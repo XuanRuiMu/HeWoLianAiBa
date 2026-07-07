@@ -1,0 +1,16 @@
+#include <common>
+uniform sampler2D godrays;uniform sampler2D sceneDiffuse;uniform sampler2D sceneDepth;uniform vec2 resolution;uniform vec2 godraysResolution;uniform float near;uniform float far;uniform vec3 color;uniform bool gammaCorrection;varying vec2 vUv;
+#define DITHERING
+#include <dithering_pars_fragment>
+float linearize_depth(float depth,float zNear,float zFar){
+#if defined( USE_LOGDEPTHBUF )
+float d=pow(2.0,depth*log2(far+1.0))-1.0;float a=far/(far-near);float b=far*near/(near-far);depth=a+b/d;
+#endif
+return zNear*zFar/(zFar+depth*(zNear-zFar));}vec4 LinearTosRGB_(in vec4 value){return vec4(mix(pow(value.rgb,vec3(0.41666))*1.055-vec3(0.055),value.rgb*12.92,vec3(lessThanEqual(value.rgb,vec3(0.0031308)))),value.a);}void main(){float rawDepth=texture2D(sceneDepth,vUv).x;float correctDepth=linearize_depth(rawDepth,near,far);vec2 texelSize=1.0/godraysResolution;vec2 texelPos=vUv*godraysResolution-0.5;vec2 base=floor(texelPos);vec2 f=texelPos-base;float totalWeight=0.0;float totalIllum=0.0;for(int y=-JBU_EXTENT;y<=1+JBU_EXTENT;y++){for(int x=-JBU_EXTENT;x<=1+JBU_EXTENT;x++){vec2 sampleUv=(base+vec2(float(x),float(y))+0.5)*texelSize;vec4 data=texture2D(godrays,sampleUv);float sampleDepth=data.a;vec2 d=vec2(float(x),float(y))-f;float spatialW=exp(-dot(d,d)/(2.0*JBU_SPATIAL_SIGMA*JBU_SPATIAL_SIGMA));float depthDiff=(sampleDepth-correctDepth)/max(correctDepth,0.001);float depthW=exp(-0.5*depthDiff*depthDiff/(JBU_DEPTH_SIGMA*JBU_DEPTH_SIGMA));float w=spatialW*depthW;totalWeight+=w;totalIllum+=data.r*w;}}float bestChoice=totalWeight>0.0 ? totalIllum/totalWeight : 0.0;vec3 diffuse=texture2D(sceneDiffuse,vUv).rgb;
+#if defined(DEBUG_STEPS)
+vec3 totalColor=vec3(0.0);float totalColorWeight=0.0;for(int y=-JBU_EXTENT;y<=1+JBU_EXTENT;y++){for(int x=-JBU_EXTENT;x<=1+JBU_EXTENT;x++){vec2 sampleUv=(base+vec2(float(x),float(y))+0.5)*texelSize;vec4 data=texture2D(godrays,sampleUv);float sampleDepth=data.a;vec2 d=vec2(float(x),float(y))-f;float spatialW=exp(-dot(d,d)/(2.0*JBU_SPATIAL_SIGMA*JBU_SPATIAL_SIGMA));float depthDiff=(sampleDepth-correctDepth)/max(correctDepth,0.001);float depthW=exp(-0.5*depthDiff*depthDiff/(JBU_DEPTH_SIGMA*JBU_DEPTH_SIGMA));float w=spatialW*depthW;totalColorWeight+=w;totalColor+=data.rgb*w;}}gl_FragColor=vec4(totalColorWeight>0.0 ? totalColor/totalColorWeight : vec3(0.0),1.0);
+#else
+gl_FragColor=vec4(mix(diffuse,color,bestChoice),1.0);
+#endif
+#include <dithering_fragment>
+if(gammaCorrection){gl_FragColor=LinearTosRGB_(gl_FragColor);}}

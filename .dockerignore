@@ -1,0 +1,10 @@
+backend/
+database/
+.git
+.env
+*.log
+.DS_Store
+Thumbs.db
+frontend/node_modules
+frontend/dist
+frontend/scripts

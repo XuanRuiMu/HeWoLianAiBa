@@ -1,0 +1,254 @@
+@import './variables.css';
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: var(--ziti-zhong);
+  color: var(--wenben-zhuse);
+  background: linear-gradient(
+    135deg,
+    var(--beijing-jianbian-1),
+    var(--beijing-jianbian-2),
+    var(--beijing-jianbian-3),
+    var(--beijing-jianbian-4)
+  );
+  background-size: 300% 300%;
+  animation: jianbian-liudong 12s ease infinite;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  height: 100%;
+  width: 100%;
+}
+
+a {
+  color: var(--zhuse);
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: inherit;
+  background: transparent;
+}
+
+input,
+textarea {
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: transparent;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+.anniu-zhuyao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  background: var(--zhuse);
+  color: var(--beijing-kaopian);
+  border-radius: var(--yuanjiao-zhong);
+  font-size: var(--ziti-zhong);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.anniu-zhuyao:hover {
+  background: var(--zhuse-shen);
+  transform: translateY(-1px);
+}
+
+.anniu-zhuyao:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.shuru-kuang {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--beijing-kaopian);
+  border: 1px solid var(--biankuang-yanse);
+  border-radius: var(--yuanjiao-zhong);
+  color: var(--wenben-zhuse);
+  transition: border-color 0.3s ease;
+}
+
+.shuru-kuang:focus {
+  border-color: var(--zhuse);
+}
+
+.shuru-kuang::placeholder {
+  color: var(--wenben-tishi);
+}
+
+.yemian-rongqi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.yemian-rongqi.quanping-rongqi {
+  padding: 0;
+}
+
+.biaodan-rongqi {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--jiange-da);
+  background: var(--beijing-kaopian);
+  border-radius: var(--yuanjiao-da);
+  box-shadow: 0 2px 12px var(--yinying-yanse);
+}
+
+.biaodan-biaoti {
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: var(--jiange-da);
+  color: var(--wenben-zhuse);
+}
+
+.biaodan-zu {
+  margin-bottom: var(--jiange-zhong);
+}
+
+.biaodan-zu label {
+  display: block;
+  margin-bottom: var(--jiange-xiao);
+  font-size: var(--ziti-zhong);
+  color: var(--wenben-ciuse);
+}
+
+.cuowu-tishi {
+  padding: 8px 12px;
+  background: rgba(250, 81, 81, 0.1);
+  border: 1px solid rgba(250, 81, 81, 0.2);
+  border-radius: var(--yuanjiao-xiao);
+  color: var(--cuowu-yanse);
+  font-size: var(--ziti-xiao);
+  margin-top: var(--jiange-xiao);
+}
+
+.lianjie-wenben {
+  display: block;
+  text-align: center;
+  margin-top: var(--jiange-zhong);
+  color: var(--wenben-ciuse);
+  font-size: var(--ziti-zhong);
+}
+
+.lianjie-wenben a {
+  color: var(--zhuse);
+  font-weight: 600;
+}
+
+.boli-kapian {
+  background: var(--boli-beijing);
+  backdrop-filter: var(--boli-mohu);
+  -webkit-backdrop-filter: var(--boli-mohu);
+  border: 1px solid var(--boli-biankuang);
+  border-radius: 24px;
+  box-shadow: var(--boli-yinying);
+  position: relative;
+  isolation: isolate;
+}
+
+.boli-kapian::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+.boli-kapian-zheshe::after {
+  animation: zheshe-guang 0.6s ease forwards;
+}
+
+@keyframes zheshe-guang {
+  from {
+    left: -100%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@keyframes jianbian-liudong {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes maichong-faguang {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0px var(--nuanhui-lan));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px var(--nuanhui-lan));
+  }
+}
+
+@keyframes lizi-kuosan {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--lizi-x), var(--lizi-y)) scale(0);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boli-kapian-zheshe::after {
+    animation: none;
+  }
+}

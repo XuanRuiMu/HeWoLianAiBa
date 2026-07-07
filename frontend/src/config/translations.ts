@@ -1,0 +1,70 @@
+export const fanYi = {
+  tongYong: {
+    caoZuoChengGong: '操作成功',
+    queShaoCanShu: '缺少必要参数',
+    fuWuQiNeiBuCuoWu: '服务器内部错误',
+    weiShouQuan: '未授权，请先登录',
+  },
+  renZheng: {
+    yingYongMing: '和我恋爱吧',
+    yingYongFuBiaoTi: '开启你的AI恋爱之旅',
+    shouJiHaoYiZhuCe: '该手机号已经被注册',
+    shouJiHaoGeShiCuoWu: '请输入正确的手机号',
+    yanZhengMaGeShiCuoWu: '请输入6位数字验证码',
+    yongHuMingChangDuCuoWu: '用户名需要1-30个字符',
+    yongHuMingTeShuZiFu: '用户名不能包含特殊字符',
+    miMaKong: '请输入密码',
+    weiTongYiXieYi: '请先阅读并同意用户协议和隐私政策',
+    dengLuShiBai: '登录失败',
+    zhuCeShiBai: '注册失败',
+    yanZhengMaFaSongShiBai: '验证码发送失败',
+    dengLuZhong: '登录中...',
+    zhuCeZhong: '注册中...',
+    faSongZhong: '发送中...',
+    huoQuYanZhengMa: '获取验证码',
+    dengLu: '登录',
+    zhuCe: '注册',
+    yiYueDu: '我已阅读并同意',
+    he: '和',
+    yongHuXieYi: '用户协议',
+    yinSiZhengCe: '隐私政策',
+    miMaBuYiZhi: '两次输入的新密码不一致',
+    xiuGaiShiBai: '修改失败',
+    xiuGaiZhong: '修改中...',
+    queRen: '确定',
+    quXiao: '取消',
+  },
+  ui: {
+    shouJiHao: '手机号',
+    miMa: '密码',
+    yanZhengMa: '验证码',
+    yongHuMing: '用户名',
+    xinYongHuMing: '输入新用户名',
+    jiuMiMa: '输入旧密码',
+    xinMiMa: '输入新密码',
+    queRenXinMiMa: '确认新密码',
+  },
+  caidan: {
+    fanHui: '返回',
+    weiDengLu: '未登录',
+    xiuGaiYongHuMing: '修改用户名',
+    xiuGaiMiMa: '修改密码',
+    guoWangZhanJi: '过往战绩',
+    tuiChuDengLu: '退出登录',
+    banBenHao: '版本号',
+    tongZhi: '通知',
+    yongHuXieYi: '用户协议',
+    yinSiZhengCe: '隐私政策',
+    banBenXinXi: '版本信息',
+    yongHu: '用户',
+    junShiZhiDao: '军师指导',
+    junShi: '军师',
+  },
+} as const
+
+export type FanYiJian = keyof typeof fanYi
+export type FanYiZiJian<T extends FanYiJian> = keyof (typeof fanYi)[T]
+
+export function huoQuFanYi<T extends FanYiJian>(fenLei: T, jian: FanYiZiJian<T>): string {
+  return fanYi[fenLei][jian] as string
+}
