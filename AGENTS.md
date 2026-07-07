@@ -38,45 +38,37 @@ AuthLayout.vue (父布局: 左侧动画 + 右侧内容区)
 
 ## GitHub 备份规则
 
-每次完成代码修改后，必须对本项目文件夹执行「清理 → 提交 → 推送」闭环，确保仓库始终保持干净可用的最新状态。
+本项目已纳入「总控制台」的 Git 自动推送管理，与 MMORPG 服务端等其他仓库共用同一套提交命名与推送流程。
 
-### 1. 清理项目文件夹
+### 1. 仓库信息
 
-提交前必须删除过程性文件，只保留有价值的源码与配置：
+- 远程仓库：https://github.com/XuanRuiMu/HeWoLianAiBa
+- 主分支：`main`
+- 在总控制台 `GIT_REPOS` 中的名称：`和我恋爱吧`
 
-- 编译产物：`node_modules/`、`dist/`、`*.tsbuildinfo`、`package-lock.json`（已在 `.gitignore` 中声明）
-- 测试与日志：`tests/`、`test-results/`、`playwright-report/`、`*.log`
-- 系统杂项：`.DS_Store`、`Thumbs.db`
-- 调试中间产物、临时截图、过期版本备份
-- 已在 `.gitignore` 中声明的其他文件一律不得入库
+### 2. 提交方式
 
-清理范围以 `.gitignore` 为准；若发现新的过程性文件类型，应同步补充到 `.gitignore`。
+通过「总控制台」主菜单 → `1. Git 自动推送` → 选择 `和我恋爱吧` 仓库进行推送，或使用「一键推送全部」批量推送。禁止手动执行 `git push`，必须走总控制台流程以确保清理与命名规则统一执行。
 
-### 2. 提交信息命名规则
+### 3. 提交信息命名规则
 
-提交信息格式：`YYYY.MM.DD_N`
+采用总控制台统一的命名规则：`YYYY.MM.DD_N`
 
-- `YYYY.MM.DD`：当天日期，使用点号分隔（如 `2026.07.07`）
+- `YYYY.MM.DD`：当天日期，点号分隔（如 `2026.07.07`）
 - `N`：当天第 N 次提交，从 1 开始递增
+- 序号由总控制台 `_生成提交信息` 方法自动统计当天 `git log` 记录后计算，无需人工计算
 
-`N` 的计算方式：先执行
+示例：当天首次推送为 `2026.07.07_1`，第二次为 `2026.07.07_2`。
 
-```bash
-git log --oneline --grep="^YYYY.MM.DD" --since=today
-```
+### 4. 清理规则
 
-统计当天已有的提交数量，再加 1 得到本次提交的序号。例如当天已有 2 条以 `2026.07.07` 开头的提交记录，则本次提交信息为 `2026.07.07_3`。
+总控制台推送前会自动清理以下过程性文件（配置在 `GIT_REPOS` 的 `清理路径` 与 `日志清理路径` 中）：
 
-### 3. 推送命令序列
+- 编译产物：`backend/node_modules`、`frontend/node_modules`、`frontend/dist`、`backend/dist`、`frontend/eslint-report.json`、`frontend/tsconfig.tsbuildinfo`
+- 日志与测试产物：`tests`、`frontend/test-results`、`frontend/playwright-report`、`测试截图`
 
-```bash
-git add -A
-git commit -m "YYYY.MM.DD_N"
-git push
-```
+若开发过程中产生新的过程性文件类型，应同步补充到本项目的 `.gitignore` 以及总控制台 `GIT_REPOS` 对应条目的清理路径中。
 
-### 4. 推送前自检
+### 5. 敏感文件保护
 
-- 确认 `git status` 中无敏感文件（`.env`、凭据文件等）
-- 确认远程分支为 `main`
-- 若推送失败，先 `git pull` 解决冲突后再推送，禁止使用 `--force`
+`.env`、`.env.example`（含真实 API 密钥与 JWT 密钥）、凭据文件等已加入 `.gitignore`，严禁入库。推送前总控制台会执行 `git status` 检查，若发现敏感文件踪迹必须立即中止推送并排查。
