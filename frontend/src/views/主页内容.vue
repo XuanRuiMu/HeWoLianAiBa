@@ -2,9 +2,9 @@
   <div ref="zhuyeQuyu" class="zhuye-quyu">
     <div class="gonggong-biaoti-qu">
       <div class="biaoti-neirong">
-        <span class="biaoti-wenzi">欢迎回来</span>
+        <span class="biaoti-wenzi">{{ huoQuFanYi('zhuYe', 'huanYingHuiLai') }}</span>
         <span class="biaoti-fenge" />
-        <span class="biaoti-zhushi">开启专属恋AI之旅</span>
+        <span class="biaoti-zhushi">{{ huoQuFanYi('zhuYe', 'kaiQiZhuanShu') }}</span>
       </div>
     </div>
 
@@ -13,12 +13,12 @@
         <div class="qinggan-neirong-ceng">
           <div class="pinpai-qu">
             <img src="/favicon.svg" class="pinpai-logo" alt="" />
-            <span class="pinpai-mingcheng">和我恋爱吧</span>
+            <span class="pinpai-mingcheng">{{ huoQuFanYi('zhuYe', 'pinPaiMing') }}</span>
           </div>
           <div class="juese-zhanshi-qu">
-            <img src="/图片/主页元素/吴昊阳终稿静态图.png" class="juese-tupian" alt="主页装饰图" />
+            <img src="/图片/主页元素/吴昊阳终稿静态图.png" class="juese-tupian" alt="" />
           </div>
-          <p class="zuoce-slogan">每一次对话，都是一段故事的开始</p>
+          <p class="zuoce-slogan">{{ huoQuFanYi('zhuYe', 'slogan') }}</p>
         </div>
       </div>
 
@@ -40,27 +40,28 @@
                 </svg>
               </div>
               <div class="kapian-xinxi">
-                <h3 class="kapian-biaoti">普通模式</h3>
-                <p class="kapian-fubiaoti">自由探索，为真正的挑战做准备</p>
+                <h3 class="kapian-biaoti">{{ huoQuFanYi('zhuYe', 'putongMoShi') }}</h3>
+                <p class="kapian-fubiaoti">{{ huoQuFanYi('zhuYe', 'putongFuBiaoTi') }}</p>
               </div>
             </div>
             <div class="kapian-yulan-qu">
               <div class="yulan-xiangmu yulan-xiangmu-1">
                 <span class="yulan-dian" />
-                <span class="yulan-wenzi">自定义角色性格</span>
+                <span class="yulan-wenzi">{{ huoQuFanYi('zhuYe', 'ziDingYiJiaoSe') }}</span>
               </div>
               <div class="yulan-xiangmu yulan-xiangmu-2">
                 <span class="yulan-dian" />
-                <span class="yulan-wenzi">适合新手入门</span>
+                <span class="yulan-wenzi">{{ huoQuFanYi('zhuYe', 'shiHeXinShou') }}</span>
               </div>
             </div>
             <div class="kapian-dibu">
-              <span class="kaishi-wenben">开始体验</span>
+              <span class="kaishi-wenben">{{ huoQuFanYi('zhuYe', 'kaiShiTiYan') }}</span>
               <span class="kaishi-jiantou">→</span>
             </div>
           </button>
 
           <button class="moshi-kapian tiaozhan-moshi-kapian" @click="jinRuTiaoZhanMoShi">
+            <span class="jijiang-tuichu-biaoqian">{{ huoQuFanYi('zhuYe', 'jiJiangTuiChu') }}</span>
             <div class="kapian-dingbu">
               <div class="kapian-tubiao-qu">
                 <svg
@@ -74,26 +75,26 @@
                 </svg>
               </div>
               <div class="kapian-xinxi">
-                <h3 class="kapian-biaoti">挑战模式</h3>
-                <p class="kapian-fubiaoti">模拟真实环境</p>
+                <h3 class="kapian-biaoti">{{ huoQuFanYi('zhuYe', 'tiaoZhanMoShi') }}</h3>
+                <p class="kapian-fubiaoti">{{ huoQuFanYi('zhuYe', 'tiaoZhanFuBiaoTi') }}</p>
               </div>
             </div>
             <div class="kapian-yulan-qu">
               <div class="yulan-xiangmu yulan-xiangmu-1">
                 <span class="yulan-dian" />
-                <span class="yulan-wenzi">系统随机角色人格</span>
+                <span class="yulan-wenzi">{{ huoQuFanYi('zhuYe', 'xiTongSuiJi') }}</span>
               </div>
               <div class="yulan-xiangmu yulan-xiangmu-2">
                 <span class="yulan-dian" />
-                <span class="yulan-wenzi">分数记入排名</span>
+                <span class="yulan-wenzi">{{ huoQuFanYi('zhuYe', 'fenShuJiRuPaiMing') }}</span>
               </div>
               <div class="yulan-xiangmu yulan-xiangmu-3">
                 <span class="yulan-dian" />
-                <span class="yulan-wenzi">适合情场高手</span>
+                <span class="yulan-wenzi">{{ huoQuFanYi('zhuYe', 'shiHeQingChangGaoShou') }}</span>
               </div>
             </div>
             <div class="kapian-dibu">
-              <span class="kaishi-wenben">接受挑战</span>
+              <span class="kaishi-wenben">{{ huoQuFanYi('zhuYe', 'jieShouTiaoZhan') }}</span>
               <span class="kaishi-jiantou">→</span>
             </div>
           </button>
@@ -111,7 +112,7 @@
               d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"
             />
           </svg>
-          <span>所有对话均由AI驱动，每次体验都独一无二</span>
+          <span>{{ huoQuFanYi('zhuYe', 'diWeiShuoMing') }}</span>
         </div>
       </div>
     </div>
@@ -122,6 +123,7 @@
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { 使用用户仓库 } from '@/stores/用户'
+import { huoQuFanYi } from '@/config/translations'
 
 const router = useRouter()
 const 用户仓库 = 使用用户仓库()
@@ -133,7 +135,7 @@ function jinRuPuTongMoShi() {
 }
 
 function jinRuTiaoZhanMoShi() {
-  router.push('/profile-setup?moshi=tiaozhan')
+  // 挑战模式暂时搁置，点击不触发路由跳转
 }
 
 async function zhiXingTuiChuDongHua() {
@@ -431,6 +433,27 @@ watch(
   justify-self: end;
   margin-left: 48px;
   animation: kapian-you-xia 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
+}
+
+.jijiang-tuichu-biaoqian {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(255, 107, 157, 0.9), rgba(251, 146, 60, 0.9));
+  box-shadow: 0 4px 14px rgba(255, 107, 157, 0.35);
+  pointer-events: none;
+}
+
+:root[data-theme='浅色'] .jijiang-tuichu-biaoqian {
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(255, 107, 157, 0.25);
 }
 
 @keyframes kapian-zuo-shang {

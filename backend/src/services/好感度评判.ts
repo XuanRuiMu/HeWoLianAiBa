@@ -1,0 +1,72 @@
+import { AI_PEI_ZHI } from '../config/AI配置'
+import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
+import { gouJianHaoGanDuPingPanPrompt } from './Prompt构建器'
+import type { HaoGanDuPingPanJieGuo } from '../types'
+
+export async function pingPanHaoGanDuBianHua(
+  yongHuXiaoXi: string,
+  jiaoSeHuiFu: string,
+  jiaoSeMing: string,
+): Promise<HaoGanDuPingPanJieGuo> {
+  try {
+    const xiangYing = await genJuPeiZhiTiaoYong('haoGanDuPingPan', [
+      { jiaoSe: 'system', neiRong: '你是好感度评判专家，只输出JSON。' },
+      {
+        jiaoSe: 'user',
+        neiRong: gouJianHaoGanDuPingPanPrompt(yongHuXiaoXi, jiaoSeHuiFu, jiaoSeMing),
+      },
+    ])
+
+    const shuJu = jieXiJSON(xiangYing.neiRong)
+
+    return {
+      xin_ren_du_bian_hua: xiuZhengFanWei(
+        Number(shuJu['信任度变化'] ?? shuJu['xin_ren_du_bian_hua'] ?? 0),
+      ),
+      qin_mi_du_bian_hua: xiuZhengFanWei(
+        Number(shuJu['亲密度变化'] ?? shuJu['qin_mi_du_bian_hua'] ?? 0),
+      ),
+      qu_wei_du_bian_hua: xiuZhengFanWei(
+        Number(shuJu['趣味度变化'] ?? shuJu['qu_wei_du_bian_hua'] ?? 0),
+      ),
+      guan_huai_du_bian_hua: xiuZhengFanWei(
+        Number(shuJu['关怀度变化'] ?? shuJu['guan_huai_du_bian_hua'] ?? 0),
+      ),
+      li_you: String(shuJu['理由'] ?? shuJu['li_you'] ?? ''),
+    }
+  } catch (cuoWu) {
+    console.error('好感度评判失败', cuoWu)
+    return {
+      xin_ren_du_bian_hua: 0,
+      qin_mi_du_bian_hua: 0,
+      qu_wei_du_bian_hua: 0,
+      guan_huai_du_bian_hua: 0,
+      li_you: '',
+    }
+  }
+}
+
+function xiuZhengFanWei(zhi: number): number {
+  if (Number.isNaN(zhi)) return 0
+  return Math.max(
+    AI_PEI_ZHI.haoGanDu.zuiXiaoBianHua,
+    Math.min(AI_PEI_ZHI.haoGanDu.zuiDaBianHua, zhi),
+  )
+}
+
+function jieXiJSON(neiRong: string): Record<string, unknown> {
+  const qingLi = neiRong.trim()
+  try {
+    return JSON.parse(qingLi)
+  } catch {
+    const piPei = qingLi.match(/\{[\s\S]*\}/)
+    if (piPei) {
+      try {
+        return JSON.parse(piPei[0])
+      } catch {
+        return {}
+      }
+    }
+    return {}
+  }
+}

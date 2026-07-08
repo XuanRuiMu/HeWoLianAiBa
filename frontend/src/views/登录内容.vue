@@ -276,15 +276,13 @@ const bd = 使用认证表单仓库()
 const router = useRouter()
 
 type MoShiLeiXing = 'dengLu' | 'zhuCe'
-const fuMoShi = inject<Ref<MoShiLeiXing>>('denglu-moshi')
+const fuMoShi = inject<Ref<MoShiLeiXing>>('denglu-moshi', ref(bd.moShi))
 const moShi = ref<MoShiLeiXing>(bd.moShi)
 
 watch(moShi, (xinMoShi) => {
   bd.moShi = xinMoShi
   emit('gengXinMoShi', xinMoShi)
-  if (fuMoShi) {
-    fuMoShi.value = xinMoShi
-  }
+  fuMoShi.value = xinMoShi
 })
 
 const dengLuShouJiHao = ref(bd.dengLuShouJiHao)
@@ -309,16 +307,17 @@ const gouXuanYanSe = computed(() => {
   return gouXuanCiShu.value % 2 === 0 ? '#ff6b9d' : '#6B8CA6'
 })
 
-watch(tongYiXieYi, () => {
-  if (tongYiXieYi.value) {
-    gouXuanCiShu.value++
-  }
-})
-
 function daKaiXieYi(leiXing: 'yongHuXieYi' | 'yinSiZhengCe') {
   xieYiLeiXing.value = leiXing
   xieYiXianShi.value = true
 }
+
+watch(tongYiXieYi, (val) => {
+  bd.tongYiXieYi = val
+  if (val) {
+    gouXuanCiShu.value++
+  }
+})
 
 const shouJiHaoJuJiao = ref(false)
 const miMaJuJiao = ref(false)
@@ -339,7 +338,6 @@ watch(zhuCeShouJiHao, (val) => (bd.zhuCeShouJiHao = val))
 watch(zhuCeYanZhengMa, (val) => (bd.zhuCeYanZhengMa = val))
 watch(zhuCeYongHuMing, (val) => (bd.zhuCeYongHuMing = val))
 watch(zhuCeMiMa, (val) => (bd.zhuCeMiMa = val))
-watch(tongYiXieYi, (val) => (bd.tongYiXieYi = val))
 
 function qieHuanMoShi(xinMoShi: MoShiLeiXing) {
   if (xinMoShi === moShi.value) return
@@ -730,7 +728,7 @@ async function zhiXingZhuCe() {
       tongYiXieYi.value,
     )
     bd.qingKongDengLuZhuCe()
-    router.push('/profile-setup')
+    await qiDongJuanZhouDongHua('/')
   } catch (cuoWu) {
     if (typeof cuoWu === 'object' && cuoWu !== null && 'response' in cuoWu) {
       const xiangYing = huoQuCuoWuXiangYing(cuoWu)

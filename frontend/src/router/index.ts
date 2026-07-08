@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-// import { 使用用户仓库 } from '@/stores/用户'
-// import { LING_PAI_JIAN } from '@/constants/auth'
+import { 令牌键 } from '@/constants/auth'
 
 const luYou: RouteRecordRaw[] = [
   {
@@ -69,10 +68,18 @@ const router = createRouter({
   routes: luYou,
 })
 
-// 预览：临时禁用登录守卫，仅用于本地查看主页小样
+function huoQuLingPai(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(令牌键)
+}
+
 router.beforeEach(async (to, _from) => {
-  if (to.name === 'dengLu') {
-    return { name: 'zhuJieMian' }
+  const youLingPai = Boolean(huoQuLingPai())
+  if (to.meta.xuYaoDengLu && !youLingPai) {
+    return { name: 'dengLu', replace: true }
+  }
+  if ((to.name === 'dengLu' || to.path === '/login') && youLingPai) {
+    return { name: 'zhuJieMian', replace: true }
   }
 })
 

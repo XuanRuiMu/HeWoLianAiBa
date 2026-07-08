@@ -35,7 +35,7 @@ export const 使用通知仓库 = defineStore('通知', () => {
       transports: ['websocket', 'polling'],
     })
 
-    socket.on('通知信', (tongZhi: 通知) => {
+    socket.on('通知新', (tongZhi: 通知) => {
       if (!tongZhiLieBiao.value.some((xiang) => xiang.id === tongZhi.id)) {
         tongZhiLieBiao.value = [tongZhi, ...tongZhiLieBiao.value]
       }

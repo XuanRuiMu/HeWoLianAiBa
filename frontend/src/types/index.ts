@@ -1,11 +1,11 @@
-export interface 接口响应<T> {
+export interface ApiXiangYing<T> {
   cheng_gong: boolean
   shu_ju: T | null
   ti_shi?: string
   cuo_wu_ma?: string
 }
 
-export type 关系阶段 =
+export type GuanxiJieduan =
   | 'lengDan'
   | 'shuYuan'
   | 'renShi'
@@ -17,9 +17,9 @@ export type 关系阶段 =
   | 'reLian'
   | 'shenAi'
 
-export type 性别 = 'male' | 'female'
+export type XingBie = 'male' | 'female'
 
-export type MBTI类型 =
+export type MBTILeiXing =
   | 'ISTJ'
   | 'ISFJ'
   | 'INFJ'
@@ -37,9 +37,9 @@ export type MBTI类型 =
   | 'ESFJ'
   | 'ENTP'
 
-export type 性格选择 = MBTI类型
+export type XingGeXuanZe = MBTILeiXing
 
-export type 人设标签 =
+export type RenSheBiaoQian =
   | 'neiLianXueBa'
   | 'huoPoSheJiaoDaRen'
   | 'wenYiQingNian'
@@ -47,15 +47,15 @@ export type 人设标签 =
   | 'wenRouQingTingZhe'
   | 'youMoHuaLao'
 
-export interface 用户 {
+export interface Yonghu {
   id: string
   shou_ji_hao: string
   yong_hu_ming: string | null
   ni_cheng: string | null
-  xing_bie: 性别 | null
-  mu_biao_xing_bie: 性别 | null
-  xing_ge_xuan_ze: 性格选择 | null
-  ren_she_biao_qian: 人设标签 | null
+  xing_bie: XingBie | null
+  mu_biao_xing_bie: XingBie | null
+  xing_ge_xuan_ze: XingGeXuanZe | null
+  ren_she_biao_qian: RenSheBiaoQian | null
   yun_xu_zha_nan_zha_nv: boolean
   tou_xiang: string | null
   sheng_ri: string | null
@@ -67,14 +67,14 @@ export interface 用户 {
   geng_xin_shi_jian: string
 }
 
-export interface 登录响应 {
+export interface DengLuXiangYing {
   令牌: string
-  用户: 用户
+  用户: Yonghu
   新用户: boolean
   是否管理员: boolean
 }
 
-export interface 消息 {
+export interface Xiaoxi {
   id: string
   hui_hua_id: string
   fa_song_zhe_id: string
@@ -86,20 +86,20 @@ export interface 消息 {
   zheng_zai_da_zi?: boolean
   jiao_se_se?: string
   chuang_jian_shi_jian?: string
-  tong_guan_xin_xi?: 通关信息 | null
+  tong_guan_xin_xi?: TongGuanXinXi | null
   yi_che_hui?: boolean
   che_hui_shi_jian?: string
   yuan_shi_nei_rong?: string
   fa_song_zhong?: boolean
 }
 
-export interface 通关信息 {
+export interface TongGuanXinXi {
   lei_xing: string
   xiao_xi: string
   ke_ji_xu_liao_tian?: boolean
 }
 
-export interface 角色 {
+export interface Jiaose {
   id: string
   ming_zi: string
   xing_bie: 'nan' | 'nv'
@@ -114,7 +114,7 @@ export interface 角色 {
   biao_qian: string[]
   re_du: number
   chuang_jian_shi_jian: string
-  mbti_lei_xing?: MBTI类型
+  mbti_lei_xing?: MBTILeiXing
   shi_fou_zha_xing?: boolean
   kai_chang_bai?: string[]
   wei_xin_ming?: string
@@ -135,7 +135,7 @@ export interface 角色 {
   shi_po_xian_suo?: string[]
 }
 
-export interface 生成角色结果 {
+export interface ShengChengJiaoSeJieGuo {
   id?: string
   jiao_se_id?: string
   ming_zi: string
@@ -148,8 +148,8 @@ export interface 生成角色结果 {
   yan_yu_feng_ge: string
   tou_xiang: string
   biao_qian: string[]
-  yu_she_lei_xing: 性格选择
-  mbti_lei_xing: MBTI类型
+  yu_she_lei_xing: XingGeXuanZe
+  mbti_lei_xing: MBTILeiXing
   ie_lei_xing: 'I' | 'E'
   re_shen_lei_xing: 'slow' | 'fast'
   shi_fou_zha_xing: boolean
@@ -164,7 +164,7 @@ export interface 生成角色结果 {
   shi_po_xian_suo?: string[]
 }
 
-export interface 好感度 {
+export interface HaoGanDu {
   id: string
   yong_hu_id: string
   jiao_se_id: string
@@ -182,18 +182,18 @@ export interface 好感度 {
   chao_shi_ci_shu: number
 }
 
-export interface 情感状态 {
+export interface QingganZhuangtai {
   jiao_se_id: string
   yong_hu_id: string
   qin_mi_du: number
-  guan_xi_jie_duan: 关系阶段
+  guan_xi_jie_duan: GuanxiJieduan
   xin_ren_du: number
   hao_gan_du: number
   jie_suo_dui_hua: string[]
   zui_hou_hu_dong_shi_jian: number
 }
 
-export interface 会话 {
+export interface HuiHua {
   id: string
   jiao_se_id: string
   yong_hu_id: string
@@ -202,18 +202,38 @@ export interface 会话 {
   wei_du_xiao_xi_shu: number
 }
 
-export interface 登录状态 {
+export interface Dengluzhuangtai {
   deng_lu_zhong: boolean
   cuo_wu_xin_xi: string | null
 }
 
-export interface 军师建议 {
+export interface JunShiXinXi {
+  id: string
+  mingCheng: string
+  fuBiaoTi: string
+  biaoQian: string
+  miaoShu: string
+  touXiang: string
+}
+
+export interface JunShiZhiDaoJieGuo {
+  junShi: JunShiXinXi
+  zhiDaoNeiRong: string
+  shiJian: string
+}
+
+export interface JunShiJianYi {
   id?: string
-  jian_yi: string
-  jun_shi_id: string
-  jun_shi_ming_chen: string
+  jian_yi?: string
+  jun_shi_id?: string
+  jun_shi_ming_chen?: string
+  mingCheng?: string
   ming_chen?: string
   cheng_hao?: string
+  fuBiaoTi?: string
+  biaoQian?: string
+  biao_qian?: string
+  touXiang?: string
   tou_xiang?: string
   hou_tai_shu_ju?: {
     hao_gan_du: {
@@ -228,12 +248,12 @@ export interface 军师建议 {
   }
 }
 
-export interface 军师记录消息 {
+export interface JunShiJiLuXiaoXi {
   jiao_se: string
   nei_rong: string
 }
 
-export interface 军师记录聊天消息 {
+export interface JunShiJiLuLiaoTianXiaoXi {
   jiao_se: string
   nei_rong: string
   shi_jian: string
@@ -242,7 +262,7 @@ export interface 军师记录聊天消息 {
   che_hui_shi_jian?: string | null
 }
 
-export interface 军师记录后台数据 {
+export interface JunShiJiLuHouTaiShuJu {
   haoGanDu: {
     zongFen: number
     xinRenDu: number
@@ -252,10 +272,10 @@ export interface 军师记录后台数据 {
     guanXiJieDuan: string
     guanXiJieDuanMingCheng: string
   }
-  fuPanShuJu: 复盘条目[]
+  fuPanShuJu: FuPanTiaoMu[]
 }
 
-export interface 军师记录 {
+export interface JunShiJiLu {
   jian_yi: string
   shi_jian: string
   jiao_se_id: string
@@ -264,29 +284,31 @@ export interface 军师记录 {
   jun_shi_ming_chen: string
   dui_hua_zhai_yao?: string
   xiao_xi_zhao_pian?: string
-  liao_tian_ji_lu?: 军师记录聊天消息[]
-  hou_tai_shu_ju?: 军师记录后台数据
+  liao_tian_ji_lu?: JunShiJiLuLiaoTianXiaoXi[]
+  hou_tai_shu_ju?: JunShiJiLuHouTaiShuJu
 }
 
-export interface 档案详情 {
+export interface DangAnXiangQing {
   id: string
   yong_hu_id: string
   jiao_se_id: string
   jiao_se_ming_zi: string
   shi_fou_zha_xing: boolean
   jie_guo_lei_xing: string
+  jie_guo_lei_xing_yuan: string
   shi_fou_feng_cun: boolean
   hao_gan_du_zong_fen: number
   guan_xi_jie_duan: string
   liao_tian_tian_shu: number
   xiao_xi_zong_shu: number
-  fu_pan_shu_ju: 复盘条目[] | null
+  fu_pan_shu_ju: FuPanTiaoMu[] | null
+  fu_pan_nei_rong?: string | null
   chuang_jian_shi_jian: string
   sui_ji_xing_ge?: boolean
   mbti_lei_xing?: string
 }
 
-export interface 复盘条目 {
+export interface FuPanTiaoMu {
   shi_jian: string
   shi_jian_miao_shu: string
   yong_hu_xiao_xi: string
@@ -302,22 +324,22 @@ export interface 复盘条目 {
   }
 }
 
-export interface 评估结果 {
-  hua_ti_yin_dao: 维度评分
-  qing_gan_gong_ming: 维度评分
-  you_mo_gan: 维度评分
-  ti_tie_du: 维度评分
-  jie_zou_ba_kong: 维度评分
-  zong_ti_ping_jia: string
-  gai_jin_jian_yi: string[]
+export interface PingGuJieGuo {
+  话题引导: WeiDuPingFen
+  情感共鸣: WeiDuPingFen
+  幽默感: WeiDuPingFen
+  体贴度: WeiDuPingFen
+  节奏把控: WeiDuPingFen
+  总体评价: string
+  改进建议: string[]
 }
 
-export interface 维度评分 {
+export interface WeiDuPingFen {
   fen: number
   shuo_ming: string
 }
 
-export interface 人设 {
+export interface RenShe {
   id: string
   yong_hu_id: string
   ming_cheng: string
@@ -330,7 +352,7 @@ export interface 人设 {
   chuang_jian_shi_jian: string
 }
 
-export const 关系阶段映射: Record<关系阶段, string> = {
+export const GUANXI_JIEDUAN_MAP: Record<GuanxiJieduan, string> = {
   lengDan: '冷淡',
   shuYuan: '疏远',
   renShi: '认识',
@@ -343,7 +365,7 @@ export const 关系阶段映射: Record<关系阶段, string> = {
   shenAi: '深爱',
 }
 
-export const 关系阶段顺序: 关系阶段[] = [
+export const GUANXI_JIEDUAN_ORDER: GuanxiJieduan[] = [
   'lengDan',
   'shuYuan',
   'renShi',
@@ -356,12 +378,12 @@ export const 关系阶段顺序: 关系阶段[] = [
   'shenAi',
 ]
 
-export const 性别映射: Record<性别, string> = {
+export const XING_BIE_MAP: Record<XingBie, string> = {
   male: '男',
   female: '女',
 }
 
-export const 性格选择映射: Record<性格选择, string> = {
+export const XING_GE_XUAN_ZE_MAP: Record<XingGeXuanZe, string> = {
   ISTJ: '物流师',
   ISFJ: '守护者',
   INFJ: '提倡者',
@@ -380,7 +402,7 @@ export const 性格选择映射: Record<性格选择, string> = {
   ENTP: '辩论家',
 }
 
-export const 人设标签映射: Record<人设标签, string> = {
+export const REN_SHE_BIAO_QIAN_MAP: Record<RenSheBiaoQian, string> = {
   neiLianXueBa: '内敛学霸',
   huoPoSheJiaoDaRen: '活泼社交达人',
   wenYiQingNian: '文艺青年',
@@ -389,7 +411,10 @@ export const 人设标签映射: Record<人设标签, string> = {
   youMoHuaLao: '幽默话痨',
 }
 
-export const 好感度层级映射: Record<string, { min: number; max: number; ming_cheng: string }> = {
+export const HAO_GAN_DU_CENG_JI_MAP: Record<
+  string,
+  { min: number; max: number; ming_cheng: string }
+> = {
   lengDan: { min: 0, max: 100, ming_cheng: '冷淡' },
   shuYuan: { min: 101, max: 200, ming_cheng: '疏远' },
   renShi: { min: 201, max: 300, ming_cheng: '认识' },
@@ -402,21 +427,21 @@ export const 好感度层级映射: Record<string, { min: number; max: number; m
   shenAi: { min: 901, max: 1000, ming_cheng: '深爱' },
 }
 
-export type 反馈类别 =
+export type FanKuiLeiBie =
   | 'jiaoSeBuHeShi'
   | 'huiFuBuHeShi'
   | 'neiRongBuDang'
   | 'xiTongGuZhang'
   | 'qiTaJianYi'
 
-export interface 反馈提交 {
+export interface FanKuiTiJiao {
   jiao_se_id: string
-  lei_bie: 反馈类别
+  lei_bie: FanKuiLeiBie
   nei_rong: string
   xiao_xi_duan_luo?: string
 }
 
-export interface 通知 {
+export interface TongZhi {
   id: string
   fa_song_zhe_id: string | null
   jie_shou_zhe_id: string
@@ -427,7 +452,7 @@ export interface 通知 {
   yi_du_shi_jian: string | null
 }
 
-export const 反馈类别映射: Record<反馈类别, string> = {
+export const FAN_KUI_LEI_BIE_MAP: Record<FanKuiLeiBie, string> = {
   jiaoSeBuHeShi: '角色不合适',
   huiFuBuHeShi: '回复不合适',
   neiRongBuDang: '内容不当',
@@ -435,9 +460,22 @@ export const 反馈类别映射: Record<反馈类别, string> = {
   qiTaJianYi: '其他建议',
 }
 
-export function 获取好感度层级(haoGanDu: number): string {
-  for (const [, dingYi] of Object.entries(好感度层级映射)) {
+export function huoQuHaoGanDuCengJi(haoGanDu: number): string {
+  for (const [, dingYi] of Object.entries(HAO_GAN_DU_CENG_JI_MAP)) {
     if (haoGanDu >= dingYi.min && haoGanDu <= dingYi.max) return dingYi.ming_cheng
   }
   return '冷淡'
 }
+
+export type 用户 = Yonghu
+export type 登录状态 = Dengluzhuangtai
+export type 消息 = Xiaoxi
+export type 角色 = Jiaose
+export type 通知 = TongZhi
+export type 档案详情 = DangAnXiangQing
+export type 评估结果 = PingGuJieGuo
+export type MBTI类型 = MBTILeiXing
+export type 性格选择 = XingGeXuanZe
+export const 性格选择映射 = XING_GE_XUAN_ZE_MAP
+export type 人设标签 = RenSheBiaoQian
+export type 性别 = XingBie

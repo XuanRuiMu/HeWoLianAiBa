@@ -1,12 +1,12 @@
 import http from './请求'
-import type { 通知 } from '@/types'
+import type { TongZhi } from '@/types'
 
 export async function huoQuTongZhiLieBiao(
   xianShiShu = 50,
-): Promise<{ lie_biao: 通知[]; wei_du_shu: number }> {
+): Promise<{ lie_biao: TongZhi[]; wei_du_shu: number }> {
   const 响应 = await http.get<{
     cheng_gong: boolean
-    shu_ju: { lie_biao: 通知[]; wei_du_shu: number }
+    shu_ju: { lie_biao: TongZhi[]; wei_du_shu: number }
   }>('/通知', {
     params: { xianShiShu },
   })

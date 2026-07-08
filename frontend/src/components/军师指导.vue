@@ -8,17 +8,19 @@
             :class="{ huoyue: dangQianBiaoQian === 'zhidao' }"
             @click="dangQianBiaoQian = 'zhidao'"
           >
-            军师指导
+            {{ huoQuFanYi('junShi', 'junShiZhiDao') }}
           </button>
           <button
             class="biaoqian-anniu"
             :class="{ huoyue: dangQianBiaoQian === 'jilu' }"
             @click="qieHuanDaoJiLu()"
           >
-            指导记录
+            {{ huoQuFanYi('junShi', 'zhiDaoJiLu') }}
           </button>
         </div>
-        <button class="guanbi-anniu" @click="$emit('guanBi')">✕</button>
+        <button class="guanbi-anniu" @click="$emit('guanBi')">
+          {{ huoQuFanYi('junShi', 'guanBi') }}
+        </button>
       </div>
 
       <div class="junshi-neirong">
@@ -32,13 +34,13 @@
               <div class="junshi-touxiang">
                 <img
                   :src="dangQianJunShi.touXiang"
-                  :alt="dangQianJunShi.mingChen"
+                  :alt="dangQianJunShi.mingCheng"
                   class="touxiang-tu"
                 />
               </div>
               <div class="junshi-xiangqing">
-                <span class="junshi-mingcheng">{{ dangQianJunShi.mingChen }}</span>
-                <span class="junshi-fubiaoti">{{ dangQianJunShi.chengHao }}</span>
+                <span class="junshi-mingcheng">{{ dangQianJunShi.mingCheng }}</span>
+                <span class="junshi-fubiaoti">{{ dangQianJunShi.fuBiaoTi }}</span>
                 <span v-if="dangQianJunShi.biaoQian" class="junshi-biaoqian">{{
                   dangQianJunShi.biaoQian
                 }}</span>
@@ -55,56 +57,16 @@
               >
                 <div class="junshi-touxiang xiao">
                   <img
-                    :src="junShi.tou_xiang || '/advisors/军师玄锐暮头像.jpg'"
-                    :alt="junShi.ming_chen || ''"
+                    :src="junShi.touXiang || '/advisors/军师玄锐暮头像.jpg'"
+                    :alt="junShi.mingCheng || ''"
                     class="touxiang-tu"
                   />
                 </div>
                 <div class="junshi-xiangqing">
-                  <span class="junshi-mingcheng">{{
-                    junShi.ming_chen || junShi.jun_shi_ming_chen
-                  }}</span>
-                  <span class="junshi-fubiaoti">{{ junShi.cheng_hao || '' }}</span>
+                  <span class="junshi-mingcheng">{{ junShi.mingCheng }}</span>
+                  <span class="junshi-fubiaoti">{{ junShi.fuBiaoTi }}</span>
                 </div>
                 <span v-if="junShi.id === dangQianJunShi.id" class="yixuan-biaoji">✓</span>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="haoGanDuShuJu" class="guanxi-zhanshi">
-            <span class="guanxi-jieduan-biaoqian">{{
-              GUAN_XI_JIE_DUAN_YING_SHE[haoGanDuShuJu.guan_xi_jie_duan] ||
-              haoGanDuShuJu.guan_xi_jie_duan
-            }}</span>
-          </div>
-
-          <div v-if="fuPanShuJu.length > 0" class="neixin-huodong-zhanshi">
-            <div
-              class="neixin-huodong-biaoti"
-              @click="zhanKaiNeiXinHuoDong = !zhanKaiNeiXinHuoDong"
-            >
-              <span>AI内心活动 & 评分变化</span>
-              <span class="zhanKai-tubiao">{{ zhanKaiNeiXinHuoDong ? '▼' : '▶' }}</span>
-            </div>
-            <div v-if="zhanKaiNeiXinHuoDong" class="neixin-huodong-liebiao">
-              <div
-                v-for="(tiaoMu, suoYin) in fuPanShuJu"
-                :key="suoYin"
-                class="neixin-huodong-tiaomu"
-              >
-                <div class="tiaoMu-lunCi">第{{ suoYin + 1 }}轮</div>
-                <div class="tiaoMu-xinxi">
-                  <div class="tiaoMu-hang">
-                    <span class="tiaoMu-biaoqian">你说：</span>{{ tiaoMu.yong_hu_xiao_xi || '' }}
-                  </div>
-                  <div class="tiaoMu-hang">
-                    <span class="tiaoMu-biaoqian">TA回：</span>{{ tiaoMu.ai_hui_fu || '' }}
-                  </div>
-                  <div class="tiaoMu-hang tiaoMu-neixin">
-                    <span class="tiaoMu-biaoqian">内心：</span
-                    >{{ tiaoMu.ai_xin_li_huo_dong || '无记录' }}
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -114,7 +76,11 @@
             :disabled="qingQiuZhong || !jiaoSeId"
             @click="zhiXingQingQiu"
           >
-            {{ qingQiuZhong ? '请求中...' : '请求指导' }}
+            {{
+              qingQiuZhong
+                ? huoQuFanYi('junShi', 'qingQiuZhong')
+                : huoQuFanYi('junShi', 'qingQiuZhiDao')
+            }}
           </button>
 
           <div v-if="cuoWuTiShi" class="cuowu-tishi">
@@ -122,7 +88,7 @@
           </div>
 
           <div v-if="zhiDaoJieGuo" class="zhidao-jieguo">
-            <h3 class="jieguo-biaoti">指导建议</h3>
+            <h3 class="jieguo-biaoti">{{ huoQuFanYi('junShi', 'zhiDaoJianYi') }}</h3>
             <p class="jieguo-neirong">
               {{ zhiDaoJieGuo }}
             </p>
@@ -130,8 +96,12 @@
         </div>
 
         <div v-else class="jilu-buju">
-          <div v-if="jiaZaiJiLuZhong" class="jiazai-zhuangtai">加载中...</div>
-          <div v-else-if="jiLuLieBiao.length === 0" class="kong-zhuangtai">暂无指导记录</div>
+          <div v-if="jiaZaiJiLuZhong" class="jiazai-zhuangtai">
+            {{ huoQuFanYi('junShi', 'jiaZaiZhong') }}
+          </div>
+          <div v-else-if="jiLuLieBiao.length === 0" class="kong-zhuangtai">
+            {{ huoQuFanYi('junShi', 'zanWuZhiDaoJiLu') }}
+          </div>
           <div v-else class="jilu-liebiao">
             <div
               v-for="jiLu in jiLuLieBiao"
@@ -158,9 +128,9 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { qingQiuJunShiZhiDao, huoQuJunShiJiLu, huoQuJunShiLieBiao } from '@/api/聊天'
-import { huoQuQiuZhuZhuangTai } from '@/api/军师'
+import { huoQuFanYi } from '@/config/translations'
 import { 是业务错误 } from '@/api/请求'
-import type { 军师建议, 军师记录, 复盘条目 } from '@/types'
+import type { JunShiXinXi, JunShiJiLu } from '@/types'
 
 const props = defineProps<{
   jiaoSeId: string
@@ -174,91 +144,42 @@ const dangQianBiaoQian = ref<'zhidao' | 'jilu'>('zhidao')
 const qingQiuZhong = ref(false)
 const zhiDaoJieGuo = ref<string | null>(null)
 const cuoWuTiShi = ref('')
-const jiLuLieBiao = ref<军师记录[]>([])
+const jiLuLieBiao = ref<JunShiJiLu[]>([])
 const jiaZaiJiLuZhong = ref(false)
-const junShiLieBiaoXuanXiang = ref<军师建议[]>([])
+const junShiLieBiaoXuanXiang = ref<JunShiXinXi[]>([])
 const xuanZeZhanKai = ref(false)
 
-const MO_REN_JUN_SHI = {
+const MO_REN_JUN_SHI: JunShiXinXi = {
   id: 'xuanRuiMu',
-  mingChen: '玄锐暮',
-  chengHao: '拥有大量旁观经验的指导老师',
-  biaoQian: '损友军师',
+  mingCheng: huoQuFanYi('junShi', 'junShiMing'),
+  fuBiaoTi: huoQuFanYi('junShi', 'junShiFuBiaoTi'),
+  biaoQian: huoQuFanYi('junShi', 'junShiBiaoQian'),
+  miaoShu: huoQuFanYi('junShi', 'junShiMiaoShu'),
   touXiang: '/advisors/军师玄锐暮头像.jpg',
 }
 
-const dangQianJunShi = ref({ ...MO_REN_JUN_SHI })
-const zhanKaiNeiXinHuoDong = ref(false)
-const haoGanDuShuJu = ref<{
-  zong_fen: number
-  guan_xi_jie_duan: string
-  xin_ren_du: number
-  qin_mi_du: number
-  qu_wei_du: number
-  guan_huai_du: number
-} | null>(null)
-const GUAN_XI_JIE_DUAN_YING_SHE: Record<string, string> = {
-  lengDan: '陌生人',
-  shuYuan: '陌生人',
-  renShi: '认识的人',
-  shuXi: '认识的人',
-  pengYou: '朋友',
-  haoYou: '朋友',
-  aiMei: '暧昧',
-  xinDong: '暧昧',
-  reLian: '恋人',
-  shenAi: '恋人',
-  moShengRen: '陌生人',
-  renShiDeRen: '认识的人',
-  lianRen: '恋人',
-}
-
-const fuPanShuJu = ref<复盘条目[]>([])
+const dangQianJunShi = ref<JunShiXinXi>({ ...MO_REN_JUN_SHI })
 const router = useRouter()
 
 onMounted(async () => {
   try {
     const lieBiao = await huoQuJunShiLieBiao()
     junShiLieBiaoXuanXiang.value = lieBiao
-    const xuanRuiMu = lieBiao.find((j: 军师建议) => j.id === 'xuanRuiMu')
+    const xuanRuiMu = lieBiao.find((j) => j.id === 'xuanRuiMu')
     if (xuanRuiMu) {
-      dangQianJunShi.value = {
-        id: xuanRuiMu.id || 'xuanRuiMu',
-        mingChen: xuanRuiMu.ming_chen || MO_REN_JUN_SHI.mingChen,
-        chengHao: xuanRuiMu.cheng_hao || MO_REN_JUN_SHI.chengHao,
-        biaoQian: xuanRuiMu.ming_chen || MO_REN_JUN_SHI.biaoQian,
-        touXiang: xuanRuiMu.tou_xiang || MO_REN_JUN_SHI.touXiang,
-      }
+      dangQianJunShi.value = xuanRuiMu
     }
   } catch (e) {
-    console.warn('加载军师列表失败', e)
+    console.warn(huoQuFanYi('junShi', 'jiaZaiJunShiLieBiaoShiBai'), e)
   }
-  jiaZaiHaoGanDu()
 })
 
-function xuanZeJunShi(junShi: 军师建议) {
-  dangQianJunShi.value = {
-    id: junShi.id || 'xuanRuiMu',
-    mingChen: junShi.ming_chen || junShi.jun_shi_ming_chen || '玄锐暮',
-    chengHao: junShi.cheng_hao || '',
-    biaoQian: junShi.ming_chen || '',
-    touXiang: junShi.tou_xiang || '/advisors/军师玄锐暮头像.jpg',
-  }
+function xuanZeJunShi(junShi: JunShiXinXi) {
+  dangQianJunShi.value = junShi
   xuanZeZhanKai.value = false
 }
 
-async function jiaZaiHaoGanDu() {
-  if (!props.jiaoSeId) return
-  try {
-    const zhuangTai = await huoQuQiuZhuZhuangTai(props.jiaoSeId)
-    haoGanDuShuJu.value = zhuangTai.hao_gan_du
-    fuPanShuJu.value = zhuangTai.fu_pan_shu_ju || []
-  } catch (e) {
-    console.warn('加载好感度失败', e)
-  }
-}
-
-function jinRuJiLuXiangQing(jiLu: 军师记录) {
+function jinRuJiLuXiangQing(jiLu: JunShiJiLu) {
   router.push(`/junshi-jilu/${props.jiaoSeId}/${encodeURIComponent(jiLu.shi_jian)}`)
 }
 
@@ -268,16 +189,15 @@ async function zhiXingQingQiu() {
   cuoWuTiShi.value = ''
   try {
     const jieGuo = await qingQiuJunShiZhiDao(props.jiaoSeId)
-    zhiDaoJieGuo.value = jieGuo.jian_yi
-    jiaZaiHaoGanDu()
+    zhiDaoJieGuo.value = jieGuo.zhiDaoNeiRong
   } catch (e: unknown) {
     const cuoWuMa = 是业务错误(e) ? e.cuo_wu_ma : ''
     if (cuoWuMa === 'JUN_SHI_CHONG_FU') {
-      cuoWuTiShi.value = '已指导过相同聊天内容，请先发送新消息'
+      cuoWuTiShi.value = huoQuFanYi('junShi', 'junShiChongFu')
     } else if (cuoWuMa === 'WU_LIAO_TIAN_JI_LU') {
-      cuoWuTiShi.value = '暂无聊天记录，无法请求军师指导'
+      cuoWuTiShi.value = huoQuFanYi('junShi', 'wuLiaoTianJiLu')
     } else {
-      cuoWuTiShi.value = e instanceof Error ? e.message : '请求失败，请稍后再试'
+      cuoWuTiShi.value = e instanceof Error ? e.message : huoQuFanYi('junShi', 'qingQiuShiBai')
     }
     zhiDaoJieGuo.value = null
   } finally {
@@ -502,88 +422,6 @@ function qieHuanDaoJiLu() {
   font-size: 15px;
   font-weight: 600;
   transition: all 0.2s ease;
-}
-
-.guanxi-zhanshi {
-  padding: 10px 14px;
-  background: var(--boli-beijing);
-  border: 1px solid var(--boli-biankuang);
-  border-radius: 12px;
-}
-
-.guanxi-jieduan-biaoqian {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--junshi-zhuse);
-  background: var(--junshi-zhuse-touming);
-  padding: 4px 12px;
-  border-radius: 8px;
-}
-
-.neixin-huodong-zhanshi {
-  background: var(--boli-beijing);
-  border: 1px solid var(--boli-biankuang);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.neixin-huodong-biaoti {
-  padding: 12px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--junshi-zhuse);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.zhanKai-tubiao {
-  font-size: 10px;
-  transition: transform 0.2s ease;
-}
-
-.neixin-huodong-liebiao {
-  padding: 0 14px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.neixin-huodong-tiaomu {
-  padding: 10px;
-  background: var(--beijing-ciuse);
-  border-radius: 8px;
-}
-
-.tiaoMu-lunCi {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--junshi-zhuse);
-  margin-bottom: 6px;
-}
-
-.tiaoMu-xinxi {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.tiaoMu-hang {
-  font-size: 11px;
-  color: var(--wenben-ciuse);
-  line-height: 1.5;
-  word-break: break-word;
-}
-
-.tiaoMu-biaoqian {
-  font-weight: 600;
-  color: var(--wenben-zhuse);
-}
-
-.tiaoMu-neixin {
-  color: var(--junshi-zhuse);
-  font-style: italic;
 }
 
 .qingqiu-anniu:hover:not(:disabled) {

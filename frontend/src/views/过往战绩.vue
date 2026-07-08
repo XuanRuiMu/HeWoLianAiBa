@@ -1,14 +1,22 @@
 <template>
   <div class="zhanji-yemian">
     <main class="zhanji-liebiao">
-      <div v-if="jiaZaiZhong" class="jiazai-zhuangtai">加载中...</div>
-      <div v-else-if="dangAnLieBiao.length === 0" class="kong-zhuangtai">暂无战绩记录</div>
+      <div v-if="jiaZaiZhong" class="jiazai-zhuangtai">
+        {{ huoQuFanYi('zhanJi', 'jiaZaiZhong') }}
+      </div>
+      <div v-else-if="dangAnLieBiao.length === 0" class="kong-zhuangtai">
+        {{ huoQuFanYi('zhanJi', 'zanWuZhanJi') }}
+      </div>
       <TransitionGroup v-else name="liebiao-guodu" tag="div" class="zhanji-liebiao-neirong">
         <div v-for="dangAn in dangAnLieBiao" :key="dangAn.id" class="zhanji-kapian">
           <div class="zhanji-zuo">
             <div class="jiaose-touxiang">
               {{
-                dangAn.shi_fou_zha_xing ? '😈' : dangAn.jie_guo_lei_xing === 'aiQing' ? '💕' : '👤'
+                dangAn.shi_fou_zha_xing
+                  ? '😈'
+                  : dangAn.jie_guo_lei_xing_yuan === 'sheng_li_ai_qing'
+                    ? '💕'
+                    : '👤'
               }}
             </div>
             <div class="zhanji-xinxi">
@@ -19,27 +27,37 @@
                 <span v-if="dangAn.mbti_lei_xing" class="mbti-biaoqian">{{
                   dangAn.mbti_lei_xing
                 }}</span>
-                <span class="zhuangtai-biaoqian" :class="zhuangTaiYangShi(dangAn.jie_guo_lei_xing)">
-                  {{ zhuangTaiWenBen(dangAn.jie_guo_lei_xing) }}
+                <span
+                  class="zhuangtai-biaoqian"
+                  :class="zhuangTaiYangShi(dangAn.jie_guo_lei_xing_yuan)"
+                >
+                  {{ zhuangTaiWenBen(dangAn.jie_guo_lei_xing_yuan) }}
                 </span>
               </div>
-              <div class="liaotian-tianshu">聊天 {{ dangAn.liao_tian_tian_shu }} 天</div>
+              <div class="liaotian-tianshu">
+                {{
+                  huoQuFanYi('zhanJi', 'liaoTianTianShu').replace(
+                    '{天}',
+                    String(dangAn.liao_tian_tian_shu),
+                  )
+                }}
+              </div>
             </div>
           </div>
           <div class="zhanji-you">
             <button
-              v-if="dangAn.jie_guo_lei_xing === 'jinxingzhong'"
+              v-if="dangAn.jie_guo_lei_xing_yuan === 'jinxing_zhong'"
               class="caozuo-anniu jixu"
               @click.stop="jiXuLiaoTian(dangAn)"
             >
-              继续
+              {{ huoQuFanYi('zhanJi', 'jiXu') }}
             </button>
             <button
-              v-if="dangAn.jie_guo_lei_xing !== 'jinxingzhong'"
+              v-if="dangAn.jie_guo_lei_xing_yuan !== 'jinxing_zhong'"
               class="caozuo-anniu fupan"
               @click.stop="daKaiFuPan(dangAn)"
             >
-              复盘
+              {{ huoQuFanYi('zhanJi', 'fuPan') }}
             </button>
           </div>
         </div>
@@ -51,14 +69,23 @@
         <div v-if="fuPanZhanKai" class="fupan-zhezhao" @click.self="fuPanZhanKai = false">
           <div class="fupan-tanchuang">
             <div class="fupan-dingbu">
-              <h2 class="fupan-biaoti2">AI复盘分析</h2>
-              <button class="guanbi-anniu" @click="fuPanZhanKai = false">✕</button>
+              <h2 class="fupan-biaoti2">{{ huoQuFanYi('zhanJi', 'aiFuPanFenXi') }}</h2>
+              <button class="guanbi-anniu" @click="fuPanZhanKai = false">
+                {{ huoQuFanYi('zhanJi', 'guanBi') }}
+              </button>
             </div>
             <div class="fupan-neirong">
-              <div v-if="fuPanJiaZaiZhong" class="jiazai-zhuangtai">复盘生成中，请稍候...</div>
+              <div v-if="fuPanJiaZaiZhong" class="jiazai-zhuangtai">
+                {{ huoQuFanYi('zhanJi', 'fuPanShengChengZhong') }}
+              </div>
               <template v-else>
+                <div v-if="!fuPanNeiRong && fuPanShiJianXian.length === 0" class="kong-zhuangtai">
+                  {{ huoQuFanYi('zhanJi', 'fuPanWeiShengCheng') }}
+                </div>
                 <div v-if="fuPanShiJianXian.length > 0" class="shijianxian-quyu">
-                  <h3 class="shijianxian-biaoti">关键事件时间线</h3>
+                  <h3 class="shijianxian-biaoti">
+                    {{ huoQuFanYi('zhanJi', 'guanJianShiJianShiJianXian') }}
+                  </h3>
                   <div class="shijianxian-liebiao">
                     <div
                       v-for="(tiaoMu, suoYin) in fuPanShiJianXian"
@@ -80,15 +107,21 @@
                           {{ tiaoMu.shi_jian_miao_shu }}
                         </div>
                         <div v-if="tiaoMu.yong_hu_xiao_xi" class="shijianxian-duihua">
-                          <span class="shijianxian-jiaose yonghu">你</span>
+                          <span class="shijianxian-jiaose yonghu">{{
+                            huoQuFanYi('zhanJi', 'ni')
+                          }}</span>
                           <span class="shijianxian-xiaoxi">{{ tiaoMu.yong_hu_xiao_xi }}</span>
                         </div>
                         <div v-if="tiaoMu.ai_hui_fu" class="shijianxian-duihua">
-                          <span class="shijianxian-jiaose ai">TA</span>
+                          <span class="shijianxian-jiaose ai">{{
+                            huoQuFanYi('zhanJi', 'ta')
+                          }}</span>
                           <span class="shijianxian-xiaoxi">{{ tiaoMu.ai_hui_fu }}</span>
                         </div>
                         <div v-if="tiaoMu.ai_xin_li_huo_dong" class="shijianxian-xinli">
-                          <span class="xinli-biaoqian">💭 内心</span>
+                          <span class="xinli-biaoqian"
+                            >💭 {{ huoQuFanYi('zhanJi', 'neiXin') }}</span
+                          >
                           <span class="xinli-neirong">{{ tiaoMu.ai_xin_li_huo_dong }}</span>
                         </div>
                         <div v-if="tiaoMu.hao_gan_du_bian_hua" class="shijianxian-haogandu">
@@ -115,7 +148,9 @@
                   {{ fuPanNeiRong }}
                 </div>
                 <div v-if="junShiZhiDaoJiLu.length > 0" class="junshi-zhidao-quyu">
-                  <h3 class="junshi-zhidao-biaoti">🎯 军师指导记录</h3>
+                  <h3 class="junshi-zhidao-biaoti">
+                    🎯 {{ huoQuFanYi('zhanJi', 'junShiZhiDaoJiLu') }}
+                  </h3>
                   <div class="junshi-zhidao-liebiao">
                     <div
                       v-for="(jiLu, suoYin) in junShiZhiDaoJiLu"
@@ -123,7 +158,9 @@
                       class="junshi-zhidao-xiangmu"
                     >
                       <div class="junshi-zhidao-tou">
-                        <span class="junshi-zhidao-xuhao">第{{ suoYin + 1 }}次</span>
+                        <span class="junshi-zhidao-xuhao">{{
+                          huoQuFanYi('zhanJi', 'diNCi').replace('{次}', String(suoYin + 1))
+                        }}</span>
                         <span v-if="jiLu.jun_shi_ming_chen" class="junshi-zhidao-mingchen">{{
                           jiLu.jun_shi_ming_chen
                         }}</span>
@@ -149,18 +186,26 @@
             </div>
             <div class="pinggu-quyu">
               <div class="pinggu-dingbu">
-                <h3 class="pinggu-biaoti">聊天水平评估</h3>
+                <h3 class="pinggu-biaoti">{{ huoQuFanYi('zhanJi', 'liaoTianShuiPingPingGu') }}</h3>
                 <button
                   class="caozuo-anniu pinggu"
                   :disabled="pingGuJiaZaiZhong"
                   @click="zhiXingPingGuCaoZuo"
                 >
-                  <span v-if="pingGuJiaZaiZhong">评估中...</span>
-                  <span v-else>{{ pingGuJieGuo ? '重新评估' : '评估聊天水平' }}</span>
+                  <span v-if="pingGuJiaZaiZhong">{{
+                    huoQuFanYi('zhanJi', 'pingGuShengChengZhong')
+                  }}</span>
+                  <span v-else>{{
+                    pingGuJieGuo
+                      ? huoQuFanYi('zhanJi', 'chongXinPingGu')
+                      : huoQuFanYi('zhanJi', 'pingGuLiaoTianShuiPing')
+                  }}</span>
                 </button>
               </div>
 
-              <div v-if="pingGuJiaZaiZhong" class="jiazai-zhuangtai">评估生成中，请稍候...</div>
+              <div v-if="pingGuJiaZaiZhong" class="jiazai-zhuangtai">
+                {{ huoQuFanYi('zhanJi', 'pingGuShengChengZhong') }}
+              </div>
 
               <div v-else-if="pingGuJieGuo" class="pinggu-neirong">
                 <div class="weidu-liebiao">
@@ -184,20 +229,20 @@
                 </div>
 
                 <div class="pinggu-zongti">
-                  <h4 class="zongti-biaoti">总体评价</h4>
+                  <h4 class="zongti-biaoti">{{ huoQuFanYi('zhanJi', 'zongTiPingJia') }}</h4>
                   <p class="zongti-wenben">
-                    {{ pingGuJieGuo.zong_ti_ping_jia }}
+                    {{ pingGuJieGuo['总体评价'] }}
                   </p>
                 </div>
 
                 <div
-                  v-if="pingGuJieGuo.gai_jin_jian_yi && pingGuJieGuo.gai_jin_jian_yi.length > 0"
+                  v-if="pingGuJieGuo['改进建议'] && pingGuJieGuo['改进建议'].length > 0"
                   class="pinggu-jianyi"
                 >
-                  <h4 class="jianyi-biaoti">改进建议</h4>
+                  <h4 class="jianyi-biaoti">{{ huoQuFanYi('zhanJi', 'gaiJinJianYi') }}</h4>
                   <ul class="jianyi-liebiao">
                     <li
-                      v-for="(jianYi, suoYin) in pingGuJieGuo.gai_jin_jian_yi"
+                      v-for="(jianYi, suoYin) in pingGuJieGuo['改进建议']"
                       :key="suoYin"
                       class="jianyi-xiangmu"
                     >
@@ -219,7 +264,8 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { huoQuDangAnLieBiao, huoQuFuPan, zhiXingPingGu, huoQuPingGuLiShi } from '@/api/聊天'
 import type { 复盘时间线条目, 军师指导记录项, 关键事件项 } from '@/api/聊天'
-import type { 档案详情, 评估结果 } from '@/types'
+import type { 档案详情, 评估结果, WeiDuPingFen } from '@/types'
+import { huoQuFanYi } from '@/config/translations'
 
 const router = useRouter()
 const dangAnLieBiao = ref<档案详情[]>([])
@@ -235,13 +281,13 @@ const pingGuJieGuo = ref<评估结果 | null>(null)
 const pingGuJiaZaiZhong = ref(false)
 const fuPanQingQiuId = ref(0)
 
-const WEI_DU_MING_CHENG: Record<string, string> = {
-  hua_ti_yin_dao: '话题引导',
-  qing_gan_gong_ming: '情感共鸣',
-  you_mo_gan: '幽默感',
-  ti_tie_du: '体贴度',
-  jie_zou_ba_kong: '节奏把控',
-}
+const WEI_DU_LIE_BIAO = [
+  { key: 'huaTiYinDao', mingCheng: '话题引导' },
+  { key: 'qingGanGongMing', mingCheng: '情感共鸣' },
+  { key: 'youMoGan', mingCheng: '幽默感' },
+  { key: 'tiTieDu', mingCheng: '体贴度' },
+  { key: 'jieZouBaKong', mingCheng: '节奏把控' },
+]
 
 const HAO_GAN_DU_WEI_DU: Record<string, string> = {
   xin_ren_bian_hua: '信任',
@@ -254,38 +300,15 @@ const HAO_GAN_DU_WEI_DU: Record<string, string> = {
 const weiDuLieBiao = computed(() => {
   if (!pingGuJieGuo.value) return []
   const jieGuo = pingGuJieGuo.value
-  return [
-    {
-      key: 'hua_ti_yin_dao',
-      mingCheng: WEI_DU_MING_CHENG.hua_ti_yin_dao,
-      fen: jieGuo.hua_ti_yin_dao.fen,
-      shuoMing: jieGuo.hua_ti_yin_dao.shuo_ming,
-    },
-    {
-      key: 'qing_gan_gong_ming',
-      mingCheng: WEI_DU_MING_CHENG.qing_gan_gong_ming,
-      fen: jieGuo.qing_gan_gong_ming.fen,
-      shuoMing: jieGuo.qing_gan_gong_ming.shuo_ming,
-    },
-    {
-      key: 'you_mo_gan',
-      mingCheng: WEI_DU_MING_CHENG.you_mo_gan,
-      fen: jieGuo.you_mo_gan.fen,
-      shuoMing: jieGuo.you_mo_gan.shuo_ming,
-    },
-    {
-      key: 'ti_tie_du',
-      mingCheng: WEI_DU_MING_CHENG.ti_tie_du,
-      fen: jieGuo.ti_tie_du.fen,
-      shuoMing: jieGuo.ti_tie_du.shuo_ming,
-    },
-    {
-      key: 'jie_zou_ba_kong',
-      mingCheng: WEI_DU_MING_CHENG.jie_zou_ba_kong,
-      fen: jieGuo.jie_zou_ba_kong.fen,
-      shuoMing: jieGuo.jie_zou_ba_kong.shuo_ming,
-    },
-  ]
+  return WEI_DU_LIE_BIAO.map((x) => {
+    const pingFen = jieGuo[x.mingCheng as keyof 评估结果] as WeiDuPingFen
+    return {
+      key: x.key,
+      mingCheng: x.mingCheng,
+      fen: pingFen.fen,
+      shuoMing: pingFen.shuo_ming,
+    }
+  })
 })
 
 function geShiHuaShiJian(shiJian: string): string {
@@ -307,21 +330,14 @@ function guoLvBianHua(
 }
 
 function zhuangTaiWenBen(jieGuoLeiXing: string): string {
-  if (jieGuoLeiXing === 'jinxingzhong') return '进行中'
-  if (jieGuoLeiXing === 'shengLi' || jieGuoLeiXing === 'aiQing') return '胜利'
-  if (jieGuoLeiXing === 'huShanShengLi') return '互删胜利'
-  if (jieGuoLeiXing === 'biaoBaiChengGong') return '表白成功'
-  if (jieGuoLeiXing === 'aiZhuDongBiaoBai') return 'AI主动表白'
-  if (['zhaXingTaoTuo', 'taoTuo'].includes(jieGuoLeiXing)) return '逃脱'
-  return '失败'
+  if (jieGuoLeiXing === 'jinxing_zhong') return huoQuFanYi('zhanJi', 'zhuangTaiJinXingZhong')
+  if (jieGuoLeiXing.startsWith('sheng_li')) return huoQuFanYi('zhanJi', 'zhuangTaiShengLi')
+  return huoQuFanYi('zhanJi', 'zhuangTaiShiBai')
 }
 
 function zhuangTaiYangShi(jieGuoLeiXing: string): string {
-  if (jieGuoLeiXing === 'jinxingzhong') return 'jinxingzhong'
-  if (jieGuoLeiXing === 'shengLi' || jieGuoLeiXing === 'aiQing') return 'shengli'
-  if (jieGuoLeiXing === 'huShanShengLi') return 'huShanShengLi'
-  if (jieGuoLeiXing === 'biaoBaiChengGong' || jieGuoLeiXing === 'aiZhuDongBiaoBai') return 'biaobai'
-  if (['zhaXingTaoTuo', 'taoTuo'].includes(jieGuoLeiXing)) return 'taotuo'
+  if (jieGuoLeiXing === 'jinxing_zhong') return 'jinxingzhong'
+  if (jieGuoLeiXing.startsWith('sheng_li')) return 'shengli'
   return 'shibai'
 }
 
@@ -365,33 +381,40 @@ async function daKaiFuPan(dangAn: 档案详情) {
   pingGuJieGuo.value = null
   try {
     let fuPanShuJu = await huoQuFuPan(dangAn.id)
-    let changShiCiShu = 0
-    while (
-      !fuPanShuJu.fu_pan_nei_rong &&
-      changShiCiShu < 20 &&
-      fuPanZhanKai.value &&
-      fuPanQingQiuId.value === benCiId
-    ) {
-      await new Promise((jieJue) => setTimeout(jieJue, 3000))
-      changShiCiShu++
-      if (!fuPanZhanKai.value || fuPanQingQiuId.value !== benCiId) return
-      try {
-        fuPanShuJu = await huoQuFuPan(dangAn.id)
-      } catch (e) {
-        console.warn('轮询复盘数据失败', e)
-      }
-      if (fuPanShuJu.fu_pan_nei_rong) {
-        fuPanNeiRong.value = fuPanShuJu.fu_pan_nei_rong
-        fuPanShiJianXian.value = fuPanShuJu.fu_pan_shi_jian_xian || []
-        junShiZhiDaoJiLu.value = fuPanShuJu.jun_shi_zhi_dao_ji_lu || []
-        fuPanJiaZaiZhong.value = false
+    if (!fuPanShuJu.jia_zai_zhong) {
+      fuPanNeiRong.value = fuPanShuJu.fu_pan_nei_rong
+      fuPanShiJianXian.value = fuPanShuJu.fu_pan_shi_jian_xian || []
+      junShiZhiDaoJiLu.value = fuPanShuJu.jun_shi_zhi_dao_ji_lu || []
+      fuPanJiaZaiZhong.value = false
+    } else {
+      let changShiCiShu = 0
+      while (
+        !fuPanShuJu.fu_pan_nei_rong &&
+        changShiCiShu < 20 &&
+        fuPanZhanKai.value &&
+        fuPanQingQiuId.value === benCiId
+      ) {
+        await new Promise((jieJue) => setTimeout(jieJue, 3000))
+        changShiCiShu++
+        if (!fuPanZhanKai.value || fuPanQingQiuId.value !== benCiId) return
+        try {
+          fuPanShuJu = await huoQuFuPan(dangAn.id)
+        } catch (e) {
+          console.warn('轮询复盘数据失败', e)
+        }
+        if (fuPanShuJu.fu_pan_nei_rong || !fuPanShuJu.jia_zai_zhong) {
+          fuPanNeiRong.value = fuPanShuJu.fu_pan_nei_rong
+          fuPanShiJianXian.value = fuPanShuJu.fu_pan_shi_jian_xian || []
+          junShiZhiDaoJiLu.value = fuPanShuJu.jun_shi_zhi_dao_ji_lu || []
+          fuPanJiaZaiZhong.value = false
+          break
+        }
       }
     }
-  } catch (e) {
-    console.warn('加载复盘失败', e)
-    fuPanNeiRong.value = null
-    fuPanShiJianXian.value = []
-    fuPanJiaZaiZhong.value = false
+  } finally {
+    if (fuPanQingQiuId.value === benCiId) {
+      fuPanJiaZaiZhong.value = false
+    }
   }
   if (fuPanQingQiuId.value !== benCiId) return
   try {

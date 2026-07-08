@@ -1,5 +1,5 @@
 import http from './请求'
-import type { 用户, 性别, 性格选择, 人设标签, 登录响应 } from '@/types'
+import type { Yonghu, XingBie, XingGeXuanZe, RenSheBiaoQian, DengLuXiangYing } from '@/types'
 
 export interface 发送码请求 {
   shouJiHao: string
@@ -20,10 +20,10 @@ export interface 登录请求 {
 
 export interface 资料请求 {
   niCheng: string
-  xingBie: 性别
-  muBiaoXingBie: 性别
-  xingGeXuanZe: 性格选择
-  renSheBiaoQian: 人设标签
+  xingBie: XingBie
+  muBiaoXingBie: XingBie
+  xingGeXuanZe: XingGeXuanZe
+  renSheBiaoQian: RenSheBiaoQian
   yunXuZhaNanZhaNv: boolean
 }
 
@@ -44,8 +44,8 @@ export async function zhuCe(
   yongHuMing: string,
   miMa: string,
   tongYiXieYi: boolean,
-): Promise<登录响应> {
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: 登录响应 }>('/认证/注册', {
+): Promise<DengLuXiangYing> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: DengLuXiangYing }>('/认证/注册', {
     shouJiHao,
     yanZhengMa,
     yongHuMing,
@@ -55,8 +55,8 @@ export async function zhuCe(
   return 响应.data.shu_ju
 }
 
-export async function dengLu(shouJiHao: string, miMa: string): Promise<登录响应> {
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: 登录响应 }>('/认证/登录', {
+export async function dengLu(shouJiHao: string, miMa: string): Promise<DengLuXiangYing> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: DengLuXiangYing }>('/认证/登录', {
     shouJiHao,
     miMa,
   })
@@ -80,12 +80,12 @@ export async function gengGaiYongHuMing(yongHuMing: string): Promise<{ yong_hu_m
   return 响应.data.shu_ju
 }
 
-export async function huoQuYongHuXinXi(): Promise<用户> {
-  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: 用户 }>('/用户/信息')
+export async function huoQuYongHuXinXi(): Promise<Yonghu> {
+  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: Yonghu }>('/认证/信息')
   return 响应.data.shu_ju
 }
 
-export async function sheZhiZiLiao(shuJu: 资料请求): Promise<用户> {
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: 用户 }>('/用户/资料', shuJu)
+export async function sheZhiZiLiao(shuJu: 资料请求): Promise<Yonghu> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: Yonghu }>('/用户/资料', shuJu)
   return 响应.data.shu_ju
 }

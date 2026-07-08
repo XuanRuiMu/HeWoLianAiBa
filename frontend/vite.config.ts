@@ -3,9 +3,15 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/__tests__/setup.ts'],
+  },
   plugins: [
     vue(),
     VitePWA({
+      injectRegister: false,
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons.svg'],
       manifest: {
@@ -95,11 +101,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:3000',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:3000',
         ws: true,
       },
     },

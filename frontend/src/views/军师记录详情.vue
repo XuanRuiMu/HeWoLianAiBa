@@ -1,12 +1,16 @@
 <template>
   <div class="junshi-jilu-yemian">
-    <div v-if="jiaZaiZhong" class="jiaZai-zhuangtai">加载中...</div>
-    <div v-else-if="!jiLuShuJu" class="kong-zhuangtai">未找到指导记录</div>
+    <div v-if="jiaZaiZhong" class="jiaZai-zhuangtai">{{ huoQuFanYi('junShi', 'jiaZaiZhong') }}</div>
+    <div v-else-if="!jiLuShuJu" class="kong-zhuangtai">
+      {{ huoQuFanYi('junShi', 'weiZhaoDaoJiLu') }}
+    </div>
     <template v-else>
       <div class="jilu-xiangqing-kapian">
         <div class="jilu-tou">
-          <button class="fanhui-anniu" @click="fanhui">← 返回</button>
-          <h2 class="jilu-biaoti">军师指导详情</h2>
+          <button class="fanhui-anniu" @click="fanhui">
+            ← {{ huoQuFanYi('caidan', 'fanHui') }}
+          </button>
+          <h2 class="jilu-biaoti">{{ huoQuFanYi('yeMianBiaoTi', 'junShiJiLuXiangQing') }}</h2>
           <div class="jilu-jiaose-xinxi">
             <span class="jilu-shijian">{{ jiLuShuJu.shi_jian }}</span>
             <span class="jilu-jiaose-ming">{{ jiLuShuJu.jiao_se_ming_zi }}</span>
@@ -14,7 +18,7 @@
         </div>
 
         <div v-if="jiLuShuJu.dui_hua_zhai_yao" class="duihua-zhaiyao">
-          <h3 class="quyu-biaoti">对话摘要</h3>
+          <h3 class="quyu-biaoti">{{ huoQuFanYi('junShi', 'duiHuaZhaiYao') }}</h3>
           <p class="zhaiyao-neirong">
             {{ jiLuShuJu.dui_hua_zhai_yao }}
           </p>
@@ -22,13 +26,13 @@
 
         <div v-if="jiLuShuJu.hou_tai_shu_ju" class="houtai-shuju-quyu">
           <h3 class="quyu-biaoti" style="cursor: pointer" @click="zhanKaiHouTai = !zhanKaiHouTai">
-            后台数据
+            {{ huoQuFanYi('junShi', 'houTaiShuJu') }}
             <span class="zhanKai-biaoji">{{ zhanKaiHouTai ? '▼' : '▶' }}</span>
           </h3>
           <div v-if="zhanKaiHouTai" class="houtai-neirong">
             <div v-if="jiLuShuJu.hou_tai_shu_ju.haoGanDu" class="houtai-haogandu">
               <div class="houtai-haogandu-jieduan">
-                <span class="houtai-biaoti">关系阶段</span>
+                <span class="houtai-biaoti">{{ huoQuFanYi('junShi', 'guanXiJieDuan') }}</span>
                 <span class="houtai-jieduan">{{
                   jiLuShuJu.hou_tai_shu_ju.haoGanDu.guanXiJieDuanMingCheng
                 }}</span>
@@ -42,23 +46,25 @@
               "
               class="houtai-fupan"
             >
-              <div class="houtai-biaoti-fupan">AI内心活动 & 评分变化</div>
+              <div class="houtai-biaoti-fupan">{{ huoQuFanYi('junShi', 'aiXinLiHuoDong') }}</div>
               <div
                 v-for="(tiaoMu, suoYin) in jiLuShuJu.hou_tai_shu_ju.fuPanShuJu"
                 :key="suoYin"
                 class="houtai-fupan-tiaomu"
               >
-                <div class="fupan-lunci">第{{ suoYin + 1 }}轮</div>
+                <div class="fupan-lunci">{{ geShiHuaDiNLun(suoYin + 1) }}</div>
                 <div class="fupan-xinxi">
                   <div class="fupan-hang">
-                    <span class="fupan-biaoqian">你说：</span>{{ tiaoMu.yong_hu_xiao_xi || '' }}
+                    <span class="fupan-biaoqian">{{ huoQuFanYi('junShi', 'niShuo') }}</span
+                    >{{ tiaoMu.yong_hu_xiao_xi || '' }}
                   </div>
                   <div class="fupan-hang">
-                    <span class="fupan-biaoqian">TA回：</span>{{ tiaoMu.ai_hui_fu || '' }}
+                    <span class="fupan-biaoqian">{{ huoQuFanYi('junShi', 'taHui') }}</span
+                    >{{ tiaoMu.ai_hui_fu || '' }}
                   </div>
                   <div class="fupan-hang fupan-neixin">
-                    <span class="fupan-biaoqian">内心：</span
-                    >{{ tiaoMu.ai_xin_li_huo_dong || '无记录' }}
+                    <span class="fupan-biaoqian">{{ huoQuFanYi('junShi', 'neiXin') }}</span
+                    >{{ tiaoMu.ai_xin_li_huo_dong || huoQuFanYi('junShi', 'wuJiLu') }}
                   </div>
                 </div>
               </div>
@@ -70,7 +76,7 @@
           v-if="jiLuShuJu.liao_tian_ji_lu && jiLuShuJu.liao_tian_ji_lu.length > 0"
           class="liaotian-jilu"
         >
-          <h3 class="quyu-biaoti">聊天记录</h3>
+          <h3 class="quyu-biaoti">{{ huoQuFanYi('junShi', 'liaoTianJiLu') }}</h3>
           <div class="xiaoxi-liebiao">
             <div
               v-for="(xiaoXi, suoYin) in jiLuShuJu.liao_tian_ji_lu"
@@ -82,11 +88,11 @@
               <div class="xiaoxi-neirong-qu">
                 <span class="xiaoxi-neirong">{{ xiaoXi.nei_rong }}</span>
                 <div v-if="xiaoXi.yi_che_hui && xiaoXi.yuan_shi_nei_rong" class="chehui-yuanshi">
-                  <span class="chehui-biaoqian">撤回原文：</span>
+                  <span class="chehui-biaoqian">{{ huoQuFanYi('junShi', 'cheHuiYuanWen') }}</span>
                   <span class="chehui-neirong">{{ xiaoXi.yuan_shi_nei_rong }}</span>
                 </div>
                 <div v-if="xiaoXi.yi_che_hui && xiaoXi.che_hui_shi_jian" class="chehui-shijian">
-                  撤回于 {{ xiaoXi.che_hui_shi_jian }}
+                  {{ huoQuFanYi('junShi', 'cheHuiYu') }} {{ xiaoXi.che_hui_shi_jian }}
                 </div>
               </div>
               <span v-if="xiaoXi.shi_jian" class="xiaoxi-shijian">{{ xiaoXi.shi_jian }}</span>
@@ -95,7 +101,7 @@
         </div>
 
         <div class="jianyi-quyu">
-          <h3 class="quyu-biaoti">指导建议</h3>
+          <h3 class="quyu-biaoti">{{ huoQuFanYi('junShi', 'zhiDaoJianYi') }}</h3>
           <p class="jianyi-neirong">
             {{ jiLuShuJu.jian_yi }}
           </p>
@@ -109,13 +115,18 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { huoQuJunShiJiLu } from '@/api/聊天'
-import type { 军师记录 } from '@/types'
+import { huoQuFanYi } from '@/config/translations'
+import type { JunShiJiLu } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
-const jiLuShuJu = ref<军师记录 | null>(null)
+const jiLuShuJu = ref<JunShiJiLu | null>(null)
 const jiaZaiZhong = ref(true)
 const zhanKaiHouTai = ref(false)
+
+function geShiHuaDiNLun(lun: number): string {
+  return huoQuFanYi('junShi', 'diNLun').replace('{轮}', String(lun))
+}
 
 async function jiaZaiShuJu() {
   jiaZaiZhong.value = true

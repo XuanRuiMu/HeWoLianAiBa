@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { 接口响应 } from '../types'
+import type { ApiXiangYing } from '../types'
 import { 令牌键 } from '@/constants/auth'
 
 export interface 业务错误 extends Error {
@@ -35,7 +35,7 @@ const 实例 = axios.create({
 
 实例.interceptors.response.use(
   (响应) => {
-    const 数据 = 响应.data as 接口响应<unknown>
+    const 数据 = 响应.data as ApiXiangYing<unknown>
     if (数据 && !数据.cheng_gong) {
       const 错误 = new Error(数据.ti_shi || '请求失败') as 业务错误
       错误.cuo_wu_ma = 数据.cuo_wu_ma

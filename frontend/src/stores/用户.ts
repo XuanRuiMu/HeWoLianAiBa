@@ -108,7 +108,6 @@ export const 使用用户仓库 = defineStore('用户', () => {
     tuiChuQingQiu.value = false
     zhuangTai.value = { deng_lu_zhong: false, cuo_wu_xin_xi: null }
     localStorage.removeItem(令牌键)
-    localStorage.removeItem('zhuti')
     shanChuShuJu('yonghu')
     const 认证表单仓库 = 使用认证表单仓库()
     认证表单仓库.qingKongDengLuZhuCe()

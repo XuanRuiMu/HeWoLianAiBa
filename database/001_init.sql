@@ -61,6 +61,9 @@ CREATE TABLE IF NOT EXISTS "角色" (
     "真实姓名" VARCHAR(100),
     "世界信息" JSONB,
     "随机性格" BOOLEAN DEFAULT FALSE,
+    "封存" BOOLEAN DEFAULT FALSE,
+    "可继续聊天" BOOLEAN DEFAULT FALSE,
+    "结局状态" VARCHAR(50) DEFAULT '',
     "删除时间" TIMESTAMPTZ,
     "创建时间" TIMESTAMPTZ DEFAULT NOW()
 );

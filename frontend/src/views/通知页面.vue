@@ -2,23 +2,25 @@
   <div class="tongzhi-yemian">
     <div class="tongzhi-rongqi">
       <div class="tongzhi-dingbu">
-        <h1 class="tongzhi-biaoti">通知</h1>
+        <h1 class="tongzhi-biaoti">{{ huoQuFanYi('yeMianBiaoTi', 'tongZhi') }}</h1>
         <button
           v-if="通知仓库.weiDuShu > 0"
           class="quanbu-anniu"
           :disabled="caoZuoZhong"
           @click="biaoJiQuanBuYiDu"
         >
-          全部已读
+          {{ huoQuFanYi('tongZhi', 'quanBuYiDu') }}
         </button>
       </div>
 
-      <div v-if="通知仓库.jiaZaiZhong" class="tongzhi-zhuangtai">加载中...</div>
+      <div v-if="通知仓库.jiaZaiZhong" class="tongzhi-zhuangtai">
+        {{ huoQuFanYi('tongZhi', 'jiaZaiZhong') }}
+      </div>
 
       <div v-else-if="通知仓库.tongZhiLieBiao.length === 0" class="tongzhi-kong">
         <span class="kong-tubiao">🔔</span>
-        <p class="kong-wenben">暂无通知</p>
-        <p class="kong-fuwen">有新消息时会在这里提醒你</p>
+        <p class="kong-wenben">{{ huoQuFanYi('tongZhi', 'zanWuTongZhi') }}</p>
+        <p class="kong-fuwen">{{ huoQuFanYi('tongZhi', 'xinXiTiShi') }}</p>
       </div>
 
       <TransitionGroup v-else name="liebiao-guodu" tag="div" class="tongzhi-liebiao">
@@ -45,6 +47,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { 使用通知仓库 } from '@/stores/通知'
+import { huoQuFanYi } from '@/config/translations'
 
 const 通知仓库 = 使用通知仓库()
 const caoZuoZhong = ref(false)

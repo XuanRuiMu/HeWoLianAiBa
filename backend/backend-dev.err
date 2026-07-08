@@ -1,0 +1,6123 @@
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+未捕获错误 SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+    at JSON.parse (<anonymous>)
+    at parse (D:\XiTongWenJianJia\ZhuoMian\燃烧之陨我的世界服务端\和我恋爱吧\backend\node_modules\body-parser\lib\types\json.js:72:19)
+    at D:\XiTongWenJianJia\ZhuoMian\燃烧之陨我的世界服务端\和我恋爱吧\backend\node_modules\body-parser\lib\read.js:162:18
+    at AsyncResource.runInAsyncScope (node:async_hooks:226:14)
+    at invokeCallback (D:\XiTongWenJianJia\ZhuoMian\燃烧之陨我的世界服务端\和我恋爱吧\backend\node_modules\raw-body\index.js:238:16)
+    at done (D:\XiTongWenJianJia\ZhuoMian\燃烧之陨我的世界服务端\和我恋爱吧\backend\node_modules\raw-body\index.js:227:7)
+    at IncomingMessage.onEnd (D:\XiTongWenJianJia\ZhuoMian\燃烧之陨我的世界服务端\和我恋爱吧\backend\node_modules\raw-body\index.js:287:7)
+    at IncomingMessage.emit (node:events:509:20)
+    at endReadableNT (node:internal/streams/readable:1744:12)
+    at processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  expose: true,
+  statusCode: 400,
+  status: 400,
+  body: '{\\',
+  type: 'entity.parse.failed'
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 Error: read ECONNRESET
+    at TCP.onStreamRead (node:internal/stream_base_commons:216:20) {
+  errno: -4077,
+  code: 'ECONNRESET',
+  syscall: 'read'
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}
+Redis连接错误 AggregateError
+    at internalConnectMultiple (node:net:1194:18)
+    at afterConnectMultiple (node:net:1784:7) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 6379
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:6379
+        at createConnectionError (node:net:1747:14)
+        at afterConnectMultiple (node:net:1777:16) {
+      errno: -4078,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 6379
+    }
+  ]
+}

@@ -3,207 +3,234 @@
     <div class="ziliao-kapian">
       <div class="jindu-yuan-dian">
         <button
-          v-for="buZhou in buZhouLieBiao"
+          v-for="buZhou in 步骤列表"
           :key="buZhou"
           class="jindu-dian"
-          :class="{ huoyue: buZhou <= dangQianBuZhou, dangQian: buZhou === dangQianBuZhou }"
+          :class="{ huoyue: buZhou <= 当前步骤, dangQian: buZhou === 当前步骤 }"
           @click="tiaoZhuanBuZhou(buZhou)"
         />
       </div>
 
-      <Transition :name="buZhouGuoDuMingCheng" mode="out-in">
-        <div v-if="dangQianBuZhou === 1" key="b1" class="buzuo-neirong">
-          <h2 class="buZuo-biaoti">选择你的性别</h2>
-          <p class="buZuo-miaoShu">告诉我们你是谁</p>
-          <div class="xingBie-wangGe">
-            <button
-              class="xingBie-kaPian ziJi-xingBie-kaPian"
-              :class="{ beiXuanZhong: ziLiaoShuJu.xingBie === 'male' }"
-              @click="ziLiaoShuJu.xingBie = 'male'"
-            >
-              <div class="xingBie-tubiao ziJi-nan-tubiao">
-                <svg viewBox="0 0 64 64" class="xingBie-svg">
-                  <circle
-                    cx="32"
-                    cy="24"
-                    r="14"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                  />
-                  <line x1="32" y1="38" x2="32" y2="58" stroke="currentColor" stroke-width="2.5" />
-                  <line x1="22" y1="48" x2="42" y2="48" stroke="currentColor" stroke-width="2.5" />
-                </svg>
-              </div>
-              <span class="xingBie-mingCheng">男</span>
-            </button>
-            <button
-              class="xingBie-kaPian ziJi-xingBie-kaPian"
-              :class="{ beiXuanZhong: ziLiaoShuJu.xingBie === 'female' }"
-              @click="ziLiaoShuJu.xingBie = 'female'"
-            >
-              <div class="xingBie-tubiao ziJi-nv-tubiao">
-                <svg viewBox="0 0 64 64" class="xingBie-svg">
-                  <circle
-                    cx="32"
-                    cy="24"
-                    r="14"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                  />
-                  <line x1="32" y1="38" x2="32" y2="52" stroke="currentColor" stroke-width="2.5" />
-                  <path
-                    d="M24 46 L32 52 L40 46"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                  />
-                </svg>
-              </div>
-              <span class="xingBie-mingCheng">女</span>
-            </button>
-          </div>
-        </div>
-
-        <div v-else-if="dangQianBuZhou === 2" key="b2" class="buzuo-neirong">
-          <h2 class="buZuo-biaoti">选择对象的性别</h2>
-          <p class="buZuo-miaoShu">你想和谁谈恋爱？</p>
-          <div class="xingBie-wangGe">
-            <button
-              class="xingBie-kaPian duiXiang-xingBie-kaPian"
-              :class="{ beiXuanZhong: ziLiaoShuJu.muBiaoXingBie === 'male' }"
-              @click="ziLiaoShuJu.muBiaoXingBie = 'male'"
-            >
-              <div class="xingBie-tubiao duiXiang-nan-tubiao">
-                <svg viewBox="0 0 64 64" class="xingBie-svg">
-                  <circle
-                    cx="32"
-                    cy="22"
-                    r="12"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                  />
-                  <path
-                    d="M18 58 C18 42 46 42 46 58"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                  />
-                  <circle cx="28" cy="20" r="1.5" fill="currentColor" />
-                  <circle cx="36" cy="20" r="1.5" fill="currentColor" />
-                  <path
-                    d="M28 26 Q32 29 36 26"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                  />
-                </svg>
-              </div>
-              <span class="xingBie-mingCheng">男</span>
-            </button>
-            <button
-              class="xingBie-kaPian duiXiang-xingBie-kaPian"
-              :class="{ beiXuanZhong: ziLiaoShuJu.muBiaoXingBie === 'female' }"
-              @click="ziLiaoShuJu.muBiaoXingBie = 'female'"
-            >
-              <div class="xingBie-tubiao duiXiang-nv-tubiao">
-                <svg viewBox="0 0 64 64" class="xingBie-svg">
-                  <circle
-                    cx="32"
-                    cy="22"
-                    r="12"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                  />
-                  <path
-                    d="M18 58 C18 42 46 42 46 58"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.5"
-                  />
-                  <path
-                    d="M24 16 Q28 8 32 12 Q36 8 40 16"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  />
-                  <circle cx="28" cy="20" r="1.5" fill="currentColor" />
-                  <circle cx="36" cy="20" r="1.5" fill="currentColor" />
-                  <path
-                    d="M29 25 Q32 28 35 25"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                  />
-                </svg>
-              </div>
-              <span class="xingBie-mingCheng">女</span>
-            </button>
-          </div>
-        </div>
-
-        <div v-else-if="dangQianBuZhou === 3" key="b3" class="buzuo-neirong buZuo3-gundong">
-          <h2 class="buZuo-biaoti">选择性性格特征</h2>
-          <div class="mbti-wangGe">
-            <button
-              v-for="mbti in mbtiLieBiao"
-              :key="mbti"
-              class="mbti-kaPian"
-              :class="{ beiXuanZhong: ziLiaoShuJu.xingGeXuanZe === mbti && !suiJiXuanZhong }"
-              @click="xuanZeXingGe(mbti)"
-            >
-              <span class="mbti-daiMa">{{ mbti }}</span>
-              <span class="mbti-zhongWen">{{ 性格选择映射[mbti] }}</span>
-              <span class="mbti-miaoShu">{{ miaoShuWenAn[mbti] }}</span>
-            </button>
-            <button
-              class="mbti-kaPian suiJi-kaPian"
-              :class="{ beiXuanZhong: suiJiXuanZhong }"
-              @click="suiJiXuanZe"
-            >
-              <span class="mbti-daiMa">&#127922;</span>
-              <span class="mbti-zhongWen">随机</span>
-              <span class="mbti-miaoShu">命运的选择</span>
-            </button>
+      <div class="buzhou-guo-du-rong-qi">
+        <Transition :name="步骤过渡名称">
+          <div v-if="当前步骤 === 1" key="b1" class="buzuo-neirong">
+            <h2 class="buZuo-biaoti">{{ huoQuFanYi('ziLiaoSheZhi', 'buZhou1BiaoTi') }}</h2>
+            <p class="buZuo-miaoShu">{{ huoQuFanYi('ziLiaoSheZhi', 'buZhou1MiaoShu') }}</p>
+            <div class="xingBie-wangGe">
+              <button
+                class="xingBie-kaPian ziJi-xingBie-kaPian"
+                :class="{ beiXuanZhong: ziLiaoShuJu.xingBie === 'male' }"
+                @click="ziLiaoShuJu.xingBie = 'male'"
+              >
+                <div class="xingBie-tubiao ziJi-nan-tubiao">
+                  <svg viewBox="0 0 64 64" class="xingBie-svg">
+                    <circle
+                      cx="32"
+                      cy="24"
+                      r="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    />
+                    <line
+                      x1="32"
+                      y1="38"
+                      x2="32"
+                      y2="58"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    />
+                    <line
+                      x1="22"
+                      y1="48"
+                      x2="42"
+                      y2="48"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    />
+                  </svg>
+                </div>
+                <span class="xingBie-mingCheng">{{
+                  huoQuFanYi('ziLiaoSheZhi', 'xingBieNan')
+                }}</span>
+              </button>
+              <button
+                class="xingBie-kaPian ziJi-xingBie-kaPian"
+                :class="{ beiXuanZhong: ziLiaoShuJu.xingBie === 'female' }"
+                @click="ziLiaoShuJu.xingBie = 'female'"
+              >
+                <div class="xingBie-tubiao ziJi-nv-tubiao">
+                  <svg viewBox="0 0 64 64" class="xingBie-svg">
+                    <circle
+                      cx="32"
+                      cy="24"
+                      r="14"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    />
+                    <line
+                      x1="32"
+                      y1="38"
+                      x2="32"
+                      y2="52"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    />
+                    <path
+                      d="M24 46 L32 52 L40 46"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    />
+                  </svg>
+                </div>
+                <span class="xingBie-mingCheng">{{ huoQuFanYi('ziLiaoSheZhi', 'xingBieNv') }}</span>
+              </button>
+            </div>
           </div>
 
-          <label class="zhaNv-gouxuan">
-            <input
-              v-model="ziLiaoShuJu.yunXuZhaNanZhaNv"
-              type="checkbox"
-              class="zhaXing-gouxuan"
-              :class="{ 'zhaNan-gouxuan': ziLiaoShuJu.muBiaoXingBie === 'male' }"
-            />
-            <span>{{ ziLiaoShuJu.muBiaoXingBie === 'male' ? '渣男' : '渣女' }}</span>
-          </label>
-          <p :class="['zhaNv-tishi', { 'zhaNv-tishi-huaxian': ziLiaoShuJu.yunXuZhaNanZhaNv }]">
-            勾选后，对象为你所选性格，但{{
-              ziLiaoShuJu.muBiaoXingBie === 'male' ? '他' : '她'
-            }}只是为了玩弄你的感情罢了...
-          </p>
-        </div>
-      </Transition>
+          <div v-else-if="当前步骤 === 2" key="b2" class="buzuo-neirong">
+            <h2 class="buZuo-biaoti">{{ huoQuFanYi('ziLiaoSheZhi', 'buZhou2BiaoTi') }}</h2>
+            <p class="buZuo-miaoShu">{{ huoQuFanYi('ziLiaoSheZhi', 'buZhou2MiaoShu') }}</p>
+            <div class="xingBie-wangGe">
+              <button
+                class="xingBie-kaPian duiXiang-xingBie-kaPian"
+                :class="{ beiXuanZhong: ziLiaoShuJu.muBiaoXingBie === 'male' }"
+                @click="ziLiaoShuJu.muBiaoXingBie = 'male'"
+              >
+                <div class="xingBie-tubiao duiXiang-nan-tubiao">
+                  <svg viewBox="0 0 64 64" class="xingBie-svg">
+                    <circle
+                      cx="32"
+                      cy="22"
+                      r="12"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    />
+                    <path
+                      d="M18 58 C18 42 46 42 46 58"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    />
+                    <circle cx="28" cy="20" r="1.5" fill="currentColor" />
+                    <circle cx="36" cy="20" r="1.5" fill="currentColor" />
+                    <path
+                      d="M28 26 Q32 29 36 26"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    />
+                  </svg>
+                </div>
+                <span class="xingBie-mingCheng">{{
+                  huoQuFanYi('ziLiaoSheZhi', 'xingBieNan')
+                }}</span>
+              </button>
+              <button
+                class="xingBie-kaPian duiXiang-xingBie-kaPian"
+                :class="{ beiXuanZhong: ziLiaoShuJu.muBiaoXingBie === 'female' }"
+                @click="ziLiaoShuJu.muBiaoXingBie = 'female'"
+              >
+                <div class="xingBie-tubiao duiXiang-nv-tubiao">
+                  <svg viewBox="0 0 64 64" class="xingBie-svg">
+                    <circle
+                      cx="32"
+                      cy="22"
+                      r="12"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    />
+                    <path
+                      d="M18 58 C18 42 46 42 46 58"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                    />
+                    <path
+                      d="M24 16 Q28 8 32 12 Q36 8 40 16"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    />
+                    <circle cx="28" cy="20" r="1.5" fill="currentColor" />
+                    <circle cx="36" cy="20" r="1.5" fill="currentColor" />
+                    <path
+                      d="M29 25 Q32 28 35 25"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    />
+                  </svg>
+                </div>
+                <span class="xingBie-mingCheng">{{ huoQuFanYi('ziLiaoSheZhi', 'xingBieNv') }}</span>
+              </button>
+            </div>
+          </div>
+
+          <div v-else-if="当前步骤 === 3" key="b3" class="buzuo-neirong buZuo3-gundong">
+            <h2 class="buZuo-biaoti">{{ huoQuFanYi('ziLiaoSheZhi', 'buZhou3BiaoTi') }}</h2>
+            <div class="mbti-wangGe">
+              <button
+                v-for="mbti in mbti列表"
+                :key="mbti"
+                class="mbti-kaPian"
+                :class="{ beiXuanZhong: ziLiaoShuJu.xingGeXuanZe === mbti && !随机选中 }"
+                @click="xuanZeXingGe(mbti)"
+              >
+                <span class="mbti-daiMa">{{ mbti }}</span>
+                <span class="mbti-zhongWen">{{ 性格选择映射[mbti] }}</span>
+                <span class="mbti-miaoShu">{{ huoQuMbtiMiaoShu(mbti) }}</span>
+              </button>
+              <button
+                class="mbti-kaPian suiJi-kaPian"
+                :class="{ beiXuanZhong: 随机选中 }"
+                @click="suiJiXuanZe"
+              >
+                <span class="mbti-daiMa">&#127922;</span>
+                <span class="mbti-zhongWen">{{ huoQuFanYi('ziLiaoSheZhi', 'suiJi') }}</span>
+                <span class="mbti-miaoShu">{{ huoQuFanYi('ziLiaoSheZhi', 'suiJiMiaoShu') }}</span>
+              </button>
+            </div>
+
+            <label class="zhaNv-gouxuan">
+              <input
+                v-model="ziLiaoShuJu.yunXuZhaNanZhaNv"
+                type="checkbox"
+                class="zhaXing-gouxuan"
+                :class="{ 'zhaNan-gouxuan': ziLiaoShuJu.muBiaoXingBie === 'male' }"
+              />
+              <span>{{ 渣型文案 }}</span>
+            </label>
+            <p v-show="ziLiaoShuJu.yunXuZhaNanZhaNv" class="zhaNv-tishi zhaNv-tishi-huaxian">
+              {{ 渣型提示文案 }}
+            </p>
+          </div>
+        </Transition>
+      </div>
 
       <div class="caoZuo-anNiu">
-        <button v-if="dangQianBuZhou > 1" class="anniu-fuZhu" @click="houTuiBuZhou">上一步</button>
+        <button v-if="当前步骤 > 1" class="anniu-fuZhu" @click="houTuiBuZhou">
+          {{ huoQuFanYi('ziLiaoSheZhi', 'shangYiBu') }}
+        </button>
         <button
-          v-if="dangQianBuZhou < 3"
+          v-if="当前步骤 < 3"
           class="anniu-zhuYao"
-          :disabled="!keYiXiaYiBu"
+          :disabled="!可以下一步"
           @click="qianJinBuZhou"
         >
-          下一步
+          {{ huoQuFanYi('ziLiaoSheZhi', 'xiaYiBu') }}
         </button>
         <button
           v-else
           class="anniu-zhuYao kaiShiLiaoTian"
-          :disabled="!keYiKaiShi"
+          :disabled="!可以开始"
           @click="kaiShiLiaoTian"
         >
-          开始聊天
+          {{ huoQuFanYi('ziLiaoSheZhi', 'kaiShiLiaoTian') }}
         </button>
       </div>
     </div>
@@ -217,38 +244,39 @@ import { 使用认证表单仓库 } from '@/stores/认证表单'
 import type { MBTI类型, 性格选择 } from '@/types'
 import { 性格选择映射 } from '@/types'
 import { shengChengJiaoSe, queRenJiaoSe } from '@/api/聊天'
+import { huoQuFanYi } from '@/config/translations'
 
-const bd = 使用认证表单仓库()
+const 仓库 = 使用认证表单仓库()
 const router = useRouter()
 
-const buZhouLieBiao = [1, 2, 3]
-const dangQianBuZhou = ref(bd.ziLiaoDangQianBuZhou)
-const ziLiaoShuJu = bd.ziLiaoShuJu
-const buZhouFangXiang = ref<'qian' | 'hou'>('qian')
+const 步骤列表 = [1, 2, 3]
+const 当前步骤 = ref(仓库.ziLiaoDangQianBuZhou)
+const ziLiaoShuJu = 仓库.ziLiaoShuJu
+const 步骤方向 = ref<'qian' | 'hou'>('qian')
 
-const buZhouGuoDuMingCheng = computed(() =>
-  buZhouFangXiang.value === 'qian' ? 'buZhou-qianJin' : 'buZhou-houTui',
+const 步骤过渡名称 = computed(() =>
+  步骤方向.value === 'qian' ? 'buZhou-qianJin' : 'buZhou-houTui',
 )
 
 function qianJinBuZhou() {
-  if (dangQianBuZhou.value >= 3 || !keYiXiaYiBu.value) return
-  buZhouFangXiang.value = 'qian'
-  dangQianBuZhou.value++
+  if (当前步骤.value >= 3 || !可以下一步.value) return
+  步骤方向.value = 'qian'
+  当前步骤.value++
 }
 
 function houTuiBuZhou() {
-  if (dangQianBuZhou.value <= 1) return
-  buZhouFangXiang.value = 'hou'
-  dangQianBuZhou.value--
+  if (当前步骤.value <= 1) return
+  步骤方向.value = 'hou'
+  当前步骤.value--
 }
 
 function tiaoZhuanBuZhou(buZhou: number) {
-  if (buZhou >= dangQianBuZhou.value) return
-  buZhouFangXiang.value = 'hou'
-  dangQianBuZhou.value = buZhou
+  if (buZhou >= 当前步骤.value) return
+  步骤方向.value = 'hou'
+  当前步骤.value = buZhou
 }
 
-const mbtiLieBiao: MBTI类型[] = [
+const mbti列表: MBTI类型[] = [
   'ISTJ',
   'ISFJ',
   'INFJ',
@@ -267,62 +295,59 @@ const mbtiLieBiao: MBTI类型[] = [
   'ENTP',
 ]
 
-const miaoShuWenAn: Record<MBTI类型, string> = {
-  ISTJ: '诚实、踏实、可靠的实干家',
-  ISFJ: '温暖、体贴、专注照顾他人',
-  INFJ: '安静的神秘主义者，追求深层意义',
-  INTJ: '独立思考的战略家',
-  ISTP: '灵活的观察者，擅长分析问题',
-  ISFP: '温和的艺术家，重视个人价值观',
-  INFP: '理想主义的治愈者',
-  INTP: '逻辑驱动的创新者',
-  ESTP: '大胆的实干家，享受当下',
-  ESFP: '自发的表演者，热爱生活',
-  ENFP: '充满热情的灵感者',
-  ENFJ: '富有魅力的领导者',
-  ENTJ: '果断的指挥官',
-  ESTJ: '高效的组织者',
-  ESFJ: '热心的支持者',
-  ENTP: '聪明的辩论家',
+function huoQuMbtiMiaoShu(mbti: MBTI类型): string {
+  const jian = `mbtiMiaoShu_${mbti}` as const
+  return huoQuFanYi('ziLiaoSheZhi', jian)
 }
 
-const keYiXiaYiBu = computed(() => {
-  if (dangQianBuZhou.value === 1) return !!ziLiaoShuJu.xingBie
-  if (dangQianBuZhou.value === 2) return !!ziLiaoShuJu.muBiaoXingBie
+const 可以下一步 = computed(() => {
+  if (当前步骤.value === 1) return !!ziLiaoShuJu.xingBie
+  if (当前步骤.value === 2) return !!ziLiaoShuJu.muBiaoXingBie
   return false
 })
 
-const keYiKaiShi = computed(() => !!ziLiaoShuJu.xingGeXuanZe)
+const 可以开始 = computed(() => !!ziLiaoShuJu.xingGeXuanZe)
 
-const suiJiXuanZhong = ref(false)
-const suiJiXingGe = ref(false)
+const 随机选中 = ref(false)
+const 随机性格标记 = ref(false)
 
 function xuanZeXingGe(mbti: MBTI类型) {
   ziLiaoShuJu.xingGeXuanZe = mbti as 性格选择
-  suiJiXuanZhong.value = false
-  suiJiXingGe.value = false
+  随机选中.value = false
+  随机性格标记.value = false
 }
 
 function suiJiXuanZe() {
-  const suiJiSuoyin = Math.floor(Math.random() * mbtiLieBiao.length)
-  ziLiaoShuJu.xingGeXuanZe = mbtiLieBiao[suiJiSuoyin] as 性格选择
-  suiJiXuanZhong.value = true
-  suiJiXingGe.value = true
+  const suiJiSuoyin = Math.floor(Math.random() * mbti列表.length)
+  ziLiaoShuJu.xingGeXuanZe = mbti列表[suiJiSuoyin] as 性格选择
+  随机选中.value = true
+  随机性格标记.value = true
 }
 
+const 渣型文案 = computed(() =>
+  ziLiaoShuJu.muBiaoXingBie === 'male'
+    ? huoQuFanYi('ziLiaoSheZhi', 'zhaNanBianTi')
+    : huoQuFanYi('ziLiaoSheZhi', 'zhaNvBianTi'),
+)
+
+const 渣型提示文案 = computed(() => {
+  const daiTi = ziLiaoShuJu.muBiaoXingBie === 'male' ? '他' : '她'
+  return huoQuFanYi('ziLiaoSheZhi', 'zhaXingTiShi').replace('{ta}', daiTi)
+})
+
 async function kaiShiLiaoTian() {
-  if (!keYiKaiShi.value) return
-  bd.ziLiaoDangQianBuZhou = dangQianBuZhou.value
+  if (!可以开始.value) return
+  仓库.ziLiaoDangQianBuZhou = 当前步骤.value
   try {
     const jiaoSe = await shengChengJiaoSe(
       ziLiaoShuJu.muBiaoXingBie || 'female',
       ziLiaoShuJu.xingGeXuanZe || 'INFP',
       ziLiaoShuJu.yunXuZhaNanZhaNv,
-      suiJiXingGe.value,
+      随机性格标记.value,
       ziLiaoShuJu.xingBie || undefined,
     )
-    await queRenJiaoSe(jiaoSe)
-    const jiaoSeId = jiaoSe.jiao_se_id || jiaoSe.id || ''
+    const queRenHouJiaoSe = await queRenJiaoSe(jiaoSe)
+    const jiaoSeId = queRenHouJiaoSe.jiao_se_id || queRenHouJiaoSe.id || ''
     router.push(`/tian-jia-wei-xin?jiaoSeId=${jiaoSeId}`)
   } catch {
     router.push('/')
@@ -382,14 +407,26 @@ async function kaiShiLiaoTian() {
   transform: scale(1.25);
 }
 
+.buzhou-guo-du-rong-qi {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 360px;
+  overflow: hidden;
+}
+
 .buzuo-neirong {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .buZuo3-gundong {
-  max-height: 55vh;
   overflow-y: auto;
   padding-right: 4px;
   overscroll-behavior: contain;
@@ -720,27 +757,49 @@ async function kaiShiLiaoTian() {
 .buZhou-qianJin-leave-active,
 .buZhou-houTui-enter-active,
 .buZhou-houTui-leave-active {
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .buZhou-qianJin-enter-from {
   opacity: 0;
-  transform: translateX(30px);
+  transform: translateX(100%);
+}
+
+.buZhou-qianJin-enter-to {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.buZhou-qianJin-leave-from {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .buZhou-qianJin-leave-to {
   opacity: 0;
-  transform: translateX(-30px);
+  transform: translateX(-100%);
 }
 
 .buZhou-houTui-enter-from {
   opacity: 0;
-  transform: translateX(-30px);
+  transform: translateX(-100%);
+}
+
+.buZhou-houTui-enter-to {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.buZhou-houTui-leave-from {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .buZhou-houTui-leave-to {
   opacity: 0;
-  transform: translateX(30px);
+  transform: translateX(100%);
 }
 
 @media (max-width: 480px) {

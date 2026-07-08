@@ -10,6 +10,7 @@ import {
   biaoJiYiDu,
   huoQuJiaoSeXiangQing,
 } from '@/api/聊天'
+import { huoQuFanYi } from '@/config/translations'
 
 export const 使用聊天仓库 = defineStore('聊天', () => {
   const dangQianHuiHuaId = ref<string | null>(null)
@@ -22,10 +23,26 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   const youXiYiJieShu = ref(false)
   const keJiXuLiaoTian = ref(false)
   const yiDuBuHuiZhuangTai = ref(false)
+  const cuoWuXinXi = ref<string | null>(null)
+  const yeMa = ref(1)
+  const meiYeTiaoShu = ref(50)
+  const zongShu = ref(0)
+  const jiaZaiGengDuoZhong = ref(false)
+  const haiYouGengDuo = ref(false)
+
+  const zuiDaXiaoXiChangDu = 500
 
   function anQuanTuiSong(xiaoXi: 消息) {
     if (!Array.isArray(xiaoXiLieBiao.value)) xiaoXiLieBiao.value = []
     xiaoXiLieBiao.value.push(xiaoXi)
+  }
+
+  function qingChuCuoWu() {
+    cuoWuXinXi.value = null
+  }
+
+  function sheZhiCuoWu(xiaoXi: string) {
+    cuoWuXinXi.value = xiaoXi
   }
 
   function lianJieSocket(huiHuaId: string) {
@@ -44,9 +61,9 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       socket.emit('加入聊天', huiHuaId)
     })
 
-    socket.on('角色回复', (xiaoXi: 消息) => {
-      if (xiaoXi.hui_hua_id === dangQianHuiHuaId.value) {
-        anQuanTuiSong(xiaoXi)
+    socket.on('角色回复', (shuJu: { 角色ID: string; 消息列表: 消息[] }) => {
+      if (shuJu.角色ID === dangQianHuiHuaId.value) {
+        shuJu.消息列表.forEach((xiaoXi) => anQuanTuiSong(xiaoXi))
       }
       zhengZaiShuRu.value = false
     })
@@ -107,7 +124,9 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
           xiaoXiLieBiao.value[suoYin] = {
             ...xiaoXi,
             yi_che_hui: true,
-            nei_rong: shiYongHu ? '你撤回了一条消息' : '对方撤回了一条消息',
+            nei_rong: shiYongHu
+              ? huoQuFanYi('liaoTian', 'ninCheHuiLeYiTiaoXiaoXi')
+              : huoQuFanYi('liaoTian', 'duiFangCheHuiLeYiTiaoXiaoXi'),
           }
         }
       }
@@ -121,7 +140,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
           hui_hua_id: dangQianHuiHuaId.value || '',
           fa_song_zhe_id: '',
           fa_song_zhe_lei_xing: 'xitong',
-          nei_rong: '对方已读不回',
+          nei_rong: huoQuFanYi('liaoTian', 'duiFangYiDuBuHui'),
           lei_xing: 'xitong',
           shi_jian_chuo: Date.now(),
           yi_du: true,
@@ -153,12 +172,20 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     yiDuBuHuiZhuangTai.value = false
     youXiYiJieShu.value = false
     keJiXuLiaoTian.value = false
+    cuoWuXinXi.value = null
+    yeMa.value = 1
+    haiYouGengDuo.value = false
+    jiaZaiGengDuoZhong.value = false
     try {
-      const lieBiao = await huoQuXiaoXi(huiHuaId)
-      xiaoXiLieBiao.value = lieBiao
-      biaoJiYiDu(huiHuaId).catch(() => {})
+      const jieGuo = await huoQuXiaoXi(huiHuaId, yeMa.value, meiYeTiaoShu.value)
+      xiaoXiLieBiao.value = [...jieGuo.lie_biao].reverse()
+      zongShu.value = jieGuo.zong_shu
+      haiYouGengDuo.value = jieGuo.lie_biao.length < jieGuo.zong_shu
+      Promise.resolve(biaoJiYiDu(huiHuaId)).catch(() => {})
     } catch {
       xiaoXiLieBiao.value = []
+      zongShu.value = 0
+      haiYouGengDuo.value = false
     }
     try {
       const { jiao_se, dang_an_zhuang_tai } = await huoQuJiaoSeXiangQing(huiHuaId)
@@ -172,14 +199,41 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     }
   }
 
+  async function jiaZaiGengDuoXiaoXi(): Promise<boolean> {
+    if (!dangQianHuiHuaId.value || jiaZaiGengDuoZhong.value || !haiYouGengDuo.value) return false
+    jiaZaiGengDuoZhong.value = true
+    try {
+      const xiaYiYe = yeMa.value + 1
+      const jieGuo = await huoQuXiaoXi(dangQianHuiHuaId.value, xiaYiYe, meiYeTiaoShu.value)
+      const xinLieBiao = jieGuo.lie_biao.filter(
+        (xiaoXi) => !xiaoXiLieBiao.value.some((xianYou) => xianYou.id === xiaoXi.id),
+      )
+      xiaoXiLieBiao.value = [...xinLieBiao.reverse(), ...xiaoXiLieBiao.value]
+      yeMa.value = xiaYiYe
+      zongShu.value = jieGuo.zong_shu
+      haiYouGengDuo.value = xiaoXiLieBiao.value.length < jieGuo.zong_shu
+      return xinLieBiao.length > 0
+    } catch {
+      return false
+    } finally {
+      jiaZaiGengDuoZhong.value = false
+    }
+  }
+
   async function faSongXiaoXi(neiRong: string): Promise<消息 | null> {
     if (!dangQianHuiHuaId.value || !neiRong.trim()) return null
+    const qingLiNeiRong = neiRong.trim()
+    if (qingLiNeiRong.length > zuiDaXiaoXiChangDu) {
+      sheZhiCuoWu(huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'))
+      return null
+    }
+    qingChuCuoWu()
     const linShiXiaoXi: 消息 = {
       id: `linshi-${Date.now()}`,
       hui_hua_id: dangQianHuiHuaId.value,
       fa_song_zhe_id: '',
       fa_song_zhe_lei_xing: 'yonghu',
-      nei_rong: neiRong.trim(),
+      nei_rong: qingLiNeiRong,
       lei_xing: 'wenben',
       shi_jian_chuo: Date.now(),
       yi_du: false,
@@ -187,17 +241,22 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     }
     anQuanTuiSong(linShiXiaoXi)
     try {
-      const xiaoXi = await faSongXiaoXiApi(dangQianHuiHuaId.value, neiRong.trim())
+      const xiaoXi = await faSongXiaoXiApi(dangQianHuiHuaId.value, qingLiNeiRong)
       const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.id === linShiXiaoXi.id)
       if (suoYin !== -1) {
         xiaoXiLieBiao.value[suoYin] = xiaoXi
       }
+      if (socketLianJie.value?.connected) {
+        socketLianJie.value.emit('发送消息')
+      }
       return xiaoXi
-    } catch {
+    } catch (cuoWu: unknown) {
       const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.id === linShiXiaoXi.id)
       if (suoYin !== -1) {
         xiaoXiLieBiao.value.splice(suoYin, 1)
       }
+      const xiaoXi = cuoWu instanceof Error ? cuoWu.message : huoQuFanYi('liaoTian', 'faSongShiBai')
+      sheZhiCuoWu(xiaoXi)
       return null
     }
   }
@@ -211,7 +270,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
         xiaoXiLieBiao.value[suoYin] = {
           ...xiaoXiLieBiao.value[suoYin],
           yi_che_hui: true,
-          nei_rong: '你撤回了一条消息',
+          nei_rong: huoQuFanYi('liaoTian', 'ninCheHuiLeYiTiaoXiaoXi'),
         }
       }
     } catch (e) {
@@ -228,6 +287,11 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     youXiYiJieShu.value = false
     keJiXuLiaoTian.value = false
     yiDuBuHuiZhuangTai.value = false
+    cuoWuXinXi.value = null
+    yeMa.value = 1
+    zongShu.value = 0
+    haiYouGengDuo.value = false
+    jiaZaiGengDuoZhong.value = false
     duanKaiSocket()
   }
 
@@ -242,11 +306,21 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     socketLianJie,
     lianJieZhong,
     yiDuBuHuiZhuangTai,
+    cuoWuXinXi,
+    yeMa,
+    meiYeTiaoShu,
+    zongShu,
+    jiaZaiGengDuoZhong,
+    haiYouGengDuo,
+    zuiDaXiaoXiChangDu,
     lianJieSocket,
     duanKaiSocket,
     jiaZaiXiaoXi,
+    jiaZaiGengDuoXiaoXi,
     faSongXiaoXi,
     cheHuiXiaoXi,
     qingKongZhuangTai,
+    qingChuCuoWu,
+    sheZhiCuoWu,
   }
 })

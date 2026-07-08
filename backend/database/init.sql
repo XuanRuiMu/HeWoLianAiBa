@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS "用户" (
     "签名" TEXT,
     "管理员" BOOLEAN DEFAULT FALSE,
     "活跃角色ID" UUID,
+    "测试" BOOLEAN DEFAULT FALSE,
     "创建时间" TIMESTAMPTZ DEFAULT NOW(),
     "更新时间" TIMESTAMPTZ DEFAULT NOW()
 );
@@ -61,6 +62,9 @@ CREATE TABLE IF NOT EXISTS "角色" (
     "真实姓名" VARCHAR(100),
     "世界信息" JSONB,
     "随机性格" BOOLEAN DEFAULT FALSE,
+    "封存" BOOLEAN DEFAULT FALSE,
+    "可继续聊天" BOOLEAN DEFAULT FALSE,
+    "结局状态" VARCHAR(50) DEFAULT '',
     "删除时间" TIMESTAMPTZ,
     "创建时间" TIMESTAMPTZ DEFAULT NOW()
 );

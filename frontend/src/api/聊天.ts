@@ -1,41 +1,49 @@
 import http from './请求'
 import type {
-  消息,
-  会话,
-  军师建议,
-  军师记录,
-  档案详情,
-  生成角色结果,
-  角色,
-  评估结果,
-  反馈提交,
+  Xiaoxi,
+  HuiHua,
+  JunShiXinXi,
+  JunShiZhiDaoJieGuo,
+  JunShiJiLu,
+  DangAnXiangQing,
+  ShengChengJiaoSeJieGuo,
+  Jiaose,
+  PingGuJieGuo,
+  FanKuiTiJiao,
 } from '@/types'
 
-export async function chuangJianHuiHua(jiaoSeId: string): Promise<会话> {
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: 会话 }>('/聊天/会话', {
+export async function chuangJianHuiHua(jiaoSeId: string): Promise<HuiHua> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: HuiHua }>('/聊天/会话', {
     jiaoSeId,
   })
   return 响应.data.shu_ju
 }
 
-export async function huoQuHuiHuaLieBiao(): Promise<会话[]> {
-  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: 会话[] }>('/聊天/会话')
+export async function huoQuHuiHuaLieBiao(): Promise<HuiHua[]> {
+  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: HuiHua[] }>('/聊天/会话')
   return 响应.data.shu_ju
 }
 
-export async function huoQuXiaoXi(huiHuaId: string): Promise<消息[]> {
+export async function huoQuXiaoXi(
+  huiHuaId: string,
+  yeMa: number = 1,
+  meiYeTiaoShu: number = 50,
+): Promise<{ lie_biao: Xiaoxi[]; zong_shu: number }> {
   const 响应 = await http.get<{
     cheng_gong: boolean
-    shu_ju: { lie_biao: 消息[] } | 消息[]
-  }>(`/聊天/会话/${huiHuaId}/消息`)
+    shu_ju: { lie_biao: Xiaoxi[]; zong_shu: number }
+  }>(`/聊天/会话/${huiHuaId}/消息`, {
+    params: { ye_ma: yeMa, mei_ye_tiao_shu: meiYeTiaoShu },
+  })
   const shuJu = 响应.data.shu_ju
-  if (Array.isArray(shuJu)) return shuJu
-  if (shuJu && 'lie_biao' in shuJu && Array.isArray(shuJu.lie_biao)) return shuJu.lie_biao
-  return []
+  return {
+    lie_biao: shuJu?.lie_biao || [],
+    zong_shu: shuJu?.zong_shu || 0,
+  }
 }
 
-export async function faSongXiaoXi(huiHuaId: string, neiRong: string): Promise<消息> {
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: 消息 }>(
+export async function faSongXiaoXi(huiHuaId: string, neiRong: string): Promise<Xiaoxi> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: Xiaoxi }>(
     `/聊天/会话/${huiHuaId}/消息`,
     { neiRong },
   )
@@ -50,65 +58,72 @@ export async function biaoJiYiDu(huiHuaId: string): Promise<void> {
   await http.put(`/聊天/会话/${huiHuaId}/已读`)
 }
 
-export async function huoQuJunShiLieBiao(): Promise<军师建议[]> {
+export async function huoQuJunShiLieBiao(): Promise<JunShiXinXi[]> {
   const 响应 = await http.get<{
     cheng_gong: boolean
-    shu_ju: { junShiLieBiao: 军师建议[] }
+    shu_ju: { junShiLieBiao: JunShiXinXi[] }
   }>('/聊天/军师/列表')
   return 响应.data.shu_ju.junShiLieBiao
 }
 
-export async function qingQiuJunShiZhiDao(jiaoSeId: string): Promise<军师建议> {
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: 军师建议 }>('/聊天/军师', {
+export async function qingQiuJunShiZhiDao(jiaoSeId: string): Promise<JunShiZhiDaoJieGuo> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: JunShiZhiDaoJieGuo }>('/聊天/军师', {
     jiaoSeId,
   })
   return 响应.data.shu_ju
 }
 
-export async function huoQuJunShiJiLu(jiaoSeId: string): Promise<军师记录[]> {
-  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: 军师记录[] }>(
+export async function huoQuJunShiJiLu(jiaoSeId: string): Promise<JunShiJiLu[]> {
+  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: { jiLuLieBiao: JunShiJiLu[] } }>(
     `/聊天/军师/记录/${jiaoSeId}`,
+  )
+  return 响应.data.shu_ju.jiLuLieBiao
+}
+
+export async function huoQuDangAnLieBiao(): Promise<DangAnXiangQing[]> {
+  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: DangAnXiangQing[] }>('/战绩/列表')
+  return 响应.data.shu_ju
+}
+
+export async function huoQuDangAnXiangQing(dangAnId: string): Promise<DangAnXiangQing> {
+  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: DangAnXiangQing }>(
+    `/战绩/详情/${dangAnId}`,
   )
   return 响应.data.shu_ju
 }
 
-export async function huoQuDangAnLieBiao(): Promise<档案详情[]> {
-  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: 档案详情[] }>('/档案/列表')
-  return 响应.data.shu_ju
-}
-
-export async function huoQuDangAnXiangQing(dangAnId: string): Promise<档案详情> {
-  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: 档案详情 }>(`/档案/详情/${dangAnId}`)
-  return 响应.data.shu_ju
-}
-
 export async function shengChengJiaoSe(
-  muBiaoXingBie: string,
-  xingGeXuanZe: string,
-  yunXuZhaXing: boolean,
-  suiJiXingGe?: boolean,
-  yongHuXingBie?: string | null,
-): Promise<生成角色结果> {
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: 生成角色结果 }>(
+  目标性别: string,
+  性格选择: string,
+  允许渣型: boolean,
+  是否随机性格?: boolean,
+  用户性别?: string | null,
+): Promise<ShengChengJiaoSeJieGuo> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: ShengChengJiaoSeJieGuo }>(
     '/生成角色/MBTI生成',
     {
-      xingBie: muBiaoXingBie === 'male' ? 'nan' : 'nv',
-      mbtiLeiXing: xingGeXuanZe,
-      shiFouZhaXing: yunXuZhaXing,
-      suiJiXingGe: suiJiXingGe || false,
-      yongHuXingBie:
-        yongHuXingBie === 'male' ? 'nan' : yongHuXingBie === 'female' ? 'nv' : undefined,
+      性别: 目标性别 === 'male' ? 'nan' : 'nv',
+      mbti类型: 性格选择,
+      渣男渣女变体: 允许渣型,
+      随机性格: 是否随机性格 || false,
+      用户性别: 用户性别 === 'male' ? 'nan' : 用户性别 === 'female' ? 'nv' : undefined,
     },
   )
   return 响应.data.shu_ju
 }
 
-export async function queRenJiaoSe(xuanZhongJiaoSe: 生成角色结果): Promise<void> {
-  await http.post('/生成角色/确认', { xuanZhongJiaoSe })
+export async function queRenJiaoSe(
+  xuanZhongJiaoSe: ShengChengJiaoSeJieGuo,
+): Promise<ShengChengJiaoSeJieGuo> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: ShengChengJiaoSeJieGuo }>(
+    '/生成角色/确认',
+    { xuanZhongJiaoSe },
+  )
+  return 响应.data.shu_ju
 }
 
 export async function huoQuJiaoSeXiangQing(jiaoSeId: string): Promise<{
-  jiao_se: 角色
+  jiao_se: Jiaose
   dang_an_zhuang_tai?: {
     jie_guo_lei_xing: string
     shi_fou_feng_cun: boolean
@@ -119,7 +134,7 @@ export async function huoQuJiaoSeXiangQing(jiaoSeId: string): Promise<{
   const 响应 = await http.get<{
     cheng_gong: boolean
     shu_ju: {
-      jiao_se: 角色
+      jiao_se: Jiaose
       dang_an_zhuang_tai?: {
         jie_guo_lei_xing: string
         shi_fou_feng_cun: boolean
@@ -159,6 +174,7 @@ export interface 复盘响应 {
   fu_pan_shi_jian_xian: 复盘时间线条目[]
   jun_shi_zhi_dao_ji_lu: 军师指导记录项[]
   guan_jian_shi_jian: 关键事件项[]
+  jia_zai_zhong: boolean
 }
 
 export interface 复盘时间线条目 {
@@ -178,7 +194,7 @@ export interface 复盘时间线条目 {
 }
 
 export async function huoQuFuPan(dangAnId: string): Promise<复盘响应> {
-  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: 复盘响应 }>(`/档案/复盘/${dangAnId}`)
+  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: 复盘响应 }>(`/战绩/复盘/${dangAnId}`)
   return 响应.data.shu_ju
 }
 
@@ -252,20 +268,24 @@ export async function 响应AI主动告白(jiaoSeId: string, jieShou: boolean): 
   return 响应.data.shu_ju
 }
 
-export async function tiJiaoFanKui(canShu: 反馈提交): Promise<void> {
+export async function tiJiaoFanKui(canShu: FanKuiTiJiao): Promise<void> {
   await http.post('/反馈/提交', canShu)
 }
 
-export async function zhiXingPingGu(jiaoSeId: string): Promise<评估结果> {
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: 评估结果 }>('/评估/聊天水平', {
-    jiaoSeId,
-  })
+export async function zhiXingPingGu(jiaoSeId: string): Promise<PingGuJieGuo> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: PingGuJieGuo }>(
+    '/战绩/评估/聊天水平',
+    {
+      jiaoSeId,
+    },
+  )
   return 响应.data.shu_ju
 }
 
-export async function huoQuPingGuLiShi(jiaoSeId: string): Promise<评估结果 | null> {
-  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: 评估结果 | null }>('/评估/聊天水平', {
-    params: { jiaoSeId },
-  })
+export async function huoQuPingGuLiShi(jiaoSeId: string): Promise<PingGuJieGuo | null> {
+  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: PingGuJieGuo | null }>(
+    '/战绩/评估/聊天水平',
+    { params: { jiaoSeId } },
+  )
   return 响应.data.shu_ju
 }

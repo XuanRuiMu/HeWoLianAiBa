@@ -12,7 +12,17 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import QuanJuCaiDan from '@/components/全局菜单.vue'
+import { 使用用户仓库 } from '@/stores/用户'
+
+const 用户仓库 = 使用用户仓库()
+
+onMounted(() => {
+  if (用户仓库.令牌 && !用户仓库.dangQianYongHu) {
+    用户仓库.jiaZaiYongHu()
+  }
+})
 </script>
 
 <style scoped>
@@ -25,6 +35,8 @@ import QuanJuCaiDan from '@/components/全局菜单.vue'
 
 .app-zhuti {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   margin-top: 52px;
 }
 
