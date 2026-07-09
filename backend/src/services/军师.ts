@@ -149,6 +149,7 @@ export async function qingQiuJunShiZhiDao(
     jiao_se_ming_zi: jiaoSeXinXi.wei_xin_ming,
     jun_shi_id: JUN_SHI_PEI_ZHI_MO_REN.id,
     jun_shi_ming_chen: JUN_SHI_PEI_ZHI_MO_REN.mingCheng,
+    jun_shi_tou_xiang: JUN_SHI_PEI_ZHI_MO_REN.touXiang,
     dui_hua_zhai_yao: shengChengDuiHuaZhaiYao(duiHuaLiShi),
     liao_tian_ji_lu: zhuanHuanLiaoTianJiLu(youXiaoXiaoXi, jiaoSeXinXi.wei_xin_ming),
     hou_tai_shu_ju: {

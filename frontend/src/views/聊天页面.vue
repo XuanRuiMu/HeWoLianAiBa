@@ -92,13 +92,6 @@
           </template>
         </template>
       </TransitionGroup>
-
-      <div v-if="聊天仓库.zhengZaiShuRu" class="dazi-tishi">
-        <span class="dazi-dian" />
-        <span class="dazi-dian" />
-        <span class="dazi-dian" />
-        <span class="dazi-wenben">{{ huoQuFanYi('liaoTian', 'duiFangZhengZaiShuRu') }}</span>
-      </div>
     </main>
 
     <footer class="shuru-quyu weixin-shuru">
@@ -530,7 +523,8 @@ const xiaoXiFenZu = computed<XiaoXiFenZuXiang[]>(() => {
   for (const xiaoXi of lieBiao) {
     const beiJing = zhuanBeiJing(xiaoXi.shi_jian_chuo)
     const xuYaoXinBiaoQian =
-      shangYiGeShiJianChuo === null || xiaoXi.shi_jian_chuo - shangYiGeShiJianChuo > 5 * 60 * 1000
+      shangYiGeShiJianChuo === null ||
+      xiaoXi.shi_jian_chuo - shangYiGeShiJianChuo > XIAO_XI_PEI_ZHI.heBingShiJianYuZhi
 
     if (xuYaoXinBiaoQian) {
       jieGuo.push({
@@ -596,11 +590,11 @@ async function faSong() {
     聊天仓库.sheZhiCuoWu(huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'))
     return
   }
+  shuRuNeiRong.value = ''
   faSongZhong.value = true
   try {
     const jieGuo = await 聊天仓库.faSongXiaoXi(neiRong)
     if (jieGuo) {
-      shuRuNeiRong.value = ''
       gunDongDaoDiBu()
     }
   } finally {
@@ -758,11 +752,22 @@ onBeforeUnmount(() => {
   background: var(--liaotian-beijing);
   background-size: 18px 18px;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gundong-tiao-beijing) transparent;
 }
 
 .xiaoxi-quyu::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+  width: 6px;
+  height: 6px;
+}
+
+.xiaoxi-quyu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.xiaoxi-quyu::-webkit-scrollbar-thumb {
+  background: var(--gundong-tiao-beijing);
+  border-radius: 3px;
 }
 
 .xiaoxi-liebiao {
@@ -948,55 +953,6 @@ onBeforeUnmount(() => {
   color: var(--wenben-tishi);
   text-align: center;
   padding: 4px 0;
-}
-
-.dazi-tishi {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  background: var(--dazi-tishi-beijing);
-  border: 0.5px solid var(--biankuang-yanse);
-  border-radius: 12px;
-  align-self: flex-start;
-  margin-left: 50px;
-  margin-bottom: 12px;
-  box-shadow: var(--qipao-yinying);
-}
-
-.dazi-dian {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--dazi-dian-se);
-  animation: dazi-tiaodong 1.4s infinite ease-in-out;
-}
-
-.dazi-dian:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.dazi-dian:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-.dazi-wenben {
-  font-size: 12px;
-  color: var(--dazi-wenben-se);
-  margin-left: 4px;
-}
-
-@keyframes dazi-tiaodong {
-  0%,
-  80%,
-  100% {
-    transform: scale(0.6);
-    opacity: 0.4;
-  }
-  40% {
-    transform: scale(1);
-    opacity: 1;
-  }
 }
 
 .chehui-anniu {

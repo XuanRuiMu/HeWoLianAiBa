@@ -42,7 +42,7 @@ function chuangJianMoNiJunShiLieBiao() {
       fuBiaoTi: '来自后端配置的副标题',
       biaoQian: huoQuFanYi('junShi', 'junShiBiaoQian'),
       miaoShu: huoQuFanYi('junShi', 'junShiMiaoShu'),
-      touXiang: '/advisors/军师玄锐暮头像.jpg',
+      touXiang: '图片/军师头像/军师玄锐暮头像.png',
     },
   ]
 }
@@ -151,6 +151,33 @@ describe('FP-12 军师指导系统前端', () => {
       expect(wrapper.text()).toContain(huoQuFanYi('junShi', 'qingQiuZhiDao'))
       expect(wrapper.text()).toContain(huoQuFanYi('junShi', 'guanBi'))
     })
+
+    it('选择菜单显示“请选择你的军师”提示', async () => {
+      const { wrapper } = await mountJunShiZhiDao()
+
+      expect(wrapper.text()).toContain(huoQuFanYi('junShi', 'qingXuanZeNiDeJunShi'))
+    })
+
+    it('军师头像使用后端配置路径', async () => {
+      const { wrapper } = await mountJunShiZhiDao()
+
+      const touXiang = wrapper.find('.junshi-touxiang .touxiang-tu')
+      expect(touXiang.exists()).toBe(true)
+      expect(touXiang.attributes('src')).toBe('/图片/军师头像/军师玄锐暮头像.png')
+    })
+
+    it('军师选择菜单仅展示玄锐暮', async () => {
+      const { wrapper } = await mountJunShiZhiDao()
+
+      await wrapper.find('.junshi-xinxi').trigger('click')
+      await flushPromises()
+
+      const xuanZeXiang = wrapper.findAll('.junshi-xuanze-xiang')
+      expect(xuanZeXiang.length).toBe(1)
+      expect(xuanZeXiang[0].find('.junshi-mingcheng').text()).toBe(
+        huoQuFanYi('junShi', 'junShiMing'),
+      )
+    })
   })
 
   describe('前端军师面板数据展示', () => {
@@ -255,7 +282,7 @@ describe('FP-12 军师指导系统前端', () => {
 
       expect(wrapper.find('.jilu-liebiao').exists()).toBe(true)
       expect(wrapper.text()).toContain('小甜心')
-      expect(wrapper.text()).toContain('摘要内容')
+      expect(wrapper.text()).not.toContain('摘要内容')
     })
 
     it('点击记录项跳转到详情页', async () => {

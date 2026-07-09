@@ -185,6 +185,7 @@ export const fanYi = {
   junShi: {
     junShiZhiDao: '军师指导',
     zhiDaoJiLu: '指导记录',
+    qingXuanZeNiDeJunShi: '请选择你的军师',
     qingQiuZhiDao: '请求指导',
     qingQiuZhong: '请求中...',
     zhiDaoJianYi: '指导建议',

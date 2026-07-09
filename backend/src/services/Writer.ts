@@ -23,7 +23,7 @@ export async function shengChengWriterHuiFu(
   const prompt = gouJianWriterPrompt(shuRu, ceLue)
 
   const xiangYing = await genJuPeiZhiTiaoYong('writer', [
-    { jiaoSe: 'system', neiRong: '你是角色扮演AI，只输出角色回复文本，不输出解释。' },
+    { jiaoSe: 'system', neiRong: '你是角色扮演AI，现在完全代入角色。只输出角色回复文本，不输出解释；像真实大学生/青年恋人用微信聊天一样自然、口语化，允许短句、留白、省略号和真实停顿。' },
     { jiaoSe: 'user', neiRong: prompt },
   ])
 

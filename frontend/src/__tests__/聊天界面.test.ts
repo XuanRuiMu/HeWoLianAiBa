@@ -359,4 +359,31 @@ describe('FP-05 聊天界面', () => {
       )
     })
   })
+
+  describe('FP-A3 微信还原：正在输入、滚动条与底部输入栏', () => {
+    it('对方正在输入时顶部菜单栏显示“对方正在输入...”替代角色名', async () => {
+      const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
+      聊天仓库.zhengZaiShuRu = true
+      await flushPromises()
+
+      const caiDan = wrapper.findComponent({ name: '全局菜单' })
+      expect(caiDan.text()).toContain(huoQuFanYi('liaoTian', 'duiFangZhengZaiShuRu'))
+    })
+
+    it('聊天页面消息区域存在纵向滚动条样式', () => {
+      expect(liaoTianYeMianYuanMa).toMatch(/\.xiaoxi-quyu\s*\{[^}]*overflow-y:\s*auto/)
+      expect(liaoTianYeMianYuanMa).toMatch(
+        /\.xiaoxi-quyu::-webkit-scrollbar\s*\{[^}]*width:\s*\d+px/,
+      )
+    })
+
+    it('底部输入栏在页面中可见且包含必要元素', async () => {
+      const { wrapper } = await mountLiaoTianYeMian()
+      const shuruQuyu = wrapper.find('.shuru-quyu')
+      expect(shuruQuyu.exists()).toBe(true)
+      expect(shuruQuyu.isVisible()).toBe(true)
+      expect(wrapper.find('.shuru-kuang').exists()).toBe(true)
+      expect(wrapper.find('.fasong-anniu').exists()).toBe(true)
+    })
+  })
 })

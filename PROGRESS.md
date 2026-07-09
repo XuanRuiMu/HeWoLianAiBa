@@ -6,7 +6,7 @@
 | -------- | --------------------------------- |
 | 任务     | 修复和我恋爱吧17项问题            |
 | 状态     | 进行中                            |
-| 循环计数 | 5                                 |
+| 循环计数 | 7                                 |
 
 ## 目标
 
@@ -80,11 +80,10 @@
 | FP-A5 | 添加 whosyourdaddy 秘境系统 | 输入whosyourdaddy（大小写不敏感，精确匹配）后好感度=1000且AI只回复"启用成功"；需求文档已补充；测试通过 | 无 | 已完成 | 4 |
 | FP-A6 | 重构开场白系统 | 开场白对玩家不可见；AI根据人设主动发送0~5条开场白消息；进入聊天页直接显示开场白消息；开场白不再暴露姓名/个人信息；需求文档已更新；测试通过 | 无 | 待开始 | 0 |
 | FP-A7 | 统一AI模型为deepseek-v4-pro | 所有DeepSeek调用使用deepseek-v4-pro；需求文档7.1已更新；配置/客户端已修改；测试通过 | 无 | 已完成 | 2 |
-| FP-A8 | 优化AI恋爱对话自然度 | 基于角色扮演/大学生恋爱资料优化Prompt构建器、Director、Writer、军师Prompt；AI回复更自然；测试通过 | FP-A7 | 待开始 | 0 |
 | FP-A9 | 修复军师重复指导错误显示 | 同一聊天记录重复请求军师返回中文错误"军师重复"，前端正确展示，不再显示"Request failed with status code 409"；测试通过 | 无 | 已完成 | 3 |
-| FP-A10 | 修复军师指导页面UI | 军师指导记录页面有滚动条；军师指导面板删除对话摘要和后台数据展示；军师选择菜单显示"请选择你的军师"且仅玄锐暮；测试通过 | 无 | 待开始 | 0 |
+| FP-A10 | 修复军师指导页面UI | 军师指导记录页面有滚动条；军师指导面板删除对话摘要和后台数据展示；军师选择菜单显示"请选择你的军师"且仅玄锐暮；测试通过 | 无 | 已完成 | 7 |
 | FP-A11 | 修复军师指导后AI不回复问题 | 点击军师指导后，返回聊天页AI回复机制正常工作（10秒延迟、正在输入、角色回复事件）；测试通过 | FP-A9, FP-A10 | 待开始 | 0 |
-| FP-A12 | 修复军师玄锐暮头像显示 | 军师指导面板和记录详情中玄锐暮头像正确显示；测试通过 | FP-A10 | 待开始 | 0 |
+| FP-A12 | 修复军师玄锐暮头像显示 | 军师指导面板和记录详情中玄锐暮头像正确显示；测试通过 | FP-A10 | 已完成 | 7 |
 | FP-A13 | 修复过往战绩与复盘 | 过往战绩列表显示所有聊天记录、对象昵称、最后消息时间/结束时间；可删除；已结束游戏自动生成复盘；删除"评估聊天水平"；复盘内容正确展示7维度；测试通过 | 无 | 已完成 | 5 |
 
 ### 状态说明
@@ -99,7 +98,9 @@
 - FP-A1 清理声明性文件日期（循环1）：AGENTS.md 日期统一为 2026.07.09，其余声明性文件无其他历史日期。
 - FP-A5 添加 whosyourdaddy 秘境系统（循环4）：backend/src/routes/消息.ts 中精确匹配秘籍并设置好感度1000，返回 shi_mi_ji 标志；前端 store 根据标志跳过 AI 发送消息；前后端翻译文件已更新；相关测试通过。
 - FP-A7 统一AI模型为deepseek-v4-pro（循环2）：backend/src/config/AI配置.ts、backend/src/config/index.ts 默认模型回退改为 deepseek-v4-pro；需求文档 7.1 同步更新；.env 因受保护未触碰。
+- FP-A8 优化AI恋爱对话自然度（循环6）：backend/src/services/Prompt构建器.ts 在六层 prompt 中增加自然聊天要求、节奏留白、第一人称沉浸、避免AI味等指令；Director.ts/Writer.ts system prompt 强化真实大学生/青年恋人微信聊天风格；backend/src/config/军师配置.ts 优化军师口吻贴近真实损友军师；backend/src/services/军师.ts 与军师缓存.ts 新增 jun_shi_tou_xiang 字段支持头像显示；需求文档 6.1/7.1 同步更新；新增 AI引擎.test.ts/军师指导.test.ts 自然度测试；backend build/lint/test 全部通过，三轴审查发现需求文档 7.1 项目符号格式不一致已修复。
 - FP-A9 修复军师重复指导错误显示（循环3）：backend 军师重复检测保持 409 + `军师重复` 中文消息；frontend/src/api/请求.ts 错误拦截器从非 2xx 响应体提取 ti_shi/cuo_wu_ma 并 reject 业务错误，确保军师指导面板显示中文提示；新增 frontend/src/__tests__/请求.test.ts 覆盖 409/401/500/2xx 业务错误等场景。
+- FP-A10 + FP-A12 修复军师指导页面UI与玄锐暮头像显示（循环7）：frontend/src/views/军师记录详情.vue 添加纵向滚动条并移除对话摘要/后台数据展示区域，新增军师头像与名称；frontend/src/components/军师指导.vue 选择菜单增加"请选择你的军师"提示、过滤仅展示玄锐暮、移除记录列表摘要并使用统一头像路径；frontend/src/utils/头像.ts 新增 shengChengTouXiangURL 处理相对/绝对/网络头像路径；backend/src/services/军师.ts 与 backend/src/services/军师缓存.ts 增加 jun_shi_tou_xiang 字段；frontend/public/advisors/ 旧目录已删除，头像资源统一至 frontend/public/图片/军师头像/；前后端翻译文件与测试同步更新；前后端 build/lint/test 全部通过，三轴审查无硬性违规。
 - FP-A13 修复过往战绩与复盘（循环5）：backend/src/services/战绩.ts 增加最后消息时间字段与删除函数，backend/src/routes/战绩.ts 新增 DELETE /:dangAnId；backend/src/services/复盘.ts 修复7维度Markdown输出（含关键事件时间线）；frontend/src/views/过往战绩.vue 移除评估聊天水平UI、增加删除按钮与最后消息时间；删除 backend/src/services/评估.ts；前后端翻译文件同步更新；需求文档 FP-13 同步删除评估相关规则与验收标准；相关测试通过。
 
 ## 当前决策（只保留影响待处理项的决策）

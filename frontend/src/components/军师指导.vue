@@ -26,6 +26,7 @@
       <div class="junshi-neirong">
         <div v-if="dangQianBiaoQian === 'zhidao'" class="zhidao-buju">
           <div class="junshi-xuanze">
+            <div class="xuanze-tishi">{{ huoQuFanYi('junShi', 'qingXuanZeNiDeJunShi') }}</div>
             <div
               class="junshi-xinxi"
               :class="{ huoyue: xuanZeZhanKai }"
@@ -33,7 +34,7 @@
             >
               <div class="junshi-touxiang">
                 <img
-                  :src="dangQianJunShi.touXiang"
+                  :src="shengChengTouXiangURL(dangQianJunShi.touXiang)"
                   :alt="dangQianJunShi.mingCheng"
                   class="touxiang-tu"
                 />
@@ -57,7 +58,7 @@
               >
                 <div class="junshi-touxiang xiao">
                   <img
-                    :src="junShi.touXiang || '/advisors/军师玄锐暮头像.jpg'"
+                    :src="shengChengTouXiangURL(junShi.touXiang)"
                     :alt="junShi.mingCheng || ''"
                     class="touxiang-tu"
                   />
@@ -113,9 +114,6 @@
                 <span class="jilu-shijian">{{ jiLu.shi_jian }}</span>
                 <span class="jilu-jiaose">{{ jiLu.jiao_se_ming_zi }}</span>
               </div>
-              <div v-if="jiLu.dui_hua_zhai_yao" class="jilu-zhaiyao-wenben">
-                {{ jiLu.dui_hua_zhai_yao }}
-              </div>
             </div>
           </div>
         </div>
@@ -130,6 +128,7 @@ import { useRouter } from 'vue-router'
 import { qingQiuJunShiZhiDao, huoQuJunShiJiLu, huoQuJunShiLieBiao } from '@/api/聊天'
 import { huoQuFanYi } from '@/config/translations'
 import { 是业务错误 } from '@/api/请求'
+import { shengChengTouXiangURL } from '@/utils/头像'
 import type { JunShiXinXi, JunShiJiLu } from '@/types'
 
 const props = defineProps<{
@@ -155,7 +154,7 @@ const MO_REN_JUN_SHI: JunShiXinXi = {
   fuBiaoTi: huoQuFanYi('junShi', 'junShiFuBiaoTi'),
   biaoQian: huoQuFanYi('junShi', 'junShiBiaoQian'),
   miaoShu: huoQuFanYi('junShi', 'junShiMiaoShu'),
-  touXiang: '/advisors/军师玄锐暮头像.jpg',
+  touXiang: '图片/军师头像/军师玄锐暮头像.png',
 }
 
 const dangQianJunShi = ref<JunShiXinXi>({ ...MO_REN_JUN_SHI })
@@ -164,8 +163,9 @@ const router = useRouter()
 onMounted(async () => {
   try {
     const lieBiao = await huoQuJunShiLieBiao()
-    junShiLieBiaoXuanXiang.value = lieBiao
-    const xuanRuiMu = lieBiao.find((j) => j.id === 'xuanRuiMu')
+    const guoLvLieBiao = lieBiao.filter((j) => j.id === 'xuanRuiMu')
+    junShiLieBiaoXuanXiang.value = guoLvLieBiao
+    const xuanRuiMu = guoLvLieBiao.find((j) => j.id === 'xuanRuiMu')
     if (xuanRuiMu) {
       dangQianJunShi.value = xuanRuiMu
     }
@@ -304,6 +304,12 @@ function qieHuanDaoJiLu() {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.xuanze-tishi {
+  font-size: 13px;
+  color: var(--wenben-ciuse);
+  padding: 0 4px;
 }
 
 .junshi-xinxi {
@@ -513,15 +519,6 @@ function qieHuanDaoJiLu() {
   font-size: 13px;
   font-weight: 600;
   color: var(--wenben-zhuse);
-}
-
-.jilu-zhaiyao-wenben {
-  font-size: 12px;
-  color: var(--wenben-ciuse);
-  margin-top: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 @media (max-width: 480px) {

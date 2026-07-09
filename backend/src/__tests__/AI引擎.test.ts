@@ -188,6 +188,26 @@ describe('FP-09 AI对话引擎', () => {
       expect(prompt).toContain('【角色沉浸要求】')
       expect(prompt.endsWith('不要跳出角色分析。')).toBe(true)
     })
+
+    it('优化后Writer Prompt → 包含自然聊天与第一人称沉浸要素', () => {
+      const shuRu = chuangJianCeShiShuRu()
+      const prompt = gouJianWriterPrompt(shuRu)
+
+      expect(prompt).toContain('自然聊天要求')
+      expect(prompt).toContain('留白')
+      expect(prompt).toContain('第一人称沉浸')
+      expect(prompt).toContain('避免AI味')
+    })
+
+    it('优化后Director Prompt → 包含自然节奏与导演要求', () => {
+      const shuRu = chuangJianCeShiShuRu()
+      const prompt = gouJianDirectorPrompt(shuRu)
+
+      expect(prompt).toContain('导演要求')
+      expect(prompt).toContain('留白')
+      expect(prompt).toContain('推拉')
+      expect(prompt).toContain('真实大学生/青年恋人')
+    })
   })
 
   describe('Director调用', () => {

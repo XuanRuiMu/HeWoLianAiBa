@@ -282,6 +282,7 @@ export interface JunShiJiLu {
   jiao_se_ming_zi: string
   jun_shi_id: string
   jun_shi_ming_chen: string
+  jun_shi_tou_xiang?: string
   dui_hua_zhai_yao?: string
   xiao_xi_zhao_pian?: string
   liao_tian_ji_lu?: JunShiJiLuLiaoTianXiaoXi[]

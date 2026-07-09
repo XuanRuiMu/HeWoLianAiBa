@@ -8,6 +8,7 @@ import QuanJuCaiDan from '@/components/全局菜单.vue'
 import { 使用聊天仓库 } from '@/stores/聊天'
 import { 使用用户仓库 } from '@/stores/用户'
 import { huoQuFanYi } from '@/config/translations'
+import { XIAO_XI_PEI_ZHI } from '@/config/消息配置'
 import { huoQuXiaoXi, faSongXiaoXi } from '@/api/聊天'
 
 vi.mock('@/api/聊天', () => ({
@@ -189,6 +190,34 @@ describe('FP-06 消息发送与显示', () => {
       await flushPromises()
     })
 
+    it('点击发送后输入栏立即清空', async () => {
+      const { wrapper } = await mountLiaoTianYeMian()
+      vi.mocked(faSongXiaoXi).mockImplementation(() => new Promise(() => {}))
+
+      const shuRuKuang = wrapper.find('.shuru-kuang')
+      await shuRuKuang.setValue('立即清空测试')
+      await wrapper.find('.fasong-anniu').trigger('click')
+      await flushPromises()
+
+      expect((shuRuKuang.element as HTMLInputElement).value).toBe('')
+    })
+
+    it('发送中的临时消息显示发送动画标记', async () => {
+      const { wrapper } = await mountLiaoTianYeMian()
+      vi.mocked(faSongXiaoXi).mockImplementation(() => new Promise(() => {}))
+
+      const shuRuKuang = wrapper.find('.shuru-kuang')
+      await shuRuKuang.setValue('动画测试')
+      await wrapper.find('.fasong-anniu').trigger('click')
+      await flushPromises()
+
+      const xiaoXiLieBiao = wrapper.findAll('.qipao-neirong')
+      expect(xiaoXiLieBiao.length).toBeGreaterThan(0)
+      expect(xiaoXiLieBiao[xiaoXiLieBiao.length - 1].find('.fasong-zhong-biaoji').exists()).toBe(
+        true,
+      )
+    })
+
     it('发送whosyourdaddy秘籍时不触发AI发送消息事件', async () => {
       const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
       const faSongMock = vi.fn()
@@ -296,6 +325,10 @@ describe('FP-06 消息发送与显示', () => {
       expect(shiJianBiaoQian.text()).toContain('14:05')
     })
 
+    it('消息配置合并阈值为1分钟', () => {
+      expect(XIAO_XI_PEI_ZHI.heBingShiJianYuZhi).toBe(60 * 1000)
+    })
+
     it('同一分钟内的两条消息合并为同一时间分组', async () => {
       vi.setSystemTime(new Date('2026-07-08T14:05:00+08:00'))
       const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
@@ -333,6 +366,38 @@ describe('FP-06 消息发送与显示', () => {
         (x) => x.text() === '消息一' || x.text() === '消息二',
       )
       expect(quChuBiaoJi.length).toBe(2)
+    })
+
+    it('相隔超过1分钟的消息分为两个时间组', async () => {
+      vi.setSystemTime(new Date('2026-07-08T14:06:00+08:00'))
+      const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
+      const jiChuShiJian = new Date('2026-07-07T14:05:00+08:00').getTime()
+      聊天仓库.xiaoXiLieBiao = [
+        {
+          id: 'x1',
+          hui_hua_id: 'h1',
+          fa_song_zhe_id: 'u1',
+          fa_song_zhe_lei_xing: 'yonghu',
+          nei_rong: '消息一',
+          lei_xing: 'wenben',
+          shi_jian_chuo: jiChuShiJian,
+          yi_du: true,
+        },
+        {
+          id: 'x2',
+          hui_hua_id: 'h1',
+          fa_song_zhe_id: 'u1',
+          fa_song_zhe_lei_xing: 'yonghu',
+          nei_rong: '消息二',
+          lei_xing: 'wenben',
+          shi_jian_chuo: jiChuShiJian + 61 * 1000,
+          yi_du: true,
+        },
+      ]
+      await flushPromises()
+
+      const shiJianBiaoQian = wrapper.findAll('.shijian-biaoqian')
+      expect(shiJianBiaoQian.length).toBe(2)
     })
   })
 

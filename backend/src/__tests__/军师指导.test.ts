@@ -243,6 +243,24 @@ describe('FP-12 军师指导系统', () => {
       expect(yongHuPrompt).toContain('原始内容：这条会撤回')
     })
 
+    it('军师 Prompt 包含自然度提升要素', async () => {
+      mock.sheZhiXiangYing({ neiRong: '这是指导内容。' })
+      await faSongCeShiXiaoXi(ceShiYongHu!.lingPai, jiaoSeId, '自然度测试')
+
+      await request(yingYong)
+        .post('/api/聊天/军师')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ jiaoSeId })
+        .expect(200)
+
+      const junShiTiaoYong = mock.jiLu.find((ji) => ji.wenDu === 0.85 && ji.zuiDaTokens === 1500)
+      expect(junShiTiaoYong).toBeDefined()
+      const yongHuPrompt = junShiTiaoYong!.xiaoXi[1]?.neiRong || ''
+      expect(yongHuPrompt).toContain('真实损友军师')
+      expect(yongHuPrompt).toContain('真实口语化')
+      expect(yongHuPrompt).toContain('接地气')
+    })
+
     it('军师响应内容不包含具体分数或维度名', async () => {
       mock.sheZhiXiangYing({
         neiRong: 'TA现在对你挺有兴趣，关系还在试探期，多聊聊日常会更自然 😊',
@@ -325,6 +343,8 @@ describe('FP-12 军师指导系统', () => {
       const jiLu = lieBiao[0]
       expect(jiLu).toHaveProperty('jian_yi')
       expect(jiLu).toHaveProperty('shi_jian')
+      expect(jiLu).toHaveProperty('jun_shi_tou_xiang')
+      expect(jiLu.jun_shi_tou_xiang).toBe(JUN_SHI_PEI_ZHI_MO_REN.touXiang)
       expect(jiLu).toHaveProperty('hou_tai_shu_ju')
       expect(jiLu.hou_tai_shu_ju).toHaveProperty('hao_gan_du')
       expect(jiLu.hou_tai_shu_ju.hao_gan_du).toHaveProperty('xin_ren_du')
