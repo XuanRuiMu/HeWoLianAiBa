@@ -252,10 +252,6 @@ export async function chuangJianCeShiYongHu(
   shou_ji_hao: string,
   yong_hu_ming: string,
 ): Promise<ChuangJianCeShiYongHuJieGuo> {
-  await 数据库.query(
-    `ALTER TABLE "用户" ADD COLUMN IF NOT EXISTS "测试" BOOLEAN DEFAULT FALSE`,
-  )
-
   const yiCunZai = await 数据库.query(
     `SELECT 1 FROM "用户" WHERE "手机号" = $1 LIMIT 1`,
     [shou_ji_hao],

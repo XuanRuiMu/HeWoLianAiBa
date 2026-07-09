@@ -8,7 +8,11 @@
         {{ huoQuFanYi('zhanJi', 'zanWuZhanJi') }}
       </div>
       <TransitionGroup v-else name="liebiao-guodu" tag="div" class="zhanji-liebiao-neirong">
-        <div v-for="dangAn in dangAnLieBiao" :key="dangAn.id" class="zhanji-kapian">
+        <div
+          v-for="(dangAn, suoYin) in dangAnLieBiao"
+          :key="`zhanji-${suoYin}`"
+          class="zhanji-kapian"
+        >
           <div class="zhanji-zuo">
             <div class="jiaose-touxiang">
               {{
@@ -38,7 +42,7 @@
                 {{
                   huoQuFanYi('zhanJi', 'liaoTianTianShu').replace(
                     '{天}',
-                    String(dangAn.liao_tian_tian_shu),
+                    String(dangAn.liao_tian_tian_shu ?? 0),
                   )
                 }}
               </div>
@@ -329,14 +333,15 @@ function guoLvBianHua(
     .filter((x) => x.zhi !== 0)
 }
 
-function zhuangTaiWenBen(jieGuoLeiXing: string): string {
-  if (jieGuoLeiXing === 'jinxing_zhong') return huoQuFanYi('zhanJi', 'zhuangTaiJinXingZhong')
+function zhuangTaiWenBen(jieGuoLeiXing: string | undefined): string {
+  if (!jieGuoLeiXing || jieGuoLeiXing === 'jinxing_zhong')
+    return huoQuFanYi('zhanJi', 'zhuangTaiJinXingZhong')
   if (jieGuoLeiXing.startsWith('sheng_li')) return huoQuFanYi('zhanJi', 'zhuangTaiShengLi')
   return huoQuFanYi('zhanJi', 'zhuangTaiShiBai')
 }
 
-function zhuangTaiYangShi(jieGuoLeiXing: string): string {
-  if (jieGuoLeiXing === 'jinxing_zhong') return 'jinxingzhong'
+function zhuangTaiYangShi(jieGuoLeiXing: string | undefined): string {
+  if (!jieGuoLeiXing || jieGuoLeiXing === 'jinxing_zhong') return 'jinxingzhong'
   if (jieGuoLeiXing.startsWith('sheng_li')) return 'shengli'
   return 'shibai'
 }

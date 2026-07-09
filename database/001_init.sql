@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS "用户" (
     "生日" VARCHAR(20),
     "签名" TEXT,
     "管理员" BOOLEAN DEFAULT FALSE,
+    "测试" BOOLEAN DEFAULT FALSE,
     "活跃角色ID" UUID,
     "创建时间" TIMESTAMPTZ DEFAULT NOW(),
     "更新时间" TIMESTAMPTZ DEFAULT NOW()
