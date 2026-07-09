@@ -1,4 +1,5 @@
 import { 数据库 } from '../数据库'
+import { jiLuXiaoXiCaoZuo } from '../utils/debug日志'
 import type {
   AIJiaoSeXinXi,
   DuiHuaLiShiXiang,
@@ -164,9 +165,8 @@ export async function baoCunJiaoSeXiaoXi(
   )
 
   const row = jieGuo.rows[0]
-  const faSongZheLeiXing = 'jiaose'
-
-  return {
+  const faSongZheLeiXing = 'jiaose' as const
+  const xiaoXi = {
     id: String(row.ID),
     hui_hua_id: canShu.jiao_se_id,
     fa_song_zhe_id: canShu.jiao_se_id,
@@ -179,4 +179,6 @@ export async function baoCunJiaoSeXiaoXi(
     che_hui_shi_jian: row.撤回时间 ? String(row.撤回时间) : null,
     yuan_shi_nei_rong: null,
   }
+  jiLuXiaoXiCaoZuo('角色消息发送', canShu.yong_hu_id, canShu.jiao_se_id, 'jiaose', { xiao_xi_id: xiaoXi.id })
+  return xiaoXi
 }

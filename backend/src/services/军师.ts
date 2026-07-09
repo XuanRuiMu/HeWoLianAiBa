@@ -14,6 +14,7 @@ import {
   type JunShiJiLuXiang,
   type JunShiJiLuLiaoTianXiaoXi,
 } from './军师缓存'
+import { jiLuJunShiQiuZhu } from '../utils/debug日志'
 import type { HaoGanDuXinXi } from '../types'
 
 export interface JunShiLieBiaoXiangYing {
@@ -75,14 +76,17 @@ export async function qingQiuJunShiZhiDao(
 ): Promise<{ cheng_gong: boolean; jie_guo?: JunShiZhiDaoJieGuo; cuo_wu_ma?: string; ti_shi?: string; zhuang_tai_ma?: number }> {
   const jiaoSeSuoYouZhe = await huoQuJiaoSeSuoYouZhe(canShu.jiao_se_id)
   if (!jiaoSeSuoYouZhe) {
+    jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, false, 'JIAO_SE_BU_CUN_ZAI')
     return { cheng_gong: false, cuo_wu_ma: 'JIAO_SE_BU_CUN_ZAI', ti_shi: huoQuFanYi('junShi', 'jiaoSeBuCunZai'), zhuang_tai_ma: 404 }
   }
   if (jiaoSeSuoYouZhe.yong_hu_id !== canShu.yong_hu_id) {
+    jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, false, 'WU_QUAN_XIAN')
     return { cheng_gong: false, cuo_wu_ma: 'WU_QUAN_XIAN', ti_shi: huoQuFanYi('junShi', 'wuQuanXian'), zhuang_tai_ma: 403 }
   }
 
   const jiaoSeXinXi = await huoQuJiaoSeJiBenXinXi(canShu.jiao_se_id)
   if (!jiaoSeXinXi) {
+    jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, false, 'JIAO_SE_BU_CUN_ZAI')
     return { cheng_gong: false, cuo_wu_ma: 'JIAO_SE_BU_CUN_ZAI', ti_shi: huoQuFanYi('junShi', 'jiaoSeBuCunZai'), zhuang_tai_ma: 404 }
   }
 
@@ -98,6 +102,7 @@ export async function qingQiuJunShiZhiDao(
     .reverse()
 
   if (youXiaoXiaoXi.length === 0) {
+    jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, false, 'WU_LIAO_TIAN_JI_LU')
     return {
       cheng_gong: false,
       cuo_wu_ma: 'WU_LIAO_TIAN_JI_LU',
@@ -111,6 +116,7 @@ export async function qingQiuJunShiZhiDao(
 
   const shiChongFu = await jianChaJunShiChongFu(canShu.yong_hu_id, canShu.jiao_se_id, haXi)
   if (shiChongFu) {
+    jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, false, 'JUN_SHI_CHONG_FU')
     return { cheng_gong: false, cuo_wu_ma: 'JUN_SHI_CHONG_FU', ti_shi: huoQuFanYi('junShi', 'junShiChongFu'), zhuang_tai_ma: 409 }
   }
 
@@ -169,6 +175,8 @@ export async function qingQiuJunShiZhiDao(
     baoCunJunShiHaXi(canShu.yong_hu_id, canShu.jiao_se_id, haXi),
     baoCunJunShiJiLu(canShu.yong_hu_id, canShu.jiao_se_id, jiLu),
   ])
+
+  jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, true)
 
   return {
     cheng_gong: true,

@@ -21,6 +21,13 @@ function jieXiGuanLiYuanShouJiHao(shouJiHao: string): string[] {
     .filter((hao) => hao.length > 0)
 }
 
+function jieXiZiFuChuanLieBiao(zhi: string): string[] {
+  return zhi
+    .split(',')
+    .map((x) => x.trim())
+    .filter((x) => x.length > 0)
+}
+
 export const peiZhi = {
   duanKou: parseInt(huoQuHuanJingBianLiang('PORT', '3000'), 10),
   huanJing: huoQuHuanJingBianLiang('NODE_ENV', 'development'),
@@ -75,6 +82,21 @@ export const peiZhi = {
 
   shouJiHao: {
     zhengZe: /^1[3-9]\d{9}$/,
+  },
+
+  minGanZiDuan: {
+    guanJianZi: jieXiZiFuChuanLieBiao(
+      huoQuHuanJingBianLiang(
+        'MIN_GAN_GUAN_JIAN_ZI',
+        'password,miMa,mi_ma,yanZhengMa,yan_zheng_ma,token,lingPai,ling_pai,jwt,mi_yao,miYao,apiKey,api_key,apiMiYao,api_mi_yao',
+      ),
+    ),
+    ziDuanMing: jieXiZiFuChuanLieBiao(
+      huoQuHuanJingBianLiang(
+        'MIN_GAN_ZI_DUAN_MING',
+        'password,miMa,mi_ma,yanZhengMa,yan_zheng_ma,token,lingPai,ling_pai,jwt,miYao,mi_yao,apiKey,api_key,apiMiYao,api_mi_yao,fangWenMiYao,fang_wen_mi_yao,fangWenMiYaoMiMa,fang_wen_mi_yao_mi_ma,ALIYUN_ACCESS_KEY_SECRET,DEEPSEEK_API_KEY,JWT_SECRET',
+      ),
+    ),
   },
 
   yunXuDeYuan: jieXiYunXuYuan(huoQuHuanJingBianLiang(

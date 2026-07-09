@@ -16,3 +16,4 @@ playwright-report/
 *.tsbuildinfo
 package-lock.json
 测试截图/
+e2e/.fu-wu-zhuang-tai.json

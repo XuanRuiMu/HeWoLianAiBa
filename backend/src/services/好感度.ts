@@ -2,6 +2,7 @@ import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import { HAO_GAN_DU_PEI_ZHI, HaoGanDuJieDuanYingShe } from '../config/好感度配置'
 import { xieRuJiYi } from './记忆'
+import { jiLuHaoGanDuBianHua } from '../utils/debug日志'
 import type { HaoGanDuXinXi, GongKaiHaoGanDuXinXi, WanZhengHaoGanDuXinXi } from '../types'
 
 export interface HaoGanDuSiWeiBianHua {
@@ -209,6 +210,8 @@ export async function gengXinHaoGanDu(
       await xieRuJieDuanBianGengJiYi(yong_hu_id, jiao_se_id, jiuJieDuanMing, xinJieDuanMing, xinZongFen)
     }
 
+    jiLuHaoGanDuBianHua(yong_hu_id, jiao_se_id, { ...bianHua }, xinZongFen)
+
     return {
       cheng_gong: true,
       hao_gan_du: {
@@ -267,6 +270,13 @@ export async function sheZhiMiJiHaoGanDu(
   if (jiuJieDuanMing !== xinJieDuanMing) {
     await xieRuJieDuanBianGengJiYi(yong_hu_id, jiao_se_id, jiuJieDuanMing, xinJieDuanMing, muBiaoFen)
   }
+
+  jiLuHaoGanDuBianHua(yong_hu_id, jiao_se_id, {
+    xin_ren_du_bian_hua: xinSiWei.xin_ren_du - jiuHaoGanDu.xin_ren_du,
+    qin_mi_du_bian_hua: xinSiWei.qin_mi_du - jiuHaoGanDu.qin_mi_du,
+    qu_wei_du_bian_hua: xinSiWei.qu_wei_du - jiuHaoGanDu.qu_wei_du,
+    guan_huai_du_bian_hua: xinSiWei.guan_huai_du - jiuHaoGanDu.guan_huai_du,
+  }, muBiaoFen)
 
   return {
     cheng_gong: true,

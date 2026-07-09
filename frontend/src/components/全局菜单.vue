@@ -298,11 +298,7 @@ const xianShiJiaoSeMing = computed(() => {
   if (聊天仓库.zhengZaiShuRu) {
     return huoQuFanYi('liaoTian', 'duiFangZhengZaiShuRu')
   }
-  return (
-    聊天仓库.jiaoSeXinXi?.wei_xin_ming ||
-    聊天仓库.jiaoSeXinXi?.ming_zi ||
-    huoQuFanYi('liaoTian', 'duiFang')
-  )
+  return 聊天仓库.jiaoSeXinXi?.wei_xin_ming || 聊天仓库.jiaoSeXinXi?.ming_zi || huoQuFanYi('liaoTian', 'duiFang')
 })
 
 const fanYiBiaoTiDuiZhao: Record<

@@ -73,9 +73,15 @@ export async function huoQuJunShiLieBiao(): Promise<JunShiXinXi[]> {
 }
 
 export async function qingQiuJunShiZhiDao(jiaoSeId: string): Promise<JunShiZhiDaoJieGuo> {
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: JunShiZhiDaoJieGuo }>('/聊天/军师', {
-    jiaoSeId,
-  })
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: JunShiZhiDaoJieGuo }>(
+    '/聊天/军师',
+    {
+      jiaoSeId,
+    },
+    {
+      timeout: 120000,
+    },
+  )
   return 响应.data.shu_ju
 }
 
@@ -87,8 +93,10 @@ export async function huoQuJunShiJiLu(jiaoSeId: string): Promise<JunShiJiLu[]> {
 }
 
 export async function huoQuDangAnLieBiao(): Promise<DangAnXiangQing[]> {
-  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: DangAnXiangQing[] }>('/战绩/列表')
-  return 响应.data.shu_ju
+  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: { dangAnLieBiao: DangAnXiangQing[] } }>(
+    '/战绩/列表',
+  )
+  return 响应.data.shu_ju?.dangAnLieBiao || []
 }
 
 export async function huoQuDangAnXiangQing(dangAnId: string): Promise<DangAnXiangQing> {

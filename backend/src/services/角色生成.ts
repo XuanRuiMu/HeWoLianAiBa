@@ -444,6 +444,33 @@ export async function baoCunJiaoSe(
     ],
   )
 
+  const guanXiJieDuan = huoQuGuanXiJieDuan(jiaoSe.hao_gan_du_zong_fen)
+  await 数据库.query(
+    `INSERT INTO "游戏档案" (
+      "用户ID", "角色ID", "角色名字", "是否渣型", "结果类型", "是否封存",
+      "好感度总分", "关系阶段", "聊天天数", "消息总数"
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    ON CONFLICT ("用户ID", "角色ID") DO UPDATE SET
+      "角色名字" = EXCLUDED."角色名字",
+      "是否渣型" = EXCLUDED."是否渣型",
+      "结果类型" = EXCLUDED."结果类型",
+      "是否封存" = EXCLUDED."是否封存",
+      "好感度总分" = EXCLUDED."好感度总分",
+      "关系阶段" = EXCLUDED."关系阶段"`,
+    [
+      yongHuId,
+      jiaoSeId,
+      jiaoSe.ming_zi,
+      jiaoSe.shi_fou_zha_xing,
+      '',
+      false,
+      jiaoSe.hao_gan_du_zong_fen,
+      guanXiJieDuan,
+      0,
+      0,
+    ],
+  )
+
   await 数据库.query(
     `UPDATE "用户" SET "活跃角色ID" = $1, "目标性别" = $2, "性格选择" = $3, "渣男渣女变体" = $4 WHERE "ID" = $5`,
     [

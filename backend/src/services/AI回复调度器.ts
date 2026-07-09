@@ -13,6 +13,7 @@ import {
   chuLiAIHuiFuHouJieShuJianCha,
 } from './胜利失败条件'
 import { jiaoSeShiFouBeiDuoShe } from './夺舍'
+import { jiLuSocketShiJian, jiLuXiaoXiCaoZuo } from '../utils/debug日志'
 import type {
   AIYinQingShuChu,
   AIYinQingShuRu,
@@ -167,12 +168,14 @@ export class AI回复调度器 {
 
     try {
       this.io.to(this.用户ID).emit('对方正在输入', this.角色ID)
+      jiLuSocketShiJian('对方正在输入', this.用户ID, { jiao_se_id: this.角色ID })
 
       const ai结果 = await this.运行AI()
       if (信号.aborted || 处理ID !== this.当前处理ID) return
 
       if (ai结果.shi_fou_che_hui) {
         await cheHuiJiaoSeXiaoXi({ yong_hu_id: this.用户ID, jiao_se_id: this.角色ID })
+        jiLuXiaoXiCaoZuo('角色消息撤回', this.用户ID, this.角色ID, 'jiaose')
       }
 
       if (!ai结果.shi_fou_hui_fu || ai结果.xiao_xi_lie_biao.length === 0) {
@@ -180,6 +183,7 @@ export class AI回复调度器 {
           角色ID: this.角色ID,
           消息列表: [],
         })
+        jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 0 })
         return
       }
 
@@ -200,6 +204,7 @@ export class AI回复调度器 {
         角色ID: this.角色ID,
         消息列表: [],
       })
+      jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 0, cuo_wu: true })
     } finally {
       if (处理ID === this.当前处理ID) {
         this.处理中 = false
@@ -221,6 +226,7 @@ export class AI回复调度器 {
       角色ID: this.角色ID,
       消息列表: [保存结果],
     })
+    jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 1, zhu_dong_biao_bai: true })
   }
 
   private async 运行AI(): Promise<AIYinQingShuChu> {
@@ -292,6 +298,7 @@ export class AI回复调度器 {
         角色ID: this.角色ID,
         消息列表: [保存结果],
       })
+      jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 1, xiao_xi_id: 保存结果?.id })
 
       if (最新用户消息) {
         await this.更新好感度(最新用户消息, 消息列表[i])

@@ -316,10 +316,10 @@ async function daKaiFuPan(dangAn: 档案详情) {
   junShiZhiDaoJiLu.value = []
   try {
     let fuPanShuJu = await huoQuFuPan(dangAn.id)
+    junShiZhiDaoJiLu.value = fuPanShuJu.jun_shi_zhi_dao_ji_lu || []
     if (!fuPanShuJu.jia_zai_zhong) {
       fuPanNeiRong.value = fuPanShuJu.fu_pan_nei_rong
       fuPanShiJianXian.value = fuPanShuJu.fu_pan_shi_jian_xian || []
-      junShiZhiDaoJiLu.value = fuPanShuJu.jun_shi_zhi_dao_ji_lu || []
       fuPanJiaZaiZhong.value = false
     } else {
       let changShiCiShu = 0
@@ -334,13 +334,13 @@ async function daKaiFuPan(dangAn: 档案详情) {
         if (!fuPanZhanKai.value || fuPanQingQiuId.value !== benCiId) return
         try {
           fuPanShuJu = await huoQuFuPan(dangAn.id)
+          junShiZhiDaoJiLu.value = fuPanShuJu.jun_shi_zhi_dao_ji_lu || []
         } catch (e) {
           console.warn('轮询复盘数据失败', e)
         }
         if (fuPanShuJu.fu_pan_nei_rong || !fuPanShuJu.jia_zai_zhong) {
           fuPanNeiRong.value = fuPanShuJu.fu_pan_nei_rong
           fuPanShiJianXian.value = fuPanShuJu.fu_pan_shi_jian_xian || []
-          junShiZhiDaoJiLu.value = fuPanShuJu.jun_shi_zhi_dao_ji_lu || []
           fuPanJiaZaiZhong.value = false
           break
         }

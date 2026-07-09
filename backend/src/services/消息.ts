@@ -3,6 +3,7 @@ import { huoQuFanYi } from '../config/translations'
 import { XIAO_XI_PEI_ZHI } from '../config/消息配置'
 import { huoQuIo } from '../socket/io'
 import { yanZhengUUID } from '../utils/验证'
+import { jiLuXiaoXiCaoZuo, jiLuSocketShiJian } from '../utils/debug日志'
 
 export interface XiaoXiXinXi {
   id: string
@@ -52,6 +53,11 @@ function tuiSongCheHuiShiJian(
   if (io) {
     io.to(yong_hu_id).emit('消息撤回', {
       hui_hua_id: jiao_se_id,
+      xiao_xi_id,
+      fa_song_zhe_lei_xing,
+    })
+    jiLuSocketShiJian('消息撤回', yong_hu_id, {
+      jiao_se_id,
       xiao_xi_id,
       fa_song_zhe_lei_xing,
     })
@@ -176,7 +182,17 @@ export async function chuangJianYongHuXiaoXi(
   )
 
   const xiaoXi = yingSheXiaoXi(jieGuo.rows[0])
+  jiLuXiaoXiCaoZuo('用户消息发送', canShu.yong_hu_id, canShu.jiao_se_id, 'yonghu', { xiao_xi_id: xiaoXi.id })
   return { cheng_gong: true, xiao_xi: xiaoXi }
+}
+
+function jiLuCheHuiCaoZuo(
+  caoZuo: string,
+  yong_hu_id: string,
+  jiao_se_id: string,
+  xiao_xi_id: string,
+): void {
+  jiLuXiaoXiCaoZuo(caoZuo, yong_hu_id, jiao_se_id, 'yonghu', { xiao_xi_id })
 }
 
 export async function cheHuiYongHuXiaoXi(
@@ -215,6 +231,7 @@ export async function cheHuiYongHuXiaoXi(
   )
 
   tuiSongCheHuiShiJian(canShu.yong_hu_id, canShu.jiao_se_id, canShu.xiao_xi_id, 'yonghu')
+  jiLuCheHuiCaoZuo('用户消息撤回', canShu.yong_hu_id, canShu.jiao_se_id, canShu.xiao_xi_id)
 
   return { cheng_gong: true, xiao_xi: yingSheXiaoXi(gengXinJieGuo.rows[0]) }
 }
@@ -248,6 +265,7 @@ export async function cheHuiJiaoSeXiaoXi(
 
   const cheHuiXiaoXi = yingSheXiaoXi(gengXinJieGuo.rows[0])
   tuiSongCheHuiShiJian(canShu.yong_hu_id, canShu.jiao_se_id, cheHuiXiaoXi.id, 'jiaose')
+  jiLuXiaoXiCaoZuo('角色消息撤回', canShu.yong_hu_id, canShu.jiao_se_id, 'jiaose', { xiao_xi_id: cheHuiXiaoXi.id })
 
   return { cheng_gong: true, xiao_xi: cheHuiXiaoXi }
 }

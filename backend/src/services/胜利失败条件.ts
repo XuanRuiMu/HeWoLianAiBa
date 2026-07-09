@@ -3,6 +3,7 @@ import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gengXinHaoGanDu, huoQuWanZhengHaoGanDu } from './好感度'
 import { huoQuIo } from '../socket/io'
 import { shengChengFuPan } from './复盘'
+import { jiLuYouXiJieJu, jiLuSocketShiJian } from '../utils/debug日志'
 import type {
   AIJiaoSeXinXi,
   BiaoBaiJianCeJieGuo,
@@ -272,6 +273,11 @@ function tuiSongYouXiShiJian(
       xiao_xi: jie_guo.zhuang_tai_wen_ben,
       ke_ji_xu_liao_tian: jie_guo.ke_ji_xu_liao_tian,
     })
+    jiLuSocketShiJian('游戏事件', yong_hu_id, {
+      jiao_se_id,
+      jie_guo_lei_xing: jie_guo.jie_guo_lei_xing,
+      ke_ji_xu_liao_tian: jie_guo.ke_ji_xu_liao_tian,
+    })
   }
 }
 
@@ -305,6 +311,8 @@ export async function chuLiYouXiJieShu(
 ): Promise<YouXiJieShuJieGuo> {
   const keJiXuLiaoTian = jie_guo_lei_xing === 'sheng_li_ai_qing'
   const chengJiu = jie_guo_lei_xing === 'sheng_li_shi_po' ? '火眼金睛' : undefined
+
+  jiLuYouXiJieJu(yong_hu_id, jiao_se_id, JIE_GUO_WEN_BEN_YING_SHE[jie_guo_lei_xing])
 
   await Promise.all([
     gengXinJiaoSeJieJuZhuangTai(jiao_se_id, jie_guo_lei_xing),

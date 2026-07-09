@@ -580,6 +580,9 @@ watch(
       'huShanShengLi',
       'zhaXingTaoTuo',
       'taoTuo',
+      'sheng_li_ai_qing',
+      'sheng_li_hu_shan_sheng_li',
+      'sheng_li_shi_po',
     ]
     if (shengLiLeiXing.includes(shiJian.lei_xing)) {
       youXiShiJianLeiXing.value = 'shengli'

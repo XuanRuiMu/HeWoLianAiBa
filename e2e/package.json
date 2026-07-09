@@ -1,0 +1,18 @@
+{
+  "name": "he-wo-lian-ai-ba-e2e",
+  "version": "1.0.0",
+  "description": "和我恋爱吧 E2E 测试",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "install:browsers": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.0.0",
+    "dotenv": "^17.4.2",
+    "typescript": "^5.7.0"
+  }
+}

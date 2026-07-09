@@ -18,6 +18,7 @@ import zhanJiLuYou from './routes/战绩'
 import tongZhiLuYou from './routes/通知'
 import guanLiYuanLuYou from './routes/管理员'
 import { chengGongXiangYing, shiBaiXiangYing } from './utils/xiangying'
+import { chuangJianHTTPRiZhiZhongJianJian } from './utils/debug日志'
 import { renZhengSocketZhongJianJian } from './socket/认证'
 import { 初始化聊天Socket } from './socket/聊天'
 import { chuShiHuaTongZhiSocket } from './socket/通知'
@@ -65,6 +66,13 @@ yingYong.use((qingQiu, _xiangYing, xiaYiBu) => {
 })
 
 yingYong.use(express.json({ limit: '1mb' }))
+
+yingYong.use((qingQiu, _xiangYing, xiaYiBu) => {
+  ;(qingQiu as unknown as Record<string, number>).kai_shi_shi_jian = Date.now()
+  xiaYiBu()
+})
+
+yingYong.use(chuangJianHTTPRiZhiZhongJianJian())
 
 yingYong.use(IP封禁中间件)
 yingYong.use(changGuiXianLiu)

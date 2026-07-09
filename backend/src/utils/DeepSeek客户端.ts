@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import { AI_PEI_ZHI } from '../config/AI配置'
 import { peiZhi } from '../config'
+import { jiLuAIJiLu } from './debug日志'
 
 export interface DuiHuaXiaoXi {
   jiaoSe: 'system' | 'user' | 'assistant'
@@ -54,11 +55,15 @@ export function chongZhiDeepSeekKeHuDuan(): void {
   shiLi = null
 }
 
-export async function tiaoYongDeepSeek(canShu: TiaoYongCanShu): Promise<TiaoYongJieGuo> {
+export async function tiaoYongDeepSeek(
+  canShu: TiaoYongCanShu,
+  moXingLeiXing: string = 'DeepSeek',
+): Promise<TiaoYongJieGuo> {
   if (mockTiaoYong) {
     return mockTiaoYong(canShu)
   }
 
+  const kaiShiShiJian = Date.now()
   const keHuDuan = huoQuDeepSeekKeHuDuan()
   const moXing = canShu.moXing || AI_PEI_ZHI.deepSeek.moXing
   const xiangYingGeShi = canShu.xiangYingGeShi || { type: 'text' as const }
@@ -71,25 +76,34 @@ export async function tiaoYongDeepSeek(canShu: TiaoYongCanShu): Promise<TiaoYong
     tiShiCanShu.reasoning_effort = canShu.reasoningEffort
   }
 
-  const xiangYing = await keHuDuan.chat.completions.create({
-    model: moXing,
-    messages: canShu.xiaoXi.map((xiaoXi) => ({
-      role: xiaoXi.jiaoSe,
-      content: xiaoXi.neiRong,
-    })),
-    temperature: canShu.wenDu,
-    max_tokens: canShu.zuiDaTokens,
-    response_format: xiangYingGeShi,
-    ...tiShiCanShu,
-  })
+  try {
+    const xiangYing = await keHuDuan.chat.completions.create({
+      model: moXing,
+      messages: canShu.xiaoXi.map((xiaoXi) => ({
+        role: xiaoXi.jiaoSe,
+        content: xiaoXi.neiRong,
+      })),
+      temperature: canShu.wenDu,
+      max_tokens: canShu.zuiDaTokens,
+      response_format: xiangYingGeShi,
+      ...tiShiCanShu,
+    })
 
-  const xuanZe = xiangYing.choices[0]
-  const neiRong = xuanZe?.message?.content || ''
+    const xuanZe = xiangYing.choices[0]
+    const neiRong = xuanZe?.message?.content || ''
+    const haoShi = Date.now() - kaiShiShiJian
+    jiLuAIJiLu(moXingLeiXing, moXing, haoShi, true)
 
-  return {
-    neiRong,
-    xinXi: xuanZe?.message || { role: 'assistant', content: '' },
-    yuanShuJu: xiangYing,
+    return {
+      neiRong,
+      xinXi: xuanZe?.message || { role: 'assistant', content: '' },
+      yuanShuJu: xiangYing,
+    }
+  } catch (cuoWu) {
+    const haoShi = Date.now() - kaiShiShiJian
+    const cuoWuXinXi = cuoWu instanceof Error ? cuoWu.message : String(cuoWu)
+    jiLuAIJiLu(moXingLeiXing, moXing, haoShi, false, cuoWuXinXi)
+    throw cuoWu
   }
 }
 
@@ -98,13 +112,16 @@ export function genJuPeiZhiTiaoYong(
   xiaoXi: DuiHuaXiaoXi[],
 ): Promise<TiaoYongJieGuo> {
   const moXingCanShu = AI_PEI_ZHI.moXing[moXingLeiXing]
-  return tiaoYongDeepSeek({
-    moXing: moXingCanShu.moXing,
-    wenDu: moXingCanShu.wenDu,
-    zuiDaTokens: moXingCanShu.zuiDaTokens,
-    xiangYingGeShi: moXingCanShu.xiangYingGeShi,
-    enableThinking: moXingCanShu.enableThinking,
-    reasoningEffort: moXingCanShu.reasoningEffort,
-    xiaoXi,
-  })
+  return tiaoYongDeepSeek(
+    {
+      moXing: moXingCanShu.moXing,
+      wenDu: moXingCanShu.wenDu,
+      zuiDaTokens: moXingCanShu.zuiDaTokens,
+      xiangYingGeShi: moXingCanShu.xiangYingGeShi,
+      enableThinking: moXingCanShu.enableThinking,
+      reasoningEffort: moXingCanShu.reasoningEffort,
+      xiaoXi,
+    },
+    moXingLeiXing,
+  )
 }

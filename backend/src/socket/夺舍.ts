@@ -9,6 +9,7 @@ import {
   huoQuJiaoSeYongHuId,
 } from '../services/夺舍'
 import { peiZhi } from '../config'
+import { jiLuSocketShiJian, jiLuXiaoXiCaoZuo } from '../utils/debug日志'
 
 function panDuanShiGuanLiYuan(shouJiHao: string): boolean {
   return peiZhi.shenYongYuan.yunXuLieBiao.includes(shouJiHao)
@@ -24,6 +25,7 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
     if (!yongHu) return
 
     const shiGuanLiYuan = panDuanShiGuanLiYuan(yongHu.shouJiHao)
+    jiLuSocketShiJian('Socket连接', yongHu.yongHuId, { socket_id: socket.id, shi_jian: 'duo_she', shi_guan_li_yuan: shiGuanLiYuan })
 
     socket.on('夺舍', async (jiao_se_id: unknown, huiDiao?: (jieGuo: unknown) => void) => {
       if (!shiGuanLiYuan) {
@@ -42,6 +44,7 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
         [yongHu.yongHuId, jiaoSeId],
       )
       socket.join(shengChengDuoSheFangJian(jiaoSeId))
+      jiLuSocketShiJian('夺舍', yongHu.yongHuId, { jiao_se_id: jiaoSeId, socket_id: socket.id })
       if (huiDiao) huiDiao({ cheng_gong: true, jiao_se_id: jiaoSeId })
     })
 
@@ -69,6 +72,7 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
         [yongHu.yongHuId, jiaoSeId],
       )
       socket.leave(shengChengDuoSheFangJian(jiaoSeId))
+      jiLuSocketShiJian('归还', yongHu.yongHuId, { jiao_se_id: jiaoSeId, socket_id: socket.id })
       if (huiDiao) huiDiao({ cheng_gong: true, jiao_se_id: jiaoSeId })
     })
 
@@ -81,6 +85,7 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
       const yongHuId = await huoQuJiaoSeYongHuId(jiaoSeId)
       if (!yongHuId) return
 
+      jiLuSocketShiJian('开始输入', yongHu.yongHuId, { jiao_se_id: jiaoSeId, mu_biao_yong_hu_id: yongHuId, socket_id: socket.id })
       io.to(yongHuId).emit('对方正在输入', jiaoSeId)
     })
 
@@ -101,11 +106,16 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
       try {
         const xiaoXi = await baoCunJiaoSeXiaoXi({ yong_hu_id: yongHuId, jiao_se_id: jiaoSeId, nei_rong: neiRong })
         io.to(yongHuId).emit('角色回复', { 角色ID: jiaoSeId, 消息列表: [xiaoXi] })
+        jiLuXiaoXiCaoZuo('夺舍回复发送', yongHuId, jiaoSeId, 'jiaose', { socket_id: socket.id, guan_li_yuan_id: yongHu.yongHuId })
         if (huiDiao) huiDiao({ cheng_gong: true, xiao_xi: xiaoXi })
       } catch (cuoWu) {
         console.error('夺舍回复保存失败', cuoWu)
         if (huiDiao) huiDiao({ cheng_gong: false, ti_shi: '保存失败' })
       }
+    })
+
+    socket.on('disconnect', () => {
+      jiLuSocketShiJian('Socket断开', yongHu.yongHuId, { socket_id: socket.id, shi_jian: 'duo_she' })
     })
   })
 }

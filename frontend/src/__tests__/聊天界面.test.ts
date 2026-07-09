@@ -505,7 +505,7 @@ describe('FP-A11 军师指导后AI回复机制保持正常', () => {
 
   it('App.vue 使用 KeepAlive 缓存聊天页组件', () => {
     expect(appYuanMa).toContain('<KeepAlive')
-    expect(appYuanMa).toContain(':include="[\'liaoTian\']"')
+    expect(appYuanMa).toContain(":include=\"['liaoTian']\"")
   })
 
   it('聊天页组件声明 name 为 liaoTian 以匹配 KeepAlive include', () => {

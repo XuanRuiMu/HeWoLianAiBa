@@ -15,19 +15,14 @@ describe('请求拦截器', () => {
           interceptors: {
             request: { use: vi.fn() },
             response: {
-              use: (
-                success: (response: { data: unknown }) => unknown,
-                error: (err: unknown) => unknown,
-              ) => {
+              use: (success: (response: { data: unknown }) => unknown, error: (err: unknown) => unknown) => {
                 successHandler = success
                 errorHandler = error
               },
             },
           },
         })),
-        isAxiosError: vi.fn(
-          (value: unknown) => (value as { isAxiosError?: boolean }).isAxiosError === true,
-        ),
+        isAxiosError: vi.fn((value: unknown) => (value as { isAxiosError?: boolean }).isAxiosError === true),
       },
     }))
 

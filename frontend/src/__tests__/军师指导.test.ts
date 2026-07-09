@@ -174,9 +174,7 @@ describe('FP-12 军师指导系统前端', () => {
 
       const xuanZeXiang = wrapper.findAll('.junshi-xuanze-xiang')
       expect(xuanZeXiang.length).toBe(1)
-      expect(xuanZeXiang[0].find('.junshi-mingcheng').text()).toBe(
-        huoQuFanYi('junShi', 'junShiMing'),
-      )
+      expect(xuanZeXiang[0].find('.junshi-mingcheng').text()).toBe(huoQuFanYi('junShi', 'junShiMing'))
     })
   })
 

@@ -5,6 +5,7 @@ import { huoQuJiaoSeIELeiXing } from '../services/AI输入准备'
 import { jiaoSeShiFouBeiDuoShe } from '../services/夺舍'
 import { zhuanFaYongHuXiaoXiGeiGuanLiYuan } from './夺舍'
 import { 数据库 } from '../数据库'
+import { jiLuSocketShiJian, jiLuXiaoXiCaoZuo } from '../utils/debug日志'
 
 interface TiaoDuQiJiLu {
   角色ID: string
@@ -72,6 +73,8 @@ export function 初始化聊天Socket(io: Server): void {
       return
     }
 
+    jiLuSocketShiJian('Socket连接', 用户ID, { socket_id: socket.id, shi_jian: 'liao_tian' })
+
     socket.on('加入聊天', async (角色ID: unknown) => {
       const 角色ID字符串 = typeof 角色ID === 'string' ? 角色ID : ''
       if (!角色ID字符串) {
@@ -97,11 +100,14 @@ export function 初始化聊天Socket(io: Server): void {
       const xinJiLu = { 角色ID: 角色ID字符串, 调度器 }
       socketTiaoDuQiMap.set(socket.id, xinJiLu)
       jiaoSeTiaoDuQiMap.set(shengChengJiaoSeTiaoDuQiJian(用户ID, 角色ID字符串), xinJiLu)
+      jiLuSocketShiJian('加入聊天', 用户ID, { jiao_se_id: 角色ID字符串, socket_id: socket.id })
     })
 
     socket.on('发送消息', async () => {
       const jiLu = socketTiaoDuQiMap.get(socket.id)
       if (!jiLu) return
+
+      jiLuXiaoXiCaoZuo('用户发送消息触发AI处理', 用户ID, jiLu.角色ID, 'yonghu', { socket_id: socket.id })
 
       const beiDuoShe = await jiaoSeShiFouBeiDuoShe(jiLu.角色ID)
       if (beiDuoShe) {
@@ -122,6 +128,7 @@ export function 初始化聊天Socket(io: Server): void {
         jiaoSeTiaoDuQiMap.delete(shengChengJiaoSeTiaoDuQiJian(用户ID, jiLu.角色ID))
         socketTiaoDuQiMap.delete(socket.id)
       }
+      jiLuSocketShiJian('Socket断开', 用户ID, { socket_id: socket.id })
     })
   })
 }

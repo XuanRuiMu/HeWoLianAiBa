@@ -192,7 +192,9 @@ describe('FP-06 消息发送与显示', () => {
 
     it('点击发送后输入栏立即清空', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
-      vi.mocked(faSongXiaoXi).mockImplementation(() => new Promise(() => {}))
+      vi.mocked(faSongXiaoXi).mockImplementation(
+        () => new Promise(() => {}),
+      )
 
       const shuRuKuang = wrapper.find('.shuru-kuang')
       await shuRuKuang.setValue('立即清空测试')
@@ -204,7 +206,9 @@ describe('FP-06 消息发送与显示', () => {
 
     it('发送中的临时消息显示发送动画标记', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
-      vi.mocked(faSongXiaoXi).mockImplementation(() => new Promise(() => {}))
+      vi.mocked(faSongXiaoXi).mockImplementation(
+        () => new Promise(() => {}),
+      )
 
       const shuRuKuang = wrapper.find('.shuru-kuang')
       await shuRuKuang.setValue('动画测试')
@@ -213,9 +217,7 @@ describe('FP-06 消息发送与显示', () => {
 
       const xiaoXiLieBiao = wrapper.findAll('.qipao-neirong')
       expect(xiaoXiLieBiao.length).toBeGreaterThan(0)
-      expect(xiaoXiLieBiao[xiaoXiLieBiao.length - 1].find('.fasong-zhong-biaoji').exists()).toBe(
-        true,
-      )
+      expect(xiaoXiLieBiao[xiaoXiLieBiao.length - 1].find('.fasong-zhong-biaoji').exists()).toBe(true)
     })
 
     it('发送whosyourdaddy秘籍时不触发AI发送消息事件', async () => {
