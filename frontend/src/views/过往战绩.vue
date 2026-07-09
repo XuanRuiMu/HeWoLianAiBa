@@ -10,7 +10,7 @@
       <TransitionGroup v-else name="liebiao-guodu" tag="div" class="zhanji-liebiao-neirong">
         <div
           v-for="(dangAn, suoYin) in dangAnLieBiao"
-          :key="`zhanji-${suoYin}`"
+          :key="dangAn.id ?? `zhanji-${suoYin}`"
           class="zhanji-kapian"
         >
           <div class="zhanji-zuo">

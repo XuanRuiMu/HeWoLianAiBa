@@ -229,6 +229,20 @@ describe('FP-13 过往战绩与复盘前端', () => {
 
       expect(luYou.currentRoute.value.path).toBe('/chat/jiao-se-3')
     })
+
+    it('后端未返回 id 时仍能用索引兜底渲染列表', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue([
+        { ...chuangJianDangAnLieBiao()[0], id: undefined },
+        { ...chuangJianDangAnLieBiao()[1], id: undefined },
+      ] as unknown as DangAnXiangQing[])
+
+      const { wrapper } = await mountZuJian()
+      const lieBiao = wrapper.findAll('.zhanji-kapian')
+      expect(lieBiao.length).toBe(2)
+      expect(lieBiao[0].text()).toContain('小甜心')
+      expect(lieBiao[1].text()).toContain('高冷姐')
+    })
   })
 
   describe('复盘弹窗', () => {
