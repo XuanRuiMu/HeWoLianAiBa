@@ -6,7 +6,7 @@
 | -------- | --------------------------------- |
 | 任务     | 修复和我恋爱吧17项问题            |
 | 状态     | 进行中                            |
-| 循环计数 | 7                                 |
+| 循环计数 | 8                                 |
 
 ## 目标
 
@@ -74,9 +74,9 @@
 | ID    | 描述 | 验收标准 | 依赖 | 状态 | 循环 |
 | ----- | ---- | -------- | ---- | ---- | ---- |
 | FP-A1 | 清理声明性文件日期 | AGENTS.md/CLAUDE.md/需求文档.md等声明性文件中仅保留2026.07.09日期，其他日期已删除；文件通过lint | 无 | 已完成 | 1 |
-| FP-A2 | 修复消息发送动画与输入栏清空 | 点击发送/回车后输入栏立即清空并显示发送动画；不再先即时显示静态消息再替换为动画；对应测试通过 | 无 | 待开始 | 0 |
-| FP-A3 | 修复聊天页面微信还原问题 | "对方正在输入"替换顶部角色名；聊天页面有滚动条；底部输入栏在各种浏览器高度下完整显示；对应测试通过 | 无 | 待开始 | 0 |
-| FP-A4 | 统一消息合并阈值为1分钟 | 同一分钟内消息合并为一个时间戳；需求文档已更新为1分钟；测试通过 | 无 | 待开始 | 0 |
+| FP-A2 | 修复消息发送动画与输入栏清空 | 点击发送/回车后输入栏立即清空并显示发送动画；不再先即时显示静态消息再替换为动画；对应测试通过 | 无 | 已完成 | 8 |
+| FP-A3 | 修复聊天页面微信还原问题 | "对方正在输入"替换顶部角色名；聊天页面有滚动条；底部输入栏在各种浏览器高度下完整显示；对应测试通过 | 无 | 已完成 | 8 |
+| FP-A4 | 统一消息合并阈值为1分钟 | 同一分钟内消息合并为一个时间戳；需求文档已更新为1分钟；测试通过 | 无 | 已完成 | 8 |
 | FP-A5 | 添加 whosyourdaddy 秘境系统 | 输入whosyourdaddy（大小写不敏感，精确匹配）后好感度=1000且AI只回复"启用成功"；需求文档已补充；测试通过 | 无 | 已完成 | 4 |
 | FP-A6 | 重构开场白系统 | 开场白对玩家不可见；AI根据人设主动发送0~5条开场白消息；进入聊天页直接显示开场白消息；开场白不再暴露姓名/个人信息；需求文档已更新；测试通过 | 无 | 待开始 | 0 |
 | FP-A7 | 统一AI模型为deepseek-v4-pro | 所有DeepSeek调用使用deepseek-v4-pro；需求文档7.1已更新；配置/客户端已修改；测试通过 | 无 | 已完成 | 2 |
@@ -102,6 +102,7 @@
 - FP-A9 修复军师重复指导错误显示（循环3）：backend 军师重复检测保持 409 + `军师重复` 中文消息；frontend/src/api/请求.ts 错误拦截器从非 2xx 响应体提取 ti_shi/cuo_wu_ma 并 reject 业务错误，确保军师指导面板显示中文提示；新增 frontend/src/__tests__/请求.test.ts 覆盖 409/401/500/2xx 业务错误等场景。
 - FP-A10 + FP-A12 修复军师指导页面UI与玄锐暮头像显示（循环7）：frontend/src/views/军师记录详情.vue 添加纵向滚动条并移除对话摘要/后台数据展示区域，新增军师头像与名称；frontend/src/components/军师指导.vue 选择菜单增加"请选择你的军师"提示、过滤仅展示玄锐暮、移除记录列表摘要并使用统一头像路径；frontend/src/utils/头像.ts 新增 shengChengTouXiangURL 处理相对/绝对/网络头像路径；backend/src/services/军师.ts 与 backend/src/services/军师缓存.ts 增加 jun_shi_tou_xiang 字段；frontend/public/advisors/ 旧目录已删除，头像资源统一至 frontend/public/图片/军师头像/；前后端翻译文件与测试同步更新；前后端 build/lint/test 全部通过，三轴审查无硬性违规。
 - FP-A13 修复过往战绩与复盘（循环5）：backend/src/services/战绩.ts 增加最后消息时间字段与删除函数，backend/src/routes/战绩.ts 新增 DELETE /:dangAnId；backend/src/services/复盘.ts 修复7维度Markdown输出（含关键事件时间线）；frontend/src/views/过往战绩.vue 移除评估聊天水平UI、增加删除按钮与最后消息时间；删除 backend/src/services/评估.ts；前后端翻译文件同步更新；需求文档 FP-13 同步删除评估相关规则与验收标准；相关测试通过。
+- FP-A2 + FP-A3 + FP-A4 修复聊天页面交互与显示（循环8）：frontend/src/views/聊天页面.vue 调整发送逻辑为点击后先清空输入栏、设置发送中状态并显示 ⏳ 动画标记，移除消息区域内旧打字指示器，为消息区域添加可见滚动条样式，消息分组改用 XIAO_XI_PEI_ZHI.heBingShiJianYuZhi（60*1000）并保留 safe-area 底部内边距；frontend/src/components/全局菜单.vue 在聊天页将顶部角色名动态替换为"对方正在输入..."；frontend/src/App.vue 增加 100dvh 视口回退；frontend/src/config/消息配置.ts 与 backend/src/config/消息配置.ts 同步新增 heBingShiJianYuZhi；需求文档.md FP-06 更新为1分钟合并阈值；新增/更新 frontend/src/__tests__/消息发送与显示.test.ts 与 frontend/src/__tests__/聊天界面.test.ts 对应测试；前后端 test/build/lint 全部通过，三轴审查 Standards/Spec/BlindSpot 均无硬性违规。
 
 ## 当前决策（只保留影响待处理项的决策）
 
