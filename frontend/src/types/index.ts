@@ -304,6 +304,7 @@ export interface DangAnXiangQing {
   fu_pan_shu_ju: FuPanTiaoMu[] | null
   fu_pan_nei_rong?: string | null
   chuang_jian_shi_jian: string
+  zui_hou_xiao_xi_shi_jian: string | null
   sui_ji_xing_ge?: boolean
   mbti_lei_xing?: string
 }
@@ -322,21 +323,6 @@ export interface FuPanTiaoMu {
     zong_fen_bian_hua: number
     guan_xi_jie_duan: string
   }
-}
-
-export interface PingGuJieGuo {
-  话题引导: WeiDuPingFen
-  情感共鸣: WeiDuPingFen
-  幽默感: WeiDuPingFen
-  体贴度: WeiDuPingFen
-  节奏把控: WeiDuPingFen
-  总体评价: string
-  改进建议: string[]
-}
-
-export interface WeiDuPingFen {
-  fen: number
-  shuo_ming: string
 }
 
 export interface RenShe {
@@ -473,7 +459,6 @@ export type 消息 = Xiaoxi
 export type 角色 = Jiaose
 export type 通知 = TongZhi
 export type 档案详情 = DangAnXiangQing
-export type 评估结果 = PingGuJieGuo
 export type MBTI类型 = MBTILeiXing
 export type 性格选择 = XingGeXuanZe
 export const 性格选择映射 = XING_GE_XUAN_ZE_MAP

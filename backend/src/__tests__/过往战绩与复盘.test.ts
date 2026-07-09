@@ -133,7 +133,6 @@ async function qingLiFuPanPingGuRedis(yongHuId: string, jiaoSeId: string): Promi
 }
 
 async function qingLiDangAnYuJieJu(yongHuId: string): Promise<void> {
-  await 数据库.query(`DELETE FROM "评估" WHERE "用户ID" = $1`, [yongHuId])
   await 数据库.query(`DELETE FROM "游戏档案" WHERE "用户ID" = $1`, [yongHuId])
   await 数据库.query(`DELETE FROM "游戏结局" WHERE "用户ID" = $1`, [yongHuId])
 }
@@ -147,18 +146,6 @@ function shengChengFuPanMockNeiRong(): string {
     军师建议效果: '军师建议你多分享日常，实际帮助了你打开话题。',
     关键事件时间线: ['10:00 - 初次互动', '10:05 - 话题深入', '10:10 - 关心对方'],
     总结评价: '整体表现不错，建议继续保持自然节奏。',
-  })
-}
-
-function shengChengPingGuMockNeiRong(): string {
-  return JSON.stringify({
-    话题引导: { 分数: 8, 说明: '能自然引出话题' },
-    情感共鸣: { 分数: 7, 说明: '能回应情绪' },
-    幽默感: { 分数: 6, 说明: '偶尔有亮点' },
-    体贴度: { 分数: 8, 说明: '关心细节' },
-    节奏把控: { 分数: 7, 说明: '总体平稳' },
-    总体评价: '聊天水平良好，有进一步提升空间。',
-    改进建议: ['多倾听', '避免急躁', '增加共同话题'],
   })
 }
 
@@ -424,111 +411,7 @@ describe('FP-13 过往战绩与复盘', () => {
     })
   })
 
-  describe('聊天水平评估', () => {
-    it('评估调用 temperature=0.3 且返回合法JSON', async () => {
-      await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
-      let tiaoYongCanShu: { wenDu?: number } | null = null
-
-      sheZhiMockTiaoYong(async (canShu) => {
-        tiaoYongCanShu = canShu
-        return {
-          neiRong: shengChengPingGuMockNeiRong(),
-          xinXi: { role: 'assistant', content: shengChengPingGuMockNeiRong() },
-          yuanShuJu: {} as never,
-        }
-      })
-
-      const xiangYing = await request(yingYong)
-        .post('/api/战绩/评估/聊天水平')
-        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
-        .send({ jiaoSeId })
-        .expect(200)
-
-      expect(tiaoYongCanShu).not.toBeNull()
-      expect(tiaoYongCanShu!.wenDu).toBe(0.3)
-      expect(xiangYing.body.cheng_gong).toBe(true)
-      expect(xiangYing.body.shu_ju).toHaveProperty('话题引导')
-      expect(xiangYing.body.shu_ju).toHaveProperty('情感共鸣')
-      expect(xiangYing.body.shu_ju).toHaveProperty('幽默感')
-      expect(xiangYing.body.shu_ju).toHaveProperty('体贴度')
-      expect(xiangYing.body.shu_ju).toHaveProperty('节奏把控')
-    })
-
-    it('评估JSON各维度分数在1-10范围内', async () => {
-      await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
-
-      sheZhiMockTiaoYong(async () => ({
-        neiRong: shengChengPingGuMockNeiRong(),
-        xinXi: { role: 'assistant', content: shengChengPingGuMockNeiRong() },
-        yuanShuJu: {} as never,
-      }))
-
-      const xiangYing = await request(yingYong)
-        .post('/api/战绩/评估/聊天水平')
-        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
-        .send({ jiaoSeId })
-        .expect(200)
-
-      const jieGuo = xiangYing.body.shu_ju
-      const weiDu = ['话题引导', '情感共鸣', '幽默感', '体贴度', '节奏把控']
-      for (const mingCheng of weiDu) {
-        expect(jieGuo[mingCheng]).toHaveProperty('fen')
-        expect(jieGuo[mingCheng]).toHaveProperty('shuo_ming')
-        expect(jieGuo[mingCheng].fen).toBeGreaterThanOrEqual(1)
-        expect(jieGuo[mingCheng].fen).toBeLessThanOrEqual(10)
-      }
-    })
-
-    it('聊天水平评估完成后评估表新增记录', async () => {
-      await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
-
-      sheZhiMockTiaoYong(async () => ({
-        neiRong: shengChengPingGuMockNeiRong(),
-        xinXi: { role: 'assistant', content: shengChengPingGuMockNeiRong() },
-        yuanShuJu: {} as never,
-      }))
-
-      await request(yingYong)
-        .post('/api/战绩/评估/聊天水平')
-        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
-        .send({ jiaoSeId })
-        .expect(200)
-
-      const jieGuo = await 数据库.query(
-        `SELECT "ID" FROM "评估" WHERE "用户ID" = $1 AND "角色ID" = $2`,
-        [ceShiYongHu!.yongHuId, jiaoSeId],
-      )
-      expect(jieGuo.rows.length).toBeGreaterThan(0)
-    })
-
-    it('获取评估历史返回最近一条记录', async () => {
-      await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
-
-      sheZhiMockTiaoYong(async () => ({
-        neiRong: shengChengPingGuMockNeiRong(),
-        xinXi: { role: 'assistant', content: shengChengPingGuMockNeiRong() },
-        yuanShuJu: {} as never,
-      }))
-
-      await request(yingYong)
-        .post('/api/战绩/评估/聊天水平')
-        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
-        .send({ jiaoSeId })
-        .expect(200)
-
-      const xiangYing = await request(yingYong)
-        .get('/api/战绩/评估/聊天水平')
-        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
-        .query({ jiaoSeId })
-        .expect(200)
-
-      expect(xiangYing.body.cheng_gong).toBe(true)
-      expect(xiangYing.body.shu_ju).not.toBeNull()
-      expect(xiangYing.body.shu_ju.话题引导.fen).toBe(8)
-    })
-  })
-
-  describe('战绩详情', () => {
+  describe('战绩详情与删除', () => {
     it('未授权访问返回 401', async () => {
       const xiangYing = await request(yingYong).get('/api/战绩/列表').expect(401)
       expect(xiangYing.body.ti_shi).toBe(huoQuFanYi('tongYong', 'weiShouQuan'))
@@ -540,6 +423,21 @@ describe('FP-13 过往战绩与复盘', () => {
         .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
         .expect(404)
       expect(xiangYing.body.ti_shi).toBe(huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
+    })
+
+    it('删除已存在的战绩后无法再次访问', async () => {
+      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
+
+      const shanChuXiangYing = await request(yingYong)
+        .delete(`/api/战绩/${dangAnId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+      expect(shanChuXiangYing.body.cheng_gong).toBe(true)
+
+      await request(yingYong)
+        .get(`/api/战绩/详情/${dangAnId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(404)
     })
   })
 })

@@ -10,6 +10,17 @@ export function 是业务错误(错误: unknown): 错误 is 业务错误 {
   return 错误 instanceof Error && 'cuo_wu_ma' in 错误
 }
 
+function shiYeWuCuoWuShuJu(数据: unknown): 数据 is ApiXiangYing<unknown> & { ti_shi: string } {
+  return (
+    typeof 数据 === 'object' &&
+    数据 !== null &&
+    'cheng_gong' in 数据 &&
+    数据.cheng_gong === false &&
+    'ti_shi' in 数据 &&
+    typeof (数据 as ApiXiangYing<unknown>).ti_shi === 'string'
+  )
+}
+
 export function huoQuCuoWuXiangYing(错误: unknown) {
   if (axios.isAxiosError(错误)) {
     return 错误.response
@@ -44,10 +55,18 @@ const 实例 = axios.create({
     return 响应
   },
   (错误) => {
-    if (axios.isAxiosError(错误) && 错误.response?.status === 401) {
-      localStorage.removeItem(令牌键)
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login'
+    if (axios.isAxiosError(错误) && 错误.response) {
+      const { status, data } = 错误.response
+      if (status === 401) {
+        localStorage.removeItem(令牌键)
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login'
+        }
+      }
+      if (shiYeWuCuoWuShuJu(data)) {
+        const 业务错误实例 = new Error(data.ti_shi) as 业务错误
+        业务错误实例.cuo_wu_ma = data.cuo_wu_ma
+        return Promise.reject(业务错误实例)
       }
     }
     return Promise.reject(错误)

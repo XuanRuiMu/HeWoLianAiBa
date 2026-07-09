@@ -31,6 +31,7 @@ export interface DangAnLieBiaoXiang {
   liao_tian_tian_shu: number
   xiao_xi_zong_shu: number
   chuang_jian_shi_jian: string
+  zui_hou_xiao_xi_shi_jian: string | null
   mbti_lei_xing?: string
 }
 
@@ -69,7 +70,9 @@ export async function huoQuDangAnLieBiao(yong_hu_id: string): Promise<DangAnLieB
   const jieGuo = await 数据库.query(
     `SELECT d."ID", d."用户ID", d."角色ID", d."角色名字", d."是否渣型",
             d."结果类型", d."是否封存", d."好感度总分", d."关系阶段",
-            d."聊天天数", d."消息总数", d."创建时间", r."MBTI"
+            d."聊天天数", d."消息总数", d."创建时间", r."MBTI",
+            (SELECT MAX("创建时间") FROM "消息" m
+             WHERE m."用户ID" = d."用户ID" AND m."角色ID" = d."角色ID") AS "最后消息时间"
      FROM "游戏档案" d
      LEFT JOIN "角色" r ON r."ID" = d."角色ID"
      WHERE d."用户ID" = $1
@@ -96,6 +99,7 @@ export async function huoQuDangAnLieBiao(yong_hu_id: string): Promise<DangAnLieB
       liao_tian_tian_shu: Number(row.聊天天数 || 0),
       xiao_xi_zong_shu: Number(row.消息总数 || 0),
       chuang_jian_shi_jian: String(row.创建时间 || new Date().toISOString()),
+      zui_hou_xiao_xi_shi_jian: row.最后消息时间 ? String(row.最后消息时间) : null,
       mbti_lei_xing: row.MBTI ? String(row.MBTI) : undefined,
     }
   })
@@ -109,7 +113,9 @@ export async function huoQuDangAnXiangQing(
     `SELECT d."ID", d."用户ID", d."角色ID", d."角色名字", d."是否渣型",
             d."结果类型", d."是否封存", d."好感度总分", d."关系阶段",
             d."聊天天数", d."消息总数", d."复盘数据", d."复盘内容", d."创建时间",
-            r."MBTI"
+            r."MBTI",
+            (SELECT MAX("创建时间") FROM "消息" m
+             WHERE m."用户ID" = d."用户ID" AND m."角色ID" = d."角色ID") AS "最后消息时间"
      FROM "游戏档案" d
      LEFT JOIN "角色" r ON r."ID" = d."角色ID"
      WHERE d."ID" = $1 AND d."用户ID" = $2
@@ -151,6 +157,7 @@ export async function huoQuDangAnXiangQing(
     fu_pan_shu_ju: fuPanShuJu,
     fu_pan_nei_rong: row.复盘内容 ? String(row.复盘内容) : null,
     chuang_jian_shi_jian: String(row.创建时间 || new Date().toISOString()),
+    zui_hou_xiao_xi_shi_jian: row.最后消息时间 ? String(row.最后消息时间) : null,
     mbti_lei_xing: row.MBTI ? String(row.MBTI) : undefined,
   }
 }
@@ -164,4 +171,12 @@ export async function gengXinFuPanNeiRong(
     `UPDATE "游戏档案" SET "复盘内容" = $1, "复盘数据" = $2 WHERE "ID" = $3`,
     [fu_pan_nei_rong, JSON.stringify(fu_pan_shu_ju), dang_an_id],
   )
+}
+
+export async function shanChuDangAn(yong_hu_id: string, dang_an_id: string): Promise<boolean> {
+  const jieGuo = await 数据库.query(
+    `DELETE FROM "游戏档案" WHERE "ID" = $1 AND "用户ID" = $2 RETURNING "ID"`,
+    [dang_an_id, yong_hu_id],
+  )
+  return jieGuo.rows.length > 0
 }

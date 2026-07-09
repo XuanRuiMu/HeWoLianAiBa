@@ -241,12 +241,12 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     }
     anQuanTuiSong(linShiXiaoXi)
     try {
-      const xiaoXi = await faSongXiaoXiApi(dangQianHuiHuaId.value, qingLiNeiRong)
+      const { xiaoXi, shiMiJi } = await faSongXiaoXiApi(dangQianHuiHuaId.value, qingLiNeiRong)
       const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.id === linShiXiaoXi.id)
       if (suoYin !== -1) {
         xiaoXiLieBiao.value[suoYin] = xiaoXi
       }
-      if (socketLianJie.value?.connected) {
+      if (socketLianJie.value?.connected && !shiMiJi) {
         socketLianJie.value.emit('发送消息')
       }
       return xiaoXi

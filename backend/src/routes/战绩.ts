@@ -4,20 +4,12 @@ import { huoQuFanYi } from '../config/translations'
 import { chengGongXiangYing, shiBaiXiangYing } from '../utils/xiangying'
 import { changGuiXianLiu } from '../middleware/限流'
 import type { RenZhengQingQiu } from '../middleware/认证'
-import { huoQuDangAnLieBiao, huoQuDangAnXiangQing } from '../services/战绩'
+import { huoQuDangAnLieBiao, huoQuDangAnXiangQing, shanChuDangAn } from '../services/战绩'
 import { shengChengFuPan } from '../services/复盘'
-import { pingGuLiaoTianShuiPing, huoQuPingGuLiShi } from '../services/评估'
 import { huoQuJunShiJiLuLieBiao, type JunShiJiLuXiang } from '../services/军师缓存'
 import { HAO_GAN_DU_PEI_ZHI } from '../config/好感度配置'
 
 const luYou = Router()
-
-function jieXiZiFuChuan(body: Record<string, unknown>, jian: string, tianChongJian?: string): string {
-  const zhi = body[jian]
-  if (typeof zhi === 'string') return zhi
-  if (tianChongJian && typeof body[tianChongJian] === 'string') return String(body[tianChongJian])
-  return ''
-}
 
 interface QianDuanJunShiZhiDaoJiLu {
   shi_jian: string
@@ -105,6 +97,33 @@ luYou.get(
   },
 )
 
+luYou.delete(
+  '/:dangAnId',
+  changGuiXianLiu,
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+
+    const dangAnId = String(qingQiu.params.dangAnId || '')
+    if (!dangAnId) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    }
+
+    try {
+      const chengGong = await shanChuDangAn(yongHu.yongHuId, dangAnId)
+      if (!chengGong) {
+        return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
+      }
+      return chengGongXiangYing(xiangYing, { cheng_gong: true })
+    } catch (cuoWu) {
+      console.error('删除战绩失败', cuoWu)
+      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
+    }
+  },
+)
+
 luYou.get(
   '/复盘/:dangAnId',
   changGuiXianLiu,
@@ -129,7 +148,9 @@ luYou.get(
       const qianDuanJunShiJiLu = junShiJiLu.map(zhuanHuanJunShiJiLu)
 
       if (!dangAn.fu_pan_nei_rong) {
-        void shengChengFuPan(yongHu.yongHuId, dangAn.jiao_se_id, dangAnId)
+        void shengChengFuPan(yongHu.yongHuId, dangAn.jiao_se_id, dangAnId).catch((cuoWu) =>
+          console.error('异步生成复盘失败', cuoWu),
+        )
         return chengGongXiangYing(xiangYing, {
           fu_pan_nei_rong: null,
           fu_pan_shi_jian_xian: [],
@@ -146,56 +167,6 @@ luYou.get(
       })
     } catch (cuoWu) {
       console.error('获取复盘失败', cuoWu)
-      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
-    }
-  },
-)
-
-luYou.post(
-  '/评估/聊天水平',
-  changGuiXianLiu,
-  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
-    const yongHu = qingQiu.yong_hu
-    if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
-    }
-
-    const body = qingQiu.body as Record<string, unknown>
-    const jiaoSeId = jieXiZiFuChuan(body, 'jiaoSeId', 'jiao_se_id')
-
-    if (!jiaoSeId) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
-    }
-
-    try {
-      const jieGuo = await pingGuLiaoTianShuiPing(yongHu.yongHuId, jiaoSeId)
-      return chengGongXiangYing(xiangYing, jieGuo)
-    } catch (cuoWu) {
-      console.error('评估聊天水平失败', cuoWu)
-      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
-    }
-  },
-)
-
-luYou.get(
-  '/评估/聊天水平',
-  changGuiXianLiu,
-  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
-    const yongHu = qingQiu.yong_hu
-    if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
-    }
-
-    const jiaoSeId = String(qingQiu.query.jiaoSeId || qingQiu.query.jiao_se_id || '')
-    if (!jiaoSeId) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
-    }
-
-    try {
-      const liShi = await huoQuPingGuLiShi(yongHu.yongHuId, jiaoSeId)
-      return chengGongXiangYing(xiangYing, liShi)
-    } catch (cuoWu) {
-      console.error('获取评估历史失败', cuoWu)
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },

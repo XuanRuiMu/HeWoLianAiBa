@@ -77,6 +77,7 @@ export const fanYi = {
     duiFangCheHuiLeYiTiaoXiaoXi: '对方撤回了一条消息',
     duiFangYiDuBuHui: '对方已读不回',
     youXiYiJieShu: '游戏已结束，无法继续发送消息',
+    miJiQiYongChengGong: '启用成功',
   },
   anQuan: {
     sqlZhuRuWeiXian: '请求包含危险内容，已被拦截',

@@ -13,7 +13,7 @@ export const AI_PEI_ZHI = {
   deepSeek: {
     apiMiYao: process.env.DEEPSEEK_API_KEY || '',
     jiChuUrl: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
-    moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+    moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
     tongYongCanShu: {
       topP: 1,
     },
@@ -21,14 +21,14 @@ export const AI_PEI_ZHI = {
 
   moXing: {
     director: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
       wenDu: 0.3,
       xiangYingGeShi: { type: 'json_object' },
       zuiDaTokens: 2000,
     } as MoXingCanShu,
 
     writer: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
       wenDu: 0.85,
       enableThinking: true,
       reasoningEffort: 'max',
@@ -36,86 +36,80 @@ export const AI_PEI_ZHI = {
     } as MoXingCanShu,
 
     qingGanFenXi: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
       wenDu: 0.2,
       xiangYingGeShi: { type: 'json_object' },
       zuiDaTokens: 500,
     } as MoXingCanShu,
 
     haoGanDuPingPan: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
       wenDu: 0.2,
       xiangYingGeShi: { type: 'json_object' },
       zuiDaTokens: 500,
     } as MoXingCanShu,
 
     jiYiZhaiYao: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
       wenDu: 0.3,
       zuiDaTokens: 1000,
     } as MoXingCanShu,
 
     anQuanShenHe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
       wenDu: 0.1,
       xiangYingGeShi: { type: 'json_object' },
       zuiDaTokens: 500,
     } as MoXingCanShu,
 
     guanJianShiJian: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
       wenDu: 0.2,
       xiangYingGeShi: { type: 'json_object' },
       zuiDaTokens: 500,
     } as MoXingCanShu,
 
     junShiQiuZhu: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
       wenDu: 0.85,
       zuiDaTokens: 1500,
     } as MoXingCanShu,
 
     biaoBaiJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
       wenDu: 0.1,
       xiangYingGeShi: { type: 'json_object' },
       zuiDaTokens: 500,
     } as MoXingCanShu,
 
     huShanJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
       wenDu: 0.1,
       xiangYingGeShi: { type: 'json_object' },
       zuiDaTokens: 500,
     } as MoXingCanShu,
 
     shiPoJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
       wenDu: 0.1,
       xiangYingGeShi: { type: 'json_object' },
       zuiDaTokens: 500,
     } as MoXingCanShu,
 
     jieShouBiaoBaiJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
       wenDu: 0.1,
       xiangYingGeShi: { type: 'json_object' },
       zuiDaTokens: 500,
     } as MoXingCanShu,
 
     fuPanShengCheng: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
       wenDu: 0.7,
       xiangYingGeShi: { type: 'json_object' },
       zuiDaTokens: 3000,
     } as MoXingCanShu,
 
-    liaoTianShuiPingPingGu: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
-      wenDu: 0.3,
-      xiangYingGeShi: { type: 'json_object' },
-      zuiDaTokens: 1500,
-    } as MoXingCanShu,
   },
 
   prompt: {

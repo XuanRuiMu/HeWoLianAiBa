@@ -23,7 +23,10 @@ import {
   baoCunJiaoSeXiaoXi,
 } from '../services/AI输入准备'
 import { chongZhiJiaoSeTiaoDuQi } from '../socket/聊天'
+import { huoQuIo } from '../socket/io'
 import { 数据库 } from '../数据库'
+import { HAO_GAN_DU_PEI_ZHI } from '../config/好感度配置'
+import { sheZhiMiJiHaoGanDu } from '../services/好感度'
 
 const luYou = Router()
 
@@ -185,6 +188,38 @@ luYou.post(
       if (!jieGuo.cheng_gong) {
         return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('liaoTian', 'faSongShiBai'))
       }
+
+      if (neiRong.trim().toLowerCase() === HAO_GAN_DU_PEI_ZHI.miJi.miLing.toLowerCase()) {
+        const miJiJieGuo = await sheZhiMiJiHaoGanDu(
+          yongHu.yongHuId,
+          jiaoSeId,
+          HAO_GAN_DU_PEI_ZHI.miJi.miLing,
+        )
+        if (!miJiJieGuo.cheng_gong) {
+          return shiBaiXiangYing(
+            xiangYing,
+            miJiJieGuo.zhuang_tai_ma || 500,
+            miJiJieGuo.ti_shi || huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'),
+          )
+        }
+
+        const huiFuXiaoXi = await baoCunJiaoSeXiaoXi({
+          yong_hu_id: yongHu.yongHuId,
+          jiao_se_id: jiaoSeId,
+          nei_rong: huoQuFanYi('liaoTian', 'miJiQiYongChengGong'),
+        })
+
+        const io = huoQuIo()
+        if (io) {
+          io.to(yongHu.yongHuId).emit('角色回复', {
+            角色ID: jiaoSeId,
+            消息列表: [huiFuXiaoXi],
+          })
+        }
+
+        return chengGongXiangYing(xiangYing, { ...jieGuo.xiao_xi, shi_mi_ji: true })
+      }
+
       return chengGongXiangYing(xiangYing, jieGuo.xiao_xi)
     } catch (cuoWu) {
       console.error('发送消息失败', cuoWu)

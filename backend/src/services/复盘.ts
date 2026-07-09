@@ -139,12 +139,20 @@ function zhuanHuanShiJianXian(
 }
 
 function shengChengFuPanNeiRong(jieGou: FuPanJSONJieGou): string {
+  const shiJianXian = Array.isArray(jieGou.关键事件时间线)
+    ? jieGou.关键事件时间线
+        .filter((tiaoMu) => typeof tiaoMu === 'string' && tiaoMu.trim().length > 0)
+        .map((tiaoMu) => `- ${tiaoMu}`)
+        .join('\n')
+    : ''
+
   const buFen = [
     jieGou.逐句分析 ? `## 逐句分析\n${jieGou.逐句分析}` : '',
     jieGou.聊对了什么 ? `## 聊对了什么\n${jieGou.聊对了什么}` : '',
     jieGou.聊错了什么 ? `## 聊错了什么\n${jieGou.聊错了什么}` : '',
     jieGou.撤回分析 ? `## 撤回分析\n${jieGou.撤回分析}` : '',
     jieGou.军师建议效果 ? `## 军师建议效果\n${jieGou.军师建议效果}` : '',
+    shiJianXian ? `## 关键事件时间线\n${shiJianXian}` : '',
     jieGou.总结评价 ? `## 总结评价\n${jieGou.总结评价}` : '',
   ]
   return buFen.filter(Boolean).join('\n\n')

@@ -174,16 +174,48 @@ describe('FP-06 消息发送与显示', () => {
       expect(聊天仓库.xiaoXiLieBiao.some((x) => x.nei_rong === '你好')).toBe(true)
 
       jieXiCuoWu({
-        id: 'x-real',
-        hui_hua_id: 'h1',
-        fa_song_zhe_id: 'u1',
-        fa_song_zhe_lei_xing: 'yonghu',
-        nei_rong: '你好',
-        lei_xing: 'wenben',
-        shi_jian_chuo: Date.now(),
-        yi_du: true,
+        xiaoXi: {
+          id: 'x-real',
+          hui_hua_id: 'h1',
+          fa_song_zhe_id: 'u1',
+          fa_song_zhe_lei_xing: 'yonghu',
+          nei_rong: '你好',
+          lei_xing: 'wenben',
+          shi_jian_chuo: Date.now(),
+          yi_du: true,
+        },
+        shiMiJi: false,
       })
       await flushPromises()
+    })
+
+    it('发送whosyourdaddy秘籍时不触发AI发送消息事件', async () => {
+      const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
+      const faSongMock = vi.fn()
+      if (聊天仓库.socketLianJie) {
+        聊天仓库.socketLianJie.emit = faSongMock
+      }
+
+      vi.mocked(faSongXiaoXi).mockResolvedValue({
+        xiaoXi: {
+          id: 'x-miji',
+          hui_hua_id: 'h1',
+          fa_song_zhe_id: 'u1',
+          fa_song_zhe_lei_xing: 'yonghu',
+          nei_rong: 'whosyourdaddy',
+          lei_xing: 'wenben',
+          shi_jian_chuo: Date.now(),
+          yi_du: true,
+        },
+        shiMiJi: true,
+      })
+
+      const shuRuKuang = wrapper.find('.shuru-kuang')
+      await shuRuKuang.setValue('whosyourdaddy')
+      await wrapper.find('.fasong-anniu').trigger('click')
+      await flushPromises()
+
+      expect(faSongMock).not.toHaveBeenCalledWith('发送消息')
     })
 
     it('API发送失败时临时消息从列表移除并显示错误提示', async () => {

@@ -8,7 +8,6 @@ import type {
   DangAnXiangQing,
   ShengChengJiaoSeJieGuo,
   Jiaose,
-  PingGuJieGuo,
   FanKuiTiJiao,
 } from '@/types'
 
@@ -42,12 +41,19 @@ export async function huoQuXiaoXi(
   }
 }
 
-export async function faSongXiaoXi(huiHuaId: string, neiRong: string): Promise<Xiaoxi> {
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: Xiaoxi }>(
+export async function faSongXiaoXi(
+  huiHuaId: string,
+  neiRong: string,
+): Promise<{ xiaoXi: Xiaoxi; shiMiJi: boolean }> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: Xiaoxi & { shi_mi_ji?: boolean } }>(
     `/聊天/会话/${huiHuaId}/消息`,
     { neiRong },
   )
-  return 响应.data.shu_ju
+  const shuJu = 响应.data.shu_ju
+  return {
+    xiaoXi: shuJu,
+    shiMiJi: shuJu.shi_mi_ji === true,
+  }
 }
 
 export async function cheHuiXiaoXi(huiHuaId: string, xiaoXiId: string): Promise<void> {
@@ -272,20 +278,9 @@ export async function tiJiaoFanKui(canShu: FanKuiTiJiao): Promise<void> {
   await http.post('/反馈/提交', canShu)
 }
 
-export async function zhiXingPingGu(jiaoSeId: string): Promise<PingGuJieGuo> {
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: PingGuJieGuo }>(
-    '/战绩/评估/聊天水平',
-    {
-      jiaoSeId,
-    },
-  )
-  return 响应.data.shu_ju
-}
-
-export async function huoQuPingGuLiShi(jiaoSeId: string): Promise<PingGuJieGuo | null> {
-  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: PingGuJieGuo | null }>(
-    '/战绩/评估/聊天水平',
-    { params: { jiaoSeId } },
+export async function shanChuDangAn(dangAnId: string): Promise<{ cheng_gong: boolean }> {
+  const 响应 = await http.delete<{ cheng_gong: boolean; shu_ju: { cheng_gong: boolean } }>(
+    `/战绩/${dangAnId}`,
   )
   return 响应.data.shu_ju
 }
