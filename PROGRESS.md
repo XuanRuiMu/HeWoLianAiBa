@@ -56,6 +56,7 @@ _无_
 - FP-DOC-W01：需求文档 FP-05 颜色描述已同步为「完全还原微信」。
 - FP-BE-T01：后端管理员后台测试失败已修复（database/001_init.sql、管理员服务）。
 - FP-GIT-01：已通过总控制台.py 推送 GitHub，仓库状态干净。
+- FP-FIX-01：过往战绩列表 key 改为稳定 `dangAn.id` 并保留索引兜底；新增 `database/002_add_user_test_column.sql` 迁移脚本；前后端测试、lint、构建均通过，已推送 GitHub。
 
 ## 阻塞与遗留问题
 
