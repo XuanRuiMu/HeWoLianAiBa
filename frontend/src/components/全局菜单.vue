@@ -954,7 +954,7 @@ watch(
 }
 
 .xiugai-shuru:focus {
-  border-color: var(--nuanhui-lan, #6b8ca6);
+  border-color: var(--nuanhui-lan);
 }
 
 .xiugai-shuru::placeholder {
@@ -998,7 +998,7 @@ watch(
 }
 
 .xiugai-anniu.queding {
-  background: linear-gradient(135deg, var(--nuanhui-lan, #6b8ca6), var(--roufen-zi, #c4a0b0));
+  background: linear-gradient(135deg, var(--nuanhui-lan), var(--roufen-zi));
   color: var(--wenzi-baise);
 }
 

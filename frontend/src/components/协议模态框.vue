@@ -166,7 +166,7 @@ function guanBi() {
 .zhidao-anniu {
   width: 100%;
   padding: 12px 24px;
-  background: linear-gradient(135deg, var(--nuanhui-lan, #6b8ca6), var(--roufen-zi, #c4a0b0));
+  background: linear-gradient(135deg, var(--nuanhui-lan), var(--roufen-zi));
   color: #ffffff;
   border-radius: 12px;
   font-size: 15px;
