@@ -4,7 +4,9 @@
     <div class="app-zhuti">
       <router-view v-slot="{ Component, route }">
         <Transition name="yemian-guodu" mode="out-in">
-          <component :is="Component" v-if="Component" :key="route.path" />
+          <KeepAlive :include="['liaoTian']">
+            <component :is="Component" v-if="Component" :key="route.path" />
+          </KeepAlive>
         </Transition>
       </router-view>
     </div>

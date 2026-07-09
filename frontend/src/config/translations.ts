@@ -120,7 +120,6 @@ export const fanYi = {
     dengDaiDuiFangYanZheng: '等待对方验证...',
     yanZhengTongGuo: '验证通过！',
     kaiShiLiaoTian: '开始聊天',
-    kaiChangBai: '开场白',
   },
   liaoTian: {
     shuRuXiaoXi: '输入消息...',

@@ -234,16 +234,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  onActivated,
+  onDeactivated,
+  nextTick,
+  watch,
+} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { 使用聊天仓库 } from '@/stores/聊天'
 import { 使用用户仓库 } from '@/stores/用户'
-import { faSongKaiChangBai } from '@/api/聊天'
+
 import { huoQuFanYi } from '@/config/translations'
 import { XIAO_XI_PEI_ZHI } from '@/config/消息配置'
 import { shiTuPianDiZhi } from '@/utils/头像'
 import type { 消息 } from '@/types'
 import JunShiZhiDao from '@/components/军师指导.vue'
+
+defineOptions({
+  name: 'LiaoTian',
+})
 
 const route = useRoute()
 const router = useRouter()
@@ -261,6 +274,7 @@ const xiaoxiQuYuRef = ref<HTMLElement | null>(null)
 const emojiMianBanZhanKai = ref(false)
 const dangQianShiJian = ref(Date.now())
 let shiJianGengXinQi: ReturnType<typeof setInterval> | null = null
+let yiTongGuoMountedChuShiHua = false
 
 const changYongEmoji = [
   '😀',
@@ -692,40 +706,58 @@ function junShiZhanKaiJianTingQi() {
   }
 }
 
-onMounted(async () => {
-  window.addEventListener('junshi-zhankai', junShiZhanKaiJianTingQi)
+function qingLiUIMianBan() {
+  emojiMianBanZhanKai.value = false
+  junShiZhanKai.value = false
+  cheHuiCaiDanZhanKai.value = false
+}
 
+async function chuShiHuaLiaoTian() {
   const huiHuaId = route.params.huiHuaId as string
+  if (!huiHuaId) return
+  await 聊天仓库.jiaZaiXiaoXi(huiHuaId)
+  聊天仓库.lianJieSocket(huiHuaId)
+  gunDongDaoDiBu()
+}
+
+function qiDongShiJianGengXinQi() {
+  if (shiJianGengXinQi) return
   shiJianGengXinQi = setInterval(() => {
     dangQianShiJian.value = Date.now()
   }, 1000)
+}
 
-  if (huiHuaId) {
-    await 聊天仓库.jiaZaiXiaoXi(huiHuaId)
-    聊天仓库.lianJieSocket(huiHuaId)
-    gunDongDaoDiBu()
-
-    if (聊天仓库.xiaoXiLieBiao.length === 0 && 聊天仓库.jiaoSeXinXi?.id) {
-      try {
-        await faSongKaiChangBai(聊天仓库.jiaoSeXinXi.id)
-        await 聊天仓库.jiaZaiXiaoXi(huiHuaId)
-        gunDongDaoDiBu()
-      } catch (e) {
-        console.warn('发送开场白失败', e)
-      }
-    }
-  }
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('junshi-zhankai', junShiZhanKaiJianTingQi)
+function tingZhiShiJianGengXinQi() {
   if (shiJianGengXinQi) {
     clearInterval(shiJianGengXinQi)
     shiJianGengXinQi = null
   }
-  emojiMianBanZhanKai.value = false
-  junShiZhanKai.value = false
-  cheHuiCaiDanZhanKai.value = false
+}
+
+onMounted(async () => {
+  window.addEventListener('junshi-zhankai', junShiZhanKaiJianTingQi)
+  qiDongShiJianGengXinQi()
+  await chuShiHuaLiaoTian()
+  yiTongGuoMountedChuShiHua = true
+})
+
+onActivated(async () => {
+  qiDongShiJianGengXinQi()
+  if (!yiTongGuoMountedChuShiHua) {
+    return
+  }
+  await chuShiHuaLiaoTian()
+})
+
+onDeactivated(() => {
+  tingZhiShiJianGengXinQi()
+  qingLiUIMianBan()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('junshi-zhankai', junShiZhanKaiJianTingQi)
+  tingZhiShiJianGengXinQi()
+  qingLiUIMianBan()
   聊天仓库.qingKongZhuangTai()
 })
 </script>

@@ -13,10 +13,6 @@
         }}</span>
       </div>
       <h2 class="weiXin-mingCheng">{{ weiXinMingCheng }}</h2>
-      <div class="kaiChangBai-qu">
-        <span class="kaiChangBai-biaoQian">{{ huoQuFanYi('tianJiaWeiXin', 'kaiChangBai') }}</span>
-        <p class="kaiChangBai-neiRong">{{ kaiChangBaiWenBen }}</p>
-      </div>
       <div class="jinDu-tiao">
         <div class="jinDu-wanCheng" :style="{ width: jinDu + '%' }" />
       </div>
@@ -49,14 +45,6 @@ const guoDuShiJian = 1500
 
 const weiXinMingCheng = computed(() => {
   return jiaoSeXinXi.value?.wei_xin_ming || jiaoSeXinXi.value?.ming_zi || ''
-})
-
-const kaiChangBaiWenBen = computed(() => {
-  if (!jiaoSeXinXi.value?.kai_chang_bai) return ''
-  if (Array.isArray(jiaoSeXinXi.value.kai_chang_bai)) {
-    return jiaoSeXinXi.value.kai_chang_bai.join('\n')
-  }
-  return String(jiaoSeXinXi.value.kai_chang_bai)
 })
 
 const moRenTouXiang = computed(() => {
@@ -196,32 +184,6 @@ onBeforeUnmount(() => {
   font-weight: 700;
   color: var(--wenben-zhuse);
   margin: 0;
-}
-
-.kaiChangBai-qu {
-  width: 100%;
-  padding: 16px;
-  background: var(--boli-beijing-qian);
-  border-radius: 16px;
-  border: 1px solid var(--boli-biankuang);
-  text-align: left;
-}
-
-.kaiChangBai-biaoQian {
-  display: inline-block;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--yanse-qiangdiao);
-  margin-bottom: 8px;
-}
-
-.kaiChangBai-neiRong {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--wenben-zhuse);
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
 }
 
 .jinDu-tiao {

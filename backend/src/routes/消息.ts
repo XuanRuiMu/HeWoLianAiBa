@@ -98,6 +98,30 @@ luYou.post(
       if (jianCha.rows.length === 0) {
         return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
       }
+
+      const xiaoXiShuLiangJieGuo = await 数据库.query(
+        `SELECT COUNT(*) as shu_liang FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
+        [yongHu.yongHuId, jiaoSeId],
+      )
+      const xiaoXiShuLiang = Number(xiaoXiShuLiangJieGuo.rows[0]?.shu_liang || 0)
+      if (xiaoXiShuLiang === 0) {
+        const jiaoSeXinXi = await huoQuAIJiaoSeXinXi(jiaoSeId)
+        if (jiaoSeXinXi && Array.isArray(jiaoSeXinXi.kai_chang_bai) && jiaoSeXinXi.kai_chang_bai.length > 0) {
+          for (const neiRong of jiaoSeXinXi.kai_chang_bai) {
+            if (typeof neiRong === 'string') {
+              const qingLiNeiRong = neiRong.replace(/\{mingZi\}/g, '').trim()
+              if (qingLiNeiRong) {
+                await baoCunJiaoSeXiaoXi({
+                  yong_hu_id: yongHu.yongHuId,
+                  jiao_se_id: jiaoSeId,
+                  nei_rong: qingLiNeiRong,
+                })
+              }
+            }
+          }
+        }
+      }
+
       const shiJian = Date.now()
       return chengGongXiangYing(xiangYing, {
         id: jiaoSeId,
@@ -327,60 +351,6 @@ luYou.post(
       return chengGongXiangYing(xiangYing, jieGuo.jie_guo)
     } catch (cuoWu) {
       console.error('请求军师指导失败', cuoWu)
-      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
-    }
-  },
-)
-
-luYou.post(
-  '/开场白',
-  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
-    const yongHu = qingQiu.yong_hu
-    if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
-    }
-
-    const body = qingQiu.body as Record<string, unknown>
-    const jiaoSeId = huoQuZiFuChuan(body, 'jiaoSeId', 'jiao_se_id')
-    if (!jiaoSeId) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
-    }
-
-    try {
-      const suoYouQuanJianCha = await 数据库.query(
-        `SELECT "ID" FROM "角色" WHERE "ID" = $1 AND "用户ID" = $2 LIMIT 1`,
-        [jiaoSeId, yongHu.yongHuId],
-      )
-      if (suoYouQuanJianCha.rows.length === 0) {
-        return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('liaoTian', 'wuQuanXian'))
-      }
-
-      const xiaoXiShuLiangJianCha = await 数据库.query(
-        `SELECT COUNT(*) as shu_liang FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
-        [yongHu.yongHuId, jiaoSeId],
-      )
-      const xiaoXiShuLiang = Number(xiaoXiShuLiangJianCha.rows[0]?.shu_liang || 0)
-      if (xiaoXiShuLiang > 0) {
-        return chengGongXiangYing(xiangYing, { yi_fa_song: false, xiao_xi_shu: xiaoXiShuLiang, yuan_yin: 'yi_cun_zai_xiao_xi' })
-      }
-
-      const jiaoSeXinXi = await huoQuAIJiaoSeXinXi(jiaoSeId)
-      if (!jiaoSeXinXi) {
-        return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
-      }
-
-      const kaiChangBaiLieBiao = jiaoSeXinXi.kai_chang_bai || ['你好']
-      const suiJiKaiChangBai = kaiChangBaiLieBiao[Math.floor(Math.random() * kaiChangBaiLieBiao.length)]
-
-      await baoCunJiaoSeXiaoXi({
-        yong_hu_id: yongHu.yongHuId,
-        jiao_se_id: jiaoSeId,
-        nei_rong: suiJiKaiChangBai,
-      })
-
-      return chengGongXiangYing(xiangYing, { yi_fa_song: true, xiao_xi_shu: 1 })
-    } catch (cuoWu) {
-      console.error('发送开场白失败', cuoWu)
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },

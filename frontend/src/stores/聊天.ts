@@ -46,6 +46,10 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   }
 
   function lianJieSocket(huiHuaId: string) {
+    if (socketLianJie.value?.connected && dangQianHuiHuaId.value === huiHuaId) {
+      return
+    }
+
     if (socketLianJie.value?.connected) {
       socketLianJie.value.disconnect()
     }

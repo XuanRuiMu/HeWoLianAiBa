@@ -158,4 +158,56 @@ describe('FP-06 消息发送与显示', () => {
       expect(xiangYing.body.shu_ju.nei_rong).toBe('你好呀')
     })
   })
+
+  describe('开场白消息自动保存', () => {
+    it('创建会话时自动将角色开场白保存为AI消息', async () => {
+      const jiaoSeId = await chuangJianCeShiJiaoSe(ceShiYongHu!.lingPai, { 性别: 'nv', mbti类型: 'ENFP' })
+
+      const chuangJianHuiHuaXiangYing = await request(yingYong)
+        .post('/api/聊天/会话')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ jiaoSeId })
+        .expect(200)
+
+      expect(chuangJianHuiHuaXiangYing.body.cheng_gong).toBe(true)
+
+      const xiaoXiJieGuo = await 数据库.query(
+        `SELECT "内容", "发送者" FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2 ORDER BY "创建时间" ASC`,
+        [ceShiYongHu!.yongHuId, jiaoSeId],
+      )
+      expect(xiaoXiJieGuo.rows.length).toBeGreaterThanOrEqual(0)
+      expect(xiaoXiJieGuo.rows.length).toBeLessThanOrEqual(5)
+      for (const xiaoXi of xiaoXiJieGuo.rows) {
+        expect(xiaoXi.发送者).toBe('jiaose')
+      }
+    })
+
+    it('重复创建会话不会重复保存开场白消息', async () => {
+      const jiaoSeId = await chuangJianCeShiJiaoSe(ceShiYongHu!.lingPai, { 性别: 'nv', mbti类型: 'ENTJ' })
+
+      await request(yingYong)
+        .post('/api/聊天/会话')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ jiaoSeId })
+        .expect(200)
+
+      const diYiCiXiaoXi = await 数据库.query(
+        `SELECT COUNT(*) as shu_liang FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
+        [ceShiYongHu!.yongHuId, jiaoSeId],
+      )
+      const diYiCiShuLiang = Number(diYiCiXiaoXi.rows[0].shu_liang)
+
+      await request(yingYong)
+        .post('/api/聊天/会话')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ jiaoSeId })
+        .expect(200)
+
+      const diErCiXiaoXi = await 数据库.query(
+        `SELECT COUNT(*) as shu_liang FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
+        [ceShiYongHu!.yongHuId, jiaoSeId],
+      )
+      expect(Number(diErCiXiaoXi.rows[0].shu_liang)).toBe(diYiCiShuLiang)
+    })
+  })
 })

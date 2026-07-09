@@ -236,7 +236,7 @@ describe('FP-04 AI角色生成', () => {
     expect(tpXiangYing.body.shu_ju.re_shen_lei_xing).toBe('快热')
   })
 
-  it('角色对象包含非空开场白字段', async () => {
+  it('角色对象开场白字段为字符串数组且长度在0~5之间', async () => {
     const xiangYing = await request(yingYong)
       .post('/api/生成角色/MBTI生成')
       .set('Authorization', `Bearer ${lingPai}`)
@@ -244,8 +244,35 @@ describe('FP-04 AI角色生成', () => {
       .expect(200)
 
     expect(xiangYing.body.shu_ju.kai_chang_bai).toBeInstanceOf(Array)
-    expect(xiangYing.body.shu_ju.kai_chang_bai.length).toBeGreaterThan(0)
-    expect(xiangYing.body.shu_ju.kai_chang_bai[0]).toBeTruthy()
+    expect(xiangYing.body.shu_ju.kai_chang_bai.length).toBeGreaterThanOrEqual(0)
+    expect(xiangYing.body.shu_ju.kai_chang_bai.length).toBeLessThanOrEqual(5)
+  })
+
+  it('开场白内容不包含姓名、家乡、学校、专业等个人信息', async () => {
+    const xiangYing = await request(yingYong)
+      .post('/api/生成角色/MBTI生成')
+      .set('Authorization', `Bearer ${lingPai}`)
+      .send({ 性别: 'nv', mbti类型: 'ENFP' })
+      .expect(200)
+
+    const kaiChangBai = xiangYing.body.shu_ju.kai_chang_bai as string[]
+    const mingZi = String(xiangYing.body.shu_ju.ming_zi || '')
+    const chengShi = String(xiangYing.body.shu_ju.shi_jie_xin_xi?.cheng_shi || '')
+    const nianJi = String(xiangYing.body.shu_ju.shi_jie_xin_xi?.nian_ji || '')
+
+    for (const neiRong of kaiChangBai) {
+      expect(neiRong).not.toContain('{mingZi}')
+      if (mingZi) {
+        expect(neiRong).not.toContain(mingZi)
+      }
+      if (chengShi) {
+        expect(neiRong).not.toContain(chengShi)
+      }
+      if (nianJi) {
+        expect(neiRong).not.toContain(nianJi)
+      }
+      expect(neiRong).not.toMatch(/来自|学校|专业|年级|我是|我叫/)
+    }
   })
 
   it('确认角色后写入角色表和好感度表', async () => {

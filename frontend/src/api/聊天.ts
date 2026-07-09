@@ -204,16 +204,6 @@ export async function huoQuFuPan(dangAnId: string): Promise<复盘响应> {
   return 响应.data.shu_ju
 }
 
-export async function faSongKaiChangBai(
-  jiaoSeId: string,
-): Promise<{ yi_fa_song: boolean; xiao_xi_shu?: number; yuan_yin?: string }> {
-  const 响应 = await http.post<{
-    cheng_gong: boolean
-    shu_ju: { yi_fa_song: boolean; xiao_xi_shu?: number; yuan_yin?: string }
-  }>('/聊天/开场白', { jiaoSeId })
-  return 响应.data.shu_ju
-}
-
 export interface 通关结果 {
   xiao_xi?: string
   cheng_gong?: boolean

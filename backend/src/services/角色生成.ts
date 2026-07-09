@@ -192,9 +192,57 @@ function huoQuIeLeiXing(mbti: MBTILeiXing): 'I' | 'E' {
   return mbti.charAt(0) as 'I' | 'E'
 }
 
-function huoQuKaiChangBai(mbti: MBTILeiXing, mingZi: string): string[] {
-  const moBan = suiJiXuanZe(kaiChangBaiMoBan[mbti])
-  return [moBan.replace(/{mingZi}/g, mingZi)]
+function huoQuKaiChangBai(
+  mbti: MBTILeiXing,
+  ieLeiXing: 'I' | 'E',
+  reShenLeiXing: '慢热' | '快热',
+  shiFouZhaXing: boolean,
+  yongHuId?: string,
+): string[] {
+  const moBanLieBiao = kaiChangBaiMoBan[mbti]
+  const zhongZi = yongHuId
+    ? `${yongHuId}_${mbti}_kai_chang_bai`
+    : `${mbti}_${Date.now()}_${Math.random()}`
+
+  let zuiXiaoShuLiang = 0
+  let zuiDaShuLiang = 0
+  if (ieLeiXing === 'E') {
+    if (reShenLeiXing === '快热') {
+      zuiXiaoShuLiang = 2
+      zuiDaShuLiang = 5
+    } else {
+      zuiXiaoShuLiang = 1
+      zuiDaShuLiang = 3
+    }
+  } else {
+    if (reShenLeiXing === '快热') {
+      zuiXiaoShuLiang = 0
+      zuiDaShuLiang = 2
+    } else {
+      zuiXiaoShuLiang = 0
+      zuiDaShuLiang = 1
+    }
+  }
+
+  if (shiFouZhaXing) {
+    zuiDaShuLiang = Math.min(5, zuiDaShuLiang + 1)
+    if (zuiXiaoShuLiang === 0) {
+      zuiXiaoShuLiang = 1
+    }
+  }
+
+  const shuLiang = anZhongZiSuiJiShu(zhongZi, zuiXiaoShuLiang, zuiDaShuLiang)
+  if (shuLiang <= 0) {
+    return []
+  }
+
+  const daLuanMoBan = [...moBanLieBiao]
+  for (let i = daLuanMoBan.length - 1; i > 0; i--) {
+    const suiJiWeiZhi = anZhongZiSuiJiShu(`${zhongZi}_${i}`, 0, i)
+    ;[daLuanMoBan[i], daLuanMoBan[suiJiWeiZhi]] = [daLuanMoBan[suiJiWeiZhi], daLuanMoBan[i]]
+  }
+
+  return daLuanMoBan.slice(0, shuLiang)
 }
 
 function shengChengShiJieXinXi(shenFen: string, _mbti: MBTILeiXing): Record<string, unknown> {
@@ -271,8 +319,10 @@ export function shengChengJiaoSe(canShu: ShengChengJiaoSeCanShu): ShengChengJiao
   const xingGe = xingGeMiaoShu[mbti]
   const yanYu = yanYuFengGe[mbti]
   const xingWei = xingWeiTeDian[mbti]
+  const ieLeiXing = huoQuIeLeiXing(mbti)
+  const reShenLeiXing = huoQuReShenLeiXing(mbti)
   const xiTong = xiTongTiShi[mbti]
-  const kaiChangBai = huoQuKaiChangBai(mbti, mingZi)
+  const kaiChangBai = huoQuKaiChangBai(mbti, ieLeiXing, reShenLeiXing, shiFouZhaXing, canShu.yong_hu_id)
   const weiXinMing = huoQuWeiXinMing(xingBie)
   const touXiang = touXiangEmoji[mbti]
   const haoGanDuZongFen = shengChengHaoGanDuZongFen(mbti, shiFouZhaXing, canShu.yong_hu_id)
@@ -310,8 +360,8 @@ export function shengChengJiaoSe(canShu: ShengChengJiaoSeCanShu): ShengChengJiao
     shi_fou_zha_xing: shiFouZhaXing,
     yu_she_lei_xing: mbti,
     mbti_lei_xing: mbti,
-    ie_lei_xing: huoQuIeLeiXing(mbti),
-    re_shen_lei_xing: huoQuReShenLeiXing(mbti),
+    ie_lei_xing: ieLeiXing,
+    re_shen_lei_xing: reShenLeiXing,
     kai_chang_bai: kaiChangBai,
     wei_xin_ming: weiXinMing,
     zhen_shi_ming: mingZi,
