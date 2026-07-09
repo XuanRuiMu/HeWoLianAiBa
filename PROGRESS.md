@@ -6,7 +6,7 @@
 | -------- | --------------------------------- |
 | 任务     | 修复和我恋爱吧17项问题            |
 | 状态     | 进行中                            |
-| 循环计数 | 11                                |
+| 循环计数 | 12                                |
 
 ## 目标
 
@@ -28,7 +28,7 @@
 
 | 类型              | 上限   | 当前 | 状态 |
 | ----------------- | ------ | ---- | ---- |
-| 总循环次数        | 39     | 0    | 正常 |
+| 总循环次数        | 39     | 12   | 正常 |
 | 单问题修复次数    | 5      | 0    | 正常 |
 | Token预算（可选） | 无上限 | -    | 正常 |
 
@@ -105,6 +105,7 @@
 - FP-A2 + FP-A3 + FP-A4 修复聊天页面交互与显示（循环8）：frontend/src/views/聊天页面.vue 调整发送逻辑为点击后先清空输入栏、设置发送中状态并显示 ⏳ 动画标记，移除消息区域内旧打字指示器，为消息区域添加可见滚动条样式，消息分组改用 XIAO_XI_PEI_ZHI.heBingShiJianYuZhi（60*1000）并保留 safe-area 底部内边距；frontend/src/components/全局菜单.vue 在聊天页将顶部角色名动态替换为"对方正在输入..."；frontend/src/App.vue 增加 100dvh 视口回退；frontend/src/config/消息配置.ts 与 backend/src/config/消息配置.ts 同步新增 heBingShiJianYuZhi；需求文档.md FP-06 更新为1分钟合并阈值；新增/更新 frontend/src/__tests__/消息发送与显示.test.ts 与 frontend/src/__tests__/聊天界面.test.ts 对应测试；前后端 test/build/lint 全部通过，三轴审查 Standards/Spec/BlindSpot 均无硬性违规。
 - FP-A6 重构开场白系统（循环9）：backend/src/services/角色生成.ts 与 backend/src/config/角色配置.ts 根据 IE 类型、热身类型、渣男渣女变体决定 0~5 条开场消息，内容自然且不暴露姓名/个人信息；backend/src/routes/消息.ts POST /会话 在创建会话时自动将开场白保存为普通 AI 消息并删除旧 /开场白 路由；frontend/src/views/添加微信.vue 与聊天页面.vue、frontend/src/api/聊天.ts、frontend/src/config/translations.ts 移除所有向玩家展示"开场白"的代码与文本；需求文档.md FP-04/FP-05 同步更新；前后端 test/build/lint 全部通过，三轴审查无硬性违规。
 - FP-A11 修复军师指导后AI不回复问题（循环11）：frontend/src/App.vue 添加 KeepAlive 缓存聊天页组件；frontend/src/views/聊天页面.vue 声明组件名 `liaoTian` 以匹配 KeepAlive include，使用 onActivated/onDeactivated/onBeforeUnmount 生命周期避免跳转军师记录详情时断开 socket 或清空仓库状态，新增 `yiTongGuoMountedChuShiHua` 标志防止重复初始化；frontend/src/stores/聊天.ts 在 `lianJieSocket` 中增加同一会话重复连接保护；frontend/src/__tests__/聊天界面.test.ts 新增 FP-A11 回归测试覆盖 KeepAlive 缓存、状态保持、返回后消息发送；前后端 test/build/lint 全部通过。
+- FP-A11R 修复FP-A11回归测试失败（循环12）：frontend/src/views/聊天页面.vue 将组件名从 `LiaoTian` 改为 `liaoTian` 以匹配 App.vue KeepAlive include；frontend/eslint.config.js 为该文件单独关闭 `vue/component-definition-name-casing` 规则防止 eslint --fix 回退；`frontend/src/__tests__/聊天界面.test.ts` 21 项全部通过；前后端 test/build/lint 全部通过，三轴审查无硬性违规。
 
 ## 当前决策（只保留影响待处理项的决策）
 
@@ -114,5 +115,3 @@
 
 ## 阻塞与遗留问题
 
-| ID  | 问题描述 | 建议处理方式 |
-| --- | -------- | ------------ |

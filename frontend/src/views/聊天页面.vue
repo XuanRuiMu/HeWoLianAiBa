@@ -255,7 +255,7 @@ import type { 消息 } from '@/types'
 import JunShiZhiDao from '@/components/军师指导.vue'
 
 defineOptions({
-  name: 'LiaoTian',
+  name: 'liaoTian',
 })
 
 const route = useRoute()

@@ -47,4 +47,10 @@ export default tseslint.config(
       'vue/multiline-html-element-content-newline': 'off',
     },
   },
+  {
+    files: ['src/views/聊天页面.vue'],
+    rules: {
+      'vue/component-definition-name-casing': 'off',
+    },
+  },
 )
