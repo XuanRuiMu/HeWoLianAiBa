@@ -8,7 +8,7 @@ export async function fenXiQingGan(
 ): Promise<QingGanFenXiJieGuo> {
   try {
     const xiangYing = await genJuPeiZhiTiaoYong('qingGanFenXi', [
-      { jiaoSe: 'system', neiRong: '你是情感分析专家，只输出JSON。' },
+      { jiaoSe: 'system', neiRong: '判断用户消息的情绪倾向，只输出 JSON。' },
       { jiaoSe: 'user', neiRong: gouJianQingGanFenXiPrompt(xiaoXi, jiaoSeMing) },
     ])
 

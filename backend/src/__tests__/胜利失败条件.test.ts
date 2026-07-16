@@ -11,10 +11,13 @@ import {
   jianCeBiaoBai,
   jianCeHuShan,
   jianCeShiPo,
+  jianCeShenJingBing,
   jianCeYongHuXiaoXi,
+  jianCeYongHuXiaoXiBingChuLi,
   chuLiYongHuBiaoBai,
   chuLiHuShan,
   chuLiShiPo,
+  chuLiShenJingBing,
   chuLiAIHuiFuHouJieShuJianCha,
   chuLiAIJieShouBiaoBai,
   chuLiYongHuJuJueAIHuoJieShou,
@@ -55,7 +58,6 @@ function chuangJianCeShiJiaoSe(shiFouZhaXing = false): AIJiaoSeXinXi {
     jia_ting_bei_jing: '普通家庭',
     qing_gan_jing_li: '有过一段青涩暗恋',
     shi_fou_zha_xing: shiFouZhaXing,
-    kai_chang_bai: ['你好呀'],
     shi_jie_xin_xi: {},
     ba_da_mo_kuai: {
       ji_ben_xin_xi: '小雨，女，20岁',
@@ -160,7 +162,7 @@ describe('FP-11 胜利失败条件', () => {
   })
 
   describe('综合用户消息检测', () => {
-    it('同时检测三种意图并聚合结果', async () => {
+    it('同时检测四种意图并聚合结果', async () => {
       let ciShu = 0
       sheZhiMockTiaoYong(async (canShu: TiaoYongCanShu) => {
         ciShu++
@@ -172,6 +174,8 @@ describe('FP-11 胜利失败条件', () => {
           neiRong = JSON.stringify({ 是否互删: false, 确信度: 0.2, 理由: '' })
         } else if (leiXing.includes('识破')) {
           neiRong = JSON.stringify({ 是否识破: false, 确信度: 0.2, 理由: '' })
+        } else if (leiXing.includes('神经病') || canShu.xiaoXi[0]?.neiRong.includes('人设适配')) {
+          neiRong = JSON.stringify({ 是否神经病: false, 发散思维人设: false, 确信度: 0.1, 理由: '' })
         }
         return {
           neiRong,
@@ -180,12 +184,14 @@ describe('FP-11 胜利失败条件', () => {
         }
       })
 
-      const jieGuo = await jianCeYongHuXiaoXi('我喜欢你')
+      const jiaoSe = chuangJianCeShiJiaoSe(false)
+      const jieGuo = await jianCeYongHuXiaoXi('我喜欢你', [], jiaoSe)
 
       expect(jieGuo.biao_bai.shi_fou_biao_bai).toBe(true)
       expect(jieGuo.hu_shan.shi_fou_hu_shan).toBe(false)
       expect(jieGuo.shi_po.shi_fou_shi_po).toBe(false)
-      expect(ciShu).toBe(3)
+      expect(jieGuo.shen_jing_bing.shi_fou_shen_jing_bing).toBe(false)
+      expect(ciShu).toBe(4)
     })
   })
 
@@ -204,7 +210,7 @@ describe('FP-11 胜利失败条件', () => {
         expect.objectContaining({
           角色ID: 'jiao-se-id',
           lei_xing: 'sheng_li_ai_qing',
-          xiao_xi: '胜利-爱情',
+          xiao_xi: '在一起了 💕',
           ke_ji_xu_liao_tian: true,
         }),
       )
@@ -290,6 +296,168 @@ describe('FP-11 胜利失败条件', () => {
 
       expect(jieGuo).not.toBeNull()
       expect(jieGuo!.jie_guo_lei_xing).toBe('shi_bai_cuo_wu_shi_po')
+    })
+  })
+
+  describe('神经病检测', () => {
+    it('正常消息 → 不判定为神经病', async () => {
+      chuangJianMockTiaoYong(
+        JSON.stringify({
+          是否神经病: false,
+          发散思维人设: false,
+          确信度: 0.1,
+          理由: '正常聊天',
+        }),
+      )
+
+      const jieGuo = await jianCeShenJingBing('今天过得怎么样', [], chuangJianCeShiJiaoSe(false))
+
+      expect(jieGuo.shi_fou_shen_jing_bing).toBe(false)
+      expect(jieGuo.que_xin_du).toBe(0.1)
+    })
+
+    it('明显无厘头消息 → 判定为神经病', async () => {
+      chuangJianMockTiaoYong(
+        JSON.stringify({
+          是否神经病: true,
+          发散思维人设: false,
+          确信度: 0.9,
+          理由: '与上下文完全无关',
+        }),
+      )
+
+      const jieGuo = await jianCeShenJingBing('土豆会梦见电子羊吗', [], chuangJianCeShiJiaoSe(false))
+
+      expect(jieGuo.shi_fou_shen_jing_bing).toBe(true)
+      expect(jieGuo.fa_san_si_wei_ren_she).toBe(false)
+      expect(jieGuo.que_xin_du).toBe(0.9)
+    })
+
+    it('发散思维人设 → 不触发神经病判定', async () => {
+      chuangJianMockTiaoYong(
+        JSON.stringify({
+          是否神经病: true,
+          发散思维人设: true,
+          确信度: 0.8,
+          理由: '虽然无厘头但角色能接受',
+        }),
+      )
+
+      const jiaoSe = chuangJianCeShiJiaoSe(false)
+      jiaoSe.ba_da_mo_kuai.xi_tong_ti_shi = '发散思维，能接受无厘头'
+      const jieGuo = await jianCeShenJingBing('彩虹在冰箱里唱歌', [], jiaoSe)
+
+      expect(jieGuo.shi_fou_shen_jing_bing).toBe(true)
+      expect(jieGuo.fa_san_si_wei_ren_she).toBe(true)
+    })
+  })
+
+  describe('神经病处理', () => {
+    it('渣型角色 → 神经病胜利', async () => {
+      sheZhiShuJuKuMoNi([{ 用户ID: 'yong-hu-id', 是否渣型: true }])
+      const emit = huoQuFaSongShiJian()
+
+      const jieGuo = await chuLiShenJingBing('yong-hu-id', 'jiao-se-id')
+
+      expect(jieGuo).not.toBeNull()
+      expect(jieGuo!.jie_guo_lei_xing).toBe('sheng_li_shen_jing_bing')
+      expect(jieGuo!.ke_ji_xu_liao_tian).toBe(false)
+      expect(emit).toHaveBeenCalledWith(
+        '游戏事件',
+        expect.objectContaining({
+          角色ID: 'jiao-se-id',
+          lei_xing: 'sheng_li_shen_jing_bing',
+          xiao_xi: '对方被你搞懵了',
+          ke_ji_xu_liao_tian: false,
+        }),
+      )
+    })
+
+    it('正常角色 → 神经病失败', async () => {
+      sheZhiShuJuKuMoNi([{ 用户ID: 'yong-hu-id', 是否渣型: false }])
+      const emit = huoQuFaSongShiJian()
+
+      const jieGuo = await chuLiShenJingBing('yong-hu-id', 'jiao-se-id')
+
+      expect(jieGuo).not.toBeNull()
+      expect(jieGuo!.jie_guo_lei_xing).toBe('shi_bai_shen_jing_bing')
+      expect(jieGuo!.ke_ji_xu_liao_tian).toBe(false)
+      expect(emit).toHaveBeenCalled()
+    })
+  })
+
+  describe('综合用户消息处理（神经病）', () => {
+    it('明显无厘头 + 非发散思维 → 触发失败结局', async () => {
+      sheZhiShuJuKuMoNi([{ 用户ID: 'yong-hu-id', 是否渣型: false }])
+      chuangJianMockTiaoYong(
+        JSON.stringify({
+          是否神经病: true,
+          发散思维人设: false,
+          确信度: 0.85,
+          理由: '完全无关',
+        }),
+      )
+
+      const jieGuo = await jianCeYongHuXiaoXiBingChuLi(
+        'yong-hu-id',
+        'jiao-se-id',
+        '蚂蚁在月球上跳芭蕾',
+        500,
+        false,
+        chuangJianCeShiJiaoSe(false),
+        [],
+      )
+
+      expect(jieGuo).not.toBeNull()
+      expect(jieGuo!.jie_guo_lei_xing).toBe('shi_bai_shen_jing_bing')
+    })
+
+    it('明显无厘头 + 发散思维人设 → 不触发结局', async () => {
+      chuangJianMockTiaoYong(
+        JSON.stringify({
+          是否神经病: true,
+          发散思维人设: true,
+          确信度: 0.85,
+          理由: '角色能接受',
+        }),
+      )
+
+      const jiaoSe = chuangJianCeShiJiaoSe(false)
+      jiaoSe.ba_da_mo_kuai.xi_tong_ti_shi = '发散思维，能接受无厘头'
+      const jieGuo = await jianCeYongHuXiaoXiBingChuLi(
+        'yong-hu-id',
+        'jiao-se-id',
+        '蚂蚁在月球上跳芭蕾',
+        500,
+        false,
+        jiaoSe,
+        [],
+      )
+
+      expect(jieGuo).toBeNull()
+    })
+
+    it('轻微跑题 → 不触发结局', async () => {
+      chuangJianMockTiaoYong(
+        JSON.stringify({
+          是否神经病: false,
+          发散思维人设: false,
+          确信度: 0.3,
+          理由: '只是轻微跑题',
+        }),
+      )
+
+      const jieGuo = await jianCeYongHuXiaoXiBingChuLi(
+        'yong-hu-id',
+        'jiao-se-id',
+        '说到电影，你最近看啥',
+        500,
+        false,
+        chuangJianCeShiJiaoSe(false),
+        [],
+      )
+
+      expect(jieGuo).toBeNull()
     })
   })
 
@@ -386,6 +554,7 @@ describe('FP-11 胜利失败条件', () => {
         'sheng_li_ai_qing',
         'sheng_li_hu_shan_sheng_li',
         'sheng_li_shi_po',
+        'sheng_li_shen_jing_bing',
         'shi_bai_guo_zao_biao_bai',
         'shi_bai_hu_shan_shi_bai',
         'shi_bai_cuo_wu_shi_po',
@@ -393,6 +562,7 @@ describe('FP-11 胜利失败条件', () => {
         'shi_bai_ju_jue_biao_bai',
         'shi_bai_bei_qi_pian',
         'shi_bai_bei_zha_xing_qi_pian',
+        'shi_bai_shen_jing_bing',
       ] as const
 
       leiXingLieBiao.forEach((leiXing) => {

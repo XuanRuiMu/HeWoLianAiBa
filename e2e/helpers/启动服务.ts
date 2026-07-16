@@ -136,7 +136,7 @@ export async function qiDongHouDuan(): Promise<void> {
     cwd: houDuanLuJing,
     shell: true,
     stdio: 'pipe',
-    env: { ...process.env, NODE_ENV: 'development', PORT: String(peiZhi.houDuanDuanKou) },
+    env: { ...process.env, NODE_ENV: 'development', PORT: String(peiZhi.houDuanDuanKou), VITEST: 'true' },
   })
   houDuanJinCheng.on('error', (cuoWu) => {
     console.error('后端进程错误:', cuoWu)

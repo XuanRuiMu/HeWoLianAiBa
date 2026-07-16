@@ -114,7 +114,6 @@ function chuangJianCeShiJiaoSeXinXi(): {
   jia_ting_bei_jing: string
   qing_gan_jing_li: string
   shi_fou_zha_xing: boolean
-  kai_chang_bai: string[]
   shi_jie_xin_xi: Record<string, unknown>
   ba_da_mo_kuai: {
     ji_ben_xin_xi: string
@@ -148,7 +147,6 @@ function chuangJianCeShiJiaoSeXinXi(): {
     jia_ting_bei_jing: '普通家庭',
     qing_gan_jing_li: '有过一段青涩暗恋',
     shi_fou_zha_xing: false,
-    kai_chang_bai: ['你好呀'],
     shi_jie_xin_xi: {},
     ba_da_mo_kuai: {
       ji_ben_xin_xi: '小雨，女，20岁',

@@ -52,6 +52,7 @@
   --dingbu-lan-biankuang: #d6d6d6;
   --liaotian-beijing: #ededed;
   --gundong-tiao-beijing: rgba(0, 0, 0, 0.1);
+  --gundong-tiao-hover: rgba(0, 0, 0, 0.18);
   --junshi-beijing: #F7F7F7;
   --junshi-biankuang: #E5E5E5;
   --junshi-qipao-beijing: #FFFFFF;
@@ -287,6 +288,7 @@
   --dingbu-lan-biankuang: #2c2c2e;
   --liaotian-beijing: #111111;
   --gundong-tiao-beijing: rgba(255, 255, 255, 0.1);
+  --gundong-tiao-hover: rgba(255, 255, 255, 0.18);
   --junshi-beijing: #1C1C1E;
   --junshi-biankuang: #38383A;
   --junshi-qipao-beijing: #2C2C2E;

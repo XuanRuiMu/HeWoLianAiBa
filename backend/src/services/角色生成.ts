@@ -27,11 +27,12 @@ import {
   yanYuFengGe,
   xingWeiTeDian,
   xiTongTiShi,
-  kaiChangBaiMoBan,
   touXiangEmoji,
   zhaXingBianTi,
   haoGanDuJiChuFanWei,
 } from '../config/角色配置'
+import { baoCunJiaoSeXiaoXi } from './AI输入准备'
+import { shengChengKaiChangBai } from './开场白生成'
 
 export interface ShengChengJiaoSeCanShu {
   yong_hu_id: string
@@ -68,7 +69,6 @@ export interface ShengChengJiaoSeJieGuo {
   mbti_lei_xing: MBTILeiXing
   ie_lei_xing: 'I' | 'E'
   re_shen_lei_xing: '慢热' | '快热'
-  kai_chang_bai: string[]
   wei_xin_ming: string
   zhen_shi_ming: string
   shi_jie_xin_xi: Record<string, unknown>
@@ -192,59 +192,6 @@ function huoQuIeLeiXing(mbti: MBTILeiXing): 'I' | 'E' {
   return mbti.charAt(0) as 'I' | 'E'
 }
 
-function huoQuKaiChangBai(
-  mbti: MBTILeiXing,
-  ieLeiXing: 'I' | 'E',
-  reShenLeiXing: '慢热' | '快热',
-  shiFouZhaXing: boolean,
-  yongHuId?: string,
-): string[] {
-  const moBanLieBiao = kaiChangBaiMoBan[mbti]
-  const zhongZi = yongHuId
-    ? `${yongHuId}_${mbti}_kai_chang_bai`
-    : `${mbti}_${Date.now()}_${Math.random()}`
-
-  let zuiXiaoShuLiang = 0
-  let zuiDaShuLiang = 0
-  if (ieLeiXing === 'E') {
-    if (reShenLeiXing === '快热') {
-      zuiXiaoShuLiang = 2
-      zuiDaShuLiang = 5
-    } else {
-      zuiXiaoShuLiang = 1
-      zuiDaShuLiang = 3
-    }
-  } else {
-    if (reShenLeiXing === '快热') {
-      zuiXiaoShuLiang = 0
-      zuiDaShuLiang = 2
-    } else {
-      zuiXiaoShuLiang = 0
-      zuiDaShuLiang = 1
-    }
-  }
-
-  if (shiFouZhaXing) {
-    zuiDaShuLiang = Math.min(5, zuiDaShuLiang + 1)
-    if (zuiXiaoShuLiang === 0) {
-      zuiXiaoShuLiang = 1
-    }
-  }
-
-  const shuLiang = anZhongZiSuiJiShu(zhongZi, zuiXiaoShuLiang, zuiDaShuLiang)
-  if (shuLiang <= 0) {
-    return []
-  }
-
-  const daLuanMoBan = [...moBanLieBiao]
-  for (let i = daLuanMoBan.length - 1; i > 0; i--) {
-    const suiJiWeiZhi = anZhongZiSuiJiShu(`${zhongZi}_${i}`, 0, i)
-    ;[daLuanMoBan[i], daLuanMoBan[suiJiWeiZhi]] = [daLuanMoBan[suiJiWeiZhi], daLuanMoBan[i]]
-  }
-
-  return daLuanMoBan.slice(0, shuLiang)
-}
-
 function shengChengShiJieXinXi(shenFen: string, _mbti: MBTILeiXing): Record<string, unknown> {
   return {
     cheng_shi: suiJiXuanZe(chengShiKu),
@@ -322,7 +269,6 @@ export function shengChengJiaoSe(canShu: ShengChengJiaoSeCanShu): ShengChengJiao
   const ieLeiXing = huoQuIeLeiXing(mbti)
   const reShenLeiXing = huoQuReShenLeiXing(mbti)
   const xiTong = xiTongTiShi[mbti]
-  const kaiChangBai = huoQuKaiChangBai(mbti, ieLeiXing, reShenLeiXing, shiFouZhaXing, canShu.yong_hu_id)
   const weiXinMing = huoQuWeiXinMing(xingBie)
   const touXiang = touXiangEmoji[mbti]
   const haoGanDuZongFen = shengChengHaoGanDuZongFen(mbti, shiFouZhaXing, canShu.yong_hu_id)
@@ -362,7 +308,6 @@ export function shengChengJiaoSe(canShu: ShengChengJiaoSeCanShu): ShengChengJiao
     mbti_lei_xing: mbti,
     ie_lei_xing: ieLeiXing,
     re_shen_lei_xing: reShenLeiXing,
-    kai_chang_bai: kaiChangBai,
     wei_xin_ming: weiXinMing,
     zhen_shi_ming: mingZi,
     shi_jie_xin_xi: shiJieXinXi,
@@ -417,7 +362,7 @@ export async function baoCunJiaoSe(
       jiaoSe.yu_she_lei_xing,
       jiaoSe.ie_lei_xing,
       jiaoSe.re_shen_lei_xing,
-      JSON.stringify(jiaoSe.kai_chang_bai),
+      JSON.stringify([]),
       jiaoSe.yu_she_lei_xing,
       jiaoSe.wei_xin_ming,
       jiaoSe.zhen_shi_ming,
@@ -482,6 +427,30 @@ export async function baoCunJiaoSe(
     ],
   )
 
+  try {
+    const kaiChangBai = await shengChengKaiChangBai({
+      mbti_lei_xing: jiaoSe.mbti_lei_xing,
+      ie_lei_xing: jiaoSe.ie_lei_xing,
+      re_shen_lei_xing: jiaoSe.re_shen_lei_xing,
+      shi_fou_zha_xing: jiaoSe.shi_fou_zha_xing,
+      xing_ge: jiaoSe.xing_ge,
+      yan_yu_feng_ge: jiaoSe.yan_yu_feng_ge,
+      xi_huan_de_lei_xing: jiaoSe.xi_huan_de_lei_xing,
+      xing_bie: jiaoSe.xing_bie,
+    })
+    for (const neiRong of kaiChangBai.xiao_xi_lie_biao.slice(0, 5)) {
+      if (neiRong.trim()) {
+        await baoCunJiaoSeXiaoXi({
+          yong_hu_id: yongHuId,
+          jiao_se_id: jiaoSeId,
+          nei_rong: neiRong.trim(),
+        })
+      }
+    }
+  } catch (cuoWu) {
+    console.error('生成开场白消息失败', cuoWu)
+  }
+
   return jiaoSe
 }
 
@@ -492,11 +461,6 @@ export async function anIdChaJiaoSeXiangQing(
   if (jieGuo.rows.length === 0) return null
 
   const row = jieGuo.rows[0]
-  const kaiChangBai = row.开场白
-    ? Array.isArray(row.开场白)
-      ? row.开场白
-      : JSON.parse(String(row.开场白))
-    : []
   const shiJieXinXi = row.世界信息
     ? typeof row.世界信息 === 'object'
       ? row.世界信息
@@ -529,7 +493,6 @@ export async function anIdChaJiaoSeXiangQing(
     mbti_lei_xing: String(row.MBTI || row.预设类型 || 'INTJ') as MBTILeiXing,
     ie_lei_xing: String(row.IE类型 || 'I') as 'I' | 'E',
     re_shen_lei_xing: String(row.热身类型 || '慢热') as '慢热' | '快热',
-    kai_chang_bai: Array.isArray(kaiChangBai) ? kaiChangBai : [String(kaiChangBai)],
     wei_xin_ming: String(row.微信昵称 || row.名字 || ''),
     zhen_shi_ming: String(row.真实姓名 || row.名字 || ''),
     shi_jie_xin_xi: shiJieXinXi as Record<string, unknown>,

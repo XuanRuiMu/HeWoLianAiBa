@@ -10,7 +10,7 @@ export async function pingPanHaoGanDuBianHua(
 ): Promise<HaoGanDuPingPanJieGuo> {
   try {
     const xiangYing = await genJuPeiZhiTiaoYong('haoGanDuPingPan', [
-      { jiaoSe: 'system', neiRong: '你是好感度评判专家，只输出JSON。' },
+      { jiaoSe: 'system', neiRong: '根据一轮对话判断好感变化，只输出 JSON。' },
       {
         jiaoSe: 'user',
         neiRong: gouJianHaoGanDuPingPanPrompt(yongHuXiaoXi, jiaoSeHuiFu, jiaoSeMing),

@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type { ApiXiangYing } from '../types'
 import { 令牌键 } from '@/constants/auth'
+import { huoQuFanYi } from '@/config/translations'
 
 export interface 业务错误 extends Error {
   cuo_wu_ma?: string
@@ -48,7 +49,7 @@ const 实例 = axios.create({
   (响应) => {
     const 数据 = 响应.data as ApiXiangYing<unknown>
     if (数据 && !数据.cheng_gong) {
-      const 错误 = new Error(数据.ti_shi || '请求失败') as 业务错误
+      const 错误 = new Error(数据.ti_shi || huoQuFanYi('tongYong', 'caoZuoShiBai')) as 业务错误
       错误.cuo_wu_ma = 数据.cuo_wu_ma
       return Promise.reject(错误)
     }

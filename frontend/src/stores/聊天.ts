@@ -31,6 +31,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   const haiYouGengDuo = ref(false)
 
   const zuiDaXiaoXiChangDu = 500
+  let linShiXiaoXiXuHao = 0
 
   function anQuanTuiSong(xiaoXi: 消息) {
     if (!Array.isArray(xiaoXiLieBiao.value)) xiaoXiLieBiao.value = []
@@ -232,8 +233,11 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       return null
     }
     qingChuCuoWu()
+    linShiXiaoXiXuHao += 1
+    const linShiId = `linshi-${Date.now()}-${linShiXiaoXiXuHao}`
     const linShiXiaoXi: 消息 = {
-      id: `linshi-${Date.now()}`,
+      id: linShiId,
+      ke_hu_duan_id: linShiId,
       hui_hua_id: dangQianHuiHuaId.value,
       fa_song_zhe_id: '',
       fa_song_zhe_lei_xing: 'yonghu',
@@ -246,16 +250,16 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     anQuanTuiSong(linShiXiaoXi)
     try {
       const { xiaoXi, shiMiJi } = await faSongXiaoXiApi(dangQianHuiHuaId.value, qingLiNeiRong)
-      const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.id === linShiXiaoXi.id)
+      const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.ke_hu_duan_id === linShiXiaoXi.ke_hu_duan_id)
       if (suoYin !== -1) {
-        xiaoXiLieBiao.value[suoYin] = xiaoXi
+        xiaoXiLieBiao.value[suoYin] = { ...xiaoXi, ke_hu_duan_id: linShiXiaoXi.ke_hu_duan_id }
       }
       if (socketLianJie.value?.connected && !shiMiJi) {
         socketLianJie.value.emit('发送消息')
       }
       return xiaoXi
     } catch (cuoWu: unknown) {
-      const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.id === linShiXiaoXi.id)
+      const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.ke_hu_duan_id === linShiXiaoXi.ke_hu_duan_id)
       if (suoYin !== -1) {
         xiaoXiLieBiao.value.splice(suoYin, 1)
       }

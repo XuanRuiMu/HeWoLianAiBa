@@ -19,7 +19,6 @@ import {
   huoQuJunShiJiLu,
 } from '../services/军师'
 import {
-  huoQuAIJiaoSeXinXi,
   baoCunJiaoSeXiaoXi,
 } from '../services/AI输入准备'
 import { chongZhiJiaoSeTiaoDuQi } from '../socket/聊天'
@@ -97,29 +96,6 @@ luYou.post(
       )
       if (jianCha.rows.length === 0) {
         return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
-      }
-
-      const xiaoXiShuLiangJieGuo = await 数据库.query(
-        `SELECT COUNT(*) as shu_liang FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
-        [yongHu.yongHuId, jiaoSeId],
-      )
-      const xiaoXiShuLiang = Number(xiaoXiShuLiangJieGuo.rows[0]?.shu_liang || 0)
-      if (xiaoXiShuLiang === 0) {
-        const jiaoSeXinXi = await huoQuAIJiaoSeXinXi(jiaoSeId)
-        if (jiaoSeXinXi && Array.isArray(jiaoSeXinXi.kai_chang_bai) && jiaoSeXinXi.kai_chang_bai.length > 0) {
-          for (const neiRong of jiaoSeXinXi.kai_chang_bai) {
-            if (typeof neiRong === 'string') {
-              const qingLiNeiRong = neiRong.replace(/\{mingZi\}/g, '').trim()
-              if (qingLiNeiRong) {
-                await baoCunJiaoSeXiaoXi({
-                  yong_hu_id: yongHu.yongHuId,
-                  jiao_se_id: jiaoSeId,
-                  nei_rong: qingLiNeiRong,
-                })
-              }
-            }
-          }
-        }
       }
 
       const shiJian = Date.now()
@@ -340,10 +316,13 @@ luYou.post(
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
     }
 
+    const junShiId = huoQuZiFuChuan(qingQiu.body as Record<string, unknown>, 'junShiId', 'jun_shi_id')
+
     try {
       const jieGuo = await qingQiuJunShiZhiDao({
         yong_hu_id: yongHu.yongHuId,
         jiao_se_id: jiaoSeId,
+        jun_shi_id: junShiId,
       })
       if (!jieGuo.cheng_gong) {
         return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('junShi', 'shengChengShiBai'), jieGuo.cuo_wu_ma)

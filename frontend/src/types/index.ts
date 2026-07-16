@@ -91,6 +91,7 @@ export interface Xiaoxi {
   che_hui_shi_jian?: string
   yuan_shi_nei_rong?: string
   fa_song_zhong?: boolean
+  ke_hu_duan_id?: string
 }
 
 export interface TongGuanXinXi {
@@ -116,7 +117,6 @@ export interface Jiaose {
   chuang_jian_shi_jian: string
   mbti_lei_xing?: MBTILeiXing
   shi_fou_zha_xing?: boolean
-  kai_chang_bai?: string[]
   wei_xin_ming?: string
   zhen_shi_ming?: string
   yu_she_lei_xing?: string
@@ -153,7 +153,6 @@ export interface ShengChengJiaoSeJieGuo {
   ie_lei_xing: 'I' | 'E'
   re_shen_lei_xing: 'slow' | 'fast'
   shi_fou_zha_xing: boolean
-  kai_chang_bai: string[]
   wei_xin_ming: string
   zhen_shi_ming: string
   te_zheng_miao_shu?: string
@@ -222,32 +221,6 @@ export interface JunShiZhiDaoJieGuo {
   shiJian: string
 }
 
-export interface JunShiJianYi {
-  id?: string
-  jian_yi?: string
-  jun_shi_id?: string
-  jun_shi_ming_chen?: string
-  mingCheng?: string
-  ming_chen?: string
-  cheng_hao?: string
-  fuBiaoTi?: string
-  biaoQian?: string
-  biao_qian?: string
-  touXiang?: string
-  tou_xiang?: string
-  hou_tai_shu_ju?: {
-    hao_gan_du: {
-      zong_fen: number
-      xin_ren_du: number
-      qin_mi_du: number
-      qu_wei_du: number
-      guan_huai_du: number
-      guan_xi_jie_duan: string
-      guan_xi_jie_duan_ming_cheng: string
-    }
-  }
-}
-
 export interface JunShiJiLuXiaoXi {
   jiao_se: string
   nei_rong: string
@@ -262,19 +235,6 @@ export interface JunShiJiLuLiaoTianXiaoXi {
   che_hui_shi_jian?: string | null
 }
 
-export interface JunShiJiLuHouTaiShuJu {
-  haoGanDu: {
-    zongFen: number
-    xinRenDu: number
-    qinMiDu: number
-    quWeiDu: number
-    guanHuaiDu: number
-    guanXiJieDuan: string
-    guanXiJieDuanMingCheng: string
-  }
-  fuPanShuJu: FuPanTiaoMu[]
-}
-
 export interface JunShiJiLu {
   jian_yi: string
   shi_jian: string
@@ -284,28 +244,24 @@ export interface JunShiJiLu {
   jun_shi_ming_chen: string
   jun_shi_tou_xiang?: string
   dui_hua_zhai_yao?: string
-  xiao_xi_zhao_pian?: string
   liao_tian_ji_lu?: JunShiJiLuLiaoTianXiaoXi[]
-  hou_tai_shu_ju?: JunShiJiLuHouTaiShuJu
 }
 
 export interface DangAnXiangQing {
   id: string
-  yong_hu_id: string
   jiao_se_id: string
   jiao_se_ming_zi: string
   shi_fou_zha_xing: boolean
   jie_guo_lei_xing: string
   jie_guo_lei_xing_yuan: string
   shi_fou_feng_cun: boolean
-  hao_gan_du_zong_fen: number
-  guan_xi_jie_duan: string
   liao_tian_tian_shu: number
   xiao_xi_zong_shu: number
   fu_pan_shu_ju: FuPanTiaoMu[] | null
   fu_pan_nei_rong?: string | null
   chuang_jian_shi_jian: string
   zui_hou_xiao_xi_shi_jian: string | null
+  you_xi_jie_shu_shi_jian: string | null
   sui_ji_xing_ge?: boolean
   mbti_lei_xing?: string
 }
@@ -316,14 +272,6 @@ export interface FuPanTiaoMu {
   yong_hu_xiao_xi: string
   ai_hui_fu: string
   ai_xin_li_huo_dong: string
-  hao_gan_du_bian_hua: {
-    xin_ren_bian_hua: number
-    qin_mi_bian_hua: number
-    qu_wei_bian_hua: number
-    guan_huai_bian_hua: number
-    zong_fen_bian_hua: number
-    guan_xi_jie_duan: string
-  }
 }
 
 export interface RenShe {

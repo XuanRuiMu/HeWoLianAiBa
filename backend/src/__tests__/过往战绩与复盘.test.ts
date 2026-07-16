@@ -69,17 +69,18 @@ async function qingLiJiaoSeHeYongHu(yongHuId: string): Promise<void> {
   await 数据库.query(`DELETE FROM "用户" WHERE "ID" = $1`, [yongHuId])
 }
 
-async function chuangJianJianYiJiaoSe(yongHuId: string): Promise<string> {
+async function chuangJianJianYiJiaoSe(yongHuId: string, weiXinNiCheng?: string): Promise<string> {
   const jiaoSeId = uuidV4()
   await 数据库.query(
     `INSERT INTO "角色" (
-      "ID", "用户ID", "名字", "性别", "年龄", "外貌", "性格",
+      "ID", "用户ID", "名字", "微信昵称", "性别", "年龄", "外貌", "性格",
       "背景故事", "爱好", "言语风格", "头像", "标签", "是否渣型"
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
     [
       jiaoSeId,
       yongHuId,
-      '简易角色',
+      '真实姓名',
+      weiXinNiCheng || null,
       'nv',
       20,
       '清秀',
@@ -145,7 +146,7 @@ function shengChengFuPanMockNeiRong(): string {
     撤回分析: '撤回了一条消息，避免了尴尬。',
     军师建议效果: '军师建议你多分享日常，实际帮助了你打开话题。',
     关键事件时间线: ['10:00 - 初次互动', '10:05 - 话题深入', '10:10 - 关心对方'],
-    总结评价: '整体表现不错，建议继续保持自然节奏。',
+    整体感受: '整体表现不错，建议继续保持自然节奏。',
   })
 }
 
@@ -245,6 +246,80 @@ describe('FP-13 过往战绩与复盘', () => {
       expect(dangAn.jie_guo_lei_xing_yuan).toBe(yuQiYuan)
       expect(dangAn.shi_fou_feng_cun).toBe(true)
     })
+
+    it('战绩列表不返回好感度总分、关系阶段等敏感字段', async () => {
+      await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
+
+      const xiangYing = await request(yingYong)
+        .get('/api/战绩/列表')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const lieBiao = xiangYing.body.shu_ju.dangAnLieBiao
+      expect(lieBiao.length).toBeGreaterThan(0)
+      for (const dangAn of lieBiao) {
+        expect(dangAn).not.toHaveProperty('hao_gan_du_zong_fen')
+        expect(dangAn).not.toHaveProperty('guan_xi_jie_duan')
+        expect(dangAn).not.toHaveProperty('yong_hu_id')
+      }
+    })
+
+    it('战绩列表显示对象微信昵称而非真实姓名', async () => {
+      const jiaoSeId2 = await chuangJianJianYiJiaoSe(ceShiYongHu!.yongHuId, '微信甜心')
+      await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId2, '胜利-爱情')
+
+      const xiangYing = await request(yingYong)
+        .get('/api/战绩/列表')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const dangAn = xiangYing.body.shu_ju.dangAnLieBiao.find(
+        (x: { jiao_se_id: string }) => x.jiao_se_id === jiaoSeId2,
+      )
+      expect(dangAn).toBeDefined()
+      expect(dangAn.jiao_se_ming_zi).toBe('微信甜心')
+      expect(dangAn.jiao_se_ming_zi).not.toBe('真实姓名')
+    })
+
+    it('微信昵称为空时不返回真实姓名，使用未知微信兜底', async () => {
+      const jiaoSeId2 = await chuangJianJianYiJiaoSe(ceShiYongHu!.yongHuId)
+      await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId2, '胜利-爱情')
+
+      const xiangYing = await request(yingYong)
+        .get('/api/战绩/列表')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const dangAn = xiangYing.body.shu_ju.dangAnLieBiao.find(
+        (x: { jiao_se_id: string }) => x.jiao_se_id === jiaoSeId2,
+      )
+      expect(dangAn).toBeDefined()
+      expect(dangAn.jiao_se_ming_zi).toBe(huoQuFanYi('zhanJi', 'weiZhiWeiXin'))
+      expect(dangAn.jiao_se_ming_zi).not.toBe('真实姓名')
+    })
+
+    it('已结束游戏返回游戏结束时间，进行中游戏返回 null', async () => {
+      const jiaoSeId2 = await chuangJianJianYiJiaoSe(ceShiYongHu!.yongHuId, '结束测试')
+      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId2, '胜利-爱情')
+      await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '', false)
+
+      const xiangYing = await request(yingYong)
+        .get('/api/战绩/列表')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const yiJieShu = xiangYing.body.shu_ju.dangAnLieBiao.find(
+        (x: { id: string }) => x.id === dangAnId,
+      )
+      expect(yiJieShu).toBeDefined()
+      expect(yiJieShu.you_xi_jie_shu_shi_jian).toBeTruthy()
+
+      const jinXingZhong = xiangYing.body.shu_ju.dangAnLieBiao.find(
+        (x: { jie_guo_lei_xing_yuan: string }) => x.jie_guo_lei_xing_yuan === 'jinxing_zhong',
+      )
+      expect(jinXingZhong).toBeDefined()
+      expect(jinXingZhong.you_xi_jie_shu_shi_jian).toBeNull()
+    })
   })
 
   describe('复盘生成', () => {
@@ -306,7 +381,7 @@ describe('FP-13 过往战绩与复盘', () => {
       expect(neiRong).toContain('## 聊错了什么')
       expect(neiRong).toContain('## 撤回分析')
       expect(neiRong).toContain('## 军师建议效果')
-      expect(neiRong).toContain('## 总结评价')
+      expect(neiRong).toContain('## 整体感受')
     })
 
     it('复盘关键事件时间线格式匹配 HH:MM - 描述', async () => {
@@ -330,6 +405,7 @@ describe('FP-13 过往战绩与复盘', () => {
       for (const tiaoMu of shiJianXian) {
         expect(tiaoMu.shi_jian).toMatch(/^\d{2}:\d{2}$/)
         expect(tiaoMu.shi_jian_miao_shu).toBeTruthy()
+        expect(tiaoMu).not.toHaveProperty('hao_gan_du_bian_hua')
       }
     })
 
@@ -377,7 +453,37 @@ describe('FP-13 过往战绩与复盘', () => {
       expect(neiRong).not.toContain('好感度')
     })
 
-    it('复盘详情返回军师指导记录且包含好感度快照', async () => {
+    it('AI 返回对象字段时复盘内容不出现 [object Object]', async () => {
+      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
+
+      sheZhiMockTiaoYong(async () => ({
+        neiRong: JSON.stringify({
+          逐句分析: { summary: '对象字段示例' },
+          聊对了什么: ['保持轻松', '关心对方'],
+          聊错了什么: '有一次回复稍显急躁。',
+          撤回分析: '',
+          军师建议效果: { effective: true },
+          关键事件时间线: ['10:00 - 初次互动'],
+          整体感受: '整体表现不错。',
+        }),
+        xinXi: { role: 'assistant', content: '' },
+        yuanShuJu: {} as never,
+      }))
+
+      await shengChengFuPan(ceShiYongHu!.yongHuId, jiaoSeId, dangAnId)
+
+      const xiangYing = await request(yingYong)
+        .get(`/api/战绩/复盘/${dangAnId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const neiRong = xiangYing.body.shu_ju.fu_pan_nei_rong
+      expect(neiRong).not.toContain('[object Object]')
+      expect(neiRong).toContain('summary')
+      expect(neiRong).toContain('effective')
+    })
+
+    it('复盘详情返回军师指导记录且不包含好感度快照', async () => {
       const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
       await xieRuFuPanTiaoMu(ceShiYongHu!.yongHuId, jiaoSeId, {
         shi_jian: new Date().toISOString(),
@@ -408,6 +514,10 @@ describe('FP-13 过往战绩与复盘', () => {
 
       const jiLuLieBiao = xiangYing.body.shu_ju.jun_shi_zhi_dao_ji_lu
       expect(Array.isArray(jiLuLieBiao)).toBe(true)
+      for (const jiLu of jiLuLieBiao) {
+        expect(jiLu).not.toHaveProperty('hao_gan_du_kuai_zhao')
+        expect(jiLu).not.toHaveProperty('hou_tai_shu_ju')
+      }
     })
   })
 
@@ -438,6 +548,64 @@ describe('FP-13 过往战绩与复盘', () => {
         .get(`/api/战绩/详情/${dangAnId}`)
         .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
         .expect(404)
+    })
+
+    it('批量删除多条战绩后无法再次访问', async () => {
+      const jiaoSeId2 = await chuangJianJianYiJiaoSe(ceShiYongHu!.yongHuId)
+      const dangAnId1 = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
+      const dangAnId2 = await chuangJianYouXiDangAn(
+        ceShiYongHu!.yongHuId,
+        jiaoSeId2,
+        '失败-过早表白',
+      )
+
+      const shanChuXiangYing = await request(yingYong)
+        .post('/api/战绩/批量删除')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ dangAnIds: [dangAnId1, dangAnId2] })
+        .expect(200)
+      expect(shanChuXiangYing.body.cheng_gong).toBe(true)
+      expect(shanChuXiangYing.body.shu_ju.shan_chu_ids).toContain(dangAnId1)
+      expect(shanChuXiangYing.body.shu_ju.shan_chu_ids).toContain(dangAnId2)
+
+      await request(yingYong)
+        .get(`/api/战绩/详情/${dangAnId1}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(404)
+      await request(yingYong)
+        .get(`/api/战绩/详情/${dangAnId2}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(404)
+    })
+
+    it('批量删除空数组或非法参数返回 400', async () => {
+      const kongXiangYing = await request(yingYong)
+        .post('/api/战绩/批量删除')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ dangAnIds: [] })
+        .expect(400)
+      expect(kongXiangYing.body.ti_shi).toBe(huoQuFanYi('tongYong', 'queShaoCanShu'))
+
+      const feiFaXiangYing = await request(yingYong)
+        .post('/api/战绩/批量删除')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ dangAnIds: ['', 123, null] })
+        .expect(400)
+      expect(feiFaXiangYing.body.ti_shi).toBe(huoQuFanYi('tongYong', 'queShaoCanShu'))
+    })
+
+    it('战绩详情不返回好感度总分、关系阶段等敏感字段', async () => {
+      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
+
+      const xiangYing = await request(yingYong)
+        .get(`/api/战绩/详情/${dangAnId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const dangAn = xiangYing.body.shu_ju
+      expect(dangAn).not.toHaveProperty('hao_gan_du_zong_fen')
+      expect(dangAn).not.toHaveProperty('guan_xi_jie_duan')
+      expect(dangAn).not.toHaveProperty('yong_hu_id')
     })
   })
 })

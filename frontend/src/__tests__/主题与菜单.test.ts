@@ -243,6 +243,41 @@ describe('FP-18 主题与UI', () => {
       expect(fanHui.text()).toContain(huoQuFanYi('caidan', 'fanHui'))
     })
 
+    it('主页不显示主页按钮', async () => {
+      const { wrapper } = await mountCaiDan({ luJing: '/' })
+      const zhuYe = wrapper.find('.zhuye-anniu')
+      expect(zhuYe.classes()).toContain('yincang')
+    })
+
+    it('登录页不显示主页按钮', async () => {
+      const { wrapper } = await mountCaiDan({ luJing: '/login' })
+      const zhuYe = wrapper.find('.zhuye-anniu')
+      expect(zhuYe.classes()).toContain('yincang')
+    })
+
+    it('非主页且非登录页显示主页按钮', async () => {
+      const { wrapper } = await mountCaiDan({ luJing: '/guo-wang-zhan-ji' })
+      const zhuYe = wrapper.find('.zhuye-anniu')
+      expect(zhuYe.classes()).not.toContain('yincang')
+      expect(zhuYe.text()).toContain(huoQuFanYi('caidan', 'zhuYe'))
+    })
+
+    it('点击返回按钮调用 router.back()', async () => {
+      const { wrapper, luYou } = await mountCaiDan({ luJing: '/guo-wang-zhan-ji' })
+      const backSpy = vi.spyOn(luYou, 'back')
+      await wrapper.find('.fanhui-anniu').trigger('click')
+      await flushPromises()
+      expect(backSpy).toHaveBeenCalled()
+    })
+
+    it('点击主页按钮跳转主页', async () => {
+      const { wrapper, luYou } = await mountCaiDan({ luJing: '/guo-wang-zhan-ji' })
+      const pushSpy = vi.spyOn(luYou, 'push')
+      await wrapper.find('.zhuye-anniu').trigger('click')
+      await flushPromises()
+      expect(pushSpy).toHaveBeenCalledWith('/')
+    })
+
     it('非聊天页中间显示页面标题', async () => {
       const { wrapper } = await mountCaiDan({ luJing: '/guo-wang-zhan-ji' })
       const biaoTi = wrapper.find('.ye-mian-biao-ti')
@@ -356,6 +391,111 @@ describe('FP-18 主题与UI', () => {
       const xiala = wrapper.find('.qita-xiala')
       expect(xiala.text()).toContain(huoQuFanYi('caidan', 'yongHuXieYi'))
       expect(xiala.text()).toContain(huoQuFanYi('caidan', 'yinSiZhengCe'))
+    })
+
+    it('聊天页「对方正在输入」提示出现在角色名下方且整体居中', async () => {
+      const { wrapper } = await mountCaiDan({ luJing: '/chat/test123' })
+      const 聊天仓库 = 使用聊天仓库()
+      聊天仓库.jiaoSeXinXi = {
+        id: 'j1',
+        ming_zi: '测试角色',
+        wei_xin_ming: '小甜心',
+        xing_bie: 'nv',
+        nian_ling: 22,
+        wai_mao: '',
+        xing_ge: '',
+        bei_jing_gu_shi: '',
+        xi_hao: [],
+        yan_yu_feng_ge: '',
+        tou_xiang: '',
+        bei_jing_tu: null,
+        biao_qian: [],
+        re_du: 0,
+        chuang_jian_shi_jian: new Date().toISOString(),
+      }
+      聊天仓库.zhengZaiShuRu = true
+      await flushPromises()
+
+      const biaoTiZu = wrapper.find('.liaotian-biaoti-zu')
+      expect(biaoTiZu.exists()).toBe(true)
+      expect(biaoTiZu.find('.jiaose-mingcheng-caidan').text()).toBe('小甜心')
+      const shuruTishi = biaoTiZu.find('.duifang-shuru-tishi')
+      expect(shuruTishi.exists()).toBe(true)
+      expect(shuruTishi.text()).toBe(huoQuFanYi('liaoTian', 'duiFangZhengZaiShuRu'))
+      expect(wrapper.find('.caidan-zhong').classes()).toContain('liaotian-zhongxin')
+    })
+
+    it('聊天页使用现代布局：左侧返回/主页、右侧军师/更多，隐藏用户下拉', async () => {
+      const { wrapper } = await mountCaiDan({ luJing: '/chat/test123', dengLu: true })
+      const 聊天仓库 = 使用聊天仓库()
+      聊天仓库.jiaoSeXinXi = {
+        id: 'j1',
+        ming_zi: '测试角色',
+        wei_xin_ming: '小甜心',
+        xing_bie: 'nv',
+        nian_ling: 22,
+        wai_mao: '',
+        xing_ge: '',
+        bei_jing_gu_shi: '',
+        xi_hao: [],
+        yan_yu_feng_ge: '',
+        tou_xiang: '',
+        bei_jing_tu: null,
+        biao_qian: [],
+        re_du: 0,
+        chuang_jian_shi_jian: new Date().toISOString(),
+      }
+      await flushPromises()
+
+      expect(wrapper.find('.caidan-neirong').classes()).toContain('liaotian-caidan')
+      const fanHui = wrapper.find('.fanhui-anniu')
+      expect(fanHui.exists()).toBe(true)
+      expect(fanHui.classes()).not.toContain('yincang')
+      const zhuYe = wrapper.find('.zhuye-anniu')
+      expect(zhuYe.exists()).toBe(true)
+      expect(zhuYe.classes()).not.toContain('yincang')
+      expect(wrapper.find('.yonghu-xuanxiang').exists()).toBe(false)
+      expect(wrapper.find('.junshi-anniu').exists()).toBe(true)
+      expect(wrapper.find('.liaotian-gengduo').exists()).toBe(true)
+    })
+
+    it('聊天页更多菜单可展开并包含主题切换、协议与版本号', async () => {
+      const { wrapper } = await mountCaiDan({ luJing: '/chat/test123', dengLu: true })
+      const 聊天仓库 = 使用聊天仓库()
+      聊天仓库.jiaoSeXinXi = {
+        id: 'j1',
+        ming_zi: '测试角色',
+        wei_xin_ming: '小甜心',
+        xing_bie: 'nv',
+        nian_ling: 22,
+        wai_mao: '',
+        xing_ge: '',
+        bei_jing_gu_shi: '',
+        xi_hao: [],
+        yan_yu_feng_ge: '',
+        tou_xiang: '',
+        bei_jing_tu: null,
+        biao_qian: [],
+        re_du: 0,
+        chuang_jian_shi_jian: new Date().toISOString(),
+      }
+      await flushPromises()
+
+      await wrapper.find('.liaotian-gengduo').trigger('click')
+      await flushPromises()
+      const xiala = wrapper.find('.liaotian-gengduo-xiala')
+      expect(xiala.exists()).toBe(true)
+      expect(xiala.text()).toContain(huoQuFanYi('caidan', 'yongHuXieYi'))
+      expect(xiala.text()).toContain(huoQuFanYi('caidan', 'yinSiZhengCe'))
+      expect(xiala.text()).toContain('1.0.0')
+    })
+
+    it('顶部栏固定且主内容区有对应 margin-top，避免挤压滚动区域', () => {
+      expect(caiDanYuanMa).toMatch(/\.quanju-caidan\s*\{[^}]*position:\s*fixed/)
+      const appYuanMa = readFileSync(resolve(__dirname, '../App.vue'), 'utf8')
+      expect(appYuanMa).toMatch(
+        /\.app-zhuti\s*\{[^}]*margin-top:\s*calc\(\s*52px\s*\+\s*var\(--anquan-quyu-shang\)/,
+      )
     })
   })
 })

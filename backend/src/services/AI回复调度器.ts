@@ -106,6 +106,7 @@ export class AI回复调度器 {
         好感度?.zong_fen || 0,
         等待表白回复,
         角色,
+        历史消息,
       )
 
       if (jieShuJieGuo) {

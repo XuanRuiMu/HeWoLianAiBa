@@ -2,11 +2,15 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
 import { huoQuFanYi } from '@/config/translations'
 import 军师指导 from '@/components/军师指导.vue'
 import { qingQiuJunShiZhiDao, huoQuJunShiLieBiao, huoQuJunShiJiLu } from '@/api/聊天'
 
 vi.mock('@/api/聊天')
+
+const junShiZhiDaoYuanMa = readFileSync(resolve(__dirname, '../components/军师指导.vue'), 'utf8')
 
 const tianJinFangYanGuanJianCi = [
   '天津',
@@ -39,10 +43,26 @@ function chuangJianMoNiJunShiLieBiao() {
     {
       id: 'xuanRuiMu',
       mingCheng: huoQuFanYi('junShi', 'junShiMing'),
-      fuBiaoTi: '来自后端配置的副标题',
+      fuBiaoTi: huoQuFanYi('junShi', 'junShiFuBiaoTi'),
       biaoQian: huoQuFanYi('junShi', 'junShiBiaoQian'),
       miaoShu: huoQuFanYi('junShi', 'junShiMiaoShu'),
       touXiang: '图片/军师头像/军师玄锐暮头像.png',
+    },
+    {
+      id: 'ceShiJunShi1',
+      mingCheng: huoQuFanYi('junShi', 'ceShiJunShi1Ming'),
+      fuBiaoTi: huoQuFanYi('junShi', 'ceShiJunShi1FuBiaoTi'),
+      biaoQian: huoQuFanYi('junShi', 'ceShiJunShi1BiaoQian'),
+      miaoShu: huoQuFanYi('junShi', 'ceShiJunShi1MiaoShu'),
+      touXiang: '图片/军师头像/军师测试军师1头像.png',
+    },
+    {
+      id: 'ceShiJunShi2',
+      mingCheng: huoQuFanYi('junShi', 'ceShiJunShi2Ming'),
+      fuBiaoTi: huoQuFanYi('junShi', 'ceShiJunShi2FuBiaoTi'),
+      biaoQian: huoQuFanYi('junShi', 'ceShiJunShi2BiaoQian'),
+      miaoShu: huoQuFanYi('junShi', 'ceShiJunShi2MiaoShu'),
+      touXiang: '图片/军师头像/军师测试军师2头像.png',
     },
   ]
 }
@@ -50,7 +70,7 @@ function chuangJianMoNiJunShiLieBiao() {
 function chuangJianMoNiJiLuLieBiao() {
   return [
     {
-      jian_yi: '这是指导建议',
+      jian_yi: '这是玄锐暮的指导建议',
       shi_jian: '2026-07-07T10:00:00.000Z',
       jiao_se_id: 'j1',
       jiao_se_ming_zi: '小甜心',
@@ -67,34 +87,25 @@ function chuangJianMoNiJiLuLieBiao() {
           che_hui_shi_jian: null,
         },
       ],
-      hou_tai_shu_ju: {
-        haoGanDu: {
-          zongFen: 300,
-          xinRenDu: 100,
-          qinMiDu: 80,
-          quWeiDu: 60,
-          guanHuaiDu: 60,
-          guanXiJieDuan: 'renShi',
-          guanXiJieDuanMingCheng: '认识',
+    },
+    {
+      jian_yi: '这是测试军师1的指导建议',
+      shi_jian: '2026-07-07T11:00:00.000Z',
+      jiao_se_id: 'j1',
+      jiao_se_ming_zi: '小甜心',
+      jun_shi_id: 'ceShiJunShi1',
+      jun_shi_ming_chen: huoQuFanYi('junShi', 'ceShiJunShi1Ming'),
+      dui_hua_zhai_yao: '摘要内容2',
+      liao_tian_ji_lu: [
+        {
+          jiao_se: '用户',
+          nei_rong: '在吗',
+          shi_jian: '11:00',
+          yi_che_hui: false,
+          yuan_shi_nei_rong: null,
+          che_hui_shi_jian: null,
         },
-        fuPanShuJu: [
-          {
-            shi_jian: '10:00',
-            shi_jian_miao_shu: '初次互动',
-            yong_hu_xiao_xi: '你好',
-            ai_hui_fu: '嗨',
-            ai_xin_li_huo_dong: 'AI内心活动',
-            hao_gan_du_bian_hua: {
-              xin_ren_bian_hua: 1,
-              qin_mi_bian_hua: 0,
-              qu_wei_bian_hua: 0,
-              guan_huai_bian_hua: 0,
-              zong_fen_bian_hua: 1,
-              guan_xi_jie_duan: 'renShi',
-            },
-          },
-        ],
-      },
+      ],
     },
   ]
 }
@@ -116,7 +127,34 @@ async function mountJunShiZhiDao(jiaoSeId = 'j1') {
   return { wrapper, luYou }
 }
 
-describe('FP-12 军师指导系统前端', () => {
+async function xuanZeJunShi(wrapper: ReturnType<typeof mount>['wrapper'], junShiId: string) {
+  const xiang = wrapper.findAll('.junshi-xuanze-xiang').find((el) => {
+    const touXiang = el.find('.touxiang-tu')
+    return (
+      touXiang.attributes('src')?.includes(junShiId.replace(/([A-Z])/g, '-$1').toLowerCase()) ??
+      false
+    )
+  })
+  if (!xiang) {
+    const muBiao = wrapper
+      .findAll('.junshi-xuanze-xiang')
+      .find((el) =>
+        el
+          .text()
+          .includes(
+            junShiId === 'xuanRuiMu'
+              ? huoQuFanYi('junShi', 'junShiMing')
+              : huoQuFanYi('junShi', `${junShiId}Ming` as never),
+          ),
+      )
+    await muBiao?.trigger('click')
+  } else {
+    await xiang.trigger('click')
+  }
+  await flushPromises()
+}
+
+describe('FP-08 军师指导菜单简化与扩展', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(huoQuJunShiLieBiao).mockResolvedValue(chuangJianMoNiJunShiLieBiao())
@@ -124,57 +162,83 @@ describe('FP-12 军师指导系统前端', () => {
     vi.mocked(qingQiuJunShiZhiDao).mockReset()
   })
 
-  describe('军师面板渲染', () => {
-    it('副标题文本来自后端API响应，非前端硬编码', async () => {
+  describe('军师列表一级菜单', () => {
+    it('首屏仅展示军师头像与名字，不含二级内容', async () => {
       const { wrapper } = await mountJunShiZhiDao()
 
-      const fuBiaoTi = wrapper.find('.junshi-fubiaoti')
-      expect(fuBiaoTi.exists()).toBe(true)
-      expect(fuBiaoTi.text()).toBe('来自后端配置的副标题')
-      expect(fuBiaoTi.text()).not.toBe(huoQuFanYi('junShi', 'junShiFuBiaoTi'))
+      expect(wrapper.find('.junshi-xuanze-buju').exists()).toBe(true)
+      expect(wrapper.find('.zhidao-buju').exists()).toBe(false)
+      expect(wrapper.find('.jilu-buju').exists()).toBe(false)
+
+      const lieBiao = wrapper.findAll('.junshi-xuanze-xiang')
+      expect(lieBiao.length).toBe(3)
+      lieBiao.forEach((xiang) => {
+        expect(xiang.find('.junshi-touxiang').exists()).toBe(true)
+        expect(xiang.find('.junshi-mingcheng').exists()).toBe(true)
+        expect(xiang.find('.junshi-fubiaoti').exists()).toBe(false)
+        expect(xiang.find('.junshi-biaoqian').exists()).toBe(false)
+      })
     })
 
-    it('面板内容不包含天津方言味相关描述', async () => {
+    it('列表包含玄锐暮、测试军师1、测试军师2', async () => {
       const { wrapper } = await mountJunShiZhiDao()
 
       const quanBuWenBen = wrapper.text()
-      for (const guanJianCi of tianJinFangYanGuanJianCi) {
-        expect(quanBuWenBen).not.toContain(guanJianCi)
-      }
+      expect(quanBuWenBen).toContain(huoQuFanYi('junShi', 'junShiMing'))
+      expect(quanBuWenBen).toContain(huoQuFanYi('junShi', 'ceShiJunShi1Ming'))
+      expect(quanBuWenBen).toContain(huoQuFanYi('junShi', 'ceShiJunShi2Ming'))
     })
 
     it('所有用户可见文本来自翻译文件', async () => {
       const { wrapper } = await mountJunShiZhiDao()
 
       expect(wrapper.text()).toContain(huoQuFanYi('junShi', 'junShiZhiDao'))
-      expect(wrapper.text()).toContain(huoQuFanYi('junShi', 'zhiDaoJiLu'))
-      expect(wrapper.text()).toContain(huoQuFanYi('junShi', 'qingQiuZhiDao'))
-      expect(wrapper.text()).toContain(huoQuFanYi('junShi', 'guanBi'))
-    })
-
-    it('选择菜单显示“请选择你的军师”提示', async () => {
-      const { wrapper } = await mountJunShiZhiDao()
-
       expect(wrapper.text()).toContain(huoQuFanYi('junShi', 'qingXuanZeNiDeJunShi'))
+      expect(wrapper.text()).toContain(huoQuFanYi('junShi', 'guanBi'))
     })
 
     it('军师头像使用后端配置路径', async () => {
       const { wrapper } = await mountJunShiZhiDao()
 
-      const touXiang = wrapper.find('.junshi-touxiang .touxiang-tu')
-      expect(touXiang.exists()).toBe(true)
-      expect(touXiang.attributes('src')).toBe('/图片/军师头像/军师玄锐暮头像.png')
+      const touXiangLieBiao = wrapper.findAll('.junshi-xuanze-xiang .touxiang-tu')
+      expect(touXiangLieBiao.length).toBe(3)
+      expect(touXiangLieBiao[0].attributes('src')).toBe('/图片/军师头像/军师玄锐暮头像.png')
+      expect(touXiangLieBiao[1].attributes('src')).toBe('/图片/军师头像/军师测试军师1头像.png')
+      expect(touXiangLieBiao[2].attributes('src')).toBe('/图片/军师头像/军师测试军师2头像.png')
     })
+  })
 
-    it('军师选择菜单仅展示玄锐暮', async () => {
+  describe('军师详情界面', () => {
+    it('点击军师后进入该军师的指导界面', async () => {
       const { wrapper } = await mountJunShiZhiDao()
 
-      await wrapper.find('.junshi-xinxi').trigger('click')
+      await xuanZeJunShi(wrapper, 'xuanRuiMu')
+
+      expect(wrapper.find('.junshi-xuanze-buju').exists()).toBe(false)
+      expect(wrapper.find('.zhidao-buju').exists()).toBe(true)
+      expect(wrapper.find('.xuanzhong-junshi').text()).toContain(huoQuFanYi('junShi', 'junShiMing'))
+    })
+
+    it('详情界面包含指导与记录标签', async () => {
+      const { wrapper } = await mountJunShiZhiDao()
+
+      await xuanZeJunShi(wrapper, 'xuanRuiMu')
+
+      const biaoQian = wrapper.findAll('.biaoqian-anniu')
+      expect(biaoQian.length).toBe(2)
+      expect(biaoQian[0].text()).toBe(huoQuFanYi('junShi', 'junShiZhiDao'))
+      expect(biaoQian[1].text()).toBe(huoQuFanYi('junShi', 'zhiDaoJiLu'))
+    })
+
+    it('点击返回按钮回到军师列表', async () => {
+      const { wrapper } = await mountJunShiZhiDao()
+
+      await xuanZeJunShi(wrapper, 'xuanRuiMu')
+      await wrapper.find('.fanhui-anniu').trigger('click')
       await flushPromises()
 
-      const xuanZeXiang = wrapper.findAll('.junshi-xuanze-xiang')
-      expect(xuanZeXiang.length).toBe(1)
-      expect(xuanZeXiang[0].find('.junshi-mingcheng').text()).toBe(huoQuFanYi('junShi', 'junShiMing'))
+      expect(wrapper.find('.junshi-xuanze-buju').exists()).toBe(true)
+      expect(wrapper.find('.zhidao-buju').exists()).toBe(false)
     })
   })
 
@@ -199,18 +263,20 @@ describe('FP-12 军师指导系统前端', () => {
       expect(quanBuWenBen).not.toContain('内心')
     })
 
-    it('仅展示军师指导文本区域，不含后台数据区域', async () => {
+    it('面板内容不包含天津方言味相关描述', async () => {
       const { wrapper } = await mountJunShiZhiDao()
 
-      expect(wrapper.find('.zhidao-buju').exists()).toBe(true)
-      expect(wrapper.find('.houtai-shuju-quyu').exists()).toBe(false)
-      expect(wrapper.find('.liaotian-jilu').exists()).toBe(false)
+      const quanBuWenBen = wrapper.text()
+      for (const guanJianCi of tianJinFangYanGuanJianCi) {
+        expect(quanBuWenBen).not.toContain(guanJianCi)
+      }
     })
   })
 
   describe('请求指导交互', () => {
     it('请求按钮初始可用且显示请求指导', async () => {
       const { wrapper } = await mountJunShiZhiDao()
+      await xuanZeJunShi(wrapper, 'xuanRuiMu')
 
       const anNiu = wrapper.find('.qingqiu-anniu')
       expect(anNiu.exists()).toBe(true)
@@ -226,14 +292,31 @@ describe('FP-12 军师指导系统前端', () => {
       })
 
       const { wrapper } = await mountJunShiZhiDao()
+      await xuanZeJunShi(wrapper, 'xuanRuiMu')
       const anNiu = wrapper.find('.qingqiu-anniu')
 
       await anNiu.trigger('click')
       await flushPromises()
 
-      expect(qingQiuJunShiZhiDao).toHaveBeenCalledWith('j1')
+      expect(qingQiuJunShiZhiDao).toHaveBeenCalledWith('j1', 'xuanRuiMu')
       expect(wrapper.find('.qingqiu-anniu').text()).toBe(huoQuFanYi('junShi', 'qingQiuZhiDao'))
       expect(wrapper.find('.jieguo-neirong').text()).toBe('先吐槽你一句，然后给你具体建议。')
+    })
+
+    it('选择测试军师1后请求携带对应军师ID', async () => {
+      vi.mocked(qingQiuJunShiZhiDao).mockResolvedValue({
+        junShi: chuangJianMoNiJunShiLieBiao()[1],
+        zhiDaoNeiRong: '测试军师1的建议。',
+        shiJian: '2026-07-07T11:00:00.000Z',
+      })
+
+      const { wrapper } = await mountJunShiZhiDao()
+      await xuanZeJunShi(wrapper, 'ceShiJunShi1')
+      await wrapper.find('.qingqiu-anniu').trigger('click')
+      await flushPromises()
+
+      expect(qingQiuJunShiZhiDao).toHaveBeenCalledWith('j1', 'ceShiJunShi1')
+      expect(wrapper.find('.jieguo-neirong').text()).toBe('测试军师1的建议。')
     })
 
     it('军师重复错误显示对应翻译提示', async () => {
@@ -242,6 +325,7 @@ describe('FP-12 军师指导系统前端', () => {
       vi.mocked(qingQiuJunShiZhiDao).mockRejectedValue(cuoWu)
 
       const { wrapper } = await mountJunShiZhiDao()
+      await xuanZeJunShi(wrapper, 'xuanRuiMu')
       await wrapper.find('.qingqiu-anniu').trigger('click')
       await flushPromises()
 
@@ -255,6 +339,7 @@ describe('FP-12 军师指导系统前端', () => {
       vi.mocked(qingQiuJunShiZhiDao).mockRejectedValue(cuoWu)
 
       const { wrapper } = await mountJunShiZhiDao()
+      await xuanZeJunShi(wrapper, 'xuanRuiMu')
       await wrapper.find('.qingqiu-anniu').trigger('click')
       await flushPromises()
 
@@ -263,6 +348,7 @@ describe('FP-12 军师指导系统前端', () => {
 
     it('缺少jiaoSeId时请求按钮禁用', async () => {
       const { wrapper } = await mountJunShiZhiDao('')
+      await xuanZeJunShi(wrapper, 'xuanRuiMu')
 
       const anNiu = wrapper.find('.qingqiu-anniu')
       expect(anNiu.attributes('disabled')).toBeDefined()
@@ -270,8 +356,9 @@ describe('FP-12 军师指导系统前端', () => {
   })
 
   describe('指导记录列表', () => {
-    it('切换到指导记录标签加载并展示记录', async () => {
+    it('切换到指导记录标签加载并展示当前军师记录', async () => {
       const { wrapper } = await mountJunShiZhiDao()
+      await xuanZeJunShi(wrapper, 'xuanRuiMu')
 
       const jiLuBiaoQian = wrapper.findAll('.biaoqian-anniu').at(1)
       expect(jiLuBiaoQian).toBeDefined()
@@ -279,12 +366,28 @@ describe('FP-12 军师指导系统前端', () => {
       await flushPromises()
 
       expect(wrapper.find('.jilu-liebiao').exists()).toBe(true)
+      const jiLuXiang = wrapper.findAll('.jilu-xiangmu')
+      expect(jiLuXiang.length).toBe(1)
       expect(wrapper.text()).toContain('小甜心')
       expect(wrapper.text()).not.toContain('摘要内容')
     })
 
+    it('测试军师1只展示其对应记录', async () => {
+      const { wrapper } = await mountJunShiZhiDao()
+      await xuanZeJunShi(wrapper, 'ceShiJunShi1')
+
+      const jiLuBiaoQian = wrapper.findAll('.biaoqian-anniu').at(1)
+      await jiLuBiaoQian!.trigger('click')
+      await flushPromises()
+
+      const jiLuXiang = wrapper.findAll('.jilu-xiangmu')
+      expect(jiLuXiang.length).toBe(1)
+      expect(wrapper.text()).toContain(huoQuFanYi('junShi', 'ceShiJunShi1Ming'))
+    })
+
     it('点击记录项跳转到详情页', async () => {
       const { wrapper, luYou } = await mountJunShiZhiDao()
+      await xuanZeJunShi(wrapper, 'xuanRuiMu')
 
       const jiLuBiaoQian = wrapper.findAll('.biaoqian-anniu').at(1)
       await jiLuBiaoQian!.trigger('click')
@@ -296,16 +399,16 @@ describe('FP-12 军师指导系统前端', () => {
       await jiLuXiang.trigger('click')
       await flushPromises()
 
-      expect(luYou.currentRoute.value.path).toBe(
-        `/junshi-jilu/j1/${encodeURIComponent('2026-07-07T10:00:00.000Z')}`,
-      )
+      expect(luYou.currentRoute.value.name).toBe('junShiJiLuXiangQing')
+      expect(luYou.currentRoute.value.params.jiaoSeId).toBe('j1')
+      expect(luYou.currentRoute.value.params.jiLuId).toBe('2026-07-07T10:00:00.000Z')
     })
 
     it('无记录时展示空状态翻译文本', async () => {
-      const { huoQuJunShiJiLu } = await import('@/api/聊天')
       vi.mocked(huoQuJunShiJiLu).mockResolvedValueOnce([])
 
       const { wrapper } = await mountJunShiZhiDao()
+      await xuanZeJunShi(wrapper, 'xuanRuiMu')
 
       const jiLuBiaoQian = wrapper.findAll('.biaoqian-anniu').at(1)
       await jiLuBiaoQian!.trigger('click')
@@ -313,5 +416,18 @@ describe('FP-12 军师指导系统前端', () => {
 
       expect(wrapper.find('.kong-zhuangtai').text()).toBe(huoQuFanYi('junShi', 'zanWuZhiDaoJiLu'))
     })
+  })
+})
+
+describe('FP-04 军师指导滚动条样式', () => {
+  it('军师指导内容区存在统一纵向滚动条样式', () => {
+    expect(junShiZhiDaoYuanMa).toMatch(/\.junshi-neirong\s*\{[^}]*overflow-y:\s*auto/)
+    expect(junShiZhiDaoYuanMa).toMatch(
+      /\.junshi-neirong::-webkit-scrollbar\s*\{[^}]*width:\s*\d+px/,
+    )
+    expect(junShiZhiDaoYuanMa).toMatch(
+      /\.junshi-neirong::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*var\(--gundong-tiao-beijing\)/,
+    )
+    expect(junShiZhiDaoYuanMa).toMatch(/\.junshi-neirong::-webkit-scrollbar-thumb:hover/)
   })
 })

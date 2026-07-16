@@ -1,4 +1,5 @@
 import { 数据库 } from '../数据库'
+import { huoQuFanYi } from '../config/translations'
 import type { YouXiJieGuoLeiXing } from '../types'
 
 export interface FuPanShiJianXianTiaoMu {
@@ -32,6 +33,7 @@ export interface DangAnLieBiaoXiang {
   xiao_xi_zong_shu: number
   chuang_jian_shi_jian: string
   zui_hou_xiao_xi_shi_jian: string | null
+  you_xi_jie_shu_shi_jian: string | null
   mbti_lei_xing?: string
 }
 
@@ -44,6 +46,7 @@ const 结局文本映射: Record<string, YouXiJieGuoLeiXing | 'jinxing_zhong'> =
   '胜利-爱情': 'sheng_li_ai_qing',
   '胜利-互删胜利': 'sheng_li_hu_shan_sheng_li',
   '胜利-识破': 'sheng_li_shi_po',
+  '胜利-神经病': 'sheng_li_shen_jing_bing',
   '失败-过早表白': 'shi_bai_guo_zao_biao_bai',
   '失败-被欺骗': 'shi_bai_bei_qi_pian',
   '失败-被诈型欺骗': 'shi_bai_bei_zha_xing_qi_pian',
@@ -51,6 +54,7 @@ const 结局文本映射: Record<string, YouXiJieGuoLeiXing | 'jinxing_zhong'> =
   '失败-好感度归零': 'shi_bai_hao_gan_du_gui_ling',
   '失败-错误识破': 'shi_bai_cuo_wu_shi_po',
   '失败-拒绝表白': 'shi_bai_ju_jue_biao_bai',
+  '失败-神经病': 'shi_bai_shen_jing_bing',
 }
 
 function yingSheJieGuoLeiXing(
@@ -68,7 +72,7 @@ function yingSheJieGuoLeiXing(
 
 export async function huoQuDangAnLieBiao(yong_hu_id: string): Promise<DangAnLieBiaoXiang[]> {
   const jieGuo = await 数据库.query(
-    `SELECT d."ID", d."用户ID", d."角色ID", d."角色名字", d."是否渣型",
+    `SELECT d."ID", d."用户ID", d."角色ID", d."角色名字", r."微信昵称", d."是否渣型",
             d."结果类型", d."是否封存", d."好感度总分", d."关系阶段",
             d."聊天天数", d."消息总数", d."创建时间", r."MBTI",
             (SELECT MAX("创建时间") FROM "消息" m
@@ -85,11 +89,13 @@ export async function huoQuDangAnLieBiao(yong_hu_id: string): Promise<DangAnLieB
       String(row.结果类型 || ''),
       Boolean(row.是否封存),
     )
+    const chuangJianShiJian = String(row.创建时间 || new Date().toISOString())
+    const youXiJieShu = jieGuoLeiXingYuan !== 'jinxing_zhong'
     return {
       id: String(row.ID),
       yong_hu_id: String(row.用户ID),
       jiao_se_id: String(row.角色ID),
-      jiao_se_ming_zi: String(row.角色名字 || ''),
+      jiao_se_ming_zi: String(row.微信昵称 || huoQuFanYi('zhanJi', 'weiZhiWeiXin')),
       shi_fou_zha_xing: Boolean(row.是否渣型),
       jie_guo_lei_xing: String(row.结果类型 || '进行中'),
       jie_guo_lei_xing_yuan: jieGuoLeiXingYuan,
@@ -98,8 +104,9 @@ export async function huoQuDangAnLieBiao(yong_hu_id: string): Promise<DangAnLieB
       guan_xi_jie_duan: String(row.关系阶段 || ''),
       liao_tian_tian_shu: Number(row.聊天天数 || 0),
       xiao_xi_zong_shu: Number(row.消息总数 || 0),
-      chuang_jian_shi_jian: String(row.创建时间 || new Date().toISOString()),
+      chuang_jian_shi_jian: chuangJianShiJian,
       zui_hou_xiao_xi_shi_jian: row.最后消息时间 ? String(row.最后消息时间) : null,
+      you_xi_jie_shu_shi_jian: youXiJieShu ? chuangJianShiJian : null,
       mbti_lei_xing: row.MBTI ? String(row.MBTI) : undefined,
     }
   })
@@ -110,7 +117,7 @@ export async function huoQuDangAnXiangQing(
   dang_an_id: string,
 ): Promise<DangAnXiangQing | null> {
   const jieGuo = await 数据库.query(
-    `SELECT d."ID", d."用户ID", d."角色ID", d."角色名字", d."是否渣型",
+    `SELECT d."ID", d."用户ID", d."角色ID", d."角色名字", r."微信昵称", d."是否渣型",
             d."结果类型", d."是否封存", d."好感度总分", d."关系阶段",
             d."聊天天数", d."消息总数", d."复盘数据", d."复盘内容", d."创建时间",
             r."MBTI",
@@ -130,6 +137,8 @@ export async function huoQuDangAnXiangQing(
     String(row.结果类型 || ''),
     Boolean(row.是否封存),
   )
+  const chuangJianShiJian = String(row.创建时间 || new Date().toISOString())
+  const youXiJieShu = jieGuoLeiXingYuan !== 'jinxing_zhong'
 
   let fuPanShuJu: FuPanShiJianXianTiaoMu[] | null = null
   if (row.复盘数据) {
@@ -145,7 +154,7 @@ export async function huoQuDangAnXiangQing(
     id: String(row.ID),
     yong_hu_id: String(row.用户ID),
     jiao_se_id: String(row.角色ID),
-    jiao_se_ming_zi: String(row.角色名字 || ''),
+    jiao_se_ming_zi: String(row.微信昵称 || huoQuFanYi('zhanJi', 'weiZhiWeiXin')),
     shi_fou_zha_xing: Boolean(row.是否渣型),
     jie_guo_lei_xing: String(row.结果类型 || '进行中'),
     jie_guo_lei_xing_yuan: jieGuoLeiXingYuan,
@@ -156,8 +165,9 @@ export async function huoQuDangAnXiangQing(
     xiao_xi_zong_shu: Number(row.消息总数 || 0),
     fu_pan_shu_ju: fuPanShuJu,
     fu_pan_nei_rong: row.复盘内容 ? String(row.复盘内容) : null,
-    chuang_jian_shi_jian: String(row.创建时间 || new Date().toISOString()),
+    chuang_jian_shi_jian: chuangJianShiJian,
     zui_hou_xiao_xi_shi_jian: row.最后消息时间 ? String(row.最后消息时间) : null,
+    you_xi_jie_shu_shi_jian: youXiJieShu ? chuangJianShiJian : null,
     mbti_lei_xing: row.MBTI ? String(row.MBTI) : undefined,
   }
 }
@@ -179,4 +189,17 @@ export async function shanChuDangAn(yong_hu_id: string, dang_an_id: string): Pro
     [dang_an_id, yong_hu_id],
   )
   return jieGuo.rows.length > 0
+}
+
+export async function piLiangShanChuDangAn(
+  yong_hu_id: string,
+  dang_an_ids: string[],
+): Promise<string[]> {
+  if (dang_an_ids.length === 0) return []
+  const canShuLieBiao = dang_an_ids.map((_, index) => `$${index + 2}`).join(', ')
+  const jieGuo = await 数据库.query(
+    `DELETE FROM "游戏档案" WHERE "ID" IN (${canShuLieBiao}) AND "用户ID" = $1 RETURNING "ID"`,
+    [yong_hu_id, ...dang_an_ids],
+  )
+  return jieGuo.rows.map((row) => String(row.ID))
 }

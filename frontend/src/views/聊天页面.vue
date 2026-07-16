@@ -1,6 +1,11 @@
 <template>
   <div class="liaotian-yemian">
-    <main ref="xiaoxiQuYuRef" class="xiaoxi-quyu weixin-beijing" @scroll="chuLiGunDong">
+    <main
+      ref="xiaoxiQuYuRef"
+      class="xiaoxi-quyu weixin-beijing"
+      :class="{ 'emoji-mianban-zhankai': emojiMianBanZhanKai }"
+      @scroll="chuLiGunDong"
+    >
       <div v-if="聊天仓库.haiYouGengDuo" class="jiazaigengduo-qu">
         <button
           class="jiazaigengduo-anniu"
@@ -19,7 +24,7 @@
           <div class="shijian-biaoqian">
             {{ zu.shiJian }}
           </div>
-          <template v-for="xiaoXi in zu.xiaoXiLieBiao" :key="xiaoXi.id">
+          <template v-for="xiaoXi in zu.xiaoXiLieBiao" :key="xiaoXi.ke_hu_duan_id || xiaoXi.id">
             <div
               v-if="xiaoXi.lei_xing !== 'neiXinHuoDong'"
               class="xiaoxi-xiangmu"
@@ -84,8 +89,14 @@
                 <div class="qipao-waike">
                   <div class="qipao-neirong">
                     {{ xiaoXi.nei_rong }}
-                    <span v-if="xiaoXi.fa_song_zhong" class="fasong-zhong-biaoji">⏳</span>
                   </div>
+                </div>
+                <div
+                  v-if="xiaoXi.fa_song_zhong && xiaoXi.fa_song_zhe_lei_xing === 'yonghu'"
+                  class="fasong-zhuangtai"
+                  :aria-label="huoQuFanYi('liaoTian', 'faSongZhong')"
+                >
+                  <span class="fasong-zhuangtai-zhuanquan" />
                 </div>
               </template>
             </div>
@@ -94,7 +105,7 @@
       </TransitionGroup>
     </main>
 
-    <footer class="shuru-quyu weixin-shuru">
+    <footer ref="shuruQuYuRef" class="shuru-quyu weixin-shuru">
       <div v-if="liaoTianSuoDing" class="suoding-tishi">
         {{ huoQuFanYi('liaoTian', 'youXiYiJieShu') }}
       </div>
@@ -113,6 +124,7 @@
         </button>
         <div class="shuru-kuang-waike">
           <input
+            ref="shuruKuangRef"
             v-model="shuRuNeiRong"
             type="text"
             class="shuru-kuang"
@@ -120,7 +132,7 @@
             :disabled="faSongZhong"
             maxlength="500"
             @keydown.enter="faSong"
-            @focus="emojiMianBanZhanKai = false"
+            @focus="chuLiShuRuKuangJuJiao"
             @input="chuLiShuRuBianHua"
           />
         </div>
@@ -271,6 +283,7 @@ const youXiShiJianZhanKai = ref(false)
 const youXiShiJianLeiXing = ref<'shengli' | 'shibai'>('shengli')
 const youXiShiJianNeiRong = ref('')
 const xiaoxiQuYuRef = ref<HTMLElement | null>(null)
+const shuruQuYuRef = ref<HTMLElement | null>(null)
 const emojiMianBanZhanKai = ref(false)
 const dangQianShiJian = ref(Date.now())
 let shiJianGengXinQi: ReturnType<typeof setInterval> | null = null
@@ -449,6 +462,9 @@ const changYongEmoji = [
 
 function qieHuanEmojiMianBan() {
   emojiMianBanZhanKai.value = !emojiMianBanZhanKai.value
+  if (emojiMianBanZhanKai.value) {
+    gunDongDaoDiBu()
+  }
 }
 
 function chaRuEmoji(emoji: string) {
@@ -506,7 +522,7 @@ const xiaoXiFenZu = computed<XiaoXiFenZuXiang[]>(() => {
       beiJing.getDate() === zuoTian.getDate()
 
     if (shiFouZuoTian) {
-      return `昨天 ${shiJianBuFen}`
+      return `${huoQuFanYi('shiJian', 'zuoTian')} ${shiJianBuFen}`
     }
 
     const benZhouKaiShi = new Date(xianZai.getTime())
@@ -515,7 +531,15 @@ const xiaoXiFenZu = computed<XiaoXiFenZuXiang[]>(() => {
     const zaiBenZhou = beiJing.getTime() >= benZhouKaiShi.getTime()
 
     if (zaiBenZhou) {
-      const xingQiLieBiao = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
+      const xingQiLieBiao = [
+        huoQuFanYi('shiJian', 'xingQiRi'),
+        huoQuFanYi('shiJian', 'xingQiYi'),
+        huoQuFanYi('shiJian', 'xingQiEr'),
+        huoQuFanYi('shiJian', 'xingQiSan'),
+        huoQuFanYi('shiJian', 'xingQiSi'),
+        huoQuFanYi('shiJian', 'xingQiWu'),
+        huoQuFanYi('shiJian', 'xingQiLiu'),
+      ]
       return `${xingQiLieBiao[beiJing.getDay()]} ${shiJianBuFen}`
     }
 
@@ -560,6 +584,29 @@ function gunDongDaoDiBu() {
       xiaoxiQuYuRef.value.scrollTop = xiaoxiQuYuRef.value.scrollHeight
     }
   })
+}
+
+function huaDongShuRuLanKeJian() {
+  nextTick(() => {
+    setTimeout(() => {
+      shuruQuYuRef.value?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    }, 50)
+  })
+}
+
+function chuLiShiJiaoKouBianHua() {
+  if (!window.visualViewport) return
+  const shiJiaoKouGaoDu = window.visualViewport.height
+  const buJuGaoDu = window.innerHeight
+  const jianPanPianYi = Math.max(0, buJuGaoDu - shiJiaoKouGaoDu)
+  if (jianPanPianYi > 80) {
+    huaDongShuRuLanKeJian()
+  }
+}
+
+function chuLiShuRuKuangJuJiao() {
+  emojiMianBanZhanKai.value = false
+  huaDongShuRuLanKeJian()
 }
 
 watch(
@@ -739,6 +786,10 @@ function tingZhiShiJianGengXinQi() {
 
 onMounted(async () => {
   window.addEventListener('junshi-zhankai', junShiZhanKaiJianTingQi)
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', chuLiShiJiaoKouBianHua)
+    window.visualViewport.addEventListener('scroll', chuLiShiJiaoKouBianHua)
+  }
   qiDongShiJianGengXinQi()
   await chuShiHuaLiaoTian()
   yiTongGuoMountedChuShiHua = true
@@ -759,6 +810,10 @@ onDeactivated(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('junshi-zhankai', junShiZhanKaiJianTingQi)
+  if (window.visualViewport) {
+    window.visualViewport.removeEventListener('resize', chuLiShiJiaoKouBianHua)
+    window.visualViewport.removeEventListener('scroll', chuLiShiJiaoKouBianHua)
+  }
   tingZhiShiJianGengXinQi()
   qingLiUIMianBan()
   聊天仓库.qingKongZhuangTai()
@@ -767,11 +822,14 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .liaotian-yemian {
+  --emoji-mianban-bu-ju-gao-du: 220px;
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  height: 100%;
   width: 100%;
+  overflow: hidden;
   background: var(--beijing-zhuse);
   font-family:
     -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Helvetica Neue', Arial,
@@ -782,6 +840,7 @@ onBeforeUnmount(() => {
   flex: 1;
   overflow-y: auto;
   padding: 12px 16px;
+  padding-bottom: 20px;
   display: flex;
   flex-direction: column;
   background: var(--liaotian-beijing);
@@ -789,6 +848,13 @@ onBeforeUnmount(() => {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--gundong-tiao-beijing) transparent;
+  scroll-padding-bottom: 20px;
+  transition: padding-bottom 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.xiaoxi-quyu.emoji-mianban-zhankai {
+  padding-bottom: 220px;
+  scroll-padding-bottom: 220px;
 }
 
 .xiaoxi-quyu::-webkit-scrollbar {
@@ -803,6 +869,10 @@ onBeforeUnmount(() => {
 .xiaoxi-quyu::-webkit-scrollbar-thumb {
   background: var(--gundong-tiao-beijing);
   border-radius: 3px;
+}
+
+.xiaoxi-quyu::-webkit-scrollbar-thumb:hover {
+  background: var(--gundong-tiao-hover);
 }
 
 .xiaoxi-liebiao {
@@ -959,12 +1029,22 @@ onBeforeUnmount(() => {
   border-bottom: 5px solid transparent;
 }
 
-.fasong-zhong-biaoji {
+.fasong-zhuangtai {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0 6px;
+}
+
+.fasong-zhuangtai-zhuanquan {
   display: inline-block;
-  margin-left: 4px;
-  font-size: 10px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--wenben-tishi);
+  border-top-color: transparent;
+  border-radius: 50%;
   animation: fasong-xuanzhuan 1s linear infinite;
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
 @keyframes fasong-xuanzhuan {
@@ -1124,15 +1204,26 @@ onBeforeUnmount(() => {
   max-height: 200px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gundong-tiao-beijing) transparent;
 }
 
 .emoji-mianban::-webkit-scrollbar {
-  width: 3px;
+  width: 6px;
+  height: 6px;
+}
+
+.emoji-mianban::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .emoji-mianban::-webkit-scrollbar-thumb {
-  background: var(--emoji-gundong-tiao);
-  border-radius: 2px;
+  background: var(--gundong-tiao-beijing);
+  border-radius: 3px;
+}
+
+.emoji-mianban::-webkit-scrollbar-thumb:hover {
+  background: var(--gundong-tiao-hover);
 }
 
 .emoji-xiangmu {
@@ -1322,6 +1413,12 @@ onBeforeUnmount(() => {
   max-height: 220px;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .xiaoxi-quyu {
+    transition: none;
+  }
+}
+
 @media (max-width: 480px) {
   .qipao-waike {
     max-width: min(calc(100vw - 120px), 420px);
@@ -1333,6 +1430,11 @@ onBeforeUnmount(() => {
 
   .xiaoxi-quyu {
     padding: 10px 12px;
+  }
+
+  .xiaoxi-quyu.emoji-mianban-zhankai {
+    padding-bottom: 220px;
+    scroll-padding-bottom: 220px;
   }
 }
 </style>

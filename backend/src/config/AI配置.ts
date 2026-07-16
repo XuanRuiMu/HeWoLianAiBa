@@ -103,6 +103,20 @@ export const AI_PEI_ZHI = {
       zuiDaTokens: 500,
     } as MoXingCanShu,
 
+    shenJingBingJianCe: {
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      wenDu: 0.1,
+      xiangYingGeShi: { type: 'json_object' },
+      zuiDaTokens: 500,
+    } as MoXingCanShu,
+
+    kaiChangBai: {
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      wenDu: 0.75,
+      xiangYingGeShi: { type: 'json_object' },
+      zuiDaTokens: 1000,
+    } as MoXingCanShu,
+
     fuPanShengCheng: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
       wenDu: 0.7,
@@ -115,7 +129,7 @@ export const AI_PEI_ZHI = {
   prompt: {
     liShiXiaoXiShuLiang: 20,
     junShiLiShiXiaoXiShuLiang: 10,
-    jiaoSeChenJinZhiLing: '【角色沉浸要求】',
+    jiaoSeChenJinZhiLing: '【从现在起，你就是 TA】',
   },
 
   haoGanDu: {

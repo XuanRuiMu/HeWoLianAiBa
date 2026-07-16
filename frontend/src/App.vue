@@ -30,22 +30,25 @@ onMounted(() => {
 <style scoped>
 .app-rongqi {
   width: 100%;
-  min-height: 100vh;
+  height: 100dvh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .app-zhuti {
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-top: 52px;
+  margin-top: calc(52px + var(--anquan-quyu-shang));
+  overflow: hidden;
+  min-height: 0;
 }
 
 @media (max-width: 767px) {
   .app-zhuti {
-    margin-top: 48px;
+    margin-top: calc(48px + var(--anquan-quyu-shang));
   }
 }
 

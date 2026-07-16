@@ -110,6 +110,27 @@ onMounted(() => {
   flex-direction: column;
   gap: 16px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gundong-tiao-beijing) transparent;
+}
+
+.junshi-jilu-yemian::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.junshi-jilu-yemian::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.junshi-jilu-yemian::-webkit-scrollbar-thumb {
+  background: var(--gundong-tiao-beijing);
+  border-radius: 3px;
+}
+
+.junshi-jilu-yemian::-webkit-scrollbar-thumb:hover {
+  background: var(--gundong-tiao-hover);
 }
 
 .jiaZai-zhuangtai,

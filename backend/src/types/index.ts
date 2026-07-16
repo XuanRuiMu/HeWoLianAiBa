@@ -87,7 +87,6 @@ export interface AIJiaoSeXinXi {
   hua_shu?: string[]
   bao_lu_fang_shi?: string
   shi_po_xian_suo?: string[]
-  kai_chang_bai: string[]
   shi_jie_xin_xi: Record<string, unknown>
   ba_da_mo_kuai: {
     ji_ben_xin_xi: string
@@ -200,6 +199,7 @@ export type YouXiJieGuoLeiXing =
   | 'sheng_li_ai_qing'
   | 'sheng_li_hu_shan_sheng_li'
   | 'sheng_li_shi_po'
+  | 'sheng_li_shen_jing_bing'
   | 'shi_bai_guo_zao_biao_bai'
   | 'shi_bai_hu_shan_shi_bai'
   | 'shi_bai_cuo_wu_shi_po'
@@ -207,6 +207,7 @@ export type YouXiJieGuoLeiXing =
   | 'shi_bai_ju_jue_biao_bai'
   | 'shi_bai_bei_qi_pian'
   | 'shi_bai_bei_zha_xing_qi_pian'
+  | 'shi_bai_shen_jing_bing'
 
 export interface YouXiJieShuJieGuo {
   jie_guo_lei_xing: YouXiJieGuoLeiXing
@@ -234,10 +235,18 @@ export interface ShiPoJianCeJieGuo {
   li_you?: string
 }
 
+export interface ShenJingBingJianCeJieGuo {
+  shi_fou_shen_jing_bing: boolean
+  fa_san_si_wei_ren_she: boolean
+  que_xin_du: number
+  li_you?: string
+}
+
 export interface YongHuXiaoXiJianCeJieGuo {
   biao_bai: BiaoBaiJianCeJieGuo
   hu_shan: HuShanJianCeJieGuo
   shi_po: ShiPoJianCeJieGuo
+  shen_jing_bing: ShenJingBingJianCeJieGuo
 }
 
 export interface DirectorCeLue {
@@ -269,6 +278,11 @@ export interface JunShiQiuZhuCanShu {
   dui_hua_li_shi: DuiHuaLiShiXiang[]
   hao_gan_du: HaoGanDuXinXi
   fu_pan_tiao_mu?: string[]
+  jun_shi_pei_zhi: {
+    id: string
+    mingCheng: string
+    xiTongTiShi: string
+  }
 }
 
 export interface JunShiQiuZhuJieGuo {

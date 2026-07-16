@@ -19,7 +19,7 @@ interface FuPanJSONJieGou {
   撤回分析?: string
   军师建议效果?: string
   关键事件时间线?: string[]
-  总结评价?: string
+  整体感受?: string
 }
 
 const FU_PAN_MAX_XIAO_XI = 999
@@ -70,29 +70,32 @@ function gouJianFuPanPrompt(
   const junShiJiLuWenBen = junShiJiLu.map((jiLu) => `[${jiLu.shi_jian}] ${jiLu.jian_yi}`).join('\n---\n')
 
   return [
-    '你是一位专业的恋爱聊天复盘分析师。请根据以下完整对话记录、AI复盘条目、军师指导记录和最终结局，生成一份结构化的复盘报告。',
+    `你刚陪朋友聊完一段恋爱模拟，现在帮他回头看看跟 ${jiaoSeMing} 的整场聊天。`,
+    '别写得太正式，像朋友之间复盘吐槽一样自然，但要用 JSON 输出。',
     '',
-    '要求：',
-    '1. 输出必须是合法JSON，包含以下7个字段：逐句分析、聊对了什么、聊错了什么、撤回分析、军师建议效果、关键事件时间线、总结评价。',
-    '2. "关键事件时间线"必须是字符串数组，每条格式严格为"HH:MM - 事件描述"，列出5-10个关键转折点。',
-    '3. 总结评价中不得出现数字评分，不得出现"信任度"、"亲密度"、"趣味度"、"关怀度"、"总分"、"阶段"、"好感度"等维度名或分数相关字样。',
-    '4. 复盘中不得出现具体分数、维度名、阶段名或"好感度"字样。',
-    '5. 军师建议效果分析需要评价军师给出的建议对用户聊天策略的实际帮助。',
+    '输出格式（JSON）：',
+    '包含 7 个字段：逐句分析、聊对了什么、聊错了什么、撤回分析、军师建议效果、关键事件时间线、整体感受。',
+    '"关键事件时间线"是字符串数组，每条格式"HH:MM - 事件描述"，写 5-10 个关键节点。',
+    '',
+    '提醒：',
+    '1. 整体感受里别提具体分数，也别出现"信任度"、"亲密度"、"趣味度"、"关怀度"、"总分"、"阶段"、"好感度"这种后台词。',
+    '2. 复盘整体都别暴露具体分数、维度名、阶段名或"好感度"。',
+    '3. 军师建议效果就说说军师给的主意到底有没有帮上忙。',
     '',
     `角色名字：${jiaoSeMing}`,
     `最终结局：${jieJuZhuangTai}`,
-    `最终关系总分（仅后台参考，不得暴露）：${haoGanDuZongFen}`,
+    `最终关系总分（仅后台参考，别写进复盘）：${haoGanDuZongFen}`,
     '',
     '完整对话记录：',
     xiaoXiWenBen || '（无对话记录）',
     '',
-    'AI复盘条目（后台数据，含内心活动与变化）：',
+    '复盘条目（后台数据，含内心活动与变化）：',
     fuPanTiaoMuWenBen || '（无复盘条目）',
     '',
     '军师指导记录：',
     junShiJiLuWenBen || '（无军师指导记录）',
     '',
-    '请只输出合法JSON，不要任何额外说明。',
+    '只输出 JSON，别加额外说明。',
   ].join('\n')
 }
 
@@ -138,6 +141,21 @@ function zhuanHuanShiJianXian(
   return jieGuo
 }
 
+function zhuanHuanWeiWenBen(zhi: unknown): string {
+  if (zhi === null || zhi === undefined) return ''
+  if (typeof zhi === 'string') return zhi
+  if (typeof zhi === 'number' || typeof zhi === 'boolean') return String(zhi)
+  if (Array.isArray(zhi)) return zhi.map(zhuanHuanWeiWenBen).join('\n')
+  if (typeof zhi === 'object') {
+    try {
+      return JSON.stringify(zhi, null, 2)
+    } catch {
+      return String(zhi)
+    }
+  }
+  return String(zhi)
+}
+
 function shengChengFuPanNeiRong(jieGou: FuPanJSONJieGou): string {
   const shiJianXian = Array.isArray(jieGou.关键事件时间线)
     ? jieGou.关键事件时间线
@@ -147,13 +165,15 @@ function shengChengFuPanNeiRong(jieGou: FuPanJSONJieGou): string {
     : ''
 
   const buFen = [
-    jieGou.逐句分析 ? `## 逐句分析\n${jieGou.逐句分析}` : '',
-    jieGou.聊对了什么 ? `## 聊对了什么\n${jieGou.聊对了什么}` : '',
-    jieGou.聊错了什么 ? `## 聊错了什么\n${jieGou.聊错了什么}` : '',
-    jieGou.撤回分析 ? `## 撤回分析\n${jieGou.撤回分析}` : '',
-    jieGou.军师建议效果 ? `## 军师建议效果\n${jieGou.军师建议效果}` : '',
+    jieGou.逐句分析 ? `## 逐句分析\n${zhuanHuanWeiWenBen(jieGou.逐句分析)}` : '',
+    jieGou.聊对了什么 ? `## 聊对了什么\n${zhuanHuanWeiWenBen(jieGou.聊对了什么)}` : '',
+    jieGou.聊错了什么 ? `## 聊错了什么\n${zhuanHuanWeiWenBen(jieGou.聊错了什么)}` : '',
+    jieGou.撤回分析 ? `## 撤回分析\n${zhuanHuanWeiWenBen(jieGou.撤回分析)}` : '',
+    jieGou.军师建议效果
+      ? `## 军师建议效果\n${zhuanHuanWeiWenBen(jieGou.军师建议效果)}`
+      : '',
     shiJianXian ? `## 关键事件时间线\n${shiJianXian}` : '',
-    jieGou.总结评价 ? `## 总结评价\n${jieGou.总结评价}` : '',
+    jieGou.整体感受 ? `## 整体感受\n${zhuanHuanWeiWenBen(jieGou.整体感受)}` : '',
   ]
   return buFen.filter(Boolean).join('\n\n')
 }
@@ -214,7 +234,7 @@ export async function shengChengFuPan(
   )
 
   const xiangYing = await genJuPeiZhiTiaoYong('fuPanShengCheng', [
-    { jiaoSe: 'system', neiRong: '你是恋爱聊天复盘分析师，只输出合法JSON。' },
+    { jiaoSe: 'system', neiRong: '帮朋友复盘一段恋爱模拟，只输出 JSON。' },
     { jiaoSe: 'user', neiRong: prompt },
   ])
 

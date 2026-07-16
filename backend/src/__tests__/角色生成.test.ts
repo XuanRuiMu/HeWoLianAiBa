@@ -1,10 +1,11 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import request from 'supertest'
 import yingYong from '../server'
 import { 数据库 } from '../数据库'
 import { redis } from '../redis'
 import { huoQuNiChengKu } from '../utils/昵称解析'
 import { mbtiLieBiao } from '../config/角色配置'
+import { sheZhiKaiChangBaiMock } from '../services/开场白生成'
 
 function suiJiShouJiHao(): string {
   return `138${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`
@@ -51,6 +52,10 @@ describe('FP-04 AI角色生成', () => {
     lingPai = jieGuo.lingPai
     const yongHu = await 数据库.query(`SELECT "ID" FROM "用户" WHERE "手机号" = $1`, [jieGuo.shouJiHao])
     ceShiYongHuId = String(yongHu.rows[0].ID)
+  })
+
+  afterEach(() => {
+    sheZhiKaiChangBaiMock(null)
   })
 
   afterAll(async () => {
@@ -236,46 +241,101 @@ describe('FP-04 AI角色生成', () => {
     expect(tpXiangYing.body.shu_ju.re_shen_lei_xing).toBe('快热')
   })
 
-  it('角色对象开场白字段为字符串数组且长度在0~5之间', async () => {
+  it('生成角色接口不再向玩家暴露 kai_chang_bai/开场白 字段', async () => {
     const xiangYing = await request(yingYong)
       .post('/api/生成角色/MBTI生成')
       .set('Authorization', `Bearer ${lingPai}`)
       .send({ 性别: 'nv', mbti类型: 'ISFP' })
       .expect(200)
 
-    expect(xiangYing.body.shu_ju.kai_chang_bai).toBeInstanceOf(Array)
-    expect(xiangYing.body.shu_ju.kai_chang_bai.length).toBeGreaterThanOrEqual(0)
-    expect(xiangYing.body.shu_ju.kai_chang_bai.length).toBeLessThanOrEqual(5)
+    expect(xiangYing.body.shu_ju.kai_chang_bai).toBeUndefined()
+    expect(xiangYing.body.shu_ju.开场白).toBeUndefined()
   })
 
-  it('开场白内容不包含姓名、家乡、学校、专业等个人信息', async () => {
-    const xiangYing = await request(yingYong)
+  it('外向+快热角色确认后会保存开场白消息（AI 决定发送）', async () => {
+    sheZhiKaiChangBaiMock(() => ({ xiao_xi_lie_biao: ['嗨', '今天天气不错'] }))
+
+    const shengChengXiangYing = await request(yingYong)
       .post('/api/生成角色/MBTI生成')
       .set('Authorization', `Bearer ${lingPai}`)
       .send({ 性别: 'nv', mbti类型: 'ENFP' })
       .expect(200)
 
-    const kaiChangBai = xiangYing.body.shu_ju.kai_chang_bai as string[]
-    const mingZi = String(xiangYing.body.shu_ju.ming_zi || '')
-    const chengShi = String(xiangYing.body.shu_ju.shi_jie_xin_xi?.cheng_shi || '')
-    const nianJi = String(xiangYing.body.shu_ju.shi_jie_xin_xi?.nian_ji || '')
+    const jiaoSe = shengChengXiangYing.body.shu_ju
+    const queRenXiangYing = await request(yingYong)
+      .post('/api/生成角色/确认')
+      .set('Authorization', `Bearer ${lingPai}`)
+      .send({ xuanZhongJiaoSe: jiaoSe })
+      .expect(200)
 
-    for (const neiRong of kaiChangBai) {
-      expect(neiRong).not.toContain('{mingZi}')
-      if (mingZi) {
-        expect(neiRong).not.toContain(mingZi)
-      }
-      if (chengShi) {
-        expect(neiRong).not.toContain(chengShi)
-      }
-      if (nianJi) {
-        expect(neiRong).not.toContain(nianJi)
-      }
-      expect(neiRong).not.toMatch(/来自|学校|专业|年级|我是|我叫/)
+    const jiaoSeId = String(queRenXiangYing.body.shu_ju.id)
+    const xiaoXiJieGuo = await 数据库.query(
+      `SELECT "内容", "发送者" FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2 ORDER BY "创建时间" ASC`,
+      [ceShiYongHuId, jiaoSeId],
+    )
+    expect(xiaoXiJieGuo.rows.length).toBe(2)
+    expect(xiaoXiJieGuo.rows[0].发送者).toBe('jiaose')
+    expect(xiaoXiJieGuo.rows[0].内容).toBe('嗨')
+    expect(xiaoXiJieGuo.rows[1].发送者).toBe('jiaose')
+    expect(xiaoXiJieGuo.rows[1].内容).toBe('今天天气不错')
+  })
+
+  it('内向+慢热角色确认后不发送开场白消息', async () => {
+    sheZhiKaiChangBaiMock(() => ({ xiao_xi_lie_biao: [] }))
+
+    const shengChengXiangYing = await request(yingYong)
+      .post('/api/生成角色/MBTI生成')
+      .set('Authorization', `Bearer ${lingPai}`)
+      .send({ 性别: 'nv', mbti类型: 'INFJ' })
+      .expect(200)
+
+    const jiaoSe = shengChengXiangYing.body.shu_ju
+    const queRenXiangYing = await request(yingYong)
+      .post('/api/生成角色/确认')
+      .set('Authorization', `Bearer ${lingPai}`)
+      .send({ xuanZhongJiaoSe: jiaoSe })
+      .expect(200)
+
+    const jiaoSeId = String(queRenXiangYing.body.shu_ju.id)
+    const xiaoXiJieGuo = await 数据库.query(
+      `SELECT COUNT(*) as shu_liang FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
+      [ceShiYongHuId, jiaoSeId],
+    )
+    expect(Number(xiaoXiJieGuo.rows[0].shu_liang)).toBe(0)
+  })
+
+  it('开场白内容不超过 5 条且不包含个人信息', async () => {
+    sheZhiKaiChangBaiMock(() => ({
+      xiao_xi_lie_biao: ['嗨', '哈喽', '在吗', '今天有点无聊', '你的头像挺有意思'],
+    }))
+
+    const shengChengXiangYing = await request(yingYong)
+      .post('/api/生成角色/MBTI生成')
+      .set('Authorization', `Bearer ${lingPai}`)
+      .send({ 性别: 'nv', mbti类型: 'ESFP' })
+      .expect(200)
+
+    const jiaoSe = shengChengXiangYing.body.shu_ju
+    const queRenXiangYing = await request(yingYong)
+      .post('/api/生成角色/确认')
+      .set('Authorization', `Bearer ${lingPai}`)
+      .send({ xuanZhongJiaoSe: jiaoSe })
+      .expect(200)
+
+    const jiaoSeId = String(queRenXiangYing.body.shu_ju.id)
+    const xiaoXiJieGuo = await 数据库.query(
+      `SELECT "内容" FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2 ORDER BY "创建时间" ASC`,
+      [ceShiYongHuId, jiaoSeId],
+    )
+    expect(xiaoXiJieGuo.rows.length).toBeLessThanOrEqual(5)
+    for (const xiaoXi of xiaoXiJieGuo.rows) {
+      expect(String(xiaoXi.内容)).not.toMatch(/我叫|我是|来自|家乡|学校|大学|学院|专业|年级|班级|学号/)
     }
   })
 
   it('确认角色后写入角色表和好感度表', async () => {
+    sheZhiKaiChangBaiMock(() => ({ xiao_xi_lie_biao: [] }))
+
     const shengChengXiangYing = await request(yingYong)
       .post('/api/生成角色/MBTI生成')
       .set('Authorization', `Bearer ${lingPai}`)

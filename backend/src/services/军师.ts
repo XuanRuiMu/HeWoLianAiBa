@@ -31,6 +31,7 @@ export interface JunShiLieBiaoXiangYing {
 export interface JunShiZhiDaoCanShu {
   yong_hu_id: string
   jiao_se_id: string
+  jun_shi_id?: string
 }
 
 export interface JunShiZhiDaoJieGuo {
@@ -50,6 +51,29 @@ export interface JunShiJiLuXiangYing {
   jiLuLieBiao: JunShiJiLuXiang[]
 }
 
+interface QianDuanJunShiJiLuXiang {
+  jian_yi: string
+  shi_jian: string
+  jiao_se_id: string
+  jiao_se_ming_zi: string
+  jun_shi_id: string
+  jun_shi_ming_chen: string
+  jun_shi_tou_xiang: string
+  dui_hua_zhai_yao: string
+  liao_tian_ji_lu: {
+    jiao_se: string
+    nei_rong: string
+    shi_jian: string
+    yi_che_hui: boolean
+    yuan_shi_nei_rong?: string | null
+    che_hui_shi_jian?: string | null
+  }[]
+}
+
+export interface QianDuanJunShiJiLuXiangYing {
+  jiLuLieBiao: QianDuanJunShiJiLuXiang[]
+}
+
 export async function huoQuJunShiLieBiao(): Promise<JunShiLieBiaoXiangYing> {
   return {
     junShiLieBiao: Object.values(JUN_SHI_PEI_ZHI).map((peiZhi) => ({
@@ -66,14 +90,27 @@ export async function huoQuJunShiLieBiao(): Promise<JunShiLieBiaoXiangYing> {
 export async function huoQuJunShiJiLu(
   yong_hu_id: string,
   jiao_se_id: string,
-): Promise<JunShiJiLuXiangYing> {
+): Promise<QianDuanJunShiJiLuXiangYing> {
   const jiLuLieBiao = await huoQuJunShiJiLuLieBiao(yong_hu_id, jiao_se_id)
-  return { jiLuLieBiao }
+  const qianDuanLieBiao: QianDuanJunShiJiLuXiang[] = jiLuLieBiao.map((ji_lu) => ({
+    jian_yi: ji_lu.jian_yi,
+    shi_jian: ji_lu.shi_jian,
+    jiao_se_id: ji_lu.jiao_se_id,
+    jiao_se_ming_zi: ji_lu.jiao_se_ming_zi,
+    jun_shi_id: ji_lu.jun_shi_id,
+    jun_shi_ming_chen: ji_lu.jun_shi_ming_chen,
+    jun_shi_tou_xiang: ji_lu.jun_shi_tou_xiang,
+    dui_hua_zhai_yao: ji_lu.dui_hua_zhai_yao,
+    liao_tian_ji_lu: ji_lu.liao_tian_ji_lu,
+  }))
+  return { jiLuLieBiao: qianDuanLieBiao }
 }
 
 export async function qingQiuJunShiZhiDao(
   canShu: JunShiZhiDaoCanShu,
 ): Promise<{ cheng_gong: boolean; jie_guo?: JunShiZhiDaoJieGuo; cuo_wu_ma?: string; ti_shi?: string; zhuang_tai_ma?: number }> {
+  const junShiPeiZhi = JUN_SHI_PEI_ZHI[canShu.jun_shi_id || ''] || JUN_SHI_PEI_ZHI_MO_REN
+
   const jiaoSeSuoYouZhe = await huoQuJiaoSeSuoYouZhe(canShu.jiao_se_id)
   if (!jiaoSeSuoYouZhe) {
     jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, false, 'JIAO_SE_BU_CUN_ZAI')
@@ -145,6 +182,11 @@ export async function qingQiuJunShiZhiDao(
     dui_hua_li_shi: duiHuaLiShi,
     hao_gan_du: haoGanDu,
     fu_pan_tiao_mu: fuPanWenBenLieBiao,
+    jun_shi_pei_zhi: {
+      id: junShiPeiZhi.id,
+      mingCheng: junShiPeiZhi.mingCheng,
+      xiTongTiShi: junShiPeiZhi.xiTongTiShi,
+    },
   })
 
   const shiJian = new Date().toISOString()
@@ -153,9 +195,9 @@ export async function qingQiuJunShiZhiDao(
     shi_jian: shiJian,
     jiao_se_id: canShu.jiao_se_id,
     jiao_se_ming_zi: jiaoSeXinXi.wei_xin_ming,
-    jun_shi_id: JUN_SHI_PEI_ZHI_MO_REN.id,
-    jun_shi_ming_chen: JUN_SHI_PEI_ZHI_MO_REN.mingCheng,
-    jun_shi_tou_xiang: JUN_SHI_PEI_ZHI_MO_REN.touXiang,
+    jun_shi_id: junShiPeiZhi.id,
+    jun_shi_ming_chen: junShiPeiZhi.mingCheng,
+    jun_shi_tou_xiang: junShiPeiZhi.touXiang,
     dui_hua_zhai_yao: shengChengDuiHuaZhaiYao(duiHuaLiShi),
     liao_tian_ji_lu: zhuanHuanLiaoTianJiLu(youXiaoXiaoXi, jiaoSeXinXi.wei_xin_ming),
     hou_tai_shu_ju: {
@@ -182,12 +224,12 @@ export async function qingQiuJunShiZhiDao(
     cheng_gong: true,
     jie_guo: {
       junShi: {
-        id: JUN_SHI_PEI_ZHI_MO_REN.id,
-        mingCheng: JUN_SHI_PEI_ZHI_MO_REN.mingCheng,
-        fuBiaoTi: JUN_SHI_PEI_ZHI_MO_REN.fuBiaoTi,
-        biaoQian: JUN_SHI_PEI_ZHI_MO_REN.biaoQian,
-        miaoShu: JUN_SHI_PEI_ZHI_MO_REN.miaoShu,
-        touXiang: JUN_SHI_PEI_ZHI_MO_REN.touXiang,
+        id: junShiPeiZhi.id,
+        mingCheng: junShiPeiZhi.mingCheng,
+        fuBiaoTi: junShiPeiZhi.fuBiaoTi,
+        biaoQian: junShiPeiZhi.biaoQian,
+        miaoShu: junShiPeiZhi.miaoShu,
+        touXiang: junShiPeiZhi.touXiang,
       },
       zhiDaoNeiRong: zhiDaoJieGuo.zhi_dao_nei_rong,
       shiJian,

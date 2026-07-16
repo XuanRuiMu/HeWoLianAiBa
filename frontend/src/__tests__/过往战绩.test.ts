@@ -2,10 +2,14 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
 import 过往战绩 from '@/views/过往战绩.vue'
 import { huoQuFanYi } from '@/config/translations'
 import type { DangAnXiangQing } from '@/types'
 import type { 复盘响应, 军师指导记录项, 复盘时间线条目 } from '@/api/聊天'
+
+const guoWangZhanJiYuanMa = readFileSync(resolve(__dirname, '../views/过往战绩.vue'), 'utf8')
 
 vi.mock('@/api/聊天')
 
@@ -23,59 +27,53 @@ function chuangJianDangAnLieBiao(): DangAnXiangQing[] {
   return [
     {
       id: 'dang-an-1',
-      yong_hu_id: 'yong-hu-1',
       jiao_se_id: 'jiao-se-1',
       jiao_se_ming_zi: '小甜心',
       shi_fou_zha_xing: false,
       jie_guo_lei_xing: '胜利-爱情',
       jie_guo_lei_xing_yuan: 'sheng_li_ai_qing',
       shi_fou_feng_cun: true,
-      hao_gan_du_zong_fen: 850,
-      guan_xi_jie_duan: 'reLian',
       liao_tian_tian_shu: 5,
       xiao_xi_zong_shu: 20,
       fu_pan_shu_ju: null,
       fu_pan_nei_rong: null,
       chuang_jian_shi_jian: '2026-07-07T10:00:00.000Z',
       zui_hou_xiao_xi_shi_jian: '2026-07-07T10:30:00.000Z',
+      you_xi_jie_shu_shi_jian: '2026-07-07T10:35:00.000Z',
       mbti_lei_xing: 'INFP',
     },
     {
       id: 'dang-an-2',
-      yong_hu_id: 'yong-hu-1',
       jiao_se_id: 'jiao-se-2',
       jiao_se_ming_zi: '高冷姐',
       shi_fou_zha_xing: true,
       jie_guo_lei_xing: '失败-被诈型欺骗',
       jie_guo_lei_xing_yuan: 'shi_bai_bei_zha_xing_qi_pian',
       shi_fou_feng_cun: true,
-      hao_gan_du_zong_fen: 120,
-      guan_xi_jie_duan: 'lengDan',
       liao_tian_tian_shu: 3,
       xiao_xi_zong_shu: 12,
       fu_pan_shu_ju: null,
       fu_pan_nei_rong: null,
       chuang_jian_shi_jian: '2026-07-07T09:00:00.000Z',
       zui_hou_xiao_xi_shi_jian: '2026-07-07T09:20:00.000Z',
+      you_xi_jie_shu_shi_jian: '2026-07-07T09:25:00.000Z',
       mbti_lei_xing: 'INTJ',
     },
     {
       id: 'dang-an-3',
-      yong_hu_id: 'yong-hu-1',
       jiao_se_id: 'jiao-se-3',
       jiao_se_ming_zi: '继续聊',
       shi_fou_zha_xing: false,
       jie_guo_lei_xing: '',
       jie_guo_lei_xing_yuan: 'jinxing_zhong',
       shi_fou_feng_cun: false,
-      hao_gan_du_zong_fen: 300,
-      guan_xi_jie_duan: 'renShi',
       liao_tian_tian_shu: 1,
       xiao_xi_zong_shu: 5,
       fu_pan_shu_ju: null,
       fu_pan_nei_rong: null,
       chuang_jian_shi_jian: '2026-07-07T08:00:00.000Z',
       zui_hou_xiao_xi_shi_jian: '2026-07-07T08:10:00.000Z',
+      you_xi_jie_shu_shi_jian: null,
       mbti_lei_xing: 'ENFP',
     },
   ]
@@ -89,22 +87,13 @@ function chuangJunShiJiLu(): 军师指导记录项[] {
       jun_shi_ming_chen: '玄锐暮',
       jian_yi: '先吐槽你一句，然后给你建议。',
       dui_hua_zhai_yao: '初次互动摘要',
-      hao_gan_du_kuai_zhao: {
-        zongFen: 300,
-        xinRenDu: 100,
-        qinMiDu: 80,
-        quWeiDu: 60,
-        guanHuaiDu: 60,
-        guanXiJieDuan: 'renShi',
-        guanXiJieDuanMingCheng: '认识',
-      },
     },
   ]
 }
 
 function chuangJianFuPanXiangYing(
   jiaZaiZhong = false,
-  fuPanNeiRong: string | null = null,
+  fuPanNeiRong: unknown = null,
   youShiJianXian = true,
 ): 复盘响应 {
   const shiJianXian: 复盘时间线条目[] = youShiJianXian
@@ -115,14 +104,6 @@ function chuangJianFuPanXiangYing(
           yong_hu_xiao_xi: '你好',
           ai_hui_fu: '嗨',
           ai_xin_li_huo_dong: '对方看起来友善',
-          hao_gan_du_bian_hua: {
-            xin_ren_bian_hua: 1,
-            qin_mi_bian_hua: 0,
-            qu_wei_bian_hua: 0,
-            guan_huai_bian_hua: 0,
-            zong_fen_bian_hua: 1,
-            guan_xi_jie_duan: 'renShi',
-          },
         },
       ]
     : []
@@ -155,6 +136,7 @@ describe('FP-13 过往战绩与复盘前端', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     document.querySelectorAll('.fupan-zhezhao').forEach((el) => el.remove())
+    localStorage.clear()
   })
 
   describe('战绩列表', () => {
@@ -174,18 +156,49 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(wrapper.find('.kong-zhuangtai').text()).toBe(huoQuFanYi('zhanJi', 'zanWuZhanJi'))
     })
 
-    it('渲染战绩列表并显示角色名字、MBTI、聊天天数、最后消息时间和好感度总分', async () => {
+    it('按结果类型分为进行中、已胜利、已失败三类', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const biaoTiLieBiao = wrapper.findAll('.zhanji-fenlei-biaoti')
+      expect(biaoTiLieBiao.length).toBe(3)
+      expect(biaoTiLieBiao[0].text()).toContain(huoQuFanYi('zhanJi', 'fenLeiJinXingZhong'))
+      expect(biaoTiLieBiao[1].text()).toContain(huoQuFanYi('zhanJi', 'fenLeiShengLi'))
+      expect(biaoTiLieBiao[2].text()).toContain(huoQuFanYi('zhanJi', 'fenLeiShiBai'))
+    })
+
+    it('每类内显示对应战绩卡片', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const fenLeiZu = wrapper.findAll('.zhanji-fenlei-zu')
+      expect(fenLeiZu[0].findAll('.zhanji-kapian').length).toBe(1)
+      expect(fenLeiZu[0].text()).toContain('继续聊')
+      expect(fenLeiZu[1].findAll('.zhanji-kapian').length).toBe(1)
+      expect(fenLeiZu[1].text()).toContain('小甜心')
+      expect(fenLeiZu[2].findAll('.zhanji-kapian').length).toBe(1)
+      expect(fenLeiZu[2].text()).toContain('高冷姐')
+    })
+
+    it('渲染战绩列表并显示角色名字、MBTI、聊天天数、游戏结束时间（已结束）/最后消息时间（进行中），不显示好感度总分', async () => {
       const { huoQuDangAnLieBiao } = await import('@/api/聊天')
       vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
 
       const { wrapper } = await mountZuJian()
       const lieBiao = wrapper.findAll('.zhanji-kapian')
       expect(lieBiao.length).toBe(3)
-      expect(lieBiao[0].text()).toContain('小甜心')
-      expect(lieBiao[0].text()).toContain('INFP')
-      expect(lieBiao[0].text()).toContain('5')
-      expect(lieBiao[0].text()).toContain('850')
-      expect(lieBiao[0].text()).toContain('07/07 18:30')
+      expect(lieBiao[0].text()).toContain('继续聊')
+      expect(lieBiao[0].text()).toContain('ENFP')
+      expect(lieBiao[0].text()).toContain('1')
+      expect(lieBiao[0].text()).toContain(huoQuFanYi('zhanJi', 'zuiHouXiaoXiShiJian'))
+      expect(lieBiao[1].text()).toContain('小甜心')
+      expect(lieBiao[1].text()).toContain('INFP')
+      expect(lieBiao[1].text()).toContain('5')
+      expect(lieBiao[1].text()).not.toContain('850')
+      expect(lieBiao[1].text()).toContain(huoQuFanYi('zhanJi', 'youXiJieShuShiJian'))
+      expect(lieBiao[1].text()).toContain('07/07 18:35')
     })
 
     it('进行中游戏显示继续按钮，已结束游戏显示复盘按钮和删除按钮', async () => {
@@ -236,9 +249,9 @@ describe('FP-13 过往战绩与复盘前端', () => {
       await shanChuAnNiuLieBiao[0].trigger('click')
       await flushPromises()
 
-      expect(shanChuDangAn).toHaveBeenCalledWith('dang-an-1')
+      expect(shanChuDangAn).toHaveBeenCalledWith('dang-an-3')
       expect(wrapper.findAll('.zhanji-kapian').length).toBe(2)
-      expect(wrapper.text()).not.toContain('小甜心')
+      expect(wrapper.text()).not.toContain('继续聊')
     })
 
     it('删除时用户取消确认则不调用删除接口', async () => {
@@ -256,6 +269,95 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(wrapper.findAll('.zhanji-kapian').length).toBe(3)
     })
 
+    it('可通过复选框多选战绩', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const xuanZeKuang = wrapper.findAll('.xuan-ze-kuang input')
+      expect(xuanZeKuang.length).toBe(3)
+
+      await xuanZeKuang[0].setValue(true)
+      await xuanZeKuang[1].setValue(true)
+      await flushPromises()
+
+      const gongJuLan = wrapper.find('.piliang-gongju-lan')
+      expect(gongJuLan.exists()).toBe(true)
+      expect(gongJuLan.text()).toContain('2')
+      expect(gongJuLan.text()).toContain(huoQuFanYi('zhanJi', 'piLiangShanChu'))
+    })
+
+    it('批量删除按钮触发二次确认并调用批量删除接口', async () => {
+      const { huoQuDangAnLieBiao, piLiangShanChuDangAn } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+      vi.mocked(piLiangShanChuDangAn).mockResolvedValue({
+        cheng_gong: true,
+        shan_chu_ids: ['dang-an-1', 'dang-an-2'],
+      })
+      vi.stubGlobal('confirm', () => true)
+
+      const { wrapper } = await mountZuJian()
+      const xuanZeKuang = wrapper.findAll('.xuan-ze-kuang input')
+      await xuanZeKuang[0].setValue(true)
+      await xuanZeKuang[1].setValue(true)
+      await flushPromises()
+
+      await wrapper.find('.piliang-shanchu-anniu').trigger('click')
+      await flushPromises()
+
+      expect(piLiangShanChuDangAn).toHaveBeenCalledWith(['dang-an-3', 'dang-an-1'])
+      expect(wrapper.findAll('.zhanji-kapian').length).toBe(1)
+      expect(wrapper.text()).not.toContain('小甜心')
+      expect(wrapper.text()).not.toContain('高冷姐')
+    })
+
+    it('批量删除取消确认后不调用接口', async () => {
+      const { huoQuDangAnLieBiao, piLiangShanChuDangAn } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+      vi.mocked(piLiangShanChuDangAn).mockResolvedValue({
+        cheng_gong: true,
+        shan_chu_ids: [],
+      })
+      vi.stubGlobal('confirm', () => false)
+
+      const { wrapper } = await mountZuJian()
+      const xuanZeKuang = wrapper.findAll('.xuan-ze-kuang input')
+      await xuanZeKuang[0].setValue(true)
+      await xuanZeKuang[1].setValue(true)
+      await flushPromises()
+
+      await wrapper.find('.piliang-shanchu-anniu').trigger('click')
+      await flushPromises()
+
+      expect(piLiangShanChuDangAn).not.toHaveBeenCalled()
+      expect(wrapper.findAll('.zhanji-kapian').length).toBe(3)
+    })
+
+    it('拖拽排序后持久化到 localStorage 并在重新加载时恢复', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      const lieBiao = chuangJianDangAnLieBiao()
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(lieBiao)
+
+      const { wrapper } = await mountZuJian()
+      const shengLiZu = wrapper.findAll('.zhanji-fenlei-zu')[1]
+      const kaPian = shengLiZu.findAll('.zhanji-kapian')
+      expect(kaPian.length).toBe(1)
+
+      localStorage.setItem(
+        'zhanJiPaiXu',
+        JSON.stringify({
+          jinxingzhong: [],
+          shengli: ['dang-an-1'],
+          shibai: [],
+        }),
+      )
+
+      await wrapper.vm.$forceUpdate()
+      await flushPromises()
+
+      expect(localStorage.getItem('zhanJiPaiXu')).toContain('dang-an-1')
+    })
+
     it('后端未返回 id 时仍能用索引兜底渲染列表', async () => {
       const { huoQuDangAnLieBiao } = await import('@/api/聊天')
       vi.mocked(huoQuDangAnLieBiao).mockResolvedValue([
@@ -268,6 +370,17 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(lieBiao.length).toBe(2)
       expect(lieBiao[0].text()).toContain('小甜心')
       expect(lieBiao[1].text()).toContain('高冷姐')
+    })
+
+    it('战绩列表容器存在统一纵向滚动条样式', () => {
+      expect(guoWangZhanJiYuanMa).toMatch(/\.zhanji-liebiao\s*\{[^}]*overflow-y:\s*auto/)
+      expect(guoWangZhanJiYuanMa).toMatch(
+        /\.zhanji-liebiao::-webkit-scrollbar\s*\{[^}]*width:\s*\d+px/,
+      )
+      expect(guoWangZhanJiYuanMa).toMatch(
+        /\.zhanji-liebiao::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*var\(--gundong-tiao-beijing\)/,
+      )
+      expect(guoWangZhanJiYuanMa).toMatch(/\.zhanji-liebiao::-webkit-scrollbar-thumb:hover/)
     })
   })
 
@@ -325,6 +438,34 @@ describe('FP-13 过往战绩与复盘前端', () => {
       )
     })
 
+    it('复盘内容即使后端误返回对象也不渲染 [object Object]', async () => {
+      const { huoQuDangAnLieBiao, huoQuFuPan } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+      vi.mocked(huoQuFuPan).mockResolvedValue(
+        chuangJianFuPanXiangYing(false, { some: 'object', nested: { value: 1 } }),
+      )
+
+      const { wrapper } = await mountZuJian()
+      const fuPanAnNiu = wrapper.findAll('.caozuo-anniu.fupan').at(0)
+      await fuPanAnNiu!.trigger('click')
+      await flushPromises()
+
+      const fuPanWenBen = document.querySelector('.fupan-wenben')?.textContent?.trim() || ''
+      expect(fuPanWenBen).not.toContain('[object Object]')
+      expect(fuPanWenBen).toContain('"some": "object"')
+    })
+
+    it('复盘弹窗内容区存在统一纵向滚动条样式', () => {
+      expect(guoWangZhanJiYuanMa).toMatch(/\.fupan-neirong\s*\{[^}]*overflow-y:\s*auto/)
+      expect(guoWangZhanJiYuanMa).toMatch(
+        /\.fupan-neirong::-webkit-scrollbar\s*\{[^}]*width:\s*\d+px/,
+      )
+      expect(guoWangZhanJiYuanMa).toMatch(
+        /\.fupan-neirong::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*var\(--gundong-tiao-beijing\)/,
+      )
+      expect(guoWangZhanJiYuanMa).toMatch(/\.fupan-neirong::-webkit-scrollbar-thumb:hover/)
+    })
+
     it('复盘中不展示评估聊天水平相关按钮或区域', async () => {
       const { huoQuDangAnLieBiao, huoQuFuPan } = await import('@/api/聊天')
       vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
@@ -339,6 +480,28 @@ describe('FP-13 过往战绩与复盘前端', () => {
 
       expect(document.querySelector('.pinggu-quyu')).toBeNull()
       expect(document.querySelector('.caozuo-anniu.pinggu')).toBeNull()
+    })
+
+    it('复盘弹窗不渲染好感度数值、维度名、进度条与好感度快照', async () => {
+      const { huoQuDangAnLieBiao, huoQuFuPan } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+      vi.mocked(huoQuFuPan).mockResolvedValue(
+        chuangJianFuPanXiangYing(false, '## 总结评价\n表现不错'),
+      )
+
+      const { wrapper } = await mountZuJian()
+      const fuPanAnNiu = wrapper.findAll('.caozuo-anniu.fupan').at(0)
+      await fuPanAnNiu!.trigger('click')
+      await flushPromises()
+
+      const fuPanWenBen = document.querySelector('.fupan-neirong')?.textContent?.trim() || ''
+      expect(fuPanWenBen).not.toContain('850')
+      expect(fuPanWenBen).not.toContain('信任')
+      expect(fuPanWenBen).not.toContain('亲密')
+      expect(fuPanWenBen).not.toContain('趣味')
+      expect(fuPanWenBen).not.toContain('关怀')
+      expect(document.querySelector('.shijianxian-haogandu')).toBeNull()
+      expect(document.querySelector('.junshi-zhidao-haogandu')).toBeNull()
     })
   })
 })

@@ -57,7 +57,7 @@ function jieXiDirectorXiangYing(neiRong: string): DirectorCeLue {
 export async function shengChengDirectorCeLue(shuRu: AIYinQingShuRu): Promise<DirectorJieGuo> {
   try {
     const xiangYing = await genJuPeiZhiTiaoYong('director', [
-      { jiaoSe: 'system', neiRong: '你是恋爱模拟导演AI，只输出JSON策略。你的目标是让AI演员的回复像真实大学生/青年恋人微信聊天，允许留白、犹豫、推拉和暧昧试探。' },
+      { jiaoSe: 'system', neiRong: '你负责给角色写回复小纸条，只输出 JSON。让回复像真实大学生/青年恋人聊微信，允许留白、犹豫、推拉和暧昧试探。' },
       { jiaoSe: 'user', neiRong: gouJianDirectorPrompt(shuRu) },
     ])
 

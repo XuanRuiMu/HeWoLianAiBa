@@ -6,7 +6,7 @@ if (!process.env.REDIS_URL) {
   process.env.REDIS_URL = 'redis://localhost:6379'
 }
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
 import request from 'supertest'
 import { createServer } from 'http'
 import type { AddressInfo } from 'net'
@@ -24,6 +24,7 @@ import { sheZhiIo } from '../socket/io'
 import { huoQuFanYi } from '../config/translations'
 import { chuShiHuaHaoGanDu } from '../services/好感度'
 import { xieRuJiYi } from '../services/记忆'
+import { sheZhiMockTiaoYong, chongZhiDeepSeekKeHuDuan } from '../utils/DeepSeek客户端'
 
 function suiJiShouJiHao(): string {
   return `138${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`
@@ -184,6 +185,19 @@ describe.sequential('FP-16 管理员后台', () => {
     })
     await 数据库.end()
     await redis.quit()
+  })
+
+  beforeEach(() => {
+    chongZhiDeepSeekKeHuDuan()
+    sheZhiMockTiaoYong(async () => ({
+      neiRong: JSON.stringify({ 违规: false, 确信度: 0.1, 类型: '', 严重程度: '', 理由: '' }),
+      xinXi: { role: 'assistant', content: '' },
+      yuanShuJu: {} as never,
+    }))
+  })
+
+  afterEach(() => {
+    sheZhiMockTiaoYong(null)
   })
 
   it('非管理员访问管理员路由返回403', async () => {

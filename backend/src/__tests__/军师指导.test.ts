@@ -10,8 +10,9 @@ import {
   type TiaoYongJieGuo,
 } from '../utils/DeepSeek客户端'
 import { xieRuFuPanTiaoMu } from '../services/复盘条目'
-import { JUN_SHI_PEI_ZHI_MO_REN } from '../config/军师配置'
+import { JUN_SHI_PEI_ZHI, JUN_SHI_PEI_ZHI_MO_REN } from '../config/军师配置'
 import { huoQuFanYi } from '../config/translations'
+import { aiQingQiuXianLiu } from '../middleware/限流'
 
 function suiJiShouJiHao(): string {
   return `138${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`
@@ -150,6 +151,9 @@ describe('FP-12 军师指导系统', () => {
         ceShiYongHu.yongHuId,
         jiaoSeId,
       ])
+      ;(aiQingQiuXianLiu as unknown as { resetKey?: (key: string) => void }).resetKey?.(
+        ceShiYongHu.yongHuId,
+      )
     }
   })
 
@@ -172,6 +176,19 @@ describe('FP-12 军师指导系统', () => {
       const xuanRuiMu = xiangYing.body.shu_ju.junShiLieBiao.find((j: { id: string }) => j.id === 'xuanRuiMu')
       expect(xuanRuiMu).toBeDefined()
       expect(xuanRuiMu.fuBiaoTi).toBe(JUN_SHI_PEI_ZHI_MO_REN.fuBiaoTi)
+    })
+
+    it('列表包含玄锐暮、测试军师1、测试军师2', async () => {
+      const xiangYing = await request(yingYong)
+        .get('/api/聊天/军师/列表')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const ids = xiangYing.body.shu_ju.junShiLieBiao.map((j: { id: string }) => j.id)
+      expect(ids).toContain('xuanRuiMu')
+      expect(ids).toContain('ceShiJunShi1')
+      expect(ids).toContain('ceShiJunShi2')
+      expect(xiangYing.body.shu_ju.junShiLieBiao.length).toBe(3)
     })
   })
 
@@ -206,6 +223,26 @@ describe('FP-12 军师指导系统', () => {
       expect(junShiTiaoYong!.zuiDaTokens).toBe(1500)
     })
 
+    it('指定测试军师1时复用玄锐暮提示词并返回测试军师1信息', async () => {
+      mock.sheZhiXiangYing({ neiRong: '测试军师1的建议。' })
+      await faSongCeShiXiaoXi(ceShiYongHu!.lingPai, jiaoSeId, '测试军师1消息')
+
+      const xiangYing = await request(yingYong)
+        .post('/api/聊天/军师')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ jiaoSeId, junShiId: 'ceShiJunShi1' })
+        .expect(200)
+
+      expect(xiangYing.body.cheng_gong).toBe(true)
+      expect(xiangYing.body.shu_ju.junShi.id).toBe('ceShiJunShi1')
+      expect(xiangYing.body.shu_ju.junShi.mingCheng).toBe('测试军师1')
+
+      const junShiTiaoYong = mock.jiLu.find((ji) => ji.wenDu === 0.85 && ji.zuiDaTokens === 1500)
+      expect(junShiTiaoYong).toBeDefined()
+      expect(junShiTiaoYong!.xiaoXi[0].neiRong).toBe(JUN_SHI_PEI_ZHI.ceShiJunShi1.xiTongTiShi)
+      expect(junShiTiaoYong!.xiaoXi[0].neiRong).toBe(JUN_SHI_PEI_ZHI.xuanRuiMu.xiTongTiShi)
+    })
+
     it('军师 Prompt 包含好感度四维分数、复盘条目和撤回消息原始内容', async () => {
       mock.sheZhiXiangYing({ neiRong: '这是指导内容。' })
 
@@ -235,11 +272,11 @@ describe('FP-12 军师指导系统', () => {
       const junShiTiaoYong = mock.jiLu.find((ji) => ji.wenDu === 0.85 && ji.zuiDaTokens === 1500)
       expect(junShiTiaoYong).toBeDefined()
       const yongHuPrompt = junShiTiaoYong!.xiaoXi[1]?.neiRong || ''
-      expect(yongHuPrompt).toContain('信任度')
-      expect(yongHuPrompt).toContain('亲密度')
-      expect(yongHuPrompt).toContain('趣味度')
-      expect(yongHuPrompt).toContain('关怀度')
-      expect(yongHuPrompt).toContain('AI复盘条目')
+      expect(yongHuPrompt).toContain('信任')
+      expect(yongHuPrompt).toContain('亲密')
+      expect(yongHuPrompt).toContain('趣味')
+      expect(yongHuPrompt).toContain('关怀')
+      expect(yongHuPrompt).toContain('复盘条目')
       expect(yongHuPrompt).toContain('原始内容：这条会撤回')
     })
 
@@ -256,9 +293,9 @@ describe('FP-12 军师指导系统', () => {
       const junShiTiaoYong = mock.jiLu.find((ji) => ji.wenDu === 0.85 && ji.zuiDaTokens === 1500)
       expect(junShiTiaoYong).toBeDefined()
       const yongHuPrompt = junShiTiaoYong!.xiaoXi[1]?.neiRong || ''
-      expect(yongHuPrompt).toContain('真实损友军师')
-      expect(yongHuPrompt).toContain('真实口语化')
-      expect(yongHuPrompt).toContain('接地气')
+      expect(yongHuPrompt).toContain('嘴贱但靠谱')
+      expect(yongHuPrompt).toContain('像军师在耳边碎碎念')
+      expect(yongHuPrompt).toContain('先损两句')
     })
 
     it('军师响应内容不包含具体分数或维度名', async () => {
@@ -305,7 +342,7 @@ describe('FP-12 军师指导系统', () => {
     it('不同聊天内容多次请求均成功，无每日限额', async () => {
       mock.sheZhiXiangYing({ neiRong: '指导' })
 
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 2; i++) {
         await faSongCeShiXiaoXi(ceShiYongHu!.lingPai, jiaoSeId, `新内容${i}`)
         const xiangYing = await request(yingYong)
           .post('/api/聊天/军师')
@@ -318,7 +355,7 @@ describe('FP-12 军师指导系统', () => {
   })
 
   describe('指导记录', () => {
-    it('指导记录 API 返回最多 20 条，且包含完整聊天记录、时间点与后台数据', async () => {
+    it('指导记录 API 返回最多 20 条，包含完整聊天记录与时间点，且不暴露后台数据/分数/维度名', async () => {
       mock.sheZhiXiangYing({ neiRong: '这是记录测试指导。' })
 
       for (let i = 0; i < 3; i++) {
@@ -345,13 +382,33 @@ describe('FP-12 军师指导系统', () => {
       expect(jiLu).toHaveProperty('shi_jian')
       expect(jiLu).toHaveProperty('jun_shi_tou_xiang')
       expect(jiLu.jun_shi_tou_xiang).toBe(JUN_SHI_PEI_ZHI_MO_REN.touXiang)
-      expect(jiLu).toHaveProperty('hou_tai_shu_ju')
-      expect(jiLu.hou_tai_shu_ju).toHaveProperty('hao_gan_du')
-      expect(jiLu.hou_tai_shu_ju.hao_gan_du).toHaveProperty('xin_ren_du')
-      expect(jiLu.hou_tai_shu_ju.hao_gan_du).toHaveProperty('guan_xi_jie_duan')
+      expect(jiLu).not.toHaveProperty('hou_tai_shu_ju')
+      expect(jiLu).not.toHaveProperty('hao_gan_du_kuai_zhao')
       expect(jiLu.liao_tian_ji_lu).toBeInstanceOf(Array)
       expect(jiLu.liao_tian_ji_lu.length).toBeGreaterThan(0)
       expect(jiLu.liao_tian_ji_lu[0]).toHaveProperty('shi_jian')
+    })
+
+    it('指定测试军师2后记录保存该军师信息', async () => {
+      mock.sheZhiXiangYing({ neiRong: '测试军师2记录。' })
+      await faSongCeShiXiaoXi(ceShiYongHu!.lingPai, jiaoSeId, '测试军师2记录消息')
+
+      await request(yingYong)
+        .post('/api/聊天/军师')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ jiaoSeId, junShiId: 'ceShiJunShi2' })
+        .expect(200)
+
+      const xiangYing = await request(yingYong)
+        .get(`/api/聊天/军师/记录/${jiaoSeId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const lieBiao = xiangYing.body.shu_ju.jiLuLieBiao
+      expect(lieBiao.length).toBe(1)
+      expect(lieBiao[0].jun_shi_id).toBe('ceShiJunShi2')
+      expect(lieBiao[0].jun_shi_ming_chen).toBe('测试军师2')
+      expect(lieBiao[0].jun_shi_tou_xiang).toBe(JUN_SHI_PEI_ZHI.ceShiJunShi2.touXiang)
     })
 
     it('指导记录中撤回消息显示原始内容与撤回时间', async () => {

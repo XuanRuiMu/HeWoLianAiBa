@@ -1,9 +1,12 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
 import request from 'supertest'
 import yingYong from '../server'
 import { 数据库 } from '../数据库'
 import { redis } from '../redis'
 import { huoQuJieDuanMing } from '../services/好感度'
+import { XIAO_XI_PEI_ZHI } from '../config/消息配置'
+import { sheZhiKaiChangBaiMock } from '../services/开场白生成'
+import { sheZhiMockTiaoYong, chongZhiDeepSeekKeHuDuan } from '../utils/DeepSeek客户端'
 
 function suiJiShouJiHao(): string {
   return `138${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`
@@ -65,11 +68,32 @@ async function qingLiJiaoSeHeYongHu(yongHuId: string): Promise<void> {
   await 数据库.query(`DELETE FROM "用户" WHERE "ID" = $1`, [yongHuId])
 }
 
+describe('消息配置', () => {
+  it('合并时间阈值统一为1分钟', () => {
+    expect(XIAO_XI_PEI_ZHI.heBingShiJianYuZhi).toBe(60 * 1000)
+  })
+})
+
 describe('FP-06 消息发送与显示', () => {
   let ceShiYongHu: { shouJiHao: string; lingPai: string; yongHuId: string } | null = null
 
   beforeAll(async () => {
     ceShiYongHu = await chuangJianCeShiYongHu()
+  })
+
+  beforeEach(() => {
+    sheZhiKaiChangBaiMock(() => ({ xiao_xi_lie_biao: [] }))
+    chongZhiDeepSeekKeHuDuan()
+    sheZhiMockTiaoYong(async () => ({
+      neiRong: JSON.stringify({ 违规: false, 确信度: 0.1, 类型: '', 严重程度: '', 理由: '' }),
+      xinXi: { role: 'assistant', content: '' },
+      yuanShuJu: {} as never,
+    }))
+  })
+
+  afterEach(() => {
+    sheZhiKaiChangBaiMock(null)
+    sheZhiMockTiaoYong(null)
   })
 
   afterAll(async () => {
@@ -160,29 +184,25 @@ describe('FP-06 消息发送与显示', () => {
   })
 
   describe('开场白消息自动保存', () => {
-    it('创建会话时自动将角色开场白保存为AI消息', async () => {
+    it('角色确认时已根据 AI 决策将开场白保存为 jiaose 消息', async () => {
+      sheZhiKaiChangBaiMock(() => ({ xiao_xi_lie_biao: ['嗨', '在忙吗'] }))
+
       const jiaoSeId = await chuangJianCeShiJiaoSe(ceShiYongHu!.lingPai, { 性别: 'nv', mbti类型: 'ENFP' })
-
-      const chuangJianHuiHuaXiangYing = await request(yingYong)
-        .post('/api/聊天/会话')
-        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
-        .send({ jiaoSeId })
-        .expect(200)
-
-      expect(chuangJianHuiHuaXiangYing.body.cheng_gong).toBe(true)
 
       const xiaoXiJieGuo = await 数据库.query(
         `SELECT "内容", "发送者" FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2 ORDER BY "创建时间" ASC`,
         [ceShiYongHu!.yongHuId, jiaoSeId],
       )
-      expect(xiaoXiJieGuo.rows.length).toBeGreaterThanOrEqual(0)
-      expect(xiaoXiJieGuo.rows.length).toBeLessThanOrEqual(5)
-      for (const xiaoXi of xiaoXiJieGuo.rows) {
-        expect(xiaoXi.发送者).toBe('jiaose')
-      }
+      expect(xiaoXiJieGuo.rows.length).toBe(2)
+      expect(xiaoXiJieGuo.rows[0].发送者).toBe('jiaose')
+      expect(xiaoXiJieGuo.rows[0].内容).toBe('嗨')
+      expect(xiaoXiJieGuo.rows[1].发送者).toBe('jiaose')
+      expect(xiaoXiJieGuo.rows[1].内容).toBe('在忙吗')
     })
 
     it('重复创建会话不会重复保存开场白消息', async () => {
+      sheZhiKaiChangBaiMock(() => ({ xiao_xi_lie_biao: ['哈喽'] }))
+
       const jiaoSeId = await chuangJianCeShiJiaoSe(ceShiYongHu!.lingPai, { 性别: 'nv', mbti类型: 'ENTJ' })
 
       await request(yingYong)
@@ -196,6 +216,7 @@ describe('FP-06 消息发送与显示', () => {
         [ceShiYongHu!.yongHuId, jiaoSeId],
       )
       const diYiCiShuLiang = Number(diYiCiXiaoXi.rows[0].shu_liang)
+      expect(diYiCiShuLiang).toBe(1)
 
       await request(yingYong)
         .post('/api/聊天/会话')

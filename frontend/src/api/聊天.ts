@@ -72,11 +72,15 @@ export async function huoQuJunShiLieBiao(): Promise<JunShiXinXi[]> {
   return 响应.data.shu_ju.junShiLieBiao
 }
 
-export async function qingQiuJunShiZhiDao(jiaoSeId: string): Promise<JunShiZhiDaoJieGuo> {
+export async function qingQiuJunShiZhiDao(
+  jiaoSeId: string,
+  junShiId: string,
+): Promise<JunShiZhiDaoJieGuo> {
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: JunShiZhiDaoJieGuo }>(
     '/聊天/军师',
     {
       jiaoSeId,
+      junShiId,
     },
     {
       timeout: 120000,
@@ -93,9 +97,10 @@ export async function huoQuJunShiJiLu(jiaoSeId: string): Promise<JunShiJiLu[]> {
 }
 
 export async function huoQuDangAnLieBiao(): Promise<DangAnXiangQing[]> {
-  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: { dangAnLieBiao: DangAnXiangQing[] } }>(
-    '/战绩/列表',
-  )
+  const 响应 = await http.get<{
+    cheng_gong: boolean
+    shu_ju: { dangAnLieBiao: DangAnXiangQing[] }
+  }>('/战绩/列表')
   return 响应.data.shu_ju?.dangAnLieBiao || []
 }
 
@@ -166,15 +171,6 @@ export interface 军师指导记录项 {
   jun_shi_ming_chen: string
   jian_yi: string
   dui_hua_zhai_yao: string
-  hao_gan_du_kuai_zhao: {
-    zongFen: number
-    xinRenDu: number
-    qinMiDu: number
-    quWeiDu: number
-    guanHuaiDu: number
-    guanXiJieDuan: string
-    guanXiJieDuanMingCheng: string
-  } | null
 }
 
 export interface 关键事件项 {
@@ -197,14 +193,6 @@ export interface 复盘时间线条目 {
   yong_hu_xiao_xi: string
   ai_hui_fu: string
   ai_xin_li_huo_dong: string
-  hao_gan_du_bian_hua: {
-    xin_ren_bian_hua: number
-    qin_mi_bian_hua: number
-    qu_wei_bian_hua: number
-    guan_huai_bian_hua: number
-    zong_fen_bian_hua: number
-    guan_xi_jie_duan: string
-  } | null
 }
 
 export async function huoQuFuPan(dangAnId: string): Promise<复盘响应> {
@@ -279,6 +267,17 @@ export async function tiJiaoFanKui(canShu: FanKuiTiJiao): Promise<void> {
 export async function shanChuDangAn(dangAnId: string): Promise<{ cheng_gong: boolean }> {
   const 响应 = await http.delete<{ cheng_gong: boolean; shu_ju: { cheng_gong: boolean } }>(
     `/战绩/${dangAnId}`,
+  )
+  return 响应.data.shu_ju
+}
+
+export async function piLiangShanChuDangAn(dangAnIds: string[]): Promise<{
+  cheng_gong: boolean
+  shan_chu_ids: string[]
+}> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: { cheng_gong: boolean; shan_chu_ids: string[] } }>(
+    '/战绩/批量删除',
+    { dangAnIds },
   )
   return 响应.data.shu_ju
 }

@@ -5,7 +5,7 @@ import type { AnQuanShenHeJieGuo } from '../types'
 export async function shenHeNeiRongAnQuan(xiaoXi: string): Promise<AnQuanShenHeJieGuo> {
   try {
     const xiangYing = await genJuPeiZhiTiaoYong('anQuanShenHe', [
-      { jiaoSe: 'system', neiRong: '你是内容安全审核员，只输出JSON。' },
+      { jiaoSe: 'system', neiRong: '判断消息是否违规，只输出 JSON。' },
       { jiaoSe: 'user', neiRong: gouJianAnQuanShenHePrompt(xiaoXi) },
     ])
 

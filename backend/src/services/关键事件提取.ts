@@ -8,7 +8,7 @@ export async function tiQuGuanJianShiJian(
 ): Promise<GongJianShiJianJieGuo[]> {
   try {
     const xiangYing = await genJuPeiZhiTiaoYong('guanJianShiJian', [
-      { jiaoSe: 'system', neiRong: '你是关键事件提取专家，只输出JSON数组。' },
+      { jiaoSe: 'system', neiRong: '从聊天记录里挑出关键事件，只输出 JSON 数组。' },
       { jiaoSe: 'user', neiRong: gouJianGuanJianShiJianPrompt(duiHuaWenBen, jiaoSeMing) },
     ])
 

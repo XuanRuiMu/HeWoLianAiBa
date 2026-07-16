@@ -8,7 +8,7 @@ export async function shengChengJiYiZhaiYao(
 ): Promise<JiYiZhaiYaoJieGuo> {
   try {
     const xiangYing = await genJuPeiZhiTiaoYong('jiYiZhaiYao', [
-      { jiaoSe: 'system', neiRong: '你是记忆摘要专家，输出简洁中文摘要。' },
+      { jiaoSe: 'system', neiRong: '用几句话把聊天记录里值得记住的内容串起来。' },
       { jiaoSe: 'user', neiRong: gouJianJiYiZhaiYaoPrompt(duiHuaWenBen, jiaoSeMing) },
     ])
 

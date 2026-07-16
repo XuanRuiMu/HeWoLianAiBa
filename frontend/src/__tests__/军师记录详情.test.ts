@@ -1,9 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createWebHistory } from 'vue-router'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
 import { huoQuFanYi } from '@/config/translations'
 import 军师记录详情 from '@/views/军师记录详情.vue'
 import { huoQuJunShiJiLu } from '@/api/聊天'
+
+const junShiJiLuXiangQingYuanMa = readFileSync(
+  resolve(__dirname, '../views/军师记录详情.vue'),
+  'utf8',
+)
 
 vi.mock('@/api/聊天')
 
@@ -42,18 +49,6 @@ function chuangJianMoNiJiLu() {
           che_hui_shi_jian: null,
         },
       ],
-      hou_tai_shu_ju: {
-        haoGanDu: {
-          zongFen: 300,
-          xinRenDu: 100,
-          qinMiDu: 80,
-          quWeiDu: 60,
-          guanHuaiDu: 60,
-          guanXiJieDuan: 'renShi',
-          guanXiJieDuanMingCheng: '认识',
-        },
-        fuPanShuJu: [],
-      },
     },
   ]
 }
@@ -94,11 +89,21 @@ describe('FP-A10/A12 军师记录详情页', () => {
     expect(yeMian.element.style.overflowY).toBe('auto')
   })
 
+  it('页面容器使用统一滚动条样式变量', () => {
+    expect(junShiJiLuXiangQingYuanMa).toMatch(
+      /\.junshi-jilu-yemian::-webkit-scrollbar\s*\{[^}]*width:\s*\d+px/,
+    )
+    expect(junShiJiLuXiangQingYuanMa).toMatch(
+      /\.junshi-jilu-yemian::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*var\(--gundong-tiao-beijing\)/,
+    )
+    expect(junShiJiLuXiangQingYuanMa).toMatch(/\.junshi-jilu-yemian::-webkit-scrollbar-thumb:hover/)
+  })
+
   it('不展示对话摘要区域', async () => {
     const { wrapper } = await mountJunShiJiLuXiangQing()
 
     expect(wrapper.find('.duihua-zhaiyao').exists()).toBe(false)
-    expect(wrapper.text()).not.toContain(huoQuFanYi('junShi', 'duiHuaZhaiYao'))
+    expect(wrapper.text()).not.toContain('对话摘要')
     expect(wrapper.text()).not.toContain('摘要内容')
   })
 
@@ -106,8 +111,8 @@ describe('FP-A10/A12 军师记录详情页', () => {
     const { wrapper } = await mountJunShiJiLuXiangQing()
 
     expect(wrapper.find('.houtai-shuju-quyu').exists()).toBe(false)
-    expect(wrapper.text()).not.toContain(huoQuFanYi('junShi', 'houTaiShuJu'))
-    expect(wrapper.text()).not.toContain(huoQuFanYi('junShi', 'guanXiJieDuan'))
+    expect(wrapper.text()).not.toContain('后台数据')
+    expect(wrapper.text()).not.toContain('关系阶段')
   })
 
   it('展示聊天记录与指导建议', async () => {
@@ -117,5 +122,17 @@ describe('FP-A10/A12 军师记录详情页', () => {
     expect(wrapper.text()).toContain('你好')
     expect(wrapper.text()).toContain(huoQuFanYi('junShi', 'zhiDaoJianYi'))
     expect(wrapper.text()).toContain('这是指导建议')
+  })
+
+  it('不渲染具体分数或维度名', async () => {
+    const { wrapper } = await mountJunShiJiLuXiangQing()
+
+    const quanBuWenBen = wrapper.text()
+    expect(quanBuWenBen).not.toContain('信任度')
+    expect(quanBuWenBen).not.toContain('亲密度')
+    expect(quanBuWenBen).not.toContain('趣味度')
+    expect(quanBuWenBen).not.toContain('关怀度')
+    expect(quanBuWenBen).not.toContain('好感度')
+    expect(quanBuWenBen).not.toMatch(/\d+分/)
   })
 })

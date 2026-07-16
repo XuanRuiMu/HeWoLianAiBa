@@ -7,13 +7,21 @@
             <h2 class="tanchuang-biaoti">
               {{ biaoTi }}
             </h2>
-            <button class="guanbi-anniu" aria-label="关闭" @click="guanBi">✕</button>
+            <button
+              class="guanbi-anniu"
+              :aria-label="huoQuFanYi('caidan', 'guanBi')"
+              @click="guanBi"
+            >
+              ✕
+            </button>
           </div>
           <div ref="neirongQu" class="tanchuang-neirong">
             <pre class="xieyi-wenben">{{ yuanShiWenBen }}</pre>
           </div>
           <div class="tanchuang-dibu">
-            <button class="zhidao-anniu" @click="guanBi">我已知晓</button>
+            <button class="zhidao-anniu" @click="guanBi">
+              {{ huoQuFanYi('caidan', 'yiYiZhiXiao') }}
+            </button>
           </div>
         </div>
       </div>
@@ -25,6 +33,7 @@
 import { ref, computed, watch } from 'vue'
 import yongHuXieYiText from '@/assets/yongHuXieYi.txt?raw'
 import yinSiZhengCeText from '@/assets/yinSiZhengCe.txt?raw'
+import { huoQuFanYi } from '@/config/translations'
 
 const props = defineProps<{
   xianShi: boolean
@@ -38,7 +47,9 @@ const emit = defineEmits<{
 const neirongQu = ref<HTMLElement | null>(null)
 
 const biaoTi = computed(() => {
-  return props.leiXing === 'yongHuXieYi' ? '用户协议' : '隐私政策'
+  return props.leiXing === 'yongHuXieYi'
+    ? huoQuFanYi('yeMianBiaoTi', 'yongHuXieYi')
+    : huoQuFanYi('yeMianBiaoTi', 'yinSiZhengCe')
 })
 
 const yuanShiWenBen = computed(() => {

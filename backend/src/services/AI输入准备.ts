@@ -59,7 +59,6 @@ export async function huoQuAIJiaoSeXinXi(
   if (jieGuo.rows.length === 0) return null
 
   const row = jieGuo.rows[0]
-  const kaiChangBai = anQuanZiFuChuanShuZu(jieXiJSONZiDuan(row.开场白))
   const shiJieXinXi = jieXiJSONZiDuan(row.世界信息)
   const xingBie = zhuanHuanXingBie(row.性别)
   const mbtiLeiXing = anQuanZiFuChuan(row.MBTI || row.预设类型 || 'INTJ')
@@ -99,7 +98,6 @@ export async function huoQuAIJiaoSeXinXi(
     hua_shu: row.是否渣型 ? anQuanZiFuChuanShuZu(row.话术) : undefined,
     bao_lu_fang_shi: row.是否渣型 ? anQuanZiFuChuan(row.暴露方式) : undefined,
     shi_po_xian_suo: row.是否渣型 ? anQuanZiFuChuanShuZu(row.识破线索) : undefined,
-    kai_chang_bai: kaiChangBai.length > 0 ? kaiChangBai : ['你好'],
     shi_jie_xin_xi: typeof shiJieXinXi === 'object' && shiJieXinXi !== null
       ? (shiJieXinXi as Record<string, unknown>)
       : {},

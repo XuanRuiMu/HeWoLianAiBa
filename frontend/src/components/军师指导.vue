@@ -2,7 +2,7 @@
   <div class="junshi-zhezhao" @click.self="$emit('guanBi')">
     <div class="junshi-mianban">
       <div class="junshi-dingbu">
-        <div class="biaoqian-zu">
+        <div v-if="dangQianJunShi" class="biaoqian-zu">
           <button
             class="biaoqian-anniu"
             :class="{ huoyue: dangQianBiaoQian === 'zhidao' }"
@@ -18,115 +18,111 @@
             {{ huoQuFanYi('junShi', 'zhiDaoJiLu') }}
           </button>
         </div>
+        <div v-else class="junshi-biaoti">{{ huoQuFanYi('junShi', 'junShiZhiDao') }}</div>
         <button class="guanbi-anniu" @click="$emit('guanBi')">
           {{ huoQuFanYi('junShi', 'guanBi') }}
         </button>
       </div>
 
       <div class="junshi-neirong">
-        <div v-if="dangQianBiaoQian === 'zhidao'" class="zhidao-buju">
-          <div class="junshi-xuanze">
-            <div class="xuanze-tishi">{{ huoQuFanYi('junShi', 'qingXuanZeNiDeJunShi') }}</div>
+        <div v-if="!dangQianJunShi" class="junshi-xuanze-buju">
+          <div class="xuanze-tishi">{{ huoQuFanYi('junShi', 'qingXuanZeNiDeJunShi') }}</div>
+          <div class="junshi-liebiao">
             <div
-              class="junshi-xinxi"
-              :class="{ huoyue: xuanZeZhanKai }"
-              @click="xuanZeZhanKai = !xuanZeZhanKai"
+              v-for="junShi in junShiLieBiaoXuanXiang"
+              :key="junShi.id"
+              class="junshi-xuanze-xiang"
+              @click="jinRuJunShiXiangQing(junShi)"
             >
               <div class="junshi-touxiang">
                 <img
-                  :src="shengChengTouXiangURL(dangQianJunShi.touXiang)"
-                  :alt="dangQianJunShi.mingCheng"
+                  :src="shengChengTouXiangURL(junShi.touXiang)"
+                  :alt="huoQuJunShiMingCheng(junShi) || ''"
                   class="touxiang-tu"
                 />
               </div>
               <div class="junshi-xiangqing">
-                <span class="junshi-mingcheng">{{ dangQianJunShi.mingCheng }}</span>
-                <span class="junshi-fubiaoti">{{ dangQianJunShi.fuBiaoTi }}</span>
-                <span v-if="dangQianJunShi.biaoQian" class="junshi-biaoqian">{{
-                  dangQianJunShi.biaoQian
-                }}</span>
+                <span class="junshi-mingcheng">{{ huoQuJunShiMingCheng(junShi) }}</span>
               </div>
-              <span class="xuanze-jiantou">{{ xuanZeZhanKai ? '▲' : '▼' }}</span>
+              <span class="jiantou">›</span>
             </div>
-            <div v-if="xuanZeZhanKai" class="junshi-xuanze-liebiao">
-              <div
-                v-for="junShi in junShiLieBiaoXuanXiang"
-                :key="junShi.id"
-                class="junshi-xuanze-xiang"
-                :class="{ dangQian: junShi.id === dangQianJunShi.id }"
-                @click="xuanZeJunShi(junShi)"
-              >
-                <div class="junshi-touxiang xiao">
-                  <img
-                    :src="shengChengTouXiangURL(junShi.touXiang)"
-                    :alt="junShi.mingCheng || ''"
-                    class="touxiang-tu"
-                  />
-                </div>
-                <div class="junshi-xiangqing">
-                  <span class="junshi-mingcheng">{{ junShi.mingCheng }}</span>
-                  <span class="junshi-fubiaoti">{{ junShi.fuBiaoTi }}</span>
-                </div>
-                <span v-if="junShi.id === dangQianJunShi.id" class="yixuan-biaoji">✓</span>
-              </div>
-            </div>
-          </div>
-
-          <button
-            class="qingqiu-anniu"
-            :disabled="qingQiuZhong || !jiaoSeId"
-            @click="zhiXingQingQiu"
-          >
-            {{
-              qingQiuZhong
-                ? huoQuFanYi('junShi', 'qingQiuZhong')
-                : huoQuFanYi('junShi', 'qingQiuZhiDao')
-            }}
-          </button>
-
-          <div v-if="cuoWuTiShi" class="cuowu-tishi">
-            {{ cuoWuTiShi }}
-          </div>
-
-          <div v-if="zhiDaoJieGuo" class="zhidao-jieguo">
-            <h3 class="jieguo-biaoti">{{ huoQuFanYi('junShi', 'zhiDaoJianYi') }}</h3>
-            <p class="jieguo-neirong">
-              {{ zhiDaoJieGuo }}
-            </p>
           </div>
         </div>
 
-        <div v-else class="jilu-buju">
-          <div v-if="jiaZaiJiLuZhong" class="jiazai-zhuangtai">
-            {{ huoQuFanYi('junShi', 'jiaZaiZhong') }}
+        <template v-else>
+          <div class="junshi-xinxi-toubu">
+            <button class="fanhui-anniu" @click="fanHuiDaoLieBiao">
+              ← {{ huoQuFanYi('caidan', 'fanHui') }}
+            </button>
+            <div class="xuanzhong-junshi">
+              <div class="junshi-touxiang xiao">
+                <img
+                  :src="shengChengTouXiangURL(dangQianJunShi.touXiang)"
+                  :alt="huoQuJunShiMingCheng(dangQianJunShi)"
+                  class="touxiang-tu"
+                />
+              </div>
+              <span class="junshi-mingcheng">{{ huoQuJunShiMingCheng(dangQianJunShi) }}</span>
+            </div>
           </div>
-          <div v-else-if="jiLuLieBiao.length === 0" class="kong-zhuangtai">
-            {{ huoQuFanYi('junShi', 'zanWuZhiDaoJiLu') }}
-          </div>
-          <div v-else class="jilu-liebiao">
-            <div
-              v-for="jiLu in jiLuLieBiao"
-              :key="jiLu.shi_jian"
-              class="jilu-xiangmu"
-              @click="jinRuJiLuXiangQing(jiLu)"
+
+          <div v-if="dangQianBiaoQian === 'zhidao'" class="zhidao-buju">
+            <button
+              class="qingqiu-anniu"
+              :disabled="qingQiuZhong || !jiaoSeId"
+              @click="zhiXingQingQiu"
             >
-              <div class="jilu-zhaiyao">
-                <span class="jilu-shijian">{{ jiLu.shi_jian }}</span>
-                <span class="jilu-jiaose">{{ jiLu.jiao_se_ming_zi }}</span>
+              {{
+                qingQiuZhong
+                  ? huoQuFanYi('junShi', 'qingQiuZhong')
+                  : huoQuFanYi('junShi', 'qingQiuZhiDao')
+              }}
+            </button>
+
+            <div v-if="cuoWuTiShi" class="cuowu-tishi">
+              {{ cuoWuTiShi }}
+            </div>
+
+            <div v-if="zhiDaoJieGuo" class="zhidao-jieguo">
+              <h3 class="jieguo-biaoti">{{ huoQuFanYi('junShi', 'zhiDaoJianYi') }}</h3>
+              <p class="jieguo-neirong">
+                {{ zhiDaoJieGuo }}
+              </p>
+            </div>
+          </div>
+
+          <div v-else class="jilu-buju">
+            <div v-if="jiaZaiJiLuZhong" class="jiazai-zhuangtai">
+              {{ huoQuFanYi('junShi', 'jiaZaiZhong') }}
+            </div>
+            <div v-else-if="dangQianJunShiJiLu.length === 0" class="kong-zhuangtai">
+              {{ huoQuFanYi('junShi', 'zanWuZhiDaoJiLu') }}
+            </div>
+            <div v-else class="jilu-liebiao">
+              <div
+                v-for="jiLu in dangQianJunShiJiLu"
+                :key="jiLu.shi_jian"
+                class="jilu-xiangmu"
+                @click="jinRuJiLuXiangQing(jiLu)"
+              >
+                <div class="jilu-zhaiyao">
+                  <span class="jilu-shijian">{{ jiLu.shi_jian }}</span>
+                  <span class="jilu-jiaose">{{ jiLu.jiao_se_ming_zi }}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </template>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { qingQiuJunShiZhiDao, huoQuJunShiJiLu, huoQuJunShiLieBiao } from '@/api/聊天'
-import { huoQuFanYi } from '@/config/translations'
+import { fanYi, huoQuFanYi } from '@/config/translations'
 import { 是业务错误 } from '@/api/请求'
 import { shengChengTouXiangURL } from '@/utils/头像'
 import type { JunShiXinXi, JunShiJiLu } from '@/types'
@@ -146,49 +142,59 @@ const cuoWuTiShi = ref('')
 const jiLuLieBiao = ref<JunShiJiLu[]>([])
 const jiaZaiJiLuZhong = ref(false)
 const junShiLieBiaoXuanXiang = ref<JunShiXinXi[]>([])
-const xuanZeZhanKai = ref(false)
-
-const MO_REN_JUN_SHI: JunShiXinXi = {
-  id: 'xuanRuiMu',
-  mingCheng: huoQuFanYi('junShi', 'junShiMing'),
-  fuBiaoTi: huoQuFanYi('junShi', 'junShiFuBiaoTi'),
-  biaoQian: huoQuFanYi('junShi', 'junShiBiaoQian'),
-  miaoShu: huoQuFanYi('junShi', 'junShiMiaoShu'),
-  touXiang: '图片/军师头像/军师玄锐暮头像.png',
-}
-
-const dangQianJunShi = ref<JunShiXinXi>({ ...MO_REN_JUN_SHI })
+const dangQianJunShi = ref<JunShiXinXi | null>(null)
 const router = useRouter()
+
+const dangQianJunShiJiLu = computed(() => {
+  if (!dangQianJunShi.value) return []
+  return jiLuLieBiao.value.filter((jiLu) => jiLu.jun_shi_id === dangQianJunShi.value!.id)
+})
 
 onMounted(async () => {
   try {
-    const lieBiao = await huoQuJunShiLieBiao()
-    const guoLvLieBiao = lieBiao.filter((j) => j.id === 'xuanRuiMu')
-    junShiLieBiaoXuanXiang.value = guoLvLieBiao
-    const xuanRuiMu = guoLvLieBiao.find((j) => j.id === 'xuanRuiMu')
-    if (xuanRuiMu) {
-      dangQianJunShi.value = xuanRuiMu
-    }
+    junShiLieBiaoXuanXiang.value = await huoQuJunShiLieBiao()
   } catch (e) {
     console.warn(huoQuFanYi('junShi', 'jiaZaiJunShiLieBiaoShiBai'), e)
   }
 })
 
-function xuanZeJunShi(junShi: JunShiXinXi) {
+function jinRuJunShiXiangQing(junShi: JunShiXinXi) {
   dangQianJunShi.value = junShi
-  xuanZeZhanKai.value = false
+  dangQianBiaoQian.value = 'zhidao'
+  zhiDaoJieGuo.value = null
+  cuoWuTiShi.value = ''
+}
+
+function fanHuiDaoLieBiao() {
+  dangQianJunShi.value = null
+  dangQianBiaoQian.value = 'zhidao'
+  zhiDaoJieGuo.value = null
+  cuoWuTiShi.value = ''
+}
+
+function huoQuJunShiMingCheng(junShi: JunShiXinXi): string {
+  const fanYiJian = `${junShi.id}Ming` as keyof typeof fanYi.junShi
+  const fanYiZhi = fanYi.junShi[fanYiJian]
+  return typeof fanYiZhi === 'string' ? fanYiZhi : junShi.mingCheng
 }
 
 function jinRuJiLuXiangQing(jiLu: JunShiJiLu) {
-  router.push(`/junshi-jilu/${props.jiaoSeId}/${encodeURIComponent(jiLu.shi_jian)}`)
+  router.push({
+    name: 'junShiJiLuXiangQing',
+    params: {
+      jiaoSeId: props.jiaoSeId,
+      jiLuId: jiLu.shi_jian,
+    },
+  })
 }
 
 async function zhiXingQingQiu() {
+  if (!dangQianJunShi.value) return
   qingQiuZhong.value = true
   zhiDaoJieGuo.value = null
   cuoWuTiShi.value = ''
   try {
-    const jieGuo = await qingQiuJunShiZhiDao(props.jiaoSeId)
+    const jieGuo = await qingQiuJunShiZhiDao(props.jiaoSeId, dangQianJunShi.value.id)
     zhiDaoJieGuo.value = jieGuo.zhiDaoNeiRong
   } catch (e: unknown) {
     const cuoWuMa = 是业务错误(e) ? e.cuo_wu_ma : ''
@@ -276,6 +282,12 @@ function qieHuanDaoJiLu() {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
+.junshi-biaoti {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--wenben-zhuse);
+}
+
 .guanbi-anniu {
   font-size: 18px;
   color: var(--wenben-ciuse);
@@ -292,18 +304,33 @@ function qieHuanDaoJiLu() {
   flex: 1;
   overflow-y: auto;
   padding: 20px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gundong-tiao-beijing) transparent;
 }
 
-.zhidao-buju {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+.junshi-neirong::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-.junshi-xuanze {
+.junshi-neirong::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.junshi-neirong::-webkit-scrollbar-thumb {
+  background: var(--gundong-tiao-beijing);
+  border-radius: 3px;
+}
+
+.junshi-neirong::-webkit-scrollbar-thumb:hover {
+  background: var(--gundong-tiao-hover);
+}
+
+.junshi-xuanze-buju {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .xuanze-tishi {
@@ -312,63 +339,33 @@ function qieHuanDaoJiLu() {
   padding: 0 4px;
 }
 
-.junshi-xinxi {
+.junshi-liebiao {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 12px;
-  padding: 16px;
-  background: var(--junshi-zhuse-touming);
-  border-radius: 16px;
-  border: 1px solid var(--junshi-biankuang);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.junshi-xinxi:hover {
-  background: var(--junshi-zhuse-touming);
-  border-color: var(--junshi-zhuse);
-}
-
-.junshi-xinxi.huoyue {
-  border-radius: 16px 16px 4px 4px;
-}
-
-.xuanze-jiantou {
-  margin-left: auto;
-  font-size: 10px;
-  color: var(--wenben-ciuse);
-  flex-shrink: 0;
-}
-
-.junshi-xuanze-liebiao {
-  border: 1px solid var(--junshi-biankuang);
-  border-top: none;
-  border-radius: 0 0 16px 16px;
-  overflow: hidden;
 }
 
 .junshi-xuanze-xiang {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 16px;
+  background: var(--junshi-zhuse-touming);
+  border: 1px solid var(--junshi-biankuang);
+  border-radius: 16px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .junshi-xuanze-xiang:hover {
   background: var(--junshi-zhuse-touming);
+  border-color: var(--junshi-zhuse);
 }
 
-.junshi-xuanze-xiang.dangQian {
-  background: var(--junshi-zhuse-touming);
-}
-
-.yixuan-biaoji {
+.jiantou {
   margin-left: auto;
-  color: var(--junshi-zhuse);
-  font-weight: 700;
-  font-size: 14px;
+  font-size: 18px;
+  color: var(--wenben-ciuse);
 }
 
 .junshi-touxiang {
@@ -404,19 +401,37 @@ function qieHuanDaoJiLu() {
   color: var(--junshi-zhuse);
 }
 
-.junshi-fubiaoti {
-  font-size: 12px;
-  color: var(--wenben-ciuse);
+.junshi-xinxi-toubu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.junshi-biaoqian {
-  font-size: 11px;
-  color: var(--junshi-zhuse);
+.fanhui-anniu {
+  align-self: flex-start;
+  font-size: 14px;
+  color: var(--wenben-ciuse);
+  padding: 4px 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.xuanzhong-junshi {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
   background: var(--junshi-zhuse-touming);
-  padding: 2px 8px;
-  border-radius: 6px;
-  margin-top: 2px;
-  display: inline-block;
+  border: 1px solid var(--junshi-biankuang);
+  border-radius: 16px;
+}
+
+.zhidao-buju {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .qingqiu-anniu {

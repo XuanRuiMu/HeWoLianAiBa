@@ -238,7 +238,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
 import type { MBTI类型, 性格选择 } from '@/types'
@@ -249,10 +249,22 @@ import { huoQuFanYi } from '@/config/translations'
 const 仓库 = 使用认证表单仓库()
 const router = useRouter()
 
+if (仓库.huoQuZiLiaoSheZhiYiWanCheng()) {
+  仓库.qingKongZiLiao()
+}
+
 const 步骤列表 = [1, 2, 3]
-const 当前步骤 = ref(仓库.ziLiaoDangQianBuZhou)
+const 当前步骤 = computed({
+  get: () => 仓库.ziLiaoDangQianBuZhou,
+  set: (zhi) => {
+    仓库.ziLiaoDangQianBuZhou = zhi
+  },
+})
 const ziLiaoShuJu = 仓库.ziLiaoShuJu
 const 步骤方向 = ref<'qian' | 'hou'>('qian')
+
+watch(() => 仓库.ziLiaoDangQianBuZhou, 仓库.baoCunZiLiaoZhuangTai)
+watch(() => ({ ...仓库.ziLiaoShuJu }), 仓库.baoCunZiLiaoZhuangTai, { deep: true })
 
 const 步骤过渡名称 = computed(() =>
   步骤方向.value === 'qian' ? 'buZhou-qianJin' : 'buZhou-houTui',
@@ -337,7 +349,6 @@ const 渣型提示文案 = computed(() => {
 
 async function kaiShiLiaoTian() {
   if (!可以开始.value) return
-  仓库.ziLiaoDangQianBuZhou = 当前步骤.value
   try {
     const jiaoSe = await shengChengJiaoSe(
       ziLiaoShuJu.muBiaoXingBie || 'female',
@@ -348,6 +359,7 @@ async function kaiShiLiaoTian() {
     )
     const queRenHouJiaoSe = await queRenJiaoSe(jiaoSe)
     const jiaoSeId = queRenHouJiaoSe.jiao_se_id || queRenHouJiaoSe.id || ''
+    仓库.sheZhiZiLiaoSheZhiYiWanCheng(true)
     router.push(`/tian-jia-wei-xin?jiaoSeId=${jiaoSeId}`)
   } catch {
     router.push('/')

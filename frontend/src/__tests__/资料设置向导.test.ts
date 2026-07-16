@@ -31,12 +31,15 @@ function 创建路由() {
   })
 }
 
-async function 挂载组件() {
+async function 挂载组件(选项目: { 清空状态?: boolean } = {}) {
+  const 需要清空 = 选项目.清空状态 !== false
   const luYou = 创建路由()
   const pinia = createPinia()
   setActivePinia(pinia)
   const cangKu = 使用认证表单仓库()
-  cangKu.qingKongZiLiao()
+  if (需要清空) {
+    cangKu.qingKongZiLiao()
+  }
 
   const wrapper = mount(资料设置向导, {
     global: {
@@ -183,7 +186,6 @@ describe('资料设置向导组件', () => {
       ie_lei_xing: 'I',
       re_shen_lei_xing: 'slow',
       shi_fou_zha_xing: true,
-      kai_chang_bai: ['你好'],
       wei_xin_ming: '测试微信昵称',
       zhen_shi_ming: '测试名字',
     })
@@ -270,7 +272,6 @@ describe('资料设置向导组件', () => {
       ie_lei_xing: 'I',
       re_shen_lei_xing: 'slow',
       shi_fou_zha_xing: false,
-      kai_chang_bai: ['你好'],
       wei_xin_ming: '测试微信昵称',
       zhen_shi_ming: '测试名字',
     })
@@ -284,5 +285,97 @@ describe('资料设置向导组件', () => {
     expect(queRenJiaoSe).toHaveBeenCalledTimes(1)
     expect(luYou.currentRoute.value.path).toBe('/tian-jia-wei-xin')
     expect(luYou.currentRoute.value.query.jiaoSeId).toBe('jiao-se-1')
+  })
+
+  it('完整设置对象后退出再进入，从步骤1开始', async () => {
+    const { wrapper } = await 挂载组件()
+    await 进入步骤三(wrapper)
+
+    const mbtiKaPian = wrapper.findAll('.mbti-kaPian')
+    await mbtiKaPian[0].trigger('click')
+    await flushPromises()
+
+    vi.mocked(shengChengJiaoSe).mockResolvedValue({
+      id: 'jiao-se-1',
+      ming_zi: '测试角色',
+      xing_bie: 'nv',
+      nian_ling: 22,
+      wai_mao: '测试外貌',
+      xing_ge: '测试性格',
+      bei_jing_gu_shi: '测试背景',
+      xi_hao: ['测试爱好'],
+      yan_yu_feng_ge: '测试言语风格',
+      tou_xiang: 'emoji',
+      biao_qian: ['测试标签'],
+      yu_she_lei_xing: 'ISTJ',
+      mbti_lei_xing: 'ISTJ',
+      ie_lei_xing: 'I',
+      re_shen_lei_xing: 'slow',
+      shi_fou_zha_xing: false,
+      wei_xin_ming: '测试微信昵称',
+      zhen_shi_ming: '测试名字',
+    })
+    vi.mocked(queRenJiaoSe).mockResolvedValue({ jiao_se_id: 'jiao-se-1' })
+
+    await wrapper.find('.kaiShiLiaoTian').trigger('click')
+    await flushPromises()
+
+    wrapper.unmount()
+
+    const { wrapper: xinWrapper } = await 挂载组件({ 清空状态: false })
+
+    expect(xinWrapper.text()).toContain(huoQuFanYi('ziLiaoSheZhi', 'buZhou1BiaoTi'))
+    expect(xinWrapper.text()).not.toContain(huoQuFanYi('ziLiaoSheZhi', 'buZhou3BiaoTi'))
+  })
+
+  it('步骤2未点确定退出后重新进入，恢复到步骤2并保留已选项', async () => {
+    const { wrapper } = await 挂载组件()
+    await 进入步骤二(wrapper)
+
+    const duiXiangKaPian = wrapper.findAll('.duiXiang-xingBie-kaPian')
+    await duiXiangKaPian[1].trigger('click')
+    await flushPromises()
+
+    wrapper.unmount()
+
+    const { wrapper: xinWrapper } = await 挂载组件({ 清空状态: false })
+
+    expect(xinWrapper.text()).toContain(huoQuFanYi('ziLiaoSheZhi', 'buZhou2BiaoTi'))
+    const xinDuiXiangKaPian = xinWrapper.findAll('.duiXiang-xingBie-kaPian')
+    expect(xinDuiXiangKaPian[1].classes()).toContain('beiXuanZhong')
+  })
+
+  it('步骤3未点确定退出后重新进入，恢复到步骤3并保留性格选择', async () => {
+    const { wrapper } = await 挂载组件()
+    await 进入步骤三(wrapper)
+
+    const mbtiKaPian = wrapper.findAll('.mbti-kaPian')
+    await mbtiKaPian[3].trigger('click')
+    await flushPromises()
+
+    wrapper.unmount()
+
+    const { wrapper: xinWrapper } = await 挂载组件({ 清空状态: false })
+
+    expect(xinWrapper.text()).toContain(huoQuFanYi('ziLiaoSheZhi', 'buZhou3BiaoTi'))
+    const xinMbtiKaPian = xinWrapper.findAll('.mbti-kaPian')
+    expect(xinMbtiKaPian[3].classes()).toContain('beiXuanZhong')
+  })
+
+  it('刷新页面后未完成的步骤和已选项仍然保持', async () => {
+    const { wrapper } = await 挂载组件()
+    await 进入步骤二(wrapper)
+
+    const duiXiangKaPian = wrapper.findAll('.duiXiang-xingBie-kaPian')
+    await duiXiangKaPian[0].trigger('click')
+    await flushPromises()
+
+    wrapper.unmount()
+
+    const { wrapper: xinWrapper } = await 挂载组件({ 清空状态: false })
+
+    expect(xinWrapper.text()).toContain(huoQuFanYi('ziLiaoSheZhi', 'buZhou2BiaoTi'))
+    const xinDuiXiangKaPian = xinWrapper.findAll('.duiXiang-xingBie-kaPian')
+    expect(xinDuiXiangKaPian[0].classes()).toContain('beiXuanZhong')
   })
 })

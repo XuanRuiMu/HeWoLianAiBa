@@ -16,6 +16,7 @@ import {
   shengChengJunShiZhiDao,
   tiQuGuanJianShiJian,
 } from '../services/AI引擎'
+import { JUN_SHI_PEI_ZHI_MO_REN } from '../config/军师配置'
 import { gouJianWriterPrompt, gouJianDirectorPrompt } from '../services/Prompt构建器'
 import type {
   AIJiaoSeXinXi,
@@ -46,7 +47,6 @@ function chuangJianCeShiJiaoSe(): AIJiaoSeXinXi {
     jia_ting_bei_jing: '普通家庭，父母开明',
     qing_gan_jing_li: '有过一段青涩暗恋',
     shi_fou_zha_xing: false,
-    kai_chang_bai: ['你好呀，我是雨夜的猫'],
     shi_jie_xin_xi: { cheng_shi: '杭州' },
     ba_da_mo_kuai: {
       ji_ben_xin_xi: '小雨，女，20岁，大学生',
@@ -135,28 +135,28 @@ describe('FP-09 AI对话引擎', () => {
       const shuRu = chuangJianCeShiShuRu()
       const prompt = gouJianWriterPrompt(shuRu)
 
-      expect(prompt).toContain('【第一层：禁止规则与行为契约】')
-      expect(prompt).toContain('【第二层：人设词】')
-      expect(prompt).toContain('【第三层：当前状态】')
-      expect(prompt).toContain('【第四层：关系进展参考')
-      expect(prompt).toContain('【第五层：对话历史】')
-      expect(prompt).toContain('【第六层：角色身份与情感状态】')
+      expect(prompt).toContain('【先记住这些】')
+      expect(prompt).toContain('【你是这样一个人】')
+      expect(prompt).toContain('【现在的你和这段关系】')
+      expect(prompt).toContain('【关系参考，不是束缚】')
+      expect(prompt).toContain('【刚才聊了什么】')
+      expect(prompt).toContain('【代入你自己】')
     })
 
-    it('Prompt第一层 → 包含三条禁止规则', () => {
+    it('Prompt第一层 → 包含三条行为规则', () => {
       const shuRu = chuangJianCeShiShuRu()
       const prompt = gouJianWriterPrompt(shuRu)
 
-      expect(prompt).toContain('禁止每条必回')
-      expect(prompt).toContain('禁止括号动作描写')
-      expect(prompt).toContain('禁止主动介绍个人信息')
+      expect(prompt).toContain('不用每条消息都回')
+      expect(prompt).toContain('别用（）或[]写动作')
+      expect(prompt).toContain('别一上来就主动报年龄')
     })
 
     it('Prompt内容 → 包含恋爱目的文本', () => {
       const shuRu = chuangJianCeShiShuRu()
       const prompt = gouJianWriterPrompt(shuRu)
 
-      expect(prompt).toContain('用户与其聊天的目的是为了谈恋爱')
+      expect(prompt).toContain('对方加你聊天是想谈恋爱')
     })
 
     it('Prompt第五层历史消息格式 → 匹配指定正则', () => {
@@ -172,41 +172,41 @@ describe('FP-09 AI对话引擎', () => {
       expect(pipeiHang.length).toBeGreaterThan(0)
     })
 
-    it('Prompt第四层阶段描述 → 不包含指令化表述', () => {
+    it('Prompt第四层阶段描述 → 禁止指令化自我暗示', () => {
       const shuRu = chuangJianCeShiShuRu()
       const prompt = gouJianWriterPrompt(shuRu)
 
-      expect(prompt).not.toContain('你对这个人没什么感觉')
-      expect(prompt).not.toContain('你的心已经不受控制了')
+      expect(prompt).toContain('别用“你对这个人没什么感觉”“你的心已经不受控制了”这种话命令自己。')
     })
 
-    it('第一轮Writer Prompt末尾 → 包含【角色沉浸要求】', () => {
+    it('第一轮Writer Prompt末尾 → 包含角色沉浸指令', () => {
       const shuRu = chuangJianCeShiShuRu()
       shuRu.shi_fou_di_yi_lun = true
       const prompt = gouJianWriterPrompt(shuRu)
 
-      expect(prompt).toContain('【角色沉浸要求】')
-      expect(prompt.endsWith('不要跳出角色分析。')).toBe(true)
+      expect(prompt).toContain('【代入你自己】')
+      expect(prompt).toContain('完全变成')
+      expect(prompt).toContain('别跳出来分析')
     })
 
     it('优化后Writer Prompt → 包含自然聊天与第一人称沉浸要素', () => {
       const shuRu = chuangJianCeShiShuRu()
       const prompt = gouJianWriterPrompt(shuRu)
 
-      expect(prompt).toContain('自然聊天要求')
+      expect(prompt).toContain('像真实大学生/年轻人谈恋爱那样聊微信')
       expect(prompt).toContain('留白')
-      expect(prompt).toContain('第一人称沉浸')
-      expect(prompt).toContain('避免AI味')
+      expect(prompt).toContain('用“我”去想')
+      expect(prompt).toContain('话里也别露馅像机器人在回。')
     })
 
     it('优化后Director Prompt → 包含自然节奏与导演要求', () => {
       const shuRu = chuangJianCeShiShuRu()
       const prompt = gouJianDirectorPrompt(shuRu)
 
-      expect(prompt).toContain('导演要求')
+      expect(prompt).toContain('你手里有个演员')
       expect(prompt).toContain('留白')
       expect(prompt).toContain('推拉')
-      expect(prompt).toContain('真实大学生/青年恋人')
+      expect(prompt).toContain('真实大学生/年轻人谈恋爱')
     })
   })
 
@@ -511,6 +511,11 @@ describe('FP-09 AI对话引擎', () => {
         jiao_se_ming: '雨夜的猫',
         dui_hua_li_shi: liShi,
         hao_gan_du: chuangJianCeShiHaoGanDu(),
+        jun_shi_pei_zhi: {
+          id: JUN_SHI_PEI_ZHI_MO_REN.id,
+          mingCheng: JUN_SHI_PEI_ZHI_MO_REN.mingCheng,
+          xiTongTiShi: JUN_SHI_PEI_ZHI_MO_REN.xiTongTiShi,
+        },
       })
 
       expect(jieGuo.zhi_dao_nei_rong.length).toBeGreaterThan(0)
@@ -539,7 +544,7 @@ describe('FP-09 AI对话引擎', () => {
       const shuRu = chuangJianCeShiShuRu()
       const prompt = gouJianDirectorPrompt(shuRu)
 
-      expect(prompt).toContain('用户与其聊天的目的是为了谈恋爱')
+      expect(prompt).toContain('对方加 TA 聊天是想谈恋爱')
     })
   })
 })

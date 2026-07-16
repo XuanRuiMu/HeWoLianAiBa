@@ -192,9 +192,7 @@ describe('FP-06 消息发送与显示', () => {
 
     it('点击发送后输入栏立即清空', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
-      vi.mocked(faSongXiaoXi).mockImplementation(
-        () => new Promise(() => {}),
-      )
+      vi.mocked(faSongXiaoXi).mockImplementation(() => new Promise(() => {}))
 
       const shuRuKuang = wrapper.find('.shuru-kuang')
       await shuRuKuang.setValue('立即清空测试')
@@ -206,18 +204,88 @@ describe('FP-06 消息发送与显示', () => {
 
     it('发送中的临时消息显示发送动画标记', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
-      vi.mocked(faSongXiaoXi).mockImplementation(
-        () => new Promise(() => {}),
-      )
+      vi.mocked(faSongXiaoXi).mockImplementation(() => new Promise(() => {}))
 
       const shuRuKuang = wrapper.find('.shuru-kuang')
       await shuRuKuang.setValue('动画测试')
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
 
-      const xiaoXiLieBiao = wrapper.findAll('.qipao-neirong')
+      const xiaoXiLieBiao = wrapper.findAll('.xiaoxi-xiangmu.yonghu-xiaoxi')
       expect(xiaoXiLieBiao.length).toBeGreaterThan(0)
-      expect(xiaoXiLieBiao[xiaoXiLieBiao.length - 1].find('.fasong-zhong-biaoji').exists()).toBe(true)
+      const zuiHouXiaoXi = xiaoXiLieBiao[xiaoXiLieBiao.length - 1]
+      expect(zuiHouXiaoXi.find('.fasong-zhuangtai-zhuanquan').exists()).toBe(true)
+      expect(zuiHouXiaoXi.find('.fasong-zhuangtai').attributes('aria-label')).toBe(
+        huoQuFanYi('liaoTian', 'faSongZhong'),
+      )
+    })
+
+    it('发送中转圈位于气泡外部左侧，不覆盖文字', async () => {
+      const { wrapper } = await mountLiaoTianYeMian()
+      vi.mocked(faSongXiaoXi).mockImplementation(() => new Promise(() => {}))
+
+      const shuRuKuang = wrapper.find('.shuru-kuang')
+      await shuRuKuang.setValue('位置测试')
+      await wrapper.find('.fasong-anniu').trigger('click')
+      await flushPromises()
+
+      const qipao = wrapper.find('.qipao-neirong')
+      expect(qipao.find('.fasong-zhuangtai-zhuanquan').exists()).toBe(false)
+      const xiaoXiXiangMu = wrapper.find('.xiaoxi-xiangmu.yonghu-xiaoxi')
+      const zhuangTai = xiaoXiXiangMu.find('.fasong-zhuangtai')
+      expect(zhuangTai.exists()).toBe(true)
+      expect(zhuangTai.find('.qipao-neirong').exists()).toBe(false)
+
+      const xiangMuElement = xiaoXiXiangMu.element as HTMLElement
+      const qipaoIndex = Array.from(xiangMuElement.children).findIndex((el) =>
+        el.classList.contains('qipao-waike'),
+      )
+      const zhuangTaiIndex = Array.from(xiangMuElement.children).findIndex((el) =>
+        el.classList.contains('fasong-zhuangtai'),
+      )
+      expect(zhuangTaiIndex).toBeGreaterThan(qipaoIndex)
+    })
+
+    it('后端确认后消息使用相同客户端键，无二次渲染跳动', async () => {
+      const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
+      let jieXiCuoWu: (value: unknown) => void = () => {}
+      vi.mocked(faSongXiaoXi).mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            jieXiCuoWu = resolve
+          }),
+      )
+
+      const shuRuKuang = wrapper.find('.shuru-kuang')
+      await shuRuKuang.setValue('稳定键测试')
+      await wrapper.find('.fasong-anniu').trigger('click')
+      await flushPromises()
+
+      const linShiXiaoXi = 聊天仓库.xiaoXiLieBiao.find((x) => x.nei_rong === '稳定键测试')
+      expect(linShiXiaoXi).toBeDefined()
+      expect(linShiXiaoXi?.ke_hu_duan_id).toBeTruthy()
+      const linShiId = linShiXiaoXi!.ke_hu_duan_id
+
+      jieXiCuoWu({
+        xiaoXi: {
+          id: 'x-real-stable',
+          hui_hua_id: 'h1',
+          fa_song_zhe_id: 'u1',
+          fa_song_zhe_lei_xing: 'yonghu',
+          nei_rong: '稳定键测试',
+          lei_xing: 'wenben',
+          shi_jian_chuo: Date.now(),
+          yi_du: true,
+        },
+        shiMiJi: false,
+      })
+      await flushPromises()
+
+      const queRenXiaoXi = 聊天仓库.xiaoXiLieBiao.find((x) => x.id === 'x-real-stable')
+      expect(queRenXiaoXi).toBeDefined()
+      expect(queRenXiaoXi?.ke_hu_duan_id).toBe(linShiId)
+      expect(queRenXiaoXi?.fa_song_zhong).toBeFalsy()
+      expect(wrapper.find('.fasong-zhuangtai').exists()).toBe(false)
     })
 
     it('发送whosyourdaddy秘籍时不触发AI发送消息事件', async () => {
@@ -353,7 +421,7 @@ describe('FP-06 消息发送与显示', () => {
           fa_song_zhe_lei_xing: 'yonghu',
           nei_rong: '消息二',
           lei_xing: 'wenben',
-          shi_jian_chuo: jiChuShiJian + 30 * 1000,
+          shi_jian_chuo: jiChuShiJian + 59 * 1000,
           yi_du: true,
         },
       ]
