@@ -165,9 +165,9 @@ export async function huoQuDangAnXiangQing(
               typeof (item as { ping_lun?: unknown }).ping_lun === 'string' &&
               (item as { ping_lun: string }).ping_lun.trim().length > 0,
           )
-          .map((item) => ({
-            xu_hao: Math.floor((item as { xu_hao: number }).xu_hao),
-            ping_lun: (item as { ping_lun: string }).ping_lun,
+          .map((item: FuPanPiZhu) => ({
+            xu_hao: Math.floor(item.xu_hao),
+            ping_lun: item.ping_lun,
           }))
       }
     } catch {
