@@ -145,18 +145,32 @@ export async function jianCeShenJingBing(
     )
     .join('\n')
   const xiangYing = await genJuPeiZhiTiaoYong('shenJingBingJianCe', [
-    { jiaoSe: 'system', neiRong: '结合上下文和人设，判断用户消息是不是莫名其妙、无厘头，只输出 JSON。' },
+    {
+      jiaoSe: 'system',
+      neiRong:
+        '基于角色完整人设判定用户消息是否让该角色觉得莫名其妙/神经病。由你根据人设自行判定阈值，不要使用固定阈值。只输出 JSON。',
+    },
     {
       jiaoSe: 'user',
       neiRong: [
-        '看看下面这条消息，放在当前聊天里是不是特别跳脱、让人摸不着头脑。',
+        '判断下面这条用户消息，放在当前聊天里是不是特别跳脱、让这个角色觉得摸不着头脑。',
+        '请基于对方完整人设自行判断，不要使用任何固定阈值：',
         '',
-        '角色人设：',
+        '【角色完整人设】',
         `MBTI：${jiaoSe.mbti_lei_xing}`,
+        `内外向（IE）类型：${jiaoSe.ie_lei_xing}（E=外向型，I=内向型）`,
         `性格：${jiaoSe.xing_ge}`,
         `说话风格：${jiaoSe.yan_yu_feng_ge}`,
+        `行为特点：${jiaoSe.xing_wei_te_dian}`,
         `背景故事：${jiaoSe.bei_jing_gu_shi}`,
-        `这人设能不能接受无厘头/发散思维：${jiaoSe.ba_da_mo_kuai.xi_tong_ti_shi.includes('发散思维') || jiaoSe.xing_ge.includes('发散思维') || jiaoSe.yan_yu_feng_ge.includes('发散思维') ? '能' : '不能'}`,
+        `人设核心提示：${jiaoSe.ba_da_mo_kuai.xi_tong_ti_shi}`,
+        '',
+        '【判定准则（由你综合权衡）】',
+        '- E 型人格（外向、热情、爱玩、思维跳跃）通常更宽容，会觉得莫名其妙的话好玩、有趣、能接梗，不轻易判定为"神经病"',
+        '- I 型人格（内向、敏感、慢热、需深度连接）可能更容易对跳脱的内容感到摸不着头脑',
+        '- 综合考虑性格、说话风格、行为特点，自行判断这个角色会不会觉得用户消息莫名其妙到无法继续',
+        '- 只有真正严重跳脱、与上下文完全无关、让人完全无法理解时才判定为"神经病"',
+        '- 轻微跑题、开玩笑、调侃、发散思维、表情包、撒娇等都不应判定为"神经病"',
         '',
         '最近聊天：',
         liShiWenBen || '（无）',
@@ -164,10 +178,10 @@ export async function jianCeShenJingBing(
         `用户消息：${xiaoXi}`,
         '',
         '输出 JSON：{',
-        '  "是否神经病": boolean,',
-        '  "发散思维人设": boolean,',
-        '  "确信度": number（0-1）,',
-        '  "理由": "string"',
+        '  "是否神经病": boolean,  // 该角色会不会觉得这条消息莫名其妙到无法接受',
+        '  "人设能接受": boolean,  // 该人设能否接受/包容这种类型的消息（E人通常为true）',
+        '  "确信度": number（0-1）,  // 你对判定的确信程度',
+        '  "理由": "string"  // 基于人设的具体解释',
         '}',
         '只输出 JSON。',
       ].join('\n'),
@@ -176,16 +190,17 @@ export async function jianCeShenJingBing(
 
   const shuJu = jieXiJSONXiangYing(xiangYing.neiRong)
   const queXinDu = Number(shuJu['确信度'] ?? shuJu['que_xin_du'] ?? 0)
-  const jiaoSeFaSanSiWei =
-    jiaoSe.ba_da_mo_kuai.xi_tong_ti_shi.includes('发散思维') ||
-    jiaoSe.xing_ge.includes('发散思维') ||
-    jiaoSe.yan_yu_feng_ge.includes('发散思维')
+  const renSheNengJieShou = Boolean(
+    shuJu['人设能接受'] ??
+      shuJu['ren_she_neng_jie_shou'] ??
+      shuJu['发散思维人设'] ??
+      shuJu['fa_san_si_wei_ren_she'] ??
+      false,
+  )
 
   return {
     shi_fou_shen_jing_bing: Boolean(shuJu['是否神经病'] ?? shuJu['shi_fou_shen_jing_bing'] ?? false),
-    fa_san_si_wei_ren_she: Boolean(
-      shuJu['发散思维人设'] ?? shuJu['fa_san_si_wei_ren_she'] ?? false,
-    ) || jiaoSeFaSanSiWei,
+    fa_san_si_wei_ren_she: renSheNengJieShou,
     que_xin_du: Number.isNaN(queXinDu) ? 0 : queXinDu,
     li_you: String(shuJu['理由'] ?? shuJu['li_you'] ?? ''),
   }
@@ -611,8 +626,7 @@ export async function jianCeYongHuXiaoXiBingChuLi(
 
   if (
     jianCeJieGuo.shen_jing_bing.shi_fou_shen_jing_bing &&
-    !jianCeJieGuo.shen_jing_bing.fa_san_si_wei_ren_she &&
-    jianCeJieGuo.shen_jing_bing.que_xin_du > 0.7
+    !jianCeJieGuo.shen_jing_bing.fa_san_si_wei_ren_she
   ) {
     return chuLiShenJingBing(yong_hu_id, jiao_se_id)
   }

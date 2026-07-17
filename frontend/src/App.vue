@@ -41,15 +41,8 @@ onMounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-top: calc(52px + var(--anquan-quyu-shang));
   overflow: hidden;
   min-height: 0;
-}
-
-@media (max-width: 767px) {
-  .app-zhuti {
-    margin-top: calc(48px + var(--anquan-quyu-shang));
-  }
 }
 
 .yemian-guodu-enter-active {

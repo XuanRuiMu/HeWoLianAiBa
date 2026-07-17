@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
@@ -6,7 +6,12 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { huoQuFanYi } from '@/config/translations'
 import 军师指导 from '@/components/军师指导.vue'
-import { qingQiuJunShiZhiDao, huoQuJunShiLieBiao, huoQuJunShiJiLu } from '@/api/聊天'
+import {
+  qingQiuJunShiZhiDao,
+  huoQuJunShiLieBiao,
+  huoQuJunShiJiLu,
+  huoQuJunShiZhiDaoZhuangTai,
+} from '@/api/聊天'
 
 vi.mock('@/api/聊天')
 
@@ -159,7 +164,12 @@ describe('FP-08 军师指导菜单简化与扩展', () => {
     vi.clearAllMocks()
     vi.mocked(huoQuJunShiLieBiao).mockResolvedValue(chuangJianMoNiJunShiLieBiao())
     vi.mocked(huoQuJunShiJiLu).mockResolvedValue(chuangJianMoNiJiLuLieBiao())
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue(null)
     vi.mocked(qingQiuJunShiZhiDao).mockReset()
+  })
+
+  afterEach(() => {
+    vi.clearAllTimers()
   })
 
   describe('军师列表一级菜单', () => {
@@ -416,6 +426,174 @@ describe('FP-08 军师指导菜单简化与扩展', () => {
 
       expect(wrapper.find('.kong-zhuangtai').text()).toBe(huoQuFanYi('junShi', 'zanWuZhiDaoJiLu'))
     })
+  })
+})
+
+describe('FP-07 军师指导状态持久化与重进显示真实状态', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(huoQuJunShiLieBiao).mockResolvedValue(chuangJianMoNiJunShiLieBiao())
+    vi.mocked(huoQuJunShiJiLu).mockResolvedValue(chuangJianMoNiJiLuLieBiao())
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue(null)
+    vi.mocked(qingQiuJunShiZhiDao).mockReset()
+  })
+
+  afterEach(() => {
+    vi.clearAllTimers()
+    vi.useRealTimers()
+  })
+
+  it('进入军师详情时状态为空，显示请求指导按钮且可用', async () => {
+    const { wrapper } = await mountJunShiZhiDao()
+    await xuanZeJunShi(wrapper, 'xuanRuiMu')
+    await flushPromises()
+
+    expect(huoQuJunShiZhiDaoZhuangTai).toHaveBeenCalledWith('j1')
+    const anNiu = wrapper.find('.qingqiu-anniu')
+    expect(anNiu.exists()).toBe(true)
+    expect(anNiu.attributes('disabled')).toBeUndefined()
+    expect(anNiu.text()).toBe(huoQuFanYi('junShi', 'qingQiuZhiDao'))
+    expect(wrapper.find('.jieguo-neirong').exists()).toBe(false)
+  })
+
+  it('进入军师详情时状态为指导中，显示指导中并禁用按钮', async () => {
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuang_tai: 'zhi_dao_zhong',
+      jun_shi_id: 'xuanRuiMu',
+      kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+    })
+
+    const { wrapper } = await mountJunShiZhiDao()
+    await xuanZeJunShi(wrapper, 'xuanRuiMu')
+    await flushPromises()
+
+    const anNiu = wrapper.find('.qingqiu-anniu')
+    expect(anNiu.attributes('disabled')).toBeDefined()
+    expect(anNiu.text()).toBe(huoQuFanYi('junShi', 'zhiDaoZhong'))
+    expect(wrapper.find('.jieguo-neirong').exists()).toBe(false)
+    expect(wrapper.find('.cuowu-tishi').exists()).toBe(false)
+  })
+
+  it('进入军师详情时状态为已完成，直接显示指导结果', async () => {
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuang_tai: 'yi_wan_cheng',
+      jun_shi_id: 'xuanRuiMu',
+      kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+      jie_guo: {
+        junShi: chuangJianMoNiJunShiLieBiao()[0],
+        zhiDaoNeiRong: '重进时显示的已完成指导内容',
+        shiJian: '2026-07-17T10:01:00.000Z',
+      },
+    })
+
+    const { wrapper } = await mountJunShiZhiDao()
+    await xuanZeJunShi(wrapper, 'xuanRuiMu')
+    await flushPromises()
+
+    expect(wrapper.find('.jieguo-neirong').text()).toBe('重进时显示的已完成指导内容')
+    const anNiu = wrapper.find('.qingqiu-anniu')
+    expect(anNiu.attributes('disabled')).toBeUndefined()
+    expect(anNiu.text()).toBe(huoQuFanYi('junShi', 'qingQiuZhiDao'))
+  })
+
+  it('已完成状态属于其他军师时不显示其结果', async () => {
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuang_tai: 'yi_wan_cheng',
+      jun_shi_id: 'xuanRuiMu',
+      kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+      jie_guo: {
+        junShi: chuangJianMoNiJunShiLieBiao()[0],
+        zhiDaoNeiRong: '军师A的指导结果',
+        shiJian: '2026-07-17T10:01:00.000Z',
+      },
+    })
+
+    const { wrapper } = await mountJunShiZhiDao()
+    await xuanZeJunShi(wrapper, 'ceShiJunShi1')
+    await flushPromises()
+
+    expect(wrapper.find('.jieguo-neirong').exists()).toBe(false)
+    const anNiu = wrapper.find('.qingqiu-anniu')
+    expect(anNiu.text()).toBe(huoQuFanYi('junShi', 'qingQiuZhiDao'))
+    expect(anNiu.attributes('disabled')).toBeUndefined()
+  })
+
+  it('请求返回指导中错误码时启动轮询，轮询检测到完成后显示结果', async () => {
+    vi.useFakeTimers()
+
+    const cuoWu = new Error(huoQuFanYi('junShi', 'zhiDaoZhong'))
+    ;(cuoWu as { cuo_wu_ma?: string }).cuo_wu_ma = 'JUN_SHI_ZAI_ZHI_DAO_ZHONG'
+    vi.mocked(qingQiuJunShiZhiDao).mockRejectedValueOnce(cuoWu)
+
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        zhuang_tai: 'zhi_dao_zhong',
+        jun_shi_id: 'xuanRuiMu',
+        kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+      })
+      .mockResolvedValueOnce({
+        zhuang_tai: 'yi_wan_cheng',
+        jun_shi_id: 'xuanRuiMu',
+        kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+        jie_guo: {
+          junShi: chuangJianMoNiJunShiLieBiao()[0],
+          zhiDaoNeiRong: '轮询完成后的指导内容',
+          shiJian: '2026-07-17T10:01:00.000Z',
+        },
+      })
+
+    const { wrapper } = await mountJunShiZhiDao()
+    await xuanZeJunShi(wrapper, 'xuanRuiMu')
+    await flushPromises()
+
+    const anNiu = wrapper.find('.qingqiu-anniu')
+    expect(anNiu.text()).toBe(huoQuFanYi('junShi', 'qingQiuZhiDao'))
+    await anNiu.trigger('click')
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(wrapper.find('.qingqiu-anniu').text()).toBe(huoQuFanYi('junShi', 'zhiDaoZhong'))
+    expect(wrapper.find('.qingqiu-anniu').attributes('disabled')).toBeDefined()
+
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(wrapper.find('.qingqiu-anniu').text()).toBe(huoQuFanYi('junShi', 'zhiDaoZhong'))
+
+    await vi.advanceTimersByTimeAsync(3000)
+
+    expect(wrapper.find('.jieguo-neirong').text()).toBe('轮询完成后的指导内容')
+    expect(wrapper.find('.qingqiu-anniu').text()).toBe(huoQuFanYi('junShi', 'qingQiuZhiDao'))
+    expect(wrapper.find('.qingqiu-anniu').attributes('disabled')).toBeUndefined()
+  })
+
+  it('返回军师列表后再进入不残留之前的状态', async () => {
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuang_tai: 'yi_wan_cheng',
+      jun_shi_id: 'xuanRuiMu',
+      kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+      jie_guo: {
+        junShi: chuangJianMoNiJunShiLieBiao()[0],
+        zhiDaoNeiRong: '第一次进入的结果',
+        shiJian: '2026-07-17T10:01:00.000Z',
+      },
+    })
+
+    const { wrapper } = await mountJunShiZhiDao()
+    await xuanZeJunShi(wrapper, 'xuanRuiMu')
+    await flushPromises()
+    expect(wrapper.find('.jieguo-neirong').text()).toBe('第一次进入的结果')
+
+    await wrapper.find('.fanhui-anniu').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.zhidao-buju').exists()).toBe(false)
+
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue(null)
+    await xuanZeJunShi(wrapper, 'xuanRuiMu')
+    await flushPromises()
+
+    expect(wrapper.find('.jieguo-neirong').exists()).toBe(false)
+    const anNiu = wrapper.find('.qingqiu-anniu')
+    expect(anNiu.text()).toBe(huoQuFanYi('junShi', 'qingQiuZhiDao'))
+    expect(anNiu.attributes('disabled')).toBeUndefined()
   })
 })
 

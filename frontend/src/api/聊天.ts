@@ -4,6 +4,7 @@ import type {
   HuiHua,
   JunShiXinXi,
   JunShiZhiDaoJieGuo,
+  JunShiZhiDaoZhuangTaiXinXi,
   JunShiJiLu,
   DangAnXiangQing,
   ShengChengJiaoSeJieGuo,
@@ -96,6 +97,16 @@ export async function huoQuJunShiJiLu(jiaoSeId: string): Promise<JunShiJiLu[]> {
   return 响应.data.shu_ju.jiLuLieBiao
 }
 
+export async function huoQuJunShiZhiDaoZhuangTai(
+  jiaoSeId: string,
+): Promise<JunShiZhiDaoZhuangTaiXinXi | null> {
+  const 响应 = await http.get<{
+    cheng_gong: boolean
+    shu_ju: { zhuangTai: JunShiZhiDaoZhuangTaiXinXi | null }
+  }>(`/聊天/军师/状态/${jiaoSeId}`)
+  return 响应.data.shu_ju.zhuangTai
+}
+
 export async function huoQuDangAnLieBiao(): Promise<DangAnXiangQing[]> {
   const 响应 = await http.get<{
     cheng_gong: boolean
@@ -127,6 +138,7 @@ export async function shengChengJiaoSe(
       随机性格: 是否随机性格 || false,
       用户性别: 用户性别 === 'male' ? 'nan' : 用户性别 === 'female' ? 'nv' : undefined,
     },
+    { timeout: 60000 },
   )
   return 响应.data.shu_ju
 }
@@ -137,6 +149,7 @@ export async function queRenJiaoSe(
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: ShengChengJiaoSeJieGuo }>(
     '/生成角色/确认',
     { xuanZhongJiaoSe },
+    { timeout: 60000 },
   )
   return 响应.data.shu_ju
 }
@@ -179,9 +192,15 @@ export interface 关键事件项 {
   miao_shu: string
 }
 
+export interface 复盘批注项 {
+  xu_hao: number
+  ping_lun: string
+}
+
 export interface 复盘响应 {
   fu_pan_nei_rong: string | null
   fu_pan_shi_jian_xian: 复盘时间线条目[]
+  fu_pan_pi_zhu: 复盘批注项[] | null
   jun_shi_zhi_dao_ji_lu: 军师指导记录项[]
   guan_jian_shi_jian: 关键事件项[]
   jia_zai_zhong: boolean
@@ -275,9 +294,9 @@ export async function piLiangShanChuDangAn(dangAnIds: string[]): Promise<{
   cheng_gong: boolean
   shan_chu_ids: string[]
 }> {
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: { cheng_gong: boolean; shan_chu_ids: string[] } }>(
-    '/战绩/批量删除',
-    { dangAnIds },
-  )
+  const 响应 = await http.post<{
+    cheng_gong: boolean
+    shu_ju: { cheng_gong: boolean; shan_chu_ids: string[] }
+  }>('/战绩/批量删除', { dangAnIds })
   return 响应.data.shu_ju
 }

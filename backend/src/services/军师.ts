@@ -11,8 +11,12 @@ import {
   baoCunJunShiHaXi,
   baoCunJunShiJiLu,
   huoQuJunShiJiLuLieBiao,
+  sheZhiJunShiZhiDaoZhuangTai,
+  huoQuJunShiZhiDaoZhuangTai,
+  shanChuJunShiZhiDaoZhuangTai,
   type JunShiJiLuXiang,
   type JunShiJiLuLiaoTianXiaoXi,
+  type JunShiZhiDaoZhuangTaiXinXi,
 } from './军师缓存'
 import { jiLuJunShiQiuZhu } from '../utils/debug日志'
 import type { HaoGanDuXinXi } from '../types'
@@ -121,6 +125,17 @@ export async function qingQiuJunShiZhiDao(
     return { cheng_gong: false, cuo_wu_ma: 'WU_QUAN_XIAN', ti_shi: huoQuFanYi('junShi', 'wuQuanXian'), zhuang_tai_ma: 403 }
   }
 
+  const xianYouZhuangTai = await huoQuJunShiZhiDaoZhuangTai(canShu.yong_hu_id, canShu.jiao_se_id)
+  if (xianYouZhuangTai && xianYouZhuangTai.zhuang_tai === 'zhi_dao_zhong') {
+    jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, false, 'JUN_SHI_ZAI_ZHI_DAO_ZHONG')
+    return {
+      cheng_gong: false,
+      cuo_wu_ma: 'JUN_SHI_ZAI_ZHI_DAO_ZHONG',
+      ti_shi: huoQuFanYi('junShi', 'zhiDaoZhong'),
+      zhuang_tai_ma: 409,
+    }
+  }
+
   const jiaoSeXinXi = await huoQuJiaoSeJiBenXinXi(canShu.jiao_se_id)
   if (!jiaoSeXinXi) {
     jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, false, 'JIAO_SE_BU_CUN_ZAI')
@@ -157,72 +172,77 @@ export async function qingQiuJunShiZhiDao(
     return { cheng_gong: false, cuo_wu_ma: 'JUN_SHI_CHONG_FU', ti_shi: huoQuFanYi('junShi', 'junShiChongFu'), zhuang_tai_ma: 409 }
   }
 
-  const haoGanDu = await huoQuHaoGanDu(canShu.yong_hu_id, canShu.jiao_se_id)
-  const fuPanTiaoMu = await huoQuFuPanTiaoMuLieBiao(
-    canShu.yong_hu_id,
-    canShu.jiao_se_id,
-    JUN_SHI_QIU_ZHU_PEI_ZHI.fuPanTiaoMuShuLiang,
-  )
-
-  const fuPanWenBenLieBiao = fuPanTiaoMu.map((tiaoMu) => {
-    const bianHua = tiaoMu.hao_gan_du_bian_hua
-    return [
-      `时间：${tiaoMu.shi_jian}`,
-      `用户消息：${tiaoMu.yong_hu_xiao_xi}`,
-      `AI回复：${tiaoMu.ai_hui_fu}`,
-      `AI内心活动：${tiaoMu.ai_xin_li_huo_dong}`,
-      `好感度变化：信任${bianHua.xin_ren_bian_hua} 亲密${bianHua.qin_mi_bian_hua} 趣味${bianHua.qu_wei_bian_hua} 关怀${bianHua.guan_huai_bian_hua} 总分${bianHua.zong_fen_bian_hua}`,
-    ].join('\n')
-  })
-
-  const zhiDaoJieGuo = await shengChengJunShiZhiDao({
-    yong_hu_id: canShu.yong_hu_id,
-    jiao_se_id: canShu.jiao_se_id,
-    jiao_se_ming: jiaoSeXinXi.wei_xin_ming,
-    dui_hua_li_shi: duiHuaLiShi,
-    hao_gan_du: haoGanDu,
-    fu_pan_tiao_mu: fuPanWenBenLieBiao,
-    jun_shi_pei_zhi: {
-      id: junShiPeiZhi.id,
-      mingCheng: junShiPeiZhi.mingCheng,
-      xiTongTiShi: junShiPeiZhi.xiTongTiShi,
-    },
-  })
-
-  const shiJian = new Date().toISOString()
-  const jiLu: JunShiJiLuXiang = {
-    jian_yi: zhiDaoJieGuo.zhi_dao_nei_rong,
-    shi_jian: shiJian,
-    jiao_se_id: canShu.jiao_se_id,
-    jiao_se_ming_zi: jiaoSeXinXi.wei_xin_ming,
+  const kaiShiShiJian = new Date().toISOString()
+  const chuShiZhuangTai: JunShiZhiDaoZhuangTaiXinXi = {
+    zhuang_tai: 'zhi_dao_zhong',
     jun_shi_id: junShiPeiZhi.id,
-    jun_shi_ming_chen: junShiPeiZhi.mingCheng,
-    jun_shi_tou_xiang: junShiPeiZhi.touXiang,
-    dui_hua_zhai_yao: shengChengDuiHuaZhaiYao(duiHuaLiShi),
-    liao_tian_ji_lu: zhuanHuanLiaoTianJiLu(youXiaoXiaoXi, jiaoSeXinXi.wei_xin_ming),
-    hou_tai_shu_ju: {
-      hao_gan_du: {
-        zong_fen: haoGanDu.zong_fen,
-        xin_ren_du: haoGanDu.xin_ren_du,
-        qin_mi_du: haoGanDu.qin_mi_du,
-        qu_wei_du: haoGanDu.qu_wei_du,
-        guan_huai_du: haoGanDu.guan_huai_du,
-        guan_xi_jie_duan: haoGanDu.guan_xi_jie_duan,
-      },
-      fu_pan_tiao_mu: fuPanTiaoMu,
-    },
+    kai_shi_shi_jian: kaiShiShiJian,
   }
+  await sheZhiJunShiZhiDaoZhuangTai(canShu.yong_hu_id, canShu.jiao_se_id, chuShiZhuangTai)
 
-  await Promise.all([
-    baoCunJunShiHaXi(canShu.yong_hu_id, canShu.jiao_se_id, haXi),
-    baoCunJunShiJiLu(canShu.yong_hu_id, canShu.jiao_se_id, jiLu),
-  ])
+  try {
+    const haoGanDu = await huoQuHaoGanDu(canShu.yong_hu_id, canShu.jiao_se_id)
+    const fuPanTiaoMu = await huoQuFuPanTiaoMuLieBiao(
+      canShu.yong_hu_id,
+      canShu.jiao_se_id,
+      JUN_SHI_QIU_ZHU_PEI_ZHI.fuPanTiaoMuShuLiang,
+    )
 
-  jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, true)
+    const fuPanWenBenLieBiao = fuPanTiaoMu.map((tiaoMu) => {
+      const bianHua = tiaoMu.hao_gan_du_bian_hua
+      return [
+        `时间：${tiaoMu.shi_jian}`,
+        `用户消息：${tiaoMu.yong_hu_xiao_xi}`,
+        `AI回复：${tiaoMu.ai_hui_fu}`,
+        `AI内心活动：${tiaoMu.ai_xin_li_huo_dong}`,
+        `好感度变化：信任${bianHua.xin_ren_bian_hua} 亲密${bianHua.qin_mi_bian_hua} 趣味${bianHua.qu_wei_bian_hua} 关怀${bianHua.guan_huai_bian_hua} 总分${bianHua.zong_fen_bian_hua}`,
+      ].join('\n')
+    })
 
-  return {
-    cheng_gong: true,
-    jie_guo: {
+    const zhiDaoJieGuo = await shengChengJunShiZhiDao({
+      yong_hu_id: canShu.yong_hu_id,
+      jiao_se_id: canShu.jiao_se_id,
+      jiao_se_ming: jiaoSeXinXi.wei_xin_ming,
+      dui_hua_li_shi: duiHuaLiShi,
+      hao_gan_du: haoGanDu,
+      fu_pan_tiao_mu: fuPanWenBenLieBiao,
+      jun_shi_pei_zhi: {
+        id: junShiPeiZhi.id,
+        mingCheng: junShiPeiZhi.mingCheng,
+        xiTongTiShi: junShiPeiZhi.xiTongTiShi,
+      },
+    })
+
+    const shiJian = new Date().toISOString()
+    const jiLu: JunShiJiLuXiang = {
+      jian_yi: zhiDaoJieGuo.zhi_dao_nei_rong,
+      shi_jian: shiJian,
+      jiao_se_id: canShu.jiao_se_id,
+      jiao_se_ming_zi: jiaoSeXinXi.wei_xin_ming,
+      jun_shi_id: junShiPeiZhi.id,
+      jun_shi_ming_chen: junShiPeiZhi.mingCheng,
+      jun_shi_tou_xiang: junShiPeiZhi.touXiang,
+      dui_hua_zhai_yao: shengChengDuiHuaZhaiYao(duiHuaLiShi),
+      liao_tian_ji_lu: zhuanHuanLiaoTianJiLu(youXiaoXiaoXi, jiaoSeXinXi.wei_xin_ming),
+      hou_tai_shu_ju: {
+        hao_gan_du: {
+          zong_fen: haoGanDu.zong_fen,
+          xin_ren_du: haoGanDu.xin_ren_du,
+          qin_mi_du: haoGanDu.qin_mi_du,
+          qu_wei_du: haoGanDu.qu_wei_du,
+          guan_huai_du: haoGanDu.guan_huai_du,
+          guan_xi_jie_duan: haoGanDu.guan_xi_jie_duan,
+        },
+        fu_pan_tiao_mu: fuPanTiaoMu,
+      },
+    }
+
+    await Promise.all([
+      baoCunJunShiHaXi(canShu.yong_hu_id, canShu.jiao_se_id, haXi),
+      baoCunJunShiJiLu(canShu.yong_hu_id, canShu.jiao_se_id, jiLu),
+    ])
+
+    const jieGuo: JunShiZhiDaoJieGuo = {
       junShi: {
         id: junShiPeiZhi.id,
         mingCheng: junShiPeiZhi.mingCheng,
@@ -233,8 +253,38 @@ export async function qingQiuJunShiZhiDao(
       },
       zhiDaoNeiRong: zhiDaoJieGuo.zhi_dao_nei_rong,
       shiJian,
-    },
+    }
+
+    const wanChengZhuangTai: JunShiZhiDaoZhuangTaiXinXi = {
+      zhuang_tai: 'yi_wan_cheng',
+      jun_shi_id: junShiPeiZhi.id,
+      kai_shi_shi_jian: kaiShiShiJian,
+      jie_guo: jieGuo,
+    }
+    await sheZhiJunShiZhiDaoZhuangTai(canShu.yong_hu_id, canShu.jiao_se_id, wanChengZhuangTai)
+
+    jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, true)
+
+    return { cheng_gong: true, jie_guo: jieGuo }
+  } catch (cuoWu) {
+    await shanChuJunShiZhiDaoZhuangTai(canShu.yong_hu_id, canShu.jiao_se_id)
+    jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, false, 'XI_TONG_YI_CHANG')
+    console.error('请求军师指导异常', cuoWu)
+    return {
+      cheng_gong: false,
+      cuo_wu_ma: 'XI_TONG_YI_CHANG',
+      ti_shi: huoQuFanYi('junShi', 'shengChengShiBai'),
+      zhuang_tai_ma: 500,
+    }
   }
+}
+
+export async function huoQuJunShiZhiDaoZhuangTaiXinXi(
+  yong_hu_id: string,
+  jiao_se_id: string,
+): Promise<{ zhuang_tai: JunShiZhiDaoZhuangTaiXinXi | null }> {
+  const zhuangTai = await huoQuJunShiZhiDaoZhuangTai(yong_hu_id, jiao_se_id)
+  return { zhuang_tai: zhuangTai }
 }
 
 async function huoQuJiaoSeJiBenXinXi(

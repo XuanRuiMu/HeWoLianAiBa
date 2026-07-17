@@ -492,12 +492,8 @@ describe('FP-05 聊天界面', () => {
     })
 
     it('消息区域底部保留滚动内边距，最后一条消息不被输入栏遮挡', () => {
-      expect(liaoTianYeMianYuanMa).toMatch(
-        /\.xiaoxi-quyu\s*\{[^}]*padding-bottom:\s*\d+px/,
-      )
-      expect(liaoTianYeMianYuanMa).toMatch(
-        /\.xiaoxi-quyu\s*\{[^}]*scroll-padding-bottom:\s*\d+px/,
-      )
+      expect(liaoTianYeMianYuanMa).toMatch(/\.xiaoxi-quyu\s*\{[^}]*padding-bottom:\s*\d+px/)
+      expect(liaoTianYeMianYuanMa).toMatch(/\.xiaoxi-quyu\s*\{[^}]*scroll-padding-bottom:\s*\d+px/)
     })
 
     it('底部输入栏适配安全区域，padding-bottom包含安全区域变量', () => {
@@ -520,9 +516,7 @@ describe('FP-05 聊天界面', () => {
         HTMLElement.prototype.scrollIntoView = yuanShiScrollIntoView
       }
 
-      expect(scrollIntoViewMock).toHaveBeenCalledWith(
-        expect.objectContaining({ block: 'end' }),
-      )
+      expect(scrollIntoViewMock).toHaveBeenCalledWith(expect.objectContaining({ block: 'end' }))
     })
 
     it('emoji面板展开时消息区域底部内边距增加至220px', async () => {
@@ -561,9 +555,10 @@ describe('FP-05 聊天界面', () => {
     it('App.vue 使用 dvh 高度并为主内容区预留安全区域与顶部栏空间', () => {
       expect(appYuanMa).toMatch(/\.app-rongqi\s*\{[^}]*height:\s*100dvh/)
       expect(appYuanMa).toMatch(/\.app-rongqi\s*\{[^}]*overflow:\s*hidden/)
-      expect(appYuanMa).toMatch(
-        /\.app-zhuti\s*\{[^}]*margin-top:\s*calc\(\s*52px\s*\+\s*var\(--anquan-quyu-shang\)/,
-      )
+      expect(appYuanMa).toMatch(/\.app-rongqi\s*\{[^}]*display:\s*flex/)
+      expect(appYuanMa).toMatch(/\.app-rongqi\s*\{[^}]*flex-direction:\s*column/)
+      expect(appYuanMa).toMatch(/\.app-zhuti\s*\{[^}]*flex:\s*1/)
+      expect(appYuanMa).not.toMatch(/\.app-zhuti\s*\{[^}]*margin-top:/)
     })
 
     it('聊天页面容器占满父级高度并禁止页面级滚动', () => {
@@ -589,8 +584,12 @@ describe('FP-05 聊天界面', () => {
     })
 
     it('监听 visualViewport scroll 与 resize 事件以响应软键盘变化', () => {
-      const resizeCount = (liaoTianYeMianYuanMa.match(/visualViewport\.addEventListener\('resize'/g) || []).length
-      const scrollCount = (liaoTianYeMianYuanMa.match(/visualViewport\.addEventListener\('scroll'/g) || []).length
+      const resizeCount = (
+        liaoTianYeMianYuanMa.match(/visualViewport\.addEventListener\('resize'/g) || []
+      ).length
+      const scrollCount = (
+        liaoTianYeMianYuanMa.match(/visualViewport\.addEventListener\('scroll'/g) || []
+      ).length
       expect(resizeCount).toBeGreaterThanOrEqual(1)
       expect(scrollCount).toBeGreaterThanOrEqual(1)
     })
@@ -624,7 +623,7 @@ describe('FP-A11 军师指导后AI回复机制保持正常', () => {
 
   it('App.vue 使用 KeepAlive 缓存聊天页组件', () => {
     expect(appYuanMa).toContain('<KeepAlive')
-    expect(appYuanMa).toContain(":include=\"['liaoTian']\"")
+    expect(appYuanMa).toContain(':include="[\'liaoTian\']"')
   })
 
   it('聊天页组件声明 name 为 liaoTian 以匹配 KeepAlive include', () => {

@@ -7,6 +7,30 @@ const JUN_SHI_JI_LU_KEY = '军师记录'
 const JI_LU_ZUI_DA_SHU_LIANG = 20
 const TTL_MIAO = 30 * 24 * 60 * 60
 
+const JUN_SHI_ZHI_DAO_ZHUANG_TAI_KEY = '军师指导状态'
+const ZHUANG_TAI_TTL_MIAO = 5 * 60
+
+export type JunShiZhiDaoZhuangTai = 'zhi_dao_zhong' | 'yi_wan_cheng'
+
+export interface JunShiZhiDaoZhuangTaiXinXi {
+  zhuang_tai: JunShiZhiDaoZhuangTai
+  jun_shi_id: string
+  kai_shi_shi_jian: string
+  jie_guo?: {
+    junShi: {
+      id: string
+      mingCheng: string
+      fuBiaoTi: string
+      biaoQian: string
+      miaoShu: string
+      touXiang: string
+    }
+    zhiDaoNeiRong: string
+    shiJian: string
+  }
+  cuo_wu_ma?: string
+}
+
 export interface JunShiJiLuLiaoTianXiaoXi {
   jiao_se: string
   nei_rong: string
@@ -129,5 +153,45 @@ export async function huoQuJunShiJiLuLieBiao(
   } catch (cuo_wu) {
     console.error('读取军师记录失败', cuo_wu)
     return []
+  }
+}
+
+export async function sheZhiJunShiZhiDaoZhuangTai(
+  yong_hu_id: string,
+  jiao_se_id: string,
+  zhuang_tai: JunShiZhiDaoZhuangTaiXinXi,
+): Promise<void> {
+  try {
+    const key = `${JUN_SHI_ZHI_DAO_ZHUANG_TAI_KEY}:${yong_hu_id}:${jiao_se_id}`
+    await redis.set(key, JSON.stringify(zhuang_tai), 'EX', ZHUANG_TAI_TTL_MIAO)
+  } catch (cuo_wu) {
+    console.error('设置军师指导状态失败', cuo_wu)
+  }
+}
+
+export async function huoQuJunShiZhiDaoZhuangTai(
+  yong_hu_id: string,
+  jiao_se_id: string,
+): Promise<JunShiZhiDaoZhuangTaiXinXi | null> {
+  try {
+    const key = `${JUN_SHI_ZHI_DAO_ZHUANG_TAI_KEY}:${yong_hu_id}:${jiao_se_id}`
+    const zhi = await redis.get(key)
+    if (!zhi) return null
+    return JSON.parse(zhi) as JunShiZhiDaoZhuangTaiXinXi
+  } catch (cuo_wu) {
+    console.error('获取军师指导状态失败', cuo_wu)
+    return null
+  }
+}
+
+export async function shanChuJunShiZhiDaoZhuangTai(
+  yong_hu_id: string,
+  jiao_se_id: string,
+): Promise<void> {
+  try {
+    const key = `${JUN_SHI_ZHI_DAO_ZHUANG_TAI_KEY}:${yong_hu_id}:${jiao_se_id}`
+    await redis.del(key)
+  } catch (cuo_wu) {
+    console.error('删除军师指导状态失败', cuo_wu)
   }
 }

@@ -11,6 +11,7 @@ import {
   piLiangShanChuDangAn,
   type DangAnLieBiaoXiang,
   type DangAnXiangQing,
+  type FuPanPiZhu,
   type FuPanShiJianXianTiaoMu,
 } from '../services/战绩'
 import { shengChengFuPan } from '../services/复盘'
@@ -80,9 +81,15 @@ interface QianDuanFuPanShiJianXianTiaoMu {
   ai_xin_li_huo_dong?: string
 }
 
+interface QianDuanFuPanPiZhu {
+  xu_hao: number
+  ping_lun: string
+}
+
 interface QianDuanDangAnXiangQing extends QianDuanDangAnLieBiaoXiang {
   fu_pan_shu_ju: QianDuanFuPanShiJianXianTiaoMu[] | null
   fu_pan_nei_rong?: string | null
+  fu_pan_pi_zhu: QianDuanFuPanPiZhu[] | null
 }
 
 function guoLvFuPanShiJianXian(
@@ -96,6 +103,11 @@ function guoLvFuPanShiJianXian(
     ai_hui_fu: tiao_mu.ai_hui_fu,
     ai_xin_li_huo_dong: tiao_mu.ai_xin_li_huo_dong,
   }))
+}
+
+function guoLvFuPanPiZhu(pi_zhu: FuPanPiZhu[] | null): QianDuanFuPanPiZhu[] | null {
+  if (!pi_zhu) return null
+  return pi_zhu.map((xiang) => ({ xu_hao: xiang.xu_hao, ping_lun: xiang.ping_lun }))
 }
 
 function guoLvMinGanZiDuanXiangQing(
@@ -117,6 +129,7 @@ function guoLvMinGanZiDuanXiangQing(
     mbti_lei_xing: dang_an.mbti_lei_xing,
     fu_pan_shu_ju: guoLvFuPanShiJianXian(dang_an.fu_pan_shu_ju),
     fu_pan_nei_rong: dang_an.fu_pan_nei_rong,
+    fu_pan_pi_zhu: guoLvFuPanPiZhu(dang_an.fu_pan_pi_zhu),
   }
 }
 
@@ -252,6 +265,7 @@ luYou.get(
         return chengGongXiangYing(xiangYing, {
           fu_pan_nei_rong: null,
           fu_pan_shi_jian_xian: [],
+          fu_pan_pi_zhu: null,
           jun_shi_zhi_dao_ji_lu: qianDuanJunShiJiLu,
           jia_zai_zhong: true,
         })
@@ -260,6 +274,7 @@ luYou.get(
       return chengGongXiangYing(xiangYing, {
         fu_pan_nei_rong: qianDuanDangAn.fu_pan_nei_rong,
         fu_pan_shi_jian_xian: qianDuanDangAn.fu_pan_shu_ju,
+        fu_pan_pi_zhu: qianDuanDangAn.fu_pan_pi_zhu,
         jun_shi_zhi_dao_ji_lu: qianDuanJunShiJiLu,
         jia_zai_zhong: false,
       })

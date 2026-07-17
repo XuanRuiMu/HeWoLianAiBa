@@ -350,6 +350,46 @@ describe('FP-11 胜利失败条件', () => {
       expect(jieGuo.shi_fou_shen_jing_bing).toBe(true)
       expect(jieGuo.fa_san_si_wei_ren_she).toBe(true)
     })
+
+    it('FP-08 E型人格 + AI自判人设能接受 → fa_san_si_wei_ren_she=true', async () => {
+      chuangJianMockTiaoYong(
+        JSON.stringify({
+          是否神经病: true,
+          人设能接受: true,
+          确信度: 0.85,
+          理由: 'E型人格觉得莫名其妙的话好玩，能接梗',
+        }),
+      )
+
+      const jiaoSe = chuangJianCeShiJiaoSe(false)
+      jiaoSe.mbti_lei_xing = 'ESFP'
+      jiaoSe.ie_lei_xing = 'E'
+      const jieGuo = await jianCeShenJingBing('土豆会梦见电子羊吗', [], jiaoSe)
+
+      expect(jieGuo.shi_fou_shen_jing_bing).toBe(true)
+      expect(jieGuo.fa_san_si_wei_ren_she).toBe(true)
+      expect(jieGuo.li_you).toContain('E型人格')
+    })
+
+    it('FP-08 AI自判阈值 → 不再依赖 que_xin_du>0.7 硬编码阈值', async () => {
+      chuangJianMockTiaoYong(
+        JSON.stringify({
+          是否神经病: true,
+          人设能接受: false,
+          确信度: 0.4,
+          理由: 'I型人格觉得莫名其妙',
+        }),
+      )
+
+      const jiaoSe = chuangJianCeShiJiaoSe(false)
+      jiaoSe.mbti_lei_xing = 'INTJ'
+      jiaoSe.ie_lei_xing = 'I'
+      const jieGuo = await jianCeShenJingBing('完全无关的内容', [], jiaoSe)
+
+      expect(jieGuo.shi_fou_shen_jing_bing).toBe(true)
+      expect(jieGuo.fa_san_si_wei_ren_she).toBe(false)
+      expect(jieGuo.que_xin_du).toBe(0.4)
+    })
   })
 
   describe('神经病处理', () => {
@@ -458,6 +498,61 @@ describe('FP-11 胜利失败条件', () => {
       )
 
       expect(jieGuo).toBeNull()
+    })
+
+    it('FP-08 E型人格 + AI自判人设能接受 → 不触发结局（E人宽容）', async () => {
+      sheZhiShuJuKuMoNi([{ 用户ID: 'yong-hu-id', 是否渣型: false }])
+      chuangJianMockTiaoYong(
+        JSON.stringify({
+          是否神经病: true,
+          人设能接受: true,
+          确信度: 0.85,
+          理由: 'E型人格觉得莫名其妙的话好玩，能接梗',
+        }),
+      )
+
+      const jiaoSe = chuangJianCeShiJiaoSe(false)
+      jiaoSe.mbti_lei_xing = 'ENFP'
+      jiaoSe.ie_lei_xing = 'E'
+      const jieGuo = await jianCeYongHuXiaoXiBingChuLi(
+        'yong-hu-id',
+        'jiao-se-id',
+        '蚂蚁在月球上跳芭蕾',
+        500,
+        false,
+        jiaoSe,
+        [],
+      )
+
+      expect(jieGuo).toBeNull()
+    })
+
+    it('FP-08 AI自判低确信度也能触发游戏结束（阈值已移除）', async () => {
+      sheZhiShuJuKuMoNi([{ 用户ID: 'yong-hu-id', 是否渣型: false }])
+      chuangJianMockTiaoYong(
+        JSON.stringify({
+          是否神经病: true,
+          人设能接受: false,
+          确信度: 0.4,
+          理由: 'I型人格觉得莫名其妙',
+        }),
+      )
+
+      const jiaoSe = chuangJianCeShiJiaoSe(false)
+      jiaoSe.mbti_lei_xing = 'INTJ'
+      jiaoSe.ie_lei_xing = 'I'
+      const jieGuo = await jianCeYongHuXiaoXiBingChuLi(
+        'yong-hu-id',
+        'jiao-se-id',
+        '完全无关的内容',
+        500,
+        false,
+        jiaoSe,
+        [],
+      )
+
+      expect(jieGuo).not.toBeNull()
+      expect(jieGuo!.jie_guo_lei_xing).toBe('shi_bai_shen_jing_bing')
     })
   })
 

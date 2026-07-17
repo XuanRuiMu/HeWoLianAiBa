@@ -6,7 +6,7 @@
       :class="{ 'emoji-mianban-zhankai': emojiMianBanZhanKai }"
       @scroll="chuLiGunDong"
     >
-      <div v-if="聊天仓库.haiYouGengDuo" class="jiazaigengduo-qu">
+      <div v-if="聊天仓库.haiYouGengDuo && !fuPanMoShi" class="jiazaigengduo-qu">
         <button
           class="jiazaigengduo-anniu"
           :disabled="聊天仓库.jiaZaiGengDuoZhong"
@@ -35,8 +35,8 @@
                 'xitong-xiaoxi': xiaoXi.lei_xing === 'xitong',
                 'chehui-xiaoxi': xiaoXi.yi_che_hui,
               }"
-              @contextmenu.prevent="daKaiCaiDan(xiaoXi, $event)"
-              @touchstart="chuMoKaiShi(xiaoXi)"
+              @contextmenu.prevent="fuPanMoShi ? null : daKaiCaiDan(xiaoXi, $event)"
+              @touchstart="fuPanMoShi ? null : chuMoKaiShi(xiaoXi)"
               @touchend="chuMoJieShu"
               @touchmove="chuMoJieShu"
             >
@@ -80,7 +80,7 @@
                   }}</span>
                 </div>
                 <button
-                  v-if="xianShiCheHuiAnNiu(xiaoXi)"
+                  v-if="!fuPanMoShi && xianShiCheHuiAnNiu(xiaoXi)"
                   class="chehui-anniu"
                   @click.stop="zhiXingCheHuiXiaoXi(xiaoXi)"
                 >
@@ -92,7 +92,7 @@
                   </div>
                 </div>
                 <div
-                  v-if="xiaoXi.fa_song_zhong && xiaoXi.fa_song_zhe_lei_xing === 'yonghu'"
+                  v-if="!fuPanMoShi && xiaoXi.fa_song_zhong && xiaoXi.fa_song_zhe_lei_xing === 'yonghu'"
                   class="fasong-zhuangtai"
                   :aria-label="huoQuFanYi('liaoTian', 'faSongZhong')"
                 >
@@ -100,13 +100,44 @@
                 </div>
               </template>
             </div>
+            <div
+              v-if="fuPanMoShi && !xiaoXi.yi_che_hui && xiaoXi.lei_xing !== 'xitong' && huoQuPiZhuByXiaoXiId(xiaoXi.ke_hu_duan_id || xiaoXi.id)"
+              class="fupan-pizhu-xiangmu"
+              :class="{
+                'yonghu-pizhu': xiaoXi.fa_song_zhe_lei_xing === 'yonghu',
+                'jiaose-pizhu': xiaoXi.fa_song_zhe_lei_xing === 'jiaose',
+              }"
+            >
+              <div class="fupan-pizhu-qipao">
+                <span class="fupan-pizhu-biaoqian">{{ huoQuFanYi('zhanJi', 'fuPanPiZhuBiaoQian') }}</span>
+                <span class="fupan-pizhu-neirong">{{ huoQuPiZhuByXiaoXiId(xiaoXi.ke_hu_duan_id || xiaoXi.id) }}</span>
+              </div>
+            </div>
           </template>
         </template>
       </TransitionGroup>
+      <div v-if="fuPanMoShi && fuPanJiaZaiZhong" class="fupan-jiazai-qu">
+        <div class="fupan-jiazai-tishi">
+          <span class="fupan-jiazai-zhuanquan" />
+          <span>{{ huoQuFanYi('zhanJi', 'fuPanShengChengZhong') }}</span>
+        </div>
+      </div>
+      <div
+        v-if="fuPanMoShi && !fuPanJiaZaiZhong && fuPanZongJie"
+        class="fupan-zongjie-qu"
+      >
+        <div class="fupan-zongjie-biaoti">{{ huoQuFanYi('zhanJi', 'fuPanZongJie') }}</div>
+        <div class="fupan-zongjie-neirong">{{ fuPanZongJie }}</div>
+      </div>
     </main>
 
     <footer ref="shuruQuYuRef" class="shuru-quyu weixin-shuru">
-      <div v-if="liaoTianSuoDing" class="suoding-tishi">
+      <div v-if="fuPanMoShi" class="fupan-dibu-lan">
+        <button class="fupan-tuichu-anniu" @click="tuiChuFuPan">
+          {{ huoQuFanYi('zhanJi', 'tuiChuFuPan') }}
+        </button>
+      </div>
+      <div v-else-if="liaoTianSuoDing" class="suoding-tishi">
         {{ huoQuFanYi('liaoTian', 'youXiYiJieShu') }}
       </div>
       <div v-else class="shuru-rongqi">
@@ -167,14 +198,14 @@
           {{ huoQuFanYi('liaoTian', 'faSong') }}
         </button>
       </div>
-      <div class="shuru-fu-zhu">
+      <div v-if="!fuPanMoShi" class="shuru-fu-zhu">
         <span v-if="聊天仓库.cuoWuXinXi" class="fasong-cuowu">{{ 聊天仓库.cuoWuXinXi }}</span>
         <span v-else class="zifu-jishu" :class="{ 'zifu-chaochu': shuRuNeiRong.length > 500 }">
           {{ shuRuNeiRong.length }}/500
         </span>
       </div>
       <Transition name="emoji-zhankai">
-        <div v-if="emojiMianBanZhanKai" class="emoji-mianban">
+        <div v-if="!fuPanMoShi && emojiMianBanZhanKai" class="emoji-mianban">
           <button
             v-for="emoji in changYongEmoji"
             :key="emoji"
@@ -265,6 +296,7 @@ import { XIAO_XI_PEI_ZHI } from '@/config/消息配置'
 import { shiTuPianDiZhi } from '@/utils/头像'
 import type { 消息 } from '@/types'
 import JunShiZhiDao from '@/components/军师指导.vue'
+import { huoQuFuPan, type 复盘批注项 } from '@/api/聊天'
 
 defineOptions({
   name: 'liaoTian',
@@ -288,6 +320,13 @@ const emojiMianBanZhanKai = ref(false)
 const dangQianShiJian = ref(Date.now())
 let shiJianGengXinQi: ReturnType<typeof setInterval> | null = null
 let yiTongGuoMountedChuShiHua = false
+
+const fuPanMoShi = ref(false)
+const fuPanPiZhu = ref<复盘批注项[] | null>(null)
+const fuPanZongJie = ref<string | null>(null)
+const fuPanJiaZaiZhong = ref(false)
+const fuPanDangAnId = ref<string | null>(null)
+let fuPanQingQiuId = 0
 
 const changYongEmoji = [
   '😀',
@@ -578,6 +617,38 @@ const xiaoXiFenZu = computed<XiaoXiFenZuXiang[]>(() => {
   return jieGuo
 })
 
+const xiaoXiDaoXuHaoMap = computed<Map<string, number>>(() => {
+  const map = new Map<string, number>()
+  if (!fuPanMoShi.value) return map
+  const lieBiao = 聊天仓库.xiaoXiLieBiao
+  if (!Array.isArray(lieBiao)) return map
+  let xuHao = 0
+  for (const xiaoXi of lieBiao) {
+    if (xiaoXi.fa_song_zhe_lei_xing === 'xitong' || xiaoXi.lei_xing === 'xitong') continue
+    xuHao += 1
+    const key = xiaoXi.ke_hu_duan_id || xiaoXi.id
+    if (key) map.set(key, xuHao)
+  }
+  return map
+})
+
+const piZhuMap = computed<Map<number, string>>(() => {
+  const map = new Map<number, string>()
+  if (!fuPanPiZhu.value) return map
+  for (const xiang of fuPanPiZhu.value) {
+    if (typeof xiang.xu_hao === 'number' && typeof xiang.ping_lun === 'string') {
+      map.set(xiang.xu_hao, xiang.ping_lun)
+    }
+  }
+  return map
+})
+
+function huoQuPiZhuByXiaoXiId(xiaoXiId: string): string | null {
+  const xuHao = xiaoXiDaoXuHaoMap.value.get(xiaoXiId)
+  if (!xuHao) return null
+  return piZhuMap.value.get(xuHao) || null
+}
+
 function gunDongDaoDiBu() {
   nextTick(() => {
     if (xiaoxiQuYuRef.value) {
@@ -762,9 +833,74 @@ function qingLiUIMianBan() {
   cheHuiCaiDanZhanKai.value = false
 }
 
+async function jiaZaiFuPanShuJu(dangAnId: string) {
+  const benCiId = ++fuPanQingQiuId
+  fuPanJiaZaiZhong.value = true
+  fuPanPiZhu.value = null
+  fuPanZongJie.value = null
+  try {
+    let fuPanShuJu = await huoQuFuPan(dangAnId)
+    if (!fuPanShuJu.jia_zai_zhong && fuPanShuJu.fu_pan_nei_rong) {
+      fuPanPiZhu.value = fuPanShuJu.fu_pan_pi_zhu
+      fuPanZongJie.value = fuPanShuJu.fu_pan_nei_rong
+      fuPanJiaZaiZhong.value = false
+      return
+    }
+    let changShiCiShu = 0
+    while (
+      !fuPanShuJu.fu_pan_nei_rong &&
+      changShiCiShu < 20 &&
+      fuPanQingQiuId === benCiId
+    ) {
+      await new Promise((jieJue) => setTimeout(jieJue, 3000))
+      changShiCiShu++
+      if (fuPanQingQiuId !== benCiId) return
+      try {
+        fuPanShuJu = await huoQuFuPan(dangAnId)
+      } catch (e) {
+        console.warn('轮询复盘数据失败', e)
+      }
+      if (fuPanShuJu.fu_pan_nei_rong || !fuPanShuJu.jia_zai_zhong) {
+        fuPanPiZhu.value = fuPanShuJu.fu_pan_pi_zhu
+        fuPanZongJie.value = fuPanShuJu.fu_pan_nei_rong
+        fuPanJiaZaiZhong.value = false
+        break
+      }
+    }
+  } finally {
+    if (fuPanQingQiuId === benCiId) {
+      fuPanJiaZaiZhong.value = false
+    }
+  }
+}
+
+function tuiChuFuPan() {
+  fuPanMoShi.value = false
+  fuPanPiZhu.value = null
+  fuPanZongJie.value = null
+  fuPanJiaZaiZhong.value = false
+  fuPanDangAnId.value = null
+  fuPanQingQiuId++
+  聊天仓库.qingKongZhuangTai()
+  router.push('/guo-wang-zhan-ji')
+}
+
 async function chuShiHuaLiaoTian() {
   const huiHuaId = route.params.huiHuaId as string
   if (!huiHuaId) return
+  const queryFuPan = route.query.fuPan
+  const queryDangAnId = route.query.dangAnId
+  if (queryFuPan === '1' && typeof queryDangAnId === 'string' && queryDangAnId) {
+    fuPanMoShi.value = true
+    fuPanDangAnId.value = queryDangAnId
+    聊天仓库.meiYeTiaoShu = 999
+    await 聊天仓库.jiaZaiXiaoXi(huiHuaId)
+    gunDongDaoDiBu()
+    void jiaZaiFuPanShuJu(queryDangAnId)
+    return
+  }
+  fuPanMoShi.value = false
+  聊天仓库.meiYeTiaoShu = 50
   await 聊天仓库.jiaZaiXiaoXi(huiHuaId)
   聊天仓库.lianJieSocket(huiHuaId)
   gunDongDaoDiBu()
@@ -1388,10 +1524,6 @@ onBeforeUnmount(() => {
   transform: translateY(6px);
 }
 
-.xiaoxi-guodu-move {
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 .emoji-zhankai-enter-active {
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1411,6 +1543,120 @@ onBeforeUnmount(() => {
 .emoji-zhankai-enter-to,
 .emoji-zhankai-leave-from {
   max-height: 220px;
+}
+
+.fupan-pizhu-xiangmu {
+  display: flex;
+  margin-bottom: 12px;
+  margin-top: -8px;
+  padding: 0 50px;
+}
+
+.fupan-pizhu-xiangmu.yonghu-pizhu {
+  justify-content: flex-end;
+}
+
+.fupan-pizhu-xiangmu.jiaose-pizhu {
+  justify-content: flex-start;
+}
+
+.fupan-pizhu-qipao {
+  max-width: min(calc(100vw - 126px), 520px);
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(108, 92, 231, 0.12);
+  border: 1px solid rgba(108, 92, 231, 0.25);
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-word;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fupan-pizhu-biaoqian {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--yanse-zhanji, #6c5ce7);
+  flex-shrink: 0;
+}
+
+.fupan-pizhu-neirong {
+  color: var(--wenben-zhuse);
+  white-space: pre-wrap;
+}
+
+.fupan-jiazai-qu {
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px 16px;
+}
+
+.fupan-jiazai-tishi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: var(--shijian-biaoqian-beijing);
+  color: var(--wenben-tishi);
+  font-size: 13px;
+}
+
+.fupan-jiazai-zhuanquan {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--wenben-tishi);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: fasong-xuanzhuan 1s linear infinite;
+  opacity: 0.6;
+}
+
+.fupan-zongjie-qu {
+  margin: 20px 16px 24px;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(108, 92, 231, 0.08);
+  border: 1px solid rgba(108, 92, 231, 0.2);
+}
+
+.fupan-zongjie-biaoti {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--yanse-zhanji, #6c5ce7);
+  margin-bottom: 10px;
+}
+
+.fupan-zongjie-neirong {
+  font-size: 14px;
+  color: var(--wenben-zhuse);
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.fupan-dibu-lan {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.fupan-tuichu-anniu {
+  padding: 8px 24px;
+  border-radius: 8px;
+  background: var(--zhuse);
+  color: var(--fasong-anniu-wenben);
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.fupan-tuichu-anniu:hover {
+  opacity: 0.85;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1435,6 +1681,10 @@ onBeforeUnmount(() => {
   .xiaoxi-quyu.emoji-mianban-zhankai {
     padding-bottom: 220px;
     scroll-padding-bottom: 220px;
+  }
+
+  .fupan-pizhu-qipao {
+    max-width: min(calc(100vw - 120px), 420px);
   }
 }
 </style>

@@ -74,7 +74,7 @@
             >
               {{
                 qingQiuZhong
-                  ? huoQuFanYi('junShi', 'qingQiuZhong')
+                  ? huoQuFanYi('junShi', 'zhiDaoZhong')
                   : huoQuFanYi('junShi', 'qingQiuZhiDao')
               }}
             </button>
@@ -119,9 +119,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { qingQiuJunShiZhiDao, huoQuJunShiJiLu, huoQuJunShiLieBiao } from '@/api/聊天'
+import {
+  qingQiuJunShiZhiDao,
+  huoQuJunShiJiLu,
+  huoQuJunShiLieBiao,
+  huoQuJunShiZhiDaoZhuangTai,
+} from '@/api/聊天'
 import { fanYi, huoQuFanYi } from '@/config/translations'
 import { 是业务错误 } from '@/api/请求'
 import { shengChengTouXiangURL } from '@/utils/头像'
@@ -144,6 +149,51 @@ const jiaZaiJiLuZhong = ref(false)
 const junShiLieBiaoXuanXiang = ref<JunShiXinXi[]>([])
 const dangQianJunShi = ref<JunShiXinXi | null>(null)
 const router = useRouter()
+let lunXunShiJianQi: ReturnType<typeof setInterval> | null = null
+const LUN_XUN_JIAN_GE_HAO_MIAO = 3000
+
+function tingZhiLunXun() {
+  if (lunXunShiJianQi) {
+    clearInterval(lunXunShiJianQi)
+    lunXunShiJianQi = null
+  }
+}
+
+function qiDongLunXun() {
+  tingZhiLunXun()
+  lunXunShiJianQi = setInterval(() => {
+    void chaXunBingGengXinZhuangTai(false)
+  }, LUN_XUN_JIAN_GE_HAO_MIAO)
+}
+
+async function chaXunBingGengXinZhuangTai(qingQiuZhongBaoChi: boolean): Promise<void> {
+  if (!props.jiaoSeId) return
+  try {
+    const zhuangTai = await huoQuJunShiZhiDaoZhuangTai(props.jiaoSeId)
+    if (!zhuangTai) {
+      if (!qingQiuZhongBaoChi) {
+        qingQiuZhong.value = false
+        zhiDaoJieGuo.value = null
+        cuoWuTiShi.value = ''
+        tingZhiLunXun()
+      }
+      return
+    }
+    if (zhuangTai.zhuang_tai === 'zhi_dao_zhong') {
+      qingQiuZhong.value = true
+      zhiDaoJieGuo.value = null
+      cuoWuTiShi.value = ''
+    } else if (zhuangTai.zhuang_tai === 'yi_wan_cheng' && zhuangTai.jie_guo) {
+      qingQiuZhong.value = false
+      const junShiPiPei = dangQianJunShi.value && zhuangTai.jun_shi_id === dangQianJunShi.value.id
+      zhiDaoJieGuo.value = junShiPiPei ? zhuangTai.jie_guo.zhiDaoNeiRong : null
+      cuoWuTiShi.value = ''
+      tingZhiLunXun()
+    }
+  } catch (e) {
+    console.warn('查询军师指导状态失败', e)
+  }
+}
 
 const dangQianJunShiJiLu = computed(() => {
   if (!dangQianJunShi.value) return []
@@ -158,11 +208,21 @@ onMounted(async () => {
   }
 })
 
-function jinRuJunShiXiangQing(junShi: JunShiXinXi) {
+onUnmounted(() => {
+  tingZhiLunXun()
+})
+
+async function jinRuJunShiXiangQing(junShi: JunShiXinXi) {
   dangQianJunShi.value = junShi
   dangQianBiaoQian.value = 'zhidao'
   zhiDaoJieGuo.value = null
   cuoWuTiShi.value = ''
+  qingQiuZhong.value = false
+  tingZhiLunXun()
+  await chaXunBingGengXinZhuangTai(false)
+  if (qingQiuZhong.value) {
+    qiDongLunXun()
+  }
 }
 
 function fanHuiDaoLieBiao() {
@@ -170,6 +230,8 @@ function fanHuiDaoLieBiao() {
   dangQianBiaoQian.value = 'zhidao'
   zhiDaoJieGuo.value = null
   cuoWuTiShi.value = ''
+  qingQiuZhong.value = false
+  tingZhiLunXun()
 }
 
 function huoQuJunShiMingCheng(junShi: JunShiXinXi): string {
@@ -196,18 +258,28 @@ async function zhiXingQingQiu() {
   try {
     const jieGuo = await qingQiuJunShiZhiDao(props.jiaoSeId, dangQianJunShi.value.id)
     zhiDaoJieGuo.value = jieGuo.zhiDaoNeiRong
+    qingQiuZhong.value = false
+    tingZhiLunXun()
   } catch (e: unknown) {
     const cuoWuMa = 是业务错误(e) ? e.cuo_wu_ma : ''
     if (cuoWuMa === 'JUN_SHI_CHONG_FU') {
       cuoWuTiShi.value = huoQuFanYi('junShi', 'junShiChongFu')
+      qingQiuZhong.value = false
+      tingZhiLunXun()
     } else if (cuoWuMa === 'WU_LIAO_TIAN_JI_LU') {
       cuoWuTiShi.value = huoQuFanYi('junShi', 'wuLiaoTianJiLu')
+      qingQiuZhong.value = false
+      tingZhiLunXun()
+    } else if (cuoWuMa === 'JUN_SHI_ZAI_ZHI_DAO_ZHONG') {
+      cuoWuTiShi.value = ''
+      qingQiuZhong.value = true
+      qiDongLunXun()
     } else {
-      cuoWuTiShi.value = e instanceof Error ? e.message : huoQuFanYi('junShi', 'qingQiuShiBai')
+      cuoWuTiShi.value = ''
+      qingQiuZhong.value = true
+      qiDongLunXun()
     }
     zhiDaoJieGuo.value = null
-  } finally {
-    qingQiuZhong.value = false
   }
 }
 

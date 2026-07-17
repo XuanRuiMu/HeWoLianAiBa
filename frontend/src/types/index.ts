@@ -221,6 +221,16 @@ export interface JunShiZhiDaoJieGuo {
   shiJian: string
 }
 
+export type JunShiZhiDaoZhuangTai = 'zhi_dao_zhong' | 'yi_wan_cheng'
+
+export interface JunShiZhiDaoZhuangTaiXinXi {
+  zhuang_tai: JunShiZhiDaoZhuangTai
+  jun_shi_id: string
+  kai_shi_shi_jian: string
+  jie_guo?: JunShiZhiDaoJieGuo
+  cuo_wu_ma?: string
+}
+
 export interface JunShiJiLuXiaoXi {
   jiao_se: string
   nei_rong: string

@@ -250,7 +250,9 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     anQuanTuiSong(linShiXiaoXi)
     try {
       const { xiaoXi, shiMiJi } = await faSongXiaoXiApi(dangQianHuiHuaId.value, qingLiNeiRong)
-      const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.ke_hu_duan_id === linShiXiaoXi.ke_hu_duan_id)
+      const suoYin = xiaoXiLieBiao.value.findIndex(
+        (m) => m.ke_hu_duan_id === linShiXiaoXi.ke_hu_duan_id,
+      )
       if (suoYin !== -1) {
         xiaoXiLieBiao.value[suoYin] = { ...xiaoXi, ke_hu_duan_id: linShiXiaoXi.ke_hu_duan_id }
       }
@@ -259,7 +261,9 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       }
       return xiaoXi
     } catch (cuoWu: unknown) {
-      const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.ke_hu_duan_id === linShiXiaoXi.ke_hu_duan_id)
+      const suoYin = xiaoXiLieBiao.value.findIndex(
+        (m) => m.ke_hu_duan_id === linShiXiaoXi.ke_hu_duan_id,
+      )
       if (suoYin !== -1) {
         xiaoXiLieBiao.value.splice(suoYin, 1)
       }

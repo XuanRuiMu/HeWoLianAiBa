@@ -17,6 +17,7 @@ import {
   huoQuJunShiLieBiao,
   qingQiuJunShiZhiDao,
   huoQuJunShiJiLu,
+  huoQuJunShiZhiDaoZhuangTaiXinXi,
 } from '../services/军师'
 import {
   baoCunJiaoSeXiaoXi,
@@ -353,6 +354,29 @@ luYou.get(
       return chengGongXiangYing(xiangYing, { jiLuLieBiao: jieGuo.jiLuLieBiao })
     } catch (cuoWu) {
       console.error('获取军师记录失败', cuoWu)
+      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
+    }
+  },
+)
+
+luYou.get(
+  '/军师/状态/:jiaoSeId',
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+
+    const jiaoSeId = String(qingQiu.params.jiaoSeId || '')
+    if (!jiaoSeId) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    }
+
+    try {
+      const jieGuo = await huoQuJunShiZhiDaoZhuangTaiXinXi(yongHu.yongHuId, jiaoSeId)
+      return chengGongXiangYing(xiangYing, { zhuangTai: jieGuo.zhuang_tai })
+    } catch (cuoWu) {
+      console.error('获取军师指导状态失败', cuoWu)
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },

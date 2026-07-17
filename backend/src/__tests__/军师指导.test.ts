@@ -78,6 +78,7 @@ async function qingLiJunShiRedis(yongHuId: string, jiaoSeId: string): Promise<vo
   await redis.del(`军师哈希:${yongHuId}:${jiaoSeId}`)
   await redis.del(`军师记录:${yongHuId}:${jiaoSeId}`)
   await redis.del(`复盘条目:${yongHuId}:${jiaoSeId}`)
+  await redis.del(`军师指导状态:${yongHuId}:${jiaoSeId}`)
 }
 
 async function faSongCeShiXiaoXi(
@@ -437,6 +438,113 @@ describe('FP-12 军师指导系统', () => {
       expect(cheHuiXiaoXi.yi_che_hui).toBe(true)
       expect(cheHuiXiaoXi.yuan_shi_nei_rong).toBe('这条要记录撤回')
       expect(cheHuiXiaoXi.che_hui_shi_jian).toBeTruthy()
+    })
+  })
+
+  describe('FP-07 军师指导状态持久化与重进显示真实状态', () => {
+    it('请求指导前查询状态返回 null', async () => {
+      await faSongCeShiXiaoXi(ceShiYongHu!.lingPai, jiaoSeId, '状态测试消息')
+
+      const xiangYing = await request(yingYong)
+        .get(`/api/聊天/军师/状态/${jiaoSeId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      expect(xiangYing.body.cheng_gong).toBe(true)
+      expect(xiangYing.body.shu_ju.zhuangTai).toBeNull()
+    })
+
+    it('请求指导完成后查询状态为 yi_wan_cheng 且包含结果', async () => {
+      mock.sheZhiXiangYing({ neiRong: 'FP-07 完成状态测试指导。' })
+      await faSongCeShiXiaoXi(ceShiYongHu!.lingPai, jiaoSeId, '完成状态测试内容')
+
+      await request(yingYong)
+        .post('/api/聊天/军师')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ jiaoSeId })
+        .expect(200)
+
+      const zhuangTaiXiangYing = await request(yingYong)
+        .get(`/api/聊天/军师/状态/${jiaoSeId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const zhuangTai = zhuangTaiXiangYing.body.shu_ju.zhuangTai
+      expect(zhuangTai).not.toBeNull()
+      expect(zhuangTai.zhuang_tai).toBe('yi_wan_cheng')
+      expect(zhuangTai.jun_shi_id).toBe('xuanRuiMu')
+      expect(zhuangTai.jie_guo).toBeDefined()
+      expect(zhuangTai.jie_guo.zhiDaoNeiRong).toBe('FP-07 完成状态测试指导。')
+      expect(zhuangTai.jie_guo.junShi.id).toBe('xuanRuiMu')
+      expect(zhuangTai.kai_shi_shi_jian).toBeTruthy()
+    })
+
+    it('指导中状态时再次请求返回 409 且错误码为 JUN_SHI_ZAI_ZHI_DAO_ZHONG', async () => {
+      await redis.set(
+        `军师指导状态:${ceShiYongHu!.yongHuId}:${jiaoSeId}`,
+        JSON.stringify({
+          zhuang_tai: 'zhi_dao_zhong',
+          jun_shi_id: 'xuanRuiMu',
+          kai_shi_shi_jian: new Date().toISOString(),
+        }),
+        'EX',
+        300,
+      )
+
+      const xiangYing = await request(yingYong)
+        .post('/api/聊天/军师')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ jiaoSeId })
+        .expect(409)
+
+      expect(xiangYing.body.cheng_gong).toBe(false)
+      expect(xiangYing.body.cuo_wu_ma).toBe('JUN_SHI_ZAI_ZHI_DAO_ZHONG')
+      expect(xiangYing.body.ti_shi).toBe(huoQuFanYi('junShi', 'zhiDaoZhong'))
+    })
+
+    it('指导中状态查询接口返回 zhi_dao_zhong', async () => {
+      await redis.set(
+        `军师指导状态:${ceShiYongHu!.yongHuId}:${jiaoSeId}`,
+        JSON.stringify({
+          zhuang_tai: 'zhi_dao_zhong',
+          jun_shi_id: 'xuanRuiMu',
+          kai_shi_shi_jian: new Date().toISOString(),
+        }),
+        'EX',
+        300,
+      )
+
+      const xiangYing = await request(yingYong)
+        .get(`/api/聊天/军师/状态/${jiaoSeId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const zhuangTai = xiangYing.body.shu_ju.zhuangTai
+      expect(zhuangTai).not.toBeNull()
+      expect(zhuangTai.zhuang_tai).toBe('zhi_dao_zhong')
+      expect(zhuangTai.jun_shi_id).toBe('xuanRuiMu')
+      expect(zhuangTai.jie_guo).toBeUndefined()
+    })
+
+    it('请求指导完成后状态 TTL 为 5 分钟避免长期卡死', async () => {
+      mock.sheZhiXiangYing({ neiRong: 'TTL 测试指导。' })
+      await faSongCeShiXiaoXi(ceShiYongHu!.lingPai, jiaoSeId, 'TTL 测试内容')
+
+      await request(yingYong)
+        .post('/api/聊天/军师')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ jiaoSeId })
+        .expect(200)
+
+      const ttl = await redis.ttl(`军师指导状态:${ceShiYongHu!.yongHuId}:${jiaoSeId}`)
+      expect(ttl).toBeGreaterThan(0)
+      expect(ttl).toBeLessThanOrEqual(300)
+    })
+
+    it('未授权访问状态查询返回 401', async () => {
+      await request(yingYong)
+        .get(`/api/聊天/军师/状态/${jiaoSeId}`)
+        .expect(401)
     })
   })
 })

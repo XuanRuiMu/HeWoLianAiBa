@@ -227,12 +227,20 @@
         <button
           v-else
           class="anniu-zhuYao kaiShiLiaoTian"
-          :disabled="!可以开始"
+          :disabled="!可以开始 || zhengZaiChuLi"
           @click="kaiShiLiaoTian"
         >
-          {{ huoQuFanYi('ziLiaoSheZhi', 'kaiShiLiaoTian') }}
+          {{
+            zhengZaiChuLi
+              ? huoQuFanYi('ziLiaoSheZhi', 'zhengZaiShengCheng')
+              : huoQuFanYi('ziLiaoSheZhi', 'kaiShiLiaoTian')
+          }}
         </button>
       </div>
+
+      <p v-if="cuoWuXinXi" class="kaiShi-cuoWu-tishi">
+        {{ cuoWuXinXi }}
+      </p>
     </div>
   </div>
 </template>
@@ -347,8 +355,13 @@ const 渣型提示文案 = computed(() => {
   return huoQuFanYi('ziLiaoSheZhi', 'zhaXingTiShi').replace('{ta}', daiTi)
 })
 
+const zhengZaiChuLi = ref(false)
+const cuoWuXinXi = ref('')
+
 async function kaiShiLiaoTian() {
-  if (!可以开始.value) return
+  if (!可以开始.value || zhengZaiChuLi.value) return
+  zhengZaiChuLi.value = true
+  cuoWuXinXi.value = ''
   try {
     const jiaoSe = await shengChengJiaoSe(
       ziLiaoShuJu.muBiaoXingBie || 'female',
@@ -361,8 +374,11 @@ async function kaiShiLiaoTian() {
     const jiaoSeId = queRenHouJiaoSe.jiao_se_id || queRenHouJiaoSe.id || ''
     仓库.sheZhiZiLiaoSheZhiYiWanCheng(true)
     router.push(`/tian-jia-wei-xin?jiaoSeId=${jiaoSeId}`)
-  } catch {
-    router.push('/')
+  } catch (cuoWu) {
+    console.error('开始聊天失败', cuoWu)
+    cuoWuXinXi.value = huoQuFanYi('ziLiaoSheZhi', 'shengChengShiBai')
+  } finally {
+    zhengZaiChuLi.value = false
   }
 }
 </script>
@@ -763,6 +779,17 @@ async function kaiShiLiaoTian() {
 .kaiShiLiaoTian {
   flex: 1;
   max-width: 280px;
+}
+
+.kaiShi-cuoWu-tishi {
+  font-size: 13px;
+  color: #ff6b6b;
+  text-align: center;
+  margin: 0;
+  padding: 8px 12px;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.25);
+  border-radius: 10px;
 }
 
 .buZhou-qianJin-enter-active,

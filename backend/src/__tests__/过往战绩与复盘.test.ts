@@ -140,13 +140,11 @@ async function qingLiDangAnYuJieJu(yongHuId: string): Promise<void> {
 
 function shengChengFuPanMockNeiRong(): string {
   return JSON.stringify({
-    逐句分析: '你开场问候自然，后续能接住话题。',
-    聊对了什么: '保持了轻松语气，适时关心对方。',
-    聊错了什么: '有一次回复稍显急躁。',
-    撤回分析: '撤回了一条消息，避免了尴尬。',
-    军师建议效果: '军师建议你多分享日常，实际帮助了你打开话题。',
-    关键事件时间线: ['10:00 - 初次互动', '10:05 - 话题深入', '10:10 - 关心对方'],
-    整体感受: '整体表现不错，建议继续保持自然节奏。',
+    pi_zhu: [
+      { xu_hao: 1, ping_lun: '开场挺自然的，没让人尴尬。' },
+      { xu_hao: 3, ping_lun: '这句回应有点急了，可以再稳一点。' },
+    ],
+    zong_jie: '整体表现不错，建议继续保持自然节奏，像朋友复盘吐槽一样。',
   })
 }
 
@@ -335,11 +333,12 @@ describe('FP-13 过往战绩与复盘', () => {
       expect(xiangYing.body.shu_ju.jia_zai_zhong).toBe(true)
       expect(xiangYing.body.shu_ju.fu_pan_nei_rong).toBeNull()
       expect(xiangYing.body.shu_ju.fu_pan_shi_jian_xian).toEqual([])
+      expect(xiangYing.body.shu_ju.fu_pan_pi_zhu).toBeNull()
     })
 
     it('复盘生成调用 temperature=0.7 且 max_tokens=3000', async () => {
       const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
-      let tiaoYongCanShu: { wenDu?: number; zuiDaTokens?: number } | null = null
+      let tiaoYongCanShu: { wenDu?: number; zuiDaTokens?: number; xiangYingGeShi?: string } | null = null
 
       sheZhiMockTiaoYong(async (canShu) => {
         tiaoYongCanShu = canShu
@@ -357,7 +356,7 @@ describe('FP-13 过往战绩与复盘', () => {
       expect(tiaoYongCanShu!.zuiDaTokens).toBe(3000)
     })
 
-    it('复盘生成完毕后刷新页面显示完整7维度内容', async () => {
+    it('复盘生成完毕后返回 pi_zhu 批注列表与 zong_jie 总结', async () => {
       const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
 
       sheZhiMockTiaoYong(async () => ({
@@ -376,40 +375,19 @@ describe('FP-13 过往战绩与复盘', () => {
       expect(xiangYing.body.cheng_gong).toBe(true)
       expect(xiangYing.body.shu_ju.jia_zai_zhong).toBe(false)
       const neiRong = xiangYing.body.shu_ju.fu_pan_nei_rong
-      expect(neiRong).toContain('## 逐句分析')
-      expect(neiRong).toContain('## 聊对了什么')
-      expect(neiRong).toContain('## 聊错了什么')
-      expect(neiRong).toContain('## 撤回分析')
-      expect(neiRong).toContain('## 军师建议效果')
-      expect(neiRong).toContain('## 整体感受')
-    })
-
-    it('复盘关键事件时间线格式匹配 HH:MM - 描述', async () => {
-      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
-
-      sheZhiMockTiaoYong(async () => ({
-        neiRong: shengChengFuPanMockNeiRong(),
-        xinXi: { role: 'assistant', content: shengChengFuPanMockNeiRong() },
-        yuanShuJu: {} as never,
-      }))
-
-      await shengChengFuPan(ceShiYongHu!.yongHuId, jiaoSeId, dangAnId)
-
-      const xiangYing = await request(yingYong)
-        .get(`/api/战绩/复盘/${dangAnId}`)
-        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
-        .expect(200)
-
-      const shiJianXian = xiangYing.body.shu_ju.fu_pan_shi_jian_xian
-      expect(shiJianXian.length).toBeGreaterThan(0)
-      for (const tiaoMu of shiJianXian) {
-        expect(tiaoMu.shi_jian).toMatch(/^\d{2}:\d{2}$/)
-        expect(tiaoMu.shi_jian_miao_shu).toBeTruthy()
-        expect(tiaoMu).not.toHaveProperty('hao_gan_du_bian_hua')
+      expect(neiRong).toContain('整体表现不错')
+      const piZhu = xiangYing.body.shu_ju.fu_pan_pi_zhu
+      expect(Array.isArray(piZhu)).toBe(true)
+      expect(piZhu.length).toBeGreaterThan(0)
+      for (const tiaoMu of piZhu) {
+        expect(typeof tiaoMu.xu_hao).toBe('number')
+        expect(tiaoMu.xu_hao).toBeGreaterThan(0)
+        expect(typeof tiaoMu.ping_lun).toBe('string')
+        expect(tiaoMu.ping_lun.length).toBeGreaterThan(0)
       }
     })
 
-    it('复盘内容包含军师建议效果分析', async () => {
+    it('复盘响应不包含旧的 7 维度 markdown 标题', async () => {
       const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
 
       sheZhiMockTiaoYong(async () => ({
@@ -425,7 +403,13 @@ describe('FP-13 过往战绩与复盘', () => {
         .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
         .expect(200)
 
-      expect(xiangYing.body.shu_ju.fu_pan_nei_rong).toContain('军师建议效果')
+      const neiRong = xiangYing.body.shu_ju.fu_pan_nei_rong
+      expect(neiRong).not.toContain('## 逐句分析')
+      expect(neiRong).not.toContain('## 聊对了什么')
+      expect(neiRong).not.toContain('## 聊错了什么')
+      expect(neiRong).not.toContain('## 撤回分析')
+      expect(neiRong).not.toContain('## 军师建议效果')
+      expect(neiRong).not.toContain('## 整体感受')
     })
 
     it('复盘内容不包含数字评分、维度名或好感度字样', async () => {
@@ -451,6 +435,65 @@ describe('FP-13 过往战绩与复盘', () => {
       expect(neiRong).not.toContain('趣味度')
       expect(neiRong).not.toContain('关怀度')
       expect(neiRong).not.toContain('好感度')
+      const piZhu = xiangYing.body.shu_ju.fu_pan_pi_zhu || []
+      for (const tiaoMu of piZhu) {
+        expect(tiaoMu.ping_lun).not.toMatch(/\d+分/)
+        expect(tiaoMu.ping_lun).not.toContain('信任度')
+        expect(tiaoMu.ping_lun).not.toContain('亲密度')
+        expect(tiaoMu.ping_lun).not.toContain('趣味度')
+        expect(tiaoMu.ping_lun).not.toContain('关怀度')
+        expect(tiaoMu.ping_lun).not.toContain('好感度')
+      }
+    })
+
+    it('复盘 prompt 不含角色真实姓名、人物画像、MBTI、好感度等后台数据', async () => {
+      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
+      let puRongWenBen = ''
+
+      sheZhiMockTiaoYong(async (canShu) => {
+        if (Array.isArray(canShu.xiaoXiLieBiao)) {
+          puRongWenBen = canShu.xiaoXiLieBiao.map((m: { neiRong: string }) => m.neiRong).join('\n')
+        }
+        return {
+          neiRong: shengChengFuPanMockNeiRong(),
+          xinXi: { role: 'assistant', content: shengChengFuPanMockNeiRong() },
+          yuanShuJu: {} as never,
+        }
+      })
+
+      await shengChengFuPan(ceShiYongHu!.yongHuId, jiaoSeId, dangAnId)
+
+      expect(puRongWenBen).not.toContain('真实姓名')
+      expect(puRongWenBen).not.toContain('INFP')
+      expect(puRongWenBen).not.toContain('MBTI')
+      expect(puRongWenBen).not.toContain('信任度')
+      expect(puRongWenBen).not.toContain('好感度')
+      expect(puRongWenBen).not.toContain('关系阶段')
+      expect(puRongWenBen).not.toContain('人物画像')
+    })
+
+    it('复盘存储格式为 {pi_zhu: ...} 对象', async () => {
+      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
+
+      sheZhiMockTiaoYong(async () => ({
+        neiRong: shengChengFuPanMockNeiRong(),
+        xinXi: { role: 'assistant', content: shengChengFuPanMockNeiRong() },
+        yuanShuJu: {} as never,
+      }))
+
+      await shengChengFuPan(ceShiYongHu!.yongHuId, jiaoSeId, dangAnId)
+
+      const jieGuo = await 数据库.query(
+        `SELECT "复盘数据" FROM "游戏档案" WHERE "ID" = $1`,
+        [dangAnId],
+      )
+      const fuPanShuJu = jieGuo.rows[0].复盘数据
+      const jieXi = typeof fuPanShuJu === 'string' ? JSON.parse(fuPanShuJu) : fuPanShuJu
+      expect(jieXi).toHaveProperty('pi_zhu')
+      expect(Array.isArray(jieXi.pi_zhu)).toBe(true)
+      expect(jieXi.pi_zhu.length).toBeGreaterThan(0)
+      expect(jieXi.pi_zhu[0]).toHaveProperty('xu_hao')
+      expect(jieXi.pi_zhu[0]).toHaveProperty('ping_lun')
     })
 
     it('AI 返回对象字段时复盘内容不出现 [object Object]', async () => {
@@ -458,13 +501,11 @@ describe('FP-13 过往战绩与复盘', () => {
 
       sheZhiMockTiaoYong(async () => ({
         neiRong: JSON.stringify({
-          逐句分析: { summary: '对象字段示例' },
-          聊对了什么: ['保持轻松', '关心对方'],
-          聊错了什么: '有一次回复稍显急躁。',
-          撤回分析: '',
-          军师建议效果: { effective: true },
-          关键事件时间线: ['10:00 - 初次互动'],
-          整体感受: '整体表现不错。',
+          pi_zhu: [
+            { xu_hao: 1, ping_lun: { nested: '对象字段示例' } },
+            { xu_hao: 2, ping_lun: ['数组', '字段'] },
+          ],
+          zong_jie: { summary: '总结对象' },
         }),
         xinXi: { role: 'assistant', content: '' },
         yuanShuJu: {} as never,
@@ -480,7 +521,10 @@ describe('FP-13 过往战绩与复盘', () => {
       const neiRong = xiangYing.body.shu_ju.fu_pan_nei_rong
       expect(neiRong).not.toContain('[object Object]')
       expect(neiRong).toContain('summary')
-      expect(neiRong).toContain('effective')
+      const piZhu = xiangYing.body.shu_ju.fu_pan_pi_zhu || []
+      for (const tiaoMu of piZhu) {
+        expect(tiaoMu.ping_lun).not.toContain('[object Object]')
+      }
     })
 
     it('复盘详情返回军师指导记录且不包含好感度快照', async () => {
@@ -518,6 +562,27 @@ describe('FP-13 过往战绩与复盘', () => {
         expect(jiLu).not.toHaveProperty('hao_gan_du_kuai_zhao')
         expect(jiLu).not.toHaveProperty('hou_tai_shu_ju')
       }
+    })
+
+    it('时间格式化函数对无效时间戳返回空字符串不显示 Invalid Date', async () => {
+      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
+
+      sheZhiMockTiaoYong(async () => ({
+        neiRong: shengChengFuPanMockNeiRong(),
+        xinXi: { role: 'assistant', content: shengChengFuPanMockNeiRong() },
+        yuanShuJu: {} as never,
+      }))
+
+      await shengChengFuPan(ceShiYongHu!.yongHuId, jiaoSeId, dangAnId)
+
+      const xiangYing = await request(yingYong)
+        .get(`/api/战绩/复盘/${dangAnId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const quanBuWenBen = JSON.stringify(xiangYing.body.shu_ju)
+      expect(quanBuWenBen).not.toContain('Invalid Date')
+      expect(quanBuWenBen).not.toContain('NaN:NaN')
     })
   })
 

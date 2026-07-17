@@ -490,12 +490,18 @@ describe('FP-18 主题与UI', () => {
       expect(xiala.text()).toContain('1.0.0')
     })
 
-    it('顶部栏固定且主内容区有对应 margin-top，避免挤压滚动区域', () => {
-      expect(caiDanYuanMa).toMatch(/\.quanju-caidan\s*\{[^}]*position:\s*fixed/)
+    it('顶部栏流式布局不覆盖页面，主内容区无 margin-top 偏移', () => {
+      expect(caiDanYuanMa).not.toMatch(/\.quanju-caidan\s*\{[^}]*position:\s*fixed/)
+      expect(caiDanYuanMa).not.toMatch(/\.quanju-caidan\s*\{[^}]*position:\s*absolute/)
       const appYuanMa = readFileSync(resolve(__dirname, '../App.vue'), 'utf8')
-      expect(appYuanMa).toMatch(
-        /\.app-zhuti\s*\{[^}]*margin-top:\s*calc\(\s*52px\s*\+\s*var\(--anquan-quyu-shang\)/,
-      )
+      expect(appYuanMa).not.toMatch(/\.app-zhuti\s*\{[^}]*margin-top:/)
+    })
+
+    it('顶部菜单栏左右两列等宽分配，标题真正居中无偏右', () => {
+      expect(caiDanYuanMa).toMatch(/\.caidan-zuo\s*\{[^}]*flex:\s*1\s+1\s+0/)
+      expect(caiDanYuanMa).toMatch(/\.caidan-you\s*\{[^}]*flex:\s*1\s+1\s+0/)
+      expect(caiDanYuanMa).toMatch(/\.caidan-zhong\s*\{[^}]*flex:\s*0\s+0\s+auto/)
+      expect(caiDanYuanMa).toMatch(/\.caidan-zhong\s*\{[^}]*justify-content:\s*center/)
     })
   })
 })

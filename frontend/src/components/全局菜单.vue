@@ -99,11 +99,9 @@
           </button>
           <div class="liaotian-gengduo" @click="qieHuanLiaoTianGengDuoCaiDan">
             <span class="gengduo-tubiao">⋯</span>
-            <span
-              v-if="通知仓库.weiDuShu > 0"
-              class="gengduo-badge"
-              aria-hidden="true"
-            >{{ xianShiTongZhiShu }}</span>
+            <span v-if="通知仓库.weiDuShu > 0" class="gengduo-badge" aria-hidden="true">{{
+              xianShiTongZhiShu
+            }}</span>
             <Transition name="xiala">
               <div
                 v-if="liaoTianGengDuoCaiDanZhanKai"
@@ -120,7 +118,9 @@
                   @click="jinRuTongZhiCaiDanZhong"
                 >
                   {{ huoQuFanYi('caidan', 'tongZhi') }}
-                  <span v-if="通知仓库.weiDuShu > 0" class="xiala-badge">{{ xianShiTongZhiShu }}</span>
+                  <span v-if="通知仓库.weiDuShu > 0" class="xiala-badge">{{
+                    xianShiTongZhiShu
+                  }}</span>
                 </button>
                 <button class="xiala-xiangmu" @click="daKaiXieYi('yongHuXieYi')">
                   {{ huoQuFanYi('caidan', 'yongHuXieYi') }}
@@ -637,10 +637,9 @@ watch(
 
 <style scoped>
 .quanju-caidan {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
+  width: 100%;
+  flex-shrink: 0;
   z-index: 100;
   height: 52px;
   background: var(--daohanglan-beijing);
@@ -670,7 +669,7 @@ watch(
 }
 
 .caidan-zuo {
-  flex: 0 0 auto;
+  flex: 1 1 0;
   justify-content: flex-start;
   gap: 8px;
   min-width: 0;
@@ -746,31 +745,17 @@ watch(
 }
 
 .caidan-zhong {
-  flex: 1;
+  flex: 0 0 auto;
   justify-content: center;
   gap: 10px;
   min-width: 0;
 }
 
 .caidan-you {
-  flex: 0 0 auto;
+  flex: 1 1 0;
   justify-content: flex-end;
   gap: 8px;
   min-width: 0;
-}
-
-.liaotian-caidan .caidan-zuo,
-.liaotian-caidan .caidan-you {
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-.liaotian-caidan .caidan-zuo {
-  justify-content: flex-start;
-}
-
-.liaotian-caidan .caidan-you {
-  justify-content: flex-end;
 }
 
 .yonghu-xuanxiang {

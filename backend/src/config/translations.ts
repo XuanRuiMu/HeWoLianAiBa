@@ -124,6 +124,7 @@ export const fanYi = {
     junShiChongFu: '军师重复',
     shengChengShiBai: '军师这会儿卡壳了，稍后再试',
     zanShiMeiXiangHao: '军师暂时没想好怎么说，稍后再试吧。',
+    zhiDaoZhong: '军师正在指导中，请稍候',
   },
 } as const
 

@@ -427,6 +427,14 @@ export async function baoCunJiaoSe(
     ],
   )
 
+  // AI 开场白生成必须在返回前完成（同步 await）。
+  // 修复"开始聊天后看不到消息只有复盘能看到"的严重 bug：
+  // 原先用 void async 后台生成，用户进聊天页时消息可能尚未写入数据库，
+  // 且后台保存不触发 socket 推送，导致聊天页拉取消息为空。
+  // 现在同步等待生成+保存完成，/生成角色/确认 返回时消息已在数据库，
+  // 添加微信过渡页 1.5s 后跳转聊天页，聊天页拉取消息时直接显示。
+  // 前端 queRenJiaoSe 已配置 60s timeout，DeepSeek 客户端 timeout=120s，
+  // shengChengKaiChangBai 内部 try/catch 失败会降级到 jiangJi 不会抛出。
   try {
     const kaiChangBai = await shengChengKaiChangBai({
       mbti_lei_xing: jiaoSe.mbti_lei_xing,
@@ -437,6 +445,7 @@ export async function baoCunJiaoSe(
       yan_yu_feng_ge: jiaoSe.yan_yu_feng_ge,
       xi_huan_de_lei_xing: jiaoSe.xi_huan_de_lei_xing,
       xing_bie: jiaoSe.xing_bie,
+      ming_zi: jiaoSe.ming_zi,
     })
     for (const neiRong of kaiChangBai.xiao_xi_lie_biao.slice(0, 5)) {
       if (neiRong.trim()) {

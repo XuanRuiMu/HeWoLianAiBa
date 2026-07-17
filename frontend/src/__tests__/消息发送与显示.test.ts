@@ -10,6 +10,11 @@ import { 使用用户仓库 } from '@/stores/用户'
 import { huoQuFanYi } from '@/config/translations'
 import { XIAO_XI_PEI_ZHI } from '@/config/消息配置'
 import { huoQuXiaoXi, faSongXiaoXi } from '@/api/聊天'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+const dangQianMuLu = dirname(fileURLToPath(import.meta.url))
 
 vi.mock('@/api/聊天', () => ({
   huoQuXiaoXi: vi.fn().mockResolvedValue({ lie_biao: [], zong_shu: 0 }),
@@ -138,6 +143,28 @@ async function mountLiaoTianYeMian() {
   await flushPromises()
   return { wrapper, luYou, 聊天仓库 }
 }
+
+describe('FP-02 删除发送消息后转圈结束的左右跳动动画', () => {
+  it('聊天页面样式表中不存在 xiaoxi-guodu-move 动画类', () => {
+    const wenJianLuJing = resolve(dangQianMuLu, '../views/聊天页面.vue')
+    const wenJianNeiRong = readFileSync(wenJianLuJing, 'utf-8')
+    expect(wenJianNeiRong).not.toContain('xiaoxi-guodu-move')
+  })
+
+  it('保留正常的转圈动画 fasong-zhuangtai-zhuanquan 与 keyframes', () => {
+    const wenJianLuJing = resolve(dangQianMuLu, '../views/聊天页面.vue')
+    const wenJianNeiRong = readFileSync(wenJianLuJing, 'utf-8')
+    expect(wenJianNeiRong).toContain('fasong-zhuangtai-zhuanquan')
+    expect(wenJianNeiRong).toContain('@keyframes fasong-xuanzhuan')
+  })
+
+  it('保留消息进入动画 xiaoxi-guodu-enter（不误删正常动画）', () => {
+    const wenJianLuJing = resolve(dangQianMuLu, '../views/聊天页面.vue')
+    const wenJianNeiRong = readFileSync(wenJianLuJing, 'utf-8')
+    expect(wenJianNeiRong).toContain('xiaoxi-guodu-enter-active')
+    expect(wenJianNeiRong).toContain('xiaoxi-guodu-enter-from')
+  })
+})
 
 describe('FP-06 消息发送与显示', () => {
   beforeEach(() => {

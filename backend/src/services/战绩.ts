@@ -18,6 +18,11 @@ export interface FuPanShiJianXianTiaoMu {
   }
 }
 
+export interface FuPanPiZhu {
+  xu_hao: number
+  ping_lun: string
+}
+
 export interface DangAnLieBiaoXiang {
   id: string
   yong_hu_id: string
@@ -40,6 +45,7 @@ export interface DangAnLieBiaoXiang {
 export interface DangAnXiangQing extends DangAnLieBiaoXiang {
   fu_pan_shu_ju: FuPanShiJianXianTiaoMu[] | null
   fu_pan_nei_rong?: string | null
+  fu_pan_pi_zhu: FuPanPiZhu[] | null
 }
 
 const 结局文本映射: Record<string, YouXiJieGuoLeiXing | 'jinxing_zhong'> = {
@@ -141,12 +147,32 @@ export async function huoQuDangAnXiangQing(
   const youXiJieShu = jieGuoLeiXingYuan !== 'jinxing_zhong'
 
   let fuPanShuJu: FuPanShiJianXianTiaoMu[] | null = null
+  let fuPanPiZhu: FuPanPiZhu[] | null = null
   if (row.复盘数据) {
     try {
       const jieXi = typeof row.复盘数据 === 'string' ? JSON.parse(row.复盘数据) : row.复盘数据
-      fuPanShuJu = Array.isArray(jieXi) ? jieXi : null
+      if (Array.isArray(jieXi)) {
+        fuPanShuJu = jieXi
+      } else if (jieXi && typeof jieXi === 'object' && Array.isArray(jieXi.pi_zhu)) {
+        fuPanPiZhu = jieXi.pi_zhu
+          .filter(
+            (item: unknown): item is FuPanPiZhu =>
+              item !== null &&
+              typeof item === 'object' &&
+              typeof (item as { xu_hao?: unknown }).xu_hao === 'number' &&
+              Number.isFinite((item as { xu_hao: number }).xu_hao) &&
+              (item as { xu_hao: number }).xu_hao > 0 &&
+              typeof (item as { ping_lun?: unknown }).ping_lun === 'string' &&
+              (item as { ping_lun: string }).ping_lun.trim().length > 0,
+          )
+          .map((item) => ({
+            xu_hao: Math.floor((item as { xu_hao: number }).xu_hao),
+            ping_lun: (item as { ping_lun: string }).ping_lun,
+          }))
+      }
     } catch {
       fuPanShuJu = null
+      fuPanPiZhu = null
     }
   }
 
@@ -165,6 +191,7 @@ export async function huoQuDangAnXiangQing(
     xiao_xi_zong_shu: Number(row.消息总数 || 0),
     fu_pan_shu_ju: fuPanShuJu,
     fu_pan_nei_rong: row.复盘内容 ? String(row.复盘内容) : null,
+    fu_pan_pi_zhu: fuPanPiZhu,
     chuang_jian_shi_jian: chuangJianShiJian,
     zui_hou_xiao_xi_shi_jian: row.最后消息时间 ? String(row.最后消息时间) : null,
     you_xi_jie_shu_shi_jian: youXiJieShu ? chuangJianShiJian : null,
@@ -175,11 +202,11 @@ export async function huoQuDangAnXiangQing(
 export async function gengXinFuPanNeiRong(
   dang_an_id: string,
   fu_pan_nei_rong: string,
-  fu_pan_shu_ju: FuPanShiJianXianTiaoMu[],
+  fu_pan_pi_zhu: FuPanPiZhu[],
 ): Promise<void> {
   await 数据库.query(
     `UPDATE "游戏档案" SET "复盘内容" = $1, "复盘数据" = $2 WHERE "ID" = $3`,
-    [fu_pan_nei_rong, JSON.stringify(fu_pan_shu_ju), dang_an_id],
+    [fu_pan_nei_rong, JSON.stringify({ pi_zhu: fu_pan_pi_zhu }), dang_an_id],
   )
 }
 
