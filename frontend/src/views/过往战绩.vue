@@ -12,15 +12,32 @@
           <span class="xuan-ze-shu-liang">
             {{ huoQuFanYi('zhanJi', 'yiXuanZe').replace('{条}', String(xuanZhongIds.size)) }}
           </span>
-          <button class="piliang-shanchu-anniu" @click="piLiangShanChu">
-            {{ huoQuFanYi('zhanJi', 'piLiangShanChu') }}
-          </button>
+          <div class="piliang-anniu-zu">
+            <button class="quan-xuan-anniu" @click="qieHuanQuanXuan">
+              {{ huoQuFanYi('zhanJi', suoYouQuanXuan ? 'quXiaoQuanXuan' : 'quanXuan') }}
+            </button>
+            <button class="piliang-shanchu-anniu" @click="piLiangShanChu">
+              {{ huoQuFanYi('zhanJi', 'piLiangShanChu') }}
+            </button>
+          </div>
         </div>
         <div v-for="fenLei in fenLeiLieBiao" :key="fenLei.zhuangTai" class="zhanji-fenlei-zu">
           <h2 class="zhanji-fenlei-biaoti">
             <span class="fenlei-tubiao">{{ fenLei.tuBiao }}</span>
             {{ fenLei.biaoTi }}
             <span class="fenlei-shu-liang">{{ fenLei.dangAn.length }}</span>
+            <button
+              v-if="fenLei.dangAn.length > 0"
+              class="fenlei-quan-xuan-anniu"
+              @click="qieHuanFenLeiQuanXuan(fenLei)"
+            >
+              {{
+                huoQuFanYi(
+                  'zhanJi',
+                  fenLeiQuanXuanZhuangTai(fenLei) ? 'quXiaoQuanXuan' : 'quanXuanGaiFenLei',
+                )
+              }}
+            </button>
           </h2>
           <TransitionGroup
             v-if="fenLei.dangAn.length > 0"
@@ -208,6 +225,11 @@ function huoQuFenLeiZhuangTai(item: 档案详情): FenLeiZhuangTai {
   return 'shibai'
 }
 
+const suoYouQuanXuan = computed(() => {
+  const keXuanIds = dangAnLieBiao.value.map((item) => item.id).filter((id): id is string => !!id)
+  return keXuanIds.length > 0 && keXuanIds.every((id) => xuanZhongIds.value.has(id))
+})
+
 const fenLeiLieBiao = computed<FenLeiXinXi[]>(() => {
   const map = paiXuMap.value
   const jinXingZhong: 档案详情[] = []
@@ -303,6 +325,35 @@ function qieHuanXuanZe(dangAn: 档案详情, event: Event) {
     xuanZhongIds.value.add(dangAn.id)
   } else {
     xuanZhongIds.value.delete(dangAn.id)
+  }
+}
+
+function qieHuanQuanXuan() {
+  if (suoYouQuanXuan.value) {
+    xuanZhongIds.value.clear()
+  } else {
+    for (const item of dangAnLieBiao.value) {
+      if (item.id) xuanZhongIds.value.add(item.id)
+    }
+  }
+}
+
+function fenLeiQuanXuanZhuangTai(fenLei: FenLeiXinXi): boolean {
+  const fenLeiIds = fenLei.dangAn.map((item) => item.id).filter((id): id is string => !!id)
+  return fenLeiIds.length > 0 && fenLeiIds.every((id) => xuanZhongIds.value.has(id))
+}
+
+function qieHuanFenLeiQuanXuan(fenLei: FenLeiXinXi) {
+  const fenLeiIds = fenLei.dangAn.map((item) => item.id).filter((id): id is string => !!id)
+  if (fenLeiIds.length === 0) return
+  if (fenLeiQuanXuanZhuangTai(fenLei)) {
+    for (const id of fenLeiIds) {
+      xuanZhongIds.value.delete(id)
+    }
+  } else {
+    for (const id of fenLeiIds) {
+      xuanZhongIds.value.add(id)
+    }
   }
 }
 
@@ -501,6 +552,27 @@ watch(paiXuCunChuJian, () => {
   box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
 }
 
+.piliang-anniu-zu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quan-xuan-anniu {
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--wenben-zhuse);
+  transition: all 0.2s ease;
+}
+
+.quan-xuan-anniu:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
 .zhanji-fenlei-zu {
   display: flex;
   flex-direction: column;
@@ -540,6 +612,22 @@ watch(paiXuCunChuJian, () => {
   background: rgba(255, 255, 255, 0.1);
   color: var(--wenben-ciuse);
   margin-left: auto;
+}
+
+.fenlei-quan-xuan-anniu {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(107, 140, 166, 0.2);
+  color: var(--wenben-zhuse);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.fenlei-quan-xuan-anniu:hover {
+  background: rgba(107, 140, 166, 0.35);
+  transform: translateY(-1px);
 }
 
 .fenlei-kong-zhuangtai {

@@ -360,15 +360,15 @@ describe('FP-06 消息发送与显示', () => {
   })
 
   describe('输入验证', () => {
-    it('输入框存在 maxlength="500" 属性', async () => {
+    it('输入框存在 maxlength 属性且等于最大消息长度', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
       const shuRuKuang = wrapper.find('.shuru-kuang')
-      expect(shuRuKuang.attributes('maxlength')).toBe('500')
+      expect(shuRuKuang.attributes('maxlength')).toBe(String(XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu))
     })
 
     it('输入超过500字符后发送按钮禁用', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
-      const changNeiRong = 'a'.repeat(501)
+      const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu + 1)
       const shuRuKuang = wrapper.find('.shuru-kuang')
       await shuRuKuang.setValue(changNeiRong)
       await flushPromises()
@@ -377,13 +377,16 @@ describe('FP-06 消息发送与显示', () => {
       expect(faSongAnNiu.attributes('disabled')).toBeDefined()
     })
 
-    it('字符计数显示当前长度/500', async () => {
+    it('字符计数在达到阈值后显示当前长度/最大长度', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
       const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('abc')
+      const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
+      await shuRuKuang.setValue(changNeiRong)
       await flushPromises()
 
-      expect(wrapper.find('.zifu-jishu').text()).toBe('3/500')
+      expect(wrapper.find('.zifu-jishu').text()).toBe(
+        `${XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi}/${XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu}`,
+      )
     })
 
     it('store直接发送超过500字符的消息返回null并设置错误', async () => {

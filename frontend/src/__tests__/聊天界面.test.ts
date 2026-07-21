@@ -11,6 +11,7 @@ import QuanJuCaiDan from '@/components/全局菜单.vue'
 import { 使用聊天仓库 } from '@/stores/聊天'
 import { 使用用户仓库 } from '@/stores/用户'
 import { huoQuFanYi } from '@/config/translations'
+import { XIAO_XI_PEI_ZHI } from '@/config/消息配置'
 import { faSongXiaoXi } from '@/api/聊天'
 
 vi.mock('@/api/聊天', () => ({
@@ -432,7 +433,7 @@ describe('FP-05 聊天界面', () => {
       await flushPromises()
 
       const shuRuKuang = wrapper.find('.shuru-kuang')
-      expect((shuRuKuang.element as HTMLInputElement).value).toBe('😀')
+      expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('😀')
     })
   })
 
@@ -593,6 +594,219 @@ describe('FP-05 聊天界面', () => {
       expect(resizeCount).toBeGreaterThanOrEqual(1)
       expect(scrollCount).toBeGreaterThanOrEqual(1)
     })
+  })
+})
+
+describe('FP-01 聊天输入字数统计条件显示与右侧定位', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.clearAllMocks()
+  })
+
+  it('输入字符数小于阈值时不显示字数统计', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+    const duanNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi - 1)
+
+    await shuRuKuang.setValue(duanNeiRong)
+    await flushPromises()
+
+    expect(wrapper.find('.shuru-kuang-waike .zifu-jishu').exists()).toBe(false)
+  })
+
+  it('输入字符数达到阈值时显示字数统计', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+    const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
+
+    await shuRuKuang.setValue(changNeiRong)
+    await flushPromises()
+
+    const jiShi = wrapper.find('.shuru-kuang-waike .zifu-jishu')
+    expect(jiShi.exists()).toBe(true)
+    expect(jiShi.text()).toBe(
+      `${XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi}/${XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu}`,
+    )
+  })
+
+  it('字数统计位于输入框容器内且在输入框之后', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+    const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
+
+    await shuRuKuang.setValue(changNeiRong)
+    await flushPromises()
+
+    const waiKe = wrapper.find('.shuru-kuang-waike')
+    const jiShi = waiKe.find('.zifu-jishu')
+    expect(jiShi.exists()).toBe(true)
+
+    const shuRuKuangYuanSu = waiKe.find('.shuru-kuang')
+    const jiShiYuanSu = jiShi.element
+    const shuRuKuangIndex = Array.from(waiKe.element.children).indexOf(shuRuKuangYuanSu.element)
+    const jiShiIndex = Array.from(waiKe.element.children).indexOf(jiShiYuanSu)
+    expect(jiShiIndex).toBeGreaterThan(shuRuKuangIndex)
+  })
+
+  it('超出最大长度时计数器应用错误样式', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+    const chaoChuNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu + 1)
+
+    await shuRuKuang.setValue(chaoChuNeiRong)
+    await flushPromises()
+
+    const jiShi = wrapper.find('.shuru-kuang-waike .zifu-jishu')
+    expect(jiShi.exists()).toBe(true)
+    expect(jiShi.classes()).toContain('zifu-chaochu')
+  })
+
+  it('字数统计显示时不影响表情、告白、发送按钮', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+    const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
+
+    await shuRuKuang.setValue(changNeiRong)
+    await flushPromises()
+
+    expect(wrapper.find('.shuru-kuang-waike .zifu-jishu').exists()).toBe(true)
+    expect(wrapper.find('.emoji-anniu').exists()).toBe(true)
+    expect(wrapper.find('.gaobai-anniu').exists()).toBe(true)
+    expect(wrapper.find('.fasong-anniu').exists()).toBe(true)
+  })
+
+  it('原输入框下方辅助区域不再显示字数统计', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+    const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
+
+    await shuRuKuang.setValue(changNeiRong)
+    await flushPromises()
+
+    const fuZhuQuYu = wrapper.find('.shuru-fu-zhu')
+    expect(fuZhuQuYu.exists()).toBe(false)
+  })
+})
+
+describe('FP-02 聊天输入多行展开/折叠', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.clearAllMocks()
+  })
+
+  it('输入框为 textarea 且保持 maxlength=500', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+    expect(shuRuKuang.element.tagName).toBe('TEXTAREA')
+    expect(shuRuKuang.attributes('maxlength')).toBe(String(XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu))
+  })
+
+  it('Enter 键发送消息', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+    await shuRuKuang.setValue('测试消息')
+    await shuRuKuang.trigger('keydown.enter')
+    await flushPromises()
+    expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('')
+  })
+
+  it('Shift+Enter 不发送消息', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+    await shuRuKuang.setValue('测试消息')
+    await shuRuKuang.trigger('keydown.enter.shift')
+    await flushPromises()
+    expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('测试消息')
+  })
+
+  it('单行输入不显示展开按钮', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+    await shuRuKuang.setValue('短消息')
+    await flushPromises()
+    expect(wrapper.find('.zhan-kai-anniu').exists()).toBe(false)
+  })
+
+  it('多行输入时显示展开按钮', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+
+    vi.spyOn(shuRuKuang.element, 'scrollHeight', 'get').mockReturnValue(60)
+    vi.spyOn(shuRuKuang.element, 'clientHeight', 'get').mockReturnValue(38)
+
+    await shuRuKuang.setValue('这是一段比较长的消息内容，应该会折行显示展开按钮')
+    await flushPromises()
+
+    expect(wrapper.find('.zhan-kai-anniu').exists()).toBe(true)
+  })
+
+  it('点击展开按钮后输入框添加展开类', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+
+    vi.spyOn(shuRuKuang.element, 'scrollHeight', 'get').mockReturnValue(60)
+    vi.spyOn(shuRuKuang.element, 'clientHeight', 'get').mockReturnValue(38)
+
+    await shuRuKuang.setValue('这是一段比较长的消息内容')
+    await flushPromises()
+
+    await wrapper.find('.zhan-kai-anniu').trigger('click')
+    await flushPromises()
+
+    expect(shuRuKuang.classes()).toContain('zhan-kai')
+  })
+
+  it('展开按钮位于输入栏最右侧且在字数统计之后', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+    const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
+
+    vi.spyOn(shuRuKuang.element, 'scrollHeight', 'get').mockReturnValue(60)
+    vi.spyOn(shuRuKuang.element, 'clientHeight', 'get').mockReturnValue(38)
+
+    await shuRuKuang.setValue(changNeiRong)
+    await flushPromises()
+
+    const waiKe = wrapper.find('.shuru-kuang-waike')
+    const zhanKaiAnNiu = waiKe.find('.zhan-kai-anniu')
+    const ziFuJiShu = waiKe.find('.zifu-jishu')
+    expect(zhanKaiAnNiu.exists()).toBe(true)
+    expect(ziFuJiShu.exists()).toBe(true)
+
+    const zhanKaiIndex = Array.from(waiKe.element.children).indexOf(zhanKaiAnNiu.element)
+    const ziFuJiShuIndex = Array.from(waiKe.element.children).indexOf(ziFuJiShu.element)
+    expect(zhanKaiIndex).toBeGreaterThan(ziFuJiShuIndex)
+  })
+
+  it('发送后输入框清空并折叠', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+
+    vi.spyOn(shuRuKuang.element, 'scrollHeight', 'get').mockReturnValue(60)
+    vi.spyOn(shuRuKuang.element, 'clientHeight', 'get').mockReturnValue(38)
+
+    await shuRuKuang.setValue('测试消息\n第二行')
+    await wrapper.find('.zhan-kai-anniu').trigger('click')
+    await flushPromises()
+
+    expect(shuRuKuang.classes()).toContain('zhan-kai')
+
+    await wrapper.find('.fasong-anniu').trigger('click')
+    await flushPromises()
+
+    expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('')
+    expect(shuRuKuang.classes()).not.toContain('zhan-kai')
+    expect(wrapper.find('.zhan-kai-anniu').exists()).toBe(false)
   })
 })
 

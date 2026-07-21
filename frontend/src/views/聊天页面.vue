@@ -92,7 +92,9 @@
                   </div>
                 </div>
                 <div
-                  v-if="!fuPanMoShi && xiaoXi.fa_song_zhong && xiaoXi.fa_song_zhe_lei_xing === 'yonghu'"
+                  v-if="
+                    !fuPanMoShi && xiaoXi.fa_song_zhong && xiaoXi.fa_song_zhe_lei_xing === 'yonghu'
+                  "
                   class="fasong-zhuangtai"
                   :aria-label="huoQuFanYi('liaoTian', 'faSongZhong')"
                 >
@@ -101,7 +103,12 @@
               </template>
             </div>
             <div
-              v-if="fuPanMoShi && !xiaoXi.yi_che_hui && xiaoXi.lei_xing !== 'xitong' && huoQuPiZhuByXiaoXiId(xiaoXi.ke_hu_duan_id || xiaoXi.id)"
+              v-if="
+                fuPanMoShi &&
+                !xiaoXi.yi_che_hui &&
+                xiaoXi.lei_xing !== 'xitong' &&
+                huoQuPiZhuByXiaoXiId(xiaoXi.ke_hu_duan_id || xiaoXi.id)
+              "
               class="fupan-pizhu-xiangmu"
               :class="{
                 'yonghu-pizhu': xiaoXi.fa_song_zhe_lei_xing === 'yonghu',
@@ -109,8 +116,12 @@
               }"
             >
               <div class="fupan-pizhu-qipao">
-                <span class="fupan-pizhu-biaoqian">{{ huoQuFanYi('zhanJi', 'fuPanPiZhuBiaoQian') }}</span>
-                <span class="fupan-pizhu-neirong">{{ huoQuPiZhuByXiaoXiId(xiaoXi.ke_hu_duan_id || xiaoXi.id) }}</span>
+                <span class="fupan-pizhu-biaoqian">{{
+                  huoQuFanYi('zhanJi', 'fuPanPiZhuBiaoQian')
+                }}</span>
+                <span class="fupan-pizhu-neirong">{{
+                  huoQuPiZhuByXiaoXiId(xiaoXi.ke_hu_duan_id || xiaoXi.id)
+                }}</span>
               </div>
             </div>
           </template>
@@ -122,10 +133,7 @@
           <span>{{ huoQuFanYi('zhanJi', 'fuPanShengChengZhong') }}</span>
         </div>
       </div>
-      <div
-        v-if="fuPanMoShi && !fuPanJiaZaiZhong && fuPanZongJie"
-        class="fupan-zongjie-qu"
-      >
+      <div v-if="fuPanMoShi && !fuPanJiaZaiZhong && fuPanZongJie" class="fupan-zongjie-qu">
         <div class="fupan-zongjie-biaoti">{{ huoQuFanYi('zhanJi', 'fuPanZongJie') }}</div>
         <div class="fupan-zongjie-neirong">{{ fuPanZongJie }}</div>
       </div>
@@ -154,18 +162,46 @@
           </svg>
         </button>
         <div class="shuru-kuang-waike">
-          <input
+          <textarea
             ref="shuruKuangRef"
             v-model="shuRuNeiRong"
-            type="text"
             class="shuru-kuang"
+            :class="{ 'zhan-kai': shuRuKuangZhanKai }"
             :placeholder="huoQuFanYi('liaoTian', 'shuRuXiaoXi')"
             :disabled="faSongZhong"
-            maxlength="500"
-            @keydown.enter="faSong"
+            :maxlength="XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu"
+            rows="1"
+            @keydown.enter="chuLiShuRuKuangAnJian"
             @focus="chuLiShuRuKuangJuJiao"
             @input="chuLiShuRuBianHua"
           />
+          <span
+            v-if="shuRuNeiRong.length >= XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi"
+            class="zifu-jishu"
+            :class="{ 'zifu-chaochu': shuRuNeiRong.length > XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu }"
+          >
+            {{ shuRuNeiRong.length }}/{{ XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu }}
+          </span>
+          <button
+            v-if="xianShiZhanKaiAnNiu"
+            class="zhan-kai-anniu"
+            :class="{ 'zhan-kai': shuRuKuangZhanKai }"
+            :title="
+              shuRuKuangZhanKai
+                ? huoQuFanYi('liaoTian', 'zheDie')
+                : huoQuFanYi('liaoTian', 'zhanKai')
+            "
+            :aria-label="
+              shuRuKuangZhanKai
+                ? huoQuFanYi('liaoTian', 'zheDie')
+                : huoQuFanYi('liaoTian', 'zhanKai')
+            "
+            @click="qieHuanShuRuKuangZhanKai"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
         </div>
         <button
           class="biaoqing-anniu emoji-anniu"
@@ -198,11 +234,8 @@
           {{ huoQuFanYi('liaoTian', 'faSong') }}
         </button>
       </div>
-      <div v-if="!fuPanMoShi" class="shuru-fu-zhu">
-        <span v-if="聊天仓库.cuoWuXinXi" class="fasong-cuowu">{{ 聊天仓库.cuoWuXinXi }}</span>
-        <span v-else class="zifu-jishu" :class="{ 'zifu-chaochu': shuRuNeiRong.length > 500 }">
-          {{ shuRuNeiRong.length }}/500
-        </span>
+      <div v-if="!fuPanMoShi && 聊天仓库.cuoWuXinXi" class="shuru-fu-zhu">
+        <span class="fasong-cuowu">{{ 聊天仓库.cuoWuXinXi }}</span>
       </div>
       <Transition name="emoji-zhankai">
         <div v-if="!fuPanMoShi && emojiMianBanZhanKai" class="emoji-mianban">
@@ -316,6 +349,9 @@ const youXiShiJianLeiXing = ref<'shengli' | 'shibai'>('shengli')
 const youXiShiJianNeiRong = ref('')
 const xiaoxiQuYuRef = ref<HTMLElement | null>(null)
 const shuruQuYuRef = ref<HTMLElement | null>(null)
+const shuruKuangRef = ref<HTMLTextAreaElement | null>(null)
+const shuRuKuangZhanKai = ref(false)
+const shuRuKuangKeZhanKai = ref(false)
 const emojiMianBanZhanKai = ref(false)
 const dangQianShiJian = ref(Date.now())
 let shiJianGengXinQi: ReturnType<typeof setInterval> | null = null
@@ -521,7 +557,13 @@ const liaoTianSuoDing = computed(() => {
 
 const keYiFaSong = computed(() => {
   const neiRong = shuRuNeiRong.value.trim()
-  return neiRong.length > 0 && neiRong.length <= 500 && !faSongZhong.value
+  return (
+    neiRong.length > 0 && neiRong.length <= XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu && !faSongZhong.value
+  )
+})
+
+const xianShiZhanKaiAnNiu = computed(() => {
+  return shuRuNeiRong.value.length > 0 && (shuRuKuangZhanKai.value || shuRuKuangKeZhanKai.value)
 })
 
 interface XiaoXiFenZuXiang {
@@ -712,20 +754,65 @@ watch(
   },
 )
 
+watch(
+  () => shuRuNeiRong.value,
+  () => {
+    if (!shuRuKuangZhanKai.value) {
+      jianCeShuRuKuangGaoDu()
+    }
+  },
+)
+
 function chuLiShuRuBianHua() {
   if (聊天仓库.cuoWuXinXi) {
     聊天仓库.qingChuCuoWu()
   }
+  if (!shuRuKuangZhanKai.value) {
+    jianCeShuRuKuangGaoDu()
+  }
+}
+
+function jianCeShuRuKuangGaoDu() {
+  nextTick(() => {
+    const el = shuruKuangRef.value
+    if (!el) {
+      shuRuKuangKeZhanKai.value = false
+      return
+    }
+    if (shuRuNeiRong.value.length === 0) {
+      shuRuKuangKeZhanKai.value = false
+      return
+    }
+    shuRuKuangKeZhanKai.value = el.scrollHeight > el.clientHeight + 1
+  })
+}
+
+function qieHuanShuRuKuangZhanKai() {
+  shuRuKuangZhanKai.value = !shuRuKuangZhanKai.value
+  if (!shuRuKuangZhanKai.value) {
+    jianCeShuRuKuangGaoDu()
+  }
+  nextTick(() => {
+    shuruKuangRef.value?.focus()
+  })
+}
+
+function chuLiShuRuKuangAnJian(event: KeyboardEvent) {
+  if (event.shiftKey) return
+  event.preventDefault()
+  faSong()
 }
 
 async function faSong() {
   if (!keYiFaSong.value) return
   const neiRong = shuRuNeiRong.value.trim()
-  if (neiRong.length > 500) {
+  if (neiRong.length > XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu) {
     聊天仓库.sheZhiCuoWu(huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'))
     return
   }
   shuRuNeiRong.value = ''
+  shuRuKuangZhanKai.value = false
+  shuRuKuangKeZhanKai.value = false
   faSongZhong.value = true
   try {
     const jieGuo = await 聊天仓库.faSongXiaoXi(neiRong)
@@ -822,15 +909,15 @@ function chakanZhanJi() {
 }
 
 function junShiZhanKaiJianTingQi() {
-  if (!聊天仓库.youXiYiJieShu) {
-    junShiZhanKai.value = true
-  }
+  junShiZhanKai.value = true
 }
 
 function qingLiUIMianBan() {
   emojiMianBanZhanKai.value = false
   junShiZhanKai.value = false
   cheHuiCaiDanZhanKai.value = false
+  shuRuKuangZhanKai.value = false
+  shuRuKuangKeZhanKai.value = false
 }
 
 async function jiaZaiFuPanShuJu(dangAnId: string) {
@@ -847,11 +934,7 @@ async function jiaZaiFuPanShuJu(dangAnId: string) {
       return
     }
     let changShiCiShu = 0
-    while (
-      !fuPanShuJu.fu_pan_nei_rong &&
-      changShiCiShu < 20 &&
-      fuPanQingQiuId === benCiId
-    ) {
+    while (!fuPanShuJu.fu_pan_nei_rong && changShiCiShu < 20 && fuPanQingQiuId === benCiId) {
       await new Promise((jieJue) => setTimeout(jieJue, 3000))
       changShiCiShu++
       if (fuPanQingQiuId !== benCiId) return
@@ -959,6 +1042,8 @@ onBeforeUnmount(() => {
 <style scoped>
 .liaotian-yemian {
   --emoji-mianban-bu-ju-gao-du: 220px;
+  --shuru-kuang-zhe-die-gao-du: 38px;
+  --shuru-kuang-zhan-kai-gao-du: 120px;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -1263,14 +1348,15 @@ onBeforeUnmount(() => {
   flex: 1;
   background: var(--beijing-kaopian);
   border-radius: 6px;
-  min-height: 36px;
+  min-height: var(--shuru-kuang-zhe-die-gao-du);
   display: flex;
   align-items: center;
   border: 0.5px solid var(--shuru-quyu-biankuang);
 }
 
 .shuru-kuang {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 8px 12px;
   border: none;
   background: transparent;
@@ -1279,10 +1365,22 @@ onBeforeUnmount(() => {
   line-height: 1.4;
   outline: none;
   border-radius: 6px;
+  box-sizing: border-box;
+  resize: none;
+  overflow: hidden;
+  height: var(--shuru-kuang-zhe-die-gao-du);
+  max-height: var(--shuru-kuang-zhe-die-gao-du);
+  transition: height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .shuru-kuang::placeholder {
   color: var(--shuru-zhanwei-se);
+}
+
+.shuru-kuang.zhan-kai {
+  height: var(--shuru-kuang-zhan-kai-gao-du);
+  max-height: var(--shuru-kuang-zhan-kai-gao-du);
+  overflow-y: auto;
 }
 
 .fasong-anniu {
@@ -1321,13 +1419,42 @@ onBeforeUnmount(() => {
   color: var(--cuowu-yanse);
 }
 
-.zifu-jishu {
+.shuru-kuang-waike .zifu-jishu {
+  flex-shrink: 0;
+  padding-right: 10px;
+  padding-left: 4px;
+  white-space: nowrap;
   font-size: 11px;
   color: var(--wenben-tishi);
 }
 
 .zifu-chaochu {
   color: var(--cuowu-yanse);
+}
+
+.zhan-kai-anniu {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--shuru-fu-anniu-se);
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  margin-right: 4px;
+}
+
+.zhan-kai-anniu svg {
+  width: 20px;
+  height: 20px;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.zhan-kai-anniu.zhan-kai svg {
+  transform: rotate(180deg);
 }
 
 .emoji-mianban {

@@ -32,6 +32,7 @@ export interface JiaoSeCanShu {
 export interface JiaoSeJieGuo {
   jiaoSeId: string
   mingZi: string
+  weiXinMing: string
   xingGe: XingGeLeiXing
   shiFouZhaXing: boolean
 }
@@ -78,6 +79,7 @@ export async function chuangJianJiaoSe(
   return {
     jiaoSeId: jiaoSe.jiao_se_id || jiaoSe.id,
     mingZi: jiaoSe.ming_zi,
+    weiXinMing: jiaoSe.wei_xin_ming || jiaoSe.ming_zi,
     xingGe: jiaoSe.mbti_lei_xing || jiaoSe.yu_she_lei_xing,
     shiFouZhaXing: jiaoSe.shi_fou_zha_xing === true,
   }

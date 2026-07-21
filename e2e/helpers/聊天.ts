@@ -32,17 +32,32 @@ export async function guanBiJunShiZhiDao(page: Page): Promise<void> {
   await page.locator('.junshi-mianban').waitFor({ state: 'hidden' })
 }
 
+export async function xuanZeDiYiGeJunShi(page: Page): Promise<void> {
+  const qingQiuAnNiu = page.locator('.qingqiu-anniu')
+  if (await qingQiuAnNiu.count() > 0) {
+    return
+  }
+  const xuanZeAnNiu = page.locator('.xuanze-anniu')
+  await expect(xuanZeAnNiu, '军师选择入口应可见').toBeVisible({ timeout: 5000 })
+  await xuanZeAnNiu.click()
+  const diYiGeJunShi = page.locator('.junshi-xuanze-xiang').first()
+  await expect(diYiGeJunShi, '应存在可选军师').toBeVisible({ timeout: 5000 })
+  await diYiGeJunShi.click()
+  await expect(qingQiuAnNiu, '选择军师后请求指导按钮应出现').toBeVisible({ timeout: 5000 })
+}
+
 export async function qingQiuJunShiZhiDao(page: Page): Promise<string> {
+  await xuanZeDiYiGeJunShi(page)
   const qingQiuAnNiu = page.locator('.qingqiu-anniu')
   await qingQiuAnNiu.click()
   await expect(qingQiuAnNiu).not.toHaveAttribute('disabled', '', { timeout: 120000 })
   const jieGuoQu = page.locator('.zhidao-jieguo .jieguo-neirong')
   await expect(jieGuoQu).toBeVisible({ timeout: 10000 })
-  return await jieGuoQu.textContent() || ''
+  return (await jieGuoQu.textContent()) || ''
 }
 
 export async function qieHuanDaoJunShiJiLu(page: Page): Promise<void> {
-  await page.locator('.biaoqian-anniu').filter({ hasText: '指导记录' }).click()
+  await page.locator('[data-testid="lishi-zhanji-tab"]').click()
   await expect(page.locator('.jilu-buju')).toBeVisible()
 }
 

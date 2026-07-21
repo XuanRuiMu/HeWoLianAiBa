@@ -7,7 +7,6 @@ import { resolve } from 'path'
 import 过往战绩 from '@/views/过往战绩.vue'
 import { huoQuFanYi } from '@/config/translations'
 import type { DangAnXiangQing } from '@/types'
-import type { 复盘响应, 军师指导记录项, 复盘时间线条目, 复盘批注项 } from '@/api/聊天'
 
 const guoWangZhanJiYuanMa = readFileSync(resolve(__dirname, '../views/过往战绩.vue'), 'utf8')
 
@@ -78,50 +77,6 @@ function chuangJianDangAnLieBiao(): DangAnXiangQing[] {
       mbti_lei_xing: 'ENFP',
     },
   ]
-}
-
-function chuangJunShiJiLu(): 军师指导记录项[] {
-  return [
-    {
-      shi_jian: '2026-07-07T10:00:00.000Z',
-      jiao_se_ming_zi: '小甜心',
-      jun_shi_ming_chen: '玄锐暮',
-      jian_yi: '先吐槽你一句，然后给你建议。',
-      dui_hua_zhai_yao: '初次互动摘要',
-    },
-  ]
-}
-
-function chuangJianFuPanXiangYing(
-  jiaZaiZhong = false,
-  fuPanNeiRong: unknown = null,
-  youShiJianXian = true,
-): 复盘响应 {
-  const shiJianXian: 复盘时间线条目[] = youShiJianXian
-    ? [
-        {
-          shi_jian: '10:00',
-          shi_jian_miao_shu: '初次互动',
-          yong_hu_xiao_xi: '你好',
-          ai_hui_fu: '嗨',
-          ai_xin_li_huo_dong: '对方看起来友善',
-        },
-      ]
-    : []
-  const piZhu: 复盘批注项[] | null = fuPanNeiRong
-    ? [
-        { xu_hao: 1, ping_lun: '开场挺自然的。' },
-        { xu_hao: 2, ping_lun: '这句回应有点急了。' },
-      ]
-    : null
-  return {
-    fu_pan_nei_rong: fuPanNeiRong,
-    fu_pan_shi_jian_xian: shiJianXian,
-    fu_pan_pi_zhu: piZhu,
-    jun_shi_zhi_dao_ji_lu: chuangJunShiJiLu(),
-    guan_jian_shi_jian: [],
-    jia_zai_zhong: jiaZaiZhong,
-  } as 复盘响应
 }
 
 async function mountZuJian() {
@@ -339,6 +294,109 @@ describe('FP-13 过往战绩与复盘前端', () => {
 
       expect(piLiangShanChuDangAn).not.toHaveBeenCalled()
       expect(wrapper.findAll('.zhanji-kapian').length).toBe(3)
+    })
+
+    it('未选中任何记录时不显示批量工具栏', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      expect(wrapper.find('.piliang-gongju-lan').exists()).toBe(false)
+    })
+
+    it('选中任意记录后工具栏显示全选按钮', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const xuanZeKuang = wrapper.findAll('.xuan-ze-kuang input')
+      await xuanZeKuang[0].setValue(true)
+      await flushPromises()
+
+      const gongJuLan = wrapper.find('.piliang-gongju-lan')
+      expect(gongJuLan.exists()).toBe(true)
+      expect(gongJuLan.text()).toContain(huoQuFanYi('zhanJi', 'quanXuan'))
+    })
+
+    it('点击全选按钮选中当前所有战绩', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const xuanZeKuang = wrapper.findAll('.xuan-ze-kuang input')
+      await xuanZeKuang[0].setValue(true)
+      await flushPromises()
+
+      await wrapper.find('.quan-xuan-anniu').trigger('click')
+      await flushPromises()
+
+      const xuanZhongKaPian = wrapper.findAll('.zhanji-kapian.xuanZhong')
+      expect(xuanZhongKaPian.length).toBe(3)
+      expect(wrapper.find('.xuan-ze-shu-liang').text()).toContain('3')
+    })
+
+    it('全部选中时全选按钮变为取消全选并点击清空选择', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const xuanZeKuang = wrapper.findAll('.xuan-ze-kuang input')
+      await xuanZeKuang[0].setValue(true)
+      await xuanZeKuang[1].setValue(true)
+      await xuanZeKuang[2].setValue(true)
+      await flushPromises()
+
+      const quanXuanAnNiu = wrapper.find('.quan-xuan-anniu')
+      expect(quanXuanAnNiu.text()).toBe(huoQuFanYi('zhanJi', 'quXiaoQuanXuan'))
+
+      await quanXuanAnNiu.trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('.piliang-gongju-lan').exists()).toBe(false)
+      expect(wrapper.findAll('.zhanji-kapian.xuanZhong').length).toBe(0)
+    })
+
+    it('每个非空分类标题旁显示全选该分类按钮', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const fenLeiQuanXuanAnNiu = wrapper.findAll('.fenlei-quan-xuan-anniu')
+      expect(fenLeiQuanXuanAnNiu.length).toBe(3)
+      fenLeiQuanXuanAnNiu.forEach((anniu) => {
+        expect(anniu.text()).toBe(huoQuFanYi('zhanJi', 'quanXuanGaiFenLei'))
+      })
+    })
+
+    it('点击分类全选按钮只选中该分类下所有记录', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const fenLeiQuanXuanAnNiu = wrapper.findAll('.fenlei-quan-xuan-anniu')
+      await fenLeiQuanXuanAnNiu[1].trigger('click')
+      await flushPromises()
+
+      const xuanZhongKaPian = wrapper.findAll('.zhanji-kapian.xuanZhong')
+      expect(xuanZhongKaPian.length).toBe(1)
+      expect(xuanZhongKaPian[0].text()).toContain('小甜心')
+      expect(wrapper.find('.xuan-ze-shu-liang').text()).toContain('1')
+    })
+
+    it('分类已全部选中时点击分类全选按钮取消该分类选择', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const fenLeiQuanXuanAnNiu = wrapper.findAll('.fenlei-quan-xuan-anniu')
+      await fenLeiQuanXuanAnNiu[1].trigger('click')
+      await flushPromises()
+
+      await fenLeiQuanXuanAnNiu[1].trigger('click')
+      await flushPromises()
+
+      expect(wrapper.findAll('.zhanji-kapian.xuanZhong').length).toBe(0)
+      expect(wrapper.find('.piliang-gongju-lan').exists()).toBe(false)
     })
 
     it('拖拽排序后持久化到 localStorage 并在重新加载时恢复', async () => {
