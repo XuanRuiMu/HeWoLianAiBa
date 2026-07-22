@@ -643,6 +643,8 @@ watch(
   z-index: 100;
   height: 52px;
   height: calc(52px + var(--anquan-quyu-shang));
+  min-height: 52px;
+  min-height: calc(52px + var(--anquan-quyu-shang));
   background: var(--daohanglan-beijing);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -1257,6 +1259,8 @@ watch(
   .quanju-caidan {
     height: 48px;
     height: calc(48px + var(--anquan-quyu-shang));
+    min-height: 48px;
+    min-height: calc(48px + var(--anquan-quyu-shang));
   }
 
   .caidan-neirong {

@@ -535,7 +535,7 @@ defineExpose({
 
 .zhanji-liebiao {
   flex: 1;
-  padding: 16px;
+  padding: 0 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -580,6 +580,7 @@ defineExpose({
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-radius: 14px;
+  margin-top: 12px;
   margin-bottom: 4px;
   gap: 12px;
 }
