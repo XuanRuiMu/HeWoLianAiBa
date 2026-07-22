@@ -148,7 +148,7 @@ describe('FP-03 军师指导面板单级菜单化', () => {
     vi.clearAllMocks()
     vi.mocked(huoQuJunShiLieBiao).mockResolvedValue(chuangJianMoNiJunShiLieBiao())
     vi.mocked(huoQuJunShiJiLu).mockResolvedValue(chuangJianMoNiJiLuLieBiao())
-    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue(null)
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({ zhuangTai: null, keZaiCiZhiDao: false })
     vi.mocked(qingQiuJunShiZhiDao).mockReset()
   })
 
@@ -345,9 +345,12 @@ describe('FP-03 军师指导面板单级菜单化', () => {
 
     it('当前指导中的军师显示指导中并禁用按钮', async () => {
       vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
-        zhuang_tai: 'zhi_dao_zhong',
-        jun_shi_id: 'xuanRuiMu',
-        kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+        zhuangTai: {
+          zhuang_tai: 'zhi_dao_zhong',
+          jun_shi_id: 'xuanRuiMu',
+          kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+        },
+        keZaiCiZhiDao: false,
       })
       vi.mocked(huoQuJunShiJiLu).mockResolvedValue([])
 
@@ -362,14 +365,17 @@ describe('FP-03 军师指导面板单级菜单化', () => {
 
     it('当前已完成状态的军师显示已指导 - 查看结果', async () => {
       vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
-        zhuang_tai: 'yi_wan_cheng',
-        jun_shi_id: 'xuanRuiMu',
-        kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
-        jie_guo: {
-          junShi: chuangJianMoNiJunShiLieBiao()[0],
-          zhiDaoNeiRong: '已完成状态下的指导内容',
-          shiJian: '2026-07-17T10:01:00.000Z',
+        zhuangTai: {
+          zhuang_tai: 'yi_wan_cheng',
+          jun_shi_id: 'xuanRuiMu',
+          kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+          jie_guo: {
+            junShi: chuangJianMoNiJunShiLieBiao()[0],
+            zhiDaoNeiRong: '已完成状态下的指导内容',
+            shiJian: '2026-07-17T10:01:00.000Z',
+          },
         },
+        keZaiCiZhiDao: false,
       })
       vi.mocked(huoQuJunShiJiLu).mockResolvedValue([])
 
@@ -401,14 +407,17 @@ describe('FP-03 军师指导面板单级菜单化', () => {
 
     it('已完成状态属于其他军师时该军师仍显示请求指导', async () => {
       vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
-        zhuang_tai: 'yi_wan_cheng',
-        jun_shi_id: 'xuanRuiMu',
-        kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
-        jie_guo: {
-          junShi: chuangJianMoNiJunShiLieBiao()[0],
-          zhiDaoNeiRong: '军师A的指导结果',
-          shiJian: '2026-07-17T10:01:00.000Z',
+        zhuangTai: {
+          zhuang_tai: 'yi_wan_cheng',
+          jun_shi_id: 'xuanRuiMu',
+          kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+          jie_guo: {
+            junShi: chuangJianMoNiJunShiLieBiao()[0],
+            zhiDaoNeiRong: '军师A的指导结果',
+            shiJian: '2026-07-17T10:01:00.000Z',
+          },
         },
+        keZaiCiZhiDao: false,
       })
       vi.mocked(huoQuJunShiJiLu).mockResolvedValue([])
 
@@ -418,6 +427,68 @@ describe('FP-03 军师指导面板单级菜单化', () => {
       const anNiu = ceShiJunShi1Kapian?.find('.qingqiu-anniu')
       expect(anNiu?.text()).toBe(huoQuFanYi('junShi', 'junShiQingQiuZhiDao'))
       expect(anNiu?.classes()).not.toContain('yi-zhidao')
+    })
+
+    it('指导完成后有新聊天记录时回到初态可再次请求指导', async () => {
+      vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+        zhuangTai: {
+          zhuang_tai: 'yi_wan_cheng',
+          jun_shi_id: 'xuanRuiMu',
+          kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+          jie_guo: {
+            junShi: chuangJianMoNiJunShiLieBiao()[0],
+            zhiDaoNeiRong: '之前的指导内容',
+            shiJian: '2026-07-17T10:01:00.000Z',
+          },
+        },
+        keZaiCiZhiDao: true,
+      })
+      vi.mocked(huoQuJunShiJiLu).mockResolvedValue(chuangJianMoNiJiLuLieBiao())
+
+      const { wrapper } = await mountJunShiZhiDao()
+
+      const xuanRuiMuKapian = huoQuJunShiKapianByJunShiId(wrapper, 'xuanRuiMu')
+      const anNiu = xuanRuiMuKapian?.find('.qingqiu-anniu')
+      expect(anNiu?.text()).toBe(huoQuFanYi('junShi', 'junShiQingQiuZhiDao'))
+      expect(anNiu?.classes()).not.toContain('yi-zhidao')
+      expect(anNiu?.classes()).not.toContain('zhidao-zhong')
+    })
+
+    it('历史记录中有该军师但可再次指导时也回到初态', async () => {
+      vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+        zhuangTai: null,
+        keZaiCiZhiDao: true,
+      })
+      vi.mocked(huoQuJunShiJiLu).mockResolvedValue(chuangJianMoNiJiLuLieBiao())
+
+      const { wrapper } = await mountJunShiZhiDao()
+
+      const xuanRuiMuKapian = huoQuJunShiKapianByJunShiId(wrapper, 'xuanRuiMu')
+      const anNiu = xuanRuiMuKapian?.find('.qingqiu-anniu')
+      expect(anNiu?.text()).toBe(huoQuFanYi('junShi', 'junShiQingQiuZhiDao'))
+      expect(anNiu?.classes()).not.toContain('yi-zhidao')
+    })
+
+    it('任何军师指导中时所有其他军师请求按钮全部禁用', async () => {
+      vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+        zhuangTai: {
+          zhuang_tai: 'zhi_dao_zhong',
+          jun_shi_id: 'xuanRuiMu',
+          kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+        },
+        keZaiCiZhiDao: false,
+      })
+      vi.mocked(huoQuJunShiJiLu).mockResolvedValue([])
+
+      const { wrapper } = await mountJunShiZhiDao()
+
+      const ceShiJunShi1Kapian = huoQuJunShiKapianByJunShiId(wrapper, 'ceShiJunShi1')
+      const ceShiJunShi1AnNiu = ceShiJunShi1Kapian?.find('.qingqiu-anniu')
+      expect(ceShiJunShi1AnNiu?.attributes('disabled')).toBeDefined()
+
+      const ceShiJunShi2Kapian = huoQuJunShiKapianByJunShiId(wrapper, 'ceShiJunShi2')
+      const ceShiJunShi2AnNiu = ceShiJunShi2Kapian?.find('.qingqiu-anniu')
+      expect(ceShiJunShi2AnNiu?.attributes('disabled')).toBeDefined()
     })
   })
 
@@ -431,24 +502,33 @@ describe('FP-03 军师指导面板单级菜单化', () => {
 
       vi.mocked(huoQuJunShiZhiDaoZhuangTai)
         .mockResolvedValueOnce({
-          zhuang_tai: 'zhi_dao_zhong',
-          jun_shi_id: 'xuanRuiMu',
-          kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
-        })
-        .mockResolvedValueOnce({
-          zhuang_tai: 'zhi_dao_zhong',
-          jun_shi_id: 'xuanRuiMu',
-          kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
-        })
-        .mockResolvedValueOnce({
-          zhuang_tai: 'yi_wan_cheng',
-          jun_shi_id: 'xuanRuiMu',
-          kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
-          jie_guo: {
-            junShi: chuangJianMoNiJunShiLieBiao()[0],
-            zhiDaoNeiRong: '轮询完成后的指导内容',
-            shiJian: '2026-07-17T10:01:00.000Z',
+          zhuangTai: {
+            zhuang_tai: 'zhi_dao_zhong',
+            jun_shi_id: 'xuanRuiMu',
+            kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
           },
+          keZaiCiZhiDao: false,
+        })
+        .mockResolvedValueOnce({
+          zhuangTai: {
+            zhuang_tai: 'zhi_dao_zhong',
+            jun_shi_id: 'xuanRuiMu',
+            kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+          },
+          keZaiCiZhiDao: false,
+        })
+        .mockResolvedValueOnce({
+          zhuangTai: {
+            zhuang_tai: 'yi_wan_cheng',
+            jun_shi_id: 'xuanRuiMu',
+            kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+            jie_guo: {
+              junShi: chuangJianMoNiJunShiLieBiao()[0],
+              zhiDaoNeiRong: '轮询完成后的指导内容',
+              shiJian: '2026-07-17T10:01:00.000Z',
+            },
+          },
+          keZaiCiZhiDao: false,
         })
 
       const { wrapper } = await mountJunShiZhiDao()
@@ -479,21 +559,27 @@ describe('FP-03 军师指导面板单级菜单化', () => {
       vi.mocked(qingQiuJunShiZhiDao).mockRejectedValueOnce(cuoWu)
 
       vi.mocked(huoQuJunShiZhiDaoZhuangTai)
-        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ zhuangTai: null, keZaiCiZhiDao: true })
         .mockResolvedValueOnce({
-          zhuang_tai: 'zhi_dao_zhong',
-          jun_shi_id: 'xuanRuiMu',
-          kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+          zhuangTai: {
+            zhuang_tai: 'zhi_dao_zhong',
+            jun_shi_id: 'xuanRuiMu',
+            kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+          },
+          keZaiCiZhiDao: false,
         })
         .mockResolvedValueOnce({
-          zhuang_tai: 'yi_wan_cheng',
-          jun_shi_id: 'xuanRuiMu',
-          kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
-          jie_guo: {
-            junShi: chuangJianMoNiJunShiLieBiao()[0],
-            zhiDaoNeiRong: '轮询完成后的指导内容',
-            shiJian: '2026-07-17T10:01:00.000Z',
+          zhuangTai: {
+            zhuang_tai: 'yi_wan_cheng',
+            jun_shi_id: 'xuanRuiMu',
+            kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+            jie_guo: {
+              junShi: chuangJianMoNiJunShiLieBiao()[0],
+              zhiDaoNeiRong: '轮询完成后的指导内容',
+              shiJian: '2026-07-17T10:01:00.000Z',
+            },
           },
+          keZaiCiZhiDao: false,
         })
 
       const { wrapper } = await mountJunShiZhiDao()
@@ -574,7 +660,7 @@ describe('FP-04 军师指导"指导记录"独立入口', () => {
     vi.clearAllMocks()
     vi.mocked(huoQuJunShiLieBiao).mockResolvedValue(chuangJianMoNiJunShiLieBiao())
     vi.mocked(huoQuJunShiJiLu).mockResolvedValue(chuangJianMoNiJiLuLieBiao())
-    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue(null)
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({ zhuangTai: null, keZaiCiZhiDao: false })
     vi.mocked(qingQiuJunShiZhiDao).mockReset()
   })
 

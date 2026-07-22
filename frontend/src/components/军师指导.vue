@@ -44,7 +44,7 @@
             <button
               v-if="huoQuJunShiZhuangTai(junShi.id) === 'wei_zhi_dao'"
               class="qingqiu-anniu"
-              :disabled="!jiaoSeId || qingQiuZhongJunShiId !== null"
+              :disabled="!jiaoSeId || qingQiuZhongJunShiId !== null || dangQianZhuangTai?.zhuang_tai === 'zhi_dao_zhong'"
               @click="zhiXingQingQiu(junShi)"
             >
               {{ qingQiuZhongJunShiId === junShi.id ? huoQuFanYi('junShi', 'qingQiuZhong') : huoQuFanYi('junShi', 'junShiQingQiuZhiDao') }}
@@ -151,6 +151,7 @@ const router = useRouter()
 const junShiLieBiaoXuanXiang = ref<JunShiXinXi[]>([])
 const jiLuLieBiao = ref<JunShiJiLu[]>([])
 const dangQianZhuangTai = ref<JunShiZhiDaoZhuangTaiXinXi | null>(null)
+const keZaiCiZhiDao = ref(true)
 const qingQiuZhongJunShiId = ref<string | null>(null)
 const zhanKaiJunShiId = ref<string | null>(null)
 const cuoWuTiShiMap = ref<Record<string, string>>({})
@@ -185,10 +186,10 @@ function huoQuJunShiZhuangTai(junShiId: string): JunShiZhuangTaiLeiXing {
     dangQianZhuangTai.value?.zhuang_tai === 'yi_wan_cheng' &&
     dangQianZhuangTai.value.jun_shi_id === junShiId
   ) {
-    return 'yi_wan_cheng'
+    return keZaiCiZhiDao.value ? 'wei_zhi_dao' : 'yi_wan_cheng'
   }
   if (jiLuLieBiao.value.some((jiLu) => jiLu.jun_shi_id === junShiId)) {
-    return 'yi_wan_cheng'
+    return keZaiCiZhiDao.value ? 'wei_zhi_dao' : 'yi_wan_cheng'
   }
   return 'wei_zhi_dao'
 }
@@ -208,8 +209,9 @@ function huoQuZhiDaoJieGuo(junShiId: string): string | null {
 async function chaXunBingGengXinZhuangTai(): Promise<void> {
   if (!props.jiaoSeId) return
   try {
-    const zhuangTai = await huoQuJunShiZhiDaoZhuangTai(props.jiaoSeId)
+    const { zhuangTai, keZaiCiZhiDao: keZaiCi } = await huoQuJunShiZhiDaoZhuangTai(props.jiaoSeId)
     dangQianZhuangTai.value = zhuangTai
+    keZaiCiZhiDao.value = keZaiCi
     if (zhuangTai?.zhuang_tai === 'yi_wan_cheng') {
       tingZhiLunXun()
       await shuaXinJiLuLieBiao()
@@ -319,19 +321,20 @@ function tiaoZhuanZhiDaoJiLuXiangQing(jiLu: JunShiJiLu) {
 onMounted(async () => {
   jiaZaiZhong.value = true
   try {
-    const [lieBiao, jiLu, zhuangTai] = await Promise.all([
+    const [lieBiao, jiLu, zhuangTaiJieGuo] = await Promise.all([
       huoQuJunShiLieBiao(),
       props.jiaoSeId
         ? huoQuJunShiJiLu(props.jiaoSeId)
         : Promise.resolve([] as JunShiJiLu[]),
       props.jiaoSeId
         ? huoQuJunShiZhiDaoZhuangTai(props.jiaoSeId)
-        : Promise.resolve(null),
+        : Promise.resolve({ zhuangTai: null, keZaiCiZhiDao: true } as { zhuangTai: JunShiZhiDaoZhuangTaiXinXi | null; keZaiCiZhiDao: boolean }),
     ])
     junShiLieBiaoXuanXiang.value = lieBiao
     jiLuLieBiao.value = jiLu
-    dangQianZhuangTai.value = zhuangTai
-    if (zhuangTai?.zhuang_tai === 'zhi_dao_zhong') {
+    dangQianZhuangTai.value = zhuangTaiJieGuo.zhuangTai
+    keZaiCiZhiDao.value = zhuangTaiJieGuo.keZaiCiZhiDao
+    if (zhuangTaiJieGuo.zhuangTai?.zhuang_tai === 'zhi_dao_zhong') {
       qiDongLunXun()
     }
   } catch (e) {

@@ -99,12 +99,12 @@ export async function huoQuJunShiJiLu(jiaoSeId: string): Promise<JunShiJiLu[]> {
 
 export async function huoQuJunShiZhiDaoZhuangTai(
   jiaoSeId: string,
-): Promise<JunShiZhiDaoZhuangTaiXinXi | null> {
+): Promise<{ zhuangTai: JunShiZhiDaoZhuangTaiXinXi | null; keZaiCiZhiDao: boolean }> {
   const 响应 = await http.get<{
     cheng_gong: boolean
-    shu_ju: { zhuangTai: JunShiZhiDaoZhuangTaiXinXi | null }
+    shu_ju: { zhuangTai: JunShiZhiDaoZhuangTaiXinXi | null; keZaiCiZhiDao: boolean }
   }>(`/聊天/军师/状态/${jiaoSeId}`)
-  return 响应.data.shu_ju.zhuangTai
+  return { zhuangTai: 响应.data.shu_ju.zhuangTai, keZaiCiZhiDao: 响应.data.shu_ju.keZaiCiZhiDao }
 }
 
 export async function huoQuDangAnLieBiao(): Promise<DangAnXiangQing[]> {

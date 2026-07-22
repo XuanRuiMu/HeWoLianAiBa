@@ -282,9 +282,23 @@ export async function qingQiuJunShiZhiDao(
 export async function huoQuJunShiZhiDaoZhuangTaiXinXi(
   yong_hu_id: string,
   jiao_se_id: string,
-): Promise<{ zhuang_tai: JunShiZhiDaoZhuangTaiXinXi | null }> {
+): Promise<{ zhuang_tai: JunShiZhiDaoZhuangTaiXinXi | null; ke_zai_ci_zhi_dao: boolean }> {
   const zhuangTai = await huoQuJunShiZhiDaoZhuangTai(yong_hu_id, jiao_se_id)
-  return { zhuang_tai: zhuangTai }
+
+  if (zhuangTai?.zhuang_tai === 'zhi_dao_zhong') {
+    return { zhuang_tai: zhuangTai, ke_zai_ci_zhi_dao: false }
+  }
+
+  const xiaoXiJieGuo = await huoQuXiaoXiLieBiao({
+    yong_hu_id,
+    jiao_se_id,
+    ye_ma: 1,
+    mei_ye_tiao_shu: 999,
+  })
+  const dangQianHaXi = jiSuanLiaoTianHaXi(xiaoXiJieGuo.lie_biao)
+  const shiChongFu = await jianChaJunShiChongFu(yong_hu_id, jiao_se_id, dangQianHaXi)
+
+  return { zhuang_tai: zhuangTai, ke_zai_ci_zhi_dao: !shiChongFu }
 }
 
 async function huoQuJiaoSeJiBenXinXi(

@@ -374,7 +374,7 @@ luYou.get(
 
     try {
       const jieGuo = await huoQuJunShiZhiDaoZhuangTaiXinXi(yongHu.yongHuId, jiaoSeId)
-      return chengGongXiangYing(xiangYing, { zhuangTai: jieGuo.zhuang_tai })
+      return chengGongXiangYing(xiangYing, { zhuangTai: jieGuo.zhuang_tai, keZaiCiZhiDao: jieGuo.ke_zai_ci_zhi_dao })
     } catch (cuoWu) {
       console.error('获取军师指导状态失败', cuoWu)
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
