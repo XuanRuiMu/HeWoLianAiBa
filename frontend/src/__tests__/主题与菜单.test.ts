@@ -216,12 +216,36 @@ describe('FP-18 主题与UI', () => {
       expect(caiDanYuanMa).toMatch(/\.quanju-caidan\s*\{[^}]*height:\s*52px/)
     })
 
-    it('未登录时用户下拉菜单隐藏且位置不塌缩', async () => {
+    it('未登录时不渲染用户下拉菜单（位置空出不塌缩）', async () => {
       const { wrapper } = await mountCaiDan({ luJing: '/login' })
       expect(wrapper.find('.yonghu-xiala').exists()).toBe(false)
-      const yongHuXuanXiang = wrapper.find('.yonghu-xuanxiang')
-      expect(yongHuXuanXiang.exists()).toBe(true)
-      expect(yongHuXuanXiang.text()).toContain(huoQuFanYi('caidan', 'weiDengLu'))
+      expect(wrapper.find('.yonghu-xuanxiang').exists()).toBe(false)
+    })
+
+    it('已登录时所有页面用户下拉菜单均显示', async () => {
+      const feiLiaoTian = await mountCaiDan({ luJing: '/', dengLu: true })
+      expect(feiLiaoTian.wrapper.find('.yonghu-xuanxiang').exists()).toBe(true)
+      const liaoTian = await mountCaiDan({ luJing: '/chat/test123', dengLu: true })
+      const 聊天仓库 = 使用聊天仓库()
+      聊天仓库.jiaoSeXinXi = {
+        id: 'j1',
+        ming_zi: '测试角色',
+        wei_xin_ming: '小甜心',
+        xing_bie: 'nv',
+        nian_ling: 22,
+        wai_mao: '',
+        xing_ge: '',
+        bei_jing_gu_shi: '',
+        xi_hao: [],
+        yan_yu_feng_ge: '',
+        tou_xiang: '',
+        bei_jing_tu: null,
+        biao_qian: [],
+        re_du: 0,
+        chuang_jian_shi_jian: new Date().toISOString(),
+      }
+      await flushPromises()
+      expect(liaoTian.wrapper.find('.yonghu-xuanxiang').exists()).toBe(true)
     })
 
     it('主页不显示返回按钮', async () => {
@@ -422,10 +446,9 @@ describe('FP-18 主题与UI', () => {
       const shuruTishi = biaoTiZu.find('.duifang-shuru-tishi')
       expect(shuruTishi.exists()).toBe(true)
       expect(shuruTishi.text()).toBe(huoQuFanYi('liaoTian', 'duiFangZhengZaiShuRu'))
-      expect(wrapper.find('.caidan-zhong').classes()).toContain('liaotian-zhongxin')
     })
 
-    it('聊天页使用现代布局：左侧返回/主页、右侧军师/更多，隐藏用户下拉', async () => {
+    it('FP-19 聊天页菜单栏右侧包含主题切换+军师+通知+版本号+更多菜单（统一布局）', async () => {
       const { wrapper } = await mountCaiDan({ luJing: '/chat/test123', dengLu: true })
       const 聊天仓库 = 使用聊天仓库()
       聊天仓库.jiaoSeXinXi = {
@@ -447,19 +470,75 @@ describe('FP-18 主题与UI', () => {
       }
       await flushPromises()
 
-      expect(wrapper.find('.caidan-neirong').classes()).toContain('liaotian-caidan')
+      // 不再使用 liaotian-caidan / liaotian-zhongxin 双布局 class
+      expect(wrapper.find('.caidan-neirong').classes()).not.toContain('liaotian-caidan')
+      expect(wrapper.find('.caidan-zhong').classes()).not.toContain('liaotian-zhongxin')
+
+      // 聊天页统一布局：返回/主页可见
       const fanHui = wrapper.find('.fanhui-anniu')
       expect(fanHui.exists()).toBe(true)
       expect(fanHui.classes()).not.toContain('yincang')
       const zhuYe = wrapper.find('.zhuye-anniu')
       expect(zhuYe.exists()).toBe(true)
       expect(zhuYe.classes()).not.toContain('yincang')
-      expect(wrapper.find('.yonghu-xuanxiang').exists()).toBe(false)
+
+      // 已登录用户下拉菜单在聊天页也显示
+      expect(wrapper.find('.yonghu-xuanxiang').exists()).toBe(true)
+
+      // 右侧统一布局元素
+      expect(wrapper.find('.zhuti-qiehuan-anniu').exists()).toBe(true)
       expect(wrapper.find('.junshi-anniu').exists()).toBe(true)
-      expect(wrapper.find('.liaotian-gengduo').exists()).toBe(true)
+      expect(wrapper.find('.tongzhi-anniu').exists()).toBe(true)
+      expect(wrapper.find('.banben-wenben').exists()).toBe(true)
+      expect(wrapper.find('.qita-xuanxiang').exists()).toBe(true)
+      // 聊天页不再使用专用 .liaotian-gengduo
+      expect(wrapper.find('.liaotian-gengduo').exists()).toBe(false)
     })
 
-    it('聊天页更多菜单可展开并包含主题切换、协议与版本号', async () => {
+    it('FP-19 非聊天页菜单栏右侧包含主题切换+通知+版本号+更多菜单（无军师按钮）', async () => {
+      const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
+      expect(wrapper.find('.zhuti-qiehuan-anniu').exists()).toBe(true)
+      expect(wrapper.find('.junshi-anniu').exists()).toBe(false)
+      expect(wrapper.find('.tongzhi-anniu').exists()).toBe(true)
+      expect(wrapper.find('.banben-wenben').exists()).toBe(true)
+      expect(wrapper.find('.qita-xuanxiang').exists()).toBe(true)
+    })
+
+    it('FP-19 聊天页与非聊天页菜单栏使用同一套布局结构（caidan-zuo/zhong/you 共存）', async () => {
+      const feiLiaoTian = await mountCaiDan({ luJing: '/', dengLu: true })
+      expect(feiLiaoTian.wrapper.find('.caidan-zuo').exists()).toBe(true)
+      expect(feiLiaoTian.wrapper.find('.caidan-zhong').exists()).toBe(true)
+      expect(feiLiaoTian.wrapper.find('.caidan-you').exists()).toBe(true)
+
+      const liaoTian = await mountCaiDan({ luJing: '/chat/test123', dengLu: true })
+      const 聊天仓库 = 使用聊天仓库()
+      聊天仓库.jiaoSeXinXi = {
+        id: 'j1',
+        ming_zi: '测试角色',
+        wei_xin_ming: '小甜心',
+        xing_bie: 'nv',
+        nian_ling: 22,
+        wai_mao: '',
+        xing_ge: '',
+        bei_jing_gu_shi: '',
+        xi_hao: [],
+        yan_yu_feng_ge: '',
+        tou_xiang: '',
+        bei_jing_tu: null,
+        biao_qian: [],
+        re_du: 0,
+        chuang_jian_shi_jian: new Date().toISOString(),
+      }
+      await flushPromises()
+      expect(liaoTian.wrapper.find('.caidan-zuo').exists()).toBe(true)
+      expect(liaoTian.wrapper.find('.caidan-zhong').exists()).toBe(true)
+      expect(liaoTian.wrapper.find('.caidan-you').exists()).toBe(true)
+
+      // 聊天页与非聊天页菜单栏高度一致（同一 CSS 规则）
+      expect(caiDanYuanMa).toMatch(/\.quanju-caidan\s*\{[^}]*height:\s*52px/)
+    })
+
+    it('FP-19 聊天页更多菜单（qita-xuanxiang）可展开并包含用户协议与隐私政策', async () => {
       const { wrapper } = await mountCaiDan({ luJing: '/chat/test123', dengLu: true })
       const 聊天仓库 = 使用聊天仓库()
       聊天仓库.jiaoSeXinXi = {
@@ -481,13 +560,15 @@ describe('FP-18 主题与UI', () => {
       }
       await flushPromises()
 
-      await wrapper.find('.liaotian-gengduo').trigger('click')
+      await wrapper.find('.qita-xuanxiang').trigger('click')
       await flushPromises()
-      const xiala = wrapper.find('.liaotian-gengduo-xiala')
+      const xiala = wrapper.find('.qita-xiala')
       expect(xiala.exists()).toBe(true)
       expect(xiala.text()).toContain(huoQuFanYi('caidan', 'yongHuXieYi'))
       expect(xiala.text()).toContain(huoQuFanYi('caidan', 'yinSiZhengCe'))
-      expect(xiala.text()).toContain('1.0.0')
+      // 版本号直接以 .banben-wenben 形式可见，不再折叠在更多菜单内
+      expect(wrapper.find('.banben-wenben').exists()).toBe(true)
+      expect(wrapper.find('.banben-wenben').text()).toBe('1.0.0')
     })
 
     it('顶部栏流式布局不覆盖页面，主内容区无 margin-top 偏移', () => {

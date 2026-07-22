@@ -1,9 +1,6 @@
 <template>
   <nav class="quanju-caidan">
-    <div
-      class="caidan-neirong"
-      :class="{ 'liaotian-caidan': shiLiaoTianYe && 聊天仓库.jiaoSeXinXi }"
-    >
+    <div class="caidan-neirong">
       <div class="caidan-zuo">
         <button
           class="fanhui-anniu"
@@ -26,9 +23,8 @@
           <span class="zhuye-wenzi">{{ huoQuFanYi('caidan', 'zhuYe') }}</span>
         </button>
         <div
-          v-if="!shiLiaoTianYe"
+          v-if="用户仓库.dangQianYongHu"
           class="yonghu-xuanxiang"
-          :class="{ 'wei-deng-lu': !用户仓库.dangQianYongHu }"
           @click="qieHuanYongHuCaiDan"
         >
           <div class="yonghu-touxiang-xiao">
@@ -71,109 +67,63 @@
         </div>
       </div>
 
-      <div
-        class="caidan-zhong"
-        :class="{ 'liaotian-zhongxin': shiLiaoTianYe && 聊天仓库.jiaoSeXinXi }"
-      >
-        <template v-if="shiLiaoTianYe && 聊天仓库.jiaoSeXinXi">
-          <div class="liaotian-biaoti-zu">
-            <span class="jiaose-mingcheng-caidan">{{ xianShiJiaoSeMing }}</span>
-            <span v-if="聊天仓库.zhengZaiShuRu" class="duifang-shuru-tishi">
-              {{ huoQuFanYi('liaoTian', 'duiFangZhengZaiShuRu') }}
-            </span>
-          </div>
-        </template>
+      <div class="caidan-zhong">
+        <div v-if="shiLiaoTianYe && 聊天仓库.jiaoSeXinXi" class="liaotian-biaoti-zu">
+          <span class="jiaose-mingcheng-caidan">{{ xianShiJiaoSeMing }}</span>
+          <span v-if="聊天仓库.zhengZaiShuRu" class="duifang-shuru-tishi">
+            {{ huoQuFanYi('liaoTian', 'duiFangZhengZaiShuRu') }}
+          </span>
+        </div>
         <h1 v-else class="ye-mian-biao-ti">{{ dangQianYeMianBiaoTi }}</h1>
       </div>
 
       <div class="caidan-you">
-        <template v-if="shiLiaoTianYe && 聊天仓库.jiaoSeXinXi">
-          <button
-            class="junshi-anniu"
-            :title="huoQuFanYi('caidan', 'junShiZhiDao')"
-            :aria-label="huoQuFanYi('caidan', 'junShiZhiDao')"
-            @click="tongZhiJunShiZhiDao"
-          >
-            <span class="junshi-wenzi-quan">{{ huoQuFanYi('caidan', 'junShiZhiDao') }}</span>
-            <span class="junshi-wenzi-duan">{{ huoQuFanYi('caidan', 'junShi') }}</span>
-          </button>
-          <div class="liaotian-gengduo" @click="qieHuanLiaoTianGengDuoCaiDan">
-            <span class="gengduo-tubiao">⋯</span>
-            <span v-if="通知仓库.weiDuShu > 0" class="gengduo-badge" aria-hidden="true">{{
-              xianShiTongZhiShu
-            }}</span>
-            <Transition name="xiala">
-              <div
-                v-if="liaoTianGengDuoCaiDanZhanKai"
-                class="xiala-caidan liaotian-gengduo-xiala"
-                @click.stop
-              >
-                <button class="xiala-xiangmu" @click="qieHuanZhutiCaiDanZhong">
-                  <span class="xiala-tubiao">{{ zhutiAnNiuTuBiao }}</span>
-                  {{ zhutiAnNiuBiaoTi }}
-                </button>
-                <button
-                  v-if="用户仓库.dangQianYongHu"
-                  class="xiala-xiangmu"
-                  @click="jinRuTongZhiCaiDanZhong"
-                >
-                  {{ huoQuFanYi('caidan', 'tongZhi') }}
-                  <span v-if="通知仓库.weiDuShu > 0" class="xiala-badge">{{
-                    xianShiTongZhiShu
-                  }}</span>
-                </button>
-                <button class="xiala-xiangmu" @click="daKaiXieYi('yongHuXieYi')">
-                  {{ huoQuFanYi('caidan', 'yongHuXieYi') }}
-                </button>
-                <button class="xiala-xiangmu" @click="daKaiXieYi('yinSiZhengCe')">
-                  {{ huoQuFanYi('caidan', 'yinSiZhengCe') }}
-                </button>
-                <div class="xiala-fenge" />
-                <div class="xiala-xiangmu banben-xiangmu">
-                  {{ huoQuFanYi('caidan', 'banBenHao') }} {{ banBenHao }}
-                </div>
-              </div>
-            </Transition>
-          </div>
-        </template>
-        <template v-else>
-          <button
-            class="zhuti-qiehuan-anniu"
-            :title="zhutiAnNiuBiaoTi"
-            :aria-label="zhutiAnNiuBiaoTi"
-            @click="qieHuanZhuti"
-          >
-            <span class="zhuti-tubiao">{{ zhutiAnNiuTuBiao }}</span>
-          </button>
-          <button
-            v-if="用户仓库.dangQianYongHu"
-            class="tongzhi-anniu"
-            :aria-label="huoQuFanYi('caidan', 'tongZhi')"
-            @click="jinRuTongZhi"
-          >
-            <span class="tongzhi-tubiao">{{ huoQuFanYi('caidan', 'tongZhiTuBiao') }}</span>
-            <span v-if="通知仓库.weiDuShu > 0" class="tongzhi-badge">{{ xianShiTongZhiShu }}</span>
-          </button>
-          <span
-            class="banben-wenben"
-            :aria-label="`${huoQuFanYi('caidan', 'banBenHao')} ${banBenHao}`"
-            >{{ banBenHao }}</span
-          >
-          <div class="qita-xuanxiang" @click="qieHuanQitaCaiDan">
-            <span class="qita-tubiao">☰</span>
-            <span class="qita-wenzi">{{ huoQuFanYi('caidan', 'gengDuo') }}</span>
-            <Transition name="xiala">
-              <div v-if="qitaCaiDanZhanKai" class="xiala-caidan qita-xiala" @click.stop>
-                <button class="xiala-xiangmu" @click="daKaiXieYi('yongHuXieYi')">
-                  {{ huoQuFanYi('caidan', 'yongHuXieYi') }}
-                </button>
-                <button class="xiala-xiangmu" @click="daKaiXieYi('yinSiZhengCe')">
-                  {{ huoQuFanYi('caidan', 'yinSiZhengCe') }}
-                </button>
-              </div>
-            </Transition>
-          </div>
-        </template>
+        <button
+          class="zhuti-qiehuan-anniu"
+          :title="zhutiAnNiuBiaoTi"
+          :aria-label="zhutiAnNiuBiaoTi"
+          @click="qieHuanZhuti"
+        >
+          <span class="zhuti-tubiao">{{ zhutiAnNiuTuBiao }}</span>
+        </button>
+        <button
+          v-if="shiLiaoTianYe && 聊天仓库.jiaoSeXinXi"
+          class="junshi-anniu"
+          :title="huoQuFanYi('caidan', 'junShiZhiDao')"
+          :aria-label="huoQuFanYi('caidan', 'junShiZhiDao')"
+          @click="tongZhiJunShiZhiDao"
+        >
+          <span class="junshi-wenzi-quan">{{ huoQuFanYi('caidan', 'junShiZhiDao') }}</span>
+          <span class="junshi-wenzi-duan">{{ huoQuFanYi('caidan', 'junShi') }}</span>
+        </button>
+        <button
+          v-if="用户仓库.dangQianYongHu"
+          class="tongzhi-anniu"
+          :aria-label="huoQuFanYi('caidan', 'tongZhi')"
+          @click="jinRuTongZhi"
+        >
+          <span class="tongzhi-tubiao">{{ huoQuFanYi('caidan', 'tongZhiTuBiao') }}</span>
+          <span v-if="通知仓库.weiDuShu > 0" class="tongzhi-badge">{{ xianShiTongZhiShu }}</span>
+        </button>
+        <span
+          class="banben-wenben"
+          :aria-label="`${huoQuFanYi('caidan', 'banBenHao')} ${banBenHao}`"
+          >{{ banBenHao }}</span
+        >
+        <div class="qita-xuanxiang" @click="qieHuanQitaCaiDan">
+          <span class="qita-tubiao">☰</span>
+          <span class="qita-wenzi">{{ huoQuFanYi('caidan', 'gengDuo') }}</span>
+          <Transition name="xiala">
+            <div v-if="qitaCaiDanZhanKai" class="xiala-caidan qita-xiala" @click.stop>
+              <button class="xiala-xiangmu" @click="daKaiXieYi('yongHuXieYi')">
+                {{ huoQuFanYi('caidan', 'yongHuXieYi') }}
+              </button>
+              <button class="xiala-xiangmu" @click="daKaiXieYi('yinSiZhengCe')">
+                {{ huoQuFanYi('caidan', 'yinSiZhengCe') }}
+              </button>
+            </div>
+          </Transition>
+        </div>
       </div>
     </div>
 
@@ -329,7 +279,6 @@ const route = useRoute()
 
 const yongHuCaiDanZhanKai = ref(false)
 const qitaCaiDanZhanKai = ref(false)
-const liaoTianGengDuoCaiDanZhanKai = ref(false)
 const xieYiXianShi = ref(false)
 const xieYiLeiXing = ref<'yongHuXieYi' | 'yinSiZhengCe'>('yongHuXieYi')
 
@@ -448,20 +397,6 @@ function qieHuanYongHuCaiDan() {
 function qieHuanQitaCaiDan() {
   qitaCaiDanZhanKai.value = !qitaCaiDanZhanKai.value
   yongHuCaiDanZhanKai.value = false
-}
-
-function qieHuanLiaoTianGengDuoCaiDan() {
-  liaoTianGengDuoCaiDanZhanKai.value = !liaoTianGengDuoCaiDanZhanKai.value
-}
-
-function qieHuanZhutiCaiDanZhong() {
-  qieHuanZhuti()
-  liaoTianGengDuoCaiDanZhanKai.value = false
-}
-
-function jinRuTongZhiCaiDanZhong() {
-  jinRuTongZhi()
-  liaoTianGengDuoCaiDanZhanKai.value = false
 }
 
 function qieHuanZhuti() {
@@ -605,7 +540,6 @@ function dianJiWaiBuGuanBi(shiJian: MouseEvent) {
   if (!muBiao.closest('.quanju-caidan')) {
     yongHuCaiDanZhanKai.value = false
     qitaCaiDanZhanKai.value = false
-    liaoTianGengDuoCaiDanZhanKai.value = false
   }
 }
 
@@ -773,11 +707,7 @@ watch(
   min-width: 0;
 }
 
-.yonghu-xuanxiang.wei-deng-lu {
-  cursor: default;
-}
-
-.yonghu-xuanxiang:not(.wei-deng-lu):hover {
+.yonghu-xuanxiang:hover {
   background: var(--daohanglan-hover);
 }
 
@@ -926,50 +856,6 @@ watch(
   color: var(--daohanglan-ciwenben);
   line-height: 1.2;
   white-space: nowrap;
-}
-
-.liaotian-gengduo {
-  position: relative;
-  cursor: pointer;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  transition: background 0.2s ease;
-  flex-shrink: 0;
-}
-
-.liaotian-gengduo:hover {
-  background: var(--daohanglan-zhongbeijing);
-}
-
-.gengduo-tubiao {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--daohanglan-ciwenben);
-  line-height: 1;
-}
-
-.gengduo-badge {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9px;
-  background: var(--tongzhi-badge-beijing);
-  color: var(--tongzhi-badge-wenben);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 18px;
-  text-align: center;
-}
-
-.liaotian-gengduo-xiala {
-  right: 0;
 }
 
 .zhuti-qiehuan-anniu {

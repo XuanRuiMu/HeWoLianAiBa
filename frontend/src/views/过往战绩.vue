@@ -981,8 +981,8 @@ defineExpose({
 }
 
 .zhanji-kapian.sortable-ghost {
-  opacity: 0.3;
-  background: rgba(255, 107, 157, 0.08) !important;
+  opacity: 0 !important;
+  background: transparent !important;
 }
 
 .zhanji-kapian.sortable-chosen {
