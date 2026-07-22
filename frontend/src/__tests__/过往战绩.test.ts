@@ -626,14 +626,16 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(gouXuanGengXin[0].classes()).toContain('gouxuan-anniu--xuanzhong')
     })
 
-    it('拖拽手柄存在且带 aria-label', async () => {
+    it('整卡可拖拽且无拖拽手柄', async () => {
       const { huoQuDangAnLieBiao } = await import('@/api/聊天')
       vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
 
       const { wrapper } = await mountZuJian()
       const shouBing = wrapper.findAll('.tuozhuai-shoubing')
-      expect(shouBing.length).toBe(3)
-      expect(shouBing[0].attributes('aria-label')).toBe(huoQuFanYi('zhanJi', 'tuoDongPaiXu'))
+      expect(shouBing.length).toBe(0)
+      const kaPian = wrapper.findAll('.zhanji-kapian')
+      expect(kaPian.length).toBe(3)
+      expect(kaPian[0].attributes('style') ?? '').not.toContain('cursor')
     })
   })
 

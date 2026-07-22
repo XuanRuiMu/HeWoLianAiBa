@@ -92,7 +92,8 @@
             v-if="fenLeiZu[fenLei.zhuangTai].length > 0"
             v-model="fenLeiZu[fenLei.zhuangTai]"
             :animation="200"
-            handle=".tuozhuai-shoubing"
+            :filter="'.gouxuan-anniu, .caozuo-anniu'"
+            :prevent-on-filter="false"
             ghost-class="sortable-ghost"
             chosen-class="sortable-chosen"
             drag-class="sortable-drag"
@@ -191,17 +192,6 @@
                 >
                   {{ huoQuFanYi('zhanJi', 'shanChu') }}
                 </button>
-              </div>
-              <div
-                class="tuozhuai-shoubing"
-                :aria-label="huoQuFanYi('zhanJi', 'tuoDongPaiXu')"
-                :title="huoQuFanYi('zhanJi', 'tuoDongPaiXu')"
-              >
-                <svg viewBox="0 0 16 16" fill="currentColor">
-                  <circle cx="5" cy="3" r="1.3" /><circle cx="11" cy="3" r="1.3" />
-                  <circle cx="5" cy="8" r="1.3" /><circle cx="11" cy="8" r="1.3" />
-                  <circle cx="5" cy="13" r="1.3" /><circle cx="11" cy="13" r="1.3" />
-                </svg>
               </div>
             </div>
           </VueDraggable>
@@ -751,6 +741,7 @@ defineExpose({
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-radius: 16px;
+  cursor: grab;
   transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -982,35 +973,6 @@ defineExpose({
   border-color: transparent;
 }
 
-.tuozhuai-shoubing {
-  color: var(--wenben-ciuse);
-  cursor: grab;
-  display: flex;
-  align-items: center;
-  padding: 4px;
-  margin-left: 8px;
-  border-radius: 4px;
-  transition: color 0.15s ease;
-  touch-action: none;
-  opacity: 0.5;
-  flex-shrink: 0;
-}
-
-.tuozhuai-shoubing:hover {
-  color: var(--wenben-zhuse);
-  opacity: 1;
-}
-
-.tuozhuai-shoubing:active {
-  cursor: grabbing;
-}
-
-.tuozhuai-shoubing svg {
-  width: 14px;
-  height: 14px;
-  display: block;
-}
-
 .zhanji-liebiao-neirong {
   display: flex;
   flex-direction: column;
@@ -1050,8 +1012,7 @@ defineExpose({
 @media (prefers-reduced-motion: reduce) {
   .zhanji-kapian,
   .gouxuan-anniu,
-  .gouxuan-anniu svg,
-  .tuozhuai-shoubing {
+  .gouxuan-anniu svg {
     transition-duration: 0.01ms !important;
   }
   .zhanji-kapian.sortable-drag {
