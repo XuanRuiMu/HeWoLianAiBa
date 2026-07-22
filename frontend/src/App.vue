@@ -14,15 +14,35 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, onBeforeUnmount } from 'vue'
 import QuanJuCaiDan from '@/components/全局菜单.vue'
 import { 使用用户仓库 } from '@/stores/用户'
 
 const 用户仓库 = 使用用户仓库()
 
+function gengXinShiJiaoKouGaoDu() {
+  if (typeof window === 'undefined' || !window.visualViewport) return
+  const gaoDu = window.visualViewport.height
+  if (gaoDu > 0) {
+    document.documentElement.style.setProperty('--shi-jiao-kou-gao-du', `${gaoDu}px`)
+  }
+}
+
 onMounted(() => {
   if (用户仓库.令牌 && !用户仓库.dangQianYongHu) {
     用户仓库.jiaZaiYongHu()
+  }
+  gengXinShiJiaoKouGaoDu()
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', gengXinShiJiaoKouGaoDu)
+    window.visualViewport.addEventListener('scroll', gengXinShiJiaoKouGaoDu)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (window.visualViewport) {
+    window.visualViewport.removeEventListener('resize', gengXinShiJiaoKouGaoDu)
+    window.visualViewport.removeEventListener('scroll', gengXinShiJiaoKouGaoDu)
   }
 })
 </script>
@@ -30,8 +50,9 @@ onMounted(() => {
 <style scoped>
 .app-rongqi {
   width: 100%;
+  height: 100vh;
   height: 100dvh;
-  min-height: 100dvh;
+  height: var(--shi-jiao-kou-gao-du, 100dvh);
   display: flex;
   flex-direction: column;
   overflow: hidden;

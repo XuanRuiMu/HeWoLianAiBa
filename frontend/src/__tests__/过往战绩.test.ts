@@ -8,6 +8,15 @@ import 过往战绩 from '@/views/过往战绩.vue'
 import { huoQuFanYi } from '@/config/translations'
 import type { DangAnXiangQing } from '@/types'
 
+vi.mock('vue-draggable-plus', () => ({
+  VueDraggable: {
+    name: 'VueDraggable',
+    props: { modelValue: { type: Array, default: () => [] } },
+    emits: ['update:modelValue', 'end'],
+    template: '<div class="vue-draggable-stub"><slot /></div>',
+  },
+}))
+
 const guoWangZhanJiYuanMa = readFileSync(resolve(__dirname, '../views/过往战绩.vue'), 'utf8')
 
 vi.mock('@/api/聊天')
@@ -232,16 +241,16 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(wrapper.findAll('.zhanji-kapian').length).toBe(3)
     })
 
-    it('可通过复选框多选战绩', async () => {
+    it('可通过自定义勾选按钮多选战绩', async () => {
       const { huoQuDangAnLieBiao } = await import('@/api/聊天')
       vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
 
       const { wrapper } = await mountZuJian()
-      const xuanZeKuang = wrapper.findAll('.xuan-ze-kuang input')
-      expect(xuanZeKuang.length).toBe(3)
+      const gouXuan = wrapper.findAll('.gouxuan-anniu--kapian')
+      expect(gouXuan.length).toBe(3)
 
-      await xuanZeKuang[0].setValue(true)
-      await xuanZeKuang[1].setValue(true)
+      await gouXuan[0].trigger('click')
+      await gouXuan[1].trigger('click')
       await flushPromises()
 
       const gongJuLan = wrapper.find('.piliang-gongju-lan')
@@ -260,9 +269,9 @@ describe('FP-13 过往战绩与复盘前端', () => {
       vi.stubGlobal('confirm', () => true)
 
       const { wrapper } = await mountZuJian()
-      const xuanZeKuang = wrapper.findAll('.xuan-ze-kuang input')
-      await xuanZeKuang[0].setValue(true)
-      await xuanZeKuang[1].setValue(true)
+      const gouXuan = wrapper.findAll('.gouxuan-anniu--kapian')
+      await gouXuan[0].trigger('click')
+      await gouXuan[1].trigger('click')
       await flushPromises()
 
       await wrapper.find('.piliang-shanchu-anniu').trigger('click')
@@ -284,9 +293,9 @@ describe('FP-13 过往战绩与复盘前端', () => {
       vi.stubGlobal('confirm', () => false)
 
       const { wrapper } = await mountZuJian()
-      const xuanZeKuang = wrapper.findAll('.xuan-ze-kuang input')
-      await xuanZeKuang[0].setValue(true)
-      await xuanZeKuang[1].setValue(true)
+      const gouXuan = wrapper.findAll('.gouxuan-anniu--kapian')
+      await gouXuan[0].trigger('click')
+      await gouXuan[1].trigger('click')
       await flushPromises()
 
       await wrapper.find('.piliang-shanchu-anniu').trigger('click')
@@ -296,25 +305,41 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(wrapper.findAll('.zhanji-kapian').length).toBe(3)
     })
 
-    it('未选中任何记录时不显示批量工具栏', async () => {
+    it('FP-05 未选中任何记录时常驻显示批量工具栏（取消全选/批量删除 disabled）', async () => {
       const { huoQuDangAnLieBiao } = await import('@/api/聊天')
       vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
 
       const { wrapper } = await mountZuJian()
-      expect(wrapper.find('.piliang-gongju-lan').exists()).toBe(false)
-    })
-
-    it('选中任意记录后工具栏显示全选按钮', async () => {
-      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
-      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
-
-      const { wrapper } = await mountZuJian()
-      const xuanZeKuang = wrapper.findAll('.xuan-ze-kuang input')
-      await xuanZeKuang[0].setValue(true)
-      await flushPromises()
-
       const gongJuLan = wrapper.find('.piliang-gongju-lan')
       expect(gongJuLan.exists()).toBe(true)
+      expect(gongJuLan.text()).toContain('0')
+
+      const quanXuanAnNiu = wrapper.find('.quan-xuan-anniu')
+      expect(quanXuanAnNiu.attributes('disabled')).toBeFalsy()
+
+      const quXiaoAnNiu = wrapper.find('.quxiao-quanxuan-anniu')
+      expect(quXiaoAnNiu.attributes('disabled')).toBeDefined()
+
+      const piLiangAnNiu = wrapper.find('.piliang-shanchu-anniu')
+      expect(piLiangAnNiu.attributes('disabled')).toBeDefined()
+    })
+
+    it('FP-05 选中任意记录后取消全选/批量删除按钮启用', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const gouXuan = wrapper.findAll('.gouxuan-anniu--kapian')
+      await gouXuan[0].trigger('click')
+      await flushPromises()
+
+      const quXiaoAnNiu = wrapper.find('.quxiao-quanxuan-anniu')
+      expect(quXiaoAnNiu.attributes('disabled')).toBeFalsy()
+
+      const piLiangAnNiu = wrapper.find('.piliang-shanchu-anniu')
+      expect(piLiangAnNiu.attributes('disabled')).toBeFalsy()
+
+      const gongJuLan = wrapper.find('.piliang-gongju-lan')
       expect(gongJuLan.text()).toContain(huoQuFanYi('zhanJi', 'quanXuan'))
     })
 
@@ -323,10 +348,6 @@ describe('FP-13 过往战绩与复盘前端', () => {
       vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
 
       const { wrapper } = await mountZuJian()
-      const xuanZeKuang = wrapper.findAll('.xuan-ze-kuang input')
-      await xuanZeKuang[0].setValue(true)
-      await flushPromises()
-
       await wrapper.find('.quan-xuan-anniu').trigger('click')
       await flushPromises()
 
@@ -335,25 +356,22 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(wrapper.find('.xuan-ze-shu-liang').text()).toContain('3')
     })
 
-    it('全部选中时全选按钮变为取消全选并点击清空选择', async () => {
+    it('FP-05 全部选中后点击取消全选按钮清空选择', async () => {
       const { huoQuDangAnLieBiao } = await import('@/api/聊天')
       vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
 
       const { wrapper } = await mountZuJian()
-      const xuanZeKuang = wrapper.findAll('.xuan-ze-kuang input')
-      await xuanZeKuang[0].setValue(true)
-      await xuanZeKuang[1].setValue(true)
-      await xuanZeKuang[2].setValue(true)
+      await wrapper.find('.quan-xuan-anniu').trigger('click')
+      await flushPromises()
+      expect(wrapper.findAll('.zhanji-kapian.xuanZhong').length).toBe(3)
+
+      const quXiaoAnNiu = wrapper.find('.quxiao-quanxuan-anniu')
+      expect(quXiaoAnNiu.attributes('disabled')).toBeFalsy()
+      await quXiaoAnNiu.trigger('click')
       await flushPromises()
 
-      const quanXuanAnNiu = wrapper.find('.quan-xuan-anniu')
-      expect(quanXuanAnNiu.text()).toBe(huoQuFanYi('zhanJi', 'quXiaoQuanXuan'))
-
-      await quanXuanAnNiu.trigger('click')
-      await flushPromises()
-
-      expect(wrapper.find('.piliang-gongju-lan').exists()).toBe(false)
       expect(wrapper.findAll('.zhanji-kapian.xuanZhong').length).toBe(0)
+      expect(wrapper.find('.xuan-ze-shu-liang').text()).toContain('0')
     })
 
     it('每个非空分类标题旁显示全选该分类按钮', async () => {
@@ -396,7 +414,6 @@ describe('FP-13 过往战绩与复盘前端', () => {
       await flushPromises()
 
       expect(wrapper.findAll('.zhanji-kapian.xuanZhong').length).toBe(0)
-      expect(wrapper.find('.piliang-gongju-lan').exists()).toBe(false)
     })
 
     it('拖拽排序后持久化到 localStorage 并在重新加载时恢复', async () => {
@@ -424,7 +441,7 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(localStorage.getItem('zhanJiPaiXu')).toContain('dang-an-1')
     })
 
-    it('FP-09 拖拽卡片后视图顺序立即更新（无需手动刷新）', async () => {
+    it('FP-05 拖拽排序后顺序持久化（mock vDraggable onEnd 回调）', async () => {
       const { huoQuDangAnLieBiao } = await import('@/api/聊天')
       const lieBiao: DangAnXiangQing[] = [
         {
@@ -474,27 +491,20 @@ describe('FP-13 过往战绩与复盘前端', () => {
       )
 
       const { wrapper } = await mountZuJian()
-      const fenLeiZu = wrapper.findAll('.zhanji-fenlei-zu')[0]
-      const kaPian = fenLeiZu.findAll('.zhanji-kapian')
-      expect(kaPian.length).toBe(2)
-      expect(kaPian[0].text()).toContain('进行中A')
-      expect(kaPian[1].text()).toContain('进行中B')
+      const fenLeiZu0 = wrapper.findAll('.zhanji-fenlei-zu')[0]
+      const kaPian0 = fenLeiZu0.findAll('.zhanji-kapian')
+      expect(kaPian0.length).toBe(2)
+      expect(kaPian0[0].text()).toContain('进行中A')
+      expect(kaPian0[1].text()).toContain('进行中B')
 
-      const dataTransfer = {
-        effectAllowed: 'move' as const,
-        dropEffect: 'move' as const,
-        data: {} as Record<string, string>,
-        setData(type: string, val: string) {
-          this.data[type] = val
-        },
-        getData(type: string) {
-          return this.data[type] || ''
-        },
-      }
-      await kaPian[0].trigger('dragstart', { dataTransfer })
-      await kaPian[1].trigger('dragover', { dataTransfer })
-      await kaPian[1].trigger('drop', { dataTransfer })
-      await kaPian[0].trigger('dragend')
+      const fenLeiZuRef = (wrapper.vm as unknown as {
+        fenLeiZu: Record<string, DangAnXiangQing[]>
+      }).fenLeiZu
+      const oldArr = [...fenLeiZuRef.jinxingzhong]
+      fenLeiZuRef.jinxingzhong = [oldArr[1], oldArr[0]]
+      ;(
+        wrapper.vm as unknown as { onTuoZhuaiJieShu: (zhuangTai: string) => void }
+      ).onTuoZhuaiJieShu('jinxingzhong')
       await flushPromises()
 
       const xinKaPian = wrapper.findAll('.zhanji-fenlei-zu')[0].findAll('.zhanji-kapian')
@@ -528,6 +538,102 @@ describe('FP-13 过往战绩与复盘前端', () => {
         /\.zhanji-liebiao::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*var\(--gundong-tiao-beijing\)/,
       )
       expect(guoWangZhanJiYuanMa).toMatch(/\.zhanji-liebiao::-webkit-scrollbar-thumb:hover/)
+    })
+  })
+
+  describe('FP-05 勾选组件三态视觉', () => {
+    it('未选中时全局勾选框为未选态（无 xuanzhong/bufen 类）', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const quanJuGouXuan = wrapper.find('.gouxuan-anniu--quanju')
+      expect(quanJuGouXuan.exists()).toBe(true)
+      expect(quanJuGouXuan.classes()).not.toContain('gouxuan-anniu--xuanzhong')
+      expect(quanJuGouXuan.classes()).not.toContain('gouxuan-anniu--bufen')
+    })
+
+    it('选中部分记录时全局勾选框为部分选中态（bufen 类）', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const gouXuan = wrapper.findAll('.gouxuan-anniu--kapian')
+      await gouXuan[0].trigger('click')
+      await flushPromises()
+
+      const quanJuGouXuan = wrapper.find('.gouxuan-anniu--quanju')
+      expect(quanJuGouXuan.classes()).toContain('gouxuan-anniu--bufen')
+      expect(quanJuGouXuan.classes()).not.toContain('gouxuan-anniu--xuanzhong')
+    })
+
+    it('全部选中时全局勾选框为选中态（xuanzhong 类）', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      await wrapper.find('.quan-xuan-anniu').trigger('click')
+      await flushPromises()
+
+      const quanJuGouXuan = wrapper.find('.gouxuan-anniu--quanju')
+      expect(quanJuGouXuan.classes()).toContain('gouxuan-anniu--xuanzhong')
+      expect(quanJuGouXuan.classes()).not.toContain('gouxuan-anniu--bufen')
+    })
+
+    it('卡片勾选框选中时添加 xuanzhong 类', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const gouXuan = wrapper.findAll('.gouxuan-anniu--kapian')
+      expect(gouXuan[0].classes()).not.toContain('gouxuan-anniu--xuanzhong')
+
+      await gouXuan[0].trigger('click')
+      await flushPromises()
+
+      const gouXuanGengXin = wrapper.findAll('.gouxuan-anniu--kapian')
+      expect(gouXuanGengXin[0].classes()).toContain('gouxuan-anniu--xuanzhong')
+    })
+
+    it('勾选按钮有 role=checkbox 和 aria-checked 属性', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const gouXuan = wrapper.findAll('.gouxuan-anniu--kapian')
+      expect(gouXuan[0].attributes('role')).toBe('checkbox')
+      expect(gouXuan[0].attributes('aria-checked')).toBe('false')
+
+      await gouXuan[0].trigger('click')
+      await flushPromises()
+
+      const gouXuanGengXin = wrapper.findAll('.gouxuan-anniu--kapian')
+      expect(gouXuanGengXin[0].attributes('aria-checked')).toBe('true')
+    })
+
+    it('勾选按钮支持键盘 Space 切换', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const gouXuan = wrapper.findAll('.gouxuan-anniu--kapian')
+      expect(gouXuan[0].attributes('tabindex')).toBe('0')
+
+      await gouXuan[0].trigger('keydown', { key: ' ' })
+      await flushPromises()
+
+      const gouXuanGengXin = wrapper.findAll('.gouxuan-anniu--kapian')
+      expect(gouXuanGengXin[0].classes()).toContain('gouxuan-anniu--xuanzhong')
+    })
+
+    it('拖拽手柄存在且带 aria-label', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const shouBing = wrapper.findAll('.tuozhuai-shoubing')
+      expect(shouBing.length).toBe(3)
+      expect(shouBing[0].attributes('aria-label')).toBe(huoQuFanYi('zhanJi', 'tuoDongPaiXu'))
     })
   })
 

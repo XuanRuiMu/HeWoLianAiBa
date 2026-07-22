@@ -8,64 +8,127 @@
         {{ huoQuFanYi('zhanJi', 'zanWuZhanJi') }}
       </div>
       <template v-else>
-        <div v-if="xuanZhongIds.size > 0" class="piliang-gongju-lan">
-          <span class="xuan-ze-shu-liang">
-            {{ huoQuFanYi('zhanJi', 'yiXuanZe').replace('{条}', String(xuanZhongIds.size)) }}
-          </span>
-          <div class="piliang-anniu-zu">
-            <button class="quan-xuan-anniu" @click="qieHuanQuanXuan">
-              {{ huoQuFanYi('zhanJi', suoYouQuanXuan ? 'quXiaoQuanXuan' : 'quanXuan') }}
+        <div
+          class="piliang-gongju-lan"
+          :class="{ 'piliang-gongju-lan--kong': xuanZhongIds.size === 0 }"
+        >
+          <div class="quanju-gouxuan-zu">
+            <button
+              class="gouxuan-anniu gouxuan-anniu--quanju"
+              :class="{
+                'gouxuan-anniu--xuanzhong': quanJuGouXuanZhuangTai === 'checked',
+                'gouxuan-anniu--bufen': quanJuGouXuanZhuangTai === 'indeterminate',
+              }"
+              role="checkbox"
+              :aria-checked="
+                quanJuGouXuanZhuangTai === 'checked'
+                  ? 'true'
+                  : quanJuGouXuanZhuangTai === 'indeterminate'
+                    ? 'mixed'
+                    : 'false'
+              "
+              :aria-label="huoQuFanYi('zhanJi', 'quanXuan')"
+              tabindex="0"
+              @click="qieHuanQuanXuan"
+              @keydown.space.prevent="qieHuanQuanXuan"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
             </button>
-            <button class="piliang-shanchu-anniu" @click="piLiangShanChu">
+            <span
+              class="xuan-ze-shu-liang"
+              :class="{ 'xuan-ze-shu-liang--kong': xuanZhongIds.size === 0 }"
+            >
+              {{ huoQuFanYi('zhanJi', 'yiXuanZe').replace('{条}', String(xuanZhongIds.size)) }}
+            </span>
+          </div>
+          <div class="piliang-anniu-zu">
+            <button class="quan-xuan-anniu" @click="quanBuXuanZe">
+              {{ huoQuFanYi('zhanJi', 'quanXuan') }}
+            </button>
+            <button
+              class="quxiao-quanxuan-anniu"
+              :disabled="xuanZhongIds.size === 0"
+              @click="qingKongXuanZe"
+            >
+              {{ huoQuFanYi('zhanJi', 'quXiaoQuanXuan') }}
+            </button>
+            <button
+              class="piliang-shanchu-anniu"
+              :disabled="xuanZhongIds.size === 0"
+              @click="piLiangShanChu"
+            >
               {{ huoQuFanYi('zhanJi', 'piLiangShanChu') }}
             </button>
           </div>
         </div>
-        <div v-for="fenLei in fenLeiLieBiao" :key="fenLei.zhuangTai" class="zhanji-fenlei-zu">
+        <div v-for="fenLei in fenLeiXinXiList" :key="fenLei.zhuangTai" class="zhanji-fenlei-zu">
           <h2 class="zhanji-fenlei-biaoti">
             <span class="fenlei-tubiao">{{ fenLei.tuBiao }}</span>
             {{ fenLei.biaoTi }}
-            <span class="fenlei-shu-liang">{{ fenLei.dangAn.length }}</span>
+            <span class="fenlei-shu-liang">{{ fenLeiZu[fenLei.zhuangTai].length }}</span>
             <button
-              v-if="fenLei.dangAn.length > 0"
+              v-if="fenLeiZu[fenLei.zhuangTai].length > 0"
               class="fenlei-quan-xuan-anniu"
-              @click="qieHuanFenLeiQuanXuan(fenLei)"
+              @click="qieHuanFenLeiQuanXuan(fenLei.zhuangTai)"
             >
               {{
                 huoQuFanYi(
                   'zhanJi',
-                  fenLeiQuanXuanZhuangTai(fenLei) ? 'quXiaoQuanXuan' : 'quanXuanGaiFenLei',
+                  fenLeiQuanXuanZhuangTai(fenLei.zhuangTai) ? 'quXiaoQuanXuan' : 'quanXuanGaiFenLei',
                 )
               }}
             </button>
           </h2>
-          <TransitionGroup
-            v-if="fenLei.dangAn.length > 0"
-            name="liebiao-guodu"
-            tag="div"
+          <VueDraggable
+            v-if="fenLeiZu[fenLei.zhuangTai].length > 0"
+            v-model="fenLeiZu[fenLei.zhuangTai]"
+            :animation="200"
+            handle=".tuozhuai-shoubing"
+            ghost-class="sortable-ghost"
+            chosen-class="sortable-chosen"
+            drag-class="sortable-drag"
+            :group="{ name: fenLei.zhuangTai, pull: false, put: false }"
             class="zhanji-liebiao-neirong"
+            @end="onTuoZhuaiJieShu(fenLei.zhuangTai)"
           >
             <div
-              v-for="(dangAn, suoYin) in fenLei.dangAn"
+              v-for="(dangAn, suoYin) in fenLeiZu[fenLei.zhuangTai]"
               :key="dangAn.id ?? `zhanji-${fenLei.zhuangTai}-${suoYin}`"
               class="zhanji-kapian"
-              :class="{
-                xuanZhong: dangAn.id && xuanZhongIds.has(dangAn.id),
-                tuoZhuaiZhong: tuoZhuaiId === dangAn.id,
-              }"
-              draggable="true"
-              @dragstart="kaiShiTuoZhuai($event, dangAn, fenLei.zhuangTai)"
-              @dragover="tuoZhuaiJingGuo($event, dangAn, fenLei.zhuangTai)"
-              @drop="jieShouTuoZhuai($event, dangAn, fenLei.zhuangTai)"
-              @dragend="jieShuTuoZhuai"
+              :class="{ xuanZhong: dangAn.id && xuanZhongIds.has(dangAn.id) }"
             >
-              <label class="xuan-ze-kuang" @click.stop>
-                <input
-                  type="checkbox"
-                  :checked="dangAn.id ? xuanZhongIds.has(dangAn.id) : false"
-                  @change="qieHuanXuanZe(dangAn, $event)"
-                />
-              </label>
+              <button
+                class="gouxuan-anniu gouxuan-anniu--kapian"
+                :class="{
+                  'gouxuan-anniu--xuanzhong': dangAn.id && xuanZhongIds.has(dangAn.id),
+                }"
+                role="checkbox"
+                :aria-checked="dangAn.id && xuanZhongIds.has(dangAn.id) ? 'true' : 'false'"
+                :aria-label="huoQuFanYi('zhanJi', 'gouXuan').replace('{名字}', dangAn.jiao_se_ming_zi ?? '')"
+                tabindex="0"
+                @click.stop="qieHuanXuanZe(dangAn)"
+                @keydown.space.prevent.stop="qieHuanXuanZe(dangAn)"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </button>
               <div class="zhanji-zuo">
                 <div class="jiaose-touxiang">
                   {{
@@ -129,8 +192,19 @@
                   {{ huoQuFanYi('zhanJi', 'shanChu') }}
                 </button>
               </div>
+              <div
+                class="tuozhuai-shoubing"
+                :aria-label="huoQuFanYi('zhanJi', 'tuoDongPaiXu')"
+                :title="huoQuFanYi('zhanJi', 'tuoDongPaiXu')"
+              >
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                  <circle cx="5" cy="3" r="1.3" /><circle cx="11" cy="3" r="1.3" />
+                  <circle cx="5" cy="8" r="1.3" /><circle cx="11" cy="8" r="1.3" />
+                  <circle cx="5" cy="13" r="1.3" /><circle cx="11" cy="13" r="1.3" />
+                </svg>
+              </div>
             </div>
-          </TransitionGroup>
+          </VueDraggable>
           <div v-else class="fenlei-kong-zhuangtai">
             {{ fenLei.kongWenBen }}
           </div>
@@ -141,21 +215,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { VueDraggable } from 'vue-draggable-plus'
 import { huoQuDangAnLieBiao, shanChuDangAn, piLiangShanChuDangAn } from '@/api/聊天'
 import type { 档案详情 } from '@/types'
 import { huoQuFanYi } from '@/config/translations'
 import { 使用用户仓库 } from '@/stores/用户'
 
+type FenLeiZhuangTai = 'jinxingzhong' | 'shengli' | 'shibai'
+
+interface FenLeiXinXi {
+  zhuangTai: FenLeiZhuangTai
+  tuBiao: string
+  biaoTi: string
+  kongWenBen: string
+}
+
 const router = useRouter()
 const yongHuCangKu = 使用用户仓库()
-const dangAnLieBiao = ref<档案详情[]>([])
 const jiaZaiZhong = ref(true)
 const xuanZhongIds = ref<Set<string>>(new Set())
-const tuoZhuaiId = ref<string | null>(null)
-const tuoZhuaiMuBiaoId = ref<string | null>(null)
-const paiXuMap = ref<Record<FenLeiZhuangTai, string[]>>({
+const fenLeiZu = reactive<Record<FenLeiZhuangTai, 档案详情[]>>({
   jinxingzhong: [],
   shengli: [],
   shibai: [],
@@ -166,15 +247,32 @@ const paiXuCunChuJian = computed(() => {
   return yongHuId ? `zhanJiPaiXu_${yongHuId}` : 'zhanJiPaiXu'
 })
 
-type FenLeiZhuangTai = 'jinxingzhong' | 'shengli' | 'shibai'
+const fenLeiXinXiList = computed<FenLeiXinXi[]>(() => [
+  {
+    zhuangTai: 'jinxingzhong',
+    tuBiao: '⏳',
+    biaoTi: huoQuFanYi('zhanJi', 'fenLeiJinXingZhong'),
+    kongWenBen: huoQuFanYi('zhanJi', 'zanWuJinXingZhong'),
+  },
+  {
+    zhuangTai: 'shengli',
+    tuBiao: '🏆',
+    biaoTi: huoQuFanYi('zhanJi', 'fenLeiShengLi'),
+    kongWenBen: huoQuFanYi('zhanJi', 'zanWuShengLi'),
+  },
+  {
+    zhuangTai: 'shibai',
+    tuBiao: '💔',
+    biaoTi: huoQuFanYi('zhanJi', 'fenLeiShiBai'),
+    kongWenBen: huoQuFanYi('zhanJi', 'zanWuShiBai'),
+  },
+])
 
-interface FenLeiXinXi {
-  zhuangTai: FenLeiZhuangTai
-  tuBiao: string
-  biaoTi: string
-  kongWenBen: string
-  dangAn: 档案详情[]
-}
+const dangAnLieBiao = computed<档案详情[]>(() => [
+  ...fenLeiZu.jinxingzhong,
+  ...fenLeiZu.shengli,
+  ...fenLeiZu.shibai,
+])
 
 function huoQuPaiXuMap(): Record<FenLeiZhuangTai, string[]> {
   try {
@@ -192,7 +290,6 @@ function huoQuPaiXuMap(): Record<FenLeiZhuangTai, string[]> {
 }
 
 function baoCunPaiXuMap(map: Record<FenLeiZhuangTai, string[]>) {
-  paiXuMap.value = { ...map }
   try {
     localStorage.setItem(paiXuCunChuJian.value, JSON.stringify(map))
   } catch {
@@ -226,44 +323,21 @@ function huoQuFenLeiZhuangTai(item: 档案详情): FenLeiZhuangTai {
 }
 
 const suoYouQuanXuan = computed(() => {
-  const keXuanIds = dangAnLieBiao.value.map((item) => item.id).filter((id): id is string => !!id)
+  const keXuanIds = dangAnLieBiao.value
+    .map((item) => item.id)
+    .filter((id): id is string => !!id)
   return keXuanIds.length > 0 && keXuanIds.every((id) => xuanZhongIds.value.has(id))
 })
 
-const fenLeiLieBiao = computed<FenLeiXinXi[]>(() => {
-  const map = paiXuMap.value
-  const jinXingZhong: 档案详情[] = []
-  const shengLi: 档案详情[] = []
-  const shiBai: 档案详情[] = []
-  for (const item of dangAnLieBiao.value) {
-    const fenLei = huoQuFenLeiZhuangTai(item)
-    if (fenLei === 'jinxingzhong') jinXingZhong.push(item)
-    else if (fenLei === 'shengli') shengLi.push(item)
-    else shiBai.push(item)
-  }
-  return [
-    {
-      zhuangTai: 'jinxingzhong',
-      tuBiao: '⏳',
-      biaoTi: huoQuFanYi('zhanJi', 'fenLeiJinXingZhong'),
-      kongWenBen: huoQuFanYi('zhanJi', 'zanWuJinXingZhong'),
-      dangAn: yingYongPaiXuLieBiao(jinXingZhong, map.jinxingzhong),
-    },
-    {
-      zhuangTai: 'shengli',
-      tuBiao: '🏆',
-      biaoTi: huoQuFanYi('zhanJi', 'fenLeiShengLi'),
-      kongWenBen: huoQuFanYi('zhanJi', 'zanWuShengLi'),
-      dangAn: yingYongPaiXuLieBiao(shengLi, map.shengli),
-    },
-    {
-      zhuangTai: 'shibai',
-      tuBiao: '💔',
-      biaoTi: huoQuFanYi('zhanJi', 'fenLeiShiBai'),
-      kongWenBen: huoQuFanYi('zhanJi', 'zanWuShiBai'),
-      dangAn: yingYongPaiXuLieBiao(shiBai, map.shibai),
-    },
-  ]
+const buFenXuanZe = computed(() => {
+  const zongShu = dangAnLieBiao.value.filter((item) => item.id).length
+  return xuanZhongIds.value.size > 0 && xuanZhongIds.value.size < zongShu
+})
+
+const quanJuGouXuanZhuangTai = computed<'unchecked' | 'indeterminate' | 'checked'>(() => {
+  if (suoYouQuanXuan.value) return 'checked'
+  if (buFenXuanZe.value) return 'indeterminate'
+  return 'unchecked'
 })
 
 function geShiHuaRiQiShiJian(shiJian: string): string {
@@ -310,21 +384,35 @@ function zhuangTaiYangShi(jieGuoLeiXing: string | undefined): string {
 async function jiaZaiShuJu() {
   jiaZaiZhong.value = true
   try {
-    dangAnLieBiao.value = await huoQuDangAnLieBiao()
+    const list = await huoQuDangAnLieBiao()
+    const map = huoQuPaiXuMap()
+    const jinXingZhong: 档案详情[] = []
+    const shengLi: 档案详情[] = []
+    const shiBai: 档案详情[] = []
+    for (const item of list) {
+      const fenLei = huoQuFenLeiZhuangTai(item)
+      if (fenLei === 'jinxingzhong') jinXingZhong.push(item)
+      else if (fenLei === 'shengli') shengLi.push(item)
+      else shiBai.push(item)
+    }
+    fenLeiZu.jinxingzhong = yingYongPaiXuLieBiao(jinXingZhong, map.jinxingzhong)
+    fenLeiZu.shengli = yingYongPaiXuLieBiao(shengLi, map.shengli)
+    fenLeiZu.shibai = yingYongPaiXuLieBiao(shiBai, map.shibai)
   } catch {
-    dangAnLieBiao.value = []
+    fenLeiZu.jinxingzhong = []
+    fenLeiZu.shengli = []
+    fenLeiZu.shibai = []
   } finally {
     jiaZaiZhong.value = false
   }
 }
 
-function qieHuanXuanZe(dangAn: 档案详情, event: Event) {
+function qieHuanXuanZe(dangAn: 档案详情) {
   if (!dangAn.id) return
-  const muBiao = event.target as HTMLInputElement
-  if (muBiao.checked) {
-    xuanZhongIds.value.add(dangAn.id)
-  } else {
+  if (xuanZhongIds.value.has(dangAn.id)) {
     xuanZhongIds.value.delete(dangAn.id)
+  } else {
+    xuanZhongIds.value.add(dangAn.id)
   }
 }
 
@@ -338,15 +426,29 @@ function qieHuanQuanXuan() {
   }
 }
 
-function fenLeiQuanXuanZhuangTai(fenLei: FenLeiXinXi): boolean {
-  const fenLeiIds = fenLei.dangAn.map((item) => item.id).filter((id): id is string => !!id)
+function quanBuXuanZe() {
+  for (const item of dangAnLieBiao.value) {
+    if (item.id) xuanZhongIds.value.add(item.id)
+  }
+}
+
+function qingKongXuanZe() {
+  xuanZhongIds.value.clear()
+}
+
+function fenLeiQuanXuanZhuangTai(zhuangTai: FenLeiZhuangTai): boolean {
+  const fenLeiIds = fenLeiZu[zhuangTai]
+    .map((item) => item.id)
+    .filter((id): id is string => !!id)
   return fenLeiIds.length > 0 && fenLeiIds.every((id) => xuanZhongIds.value.has(id))
 }
 
-function qieHuanFenLeiQuanXuan(fenLei: FenLeiXinXi) {
-  const fenLeiIds = fenLei.dangAn.map((item) => item.id).filter((id): id is string => !!id)
+function qieHuanFenLeiQuanXuan(zhuangTai: FenLeiZhuangTai) {
+  const fenLeiIds = fenLeiZu[zhuangTai]
+    .map((item) => item.id)
+    .filter((id): id is string => !!id)
   if (fenLeiIds.length === 0) return
-  if (fenLeiQuanXuanZhuangTai(fenLei)) {
+  if (fenLeiQuanXuanZhuangTai(zhuangTai)) {
     for (const id of fenLeiIds) {
       xuanZhongIds.value.delete(id)
     }
@@ -361,7 +463,8 @@ async function shanChuZhanJi(dangAn: 档案详情) {
   if (!dangAn.id || !confirm(huoQuFanYi('zhanJi', 'queRenShanChu'))) return
   try {
     await shanChuDangAn(dangAn.id)
-    dangAnLieBiao.value = dangAnLieBiao.value.filter((item) => item.id !== dangAn.id)
+    const fenLei = huoQuFenLeiZhuangTai(dangAn)
+    fenLeiZu[fenLei] = fenLeiZu[fenLei].filter((item) => item.id !== dangAn.id)
     xuanZhongIds.value.delete(dangAn.id)
   } catch (cuoWu) {
     console.error('删除战绩失败', cuoWu)
@@ -380,7 +483,9 @@ async function piLiangShanChu() {
     const jieGuo = await piLiangShanChuDangAn(ids)
     if (jieGuo.cheng_gong) {
       const shanChuSet = new Set(jieGuo.shan_chu_ids)
-      dangAnLieBiao.value = dangAnLieBiao.value.filter((item) => !shanChuSet.has(item.id))
+      fenLeiZu.jinxingzhong = fenLeiZu.jinxingzhong.filter((item) => !shanChuSet.has(item.id))
+      fenLeiZu.shengli = fenLeiZu.shengli.filter((item) => !shanChuSet.has(item.id))
+      fenLeiZu.shibai = fenLeiZu.shibai.filter((item) => !shanChuSet.has(item.id))
       xuanZhongIds.value.clear()
     }
   } catch (cuoWu) {
@@ -400,67 +505,24 @@ function daKaiFuPan(dangAn: 档案详情) {
   })
 }
 
-function kaiShiTuoZhuai(event: DragEvent, dangAn: 档案详情, fenLei: FenLeiZhuangTai) {
-  if (!dangAn.id || !event.dataTransfer) return
-  event.dataTransfer.effectAllowed = 'move'
-  event.dataTransfer.setData('text/plain', JSON.stringify({ id: dangAn.id, fenLei }))
-  tuoZhuaiId.value = dangAn.id
-}
-
-function tuoZhuaiJingGuo(event: DragEvent, dangAn: 档案详情, fenLei: FenLeiZhuangTai) {
-  event.preventDefault()
-  if (!dangAn.id || dangAn.id === tuoZhuaiId.value) return
-  if (!event.dataTransfer) return
-  const yuanShuJu = event.dataTransfer.getData('text/plain')
-  if (!yuanShuJu) return
-  try {
-    const { fenLei: yuanFenLei } = JSON.parse(yuanShuJu) as { fenLei: FenLeiZhuangTai }
-    if (yuanFenLei !== fenLei) return
-  } catch {
-    return
-  }
-  event.dataTransfer.dropEffect = 'move'
-  tuoZhuaiMuBiaoId.value = dangAn.id
-}
-
-function jieShouTuoZhuai(event: DragEvent, dangAn: 档案详情, fenLei: FenLeiZhuangTai) {
-  event.preventDefault()
-  if (!event.dataTransfer || !dangAn.id) return
-  const yuanShuJu = event.dataTransfer.getData('text/plain')
-  if (!yuanShuJu) return
-  let tuoZhuaiShuJu: { id: string; fenLei: FenLeiZhuangTai }
-  try {
-    tuoZhuaiShuJu = JSON.parse(yuanShuJu) as { id: string; fenLei: FenLeiZhuangTai }
-  } catch {
-    return
-  }
-  if (tuoZhuaiShuJu.fenLei !== fenLei) return
-  const yuanId = tuoZhuaiShuJu.id
-  if (yuanId === dangAn.id) return
+function onTuoZhuaiJieShu(zhuangTai: FenLeiZhuangTai) {
   const map = huoQuPaiXuMap()
-  const dangQianPaiXu = map[fenLei]
-  const xinPaiXu = [...dangQianPaiXu]
-  const yuanWeiZhi = xinPaiXu.indexOf(yuanId)
-  const muBiaoWeiZhi = xinPaiXu.indexOf(dangAn.id)
-  if (yuanWeiZhi > -1) xinPaiXu.splice(yuanWeiZhi, 1)
-  const chaRuWeiZhi = muBiaoWeiZhi > -1 ? muBiaoWeiZhi : xinPaiXu.length
-  xinPaiXu.splice(chaRuWeiZhi, 0, yuanId)
-  map[fenLei] = xinPaiXu
+  map[zhuangTai] = fenLeiZu[zhuangTai]
+    .map((item) => item.id)
+    .filter((id): id is string => !!id)
   baoCunPaiXuMap(map)
 }
 
-function jieShuTuoZhuai() {
-  tuoZhuaiId.value = null
-  tuoZhuaiMuBiaoId.value = null
-}
-
 onMounted(() => {
-  paiXuMap.value = huoQuPaiXuMap()
   jiaZaiShuJu()
 })
 
-watch(paiXuCunChuJian, () => {
-  paiXuMap.value = huoQuPaiXuMap()
+defineExpose({
+  fenLeiZu,
+  onTuoZhuaiJieShu,
+  qieHuanXuanZe,
+  qingKongXuanZe,
+  quanBuXuanZe,
 })
 </script>
 
@@ -529,12 +591,34 @@ watch(paiXuCunChuJian, () => {
   -webkit-backdrop-filter: blur(8px);
   border-radius: 14px;
   margin-bottom: 4px;
+  gap: 12px;
+}
+
+.piliang-gongju-lan--kong {
+  opacity: 0.7;
+}
+
+.quanju-gouxuan-zu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .xuan-ze-shu-liang {
   font-size: 14px;
   font-weight: 600;
-  color: var(--wenben-zhuse);
+  color: var(--an-niu-bei-jing, #ff6b9d);
+}
+
+.xuan-ze-shu-liang--kong {
+  color: var(--wenben-ciuse);
+  font-weight: 500;
+}
+
+.piliang-anniu-zu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .piliang-shanchu-anniu {
@@ -547,15 +631,14 @@ watch(paiXuCunChuJian, () => {
   transition: all 0.2s ease;
 }
 
-.piliang-shanchu-anniu:hover {
+.piliang-shanchu-anniu:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
 }
 
-.piliang-anniu-zu {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.piliang-shanchu-anniu:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .quan-xuan-anniu {
@@ -571,6 +654,26 @@ watch(paiXuCunChuJian, () => {
 .quan-xuan-anniu:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: translateY(-1px);
+}
+
+.quxiao-quanxuan-anniu {
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--wenben-zhuse);
+  transition: all 0.2s ease;
+}
+
+.quxiao-quanxuan-anniu:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+.quxiao-quanxuan-anniu:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .zhanji-fenlei-zu {
@@ -648,36 +751,79 @@ watch(paiXuCunChuJian, () => {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-radius: 16px;
-  transition: all 0.2s ease;
-  cursor: grab;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
 .zhanji-kapian.xuanZhong {
-  background: rgba(107, 140, 166, 0.18);
-  border: 1px solid rgba(107, 140, 166, 0.4);
+  background: rgba(255, 107, 157, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 107, 157, 0.4);
 }
 
-.zhanji-kapian.tuoZhuaiZhong {
-  opacity: 0.6;
-}
-
-.zhanji-kapian:active {
-  cursor: grabbing;
-}
-
-.xuan-ze-kuang {
-  display: flex;
+.gouxuan-anniu {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 1.5px solid var(--biankuang-qianse, #2a3242);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
+  transition: all 0.15s ease;
   flex-shrink: 0;
+  position: relative;
+  padding: 0;
+  margin-right: 12px;
 }
 
-.xuan-ze-kuang input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--nuanhui-lan);
-  cursor: pointer;
+.gouxuan-anniu:hover {
+  border-color: var(--an-niu-bei-jing, #ff6b9d);
+  background: rgba(255, 107, 157, 0.06);
+}
+
+.gouxuan-anniu:focus-visible {
+  outline: 2px solid var(--an-niu-bei-jing, #ff6b9d);
+  outline-offset: 2px;
+}
+
+.gouxuan-anniu svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.15s ease;
+}
+
+.gouxuan-anniu--xuanzhong {
+  background: var(--an-niu-bei-jing, #ff6b9d);
+  border-color: var(--an-niu-bei-jing, #ff6b9d);
+}
+
+.gouxuan-anniu--xuanzhong svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.gouxuan-anniu--bufen {
+  border-color: var(--an-niu-bei-jing, #ff6b9d);
+  background: transparent;
+}
+
+.gouxuan-anniu--bufen::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--an-niu-bei-jing, #ff6b9d);
+  position: absolute;
+}
+
+.gouxuan-anniu--bufen svg {
+  opacity: 0;
+}
+
+.gouxuan-anniu--kapian {
+  margin-right: 12px;
 }
 
 .zhanji-zuo {
@@ -836,32 +982,57 @@ watch(paiXuCunChuJian, () => {
   border-color: transparent;
 }
 
+.tuozhuai-shoubing {
+  color: var(--wenben-ciuse);
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  margin-left: 8px;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+  touch-action: none;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.tuozhuai-shoubing:hover {
+  color: var(--wenben-zhuse);
+  opacity: 1;
+}
+
+.tuozhuai-shoubing:active {
+  cursor: grabbing;
+}
+
+.tuozhuai-shoubing svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
 .zhanji-liebiao-neirong {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.liebiao-guodu-enter-active {
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+.zhanji-kapian.sortable-ghost {
+  opacity: 0.3;
+  background: rgba(255, 107, 157, 0.08) !important;
 }
 
-.liebiao-guodu-leave-active {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+.zhanji-kapian.sortable-chosen {
+  cursor: grabbing;
 }
 
-.liebiao-guodu-enter-from {
-  opacity: 0;
-  transform: translateY(12px);
-}
-
-.liebiao-guodu-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
-
-.liebiao-guodu-move {
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+.zhanji-kapian.sortable-drag {
+  background: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 107, 157, 0.4) !important;
+  transform: rotate(2deg) scale(1.02);
+  opacity: 1 !important;
+  cursor: grabbing !important;
+  border-radius: 16px;
 }
 
 @keyframes jianbian-liudong {
@@ -873,6 +1044,18 @@ watch(paiXuCunChuJian, () => {
   }
   100% {
     background-position: 0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zhanji-kapian,
+  .gouxuan-anniu,
+  .gouxuan-anniu svg,
+  .tuozhuai-shoubing {
+    transition-duration: 0.01ms !important;
+  }
+  .zhanji-kapian.sortable-drag {
+    transform: none !important;
   }
 }
 </style>

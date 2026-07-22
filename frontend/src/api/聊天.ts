@@ -195,6 +195,7 @@ export interface 关键事件项 {
 export interface 复盘批注项 {
   xu_hao: number
   ping_lun: string
+  qing_gan?: string
 }
 
 export interface 复盘响应 {

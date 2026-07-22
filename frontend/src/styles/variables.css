@@ -1,3 +1,7 @@
+:root {
+  --shi-jiao-kou-gao-du: 100dvh;
+}
+
 :root[data-theme="light"] {
   --zhuse: #07C160;
   --zhuse-qian: #4CD964;

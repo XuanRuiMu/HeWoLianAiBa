@@ -96,6 +96,51 @@ async function chuangJianJianYiJiaoSe(yongHuId: string, weiXinNiCheng?: string):
   return jiaoSeId
 }
 
+async function chuangJianZhaXingJiaoSe(
+  yongHuId: string,
+  weiXinNiCheng: string,
+  mbtiLeiXing: string = 'INFJ',
+): Promise<string> {
+  const jiaoSeId = uuidV4()
+  await 数据库.query(
+    `INSERT INTO "角色" (
+      "ID", "用户ID", "名字", "微信昵称", "性别", "年龄", "外貌", "性格",
+      "背景故事", "爱好", "言语风格", "头像", "标签", "是否渣型", "MBTI"
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+    [
+      jiaoSeId,
+      yongHuId,
+      '林嵩序',
+      weiXinNiCheng,
+      'nv',
+      22,
+      '清冷',
+      '理想主义',
+      '小城出身',
+      ['写作'],
+      '含蓄诗意',
+      'avatar',
+      ['文艺'],
+      true,
+      mbtiLeiXing,
+    ],
+  )
+  return jiaoSeId
+}
+
+async function chaRuXiaoXi(
+  yongHuId: string,
+  jiaoSeId: string,
+  neiRong: string,
+  faSongZhe: 'yonghu' | 'jiaose' = 'yonghu',
+): Promise<void> {
+  await 数据库.query(
+    `INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读")
+     VALUES ($1, $2, $3, $4, 'wenben', true)`,
+    [yongHuId, jiaoSeId, neiRong, faSongZhe],
+  )
+}
+
 async function chuangJianYouXiDangAn(
   yongHuId: string,
   jiaoSeId: string,
@@ -446,13 +491,15 @@ describe('FP-13 过往战绩与复盘', () => {
       }
     })
 
-    it('复盘 prompt 不含角色真实姓名、人物画像、MBTI、好感度等后台数据', async () => {
-      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
-      let puRongWenBen = ''
+    it('复盘 prompt 包含角色基本信息和后台数据用于 AI 分析', async () => {
+      const zhaXingJiaoSeId = await chuangJianZhaXingJiaoSe(ceShiYongHu!.yongHuId, '渣女林嵩序', 'INFJ')
+      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, '胜利-识破')
+      let buHuoDePrompt = ''
 
       sheZhiMockTiaoYong(async (canShu) => {
-        if (Array.isArray(canShu.xiaoXiLieBiao)) {
-          puRongWenBen = canShu.xiaoXiLieBiao.map((m: { neiRong: string }) => m.neiRong).join('\n')
+        const yongHuXiaoXi = canShu.xiaoXi.find((x) => x.jiaoSe === 'user')
+        if (yongHuXiaoXi && yongHuXiaoXi.neiRong.includes('【角色基本信息】')) {
+          buHuoDePrompt = yongHuXiaoXi.neiRong
         }
         return {
           neiRong: shengChengFuPanMockNeiRong(),
@@ -461,15 +508,213 @@ describe('FP-13 过往战绩与复盘', () => {
         }
       })
 
+      await shengChengFuPan(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, dangAnId)
+
+      expect(buHuoDePrompt).not.toBe('')
+      expect(buHuoDePrompt).toContain('渣女林嵩序')
+      expect(buHuoDePrompt).toContain('MBTI：INFJ')
+      expect(buHuoDePrompt).toContain('对象类型：渣型（渣女）')
+      expect(buHuoDePrompt).toContain('渣型特质')
+      expect(buHuoDePrompt).toContain('识破线索')
+      expect(buHuoDePrompt).toContain('胜利条件：用户识破渣型身份')
+    })
+
+    it('渣型角色复盘 prompt 包含渣型特质和识破线索', async () => {
+      const zhaXingJiaoSeId = await chuangJianZhaXingJiaoSe(ceShiYongHu!.yongHuId, '林嵩序渣女', 'INFJ')
+      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, '胜利-识破')
+      let buHuoDePrompt = ''
+
+      sheZhiMockTiaoYong(async (canShu) => {
+        const yongHuXiaoXi = canShu.xiaoXi.find((x) => x.jiaoSe === 'user')
+        if (yongHuXiaoXi && yongHuXiaoXi.neiRong.includes('【角色基本信息】')) {
+          buHuoDePrompt = yongHuXiaoXi.neiRong
+        }
+        return {
+          neiRong: shengChengFuPanMockNeiRong(),
+          xinXi: { role: 'assistant', content: shengChengFuPanMockNeiRong() },
+          yuanShuJu: {} as never,
+        }
+      })
+
+      await shengChengFuPan(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, dangAnId)
+
+      expect(buHuoDePrompt).not.toBe('')
+      expect(buHuoDePrompt).toContain('渣型特质')
+      expect(buHuoDePrompt).toContain('灵魂共鸣')
+      expect(buHuoDePrompt).toContain('很少有人能懂我')
+      expect(buHuoDePrompt).toContain('害怕受伤')
+      expect(buHuoDePrompt).toContain('推拉感很强')
+      expect(buHuoDePrompt).toContain('识破线索')
+      expect(buHuoDePrompt).toContain('胜利条件：用户识破渣型身份')
+      expect(buHuoDePrompt).toContain('失败条件：用户被欺骗表白')
+    })
+
+    it('渣型角色复盘 zong_jie 标注对象类型为渣型', async () => {
+      const zhaXingJiaoSeId = await chuangJianZhaXingJiaoSe(ceShiYongHu!.yongHuId, '渣女测试', 'INFJ')
+      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, '胜利-识破')
+
+      const zhaXingMockNeiRong = JSON.stringify({
+        pi_zhu: [{ xu_hao: 1, pi_zhu_nei_rong: '对方开场就在制造稀缺感。', qing_gan: '消极' }],
+        zong_jie: {
+          dui_xiang_lei_xing: '渣型',
+          yong_hu_biao_xian: '用户在第3条识破了渣型的灵魂共鸣话术。',
+          guan_jian_zhuan_zhe_dian: '用户直接质疑"很少有人能懂我"是套路。',
+          gai_jin_jian_yi: '继续保持警惕，对感性的话多问为什么。',
+        },
+      })
+
+      sheZhiMockTiaoYong(async () => ({
+        neiRong: zhaXingMockNeiRong,
+        xinXi: { role: 'assistant', content: zhaXingMockNeiRong },
+        yuanShuJu: {} as never,
+      }))
+
+      await shengChengFuPan(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, dangAnId)
+
+      const xiangYing = await request(yingYong)
+        .get(`/api/战绩/复盘/${dangAnId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const neiRong = xiangYing.body.shu_ju.fu_pan_nei_rong
+      expect(neiRong).toContain('对象类型：渣型')
+      expect(neiRong).toContain('用户表现')
+      expect(neiRong).toContain('关键转折点')
+      expect(neiRong).toContain('改进建议')
+      expect(neiRong).not.toContain('信任度')
+      expect(neiRong).not.toContain('亲密度')
+      expect(neiRong).not.toContain('MBTI')
+      expect(neiRong).not.toMatch(/\d+分/)
+    })
+
+    it('正常角色复盘 prompt 不包含渣型特质段', async () => {
+      const zhengChangJiaoSeId = await chuangJianJianYiJiaoSe(ceShiYongHu!.yongHuId, '温柔对象')
+      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, zhengChangJiaoSeId, '胜利-爱情')
+      let buHuoDePrompt = ''
+
+      sheZhiMockTiaoYong(async (canShu) => {
+        const yongHuXiaoXi = canShu.xiaoXi.find((x) => x.jiaoSe === 'user')
+        if (yongHuXiaoXi && yongHuXiaoXi.neiRong.includes('【角色基本信息】')) {
+          buHuoDePrompt = yongHuXiaoXi.neiRong
+        }
+        return {
+          neiRong: shengChengFuPanMockNeiRong(),
+          xinXi: { role: 'assistant', content: shengChengFuPanMockNeiRong() },
+          yuanShuJu: {} as never,
+        }
+      })
+
+      await shengChengFuPan(ceShiYongHu!.yongHuId, zhengChangJiaoSeId, dangAnId)
+
+      expect(buHuoDePrompt).not.toBe('')
+      expect(buHuoDePrompt).not.toContain('【渣型特质】')
+      expect(buHuoDePrompt).not.toContain('渣法描述')
+      expect(buHuoDePrompt).not.toContain('用户识破渣型身份')
+      expect(buHuoDePrompt).toContain('对象类型：正常角色')
+      expect(buHuoDePrompt).toContain('双向表白成功')
+    })
+
+    it('复盘 pi_zhu 的 qing_gan 字段被传递到前端响应', async () => {
+      const zhaXingJiaoSeId = await chuangJianZhaXingJiaoSe(ceShiYongHu!.yongHuId, '渣女情感字段测试', 'INFJ')
+      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, '胜利-识破')
+
+      const qingGanMockNeiRong = JSON.stringify({
+        pi_zhu: [
+          { xu_hao: 1, pi_zhu_nei_rong: '对方开场就在制造稀缺感。', qing_gan: '消极' },
+          { xu_hao: 2, pi_zhu_nei_rong: '此处回应稍显急切。', qing_gan: '中性' },
+          { xu_hao: 3, pi_zhu_nei_rong: '识破话术很果断，干得漂亮。', qing_gan: '积极' },
+        ],
+        zong_jie: {
+          dui_xiang_lei_xing: '渣型',
+          yong_hu_biao_xian: '用户识破及时。',
+          guan_jian_zhuan_zhe_dian: '第3条直接质疑。',
+          gai_jin_jian_yi: '继续保持警惕。',
+        },
+      })
+
+      sheZhiMockTiaoYong(async () => ({
+        neiRong: qingGanMockNeiRong,
+        xinXi: { role: 'assistant', content: qingGanMockNeiRong },
+        yuanShuJu: {} as never,
+      }))
+
+      await shengChengFuPan(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, dangAnId)
+
+      const xiangYing = await request(yingYong)
+        .get(`/api/战绩/复盘/${dangAnId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const piZhu = xiangYing.body.shu_ju.fu_pan_pi_zhu
+      expect(Array.isArray(piZhu)).toBe(true)
+      expect(piZhu.length).toBe(3)
+      const qingGanLieBiao = piZhu.map((tiaoMu: { qing_gan?: string }) => tiaoMu.qing_gan)
+      expect(qingGanLieBiao).toContain('消极')
+      expect(qingGanLieBiao).toContain('中性')
+      expect(qingGanLieBiao).toContain('积极')
+    })
+
+    it('复盘 pi_zhu 缺失 qing_gan 时不向前端返回该字段', async () => {
+      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
+
+      const wuQingGanMockNeiRong = JSON.stringify({
+        pi_zhu: [
+          { xu_hao: 1, ping_lun: '开场挺自然的，没让人尴尬。' },
+          { xu_hao: 3, ping_lun: '这句回应有点急了，可以再稳一点。' },
+        ],
+        zong_jie: '整体表现不错，建议继续保持自然节奏。',
+      })
+
+      sheZhiMockTiaoYong(async () => ({
+        neiRong: wuQingGanMockNeiRong,
+        xinXi: { role: 'assistant', content: wuQingGanMockNeiRong },
+        yuanShuJu: {} as never,
+      }))
+
       await shengChengFuPan(ceShiYongHu!.yongHuId, jiaoSeId, dangAnId)
 
-      expect(puRongWenBen).not.toContain('真实姓名')
-      expect(puRongWenBen).not.toContain('INFP')
-      expect(puRongWenBen).not.toContain('MBTI')
-      expect(puRongWenBen).not.toContain('信任度')
-      expect(puRongWenBen).not.toContain('好感度')
-      expect(puRongWenBen).not.toContain('关系阶段')
-      expect(puRongWenBen).not.toContain('人物画像')
+      const xiangYing = await request(yingYong)
+        .get(`/api/战绩/复盘/${dangAnId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const piZhu = xiangYing.body.shu_ju.fu_pan_pi_zhu
+      expect(Array.isArray(piZhu)).toBe(true)
+      expect(piZhu.length).toBe(2)
+      for (const tiaoMu of piZhu) {
+        expect(tiaoMu).not.toHaveProperty('qing_gan')
+      }
+    })
+
+    it('复盘 prompt 包含开场白和用户第一句话内容', async () => {
+      const zhaXingJiaoSeId = await chuangJianZhaXingJiaoSe(ceShiYongHu!.yongHuId, '林嵩序开场白测试', 'INFJ')
+      const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, '胜利-识破')
+      let buHuoDePrompt = ''
+
+      await chaRuXiaoXi(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, '嗨，我也是一个人在写东西，看到你的签名就过来了。', 'jiaose')
+      await chaRuXiaoXi(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, '你好呀，写什么呢？', 'yonghu')
+      await chaRuXiaoXi(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, '在写一些关于孤独的东西，很少有人能懂我。', 'jiaose')
+      await chaRuXiaoXi(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, '我感觉你在套路我。', 'yonghu')
+
+      sheZhiMockTiaoYong(async (canShu) => {
+        const yongHuXiaoXi = canShu.xiaoXi.find((x) => x.jiaoSe === 'user')
+        if (yongHuXiaoXi && yongHuXiaoXi.neiRong.includes('【角色基本信息】')) {
+          buHuoDePrompt = yongHuXiaoXi.neiRong
+        }
+        return {
+          neiRong: shengChengFuPanMockNeiRong(),
+          xinXi: { role: 'assistant', content: shengChengFuPanMockNeiRong() },
+          yuanShuJu: {} as never,
+        }
+      })
+
+      await shengChengFuPan(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, dangAnId)
+
+      expect(buHuoDePrompt).not.toBe('')
+      expect(buHuoDePrompt).toContain('我也是一个人在写东西')
+      expect(buHuoDePrompt).toContain('你好呀，写什么呢？')
+      expect(buHuoDePrompt).toContain('很少有人能懂我')
+      expect(buHuoDePrompt).toContain('我感觉你在套路我')
     })
 
     it('复盘存储格式为 {pi_zhu: ...} 对象', async () => {

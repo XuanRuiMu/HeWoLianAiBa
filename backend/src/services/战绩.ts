@@ -21,6 +21,7 @@ export interface FuPanShiJianXianTiaoMu {
 export interface FuPanPiZhu {
   xu_hao: number
   ping_lun: string
+  qing_gan?: string
 }
 
 export interface DangAnLieBiaoXiang {
@@ -165,10 +166,16 @@ export async function huoQuDangAnXiangQing(
               typeof (item as { ping_lun?: unknown }).ping_lun === 'string' &&
               (item as { ping_lun: string }).ping_lun.trim().length > 0,
           )
-          .map((item: FuPanPiZhu) => ({
-            xu_hao: Math.floor(item.xu_hao),
-            ping_lun: item.ping_lun,
-          }))
+          .map((item: FuPanPiZhu) => {
+            const tiaoMu: FuPanPiZhu = {
+              xu_hao: Math.floor(item.xu_hao),
+              ping_lun: item.ping_lun,
+            }
+            if (typeof item.qing_gan === 'string' && item.qing_gan.trim()) {
+              tiaoMu.qing_gan = item.qing_gan.trim()
+            }
+            return tiaoMu
+          })
       }
     } catch {
       fuPanShuJu = null

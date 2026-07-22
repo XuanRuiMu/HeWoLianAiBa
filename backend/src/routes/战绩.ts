@@ -84,6 +84,7 @@ interface QianDuanFuPanShiJianXianTiaoMu {
 interface QianDuanFuPanPiZhu {
   xu_hao: number
   ping_lun: string
+  qing_gan?: string
 }
 
 interface QianDuanDangAnXiangQing extends QianDuanDangAnLieBiaoXiang {
@@ -107,7 +108,16 @@ function guoLvFuPanShiJianXian(
 
 function guoLvFuPanPiZhu(pi_zhu: FuPanPiZhu[] | null): QianDuanFuPanPiZhu[] | null {
   if (!pi_zhu) return null
-  return pi_zhu.map((xiang) => ({ xu_hao: xiang.xu_hao, ping_lun: xiang.ping_lun }))
+  return pi_zhu.map((xiang) => {
+    const tiaoMu: QianDuanFuPanPiZhu = {
+      xu_hao: xiang.xu_hao,
+      ping_lun: xiang.ping_lun,
+    }
+    if (xiang.qing_gan) {
+      tiaoMu.qing_gan = xiang.qing_gan
+    }
+    return tiaoMu
+  })
 }
 
 function guoLvMinGanZiDuanXiangQing(

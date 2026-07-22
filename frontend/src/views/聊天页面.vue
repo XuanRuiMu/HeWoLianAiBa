@@ -102,28 +102,37 @@
                 </div>
               </template>
             </div>
-            <div
-              v-if="
-                fuPanMoShi &&
-                !xiaoXi.yi_che_hui &&
-                xiaoXi.lei_xing !== 'xitong' &&
-                huoQuPiZhuByXiaoXiId(xiaoXi.ke_hu_duan_id || xiaoXi.id)
-              "
-              class="fupan-pizhu-xiangmu"
-              :class="{
-                'yonghu-pizhu': xiaoXi.fa_song_zhe_lei_xing === 'yonghu',
-                'jiaose-pizhu': xiaoXi.fa_song_zhe_lei_xing === 'jiaose',
-              }"
+            <template
+              v-for="piZhuXiang in [huoQuPiZhuByXiaoXiId(xiaoXi.ke_hu_duan_id || xiaoXi.id)]"
+              :key="'pizhu-' + (xiaoXi.ke_hu_duan_id || xiaoXi.id)"
             >
-              <div class="fupan-pizhu-qipao">
-                <span class="fupan-pizhu-biaoqian">{{
-                  huoQuFanYi('zhanJi', 'fuPanPiZhuBiaoQian')
-                }}</span>
-                <span class="fupan-pizhu-neirong">{{
-                  huoQuPiZhuByXiaoXiId(xiaoXi.ke_hu_duan_id || xiaoXi.id)
-                }}</span>
+              <div
+                v-if="
+                  fuPanMoShi &&
+                  piZhuXiang &&
+                  !xiaoXi.yi_che_hui &&
+                  xiaoXi.lei_xing !== 'xitong'
+                "
+                class="fupan-pizhu-xiangmu"
+                :class="{
+                  'yonghu-pizhu': xiaoXi.fa_song_zhe_lei_xing === 'yonghu',
+                  'jiaose-pizhu': xiaoXi.fa_song_zhe_lei_xing === 'jiaose',
+                  'pizhu-positive':
+                    huoQuQingGanLeiXing(piZhuXiang.qing_gan) === 'positive',
+                  'pizhu-negative':
+                    huoQuQingGanLeiXing(piZhuXiang.qing_gan) === 'negative',
+                  'pizhu-neutral':
+                    huoQuQingGanLeiXing(piZhuXiang.qing_gan) === 'neutral',
+                }"
+              >
+                <div class="fupan-pizhu-qipao">
+                  <span class="fupan-pizhu-biaoqian">{{
+                    huoQuFanYi('zhanJi', 'fuPanPiZhuBiaoQian')
+                  }}</span>
+                  <span class="fupan-pizhu-neirong">{{ piZhuXiang.nei_rong }}</span>
+                </div>
               </div>
-            </div>
+            </template>
           </template>
         </template>
       </TransitionGroup>
@@ -133,9 +142,30 @@
           <span>{{ huoQuFanYi('zhanJi', 'fuPanShengChengZhong') }}</span>
         </div>
       </div>
-      <div v-if="fuPanMoShi && !fuPanJiaZaiZhong && fuPanZongJie" class="fupan-zongjie-qu">
+      <div
+        v-if="fuPanMoShi && !fuPanJiaZaiZhong && fuPanZongJie"
+        class="fupan-zongjie-qu"
+        :class="{ 'you-fen-kuai': fuPanZongJieFenKuai }"
+      >
         <div class="fupan-zongjie-biaoti">{{ huoQuFanYi('zhanJi', 'fuPanZongJie') }}</div>
-        <div class="fupan-zongjie-neirong">{{ fuPanZongJie }}</div>
+        <template v-if="fuPanZongJieFenKuai">
+          <div
+            v-for="(fenKuai, suoYin) in fuPanZongJieFenKuai"
+            :key="'zongjie-' + suoYin"
+            class="fupan-zongjie-fenkuai"
+            :class="{ 'jinggao-fenkuai': fenKuai.jingGao }"
+          >
+            <div class="fupan-zongjie-fenkuai-biaoti">
+              <span v-if="fenKuai.jingGao" class="jinggao-tubiao">⚠</span>
+              <span>{{ fenKuai.biaoTi }}</span>
+            </div>
+            <div class="fupan-zongjie-fenkuai-neirong">{{ fenKuai.neiRong }}</div>
+          </div>
+          <div v-if="fuPanZongJieFenKuai[0]?.jingGao" class="fupan-zongjie-jinggao-tishi">
+            {{ huoQuFanYi('zhanJi', 'zhaXingJingGao') }}
+          </div>
+        </template>
+        <div v-else class="fupan-zongjie-neirong">{{ fuPanZongJie }}</div>
       </div>
     </main>
 
@@ -176,16 +206,15 @@
             @input="chuLiShuRuBianHua"
           />
           <span
-            v-if="shuRuNeiRong.length >= XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi"
             class="zifu-jishu"
             :class="{ 'zifu-chaochu': shuRuNeiRong.length > XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu }"
           >
             {{ shuRuNeiRong.length }}/{{ XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu }}
           </span>
           <button
-            v-if="xianShiZhanKaiAnNiu"
             class="zhan-kai-anniu"
             :class="{ 'zhan-kai': shuRuKuangZhanKai }"
+            :disabled="!xianShiZhanKaiAnNiu"
             :title="
               shuRuKuangZhanKai
                 ? huoQuFanYi('liaoTian', 'zheDie')
@@ -562,9 +591,7 @@ const keYiFaSong = computed(() => {
   )
 })
 
-const xianShiZhanKaiAnNiu = computed(() => {
-  return shuRuNeiRong.value.length > 0 && (shuRuKuangZhanKai.value || shuRuKuangKeZhanKai.value)
-})
+const xianShiZhanKaiAnNiu = computed(() => shuRuKuangKeZhanKai.value)
 
 interface XiaoXiFenZuXiang {
   shiJian: string
@@ -674,22 +701,100 @@ const xiaoXiDaoXuHaoMap = computed<Map<string, number>>(() => {
   return map
 })
 
-const piZhuMap = computed<Map<number, string>>(() => {
-  const map = new Map<number, string>()
+const piZhuMap = computed<Map<number, PiZhuXiang>>(() => {
+  const map = new Map<number, PiZhuXiang>()
   if (!fuPanPiZhu.value) return map
   for (const xiang of fuPanPiZhu.value) {
     if (typeof xiang.xu_hao === 'number' && typeof xiang.ping_lun === 'string') {
-      map.set(xiang.xu_hao, xiang.ping_lun)
+      map.set(xiang.xu_hao, {
+        nei_rong: xiang.ping_lun,
+        qing_gan: typeof xiang.qing_gan === 'string' ? xiang.qing_gan : undefined,
+      })
     }
   }
   return map
 })
 
-function huoQuPiZhuByXiaoXiId(xiaoXiId: string): string | null {
+function huoQuPiZhuByXiaoXiId(xiaoXiId: string): PiZhuXiang | null {
   const xuHao = xiaoXiDaoXuHaoMap.value.get(xiaoXiId)
   if (!xuHao) return null
   return piZhuMap.value.get(xuHao) || null
 }
+
+interface PiZhuXiang {
+  nei_rong: string
+  qing_gan?: string
+}
+
+interface ZongJieFenKuai {
+  biaoTi: string
+  neiRong: string
+  jingGao: boolean
+}
+
+function huoQuQingGanLeiXing(qingGan?: string): 'positive' | 'negative' | 'neutral' {
+  if (!qingGan) return 'neutral'
+  const zhi = qingGan.trim().toLowerCase()
+  if (zhi === 'positive' || zhi === '积极') return 'positive'
+  if (zhi === 'negative' || zhi === '消极') return 'negative'
+  return 'neutral'
+}
+
+const fuPanZongJieFenKuai = computed<ZongJieFenKuai[] | null>(() => {
+  if (!fuPanZongJie.value) return null
+  const wenBen = fuPanZongJie.value.trim()
+  if (!wenBen) return null
+
+  const ziDuanMingChen = [
+    huoQuFanYi('zhanJi', 'duiXiangLeiXing'),
+    huoQuFanYi('zhanJi', 'yongHuBiaoXian'),
+    huoQuFanYi('zhanJi', 'guanJianZhuanZheDian'),
+    huoQuFanYi('zhanJi', 'gaiJinJianYi'),
+  ]
+
+  const youZiDuan = ziDuanMingChen.some(
+    (ming) => wenBen.includes(ming + '：') || wenBen.includes(ming + ':'),
+  )
+  if (!youZiDuan) return null
+
+  const hangLie = wenBen
+    .split('\n')
+    .map((x) => x.trim())
+    .filter(Boolean)
+  const jieGuo: ZongJieFenKuai[] = []
+  let dangQianBiaoTi = ''
+  let dangQianNeiRong = ''
+
+  function yaRuDangQian(): void {
+    if (!dangQianBiaoTi) return
+    jieGuo.push({
+      biaoTi: dangQianBiaoTi,
+      neiRong: dangQianNeiRong.trim(),
+      jingGao:
+        dangQianBiaoTi === huoQuFanYi('zhanJi', 'duiXiangLeiXing') &&
+        dangQianNeiRong.includes(huoQuFanYi('zhanJi', 'zhaXing')),
+    })
+  }
+
+  for (const hang of hangLie) {
+    const piPeiMing = ziDuanMingChen.find(
+      (ming) => hang.startsWith(ming + '：') || hang.startsWith(ming + ':'),
+    )
+    if (piPeiMing) {
+      yaRuDangQian()
+      dangQianBiaoTi = piPeiMing
+      const qianZhui = hang.startsWith(piPeiMing + '：')
+        ? piPeiMing + '：'
+        : piPeiMing + ':'
+      dangQianNeiRong = hang.slice(qianZhui.length).trim()
+    } else if (dangQianBiaoTi) {
+      dangQianNeiRong += '\n' + hang
+    }
+  }
+  yaRuDangQian()
+
+  return jieGuo.length > 0 ? jieGuo : null
+})
 
 function gunDongDaoDiBu() {
   nextTick(() => {
@@ -702,7 +807,9 @@ function gunDongDaoDiBu() {
 function huaDongShuRuLanKeJian() {
   nextTick(() => {
     setTimeout(() => {
-      shuruQuYuRef.value?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+      if (xiaoxiQuYuRef.value) {
+        xiaoxiQuYuRef.value.scrollTop = xiaoxiQuYuRef.value.scrollHeight
+      }
     }, 50)
   })
 }
@@ -1074,8 +1181,8 @@ onBeforeUnmount(() => {
 }
 
 .xiaoxi-quyu.emoji-mianban-zhankai {
-  padding-bottom: 220px;
-  scroll-padding-bottom: 220px;
+  padding-bottom: var(--emoji-mianban-bu-ju-gao-du);
+  scroll-padding-bottom: var(--emoji-mianban-bu-ju-gao-du);
 }
 
 .xiaoxi-quyu::-webkit-scrollbar {
@@ -1457,6 +1564,11 @@ onBeforeUnmount(() => {
   transform: rotate(180deg);
 }
 
+.zhan-kai-anniu:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .emoji-mianban {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
@@ -1693,12 +1805,43 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   background: rgba(108, 92, 231, 0.12);
   border: 1px solid rgba(108, 92, 231, 0.25);
+  border-left-width: 3px;
   font-size: 13px;
   line-height: 1.5;
   word-break: break-word;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.fupan-pizhu-xiangmu.pizhu-positive .fupan-pizhu-qipao {
+  background: rgba(76, 175, 80, 0.1);
+  border-color: rgba(76, 175, 80, 0.3);
+  border-left-color: #4caf50;
+}
+
+.fupan-pizhu-xiangmu.pizhu-positive .fupan-pizhu-biaoqian {
+  color: #4caf50;
+}
+
+.fupan-pizhu-xiangmu.pizhu-negative .fupan-pizhu-qipao {
+  background: rgba(244, 67, 54, 0.1);
+  border-color: rgba(244, 67, 54, 0.3);
+  border-left-color: #f44336;
+}
+
+.fupan-pizhu-xiangmu.pizhu-negative .fupan-pizhu-biaoqian {
+  color: #f44336;
+}
+
+.fupan-pizhu-xiangmu.pizhu-neutral .fupan-pizhu-qipao {
+  background: rgba(158, 158, 158, 0.1);
+  border-color: rgba(158, 158, 158, 0.3);
+  border-left-color: #9e9e9e;
+}
+
+.fupan-pizhu-xiangmu.pizhu-neutral .fupan-pizhu-biaoqian {
+  color: #757575;
 }
 
 .fupan-pizhu-biaoqian {
@@ -1749,6 +1892,10 @@ onBeforeUnmount(() => {
   border: 1px solid rgba(108, 92, 231, 0.2);
 }
 
+.fupan-zongjie-qu.you-fen-kuai {
+  background: rgba(108, 92, 231, 0.05);
+}
+
 .fupan-zongjie-biaoti {
   font-size: 15px;
   font-weight: 700;
@@ -1762,6 +1909,63 @@ onBeforeUnmount(() => {
   line-height: 1.7;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.fupan-zongjie-fenkuai {
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: var(--beijing-kaopian, rgba(255, 255, 255, 0.5));
+  border: 0.5px solid var(--shuru-quyu-biankuang, rgba(0, 0, 0, 0.08));
+}
+
+.fupan-zongjie-fenkuai:last-of-type {
+  margin-bottom: 0;
+}
+
+.fupan-zongjie-fenkuai.jinggao-fenkuai {
+  background: rgba(244, 67, 54, 0.08);
+  border: 1px solid rgba(244, 67, 54, 0.4);
+  border-left-width: 3px;
+  border-left-color: #f44336;
+}
+
+.fupan-zongjie-fenkuai-biaoti {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--yanse-zhanji, #6c5ce7);
+  margin-bottom: 4px;
+}
+
+.fupan-zongjie-fenkuai.jinggao-fenkuai .fupan-zongjie-fenkuai-biaoti {
+  color: #f44336;
+}
+
+.jinggao-tubiao {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.fupan-zongjie-fenkuai-neirong {
+  font-size: 14px;
+  color: var(--wenben-zhuse);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.fupan-zongjie-jinggao-tishi {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgba(244, 67, 54, 0.1);
+  border-left: 3px solid #f44336;
+  font-size: 12px;
+  color: #f44336;
+  line-height: 1.5;
 }
 
 .fupan-dibu-lan {
@@ -1806,8 +2010,8 @@ onBeforeUnmount(() => {
   }
 
   .xiaoxi-quyu.emoji-mianban-zhankai {
-    padding-bottom: 220px;
-    scroll-padding-bottom: 220px;
+    padding-bottom: var(--emoji-mianban-bu-ju-gao-du);
+    scroll-padding-bottom: var(--emoji-mianban-bu-ju-gao-du);
   }
 
   .fupan-pizhu-qipao {

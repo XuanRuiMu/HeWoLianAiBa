@@ -12,7 +12,7 @@ import { 使用聊天仓库 } from '@/stores/聊天'
 import { 使用用户仓库 } from '@/stores/用户'
 import { huoQuFanYi } from '@/config/translations'
 import { XIAO_XI_PEI_ZHI } from '@/config/消息配置'
-import { faSongXiaoXi } from '@/api/聊天'
+import { faSongXiaoXi, huoQuXiaoXi, huoQuFuPan } from '@/api/聊天'
 
 vi.mock('@/api/聊天', () => ({
   huoQuXiaoXi: vi.fn().mockResolvedValue({ lie_biao: [], zong_shu: 0 }),
@@ -59,6 +59,14 @@ vi.mock('@/api/聊天', () => ({
   huoQuJunShiLieBiao: vi.fn().mockResolvedValue({ junShiLieBiao: [] }),
   qingQiuJunShiZhiDao: vi.fn(),
   huoQuJunShiJiLu: vi.fn().mockResolvedValue([]),
+  huoQuFuPan: vi.fn().mockResolvedValue({
+    fu_pan_nei_rong: null,
+    fu_pan_shi_jian_xian: [],
+    fu_pan_pi_zhu: null,
+    jun_shi_zhi_dao_ji_lu: [],
+    guan_jian_shi_jian: [],
+    jia_zai_zhong: false,
+  }),
 }))
 
 vi.mock('@/api/通知', () => ({
@@ -503,33 +511,30 @@ describe('FP-05 聊天界面', () => {
       )
     })
 
-    it('输入框聚焦时滚动输入栏到可视区域', async () => {
-      const scrollIntoViewMock = vi.fn()
-      const yuanShiScrollIntoView = HTMLElement.prototype.scrollIntoView
-      HTMLElement.prototype.scrollIntoView = scrollIntoViewMock
+    it('输入框聚焦时滚动消息区到底部避免新消息被键盘遮挡', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
+      const xiaoxiQuyu = wrapper.find('.xiaoxi-quyu').element as HTMLElement
+      Object.defineProperty(xiaoxiQuyu, 'scrollHeight', { value: 1000, configurable: true })
 
-      try {
-        await wrapper.find('.shuru-kuang').trigger('focus')
-        await flushPromises()
-        await vi.advanceTimersByTimeAsync(100)
-      } finally {
-        HTMLElement.prototype.scrollIntoView = yuanShiScrollIntoView
-      }
+      await wrapper.find('.shuru-kuang').trigger('focus')
+      await flushPromises()
+      await vi.advanceTimersByTimeAsync(100)
+      await flushPromises()
 
-      expect(scrollIntoViewMock).toHaveBeenCalledWith(expect.objectContaining({ block: 'end' }))
+      expect(xiaoxiQuyu.scrollTop).toBe(1000)
     })
 
-    it('emoji面板展开时消息区域底部内边距增加至220px', async () => {
+    it('emoji面板展开时消息区域底部内边距使用CSS变量保证面板高度一致', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
       const xiaoXiQuYu = wrapper.find('.xiaoxi-quyu')
 
       expect(xiaoXiQuYu.classes()).not.toContain('emoji-mianban-zhankai')
+      expect(liaoTianYeMianYuanMa).toMatch(/--emoji-mianban-bu-ju-gao-du:\s*220px/)
       expect(liaoTianYeMianYuanMa).toMatch(
-        /\.xiaoxi-quyu\.emoji-mianban-zhankai\s*\{[^}]*padding-bottom:\s*220px/,
+        /\.xiaoxi-quyu\.emoji-mianban-zhankai\s*\{[^}]*padding-bottom:\s*var\(--emoji-mianban-bu-ju-gao-du\)/,
       )
       expect(liaoTianYeMianYuanMa).toMatch(
-        /\.xiaoxi-quyu\.emoji-mianban-zhankai\s*\{[^}]*scroll-padding-bottom:\s*220px/,
+        /\.xiaoxi-quyu\.emoji-mianban-zhankai\s*\{[^}]*scroll-padding-bottom:\s*var\(--emoji-mianban-bu-ju-gao-du\)/,
       )
 
       await wrapper.find('.emoji-anniu').trigger('click')
@@ -539,17 +544,17 @@ describe('FP-05 聊天界面', () => {
     })
 
     it('注册visualViewport的resize与scroll事件监听软键盘变化', () => {
-      expect(liaoTianYeMianYuanMa).toMatch(
-        /visualViewport\.addEventListener\('resize',\s*chuLiShiJiaoKouBianHua\)/,
+      expect(appYuanMa).toMatch(
+        /visualViewport\.addEventListener\('resize',\s*gengXinShiJiaoKouGaoDu\)/,
       )
-      expect(liaoTianYeMianYuanMa).toMatch(
-        /visualViewport\.addEventListener\('scroll',\s*chuLiShiJiaoKouBianHua\)/,
+      expect(appYuanMa).toMatch(
+        /visualViewport\.addEventListener\('scroll',\s*gengXinShiJiaoKouGaoDu\)/,
       )
-      expect(liaoTianYeMianYuanMa).toMatch(
-        /visualViewport\.removeEventListener\('resize',\s*chuLiShiJiaoKouBianHua\)/,
+      expect(appYuanMa).toMatch(
+        /visualViewport\.removeEventListener\('resize',\s*gengXinShiJiaoKouGaoDu\)/,
       )
-      expect(liaoTianYeMianYuanMa).toMatch(
-        /visualViewport\.removeEventListener\('scroll',\s*chuLiShiJiaoKouBianHua\)/,
+      expect(appYuanMa).toMatch(
+        /visualViewport\.removeEventListener\('scroll',\s*gengXinShiJiaoKouGaoDu\)/,
       )
     })
 
@@ -560,6 +565,29 @@ describe('FP-05 聊天界面', () => {
       expect(appYuanMa).toMatch(/\.app-rongqi\s*\{[^}]*flex-direction:\s*column/)
       expect(appYuanMa).toMatch(/\.app-zhuti\s*\{[^}]*flex:\s*1/)
       expect(appYuanMa).not.toMatch(/\.app-zhuti\s*\{[^}]*margin-top:/)
+    })
+
+    it('App.vue 容器高度采用三层 fallback 兼容旧版 iOS Safari 与 Android Chrome', () => {
+      expect(appYuanMa).toMatch(/\.app-rongqi\s*\{[^}]*height:\s*100vh/)
+      expect(appYuanMa).toMatch(/\.app-rongqi\s*\{[^}]*height:\s*100dvh/)
+      expect(appYuanMa).toMatch(
+        /\.app-rongqi\s*\{[^}]*height:\s*var\(--shi-jiao-kou-gao-du,\s*100dvh\)/,
+      )
+      expect(appYuanMa).not.toMatch(/\.app-rongqi\s*\{[^}]*min-height:\s*100dvh/)
+    })
+
+    it('App.vue 动态更新 --shi-jiao-kou-gao-du CSS 变量驱动视口高度', () => {
+      expect(appYuanMa).toMatch(
+        /document\.documentElement\.style\.setProperty\('--shi-jiao-kou-gao-du',\s*`\$\{gaoDu\}px`\)/,
+      )
+      expect(appYuanMa).toMatch(/window\.visualViewport\.height/)
+    })
+
+    it('全局菜单栏高度计算包含顶部安全区域，避免刘海屏压缩菜单内容', () => {
+      const quanJuCaiDanLuJing = resolve(__dirname, '../components/全局菜单.vue')
+      const quanJuCaiDanYuanMa = readFileSync(quanJuCaiDanLuJing, 'utf8')
+      expect(quanJuCaiDanYuanMa).toMatch(/height:\s*calc\(\s*52px\s*\+\s*var\(--anquan-quyu-shang\)\s*\)/)
+      expect(quanJuCaiDanYuanMa).toMatch(/padding-top:\s*var\(--anquan-quyu-shang\)/)
     })
 
     it('聊天页面容器占满父级高度并禁止页面级滚动', () => {
@@ -577,27 +605,23 @@ describe('FP-05 聊天界面', () => {
 
       expect(wrapper.find('.xiaoxi-quyu').classes()).toContain('emoji-mianban-zhankai')
       expect(liaoTianYeMianYuanMa).toMatch(
-        /\.xiaoxi-quyu\.emoji-mianban-zhankai\s*\{[^}]*padding-bottom:\s*220px/,
+        /\.xiaoxi-quyu\.emoji-mianban-zhankai\s*\{[^}]*padding-bottom:\s*var\(--emoji-mianban-bu-ju-gao-du\)/,
       )
       expect(liaoTianYeMianYuanMa).toMatch(
-        /\.xiaoxi-quyu\.emoji-mianban-zhankai\s*\{[^}]*scroll-padding-bottom:\s*220px/,
+        /\.xiaoxi-quyu\.emoji-mianban-zhankai\s*\{[^}]*scroll-padding-bottom:\s*var\(--emoji-mianban-bu-ju-gao-du\)/,
       )
     })
 
     it('监听 visualViewport scroll 与 resize 事件以响应软键盘变化', () => {
-      const resizeCount = (
-        liaoTianYeMianYuanMa.match(/visualViewport\.addEventListener\('resize'/g) || []
-      ).length
-      const scrollCount = (
-        liaoTianYeMianYuanMa.match(/visualViewport\.addEventListener\('scroll'/g) || []
-      ).length
+      const resizeCount = (appYuanMa.match(/visualViewport\.addEventListener\('resize'/g) || []).length
+      const scrollCount = (appYuanMa.match(/visualViewport\.addEventListener\('scroll'/g) || []).length
       expect(resizeCount).toBeGreaterThanOrEqual(1)
       expect(scrollCount).toBeGreaterThanOrEqual(1)
     })
   })
 })
 
-describe('FP-01 聊天输入字数统计条件显示与右侧定位', () => {
+describe('FP-01 聊天输入字数统计常驻显示与右侧定位', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.useFakeTimers({ shouldAdvanceTime: true })
@@ -608,7 +632,16 @@ describe('FP-01 聊天输入字数统计条件显示与右侧定位', () => {
     vi.clearAllMocks()
   })
 
-  it('输入字符数小于阈值时不显示字数统计', async () => {
+  it('空输入框时常驻显示字数统计 0/500', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    await flushPromises()
+
+    const jiShi = wrapper.find('.shuru-kuang-waike .zifu-jishu')
+    expect(jiShi.exists()).toBe(true)
+    expect(jiShi.text()).toBe(`0/${XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu}`)
+  })
+
+  it('输入字符数小于阈值时常驻显示字数统计', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
     const shuRuKuang = wrapper.find('.shuru-kuang')
     const duanNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi - 1)
@@ -616,7 +649,11 @@ describe('FP-01 聊天输入字数统计条件显示与右侧定位', () => {
     await shuRuKuang.setValue(duanNeiRong)
     await flushPromises()
 
-    expect(wrapper.find('.shuru-kuang-waike .zifu-jishu').exists()).toBe(false)
+    const jiShi = wrapper.find('.shuru-kuang-waike .zifu-jishu')
+    expect(jiShi.exists()).toBe(true)
+    expect(jiShi.text()).toBe(
+      `${XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi - 1}/${XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu}`,
+    )
   })
 
   it('输入字符数达到阈值时显示字数统计', async () => {
@@ -729,15 +766,25 @@ describe('FP-02 聊天输入多行展开/折叠', () => {
     expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('测试消息')
   })
 
-  it('单行输入不显示展开按钮', async () => {
+  it('单行输入时展开按钮常驻显示但 disabled', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
     const shuRuKuang = wrapper.find('.shuru-kuang')
     await shuRuKuang.setValue('短消息')
     await flushPromises()
-    expect(wrapper.find('.zhan-kai-anniu').exists()).toBe(false)
+    const zhanKaiAnNiu = wrapper.find('.zhan-kai-anniu')
+    expect(zhanKaiAnNiu.exists()).toBe(true)
+    expect(zhanKaiAnNiu.attributes('disabled')).toBeDefined()
   })
 
-  it('多行输入时显示展开按钮', async () => {
+  it('空输入框时展开按钮常驻显示且 disabled', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    await flushPromises()
+    const zhanKaiAnNiu = wrapper.find('.zhan-kai-anniu')
+    expect(zhanKaiAnNiu.exists()).toBe(true)
+    expect(zhanKaiAnNiu.attributes('disabled')).toBeDefined()
+  })
+
+  it('多行输入时显示展开按钮且可点击', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
     const shuRuKuang = wrapper.find('.shuru-kuang')
 
@@ -747,7 +794,9 @@ describe('FP-02 聊天输入多行展开/折叠', () => {
     await shuRuKuang.setValue('这是一段比较长的消息内容，应该会折行显示展开按钮')
     await flushPromises()
 
-    expect(wrapper.find('.zhan-kai-anniu').exists()).toBe(true)
+    const zhanKaiAnNiu = wrapper.find('.zhan-kai-anniu')
+    expect(zhanKaiAnNiu.exists()).toBe(true)
+    expect(zhanKaiAnNiu.attributes('disabled')).toBeUndefined()
   })
 
   it('点击展开按钮后输入框添加展开类', async () => {
@@ -806,7 +855,9 @@ describe('FP-02 聊天输入多行展开/折叠', () => {
 
     expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('')
     expect(shuRuKuang.classes()).not.toContain('zhan-kai')
-    expect(wrapper.find('.zhan-kai-anniu').exists()).toBe(false)
+    const zhanKaiAnNiu = wrapper.find('.zhan-kai-anniu')
+    expect(zhanKaiAnNiu.exists()).toBe(true)
+    expect(zhanKaiAnNiu.attributes('disabled')).toBeDefined()
   })
 })
 
@@ -911,5 +962,227 @@ describe('FP-A11 军师指导后AI回复机制保持正常', () => {
     await flushPromises()
 
     expect(faSongMock).toHaveBeenCalledWith('发送消息')
+  })
+})
+
+describe('FP-06 复盘展示', () => {
+  const jiShu = 1700000000000
+
+  const ceShiXiaoXiLieBiao = [
+    {
+      id: 'x3',
+      hui_hua_id: 'h1',
+      fa_song_zhe_id: 'j1',
+      fa_song_zhe_lei_xing: 'jiaose',
+      nei_rong: '今天天气不错',
+      lei_xing: 'wenben',
+      shi_jian_chuo: jiShu + 60000,
+      yi_du: true,
+    },
+    {
+      id: 'x2',
+      hui_hua_id: 'h1',
+      fa_song_zhe_id: 'u1',
+      fa_song_zhe_lei_xing: 'yonghu',
+      nei_rong: '你好呀',
+      lei_xing: 'wenben',
+      shi_jian_chuo: jiShu + 30000,
+      yi_du: true,
+    },
+    {
+      id: 'x1',
+      hui_hua_id: 'h1',
+      fa_song_zhe_id: 'j1',
+      fa_song_zhe_lei_xing: 'jiaose',
+      nei_rong: '嗨，我是林嵩序',
+      lei_xing: 'wenben',
+      shi_jian_chuo: jiShu,
+      yi_du: true,
+    },
+  ]
+
+  beforeEach(() => {
+    localStorage.clear()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.mocked(huoQuXiaoXi).mockReset()
+    vi.mocked(huoQuFuPan).mockReset()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.clearAllMocks()
+  })
+
+  async function mountFuPanYeMian(options: {
+    xiaoXiLieBiao?: typeof ceShiXiaoXiLieBiao
+    fuPanNeiRong?: string | null
+    fuPanPiZhu?: Array<{ xu_hao: number; ping_lun: string; qing_gan?: string }> | null
+  } = {}) {
+    const xiaoXiLieBiao = options.xiaoXiLieBiao ?? ceShiXiaoXiLieBiao
+    vi.mocked(huoQuXiaoXi).mockResolvedValue({
+      lie_biao: xiaoXiLieBiao,
+      zong_shu: xiaoXiLieBiao.length,
+    })
+    vi.mocked(huoQuFuPan).mockResolvedValue({
+      fu_pan_nei_rong: options.fuPanNeiRong ?? null,
+      fu_pan_shi_jian_xian: [],
+      fu_pan_pi_zhu: options.fuPanPiZhu ?? null,
+      jun_shi_zhi_dao_ji_lu: [],
+      guan_jian_shi_jian: [],
+      jia_zai_zhong: false,
+    })
+
+    const luYou = chuangJianLuYou()
+    await luYou.push('/chat/h1?fuPan=1&dangAnId=d1')
+    const pinia = createPinia()
+    setActivePinia(pinia)
+
+    const 用户仓库 = 使用用户仓库()
+    用户仓库.dangQianYongHu = {
+      id: 'u1',
+      shou_ji_hao: '13800138000',
+      yong_hu_ming: '测试用户',
+      ni_cheng: '测试昵称',
+      xing_bie: 'male',
+      mu_biao_xing_bie: 'female',
+      xing_ge_xuan_ze: 'INTJ',
+      ren_she_biao_qian: 'neiLianXueBa',
+      yun_xu_zha_nan_zha_nv: false,
+      tou_xiang: null,
+      sheng_ri: null,
+      qian_ming: null,
+      guan_li_yuan: false,
+      huo_yue_ren_she_id: null,
+      hai_wang_fen_shu: 0,
+      chuang_jian_shi_jian: new Date().toISOString(),
+      geng_xin_shi_jian: new Date().toISOString(),
+    }
+    用户仓库.令牌 = 'test-token'
+
+    const 聊天仓库 = 使用聊天仓库()
+    聊天仓库.jiaoSeXinXi = {
+      id: 'j1',
+      ming_zi: '林嵩序',
+      wei_xin_ming: '嵩序',
+      xing_bie: 'nv',
+      nian_ling: 22,
+      wai_mao: '',
+      xing_ge: '',
+      bei_jing_gu_shi: '',
+      xi_hao: [],
+      yan_yu_feng_ge: '',
+      tou_xiang: '',
+      bei_jing_tu: null,
+      biao_qian: [],
+      re_du: 0,
+      chuang_jian_shi_jian: new Date().toISOString(),
+    }
+
+    const wrapper = mount(
+      {
+        components: { QuanJuCaiDan },
+        template: '<div><QuanJuCaiDan /><router-view /></div>',
+      },
+      {
+        global: {
+          plugins: [pinia, luYou],
+        },
+        attachTo: document.body,
+      },
+    )
+    await flushPromises()
+    return { wrapper, luYou, 聊天仓库 }
+  }
+
+  it('复盘模式开场白消息可见', async () => {
+    const { wrapper } = await mountFuPanYeMian()
+    await flushPromises()
+
+    const jiaoSeXiaoXi = wrapper.findAll('.jiaose-xiaoxi')
+    expect(jiaoSeXiaoXi.length).toBeGreaterThanOrEqual(1)
+    expect(wrapper.text()).toContain('嗨，我是林嵩序')
+  })
+
+  it('复盘模式用户第一句话可见', async () => {
+    const { wrapper } = await mountFuPanYeMian()
+    await flushPromises()
+
+    const yongHuXiaoXi = wrapper.findAll('.yonghu-xiaoxi')
+    expect(yongHuXiaoXi.length).toBeGreaterThanOrEqual(1)
+    expect(wrapper.text()).toContain('你好呀')
+  })
+
+  it('复盘 zong_jie 对象格式分块展示且渣型高亮', async () => {
+    const { wrapper } = await mountFuPanYeMian({
+      fuPanNeiRong:
+        '对象类型：渣型\n用户表现：过于信任对方的话术\n关键转折点：第三次对话时未能识破矛盾\n改进建议：保持警觉，注意细节矛盾',
+    })
+    await flushPromises()
+
+    const fenKuai = wrapper.findAll('.fupan-zongjie-fenkuai')
+    expect(fenKuai.length).toBe(4)
+
+    expect(fenKuai[0].classes()).toContain('jinggao-fenkuai')
+    expect(fenKuai[0].text()).toContain(huoQuFanYi('zhanJi', 'duiXiangLeiXing'))
+    expect(fenKuai[0].text()).toContain(huoQuFanYi('zhanJi', 'zhaXing'))
+    expect(fenKuai[0].find('.jinggao-tubiao').exists()).toBe(true)
+
+    expect(fenKuai[1].text()).toContain(huoQuFanYi('zhanJi', 'yongHuBiaoXian'))
+    expect(fenKuai[2].text()).toContain(huoQuFanYi('zhanJi', 'guanJianZhuanZheDian'))
+    expect(fenKuai[3].text()).toContain(huoQuFanYi('zhanJi', 'gaiJinJianYi'))
+
+    expect(wrapper.find('.fupan-zongjie-jinggao-tishi').exists()).toBe(true)
+    expect(wrapper.find('.fupan-zongjie-jinggao-tishi').text()).toBe(
+      huoQuFanYi('zhanJi', 'zhaXingJingGao'),
+    )
+  })
+
+  it('复盘 zong_jie 字符串格式兼容显示', async () => {
+    const { wrapper } = await mountFuPanYeMian({
+      fuPanNeiRong: '整体表现不错，建议继续保持自然节奏，像朋友复盘吐槽一样。',
+    })
+    await flushPromises()
+
+    expect(wrapper.find('.fupan-zongjie-neirong').exists()).toBe(true)
+    expect(wrapper.find('.fupan-zongjie-fenkuai').exists()).toBe(false)
+    expect(wrapper.find('.fupan-zongjie-neirong').text()).toBe(
+      '整体表现不错，建议继续保持自然节奏，像朋友复盘吐槽一样。',
+    )
+  })
+
+  it('复盘 pi_zhu 三色情感标签正常显示', async () => {
+    const { wrapper } = await mountFuPanYeMian({
+      fuPanNeiRong: '整体表现需要改进。',
+      fuPanPiZhu: [
+        { xu_hao: 1, ping_lun: '开场挺自然的', qing_gan: 'positive' },
+        { xu_hao: 2, ping_lun: '回应有点急了', qing_gan: 'negative' },
+        { xu_hao: 3, ping_lun: '天气话题安全', qing_gan: 'neutral' },
+      ],
+    })
+    await flushPromises()
+
+    const piZhuXiangMu = wrapper.findAll('.fupan-pizhu-xiangmu')
+    expect(piZhuXiangMu.length).toBe(3)
+
+    expect(piZhuXiangMu[0].classes()).toContain('pizhu-positive')
+    expect(piZhuXiangMu[0].find('.fupan-pizhu-neirong').text()).toBe('开场挺自然的')
+
+    expect(piZhuXiangMu[1].classes()).toContain('pizhu-negative')
+    expect(piZhuXiangMu[1].find('.fupan-pizhu-neirong').text()).toBe('回应有点急了')
+
+    expect(piZhuXiangMu[2].classes()).toContain('pizhu-neutral')
+    expect(piZhuXiangMu[2].find('.fupan-pizhu-neirong').text()).toBe('天气话题安全')
+  })
+
+  it('复盘 pi_zhu 缺失 qing_gan 字段时默认中性灰色', async () => {
+    const { wrapper } = await mountFuPanYeMian({
+      fuPanNeiRong: '整体表现需要改进。',
+      fuPanPiZhu: [{ xu_hao: 1, ping_lun: '无情感字段的批注' }],
+    })
+    await flushPromises()
+
+    const piZhuXiangMu = wrapper.findAll('.fupan-pizhu-xiangmu')
+    expect(piZhuXiangMu.length).toBe(1)
+    expect(piZhuXiangMu[0].classes()).toContain('pizhu-neutral')
   })
 })
