@@ -674,7 +674,7 @@ describe('FP-01 聊天输入字数统计常驻显示与右侧定位', () => {
   it('字数统计位于输入框容器内且在输入框之后', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
     const shuRuKuang = wrapper.find('.shuru-kuang')
-    const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
+    const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianZhiYuZhi)
 
     await shuRuKuang.setValue(changNeiRong)
     await flushPromises()
@@ -684,10 +684,12 @@ describe('FP-01 聊天输入字数统计常驻显示与右侧定位', () => {
     expect(jiShi.exists()).toBe(true)
 
     const shuRuKuangYuanSu = waiKe.find('.shuru-kuang')
-    const jiShiYuanSu = jiShi.element
     const shuRuKuangIndex = Array.from(waiKe.element.children).indexOf(shuRuKuangYuanSu.element)
-    const jiShiIndex = Array.from(waiKe.element.children).indexOf(jiShiYuanSu)
-    expect(jiShiIndex).toBeGreaterThan(shuRuKuangIndex)
+    const dibuHang = waiKe.find('.shuru-dibu-hang')
+    expect(dibuHang.exists()).toBe(true)
+    const dibuHangIndex = Array.from(waiKe.element.children).indexOf(dibuHang.element)
+    expect(dibuHangIndex).toBeGreaterThan(shuRuKuangIndex)
+    expect(dibuHang.find('.zifu-jishu').exists()).toBe(true)
   })
 
   it('超出最大长度时计数器应用错误样式', async () => {
@@ -832,8 +834,10 @@ describe('FP-02 聊天输入多行展开/折叠', () => {
     expect(zhanKaiAnNiu.exists()).toBe(true)
     expect(ziFuJiShu.exists()).toBe(true)
 
-    const zhanKaiIndex = Array.from(waiKe.element.children).indexOf(zhanKaiAnNiu.element)
-    const ziFuJiShuIndex = Array.from(waiKe.element.children).indexOf(ziFuJiShu.element)
+    const dibuHang = waiKe.find('.shuru-dibu-hang')
+    expect(dibuHang.exists()).toBe(true)
+    const zhanKaiIndex = Array.from(dibuHang.element.children).indexOf(zhanKaiAnNiu.element)
+    const ziFuJiShuIndex = Array.from(dibuHang.element.children).indexOf(ziFuJiShu.element)
     expect(zhanKaiIndex).toBeGreaterThan(ziFuJiShuIndex)
   })
 

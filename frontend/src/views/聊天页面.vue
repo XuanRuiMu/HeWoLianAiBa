@@ -205,32 +205,34 @@
             @focus="chuLiShuRuKuangJuJiao"
             @input="chuLiShuRuBianHua"
           />
-          <span
-            class="zifu-jishu"
-            :class="{ 'zifu-chaochu': shuRuNeiRong.length > XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu }"
-          >
-            {{ shuRuNeiRong.length }}/{{ XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu }}
-          </span>
-          <button
-            class="zhan-kai-anniu"
-            :class="{ 'zhan-kai': shuRuKuangZhanKai }"
-            :disabled="!xianShiZhanKaiAnNiu"
-            :title="
-              shuRuKuangZhanKai
-                ? huoQuFanYi('liaoTian', 'zheDie')
-                : huoQuFanYi('liaoTian', 'zhanKai')
-            "
-            :aria-label="
-              shuRuKuangZhanKai
-                ? huoQuFanYi('liaoTian', 'zheDie')
-                : huoQuFanYi('liaoTian', 'zhanKai')
-            "
-            @click="qieHuanShuRuKuangZhanKai"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
+          <div class="shuru-dibu-hang">
+            <span
+              class="zifu-jishu"
+              :class="{ 'zifu-chaochu': shuRuNeiRong.length > XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu }"
+            >
+              {{ shuRuNeiRong.length }}/{{ XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu }}
+            </span>
+            <button
+              class="zhan-kai-anniu"
+              :class="{ 'zhan-kai': shuRuKuangZhanKai }"
+              :disabled="!xianShiZhanKaiAnNiu"
+              :title="
+                shuRuKuangZhanKai
+                  ? huoQuFanYi('liaoTian', 'zheDie')
+                  : huoQuFanYi('liaoTian', 'zhanKai')
+              "
+              :aria-label="
+                shuRuKuangZhanKai
+                  ? huoQuFanYi('liaoTian', 'zheDie')
+                  : huoQuFanYi('liaoTian', 'zhanKai')
+              "
+              @click="qieHuanShuRuKuangZhanKai"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+          </div>
         </div>
         <button
           class="biaoqing-anniu emoji-anniu"
@@ -1149,7 +1151,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .liaotian-yemian {
   --emoji-mianban-bu-ju-gao-du: 220px;
-  --shuru-kuang-zhe-die-gao-du: 38px;
+  --shuru-kuang-zhe-die-gao-du: 46px;
   --shuru-kuang-zhan-kai-gao-du: 120px;
   display: flex;
   flex-direction: column;
@@ -1457,14 +1459,15 @@ onBeforeUnmount(() => {
   border-radius: 6px;
   min-height: var(--shuru-kuang-zhe-die-gao-du);
   display: flex;
-  align-items: center;
+  flex-direction: column;
   border: 0.5px solid var(--shuru-quyu-biankuang);
+  overflow: hidden;
 }
 
 .shuru-kuang {
   flex: 1;
   min-width: 0;
-  padding: 8px 12px;
+  padding: 8px 12px 0;
   border: none;
   background: transparent;
   font-size: 16px;
@@ -1526,12 +1529,19 @@ onBeforeUnmount(() => {
   color: var(--cuowu-yanse);
 }
 
-.shuru-kuang-waike .zifu-jishu {
+.shuru-dibu-hang {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 0 8px;
   flex-shrink: 0;
-  padding-right: 10px;
-  padding-left: 4px;
+  height: 16px;
+}
+
+.shuru-kuang-waike .zifu-jishu {
   white-space: nowrap;
   font-size: 11px;
+  line-height: 16px;
   color: var(--wenben-tishi);
 }
 
@@ -1540,8 +1550,8 @@ onBeforeUnmount(() => {
 }
 
 .zhan-kai-anniu {
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1555,8 +1565,8 @@ onBeforeUnmount(() => {
 }
 
 .zhan-kai-anniu svg {
-  width: 20px;
-  height: 20px;
+  width: 14px;
+  height: 14px;
   transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
