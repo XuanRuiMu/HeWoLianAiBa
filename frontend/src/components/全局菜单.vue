@@ -79,14 +79,6 @@
 
       <div class="caidan-you">
         <button
-          class="zhuti-qiehuan-anniu"
-          :title="zhutiAnNiuBiaoTi"
-          :aria-label="zhutiAnNiuBiaoTi"
-          @click="qieHuanZhuti"
-        >
-          <span class="zhuti-tubiao">{{ zhutiAnNiuTuBiao }}</span>
-        </button>
-        <button
           v-if="shiLiaoTianYe && 聊天仓库.jiaoSeXinXi"
           class="junshi-anniu"
           :title="huoQuFanYi('caidan', 'junShiZhiDao')"
@@ -95,6 +87,14 @@
         >
           <span class="junshi-wenzi-quan">{{ huoQuFanYi('caidan', 'junShiZhiDao') }}</span>
           <span class="junshi-wenzi-duan">{{ huoQuFanYi('caidan', 'junShi') }}</span>
+        </button>
+        <button
+          class="zhuti-qiehuan-anniu"
+          :title="zhutiAnNiuBiaoTi"
+          :aria-label="zhutiAnNiuBiaoTi"
+          @click="qieHuanZhuti"
+        >
+          <span class="zhuti-tubiao">{{ zhutiAnNiuTuBiao }}</span>
         </button>
         <button
           v-if="用户仓库.dangQianYongHu"

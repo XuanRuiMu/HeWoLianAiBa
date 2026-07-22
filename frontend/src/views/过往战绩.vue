@@ -116,8 +116,8 @@
                 :aria-checked="dangAn.id && xuanZhongIds.has(dangAn.id) ? 'true' : 'false'"
                 :aria-label="huoQuFanYi('zhanJi', 'gouXuan').replace('{名字}', dangAn.jiao_se_ming_zi ?? '')"
                 tabindex="0"
-                @click.stop="qieHuanXuanZe(dangAn)"
-                @keydown.space.prevent.stop="qieHuanXuanZe(dangAn)"
+                @click.stop="qieHuanXuanZe(dangAn, $event)"
+                @keydown.space.prevent.stop="qieHuanXuanZe(dangAn, $event)"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -226,6 +226,7 @@ const router = useRouter()
 const yongHuCangKu = 使用用户仓库()
 const jiaZaiZhong = ref(true)
 const xuanZhongIds = ref<Set<string>>(new Set())
+const zuiHouDianJiSuoYin = ref<number | null>(null)
 const fenLeiZu = reactive<Record<FenLeiZhuangTai, 档案详情[]>>({
   jinxingzhong: [],
   shengli: [],
@@ -397,12 +398,34 @@ async function jiaZaiShuJu() {
   }
 }
 
-function qieHuanXuanZe(dangAn: 档案详情) {
+function huoQuDangAnQuanJuSuoYin(dangAnId: string | undefined): number {
+  if (!dangAnId) return -1
+  return dangAnLieBiao.value.findIndex((item) => item.id === dangAnId)
+}
+
+function qieHuanXuanZe(dangAn: 档案详情, shiJian?: { shiftKey?: boolean }) {
   if (!dangAn.id) return
-  if (xuanZhongIds.value.has(dangAn.id)) {
-    xuanZhongIds.value.delete(dangAn.id)
+  const dangQianSuoYin = huoQuDangAnQuanJuSuoYin(dangAn.id)
+  if (
+    shiJian?.shiftKey &&
+    zuiHouDianJiSuoYin.value !== null &&
+    zuiHouDianJiSuoYin.value >= 0 &&
+    dangQianSuoYin >= 0
+  ) {
+    const qiShi = Math.min(zuiHouDianJiSuoYin.value, dangQianSuoYin)
+    const jieShu = Math.max(zuiHouDianJiSuoYin.value, dangQianSuoYin)
+    for (let i = qiShi; i <= jieShu; i++) {
+      const item = dangAnLieBiao.value[i]
+      if (item?.id) xuanZhongIds.value.add(item.id)
+    }
+    zuiHouDianJiSuoYin.value = dangQianSuoYin
   } else {
-    xuanZhongIds.value.add(dangAn.id)
+    if (xuanZhongIds.value.has(dangAn.id)) {
+      xuanZhongIds.value.delete(dangAn.id)
+    } else {
+      xuanZhongIds.value.add(dangAn.id)
+    }
+    zuiHouDianJiSuoYin.value = dangQianSuoYin
   }
 }
 
@@ -583,6 +606,12 @@ defineExpose({
   margin-top: 12px;
   margin-bottom: 4px;
   gap: 12px;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.piliang-gongju-lan:not(.piliang-gongju-lan--kong) {
+  background: rgba(255, 107, 157, 0.1);
+  box-shadow: 0 4px 16px rgba(255, 107, 157, 0.15);
 }
 
 .piliang-gongju-lan--kong {
@@ -747,8 +776,9 @@ defineExpose({
 }
 
 .zhanji-kapian.xuanZhong {
-  background: rgba(255, 107, 157, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(255, 107, 157, 0.4);
+  background: var(--yanse-zhanji-beijing, rgba(255, 107, 157, 0.08));
+  box-shadow: inset 0 0 0 1px rgba(255, 107, 157, 0.4),
+    inset 3px 0 0 0 var(--yanse-zhanji, #ff6b9d);
 }
 
 .gouxuan-anniu {
@@ -804,10 +834,13 @@ defineExpose({
 .gouxuan-anniu--bufen::after {
   content: '';
   width: 10px;
-  height: 10px;
-  border-radius: 50%;
+  height: 2px;
+  border-radius: 1px;
   background: var(--an-niu-bei-jing, #ff6b9d);
   position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .gouxuan-anniu--bufen svg {
@@ -816,6 +849,13 @@ defineExpose({
 
 .gouxuan-anniu--kapian {
   margin-right: 12px;
+  opacity: 0.6;
+}
+
+.zhanji-kapian:hover .gouxuan-anniu--kapian,
+.gouxuan-anniu--kapian:focus-visible,
+.gouxuan-anniu--kapian.gouxuan-anniu--xuanzhong {
+  opacity: 1;
 }
 
 .zhanji-zuo {
@@ -981,8 +1021,12 @@ defineExpose({
 }
 
 .zhanji-kapian.sortable-ghost {
-  opacity: 0 !important;
+  opacity: 0.4 !important;
   background: transparent !important;
+  border: 1px dashed rgba(255, 107, 157, 0.4) !important;
+  transform: translateY(-4px) !important;
+  box-shadow: 0 -8px 16px rgba(255, 107, 157, 0.15) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
 }
 
 .zhanji-kapian.sortable-chosen {
@@ -1018,6 +1062,10 @@ defineExpose({
   }
   .zhanji-kapian.sortable-drag {
     transform: none !important;
+  }
+  .zhanji-kapian.sortable-ghost {
+    transform: none !important;
+    box-shadow: none !important;
   }
 }
 </style>

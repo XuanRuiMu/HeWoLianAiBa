@@ -28,11 +28,46 @@ function gengXinShiJiaoKouGaoDu() {
   }
 }
 
+function jianCeAnQuanQuYu() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return
+  const shiYongDiv = document.createElement('div')
+  shiYongDiv.style.position = 'fixed'
+  shiYongDiv.style.top = '0'
+  shiYongDiv.style.left = '0'
+  shiYongDiv.style.width = '0'
+  shiYongDiv.style.height = '0'
+  shiYongDiv.style.paddingTop = 'env(safe-area-inset-top)'
+  shiYongDiv.style.paddingBottom = 'env(safe-area-inset-bottom)'
+  shiYongDiv.style.visibility = 'hidden'
+  document.body.appendChild(shiYongDiv)
+  const shang = window.getComputedStyle(shiYongDiv).paddingTop
+  const xia = window.getComputedStyle(shiYongDiv).paddingBottom
+  document.body.removeChild(shiYongDiv)
+  const zhiChi = (shang && shang !== '0px') || (xia && xia !== '0px')
+  if (zhiChi) return
+  let tuiSuanShang = 0
+  let tuiSuanXia = 0
+  if (window.screen && typeof window.screen.height === 'number' && window.visualViewport) {
+    const chuangKouGaoDu = window.visualViewport.height
+    const pingMuGaoDu = window.screen.height
+    const chaZhi = Math.max(0, pingMuGaoDu - chuangKouGaoDu)
+    if (chaZhi > 0 && chaZhi < 200) {
+      if (window.visualViewport.offsetTop > 0) {
+        tuiSuanShang = window.visualViewport.offsetTop
+      }
+      tuiSuanXia = Math.max(0, chaZhi - tuiSuanShang)
+    }
+  }
+  document.documentElement.style.setProperty('--anquan-quyu-shang', `${tuiSuanShang}px`)
+  document.documentElement.style.setProperty('--anquan-quyu-xia', `${tuiSuanXia}px`)
+}
+
 onMounted(() => {
   if (用户仓库.令牌 && !用户仓库.dangQianYongHu) {
     用户仓库.jiaZaiYongHu()
   }
   gengXinShiJiaoKouGaoDu()
+  jianCeAnQuanQuYu()
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', gengXinShiJiaoKouGaoDu)
     window.visualViewport.addEventListener('scroll', gengXinShiJiaoKouGaoDu)

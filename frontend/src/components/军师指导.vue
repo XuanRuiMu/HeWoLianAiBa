@@ -21,6 +21,9 @@
           {{ huoQuFanYi('junShi', 'zanWuJunShi') }}
         </div>
         <div v-else class="junshi-liebiao">
+          <div v-if="yiZhiDaoGuo" class="yi-zhidao-tishi">
+            {{ huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong') }}
+          </div>
           <div
             v-for="junShi in junShiLieBiaoXuanXiang"
             :key="junShi.id"
@@ -119,7 +122,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   qingQiuJunShiZhiDao,
@@ -157,6 +160,12 @@ const zhanKaiJunShiId = ref<string | null>(null)
 const cuoWuTiShiMap = ref<Record<string, string>>({})
 const jiaZaiZhong = ref(true)
 const xianShiZhiDaoJiLu = ref(false)
+
+const yiZhiDaoGuo = computed(
+  () =>
+    !keZaiCiZhiDao.value &&
+    dangQianZhuangTai.value?.zhuang_tai !== 'zhi_dao_zhong',
+)
 let lunXunShiJianQi: ReturnType<typeof setInterval> | null = null
 const LUN_XUN_JIAN_GE_HAO_MIAO = 3000
 const JIAN_YI_YU_LAN_CHANG_DU = 50
@@ -554,6 +563,17 @@ onUnmounted(() => {
 .cuowu-tishi {
   width: 100%;
   padding: 10px 14px;
+  background: rgba(255, 152, 0, 0.1);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #e65100;
+  text-align: center;
+}
+
+.yi-zhidao-tishi {
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 12px;
   background: rgba(255, 152, 0, 0.1);
   border-radius: 8px;
   font-size: 13px;

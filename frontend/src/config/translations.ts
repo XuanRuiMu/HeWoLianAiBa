@@ -244,6 +244,7 @@ export const fanYi = {
     junShiYiZhiDao: '已指导',
     junShiChaKanJieGuo: '查看结果',
     junShiChongFu: '已指导过相同聊天内容，请先发送新消息',
+    yiZhiDaoXiangTongNeiRong: '已指导过相同聊天内容，请先发送新消息',
     wuLiaoTianJiLu: '暂无聊天记录，无法请求军师指导',
     qingQiuShiBai: '请求失败，请稍后再试',
     zhiDaoZhongTiShi: '军师正在指导中，请稍候',

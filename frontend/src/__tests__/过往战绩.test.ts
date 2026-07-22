@@ -734,4 +734,85 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(quanBuWenBen).not.toContain('NaN:NaN')
     })
   })
+
+  describe('FP-04 Gmail风格勾选增强', () => {
+    it('Shift+点击范围多选：单击A，Shift+点击C，选中A到C之间所有项', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const gouXuan = wrapper.findAll('.gouxuan-anniu--kapian')
+
+      await gouXuan[0].trigger('click')
+      await flushPromises()
+      expect(wrapper.findAll('.zhanji-kapian.xuanZhong').length).toBe(1)
+
+      await gouXuan[2].trigger('click', { shiftKey: true })
+      await flushPromises()
+
+      expect(wrapper.findAll('.zhanji-kapian.xuanZhong').length).toBe(3)
+      expect(wrapper.find('.xuan-ze-shu-liang').text()).toContain('3')
+    })
+
+    it('Shift+点击反向范围同样生效：单击C，Shift+点击A，选中A到C', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const gouXuan = wrapper.findAll('.gouxuan-anniu--kapian')
+
+      await gouXuan[2].trigger('click')
+      await flushPromises()
+
+      await gouXuan[0].trigger('click', { shiftKey: true })
+      await flushPromises()
+
+      expect(wrapper.findAll('.zhanji-kapian.xuanZhong').length).toBe(3)
+    })
+
+    it('无上次点击时 Shift+点击退化为单选切换', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const gouXuan = wrapper.findAll('.gouxuan-anniu--kapian')
+
+      await gouXuan[1].trigger('click', { shiftKey: true })
+      await flushPromises()
+
+      expect(wrapper.findAll('.zhanji-kapian.xuanZhong').length).toBe(1)
+    })
+
+    it('sortable-ghost 抬升动画保留FP-06透明度和虚线边框', () => {
+      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-ghost\s*\{[^}]*opacity:\s*0\.4/)
+      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-ghost\s*\{[^}]*dashed/)
+      expect(guoWangZhanJiYuanMa).toMatch(
+        /\.sortable-ghost\s*\{[^}]*transform:\s*translateY\(-\d+px\)/,
+      )
+    })
+
+    it('卡片勾选框默认半透明，悬停或选中时完全显示', () => {
+      expect(guoWangZhanJiYuanMa).toMatch(/\.gouxuan-anniu--kapian\s*\{[^}]*opacity:\s*0\.6/)
+      expect(guoWangZhanJiYuanMa).toMatch(/\.zhanji-kapian:hover\s+\.gouxuan-anniu--kapian/)
+    })
+
+    it('选中行使用战绩主题背景色和左边框高亮', () => {
+      expect(guoWangZhanJiYuanMa).toMatch(
+        /\.zhanji-kapian\.xuanZhong\s*\{[^}]*var\(--yanse-zhanji-beijing/,
+      )
+      expect(guoWangZhanJiYuanMa).toMatch(/inset\s+3px\s+0\s+0\s+0/)
+    })
+
+    it('批量工具栏有选中项时高亮加阴影', () => {
+      expect(guoWangZhanJiYuanMa).toMatch(
+        /\.piliang-gongju-lan:not\(\.piliang-gongju-lan--kong\)/,
+      )
+    })
+
+    it('indeterminate 态改为横线样式', () => {
+      expect(guoWangZhanJiYuanMa).toMatch(
+        /\.gouxuan-anniu--bufen::after\s*\{[^}]*height:\s*2px/,
+      )
+    })
+  })
 })

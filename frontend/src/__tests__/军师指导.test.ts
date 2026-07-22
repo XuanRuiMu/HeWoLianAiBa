@@ -787,3 +787,91 @@ describe('FP-04 军师指导"指导记录"独立入口', () => {
     expect(yuLan.text().length).toBeLessThan(changJianYi.length)
   })
 })
+
+describe('FP-02 军师指导"已指导过相同聊天内容"恒定提示', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(huoQuJunShiLieBiao).mockResolvedValue(chuangJianMoNiJunShiLieBiao())
+    vi.mocked(huoQuJunShiJiLu).mockResolvedValue(chuangJianMoNiJiLuLieBiao())
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({ zhuangTai: null, keZaiCiZhiDao: false })
+    vi.mocked(qingQiuJunShiZhiDao).mockReset()
+  })
+
+  afterEach(() => {
+    vi.clearAllTimers()
+    vi.useRealTimers()
+  })
+
+  it('keZaiCiZhiDao为false且非指导中时恒定显示提示', async () => {
+    const { wrapper } = await mountJunShiZhiDao()
+
+    const tiShi = wrapper.find('.yi-zhidao-tishi')
+    expect(tiShi.exists()).toBe(true)
+    expect(tiShi.text()).toBe(huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong'))
+  })
+
+  it('keZaiCiZhiDao为true时不显示恒定提示', async () => {
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({ zhuangTai: null, keZaiCiZhiDao: true })
+
+    const { wrapper } = await mountJunShiZhiDao()
+
+    expect(wrapper.find('.yi-zhidao-tishi').exists()).toBe(false)
+  })
+
+  it('指导中状态时不显示恒定提示', async () => {
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuangTai: {
+        zhuang_tai: 'zhi_dao_zhong',
+        jun_shi_id: 'xuanRuiMu',
+        kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+      },
+      keZaiCiZhiDao: false,
+    })
+    vi.mocked(huoQuJunShiJiLu).mockResolvedValue([])
+
+    const { wrapper } = await mountJunShiZhiDao()
+
+    expect(wrapper.find('.yi-zhidao-tishi').exists()).toBe(false)
+  })
+
+  it('已完成状态且keZaiCiZhiDao为false时恒定显示提示', async () => {
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuangTai: {
+        zhuang_tai: 'yi_wan_cheng',
+        jun_shi_id: 'xuanRuiMu',
+        kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
+        jie_guo: {
+          junShi: chuangJianMoNiJunShiLieBiao()[0],
+          zhiDaoNeiRong: '已完成状态下的指导内容',
+          shiJian: '2026-07-17T10:01:00.000Z',
+        },
+      },
+      keZaiCiZhiDao: false,
+    })
+    vi.mocked(huoQuJunShiJiLu).mockResolvedValue([])
+
+    const { wrapper } = await mountJunShiZhiDao()
+
+    expect(wrapper.find('.yi-zhidao-tishi').exists()).toBe(true)
+    expect(wrapper.find('.yi-zhidao-tishi').text()).toBe(
+      huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong'),
+    )
+  })
+
+  it('加载中时不显示恒定提示', async () => {
+    vi.mocked(huoQuJunShiLieBiao).mockImplementation(
+      () => new Promise(() => []),
+    )
+
+    const wrapper = mount(军师指导, {
+      props: { jiaoSeId: 'j1' },
+      global: {
+        plugins: [createPinia(), chuangJianLuYou()],
+      },
+      attachTo: document.body,
+    })
+    await flushPromises()
+
+    expect(wrapper.find('.yi-zhidao-tishi').exists()).toBe(false)
+  })
+})

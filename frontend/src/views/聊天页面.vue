@@ -169,7 +169,7 @@
       </div>
     </main>
 
-    <footer ref="shuruQuYuRef" class="shuru-quyu weixin-shuru">
+    <footer class="shuru-quyu weixin-shuru">
       <div v-if="fuPanMoShi" class="fupan-dibu-lan">
         <button class="fupan-tuichu-anniu" @click="tuiChuFuPan">
           {{ huoQuFanYi('zhanJi', 'tuiChuFuPan') }}
@@ -379,7 +379,6 @@ const youXiShiJianZhanKai = ref(false)
 const youXiShiJianLeiXing = ref<'shengli' | 'shibai'>('shengli')
 const youXiShiJianNeiRong = ref('')
 const xiaoxiQuYuRef = ref<HTMLElement | null>(null)
-const shuruQuYuRef = ref<HTMLElement | null>(null)
 const shuruKuangRef = ref<HTMLTextAreaElement | null>(null)
 const shuRuKuangZhanKai = ref(false)
 const shuRuKuangKeZhanKai = ref(false)
@@ -1153,9 +1152,8 @@ onBeforeUnmount(() => {
   --emoji-mianban-bu-ju-gao-du: 220px;
   --shuru-kuang-zhe-die-gao-du: 46px;
   --shuru-kuang-zhan-kai-gao-du: 120px;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+  display: grid;
+  grid-template-rows: 1fr auto;
   min-height: 0;
   height: 100%;
   width: 100%;
@@ -1167,7 +1165,6 @@ onBeforeUnmount(() => {
 }
 
 .xiaoxi-quyu {
-  flex: 1;
   overflow-y: auto;
   padding: 12px 16px;
   padding-bottom: 20px;
@@ -1409,7 +1406,6 @@ onBeforeUnmount(() => {
   border-top: 0.5px solid var(--shuru-quyu-biankuang);
   padding: 8px 10px;
   padding-bottom: calc(8px + var(--anquan-quyu-xia));
-  flex-shrink: 0;
 }
 
 .shuru-rongqi {
@@ -1457,15 +1453,12 @@ onBeforeUnmount(() => {
   flex: 1;
   background: var(--beijing-kaopian);
   border-radius: 6px;
-  min-height: var(--shuru-kuang-zhe-die-gao-du);
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 1fr auto;
   border: 0.5px solid var(--shuru-quyu-biankuang);
-  overflow: hidden;
 }
 
 .shuru-kuang {
-  flex: 1;
   min-width: 0;
   padding: 8px 12px 0;
   border: none;
@@ -1478,8 +1471,8 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   resize: none;
   overflow: hidden;
-  height: var(--shuru-kuang-zhe-die-gao-du);
-  max-height: var(--shuru-kuang-zhe-die-gao-du);
+  min-height: var(--shuru-kuang-zhe-die-gao-du);
+  max-height: var(--shuru-kuang-zhan-kai-gao-du);
   transition: height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1488,8 +1481,6 @@ onBeforeUnmount(() => {
 }
 
 .shuru-kuang.zhan-kai {
-  height: var(--shuru-kuang-zhan-kai-gao-du);
-  max-height: var(--shuru-kuang-zhan-kai-gao-du);
   overflow-y: auto;
 }
 
@@ -1534,7 +1525,6 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0 4px 0 8px;
-  flex-shrink: 0;
   height: 16px;
 }
 
