@@ -8,3 +8,4 @@ test-results/
 playwright-report/
 *.tsbuildinfo
 eslint-report.json
+coverage/

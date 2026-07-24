@@ -3,7 +3,7 @@ import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   {
-    ignores: ['dist', 'node_modules', '*.d.ts', 'tests', 'src/__tests__', 'validate_init_sql.js'],
+    ignores: ['dist', 'node_modules', '*.d.ts', 'tests', 'src/__tests__'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

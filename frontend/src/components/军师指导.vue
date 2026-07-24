@@ -47,10 +47,18 @@
             <button
               v-if="huoQuJunShiZhuangTai(junShi.id) === 'wei_zhi_dao'"
               class="qingqiu-anniu"
-              :disabled="!jiaoSeId || qingQiuZhongJunShiId !== null || dangQianZhuangTai?.zhuang_tai === 'zhi_dao_zhong'"
+              :disabled="
+                !jiaoSeId ||
+                qingQiuZhongJunShiId !== null ||
+                dangQianZhuangTai?.zhuang_tai === 'zhi_dao_zhong'
+              "
               @click="zhiXingQingQiu(junShi)"
             >
-              {{ qingQiuZhongJunShiId === junShi.id ? huoQuFanYi('junShi', 'qingQiuZhong') : huoQuFanYi('junShi', 'junShiQingQiuZhiDao') }}
+              {{
+                qingQiuZhongJunShiId === junShi.id
+                  ? huoQuFanYi('junShi', 'qingQiuZhong')
+                  : huoQuFanYi('junShi', 'junShiQingQiuZhiDao')
+              }}
             </button>
             <button
               v-else-if="huoQuJunShiZhuangTai(junShi.id) === 'zhi_dao_zhong'"
@@ -59,12 +67,9 @@
             >
               {{ huoQuFanYi('junShi', 'junShiZhiDaoZhong') }}
             </button>
-            <button
-              v-else
-              class="qingqiu-anniu yi-zhidao"
-              @click="qieHuanZhanKai(junShi.id)"
-            >
-              {{ huoQuFanYi('junShi', 'junShiYiZhiDao') }} - {{ huoQuFanYi('junShi', 'junShiChaKanJieGuo') }}
+            <button v-else class="qingqiu-anniu yi-zhidao" @click="qieHuanZhanKai(junShi.id)">
+              {{ huoQuFanYi('junShi', 'junShiYiZhiDao') }} -
+              {{ huoQuFanYi('junShi', 'junShiChaKanJieGuo') }}
             </button>
 
             <div v-if="cuoWuTiShiMap[junShi.id]" class="cuowu-tishi">
@@ -133,11 +138,7 @@ import {
 import { fanYi, huoQuFanYi } from '@/config/translations'
 import { 是业务错误 } from '@/api/请求'
 import { shengChengTouXiangURL } from '@/utils/头像'
-import type {
-  JunShiXinXi,
-  JunShiJiLu,
-  JunShiZhiDaoZhuangTaiXinXi,
-} from '@/types'
+import type { JunShiXinXi, JunShiJiLu, JunShiZhiDaoZhuangTaiXinXi } from '@/types'
 
 type JunShiZhuangTaiLeiXing = 'wei_zhi_dao' | 'zhi_dao_zhong' | 'yi_wan_cheng'
 
@@ -162,9 +163,7 @@ const jiaZaiZhong = ref(true)
 const xianShiZhiDaoJiLu = ref(false)
 
 const yiZhiDaoGuo = computed(
-  () =>
-    !keZaiCiZhiDao.value &&
-    dangQianZhuangTai.value?.zhuang_tai !== 'zhi_dao_zhong',
+  () => !keZaiCiZhiDao.value && dangQianZhuangTai.value?.zhuang_tai !== 'zhi_dao_zhong',
 )
 let lunXunShiJianQi: ReturnType<typeof setInterval> | null = null
 const LUN_XUN_JIAN_GE_HAO_MIAO = 3000
@@ -332,12 +331,13 @@ onMounted(async () => {
   try {
     const [lieBiao, jiLu, zhuangTaiJieGuo] = await Promise.all([
       huoQuJunShiLieBiao(),
-      props.jiaoSeId
-        ? huoQuJunShiJiLu(props.jiaoSeId)
-        : Promise.resolve([] as JunShiJiLu[]),
+      props.jiaoSeId ? huoQuJunShiJiLu(props.jiaoSeId) : Promise.resolve([] as JunShiJiLu[]),
       props.jiaoSeId
         ? huoQuJunShiZhiDaoZhuangTai(props.jiaoSeId)
-        : Promise.resolve({ zhuangTai: null, keZaiCiZhiDao: true } as { zhuangTai: JunShiZhiDaoZhuangTaiXinXi | null; keZaiCiZhiDao: boolean }),
+        : Promise.resolve({ zhuangTai: null, keZaiCiZhiDao: true } as {
+            zhuangTai: JunShiZhiDaoZhuangTaiXinXi | null
+            keZaiCiZhiDao: boolean
+          }),
     ])
     junShiLieBiaoXuanXiang.value = lieBiao
     jiLuLieBiao.value = jiLu

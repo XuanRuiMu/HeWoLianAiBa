@@ -19,6 +19,8 @@ import tongZhiLuYou from './routes/通知'
 import guanLiYuanLuYou from './routes/管理员'
 import { chengGongXiangYing, shiBaiXiangYing } from './utils/xiangying'
 import { chuangJianHTTPRiZhiZhongJianJian } from './utils/debug日志'
+import jianKangJianChaLuYou, { qingQiuJiShu, qingQiuHaoShi } from './routes/健康检查'
+import riZhiJieShouLuYou from './routes/日志接收'
 import { renZhengSocketZhongJianJian } from './socket/认证'
 import { 初始化聊天Socket } from './socket/聊天'
 import { chuShiHuaTongZhiSocket } from './socket/通知'
@@ -74,8 +76,26 @@ yingYong.use((qingQiu, _xiangYing, xiaYiBu) => {
 
 yingYong.use(chuangJianHTTPRiZhiZhongJianJian())
 
+yingYong.use((qingQiu, xiangYing, xiaYiBu) => {
+  const kaiShi = (qingQiu as unknown as Record<string, number>).kai_shi_shi_jian || Date.now()
+  xiangYing.on('finish', () => {
+    const haoShi = Date.now() - kaiShi
+    const biaoQian = {
+      fang_fa: qingQiu.method,
+      lu_jing: qingQiu.path,
+      zhuang_tai_ma: String(xiangYing.statusCode),
+    }
+    qingQiuJiShu.inc(biaoQian)
+    qingQiuHaoShi.observe(biaoQian, haoShi)
+  })
+  xiaYiBu()
+})
+
+yingYong.use(jianKangJianChaLuYou)
+
 yingYong.use(IP封禁中间件)
 yingYong.use(changGuiXianLiu)
+yingYong.use('/api/logs', riZhiJieShouLuYou)
 yingYong.use(renZhengZhongJianJian)
 yingYong.use(anQuanZhongJianJian)
 

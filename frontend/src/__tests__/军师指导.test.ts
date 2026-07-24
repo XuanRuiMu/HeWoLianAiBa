@@ -148,7 +148,10 @@ describe('FP-03 军师指导面板单级菜单化', () => {
     vi.clearAllMocks()
     vi.mocked(huoQuJunShiLieBiao).mockResolvedValue(chuangJianMoNiJunShiLieBiao())
     vi.mocked(huoQuJunShiJiLu).mockResolvedValue(chuangJianMoNiJiLuLieBiao())
-    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({ zhuangTai: null, keZaiCiZhiDao: false })
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuangTai: null,
+      keZaiCiZhiDao: false,
+    })
     vi.mocked(qingQiuJunShiZhiDao).mockReset()
   })
 
@@ -293,7 +296,9 @@ describe('FP-03 军师指导面板单级菜单化', () => {
       await xuanRuiMuKapian?.find('.qingqiu-anniu').trigger('click')
       await flushPromises()
 
-      expect(xuanRuiMuKapian?.find('.cuowu-tishi').text()).toBe(huoQuFanYi('junShi', 'junShiChongFu'))
+      expect(xuanRuiMuKapian?.find('.cuowu-tishi').text()).toBe(
+        huoQuFanYi('junShi', 'junShiChongFu'),
+      )
       expect(wrapper.find('.jieguo-neirong').exists()).toBe(false)
     })
 
@@ -307,7 +312,9 @@ describe('FP-03 军师指导面板单级菜单化', () => {
       await xuanRuiMuKapian?.find('.qingqiu-anniu').trigger('click')
       await flushPromises()
 
-      expect(xuanRuiMuKapian?.find('.cuowu-tishi').text()).toBe(huoQuFanYi('junShi', 'wuLiaoTianJiLu'))
+      expect(xuanRuiMuKapian?.find('.cuowu-tishi').text()).toBe(
+        huoQuFanYi('junShi', 'wuLiaoTianJiLu'),
+      )
     })
 
     it('未知错误显示通用失败提示', async () => {
@@ -318,7 +325,9 @@ describe('FP-03 军师指导面板单级菜单化', () => {
       await xuanRuiMuKapian?.find('.qingqiu-anniu').trigger('click')
       await flushPromises()
 
-      expect(xuanRuiMuKapian?.find('.cuowu-tishi').text()).toBe(huoQuFanYi('junShi', 'qingQiuShiBai'))
+      expect(xuanRuiMuKapian?.find('.cuowu-tishi').text()).toBe(
+        huoQuFanYi('junShi', 'qingQiuShiBai'),
+      )
     })
   })
 
@@ -660,7 +669,10 @@ describe('FP-04 军师指导"指导记录"独立入口', () => {
     vi.clearAllMocks()
     vi.mocked(huoQuJunShiLieBiao).mockResolvedValue(chuangJianMoNiJunShiLieBiao())
     vi.mocked(huoQuJunShiJiLu).mockResolvedValue(chuangJianMoNiJiLuLieBiao())
-    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({ zhuangTai: null, keZaiCiZhiDao: false })
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuangTai: null,
+      keZaiCiZhiDao: false,
+    })
     vi.mocked(qingQiuJunShiZhiDao).mockReset()
   })
 
@@ -721,7 +733,9 @@ describe('FP-04 军师指导"指导记录"独立入口', () => {
     await flushPromises()
 
     expect(wrapper.emitted('guanBi')).toBeTruthy()
-    const luYou = wrapper.vm.$router as unknown as { currentRoute: { value: { name: string; params: Record<string, string> } } }
+    const luYou = wrapper.vm.$router as unknown as {
+      currentRoute: { value: { name: string; params: Record<string, string> } }
+    }
     expect(luYou.currentRoute.value.name).toBe('junShiJiLuXiangQing')
     expect(luYou.currentRoute.value.params.jiaoSeId).toBe('j1')
     expect(luYou.currentRoute.value.params.jiLuId).toBe('2026-07-07T10:00:00.000Z')
@@ -793,7 +807,10 @@ describe('FP-02 军师指导"已指导过相同聊天内容"恒定提示', () =>
     vi.clearAllMocks()
     vi.mocked(huoQuJunShiLieBiao).mockResolvedValue(chuangJianMoNiJunShiLieBiao())
     vi.mocked(huoQuJunShiJiLu).mockResolvedValue(chuangJianMoNiJiLuLieBiao())
-    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({ zhuangTai: null, keZaiCiZhiDao: false })
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuangTai: null,
+      keZaiCiZhiDao: false,
+    })
     vi.mocked(qingQiuJunShiZhiDao).mockReset()
   })
 
@@ -811,7 +828,10 @@ describe('FP-02 军师指导"已指导过相同聊天内容"恒定提示', () =>
   })
 
   it('keZaiCiZhiDao为true时不显示恒定提示', async () => {
-    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({ zhuangTai: null, keZaiCiZhiDao: true })
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuangTai: null,
+      keZaiCiZhiDao: true,
+    })
 
     const { wrapper } = await mountJunShiZhiDao()
 
@@ -859,9 +879,7 @@ describe('FP-02 军师指导"已指导过相同聊天内容"恒定提示', () =>
   })
 
   it('加载中时不显示恒定提示', async () => {
-    vi.mocked(huoQuJunShiLieBiao).mockImplementation(
-      () => new Promise(() => []),
-    )
+    vi.mocked(huoQuJunShiLieBiao).mockImplementation(() => new Promise(() => []))
 
     const wrapper = mount(军师指导, {
       props: { jiaoSeId: 'j1' },

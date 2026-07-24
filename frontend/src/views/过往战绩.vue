@@ -83,7 +83,9 @@
               {{
                 huoQuFanYi(
                   'zhanJi',
-                  fenLeiQuanXuanZhuangTai(fenLei.zhuangTai) ? 'quXiaoQuanXuan' : 'quanXuanGaiFenLei',
+                  fenLeiQuanXuanZhuangTai(fenLei.zhuangTai)
+                    ? 'quXiaoQuanXuan'
+                    : 'quanXuanGaiFenLei',
                 )
               }}
             </button>
@@ -114,7 +116,9 @@
                 }"
                 role="checkbox"
                 :aria-checked="dangAn.id && xuanZhongIds.has(dangAn.id) ? 'true' : 'false'"
-                :aria-label="huoQuFanYi('zhanJi', 'gouXuan').replace('{名字}', dangAn.jiao_se_ming_zi ?? '')"
+                :aria-label="
+                  huoQuFanYi('zhanJi', 'gouXuan').replace('{名字}', dangAn.jiao_se_ming_zi ?? '')
+                "
                 tabindex="0"
                 @click.stop="qieHuanXuanZe(dangAn, $event)"
                 @keydown.space.prevent.stop="qieHuanXuanZe(dangAn, $event)"
@@ -314,9 +318,7 @@ function huoQuFenLeiZhuangTai(item: 档案详情): FenLeiZhuangTai {
 }
 
 const suoYouQuanXuan = computed(() => {
-  const keXuanIds = dangAnLieBiao.value
-    .map((item) => item.id)
-    .filter((id): id is string => !!id)
+  const keXuanIds = dangAnLieBiao.value.map((item) => item.id).filter((id): id is string => !!id)
   return keXuanIds.length > 0 && keXuanIds.every((id) => xuanZhongIds.value.has(id))
 })
 
@@ -450,16 +452,12 @@ function qingKongXuanZe() {
 }
 
 function fenLeiQuanXuanZhuangTai(zhuangTai: FenLeiZhuangTai): boolean {
-  const fenLeiIds = fenLeiZu[zhuangTai]
-    .map((item) => item.id)
-    .filter((id): id is string => !!id)
+  const fenLeiIds = fenLeiZu[zhuangTai].map((item) => item.id).filter((id): id is string => !!id)
   return fenLeiIds.length > 0 && fenLeiIds.every((id) => xuanZhongIds.value.has(id))
 }
 
 function qieHuanFenLeiQuanXuan(zhuangTai: FenLeiZhuangTai) {
-  const fenLeiIds = fenLeiZu[zhuangTai]
-    .map((item) => item.id)
-    .filter((id): id is string => !!id)
+  const fenLeiIds = fenLeiZu[zhuangTai].map((item) => item.id).filter((id): id is string => !!id)
   if (fenLeiIds.length === 0) return
   if (fenLeiQuanXuanZhuangTai(zhuangTai)) {
     for (const id of fenLeiIds) {
@@ -520,9 +518,7 @@ function daKaiFuPan(dangAn: 档案详情) {
 
 function onTuoZhuaiJieShu(zhuangTai: FenLeiZhuangTai) {
   const map = huoQuPaiXuMap()
-  map[zhuangTai] = fenLeiZu[zhuangTai]
-    .map((item) => item.id)
-    .filter((id): id is string => !!id)
+  map[zhuangTai] = fenLeiZu[zhuangTai].map((item) => item.id).filter((id): id is string => !!id)
   baoCunPaiXuMap(map)
 }
 
@@ -606,7 +602,9 @@ defineExpose({
   margin-top: 12px;
   margin-bottom: 4px;
   gap: 12px;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .piliang-gongju-lan:not(.piliang-gongju-lan--kong) {
@@ -772,12 +770,15 @@ defineExpose({
   -webkit-backdrop-filter: blur(8px);
   border-radius: 16px;
   cursor: grab;
-  transition: background 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    background 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .zhanji-kapian.xuanZhong {
   background: var(--yanse-zhanji-beijing, rgba(255, 107, 157, 0.08));
-  box-shadow: inset 0 0 0 1px rgba(255, 107, 157, 0.4),
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 107, 157, 0.4),
     inset 3px 0 0 0 var(--yanse-zhanji, #ff6b9d);
 }
 
@@ -1026,7 +1027,9 @@ defineExpose({
   border: 1px dashed rgba(255, 107, 157, 0.4) !important;
   transform: translateY(-4px) !important;
   box-shadow: 0 -8px 16px rgba(255, 107, 157, 0.15) !important;
-  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease !important;
 }
 
 .zhanji-kapian.sortable-chosen {
@@ -1035,7 +1038,9 @@ defineExpose({
 
 .zhanji-kapian.sortable-drag {
   background: rgba(255, 255, 255, 0.14) !important;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 107, 157, 0.4) !important;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 107, 157, 0.4) !important;
   transform: rotate(2deg) scale(1.02);
   opacity: 1 !important;
   cursor: grabbing !important;

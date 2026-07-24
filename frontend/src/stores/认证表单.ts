@@ -1,11 +1,15 @@
 import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
 import type { 性别, 性格选择, 人设标签 } from '@/types'
-import { baoCunShuJu, duQuShuJu } from '@/utils/storage'
+import { baoCunShuJu, duQuShuJu, shanChuShuJu } from '@/utils/storage'
 
 const ZI_LIAO_DANG_QIAN_BU_ZHOU_JIAN = 'ziLiaoDangQianBuZhou'
 const ZI_LIAO_SHU_JU_JIAN = 'ziLiaoShuJu'
 const ZI_LIAO_SHE_ZHI_YI_WAN_CHENG_JIAN = 'ziLiaoSheZhiYiWanCheng'
+const JI_ZHU_ZHANG_HAO_JIAN = 'jiZhuZhangHao'
+const JI_ZHU_MI_MA_JIAN = 'jiZhuMiMa'
+const BAO_CUN_ZHANG_HAO_JIAN = 'baoCunZhangHao'
+const BAO_CUN_MI_MA_JIAN = 'baoCunMiMa'
 
 export const 使用认证表单仓库 = defineStore('认证表单', () => {
   type MoShiLeiXing = 'dengLu' | 'zhuCe'
@@ -19,6 +23,8 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
   const zhuCeMiMa = ref('')
   const tongYiXieYi = ref(false)
   const yanZhengMaFaSongShiJian = ref<number | null>(null)
+  const jiZhuZhangHao = ref(false)
+  const jiZhuMiMa = ref(false)
 
   const ziLiaoDangQianBuZhou = ref(1)
   const ziLiaoShuJu = reactive({
@@ -63,6 +69,40 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
     zhuCeMiMa.value = ''
     tongYiXieYi.value = false
     yanZhengMaFaSongShiJian.value = null
+    // 不清除 jiZhuZhangHao / jiZhuMiMa 勾选状态，由登录页根据持久化数据回填
+  }
+
+  function jiaZaiJiZhuSheZhi() {
+    const baoCunZhangHao = duQuShuJu<string>(BAO_CUN_ZHANG_HAO_JIAN, null)
+    const baoCunMiMa = duQuShuJu<string>(BAO_CUN_MI_MA_JIAN, null)
+    jiZhuZhangHao.value = baoCunZhangHao !== null
+    jiZhuMiMa.value = baoCunMiMa !== null
+    if (baoCunZhangHao !== null) {
+      dengLuShouJiHao.value = baoCunZhangHao
+    }
+    if (baoCunMiMa !== null) {
+      dengLuMiMa.value = baoCunMiMa
+    }
+  }
+
+  function sheZhiJiZhuZhangHaoMiMa(
+    zhangHao: string,
+    miMa: string,
+    jiZhuZhangHaoZhi: boolean,
+    jiZhuMiMaZhi: boolean,
+  ) {
+    baoCunShuJu(JI_ZHU_ZHANG_HAO_JIAN, jiZhuZhangHaoZhi)
+    baoCunShuJu(JI_ZHU_MI_MA_JIAN, jiZhuMiMaZhi)
+    if (jiZhuZhangHaoZhi) {
+      baoCunShuJu(BAO_CUN_ZHANG_HAO_JIAN, zhangHao)
+    } else {
+      shanChuShuJu(BAO_CUN_ZHANG_HAO_JIAN)
+    }
+    if (jiZhuMiMaZhi) {
+      baoCunShuJu(BAO_CUN_MI_MA_JIAN, miMa)
+    } else {
+      shanChuShuJu(BAO_CUN_MI_MA_JIAN)
+    }
   }
 
   function qingKongZiLiao() {
@@ -78,6 +118,7 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
   }
 
   jiaZaiZiLiaoZhuangTai()
+  jiaZaiJiZhuSheZhi()
 
   return {
     moShi,
@@ -89,6 +130,8 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
     zhuCeMiMa,
     tongYiXieYi,
     yanZhengMaFaSongShiJian,
+    jiZhuZhangHao,
+    jiZhuMiMa,
     ziLiaoDangQianBuZhou,
     ziLiaoShuJu,
     qingKongDengLuZhuCe,
@@ -96,5 +139,7 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
     baoCunZiLiaoZhuangTai,
     sheZhiZiLiaoSheZhiYiWanCheng,
     huoQuZiLiaoSheZhiYiWanCheng,
+    sheZhiJiZhuZhangHaoMiMa,
+    jiaZaiJiZhuSheZhi,
   }
 })

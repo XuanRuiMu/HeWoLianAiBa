@@ -87,6 +87,59 @@ describe('用户 store', () => {
     expect(yongHuCangKu.zhuangTai.cuo_wu_xin_xi).toBe('密码错误')
   })
 
+  it('jiaZaiYongHu 遇到 401 错误：清除本地登录态', async () => {
+    const cuoWu = {
+      response: {
+        status: 401,
+        data: { ti_shi: '令牌无效' },
+      },
+    }
+    vi.mocked(huoQuYongHuXinXi).mockRejectedValue(cuoWu)
+
+    const yongHuCangKu = 使用用户仓库()
+    yongHuCangKu.sheZhiLingPai('test-jwt-token', false)
+    expect(yongHuCangKu.令牌).toBe('test-jwt-token')
+
+    await yongHuCangKu.jiaZaiYongHu()
+
+    expect(yongHuCangKu.令牌).toBeNull()
+    expect(localStorage.getItem(令牌键)).toBeNull()
+    expect(yongHuCangKu.dangQianYongHu).toBeNull()
+  })
+
+  it('jiaZaiYongHu 遇到网络错误：保留本地登录态', async () => {
+    const cuoWu = new Error('Network Error')
+    vi.mocked(huoQuYongHuXinXi).mockRejectedValue(cuoWu)
+
+    const yongHuCangKu = 使用用户仓库()
+    yongHuCangKu.sheZhiLingPai('test-jwt-token', false)
+    expect(yongHuCangKu.令牌).toBe('test-jwt-token')
+
+    await yongHuCangKu.jiaZaiYongHu()
+
+    expect(yongHuCangKu.令牌).toBe('test-jwt-token')
+    expect(localStorage.getItem(令牌键)).toBe('test-jwt-token')
+  })
+
+  it('jiaZaiYongHu 遇到 500 错误：保留本地登录态', async () => {
+    const cuoWu = {
+      response: {
+        status: 500,
+        data: { ti_shi: '服务器错误' },
+      },
+    }
+    vi.mocked(huoQuYongHuXinXi).mockRejectedValue(cuoWu)
+
+    const yongHuCangKu = 使用用户仓库()
+    yongHuCangKu.sheZhiLingPai('test-jwt-token', false)
+    expect(yongHuCangKu.令牌).toBe('test-jwt-token')
+
+    await yongHuCangKu.jiaZaiYongHu()
+
+    expect(yongHuCangKu.令牌).toBe('test-jwt-token')
+    expect(localStorage.getItem(令牌键)).toBe('test-jwt-token')
+  })
+
   it('退出登录：清除令牌、认证表单字段、用户状态、聊天 socket', async () => {
     vi.mocked(dengLu).mockResolvedValue(moNiDengLuXiangYing)
     vi.mocked(huoQuYongHuXinXi).mockResolvedValue(moNiYongHu)

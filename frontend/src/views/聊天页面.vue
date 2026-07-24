@@ -104,25 +104,19 @@
             </div>
             <template
               v-for="piZhuXiang in [huoQuPiZhuByXiaoXiId(xiaoXi.ke_hu_duan_id || xiaoXi.id)]"
-              :key="'pizhu-' + (xiaoXi.ke_hu_duan_id || xiaoXi.id)"
+              :key="'pizhu-' + (piZhuXiang?.nei_rong ?? '')"
             >
               <div
                 v-if="
-                  fuPanMoShi &&
-                  piZhuXiang &&
-                  !xiaoXi.yi_che_hui &&
-                  xiaoXi.lei_xing !== 'xitong'
+                  fuPanMoShi && piZhuXiang && !xiaoXi.yi_che_hui && xiaoXi.lei_xing !== 'xitong'
                 "
                 class="fupan-pizhu-xiangmu"
                 :class="{
                   'yonghu-pizhu': xiaoXi.fa_song_zhe_lei_xing === 'yonghu',
                   'jiaose-pizhu': xiaoXi.fa_song_zhe_lei_xing === 'jiaose',
-                  'pizhu-positive':
-                    huoQuQingGanLeiXing(piZhuXiang.qing_gan) === 'positive',
-                  'pizhu-negative':
-                    huoQuQingGanLeiXing(piZhuXiang.qing_gan) === 'negative',
-                  'pizhu-neutral':
-                    huoQuQingGanLeiXing(piZhuXiang.qing_gan) === 'neutral',
+                  'pizhu-positive': huoQuQingGanLeiXing(piZhuXiang.qing_gan) === 'positive',
+                  'pizhu-negative': huoQuQingGanLeiXing(piZhuXiang.qing_gan) === 'negative',
+                  'pizhu-neutral': huoQuQingGanLeiXing(piZhuXiang.qing_gan) === 'neutral',
                 }"
               >
                 <div class="fupan-pizhu-qipao">
@@ -784,9 +778,7 @@ const fuPanZongJieFenKuai = computed<ZongJieFenKuai[] | null>(() => {
     if (piPeiMing) {
       yaRuDangQian()
       dangQianBiaoTi = piPeiMing
-      const qianZhui = hang.startsWith(piPeiMing + '：')
-        ? piPeiMing + '：'
-        : piPeiMing + ':'
+      const qianZhui = hang.startsWith(piPeiMing + '：') ? piPeiMing + '：' : piPeiMing + ':'
       dangQianNeiRong = hang.slice(qianZhui.length).trim()
     } else if (dangQianBiaoTi) {
       dangQianNeiRong += '\n' + hang

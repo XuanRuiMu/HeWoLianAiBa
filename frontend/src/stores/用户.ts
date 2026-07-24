@@ -89,8 +89,13 @@ export const 使用用户仓库 = defineStore('用户', () => {
       const shuJu = await huoQuYongHuXinXi()
       dangQianYongHu.value = shuJu
       baoCunShuJu('yonghu', dangQianYongHu.value)
-    } catch {
-      tuiChuDengLu()
+    } catch (cuoWu: unknown) {
+      // 仅在令牌确实无效（401）时才清除本地登录数据
+      // 网络错误、服务器故障等情况下保留本地登录态，避免后端暂时不可用导致用户被强制登出
+      const xiangYing = huoQuCuoWuXiangYing(cuoWu)
+      if (xiangYing?.status === 401) {
+        tuiChuDengLu()
+      }
     }
   }
 

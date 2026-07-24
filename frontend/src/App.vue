@@ -1,24 +1,47 @@
 <template>
-  <div class="app-rongqi">
-    <QuanJuCaiDan />
-    <div class="app-zhuti">
-      <router-view v-slot="{ Component, route }">
-        <Transition name="yemian-guodu" mode="out-in">
-          <KeepAlive :include="['liaoTian']">
-            <component :is="Component" v-if="Component" :key="route.path" />
-          </KeepAlive>
-        </Transition>
-      </router-view>
+  <CuoWuBianJie @cuo-wu-bu-huo="chuLiCuoWuBuHuo">
+    <div class="app-rongqi">
+      <QuanJuCaiDan />
+      <div class="app-zhuti">
+        <router-view v-slot="{ Component, route }">
+          <Transition name="yemian-guodu" mode="out-in">
+            <KeepAlive :include="['liaoTian']">
+              <component :is="Component" v-if="Component" :key="route.path" />
+            </KeepAlive>
+          </Transition>
+        </router-view>
+      </div>
     </div>
-  </div>
+  </CuoWuBianJie>
 </template>
 
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount } from 'vue'
 import QuanJuCaiDan from '@/components/全局菜单.vue'
+import CuoWuBianJie from '@/components/错误边界.vue'
 import { 使用用户仓库 } from '@/stores/用户'
+import { chuFaCuoWuShangBao } from '@/utils/错误上报'
 
 const 用户仓库 = 使用用户仓库()
+
+function chuLiCuoWuBuHuo(xinXi: {
+  cuoWu: unknown
+  shiLi: unknown
+  xinXi: string
+  leiXing: string
+  shiJianChuo: number
+}) {
+  chuFaCuoWuShangBao({
+    leiBie: 'vue',
+    cuoWu: xinXi.cuoWu,
+    shiJianChuo: xinXi.shiJianChuo,
+    fuJia: {
+      laiYuan: 'cuoWuBianJie',
+      xinXi: xinXi.xinXi,
+      leiXing: xinXi.leiXing,
+    },
+  })
+}
 
 function gengXinShiJiaoKouGaoDu() {
   if (typeof window === 'undefined' || !window.visualViewport) return
@@ -45,6 +68,20 @@ function jianCeAnQuanQuYu() {
   document.body.removeChild(shiYongDiv)
   const zhiChi = (shang && shang !== '0px') || (xia && xia !== '0px')
   if (zhiChi) return
+
+  // 桌面端不进行键盘遮挡兜底推算，避免将浏览器工具栏/任务栏高度误判为底部安全区
+  const shiYiDongDuan =
+    navigator.maxTouchPoints > 0 &&
+    typeof window.screen === 'object' &&
+    window.screen !== null &&
+    typeof window.screen.width === 'number' &&
+    window.screen.width <= 1024
+  if (!shiYiDongDuan) {
+    document.documentElement.style.setProperty('--anquan-quyu-shang', '0px')
+    document.documentElement.style.setProperty('--anquan-quyu-xia', '0px')
+    return
+  }
+
   let tuiSuanShang = 0
   let tuiSuanXia = 0
   if (window.screen && typeof window.screen.height === 'number' && window.visualViewport) {

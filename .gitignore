@@ -1,7 +1,6 @@
 node_modules/
 dist/
 .env
-.env.example
 .env.local
 .env.*.local
 *.log
@@ -17,3 +16,4 @@ playwright-report/
 package-lock.json
 测试截图/
 e2e/.fu-wu-zhuang-tai.json
+coverage/

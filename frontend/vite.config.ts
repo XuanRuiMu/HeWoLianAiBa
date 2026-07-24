@@ -7,6 +7,26 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/__tests__/setup.ts'],
+    pool: 'threads',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'text-summary', 'html', 'lcov'],
+      reportsDirectory: './coverage',
+      thresholds: {
+        lines: 60,
+        functions: 60,
+        branches: 50,
+        statements: 60,
+      },
+      exclude: [
+        'node_modules/',
+        'src/**/*.d.ts',
+        'src/main.ts',
+        'src/vite-env.d.ts',
+        'src/env.d.ts',
+        'coverage/',
+      ],
+    },
   },
   plugins: [
     vue(),

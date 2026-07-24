@@ -92,9 +92,61 @@
                   }}</label>
                   <div class="dixian-dixian" />
                   <button type="button" class="mima-qiehuan" @click="xianShiMiMa1 = !xianShiMiMa1">
-                    {{ xianShiMiMa1 ? '🙈' : '👁' }}
+                    <svg
+                      v-if="xianShiMiMa1"
+                      class="mima-tubiao"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                      />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                    <svg
+                      v-else
+                      class="mima-tubiao"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
                   </button>
                 </div>
+              </div>
+
+              <div class="ji-zhu-xuan-xiang">
+                <label class="ji-zhu-xuan-ze">
+                  <input
+                    :checked="jiZhuZhangHao"
+                    type="checkbox"
+                    class="ji-zhu-fu-xuan"
+                    @change="jiZhuZhangHao = ($event.target as HTMLInputElement).checked"
+                  />
+                  <span class="ji-zhu-wen-ben" :class="{ 'yi-gou-xuan': jiZhuZhangHao }">{{
+                    huoQuFanYi('renZheng', 'jiZhuZhangHao')
+                  }}</span>
+                </label>
+                <label class="ji-zhu-xuan-ze">
+                  <input
+                    :checked="jiZhuMiMa"
+                    type="checkbox"
+                    class="ji-zhu-fu-xuan"
+                    @change="jiZhuMiMa = ($event.target as HTMLInputElement).checked"
+                  />
+                  <span class="ji-zhu-wen-ben" :class="{ 'yi-gou-xuan': jiZhuMiMa }">{{
+                    huoQuFanYi('renZheng', 'jiZhuMiMa')
+                  }}</span>
+                </label>
               </div>
 
               <button type="submit" class="anniu-zhuyao" :disabled="dengLuZhong || !keYiDengLu">
@@ -210,11 +262,7 @@
 
               <div class="xieyi-gouxuan">
                 <label class="xieyi-fuxuan">
-                  <input
-                    v-model="tongYiXieYi"
-                    type="checkbox"
-                    :style="{ accentColor: gouXuanYanSe }"
-                  />
+                  <input v-model="tongYiXieYi" type="checkbox" />
                 </label>
                 <span class="xieyi-wenben"
                   >{{ huoQuFanYi('renZheng', 'yiYueDu')
@@ -287,6 +335,8 @@ watch(moShi, (xinMoShi) => {
 
 const dengLuShouJiHao = ref(bd.dengLuShouJiHao)
 const dengLuMiMa = ref(bd.dengLuMiMa)
+const jiZhuZhangHao = ref(bd.jiZhuZhangHao)
+const jiZhuMiMa = ref(bd.jiZhuMiMa)
 const zhuCeShouJiHao = ref(bd.zhuCeShouJiHao)
 const zhuCeYanZhengMa = ref(bd.zhuCeYanZhengMa)
 const zhuCeYongHuMing = ref(bd.zhuCeYongHuMing)
@@ -301,11 +351,6 @@ const xianShiMiMa2 = ref(false)
 const tongYiXieYi = ref(bd.tongYiXieYi)
 const xieYiXianShi = ref(false)
 const xieYiLeiXing = ref<'yongHuXieYi' | 'yinSiZhengCe'>('yongHuXieYi')
-const gouXuanCiShu = ref(0)
-
-const gouXuanYanSe = computed(() => {
-  return gouXuanCiShu.value % 2 === 0 ? '#ff6b9d' : '#6B8CA6'
-})
 
 function daKaiXieYi(leiXing: 'yongHuXieYi' | 'yinSiZhengCe') {
   xieYiLeiXing.value = leiXing
@@ -314,9 +359,6 @@ function daKaiXieYi(leiXing: 'yongHuXieYi' | 'yinSiZhengCe') {
 
 watch(tongYiXieYi, (val) => {
   bd.tongYiXieYi = val
-  if (val) {
-    gouXuanCiShu.value++
-  }
 })
 
 const shouJiHaoJuJiao = ref(false)
@@ -334,6 +376,8 @@ let daoJiShiDingShiQi: ReturnType<typeof setInterval> | null = null
 
 watch(dengLuShouJiHao, (val) => (bd.dengLuShouJiHao = val))
 watch(dengLuMiMa, (val) => (bd.dengLuMiMa = val))
+watch(jiZhuZhangHao, (val) => (bd.jiZhuZhangHao = val))
+watch(jiZhuMiMa, (val) => (bd.jiZhuMiMa = val))
 watch(zhuCeShouJiHao, (val) => (bd.zhuCeShouJiHao = val))
 watch(zhuCeYanZhengMa, (val) => (bd.zhuCeYanZhengMa = val))
 watch(zhuCeYongHuMing, (val) => (bd.zhuCeYongHuMing = val))
@@ -433,6 +477,11 @@ function tongBuDummyZhi() {
 }
 
 onMounted(() => {
+  bd.jiaZaiJiZhuSheZhi()
+  jiZhuZhangHao.value = bd.jiZhuZhangHao
+  jiZhuMiMa.value = bd.jiZhuMiMa
+  dengLuShouJiHao.value = bd.dengLuShouJiHao
+  dengLuMiMa.value = bd.dengLuMiMa
   if (bd.yanZhengMaFaSongShiJian) {
     const shengYu = Math.max(0, 60 - Math.floor((Date.now() - bd.yanZhengMaFaSongShiJian) / 1000))
     if (shengYu > 0) kaiShiDaoJiShi(shengYu)
@@ -683,6 +732,12 @@ async function zhiXingDengLu() {
   cuoWuXinXi.value = ''
   try {
     await 用户仓库.zhiXingDengLu(dengLuShouJiHao.value, dengLuMiMa.value)
+    bd.sheZhiJiZhuZhangHaoMiMa(
+      dengLuShouJiHao.value,
+      dengLuMiMa.value,
+      jiZhuZhangHao.value,
+      jiZhuMiMa.value,
+    )
     bd.qingKongDengLuZhuCe()
     emit('dengLuChengGong')
     await qiDongJuanZhouDongHua('/')
@@ -1009,17 +1064,98 @@ async function zhiXingZhuCe() {
   position: absolute;
   right: 0;
   top: 8px;
-  padding: 6px 8px;
+  padding: 6px;
   background: transparent;
   border: none;
-  font-size: 18px;
   cursor: pointer;
   transition: all 0.2s ease;
   z-index: 2;
+  color: rgba(255, 255, 255, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mima-qiehuan:hover {
   transform: scale(1.15);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.mima-tubiao {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.fenlie-shuru::-ms-reveal,
+.fenlie-shuru::-ms-clear {
+  display: none;
+}
+
+.ji-zhu-xuan-xiang {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: -4px 0 20px;
+  padding: 0 2px;
+}
+
+.ji-zhu-xuan-ze {
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: var(--ziti-xiao);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.ji-zhu-xuan-ze:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.ji-zhu-fu-xuan {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+.ji-zhu-wen-ben {
+  line-height: 1;
+  position: relative;
+  padding-left: 22px;
+}
+
+.ji-zhu-wen-ben::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  border-radius: 3px;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.ji-zhu-wen-ben.yi-gou-xuan::before {
+  background: #1a1a1a;
+  border-color: #ffffff;
+}
+
+.ji-zhu-wen-ben.yi-gou-xuan::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  width: 4px;
+  height: 8px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: translateY(-65%) rotate(45deg);
 }
 
 .yanzhengma-zu {

@@ -2,6 +2,8 @@ import axios from 'axios'
 import type { ApiXiangYing } from '../types'
 import { 令牌键 } from '@/constants/auth'
 import { huoQuFanYi } from '@/config/translations'
+import { fenLeiCuoWu } from '@/utils/错误处理'
+import { chuFaCuoWuShangBao } from '@/utils/错误上报'
 
 export interface 业务错误 extends Error {
   cuo_wu_ma?: string
@@ -56,6 +58,21 @@ const 实例 = axios.create({
     return 响应
   },
   (错误) => {
+    const fenLei = fenLeiCuoWu(错误)
+
+    if (fenLei === 'wangLuo') {
+      chuFaCuoWuShangBao({
+        leiBie: 'weiZhi',
+        cuoWu: 错误,
+        shiJianChuo: Date.now(),
+        fuJia: {
+          fenLei,
+          url: axios.isAxiosError(错误) ? 错误.config?.url : undefined,
+          code: axios.isAxiosError(错误) ? 错误.code : undefined,
+        },
+      })
+    }
+
     if (axios.isAxiosError(错误) && 错误.response) {
       const { status, data } = 错误.response
       if (status === 401) {
@@ -69,7 +86,20 @@ const 实例 = axios.create({
         业务错误实例.cuo_wu_ma = data.cuo_wu_ma
         return Promise.reject(业务错误实例)
       }
+      if (fenLei === 'fuWuQi') {
+        chuFaCuoWuShangBao({
+          leiBie: 'weiZhi',
+          cuoWu: 错误,
+          shiJianChuo: Date.now(),
+          fuJia: {
+            fenLei,
+            status,
+            url: 错误.config?.url,
+          },
+        })
+      }
     }
+
     return Promise.reject(错误)
   },
 )

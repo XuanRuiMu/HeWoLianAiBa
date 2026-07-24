@@ -13,6 +13,8 @@ import {
   jiLuYouXiJieJu,
   jiLuXiaoXiCaoZuo,
   chuangJianHTTPRiZhiZhongJianJian,
+  withRequestId,
+  xieRuRiZhi,
 } from '../utils/debug日志'
 
 const LOG_WEN_JIAN = path.resolve(process.cwd(), 'logs', 'debug.log')
@@ -203,5 +205,136 @@ describe('FP-T1R HTTP 日志用户 ID 修复', () => {
     expect(spy).toHaveBeenCalledTimes(1)
     const xuanXiang = spy.mock.calls[0][2] as { yong_hu_id?: string }
     expect(xuanXiang?.yong_hu_id).toBeUndefined()
+  })
+})
+
+describe('FP-01 pino 结构化日志', () => {
+  beforeEach(async () => {
+    await qingLiRiZhi()
+    sheZhiZuiDiRiZhiJiBie('debug')
+  })
+
+  afterEach(async () => {
+    await qingLiRiZhi()
+  })
+
+  it('每行日志均为可解析的 JSON 并包含结构化字段', async () => {
+    debug日志.info('测试', 'JSON格式验证', { xiang_qing: { a: 1 } })
+    await guanBiRiZhiLiu()
+
+    const hang = duQuRiZhiHang()
+    expect(hang.length).toBe(1)
+
+    const tiaoMu = JSON.parse(hang[0])
+    expect(tiaoMu.ji_bie).toBe('info')
+    expect(tiaoMu.lei_xing).toBe('测试')
+    expect(tiaoMu.xiao_xi).toBe('JSON格式验证')
+    expect(tiaoMu.shi_jian).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)
+    expect(tiaoMu.xiang_qing.a).toBe(1)
+    expect(typeof tiaoMu.pid).toBe('number')
+    expect(typeof tiaoMu.hostname).toBe('string')
+  })
+
+  it('xieRuRiZhi 直接调用支持 qing_qiu_id 字段', async () => {
+    xieRuRiZhi('info', '请求追踪', '带请求ID', {
+      qing_qiu_id: 'req-001',
+      yong_hu_id: 'user-x',
+    })
+    await guanBiRiZhiLiu()
+
+    const hang = duQuRiZhiHang()
+    const tiaoMu = JSON.parse(hang[0])
+    expect(tiaoMu.qing_qiu_id).toBe('req-001')
+    expect(tiaoMu.yong_hu_id).toBe('user-x')
+    expect(tiaoMu.lei_xing).toBe('请求追踪')
+  })
+
+  it('withRequestId 自动注入 qing_qiu_id 到每条日志', async () => {
+    const qingQiuRiZhi = withRequestId('req-abc-123', 'user-1', 'role-1')
+    qingQiuRiZhi.info('请求处理', '开始处理', { bu_zhou: 'jiao_yan' })
+    qingQiuRiZhi.warn('请求处理', '耗时偏高', { hao_shi: 800 })
+    qingQiuRiZhi.error('请求处理', '处理失败')
+    await guanBiRiZhiLiu()
+
+    const hang = duQuRiZhiHang()
+    expect(hang.length).toBe(3)
+
+    for (const hangXiang of hang) {
+      const tiaoMu = JSON.parse(hangXiang)
+      expect(tiaoMu.qing_qiu_id).toBe('req-abc-123')
+      expect(tiaoMu.yong_hu_id).toBe('user-1')
+      expect(tiaoMu.jiao_se_id).toBe('role-1')
+      expect(tiaoMu.lei_xing).toBe('请求处理')
+    }
+
+    const tiaoMu1 = JSON.parse(hang[0])
+    expect(tiaoMu1.ji_bie).toBe('info')
+    expect(tiaoMu1.xiang_qing.bu_zhou).toBe('jiao_yan')
+
+    const tiaoMu2 = JSON.parse(hang[1])
+    expect(tiaoMu2.ji_bie).toBe('warn')
+    expect(tiaoMu2.xiang_qing.hao_shi).toBe(800)
+
+    const tiaoMu3 = JSON.parse(hang[2])
+    expect(tiaoMu3.ji_bie).toBe('error')
+    expect(tiaoMu3.xiang_qing).toBeUndefined()
+  })
+
+  it('LOG_LEVEL 控制级别过滤 - error 级别只输出 error', async () => {
+    sheZhiZuiDiRiZhiJiBie('error')
+    debug日志.debug('测试', 'debug消息')
+    debug日志.info('测试', 'info消息')
+    debug日志.warn('测试', 'warn消息')
+    debug日志.error('测试', 'error消息')
+    await guanBiRiZhiLiu()
+
+    const hang = duQuRiZhiHang()
+    expect(hang.length).toBe(1)
+    const tiaoMu = JSON.parse(hang[0])
+    expect(tiaoMu.ji_bie).toBe('error')
+    expect(tiaoMu.xiao_xi).toBe('error消息')
+  })
+
+  it('LOG_LEVEL 控制级别过滤 - info 级别输出 info/warn/error', async () => {
+    sheZhiZuiDiRiZhiJiBie('info')
+    debug日志.debug('测试', 'debug消息')
+    debug日志.info('测试', 'info消息')
+    debug日志.warn('测试', 'warn消息')
+    debug日志.error('测试', 'error消息')
+    await guanBiRiZhiLiu()
+
+    const hang = duQuRiZhiHang()
+    expect(hang.length).toBe(3)
+    const jiBieLieBiao = hang.map((hangXiang) => JSON.parse(hangXiang).ji_bie)
+    expect(jiBieLieBiao).toContain('info')
+    expect(jiBieLieBiao).toContain('warn')
+    expect(jiBieLieBiao).toContain('error')
+    expect(jiBieLieBiao).not.toContain('debug')
+  })
+
+  it('LOG_LEVEL=debug 时 debug 级别日志能输出', async () => {
+    sheZhiZuiDiRiZhiJiBie('debug')
+    debug日志.debug('测试', 'debug消息')
+    debug日志.info('测试', 'info消息')
+    await guanBiRiZhiLiu()
+
+    const hang = duQuRiZhiHang()
+    expect(hang.length).toBe(2)
+    const jiBieLieBiao = hang.map((hangXiang) => JSON.parse(hangXiang).ji_bie)
+    expect(jiBieLieBiao).toContain('debug')
+    expect(jiBieLieBiao).toContain('info')
+  })
+
+  it('多次 guanBiRiZhiLiu 后再次写入能重建日志流', async () => {
+    debug日志.info('测试', '第一批')
+    await guanBiRiZhiLiu()
+    expect(duQuRiZhiHang().length).toBe(1)
+
+    debug日志.info('测试', '第二批')
+    await guanBiRiZhiLiu()
+    const hang = duQuRiZhiHang()
+    expect(hang.length).toBe(2)
+    const tiaoMu2 = JSON.parse(hang[1])
+    expect(tiaoMu2.xiao_xi).toBe('第二批')
   })
 })

@@ -497,9 +497,11 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(kaPian0[0].text()).toContain('进行中A')
       expect(kaPian0[1].text()).toContain('进行中B')
 
-      const fenLeiZuRef = (wrapper.vm as unknown as {
-        fenLeiZu: Record<string, DangAnXiangQing[]>
-      }).fenLeiZu
+      const fenLeiZuRef = (
+        wrapper.vm as unknown as {
+          fenLeiZu: Record<string, DangAnXiangQing[]>
+        }
+      ).fenLeiZu
       const oldArr = [...fenLeiZuRef.jinxingzhong]
       fenLeiZuRef.jinxingzhong = [oldArr[1], oldArr[0]]
       ;(
@@ -804,15 +806,11 @@ describe('FP-13 过往战绩与复盘前端', () => {
     })
 
     it('批量工具栏有选中项时高亮加阴影', () => {
-      expect(guoWangZhanJiYuanMa).toMatch(
-        /\.piliang-gongju-lan:not\(\.piliang-gongju-lan--kong\)/,
-      )
+      expect(guoWangZhanJiYuanMa).toMatch(/\.piliang-gongju-lan:not\(\.piliang-gongju-lan--kong\)/)
     })
 
     it('indeterminate 态改为横线样式', () => {
-      expect(guoWangZhanJiYuanMa).toMatch(
-        /\.gouxuan-anniu--bufen::after\s*\{[^}]*height:\s*2px/,
-      )
+      expect(guoWangZhanJiYuanMa).toMatch(/\.gouxuan-anniu--bufen::after\s*\{[^}]*height:\s*2px/)
     })
   })
 })

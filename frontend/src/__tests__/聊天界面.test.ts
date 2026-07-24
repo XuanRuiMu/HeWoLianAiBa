@@ -586,7 +586,9 @@ describe('FP-05 聊天界面', () => {
     it('全局菜单栏高度计算包含顶部安全区域，避免刘海屏压缩菜单内容', () => {
       const quanJuCaiDanLuJing = resolve(__dirname, '../components/全局菜单.vue')
       const quanJuCaiDanYuanMa = readFileSync(quanJuCaiDanLuJing, 'utf8')
-      expect(quanJuCaiDanYuanMa).toMatch(/height:\s*calc\(\s*52px\s*\+\s*var\(--anquan-quyu-shang\)\s*\)/)
+      expect(quanJuCaiDanYuanMa).toMatch(
+        /height:\s*calc\(\s*52px\s*\+\s*var\(--anquan-quyu-shang\)\s*\)/,
+      )
       expect(quanJuCaiDanYuanMa).toMatch(/padding-top:\s*var\(--anquan-quyu-shang\)/)
     })
 
@@ -613,8 +615,10 @@ describe('FP-05 聊天界面', () => {
     })
 
     it('监听 visualViewport scroll 与 resize 事件以响应软键盘变化', () => {
-      const resizeCount = (appYuanMa.match(/visualViewport\.addEventListener\('resize'/g) || []).length
-      const scrollCount = (appYuanMa.match(/visualViewport\.addEventListener\('scroll'/g) || []).length
+      const resizeCount = (appYuanMa.match(/visualViewport\.addEventListener\('resize'/g) || [])
+        .length
+      const scrollCount = (appYuanMa.match(/visualViewport\.addEventListener\('scroll'/g) || [])
+        .length
       expect(resizeCount).toBeGreaterThanOrEqual(1)
       expect(scrollCount).toBeGreaterThanOrEqual(1)
     })
@@ -1017,11 +1021,13 @@ describe('FP-06 复盘展示', () => {
     vi.clearAllMocks()
   })
 
-  async function mountFuPanYeMian(options: {
-    xiaoXiLieBiao?: typeof ceShiXiaoXiLieBiao
-    fuPanNeiRong?: string | null
-    fuPanPiZhu?: Array<{ xu_hao: number; ping_lun: string; qing_gan?: string }> | null
-  } = {}) {
+  async function mountFuPanYeMian(
+    options: {
+      xiaoXiLieBiao?: typeof ceShiXiaoXiLieBiao
+      fuPanNeiRong?: string | null
+      fuPanPiZhu?: Array<{ xu_hao: number; ping_lun: string; qing_gan?: string }> | null
+    } = {},
+  ) {
     const xiaoXiLieBiao = options.xiaoXiLieBiao ?? ceShiXiaoXiLieBiao
     vi.mocked(huoQuXiaoXi).mockResolvedValue({
       lie_biao: xiaoXiLieBiao,

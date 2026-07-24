@@ -22,11 +22,7 @@
           <span class="zhuye-tubiao">⌂</span>
           <span class="zhuye-wenzi">{{ huoQuFanYi('caidan', 'zhuYe') }}</span>
         </button>
-        <div
-          v-if="用户仓库.dangQianYongHu"
-          class="yonghu-xuanxiang"
-          @click="qieHuanYongHuCaiDan"
-        >
+        <div v-if="用户仓库.dangQianYongHu" class="yonghu-xuanxiang" @click="qieHuanYongHuCaiDan">
           <div class="yonghu-touxiang-xiao">
             <img
               v-if="用户仓库.dangQianYongHu?.tou_xiang"

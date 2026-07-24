@@ -6,6 +6,7 @@ import { jiaoSeShiFouBeiDuoShe } from '../services/夺舍'
 import { zhuanFaYongHuXiaoXiGeiGuanLiYuan } from './夺舍'
 import { 数据库 } from '../数据库'
 import { jiLuSocketShiJian, jiLuXiaoXiCaoZuo } from '../utils/debug日志'
+import { yanZhengUUID } from '../utils/验证'
 
 interface TiaoDuQiJiLu {
   角色ID: string
@@ -77,8 +78,8 @@ export function 初始化聊天Socket(io: Server): void {
 
     socket.on('加入聊天', async (角色ID: unknown) => {
       const 角色ID字符串 = typeof 角色ID === 'string' ? 角色ID : ''
-      if (!角色ID字符串) {
-        socket.emit('错误', '缺少角色ID')
+      if (!角色ID字符串 || !yanZhengUUID(角色ID字符串)) {
+        socket.emit('错误', '缺少或无效角色ID')
         return
       }
 
