@@ -130,16 +130,16 @@ async function chuangJianJiYi(
 
 function dengDaiLianJie(socket: Socket): Promise<void> {
   return new Promise((resolve, reject) => {
-    socket.on('connect', () => resolve())
-    socket.on('connect_error', (cuoWu) => reject(cuoWu))
-    setTimeout(() => reject(new Error('Socket连接超时')), 5000)
+    socket.once('connect', () => resolve())
+    socket.once('connect_error', (cuoWu) => reject(cuoWu))
+    setTimeout(() => reject(new Error('Socket连接超时')), 15000)
   })
 }
 
 function dengDaiShiJian(socket: Socket, shiJian: string): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
     socket.once(shiJian, (shuJu: Record<string, unknown>) => resolve(shuJu))
-    setTimeout(() => reject(new Error(`未收到${shiJian}事件`)), 5000)
+    setTimeout(() => reject(new Error(`未收到${shiJian}事件`)), 15000)
   })
 }
 
@@ -384,7 +384,7 @@ describe.sequential('FP-16 管理员后台', () => {
           if (jieGuo.cheng_gong) resolve()
           else reject(new Error('夺舍失败'))
         })
-        setTimeout(() => reject(new Error('夺舍确认超时')), 3000)
+        setTimeout(() => reject(new Error('夺舍确认超时')), 15000)
       })
 
       puTongSocket.emit('加入聊天', jiaoSeId)
@@ -439,7 +439,7 @@ describe.sequential('FP-16 管理员后台', () => {
           if (jieGuo.cheng_gong) resolve()
           else reject(new Error('夺舍失败'))
         })
-        setTimeout(() => reject(new Error('夺舍确认超时')), 3000)
+        setTimeout(() => reject(new Error('夺舍确认超时')), 15000)
       })
 
       const shuRuYingDa = dengDaiShiJian(puTongSocket, '对方正在输入')

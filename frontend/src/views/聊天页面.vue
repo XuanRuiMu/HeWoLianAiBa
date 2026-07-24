@@ -104,7 +104,7 @@
             </div>
             <template
               v-for="piZhuXiang in [huoQuPiZhuByXiaoXiId(xiaoXi.ke_hu_duan_id || xiaoXi.id)]"
-              :key="'pizhu-' + (piZhuXiang?.nei_rong ?? '')"
+              :key="'pizhu-' + (piZhuXiang?.xu_hao ?? '')"
             >
               <div
                 v-if="
@@ -702,6 +702,7 @@ const piZhuMap = computed<Map<number, PiZhuXiang>>(() => {
   for (const xiang of fuPanPiZhu.value) {
     if (typeof xiang.xu_hao === 'number' && typeof xiang.ping_lun === 'string') {
       map.set(xiang.xu_hao, {
+        xu_hao: xiang.xu_hao,
         nei_rong: xiang.ping_lun,
         qing_gan: typeof xiang.qing_gan === 'string' ? xiang.qing_gan : undefined,
       })
@@ -717,6 +718,7 @@ function huoQuPiZhuByXiaoXiId(xiaoXiId: string): PiZhuXiang | null {
 }
 
 interface PiZhuXiang {
+  xu_hao: number
   nei_rong: string
   qing_gan?: string
 }

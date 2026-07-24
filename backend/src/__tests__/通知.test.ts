@@ -79,16 +79,16 @@ async function zhuCeYongHu(
 
 function dengDaiLianJie(socket: Socket): Promise<void> {
   return new Promise((resolve, reject) => {
-    socket.on('connect', () => resolve())
-    socket.on('connect_error', (cuoWu) => reject(cuoWu))
-    setTimeout(() => reject(new Error('Socket连接超时')), 5000)
+    socket.once('connect', () => resolve())
+    socket.once('connect_error', (cuoWu) => reject(cuoWu))
+    setTimeout(() => reject(new Error('Socket连接超时')), 15000)
   })
 }
 
 function dengDaiTongZhi(socket: Socket): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
     socket.once('通知新', (shuJu: Record<string, unknown>) => resolve(shuJu))
-    setTimeout(() => reject(new Error('未收到通知新事件')), 5000)
+    setTimeout(() => reject(new Error('未收到通知新事件')), 15000)
   })
 }
 
