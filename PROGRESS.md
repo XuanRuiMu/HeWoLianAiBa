@@ -36,7 +36,7 @@
 
 ## 待处理功能点
 
-（FP-01~FP-11 全部已完成，详细摘要见下方「已完成」区块；本轮阶段4 已压缩待处理区块。注：聊天页面.vue:107 存在 1 个前端 lint 残留 ERROR（vue/valid-v-for，属 FP 范围外业务文件），列为遗留问题待用户决策。）
+（FP-01~FP-11 全部已完成，详细摘要见下方「已完成」区块；本轮阶段4 已压缩待处理区块。注：先前摘要记「聊天页面.vue:107 有 1 个 vue/valid-v-for 残留 ERROR」——经本轮独立复核为**误报**：上一轮 `eslint . --fix` 已修复该错并随 c857f6e 入库，当前 `eslint .` 0 错误，无需改动。）
 
 ## 已完成（仅保留一行摘要）
 - FP-01：用 pino 重构 backend/src/utils/debug日志.ts，multistream 输出 JSON 到 stdout + logs/debug.log；保留全部导出函数签名（debug日志/sheZhiZuiDiRiZhiJiBie/guanBiRiZhiLiu/jiLu*/chuangJianHTTPRiZhiZhongJianJian 等）；新增 withRequestId 注入 qing_qiu_id；LOG_LEVEL 环境变量控制级别；保留敏感字段过滤；测试 11→18 全通过，build/lint 零报错，dev 启动日志为 JSON 格式
@@ -62,3 +62,5 @@
 
 ## 元循环摘要
 Self-Harness：本轮发现 3 个弱点（W-新1：PROGRESS 待处理区块未压缩，FP-05 仍标"待开始"；W-新2：范围外业务文件 lint 未全量独立验证致"假完成"；W-新3：验证脚本 lint --fix 副作用污染工作树），0 个自动级提案，3 个待确认/禁止自动项待用户决策（见阶段4 AskUserQuestion 交付）。
+
+阶段4 收尾（2026-07-24）：3 项待确认已全部决策——① 入库方式：已走「总控制台」非交互推送成功（beaffbb..c857f6e main→main，55 文件 +2874/−6381，远端 ls-remote 确认 c857f6e5f08）；② lint 残留：经独立复核为误报（已随 c857f6e 修复，当前 `eslint .` 0 错误），无需修；③ harness 提案：维持「仅记 EVIDENCE.md、不自动应用」。6 项停止条件经本轮独立重跑复核全过（前端 build✅/332✅/lint0；后端 build✅/297✅/lint0），工作区 0 改动、main 与 origin/main 同步。阶段4 关闭。
