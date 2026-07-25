@@ -177,6 +177,7 @@ export async function qingQiuJunShiZhiDao(
     zhuang_tai: 'zhi_dao_zhong',
     jun_shi_id: junShiPeiZhi.id,
     kai_shi_shi_jian: kaiShiShiJian,
+    you_liao_tian_ji_lu: true,
   }
   await sheZhiJunShiZhiDaoZhuangTai(canShu.yong_hu_id, canShu.jiao_se_id, chuShiZhuangTai)
 
@@ -260,6 +261,7 @@ export async function qingQiuJunShiZhiDao(
       jun_shi_id: junShiPeiZhi.id,
       kai_shi_shi_jian: kaiShiShiJian,
       jie_guo: jieGuo,
+      you_liao_tian_ji_lu: true,
     }
     await sheZhiJunShiZhiDaoZhuangTai(canShu.yong_hu_id, canShu.jiao_se_id, wanChengZhuangTai)
 
@@ -282,18 +284,24 @@ export async function qingQiuJunShiZhiDao(
 export async function huoQuJunShiZhiDaoZhuangTaiXinXi(
   yong_hu_id: string,
   jiao_se_id: string,
-): Promise<{ zhuang_tai: JunShiZhiDaoZhuangTaiXinXi | null; ke_zai_ci_zhi_dao: boolean }> {
+): Promise<{
+  zhuang_tai: JunShiZhiDaoZhuangTaiXinXi | null
+  ke_zai_ci_zhi_dao: boolean
+  you_liao_tian_ji_lu: boolean
+}> {
   const zhuangTai = await huoQuJunShiZhiDaoZhuangTai(yong_hu_id, jiao_se_id)
 
   // 指导中：不可再次指导（提示暂不显示，等完成后才显示）
   if (zhuangTai?.zhuang_tai === 'zhi_dao_zhong') {
-    return { zhuang_tai: zhuangTai, ke_zai_ci_zhi_dao: false }
+    // 处于指导中说明已有聊天记录
+    return { zhuang_tai: zhuangTai, ke_zai_ci_zhi_dao: false, you_liao_tian_ji_lu: true }
   }
 
   // 已完成指导：恒定返回「不可再指导」（提示恒定显示），
   // 直到用户发送新消息后状态被发送消息路由清除
   if (zhuangTai?.zhuang_tai === 'yi_wan_cheng') {
-    return { zhuang_tai: zhuangTai, ke_zai_ci_zhi_dao: false }
+    // 已能完成指导说明已有聊天记录
+    return { zhuang_tai: zhuangTai, ke_zai_ci_zhi_dao: false, you_liao_tian_ji_lu: true }
   }
 
   const xiaoXiJieGuo = await huoQuXiaoXiLieBiao({
@@ -308,7 +316,12 @@ export async function huoQuJunShiZhiDaoZhuangTaiXinXi(
   const dangQianHaXi = jiSuanLiaoTianHaXi(dangQianLieBiao)
   const shiChongFu = await jianChaJunShiChongFu(yong_hu_id, jiao_se_id, dangQianHaXi)
 
-  return { zhuang_tai: zhuangTai, ke_zai_ci_zhi_dao: !shiChongFu }
+  return {
+    zhuang_tai: zhuangTai,
+    ke_zai_ci_zhi_dao: !shiChongFu,
+    // 是否有聊天记录：用于「暂无聊天记录，无法请求军师指导」提示恒定显示
+    you_liao_tian_ji_lu: dangQianLieBiao.length > 0,
+  }
 }
 
 async function huoQuJiaoSeJiBenXinXi(

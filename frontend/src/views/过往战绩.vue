@@ -1022,7 +1022,7 @@ defineExpose({
 }
 
 .zhanji-kapian.sortable-ghost {
-  display: none !important;
+  visibility: hidden;
 }
 
 .zhanji-kapian.sortable-chosen {

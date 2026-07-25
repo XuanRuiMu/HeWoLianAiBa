@@ -229,6 +229,7 @@ export interface JunShiZhiDaoZhuangTaiXinXi {
   kai_shi_shi_jian: string
   jie_guo?: JunShiZhiDaoJieGuo
   cuo_wu_ma?: string
+  youLiaoTianJiLu: boolean
 }
 
 export interface JunShiJiLuXiaoXi {

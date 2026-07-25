@@ -785,9 +785,9 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(wrapper.findAll('.zhanji-kapian.xuanZhong').length).toBe(1)
     })
 
-    it('拖拽移除即将放置位置的预览（sortable-ghost 设为 display:none）', () => {
-      // 「即将放置位置的预览」被移除
-      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-ghost\s*\{[^}]*display:\s*none/)
+    it('拖拽保留即将放置位置的透明空位（sortable-ghost 设为 visibility:hidden）', () => {
+      // 「即将放置位置的预览」保留为透明空位（隐藏内容与边框，但保留占位空间、留出落点）
+      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-ghost\s*\{[^}]*visibility:\s*hidden/)
       // 「手里拽着的」卡片样式保留
       expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-drag\s*\{[^}]*opacity:\s*1/)
     })

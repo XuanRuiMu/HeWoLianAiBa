@@ -816,6 +816,10 @@ watch(
 }
 
 .ye-mian-biao-ti {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
   font-size: 16px;
   font-weight: 600;
   color: var(--daohanglan-qiangwenben);
@@ -825,6 +829,7 @@ watch(
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  pointer-events: none;
 }
 
 .jiaose-mingcheng-caidan {

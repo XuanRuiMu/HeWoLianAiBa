@@ -21,7 +21,10 @@
           {{ huoQuFanYi('junShi', 'zanWuJunShi') }}
         </div>
         <div v-else class="junshi-liebiao">
-          <div v-if="yiZhiDaoGuo" class="yi-zhidao-tishi">
+          <div class="wu-liao-tian-tishi">
+            {{ huoQuFanYi('junShi', 'wuLiaoTianJiLu') }}
+          </div>
+          <div class="yi-zhidao-tishi">
             {{ huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong') }}
           </div>
           <div
@@ -127,7 +130,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   qingQiuJunShiZhiDao,
@@ -156,15 +159,13 @@ const junShiLieBiaoXuanXiang = ref<JunShiXinXi[]>([])
 const jiLuLieBiao = ref<JunShiJiLu[]>([])
 const dangQianZhuangTai = ref<JunShiZhiDaoZhuangTaiXinXi | null>(null)
 const keZaiCiZhiDao = ref(true)
+const youLiaoTianJiLu = ref(true)
 const qingQiuZhongJunShiId = ref<string | null>(null)
 const zhanKaiJunShiId = ref<string | null>(null)
 const cuoWuTiShiMap = ref<Record<string, string>>({})
 const jiaZaiZhong = ref(true)
 const xianShiZhiDaoJiLu = ref(false)
 
-const yiZhiDaoGuo = computed(
-  () => !keZaiCiZhiDao.value && dangQianZhuangTai.value?.zhuang_tai !== 'zhi_dao_zhong',
-)
 let lunXunShiJianQi: ReturnType<typeof setInterval> | null = null
 const LUN_XUN_JIAN_GE_HAO_MIAO = 3000
 const JIAN_YI_YU_LAN_CHANG_DU = 50
@@ -220,6 +221,7 @@ async function chaXunBingGengXinZhuangTai(): Promise<void> {
     const { zhuangTai, keZaiCiZhiDao: keZaiCi } = await huoQuJunShiZhiDaoZhuangTai(props.jiaoSeId)
     dangQianZhuangTai.value = zhuangTai
     keZaiCiZhiDao.value = keZaiCi
+    youLiaoTianJiLu.value = zhuangTai?.youLiaoTianJiLu ?? youLiaoTianJiLu.value
     if (zhuangTai?.zhuang_tai === 'yi_wan_cheng') {
       tingZhiLunXun()
       await shuaXinJiLuLieBiao()
@@ -260,6 +262,7 @@ async function zhiXingQingQiu(junShi: JunShiXinXi) {
       jun_shi_id: junShi.id,
       kai_shi_shi_jian: jieGuo.shiJian,
       jie_guo: jieGuo,
+      youLiaoTianJiLu: true,
     }
     // 仅刷新 keZaiCiZhiDao（不覆盖已正确设置的 dangQianZhuangTai），使「已指导过」提示显示
     const { keZaiCiZhiDao: kzc } = await huoQuJunShiZhiDaoZhuangTai(props.jiaoSeId)
@@ -286,6 +289,7 @@ async function zhiXingQingQiu(junShi: JunShiXinXi) {
         zhuang_tai: 'zhi_dao_zhong',
         jun_shi_id: junShi.id,
         kai_shi_shi_jian: new Date().toISOString(),
+        youLiaoTianJiLu: true,
       }
       qiDongLunXun()
     } else {
@@ -337,15 +341,17 @@ onMounted(async () => {
       props.jiaoSeId ? huoQuJunShiJiLu(props.jiaoSeId) : Promise.resolve([] as JunShiJiLu[]),
       props.jiaoSeId
         ? huoQuJunShiZhiDaoZhuangTai(props.jiaoSeId)
-        : Promise.resolve({ zhuangTai: null, keZaiCiZhiDao: true } as {
+        : Promise.resolve({ zhuangTai: null, keZaiCiZhiDao: true, youLiaoTianJiLu: true } as {
             zhuangTai: JunShiZhiDaoZhuangTaiXinXi | null
             keZaiCiZhiDao: boolean
+            youLiaoTianJiLu: boolean
           }),
     ])
     junShiLieBiaoXuanXiang.value = lieBiao
     jiLuLieBiao.value = jiLu
     dangQianZhuangTai.value = zhuangTaiJieGuo.zhuangTai
     keZaiCiZhiDao.value = zhuangTaiJieGuo.keZaiCiZhiDao
+    youLiaoTianJiLu.value = zhuangTaiJieGuo.youLiaoTianJiLu
     if (zhuangTaiJieGuo.zhuangTai?.zhuang_tai === 'zhi_dao_zhong') {
       qiDongLunXun()
     }
@@ -581,6 +587,17 @@ onUnmounted(() => {
   border-radius: 8px;
   font-size: 13px;
   color: #e65100;
+  text-align: center;
+}
+
+.wu-liao-tian-tishi {
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: rgba(33, 150, 243, 0.1);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1976d2;
   text-align: center;
 }
 

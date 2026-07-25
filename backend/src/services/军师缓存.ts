@@ -16,6 +16,7 @@ export interface JunShiZhiDaoZhuangTaiXinXi {
   zhuang_tai: JunShiZhiDaoZhuangTai
   jun_shi_id: string
   kai_shi_shi_jian: string
+  you_liao_tian_ji_lu: boolean
   jie_guo?: {
     junShi: {
       id: string

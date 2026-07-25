@@ -854,7 +854,7 @@ describe('FP-02 聊天输入多行展开/折叠', () => {
     const { wrapper } = await mountLiaoTianYeMian()
     const shuRuKuang = wrapper.find('.shuru-kuang')
 
-    vi.spyOn(shuRuKuang.element, 'scrollHeight', 'get').mockReturnValue(60)
+    const scrollSpy = vi.spyOn(shuRuKuang.element, 'scrollHeight', 'get').mockReturnValue(60)
     vi.spyOn(shuRuKuang.element, 'clientHeight', 'get').mockReturnValue(38)
 
     await shuRuKuang.setValue('测试消息\n第二行')
@@ -863,6 +863,8 @@ describe('FP-02 聊天输入多行展开/折叠', () => {
 
     expect(shuRuKuang.classes()).toContain('zhan-kai')
 
+    // 发送前：内容将清空，高度回落单行（mock 反映清空后内容）
+    scrollSpy.mockReturnValue(38)
     await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
 

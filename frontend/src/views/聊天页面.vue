@@ -859,79 +859,74 @@ watch(
 watch(
   () => shuRuNeiRong.value,
   () => {
-    if (shuRuKuangZhanKai.value) {
-      tiaoZhengShuRuKuangGaoDu()
-    } else {
-      jianCeShuRuKuangGaoDu()
-    }
+    gengXinShuRuKuangGaoDu()
   },
 )
+
+function jiSuanDanXingGaoDu(el: HTMLTextAreaElement): number {
+  const cs = getComputedStyle(el)
+  const lineHeight = parseFloat(cs.lineHeight)
+  const fontSize = parseFloat(cs.fontSize)
+  const xingGao = Number.isFinite(lineHeight)
+    ? lineHeight
+    : Number.isFinite(fontSize)
+      ? fontSize * 1.4
+      : 0
+  const padShang = parseFloat(cs.paddingTop) || 0
+  const padXia = parseFloat(cs.paddingBottom) || 0
+  const bianKuang = (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0)
+  const jiSuanZhi = xingGao + padShang + padXia + bianKuang
+  // 折叠态精确单行高度：行高 + 上下内边距 + 上下边框，使占位符"输入消息..."完美契合单行
+  // 无布局环境（jsdom 等）下 getComputedStyle 不可靠，降级为 clientHeight（单元测试已 mock）
+  if (!Number.isFinite(jiSuanZhi) || jiSuanZhi <= 0) {
+    return el.clientHeight || 0
+  }
+  return Math.ceil(jiSuanZhi)
+}
+
+// 统一刷新输入框高度与「可展开」状态（同步计算，避免 nextTick 竞态）：
+// - 折叠态：max-height 封顶精确单行；超出部分由原生滚动条承载（鼠标滚轮 / 触摸滑动 / 点击滚动条拖动一致）
+// - 展开态：max-height 封顶半屏；超出部分由原生滚动条承载
+// 仅设置 max-height 与 overflow，绝不写死 height / 不触碰 scrollTop，原生滚动条完全由浏览器接管，拖动与滚轮行为一致
+function gengXinShuRuKuangGaoDu() {
+  const el = shuruKuangRef.value
+  if (!el) {
+    shuRuKuangKeZhanKai.value = false
+    return
+  }
+  // 先交还为 auto 以测得真实内容高度
+  el.style.height = 'auto'
+  const neiRongGaoDu = el.scrollHeight
+  const danXingGaoDu = jiSuanDanXingGaoDu(el)
+
+  const shangXian = Math.round(window.innerHeight * 0.5)
+  // 折叠封顶单行、展开封顶半屏；始终 height:auto 让原生滚动条完整接管
+  const xianZhi = shuRuKuangZhanKai.value ? shangXian : danXingGaoDu
+  el.style.maxHeight = `${xianZhi}px`
+  el.style.height = 'auto'
+  const chaoChu = neiRongGaoDu > xianZhi + 1
+  el.style.overflowY = chaoChu ? 'auto' : 'hidden'
+  shuRuKuangKeZhanKai.value = shuRuKuangZhanKai.value || chaoChu
+}
 
 function chuLiShuRuBianHua() {
   if (聊天仓库.cuoWuXinXi) {
     聊天仓库.qingChuCuoWu()
   }
-  if (shuRuKuangZhanKai.value) {
-    // 展开态：随内容增长动态撑开
-    tiaoZhengShuRuKuangGaoDu()
-  } else {
-    jianCeShuRuKuangGaoDu()
-  }
-}
-
-function jianCeShuRuKuangGaoDu() {
-  nextTick(() => {
-    const el = shuruKuangRef.value
-    if (!el) {
-      shuRuKuangKeZhanKai.value = false
-      return
-    }
-    // 展开态始终显示收起按钮
-    if (shuRuKuangZhanKai.value) {
-      shuRuKuangKeZhanKai.value = true
-      return
-    }
-    if (shuRuNeiRong.value.length === 0) {
-      shuRuKuangKeZhanKai.value = false
-      return
-    }
-    shuRuKuangKeZhanKai.value = el.scrollHeight > el.clientHeight + 1
-  })
-}
-
-function tiaoZhengShuRuKuangGaoDu() {
-  nextTick(() => {
-    const el = shuruKuangRef.value
-    if (!el) return
-    if (shuRuKuangZhanKai.value) {
-      // 展开：撑开到内容高度，封顶半屏，超出则内部滚动
-      el.style.height = 'auto'
-      const shangXian = Math.round(window.innerHeight * 0.5)
-      const muBiao = Math.min(el.scrollHeight, shangXian)
-      el.style.height = `${muBiao}px`
-      el.style.overflowY = el.scrollHeight > shangXian ? 'auto' : 'hidden'
-    } else {
-      // 折叠：交还 CSS 控制（固定单行 + 可滚动预览）
-      el.style.height = ''
-      el.style.overflowY = ''
-    }
-  })
+  gengXinShuRuKuangGaoDu()
 }
 
 function qieHuanShuRuKuangZhanKai() {
   shuRuKuangZhanKai.value = !shuRuKuangZhanKai.value
-  if (shuRuKuangZhanKai.value) {
-    // 进入展开态：撑开显示全部文字，并显示收起按钮
-    shuRuKuangKeZhanKai.value = true
-    tiaoZhengShuRuKuangGaoDu()
-  } else {
-    // 回到折叠态：重新评估是否显示展开按钮
-    tiaoZhengShuRuKuangGaoDu()
-    jianCeShuRuKuangGaoDu()
-  }
+  gengXinShuRuKuangGaoDu()
   nextTick(() => {
     shuruKuangRef.value?.focus()
   })
+}
+
+// 视口尺寸变化（如软键盘收起、旋转）时重算高度；折叠态重算为精确单行，展开态重算 50vh 封顶
+function chongSuanShuRuKuangGaoDu() {
+  gengXinShuRuKuangGaoDu()
 }
 
 function chuLiShuRuKuangAnJian(event: KeyboardEvent) {
@@ -950,7 +945,7 @@ async function faSong() {
   shuRuNeiRong.value = ''
   shuRuKuangZhanKai.value = false
   shuRuKuangKeZhanKai.value = false
-  nextTick(() => tiaoZhengShuRuKuangGaoDu())
+  nextTick(() => gengXinShuRuKuangGaoDu())
   faSongZhong.value = true
   try {
     const jieGuo = await 聊天仓库.faSongXiaoXi(neiRong)
@@ -1148,12 +1143,15 @@ onMounted(async () => {
     window.visualViewport.addEventListener('scroll', chuLiShiJiaoKouBianHua)
   }
   qiDongShiJianGengXinQi()
+  window.addEventListener('resize', chongSuanShuRuKuangGaoDu)
+  nextTick(() => gengXinShuRuKuangGaoDu())
   await chuShiHuaLiaoTian()
   yiTongGuoMountedChuShiHua = true
 })
 
 onActivated(async () => {
   qiDongShiJianGengXinQi()
+  nextTick(() => gengXinShuRuKuangGaoDu())
   if (!yiTongGuoMountedChuShiHua) {
     return
   }
@@ -1167,6 +1165,7 @@ onDeactivated(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('junshi-zhankai', junShiZhanKaiJianTingQi)
+  window.removeEventListener('resize', chongSuanShuRuKuangGaoDu)
   if (window.visualViewport) {
     window.visualViewport.removeEventListener('resize', chuLiShiJiaoKouBianHua)
     window.visualViewport.removeEventListener('scroll', chuLiShiJiaoKouBianHua)
@@ -1180,7 +1179,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .liaotian-yemian {
   --emoji-mianban-bu-ju-gao-du: 220px;
-  --shuru-kuang-zhe-die-gao-du: 46px;
+  --shuru-kuang-zhe-die-gao-du: 32px;
   display: grid;
   grid-template-rows: 1fr auto;
   min-height: 0;
@@ -1500,10 +1499,11 @@ onBeforeUnmount(() => {
   border-radius: 6px;
   box-sizing: border-box;
   resize: none;
-  /* 折叠态：固定单行高度，可滚动预览（鼠标滚轮/触摸滑动） */
-  height: var(--shuru-kuang-zhe-die-gao-du);
+  /* 折叠态：height:auto 由内容撑开单行，max-height 封顶精确单行；超出部分由原生滚动条承载（滚轮/触摸/拖动一致） */
+  height: auto;
+  max-height: var(--shuru-kuang-zhe-die-gao-du);
   overflow-y: auto;
-  transition: height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  scrollbar-width: thin;
 }
 
 .shuru-kuang::placeholder {

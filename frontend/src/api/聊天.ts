@@ -99,12 +99,24 @@ export async function huoQuJunShiJiLu(jiaoSeId: string): Promise<JunShiJiLu[]> {
 
 export async function huoQuJunShiZhiDaoZhuangTai(
   jiaoSeId: string,
-): Promise<{ zhuangTai: JunShiZhiDaoZhuangTaiXinXi | null; keZaiCiZhiDao: boolean }> {
+): Promise<{
+  zhuangTai: JunShiZhiDaoZhuangTaiXinXi | null
+  keZaiCiZhiDao: boolean
+  youLiaoTianJiLu: boolean
+}> {
   const 响应 = await http.get<{
     cheng_gong: boolean
-    shu_ju: { zhuangTai: JunShiZhiDaoZhuangTaiXinXi | null; keZaiCiZhiDao: boolean }
+    shu_ju: {
+      zhuangTai: JunShiZhiDaoZhuangTaiXinXi | null
+      keZaiCiZhiDao: boolean
+      youLiaoTianJiLu: boolean
+    }
   }>(`/聊天/军师/状态/${jiaoSeId}`)
-  return { zhuangTai: 响应.data.shu_ju.zhuangTai, keZaiCiZhiDao: 响应.data.shu_ju.keZaiCiZhiDao }
+  return {
+    zhuangTai: 响应.data.shu_ju.zhuangTai,
+    keZaiCiZhiDao: 响应.data.shu_ju.keZaiCiZhiDao,
+    youLiaoTianJiLu: 响应.data.shu_ju.youLiaoTianJiLu,
+  }
 }
 
 export async function huoQuDangAnLieBiao(): Promise<DangAnXiangQing[]> {
