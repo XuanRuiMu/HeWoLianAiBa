@@ -1022,14 +1022,7 @@ defineExpose({
 }
 
 .zhanji-kapian.sortable-ghost {
-  opacity: 0.4 !important;
-  background: transparent !important;
-  border: 1px dashed rgba(255, 107, 157, 0.4) !important;
-  transform: translateY(-4px) !important;
-  box-shadow: 0 -8px 16px rgba(255, 107, 157, 0.15) !important;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease !important;
+  display: none !important;
 }
 
 .zhanji-kapian.sortable-chosen {
@@ -1067,10 +1060,6 @@ defineExpose({
   }
   .zhanji-kapian.sortable-drag {
     transform: none !important;
-  }
-  .zhanji-kapian.sortable-ghost {
-    transform: none !important;
-    box-shadow: none !important;
   }
 }
 </style>

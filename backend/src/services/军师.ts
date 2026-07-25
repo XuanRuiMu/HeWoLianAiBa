@@ -285,7 +285,14 @@ export async function huoQuJunShiZhiDaoZhuangTaiXinXi(
 ): Promise<{ zhuang_tai: JunShiZhiDaoZhuangTaiXinXi | null; ke_zai_ci_zhi_dao: boolean }> {
   const zhuangTai = await huoQuJunShiZhiDaoZhuangTai(yong_hu_id, jiao_se_id)
 
+  // 指导中：不可再次指导（提示暂不显示，等完成后才显示）
   if (zhuangTai?.zhuang_tai === 'zhi_dao_zhong') {
+    return { zhuang_tai: zhuangTai, ke_zai_ci_zhi_dao: false }
+  }
+
+  // 已完成指导：恒定返回「不可再指导」（提示恒定显示），
+  // 直到用户发送新消息后状态被发送消息路由清除
+  if (zhuangTai?.zhuang_tai === 'yi_wan_cheng') {
     return { zhuang_tai: zhuangTai, ke_zai_ci_zhi_dao: false }
   }
 
@@ -293,9 +300,12 @@ export async function huoQuJunShiZhiDaoZhuangTaiXinXi(
     yong_hu_id,
     jiao_se_id,
     ye_ma: 1,
-    mei_ye_tiao_shu: 999,
+    mei_ye_tiao_shu: JUN_SHI_QIU_ZHU_PEI_ZHI.liShiXiaoXiShuLiang,
   })
-  const dangQianHaXi = jiSuanLiaoTianHaXi(xiaoXiJieGuo.lie_biao)
+  const dangQianLieBiao = xiaoXiJieGuo.lie_biao
+    .filter((xiao_xi) => xiao_xi.fa_song_zhe_lei_xing !== 'xitong')
+    .reverse()
+  const dangQianHaXi = jiSuanLiaoTianHaXi(dangQianLieBiao)
   const shiChongFu = await jianChaJunShiChongFu(yong_hu_id, jiao_se_id, dangQianHaXi)
 
   return { zhuang_tai: zhuangTai, ke_zai_ci_zhi_dao: !shiChongFu }

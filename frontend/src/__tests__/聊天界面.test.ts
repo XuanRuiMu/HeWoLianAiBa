@@ -640,7 +640,7 @@ describe('FP-01 聊天输入字数统计常驻显示与右侧定位', () => {
     const { wrapper } = await mountLiaoTianYeMian()
     await flushPromises()
 
-    const jiShi = wrapper.find('.shuru-kuang-waike .zifu-jishu')
+    const jiShi = wrapper.find('.shuru-dibu-hang .zifu-jishu')
     expect(jiShi.exists()).toBe(true)
     expect(jiShi.text()).toBe(`0/${XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu}`)
   })
@@ -653,7 +653,7 @@ describe('FP-01 聊天输入字数统计常驻显示与右侧定位', () => {
     await shuRuKuang.setValue(duanNeiRong)
     await flushPromises()
 
-    const jiShi = wrapper.find('.shuru-kuang-waike .zifu-jishu')
+    const jiShi = wrapper.find('.shuru-dibu-hang .zifu-jishu')
     expect(jiShi.exists()).toBe(true)
     expect(jiShi.text()).toBe(
       `${XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi - 1}/${XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu}`,
@@ -668,14 +668,14 @@ describe('FP-01 聊天输入字数统计常驻显示与右侧定位', () => {
     await shuRuKuang.setValue(changNeiRong)
     await flushPromises()
 
-    const jiShi = wrapper.find('.shuru-kuang-waike .zifu-jishu')
+    const jiShi = wrapper.find('.shuru-dibu-hang .zifu-jishu')
     expect(jiShi.exists()).toBe(true)
     expect(jiShi.text()).toBe(
       `${XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi}/${XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu}`,
     )
   })
 
-  it('字数统计位于输入框容器内且在输入框之后', async () => {
+  it('字数统计位于输入框之外、表情按钮之前', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
     const shuRuKuang = wrapper.find('.shuru-kuang')
     const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianZhiYuZhi)
@@ -683,17 +683,23 @@ describe('FP-01 聊天输入字数统计常驻显示与右侧定位', () => {
     await shuRuKuang.setValue(changNeiRong)
     await flushPromises()
 
-    const waiKe = wrapper.find('.shuru-kuang-waike')
-    const jiShi = waiKe.find('.zifu-jishu')
-    expect(jiShi.exists()).toBe(true)
+    const rongQi = wrapper.find('.shuru-rongqi')
+    const waiKe = rongQi.find('.shuru-kuang-waike')
+    const dibuHang = rongQi.find('.shuru-dibu-hang')
+    const biaoQing = rongQi.find('.biaoqing-anniu')
 
-    const shuRuKuangYuanSu = waiKe.find('.shuru-kuang')
-    const shuRuKuangIndex = Array.from(waiKe.element.children).indexOf(shuRuKuangYuanSu.element)
-    const dibuHang = waiKe.find('.shuru-dibu-hang')
-    expect(dibuHang.exists()).toBe(true)
-    const dibuHangIndex = Array.from(waiKe.element.children).indexOf(dibuHang.element)
-    expect(dibuHangIndex).toBeGreaterThan(shuRuKuangIndex)
+    // 字数统计位于输入框之外（在底部行内），不在输入框容器内
     expect(dibuHang.find('.zifu-jishu').exists()).toBe(true)
+    expect(waiKe.find('.zifu-jishu').exists()).toBe(false)
+
+    // 底部行位于输入框之后、表情按钮之前，保证整行只有一行
+    const rongQiHaiZi = Array.from(rongQi.element.children)
+    const waiKeIndex = rongQiHaiZi.indexOf(waiKe.element)
+    const dibuHangIndex = rongQiHaiZi.indexOf(dibuHang.element)
+    const biaoQingIndex = rongQiHaiZi.indexOf(biaoQing.element)
+    expect(waiKeIndex).toBeGreaterThanOrEqual(0)
+    expect(dibuHangIndex).toBeGreaterThan(waiKeIndex)
+    expect(biaoQingIndex).toBeGreaterThan(dibuHangIndex)
   })
 
   it('超出最大长度时计数器应用错误样式', async () => {
@@ -704,7 +710,7 @@ describe('FP-01 聊天输入字数统计常驻显示与右侧定位', () => {
     await shuRuKuang.setValue(chaoChuNeiRong)
     await flushPromises()
 
-    const jiShi = wrapper.find('.shuru-kuang-waike .zifu-jishu')
+    const jiShi = wrapper.find('.shuru-dibu-hang .zifu-jishu')
     expect(jiShi.exists()).toBe(true)
     expect(jiShi.classes()).toContain('zifu-chaochu')
   })
@@ -717,7 +723,7 @@ describe('FP-01 聊天输入字数统计常驻显示与右侧定位', () => {
     await shuRuKuang.setValue(changNeiRong)
     await flushPromises()
 
-    expect(wrapper.find('.shuru-kuang-waike .zifu-jishu').exists()).toBe(true)
+    expect(wrapper.find('.shuru-dibu-hang .zifu-jishu').exists()).toBe(true)
     expect(wrapper.find('.emoji-anniu').exists()).toBe(true)
     expect(wrapper.find('.gaobai-anniu').exists()).toBe(true)
     expect(wrapper.find('.fasong-anniu').exists()).toBe(true)
@@ -821,7 +827,7 @@ describe('FP-02 聊天输入多行展开/折叠', () => {
     expect(shuRuKuang.classes()).toContain('zhan-kai')
   })
 
-  it('展开按钮位于输入栏最右侧且在字数统计之后', async () => {
+  it('展开按钮位于字数统计之后且在输入栏右侧', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
     const shuRuKuang = wrapper.find('.shuru-kuang')
     const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
@@ -832,16 +838,15 @@ describe('FP-02 聊天输入多行展开/折叠', () => {
     await shuRuKuang.setValue(changNeiRong)
     await flushPromises()
 
-    const waiKe = wrapper.find('.shuru-kuang-waike')
-    const zhanKaiAnNiu = waiKe.find('.zhan-kai-anniu')
-    const ziFuJiShu = waiKe.find('.zifu-jishu')
+    const dibuHang = wrapper.find('.shuru-dibu-hang')
+    const zhanKaiAnNiu = dibuHang.find('.zhan-kai-anniu')
+    const ziFuJiShu = dibuHang.find('.zifu-jishu')
     expect(zhanKaiAnNiu.exists()).toBe(true)
     expect(ziFuJiShu.exists()).toBe(true)
 
-    const dibuHang = waiKe.find('.shuru-dibu-hang')
-    expect(dibuHang.exists()).toBe(true)
     const zhanKaiIndex = Array.from(dibuHang.element.children).indexOf(zhanKaiAnNiu.element)
     const ziFuJiShuIndex = Array.from(dibuHang.element.children).indexOf(ziFuJiShu.element)
+    // 展开按钮在字数统计之后
     expect(zhanKaiIndex).toBeGreaterThan(ziFuJiShuIndex)
   })
 

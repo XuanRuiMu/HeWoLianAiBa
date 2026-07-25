@@ -785,12 +785,11 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(wrapper.findAll('.zhanji-kapian.xuanZhong').length).toBe(1)
     })
 
-    it('sortable-ghost 抬升动画保留FP-06透明度和虚线边框', () => {
-      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-ghost\s*\{[^}]*opacity:\s*0\.4/)
-      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-ghost\s*\{[^}]*dashed/)
-      expect(guoWangZhanJiYuanMa).toMatch(
-        /\.sortable-ghost\s*\{[^}]*transform:\s*translateY\(-\d+px\)/,
-      )
+    it('拖拽移除即将放置位置的预览（sortable-ghost 设为 display:none）', () => {
+      // 「即将放置位置的预览」被移除
+      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-ghost\s*\{[^}]*display:\s*none/)
+      // 「手里拽着的」卡片样式保留
+      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-drag\s*\{[^}]*opacity:\s*1/)
     })
 
     it('卡片勾选框默认半透明，悬停或选中时完全显示', () => {

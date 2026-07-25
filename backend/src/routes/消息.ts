@@ -19,6 +19,7 @@ import {
   huoQuJunShiJiLu,
   huoQuJunShiZhiDaoZhuangTaiXinXi,
 } from '../services/军师'
+import { shanChuJunShiZhiDaoZhuangTai } from '../services/军师缓存'
 import {
   baoCunJiaoSeXiaoXi,
 } from '../services/AI输入准备'
@@ -189,6 +190,10 @@ luYou.post(
       if (!jieGuo.cheng_gong) {
         return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('liaoTian', 'faSongShiBai'))
       }
+
+      // 用户发送新消息后，清除军师「已指导」状态，
+      // 使提示消失并允许重新请求指导
+      await shanChuJunShiZhiDaoZhuangTai(yongHu.yongHuId, jiaoSeId).catch(() => {})
 
       if (neiRong.trim().toLowerCase() === HAO_GAN_DU_PEI_ZHI.miJi.miLing.toLowerCase()) {
         const miJiJieGuo = await sheZhiMiJiHaoGanDu(

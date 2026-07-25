@@ -261,6 +261,9 @@ async function zhiXingQingQiu(junShi: JunShiXinXi) {
       kai_shi_shi_jian: jieGuo.shiJian,
       jie_guo: jieGuo,
     }
+    // 仅刷新 keZaiCiZhiDao（不覆盖已正确设置的 dangQianZhuangTai），使「已指导过」提示显示
+    const { keZaiCiZhiDao: kzc } = await huoQuJunShiZhiDaoZhuangTai(props.jiaoSeId)
+    keZaiCiZhiDao.value = kzc
     await shuaXinJiLuLieBiao()
     zhanKaiJunShiId.value = junShi.id
     qingQiuZhongJunShiId.value = null

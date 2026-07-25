@@ -353,6 +353,33 @@ describe('FP-12 军师指导系统', () => {
         expect(xiangYing.body.cheng_gong).toBe(true)
       }
     })
+
+    it('请求指导后状态接口恒定返回不可再次指导（提示恒定显示）', async () => {
+      mock.sheZhiXiangYing({ neiRong: '指导内容' })
+      await faSongCeShiXiaoXi(ceShiYongHu!.lingPai, jiaoSeId, '恒定显示测试')
+
+      // 请求前：状态接口返回可再次指导，提示不显示
+      const weiQingQiu = await request(yingYong)
+        .get(`/api/聊天/军师/状态/${jiaoSeId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+      expect(weiQingQiu.body.cheng_gong).toBe(true)
+      expect(weiQingQiu.body.shu_ju.keZaiCiZhiDao).toBe(true)
+
+      // 请求指导后：同一聊天内容，状态接口应恒定返回不可再次指导
+      await request(yingYong)
+        .post('/api/聊天/军师')
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ jiaoSeId })
+        .expect(200)
+
+      const yiQingQiu = await request(yingYong)
+        .get(`/api/聊天/军师/状态/${jiaoSeId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+      expect(yiQingQiu.body.cheng_gong).toBe(true)
+      expect(yiQingQiu.body.shu_ju.keZaiCiZhiDao).toBe(false)
+    })
   })
 
   describe('指导记录', () => {

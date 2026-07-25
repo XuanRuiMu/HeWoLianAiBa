@@ -199,34 +199,34 @@
             @focus="chuLiShuRuKuangJuJiao"
             @input="chuLiShuRuBianHua"
           />
-          <div class="shuru-dibu-hang">
-            <span
-              class="zifu-jishu"
-              :class="{ 'zifu-chaochu': shuRuNeiRong.length > XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu }"
-            >
-              {{ shuRuNeiRong.length }}/{{ XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu }}
-            </span>
-            <button
-              class="zhan-kai-anniu"
-              :class="{ 'zhan-kai': shuRuKuangZhanKai }"
-              :disabled="!xianShiZhanKaiAnNiu"
-              :title="
-                shuRuKuangZhanKai
-                  ? huoQuFanYi('liaoTian', 'zheDie')
-                  : huoQuFanYi('liaoTian', 'zhanKai')
-              "
-              :aria-label="
-                shuRuKuangZhanKai
-                  ? huoQuFanYi('liaoTian', 'zheDie')
-                  : huoQuFanYi('liaoTian', 'zhanKai')
-              "
-              @click="qieHuanShuRuKuangZhanKai"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-          </div>
+        </div>
+        <div class="shuru-dibu-hang">
+          <span
+            class="zifu-jishu"
+            :class="{ 'zifu-chaochu': shuRuNeiRong.length > XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu }"
+          >
+            {{ shuRuNeiRong.length }}/{{ XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu }}
+          </span>
+          <button
+            class="zhan-kai-anniu"
+            :class="{ 'zhan-kai': shuRuKuangZhanKai }"
+            :disabled="!xianShiZhanKaiAnNiu"
+            :title="
+              shuRuKuangZhanKai
+                ? huoQuFanYi('liaoTian', 'zheDie')
+                : huoQuFanYi('liaoTian', 'zhanKai')
+            "
+            :aria-label="
+              shuRuKuangZhanKai
+                ? huoQuFanYi('liaoTian', 'zheDie')
+                : huoQuFanYi('liaoTian', 'zhanKai')
+            "
+            @click="qieHuanShuRuKuangZhanKai"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
         </div>
         <button
           class="biaoqing-anniu emoji-anniu"
@@ -859,7 +859,9 @@ watch(
 watch(
   () => shuRuNeiRong.value,
   () => {
-    if (!shuRuKuangZhanKai.value) {
+    if (shuRuKuangZhanKai.value) {
+      tiaoZhengShuRuKuangGaoDu()
+    } else {
       jianCeShuRuKuangGaoDu()
     }
   },
@@ -869,7 +871,10 @@ function chuLiShuRuBianHua() {
   if (聊天仓库.cuoWuXinXi) {
     聊天仓库.qingChuCuoWu()
   }
-  if (!shuRuKuangZhanKai.value) {
+  if (shuRuKuangZhanKai.value) {
+    // 展开态：随内容增长动态撑开
+    tiaoZhengShuRuKuangGaoDu()
+  } else {
     jianCeShuRuKuangGaoDu()
   }
 }
@@ -881,6 +886,11 @@ function jianCeShuRuKuangGaoDu() {
       shuRuKuangKeZhanKai.value = false
       return
     }
+    // 展开态始终显示收起按钮
+    if (shuRuKuangZhanKai.value) {
+      shuRuKuangKeZhanKai.value = true
+      return
+    }
     if (shuRuNeiRong.value.length === 0) {
       shuRuKuangKeZhanKai.value = false
       return
@@ -889,9 +899,34 @@ function jianCeShuRuKuangGaoDu() {
   })
 }
 
+function tiaoZhengShuRuKuangGaoDu() {
+  nextTick(() => {
+    const el = shuruKuangRef.value
+    if (!el) return
+    if (shuRuKuangZhanKai.value) {
+      // 展开：撑开到内容高度，封顶半屏，超出则内部滚动
+      el.style.height = 'auto'
+      const shangXian = Math.round(window.innerHeight * 0.5)
+      const muBiao = Math.min(el.scrollHeight, shangXian)
+      el.style.height = `${muBiao}px`
+      el.style.overflowY = el.scrollHeight > shangXian ? 'auto' : 'hidden'
+    } else {
+      // 折叠：交还 CSS 控制（固定单行 + 可滚动预览）
+      el.style.height = ''
+      el.style.overflowY = ''
+    }
+  })
+}
+
 function qieHuanShuRuKuangZhanKai() {
   shuRuKuangZhanKai.value = !shuRuKuangZhanKai.value
-  if (!shuRuKuangZhanKai.value) {
+  if (shuRuKuangZhanKai.value) {
+    // 进入展开态：撑开显示全部文字，并显示收起按钮
+    shuRuKuangKeZhanKai.value = true
+    tiaoZhengShuRuKuangGaoDu()
+  } else {
+    // 回到折叠态：重新评估是否显示展开按钮
+    tiaoZhengShuRuKuangGaoDu()
     jianCeShuRuKuangGaoDu()
   }
   nextTick(() => {
@@ -915,6 +950,7 @@ async function faSong() {
   shuRuNeiRong.value = ''
   shuRuKuangZhanKai.value = false
   shuRuKuangKeZhanKai.value = false
+  nextTick(() => tiaoZhengShuRuKuangGaoDu())
   faSongZhong.value = true
   try {
     const jieGuo = await 聊天仓库.faSongXiaoXi(neiRong)
@@ -1145,7 +1181,6 @@ onBeforeUnmount(() => {
 .liaotian-yemian {
   --emoji-mianban-bu-ju-gao-du: 220px;
   --shuru-kuang-zhe-die-gao-du: 46px;
-  --shuru-kuang-zhan-kai-gao-du: 120px;
   display: grid;
   grid-template-rows: 1fr auto;
   min-height: 0;
@@ -1404,7 +1439,7 @@ onBeforeUnmount(() => {
 
 .shuru-rongqi {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px;
 }
 
@@ -1445,14 +1480,15 @@ onBeforeUnmount(() => {
 
 .shuru-kuang-waike {
   flex: 1;
+  min-width: 0;
   background: var(--beijing-kaopian);
   border-radius: 6px;
-  display: grid;
-  grid-template-rows: 1fr auto;
+  display: block;
   border: 0.5px solid var(--shuru-quyu-biankuang);
 }
 
 .shuru-kuang {
+  width: 100%;
   min-width: 0;
   padding: 8px 12px 0;
   border: none;
@@ -1464,9 +1500,9 @@ onBeforeUnmount(() => {
   border-radius: 6px;
   box-sizing: border-box;
   resize: none;
-  overflow: hidden;
-  min-height: var(--shuru-kuang-zhe-die-gao-du);
-  max-height: var(--shuru-kuang-zhan-kai-gao-du);
+  /* 折叠态：固定单行高度，可滚动预览（鼠标滚轮/触摸滑动） */
+  height: var(--shuru-kuang-zhe-die-gao-du);
+  overflow-y: auto;
   transition: height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1517,12 +1553,12 @@ onBeforeUnmount(() => {
 .shuru-dibu-hang {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 4px 0 8px;
-  height: 16px;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 0;
 }
 
-.shuru-kuang-waike .zifu-jishu {
+.zifu-jishu {
   white-space: nowrap;
   font-size: 11px;
   line-height: 16px;
