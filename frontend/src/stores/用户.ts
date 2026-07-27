@@ -88,6 +88,7 @@ export const 使用用户仓库 = defineStore('用户', () => {
     try {
       const shuJu = await huoQuYongHuXinXi()
       dangQianYongHu.value = shuJu
+      shiFouGuanLiYuan.value = shuJu.guan_li_yuan === true
       baoCunShuJu('yonghu', dangQianYongHu.value)
     } catch (cuoWu: unknown) {
       // 仅在令牌确实无效（401）时才清除本地登录数据

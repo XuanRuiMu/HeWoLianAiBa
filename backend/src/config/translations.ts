@@ -103,6 +103,14 @@ export const fanYi = {
   zhanJi: {
     weiZhiWeiXin: '未知微信',
   },
+  fuPan: {
+    zhaXingJingShiBiaoTi: '⚠️【渣型警示】⚠️',
+    zhaXingJingShiDaoYu: '本局对象为渣男/渣女，请警惕其常见套路：',
+    zhaXingShiPoXianSuoQianZhui: '识别线索：',
+    zhaXingJingShiFallback: '本局对象为渣男/渣女，复盘已重点标注其套路，请提高警惕、避免被情感欺骗。',
+    miJiShengMing: '（本局使用了秘籍通关，以上复盘仅针对秘籍使用前的真实表现进行。）',
+    miJiShengMingGuanJianCi: '仅针对秘籍使用前的真实表现',
+  },
   jieJu: {
     sheng_li_ai_qing: '在一起了 💕',
     sheng_li_hu_shan_sheng_li: '互删成功',

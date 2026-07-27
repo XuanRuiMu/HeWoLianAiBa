@@ -6,13 +6,15 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import 聊天页面 from '@/views/聊天页面.vue'
 import 添加微信 from '@/views/添加微信.vue'
+import 资料设置向导 from '@/views/资料设置向导.vue'
 import 军师记录详情 from '@/views/军师记录详情.vue'
 import QuanJuCaiDan from '@/components/全局菜单.vue'
 import { 使用聊天仓库 } from '@/stores/聊天'
 import { 使用用户仓库 } from '@/stores/用户'
+import { 使用认证表单仓库 } from '@/stores/认证表单'
 import { huoQuFanYi } from '@/config/translations'
 import { XIAO_XI_PEI_ZHI } from '@/config/消息配置'
-import { faSongXiaoXi, huoQuXiaoXi, huoQuFuPan } from '@/api/聊天'
+import { faSongXiaoXi, huoQuXiaoXi, huoQuFuPan, shengChengJiaoSe, queRenJiaoSe } from '@/api/聊天'
 
 vi.mock('@/api/聊天', () => ({
   huoQuXiaoXi: vi.fn().mockResolvedValue({ lie_biao: [], zong_shu: 0 }),
@@ -67,6 +69,38 @@ vi.mock('@/api/聊天', () => ({
     guan_jian_shi_jian: [],
     jia_zai_zhong: false,
   }),
+  shengChengJiaoSe: vi.fn().mockResolvedValue({
+    id: '',
+    wei_xin_ming: '小甜心',
+    ming_zi: '测试角色',
+    tou_xiang: 'https://example.com/avatar.png',
+    xing_bie: 'nv',
+    nian_ling: 22,
+    wai_mao: '',
+    xing_ge: '',
+    bei_jing_gu_shi: '',
+    xi_hao: [],
+    yan_yu_feng_ge: '',
+    biao_qian: [],
+    re_du: 0,
+    chuang_jian_shi_jian: new Date().toISOString(),
+  }),
+  queRenJiaoSe: vi.fn().mockResolvedValue({
+    id: 'j1',
+    wei_xin_ming: '小甜心',
+    ming_zi: '测试角色',
+    tou_xiang: 'https://example.com/avatar.png',
+    xing_bie: 'nv',
+    nian_ling: 22,
+    wai_mao: '',
+    xing_ge: '',
+    bei_jing_gu_shi: '',
+    xi_hao: [],
+    yan_yu_feng_ge: '',
+    biao_qian: [],
+    re_du: 0,
+    chuang_jian_shi_jian: new Date().toISOString(),
+  }),
 }))
 
 vi.mock('@/api/通知', () => ({
@@ -96,6 +130,7 @@ function chuangJianLuYou() {
       { path: '/', name: 'zhuJieMian', component: { template: '<div>主页</div>' } },
       { path: '/chat/:huiHuaId', name: 'liaoTian', component: 聊天页面 },
       { path: '/tian-jia-wei-xin', name: 'tianJiaWeiXin', component: 添加微信 },
+      { path: '/profile-setup', name: 'ziLiaoSheZhi', component: { template: '<div>资料</div>' } },
     ],
   })
 }
@@ -262,11 +297,76 @@ describe('FP-05 聊天界面', () => {
   })
 
   describe('添加微信过渡页', () => {
-    async function mountTianJiaWeiXin() {
+    async function mountTianJiaWeiXin(options: { shiBai?: boolean; kongZhi?: boolean } = {}) {
+      // 资料由资料设置向导通过 sessionStorage 透传（尚未生成角色）
+      sessionStorage.setItem(
+        'ziLiaoSheZhiLinShi',
+        JSON.stringify({
+          xingBie: 'male',
+          muBiaoXingBie: 'female',
+          xingGeXuanZe: 'INFP',
+          yunXuZhaNanZhaNv: false,
+          随机性格标记: false,
+        }),
+      )
       const luYou = chuangJianLuYou()
       await luYou.push('/tian-jia-wei-xin?jiaoSeId=j1')
       const pinia = createPinia()
       setActivePinia(pinia)
+
+      let resolveJiaoSe: (zhi: unknown) => void = () => {}
+      let resolveQueRen: (zhi: unknown) => void = () => {}
+
+      if (!options.kongZhi) {
+        if (options.shiBai) {
+          vi.mocked(shengChengJiaoSe).mockRejectedValue(new Error('网络错误'))
+        } else {
+          vi.mocked(shengChengJiaoSe).mockResolvedValue({
+            id: '',
+            wei_xin_ming: '小甜心',
+            ming_zi: '测试角色',
+            tou_xiang: 'https://example.com/avatar.png',
+            xing_bie: 'nv',
+            nian_ling: 22,
+            wai_mao: '',
+            xing_ge: '',
+            bei_jing_gu_shi: '',
+            xi_hao: [],
+            yan_yu_feng_ge: '',
+            biao_qian: [],
+            re_du: 0,
+            chuang_jian_shi_jian: new Date().toISOString(),
+          })
+          vi.mocked(queRenJiaoSe).mockResolvedValue({
+            id: 'j1',
+            wei_xin_ming: '小甜心',
+            ming_zi: '测试角色',
+            tou_xiang: 'https://example.com/avatar.png',
+            xing_bie: 'nv',
+            nian_ling: 22,
+            wai_mao: '',
+            xing_ge: '',
+            bei_jing_gu_shi: '',
+            xi_hao: [],
+            yan_yu_feng_ge: '',
+            biao_qian: [],
+            re_du: 0,
+            chuang_jian_shi_jian: new Date().toISOString(),
+          })
+        }
+      } else {
+        // 受控模式：先挂起生成接口，便于观察阶段文案推进
+        vi.mocked(shengChengJiaoSe).mockReturnValue(
+          new Promise((resolve) => {
+            resolveJiaoSe = resolve
+          }),
+        )
+        vi.mocked(queRenJiaoSe).mockReturnValue(
+          new Promise((resolve) => {
+            resolveQueRen = resolve
+          }),
+        )
+      }
 
       const wrapper = mount(添加微信, {
         global: {
@@ -274,11 +374,11 @@ describe('FP-05 聊天界面', () => {
         },
         attachTo: document.body,
       })
-      await flushPromises()
-      return { wrapper, luYou }
+      if (!options.kongZhi) await flushPromises()
+      return { wrapper, luYou, resolveJiaoSe, resolveQueRen }
     }
 
-    it('展示对象微信昵称、头像，不展示开场白标签或内容', async () => {
+    it('展示对象微信昵称、头像，并显示生成进度（不提前泄露开场白内容）', async () => {
       const { wrapper } = await mountTianJiaWeiXin()
       await flushPromises()
 
@@ -287,19 +387,115 @@ describe('FP-05 聊天界面', () => {
       expect(wrapper.find('.jiaoSe-touxiang').attributes('src')).toBe(
         'https://example.com/avatar.png',
       )
-      expect(wrapper.text()).not.toContain('开场白')
+      // 过渡页只展示进度文案，不展示真实开场白内容元素
+      expect(wrapper.find('.tianjia-tiShi').exists()).toBe(true)
     })
 
-    it('1.5秒后自动进入聊天界面', async () => {
+    it('生成完成后自动进入聊天界面', async () => {
       const { luYou } = await mountTianJiaWeiXin()
       await flushPromises()
 
-      expect(luYou.currentRoute.value.path).toBe('/tian-jia-wei-xin')
+      // 真实生成流程（含创建会话）完成立即跳转聊天界面
+      expect(luYou.currentRoute.value.path).toBe('/chat/h1')
+    })
 
-      await vi.advanceTimersByTimeAsync(1500)
+    it('点击开始聊天后立即跳转加载页且透传资料（不等待网络）', async () => {
+      const luYou = chuangJianLuYou()
+      await luYou.push('/tian-jia-wei-xin')
+      const pinia = createPinia()
+      setActivePinia(pinia)
+      const 认证仓库 = 使用认证表单仓库()
+      认证仓库.ziLiaoShuJu.xingGeXuanZe = 'INFP'
+      认证仓库.ziLiaoShuJu.muBiaoXingBie = 'female'
+      认证仓库.ziLiaoDangQianBuZhou = 3
+
+      const wrapper = mount(资料设置向导, {
+        global: {
+          plugins: [pinia, luYou],
+        },
+        attachTo: document.body,
+      })
       await flushPromises()
 
+      expect(wrapper.find('.kaiShiLiaoTian').exists()).toBe(true)
+      await wrapper.find('.kaiShiLiaoTian').trigger('click')
+      await flushPromises()
+
+      // 立即跳转加载界面
+      expect(luYou.currentRoute.value.path).toBe('/tian-jia-wei-xin')
+      // 资料已透传，加载页据此发起生成
+      expect(sessionStorage.getItem('ziLiaoSheZhiLinShi')).not.toBeNull()
+    })
+
+    it('生成过程中进度文案随真实节点实时推进', async () => {
+      const { wrapper, luYou, resolveJiaoSe, resolveQueRen } = await mountTianJiaWeiXin({
+        kongZhi: true,
+      })
+      await flushPromises()
+
+      // 初始：正在打开手机…
+      expect(wrapper.find('.tianjia-tiShi').text()).toBe(
+        huoQuFanYi('tianJiaWeiXin', 'zhengZaiDaKaiShouJi'),
+      )
+
+      // 前置趣味文案随真实等待推进
+      await vi.advanceTimersByTimeAsync(800)
+      await flushPromises()
+      expect(wrapper.find('.tianjia-tiShi').text()).toBe(
+        huoQuFanYi('tianJiaWeiXin', 'zhengZaiTaoLunShuiSaoShui'),
+      )
+
+      await vi.advanceTimersByTimeAsync(800)
+      await flushPromises()
+      expect(wrapper.find('.tianjia-tiShi').text()).toBe(
+        huoQuFanYi('tianJiaWeiXin', 'zhengZaiKuoQuan'),
+      )
+
+      // 真实第1阶段：拿到人设 → 正在生成人设…
+      resolveJiaoSe({
+        id: '',
+        wei_xin_ming: '小甜心',
+        ming_zi: '测试角色',
+        tou_xiang: 'https://example.com/avatar.png',
+        xing_bie: 'nv',
+        nian_ling: 22,
+        wai_mao: '',
+        xing_ge: '',
+        bei_jing_gu_shi: '',
+        xi_hao: [],
+        yan_yu_feng_ge: '',
+        biao_qian: [],
+        re_du: 0,
+        chuang_jian_shi_jian: new Date().toISOString(),
+      })
+      await flushPromises()
+      expect(wrapper.find('.tianjia-tiShi').text()).toBe(
+        huoQuFanYi('tianJiaWeiXin', 'zhengZaiShengChengRenShe'),
+      )
+
+      // 真实末阶段：保存人设 + 开场白完成 → 立即进入完成态并跳转
+      resolveQueRen({ id: 'j1' })
+      await flushPromises()
+      expect(wrapper.find('.tianjia-tiShi').text()).toBe(
+        huoQuFanYi('tianJiaWeiXin', 'zhengZaiShengChengKaiChangBai'),
+      )
+      await flushPromises()
       expect(luYou.currentRoute.value.path).toBe('/chat/h1')
+    })
+
+    it('生成失败时显示错误信息并提供返回入口', async () => {
+      const { wrapper, luYou } = await mountTianJiaWeiXin({ shiBai: true })
+      await flushPromises()
+
+      expect(wrapper.find('.tianjia-cuowu').exists()).toBe(true)
+      expect(wrapper.find('.tianjia-cuowu').text()).toBe(
+        huoQuFanYi('tianJiaWeiXin', 'shengChengShiBai'),
+      )
+      expect(wrapper.find('.tianjia-fan-hui').exists()).toBe(true)
+
+      await wrapper.find('.tianjia-fan-hui').trigger('click')
+      await flushPromises()
+      expect(luYou.currentRoute.value.path).toBe('/profile-setup')
     })
   })
 
@@ -462,7 +658,7 @@ describe('FP-05 聊天界面', () => {
   describe('FP-A3 微信还原：正在输入、滚动条与底部输入栏', () => {
     it('对方正在输入时顶部菜单栏显示“对方正在输入...”替代角色名', async () => {
       const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
-      聊天仓库.zhengZaiShuRu = true
+      聊天仓库.aiZhuangTai = 'zheng_zai_shu_ru'
       await flushPromises()
 
       const caiDan = wrapper.findComponent({ name: '全局菜单' })
@@ -873,6 +1069,102 @@ describe('FP-02 聊天输入多行展开/折叠', () => {
     const zhanKaiAnNiu = wrapper.find('.zhan-kai-anniu')
     expect(zhanKaiAnNiu.exists()).toBe(true)
     expect(zhanKaiAnNiu.attributes('disabled')).toBeDefined()
+  })
+})
+
+describe('FP-02b 输入框声明式高度与滚动条', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.clearAllMocks()
+  })
+
+  function jiShuYuDanXingKuang(wrapper: any, scroll: number, client: number) {
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+    vi.spyOn(shuRuKuang.element, 'scrollHeight', 'get').mockReturnValue(scroll)
+    vi.spyOn(shuRuKuang.element, 'clientHeight', 'get').mockReturnValue(client)
+    return shuRuKuang
+  }
+
+  function yangShiShuXing(yangShi: string): string[] {
+    return yangShi
+      .split(';')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((s) => s.split(':')[0].trim())
+  }
+
+  it('折叠态单行：仅绑定 max-height 单行高度、展开按钮隐藏、无 height 绑定', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = jiShuYuDanXingKuang(wrapper, 38, 38)
+    await shuRuKuang.setValue('短')
+    await flushPromises()
+
+    const shuXing = yangShiShuXing(shuRuKuang.attributes('style') || '')
+    expect(shuXing).toContain('max-height')
+    expect(shuXing).not.toContain('height')
+    expect(wrapper.find('.zhan-kai-anniu').attributes('disabled')).toBeDefined()
+  })
+
+  it('折叠态多行：展开按钮可点击、max-height 仍为精确单行高度', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = jiShuYuDanXingKuang(wrapper, 60, 38)
+    await shuRuKuang.setValue('这是一段比较长的消息内容，应该会折行显示展开按钮')
+    await flushPromises()
+
+    expect(wrapper.find('.zhan-kai-anniu').attributes('disabled')).toBeUndefined()
+    expect(shuRuKuang.attributes('style')).toContain('max-height: 38px')
+  })
+
+  it('展开态：height = min(内容高度, 50vh)，max-height = 50vh', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = jiShuYuDanXingKuang(wrapper, 60, 38)
+    await shuRuKuang.setValue('这是一段比较长的消息内容')
+    await flushPromises()
+
+    await wrapper.find('.zhan-kai-anniu').trigger('click')
+    await flushPromises()
+
+    const qiShiVh = Math.round(window.innerHeight * 0.5)
+    const qiWangHeight = Math.min(60, qiShiVh)
+    const yangShi = shuRuKuang.attributes('style') || ''
+    expect(yangShi).toContain(`height: ${qiWangHeight}px`)
+    expect(yangShi).toContain(`max-height: ${qiShiVh}px`)
+  })
+
+  it('清空内容后：折叠回单行、展开按钮隐藏、max-height 回到单行', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = jiShuYuDanXingKuang(wrapper, 60, 38)
+    await shuRuKuang.setValue('测试消息\n第二行')
+    await wrapper.find('.zhan-kai-anniu').trigger('click')
+    await flushPromises()
+    expect(shuRuKuang.classes()).toContain('zhan-kai')
+
+    const scrollSpy = vi.spyOn(shuRuKuang.element, 'scrollHeight', 'get')
+    scrollSpy.mockReturnValue(38)
+    await wrapper.find('.fasong-anniu').trigger('click')
+    await flushPromises()
+
+    expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('')
+    expect(shuRuKuang.classes()).not.toContain('zhan-kai')
+    expect(wrapper.find('.zhan-kai-anniu').attributes('disabled')).toBeDefined()
+    expect(shuRuKuang.attributes('style')).toContain('max-height: 38px')
+  })
+
+  it('输入框仅依赖原生滚动条：overflow-y:auto + webkit 滚动条 6px/圆角 3px', () => {
+    expect(liaoTianYeMianYuanMa).toMatch(/\.shuru-kuang\s*\{[^}]*overflow-y:\s*auto/)
+    expect(liaoTianYeMianYuanMa).toMatch(/\.shuru-kuang\s*\{[^}]*scrollbar-width:\s*thin/)
+    expect(liaoTianYeMianYuanMa).toMatch(/\.shuru-kuang\s*\{[^}]*padding:\s*6px\s*12px/)
+    expect(liaoTianYeMianYuanMa).toMatch(/\.shuru-kuang::-webkit-scrollbar\s*\{[^}]*width:\s*6px/)
+    expect(liaoTianYeMianYuanMa).toMatch(
+      /\.shuru-kuang::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*var\(--gundong-tiao-beijing\)/,
+    )
+    expect(liaoTianYeMianYuanMa).toMatch(
+      /\.shuru-kuang::-webkit-scrollbar-thumb\s*\{[^}]*border-radius:\s*3px/,
+    )
   })
 })
 

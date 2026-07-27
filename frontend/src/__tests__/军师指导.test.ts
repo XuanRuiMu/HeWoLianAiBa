@@ -802,7 +802,7 @@ describe('FP-04 军师指导"指导记录"独立入口', () => {
   })
 })
 
-describe('FP-02 军师指导"已指导过相同聊天内容"恒定提示', () => {
+describe('FP-02 军师指导"已指导过相同聊天内容"按规则提示', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(huoQuJunShiLieBiao).mockResolvedValue(chuangJianMoNiJunShiLieBiao())
@@ -810,6 +810,7 @@ describe('FP-02 军师指导"已指导过相同聊天内容"恒定提示', () =>
     vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
       zhuangTai: null,
       keZaiCiZhiDao: false,
+      youLiaoTianJiLu: false,
     })
     vi.mocked(qingQiuJunShiZhiDao).mockReset()
   })
@@ -819,15 +820,7 @@ describe('FP-02 军师指导"已指导过相同聊天内容"恒定提示', () =>
     vi.useRealTimers()
   })
 
-  it('keZaiCiZhiDao为false且非指导中时恒定显示提示', async () => {
-    const { wrapper } = await mountJunShiZhiDao()
-
-    const tiShi = wrapper.find('.yi-zhidao-tishi')
-    expect(tiShi.exists()).toBe(true)
-    expect(tiShi.text()).toBe(huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong'))
-  })
-
-  it('恒定显示"暂无聊天记录"提示', async () => {
+  it('youLiaoTianJiLu为false时显示"暂无聊天记录"提示', async () => {
     const { wrapper } = await mountJunShiZhiDao()
 
     const tiShi = wrapper.find('.wu-liao-tian-tishi')
@@ -835,10 +828,23 @@ describe('FP-02 军师指导"已指导过相同聊天内容"恒定提示', () =>
     expect(tiShi.text()).toBe(huoQuFanYi('junShi', 'wuLiaoTianJiLu'))
   })
 
-  it('keZaiCiZhiDao为true时仍恒定显示提示', async () => {
+  it('youLiaoTianJiLu为true时隐藏"暂无聊天记录"提示', async () => {
     vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
       zhuangTai: null,
-      keZaiCiZhiDao: true,
+      keZaiCiZhiDao: false,
+      youLiaoTianJiLu: true,
+    })
+
+    const { wrapper } = await mountJunShiZhiDao()
+
+    expect(wrapper.find('.wu-liao-tian-tishi').exists()).toBe(false)
+  })
+
+  it('keZaiCiZhiDao为false且非指导中时显示"已指导过相同内容"提示', async () => {
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuangTai: null,
+      keZaiCiZhiDao: false,
+      youLiaoTianJiLu: true,
     })
 
     const { wrapper } = await mountJunShiZhiDao()
@@ -848,7 +854,19 @@ describe('FP-02 军师指导"已指导过相同聊天内容"恒定提示', () =>
     expect(tiShi.text()).toBe(huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong'))
   })
 
-  it('指导中状态时仍恒定显示提示', async () => {
+  it('keZaiCiZhiDao为true时隐藏"已指导过相同内容"提示', async () => {
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuangTai: null,
+      keZaiCiZhiDao: true,
+      youLiaoTianJiLu: true,
+    })
+
+    const { wrapper } = await mountJunShiZhiDao()
+
+    expect(wrapper.find('.yi-zhidao-tishi').exists()).toBe(false)
+  })
+
+  it('指导中状态时隐藏"已指导过相同内容"提示', async () => {
     vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
       zhuangTai: {
         zhuang_tai: 'zhi_dao_zhong',
@@ -856,17 +874,16 @@ describe('FP-02 军师指导"已指导过相同聊天内容"恒定提示', () =>
         kai_shi_shi_jian: '2026-07-17T10:00:00.000Z',
       },
       keZaiCiZhiDao: false,
+      youLiaoTianJiLu: true,
     })
     vi.mocked(huoQuJunShiJiLu).mockResolvedValue([])
 
     const { wrapper } = await mountJunShiZhiDao()
 
-    const tiShi = wrapper.find('.yi-zhidao-tishi')
-    expect(tiShi.exists()).toBe(true)
-    expect(tiShi.text()).toBe(huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong'))
+    expect(wrapper.find('.yi-zhidao-tishi').exists()).toBe(false)
   })
 
-  it('已完成状态且keZaiCiZhiDao为false时恒定显示提示', async () => {
+  it('已完成状态且keZaiCiZhiDao为false时显示"已指导过相同内容"提示', async () => {
     vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
       zhuangTai: {
         zhuang_tai: 'yi_wan_cheng',
@@ -879,18 +896,18 @@ describe('FP-02 军师指导"已指导过相同聊天内容"恒定提示', () =>
         },
       },
       keZaiCiZhiDao: false,
+      youLiaoTianJiLu: true,
     })
     vi.mocked(huoQuJunShiJiLu).mockResolvedValue([])
 
     const { wrapper } = await mountJunShiZhiDao()
 
-    expect(wrapper.find('.yi-zhidao-tishi').exists()).toBe(true)
-    expect(wrapper.find('.yi-zhidao-tishi').text()).toBe(
-      huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong'),
-    )
+    const tiShi = wrapper.find('.yi-zhidao-tishi')
+    expect(tiShi.exists()).toBe(true)
+    expect(tiShi.text()).toBe(huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong'))
   })
 
-  it('加载中时不显示恒定提示', async () => {
+  it('加载中时不显示提示', async () => {
     vi.mocked(huoQuJunShiLieBiao).mockImplementation(() => new Promise(() => []))
 
     const wrapper = mount(军师指导, {
@@ -903,5 +920,6 @@ describe('FP-02 军师指导"已指导过相同聊天内容"恒定提示', () =>
     await flushPromises()
 
     expect(wrapper.find('.yi-zhidao-tishi').exists()).toBe(false)
+    expect(wrapper.find('.wu-liao-tian-tishi').exists()).toBe(false)
   })
 })

@@ -191,8 +191,8 @@
             v-model="shuRuNeiRong"
             class="shuru-kuang"
             :class="{ 'zhan-kai': shuRuKuangZhanKai }"
+            :style="shuRuKuangYangShi"
             :placeholder="huoQuFanYi('liaoTian', 'shuRuXiaoXi')"
-            :disabled="faSongZhong"
             :maxlength="XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu"
             rows="1"
             @keydown.enter="chuLiShuRuKuangAnJian"
@@ -331,6 +331,10 @@
         </div>
       </Transition>
     </Teleport>
+
+    <Teleport to="body">
+      <GuanLiJianKong v-if="guanLiJianKongZhanKai" @close="guanLiJianKongZhanKai = false" />
+    </Teleport>
   </div>
 </template>
 
@@ -354,6 +358,7 @@ import { XIAO_XI_PEI_ZHI } from '@/config/消息配置'
 import { shiTuPianDiZhi } from '@/utils/头像'
 import type { 消息 } from '@/types'
 import JunShiZhiDao from '@/components/军师指导.vue'
+import GuanLiJianKong from '@/components/管理员监控.vue'
 import { huoQuFuPan, type 复盘批注项 } from '@/api/聊天'
 
 defineOptions({
@@ -375,8 +380,12 @@ const youXiShiJianNeiRong = ref('')
 const xiaoxiQuYuRef = ref<HTMLElement | null>(null)
 const shuruKuangRef = ref<HTMLTextAreaElement | null>(null)
 const shuRuKuangZhanKai = ref(false)
-const shuRuKuangKeZhanKai = ref(false)
+const neiRongGaoDu = ref(0)
+const danXingGaoDu = ref(32)
+const shiKouGaoDu = ref(typeof window !== 'undefined' ? window.innerHeight : 0)
+const shuRuKuangKeZhanKai = computed(() => neiRongGaoDu.value > danXingGaoDu.value + 1)
 const emojiMianBanZhanKai = ref(false)
+const guanLiJianKongZhanKai = ref(false)
 const dangQianShiJian = ref(Date.now())
 let shiJianGengXinQi: ReturnType<typeof setInterval> | null = null
 let yiTongGuoMountedChuShiHua = false
@@ -570,6 +579,14 @@ function chaRuEmoji(emoji: string) {
   shuRuNeiRong.value += emoji
 }
 
+// 表情面板展开时，点击页面任意「非表情」区域即收起
+function chuLiWenDangDianJi(event: MouseEvent) {
+  if (!emojiMianBanZhanKai.value) return
+  const target = event.target as HTMLElement | null
+  if (target && (target.closest('.emoji-mianban') || target.closest('.biaoqing-anniu'))) return
+  emojiMianBanZhanKai.value = false
+}
+
 const cheHuiCaiDanZhanKai = ref(false)
 const cheHuiCaiDanYangShi = ref<{ top: string; left: string }>({ top: '0px', left: '0px' })
 const xuanZhongXiaoXi = ref<消息 | null>(null)
@@ -581,9 +598,7 @@ const liaoTianSuoDing = computed(() => {
 
 const keYiFaSong = computed(() => {
   const neiRong = shuRuNeiRong.value.trim()
-  return (
-    neiRong.length > 0 && neiRong.length <= XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu && !faSongZhong.value
-  )
+  return neiRong.length > 0 && neiRong.length <= XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu
 })
 
 const xianShiZhanKaiAnNiu = computed(() => shuRuKuangKeZhanKai.value)
@@ -856,12 +871,7 @@ watch(
   },
 )
 
-watch(
-  () => shuRuNeiRong.value,
-  () => {
-    gengXinShuRuKuangGaoDu()
-  },
-)
+watch(() => shuRuNeiRong.value, ceLiangShuRuKuang, { flush: 'post' })
 
 function jiSuanDanXingGaoDu(el: HTMLTextAreaElement): number {
   const cs = getComputedStyle(el)
@@ -884,49 +894,45 @@ function jiSuanDanXingGaoDu(el: HTMLTextAreaElement): number {
   return Math.ceil(jiSuanZhi)
 }
 
-// 统一刷新输入框高度与「可展开」状态（同步计算，避免 nextTick 竞态）：
-// - 折叠态：max-height 封顶精确单行；超出部分由原生滚动条承载（鼠标滚轮 / 触摸滑动 / 点击滚动条拖动一致）
-// - 展开态：max-height 封顶半屏；超出部分由原生滚动条承载
-// 仅设置 max-height 与 overflow，绝不写死 height / 不触碰 scrollTop，原生滚动条完全由浏览器接管，拖动与滚轮行为一致
-function gengXinShuRuKuangGaoDu() {
-  const el = shuruKuangRef.value
-  if (!el) {
-    shuRuKuangKeZhanKai.value = false
-    return
+const shuRuKuangYangShi = computed(() => {
+  if (shuRuKuangZhanKai.value) {
+    const zhanKaiShangXian = Math.round(shiKouGaoDu.value * 0.5)
+    const muBiaoGaoDu = Math.min(neiRongGaoDu.value, zhanKaiShangXian)
+    return {
+      height: `${muBiaoGaoDu}px`,
+      maxHeight: `${zhanKaiShangXian}px`,
+    }
   }
-  // 先交还为 auto 以测得真实内容高度
-  el.style.height = 'auto'
-  const neiRongGaoDu = el.scrollHeight
-  const danXingGaoDu = jiSuanDanXingGaoDu(el)
+  return {
+    maxHeight: `${danXingGaoDu.value}px`,
+  }
+})
 
-  const shangXian = Math.round(window.innerHeight * 0.5)
-  // 折叠封顶单行、展开封顶半屏；始终 height:auto 让原生滚动条完整接管
-  const xianZhi = shuRuKuangZhanKai.value ? shangXian : danXingGaoDu
-  el.style.maxHeight = `${xianZhi}px`
-  el.style.height = 'auto'
-  const chaoChu = neiRongGaoDu > xianZhi + 1
-  el.style.overflowY = chaoChu ? 'auto' : 'hidden'
-  shuRuKuangKeZhanKai.value = shuRuKuangZhanKai.value || chaoChu
+function ceLiangShuRuKuang() {
+  const el = shuruKuangRef.value
+  if (!el) return
+  neiRongGaoDu.value = el.scrollHeight
+  danXingGaoDu.value = jiSuanDanXingGaoDu(el)
 }
 
 function chuLiShuRuBianHua() {
   if (聊天仓库.cuoWuXinXi) {
     聊天仓库.qingChuCuoWu()
   }
-  gengXinShuRuKuangGaoDu()
 }
 
 function qieHuanShuRuKuangZhanKai() {
   shuRuKuangZhanKai.value = !shuRuKuangZhanKai.value
-  gengXinShuRuKuangGaoDu()
+  ceLiangShuRuKuang()
   nextTick(() => {
     shuruKuangRef.value?.focus()
   })
 }
 
-// 视口尺寸变化（如软键盘收起、旋转）时重算高度；折叠态重算为精确单行，展开态重算 50vh 封顶
+// 视口尺寸变化（如软键盘收起、旋转）时同步视口高度并重测内容；折叠态重测为精确单行，展开态重测 50vh 封顶
 function chongSuanShuRuKuangGaoDu() {
-  gengXinShuRuKuangGaoDu()
+  shiKouGaoDu.value = typeof window !== 'undefined' ? window.innerHeight : 0
+  ceLiangShuRuKuang()
 }
 
 function chuLiShuRuKuangAnJian(event: KeyboardEvent) {
@@ -936,16 +942,20 @@ function chuLiShuRuKuangAnJian(event: KeyboardEvent) {
 }
 
 async function faSong() {
-  if (!keYiFaSong.value) return
   const neiRong = shuRuNeiRong.value.trim()
+  // 管理员调试入口：仅输入 "--console" 时，管理员打开实时监控面板（非管理员不发送、不打开）
+  if (neiRong === '--console') {
+    if (用户仓库.shiFouGuanLiYuan) guanLiJianKongZhanKai.value = true
+    shuRuNeiRong.value = ''
+    return
+  }
+  if (!keYiFaSong.value) return
   if (neiRong.length > XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu) {
     聊天仓库.sheZhiCuoWu(huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'))
     return
   }
   shuRuNeiRong.value = ''
   shuRuKuangZhanKai.value = false
-  shuRuKuangKeZhanKai.value = false
-  nextTick(() => gengXinShuRuKuangGaoDu())
   faSongZhong.value = true
   try {
     const jieGuo = await 聊天仓库.faSongXiaoXi(neiRong)
@@ -1050,7 +1060,6 @@ function qingLiUIMianBan() {
   junShiZhanKai.value = false
   cheHuiCaiDanZhanKai.value = false
   shuRuKuangZhanKai.value = false
-  shuRuKuangKeZhanKai.value = false
 }
 
 async function jiaZaiFuPanShuJu(dangAnId: string) {
@@ -1144,14 +1153,15 @@ onMounted(async () => {
   }
   qiDongShiJianGengXinQi()
   window.addEventListener('resize', chongSuanShuRuKuangGaoDu)
-  nextTick(() => gengXinShuRuKuangGaoDu())
+  document.addEventListener('click', chuLiWenDangDianJi)
+  nextTick(() => ceLiangShuRuKuang())
   await chuShiHuaLiaoTian()
   yiTongGuoMountedChuShiHua = true
 })
 
 onActivated(async () => {
   qiDongShiJianGengXinQi()
-  nextTick(() => gengXinShuRuKuangGaoDu())
+  nextTick(() => ceLiangShuRuKuang())
   if (!yiTongGuoMountedChuShiHua) {
     return
   }
@@ -1166,6 +1176,7 @@ onDeactivated(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('junshi-zhankai', junShiZhanKaiJianTingQi)
   window.removeEventListener('resize', chongSuanShuRuKuangGaoDu)
+  document.removeEventListener('click', chuLiWenDangDianJi)
   if (window.visualViewport) {
     window.visualViewport.removeEventListener('resize', chuLiShiJiaoKouBianHua)
     window.visualViewport.removeEventListener('scroll', chuLiShiJiaoKouBianHua)
@@ -1179,7 +1190,6 @@ onBeforeUnmount(() => {
 <style scoped>
 .liaotian-yemian {
   --emoji-mianban-bu-ju-gao-du: 220px;
-  --shuru-kuang-zhe-die-gao-du: 32px;
   display: grid;
   grid-template-rows: 1fr auto;
   min-height: 0;
@@ -1194,6 +1204,7 @@ onBeforeUnmount(() => {
 
 .xiaoxi-quyu {
   overflow-y: auto;
+  min-height: 0;
   padding: 12px 16px;
   padding-bottom: 20px;
   display: flex;
@@ -1393,8 +1404,8 @@ onBeforeUnmount(() => {
 
 .fasong-zhuangtai-zhuanquan {
   display: inline-block;
-  width: 14px;
-  height: 14px;
+  width: 1em;
+  height: 1em;
   border: 2px solid var(--wenben-tishi);
   border-top-color: transparent;
   border-radius: 50%;
@@ -1489,7 +1500,7 @@ onBeforeUnmount(() => {
 .shuru-kuang {
   width: 100%;
   min-width: 0;
-  padding: 8px 12px 0;
+  padding: 6px 12px;
   border: none;
   background: transparent;
   font-size: 16px;
@@ -1499,9 +1510,6 @@ onBeforeUnmount(() => {
   border-radius: 6px;
   box-sizing: border-box;
   resize: none;
-  /* 折叠态：height:auto 由内容撑开单行，max-height 封顶精确单行；超出部分由原生滚动条承载（滚轮/触摸/拖动一致） */
-  height: auto;
-  max-height: var(--shuru-kuang-zhe-die-gao-du);
   overflow-y: auto;
   scrollbar-width: thin;
 }
@@ -1512,6 +1520,19 @@ onBeforeUnmount(() => {
 
 .shuru-kuang.zhan-kai {
   overflow-y: auto;
+}
+
+.shuru-kuang::-webkit-scrollbar {
+  width: 6px;
+}
+
+.shuru-kuang::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.shuru-kuang::-webkit-scrollbar-thumb {
+  background: var(--gundong-tiao-beijing);
+  border-radius: 3px;
 }
 
 .fasong-anniu {

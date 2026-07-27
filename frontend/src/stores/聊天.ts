@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { io, Socket } from 'socket.io-client'
 import type { 消息, 角色 } from '@/types'
 import { 令牌键 } from '@/constants/auth'
@@ -15,7 +15,9 @@ import { huoQuFanYi } from '@/config/translations'
 export const 使用聊天仓库 = defineStore('聊天', () => {
   const dangQianHuiHuaId = ref<string | null>(null)
   const xiaoXiLieBiao = ref<消息[]>([])
-  const zhengZaiShuRu = ref(false)
+  const aiZhuangTai = ref<'kong_xian' | 'deng_dai_zhong' | 'zheng_zai_shu_ru'>('kong_xian')
+  let zuiHouXuHao = 0
+  const zhengZaiShuRu = computed(() => aiZhuangTai.value === 'zheng_zai_shu_ru')
   const jiaoSeXinXi = ref<角色 | null>(null)
   const socketLianJie = ref<Socket | null>(null)
   const lianJieZhong = ref(false)
@@ -29,6 +31,17 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   const zongShu = ref(0)
   const jiaZaiGengDuoZhong = ref(false)
   const haiYouGengDuo = ref(false)
+  const gouJianGuoChengLieBiao = ref<{ 阶段: string; 说明: string; 时间: number }[]>([])
+  const haoGanDuBianHuaLieBiao = ref<{ 变化: Record<string, number>; 时间: number }[]>([])
+  const yinCangXinXiLieBiao = ref<{ 类型: string; 内容: string; 时间: number }[]>([])
+  const zuiDaJianKongTiaoShu = 100
+
+  function tianJiaJianKongXiang<T>(lieBiao: { value: T[] }, xiang: T) {
+    lieBiao.value.push(xiang)
+    if (lieBiao.value.length > zuiDaJianKongTiaoShu) {
+      lieBiao.value.splice(0, lieBiao.value.length - zuiDaJianKongTiaoShu)
+    }
+  }
 
   const zuiDaXiaoXiChangDu = 500
   let linShiXiaoXiXuHao = 0
@@ -70,14 +83,22 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       if (shuJu.角色ID === dangQianHuiHuaId.value) {
         shuJu.消息列表.forEach((xiaoXi) => anQuanTuiSong(xiaoXi))
       }
-      zhengZaiShuRu.value = false
     })
 
-    socket.on('对方正在输入', (jiaoSeId: string) => {
-      if (jiaoSeId === dangQianHuiHuaId.value) {
-        zhengZaiShuRu.value = true
-      }
-    })
+    socket.on(
+      'AI状态',
+      (shuJu: {
+        jiao_se_id: string
+        zhuang_tai: 'kong_xian' | 'deng_dai_zhong' | 'zheng_zai_shu_ru'
+        xu_hao: number
+        shi_jian: number
+      }) => {
+        if (shuJu.jiao_se_id !== dangQianHuiHuaId.value) return
+        if (shuJu.xu_hao <= zuiHouXuHao) return
+        zuiHouXuHao = shuJu.xu_hao
+        aiZhuangTai.value = shuJu.zhuang_tai
+      },
+    )
 
     socket.on(
       '游戏事件',
@@ -156,6 +177,31 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
 
     socket.on('disconnect', () => {
       lianJieZhong.value = false
+      aiZhuangTai.value = 'kong_xian'
+      zuiHouXuHao = 0
+    })
+
+    socket.on('管理员_构建过程', (shuJu: { 阶段: string; 说明: string; 时间: number }) => {
+      tianJiaJianKongXiang(gouJianGuoChengLieBiao, {
+        阶段: shuJu.阶段,
+        说明: shuJu.说明,
+        时间: shuJu.时间,
+      })
+    })
+
+    socket.on('管理员_好感度变化', (shuJu: { 变化: Record<string, number>; 时间: number }) => {
+      tianJiaJianKongXiang(haoGanDuBianHuaLieBiao, {
+        变化: shuJu.变化,
+        时间: shuJu.时间,
+      })
+    })
+
+    socket.on('管理员_隐藏信息', (shuJu: { 类型: string; 内容: string; 时间: number }) => {
+      tianJiaJianKongXiang(yinCangXinXiLieBiao, {
+        类型: shuJu.类型,
+        内容: shuJu.内容,
+        时间: shuJu.时间,
+      })
     })
 
     socketLianJie.value = socket
@@ -173,7 +219,8 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   async function jiaZaiXiaoXi(huiHuaId: string) {
     dangQianHuiHuaId.value = huiHuaId
     xiaoXiLieBiao.value = []
-    zhengZaiShuRu.value = false
+    aiZhuangTai.value = 'kong_xian'
+    zuiHouXuHao = 0
     yiDuBuHuiZhuangTai.value = false
     youXiYiJieShu.value = false
     keJiXuLiaoTian.value = false
@@ -293,7 +340,8 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   function qingKongZhuangTai() {
     dangQianHuiHuaId.value = null
     xiaoXiLieBiao.value = []
-    zhengZaiShuRu.value = false
+    aiZhuangTai.value = 'kong_xian'
+    zuiHouXuHao = 0
     jiaoSeXinXi.value = null
     youXiShiJian.value = null
     youXiYiJieShu.value = false
@@ -311,6 +359,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     dangQianHuiHuaId,
     xiaoXiLieBiao,
     zhengZaiShuRu,
+    aiZhuangTai,
     jiaoSeXinXi,
     youXiShiJian,
     youXiYiJieShu,
@@ -324,6 +373,9 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     zongShu,
     jiaZaiGengDuoZhong,
     haiYouGengDuo,
+    gouJianGuoChengLieBiao,
+    haoGanDuBianHuaLieBiao,
+    yinCangXinXiLieBiao,
     zuiDaXiaoXiChangDu,
     lianJieSocket,
     duanKaiSocket,

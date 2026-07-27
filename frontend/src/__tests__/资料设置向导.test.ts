@@ -158,7 +158,7 @@ describe('资料设置向导组件', () => {
   })
 
   it('勾选“渣男/渣女变体”后角色生成接口请求参数渣男渣女变体=true', async () => {
-    const { wrapper } = await 挂载组件()
+    const { wrapper, luYou } = await 挂载组件()
     await 进入步骤三(wrapper)
 
     const mbtiKaPian = wrapper.findAll('.mbti-kaPian')
@@ -195,9 +195,14 @@ describe('资料设置向导组件', () => {
     await kaiShiAnNiu.trigger('click')
     await flushPromises()
 
-    expect(shengChengJiaoSe).toHaveBeenCalled()
-    const diaoYongCanShu = vi.mocked(shengChengJiaoSe).mock.calls[0]
-    expect(diaoYongCanShu[2]).toBe(true)
+    // 新流程：向导页仅透传资料并立即跳转，不再本地调用生成接口
+    expect(luYou.currentRoute.value.path).toBe('/tian-jia-wei-xin')
+    const linShi = sessionStorage.getItem('ziLiaoSheZhiLinShi')
+    expect(linShi).toBeTruthy()
+    const ziLiao = JSON.parse(linShi!)
+    expect(ziLiao.yunXuZhaNanZhaNv).toBe(true)
+    expect(ziLiao.xingGeXuanZe).toBe('ISTJ')
+    expect(shengChengJiaoSe).not.toHaveBeenCalled()
   })
 
   it('渣男渣女勾选前提示文字不显示，勾选后提示文字可见', async () => {
@@ -255,36 +260,20 @@ describe('资料设置向导组件', () => {
     await mbtiKaPian[0].trigger('click')
     await flushPromises()
 
-    vi.mocked(shengChengJiaoSe).mockResolvedValue({
-      id: 'jiao-se-1',
-      ming_zi: '测试角色',
-      xing_bie: 'nv',
-      nian_ling: 22,
-      wai_mao: '测试外貌',
-      xing_ge: '测试性格',
-      bei_jing_gu_shi: '测试背景',
-      xi_hao: ['测试爱好'],
-      yan_yu_feng_ge: '测试言语风格',
-      tou_xiang: 'emoji',
-      biao_qian: ['测试标签'],
-      yu_she_lei_xing: 'ISTJ',
-      mbti_lei_xing: 'ISTJ',
-      ie_lei_xing: 'I',
-      re_shen_lei_xing: 'slow',
-      shi_fou_zha_xing: false,
-      wei_xin_ming: '测试微信昵称',
-      zhen_shi_ming: '测试名字',
-    })
-    vi.mocked(queRenJiaoSe).mockResolvedValue({ jiao_se_id: 'jiao-se-1' })
-
     const kaiShiAnNiu = wrapper.find('.kaiShiLiaoTian')
     await kaiShiAnNiu.trigger('click')
     await flushPromises()
 
-    expect(shengChengJiaoSe).toHaveBeenCalledTimes(1)
-    expect(queRenJiaoSe).toHaveBeenCalledTimes(1)
+    // 立即跳转加载页，不等待任何网络请求
     expect(luYou.currentRoute.value.path).toBe('/tian-jia-wei-xin')
-    expect(luYou.currentRoute.value.query.jiaoSeId).toBe('jiao-se-1')
+    expect(luYou.currentRoute.value.query.jiaoSeId).toBeUndefined()
+    // 向导页透传资料（非角色对象），由加载页发起生成
+    const linShi = sessionStorage.getItem('ziLiaoSheZhiLinShi')
+    expect(linShi).toBeTruthy()
+    const ziLiao = JSON.parse(linShi!)
+    expect(ziLiao.xingGeXuanZe).toBe('ISTJ')
+    expect(ziLiao.yunXuZhaNanZhaNv).toBe(false)
+    expect(shengChengJiaoSe).not.toHaveBeenCalled()
   })
 
   it('完整设置对象后退出再进入，从步骤1开始', async () => {

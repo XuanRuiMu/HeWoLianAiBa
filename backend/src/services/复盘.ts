@@ -2,7 +2,8 @@ import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { huoQuXiaoXiLieBiao } from './消息'
 import { gengXinFuPanNeiRong } from './战绩'
 import type { FuPanPiZhu, FuPanShiJianXianTiaoMu } from './战绩'
-import { huoQuWanZhengHaoGanDu } from './好感度'
+import { HAO_GAN_DU_PEI_ZHI } from '../config/好感度配置'
+import { huoQuWanZhengHaoGanDu, huoQuJieDuanMing } from './好感度'
 import { tiQuGuanJianShiJian } from './关键事件提取'
 import { zhaXingBianTi, type MBTILeiXing } from '../config/角色配置'
 import { 数据库 } from '../数据库'
@@ -18,6 +19,7 @@ export interface FuPanShengChengJieGuo {
 interface FuPanJSONJieGou {
   pi_zhu?: Array<{ xu_hao?: unknown; ping_lun?: unknown; pi_zhu_nei_rong?: unknown; qing_gan?: unknown }>
   zong_jie?: unknown
+  zha_dian_ti_shi?: unknown
 }
 
 interface FuPanZongJieDuiXiang {
@@ -58,6 +60,7 @@ interface FuPanPromptCanShu {
   zhaXingTeZhi?: ZhaXingTeZhi
   haoGanDuGuiJi?: HaoGanDuGuiJi
   guanJianShiJian?: GongJianShiJianJieGuo[]
+  miJiTiShi?: string
 }
 
 const FU_PAN_MAX_XIAO_XI = 999
@@ -124,6 +127,10 @@ function gouJianZhaXingBuFen(teZhi: ZhaXingTeZhi): string {
     '【复盘重点】',
     '请基于"识破线索"列表，评估用户是否识破渣型身份、何时识破、识破线索的把握程度。',
     '若用户被欺骗，分析用户为何未识破，哪些话术让用户上钩。',
+    '【渣点提示（必填）】',
+    '请逐条点出：本局聊天中，哪些「用户消息」的话术/行为体现对方渣男/渣女特质（引用具体消息原文，',
+    '例如「第N条『……』体现渣型特质：……」）。该内容将作为醒目的渣型警示块展示给用户，',
+    '帮助其识别套路。只输出客观分析，不出现后台词与具体分数。',
   ].join('\n')
 }
 
@@ -207,6 +214,15 @@ function gouJianFuPanPrompt(canShu: FuPanPromptCanShu): string {
     '3. guan_jian_zhuan_zhe_dian：指出聊天中的关键转折点。',
     '4. gai_jin_jian_yi：给出改进建议。',
     '5. 不要出现后台词（信任度/亲密度/趣味度/关怀度/总分/关系阶段/好感度/MBTI）或具体分数。',
+    ...(canShu.miJiTiShi
+      ? [
+          '',
+          '【秘籍通关说明】',
+          canShu.miJiTiShi,
+          '（重要：本局使用了秘籍直接通关，以上要求中的"好感度轨迹"仅代表秘籍使用前的真实表现，',
+          '你只需基于"完整聊天记录"中秘籍使用前的真实对话进行复盘，不要被通关结果影响评价。）',
+        ]
+      : []),
     '',
     '【完整聊天记录（序号. [时间] 发送者: 内容）】',
     xiaoXiWenBen || '（无对话记录）',
@@ -224,7 +240,7 @@ function zhuanHuanWeiWenBen(zhi: unknown): string {
     try {
       return JSON.stringify(zhi, null, 2)
     } catch {
-      return String(zhi)
+      return ''
     }
   }
   return String(zhi)
@@ -332,11 +348,42 @@ function gouJianDuiHuaWenBen(
     .join('\n')
 }
 
+function gouJianZhaDianTiShi(jieGou: FuPanJSONJieGou, zhaXingTeZhi?: ZhaXingTeZhi): string {
+  const zhaDian = jieGou.zha_dian_ti_shi
+  let neiRong = ''
+  if (typeof zhaDian === 'string' && zhaDian.trim()) {
+    neiRong = zhaDian.trim()
+  } else if (zhaDian && typeof zhaDian === 'object') {
+    neiRong = zhuanHuanWeiWenBen(zhaDian).trim()
+  }
+
+  if (!neiRong && zhaXingTeZhi) {
+    neiRong =
+      `${huoQuFanYi('fuPan', 'zhaXingJingShiDaoYu')}\n` +
+      zhaXingTeZhi.huaShu.map((h) => `- ${h}`).join('\n') +
+      `\n${huoQuFanYi('fuPan', 'zhaXingShiPoXianSuoQianZhui')}${zhaXingTeZhi.shiPoXianSuo.join('、')}`
+  }
+
+  return `${huoQuFanYi('fuPan', 'zhaXingJingShiBiaoTi')}\n${
+    neiRong || huoQuFanYi('fuPan', 'zhaXingJingShiFallback')
+  }\n${huoQuFanYi('fuPan', 'zhaXingJingShiBiaoTi')}`
+}
+
 export async function shengChengFuPan(
   yong_hu_id: string,
   jiao_se_id: string,
   dang_an_id: string,
 ): Promise<FuPanShengChengJieGuo> {
+  // 读取本局是否秘籍通关及秘籍前好感度快照，供「仅复盘秘籍前真实表现」使用
+  const dangAnJieGuo = await 数据库.query(
+    `SELECT "是否秘籍通关", "秘籍前好感度" FROM "游戏档案" WHERE "用户ID" = $1 AND "角色ID" = $2 LIMIT 1`,
+    [yong_hu_id, jiao_se_id],
+  )
+  const dangAn = dangAnJieGuo.rows[0]
+  const shiFouMiJi = Boolean(dangAn?.是否秘籍通关)
+  const miJiQianHaoGanDu: number | null =
+    dangAn?.秘籍前好感度 != null ? Number(dangAn.秘籍前好感度) : null
+
   const xiaoXiJieGuo = await huoQuXiaoXiLieBiao({
     yong_hu_id,
     jiao_se_id,
@@ -344,7 +391,7 @@ export async function shengChengFuPan(
     mei_ye_tiao_shu: FU_PAN_MAX_XIAO_XI,
   })
 
-  const xiaoXiLieBiao = xiaoXiJieGuo.lie_biao
+  let xiaoXiLieBiao = xiaoXiJieGuo.lie_biao
     .filter((xiaoXi) => xiaoXi.fa_song_zhe_lei_xing !== 'xitong')
     .reverse()
     .map((xiaoXi) => ({
@@ -354,6 +401,27 @@ export async function shengChengFuPan(
       yi_che_hui: xiaoXi.yi_che_hui,
       yuan_shi_nei_rong: xiaoXi.yuan_shi_nei_rong,
     }))
+
+  // 秘籍通关：截断到秘籍使用前，仅保留秘籍前的真实对话
+  let miJiTiShi: string | undefined
+  if (shiFouMiJi) {
+    const miJiMiLing = (HAO_GAN_DU_PEI_ZHI.miJi.miLing || '').trim().toLowerCase()
+    const miJiSuoYin = miJiMiLing
+      ? xiaoXiLieBiao.findIndex(
+          (x) => x.fa_song_zhe === '你' && x.nei_rong.trim().toLowerCase() === miJiMiLing,
+        )
+      : -1
+
+    if (miJiSuoYin >= 0) {
+      xiaoXiLieBiao = xiaoXiLieBiao.slice(0, miJiSuoYin)
+      miJiTiShi =
+        '本局使用了秘籍通关：聊天记录已截断到秘籍使用前，仅复盘秘籍使用前的真实对话（不评价秘籍本身）。'
+    } else {
+      // 无法确定秘籍使用位置，保守处理：明确告知 AI 仅评秘籍前真实表现
+      miJiTiShi =
+        '本局使用了秘籍通关，但无法确定秘籍使用的具体位置。请保守处理：以上仅评秘籍使用前的真实表现，好感度轨迹以秘籍前的真实分数为准。'
+    }
+  }
 
   const jiaoSeJiBenXinXi = await huoQuJiaoSeJiBenXinXi(jiao_se_id)
   const fuPanJiaoSeXinXi: JiaoSeJiBenXinXi = jiaoSeJiBenXinXi ?? {
@@ -368,7 +436,14 @@ export async function shengChengFuPan(
     zhaXingTeZhi = huoQuZhaXingTeZhi(fuPanJiaoSeXinXi.mbtiLeiXing) ?? undefined
   }
 
-  const haoGanDuGuiJi = await huoQuHaoGanDuGuiJi(yong_hu_id, jiao_se_id)
+  // 秘籍通关时，好感度轨迹使用秘籍前真实分数快照，而非被拉满后的分数
+  let haoGanDuGuiJi = await huoQuHaoGanDuGuiJi(yong_hu_id, jiao_se_id)
+  if (shiFouMiJi && miJiQianHaoGanDu != null) {
+    haoGanDuGuiJi = {
+      zuiZhongFen: miJiQianHaoGanDu,
+      guanXiJieDuan: huoQuJieDuanMing(miJiQianHaoGanDu),
+    }
+  }
 
   let guanJianShiJian: GongJianShiJianJieGuo[] = []
   if (xiaoXiLieBiao.length > 0) {
@@ -388,6 +463,7 @@ export async function shengChengFuPan(
     ...(zhaXingTeZhi ? { zhaXingTeZhi } : {}),
     ...(haoGanDuGuiJi ? { haoGanDuGuiJi } : {}),
     ...(guanJianShiJian.length > 0 ? { guanJianShiJian } : {}),
+    ...(miJiTiShi ? { miJiTiShi } : {}),
   })
 
   const xiangYing = await genJuPeiZhiTiaoYong('fuPanShengCheng', [
@@ -396,7 +472,20 @@ export async function shengChengFuPan(
   ])
 
   const jieGou = jieXiJSONXiangYing(xiangYing.neiRong)
-  const zongJie = shengChengFuPanZongJie(jieGou) || xiangYing.neiRong.trim()
+
+  // 渣型角色：在复盘内容前追加醒目的渣型警示块（前端负责样式区分）
+  let zongJie = shengChengFuPanZongJie(jieGou) || xiangYing.neiRong.trim()
+  if (fuPanJiaoSeXinXi.shiFouZhaXing) {
+    zongJie = `${gouJianZhaDianTiShi(jieGou, zhaXingTeZhi)}\n\n${zongJie}`
+  }
+  // 秘籍通关：在结尾强制追加声明（代码层保证，不依赖 AI 自觉；已含则不重复追加）
+  if (shiFouMiJi) {
+    const guanJianCi = huoQuFanYi('fuPan', 'miJiShengMingGuanJianCi')
+    if (!zongJie.includes(guanJianCi)) {
+      zongJie = `${zongJie}\n\n${huoQuFanYi('fuPan', 'miJiShengMing')}`
+    }
+  }
+
   const piZhu = zhuanHuanPiZhu(jieGou)
 
   const jieGuo: FuPanShengChengJieGuo = {

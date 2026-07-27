@@ -255,6 +255,14 @@ export async function dengLu(
   }
 
   await qingChuDengLuShiBai(canShu.shou_ji_hao)
+  const shiGuanLiYuan = panDuanShiGuanLiYuan(yongHu.shou_ji_hao)
+  if (shiGuanLiYuan !== yongHu.guan_li_yuan) {
+    await 数据库.query(
+      `UPDATE "用户" SET "管理员" = $1 WHERE "ID" = $2`,
+      [shiGuanLiYuan, yongHu.id],
+    )
+    yongHu.guan_li_yuan = shiGuanLiYuan
+  }
   await jiLuShenJiRiZhi({
     yong_hu_id: yongHu.id,
     ip: canShu.ip,

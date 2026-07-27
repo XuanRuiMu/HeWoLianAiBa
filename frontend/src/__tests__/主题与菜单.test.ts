@@ -267,10 +267,11 @@ describe('FP-18 主题与UI', () => {
       expect(fanHui.text()).toContain(huoQuFanYi('caidan', 'fanHui'))
     })
 
-    it('主页不显示主页按钮', async () => {
+    it('主页显示主页按钮且水平居中', async () => {
       const { wrapper } = await mountCaiDan({ luJing: '/' })
       const zhuYe = wrapper.find('.zhuye-anniu')
-      expect(zhuYe.classes()).toContain('yincang')
+      expect(zhuYe.classes()).not.toContain('yincang')
+      expect(zhuYe.classes()).toContain('zhong_xin')
     })
 
     it('登录页不显示主页按钮', async () => {
@@ -437,7 +438,7 @@ describe('FP-18 主题与UI', () => {
         re_du: 0,
         chuang_jian_shi_jian: new Date().toISOString(),
       }
-      聊天仓库.zhengZaiShuRu = true
+      聊天仓库.aiZhuangTai = 'zheng_zai_shu_ru'
       await flushPromises()
 
       const biaoTiZu = wrapper.find('.liaotian-biaoti-zu')

@@ -21,12 +21,6 @@
           {{ huoQuFanYi('junShi', 'zanWuJunShi') }}
         </div>
         <div v-else class="junshi-liebiao">
-          <div class="wu-liao-tian-tishi">
-            {{ huoQuFanYi('junShi', 'wuLiaoTianJiLu') }}
-          </div>
-          <div class="yi-zhidao-tishi">
-            {{ huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong') }}
-          </div>
           <div
             v-for="junShi in junShiLieBiaoXuanXiang"
             :key="junShi.id"
@@ -74,6 +68,16 @@
               {{ huoQuFanYi('junShi', 'junShiYiZhiDao') }} -
               {{ huoQuFanYi('junShi', 'junShiChaKanJieGuo') }}
             </button>
+
+            <div v-if="!youLiaoTianJiLu" class="wu-liao-tian-tishi">
+              {{ huoQuFanYi('junShi', 'wuLiaoTianJiLu') }}
+            </div>
+            <div
+              v-if="!keZaiCiZhiDao && dangQianZhuangTai?.zhuang_tai !== 'zhi_dao_zhong'"
+              class="yi-zhidao-tishi"
+            >
+              {{ huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong') }}
+            </div>
 
             <div v-if="cuoWuTiShiMap[junShi.id]" class="cuowu-tishi">
               {{ cuoWuTiShiMap[junShi.id] }}

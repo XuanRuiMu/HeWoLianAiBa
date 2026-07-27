@@ -140,6 +140,30 @@ describe('用户 store', () => {
     expect(localStorage.getItem(令牌键)).toBe('test-jwt-token')
   })
 
+  it('jiaZaiYongHu 成功：管理员标识与服务端用户信息同步（整页刷新场景）', async () => {
+    vi.mocked(huoQuYongHuXinXi).mockResolvedValue({ ...moNiYongHu, guan_li_yuan: true })
+
+    const yongHuCangKu = 使用用户仓库()
+    yongHuCangKu.sheZhiLingPai('test-jwt-token', false)
+    expect(yongHuCangKu.shiFouGuanLiYuan).toBe(false)
+
+    await yongHuCangKu.jiaZaiYongHu()
+
+    expect(yongHuCangKu.shiFouGuanLiYuan).toBe(true)
+  })
+
+  it('jiaZaiYongHu 成功：普通用户不会被误判为管理员', async () => {
+    vi.mocked(huoQuYongHuXinXi).mockResolvedValue({ ...moNiYongHu, guan_li_yuan: false })
+
+    const yongHuCangKu = 使用用户仓库()
+    yongHuCangKu.sheZhiLingPai('test-jwt-token', true)
+    expect(yongHuCangKu.shiFouGuanLiYuan).toBe(true)
+
+    await yongHuCangKu.jiaZaiYongHu()
+
+    expect(yongHuCangKu.shiFouGuanLiYuan).toBe(false)
+  })
+
   it('退出登录：清除令牌、认证表单字段、用户状态、聊天 socket', async () => {
     vi.mocked(dengLu).mockResolvedValue(moNiDengLuXiangYing)
     vi.mocked(huoQuYongHuXinXi).mockResolvedValue(moNiYongHu)

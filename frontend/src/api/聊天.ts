@@ -97,9 +97,7 @@ export async function huoQuJunShiJiLu(jiaoSeId: string): Promise<JunShiJiLu[]> {
   return 响应.data.shu_ju.jiLuLieBiao
 }
 
-export async function huoQuJunShiZhiDaoZhuangTai(
-  jiaoSeId: string,
-): Promise<{
+export async function huoQuJunShiZhiDaoZhuangTai(jiaoSeId: string): Promise<{
   zhuangTai: JunShiZhiDaoZhuangTaiXinXi | null
   keZaiCiZhiDao: boolean
   youLiaoTianJiLu: boolean

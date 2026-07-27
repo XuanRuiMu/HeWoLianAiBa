@@ -175,6 +175,8 @@ CREATE TABLE IF NOT EXISTS "游戏档案" (
     "关系阶段" VARCHAR(20) DEFAULT 'lengDan',
     "聊天天数" INTEGER DEFAULT 0,
     "消息总数" INTEGER DEFAULT 0,
+    "是否秘籍通关" BOOLEAN DEFAULT FALSE,
+    "秘籍前好感度" INTEGER,
     "复盘数据" JSONB DEFAULT '[]'::jsonb,
     "复盘内容" TEXT,
     "创建时间" TIMESTAMPTZ DEFAULT NOW(),
@@ -293,6 +295,7 @@ CREATE INDEX IF NOT EXISTS idx_通知_接收者ID_已读 ON "通知"("接收者I
 
 CREATE INDEX IF NOT EXISTS idx_游戏档案_用户ID ON "游戏档案"("用户ID");
 CREATE INDEX IF NOT EXISTS idx_游戏档案_用户ID_角色ID ON "游戏档案"("用户ID", "角色ID");
+CREATE INDEX IF NOT EXISTS idx_游戏档案_是否秘籍通关 ON "游戏档案"("是否秘籍通关");
 
 CREATE INDEX IF NOT EXISTS idx_游戏结局_用户ID ON "游戏结局"("用户ID");
 CREATE INDEX IF NOT EXISTS idx_成就_用户ID ON "成就"("用户ID");

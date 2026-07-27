@@ -227,20 +227,12 @@
         <button
           v-else
           class="anniu-zhuYao kaiShiLiaoTian"
-          :disabled="!可以开始 || zhengZaiChuLi"
+          :disabled="!可以开始"
           @click="kaiShiLiaoTian"
         >
-          {{
-            zhengZaiChuLi
-              ? huoQuFanYi('ziLiaoSheZhi', 'zhengZaiShengCheng')
-              : huoQuFanYi('ziLiaoSheZhi', 'kaiShiLiaoTian')
-          }}
+          {{ huoQuFanYi('ziLiaoSheZhi', 'kaiShiLiaoTian') }}
         </button>
       </div>
-
-      <p v-if="cuoWuXinXi" class="kaiShi-cuoWu-tishi">
-        {{ cuoWuXinXi }}
-      </p>
     </div>
   </div>
 </template>
@@ -251,7 +243,6 @@ import { useRouter } from 'vue-router'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
 import type { MBTI类型, 性格选择 } from '@/types'
 import { 性格选择映射 } from '@/types'
-import { shengChengJiaoSe, queRenJiaoSe } from '@/api/聊天'
 import { huoQuFanYi } from '@/config/translations'
 
 const 仓库 = 使用认证表单仓库()
@@ -355,31 +346,18 @@ const 渣型提示文案 = computed(() => {
   return huoQuFanYi('ziLiaoSheZhi', 'zhaXingTiShi').replace('{ta}', daiTi)
 })
 
-const zhengZaiChuLi = ref(false)
-const cuoWuXinXi = ref('')
-
 async function kaiShiLiaoTian() {
-  if (!可以开始.value || zhengZaiChuLi.value) return
-  zhengZaiChuLi.value = true
-  cuoWuXinXi.value = ''
-  try {
-    const jiaoSe = await shengChengJiaoSe(
-      ziLiaoShuJu.muBiaoXingBie || 'female',
-      ziLiaoShuJu.xingGeXuanZe || 'INFP',
-      ziLiaoShuJu.yunXuZhaNanZhaNv,
-      随机性格标记.value,
-      ziLiaoShuJu.xingBie || undefined,
-    )
-    const queRenHouJiaoSe = await queRenJiaoSe(jiaoSe)
-    const jiaoSeId = queRenHouJiaoSe.jiao_se_id || queRenHouJiaoSe.id || ''
-    仓库.sheZhiZiLiaoSheZhiYiWanCheng(true)
-    router.push(`/tian-jia-wei-xin?jiaoSeId=${jiaoSeId}`)
-  } catch (cuoWu) {
-    console.error('开始聊天失败', cuoWu)
-    cuoWuXinXi.value = huoQuFanYi('ziLiaoSheZhi', 'shengChengShiBai')
-  } finally {
-    zhengZaiChuLi.value = false
+  if (!可以开始.value) return
+  const linShiZiLiao = {
+    xingBie: ziLiaoShuJu.xingBie,
+    muBiaoXingBie: ziLiaoShuJu.muBiaoXingBie,
+    xingGeXuanZe: ziLiaoShuJu.xingGeXuanZe,
+    yunXuZhaNanZhaNv: ziLiaoShuJu.yunXuZhaNanZhaNv,
+    随机性格标记: 随机性格标记.value,
   }
+  sessionStorage.setItem('ziLiaoSheZhiLinShi', JSON.stringify(linShiZiLiao))
+  仓库.sheZhiZiLiaoSheZhiYiWanCheng(true)
+  router.push('/tian-jia-wei-xin')
 }
 </script>
 

@@ -359,4 +359,97 @@ describe('FP-07 AI回复机制', () => {
       调度器E.重置()
     })
   })
+
+  describe('AI状态 广播（状态机唯一事实源）', () => {
+    function huoQuAiZhuangTaiJiLu() {
+      return huoQuEmit(io)
+        .mock.calls.filter((call) => call[0] === 'AI状态')
+        .map((call) => call[1] as { jiao_se_id: string; zhuang_tai: string; xu_hao: number; shi_jian: number })
+    }
+
+    it('重置广播 kong_xian 且 xu_hao 单调递增', () => {
+      调度器.重置()
+      let jiLu = huoQuAiZhuangTaiJiLu()
+      expect(jiLu.length).toBe(1)
+      expect(jiLu[0].jiao_se_id).toBe('jiao-se-id')
+      expect(jiLu[0].zhuang_tai).toBe('kong_xian')
+      const xu1 = jiLu[0].xu_hao
+
+      调度器.重置()
+      jiLu = huoQuAiZhuangTaiJiLu()
+      const xu2 = jiLu[jiLu.length - 1].xu_hao
+      expect(xu2).toBeGreaterThan(xu1)
+    })
+
+    it('用户发消息后进入 deng_dai_zhong（10秒计时中）', async () => {
+      await 调度器.处理用户消息()
+      const zhuangTaiLieBiao = huoQuAiZhuangTaiJiLu().map((c) => c.zhuang_tai)
+      expect(zhuangTaiLieBiao[0]).toBe('kong_xian')
+      expect(zhuangTaiLieBiao).toContain('deng_dai_zhong')
+    })
+
+    it('AI 开始处理广播 zheng_zai_shu_ru，完成后收敛回 kong_xian', async () => {
+      vi.mocked(yunXingAIYinQing).mockResolvedValue({
+        xiao_xi_lie_biao: ['回复'],
+        shi_fou_hui_fu: true,
+        shi_fou_che_hui: false,
+        jiang_ji_mo_shi: false,
+      })
+      vi.mocked(baoCunJiaoSeXiaoXi).mockResolvedValue(chuangJianXiaoXi('x1', '回复'))
+
+      await 调度器.处理用户消息()
+      await vi.advanceTimersByTimeAsync(10000)
+      await vi.runAllTimersAsync()
+
+      const zhuangTaiLieBiao = huoQuAiZhuangTaiJiLu().map((c) => c.zhuang_tai)
+      expect(zhuangTaiLieBiao).toContain('zheng_zai_shu_ru')
+      expect(zhuangTaiLieBiao[zhuangTaiLieBiao.length - 1]).toBe('kong_xian')
+    })
+
+    it('AI 决定不回复（空数组）仍收敛回 kong_xian', async () => {
+      vi.mocked(yunXingAIYinQing).mockResolvedValue({
+        xiao_xi_lie_biao: [],
+        shi_fou_hui_fu: false,
+        shi_fou_che_hui: false,
+        jiang_ji_mo_shi: false,
+      })
+
+      await 调度器.处理用户消息()
+      await vi.advanceTimersByTimeAsync(10000)
+      await vi.runAllTimersAsync()
+
+      const jiLu = huoQuAiZhuangTaiJiLu()
+      expect(jiLu[jiLu.length - 1].zhuang_tai).toBe('kong_xian')
+    })
+
+    it('AI 处理异常（catch）仍收敛回 kong_xian', async () => {
+      vi.mocked(yunXingAIYinQing).mockRejectedValue(new Error('模型故障'))
+
+      await 调度器.处理用户消息()
+      await vi.advanceTimersByTimeAsync(10000)
+      await vi.runAllTimersAsync()
+
+      const jiLu = huoQuAiZhuangTaiJiLu()
+      expect(jiLu[jiLu.length - 1].zhuang_tai).toBe('kong_xian')
+    })
+
+    it('全程 xu_hao 严格单调递增', async () => {
+      vi.mocked(yunXingAIYinQing).mockResolvedValue({
+        xiao_xi_lie_biao: ['回复'],
+        shi_fou_hui_fu: true,
+        shi_fou_che_hui: false,
+        jiang_ji_mo_shi: false,
+      })
+      vi.mocked(baoCunJiaoSeXiaoXi).mockResolvedValue(chuangJianXiaoXi('x1', '回复'))
+
+      await 调度器.处理用户消息()
+      await vi.advanceTimersByTimeAsync(10000)
+      await vi.runAllTimersAsync()
+
+      const xuHaoLieBiao = huoQuAiZhuangTaiJiLu().map((c) => c.xu_hao)
+      for (let i = 1; i < xuHaoLieBiao.length; i++) {
+        expect(xuHaoLieBiao[i]).toBeGreaterThan(xuHaoLieBiao[i - 1])
+      }
+    })
+  })
 })

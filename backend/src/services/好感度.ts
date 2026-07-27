@@ -2,6 +2,7 @@ import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import { HAO_GAN_DU_PEI_ZHI, HaoGanDuJieDuanYingShe } from '../config/好感度配置'
 import { xieRuJiYi } from './记忆'
+import { chuLiYouXiJieShu } from './胜利失败条件'
 import { jiLuHaoGanDuBianHua } from '../utils/debug日志'
 import type { HaoGanDuXinXi, GongKaiHaoGanDuXinXi, WanZhengHaoGanDuXinXi } from '../types'
 
@@ -239,6 +240,25 @@ export async function sheZhiMiJiHaoGanDu(
     return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'ziYuanBuCunZai'), zhuang_tai_ma: 404 }
   }
 
+  // 查询角色是否为渣型，决定秘籍通关对应的胜利分支
+  const jiaoSeJieGuo = await 数据库.query(
+    `SELECT "是否渣型" FROM "角色" WHERE "ID" = $1 LIMIT 1`,
+    [jiao_se_id],
+  )
+  const shiFouZhaXing = Boolean(jiaoSeJieGuo.rows[0]?.是否渣型)
+
+  // 快照秘籍使用前的真实好感度总分，并标记本局为秘籍通关，
+  // 供后续复盘仅评秘籍使用前的真实表现
+  const miJiQianZongFen = jiuHaoGanDu.zong_fen
+  await 数据库.query(
+    `INSERT INTO "游戏档案" ("用户ID", "角色ID", "是否秘籍通关", "秘籍前好感度")
+     VALUES ($1, $2, TRUE, $3)
+     ON CONFLICT ("用户ID", "角色ID") DO UPDATE SET
+       "是否秘籍通关" = TRUE,
+       "秘籍前好感度" = EXCLUDED."秘籍前好感度"`,
+    [yong_hu_id, jiao_se_id, miJiQianZongFen],
+  )
+
   const muBiaoFen = HAO_GAN_DU_PEI_ZHI.miJi.muBiaoFen
   const xinSiWei = fenJieSiWei(muBiaoFen)
   const xinJieDuanMing = huoQuJieDuanMing(muBiaoFen)
@@ -277,6 +297,18 @@ export async function sheZhiMiJiHaoGanDu(
     qu_wei_du_bian_hua: xinSiWei.qu_wei_du - jiuHaoGanDu.qu_wei_du,
     guan_huai_du_bian_hua: xinSiWei.guan_huai_du - jiuHaoGanDu.guan_huai_du,
   }, muBiaoFen)
+
+  // 顺带完成通关结算：复用现有胜利逻辑，写入胜利战绩并异步触发复盘。
+  // 秘籍语义=好感度直接拉满，对应「爱情胜利」通关分支（正常角色与渣型角色均复用该胜利类型；
+  // 渣型角色的人设差异由复盘分支单独标注，不改变秘籍本身「好感度拉满」的胜利语义）。
+  // 注：若后续要求渣型角色走专属的渣型胜利分支（如 sheng_li_shi_po），仅需修改下方这一行。
+  const miJiJieGuoLeiXing = 'sheng_li_ai_qing' as const
+  await chuLiYouXiJieShu(yong_hu_id, jiao_se_id, miJiJieGuoLeiXing, {
+    lei_xing: '秘籍通关',
+    mi_ji: true,
+    mi_ji_qian_hao_gan_du: miJiQianZongFen,
+    shi_fou_zha_xing: shiFouZhaXing,
+  })
 
   return {
     cheng_gong: true,

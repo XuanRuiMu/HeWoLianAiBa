@@ -99,6 +99,8 @@
             ghost-class="sortable-ghost"
             chosen-class="sortable-chosen"
             drag-class="sortable-drag"
+            :force-fallback="true"
+            fallback-class="sortable-drag"
             :group="{ name: fenLei.zhuangTai, pull: false, put: false }"
             class="zhanji-liebiao-neirong"
             @end="onTuoZhuaiJieShu(fenLei.zhuangTai)"
@@ -1030,7 +1032,7 @@ defineExpose({
 }
 
 .zhanji-kapian.sortable-drag {
-  background: rgba(255, 255, 255, 0.14) !important;
+  background: rgba(255, 255, 255, 0.3) !important;
   box-shadow:
     0 20px 50px rgba(0, 0, 0, 0.5),
     0 0 0 1px rgba(255, 107, 157, 0.4) !important;

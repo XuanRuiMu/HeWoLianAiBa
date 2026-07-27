@@ -259,6 +259,14 @@ luYou.put(
         return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('liaoTian', 'cheHuiShiBai'))
       }
       chongZhiJiaoSeTiaoDuQi(yongHu.yongHuId, jiaoSeId)
+      const io = huoQuIo()
+      if (io) {
+        io.to(yongHu.yongHuId).emit('管理员_隐藏信息', {
+          类型: '用户撤回',
+          内容: `用户撤回了消息（ID: ${xiaoXiId}），AI 上下文已重置`,
+          时间: Date.now(),
+        })
+      }
       return chengGongXiangYing(xiangYing, jieGuo.xiao_xi)
     } catch (cuoWu) {
       console.error('撤回消息失败', cuoWu)

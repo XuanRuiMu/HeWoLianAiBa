@@ -13,7 +13,7 @@
         </button>
         <button
           class="zhuye-anniu"
-          :class="{ yincang: !xianShiZhuYe }"
+          :class="{ yincang: !xianShiZhuYe, zhong_xin: route.name === 'zhuJieMian' }"
           :aria-hidden="!xianShiZhuYe"
           :title="huoQuFanYi('caidan', 'zhuYe')"
           :aria-label="huoQuFanYi('caidan', 'zhuYe')"
@@ -308,7 +308,11 @@ const xianShiFanHui = computed(() => {
   return !yinCangLuYou.includes(route.name as string)
 })
 
-const xianShiZhuYe = computed(() => xianShiFanHui.value)
+const xianShiZhuYe = computed(() => {
+  // 主页路由下“主页”按钮需显示并绝对居中（FP-19 规则3），其余路由沿用返回按钮显隐逻辑
+  if (route.name === 'zhuJieMian') return true
+  return xianShiFanHui.value
+})
 
 const shiLiaoTianYe = computed(() => route.name === 'liaoTian')
 
@@ -662,6 +666,12 @@ watch(
 .zhuye-anniu.yincang {
   visibility: hidden;
   pointer-events: none;
+}
+
+.zhuye-anniu.zhong_xin {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .zhuye-anniu:hover {

@@ -17,6 +17,7 @@ import { jiLuSocketShiJian, jiLuXiaoXiCaoZuo } from '../utils/debug日志'
 import type {
   AIYinQingShuChu,
   AIYinQingShuRu,
+  HaoGanDuPingPanJieGuo,
 } from '../types'
 import type { XiaoXiXinXi } from './消息'
 
@@ -52,6 +53,8 @@ export class AI回复调度器 {
   private 当前处理ID = 0
   private 取消控制器: AbortController | null = null
   private 处理中 = false
+  private 当前AI状态: 'kong_xian' | 'deng_dai_zhong' | 'zheng_zai_shu_ru' = 'kong_xian'
+  private xu_hao = 0
 
   constructor(
     private readonly 角色ID: string,
@@ -74,6 +77,18 @@ export class AI回复调度器 {
       this.取消控制器.abort()
       this.取消控制器 = null
     }
+    this.发布AI状态('kong_xian')
+  }
+
+  private 发布AI状态(zhuang_tai: 'kong_xian' | 'deng_dai_zhong' | 'zheng_zai_shu_ru'): void {
+    this.当前AI状态 = zhuang_tai
+    this.xu_hao += 1
+    this.io.to(this.用户ID).emit('AI状态', {
+      jiao_se_id: this.角色ID,
+      zhuang_tai,
+      xu_hao: this.xu_hao,
+      shi_jian: Date.now(),
+    })
   }
 
   是否处理中(): boolean {
@@ -130,6 +145,7 @@ export class AI回复调度器 {
       this.计时器 = null
       void this.触发AI处理()
     }, 10000)
+    this.发布AI状态('deng_dai_zhong')
   }
 
   private 是否等待表白回复(): boolean {
@@ -156,20 +172,34 @@ export class AI回复调度器 {
   }
 
   private async 触发AI处理(): Promise<void> {
-    const beiDuoShe = await jiaoSeShiFouBeiDuoShe(this.角色ID)
-    if (beiDuoShe) {
-      this.处理中 = false
-      return
-    }
-
-    this.处理中 = true
     const 处理ID = ++this.当前处理ID
+    this.处理中 = true
     this.取消控制器 = new AbortController()
     const 信号 = this.取消控制器.signal
 
+    if (信号.aborted) {
+      this.处理中 = false
+      this.取消控制器 = null
+      return
+    }
+
+    const beiDuoShe = await jiaoSeShiFouBeiDuoShe(this.角色ID)
+    if (beiDuoShe) {
+      this.处理中 = false
+      this.取消控制器 = null
+      if (处理ID === this.当前处理ID) this.发布AI状态('kong_xian')
+      return
+    }
+
     try {
+      if (处理ID === this.当前处理ID) this.发布AI状态('zheng_zai_shu_ru')
       this.io.to(this.用户ID).emit('对方正在输入', this.角色ID)
       jiLuSocketShiJian('对方正在输入', this.用户ID, { jiao_se_id: this.角色ID })
+      this.io.to(this.用户ID).emit('管理员_构建过程', {
+        阶段: '思考启动',
+        说明: 'AI 已收到新消息，开始分析上下文与最新用户消息',
+        时间: Date.now(),
+      })
 
       const ai结果 = await this.运行AI()
       if (信号.aborted || 处理ID !== this.当前处理ID) return
@@ -177,6 +207,11 @@ export class AI回复调度器 {
       if (ai结果.shi_fou_che_hui) {
         await cheHuiJiaoSeXiaoXi({ yong_hu_id: this.用户ID, jiao_se_id: this.角色ID })
         jiLuXiaoXiCaoZuo('角色消息撤回', this.用户ID, this.角色ID, 'jiaose')
+        this.io.to(this.用户ID).emit('管理员_隐藏信息', {
+          类型: 'AI撤回',
+          内容: 'AI 判定上一条自身回复需撤回（隐藏的内心修正）',
+          时间: Date.now(),
+        })
       }
 
       if (!ai结果.shi_fou_hui_fu || ai结果.xiao_xi_lie_biao.length === 0) {
@@ -185,6 +220,7 @@ export class AI回复调度器 {
           消息列表: [],
         })
         jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 0 })
+        if (处理ID === this.当前处理ID) this.发布AI状态('kong_xian')
         return
       }
 
@@ -192,6 +228,7 @@ export class AI回复调度器 {
         const 表白消息 = ai结果.xiao_xi_lie_biao[0]
         if (表白消息) {
           await this.处理AI主动表白(表白消息)
+          if (处理ID === this.当前处理ID) this.发布AI状态('kong_xian')
           return
         }
       }
@@ -206,6 +243,7 @@ export class AI回复调度器 {
         消息列表: [],
       })
       jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 0, cuo_wu: true })
+      this.发布AI状态('kong_xian')
     } finally {
       if (处理ID === this.当前处理ID) {
         this.处理中 = false
@@ -240,6 +278,12 @@ export class AI回复调度器 {
     if (!角色) {
       throw new Error('角色不存在')
     }
+
+    this.io.to(this.用户ID).emit('管理员_构建过程', {
+      阶段: '策略规划',
+      说明: 'Director 已完成意图判定，Writer 进入回复生成',
+      时间: Date.now(),
+    })
 
     const 最新用户消息 = this.获取最新用户消息(历史消息)
     const 是第一轮 = !历史消息.some((m) => m.fa_song_zhe_lei_xing === 'jiaose')
@@ -300,24 +344,54 @@ export class AI回复调度器 {
         消息列表: [保存结果],
       })
       jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 1, xiao_xi_id: 保存结果?.id })
+      this.io.to(this.用户ID).emit('管理员_构建过程', {
+        阶段: '输出回复',
+        说明: `第 ${i + 1} 条回复已生成并写入对话`,
+        时间: Date.now(),
+      })
 
       if (最新用户消息) {
-        await this.更新好感度(最新用户消息, 消息列表[i])
+        const 好感度变化 = await this.更新好感度(最新用户消息, 消息列表[i])
+        if (好感度变化) {
+          this.io.to(this.用户ID).emit('管理员_好感度变化', {
+            变化: {
+              xin_ren_du: 好感度变化.xin_ren_du_bian_hua,
+              qin_mi_du: 好感度变化.qin_mi_du_bian_hua,
+              qu_wei_du: 好感度变化.qu_wei_du_bian_hua,
+              guan_huai_du: 好感度变化.guan_huai_du_bian_hua,
+            },
+            时间: Date.now(),
+          })
+          if (好感度变化.li_you) {
+            this.io.to(this.用户ID).emit('管理员_隐藏信息', {
+              类型: '好感度评判理由',
+              内容: 好感度变化.li_you,
+              时间: Date.now(),
+            })
+          }
+        }
         const jieShuJieGuo = await chuLiAIHuiFuHouJieShuJianCha(this.用户ID, this.角色ID)
         if (jieShuJieGuo) {
           this.清除等待表白回复状态()
+          if (处理ID === this.当前处理ID) this.发布AI状态('kong_xian')
           return
         }
       }
     }
+    if (处理ID === this.当前处理ID) this.发布AI状态('kong_xian')
   }
 
-  private async 更新好感度(用户消息: string, 角色回复: string): Promise<void> {
+  private async 更新好感度(
+    用户消息: string,
+    角色回复: string,
+  ): Promise<HaoGanDuPingPanJieGuo | null> {
     try {
       const 变化 = await pingPanHaoGanDuBianHua(用户消息, 角色回复, '对方')
       await gengXinHaoGanDu(this.用户ID, this.角色ID, 变化)
+      return 变化
     } catch (错误) {
       console.error('更新好感度失败', 错误)
+      return null
     }
   }
 

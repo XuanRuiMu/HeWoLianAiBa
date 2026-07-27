@@ -49,7 +49,30 @@ export interface DangAnXiangQing extends DangAnLieBiaoXiang {
   fu_pan_pi_zhu: FuPanPiZhu[] | null
 }
 
-const 结局文本映射: Record<string, YouXiJieGuoLeiXing | 'jinxing_zhong'> = {
+// 结局枚举与 jieJu 翻译键一一对应。运行时从翻译文件生成「当前文案 -> 枚举」映射，
+// 避免 jieJu 文案改版后，新落库的战绩因映射未同步而被错判为「进行中」。
+const 结局枚举列表: YouXiJieGuoLeiXing[] = [
+  'sheng_li_ai_qing',
+  'sheng_li_hu_shan_sheng_li',
+  'sheng_li_shi_po',
+  'sheng_li_shen_jing_bing',
+  'shi_bai_guo_zao_biao_bai',
+  'shi_bai_hu_shan_shi_bai',
+  'shi_bai_cuo_wu_shi_po',
+  'shi_bai_hao_gan_du_gui_ling',
+  'shi_bai_ju_jue_biao_bai',
+  'shi_bai_bei_qi_pian',
+  'shi_bai_bei_zha_xing_qi_pian',
+  'shi_bai_shen_jing_bing',
+]
+
+const 当前结局文本映射: Record<string, YouXiJieGuoLeiXing> = {}
+for (const leiXing of 结局枚举列表) {
+  当前结局文本映射[huoQuFanYi('jieJu', leiXing)] = leiXing
+}
+
+// 兼容历史数据：jieJu 文案改版前已落库的旧文案（如「胜利-爱情」），仍需正确归类。
+const 历史结局文本映射: Record<string, YouXiJieGuoLeiXing> = {
   '胜利-爱情': 'sheng_li_ai_qing',
   '胜利-互删胜利': 'sheng_li_hu_shan_sheng_li',
   '胜利-识破': 'sheng_li_shi_po',
@@ -64,12 +87,13 @@ const 结局文本映射: Record<string, YouXiJieGuoLeiXing | 'jinxing_zhong'> =
   '失败-神经病': 'shi_bai_shen_jing_bing',
 }
 
-function yingSheJieGuoLeiXing(
+export function yingSheJieGuoLeiXing(
   zhuangTaiWenBen: string,
   shiFouFengCun: boolean,
 ): YouXiJieGuoLeiXing | 'jinxing_zhong' {
-  if (结局文本映射[zhuangTaiWenBen]) {
-    return 结局文本映射[zhuangTaiWenBen]
+  const leiXing = 当前结局文本映射[zhuangTaiWenBen] ?? 历史结局文本映射[zhuangTaiWenBen]
+  if (leiXing) {
+    return leiXing
   }
   if (!shiFouFengCun) {
     return 'jinxing_zhong'

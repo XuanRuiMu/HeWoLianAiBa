@@ -141,6 +141,20 @@ async function chaRuXiaoXi(
   )
 }
 
+async function chaRuXiaoXiShiJian(
+  yongHuId: string,
+  jiaoSeId: string,
+  neiRong: string,
+  faSongZhe: 'yonghu' | 'jiaose' = 'yonghu',
+  miao: number = 0,
+): Promise<void> {
+  await 数据库.query(
+    `INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "创建时间")
+     VALUES ($1, $2, $3, $4, 'wenben', true, NOW() - ($5 || ' seconds')::interval)`,
+    [yongHuId, jiaoSeId, neiRong, faSongZhe, String(miao)],
+  )
+}
+
 async function chuangJianYouXiDangAn(
   yongHuId: string,
   jiaoSeId: string,
@@ -181,6 +195,40 @@ async function qingLiFuPanPingGuRedis(yongHuId: string, jiaoSeId: string): Promi
 async function qingLiDangAnYuJieJu(yongHuId: string): Promise<void> {
   await 数据库.query(`DELETE FROM "游戏档案" WHERE "用户ID" = $1`, [yongHuId])
   await 数据库.query(`DELETE FROM "游戏结局" WHERE "用户ID" = $1`, [yongHuId])
+}
+
+async function chuangJianMiJiDangAn(
+  yongHuId: string,
+  jiaoSeId: string,
+  jieGuoLeiXing: string,
+  miJiQianHaoGanDu = 50,
+): Promise<string> {
+  const jiaoSe = await 数据库.query(`SELECT "名字", "微信昵称", "是否渣型" FROM "角色" WHERE "ID" = $1`, [jiaoSeId])
+  const row = jiaoSe.rows[0] || {}
+  const dangAnId = uuidV4()
+  await 数据库.query(
+    `INSERT INTO "游戏档案" (
+      "ID", "用户ID", "角色ID", "角色名字", "是否渣型", "结果类型",
+      "是否封存", "好感度总分", "关系阶段", "聊天天数", "消息总数",
+      "是否秘籍通关", "秘籍前好感度"
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+    [
+      dangAnId,
+      yongHuId,
+      jiaoSeId,
+      String(row.名字 || '测试角色'),
+      Boolean(row.是否渣型),
+      jieGuoLeiXing,
+      true,
+      850,
+      'reLian',
+      3,
+      6,
+      true,
+      miJiQianHaoGanDu,
+    ],
+  )
+  return dangAnId
 }
 
 function shengChengFuPanMockNeiRong(): string {
@@ -828,6 +876,114 @@ describe('FP-13 过往战绩与复盘', () => {
       const quanBuWenBen = JSON.stringify(xiangYing.body.shu_ju)
       expect(quanBuWenBen).not.toContain('Invalid Date')
       expect(quanBuWenBen).not.toContain('NaN:NaN')
+    })
+
+    it('秘籍通关复盘内容结尾强制含声明（AI 未输出时由代码补全）', async () => {
+      const miJiJiaoSeId = await chuangJianJianYiJiaoSe(ceShiYongHu!.yongHuId, '秘籍对象')
+      const dangAnId = await chuangJianMiJiDangAn(ceShiYongHu!.yongHuId, miJiJiaoSeId, '胜利-爱情')
+
+      await chaRuXiaoXiShiJian(ceShiYongHu!.yongHuId, miJiJiaoSeId, '你好呀', 'yonghu', 300)
+      await chaRuXiaoXiShiJian(ceShiYongHu!.yongHuId, miJiJiaoSeId, '嗨，在写什么', 'jiaose', 200)
+      await chaRuXiaoXiShiJian(ceShiYongHu!.yongHuId, miJiJiaoSeId, 'whosyourdaddy', 'yonghu', 0)
+
+      let buHuoPrompt = ''
+      sheZhiMockTiaoYong(async (canShu) => {
+        const yongHuXiaoXi = canShu.xiaoXi.find((x) => x.jiaoSe === 'user')
+        if (yongHuXiaoXi) buHuoPrompt = yongHuXiaoXi.neiRong
+        return {
+          neiRong: JSON.stringify({
+            pi_zhu: [{ xu_hao: 1, ping_lun: '开场挺自然的。' }],
+            zong_jie: '秘籍使用前你们的聊天节奏还不错。',
+          }),
+          xinXi: { role: 'assistant', content: '' },
+          yuanShuJu: {} as never,
+        }
+      })
+
+      await shengChengFuPan(ceShiYongHu!.yongHuId, miJiJiaoSeId, dangAnId)
+
+      const xiangYing = await request(yingYong)
+        .get(`/api/战绩/复盘/${dangAnId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const neiRong = xiangYing.body.shu_ju.fu_pan_nei_rong
+      expect(neiRong).toContain('仅针对秘籍使用前的真实表现')
+      expect(buHuoPrompt).toContain('秘籍通关说明')
+      expect(buHuoPrompt).not.toContain('whosyourdaddy')
+    })
+
+    it('秘籍通关声明幂等：AI 已含声明时不重复追加', async () => {
+      const miJiJiaoSeId = await chuangJianJianYiJiaoSe(ceShiYongHu!.yongHuId, '幂等对象')
+      const dangAnId = await chuangJianMiJiDangAn(ceShiYongHu!.yongHuId, miJiJiaoSeId, '胜利-爱情')
+
+      await chaRuXiaoXiShiJian(ceShiYongHu!.yongHuId, miJiJiaoSeId, '你好', 'yonghu', 100)
+      await chaRuXiaoXiShiJian(ceShiYongHu!.yongHuId, miJiJiaoSeId, 'whosyourdaddy', 'yonghu', 0)
+
+      sheZhiMockTiaoYong(async () => ({
+        neiRong: JSON.stringify({
+          pi_zhu: [{ xu_hao: 1, ping_lun: '挺好的。' }],
+          zong_jie: '秘籍使用前的聊天表现尚可。仅针对秘籍使用前的真实表现',
+        }),
+        xinXi: { role: 'assistant', content: '' },
+        yuanShuJu: {} as never,
+      }))
+
+      await shengChengFuPan(ceShiYongHu!.yongHuId, miJiJiaoSeId, dangAnId)
+
+      const xiangYing = await request(yingYong)
+        .get(`/api/战绩/复盘/${dangAnId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+
+      const neiRong = xiangYing.body.shu_ju.fu_pan_nei_rong
+      const chuXianCiShu = (neiRong.match(/仅针对秘籍使用前的真实表现/g) || []).length
+      expect(chuXianCiShu).toBe(1)
+    })
+
+    it('渣型角色复盘内容前置渣型警示块，正常角色不含', async () => {
+      const zhaXingJiaoSeId = await chuangJianZhaXingJiaoSe(ceShiYongHu!.yongHuId, '渣女警示测试', 'INFJ')
+      const zhaXingDangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, '胜利-识破')
+
+      sheZhiMockTiaoYong(async () => ({
+        neiRong: JSON.stringify({
+          pi_zhu: [{ xu_hao: 1, ping_lun: '对方开场就在制造稀缺感。' }],
+          zong_jie: '用户及时识破了套路。',
+        }),
+        xinXi: { role: 'assistant', content: '' },
+        yuanShuJu: {} as never,
+      }))
+
+      await shengChengFuPan(ceShiYongHu!.yongHuId, zhaXingJiaoSeId, zhaXingDangAnId)
+
+      const zhaXingXiangYing = await request(yingYong)
+        .get(`/api/战绩/复盘/${zhaXingDangAnId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+      const zhaXingNeiRong = zhaXingXiangYing.body.shu_ju.fu_pan_nei_rong
+      expect(zhaXingNeiRong).toContain('⚠️【渣型警示】⚠️')
+      expect(zhaXingNeiRong).toContain('本局对象为渣男/渣女')
+
+      const zhengChangJiaoSeId = await chuangJianJianYiJiaoSe(ceShiYongHu!.yongHuId, '正常警示对照')
+      const zhengChangDangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, zhengChangJiaoSeId, '胜利-爱情')
+
+      sheZhiMockTiaoYong(async () => ({
+        neiRong: JSON.stringify({
+          pi_zhu: [{ xu_hao: 1, ping_lun: '开场自然。' }],
+          zong_jie: '表现不错。',
+        }),
+        xinXi: { role: 'assistant', content: '' },
+        yuanShuJu: {} as never,
+      }))
+
+      await shengChengFuPan(ceShiYongHu!.yongHuId, zhengChangJiaoSeId, zhengChangDangAnId)
+
+      const zhengChangXiangYing = await request(yingYong)
+        .get(`/api/战绩/复盘/${zhengChangDangAnId}`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .expect(200)
+      const zhengChangNeiRong = zhengChangXiangYing.body.shu_ju.fu_pan_nei_rong
+      expect(zhengChangNeiRong).not.toContain('⚠️【渣型警示】⚠️')
     })
   })
 
