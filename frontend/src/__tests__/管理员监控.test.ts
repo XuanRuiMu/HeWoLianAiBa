@@ -1,18 +1,55 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { huoQuFanYi } from '@/config/translations'
 import GuanLiJianKong from '@/components/管理员监控.vue'
 import { 使用聊天仓库 } from '@/stores/聊天'
+
+const 组件源码 = readFileSync(resolve(process.cwd(), 'src/components/管理员监控.vue'), 'utf-8')
 
 describe('管理员监控 组件', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
   })
 
-  it('渲染遮罩、标题与四个分区标题', () => {
+  it('浮窗根元素为可拖动浮窗且不再有全屏遮罩', () => {
     const wrapper = mount(GuanLiJianKong)
-    expect(wrapper.find('.guanli-jiankong-zhezhao').exists()).toBe(true)
+    // 旧的全屏遮罩类已移除
+    expect(wrapper.find('.guanli-jiankong-zhezhao').exists()).toBe(false)
+    // 浮窗根元素存在
+    expect(wrapper.find('.guanli-jiankong-fuchuang').exists()).toBe(true)
+    // 不再是模态：无 aria-modal
+    const gen = wrapper.find('.guanli-jiankong-fuchuang')
+    expect(gen.attributes('aria-modal')).toBeUndefined()
+    expect(gen.attributes('role')).toBe('dialog')
+  })
+
+  it('浮窗根元素使用固定定位（源码断言）', () => {
+    expect(组件源码).not.toContain('inset: 0')
+    expect(组件源码).not.toContain('backdrop-filter')
+    expect(组件源码).not.toContain('guanli-jiankong-zhezhao')
+    expect(组件源码).not.toContain('aria-modal')
+    expect(组件源码).toContain('position: fixed')
+    // 尺寸与 z-index 提为 CSS 变量，禁止散落魔法数字
+    expect(组件源码).toContain('--jiankong-kuan')
+    expect(组件源码).toContain('--jiankong-gao')
+    expect(组件源码).toContain('--jiankong-z-index')
+  })
+
+  it('标题栏为拖动句柄且关闭按钮可点击不触发拖动', () => {
+    const wrapper = mount(GuanLiJianKong)
+    expect(wrapper.find('.jiankong-biaoti-lan').exists()).toBe(true)
+    // 拖动机制：自研指针事件 + setPointerCapture（源码断言）
+    expect(组件源码).toContain('setPointerCapture')
+    expect(组件源码).toContain('pointermove')
+    // 关闭按钮存在且独立于拖动
+    expect(wrapper.find('.jiankong-guanbi').exists()).toBe(true)
+  })
+
+  it('渲染标题与四个分区标题', () => {
+    const wrapper = mount(GuanLiJianKong)
     expect(wrapper.find('.jiankong-biaoti').text()).toContain(
       huoQuFanYi('guanLiJianKong', 'biaoTi'),
     )

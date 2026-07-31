@@ -16,6 +16,7 @@ import {
   withRequestId,
   xieRuRiZhi,
 } from '../utils/debug日志'
+import { qingQiuShangXiaWen, 日志追踪中间件 } from '../middleware/日志追踪'
 
 const LOG_WEN_JIAN = path.resolve(process.cwd(), 'logs', 'debug.log')
 
@@ -336,5 +337,94 @@ describe('FP-01 pino 结构化日志', () => {
     expect(hang.length).toBe(2)
     const tiaoMu2 = JSON.parse(hang[1])
     expect(tiaoMu2.xiao_xi).toBe('第二批')
+  })
+})
+
+describe('FP-02 请求追踪上下文', () => {
+  beforeEach(async () => {
+    await qingLiRiZhi()
+    sheZhiZuiDiRiZhiJiBie('debug')
+  })
+
+  afterEach(async () => {
+    await qingLiRiZhi()
+  })
+
+  it('AsyncLocalStorage 上下文内自动注入 qing_qiu_id，上下文外不注入', async () => {
+    qingQiuShangXiaWen.run(
+      { qing_qiu_id: 'als-req-777' },
+      () => {
+        debug日志.info('请求追踪', '上下文内日志')
+      },
+    )
+    debug日志.info('请求追踪', '上下文外日志')
+    await guanBiRiZhiLiu()
+
+    const hang = duQuRiZhiHang()
+    expect(hang.length).toBe(2)
+    const tiaoMu1 = JSON.parse(hang[0])
+    expect(tiaoMu1.qing_qiu_id).toBe('als-req-777')
+    const tiaoMu2 = JSON.parse(hang[1])
+    expect(tiaoMu2.qing_qiu_id).toBeUndefined()
+  })
+
+  it('日志追踪中间件自动注入 qing_qiu_id 并与 X-Request-Id 一致', async () => {
+    const yingYong = express()
+    yingYong.use(日志追踪中间件())
+    yingYong.get('/ce-shi', (_qingQiu, xiangYing) => {
+      debug日志.info('请求处理', '处理中')
+      xiangYing.status(200).json({ cheng_gong: true })
+    })
+
+    const xiangYing = await request(yingYong).get('/ce-shi').expect(200)
+    const qingQiuId = xiangYing.headers['x-request-id'] as string
+    expect(typeof qingQiuId).toBe('string')
+    expect(qingQiuId.length).toBeGreaterThan(0)
+
+    await guanBiRiZhiLiu()
+    const hang = duQuRiZhiHang()
+    const tiaoMu = JSON.parse(hang[0])
+    expect(tiaoMu.qing_qiu_id).toBe(qingQiuId)
+  })
+
+  it('显式传入的 qing_qiu_id 优先于上下文注入', async () => {
+    qingQiuShangXiaWen.run(
+      { qing_qiu_id: 'als-req-888' },
+      () => {
+        debug日志.info('请求追踪', '显式优先', { qing_qiu_id: 'ming-que-999' })
+      },
+    )
+    await guanBiRiZhiLiu()
+
+    const hang = duQuRiZhiHang()
+    const tiaoMu = JSON.parse(hang[0])
+    expect(tiaoMu.qing_qiu_id).toBe('ming-que-999')
+  })
+
+  it('并发写入时初始化防重入，所有日志均落盘', async () => {
+    await Promise.all([
+      Promise.resolve().then(() => debug日志.info('并发', '日志1')),
+      Promise.resolve().then(() => debug日志.info('并发', '日志2')),
+      Promise.resolve().then(() => debug日志.info('并发', '日志3')),
+    ])
+    await guanBiRiZhiLiu()
+
+    const hang = duQuRiZhiHang()
+    expect(hang.length).toBe(3)
+    const xiaoXiLieBiao = hang.map((hangXiang) => JSON.parse(hangXiang).xiao_xi)
+    expect(xiaoXiLieBiao).toEqual(['日志1', '日志2', '日志3'])
+  })
+
+  it('guanBiRiZhiLiu 在 10 秒内返回，不挂起', async () => {
+    debug日志.info('测试', '关闭前写入')
+    const shiJianQi = setTimeout(() => {
+      throw new Error('guanBiRiZhiLiu 挂起超过 10 秒')
+    }, 10000)
+    shiJianQi.unref()
+
+    await guanBiRiZhiLiu()
+    clearTimeout(shiJianQi)
+
+    expect(duQuRiZhiHang().length).toBe(1)
   })
 })

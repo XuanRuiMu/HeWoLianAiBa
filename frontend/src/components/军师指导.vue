@@ -47,7 +47,8 @@
               :disabled="
                 !jiaoSeId ||
                 qingQiuZhongJunShiId !== null ||
-                dangQianZhuangTai?.zhuang_tai === 'zhi_dao_zhong'
+                dangQianZhuangTai?.zhuang_tai === 'zhi_dao_zhong' ||
+                yiZhiDaoXiangTongNeiRong
               "
               @click="zhiXingQingQiu(junShi)"
             >
@@ -72,10 +73,7 @@
             <div v-if="!youLiaoTianJiLu" class="wu-liao-tian-tishi">
               {{ huoQuFanYi('junShi', 'wuLiaoTianJiLu') }}
             </div>
-            <div
-              v-if="!keZaiCiZhiDao && dangQianZhuangTai?.zhuang_tai !== 'zhi_dao_zhong'"
-              class="yi-zhidao-tishi"
-            >
+            <div v-if="yiZhiDaoXiangTongNeiRong" class="yi-zhidao-tishi">
               {{ huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong') }}
             </div>
 
@@ -134,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   qingQiuJunShiZhiDao,
@@ -169,6 +167,12 @@ const zhanKaiJunShiId = ref<string | null>(null)
 const cuoWuTiShiMap = ref<Record<string, string>>({})
 const jiaZaiZhong = ref(true)
 const xianShiZhiDaoJiLu = ref(false)
+
+// 单一派生状态：当前聊天内容是否已被指导过（非指导中时）。
+// 提示显隐与「开始指导」按钮可用性均由它统一控制，避免点击后再检查再弹提示的重复路径。
+const yiZhiDaoXiangTongNeiRong = computed(
+  () => !keZaiCiZhiDao.value && dangQianZhuangTai.value?.zhuang_tai !== 'zhi_dao_zhong',
+)
 
 let lunXunShiJianQi: ReturnType<typeof setInterval> | null = null
 const LUN_XUN_JIAN_GE_HAO_MIAO = 3000
@@ -257,6 +261,8 @@ function huoQuJunShiMingCheng(junShi: JunShiXinXi): string {
 
 async function zhiXingQingQiu(junShi: JunShiXinXi) {
   if (!props.jiaoSeId) return
+  // 单一派生状态控制：当前聊天内容已指导过时禁止再次请求，避免点击后再检查再弹提示
+  if (yiZhiDaoXiangTongNeiRong.value) return
   qingQiuZhongJunShiId.value = junShi.id
   cuoWuTiShiMap.value = { ...cuoWuTiShiMap.value, [junShi.id]: '' }
   try {
@@ -337,8 +343,24 @@ function tiaoZhuanZhiDaoJiLuXiangQing(jiLu: JunShiJiLu) {
   })
 }
 
-onMounted(async () => {
+onMounted(() => {
+  void chuShiHua()
+})
+
+// 切换会话后重新查询历史指导状态，使提示与按钮可用性随新会话正确流转
+watch(
+  () => props.jiaoSeId,
+  () => {
+    tingZhiLunXun()
+    void chuShiHua()
+  },
+)
+
+async function chuShiHua(): Promise<void> {
   jiaZaiZhong.value = true
+  qingQiuZhongJunShiId.value = null
+  zhanKaiJunShiId.value = null
+  cuoWuTiShiMap.value = {}
   try {
     const [lieBiao, jiLu, zhuangTaiJieGuo] = await Promise.all([
       huoQuJunShiLieBiao(),
@@ -364,7 +386,7 @@ onMounted(async () => {
   } finally {
     jiaZaiZhong.value = false
   }
-})
+}
 
 onUnmounted(() => {
   tingZhiLunXun()

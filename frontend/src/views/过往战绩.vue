@@ -1,6 +1,6 @@
 <template>
   <div class="zhanji-yemian">
-    <main class="zhanji-liebiao">
+    <main class="zhanji-liebiao" :class="{ 'tuo-zhuai-zhong': tuoZhuaiZhong }">
       <div v-if="jiaZaiZhong" class="jiazai-zhuangtai">
         {{ huoQuFanYi('zhanJi', 'jiaZaiZhong') }}
       </div>
@@ -103,6 +103,9 @@
             fallback-class="sortable-drag"
             :group="{ name: fenLei.zhuangTai, pull: false, put: false }"
             class="zhanji-liebiao-neirong"
+            @choose="onTuoZhuaiKaiShi"
+            @start="onTuoZhuaiKaiShi"
+            @unchoose="onTuoZhuaiTingZhi"
             @end="onTuoZhuaiJieShu(fenLei.zhuangTai)"
           >
             <div
@@ -231,6 +234,7 @@ interface FenLeiXinXi {
 const router = useRouter()
 const yongHuCangKu = 使用用户仓库()
 const jiaZaiZhong = ref(true)
+const tuoZhuaiZhong = ref(false)
 const xuanZhongIds = ref<Set<string>>(new Set())
 const zuiHouDianJiSuoYin = ref<number | null>(null)
 const fenLeiZu = reactive<Record<FenLeiZhuangTai, 档案详情[]>>({
@@ -518,7 +522,17 @@ function daKaiFuPan(dangAn: 档案详情) {
   })
 }
 
+function onTuoZhuaiKaiShi() {
+  tuoZhuaiZhong.value = true
+}
+
+function onTuoZhuaiTingZhi() {
+  tuoZhuaiZhong.value = false
+}
+
 function onTuoZhuaiJieShu(zhuangTai: FenLeiZhuangTai) {
+  tuoZhuaiZhong.value = false
+  window.getSelection()?.removeAllRanges()
   const map = huoQuPaiXuMap()
   map[zhuangTai] = fenLeiZu[zhuangTai].map((item) => item.id).filter((id): id is string => !!id)
   baoCunPaiXuMap(map)
@@ -530,6 +544,8 @@ onMounted(() => {
 
 defineExpose({
   fenLeiZu,
+  tuoZhuaiZhong,
+  onTuoZhuaiKaiShi,
   onTuoZhuaiJieShu,
   qieHuanXuanZe,
   qingKongXuanZe,
@@ -582,6 +598,11 @@ defineExpose({
 
 .zhanji-liebiao::-webkit-scrollbar-thumb:hover {
   background: var(--gundong-tiao-hover);
+}
+
+.zhanji-liebiao.tuo-zhuai-zhong {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .jiazai-zhuangtai,
@@ -1025,10 +1046,15 @@ defineExpose({
 
 .zhanji-kapian.sortable-ghost {
   visibility: hidden;
+  /* Req1：拖拽预览空位同样禁止选中文字 */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .zhanji-kapian.sortable-chosen {
   cursor: grabbing;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .zhanji-kapian.sortable-drag {
@@ -1040,6 +1066,9 @@ defineExpose({
   opacity: 1 !important;
   cursor: grabbing !important;
   border-radius: 16px;
+  /* Req1：跟随光标的拖拽副本（force-fallback）禁止选中文字 */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 @keyframes jianbian-liudong {

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onScopeDispose } from 'vue'
 import { io, Socket } from 'socket.io-client'
 import type { 消息, 角色 } from '@/types'
 import { 令牌键 } from '@/constants/auth'
@@ -17,7 +17,56 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   const xiaoXiLieBiao = ref<消息[]>([])
   const aiZhuangTai = ref<'kong_xian' | 'deng_dai_zhong' | 'zheng_zai_shu_ru'>('kong_xian')
   let zuiHouXuHao = 0
-  const zhengZaiShuRu = computed(() => aiZhuangTai.value === 'zheng_zai_shu_ru')
+  // 「正在输入」显示态延迟消失的时长（毫秒），仅在此一处定义，禁止散落硬编码
+  const ZHENG_ZAI_SHU_RU_XIAO_SHI_YAN_CHI_HAO_MIAO = 1000
+
+  // 显示层状态：组件消费的是这个，而非真实状态 aiZhuangTai，从而支持延迟消失
+  const xianShiZhengZaiShuRu = ref(false)
+  let yanChiDingShiQi: ReturnType<typeof setTimeout> | null = null
+  let huLueJianTing = false
+
+  function qingLiYanChiDingShiQi() {
+    if (yanChiDingShiQi !== null) {
+      clearTimeout(yanChiDingShiQi)
+      yanChiDingShiQi = null
+    }
+  }
+
+  // 强制立即隐藏「正在输入」显示态（断线/切会话/清空等重置场景），不走延迟
+  function qiangZhiYinChangXianShi() {
+    qingLiYanChiDingShiQi()
+    huLueJianTing = true
+    aiZhuangTai.value = 'kong_xian'
+    huLueJianTing = false
+    xianShiZhengZaiShuRu.value = false
+  }
+
+  // 监听真实状态：从「正在输入」变「非正在输入」时延迟消失；变「正在输入」时立即显示并取消挂起的隐藏定时器
+  watch(
+    aiZhuangTai,
+    (xinZhuangTai, jiuZhuangTai) => {
+      if (huLueJianTing) return
+      const xinZaiShuRu = xinZhuangTai === 'zheng_zai_shu_ru'
+      const jiuZaiShuRu = jiuZhuangTai === 'zheng_zai_shu_ru'
+      if (xinZaiShuRu) {
+        qingLiYanChiDingShiQi()
+        xianShiZhengZaiShuRu.value = true
+      } else if (jiuZaiShuRu) {
+        qingLiYanChiDingShiQi()
+        yanChiDingShiQi = setTimeout(() => {
+          xianShiZhengZaiShuRu.value = false
+          yanChiDingShiQi = null
+        }, ZHENG_ZAI_SHU_RU_XIAO_SHI_YAN_CHI_HAO_MIAO)
+      }
+    },
+    { flush: 'sync' },
+  )
+
+  onScopeDispose(() => {
+    qingLiYanChiDingShiQi()
+  })
+
+  const zhengZaiShuRu = computed(() => xianShiZhengZaiShuRu.value)
   const jiaoSeXinXi = ref<角色 | null>(null)
   const socketLianJie = ref<Socket | null>(null)
   const lianJieZhong = ref(false)
@@ -177,7 +226,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
 
     socket.on('disconnect', () => {
       lianJieZhong.value = false
-      aiZhuangTai.value = 'kong_xian'
+      qiangZhiYinChangXianShi()
       zuiHouXuHao = 0
     })
 
@@ -219,7 +268,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   async function jiaZaiXiaoXi(huiHuaId: string) {
     dangQianHuiHuaId.value = huiHuaId
     xiaoXiLieBiao.value = []
-    aiZhuangTai.value = 'kong_xian'
+    qiangZhiYinChangXianShi()
     zuiHouXuHao = 0
     yiDuBuHuiZhuangTai.value = false
     youXiYiJieShu.value = false
@@ -340,7 +389,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   function qingKongZhuangTai() {
     dangQianHuiHuaId.value = null
     xiaoXiLieBiao.value = []
-    aiZhuangTai.value = 'kong_xian'
+    qiangZhiYinChangXianShi()
     zuiHouXuHao = 0
     jiaoSeXinXi.value = null
     youXiShiJian.value = null

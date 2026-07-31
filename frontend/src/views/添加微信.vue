@@ -3,22 +3,22 @@
     <div class="tianjia-kaPian">
       <div class="touxiang-wrap">
         <img
-          v-if="shiTuPianDiZhi(jiaoSeXinXi?.tou_xiang)"
-          :src="jiaoSeXinXi?.tou_xiang"
+          v-if="shiTuPianDiZhi(仓库.jiaoSeXinXi?.tou_xiang)"
+          :src="仓库.jiaoSeXinXi?.tou_xiang"
           class="jiaoSe-touxiang"
           alt=""
         />
         <span v-else class="jiaoSe-touxiang-more">{{
-          jiaoSeXinXi?.tou_xiang || moRenTouXiang
+          仓库.jiaoSeXinXi?.tou_xiang || moRenTouXiang
         }}</span>
       </div>
       <h2 class="weiXin-mingCheng">{{ weiXinMingCheng }}</h2>
       <div class="jinDu-tiao">
-        <div class="jinDu-wanCheng" :style="{ width: jinDu + '%' }" />
+        <div class="jinDu-wanCheng" :style="{ width: 仓库.jinDu + '%' }" />
       </div>
-      <p class="tianjia-tiShi">{{ dangQianBuZhouWenAn }}</p>
-      <p v-if="cuoWuXinXi" class="tianjia-cuowu">{{ cuoWuXinXi }}</p>
-      <button v-if="cuoWuXinXi" class="tianjia-fan-hui" @click="fanHui">
+      <p class="tianjia-tiShi">{{ 仓库.dangQianWenAn }}</p>
+      <p v-if="仓库.cuoWuXinXi" class="tianjia-cuowu">{{ 仓库.cuoWuXinXi }}</p>
+      <button v-if="仓库.cuoWuXinXi" class="tianjia-fan-hui" @click="fanHui">
         {{ huoQuFanYi('tianJiaWeiXin', 'fanHui') }}
       </button>
     </div>
@@ -26,128 +26,68 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { chuangJianHuiHua, queRenJiaoSe, shengChengJiaoSe } from '@/api/聊天'
+import { 使用角色生成仓库 } from '@/stores/角色生成'
 import { huoQuFanYi } from '@/config/translations'
 import { shiTuPianDiZhi } from '@/utils/头像'
-import type { ShengChengJiaoSeJieGuo } from '@/types'
+import type { 生成流程资料 } from '@/stores/角色生成'
 
 const router = useRouter()
+const 仓库 = 使用角色生成仓库()
 
-const jiaoSeXinXi = ref<ShengChengJiaoSeJieGuo | null>(null)
-const dangQianBuZhouWenAn = ref('')
-const jinDu = ref(0)
-const cuoWuXinXi = ref('')
-
-let buZhouDingShiQi: ReturnType<typeof setInterval> | null = null
-
-const 步骤文案键 = [
-  'zhengZaiDaKaiShouJi',
-  'zhengZaiTaoLunShuiSaoShui',
-  'zhengZaiKuoQuan',
-  'zhengZaiShengChengRenShe',
-  'zhengZaiShengChengKaiChangBai',
-] as const
-
-const 步骤进度 = [20, 40, 60, 80, 100]
-
-const weiXinMingCheng = computed(() => {
-  return jiaoSeXinXi.value?.wei_xin_ming || jiaoSeXinXi.value?.ming_zi || ''
-})
-
-const moRenTouXiang = computed(() => {
-  return jiaoSeXinXi.value?.xing_bie === 'nv' ? '👩' : '👨'
-})
-
-function qingChuDingShiQi() {
-  if (buZhouDingShiQi) {
-    clearInterval(buZhouDingShiQi)
-    buZhouDingShiQi = null
-  }
-}
-
-function gengXinBuZhou(suoYin: number) {
-  dangQianBuZhouWenAn.value = huoQuFanYi('tianJiaWeiXin', 步骤文案键[suoYin])
-  jinDu.value = 步骤进度[suoYin]
-}
-
-interface LinShiZiLiao {
-  xingBie?: string | null
-  muBiaoXingBie?: string | null
-  xingGeXuanZe?: string | null
-  yunXuZhaNanZhaNv?: boolean
-  随机性格标记?: boolean
-}
+const weiXinMingCheng = computed(
+  () => 仓库.jiaoSeXinXi?.wei_xin_ming || 仓库.jiaoSeXinXi?.ming_zi || '',
+)
+const moRenTouXiang = computed(() => (仓库.jiaoSeXinXi?.xing_bie === 'nv' ? '👩' : '👨'))
 
 function fanHui() {
+  // 返回资料设置；生成流程托管在 store，仍在后台继续跑，不会中断
   router.push({ name: 'ziLiaoSheZhi' })
 }
 
-async function zhiXingShengChengLiuCheng(ziLiao: LinShiZiLiao) {
-  let suoYin = 0
-  gengXinBuZhou(suoYin) // 正在打开手机… 20%
-
-  // 前置趣味文案随真实等待推进（打开手机 → 讨论谁扫谁 → 扩圈），封顶 60%，
-  // 真实“生成人设”请求发出后由真实响应接管，避免纯假进度
-  buZhouDingShiQi = setInterval(() => {
-    if (suoYin < 2) {
-      suoYin++
-      gengXinBuZhou(suoYin)
+// 完成时导航裁决：仅当用户仍停留在加载页（zaiJiaZaiYe 为真）才跳转聊天页；
+// 若已离开，则保持静默、不去打扰，会话自然进入「过往战绩」的“进行中”分组。
+watch(
+  () => 仓库.zhuangTai,
+  (zhuangTai) => {
+    if (zhuangTai === 'yi_wan_cheng' && 仓库.huiHuaId && 仓库.zaiJiaZaiYe) {
+      router.replace(`/chat/${仓库.huiHuaId}`)
     }
-  }, 800)
-
-  try {
-    const jiaoSe = await shengChengJiaoSe(
-      ziLiao.muBiaoXingBie || 'female',
-      ziLiao.xingGeXuanZe || 'INFP',
-      ziLiao.yunXuZhaNanZhaNv ?? false,
-      ziLiao.随机性格标记 ?? false,
-      ziLiao.xingBie || undefined,
-    )
-    jiaoSeXinXi.value = jiaoSe
-    qingChuDingShiQi()
-
-    suoYin = 3
-    gengXinBuZhou(suoYin) // 正在生成人设… 80%
-    const queRenHouJiaoSe = await queRenJiaoSe(jiaoSe)
-    const jiaoSeId = queRenHouJiaoSe.id || queRenHouJiaoSe.jiao_se_id || ''
-    if (!jiaoSeId) throw new Error('缺少角色ID')
-
-    // 真实末阶段：收到完成信号立即进入完成态（禁止继续演动画）
-    suoYin = 4
-    gengXinBuZhou(suoYin) // 正在生成开场白… 100%
-    const huiHua = await chuangJianHuiHua(jiaoSeId)
-    router.replace(`/chat/${huiHua.id}`)
-  } catch (cuoWu) {
-    qingChuDingShiQi()
-    console.error('生成角色失败', cuoWu)
-    cuoWuXinXi.value = huoQuFanYi('tianJiaWeiXin', 'shengChengShiBai')
-  }
-}
+  },
+)
 
 onMounted(() => {
   // 资料由资料设置向导通过 sessionStorage 透传（尚未生成角色，无 jiaoSeId）
   const linShi = sessionStorage.getItem('ziLiaoSheZhiLinShi')
-  sessionStorage.removeItem('ziLiaoSheZhiLinShi')
-  if (!linShi) {
+  if (linShi) {
+    sessionStorage.removeItem('ziLiaoSheZhiLinShi')
+    let ziLiao: 生成流程资料
+    try {
+      ziLiao = JSON.parse(linShi) as 生成流程资料
+    } catch {
+      router.replace('/')
+      return
+    }
+    // 标记加载页活跃，发起（或接管）后台生成流程
+    仓库.zhuCeJiaZaiYe()
+    仓库.kaiShiLiuCheng(ziLiao)
+  } else if (仓库.zhuangTai === 'jin_xing_zhong' || 仓库.zhuangTai === 'yi_wan_cheng') {
+    // 无透传资料但后台流程进行中/已完成：重入加载页，接管进度并重新标记活跃
+    仓库.zhuCeJiaZaiYe()
+    // 若已完成且持有会话，立即跳转聊天页（照旧跳转聊天页面）
+    if (仓库.zhuangTai === 'yi_wan_cheng' && 仓库.huiHuaId) {
+      router.replace(`/chat/${仓库.huiHuaId}`)
+    }
+  } else {
+    // 无待处理资料且未在后台跑流程 → 回主页
     router.replace('/')
-    return
   }
-
-  let ziLiao: LinShiZiLiao
-  try {
-    ziLiao = JSON.parse(linShi) as LinShiZiLiao
-  } catch {
-    router.replace('/')
-    return
-  }
-
-  zhiXingShengChengLiuCheng(ziLiao)
 })
 
 onBeforeUnmount(() => {
-  qingChuDingShiQi()
+  // 离开加载页：仅注销活跃标记，绝不取消后台流程（离开≠取消）
+  仓库.xiaoZhuJiaZaiYe()
 })
 </script>
 

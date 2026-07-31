@@ -812,4 +812,61 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(guoWangZhanJiYuanMa).toMatch(/\.gouxuan-anniu--bufen::after\s*\{[^}]*height:\s*2px/)
     })
   })
+
+  describe('拖拽不选中文字（Req1）', () => {
+    it('拖拽开始时为列表容器添加抑制文本选择的 tuo-zhuai-zhong 类', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const { wrapper } = await mountZuJian()
+      const lieBiao = wrapper.find('.zhanji-liebiao')
+      expect(lieBiao.exists()).toBe(true)
+      expect(lieBiao.classes()).not.toContain('tuo-zhuai-zhong')
+      ;(wrapper.vm as unknown as { onTuoZhuaiKaiShi: () => void }).onTuoZhuaiKaiShi()
+      await flushPromises()
+
+      expect(wrapper.find('.zhanji-liebiao').classes()).toContain('tuo-zhuai-zhong')
+    })
+
+    it('拖拽结束后移除 tuo-zhuai-zhong 类并清空已产生的文本选区', async () => {
+      const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+      vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(chuangJianDangAnLieBiao())
+
+      const removeAllRanges = vi.fn()
+      vi.stubGlobal(
+        'getSelection',
+        () => ({ removeAllRanges, toString: () => '被误选中的文字' }) as unknown as Selection,
+      )
+
+      const { wrapper } = await mountZuJian()
+      ;(wrapper.vm as unknown as { onTuoZhuaiKaiShi: () => void }).onTuoZhuaiKaiShi()
+      await flushPromises()
+      expect(wrapper.find('.zhanji-liebiao').classes()).toContain('tuo-zhuai-zhong')
+      ;(wrapper.vm as unknown as { onTuoZhuaiJieShu: (z: string) => void }).onTuoZhuaiJieShu(
+        'shengli',
+      )
+      await flushPromises()
+
+      expect(wrapper.find('.zhanji-liebiao').classes()).not.toContain('tuo-zhuai-zhong')
+      expect(removeAllRanges).toHaveBeenCalledTimes(1)
+    })
+
+    it('源码声明 .zhanji-liebiao.tuo-zhuai-zhong 同时设置 user-select:none 与 -webkit-user-select', () => {
+      expect(guoWangZhanJiYuanMa).toMatch(
+        /\.zhanji-liebiao\.tuo-zhuai-zhong\s*\{[^}]*user-select:\s*none/,
+      )
+      expect(guoWangZhanJiYuanMa).toMatch(
+        /\.zhanji-liebiao\.tuo-zhuai-zhong\s*\{[^}]*-webkit-user-select:\s*none/,
+      )
+    })
+  })
+
+  describe('Req1 卡片本体与拖拽副本禁止选中文字', () => {
+    it('拖拽 ghost 预览空位与跟随光标的 drag 副本同样携带 user-select:none', () => {
+      // force-fallback 拖拽副本（.sortable-drag）与预览空位（.sortable-ghost/.sortable-chosen）
+      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-ghost\s*\{[^}]*user-select:\s*none/)
+      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-chosen\s*\{[^}]*user-select:\s*none/)
+      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-drag\s*\{[^}]*user-select:\s*none/)
+    })
+  })
 })

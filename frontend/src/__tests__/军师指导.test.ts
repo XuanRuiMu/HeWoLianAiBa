@@ -199,6 +199,11 @@ describe('FP-03 军师指导面板单级菜单化', () => {
   describe('军师列表展示', () => {
     it('默认每个未指导军师显示请求指导按钮', async () => {
       vi.mocked(huoQuJunShiJiLu).mockResolvedValue([])
+      vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+        zhuangTai: null,
+        keZaiCiZhiDao: true,
+        youLiaoTianJiLu: true,
+      })
 
       const { wrapper } = await mountJunShiZhiDao()
 
@@ -248,6 +253,11 @@ describe('FP-03 军师指导面板单级菜单化', () => {
   describe('请求指导交互', () => {
     beforeEach(() => {
       vi.mocked(huoQuJunShiJiLu).mockResolvedValue([])
+      vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+        zhuangTai: null,
+        keZaiCiZhiDao: true,
+        youLiaoTianJiLu: true,
+      })
     })
 
     it('点击请求后调用API并展示结果', async () => {
@@ -504,6 +514,11 @@ describe('FP-03 军师指导面板单级菜单化', () => {
   describe('轮询与状态持久化', () => {
     beforeEach(() => {
       vi.mocked(huoQuJunShiJiLu).mockResolvedValue([])
+      vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+        zhuangTai: null,
+        keZaiCiZhiDao: true,
+        youLiaoTianJiLu: true,
+      })
     })
 
     it('初始进入指导中状态时启动轮询，轮询完成后显示结果', async () => {
@@ -907,6 +922,34 @@ describe('FP-02 军师指导"已指导过相同聊天内容"按规则提示', ()
     expect(tiShi.text()).toBe(huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong'))
   })
 
+  it('已指导过提示显示时，无记录的军师「请求指导」按钮被禁用', async () => {
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuangTai: null,
+      keZaiCiZhiDao: false,
+      youLiaoTianJiLu: true,
+    })
+    vi.mocked(qingQiuJunShiZhiDao).mockResolvedValue({
+      junShi: chuangJianMoNiJunShiLieBiao()[2],
+      zhiDaoNeiRong: '测试军师2的建议。',
+      shiJian: '2026-07-07T10:00:00.000Z',
+    })
+
+    const { wrapper } = await mountJunShiZhiDao()
+
+    // 恒定提示已显示
+    const tiShi = wrapper.find('.yi-zhidao-tishi')
+    expect(tiShi.exists()).toBe(true)
+    expect(tiShi.text()).toBe(huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong'))
+
+    // 无记录的军师（测试军师2）显示「请求指导」按钮，且因 yiZhiDaoXiangTongNeiRong 而禁用，
+    // 提示显示时点击不会再弹出相同提示
+    const ceShiJunShi2Kapian = huoQuJunShiKapianByJunShiId(wrapper, 'ceShiJunShi2')
+    const anNiu = ceShiJunShi2Kapian?.find('.qingqiu-anniu')
+    expect(anNiu?.exists()).toBe(true)
+    expect(anNiu?.text()).toBe(huoQuFanYi('junShi', 'junShiQingQiuZhiDao'))
+    expect(anNiu?.attributes('disabled')).toBeDefined()
+  })
+
   it('加载中时不显示提示', async () => {
     vi.mocked(huoQuJunShiLieBiao).mockImplementation(() => new Promise(() => []))
 
@@ -921,5 +964,86 @@ describe('FP-02 军师指导"已指导过相同聊天内容"按规则提示', ()
 
     expect(wrapper.find('.yi-zhidao-tishi').exists()).toBe(false)
     expect(wrapper.find('.wu-liao-tian-tishi').exists()).toBe(false)
+  })
+})
+
+describe('Req3 提示显示期间按钮禁用与状态流转', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(huoQuJunShiLieBiao).mockResolvedValue(chuangJianMoNiJunShiLieBiao())
+    vi.mocked(huoQuJunShiJiLu).mockResolvedValue([])
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuangTai: null,
+      keZaiCiZhiDao: false,
+      youLiaoTianJiLu: true,
+    })
+    vi.mocked(qingQiuJunShiZhiDao).mockReset()
+  })
+
+  afterEach(() => {
+    vi.clearAllTimers()
+    vi.useRealTimers()
+  })
+
+  it('keZaiCiZhiDao为false时请求指导按钮禁用且提示显示', async () => {
+    const { wrapper } = await mountJunShiZhiDao()
+
+    const tiShi = wrapper.find('.yi-zhidao-tishi')
+    expect(tiShi.exists()).toBe(true)
+    expect(tiShi.text()).toBe(huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong'))
+
+    const anNiuList = wrapper.findAll('.qingqiu-anniu')
+    expect(anNiuList.length).toBe(3)
+    for (const anNiu of anNiuList) {
+      expect(anNiu.attributes('disabled')).toBeDefined()
+    }
+  })
+
+  it('提示显示时点击按钮无副作用（不调用接口、不弹新提示）', async () => {
+    const { wrapper } = await mountJunShiZhiDao()
+
+    const anNiu = wrapper.find('.qingqiu-anniu')
+    expect(anNiu.attributes('disabled')).toBeDefined()
+
+    await anNiu.trigger('click')
+    await flushPromises()
+
+    expect(qingQiuJunShiZhiDao).not.toHaveBeenCalled()
+    expect(wrapper.find('.cuowu-tishi').exists()).toBe(false)
+    expect(wrapper.find('.yi-zhidao-tishi').exists()).toBe(true)
+  })
+
+  it('keZaiCiZhiDao重新为true（用户发新消息后）按钮恢复可点', async () => {
+    const { wrapper } = await mountJunShiZhiDao()
+    expect(wrapper.find('.yi-zhidao-tishi').exists()).toBe(true)
+    expect(wrapper.find('.qingqiu-anniu').attributes('disabled')).toBeDefined()
+
+    // 模拟用户发送新消息后重新打开面板：服务器返回 keZaiCiZhiDao true
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuangTai: null,
+      keZaiCiZhiDao: true,
+      youLiaoTianJiLu: true,
+    })
+    const { wrapper: wrapper2 } = await mountJunShiZhiDao()
+
+    expect(wrapper2.find('.yi-zhidao-tishi').exists()).toBe(false)
+    expect(wrapper2.find('.qingqiu-anniu').attributes('disabled')).toBeUndefined()
+  })
+
+  it('切换会话后重新查询使按钮可用性随新会话流转', async () => {
+    const { wrapper } = await mountJunShiZhiDao('j1')
+    expect(wrapper.find('.qingqiu-anniu').attributes('disabled')).toBeDefined()
+
+    // 切换到另一会话，服务器返回可再次指导
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuangTai: null,
+      keZaiCiZhiDao: true,
+      youLiaoTianJiLu: true,
+    })
+    await wrapper.setProps({ jiaoSeId: 'j2' })
+    await flushPromises()
+
+    expect(wrapper.find('.yi-zhidao-tishi').exists()).toBe(false)
+    expect(wrapper.find('.qingqiu-anniu').attributes('disabled')).toBeUndefined()
   })
 })

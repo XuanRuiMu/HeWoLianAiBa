@@ -13,7 +13,7 @@
         </button>
         <button
           class="zhuye-anniu"
-          :class="{ yincang: !xianShiZhuYe, zhong_xin: route.name === 'zhuJieMian' }"
+          :class="{ yincang: !xianShiZhuYe }"
           :aria-hidden="!xianShiZhuYe"
           :title="huoQuFanYi('caidan', 'zhuYe')"
           :aria-label="huoQuFanYi('caidan', 'zhuYe')"
@@ -309,9 +309,11 @@ const xianShiFanHui = computed(() => {
 })
 
 const xianShiZhuYe = computed(() => {
-  // 主页路由下“主页”按钮需显示并绝对居中（FP-19 规则3），其余路由沿用返回按钮显隐逻辑
-  if (route.name === 'zhuJieMian') return true
-  return xianShiFanHui.value
+  // 主页路由下“主页”按钮功能冗余（与居中页面标题重复），需隐藏；但为保持左槽宽度、避免
+  // 右侧“个人资料”等元素因左槽塌缩而挤位，仅以 visibility:hidden 占位保留在 DOM 流中。
+  // 登录/注册页同样隐藏（沿用原逻辑）。其余路由正常显示该按钮。
+  const yinCangLuYou = ['zhuJieMian', 'dengLu', 'zhuCe']
+  return !yinCangLuYou.includes(route.name as string)
 })
 
 const shiLiaoTianYe = computed(() => route.name === 'liaoTian')
@@ -591,9 +593,9 @@ watch(
   max-width: 1200px;
   margin: 0 auto;
   height: 100%;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   padding: 0 20px;
 }
@@ -603,13 +605,12 @@ watch(
 .caidan-you {
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 .caidan-zuo {
-  flex: 1 1 0;
   justify-content: flex-start;
   gap: 8px;
-  min-width: 0;
 }
 
 .fanhui-anniu {
@@ -668,12 +669,6 @@ watch(
   pointer-events: none;
 }
 
-.zhuye-anniu.zhong_xin {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
 .zhuye-anniu:hover {
   background: var(--daohanglan-zhongbeijing);
 }
@@ -688,14 +683,12 @@ watch(
 }
 
 .caidan-zhong {
-  flex: 0 0 auto;
   justify-content: center;
   gap: 10px;
   min-width: 0;
 }
 
 .caidan-you {
-  flex: 1 1 0;
   justify-content: flex-end;
   gap: 8px;
   min-width: 0;

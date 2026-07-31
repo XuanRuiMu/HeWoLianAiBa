@@ -267,11 +267,23 @@ describe('FP-18 主题与UI', () => {
       expect(fanHui.text()).toContain(huoQuFanYi('caidan', 'fanHui'))
     })
 
-    it('主页显示主页按钮且水平居中', async () => {
+    it('Req4 主页隐藏主页按钮（仅保留占位，避免重复“主页”标题）', async () => {
       const { wrapper } = await mountCaiDan({ luJing: '/' })
       const zhuYe = wrapper.find('.zhuye-anniu')
-      expect(zhuYe.classes()).not.toContain('yincang')
-      expect(zhuYe.classes()).toContain('zhong_xin')
+      // 主页按钮作为占位保留在 DOM（维持左槽宽度），但不可见；不再使用 zhong_xin 绝对居中
+      expect(zhuYe.exists()).toBe(true)
+      expect(zhuYe.classes()).toContain('yincang')
+      expect(zhuYe.classes()).not.toContain('zhong_xin')
+    })
+
+    it('Req4 主页中间仅显示居中的页面标题“主页”，无重复的返回主页按钮文本', async () => {
+      const { wrapper } = await mountCaiDan({ luJing: '/' })
+      const biaoTi = wrapper.find('.ye-mian-biao-ti')
+      expect(biaoTi.exists()).toBe(true)
+      expect(biaoTi.text()).toBe(huoQuFanYi('yeMianBiaoTi', 'zhuJieMian'))
+      // 顶栏中只应出现一次“主页”文本（居中标题），主页按钮为隐藏占位
+      const zhuYe = wrapper.find('.zhuye-anniu')
+      expect(zhuYe.classes()).toContain('yincang')
     })
 
     it('登录页不显示主页按钮', async () => {
@@ -579,11 +591,29 @@ describe('FP-18 主题与UI', () => {
       expect(appYuanMa).not.toMatch(/\.app-zhuti\s*\{[^}]*margin-top:/)
     })
 
-    it('顶部菜单栏左右两列等宽分配，标题真正居中无偏右', () => {
-      expect(caiDanYuanMa).toMatch(/\.caidan-zuo\s*\{[^}]*flex:\s*1\s+1\s+0/)
-      expect(caiDanYuanMa).toMatch(/\.caidan-you\s*\{[^}]*flex:\s*1\s+1\s+0/)
-      expect(caiDanYuanMa).toMatch(/\.caidan-zhong\s*\{[^}]*flex:\s*0\s+0\s+auto/)
+    it('Req4 顶部菜单栏采用固定三栏网格布局（左/中/右固定尺寸插槽），标题真正居中无偏右', () => {
+      expect(caiDanYuanMa).toMatch(/\.caidan-neirong\s*\{[^}]*display:\s*grid/)
+      expect(caiDanYuanMa).toMatch(
+        /\.caidan-neirong\s*\{[^}]*grid-template-columns:\s*1fr\s+1fr\s+1fr/,
+      )
       expect(caiDanYuanMa).toMatch(/\.caidan-zhong\s*\{[^}]*justify-content:\s*center/)
+    })
+
+    it('Req4 主页与非主页共享同一三栏结构，主页按钮作为占位保留在左槽', async () => {
+      const zhuYe = await mountCaiDan({ luJing: '/', dengLu: true })
+      const feiZhuYe = await mountCaiDan({ luJing: '/profile-setup', dengLu: true })
+      for (const w of [zhuYe.wrapper, feiZhuYe.wrapper]) {
+        expect(w.find('.caidan-zuo').exists()).toBe(true)
+        expect(w.find('.caidan-zhong').exists()).toBe(true)
+        expect(w.find('.caidan-you').exists()).toBe(true)
+        // 主页按钮占位始终存在（保持左槽宽度一致）
+        expect(w.find('.caidan-zuo .zhuye-anniu').exists()).toBe(true)
+        // 个人资料区（用户下拉）均在左槽，结构一致
+        expect(w.find('.caidan-zuo .yonghu-xuanxiang').exists()).toBe(true)
+      }
+      // 主页下主页按钮为隐藏占位；非主页下正常显示
+      expect(zhuYe.wrapper.find('.zhuye-anniu').classes()).toContain('yincang')
+      expect(feiZhuYe.wrapper.find('.zhuye-anniu').classes()).not.toContain('yincang')
     })
   })
 })

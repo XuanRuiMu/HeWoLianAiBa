@@ -15,6 +15,11 @@ import { 使用认证表单仓库 } from '@/stores/认证表单'
 import { huoQuFanYi } from '@/config/translations'
 import { XIAO_XI_PEI_ZHI } from '@/config/消息配置'
 import { faSongXiaoXi, huoQuXiaoXi, huoQuFuPan, shengChengJiaoSe, queRenJiaoSe } from '@/api/聊天'
+import router from '@/router'
+
+vi.mock('@/router', () => ({
+  default: { push: vi.fn().mockResolvedValue(true) },
+}))
 
 vi.mock('@/api/聊天', () => ({
   huoQuXiaoXi: vi.fn().mockResolvedValue({ lie_biao: [], zong_shu: 0 }),
@@ -391,12 +396,16 @@ describe('FP-05 聊天界面', () => {
       expect(wrapper.find('.tianjia-tiShi').exists()).toBe(true)
     })
 
-    it('生成完成后自动进入聊天界面', async () => {
+    it('生成完成后停留在加载页则直接跳转聊天页（照旧跳转聊天页面）', async () => {
       const { luYou } = await mountTianJiaWeiXin()
       await flushPromises()
 
-      // 真实生成流程（含创建会话）完成立即跳转聊天界面
+      // 真实生成流程（含创建会话）在后台跑完，且用户仍停留在加载页 → 跳转聊天页
       expect(luYou.currentRoute.value.path).toBe('/chat/h1')
+      // store 不再自行跳转「过往战绩」，导航由加载页组件裁决，避免离开时打扰
+      expect(vi.mocked(router.push)).not.toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'guoWangZhanJi' }),
+      )
     })
 
     it('点击开始聊天后立即跳转加载页且透传资料（不等待网络）', async () => {
@@ -480,7 +489,11 @@ describe('FP-05 聊天界面', () => {
         huoQuFanYi('tianJiaWeiXin', 'zhengZaiShengChengKaiChangBai'),
       )
       await flushPromises()
+      // 流程在后台跑完且仍停留在加载页 → 跳转聊天页
       expect(luYou.currentRoute.value.path).toBe('/chat/h1')
+      expect(vi.mocked(router.push)).not.toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'guoWangZhanJi' }),
+      )
     })
 
     it('生成失败时显示错误信息并提供返回入口', async () => {
@@ -641,6 +654,65 @@ describe('FP-05 聊天界面', () => {
     })
   })
 
+  describe('管理员调试指令（greedisgood）', () => {
+    it('源码触发指令已由 --console 改为 greedisgood（零硬编码，使用命名常量）', () => {
+      // 不再出现旧指令 --console
+      expect(liaoTianYeMianYuanMa).not.toContain("'--console'")
+      // 提取为命名常量，单一来源、零硬编码
+      expect(liaoTianYeMianYuanMa).toMatch(/const\s+管理员调试指令\s*=\s*['"]greedisgood['"]/)
+      // 触发逻辑引用该常量而非裸字符串
+      expect(liaoTianYeMianYuanMa).toMatch(/neiRong\s*===\s*管理员调试指令/)
+    })
+
+    it('输入 greedisgood 时清空输入框且不发送消息', async () => {
+      const { wrapper } = await mountLiaoTianYeMian()
+      const shuRuKuang = wrapper.find('.shuru-kuang')
+      await shuRuKuang.setValue('greedisgood')
+      await flushPromises()
+
+      await wrapper.find('.fasong-anniu').trigger('click')
+      await flushPromises()
+
+      expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('')
+      expect(faSongXiaoXi).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('表情面板外部点击收起（捕获阶段）', () => {
+    it('文档级 click 监听以捕获阶段注册，确保点击顶栏(@click.stop)等也能收起面板', () => {
+      expect(liaoTianYeMianYuanMa).toMatch(
+        /document\.addEventListener\('click',\s*chuLiWenDangDianJi,\s*true\)/,
+      )
+      expect(liaoTianYeMianYuanMa).toMatch(
+        /document\.removeEventListener\('click',\s*chuLiWenDangDianJi,\s*true\)/,
+      )
+    })
+
+    it('展开表情面板后，点击消息区等外部区域会收起面板', async () => {
+      const { wrapper } = await mountLiaoTianYeMian()
+      await wrapper.find('.emoji-anniu').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.emoji-mianban').exists()).toBe(true)
+
+      // 模拟点击页面其它区域（消息区），应触发文档捕获监听收起面板
+      const xiaoxiQuyu = wrapper.find('.xiaoxi-quyu').element
+      xiaoxiQuyu.dispatchEvent(new Event('click', { bubbles: true }))
+      await flushPromises()
+      expect(wrapper.find('.emoji-mianban').exists()).toBe(false)
+    })
+  })
+
+  describe('发送状态转圈尺寸', () => {
+    it('发送中转圈直径约等于一行气泡高度，使用 em 而非硬编码 px', () => {
+      expect(liaoTianYeMianYuanMa).toMatch(/\.fasong-zhuangtai-zhuanquan\s*\{[^}]*width:\s*1\.4em/)
+      expect(liaoTianYeMianYuanMa).toMatch(/\.fasong-zhuangtai-zhuanquan\s*\{[^}]*height:\s*1\.4em/)
+      // 边框也用 em，整体不使用固定 px
+      expect(liaoTianYeMianYuanMa).toMatch(
+        /\.fasong-zhuangtai-zhuanquan\s*\{[^}]*border:\s*0\.16em/,
+      )
+    })
+  })
+
   describe('翻译文件化', () => {
     it('发送按钮文本来自翻译文件', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
@@ -665,24 +737,32 @@ describe('FP-05 聊天界面', () => {
       expect(caiDan.text()).toContain(huoQuFanYi('liaoTian', 'duiFangZhengZaiShuRu'))
     })
 
-    it('聊天页面消息区域存在纵向滚动条样式', () => {
+    it('聊天页面消息区域存在清晰可见的纵向滚动条样式', () => {
       expect(liaoTianYeMianYuanMa).toMatch(/\.xiaoxi-quyu\s*\{[^}]*overflow-y:\s*auto/)
+      // 不声明标准 scrollbar-width / scrollbar-color，否则会覆盖下方 WebKit 自定义样式
+      expect(liaoTianYeMianYuanMa).not.toMatch(/\.xiaoxi-quyu\s*\{[^}]*scrollbar-width:/)
+      expect(liaoTianYeMianYuanMa).not.toMatch(/\.xiaoxi-quyu\s*\{[^}]*scrollbar-color:/)
       expect(liaoTianYeMianYuanMa).toMatch(
         /\.xiaoxi-quyu::-webkit-scrollbar\s*\{[^}]*width:\s*\d+px/,
       )
+      // 使用独立可见色变量，避免沿用近乎不可见的 --gundong-tiao-beijing
       expect(liaoTianYeMianYuanMa).toMatch(
-        /\.xiaoxi-quyu::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*var\(--gundong-tiao-beijing\)/,
+        /\.xiaoxi-quyu::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*var\(--liaotian-gundong-tiao\)/,
       )
       expect(liaoTianYeMianYuanMa).toMatch(/\.xiaoxi-quyu::-webkit-scrollbar-thumb:hover/)
     })
 
-    it('emoji面板存在统一滚动条样式', () => {
+    it('emoji面板存在统一且清晰的滚动条样式（仅 WebKit 伪类，可见色变量）', () => {
       expect(liaoTianYeMianYuanMa).toMatch(/\.emoji-mianban\s*\{[^}]*overflow-y:\s*auto/)
+      // 不声明标准 scrollbar-width / scrollbar-color，否则会覆盖下方 ::-webkit-scrollbar 自定义样式
+      expect(liaoTianYeMianYuanMa).not.toMatch(/\.emoji-mianban\s*\{[^}]*scrollbar-width:/)
+      expect(liaoTianYeMianYuanMa).not.toMatch(/\.emoji-mianban\s*\{[^}]*scrollbar-color:/)
       expect(liaoTianYeMianYuanMa).toMatch(
         /\.emoji-mianban::-webkit-scrollbar\s*\{[^}]*width:\s*\d+px/,
       )
+      // 使用独立可见色变量，避免沿用近乎不可见的 --gundong-tiao-beijing
       expect(liaoTianYeMianYuanMa).toMatch(
-        /\.emoji-mianban::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*var\(--gundong-tiao-beijing\)/,
+        /\.emoji-mianban::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*var\(--emoji-mianban-gundong-tiao\)/,
       )
       expect(liaoTianYeMianYuanMa).toMatch(/\.emoji-mianban::-webkit-scrollbar-thumb:hover/)
     })
@@ -720,23 +800,23 @@ describe('FP-05 聊天界面', () => {
       expect(xiaoxiQuyu.scrollTop).toBe(1000)
     })
 
-    it('emoji面板展开时消息区域底部内边距使用CSS变量保证面板高度一致', async () => {
+    it('emoji面板展开时不为消息区域额外增加底部内边距（由 grid 布局处理间距，消除空白）', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
       const xiaoXiQuYu = wrapper.find('.xiaoxi-quyu')
 
-      expect(xiaoXiQuYu.classes()).not.toContain('emoji-mianban-zhankai')
-      expect(liaoTianYeMianYuanMa).toMatch(/--emoji-mianban-bu-ju-gao-du:\s*220px/)
-      expect(liaoTianYeMianYuanMa).toMatch(
-        /\.xiaoxi-quyu\.emoji-mianban-zhankai\s*\{[^}]*padding-bottom:\s*var\(--emoji-mianban-bu-ju-gao-du\)/,
+      // 已彻底移除：类绑定、补偿变量、补偿样式
+      expect(liaoTianYeMianYuanMa).not.toMatch(/emoji-mianban-zhankai/)
+      expect(liaoTianYeMianYuanMa).not.toMatch(/--emoji-mianban-bu-ju-gao-du/)
+      expect(liaoTianYeMianYuanMa).not.toMatch(
+        /\.xiaoxi-quyu\.emoji-mianban-zhankai\s*\{[^}]*padding-bottom/,
       )
-      expect(liaoTianYeMianYuanMa).toMatch(
-        /\.xiaoxi-quyu\.emoji-mianban-zhankai\s*\{[^}]*scroll-padding-bottom:\s*var\(--emoji-mianban-bu-ju-gao-du\)/,
-      )
+      // 消息区仍保留基础底部内边距（最后一条消息不被输入栏遮挡）
+      expect(liaoTianYeMianYuanMa).toMatch(/\.xiaoxi-quyu\s*\{[^}]*padding-bottom:\s*\d+px/)
 
+      // 点击表情按钮后，面板正常展开（由 emojiMianBanZhanKai 驱动，而非 xiaoxi-quyu 类）
       await wrapper.find('.emoji-anniu').trigger('click')
       await flushPromises()
-
-      expect(wrapper.find('.xiaoxi-quyu').classes()).toContain('emoji-mianban-zhankai')
+      expect(wrapper.find('.emoji-mianban').exists()).toBe(true)
     })
 
     it('注册visualViewport的resize与scroll事件监听软键盘变化', () => {
@@ -793,7 +873,7 @@ describe('FP-05 聊天界面', () => {
       expect(liaoTianYeMianYuanMa).toMatch(/\.liaotian-yemian\s*\{[^}]*overflow:\s*hidden/)
     })
 
-    it('打开 emoji 面板时消息区域增加底部内边距，最后一条消息不被遮挡', async () => {
+    it('打开 emoji 面板时不再为消息区域增加底部内边距（消除空白，最后一条消息仍可见可达）', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
       const xiaoxiQuyu = wrapper.find('.xiaoxi-quyu')
       expect(xiaoxiQuyu.classes()).not.toContain('emoji-mianban-zhankai')
@@ -801,13 +881,15 @@ describe('FP-05 聊天界面', () => {
       await wrapper.find('.emoji-anniu').trigger('click')
       await flushPromises()
 
-      expect(wrapper.find('.xiaoxi-quyu').classes()).toContain('emoji-mianban-zhankai')
-      expect(liaoTianYeMianYuanMa).toMatch(
-        /\.xiaoxi-quyu\.emoji-mianban-zhankai\s*\{[^}]*padding-bottom:\s*var\(--emoji-mianban-bu-ju-gao-du\)/,
+      // 类绑定已移除，不再为 .xiaoxi-quyu 添加额外内边距类
+      expect(wrapper.find('.xiaoxi-quyu').classes()).not.toContain('emoji-mianban-zhankai')
+      // 旧补偿样式已彻底删除
+      expect(liaoTianYeMianYuanMa).not.toMatch(/--emoji-mianban-bu-ju-gao-du/)
+      expect(liaoTianYeMianYuanMa).not.toMatch(
+        /\.xiaoxi-quyu\.emoji-mianban-zhankai\s*\{[^}]*padding-bottom/,
       )
-      expect(liaoTianYeMianYuanMa).toMatch(
-        /\.xiaoxi-quyu\.emoji-mianban-zhankai\s*\{[^}]*scroll-padding-bottom:\s*var\(--emoji-mianban-bu-ju-gao-du\)/,
-      )
+      // 面板仍正常展开
+      expect(wrapper.find('.emoji-mianban').exists()).toBe(true)
     })
 
     it('监听 visualViewport scroll 与 resize 事件以响应软键盘变化', () => {
@@ -1154,16 +1236,22 @@ describe('FP-02b 输入框声明式高度与滚动条', () => {
     expect(shuRuKuang.attributes('style')).toContain('max-height: 38px')
   })
 
-  it('输入框仅依赖原生滚动条：overflow-y:auto + webkit 滚动条 6px/圆角 3px', () => {
+  it('输入框折叠态隐藏滚动条但保留滚轮、展开态出现可见滚动条', () => {
+    // 折叠态：overflow-y:auto，隐藏滚动条（scrollbar-width:none + webkit 宽 0、display:none），保留滚轮滚动
     expect(liaoTianYeMianYuanMa).toMatch(/\.shuru-kuang\s*\{[^}]*overflow-y:\s*auto/)
-    expect(liaoTianYeMianYuanMa).toMatch(/\.shuru-kuang\s*\{[^}]*scrollbar-width:\s*thin/)
+    expect(liaoTianYeMianYuanMa).toMatch(/\.shuru-kuang\s*\{[^}]*scrollbar-width:\s*none/)
     expect(liaoTianYeMianYuanMa).toMatch(/\.shuru-kuang\s*\{[^}]*padding:\s*6px\s*12px/)
-    expect(liaoTianYeMianYuanMa).toMatch(/\.shuru-kuang::-webkit-scrollbar\s*\{[^}]*width:\s*6px/)
+    expect(liaoTianYeMianYuanMa).toMatch(/\.shuru-kuang::-webkit-scrollbar\s*\{[^}]*width:\s*0/)
+    // 展开态（.zhan-kai）：出现可见滚动条
+    expect(liaoTianYeMianYuanMa).toMatch(/\.shuru-kuang\.zhan-kai\s*\{[^}]*scrollbar-width:\s*auto/)
     expect(liaoTianYeMianYuanMa).toMatch(
-      /\.shuru-kuang::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*var\(--gundong-tiao-beijing\)/,
+      /\.shuru-kuang\.zhan-kai::-webkit-scrollbar\s*\{[^}]*width:\s*6px/,
     )
     expect(liaoTianYeMianYuanMa).toMatch(
-      /\.shuru-kuang::-webkit-scrollbar-thumb\s*\{[^}]*border-radius:\s*3px/,
+      /\.shuru-kuang\.zhan-kai::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*var\(--shuru-kuang-gundong-tiao\)/,
+    )
+    expect(liaoTianYeMianYuanMa).toMatch(
+      /\.shuru-kuang\.zhan-kai::-webkit-scrollbar-thumb\s*\{[^}]*border-radius:\s*3px/,
     )
   })
 })

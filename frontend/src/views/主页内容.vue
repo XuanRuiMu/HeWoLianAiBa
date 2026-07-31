@@ -238,6 +238,7 @@ watch(
   display: inline-flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
   gap: 6px;
 }
 

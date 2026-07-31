@@ -1,125 +1,200 @@
 <template>
-  <div class="guanli-jiankong-zhezhao" @click.self="guanBi">
-    <div class="guanli-jiankong-mianban" role="dialog" aria-modal="true">
-      <header class="jiankong-biaoti-lan">
-        <div class="jiankong-biaoti">
-          <span class="jiankong-dian" />
-          {{ huoQuFanYi('guanLiJianKong', 'biaoTi') }}
-        </div>
-        <button class="jiankong-guanbi" type="button" @click="guanBi">
-          {{ huoQuFanYi('guanLiJianKong', 'guanBi') }}
-        </button>
-      </header>
-
-      <div class="jiankong-wangge">
-        <section class="jiankong-fenqu jiankong-goujian">
-          <h3 class="fenqu-biaoti">{{ huoQuFanYi('guanLiJianKong', 'gouJianSiLu') }}</h3>
-          <div class="fenqu-neirong">
-            <ul v-if="聊天仓库.gouJianGuoChengLieBiao.length" class="shijian-xian">
-              <li
-                v-for="(xiang, suoYin) in gouJianDaoXu"
-                :key="'gj-' + xiang.时间 + '-' + suoYin"
-                class="shijian-xian-xiang"
-              >
-                <span class="shijian-xian-dian" />
-                <div class="shijian-xian-zhuti">
-                  <div class="shijian-xian-jieduan">{{ xiang.阶段 }}</div>
-                  <div class="shijian-xian-shuoming">{{ xiang.说明 }}</div>
-                  <div class="shijian-xian-shijian">{{ geShiHuaShiJian(xiang.时间) }}</div>
-                </div>
-              </li>
-            </ul>
-            <div v-else class="fenqu-kong">{{ huoQuFanYi('guanLiJianKong', 'kongZhuangTai') }}</div>
-          </div>
-        </section>
-
-        <section class="jiankong-fenqu jiankong-haogandu">
-          <h3 class="fenqu-biaoti">{{ huoQuFanYi('guanLiJianKong', 'haoGanDuBianHua') }}</h3>
-          <div class="fenqu-neirong">
-            <div v-if="leiJiLieBiao.length" class="leiji-qu">
-              <span class="leiji-biaoqian">{{ huoQuFanYi('guanLiJianKong', 'leiJi') }}</span>
-              <span
-                v-for="ji in leiJiLieBiao"
-                :key="'lj-' + ji.jueSeId"
-                class="leiji-xiang"
-                :class="ji.zhi >= 0 ? 'zheng-xiang' : 'fu-xiang'"
-              >
-                {{ ji.jueSeId }}：{{ ji.zhi >= 0 ? '+' : '' }}{{ ji.zhi }}
-              </span>
-            </div>
-            <ul v-if="聊天仓库.haoGanDuBianHuaLieBiao.length" class="haogandu-liebiao">
-              <li
-                v-for="(xiang, suoYin) in haoGanDuDaoXu"
-                :key="'hg-' + xiang.时间 + '-' + suoYin"
-                class="haogandu-xiang"
-              >
-                <div class="haogandu-bianhua">
-                  <span
-                    v-for="([jueSeId, zhi], k) in bianHuaShuZu(xiang.变化)"
-                    :key="'bh-' + k"
-                    class="haogandu-shuzhi"
-                    :class="zhi >= 0 ? 'zheng-xiang' : 'fu-xiang'"
-                  >
-                    {{ jueSeId }} {{ zhi >= 0 ? '+' : '' }}{{ zhi }}
-                  </span>
-                </div>
-                <div class="haogandu-shijian">{{ geShiHuaShiJian(xiang.时间) }}</div>
-              </li>
-            </ul>
-            <div v-else class="fenqu-kong">{{ huoQuFanYi('guanLiJianKong', 'kongZhuangTai') }}</div>
-          </div>
-        </section>
-
-        <section class="jiankong-fenqu jiankong-yincang">
-          <h3 class="fenqu-biaoti">{{ huoQuFanYi('guanLiJianKong', 'yinCangXinXi') }}</h3>
-          <div class="fenqu-neirong">
-            <ul v-if="聊天仓库.yinCangXinXiLieBiao.length" class="yincang-liebiao">
-              <li
-                v-for="(xiang, suoYin) in yinCangDaoXu"
-                :key="'yc-' + xiang.时间 + '-' + suoYin"
-                class="yincang-xiang"
-              >
-                <span class="yincang-biaoqian">{{ xiang.类型 }}</span>
-                <span class="yincang-neirong">{{ xiang.内容 }}</span>
-                <span class="yincang-shijian">{{ geShiHuaShiJian(xiang.时间) }}</span>
-              </li>
-            </ul>
-            <div v-else class="fenqu-kong">{{ huoQuFanYi('guanLiJianKong', 'kongZhuangTai') }}</div>
-          </div>
-        </section>
-
-        <section class="jiankong-fenqu jiankong-rizhi">
-          <h3 class="fenqu-biaoti">{{ huoQuFanYi('guanLiJianKong', 'shiJianRiZhi') }}</h3>
-          <div class="fenqu-neirong">
-            <ul v-if="shiJianRiZhi.length" class="rizhi-liebiao">
-              <li
-                v-for="(xiang, suoYin) in shiJianRiZhi"
-                :key="'rz-' + xiang.时间 + '-' + suoYin"
-                class="rizhi-xiang"
-              >
-                <span class="rizhi-biaoqian" :class="'rizhi-' + xiang.leiXing">{{
-                  xiang.biaoQian
-                }}</span>
-                <span class="rizhi-zhuyao">{{ xiang.zhuanYao }}</span>
-                <span class="rizhi-shijian">{{ geShiHuaShiJian(xiang.时间) }}</span>
-              </li>
-            </ul>
-            <div v-else class="fenqu-kong">{{ huoQuFanYi('guanLiJianKong', 'kongZhuangTai') }}</div>
-          </div>
-        </section>
+  <div
+    ref="fuchuang"
+    class="guanli-jiankong-fuchuang"
+    :style="weiZhiYangShi"
+    role="dialog"
+    aria-label="管理员实时监控"
+  >
+    <header class="jiankong-biaoti-lan" @pointerdown="kaiShiTuoDong">
+      <div class="jiankong-biaoti">
+        <span class="jiankong-dian" />
+        {{ huoQuFanYi('guanLiJianKong', 'biaoTi') }}
       </div>
+      <button class="jiankong-guanbi" type="button" @click="guanBi">
+        {{ huoQuFanYi('guanLiJianKong', 'guanBi') }}
+      </button>
+    </header>
+
+    <div class="jiankong-wangge">
+      <section class="jiankong-fenqu jiankong-goujian">
+        <h3 class="fenqu-biaoti">{{ huoQuFanYi('guanLiJianKong', 'gouJianSiLu') }}</h3>
+        <div class="fenqu-neirong">
+          <ul v-if="聊天仓库.gouJianGuoChengLieBiao.length" class="shijian-xian">
+            <li
+              v-for="(xiang, suoYin) in gouJianDaoXu"
+              :key="'gj-' + xiang.时间 + '-' + suoYin"
+              class="shijian-xian-xiang"
+            >
+              <span class="shijian-xian-dian" />
+              <div class="shijian-xian-zhuti">
+                <div class="shijian-xian-jieduan">{{ xiang.阶段 }}</div>
+                <div class="shijian-xian-shuoming">{{ xiang.说明 }}</div>
+                <div class="shijian-xian-shijian">{{ geShiHuaShiJian(xiang.时间) }}</div>
+              </div>
+            </li>
+          </ul>
+          <div v-else class="fenqu-kong">{{ huoQuFanYi('guanLiJianKong', 'kongZhuangTai') }}</div>
+        </div>
+      </section>
+
+      <section class="jiankong-fenqu jiankong-haogandu">
+        <h3 class="fenqu-biaoti">{{ huoQuFanYi('guanLiJianKong', 'haoGanDuBianHua') }}</h3>
+        <div class="fenqu-neirong">
+          <div v-if="leiJiLieBiao.length" class="leiji-qu">
+            <span class="leiji-biaoqian">{{ huoQuFanYi('guanLiJianKong', 'leiJi') }}</span>
+            <span
+              v-for="ji in leiJiLieBiao"
+              :key="'lj-' + ji.jueSeId"
+              class="leiji-xiang"
+              :class="ji.zhi >= 0 ? 'zheng-xiang' : 'fu-xiang'"
+            >
+              {{ ji.jueSeId }}：{{ ji.zhi >= 0 ? '+' : '' }}{{ ji.zhi }}
+            </span>
+          </div>
+          <ul v-if="聊天仓库.haoGanDuBianHuaLieBiao.length" class="haogandu-liebiao">
+            <li
+              v-for="(xiang, suoYin) in haoGanDuDaoXu"
+              :key="'hg-' + xiang.时间 + '-' + suoYin"
+              class="haogandu-xiang"
+            >
+              <div class="haogandu-bianhua">
+                <span
+                  v-for="([jueSeId, zhi], k) in bianHuaShuZu(xiang.变化)"
+                  :key="'bh-' + k"
+                  class="haogandu-shuzhi"
+                  :class="zhi >= 0 ? 'zheng-xiang' : 'fu-xiang'"
+                >
+                  {{ jueSeId }} {{ zhi >= 0 ? '+' : '' }}{{ zhi }}
+                </span>
+              </div>
+              <div class="haogandu-shijian">{{ geShiHuaShiJian(xiang.时间) }}</div>
+            </li>
+          </ul>
+          <div v-else class="fenqu-kong">{{ huoQuFanYi('guanLiJianKong', 'kongZhuangTai') }}</div>
+        </div>
+      </section>
+
+      <section class="jiankong-fenqu jiankong-yincang">
+        <h3 class="fenqu-biaoti">{{ huoQuFanYi('guanLiJianKong', 'yinCangXinXi') }}</h3>
+        <div class="fenqu-neirong">
+          <ul v-if="聊天仓库.yinCangXinXiLieBiao.length" class="yincang-liebiao">
+            <li
+              v-for="(xiang, suoYin) in yinCangDaoXu"
+              :key="'yc-' + xiang.时间 + '-' + suoYin"
+              class="yincang-xiang"
+            >
+              <span class="yincang-biaoqian">{{ xiang.类型 }}</span>
+              <span class="yincang-neirong">{{ xiang.内容 }}</span>
+              <span class="yincang-shijian">{{ geShiHuaShiJian(xiang.时间) }}</span>
+            </li>
+          </ul>
+          <div v-else class="fenqu-kong">{{ huoQuFanYi('guanLiJianKong', 'kongZhuangTai') }}</div>
+        </div>
+      </section>
+
+      <section class="jiankong-fenqu jiankong-rizhi">
+        <h3 class="fenqu-biaoti">{{ huoQuFanYi('guanLiJianKong', 'shiJianRiZhi') }}</h3>
+        <div class="fenqu-neirong">
+          <ul v-if="shiJianRiZhi.length" class="rizhi-liebiao">
+            <li
+              v-for="(xiang, suoYin) in shiJianRiZhi"
+              :key="'rz-' + xiang.时间 + '-' + suoYin"
+              class="rizhi-xiang"
+            >
+              <span class="rizhi-biaoqian" :class="'rizhi-' + xiang.leiXing">{{
+                xiang.biaoQian
+              }}</span>
+              <span class="rizhi-zhuyao">{{ xiang.zhuanYao }}</span>
+              <span class="rizhi-shijian">{{ geShiHuaShiJian(xiang.时间) }}</span>
+            </li>
+          </ul>
+          <div v-else class="fenqu-kong">{{ huoQuFanYi('guanLiJianKong', 'kongZhuangTai') }}</div>
+        </div>
+      </section>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onBeforeUnmount } from 'vue'
 import { 使用聊天仓库 } from '@/stores/聊天'
 import { huoQuFanYi } from '@/config/translations'
 
 const emit = defineEmits<{ close: [] }>()
 
 const 聊天仓库 = 使用聊天仓库()
+
+const fuchuang = ref<HTMLElement | null>(null)
+// 拖动偏移量（相对默认停靠位置的 translate 值）
+const yiYi = ref({ x: 0, y: 0 })
+
+let tuoDongZhong = false
+let qiShiX = 0
+let qiShiY = 0
+let qiShiYiYiX = 0
+let qiShiYiYiY = 0
+let kuangKuan = 0
+let kuangGao = 0
+
+function xianZhi(zhi: number, zuiXiao: number, zuiDa: number): number {
+  return Math.min(zuiDa, Math.max(zuiXiao, zhi))
+}
+
+const weiZhiYangShi = computed(() => ({
+  transform: `translate(${yiYi.value.x}px, ${yiYi.value.y}px)`,
+}))
+
+function kaiShiTuoDong(e: PointerEvent) {
+  // 点击关闭按钮不触发拖动
+  if ((e.target as HTMLElement).closest('.jiankong-guanbi')) return
+  const el = fuchuang.value
+  if (!el) return
+  tuoDongZhong = true
+  qiShiX = e.clientX
+  qiShiY = e.clientY
+  qiShiYiYiX = yiYi.value.x
+  qiShiYiYiY = yiYi.value.y
+  const rect = el.getBoundingClientRect()
+  kuangKuan = rect.width
+  kuangGao = rect.height
+  el.setPointerCapture(e.pointerId)
+  el.classList.add('jiankong-tuodong')
+  window.addEventListener('pointermove', chuLiTuoDong)
+  window.addEventListener('pointerup', jieShuTuoDong)
+}
+
+function chuLiTuoDong(e: PointerEvent) {
+  if (!tuoDongZhong) return
+  const xinX = qiShiYiYiX + (e.clientX - qiShiX)
+  const xinY = qiShiYiYiY + (e.clientY - qiShiY)
+  const shiKuan = window.innerWidth
+  const shiGao = window.innerHeight
+  // 默认停靠在右下角（距视口右/下各 24px），限制浮窗完整停留在视口内
+  const zuiXiaoX = kuangKuan + 24 - shiKuan
+  const zuiDaX = 24
+  const zuiXiaoY = kuangGao + 24 - shiGao
+  const zuiDaY = 24
+  yiYi.value = {
+    x: xianZhi(xinX, zuiXiaoX, zuiDaX),
+    y: xianZhi(xinY, zuiXiaoY, zuiDaY),
+  }
+}
+
+function jieShuTuoDong(e: PointerEvent) {
+  if (!tuoDongZhong) return
+  tuoDongZhong = false
+  const el = fuchuang.value
+  if (el && el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId)
+  el?.classList.remove('jiankong-tuodong')
+  window.removeEventListener('pointermove', chuLiTuoDong)
+  window.removeEventListener('pointerup', jieShuTuoDong)
+}
+
+onBeforeUnmount(() => {
+  window.removeEventListener('pointermove', chuLiTuoDong)
+  window.removeEventListener('pointerup', jieShuTuoDong)
+})
 
 function guanBi() {
   emit('close')
@@ -183,22 +258,20 @@ const shiJianRiZhi = computed(() => {
 </script>
 
 <style scoped>
-.guanli-jiankong-zhezhao {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(4, 8, 16, 0.78);
-  backdrop-filter: blur(6px);
-  padding: 24px;
-}
+.guanli-jiankong-fuchuang {
+  /* 浮窗尺寸与停靠位置均提为 CSS 变量，禁止散落魔法数字 */
+  --jiankong-kuan: 420px;
+  --jiankong-gao: 55vh;
+  --jiankong-ju-xiabian: 24px;
+  --jiankong-ju-youbian: 24px;
+  --jiankong-z-index: 1100;
 
-.guanli-jiankong-mianban {
-  width: 90%;
-  max-width: 1100px;
-  height: 85vh;
+  position: fixed;
+  right: var(--jiankong-ju-youbian);
+  bottom: var(--jiankong-ju-xiabian);
+  width: var(--jiankong-kuan);
+  height: var(--jiankong-gao);
+  z-index: var(--jiankong-z-index);
   display: flex;
   flex-direction: column;
   background: linear-gradient(160deg, #0c1322 0%, #0a0f1c 100%);
@@ -206,18 +279,26 @@ const shiJianRiZhi = computed(() => {
   border-radius: 16px;
   box-shadow:
     0 0 0 1px rgba(99, 179, 237, 0.08),
-    0 24px 80px rgba(0, 0, 0, 0.6),
-    0 0 40px rgba(99, 179, 237, 0.15);
+    0 18px 60px rgba(0, 0, 0, 0.55),
+    0 0 36px rgba(99, 179, 237, 0.14);
   overflow: hidden;
+  will-change: transform;
 }
 
 .jiankong-biaoti-lan {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px;
+  padding: 12px 16px;
   border-bottom: 1px solid rgba(99, 179, 237, 0.18);
   background: rgba(99, 179, 237, 0.06);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.jiankong-tuodong {
+  cursor: grabbing;
 }
 
 .jiankong-biaoti {
@@ -267,18 +348,17 @@ const shiJianRiZhi = computed(() => {
 
 .jiankong-wangge {
   flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 1px;
   background: rgba(99, 179, 237, 0.18);
+  overflow-y: auto;
   min-height: 0;
 }
 
 .jiankong-fenqu {
   display: flex;
   flex-direction: column;
-  min-height: 0;
   background: #0a0f1c;
 }
 
@@ -295,18 +375,9 @@ const shiJianRiZhi = computed(() => {
 
 .fenqu-neirong {
   flex: 1;
-  overflow-y: auto;
+  overflow: visible;
   padding: 12px 16px;
   min-height: 0;
-}
-
-.fenqu-neirong::-webkit-scrollbar {
-  width: 6px;
-}
-
-.fenqu-neirong::-webkit-scrollbar-thumb {
-  background: rgba(99, 179, 237, 0.3);
-  border-radius: 3px;
 }
 
 .fenqu-kong {

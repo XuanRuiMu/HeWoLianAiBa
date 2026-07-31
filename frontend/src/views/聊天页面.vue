@@ -1,11 +1,6 @@
 <template>
   <div class="liaotian-yemian">
-    <main
-      ref="xiaoxiQuYuRef"
-      class="xiaoxi-quyu weixin-beijing"
-      :class="{ 'emoji-mianban-zhankai': emojiMianBanZhanKai }"
-      @scroll="chuLiGunDong"
-    >
+    <main ref="xiaoxiQuYuRef" class="xiaoxi-quyu weixin-beijing" @scroll="chuLiGunDong">
       <div v-if="聊天仓库.haiYouGengDuo && !fuPanMoShi" class="jiazaigengduo-qu">
         <button
           class="jiazaigengduo-anniu"
@@ -570,20 +565,20 @@ const changYongEmoji = [
 
 function qieHuanEmojiMianBan() {
   emojiMianBanZhanKai.value = !emojiMianBanZhanKai.value
-  if (emojiMianBanZhanKai.value) {
-    gunDongDaoDiBu()
-  }
+  // 面板展开/收起都会改变布局高度，统一在 DOM 更新后将消息区滚动到底部，保证最后一条消息可见可达
+  gunDongDaoDiBu()
 }
 
 function chaRuEmoji(emoji: string) {
   shuRuNeiRong.value += emoji
 }
 
-// 表情面板展开时，点击页面任意「非表情」区域即收起
+// 表情面板展开时，点击页面任意「非表情面板、非表情按钮」区域即收起
 function chuLiWenDangDianJi(event: MouseEvent) {
   if (!emojiMianBanZhanKai.value) return
   const target = event.target as HTMLElement | null
-  if (target && (target.closest('.emoji-mianban') || target.closest('.biaoqing-anniu'))) return
+  if (!target) return
+  if (target.closest('.emoji-mianban') || target.closest('.biaoqing-anniu')) return
   emojiMianBanZhanKai.value = false
 }
 
@@ -911,7 +906,12 @@ const shuRuKuangYangShi = computed(() => {
 function ceLiangShuRuKuang() {
   const el = shuruKuangRef.value
   if (!el) return
+  // 测量前临时将高度置为 auto，读取自然内容高度，使「加字增高、删字缩行」均成立；
+  // 读取后立即还原，最终应用高度仍完全由 computed :style 派生，此处绝不写最终高度
+  const yuanShiGaoDu = el.style.height
+  el.style.height = 'auto'
   neiRongGaoDu.value = el.scrollHeight
+  el.style.height = yuanShiGaoDu
   danXingGaoDu.value = jiSuanDanXingGaoDu(el)
 }
 
@@ -941,10 +941,12 @@ function chuLiShuRuKuangAnJian(event: KeyboardEvent) {
   faSong()
 }
 
+const 管理员调试指令 = 'greedisgood'
+
 async function faSong() {
   const neiRong = shuRuNeiRong.value.trim()
-  // 管理员调试入口：仅输入 "--console" 时，管理员打开实时监控面板（非管理员不发送、不打开）
-  if (neiRong === '--console') {
+  // 管理员调试入口：仅输入管理员调试指令时，管理员打开实时监控面板（非管理员不发送、不打开）
+  if (neiRong === 管理员调试指令) {
     if (用户仓库.shiFouGuanLiYuan) guanLiJianKongZhanKai.value = true
     shuRuNeiRong.value = ''
     return
@@ -1153,7 +1155,7 @@ onMounted(async () => {
   }
   qiDongShiJianGengXinQi()
   window.addEventListener('resize', chongSuanShuRuKuangGaoDu)
-  document.addEventListener('click', chuLiWenDangDianJi)
+  document.addEventListener('click', chuLiWenDangDianJi, true)
   nextTick(() => ceLiangShuRuKuang())
   await chuShiHuaLiaoTian()
   yiTongGuoMountedChuShiHua = true
@@ -1176,7 +1178,7 @@ onDeactivated(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('junshi-zhankai', junShiZhanKaiJianTingQi)
   window.removeEventListener('resize', chongSuanShuRuKuangGaoDu)
-  document.removeEventListener('click', chuLiWenDangDianJi)
+  document.removeEventListener('click', chuLiWenDangDianJi, true)
   if (window.visualViewport) {
     window.visualViewport.removeEventListener('resize', chuLiShiJiaoKouBianHua)
     window.visualViewport.removeEventListener('scroll', chuLiShiJiaoKouBianHua)
@@ -1189,7 +1191,6 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .liaotian-yemian {
-  --emoji-mianban-bu-ju-gao-du: 220px;
   display: grid;
   grid-template-rows: 1fr auto;
   min-height: 0;
@@ -1203,6 +1204,10 @@ onBeforeUnmount(() => {
 }
 
 .xiaoxi-quyu {
+  /* 聊天区滚动条：独立可见色，避免标准属性覆盖 WebKit 自定义样式 */
+  --liaotian-gundong-tiao: rgba(110, 110, 110, 0.85);
+  --liaotian-gundong-tiao-hover: rgba(80, 80, 80, 0.95);
+  --liaotian-gundong-tiao-track: rgba(140, 140, 140, 0.16);
   overflow-y: auto;
   min-height: 0;
   padding: 12px 16px;
@@ -1212,33 +1217,26 @@ onBeforeUnmount(() => {
   background: var(--liaotian-beijing);
   background-size: 18px 18px;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: var(--gundong-tiao-beijing) transparent;
+  /* 注意：此处不声明 scrollbar-width / scrollbar-color，否则会覆盖下方 ::-webkit-scrollbar 自定义样式 */
   scroll-padding-bottom: 20px;
-  transition: padding-bottom 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.xiaoxi-quyu.emoji-mianban-zhankai {
-  padding-bottom: var(--emoji-mianban-bu-ju-gao-du);
-  scroll-padding-bottom: var(--emoji-mianban-bu-ju-gao-du);
 }
 
 .xiaoxi-quyu::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 .xiaoxi-quyu::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--liaotian-gundong-tiao-track);
 }
 
 .xiaoxi-quyu::-webkit-scrollbar-thumb {
-  background: var(--gundong-tiao-beijing);
-  border-radius: 3px;
+  background: var(--liaotian-gundong-tiao);
+  border-radius: 4px;
 }
 
 .xiaoxi-quyu::-webkit-scrollbar-thumb:hover {
-  background: var(--gundong-tiao-hover);
+  background: var(--liaotian-gundong-tiao-hover);
 }
 
 .xiaoxi-liebiao {
@@ -1404,13 +1402,14 @@ onBeforeUnmount(() => {
 
 .fasong-zhuangtai-zhuanquan {
   display: inline-block;
-  width: 1em;
-  height: 1em;
-  border: 2px solid var(--wenben-tishi);
+  /* 直径约等于一行气泡高度：以相对气泡字体的 em 设定，禁止硬编码 px */
+  width: 1.4em;
+  height: 1.4em;
+  border: 0.16em solid var(--wenben-tishi);
   border-top-color: transparent;
   border-radius: 50%;
   animation: fasong-xuanzhuan 1s linear infinite;
-  opacity: 0.6;
+  opacity: 0.9;
 }
 
 @keyframes fasong-xuanzhuan {
@@ -1511,7 +1510,9 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   resize: none;
   overflow-y: auto;
-  scrollbar-width: thin;
+  /* 折叠态：彻底隐藏滚动条，但保留鼠标滚轮上下滚动，绝不可出现可见滚动条 */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .shuru-kuang::placeholder {
@@ -1520,19 +1521,39 @@ onBeforeUnmount(() => {
 
 .shuru-kuang.zhan-kai {
   overflow-y: auto;
+  /* 展开态：覆盖折叠态的 scrollbar-width:none，恢复 WebKit 自定义滚动条（可见） */
+  scrollbar-width: auto;
+  -ms-overflow-style: auto;
+  /* 独立可见色变量，避免沿用近乎不可见的 --gundong-tiao-beijing */
+  --shuru-kuang-gundong-tiao: rgba(110, 110, 110, 0.85);
+  --shuru-kuang-gundong-tiao-hover: rgba(80, 80, 80, 0.95);
 }
 
+/* 折叠态：彻底隐藏滚动条（保留滚轮滚动） */
 .shuru-kuang::-webkit-scrollbar {
-  width: 6px;
+  width: 0;
+  height: 0;
+  display: none;
 }
 
-.shuru-kuang::-webkit-scrollbar-track {
+/* 展开态：出现可见滚动条 */
+.shuru-kuang.zhan-kai::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  display: block;
+}
+
+.shuru-kuang.zhan-kai::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.shuru-kuang::-webkit-scrollbar-thumb {
-  background: var(--gundong-tiao-beijing);
+.shuru-kuang.zhan-kai::-webkit-scrollbar-thumb {
+  background: var(--shuru-kuang-gundong-tiao);
   border-radius: 3px;
+}
+
+.shuru-kuang.zhan-kai::-webkit-scrollbar-thumb:hover {
+  background: var(--shuru-kuang-gundong-tiao-hover);
 }
 
 .fasong-anniu {
@@ -1630,8 +1651,10 @@ onBeforeUnmount(() => {
   max-height: 200px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: var(--gundong-tiao-beijing) transparent;
+  /* 不声明标准 scrollbar-width / scrollbar-color，否则会覆盖下方 ::-webkit-scrollbar 自定义样式 */
+  /* 独立可见色变量，避免沿用近乎不可见的 --gundong-tiao-beijing */
+  --emoji-mianban-gundong-tiao: rgba(110, 110, 110, 0.85);
+  --emoji-mianban-gundong-tiao-hover: rgba(80, 80, 80, 0.95);
 }
 
 .emoji-mianban::-webkit-scrollbar {
@@ -1644,12 +1667,12 @@ onBeforeUnmount(() => {
 }
 
 .emoji-mianban::-webkit-scrollbar-thumb {
-  background: var(--gundong-tiao-beijing);
+  background: var(--emoji-mianban-gundong-tiao);
   border-radius: 3px;
 }
 
 .emoji-mianban::-webkit-scrollbar-thumb:hover {
-  background: var(--gundong-tiao-hover);
+  background: var(--emoji-mianban-gundong-tiao-hover);
 }
 
 .emoji-xiangmu {
@@ -2058,11 +2081,6 @@ onBeforeUnmount(() => {
 
   .xiaoxi-quyu {
     padding: 10px 12px;
-  }
-
-  .xiaoxi-quyu.emoji-mianban-zhankai {
-    padding-bottom: var(--emoji-mianban-bu-ju-gao-du);
-    scroll-padding-bottom: var(--emoji-mianban-bu-ju-gao-du);
   }
 
   .fupan-pizhu-qipao {

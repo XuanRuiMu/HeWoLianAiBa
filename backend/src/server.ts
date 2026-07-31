@@ -9,6 +9,7 @@ import { renZhengZhongJianJian } from './middleware/认证'
 import { changGuiXianLiu } from './middleware/限流'
 import { anQuanZhongJianJian } from './middleware/安全'
 import { IP封禁中间件 } from './middleware/IP封禁'
+import { 日志追踪中间件 } from './middleware/日志追踪'
 import renZhengLuYou from './routes/认证'
 import jiaoSeLuYou from './routes/角色'
 import jiaoSeXiangQingLuYou from './routes/角色详情'
@@ -26,6 +27,8 @@ import { 初始化聊天Socket } from './socket/聊天'
 import { chuShiHuaTongZhiSocket } from './socket/通知'
 import { chuShiHuaDuoSheSocket } from './socket/夺舍'
 import { sheZhiIo } from './socket/io'
+import { chuShiHuaOTel } from './utils/OTel'
+chuShiHuaOTel()
 
 const yingYong = express()
 
@@ -94,6 +97,7 @@ yingYong.use((qingQiu, xiangYing, xiaYiBu) => {
 yingYong.use(jianKangJianChaLuYou)
 
 yingYong.use(IP封禁中间件)
+yingYong.use(日志追踪中间件())
 yingYong.use(changGuiXianLiu)
 yingYong.use('/api/logs', riZhiJieShouLuYou)
 yingYong.use(renZhengZhongJianJian)

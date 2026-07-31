@@ -1,7 +1,5 @@
-import fs from 'fs'
-import path from 'path'
 import type { RequestHandler } from 'express'
-import pino from 'pino'
+import { chuangJianRiZhiYinQing, sheZhiRiZhiJiBie, guanBiRiZhiYinQing } from './日志引擎'
 import { peiZhi } from '../config'
 
 export type RiZhiJiBie = 'debug' | 'info' | 'warn' | 'error'
@@ -38,127 +36,19 @@ type QingQiuRiZhiDuiXiang = {
   error: (leiXing: string, xiaoXi: string, xiangQing?: Record<string, unknown>) => void
 }
 
-const riZhiMuLu = path.resolve(process.cwd(), 'logs')
-const riZhiWenJian = path.join(riZhiMuLu, 'debug.log')
-
-function huoQuYouXiaoRiZhiJiBie(jiBie: string | undefined): pino.LevelWithSilent {
-  const youXiaoJiBieLieBiao: pino.LevelWithSilent[] = ['debug', 'info', 'warn', 'error']
-  if (jiBie && youXiaoJiBieLieBiao.includes(jiBie as pino.LevelWithSilent)) {
-    return jiBie as pino.LevelWithSilent
-  }
-  return 'debug'
-}
-
-let dangQianJiBie: pino.LevelWithSilent = huoQuYouXiaoRiZhiJiBie(process.env.LOG_LEVEL)
-let logger: pino.Logger
-let wenJianLiu: fs.WriteStream | null = null
-let liuYiGuanBi = false
-
-function queBaoRiZhiMuLu(): boolean {
-  if (!fs.existsSync(riZhiMuLu)) {
-    try {
-      fs.mkdirSync(riZhiMuLu, { recursive: true })
-    } catch (cuoWu) {
-      console.error('日志目录创建失败，日志将降级到控制台', cuoWu)
-      return false
-    }
-  }
-  return true
-}
-
-function chuangJianWenJianLiu(): fs.WriteStream | null {
-  if (!queBaoRiZhiMuLu()) return null
-  try {
-    const liu = fs.createWriteStream(riZhiWenJian, { flags: 'a' })
-    liu.on('error', (cuoWu) => {
-      console.error('日志文件流错误', cuoWu)
-    })
-    return liu
-  } catch (cuoWu) {
-    console.error('日志文件流创建失败', cuoWu)
-    return null
-  }
-}
-
-function chuangJianLogger(): void {
-  if (wenJianLiu) {
-    try {
-      wenJianLiu.end()
-    } catch {
-      // 忽略关闭错误
-    }
-    wenJianLiu = null
-  }
-
-  wenJianLiu = chuangJianWenJianLiu()
-
-  const muBiaoLiu = wenJianLiu
-    ? pino.multistream([
-        { stream: process.stdout, level: 'trace' as pino.LevelWithSilent },
-        { stream: wenJianLiu, level: 'trace' as pino.LevelWithSilent },
-      ])
-    : process.stdout
-
-  logger = pino(
-    {
-      level: dangQianJiBie,
-      messageKey: 'xiao_xi',
-      timestamp: () => `,"shi_jian":"${new Date().toISOString()}"`,
-      formatters: {
-        level: (label: string) => ({ ji_bie: label }),
-      },
-    },
-    muBiaoLiu,
-  )
-
-  liuYiGuanBi = false
-}
-
-chuangJianLogger()
-
-function queBaoLoggerKeYong(): void {
-  if (liuYiGuanBi || !logger) {
-    chuangJianLogger()
-  }
-}
-
 function guoLvMinGanZiDuan(shuJu: unknown): unknown {
-  if (shuJu === null || shuJu === undefined) {
-    return shuJu
-  }
+  if (typeof shuJu !== 'string') return shuJu
 
-  if (typeof shuJu === 'string') {
-    let jieGuo = shuJu
-    const minGanGuanJianZi = peiZhi.minGanZiDuan.guanJianZi
-    for (const guanJianZi of minGanGuanJianZi) {
-      const zhengZe = new RegExp(`"${guanJianZi}"\\s*:\\s*"[^"]*"`, 'gi')
-      jieGuo = jieGuo.replace(zhengZe, `"${guanJianZi}":"***"`)
-    }
-    if (/^[A-Za-z0-9+/=_-]+(\.[A-Za-z0-9+/=_-]+){2,}$/.test(jieGuo) && jieGuo.length > 40) {
-      return '***'
-    }
-    return jieGuo
+  let jieGuo = shuJu
+  const minGanGuanJianZi = peiZhi.minGanZiDuan.guanJianZi
+  for (const guanJianZi of minGanGuanJianZi) {
+    const zhengZe = new RegExp(`"${guanJianZi}"\\s*:\\s*"[^"]*"`, 'gi')
+    jieGuo = jieGuo.replace(zhengZe, `"${guanJianZi}":"***"`)
   }
-
-  if (Array.isArray(shuJu)) {
-    return shuJu.map(guoLvMinGanZiDuan)
+  if (/^[A-Za-z0-9+/=_-]+(\.[A-Za-z0-9+/=_-]+){2,}$/.test(jieGuo) && jieGuo.length > 40) {
+    return '***'
   }
-
-  if (typeof shuJu === 'object') {
-    const duiXiang = shuJu as Record<string, unknown>
-    const jieGuo: Record<string, unknown> = {}
-    const minGanZiDuanMing = new Set(peiZhi.minGanZiDuan.ziDuanMing)
-    for (const [jian, zhi] of Object.entries(duiXiang)) {
-      if (minGanZiDuanMing.has(jian)) {
-        jieGuo[jian] = '***'
-      } else {
-        jieGuo[jian] = guoLvMinGanZiDuan(zhi)
-      }
-    }
-    return jieGuo
-  }
-
-  return shuJu
+  return jieGuo
 }
 
 function gouJianShangXiaWen(xuanXiang: RiZhiXuanXiang | undefined): Record<string, unknown> {
@@ -166,16 +56,12 @@ function gouJianShangXiaWen(xuanXiang: RiZhiXuanXiang | undefined): Record<strin
   if (xuanXiang?.yong_hu_id) shangXiaWen.yong_hu_id = xuanXiang.yong_hu_id
   if (xuanXiang?.jiao_se_id) shangXiaWen.jiao_se_id = xuanXiang.jiao_se_id
   if (xuanXiang?.qing_qiu_id) shangXiaWen.qing_qiu_id = xuanXiang.qing_qiu_id
-  if (xuanXiang?.xiang_qing) {
-    shangXiaWen.xiang_qing = guoLvMinGanZiDuan(xuanXiang.xiang_qing)
-  }
+  if (xuanXiang?.xiang_qing) shangXiaWen.xiang_qing = xuanXiang.xiang_qing
   return shangXiaWen
 }
 
 export function sheZhiZuiDiRiZhiJiBie(jiBie: RiZhiJiBie): void {
-  dangQianJiBie = jiBie
-  queBaoLoggerKeYong()
-  logger.level = jiBie
+  sheZhiRiZhiJiBie(jiBie)
 }
 
 export function xieRuRiZhi(
@@ -184,11 +70,11 @@ export function xieRuRiZhi(
   xiaoXi: string,
   xuanXiang?: RiZhiXuanXiang,
 ): void {
-  queBaoLoggerKeYong()
+  const yinQing = chuangJianRiZhiYinQing()
   const shangXiaWen = gouJianShangXiaWen(xuanXiang)
-  const guoLvXiaoXi = String(guoLvMinGanZiDuan(xiaoXi))
   const heBingDuiXiang = { lei_xing: leiXing, ...shangXiaWen }
-  ;(logger[jiBie] as pino.LogFn)(heBingDuiXiang, guoLvXiaoXi)
+  const guoLvXiaoXi = String(guoLvMinGanZiDuan(xiaoXi))
+  ;(yinQing as any)[jiBie](heBingDuiXiang, guoLvXiaoXi)
 }
 
 export const debug日志: RiZhiDuiXiang = {
@@ -356,24 +242,5 @@ export function jiLuXiaoXiCaoZuo(
 }
 
 export function guanBiRiZhiLiu(): Promise<void> {
-  return new Promise((resolve) => {
-    try {
-      if (logger && typeof logger.flush === 'function') {
-        logger.flush()
-      }
-    } catch {
-      // 忽略 flush 错误
-    }
-    if (wenJianLiu) {
-      const liu = wenJianLiu
-      wenJianLiu = null
-      liu.end(() => {
-        liuYiGuanBi = true
-        resolve()
-      })
-    } else {
-      liuYiGuanBi = true
-      resolve()
-    }
-  })
+  return guanBiRiZhiYinQing()
 }
