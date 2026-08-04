@@ -6,16 +6,17 @@ import { createRouter, createWebHistory } from 'vue-router'
 import 过往战绩 from '@/views/过往战绩.vue'
 import type { DangAnXiangQing } from '@/types'
 
-// 忠实 stub：持有 modelValue 并渲染 slot（使父组件 v-for 真实落 DOM，
-// 从而可被 onTuoZhuaiJieShu 按真实落点顺序读取）。拖拽由测试通过
-// $emit('update:modelValue', 重排数组) + $emit('end') 模拟，等价于真实库完成一次拖拽。
+// 忠实 stub：持有 modelValue 并渲染 slot。拖拽由测试通过事件模拟真实库：
+// $emit('start') 触发父组件快照；库内部 onUpdate 通过 $emit('update:modelValue', 重排数组)
+// 写回模型；最后 $emit('end', { oldIndex, newIndex, ... }) 触发父组件按索引持久化。
+// 注意：父组件已不再读取 DOM，故顺序完全由事件索引决定，与真实库行为一致。
 vi.mock('vue-draggable-plus', async () => {
   const vue = await vi.importActual<typeof import('vue')>('vue')
   return {
     VueDraggable: vue.defineComponent({
       name: 'VueDraggable',
       props: { modelValue: { type: Array, default: () => [] }, disabled: { type: Boolean } },
-      emits: ['update:modelValue', 'end'],
+      emits: ['update:modelValue', 'start', 'end'],
       setup(_props, { slots }) {
         return () =>
           vue.h('div', { class: 'vue-draggable-stub' }, slots.default ? slots.default() : [])
@@ -236,6 +237,156 @@ describe('过往战绩排序', () => {
       // ③ 重建组件后顺序保持
       const chongJian = await guaZai(jinXingZhongLieBiao())
       expect(jinXingZhongMingCheng(chongJian)).toEqual(['波乙', '此丙', '阿甲'])
+    })
+
+    it('拖拽结束以 oldIndex→newIndex 重排序并持久化（不依赖 DOM 落点）', async () => {
+      localStorage.setItem(
+        'zhanJiPaiXu_yong-hu-1',
+        JSON.stringify({ jinxingzhong: ['jia', 'yi', 'bing'], shengli: [], shibai: [] }),
+      )
+      const wrapper = await guaZai(jinXingZhongLieBiao())
+      const shiLi = wrapper.vm as unknown as { fenLeiZu: Record<string, DangAnXiangQing[]> }
+      const draggable = wrapper.findComponent({ name: 'VueDraggable' })
+
+      // 真实库：start 触发快照；把第 0 项拖到第 2 位（oldIndex 0 → newIndex 2）。
+      // 故意不 emit update:modelValue，验证最终顺序完全由事件索引重排得出，
+      // 而非依赖 force-fallback 下不可靠的 DOM 落点读物。
+      draggable.vm.$emit('start', { oldIndex: 0 })
+      draggable.vm.$emit('end', {
+        oldIndex: 0,
+        newIndex: 2,
+        oldDraggableIndex: 0,
+        newDraggableIndex: 2,
+        from: {},
+        to: {},
+      })
+      await flushPromises()
+
+      // ① 模型顺序已被索引重排改变
+      expect(shiLi.fenLeiZu.jinxingzhong.map((x) => x.id)).toEqual(['yi', 'bing', 'jia'])
+      // ② 持久化到 localStorage
+      const cunChu = JSON.parse(localStorage.getItem('zhanJiPaiXu_yong-hu-1') || '{}')
+      expect(cunChu.jinxingzhong).toEqual(['yi', 'bing', 'jia'])
+      // ③ 重建组件后顺序保持
+      const chongJian = await guaZai(jinXingZhongLieBiao())
+      expect(jinXingZhongMingCheng(chongJian)).toEqual(['波乙', '此丙', '阿甲'])
+    })
+
+    it('fallback 模式：以指针坐标推算目标下标重排（事件索引与 DOM 均不可信）', async () => {
+      localStorage.setItem(
+        'zhanJiPaiXu_yong-hu-1',
+        JSON.stringify({ jinxingzhong: ['jia', 'yi', 'bing'], shengli: [], shibai: [] }),
+      )
+      const wrapper = await guaZai(jinXingZhongLieBiao())
+      const shiLi = wrapper.vm as unknown as { fenLeiZu: Record<string, DangAnXiangQing[]> }
+      const draggable = wrapper.findComponent({ name: 'VueDraggable' })
+
+      // 构造 fallback 真实场景：事件索引全部等于起始位（0）且 DOM 不变；
+      // 唯一可靠落点来源是「放下瞬间指针坐标」。把 jia 拖到 yi 与 bing 之间：
+      // clientY 落在 yi 中点之下、bing 中点之上。
+      const paiPiao = [
+        { id: 'jia', top: 0 },
+        { id: 'yi', top: 10 },
+        { id: 'bing', top: 20 },
+      ]
+      const toMock = {
+        querySelectorAll: () =>
+          paiPiao.map((p) => {
+            const el = document.createElement('div')
+            el.setAttribute('data-id', p.id)
+            el.getBoundingClientRect = () =>
+              ({ top: p.top, height: 10, left: 0, right: 0, bottom: p.top + 10, width: 0, x: 0, y: 0, toJSON: () => ({}) } as unknown as DOMRect)
+            return el
+          }),
+      }
+      const itemMock = document.createElement('div')
+      itemMock.setAttribute('data-id', 'jia')
+      const originalEvent = { clientY: 18 } as unknown as Event
+
+      draggable.vm.$emit('start', { oldIndex: 0 })
+      draggable.vm.$emit('end', {
+        oldIndex: 0,
+        newIndex: 0,
+        oldDraggableIndex: 0,
+        newDraggableIndex: 0,
+        from: toMock,
+        to: toMock,
+        item: itemMock,
+        originalEvent,
+      })
+      await flushPromises()
+
+      // jia 应被排到 yi 与 bing 之间
+      expect(shiLi.fenLeiZu.jinxingzhong.map((x) => x.id)).toEqual(['yi', 'jia', 'bing'])
+      const cunChu = JSON.parse(localStorage.getItem('zhanJiPaiXu_yong-hu-1') || '{}')
+      expect(cunChu.jinxingzhong).toEqual(['yi', 'jia', 'bing'])
+    })
+  })
+
+  describe('拖拽实时预览（fallback 模式交互）', () => {
+    it('拖拽过程中按指针坐标实时重排预览顺序，其余卡片将滑动错位', async () => {
+      localStorage.setItem(
+        'zhanJiPaiXu_yong-hu-1',
+        JSON.stringify({ jinxingzhong: ['jia', 'yi', 'bing'], shengli: [], shibai: [] }),
+      )
+      const wrapper = await guaZai(jinXingZhongLieBiao())
+      const shiLi = wrapper.vm as unknown as { fenLeiZu: Record<string, DangAnXiangQing[]> }
+      const draggable = wrapper.findComponent({ name: 'VueDraggable' })
+
+      // 构造 fallback 真实场景：事件索引全部等于起始位（0），真实 DOM 不被移动；
+      // 预览顺序完全由「指针坐标」实时推算。把 jia 从下标 0 拖到 yi 与 bing 之间。
+      const zu = wrapper.findAll('.zhanji-fenlei-zu')[0]
+      const kapian = zu.findAll('.zhanji-kapian')
+      const zhongXin = [0, 10, 20]
+      kapian.forEach((k, i) => {
+        k.element.getBoundingClientRect = () =>
+          ({
+            top: zhongXin[i],
+            height: 10,
+            left: 0,
+            right: 0,
+            bottom: zhongXin[i] + 10,
+            width: 0,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+          }) as unknown as DOMRect
+      })
+      // 真实浏览器的 start 事件不带 oldIndex/oldDraggableIndex（已核实 SortableJS 源码），
+      // 源卡片必须靠挂上 sortable-ghost 类的真实卡片 data-id 反查。这里让 from.querySelector
+      // 返回首张卡片（jia）以模拟该行为，且不传 oldIndex，防止测试用假数据掩盖根因。
+      const from = {
+        querySelectorAll: () => kapian.map((k) => k.element),
+        querySelector: () => kapian[0].element,
+      }
+
+      // 开始拖拽（不传 oldIndex，忠实于真实浏览器）
+      draggable.vm.$emit('start', { from })
+      await nextTick()
+
+      // 模拟指针移动到 yi 与 bing 之间（clientY 落在 yi 中点之下、bing 中点之上）
+      const yiDong = new Event('pointermove')
+      Object.defineProperty(yiDong, 'clientY', { value: 18, configurable: true })
+      window.dispatchEvent(yiDong)
+      await nextTick()
+
+      // 实时预览：jia 已被排到 yi 与 bing 之间（其余卡片将随之滑动）
+      expect(shiLi.fenLeiZu.jinxingzhong.map((x) => x.id)).toEqual(['yi', 'jia', 'bing'])
+
+      // 松手：以放下瞬间指针坐标权威提交并持久化
+      draggable.vm.$emit('end', {
+        oldIndex: 0,
+        newIndex: 0,
+        oldDraggableIndex: 0,
+        newDraggableIndex: 0,
+        from,
+        to: from,
+        originalEvent: { clientY: 18 } as unknown as Event,
+      })
+      await flushPromises()
+
+      const cunChu = JSON.parse(localStorage.getItem('zhanJiPaiXu_yong-hu-1') || '{}')
+      expect(cunChu.jinxingzhong).toEqual(['yi', 'jia', 'bing'])
     })
   })
 

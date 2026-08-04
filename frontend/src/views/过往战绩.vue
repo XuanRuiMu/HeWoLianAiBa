@@ -1,5 +1,5 @@
 <template>
-  <div ref="genYuan" class="zhanji-yemian">
+  <div class="zhanji-yemian">
     <main class="zhanji-liebiao" :class="{ 'tuo-zhuai-zhong': tuoZhuaiZhong }">
       <div v-if="jiaZaiZhong" class="jiazai-zhuangtai">
         {{ huoQuFanYi('zhanJi', 'jiaZaiZhong') }}
@@ -96,12 +96,7 @@
             }}
           </button>
         </div>
-        <div
-          v-for="fenLei in fenLeiXinXiList"
-          :key="fenLei.zhuangTai"
-          class="zhanji-fenlei-zu"
-          :data-zhuang-tai="fenLei.zhuangTai"
-        >
+        <div v-for="fenLei in fenLeiXinXiList" :key="fenLei.zhuangTai" class="zhanji-fenlei-zu">
           <h2 class="zhanji-fenlei-biaoti">
             <span class="fenlei-tubiao">{{ fenLei.tuBiao }}</span>
             {{ fenLei.biaoTi }}
@@ -131,13 +126,14 @@
             ghost-class="sortable-ghost"
             chosen-class="sortable-chosen"
             drag-class="sortable-drag"
-            :force-fallback="true"
             fallback-class="sortable-drag"
+            :force-fallback="true"
             :group="{ name: fenLei.zhuangTai, pull: false, put: false }"
             class="zhanji-liebiao-neirong"
-            @start="onTuoZhuaiKaiShi"
-            @end="onTuoZhuaiJieShu(fenLei.zhuangTai)"
+            @start="onTuoZhuaiKaiShi(fenLei.zhuangTai, $event)"
+            @end="onTuoZhuaiJieShu(fenLei.zhuangTai, $event)"
           >
+            <TransitionGroup name="zhanji-kapian">
             <div
               v-for="(dangAn, suoYin) in xianShiFenLeiZu[fenLei.zhuangTai]"
               :key="dangAn.id ?? `zhanji-${fenLei.zhuangTai}-${suoYin}`"
@@ -234,6 +230,7 @@
                 </button>
               </div>
             </div>
+            </TransitionGroup>
           </VueDraggable>
           <div v-else class="fenlei-kong-zhuangtai">
             {{ fenLei.kongWenBen }}
@@ -245,13 +242,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { VueDraggable } from 'vue-draggable-plus'
 import { huoQuDangAnLieBiao, shanChuDangAn, piLiangShanChuDangAn } from '@/api/聊天'
 import type { 档案详情 } from '@/types'
 import { huoQuFanYi } from '@/config/translations'
 import { 使用用户仓库 } from '@/stores/用户'
+import { jiSuanMuBiaoSuoYin, jiSuanYuLanShunXu } from '@/utils/paixuYuLan'
 
 type FenLeiZhuangTai = 'jinxingzhong' | 'shengli' | 'shibai'
 
@@ -286,7 +284,22 @@ const router = useRouter()
 const yongHuCangKu = 使用用户仓库()
 const jiaZaiZhong = ref(true)
 const tuoZhuaiZhong = ref(false)
-const genYuan = ref<HTMLElement>()
+// 实时预览（fallback 模式根因修复的延伸）：拖拽过程中按指针坐标实时重排预览顺序，
+// 其余卡片 FLIP 滑动错位、目标处显示霓虹虚线落点，松手提交复用指针坐标兜底。
+const draggingState = ref<FenLeiZhuangTai | null>(null)
+const draggingId = ref<string | null>(null)
+const draggingYuanSuoYin = ref<number>(-1)
+const mubiaoSuoYin = ref<number>(-1)
+const tuoZhuaiRongQi = ref<HTMLElement | null>(null)
+const yuanXinZuoBiao = ref<number[]>([])
+// 拖拽前各分组的 id 顺序快照。最终顺序以拖拽事件携带的 oldIndex→newIndex 为准，
+// 快照用于在 onEnd 时按索引从拖拽前顺序重排出最终顺序，从根因上消除
+// 「拖了不动 / 回弹 / 刷新后不保持」。
+const tuoZhuaiQianIdShunXu = ref<Record<FenLeiZhuangTai, string[]>>({
+  jinxingzhong: [],
+  shengli: [],
+  shibai: [],
+})
 const xuanZhongIds = ref<Set<string>>(new Set())
 const zuiHouDianJiSuoYin = ref<number | null>(null)
 const paiXuWeiDu = ref<PaiXuWeiDu>('shouDong')
@@ -738,48 +751,233 @@ function daKaiFuPan(dangAn: 档案详情) {
   })
 }
 
-function onTuoZhuaiKaiShi() {
-  tuoZhuaiZhong.value = true
+interface TuoZhuaiShiJian {
+  oldIndex?: number
+  newIndex?: number
+  oldDraggableIndex?: number
+  newDraggableIndex?: number
+  to?: HTMLElement
+  from?: HTMLElement
+  item?: HTMLElement
+  originalEvent?: Event
 }
 
-function onTuoZhuaiJieShu(zhuangTai: FenLeiZhuangTai) {
+// 捕获容器内各卡片的垂直中心 Y（视口坐标系，固定不变），供 pointermove 幂等推算落点
+function buZhuoZhongXin(rongQi: HTMLElement | null): number[] {
+  if (!rongQi || typeof rongQi.querySelectorAll !== 'function') return []
+  const paiPiao = Array.from(rongQi.querySelectorAll('.zhanji-kapian')) as HTMLElement[]
+  return paiPiao.map((el) => {
+    const r = el.getBoundingClientRect()
+    return r.top + r.height / 2
+  })
+}
+
+function onTuoZhuaiKaiShi(zhuangTai: FenLeiZhuangTai, shiJian?: TuoZhuaiShiJian) {
+  tuoZhuaiZhong.value = true
+  // 记录拖拽前该分组的 id 顺序（固定原始顺序），用于实时预览与 @end 提交
+  tuoZhuaiQianIdShunXu.value[zhuangTai] = fenLeiZu[zhuangTai]
+    .map((item) => item.id)
+    .filter((id): id is string => !!id)
+
+  // 源卡片：已核实 SortableJS 的 start 事件仅携带 from/originalEvent，不携带
+  // oldIndex/oldDraggableIndex（源码 W({sortable,name:'start',originalEvent}) 未传入这些字段）。
+  // 因此不能用它们定位源。start 触发前 SortableJS 已给被拖真实卡片挂上 sortable-ghost 类，
+  // 其 data-id 即源 id，是真实浏览器下唯一可靠的源。
+  const rongQi = (shiJian?.from as HTMLElement | undefined) ?? null
+  tuoZhuaiRongQi.value = rongQi
+  let beiTuoId: string | null = null
+  if (rongQi && typeof rongQi.querySelector === 'function') {
+    const beiTuoEl =
+      (rongQi.querySelector('.sortable-ghost') as HTMLElement | null) ??
+      (rongQi.querySelector('.sortable-chosen') as HTMLElement | null)
+    beiTuoId = beiTuoEl?.getAttribute('data-id') ?? null
+  }
+  // 退化：个别环境 start 仍未带 ghost 类时，退回 oldIndex/oldDraggableIndex
+  if (!beiTuoId) {
+    const old =
+      typeof shiJian?.oldDraggableIndex === 'number'
+        ? shiJian.oldDraggableIndex
+        : typeof shiJian?.oldIndex === 'number'
+          ? shiJian.oldIndex
+          : -1
+    beiTuoId =
+      old >= 0 && fenLeiZu[zhuangTai][old] ? (fenLeiZu[zhuangTai][old].id ?? null) : null
+  }
+
+  const yuanSuoYin = beiTuoId ? tuoZhuaiQianIdShunXu.value[zhuangTai].indexOf(beiTuoId) : -1
+
+  draggingState.value = zhuangTai
+  draggingId.value = beiTuoId
+  draggingYuanSuoYin.value = yuanSuoYin
+  mubiaoSuoYin.value = yuanSuoYin
+
+  // 捕获「固定原始顺序」各卡片中心 Y，供 pointermove 幂等推算落点
+  yuanXinZuoBiao.value = buZhuoZhongXin(rongQi)
+
+  // 实时预览：监听指针移动，按落点重排预览顺序（其余卡片由 TransitionGroup 做 FLIP 滑动）
+  window.addEventListener('pointermove', onTuoZhuaiYiDong, { passive: true })
+  window.addEventListener('touchmove', onTuoZhuaiYiDong, { passive: true })
+}
+
+// 指针移动时，由固定原始顺序幂等重算预览顺序（避免基于已变化的预览顺序叠加导致抖动）
+function onTuoZhuaiYiDong(e: Event) {
+  const zt = draggingState.value
+  const yuanId = draggingId.value
+  const yuan = draggingYuanSuoYin.value
+  if (zt === null || yuanId === null || yuan < 0) return
+  const yuanShiShunXu = tuoZhuaiQianIdShunXu.value[zt]
+  if (!yuanShiShunXu.includes(yuanId)) return
+
+  // 退化重捕：若 start 时容器中心捕获失败（极少见），用已记录的容器懒捕获一次
+  if (yuanXinZuoBiao.value.length === 0) {
+    yuanXinZuoBiao.value = buZhuoZhongXin(tuoZhuaiRongQi.value)
+  }
+  if (yuanXinZuoBiao.value.length === 0) return
+
+  const yuanShiJian = e as MouseEvent | TouchEvent
+  const zhiBiaoY =
+    'clientY' in yuanShiJian
+      ? yuanShiJian.clientY
+      : (yuanShiJian as TouchEvent).changedTouches?.[0]?.clientY
+  if (typeof zhiBiaoY !== 'number') return
+
+  const muBiao = jiSuanMuBiaoSuoYin(yuanXinZuoBiao.value, zhiBiaoY, yuan)
+  if (muBiao === mubiaoSuoYin.value) return
+  mubiaoSuoYin.value = muBiao
+
+  const ids = jiSuanYuLanShunXu(yuanShiShunXu, yuan, muBiao)
+  const idDaoJiLu = new Map(fenLeiZu[zt].map((i) => [i.id, i]))
+  fenLeiZu[zt] = ids.map((id) => idDaoJiLu.get(id)).filter((i): i is 档案详情 => !!i)
+}
+
+function chongZhiYuLan() {
+  draggingState.value = null
+  draggingId.value = null
+  draggingYuanSuoYin.value = -1
+  mubiaoSuoYin.value = -1
+  tuoZhuaiRongQi.value = null
+  yuanXinZuoBiao.value = []
+}
+
+function onTuoZhuaiJieShu(zhuangTai: FenLeiZhuangTai, shiJian?: TuoZhuaiShiJian) {
+  // 先移除实时预览监听，避免拖拽结束后仍触发重排
+  window.removeEventListener('pointermove', onTuoZhuaiYiDong)
+  window.removeEventListener('touchmove', onTuoZhuaiYiDong)
   tuoZhuaiZhong.value = false
   window.getSelection()?.removeAllRanges()
   // 自动排序维度下拖拽已停用，此时不覆盖用户的手动顺序
-  if (!shiFouShouDongPaiXu.value) return
-  // 以拖拽结束后 DOM 的真实落点顺序为准同步模型。vue-draggable-plus 在
-  // force-fallback 场景下 onUpdate 的 v-model 写回可能不落地，若仅依赖
-  // update:modelValue 会出现「位置回弹、刷新后不保持」。这里直接读取用户
-  // 实际拖出的顺序，保证模型与所见一致并持久化，从根因上消除回弹/不持久化。
-  const rongQi = genYuan.value?.querySelector<HTMLElement>(
-    `.zhanji-fenlei-zu[data-zhuang-tai="${zhuangTai}"]`,
-  )
-  const yuanShi = fenLeiZu[zhuangTai]
-  if (rongQi) {
-    const idShunXu = Array.from(rongQi.querySelectorAll<HTMLElement>('.zhanji-kapian'))
-      .map((jie) => jie.dataset.id)
-      .filter((id): id is string => !!id)
-    if (idShunXu.length > 0) {
-      const idDaoJiLu = new Map(yuanShi.map((item) => [item.id, item]))
-      const chongXinPaiXu: 档案详情[] = []
-      for (const id of idShunXu) {
-        const item = idDaoJiLu.get(id)
-        if (item) chongXinPaiXu.push(item)
-      }
-      // 兜底：未带 id 的卡片（理论上不会出现在拖拽顺序里）原样追加，避免丢失
-      for (const item of yuanShi) {
-        if (!item.id || !idShunXu.includes(item.id)) chongXinPaiXu.push(item)
-      }
-      fenLeiZu[zhuangTai] = chongXinPaiXu
+  if (!shiFouShouDongPaiXu.value) {
+    chongZhiYuLan()
+    return
+  }
+
+  const qianZhao = tuoZhuaiQianIdShunXu.value[zhuangTai]
+
+  // 权威重算（新）：以「放下瞬间指针坐标」计算最终落点，覆盖拖拽过程中的预览漂移，
+  // 保证提交顺序与松手位置完全一致。仅当能确定源卡片与指针坐标时生效。
+  const yuanId = draggingId.value
+  const yuan = draggingYuanSuoYin.value
+  if (yuanId && yuan >= 0 && qianZhao.includes(yuanId)) {
+    const yuanShiJian = shiJian?.originalEvent as (MouseEvent | PointerEvent | TouchEvent | undefined)
+    const zhiBiaoY =
+      yuanShiJian && 'clientY' in yuanShiJian
+        ? yuanShiJian.clientY
+        : (yuanShiJian as TouchEvent | undefined)?.changedTouches?.[0]?.clientY
+    if (typeof zhiBiaoY === 'number') {
+      const muBiao = jiSuanMuBiaoSuoYin(yuanXinZuoBiao.value, zhiBiaoY, yuan)
+      const ids = jiSuanYuLanShunXu(qianZhao, yuan, muBiao)
+      const idDaoJiLu = new Map<string, 档案详情>(fenLeiZu[zhuangTai].map((i) => [i.id, i]))
+      fenLeiZu[zhuangTai] = ids
+        .map((id) => idDaoJiLu.get(id))
+        .filter((i): i is 档案详情 => !!i)
     }
   }
+
+  const dangQianIds = fenLeiZu[zhuangTai].map((item) => item.id)
+  // 库的 onUpdate 已通过 v-model 把模型重排为最终顺序（native 模式），直接采用并持久化
+  const onUpdateYiChongPai = JSON.stringify(dangQianIds) !== JSON.stringify(qianZhao)
+
+  if (!onUpdateYiChongPai) {
+    const zhao = [...dangQianIds]
+    let yingYong = false
+
+    // 兜底 1：事件索引（native 模式可靠）
+    const yuanSuoYinF = shiJian?.oldDraggableIndex ?? shiJian?.oldIndex
+    const muBiaoSuoYinF = shiJian?.newDraggableIndex ?? shiJian?.newIndex
+    if (
+      typeof yuanSuoYinF === 'number' &&
+      typeof muBiaoSuoYinF === 'number' &&
+      yuanSuoYinF >= 0 &&
+      yuanSuoYinF < zhao.length &&
+      muBiaoSuoYinF >= 0 &&
+      muBiaoSuoYinF <= zhao.length &&
+      yuanSuoYinF !== muBiaoSuoYinF
+    ) {
+      const [yiDongId] = zhao.splice(yuanSuoYinF, 1)
+      const muBiao = muBiaoSuoYinF > zhao.length ? zhao.length : muBiaoSuoYinF
+      zhao.splice(muBiao, 0, yiDongId)
+      yingYong = true
+    }
+
+    // 兜底 2（fallback 模式根因修复）：事件索引与真实 DOM 均不可信（真实拖拽元素 c 在
+    // 拖拽过程中不被移动，故 oldIndex/newIndex/oldDraggableIndex/newDraggableIndex 恒等于起始位，
+    // 容器 DOM 顺序也始终为原序）。唯一可靠的落点来源是「放下瞬间指针坐标」：以被拖卡片 id
+    // 定位源下标，以指针相对各卡片矩形中心的位置推算目标下标。
+    if (!yingYong) {
+      const rongQi = shiJian?.to as HTMLElement | undefined
+      const yuanIdF = shiJian?.item instanceof HTMLElement ? shiJian.item.getAttribute('data-id') ?? undefined : undefined
+      const yuanIndex = yuanIdF ? dangQianIds.indexOf(yuanIdF) : typeof yuanSuoYinF === 'number' ? yuanSuoYinF : -1
+      const yuanShiJian = shiJian?.originalEvent as (MouseEvent | PointerEvent | TouchEvent | undefined)
+      const zhiBiaoY =
+        yuanShiJian && 'clientY' in yuanShiJian
+          ? yuanShiJian.clientY
+          : (yuanShiJian as TouchEvent | undefined)?.changedTouches?.[0]?.clientY
+      if (
+        rongQi &&
+        typeof rongQi.querySelectorAll === 'function' &&
+        typeof yuanIndex === 'number' &&
+        yuanIndex >= 0 &&
+        yuanIndex < dangQianIds.length &&
+        typeof zhiBiaoY === 'number'
+      ) {
+        const paiPiao = Array.from(rongQi.querySelectorAll('.zhanji-kapian')) as HTMLElement[]
+        let muBiaoIndex = paiPiao.findIndex((el) => {
+          const r = el.getBoundingClientRect()
+          return zhiBiaoY < r.top + r.height / 2
+        })
+        if (muBiaoIndex === -1) muBiaoIndex = paiPiao.length
+        // muBiaoIndex 为「含被拖元素」的当前 DOM 顺序插入点，换算为移除被拖元素后的目标下标
+        const muBiao = yuanIndex < muBiaoIndex ? muBiaoIndex - 1 : muBiaoIndex
+        if (muBiao !== yuanIndex && muBiao >= 0 && muBiao <= dangQianIds.length) {
+          const [id] = zhao.splice(yuanIndex, 1)
+          zhao.splice(muBiao, 0, id)
+          yingYong = true
+        }
+      }
+    }
+
+    if (yingYong) {
+      const idDaoJiLu = new Map<string, 档案详情>(fenLeiZu[zhuangTai].map((i) => [i.id, i]))
+      fenLeiZu[zhuangTai] = zhao
+        .map((id) => idDaoJiLu.get(id))
+        .filter((i): i is 档案详情 => !!i)
+    }
+  }
+
+  // 持久化到 localStorage（按用户维度存储）
   const map = huoQuPaiXuMap()
   map[zhuangTai] = fenLeiZu[zhuangTai].map((item) => item.id).filter((id): id is string => !!id)
   baoCunPaiXuMap(map)
+  chongZhiYuLan()
 }
 
 onMounted(() => {
   jiaZaiShuJu()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('pointermove', onTuoZhuaiYiDong)
+  window.removeEventListener('touchmove', onTuoZhuaiYiDong)
 })
 
 defineExpose({
@@ -1360,10 +1558,26 @@ defineExpose({
 }
 
 .zhanji-kapian.sortable-ghost {
-  visibility: hidden;
+  /* 实时预览：被拖卡片的「落点空位」——霓虹虚线轮廓，隐藏卡片内容，仅作落点提示 */
+  background: rgba(255, 107, 157, 0.06) !important;
+  border: 1.5px dashed rgba(255, 107, 157, 0.75) !important;
+  box-shadow:
+    0 0 0 4px rgba(255, 107, 157, 0.10),
+    0 10px 26px rgba(255, 107, 157, 0.20) !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease !important;
+  pointer-events: none;
   /* Req1：拖拽预览空位同样禁止选中文字 */
   user-select: none;
   -webkit-user-select: none;
+}
+
+.zhanji-kapian.sortable-ghost > * {
+  opacity: 0 !important;
+}
+
+/* 拖拽实时预览：其余卡片随落点滑动错位的 FLIP 过渡（GPU 加速，前沿缓动曲线） */
+.zhanji-kapian-move {
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .zhanji-kapian.sortable-chosen {
@@ -1373,7 +1587,7 @@ defineExpose({
 }
 
 .zhanji-kapian.sortable-drag {
-  background: rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.14) !important;
   box-shadow:
     0 20px 50px rgba(0, 0, 0, 0.5),
     0 0 0 1px rgba(255, 107, 157, 0.4) !important;
@@ -1381,7 +1595,7 @@ defineExpose({
   opacity: 1 !important;
   cursor: grabbing !important;
   border-radius: 16px;
-  /* Req1：跟随光标的拖拽副本（force-fallback）禁止选中文字 */
+  /* Req1：拖拽过程中禁止选中文字 */
   user-select: none;
   -webkit-user-select: none;
 }
@@ -1406,6 +1620,13 @@ defineExpose({
   }
   .zhanji-kapian.sortable-drag {
     transform: none !important;
+  }
+  .zhanji-kapian.sortable-ghost {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .zhanji-kapian-move {
+    transition: none !important;
   }
 }
 </style>

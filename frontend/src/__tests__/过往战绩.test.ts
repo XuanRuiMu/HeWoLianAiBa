@@ -795,9 +795,12 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(wrapper.findAll('.zhanji-kapian.xuanZhong').length).toBe(1)
     })
 
-    it('拖拽保留即将放置位置的透明空位（sortable-ghost 设为 visibility:hidden）', () => {
-      // 「即将放置位置的预览」保留为透明空位（隐藏内容与边框，但保留占位空间、留出落点）
-      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-ghost\s*\{[^}]*visibility:\s*hidden/)
+    it('拖拽时源卡片隐藏、目标处显示霓虹虚线落点空位（sortable-ghost 设为虚线边框且隐藏内容）', () => {
+      // 「即将放置位置的预览」为霓虹虚线轮廓落点空位
+      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-ghost\s*\{[^}]*dashed/)
+      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-ghost\s*\{[^}]*rgba\(255,\s*107,\s*157/)
+      // 落点空位内卡片内容隐藏，仅保留轮廓
+      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-ghost\s*>\s*\*\s*\{[^}]*opacity:\s*0/)
       // 「手里拽着的」卡片样式保留
       expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-drag\s*\{[^}]*opacity:\s*1/)
     })
@@ -832,7 +835,9 @@ describe('FP-13 过往战绩与复盘前端', () => {
       const lieBiao = wrapper.find('.zhanji-liebiao')
       expect(lieBiao.exists()).toBe(true)
       expect(lieBiao.classes()).not.toContain('tuo-zhuai-zhong')
-      ;(wrapper.vm as unknown as { onTuoZhuaiKaiShi: () => void }).onTuoZhuaiKaiShi()
+      ;(wrapper.vm as unknown as { onTuoZhuaiKaiShi: (z: string) => void }).onTuoZhuaiKaiShi(
+        'jinxingzhong',
+      )
       await flushPromises()
 
       expect(wrapper.find('.zhanji-liebiao').classes()).toContain('tuo-zhuai-zhong')
@@ -849,7 +854,9 @@ describe('FP-13 过往战绩与复盘前端', () => {
       )
 
       const { wrapper } = await mountZuJian()
-      ;(wrapper.vm as unknown as { onTuoZhuaiKaiShi: () => void }).onTuoZhuaiKaiShi()
+      ;(wrapper.vm as unknown as { onTuoZhuaiKaiShi: (z: string) => void }).onTuoZhuaiKaiShi(
+        'shengli',
+      )
       await flushPromises()
       expect(wrapper.find('.zhanji-liebiao').classes()).toContain('tuo-zhuai-zhong')
       ;(wrapper.vm as unknown as { onTuoZhuaiJieShu: (z: string) => void }).onTuoZhuaiJieShu(
