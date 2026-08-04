@@ -602,7 +602,7 @@ export const zhaXingBianTi: Record<MBTILeiXing, ZhaXingPeiZhi> = {
     shiPoXianSuo: ['热情突然冷却', '喜欢新鲜感', '不愿深入聊天'],
   },
   ESFP: {
-    zhaFaMiaoShu: '用灿烂笑容和热情包围你，但 attention 分给很多人。',
+    zhaFaMiaoShu: '用灿烂笑容和热情包围你，但注意力分给很多人。',
     huaShu: ['你是最重要的啦', '我只是人缘好', '别那么小气嘛'],
     baoLuFangShi: '对很多人都这样热情，让你误以为自己很特别。',
     shiPoXianSuo: ['社交圈很杂', '对异性边界模糊', '经常忽略你的感受'],

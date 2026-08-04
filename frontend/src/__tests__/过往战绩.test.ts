@@ -8,14 +8,22 @@ import 过往战绩 from '@/views/过往战绩.vue'
 import { huoQuFanYi } from '@/config/translations'
 import type { DangAnXiangQing } from '@/types'
 
-vi.mock('vue-draggable-plus', () => ({
-  VueDraggable: {
-    name: 'VueDraggable',
-    props: { modelValue: { type: Array, default: () => [] } },
-    emits: ['update:modelValue', 'end'],
-    template: '<div class="vue-draggable-stub"><slot /></div>',
-  },
-}))
+// 忠实 stub：持有 modelValue 并渲染 slot，使父组件 v-for 真实落 DOM，
+// 供 onTuoZhuaiJieShu 按真实落点顺序读取。拖拽由测试以 $emit 模拟。
+vi.mock('vue-draggable-plus', async () => {
+  const vue = await vi.importActual<typeof import('vue')>('vue')
+  return {
+    VueDraggable: vue.defineComponent({
+      name: 'VueDraggable',
+      props: { modelValue: { type: Array, default: () => [] }, disabled: { type: Boolean } },
+      emits: ['update:modelValue', 'end'],
+      setup(_props, { slots }) {
+        return () =>
+          vue.h('div', { class: 'vue-draggable-stub' }, slots.default ? slots.default() : [])
+      },
+    }),
+  }
+})
 
 const guoWangZhanJiYuanMa = readFileSync(resolve(__dirname, '../views/过往战绩.vue'), 'utf8')
 
@@ -504,6 +512,8 @@ describe('FP-13 过往战绩与复盘前端', () => {
       ).fenLeiZu
       const oldArr = [...fenLeiZuRef.jinxingzhong]
       fenLeiZuRef.jinxingzhong = [oldArr[1], oldArr[0]]
+      // 先让 DOM 按新顺序重渲染（模拟真实拖拽后 DOM 已落位），再触发结束持久化
+      await flushPromises()
       ;(
         wrapper.vm as unknown as { onTuoZhuaiJieShu: (zhuangTai: string) => void }
       ).onTuoZhuaiJieShu('jinxingzhong')

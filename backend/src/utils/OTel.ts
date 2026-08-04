@@ -33,6 +33,15 @@ export function chuShiHuaOTel(): void {
 
   sdkShiLi.start()
   yiChuShiHua = true
+
+  try {
+    // 若核心模块已在本模块之前被加载，require-in-the-middle 的 hook
+    // 不会自动应用 patch，需主动触发一次 require 使其生效
+    require('http')
+    require('https')
+  } catch {
+    // 忽略加载失败
+  }
 }
 
 export function huoQuDangQianTraceId(): string {

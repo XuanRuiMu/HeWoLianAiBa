@@ -1,5 +1,5 @@
 <template>
-  <div class="zhanji-yemian">
+  <div ref="genYuan" class="zhanji-yemian">
     <main class="zhanji-liebiao" :class="{ 'tuo-zhuai-zhong': tuoZhuaiZhong }">
       <div v-if="jiaZaiZhong" class="jiazai-zhuangtai">
         {{ huoQuFanYi('zhanJi', 'jiaZaiZhong') }}
@@ -70,13 +70,44 @@
             </button>
           </div>
         </div>
-        <div v-for="fenLei in fenLeiXinXiList" :key="fenLei.zhuangTai" class="zhanji-fenlei-zu">
+        <div class="paixu-gongju-lan">
+          <span class="paixu-biaoqian">{{ huoQuFanYi('zhanJi', 'paiXuBiaoQian') }}</span>
+          <div class="paixu-weidu-zu">
+            <button
+              v-for="xuanXiang in paiXuXuanXiangList"
+              :key="xuanXiang.zhi"
+              class="paixu-weidu-anniu"
+              :class="{ 'paixu-weidu-anniu--jihuo': paiXuWeiDu === xuanXiang.zhi }"
+              :aria-pressed="paiXuWeiDu === xuanXiang.zhi ? 'true' : 'false'"
+              @click="qieHuanPaiXuWeiDu(xuanXiang.zhi)"
+            >
+              {{ xuanXiang.biaoTi }}
+            </button>
+          </div>
+          <button
+            class="paixu-fangxiang-anniu"
+            :disabled="shiFouShouDongPaiXu"
+            @click="qieHuanPaiXuFangXiang"
+          >
+            {{
+              paiXuFangXiang === 'jiangXu'
+                ? huoQuFanYi('zhanJi', 'paiXuJiangXu')
+                : huoQuFanYi('zhanJi', 'paiXuShengXu')
+            }}
+          </button>
+        </div>
+        <div
+          v-for="fenLei in fenLeiXinXiList"
+          :key="fenLei.zhuangTai"
+          class="zhanji-fenlei-zu"
+          :data-zhuang-tai="fenLei.zhuangTai"
+        >
           <h2 class="zhanji-fenlei-biaoti">
             <span class="fenlei-tubiao">{{ fenLei.tuBiao }}</span>
             {{ fenLei.biaoTi }}
-            <span class="fenlei-shu-liang">{{ fenLeiZu[fenLei.zhuangTai].length }}</span>
+            <span class="fenlei-shu-liang">{{ xianShiFenLeiZu[fenLei.zhuangTai].length }}</span>
             <button
-              v-if="fenLeiZu[fenLei.zhuangTai].length > 0"
+              v-if="xianShiFenLeiZu[fenLei.zhuangTai].length > 0"
               class="fenlei-quan-xuan-anniu"
               @click="qieHuanFenLeiQuanXuan(fenLei.zhuangTai)"
             >
@@ -91,8 +122,9 @@
             </button>
           </h2>
           <VueDraggable
-            v-if="fenLeiZu[fenLei.zhuangTai].length > 0"
+            v-if="xianShiFenLeiZu[fenLei.zhuangTai].length > 0"
             v-model="fenLeiZu[fenLei.zhuangTai]"
+            :disabled="!shiFouShouDongPaiXu"
             :animation="200"
             :filter="'.gouxuan-anniu, .caozuo-anniu'"
             :prevent-on-filter="false"
@@ -103,16 +135,15 @@
             fallback-class="sortable-drag"
             :group="{ name: fenLei.zhuangTai, pull: false, put: false }"
             class="zhanji-liebiao-neirong"
-            @choose="onTuoZhuaiKaiShi"
             @start="onTuoZhuaiKaiShi"
-            @unchoose="onTuoZhuaiTingZhi"
             @end="onTuoZhuaiJieShu(fenLei.zhuangTai)"
           >
             <div
-              v-for="(dangAn, suoYin) in fenLeiZu[fenLei.zhuangTai]"
+              v-for="(dangAn, suoYin) in xianShiFenLeiZu[fenLei.zhuangTai]"
               :key="dangAn.id ?? `zhanji-${fenLei.zhuangTai}-${suoYin}`"
               class="zhanji-kapian"
               :class="{ xuanZhong: dangAn.id && xuanZhongIds.has(dangAn.id) }"
+              :data-id="dangAn.id"
             >
               <button
                 class="gouxuan-anniu gouxuan-anniu--kapian"
@@ -224,6 +255,10 @@ import { 使用用户仓库 } from '@/stores/用户'
 
 type FenLeiZhuangTai = 'jinxingzhong' | 'shengli' | 'shibai'
 
+// 手动排序 = 拖拽结果；其余为自动排序维度，选中自动维度时拖拽暂时停用，切回手动即恢复原有拖拽顺序
+type PaiXuWeiDu = 'shouDong' | 'chuangJianShiJian' | 'zuiHouDuiHuaShiJian' | 'mingCheng' | 'xingGe'
+type PaiXuFangXiang = 'jiangXu' | 'shengXu'
+
 interface FenLeiXinXi {
   zhuangTai: FenLeiZhuangTai
   tuBiao: string
@@ -231,12 +266,31 @@ interface FenLeiXinXi {
   kongWenBen: string
 }
 
+interface PaiXuXuanXiang {
+  zhi: PaiXuWeiDu
+  biaoTi: string
+}
+
+// 未登录时的兜底键；身份就绪后会迁移到 `<键>_<用户id>`
+const HOU_BEI_PAI_XU_JIAN = 'zhanJiPaiXu'
+const HOU_BEI_PIAN_HAO_JIAN = 'zhanJiPaiXuPianHao'
+const PAI_XU_WEI_DU_JI_HE: PaiXuWeiDu[] = [
+  'shouDong',
+  'chuangJianShiJian',
+  'zuiHouDuiHuaShiJian',
+  'mingCheng',
+  'xingGe',
+]
+
 const router = useRouter()
 const yongHuCangKu = 使用用户仓库()
 const jiaZaiZhong = ref(true)
 const tuoZhuaiZhong = ref(false)
+const genYuan = ref<HTMLElement>()
 const xuanZhongIds = ref<Set<string>>(new Set())
 const zuiHouDianJiSuoYin = ref<number | null>(null)
+const paiXuWeiDu = ref<PaiXuWeiDu>('shouDong')
+const paiXuFangXiang = ref<PaiXuFangXiang>('jiangXu')
 const fenLeiZu = reactive<Record<FenLeiZhuangTai, 档案详情[]>>({
   jinxingzhong: [],
   shengli: [],
@@ -245,8 +299,23 @@ const fenLeiZu = reactive<Record<FenLeiZhuangTai, 档案详情[]>>({
 
 const paiXuCunChuJian = computed(() => {
   const yongHuId = yongHuCangKu.dangQianYongHu?.id
-  return yongHuId ? `zhanJiPaiXu_${yongHuId}` : 'zhanJiPaiXu'
+  return yongHuId ? `${HOU_BEI_PAI_XU_JIAN}_${yongHuId}` : HOU_BEI_PAI_XU_JIAN
 })
+
+const pianHaoCunChuJian = computed(() => {
+  const yongHuId = yongHuCangKu.dangQianYongHu?.id
+  return yongHuId ? `${HOU_BEI_PIAN_HAO_JIAN}_${yongHuId}` : HOU_BEI_PIAN_HAO_JIAN
+})
+
+const shiFouShouDongPaiXu = computed(() => paiXuWeiDu.value === 'shouDong')
+
+const paiXuXuanXiangList = computed<PaiXuXuanXiang[]>(() => [
+  { zhi: 'shouDong', biaoTi: huoQuFanYi('zhanJi', 'tuoDongPaiXu') },
+  { zhi: 'chuangJianShiJian', biaoTi: huoQuFanYi('zhanJi', 'paiXuChuangJianShiJian') },
+  { zhi: 'zuiHouDuiHuaShiJian', biaoTi: huoQuFanYi('zhanJi', 'paiXuZuiHouDuiHuaShiJian') },
+  { zhi: 'mingCheng', biaoTi: huoQuFanYi('zhanJi', 'paiXuMingCheng') },
+  { zhi: 'xingGe', biaoTi: huoQuFanYi('zhanJi', 'paiXuXingGe') },
+])
 
 const fenLeiXinXiList = computed<FenLeiXinXi[]>(() => [
   {
@@ -269,11 +338,140 @@ const fenLeiXinXiList = computed<FenLeiXinXi[]>(() => [
   },
 ])
 
+function huoQuShiJianChuo(zhi: string | null | undefined): number | null {
+  if (!zhi) return null
+  const shiJianChuo = new Date(zhi).getTime()
+  return Number.isNaN(shiJianChuo) ? null : shiJianChuo
+}
+
+// 未知值（空时间、空名称、空性格）恒定沉底，不随升降序翻转，保证「未知」档始终可见且位置稳定
+function biJiaoShuZi(zuo: number | null, you: number | null, fangXiang: number): number {
+  if (zuo === null && you === null) return 0
+  if (zuo === null) return 1
+  if (you === null) return -1
+  if (zuo === you) return 0
+  return (zuo < you ? -1 : 1) * fangXiang
+}
+
+function biJiaoWenBen(zuo: string, you: string, fangXiang: number): number {
+  if (!zuo && !you) return 0
+  if (!zuo) return 1
+  if (!you) return -1
+  return zuo.localeCompare(you, 'zh-CN') * fangXiang
+}
+
+function huoQuMingChengJian(item: 档案详情): string {
+  return (item.jiao_se_ming_zi || item.id || '').trim()
+}
+
+// 先一次性抽取排序键再比较，避免比较器内重复解析时间字符串（数百条时降到 O(n) 次解析）
+function paiXuFenLei(lieBiao: 档案详情[]): 档案详情[] {
+  const weiDu = paiXuWeiDu.value
+  const fangXiang = paiXuFangXiang.value === 'jiangXu' ? -1 : 1
+  const shiFouWenBenWeiDu = weiDu === 'mingCheng' || weiDu === 'xingGe'
+  const zhuangShiXiang = lieBiao.map((item, suoYin) => ({
+    item,
+    suoYin,
+    chuangJianJian: huoQuShiJianChuo(item.chuang_jian_shi_jian),
+    shuZiJian:
+      weiDu === 'chuangJianShiJian'
+        ? huoQuShiJianChuo(item.chuang_jian_shi_jian)
+        : weiDu === 'zuiHouDuiHuaShiJian'
+          ? huoQuShiJianChuo(item.zui_hou_xiao_xi_shi_jian)
+          : null,
+    wenBenJian:
+      weiDu === 'mingCheng'
+        ? huoQuMingChengJian(item)
+        : weiDu === 'xingGe'
+          ? (item.mbti_lei_xing || '').trim()
+          : '',
+  }))
+  zhuangShiXiang.sort((zuo, you) => {
+    const zhuJieGuo = shiFouWenBenWeiDu
+      ? biJiaoWenBen(zuo.wenBenJian, you.wenBenJian, fangXiang)
+      : biJiaoShuZi(zuo.shuZiJian, you.shuZiJian, fangXiang)
+    if (zhuJieGuo !== 0) return zhuJieGuo
+    const ciJieGuo = biJiaoShuZi(zuo.chuangJianJian, you.chuangJianJian, -1)
+    if (ciJieGuo !== 0) return ciJieGuo
+    return zuo.suoYin - you.suoYin
+  })
+  return zhuangShiXiang.map((tiao) => tiao.item)
+}
+
+// computed 天然缓存：仅在分类数据或排序偏好变化时重算；手动排序直接复用原数组引用，
+// 保证 VueDraggable 的 v-model 数组与 DOM 顺序完全一致，索引计算不会错位
+const xianShiFenLeiZu = computed<Record<FenLeiZhuangTai, 档案详情[]>>(() => {
+  if (shiFouShouDongPaiXu.value) {
+    return {
+      jinxingzhong: fenLeiZu.jinxingzhong,
+      shengli: fenLeiZu.shengli,
+      shibai: fenLeiZu.shibai,
+    }
+  }
+  return {
+    jinxingzhong: paiXuFenLei(fenLeiZu.jinxingzhong),
+    shengli: paiXuFenLei(fenLeiZu.shengli),
+    shibai: paiXuFenLei(fenLeiZu.shibai),
+  }
+})
+
 const dangAnLieBiao = computed<档案详情[]>(() => [
-  ...fenLeiZu.jinxingzhong,
-  ...fenLeiZu.shengli,
-  ...fenLeiZu.shibai,
+  ...xianShiFenLeiZu.value.jinxingzhong,
+  ...xianShiFenLeiZu.value.shengli,
+  ...xianShiFenLeiZu.value.shibai,
 ])
+
+// 身份就绪前读到的是兜底键，就绪后把兜底键的历史数据迁移到真实键，避免读写键错配导致顺序丢失
+function qianYiHouBeiJian(houBeiJian: string, shiJiJian: string) {
+  if (shiJiJian === houBeiJian) return
+  try {
+    const houBeiZhi = localStorage.getItem(houBeiJian)
+    if (houBeiZhi === null) return
+    if (localStorage.getItem(shiJiJian) === null) {
+      localStorage.setItem(shiJiJian, houBeiZhi)
+    }
+    localStorage.removeItem(houBeiJian)
+  } catch {
+    // 忽略存储失败
+  }
+}
+
+function huiFuPaiXuPianHao() {
+  try {
+    const yuan = localStorage.getItem(pianHaoCunChuJian.value)
+    if (!yuan) return
+    const jieXi = JSON.parse(yuan)
+    if (PAI_XU_WEI_DU_JI_HE.includes(jieXi?.weiDu)) paiXuWeiDu.value = jieXi.weiDu
+    if (jieXi?.fangXiang === 'jiangXu' || jieXi?.fangXiang === 'shengXu') {
+      paiXuFangXiang.value = jieXi.fangXiang
+    }
+  } catch {
+    // 解析失败时沿用默认偏好
+  }
+}
+
+function baoCunPaiXuPianHao() {
+  try {
+    localStorage.setItem(
+      pianHaoCunChuJian.value,
+      JSON.stringify({ weiDu: paiXuWeiDu.value, fangXiang: paiXuFangXiang.value }),
+    )
+  } catch {
+    // 忽略存储失败
+  }
+}
+
+function qieHuanPaiXuWeiDu(weiDu: PaiXuWeiDu) {
+  if (paiXuWeiDu.value === weiDu) return
+  paiXuWeiDu.value = weiDu
+  baoCunPaiXuPianHao()
+}
+
+function qieHuanPaiXuFangXiang() {
+  if (shiFouShouDongPaiXu.value) return
+  paiXuFangXiang.value = paiXuFangXiang.value === 'jiangXu' ? 'shengXu' : 'jiangXu'
+  baoCunPaiXuPianHao()
+}
 
 function huoQuPaiXuMap(): Record<FenLeiZhuangTai, string[]> {
   try {
@@ -313,7 +511,15 @@ function yingYongPaiXuLieBiao(lieBiao: 档案详情[], paiXuIds: string[]): 档�
       idDaoJiLu.delete(id)
     }
   }
-  return [...paiXuHou, ...Array.from(idDaoJiLu.values()), ...wuIdJiLu]
+  // 未出现在已存顺序里的都是新建对话，按创建时间倒序置顶
+  const xinJianJiLu = Array.from(idDaoJiLu.values()).sort((zuo, you) =>
+    biJiaoShuZi(
+      huoQuShiJianChuo(zuo.chuang_jian_shi_jian),
+      huoQuShiJianChuo(you.chuang_jian_shi_jian),
+      -1,
+    ),
+  )
+  return [...xinJianJiLu, ...paiXuHou, ...wuIdJiLu]
 }
 
 function huoQuFenLeiZhuangTai(item: 档案详情): FenLeiZhuangTai {
@@ -382,6 +588,16 @@ function zhuangTaiYangShi(jieGuoLeiXing: string | undefined): string {
 
 async function jiaZaiShuJu() {
   jiaZaiZhong.value = true
+  // 排序存储键依赖用户 id，而身份是异步解析的。先等身份就绪门，
+  // 否则首屏会用兜底键读顺序、拖拽后又写入带 id 的键，读写错配导致刷新后顺序丢失
+  try {
+    await yongHuCangKu.queBaoShenFenJiuXu()
+  } catch {
+    // 身份加载失败时退回兜底键，不阻断战绩渲染
+  }
+  qianYiHouBeiJian(HOU_BEI_PAI_XU_JIAN, paiXuCunChuJian.value)
+  qianYiHouBeiJian(HOU_BEI_PIAN_HAO_JIAN, pianHaoCunChuJian.value)
+  huiFuPaiXuPianHao()
   try {
     const list = await huoQuDangAnLieBiao()
     const map = huoQuPaiXuMap()
@@ -526,13 +742,37 @@ function onTuoZhuaiKaiShi() {
   tuoZhuaiZhong.value = true
 }
 
-function onTuoZhuaiTingZhi() {
-  tuoZhuaiZhong.value = false
-}
-
 function onTuoZhuaiJieShu(zhuangTai: FenLeiZhuangTai) {
   tuoZhuaiZhong.value = false
   window.getSelection()?.removeAllRanges()
+  // 自动排序维度下拖拽已停用，此时不覆盖用户的手动顺序
+  if (!shiFouShouDongPaiXu.value) return
+  // 以拖拽结束后 DOM 的真实落点顺序为准同步模型。vue-draggable-plus 在
+  // force-fallback 场景下 onUpdate 的 v-model 写回可能不落地，若仅依赖
+  // update:modelValue 会出现「位置回弹、刷新后不保持」。这里直接读取用户
+  // 实际拖出的顺序，保证模型与所见一致并持久化，从根因上消除回弹/不持久化。
+  const rongQi = genYuan.value?.querySelector<HTMLElement>(
+    `.zhanji-fenlei-zu[data-zhuang-tai="${zhuangTai}"]`,
+  )
+  const yuanShi = fenLeiZu[zhuangTai]
+  if (rongQi) {
+    const idShunXu = Array.from(rongQi.querySelectorAll<HTMLElement>('.zhanji-kapian'))
+      .map((jie) => jie.dataset.id)
+      .filter((id): id is string => !!id)
+    if (idShunXu.length > 0) {
+      const idDaoJiLu = new Map(yuanShi.map((item) => [item.id, item]))
+      const chongXinPaiXu: 档案详情[] = []
+      for (const id of idShunXu) {
+        const item = idDaoJiLu.get(id)
+        if (item) chongXinPaiXu.push(item)
+      }
+      // 兜底：未带 id 的卡片（理论上不会出现在拖拽顺序里）原样追加，避免丢失
+      for (const item of yuanShi) {
+        if (!item.id || !idShunXu.includes(item.id)) chongXinPaiXu.push(item)
+      }
+      fenLeiZu[zhuangTai] = chongXinPaiXu
+    }
+  }
   const map = huoQuPaiXuMap()
   map[zhuangTai] = fenLeiZu[zhuangTai].map((item) => item.id).filter((id): id is string => !!id)
   baoCunPaiXuMap(map)
@@ -544,6 +784,11 @@ onMounted(() => {
 
 defineExpose({
   fenLeiZu,
+  xianShiFenLeiZu,
+  paiXuWeiDu,
+  paiXuFangXiang,
+  qieHuanPaiXuWeiDu,
+  qieHuanPaiXuFangXiang,
   tuoZhuaiZhong,
   onTuoZhuaiKaiShi,
   onTuoZhuaiJieShu,
@@ -713,6 +958,76 @@ defineExpose({
 }
 
 .quxiao-quanxuan-anniu:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.paixu-gongju-lan {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 14px;
+}
+
+.paixu-biaoqian {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wenben-ciuse);
+  flex-shrink: 0;
+}
+
+.paixu-weidu-zu {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.paixu-weidu-anniu {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--wenben-ciuse);
+  transition: all 0.2s ease;
+}
+
+.paixu-weidu-anniu:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--wenben-zhuse);
+}
+
+.paixu-weidu-anniu--jihuo {
+  background: var(--yanse-zhanji-beijing, rgba(255, 107, 157, 0.12));
+  color: var(--an-niu-bei-jing, #ff6b9d);
+  box-shadow: inset 0 0 0 1px rgba(255, 107, 157, 0.4);
+}
+
+.paixu-fangxiang-anniu {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(107, 140, 166, 0.2);
+  color: var(--wenben-zhuse);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.paixu-fangxiang-anniu:hover:not(:disabled) {
+  background: rgba(107, 140, 166, 0.35);
+  transform: translateY(-1px);
+}
+
+.paixu-fangxiang-anniu:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }

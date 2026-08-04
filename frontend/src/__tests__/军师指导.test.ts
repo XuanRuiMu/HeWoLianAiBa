@@ -950,6 +950,22 @@ describe('FP-02 军师指导"已指导过相同聊天内容"按规则提示', ()
     expect(anNiu?.attributes('disabled')).toBeDefined()
   })
 
+  it('会话级提示在多军师卡片下只渲染一条且位于列表之外', async () => {
+    vi.mocked(huoQuJunShiZhiDaoZhuangTai).mockResolvedValue({
+      zhuangTai: null,
+      keZaiCiZhiDao: false,
+      youLiaoTianJiLu: false,
+    })
+
+    const { wrapper } = await mountJunShiZhiDao()
+
+    expect(wrapper.findAll('.junshi-kapian').length).toBe(3)
+    expect(wrapper.findAll('.yi-zhidao-tishi').length).toBe(1)
+    expect(wrapper.findAll('.wu-liao-tian-tishi').length).toBe(1)
+    expect(wrapper.find('.junshi-liebiao .yi-zhidao-tishi').exists()).toBe(false)
+    expect(wrapper.find('.junshi-liebiao .wu-liao-tian-tishi').exists()).toBe(false)
+  })
+
   it('加载中时不显示提示', async () => {
     vi.mocked(huoQuJunShiLieBiao).mockImplementation(() => new Promise(() => []))
 

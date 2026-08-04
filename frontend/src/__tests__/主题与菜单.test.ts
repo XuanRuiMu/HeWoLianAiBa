@@ -216,10 +216,33 @@ describe('FP-18 主题与UI', () => {
       expect(caiDanYuanMa).toMatch(/\.quanju-caidan\s*\{[^}]*height:\s*52px/)
     })
 
-    it('未登录时不渲染用户下拉菜单（位置空出不塌缩）', async () => {
+    it('未登录时原个人信息位置复用已登录模块外观，名称显示「未登录」（无下拉菜单）', async () => {
       const { wrapper } = await mountCaiDan({ luJing: '/login' })
+      // 未登录态与已登录态共用同一 .yonghu-xuanxiang 模块（头像+名称），仅文本不同
+      const yongHu = wrapper.find('.yonghu-xuanxiang')
+      expect(yongHu.exists()).toBe(true)
+      expect(wrapper.find('.yonghu-mingcheng').text()).toBe(huoQuFanYi('caidan', 'weiDengLu'))
+      // 未登录不渲染下拉菜单与展开箭头
       expect(wrapper.find('.yonghu-xiala').exists()).toBe(false)
-      expect(wrapper.find('.yonghu-xuanxiang').exists()).toBe(false)
+      expect(wrapper.find('.zhankai-jiantou').exists()).toBe(false)
+      // 旧的独立按钮/标签类已移除
+      expect(wrapper.find('.weidenglu-anniu').exists()).toBe(false)
+      expect(wrapper.find('.weidenglu-biaoqian').exists()).toBe(false)
+    })
+
+    it('未登录（非登录页）原个人信息位置同样显示「未登录」', async () => {
+      const { wrapper } = await mountCaiDan({ luJing: '/guo-wang-zhan-ji' })
+      const yongHu = wrapper.find('.yonghu-xuanxiang')
+      expect(yongHu.exists()).toBe(true)
+      expect(wrapper.find('.yonghu-mingcheng').text()).toBe(huoQuFanYi('caidan', 'weiDengLu'))
+    })
+
+    it('点击未登录模块跳转到登录页', async () => {
+      const { wrapper, luYou } = await mountCaiDan({ luJing: '/' })
+      const pushSpy = vi.spyOn(luYou, 'push')
+      await wrapper.find('.yonghu-xuanxiang').trigger('click')
+      await flushPromises()
+      expect(pushSpy).toHaveBeenCalledWith('/login')
     })
 
     it('已登录时所有页面用户下拉菜单均显示', async () => {

@@ -129,7 +129,7 @@ export const AI_PEI_ZHI = {
   prompt: {
     liShiXiaoXiShuLiang: 20,
     junShiLiShiXiaoXiShuLiang: 10,
-    jiaoSeChenJinZhiLing: '【从现在起，你就是 TA】',
+    jiaoSeChenJinZhiLing: '【从现在起，你就是TA】',
   },
 
   haoGanDu: {

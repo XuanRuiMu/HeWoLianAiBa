@@ -1,5 +1,6 @@
 import type { RequestHandler } from 'express'
 import { chuangJianRiZhiYinQing, sheZhiRiZhiJiBie, guanBiRiZhiYinQing } from './日志引擎'
+import { fenFaRiZhi } from './日志订阅'
 import { peiZhi } from '../config'
 
 export type RiZhiJiBie = 'debug' | 'info' | 'warn' | 'error'
@@ -75,6 +76,9 @@ export function xieRuRiZhi(
   const heBingDuiXiang = { lei_xing: leiXing, ...shangXiaWen }
   const guoLvXiaoXi = String(guoLvMinGanZiDuan(xiaoXi))
   ;(yinQing as any)[jiBie](heBingDuiXiang, guoLvXiaoXi)
+  if (yinQing.isLevelEnabled(jiBie)) {
+    fenFaRiZhi(jiBie, leiXing, guoLvXiaoXi, shangXiaWen)
+  }
 }
 
 export const debug日志: RiZhiDuiXiang = {

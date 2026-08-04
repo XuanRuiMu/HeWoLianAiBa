@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import type { 用户, 登录状态 } from '@/types'
 import { dengLu, zhuCe, huoQuYongHuXinXi } from '@/api/认证'
 import { huoQuCuoWuXiangYing } from '@/api/请求'
-import { baoCunShuJu, shanChuShuJu } from '@/utils/storage'
+import { baoCunShuJu, duQuShuJu, shanChuShuJu } from '@/utils/storage'
 import { 令牌键 } from '@/constants/auth'
 import { 使用认证表单仓库 } from './认证表单'
 import { 使用聊天仓库 } from './聊天'
@@ -19,6 +19,42 @@ export const 使用用户仓库 = defineStore('用户', () => {
     cuo_wu_xin_xi: null,
   })
 
+  // 身份就绪门（Identity Readiness Gate）
+  //
+  // 身份来自异步接口，但排序存储键、管理员判定、菜单渲染等逻辑都在同步时机读取它。
+  // 缺少「就绪信号」会让这些读取落在身份解析完成之前，产生静默错误（读到 null / false）。
+  // 此处提供两条保障：
+  //   1) 同步水合——启动即用本地缓存点亮身份，消除首帧空窗；
+  //   2) 单飞就绪 Promise——任何需要确定身份的逻辑都可 await，且并发调用只发一次请求。
+  const shenFenYiJiuXu = ref(false)
+  let jiuXuNuoYan: Promise<void> | null = null
+
+  function shuiHeBenDiShenFen() {
+    if (!令牌.value) {
+      shenFenYiJiuXu.value = true
+      return
+    }
+    const huanCun = duQuShuJu<用户>('yonghu')
+    if (huanCun && huanCun.id) {
+      dangQianYongHu.value = huanCun
+      shiFouGuanLiYuan.value = huanCun.guan_li_yuan === true
+    }
+  }
+
+  async function queBaoShenFenJiuXu(): Promise<void> {
+    if (shenFenYiJiuXu.value) return
+    if (jiuXuNuoYan) return jiuXuNuoYan
+    jiuXuNuoYan = (async () => {
+      try {
+        await jiaZaiYongHu()
+      } finally {
+        shenFenYiJiuXu.value = true
+        jiuXuNuoYan = null
+      }
+    })()
+    return jiuXuNuoYan
+  }
+
   async function zhiXingDengLu(shouJiHao: string, miMa: string): Promise<boolean> {
     zhuangTai.value.deng_lu_zhong = true
     zhuangTai.value.cuo_wu_xin_xi = null
@@ -28,6 +64,7 @@ export const 使用用户仓库 = defineStore('用户', () => {
       localStorage.setItem(令牌键, jieGuo.令牌)
       dangQianYongHu.value = jieGuo.用户
       shiFouGuanLiYuan.value = jieGuo.是否管理员
+      shenFenYiJiuXu.value = true
       await jiaZaiYongHu()
       return jieGuo.新用户
     } catch (cuoWu: unknown) {
@@ -63,6 +100,7 @@ export const 使用用户仓库 = defineStore('用户', () => {
       localStorage.setItem(令牌键, jieGuo.令牌)
       dangQianYongHu.value = jieGuo.用户
       shiFouGuanLiYuan.value = jieGuo.是否管理员
+      shenFenYiJiuXu.value = true
       await jiaZaiYongHu()
       return true
     } catch (cuoWu: unknown) {
@@ -84,7 +122,10 @@ export const 使用用户仓库 = defineStore('用户', () => {
   }
 
   async function jiaZaiYongHu() {
-    if (!令牌.value) return
+    if (!令牌.value) {
+      shenFenYiJiuXu.value = true
+      return
+    }
     try {
       const shuJu = await huoQuYongHuXinXi()
       dangQianYongHu.value = shuJu
@@ -97,6 +138,8 @@ export const 使用用户仓库 = defineStore('用户', () => {
       if (xiangYing?.status === 401) {
         tuiChuDengLu()
       }
+    } finally {
+      shenFenYiJiuXu.value = true
     }
   }
 
@@ -112,6 +155,7 @@ export const 使用用户仓库 = defineStore('用户', () => {
     shiFouGuanLiYuan.value = false
     mingChengKeJian.value = true
     tuiChuQingQiu.value = false
+    shenFenYiJiuXu.value = true
     zhuangTai.value = { deng_lu_zhong: false, cuo_wu_xin_xi: null }
     localStorage.removeItem(令牌键)
     shanChuShuJu('yonghu')
@@ -126,6 +170,8 @@ export const 使用用户仓库 = defineStore('用户', () => {
     shiFouGuanLiYuan.value = guanLiYuan
   }
 
+  shuiHeBenDiShenFen()
+
   return {
     dangQianYongHu,
     令牌,
@@ -133,9 +179,11 @@ export const 使用用户仓库 = defineStore('用户', () => {
     mingChengKeJian,
     tuiChuQingQiu,
     zhuangTai,
+    shenFenYiJiuXu,
     zhiXingDengLu,
     zhiXingZhuCe,
     jiaZaiYongHu,
+    queBaoShenFenJiuXu,
     qingQiuTuiChu,
     tuiChuDengLu,
     sheZhiLingPai,

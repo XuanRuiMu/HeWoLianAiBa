@@ -20,78 +20,79 @@
         <div v-else-if="junShiLieBiaoXuanXiang.length === 0" class="kong-zhuangtai">
           {{ huoQuFanYi('junShi', 'zanWuJunShi') }}
         </div>
-        <div v-else class="junshi-liebiao">
-          <div
-            v-for="junShi in junShiLieBiaoXuanXiang"
-            :key="junShi.id"
-            class="junshi-kapian"
-            :class="{
-              'zhi-dao-zhong': huoQuJunShiZhuangTai(junShi.id) === 'zhi_dao_zhong',
-              'yi-wan-cheng': huoQuJunShiZhuangTai(junShi.id) === 'yi_wan_cheng',
-            }"
-          >
-            <div class="junshi-touxiang">
-              <img
-                :src="shengChengTouXiangURL(junShi.touXiang)"
-                :alt="huoQuJunShiMingCheng(junShi) || ''"
-                class="touxiang-tu"
-              />
-            </div>
-            <div class="junshi-xiangqing">
-              <span class="junshi-mingcheng">{{ huoQuJunShiMingCheng(junShi) }}</span>
-            </div>
-
-            <button
-              v-if="huoQuJunShiZhuangTai(junShi.id) === 'wei_zhi_dao'"
-              class="qingqiu-anniu"
-              :disabled="
-                !jiaoSeId ||
-                qingQiuZhongJunShiId !== null ||
-                dangQianZhuangTai?.zhuang_tai === 'zhi_dao_zhong' ||
-                yiZhiDaoXiangTongNeiRong
-              "
-              @click="zhiXingQingQiu(junShi)"
-            >
-              {{
-                qingQiuZhongJunShiId === junShi.id
-                  ? huoQuFanYi('junShi', 'qingQiuZhong')
-                  : huoQuFanYi('junShi', 'junShiQingQiuZhiDao')
-              }}
-            </button>
-            <button
-              v-else-if="huoQuJunShiZhuangTai(junShi.id) === 'zhi_dao_zhong'"
-              class="qingqiu-anniu zhidao-zhong"
-              disabled
-            >
-              {{ huoQuFanYi('junShi', 'junShiZhiDaoZhong') }}
-            </button>
-            <button v-else class="qingqiu-anniu yi-zhidao" @click="qieHuanZhanKai(junShi.id)">
-              {{ huoQuFanYi('junShi', 'junShiYiZhiDao') }} -
-              {{ huoQuFanYi('junShi', 'junShiChaKanJieGuo') }}
-            </button>
-
-            <div v-if="!youLiaoTianJiLu" class="wu-liao-tian-tishi">
-              {{ huoQuFanYi('junShi', 'wuLiaoTianJiLu') }}
-            </div>
-            <div v-if="yiZhiDaoXiangTongNeiRong" class="yi-zhidao-tishi">
-              {{ huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong') }}
-            </div>
-
-            <div v-if="cuoWuTiShiMap[junShi.id]" class="cuowu-tishi">
-              {{ cuoWuTiShiMap[junShi.id] }}
-            </div>
-
+        <template v-else>
+          <div v-if="!youLiaoTianJiLu" class="wu-liao-tian-tishi">
+            {{ huoQuFanYi('junShi', 'wuLiaoTianJiLu') }}
+          </div>
+          <div v-if="yiZhiDaoXiangTongNeiRong" class="yi-zhidao-tishi">
+            {{ huoQuFanYi('junShi', 'yiZhiDaoXiangTongNeiRong') }}
+          </div>
+          <div class="junshi-liebiao">
             <div
-              v-if="zhanKaiJunShiId === junShi.id && huoQuZhiDaoJieGuo(junShi.id)"
-              class="zhidao-jieguo"
+              v-for="junShi in junShiLieBiaoXuanXiang"
+              :key="junShi.id"
+              class="junshi-kapian"
+              :class="{
+                'zhi-dao-zhong': huoQuJunShiZhuangTai(junShi.id) === 'zhi_dao_zhong',
+                'yi-wan-cheng': huoQuJunShiZhuangTai(junShi.id) === 'yi_wan_cheng',
+              }"
             >
-              <h3 class="jieguo-biaoti">{{ huoQuFanYi('junShi', 'zhiDaoJianYi') }}</h3>
-              <p class="jieguo-neirong">
-                {{ huoQuZhiDaoJieGuo(junShi.id) }}
-              </p>
+              <div class="junshi-touxiang">
+                <img
+                  :src="shengChengTouXiangURL(junShi.touXiang)"
+                  :alt="huoQuJunShiMingCheng(junShi) || ''"
+                  class="touxiang-tu"
+                />
+              </div>
+              <div class="junshi-xiangqing">
+                <span class="junshi-mingcheng">{{ huoQuJunShiMingCheng(junShi) }}</span>
+              </div>
+
+              <button
+                v-if="huoQuJunShiZhuangTai(junShi.id) === 'wei_zhi_dao'"
+                class="qingqiu-anniu"
+                :disabled="
+                  !jiaoSeId ||
+                  qingQiuZhongJunShiId !== null ||
+                  dangQianZhuangTai?.zhuang_tai === 'zhi_dao_zhong' ||
+                  yiZhiDaoXiangTongNeiRong
+                "
+                @click="zhiXingQingQiu(junShi)"
+              >
+                {{
+                  qingQiuZhongJunShiId === junShi.id
+                    ? huoQuFanYi('junShi', 'qingQiuZhong')
+                    : huoQuFanYi('junShi', 'junShiQingQiuZhiDao')
+                }}
+              </button>
+              <button
+                v-else-if="huoQuJunShiZhuangTai(junShi.id) === 'zhi_dao_zhong'"
+                class="qingqiu-anniu zhidao-zhong"
+                disabled
+              >
+                {{ huoQuFanYi('junShi', 'junShiZhiDaoZhong') }}
+              </button>
+              <button v-else class="qingqiu-anniu yi-zhidao" @click="qieHuanZhanKai(junShi.id)">
+                {{ huoQuFanYi('junShi', 'junShiYiZhiDao') }} -
+                {{ huoQuFanYi('junShi', 'junShiChaKanJieGuo') }}
+              </button>
+
+              <div v-if="cuoWuTiShiMap[junShi.id]" class="cuowu-tishi">
+                {{ cuoWuTiShiMap[junShi.id] }}
+              </div>
+
+              <div
+                v-if="zhanKaiJunShiId === junShi.id && huoQuZhiDaoJieGuo(junShi.id)"
+                class="zhidao-jieguo"
+              >
+                <h3 class="jieguo-biaoti">{{ huoQuFanYi('junShi', 'zhiDaoJianYi') }}</h3>
+                <p class="jieguo-neirong">
+                  {{ huoQuZhiDaoJieGuo(junShi.id) }}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        </template>
       </div>
 
       <div v-if="xianShiZhiDaoJiLu" class="zhidao-jilu-zhezhao" @click.self="guanBiZhiDaoJiLu">
@@ -606,7 +607,6 @@ onUnmounted(() => {
 }
 
 .yi-zhidao-tishi {
-  width: 100%;
   padding: 10px 14px;
   margin-bottom: 12px;
   background: rgba(255, 152, 0, 0.1);
@@ -617,7 +617,6 @@ onUnmounted(() => {
 }
 
 .wu-liao-tian-tishi {
-  width: 100%;
   padding: 10px 14px;
   margin-bottom: 12px;
   background: rgba(33, 150, 243, 0.1);

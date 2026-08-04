@@ -22,7 +22,7 @@
           <span class="zhuye-tubiao">⌂</span>
           <span class="zhuye-wenzi">{{ huoQuFanYi('caidan', 'zhuYe') }}</span>
         </button>
-        <div v-if="用户仓库.dangQianYongHu" class="yonghu-xuanxiang" @click="qieHuanYongHuCaiDan">
+        <div class="yonghu-xuanxiang" @click="dianJiYongHuQuYu">
           <div class="yonghu-touxiang-xiao">
             <img
               v-if="用户仓库.dangQianYongHu?.tou_xiang"
@@ -396,6 +396,15 @@ function qieHuanYongHuCaiDan() {
   qitaCaiDanZhanKai.value = false
 }
 
+// 已登录：展开/收起个人下拉菜单；未登录：复用同一模块，点击跳转登录页
+function dianJiYongHuQuYu() {
+  if (用户仓库.dangQianYongHu) {
+    qieHuanYongHuCaiDan()
+  } else {
+    jinRuDengLu()
+  }
+}
+
 function qieHuanQitaCaiDan() {
   qitaCaiDanZhanKai.value = !qitaCaiDanZhanKai.value
   yongHuCaiDanZhanKai.value = false
@@ -414,6 +423,10 @@ function daKaiXieYi(leiXing: 'yongHuXieYi' | 'yinSiZhengCe') {
 function jinRuTongZhi() {
   qitaCaiDanZhanKai.value = false
   router.push('/tong-zhi')
+}
+
+function jinRuDengLu() {
+  router.push('/login').catch(() => {})
 }
 
 function fanHuiShangYiYe() {

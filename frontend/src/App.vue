@@ -12,6 +12,7 @@
         </router-view>
       </div>
     </div>
+    <ShiShiRiZhi />
   </CuoWuBianJie>
 </template>
 
@@ -19,6 +20,7 @@
 import { onMounted, onBeforeUnmount } from 'vue'
 import QuanJuCaiDan from '@/components/全局菜单.vue'
 import CuoWuBianJie from '@/components/错误边界.vue'
+import ShiShiRiZhi from '@/components/实时日志.vue'
 import { 使用用户仓库 } from '@/stores/用户'
 import { chuFaCuoWuShangBao } from '@/utils/错误上报'
 
@@ -100,9 +102,7 @@ function jianCeAnQuanQuYu() {
 }
 
 onMounted(() => {
-  if (用户仓库.令牌 && !用户仓库.dangQianYongHu) {
-    用户仓库.jiaZaiYongHu()
-  }
+  用户仓库.queBaoShenFenJiuXu()
   gengXinShiJiaoKouGaoDu()
   jianCeAnQuanQuYu()
   if (window.visualViewport) {

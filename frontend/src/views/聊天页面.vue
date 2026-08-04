@@ -205,7 +205,7 @@
           <button
             class="zhan-kai-anniu"
             :class="{ 'zhan-kai': shuRuKuangZhanKai }"
-            :disabled="!xianShiZhanKaiAnNiu"
+            :disabled="!zhanKaiAnNiuKeYong"
             :title="
               shuRuKuangZhanKai
                 ? huoQuFanYi('liaoTian', 'zheDie')
@@ -257,7 +257,7 @@
       <div v-if="!fuPanMoShi && 聊天仓库.cuoWuXinXi" class="shuru-fu-zhu">
         <span class="fasong-cuowu">{{ 聊天仓库.cuoWuXinXi }}</span>
       </div>
-      <Transition name="emoji-zhankai">
+      <Transition name="emoji-zhankai" @after-enter="gunDongDaoDiBu" @after-leave="gunDongDaoDiBu">
         <div v-if="!fuPanMoShi && emojiMianBanZhanKai" class="emoji-mianban">
           <button
             v-for="emoji in changYongEmoji"
@@ -563,10 +563,10 @@ const changYongEmoji = [
   '🎲',
 ]
 
+// 面板高度在过渡结束时才定型，重新贴底交由 Transition 的 after-enter / after-leave 触发；
+// 在此处按 nextTick 贴底会早于过渡完成，最后一条消息仍会被涨起来的面板顶出视口
 function qieHuanEmojiMianBan() {
   emojiMianBanZhanKai.value = !emojiMianBanZhanKai.value
-  // 面板展开/收起都会改变布局高度，统一在 DOM 更新后将消息区滚动到底部，保证最后一条消息可见可达
-  gunDongDaoDiBu()
 }
 
 function chaRuEmoji(emoji: string) {
@@ -596,7 +596,8 @@ const keYiFaSong = computed(() => {
   return neiRong.length > 0 && neiRong.length <= XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu
 })
 
-const xianShiZhanKaiAnNiu = computed(() => shuRuKuangKeZhanKai.value)
+// 展开态必须始终保留收起出口：只按「内容是否超过单行」禁用按钮会让状态机变成只进不出
+const zhanKaiAnNiuKeYong = computed(() => shuRuKuangZhanKai.value || shuRuKuangKeZhanKai.value)
 
 interface XiaoXiFenZuXiang {
   shiJian: string
@@ -867,6 +868,13 @@ watch(
 )
 
 watch(() => shuRuNeiRong.value, ceLiangShuRuKuang, { flush: 'post' })
+
+// 内容高度回落到单行后展开态已失去依据，必须自动退出，否则展开态只能靠发送/离开页面才能解除。
+// neiRongGaoDu 由 height:auto 实测得到，与展开态无关；展开态仅改变滚动条样式且此时不溢出，
+// 故该判据不会被自身状态反馈影响，配合 danXingGaoDu + 1 的 1px 容差不会在临界高度横跳
+watch(shuRuKuangKeZhanKai, (keZhanKai) => {
+  if (!keZhanKai) shuRuKuangZhanKai.value = false
+})
 
 function jiSuanDanXingGaoDu(el: HTMLTextAreaElement): number {
   const cs = getComputedStyle(el)
@@ -1219,6 +1227,8 @@ onBeforeUnmount(() => {
   -webkit-overflow-scrolling: touch;
   /* 注意：此处不声明 scrollbar-width / scrollbar-color，否则会覆盖下方 ::-webkit-scrollbar 自定义样式 */
   scroll-padding-bottom: 20px;
+  /* 常驻滚动条槽位：否则滚动条出现/消失会改变内容宽度，导致气泡与时间标签横向抖动 */
+  scrollbar-gutter: stable;
 }
 
 .xiaoxi-quyu::-webkit-scrollbar {
@@ -1242,9 +1252,12 @@ onBeforeUnmount(() => {
 .xiaoxi-liebiao {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  flex: 1;
-  min-height: 100%;
+  /* 贴底只能靠自动外边距吸收父级剩余空间。
+     原写法 flex:1（basis:0）+ min-height:100% 会把本列表钉死为「恰好一屏高」，
+     消息多于一屏时内容被 justify-content:flex-end 挤出列表顶部；而滚动容器的可滚动区域
+     在 block-start 边被裁到 padding 边，溢出到上方的历史消息因此永远滚不到 —— 这才是滚动条异常的根因。
+     复盘模式下同一机制还会在消息与总结之间留出整屏空白。 */
+  margin-top: auto;
 }
 
 .jiazaigengduo-qu {
@@ -1508,6 +1521,9 @@ onBeforeUnmount(() => {
   outline: none;
   border-radius: 6px;
   box-sizing: border-box;
+  /* 改为块级，消除 textarea 作为 inline-block 时在父容器中产生的基线对齐下方空隙，
+     使 placeholder 在折叠态视觉上垂直居中 */
+  display: block;
   resize: none;
   overflow-y: auto;
   /* 折叠态：彻底隐藏滚动条，但保留鼠标滚轮上下滚动，绝不可出现可见滚动条 */
@@ -1855,7 +1871,8 @@ onBeforeUnmount(() => {
 
 .emoji-zhankai-enter-to,
 .emoji-zhankai-leave-from {
-  max-height: 220px;
+  /* 必须匹配静态态 .emoji-mianban{max-height:200px}，否则进入→静止、静止→收起交接瞬间 220px 与 200px 不一致产生跳变 */
+  max-height: 200px;
 }
 
 .fupan-pizhu-xiangmu {
@@ -2062,12 +2079,6 @@ onBeforeUnmount(() => {
 
 .fupan-tuichu-anniu:hover {
   opacity: 0.85;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .xiaoxi-quyu {
-    transition: none;
-  }
 }
 
 @media (max-width: 480px) {
