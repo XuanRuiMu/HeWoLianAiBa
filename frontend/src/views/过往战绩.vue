@@ -128,108 +128,111 @@
             drag-class="sortable-drag"
             fallback-class="sortable-drag"
             :force-fallback="true"
+            :fallback-on-body="true"
+            :on-move="() => false"
+            :custom-update="onTuoZhuaiGengXin"
             :group="{ name: fenLei.zhuangTai, pull: false, put: false }"
             class="zhanji-liebiao-neirong"
             @start="onTuoZhuaiKaiShi(fenLei.zhuangTai, $event)"
             @end="onTuoZhuaiJieShu(fenLei.zhuangTai, $event)"
           >
             <TransitionGroup name="zhanji-kapian">
-            <div
-              v-for="(dangAn, suoYin) in xianShiFenLeiZu[fenLei.zhuangTai]"
-              :key="dangAn.id ?? `zhanji-${fenLei.zhuangTai}-${suoYin}`"
-              class="zhanji-kapian"
-              :class="{ xuanZhong: dangAn.id && xuanZhongIds.has(dangAn.id) }"
-              :data-id="dangAn.id"
-            >
-              <button
-                class="gouxuan-anniu gouxuan-anniu--kapian"
-                :class="{
-                  'gouxuan-anniu--xuanzhong': dangAn.id && xuanZhongIds.has(dangAn.id),
-                }"
-                role="checkbox"
-                :aria-checked="dangAn.id && xuanZhongIds.has(dangAn.id) ? 'true' : 'false'"
-                :aria-label="
-                  huoQuFanYi('zhanJi', 'gouXuan').replace('{名字}', dangAn.jiao_se_ming_zi ?? '')
-                "
-                tabindex="0"
-                @click.stop="qieHuanXuanZe(dangAn, $event)"
-                @keydown.space.prevent.stop="qieHuanXuanZe(dangAn, $event)"
+              <div
+                v-for="(dangAn, suoYin) in xianShiFenLeiZu[fenLei.zhuangTai]"
+                :key="dangAn.id ?? `zhanji-${fenLei.zhuangTai}-${suoYin}`"
+                class="zhanji-kapian"
+                :class="{ xuanZhong: dangAn.id && xuanZhongIds.has(dangAn.id) }"
+                :data-id="dangAn.id"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  stroke-width="3"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                <button
+                  class="gouxuan-anniu gouxuan-anniu--kapian"
+                  :class="{
+                    'gouxuan-anniu--xuanzhong': dangAn.id && xuanZhongIds.has(dangAn.id),
+                  }"
+                  role="checkbox"
+                  :aria-checked="dangAn.id && xuanZhongIds.has(dangAn.id) ? 'true' : 'false'"
+                  :aria-label="
+                    huoQuFanYi('zhanJi', 'gouXuan').replace('{名字}', dangAn.jiao_se_ming_zi ?? '')
+                  "
+                  tabindex="0"
+                  @click.stop="qieHuanXuanZe(dangAn, $event)"
+                  @keydown.space.prevent.stop="qieHuanXuanZe(dangAn, $event)"
                 >
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-              </button>
-              <div class="zhanji-zuo">
-                <div class="jiaose-touxiang">
-                  {{
-                    dangAn.shi_fou_zha_xing
-                      ? '😈'
-                      : dangAn.jie_guo_lei_xing_yuan === 'sheng_li_ai_qing'
-                        ? '💕'
-                        : '👤'
-                  }}
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </button>
+                <div class="zhanji-zuo">
+                  <div class="jiaose-touxiang">
+                    {{
+                      dangAn.shi_fou_zha_xing
+                        ? '😈'
+                        : dangAn.jie_guo_lei_xing_yuan === 'sheng_li_ai_qing'
+                          ? '💕'
+                          : '👤'
+                    }}
+                  </div>
+                  <div class="zhanji-xinxi">
+                    <div class="jiaose-mingcheng">
+                      {{ dangAn.jiao_se_ming_zi }}
+                    </div>
+                    <div class="zhanji-biaoqian-zu">
+                      <span v-if="dangAn.mbti_lei_xing" class="mbti-biaoqian">{{
+                        dangAn.mbti_lei_xing
+                      }}</span>
+                      <span
+                        class="zhuangtai-biaoqian"
+                        :class="zhuangTaiYangShi(dangAn.jie_guo_lei_xing_yuan)"
+                      >
+                        {{ zhuangTaiWenBen(dangAn.jie_guo_lei_xing_yuan) }}
+                      </span>
+                    </div>
+                    <div class="zhanji-fu-jia-xin-xi">
+                      <span class="liaotian-tianshu">
+                        {{
+                          huoQuFanYi('zhanJi', 'liaoTianTianShu').replace(
+                            '{天}',
+                            String(dangAn.liao_tian_tian_shu ?? 0),
+                          )
+                        }}
+                      </span>
+                      <span v-if="xianShiShiJian(dangAn)" class="zui-hou-xiao-xi-shi-jian">
+                        {{ xianShiShiJian(dangAn) }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div class="zhanji-xinxi">
-                  <div class="jiaose-mingcheng">
-                    {{ dangAn.jiao_se_ming_zi }}
-                  </div>
-                  <div class="zhanji-biaoqian-zu">
-                    <span v-if="dangAn.mbti_lei_xing" class="mbti-biaoqian">{{
-                      dangAn.mbti_lei_xing
-                    }}</span>
-                    <span
-                      class="zhuangtai-biaoqian"
-                      :class="zhuangTaiYangShi(dangAn.jie_guo_lei_xing_yuan)"
-                    >
-                      {{ zhuangTaiWenBen(dangAn.jie_guo_lei_xing_yuan) }}
-                    </span>
-                  </div>
-                  <div class="zhanji-fu-jia-xin-xi">
-                    <span class="liaotian-tianshu">
-                      {{
-                        huoQuFanYi('zhanJi', 'liaoTianTianShu').replace(
-                          '{天}',
-                          String(dangAn.liao_tian_tian_shu ?? 0),
-                        )
-                      }}
-                    </span>
-                    <span v-if="xianShiShiJian(dangAn)" class="zui-hou-xiao-xi-shi-jian">
-                      {{ xianShiShiJian(dangAn) }}
-                    </span>
-                  </div>
+                <div class="zhanji-you">
+                  <button
+                    v-if="dangAn.jie_guo_lei_xing_yuan === 'jinxing_zhong'"
+                    class="caozuo-anniu jixu"
+                    @click.stop="jiXuLiaoTian(dangAn)"
+                  >
+                    {{ huoQuFanYi('zhanJi', 'jiXu') }}
+                  </button>
+                  <button
+                    v-if="dangAn.jie_guo_lei_xing_yuan !== 'jinxing_zhong'"
+                    class="caozuo-anniu fupan"
+                    @click.stop="daKaiFuPan(dangAn)"
+                  >
+                    {{ huoQuFanYi('zhanJi', 'fuPan') }}
+                  </button>
+                  <button
+                    class="caozuo-anniu shanchu"
+                    :title="huoQuFanYi('zhanJi', 'shanChu')"
+                    @click.stop="shanChuZhanJi(dangAn)"
+                  >
+                    {{ huoQuFanYi('zhanJi', 'shanChu') }}
+                  </button>
                 </div>
               </div>
-              <div class="zhanji-you">
-                <button
-                  v-if="dangAn.jie_guo_lei_xing_yuan === 'jinxing_zhong'"
-                  class="caozuo-anniu jixu"
-                  @click.stop="jiXuLiaoTian(dangAn)"
-                >
-                  {{ huoQuFanYi('zhanJi', 'jiXu') }}
-                </button>
-                <button
-                  v-if="dangAn.jie_guo_lei_xing_yuan !== 'jinxing_zhong'"
-                  class="caozuo-anniu fupan"
-                  @click.stop="daKaiFuPan(dangAn)"
-                >
-                  {{ huoQuFanYi('zhanJi', 'fuPan') }}
-                </button>
-                <button
-                  class="caozuo-anniu shanchu"
-                  :title="huoQuFanYi('zhanJi', 'shanChu')"
-                  @click.stop="shanChuZhanJi(dangAn)"
-                >
-                  {{ huoQuFanYi('zhanJi', 'shanChu') }}
-                </button>
-              </div>
-            </div>
             </TransitionGroup>
           </VueDraggable>
           <div v-else class="fenlei-kong-zhuangtai">
@@ -242,14 +245,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, computed, onUnmounted, nextTick } from 'vue'
+import { jiSuanMuBiaoSuoYin, jiSuanYuLanShunXu } from '@/utils/paixuYuLan'
 import { useRouter } from 'vue-router'
 import { VueDraggable } from 'vue-draggable-plus'
 import { huoQuDangAnLieBiao, shanChuDangAn, piLiangShanChuDangAn } from '@/api/聊天'
 import type { 档案详情 } from '@/types'
 import { huoQuFanYi } from '@/config/translations'
 import { 使用用户仓库 } from '@/stores/用户'
-import { jiSuanMuBiaoSuoYin, jiSuanYuLanShunXu } from '@/utils/paixuYuLan'
 
 type FenLeiZhuangTai = 'jinxingzhong' | 'shengli' | 'shibai'
 
@@ -284,14 +287,6 @@ const router = useRouter()
 const yongHuCangKu = 使用用户仓库()
 const jiaZaiZhong = ref(true)
 const tuoZhuaiZhong = ref(false)
-// 实时预览（fallback 模式根因修复的延伸）：拖拽过程中按指针坐标实时重排预览顺序，
-// 其余卡片 FLIP 滑动错位、目标处显示霓虹虚线落点，松手提交复用指针坐标兜底。
-const draggingState = ref<FenLeiZhuangTai | null>(null)
-const draggingId = ref<string | null>(null)
-const draggingYuanSuoYin = ref<number>(-1)
-const mubiaoSuoYin = ref<number>(-1)
-const tuoZhuaiRongQi = ref<HTMLElement | null>(null)
-const yuanXinZuoBiao = ref<number[]>([])
 // 拖拽前各分组的 id 顺序快照。最终顺序以拖拽事件携带的 oldIndex→newIndex 为准，
 // 快照用于在 onEnd 时按索引从拖拽前顺序重排出最终顺序，从根因上消除
 // 「拖了不动 / 回弹 / 刷新后不保持」。
@@ -300,11 +295,37 @@ const tuoZhuaiQianIdShunXu = ref<Record<FenLeiZhuangTai, string[]>>({
   shengli: [],
   shibai: [],
 })
+
+// 实时预览所需的拖拽态：拖拽中由 pointermove 主动重排「预览数组 yuLanShunXu」触发 FLIP 滑动，
+// 而 v-model 源 fenLeiZu 保持原始顺序不动，二者彻底解耦。
+// 关键：<VueDraggable> 上 :on-move="() => false" 已禁用 SortableJS 原生的「拖拽中移动真实卡片」逻辑；
+// :custom-update 钩子接管库内部 onUpdate 的「默认 DOM 移动(Ke/Tt) + 模型二次换位(St)」，改为本组件
+// 落定时一次性权威重排 fenLeiZu。兄弟卡片的滑动动画由本组件自行实现的「手动 FLIP」
+// （buZhuoFlipJiuWeiZhi + yingYongFlip）驱动，而非 <TransitionGroup>。
+// 原因：vue-draggable-plus 会把 <TransitionGroup> 拍平，卡片直接成为容器子节点，
+// TransitionGroup 的 -move 类 / FLIP 动画因此完全失效（实测 带move类=0），必须手工 FLIP。
+// :fallback-on-body="true" 让 force-fallback 的克隆体挂到 document.body，保持列表容器 DOM 干净。
+const draggingState = ref<FenLeiZhuangTai | null>(null)
+const draggingId = ref<string | null>(null)
+const draggingYuanSuoYin = ref<number>(-1)
+const mubiaoSuoYin = ref<number>(-1)
+const tuoZhuaiRongQi = ref<HTMLElement | null>(null)
+const yuanXinZuoBiao = ref<number[]>([])
 const xuanZhongIds = ref<Set<string>>(new Set())
 const zuiHouDianJiSuoYin = ref<number | null>(null)
 const paiXuWeiDu = ref<PaiXuWeiDu>('shouDong')
 const paiXuFangXiang = ref<PaiXuFangXiang>('jiangXu')
 const fenLeiZu = reactive<Record<FenLeiZhuangTai, 档案详情[]>>({
+  jinxingzhong: [],
+  shengli: [],
+  shibai: [],
+})
+
+// 实时预览数组：与 v-model 源 fenLeiZu 完全解耦。拖拽过程中仅由本组件的指针推算驱动
+// yuLanShunXu（驱动 v-for 与手动 FLIP 兄弟卡片滑动），fenLeiZu 在拖拽全程保持「原始顺序」不动。
+// 落定时由 customUpdate 以「原始顺序 + 落定索引」对 fenLeiZu 一次性权威重排，
+// 从根本上消除「预览改写 v-model → 库内部 onUpdate 二次换位」的双重换位回弹（实测 @end 回弹根因）。
+const yuLanShunXu = reactive<Record<FenLeiZhuangTai, 档案详情[]>>({
   jinxingzhong: [],
   shengli: [],
   shibai: [],
@@ -411,9 +432,19 @@ function paiXuFenLei(lieBiao: 档案详情[]): 档案详情[] {
   return zhuangShiXiang.map((tiao) => tiao.item)
 }
 
-// computed 天然缓存：仅在分类数据或排序偏好变化时重算；手动排序直接复用原数组引用，
-// 保证 VueDraggable 的 v-model 数组与 DOM 顺序完全一致，索引计算不会错位
+// computed 天然缓存：仅在分类数据或排序偏好变化时重算。
+// 拖拽中：被拖分组渲染「预览顺序」yuLanShunXu（仅它由 pointermove 驱动），其余分组保持原顺序，
+// 以保证兄弟卡片 FLIP 实时滑动，同时 v-model(fenLeiZu) 保持原始顺序，由落定时的
+// customUpdate 一次性权威重排，避免双重换位回弹。非拖拽时：手动排序复用原数组，自动排序维度走 paiXuFenLei。
 const xianShiFenLeiZu = computed<Record<FenLeiZhuangTai, 档案详情[]>>(() => {
+  if (draggingState.value) {
+    const zt = draggingState.value
+    return {
+      jinxingzhong: zt === 'jinxingzhong' ? yuLanShunXu.jinxingzhong : fenLeiZu.jinxingzhong,
+      shengli: zt === 'shengli' ? yuLanShunXu.shengli : fenLeiZu.shengli,
+      shibai: zt === 'shibai' ? yuLanShunXu.shibai : fenLeiZu.shibai,
+    }
+  }
   if (shiFouShouDongPaiXu.value) {
     return {
       jinxingzhong: fenLeiZu.jinxingzhong,
@@ -762,7 +793,7 @@ interface TuoZhuaiShiJian {
   originalEvent?: Event
 }
 
-// 捕获容器内各卡片的垂直中心 Y（视口坐标系，固定不变），供 pointermove 幂等推算落点
+// 捕获容器内各卡片中心 Y 坐标（固定原始顺序），供 pointermove 幂等推算落点
 function buZhuoZhongXin(rongQi: HTMLElement | null): number[] {
   if (!rongQi || typeof rongQi.querySelectorAll !== 'function') return []
   const paiPiao = Array.from(rongQi.querySelectorAll('.zhanji-kapian')) as HTMLElement[]
@@ -772,16 +803,73 @@ function buZhuoZhongXin(rongQi: HTMLElement | null): number[] {
   })
 }
 
+// 手动 FLIP：vue-draggable-plus 会把 <TransitionGroup> 拍平，导致卡片直接成为容器子节点，
+// TransitionGroup 的 -move 类 / FLIP 动画根本不生效（实测 带move类=0）。因此自行实现 FLIP：
+// 重排前记录各卡片旧位置，重排后(nextTick)测量新位置，对位移>0 的卡片施加反向 transform，
+// 再在下一帧过渡回自然位置，从而实现拖拽中兄弟卡片实时滑动。
+const flipJiuWeiZhi = new Map<string, { left: number; top: number }>()
+
+function buZhuoFlipJiuWeiZhi() {
+  flipJiuWeiZhi.clear()
+  const r = tuoZhuaiRongQi.value
+  if (!r || typeof r.querySelectorAll !== 'function') return
+  const cards = Array.from(r.querySelectorAll('.zhanji-kapian')) as HTMLElement[]
+  cards.forEach((c) => {
+    const id = c.getAttribute('data-id')
+    if (!id) return
+    const rect = c.getBoundingClientRect()
+    flipJiuWeiZhi.set(id, { left: rect.left, top: rect.top })
+  })
+}
+
+function yingYongFlip() {
+  const r = tuoZhuaiRongQi.value
+  if (!r || typeof r.querySelectorAll !== 'function') return
+  const cards = Array.from(r.querySelectorAll('.zhanji-kapian')) as HTMLElement[]
+  const pending: HTMLElement[] = []
+  cards.forEach((c) => {
+    const id = c.getAttribute('data-id')
+    if (!id) return
+    const jiu = flipJiuWeiZhi.get(id)
+    if (!jiu) return
+    const rect = c.getBoundingClientRect()
+    const dx = jiu.left - rect.left
+    const dy = jiu.top - rect.top
+    if (dx === 0 && dy === 0) return
+    // 先置回旧位置（无过渡），下一帧过渡到自然位置
+    c.style.transition = 'none'
+    c.style.transform = `translate(${dx}px, ${dy}px)`
+    pending.push(c)
+  })
+  if (pending.length === 0) return
+  // 强制重排，确保起始 transform 已生效
+  void r.offsetHeight
+  requestAnimationFrame(() => {
+    for (const c of pending) {
+      c.style.transition = 'transform 0.32s cubic-bezier(0.22, 1, 0.36, 1)'
+      c.style.transform = ''
+      const onEnd = () => {
+        c.style.transition = ''
+        c.style.transform = ''
+        c.removeEventListener('transitionend', onEnd)
+      }
+      c.addEventListener('transitionend', onEnd)
+    }
+  })
+}
+
 function onTuoZhuaiKaiShi(zhuangTai: FenLeiZhuangTai, shiJian?: TuoZhuaiShiJian) {
   tuoZhuaiZhong.value = true
-  // 记录拖拽前该分组的 id 顺序（固定原始顺序），用于实时预览与 @end 提交
+  // 记录拖拽前该分组的 id 顺序（固定原始顺序），用于实时预览与 @end/customUpdate 提交
   tuoZhuaiQianIdShunXu.value[zhuangTai] = fenLeiZu[zhuangTai]
     .map((item) => item.id)
     .filter((id): id is string => !!id)
 
-  // 源卡片：已核实 SortableJS 的 start 事件仅携带 from/originalEvent，不携带
-  // oldIndex/oldDraggableIndex（源码 W({sortable,name:'start',originalEvent}) 未传入这些字段）。
-  // 因此不能用它们定位源。start 触发前 SortableJS 已给被拖真实卡片挂上 sortable-ghost 类，
+  // 初始化预览数组为原始顺序副本；拖拽中只改 yuLanShunXu（驱动 v-for 与 FLIP），
+  // fenLeiZu(v-model) 保持原始不动，避免库内部 onUpdate 二次换位导致回弹
+  yuLanShunXu[zhuangTai] = [...fenLeiZu[zhuangTai]]
+
+  // 源卡片：SortableJS 的 start 事件携带 from，且已给被拖真实卡片挂上 sortable-ghost 类，
   // 其 data-id 即源 id，是真实浏览器下唯一可靠的源。
   const rongQi = (shiJian?.from as HTMLElement | undefined) ?? null
   tuoZhuaiRongQi.value = rongQi
@@ -800,8 +888,7 @@ function onTuoZhuaiKaiShi(zhuangTai: FenLeiZhuangTai, shiJian?: TuoZhuaiShiJian)
         : typeof shiJian?.oldIndex === 'number'
           ? shiJian.oldIndex
           : -1
-    beiTuoId =
-      old >= 0 && fenLeiZu[zhuangTai][old] ? (fenLeiZu[zhuangTai][old].id ?? null) : null
+    beiTuoId = old >= 0 && fenLeiZu[zhuangTai][old] ? (fenLeiZu[zhuangTai][old].id ?? null) : null
   }
 
   const yuanSuoYin = beiTuoId ? tuoZhuaiQianIdShunXu.value[zhuangTai].indexOf(beiTuoId) : -1
@@ -814,7 +901,7 @@ function onTuoZhuaiKaiShi(zhuangTai: FenLeiZhuangTai, shiJian?: TuoZhuaiShiJian)
   // 捕获「固定原始顺序」各卡片中心 Y，供 pointermove 幂等推算落点
   yuanXinZuoBiao.value = buZhuoZhongXin(rongQi)
 
-  // 实时预览：监听指针移动，按落点重排预览顺序（其余卡片由 TransitionGroup 做 FLIP 滑动）
+  // 实时预览：监听指针移动，按落点重排预览顺序（其余卡片由手动 FLIP 做滑动动画）
   window.addEventListener('pointermove', onTuoZhuaiYiDong, { passive: true })
   window.addEventListener('touchmove', onTuoZhuaiYiDong, { passive: true })
 }
@@ -846,8 +933,13 @@ function onTuoZhuaiYiDong(e: Event) {
   mubiaoSuoYin.value = muBiao
 
   const ids = jiSuanYuLanShunXu(yuanShiShunXu, yuan, muBiao)
+  // 重排前先捕获各卡片旧位置（同步、DOM 尚未更新），供手动 FLIP 计算位移
+  buZhuoFlipJiuWeiZhi()
+  // 仅改写预览数组 yuLanShunXu（驱动 v-for 与 FLIP）；v-model(fenLeiZu) 保持原始不动
   const idDaoJiLu = new Map(fenLeiZu[zt].map((i) => [i.id, i]))
-  fenLeiZu[zt] = ids.map((id) => idDaoJiLu.get(id)).filter((i): i is 档案详情 => !!i)
+  yuLanShunXu[zt] = ids.map((id) => idDaoJiLu.get(id)).filter((i): i is 档案详情 => !!i)
+  // 重排后(nextTick)由手动 FLIP 让兄弟卡片滑动到新位置
+  nextTick(yingYongFlip)
 }
 
 function chongZhiYuLan() {
@@ -857,6 +949,49 @@ function chongZhiYuLan() {
   mubiaoSuoYin.value = -1
   tuoZhuaiRongQi.value = null
   yuanXinZuoBiao.value = []
+}
+
+// 落定权威重排（被 customUpdate 与兜底微任务共用）：以「原始顺序 + 落定索引」一次性重排 v-model(fenLeiZu)，
+// 并将预览数组同步为最终顺序（渲染无缝衔接），最后持久化。绝不二次换位。
+function yingYongZuiZhongChongPai(zt: FenLeiZhuangTai, oldIdx: number, newIdx: number) {
+  const qianZhao = tuoZhuaiQianIdShunXu.value[zt]
+  if (
+    oldIdx >= 0 &&
+    newIdx >= 0 &&
+    oldIdx !== newIdx &&
+    qianZhao.length > Math.max(oldIdx, newIdx)
+  ) {
+    const ids = jiSuanYuLanShunXu(qianZhao, oldIdx, newIdx)
+    const idDaoJiLu = new Map<string, 档案详情>(fenLeiZu[zt].map((i) => [i.id, i]))
+    fenLeiZu[zt] = ids.map((id) => idDaoJiLu.get(id)).filter((i): i is 档案详情 => !!i)
+  }
+  // 预览与最终一致，避免渲染从预览切回 fenLeiZu 时跳动
+  yuLanShunXu[zt] = [...fenLeiZu[zt]]
+  const map = huoQuPaiXuMap()
+  map[zt] = fenLeiZu[zt].map((item) => item.id).filter((id): id is string => !!id)
+  baoCunPaiXuMap(map)
+}
+
+// 绑定到 <VueDraggable> 的 :custom-update。库内部 onUpdate 默认会「移除/插回真实 DOM(Ke/Tt)
+// + 对 v-model 二次换位(St)」，造成回弹；提供 customUpdate 后该默认逻辑被替换为以下一次性权威重排，
+// 且不会触碰真实 DOM（fallback 克隆体的移除由库自行处理），与 Vue 的响应式渲染互不冲突。
+function onTuoZhuaiGengXin(evt: TuoZhuaiShiJian) {
+  const zt = draggingState.value
+  if (!zt) return
+  const oldIdx =
+    typeof evt.oldDraggableIndex === 'number'
+      ? evt.oldDraggableIndex
+      : typeof evt.oldIndex === 'number'
+        ? evt.oldIndex
+        : -1
+  const newIdx =
+    typeof evt.newDraggableIndex === 'number'
+      ? evt.newDraggableIndex
+      : typeof evt.newIndex === 'number'
+        ? evt.newIndex
+        : -1
+  yingYongZuiZhongChongPai(zt, oldIdx, newIdx)
+  chongZhiYuLan()
 }
 
 function onTuoZhuaiJieShu(zhuangTai: FenLeiZhuangTai, shiJian?: TuoZhuaiShiJian) {
@@ -871,104 +1006,28 @@ function onTuoZhuaiJieShu(zhuangTai: FenLeiZhuangTai, shiJian?: TuoZhuaiShiJian)
     return
   }
 
-  const qianZhao = tuoZhuaiQianIdShunXu.value[zhuangTai]
-
-  // 权威重算（新）：以「放下瞬间指针坐标」计算最终落点，覆盖拖拽过程中的预览漂移，
-  // 保证提交顺序与松手位置完全一致。仅当能确定源卡片与指针坐标时生效。
-  const yuanId = draggingId.value
-  const yuan = draggingYuanSuoYin.value
-  if (yuanId && yuan >= 0 && qianZhao.includes(yuanId)) {
-    const yuanShiJian = shiJian?.originalEvent as (MouseEvent | PointerEvent | TouchEvent | undefined)
-    const zhiBiaoY =
-      yuanShiJian && 'clientY' in yuanShiJian
-        ? yuanShiJian.clientY
-        : (yuanShiJian as TouchEvent | undefined)?.changedTouches?.[0]?.clientY
-    if (typeof zhiBiaoY === 'number') {
-      const muBiao = jiSuanMuBiaoSuoYin(yuanXinZuoBiao.value, zhiBiaoY, yuan)
-      const ids = jiSuanYuLanShunXu(qianZhao, yuan, muBiao)
-      const idDaoJiLu = new Map<string, 档案详情>(fenLeiZu[zhuangTai].map((i) => [i.id, i]))
-      fenLeiZu[zhuangTai] = ids
-        .map((id) => idDaoJiLu.get(id))
-        .filter((i): i is 档案详情 => !!i)
-    }
-  }
-
-  const dangQianIds = fenLeiZu[zhuangTai].map((item) => item.id)
-  // 库的 onUpdate 已通过 v-model 把模型重排为最终顺序（native 模式），直接采用并持久化
-  const onUpdateYiChongPai = JSON.stringify(dangQianIds) !== JSON.stringify(qianZhao)
-
-  if (!onUpdateYiChongPai) {
-    const zhao = [...dangQianIds]
-    let yingYong = false
-
-    // 兜底 1：事件索引（native 模式可靠）
-    const yuanSuoYinF = shiJian?.oldDraggableIndex ?? shiJian?.oldIndex
-    const muBiaoSuoYinF = shiJian?.newDraggableIndex ?? shiJian?.newIndex
-    if (
-      typeof yuanSuoYinF === 'number' &&
-      typeof muBiaoSuoYinF === 'number' &&
-      yuanSuoYinF >= 0 &&
-      yuanSuoYinF < zhao.length &&
-      muBiaoSuoYinF >= 0 &&
-      muBiaoSuoYinF <= zhao.length &&
-      yuanSuoYinF !== muBiaoSuoYinF
-    ) {
-      const [yiDongId] = zhao.splice(yuanSuoYinF, 1)
-      const muBiao = muBiaoSuoYinF > zhao.length ? zhao.length : muBiaoSuoYinF
-      zhao.splice(muBiao, 0, yiDongId)
-      yingYong = true
-    }
-
-    // 兜底 2（fallback 模式根因修复）：事件索引与真实 DOM 均不可信（真实拖拽元素 c 在
-    // 拖拽过程中不被移动，故 oldIndex/newIndex/oldDraggableIndex/newDraggableIndex 恒等于起始位，
-    // 容器 DOM 顺序也始终为原序）。唯一可靠的落点来源是「放下瞬间指针坐标」：以被拖卡片 id
-    // 定位源下标，以指针相对各卡片矩形中心的位置推算目标下标。
-    if (!yingYong) {
-      const rongQi = shiJian?.to as HTMLElement | undefined
-      const yuanIdF = shiJian?.item instanceof HTMLElement ? shiJian.item.getAttribute('data-id') ?? undefined : undefined
-      const yuanIndex = yuanIdF ? dangQianIds.indexOf(yuanIdF) : typeof yuanSuoYinF === 'number' ? yuanSuoYinF : -1
-      const yuanShiJian = shiJian?.originalEvent as (MouseEvent | PointerEvent | TouchEvent | undefined)
-      const zhiBiaoY =
-        yuanShiJian && 'clientY' in yuanShiJian
-          ? yuanShiJian.clientY
-          : (yuanShiJian as TouchEvent | undefined)?.changedTouches?.[0]?.clientY
-      if (
-        rongQi &&
-        typeof rongQi.querySelectorAll === 'function' &&
-        typeof yuanIndex === 'number' &&
-        yuanIndex >= 0 &&
-        yuanIndex < dangQianIds.length &&
-        typeof zhiBiaoY === 'number'
-      ) {
-        const paiPiao = Array.from(rongQi.querySelectorAll('.zhanji-kapian')) as HTMLElement[]
-        let muBiaoIndex = paiPiao.findIndex((el) => {
-          const r = el.getBoundingClientRect()
-          return zhiBiaoY < r.top + r.height / 2
-        })
-        if (muBiaoIndex === -1) muBiaoIndex = paiPiao.length
-        // muBiaoIndex 为「含被拖元素」的当前 DOM 顺序插入点，换算为移除被拖元素后的目标下标
-        const muBiao = yuanIndex < muBiaoIndex ? muBiaoIndex - 1 : muBiaoIndex
-        if (muBiao !== yuanIndex && muBiao >= 0 && muBiao <= dangQianIds.length) {
-          const [id] = zhao.splice(yuanIndex, 1)
-          zhao.splice(muBiao, 0, id)
-          yingYong = true
-        }
-      }
-    }
-
-    if (yingYong) {
-      const idDaoJiLu = new Map<string, 档案详情>(fenLeiZu[zhuangTai].map((i) => [i.id, i]))
-      fenLeiZu[zhuangTai] = zhao
-        .map((id) => idDaoJiLu.get(id))
-        .filter((i): i is 档案详情 => !!i)
-    }
-  }
-
-  // 持久化到 localStorage（按用户维度存储）
-  const map = huoQuPaiXuMap()
-  map[zhuangTai] = fenLeiZu[zhuangTai].map((item) => item.id).filter((id): id is string => !!id)
-  baoCunPaiXuMap(map)
-  chongZhiYuLan()
+  // 最终重排与持久化交由 customUpdate（库 onUpdate 钩子）在 onEnd 之后统一处理：
+  // 该钩子以「原始顺序 + 落定索引」对 v-model(fenLeiZu) 做一次性权威重排，
+  // 从根本上避免「预览改写 v-model → 库内部 onUpdate 二次换位」的双重换位回弹。
+  // 若本次为原地释放（无重排，customUpdate 不会触发），用微任务兜底复位预览与拖拽态。
+  // 兜底：若 customUpdate 因故未触发（极少见），用落定事件索引重排，避免拖拽失效
+  Promise.resolve().then(() => {
+    if (draggingState.value !== zhuangTai) return
+    const oldIdx =
+      typeof shiJian?.oldDraggableIndex === 'number'
+        ? shiJian.oldDraggableIndex
+        : typeof shiJian?.oldIndex === 'number'
+          ? shiJian.oldIndex
+          : -1
+    const newIdx =
+      typeof shiJian?.newDraggableIndex === 'number'
+        ? shiJian.newDraggableIndex
+        : typeof shiJian?.newIndex === 'number'
+          ? shiJian.newIndex
+          : -1
+    yingYongZuiZhongChongPai(zhuangTai, oldIdx, newIdx)
+    chongZhiYuLan()
+  })
 }
 
 onMounted(() => {
@@ -1046,6 +1105,13 @@ defineExpose({
 .zhanji-liebiao.tuo-zhuai-zhong {
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* 拖拽中：强制卡片提升到独立合成层，确保 TransitionGroup 在「两卡片相邻互换」时
+   也能稳定播放 transform FLIP 过渡（避免浏览器合成策略把单槽位移的过渡优化掉）。 */
+.zhanji-liebiao.tuo-zhuai-zhong .zhanji-kapian {
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .jiazai-zhuangtai,
@@ -1562,9 +1628,12 @@ defineExpose({
   background: rgba(255, 107, 157, 0.06) !important;
   border: 1.5px dashed rgba(255, 107, 157, 0.75) !important;
   box-shadow:
-    0 0 0 4px rgba(255, 107, 157, 0.10),
-    0 10px 26px rgba(255, 107, 157, 0.20) !important;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease !important;
+    0 0 0 4px rgba(255, 107, 157, 0.1),
+    0 10px 26px rgba(255, 107, 157, 0.2) !important;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease !important;
   pointer-events: none;
   /* Req1：拖拽预览空位同样禁止选中文字 */
   user-select: none;
@@ -1575,15 +1644,16 @@ defineExpose({
   opacity: 0 !important;
 }
 
-/* 拖拽实时预览：其余卡片随落点滑动错位的 FLIP 过渡（GPU 加速，前沿缓动曲线） */
-.zhanji-kapian-move {
-  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
 .zhanji-kapian.sortable-chosen {
   cursor: grabbing;
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* 实时预览：TransitionGroup 在模型重排时给移动的卡片加 .zhanji-kapian-move，
+   这里用 transform 过渡实现「其它卡片实时滑动让位」的 FLIP 动画（force-fallback 下库自身不提供）。 */
+.zhanji-kapian-move {
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .zhanji-kapian.sortable-drag {
