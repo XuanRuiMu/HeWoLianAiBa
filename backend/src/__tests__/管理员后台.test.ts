@@ -629,7 +629,7 @@ describe.sequential('FP-16 管理员后台', () => {
     let jieGuo = ''
     try {
       jieGuo = execSync(
-        'rg -i "x-admin-token" --type ts --glob "!__tests__" D:\\XiTongWenJianJia\\ZhuoMian\\燃烧之陨我的世界服务端\\和我恋爱吧\\backend\\src',
+        'rg -i "x-admin-token" --type ts --glob "!__tests__" D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\backend\\src',
         { encoding: 'utf-8' },
       )
     } catch (cuoWu: unknown) {
