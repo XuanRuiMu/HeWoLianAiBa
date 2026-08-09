@@ -17,3 +17,8 @@ package-lock.json
 测试截图/
 e2e/.fu-wu-zhuang-tai.json
 coverage/
+
+# 运行时日志/截图（不入库，避免总控制台 git add -A 误带）
+logs_*.txt
+聊天界面截图.png
+backend/logs/
