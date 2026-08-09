@@ -1,10 +1,13 @@
 import { 数据库 } from '../数据库'
-import { JUN_SHI_PEI_ZHI, JUN_SHI_PEI_ZHI_MO_REN, JUN_SHI_QIU_ZHU_PEI_ZHI } from '../config/军师配置'
+import { JUN_SHI_PEI_ZHI, JUN_SHI_PEI_ZHI_MO_REN, JUN_SHI_QIU_ZHU_FU_PAN_TIAO_MU_SHU_LIANG } from '../config/军师配置'
+import { AI_PEI_ZHI } from '../config/AI配置'
 import { huoQuFanYi } from '../config/translations'
+import { gouJianJiaoSeShangXiaWen, type CanShuShangXiaWen } from '../config/AI参数策略'
 import { huoQuWanZhengHaoGanDu } from './好感度'
 import { huoQuFuPanTiaoMuLieBiao } from './复盘条目'
 import { huoQuXiaoXiLieBiao, huoQuJiaoSeSuoYouZhe } from './消息'
 import { shengChengJunShiZhiDao } from './军师求助'
+import { huoQuAIJiaoSeXinXi } from './AI输入准备'
 import {
   jiSuanLiaoTianHaXi,
   jianChaJunShiChongFu,
@@ -136,7 +139,7 @@ export async function qingQiuJunShiZhiDao(
     }
   }
 
-  const jiaoSeXinXi = await huoQuJiaoSeJiBenXinXi(canShu.jiao_se_id)
+  const jiaoSeXinXi = await huoQuAIJiaoSeXinXi(canShu.jiao_se_id)
   if (!jiaoSeXinXi) {
     jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, false, 'JIAO_SE_BU_CUN_ZAI')
     return { cheng_gong: false, cuo_wu_ma: 'JIAO_SE_BU_CUN_ZAI', ti_shi: huoQuFanYi('junShi', 'jiaoSeBuCunZai'), zhuang_tai_ma: 404 }
@@ -146,7 +149,7 @@ export async function qingQiuJunShiZhiDao(
     yong_hu_id: canShu.yong_hu_id,
     jiao_se_id: canShu.jiao_se_id,
     ye_ma: 1,
-    mei_ye_tiao_shu: JUN_SHI_QIU_ZHU_PEI_ZHI.liShiXiaoXiShuLiang,
+    mei_ye_tiao_shu: AI_PEI_ZHI.prompt.junShiLiShiXiaoXiShuLiang,
   })
 
   const youXiaoXiaoXi = xiaoXiJieGuo.lie_biao
@@ -186,7 +189,7 @@ export async function qingQiuJunShiZhiDao(
     const fuPanTiaoMu = await huoQuFuPanTiaoMuLieBiao(
       canShu.yong_hu_id,
       canShu.jiao_se_id,
-      JUN_SHI_QIU_ZHU_PEI_ZHI.fuPanTiaoMuShuLiang,
+      JUN_SHI_QIU_ZHU_FU_PAN_TIAO_MU_SHU_LIANG,
     )
 
     const fuPanWenBenLieBiao = fuPanTiaoMu.map((tiaoMu) => {
@@ -200,19 +203,28 @@ export async function qingQiuJunShiZhiDao(
       ].join('\n')
     })
 
-    const zhiDaoJieGuo = await shengChengJunShiZhiDao({
-      yong_hu_id: canShu.yong_hu_id,
-      jiao_se_id: canShu.jiao_se_id,
-      jiao_se_ming: jiaoSeXinXi.wei_xin_ming,
-      dui_hua_li_shi: duiHuaLiShi,
-      hao_gan_du: haoGanDu,
-      fu_pan_tiao_mu: fuPanWenBenLieBiao,
-      jun_shi_pei_zhi: {
-        id: junShiPeiZhi.id,
-        mingCheng: junShiPeiZhi.mingCheng,
-        xiTongTiShi: junShiPeiZhi.xiTongTiShi,
+    const zhiDaoJieGuo = await shengChengJunShiZhiDao(
+      {
+        yong_hu_id: canShu.yong_hu_id,
+        jiao_se_id: canShu.jiao_se_id,
+        jiao_se_ming: jiaoSeXinXi.wei_xin_ming,
+        dui_hua_li_shi: duiHuaLiShi,
+        hao_gan_du: haoGanDu,
+        fu_pan_tiao_mu: fuPanWenBenLieBiao,
+        jun_shi_pei_zhi: {
+          id: junShiPeiZhi.id,
+          mingCheng: junShiPeiZhi.mingCheng,
+          xiTongTiShi: junShiPeiZhi.xiTongTiShi,
+        },
       },
-    })
+      {
+        // 军师指导按所聊角色完整人设 + 当前好感度/关系阶段动态取参数
+        jiaoSe: gouJianJiaoSeShangXiaWen(jiaoSeXinXi),
+        haoGanDu: haoGanDu
+          ? { zong_fen: haoGanDu.zong_fen, guan_xi_jie_duan: haoGanDu.guan_xi_jie_duan }
+          : undefined,
+      },
+    )
 
     const shiJian = new Date().toISOString()
     const jiLu: JunShiJiLuXiang = {
@@ -308,7 +320,7 @@ export async function huoQuJunShiZhiDaoZhuangTaiXinXi(
     yong_hu_id,
     jiao_se_id,
     ye_ma: 1,
-    mei_ye_tiao_shu: JUN_SHI_QIU_ZHU_PEI_ZHI.liShiXiaoXiShuLiang,
+    mei_ye_tiao_shu: AI_PEI_ZHI.prompt.junShiLiShiXiaoXiShuLiang,
   })
   const dangQianLieBiao = xiaoXiJieGuo.lie_biao
     .filter((xiao_xi) => xiao_xi.fa_song_zhe_lei_xing !== 'xitong')
@@ -321,20 +333,6 @@ export async function huoQuJunShiZhiDaoZhuangTaiXinXi(
     ke_zai_ci_zhi_dao: !shiChongFu,
     // 是否有聊天记录：用于「暂无聊天记录，无法请求军师指导」提示恒定显示
     you_liao_tian_ji_lu: dangQianLieBiao.length > 0,
-  }
-}
-
-async function huoQuJiaoSeJiBenXinXi(
-  jiao_se_id: string,
-): Promise<{ wei_xin_ming: string; ming_zi: string } | null> {
-  const jieGuo = await 数据库.query(
-    `SELECT "微信昵称", "名字" FROM "角色" WHERE "ID" = $1 LIMIT 1`,
-    [jiao_se_id],
-  )
-  if (jieGuo.rows.length === 0) return null
-  return {
-    wei_xin_ming: String(jieGuo.rows[0].微信昵称 || ''),
-    ming_zi: String(jieGuo.rows[0].名字 || ''),
   }
 }
 

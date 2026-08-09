@@ -1218,8 +1218,12 @@ onBeforeUnmount(() => {
   --liaotian-gundong-tiao-track: rgba(140, 140, 140, 0.16);
   overflow-y: auto;
   min-height: 0;
+  /* 纵向节奏由消息自身 margin 唯一掌管（单一起源原则）：
+     此处内边距必须归零。若再声明非零 padding-bottom，就会与最后一条
+     消息的 margin-bottom(16px) 叠加出 36px 的失真底部空隙，
+     使底部边界空隙永远无法与消息间空隙(16px)保持一致。 */
   padding: 12px 16px;
-  padding-bottom: 20px;
+  padding-bottom: 0;
   display: flex;
   flex-direction: column;
   background: var(--liaotian-beijing);

@@ -2,6 +2,7 @@ import { huoQuFanYi } from '../config/translations'
 import { shengChengDirectorCeLue } from './Director'
 import { shengChengWriterHuiFu } from './Writer'
 import { shenHeNeiRongAnQuan } from './安全审核'
+import { gouJianJiaoSeShangXiaWen, type CanShuShangXiaWen } from '../config/AI参数策略'
 import type {
   AIYinQingShuRu,
   AIYinQingShuChu,
@@ -54,8 +55,20 @@ export async function yunXingAIYinQing(
   let jiang_ji_mo_shi = false
   let cuoWuXinXi: string | undefined
 
+  // 人设/关系上下文：驱动 Director 与 Writer 的调用参数（温度/top_p）随 AI对象人设与关系阶段动态变化，
+  // 而非沿用固定基座值。这是“按 AI对象具体人设确定参数”的根因落点。
+  const shangXiaWen: CanShuShangXiaWen = {
+    jiaoSe: gouJianJiaoSeShangXiaWen(shuRu.jiao_se),
+    haoGanDu: shuRu.hao_gan_du
+      ? {
+          zong_fen: shuRu.hao_gan_du.zong_fen,
+          guan_xi_jie_duan: shuRu.hao_gan_du.guan_xi_jie_duan,
+        }
+      : undefined,
+  }
+
   // Director调用
-  const directorJieGuo = await shengChengDirectorCeLue(shuRu)
+  const directorJieGuo = await shengChengDirectorCeLue(shuRu, shangXiaWen)
   if (directorJieGuo.cheng_gong) {
     ceLue = directorJieGuo.ce_lue
   } else {
@@ -77,7 +90,7 @@ export async function yunXingAIYinQing(
 
   try {
     // Writer调用（Director失败时降级为单代理，ceLue为undefined）
-    const writerJieGuo = await shengChengWriterHuiFu(shuRu, ceLue)
+    const writerJieGuo = await shengChengWriterHuiFu(shuRu, ceLue, shangXiaWen)
 
     // 检查点3：Writer后
     const zuiZhongTiaoShu = ceLue

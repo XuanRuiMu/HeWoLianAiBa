@@ -1,16 +1,18 @@
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianQingGanFenXiPrompt } from './Prompt构建器'
 import type { QingGanFenXiJieGuo } from '../types'
+import type { CanShuShangXiaWen } from '../config/AI参数策略'
 
 export async function fenXiQingGan(
   xiaoXi: string,
   jiaoSeMing: string,
+  shangXiaWen?: CanShuShangXiaWen,
 ): Promise<QingGanFenXiJieGuo> {
   try {
     const xiangYing = await genJuPeiZhiTiaoYong('qingGanFenXi', [
       { jiaoSe: 'system', neiRong: '判断用户消息的情绪倾向，只输出 JSON。' },
       { jiaoSe: 'user', neiRong: gouJianQingGanFenXiPrompt(xiaoXi, jiaoSeMing) },
-    ])
+    ], shangXiaWen)
 
     const shuJu = jieXiJSON(xiangYing.neiRong)
     const fenShu = Number(shuJu['分数'] ?? shuJu['fen_shu'] ?? 0)

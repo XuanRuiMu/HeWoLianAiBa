@@ -16,6 +16,8 @@ import type {
   YouXiJieGuoLeiXing,
   YouXiJieShuJieGuo,
 } from '../types'
+import type { CanShuShangXiaWen } from '../config/AI参数策略'
+import { gouJianJiaoSeShangXiaWen } from '../config/AI参数策略'
 
 function jieXiJSONXiangYing(neiRong: string): Record<string, unknown> {
   const qingLiNeiRong = neiRong.trim()
@@ -34,7 +36,10 @@ function jieXiJSONXiangYing(neiRong: string): Record<string, unknown> {
   }
 }
 
-export async function jianCeBiaoBai(xiaoXi: string): Promise<BiaoBaiJianCeJieGuo> {
+export async function jianCeBiaoBai(
+  xiaoXi: string,
+  shangXiaWen?: CanShuShangXiaWen,
+): Promise<BiaoBaiJianCeJieGuo> {
   const xiangYing = await genJuPeiZhiTiaoYong('biaoBaiJianCe', [
     { jiaoSe: 'system', neiRong: '判断用户消息有没有表白或想确立关系的意思，只输出 JSON。' },
     {
@@ -52,7 +57,7 @@ export async function jianCeBiaoBai(xiaoXi: string): Promise<BiaoBaiJianCeJieGuo
         '只输出 JSON。',
       ].join('\n'),
     },
-  ])
+  ], shangXiaWen)
 
   const shuJu = jieXiJSONXiangYing(xiangYing.neiRong)
   const queXinDu = Number(shuJu['确信度'] ?? shuJu['que_xin_du'] ?? 0)
@@ -74,7 +79,10 @@ export async function jianCeBiaoBai(xiaoXi: string): Promise<BiaoBaiJianCeJieGuo
   }
 }
 
-export async function jianCeHuShan(xiaoXi: string): Promise<HuShanJianCeJieGuo> {
+export async function jianCeHuShan(
+  xiaoXi: string,
+  shangXiaWen?: CanShuShangXiaWen,
+): Promise<HuShanJianCeJieGuo> {
   const xiangYing = await genJuPeiZhiTiaoYong('huShanJianCe', [
     { jiaoSe: 'system', neiRong: '判断用户消息有没有互删、拒绝交往或想断绝关系的意思，只输出 JSON。' },
     {
@@ -91,7 +99,7 @@ export async function jianCeHuShan(xiaoXi: string): Promise<HuShanJianCeJieGuo> 
         '只输出 JSON。',
       ].join('\n'),
     },
-  ])
+  ], shangXiaWen)
 
   const shuJu = jieXiJSONXiangYing(xiangYing.neiRong)
   const queXinDu = Number(shuJu['确信度'] ?? shuJu['que_xin_du'] ?? 0)
@@ -103,7 +111,10 @@ export async function jianCeHuShan(xiaoXi: string): Promise<HuShanJianCeJieGuo> 
   }
 }
 
-export async function jianCeShiPo(xiaoXi: string): Promise<ShiPoJianCeJieGuo> {
+export async function jianCeShiPo(
+  xiaoXi: string,
+  shangXiaWen?: CanShuShangXiaWen,
+): Promise<ShiPoJianCeJieGuo> {
   const xiangYing = await genJuPeiZhiTiaoYong('shiPoJianCe', [
     { jiaoSe: 'system', neiRong: '判断用户消息有没有识破对方是渣男/渣女的意思，只输出 JSON。' },
     {
@@ -120,7 +131,7 @@ export async function jianCeShiPo(xiaoXi: string): Promise<ShiPoJianCeJieGuo> {
         '只输出 JSON。',
       ].join('\n'),
     },
-  ])
+  ], shangXiaWen)
 
   const shuJu = jieXiJSONXiangYing(xiangYing.neiRong)
   const queXinDu = Number(shuJu['确信度'] ?? shuJu['que_xin_du'] ?? 0)
@@ -136,6 +147,7 @@ export async function jianCeShenJingBing(
   xiaoXi: string,
   duiHuaLiShi: DuiHuaLiShiXiang[],
   jiaoSe: AIJiaoSeXinXi,
+  shangXiaWen?: CanShuShangXiaWen,
 ): Promise<ShenJingBingJianCeJieGuo> {
   const liShiWenBen = duiHuaLiShi
     .slice(-10)
@@ -144,6 +156,8 @@ export async function jianCeShenJingBing(
         `[${xiaoXi.shi_jian}] ${xiaoXi.fa_song_zhe_lei_xing === 'yonghu' ? '用户' : '角色'}: ${xiaoXi.nei_rong}`,
     )
     .join('\n')
+  // 未显式传入上下文时，用当前 人设（渣型 + 由文本推断的发散思维）就地构造，神经病检测尤其需要
+  const shangXiaWenShiJi = shangXiaWen ?? { jiaoSe: gouJianJiaoSeShangXiaWen(jiaoSe) }
   const xiangYing = await genJuPeiZhiTiaoYong('shenJingBingJianCe', [
     {
       jiaoSe: 'system',
@@ -186,7 +200,7 @@ export async function jianCeShenJingBing(
         '只输出 JSON。',
       ].join('\n'),
     },
-  ])
+  ], shangXiaWenShiJi)
 
   const shuJu = jieXiJSONXiangYing(xiangYing.neiRong)
   const queXinDu = Number(shuJu['确信度'] ?? shuJu['que_xin_du'] ?? 0)
@@ -210,17 +224,25 @@ export async function jianCeYongHuXiaoXi(
   xiaoXi: string,
   duiHuaLiShi: DuiHuaLiShiXiang[] = [],
   jiaoSe?: AIJiaoSeXinXi,
+  shangXiaWen?: CanShuShangXiaWen,
 ): Promise<YongHuXiaoXiJianCeJieGuo> {
+  // 未显式传入上下文时，用当前 人设就地构造（运行时主路径：调度器已持有 角色）
+  const jiChuShangXiaWen = shangXiaWen ?? { jiaoSe: gouJianJiaoSeShangXiaWen(jiaoSe) }
   const [biaoBai, huShan, shiPo, shenJingBing] = await Promise.all([
-    jianCeBiaoBai(xiaoXi),
-    jianCeHuShan(xiaoXi),
-    jianCeShiPo(xiaoXi),
-    jiaoSe ? jianCeShenJingBing(xiaoXi, duiHuaLiShi, jiaoSe) : Promise.resolve({
-      shi_fou_shen_jing_bing: false,
-      fa_san_si_wei_ren_she: false,
-      que_xin_du: 0,
-      li_you: '',
-    } as ShenJingBingJianCeJieGuo),
+    jianCeBiaoBai(xiaoXi, { ...jiChuShangXiaWen, changJing: 'biaoBai' }),
+    jianCeHuShan(xiaoXi, { ...jiChuShangXiaWen, changJing: 'huShan' }),
+    jianCeShiPo(xiaoXi, { ...jiChuShangXiaWen, changJing: 'shiPo' }),
+    jiaoSe
+      ? jianCeShenJingBing(xiaoXi, duiHuaLiShi, jiaoSe, {
+          ...jiChuShangXiaWen,
+          changJing: 'shenJingBing',
+        })
+      : Promise.resolve({
+          shi_fou_shen_jing_bing: false,
+          fa_san_si_wei_ren_she: false,
+          que_xin_du: 0,
+          li_you: '',
+        } as ShenJingBingJianCeJieGuo),
   ])
 
   return { biao_bai: biaoBai, hu_shan: huShan, shi_po: shiPo, shen_jing_bing: shenJingBing }
@@ -558,7 +580,9 @@ export async function chuLiYongHuJuJueAIHuoJieShou(
   jiao_se_id: string,
   jiao_se: AIJiaoSeXinXi,
   yong_hu_xiao_xi: string,
+  shangXiaWen?: CanShuShangXiaWen,
 ): Promise<YouXiJieShuJieGuo | null> {
+  const shangXiaWenShiJi = shangXiaWen ?? { jiaoSe: gouJianJiaoSeShangXiaWen(jiao_se) }
   const xiangYing = await genJuPeiZhiTiaoYong('jieShouBiaoBaiJianCe', [
     { jiaoSe: 'system', neiRong: '判断用户回复是接受表白还是拒绝，只输出 JSON。' },
     {
@@ -575,7 +599,7 @@ export async function chuLiYongHuJuJueAIHuoJieShou(
         '只输出 JSON。',
       ].join('\n'),
     },
-  ])
+  ], shangXiaWenShiJi)
 
   const shuJu = jieXiJSONXiangYing(xiangYing.neiRong)
   const jieShou = Boolean(shuJu['是否接受'] ?? shuJu['shi_fou_jie_shou'] ?? false)

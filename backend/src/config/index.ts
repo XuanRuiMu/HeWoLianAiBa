@@ -64,7 +64,7 @@ export const peiZhi = {
   deepSeek: {
     apiMiYao: huoQuHuanJingBianLiang('DEEPSEEK_API_KEY', ''),
     jiChuUrl: huoQuHuanJingBianLiang('DEEPSEEK_BASE_URL', 'https://api.deepseek.com'),
-    moXing: huoQuHuanJingBianLiang('DEEPSEEK_MODEL', 'deepseek-v4-pro'),
+    moXing: huoQuHuanJingBianLiang('DEEPSEEK_MODEL', 'deepseek-v4-flash'),
   },
 
   yanZhengMa: {

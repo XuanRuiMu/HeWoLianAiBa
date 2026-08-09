@@ -206,7 +206,7 @@ describe('FP-12 军师指导系统', () => {
       expect(xiangYing.body.ti_shi).toBe(huoQuFanYi('junShi', 'wuLiaoTianJiLu'))
     })
 
-    it('正常请求时 DeepSeek 温度=0.85 且 max_tokens=1500', async () => {
+    it('正常请求时 DeepSeek 使用军师配置（max_tokens=1500）且温度随人设动态', async () => {
       mock.sheZhiXiangYing({ neiRong: '先吐槽你一句，然后给你建议。' })
       await faSongCeShiXiaoXi(ceShiYongHu!.lingPai, jiaoSeId, '你好呀')
 
@@ -218,9 +218,11 @@ describe('FP-12 军师指导系统', () => {
 
       expect(xiangYing.body.cheng_gong).toBe(true)
       expect(xiangYing.body.shu_ju.zhiDaoNeiRong).toBe('先吐槽你一句，然后给你建议。')
-      const junShiTiaoYong = mock.jiLu.find((ji) => ji.wenDu === 0.85 && ji.zuiDaTokens === 1500)
+      const junShiTiaoYong = mock.jiLu.find((ji) => ji.zuiDaTokens === 1500)
       expect(junShiTiaoYong).toBeDefined()
-      expect(junShiTiaoYong!.wenDu).toBe(0.85)
+      // 温度随所聊角色人设动态变化（不再固定 0.85），但仍在合法采样区间 [0,2]
+      expect(junShiTiaoYong!.wenDu).toBeGreaterThanOrEqual(0)
+      expect(junShiTiaoYong!.wenDu).toBeLessThanOrEqual(2)
       expect(junShiTiaoYong!.zuiDaTokens).toBe(1500)
     })
 
@@ -238,7 +240,7 @@ describe('FP-12 军师指导系统', () => {
       expect(xiangYing.body.shu_ju.junShi.id).toBe('ceShiJunShi1')
       expect(xiangYing.body.shu_ju.junShi.mingCheng).toBe('测试军师1')
 
-      const junShiTiaoYong = mock.jiLu.find((ji) => ji.wenDu === 0.85 && ji.zuiDaTokens === 1500)
+      const junShiTiaoYong = mock.jiLu.find((ji) => ji.zuiDaTokens === 1500)
       expect(junShiTiaoYong).toBeDefined()
       expect(junShiTiaoYong!.xiaoXi[0].neiRong).toBe(JUN_SHI_PEI_ZHI.ceShiJunShi1.xiTongTiShi)
       expect(junShiTiaoYong!.xiaoXi[0].neiRong).toBe(JUN_SHI_PEI_ZHI.xuanRuiMu.xiTongTiShi)
@@ -270,7 +272,7 @@ describe('FP-12 军师指导系统', () => {
         .send({ jiaoSeId })
         .expect(200)
 
-      const junShiTiaoYong = mock.jiLu.find((ji) => ji.wenDu === 0.85 && ji.zuiDaTokens === 1500)
+      const junShiTiaoYong = mock.jiLu.find((ji) => ji.zuiDaTokens === 1500)
       expect(junShiTiaoYong).toBeDefined()
       const yongHuPrompt = junShiTiaoYong!.xiaoXi[1]?.neiRong || ''
       expect(yongHuPrompt).toContain('信任')
@@ -291,7 +293,7 @@ describe('FP-12 军师指导系统', () => {
         .send({ jiaoSeId })
         .expect(200)
 
-      const junShiTiaoYong = mock.jiLu.find((ji) => ji.wenDu === 0.85 && ji.zuiDaTokens === 1500)
+      const junShiTiaoYong = mock.jiLu.find((ji) => ji.zuiDaTokens === 1500)
       expect(junShiTiaoYong).toBeDefined()
       const yongHuPrompt = junShiTiaoYong!.xiaoXi[1]?.neiRong || ''
       expect(yongHuPrompt).toContain('嘴贱但靠谱')

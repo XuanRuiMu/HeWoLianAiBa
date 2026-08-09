@@ -2,11 +2,13 @@ import { AI_PEI_ZHI } from '../config/AI配置'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianHaoGanDuPingPanPrompt } from './Prompt构建器'
 import type { HaoGanDuPingPanJieGuo } from '../types'
+import type { CanShuShangXiaWen } from '../config/AI参数策略'
 
 export async function pingPanHaoGanDuBianHua(
   yongHuXiaoXi: string,
   jiaoSeHuiFu: string,
   jiaoSeMing: string,
+  shangXiaWen?: CanShuShangXiaWen,
 ): Promise<HaoGanDuPingPanJieGuo> {
   try {
     const xiangYing = await genJuPeiZhiTiaoYong('haoGanDuPingPan', [
@@ -15,7 +17,7 @@ export async function pingPanHaoGanDuBianHua(
         jiaoSe: 'user',
         neiRong: gouJianHaoGanDuPingPanPrompt(yongHuXiaoXi, jiaoSeHuiFu, jiaoSeMing),
       },
-    ])
+    ], shangXiaWen)
 
     const shuJu = jieXiJSON(xiangYing.neiRong)
 

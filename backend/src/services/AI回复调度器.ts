@@ -14,9 +14,11 @@ import {
 } from './胜利失败条件'
 import { jiaoSeShiFouBeiDuoShe } from './夺舍'
 import { jiLuSocketShiJian, jiLuXiaoXiCaoZuo } from '../utils/debug日志'
+import { gouJianJiaoSeShangXiaWen, type CanShuShangXiaWen } from '../config/AI参数策略'
 import type {
   AIYinQingShuChu,
   AIYinQingShuRu,
+  AIJiaoSeXinXi,
   HaoGanDuPingPanJieGuo,
 } from '../types'
 import type { XiaoXiXinXi } from './消息'
@@ -54,6 +56,7 @@ export class AI回复调度器 {
   private 取消控制器: AbortController | null = null
   private 处理中 = false
   private 当前AI状态: 'kong_xian' | 'deng_dai_zhong' | 'zheng_zai_shu_ru' = 'kong_xian'
+  private 当前角色?: AIJiaoSeXinXi = undefined
   private xu_hao = 0
 
   constructor(
@@ -279,6 +282,8 @@ export class AI回复调度器 {
       throw new Error('角色不存在')
     }
 
+    this.当前角色 = 角色
+
     this.io.to(this.用户ID).emit('管理员_构建过程', {
       阶段: '策略规划',
       说明: 'Director 已完成意图判定，Writer 进入回复生成',
@@ -386,7 +391,11 @@ export class AI回复调度器 {
     角色回复: string,
   ): Promise<HaoGanDuPingPanJieGuo | null> {
     try {
-      const 变化 = await pingPanHaoGanDuBianHua(用户消息, 角色回复, '对方')
+      // 按当前 AI对象人设驱动好感度评判的采样参数（温度随渣型/IE/性格等动态变化）
+      const shangXiaWen: CanShuShangXiaWen = {
+        jiaoSe: gouJianJiaoSeShangXiaWen(this.当前角色),
+      }
+      const 变化 = await pingPanHaoGanDuBianHua(用户消息, 角色回复, '对方', shangXiaWen)
       await gengXinHaoGanDu(this.用户ID, this.角色ID, 变化)
       return 变化
     } catch (错误) {

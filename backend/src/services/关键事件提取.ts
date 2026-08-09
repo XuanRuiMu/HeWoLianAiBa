@@ -1,16 +1,18 @@
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianGuanJianShiJianPrompt } from './Prompt构建器'
 import type { GongJianShiJianJieGuo } from '../types'
+import type { CanShuShangXiaWen } from '../config/AI参数策略'
 
 export async function tiQuGuanJianShiJian(
   duiHuaWenBen: string,
   jiaoSeMing: string,
+  shangXiaWen?: CanShuShangXiaWen,
 ): Promise<GongJianShiJianJieGuo[]> {
   try {
     const xiangYing = await genJuPeiZhiTiaoYong('guanJianShiJian', [
       { jiaoSe: 'system', neiRong: '从聊天记录里挑出关键事件，只输出 JSON 数组。' },
       { jiaoSe: 'user', neiRong: gouJianGuanJianShiJianPrompt(duiHuaWenBen, jiaoSeMing) },
-    ])
+    ], shangXiaWen)
 
     return jieXiShiJianShuZu(xiangYing.neiRong)
   } catch (cuoWu) {

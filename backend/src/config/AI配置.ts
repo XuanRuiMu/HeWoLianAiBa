@@ -1,9 +1,9 @@
 export interface MoXingCanShu {
   moXing: string
   wenDu: number
+  top_p?: number
   zuiDaTokens?: number
-  enableThinking?: boolean
-  reasoningEffort?: string
+  siKaoMoShi?: 'enabled' | 'disabled'
   xiangYingGeShi?: {
     type: 'json_object' | 'text'
   }
@@ -13,115 +13,142 @@ export const AI_PEI_ZHI = {
   deepSeek: {
     apiMiYao: process.env.DEEPSEEK_API_KEY || '',
     jiChuUrl: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
-    moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
-    tongYongCanShu: {
-      topP: 1,
-    },
+    moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
   },
 
   moXing: {
+    // 说明：官方文档规定思考模式下 temperature 等采样参数不生效，
+    // 为使各场景温度/采样参数真正生效，全部场景显式关闭思考模式（siKaoMoShi: 'disabled'）。
     director: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.3,
-      xiangYingGeShi: { type: 'json_object' },
+      top_p: 0.4,
       zuiDaTokens: 2000,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     writer: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.85,
-      enableThinking: true,
-      reasoningEffort: 'max',
+      top_p: 0.95,
       zuiDaTokens: 2000,
+      siKaoMoShi: 'disabled',
     } as MoXingCanShu,
 
     qingGanFenXi: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.2,
-      xiangYingGeShi: { type: 'json_object' },
+      top_p: 0.2,
       zuiDaTokens: 500,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     haoGanDuPingPan: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.2,
-      xiangYingGeShi: { type: 'json_object' },
+      top_p: 0.2,
       zuiDaTokens: 500,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     jiYiZhaiYao: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.3,
+      top_p: 0.5,
       zuiDaTokens: 1000,
+      siKaoMoShi: 'disabled',
     } as MoXingCanShu,
 
     anQuanShenHe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.1,
-      xiangYingGeShi: { type: 'json_object' },
+      top_p: 0.1,
       zuiDaTokens: 500,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     guanJianShiJian: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.2,
-      xiangYingGeShi: { type: 'json_object' },
+      top_p: 0.2,
       zuiDaTokens: 500,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     junShiQiuZhu: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.85,
+      top_p: 0.9,
       zuiDaTokens: 1500,
+      siKaoMoShi: 'disabled',
     } as MoXingCanShu,
 
     biaoBaiJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.1,
-      xiangYingGeShi: { type: 'json_object' },
+      top_p: 0.1,
       zuiDaTokens: 500,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     huShanJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.1,
-      xiangYingGeShi: { type: 'json_object' },
+      top_p: 0.1,
       zuiDaTokens: 500,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     shiPoJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.1,
-      xiangYingGeShi: { type: 'json_object' },
+      top_p: 0.1,
       zuiDaTokens: 500,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     jieShouBiaoBaiJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.1,
-      xiangYingGeShi: { type: 'json_object' },
+      top_p: 0.1,
       zuiDaTokens: 500,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     shenJingBingJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.1,
-      xiangYingGeShi: { type: 'json_object' },
+      top_p: 0.1,
       zuiDaTokens: 500,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     kaiChangBai: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.75,
-      xiangYingGeShi: { type: 'json_object' },
+      top_p: 0.9,
       zuiDaTokens: 1000,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     fuPanShengCheng: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-pro',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.7,
-      xiangYingGeShi: { type: 'json_object' },
+      top_p: 0.85,
       zuiDaTokens: 3000,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
   },

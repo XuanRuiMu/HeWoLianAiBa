@@ -1,6 +1,7 @@
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianWriterPrompt } from './Prompt构建器'
 import type { AIYinQingShuRu, DirectorCeLue, WriterJieGuo } from '../types'
+import type { CanShuShangXiaWen } from '../config/AI参数策略'
 
 function qingLiXiaoXi(neiRong: string): string[] {
   if (!neiRong) return []
@@ -19,13 +20,14 @@ function qingLiXiaoXi(neiRong: string): string[] {
 export async function shengChengWriterHuiFu(
   shuRu: AIYinQingShuRu,
   ceLue?: DirectorCeLue,
+  shangXiaWen?: CanShuShangXiaWen,
 ): Promise<WriterJieGuo> {
   const prompt = gouJianWriterPrompt(shuRu, ceLue)
 
   const xiangYing = await genJuPeiZhiTiaoYong('writer', [
     { jiaoSe: 'system', neiRong: '完全代入下面这个角色，只输出你要发的消息。像真实大学生/青年恋人聊微信，自然口语化，允许短句、留白、省略号和真实停顿。' },
     { jiaoSe: 'user', neiRong: prompt },
-  ])
+  ], shangXiaWen)
 
   const xiaoXiLieBiao = qingLiXiaoXi(xiangYing.neiRong)
 

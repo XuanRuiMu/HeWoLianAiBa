@@ -1,6 +1,7 @@
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianDirectorPrompt } from './Prompt构建器'
 import type { AIYinQingShuRu, DirectorCeLue } from '../types'
+import type { CanShuShangXiaWen } from '../config/AI参数策略'
 
 export interface DirectorJieGuo {
   cheng_gong: boolean
@@ -54,12 +55,15 @@ function jieXiDirectorXiangYing(neiRong: string): DirectorCeLue {
   }
 }
 
-export async function shengChengDirectorCeLue(shuRu: AIYinQingShuRu): Promise<DirectorJieGuo> {
+export async function shengChengDirectorCeLue(
+  shuRu: AIYinQingShuRu,
+  shangXiaWen?: CanShuShangXiaWen,
+): Promise<DirectorJieGuo> {
   try {
     const xiangYing = await genJuPeiZhiTiaoYong('director', [
       { jiaoSe: 'system', neiRong: '你负责给角色写回复小纸条，只输出 JSON。让回复像真实大学生/青年恋人聊微信，允许留白、犹豫、推拉和暧昧试探。' },
       { jiaoSe: 'user', neiRong: gouJianDirectorPrompt(shuRu) },
-    ])
+    ], shangXiaWen)
 
     const ceLue = jieXiDirectorXiangYing(xiangYing.neiRong)
     return { cheng_gong: true, ce_lue: ceLue }

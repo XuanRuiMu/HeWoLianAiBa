@@ -2,6 +2,7 @@ import { AI_PEI_ZHI } from '../config/AI配置'
 import { peiZhi } from '../config'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import type { MBTILeiXing } from '../config/角色配置'
+import type { CanShuShangXiaWen } from '../config/AI参数策略'
 
 export interface KaiChangBaiShengChengCanShu {
   mbti_lei_xing: MBTILeiXing
@@ -176,6 +177,7 @@ function jiangJiKaiChangBai(canShu: KaiChangBaiShengChengCanShu): KaiChangBaiShe
 
 export async function shengChengKaiChangBai(
   canShu: KaiChangBaiShengChengCanShu,
+  shangXiaWen?: CanShuShangXiaWen,
 ): Promise<KaiChangBaiShengChengJieGuo> {
   // 主动型人格过滤：只有 E 型才发开场消息。
   // 此检查在 mock 之前，确保即使测试 mock 也不能让 I 型发送（防止回归）。
@@ -199,11 +201,22 @@ export async function shengChengKaiChangBai(
     return jiangJiKaiChangBai(canShu)
   }
 
+  // 未显式传入上下文时，用 canShu 已有的人设字段构造 jiaoSe 上下文（向后兼容：无则退回基座）
+  const shangXiaWenShiJi = shangXiaWen ?? {
+    jiaoSe: {
+      ie_lei_xing: canShu.ie_lei_xing,
+      re_shen_lei_xing: canShu.re_shen_lei_xing,
+      shi_fou_zha_xing: canShu.shi_fou_zha_xing,
+      xing_ge: canShu.xing_ge,
+      yan_yu_feng_ge: canShu.yan_yu_feng_ge,
+    },
+  }
+
   try {
     const xiangYing = await genJuPeiZhiTiaoYong('kaiChangBai' as keyof typeof AI_PEI_ZHI.moXing, [
       { jiaoSe: 'system', neiRong: '你正在帮一个刚加上微信的中国大学生想主动发出的开场消息。' },
       { jiaoSe: 'user', neiRong: gouJianKaiChangBaiTiShi(canShu) },
-    ])
+    ], shangXiaWenShiJi)
     const xiaoXiLieBiao = jieXiJSONNeiRong(xiangYing.neiRong, canShu.ming_zi)
     if (xiaoXiLieBiao.length === 0) {
       return jiangJiKaiChangBai(canShu)

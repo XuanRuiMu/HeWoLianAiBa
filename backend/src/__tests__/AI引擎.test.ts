@@ -259,7 +259,7 @@ describe('FP-09 AI对话引擎', () => {
   })
 
   describe('Writer调用', () => {
-    it('Writer调用 → temperature=0.85且enable_thinking=true且reasoning_effort=max', async () => {
+    it('Writer调用 → temperature=0.85且siKaoMoShi=disabled（思考与温度互斥，按官方规范关闭思考使温度生效）', async () => {
       const { jiLu, sheZhiXiangYing } = chuangJianMock()
       sheZhiXiangYing({ neiRong: '嗯，天气确实不错~\n我在画画呢，你呢？' })
 
@@ -267,8 +267,8 @@ describe('FP-09 AI对话引擎', () => {
 
       expect(jiLu.length).toBe(1)
       expect(jiLu[0].wenDu).toBe(0.85)
-      expect(jiLu[0].enableThinking).toBe(true)
-      expect(jiLu[0].reasoningEffort).toBe('max')
+      expect(jiLu[0].siKaoMoShi).toBe('disabled')
+      expect(jiLu[0].reasoningEffort).toBeUndefined()
     })
   })
 
@@ -290,7 +290,7 @@ describe('FP-09 AI对话引擎', () => {
             yuanShuJu: {} as TiaoYongJieGuo['yuanShuJu'],
           }
         }
-        if (canShu.wenDu === 0.3) {
+        if (canShu.xiaoXi[0]?.neiRong?.includes('小纸条')) {
           return {
             neiRong: JSON.stringify({
               用户意图: '继续聊天',
@@ -345,7 +345,7 @@ describe('FP-09 AI对话引擎', () => {
               yuanShuJu: {} as TiaoYongJieGuo['yuanShuJu'],
             }
           }
-          if (canShu.wenDu === 0.3) {
+          if (canShu.xiaoXi[0]?.neiRong?.includes('小纸条')) {
             throw new Error(cuoWuXinXi)
           }
           return {
@@ -386,6 +386,57 @@ describe('FP-09 AI对话引擎', () => {
 
       expect(jieGuo.shi_fou_hui_fu).toBe(false)
       expect(jieGuo.xiao_xi_lie_biao).toEqual([])
+    })
+
+    it('yunXingAIYinQing：渣型+E+快热 角色 → Director/Writer 温度高于基座（人设驱动在主路径生效）', async () => {
+      const jiLu: TiaoYongCanShu[] = []
+      sheZhiMockTiaoYong(async (canShu) => {
+        jiLu.push(canShu)
+        if (canShu.wenDu === 0.1) {
+          return {
+            neiRong: JSON.stringify({ 违规: false, 类型: '', 严重程度: null, 理由: '', 确信度: 0.1 }),
+            xinXi: { role: 'assistant', content: 'safe' },
+            yuanShuJu: {} as TiaoYongJieGuo['yuanShuJu'],
+          }
+        }
+        if (canShu.xiaoXi[0]?.neiRong?.includes('小纸条')) {
+          return {
+            neiRong: JSON.stringify({
+              用户意图: '继续聊天',
+              情感分析: '中性',
+              回复策略: '自然回复',
+              是否回复: true,
+              回复条数: 1,
+              时间情绪: '轻松',
+              是否撤回: false,
+            }),
+            xinXi: { role: 'assistant', content: 'director' },
+            yuanShuJu: {} as TiaoYongJieGuo['yuanShuJu'],
+          }
+        }
+        return {
+          neiRong: '那肯定呀，我也正想找你聊呢~',
+          xinXi: { role: 'assistant', content: 'writer' },
+          yuanShuJu: {} as TiaoYongJieGuo['yuanShuJu'],
+        }
+      })
+
+      const shuRu = chuangJianCeShiShuRu()
+      shuRu.jiao_se.ie_lei_xing = 'E'
+      shuRu.jiao_se.re_shen_lei_xing = '快热'
+      shuRu.jiao_se.shi_fou_zha_xing = true
+      shuRu.jiao_se.xing_ge = '活泼浪漫'
+
+      const jieGuo = await yunXingAIYinQing(shuRu)
+
+      expect(jieGuo.shi_fou_hui_fu).toBe(true)
+      const directorJiLu = jiLu.find((c) => c.xiaoXi[0]?.neiRong?.includes('小纸条'))
+      const writerJiLu = jiLu.find((c) => c.xiaoXi[0]?.neiRong?.includes('完全代入'))
+      expect(directorJiLu).toBeDefined()
+      expect(writerJiLu).toBeDefined()
+      // 基座 Director=0.3、Writer=0.85；渣型(+0.05)+E(+0.1)+快热(+0.05)+浪漫(+0.1) 应高于基座
+      expect(directorJiLu!.wenDu).toBeGreaterThan(0.3)
+      expect(writerJiLu!.wenDu).toBeGreaterThan(0.85)
     })
   })
 
@@ -545,6 +596,77 @@ describe('FP-09 AI对话引擎', () => {
       const prompt = gouJianDirectorPrompt(shuRu)
 
       expect(prompt).toContain('对方加 TA 聊天是想谈恋爱')
+    })
+  })
+
+  describe('动态参数随人设/场景变化', () => {
+    it('Writer：温柔/浪漫 + E型 + 快热 → 温度高于基座 0.85', async () => {
+      const { jiLu, sheZhiXiangYing } = chuangJianMock()
+      sheZhiXiangYing({ neiRong: '那肯定呀，我也正想找你聊呢~' })
+
+      const shangXiaWen = {
+        jiaoSe: {
+          ie_lei_xing: 'E' as const,
+          re_shen_lei_xing: '快热' as const,
+          xing_ge: '温柔浪漫',
+          yan_yu_feng_ge: '甜蜜撒娇',
+        },
+        changJing: 'langMan' as const,
+      }
+      await shengChengWriterHuiFu(chuangJianCeShiShuRu(), undefined, shangXiaWen)
+
+      expect(jiLu.length).toBe(1)
+      expect(jiLu[0].wenDu).toBeGreaterThan(0.85)
+      expect(typeof jiLu[0].top_p).toBe('number')
+      expect(jiLu[0].top_p as number).toBeGreaterThan(0)
+    })
+
+    it('Writer：理性/冷静 + I型 + 慢热 → 温度低于基座 0.85', async () => {
+      const { jiLu, sheZhiXiangYing } = chuangJianMock()
+      sheZhiXiangYing({ neiRong: '嗯，好的。' })
+
+      const shangXiaWen = {
+        jiaoSe: {
+          ie_lei_xing: 'I' as const,
+          re_shen_lei_xing: '慢热' as const,
+          xing_ge: '理性冷静',
+          yan_yu_feng_ge: '克制',
+        },
+      }
+      await shengChengWriterHuiFu(chuangJianCeShiShuRu(), undefined, shangXiaWen)
+
+      expect(jiLu.length).toBe(1)
+      expect(jiLu[0].wenDu).toBeLessThan(0.85)
+    })
+
+    it('Director：chaoJia 场景 → 温度低于基座 0.3', async () => {
+      const { jiLu, sheZhiXiangYing } = chuangJianMock()
+      sheZhiXiangYing({
+        neiRong: JSON.stringify({
+          用户意图: '继续聊天',
+          情感分析: '生气',
+          回复策略: '冷淡回应',
+          是否回复: true,
+          回复条数: 1,
+          时间情绪: '愤怒',
+          是否撤回: false,
+        }),
+      })
+
+      const shangXiaWen = {
+        jiaoSe: {
+          ie_lei_xing: 'I' as const,
+          re_shen_lei_xing: '慢热' as const,
+          xing_ge: '理性冷静',
+        },
+        changJing: 'chaoJia' as const,
+      }
+      await shengChengDirectorCeLue(chuangJianCeShiShuRu(), shangXiaWen)
+
+      expect(jiLu.length).toBe(1)
+      expect(jiLu[0].wenDu).toBeLessThan(0.3)
+      expect(typeof jiLu[0].top_p).toBe('number')
+      expect(jiLu[0].top_p as number).toBeGreaterThan(0)
     })
   })
 })

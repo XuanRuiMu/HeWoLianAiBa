@@ -780,6 +780,14 @@ describe('FP-05 聊天界面', () => {
       expect(liaoTianYeMianYuanMa).toMatch(/\.xiaoxi-quyu\s*\{[^}]*padding-bottom:\s*\d+px/)
       expect(liaoTianYeMianYuanMa).toMatch(/\.xiaoxi-quyu\s*\{[^}]*scroll-padding-bottom:\s*\d+px/)
     })
+    it('底部边界空隙与消息间空隙保持一致（单一起源：滚动容器不得叠加额外底部内边距）', () => {
+      // 根因回归：纵向节奏只允许一个来源。若滚动容器再声明非零 padding-bottom，
+      // 会与最后一条消息的 margin-bottom 叠加成 36px 失真间距，底部空隙将远超消息间 16px 空隙。
+      // 因此容器底部内边距必须归零，让最后一条消息的 margin-bottom 充当与底部边界的唯一间距。
+      expect(liaoTianYeMianYuanMa).toContain('padding-bottom: 0')
+      // 消息自身仍保留标准 16px 纵向节奏，作为消息间与到底部边界的统一间距来源
+      expect(liaoTianYeMianYuanMa).toContain('margin-bottom: 16px')
+    })
 
     it('底部输入栏适配安全区域，padding-bottom包含安全区域变量', () => {
       expect(liaoTianYeMianYuanMa).toMatch(

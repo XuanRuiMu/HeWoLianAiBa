@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import { AI_PEI_ZHI } from '../config/AI配置'
 import { peiZhi } from '../config'
+import { jiSuanAIChanShu, type CanShuShangXiaWen } from '../config/AI参数策略'
 import { jiLuAIJiLu } from './debug日志'
 
 export interface DuiHuaXiaoXi {
@@ -11,9 +12,10 @@ export interface DuiHuaXiaoXi {
 export interface TiaoYongCanShu {
   moXing?: string
   wenDu?: number
+  top_p?: number
   zuiDaTokens?: number
   xiangYingGeShi?: { type: 'json_object' | 'text' }
-  enableThinking?: boolean
+  siKaoMoShi?: 'enabled' | 'disabled'
   reasoningEffort?: string
   xiaoXi: DuiHuaXiaoXi[]
 }
@@ -68,9 +70,22 @@ export async function tiaoYongDeepSeek(
   const moXing = canShu.moXing || AI_PEI_ZHI.deepSeek.moXing
   const xiangYingGeShi = canShu.xiangYingGeShi || { type: 'text' as const }
 
+  if (peiZhi.kaiFaMoShi) {
+    console.debug('[AI参数] 最终生效参数', {
+      moXingLeiXing,
+      moXing,
+      wenDu: canShu.wenDu,
+      top_p: canShu.top_p,
+      zuiDaTokens: canShu.zuiDaTokens,
+      siKaoMoShi: canShu.siKaoMoShi,
+    })
+  }
+
   const tiShiCanShu: Record<string, unknown> = {}
-  if (canShu.enableThinking) {
-    tiShiCanShu.enable_thinking = true
+  // 官方规范：思考模式开关使用顶层参数 thinking:{type:'enabled'|'disabled'}，
+  // 旧字段 enable_thinking 会被服务端静默忽略（思考模式下 temperature 等采样参数不生效）
+  if (canShu.siKaoMoShi) {
+    tiShiCanShu.thinking = { type: canShu.siKaoMoShi }
   }
   if (canShu.reasoningEffort) {
     tiShiCanShu.reasoning_effort = canShu.reasoningEffort
@@ -84,6 +99,7 @@ export async function tiaoYongDeepSeek(
         content: xiaoXi.neiRong,
       })),
       temperature: canShu.wenDu,
+      top_p: canShu.top_p,
       max_tokens: canShu.zuiDaTokens,
       response_format: xiangYingGeShi,
       ...tiShiCanShu,
@@ -110,16 +126,17 @@ export async function tiaoYongDeepSeek(
 export function genJuPeiZhiTiaoYong(
   moXingLeiXing: keyof typeof AI_PEI_ZHI.moXing,
   xiaoXi: DuiHuaXiaoXi[],
+  shangXiaWen?: CanShuShangXiaWen,
 ): Promise<TiaoYongJieGuo> {
-  const moXingCanShu = AI_PEI_ZHI.moXing[moXingLeiXing]
+  const moXingCanShu = jiSuanAIChanShu(moXingLeiXing, shangXiaWen)
   return tiaoYongDeepSeek(
     {
       moXing: moXingCanShu.moXing,
       wenDu: moXingCanShu.wenDu,
+      top_p: moXingCanShu.top_p,
       zuiDaTokens: moXingCanShu.zuiDaTokens,
       xiangYingGeShi: moXingCanShu.xiangYingGeShi,
-      enableThinking: moXingCanShu.enableThinking,
-      reasoningEffort: moXingCanShu.reasoningEffort,
+      siKaoMoShi: moXingCanShu.siKaoMoShi,
       xiaoXi,
     },
     moXingLeiXing,

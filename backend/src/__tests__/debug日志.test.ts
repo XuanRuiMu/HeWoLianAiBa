@@ -120,8 +120,8 @@ describe('FP-T1 全量 debug 日志', () => {
   })
 
   it('AI 调用日志', async () => {
-    jiLuAIJiLu('director', 'deepseek-v4-pro', 1200, true)
-    jiLuAIJiLu('writer', 'deepseek-v4-pro', 2500, false, '超时')
+    jiLuAIJiLu('director', 'deepseek-v4-flash', 1200, true)
+    jiLuAIJiLu('writer', 'deepseek-v4-flash', 2500, false, '超时')
     await guanBiRiZhiLiu()
 
     const hang = duQuRiZhiHang()

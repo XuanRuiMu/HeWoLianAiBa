@@ -51,9 +51,7 @@ export const JUN_SHI_PEI_ZHI: Record<string, JunShiPeiZhiXiang> = {
 
 export const JUN_SHI_PEI_ZHI_MO_REN = JUN_SHI_PEI_ZHI.xuanRuiMu
 
-export const JUN_SHI_QIU_ZHU_PEI_ZHI = {
-  zuiDaTokens: 1500,
-  wenDu: 0.85,
-  liShiXiaoXiShuLiang: 10,
-  fuPanTiaoMuShuLiang: 10,
-} as const
+// 军师求助的 AI 调用参数（zuiDaTokens/wenDu/liShiXiaoXiShuLiang）统一收敛于
+// AI_PEI_ZHI.moXing.junShiQiuZhu 与 AI_PEI_ZHI.prompt.junShiLiShiXiaoXiShuLiang（单一数据源），
+// 此处仅保留无重复的复盘条目数
+export const JUN_SHI_QIU_ZHU_FU_PAN_TIAO_MU_SHU_LIANG = 10

@@ -8,6 +8,7 @@ import { tiQuGuanJianShiJian } from './关键事件提取'
 import { zhaXingBianTi, type MBTILeiXing } from '../config/角色配置'
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
+import { type CanShuShangXiaWen } from '../config/AI参数策略'
 import type { GongJianShiJianJieGuo } from '../types'
 
 export interface FuPanShengChengJieGuo {
@@ -445,12 +446,24 @@ export async function shengChengFuPan(
     }
   }
 
+  // 复盘链路（关键事件提取 + 复盘生成）按角色人设与最终好感度/关系阶段动态取参数
+  const fuPanShangXiaWen: CanShuShangXiaWen = {
+    jiaoSe: { shi_fou_zha_xing: fuPanJiaoSeXinXi.shiFouZhaXing },
+    haoGanDu: haoGanDuGuiJi
+      ? { zong_fen: haoGanDuGuiJi.zuiZhongFen, guan_xi_jie_duan: haoGanDuGuiJi.guanXiJieDuan }
+      : undefined,
+  }
+
   let guanJianShiJian: GongJianShiJianJieGuo[] = []
   if (xiaoXiLieBiao.length > 0) {
     const duiHuaWenBen = gouJianDuiHuaWenBen(xiaoXiLieBiao)
     if (duiHuaWenBen) {
       try {
-        guanJianShiJian = await tiQuGuanJianShiJian(duiHuaWenBen, fuPanJiaoSeXinXi.weiXinNiCheng)
+        guanJianShiJian = await tiQuGuanJianShiJian(
+          duiHuaWenBen,
+          fuPanJiaoSeXinXi.weiXinNiCheng,
+          fuPanShangXiaWen,
+        )
       } catch {
         guanJianShiJian = []
       }
@@ -469,7 +482,7 @@ export async function shengChengFuPan(
   const xiangYing = await genJuPeiZhiTiaoYong('fuPanShengCheng', [
     { jiaoSe: 'system', neiRong: '帮朋友复盘一段恋爱模拟聊天，结合后台数据客观分析，只输出 JSON。' },
     { jiaoSe: 'user', neiRong: prompt },
-  ])
+  ], fuPanShangXiaWen)
 
   const jieGou = jieXiJSONXiangYing(xiangYing.neiRong)
 
