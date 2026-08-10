@@ -619,12 +619,13 @@ describe('FP-05 聊天界面', () => {
   describe('Emoji选择器', () => {
     it('点击表情按钮弹出emoji选择器', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
-      expect(wrapper.find('.emoji-mianban').exists()).toBe(false)
+      // v-show：面板常驻布局，仅通过可见性切换，故以 isVisible 判定而非 exists
+      expect(wrapper.find('.emoji-mianban').isVisible()).toBe(false)
 
       await wrapper.find('.emoji-anniu').trigger('click')
       await flushPromises()
 
-      expect(wrapper.find('.emoji-mianban').exists()).toBe(true)
+      expect(wrapper.find('.emoji-mianban').isVisible()).toBe(true)
     })
 
     it('emoji选择器包含168个emoji且为8列网格', async () => {
@@ -692,13 +693,13 @@ describe('FP-05 聊天界面', () => {
       const { wrapper } = await mountLiaoTianYeMian()
       await wrapper.find('.emoji-anniu').trigger('click')
       await flushPromises()
-      expect(wrapper.find('.emoji-mianban').exists()).toBe(true)
+      expect(wrapper.find('.emoji-mianban').isVisible()).toBe(true)
 
       // 模拟点击页面其它区域（消息区），应触发文档捕获监听收起面板
       const xiaoxiQuyu = wrapper.find('.xiaoxi-quyu').element
       xiaoxiQuyu.dispatchEvent(new Event('click', { bubbles: true }))
       await flushPromises()
-      expect(wrapper.find('.emoji-mianban').exists()).toBe(false)
+      expect(wrapper.find('.emoji-mianban').isVisible()).toBe(false)
     })
   })
 
@@ -1589,5 +1590,92 @@ describe('FP-06 复盘展示', () => {
     const piZhuXiangMu = wrapper.findAll('.fupan-pizhu-xiangmu')
     expect(piZhuXiangMu.length).toBe(1)
     expect(piZhuXiangMu[0].classes()).toContain('pizhu-neutral')
+  })
+})
+
+describe('FP-01 发送顺序与钉底滚动根因修复', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.mocked(faSongXiaoXi).mockReset()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.clearAllMocks()
+  })
+
+  it('快速连续发送时网络派发顺序等于点击顺序且客户端序号递增', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const diaoYongJiLu: Array<{ neiRong: string; xuHao: number | null }> = []
+    vi.mocked(faSongXiaoXi).mockImplementation(async (_huiHuaId, neiRong, xuHao) => {
+      diaoYongJiLu.push({ neiRong, xuHao: xuHao ?? null })
+      // 模拟轻微网络延迟，使两次点击在首个请求完成前都已入串行队列
+      await new Promise((r) => setTimeout(r, 5))
+      return {
+        xiaoXi: {
+          id: `x-${neiRong}`,
+          hui_hua_id: 'h1',
+          fa_song_zhe_id: 'u1',
+          fa_song_zhe_lei_xing: 'yonghu',
+          nei_rong,
+          lei_xing: 'wenben',
+          shi_jian_chuo: Date.now(),
+          yi_du: true,
+          ke_hu_duan_xu_hao: xuHao ?? null,
+        },
+        shiMiJi: false,
+      }
+    })
+
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+    await shuRuKuang.setValue('A')
+    await wrapper.find('.fasong-anniu').trigger('click')
+    await shuRuKuang.setValue('B')
+    await wrapper.find('.fasong-anniu').trigger('click')
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(50)
+    await flushPromises()
+
+    // 串行队列保证派发顺序恒等于点击顺序，且序号随点击单调递增
+    expect(diaoYongJiLu.map((r) => r.neiRong)).toEqual(['A', 'B'])
+    expect(diaoYongJiLu[0].xuHao).toBe(1)
+    expect(diaoYongJiLu[1].xuHao).toBe(2)
+  })
+
+  it('用户未钉底时收到新消息不强制滚动', async () => {
+    const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
+    const xiaoxiQuyu = wrapper.find('.xiaoxi-quyu').element as HTMLElement
+    Object.defineProperty(xiaoxiQuyu, 'scrollHeight', { value: 1000, configurable: true })
+    Object.defineProperty(xiaoxiQuyu, 'clientHeight', { value: 800, configurable: true })
+    Object.defineProperty(xiaoxiQuyu, 'scrollTop', {
+      value: 100,
+      configurable: true,
+      writable: true,
+    })
+
+    // 触发滚动事件：距底 = 1000 - 100 - 800 = 100 >= 40 → 判定不在底部
+    xiaoxiQuyu.dispatchEvent(new Event('scroll'))
+    await flushPromises()
+
+    // 追加一条消息，消息数 watch 应判定不在底部而不强制滚动
+    聊天仓库.xiaoXiLieBiao = [
+      ...聊天仓库.xiaoXiLieBiao,
+      {
+        id: 'x-new',
+        hui_hua_id: 'h1',
+        fa_song_zhe_id: 'j1',
+        fa_song_zhe_lei_xing: 'jiaose',
+        nei_rong: '新消息',
+        lei_xing: 'wenben',
+        shi_jian_chuo: Date.now(),
+        yi_du: true,
+      },
+    ]
+    await flushPromises()
+    await vi.advanceTimersByTimeAsync(50)
+    await flushPromises()
+
+    expect(xiaoxiQuyu.scrollTop).toBe(100)
   })
 })

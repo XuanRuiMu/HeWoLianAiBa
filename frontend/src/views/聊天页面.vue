@@ -257,8 +257,12 @@
       <div v-if="!fuPanMoShi && 聊天仓库.cuoWuXinXi" class="shuru-fu-zhu">
         <span class="fasong-cuowu">{{ 聊天仓库.cuoWuXinXi }}</span>
       </div>
-      <Transition name="emoji-zhankai" @after-enter="gunDongDaoDiBu" @after-leave="gunDongDaoDiBu">
-        <div v-if="!fuPanMoShi && emojiMianBanZhanKai" class="emoji-mianban">
+      <Transition name="emoji-zhankai">
+        <div
+          v-show="!fuPanMoShi && emojiMianBanZhanKai"
+          ref="emojiMianBanRef"
+          class="emoji-mianban"
+        >
           <button
             v-for="emoji in changYongEmoji"
             :key="emoji"
@@ -380,6 +384,9 @@ const danXingGaoDu = ref(32)
 const shiKouGaoDu = ref(typeof window !== 'undefined' ? window.innerHeight : 0)
 const shuRuKuangKeZhanKai = computed(() => neiRongGaoDu.value > danXingGaoDu.value + 1)
 const emojiMianBanZhanKai = ref(false)
+const emojiMianBanRef = ref<HTMLElement | null>(null)
+// 监听表情面板尺寸变化，在「布局提交后」补偿滚动，保证首次打开也能把最新消息顶入视口
+let emojiMianBanGuanChaZhe: ResizeObserver | null = null
 const guanLiJianKongZhanKai = ref(false)
 const dangQianShiJian = ref(Date.now())
 let shiJianGengXinQi: ReturnType<typeof setInterval> | null = null
@@ -563,8 +570,7 @@ const changYongEmoji = [
   '🎲',
 ]
 
-// 面板高度在过渡结束时才定型，重新贴底交由 Transition 的 after-enter / after-leave 触发；
-// 在此处按 nextTick 贴底会早于过渡完成，最后一条消息仍会被涨起来的面板顶出视口
+// 面板开合后的滚动补偿交由 ResizeObserver 驱动（布局提交后），而非依赖过渡钩子时序
 function qieHuanEmojiMianBan() {
   emojiMianBanZhanKai.value = !emojiMianBanZhanKai.value
 }
@@ -802,6 +808,17 @@ const fuPanZongJieFenKuai = computed<ZongJieFenKuai[] | null>(() => {
   return jieGuo.length > 0 ? jieGuo : null
 })
 
+// 用户是否停留在消息区底部：向上浏览时取消跟随，回到底部附近才恢复
+const yiDingZaiDiBu = ref(true)
+const DING_BUYu_Zhi_PX = 40
+
+function gengXinDingBuZhuangTai() {
+  const el = xiaoxiQuYuRef.value
+  if (!el) return
+  const juDiJuLi = el.scrollHeight - el.scrollTop - el.clientHeight
+  yiDingZaiDiBu.value = juDiJuLi < DING_BUYu_Zhi_PX
+}
+
 function gunDongDaoDiBu() {
   nextTick(() => {
     if (xiaoxiQuYuRef.value) {
@@ -838,7 +855,8 @@ function chuLiShuRuKuangJuJiao() {
 watch(
   () => (Array.isArray(聊天仓库.xiaoXiLieBiao) ? 聊天仓库.xiaoXiLieBiao.length : 0),
   () => {
-    gunDongDaoDiBu()
+    // 仅当用户停留在底部时才跟随滚动；向上浏览历史时保持当前位置
+    if (yiDingZaiDiBu.value) gunDongDaoDiBu()
   },
 )
 
@@ -969,7 +987,7 @@ async function faSong() {
   faSongZhong.value = true
   try {
     const jieGuo = await 聊天仓库.faSongXiaoXi(neiRong)
-    if (jieGuo) {
+    if (jieGuo && yiDingZaiDiBu.value) {
       gunDongDaoDiBu()
     }
   } finally {
@@ -989,6 +1007,8 @@ async function jiaZaiGengDuo() {
 }
 
 function chuLiGunDong() {
+  // 先更新钉底状态，再判断是否触发加载更多（向上滚时不应被强制拽回底部）
+  gengXinDingBuZhuangTai()
   if (!xiaoxiQuYuRef.value || !聊天仓库.haiYouGengDuo || 聊天仓库.jiaZaiGengDuoZhong) return
   if (xiaoxiQuYuRef.value.scrollTop <= 20) {
     jiaZaiGengDuo()
@@ -1165,6 +1185,14 @@ onMounted(async () => {
   window.addEventListener('resize', chongSuanShuRuKuangGaoDu)
   document.addEventListener('click', chuLiWenDangDianJi, true)
   nextTick(() => ceLiangShuRuKuang())
+  // 表情面板用 v-show 常驻布局，尺寸变化（开合）天然在 layout 之后发生，
+  // 据此补偿滚动，首次与后续走同一条「布局变更→补偿」路径
+  if (typeof ResizeObserver !== 'undefined' && emojiMianBanRef.value) {
+    emojiMianBanGuanChaZhe = new ResizeObserver(() => {
+      if (yiDingZaiDiBu.value) gunDongDaoDiBu()
+    })
+    emojiMianBanGuanChaZhe.observe(emojiMianBanRef.value)
+  }
   await chuShiHuaLiaoTian()
   yiTongGuoMountedChuShiHua = true
 })
@@ -1193,6 +1221,10 @@ onBeforeUnmount(() => {
   }
   tingZhiShiJianGengXinQi()
   qingLiUIMianBan()
+  if (emojiMianBanGuanChaZhe) {
+    emojiMianBanGuanChaZhe.disconnect()
+    emojiMianBanGuanChaZhe = null
+  }
   聊天仓库.qingKongZhuangTai()
 })
 </script>
@@ -1873,11 +1905,9 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-.emoji-zhankai-enter-to,
-.emoji-zhankai-leave-from {
-  /* 必须匹配静态态 .emoji-mianban{max-height:200px}，否则进入→静止、静止→收起交接瞬间 220px 与 200px 不一致产生跳变 */
-  max-height: 200px;
-}
+/* 进入→静止、静止→收起的交接态不再重复声明 max-height，
+   隐式等于唯一静止态 .emoji-mianban{max-height:200px; padding:8px}，
+   彻底消除相位错位跳变 */
 
 .fupan-pizhu-xiangmu {
   display: flex;

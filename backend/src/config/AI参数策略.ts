@@ -114,6 +114,7 @@ export function jiSuanAIChanShu(
     top_p: hanHanPeiZhi(ji.top_p, moXingLeiXing),
     zuiDaTokens: ji.zuiDaTokens,
     siKaoMoShi: ji.siKaoMoShi,
+    reasoningEffort: ji.reasoningEffort,
     xiangYingGeShi: ji.xiangYingGeShi,
   }
 }

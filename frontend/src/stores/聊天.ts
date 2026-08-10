@@ -94,6 +94,11 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
 
   const zuiDaXiaoXiChangDu = 500
   let linShiXiaoXiXuHao = 0
+  // 每会话单调递增的客户端序号（用户消息维度），随请求体上报，作为重载/分页的权威排序来源
+  let ke_hu_duan_xu_hao = 0
+  // 串行发送队列：上一条发送请求完成（或失败）后才派发下一条，
+  // 使网络派发顺序恒等于用户点击顺序，从根本上消除并发乱序。
+  let faSongDuiLie: Promise<void> = Promise.resolve()
 
   function anQuanTuiSong(xiaoXi: 消息) {
     if (!Array.isArray(xiaoXiLieBiao.value)) xiaoXiLieBiao.value = []
@@ -131,6 +136,12 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     socket.on('角色回复', (shuJu: { 角色ID: string; 消息列表: 消息[] }) => {
       if (shuJu.角色ID === dangQianHuiHuaId.value) {
         shuJu.消息列表.forEach((xiaoXi) => anQuanTuiSong(xiaoXi))
+        // 角色消息可能回填更大的客户端序号，抬高本地计数器避免后续用户消息冲突
+        const zuiDaXuHao = shuJu.消息列表.reduce(
+          (zuiDa, x) => Math.max(zuiDa, x.ke_hu_duan_xu_hao ?? 0),
+          0,
+        )
+        if (zuiDaXuHao > ke_hu_duan_xu_hao) ke_hu_duan_xu_hao = zuiDaXuHao
       }
     })
 
@@ -281,6 +292,11 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       const jieGuo = await huoQuXiaoXi(huiHuaId, yeMa.value, meiYeTiaoShu.value)
       xiaoXiLieBiao.value = [...jieGuo.lie_biao].reverse()
       zongShu.value = jieGuo.zong_shu
+      // 以会话内已存在的最大客户端序号为基点，保证新消息序号严格递增且不与其冲突
+      ke_hu_duan_xu_hao = jieGuo.lie_biao.reduce(
+        (zuiDa, x) => Math.max(zuiDa, x.ke_hu_duan_xu_hao ?? 0),
+        0,
+      )
       haiYouGengDuo.value = jieGuo.lie_biao.length < jieGuo.zong_shu
       Promise.resolve(biaoJiYiDu(huiHuaId)).catch(() => {})
     } catch {
@@ -331,9 +347,12 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     qingChuCuoWu()
     linShiXiaoXiXuHao += 1
     const linShiId = `linshi-${Date.now()}-${linShiXiaoXiXuHao}`
+    // 本条待发消息的客户端序号：随点击顺序单调递增，作为权威排序来源上报
+    const benCiXuHao = ++ke_hu_duan_xu_hao
     const linShiXiaoXi: 消息 = {
       id: linShiId,
       ke_hu_duan_id: linShiId,
+      ke_hu_duan_xu_hao: benCiXuHao,
       hui_hua_id: dangQianHuiHuaId.value,
       fa_song_zhe_id: '',
       fa_song_zhe_lei_xing: 'yonghu',
@@ -344,8 +363,23 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       fa_song_zhong: true,
     }
     anQuanTuiSong(linShiXiaoXi)
+
+    // 进入串行队列：捕获当前会话 ID，避免切会话后误发到其它会话；
+    // 队列保证上一条请求完成后再派发本条，杜绝并发到达乱序。
+    const dangQianHuiHua = dangQianHuiHuaId.value
+    const paiDuiRenWu = faSongDuiLie.then(() =>
+      faSongXiaoXiApi(dangQianHuiHua, qingLiNeiRong, benCiXuHao),
+    )
+    // 无论成败都推进队列，不阻断后续发送
+    faSongDuiLie = paiDuiRenWu.then(
+      () => undefined,
+      () => undefined,
+    )
+
     try {
-      const { xiaoXi, shiMiJi } = await faSongXiaoXiApi(dangQianHuiHuaId.value, qingLiNeiRong)
+      const { xiaoXi, shiMiJi } = await paiDuiRenWu
+      // 服务端可能回写更大的序号（如角色消息回填），同步抬高本地计数器避免后续冲突
+      ke_hu_duan_xu_hao = Math.max(ke_hu_duan_xu_hao, xiaoXi.ke_hu_duan_xu_hao ?? 0)
       const suoYin = xiaoXiLieBiao.value.findIndex(
         (m) => m.ke_hu_duan_id === linShiXiaoXi.ke_hu_duan_id,
       )

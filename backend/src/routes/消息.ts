@@ -164,6 +164,19 @@ luYou.post(
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
     }
 
+    // 校验客户端序号：存在则必须为非负整数（BIGINT 范围），拒绝非整数，缺失则视为 null 由服务端按会话追加
+    const yuanShiXuHao = (qingQiu.body as Record<string, unknown>)['客户端序号']
+    let keHuDuanXuHao: number | null = null
+    if (yuanShiXuHao !== undefined && yuanShiXuHao !== null) {
+      if (typeof yuanShiXuHao === 'number' && Number.isInteger(yuanShiXuHao) && yuanShiXuHao >= 0) {
+        keHuDuanXuHao = yuanShiXuHao
+      } else if (typeof yuanShiXuHao === 'string' && /^\d+$/.test(yuanShiXuHao)) {
+        keHuDuanXuHao = Number(yuanShiXuHao)
+      } else {
+        return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
+      }
+    }
+
     try {
       const anQuanJieGuo = await shenHeNeiRongAnQuan(neiRong)
       if (anQuanJieGuo.wei_gui) {
@@ -186,6 +199,7 @@ luYou.post(
         yong_hu_id: yongHu.yongHuId,
         jiao_se_id: jiaoSeId,
         nei_rong: neiRong,
+        ke_hu_duan_xu_hao: keHuDuanXuHao,
       })
       if (!jieGuo.cheng_gong) {
         return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('liaoTian', 'faSongShiBai'))

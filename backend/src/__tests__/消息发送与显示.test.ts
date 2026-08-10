@@ -183,6 +183,47 @@ describe('FP-06 消息发送与显示', () => {
     })
   })
 
+  describe('FP-01 客户端序号：乱序到达仍按点击顺序', () => {
+    it('先发序号2再发序号1，重载后用户消息按序号升序（根因修复）', async () => {
+      const jiaoSeId = await chuangJianCeShiJiaoSe(ceShiYongHu!.lingPai, {
+        性别: 'nv',
+        mbti类型: 'ISTP',
+      })
+
+      // 模拟网络到达乱序：序号 2 先抵达，序号 1 后抵达
+      await request(yingYong)
+        .post(`/api/聊天/会话/${jiaoSeId}/消息`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ neiRong: '第二条', 客户端序号: 2 })
+        .expect(200)
+      await request(yingYong)
+        .post(`/api/聊天/会话/${jiaoSeId}/消息`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ neiRong: '第一条', 客户端序号: 1 })
+        .expect(200)
+
+      // 重载权威顺序：仅看用户消息，应按客户端序号升序
+      const jieGuo = await 数据库.query(
+        `SELECT "内容" FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2 AND "发送者" = 'yonghu' ORDER BY COALESCE("客户端序号", 0) ASC`,
+        [ceShiYongHu!.yongHuId, jiaoSeId],
+      )
+      expect(jieGuo.rows.map((r: { 内容: string }) => r.内容)).toEqual(['第一条', '第二条'])
+    })
+
+    it('客户端序号非整数被拒绝', async () => {
+      const jiaoSeId = await chuangJianCeShiJiaoSe(ceShiYongHu!.lingPai, {
+        性别: 'nv',
+        mbti类型: 'ISFJ',
+      })
+
+      await request(yingYong)
+        .post(`/api/聊天/会话/${jiaoSeId}/消息`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ neiRong: '异常序号', 客户端序号: 'abc' })
+        .expect(400)
+    })
+  })
+
   describe('开场白消息自动保存', () => {
     it('角色确认时已根据 AI 决策将开场白保存为 jiaose 消息', async () => {
       sheZhiKaiChangBaiMock(() => ({ xiao_xi_lie_biao: ['嗨', '在忙吗'] }))

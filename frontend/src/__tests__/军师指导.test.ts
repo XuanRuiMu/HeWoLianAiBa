@@ -115,7 +115,11 @@ function chuangJianMoNiJiLuLieBiao() {
   ]
 }
 
-async function mountJunShiZhiDao(jiaoSeId = 'j1') {
+// 符合 UUID v4 格式的角色 ID（供 jiaoSeId prop 使用，匹配组件内的 P0 输入验证）
+const 测试会话Id = '11111111-1111-4111-8111-111111111111'
+const 测试会话Id2 = '22222222-2222-4222-8222-222222222222'
+
+async function mountJunShiZhiDao(jiaoSeId = 测试会话Id) {
   const luYou = chuangJianLuYou()
   await luYou.push('/')
   const pinia = createPinia()
@@ -274,7 +278,7 @@ describe('FP-03 军师指导面板单级菜单化', () => {
       await anNiu?.trigger('click')
       await flushPromises()
 
-      expect(qingQiuJunShiZhiDao).toHaveBeenCalledWith('j1', 'xuanRuiMu')
+      expect(qingQiuJunShiZhiDao).toHaveBeenCalledWith(测试会话Id, 'xuanRuiMu')
       expect(wrapper.find('.jieguo-neirong').text()).toBe('先吐槽你一句，然后给你具体建议。')
     })
 
@@ -292,7 +296,7 @@ describe('FP-03 军师指导面板单级菜单化', () => {
       await anNiu?.trigger('click')
       await flushPromises()
 
-      expect(qingQiuJunShiZhiDao).toHaveBeenCalledWith('j1', 'ceShiJunShi1')
+      expect(qingQiuJunShiZhiDao).toHaveBeenCalledWith(测试会话Id, 'ceShiJunShi1')
       expect(wrapper.find('.jieguo-neirong').text()).toBe('测试军师1的建议。')
     })
 
@@ -752,7 +756,7 @@ describe('FP-04 军师指导"指导记录"独立入口', () => {
       currentRoute: { value: { name: string; params: Record<string, string> } }
     }
     expect(luYou.currentRoute.value.name).toBe('junShiJiLuXiangQing')
-    expect(luYou.currentRoute.value.params.jiaoSeId).toBe('j1')
+    expect(luYou.currentRoute.value.params.jiaoSeId).toBe(测试会话Id)
     expect(luYou.currentRoute.value.params.jiLuId).toBe('2026-07-07T10:00:00.000Z')
   })
 
@@ -970,7 +974,7 @@ describe('FP-02 军师指导"已指导过相同聊天内容"按规则提示', ()
     vi.mocked(huoQuJunShiLieBiao).mockImplementation(() => new Promise(() => []))
 
     const wrapper = mount(军师指导, {
-      props: { jiaoSeId: 'j1' },
+      props: { jiaoSeId: 测试会话Id },
       global: {
         plugins: [createPinia(), chuangJianLuYou()],
       },
@@ -1047,7 +1051,7 @@ describe('Req3 提示显示期间按钮禁用与状态流转', () => {
   })
 
   it('切换会话后重新查询使按钮可用性随新会话流转', async () => {
-    const { wrapper } = await mountJunShiZhiDao('j1')
+    const { wrapper } = await mountJunShiZhiDao(测试会话Id)
     expect(wrapper.find('.qingqiu-anniu').attributes('disabled')).toBeDefined()
 
     // 切换到另一会话，服务器返回可再次指导
@@ -1056,7 +1060,7 @@ describe('Req3 提示显示期间按钮禁用与状态流转', () => {
       keZaiCiZhiDao: true,
       youLiaoTianJiLu: true,
     })
-    await wrapper.setProps({ jiaoSeId: 'j2' })
+    await wrapper.setProps({ jiaoSeId: 测试会话Id2 })
     await flushPromises()
 
     expect(wrapper.find('.yi-zhidao-tishi').exists()).toBe(false)

@@ -45,10 +45,11 @@ export async function huoQuXiaoXi(
 export async function faSongXiaoXi(
   huiHuaId: string,
   neiRong: string,
+  keHuDuanXuHao?: number | null,
 ): Promise<{ xiaoXi: Xiaoxi; shiMiJi: boolean }> {
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: Xiaoxi & { shi_mi_ji?: boolean } }>(
     `/聊天/会话/${huiHuaId}/消息`,
-    { neiRong },
+    { neiRong, 客户端序号: keHuDuanXuHao ?? null },
   )
   const shuJu = 响应.data.shu_ju
   return {

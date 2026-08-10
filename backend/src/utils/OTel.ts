@@ -13,17 +13,33 @@ let sdkShiLi: NodeSDK | null = null
 export function chuShiHuaOTel(): void {
   if (yiChuShiHua) return
 
-  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO)
+  const duanDian = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
+
+  // 是否启用导出完全由配置显式决定：
+  // 1) 用户/部署明确提供 collector 地址 → 使用 OTLP 导出
+  // 2) 开发环境 → 用 Console 导出便于本地观察 trace
+  // 3) 生产环境且未配置 endpoint（本部署无 collector）→ 直接跳过，
+  //    不初始化 SDK、不构造导出器、不开启 diag，从根本上消除 ECONNREFUSED 噪音
+  const shiYongOTLP = Boolean(duanDian)
+  const shiYongConsole = !shiYongOTLP && peiZhi.huanJing === 'development'
+
+  if (!shiYongOTLP && !shiYongConsole) {
+    yiChuShiHua = true
+    return
+  }
+
+  // diag 仅在 OTLP 分支显式开启，避免生产无 collector 时刷诊断日志
+  if (shiYongOTLP) {
+    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO)
+  }
 
   const ziYuan = resourceFromAttributes({
     [SEMRESATTRS_SERVICE_NAME]: '和我恋爱吧',
   })
 
-  const baoLuQi = peiZhi.huanJing === 'development'
-    ? new ConsoleSpanExporter()
-    : new OTLPTraceExporter({
-        url: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318/v1/traces',
-      })
+  const baoLuQi = shiYongOTLP
+    ? new OTLPTraceExporter({ url: duanDian as string })
+    : new ConsoleSpanExporter()
 
   sdkShiLi = new NodeSDK({
     resource: ziYuan,

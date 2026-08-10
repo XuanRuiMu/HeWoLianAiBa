@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS "消息" (
     "已撤回" BOOLEAN DEFAULT FALSE,
     "撤回时间" TIMESTAMPTZ,
     "原始内容" TEXT,
+    "客户端序号" BIGINT,
     "创建时间" TIMESTAMPTZ DEFAULT NOW()
 );
 

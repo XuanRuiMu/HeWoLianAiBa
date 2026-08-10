@@ -17,12 +17,14 @@ export interface XiaoXiXinXi {
   yi_che_hui?: boolean
   che_hui_shi_jian?: string | null
   yuan_shi_nei_rong?: string | null
+  ke_hu_duan_xu_hao?: number | null
 }
 
 export interface FaSongXiaoXiCanShu {
   yong_hu_id: string
   jiao_se_id: string
   nei_rong: string
+  ke_hu_duan_xu_hao?: number | null
 }
 
 export interface HuoQuXiaoXiCanShu {
@@ -86,6 +88,7 @@ function yingSheXiaoXi(row: Record<string, unknown>): XiaoXiXinXi {
     yi_che_hui: Boolean(row.已撤回),
     che_hui_shi_jian: row.撤回时间 ? String(row.撤回时间) : null,
     yuan_shi_nei_rong: row.已撤回 && row.原始内容 ? String(row.原始内容) : null,
+    ke_hu_duan_xu_hao: row.客户端序号 != null ? Number(row.客户端序号) : null,
   }
 }
 
@@ -140,7 +143,7 @@ export async function huoQuXiaoXiLieBiao(
   const jieGuo = await 数据库.query(
     `SELECT * FROM "消息"
      WHERE "用户ID" = $1 AND "角色ID" = $2
-     ORDER BY "创建时间" DESC
+     ORDER BY COALESCE("客户端序号", 0) DESC, "创建时间" DESC
      LIMIT $3 OFFSET $4`,
     [canShu.yong_hu_id, canShu.jiao_se_id, meiYeTiaoShu, pianYi],
   )
@@ -175,10 +178,10 @@ export async function chuangJianYongHuXiaoXi(
   }
 
   const jieGuo = await 数据库.query(
-    `INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读")
-     VALUES ($1, $2, $3, 'yonghu', 'wenben', true)
+    `INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "客户端序号")
+     VALUES ($1, $2, $3, 'yonghu', 'wenben', true, $4)
      RETURNING *`,
-    [canShu.yong_hu_id, canShu.jiao_se_id, qingLiNeiRong],
+    [canShu.yong_hu_id, canShu.jiao_se_id, qingLiNeiRong, canShu.ke_hu_duan_xu_hao ?? null],
   )
 
   const xiaoXi = yingSheXiaoXi(jieGuo.rows[0])
@@ -242,7 +245,7 @@ export async function cheHuiJiaoSeXiaoXi(
   const xiaoXiJieGuo = await 数据库.query(
     `SELECT * FROM "消息"
      WHERE "用户ID" = $1 AND "角色ID" = $2 AND "发送者" = 'jiaose' AND "已撤回" = false
-     ORDER BY "创建时间" DESC
+     ORDER BY COALESCE("客户端序号", 0) DESC, "创建时间" DESC
      LIMIT 1`,
     [canShu.yong_hu_id, canShu.jiao_se_id],
   )

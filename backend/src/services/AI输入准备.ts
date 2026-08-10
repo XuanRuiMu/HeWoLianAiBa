@@ -10,6 +10,7 @@ export interface BaoCunJiaoSeXiaoXiCanShu {
   yong_hu_id: string
   jiao_se_id: string
   nei_rong: string
+  ke_hu_duan_xu_hao?: number | null
 }
 
 function jieXiJSONZiDuan(zhi: unknown): unknown {
@@ -155,11 +156,22 @@ export async function huoQuZuiJinDuiHuaLiShi(
 export async function baoCunJiaoSeXiaoXi(
   canShu: BaoCunJiaoSeXiaoXiCanShu,
 ): Promise<XiaoXiXinXi> {
+  // 客户端序号：前端显式提供则沿用，否则由服务端按会话最大值 +1 追加，
+  // 保证角色消息与用户消息落在同一排序来源，重载后顺序与乐观顺序一致。
+  let keHuDuanXuHao = canShu.ke_hu_duan_xu_hao ?? null
+  if (keHuDuanXuHao == null) {
+    const xuHaoJieGuo = await 数据库.query(
+      `SELECT COALESCE(MAX("客户端序号"), 0) as zui_da FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
+      [canShu.yong_hu_id, canShu.jiao_se_id],
+    )
+    keHuDuanXuHao = Number(xuHaoJieGuo.rows[0]?.zui_da ?? 0) + 1
+  }
+
   const jieGuo = await 数据库.query(
-    `INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读")
-     VALUES ($1, $2, $3, 'jiaose', 'wenben', true)
+    `INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "客户端序号")
+     VALUES ($1, $2, $3, 'jiaose', 'wenben', true, $4)
      RETURNING *`,
-    [canShu.yong_hu_id, canShu.jiao_se_id, canShu.nei_rong],
+    [canShu.yong_hu_id, canShu.jiao_se_id, canShu.nei_rong, keHuDuanXuHao],
   )
 
   const row = jieGuo.rows[0]
@@ -176,6 +188,7 @@ export async function baoCunJiaoSeXiaoXi(
     yi_che_hui: Boolean(row.已撤回),
     che_hui_shi_jian: row.撤回时间 ? String(row.撤回时间) : null,
     yuan_shi_nei_rong: null,
+    ke_hu_duan_xu_hao: row.客户端序号 != null ? Number(row.客户端序号) : null,
   }
   jiLuXiaoXiCaoZuo('角色消息发送', canShu.yong_hu_id, canShu.jiao_se_id, 'jiaose', { xiao_xi_id: xiaoXi.id })
   return xiaoXi

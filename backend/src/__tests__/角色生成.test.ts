@@ -280,7 +280,7 @@ describe('FP-04 AI角色生成', () => {
     expect(xiaoXiJieGuo.rows[1].内容).toBe('今天天气不错')
   })
 
-  it('内向+慢热角色确认后不发送开场白消息', async () => {
+  it('mock 返回空数组时确认后不保存开场白消息（AI 决策不发，含 I 型）', async () => {
     sheZhiKaiChangBaiMock(() => ({ xiao_xi_lie_biao: [] }))
 
     const shengChengXiangYing = await request(yingYong)
@@ -333,8 +333,8 @@ describe('FP-04 AI角色生成', () => {
     }
   })
 
-  it('I 型角色即使 mock 返回消息也不发送（主动型人格过滤回归保护）', async () => {
-    // 关键回归保护：mock 返回非空消息，但 I 型在外层就拦截，不应保存任何消息
+  it('I 型角色 mock 返回消息时也会被保存（AI 决策路径被实际调用，不再被 E/I 拦截）', async () => {
+    // 新行为：是否发送由 AI/mock 决策，I 型不再被外层硬拦截
     sheZhiKaiChangBaiMock(() => ({ xiao_xi_lie_biao: ['嗨', '你好呀', '在吗'] }))
 
     const shengChengXiangYing = await request(yingYong)
@@ -357,11 +357,11 @@ describe('FP-04 AI角色生成', () => {
       `SELECT COUNT(*) as shu_liang FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
       [ceShiYongHuId, jiaoSeId],
     )
-    expect(Number(xiaoXiJieGuo.rows[0].shu_liang)).toBe(0)
+    expect(Number(xiaoXiJieGuo.rows[0].shu_liang)).toBe(3)
   })
 
-  it('E 型+慢热角色开场消息条数在 1~3 范围内', async () => {
-    // ENFJ: E + J(慢热)，规则 1~3 条；mock 返回 3 条，应全部保存
+  it('mock 返回 3 条时全部保存（AI 决策路径，不按 E/I 截断）', async () => {
+    // ENFJ: E + 慢热；新逻辑下条数完全由 mock/AI 决定，mock 返回 3 条即保存 3 条
     sheZhiKaiChangBaiMock(() => ({ xiao_xi_lie_biao: ['嗨', '在吗', '今天好热'] }))
 
     const shengChengXiangYing = await request(yingYong)
@@ -385,12 +385,11 @@ describe('FP-04 AI角色生成', () => {
       `SELECT "内容" FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2 ORDER BY "创建时间" ASC`,
       [ceShiYongHuId, jiaoSeId],
     )
-    expect(xiaoXiJieGuo.rows.length).toBeGreaterThanOrEqual(1)
-    expect(xiaoXiJieGuo.rows.length).toBeLessThanOrEqual(3)
+    expect(xiaoXiJieGuo.rows.length).toBe(3)
   })
 
-  it('E 型+慢热角色 mock 返回 5 条时应被截断为 3 条', async () => {
-    // ENFJ: E+慢热，zuiDa=3；mock 返回 5 条，应截断为 3 条
+  it('mock 返回 5 条时按 5 条上限截断保存', async () => {
+    // 开场白统一 5 条上限，不再按 E/I 规则截断为 3 条
     sheZhiKaiChangBaiMock(() => ({
       xiao_xi_lie_biao: ['嗨', '在吗', '今天好热', '吃了吗', '干嘛呢'],
     }))
@@ -413,12 +412,11 @@ describe('FP-04 AI角色生成', () => {
       `SELECT COUNT(*) as shu_liang FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
       [ceShiYongHuId, jiaoSeId],
     )
-    expect(Number(xiaoXiJieGuo.rows[0].shu_liang)).toBeLessThanOrEqual(3)
+    expect(Number(xiaoXiJieGuo.rows[0].shu_liang)).toBe(5)
   })
 
-  it('渣型变体条数上限 +1 但不超过 5', async () => {
-    // ESFP+渣: E+快热 zuiDa=5, 渣型 +1 = 6 但 Math.min(5, 6) = 5
-    // mock 返回 6 条，应被截断为 5 条
+  it('渣型变体 mock 返回 6 条时按 5 条上限截断', async () => {
+    // 开场白统一 5 条上限；mock 返回 6 条，应被截断为 5 条
     sheZhiKaiChangBaiMock(() => ({
       xiao_xi_lie_biao: ['嗨', '哈喽', '在吗', '今天好热', '吃了吗', '干嘛呢'],
     }))

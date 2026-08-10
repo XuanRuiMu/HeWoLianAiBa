@@ -92,6 +92,7 @@ export interface Xiaoxi {
   yuan_shi_nei_rong?: string
   fa_song_zhong?: boolean
   ke_hu_duan_id?: string
+  ke_hu_duan_xu_hao?: number | null
 }
 
 export interface TongGuanXinXi {

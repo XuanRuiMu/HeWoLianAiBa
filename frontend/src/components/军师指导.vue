@@ -144,6 +144,7 @@ import {
 import { fanYi, huoQuFanYi } from '@/config/translations'
 import { 是业务错误 } from '@/api/请求'
 import { shengChengTouXiangURL } from '@/utils/头像'
+import { 使用军师仓库, shiYouXiaoJiaoSeId } from '@/stores/军师'
 import type { JunShiXinXi, JunShiJiLu, JunShiZhiDaoZhuangTaiXinXi } from '@/types'
 
 type JunShiZhuangTaiLeiXing = 'wei_zhi_dao' | 'zhi_dao_zhong' | 'yi_wan_cheng'
@@ -158,11 +159,14 @@ const emit = defineEmits<{
 
 const router = useRouter()
 
+// 跨导航唯一事实源：军师指导状态提升到独立 store，组件本地不再持有易失副本
+const 军师仓库 = 使用军师仓库()
+
 const junShiLieBiaoXuanXiang = ref<JunShiXinXi[]>([])
 const jiLuLieBiao = ref<JunShiJiLu[]>([])
-const dangQianZhuangTai = ref<JunShiZhiDaoZhuangTaiXinXi | null>(null)
-const keZaiCiZhiDao = ref(true)
-const youLiaoTianJiLu = ref(true)
+// 透传 store 的持久状态，保持模板与派生逻辑无需改动来源
+const dangQianZhuangTai = computed(() => 军师仓库.zhuangTai)
+const youLiaoTianJiLu = computed(() => 军师仓库.youLiaoTianJiLu)
 const qingQiuZhongJunShiId = ref<string | null>(null)
 const zhanKaiJunShiId = ref<string | null>(null)
 const cuoWuTiShiMap = ref<Record<string, string>>({})
@@ -171,8 +175,9 @@ const xianShiZhiDaoJiLu = ref(false)
 
 // 单一派生状态：当前聊天内容是否已被指导过（非指导中时）。
 // 提示显隐与「开始指导」按钮可用性均由它统一控制，避免点击后再检查再弹提示的重复路径。
+// 判定依据为 store 的持久状态，离开再回来恒与后端真值一致。
 const yiZhiDaoXiangTongNeiRong = computed(
-  () => !keZaiCiZhiDao.value && dangQianZhuangTai.value?.zhuang_tai !== 'zhi_dao_zhong',
+  () => !军师仓库.keZaiCiZhiDao && 军师仓库.zhuangTai?.zhuang_tai !== 'zhi_dao_zhong',
 )
 
 let lunXunShiJianQi: ReturnType<typeof setInterval> | null = null
@@ -193,32 +198,27 @@ function qiDongLunXun() {
   }, LUN_XUN_JIAN_GE_HAO_MIAO)
 }
 
+// 由 store 的持久状态派生卡片状态，颜色（黄/灰）与后端真值始终一致。
+// 若 store 持有的会话与当前组件会话不一致（切换竞态窗口），保守视为未指导，待 seed 完成。
 function huoQuJunShiZhuangTai(junShiId: string): JunShiZhuangTaiLeiXing {
-  if (
-    dangQianZhuangTai.value?.zhuang_tai === 'zhi_dao_zhong' &&
-    dangQianZhuangTai.value.jun_shi_id === junShiId
-  ) {
+  if (!军师仓库.shiDangQianHuiHua(props.jiaoSeId)) return 'wei_zhi_dao'
+  const zt = 军师仓库.zhuangTai
+  if (zt?.zhuang_tai === 'zhi_dao_zhong' && zt.jun_shi_id === junShiId) {
     return 'zhi_dao_zhong'
   }
-  if (
-    dangQianZhuangTai.value?.zhuang_tai === 'yi_wan_cheng' &&
-    dangQianZhuangTai.value.jun_shi_id === junShiId
-  ) {
-    return keZaiCiZhiDao.value ? 'wei_zhi_dao' : 'yi_wan_cheng'
+  if (zt?.zhuang_tai === 'yi_wan_cheng' && zt.jun_shi_id === junShiId) {
+    return 军师仓库.keZaiCiZhiDao ? 'wei_zhi_dao' : 'yi_wan_cheng'
   }
   if (jiLuLieBiao.value.some((jiLu) => jiLu.jun_shi_id === junShiId)) {
-    return keZaiCiZhiDao.value ? 'wei_zhi_dao' : 'yi_wan_cheng'
+    return 军师仓库.keZaiCiZhiDao ? 'wei_zhi_dao' : 'yi_wan_cheng'
   }
   return 'wei_zhi_dao'
 }
 
 function huoQuZhiDaoJieGuo(junShiId: string): string | null {
-  if (
-    dangQianZhuangTai.value?.zhuang_tai === 'yi_wan_cheng' &&
-    dangQianZhuangTai.value.jun_shi_id === junShiId &&
-    dangQianZhuangTai.value.jie_guo
-  ) {
-    return dangQianZhuangTai.value.jie_guo.zhiDaoNeiRong
+  const zt = 军师仓库.zhuangTai
+  if (zt?.zhuang_tai === 'yi_wan_cheng' && zt.jun_shi_id === junShiId && zt.jie_guo) {
+    return zt.jie_guo.zhiDaoNeiRong
   }
   const jiLu = jiLuLieBiao.value.find((item) => item.jun_shi_id === junShiId)
   return jiLu?.jian_yi || null
@@ -227,10 +227,13 @@ function huoQuZhiDaoJieGuo(junShiId: string): string | null {
 async function chaXunBingGengXinZhuangTai(): Promise<void> {
   if (!props.jiaoSeId) return
   try {
-    const { zhuangTai, keZaiCiZhiDao: keZaiCi } = await huoQuJunShiZhiDaoZhuangTai(props.jiaoSeId)
-    dangQianZhuangTai.value = zhuangTai
-    keZaiCiZhiDao.value = keZaiCi
-    youLiaoTianJiLu.value = zhuangTai?.youLiaoTianJiLu ?? youLiaoTianJiLu.value
+    const {
+      zhuangTai,
+      keZaiCiZhiDao: keZaiCi,
+      youLiaoTianJiLu: ylt,
+    } = await huoQuJunShiZhiDaoZhuangTai(props.jiaoSeId)
+    // 写入 store（而非本地易失 ref），组件卸载不再丢失
+    军师仓库.gengXinZhuangTai(zhuangTai, keZaiCi, ylt)
     if (zhuangTai?.zhuang_tai === 'yi_wan_cheng') {
       tingZhiLunXun()
       await shuaXinJiLuLieBiao()
@@ -268,16 +271,11 @@ async function zhiXingQingQiu(junShi: JunShiXinXi) {
   cuoWuTiShiMap.value = { ...cuoWuTiShiMap.value, [junShi.id]: '' }
   try {
     const jieGuo = await qingQiuJunShiZhiDao(props.jiaoSeId, junShi.id)
-    dangQianZhuangTai.value = {
-      zhuang_tai: 'yi_wan_cheng',
-      jun_shi_id: junShi.id,
-      kai_shi_shi_jian: jieGuo.shiJian,
-      jie_guo: jieGuo,
-      youLiaoTianJiLu: true,
-    }
-    // 仅刷新 keZaiCiZhiDao（不覆盖已正确设置的 dangQianZhuangTai），使「已指导过」提示显示
+    // 写入 store：完成态持久化，离开再回来显示灰度与结果一致
+    军师仓库.sheZhiYiWanCheng(props.jiaoSeId, junShi.id, jieGuo)
+    // 仅刷新 keZaiCiZhiDao（不覆盖已完成态），使「已指导过」提示显示
     const { keZaiCiZhiDao: kzc } = await huoQuJunShiZhiDaoZhuangTai(props.jiaoSeId)
-    keZaiCiZhiDao.value = kzc
+    军师仓库.gengXinKeZaiCiZhiDao(kzc)
     await shuaXinJiLuLieBiao()
     zhanKaiJunShiId.value = junShi.id
     qingQiuZhongJunShiId.value = null
@@ -296,12 +294,8 @@ async function zhiXingQingQiu(junShi: JunShiXinXi) {
         [junShi.id]: huoQuFanYi('junShi', 'wuLiaoTianJiLu'),
       }
     } else if (cuoWuMa === 'JUN_SHI_ZAI_ZHI_DAO_ZHONG') {
-      dangQianZhuangTai.value = {
-        zhuang_tai: 'zhi_dao_zhong',
-        jun_shi_id: junShi.id,
-        kai_shi_shi_jian: new Date().toISOString(),
-        youLiaoTianJiLu: true,
-      }
+      // 并发指导命中：写入 store 持久化为指导中，颜色恒黄直到后端完成
+      军师仓库.sheZhiZhiDaoZhong(props.jiaoSeId, junShi.id)
       qiDongLunXun()
     } else {
       cuoWuTiShiMap.value = {
@@ -362,6 +356,11 @@ async function chuShiHua(): Promise<void> {
   qingQiuZhongJunShiId.value = null
   zhanKaiJunShiId.value = null
   cuoWuTiShiMap.value = {}
+  // P0 输入验证：非法角色 ID 直接中止，避免污染跨导航状态
+  if (!props.jiaoSeId || !shiYouXiaoJiaoSeId(props.jiaoSeId)) {
+    jiaZaiZhong.value = false
+    return
+  }
   try {
     const [lieBiao, jiLu, zhuangTaiJieGuo] = await Promise.all([
       huoQuJunShiLieBiao(),
@@ -376,9 +375,13 @@ async function chuShiHua(): Promise<void> {
     ])
     junShiLieBiaoXuanXiang.value = lieBiao
     jiLuLieBiao.value = jiLu
-    dangQianZhuangTai.value = zhuangTaiJieGuo.zhuangTai
-    keZaiCiZhiDao.value = zhuangTaiJieGuo.keZaiCiZhiDao
-    youLiaoTianJiLu.value = zhuangTaiJieGuo.youLiaoTianJiLu
+    // 用后端持久真值 seed store（跨导航唯一事实源），不再写本地易失 ref
+    军师仓库.jiaoSeId = props.jiaoSeId
+    军师仓库.gengXinZhuangTai(
+      zhuangTaiJieGuo.zhuangTai,
+      zhuangTaiJieGuo.keZaiCiZhiDao,
+      zhuangTaiJieGuo.youLiaoTianJiLu,
+    )
     if (zhuangTaiJieGuo.zhuangTai?.zhuang_tai === 'zhi_dao_zhong') {
       qiDongLunXun()
     }
@@ -390,6 +393,7 @@ async function chuShiHua(): Promise<void> {
 }
 
 onUnmounted(() => {
+  // 仅停止轮询；store 状态跨导航持久保留，离开再回来黄底恒与后端真值一致
   tingZhiLunXun()
 })
 </script>

@@ -446,6 +446,11 @@ export async function baoCunJiaoSe(
       xi_huan_de_lei_xing: jiaoSe.xi_huan_de_lei_xing,
       xing_bie: jiaoSe.xing_bie,
       ming_zi: jiaoSe.ming_zi,
+      bei_jing_gu_shi: jiaoSe.bei_jing_gu_shi,
+      qing_gan_jing_li: jiaoSe.qing_gan_jing_li,
+      jia_ting_bei_jing: jiaoSe.jia_ting_bei_jing,
+      tou_xiang: jiaoSe.tou_xiang,
+      biao_qian: jiaoSe.biao_qian,
     })
     for (const neiRong of kaiChangBai.xiao_xi_lie_biao.slice(0, 5)) {
       if (neiRong.trim()) {
