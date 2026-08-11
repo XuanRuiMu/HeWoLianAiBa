@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS "用户" (
     "昵称" VARCHAR(50),
     "性别" VARCHAR(10),
     "目标性别" VARCHAR(10),
+    "默认性别" VARCHAR(10),
     "性格选择" VARCHAR(50),
     "人设标签" VARCHAR(50),
     "渣男渣女变体" BOOLEAN DEFAULT FALSE,

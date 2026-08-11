@@ -80,6 +80,14 @@ export async function gengGaiYongHuMing(yongHuMing: string): Promise<{ yong_hu_m
   return 响应.data.shu_ju
 }
 
+export async function gengGaiMoRenXingBie(moRenXingBie: XingBie): Promise<Yonghu> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: { yong_hu: Yonghu } }>(
+    '/认证/设置默认性别',
+    { moRenXingBie },
+  )
+  return 响应.data.shu_ju.yong_hu
+}
+
 export async function huoQuYongHuXinXi(): Promise<Yonghu> {
   const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: Yonghu }>('/认证/信息')
   return 响应.data.shu_ju

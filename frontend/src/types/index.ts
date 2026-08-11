@@ -54,6 +54,7 @@ export interface Yonghu {
   ni_cheng: string | null
   xing_bie: XingBie | null
   mu_biao_xing_bie: XingBie | null
+  mo_ren_xing_bie: XingBie | null
   xing_ge_xuan_ze: XingGeXuanZe | null
   ren_she_biao_qian: RenSheBiaoQian | null
   yun_xu_zha_nan_zha_nv: boolean

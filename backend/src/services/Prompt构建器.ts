@@ -79,6 +79,7 @@ function gouJianDiYiCeng(): string {
 function gouJianDiErCeng(jiaoSe: AIJiaoSeXinXi): string {
   return [
     '【你是这样一个人】',
+    `性别：${jiaoSe.xing_bie === 'nv' ? '女' : '男'}`,
     `性格底色：${jiaoSe.mbti_lei_xing}（${jiaoSe.ie_lei_xing}型，${jiaoSe.re_shen_lei_xing}）`,
     `外貌：${jiaoSe.wai_mao}`,
     `成长背景：${jiaoSe.bei_jing_gu_shi}`,
@@ -161,6 +162,7 @@ function gouJianDiLiuCeng(shuRu: AIYinQingShuRu, shiFouDiYiLun: boolean): string
     '【代入你自己】',
     `你的微信昵称：${jiaoSe.wei_xin_ming}`,
     `你的真名：${jiaoSe.ming_zi}（只有很熟的时候才自然提到，别主动自我介绍）`,
+    `你的性别：${jiaoSe.xing_bie === 'nv' ? '女' : '男'}（你就是这个人，回复时牢牢记住自己的性别，不要用错代词、别把对方当成同性恋对象来聊）`,
     `性格标签：${jiaoSe.mbti_lei_xing}`,
     `你记得的事：${shuRu.ji_yi_zhai_yao || '暂时没什么特别的'}`,
     '如果对方很久没回你，再聊的时候可能会带点情绪，但别演太过。',
@@ -223,6 +225,7 @@ export function gouJianDirectorPrompt(shuRu: AIYinQingShuRu): string {
     '',
     '【演员人设】',
     `微信昵称：${shuRu.jiao_se.wei_xin_ming}`,
+    `性别：${shuRu.jiao_se.xing_bie === 'nv' ? '女' : '男'}`,
     `MBTI：${shuRu.jiao_se.mbti_lei_xing}（${shuRu.jiao_se.ie_lei_xing}型）`,
     `性格：${shuRu.jiao_se.xing_ge}`,
     `说话方式：${shuRu.jiao_se.yan_yu_feng_ge || '自然'}`,

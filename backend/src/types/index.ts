@@ -24,6 +24,7 @@ export interface YongHuXinXi {
   hai_wang_fen_shu: number
   chuang_jian_shi_jian: string
   geng_xin_shi_jian: string
+  mo_ren_xing_bie: string | null
   mi_ma?: string
 }
 

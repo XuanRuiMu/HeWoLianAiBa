@@ -39,6 +39,7 @@ export const fanYi = {
     dengLuChengGong: '登录成功',
     xiuGaiMiMa: '修改密码',
     xiuGaiYongHuMing: '修改用户名',
+    sheZhiMoRenXingBie: '设置默认性别',
     faSongTongZhi: '发送通知',
     chaKanYongHuLieBiao: '查看用户列表',
     chaKanDuiHuaLieBiao: '查看对话列表',

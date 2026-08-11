@@ -1,5 +1,6 @@
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
+import { AI_PEI_ZHI } from '../config/AI配置'
 import { huoQuNiChengKu } from '../utils/昵称解析'
 import {
   type MBTILeiXing,
@@ -435,8 +436,15 @@ export async function baoCunJiaoSe(
   // 添加微信过渡页 1.5s 后跳转聊天页，聊天页拉取消息时直接显示。
   // 前端 queRenJiaoSe 已配置 60s timeout，DeepSeek 客户端 timeout=120s，
   // shengChengKaiChangBai 内部 try/catch 失败会降级到 jiangJi 不会抛出。
+  //
+  // 开场白"是否发送"由统一概率门控决定（kaiChangBaiFaSongGaiLv，默认 0.5），
+  // 与 AI/heuristic 内部逻辑解耦——这是整体频率约 50% 的唯一决策点，
+  // 禁止在 jiangJi 或模型提示里再用 E/I 等维度二次决定。测试环境跳过门控以保证确定性。
   try {
-    const kaiChangBai = await shengChengKaiChangBai({
+    const kaiChangBai =
+      process.env.VITEST === 'true' ||
+      Math.random() < AI_PEI_ZHI.prompt.kaiChangBaiFaSongGaiLv
+        ? await shengChengKaiChangBai({
       mbti_lei_xing: jiaoSe.mbti_lei_xing,
       ie_lei_xing: jiaoSe.ie_lei_xing,
       re_shen_lei_xing: jiaoSe.re_shen_lei_xing,
@@ -452,6 +460,7 @@ export async function baoCunJiaoSe(
       tou_xiang: jiaoSe.tou_xiang,
       biao_qian: jiaoSe.biao_qian,
     })
+        : { xiao_xi_lie_biao: [] as string[] }
     for (const neiRong of kaiChangBai.xiao_xi_lie_biao.slice(0, 5)) {
       if (neiRong.trim()) {
         await baoCunJiaoSeXiaoXi({

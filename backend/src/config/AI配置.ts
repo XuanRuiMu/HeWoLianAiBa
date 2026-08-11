@@ -181,6 +181,9 @@ export const AI_PEI_ZHI = {
     // 上下文 token 预算（保守估算：字符数/2）。超过时自动丢弃最旧的非系统消息。
     shangXiaWenTokenYuSuan: 60000,
     jiaoSeChenJinZhiLing: '【从现在起，你就是TA】',
+    // 开场白发送概率（整体频率目标）。单一门控点：角色确认时按此概率决定是否生成开场白，
+    // 与 AI/heuristic 内部逻辑解耦；禁止按 E/I 等人格维度机械决定。默认 0.5（约半数角色发开场白）。
+    kaiChangBaiFaSongGaiLv: 0.5,
   },
 
   haoGanDu: {

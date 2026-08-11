@@ -6,6 +6,7 @@ import { huoQuFanYi } from '../config/translations'
 import { huoQuJieDuanMing } from './好感度'
 import { huoQuAIJiaoSeXinXi } from './AI输入准备'
 import { jiaoSeShiFouBeiDuoShe } from './夺舍'
+import { yingSheYongHu } from './认证'
 import type { YongHuXinXi } from '../types'
 
 export interface YongHuLieBiaoXiang {
@@ -62,29 +63,6 @@ export interface XiTongZhuangTai {
   }
   redis_jian_shu: number
   shen_ji_ri_zhi: unknown[]
-}
-
-function yingSheYongHu(row: Record<string, unknown>): YongHuXinXi {
-  return {
-    id: String(row.ID),
-    shou_ji_hao: String(row.手机号),
-    yong_hu_ming: row.用户名 ? String(row.用户名) : null,
-    ni_cheng: row.昵称 ? String(row.昵称) : null,
-    xing_bie: row.性别 ? String(row.性别) : null,
-    mu_biao_xing_bie: row.目标性别 ? String(row.目标性别) : null,
-    xing_ge_xuan_ze: row.性格选择 ? String(row.性格选择) : null,
-    ren_she_biao_qian: row.人设标签 ? String(row.人设标签) : null,
-    yun_xu_zha_nan_zha_nv: Boolean(row.渣男渣女变体),
-    tou_xiang: row.头像 ? String(row.头像) : null,
-    sheng_ri: row.生日 ? String(row.生日) : null,
-    qian_ming: row.签名 ? String(row.签名) : null,
-    guan_li_yuan: Boolean(row.管理员),
-    ce_shi: Boolean(row.测试),
-    huo_yue_ren_she_id: row.活跃角色ID ? String(row.活跃角色ID) : null,
-    hai_wang_fen_shu: 0,
-    chuang_jian_shi_jian: row.创建时间 ? String(row.创建时间) : new Date().toISOString(),
-    geng_xin_shi_jian: row.更新时间 ? String(row.更新时间) : new Date().toISOString(),
-  }
 }
 
 function yingSheXiaoXi(row: Record<string, unknown>): Record<string, unknown> {

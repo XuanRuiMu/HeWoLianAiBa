@@ -842,14 +842,24 @@ function chuLiShiJiaoKouBianHua() {
   const shiJiaoKouGaoDu = window.visualViewport.height
   const buJuGaoDu = window.innerHeight
   const jianPanPianYi = Math.max(0, buJuGaoDu - shiJiaoKouGaoDu)
-  if (jianPanPianYi > 80) {
+  // 仅当用户原本就在底部附近时才把最新消息顶入视口；用户正在阅读历史时，
+  // 软键盘弹出或切后台回前台带来的视口高度变化都不得强制拽回底部（保留查看位置）
+  if (jianPanPianYi > 80 && yiDingZaiDiBu.value) {
     huaDongShuRuLanKeJian()
+  }
+}
+
+// 切后台再回前台：仅按真实滚动位置刷新「是否钉在底部」标志，绝不主动回底，保留用户查看位置
+function chuLiYeMianKeJianXing() {
+  if (document.visibilityState === 'visible') {
+    gengXinDingBuZhuangTai()
   }
 }
 
 function chuLiShuRuKuangJuJiao() {
   emojiMianBanZhanKai.value = false
-  huaDongShuRuLanKeJian()
+  // 仅在用户原本就在底部附近时跟随到底；切后台回前台后输入框恢复焦点（触发 focus）若强行回底会丢失历史查看位置
+  if (yiDingZaiDiBu.value) huaDongShuRuLanKeJian()
 }
 
 watch(
@@ -1184,6 +1194,7 @@ onMounted(async () => {
   qiDongShiJianGengXinQi()
   window.addEventListener('resize', chongSuanShuRuKuangGaoDu)
   document.addEventListener('click', chuLiWenDangDianJi, true)
+  document.addEventListener('visibilitychange', chuLiYeMianKeJianXing)
   nextTick(() => ceLiangShuRuKuang())
   // 表情面板用 v-show 常驻布局，尺寸变化（开合）天然在 layout 之后发生，
   // 据此补偿滚动，首次与后续走同一条「布局变更→补偿」路径
@@ -1215,6 +1226,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('junshi-zhankai', junShiZhanKaiJianTingQi)
   window.removeEventListener('resize', chongSuanShuRuKuangGaoDu)
   document.removeEventListener('click', chuLiWenDangDianJi, true)
+  document.removeEventListener('visibilitychange', chuLiYeMianKeJianXing)
   if (window.visualViewport) {
     window.visualViewport.removeEventListener('resize', chuLiShiJiaoKouBianHua)
     window.visualViewport.removeEventListener('scroll', chuLiShiJiaoKouBianHua)
@@ -1703,6 +1715,10 @@ onBeforeUnmount(() => {
   max-height: 200px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  /* 常驻滚动条槽位：静止态内容溢出会显示滚动条，而展开/折叠态(max-height:0)无滚动条；
+     若不预留，三态内容宽度不一致，滚动条出现瞬间 emoji 网格会横向偏移（动画跳变）。
+     与聊天区一致，预留槽位使 打开/静态/折叠 三态宽度恒等，消除居中偏差 */
+  scrollbar-gutter: stable;
   /* 不声明标准 scrollbar-width / scrollbar-color，否则会覆盖下方 ::-webkit-scrollbar 自定义样式 */
   /* 独立可见色变量，避免沿用近乎不可见的 --gundong-tiao-beijing */
   --emoji-mianban-gundong-tiao: rgba(110, 110, 110, 0.85);
@@ -1902,7 +1918,9 @@ onBeforeUnmount(() => {
   opacity: 0;
   max-height: 0;
   padding: 0 8px;
-  overflow: hidden;
+  /* 与静止态 .emoji-mianban 的 overflow-y:auto 保持一致，确保 scrollbar-gutter:stable 预留的滚动条槽位在
+     打开/静态/折叠三态恒等，消除滚动条出现/消失导致的 emoji 网格横向偏移（尾帧=首帧=静止态） */
+  overflow-y: auto;
 }
 
 /* 进入→静止、静止→收起的交接态不再重复声明 max-height，

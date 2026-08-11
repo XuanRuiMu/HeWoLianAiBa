@@ -238,14 +238,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
+import { 使用用户仓库 } from '@/stores/用户'
 import type { MBTI类型, 性格选择 } from '@/types'
 import { 性格选择映射 } from '@/types'
 import { huoQuFanYi } from '@/config/translations'
 
 const 仓库 = 使用认证表单仓库()
+const 用户仓库 = 使用用户仓库()
 const router = useRouter()
 
 if (仓库.huoQuZiLiaoSheZhiYiWanCheng()) {
@@ -264,6 +266,16 @@ const 步骤方向 = ref<'qian' | 'hou'>('qian')
 
 watch(() => 仓库.ziLiaoDangQianBuZhou, 仓库.baoCunZiLiaoZhuangTai)
 watch(() => ({ ...仓库.ziLiaoShuJu }), 仓库.baoCunZiLiaoZhuangTai, { deep: true })
+
+// 普通模式第一步（用户自身性别）默认预选「默认性别」系统设置；
+// 仅当用户尚未手动选择时才填入，不覆盖进行中的选择。
+onMounted(async () => {
+  await 用户仓库.queBaoShenFenJiuXu()
+  const moRen = 用户仓库.dangQianYongHu?.mo_ren_xing_bie
+  if (moRen && !ziLiaoShuJu.xingBie) {
+    ziLiaoShuJu.xingBie = moRen
+  }
+})
 
 const 步骤过渡名称 = computed(() =>
   步骤方向.value === 'qian' ? 'buZhou-qianJin' : 'buZhou-houTui',

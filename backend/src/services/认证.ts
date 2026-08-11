@@ -39,7 +39,7 @@ export interface GengGaiYongHuMingCanShu {
   ip: string
 }
 
-function yingSheYongHu(row: Record<string, unknown>): YongHuXinXi {
+export function yingSheYongHu(row: Record<string, unknown>): YongHuXinXi {
   return {
     id: String(row.ID),
     shou_ji_hao: String(row.手机号),
@@ -47,6 +47,7 @@ function yingSheYongHu(row: Record<string, unknown>): YongHuXinXi {
     ni_cheng: row.昵称 ? String(row.昵称) : null,
     xing_bie: row.性别 ? String(row.性别) : null,
     mu_biao_xing_bie: row.目标性别 ? String(row.目标性别) : null,
+    mo_ren_xing_bie: row.默认性别 ? String(row.默认性别) : null,
     xing_ge_xuan_ze: row.性格选择 ? String(row.性格选择) : null,
     ren_she_biao_qian: row.人设标签 ? String(row.人设标签) : null,
     yun_xu_zha_nan_zha_nv: Boolean(row.渣男渣女变体),
@@ -54,6 +55,7 @@ function yingSheYongHu(row: Record<string, unknown>): YongHuXinXi {
     sheng_ri: row.生日 ? String(row.生日) : null,
     qian_ming: row.签名 ? String(row.签名) : null,
     guan_li_yuan: Boolean(row.管理员),
+    ce_shi: Boolean(row.测试),
     huo_yue_ren_she_id: row.活跃角色ID ? String(row.活跃角色ID) : null,
     hai_wang_fen_shu: 0,
     chuang_jian_shi_jian: row.创建时间 ? String(row.创建时间) : new Date().toISOString(),
@@ -367,4 +369,42 @@ export async function gengGaiYongHuMing(
   })
 
   return { cheng_gong: true, ti_shi: huoQuFanYi('renZheng', 'xiuGaiYongHuMingChengGong'), yong_hu: yongHu }
+}
+
+/**
+ * 设置用户「默认性别」。
+ * 该值仅作为普通模式资料向导第一步（用户自身性别）的系统默认预选项，
+ * 不覆盖用户已手动选择的结果，也不参与任何角色/对象性别判定。
+ * 入参归一化：male/nan/男 → 'male'，female/nv/女 → 'female'。
+ */
+export async function setMoRenXingBie(
+  canShu: { yong_hu_id: string; mo_ren_xing_bie: string },
+): Promise<{ cheng_gong: boolean; ti_shi?: string; yong_hu?: YongHuXinXi }> {
+  const 原始值 = canShu.mo_ren_xing_bie
+  const 归一值: 'male' | 'female' =
+    原始值 === 'male' || 原始值 === 'nan' || 原始值 === '男'
+      ? 'male'
+      : 原始值 === 'female' || 原始值 === 'nv' || 原始值 === '女'
+        ? 'female'
+        : (null as unknown as 'male' | 'female')
+
+  if (!归一值) {
+    return { cheng_gong: false, ti_shi: huoQuFanYi('anQuan', 'shenFenBuHeFa') }
+  }
+
+  const gengXinJieGuo = await 数据库.query(
+    `UPDATE "用户" SET "默认性别" = $1, "更新时间" = NOW() WHERE "ID" = $2 RETURNING *`,
+    [归一值, canShu.yong_hu_id],
+  )
+  if (gengXinJieGuo.rows.length === 0) {
+    return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'ziYuanBuCunZai') }
+  }
+  const yongHu = yingSheYongHu(gengXinJieGuo.rows[0])
+  await jiLuShenJiRiZhi({
+    yong_hu_id: canShu.yong_hu_id,
+    ip: '127.0.0.1',
+    shi_jian_lei_xing: huoQuFanYi('shenJi', 'sheZhiMoRenXingBie'),
+    xiang_qing: { mo_ren_xing_bie: 归一值 },
+  })
+  return { cheng_gong: true, ti_shi: huoQuFanYi('tongYong', 'caoZuoChengGong'), yong_hu: yongHu }
 }

@@ -132,18 +132,14 @@ function jieXiJSONNeiRong(neiRong: string, mingZi?: string): string[] {
 }
 
 function jiangJiKaiChangBai(canShu: KaiChangBaiShengChengCanShu): KaiChangBaiShengChengJieGuo {
-  // 无 AI key 时的兜底：基于完整画像做简单启发式，可发 0~3 条，不套用 I=0 刻板规则。
+  // 无 AI key / AI 失败时的兜底：基于完整画像做简单启发式，生成 1~3 条。
+  // 注意：是否"发送开场白"已由 角色生成 的统一概率门控决定（kaiChangBaiFaSongGaiLv），
+  // 本函数被调用即表示已决定发送，因此这里不再做"是否主动"的概率判定，
+  // 也不按 E/I 等维度机械决定条数——只负责把"要发"这件事落地成 1~3 条自然消息。
   const houXuan: string[] = [
     '嗨', '哈喽', '在忙吗', '刚加好友，有点紧张', '今天课多吗',
     '看到朋友圈有点意思', '今天天气好好', '你的头像有点意思',
   ]
-  // 主动概率：渣型/快热略高；其余也有概率主动（不机械按首字母决定）
-  let zhuDongGaiLv = 0.5
-  if (canShu.shi_fou_zha_xing) zhuDongGaiLv += 0.2
-  if (canShu.re_shen_lei_xing === '快热') zhuDongGaiLv += 0.15
-  if (Math.random() > Math.min(0.95, zhuDongGaiLv)) {
-    return { xiao_xi_lie_biao: [] }
-  }
   const zuiDa = 3
   const tiaoShu = Math.max(1, Math.floor(Math.random() * zuiDa) + 1)
   const jieGuo: string[] = []

@@ -14,6 +14,7 @@ import {
   dengLu,
   gengGaiMiMa,
   gengGaiYongHuMing,
+  setMoRenXingBie,
   yanZhengShouJiHaoGeShi,
 } from '../services/认证'
 import { faSongYanZhengMa } from '../services/短信'
@@ -201,6 +202,28 @@ luYou.post('/更改用户名', 用户名验证中间件, async (qingQiu: RenZhen
   }
 
   return chengGongXiangYing(xiangYing, { yong_hu_ming: yongHuMing }, jieGuo.ti_shi)
+})
+
+luYou.post('/设置默认性别', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+  const yongHu = qingQiu.yong_hu
+  if (!yongHu) {
+    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+  }
+  const body = qingQiu.body as Record<string, unknown>
+  const moRenXingBie =
+    (typeof body.moRenXingBie === 'string' ? body.moRenXingBie : undefined) ||
+    (typeof body.mo_ren_xing_bie === 'string' ? body.mo_ren_xing_bie : undefined)
+  if (!moRenXingBie) {
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+  }
+  const jieGuo = await setMoRenXingBie({
+    yong_hu_id: yongHu.yongHuId,
+    mo_ren_xing_bie: moRenXingBie,
+  })
+  if (!jieGuo.cheng_gong) {
+    return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'xiuGaiShiBai'))
+  }
+  return chengGongXiangYing(xiangYing, { yong_hu: jieGuo.yong_hu }, jieGuo.ti_shi)
 })
 
 luYou.get('/信息', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {

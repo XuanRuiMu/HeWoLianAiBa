@@ -269,6 +269,10 @@ async function zhiXingQingQiu(junShi: JunShiXinXi) {
   if (yiZhiDaoXiangTongNeiRong.value) return
   qingQiuZhongJunShiId.value = junShi.id
   cuoWuTiShiMap.value = { ...cuoWuTiShiMap.value, [junShi.id]: '' }
+  // 点击即乐观置为「指导中」黄色卡片（与后端真值一致），并启动轮询自校正，
+  // 使「刚点击」与「离开再进入仍在指导中」渲染同一套黄色样式，不再出现灰底
+  军师仓库.sheZhiZhiDaoZhong(props.jiaoSeId, junShi.id)
+  qiDongLunXun()
   try {
     const jieGuo = await qingQiuJunShiZhiDao(props.jiaoSeId, junShi.id)
     // 写入 store：完成态持久化，离开再回来显示灰度与结果一致
@@ -281,8 +285,12 @@ async function zhiXingQingQiu(junShi: JunShiXinXi) {
     qingQiuZhongJunShiId.value = null
     tingZhiLunXun()
   } catch (e: unknown) {
-    qingQiuZhongJunShiId.value = null
     const cuoWuMa = 是业务错误(e) ? e.cuo_wu_ma : ''
+    if (cuoWuMa === 'JUN_SHI_ZAI_ZHI_DAO_ZHONG') {
+      // 已在指导中：点击时已乐观置为「指导中」黄色卡片并启动轮询自校正，无需重复处理
+      return
+    }
+    qingQiuZhongJunShiId.value = null
     if (cuoWuMa === 'JUN_SHI_CHONG_FU') {
       cuoWuTiShiMap.value = {
         ...cuoWuTiShiMap.value,
@@ -293,10 +301,6 @@ async function zhiXingQingQiu(junShi: JunShiXinXi) {
         ...cuoWuTiShiMap.value,
         [junShi.id]: huoQuFanYi('junShi', 'wuLiaoTianJiLu'),
       }
-    } else if (cuoWuMa === 'JUN_SHI_ZAI_ZHI_DAO_ZHONG') {
-      // 并发指导命中：写入 store 持久化为指导中，颜色恒黄直到后端完成
-      军师仓库.sheZhiZhiDaoZhong(props.jiaoSeId, junShi.id)
-      qiDongLunXun()
     } else {
       cuoWuTiShiMap.value = {
         ...cuoWuTiShiMap.value,
@@ -526,7 +530,7 @@ onUnmounted(() => {
 
 .junshi-kapian.zhi-dao-zhong {
   border-color: var(--junshi-zhuse);
-  background: var(--junshi-zhuse-touming);
+  background: color-mix(in srgb, var(--junshi-zhuse) 18%, transparent);
 }
 
 .junshi-kapian.yi-wan-cheng {
@@ -585,8 +589,9 @@ onUnmounted(() => {
 }
 
 .qingqiu-anniu.zhidao-zhong {
-  background: var(--beijing-ciuse);
-  color: var(--wenben-ciuse);
+  background: var(--junshi-zhuse);
+  color: #ffffff;
+  opacity: 0.65;
   cursor: not-allowed;
 }
 
