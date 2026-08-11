@@ -34,6 +34,7 @@ import {
 } from '../config/角色配置'
 import { baoCunJiaoSeXiaoXi } from './AI输入准备'
 import { shengChengKaiChangBai } from './开场白生成'
+import { jiSuanKaiChangBaiGaiLv } from './开场白概率'
 
 export interface ShengChengJiaoSeCanShu {
   yong_hu_id: string
@@ -437,14 +438,13 @@ export async function baoCunJiaoSe(
   // 前端 queRenJiaoSe 已配置 60s timeout，DeepSeek 客户端 timeout=120s，
   // shengChengKaiChangBai 内部 try/catch 失败会降级到 jiangJi 不会抛出。
   //
-  // 开场白"是否发送"由统一概率门控决定（kaiChangBaiFaSongGaiLv，默认 0.5），
-  // 与 AI/heuristic 内部逻辑解耦——这是整体频率约 50% 的唯一决策点，
-  // 禁止在 jiangJi 或模型提示里再用 E/I 等维度二次决定。测试环境跳过门控以保证确定性。
+  // 开场白发送：画像驱动的 10%~90% 动态门控（两步，与内容生成解耦）。
+  // 第一步：AI 根据完整人物画像算出"发开场白"的概率（10%~90%）；
+  //        无 AI key / 测试环境退回固定兜底概率（kaiChangBaiFaSongGaiLv）。
+  // 第二步：系统随机选 [0,1) 一个数，小于概率则发送——概率高的角色更常发，低的更少发。
+  // 测试环境强制 faSongGaiLv=1（必发）以保证确定性。
   try {
-    const kaiChangBai =
-      process.env.VITEST === 'true' ||
-      Math.random() < AI_PEI_ZHI.prompt.kaiChangBaiFaSongGaiLv
-        ? await shengChengKaiChangBai({
+    const kcbCanShu: Parameters<typeof shengChengKaiChangBai>[0] = {
       mbti_lei_xing: jiaoSe.mbti_lei_xing,
       ie_lei_xing: jiaoSe.ie_lei_xing,
       re_shen_lei_xing: jiaoSe.re_shen_lei_xing,
@@ -459,7 +459,12 @@ export async function baoCunJiaoSe(
       jia_ting_bei_jing: jiaoSe.jia_ting_bei_jing,
       tou_xiang: jiaoSe.tou_xiang,
       biao_qian: jiaoSe.biao_qian,
-    })
+    }
+    const faSongGaiLv =
+      process.env.VITEST === 'true' ? 1 : await jiSuanKaiChangBaiGaiLv(kcbCanShu)
+    const kaiChangBai =
+      Math.random() < faSongGaiLv
+        ? await shengChengKaiChangBai(kcbCanShu)
         : { xiao_xi_lie_biao: [] as string[] }
     for (const neiRong of kaiChangBai.xiao_xi_lie_biao.slice(0, 5)) {
       if (neiRong.trim()) {

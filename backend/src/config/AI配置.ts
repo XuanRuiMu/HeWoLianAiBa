@@ -161,6 +161,17 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
+    // 开场白发送概率决策模型（轻量）：仅输出一个 10~90 的概率数字，
+    // 用于"画像驱动的 10%~90% 动态门控"，与内容生成模型解耦以极致压缩开销。
+    kaiChangBaiGaiLv: {
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+      wenDu: 0,
+      top_p: 0.1,
+      zuiDaTokens: 30,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'text' },
+    } as MoXingCanShu,
+
     fuPanShengCheng: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
       wenDu: 0.7,
@@ -181,8 +192,8 @@ export const AI_PEI_ZHI = {
     // 上下文 token 预算（保守估算：字符数/2）。超过时自动丢弃最旧的非系统消息。
     shangXiaWenTokenYuSuan: 60000,
     jiaoSeChenJinZhiLing: '【从现在起，你就是TA】',
-    // 开场白发送概率（整体频率目标）。单一门控点：角色确认时按此概率决定是否生成开场白，
-    // 与 AI/heuristic 内部逻辑解耦；禁止按 E/I 等人格维度机械决定。默认 0.5（约半数角色发开场白）。
+    // 开场白发送概率的兜底默认值（仅当无 AI key 或 AI 概率计算失败时退回，或测试环境）。
+    // 主流程已由"AI 根据人物画像动态算出 10%~90% 概率"取代（见 services/开场白概率.ts）。
     kaiChangBaiFaSongGaiLv: 0.5,
   },
 

@@ -41,8 +41,8 @@ function gouJianKaiChangBaiTiShi(canShu: KaiChangBaiShengChengCanShu): string {
   const xingBieMiaoShu = canShu.xing_bie === 'nv' ? '女生' : '男生'
   return [
     '想象一下：这个角色刚在微信上加了对方（一个刚认识的同学/朋友介绍的人），对方还没说话。',
-    '是否由 TA 主动发开场白、发几条（0~5 条均可）、说什么，请你根据 TA 的完整人物画像深度思考后自行决定。',
-    '千万不要套用任何“外向就一定主动、内向就一定不主动”的刻板规则——内向也可以主动，外向也可以因为当下不想聊而不主动。',
+    'TA 已经决定要主动发起开场白（发不发已由概率门控决定）。请让 TA 主动发送 1~5 条开场白，说什么由你根据 TA 的完整人物画像深度思考后决定。',
+    '千万不要套用任何“外向就一定多说、内向就一定少说”的刻板规则——条数由你综合画像判断，但必须在 1~5 条之间。',
     '角色真实画像：',
     `MBTI：${canShu.mbti_lei_xing}（首字母 ${canShu.ie_lei_xing} 仅供参考，不要据此机械决定），热身类型：${canShu.re_shen_lei_xing}，性别：${xingBieMiaoShu}。`,
     `性格：${canShu.xing_ge}`,
@@ -55,10 +55,8 @@ function gouJianKaiChangBaiTiShi(canShu: KaiChangBaiShengChengCanShu): string {
     `标签：${canShu.biao_qian.join('、')}`,
     canShu.shi_fou_zha_xing ? '这人设带点渣，往往会更主动地撩。' : '',
     '',
-    '决策提示：以下情况都可能合理——',
-    '1. 角色害羞/慢热/当下不想主动：发 0 条，完全正常。',
-    '2. 角色开朗/快热/渣型：主动发 1~5 条。',
-    '3. 其余：由你综合画像判断 0~5 条中的合适数量。',
+    '数量要求：必须发送 1~5 条（含 1 和 5），不要发 0 条。',
+    '角色越热情/开朗/快热/渣型，越可以发到 3~5 条；越害羞/慢热/高冷，发 1~2 条即可。',
     '请按真实中国大学生微信聊天的风格生成。',
     '',
     '内容要求（必须严格遵守）：',
