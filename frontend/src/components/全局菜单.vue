@@ -45,32 +45,55 @@
               class="xiala-caidan yonghu-xiala"
               @click.stop
             >
-              <button
-                class="zhanghao-shezhi-biaoti"
-                :aria-expanded="zhangHaoSheZhiZhanKai"
-                @click="qieHuanZhangHaoSheZhi"
+              <div
+                class="zhanghao-shezhi-zu"
+                @mouseenter="feiChuKaiQi(false)"
+                @mouseleave="feiChuGuanBi"
               >
-                <span>{{ huoQuFanYi('caidan', 'zhangHaoSheZhi') }}</span>
-                <span class="zhanghao-shezhi-jiantou" :class="{ xuanzhuan: zhangHaoSheZhiZhanKai }"
-                  >▾</span
+                <button
+                  class="xiala-xiangmu zhanghao-shezhi-biaoti"
+                  :aria-expanded="zhangHaoSheZhiZhanKai"
+                  aria-haspopup="menu"
+                  :aria-controls="zhangHaoSheZhiZhanKai ? 'zhanghao-shezhi-feichu' : undefined"
+                  @click="qieHuanZhangHaoSheZhi"
+                  @keydown.right.prevent="feiChuKaiQi(true)"
+                  @keydown.esc.prevent="feiChuGuanBi"
                 >
-              </button>
-              <Transition name="xiala">
-                <div v-if="zhangHaoSheZhiZhanKai" class="er-ji-caidan">
-                  <button class="xiala-xiangmu" @click="daKaiXiuGaiYongHuMing">
-                    {{ huoQuFanYi('caidan', 'xiuGaiYongHuMing') }}
-                  </button>
-                  <button class="xiala-xiangmu" @click="daKaiXiuGaiMiMa">
-                    {{ huoQuFanYi('caidan', 'xiuGaiMiMa') }}
-                  </button>
-                  <button class="xiala-xiangmu" @click="daKaiSheZhiMoRenXingBie">
-                    {{ huoQuFanYi('caidan', 'sheZhiMoRenXingBie') }}
-                  </button>
-                  <button class="xiala-xiangmu tuichu-xiangmu" @click="zhiXingTuiChu">
-                    {{ huoQuFanYi('caidan', 'tuiChuDengLu') }}
-                  </button>
-                </div>
-              </Transition>
+                  <span>{{ huoQuFanYi('caidan', 'zhangHaoSheZhi') }}</span>
+                  <span
+                    class="zhanghao-shezhi-jiantou"
+                    :class="{ xuanzhuan: zhangHaoSheZhiZhanKai }"
+                    >▶</span
+                  >
+                </button>
+                <Transition name="feichu">
+                  <div
+                    v-if="zhangHaoSheZhiZhanKai"
+                    id="zhanghao-shezhi-feichu"
+                    ref="feiChuLie"
+                    class="zhanghao-shezhi-feichu"
+                    role="menu"
+                    :aria-label="huoQuFanYi('caidan', 'zhangHaoSheZhi')"
+                  >
+                    <button class="xiala-xiangmu" role="menuitem" @click="daKaiXiuGaiYongHuMing">
+                      {{ huoQuFanYi('caidan', 'xiuGaiYongHuMing') }}
+                    </button>
+                    <button class="xiala-xiangmu" role="menuitem" @click="daKaiXiuGaiMiMa">
+                      {{ huoQuFanYi('caidan', 'xiuGaiMiMa') }}
+                    </button>
+                    <button class="xiala-xiangmu" role="menuitem" @click="daKaiSheZhiMoRenXingBie">
+                      {{ huoQuFanYi('caidan', 'sheZhiMoRenXingBie') }}
+                    </button>
+                    <button
+                      class="xiala-xiangmu tuichu-xiangmu"
+                      role="menuitem"
+                      @click="zhiXingTuiChu"
+                    >
+                      {{ huoQuFanYi('caidan', 'tuiChuDengLu') }}
+                    </button>
+                  </div>
+                </Transition>
+              </div>
               <button class="xiala-xiangmu" @click="jinRuZhanJi">
                 {{ huoQuFanYi('caidan', 'guoWangZhanJi') }}
               </button>
@@ -323,7 +346,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { 使用用户仓库 } from '@/stores/用户'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
@@ -346,6 +369,7 @@ const route = useRoute()
 
 const yongHuCaiDanZhanKai = ref(false)
 const zhangHaoSheZhiZhanKai = ref(false)
+const feiChuLie = ref<HTMLElement | null>(null)
 const qitaCaiDanZhanKai = ref(false)
 const xieYiXianShi = ref(false)
 const xieYiLeiXing = ref<'yongHuXieYi' | 'yinSiZhengCe'>('yongHuXieYi')
@@ -474,9 +498,33 @@ function qieHuanYongHuCaiDan() {
   qitaCaiDanZhanKai.value = false
 }
 
+const zhiChiTingLiu =
+  typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia('(hover: hover)').matches
+    : true
+
+function feiChuJiaoDianShouXiang() {
+  const shouXiang = feiChuLie.value?.querySelector('button')
+  if (shouXiang instanceof HTMLElement) shouXiang.focus()
+}
+
+// jiaoDian=true 表示由键盘触发，展开后焦点移入飞出列首子项；
+// jiaoDian=false 表示由桌面 hover 触发，仅展开不抢焦点。
+function feiChuKaiQi(jiaoDian: boolean) {
+  if (!用户仓库.dangQianYongHu) return
+  if (!jiaoDian && !zhiChiTingLiu) return
+  zhangHaoSheZhiZhanKai.value = true
+  if (jiaoDian) nextTick(feiChuJiaoDianShouXiang)
+}
+
+function feiChuGuanBi() {
+  zhangHaoSheZhiZhanKai.value = false
+}
+
 function qieHuanZhangHaoSheZhi() {
   if (!用户仓库.dangQianYongHu) return
   zhangHaoSheZhiZhanKai.value = !zhangHaoSheZhiZhanKai.value
+  if (zhangHaoSheZhiZhanKai.value) nextTick(feiChuJiaoDianShouXiang)
 }
 
 // 已登录：展开/收起个人下拉菜单；未登录：复用同一模块，点击跳转登录页
@@ -905,6 +953,26 @@ watch(
   left: 0;
 }
 
+.yonghu-xiala .zhanghao-shezhi-zu {
+  position: relative;
+}
+
+/* 飞出列：账号设置二级菜单独立成右列（cascade 飞出，纯 CSS 定位，无重布局抖动） */
+.zhanghao-shezhi-feichu {
+  position: absolute;
+  left: calc(100% + 8px);
+  top: -6px;
+  min-width: 170px;
+  background: var(--xiala-beijing);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--xiala-biankuang);
+  border-radius: 12px;
+  box-shadow: var(--xiala-yinying);
+  padding: 6px;
+  z-index: 300;
+}
+
 .qita-xiala {
   right: 0;
 }
@@ -972,7 +1040,7 @@ watch(
 }
 
 .zhanghao-shezhi-jiantou.xuanzhuan {
-  transform: rotate(180deg);
+  transform: rotate(90deg);
 }
 
 .xiugai-miaoShu {
@@ -1341,6 +1409,20 @@ watch(
   transform: translateY(-4px) scale(0.98);
 }
 
+.feichu-enter-active {
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.feichu-leave-active {
+  transition: all 0.12s ease;
+}
+
+.feichu-enter-from,
+.feichu-leave-to {
+  opacity: 0;
+  transform: translateX(-8px) scale(0.96);
+}
+
 .motaikuang-enter-active {
   transition: opacity 0.25s ease;
 }
@@ -1423,6 +1505,21 @@ watch(
   .banben-wenben {
     display: none;
   }
+
+  /* 窄屏：飞出列改为左列下方全宽子面板，避免溢出视口 */
+  .zhanghao-shezhi-feichu {
+    position: static;
+    left: auto;
+    top: auto;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    padding: 2px 0 2px 14px;
+    margin-top: 2px;
+  }
 }
 
 @media (max-width: 374px) {
@@ -1443,7 +1540,10 @@ watch(
   .tongzhi-anniu,
   .qita-xuanxiang,
   .xiala-xiangmu,
-  .xiugai-anniu {
+  .xiugai-anniu,
+  .zhanghao-shezhi-feichu,
+  .feichu-enter-active,
+  .feichu-leave-active {
     transition: none;
   }
 

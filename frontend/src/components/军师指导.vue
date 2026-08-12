@@ -567,16 +567,16 @@ onUnmounted(() => {
 }
 
 .qingqiu-anniu {
-  /* 根因修复：三态文案长度不同（请求指导/指导中.../已指导 - 查看结果），
-     按钮宽度原由文字内容决定，导致点击后宽度跳变。以最宽态「已指导 - 查看结果」
-     为基准设稳定 min-width（em 跟随字号，跨字号/响应式仍等宽），配合 border-box
-     （全局已启用）使带 1px 边框的已指导态与其余态总宽一致。 */
+  /* 根因修复：三态（请求指导 / 指导中... / 已指导 - 查看结果）统一黄底白字等宽，
+     宽度取不裁切最长态「已指导 - 查看结果」的最窄等宽（min-width，非固定 width，
+     以免最长态被裁切）；2/3 在 em 单位下必裁切，故采用不裁切的最窄等宽工程解。 */
   box-sizing: border-box;
-  min-width: 12em;
+  min-width: 10.5em;
   margin-left: auto;
   padding: 8px 16px;
   background: var(--junshi-zhuse);
   color: #ffffff;
+  border: 1px solid transparent;
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
@@ -600,16 +600,6 @@ onUnmounted(() => {
   color: #ffffff;
   opacity: 0.65;
   cursor: not-allowed;
-}
-
-.qingqiu-anniu.yi-zhidao {
-  background: var(--beijing-kaopian);
-  color: var(--junshi-zhuse);
-  border: 1px solid var(--junshi-biankuang);
-}
-
-.qingqiu-anniu.yi-zhidao:hover {
-  background: var(--junshi-zhuse-touming);
 }
 
 .cuowu-tishi {
