@@ -9,3 +9,4 @@ playwright-report/
 *.tsbuildinfo
 eslint-report.json
 coverage/
+public/version.txt

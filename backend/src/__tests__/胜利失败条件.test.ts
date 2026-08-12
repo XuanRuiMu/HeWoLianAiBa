@@ -477,6 +477,33 @@ describe('FP-11 胜利失败条件', () => {
       expect(jieGuo).toBeNull()
     })
 
+    it('渣型 + 无厘头 + 发散思维人设 → 仍触发胜利结局', async () => {
+      sheZhiShuJuKuMoNi([{ 用户ID: 'yong-hu-id', 是否渣型: true }])
+      chuangJianMockTiaoYong(
+        JSON.stringify({
+          是否神经病: true,
+          发散思维人设: true,
+          确信度: 0.85,
+          理由: '渣型被搞懵也赢',
+        }),
+      )
+
+      const jiaoSe = chuangJianCeShiJiaoSe(true)
+      jiaoSe.ba_da_mo_kuai.xi_tong_ti_shi = '发散思维，能接受无厘头'
+      const jieGuo = await jianCeYongHuXiaoXiBingChuLi(
+        'yong-hu-id',
+        'jiao-se-id',
+        '蚂蚁在月球上跳芭蕾',
+        500,
+        false,
+        jiaoSe,
+        [],
+      )
+
+      expect(jieGuo).not.toBeNull()
+      expect(jieGuo!.jie_guo_lei_xing).toBe('sheng_li_shen_jing_bing')
+    })
+
     it('轻微跑题 → 不触发结局', async () => {
       chuangJianMockTiaoYong(
         JSON.stringify({

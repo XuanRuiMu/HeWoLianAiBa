@@ -36,3 +36,30 @@ const 主题仓库 = 使用主题仓库()
 主题仓库.chuShiHua()
 
 app.mount('#app')
+
+let benDiBanBenChuo: string | null = null
+
+async function huoQuBanBenChuo(): Promise<string | null> {
+  try {
+    const xiangYing = await fetch(`${import.meta.env.BASE_URL}version.txt`, { cache: 'no-store' })
+    if (!xiangYing.ok) return null
+    return (await xiangYing.text()).trim()
+  } catch {
+    return null
+  }
+}
+
+async function jianChaBanBenGengXin() {
+  if (benDiBanBenChuo === null) return
+  const zuiXin = await huoQuBanBenChuo()
+  if (zuiXin && zuiXin !== benDiBanBenChuo) window.location.reload()
+}
+
+huoQuBanBenChuo().then((chuo) => {
+  benDiBanBenChuo = chuo
+})
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') jianChaBanBenGengXin()
+})
+window.addEventListener('focus', jianChaBanBenGengXin)

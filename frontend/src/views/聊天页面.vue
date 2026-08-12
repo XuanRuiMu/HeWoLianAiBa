@@ -274,7 +274,7 @@
     <Teleport to="body">
       <Transition name="youce-huadong">
         <JunShiZhiDao
-          v-if="junShiZhanKai"
+          v-if="junShiZhanKai && !fuPanMoShi"
           :jiao-se-id="聊天仓库.jiaoSeXinXi?.id || ''"
           @guan-bi="junShiZhanKai = false"
         />
@@ -1085,6 +1085,7 @@ function chakanZhanJi() {
 }
 
 function junShiZhanKaiJianTingQi() {
+  if (fuPanMoShi.value) return
   junShiZhanKai.value = true
 }
 
@@ -1178,22 +1179,16 @@ function tingZhiShiJianGengXinQi() {
   }
 }
 
-// 进入聊天页即离屏预加载全部 emoji：创建隐藏离屏节点渲染 changYongEmoji 全量文本，
-// 强制一次 reflow 触发浏览器对该 169 个 emoji 字形的字体整形与布局计算，随后立即移除节点。
-// 首屏即付清整形成本，首次点开表情面板（display:none→block）不再卡顿；不引入动态 import/异步组件。
 function yuZaiEmojiZiXing() {
   if (typeof document === 'undefined') return
-  const linShi = document.createElement('div')
-  linShi.setAttribute(
-    'style',
-    'position:absolute;left:-9999px;top:-9999px;visibility:hidden;display:grid;grid-template-columns:repeat(8,1fr);font-size:20px;',
-  )
-  linShi.textContent = changYongEmoji.join('')
+  const yuanSheng = document.querySelector('.emoji-mianban')
+  if (!yuanSheng) return
+  const linShi = yuanSheng.cloneNode(true) as HTMLElement
+  linShi.style.cssText =
+    'position:absolute;left:-9999px;top:-9999px;visibility:hidden;z-index:-1;display:grid;'
   document.body.appendChild(linShi)
-  // 强制 reflow，触发 emoji 字形整形与布局（读取布局度量即触发同步重排）
   void linShi.offsetWidth
   void linShi.getBoundingClientRect()
-  // 节点已被浏览器消费，立即移除，组件卸载无需额外清理、不会泄漏
   if (linShi.parentNode) linShi.parentNode.removeChild(linShi)
 }
 

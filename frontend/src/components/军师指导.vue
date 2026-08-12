@@ -567,22 +567,25 @@ onUnmounted(() => {
 }
 
 .qingqiu-anniu {
-  /* 根因修复：三态（请求指导 / 指导中... / 已指导 - 查看结果）统一黄底白字等宽，
-     宽度取不裁切最长态「已指导 - 查看结果」的最窄等宽（min-width，非固定 width，
-     以免最长态被裁切）；2/3 在 em 单位下必裁切，故采用不裁切的最窄等宽工程解。 */
   box-sizing: border-box;
-  min-width: 10.5em;
+  width: 7.6em;
+  min-height: 3em;
   margin-left: auto;
-  padding: 8px 16px;
+  padding: 4px 10px;
   background: var(--junshi-zhuse);
   color: #ffffff;
   border: 1px solid transparent;
   border-radius: 10px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  line-height: 1.25;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s ease;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .qingqiu-anniu:hover:not(:disabled) {
@@ -600,6 +603,11 @@ onUnmounted(() => {
   color: #ffffff;
   opacity: 0.65;
   cursor: not-allowed;
+}
+
+.qingqiu-anniu.yi-zhidao {
+  background: var(--junshi-zhuse);
+  color: #ffffff;
 }
 
 .cuowu-tishi {

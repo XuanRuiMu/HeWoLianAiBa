@@ -114,7 +114,7 @@
 
       <div class="caidan-you">
         <button
-          v-if="shiLiaoTianYe && 聊天仓库.jiaoSeXinXi"
+          v-if="shiLiaoTianYe && 聊天仓库.jiaoSeXinXi && route.query.fuPan !== '1'"
           class="junshi-anniu"
           :title="huoQuFanYi('caidan', 'junShiZhiDao')"
           :aria-label="huoQuFanYi('caidan', 'junShiZhiDao')"

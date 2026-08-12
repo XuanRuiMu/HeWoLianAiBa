@@ -1,6 +1,21 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
+import fs from 'node:fs'
+import path from 'node:path'
+
+function 版本戳插件() {
+  return {
+    name: 'ban-ben-chuo',
+    buildStart() {
+      try {
+        fs.writeFileSync(path.resolve(process.cwd(), 'public/version.txt'), String(Date.now()))
+      } catch {
+        // 写入失败不影响构建
+      }
+    },
+  }
+}
 
 export default defineConfig({
   test: {
@@ -29,6 +44,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    版本戳插件(),
     vue(),
     VitePWA({
       injectRegister: false,

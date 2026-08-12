@@ -527,6 +527,7 @@ export async function chuLiShiPo(
 export async function chuLiShenJingBing(
   yong_hu_id: string,
   jiao_se_id: string,
+  fa_san_si_wei_ren_she = false,
 ): Promise<YouXiJieShuJieGuo | null> {
   const jiaoSe = await huoQuJiaoSeJiBenXinXi(jiao_se_id)
   if (!jiaoSe || !jiaoSe.yong_hu_id || jiaoSe.yong_hu_id !== yong_hu_id) return null
@@ -536,6 +537,8 @@ export async function chuLiShenJingBing(
       lei_xing: '渣型角色诱导用户被视为神经病',
     })
   }
+
+  if (fa_san_si_wei_ren_she) return null
 
   return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_shen_jing_bing', {
     lei_xing: '正常角色判定用户为神经病',
@@ -648,11 +651,12 @@ export async function jianCeYongHuXiaoXiBingChuLi(
     return chuLiShiPo(yong_hu_id, jiao_se_id)
   }
 
-  if (
-    jianCeJieGuo.shen_jing_bing.shi_fou_shen_jing_bing &&
-    !jianCeJieGuo.shen_jing_bing.fa_san_si_wei_ren_she
-  ) {
-    return chuLiShenJingBing(yong_hu_id, jiao_se_id)
+  if (jianCeJieGuo.shen_jing_bing.shi_fou_shen_jing_bing) {
+    return chuLiShenJingBing(
+      yong_hu_id,
+      jiao_se_id,
+      jianCeJieGuo.shen_jing_bing.fa_san_si_wei_ren_she,
+    )
   }
 
   return null
