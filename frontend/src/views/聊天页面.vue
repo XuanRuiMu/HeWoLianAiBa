@@ -812,6 +812,10 @@ const fuPanZongJieFenKuai = computed<ZongJieFenKuai[] | null>(() => {
 const yiDingZaiDiBu = ref(true)
 const DING_BUYu_Zhi_PX = 40
 
+// emoji 面板上一次记录的高度：用于判断面板是展开（增大）还是收起（减小），
+// 从而把「展开顶起」与「收起保留位置」两种语义区分开（微信标准）
+const emojiMianBanShangCiGao = ref(0)
+
 function gengXinDingBuZhuangTai() {
   const el = xiaoxiQuYuRef.value
   if (!el) return
@@ -1196,11 +1200,20 @@ onMounted(async () => {
   document.addEventListener('click', chuLiWenDangDianJi, true)
   document.addEventListener('visibilitychange', chuLiYeMianKeJianXing)
   nextTick(() => ceLiangShuRuKuang())
-  // 表情面板用 v-show 常驻布局，尺寸变化（开合）天然在 layout 之后发生，
-  // 据此补偿滚动，首次与后续走同一条「布局变更→补偿」路径
+  // 表情面板用 v-show 常驻布局，尺寸变化（开合）天然在 layout 之后发生。
+  // 微信标准：面板展开（高度由 0 增大到 H）时，无论用户当前在顶部/中部/底部，
+  // 都强制把聊天内容顶起，确保最后一条消息不被面板遮挡；面板收起（高度减小）
+  // 时不强制滚动，保留用户当前阅读位置。该语义独立于「保留查看位置」的
+  // yiDingZaiDiBu 守卫（新消息/软键盘等场景仍守该守卫），不在此处复用它。
   if (typeof ResizeObserver !== 'undefined' && emojiMianBanRef.value) {
     emojiMianBanGuanChaZhe = new ResizeObserver(() => {
-      if (yiDingZaiDiBu.value) gunDongDaoDiBu()
+      const mianBan = emojiMianBanRef.value
+      if (!mianBan) return
+      const dangQianGao = mianBan.offsetHeight
+      if (dangQianGao > emojiMianBanShangCiGao.value) {
+        gunDongDaoDiBu()
+      }
+      emojiMianBanShangCiGao.value = dangQianGao
     })
     emojiMianBanGuanChaZhe.observe(emojiMianBanRef.value)
   }

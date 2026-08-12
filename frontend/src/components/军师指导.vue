@@ -567,6 +567,12 @@ onUnmounted(() => {
 }
 
 .qingqiu-anniu {
+  /* 根因修复：三态文案长度不同（请求指导/指导中.../已指导 - 查看结果），
+     按钮宽度原由文字内容决定，导致点击后宽度跳变。以最宽态「已指导 - 查看结果」
+     为基准设稳定 min-width（em 跟随字号，跨字号/响应式仍等宽），配合 border-box
+     （全局已启用）使带 1px 边框的已指导态与其余态总宽一致。 */
+  box-sizing: border-box;
+  min-width: 12em;
   margin-left: auto;
   padding: 8px 16px;
   background: var(--junshi-zhuse);
@@ -574,6 +580,7 @@ onUnmounted(() => {
   border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
+  text-align: center;
   transition: all 0.2s ease;
   white-space: nowrap;
 }

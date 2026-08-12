@@ -437,7 +437,10 @@ describe('FP-18 主题与UI', () => {
       const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
       await wrapper.find('.yonghu-xuanxiang').trigger('click')
       await flushPromises()
-      const tuichu = wrapper.find('.tuichu-xiangmu')
+      // 退出登录位于「账号设置」二级菜单内，需先展开
+      await wrapper.find('.zhanghao-shezhi-biaoti').trigger('click')
+      await flushPromises()
+      const tuichu = wrapper.find('.er-ji-caidan .tuichu-xiangmu')
       expect(tuichu.exists()).toBe(true)
       expect(caiDanYuanMa).toMatch(
         /\.tuichu-xiangmu\s*\{[^}]*color:\s*var\(--yanse-weixian\)\s*!important/,
@@ -637,6 +640,86 @@ describe('FP-18 主题与UI', () => {
       // 主页下主页按钮为隐藏占位；非主页下正常显示
       expect(zhuYe.wrapper.find('.zhuye-anniu').classes()).toContain('yincang')
       expect(feiZhuYe.wrapper.find('.zhuye-anniu').classes()).not.toContain('yincang')
+    })
+  })
+
+  describe('FP-01 顶部菜单功能分类重做', () => {
+    beforeEach(() => {
+      localStorage.clear()
+    })
+
+    afterEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('已登录用户下拉中「账号设置」为可点击头部按钮且带展开/收起箭头', async () => {
+      const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
+      await wrapper.find('.yonghu-xuanxiang').trigger('click')
+      await flushPromises()
+      const biaoti = wrapper.find('.zhanghao-shezhi-biaoti')
+      expect(biaoti.exists()).toBe(true)
+      expect(biaoti.text()).toContain(huoQuFanYi('caidan', 'zhangHaoSheZhi'))
+      expect(wrapper.find('.zhanghao-shezhi-jiantou').exists()).toBe(true)
+      // 初始二级菜单收起（不渲染 er-ji-caidan）
+      expect(wrapper.find('.er-ji-caidan').exists()).toBe(false)
+    })
+
+    it('点击「账号设置」展开二级菜单含4子项，再次点击收起', async () => {
+      const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
+      await wrapper.find('.yonghu-xuanxiang').trigger('click')
+      await flushPromises()
+      await wrapper.find('.zhanghao-shezhi-biaoti').trigger('click')
+      await flushPromises()
+      const erji = wrapper.find('.er-ji-caidan')
+      expect(erji.exists()).toBe(true)
+      expect(erji.text()).toContain(huoQuFanYi('caidan', 'xiuGaiYongHuMing'))
+      expect(erji.text()).toContain(huoQuFanYi('caidan', 'xiuGaiMiMa'))
+      expect(erji.text()).toContain(huoQuFanYi('caidan', 'sheZhiMoRenXingBie'))
+      expect(erji.text()).toContain(huoQuFanYi('caidan', 'tuiChuDengLu'))
+      // 再次点击收起
+      await wrapper.find('.zhanghao-shezhi-biaoti').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.er-ji-caidan').exists()).toBe(false)
+    })
+
+    it('「过往战绩」与「账号设置」同级且点击走 jinRuZhanJi 路由', async () => {
+      const { wrapper, luYou } = await mountCaiDan({ luJing: '/', dengLu: true })
+      await wrapper.find('.yonghu-xuanxiang').trigger('click')
+      await flushPromises()
+      const xiala = wrapper.find('.yonghu-xiala')
+      expect(xiala.find('.zhanghao-shezhi-biaoti').exists()).toBe(true)
+      const guoWang = xiala
+        .findAll('button')
+        .filter((b) => b.text() === huoQuFanYi('caidan', 'guoWangZhanJi'))
+      expect(guoWang.length).toBe(1)
+      const pushSpy = vi.spyOn(luYou, 'push')
+      await guoWang[0].trigger('click')
+      await flushPromises()
+      expect(pushSpy).toHaveBeenCalledWith('/guo-wang-zhan-ji')
+    })
+
+    it('二级菜单展开态下点击外部关闭（zhangHaoSheZhi 与用户下拉复位）', async () => {
+      const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
+      await wrapper.find('.yonghu-xuanxiang').trigger('click')
+      await flushPromises()
+      await wrapper.find('.zhanghao-shezhi-biaoti').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.er-ji-caidan').exists()).toBe(true)
+      document.body.click()
+      await flushPromises()
+      expect(wrapper.find('.er-ji-caidan').exists()).toBe(false)
+      expect(wrapper.find('.yonghu-xiala').exists()).toBe(false)
+    })
+
+    it('更多菜单(☰)仅含用户协议/隐私政策两项，不含过往战绩', async () => {
+      const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
+      await wrapper.find('.qita-xuanxiang').trigger('click')
+      await flushPromises()
+      const xiala = wrapper.find('.qita-xiala')
+      expect(xiala.text()).toContain(huoQuFanYi('caidan', 'yongHuXieYi'))
+      expect(xiala.text()).toContain(huoQuFanYi('caidan', 'yinSiZhengCe'))
+      expect(xiala.text()).not.toContain(huoQuFanYi('caidan', 'guoWangZhanJi'))
+      expect(xiala.findAll('.xiala-xiangmu').length).toBe(2)
     })
   })
 })
