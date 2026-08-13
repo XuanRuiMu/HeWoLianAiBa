@@ -1,0 +1,82 @@
+{
+  "generatedAt": "2026-08-12T23:19:18.372Z",
+  "base": "http://localhost",
+  "results": [
+    {
+      "viewport": "desktop",
+      "steps": {
+        "fp4": {
+          "ok": true,
+          "firstOpenMs": 6.5999999940395355,
+          "secondOpenMs": 4.299999982118607,
+          "itemCount": 168
+        },
+        "fp3": {
+          "ok": true,
+          "msgAreaH": 646,
+          "panelPosition": "static",
+          "panelDisplay": "grid",
+          "panelH": 148,
+          "overlapH": 0,
+          "panelBottom": 892,
+          "viewportH": 900,
+          "msgAreaHBefore": 795
+        },
+        "fp2": {
+          "ok": true,
+          "width": 91,
+          "height": 36,
+          "bg": "rgb(212, 168, 67)",
+          "widthStyle": "91.1875px",
+          "color": "rgb(255, 255, 255)",
+          "text": "请求指导"
+        },
+        "fp5": {
+          "junShiBtnExists": false,
+          "junShiBtnVisible": false,
+          "panelVisibleAfterDispatch": false,
+          "fuPanBannerPresent": true
+        }
+      },
+      "huiHuaId": "88864e38-7118-4a2e-a4a1-baba80ced13c"
+    },
+    {
+      "viewport": "mobile",
+      "steps": {
+        "fp4": {
+          "ok": true,
+          "firstOpenMs": 6.5,
+          "secondOpenMs": 3.5999999940395355,
+          "itemCount": 168
+        },
+        "fp3": {
+          "ok": true,
+          "msgAreaH": 629,
+          "panelPosition": "static",
+          "panelDisplay": "grid",
+          "panelH": 113,
+          "overlapH": 0,
+          "panelBottom": 836,
+          "viewportH": 844,
+          "msgAreaHBefore": 743
+        },
+        "fp2": {
+          "ok": true,
+          "width": 91,
+          "height": 36,
+          "bg": "rgb(212, 168, 67)",
+          "widthStyle": "91.1875px",
+          "color": "rgb(255, 255, 255)",
+          "text": "请求指导"
+        },
+        "fp5": {
+          "junShiBtnExists": false,
+          "junShiBtnVisible": false,
+          "panelVisibleAfterDispatch": false,
+          "fuPanBannerPresent": true
+        }
+      },
+      "huiHuaId": "88864e38-7118-4a2e-a4a1-baba80ced13c"
+    }
+  ]
+}

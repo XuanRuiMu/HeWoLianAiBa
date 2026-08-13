@@ -33,7 +33,16 @@ describe('FP-04 AI模型配置', () => {
       expect(['enabled', 'disabled'], `${leiXing}.siKaoMoShi 必须为 enabled/disabled`).toContain(canShu.siKaoMoShi)
       const canShuYuanShi = canShu as unknown as Record<string, unknown>
       expect(canShuYuanShi.enableThinking, `${leiXing} 残留旧字段 enableThinking`).toBeUndefined()
-      expect(canShuYuanShi.reasoningEffort, `${leiXing} 残留旧字段 reasoningEffort`).toBeUndefined()
+      // reasoningEffort 为当前官方 Responses API 字段（思考强度，取值 none/minimal/low/medium/high/xhigh/max）
+      // 仅在启用思考（siKaoMoShi=enabled）时必填；关闭思考的配置可不带该字段
+      if (canShuYuanShi.reasoningEffort !== undefined) {
+        expect(
+          ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'].includes(
+            canShuYuanShi.reasoningEffort as string,
+          ),
+          `${leiXing}.reasoningEffort 必须为合法思考强度`,
+        ).toBe(true)
+      }
       if (canShu.xiangYingGeShi) {
         expect(['json_object', 'text'], `${leiXing}.xiangYingGeShi.type 非法`).toContain(canShu.xiangYingGeShi.type)
       }

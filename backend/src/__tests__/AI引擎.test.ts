@@ -259,7 +259,7 @@ describe('FP-09 AI对话引擎', () => {
   })
 
   describe('Writer调用', () => {
-    it('Writer调用 → temperature=0.85且siKaoMoShi=disabled（思考与温度互斥，按官方规范关闭思考使温度生效）', async () => {
+    it('Writer调用 → temperature=0.85且siKaoMoShi=enabled（开启最大强度思考，temperature按官方规范在思考模式下不生效）', async () => {
       const { jiLu, sheZhiXiangYing } = chuangJianMock()
       sheZhiXiangYing({ neiRong: '嗯，天气确实不错~\n我在画画呢，你呢？' })
 
@@ -267,8 +267,8 @@ describe('FP-09 AI对话引擎', () => {
 
       expect(jiLu.length).toBe(1)
       expect(jiLu[0].wenDu).toBe(0.85)
-      expect(jiLu[0].siKaoMoShi).toBe('disabled')
-      expect(jiLu[0].reasoningEffort).toBeUndefined()
+      expect(jiLu[0].siKaoMoShi).toBe('enabled')
+      expect(jiLu[0].reasoningEffort).toBe('max')
     })
   })
 
