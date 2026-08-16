@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <title>草地背景</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" crossorigin href="./references/-assets-index-DF8svE4a.css">
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #0a0a12;
+        }
+        /* 草地背景页：只显示 canvas 草地，隐藏一切原型 UI 叠层 */
+        body.simplified nav,
+        body.simplified .viewpoints-progress,
+        body.simplified .sound-icon,
+        body.simplified #home .look-around-hint,
+        body.simplified #home .explore-hint,
+        body.simplified #about,
+        body.simplified #contact,
+        body.simplified .update,
+        body.simplified #point-template,
+        body.simplified .loading,
+        body.simplified #dayNightSwitch {
+            display: none !important;
+        }
+        /* 默认即隐藏所有非 canvas 元素（不依赖 .simplified 类） */
+        nav, .viewpoints-progress, .sound-icon,
+        #home .look-around-hint, #home .explore-hint,
+        #about, #contact, .update, #point-template, #dayNightSwitch {
+            display: none !important;
+        }
+        /* bundle 点击 Start 后给 .loading 加 .loaded / .hidden，隐藏它以免遮挡 canvas */
+        .loading.loaded, .loading.hidden { display: none !important; }
+        /* 静默加载：隐藏圆形进度动画与百分比文字，仅保留不透明遮罩覆盖画布，
+           避免加载期间透出夜景/紫色的瞬时帧（背景应无声无息地备好）。 */
+        .progress-percentage, .loading-text { visibility: hidden !important; opacity: 0 !important; }
+        /* loading 保持原生可见与可点击；bundle 进入后会自行隐藏它。背景页在 iframe 中，
+           真实项目主页的 UI 会覆盖其上，因此 Loading 闪光只会在页面加载最初 1-2s 透出。 */
+        /* canvas 铺满 */
+        canvas.webgl {
+            position: fixed;
+            inset: 0;
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+    </style>
+
+    <script>
+        // 屏蔽原站统计/分析域名，避免 CORS 报错
+        (function() {
+            const blockedHosts = ['ingest.analytics.invantis.tech'];
+            function shouldBlock(url) {
+                try {
+                    return blockedHosts.some(host => String(url).includes(host));
+                } catch (e) { return false; }
+            }
+            const origFetch = window.fetch;
+            window.fetch = function(...args) {
+                if (shouldBlock(args[0])) return Promise.resolve(new Response('', { status: 204 }));
+                return origFetch.apply(this, args);
+            };
+            const origOpen = XMLHttpRequest.prototype.open;
+            const origSend = XMLHttpRequest.prototype.send;
+            XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+                this._blocked = shouldBlock(url);
+                return origOpen.call(this, method, url, ...rest);
+            };
+            XMLHttpRequest.prototype.send = function(...args) {
+                if (this._blocked) {
+                    this.status = 204;
+                    this.readyState = 4;
+                    if (this.onreadystatechange) this.onreadystatechange();
+                    if (this.onloadend) this.onloadend();
+                    return;
+                }
+                return origSend.apply(this, args);
+            };
+        })();
+
+        // 音频根上禁用（真实背景应保持安静；且未复制 17MB 音频资源）
+        (function () {
+            function killSource(src) {
+                try {
+                    src.connect = function () { return src; };
+                    src.start = function () {};
+                    src.stop = function () {};
+                    src.disconnect = function () {};
+                } catch (e) {}
+                return src;
+            }
+            function patchAC(AC) {
+                if (!AC) return;
+                try {
+                    var cbs = AC.prototype.createBufferSource;
+                    if (cbs) AC.prototype.createBufferSource = function () { return killSource(cbs.call(this)); };
+                    var co = AC.prototype.createOscillator;
+                    if (co) AC.prototype.createOscillator = function () { return killSource(co.call(this)); };
+                    var cms = AC.prototype.createMediaElementSource;
+                    if (cms) AC.prototype.createMediaElementSource = function () { return killSource(cms.call(this)); };
+                } catch (e) {}
+            }
+            patchAC(window.AudioContext);
+            patchAC(window.webkitAudioContext);
+            try {
+                var M = window.HTMLMediaElement && window.HTMLMediaElement.prototype;
+                if (M) {
+                    Object.defineProperty(M, 'volume', { get: function () { return 0; }, set: function () {}, configurable: true });
+                    var op = M.play; M.play = function () { return (op ? op.call(this) : Promise.resolve()); };
+                }
+            } catch (e) {}
+            try { localStorage.setItem('audio:muted', '1'); localStorage.setItem('audio:volume', '0'); } catch (e) {}
+        })();
+
+        // 未复制音频资源：拦截 /grass-bg/audio/* 请求，返回一段静音 WAV，
+        // 避免 404 与 decodeAudioData 报错（不影响草地渲染）
+        (function () {
+            function silentWav() {
+                var sr = 8000, dur = 0.05, n = Math.floor(sr * dur);
+                var buf = new ArrayBuffer(44 + n * 2), dv = new DataView(buf);
+                function ws(o, s) { for (var i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); }
+                ws(0, 'RIFF'); dv.setUint32(4, 36 + n * 2, true); ws(8, 'WAVE'); ws(12, 'fmt ');
+                dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+                dv.setUint32(24, sr, true); dv.setUint32(28, sr * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true);
+                ws(36, 'data'); dv.setUint32(40, n * 2, true);
+                return buf;
+            }
+            var WAV = silentWav();
+            function isAudio(u) { try { return String(u).indexOf('/grass-bg/audio/') >= 0; } catch (e) { return false; } }
+            var of = window.fetch;
+            window.fetch = function (input, init) {
+                var u = (input && input.url) ? input.url : input;
+                if (isAudio(u)) return Promise.resolve(new Response(WAV, { status: 200, headers: { 'Content-Type': 'audio/wav' } }));
+                return of.apply(this, arguments);
+            };
+            var oOpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function (m, u) { this.__a = isAudio(u); return oOpen.apply(this, arguments); };
+            var oSend = XMLHttpRequest.prototype.send;
+            XMLHttpRequest.prototype.send = function () {
+                if (this.__a) {
+                    Object.defineProperty(this, 'response', { value: WAV });
+                    Object.defineProperty(this, 'responseText', { value: '' });
+                    this.status = 200; this.readyState = 4;
+                    if (this.onreadystatechange) this.onreadystatechange();
+                    if (this.onload) this.onload();
+                    if (this.onloadend) this.onloadend();
+                    return;
+                }
+                return oSend.apply(this, arguments);
+            };
+        })();
+    </script>
+</head>
+<body data-section="home">
+    <canvas class="webgl"></canvas>
+    <div id="root">
+        <nav class="hidden">
+            <a class="glass-effect active" href="#home">Explore</a>
+            <a class="glass-effect" href="#about">About</a>
+            <a class="glass-effect" href="#contact">Contact</a>
+        </nav>
+        <div class="viewpoints-progress glass-effect hidden">
+            <div class="circle-container visited">
+                <div class="ring"></div>
+                <div class="circle"></div>
+            </div>
+            <span></span>
+        </div>
+        <!-- 昼夜开关：保留在 DOM 供 bundle 绑定，但隐藏（默认白天静态，不显示切换按钮） -->
+        <div class="switch" id="dayNightSwitch" style="display:none">
+            <div class="stars">
+                <div class="star"></div><div class="star"></div><div class="star"></div>
+                <div class="star"></div><div class="star"></div>
+            </div>
+            <div class="clouds"><div class="cloud"></div><div class="cloud"></div></div>
+            <div class="switch-handle">
+                <svg class="sun-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="6.5" fill="#FFA500"/><path d="M12 3.5V1" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/></svg>
+                <svg class="moon-icon" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="#C4C4C4"/></svg>
+            </div>
+        </div>
+        <div class="sound-icon glass-effect hidden" data-sound="on"><span></span><span></span><span></span></div>
+        <section id="home">
+            <div class="look-around-hint"><span class="orbit"></span><span class="glass-effect">Touch &amp; move to look around</span></div>
+            <div class="explore-hint"><svg></svg><span class="glass-effect">Tap here to explore</span></div>
+        </section>
+        <section id="about" class="hidden"><div class="about-container glass-effect"><span class="close">+</span><h1>Jordan Breton</h1></div></section>
+        <section id="contact" class="hidden"><div class="header"><h1>Your brand deserves to stand out!</h1></div></section>
+    </div>
+    <div class="loading">
+        <div class="progress-percentage">
+            <div class="circle-container animated">
+                <div class="ring"></div>
+                <div class="circle"><span>0%</span><button>Start</button></div>
+            </div>
+        </div>
+        <div class="loading-text">Initializing...</div>
+    </div>
+    <div class="update hidden glass-effect active">
+        <h1>✨ Portfolio update!</h1>
+        <div class="text"><p>A new version is available.</p></div>
+        <button class="glass-effect">Reload now</button>
+    </div>
+    <template id="point-template">
+        <div class="circle-container"><div class="ring"></div><div class="circle"></div></div>
+    </template>
+
+    <script>
+        // 加载暮紫草场 purple 副本（仅改草色 config 一处的独立 JS）
+        (function () {
+            var s = document.createElement('script');
+            s.type = 'module';
+            s.crossOrigin = 'anonymous';
+            s.src = './references/-assets-index-G3tB3Owe-purple.patched.js?v=' + Date.now();
+            document.head.appendChild(s);
+        })();
+    </script>
+    <script>
+        /* 真正删除（从 DOM 移除，而非隐藏）：设置齿轮/面板、声音按钮、360°游览、视角热点。
+           以上由 bundle 在事件后创建，用 MutationObserver 出现即删。跳过 .loading 内的 Start 按钮。 */
+        (function () {
+            var REMOVE = ['.settings-icon', '.settings-panel', '.sound-icon', '.tour-button'];
+            function removeSel(sel) {
+                var nodes = document.querySelectorAll(sel);
+                for (var i = 0; i < nodes.length; i++) {
+                    var n = nodes[i];
+                    if (n && n.parentNode) { try { n.parentNode.removeChild(n); } catch (e) {} }
+                }
+            }
+            function sweep() {
+                for (var s = 0; s < REMOVE.length; s++) removeSel(REMOVE[s]);
+                var pts = document.querySelectorAll('.circle-container');
+                for (var i = 0; i < pts.length; i++) {
+                    var p = pts[i];
+                    if (p.closest && p.closest('.loading')) continue;
+                    if (p.parentNode) { try { p.parentNode.removeChild(p); } catch (e) {} }
+                }
+            }
+            if (document.readyState !== 'loading') sweep();
+            var mo = new MutationObserver(function () { sweep(); });
+            mo.observe(document.documentElement, { childList: true, subtree: true });
+            var t = setInterval(sweep, 300);
+            setTimeout(function () { clearInterval(t); }, 8000);
+        })();
+    </script>
+    <script>
+        // 自动进入真实草地背景：资源加载完（Start 按钮带 .show）后点击，触发 intro 相机过渡。
+        // 点击后 bundle 会给 .loading 加 .loaded（已被 CSS 隐藏）；并加硬兜底强制进入。
+        (function () {
+            var clicked = false;
+            function hideLoading() {
+                var l = document.querySelector('.loading');
+                if (l) l.style.display = 'none';
+            }
+            function tryStart() {
+                if (clicked) return;
+                var btn = document.querySelector('.loading button');
+                var circle = document.querySelector('.loading .circle-container');
+                if (!circle) { setTimeout(tryStart, 200); return; }
+                // 引擎就绪（window.__dcm 存在）或 Start 按钮带 .show 时即可揭示，不再死等按钮
+                var ready = (btn && btn.classList.contains('show')) || window.__dcm;
+                if (!ready) { setTimeout(tryStart, 200); return; }
+                clicked = true;
+                try { circle.click(); } catch (e) {}
+                // 兜底：点击后若 loading 仍可见则强制隐藏
+                setTimeout(function () {
+                    var l = document.querySelector('.loading');
+                    if (l && getComputedStyle(l).display !== 'none') hideLoading();
+                }, 1200);
+            }
+            window.addEventListener('load', function () { setTimeout(tryStart, 400); });
+            // 硬兜底：12s 仍卡在 loading 也强制进入（背景只是晚点到）
+            setTimeout(function () {
+                if (clicked) return;
+                var circle = document.querySelector('.loading .circle-container');
+                if (circle) { try { circle.click(); } catch (e) {} }
+                hideLoading();
+            }, 12000);
+        })();
+    </script>
+    <script>
+        /* 主题联动（深色=夜晚 / 浅色=白天）+ 草色 + 鼠标跟随视差：
+           - 读取父页（同源）data-theme：dark(暗色) → 夜晚相位 + 夜草色；light(浅色) → 白天 + 金草。
+             默认跟随用户设置（首次访问 data-theme=dark → 默认夜晚）。standalone 时退化为白天金草。
+             同时监听父页 postMessage('grass-theme') 作为跨域兜底。
+           - 鼠标视差：iframe 设了 pointer-events:none 且压在应用内容之下，收不到鼠标事件；
+             故由 App.vue 转发归一化光标到本页，本页用 rAF 轻推 CameraGroup 旋转，形成"跟随鼠标微晃"。 */
+        (function () {
+            var DAY = ['#d9a441', '#9c6b1e', '#b08746', '#8a6a38'];        // 白天金草 L,D,dL,dD
+            var NIGHT = ['#b07be0', '#7a3fa0', '#5e2d8a', '#2e1450'];      // 夜晚紫草（深色模式=全紫草+紫地）
+            var themeOverride = null;
+
+            function parentTheme() {
+                try {
+                    var el = (window.parent && window.parent !== window)
+                        ? window.parent.document.documentElement : document.documentElement;
+                    var t = el && el.getAttribute('data-theme');
+                    return t === 'light' ? 'light' : (t === 'dark' ? 'dark' : 'light');
+                } catch (e) { return 'light'; }
+            }
+            function currentTheme() { return themeOverride || parentTheme(); }
+            function paletteFor(theme) { return theme === 'dark' ? NIGHT : DAY; }
+            function phaseFor(theme) { return theme === 'dark' ? 'night' : 'day'; }
+
+            // 草（含脚下土地）颜色
+            function applyGrass(palette) {
+                var mats = window.__grassMats;
+                if (!mats || !mats.length) return;
+                window.__grassOverride = palette;
+                for (var i = 0; i < mats.length; i++) {
+                    var u = mats[i].uniforms;
+                    if (!u) continue;
+                    if (u.uLightGreen && u.uLightGreen.value) u.uLightGreen.value.set(palette[0]);
+                    if (u.uDarkGreen && u.uDarkGreen.value) u.uDarkGreen.value.set(palette[1]);
+                    if (u.uLightDirt && u.uLightDirt.value) u.uLightDirt.value.set(palette[2]);
+                    if (u.uDarkDirt && u.uDarkDirt.value) u.uDarkDirt.value.set(palette[3]);
+                }
+            }
+
+            // 远处地形地面（DistantTerrainGround）拥有独立颜色 uniform，
+            // nightConfig 不会改它，故深色模式下草变紫、远处地面仍停在白天金（黄）。
+            // 这里把地形颜色 uniform 一并压成主题色；首次记录白天金以便浅色还原。
+            var terrainCaptured = null;
+            var TERRAIN_KEYS = ['uGrassColor', 'uGrassColorAlt', 'uDirtColor', 'uRockColor', 'uWaterColor', 'uSnowColor'];
+            function applyTerrain(theme, palette) {
+                var exp = window.__experience; if (!exp) return;
+                var sc = exp.scene || (exp.engine && exp.engine.scene);
+                if (!sc || !sc.traverse) return;
+                var isDark = (theme === 'dark');
+                sc.traverse(function (o) {
+                    var m = o.material; if (!m) return;
+                    var list = Array.isArray(m) ? m : [m];
+                    for (var i = 0; i < list.length; i++) {
+                        var u = list[i].uniforms;
+                        if (!u || !u.uGrassColor) continue; // 仅处理远处地形地面材质
+                        if (!terrainCaptured) {
+                            terrainCaptured = {};
+                            for (var k = 0; k < TERRAIN_KEYS.length; k++) {
+                                var key = TERRAIN_KEYS[k];
+                                if (u[key] && u[key].value && u[key].value.clone) {
+                                    terrainCaptured[key] = u[key].value.clone();
+                                }
+                            }
+                        }
+                        for (var j = 0; j < TERRAIN_KEYS.length; j++) {
+                            var key2 = TERRAIN_KEYS[j];
+                            if (!u[key2] || !u[key2].value || !u[key2].value.set) continue;
+                            if (isDark) {
+                                // 紫草配色映射到地形：草->浅紫, 草Alt->中紫, 泥->深紫, 岩->更深紫
+                                var purpleMap = { uGrassColor: palette[0], uGrassColorAlt: palette[1], uDirtColor: palette[2], uRockColor: palette[3], uWaterColor: '#2a1245', uSnowColor: '#c89be8' };
+                                u[key2].value.set(purpleMap[key2] || palette[3]);
+                            } else if (terrainCaptured[key2]) {
+                                u[key2].value.copy(terrainCaptured[key2]);
+                            }
+                        }
+                    }
+                });
+            }
+
+            var subscribed = false;
+            function syncTheme() {
+                var theme = currentTheme();
+                var d = window.__dcm;
+                if (d && d.getPhase) {
+                    if (!subscribed) {
+                        try { d.on('phaseChanged', function () { setTimeout(syncTheme, 50); }); subscribed = true; } catch (e) {}
+                    }
+                    var want = phaseFor(theme);
+                    if (d.getPhase() !== want) { try { d.setPhase(want); } catch (e) {} }
+                }
+                var palette = paletteFor(theme);
+                applyGrass(palette);
+                applyTerrain(theme, palette);
+            }
+            setInterval(syncTheme, 400); // 持续确保相位/草色/地形匹配主题，覆盖引擎自带的昼夜循环
+
+            // 父页主题变化即时响应（避免轮询间隔内的短暂相位错位）
+            try {
+                var pDoc = (window.parent && window.parent !== window) ? window.parent.document : document;
+                var pEl = pDoc && pDoc.documentElement;
+                if (pEl && pEl.addEventListener) {
+                    new MutationObserver(function () { syncTheme(); }).observe(pEl, { attributes: true, attributeFilter: ['data-theme'] });
+                }
+            } catch (e) {}
+
+            // 鼠标跟随：接收父页转发的归一化光标(-1..1)，rAF 轻推 CameraGroup 旋转
+            window.__cursor = { x: 0, y: 0 };
+            window.addEventListener('message', function (e) {
+                try {
+                    var d = e.data;
+                    if (!d) return;
+                    if (d.type === 'grass-cursor') { window.__cursor.x = d.x || 0; window.__cursor.y = d.y || 0; }
+                    else if (d.type === 'grass-theme') { themeOverride = (d.mode === 'dark') ? 'dark' : 'light'; }
+                } catch (e2) {}
+            });
+            var MAX_Y = 0.025, MAX_X = 0.015;
+            function parallaxLoop() {
+                var cam = window.__experience && window.__experience.engine && window.__experience.engine.camera;
+                if (cam && cam.group) {
+                    var ty = window.__cursor.x * MAX_Y;
+                    var tx = -window.__cursor.y * MAX_X;
+                    cam.group.rotation.y += (ty - cam.group.rotation.y) * 0.05;
+                    cam.group.rotation.x += (tx - cam.group.rotation.x) * 0.05;
+                }
+                requestAnimationFrame(parallaxLoop);
+            }
+            (function waitCam() {
+                var ok = window.__experience && window.__experience.engine && window.__experience.engine.camera && window.__experience.engine.camera.group;
+                if (ok) { parallaxLoop(); return; }
+                setTimeout(waitCam, 200);
+            })();
+        })();
+    </script>
+    <script>
+        /* 缓慢移除滤镜、露出真实金色草地背景：
+           原生 reveal 被 swarmReady 卡死（生产环境 swarm 永不就绪），故在此手动触发完整 reveal：
+           - revealMesh.startReveal() 让卷须/描边辉光（uRevealProgress）0→1 淡出；
+           - postProcessing.startReveal() 让 line-glow 水体揭示（uProgress）0→1 淡出；
+           两者淡出后即露出底层真实金色草地。开场滤镜为紫色（bundle 中 lineGlowColor/glowColor=#b07be0），
+           随 reveal 渐隐，并非改色。引擎就绪(__dcm)且 reveal 方法可用后再延时触发，硬兜底 15s。 */
+        (function () {
+            var done = false, scheduled = false;
+            function ready() {
+                var e = window.__experience;
+                return !!(e && e.revealMesh && e.revealMesh.startReveal &&
+                          e.postProcessing && e.postProcessing.startReveal);
+            }
+            function fire() {
+                if (done || !ready()) return;
+                try {
+                    window.__experience.revealMesh.startReveal();
+                    window.__experience.postProcessing.startReveal();
+                } catch (e) { scheduled = false; return; }
+                done = true;
+            }
+            function loop() {
+                if (done || scheduled) return;
+                if (window.__dcm && ready()) { scheduled = true; setTimeout(fire, 2000); }
+                else setTimeout(loop, 300);
+            }
+            loop();
+            setTimeout(function () { if (!done) fire(); }, 15000);
+        })();
+    </script>
+    <script>
+        /* 鼠标划过草地的交互：
+           草背景 iframe 设了 pointer-events:none 且压在内容之下，草的 canvas 收不到真实指针事件，
+           导致引擎自带的 "bender"（弯曲贴图 brush）从不触发 —— 草对鼠标毫无反应。
+           解决：把父页（App.vue）转发来的归一化光标 window.__cursor(-1..1) 还原成画布 client 坐标，
+           向引擎 canvas 派发真实 pointermove，引擎 raycaster 会自行 raycast 地形并调用
+           bender.onPointerMove(uv, worldPos)，草随光标弯曲；光标停下约 2.5s 后自动回正。
+           同时给草/花材质保底 uBendingFactor，确保弯曲可见。 */
+        (function () {
+            var MAX_BEND = 0.7;
+            function boostBending() {
+                var exp = window.__experience; if (!exp) return;
+                var sc = exp.scene || (exp.engine && exp.engine.scene);
+                if (!sc || !sc.traverse) return;
+                sc.traverse(function (o) {
+                    var m = o.material; if (!m) return;
+                    var list = Array.isArray(m) ? m : [m];
+                    for (var i = 0; i < list.length; i++) {
+                        var u = list[i].uniforms;
+                        if (u && u.uBendingFactor && u.uBendingFactor.value < MAX_BEND) {
+                            u.uBendingFactor.value = MAX_BEND;
+                        }
+                    }
+                });
+            }
+            var lastX = null, lastY = null, frame = 0;
+            function dispatchMove(c, rect) {
+                var clientX = rect.left + (c.x * 0.5 + 0.5) * rect.width;
+                var clientY = rect.top + (-c.y * 0.5 + 0.5) * rect.height;
+                var ev;
+                try {
+                    ev = new PointerEvent('pointermove', {
+                        clientX: clientX, clientY: clientY, pointerId: 1,
+                        pointerType: 'mouse', bubbles: true, cancelable: true, view: window
+                    });
+                } catch (e) {
+                    ev = new MouseEvent('pointermove', { clientX: clientX, clientY: clientY, bubbles: true });
+                }
+                try { window.__experience.engine.canvas.dispatchEvent(ev); } catch (e2) {}
+            }
+            function loop() {
+                var exp = window.__experience;
+                if (exp && exp.engine && exp.engine.canvas) {
+                    if ((frame++ % 30) === 0) boostBending();
+                    var c = window.__cursor;
+                    if (c && (c.x !== lastX || c.y !== lastY)) {
+                        lastX = c.x; lastY = c.y;
+                        dispatchMove(c, exp.engine.canvas.getBoundingClientRect());
+                    }
+                }
+                requestAnimationFrame(loop);
+            }
+            (function wait() {
+                if (window.__experience && window.__experience.engine && window.__experience.engine.canvas) { loop(); return; }
+                setTimeout(wait, 200);
+            })();
+        })();
+    </script>
+</body>
+</html>

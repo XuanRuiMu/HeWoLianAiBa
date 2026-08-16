@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <title>和我恋爱吧 — 草地主页</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" crossorigin href="./references/-assets-index-DF8svE4a.css">
+
+    <style>
+        /* 页面加载完成后，通过 JS 添加 .simplified 类来隐藏不需要的 UI。
+           这里先保持所有元素在 DOM 中，避免原 JS 初始化时 querySelector 返回 null。 */
+        body.simplified nav,
+        body.simplified .viewpoints-progress,
+        body.simplified .sound-icon,
+        body.simplified #home .author,
+        body.simplified #home .look-around-hint,
+        body.simplified #home .explore-hint,
+        body.simplified #about,
+        body.simplified #contact,
+        body.simplified .update,
+        body.simplified #point-template {
+            display: none !important;
+        }
+
+        /* 顶部提示 */
+        #top-hint {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.75);
+            color: #222;
+            font-size: 13px;
+            backdrop-filter: blur(6px);
+            pointer-events: none;
+            user-select: none;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+        body.simplified #top-hint { opacity: 1; }
+
+        /* ===== 我们的恋爱 overlay（叠加在真实 Jordan Breton 草地上） ===== */
+        #top-hint { display: none !important; }  /* 隐藏原站提示，用我们自己的文案 */
+        .loading { display: none !important; }  /* 删掉 Start 步骤：默认直接进入草地场景，不再显示 Initializing/Start */
+        /* 调试 toast / 日志面板隐藏；设置齿轮、声音按钮、360°游览、视角热点等
+           均由底部脚本「真正从 DOM 移除」（.remove()），此处仅兜底隐藏调试 UI */
+        .log-toast, logs-panel { display: none !important; }
+        #love-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: clamp(16px, 3vw, 40px);
+            pointer-events: none;            /* 让鼠标穿透到 canvas，草地仍可随鼠标互动 */
+            opacity: 0;
+            transition: opacity 1.1s ease;
+            font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: #fff;
+        }
+        #love-overlay.love-in { opacity: 1; }
+        #love-overlay .top-row { display: flex; justify-content: space-between; align-items: flex-start; }
+        #love-overlay .brand {
+            background: rgba(255,255,255,.18);
+            border: 1px solid rgba(255,255,255,.35);
+            border-radius: 999px;
+            padding: 8px 18px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            font-size: 14px;
+            backdrop-filter: blur(6px);
+            text-shadow: 0 1px 6px rgba(0,0,0,.35);
+        }
+        #love-overlay .center-copy { text-align: center; margin-top: 4vh; text-shadow: 0 2px 18px rgba(0,0,0,.3); }
+        #love-overlay .kicker { font-size: 12px; letter-spacing: 5px; opacity: .9; margin-bottom: 10px; }
+        #love-overlay h1 {
+            font-family: "Noto Serif SC", serif;
+            font-size: clamp(34px, 7vw, 76px);
+            font-weight: 900;
+            letter-spacing: 3px;
+            line-height: 1.1; margin: 0;
+        }
+        #love-overlay .subtitle { margin-top: 12px; font-size: 15px; font-weight: 300; opacity: .95; letter-spacing: 1px; }
+        #love-overlay .bottom-scene {
+            position: relative;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            min-height: 0;
+        }
+        #love-overlay .wu {
+            position: absolute;
+            bottom: -1.5vh;
+            left: 50%;
+            transform: translateX(-50%);
+            height: clamp(90px, 16vh, 190px);
+            width: auto;
+            object-fit: contain;
+            object-position: center bottom;
+            filter: drop-shadow(0 18px 30px rgba(0,0,0,.3));
+            pointer-events: none;
+        }
+        #love-overlay .mode-pads {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: clamp(18px, 4vh, 46px);
+        }
+        #love-overlay .mode-pad {
+            pointer-events: auto;
+            background: rgba(255,255,255,.22);
+            border: 1px solid rgba(255,255,255,.42);
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 16px 24px;
+            min-width: 160px;
+            text-align: center;
+            cursor: pointer;
+            color: #fff;
+            text-shadow: 0 1px 4px rgba(0,0,0,.3);
+            transition: transform .25s ease, background .25s ease;
+        }
+        #love-overlay .mode-pad:hover { transform: translateY(-4px); background: rgba(255,255,255,.34); }
+        #love-overlay .mode-pad.soon { opacity: .55; cursor: not-allowed; }
+        #love-overlay .mode-pad.soon:hover { transform: none; }
+        #love-overlay .mode-pad .icon { font-size: 22px; margin-bottom: 6px; }
+        #love-overlay .mode-pad .tt { font-size: 16px; font-weight: 700; }
+        #love-overlay .mode-pad .ds { font-size: 12px; opacity: .9; margin-top: 4px; }
+        @media (min-width: 820px) {
+            #love-overlay { padding: clamp(32px, 5vw, 64px); }
+            #love-overlay .center-copy { text-align: left; align-self: flex-start; max-width: 540px; margin-top: 2vh; }
+            #love-overlay .center-copy h1 { font-size: clamp(52px, 6vw, 92px); }
+            #love-overlay .bottom-scene { flex-direction: row; align-items: flex-end; justify-content: center; gap: 80px; }
+            #love-overlay .wu { height: clamp(160px, 25vh, 290px); left: 60%; bottom: -2.5vh; }
+            #love-overlay .mode-pads { flex-direction: column; align-items: flex-start; margin-bottom: 60px; margin-right: auto; }
+            #love-overlay .mode-pad { text-align: left; min-width: 210px; }
+        }
+
+    </style>
+
+    <script>
+        // 屏蔽原站统计/分析域名，避免 CORS 报错
+        (function() {
+            const blockedHosts = ['ingest.analytics.invantis.tech'];
+            function shouldBlock(url) {
+                try {
+                    return blockedHosts.some(host => String(url).includes(host));
+                } catch (e) { return false; }
+            }
+            const origFetch = window.fetch;
+            window.fetch = function(...args) {
+                if (shouldBlock(args[0])) return Promise.resolve(new Response('', { status: 204 }));
+                return origFetch.apply(this, args);
+            };
+            const origOpen = XMLHttpRequest.prototype.open;
+            const origSend = XMLHttpRequest.prototype.send;
+            XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+                this._blocked = shouldBlock(url);
+                return origOpen.call(this, method, url, ...rest);
+            };
+            XMLHttpRequest.prototype.send = function(...args) {
+                if (this._blocked) {
+                    this.status = 204;
+                    this.readyState = 4;
+                    if (this.onreadystatechange) this.onreadystatechange();
+                    if (this.onloadend) this.onloadend();
+                    return;
+                }
+                return origSend.apply(this, args);
+            };
+        })();
+    </script>
+    <script>
+        // 彻底禁用一切音频输出（真正删除，而非静音/隐藏）：
+        // bundle 用 THREE.Audio 播放音乐/音效 —— 全部走 AudioContext 的「音频源节点」
+        // (createBufferSource / createOscillator / createMediaElementSource)。
+        // 我们在这些源节点被创建时，把 connect / start / stop 全部置为无操作，
+        // 使任何声音都无法接入音频图 → 从根上无声，绕开了「gain 静音被 setTargetAtTime 还原」的盲区。
+        (function () {
+            function killSource(src) {
+                try {
+                    src.connect = function () { return src; };   // 永不接入音频图
+                    src.start = function () {};                   // 永不开始播放
+                    src.stop = function () {};
+                    src.disconnect = function () {};
+                } catch (e) {}
+                return src;
+            }
+            function patchAC(AC) {
+                if (!AC) return;
+                try {
+                    var cbs = AC.prototype.createBufferSource;
+                    if (cbs) AC.prototype.createBufferSource = function () { return killSource(cbs.call(this)); };
+                    var co = AC.prototype.createOscillator;
+                    if (co) AC.prototype.createOscillator = function () { return killSource(co.call(this)); };
+                    var cms = AC.prototype.createMediaElementSource;
+                    if (cms) AC.prototype.createMediaElementSource = function () { return killSource(cms.call(this)); };
+                } catch (e) {}
+            }
+            patchAC(window.AudioContext);
+            patchAC(window.webkitAudioContext);
+            // HTML <audio>/<video> 元素也强制静音（双保险）
+            try {
+                var M = window.HTMLMediaElement && window.HTMLMediaElement.prototype;
+                if (M) {
+                    Object.defineProperty(M, 'volume', { get: function () { return 0; }, set: function () {}, configurable: true });
+                    var op = M.play; M.play = function () { return (op ? op.call(this) : Promise.resolve()); };
+                }
+            } catch (e) {}
+            // 持久化静音标记（兼容原站读取 audio:muted），并清零音量
+            try { localStorage.setItem('audio:muted', '1'); localStorage.setItem('audio:volume', '0'); } catch (e) {}
+        })();
+    </script>
+    <script type="module" crossorigin src="./references/-assets-index-G3tB3Owe-v2.patched.js"></script>
+    <script>
+      /* 真正删除（从 DOM 移除，而非隐藏）：
+         1) 设置齿轮 + 设置面板 (.settings-icon / .settings-panel)
+         2) 声音开关按钮 (.sound-icon) —— 音频已从根上禁用，按钮也无意义
+         3) 360° 自动游览按钮 (.tour-button) —— 这就是「点一下相机就自动飞」的元凶 tourMode.toggle()
+         4) 视角热点 (.circle-container) —— 从 #point-template 克隆、点击会让相机飞到预设机位 (cameraSpots.goTo)
+         ⚠️ 关键陷阱：Start 按钮 (.loading 内的 .circle-container) 也是 .circle-container，
+            绝不能删——它是进入「Start 之后真实草地背景」的触发器。故 sweep 跳过 .loading 内部。
+         以上节点由 bundle 在 INTRO_PLAYED 等事件后才创建/显示，故用 MutationObserver 出现即删。
+         保留：草地鼠标交互 (cameraLookAround)、日夜切换 (#dayNightSwitch)、天气、吴昊阳图。 */
+      (function () {
+        var REMOVE = ['.settings-icon', '.settings-panel', '.sound-icon', '.tour-button'];
+        function removeSel(sel) {
+          var nodes = document.querySelectorAll(sel);
+          for (var i = 0; i < nodes.length; i++) {
+            var n = nodes[i];
+            if (n && n.parentNode) { try { n.parentNode.removeChild(n); } catch (e) {} }
+          }
+        }
+        function sweep() {
+          for (var s = 0; s < REMOVE.length; s++) removeSel(REMOVE[s]);
+          // 视角热点 circle-container：跳过 .loading（那是 Start 按钮，必须保留以进入真实草地背景）
+          var pts = document.querySelectorAll('.circle-container');
+          for (var i = 0; i < pts.length; i++) {
+            var p = pts[i];
+            if (p.closest && p.closest('.loading')) continue;   // 保留 Start 按钮
+            if (p.parentNode) { try { p.parentNode.removeChild(p); } catch (e) {} }
+          }
+        }
+        if (document.readyState !== 'loading') sweep();
+        var mo = new MutationObserver(function () { sweep(); });
+        mo.observe(document.documentElement, { childList: true, subtree: true });
+        // 兜底轮询（仅前 8 秒保险，之后 Observer 已稳定接管）
+        var t = setInterval(sweep, 300);
+        setTimeout(function () { clearInterval(t); }, 8000);
+      })();
+    </script>
+</head>
+<body data-section="home">
+    <canvas class="webgl"></canvas>
+    <div id="root">
+        <nav class="hidden">
+            <a class="glass-effect active" href="#home">Explore</a>
+            <a class="glass-effect" href="#about">About</a>
+            <a class="glass-effect" href="#contact">Contact</a>
+        </nav>
+        <div class="viewpoints-progress glass-effect hidden">
+            <div class="circle-container visited">
+                <div class="ring"></div>
+                <div class="circle"></div>
+            </div>
+            <span></span>
+        </div>
+        <div class="switch" id="dayNightSwitch">
+            <div class="stars">
+                <div class="star"></div>
+                <div class="star"></div>
+                <div class="star"></div>
+                <div class="star"></div>
+                <div class="star"></div>
+            </div>
+            <div class="clouds">
+                <div class="cloud"></div>
+                <div class="cloud"></div>
+            </div>
+            <div class="switch-handle">
+                <svg class="sun-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="6.5" fill="#FFA500"/>
+                    <path d="M12 3.5V1" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M17.8 6.2L19.1 4.9" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M20.5 12H23" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M17.8 17.8L19.1 19.1" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M12 20.5V23" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M6.2 17.8L4.9 19.1" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M3.5 12H1" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M6.2 6.2L4.9 4.9" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <svg class="moon-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="#C4C4C4"/>
+                    <circle cx="17" cy="7" r="1" fill="white"/>
+                    <circle cx="15" cy="10" r="0.5" fill="white"/>
+                    <circle cx="19" cy="9" r="0.5" fill="white"/>
+                </svg>
+            </div>
+        </div>
+        <div class="sound-icon glass-effect hidden" data-sound="on">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <section id="home">
+            <div class="look-around-hint">
+                <span class="orbit">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 778.45 947.3">
+                        <path d="M232.56,588.18c0-3.43,0-6.85,0-10.28,0-127.92-.1-255.84.06-383.76.06-46.73,35.94-82.39,81.28-81.43,41.36.87,76.31,34.34,77.04,75.79.92,52.49.33,105,.39,157.51,0,3.39,0,6.78,0,11.1,53.01-33.12,95.1-20.79,127.96,28.83,46.47-42.16,115.26-24.42,134.19,33.3,12.68-4.95,25.04-11.99,38.24-14.5,44.2-8.4,85.67,25.67,86,70.67.56,76.68,1.39,153.4-.28,230.06-2.51,115.44-95.82,219.98-210.33,237.7-15.93,2.47-32.2,3.6-48.33,3.8-43.19.51-86.38.35-129.57.14-100.3-.5-176.06-44.12-226.51-130.95-51.24-88.18-101.94-176.68-152.83-265.06-19.69-34.19-9.52-66.03,26.23-82.56,57.44-26.55,120.6-6.79,152.5,47.85,14.06,24.09,27.87,48.32,41.8,72.49.71-.23,1.42-.46,2.13-.68Z"/>
+                        <path d="M94.44,205.78c-11.46-8.77-23.36-16.35-33.44-25.87-35.9-33.9-35.77-78.09.02-112.03,24.11-22.87,53.89-35.58,85.08-45.01C212.5,2.8,280.51-2.74,349.52,1.17c49.65,2.82,98.43,10.23,145.35,27.39,25.51,9.33,49.65,21.23,69.36,40.54,33.62,32.92,33.99,75.48.87,108.85-22.3,22.47-50.34,35.02-79.62,45.18-9.87,3.43-19.97,6.3-30.12,8.81-15.77,3.91-30.31-4.84-34.72-20.39-4.11-14.5,4.23-29.26,19.33-34.57,19.11-6.71,38.51-12.79,57.12-20.72,9.71-4.14,18.7-10.85,26.74-17.87,11.63-10.15,11.88-19-.37-28.51-11.9-9.23-25.07-17.51-38.85-23.5-37.92-16.48-78.31-23.41-119.24-26.89-59.51-5.06-118.65-2.44-177.01,11.13-26.03,6.05-51.45,14.09-74.26,28.55-6.1,3.87-11.85,8.62-16.83,13.86-7.64,8.05-8.1,13.98-.55,21.64,7.59,7.71,16.71,13.91,25.15,20.77.67-.63,1.34-1.25,2.01-1.88-1.49-4.04-3.12-8.04-4.45-12.13-4.72-14.49,2.15-29.96,15.75-35.71,13.82-5.84,30.2-.49,36.39,13.5,11.04,24.97,21.45,50.24,31.2,75.75,5.4,14.13-1.96,28.79-16.64,35.11-23.01,9.9-46.16,19.49-69.42,28.8-15.77,6.31-31.23.46-37.97-13.64-6.57-13.73-1.46-28.83,12.71-37.62,1.07-.67,2.15-1.33,2.98-1.85Z"/>
+                    </svg>
+                </span>
+                <span class="glass-effect" >Touch & move to look around</span>
+            </div>
+            <div class="explore-hint">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 318.38 303.07">
+                    <path d="M94.89,193.88c-.72-1.32-1.42-2.65-2.17-3.95C65.83,143.24,38.91,96.56,12.04,49.86,2.91,33.98,6.25,16.09,20.06,6.14c15.44-11.12,36.5-6.76,46.41,9.97,10.81,18.25,21.24,36.74,31.84,55.11.82,1.41,1.69,2.79,2.66,4.37,9.13-19.71,30.7-26.06,48.99-14.43,3.7-11.37,10.87-19.5,22.52-22.7,11.45-3.15,21.75-.31,30.01,6.76,3.94-4.52,7.16-9.62,11.65-13.09,14.31-11.05,34.48-6.47,43.91,9.7,14.27,24.48,28.53,48.97,42.38,73.69,5.09,9.08,10.12,18.47,13.28,28.33,14.05,43.88-4.58,92.65-44.01,116.35-16.49,9.91-33.14,19.58-49.95,28.93-33.88,18.83-67.92,18.54-101.54-.63-35.49-20.24-70.77-40.85-106.11-61.34-12.67-7.35-15.67-20.21-7.72-32.51,13.68-21.17,39.85-28.06,62.01-16.09,9.42,5.08,18.59,10.63,27.87,15.96.21-.21.42-.43.63-.64Z"/>
+                </svg>
+                <span class="glass-effect">Tap here to explore</span>
+            </div>
+            <div class="author">
+                <h1>Jordan Breton</h1>
+                <h2>Creative developer & Software Engineer</h2>
+            </div>
+        </section>
+        <section id="about" class="hidden">
+            <div class="about-container glass-effect">
+                <span class="close">+</span>
+                <h1>Jordan Breton</h1>
+                <h2>Creative developer & Software Engineer</h2>
+                <p>I’m Jordan, a freelance senior full-stack developer with 10 years of experience building SaaS, marketplaces, and complex web applications. My work combines engineering expertise with a creative eye, allowing me to move seamlessly between robust software design and immersive digital experiences.</p>
+                <p>As a Three.js developer, I create interactive 3D worlds and web experiences that are engaging, performant, and accessible. Whether it’s a subtle effect that adds depth or a fully immersive scene, I focus on crafting visuals that tell a story and leave an impression.</p>
+                <p>Beyond 3D, I bring deep experience in building scalable SaaS platforms, refactoring legacy codebases, and shipping features that drive real business value. I’m currently available for freelance missions both creative Three.js projects and more traditional web development so if you’re looking to bring your vision to life, let’s connect.</p>
+                <div class="fwa-otd">
+                    <a href="https://thefwa.com/cases/my-contemplative-portfolio" target="_blank" rel="noopener noreferrer">
+                        <img class="fwa-otd" src="/FOTD_bottom_left.png" alt="FWA Of The Day award ribbon">
+                    </a>
+                    <span>
+                        This portfolio won the
+                        <a href="https://thefwa.com/cases/my-contemplative-portfolio" target="_blank" rel="noopener noreferrer">FWA of the Day award</a>
+                        on October 2, 2025.
+                    </span>
+                </div>
+            </div>
+        </section>
+        <section id="contact" class="hidden">
+            <div class="header">
+                <h1>Your brand deserves to stand out!</h1>
+                <p>Let's get in touch to make it happen.</p>
+            </div>
+            <div class="container">
+                <div class="swarm-switch">
+                    <button class="left">&#8249;</button>
+                    <span class="empty"></span>
+                    <button class="right">&#8250;</button>
+                </div>
+                <div class="social-media">
+                    <button class="left-arrow">
+                        <span>&#8636;</span>
+                        <span>&#8637;</span>
+                    </button>
+                    <ul>
+                        <li class="active">
+                            <a class="glass-effect" data-social-media="default" href="mailto:contact@jordan-breton.com">contact@jordan-breton.com</a>
+                        </li>
+                        <li>
+                            <a class="glass-effect" data-social-media="linkedin" href="https://www.linkedin.com/in/jordan-breton/" target="_blank" rel="noopener noreferrer">Linkedin</a>
+                        </li>
+                        <li>
+                            <a class="glass-effect" data-social-media="x" href="https://x.com/JordanBretonDev" target="_blank" rel="noopener noreferrer">X</a>
+                        </li>
+                        <li>
+                            <a class="glass-effect" data-social-media="youtube" href="https://youtube.com/@JordanBretonDev" target="_blank" rel="noopener noreferrer">Youtube</a>
+                        </li>
+                    </ul>
+                    <button class="right-arrow">
+                        <span>&#8640;</span>
+                        <span>&#8641;</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+    <div class="loading">
+        <div class="progress-percentage">
+            <div class="circle-container animated">
+                <div class="ring"></div>
+                <div class="circle">
+                    <span>0%</span>
+                    <button>Start</button>
+                </div>
+            </div>
+        </div>
+        <div class="loading-text">Initializing...</div>
+    </div>
+    <div class="update hidden glass-effect active">
+        <h1>✨ Portfolio update!</h1>
+        <div class="text">
+            <p>A new version of this portfolio is available.</p>
+            <p>Reload now to see the latest improvements, or the page will refresh automatically in <span class="countdown">10</span> seconds.</p>
+        </div>
+        <button class="glass-effect">Reload now</button>
+    </div>
+    <template id="point-template">
+        <div class="circle-container">
+            <div class="ring"></div>
+            <div class="circle"></div>
+        </div>
+    </template>
+
+    <div id="top-hint">请在画面上移动鼠标，观察浮岛与草地交互</div>
+
+    <!-- ===== 我们的恋爱 overlay：吴昊阳趴在真实草地上 + 模式选项 ===== -->
+    <div id="love-overlay">
+        <div class="top-row">
+            <span class="brand">和我恋爱吧</span>
+            <span></span>
+        </div>
+
+        <div class="center-copy">
+            <div class="kicker">今天也想谈场恋爱吗</div>
+            <h1>躺在草地上<br>等一句开场</h1>
+            <p class="subtitle">吴昊阳正在这片草地上 —— 选一个方式靠近他</p>
+        </div>
+
+        <div class="bottom-scene">
+            <div class="mode-pads">
+                <div class="mode-pad" onclick="alert('进入普通模式')">
+                    <div class="icon">♡</div>
+                    <div class="tt">普通模式</div>
+                    <div class="ds">自定义对象 · 适合新手</div>
+                </div>
+                <div class="mode-pad soon">
+                    <div class="icon">⚡</div>
+                    <div class="tt">挑战模式</div>
+                    <div class="ds">系统随机 · 即将推出</div>
+                </div>
+            </div>
+            <img class="wu" src="吴昊阳终稿静态图.png" alt="吴昊阳" />
+        </div>
+    </div>
+
+    <script>
+        // 删掉 Start 步骤：资源加载完（engine 'reveal:complete'）后按钮会带上 'show' 类，
+        // 此时点击 .circle-container 才会真正进入场景；在此之前点击会被内部 gate 拒绝。
+        (function () {
+            function 进入完成() {
+                document.body.classList.add('simplified');
+                var loading = document.querySelector('.loading');
+                if (loading) loading.style.display = 'none';
+                var ov = document.getElementById('love-overlay');
+                if (ov) ov.classList.add('love-in');
+                // 汉化：昼夜切换按钮提示（其余英文设置面板已隐藏）
+                var dns = document.getElementById('dayNightSwitch');
+                if (dns) dns.title = '切换昼夜';
+            }
+
+            function 触发开始() {
+                var btn = document.querySelector('.loading button');
+                var circle = document.querySelector('.loading .circle-container');
+                if (!btn || !circle) { requestAnimationFrame(触发开始); return; }
+                if (!btn.classList.contains('show')) { setTimeout(触发开始, 150); return; } // 还没加载完，继续等
+                circle.click(); // 真正触发 intro 相机过渡，进入正确背景
+                var tries = 0;
+                (function 等进入() {
+                    var loading = document.querySelector('.loading');
+                    var entered = !loading || loading.classList.contains('hidden') ||
+                                  loading.classList.contains('loaded') || loading.style.display === 'none';
+                    if (entered || ++tries > 200) { 进入完成(); return; }
+                    setTimeout(等进入, 150);
+                })();
+            }
+
+            window.addEventListener('load', function () { setTimeout(触发开始, 400); });
+            // 兜底：若 30s 仍未进入，仍显示我们的 overlay（避免黑屏无反馈）
+            setTimeout(function () {
+                var ov = document.getElementById('love-overlay');
+                if (ov && !ov.classList.contains('love-in')) 进入完成();
+            }, 30000);
+        })();
+    </script>
+</body>
+</html>

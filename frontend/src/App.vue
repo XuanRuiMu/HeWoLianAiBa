@@ -12,12 +12,24 @@
         </router-view>
       </div>
     </div>
+    <!-- 草地 3D 背景：全局单例，应用启动即后台静默加载（任何路由都加载），
+         仅在主页（zhuJieMian）可见。z-index:0 使其位于 body 渐变背景之上、
+         z-index:1 的应用内容之下；opacity:0 时仍在后台运行，主页时淡入。 -->
+    <iframe
+      ref="grassIframe"
+      src="/grass-bg/grass-bg.html"
+      class="grass-bg-iframe"
+      :class="{ 'is-active': shiZhuYeMian }"
+      :aria-hidden="!shiZhuYeMian"
+      title="草地背景"
+    ></iframe>
     <ShiShiRiZhi />
   </CuoWuBianJie>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from 'vue'
+import { onMounted, onBeforeUnmount, computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import QuanJuCaiDan from '@/components/全局菜单.vue'
 import CuoWuBianJie from '@/components/错误边界.vue'
 import ShiShiRiZhi from '@/components/实时日志.vue'
@@ -25,6 +37,35 @@ import { 使用用户仓库 } from '@/stores/用户'
 import { chuFaCuoWuShangBao } from '@/utils/错误上报'
 
 const 用户仓库 = 使用用户仓库()
+const route = useRoute()
+// 仅主页（zhuJieMian）显示草地背景；其余路由（含登录页）后台静默加载但不可见
+const shiZhuYeMian = computed(() => route.name === 'zhuJieMian')
+
+// 草地背景 iframe 引用 + 鼠标跟随视差的数据桥：
+// 背景 iframe 设了 pointer-events:none 且压在应用内容之下，收不到鼠标事件；
+// 故在此把归一化光标 postMessage 给 iframe，由其内部轻推相机（CameraGroup）视差。
+const grassIframe = ref<HTMLIFrameElement | null>(null)
+let cursorRaf = 0
+let pendingCursor: { x: number; y: number } | null = null
+function zhuanFaShuBiao(e: PointerEvent) {
+  pendingCursor = {
+    x: (e.clientX / window.innerWidth) * 2 - 1,
+    y: (e.clientY / window.innerHeight) * 2 - 1,
+  }
+  if (!cursorRaf) {
+    cursorRaf = requestAnimationFrame(() => {
+      cursorRaf = 0
+      if (pendingCursor && grassIframe.value && grassIframe.value.contentWindow) {
+        try {
+          grassIframe.value.contentWindow.postMessage(
+            { type: 'grass-cursor', x: pendingCursor.x, y: pendingCursor.y },
+            '*'
+          )
+        } catch (err) {}
+      }
+    })
+  }
+}
 
 function chuLiCuoWuBuHuo(xinXi: {
   cuoWu: unknown
@@ -109,6 +150,8 @@ onMounted(() => {
     window.visualViewport.addEventListener('resize', gengXinShiJiaoKouGaoDu)
     window.visualViewport.addEventListener('scroll', gengXinShiJiaoKouGaoDu)
   }
+  // 转发鼠标位置给背景 iframe（rAF 节流），恢复"跟随鼠标微晃"
+  window.addEventListener('pointermove', zhuanFaShuBiao, { passive: true })
 })
 
 onBeforeUnmount(() => {
@@ -116,11 +159,15 @@ onBeforeUnmount(() => {
     window.visualViewport.removeEventListener('resize', gengXinShiJiaoKouGaoDu)
     window.visualViewport.removeEventListener('scroll', gengXinShiJiaoKouGaoDu)
   }
+  window.removeEventListener('pointermove', zhuanFaShuBiao)
+  if (cursorRaf) cancelAnimationFrame(cursorRaf)
 })
 </script>
 
 <style scoped>
 .app-rongqi {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100vh;
   height: 100dvh;
@@ -158,5 +205,25 @@ onBeforeUnmount(() => {
 .yemian-guodu-leave-to {
   opacity: 0;
   transform: translateY(-8px);
+}
+
+/* 草地 3D 背景：全局固定层，位于内容之下（z-index:-1），不拦截鼠标。
+   默认 opacity:0 —— 后台静默加载（文档仍可见、脚本正常跑、WebGL 初始化），
+   仅主页加 .is-active 才 opacity:1 显现。不用 visibility:hidden，否则 iframe
+   被判定为隐藏、requestAnimationFrame 不触发，导致背景无法在后台预加载。 */
+.grass-bg-iframe {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.grass-bg-iframe.is-active {
+  opacity: 1;
 }
 </style>

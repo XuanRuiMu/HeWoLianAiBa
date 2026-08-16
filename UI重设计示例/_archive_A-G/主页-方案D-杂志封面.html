@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>主页方案D · 杂志封面式</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #f4f0e8;
+    --ink: #1a1510;
+    --accent: #c45c3e;
+    --gold: #c9a227;
+    --muted: #7a7065;
+    --space-xs: 8px;
+    --space-sm: 14px;
+    --space-md: 24px;
+    --space-lg: 40px;
+    --space-xl: 72px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Noto Sans SC", sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .app {
+    container-type: inline-size;
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  /* Mobile: portrait magazine cover */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .masthead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid rgba(0,0,0,.1);
+  }
+  .masthead .logo {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 900;
+    font-size: 18px;
+    letter-spacing: 2px;
+  }
+  .masthead .issue {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .hero {
+    position: relative;
+    flex: 1;
+    min-height: 55vh;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: var(--space-md);
+    background: linear-gradient(180deg, #e8e0d4 0%, var(--paper) 100%);
+    overflow: hidden;
+  }
+  .hero img {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 95%;
+    width: auto;
+    max-width: 110%;
+    object-fit: contain;
+    object-position: center bottom;
+  }
+  .hero-overlay {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    width: 100%;
+  }
+  .headline {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 900;
+    font-size: clamp(44px, 13vw, 72px);
+    line-height: 1;
+    letter-spacing: 2px;
+  }
+  .headline .small {
+    display: block;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 6px;
+    color: var(--accent);
+    margin-bottom: var(--space-xs);
+  }
+  .deck {
+    margin-top: var(--space-sm);
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  .contents {
+    padding: var(--space-md);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
+  }
+  .story {
+    border-top: 2px solid var(--ink);
+    padding-top: var(--space-sm);
+    cursor: pointer;
+    transition: transform .2s ease;
+  }
+  .story:hover { transform: translateY(-4px); }
+  .story .num {
+    font-family: "Noto Serif SC", serif;
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .story .ttl { font-weight: 700; font-size: 15px; margin-top: 4px; }
+  .story .desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .story.soon { opacity: .55; cursor: not-allowed; }
+  .story.soon:hover { transform: none; }
+  .footer {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-align: center;
+    border-top: 1px solid rgba(0,0,0,.08);
+  }
+
+  /* Desktop: magazine spread */
+  @container (min-width: 820px) {
+    .cover {
+      flex-direction: row;
+      min-height: 100vh;
+    }
+    .masthead {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 10;
+      border-bottom-color: rgba(0,0,0,.15);
+      background: rgba(244,240,232,.98);
+    }
+    .spread-left {
+      width: 38%;
+      padding: var(--space-xl) var(--space-lg);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border-right: 1px solid rgba(0,0,0,.12);
+    }
+    .hero {
+      width: 62%;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: flex-end;
+      padding: var(--space-xl);
+    }
+    .hero img {
+      left: auto;
+      right: 0;
+      transform: none;
+      height: 92%;
+      max-width: none;
+      object-position: right bottom;
+    }
+    .hero-overlay {
+      text-align: left;
+      max-width: 420px;
+    }
+    .headline { font-size: clamp(56px, 5vw, 90px); }
+    .headline .small { margin-bottom: var(--space-sm); }
+    .deck { font-size: 16px; margin-top: var(--space-md); max-width: 320px; }
+    .contents {
+      margin-top: var(--space-xl);
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+    .story {
+      display: grid;
+      grid-template-columns: 64px 1fr;
+      gap: var(--space-sm);
+      align-items: start;
+    }
+    .story .num { font-size: 40px; }
+    .story .ttl { font-size: 17px; }
+    .story .desc { font-size: 13px; }
+    .footer {
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 38%;
+      text-align: left;
+      border-top: none;
+      padding: var(--space-sm) var(--space-lg);
+    }
+  }
+
+  .back {
+    position: absolute;
+    top: var(--space-sm); left: var(--space-sm);
+    z-index: 20;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(244,240,232,.8);
+    padding: 6px 12px; border-radius: 20px;
+  }
+  .back:hover { color: var(--ink); }
+  @container (min-width: 820px) {
+    .back { top: var(--space-md); left: var(--space-md); }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <a class="back" href="体验中心.html">← 返回体验中心</a>
+    <div class="cover">
+      <div class="masthead">
+        <span class="logo">和我恋爱吧</span>
+        <span class="issue">Vol.01 · 2026 夏季刊</span>
+      </div>
+
+      <div class="spread-left">
+        <div class="hero-overlay">
+          <h1 class="headline">
+            <span class="small">本期封面人物</span>
+            吴昊阳
+          </h1>
+          <p class="deck">欢迎回来——有人正在屏幕那头等你。今天想从哪一页开始？</p>
+        </div>
+
+        <div class="contents">
+          <div class="story" onclick="alert('进入普通模式')">
+            <div class="num">01</div>
+            <div>
+              <div class="ttl">普通模式</div>
+              <div class="desc">自定义对象 · 适合新手</div>
+            </div>
+          </div>
+          <div class="story soon">
+            <div class="num">02</div>
+            <div>
+              <div class="ttl">挑战模式</div>
+              <div class="desc">系统随机 · 分数排行 · 即将推出</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer">杂志封面式 · 把恋爱当成一本值得翻的刊</div>
+      </div>
+
+      <div class="hero">
+        <img src="吴昊阳终稿静态图.png" alt="吴昊阳" />
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>和我恋爱吧 · UI 重设计示例导航</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:"Noto Sans SC",sans-serif; background:#0f0f13; color:#eee; padding:40px 24px 80px; }
+  h1 { font-family:"Noto Serif SC",serif; font-weight:900; font-size:30px; letter-spacing:1px; }
+  .lead { color:#9a9aa5; margin:8px 0 30px; font-size:14px; line-height:1.7; max-width:680px; }
+  .lead b { color:#ff7a9c; }
+  .group { margin-bottom:36px; }
+  .group h2 { font-size:16px; color:#ff7a9c; border-left:3px solid #ff7a9c; padding-left:10px; margin-bottom:14px; letter-spacing:1px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+  a.card { display:block; background:#1b1b22; border:1px solid #2a2a33; border-radius:16px; padding:18px; text-decoration:none; color:#eee; transition:.2s; }
+  a.card:hover { border-color:#ff7a9c; transform:translateY(-3px); box-shadow:0 10px 30px rgba(255,122,156,.15); }
+  a.card .n { font-family:"Noto Serif SC",serif; font-weight:700; font-size:17px; }
+  a.card .d { font-size:12px; color:#9a9aa5; margin-top:6px; line-height:1.6; }
+  .must { display:inline-block; font-size:10px; background:#ff7a9c; color:#fff; padding:1px 7px; border-radius:8px; margin-left:6px; vertical-align:middle; }
+  .tip { background:#1b1b22; border:1px dashed #444; border-radius:14px; padding:16px; font-size:13px; color:#bbb; line-height:1.8; max-width:680px; }
+  .tip code { background:#2a2a33; padding:1px 6px; border-radius:5px; color:#ffd23f; }
+</style>
+</head>
+<body>
+  <h1>和我恋爱吧 · UI 重设计示例</h1>
+  <p class="lead">以下为各页面的<b>重设计方案可视化示例</b>（静态 HTML，仅定方向，非最终实现）。请对照 <code style="background:#2a2a33;padding:1px 6px;border-radius:5px;color:#ffd23f">UI与AI参数重设计-讨论.md</code> 第 3、5 节，在文件中勾选你认可的方向。所有方案均刻意避开"深色玻璃拟态 + 蓝紫渐变"的 AI 模板。</p>
+
+  <div class="group">
+    <h2>主页（FP-02 · 双模式入口）<span class="must">必须 3 选 1</span></h2>
+    <div class="cards">
+      <a class="card" href="主页-方案A-微信原生.html" target="_blank"><div class="n">方案A · 微信原生拟态</div><div class="d">像真的微信首页，角色作联系人卡片，温暖熟悉</div></a>
+      <a class="card" href="主页-方案B-电影感.html" target="_blank"><div class="n">方案B · 电影感视觉小说</div><div class="d">满屏角色海报 + 衬线标题，高级交友 App 感</div></a>
+      <a class="card" href="主页-方案C-俏皮纸感.html" target="_blank"><div class="n">方案C · Gen-Z 俏皮纸感</div><div class="d">纸纹 + 手绘贴纸 + 圆润展示体，浪漫俏皮</div></a>
+    </div>
+  </div>
+
+  <div class="group">
+    <h2>登录 / 注册（保留卷轴飞行动画）</h2>
+    <div class="cards">
+      <a class="card" href="登录注册-方案A-沉浸式.html" target="_blank"><div class="n">方案A · 单屏沉浸式</div><div class="d">满屏暖色天空花瓣，极简表单浮于底部面板</div></a>
+      <a class="card" href="登录注册-方案B-信笺.html" target="_blank"><div class="n">方案B · 信笺手写信</div><div class="d">登录如展信，火漆印 + 衬线，浪漫可触</div></a>
+    </div>
+  </div>
+
+  <div class="group">
+    <h2>资料向导（1/2/3 步骤 · FP-03）</h2>
+    <div class="cards">
+      <a class="card" href="资料向导-方案A-对话式.html" target="_blank"><div class="n">方案A · 对话式引导</div><div class="d">TA 用气泡一步步问你，像真的在聊天</div></a>
+      <a class="card" href="资料向导-方案B-步骤卡.html" target="_blank"><div class="n">方案B · 极简步骤卡</div><div class="d">竖向进度脊 + 强字体层级，一步一景</div></a>
+    </div>
+  </div>
+
+  <div class="group">
+    <h2>用户协议 / 隐私政策（协议模态框）</h2>
+    <div class="cards">
+      <a class="card" href="协议隐私-方案A-阅读模式.html" target="_blank"><div class="n">方案A · 舒适长读</div><div class="d">衬线正文 + 顶部目录锚点，像读读库</div></a>
+      <a class="card" href="协议隐私-方案B-要点化.html" target="_blank"><div class="n">方案B · 要点化</div><div class="d">摘要 + 可折叠卡片，降低认知负载</div></a>
+    </div>
+  </div>
+
+  <div class="tip">说明：角色头像/海报处为占位（真实将使用 <code>图片/主页元素/吴昊阳终稿静态图.png</code> 与 emoji 占位）。示例只解决"美学方向"，落地时会按选定方向改写为 Vue 组件并保留现有交互逻辑（如卷轴动画、进度圆点回退、状态保持等）。</div>
+</body>
+</html>

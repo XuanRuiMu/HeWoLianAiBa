@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>主页方案G · 草地憩息</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --sky-top: #6ec3f0;
+    --sky-mid: #b8e3f5;
+    --sky-horizon: #fff5e6;
+    --sun: #ffe8a8;
+    --hill-far: #7cb342;
+    --hill-mid: #558b2f;
+    --hill-near: #33691e;
+    --grass: #2e7d32;
+    --grass-dark: #1b5e20;
+    --ink: #1a2e1a;
+    --muted: #4a6b4a;
+    --space-sm: 12px;
+    --space-md: 20px;
+    --space-lg: 32px;
+    --space-xl: 56px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Noto Sans SC", sans-serif;
+    color: #fff;
+    overflow: hidden;
+  }
+  .app {
+    container-type: inline-size;
+    width: 100%;
+    height: 100vh;
+    position: relative;
+    background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 45%, var(--sky-horizon) 78%, #e8f5e9 100%);
+  }
+
+  /* Sun glow */
+  .sun {
+    position: absolute;
+    top: 10%;
+    right: 15%;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,232,168,.9) 0%, rgba(255,232,168,.2) 50%, transparent 70%);
+    filter: blur(2px);
+    animation: sun-pulse 6s ease-in-out infinite;
+  }
+  @keyframes sun-pulse {
+    0%, 100% { transform: scale(1); opacity: .9; }
+    50% { transform: scale(1.08); opacity: 1; }
+  }
+
+  /* Hills */
+  .hill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+  }
+  .hill.far {
+    height: 45vh;
+    background: radial-gradient(120% 100% at 30% 100%, var(--hill-far) 0%, transparent 70%);
+    opacity: .8;
+  }
+  .hill.mid {
+    height: 35vh;
+    background: radial-gradient(140% 100% at 70% 100%, var(--hill-mid) 0%, transparent 70%);
+  }
+  .hill.near {
+    height: 34vh;
+    background: radial-gradient(150% 100% at 50% 100%, var(--grass) 0%, var(--grass-dark) 60%, transparent 75%);
+  }
+
+  /* Animated grass canvas */
+  #grass-canvas {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 34vh;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* UI overlay */
+  .overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: var(--space-md);
+    pointer-events: none;
+  }
+  .overlay > * { pointer-events: auto; }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .back {
+    font-size: 13px;
+    color: #fff;
+    text-decoration: none;
+    background: rgba(0,0,0,.25);
+    padding: 8px 14px;
+    border-radius: 999px;
+    transition: background .2s ease;
+    text-shadow: none;
+  }
+  .back:hover { background: rgba(0,0,0,.4); }
+  .brand-pill {
+    background: rgba(255,255,255,.2);
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    backdrop-filter: blur(4px);
+  }
+
+  .center-copy {
+    text-align: center;
+    margin-top: 6vh;
+    text-shadow: 0 2px 16px rgba(0,0,0,.25);
+  }
+  .kicker {
+    font-size: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    opacity: .9;
+    margin-bottom: 8px;
+  }
+  h1 {
+    font-family: "Noto Serif SC", serif;
+    font-size: clamp(38px, 8vw, 80px);
+    font-weight: 900;
+    letter-spacing: 3px;
+    line-height: 1.1;
+    margin: 0;
+  }
+  .subtitle {
+    font-size: 15px;
+    font-weight: 300;
+    margin-top: 12px;
+    opacity: .95;
+    letter-spacing: 1px;
+  }
+
+  .bottom-scene {
+    position: relative;
+    width: 100%;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .wu-haoyang {
+    position: absolute;
+    bottom: -4vh;
+    left: 50%;
+    transform: translateX(-50%);
+    height: clamp(170px, 30vh, 360px);
+    width: auto;
+    object-fit: contain;
+    object-position: center bottom;
+    filter: drop-shadow(0 18px 30px rgba(0,0,0,.25));
+    z-index: 3;
+    pointer-events: none;
+  }
+  .mode-pads {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    gap: 14px;
+    margin-bottom: clamp(20px, 5vh, 50px);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .mode-pad {
+    background: rgba(255,255,255,.22);
+    border: 1px solid rgba(255,255,255,.4);
+    backdrop-filter: blur(8px);
+    border-radius: 20px;
+    padding: 16px 22px;
+    min-width: 150px;
+    cursor: pointer;
+    text-align: center;
+    transition: transform .25s ease, background .25s ease;
+    color: #fff;
+    text-shadow: 0 1px 4px rgba(0,0,0,.25);
+  }
+  .mode-pad:hover {
+    transform: translateY(-4px);
+    background: rgba(255,255,255,.34);
+  }
+  .mode-pad.soon { opacity: .55; cursor: not-allowed; }
+  .mode-pad.soon:hover { transform: none; }
+  .mode-pad .icon { font-size: 22px; margin-bottom: 6px; }
+  .mode-pad .tt { font-size: 16px; font-weight: 700; }
+  .mode-pad .ds { font-size: 12px; opacity: .9; margin-top: 4px; }
+
+  /* Desktop layout */
+  @container (min-width: 820px) {
+    .overlay { padding: var(--space-xl); }
+    .center-copy { margin-top: 4vh; text-align: left; align-self: flex-start; max-width: 520px; }
+    .center-copy h1 { font-size: clamp(52px, 6vw, 92px); }
+    .bottom-scene {
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 80px;
+    }
+    .wu-haoyang {
+      height: clamp(300px, 48vh, 560px);
+      left: 58%;
+      bottom: -6vh;
+    }
+    .mode-pads {
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 60px;
+      margin-right: auto;
+    }
+    .mode-pad { text-align: left; min-width: 200px; }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <div class="sun"></div>
+    <div class="hill far"></div>
+    <div class="hill mid"></div>
+    <div class="hill near"></div>
+    <canvas id="grass-canvas"></canvas>
+
+    <div class="overlay">
+      <div class="top-bar">
+        <a class="back" href="体验中心.html">← 返回体验中心</a>
+        <span class="brand-pill">和我恋爱吧</span>
+      </div>
+
+      <div class="center-copy">
+        <div class="kicker">今天也想谈场恋爱吗</div>
+        <h1>躺在草地上<br>等一句开场</h1>
+        <p class="subtitle">吴昊阳正在这片草地上 —— 选一个方式靠近他</p>
+      </div>
+
+      <div class="bottom-scene">
+        <div class="mode-pads">
+          <div class="mode-pad" onclick="alert('进入普通模式')">
+            <div class="icon">♡</div>
+            <div class="tt">普通模式</div>
+            <div class="ds">自定义对象 · 适合新手</div>
+          </div>
+          <div class="mode-pad soon">
+            <div class="icon">⚡</div>
+            <div class="tt">挑战模式</div>
+            <div class="ds">系统随机 · 即将推出</div>
+          </div>
+        </div>
+        <img class="wu-haoyang" src="吴昊阳终稿静态图.png" alt="吴昊阳" />
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const canvas = document.getElementById('grass-canvas');
+      const ctx = canvas.getContext('2d');
+      let blades = [];
+      let w, h;
+
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        // Use setTransform (not scale) so repeated resizes don't compound the DPR transform
+        canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+        canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        w = rect.width;
+        h = rect.height;
+        initBlades();
+      }
+
+      function initBlades() {
+        blades = [];
+        const count = Math.floor(w / 3);
+        for (let i = 0; i < count; i++) {
+          blades.push({
+            x: Math.random() * w,
+            y: h + Math.random() * 24,
+            h: 34 + Math.random() * 90,
+            w: 1.6 + Math.random() * 2.4,
+            lean: (Math.random() - 0.5) * 0.45,
+            speed: 0.002 + Math.random() * 0.003,
+            phase: Math.random() * Math.PI * 2,
+            color: Math.random() > 0.5 ? '#2e7d32' : '#388e3c'
+          });
+        }
+      }
+
+      function draw(t) {
+        ctx.clearRect(0, 0, w, h);
+        // Solid grass-field ground: green band fading upward so it reads as a field, not scattered lines
+        const ground = ctx.createLinearGradient(0, h, 0, 0);
+        ground.addColorStop(0, 'rgba(27,94,32,0.95)');
+        ground.addColorStop(0.55, 'rgba(46,125,50,0.85)');
+        ground.addColorStop(1, 'rgba(67,160,71,0)');
+        ctx.fillStyle = ground;
+        ctx.fillRect(0, h * 0.32, w, h * 0.68);
+        blades.forEach(b => {
+          const sway = Math.sin(t * b.speed + b.phase) * 8 + b.lean * 20;
+          ctx.beginPath();
+          ctx.moveTo(b.x, b.y);
+          ctx.quadraticCurveTo(b.x + sway * 0.5, b.y - b.h * 0.5, b.x + sway, b.y - b.h);
+          ctx.lineWidth = b.w;
+          ctx.strokeStyle = b.color;
+          ctx.lineCap = 'round';
+          ctx.stroke();
+        });
+        requestAnimationFrame(draw);
+      }
+
+      window.addEventListener('resize', resize);
+      resize();
+      requestAnimationFrame(draw);
+    })();
+  </script>
+</body>
+</html>

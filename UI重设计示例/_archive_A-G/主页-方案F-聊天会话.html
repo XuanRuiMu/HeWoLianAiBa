@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>主页方案F · 聊天会话隐喻</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --wx-bg: #ededed;
+    --bubble-me: #95ec69;
+    --bubble-them: #ffffff;
+    --ink: #111111;
+    --muted: #888888;
+    --bar: #f7f7f7;
+    --line: #d6d6d6;
+    --space-xs: 6px;
+    --space-sm: 10px;
+    --space-md: 14px;
+    --space-lg: 22px;
+    --space-xl: 40px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Noto Sans SC", sans-serif;
+    background: #c6c6c6;
+    color: var(--ink);
+  }
+  .app {
+    container-type: inline-size;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+  }
+
+  /* Mobile: single chat thread */
+  .chat-shell {
+    width: 100%;
+    max-width: 520px;
+    min-height: 100vh;
+    background: var(--wx-bg);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 40px rgba(0,0,0,.15);
+  }
+  .chat-header {
+    height: 52px;
+    background: var(--bar);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 0 var(--space-md);
+  }
+  .chat-header .name { font-weight: 700; font-size: 16px; }
+  .chat-header .more {
+    position: absolute; right: var(--space-md);
+    font-size: 18px; color: var(--muted);
+  }
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    background:
+      radial-gradient(circle at 10% 20%, rgba(255,255,255,.4) 0%, transparent 20%),
+      radial-gradient(circle at 90% 80%, rgba(255,255,255,.3) 0%, transparent 20%),
+      var(--wx-bg);
+  }
+  .msg {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: flex-start;
+    max-width: 85%;
+  }
+  .msg.them { align-self: flex-start; }
+  .msg.me { align-self: flex-end; flex-direction: row-reverse; }
+  .msg-avatar {
+    width: 38px; height: 38px; border-radius: 6px;
+    object-fit: cover; flex-shrink: 0;
+    background: #ddd;
+  }
+  .msg.me .msg-avatar { display: none; }
+  .bubble {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: 6px;
+    font-size: 15px;
+    line-height: 1.5;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0,0,0,.08);
+  }
+  .msg.them .bubble {
+    background: var(--bubble-them);
+    border-top-left-radius: 0;
+  }
+  .msg.me .bubble {
+    background: var(--bubble-me);
+    border-top-right-radius: 0;
+  }
+  .bubble b { font-weight: 700; }
+  .bubble .actions {
+    margin-top: var(--space-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+  .bubble button {
+    border: none;
+    background: rgba(0,0,0,.06);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: background .15s ease;
+  }
+  .bubble button:hover { background: rgba(0,0,0,.12); }
+  .bubble button.soon { opacity: .5; cursor: not-allowed; }
+  .bubble button.soon:hover { background: rgba(0,0,0,.06); }
+  .time-divider {
+    align-self: center;
+    font-size: 11px;
+    color: var(--muted);
+    background: rgba(0,0,0,.06);
+    padding: 3px 10px;
+    border-radius: 4px;
+  }
+  .input-bar {
+    background: var(--bar);
+    border-top: 1px solid var(--line);
+    padding: var(--space-sm) var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+  .input-bar .voice {
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: var(--muted);
+  }
+  .input-bar .input {
+    flex: 1;
+    background: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px var(--space-sm);
+    font-size: 15px;
+    color: var(--muted);
+  }
+  .input-bar .send {
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    border: none; background: var(--bubble-me);
+    border-radius: 6px;
+    font-size: 18px; color: #1a4a0f;
+    cursor: pointer;
+  }
+
+  /* Desktop: chat app split */
+  @container (min-width: 760px) {
+    .chat-shell {
+      max-width: 1000px;
+      min-height: 90vh;
+      margin: 5vh auto;
+      border-radius: 10px;
+      overflow: hidden;
+      flex-direction: row;
+    }
+    .sidebar {
+      width: 260px;
+      background: #fff;
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar-header {
+      height: 52px;
+      background: var(--bar);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--space-md);
+      font-weight: 700;
+    }
+    .contact {
+      display: flex; align-items: center; gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+      cursor: pointer;
+      background: #e6e6e6;
+      border-bottom: 1px solid var(--line);
+    }
+    .contact img {
+      width: 42px; height: 42px; border-radius: 6px; object-fit: cover;
+    }
+    .contact .meta { flex: 1; min-width: 0; }
+    .contact .name { font-weight: 700; font-size: 14px; }
+    .contact .preview { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .main { flex: 1; display: flex; flex-direction: column; }
+    .messages { padding: var(--space-lg); }
+    .msg { max-width: 70%; }
+  }
+
+  .back {
+    position: absolute;
+    top: var(--space-md); left: var(--space-md);
+    z-index: 10;
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,.8);
+    padding: 6px 12px; border-radius: 20px;
+  }
+  .back:hover { color: var(--ink); }
+  @container (min-width: 760px) {
+    .back { top: 12px; left: 12px; }
+  }
+</style>
+</head>
+<body>
+  <a class="back" href="体验中心.html">← 返回体验中心</a>
+  <div class="app">
+    <div class="chat-shell">
+      <div class="sidebar">
+        <div class="sidebar-header">和我恋爱吧</div>
+        <div class="contact">
+          <img src="吴昊阳终稿静态图.png" alt="吴昊阳" />
+          <div class="meta">
+            <div class="name">吴昊阳</div>
+            <div class="preview">今天也想谈场恋爱吗？</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="main">
+        <div class="chat-header">
+          <span class="name">吴昊阳</span>
+          <span class="more">⋯</span>
+        </div>
+
+        <div class="messages">
+          <div class="time-divider">欢迎回来</div>
+
+          <div class="msg them">
+            <img class="msg-avatar" src="吴昊阳终稿静态图.png" alt="吴昊阳" />
+            <div class="bubble">
+              今天想从哪种方式开始？<br><b>普通模式</b>可以自己定对象，<b>挑战模式</b>还在准备中。
+              <div class="actions">
+                <button onclick="alert('进入普通模式')">♡ 普通模式</button>
+                <button class="soon">⚡ 挑战模式（即将推出）</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="msg me">
+            <div class="bubble">
+              让我看看今天能聊出什么火花 🔥
+            </div>
+          </div>
+        </div>
+
+        <div class="input-bar">
+          <span class="voice">◉</span>
+          <input class="input" type="text" value="输入消息..." readonly />
+          <button class="send">↑</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -22,3 +22,7 @@ coverage/
 logs_*.txt
 聊天界面截图.png
 backend/logs/
+
+# 过程性备份（草地主页 bundle 分析副本的 .bak，不入版本库）
+*.bak
+*.bak2

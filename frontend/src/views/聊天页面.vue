@@ -563,7 +563,29 @@ const changYongEmoji = [
   '🎲',
 ]
 
-// 面板开合后的滚动补偿交由 ResizeObserver 驱动（布局提交后），而非依赖过渡钩子时序
+// 表情面板展开/收起会改变「聊天区 + 输入区」的 grid 行高（行 2 = auto）。
+// 若不补偿，面板会直接吃掉聊天区底部约 200px、把底部消息裁掉（表现为「覆盖」）。
+// 用 ResizeObserver 监听面板实际高度变化，按「高度增量」同步把聊天区向上滚动相同距离，
+// 使面板无论处于何种滚动位置都「顶起」聊天内容而非覆盖；收起时反向恢复原位。
+let shangYiEmojiGaoDu = 0
+let emojiMianBanGuanChaQi: ResizeObserver | null = null
+
+function chuShiHuaEmojiGunDongBuChang() {
+  const mianBan = document.querySelector('.emoji-mianban') as HTMLElement | null
+  if (!mianBan) return
+  shangYiEmojiGaoDu = mianBan.offsetHeight
+  emojiMianBanGuanChaQi = new ResizeObserver(() => {
+    const qu = xiaoxiQuYuRef.value
+    const ban = document.querySelector('.emoji-mianban') as HTMLElement | null
+    if (!qu || !ban) return
+    const xinGao = ban.offsetHeight
+    const cha = xinGao - shangYiEmojiGaoDu
+    if (cha !== 0) qu.scrollTop += cha
+    shangYiEmojiGaoDu = xinGao
+  })
+  emojiMianBanGuanChaQi.observe(mianBan)
+}
+
 function qieHuanEmojiMianBan() {
   emojiMianBanZhanKai.value = !emojiMianBanZhanKai.value
 }
@@ -1179,17 +1201,35 @@ function tingZhiShiJianGengXinQi() {
   }
 }
 
+let yuZaiEmojiLinShi: HTMLElement | null = null
 function yuZaiEmojiZiXing() {
   if (typeof document === 'undefined') return
   const yuanSheng = document.querySelector('.emoji-mianban')
   if (!yuanSheng) return
   const linShi = yuanSheng.cloneNode(true) as HTMLElement
+  // 关键修正：用 opacity:0（而非 visibility:hidden）强制浏览器真正「绘制」该克隆层，
+  // 从而把约 170 个 emoji 系统字形一次性 rasterize 并缓存；置于视口内、最底层、禁命中，
+  // 既触发合成绘制又不可见、不挡交互。原 visibility:hidden 方案浏览器会跳过字形绘制，
+  // 导致首次真实展开（v-show display:none→block）时仍需当场 rasterize → 明显的「第一次点开卡顿」。
   linShi.style.cssText =
-    'position:absolute;left:-9999px;top:-9999px;visibility:hidden;z-index:-1;display:grid;'
+    'position:fixed;inset:0;opacity:0;pointer-events:none;z-index:-1;display:grid;overflow:hidden;'
   document.body.appendChild(linShi)
+  yuZaiEmojiLinShi = linShi
+  // 强制同步布局
   void linShi.offsetWidth
   void linShi.getBoundingClientRect()
-  if (linShi.parentNode) linShi.parentNode.removeChild(linShi)
+  // 再强制两帧真实绘制（opacity:0 合成层需提交到合成线程才算 rasterize 完成），随后移除
+  const qingLi = () => {
+    if (yuZaiEmojiLinShi && yuZaiEmojiLinShi.parentNode) {
+      yuZaiEmojiLinShi.parentNode.removeChild(yuZaiEmojiLinShi)
+    }
+    yuZaiEmojiLinShi = null
+  }
+  if (typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(() => requestAnimationFrame(qingLi))
+  } else {
+    qingLi()
+  }
 }
 
 onMounted(async () => {
@@ -1203,15 +1243,20 @@ onMounted(async () => {
   document.addEventListener('click', chuLiWenDangDianJi, true)
   document.addEventListener('visibilitychange', chuLiYeMianKeJianXing)
   nextTick(() => ceLiangShuRuKuang())
-  // 进入聊天页即离屏预渲染全部 emoji 字形与布局，强制浏览器一次性完成 emoji
-  // 字体整形与布局计算；这样首次点开表情面板（v-show display:none→block）不再卡顿。
-  // 该预加载不触发任何 JS 滚动，与 emoji 展开的「当前位置顶起」纯 CSS 语义无关。
+  // 进入聊天页即把表情面板离屏克隆并以 opacity:0 真实绘制，强制浏览器一次性
+  // rasterize 全部 emoji 系统字形并缓存；这样首次点开表情面板（v-show display:none→block）不再卡顿。
+  // 该预加载不触发任何滚动；表情面板展开时对聊天区的「顶起」滚动补偿由
+  // ResizeObserver（chuShiHuaEmojiGunDongBuChang）单独处理，与字形预渲染无关。
   yuZaiEmojiZiXing()
+  chuShiHuaEmojiGunDongBuChang()
   await chuShiHuaLiaoTian()
   yiTongGuoMountedChuShiHua = true
 })
 
 onActivated(async () => {
+  // 重新进入时面板必然处于闭合态，把滚动补偿基线归零，避免 keep-alive 复用时
+  // ResizeObserver 首帧以旧高度（200）误判为「收起」而把聊天区向下甩。
+  shangYiEmojiGaoDu = 0
   qiDongShiJianGengXinQi()
   nextTick(() => ceLiangShuRuKuang())
   if (!yiTongGuoMountedChuShiHua) {
@@ -1226,6 +1271,14 @@ onDeactivated(() => {
 })
 
 onBeforeUnmount(() => {
+  if (emojiMianBanGuanChaQi) {
+    emojiMianBanGuanChaQi.disconnect()
+    emojiMianBanGuanChaQi = null
+  }
+  if (yuZaiEmojiLinShi && yuZaiEmojiLinShi.parentNode) {
+    yuZaiEmojiLinShi.parentNode.removeChild(yuZaiEmojiLinShi)
+    yuZaiEmojiLinShi = null
+  }
   window.removeEventListener('junshi-zhankai', junShiZhanKaiJianTingQi)
   window.removeEventListener('resize', chongSuanShuRuKuangGaoDu)
   document.removeEventListener('click', chuLiWenDangDianJi, true)

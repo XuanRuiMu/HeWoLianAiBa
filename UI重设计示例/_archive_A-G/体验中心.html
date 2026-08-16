@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>和我恋爱吧 · 体验中心（新版）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f4f2ee;
+    --card: #ffffff;
+    --ink: #1f1c18;
+    --muted: #6e6a62;
+    --accent: #c45c3e;
+    --line: rgba(0,0,0,.08);
+    --shadow: 0 8px 30px rgba(0,0,0,.08);
+    --space-sm: 12px;
+    --space-md: 20px;
+    --space-lg: 32px;
+    --space-xl: 56px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+  }
+  .header {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-xl) var(--space-md) var(--space-lg);
+  }
+  .header h1 {
+    font-family: "Noto Serif SC", serif;
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 700;
+    letter-spacing: 1px;
+    line-height: 1.2;
+  }
+  .header p {
+    margin-top: var(--space-sm);
+    color: var(--muted);
+    font-size: 16px;
+    max-width: 720px;
+  }
+  .notice {
+    margin-top: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: #fff9e6;
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    font-size: 14px;
+    color: #5a4a2a;
+    max-width: 720px;
+  }
+  .grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-md) var(--space-xl);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+    gap: var(--space-lg);
+  }
+  .card {
+    background: var(--card);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-head {
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--line);
+  }
+  .card-head .title {
+    font-family: "Noto Serif SC", serif;
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .card-head .desc {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .device-toggle {
+    display: flex;
+    gap: 8px;
+    margin-top: var(--space-sm);
+  }
+  .device-toggle button {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all .15s ease;
+  }
+  .device-toggle button.active {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+  }
+  .device-toggle button:hover:not(.active) { border-color: #bbb; color: var(--ink); }
+  .preview-wrap {
+    flex: 1;
+    background: #e8e6e2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--space-md);
+    min-height: 320px;
+    overflow: hidden;
+  }
+  .frame {
+    background: #000;
+    border-radius: 36px;
+    padding: 10px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.18);
+    transition: all .35s ease;
+  }
+  .frame.desktop {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .frame iframe {
+    width: 370px;
+    height: 680px;
+    border: none;
+    border-radius: 26px;
+    display: block;
+    background: #fff;
+  }
+  .frame.desktop iframe {
+    width: 100%;
+    height: 520px;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.12);
+  }
+  .card-foot {
+    padding: var(--space-md);
+    border-top: 1px solid var(--line);
+    display: flex;
+    gap: var(--space-sm);
+  }
+  .card-foot a, .card-foot button {
+    flex: 1;
+    text-align: center;
+    padding: 10px 0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all .15s ease;
+  }
+  .card-foot a.primary {
+    background: var(--ink);
+    color: #fff;
+  }
+  .card-foot a.primary:hover { background: #000; }
+  .card-foot button.secondary {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+  }
+  .card-foot button.secondary:hover { border-color: #bbb; }
+  .footer {
+    text-align: center;
+    padding: var(--space-lg) var(--space-md);
+    color: var(--muted);
+    font-size: 13px;
+    border-top: 1px solid var(--line);
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>和我恋爱吧 · 体验中心</h1>
+    <p>这次重做从根上改了问题：7 套主页方案每套都使用真实吴昊阳图，且布局结构真正不同。点进任何方案都能交互；用卡片上的 📱/🖥 切换看两种设备排版。</p>
+    <div class="notice">
+      当前先交付主页 7 套方案。登录/资料向导/协议将在你确认主页方向后，按同样标准重做。
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="footer">
+    新版体验中心 · 每个预览都是真实网页
+  </div>
+
+  <script>
+    const schemes = [
+      {
+        key: 'A',
+        name: '微信原生拟态',
+        desc: '像打开真的微信：联系人卡片 + 功能列表行。PC 端变成桌面微信分栏。',
+        file: '主页-方案A-微信原生.html',
+      },
+      {
+        key: 'B',
+        name: '电影感视觉小说',
+        desc: '吴昊阳铺满电影海报，暖色戏剧光 + 胶片颗粒，底部上滑模式入口。',
+        file: '主页-方案B-电影感.html',
+      },
+      {
+        key: 'C',
+        name: 'Gen-Z 俏皮纸感',
+        desc: '手作纸纹 + 贴纸式按钮；PC 端变成散落桌面的拼贴剪贴簿。',
+        file: '主页-方案C-俏皮纸感.html',
+      },
+      {
+        key: 'D',
+        name: '杂志封面式',
+        desc: '封面人物 + 章节编号；PC 端变成杂志跨页，左文右图。',
+        file: '主页-方案D-杂志封面.html',
+      },
+      {
+        key: 'E',
+        name: 'Bento 仪表盘',
+        desc: '把主页变成恋爱中控：Hero 图块 + 模式磁贴 + 数据小卡。',
+        file: '主页-方案E-Bento仪表盘.html',
+      },
+      {
+        key: 'F',
+        name: '聊天会话隐喻',
+        desc: '主页就是聊天界面：吴昊阳发消息问你选哪种模式。',
+        file: '主页-方案F-聊天会话.html',
+      },
+      {
+        key: 'G',
+        name: '草地憩息（参考 Jordan Breton）',
+        desc: '自然草地背景（天空/远山/草地动画），吴昊阳趴在草地上，选项浮在草地上。',
+        file: '主页-方案G-草地.html',
+      },
+    ];
+
+    const grid = document.getElementById('grid');
+
+    schemes.forEach((s, i) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="card-head">
+          <div class="title">方案 ${s.key} · ${s.name}</div>
+          <div class="desc">${s.desc}</div>
+          <div class="device-toggle">
+            <button class="active" data-device="phone" data-idx="${i}">📱 手机端</button>
+            <button data-device="desktop" data-idx="${i}">🖥 电脑端</button>
+          </div>
+        </div>
+        <div class="preview-wrap">
+          <div class="frame" id="frame-${i}">
+            <iframe src="${s.file}" loading="lazy" title="方案${s.key}预览"></iframe>
+          </div>
+        </div>
+        <div class="card-foot">
+          <a class="primary" href="${s.file}" target="_blank">▶ 进入完整体验</a>
+          <button class="secondary" onclick="reloadFrame(${i})">刷新预览</button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+
+    document.querySelectorAll('.device-toggle button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = btn.dataset.idx;
+        const device = btn.dataset.device;
+        const frame = document.getElementById(`frame-${idx}`);
+        const buttons = btn.parentElement.querySelectorAll('button');
+        buttons.forEach(b => b.classList.toggle('active', b === btn));
+        frame.classList.toggle('desktop', device === 'desktop');
+      });
+    });
+
+    function reloadFrame(idx) {
+      const frame = document.querySelector(`#frame-${idx} iframe`);
+      frame.src = frame.src;
+    }
+  </script>
+</body>
+</html>

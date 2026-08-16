@@ -226,6 +226,7 @@ watch(
   flex-direction: column;
   position: relative;
   z-index: 1;
+  background: transparent;
 }
 
 .gonggong-biaoti-qu {

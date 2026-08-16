@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>主页方案B · 电影感视觉小说</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #1a120e;
+    --cream: #fff8f0;
+    --amber: #ffb38a;
+    --rose: #ff6b8a;
+    --space-xs: 8px;
+    --space-sm: 14px;
+    --space-md: 22px;
+    --space-lg: 38px;
+    --space-xl: 64px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Noto Sans SC", sans-serif;
+    background: var(--ink);
+    color: var(--cream);
+  }
+  .app {
+    container-type: inline-size;
+    width: 100%;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  /* Shared background & grain */
+  .poster {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(120% 80% at 70% 15%, rgba(255,180,120,.45), transparent 60%),
+      radial-gradient(120% 90% at 20% 90%, rgba(255,90,140,.35), transparent 55%),
+      linear-gradient(160deg,#3a2418,#1a0f0a 70%);
+    z-index: 0;
+  }
+  .grain {
+    position: absolute; inset: 0; opacity: .12;
+    background-image: radial-gradient(rgba(255,255,255,.5) .5px, transparent .5px);
+    background-size: 3px 3px;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .hero-image {
+    position: absolute;
+    right: -10%;
+    bottom: 0;
+    height: 88vh;
+    width: auto;
+    max-width: 95vw;
+    object-fit: contain;
+    object-position: right bottom;
+    z-index: 2;
+    mask-image: linear-gradient(to top, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
+    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
+    filter: drop-shadow(0 20px 60px rgba(0,0,0,.5));
+  }
+
+  /* Mobile: stacked cinematic */
+  .content {
+    position: relative;
+    z-index: 3;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: var(--space-md);
+  }
+  .top-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .kicker {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--amber);
+    text-transform: uppercase;
+  }
+  .time {
+    font-size: 13px;
+    color: rgba(255,255,255,.6);
+    font-weight: 300;
+  }
+  .headline {
+    margin-top: auto;
+    padding-top: 50vh;
+  }
+  .title {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 900;
+    font-size: clamp(40px, 11vw, 72px);
+    line-height: 1.05;
+    letter-spacing: 2px;
+    text-shadow: 0 4px 30px rgba(0,0,0,.6);
+  }
+  .title em { font-style: normal; color: var(--amber); }
+  .subtitle {
+    margin-top: var(--space-sm);
+    font-size: 14px;
+    font-weight: 300;
+    color: rgba(255,255,255,.8);
+    letter-spacing: 1px;
+  }
+  .modes {
+    margin-top: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+  .mode {
+    display: flex; align-items: center; gap: var(--space-sm);
+    padding: var(--space-md);
+    border-radius: 18px;
+    background: rgba(28,20,14,.9);
+    border: 1px solid rgba(255,255,255,.12);
+    cursor: pointer;
+    transition: transform .25s ease, background .25s ease;
+  }
+  .mode:hover { transform: translateY(-3px); background: rgba(30,22,16,.7); }
+  .mode.soon { opacity: .55; cursor: not-allowed; }
+  .mode.soon:hover { transform: none; background: rgba(20,14,10,.55); }
+  .mode .ic { font-size: 22px; }
+  .mode .tt { font-weight: 500; font-size: 16px; }
+  .mode .ds { font-size: 12px; color: rgba(255,255,255,.6); margin-top: 2px; }
+  .mode .r { margin-left: auto; color: rgba(255,255,255,.5); font-size: 18px; }
+  .mode .r span { font-size: 11px; background: rgba(255,255,255,.15); padding: 3px 8px; border-radius: 10px; }
+  .credit {
+    margin-top: var(--space-md);
+    font-size: 10px;
+    color: rgba(255,255,255,.25);
+    text-align: right;
+  }
+
+  /* Desktop: wide cinematic layout */
+  @container (min-width: 760px) {
+    .content {
+      flex-direction: row;
+      align-items: flex-end;
+      padding: var(--space-xl);
+      gap: var(--space-xl);
+    }
+    .hero-image {
+      right: 0;
+      height: 95vh;
+      max-width: 62vw;
+      mask-image: linear-gradient(to left, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+      -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%);
+    }
+    .top-meta { position: absolute; top: var(--space-xl); left: var(--space-xl); right: var(--space-xl); }
+    .headline {
+      margin-top: 0;
+      padding-top: 0;
+      max-width: 420px;
+      padding-bottom: var(--space-xl);
+    }
+    .title { font-size: clamp(56px, 6vw, 96px); }
+    .modes { max-width: 420px; }
+    .mode { padding: var(--space-md) var(--space-lg); }
+    .credit { text-align: left; }
+  }
+
+  .back {
+    position: absolute;
+    top: var(--space-md); left: var(--space-md);
+    z-index: 10;
+    font-size: 13px;
+    color: rgba(255,255,255,.55);
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: color .2s ease;
+  }
+  .back:hover { color: var(--cream); }
+  @container (min-width: 760px) {
+    .back { top: var(--space-xl); left: var(--space-xl); }
+  }
+</style>
+</head>
+<body>
+  <a class="back" href="体验中心.html">← 返回体验中心</a>
+  <div class="app">
+    <div class="poster"></div>
+    <div class="grain"></div>
+    <img class="hero-image" src="吴昊阳终稿静态图.png" alt="吴昊阳" />
+
+    <div class="content">
+      <div class="top-meta">
+        <span class="kicker">和我恋爱吧 · 序章</span>
+        <span class="time">9:41</span>
+      </div>
+
+      <div class="headline">
+        <h1 class="title">今夜，<br>和<em>TA</em>说第一句</h1>
+        <p class="subtitle">欢迎回来 —— 有人正在屏幕那头等你</p>
+
+        <div class="modes">
+          <div class="mode" onclick="alert('进入普通模式')">
+            <span class="ic">♡</span>
+            <div>
+              <div class="tt">普通模式</div>
+              <div class="ds">自定义对象 · 适合新手</div>
+            </div>
+            <span class="r">›</span>
+          </div>
+          <div class="mode soon">
+            <span class="ic">⚡</span>
+            <div>
+              <div class="tt">挑战模式</div>
+              <div class="ds">系统随机 · 分数排行</div>
+            </div>
+            <span class="r"><span>即将推出</span></span>
+          </div>
+        </div>
+        <div class="credit">电影感视觉小说 · 把每次登录变成开场</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

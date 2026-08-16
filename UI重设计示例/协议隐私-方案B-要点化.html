@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>协议/隐私方案B · 要点化</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:rgba(0,0,0,.5); display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; font-family:"Noto Sans SC",sans-serif; }
+  .modal { width:390px; height:780px; background:#fff; border-radius:24px; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 30px 80px rgba(0,0,0,.5); }
+  .head { display:flex; align-items:center; justify-content:space-between; padding:18px 22px 10px; }
+  .head h2 { font-size:19px; font-weight:700; color:#1c1c22; }
+  .x { width:30px; height:30px; border-radius:9px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#777; font-size:14px; }
+  .body { flex:1; overflow-y:auto; padding:8px 18px 14px; }
+  .summary { background:#fff6f0; border:1.5px solid #ffd9c2; border-radius:16px; padding:14px 16px; margin-bottom:14px; }
+  .summary .t { font-size:13px; font-weight:700; color:#e0552e; margin-bottom:8px; }
+  .summary ul { margin:0; padding-left:18px; }
+  .summary li { font-size:13px; color:#5a4636; line-height:1.7; }
+  .item { border:1px solid #eee; border-radius:14px; margin-bottom:10px; overflow:hidden; }
+  .item .hd { display:flex; align-items:center; gap:10px; padding:13px 14px; cursor:pointer; }
+  .item .ic { width:30px; height:30px; border-radius:9px; background:#f4f0ec; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .item .tt { font-size:14px; font-weight:600; color:#2a2a2a; flex:1; }
+  .item .ar { color:#bbb; transition:transform .2s; }
+  .item.open .ar { transform:rotate(90deg); }
+  .item .dt { max-height:0; overflow:hidden; transition:max-height .25s ease; font-size:13px; color:#777; line-height:1.7; padding:0 14px; }
+  .item.open .dt { max-height:120px; padding:0 14px 14px; }
+  .foot { padding:14px 22px 18px; border-top:1px solid #f0f0f0; }
+  .btn { width:100%; padding:13px; border:none; border-radius:12px; background:#1c1c22; color:#fff; font-size:15px; font-weight:600; }
+  .note { text-align:center; font-size:10px; color:#bbb; margin-top:8px; }
+</style>
+</head>
+<body>
+  <div class="modal">
+    <div class="head"><h2>隐私政策</h2><div class="x">✕</div></div>
+    <div class="body">
+      <div class="summary">
+        <div class="t">只需了解这 3 点</div>
+        <ul>
+          <li>我们仅用手机号登录，不卖你的信息</li>
+          <li>聊天内容用于驱动 AI 互动，可随时删除</li>
+          <li>角色均为 AI 虚拟，请勿当真</li>
+        </ul>
+      </div>
+      <div class="item open"><div class="hd"><div class="ic">📱</div><div class="tt">我们收集什么</div><div class="ar">›</div></div><div class="dt">手机号（登录用）、聊天记录（驱动 AI 对象）。不收集通讯录、相册等无关权限。</div></div>
+      <div class="item"><div class="hd"><div class="ic">🔒</div><div class="tt">如何保护</div><div class="ar">›</div></div><div class="dt">数据加密存储，传输全程 HTTPS，密钥不落库。</div></div>
+      <div class="item"><div class="hd"><div class="ic">🗑</div><div class="tt">你的权利</div><div class="ar">›</div></div><div class="dt">可随时导出或删除个人数据，注销后 30 天内彻底清除。</div></div>
+      <div class="item"><div class="hd"><div class="ic">⚠️</div><div class="tt">风险提示</div><div class="ar">›</div></div><div class="dt">虚拟恋爱模拟，理性消费，谨防线下诈骗。</div></div>
+    </div>
+    <div class="foot"><button class="btn">我已阅读并同意</button><div class="note">要点化 · 摘要 + 可展开，降低认知负载</div></div>
+  </div>
+</body>
+</html>

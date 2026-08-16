@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>资料向导方案A · 对话式引导</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:#1b1b22; display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px; font-family:"Noto Sans SC",sans-serif; }
+  .phone { width:390px; height:844px; border-radius:44px; overflow:hidden; position:relative; box-shadow:0 30px 80px rgba(0,0,0,.55); border:10px solid #0c0c0c; background:#f3f0ea; }
+  .status { display:flex; justify-content:space-between; padding:14px 26px 6px; font-size:13px; color:#333; font-weight:600; }
+  .bar { display:flex; align-items:center; gap:6px; padding:8px 20px 12px; }
+  .bar .seg { flex:1; height:4px; border-radius:3px; background:#ddd; }
+  .bar .seg.done { background:#ff7a9c; }
+  .bar .lab { font-size:11px; color:#999; margin-left:6px; }
+  .chat { height:calc(100% - 170px); overflow:hidden; padding:8px 16px; }
+  .who { display:flex; gap:10px; align-items:flex-end; margin-bottom:14px; }
+  .av { width:36px; height:36px; border-radius:12px; background:linear-gradient(160deg,#ffd9a0,#ff9eb5); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+  .bub { background:#fff; border-radius:4px 16px 16px 16px; padding:12px 14px; font-size:15px; color:#222; max-width:74%; box-shadow:0 2px 8px rgba(0,0,0,.05); line-height:1.5; }
+  .q { font-size:13px; color:#999; margin:2px 0 10px 46px; }
+  .ans { display:flex; flex-direction:column; gap:10px; align-items:flex-end; margin-bottom:18px; }
+  .ans .opt { background:#ff7a9c; color:#fff; padding:12px 18px; border-radius:16px 16px 4px 16px; font-size:15px; font-weight:500; box-shadow:0 4px 12px rgba(255,122,156,.3); }
+  .ans .opt.ghost { background:#fff; color:#555; box-shadow:0 2px 8px rgba(0,0,0,.05); border:1px solid #eee; }
+  .peek { margin:4px 16px; background:#fff; border-radius:14px; padding:12px 14px; box-shadow:0 2px 8px rgba(0,0,0,.05); }
+  .peek .ph { font-size:12px; color:#999; }
+  .peek .pgrid { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; opacity:.5; }
+  .peek .pgrid span { font-size:11px; background:#f0f0f0; padding:3px 7px; border-radius:8px; }
+  .next { position:absolute; left:16px; right:16px; bottom:26px; padding:15px; border:none; border-radius:16px; background:#ff7a9c; color:#fff; font-size:16px; font-weight:700; box-shadow:0 8px 22px rgba(255,122,156,.35); }
+  .next:disabled { background:#e0d8cf; color:#aaa; box-shadow:none; }
+  .foot { position:absolute; bottom:6px; left:0; right:0; text-align:center; font-size:10px; color:#aaa; }
+</style>
+</head>
+<body>
+  <div class="phone">
+    <div class="status"><span>9:41</span><span>●●● 5G ▮</span></div>
+    <div class="bar"><div class="seg done"></div><div class="seg"></div><div class="seg"></div><span class="lab">第 1 / 3 步</span></div>
+    <div class="chat">
+      <div class="who"><div class="av">昊</div><div class="bub">嗨，先认识下你～ 你是男生还是女生呀？😊</div></div>
+      <div class="ans"><div class="opt">我是男生</div><div class="opt ghost">我是女生</div></div>
+      <div class="peek">
+        <div class="ph">接下来 TA 会接着问（预览）：</div>
+        <div class="pgrid"><span>对象性别？</span><span>MBTI 16 型</span><span>随机</span><span>渣男/渣女变体 ✦</span></div>
+      </div>
+    </div>
+    <button class="next">选好了，下一步 →</button>
+    <div class="foot">对话式引导 · 像 TA 真的在问你，而不是填表</div>
+  </div>
+</body>
+</html>
