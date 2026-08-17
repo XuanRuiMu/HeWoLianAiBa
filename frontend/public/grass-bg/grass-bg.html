@@ -489,44 +489,48 @@
         })();
     </script>
     <script>
-        /* 吴昊阳×草地融合系统 v3 —— 相机相对尺寸校准 + 草场落位 + 扒拉草丛交互
-           根因（v1/v2 同源缺陷）：v1 用「屏幕 NDC→地面射线」定位，语义盲目；
-           v2 改为世界空间手绘落位，但【尺寸仅按"旧值×0.62"相对猜测】，从未对
-           实际相机(fov60, 主角距相机≈4.6)做投影校准 → 主角屏占比高达 0.715(71%)，
-           即用户感知的"拉大2倍+趴在河流中部"；且落点距相机 4.6 位于全部草丛
-           (实例环绕原点, dist≥7.9) 之前，无任何前景草遮挡 → 贴图感。
-           v3 根因修复：① 尺寸由相机投影反推（目标屏宽≈0.40 → kuan≈1.45，
-           gao=kuan/1.502 严格保持原图 1537:1023 比例，禁止拉伸）；② 落点保留
-           草场、略左移使投影落入"中下部偏右"；③ 前景"扒拉"草层加宽加密覆盖
-           主角下半身，静息半隐于草、光标靠近分拨露出。复用父页已注入的
-           engine.pointer.normalizedPosition，不改动 bundle。 */
+        /* 吴昊阳×草地融合系统 v5 —— 真实 3D 场景融入（烘焙体积光影 + 接地阴影 + 深度遮挡）
+           根因（v3/v4 仍非真正融入）：v3 仅做尺寸/位置校准却用 MeshBasicMaterial，肉眼判为"贴纸"。
+           v4 试图改用受光照材质（MeshStandardMaterial），但实测本引擎的 Three.js 构建【仅导出
+           MeshBasicMaterial】——无 Standard/Lambert/Phong，且 renderer.shadowMap 处于关闭状态，
+           故"用受光照材质把 2D 角色变成受光 3D 网格"在本环境根本不可行（已用探针枚举确认）。
+           v5 根因修复（务实且可验证）：单张 2D 角色照无法直接变成带背面的水密 3D 网格，业界把 2D
+           角色融入 3D 世界的标准做法正是——① 让他成为【场景空间的真实 billboard】（真实世界坐标、
+           参与深度测试、被前景草丛几何遮挡、随相机视差移动）；② 在他的纹理上【烘焙体积光影】
+           （方向光压暗暗部 + 顶部天光反弹 + 底部接地 AO + 受光侧 rim），使其在 MeshBasicMaterial
+           下也呈现"受光体积感"而非平面贴纸；③ 叠加【接地接触阴影】让他"坐"在草地上；④ 按用户
+           对比图蓝框落位于"中下部偏右"草丛、严格保持 1537:1023 比例、禁止拉伸。
+           如未来要真正水密 3D 角色，需另提供吴昊阳 GLB 模型或用 AI 深度重建（需外部工具/网络），
+           届时再替换本 billboard 方案。复用父页已注入的 engine.pointer.normalizedPosition，不改动 bundle。 */
         (function () {
             var TU_PIAN = '/图片/主页元素/吴昊阳终稿静态图.png';
 
             // ===== 配置（全部世界空间手绘值，确定性、可复核） =====
             var PEI_ZHI = {
                 // 世界落位：相机默认 ~(5.75,1.34,5.27) 看向原点；草场在原点四周地面(y≈0)。
-                // 落点校准：实测 2.6 宽→投影 NDC 宽 0.715；目标屏宽≈0.40 → 缩放 0.559；
-                // 故 kuan≈1.45，落点略左移(x 4.0→3.5)使投影中心落入"中下部偏右"(NDC.x≈0.30)。
-                weiZhi: { x: 3.5, y: 0.14, z: 1.93 },
-                kuan: 1.45,                                // 宽（世界单位；相机投影反推，屏宽≈0.40，自然趴姿）
-                gao: 0.965,                                // 高（=kuan/1.502，严格保持原图 1537:1023 比例，禁止拉伸）
-                qingJiao: 18 * Math.PI / 180,              // 远端抬角：自然躺姿
+                // 用户对比图：红框在画面偏上岩石/暗部，蓝框在"中下部偏右"草丛。
+                // 从红框移向蓝框 = 向相机靠近（屏幕下移）+ 向右。相机近端地面偏右下，
+                // 故 x 明显增大（向右+向下），z 适度增大（向下）。新位置距相机约 3.3，
+                // 为保持屏宽自然，kuan/gao 按距离比 3.3/4.2≈0.78 同比缩小。
+                weiZhi: { x: 4.4, y: 0.12, z: 2.5 },
+                kuan: 1.10,                                // 宽（世界单位；新距离下屏宽≈0.35，自然趴姿）
+                gao: 0.732,                                // 高（=kuan/1.502，严格保持原图 1537:1023 比例，禁止拉伸）
+                qingJiao: 16 * Math.PI / 180,              // 远端抬角：更贴近地面躺姿
                 yeJianYanSe: '#9c8ecf',                    // 夜间角色表面色
-                jiaoYingTouMingDu: 0.32,                   // 接触阴影强度
+                jiaoYingTouMingDu: 0.18,                   // 接触阴影强度（有真阴影时进一步弱化）
                 shiChaBeiShu: 3,                           // 视差放大倍数（仅视差类一处 lerp）
-                huXiFuDu: 0.022,                           // 呼吸幅度（克制）
+                huXiFuDu: 0.020,                           // 呼吸幅度（克制）
                 huXiZhouQi: 4.6,                           // 呼吸周期（秒）
-                rongCengKuan: 1.3,                         // 交融层宽倍数（草叶根部扎进真实草）
-                rongCengGao: 1.55,                         // 交融层高倍数（加高，使角色下缘没入草丛）
-                rongCengQianYi: 0.03,
+                rongCengKuan: 1.45,                         // 交融层宽倍数（角色更小，相对加大以扎进真实草）
+                rongCengGao: 1.75,                         // 交融层高倍数（加高，使角色下缘更没入草丛）
+                rongCengQianYi: 0.04,
                 fengBaiFuDu: 0.06,
                 // —— 扒拉草丛交互 ——
-                boLaCengKuan: 1.9,                         // 交互层宽倍数（覆盖角色周围草，加宽）
-                boLaCengGao: 1.85,                         // 交互层高倍数（加高，盖住主角下半身）
+                boLaCengKuan: 2.1,                         // 交互层宽倍数（覆盖角色周围草，加宽）
+                boLaCengGao: 2.05,                         // 交互层高倍数（加高，盖住主角下半身）
                 boLaBanJing: 0.38,                         // 光标影响半径（NDC，约屏幕38%）
                 boLiQiangDu: 0.9,                          // 分拨强度
-                caoYeShu: 72                              // 交互层草叶数（加密，草丛更密更真）
+                caoYeShu: 80                              // 交互层草叶数（加密，草丛更密更真）
             };
 
             // 贴图预取（与引擎 bundle 并行下载，建造时零等待）
@@ -783,21 +787,65 @@
                 if (boLaWenLi) boLaWenLi.needsUpdate = true;
             }
 
+            // 在 2D 角色图上烘焙体积光影：所有叠加层用 source-atop 约束在角色不透明剪影内，
+            // 不污染透明背景；半透明冷暖色做 alpha lerp 提/压，模拟方向光、天光、接地 AO、受光 rim。
+            // 目的：让仅支持 MeshBasicMaterial 的引擎也能渲染出"受光的体积感"而非平面贴纸。
+            function huiZhiZhuJueWenLi(img) {
+                var W = img.naturalWidth || img.width || 1024;
+                var H = img.naturalHeight || img.height || 682;
+                var cv = document.createElement('canvas');
+                cv.width = W; cv.height = H;
+                var c = cv.getContext('2d');
+                c.clearRect(0, 0, W, H);
+                c.drawImage(img, 0, 0, W, H);
+                c.globalCompositeOperation = 'source-atop';
+                // (1) 暗部：右下入影（半透明冷暗色叠暗，模拟太阳在左上方的方向光）
+                var sh = c.createLinearGradient(0, 0, W * 0.92, H);
+                sh.addColorStop(0, 'rgba(58,60,82,0)');
+                sh.addColorStop(0.55, 'rgba(58,60,82,0.12)');
+                sh.addColorStop(1, 'rgba(38,40,58,0.52)');
+                c.fillStyle = sh; c.fillRect(0, 0, W, H);
+                // (2) 顶部天光反弹（暖白微提亮上缘，模拟天空散射）
+                var sky = c.createLinearGradient(0, 0, 0, H * 0.42);
+                sky.addColorStop(0, 'rgba(255,248,228,0.18)');
+                sky.addColorStop(1, 'rgba(255,248,228,0)');
+                c.fillStyle = sky; c.fillRect(0, 0, W, H);
+                // (3) 接地 AO（底部压暗，强调身体贴地）
+                var ao = c.createLinearGradient(0, H * 0.5, 0, H);
+                ao.addColorStop(0, 'rgba(14,13,8,0)');
+                ao.addColorStop(1, 'rgba(14,13,8,0.55)');
+                c.fillStyle = ao; c.fillRect(0, 0, W, H);
+                // (4) 受光侧 rim（左/上暖边，强化体积与边缘分离）
+                var rim = c.createLinearGradient(0, 0, W, H * 0.4);
+                rim.addColorStop(0, 'rgba(255,236,200,0.20)');
+                rim.addColorStop(0.3, 'rgba(255,236,200,0)');
+                c.fillStyle = rim; c.fillRect(0, 0, W, H);
+                c.globalCompositeOperation = 'source-over';
+                return cv;
+            }
+
             function jianZao(T, sc) {
-                var jiHe = new T.PlaneGeometry(PEI_ZHI.kuan, PEI_ZHI.gao);
-                caiZhi = new T.MeshBasicMaterial({
-                    transparent: true, alphaTest: 0.28, side: 2, depthWrite: true, opacity: 0
-                });
-                var wenLi = new T.CanvasTexture(tuPianJiuXu);
+                var jiHe = new T.PlaneGeometry(PEI_ZHI.kuan, PEI_ZHI.gao, 1, 1);
+                // 主角纹理：在 2D 角色图上【烘焙体积光影】，使其在被引擎仅支持的 MeshBasicMaterial
+                // 渲染时仍呈现"受光体积感"而非平面贴纸（详因见文件头 v5 注释）。
+                var wenLi = new T.CanvasTexture(huiZhiZhuJueWenLi(tuPianJiuXu));
                 wenLi.colorSpace = 'srgb';
                 wenLi.anisotropy = 4;
-                caiZhi.map = wenLi;
+                caiZhi = new T.MeshBasicMaterial({
+                    map: wenLi,
+                    transparent: true,
+                    alphaTest: 0.28,
+                    side: T.DoubleSide,
+                    depthWrite: true,
+                    opacity: 0,
+                    color: 0xffffff
+                });
                 caiZhi.needsUpdate = true;
                 zhuJueMian = new T.Mesh(jiHe, caiZhi);
                 zhuJueMian.name = 'WuHaoYang';
                 zhuJueMian.renderOrder = 2;
                 sc.add(zhuJueMian);
-                // 草叶交融层（静态，覆盖角色下缘）
+                // 草叶交融层（静态，覆盖角色下缘，作为 3D decal 存在）
                 caoJunXing = zhaoCaoJunXing();
                 var caoYeWenLi = new T.CanvasTexture(huiZhiCaoYe());
                 caoYeWenLi.colorSpace = 'srgb';
@@ -813,23 +861,27 @@
                 rongCengMian.name = 'WuHaoYangGrass';
                 rongCengMian.renderOrder = 3;
                 sc.add(rongCengMian);
-                // 接触阴影
-                var hb = document.createElement('canvas');
-                hb.width = 256; hb.height = 192;
-                var bj = hb.getContext('2d');
-                var jianBian = bj.createRadialGradient(128, 96, 8, 128, 96, 120);
-                jianBian.addColorStop(0, 'rgba(10,12,8,0.85)');
-                jianBian.addColorStop(0.55, 'rgba(10,12,8,0.35)');
-                jianBian.addColorStop(1, 'rgba(10,12,8,0)');
-                bj.fillStyle = jianBian;
-                bj.fillRect(0, 0, 256, 192);
-                var yingCaiZhi = new T.MeshBasicMaterial({
-                    map: new T.CanvasTexture(hb), transparent: true, opacity: PEI_ZHI.jiaoYingTouMingDu, depthWrite: false
-                });
-                yingZiMian = new T.Mesh(new T.PlaneGeometry(PEI_ZHI.kuan * 1.12, PEI_ZHI.gao * 1.18), yingCaiZhi);
-                yingZiMian.name = 'WuHaoYangShadow';
-                yingZiMian.renderOrder = 1;
-                sc.add(yingZiMian);
+                // 接触阴影：本引擎 shadowMap 关闭，始终用柔和接地阴影把角色"坐"进草地
+                var renderer = window.__experience && window.__experience.engine && window.__experience.engine.renderer;
+                var hasRealShadows = !!(renderer && renderer.shadowMap && renderer.shadowMap.enabled);
+                if (!hasRealShadows) {
+                    var hb = document.createElement('canvas');
+                    hb.width = 256; hb.height = 192;
+                    var bj = hb.getContext('2d');
+                    var jianBian = bj.createRadialGradient(128, 96, 8, 128, 96, 120);
+                    jianBian.addColorStop(0, 'rgba(10,12,8,0.85)');
+                    jianBian.addColorStop(0.55, 'rgba(10,12,8,0.35)');
+                    jianBian.addColorStop(1, 'rgba(10,12,8,0)');
+                    bj.fillStyle = jianBian;
+                    bj.fillRect(0, 0, 256, 192);
+                    var yingCaiZhi = new T.MeshBasicMaterial({
+                        map: new T.CanvasTexture(hb), transparent: true, opacity: PEI_ZHI.jiaoYingTouMingDu, depthWrite: false
+                    });
+                    yingZiMian = new T.Mesh(new T.PlaneGeometry(PEI_ZHI.kuan * 1.32, PEI_ZHI.gao * 1.28), yingCaiZhi);
+                    yingZiMian.name = 'WuHaoYangShadow';
+                    yingZiMian.renderOrder = 1;
+                    sc.add(yingZiMian);
+                }
                 // 扒拉草丛交互层
                 chuShiHuaBoLa();
                 baiFang();
