@@ -12,16 +12,20 @@
         </router-view>
       </div>
     </div>
-    <!-- 草地 3D 背景：全局单例，应用启动即后台静默加载（任何路由都加载），
-         仅在主页（zhuJieMian）可见。z-index:0 使其位于 body 渐变背景之上、
-         z-index:1 的应用内容之下；opacity:0 时仍在后台运行，主页时淡入。 -->
+    <!-- 草地 3D 背景：全局单例。加载完全独立于正常功能——应用启动并进入空闲后才
+         挂载 iframe（yingJiaZaiBeiJing），主线程先服务登录/主页等真实交互；
+         背景加载慢或失败都不影响任何页面功能。除聊天页外所有路由可见：
+         z-index:0 位于 body 渐变背景之上、z-index:1 的应用内容之下；
+         opacity:0 时仍在后台运行，进入非聊天路由即淡入。 -->
     <iframe
+      v-if="yingJiaZaiBeiJing"
       ref="grassIframe"
       src="/grass-bg/grass-bg.html"
       class="grass-bg-iframe"
-      :class="{ 'is-active': shiZhuYeMian }"
-      :aria-hidden="!shiZhuYeMian"
+      :class="{ 'is-active': shiYongCaoDiBeiJing }"
+      :aria-hidden="!shiYongCaoDiBeiJing"
       title="草地背景"
+      @error="yingJiaZaiBeiJing = false"
     ></iframe>
     <ShiShiRiZhi />
   </CuoWuBianJie>
@@ -38,32 +42,93 @@ import { chuFaCuoWuShangBao } from '@/utils/错误上报'
 
 const 用户仓库 = 使用用户仓库()
 const route = useRoute()
-// 仅主页（zhuJieMian）显示草地背景；其余路由（含登录页）后台静默加载但不可见
-const shiZhuYeMian = computed(() => route.name === 'zhuJieMian')
+// 除聊天页（liaoTian）外所有路由都显示草地背景；聊天页背景静默运行但不可见
+const shiYongCaoDiBeiJing = computed(() => route.name !== 'liaoTian')
 
-// 草地背景 iframe 引用 + 鼠标跟随视差的数据桥：
-// 背景 iframe 设了 pointer-events:none 且压在应用内容之下，收不到鼠标事件；
-// 故在此把归一化光标 postMessage 给 iframe，由其内部轻推相机（CameraGroup）视差。
-const grassIframe = ref<HTMLIFrameElement | null>(null)
-let cursorRaf = 0
-let pendingCursor: { x: number; y: number } | null = null
-function zhuanFaShuBiao(e: PointerEvent) {
-  pendingCursor = {
-    x: (e.clientX / window.innerWidth) * 2 - 1,
-    y: (e.clientY / window.innerHeight) * 2 - 1,
+// 背景独立加载：首帧渲染与可交互性优先，等主线程空闲再创建背景 iframe，
+// 避免 3D bundle 解析/WebGL 初始化与页面交互抢占主线程（此前"背景没加载好啥也点不了"）
+const yingJiaZaiBeiJing = ref(false)
+
+function qiDongBeiJingJiaZai() {
+  const kongXian = 'requestIdleCallback' in window ? window.requestIdleCallback : null
+  if (kongXian) {
+    kongXian(
+      () => {
+        yingJiaZaiBeiJing.value = true
+      },
+      { timeout: 1800 },
+    )
+  } else {
+    setTimeout(() => {
+      yingJiaZaiBeiJing.value = true
+    }, 800)
   }
-  if (!cursorRaf) {
-    cursorRaf = requestAnimationFrame(() => {
-      cursorRaf = 0
-      if (pendingCursor && grassIframe.value && grassIframe.value.contentWindow) {
-        try {
-          grassIframe.value.contentWindow.postMessage(
-            { type: 'grass-cursor', x: pendingCursor.x, y: pendingCursor.y },
-            '*'
-          )
-        } catch (err) {}
-      }
-    })
+}
+
+// 草地背景鼠标交互（忠实移植 jordan-breton.com 原机制）：
+// 背景 iframe 设了 pointer-events:none 且压在内容之下，收不到真实鼠标事件；
+// 而原网页的「视差晃动」与「草弯曲」都靠 iframe 内部 document/canvas 收到真实 pointermove 驱动。
+// 因此由父页（主帧）把鼠标坐标“注入”回 iframe 内部，完全复刻原网页的输入链路：
+//
+//   ① 视差晃动：原网页 engine.pointer（类 tL）监听 document 的 pointermove，
+//      写入 normalizedPosition；parallax（类 rU）每帧读取它并偏移 camera.group.position
+//      （注意：是“偏移位置”，不是旋转）。我们直接写 engine.pointer.normalizedPosition
+//      （与原监听产出的数据完全一致），由 bundle 自带的 parallax.update()（在其自身 rAF 中）
+//      完成相机偏移——绝不手动旋转/平移相机，那是对原机制的误读。
+//
+//   ② 草弯曲：raycaster/bender（类 HR）订阅 eventBus 的 "canvas" 通道，该通道的真实 DOM
+//      监听挂在 engine.canvas 上。我们向 engine.canvas 派发合成 pointermove，事件经 eventBus
+//      送达 raycaster，再触发草地 bender（类 Aw）弯曲——不手动改任何 uniform。
+//
+// 整套流程完全事件驱动（与原网页一致），不依赖父帧 rAF，由 iframe 自身的 rAF 做平滑 lerp。
+const grassIframe = ref<HTMLIFrameElement | null>(null)
+const lastClient = { x: 0, y: 0 }
+
+function onPointerMove(e: PointerEvent) {
+  lastClient.x = e.clientX
+  lastClient.y = e.clientY
+  injectGrassPointer()
+}
+
+// 把当前鼠标坐标注入 iframe 内部，复刻原网页的 document/canvas pointermove 输入
+function injectGrassPointer() {
+  if (!shiYongCaoDiBeiJing.value) return
+  const cw = grassIframe.value && grassIframe.value.contentWindow
+  if (!cw) return
+  const exp: any = (cw as any).__experience
+  if (!exp || !exp.engine) return
+  const engine = exp.engine
+
+  // ① 视差：直接喂 normalizedPosition（与原 tL 的 document 监听产出完全一致）
+  try {
+    const ptr = engine.pointer
+    if (ptr && ptr.normalizedPosition) {
+      const w = engine.sizes?.width || (cw as any).innerWidth || window.innerWidth
+      const h = engine.sizes?.height || (cw as any).innerHeight || window.innerHeight
+      ptr.normalizedPosition.x = (lastClient.x / w - 0.5) * 2
+      ptr.normalizedPosition.y = -(lastClient.y / h - 0.5) * 2
+    }
+  } catch (e1) {
+    // 注入失败仅影响背景视差，与正常功能无关（背景完全独立）
+  }
+
+  // ② 草弯曲：向 engine.canvas 派发合成 pointermove（routes to eventBus "canvas" → raycaster → 草 bender）
+  try {
+    const canvas = engine.canvas
+    if (canvas && typeof canvas.dispatchEvent === 'function') {
+      const ev = new (cw as any).PointerEvent('pointermove', {
+        clientX: lastClient.x,
+        clientY: lastClient.y,
+        pointerId: 1,
+        pointerType: 'mouse',
+        bubbles: true,
+        cancelable: false,
+        view: cw,
+      })
+      canvas.dispatchEvent(ev)
+    }
+  } catch (e2) {
+    // 同上：背景交互注入失败不影响任何页面功能
   }
 }
 
@@ -150,8 +215,10 @@ onMounted(() => {
     window.visualViewport.addEventListener('resize', gengXinShiJiaoKouGaoDu)
     window.visualViewport.addEventListener('scroll', gengXinShiJiaoKouGaoDu)
   }
-  // 转发鼠标位置给背景 iframe（rAF 节流），恢复"跟随鼠标微晃"
-  window.addEventListener('pointermove', zhuanFaShuBiao, { passive: true })
+  // 父帧把鼠标坐标注入 iframe 内部，复刻原网页 document/canvas pointermove 输入链路
+  window.addEventListener('pointermove', onPointerMove, { passive: true })
+  // 应用挂载完成后，等主线程空闲再开始加载草地背景（独立、静默、不阻塞交互）
+  qiDongBeiJingJiaZai()
 })
 
 onBeforeUnmount(() => {
@@ -159,8 +226,7 @@ onBeforeUnmount(() => {
     window.visualViewport.removeEventListener('resize', gengXinShiJiaoKouGaoDu)
     window.visualViewport.removeEventListener('scroll', gengXinShiJiaoKouGaoDu)
   }
-  window.removeEventListener('pointermove', zhuanFaShuBiao)
-  if (cursorRaf) cancelAnimationFrame(cursorRaf)
+  window.removeEventListener('pointermove', onPointerMove)
 })
 </script>
 
@@ -209,8 +275,8 @@ onBeforeUnmount(() => {
 
 /* 草地 3D 背景：全局固定层，位于内容之下（z-index:-1），不拦截鼠标。
    默认 opacity:0 —— 后台静默加载（文档仍可见、脚本正常跑、WebGL 初始化），
-   仅主页加 .is-active 才 opacity:1 显现。不用 visibility:hidden，否则 iframe
-   被判定为隐藏、requestAnimationFrame 不触发，导致背景无法在后台预加载。 */
+   除聊天页外的路由加 .is-active 才 opacity:1 显现。不用 visibility:hidden，
+   否则 iframe 被判定为隐藏、requestAnimationFrame 不触发，导致背景无法在后台预加载。 */
 .grass-bg-iframe {
   position: fixed;
   inset: 0;

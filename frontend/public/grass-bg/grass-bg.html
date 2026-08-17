@@ -193,7 +193,48 @@
             <div class="explore-hint"><svg></svg><span class="glass-effect">Tap here to explore</span></div>
         </section>
         <section id="about" class="hidden"><div class="about-container glass-effect"><span class="close">+</span><h1>Jordan Breton</h1></div></section>
-        <section id="contact" class="hidden"><div class="header"><h1>Your brand deserves to stand out!</h1></div></section>
+        <!-- 注意：下面 .swarm-switch / .social-media 必须保留在 DOM 中（即使被 CSS 隐藏）：
+             引擎的社交媒体/群岛控制器（NU 类）在 init 时 document.querySelector(".swarm-switch .left")
+             等并立即 addEventListener，缺失会抛「Cannot read properties of null (reading 'addEventListener')」，
+             进而中断体验初始化。原页 主页-真实草地.html 本就含此结构；精简背景页漏掉导致崩溃。
+             #contact 已被 CSS display:none!important 隐藏，故不可见、不影响背景。 -->
+        <section id="contact" class="hidden">
+            <div class="header">
+                <h1>Your brand deserves to stand out!</h1>
+                <p>Let's get in touch to make it happen.</p>
+            </div>
+            <div class="container">
+                <div class="swarm-switch">
+                    <button class="left">&#8249;</button>
+                    <span class="empty"></span>
+                    <button class="right">&#8250;</button>
+                </div>
+                <div class="social-media">
+                    <button class="left-arrow">
+                        <span>&#8636;</span>
+                        <span>&#8637;</span>
+                    </button>
+                    <ul>
+                        <li class="active">
+                            <a class="glass-effect" data-social-media="default" href="mailto:contact@jordan-breton.com">contact@jordan-breton.com</a>
+                        </li>
+                        <li>
+                            <a class="glass-effect" data-social-media="linkedin" href="https://www.linkedin.com/in/jordan-breton/" target="_blank" rel="noopener noreferrer">Linkedin</a>
+                        </li>
+                        <li>
+                            <a class="glass-effect" data-social-media="x" href="https://x.com/JordanBretonDev" target="_blank" rel="noopener noreferrer">X</a>
+                        </li>
+                        <li>
+                            <a class="glass-effect" data-social-media="youtube" href="https://youtube.com/@JordanBretonDev" target="_blank" rel="noopener noreferrer">Youtube</a>
+                        </li>
+                    </ul>
+                    <button class="right-arrow">
+                        <span>&#8640;</span>
+                        <span>&#8641;</span>
+                    </button>
+                </div>
+            </div>
+        </section>
     </div>
     <div class="loading">
         <div class="progress-percentage">
@@ -227,7 +268,11 @@
         /* 真正删除（从 DOM 移除，而非隐藏）：设置齿轮/面板、声音按钮、360°游览、视角热点。
            以上由 bundle 在事件后创建，用 MutationObserver 出现即删。跳过 .loading 内的 Start 按钮。 */
         (function () {
-            var REMOVE = ['.settings-icon', '.settings-panel', '.sound-icon', '.tour-button'];
+            // 注意：.sound-icon 不能从 DOM 删除——引擎的声音控制器（RU 类）在 init 时
+            // 会 document.querySelector(".sound-icon") 并立即 setAttribute / addEventListener，
+            // 删掉它会导致 init 抛「Cannot read properties of null (reading 'setAttribute')」，
+            // 进而中断整个体验初始化。该元素已被 CSS display:none!important 隐藏，留 DOM 即可。
+            var REMOVE = ['.settings-icon', '.settings-panel', '.tour-button'];
             function removeSel(sel) {
                 var nodes = document.querySelectorAll(sel);
                 for (var i = 0; i < nodes.length; i++) {
@@ -287,16 +332,15 @@
         })();
     </script>
     <script>
-        /* 主题联动（深色=夜晚 / 浅色=白天）+ 草色 + 鼠标跟随视差：
-           - 读取父页（同源）data-theme：dark(暗色) → 夜晚相位 + 夜草色；light(浅色) → 白天 + 金草。
-             默认跟随用户设置（首次访问 data-theme=dark → 默认夜晚）。standalone 时退化为白天金草。
-             同时监听父页 postMessage('grass-theme') 作为跨域兜底。
-           - 鼠标视差：iframe 设了 pointer-events:none 且压在应用内容之下，收不到鼠标事件；
-             故由 App.vue 转发归一化光标到本页，本页用 rAF 轻推 CameraGroup 旋转，形成"跟随鼠标微晃"。 */
+        /* 主题联动（深色=夜晚 / 浅色=白天）+ 草色 + 地形色：
+           - dark(暗色) → 夜晚相位 + 紫草 + 紫地；light(浅色) → 白天 + 金草。默认跟随用户设置。
+           - 引擎仅在 global:config:changed（setPhase）时用 nightConfig 给地形上色，且首屏地形未就绪时
+             onConfigChanged 会 early-return，导致夜间地形停留在白天绿（黄）。故：
+             (a) 地形材质就绪后强制 day→night 重跑一次，让引擎补上夜间色；
+             (b) 订阅 global:config:changed（晚于引擎注册，故其后执行）再次压紫，确保紫色恒成立。 */
         (function () {
             var DAY = ['#d9a441', '#9c6b1e', '#b08746', '#8a6a38'];        // 白天金草 L,D,dL,dD
             var NIGHT = ['#b07be0', '#7a3fa0', '#5e2d8a', '#2e1450'];      // 夜晚紫草（深色模式=全紫草+紫地）
-            var themeOverride = null;
 
             function parentTheme() {
                 try {
@@ -306,7 +350,7 @@
                     return t === 'light' ? 'light' : (t === 'dark' ? 'dark' : 'light');
                 } catch (e) { return 'light'; }
             }
-            function currentTheme() { return themeOverride || parentTheme(); }
+            function currentTheme() { return parentTheme(); }
             function paletteFor(theme) { return theme === 'dark' ? NIGHT : DAY; }
             function phaseFor(theme) { return theme === 'dark' ? 'night' : 'day'; }
 
@@ -325,22 +369,26 @@
                 }
             }
 
-            // 远处地形地面（DistantTerrainGround）拥有独立颜色 uniform，
-            // nightConfig 不会改它，故深色模式下草变紫、远处地面仍停在白天金（黄）。
-            // 这里把地形颜色 uniform 一并压成主题色；首次记录白天金以便浅色还原。
+            // 远处地形地面（DistantTerrainGround）拥有独立颜色 uniform，引擎仅在 config:changed 时上色。
             var terrainCaptured = null;
+            var terrainReady = false;
+            var terrainForced = false;
             var TERRAIN_KEYS = ['uGrassColor', 'uGrassColorAlt', 'uDirtColor', 'uRockColor', 'uWaterColor', 'uSnowColor'];
+            // 紫草配色映射到地形：草->浅紫, 草Alt->中紫, 泥->深紫, 岩->更深紫
+            var PURPLE_MAP = { uGrassColor: '#b07be0', uGrassColorAlt: '#7a3fa0', uDirtColor: '#5e2d8a', uRockColor: '#2e1450', uWaterColor: '#2a1245', uSnowColor: '#c89be8' };
+
             function applyTerrain(theme, palette) {
-                var exp = window.__experience; if (!exp) return;
-                var sc = exp.scene || (exp.engine && exp.engine.scene);
-                if (!sc || !sc.traverse) return;
+                var exp = window.__experience; if (!exp || !exp.engine) return;
+                var sc = exp.engine.scene; if (!sc || !sc.traverse) return;
                 var isDark = (theme === 'dark');
+                var found = false;
                 sc.traverse(function (o) {
                     var m = o.material; if (!m) return;
                     var list = Array.isArray(m) ? m : [m];
                     for (var i = 0; i < list.length; i++) {
                         var u = list[i].uniforms;
                         if (!u || !u.uGrassColor) continue; // 仅处理远处地形地面材质
+                        found = true;
                         if (!terrainCaptured) {
                             terrainCaptured = {};
                             for (var k = 0; k < TERRAIN_KEYS.length; k++) {
@@ -354,15 +402,24 @@
                             var key2 = TERRAIN_KEYS[j];
                             if (!u[key2] || !u[key2].value || !u[key2].value.set) continue;
                             if (isDark) {
-                                // 紫草配色映射到地形：草->浅紫, 草Alt->中紫, 泥->深紫, 岩->更深紫
-                                var purpleMap = { uGrassColor: palette[0], uGrassColorAlt: palette[1], uDirtColor: palette[2], uRockColor: palette[3], uWaterColor: '#2a1245', uSnowColor: '#c89be8' };
-                                u[key2].value.set(purpleMap[key2] || palette[3]);
+                                u[key2].value.set(PURPLE_MAP[key2] || palette[3]);
                             } else if (terrainCaptured[key2]) {
                                 u[key2].value.copy(terrainCaptured[key2]);
                             }
                         }
                     }
                 });
+                if (found) terrainReady = true;
+                // 首屏：地形就绪前引擎 onConfigChanged 会 early-return，夜间不上色（停留白天绿）。
+                // 地形一旦就绪且仍处夜间，强制 day→night 重跑一次，触发 config:changed 由引擎补夜间色。
+                if (terrainReady && isDark && !terrainForced) {
+                    terrainForced = true;
+                    var d = window.__dcm;
+                    if (d && d.setPhase) {
+                        try { d.setPhase('day'); } catch (e) {}
+                        try { d.setPhase('night'); } catch (e) {}
+                    }
+                }
             }
 
             var subscribed = false;
@@ -371,7 +428,15 @@
                 var d = window.__dcm;
                 if (d && d.getPhase) {
                     if (!subscribed) {
-                        try { d.on('phaseChanged', function () { setTimeout(syncTheme, 50); }); subscribed = true; } catch (e) {}
+                        subscribed = true;
+                        // 引擎每次相位切换/自动昼夜循环都会用 nightConfig 覆盖地形色；
+                        // 我们在其后（下一帧）再次压紫，确保紫色恒成立，不再与引擎抢时序。
+                        try { d.on('phaseChanged', function () { setTimeout(syncTheme, 50); }); } catch (e) {}
+                        try {
+                            window.__experience.engine.on('global:config:changed', function () {
+                                setTimeout(function () { applyTerrain(currentTheme(), paletteFor(currentTheme())); }, 0);
+                            });
+                        } catch (e) {}
                     }
                     var want = phaseFor(theme);
                     if (d.getPhase() !== want) { try { d.setPhase(want); } catch (e) {} }
@@ -390,33 +455,6 @@
                     new MutationObserver(function () { syncTheme(); }).observe(pEl, { attributes: true, attributeFilter: ['data-theme'] });
                 }
             } catch (e) {}
-
-            // 鼠标跟随：接收父页转发的归一化光标(-1..1)，rAF 轻推 CameraGroup 旋转
-            window.__cursor = { x: 0, y: 0 };
-            window.addEventListener('message', function (e) {
-                try {
-                    var d = e.data;
-                    if (!d) return;
-                    if (d.type === 'grass-cursor') { window.__cursor.x = d.x || 0; window.__cursor.y = d.y || 0; }
-                    else if (d.type === 'grass-theme') { themeOverride = (d.mode === 'dark') ? 'dark' : 'light'; }
-                } catch (e2) {}
-            });
-            var MAX_Y = 0.025, MAX_X = 0.015;
-            function parallaxLoop() {
-                var cam = window.__experience && window.__experience.engine && window.__experience.engine.camera;
-                if (cam && cam.group) {
-                    var ty = window.__cursor.x * MAX_Y;
-                    var tx = -window.__cursor.y * MAX_X;
-                    cam.group.rotation.y += (ty - cam.group.rotation.y) * 0.05;
-                    cam.group.rotation.x += (tx - cam.group.rotation.x) * 0.05;
-                }
-                requestAnimationFrame(parallaxLoop);
-            }
-            (function waitCam() {
-                var ok = window.__experience && window.__experience.engine && window.__experience.engine.camera && window.__experience.engine.camera.group;
-                if (ok) { parallaxLoop(); return; }
-                setTimeout(waitCam, 200);
-            })();
         })();
     </script>
     <script>
@@ -451,62 +489,426 @@
         })();
     </script>
     <script>
-        /* 鼠标划过草地的交互：
-           草背景 iframe 设了 pointer-events:none 且压在内容之下，草的 canvas 收不到真实指针事件，
-           导致引擎自带的 "bender"（弯曲贴图 brush）从不触发 —— 草对鼠标毫无反应。
-           解决：把父页（App.vue）转发来的归一化光标 window.__cursor(-1..1) 还原成画布 client 坐标，
-           向引擎 canvas 派发真实 pointermove，引擎 raycaster 会自行 raycast 地形并调用
-           bender.onPointerMove(uv, worldPos)，草随光标弯曲；光标停下约 2.5s 后自动回正。
-           同时给草/花材质保底 uBendingFactor，确保弯曲可见。 */
+        /* 吴昊阳×草地融合系统 v2 —— 世界空间手绘姿态 + 扒拉草丛交互
+           根因修正（v1 缺陷）：v1 用「屏幕 NDC → 地面射线交点」定位，
+           该方案语义盲目——无法区分河/草落点、且世界尺寸未校准到期望屏占比，
+           导致「趴在河中部」「面积≈2倍」两类同源问题。
+           v2 改为【世界空间手绘落位 + 尺寸校准】，落点恒在草场、尺寸恒为期望。
+           新增：前景草随光标分拨（用户「扒拉草丛」时草叶弯开、露出主角）交互。
+           复用父页已注入的 engine.pointer.normalizedPosition（光标 NDC），不改动 bundle。 */
         (function () {
-            var MAX_BEND = 0.7;
-            function boostBending() {
-                var exp = window.__experience; if (!exp) return;
-                var sc = exp.scene || (exp.engine && exp.engine.scene);
-                if (!sc || !sc.traverse) return;
-                sc.traverse(function (o) {
-                    var m = o.material; if (!m) return;
-                    var list = Array.isArray(m) ? m : [m];
-                    for (var i = 0; i < list.length; i++) {
-                        var u = list[i].uniforms;
-                        if (u && u.uBendingFactor && u.uBendingFactor.value < MAX_BEND) {
-                            u.uBendingFactor.value = MAX_BEND;
-                        }
+            var TU_PIAN = '/图片/主页元素/吴昊阳终稿静态图.png';
+
+            // ===== 配置（全部世界空间手绘值，确定性、可复核） =====
+            var PEI_ZHI = {
+                // 世界落位：相机默认 ~(5.75,1.34,5.27) 看向原点；草场前景 z=1~4、x=-2~4、y≈0。
+                // 落点：相机默认 ~(5.75,1.34,5.27) 看向原点；沿相机右向量 (+0.66,0,-0.72) 平移使 NDC.x≈+0.3（中下偏右）。
+                // 探针确认在右前草场，远离水体（DistantWater@y=-376）。
+                weiZhi: { x: 4.0, y: 0.14, z: 1.93 },
+                kuan: 2.6,                                  // 宽（世界单位，旧值×0.62 → 面积≈旧×0.38，即用户期望≈旧1/2.6）
+                gao: 1.73,                                 // 高（保持原图 1537:1023≈1.503）
+                qingJiao: 18 * Math.PI / 180,              // 远端抬角：自然躺姿
+                yeJianYanSe: '#9c8ecf',                    // 夜间角色表面色
+                jiaoYingTouMingDu: 0.30,                   // 接触阴影强度
+                shiChaBeiShu: 3,                           // 视差放大倍数（仅视差类一处 lerp）
+                huXiFuDu: 0.022,                           // 呼吸幅度（克制）
+                huXiZhouQi: 4.6,                           // 呼吸周期（秒）
+                rongCengKuan: 1.25,                        // 交融层宽倍数（草叶根部扎进真实草）
+                rongCengGao: 1.18,
+                rongCengQianYi: 0.03,
+                fengBaiFuDu: 0.06,
+                // —— 扒拉草丛交互 ——
+                boLaCengKuan: 1.55,                        // 交互层宽倍数（覆盖角色周围草）
+                boLaCengGao: 1.42,
+                boLaBanJing: 0.34,                         // 光标影响半径（NDC，约屏幕34%）
+                boLiQiangDu: 0.88,                         // 分拨强度
+                caoYeShu: 46                              // 交互层草叶数
+            };
+
+            // 贴图预取（与引擎 bundle 并行下载，建造时零等待）
+            var tuPianJiuXu = null, tuPianShiBai = false;
+            (function yuQuTuPian() {
+                var tu = new Image();
+                tu.onload = function () { tuPianJiuXu = tu; };
+                tu.onerror = function () { tuPianShiBai = true; };
+                tu.src = TU_PIAN;
+            })();
+
+            function dengDaiTiaoJian() {
+                return !!(window.__THREE && window.__experience &&
+                          window.__experience.engine && window.__experience.engine.scene);
+            }
+
+            // 视差幅度增强：包装 camera.group.position.lerp（全 bundle 仅视差类 rU 调用）
+            function anZhuangShiChaZengQiang() {
+                var pos = window.__experience.engine.camera.group.position;
+                if (!pos || typeof pos.lerp !== 'function' || pos.__shiChaZengQiang) return;
+                var T = window.__THREE;
+                if (!T || !T.Vector3) return;
+                var yuanLerp = pos.lerp.bind(pos);
+                var fangDa = new T.Vector3();
+                var beiShu = (window.matchMedia &&
+                              window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+                    ? 1 : PEI_ZHI.shiChaBeiShu;
+                pos.__shiChaZengQiang = true;
+                pos.lerp = function (mubiao, alpha) {
+                    if (mubiao && typeof mubiao.lengthSq === 'function' && mubiao.lengthSq() <= 1) {
+                        fangDa.copy(mubiao).multiplyScalar(beiShu);
+                        return yuanLerp(fangDa, alpha);
                     }
+                    return yuanLerp(mubiao, alpha);
+                };
+            }
+
+            var zhuJueMian = null, yingZiMian = null, caiZhi = null;
+            var rongCengMian = null, rongCengCaiZhi = null;
+            var boLaMian = null, boLaCaiZhi = null, boLaWenLi = null, boLaCv = null, boLaCtx = null;
+            var boLaYe = [];
+            var jiZhun = { y: 0, xuanZhuan: 0 };
+
+            // 草叶画布（静态交融层）：灰度草叶，材质色=草地调色板首色（白/夜紫自动跟随）
+            function huiZhiCaoYe() {
+                var w = 1024, h = 640;
+                var cv = document.createElement('canvas');
+                cv.width = w; cv.height = h;
+                var c = cv.getContext('2d');
+                var zhong = 20260817;
+                function sui() { zhong = (zhong * 1664525 + 1013904223) >>> 0; return zhong / 4294967296; }
+                function huaYe(gen, gao, qing) {
+                    var kuan = 3 + sui() * 4;
+                    var liang = 150 + Math.floor(sui() * 105);
+                    var jianBian = c.createLinearGradient(0, h, 0, h - gao);
+                    jianBian.addColorStop(0, 'rgba(' + ((liang * 0.55) | 0) + ',' + ((liang * 0.55) | 0) + ',' + ((liang * 0.55) | 0) + ',0.95)');
+                    jianBian.addColorStop(1, 'rgba(' + liang + ',' + liang + ',' + liang + ',0.9)');
+                    c.strokeStyle = jianBian;
+                    c.lineWidth = kuan;
+                    c.lineCap = 'round';
+                    c.beginPath();
+                    c.moveTo(gen, h);
+                    c.quadraticCurveTo(gen + qing * gao * 0.15, h - gao * 0.6,
+                                       gen + qing * gao * (0.25 + sui() * 0.35), h - gao);
+                    c.stroke();
+                }
+                var i, gen;
+                for (i = 0; i < 30; i++) {
+                    gen = (0.04 + sui() * 0.70) * w;
+                    huaYe(gen, 70 + sui() * 130, (sui() < 0.5 ? -1 : 1) * (0.15 + sui() * 0.4));
+                }
+                for (i = 0; i < 8; i++) {
+                    gen = (0.02 + sui() * 0.28) * w;
+                    huaYe(gen, 150 + sui() * 170, (sui() < 0.5 ? -1 : 1) * (0.2 + sui() * 0.35));
+                }
+                return cv;
+            }
+
+            // 找草地材质 uniforms（含 uWindTexture/uTime）—— 风场同源引用，零每帧开销
+            var caoJunXing = null;
+            function zhaoCaoJunXing() {
+                var mats = window.__grassMats;
+                if (!mats) return null;
+                for (var i = 0; i < mats.length; i++) {
+                    var u = mats[i] && mats[i].uniforms;
+                    if (u && u.uWindTexture && u.uWindTexture.value && u.uTime) return u;
+                }
+                return null;
+            }
+
+            function zhuRuFengChang(shader) {
+                shader.uniforms.uCTime = caoJunXing.uTime;
+                shader.uniforms.uCWind = caoJunXing.uWindTexture;
+                shader.vertexShader = shader.vertexShader
+                    .replace('#include <common>',
+                        '#include <common>\nuniform float uCTime;\nuniform sampler2D uCWind;')
+                    .replace('#include <begin_vertex>', [
+                        '#include <begin_vertex>',
+                        '{',
+                        '    vec2 wxz = (modelMatrix * vec4(position, 1.0)).xz;',
+                        '    float ws = 0.015;',
+                        '    vec2 sc = vec2(uCTime * ws, -uCTime * ws * 0.5);',
+                        '    float an = 0.65;',
+                        '    mat2 ro = mat2(cos(an), -sin(an), sin(an), cos(an));',
+                        '    vec2 wuv = ro * (wxz * 0.015) + sc;',
+                        '    float n1 = texture2D(uCWind, wuv).r;',
+                        '    float n2 = texture2D(uCWind, wuv + 0.618).r;',
+                        '    float bl = (sin(wuv.x * 3.14159) * 0.5 + 0.5) * (sin(wuv.y * 3.14159) * 0.5 + 0.5);',
+                        '    float wn = mix(n1, n2, bl);',
+                        '    wn = smoothstep(0.3, 0.8, wn);',
+                        '    transformed.x += wn * ' + PEI_ZHI.fengBaiFuDu.toFixed(4) +
+                            ' * pow(max(uv.y, 0.0), 1.5);',
+                        '}'
+                    ].join('\n'));
+            }
+
+            // 世界空间手绘摆放（根因修正：取代 NDC 投影，落点恒在草场、尺寸已校准）
+            function baiFang() {
+                var T = window.__THREE;
+                if (!zhuJueMian) return;
+                var p = PEI_ZHI.weiZhi;
+                var chiCun = window.__experience.engine.sizes;
+                var kuo = 1;
+                if (chiCun && chiCun.height && chiCun.width / chiCun.height < 0.9) kuo = 0.7; // 竖屏缩小
+                // 平面局部 +Y 指向远离相机方向，再抬倾角——自然躺姿
+                var cam = window.__experience.engine.camera.instance;
+                var m = cam.matrixWorld.elements;
+                var fx = -(m[8]), fz = -(m[10]);
+                var hl = Math.hypot(fx, fz) || 1;
+                var fhx = fx / hl, fhz = fz / hl;              // 水平前向
+                var psl = Math.sin(PEI_ZHI.qingJiao), pcl = Math.cos(PEI_ZHI.qingJiao);
+                var ux = pcl * fhx, uy = psl, uz = pcl * fhz;  // 平面"上"方向
+                var banGao = PEI_ZHI.gao * 0.5 * kuo;
+                // 平面中心 = 落点 + 沿"上"方向偏移半个身长（脚端贴地、头端抬起）
+                zhuJueMian.scale.set(kuo, kuo, 1);
+                zhuJueMian.position.set(p.x + ux * banGao, p.y + uy * banGao, p.z + uz * banGao);
+                zhuJueMian.rotation.order = 'YXZ';
+                zhuJueMian.rotation.y = Math.atan2(-fhx, -fhz);
+                zhuJueMian.rotation.x = -Math.PI / 2 + PEI_ZHI.qingJiao;
+                if (yingZiMian) {
+                    yingZiMian.scale.set(kuo, kuo, 1);
+                    yingZiMian.position.set(p.x, p.y - 0.02, p.z);
+                    yingZiMian.rotation.order = 'YXZ';
+                    yingZiMian.rotation.y = Math.atan2(-fhx, -fhz);
+                    yingZiMian.rotation.x = -Math.PI / 2;
+                }
+                if (rongCengMian) {
+                    rongCengMian.scale.set(kuo, kuo, 1);
+                    rongCengMian.position.copy(zhuJueMian.position);
+                    rongCengMian.rotation.order = 'YXZ';
+                    rongCengMian.rotation.y = zhuJueMian.rotation.y;
+                    rongCengMian.rotation.x = zhuJueMian.rotation.x;
+                    rongCengMian.translateZ(PEI_ZHI.rongCengQianYi);
+                }
+                if (boLaMian) {
+                    // 交互层比角色大，覆盖其周围草；贴地、略高于脚端
+                    boLaMian.scale.set(kuo, kuo, 1);
+                    boLaMian.position.set(p.x, p.y + 0.01, p.z + uz * (PEI_ZHI.gao * 0.5 * kuo));
+                    boLaMian.rotation.order = 'YXZ';
+                    boLaMian.rotation.y = zhuJueMian.rotation.y;
+                    boLaMian.rotation.x = -Math.PI / 2;
+                }
+                jiZhun.y = zhuJueMian.position.y;
+                jiZhun.xuanZhuan = zhuJueMian.rotation.x;
+            }
+
+            // 扒拉草丛：前景草叶随光标分拨（每帧重绘 canvas 纹理）
+            function chuShiHuaBoLa() {
+                var w = 1024, h = 640;
+                boLaCv = document.createElement('canvas');
+                boLaCv.width = w; boLaCv.height = h;
+                boLaCtx = boLaCv.getContext('2d');
+                var zhong = 778899, i, n = PEI_ZHI.caoYeShu;
+                for (i = 0; i < n; i++) {
+                    zhong = (zhong * 1664525 + 1013904223) >>> 0; var r1 = zhong / 4294967296;
+                    zhong = (zhong * 1664525 + 1013904223) >>> 0; var r2 = zhong / 4294967296;
+                    zhong = (zhong * 1664525 + 1013904223) >>> 0; var r3 = zhong / 4294967296;
+                    boLaYe.push({
+                        gen: (0.02 + r1 * 0.96) * w,
+                        gao: 60 + r2 * 150,
+                        qing: (r3 < 0.5 ? -1 : 1) * (0.15 + r2 * 0.5),
+                        kuan: 3 + r1 * 5,
+                        liang: 120 + ((r3 * 135) | 0)
+                    });
+                }
+                boLaWenLi = new window.__THREE.CanvasTexture(boLaCv);
+                boLaWenLi.colorSpace = 'srgb';
+                boLaWenLi.anisotropy = 4;
+                boLaCaiZhi = new window.__THREE.MeshBasicMaterial({
+                    map: boLaWenLi, transparent: true, alphaTest: 0.25,
+                    side: 2, depthWrite: false, opacity: 0
+                });
+                boLaMian = new window.__THREE.Mesh(
+                    new window.__THREE.PlaneGeometry(PEI_ZHI.kuan * PEI_ZHI.boLaCengKuan, PEI_ZHI.gao * PEI_ZHI.boLaCengGao),
+                    boLaCaiZhi
+                );
+                boLaMian.name = 'WuHaoYangGrassInteractive';
+                boLaMian.renderOrder = 4;   // 最前，位于角色与交融层之前
+                window.__experience.engine.scene.add(boLaMian);
+                chongHuiBoLa();
+            }
+
+            // 将角色世界坐标投影为屏幕 NDC，使分拨效果与角色屏幕位置对齐（含视差位移）
+            var _charV = null;
+            function chongHuiBoLa() {
+                if (!boLaCtx) return;
+                var w = boLaCv.width, h = boLaCv.height, c = boLaCtx;
+                c.clearRect(0, 0, w, h);
+                var cam = window.__experience.engine.camera.instance;
+                var chX = 0, chY = 0;   // 角色屏幕 NDC
+                if (_charV === null) _charV = new window.__THREE.Vector3();
+                if (zhuJueMian && cam) {
+                    zhuJueMian.getWorldPosition(_charV);
+                    _charV.project(cam);
+                    chX = _charV.x; chY = _charV.y;
+                }
+                var ptr = null;
+                try {
+                    var eng = window.__experience.engine;
+                    if (eng && eng.pointer && eng.pointer.normalizedPosition) ptr = eng.pointer.normalizedPosition;
+                } catch (e) {}
+                // 光标相对角色的 NDC 偏移 → canvas 坐标
+                var relX = 0, relY = 0;
+                if (ptr) { relX = ptr.x - chX; relY = ptr.y - chY; }
+                var cx = w * 0.5 + relX * w * 0.5;
+                var cy = h * 0.5 - relY * h * 0.5;
+                var banJing = PEI_ZHI.boLaBanJing * w * 0.5;
+                for (var i = 0; i < boLaYe.length; i++) {
+                    var b = boLaYe[i];
+                    var dx = b.gen - cx, dy = (h - b.gao) - cy;
+                    var dist = Math.hypot(dx, dy);
+                    var fen = 0;
+                    if (dist < banJing) fen = (1 - dist / banJing) * PEI_ZHI.boLiQiangDu;
+                    var ang = Math.atan2(dy, dx);
+                    var ox = 0, oy = 0;
+                    if (fen > 0) {
+                        var tuo = fen * b.gao * 0.9;
+                        ox = Math.cos(ang) * tuo; oy = Math.sin(ang) * tuo;
+                    }
+                    var l = b.liang;
+                    var jianBian = c.createLinearGradient(0, h, 0, h - b.gao * (1 - fen * 0.5));
+                    jianBian.addColorStop(0, 'rgba(' + ((l * 0.5) | 0) + ',' + ((l * 0.5) | 0) + ',' + ((l * 0.5) | 0) + ',0.96)');
+                    jianBian.addColorStop(1, 'rgba(' + l + ',' + l + ',' + l + ',0.92)');
+                    c.strokeStyle = jianBian;
+                    c.lineWidth = b.kuan;
+                    c.lineCap = 'round';
+                    c.beginPath();
+                    c.moveTo(b.gen, h);
+                    var topX = b.gen + b.qing * b.gao * 0.2 + ox;
+                    var topY = h - b.gao * (1 - fen * 0.5) + oy;
+                    c.quadraticCurveTo(b.gen + b.qing * b.gao * 0.15 + ox * 0.5, h - b.gao * 0.6, topX, topY);
+                    c.stroke();
+                }
+                if (boLaWenLi) boLaWenLi.needsUpdate = true;
+            }
+
+            function jianZao(T, sc) {
+                var jiHe = new T.PlaneGeometry(PEI_ZHI.kuan, PEI_ZHI.gao);
+                caiZhi = new T.MeshBasicMaterial({
+                    transparent: true, alphaTest: 0.28, side: 2, depthWrite: true, opacity: 0
+                });
+                var wenLi = new T.CanvasTexture(tuPianJiuXu);
+                wenLi.colorSpace = 'srgb';
+                wenLi.anisotropy = 4;
+                caiZhi.map = wenLi;
+                caiZhi.needsUpdate = true;
+                zhuJueMian = new T.Mesh(jiHe, caiZhi);
+                zhuJueMian.name = 'WuHaoYang';
+                zhuJueMian.renderOrder = 2;
+                sc.add(zhuJueMian);
+                // 草叶交融层（静态，覆盖角色下缘）
+                caoJunXing = zhaoCaoJunXing();
+                var caoYeWenLi = new T.CanvasTexture(huiZhiCaoYe());
+                caoYeWenLi.colorSpace = 'srgb';
+                caoYeWenLi.anisotropy = 4;
+                rongCengCaiZhi = new T.MeshBasicMaterial({
+                    map: caoYeWenLi, transparent: true, alphaTest: 0.3, side: 2, depthWrite: false, opacity: 0
+                });
+                if (caoJunXing) rongCengCaiZhi.onBeforeCompile = zhuRuFengChang;
+                rongCengMian = new T.Mesh(
+                    new T.PlaneGeometry(PEI_ZHI.kuan * PEI_ZHI.rongCengKuan, PEI_ZHI.gao * PEI_ZHI.rongCengGao),
+                    rongCengCaiZhi
+                );
+                rongCengMian.name = 'WuHaoYangGrass';
+                rongCengMian.renderOrder = 3;
+                sc.add(rongCengMian);
+                // 接触阴影
+                var hb = document.createElement('canvas');
+                hb.width = 256; hb.height = 192;
+                var bj = hb.getContext('2d');
+                var jianBian = bj.createRadialGradient(128, 96, 8, 128, 96, 120);
+                jianBian.addColorStop(0, 'rgba(10,12,8,0.85)');
+                jianBian.addColorStop(0.55, 'rgba(10,12,8,0.35)');
+                jianBian.addColorStop(1, 'rgba(10,12,8,0)');
+                bj.fillStyle = jianBian;
+                bj.fillRect(0, 0, 256, 192);
+                var yingCaiZhi = new T.MeshBasicMaterial({
+                    map: new T.CanvasTexture(hb), transparent: true, opacity: PEI_ZHI.jiaoYingTouMingDu, depthWrite: false
+                });
+                yingZiMian = new T.Mesh(new T.PlaneGeometry(PEI_ZHI.kuan * 1.12, PEI_ZHI.gao * 1.18), yingCaiZhi);
+                yingZiMian.name = 'WuHaoYangShadow';
+                yingZiMian.renderOrder = 1;
+                sc.add(yingZiMian);
+                // 扒拉草丛交互层
+                chuShiHuaBoLa();
+                baiFang();
+                // 呼吸微动（克制）
+                if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+                    var qiShiShiKe = performance.now();
+                    (function huXi() {
+                        if (!zhuJueMian) return;
+                        var t = (performance.now() - qiShiShiKe) / 1000;
+                        var bo = Math.sin((t / PEI_ZHI.huXiZhouQi) * Math.PI * 2);
+                        var fuDu = PEI_ZHI.huXiFuDu * caiZhi.opacity;
+                        zhuJueMian.position.y = jiZhun.y + bo * fuDu;
+                        zhuJueMian.rotation.x = jiZhun.xuanZhuan + bo * fuDu * 0.35;
+                        requestAnimationFrame(huXi);
+                    })();
+                }
+                // 前景草分拨重绘（仅在可见且非 reduced-motion）
+                if (!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+                    (function xunHuan() {
+                        if (!boLaMian) return;
+                        chongHuiBoLa();
+                        requestAnimationFrame(xunHuan);
+                    })();
+                } else {
+                    chongHuiBoLa();
+                }
+                // 双层同步淡入
+                var qiShi = Date.now();
+                var buWu = setInterval(function () {
+                    var bi = Math.min(1, (Date.now() - qiShi) / 1400);
+                    caiZhi.opacity = bi;
+                    rongCengCaiZhi.opacity = bi;
+                    boLaCaiZhi.opacity = bi;
+                    if (bi >= 1) clearInterval(buWu);
+                }, 50);
+                // 昼夜调色
+                var RI_SE = '#d9a441';
+                setInterval(function () {
+                    var gb = window.__grassOverride;
+                    var shiYeJian = gb && gb[0] && String(gb[0]).toLowerCase() !== RI_SE;
+                    var muBiaoSe = shiYeJian ? PEI_ZHI.yeJianYanSe : '#ffffff';
+                    if (caiZhi.color && caiZhi.color.getHexString() !== muBiaoSe.replace('#', '')) caiZhi.color.set(muBiaoSe);
+                    var caoSe = gb && gb[0] ? gb[0] : RI_SE;
+                    if (rongCengCaiZhi.color && rongCengCaiZhi.color.getHexString() !== String(caoSe).toLowerCase().replace('#', '')) rongCengCaiZhi.color.set(caoSe);
+                    if (boLaCaiZhi.color && boLaCaiZhi.color.getHexString() !== String(caoSe).toLowerCase().replace('#', '')) boLaCaiZhi.color.set(caoSe);
+                }, 600);
+                // 尺寸变化重摆
+                var dingShi = null;
+                window.addEventListener('resize', function () {
+                    clearTimeout(dingShi);
+                    dingShi = setTimeout(baiFang, 300);
                 });
             }
-            var lastX = null, lastY = null, frame = 0;
-            function dispatchMove(c, rect) {
-                var clientX = rect.left + (c.x * 0.5 + 0.5) * rect.width;
-                var clientY = rect.top + (-c.y * 0.5 + 0.5) * rect.height;
-                var ev;
-                try {
-                    ev = new PointerEvent('pointermove', {
-                        clientX: clientX, clientY: clientY, pointerId: 1,
-                        pointerType: 'mouse', bubbles: true, cancelable: true, view: window
-                    });
-                } catch (e) {
-                    ev = new MouseEvent('pointermove', { clientX: clientX, clientY: clientY, bubbles: true });
+
+            (function dengDai() {
+                if (!dengDaiTiaoJian()) { setTimeout(dengDai, 250); return; }
+                try { anZhuangShiChaZengQiang(); } catch (e) {}
+                function revealJiuXu() {
+                    var e = window.__experience;
+                    return !!(window.__dcm && e && e.revealMesh && e.revealMesh.startReveal &&
+                              e.postProcessing && e.postProcessing.startReveal);
                 }
-                try { window.__experience.engine.canvas.dispatchEvent(ev); } catch (e2) {}
-            }
-            function loop() {
-                var exp = window.__experience;
-                if (exp && exp.engine && exp.engine.canvas) {
-                    if ((frame++ % 30) === 0) boostBending();
-                    var c = window.__cursor;
-                    if (c && (c.x !== lastX || c.y !== lastY)) {
-                        lastX = c.x; lastY = c.y;
-                        dispatchMove(c, exp.engine.canvas.getBoundingClientRect());
-                    }
+                var yiJianZao = false;
+                function chuFaJianZao() {
+                    if (yiJianZao) return;
+                    yiJianZao = true;
+                    (function dengTuPian() {
+                        if (tuPianShiBai) return;
+                        if (tuPianJiuXu) {
+                            try { jianZao(window.__THREE, window.__experience.engine.scene); } catch (e) {}
+                        } else {
+                            setTimeout(dengTuPian, 200);
+                        }
+                    })();
                 }
-                requestAnimationFrame(loop);
-            }
-            (function wait() {
-                if (window.__experience && window.__experience.engine && window.__experience.engine.canvas) { loop(); return; }
-                setTimeout(wait, 200);
+                (function dengReveal() {
+                    if (revealJiuXu()) { setTimeout(chuFaJianZao, 2000); }
+                    else { setTimeout(dengReveal, 300); }
+                })();
+                setTimeout(chuFaJianZao, 15000);
             })();
         })();
+
     </script>
 </body>
 </html>

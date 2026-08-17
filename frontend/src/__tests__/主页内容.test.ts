@@ -14,9 +14,6 @@ vi.mock('@/api/认证', () => ({
 }))
 
 vi.mock('/favicon.svg', () => ({ default: '/favicon.svg' }))
-vi.mock('/图片/主页元素/吴昊阳终稿静态图.png', () => ({
-  default: '/图片/主页元素/吴昊阳终稿静态图.png',
-}))
 
 function chuangJianLuYou() {
   return createRouter({
@@ -131,11 +128,11 @@ describe('主页内容组件', () => {
     expect(luYou.currentRoute.value.path).toBe(qiShiLuJing)
   })
 
-  it('主页背景装饰元素使用吴昊阳终稿静态图', async () => {
+  it('主页不再包含吴昊阳 DOM 静态贴图（主角已移入草地 3D 背景）', async () => {
     const { wrapper } = await mountZuJian()
 
-    const zhuTu = wrapper.find('.juese-tupian')
-    expect(zhuTu.exists()).toBe(true)
-    expect(zhuTu.attributes('src')).toBe('/图片/主页元素/吴昊阳终稿静态图.png')
+    expect(wrapper.find('.juese-tupian').exists()).toBe(false)
+    expect(wrapper.find('.juese-zhanshi-qu').exists()).toBe(false)
+    expect(wrapper.html()).not.toContain('吴昊阳')
   })
 })

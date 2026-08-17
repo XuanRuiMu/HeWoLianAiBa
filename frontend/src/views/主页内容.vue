@@ -15,9 +15,6 @@
             <img src="/favicon.svg" class="pinpai-logo" alt="" />
             <span class="pinpai-mingcheng">{{ huoQuFanYi('zhuYe', 'pinPaiMing') }}</span>
           </div>
-          <div class="juese-zhanshi-qu">
-            <img src="/图片/主页元素/吴昊阳终稿静态图.png" class="juese-tupian" alt="" />
-          </div>
           <p class="zuoce-slogan">{{ huoQuFanYi('zhuYe', 'slogan') }}</p>
         </div>
       </div>
@@ -364,30 +361,6 @@ watch(
 
 :root[data-theme='浅色'] .pinpai-mingcheng {
   color: #191919;
-}
-
-.juese-zhanshi-qu {
-  width: 100%;
-  animation: juese-ruchang 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
-}
-
-.juese-tupian {
-  width: 100%;
-  height: auto;
-  max-height: calc(100vh - 240px);
-  object-fit: contain;
-  object-position: center;
-  display: block;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 14px 36px rgba(0, 0, 0, 0.22));
-}
-
-:root[data-theme='浅色'] .juese-tupian {
-  filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.08));
-}
-
-.juese-tupian:hover {
-  transform: scale(1.02);
 }
 
 .zuoce-slogan {
@@ -816,17 +789,6 @@ watch(
   }
 }
 
-@keyframes juese-ruchang {
-  from {
-    opacity: 0;
-    transform: translateX(-36px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-}
-
 @keyframes slogan-ruchang {
   from {
     opacity: 0;
@@ -862,10 +824,6 @@ watch(
 
   .pinpai-qu {
     align-self: center;
-  }
-
-  .juese-tupian {
-    max-height: 40vh;
   }
 
   .you-ce-xuanze-qu {
@@ -912,10 +870,6 @@ watch(
 
   .pinpai-mingcheng {
     font-size: 16px;
-  }
-
-  .juese-tupian {
-    max-height: 30vh;
   }
 
   .zuoce-slogan {
@@ -985,10 +939,6 @@ watch(
 
   .pinpai-qu {
     display: none;
-  }
-
-  .juese-tupian {
-    max-height: 150px;
   }
 
   .zuoce-slogan {
@@ -1086,7 +1036,6 @@ watch(
   }
 
   .pinpai-qu,
-  .juese-zhanshi-qu,
   .zuoce-slogan,
   .putong-moshi-kapian,
   .tiaozhan-moshi-kapian,

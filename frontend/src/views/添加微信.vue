@@ -99,15 +99,7 @@ onBeforeUnmount(() => {
   height: 100vh;
   width: 100%;
   padding: 24px;
-  background: linear-gradient(
-    135deg,
-    var(--beijing-jianbian-1),
-    var(--beijing-jianbian-2),
-    var(--beijing-jianbian-3),
-    var(--beijing-jianbian-4)
-  );
-  background-size: 300% 300%;
-  animation: jianbian-liudong 12s ease infinite;
+  background: transparent;
 }
 
 .tianjia-kaPian {

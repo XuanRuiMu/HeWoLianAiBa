@@ -60,6 +60,21 @@ yingYong.use(cors({
       huiDiao(null, true)
       return
     }
+    // 本地开发/测试场景：放行 localhost 与 127.0.0.1 的任意端口。
+    // 否则每新开一个测试端口（如 :8090、:8080）都会因白名单缺失而 500，
+    // 而 curl 不带 Origin 头反而能过，造成「浏览器登录失败、命令行却正常」的诡异现象。
+    try {
+      const biaoJi = new URL(qiuYuan)
+      if (
+        (biaoJi.hostname === 'localhost' || biaoJi.hostname === '127.0.0.1') &&
+        (biaoJi.protocol === 'http:' || biaoJi.protocol === 'https:')
+      ) {
+        huiDiao(null, true)
+        return
+      }
+    } catch {
+      // 解析失败则按不允许处理
+    }
     huiDiao(new Error('不允许的来源'))
   },
   credentials: true,
