@@ -26,3 +26,6 @@ backend/logs/
 # 过程性备份（草地主页 bundle 分析副本的 .bak，不入版本库）
 *.bak
 *.bak2
+
+# 过程性源文件（GIMP 源等设计中间产物，不入版本库；防止总控制台 git add -A 误带）
+最终效果.xcf
