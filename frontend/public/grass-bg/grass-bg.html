@@ -489,43 +489,60 @@
         })();
     </script>
         <script>
-        /* 吴昊阳×草地融合系统 v6 —— 真实 AI 图生3D 网格融入
-           根因（对比 v5）：v5 受引擎限制（__THREE 仅暴露 MeshBasicMaterial，无 Standard/Lambert、
-           shadowMap 关闭）只能用 2D billboard + 烘焙光影"假装"3D。本版用腾讯混元 image-to-3D 生成
-           吴昊阳真实 3D PBR 网格（单 mesh / 单 primitive / 顶点 297099 / 三角面 499926 / 内嵌 PBR
-           贴图），在浏览器内手动解析 GLB（POSITION/NORMAL/TEXCOORD_0/indices + 内嵌 baseColor PNG），
-           借由已暴露类的原型链取得 BufferGeometry/BufferAttribute/Texture 构造器（探针已确认可用），
-           以 MeshBasicMaterial 贴 baseColor 把他真实"放"进 3D 世界：世界坐标落位、参与深度测试、被
-           前景草丛几何遮挡、随相机视差移动。node 旋转 = 绕 X +90°，解析后模型已平躺于草面（非站立）。
-           保留 v5 的接地接触阴影、草叶交融层、扒拉草丛交互、呼吸微动、视差增强、昼夜调色。 */
+        /* 吴昊阳×草地融合系统 v8 —— 分关节可动画3D角色（articulated 3D puppet）
+           
+           根因修复（对比v7）：
+           v7用腾讯混元image-to-3D生成直立人形GLB（Y高1.175/X宽0.405），旋转+90°趴下后
+           UV映射与趴姿不对应→背心字幕(#3 YOUNG)/脸/手臂全部错位。探针脚本(rx90/rx-90/
+           rx180)是症状修补——单张照片AI生3D无法产出可控姿势的rigged模型。
+           
+           本版根因修复：构建分关节可动画3D角色——从源照片(1537×1023 RGBA)裁剪各身体部位为
+           独立3D平面纹理，组成带层级变换的人体骨架。每个部位是独立Mesh，可绕关节轴点旋转
+           （抬腿/挥手等动画），同时外观精确匹配源照片（纹理即照片本身）。
+           MeshBasicMaterial + 烘焙体积光影解决引擎无光照材质约束。
+           
+           架构：root Group → 6个身体部位Group（含pivot轴点）→ 每组内PlaneGeometry+CanvasTexture
+           动画接口：window.__wuHaoYangAnim = { 抬左腿(angle), 抬右腿(angle), 挥左臂(angle), ... } */
         (function () {
-            var GLB_URL = '/图片/主页元素/wuhaoyang_3d.glb';
+            var YUAN_TU_URL = '/grass-bg/wuhaoyang-source.png';
 
-            // ===== 配置（世界空间手绘值）=====
+            // ===== 配置 =====
             var PEI_ZHI = {
-                weiZhi: { x: 4.4, y: 0.12, z: 2.5 },   // 蓝框落点（中下部偏右草丛）
-                chiCun: 1.9,                            // 3D 模型整体缩放（自然趴姿屏宽）
-                yeJianYanSe: '#cdbff0',                 // 夜间角色表面冷色调（与夜紫草协调）
-                jiaoYingTouMingDu: 0.22,                // 接触阴影强度
-                shiChaBeiShu: 3,                        // 视差放大倍数
-                huXiFuDu: 0.018,                        // 呼吸幅度（克制）
-                huXiZhouQi: 4.6,                        // 呼吸周期（秒）
-                rongCengKuan: 1.5,                      // 草叶交融层宽倍数
-                rongCengGao: 1.9,                       // 草叶交融层长倍数
-                fengBaiFuDu: 0.06,                      // 风摆幅度
-                boLaCengKuan: 2.1,                      // 交互层宽倍数
-                boLaCengGao: 2.05,                      // 交互层长倍数
-                boLaBanJing: 0.38,                      // 光标影响半径（NDC）
-                boLiQiangDu: 0.9,                       // 分拨强度
-                caoYeShu: 80                            // 交互层草叶数
+                weiZhi:     { x: 2.103, y: 0.02, z: 0.744 },
+                chiCun:     1.9,
+                yeJianYanSe:'#cdbff0',
+                jiaoYingTouMingDu: 0.22,
+                shiChaBeiShu: 3,
+                huXiFuDu:   0.018,
+                huXiZhouQi: 4.6,
+                rongCengKuan: 1.5,
+                rongCengGao: 1.9,
+                fengBaiFuDu: 0.06,
+                boLaCengKuan: 2.1,
+                boLaCengGao: 2.05,
+                boLaBanJing: 0.38,
+                boLiQiangDu: 0.9,
+                caoYeShu:    80
             };
+
+            // 身体部位定义：从源照片(1537×1023)裁剪
+            // 人物趴姿：头朝右下(大Y)、脚朝左上(小Y)
+            // crop=[sx,sy,sw,sh], pivot=[px,py]相对于crop的关节旋转点, zOrder渲染顺序
+            var SHEN_TI_BU_WEI = [
+                { id:'zuoTui',  name:'左腿',  crop:[0, 10, 520, 360],   pivot:[260,20],  zOrder:0 },
+                { id:'youTui',  name:'右腿',  crop:[90, 70, 640, 390],   pivot:[320,30],  zOrder:1 },
+                { id:'qianGan', name:'躯干', crop:[450, 260, 760, 470],  pivot:[380,30],  zOrder:2 },
+                { id:'zuoBi',  name:'左臂', crop:[830, 560, 620, 380],   pivot:[50,40],   zOrder:3 },
+                { id:'youBi',  name:'右臂', crop:[790, 690, 676, 298],   pivot:[50,35],   zOrder:4 },
+                { id:'tou',    name:'头',   crop:[1020, 665, 447, 333],  pivot:[220,45],  zOrder:5 }
+            ];
 
             function dengDaiTiaoJian() {
                 return !!(window.__THREE && window.__experience &&
                           window.__experience.engine && window.__experience.engine.scene);
             }
 
-            // 视差幅度增强：包装 camera.group.position.lerp
+            // 视差幅度增强
             function anZhuangShiChaZengQiang() {
                 var pos = window.__experience.engine.camera.group.position;
                 if (!pos || typeof pos.lerp !== 'function' || pos.__shiChaZengQiang) return;
@@ -546,81 +563,170 @@
                 };
             }
 
-            var zhuJueMian = null, caiZhi = null;
+            // ===== 状态变量 =====
+            var genGen = null;          // 根节点 Group（所有部位的父级）
+            var buWeiMeshes = [];       // 各部位 [{group, mesh, material}, ...]
             var yingZiMian = null;
             var rongCengMian = null, rongCengCaiZhi = null;
             var boLaMian = null, boLaCaiZhi = null, boLaWenLi = null, boLaCv = null, boLaCtx = null;
             var boLaYe = [];
-            var jiZhun = { y: 0, xuanZhuan: 0, kuo: 1 };
-            var jiHeHalf = { x: 0, y: 0, z: 0 };   // 居中后半尺寸（本地坐标；z=旋转后垂直半高）
-            var jiaoYin = { width: 0, length: 0 }; // 角色落地足迹尺寸（未乘 kuo）
+            var jiZhun = { y: 0, kuo: 1 };
+            var jiaoYin = { width: 0, length: 0 };
+            var GroupCtor = null;       // ★ 从引擎场景中解析的 Group 构造器（window.__THREE 未导出 Group）
 
-            // 经已暴露类的原型链取得被裁剪的构造器
-            function huoQuGouZao(T) {
-                var BufferGeometry = Object.getPrototypeOf(T.PlaneGeometry.prototype).constructor;
-                var BufferAttribute = Object.getPrototypeOf(new T.PlaneGeometry().attributes.position).constructor;
-                return { BufferGeometry: BufferGeometry, BufferAttribute: BufferAttribute };
-            }
+            // ===== 从源照片裁剪部位并烘焙体积光影 =====
+            function caiJianYuGuang(yuanTu, buWei) {
+                var cr = buWei.crop;
+                var w = cr[2], h = cr[3];
+                var cv = document.createElement('canvas');
+                cv.width = w; cv.height = h;
+                var c = cv.getContext('2d');
 
-            // 浏览器内手动解析 GLB：几何 + 内嵌 baseColor 贴图
-            function jieXiGLB(T, arrayBuffer, onDone) {
-                try {
-                    var dv = new DataView(arrayBuffer);
-                    var jsonLen = dv.getUint32(12, true);
-                    var json = JSON.parse(new TextDecoder().decode(new Uint8Array(arrayBuffer, 20, jsonLen)));
-                    var off = 20 + jsonLen; off = (off + 3) & ~3;
-                    var binLen = dv.getUint32(off, true);
-                    var binStart = off + 8;
-                    var TYPE_NUM = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4 };
-                    var CT_CTOR = { 5121: Uint8Array, 5123: Uint16Array, 5125: Uint32Array, 5126: Float32Array };
-                    function readAcc(i) {
-                        var a = json.accessors[i];
-                        var bv = json.bufferViews[a.bufferView];
-                        var Ctor = CT_CTOR[a.componentType];
-                        var comps = TYPE_NUM[a.type];
-                        var start = binStart + (bv.byteOffset || 0);
-                        var ab2 = arrayBuffer.slice(start, start + bv.byteLength);
-                        return { arr: new Ctor(ab2, 0, a.count * comps), comps: comps, count: a.count };
+                // 1. 裁剪源图到 canvas
+                c.drawImage(yuanTu, cr[0], cr[1], w, h, 0, 0, w, h);
+
+                // 2. 烘焙体积光影（方向光压暗暗部 + rim light）
+                // 光源方向：右上（模拟月光/天光从场景上方照射）
+                var imgData = c.getImageData(0, 0, w, h);
+                var d = imgData.data;
+                var guangX = 0.72, guangY = 0.28; // 光源方向（归一化）
+                for (var yi = 0; yi < h; yi++) {
+                    for (var xi = 0; xi < w; xi++) {
+                        var idx = (yi * w + xi) * 4;
+                        if (d[idx + 3] < 10) continue; // 跳过透明像素
+                        // 归一化坐标（以crop中心为原点）
+                        var nx = (xi / w - 0.5) * 2;
+                        var ny = (yi / h - 0.5) * 2;
+                        // 方向光照：点积决定亮度
+                        var dot = nx * guangX + ny * guangY;
+                        var zhaoLiang = 0.55 + 0.45 * Math.max(0, dot);
+                        // AO：边缘略暗（模拟接触遮挡）
+                        var distEdge = Math.min(Math.abs(nx), Math.abs(ny));
+                        var ao = 0.92 + 0.08 * Math.max(0, 1 - distEdge * 1.5);
+                        // Rim light：背光侧边缘提亮
+                        var rim = 0;
+                        if (dot < -0.1) {
+                            var edgeDist = Math.sqrt(nx*nx + ny*ny);
+                            if (edgeDist > 0.6) rim = 0.12 * (edgeDist - 0.6) * 2.5;
+                        }
+                        var factor = Math.min(1.2, Math.max(0.5, zhaoLiang * ao + rim));
+                        d[idx]     = Math.min(255, d[idx]     * factor);
+                        d[idx + 1] = Math.min(255, d[idx + 1] * factor);
+                        d[idx + 2] = Math.min(255, d[idx + 2] * factor);
                     }
-                    var G = huoQuGouZao(T);
-                    var geo = new G.BufferGeometry();
-                    var pos = readAcc(0), nrm = readAcc(1), uv = readAcc(2), idx = readAcc(3);
-                    geo.setAttribute('position', new G.BufferAttribute(pos.arr, 3));
-                    geo.setAttribute('normal', new G.BufferAttribute(nrm.arr, 3));
-                    geo.setAttribute('uv', new G.BufferAttribute(uv.arr, 2));
-                    geo.setIndex(new G.BufferAttribute(idx.arr, 1));
-                    geo.computeBoundingBox();
-                    var c = geo.boundingBox.getCenter(new T.Vector3());
-                    geo.translate(-c.x, -c.y, -c.z);
-                    geo.computeBoundingBox();
-                    var m = json.materials[0];
-                    var bcTexIdx = m.pbrMetallicRoughness.baseColorTexture.index;
-                    var img = json.images[json.textures[bcTexIdx].source];
-                    var bvb = json.bufferViews[img.bufferView];
-                    var pstart = binStart + (bvb.byteOffset || 0);
-                    var pngBytes = arrayBuffer.slice(pstart, pstart + bvb.byteLength);
-                    var blob = new Blob([pngBytes], { type: 'image/png' });
-                    var url = URL.createObjectURL(blob);
-                    var im = new Image();
-                    im.onload = function () {
-                        var cv = document.createElement('canvas');
-                        cv.width = im.naturalWidth || im.width;
-                        cv.height = im.naturalHeight || im.height;
-                        cv.getContext('2d').drawImage(im, 0, 0);
-                        var tex = new T.CanvasTexture(cv);
-                        tex.colorSpace = 'srgb';
-                        tex.anisotropy = 4;
-                        tex.flipY = false;   // GLB 纹理约定（与 GLTFLoader 一致）
-                        tex.needsUpdate = true;
-                        URL.revokeObjectURL(url);
-                        onDone(null, { geometry: geo, texture: tex });
-                    };
-                    im.onerror = function () { URL.revokeObjectURL(url); onDone(new Error('baseColor 贴图加载失败')); };
-                    im.src = url;
-                } catch (e) { onDone(e); }
+                }
+                c.putImageData(imgData, 0, 0);
+                return cv;
             }
 
-            // 草叶画布（静态交融层）
+            // ===== 从引擎场景中解析真实的 Group 构造器 =====
+            // 引擎的 window.__THREE 仅导出 Mesh/PlaneGeometry/CanvasTexture/MeshBasicMaterial/Color/Vector3，
+            // 未导出 Group；但场景图内部大量使用 Group（如根节点/相机层级）。
+            // 从已存在的 Group 对象上取回其 constructor 即可复用引擎的原生 Group 类。
+            function jieXiGroupCtor(sc) {
+                if (GroupCtor) return GroupCtor;
+                sc.traverse(function (o) {
+                    if (!GroupCtor && o.isGroup) GroupCtor = o.constructor;
+                });
+                return GroupCtor;
+            }
+
+            // ===== 创建单个身体部位 Mesh =====
+            function chuangJianBuWei(T, yuanTu, buWeiDef, kuo) {
+                var cr = buWeiDef.crop;
+                var pv = buWeiDef.pivot;
+
+                // 裁剪+光影烘焙后的 canvas → CanvasTexture
+                var guangCv = caiJianYuGuang(yuanTu, buWeiDef);
+                var wenLi = new T.CanvasTexture(guangCv);
+                wenLi.colorSpace = 'srgb';
+                wenLi.anisotropy = 4;
+                wenLi.needsUpdate = true;
+
+                // PlaneGeometry：保持裁剪区域原始比例（禁拉伸！）
+                var mianKuan = cr[2] * 0.005 * kuo;  // 缩放到合理世界尺寸
+                var mianGao  = cr[3] * 0.005 * kuo;
+                var jiHe = new T.PlaneGeometry(mianKuan, mianGao);
+
+                var caiZhi = new T.MeshBasicMaterial({
+                    map: wenLi, side: 2, transparent: true, opacity: 0,
+                    depthWrite: true, color: 0xffffff
+                });
+                caiZhi.needsUpdate = true;
+
+                var mian = new T.Mesh(jiHe, caiZhi);
+                mian.name = 'WuHaoYang_' + buWeiDef.id;
+
+                // 关节轴点：将 mesh 偏移使 pivot 点位于 Group 原点
+                // pivot [px,py] 是 crop 内的像素坐标，转换为归一化再转到 mesh 局部坐标
+                var pvNx = pv[0] / cr[2];          // 归一化 X (0~1)
+                var pvNy = pv[1] / cr[3];          // 归一化 Y (0~1)
+                var pvLx = (pvNx - 0.5) * mianKuan;  // mesh 局部 X（中心原点）
+                var pvLy = -(pvNy - 0.5) * mianGao;  // mesh 局部 Y（翻转：图像Y↓但3D Y↑）
+
+                // 创建关节 Group（旋转轴点在原点）
+                var guanJie = new GroupCtor();
+                guanJie.name = 'Joint_' + buWeiDef.id;
+                guanJie.add(mian);
+                mian.position.set(-pvLx, -pvLy, 0);  // pivot → Group 原点
+
+                return { group: guanJie, mesh: mian, material: caiZhi, texture: wenLi };
+            }
+
+            // ===== 组装完整角色并放入场景 =====
+            function zuZhuangJiaoSe(T, sc, yuanTu, kuo) {
+                genGen = new GroupCtor();
+                genGen.name = 'WuHaoYangRoot';
+
+                // 按 zOrder 排序创建部位
+                var sorted = SHEN_TI_BU_WEI.slice().sort(function(a,b){ return a.zOrder - b.zOrder; });
+                var totalW = 0, totalH = 0;
+
+                // 源图像尺寸常量（用于将像素坐标映射到3D世界坐标）
+                var IMG_W = 1537, IMG_H = 1023;
+                var S = 0.005 * kuo;  // 像素→世界单位缩放因子
+
+                for (var i = 0; i < sorted.length; i++) {
+                    var bw = chuangJianBuWei(T, yuanTu, sorted[i], kuo);
+
+                    // ★ 根因修复：将每个关节组定位到源图像中该部位pivot的绝对像素位置
+                    //    这样6个部位在genGen局部坐标系中按原图排列，旋转后重组出完整趴姿
+                    //    （v8原代码遗漏此步骤，导致所有部位重叠在原点）
+                    var cr = sorted[i].crop, pv = sorted[i].pivot;
+                    var pivotPx = cr[0] + pv[0];   // pivot在源图中的绝对X（像素）
+                    var pivotPy = cr[1] + pv[1];   // pivot在源图中的绝对Y（像素）
+                    bw.group.position.x = (pivotPx / IMG_W - 0.5) * IMG_W * S;
+                    bw.group.position.y = -(pivotPy / IMG_H - 0.5) * IMG_H * S;  // 图像Y轴向下→3D Y轴向上翻转
+
+                    genGen.add(bw.group);
+                    bw.mesh.renderOrder = 2 + sorted[i].zOrder;
+                    buWeiMeshes.push(bw);
+                    totalW += sorted[i].crop[2];
+                    totalH = Math.max(totalH, sorted[i].crop[3]);
+                }
+
+                // 计算落地足迹（用于阴影/草层尺寸）
+                jiaoYin.width  = totalW * 0.005 * kuo * 0.85;
+                jiaoYin.length = totalH * 0.005 * kuo * 0.75;
+
+                sc.add(genGen);
+
+                // 暴露动画接口：外部可通过操作各部位 Group 的 rotation 来做动画
+                window.__wuHaoYangAnim = {};
+                for (var j = 0; j < buWeiMeshes.length; j++) {
+                    (function(idx, bwObj) {
+                        window.__wuHaoYangAnim[bwObj.group.name.replace('Joint_','')] = function(rotX, rotY, rotZ) {
+                            if (rotX !== undefined) bwObj.group.rotation.x = rotX;
+                            if (rotY !== undefined) bwObj.group.rotation.y = rotY;
+                            if (rotZ !== undefined) bwObj.group.rotation.z = rotZ;
+                        };
+                    })(j, buWeiMeshes[j]);
+                }
+
+                return genGen;
+            }
+
+            // ===== 草叶画布（静态交融层）======
             function huiZhiCaoYe() {
                 var w = 1024, h = 640;
                 var cv = document.createElement('canvas');
@@ -672,8 +778,8 @@
                 shader.vertexShader = shader.vertexShader
                     .replace('#include <common>',
                         '#include <common>\nuniform float uCTime;\nuniform sampler2D uCWind;')
-                    .replace('#include <begin_vertex>', [
-                        '#include <begin_vertex>',
+                    .replace('#include <begin_vertex}', [
+                        '#include <begin_vertex}',
                         '{',
                         '    vec2 wxz = (modelMatrix * vec4(position, 1.0)).xz;',
                         '    float ws = 0.015;',
@@ -692,48 +798,53 @@
                     ].join('\n'));
             }
 
-            // 世界空间手绘摆放：模型平躺于草面，朝向相机
+            // ===== 世界空间摆放：角色平躺于草面，朝向相机 =====
             function baiFang() {
-                if (!zhuJueMian) return;
+                if (!genGen) return;
                 var T = window.__THREE;
                 var p = PEI_ZHI.weiZhi;
                 var chiCun = window.__experience.engine.sizes;
                 var kuo = PEI_ZHI.chiCun * ((chiCun && chiCun.height && chiCun.width / chiCun.height < 0.9) ? 0.7 : 1);
-                var vertHalf = jiHeHalf.z * kuo;   // 旋转后垂直半高
-                zhuJueMian.scale.set(kuo, kuo, kuo);
-                zhuJueMian.rotation.order = 'YXZ';
-                zhuJueMian.rotation.x = Math.PI / 2;   // 平躺
+
+                // 整体旋转：趴姿（绕X转90°使平面贴地）+ 面向相机
+                genGen.rotation.order = 'YXZ';
+                genGen.rotation.x = Math.PI / 2;  // 平躺
                 var cam = window.__experience.engine.camera.instance;
                 var camPos = new T.Vector3(); cam.getWorldPosition(camPos);
-                zhuJueMian.rotation.y = Math.atan2(camPos.x - p.x, camPos.z - p.z);
-                zhuJueMian.position.set(p.x, vertHalf + 0.02, p.z);
+                genGen.rotation.y = Math.atan2(camPos.x - p.x, camPos.z - p.z);
+
+                // 位置：落地（Y≈地面高度）
+                genGen.position.set(p.x, 0.03, p.z);
+                genGen.scale.set(kuo, kuo, kuo);
+
+                jiZhun.y = genGen.position.y;
+                jiZhun.kuo = kuo;
+
+                // 同步更新附属层（阴影、草交融、交互）
                 if (yingZiMian) {
                     yingZiMian.scale.set(kuo, kuo, 1);
                     yingZiMian.position.set(p.x, 0.02, p.z);
                     yingZiMian.rotation.order = 'YXZ';
-                    yingZiMian.rotation.y = zhuJueMian.rotation.y;
+                    yingZiMian.rotation.y = genGen.rotation.y;
                     yingZiMian.rotation.x = -Math.PI / 2;
                 }
                 if (rongCengMian) {
                     rongCengMian.scale.set(kuo, kuo, 1);
                     rongCengMian.position.set(p.x, 0.03, p.z);
                     rongCengMian.rotation.order = 'YXZ';
-                    rongCengMian.rotation.y = zhuJueMian.rotation.y;
+                    rongCengMian.rotation.y = genGen.rotation.y;
                     rongCengMian.rotation.x = -Math.PI / 2;
                 }
                 if (boLaMian) {
                     boLaMian.scale.set(kuo, kuo, 1);
                     boLaMian.position.set(p.x, 0.04, p.z);
                     boLaMian.rotation.order = 'YXZ';
-                    boLaMian.rotation.y = zhuJueMian.rotation.y;
+                    boLaMian.rotation.y = genGen.rotation.y;
                     boLaMian.rotation.x = -Math.PI / 2;
                 }
-                jiZhun.y = zhuJueMian.position.y;
-                jiZhun.xuanZhuan = zhuJueMian.rotation.x;
-                jiZhun.kuo = kuo;
             }
 
-            // 扒拉草丛交互
+            // ===== 扒拉草丛交互 =====
             function chuShiHuaBoLa() {
                 var w = 1024, h = 640;
                 boLaCv = document.createElement('canvas');
@@ -777,8 +888,8 @@
                 var cam = window.__experience.engine.camera.instance;
                 var chX = 0, chY = 0;
                 if (_charV === null) _charV = new window.__THREE.Vector3();
-                if (zhuJueMian && cam) {
-                    zhuJueMian.getWorldPosition(_charV);
+                if (genGen && cam) {
+                    genGen.getWorldPosition(_charV);
                     _charV.project(cam);
                     chX = _charV.x; chY = _charV.y;
                 }
@@ -821,22 +932,18 @@
                 if (boLaWenLi) boLaWenLi.needsUpdate = true;
             }
 
-            function jianZao(T, sc, geometry, texture) {
-                geometry.computeBoundingBox();
-                var bb = geometry.boundingBox;
-                jiHeHalf.x = bb.max.x; jiHeHalf.y = bb.max.y; jiHeHalf.z = bb.max.z;
-                jiaoYin.width = 2 * jiHeHalf.x;
-                jiaoYin.length = 2 * jiHeHalf.y;
+            // ===== 主构建函数 =====
+            function jianZao(T, sc, yuanTu) {
+                var chiCun = window.__experience.engine.sizes;
+                var kuo = PEI_ZHI.chiCun * ((chiCun && chiCun.height && chiCun.width / chiCun.height < 0.9) ? 0.7 : 1);
 
-                caiZhi = new T.MeshBasicMaterial({
-                    map: texture, side: 2, transparent: true, opacity: 0, depthWrite: true, color: 0xffffff
-                });
-                caiZhi.needsUpdate = true;
-                zhuJueMian = new T.Mesh(geometry, caiZhi);
-                zhuJueMian.name = 'WuHaoYang';
-                zhuJueMian.renderOrder = 2;
-                sc.add(zhuJueMian);
+                // 解析引擎原生 Group 构造器（window.__THREE 未导出）
+                jieXiGroupCtor(sc);
 
+                // 1. 组装分关节角色
+                zuZhuangJiaoSe(T, sc, yuanTu, kuo);
+
+                // 2. 草叶交融层
                 caoJunXing = zhaoCaoJunXing();
                 var caoYeWenLi = new T.CanvasTexture(huiZhiCaoYe());
                 caoYeWenLi.colorSpace = 'srgb';
@@ -853,6 +960,7 @@
                 rongCengMian.renderOrder = 3;
                 sc.add(rongCengMian);
 
+                // 3. 接地阴影
                 var renderer = window.__experience && window.__experience.engine && window.__experience.engine.renderer;
                 var hasRealShadows = !!(renderer && renderer.shadowMap && renderer.shadowMap.enabled);
                 if (!hasRealShadows) {
@@ -874,20 +982,36 @@
                     sc.add(yingZiMian);
                 }
 
+                // 4. 扒拉交互层
                 chuShiHuaBoLa();
+
+                // 5. 摆放
                 baiFang();
 
+                // 6. 渐显
+                var qiShi = Date.now();
+                var buWu = setInterval(function () {
+                    var bi = Math.min(1, (Date.now() - qiShi) / 1400);
+                    for (var i = 0; i < buWeiMeshes.length; i++) {
+                        buWeiMeshes[i].material.opacity = bi;
+                    }
+                    rongCengCaiZhi.opacity = bi;
+                    boLaCaiZhi.opacity = bi;
+                    if (bi >= 1) clearInterval(buWu);
+                }, 50);
+
+                // 7. 呼吸动画
                 var jianShaoYunDong = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
                 if (!jianShaoYunDong) {
                     var qiShiShiKe = performance.now();
                     (function huXi() {
-                        if (!zhuJueMian) return;
+                        if (!genGen) return;
                         var t = (performance.now() - qiShiShiKe) / 1000;
                         var bo = Math.sin((t / PEI_ZHI.huXiZhouQi) * Math.PI * 2);
                         var k = jiZhun.kuo;
-                        zhuJueMian.position.y = jiZhun.y + bo * PEI_ZHI.huXiFuDu * k;
+                        genGen.position.y = jiZhun.y + bo * PEI_ZHI.huXiFuDu * k;
                         var s = k * (1 + bo * 0.006);
-                        zhuJueMian.scale.set(s, s, s);
+                        genGen.scale.set(s, s, s);
                         requestAnimationFrame(huXi);
                     })();
                     (function xunHuan() {
@@ -899,26 +1023,22 @@
                     chongHuiBoLa();
                 }
 
-                var qiShi = Date.now();
-                var buWu = setInterval(function () {
-                    var bi = Math.min(1, (Date.now() - qiShi) / 1400);
-                    caiZhi.opacity = bi;
-                    rongCengCaiZhi.opacity = bi;
-                    boLaCaiZhi.opacity = bi;
-                    if (bi >= 1) clearInterval(buWu);
-                }, 50);
-
+                // 8. 昼夜调色
                 var RI_SE = '#d9a441';
                 setInterval(function () {
                     var gb = window.__grassOverride;
                     var shiYeJian = gb && gb[0] && String(gb[0]).toLowerCase() !== RI_SE;
                     var muBiaoSe = shiYeJian ? PEI_ZHI.yeJianYanSe : '#ffffff';
-                    if (caiZhi.color && caiZhi.color.getHexString() !== muBiaoSe.replace('#', '')) caiZhi.color.set(muBiaoSe);
                     var caoSe = gb && gb[0] ? gb[0] : RI_SE;
+                    for (var i = 0; i < buWeiMeshes.length; i++) {
+                        var mz = buWeiMeshes[i].material;
+                        if (mz.color && mz.color.getHexString() !== muBiaoSe.replace('#', '')) mz.color.set(muBiaoSe);
+                    }
                     if (rongCengCaiZhi.color && rongCengCaiZhi.color.getHexString() !== String(caoSe).toLowerCase().replace('#', '')) rongCengCaiZhi.color.set(caoSe);
                     if (boLaCaiZhi.color && boLaCaiZhi.color.getHexString() !== String(caoSe).toLowerCase().replace('#', '')) boLaCaiZhi.color.set(caoSe);
                 }, 600);
 
+                // 9. Resize 响应
                 var dingShi = null;
                 window.addEventListener('resize', function () {
                     clearTimeout(dingShi);
@@ -926,33 +1046,56 @@
                 });
             }
 
+            // ===== 加载序列 =====
             (function dengDai() {
                 if (!dengDaiTiaoJian()) { setTimeout(dengDai, 250); return; }
                 try { anZhuangShiChaZengQiang(); } catch (e) {}
+
                 var yiJianZao = false;
-                function chuFa(geometry, texture) {
+                function chuFa(img) {
                     if (yiJianZao) return;
                     yiJianZao = true;
-                    try { jianZao(window.__THREE, window.__experience.engine.scene, geometry, texture); } catch (e) {}
+                    try { jianZao(window.__THREE, window.__experience.engine.scene, img); } catch (e) {}
                 }
-                function jianZai() {
-                    fetch(encodeURI(GLB_URL)).then(function (r) { return r.arrayBuffer(); }).then(function (ab) {
-                        jieXiGLB(window.__THREE, ab, function (err, res) {
-                            if (err || !res) return;
-                            chuFa(res.geometry, res.texture);
-                        });
-                    }).catch(function () {});
-                }
+
+                // 加载源图片
+                var img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = function () { chuFa(img); };
+                img.onerror = function () {
+                    // fallback: 等 reveal 后再试
+                    function revealJiuXu() {
+                        var e = window.__experience;
+                        return !!(window.__dcm && e && e.revealMesh && e.revealMesh.startReveal &&
+                                  e.postProcessing && e.postProcessing.startReveal);
+                    }
+                    (function dengReveal() {
+                        if (revealJiuXu()) {
+                            var retryImg = new Image();
+                            retryImg.crossOrigin = 'anonymous';
+                            retryImg.onload = function () { chuFa(retryImg); };
+                            retryImg.onerror = function () { /* 静默失败 */ };
+                            retryImg.src = YUAN_TU_URL;
+                        } else { setTimeout(dengReveal, 300); }
+                    })();
+                };
+
+                // 启动加载（双通道：立即尝试 + 等 reveal 后重试）
+                img.src = YUAN_TU_URL;
                 function revealJiuXu() {
                     var e = window.__experience;
                     return !!(window.__dcm && e && e.revealMesh && e.revealMesh.startReveal &&
                               e.postProcessing && e.postProcessing.startReveal);
                 }
-                (function dengReveal() {
-                    if (revealJiuXu()) { setTimeout(jianZai, 2000); }
-                    else { setTimeout(dengReveal, 300); }
+                (function dengRevealFallback() {
+                    if (revealJiuXu() && !yiJianZao) {
+                        var fbImg = new Image();
+                        fbImg.crossOrigin = 'anonymous';
+                        fbImg.onload = function () { if (!yiJianZao) chuFa(fbImg); };
+                        fbImg.src = YUAN_TU_URL;
+                    } else { setTimeout(dengRevealFallback, 2000); }
                 })();
-                setTimeout(jianZai, 15000);
+                setTimeout(function () { if (!yiJianZao) { var ti = new Image(); ti.crossOrigin = 'anonymous'; ti.onload = function(){chuFa(ti)}; ti.src = YUAN_TU_URL; }}, 15000);
             })();
         })();
     </script>
