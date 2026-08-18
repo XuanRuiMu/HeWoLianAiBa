@@ -509,7 +509,7 @@
             // ===== 配置 =====
             var PEI_ZHI = {
                 weiZhi:     { x: 2.103, y: 0.02, z: 0.744 },
-                chiCun:     1.9,
+                chiCun:     0.25,
                 yeJianYanSe:'#cdbff0',
                 jiaoYingTouMingDu: 0.22,
                 shiChaBeiShu: 3,
@@ -684,7 +684,7 @@
 
                 // 源图像尺寸常量（用于将像素坐标映射到3D世界坐标）
                 var IMG_W = 1537, IMG_H = 1023;
-                var S = 0.005 * kuo;  // 像素→世界单位缩放因子
+                var S = 0.005;  // 像素→世界单位缩放因子（固定基准，总缩放由 genGen.scale 统一控制）
 
                 for (var i = 0; i < sorted.length; i++) {
                     var bw = chuangJianBuWei(T, yuanTu, sorted[i], kuo);
