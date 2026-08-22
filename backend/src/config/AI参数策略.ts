@@ -39,6 +39,14 @@ export interface CanShuShangXiaWen {
   changJing?: 'riChang' | 'chaoJia' | 'biaoBai' | 'langMan' | 'anWei' | 'shenJingBing' | string
 }
 
+/** 慢热型好感度评判加成系数（方案A：抵消前期冷淡惩罚） */
+export const MAN_RE_HAO_GAN_DU_JIA_CHENG = 1.15
+
+/** 判断是否为慢热型 */
+export function shiFouManRe(shangXiaWen?: CanShuShangXiaWen): boolean {
+  return shangXiaWen?.jiaoSe?.re_shen_lei_xing === '慢热'
+}
+
 const WEN_DU_XIA_XIAN = 0
 const WEN_DU_SHANG_XIAN = 2
 

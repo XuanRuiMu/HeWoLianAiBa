@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { jiSuanAIChanShu } from '../config/AI参数策略'
 import { AI_PEI_ZHI } from '../config/AI配置'
 
-const AI_MO_XING = 'deepseek-v4-flash'
+const AI_MO_XING = 'deepseek-v4-flash-vision-exp'
 
 describe('FP-01 AI参数策略引擎', () => {
   it('不传上下文 → 仅用基座值（向后兼容，温度/模型不变）', () => {
@@ -96,7 +96,7 @@ describe('FP-01 AI参数策略引擎', () => {
     expect(jiSuanAIChanShu('qingGanFenXi').top_p).toBe(0.2)
   })
 
-  it('所有场景 moXing 固定为 deepseek-v4-flash', () => {
+  it('所有场景 moXing 固定为 deepseek-v4-flash-vision-exp', () => {
     for (const leiXing of Object.keys(AI_PEI_ZHI.moXing) as (keyof typeof AI_PEI_ZHI.moXing)[]) {
       expect(jiSuanAIChanShu(leiXing).moXing).toBe(AI_MO_XING)
     }

@@ -9,6 +9,7 @@ import { zhaXingBianTi, type MBTILeiXing } from '../config/角色配置'
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import { type CanShuShangXiaWen } from '../config/AI参数策略'
+import { meiTiZhanShiWenBen } from './AI视觉辅助'
 import type { GongJianShiJianJieGuo } from '../types'
 
 export interface FuPanShengChengJieGuo {
@@ -49,14 +50,19 @@ interface HaoGanDuGuiJi {
   guanXiJieDuan: string
 }
 
+interface FuPanXiaoXiXiang {
+  fa_song_zhe: string
+  nei_rong: string
+  shi_jian: string
+  yi_che_hui?: boolean
+  yuan_shi_nei_rong?: string | null
+  mei_ti_lei_bie?: string | null
+  mei_ti_shi_chang_hao_miao?: number | null
+  mei_ti_yuan_shi_wen_jian_ming?: string | null
+}
+
 interface FuPanPromptCanShu {
-  xiaoXiLieBiao: {
-    fa_song_zhe: string
-    nei_rong: string
-    shi_jian: string
-    yi_che_hui?: boolean
-    yuan_shi_nei_rong?: string | null
-  }[]
+  xiaoXiLieBiao: FuPanXiaoXiXiang[]
   jiaoSeJiBenXinXi: JiaoSeJiBenXinXi
   zhaXingTeZhi?: ZhaXingTeZhi
   haoGanDuGuiJi?: HaoGanDuGuiJi
@@ -84,14 +90,23 @@ function jieXiJSONXiangYing(neiRong: string): FuPanJSONJieGou {
   }
 }
 
+function xiaoXiZhanShiWenBen(xiaoXi: FuPanXiaoXiXiang): string {
+  const meiTiMiaoShu = meiTiZhanShiWenBen(xiaoXi.mei_ti_lei_bie, {
+    yiCheHui: xiaoXi.yi_che_hui,
+    shiChangHaoMiao: xiaoXi.mei_ti_shi_chang_hao_miao,
+    yuanShiWenJianMing: xiaoXi.mei_ti_yuan_shi_wen_jian_ming,
+  })
+  return meiTiMiaoShu || xiaoXi.nei_rong
+}
+
 function gouJianXiaoXiWenBen(
   xiaoXiLieBiao: FuPanPromptCanShu['xiaoXiLieBiao'],
 ): string {
   return xiaoXiLieBiao
     .map(
       (xiaoXi, xuHao) =>
-        `${xuHao + 1}. [${xiaoXi.shi_jian}] ${xiaoXi.fa_song_zhe}: ${xiaoXi.nei_rong}${
-          xiaoXi.yi_che_hui ? `（已撤回，原始内容：${xiaoXi.yuan_shi_nei_rong || ''}）` : ''
+        `${xuHao + 1}. [${xiaoXi.shi_jian}] ${xiaoXi.fa_song_zhe}: ${xiaoXiZhanShiWenBen(xiaoXi)}${
+          xiaoXi.yi_che_hui && xiaoXi.yuan_shi_nei_rong ? `（已撤回，原始内容：${xiaoXi.yuan_shi_nei_rong}）` : ''
         }`,
     )
     .join('\n')
@@ -335,14 +350,12 @@ async function huoQuHaoGanDuGuiJi(
   }
 }
 
-function gouJianDuiHuaWenBen(
-  xiaoXiLieBiao: { fa_song_zhe: string; nei_rong: string; shi_jian: string; yi_che_hui?: boolean; yuan_shi_nei_rong?: string | null }[],
-): string {
+function gouJianDuiHuaWenBen(xiaoXiLieBiao: FuPanXiaoXiXiang[]): string {
   if (xiaoXiLieBiao.length === 0) return ''
   return xiaoXiLieBiao
     .map(
       (xiaoXi) =>
-        `[${xiaoXi.shi_jian}] ${xiaoXi.fa_song_zhe}: ${xiaoXi.nei_rong}${
+        `[${xiaoXi.shi_jian}] ${xiaoXi.fa_song_zhe}: ${xiaoXiZhanShiWenBen(xiaoXi)}${
           xiaoXi.yi_che_hui && xiaoXi.yuan_shi_nei_rong ? `（已撤回，原始：${xiaoXi.yuan_shi_nei_rong}）` : ''
         }`,
     )
@@ -401,6 +414,9 @@ export async function shengChengFuPan(
       shi_jian: geShiHuaShiJian(xiaoXi.shi_jian_chuo),
       yi_che_hui: xiaoXi.yi_che_hui,
       yuan_shi_nei_rong: xiaoXi.yuan_shi_nei_rong,
+      mei_ti_lei_bie: xiaoXi.mei_ti_lei_bie,
+      mei_ti_shi_chang_hao_miao: xiaoXi.mei_ti_shi_chang_hao_miao,
+      mei_ti_yuan_shi_wen_jian_ming: xiaoXi.mei_ti_yuan_shi_wen_jian_ming,
     }))
 
   // 秘籍通关：截断到秘籍使用前，仅保留秘籍前的真实对话

@@ -309,6 +309,8 @@ const draggingState = ref<FenLeiZhuangTai | null>(null)
 const draggingId = ref<string | null>(null)
 const draggingYuanSuoYin = ref<number>(-1)
 const mubiaoSuoYin = ref<number>(-1)
+// 本次落定是否已由 customUpdate 权威处理（防止 @end 兜底二次重排/重复持久化）
+const benCiYiYouCustomUpdateChuLi = ref(false)
 const tuoZhuaiRongQi = ref<HTMLElement | null>(null)
 const yuanXinZuoBiao = ref<number[]>([])
 const xuanZhongIds = ref<Set<string>>(new Set())
@@ -860,6 +862,7 @@ function yingYongFlip() {
 
 function onTuoZhuaiKaiShi(zhuangTai: FenLeiZhuangTai, shiJian?: TuoZhuaiShiJian) {
   tuoZhuaiZhong.value = true
+  benCiYiYouCustomUpdateChuLi.value = false
   // 记录拖拽前该分组的 id 顺序（固定原始顺序），用于实时预览与 @end/customUpdate 提交
   tuoZhuaiQianIdShunXu.value[zhuangTai] = fenLeiZu[zhuangTai]
     .map((item) => item.id)
@@ -991,7 +994,56 @@ function onTuoZhuaiGengXin(evt: TuoZhuaiShiJian) {
         ? evt.newIndex
         : -1
   yingYongZuiZhongChongPai(zt, oldIdx, newIdx)
+  benCiYiYouCustomUpdateChuLi.value = true
   chongZhiYuLan()
+}
+
+// fallback 落点：拖拽事件索引不可信时（force-fallback 模式索引全等于起始位，事件索引与 DOM 落点读物均不可靠），
+// 以「放下瞬间指针坐标」对照各卡片中心推算目标下标并权威重排。
+function changShiZhiZhenLuoDianChongPai(zt: FenLeiZhuangTai, shiJian?: TuoZhuaiShiJian): boolean {
+  const yuanShiJian = shiJian?.originalEvent as MouseEvent | TouchEvent | undefined
+  const zhiBiaoY =
+    yuanShiJian && 'clientY' in yuanShiJian
+      ? (yuanShiJian as MouseEvent).clientY
+      : (yuanShiJian as TouchEvent | undefined)?.changedTouches?.[0]?.clientY
+  if (typeof zhiBiaoY !== 'number') return false
+
+  const rongQi =
+    (shiJian?.to as HTMLElement | undefined) ??
+    (shiJian?.from as HTMLElement | undefined) ??
+    tuoZhuaiRongQi.value
+  if (!rongQi || typeof rongQi.querySelectorAll !== 'function') return false
+
+  // 被拖卡片 id：优先结束事件携带的 item，其次 start 时的记录
+  const beiTuoId = shiJian?.item?.getAttribute?.('data-id') ?? draggingId.value
+  if (!beiTuoId) return false
+
+  const qianZhao =
+    tuoZhuaiQianIdShunXu.value[zt].length > 0
+      ? tuoZhuaiQianIdShunXu.value[zt]
+      : fenLeiZu[zt].map((item) => item.id).filter((id): id is string => !!id)
+  const yuanSuoYin = qianZhao.indexOf(beiTuoId)
+  if (yuanSuoYin < 0) return false
+
+  // DOM 读物按当前渲染序（可能是预览序），按 id 归一到拖拽前顺序，与 jiSuanMuBiaoSuoYin 语义对齐
+  const zhongXinAnId = new Map<string, number>()
+  ;(Array.from(rongQi.querySelectorAll('.zhanji-kapian')) as HTMLElement[]).forEach((el) => {
+    const id = el.getAttribute('data-id')
+    if (!id) return
+    const r = el.getBoundingClientRect()
+    zhongXinAnId.set(id, r.top + r.height / 2)
+  })
+  const zhongXin: number[] = []
+  for (const id of qianZhao) {
+    const c = zhongXinAnId.get(id)
+    if (typeof c === 'number') zhongXin.push(c)
+  }
+  if (zhongXin.length !== qianZhao.length) return false
+
+  const muBiao = jiSuanMuBiaoSuoYin(zhongXin, zhiBiaoY, yuanSuoYin)
+  if (muBiao === yuanSuoYin) return false
+  yingYongZuiZhongChongPai(zt, yuanSuoYin, muBiao)
+  return true
 }
 
 function onTuoZhuaiJieShu(zhuangTai: FenLeiZhuangTai, shiJian?: TuoZhuaiShiJian) {
@@ -1009,10 +1061,14 @@ function onTuoZhuaiJieShu(zhuangTai: FenLeiZhuangTai, shiJian?: TuoZhuaiShiJian)
   // 最终重排与持久化交由 customUpdate（库 onUpdate 钩子）在 onEnd 之后统一处理：
   // 该钩子以「原始顺序 + 落定索引」对 v-model(fenLeiZu) 做一次性权威重排，
   // 从根本上避免「预览改写 v-model → 库内部 onUpdate 二次换位」的双重换位回弹。
-  // 若本次为原地释放（无重排，customUpdate 不会触发），用微任务兜底复位预览与拖拽态。
-  // 兜底：若 customUpdate 因故未触发（极少见），用落定事件索引重排，避免拖拽失效
+  // 兜底（customUpdate 未触发时）：优先用事件索引重排；索引不可信时用指针坐标推算落点；
+  // 两者均无（含无拖拽上下文的直接调用，此时 DOM/模型已按新顺序落位）则以当前模型顺序持久化。
   Promise.resolve().then(() => {
-    if (draggingState.value !== zhuangTai) return
+    if (benCiYiYouCustomUpdateChuLi.value) {
+      benCiYiYouCustomUpdateChuLi.value = false
+      chongZhiYuLan()
+      return
+    }
     const oldIdx =
       typeof shiJian?.oldDraggableIndex === 'number'
         ? shiJian.oldDraggableIndex
@@ -1025,7 +1081,12 @@ function onTuoZhuaiJieShu(zhuangTai: FenLeiZhuangTai, shiJian?: TuoZhuaiShiJian)
         : typeof shiJian?.newIndex === 'number'
           ? shiJian.newIndex
           : -1
-    yingYongZuiZhongChongPai(zhuangTai, oldIdx, newIdx)
+    if (oldIdx >= 0 && newIdx >= 0 && oldIdx !== newIdx) {
+      yingYongZuiZhongChongPai(zhuangTai, oldIdx, newIdx)
+    } else if (!changShiZhiZhenLuoDianChongPai(zhuangTai, shiJian)) {
+      // 无可信落点：以当前模型（已渲染 DOM）顺序为权威，仅同步预览并持久化
+      yingYongZuiZhongChongPai(zhuangTai, -1, -1)
+    }
     chongZhiYuLan()
   })
 }

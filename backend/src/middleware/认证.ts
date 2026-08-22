@@ -18,11 +18,17 @@ export const gongKaiLuJingBaiMingDan: GongKaiLuJing[] = [
   { fang_fa: 'POST', lu_jing: '/api/认证/注册' },
   { fang_fa: 'POST', lu_jing: '/api/认证/登录' },
   { fang_fa: 'GET', lu_jing: '/api/健康' },
+  // 媒体下载走签名 URL 自鉴权（img/audio 标签无法携带 Authorization 头）
+  { fang_fa: 'GET', lu_jing: '/api/媒体/' },
 ]
 
 function luJingPiPei(qingQiuLuJing: string, muBiaoLuJing: string): boolean {
   if (muBiaoLuJing.includes('?')) {
     return qingQiuLuJing.startsWith(muBiaoLuJing.split('?')[0])
+  }
+  // 以 / 结尾的白名单条目按前缀匹配
+  if (muBiaoLuJing.endsWith('/')) {
+    return qingQiuLuJing.startsWith(muBiaoLuJing)
   }
   return qingQiuLuJing === muBiaoLuJing
 }

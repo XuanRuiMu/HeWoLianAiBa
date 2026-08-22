@@ -1,4 +1,5 @@
 import { AI_PEI_ZHI } from '../config/AI配置'
+import { meiTiZhanShiWenBen } from './AI视觉辅助'
 import type {
   AIJiaoSeXinXi,
   AIYinQingShuRu,
@@ -40,6 +41,20 @@ function huoQuXinQing(haoGanDu: HaoGanDuXinXi): string {
   return xinQingMap[jieDuan] || '平淡'
 }
 
+function meiTiHuoChunWenBen(xiaoXi: DuiHuaLiShiXiang): string {
+  const meiTiMiaoShu = meiTiZhanShiWenBen(xiaoXi.meiTiLeiBie, {
+    yiCheHui: xiaoXi.yi_che_hui,
+    shiChangHaoMiao: xiaoXi.meiTiShiChangHaoMiao,
+    yuanShiWenJianMing: xiaoXi.yuanShiWenJianMing,
+  })
+  if (meiTiMiaoShu) return meiTiMiaoShu
+  let neiRong = xiaoXi.nei_rong
+  if (xiaoXi.yi_che_hui && xiaoXi.yuan_shi_nei_rong) {
+    neiRong = `[已撤回，原始内容：${xiaoXi.yuan_shi_nei_rong}]`
+  }
+  return neiRong
+}
+
 function geShiHuaLiShiXiaoXi(
   liShi: DuiHuaLiShiXiang[],
   jiaoSeWeiXinMing: string,
@@ -53,11 +68,7 @@ function geShiHuaLiShiXiaoXi(
       const faSongZhe =
         xiaoXi.fa_song_zhe_lei_xing === 'jiaose' ? jiaoSeWeiXinMing : yongHuMing
       const shiJian = xiaoXi.shi_jian
-      let neiRong = xiaoXi.nei_rong
-      if (xiaoXi.yi_che_hui && xiaoXi.yuan_shi_nei_rong) {
-        neiRong = `[已撤回，原始内容：${xiaoXi.yuan_shi_nei_rong}]`
-      }
-      return `${faSongZhe}(${shiJian}): ${neiRong}`
+      return `${faSongZhe}(${shiJian}): ${meiTiHuoChunWenBen(xiaoXi)}`
     })
     .join('\n')
 }
@@ -284,25 +295,46 @@ export function gouJianQingGanFenXiPrompt(
   ].join('\n')
 }
 
+import type { CanShuShangXiaWen } from '../config/AI参数策略'
+
 export function gouJianHaoGanDuPingPanPrompt(
   yongHuXiaoXi: string,
   jiaoSeHuiFu: string,
   jiaoSeMing: string,
+  shangXiaWen?: CanShuShangXiaWen,
 ): string {
+  const manReTiShi = shangXiaWen?.jiaoSe?.re_shen_lei_xing === '慢热'
+    ? '\n※ 对方是慢热性格，平常聊天也要给适度肯定：信任/关怀维度基础分 +15~25，不需剧情冲击。'
+    : ''
+
   return [
     `看看 ${jiaoSeMing} 和用户这段一来一往，角色的好感会有啥变化。`,
     `用户消息：${yongHuXiaoXi}`,
     `${jiaoSeMing} 回复：${jiaoSeHuiFu}`,
     '',
     '从信任、亲密、趣味、关怀四个感觉各估一个变化值，再补一句为啥。',
+    '值为任意整数（正负均可），系统会自动加权并按当前好感度衰减。',
+    '',
+    '【评分参考——正常聊天校准锚点】：',
+    '- 纯寒暄/无感回应：四维各 -5~+5（总分约 ±3）',
+    '- 正常分享日常/回应话题：信任/亲密 +10~20，趣味/关怀 +8~15（总分约 +12~18）',
+    '- 有共鸣/有情绪价值/有试探：信任/亲密 +25~45，趣味/关怀 +20~35（总分约 +25~40）',
+    '- 很懂对方/给到情绪价值/暧昧拉扯：四维各 +45~80（总分约 +45~70）',
+    '- 这条消息让你「感到前所未有的被看见/被冒犯」：四维可达 ±120~200（总分约 ±100~170）',
+    '',
+    '【极罕见·叙事裁决】（全游戏 0-1 次，仅在 Director 层单独输出，不走四维系统）：',
+    '若用户消息精准回应终极追问/直击核心渴望/踩中禁忌 → 由 Director 给出「叙事裁决」，',
+    '直接改总分/直接结局，完全绕过四维加权与衰减。',
+    '',
     '格式：{',
-    '  "信任度变化": number（-3到3）,',
-    '  "亲密度变化": number（-3到3）,',
-    '  "趣味度变化": number（-3到3）,',
-    '  "关怀度变化": number（-3到3）,',
+    '  "信任度变化": number,',
+    '  "亲密度变化": number,',
+    '  "趣味度变化": number,',
+    '  "关怀度变化": number,',
     '  "理由": "string"',
     '}',
-    '只输出 JSON。',
+    manReTiShi,
+    '只输出 JSON。视实际情况，根据用户发言内容、语气、情感深度、与人设的契合度自由给分，不拘泥于上述档位。',
   ].join('\n')
 }
 
@@ -388,11 +420,7 @@ export function geShiHuaJunShiLiShi(
     .map((xiaoXi) => {
       const faSongZhe =
         xiaoXi.fa_song_zhe_lei_xing === 'jiaose' ? jiaoSeMing : '用户'
-      let neiRong = xiaoXi.nei_rong
-      if (xiaoXi.yi_che_hui && xiaoXi.yuan_shi_nei_rong) {
-        neiRong = `[已撤回，原始内容：${xiaoXi.yuan_shi_nei_rong}]`
-      }
-      return `[${xiaoXi.shi_jian}] ${faSongZhe}: ${neiRong}`
+      return `[${xiaoXi.shi_jian}] ${faSongZhe}: ${meiTiHuoChunWenBen(xiaoXi)}`
     })
     .join('\n')
 }

@@ -14,6 +14,7 @@ import renZhengLuYou from './routes/认证'
 import jiaoSeLuYou from './routes/角色'
 import jiaoSeXiangQingLuYou from './routes/角色详情'
 import xiaoXiLuYou from './routes/消息'
+import meiTiLuYou from './routes/媒体'
 import haoGanDuLuYou from './routes/好感度'
 import zhanJiLuYou from './routes/战绩'
 import tongZhiLuYou from './routes/通知'
@@ -24,6 +25,7 @@ import jianKangJianChaLuYou, { qingQiuJiShu, qingQiuHaoShi } from './routes/健�
 import riZhiJieShouLuYou from './routes/日志接收'
 import { renZhengSocketZhongJianJian } from './socket/认证'
 import { 初始化聊天Socket } from './socket/聊天'
+import { chuShiHuaTongHuaSocket } from './socket/通话'
 import { chuShiHuaTongZhiSocket } from './socket/通知'
 import { chuShiHuaDuoSheSocket } from './socket/夺舍'
 import { sheZhiIo } from './socket/io'
@@ -126,6 +128,7 @@ yingYong.use('/api/认证', renZhengLuYou)
 yingYong.use('/api/生成角色', jiaoSeLuYou)
 yingYong.use('/api/角色', jiaoSeXiangQingLuYou)
 yingYong.use('/api/聊天', xiaoXiLuYou)
+yingYong.use('/api/媒体', meiTiLuYou)
 yingYong.use('/api/好感度', haoGanDuLuYou)
 yingYong.use('/api/战绩', zhanJiLuYou)
 yingYong.use('/api/通知', tongZhiLuYou)
@@ -157,6 +160,7 @@ const io = new Server(fuWuQi, {
 io.use(renZhengSocketZhongJianJian)
 sheZhiIo(io)
 初始化聊天Socket(io)
+chuShiHuaTongHuaSocket(io)
 chuShiHuaTongZhiSocket(io)
 chuShiHuaDuoSheSocket(io)
 

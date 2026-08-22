@@ -8,6 +8,7 @@ import {
   huoQuZuiJinDuiHuaLiShi,
 } from './AI输入准备'
 import { cheHuiJiaoSeXiaoXi } from './消息'
+import { meiTiZhanShiWenBen } from './AI视觉辅助'
 import {
   jianCeYongHuXiaoXiBingChuLi,
   chuLiAIHuiFuHouJieShuJianCha,
@@ -313,10 +314,27 @@ export class AI回复调度器 {
     return yunXingAIYinQing(输入)
   }
 
-  private 获取最新用户消息(历史消息: Array<{ fa_song_zhe_lei_xing: string; nei_rong: string }>): string {
+  private 获取最新用户消息(历史消息: Array<{
+    fa_song_zhe_lei_xing: string
+    nei_rong: string
+    meiTiLeiBie?: string
+    meiTiShiChangHaoMiao?: number | null
+    yuanShiWenJianMing?: string
+    yi_che_hui?: boolean
+  }>): string {
     for (let i = 历史消息.length - 1; i >= 0; i--) {
       if (历史消息[i].fa_song_zhe_lei_xing === 'yonghu') {
-        return 历史消息[i].nei_rong
+        const xiang = 历史消息[i]
+        // 媒体消息内容为空字符串，必须以统一文本化描述作为语义表示，
+        // 否则 AI 引擎「空消息」检查点会误判为空并直接已读不回
+        const meiTiWenBen = xiang.meiTiLeiBie
+          ? meiTiZhanShiWenBen(xiang.meiTiLeiBie, {
+              yiCheHui: xiang.yi_che_hui,
+              shiChangHaoMiao: xiang.meiTiShiChangHaoMiao,
+              yuanShiWenJianMing: xiang.yuanShiWenJianMing,
+            })
+          : null
+        return meiTiWenBen || xiang.nei_rong
       }
     }
     return ''

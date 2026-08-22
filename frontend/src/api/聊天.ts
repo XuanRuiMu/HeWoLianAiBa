@@ -10,7 +10,15 @@ import type {
   ShengChengJiaoSeJieGuo,
   Jiaose,
   FanKuiTiJiao,
+  DuoMeiTiLeiXing,
 } from '@/types'
+
+export const DUO_MEI_TI_LEI_XING_SHANG_CHUAN_LEI_BIE: Record<DuoMeiTiLeiXing, ShangChuanLeiBie> = {
+  tuPian: 'tupian',
+  biaoQingBao: 'biaoqingshu',
+  yuYin: 'yuyin',
+  wenJian: 'wenjian',
+}
 
 export async function chuangJianHuiHua(jiaoSeId: string): Promise<HuiHua> {
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: HuiHua }>('/聊天/会话', {
@@ -42,14 +50,63 @@ export async function huoQuXiaoXi(
   }
 }
 
+export type ShangChuanLeiBie = 'tupian' | 'biaoqingshu' | 'yuyin' | 'wenjian'
+
+export interface MeiTiShangChuanJieGuo {
+  mediaId: string
+  sha256: string
+  mime: string
+  daXiao: number
+  leiBie: string
+  yuanShiWenJianMing: string
+  mei_ti_url: string | null
+}
+
+const MO_REN_SHANG_CHUAN_WEN_JIAN_MING: Record<ShangChuanLeiBie, string> = {
+  tupian: 'tupian.jpg',
+  biaoqingshu: 'biaoqingshu.png',
+  yuyin: 'yuyin.webm',
+  wenjian: 'wenjian',
+}
+
+export async function shangChuanMeiTi(
+  huiHuaId: string,
+  wenJian: File | Blob,
+  leiBie: ShangChuanLeiBie,
+): Promise<MeiTiShangChuanJieGuo> {
+  const formData = new FormData()
+  const wenJianMing =
+    wenJian instanceof File && wenJian.name
+      ? wenJian.name
+      : MO_REN_SHANG_CHUAN_WEN_JIAN_MING[leiBie]
+  formData.append('file', wenJian, wenJianMing)
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: MeiTiShangChuanJieGuo }>(
+    `/聊天/会话/${huiHuaId}/媒体`,
+    formData,
+    {
+      params: { leiBie },
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000,
+    },
+  )
+  return 响应.data.shu_ju
+}
+
 export async function faSongXiaoXi(
   huiHuaId: string,
   neiRong: string,
   keHuDuanXuHao?: number | null,
+  leiXing?: string,
+  meiTiId?: string | null,
 ): Promise<{ xiaoXi: Xiaoxi; shiMiJi: boolean }> {
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: Xiaoxi & { shi_mi_ji?: boolean } }>(
     `/聊天/会话/${huiHuaId}/消息`,
-    { neiRong, 客户端序号: keHuDuanXuHao ?? null },
+    {
+      neiRong,
+      客户端序号: keHuDuanXuHao ?? null,
+      leiXing: leiXing || 'wenben',
+      meiTiId: meiTiId ?? null,
+    },
   )
   const shuJu = 响应.data.shu_ju
   return {
@@ -237,14 +294,6 @@ export interface 通关结果 {
   [key: string]: unknown
 }
 
-export interface 成就项 {
-  id: string
-  ming_cheng: string
-  miao_shu?: string
-  yi_wan_cheng?: boolean
-  [key: string]: unknown
-}
-
 export async function chuLiGaoBai(jiaoSeId: string, xiaoXi: string): Promise<通关结果> {
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: 通关结果 }>('/通关/告白', {
     jiaoSeId,
@@ -257,11 +306,6 @@ export async function queRenGuanXi(jiaoSeId: string): Promise<通关结果> {
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: 通关结果 }>('/通关/确认', {
     jiaoSeId,
   })
-  return 响应.data.shu_ju
-}
-
-export async function huoQuChengJiu(): Promise<成就项[]> {
-  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: 成就项[] }>('/通关/成就')
   return 响应.data.shu_ju
 }
 

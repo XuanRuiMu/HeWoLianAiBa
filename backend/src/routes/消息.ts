@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import type { Response } from 'express'
+import Busboy from 'busboy'
 import { huoQuFanYi } from '../config/translations'
 import { chengGongXiangYing, shiBaiXiangYing } from '../utils/xiangying'
 import { liaoTianXianLiu, aiQingQiuXianLiu } from '../middleware/限流'
@@ -10,6 +11,8 @@ import {
   cheHuiYongHuXiaoXi,
   biaoJiSuoYouWeiDu,
 } from '../services/消息'
+import { liuShiBaoCunMeiTi, MeiTiCunChuCuoWu, shengChengQianMingURL } from '../services/媒体存储'
+import { shiHeFaLeiBie, shiHeFaXiaoXiLeiXing } from '../config/媒体配置'
 import { shenHeNeiRongAnQuan } from '../services/安全审核'
 import { 获取IP, 记录违规 } from '../services/IP封禁'
 import { 聊天内容验证中间件 } from '../middleware/输入验证'
@@ -20,6 +23,7 @@ import {
   huoQuJunShiZhiDaoZhuangTaiXinXi,
 } from '../services/军师'
 import { shanChuJunShiZhiDaoZhuangTai } from '../services/军师缓存'
+import { yanZhengUUID } from '../utils/验证'
 import {
   baoCunJiaoSeXiaoXi,
 } from '../services/AI输入准备'
@@ -148,6 +152,101 @@ luYou.get(
 )
 
 luYou.post(
+  '/会话/:huiHuaId/媒体',
+  liaoTianXianLiu,
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+
+    const jiaoSeId = String(qingQiu.params.huiHuaId || '')
+    if (!jiaoSeId) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    }
+
+    const body = qingQiu.body as Record<string, unknown>
+    const leiBie = typeof qingQiu.query.leiBie === 'string' ? qingQiu.query.leiBie : body['leiBie']
+    if (!shiHeFaLeiBie(leiBie)) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'meiTiLeiXingFeiFa'))
+    }
+
+    const contentType = String(qingQiu.headers['content-type'] || '')
+    if (!contentType.toLowerCase().includes('multipart/form-data')) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'meiTiQueShaoWenJian'))
+    }
+
+    await new Promise<void>((jieJue) => {
+      let yiXiangYing = false
+      let chuLiGuoWenJian = false
+
+      // defParamCharset: 'utf8' —— 中文文件名按 RFC 5987 UTF-8 解码，避免 Latin-1 乱码
+      const busboy = Busboy({ headers: qingQiu.headers, defParamCharset: 'utf8' })
+
+      busboy.on('file', (_fieldMing, wenJianLiu, xinXi) => {
+        if (yiXiangYing || chuLiGuoWenJian) {
+          wenJianLiu.resume()
+          return
+        }
+        chuLiGuoWenJian = true
+        liuShiBaoCunMeiTi(
+          wenJianLiu,
+          xinXi.filename || 'weimingming',
+          xinXi.mimeType || '',
+          leiBie,
+          yongHu.yongHuId,
+        )
+          .then((jieGuo) => {
+            yiXiangYing = true
+            chengGongXiangYing(xiangYing, {
+              mediaId: jieGuo.mediaId,
+              sha256: jieGuo.sha256,
+              mime: jieGuo.mime,
+              daXiao: jieGuo.daXiao,
+              leiBie: jieGuo.leiBie,
+              yuanShiWenJianMing: jieGuo.yuanShiWenJianMing,
+              mei_ti_url: shengChengQianMingURL(jieGuo.sha256),
+            })
+          })
+          .catch((cuoWu) => {
+            yiXiangYing = true
+            if (cuoWu instanceof MeiTiCunChuCuoWu) {
+              shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', cuoWu.fanYiJian))
+              return
+            }
+            console.error('媒体上传失败', cuoWu)
+            shiBaiXiangYing(xiangYing, 500, huoQuFanYi('liaoTian', 'meiTiShangChuanShiBai'))
+          })
+          .finally(() => {
+            // 服务在校验失败时可能未消费文件流；排空以避免 busboy 因背压挂起
+            if (!wenJianLiu.readableEnded) {
+              wenJianLiu.resume()
+            }
+          })
+      })
+
+      busboy.on('error', (cuoWu) => {
+        if (!yiXiangYing) {
+          yiXiangYing = true
+          console.error('媒体解析失败', cuoWu)
+          shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
+        }
+      })
+
+      busboy.on('close', () => {
+        if (!chuLiGuoWenJian && !yiXiangYing) {
+          yiXiangYing = true
+          shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'meiTiQueShaoWenJian'))
+        }
+        jieJue()
+      })
+
+      qingQiu.pipe(busboy)
+    })
+  },
+)
+
+luYou.post(
   '/会话/:huiHuaId/消息',
   liaoTianXianLiu,
   聊天内容验证中间件,
@@ -158,9 +257,30 @@ luYou.post(
     }
 
     const jiaoSeId = String(qingQiu.params.huiHuaId || '')
-    const neiRong = huoQuZiFuChuan(qingQiu.body as Record<string, unknown>, 'neiRong', 'nei_rong')
+    const body = qingQiu.body as Record<string, unknown>
+    const neiRong = huoQuZiFuChuan(body, 'neiRong', 'nei_rong')
+    const yuanLeiXing = huoQuZiFuChuan(body, 'leiXing', 'lei_xing')
+    const leiXing = yuanLeiXing || 'wenben'
+    if (!shiHeFaXiaoXiLeiXing(leiXing)) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'xiaoXiLeiXingFeiFa'))
+    }
+    const shiMeiTi = leiXing !== 'wenben'
 
-    if (!jiaoSeId || !neiRong.trim()) {
+    // 媒体消息：meiTiId 必填且格式合法（存在性与归属校验在消息服务内完成）
+    let meiTiId: string | null = null
+    if (shiMeiTi) {
+      const yuanMeiTiId = typeof body['meiTiId'] === 'string'
+        ? body['meiTiId']
+        : typeof body['mei_ti_id'] === 'string'
+          ? body['mei_ti_id']
+          : ''
+      if (!yuanMeiTiId || !yanZhengUUID(yuanMeiTiId)) {
+        return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'meiTiBiXuXianChuanShu'))
+      }
+      meiTiId = yuanMeiTiId
+    }
+
+    if (!jiaoSeId || (!shiMeiTi && !neiRong.trim())) {
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
     }
 
@@ -178,21 +298,24 @@ luYou.post(
     }
 
     try {
-      const anQuanJieGuo = await shenHeNeiRongAnQuan(neiRong)
-      if (anQuanJieGuo.wei_gui) {
-        const jiLuJieGuo = await 记录违规(
-          获取IP(qingQiu),
-          '内容违规',
-          anQuanJieGuo.yan_zhong_cheng_du === 'yan_zhong'
-            ? '严重'
-            : anQuanJieGuo.yan_zhong_cheng_du === 'zhong_deng'
-              ? '中等'
-              : '轻微',
-        )
-        if (jiLuJieGuo.已封禁) {
-          return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'ipYiBeiFengJin'))
+      // 安全审核仅对文本消息内容执行
+      if (!shiMeiTi) {
+        const anQuanJieGuo = await shenHeNeiRongAnQuan(neiRong)
+        if (anQuanJieGuo.wei_gui) {
+          const jiLuJieGuo = await 记录违规(
+            获取IP(qingQiu),
+            '内容违规',
+            anQuanJieGuo.yan_zhong_cheng_du === 'yan_zhong'
+              ? '严重'
+              : anQuanJieGuo.yan_zhong_cheng_du === 'zhong_deng'
+                ? '中等'
+                : '轻微',
+          )
+          if (jiLuJieGuo.已封禁) {
+            return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'ipYiBeiFengJin'))
+          }
+          return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'xiaoXiNeiRongWeiGui'))
         }
-        return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'xiaoXiNeiRongWeiGui'))
       }
 
       const jieGuo = await chuangJianYongHuXiaoXi({
@@ -200,6 +323,8 @@ luYou.post(
         jiao_se_id: jiaoSeId,
         nei_rong: neiRong,
         ke_hu_duan_xu_hao: keHuDuanXuHao,
+        lei_xing: leiXing,
+        mei_ti_id: meiTiId,
       })
       if (!jieGuo.cheng_gong) {
         return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('liaoTian', 'faSongShiBai'))
@@ -209,7 +334,7 @@ luYou.post(
       // 使提示消失并允许重新请求指导
       await shanChuJunShiZhiDaoZhuangTai(yongHu.yongHuId, jiaoSeId).catch(() => {})
 
-      if (neiRong.trim().toLowerCase() === HAO_GAN_DU_PEI_ZHI.miJi.miLing.toLowerCase()) {
+      if (!shiMeiTi && neiRong.trim().toLowerCase() === HAO_GAN_DU_PEI_ZHI.miJi.miLing.toLowerCase()) {
         const miJiJieGuo = await sheZhiMiJiHaoGanDu(
           yongHu.yongHuId,
           jiaoSeId,

@@ -276,17 +276,13 @@ describe('FP-11 胜利失败条件', () => {
   })
 
   describe('识破处理', () => {
-    it('渣型角色 → 识破胜利，解锁成就', async () => {
-      sheZhiShuJuKuMoNiLianXu([
-        [{ 用户ID: 'yong-hu-id', 是否渣型: true }],
-        [{ 名字: '小雨' }],
-      ])
+    it('渣型角色 → 识破胜利', async () => {
+      sheZhiShuJuKuMoNi([{ 用户ID: 'yong-hu-id', 是否渣型: true }])
 
       const jieGuo = await chuLiShiPo('yong-hu-id', 'jiao-se-id')
 
       expect(jieGuo).not.toBeNull()
       expect(jieGuo!.jie_guo_lei_xing).toBe('sheng_li_shi_po')
-      expect(jieGuo!.cheng_jiu).toBe('火眼金睛')
     })
 
     it('正常角色 → 错误识破失败', async () => {

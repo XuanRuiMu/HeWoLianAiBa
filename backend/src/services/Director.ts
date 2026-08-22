@@ -1,5 +1,7 @@
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianDirectorPrompt } from './Prompt构建器'
+import { gouJianYongHuTuXiangKuai } from './AI视觉辅助'
+import type { DuiHuaKuai } from '../utils/DeepSeek客户端'
 import type { AIYinQingShuRu, DirectorCeLue } from '../types'
 import type { CanShuShangXiaWen } from '../config/AI参数策略'
 
@@ -60,9 +62,16 @@ export async function shengChengDirectorCeLue(
   shangXiaWen?: CanShuShangXiaWen,
 ): Promise<DirectorJieGuo> {
   try {
+    // 历史中用户发的图片/表情包以 input_image 块注入 user 消息（仅 user 可带图，官方限制）
+    const tuXiangKuai = await gouJianYongHuTuXiangKuai(shuRu.dui_hua_li_shi)
+    const yongHuNeiRong: string | DuiHuaKuai[] =
+      tuXiangKuai.length > 0
+        ? [{ type: 'input_text', text: gouJianDirectorPrompt(shuRu) }, ...tuXiangKuai]
+        : gouJianDirectorPrompt(shuRu)
+
     const xiangYing = await genJuPeiZhiTiaoYong('director', [
       { jiaoSe: 'system', neiRong: '你负责给角色写回复小纸条，只输出 JSON。让回复像真实大学生/青年恋人聊微信，允许留白、犹豫、推拉和暧昧试探。' },
-      { jiaoSe: 'user', neiRong: gouJianDirectorPrompt(shuRu) },
+      { jiaoSe: 'user', neiRong: yongHuNeiRong },
     ], shangXiaWen)
 
     const ceLue = jieXiDirectorXiangYing(xiangYing.neiRong)

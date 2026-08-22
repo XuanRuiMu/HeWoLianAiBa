@@ -81,7 +81,15 @@ export interface Xiaoxi {
   fa_song_zhe_id: string
   fa_song_zhe_lei_xing: 'yonghu' | 'jiaose' | 'xitong'
   nei_rong: string
-  lei_xing: 'wenben' | 'tupian' | 'xitong' | 'neiXinHuoDong'
+  lei_xing:
+    | 'wenben'
+    | 'tupian'
+    | 'xitong'
+    | 'neiXinHuoDong'
+    | 'tuPian'
+    | 'biaoQingBao'
+    | 'yuYin'
+    | 'wenJian'
   shi_jian_chuo: number
   yi_du: boolean
   zheng_zai_da_zi?: boolean
@@ -94,7 +102,16 @@ export interface Xiaoxi {
   fa_song_zhong?: boolean
   ke_hu_duan_id?: string
   ke_hu_duan_xu_hao?: number | null
+  mei_ti_id?: string | null
+  mei_ti_url?: string | null
+  mei_ti_lei_bie?: string | null
+  mei_ti_shi_chang_hao_miao?: number | null
+  mei_ti_yuan_shi_wen_jian_ming?: string | null
+  ben_di_yu_lan_url?: string | null
+  ben_di_da_xiao_zi_jie?: number | null
 }
+
+export type DuoMeiTiLeiXing = 'tuPian' | 'biaoQingBao' | 'yuYin' | 'wenJian'
 
 export interface TongGuanXinXi {
   lei_xing: string

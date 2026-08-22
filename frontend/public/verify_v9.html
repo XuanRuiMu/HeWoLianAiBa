@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>吴昊阳 v9 模型验证</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #2a2a2a; overflow: hidden; font-family: sans-serif; color: #fff; }
+canvas { display: block; }
+#info { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 6px; font-size: 13px; z-index: 10; }
+#info button { margin: 2px; padding: 4px 10px; cursor: pointer; font-size: 12px; }
+#info button.active { background: #4fc3f7; color: #000; }
+#info .label { font-weight: bold; color: #4fc3f7; margin-bottom: 4px; }
+#status { margin-top: 6px; font-size: 11px; color: #aaa; }
+#lighting { margin-top: 6px; }
+</style>
+</head>
+<body>
+<div id="info">
+  <div class="label">吴昊阳 v9 多角度验证</div>
+  <button onclick="setView('back')" id="btn-back">目标背视</button>
+  <button onclick="setView('front')" id="btn-front">正面</button>
+  <button onclick="setView('side_l')" id="btn-side_l">左侧面</button>
+  <button onclick="setView('side_r')" id="btn-side_r">右侧面</button>
+  <button onclick="setView('quarter')" id="btn-quarter">3/4视角</button>
+  <button onclick="setView('top')" id="btn-top">俯视</button>
+  <br><small style="color:#aaa">鼠标拖拽旋转 · 滚轮缩放</small>
+  <div id="lighting">
+    <label style="font-size:11px"><input type="checkbox" id="flatMode" checked onchange="setFlatMode(this.checked)"> 平光模式（去高光验证纹理）</label>
+  </div>
+  <div id="status">加载中...</div>
+</div>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x3a3a3a);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 100);
+camera.position.set(0, 0.8, 2.5);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.target.set(0, 0.85, 0);
+
+// Lights
+const ambient = new THREE.AmbientLight(0xffffff, 1.2);
+scene.add(ambient);
+const dir = new THREE.DirectionalLight(0xffffff, 0.0);
+dir.position.set(1, 2, 3);
+scene.add(dir);
+
+let modelMaterials = [];
+let originalProps = [];
+
+const status = document.getElementById('status');
+const loader = new GLTFLoader();
+let model = null;
+
+loader.load('/models/wuhaoyang_v8.glb', (gltf) => {
+  model = gltf.scene;
+  scene.add(model);
+  
+  // Center model
+  const box = new THREE.Box3().setFromObject(model);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+  
+  // Store original material properties
+  model.traverse((child) => {
+    if (child.isMesh && child.material) {
+      const mats = Array.isArray(child.material) ? child.material : [child.material];
+      mats.forEach((m) => {
+        modelMaterials.push(m);
+        originalProps.push({
+          metalness: m.metalness,
+          roughness: m.roughness,
+          emissive: m.emissive ? m.emissive.clone() : null,
+          envMapIntensity: m.envMapIntensity,
+        });
+      });
+    }
+  });
+  
+  setFlatMode(true);
+  status.textContent = `模型加载完成 尺寸: ${size.x.toFixed(2)}x${size.y.toFixed(2)}x${size.z.toFixed(2)} | 材质数: ${modelMaterials.length}`;
+  
+  // Auto-show back view
+  setTimeout(() => setView('back'), 500);
+  animate();
+}, undefined, (err) => {
+  status.textContent = '加载失败: ' + err.message;
+  console.error(err);
+});
+
+window.setFlatMode = function(flat) {
+  modelMaterials.forEach((m, i) => {
+    if (flat) {
+      m.metalness = 0.0;
+      m.roughness = 1.0;
+      if (m.emissive) m.emissive.setRGB(0,0,0);
+      m.envMapIntensity = 0;
+    } else {
+      const o = originalProps[i];
+      m.metalness = o.metalness;
+      m.roughness = o.roughness;
+      if (o.emissive && m.emissive) m.emissive.copy(o.emissive);
+      m.envMapIntensity = o.envMapIntensity;
+    }
+    m.needsUpdate = true;
+  });
+  dir.intensity = flat ? 0.0 : 0.8;
+  ambient.intensity = flat ? 1.2 : 0.6;
+};
+
+// Camera positions - exact bake camera parameters
+const bakeCam = {
+  pos: new THREE.Vector3(-0.3696, 0.5569, 0.5768),
+  target: new THREE.Vector3(0.1099, -0.0368, -0.0695),
+  up: new THREE.Vector3(0.4224, 0.8017, -0.4230)
+};
+const dist = 2.2;
+const backDir = bakeCam.pos.clone().sub(bakeCam.target).normalize();
+const frontDir = backDir.clone().negate();
+const views = {
+  back:    { pos: bakeCam.pos.clone(), target: bakeCam.target.clone(), up: bakeCam.up.clone() },
+  front:   { pos: frontDir.clone().multiplyScalar(dist).add(bakeCam.target), target: bakeCam.target.clone() },
+  side_l:  { pos: new THREE.Vector3(-dist*0.9, 0.4, dist*0.3).normalize().multiplyScalar(dist), target: new THREE.Vector3(0, 0.85, 0) },
+  side_r:  { pos: new THREE.Vector3(dist*0.9, 0.4, -dist*0.3).normalize().multiplyScalar(dist), target: new THREE.Vector3(0, 0.85, 0) },
+  quarter: { pos: new THREE.Vector3(dist*0.6, 0.5, dist*0.7).normalize().multiplyScalar(dist),  target: new THREE.Vector3(0, 0.85, 0) },
+  top:     { pos: new THREE.Vector3(0, dist*1.2, 0.1),  target: new THREE.Vector3(0, 0.85, 0) },
+};
+
+let animStart = null;
+let animFrom = null, animTo = null;
+let currentView = 'back';
+
+window.setView = function(name) {
+  const v = views[name];
+  if (!v) return;
+  document.querySelectorAll('#info button[id^="btn-"]').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('btn-' + name);
+  if (btn) btn.classList.add('active');
+  animFrom = { pos: camera.position.clone(), target: controls.target.clone() };
+  animTo = { pos: v.pos.clone(), target: v.target.clone() };
+  animStart = performance.now();
+  currentView = name;
+  if (v.up) { camera.up.copy(v.up); } else { camera.up.set(0, 1, 0); }
+  status.textContent = `视角: ${name} | 相机: (${v.pos.x.toFixed(2)}, ${v.pos.y.toFixed(2)}, ${v.pos.z.toFixed(2)})`;
+};
+
+function animate() {
+  requestAnimationFrame(animate);
+  
+  if (animFrom && animTo && animStart) {
+    const t = Math.min((performance.now() - animStart) / 800, 1);
+    const e = t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2, 2)/2;
+    camera.position.lerpVectors(animFrom.pos, animTo.pos, e);
+    controls.target.lerpVectors(animFrom.target, animTo.target, e);
+    if (t >= 1) { animFrom = null; animStart = null; }
+  }
+  
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>

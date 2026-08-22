@@ -455,13 +455,13 @@ describe('FP-09 AI对话引擎', () => {
       expect(jieGuo.fen_shu).toBe(7)
     })
 
-    it('好感度评判调用 → temperature=0.2且四维值在-3到3范围内', async () => {
+    it('好感度评判调用 → temperature=0.2且四维值在-60到60范围内', async () => {
       const { jiLu, sheZhiXiangYing } = chuangJianMock()
       sheZhiXiangYing({
         neiRong: JSON.stringify({
-          信任度变化: 2,
-          亲密度变化: 1,
-          趣味度变化: -1,
+          信任度变化: 40,
+          亲密度变化: 20,
+          趣味度变化: -20,
           关怀度变化: 0,
           理由: '回复真诚',
         }),
@@ -470,34 +470,34 @@ describe('FP-09 AI对话引擎', () => {
       const jieGuo = await pingPanHaoGanDuBianHua('今天很开心', '那真好呀', '雨夜的猫')
 
       expect(jiLu[0].wenDu).toBe(0.2)
-      expect(jieGuo.xin_ren_du_bian_hua).toBeGreaterThanOrEqual(-3)
-      expect(jieGuo.xin_ren_du_bian_hua).toBeLessThanOrEqual(3)
-      expect(jieGuo.qin_mi_du_bian_hua).toBeGreaterThanOrEqual(-3)
-      expect(jieGuo.qin_mi_du_bian_hua).toBeLessThanOrEqual(3)
-      expect(jieGuo.qu_wei_du_bian_hua).toBeGreaterThanOrEqual(-3)
-      expect(jieGuo.qu_wei_du_bian_hua).toBeLessThanOrEqual(3)
-      expect(jieGuo.guan_huai_du_bian_hua).toBeGreaterThanOrEqual(-3)
-      expect(jieGuo.guan_huai_du_bian_hua).toBeLessThanOrEqual(3)
+      expect(jieGuo.xin_ren_du_bian_hua).toBeGreaterThanOrEqual(-60)
+      expect(jieGuo.xin_ren_du_bian_hua).toBeLessThanOrEqual(60)
+      expect(jieGuo.qin_mi_du_bian_hua).toBeGreaterThanOrEqual(-60)
+      expect(jieGuo.qin_mi_du_bian_hua).toBeLessThanOrEqual(60)
+      expect(jieGuo.qu_wei_du_bian_hua).toBeGreaterThanOrEqual(-60)
+      expect(jieGuo.qu_wei_du_bian_hua).toBeLessThanOrEqual(60)
+      expect(jieGuo.guan_huai_du_bian_hua).toBeGreaterThanOrEqual(-60)
+      expect(jieGuo.guan_huai_du_bian_hua).toBeLessThanOrEqual(60)
     })
 
-    it('好感度评判越界 → 自动裁剪到-3到3', async () => {
+    it('好感度评判越界 → 自动裁剪到-60到60', async () => {
       const { sheZhiXiangYing } = chuangJianMock()
       sheZhiXiangYing({
         neiRong: JSON.stringify({
-          信任度变化: 10,
-          亲密度变化: -10,
-          趣味度变化: 3,
-          关怀度变化: -3,
+          信任度变化: 200,
+          亲密度变化: -200,
+          趣味度变化: 60,
+          关怀度变化: -60,
           理由: '测试边界',
         }),
       })
 
       const jieGuo = await pingPanHaoGanDuBianHua('测试', '回复', '雨夜的猫')
 
-      expect(jieGuo.xin_ren_du_bian_hua).toBe(3)
-      expect(jieGuo.qin_mi_du_bian_hua).toBe(-3)
-      expect(jieGuo.qu_wei_du_bian_hua).toBe(3)
-      expect(jieGuo.guan_huai_du_bian_hua).toBe(-3)
+      expect(jieGuo.xin_ren_du_bian_hua).toBe(60)
+      expect(jieGuo.qin_mi_du_bian_hua).toBe(-60)
+      expect(jieGuo.qu_wei_du_bian_hua).toBe(60)
+      expect(jieGuo.guan_huai_du_bian_hua).toBe(-60)
     })
 
     it('记忆摘要调用 → 返回摘要文本', async () => {

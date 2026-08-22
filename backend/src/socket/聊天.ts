@@ -7,6 +7,7 @@ import { zhuanFaYongHuXiaoXiGeiGuanLiYuan } from './夺舍'
 import { 数据库 } from '../数据库'
 import { jiLuSocketShiJian, jiLuXiaoXiCaoZuo } from '../utils/debug日志'
 import { yanZhengUUID } from '../utils/验证'
+import { shengChengQianMingURL } from '../services/媒体存储'
 
 interface TiaoDuQiJiLu {
   角色ID: string
@@ -25,9 +26,10 @@ async function huoQuZuiJinYongHuXiaoXi(
   jiao_se_id: string,
 ): Promise<Record<string, unknown> | null> {
   const jieGuo = await 数据库.query(
-    `SELECT * FROM "消息"
-     WHERE "用户ID" = $1 AND "角色ID" = $2 AND "发送者" = 'yonghu'
-     ORDER BY "创建时间" DESC LIMIT 1`,
+    `SELECT m.*, mf."SHA256" AS "媒体SHA256"
+     FROM "消息" m LEFT JOIN "媒体文件" mf ON m."媒体ID" = mf."ID"
+     WHERE m."用户ID" = $1 AND m."角色ID" = $2 AND m."发送者" = 'yonghu'
+     ORDER BY m."创建时间" DESC LIMIT 1`,
     [yong_hu_id, jiao_se_id],
   )
   if (jieGuo.rows.length === 0) return null
@@ -42,6 +44,10 @@ async function huoQuZuiJinYongHuXiaoXi(
     shi_jian: row.创建时间 ? String(row.创建时间) : new Date().toISOString(),
     yi_du: Boolean(row.已读),
     yi_che_hui: Boolean(row.已撤回),
+    mei_ti_id: row.媒体ID ? String(row.媒体ID) : null,
+    mei_ti_url: row.媒体SHA256
+      ? shengChengQianMingURL(String(row.媒体SHA256).toLowerCase())
+      : null,
   }
 }
 

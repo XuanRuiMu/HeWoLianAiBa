@@ -22,6 +22,7 @@ coverage/
 logs_*.txt
 聊天界面截图.png
 backend/logs/
+backend/uploads/
 
 # 过程性备份（草地主页 bundle 分析副本的 .bak，不入版本库）
 *.bak
@@ -29,3 +30,11 @@ backend/logs/
 
 # 过程性源文件（GIMP 源等设计中间产物，不入版本库；防止总控制台 git add -A 误带）
 最终效果.xcf
+
+# 3D 模型与烘焙产物：超 GitHub 单文件限制（>40MB），仅保留本地
+吴昊阳模型/*.glb
+吴昊阳模型/final/merged_basecolor.png
+frontend/public/models/*.glb
+
+# 3D 模型工作目录整体排除：烘焙中间产物体积过大（数百 MB），仅保留本地
+吴昊阳模型/
