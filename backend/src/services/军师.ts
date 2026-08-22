@@ -369,6 +369,9 @@ function zhuanHuanXiaoXiDaoDuiHuaLiShi(
     shi_jian_chuo: number
     yi_che_hui?: boolean
     yuan_shi_nei_rong?: string | null
+    mei_ti_lei_bie?: string | null
+    mei_ti_shi_chang_hao_miao?: number | null
+    mei_ti_yuan_shi_wen_jian_ming?: string | null
   }[],
   jiaoSeWeiXinMing: string,
 ) {
@@ -382,6 +385,9 @@ function zhuanHuanXiaoXiDaoDuiHuaLiShi(
     shi_jian: geShiHuaShiJian(xiaoXi.shi_jian_chuo),
     yi_che_hui: xiaoXi.yi_che_hui,
     yuan_shi_nei_rong: xiaoXi.yuan_shi_nei_rong,
+    meiTiLeiBie: xiaoXi.mei_ti_lei_bie || undefined,
+    meiTiShiChangHaoMiao: xiaoXi.mei_ti_shi_chang_hao_miao ?? null,
+    yuanShiWenJianMing: xiaoXi.mei_ti_yuan_shi_wen_jian_ming || undefined,
   }))
 }
 

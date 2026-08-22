@@ -1,16 +1,23 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch, onScopeDispose } from 'vue'
 import { io, Socket } from 'socket.io-client'
-import type { 消息, 角色 } from '@/types'
+import type { 消息, 角色, DuoMeiTiLeiXing } from '@/types'
 import { 令牌键 } from '@/constants/auth'
 import {
   huoQuXiaoXi,
   faSongXiaoXi as faSongXiaoXiApi,
+  shangChuanMeiTi,
+  DUO_MEI_TI_LEI_XING_SHANG_CHUAN_LEI_BIE,
   cheHuiXiaoXi as cheHuiXiaoXiApi,
   biaoJiYiDu,
   huoQuJiaoSeXiangQing,
 } from '@/api/聊天'
 import { huoQuFanYi } from '@/config/translations'
+
+export interface MeiTiFuJia {
+  shiChangHaoMiao?: number
+  wenJianMing?: string
+}
 
 export const 使用聊天仓库 = defineStore('聊天', () => {
   const dangQianHuiHuaId = ref<string | null>(null)
@@ -64,6 +71,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
 
   onScopeDispose(() => {
     qingLiYanChiDingShiQi()
+    qingLiSuoYouYuLanURL()
   })
 
   const zhengZaiShuRu = computed(() => xianShiZhengZaiShuRu.value)
@@ -103,6 +111,27 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   function anQuanTuiSong(xiaoXi: 消息) {
     if (!Array.isArray(xiaoXiLieBiao.value)) xiaoXiLieBiao.value = []
     xiaoXiLieBiao.value.push(xiaoXi)
+  }
+
+  const yuLanURLJiHe = new Set<string>()
+
+  function dengJiYuLanURL(wenJian: Blob): string {
+    const diZhi = URL.createObjectURL(wenJian)
+    yuLanURLJiHe.add(diZhi)
+    return diZhi
+  }
+
+  function cheXiaoYuLanURL(diZhi?: string | null) {
+    if (!diZhi || !yuLanURLJiHe.has(diZhi)) return
+    yuLanURLJiHe.delete(diZhi)
+    URL.revokeObjectURL(diZhi)
+  }
+
+  function qingLiSuoYouYuLanURL() {
+    for (const diZhi of [...yuLanURLJiHe]) {
+      URL.revokeObjectURL(diZhi)
+    }
+    yuLanURLJiHe.clear()
   }
 
   function qingChuCuoWu() {
@@ -403,6 +432,90 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     }
   }
 
+  async function faSongMeiTiXiaoXi(
+    leiXing: DuoMeiTiLeiXing,
+    wenJian: File | Blob,
+    fuJia: MeiTiFuJia = {},
+  ): Promise<消息 | null> {
+    if (!dangQianHuiHuaId.value) return null
+    qingChuCuoWu()
+    linShiXiaoXiXuHao += 1
+    const linShiId = `linshi-${Date.now()}-${linShiXiaoXiXuHao}`
+    const benCiXuHao = ++ke_hu_duan_xu_hao
+    const benDiYuLan = dengJiYuLanURL(wenJian)
+    const yuanWenJianMing =
+      fuJia.wenJianMing || (wenJian instanceof File && wenJian.name ? wenJian.name : '')
+    const linShiXiaoXi: 消息 = {
+      id: linShiId,
+      ke_hu_duan_id: linShiId,
+      ke_hu_duan_xu_hao: benCiXuHao,
+      hui_hua_id: dangQianHuiHuaId.value,
+      fa_song_zhe_id: '',
+      fa_song_zhe_lei_xing: 'yonghu',
+      nei_rong: '',
+      lei_xing: leiXing,
+      shi_jian_chuo: Date.now(),
+      yi_du: false,
+      fa_song_zhong: true,
+      mei_ti_id: null,
+      mei_ti_url: null,
+      ben_di_yu_lan_url: benDiYuLan,
+      ben_di_da_xiao_zi_jie: typeof wenJian.size === 'number' ? wenJian.size : null,
+      mei_ti_shi_chang_hao_miao:
+        typeof fuJia.shiChangHaoMiao === 'number' ? fuJia.shiChangHaoMiao : null,
+      mei_ti_yuan_shi_wen_jian_ming: yuanWenJianMing || null,
+    }
+    anQuanTuiSong(linShiXiaoXi)
+
+    try {
+      const huiHuaId = dangQianHuiHuaId.value
+      const shangChuanJieGuo = await shangChuanMeiTi(
+        huiHuaId,
+        wenJian,
+        DUO_MEI_TI_LEI_XING_SHANG_CHUAN_LEI_BIE[leiXing],
+      )
+      const { xiaoXi } = await faSongXiaoXiApi(
+        huiHuaId,
+        '',
+        benCiXuHao,
+        leiXing,
+        shangChuanJieGuo.mediaId,
+      )
+      ke_hu_duan_xu_hao = Math.max(ke_hu_duan_xu_hao, xiaoXi.ke_hu_duan_xu_hao ?? 0)
+      const fuWuQiURL = xiaoXi.mei_ti_url || benDiYuLan
+      if (xiaoXi.mei_ti_url) {
+        cheXiaoYuLanURL(benDiYuLan)
+      }
+      const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.ke_hu_duan_id === linShiId)
+      if (suoYin !== -1) {
+        xiaoXiLieBiao.value[suoYin] = {
+          ...xiaoXi,
+          ke_hu_duan_id: linShiId,
+          mei_ti_url: fuWuQiURL,
+          ben_di_yu_lan_url: xiaoXi.mei_ti_url ? null : benDiYuLan,
+          ben_di_da_xiao_zi_jie:
+            xiaoXi.ben_di_da_xiao_zi_jie ?? linShiXiaoXi.ben_di_da_xiao_zi_jie ?? null,
+        }
+      }
+      if (socketLianJie.value?.connected) {
+        socketLianJie.value.emit('发送消息')
+      }
+      return xiaoXi
+    } catch (cuoWu: unknown) {
+      const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.ke_hu_duan_id === linShiId)
+      if (suoYin !== -1) {
+        xiaoXiLieBiao.value.splice(suoYin, 1)
+      }
+      cheXiaoYuLanURL(benDiYuLan)
+      const tiShi =
+        cuoWu instanceof Error && cuoWu.message
+          ? cuoWu.message
+          : huoQuFanYi('duoMeiTi', 'faSongShiBai')
+      sheZhiCuoWu(tiShi)
+      return null
+    }
+  }
+
   async function cheHuiXiaoXi(xiaoXiId: string) {
     if (!dangQianHuiHuaId.value) return
     try {
@@ -465,6 +578,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     jiaZaiXiaoXi,
     jiaZaiGengDuoXiaoXi,
     faSongXiaoXi,
+    faSongMeiTiXiaoXi,
     cheHuiXiaoXi,
     qingKongZhuangTai,
     qingChuCuoWu,

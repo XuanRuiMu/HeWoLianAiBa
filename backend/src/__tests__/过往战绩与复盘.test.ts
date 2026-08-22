@@ -429,7 +429,7 @@ describe('FP-13 过往战绩与复盘', () => {
       expect(xiangYing.body.shu_ju.fu_pan_pi_zhu).toBeNull()
     })
 
-    it('复盘生成调用 temperature=0.7 且 max_tokens=16000', async () => {
+    it('复盘生成调用 temperature=0.7 且 max_tokens=64000', async () => {
       const dangAnId = await chuangJianYouXiDangAn(ceShiYongHu!.yongHuId, jiaoSeId, '胜利-爱情')
       let tiaoYongCanShu: { wenDu?: number; zuiDaTokens?: number; xiangYingGeShi?: string } | null = null
 
@@ -446,7 +446,7 @@ describe('FP-13 过往战绩与复盘', () => {
 
       expect(tiaoYongCanShu).not.toBeNull()
       expect(tiaoYongCanShu!.wenDu).toBe(0.7)
-      expect(tiaoYongCanShu!.zuiDaTokens).toBe(16000)
+      expect(tiaoYongCanShu!.zuiDaTokens).toBe(64000)
     })
 
     it('复盘生成完毕后返回 pi_zhu 批注列表与 zong_jie 总结', async () => {

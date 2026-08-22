@@ -121,9 +121,11 @@ export async function huoQuZuiJinDuiHuaLiShi(
   shu_liang: number = 20,
 ): Promise<DuiHuaLiShiXiang[]> {
   const jieGuo = await 数据库.query(
-    `SELECT * FROM "消息"
-     WHERE "用户ID" = $1 AND "角色ID" = $2
-     ORDER BY "创建时间" DESC
+    `SELECT m.*, mf."SHA256" AS "媒体SHA256", mf."MIME" AS "媒体MIME", mf."类别" AS "媒体类别",
+            mf."时长毫秒" AS "媒体时长毫秒", mf."原始文件名" AS "媒体原始文件名"
+     FROM "消息" m LEFT JOIN "媒体文件" mf ON m."媒体ID" = mf."ID"
+     WHERE m."用户ID" = $1 AND m."角色ID" = $2
+     ORDER BY m."创建时间" DESC
      LIMIT $3`,
     [yong_hu_id, jiao_se_id, shu_liang],
   )
@@ -139,6 +141,10 @@ export async function huoQuZuiJinDuiHuaLiShi(
     const shi = String(shiJian.getHours()).padStart(2, '0')
     const fen = String(shiJian.getMinutes()).padStart(2, '0')
 
+    // 仅图片/表情包类别携带 sha+mime 供图像注入；语音/文件不带图只文本化
+    const meiTiLeiBie = row.媒体类别 ? String(row.媒体类别) : undefined
+    const shiTuXiang = meiTiLeiBie === 'tupian' || meiTiLeiBie === 'biaoqingshu'
+
     return {
       fa_song_zhe_lei_xing: faSongZheLeiXing,
       fa_song_zhe_ming:
@@ -149,6 +155,11 @@ export async function huoQuZuiJinDuiHuaLiShi(
       shi_jian: `${shi}:${fen}`,
       yi_che_hui: Boolean(row.已撤回),
       yuan_shi_nei_rong: row.原始内容 ? String(row.原始内容) : null,
+      meiTiLeiBie,
+      meiTiSha256: shiTuXiang && row.媒体SHA256 ? String(row.媒体SHA256).toLowerCase() : undefined,
+      meiTiMIME: shiTuXiang && row.媒体MIME ? String(row.媒体MIME) : undefined,
+      meiTiShiChangHaoMiao: row.媒体时长毫秒 != null ? Number(row.媒体时长毫秒) : null,
+      yuanShiWenJianMing: row.媒体原始文件名 ? String(row.媒体原始文件名) : undefined,
     }
   })
 }
@@ -189,6 +200,8 @@ export async function baoCunJiaoSeXiaoXi(
     che_hui_shi_jian: row.撤回时间 ? String(row.撤回时间) : null,
     yuan_shi_nei_rong: null,
     ke_hu_duan_xu_hao: row.客户端序号 != null ? Number(row.客户端序号) : null,
+    mei_ti_id: row.媒体ID ? String(row.媒体ID) : null,
+    mei_ti_url: null,
   }
   jiLuXiaoXiCaoZuo('角色消息发送', canShu.yong_hu_id, canShu.jiao_se_id, 'jiaose', { xiao_xi_id: xiaoXi.id })
   return xiaoXi

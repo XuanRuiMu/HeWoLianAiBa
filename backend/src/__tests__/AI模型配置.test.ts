@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import { AI_PEI_ZHI, AIMoXingLeiXing } from '../config/AI配置'
 
-const QI_WANG_MO_XING = 'deepseek-v4-flash'
+const QI_WANG_MO_XING = 'deepseek-v4-flash-vision-exp'
 
 describe('FP-04 AI模型配置', () => {
-  it('顶层 deepSeek.moXing → 等于 deepseek-v4-flash', () => {
+  it('顶层 deepSeek.moXing → 等于 deepseek-v4-flash-vision-exp', () => {
     expect(AI_PEI_ZHI.deepSeek.moXing).toBe(QI_WANG_MO_XING)
   })
 
-  it('moXing 下所有子配置的 moXing 字段 → 等于 deepseek-v4-flash', () => {
+  it('moXing 下所有子配置的 moXing 字段 → 等于 deepseek-v4-flash-vision-exp', () => {
     const moXingLeiXingLieBiao = Object.keys(AI_PEI_ZHI.moXing) as AIMoXingLeiXing[]
     expect(moXingLeiXingLieBiao.length).toBeGreaterThan(0)
 

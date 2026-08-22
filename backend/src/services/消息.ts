@@ -1,9 +1,11 @@
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import { XIAO_XI_PEI_ZHI } from '../config/消息配置'
+import { YUN_XU_XIAO_XI_LEI_XING } from '../config/媒体配置'
 import { huoQuIo } from '../socket/io'
 import { yanZhengUUID } from '../utils/验证'
 import { jiLuXiaoXiCaoZuo, jiLuSocketShiJian } from '../utils/debug日志'
+import { shengChengQianMingURL } from './媒体存储'
 
 export interface XiaoXiXinXi {
   id: string
@@ -18,6 +20,11 @@ export interface XiaoXiXinXi {
   che_hui_shi_jian?: string | null
   yuan_shi_nei_rong?: string | null
   ke_hu_duan_xu_hao?: number | null
+  mei_ti_id?: string | null
+  mei_ti_url?: string | null
+  mei_ti_lei_bie?: string | null
+  mei_ti_shi_chang_hao_miao?: number | null
+  mei_ti_yuan_shi_wen_jian_ming?: string | null
 }
 
 export interface FaSongXiaoXiCanShu {
@@ -25,6 +32,8 @@ export interface FaSongXiaoXiCanShu {
   jiao_se_id: string
   nei_rong: string
   ke_hu_duan_xu_hao?: number | null
+  lei_xing?: string
+  mei_ti_id?: string | null
 }
 
 export interface HuoQuXiaoXiCanShu {
@@ -89,6 +98,13 @@ function yingSheXiaoXi(row: Record<string, unknown>): XiaoXiXinXi {
     che_hui_shi_jian: row.撤回时间 ? String(row.撤回时间) : null,
     yuan_shi_nei_rong: row.已撤回 && row.原始内容 ? String(row.原始内容) : null,
     ke_hu_duan_xu_hao: row.客户端序号 != null ? Number(row.客户端序号) : null,
+    mei_ti_id: row.媒体ID ? String(row.媒体ID) : null,
+    mei_ti_url: row.媒体SHA256
+      ? shengChengQianMingURL(String(row.媒体SHA256).toLowerCase())
+      : null,
+    mei_ti_lei_bie: row.媒体类别 ? String(row.媒体类别) : null,
+    mei_ti_shi_chang_hao_miao: row.媒体时长毫秒 != null ? Number(row.媒体时长毫秒) : null,
+    mei_ti_yuan_shi_wen_jian_ming: row.媒体原始文件名 ? String(row.媒体原始文件名) : null,
   }
 }
 
@@ -122,7 +138,12 @@ export async function huoQuJiaoSeSuoYouZhe(
 }
 
 export async function anIdChaXiaoXi(xiao_xi_id: string): Promise<XiaoXiXinXi | null> {
-  const jieGuo = await 数据库.query(`SELECT * FROM "消息" WHERE "ID" = $1 LIMIT 1`, [xiao_xi_id])
+  const jieGuo = await 数据库.query(
+    `SELECT m.*, mf."SHA256" AS "媒体SHA256"
+     FROM "消息" m LEFT JOIN "媒体文件" mf ON m."媒体ID" = mf."ID"
+     WHERE m."ID" = $1 LIMIT 1`,
+    [xiao_xi_id],
+  )
   if (jieGuo.rows.length === 0) return null
   return yingSheXiaoXi(jieGuo.rows[0])
 }
@@ -141,9 +162,11 @@ export async function huoQuXiaoXiLieBiao(
   const zongShu = parseInt(String(zongShuJieGuo.rows[0].zong_shu), 10)
 
   const jieGuo = await 数据库.query(
-    `SELECT * FROM "消息"
-     WHERE "用户ID" = $1 AND "角色ID" = $2
-     ORDER BY COALESCE("客户端序号", 0) DESC, "创建时间" DESC
+    `SELECT m.*, mf."SHA256" AS "媒体SHA256", mf."类别" AS "媒体类别",
+            mf."时长毫秒" AS "媒体时长毫秒", mf."原始文件名" AS "媒体原始文件名"
+     FROM "消息" m LEFT JOIN "媒体文件" mf ON m."媒体ID" = mf."ID"
+     WHERE m."用户ID" = $1 AND m."角色ID" = $2
+     ORDER BY COALESCE(m."客户端序号", 0) DESC, m."创建时间" DESC
      LIMIT $3 OFFSET $4`,
     [canShu.yong_hu_id, canShu.jiao_se_id, meiYeTiaoShu, pianYi],
   )
@@ -157,11 +180,22 @@ export async function huoQuXiaoXiLieBiao(
 export async function chuangJianYongHuXiaoXi(
   canShu: FaSongXiaoXiCanShu,
 ): Promise<{ cheng_gong: boolean; xiao_xi?: XiaoXiXinXi; ti_shi?: string; zhuang_tai_ma?: number }> {
-  const qingLiNeiRong = canShu.nei_rong.trim()
-  if (!qingLiNeiRong) {
+  const leiXing = canShu.lei_xing ?? 'wenben'
+  if (!YUN_XU_XIAO_XI_LEI_XING.includes(leiXing)) {
+    return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'xiaoXiLeiXingFeiFa'), zhuang_tai_ma: 400 }
+  }
+  const shiMeiTi = leiXing !== 'wenben'
+
+  if (shiMeiTi && !canShu.mei_ti_id) {
+    return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'meiTiBiXuXianChuanShu'), zhuang_tai_ma: 400 }
+  }
+
+  // 媒体消息文本内容存空字符串，长度/非空校验仅针对文本消息
+  const qingLiNeiRong = shiMeiTi ? '' : canShu.nei_rong.trim()
+  if (!shiMeiTi && !qingLiNeiRong) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'xiaoXiNeiRongWeiKong'), zhuang_tai_ma: 400 }
   }
-  if (qingLiNeiRong.length > 500) {
+  if (!shiMeiTi && qingLiNeiRong.length > 500) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'), zhuang_tai_ma: 400 }
   }
 
@@ -177,11 +211,28 @@ export async function chuangJianYongHuXiaoXi(
     return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'youXiYiJieShu'), zhuang_tai_ma: 400 }
   }
 
+  if (shiMeiTi) {
+    const meiTiChaXun = await 数据库.query(
+      `SELECT "上传者ID" FROM "媒体文件" WHERE "ID" = $1 LIMIT 1`,
+      [canShu.mei_ti_id],
+    )
+    if (meiTiChaXun.rows.length === 0) {
+      return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'meiTiBuCunZai'), zhuang_tai_ma: 400 }
+    }
+    if (String(meiTiChaXun.rows[0].上传者ID) !== canShu.yong_hu_id) {
+      return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'meiTiWuQuanXian'), zhuang_tai_ma: 400 }
+    }
+  }
+
   const jieGuo = await 数据库.query(
-    `INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "客户端序号")
-     VALUES ($1, $2, $3, 'yonghu', 'wenben', true, $4)
-     RETURNING *`,
-    [canShu.yong_hu_id, canShu.jiao_se_id, qingLiNeiRong, canShu.ke_hu_duan_xu_hao ?? null],
+    `WITH xin AS (
+       INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "客户端序号", "媒体ID")
+       VALUES ($1, $2, $3, 'yonghu', $4, true, $5, $6)
+       RETURNING *
+     )
+     SELECT xin.*, mf."SHA256" AS "媒体SHA256"
+     FROM xin LEFT JOIN "媒体文件" mf ON xin."媒体ID" = mf."ID"`,
+    [canShu.yong_hu_id, canShu.jiao_se_id, qingLiNeiRong, leiXing, canShu.ke_hu_duan_xu_hao ?? null, canShu.mei_ti_id ?? null],
   )
 
   const xiaoXi = yingSheXiaoXi(jieGuo.rows[0])
@@ -227,9 +278,13 @@ export async function cheHuiYongHuXiaoXi(
   }
 
   const gengXinJieGuo = await 数据库.query(
-    `UPDATE "消息" SET "已撤回" = true, "撤回时间" = NOW(), "原始内容" = "内容"
-     WHERE "ID" = $1
-     RETURNING *`,
+    `WITH upd AS (
+       UPDATE "消息" SET "已撤回" = true, "撤回时间" = NOW(), "原始内容" = "内容"
+       WHERE "ID" = $1
+       RETURNING *
+     )
+     SELECT upd.*, mf."SHA256" AS "媒体SHA256"
+     FROM upd LEFT JOIN "媒体文件" mf ON upd."媒体ID" = mf."ID"`,
     [canShu.xiao_xi_id],
   )
 
@@ -260,9 +315,13 @@ export async function cheHuiJiaoSeXiaoXi(
   }
 
   const gengXinJieGuo = await 数据库.query(
-    `UPDATE "消息" SET "已撤回" = true, "撤回时间" = NOW(), "原始内容" = "内容"
-     WHERE "ID" = $1
-     RETURNING *`,
+    `WITH upd AS (
+       UPDATE "消息" SET "已撤回" = true, "撤回时间" = NOW(), "原始内容" = "内容"
+       WHERE "ID" = $1
+       RETURNING *
+     )
+     SELECT upd.*, mf."SHA256" AS "媒体SHA256"
+     FROM upd LEFT JOIN "媒体文件" mf ON upd."媒体ID" = mf."ID"`,
     [xiaoXi.ID],
   )
 

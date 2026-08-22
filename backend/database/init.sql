@@ -192,16 +192,7 @@ CREATE TABLE IF NOT EXISTS "游戏结局" (
     "创建时间" TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 12. 成就表
-CREATE TABLE IF NOT EXISTS "成就" (
-    "ID" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    "用户ID" UUID NOT NULL REFERENCES "用户"("ID") ON DELETE CASCADE,
-    "成就类型" VARCHAR(50) NOT NULL,
-    "角色名字" VARCHAR(100),
-    "创建时间" TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 13. 用户人设表
+-- 12. 用户人设表
 CREATE TABLE IF NOT EXISTS "用户人设" (
     "ID" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "用户ID" UUID NOT NULL REFERENCES "用户"("ID") ON DELETE CASCADE,
@@ -215,7 +206,7 @@ CREATE TABLE IF NOT EXISTS "用户人设" (
     "创建时间" TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 14. 反馈表
+-- 13. 反馈表
 CREATE TABLE IF NOT EXISTS "反馈" (
     "ID" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "用户ID" UUID NOT NULL REFERENCES "用户"("ID") ON DELETE CASCADE,
@@ -228,7 +219,7 @@ CREATE TABLE IF NOT EXISTS "反馈" (
     "创建时间" TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 15. 评估表
+-- 14. 评估表
 CREATE TABLE IF NOT EXISTS "评估" (
     "ID" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "用户ID" UUID NOT NULL REFERENCES "用户"("ID") ON DELETE CASCADE,
@@ -243,7 +234,7 @@ CREATE TABLE IF NOT EXISTS "评估" (
     "创建时间" TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 16. 夺舍日志表
+-- 15. 夺舍日志表
 CREATE TABLE IF NOT EXISTS "夺舍日志" (
     "ID" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "管理员ID" UUID NOT NULL REFERENCES "用户"("ID") ON DELETE CASCADE,
@@ -296,7 +287,6 @@ CREATE INDEX IF NOT EXISTS idx_游戏档案_用户ID ON "游戏档案"("用户ID
 CREATE INDEX IF NOT EXISTS idx_游戏档案_用户ID_角色ID ON "游戏档案"("用户ID", "角色ID");
 
 CREATE INDEX IF NOT EXISTS idx_游戏结局_用户ID ON "游戏结局"("用户ID");
-CREATE INDEX IF NOT EXISTS idx_成就_用户ID ON "成就"("用户ID");
 
 CREATE INDEX IF NOT EXISTS idx_用户人设_用户ID ON "用户人设"("用户ID");
 CREATE INDEX IF NOT EXISTS idx_反馈_用户ID ON "反馈"("用户ID");

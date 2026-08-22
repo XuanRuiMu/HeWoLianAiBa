@@ -82,6 +82,17 @@ export function 聊天内容验证中间件(
   响应: Response,
   下一步: NextFunction,
 ): void {
+  // 非文本消息（媒体消息）无文本内容要求，由后续媒体校验处理
+  const 消息体 = 请求.body as Record<string, unknown>
+  const 消息类型 = typeof 消息体['leiXing'] === 'string'
+    ? 消息体['leiXing']
+    : typeof 消息体['lei_xing'] === 'string'
+      ? 消息体['lei_xing']
+      : 'wenben'
+  if (消息类型 !== 'wenben') {
+    下一步()
+    return
+  }
   const 内容 = 获取请求字符串(请求, 'neiRong', 'nei_rong')
   if (!内容 || !验证聊天内容(内容)) {
     shiBaiXiangYing(响应, 400, huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'))

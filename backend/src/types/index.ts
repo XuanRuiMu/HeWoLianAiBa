@@ -127,6 +127,11 @@ export interface DuiHuaLiShiXiang {
   shi_jian: string
   yi_che_hui?: boolean
   yuan_shi_nei_rong?: string | null
+  meiTiLeiBie?: string
+  meiTiSha256?: string
+  meiTiMIME?: string
+  meiTiShiChangHaoMiao?: number | null
+  yuanShiWenJianMing?: string
 }
 
 export interface DirectorCeLue {
@@ -214,7 +219,6 @@ export interface YouXiJieShuJieGuo {
   jie_guo_lei_xing: YouXiJieGuoLeiXing
   zhuang_tai_wen_ben: string
   ke_ji_xu_liao_tian: boolean
-  cheng_jiu?: string
 }
 
 export interface BiaoBaiJianCeJieGuo {

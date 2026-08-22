@@ -4,9 +4,16 @@ import { peiZhi } from '../config'
 import { jiSuanAIChanShu, type CanShuShangXiaWen } from '../config/AI参数策略'
 import { jiLuAIJiLu } from './debug日志'
 
+/** Responses API 内容块：文本或内联图像（仅 user 消息允许图像块，官方限制）。
+ *  注意：Responses API 中 image_url 为字符串（data URL / http URL），
+ *  与 Chat Completions 的 {url} 对象形状不同（官方 vision 文档口径）。 */
+export type DuiHuaKuai =
+  | { type: 'input_text'; text: string }
+  | { type: 'input_image'; image_url: string; detail?: 'low' | 'high' | 'auto' }
+
 export interface DuiHuaXiaoXi {
   jiaoSe: 'system' | 'user' | 'assistant'
-  neiRong: string
+  neiRong: string | DuiHuaKuai[]
 }
 
 export interface TiaoYongCanShu {
@@ -61,9 +68,16 @@ export function chongZhiDeepSeekKeHuDuan(): void {
 /**
  * 保守 token 估算：中文约 1.5 字/token，英文约 4 字/token。
  * 统一按「字符数/2」高估，落在对齐安全侧，避免低估导致超出上下文窗口。
+ * 内容块数组：input_text 按字符数/2，input_image 每张按固定 384 计（官方视觉 token 口径的保守近似）。
  */
-function guJiToken(shuRu: string): number {
-  return Math.ceil(shuRu.length / 2)
+const TU_PIAN_GU_DING_TOKEN = 384
+
+function guJiToken(neiRong: string | DuiHuaKuai[]): number {
+  if (typeof neiRong === 'string') return Math.ceil(neiRong.length / 2)
+  return neiRong.reduce((zong, kuai) => {
+    if (kuai.type === 'input_text') return zong + Math.ceil(kuai.text.length / 2)
+    return zong + TU_PIAN_GU_DING_TOKEN
+  }, 0)
 }
 
 /**
@@ -71,14 +85,14 @@ function guJiToken(shuRu: string): number {
  * 这里在客户端侧做预算保护：超过预算时，从最旧的非 system 消息往前剔除，
  * 保住系统指令与最新上下文——即「尽可能多带历史，但永远不撑爆上下文」。
  */
-function yuSuanBaoHu(xiaoXi: DuiHuaXiaoXi[]): DuiHuaXiaoXi[] {
-  const yuSuan = AI_PEI_ZHI.prompt.shangXiaWenTokenYuSuan
-  if (!yuSuan || yuSuan <= 0) return xiaoXi
+export function yuSuanBaoHu(xiaoXi: DuiHuaXiaoXi[], yuSuan?: number): DuiHuaXiaoXi[] {
+  const yuSuanZhi = yuSuan ?? AI_PEI_ZHI.prompt.shangXiaWenTokenYuSuan
+  if (!yuSuanZhi || yuSuanZhi <= 0) return xiaoXi
   const xiTong = xiaoXi.filter((x) => x.jiaoSe === 'system')
   let qiTa = xiaoXi.filter((x) => x.jiaoSe !== 'system')
   const xiTongJi = xiTong.reduce((s, x) => s + guJiToken(x.neiRong), 0)
   const jiSuan = () => xiTongJi + qiTa.reduce((s, x) => s + guJiToken(x.neiRong), 0)
-  while (qiTa.length > 1 && jiSuan() > yuSuan) {
+  while (qiTa.length > 1 && jiSuan() > yuSuanZhi) {
     qiTa = qiTa.slice(1)
   }
   return [...xiTong, ...qiTa]
