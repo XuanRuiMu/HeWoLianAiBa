@@ -77,7 +77,7 @@ describe('FP-A10/A12 军师记录详情页', () => {
 
     const touXiang = wrapper.find('.jilu-junshi-touxiang')
     expect(touXiang.exists()).toBe(true)
-    expect(touXiang.attributes('src')).toBe('/图片/军师头像/军师玄锐暮头像.png')
+    expect(touXiang.attributes('src')).toBe(encodeURI('/图片/军师头像/军师玄锐暮头像.png'))
     expect(wrapper.text()).toContain(huoQuFanYi('junShi', 'junShiMing'))
   })
 

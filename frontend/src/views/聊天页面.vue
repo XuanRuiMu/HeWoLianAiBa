@@ -1,6 +1,9 @@
-﻿<template>
+<template>
   <div class="liaotian-yemian">
-    <main ref="xiaoxiQuYuRef" class="xiaoxi-quyu weixin-beijing" @scroll="chuLiGunDong">
+    <div class="aitishi-tiao" role="note">
+      {{ huoQuFanYi('tongYong', 'aiTiShiTiao') }}
+    </div>
+    <main ref="xiaoxiQuYuRef" class="xiaoxi-quyu weixin-beijing" :class="liaoTianBeiJingLeiMing" @scroll="chuLiGunDong">
       <div v-if="聊天仓库.haiYouGengDuo && !fuPanMoShi" class="jiazaigengduo-qu">
         <button
           class="jiazaigengduo-anniu"
@@ -12,6 +15,35 @@
               ? huoQuFanYi('liaoTian', 'jiaZaiZhong')
               : huoQuFanYi('liaoTian', 'jiaZaiGengDuo')
           }}
+        </button>
+      </div>
+      <div v-if="聊天仓库.shouPingJiaZaiZhong" class="gujia-liebiao" aria-hidden="true">
+        <div
+          v-for="(qiPao, guJiaSuoYin) in GU_JIA_QI_PAO_PEI_ZHI"
+          :key="'gujia-' + guJiaSuoYin"
+          class="gujia-xiangmu"
+          :class="qiPao.shiYouCe ? 'gujia-youce' : 'gujia-zuoce'"
+        >
+          <span v-if="!qiPao.shiYouCe" class="gujia-touxiang" />
+          <span class="gujia-qipao" :style="{ width: qiPao.kuanDu }" />
+          <span v-if="qiPao.shiYouCe" class="gujia-touxiang" />
+        </div>
+      </div>
+      <div v-else-if="聊天仓库.jiaZaiShiBai" class="jiazai-shibai-qu">
+        <svg class="shibai-chahua" viewBox="0 0 72 48" fill="none" aria-hidden="true">
+          <circle cx="34" cy="24" r="16" fill="currentColor" />
+          <circle cx="28" cy="20" r="4.5" fill="var(--liaotian-beijing)" opacity="0.35" />
+          <circle cx="39" cy="28" r="3" fill="var(--liaotian-beijing)" opacity="0.35" />
+          <path
+            d="M58 10l1.8 3.6L63.5 15l-3.7 1.4L58 20l-1.8-3.6L52.5 15l3.7-1.4z"
+            fill="currentColor"
+            opacity="0.55"
+          />
+        </svg>
+        <p class="shibai-biaoti">{{ huoQuFanYi('liaoTian', 'jiaZaiShiBai') }}</p>
+        <p class="shibai-tishi">{{ huoQuFanYi('liaoTian', 'jiaZaiShiBaiTiShi') }}</p>
+        <button class="chongshi-anniu" @click="chongShiJiaZai">
+          {{ huoQuFanYi('liaoTian', 'chongShi') }}
         </button>
       </div>
       <TransitionGroup name="xiaoxi-guodu" tag="div" class="xiaoxi-liebiao">
@@ -30,10 +62,10 @@
                 'xitong-xiaoxi': shiXiTongXiaoXi(xiaoXi),
                 'chehui-xiaoxi': xiaoXi.yi_che_hui,
               }"
-              @contextmenu.prevent="fuPanMoShi ? null : daKaiCaiDan(xiaoXi, $event)"
-              @touchstart="fuPanMoShi ? null : chuMoKaiShi(xiaoXi)"
-              @touchend="chuMoJieShu"
-              @touchmove="chuMoJieShu"
+              @contextmenu.prevent="fuPanMoShi ? null : chuLiYouJianCaiDan(xiaoXi, $event)"
+              @touchstart="fuPanMoShi ? null : chuLiChuMoKaiShi(xiaoXi)"
+              @touchend="chuLiChuMoJieShu"
+              @touchmove="chuLiChuMoJieShu"
             >
               <template v-if="xiaoXi.yi_che_hui">
                 <div class="chehui-tishi">
@@ -54,6 +86,8 @@
                     v-if="shiTuPianDiZhi(聊天仓库.jiaoSeXinXi?.tou_xiang)"
                     :src="聊天仓库.jiaoSeXinXi?.tou_xiang || undefined"
                     class="touxiang-tu"
+                    loading="lazy"
+                    decoding="async"
                     alt=""
                   />
                   <span v-else class="touxiang-moren-xiaoxi">{{
@@ -68,6 +102,8 @@
                     v-if="shiTuPianDiZhi(用户仓库.dangQianYongHu?.tou_xiang)"
                     :src="用户仓库.dangQianYongHu?.tou_xiang || undefined"
                     class="touxiang-tu"
+                    loading="lazy"
+                    decoding="async"
                     alt=""
                   />
                   <span v-else class="touxiang-moren-xiaoxi">{{
@@ -94,6 +130,7 @@
                       :src="huoQuXiaoXiMeiTiURL(xiaoXi)"
                       alt=""
                       @load="biaoJiTuPianYiJiaZai(xiaoXi)"
+                      @error="shuaXinMeiTiURL(xiaoXi, $event)"
                     />
                   </button>
                 </div>
@@ -101,7 +138,12 @@
                   v-else-if="xiaoXi.lei_xing === 'biaoQingBao'"
                   class="qipao-waike biaoqingbao-waike"
                 >
-                  <img class="biaoqingbao-tu" :src="huoQuXiaoXiMeiTiURL(xiaoXi)" alt="" />
+                  <img
+                    class="biaoqingbao-tu"
+                    :src="huoQuXiaoXiMeiTiURL(xiaoXi)"
+                    alt=""
+                    @error="shuaXinMeiTiURL(xiaoXi, $event)"
+                  />
                 </div>
                 <div v-else-if="xiaoXi.lei_xing === 'yuYin'" class="qipao-waike yuyin-waike">
                   <button
@@ -115,6 +157,44 @@
                     "
                     @click.stop="qieHuanYuYinBoFang(xiaoXi)"
                   >
+                    <svg
+                      v-if="!shiYuYinBoFangZhong(xiaoXi)"
+                      class="yuyin-shengyin-tubiao"
+                      :class="{
+                        'tubiao-youce': xiaoXi.fa_song_zhe_lei_xing === 'yonghu',
+                      }"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M11 5 6 9H3v6h3l5 4z"
+                        fill="currentColor"
+                        stroke="none"
+                      />
+                      <path d="M15 9a4 4 0 0 1 0 6" />
+                      <path d="M17.5 6.5a8 8 0 0 1 0 11" opacity="0.6" />
+                    </svg>
+                    <span v-else class="yuyin-jindu-qu">
+                      <input
+                        class="yuyin-jindu-tiao"
+                        type="range"
+                        :min="0"
+                        :max="huoQuBoFangZongMiao(xiaoXi)"
+                        :step="0.1"
+                        :value="huoQuBoFangJinDu(xiaoXi)"
+                        :aria-label="huoQuFanYi('duoMeiTi', 'boFangYuYin')"
+                        @click.stop
+                        @input.stop="tiaoZhuanYuYinJinDu(xiaoXi, ($event.target as HTMLInputElement).valueAsNumber)"
+                      />
+                      <span class="yuyin-jindu-wenben"
+                        >{{ geShiHuaBoFangJinDu(xiaoXi) }} / {{ geShiHuaYuYinShiChang(xiaoXi) }}</span
+                      >
+                    </span>
                     <span class="boxing-zu" aria-hidden="true">
                       <span
                         v-for="tiao in YU_YIN_BO_XING_TIAO_SHU"
@@ -124,8 +204,39 @@
                     </span>
                     <span class="yuyin-shichang">{{ geShiHuaYuYinShiChang(xiaoXi) }}</span>
                   </button>
+                  <div
+                    v-if="shiYuYinZhuanXieZhong(xiaoXi)"
+                    class="yuyin-zhuanwenzi-zhuangtai"
+                  >
+                    {{ huoQuFanYi('liaoTian', 'yuYinZhuanWenZiZhong') }}
+                  </div>
+                  <button
+                    v-else-if="shiZhuanWenZiZhanKai(xiaoXi)"
+                    type="button"
+                    class="yuyin-zhuanwenzi"
+                    :aria-label="huoQuFanYi('liaoTian', 'zheDie')"
+                    :title="huoQuFanYi('liaoTian', 'zheDie')"
+                    @click.stop="qieHuanZhuanWenZiXianShi(xiaoXi)"
+                  >
+                    {{ huoQuZhuanWenZi(xiaoXi) }}
+                  </button>
+                  <span
+                    v-else-if="shiZhuanWenZiShiBai(xiaoXi)"
+                    class="yuyin-zhuanwenzi yuyin-zhuanwenzi-shibai"
+                  >
+                    {{ huoQuFanYi('liaoTian', 'yuYinZhuanWenZiShiBai') }}
+                  </span>
                 </div>
                 <div v-else-if="xiaoXi.lei_xing === 'wenJian'" class="qipao-waike wenjian-waike">
+                  <video
+                    v-if="shiShiPinXiaoXi(xiaoXi)"
+                    class="shipin-xianshi"
+                    :src="huoQuXiaoXiMeiTiURL(xiaoXi)"
+                    controls
+                    preload="metadata"
+                    :aria-label="huoQuFanYi('duoMeiTi', 'boFangShiPin')"
+                    @error="shuaXinMeiTiURL(xiaoXi, $event)"
+                  />
                   <div class="wenjian-qipao">
                     <span class="wenjian-tubiao" aria-hidden="true">
                       <svg
@@ -206,15 +317,72 @@
                   <div class="qipao-neirong">
                     {{ xiaoXi.nei_rong }}
                   </div>
+                  <div
+                    v-if="shiFanYiZhong(xiaoXi) || shiFanYiZhanKai(xiaoXi)"
+                    class="fanyi-yuyan-hang"
+                  >
+                    <label class="fanyi-yuyan-xiang">
+                      <span>{{ huoQuFanYi('liaoTian', 'fanYiYuanYu') }}</span>
+                      <select
+                        v-model="fanYiYuanYu"
+                        class="fanyi-yuyan-xiala"
+                        @change="chongXinFanYi(xiaoXi)"
+                      >
+                        <option value="auto">{{ huoQuFanYi('liaoTian', 'fanYiZiDong') }}</option>
+                        <option value="zh">{{ huoQuFanYi('liaoTian', 'fanYiYuYanZh') }}</option>
+                        <option value="en">{{ huoQuFanYi('liaoTian', 'fanYiYuYanEn') }}</option>
+                        <option value="ja">{{ huoQuFanYi('liaoTian', 'fanYiYuYanJa') }}</option>
+                        <option value="ko">{{ huoQuFanYi('liaoTian', 'fanYiYuYanKo') }}</option>
+                        <option value="fr">{{ huoQuFanYi('liaoTian', 'fanYiYuYanFr') }}</option>
+                        <option value="de">{{ huoQuFanYi('liaoTian', 'fanYiYuYanDe') }}</option>
+                        <option value="es">{{ huoQuFanYi('liaoTian', 'fanYiYuYanEs') }}</option>
+                        <option value="ru">{{ huoQuFanYi('liaoTian', 'fanYiYuYanRu') }}</option>
+                      </select>
+                    </label>
+                    <label class="fanyi-yuyan-xiang">
+                      <span>{{ huoQuFanYi('liaoTian', 'fanYiMuBiaoYu') }}</span>
+                      <select
+                        v-model="fanYiMuBiaoYu"
+                        class="fanyi-yuyan-xiala"
+                        @change="chongXinFanYi(xiaoXi)"
+                      >
+                        <option value="zh">{{ huoQuFanYi('liaoTian', 'fanYiYuYanZh') }}</option>
+                        <option value="en">{{ huoQuFanYi('liaoTian', 'fanYiYuYanEn') }}</option>
+                        <option value="ja">{{ huoQuFanYi('liaoTian', 'fanYiYuYanJa') }}</option>
+                        <option value="ko">{{ huoQuFanYi('liaoTian', 'fanYiYuYanKo') }}</option>
+                        <option value="fr">{{ huoQuFanYi('liaoTian', 'fanYiYuYanFr') }}</option>
+                        <option value="de">{{ huoQuFanYi('liaoTian', 'fanYiYuYanDe') }}</option>
+                        <option value="es">{{ huoQuFanYi('liaoTian', 'fanYiYuYanEs') }}</option>
+                        <option value="ru">{{ huoQuFanYi('liaoTian', 'fanYiYuYanRu') }}</option>
+                      </select>
+                    </label>
+                  </div>
+                  <div v-if="shiFanYiZhong(xiaoXi)" class="yuyin-zhuanwenzi-zhuangtai">
+                    {{ huoQuFanYi('liaoTian', 'fanYiZhong') }}
+                  </div>
+                  <div v-else-if="shiFanYiZhanKai(xiaoXi)" class="yuyin-zhuanwenzi">
+                    {{ huoQuFanYiJieGuo(xiaoXi) }}
+                  </div>
                 </div>
                 <div
                   v-if="
-                    !fuPanMoShi && xiaoXi.fa_song_zhong && xiaoXi.fa_song_zhe_lei_xing === 'yonghu'
+                    !fuPanMoShi &&
+                    xiaoXi.fa_song_zhe_lei_xing === 'yonghu' &&
+                    (xiaoXi.fa_song_zhong || shiFaSongShiBai(xiaoXi))
                   "
                   class="fasong-zhuangtai"
                   :aria-label="huoQuFaSongZhuangTaiTiShi(xiaoXi)"
                 >
-                  <span class="fasong-zhuangtai-zhuanquan" />
+                  <span v-if="xiaoXi.fa_song_zhong" class="fasong-zhuangtai-zhuanquan" />
+                  <button
+                    v-else
+                    class="fasong-shibai-jiaobiao"
+                    :title="huoQuFanYi('liaoTian', 'chongXinFaSong')"
+                    :aria-label="huoQuFanYi('liaoTian', 'chongXinFaSong')"
+                    @click.stop="chongShiFaSongXiaoXi(xiaoXi)"
+                  >
+                    !
+                  </button>
                 </div>
               </template>
             </div>
@@ -289,6 +457,17 @@
         {{ huoQuFanYi('liaoTian', 'youXiYiJieShu') }}
       </div>
       <div v-else class="shuru-rongqi">
+        <div v-if="yinYongXiaoXi" class="yinyong-yulan">
+          <span class="yinyong-biaoqian">{{ huoQuFanYi('liaoTian', 'yinYong') }}</span>
+          <span class="yinyong-zhaiyao">{{ huoQuYinYongZhaiYao(yinYongXiaoXi) }}</span>
+          <button
+            class="yinyong-quxiao"
+            :aria-label="huoQuFanYi('liaoTian', 'quXiaoYinYong')"
+            @click="quXiaoYinYong"
+          >
+            ×
+          </button>
+        </div>
         <button
           class="yuyin-anniu"
           :class="{ huoyue: luYinMoShi }"
@@ -332,6 +511,7 @@
         </div>
         <div class="shuru-dibu-hang">
           <span
+            v-if="shuRuNeiRong.length >= XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi"
             class="zifu-jishu"
             :class="{ 'zifu-chaochu': shuRuNeiRong.length > XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu }"
           >
@@ -451,20 +631,23 @@
             </svg>
             <span>{{ huoQuFanYi('duoMeiTi', 'wenJian') }}</span>
           </button>
-          <button class="gengduo-rukou" @click="faQiGengDuoTongHua('yuYin')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path
-                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
-              />
-            </svg>
-            <span>{{ huoQuFanYi('duoMeiTi', 'yuYinTongHua') }}</span>
+          <button
+            v-if="duoMoTaiPeiZhi?.tuXiangShengChengQiYong"
+            class="duomotai-rukou"
+            :disabled="shengChengZhong"
+            @click="chuLiShengTuDianJi"
+          >
+            <span aria-hidden="true">🎨</span>
+            <span>{{ huoQuFanYi('duoMeiTi', 'shengTu') }}</span>
           </button>
-          <button class="gengduo-rukou" @click="faQiGengDuoTongHua('shiPin')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="23 7 16 12 23 17 23 7" />
-              <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-            </svg>
-            <span>{{ huoQuFanYi('duoMeiTi', 'shiPinTongHua') }}</span>
+          <button
+            v-if="duoMoTaiPeiZhi?.shiPinShengChengQiYong"
+            class="duomotai-rukou"
+            :disabled="shengChengZhong"
+            @click="chuLiShengShiPinDianJi"
+          >
+            <span aria-hidden="true">🎬</span>
+            <span>{{ huoQuFanYi('duoMeiTi', 'shengChengShiPin') }}</span>
           </button>
         </div>
       </Transition>
@@ -542,6 +725,48 @@
     </Teleport>
 
     <Teleport to="body">
+      <Transition name="zhezhao-xianshi">
+        <div
+          v-if="yuYinCaiDanZhanKai"
+          class="chehui-zhezhao"
+          @click="guanBiYuYinCaiDan"
+        >
+          <div class="chehui-caidan" :style="yuYinCaiDanYangShi">
+            <button
+              v-for="xiang in huoQuYuYinCaiDanXiang()"
+              :key="xiang"
+              class="chehui-xiangmu"
+              @click="zhiXingYuYinCaiDanXiang(xiang)"
+            >
+              {{ huoQuFanYi('liaoTian', xiang) }}
+            </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <Teleport to="body">
+      <Transition name="zhezhao-xianshi">
+        <div
+          v-if="wenBenCaiDanZhanKai"
+          class="chehui-zhezhao"
+          @click="guanBiWenBenCaiDan"
+        >
+          <div class="chehui-caidan" :style="wenBenCaiDanYangShi">
+            <button
+              v-for="xiang in huoQuWenBenCaiDanXiang()"
+              :key="xiang"
+              class="chehui-xiangmu"
+              @click="zhiXingWenBenCaiDanXiang(xiang)"
+            >
+              {{ huoQuFanYi('liaoTian', xiang) }}
+            </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <Teleport to="body">
       <GuanLiJianKong v-if="guanLiJianKongZhanKai" @close="guanLiJianKongZhanKai = false" />
     </Teleport>
 
@@ -601,6 +826,13 @@
     <Teleport to="body">
       <TongHuaJieMian v-if="通话仓库.zhuangTai !== 'kongXian'" />
     </Teleport>
+
+    <!-- C4 首次多媒体授权弹窗：图片/表情包外发视觉理解前单独征得同意 -->
+    <DuoMeiTiShouQuanDanChuang
+      :xian-shi="shouQuanDanChuangXianShi"
+      @que-ren="shouQuanQueRen"
+      @ju-jue="shouQuanJuJue"
+    />
   </div>
 </template>
 
@@ -619,6 +851,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { 使用聊天仓库 } from '@/stores/聊天'
 import { 使用用户仓库 } from '@/stores/用户'
 import { 使用通话仓库 } from '@/stores/通话'
+import { 使用用户设置仓库 } from '@/stores/用户设置'
 
 import { huoQuFanYi } from '@/config/translations'
 import {
@@ -637,7 +870,17 @@ import type { 消息 } from '@/types'
 import JunShiZhiDao from '@/components/军师指导.vue'
 import GuanLiJianKong from '@/components/管理员监控.vue'
 import TongHuaJieMian from '@/components/通话界面.vue'
-import { huoQuFuPan, type 复盘批注项 } from '@/api/聊天'
+import DuoMeiTiShouQuanDanChuang from '@/components/多媒体授权弹窗.vue'
+import { chongQianMeiTiURL, fanYiWenBen as fanYiWenBenApi, zhuanXieYuYin, huoQuDuoMoTaiPeiZhi } from '@/api/聊天'
+import { shiShiPinXiaoXi, shiShengTuMingLing, shiShengShiPinMingLing, jieXiShengTuMingLing } from '@/utils/多模态'
+import { use复盘 } from '@/composables/use复盘'
+import { use长按菜单 } from '@/composables/use长按菜单'
+import { use语音转文字 } from '@/composables/use语音转文字'
+import { use录音 } from '@/composables/use录音'
+import { use虚拟窗口 } from '@/composables/use虚拟窗口'
+import { use表情面板 } from '@/composables/use表情面板'
+import { use语音播放 } from '@/composables/use语音播放'
+import { use输入框 } from '@/composables/use输入框'
 
 defineOptions({
   name: 'liaoTian',
@@ -648,6 +891,8 @@ const router = useRouter()
 const 聊天仓库 = 使用聊天仓库()
 const 用户仓库 = 使用用户仓库()
 const 通话仓库 = 使用通话仓库()
+const 设置仓库 = 使用用户设置仓库()
+const liaoTianBeiJingLeiMing = computed(() => `beijing-${设置仓库.liaoTianBeiJing || 'moRen'}`)
 
 const shuRuNeiRong = ref('')
 const faSongZhong = ref(false)
@@ -658,254 +903,340 @@ const youXiShiJianLeiXing = ref<'shengli' | 'shibai'>('shengli')
 const youXiShiJianNeiRong = ref('')
 const xiaoxiQuYuRef = ref<HTMLElement | null>(null)
 const shuruKuangRef = ref<HTMLTextAreaElement | null>(null)
-const shuRuKuangZhanKai = ref(false)
-const neiRongGaoDu = ref(0)
-const danXingGaoDu = ref(32)
-const shiKouGaoDu = ref(typeof window !== 'undefined' ? window.innerHeight : 0)
-const shuRuKuangKeZhanKai = computed(() => neiRongGaoDu.value > danXingGaoDu.value + 1)
-const emojiMianBanZhanKai = ref(false)
 const guanLiJianKongZhanKai = ref(false)
 const dangQianShiJian = ref(Date.now())
-let shiJianGengXinQi: ReturnType<typeof setInterval> | null = null
+let cheHuiFanZhuanDingShiQi: ReturnType<typeof setTimeout> | null = null
+const CHE_HUI_FAN_ZHUAN_HUAN_CHONG_HAO_MIAO = 1000
 let yiTongGuoMountedChuShiHua = false
 
-type EmojiTabLeiXing = 'emoji' | 'biaoqingbao'
-const emojiTab = ref<EmojiTabLeiXing>('emoji')
+function jiSuanXiaYiCheHuiDaoQiShiKe(): number | null {
+  const lieBiao = Array.isArray(聊天仓库.xiaoXiLieBiao) ? 聊天仓库.xiaoXiLieBiao : []
+  let zuiZaoDaoQi: number | null = null
+  for (const xiaoXi of lieBiao) {
+    if (!xiaoXi || xiaoXi.fa_song_zhe_lei_xing !== 'yonghu') continue
+    if (xiaoXi.yi_che_hui) continue
+    const chuo = xiaoXi.shi_jian_chuo
+    if (typeof chuo !== 'number' || !Number.isFinite(chuo)) continue
+    const daoQiShiKe = chuo + XIAO_XI_PEI_ZHI.cheHuiShiXian
+    if (daoQiShiKe <= Date.now()) continue
+    if (zuiZaoDaoQi === null || daoQiShiKe < zuiZaoDaoQi) zuiZaoDaoQi = daoQiShiKe
+  }
+  return zuiZaoDaoQi
+}
+
+function anPaiCheHuiFanZhuan() {
+  if (cheHuiFanZhuanDingShiQi) {
+    clearTimeout(cheHuiFanZhuanDingShiQi)
+    cheHuiFanZhuanDingShiQi = null
+  }
+  const xiaYiDaoQiShiKe = jiSuanXiaYiCheHuiDaoQiShiKe()
+  if (xiaYiDaoQiShiKe === null) return
+  cheHuiFanZhuanDingShiQi = setTimeout(
+    () => {
+      cheHuiFanZhuanDingShiQi = null
+      dangQianShiJian.value = Date.now()
+      anPaiCheHuiFanZhuan()
+    },
+    Math.max(0, xiaYiDaoQiShiKe + CHE_HUI_FAN_ZHUAN_HUAN_CHONG_HAO_MIAO - Date.now()),
+  )
+}
+
+function tingZhiCheHuiFanZhuan() {
+  if (cheHuiFanZhuanDingShiQi) {
+    clearTimeout(cheHuiFanZhuanDingShiQi)
+    cheHuiFanZhuanDingShiQi = null
+  }
+}
+
+const {
+  huoQuZhuanWenZi,
+  shiYuYinZhuanXieZhong,
+  shiZhuanWenZiZhanKai,
+  shiZhuanWenZiShiBai,
+  qieHuanZhuanWenZiXianShi,
+} = use语音转文字({
+  huoQuYuYinDiZhi: huoQuXiaoXiMeiTiURL,
+  zhuanXieQingQiu: async (xiaoXi) => zhuanXieYuYin(xiaoXi.mei_ti_id || ''),
+})
+
+const {
+  cheHuiCaiDanZhanKai,
+  cheHuiCaiDanYangShi,
+  daKaiCaiDan,
+  chuMoKaiShi,
+  chuMoJieShu,
+  zhiXingCheHui,
+  xianShiCheHuiAnNiu,
+  zhiXingCheHuiXiaoXi,
+  yuYinCaiDanZhanKai,
+  yuYinCaiDanYangShi,
+  daKaiYuYinCaiDan,
+  chuMoKaiShiYuYin,
+  chuMoJieShuYuYin,
+  guanBiYuYinCaiDan,
+  huoQuYuYinCaiDanXiang,
+  zhiXingYuYinCaiDanXiang,
+  wenBenCaiDanZhanKai,
+  wenBenCaiDanYangShi,
+  daKaiWenBenCaiDan,
+  chuMoKaiShiWenBen,
+  chuMoJieShuWenBen,
+  guanBiWenBenCaiDan,
+  huoQuWenBenCaiDanXiang,
+  zhiXingWenBenCaiDanXiang,
+  huoQuFanYiJieGuo,
+  shiFanYiZhong,
+  shiFanYiZhanKai,
+  qiangZhiFanYi,
+  fanYiYuanYu,
+  fanYiMuBiaoYu,
+  yinYongXiaoXi,
+  quXiaoYinYong,
+  huoQuYinYongZhaiYao,
+} = use长按菜单({
+  dangQianShiJian,
+  cheHuiXiaoXi: (xiaoXiId) => 聊天仓库.cheHuiXiaoXi(xiaoXiId),
+  qieHuanYuYinZhuanWenZi: (xiaoXi) => qieHuanZhuanWenZiXianShi(xiaoXi),
+  fanYiQingQiu: (wenBen, yuanYu, muBiaoYu) => fanYiWenBenApi(wenBen, yuanYu, muBiaoYu),
+  sheZhiCuoWu: (xinXi) => 聊天仓库.sheZhiCuoWu(xinXi),
+})
+
+function chongXinFanYi(xiaoXi: 消息) {
+  void qiangZhiFanYi(xiaoXi)
+}
+
+function chuLiYouJianCaiDan(xiaoXi: 消息, shiJian: MouseEvent) {
+  if (xiaoXi.lei_xing === 'yuYin') {
+    daKaiYuYinCaiDan(xiaoXi, shiJian)
+    return
+  }
+  if (xiaoXi.lei_xing === 'wenben') {
+    daKaiWenBenCaiDan(xiaoXi, shiJian)
+    return
+  }
+  daKaiCaiDan(xiaoXi, shiJian)
+}
+
+function chuLiChuMoKaiShi(xiaoXi: 消息) {
+  if (xiaoXi.lei_xing === 'yuYin') {
+    chuMoKaiShiYuYin(xiaoXi)
+    return
+  }
+  if (xiaoXi.lei_xing === 'wenben') {
+    chuMoKaiShiWenBen(xiaoXi)
+    return
+  }
+  chuMoKaiShi(xiaoXi)
+}
+
+function chuLiChuMoJieShu() {
+  chuMoJieShu()
+  chuMoJieShuYuYin()
+  chuMoJieShuWenBen()
+}
+
+const {
+  emojiTab,
+  emojiMianBanZhanKai,
+  changYongEmoji,
+  chuShiHuaEmojiGunDongBuChang,
+  chongZhiEmojiBuChangJiXian,
+  qieHuanEmojiMianBan,
+  chaRuEmoji,
+  qieHuanEmojiTab,
+  yuZaiEmojiZiXing,
+  qingLiEmojiZiYuan,
+} = use表情面板({
+  shuRuNeiRong,
+  xiaoxiQuYuRef,
+})
+
 const gengDuoMianBanZhanKai = ref(false)
 const xiangCeInputRef = ref<HTMLInputElement | null>(null)
 const wenJianInputRef = ref<HTMLInputElement | null>(null)
 const tuPianJiaZaiJiHe = ref(new Set<string>())
 const tuPianYuLanURL = ref<string | null>(null)
 
-const YU_YIN_BO_XING_TIAO_SHU = 12
-const LU_YIN_SHANG_HUA_QU_XIAO_JU_LI = 80
-const boFangZhongXiaoXiKey = ref<string | null>(null)
-let dangQianYinPin: HTMLAudioElement | null = null
+// C4 首次多媒体授权：未开启 tuPianShouQuan 时，发送图片/表情包前弹窗征得同意
+const shouQuanDanChuangXianShi = ref(false)
+let shouQuanDaiQueRenHuiDiao: ((yunXu: boolean) => void) | null = null
 
-const luYinMoShi = ref(false)
-const luYinZhong = ref(false)
-const luYinMiao = ref(0)
-const luYinShangHuaQuXiao = ref(false)
-let meiTiLuYinQi: MediaRecorder | null = null
-let luYinLiuPian: MediaStream | null = null
-let luYinKuaiLieBiao: Blob[] = []
-let luYinJiShiQi: ReturnType<typeof setInterval> | null = null
-let luYinKaiShiHaoMiao = 0
-let luYinQiDianY: number | null = null
-let luYinQiBuChuLiZhong = false
-
-const fuPanMoShi = ref(false)
-const fuPanPiZhu = ref<复盘批注项[] | null>(null)
-const fuPanZongJie = ref<string | null>(null)
-const fuPanJiaZaiZhong = ref(false)
-const fuPanDangAnId = ref<string | null>(null)
-let fuPanQingQiuId = 0
-
-const changYongEmoji = [
-  '😀',
-  '😃',
-  '😄',
-  '😁',
-  '😆',
-  '😅',
-  '🤣',
-  '😂',
-  '🙂',
-  '😊',
-  '😇',
-  '🥰',
-  '😍',
-  '🤩',
-  '😘',
-  '😗',
-  '😚',
-  '😙',
-  '🥲',
-  '😋',
-  '😛',
-  '😜',
-  '🤪',
-  '😝',
-  '🤗',
-  '🤭',
-  '🤫',
-  '🤔',
-  '🫡',
-  '🤐',
-  '🤨',
-  '😐',
-  '😑',
-  '😶',
-  '🫥',
-  '😏',
-  '😒',
-  '🙄',
-  '😬',
-  '😮‍💨',
-  '🤥',
-  '😌',
-  '😔',
-  '😪',
-  '🤤',
-  '😴',
-  '😷',
-  '🤒',
-  '🤕',
-  '🤢',
-  '🤮',
-  '🥵',
-  '🥶',
-  '🥴',
-  '😵',
-  '🤯',
-  '🤠',
-  '🥳',
-  '🥸',
-  '😎',
-  '🤓',
-  '🧐',
-  '😕',
-  '🫤',
-  '😟',
-  '🙁',
-  '☹️',
-  '😮',
-  '😯',
-  '😲',
-  '😳',
-  '🥺',
-  '🥹',
-  '😦',
-  '😧',
-  '😨',
-  '😰',
-  '😥',
-  '😢',
-  '😭',
-  '😱',
-  '😖',
-  '😣',
-  '😞',
-  '😓',
-  '😩',
-  '😫',
-  '🥱',
-  '😤',
-  '😡',
-  '😠',
-  '🤬',
-  '😈',
-  '👿',
-  '💀',
-  '☠️',
-  '💩',
-  '🤡',
-  '👹',
-  '👺',
-  '👻',
-  '👽',
-  '👾',
-  '🤖',
-  '❤️',
-  '🧡',
-  '💛',
-  '💚',
-  '💙',
-  '💜',
-  '🖤',
-  '🤍',
-  '💔',
-  '❤️‍🔥',
-  '💕',
-  '💞',
-  '💓',
-  '💗',
-  '💖',
-  '💘',
-  '💝',
-  '💟',
-  '♥️',
-  '🫶',
-  '👍',
-  '👎',
-  '👊',
-  '✊',
-  '🤞',
-  '✌️',
-  '🤟',
-  '🤘',
-  '👌',
-  '🤌',
-  '🤏',
-  '👈',
-  '👉',
-  '👆',
-  '👇',
-  '☝️',
-  '✋',
-  '🤚',
-  '🖐️',
-  '🖖',
-  '👋',
-  '🤙',
-  '💪',
-  '🦾',
-  '🙏',
-  '✍️',
-  '💅',
-  '🤳',
-  '🔥',
-  '⭐',
-  '🌟',
-  '💫',
-  '✨',
-  '⚡',
-  '💥',
-  '🎉',
-  '🎊',
-  '🎈',
-  '🎁',
-  '🏆',
-  '🥇',
-  '🎯',
-  '🎮',
-  '🎲',
-]
-
-// 表情面板展开/收起会改变「聊天区 + 输入区」的 grid 行高（行 2 = auto）。
-// 若不补偿，面板会直接吃掉聊天区底部约 200px、把底部消息裁掉（表现为「覆盖」）。
-// 用 ResizeObserver 监听面板实际高度变化，按「高度增量」同步把聊天区向上滚动相同距离，
-// 使面板无论处于何种滚动位置都「顶起」聊天内容而非覆盖；收起时反向恢复原位。
-let shangYiEmojiGaoDu = 0
-let emojiMianBanGuanChaQi: ResizeObserver | null = null
-
-function chuShiHuaEmojiGunDongBuChang() {
-  const mianBan = document.querySelector('.emoji-mianban') as HTMLElement | null
-  if (!mianBan) return
-  shangYiEmojiGaoDu = mianBan.offsetHeight
-  emojiMianBanGuanChaQi = new ResizeObserver(() => {
-    const qu = xiaoxiQuYuRef.value
-    const ban = document.querySelector('.emoji-mianban') as HTMLElement | null
-    if (!qu || !ban) return
-    const xinGao = ban.offsetHeight
-    const cha = xinGao - shangYiEmojiGaoDu
-    if (cha !== 0) qu.scrollTop += cha
-    shangYiEmojiGaoDu = xinGao
+function queRenTuPianShouQuan(): Promise<boolean> {
+  if (用户仓库.tuPianShouQuan) return Promise.resolve(true)
+  return new Promise((jieJue) => {
+    shouQuanDaiQueRenHuiDiao = jieJue
+    shouQuanDanChuangXianShi.value = true
   })
-  emojiMianBanGuanChaQi.observe(mianBan)
 }
 
-function qieHuanEmojiMianBan() {
-  emojiMianBanZhanKai.value = !emojiMianBanZhanKai.value
+function shouQuanQueRen() {
+  用户仓库.sheZhiTuPianShouQuan(true)
+  shouQuanDanChuangXianShi.value = false
+  shouQuanDaiQueRenHuiDiao?.(true)
+  shouQuanDaiQueRenHuiDiao = null
 }
 
-function chaRuEmoji(emoji: string) {
-  shuRuNeiRong.value += emoji
+function shouQuanJuJue() {
+  shouQuanDanChuangXianShi.value = false
+  shouQuanDaiQueRenHuiDiao?.(false)
+  shouQuanDaiQueRenHuiDiao = null
 }
 
-function qieHuanEmojiTab(tab: EmojiTabLeiXing) {
-  emojiTab.value = tab
+const duoMoTaiPeiZhi = ref<{ tuXiangShengChengQiYong: boolean; shiPinShengChengQiYong: boolean } | null>(null)
+const shengChengZhong = ref(false)
+
+async function jiaZaiDuoMoTaiPeiZhi() {
+  try {
+    duoMoTaiPeiZhi.value = await huoQuDuoMoTaiPeiZhi()
+  } catch {
+    duoMoTaiPeiZhi.value = null
+  }
 }
+
+async function benDiZhuanXieYuYinBlob(blob: Blob): Promise<string> {
+  try {
+    const chuangKou = window as unknown as Record<string, unknown>
+    const GouZao = (chuangKou['SpeechRecognition'] ?? chuangKou['webkitSpeechRecognition']) as (new () => {
+      lang: string
+      interimResults: boolean
+      maxAlternatives: number
+      onresult: ((e: { results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null
+      onerror: (() => void) | null
+      onend: (() => void) | null
+      start(): void
+      stop(): void
+    }) | undefined
+    if (!GouZao || typeof Audio === 'undefined') return ''
+    const diZhi = URL.createObjectURL(blob)
+    try {
+      return await new Promise<string>((jieJue) => {
+        const shiBieQi = new GouZao()
+        shiBieQi.lang = 'zh-CN'
+        shiBieQi.interimResults = false
+        shiBieQi.maxAlternatives = 1
+        const duanLuo: string[] = []
+        let yiJieSuan = false
+        const jieSuan = (zhi: string) => {
+          if (yiJieSuan) return
+          yiJieSuan = true
+          jieJue(zhi)
+        }
+        const chaoShi = setTimeout(() => jieSuan(duanLuo.join('').trim().slice(0, 500)), 6000)
+        const yinPin = new Audio(diZhi)
+        shiBieQi.onresult = (e) => {
+          for (let i = 0; i < e.results.length; i++) {
+            const jieGuo = e.results[i]
+            if (jieGuo && jieGuo.isFinal && jieGuo[0] && jieGuo[0].transcript) duanLuo.push(jieGuo[0].transcript)
+          }
+        }
+        shiBieQi.onerror = () => {
+          clearTimeout(chaoShi)
+          jieSuan('')
+        }
+        shiBieQi.onend = () => {
+          clearTimeout(chaoShi)
+          jieSuan(duanLuo.join('').trim().slice(0, 500))
+        }
+        yinPin.onended = () => {
+          try {
+            shiBieQi.stop()
+          } catch {
+            clearTimeout(chaoShi)
+            jieSuan(duanLuo.join('').trim().slice(0, 500))
+          }
+        }
+        yinPin.onerror = () => {
+          clearTimeout(chaoShi)
+          jieSuan('')
+        }
+        try {
+          shiBieQi.start()
+        } catch {
+          clearTimeout(chaoShi)
+          jieSuan('')
+          return
+        }
+        Promise.resolve(yinPin.play()).catch(() => {
+          clearTimeout(chaoShi)
+          jieSuan('')
+        })
+      })
+    } finally {
+      URL.revokeObjectURL(diZhi)
+    }
+  } catch {
+    return ''
+  }
+}
+
+const {
+  luYinMoShi,
+  luYinZhong,
+  luYinMiao,
+  luYinShangHuaQuXiao,
+  qieHuanLuYinMoShi,
+  guanBiLuYinMoShi,
+  qingLiLuYinZiYuan,
+  wanChengLuYin,
+  kaiShiLuYin,
+  songKaiLuYin,
+  quXiaoLuYin,
+  chuLiLuYinYiDong,
+} = use录音({
+  sheZhiCuoWu: (xinXi) => 聊天仓库.sheZhiCuoWu(xinXi),
+  faSongYuYin: async (blob, fuJia) => {
+    const zhuanXie = await benDiZhuanXieYuYinBlob(blob)
+    await 聊天仓库.faSongMeiTiXiaoXi('yuYin', blob, { ...fuJia, zhuanXieWenBen: zhuanXie })
+  },
+  gunDongDaoDiBu: () => gunDongDaoDiBu(),
+})
+
+const {
+  YU_YIN_BO_XING_TIAO_SHU,
+  shiYuYinBoFangZhong,
+  yuYinKuanYangShi,
+  geShiHuaYuYinShiChang,
+  tingZhiYinPinBoFang,
+  qieHuanYuYinBoFang,
+  huoQuBoFangJinDu,
+  huoQuBoFangZongMiao,
+  tiaoZhuanYuYinJinDu,
+} = use语音播放({
+  huoQuDiZhi: huoQuXiaoXiMeiTiURL,
+})
+
+function geShiHuaBoFangJinDu(xiaoXi: 消息): string {
+  const miao = Math.max(0, Math.floor(huoQuBoFangJinDu(xiaoXi)))
+  return `${miao}″`
+}
+
+const {
+  shuRuKuangZhanKai,
+  zhanKaiAnNiuKeYong,
+  shuRuKuangYangShi,
+  ceLiangShuRuKuang,
+  qieHuanShuRuKuangZhanKai,
+  chongSuanShuRuKuangGaoDu,
+} = use输入框({
+  shuruKuangRef,
+  shuRuNeiRong,
+})
+
+const {
+  fuPanMoShi,
+  fuPanDangAnId,
+  huoQuPiZhuByXiaoXiId,
+  huoQuQingGanLeiXing,
+  fuPanZongJie,
+  fuPanZongJieFenKuai,
+  fuPanJiaZaiZhong,
+  jiaZaiFuPanShuJu,
+  tuiChuFuPan,
+} = use复盘({
+  luYou: router,
+  huoQuXiaoXiLieBiao: () => 聊天仓库.xiaoXiLieBiao,
+  qingKongZhuangTai: () => 聊天仓库.qingKongZhuangTai(),
+})
 
 function xiaoXiKey(xiaoXi: 消息): string {
   return xiaoXi.ke_hu_duan_id || xiaoXi.id
@@ -918,6 +1249,22 @@ function shiXiTongXiaoXi(xiaoXi: 消息): boolean {
 
 function huoQuXiaoXiMeiTiURL(xiaoXi: 消息): string | undefined {
   return (xiaoXi.mei_ti_url || xiaoXi.ben_di_yu_lan_url || undefined) as string | undefined
+}
+
+// V8：签名 URL 过期（3600s）导致历史图片 403 时，@error 触发后端重签并原地替换 src；
+// 每条消息最多重试一次，避免失效媒体造成循环请求
+const meiTiChongQianJiLu = new Set<string>()
+async function shuaXinMeiTiURL(xiaoXi: 消息, shiJian?: Event): Promise<void> {
+  const jian = xiaoXiKey(xiaoXi)
+  if (!xiaoXi.mei_ti_id || meiTiChongQianJiLu.has(jian)) return
+  meiTiChongQianJiLu.add(jian)
+  const huiHuaId = 聊天仓库.jiaoSeXinXi?.id || (route.params.huiHuaId as string) || ''
+  if (!huiHuaId) return
+  const xinURL = await chongQianMeiTiURL(huiHuaId, xiaoXi.mei_ti_id)
+  if (xinURL && shiJian?.target instanceof HTMLImageElement) {
+    shiJian.target.src = xinURL
+    xiaoXi.mei_ti_url = xinURL
+  }
 }
 
 function shiTuPianYiJiaZai(xiaoXi: 消息): boolean {
@@ -941,10 +1288,36 @@ function guanBiTuPianYuLan() {
 const MEI_TI_XIAO_XI_JI_HE = new Set<string>(['tuPian', 'biaoQingBao', 'yuYin', 'wenJian'])
 
 function huoQuFaSongZhuangTaiTiShi(xiaoXi: 消息): string {
+  if (!xiaoXi.fa_song_zhong && shiFaSongShiBai(xiaoXi)) {
+    return huoQuFanYi('liaoTian', 'chongXinFaSong')
+  }
   if (MEI_TI_XIAO_XI_JI_HE.has(xiaoXi.lei_xing)) {
     return huoQuFanYi('duoMeiTi', 'shangChuanZhong')
   }
   return huoQuFanYi('liaoTian', 'faSongZhong')
+}
+
+// 首屏骨架屏配置：模拟对话左右交替的灰色气泡（微信加载视觉）
+const GU_JIA_QI_PAO_PEI_ZHI = [
+  { kuanDu: '150px', shiYouCe: true },
+  { kuanDu: '200px', shiYouCe: false },
+  { kuanDu: '120px', shiYouCe: true },
+  { kuanDu: '220px', shiYouCe: false },
+  { kuanDu: '170px', shiYouCe: true },
+  { kuanDu: '110px', shiYouCe: false },
+]
+
+function shiFaSongShiBai(xiaoXi: 消息): boolean {
+  return 聊天仓库.faSongShiBaiJiHe.has(xiaoXiKey(xiaoXi))
+}
+
+async function chongShiFaSongXiaoXi(xiaoXi: 消息) {
+  await 聊天仓库.chongShiFaSongXiaoXi(xiaoXiKey(xiaoXi))
+}
+
+async function chongShiJiaZai() {
+  if (聊天仓库.shouPingJiaZaiZhong) return
+  await chuShiHuaLiaoTian()
 }
 
 function qieHuanGengDuoMianBan() {
@@ -975,6 +1348,12 @@ function daKaiWenJianXuanZe() {
 
 async function faSongYaSuoTuPian(wenJian: File | Blob, yuanWenJianMing?: string) {
   if (!聊天仓库.dangQianHuiHuaId) return
+  // C4：图片外发视觉理解前需单独授权，拒绝则给出翻译占位提示且不发送
+  const yunXu = await queRenTuPianShouQuan()
+  if (!yunXu) {
+    聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'shouQuanWeiKaiQiTiShi'))
+    return
+  }
   try {
     const yaSuoBlob = await yaSuoTuPiang(wenJian)
     await 聊天仓库.faSongMeiTiXiaoXi('tuPian', yaSuoBlob, {
@@ -1009,7 +1388,13 @@ async function chuLiWenJianXuanZe(event: Event) {
 
 async function faSongTieZhi(tieZhi: BiaoQingBaoDingYi) {
   if (!聊天仓库.dangQianHuiHuaId) return
+  // C4：表情包同样外发视觉理解，需单独授权
+  const yunXu = await queRenTuPianShouQuan()
   emojiMianBanZhanKai.value = false
+  if (!yunXu) {
+    聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'shouQuanWeiKaiQiTiShi'))
+    return
+  }
   try {
     const blob = await xuanRanBiaoQingBao(tieZhi.emoji, tieZhi.wenZi)
     await 聊天仓库.faSongMeiTiXiaoXi('biaoQingBao', blob, { wenJianMing: `${tieZhi.id}.png` })
@@ -1021,61 +1406,6 @@ async function faSongTieZhi(tieZhi: BiaoQingBaoDingYi) {
         : huoQuFanYi('duoMeiTi', 'biaoQingBaoXuanRanShiBai'),
     )
   }
-}
-
-function geShiHuaYuYinShiChang(xiaoXi: 消息): string {
-  const miao = Math.max(1, Math.round((xiaoXi.mei_ti_shi_chang_hao_miao ?? 0) / 1000))
-  return `${miao}″`
-}
-
-function yuYinShiChangMiao(xiaoXi: 消息): number {
-  return Math.min(
-    DUO_MEI_TI_PEI_ZHI.yuYinZuiDaMiao,
-    Math.max(
-      DUO_MEI_TI_PEI_ZHI.yuYinZuiDuanMiao,
-      Math.round((xiaoXi.mei_ti_shi_chang_hao_miao ?? 0) / 1000),
-    ),
-  )
-}
-
-function shiYuYinBoFangZhong(xiaoXi: 消息): boolean {
-  return boFangZhongXiaoXiKey.value === xiaoXiKey(xiaoXi)
-}
-
-function yuYinKuanYangShi(xiaoXi: 消息) {
-  const { yuYinZuiDuanKuanPx, yuYinZuiChangKuanPx, yuYinZuiDaMiao, yuYinZuiDuanMiao } =
-    DUO_MEI_TI_PEI_ZHI
-  const miao = yuYinShiChangMiao(xiaoXi)
-  const biLi = (miao - yuYinZuiDuanMiao) / Math.max(1, yuYinZuiDaMiao - yuYinZuiDuanMiao)
-  const kuanDu = Math.round(yuYinZuiDuanKuanPx + biLi * (yuYinZuiChangKuanPx - yuYinZuiDuanKuanPx))
-  return { width: `${kuanDu}px` }
-}
-
-function tingZhiYinPinBoFang() {
-  if (dangQianYinPin) {
-    dangQianYinPin.pause()
-    dangQianYinPin.src = ''
-    dangQianYinPin = null
-  }
-  boFangZhongXiaoXiKey.value = null
-}
-
-function qieHuanYuYinBoFang(xiaoXi: 消息) {
-  const diZhi = huoQuXiaoXiMeiTiURL(xiaoXi)
-  if (!diZhi) return
-  const jian = xiaoXiKey(xiaoXi)
-  if (boFangZhongXiaoXiKey.value === jian) {
-    tingZhiYinPinBoFang()
-    return
-  }
-  tingZhiYinPinBoFang()
-  const yinPin = new Audio(diZhi)
-  yinPin.addEventListener('ended', () => {
-    if (dangQianYinPin === yinPin) tingZhiYinPinBoFang()
-  })
-  dangQianYinPin = yinPin
-  boFangZhongXiaoXiKey.value = jian
-  Promise.resolve(yinPin.play()).catch(() => {})
 }
 
 const WEN_JIAN_KUO_ZHAN_TU_BIAO: Array<{ kuoZhan: string[]; leiXing: string }> = [
@@ -1118,157 +1448,6 @@ function huoQuWenJianTuBiaoLeiXing(xiaoXi: 消息): string {
   return 'qita'
 }
 
-function qieHuanLuYinMoShi() {
-  if (luYinZhong.value) return
-  luYinMoShi.value = !luYinMoShi.value
-}
-
-function guanBiLuYinMoShi() {
-  if (luYinZhong.value) return
-  luYinMoShi.value = false
-}
-
-function qingLiLuYinZiYuan() {
-  if (luYinJiShiQi) {
-    clearInterval(luYinJiShiQi)
-    luYinJiShiQi = null
-  }
-  meiTiLuYinQi = null
-  if (luYinLiuPian) {
-    luYinLiuPian.getTracks().forEach((guiDao) => guiDao.stop())
-    luYinLiuPian = null
-  }
-  luYinZhong.value = false
-  luYinShangHuaQuXiao.value = false
-  luYinQiDianY = null
-}
-
-async function wanChengLuYin(faSong: boolean) {
-  const luYinQi = meiTiLuYinQi
-  if (!luYinQi) {
-    qingLiLuYinZiYuan()
-    return
-  }
-  const yongShiHaoMiao = Date.now() - luYinKaiShiHaoMiao
-  await new Promise<void>((jieJue) => {
-    luYinQi.addEventListener(
-      'stop',
-      () => {
-        jieJue()
-      },
-      { once: true },
-    )
-    if (luYinQi.state !== 'inactive') luYinQi.stop()
-    else jieJue()
-  })
-  const kuaiLieBiao = luYinKuaiLieBiao
-  const mime = meiTiLuYinQi?.mimeType || luYinQi.mimeType || 'audio/webm'
-  qingLiLuYinZiYuan()
-
-  if (!faSong) return
-  if (!luYinMoShi.value) luYinMoShi.value = true
-
-  if (yongShiHaoMiao < DUO_MEI_TI_PEI_ZHI.yuYinZuiDuanMiao * 1000) {
-    聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'shuoHuaTaiDuan'))
-    luYinMoShi.value = false
-    return
-  }
-  luYinMoShi.value = false
-  if (kuaiLieBiao.length === 0) return
-  const blob = new Blob(kuaiLieBiao, { type: mime })
-  await 聊天仓库.faSongMeiTiXiaoXi('yuYin', blob, {
-    shiChangHaoMiao: Math.round(yongShiHaoMiao),
-    wenJianMing: `yuyin-${Date.now()}.webm`,
-  })
-  gunDongDaoDiBu()
-}
-
-async function kaiShiLuYin() {
-  if (luYinZhong.value || luYinQiBuChuLiZhong) return
-  luYinQiBuChuLiZhong = true
-  if (typeof MediaRecorder === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-    聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'luYinShiBai'))
-    luYinQiBuChuLiZhong = false
-    return
-  }
-  let liuPian: MediaStream
-  try {
-    liuPian = await navigator.mediaDevices.getUserMedia({ audio: true })
-  } catch {
-    聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'luYinShiBai'))
-    luYinQiBuChuLiZhong = false
-    return
-  }
-
-  const houXuanMime = ['audio/webm;codecs=opus', 'audio/webm']
-  const zhiChiMime =
-    houXuanMime.find((mime) => {
-      try {
-        return MediaRecorder.isTypeSupported(mime)
-      } catch {
-        return false
-      }
-    }) || ''
-
-  let luYinQi: MediaRecorder
-  try {
-    luYinQi = zhiChiMime
-      ? new MediaRecorder(liuPian, { mimeType: zhiChiMime })
-      : new MediaRecorder(liuPian)
-  } catch {
-    liuPian.getTracks().forEach((guiDao) => guiDao.stop())
-    聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'luYinShiBai'))
-    luYinQiBuChuLiZhong = false
-    return
-  }
-  luYinQiBuChuLiZhong = false
-
-  luYinLiuPian = liuPian
-  meiTiLuYinQi = luYinQi
-  luYinKuaiLieBiao = []
-  luYinQi.ondataavailable = (shiJian) => {
-    if (shiJian.data && shiJian.data.size > 0) luYinKuaiLieBiao.push(shiJian.data)
-  }
-  luYinQi.onerror = () => {
-    void wanChengLuYin(false).then(() => {
-      luYinMoShi.value = false
-      聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'luYinShiBai'))
-    })
-  }
-
-  luYinKaiShiHaoMiao = Date.now()
-  luYinMiao.value = 0
-  luYinZhong.value = true
-  luYinShangHuaQuXiao.value = false
-  luYinQi.start()
-
-  luYinJiShiQi = setInterval(() => {
-    luYinMiao.value = Math.floor((Date.now() - luYinKaiShiHaoMiao) / 1000)
-    if (luYinMiao.value >= DUO_MEI_TI_PEI_ZHI.yuYinZuiDaMiao) {
-      songKaiLuYin()
-    }
-  }, 1000)
-}
-
-function songKaiLuYin() {
-  if (!luYinZhong.value) return
-  void wanChengLuYin(!luYinShangHuaQuXiao.value)
-}
-
-function quXiaoLuYin() {
-  if (!luYinZhong.value) return
-  void wanChengLuYin(false)
-}
-
-function chuLiLuYinYiDong(event: PointerEvent) {
-  if (!luYinZhong.value) return
-  if (luYinQiDianY === null) {
-    luYinQiDianY = event.clientY
-    return
-  }
-  luYinShangHuaQuXiao.value = luYinQiDianY - event.clientY > LU_YIN_SHANG_HUA_QU_XIAO_JU_LI
-}
-
 // 表情面板展开时，点击页面任意「非表情面板、非表情按钮」区域即收起；更多面板同理
 function chuLiWenDangDianJi(event: MouseEvent) {
   const target = event.target as HTMLElement | null
@@ -1283,11 +1462,6 @@ function chuLiWenDangDianJi(event: MouseEvent) {
   }
 }
 
-const cheHuiCaiDanZhanKai = ref(false)
-const cheHuiCaiDanYangShi = ref<{ top: string; left: string }>({ top: '0px', left: '0px' })
-const xuanZhongXiaoXi = ref<消息 | null>(null)
-let changAnDingShiQi: ReturnType<typeof setTimeout> | null = null
-
 const liaoTianSuoDing = computed(() => {
   return 聊天仓库.youXiYiJieShu && !聊天仓库.keJiXuLiaoTian
 })
@@ -1297,210 +1471,16 @@ const keYiFaSong = computed(() => {
   return neiRong.length > 0 && neiRong.length <= XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu
 })
 
-// 展开态必须始终保留收起出口：只按「内容是否超过单行」禁用按钮会让状态机变成只进不出
-const zhanKaiAnNiuKeYong = computed(() => shuRuKuangZhanKai.value || shuRuKuangKeZhanKai.value)
-
-interface XiaoXiFenZuXiang {
-  shiJian: string
-  xiaoXiLieBiao: 消息[]
-}
-
-const xiaoXiFenZu = computed<XiaoXiFenZuXiang[]>(() => {
-  const lieBiao = 聊天仓库.xiaoXiLieBiao
-  if (!Array.isArray(lieBiao)) return []
-
-  function zhuanBeiJing(shiJianChuo: number): Date {
-    const riQi = new Date(shiJianChuo)
-    const utc = riQi.getTime() + riQi.getTimezoneOffset() * 60000
-    return new Date(utc + 8 * 3600000)
-  }
-
-  function geShiHuaShiJian(beiJing: Date): string {
-    const xianZai = zhuanBeiJing(Date.now())
-    const shi = String(beiJing.getHours()).padStart(2, '0')
-    const fen = String(beiJing.getMinutes()).padStart(2, '0')
-    const shiJianBuFen = `${shi}:${fen}`
-
-    const shiFouTongYiTian =
-      beiJing.getFullYear() === xianZai.getFullYear() &&
-      beiJing.getMonth() === xianZai.getMonth() &&
-      beiJing.getDate() === xianZai.getDate()
-
-    if (shiFouTongYiTian) {
-      return shiJianBuFen
-    }
-
-    const zuoTian = new Date(xianZai.getTime() - 24 * 3600000)
-    const shiFouZuoTian =
-      beiJing.getFullYear() === zuoTian.getFullYear() &&
-      beiJing.getMonth() === zuoTian.getMonth() &&
-      beiJing.getDate() === zuoTian.getDate()
-
-    if (shiFouZuoTian) {
-      return `${huoQuFanYi('shiJian', 'zuoTian')} ${shiJianBuFen}`
-    }
-
-    const benZhouKaiShi = new Date(xianZai.getTime())
-    benZhouKaiShi.setDate(xianZai.getDate() - xianZai.getDay() + 1)
-    benZhouKaiShi.setHours(0, 0, 0, 0)
-    const zaiBenZhou = beiJing.getTime() >= benZhouKaiShi.getTime()
-
-    if (zaiBenZhou) {
-      const xingQiLieBiao = [
-        huoQuFanYi('shiJian', 'xingQiRi'),
-        huoQuFanYi('shiJian', 'xingQiYi'),
-        huoQuFanYi('shiJian', 'xingQiEr'),
-        huoQuFanYi('shiJian', 'xingQiSan'),
-        huoQuFanYi('shiJian', 'xingQiSi'),
-        huoQuFanYi('shiJian', 'xingQiWu'),
-        huoQuFanYi('shiJian', 'xingQiLiu'),
-      ]
-      return `${xingQiLieBiao[beiJing.getDay()]} ${shiJianBuFen}`
-    }
-
-    if (beiJing.getFullYear() === xianZai.getFullYear()) {
-      const yue = String(beiJing.getMonth() + 1).padStart(2, '0')
-      const ri = String(beiJing.getDate()).padStart(2, '0')
-      return `${yue}-${ri} ${shiJianBuFen}`
-    }
-
-    const nian = beiJing.getFullYear()
-    const yue = String(beiJing.getMonth() + 1).padStart(2, '0')
-    const ri = String(beiJing.getDate()).padStart(2, '0')
-    return `${nian}-${yue}-${ri} ${shiJianBuFen}`
-  }
-
-  const jieGuo: XiaoXiFenZuXiang[] = []
-  let shangYiGeShiJianChuo: number | null = null
-
-  for (const xiaoXi of lieBiao) {
-    const beiJing = zhuanBeiJing(xiaoXi.shi_jian_chuo)
-    const xuYaoXinBiaoQian =
-      shangYiGeShiJianChuo === null ||
-      xiaoXi.shi_jian_chuo - shangYiGeShiJianChuo > XIAO_XI_PEI_ZHI.heBingShiJianYuZhi
-
-    if (xuYaoXinBiaoQian) {
-      jieGuo.push({
-        shiJian: geShiHuaShiJian(beiJing),
-        xiaoXiLieBiao: [xiaoXi],
-      })
-      shangYiGeShiJianChuo = xiaoXi.shi_jian_chuo
-    } else {
-      jieGuo[jieGuo.length - 1].xiaoXiLieBiao.push(xiaoXi)
-    }
-  }
-
-  return jieGuo
-})
-
-const xiaoXiDaoXuHaoMap = computed<Map<string, number>>(() => {
-  const map = new Map<string, number>()
-  if (!fuPanMoShi.value) return map
-  const lieBiao = 聊天仓库.xiaoXiLieBiao
-  if (!Array.isArray(lieBiao)) return map
-  let xuHao = 0
-  for (const xiaoXi of lieBiao) {
-    if (xiaoXi.fa_song_zhe_lei_xing === 'xitong' || xiaoXi.lei_xing === 'xitong') continue
-    xuHao += 1
-    const key = xiaoXi.ke_hu_duan_id || xiaoXi.id
-    if (key) map.set(key, xuHao)
-  }
-  return map
-})
-
-const piZhuMap = computed<Map<number, PiZhuXiang>>(() => {
-  const map = new Map<number, PiZhuXiang>()
-  if (!fuPanPiZhu.value) return map
-  for (const xiang of fuPanPiZhu.value) {
-    if (typeof xiang.xu_hao === 'number' && typeof xiang.ping_lun === 'string') {
-      map.set(xiang.xu_hao, {
-        xu_hao: xiang.xu_hao,
-        nei_rong: xiang.ping_lun,
-        qing_gan: typeof xiang.qing_gan === 'string' ? xiang.qing_gan : undefined,
-      })
-    }
-  }
-  return map
-})
-
-function huoQuPiZhuByXiaoXiId(xiaoXiId: string): PiZhuXiang | null {
-  const xuHao = xiaoXiDaoXuHaoMap.value.get(xiaoXiId)
-  if (!xuHao) return null
-  return piZhuMap.value.get(xuHao) || null
-}
-
-interface PiZhuXiang {
-  xu_hao: number
-  nei_rong: string
-  qing_gan?: string
-}
-
-interface ZongJieFenKuai {
-  biaoTi: string
-  neiRong: string
-  jingGao: boolean
-}
-
-function huoQuQingGanLeiXing(qingGan?: string): 'positive' | 'negative' | 'neutral' {
-  if (!qingGan) return 'neutral'
-  const zhi = qingGan.trim().toLowerCase()
-  if (zhi === 'positive' || zhi === '积极') return 'positive'
-  if (zhi === 'negative' || zhi === '消极') return 'negative'
-  return 'neutral'
-}
-
-const fuPanZongJieFenKuai = computed<ZongJieFenKuai[] | null>(() => {
-  if (!fuPanZongJie.value) return null
-  const wenBen = fuPanZongJie.value.trim()
-  if (!wenBen) return null
-
-  const ziDuanMingChen = [
-    huoQuFanYi('zhanJi', 'duiXiangLeiXing'),
-    huoQuFanYi('zhanJi', 'yongHuBiaoXian'),
-    huoQuFanYi('zhanJi', 'guanJianZhuanZheDian'),
-    huoQuFanYi('zhanJi', 'gaiJinJianYi'),
-  ]
-
-  const youZiDuan = ziDuanMingChen.some(
-    (ming) => wenBen.includes(ming + '：') || wenBen.includes(ming + ':'),
-  )
-  if (!youZiDuan) return null
-
-  const hangLie = wenBen
-    .split('\n')
-    .map((x) => x.trim())
-    .filter(Boolean)
-  const jieGuo: ZongJieFenKuai[] = []
-  let dangQianBiaoTi = ''
-  let dangQianNeiRong = ''
-
-  function yaRuDangQian(): void {
-    if (!dangQianBiaoTi) return
-    jieGuo.push({
-      biaoTi: dangQianBiaoTi,
-      neiRong: dangQianNeiRong.trim(),
-      jingGao:
-        dangQianBiaoTi === huoQuFanYi('zhanJi', 'duiXiangLeiXing') &&
-        dangQianNeiRong.includes(huoQuFanYi('zhanJi', 'zhaXing')),
-    })
-  }
-
-  for (const hang of hangLie) {
-    const piPeiMing = ziDuanMingChen.find(
-      (ming) => hang.startsWith(ming + '：') || hang.startsWith(ming + ':'),
-    )
-    if (piPeiMing) {
-      yaRuDangQian()
-      dangQianBiaoTi = piPeiMing
-      const qianZhui = hang.startsWith(piPeiMing + '：') ? piPeiMing + '：' : piPeiMing + ':'
-      dangQianNeiRong = hang.slice(qianZhui.length).trim()
-    } else if (dangQianBiaoTi) {
-      dangQianNeiRong += '\n' + hang
-    }
-  }
-  yaRuDangQian()
-
-  return jieGuo.length > 0 ? jieGuo : null
+const {
+  xuNiQiSuoYin,
+  xuNiXinHao,
+  chongZhiXuNiChuangKou,
+  xuNiYinCangQianDiaoShu,
+  kuaiSuKuoZhanXiangShang,
+  xiaoXiFenZu,
+} = use虚拟窗口({
+  huoQuXiaoXiLieBiao: () => 聊天仓库.xiaoXiLieBiao,
+  xiaoxiQuYuRef,
 })
 
 // 用户是否停留在消息区底部：向上浏览时取消跟随，回到底部附近才恢复
@@ -1569,6 +1549,7 @@ watch(
   () => {
     // 仅当用户停留在底部时才跟随滚动；向上浏览历史时保持当前位置
     if (yiDingZaiDiBu.value) gunDongDaoDiBu()
+    anPaiCheHuiFanZhuan()
   },
 )
 
@@ -1597,80 +1578,10 @@ watch(
   },
 )
 
-watch(() => shuRuNeiRong.value, ceLiangShuRuKuang, { flush: 'post' })
-
-// 内容高度回落到单行后展开态已失去依据，必须自动退出，否则展开态只能靠发送/离开页面才能解除。
-// neiRongGaoDu 由 height:auto 实测得到，与展开态无关；展开态仅改变滚动条样式且此时不溢出，
-// 故该判据不会被自身状态反馈影响，配合 danXingGaoDu + 1 的 1px 容差不会在临界高度横跳
-watch(shuRuKuangKeZhanKai, (keZhanKai) => {
-  if (!keZhanKai) shuRuKuangZhanKai.value = false
-})
-
-function jiSuanDanXingGaoDu(el: HTMLTextAreaElement): number {
-  const cs = getComputedStyle(el)
-  const lineHeight = parseFloat(cs.lineHeight)
-  const fontSize = parseFloat(cs.fontSize)
-  const xingGao = Number.isFinite(lineHeight)
-    ? lineHeight
-    : Number.isFinite(fontSize)
-      ? fontSize * 1.4
-      : 0
-  const padShang = parseFloat(cs.paddingTop) || 0
-  const padXia = parseFloat(cs.paddingBottom) || 0
-  const bianKuang = (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0)
-  const jiSuanZhi = xingGao + padShang + padXia + bianKuang
-  // 折叠态精确单行高度：行高 + 上下内边距 + 上下边框，使占位符"输入消息..."完美契合单行
-  // 无布局环境（jsdom 等）下 getComputedStyle 不可靠，降级为 clientHeight（单元测试已 mock）
-  if (!Number.isFinite(jiSuanZhi) || jiSuanZhi <= 0) {
-    return el.clientHeight || 0
-  }
-  return Math.ceil(jiSuanZhi)
-}
-
-const shuRuKuangYangShi = computed(() => {
-  if (shuRuKuangZhanKai.value) {
-    const zhanKaiShangXian = Math.round(shiKouGaoDu.value * 0.5)
-    const muBiaoGaoDu = Math.min(neiRongGaoDu.value, zhanKaiShangXian)
-    return {
-      height: `${muBiaoGaoDu}px`,
-      maxHeight: `${zhanKaiShangXian}px`,
-    }
-  }
-  return {
-    maxHeight: `${danXingGaoDu.value}px`,
-  }
-})
-
-function ceLiangShuRuKuang() {
-  const el = shuruKuangRef.value
-  if (!el) return
-  // 测量前临时将高度置为 auto，读取自然内容高度，使「加字增高、删字缩行」均成立；
-  // 读取后立即还原，最终应用高度仍完全由 computed :style 派生，此处绝不写最终高度
-  const yuanShiGaoDu = el.style.height
-  el.style.height = 'auto'
-  neiRongGaoDu.value = el.scrollHeight
-  el.style.height = yuanShiGaoDu
-  danXingGaoDu.value = jiSuanDanXingGaoDu(el)
-}
-
 function chuLiShuRuBianHua() {
   if (聊天仓库.cuoWuXinXi) {
     聊天仓库.qingChuCuoWu()
   }
-}
-
-function qieHuanShuRuKuangZhanKai() {
-  shuRuKuangZhanKai.value = !shuRuKuangZhanKai.value
-  ceLiangShuRuKuang()
-  nextTick(() => {
-    shuruKuangRef.value?.focus()
-  })
-}
-
-// 视口尺寸变化（如软键盘收起、旋转）时同步视口高度并重测内容；折叠态重测为精确单行，展开态重测 50vh 封顶
-function chongSuanShuRuKuangGaoDu() {
-  shiKouGaoDu.value = typeof window !== 'undefined' ? window.innerHeight : 0
-  ceLiangShuRuKuang()
 }
 
 function chuLiShuRuKuangAnJian(event: KeyboardEvent) {
@@ -1683,9 +1594,8 @@ const 管理员调试指令 = 'greedisgood'
 
 async function faSong() {
   const neiRong = shuRuNeiRong.value.trim()
-  // 管理员调试入口：仅输入管理员调试指令时，管理员打开实时监控面板（非管理员不发送、不打开）
   if (neiRong === 管理员调试指令) {
-    if (用户仓库.shiFouGuanLiYuan) guanLiJianKongZhanKai.value = true
+    guanLiJianKongZhanKai.value = true
     shuRuNeiRong.value = ''
     return
   }
@@ -1694,13 +1604,34 @@ async function faSong() {
     聊天仓库.sheZhiCuoWu(huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'))
     return
   }
+  if (shiShengTuMingLing(neiRong) || shiShengShiPinMingLing(neiRong)) {
+    const tiShiCi = jieXiShengTuMingLing(neiRong)
+    shuRuNeiRong.value = ''
+    shuRuKuangZhanKai.value = false
+    if (!tiShiCi) {
+      聊天仓库.sheZhiCuoWu(huoQuFanYi('liaoTian', 'xiaoXiNeiRongWeiKong'))
+      return
+    }
+    shengChengZhong.value = true
+    try {
+      if (shiShengTuMingLing(neiRong)) await 聊天仓库.qingQiuShengTu(tiShiCi)
+      else await 聊天仓库.qingQiuShengChengShiPin(tiShiCi)
+      gunDongDaoDiBu()
+    } finally {
+      shengChengZhong.value = false
+    }
+    return
+  }
   shuRuNeiRong.value = ''
   shuRuKuangZhanKai.value = false
   faSongZhong.value = true
   try {
     const jieGuo = await 聊天仓库.faSongXiaoXi(neiRong)
-    if (jieGuo && yiDingZaiDiBu.value) {
-      gunDongDaoDiBu()
+    if (jieGuo) {
+      quXiaoYinYong()
+      if (yiDingZaiDiBu.value) {
+        gunDongDaoDiBu()
+      }
     }
   } finally {
     faSongZhong.value = false
@@ -1710,8 +1641,18 @@ async function faSong() {
 async function jiaZaiGengDuo() {
   if (!聊天仓库.haiYouGengDuo || 聊天仓库.jiaZaiGengDuoZhong) return
   const yuanGaoDu = xiaoxiQuYuRef.value ? xiaoxiQuYuRef.value.scrollHeight : 0
+  const zhiQianZongShu = Array.isArray(聊天仓库.xiaoXiLieBiao) ? 聊天仓库.xiaoXiLieBiao.length : 0
   const jieGuo = await 聊天仓库.jiaZaiGengDuoXiaoXi()
   if (jieGuo && xiaoxiQuYuRef.value) {
+    // M5：头部插入使绝对索引整体右移，显式窗口需同步平移以保持当前渲染内容不变；
+    // 自动尾部窗口（null）天然按「最新N条」取值，无需调整。更早消息由用户上滑时渐进揭示。
+    const xinZengTiaoShu =
+      (Array.isArray(聊天仓库.xiaoXiLieBiao) ? 聊天仓库.xiaoXiLieBiao.length : zhiQianZongShu) -
+      zhiQianZongShu
+    if (xinZengTiaoShu > 0 && xuNiQiSuoYin.value !== null) {
+      xuNiQiSuoYin.value += xinZengTiaoShu
+      xuNiXinHao.value++
+    }
     await nextTick()
     const xinGaoDu = xiaoxiQuYuRef.value.scrollHeight
     xiaoxiQuYuRef.value.scrollTop = xinGaoDu - yuanGaoDu
@@ -1721,9 +1662,15 @@ async function jiaZaiGengDuo() {
 function chuLiGunDong() {
   // 先更新钉底状态，再判断是否触发加载更多（向上滚时不应被强制拽回底部）
   gengXinDingBuZhuangTai()
-  if (!xiaoxiQuYuRef.value || !聊天仓库.haiYouGengDuo || 聊天仓库.jiaZaiGengDuoZhong) return
+  if (!xiaoxiQuYuRef.value) return
   if (xiaoxiQuYuRef.value.scrollTop <= 20) {
-    jiaZaiGengDuo()
+    if (聊天仓库.haiYouGengDuo && !聊天仓库.jiaZaiGengDuoZhong) {
+      jiaZaiGengDuo()
+    }
+    // M5：无论是否还有服务端分页，窗口外已加载消息都随上滑渐进揭示
+    if (xuNiYinCangQianDiaoShu.value > 0) {
+      kuaiSuKuoZhanXiangShang()
+    }
   }
 }
 
@@ -1731,61 +1678,44 @@ async function zhiXingGaoBai() {
   if (!聊天仓库.dangQianHuiHuaId || gaoBaiJinXingZhong.value) return
   gaoBaiJinXingZhong.value = true
   try {
-    await 聊天仓库.faSongXiaoXi('我们正式交往吧')
+    await 聊天仓库.faSongXiaoXi(huoQuFanYi('liaoTian', 'gaoBaiChengGong'))
   } finally {
     gaoBaiJinXingZhong.value = false
   }
-}
-
-function daKaiCaiDan(xiaoXi: 消息, shiJian: MouseEvent) {
-  if (xiaoXi.fa_song_zhe_lei_xing !== 'yonghu' || xiaoXi.yi_che_hui) return
-  if (Date.now() - xiaoXi.shi_jian_chuo > XIAO_XI_PEI_ZHI.cheHuiShiXian) return
-  xuanZhongXiaoXi.value = xiaoXi
-  cheHuiCaiDanYangShi.value = {
-    top: `${shiJian.clientY}px`,
-    left: `${shiJian.clientX}px`,
-  }
-  cheHuiCaiDanZhanKai.value = true
-}
-
-function chuMoKaiShi(xiaoXi: 消息) {
-  if (xiaoXi.fa_song_zhe_lei_xing !== 'yonghu' || xiaoXi.yi_che_hui) return
-  if (Date.now() - xiaoXi.shi_jian_chuo > XIAO_XI_PEI_ZHI.cheHuiShiXian) return
-  changAnDingShiQi = setTimeout(() => {
-    xuanZhongXiaoXi.value = xiaoXi
-    cheHuiCaiDanZhanKai.value = true
-  }, 500)
-}
-
-function chuMoJieShu() {
-  if (changAnDingShiQi) {
-    clearTimeout(changAnDingShiQi)
-    changAnDingShiQi = null
-  }
-}
-
-async function zhiXingCheHui() {
-  cheHuiCaiDanZhanKai.value = false
-  if (!xuanZhongXiaoXi.value) return
-  await 聊天仓库.cheHuiXiaoXi(xuanZhongXiaoXi.value.id)
-  xuanZhongXiaoXi.value = null
-}
-
-function xianShiCheHuiAnNiu(xiaoXi: 消息): boolean {
-  if (xiaoXi.fa_song_zhe_lei_xing !== 'yonghu') return false
-  if (xiaoXi.yi_che_hui) return false
-  if (!xiaoXi.shi_jian_chuo) return false
-  return dangQianShiJian.value - xiaoXi.shi_jian_chuo <= XIAO_XI_PEI_ZHI.cheHuiShiXian
-}
-
-async function zhiXingCheHuiXiaoXi(xiaoXi: 消息) {
-  await 聊天仓库.cheHuiXiaoXi(xiaoXi.id)
 }
 
 function fanhuiShouYe() {
   youXiShiJianZhanKai.value = false
   聊天仓库.qingKongZhuangTai()
   router.push('/')
+}
+
+async function chuLiShengTuDianJi() {
+  guanBiGengDuoMianBan()
+  const tiShiCi = shuRuNeiRong.value.trim()
+  if (!tiShiCi || shengChengZhong.value) return
+  shengChengZhong.value = true
+  try {
+    shuRuNeiRong.value = ''
+    await 聊天仓库.qingQiuShengTu(tiShiCi)
+    gunDongDaoDiBu()
+  } finally {
+    shengChengZhong.value = false
+  }
+}
+
+async function chuLiShengShiPinDianJi() {
+  guanBiGengDuoMianBan()
+  const tiShiCi = shuRuNeiRong.value.trim()
+  if (!tiShiCi || shengChengZhong.value) return
+  shengChengZhong.value = true
+  try {
+    shuRuNeiRong.value = ''
+    await 聊天仓库.qingQiuShengChengShiPin(tiShiCi)
+    gunDongDaoDiBu()
+  } finally {
+    shengChengZhong.value = false
+  }
 }
 
 function chakanZhanJi() {
@@ -1802,6 +1732,7 @@ function qingLiUIMianBan() {
   emojiMianBanZhanKai.value = false
   junShiZhanKai.value = false
   cheHuiCaiDanZhanKai.value = false
+  guanBiYuYinCaiDan()
   shuRuKuangZhanKai.value = false
   gengDuoMianBanZhanKai.value = false
   guanBiTuPianYuLan()
@@ -1810,54 +1741,6 @@ function qingLiUIMianBan() {
   }
   luYinMoShi.value = false
   tingZhiYinPinBoFang()
-}
-
-async function jiaZaiFuPanShuJu(dangAnId: string) {
-  const benCiId = ++fuPanQingQiuId
-  fuPanJiaZaiZhong.value = true
-  fuPanPiZhu.value = null
-  fuPanZongJie.value = null
-  try {
-    let fuPanShuJu = await huoQuFuPan(dangAnId)
-    if (!fuPanShuJu.jia_zai_zhong && fuPanShuJu.fu_pan_nei_rong) {
-      fuPanPiZhu.value = fuPanShuJu.fu_pan_pi_zhu
-      fuPanZongJie.value = fuPanShuJu.fu_pan_nei_rong
-      fuPanJiaZaiZhong.value = false
-      return
-    }
-    let changShiCiShu = 0
-    while (!fuPanShuJu.fu_pan_nei_rong && changShiCiShu < 20 && fuPanQingQiuId === benCiId) {
-      await new Promise((jieJue) => setTimeout(jieJue, 3000))
-      changShiCiShu++
-      if (fuPanQingQiuId !== benCiId) return
-      try {
-        fuPanShuJu = await huoQuFuPan(dangAnId)
-      } catch (e) {
-        console.warn('轮询复盘数据失败', e)
-      }
-      if (fuPanShuJu.fu_pan_nei_rong || !fuPanShuJu.jia_zai_zhong) {
-        fuPanPiZhu.value = fuPanShuJu.fu_pan_pi_zhu
-        fuPanZongJie.value = fuPanShuJu.fu_pan_nei_rong
-        fuPanJiaZaiZhong.value = false
-        break
-      }
-    }
-  } finally {
-    if (fuPanQingQiuId === benCiId) {
-      fuPanJiaZaiZhong.value = false
-    }
-  }
-}
-
-function tuiChuFuPan() {
-  fuPanMoShi.value = false
-  fuPanPiZhu.value = null
-  fuPanZongJie.value = null
-  fuPanJiaZaiZhong.value = false
-  fuPanDangAnId.value = null
-  fuPanQingQiuId++
-  聊天仓库.qingKongZhuangTai()
-  router.push('/guo-wang-zhan-ji')
 }
 
 async function chuShiHuaLiaoTian() {
@@ -1870,6 +1753,8 @@ async function chuShiHuaLiaoTian() {
     fuPanDangAnId.value = queryDangAnId
     聊天仓库.meiYeTiaoShu = 999
     await 聊天仓库.jiaZaiXiaoXi(huiHuaId)
+    // M5：会话数据载入完成后重置虚拟渲染窗口
+    chongZhiXuNiChuangKou()
     gunDongDaoDiBu()
     void jiaZaiFuPanShuJu(queryDangAnId)
     return
@@ -1877,62 +1762,21 @@ async function chuShiHuaLiaoTian() {
   fuPanMoShi.value = false
   聊天仓库.meiYeTiaoShu = 50
   await 聊天仓库.jiaZaiXiaoXi(huiHuaId)
+  void jiaZaiDuoMoTaiPeiZhi()
+  // M5：会话数据载入完成后重置虚拟渲染窗口
+  chongZhiXuNiChuangKou()
   聊天仓库.lianJieSocket(huiHuaId)
   gunDongDaoDiBu()
 }
 
-function qiDongShiJianGengXinQi() {
-  if (shiJianGengXinQi) return
-  shiJianGengXinQi = setInterval(() => {
-    dangQianShiJian.value = Date.now()
-  }, 1000)
-}
-
-function tingZhiShiJianGengXinQi() {
-  if (shiJianGengXinQi) {
-    clearInterval(shiJianGengXinQi)
-    shiJianGengXinQi = null
-  }
-}
-
-let yuZaiEmojiLinShi: HTMLElement | null = null
-function yuZaiEmojiZiXing() {
-  if (typeof document === 'undefined') return
-  const yuanSheng = document.querySelector('.emoji-mianban')
-  if (!yuanSheng) return
-  const linShi = yuanSheng.cloneNode(true) as HTMLElement
-  // 关键修正：用 opacity:0（而非 visibility:hidden）强制浏览器真正「绘制」该克隆层，
-  // 从而把约 170 个 emoji 系统字形一次性 rasterize 并缓存；置于视口内、最底层、禁命中，
-  // 既触发合成绘制又不可见、不挡交互。原 visibility:hidden 方案浏览器会跳过字形绘制，
-  // 导致首次真实展开（v-show display:none→block）时仍需当场 rasterize → 明显的「第一次点开卡顿」。
-  linShi.style.cssText =
-    'position:fixed;inset:0;opacity:0;pointer-events:none;z-index:-1;display:grid;overflow:hidden;'
-  document.body.appendChild(linShi)
-  yuZaiEmojiLinShi = linShi
-  // 强制同步布局
-  void linShi.offsetWidth
-  void linShi.getBoundingClientRect()
-  // 再强制两帧真实绘制（opacity:0 合成层需提交到合成线程才算 rasterize 完成），随后移除
-  const qingLi = () => {
-    if (yuZaiEmojiLinShi && yuZaiEmojiLinShi.parentNode) {
-      yuZaiEmojiLinShi.parentNode.removeChild(yuZaiEmojiLinShi)
-    }
-    yuZaiEmojiLinShi = null
-  }
-  if (typeof requestAnimationFrame === 'function') {
-    requestAnimationFrame(() => requestAnimationFrame(qingLi))
-  } else {
-    qingLi()
-  }
-}
-
 onMounted(async () => {
+  void 设置仓库.jiaZai()
+  void jiaZaiDuoMoTaiPeiZhi()
   window.addEventListener('junshi-zhankai', junShiZhanKaiJianTingQi)
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', chuLiShiJiaoKouBianHua)
     window.visualViewport.addEventListener('scroll', chuLiShiJiaoKouBianHua)
   }
-  qiDongShiJianGengXinQi()
   window.addEventListener('resize', chongSuanShuRuKuangGaoDu)
   document.addEventListener('click', chuLiWenDangDianJi, true)
   document.addEventListener('visibilitychange', chuLiYeMianKeJianXing)
@@ -1950,8 +1794,8 @@ onMounted(async () => {
 onActivated(async () => {
   // 重新进入时面板必然处于闭合态，把滚动补偿基线归零，避免 keep-alive 复用时
   // ResizeObserver 首帧以旧高度（200）误判为「收起」而把聊天区向下甩。
-  shangYiEmojiGaoDu = 0
-  qiDongShiJianGengXinQi()
+  chongZhiEmojiBuChangJiXian()
+  anPaiCheHuiFanZhuan()
   nextTick(() => ceLiangShuRuKuang())
   if (!yiTongGuoMountedChuShiHua) {
     return
@@ -1960,19 +1804,12 @@ onActivated(async () => {
 })
 
 onDeactivated(() => {
-  tingZhiShiJianGengXinQi()
+  tingZhiCheHuiFanZhuan()
   qingLiUIMianBan()
 })
 
 onBeforeUnmount(() => {
-  if (emojiMianBanGuanChaQi) {
-    emojiMianBanGuanChaQi.disconnect()
-    emojiMianBanGuanChaQi = null
-  }
-  if (yuZaiEmojiLinShi && yuZaiEmojiLinShi.parentNode) {
-    yuZaiEmojiLinShi.parentNode.removeChild(yuZaiEmojiLinShi)
-    yuZaiEmojiLinShi = null
-  }
+  qingLiEmojiZiYuan()
   tingZhiYinPinBoFang()
   qingLiLuYinZiYuan()
   window.removeEventListener('junshi-zhankai', junShiZhanKaiJianTingQi)
@@ -1983,7 +1820,7 @@ onBeforeUnmount(() => {
     window.visualViewport.removeEventListener('resize', chuLiShiJiaoKouBianHua)
     window.visualViewport.removeEventListener('scroll', chuLiShiJiaoKouBianHua)
   }
-  tingZhiShiJianGengXinQi()
+  tingZhiCheHuiFanZhuan()
   qingLiUIMianBan()
   聊天仓库.qingKongZhuangTai()
 })
@@ -1992,7 +1829,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .liaotian-yemian {
   display: grid;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: auto 1fr auto;
   min-height: 0;
   height: 100%;
   width: 100%;
@@ -2001,6 +1838,18 @@ onBeforeUnmount(() => {
   font-family:
     -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Helvetica Neue', Arial,
     sans-serif;
+}
+
+.aitishi-tiao {
+  pointer-events: none;
+  user-select: none;
+  flex-shrink: 0;
+  padding: 3px 12px;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--wenben-ciuse);
+  background: var(--beijing-ciuse);
 }
 
 .xiaoxi-quyu {
@@ -2043,6 +1892,26 @@ onBeforeUnmount(() => {
 
 .xiaoxi-quyu::-webkit-scrollbar-thumb:hover {
   background: var(--liaotian-gundong-tiao-hover);
+}
+
+.xiaoxi-quyu.beijing-miWuSenLin {
+  background: linear-gradient(135deg, #1a2f1a, #2d4a2d);
+}
+
+.xiaoxi-quyu.beijing-haiYangZhiLan {
+  background: linear-gradient(135deg, #1a3a5c, #2d6a9f);
+}
+
+.xiaoxi-quyu.beijing-fenSeMengJing {
+  background: linear-gradient(135deg, #f7d6e0, #f2a7c3);
+}
+
+.xiaoxi-quyu.beijing-yeKongXingHe {
+  background: linear-gradient(135deg, #0a0a23, #1a1a4d);
+}
+
+.xiaoxi-quyu.beijing-miSeTianYuan {
+  background: linear-gradient(135deg, #f5f0e1, #e8dcc3);
 }
 
 .xiaoxi-liebiao {
@@ -2122,7 +1991,7 @@ onBeforeUnmount(() => {
 .xiaoxi-touxiang {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: 6px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -2230,6 +2099,108 @@ onBeforeUnmount(() => {
   }
 }
 
+.fasong-shibai-jiaobiao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--cuowu-yanse);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gujia-liebiao {
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+}
+
+.gujia-xiangmu {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.gujia-xiangmu.gujia-zuoce {
+  flex-direction: row;
+  align-self: flex-start;
+}
+
+.gujia-xiangmu.gujia-youce {
+  flex-direction: row-reverse;
+  align-self: flex-end;
+}
+
+.gujia-touxiang {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background: var(--shijian-biaoqian-beijing);
+  flex-shrink: 0;
+}
+
+.gujia-zuoce .gujia-touxiang {
+  margin-right: 10px;
+}
+
+.gujia-youce .gujia-touxiang {
+  margin-left: 10px;
+}
+
+.gujia-qipao {
+  display: inline-block;
+  height: 38px;
+  border-radius: 6px;
+  background: var(--shijian-biaoqian-beijing);
+}
+
+.jiazai-shibai-qu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: auto 0;
+  padding: 24px 16px;
+}
+
+.shibai-chahua {
+  width: 72px;
+  height: 48px;
+  margin-bottom: 12px;
+  color: var(--wenben-tishi);
+  opacity: 0.8;
+}
+
+.shibai-biaoti {
+  margin: 0 0 4px;
+  font-size: 15px;
+  color: var(--wenben-ciuse);
+}
+
+.shibai-tishi {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--wenben-tishi);
+}
+
+.chongshi-anniu {
+  padding: 7px 28px;
+  border: none;
+  border-radius: 6px;
+  background: var(--shijian-biaoqian-beijing);
+  color: var(--wenben-zhuse);
+  font-size: 14px;
+  cursor: pointer;
+}
+
 .xitong-neirong {
   font-size: 12px;
   color: var(--wenben-tishi);
@@ -2258,6 +2229,7 @@ onBeforeUnmount(() => {
 .shuru-rongqi {
   display: flex;
   align-items: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -2273,8 +2245,8 @@ onBeforeUnmount(() => {
 .biaoqing-anniu,
 .gengduo-gongneng-anniu,
 .gengduo-plus-anniu {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2318,7 +2290,6 @@ onBeforeUnmount(() => {
   font-size: 16px;
   color: var(--wenben-zhuse);
   line-height: 1.4;
-  outline: none;
   border-radius: 6px;
   box-sizing: border-box;
   /* 改为块级，消除 textarea 作为 inline-block 时在父容器中产生的基线对齐下方空隙，
@@ -2373,7 +2344,8 @@ onBeforeUnmount(() => {
 }
 
 .fasong-anniu {
-  padding: 6px 14px;
+  padding: 10px 14px;
+  min-height: 44px;
   background: var(--zhuse);
   color: var(--fasong-anniu-wenben);
   border: none;
@@ -2428,8 +2400,8 @@ onBeforeUnmount(() => {
 }
 
 .zhan-kai-anniu {
-  width: 20px;
-  height: 16px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2445,7 +2417,7 @@ onBeforeUnmount(() => {
 .zhan-kai-anniu svg {
   width: 14px;
   height: 14px;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s var(--quxian-tan-chu);
 }
 
 .zhan-kai-anniu.zhan-kai svg {
@@ -2623,7 +2595,7 @@ onBeforeUnmount(() => {
 }
 
 .youce-huadong-enter-active {
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s var(--quxian-tan-chu);
 }
 
 .youce-huadong-leave-active {
@@ -2649,7 +2621,7 @@ onBeforeUnmount(() => {
 }
 
 .xiaoxi-guodu-enter-active {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s var(--quxian-biao-zhun);
 }
 
 .xiaoxi-guodu-enter-from {
@@ -2658,7 +2630,7 @@ onBeforeUnmount(() => {
 }
 
 .emoji-zhankai-enter-active {
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s var(--quxian-tan-chu);
 }
 
 .emoji-zhankai-leave-active {
@@ -2947,24 +2919,56 @@ onBeforeUnmount(() => {
 /* ─── 多媒体消息：语音条胶囊气泡 ─── */
 .yuyin-waike {
   --duomeiti-boxing-tiaokuan: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .yuyin-qipao {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 9px 13px;
   border: none;
-  border-radius: 18px;
+  border-radius: 6px;
   cursor: pointer;
   color: var(--xiaoxi-yonghu-wenben);
   background: var(--xiaoxi-yonghu-beijing);
-  min-height: 36px;
+  min-height: 38px;
+  position: relative;
+}
+
+.yonghu-xiaoxi .yuyin-qipao {
+  flex-direction: row-reverse;
+}
+
+.yonghu-xiaoxi .yuyin-qipao::after {
+  content: '';
+  position: absolute;
+  right: -5px;
+  top: 13px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid var(--xiaoxi-yonghu-beijing);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
 }
 
 .jiaose-xiaoxi .yuyin-qipao {
   background: var(--xiaoxi-jiaose-beijing);
   color: var(--xiaoxi-jiaose-wenben);
+}
+
+.jiaose-xiaoxi .yuyin-qipao::after {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 13px;
+  width: 0;
+  height: 0;
+  border-right: 6px solid var(--xiaoxi-jiaose-beijing);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
 }
 
 .yuyin-qipao.bofangzhong {
@@ -3025,9 +3029,179 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
+.yuyin-shengyin-tubiao {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.yuyin-shengyin-tubiao.tubiao-youce {
+  transform: scaleX(-1);
+}
+
+.yuyin-jindu-qu {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.yuyin-jindu-tiao {
+  flex: 1;
+  min-width: 60px;
+  accent-color: currentColor;
+}
+
+.yuyin-jindu-wenben {
+  font-size: 11px;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.yuyin-zhuanwenzi {
+  margin-top: 6px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: var(--xiaoxi-jiaose-beijing);
+  color: var(--xiaoxi-jiaose-wenben);
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-word;
+  text-align: left;
+}
+
+button.yuyin-zhuanwenzi {
+  cursor: pointer;
+}
+
+.yonghu-xiaoxi .yuyin-zhuanwenzi {
+  background: var(--xiaoxi-yonghu-beijing);
+  color: var(--xiaoxi-yonghu-wenben);
+}
+
+.yuyin-zhuanwenzi-shibai {
+  color: var(--cuowu-wenben);
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+
+.yonghu-xiaoxi .yuyin-zhuanwenzi-shibai,
+.jiaose-xiaoxi .yuyin-zhuanwenzi-shibai {
+  color: var(--cuowu-wenben);
+}
+
+span.yuyin-zhuanwenzi {
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.yonghu-xiaoxi .yuyin-waike {
+  align-items: flex-end;
+}
+
+.yuyin-zhuanwenzi-zhuangtai {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--wenben-tishi);
+}
+
+.fanyi-yuyan-hang {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--wenben-tishi);
+}
+
+.fanyi-yuyan-xiang {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fanyi-yuyan-xiala {
+  font-size: 12px;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--biankuang-yanse);
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+.yinyong-yulan {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--beijing-ciuse);
+  border-left: 3px solid var(--zhuse);
+  font-size: 13px;
+}
+
+.yinyong-biaoqian {
+  color: var(--zhuse);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.yinyong-zhaiyao {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--wenben-ciuse);
+}
+
+.yinyong-quxiao {
+  border: none;
+  background: transparent;
+  color: var(--wenben-tishi);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
 /* ─── 多媒体消息：文件卡片气泡 ─── */
 .wenjian-waike {
   max-width: min(calc(100vw - 126px), 320px);
+}
+
+.shipin-xianshi {
+  width: 100%;
+  max-width: min(calc(100vw - 126px), 320px);
+  max-height: 240px;
+  border-radius: var(--yuanjiao-xiao);
+  background: #000;
+  margin-bottom: 6px;
+}
+
+.duomotai-rukou {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: var(--wenben-zhuti);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 10px;
+  width: 100%;
+  text-align: left;
+}
+
+.duomotai-rukou:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .wenjian-qipao {
@@ -3263,9 +3437,20 @@ onBeforeUnmount(() => {
   gap: 16px;
   padding: 28px 32px;
   border-radius: var(--yuanjiao-da);
-  background: var(--tanchuang-beijing);
-  border: 0.5px solid var(--tanchuang-biankuang);
+  background: rgba(20, 20, 22, 0.92);
+  border: 0.5px solid rgba(255, 255, 255, 0.12);
   box-shadow: var(--tanchuang-yinying);
+  color: #f5f5f7;
+}
+
+.luyin-mianban .luyin-tishi-wen,
+.luyin-mianban .luyin-jishi {
+  color: rgba(245, 245, 247, 0.85);
+}
+
+.luyin-mianban .luyin-guanbi-anniu {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f5f5f7;
 }
 
 .luyin-anzhu-an {

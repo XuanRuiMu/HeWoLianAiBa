@@ -14,7 +14,7 @@ export const AI_PEI_ZHI = {
   deepSeek: {
     apiMiYao: process.env.DEEPSEEK_API_KEY || '',
     jiChuUrl: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
-    moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+    moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
   },
 
   moXing: {
@@ -25,7 +25,7 @@ export const AI_PEI_ZHI = {
     // 注意：max_output_tokens 在 Responses API 中同时计入「可见输出 + 思维链 token」，
     // 思考模式下必须调大，否则思维链会把预算吃光导致可见输出被截断（response.incomplete）。
     director: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0.3,
       top_p: 0.4,
       zuiDaTokens: 32000,
@@ -35,7 +35,7 @@ export const AI_PEI_ZHI = {
     } as MoXingCanShu,
 
     writer: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0.85,
       top_p: 0.95,
       zuiDaTokens: 64000,
@@ -44,27 +44,25 @@ export const AI_PEI_ZHI = {
     } as MoXingCanShu,
 
     qingGanFenXi: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0.2,
       top_p: 0.2,
       zuiDaTokens: 32000,
-      siKaoMoShi: 'enabled',
-      reasoningEffort: 'max',
+      siKaoMoShi: 'disabled',
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     haoGanDuPingPan: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0.2,
       top_p: 0.2,
       zuiDaTokens: 32000,
-      siKaoMoShi: 'enabled',
-      reasoningEffort: 'max',
+      siKaoMoShi: 'disabled',
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     jiYiZhaiYao: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0.3,
       top_p: 0.5,
       zuiDaTokens: 32000,
@@ -73,86 +71,107 @@ export const AI_PEI_ZHI = {
     } as MoXingCanShu,
 
     anQuanShenHe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0.1,
       top_p: 0.1,
       zuiDaTokens: 32000,
-      siKaoMoShi: 'enabled',
-      reasoningEffort: 'max',
+      siKaoMoShi: 'disabled',
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     guanJianShiJian: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0.2,
       top_p: 0.2,
       zuiDaTokens: 32000,
-      siKaoMoShi: 'enabled',
-      reasoningEffort: 'max',
+      siKaoMoShi: 'disabled',
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     junShiQiuZhu: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0.85,
       top_p: 0.9,
       zuiDaTokens: 64000,
       siKaoMoShi: 'enabled',
-      reasoningEffort: 'max',
+      reasoningEffort: 'medium',
     } as MoXingCanShu,
 
     biaoBaiJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0.1,
       top_p: 0.1,
       zuiDaTokens: 32000,
-      siKaoMoShi: 'enabled',
-      reasoningEffort: 'max',
+      siKaoMoShi: 'disabled',
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     huShanJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0.1,
       top_p: 0.1,
       zuiDaTokens: 32000,
-      siKaoMoShi: 'enabled',
-      reasoningEffort: 'max',
+      siKaoMoShi: 'disabled',
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     shiPoJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0.1,
       top_p: 0.1,
       zuiDaTokens: 32000,
-      siKaoMoShi: 'enabled',
-      reasoningEffort: 'max',
+      siKaoMoShi: 'disabled',
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     jieShouBiaoBaiJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0.1,
       top_p: 0.1,
       zuiDaTokens: 32000,
-      siKaoMoShi: 'enabled',
-      reasoningEffort: 'max',
+      siKaoMoShi: 'disabled',
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     shenJingBingJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0.1,
       top_p: 0.1,
       zuiDaTokens: 32000,
-      siKaoMoShi: 'enabled',
-      reasoningEffort: 'max',
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
+    } as MoXingCanShu,
+
+    tuPianShenHe: {
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
+      wenDu: 0.1,
+      top_p: 0.1,
+      zuiDaTokens: 32000,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
+    } as MoXingCanShu,
+
+    // M2 调用收敛：表白/互删/识破/神经病四连检合并为一次结构化输出
+    siLianJian: {
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
+      wenDu: 0.1,
+      top_p: 0.1,
+      zuiDaTokens: 32000,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
+    } as MoXingCanShu,
+
+    jiaoSeJingGaoFanYing: {
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
+      wenDu: 0.1,
+      top_p: 0.1,
+      zuiDaTokens: 32000,
+      siKaoMoShi: 'disabled',
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
     kaiChangBai: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0.75,
       top_p: 0.9,
       zuiDaTokens: 32000,
@@ -164,7 +183,7 @@ export const AI_PEI_ZHI = {
     // 开场白发送概率决策模型（轻量）：仅输出一个 10~90 的概率数字，
     // 用于"画像驱动的 10%~90% 动态门控"，与内容生成模型解耦以极致压缩开销。
     kaiChangBaiGaiLv: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0,
       top_p: 0.1,
       zuiDaTokens: 30,
@@ -173,7 +192,7 @@ export const AI_PEI_ZHI = {
     } as MoXingCanShu,
 
     fuPanShengCheng: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash-vision-exp',
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-v4.1-flash-expires-on-0910',
       wenDu: 0.7,
       top_p: 0.85,
       zuiDaTokens: 64000,

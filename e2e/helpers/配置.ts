@@ -7,4 +7,5 @@ export const peiZhi = {
   redisFuWuMing: process.env.E2E_REDIS_SERVICE || 'Redis',
   lingPaiJian: process.env.E2E_TOKEN_KEY || '令牌',
   kaiFaYanZhengMa: process.env.E2E_DEV_CODE || '123456',
+  guanLiYuanShouJiHao: process.env.E2E_ADMIN_PHONE || '13800138001',
 }

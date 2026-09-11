@@ -1,6 +1,6 @@
 {
   "name": "he-wo-lian-ai-ba-backend",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "和我恋爱吧 - AI恋爱模拟聊天后端",
   "main": "dist/server.js",
   "scripts": {
@@ -32,13 +32,15 @@
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.1",
     "helmet": "^8.1.0",
-    "ioredis": "^5.10.1",
+    "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^9.0.5",
     "openai": "^6.37.0",
     "pg": "^8.20.0",
     "pino": "^10.3.1",
     "pino-roll": "^4.0.0",
     "prom-client": "^15.1.3",
+    "rate-limit-redis": "^6.0.1",
     "redis": "^5.12.1",
     "socket.io": "^4.8.3",
     "uuid": "^14.0.0"
@@ -49,6 +51,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/nodemailer": "^7.0.12",
     "@types/pg": "^8.20.0",
     "@types/pino": "^7.0.4",
     "@types/supertest": "^7.2.0",

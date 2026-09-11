@@ -1,4 +1,4 @@
-import type { Server } from 'socket.io'
+﻿import type { Server } from 'socket.io'
 import type { RenZhengSocket } from './认证'
 import { 数据库 } from '../数据库'
 import { baoCunJiaoSeXiaoXi } from '../services/AI输入准备'
@@ -8,11 +8,16 @@ import {
   huoQuDuoSheGuanLiYuan,
   huoQuJiaoSeYongHuId,
 } from '../services/夺舍'
-import { peiZhi } from '../config'
-import { jiLuSocketShiJian, jiLuXiaoXiCaoZuo } from '../utils/debug日志'
+import { anYongHuIdPanDuanGuanLiYuan } from '../middleware/管理员'
+import { debug日志, jiLuSocketShiJian, jiLuXiaoXiCaoZuo } from '../utils/debug日志'
 
-function panDuanShiGuanLiYuan(shouJiHao: string): boolean {
-  return peiZhi.shenYongYuan.yunXuLieBiao.includes(shouJiHao)
+async function panDuanShiGuanLiYuan(yongHuId: string): Promise<boolean> {
+  try {
+    return await anYongHuIdPanDuanGuanLiYuan(yongHuId)
+  } catch (cuoWu) {
+    debug日志.error('夺舍Socket', '管理员身份校验失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+    return false
+  }
 }
 
 function shengChengDuoSheFangJian(jiao_se_id: string): string {
@@ -24,11 +29,12 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
     const yongHu = socket.yong_hu
     if (!yongHu) return
 
-    const shiGuanLiYuan = panDuanShiGuanLiYuan(yongHu.shouJiHao)
-    jiLuSocketShiJian('Socket连接', yongHu.yongHuId, { socket_id: socket.id, shi_jian: 'duo_she', shi_guan_li_yuan: shiGuanLiYuan })
+    void panDuanShiGuanLiYuan(yongHu.yongHuId).then((shiGuanLiYuan) => {
+      jiLuSocketShiJian('Socket连接', yongHu.yongHuId, { socket_id: socket.id, shi_jian: 'duo_she', shi_guan_li_yuan: shiGuanLiYuan })
+    })
 
     socket.on('夺舍', async (jiao_se_id: unknown, huiDiao?: (jieGuo: unknown) => void) => {
-      if (!shiGuanLiYuan) {
+      if (!(await panDuanShiGuanLiYuan(yongHu.yongHuId))) {
         if (huiDiao) huiDiao({ cheng_gong: false, ti_shi: '无权操作' })
         return
       }
@@ -49,7 +55,7 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
     })
 
     socket.on('归还', async (jiao_se_id: unknown, huiDiao?: (jieGuo: unknown) => void) => {
-      if (!shiGuanLiYuan) {
+      if (!(await panDuanShiGuanLiYuan(yongHu.yongHuId))) {
         if (huiDiao) huiDiao({ cheng_gong: false, ti_shi: '无权操作' })
         return
       }
@@ -77,7 +83,7 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
     })
 
     socket.on('开始输入', async (shuJu: unknown) => {
-      if (!shiGuanLiYuan) return
+      if (!(await panDuanShiGuanLiYuan(yongHu.yongHuId))) return
       const canShu = shuJu as { jiao_se_id?: string }
       const jiaoSeId = canShu?.jiao_se_id
       if (!jiaoSeId) return
@@ -90,7 +96,7 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
     })
 
     socket.on('夺舍回复', async (shuJu: unknown, huiDiao?: (jieGuo: unknown) => void) => {
-      if (!shiGuanLiYuan) {
+      if (!(await panDuanShiGuanLiYuan(yongHu.yongHuId))) {
         if (huiDiao) huiDiao({ cheng_gong: false, ti_shi: '无权操作' })
         return
       }
@@ -109,7 +115,7 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
         jiLuXiaoXiCaoZuo('夺舍回复发送', yongHuId, jiaoSeId, 'jiaose', { socket_id: socket.id, guan_li_yuan_id: yongHu.yongHuId })
         if (huiDiao) huiDiao({ cheng_gong: true, xiao_xi: xiaoXi })
       } catch (cuoWu) {
-        console.error('夺舍回复保存失败', cuoWu)
+        debug日志.error('夺舍Socket', '夺舍回复保存失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
         if (huiDiao) huiDiao({ cheng_gong: false, ti_shi: '保存失败' })
       }
     })

@@ -1,6 +1,7 @@
 import type { Request } from 'express'
 import { 数据库 } from '../数据库'
 import { redis } from '../redis'
+import { huoQuZhenShiIP } from '../utils/真实IP'
 
 export interface 封禁结果 {
   已封禁: boolean
@@ -27,11 +28,9 @@ function 标准化IP(ip: string): string {
 }
 
 export function 获取IP(请求: Request): string {
-  const 转发头 = 请求.headers['x-forwarded-for']
-  if (typeof 转发头 === 'string') {
-    return 标准化IP(转发头.split(',')[0].trim())
-  }
-  return 标准化IP(请求.ip || '127.0.0.1')
+  // A2：一律取可信链路推导的真实来源 IP（socket 对端 + 可信代理 X-Real-IP），
+  // 客户端可控的 X-Forwarded-For 不参与解析，防止伪造绕过限流/封禁或嫁祸他人
+  return 标准化IP(huoQuZhenShiIP(请求))
 }
 
 function 获取违规键(ip: string): string {

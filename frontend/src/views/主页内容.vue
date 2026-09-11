@@ -58,7 +58,6 @@
           </button>
 
           <button class="moshi-kapian tiaozhan-moshi-kapian" @click="jinRuTiaoZhanMoShi">
-            <span class="jijiang-tuichu-biaoqian">{{ huoQuFanYi('zhuYe', 'jiJiangTuiChu') }}</span>
             <div class="kapian-dingbu">
               <div class="kapian-tubiao-qu">
                 <svg
@@ -121,6 +120,7 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { 使用用户仓库 } from '@/stores/用户'
 import { huoQuFanYi } from '@/config/translations'
+import { quXian } from '@/config/设计令牌'
 
 const router = useRouter()
 const 用户仓库 = 使用用户仓库()
@@ -132,7 +132,7 @@ function jinRuPuTongMoShi() {
 }
 
 function jinRuTiaoZhanMoShi() {
-  // 挑战模式暂时搁置，点击不触发路由跳转
+  router.push('/tiao-zhan')
 }
 
 async function zhiXingTuiChuDongHua() {
@@ -167,7 +167,7 @@ async function zhiXingTuiChuDongHua() {
           { opacity: 1, transform: 'translateY(0)' },
           { opacity: 0, transform: 'translateY(-30px)' },
         ],
-        { duration: 400, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' },
+        { duration: 400, easing: quXian.biaoZhun, fill: 'forwards' },
       ),
     )
   }
@@ -179,7 +179,7 @@ async function zhiXingTuiChuDongHua() {
           { opacity: 1, transform: 'translateX(0)' },
           { opacity: 0, transform: 'translateX(-60px)' },
         ],
-        { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' },
+        { duration: 500, easing: quXian.biaoZhun, fill: 'forwards' },
       ),
     )
   }
@@ -191,7 +191,7 @@ async function zhiXingTuiChuDongHua() {
           { opacity: 1, transform: 'translateX(0)' },
           { opacity: 0, transform: 'translateX(60px)' },
         ],
-        { duration: 500, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' },
+        { duration: 500, easing: quXian.biaoZhun, fill: 'forwards' },
       ),
     )
   }
@@ -226,10 +226,16 @@ watch(
   background: transparent;
 }
 
+.gonggong-biaoti-qu,
+.zhuye-neirong-qu {
+  position: relative;
+  z-index: 1;
+}
+
 .gonggong-biaoti-qu {
   text-align: center;
   padding: 28px 36px 16px;
-  animation: biaoti-ruchang 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: biaoti-ruchang 0.8s var(--quxian-tan-chu) both;
 }
 
 .biaoti-neirong {
@@ -251,7 +257,7 @@ watch(
   background-clip: text;
 }
 
-:root[data-theme='浅色'] .biaoti-wenzi {
+:root[data-theme='light'] .biaoti-wenzi {
   color: #191919;
   background: linear-gradient(135deg, #191919 0%, rgba(25, 25, 25, 0.7) 100%);
   -webkit-background-clip: text;
@@ -274,7 +280,7 @@ watch(
   text-transform: uppercase;
 }
 
-:root[data-theme='浅色'] .biaoti-zhushi {
+:root[data-theme='light'] .biaoti-zhushi {
   color: rgba(0, 0, 0, 0.45);
 }
 
@@ -323,7 +329,7 @@ watch(
   align-items: center;
   gap: 12px;
   align-self: flex-start;
-  animation: zuoce-ruchang 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: zuoce-ruchang 0.7s var(--quxian-tan-chu) both;
 }
 
 .pinpai-logo {
@@ -359,7 +365,7 @@ watch(
   letter-spacing: 1.5px;
 }
 
-:root[data-theme='浅色'] .pinpai-mingcheng {
+:root[data-theme='light'] .pinpai-mingcheng {
   color: #191919;
 }
 
@@ -370,10 +376,10 @@ watch(
   margin: 0;
   letter-spacing: 1px;
   line-height: 1.6;
-  animation: slogan-ruchang 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+  animation: slogan-ruchang 0.6s var(--quxian-tan-chu) 0.5s both;
 }
 
-:root[data-theme='浅色'] .zuoce-slogan {
+:root[data-theme='light'] .zuoce-slogan {
   color: rgba(0, 0, 0, 0.32);
 }
 
@@ -401,34 +407,13 @@ watch(
 .putong-moshi-kapian {
   justify-self: start;
   margin-right: 48px;
-  animation: kapian-zuo-shang 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+  animation: kapian-zuo-shang 0.75s var(--quxian-tan-chu) 0.3s both;
 }
 
 .tiaozhan-moshi-kapian {
   justify-self: end;
   margin-left: 48px;
-  animation: kapian-you-xia 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
-}
-
-.jijiang-tuichu-biaoqian {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 2;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: #ffffff;
-  background: linear-gradient(135deg, rgba(255, 107, 157, 0.9), rgba(251, 146, 60, 0.9));
-  box-shadow: 0 4px 14px rgba(255, 107, 157, 0.35);
-  pointer-events: none;
-}
-
-:root[data-theme='浅色'] .jijiang-tuichu-biaoqian {
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(255, 107, 157, 0.25);
+  animation: kapian-you-xia 0.75s var(--quxian-tan-chu) 0.45s both;
 }
 
 @keyframes kapian-zuo-shang {
@@ -465,8 +450,8 @@ watch(
   text-align: left;
   background: transparent;
   transition:
-    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform 0.4s var(--quxian-biao-zhun),
+    box-shadow 0.4s var(--quxian-biao-zhun);
 }
 
 .putong-moshi-kapian {
@@ -489,7 +474,7 @@ watch(
   border: 1px solid rgba(255, 107, 157, 0.13);
 }
 
-:root[data-theme='浅色'] .putong-moshi-kapian {
+:root[data-theme='light'] .putong-moshi-kapian {
   background: linear-gradient(
     135deg,
     rgba(245, 248, 252, 0.82) 0%,
@@ -499,7 +484,7 @@ watch(
   border: 1px solid rgba(107, 140, 166, 0.22);
 }
 
-:root[data-theme='浅色'] .tiaozhan-moshi-kapian {
+:root[data-theme='light'] .tiaozhan-moshi-kapian {
   background: linear-gradient(
     135deg,
     rgba(255, 248, 250, 0.82) 0%,
@@ -527,13 +512,13 @@ watch(
   border-color: rgba(255, 107, 157, 0.25);
 }
 
-:root[data-theme='浅色'] .putong-moshi-kapian:hover {
+:root[data-theme='light'] .putong-moshi-kapian:hover {
   box-shadow:
     0 10px 28px rgba(0, 0, 0, 0.05),
     0 0 28px rgba(107, 140, 166, 0.06);
 }
 
-:root[data-theme='浅色'] .tiaozhan-moshi-kapian:hover {
+:root[data-theme='light'] .tiaozhan-moshi-kapian:hover {
   box-shadow:
     0 10px 28px rgba(0, 0, 0, 0.05),
     0 0 28px rgba(255, 107, 157, 0.06);
@@ -569,11 +554,11 @@ watch(
   background: linear-gradient(135deg, rgba(255, 107, 157, 0.28), rgba(251, 191, 36, 0.18));
 }
 
-:root[data-theme='浅色'] .putong-moshi-kapian .kapian-tubiao-qu {
+:root[data-theme='light'] .putong-moshi-kapian .kapian-tubiao-qu {
   background: linear-gradient(135deg, rgba(107, 140, 166, 0.1), rgba(196, 160, 176, 0.06));
 }
 
-:root[data-theme='浅色'] .tiaozhan-moshi-kapian .kapian-tubiao-qu {
+:root[data-theme='light'] .tiaozhan-moshi-kapian .kapian-tubiao-qu {
   background: linear-gradient(135deg, rgba(255, 107, 157, 0.1), rgba(251, 191, 36, 0.06));
 }
 
@@ -603,7 +588,7 @@ watch(
   letter-spacing: 0.5px;
 }
 
-:root[data-theme='浅色'] .kapian-biaoti {
+:root[data-theme='light'] .kapian-biaoti {
   color: #191919;
 }
 
@@ -613,7 +598,7 @@ watch(
   margin: 0;
 }
 
-:root[data-theme='浅色'] .kapian-fubiaoti {
+:root[data-theme='light'] .kapian-fubiaoti {
   color: rgba(0, 0, 0, 0.55);
 }
 
@@ -661,7 +646,7 @@ watch(
   font-weight: 400;
 }
 
-:root[data-theme='浅色'] .yulan-wenzi {
+:root[data-theme='light'] .yulan-wenzi {
   color: rgba(0, 0, 0, 0.58);
 }
 
@@ -696,52 +681,24 @@ watch(
   margin: 0 22px;
 }
 
-:root[data-theme='浅色'] .kapian-dibu {
+:root[data-theme='light'] .kapian-dibu {
   border-top-color: rgba(0, 0, 0, 0.03);
 }
 
 .kaishi-wenben {
   font-size: 12.5px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--zhuye-kaishi-wenben);
   transition: color 0.3s ease;
-}
-
-:root[data-theme='浅色'] .kaishi-wenben {
-  color: rgba(0, 0, 0, 0.55);
-}
-
-.putong-moshi-kapian:hover .kaishi-wenben {
-  color: var(--nuanhui-lan);
-}
-.tiaozhan-moshi-kapian:hover .kaishi-wenben {
-  color: var(--yanse-biaobai);
-}
-
-:root[data-theme='浅色'] .putong-moshi-kapian:hover .kaishi-wenben {
-  color: var(--nuanhui-lan-shen);
-}
-:root[data-theme='浅色'] .tiaozhan-moshi-kapian:hover .kaishi-wenben {
-  color: #e84a7a;
 }
 
 .kaishi-jiantou {
   font-size: 20px;
-  color: rgba(255, 255, 255, 0.12);
-  transition: all 0.3s ease;
+  color: var(--zhuye-kaishi-jiantou);
+  transition: transform 0.3s ease;
 }
 
-:root[data-theme='浅色'] .kaishi-jiantou {
-  color: rgba(0, 0, 0, 0.1);
-}
-
-.putong-moshi-kapian:hover .kaishi-jiantou {
-  color: var(--nuanhui-lan);
-  transform: translateX(4px);
-}
-
-.tiaozhan-moshi-kapian:hover .kaishi-jiantou {
-  color: var(--yanse-biaobai);
+.moshi-kapian:hover .kaishi-jiantou {
   transform: translateX(4px);
 }
 
@@ -752,10 +709,10 @@ watch(
   gap: 8px;
   font-size: 11.5px;
   color: rgba(255, 255, 255, 0.2);
-  animation: diwei-ruchang 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.65s both;
+  animation: diwei-ruchang 0.6s var(--quxian-tan-chu) 0.65s both;
 }
 
-:root[data-theme='浅色'] .zhuye-diwei-shuoming {
+:root[data-theme='light'] .zhuye-diwei-shuoming {
   color: rgba(0, 0, 0, 0.45);
 }
 

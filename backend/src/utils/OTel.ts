@@ -21,7 +21,9 @@ export function chuShiHuaOTel(): void {
   // 3) 生产环境且未配置 endpoint（本部署无 collector）→ 直接跳过，
   //    不初始化 SDK、不构造导出器、不开启 diag，从根本上消除 ECONNREFUSED 噪音
   const shiYongOTLP = Boolean(duanDian)
-  const shiYongConsole = !shiYongOTLP && peiZhi.huanJing === 'development'
+  // 开发环境下默认不启用 OTel（避免 auto-instrumentations 启动缓慢），
+  // 仅当显式设置 OTEL_CONSOLE_EXPORTER=true 时才启用 Console 导出
+  const shiYongConsole = !shiYongOTLP && peiZhi.huanJing === 'development' && process.env.OTEL_CONSOLE_EXPORTER === 'true'
 
   if (!shiYongOTLP && !shiYongConsole) {
     yiChuShiHua = true

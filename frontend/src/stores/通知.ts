@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { io, Socket } from 'socket.io-client'
 import type { 通知 } from '@/types'
-import { 令牌键 } from '@/constants/auth'
+import { duQuLingPai } from '@/utils/令牌存储'
 import { biaoJiQuanBuTongZhiYiDu, biaoJiTongZhiYiDu, huoQuTongZhiLieBiao } from '@/api/通知'
 
 export const 使用通知仓库 = defineStore('通知', () => {
@@ -26,7 +26,7 @@ export const 使用通知仓库 = defineStore('通知', () => {
   }
 
   function lianJieSocket() {
-    const 令牌 = localStorage.getItem(令牌键)
+    const 令牌 = duQuLingPai()
     if (!令牌 || socketLianJie.value?.connected) return
 
     const socket = io({

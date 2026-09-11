@@ -6,17 +6,29 @@ import { AI_PEI_ZHI } from '../config/AI配置'
 
 const TU_XIANG_LEI_BIE = new Set(['tupian', 'biaoqingshu'])
 
+const SHI_PIN_MIME_JI_HE = new Set(['video/mp4', 'video/quicktime', 'video/webm'])
+
+export function shiShiPinNeiRong(mime?: string | null, wenJianMing?: string | null): boolean {
+  if (typeof mime === 'string' && SHI_PIN_MIME_JI_HE.has(mime.toLowerCase())) return true
+  if (typeof wenJianMing === 'string') {
+    const xiao = wenJianMing.toLowerCase()
+    return xiao.endsWith('.mp4') || xiao.endsWith('.mov') || xiao.endsWith('.webm') || xiao.endsWith('.m4v')
+  }
+  return false
+}
+
 export function shiTuXiangLeiBie(leiBie: string | null | undefined): boolean {
   return typeof leiBie === 'string' && TU_XIANG_LEI_BIE.has(leiBie)
 }
 
-/** 非文本消息的统一文本化描述：[图片]/[表情包]/[语音(N秒)]/[文件:名]，撤回语义与 Writer 链路一致 */
+/** 非文本消息的统一文本化描述：[图片]/[表情包]/[语音(N秒)]/[视频]/[文件:名]，撤回语义与 Writer 链路一致 */
 export function meiTiZhanShiWenBen(
   leiBie: string | null | undefined,
   xuanXiang?: {
     yiCheHui?: boolean
     shiChangHaoMiao?: number | null
     yuanShiWenJianMing?: string | null
+    mime?: string | null
   },
 ): string | null {
   if (!leiBie) return null
@@ -32,9 +44,21 @@ export function meiTiZhanShiWenBen(
       if (haoMiao == null || !Number.isFinite(Number(haoMiao))) return '[语音]'
       return `[语音(${Math.round(Number(haoMiao) / 1000)}秒)]`
     }
-    case 'wenjian':
-      if (yiCheHui) return '[用户撤回了一个文件]'
+    case 'wenjian': {
+      if (yiCheHui) {
+        return shiShiPinNeiRong(xuanXiang?.mime, xuanXiang?.yuanShiWenJianMing)
+          ? '[用户撤回了一个视频]'
+          : '[用户撤回了一个文件]'
+      }
+      if (shiShiPinNeiRong(xuanXiang?.mime, xuanXiang?.yuanShiWenJianMing)) {
+        const haoMiao = xuanXiang?.shiChangHaoMiao
+        if (haoMiao != null && Number.isFinite(Number(haoMiao)) && Number(haoMiao) > 0) {
+          return `[视频(${Math.round(Number(haoMiao) / 1000)}秒)]`
+        }
+        return '[视频]'
+      }
       return `[文件:${xuanXiang?.yuanShiWenJianMing || ''}]`
+    }
     default:
       return null
   }

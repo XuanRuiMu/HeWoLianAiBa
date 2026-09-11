@@ -1,28 +1,39 @@
-import type { Server } from 'socket.io'
+﻿import type { Server } from 'socket.io'
 import { yunXingAIYinQing } from './AI引擎'
-import { pingPanHaoGanDuBianHua } from './好感度评判'
+import { pingPanHaoGanDuPiLiangNei } from './好感度评判'
 import { gengXinHaoGanDu, huoQuWanZhengHaoGanDu } from './好感度'
 import {
   baoCunJiaoSeXiaoXi,
   huoQuAIJiaoSeXinXi,
   huoQuZuiJinDuiHuaLiShi,
 } from './AI输入准备'
+import { anIdChaYongHu } from './认证'
 import { cheHuiJiaoSeXiaoXi } from './消息'
 import { meiTiZhanShiWenBen } from './AI视觉辅助'
+import { gouJianYuYinKeDuWenBen, tiQuYinPinShiJian } from './语音理解'
+import { huoQuHuoJieXiShiPinMiaoShu } from './视频理解'
+import { gouJianShiPinKeDuWenBen } from './视频多模态'
 import {
   jianCeYongHuXiaoXiBingChuLi,
   chuLiAIHuiFuHouJieShuJianCha,
+  chuLiYouXiJieShu,
 } from './胜利失败条件'
 import { jiaoSeShiFouBeiDuoShe } from './夺舍'
-import { jiLuSocketShiJian, jiLuXiaoXiCaoZuo } from '../utils/debug日志'
+import { XIAO_XI_PEI_ZHI } from '../config/消息配置'
+import { debug日志, jiLuSocketShiJian, jiLuXiaoXiCaoZuo } from '../utils/debug日志'
 import { gouJianJiaoSeShangXiaWen, type CanShuShangXiaWen } from '../config/AI参数策略'
+import { huoQuFanYi } from '../config/translations'
 import type {
   AIYinQingShuChu,
   AIYinQingShuRu,
   AIJiaoSeXinXi,
   HaoGanDuPingPanJieGuo,
+  DirectorCeLue,
 } from '../types'
 import type { XiaoXiXinXi } from './消息'
+import { 尝试合成语音 } from './TTS服务'
+import { 转换TTS文本 } from './TTS文本预处理'
+import { 计算TTS概率 } from './TTS概率计算'
 
 export interface AIHuiFuXiaoXiShiJian {
   角色ID: string
@@ -59,17 +70,110 @@ export class AI回复调度器 {
   private 当前AI状态: 'kong_xian' | 'deng_dai_zhong' | 'zheng_zai_shu_ru' = 'kong_xian'
   private 当前角色?: AIJiaoSeXinXi = undefined
   private xu_hao = 0
+  // M2 重置式防抖：新用户消息到达时递增，使仍在途的旧检测流程结果被丢弃
+  private 当前检测ID = 0
+  private 自上一条角色消息以来的用户消息计数 = 0
+  // A-2 预警只在每轮AI回复周期内触发一次（预警本身不重置此标志，普通AI回复才重置）
+  private 本轮已发送预警 = false
 
   constructor(
     private readonly 角色ID: string,
     private readonly 用户ID: string,
     private readonly IE类型: 'I' | 'E',
     private readonly io: Server,
+    private readonly 回复延迟毫秒: number = 10000,
   ) {}
 
   处理用户消息(): Promise<void> {
+    this.自上一条角色消息以来的用户消息计数 += 1
+
+    // A-2 连发12条预警：达到预警阈值且本轮未发送过预警时，由Writer生成角色口吻预警消息并清零计数
+    if (this.自上一条角色消息以来的用户消息计数 === XIAO_XI_PEI_ZHI.lianFaYuJingTiaoShu && !this.本轮已发送预警) {
+      return this.触发连发预警()
+    }
+
+    if (this.自上一条角色消息以来的用户消息计数 >= XIAO_XI_PEI_ZHI.lianFaMianDaRaoTiaoShu) {
+      this.触发连发免打扰判负()
+      return Promise.resolve()
+    }
+
     this.重置()
-    return this.检测用户消息并决定后续()
+    // M2 重置式防抖：新消息到达即递增检测ID，仍在途的旧检测流程结果将被丢弃；
+    // 返回本次检测的 Promise 以保持既有调用方 await 语义
+    const benCiJianCeID = ++this.当前检测ID
+    return this.检测用户消息并决定后续(benCiJianCeID)
+  }
+
+  private async 触发连发预警(): Promise<void> {
+    // 清零计数，不阻断后续流程
+    this.自上一条角色消息以来的用户消息计数 = 0
+    this.本轮已发送预警 = true
+
+    // 取消现有的AI计时器和处理流程
+    this.重置()
+    this.当前检测ID += 1
+
+    try {
+      // 获取角色信息和对话历史用于生成预警消息
+      const [角色, 历史消息] = await Promise.all([
+        huoQuAIJiaoSeXinXi(this.角色ID),
+        huoQuZuiJinDuiHuaLiShi(this.用户ID, this.角色ID, 20),
+      ])
+
+      if (!角色) {
+        return
+      }
+
+      // 构造预警专用输入：指示Writer以角色口吻生成"别刷屏"风格消息
+      const 预警输入 = {
+        yong_hu_id: this.用户ID,
+        jiao_se_id: this.角色ID,
+        jiao_se: 角色,
+        hao_gan_du: {
+          xin_ren_du: 0,
+          qin_mi_du: 0,
+          qu_wei_du: 0,
+          guan_huai_du: 0,
+          zong_fen: 0,
+          guan_xi_jie_duan: 'lengDan',
+        },
+        dui_hua_li_shi: 历史消息,
+        yong_hu_xin_xiao_xi: '[系统提示：用户连发多条消息，请以角色口吻简短提醒用户别刷屏，语气自然、符合人设]',
+        shi_fou_di_yi_lun: false,
+        tu_pian_shou_quan: false,
+      }
+
+      const ai结果 = await yunXingAIYinQing(预警输入)
+
+      if (!ai结果.shi_fou_hui_fu || ai结果.xiao_xi_lie_biao.length === 0) {
+        return
+      }
+
+      // 发送预警消息（只取第一条）
+      const 预警消息 = ai结果.xiao_xi_lie_biao[0]
+      const 保存结果 = await baoCunJiaoSeXiaoXi({
+        yong_hu_id: this.用户ID,
+        jiao_se_id: this.角色ID,
+        nei_rong: 预警消息,
+      })
+
+      this.io.to(this.用户ID).emit('角色回复', {
+        角色ID: this.角色ID,
+        消息列表: [保存结果],
+      })
+      jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 1, xiao_xi_id: 保存结果?.id, lei_xing: 'lian_fa_yu_jing' })
+    } catch (cuoWu) {
+      debug日志.error('AI调度器', '连发预警生成失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      this.本轮已发送预警 = false
+    }
+  }
+
+  private 触发连发免打扰判负(): void {
+    this.重置()
+    this.当前检测ID += 1
+    void chuLiYouXiJieShu(this.用户ID, this.角色ID, 'shi_bai_mian_da_rao').catch((cuo_wu) => {
+      debug日志.error('AI调度器', '连发免打扰判负结算失败', { xiang_qing: { cuo_wu: String(cuo_wu) } })
+    })
   }
 
   重置(): void {
@@ -83,6 +187,8 @@ export class AI回复调度器 {
     }
     this.发布AI状态('kong_xian')
   }
+
+  private 用户信息缓存?: { tu_pian_shou_quan: boolean }
 
   private 发布AI状态(zhuang_tai: 'kong_xian' | 'deng_dai_zhong' | 'zheng_zai_shu_ru'): void {
     this.当前AI状态 = zhuang_tai
@@ -99,19 +205,48 @@ export class AI回复调度器 {
     return this.处理中
   }
 
-  private async 检测用户消息并决定后续(): Promise<void> {
+  private 发送系统错误提示(cuoWuXinXi: string): void {
+    this.io.to(this.用户ID).emit('角色回复', {
+      角色ID: this.角色ID,
+      消息列表: [{
+        id: `sys-${Date.now()}`,
+        hui_hua_id: this.角色ID,
+        fa_song_zhe_id: 'system',
+        fa_song_zhe_lei_xing: 'xitong',
+        nei_rong: cuoWuXinXi,
+        lei_xing: 'xitong_ti_shi',
+        shi_jian_chuo: Date.now(),
+        yi_du: false,
+      }],
+    })
+    jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 1, lei_xing: 'xitong_ti_shi' })
+  }
+
+  private async 检测用户消息并决定后续(jianCeID: number): Promise<void> {
+    let tuPianShouQuan = false
+    try {
+      const 认证结果 = await anIdChaYongHu(this.用户ID).catch(() => null)
+      if (jianCeID !== this.当前检测ID) return
+      if (认证结果) {
+        tuPianShouQuan = 认证结果.tu_pian_shou_quan === true
+      }
+    } catch {
+      tuPianShouQuan = false
+    }
+
     try {
       const [角色, 好感度, 历史消息] = await Promise.all([
         huoQuAIJiaoSeXinXi(this.角色ID),
         huoQuWanZhengHaoGanDu(this.用户ID, this.角色ID),
         huoQuZuiJinDuiHuaLiShi(this.用户ID, this.角色ID, 20),
       ])
+      if (jianCeID !== this.当前检测ID) return
 
       if (!角色) {
         return
       }
 
-      const 最新用户消息 = this.获取最新用户消息(历史消息)
+      const 最新用户消息 = await this.获取最新用户消息(历史消息)
       if (!最新用户消息) {
         this.启动AI计时器()
         return
@@ -126,7 +261,10 @@ export class AI回复调度器 {
         等待表白回复,
         角色,
         历史消息,
+        tuPianShouQuan,
       )
+      // M2：检测期间有新消息到达（防抖触发）则丢弃本次过期判定结果
+      if (jianCeID !== this.当前检测ID) return
 
       if (jieShuJieGuo) {
         this.清除等待表白回复状态()
@@ -139,7 +277,8 @@ export class AI回复调度器 {
 
       this.启动AI计时器()
     } catch (cuoWu) {
-      console.error('用户消息检测失败', cuoWu)
+      debug日志.error('AI调度器', '用户消息检测失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      this.发送系统错误提示(huoQuFanYi('AI', 'aiDiaoYongShiBai'))
       this.启动AI计时器()
     }
   }
@@ -148,7 +287,7 @@ export class AI回复调度器 {
     this.计时器 = setTimeout(() => {
       this.计时器 = null
       void this.触发AI处理()
-    }, 10000)
+    }, this.回复延迟毫秒)
     this.发布AI状态('deng_dai_zhong')
   }
 
@@ -203,10 +342,12 @@ export class AI回复调度器 {
         阶段: '思考启动',
         说明: 'AI 已收到新消息，开始分析上下文与最新用户消息',
         时间: Date.now(),
+        轮次: 处理ID,
       })
 
       const ai结果 = await this.运行AI()
       if (信号.aborted || 处理ID !== this.当前处理ID) return
+      this.发送深度思考监控(ai结果, 处理ID)
 
       if (ai结果.shi_fou_che_hui) {
         await cheHuiJiaoSeXiaoXi({ yong_hu_id: this.用户ID, jiao_se_id: this.角色ID })
@@ -215,6 +356,7 @@ export class AI回复调度器 {
           类型: 'AI撤回',
           内容: 'AI 判定上一条自身回复需撤回（隐藏的内心修正）',
           时间: Date.now(),
+          轮次: 处理ID,
         })
       }
 
@@ -238,10 +380,10 @@ export class AI回复调度器 {
       }
 
       const 消息列表 = ai结果.xiao_xi_lie_biao.slice(0, 5)
-      await this.发送消息列表(消息列表, 信号, 处理ID)
+      await this.发送消息列表(消息列表, 信号, 处理ID, ai结果)
     } catch (错误) {
       if (处理ID !== this.当前处理ID) return
-      console.error('AI处理失败', 错误)
+      debug日志.error('AI调度器', 'AI处理失败', { xiang_qing: { cuo_wu: String(错误) } })
       this.io.to(this.用户ID).emit('角色回复', {
         角色ID: this.角色ID,
         消息列表: [],
@@ -263,6 +405,9 @@ export class AI回复调度器 {
       nei_rong: 表白消息,
     })
 
+    this.自上一条角色消息以来的用户消息计数 = 0
+    this.本轮已发送预警 = false
+
     this.设置等待表白回复状态()
 
     this.io.to(this.用户ID).emit('角色回复', {
@@ -270,6 +415,29 @@ export class AI回复调度器 {
       消息列表: [保存结果],
     })
     jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 1, zhu_dong_biao_bai: true })
+  }
+
+  // 管理员监控「AI深度思考」单条最大字符数：思维链原文可能很长，截断后推送保 socket 轻量
+  private static readonly 深度思考最大字符数 = 1500
+
+  private 发送深度思考监控(ai结果: AIYinQingShuChu, 轮次: number): void {
+    const 思考 = ai结果.si_kao
+    if (!思考) return
+    const 推送 = (来源: string, 内容?: string) => {
+      const 清洗后 = (内容 || '').trim()
+      if (!清洗后) return
+      this.io.to(this.用户ID).emit('管理员_深度思考', {
+        来源,
+        内容:
+          清洗后.length > AI回复调度器.深度思考最大字符数
+            ? `${清洗后.slice(0, AI回复调度器.深度思考最大字符数)}……`
+            : 清洗后,
+        时间: Date.now(),
+        轮次,
+      })
+    }
+    推送('Director', 思考.director)
+    推送('Writer', 思考.writer)
   }
 
   private async 运行AI(): Promise<AIYinQingShuChu> {
@@ -283,15 +451,18 @@ export class AI回复调度器 {
       throw new Error('角色不存在')
     }
 
+    const tuPianShouQuan = this.用户信息缓存?.tu_pian_shou_quan ?? false
+
     this.当前角色 = 角色
 
     this.io.to(this.用户ID).emit('管理员_构建过程', {
       阶段: '策略规划',
       说明: 'Director 已完成意图判定，Writer 进入回复生成',
       时间: Date.now(),
+      轮次: this.当前处理ID,
     })
 
-    const 最新用户消息 = this.获取最新用户消息(历史消息)
+    const 最新用户消息 = await this.获取最新用户消息(历史消息)
     const 是第一轮 = !历史消息.some((m) => m.fa_song_zhe_lei_xing === 'jiaose')
 
     const 输入: AIYinQingShuRu = {
@@ -309,29 +480,53 @@ export class AI回复调度器 {
       dui_hua_li_shi: 历史消息,
       yong_hu_xin_xiao_xi: 最新用户消息,
       shi_fou_di_yi_lun: 是第一轮,
+      tu_pian_shou_quan: tuPianShouQuan,
     }
 
     return yunXingAIYinQing(输入)
   }
 
-  private 获取最新用户消息(历史消息: Array<{
+  private async 获取最新用户消息(历史消息: Array<{
     fa_song_zhe_lei_xing: string
     nei_rong: string
     meiTiLeiBie?: string
+    meiTiMIME?: string
+    meiTiSha256?: string
     meiTiShiChangHaoMiao?: number | null
     yuanShiWenJianMing?: string
     yi_che_hui?: boolean
-  }>): string {
+  }>): Promise<string> {
     for (let i = 历史消息.length - 1; i >= 0; i--) {
       if (历史消息[i].fa_song_zhe_lei_xing === 'yonghu') {
         const xiang = 历史消息[i]
-        // 媒体消息内容为空字符串，必须以统一文本化描述作为语义表示，
-        // 否则 AI 引擎「空消息」检查点会误判为空并直接已读不回
+        if (xiang.meiTiLeiBie === 'yuyin' && !xiang.yi_che_hui) {
+          const zhuanXie = (xiang.nei_rong || '').trim()
+          if (zhuanXie) {
+            return gouJianYuYinKeDuWenBen({ zhuanXieWenBen: zhuanXie, yinPinShiJianMiaoShu: tiQuYinPinShiJian(zhuanXie), shiChangHaoMiao: xiang.meiTiShiChangHaoMiao ?? null })
+          }
+        }
+        if (xiang.meiTiLeiBie === 'wenjian' && !xiang.yi_che_hui) {
+          const ming = xiang.yuanShiWenJianMing || ''
+          const xiaoMIME = (xiang.meiTiMIME || '').toLowerCase()
+          const shiShiPin = xiaoMIME.startsWith('video/') || ming.toLowerCase().match(/\.(mp4|mov|webm|m4v)$/) !== null
+          if (shiShiPin) {
+            const zhuanXie = (xiang.nei_rong || '').trim()
+            const jieXi = await huoQuHuoJieXiShiPinMiaoShu(xiang.meiTiSha256)
+            return gouJianShiPinKeDuWenBen({
+              wenJianMing: ming || '视频',
+              mime: xiang.meiTiMIME,
+              shiChangHaoMiao: xiang.meiTiShiChangHaoMiao ?? null,
+              zhuanXieWenBen: jieXi.zhuanXieWenBen || zhuanXie || null,
+              huaMianMiaoShu: jieXi.huaMianMiaoShu,
+            })
+          }
+        }
         const meiTiWenBen = xiang.meiTiLeiBie
           ? meiTiZhanShiWenBen(xiang.meiTiLeiBie, {
               yiCheHui: xiang.yi_che_hui,
               shiChangHaoMiao: xiang.meiTiShiChangHaoMiao,
               yuanShiWenJianMing: xiang.yuanShiWenJianMing,
+              mime: xiang.meiTiMIME,
             })
           : null
         return meiTiWenBen || xiang.nei_rong
@@ -344,8 +539,12 @@ export class AI回复调度器 {
     消息列表: string[],
     信号: AbortSignal,
     处理ID: number,
+    ai结果: { ce_lue?: DirectorCeLue },
   ): Promise<void> {
-    const 最新用户消息 = this.获取最新用户消息(await huoQuZuiJinDuiHuaLiShi(this.用户ID, this.角色ID, 20))
+    // 普通AI回复发送时重置预警标志，允许下一轮触发预警
+    this.本轮已发送预警 = false
+    const 最新用户消息 = await this.获取最新用户消息(await huoQuZuiJinDuiHuaLiShi(this.用户ID, this.角色ID, 20))
+    const yiFaSongLieBiao: string[] = []
 
     for (let i = 0; i < 消息列表.length; i++) {
       if (信号.aborted || 处理ID !== this.当前处理ID) return
@@ -360,8 +559,11 @@ export class AI回复调度器 {
         nei_rong: 消息列表[i],
       })
 
+      this.自上一条角色消息以来的用户消息计数 = 0
+
       if (信号.aborted || 处理ID !== this.当前处理ID) return
 
+      yiFaSongLieBiao.push(消息列表[i])
       this.io.to(this.用户ID).emit('角色回复', {
         角色ID: this.角色ID,
         消息列表: [保存结果],
@@ -370,54 +572,98 @@ export class AI回复调度器 {
       this.io.to(this.用户ID).emit('管理员_构建过程', {
         阶段: '输出回复',
         说明: `第 ${i + 1} 条回复已生成并写入对话`,
+        内容: 消息列表[i],
         时间: Date.now(),
+        轮次: 处理ID,
       })
+    }
 
-      if (最新用户消息) {
-        const 好感度变化 = await this.更新好感度(最新用户消息, 消息列表[i])
-        if (好感度变化) {
-          this.io.to(this.用户ID).emit('管理员_好感度变化', {
-            变化: {
-              xin_ren_du: 好感度变化.xin_ren_du_bian_hua,
-              qin_mi_du: 好感度变化.qin_mi_du_bian_hua,
-              qu_wei_du: 好感度变化.qu_wei_du_bian_hua,
-              guan_huai_du: 好感度变化.guan_huai_du_bian_hua,
-            },
+    // M2 调用收敛：一轮全部回复发送完毕后，合并为一次批量好感度评判（替代逐条 N 次调用）
+    if (最新用户消息 && yiFaSongLieBiao.length > 0) {
+      const 好感度变化 = await this.更新好感度(最新用户消息, yiFaSongLieBiao)
+      if (信号.aborted || 处理ID !== this.当前处理ID) return
+      if (好感度变化) {
+        this.io.to(this.用户ID).emit('管理员_好感度变化', {
+          变化: {
+            信任: 好感度变化.xin_ren_du_bian_hua,
+            亲密: 好感度变化.qin_mi_du_bian_hua,
+            趣味: 好感度变化.qu_wei_du_bian_hua,
+            关怀: 好感度变化.guan_huai_du_bian_hua,
+          },
+          时间: Date.now(),
+          轮次: 处理ID,
+        })
+        if (好感度变化.li_you) {
+          this.io.to(this.用户ID).emit('管理员_隐藏信息', {
+            类型: '好感度评判理由',
+            内容: 好感度变化.li_you,
             时间: Date.now(),
+            轮次: 处理ID,
           })
-          if (好感度变化.li_you) {
-            this.io.to(this.用户ID).emit('管理员_隐藏信息', {
-              类型: '好感度评判理由',
-              内容: 好感度变化.li_you,
-              时间: Date.now(),
-            })
-          }
-        }
-        const jieShuJieGuo = await chuLiAIHuiFuHouJieShuJianCha(this.用户ID, this.角色ID)
-        if (jieShuJieGuo) {
-          this.清除等待表白回复状态()
-          if (处理ID === this.当前处理ID) this.发布AI状态('kong_xian')
-          return
         }
       }
+      const jieShuJieGuo = await chuLiAIHuiFuHouJieShuJianCha(this.用户ID, this.角色ID)
+      if (jieShuJieGuo) {
+        this.清除等待表白回复状态()
+        if (处理ID === this.当前处理ID) this.发布AI状态('kong_xian')
+        return
+      }
     }
+
+    // 异步触发 TTS 语音合成（不阻塞主链路）
+    if (this.当前角色 && yiFaSongLieBiao.length > 0) {
+      const 首条回复 = yiFaSongLieBiao[0]
+      const tts文本 = 转换TTS文本(首条回复)
+      const 概率结果 = 计算TTS概率({
+        角色: this.当前角色,
+        好感度: await (async () => {
+          const { huoQuWanZhengHaoGanDu } = await import('./好感度')
+          return huoQuWanZhengHaoGanDu(this.用户ID, this.角色ID)
+        })(),
+        策略: ai结果.ce_lue,
+      })
+
+      if (概率结果.是否触发 && tts文本) {
+        const voiceId = (this.当前角色 as any).voice_id || 'female-shaonv'
+        // 使用 setImmediate 确保完全异步，不阻塞当前事件循环
+        setImmediate(() => {
+          尝试合成语音({ text: tts文本, voiceId, roleId: this.角色ID })
+            .then(结果 => {
+              if (结果) {
+                debug日志.info('AI调度器', 'TTS 语音合成完成', {
+                  xiang_qing: {
+                    roleId: this.角色ID,
+                    mediaId: 结果.mediaId,
+                    durationMs: 结果.durationMs,
+                  },
+                })
+              }
+            })
+            .catch(() => {
+              // 静默降级，已在服务内部处理
+            })
+        })
+      }
+    }
+
     if (处理ID === this.当前处理ID) this.发布AI状态('kong_xian')
   }
 
   private async 更新好感度(
     用户消息: string,
-    角色回复: string,
+    角色回复LieBiao: string[],
   ): Promise<HaoGanDuPingPanJieGuo | null> {
     try {
       // 按当前 AI对象人设驱动好感度评判的采样参数（温度随渣型/IE/性格等动态变化）
       const shangXiaWen: CanShuShangXiaWen = {
         jiaoSe: gouJianJiaoSeShangXiaWen(this.当前角色),
       }
-      const 变化 = await pingPanHaoGanDuBianHua(用户消息, 角色回复, '对方', shangXiaWen)
-      await gengXinHaoGanDu(this.用户ID, this.角色ID, 变化)
-      return 变化
+      // M2：一轮多条回复合并为一次批量评判（使用内部版本获取系数信息）
+      const 评判结果 = await pingPanHaoGanDuPiLiangNei(用户消息, 角色回复LieBiao, '对方', shangXiaWen, undefined, this.用户ID, this.角色ID)
+      await gengXinHaoGanDu(this.用户ID, this.角色ID, 评判结果.jieGuo, 评判结果.xiShu, 评判结果.muBiaoQuXian, 评判结果.lianXuWeiDaBiao)
+      return 评判结果.jieGuo
     } catch (错误) {
-      console.error('更新好感度失败', 错误)
+      debug日志.error('AI调度器', '更新好感度失败', { xiang_qing: { cuo_wu: String(错误) } })
       return null
     }
   }

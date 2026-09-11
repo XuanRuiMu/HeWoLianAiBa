@@ -151,7 +151,11 @@ const zhuangTaiWenBen = computed(() => {
   if (tongHua.zhuangTai === 'yiJieShu') {
     return huoQuFanYi(
       'tongHua',
-      tongHua.zuiHouZhongTai === 'yiQuXiao' ? 'tongHuaYiQuXiao' : 'yiJieShu',
+      tongHua.zuiHouZhongTai === 'yiQuXiao'
+        ? 'tongHuaYiQuXiao'
+        : tongHua.zuiHouZhongTai === 'yiJuJie'
+          ? 'tongHuaYiJuJie'
+          : 'yiJieShu',
     )
   }
   return ''

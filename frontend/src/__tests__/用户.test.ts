@@ -48,6 +48,7 @@ describe('用户 store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     localStorage.clear()
+    sessionStorage.clear()
     vi.resetAllMocks()
   })
 
@@ -59,8 +60,21 @@ describe('用户 store', () => {
     await yongHuCangKu.zhiXingDengLu('13800138000', 'password123')
 
     expect(localStorage.getItem(令牌键)).toBe('test-jwt-token')
+    expect(sessionStorage.getItem(令牌键)).toBeNull()
     expect(yongHuCangKu.令牌).toBe('test-jwt-token')
     expect(yongHuCangKu.dangQianYongHu?.shou_ji_hao).toBe('13800138000')
+  })
+
+  it('登录成功且不记住密码：令牌仅写入 sessionStorage', async () => {
+    vi.mocked(dengLu).mockResolvedValue(moNiDengLuXiangYing)
+    vi.mocked(huoQuYongHuXinXi).mockResolvedValue(moNiYongHu)
+
+    const yongHuCangKu = 使用用户仓库()
+    await yongHuCangKu.zhiXingDengLu('13800138000', 'password123', false)
+
+    expect(localStorage.getItem(令牌键)).toBeNull()
+    expect(sessionStorage.getItem(令牌键)).toBe('test-jwt-token')
+    expect(yongHuCangKu.令牌).toBe('test-jwt-token')
   })
 
   it('注册成功：写入 localStorage.令牌 并设置用户状态', async () => {
@@ -186,6 +200,7 @@ describe('用户 store', () => {
     yongHuCangKu.tuiChuDengLu()
 
     expect(localStorage.getItem(令牌键)).toBeNull()
+    expect(sessionStorage.getItem(令牌键)).toBeNull()
     expect(yongHuCangKu.令牌).toBeNull()
     expect(yongHuCangKu.dangQianYongHu).toBeNull()
     expect(renZhengBiaoDanCangKu.dengLuShouJiHao).toBe('')

@@ -32,21 +32,44 @@ export async function huoQuHuiHuaLieBiao(): Promise<HuiHua[]> {
   return 响应.data.shu_ju
 }
 
+export interface XiaoXiLieBiaoYouBiao {
+  xu_hao: number | null
+  shi_jian_chuo: number
+  id: string
+}
+
+export interface XiaoXiLieBiaoJieGuo {
+  lie_biao: Xiaoxi[]
+  zong_shu: number
+  hai_you_geng_duo?: boolean
+}
+
 export async function huoQuXiaoXi(
   huiHuaId: string,
   yeMa: number = 1,
   meiYeTiaoShu: number = 50,
-): Promise<{ lie_biao: Xiaoxi[]; zong_shu: number }> {
+  youBiao?: XiaoXiLieBiaoYouBiao,
+): Promise<XiaoXiLieBiaoJieGuo> {
+  const canShu: Record<string, number | string | null> = {
+    ye_ma: yeMa,
+    mei_ye_tiao_shu: meiYeTiaoShu,
+  }
+  // M6 keyset 游标：上滑加载更早消息时携带上一页末条定位，后端免 OFFSET 深分页
+  if (youBiao) {
+    canShu.ye_ma = 1
+    if (youBiao.xu_hao != null) canShu.you_biao_xu_hao = youBiao.xu_hao
+    canShu.you_biao_shi_jian_chuo = youBiao.shi_jian_chuo
+    canShu.you_biao_id = youBiao.id
+  }
   const 响应 = await http.get<{
     cheng_gong: boolean
-    shu_ju: { lie_biao: Xiaoxi[]; zong_shu: number }
-  }>(`/聊天/会话/${huiHuaId}/消息`, {
-    params: { ye_ma: yeMa, mei_ye_tiao_shu: meiYeTiaoShu },
-  })
+    shu_ju: { lie_biao: Xiaoxi[]; zong_shu: number; hai_you_geng_duo?: boolean }
+  }>(`/聊天/会话/${huiHuaId}/消息`, { params: canShu })
   const shuJu = 响应.data.shu_ju
   return {
     lie_biao: shuJu?.lie_biao || [],
     zong_shu: shuJu?.zong_shu || 0,
+    hai_you_geng_duo: shuJu?.hai_you_geng_duo,
   }
 }
 
@@ -69,6 +92,18 @@ const MO_REN_SHANG_CHUAN_WEN_JIAN_MING: Record<ShangChuanLeiBie, string> = {
   wenjian: 'wenjian',
 }
 
+// V6 顺手项：Blob 无文件名时按真实 mimeType 映射扩展名（iOS Safari 产出 audio/mp4）
+function anMimeTuiDaoWenJianMing(leiBie: ShangChuanLeiBie, mime: string): string {
+  const moRen = MO_REN_SHANG_CHUAN_WEN_JIAN_MING[leiBie]
+  if (leiBie !== 'yuyin') return moRen
+  if (mime.includes('mp4')) return `yuyin-${Date.now()}.m4a`
+  if (mime.includes('ogg')) return `yuyin-${Date.now()}.ogg`
+  if (mime.includes('mpeg') || mime.includes('mp3')) return `yuyin-${Date.now()}.mp3`
+  if (mime.includes('wav')) return `yuyin-${Date.now()}.wav`
+  if (mime.includes('aac')) return `yuyin-${Date.now()}.aac`
+  return `yuyin-${Date.now()}.webm`
+}
+
 export async function shangChuanMeiTi(
   huiHuaId: string,
   wenJian: File | Blob,
@@ -78,7 +113,7 @@ export async function shangChuanMeiTi(
   const wenJianMing =
     wenJian instanceof File && wenJian.name
       ? wenJian.name
-      : MO_REN_SHANG_CHUAN_WEN_JIAN_MING[leiBie]
+      : anMimeTuiDaoWenJianMing(leiBie, wenJian.type || '')
   formData.append('file', wenJian, wenJianMing)
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: MeiTiShangChuanJieGuo }>(
     `/聊天/会话/${huiHuaId}/媒体`,
@@ -117,6 +152,30 @@ export async function faSongXiaoXi(
 
 export async function cheHuiXiaoXi(huiHuaId: string, xiaoXiId: string): Promise<void> {
   await http.put(`/聊天/会话/${huiHuaId}/消息/${xiaoXiId}/撤回`)
+}
+
+export async function fanYiWenBen(
+  neiRong: string,
+  yuanYu: string = 'auto',
+  muBiaoYu: string = 'zh',
+): Promise<string> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: { fanYiWenBen: string } }>(
+    '/聊天/翻译',
+    { neiRong, yuanYu, muBiaoYu },
+  )
+  return 响应.data.shu_ju.fanYiWenBen
+}
+
+export async function zhuanXieYuYin(meiTiId: string): Promise<string | null> {
+  try {
+    const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: { zhuanXieWenBen: string } }>(
+      '/聊天/语音/转写',
+      { meiTiId },
+    )
+    return 响应.data.shu_ju.zhuanXieWenBen || null
+  } catch {
+    return null
+  }
 }
 
 export async function biaoJiYiDu(huiHuaId: string): Promise<void> {
@@ -190,12 +249,35 @@ export async function huoQuDangAnXiangQing(dangAnId: string): Promise<DangAnXian
   return 响应.data.shu_ju
 }
 
+export interface 心目中的TA请求参数 {
+  weiXinMing?: string
+  zhenShiMing?: string
+  nianLing?: string
+  tongYongTiShiCi?: string
+}
+
+function zuZhuangXinMuZhongDeTa(
+  ziLiao?: 心目中的TA请求参数 | null,
+): Record<string, string | number> | undefined {
+  if (!ziLiao) return undefined
+  const jieGuo: Record<string, string | number> = {}
+  if (ziLiao.weiXinMing) jieGuo.wei_xin_ming = ziLiao.weiXinMing
+  if (ziLiao.zhenShiMing) jieGuo.zhen_shi_ming = ziLiao.zhenShiMing
+  if (ziLiao.nianLing !== undefined && ziLiao.nianLing !== null && String(ziLiao.nianLing).trim() !== '') {
+    const shu = Number(String(ziLiao.nianLing).trim())
+    if (Number.isFinite(shu)) jieGuo.nian_ling = Math.max(0, Math.min(100, Math.round(shu)))
+  }
+  if (ziLiao.tongYongTiShiCi) jieGuo.tong_yong_ti_shi_ci = ziLiao.tongYongTiShiCi
+  return Object.keys(jieGuo).length > 0 ? jieGuo : undefined
+}
+
 export async function shengChengJiaoSe(
   目标性别: string,
   性格选择: string,
   允许渣型: boolean,
   是否随机性格?: boolean,
   用户性别?: string | null,
+  心目中的TA?: 心目中的TA请求参数 | null,
 ): Promise<ShengChengJiaoSeJieGuo> {
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: ShengChengJiaoSeJieGuo }>(
     '/生成角色/MBTI生成',
@@ -205,6 +287,7 @@ export async function shengChengJiaoSe(
       渣男渣女变体: 允许渣型,
       随机性格: 是否随机性格 || false,
       用户性别: 用户性别 === 'male' ? 'nan' : 用户性别 === 'female' ? 'nv' : undefined,
+      xinMuZhongDeTa: zuZhuangXinMuZhongDeTa(心目中的TA),
     },
     { timeout: 60000 },
   )
@@ -281,6 +364,60 @@ export interface 复盘时间线条目 {
   yong_hu_xiao_xi: string
   ai_hui_fu: string
   ai_xin_li_huo_dong: string
+}
+
+// V8：签名 URL 过期后重签（后端校验会话与媒体归属）
+export interface DuoMoTaiPeiZhi {
+  yuYinLiJieQiYong: boolean
+  shiPinLiJieQiYong: boolean
+  tuXiangShengChengQiYong: boolean
+  shiPinShengChengQiYong: boolean
+  meiRiShengChengShangXian: number
+}
+
+export async function huoQuDuoMoTaiPeiZhi(): Promise<DuoMoTaiPeiZhi> {
+  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: DuoMoTaiPeiZhi }>('/聊天/多模态配置')
+  return 响应.data.shu_ju
+}
+
+export async function qingQiuYuYinLiJie(
+  huiHuaId: string,
+  canShu: { zhuanXieWenBen?: string; yinPinShiJianMiaoShu?: string; shiChangHaoMiao?: number | null },
+): Promise<string> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: { keDuWenBen: string } }>(
+    `/聊天/会话/${huiHuaId}/语音理解`,
+    canShu,
+  )
+  return 响应.data.shu_ju.keDuWenBen
+}
+
+export async function qingQiuShengTu(huiHuaId: string, tiShiCi: string): Promise<Xiaoxi> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: Xiaoxi }>(
+    `/聊天/会话/${huiHuaId}/生图`,
+    { tiShiCi },
+    { timeout: 120000 },
+  )
+  return 响应.data.shu_ju
+}
+
+export async function qingQiuShengChengShiPin(huiHuaId: string, tiShiCi: string): Promise<Xiaoxi> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: Xiaoxi }>(
+    `/聊天/会话/${huiHuaId}/生成视频`,
+    { tiShiCi },
+    { timeout: 300000 },
+  )
+  return 响应.data.shu_ju
+}
+
+export async function chongQianMeiTiURL(huiHuaId: string, meiTiId: string): Promise<string | null> {
+  try {
+    const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: { mei_ti_url: string } }>(
+      `/聊天/会话/${huiHuaId}/媒体签名/${meiTiId}`,
+    )
+    return 响应.data.shu_ju.mei_ti_url || null
+  } catch {
+    return null
+  }
 }
 
 export async function huoQuFuPan(dangAnId: string): Promise<复盘响应> {

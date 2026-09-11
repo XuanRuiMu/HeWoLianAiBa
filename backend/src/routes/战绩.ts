@@ -1,3 +1,4 @@
+﻿import { debug日志 } from '../utils/debug日志'
 import { Router } from 'express'
 import type { Response } from 'express'
 import { huoQuFanYi } from '../config/translations'
@@ -91,6 +92,7 @@ interface QianDuanDangAnXiangQing extends QianDuanDangAnLieBiaoXiang {
   fu_pan_shu_ju: QianDuanFuPanShiJianXianTiaoMu[] | null
   fu_pan_nei_rong?: string | null
   fu_pan_pi_zhu: QianDuanFuPanPiZhu[] | null
+  jun_shi_zhi_dao_ji_lu: QianDuanJunShiZhiDaoJiLu[]
 }
 
 function guoLvFuPanShiJianXian(
@@ -123,6 +125,7 @@ function guoLvFuPanPiZhu(pi_zhu: FuPanPiZhu[] | null): QianDuanFuPanPiZhu[] | nu
 function guoLvMinGanZiDuanXiangQing(
   dang_an: DangAnXiangQing,
 ): QianDuanDangAnXiangQing {
+  const junShiJiLu = dang_an.jun_shi_ji_lu || []
   return {
     id: dang_an.id,
     jiao_se_id: dang_an.jiao_se_id,
@@ -140,6 +143,7 @@ function guoLvMinGanZiDuanXiangQing(
     fu_pan_shu_ju: guoLvFuPanShiJianXian(dang_an.fu_pan_shu_ju),
     fu_pan_nei_rong: dang_an.fu_pan_nei_rong,
     fu_pan_pi_zhu: guoLvFuPanPiZhu(dang_an.fu_pan_pi_zhu),
+    jun_shi_zhi_dao_ji_lu: junShiJiLu.map(zhuanHuanJunShiJiLu),
   }
 }
 
@@ -156,7 +160,7 @@ luYou.get(
       const lieBiao = await huoQuDangAnLieBiao(yongHu.yongHuId)
       return chengGongXiangYing(xiangYing, { dangAnLieBiao: guoLvMinGanZiDuanLieBiao(lieBiao) })
     } catch (cuoWu) {
-      console.error('获取战绩列表失败', cuoWu)
+      debug日志.error('战绩接口', '获取战绩列表失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -183,7 +187,7 @@ luYou.get(
       }
       return chengGongXiangYing(xiangYing, guoLvMinGanZiDuanXiangQing(dangAn))
     } catch (cuoWu) {
-      console.error('获取战绩详情失败', cuoWu)
+      debug日志.error('战绩接口', '获取战绩详情失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -210,7 +214,7 @@ luYou.delete(
       }
       return chengGongXiangYing(xiangYing, { cheng_gong: true })
     } catch (cuoWu) {
-      console.error('删除战绩失败', cuoWu)
+      debug日志.error('战绩接口', '删除战绩失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -238,7 +242,7 @@ luYou.post(
       const shanChuIds = await piLiangShanChuDangAn(yongHu.yongHuId, youXiaoIds)
       return chengGongXiangYing(xiangYing, { cheng_gong: true, shan_chu_ids: shanChuIds })
     } catch (cuoWu) {
-      console.error('批量删除战绩失败', cuoWu)
+      debug日志.error('战绩接口', '批量删除战绩失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -270,7 +274,7 @@ luYou.get(
 
       if (!dangAn.fu_pan_nei_rong) {
         void shengChengFuPan(yongHu.yongHuId, dangAn.jiao_se_id, dangAnId).catch((cuoWu) =>
-          console.error('异步生成复盘失败', cuoWu),
+          debug日志.error('战绩接口', '异步生成复盘失败', { xiang_qing: { cuo_wu: String(cuoWu) } }),
         )
         return chengGongXiangYing(xiangYing, {
           fu_pan_nei_rong: null,
@@ -289,7 +293,7 @@ luYou.get(
         jia_zai_zhong: false,
       })
     } catch (cuoWu) {
-      console.error('获取复盘失败', cuoWu)
+      debug日志.error('战绩接口', '获取复盘失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },

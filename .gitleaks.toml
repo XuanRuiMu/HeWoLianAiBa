@@ -1,0 +1,22 @@
+# gitleaks 自定义规则：补齐默认规则未覆盖的数据库连接串内嵌凭据
+# 说明：
+# - 规则匹配 postgres/postgresql 连接串中「用户:密码@」形态（密码≥6位，排除模板占位符）
+# - allowlist 放行两处有意公开的非真实凭据：
+#   1. ci.yml 中 GitHub Actions service 容器的测试凭据（lovewithme_dev，仅存在于一次性 CI 容器）
+#   2. 测试文件中的占位符（test-password）
+title = "和我恋爱吧 密钥扫描扩展规则"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "postgres-connection-string-credential"
+description = "PostgreSQL 连接串内嵌真实凭据"
+regex = '''postgres(?:ql)?:\/\/[A-Za-z0-9_.\-]+:([^@\s"'`]{6,})@[A-Za-z0-9_.\-]+'''
+keywords = ["postgres"]
+[rules.allowlist]
+regexes = [
+  '''lovewithme_dev@localhost''',
+  ''':test-password@''',
+  '''\$\{POSTGRES_PASSWORD\}''',
+]

@@ -4,21 +4,38 @@ import App from './App.vue'
 import router from './router'
 import './styles/variables.css'
 import './styles/global.css'
-import './styles/theme.css'
 import {
   anZhuangQuanJuCuoWuJianTingQi,
   chuFaCuoWuShangBao,
   chuShiHuaCuoWuShangBao,
 } from './utils/错误上报'
 import { chuShiHuaXingNengJianKong } from './utils/性能监控'
+import { laQuTeZhengKaiGuan } from './utils/teZhengKaiGuan'
+import * as THREE from 'three'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+
+declare global {
+  interface Window {
+    THREE: typeof THREE
+    GLTFLoader: typeof GLTFLoader
+  }
+}
+
+// 暴露 Three.js 和 GLTFLoader 到全局，供 grass-bg.html iframe 使用（避免多实例）
+if (typeof window !== 'undefined') {
+  window.THREE = THREE
+  window.GLTFLoader = GLTFLoader
+}
 
 const app = createApp(App)
+
+laQuTeZhengKaiGuan()
 
 app.use(createPinia())
 app.use(router)
 
 app.config.errorHandler = (cuoWu, _shiLi, xinXi) => {
-  console.error('[全局错误处理] Vue 渲染错误:', cuoWu, xinXi)
+  if (import.meta.env.DEV) console.error('[全局错误处理] Vue 渲染错误:', cuoWu, xinXi)
   chuFaCuoWuShangBao({
     leiBie: 'vue',
     cuoWu,

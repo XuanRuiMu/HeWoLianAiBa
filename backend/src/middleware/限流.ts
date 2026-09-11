@@ -1,8 +1,35 @@
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
-import type { Request } from 'express'
+import { RedisStore } from 'rate-limit-redis'
+import type { Request, Response, NextFunction } from 'express'
 import { peiZhi } from '../config'
 import { huoQuFanYi, type FanYiFenLei } from '../config/translations'
 import { shiBaiXiangYing } from '../utils/xiangying'
+import { huoQuZhenShiIP } from '../utils/真实IP'
+import { redis } from '../redis'
+
+// M3：限流计数统一存 Redis，多实例共享且重启不丢失
+function chuangJianRedisStore(): RedisStore {
+  return new RedisStore({
+    sendCommand: (...canShu: string[]) => (redis as any).call(...canShu),
+  } as never)
+}
+
+// A2：限流键一律由真实来源 IP 派生（可信代理链路推导），客户端伪造 XFF 无法漂移计数
+export function shengChengXianLiuJian(qingQiu: Request): string {
+  return ipKeyGenerator(huoQuZhenShiIP(qingQiu))
+}
+
+function huoQuQingQiuIP(req: Request): string {
+  try {
+    return ipKeyGenerator(huoQuZhenShiIP(req))
+  } catch {
+    return 'unknown'
+  }
+}
+
+function huoQuYongHuId(req: Request): string | undefined {
+  return (req as Request & { yong_hu?: { yongHuId: string } }).yong_hu?.yongHuId
+}
 
 function tongYongXianLiu(
   windowsMs: number,
@@ -16,11 +43,20 @@ function tongYongXianLiu(
     max,
     standardHeaders: true,
     legacyHeaders: false,
+    // M3：生产环境限流计数存 Redis（多实例共享、重启不丢）；
+    // vitest 下退回内存 store，避免跨测试文件共享 Redis 计数造成误限流
+    ...(process.env.VITEST === 'true' ? {} : { store: chuangJianRedisStore() }),
+    // 默认键：真实来源 IP 派生；各限流器可传入自己的键函数
     keyGenerator: keyGenerator
       ? (req) => keyGenerator(req as Request)
-      : (req) => (req.ip ? ipKeyGenerator(req.ip) : 'unknown'),
+      : (req) => huoQuQingQiuIP(req as Request),
     handler: (req, res) => {
-      shiBaiXiangYing(res, 429, (huoQuFanYi as any)(fanYiFenLei, cuoWuTiShi), 'XIAN_LIU')
+      shiBaiXiangYing(
+        res,
+        429,
+        (huoQuFanYi as (fenLei: FanYiFenLei, jian: string) => string)(fanYiFenLei, cuoWuTiShi),
+        'XIAN_LIU',
+      )
     },
   })
 }
@@ -33,10 +69,7 @@ export const changGuiXianLiu = tongYongXianLiu(
   peiZhi.xianLiu.changGui.chuangKou,
   peiZhi.xianLiu.changGui.zuiDa,
   'dengLuShiBaiPinFan',
-  (req) => {
-    const ip = req.ip ? ipKeyGenerator(req.ip) : 'unknown'
-    return `${ip}:${huoQuLuJing(req)}`
-  },
+  (req) => `${huoQuQingQiuIP(req)}:${huoQuLuJing(req)}`,
 )
 
 function huoQuShouJiHao(req: Request): string | undefined {
@@ -44,13 +77,23 @@ function huoQuShouJiHao(req: Request): string | undefined {
   return body?.shou_ji_hao || body?.shouJiHao
 }
 
+// 登录/发码为未认证端点：双层限流防「锁号 DoS」——
+// 账号维度（宽松窗口，正常用户不受影响）与 IP 维度（收紧窗口，限制攻击者爆破）
 export const dengLuXianLiu = tongYongXianLiu(
+  peiZhi.xianLiu.dengLu.chuangKou * 12,
+  peiZhi.xianLiu.dengLu.zuiDa * 4,
+  'dengLuShiBaiPinFan',
+  (req) => {
+    const zhangHao = huoQuShouJiHao(req)
+    return zhangHao ? `zhanghao:${zhangHao}` : huoQuQingQiuIP(req)
+  },
+)
+
+export const dengLuIPLianLiu = tongYongXianLiu(
   peiZhi.xianLiu.dengLu.chuangKou,
   peiZhi.xianLiu.dengLu.zuiDa,
   'dengLuShiBaiPinFan',
-  (req) => {
-    return huoQuShouJiHao(req) || (req.ip ? ipKeyGenerator(req.ip) : 'unknown')
-  },
+  (req) => huoQuQingQiuIP(req),
 )
 
 export const faSongMaXianLiu = tongYongXianLiu(
@@ -58,37 +101,80 @@ export const faSongMaXianLiu = tongYongXianLiu(
   peiZhi.xianLiu.faSongMa.zuiDa,
   'faSongYanZhengMaPinFan',
   (req) => {
-    return huoQuShouJiHao(req) || (req.ip ? ipKeyGenerator(req.ip) : 'unknown')
+    const zhangHao = huoQuShouJiHao(req)
+    return zhangHao ? `zhanghao:${zhangHao}` : huoQuQingQiuIP(req)
   },
 )
 
+// 认证后端点以用户为主键（跨 IP 生效），未认证回退真实 IP
 export const liaoTianXianLiu = tongYongXianLiu(
   peiZhi.xianLiu.liaoTian.chuangKou,
   peiZhi.xianLiu.liaoTian.zuiDa,
   'dengLuShiBaiPinFan',
-  (req) => {
-    const yongHuId = (req as Request & { yong_hu?: { yongHuId: string } }).yong_hu?.yongHuId
-    return yongHuId || (req.ip ? ipKeyGenerator(req.ip) : 'unknown')
-  },
+  (req) => huoQuYongHuId(req) || huoQuQingQiuIP(req),
 )
 
 export const aiQingQiuXianLiu = tongYongXianLiu(
   peiZhi.xianLiu.aiQingQiu.chuangKou,
   peiZhi.xianLiu.aiQingQiu.zuiDa,
   'dengLuShiBaiPinFan',
-  (req) => {
-    const yongHuId = (req as Request & { yong_hu?: { yongHuId: string } }).yong_hu?.yongHuId
-    return yongHuId || (req.ip ? ipKeyGenerator(req.ip) : 'unknown')
-  },
+  (req) => huoQuYongHuId(req) || huoQuQingQiuIP(req),
 )
 
 export const guanLiCaoZuoXianLiu = tongYongXianLiu(
   peiZhi.xianLiu.guanLi.chuangKou,
   peiZhi.xianLiu.guanLi.zuiDa,
   'caoZuoPinFan',
-  (req) => {
-    const yongHuId = (req as Request & { yong_hu?: { yongHuId: string } }).yong_hu?.yongHuId
-    return yongHuId || (req.ip ? ipKeyGenerator(req.ip) : 'unknown')
-  },
+  (req) => huoQuYongHuId(req) || huoQuQingQiuIP(req),
   'tongYong',
 )
+
+// A8：/api/logs 匿名端点独立严限流（默认 10 次/分/IP，配置化），防止刷量绕过常规限流
+export const riZhiJieShouXianLiu = tongYongXianLiu(
+  peiZhi.xianLiu.riZhiJieShou.chuangKou,
+  peiZhi.xianLiu.riZhiJieShou.zuiDa,
+  'caoZuoPinFan',
+  (req) => huoQuQingQiuIP(req),
+  'tongYong',
+)
+
+// P2-2：/api/认证/检查手机 匿名端点独立严限流（IP 维度），抑制手机号注册状态枚举探测
+export const jianChaShouJiXianLiu = tongYongXianLiu(
+  peiZhi.xianLiu.jianChaShouJi.chuangKou,
+  peiZhi.xianLiu.jianChaShouJi.zuiDa,
+  'caoZuoPinFan',
+  (req) => huoQuQingQiuIP(req),
+  'tongYong',
+)
+
+// A7 短信日配额中间件：每手机号/每IP 每日发送上限。
+// vitest 下跳过（与限流 Redis store 同策略），避免跨测试文件共享 Redis 计数误伤；
+// 配额核心逻辑由 services/短信.ts duanXinRiPeiEYunXu 单独覆盖测试。
+export async function duanXinRiPeiEZhuJi(
+  qingQiu: Request,
+  xiangYing: Response,
+  xiaYiBu: NextFunction,
+): Promise<void> {
+  if (process.env.VITEST === 'true') {
+    xiaYiBu()
+    return
+  }
+  try {
+    const { duanXinRiPeiEYunXu } = await import('../services/短信')
+    const shouJiHao = (qingQiu.body as { shou_ji_hao?: string; shouJiHao?: string })
+      ?.shou_ji_hao || (qingQiu.body as { shouJiHao?: string })?.shouJiHao
+    if (!shouJiHao) {
+      xiaYiBu()
+      return
+    }
+    const jieGuo = await duanXinRiPeiEYunXu(shouJiHao, huoQuZhenShiIP(qingQiu))
+    if (!jieGuo.yun_xu) {
+      shiBaiXiangYing(xiangYing, 429, jieGuo.ti_shi || huoQuFanYi('renZheng', 'duanXinRiPeiEYongJin'), 'XIAN_LIU')
+      return
+    }
+    xiaYiBu()
+  } catch {
+    // 配额检查自身异常时放行（服务内部已降级放行，此处兜底保证发码链路不因中间件崩溃）
+    xiaYiBu()
+  }
+}

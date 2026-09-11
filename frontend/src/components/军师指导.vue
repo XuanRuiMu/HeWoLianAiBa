@@ -39,10 +39,14 @@
             >
               <div class="junshi-touxiang">
                 <img
+                  v-if="!touXiangShiBai[junShi.id]"
                   :src="shengChengTouXiangURL(junShi.touXiang)"
                   :alt="huoQuJunShiMingCheng(junShi) || ''"
                   class="touxiang-tu"
+                  loading="lazy"
+                  @error="biaoJiTouXiangShiBai(junShi.id)"
                 />
+                <span v-else class="touxiang-moren">{{ junShiMoRenWenZi(junShi) }}</span>
               </div>
               <div class="junshi-xiangqing">
                 <span class="junshi-mingcheng">{{ huoQuJunShiMingCheng(junShi) }}</span>
@@ -89,6 +93,7 @@
                 <p class="jieguo-neirong">
                   {{ huoQuZhiDaoJieGuo(junShi.id) }}
                 </p>
+                <p class="ai-tishi" role="note">{{ huoQuFanYi('tongYong', 'aiTiShiTiao') }}</p>
               </div>
             </div>
           </div>
@@ -143,8 +148,9 @@ import {
 } from '@/api/聊天'
 import { fanYi, huoQuFanYi } from '@/config/translations'
 import { 是业务错误 } from '@/api/请求'
-import { shengChengTouXiangURL } from '@/utils/头像'
+import { shengChengTouXiangURL, junShiMoRenTouXiang } from '@/utils/头像'
 import { 使用军师仓库, shiYouXiaoJiaoSeId } from '@/stores/军师'
+import { track } from '@/utils/埋点'
 import type { JunShiXinXi, JunShiJiLu, JunShiZhiDaoZhuangTaiXinXi } from '@/types'
 
 type JunShiZhuangTaiLeiXing = 'wei_zhi_dao' | 'zhi_dao_zhong' | 'yi_wan_cheng'
@@ -172,6 +178,15 @@ const zhanKaiJunShiId = ref<string | null>(null)
 const cuoWuTiShiMap = ref<Record<string, string>>({})
 const jiaZaiZhong = ref(true)
 const xianShiZhiDaoJiLu = ref(false)
+const touXiangShiBai = ref<Record<string, boolean>>({})
+
+function biaoJiTouXiangShiBai(junShiId: string) {
+  touXiangShiBai.value = { ...touXiangShiBai.value, [junShiId]: true }
+}
+
+function junShiMoRenWenZi(junShi: JunShiXinXi): string {
+  return junShiMoRenTouXiang(huoQuJunShiMingCheng(junShi))
+}
 
 // 单一派生状态：当前聊天内容是否已被指导过（非指导中时）。
 // 提示显隐与「开始指导」按钮可用性均由它统一控制，避免点击后再检查再弹提示的重复路径。
@@ -244,6 +259,7 @@ async function chaXunBingGengXinZhuangTai(): Promise<void> {
       tingZhiLunXun()
     }
   } catch (e) {
+     
     console.warn('查询军师指导状态失败', e)
   }
 }
@@ -275,6 +291,7 @@ async function zhiXingQingQiu(junShi: JunShiXinXi) {
   qiDongLunXun()
   try {
     const jieGuo = await qingQiuJunShiZhiDao(props.jiaoSeId, junShi.id)
+    track('junShiShiYong', { jun_shi_id: junShi.id })
     // 写入 store：完成态持久化，离开再回来显示灰度与结果一致
     军师仓库.sheZhiYiWanCheng(props.jiaoSeId, junShi.id, jieGuo)
     // 仅刷新 keZaiCiZhiDao（不覆盖已完成态），使「已指导过」提示显示
@@ -390,6 +407,7 @@ async function chuShiHua(): Promise<void> {
       qiDongLunXun()
     }
   } catch (e) {
+     
     console.warn(huoQuFanYi('junShi', 'jiaZaiJunShiLieBiaoShiBai'), e)
   } finally {
     jiaZaiZhong.value = false
@@ -552,6 +570,18 @@ onUnmounted(() => {
   object-fit: cover;
 }
 
+.touxiang-moren {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #8b6914, #d4a843);
+}
+
 .junshi-xiangqing {
   display: flex;
   flex-direction: column;
@@ -661,6 +691,15 @@ onUnmounted(() => {
   line-height: 1.6;
 }
 
+.ai-tishi {
+  margin-top: 12px;
+  padding: 4px 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: right;
+  color: var(--wenben-ciuse);
+}
+
 .zhidao-jilu-zhezhao {
   position: absolute;
   top: 0;
@@ -679,7 +718,7 @@ onUnmounted(() => {
   width: 100%;
   max-width: 320px;
   max-height: 80%;
-  background: var(--beijing-kaopian);
+  background: var(--liaotian-beijing);
   border-radius: 16px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
   display: flex;

@@ -1,6 +1,6 @@
-process.env.ADMIN_PHONES = '13800000000'
+﻿process.env.ADMIN_PHONES = '13800000000'
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = 'postgres://lovewithme:BXYXblupz542284@localhost:5432/lovewithme'
+  process.env.DATABASE_URL = 'postgres://lovewithme:test-password@localhost:5432/lovewithme'
 }
 if (!process.env.REDIS_URL) {
   process.env.REDIS_URL = 'redis://localhost:6379'
@@ -11,9 +11,12 @@ if (!process.env.JWT_SECRET) {
 process.env.RI_ZHI_TUI_SONG_HE_BING_JIAN_GE = '30'
 
 import http from 'http'
-import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from 'vitest'
 import { Server } from 'socket.io'
 import { io as lianJieKeHuDuan, type Socket as KeHuDuanSocket } from 'socket.io-client'
+
+vi.mock('../数据库')
+
 import {
   debug日志,
   guanBiRiZhiLiu,
@@ -36,10 +39,22 @@ import {
   type RiZhiPiLiangZaiHe,
 } from '../socket/日志推送'
 import { shengChengLingPai } from '../utils/jwt'
+import { 数据库 } from '../数据库'
 
 const GUAN_LI_YUAN_SHOU_JI_HAO = '13800000000'
 const PU_TONG_SHOU_JI_HAO = '13900000001'
 const DENG_DAI_TUI_SONG_HAO_MIAO = 400
+
+function jiaYongHuBiaoChaXun(): void {
+  vi.mocked(数据库.query).mockImplementation(
+    async (_wenBen: unknown, canShu?: unknown[]) => {
+      const yongHuId = String(Array.isArray(canShu) ? canShu[0] : '')
+      return {
+        rows: yongHuId.startsWith('admin') ? [{ 管理员: true }] : [{ 管理员: false }],
+      }
+    },
+  )
+}
 
 function dengDai(haoMiao: number): Promise<void> {
   return new Promise((jieJue) => {
@@ -201,6 +216,7 @@ describe('FP-R3 管理员实时日志 Socket 推送', () => {
   }
 
   beforeEach(async () => {
+    jiaYongHuBiaoChaXun()
     qingKongDingYue()
     sheZhiZuiDiRiZhiJiBie('debug')
     fuWuQi = http.createServer()

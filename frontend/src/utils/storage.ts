@@ -4,6 +4,7 @@ export function baoCunShuJu(jian: string, zhi: unknown): void {
   try {
     localStorage.setItem(QIAN_ZUI + jian, JSON.stringify(zhi))
   } catch {
+     
     console.error('存储数据失败')
   }
 }

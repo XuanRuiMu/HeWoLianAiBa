@@ -9,9 +9,14 @@ import {
 } from '../services/AI输入准备'
 import { gengXinHaoGanDu, huoQuWanZhengHaoGanDu } from '../services/好感度'
 import { pingPanHaoGanDuBianHua } from '../services/好感度评判'
-import { jianCeYongHuXiaoXiBingChuLi, chuLiAIHuiFuHouJieShuJianCha } from '../services/胜利失败条件'
+import {
+  jianCeYongHuXiaoXiBingChuLi,
+  chuLiAIHuiFuHouJieShuJianCha,
+  chuLiYouXiJieShu,
+} from '../services/胜利失败条件'
 import { jiaoSeShiFouBeiDuoShe } from '../services/夺舍'
-import type { AIJiaoSeXinXi } from '../types'
+import { XIAO_XI_PEI_ZHI } from '../config/消息配置'
+import type { AIJiaoSeXinXi, AIYinQingShuChu } from '../types'
 import type { XiaoXiXinXi } from '../services/消息'
 
 vi.mock('../services/AI引擎')
@@ -20,6 +25,9 @@ vi.mock('../services/好感度')
 vi.mock('../services/好感度评判')
 vi.mock('../services/胜利失败条件')
 vi.mock('../services/夺舍')
+vi.mock('../services/认证', () => ({
+  anIdChaYongHu: vi.fn().mockResolvedValue(null),
+}))
 
 function chuangJianCeShiJiaoSe(): AIJiaoSeXinXi {
   return {
@@ -121,7 +129,15 @@ describe('FP-07 AI回复机制', () => {
     })
     vi.mocked(jianCeYongHuXiaoXiBingChuLi).mockResolvedValue(null)
     vi.mocked(chuLiAIHuiFuHouJieShuJianCha).mockResolvedValue(null)
+    vi.mocked(chuLiYouXiJieShu).mockResolvedValue({
+      jie_guo_lei_xing: 'shi_bai_mian_da_rao',
+      zhuang_tai_wen_ben: 'TA将你设为了免打扰',
+      ke_ji_xu_liao_tian: false,
+    })
     vi.mocked(jiaoSeShiFouBeiDuoShe).mockResolvedValue(false)
+    vi.mocked(baoCunJiaoSeXiaoXi).mockImplementation(async ({ nei_rong }) =>
+      chuangJianXiaoXi(`msg-${Date.now()}-${nei_rong}`, nei_rong),
+    )
   })
 
   afterEach(() => {
@@ -450,6 +466,302 @@ describe('FP-07 AI回复机制', () => {
       for (let i = 1; i < xuHaoLieBiao.length; i++) {
         expect(xuHaoLieBiao[i]).toBeGreaterThan(xuHaoLieBiao[i - 1])
       }
+    })
+  })
+
+  describe('FP-17 AI故障可见化 - 错误提示下发', () => {
+    it('用户消息检测失败（四连检异常）时下发错误提示', async () => {
+      vi.mocked(jianCeYongHuXiaoXiBingChuLi).mockRejectedValue(new Error('检测服务不可用'))
+
+      await 调度器.处理用户消息()
+
+      const emit = huoQuEmit(io)
+      const jiaoSeHuiFuCalls = emit.mock.calls.filter(
+        (call) => call[0] === '角色回复',
+      )
+      expect(jiaoSeHuiFuCalls.length).toBeGreaterThan(0)
+      const shiJian = jiaoSeHuiFuCalls[0][1] as { 消息列表: XiaoXiXinXi[] }
+      expect(shiJian.消息列表.length).toBe(1)
+      expect(shiJian.消息列表[0].fa_song_zhe_lei_xing).toBe('xitong')
+      expect(shiJian.消息列表[0].nei_rong).toBe('AI暂时无法回复，请稍后再试')
+    })
+  })
+
+  describe('P0-7 连发免打扰判负', () => {
+    function lianFa(tiaoShu: number): Promise<void> {
+      let lian = Promise.resolve()
+      for (let i = 0; i < tiaoShu; i++) {
+        lian = lian.then(() => 调度器.处理用户消息())
+      }
+      return lian
+    }
+
+    it('连发32条（含第12条预警后20条）触发判负并终止AI流程', async () => {
+      // 前11条：无预警
+      await lianFa(XIAO_XI_PEI_ZHI.lianFaYuJingTiaoShu - 1)
+      expect(chuLiYouXiJieShu).not.toHaveBeenCalled()
+
+      // 第12条：触发预警（会调用 yunXingAIYinQing 生成预警消息）
+      await 调度器.处理用户消息()
+
+      // 预警后计数清零，再发20条触发判负
+      await lianFa(XIAO_XI_PEI_ZHI.lianFaMianDaRaoTiaoShu)
+
+      expect(chuLiYouXiJieShu).toHaveBeenCalledTimes(1)
+      expect(chuLiYouXiJieShu).toHaveBeenCalledWith(
+        'yong-hu-id',
+        'jiao-se-id',
+        'shi_bai_mian_da_rao',
+      )
+
+      await vi.runAllTimersAsync()
+      // 预警时已调用 yunXingAIYinQing 生成预警消息，正常AI流程未启动
+      expect(yunXingAIYinQing).toHaveBeenCalledTimes(1)
+    })
+
+    it('AI发出角色回复后计数清零：再连发19条不触发判负', async () => {
+      await lianFa(XIAO_XI_PEI_ZHI.lianFaMianDaRaoTiaoShu - 1)
+      expect(chuLiYouXiJieShu).not.toHaveBeenCalled()
+
+      vi.mocked(yunXingAIYinQing).mockResolvedValue({
+        xiao_xi_lie_biao: ['回复'],
+        shi_fou_hui_fu: true,
+        shi_fou_che_hui: false,
+        jiang_ji_mo_shi: false,
+      })
+      vi.mocked(baoCunJiaoSeXiaoXi).mockResolvedValue(chuangJianXiaoXi('x1', '回复'))
+
+      await vi.advanceTimersByTimeAsync(10000)
+      await vi.runAllTimersAsync()
+
+      expect(baoCunJiaoSeXiaoXi).toHaveBeenCalled()
+      expect(chuLiYouXiJieShu).not.toHaveBeenCalled()
+
+      await lianFa(XIAO_XI_PEI_ZHI.lianFaMianDaRaoTiaoShu - 1)
+
+      expect(chuLiYouXiJieShu).not.toHaveBeenCalled()
+    })
+
+    it('达阈值时在途检测流程被作废：恢复后不启动AI计时器', async () => {
+      let shiFangZaiTuJianCe: (() => void) | null = null
+      vi.mocked(jianCeYongHuXiaoXiBingChuLi)
+        .mockImplementationOnce(
+          () =>
+            new Promise<null>((resolve) => {
+              shiFangZaiTuJianCe = () => resolve(null)
+            }),
+        )
+
+      const zaiTu = 调度器.处理用户消息()
+      await vi.advanceTimersByTimeAsync(0)
+      expect(shiFangZaiTuJianCe).not.toBeNull()
+
+      // 发送10条（累计11条，未达预警阈值）
+      for (let i = 0; i < XIAO_XI_PEI_ZHI.lianFaYuJingTiaoShu - 2; i++) {
+        await 调度器.处理用户消息()
+      }
+
+      // 第12条触发预警（累计12条）
+      await 调度器.处理用户消息()
+
+      // 预警后再发20条触发判负（预警后计数从0开始，20条触发判负）
+      for (let i = 0; i < XIAO_XI_PEI_ZHI.lianFaMianDaRaoTiaoShu; i++) {
+        await 调度器.处理用户消息()
+      }
+
+      // 判负已触发（预警后20条），在途检测虽完成但不应再次触发判负
+      expect(chuLiYouXiJieShu).toHaveBeenCalledTimes(1)
+      expect(chuLiYouXiJieShu).toHaveBeenCalledWith(
+        'yong-hu-id',
+        'jiao-se-id',
+        'shi_bai_mian_da_rao',
+      )
+
+      shiFangZaiTuJianCe!()
+      await zaiTu
+      await vi.runAllTimersAsync()
+
+      // 预警时已调用 yunXingAIYinQing 生成预警消息，正常AI流程未启动
+      expect(yunXingAIYinQing).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('AI主动表白链路（P1-13 补盲区）', () => {
+    function chuangJianBiaoBaiShuChu(xiaoXiLieBiao: string[]): AIYinQingShuChu {
+      return {
+        xiao_xi_lie_biao: xiaoXiLieBiao,
+        shi_fou_hui_fu: true,
+        shi_fou_che_hui: false,
+        jiang_ji_mo_shi: false,
+        ce_lue: {
+          yong_hu_yi_tu: 'biao_bai_xin_hao',
+          qing_gan_fen_xi: '好感度达标，关系进入暧昧期',
+          hui_fu_ce_lue: 'zhu_dong_biao_bai',
+          shi_fou_hui_fu: true,
+          hui_fu_tiao_shu: 1,
+          shi_jian_qing_xu: 'lang_man',
+          shi_fou_che_hui: false,
+          shi_fou_zhu_dong_biao_bai: true,
+        },
+      }
+    }
+
+    async function chuFaBiaoBai(biaoBaiNeiRong: string, houXuXiaoXi: string[] = []): Promise<void> {
+      vi.mocked(yunXingAIYinQing).mockResolvedValue(
+        chuangJianBiaoBaiShuChu([biaoBaiNeiRong, ...houXuXiaoXi]),
+      )
+      vi.mocked(baoCunJiaoSeXiaoXi).mockImplementation(async ({ nei_rong }) =>
+        chuangJianXiaoXi(`bb-${nei_rong}`, nei_rong),
+      )
+
+      await 调度器.处理用户消息()
+      await vi.advanceTimersByTimeAsync(10000)
+      await vi.runAllTimersAsync()
+    }
+
+    function huoQuZuiJinDengDaiZhi(): boolean | undefined {
+      const calls = vi.mocked(jianCeYongHuXiaoXiBingChuLi).mock.calls
+      if (calls.length === 0) return undefined
+      const zuiJin = calls[calls.length - 1] as unknown as [
+        string,
+        string,
+        string,
+        number,
+        boolean,
+      ]
+      return zuiJin[4]
+    }
+
+    afterEach(async () => {
+      // dengDaiBiaoBaiHuiFuMap 为模块级状态：消费一次普通检测确保等待态被清除，防止用例间污染
+      vi.mocked(jianCeYongHuXiaoXiBingChuLi).mockResolvedValue(null)
+      vi.mocked(yunXingAIYinQing).mockResolvedValue({
+        xiao_xi_lie_biao: [],
+        shi_fou_hui_fu: false,
+        shi_fou_che_hui: false,
+        jiang_ji_mo_shi: false,
+      })
+      await 调度器.处理用户消息()
+    })
+
+    it('ce_lue.shi_fou_zhu_dong_biao_bai=true → 表白首条入库推送，后续消息不再发送', async () => {
+      await chuFaBiaoBai('我喜欢你，做我女朋友吧', '这条不该被发送')
+
+      expect(baoCunJiaoSeXiaoXi).toHaveBeenCalledTimes(1)
+      expect(baoCunJiaoSeXiaoXi).toHaveBeenCalledWith({
+        yong_hu_id: 'yong-hu-id',
+        jiao_se_id: 'jiao-se-id',
+        nei_rong: '我喜欢你，做我女朋友吧',
+      })
+
+      const emit = huoQuEmit(io)
+      const jiaoSeHuiFuCalls = emit.mock.calls.filter((call) => call[0] === '角色回复')
+      expect(jiaoSeHuiFuCalls.length).toBe(1)
+      const shiJian = jiaoSeHuiFuCalls[0][1] as { 消息列表: XiaoXiXinXi[] }
+      expect(shiJian.消息列表.length).toBe(1)
+      expect(shiJian.消息列表[0].nei_rong).toBe('我喜欢你，做我女朋友吧')
+      expect(shiJian.消息列表[0].fa_song_zhe_lei_xing).toBe('jiaose')
+    })
+
+    it('表白路径跳过普通回复的好感度评判与结束检查（提前收敛）', async () => {
+      await chuFaBiaoBai('我喜欢你')
+
+      expect(pingPanHaoGanDuBianHua).not.toHaveBeenCalled()
+      expect(gengXinHaoGanDu).not.toHaveBeenCalled()
+      expect(chuLiAIHuiFuHouJieShuJianCha).not.toHaveBeenCalled()
+    })
+
+    it('表白后建立等待态 → 下一条用户消息以 deng_dai_biao_bai_hui_fu=true 进入检测', async () => {
+      await chuFaBiaoBai('我喜欢你')
+      expect(huoQuZuiJinDengDaiZhi()).toBe(false)
+
+      await 调度器.处理用户消息()
+
+      expect(huoQuZuiJinDengDaiZhi()).toBe(true)
+    })
+
+    it('等待态下用户回接受（模拟底层高确信接受结局）→ 流程终止不生成普通回复，等待态清除', async () => {
+      await chuFaBiaoBai('我喜欢你，做我女朋友吧')
+
+      vi.mocked(jianCeYongHuXiaoXiBingChuLi).mockImplementation(
+        async (_y, _j, _x, _h, dengDaiBiaoBaiHuiFu) => {
+          if (!dengDaiBiaoBaiHuiFu) return null
+          return {
+            jie_guo_lei_xing: 'sheng_li_ai_qing',
+            zhuang_tai_wen_ben: '在一起了 💕',
+            ke_ji_xu_liao_tian: true,
+          }
+        },
+      )
+
+      await 调度器.处理用户消息()
+      await vi.runAllTimersAsync()
+
+      expect(yunXingAIYinQing).toHaveBeenCalledTimes(1)
+
+      await 调度器.处理用户消息()
+      expect(huoQuZuiJinDengDaiZhi()).toBe(false)
+    })
+
+    it('等待态下用户拒绝（模拟底层高确信拒绝结局）→ 同样终止流程并清除等待态', async () => {
+      await chuFaBiaoBai('我喜欢你，做我女朋友吧')
+
+      vi.mocked(jianCeYongHuXiaoXiBingChuLi).mockImplementation(
+        async (_y, _j, _x, _h, dengDaiBiaoBaiHuiFu) => {
+          if (!dengDaiBiaoBaiHuiFu) return null
+          return {
+            jie_guo_lei_xing: 'shi_bai_ju_jue_biao_bai',
+            zhuang_tai_wen_ben: '你拒绝了TA的表白',
+            ke_ji_xu_liao_tian: false,
+          }
+        },
+      )
+
+      await 调度器.处理用户消息()
+      await vi.runAllTimersAsync()
+
+      expect(yunXingAIYinQing).toHaveBeenCalledTimes(1)
+
+      await 调度器.处理用户消息()
+      expect(huoQuZuiJinDengDaiZhi()).toBe(false)
+    })
+
+    it('表白等待超过30分钟 → 等待态过期，下一条消息回到普通流程', async () => {
+      await chuFaBiaoBai('我喜欢你')
+      expect(huoQuZuiJinDengDaiZhi()).toBe(false)
+
+      await vi.advanceTimersByTimeAsync(30 * 60 * 1000 + 60 * 1000)
+
+      await 调度器.处理用户消息()
+      expect(huoQuZuiJinDengDaiZhi()).toBe(false)
+    })
+
+    it('模糊回复（检测返回null不结束游戏）→ 游戏继续生成普通回复且等待态清除', async () => {
+      await chuFaBiaoBai('我喜欢你')
+
+      vi.mocked(jianCeYongHuXiaoXiBingChuLi).mockResolvedValue(null)
+      vi.mocked(yunXingAIYinQing).mockResolvedValue({
+        xiao_xi_lie_biao: ['让我想想也是'],
+        shi_fou_hui_fu: true,
+        shi_fou_che_hui: false,
+        jiang_ji_mo_shi: false,
+      })
+      vi.mocked(baoCunJiaoSeXiaoXi).mockResolvedValue(chuangJianXiaoXi('pt1', '让我想想也是'))
+
+      await 调度器.处理用户消息()
+      expect(huoQuZuiJinDengDaiZhi()).toBe(true)
+
+      await vi.advanceTimersByTimeAsync(10000)
+      await vi.runAllTimersAsync()
+
+      expect(baoCunJiaoSeXiaoXi).toHaveBeenCalledWith({
+        yong_hu_id: 'yong-hu-id',
+        jiao_se_id: 'jiao-se-id',
+        nei_rong: '让我想想也是',
+      })
+
+      await 调度器.处理用户消息()
+      expect(huoQuZuiJinDengDaiZhi()).toBe(false)
     })
   })
 })

@@ -9,6 +9,7 @@ import { 使用主题仓库, 主题键 } from '@/stores/主题'
 import { 使用用户仓库 } from '@/stores/用户'
 import { 使用聊天仓库 } from '@/stores/聊天'
 import { huoQuFanYi } from '@/config/translations'
+import { yingYongBanBen } from '@/config/站点配置'
 
 vi.mock('@/api/认证', () => ({
   gengGaiYongHuMing: vi.fn(),
@@ -20,6 +21,25 @@ vi.mock('@/api/通知', () => ({
   huoQuTongZhiLieBiao: vi.fn().mockResolvedValue({ lie_biao: [], wei_du_shu: 0 }),
   biaoJiTongZhiYiDu: vi.fn(),
   biaoJiQuanBuTongZhiYiDu: vi.fn(),
+}))
+
+vi.mock('@/api/社交', () => ({
+  huoQuYongHuSheZhi: vi.fn().mockResolvedValue({
+    uid: 'u1',
+    shou_ji_hao: '13800138000',
+    tou_xiang: null,
+    qian_ming: null,
+    qian_ming_ke_jian_xing: 'gong_kai',
+    qian_ming_bai_ming_dan: [],
+    liao_tian_bei_jing: 'moRen',
+    gong_kai_zhang_hao: true,
+    gong_kai_shou_ji_hao: false,
+    gong_kai_you_xiang: false,
+    bang_ding_you_xiang: '',
+  }),
+  baoCunLiaoTianBeiJing: vi.fn(),
+  baoCunYinSiSheZhi: vi.fn(),
+  qingKongPaiWeiShuJu: vi.fn(),
 }))
 
 vi.mock('socket.io-client', () => ({
@@ -426,21 +446,19 @@ describe('FP-18 主题与UI', () => {
       expect(wrapper.find('.tongzhi-anniu').exists()).toBe(false)
     })
 
-    it('版本号 1.0.0 直接可见', async () => {
+    it('版本号直接可见且与站点配置一致', async () => {
       const { wrapper } = await mountCaiDan({ luJing: '/' })
       const banBen = wrapper.find('.banben-wenben')
       expect(banBen.exists()).toBe(true)
-      expect(banBen.text()).toBe('1.0.0')
+      expect(banBen.text()).toBe(yingYongBanBen)
     })
 
     it('退出登录按钮默认颜色为红色', async () => {
       const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
       await wrapper.find('.yonghu-xuanxiang').trigger('click')
       await flushPromises()
-      // 退出登录位于「账号设置」二级菜单内，需先展开
-      await wrapper.find('.zhanghao-shezhi-biaoti').trigger('click')
-      await flushPromises()
-      const tuichu = wrapper.find('.zhanghao-shezhi-feichu .tuichu-xiangmu')
+      // FP-02：退出登录已移入用户下拉主列（好友之下），不再经账号设置飞出列展开
+      const tuichu = wrapper.find('.yonghu-xiala .tuichu-xiangmu')
       expect(tuichu.exists()).toBe(true)
       expect(caiDanYuanMa).toMatch(
         /\.tuichu-xiangmu\s*\{[^}]*color:\s*var\(--yanse-weixian\)\s*!important/,
@@ -607,7 +625,7 @@ describe('FP-18 主题与UI', () => {
       expect(xiala.text()).toContain(huoQuFanYi('caidan', 'yinSiZhengCe'))
       // 版本号直接以 .banben-wenben 形式可见，不再折叠在更多菜单内
       expect(wrapper.find('.banben-wenben').exists()).toBe(true)
-      expect(wrapper.find('.banben-wenben').text()).toBe('1.0.0')
+      expect(wrapper.find('.banben-wenben').text()).toBe(yingYongBanBen)
     })
 
     it('顶部栏流式布局不覆盖页面，主内容区无 margin-top 偏移', () => {
@@ -652,62 +670,113 @@ describe('FP-18 主题与UI', () => {
       vi.clearAllMocks()
     })
 
-    it('已登录用户下拉中「账号设置」为可点击头部按钮且带展开/收起箭头', async () => {
+    it('FP-02 已登录用户下拉中「账号设置」为直接入口（无展开组/无飞出列）', async () => {
       const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
       await wrapper.find('.yonghu-xuanxiang').trigger('click')
       await flushPromises()
-      const biaoti = wrapper.find('.zhanghao-shezhi-biaoti')
-      expect(biaoti.exists()).toBe(true)
-      expect(biaoti.text()).toContain(huoQuFanYi('caidan', 'zhangHaoSheZhi'))
-      expect(wrapper.find('.zhanghao-shezhi-jiantou').exists()).toBe(true)
-      // 初始二级菜单收起（不渲染 er-ji-caidan）
+      const xiala = wrapper.find('.yonghu-xiala')
+      const ruKou = xiala
+        .findAll('button')
+        .filter((b) => b.text() === huoQuFanYi('caidan', 'zhangHaoSheZhi'))
+      expect(ruKou.length).toBe(1)
+      expect(wrapper.find('.zhanghao-shezhi-biaoti').exists()).toBe(false)
+      expect(wrapper.find('.zhanghao-shezhi-zu').exists()).toBe(false)
       expect(wrapper.find('.zhanghao-shezhi-feichu').exists()).toBe(false)
+      expect(caiDanYuanMa).not.toContain('zhangHaoSheZhiZhanKai')
     })
 
-    it('点击「账号设置」展开二级菜单含4子项，再次点击收起', async () => {
+    it('FP-02 用户下拉仅含战绩/好友/退出登录/账号设置4项，退出登录紧随好友', async () => {
       const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
       await wrapper.find('.yonghu-xuanxiang').trigger('click')
       await flushPromises()
-      await wrapper.find('.zhanghao-shezhi-biaoti').trigger('click')
-      await flushPromises()
-      const erji = wrapper.find('.zhanghao-shezhi-feichu')
-      expect(erji.exists()).toBe(true)
-      expect(erji.text()).toContain(huoQuFanYi('caidan', 'xiuGaiYongHuMing'))
-      expect(erji.text()).toContain(huoQuFanYi('caidan', 'xiuGaiMiMa'))
-      expect(erji.text()).toContain(huoQuFanYi('caidan', 'sheZhiMoRenXingBie'))
-      expect(erji.text()).toContain(huoQuFanYi('caidan', 'tuiChuDengLu'))
-      // 再次点击收起
-      await wrapper.find('.zhanghao-shezhi-biaoti').trigger('click')
-      await flushPromises()
-      expect(wrapper.find('.zhanghao-shezhi-feichu').exists()).toBe(false)
+      const xiala = wrapper.find('.yonghu-xiala')
+      const zhuRuKou = xiala.findAll('.xiala-xiangmu').map((b) => b.text())
+      expect(zhuRuKou).toEqual([
+        huoQuFanYi('caidan', 'guoWangZhanJi'),
+        huoQuFanYi('caidan', 'haoYou'),
+        huoQuFanYi('caidan', 'tuiChuDengLu'),
+        huoQuFanYi('caidan', 'zhangHaoSheZhi'),
+      ])
+      expect(xiala.find('.tuichu-xiangmu').text()).toBe(huoQuFanYi('caidan', 'tuiChuDengLu'))
     })
 
-    it('「过往战绩」与「账号设置」同级且点击走 jinRuZhanJi 路由', async () => {
+    it('下拉顶部展示头像昵称签名资料头，点击直达账号设置', async () => {
+      const { wrapper, luYou } = await mountCaiDan({ luJing: '/', dengLu: true })
+      await wrapper.find('.yonghu-xuanxiang').trigger('click')
+      await flushPromises()
+      const tou = wrapper.find('.yonghu-ziliao-tou')
+      expect(tou.exists()).toBe(true)
+      expect(tou.text()).toContain('测试昵称')
+      const pushSpy = vi.spyOn(luYou, 'push')
+      await tou.trigger('click')
+      await flushPromises()
+      expect(pushSpy).toHaveBeenCalledWith('/zhang-hao-an-quan#tou-xiang')
+    })
+
+    it('FP-02 飞出列快捷锚点已收敛：下拉无锚点按钮，资料头仍直达头像卡', async () => {
       const { wrapper, luYou } = await mountCaiDan({ luJing: '/', dengLu: true })
       await wrapper.find('.yonghu-xuanxiang').trigger('click')
       await flushPromises()
       const xiala = wrapper.find('.yonghu-xiala')
-      expect(xiala.find('.zhanghao-shezhi-biaoti').exists()).toBe(true)
-      const guoWang = xiala
-        .findAll('button')
-        .filter((b) => b.text() === huoQuFanYi('caidan', 'guoWangZhanJi'))
-      expect(guoWang.length).toBe(1)
+      // 6项快捷逻辑已迁入个人设置页，下拉内不再出现修改用户名/密码等文本
+      expect(xiala.text()).not.toContain(huoQuFanYi('caidan', 'xiuGaiYongHuMing'))
+      expect(xiala.text()).not.toContain(huoQuFanYi('caidan', 'xiuGaiMiMa'))
+      expect(xiala.text()).not.toContain(huoQuFanYi('caidan', 'sheZhiMoRenXingBie'))
       const pushSpy = vi.spyOn(luYou, 'push')
-      await guoWang[0].trigger('click')
+      await wrapper.find('.yonghu-ziliao-tou').trigger('click')
       await flushPromises()
-      expect(pushSpy).toHaveBeenCalledWith('/guo-wang-zhan-ji')
+      expect(pushSpy).toHaveBeenCalledWith('/zhang-hao-an-quan#tou-xiang')
     })
 
-    it('二级菜单展开态下点击外部关闭（zhangHaoSheZhi 与用户下拉复位）', async () => {
+    it('FP-02 用户下拉箭头仍为 CSS 绘制小三角而非大字符', async () => {
       const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
       await wrapper.find('.yonghu-xuanxiang').trigger('click')
       await flushPromises()
-      await wrapper.find('.zhanghao-shezhi-biaoti').trigger('click')
+      const jiantou = wrapper.find('.zhankai-jiantou')
+      expect(jiantou.exists()).toBe(true)
+      expect(jiantou.text()).toBe('')
+      expect(caiDanYuanMa).not.toContain('>▶<')
+      expect(caiDanYuanMa).not.toContain('>▾<')
+    })
+
+    it('「过往战绩」「好友」「账号设置」同级且点击走对应路由', async () => {
+      const { wrapper, luYou } = await mountCaiDan({ luJing: '/', dengLu: true })
+      const pushSpy = vi.spyOn(luYou, 'push')
+      const dianJiRuKou = async (wenBen: string) => {
+        await wrapper.find('.yonghu-xuanxiang').trigger('click')
+        await flushPromises()
+        const anNiu = wrapper
+          .find('.yonghu-xiala')
+          .findAll('button')
+          .filter((b) => b.text() === wenBen)
+        expect(anNiu.length).toBe(1)
+        await anNiu[0].trigger('click')
+        await flushPromises()
+      }
+      await dianJiRuKou(huoQuFanYi('caidan', 'guoWangZhanJi'))
+      expect(pushSpy).toHaveBeenCalledWith('/guo-wang-zhan-ji')
+      await dianJiRuKou(huoQuFanYi('caidan', 'haoYou'))
+      expect(pushSpy).toHaveBeenCalledWith('/hao-you')
+      await dianJiRuKou(huoQuFanYi('caidan', 'zhangHaoSheZhi'))
+      expect(pushSpy).toHaveBeenCalledWith('/zhang-hao-an-quan')
+    })
+
+    it('FP-02 主页点击退出登录发起退出请求', async () => {
+      const { wrapper, 用户仓库 } = await mountCaiDan({ luJing: '/', dengLu: true })
+      await wrapper.find('.yonghu-xuanxiang').trigger('click')
       await flushPromises()
-      expect(wrapper.find('.zhanghao-shezhi-feichu').exists()).toBe(true)
+      await wrapper.find('.yonghu-xiala .tuichu-xiangmu').trigger('click')
+      await flushPromises()
+      expect(用户仓库.tuiChuQingQiu).toBe(true)
+    })
+
+    it('FP-02 下拉展开后点击外部关闭用户下拉', async () => {
+      const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
+      await wrapper.find('.yonghu-xuanxiang').trigger('click')
+      await flushPromises()
+      expect(wrapper.find('.yonghu-xiala').exists()).toBe(true)
       document.body.click()
       await flushPromises()
-      expect(wrapper.find('.zhanghao-shezhi-feichu').exists()).toBe(false)
       expect(wrapper.find('.yonghu-xiala').exists()).toBe(false)
     })
 
@@ -722,72 +791,36 @@ describe('FP-18 主题与UI', () => {
       expect(xiala.findAll('.xiala-xiangmu').length).toBe(2)
     })
 
-    it('FP-A 飞出列作为账号设置组的独立右列：flyout 位于 .zhanghao-shezhi-zu 内、与过往战绩同级', async () => {
-      const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
-      await wrapper.find('.yonghu-xuanxiang').trigger('click')
-      await flushPromises()
-      await wrapper.find('.zhanghao-shezhi-biaoti').trigger('click')
-      await flushPromises()
-
-      const zu = wrapper.find('.zhanghao-shezhi-zu')
-      expect(zu.exists()).toBe(true)
-      const feiChu = wrapper.find('.zhanghao-shezhi-feichu')
-      expect(feiChu.exists()).toBe(true)
-      // flyout 是账号设置组的子元素（右列），且不在账号设置按钮内部
-      expect(zu.element.contains(feiChu.element)).toBe(true)
-      expect(wrapper.find('.zhanghao-shezhi-biaoti').element.contains(feiChu.element)).toBe(false)
-      // 过往战绩与账号设置组同级（均在用户下拉内）
-      const guoWang = wrapper
-        .findAll('.yonghu-xiala button')
-        .filter((b) => b.text() === huoQuFanYi('caidan', 'guoWangZhanJi'))
-      expect(guoWang.length).toBe(1)
+    it('FP-02 源码无飞出列与弹窗残留：无认证接口调用/无弹窗样式', async () => {
+      await mountCaiDan({ luJing: '/', dengLu: true })
+      for (const pianDuan of [
+        'zhanghao-shezhi-feichu',
+        'zhanghao-shezhi-biaoti',
+        'zhanghao-shezhi-zu',
+        'feiChuKaiQi',
+        'xiugai-zhezhao',
+        'gengGaiYongHuMing',
+        'gengGaiMiMa',
+        'gengGaiMoRenXingBie',
+        'xiuGaiYongHuMingXianShi',
+        'xiuGaiMiMaXianShi',
+        'sheZhiMoRenXingBieXianShi',
+      ]) {
+        expect(caiDanYuanMa).not.toContain(pianDuan)
+      }
     })
 
-    it('FP-A 飞出列含4子项且退出登录默认红色', async () => {
+    it('FP-02 退出登录为下拉内红色原生按钮，键盘可达', async () => {
       const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
       await wrapper.find('.yonghu-xuanxiang').trigger('click')
       await flushPromises()
-      await wrapper.find('.zhanghao-shezhi-biaoti').trigger('click')
-      await flushPromises()
-      const feiChu = wrapper.find('.zhanghao-shezhi-feichu')
-      expect(feiChu.findAll('.xiala-xiangmu').length).toBe(4)
-      expect(feiChu.text()).toContain(huoQuFanYi('caidan', 'xiuGaiYongHuMing'))
-      expect(feiChu.text()).toContain(huoQuFanYi('caidan', 'xiuGaiMiMa'))
-      expect(feiChu.text()).toContain(huoQuFanYi('caidan', 'sheZhiMoRenXingBie'))
-      expect(feiChu.text()).toContain(huoQuFanYi('caidan', 'tuiChuDengLu'))
-      expect(feiChu.find('.tuichu-xiangmu').exists()).toBe(true)
+      const tuiChu = wrapper.find('.yonghu-xiala .tuichu-xiangmu')
+      expect(tuiChu.exists()).toBe(true)
+      expect(tuiChu.element.tagName).toBe('BUTTON')
+      expect(tuiChu.text()).toBe(huoQuFanYi('caidan', 'tuiChuDengLu'))
       expect(caiDanYuanMa).toMatch(
         /\.tuichu-xiangmu\s*\{[^}]*color:\s*var\(--yanse-weixian\)\s*!important/,
       )
-    })
-
-    it('FP-A 键盘 ArrowRight 展开飞出列并聚焦首子项，Escape 收起', async () => {
-      const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
-      await wrapper.find('.yonghu-xuanxiang').trigger('click')
-      await flushPromises()
-      const biaoti = wrapper.find('.zhanghao-shezhi-biaoti')
-      await biaoti.trigger('keydown', { key: 'ArrowRight' })
-      await flushPromises()
-      expect(wrapper.find('.zhanghao-shezhi-feichu').exists()).toBe(true)
-      const shouXiang = wrapper.find('.zhanghao-shezhi-feichu .xiala-xiangmu')
-      expect(document.activeElement === shouXiang.element).toBe(true)
-
-      await biaoti.trigger('keydown', { key: 'Escape' })
-      await flushPromises()
-      expect(wrapper.find('.zhanghao-shezhi-feichu').exists()).toBe(false)
-    })
-
-    it('FP-A 账号设置按钮带 aria-expanded 且 flyout 带 role=menu/aria-label', async () => {
-      const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
-      await wrapper.find('.yonghu-xuanxiang').trigger('click')
-      await flushPromises()
-      const biaoti = wrapper.find('.zhanghao-shezhi-biaoti')
-      expect(biaoti.attributes('aria-expanded')).toBe('false')
-      await biaoti.trigger('click')
-      await flushPromises()
-      const feiChu = wrapper.find('.zhanghao-shezhi-feichu')
-      expect(feiChu.attributes('role')).toBe('menu')
-      expect(feiChu.attributes('aria-label')).toBe(huoQuFanYi('caidan', 'zhangHaoSheZhi'))
     })
   })
 })

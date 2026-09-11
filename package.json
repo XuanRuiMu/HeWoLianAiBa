@@ -1,6 +1,6 @@
 {
   "name": "hewolianba-root",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "和我恋爱吧 - 根目录（husky/commitlint 管理）",
   "scripts": {
@@ -10,5 +10,8 @@
     "@commitlint/cli": "^21.2.1",
     "@commitlint/config-conventional": "^21.2.0",
     "husky": "^9.1.7"
+  },
+  "dependencies": {
+    "meshoptimizer": "^1.2.0"
   }
 }

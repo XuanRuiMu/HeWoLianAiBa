@@ -1,9 +1,9 @@
-import type { Server } from 'socket.io'
+﻿import type { Server } from 'socket.io'
 import type { RenZhengSocket } from './认证'
-import { peiZhi } from '../config'
+import { anYongHuIdPanDuanGuanLiYuan } from '../middleware/管理员'
 import { riZhiTuiSongPeiZhi } from '../config/日志推送配置'
 import { dingYueRiZhi } from '../utils/日志订阅'
-import type { RiZhiTiaoMu } from '../utils/debug日志'
+import { debug日志, type RiZhiTiaoMu } from '../utils/debug日志'
 
 export const SHI_JIAN_DING_YUE_RI_ZHI = '日志_订阅'
 export const SHI_JIAN_QU_XIAO_RI_ZHI = '日志_取消订阅'
@@ -24,8 +24,13 @@ let diuQiShu = 0
 let chuangKouQiShiShiJian = 0
 let chuangKouYiTuiSong = 0
 
-function panDuanShiGuanLiYuan(shouJiHao: string): boolean {
-  return peiZhi.shenYongYuan.yunXuLieBiao.includes(shouJiHao)
+async function panDuanShiGuanLiYuan(yongHuId: string): Promise<boolean> {
+  try {
+    return await anYongHuIdPanDuanGuanLiYuan(yongHuId)
+  } catch (cuoWu) {
+    debug日志.error('日志推送Socket', '管理员身份校验失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+    return false
+  }
 }
 
 function shouJiRiZhi(tiaoMu: RiZhiTiaoMu): void {
@@ -89,17 +94,19 @@ export function chuShiHuaRiZhiTuiSongSocket(io: Server): void {
 
   io.on('connection', (socket: RenZhengSocket) => {
     const yongHu = socket.yong_hu
-    // 安全红线：非管理员连接不注册任何日志事件监听，也无法加入日志房间
-    if (!yongHu || !panDuanShiGuanLiYuan(yongHu.shouJiHao)) return
+    if (!yongHu) return
 
-    socket.on(SHI_JIAN_DING_YUE_RI_ZHI, (huiDiao?: (jieGuo: unknown) => void) => {
+    // 安全红线：非管理员的订阅/取消订阅一律忽略，无法加入日志房间，也不会触发日志管道启动
+    socket.on(SHI_JIAN_DING_YUE_RI_ZHI, async (huiDiao?: (jieGuo: unknown) => void) => {
+      if (!(await panDuanShiGuanLiYuan(yongHu.yongHuId))) return
       socket.join(riZhiTuiSongPeiZhi.fangJianMing)
       dingYueSocketJiHe.add(socket.id)
       qiDongGuanDao()
       if (typeof huiDiao === 'function') huiDiao({ cheng_gong: true })
     })
 
-    socket.on(SHI_JIAN_QU_XIAO_RI_ZHI, (huiDiao?: (jieGuo: unknown) => void) => {
+    socket.on(SHI_JIAN_QU_XIAO_RI_ZHI, async (huiDiao?: (jieGuo: unknown) => void) => {
+      if (!(await panDuanShiGuanLiYuan(yongHu.yongHuId))) return
       socket.leave(riZhiTuiSongPeiZhi.fangJianMing)
       yiChuDingYue(socket.id)
       if (typeof huiDiao === 'function') huiDiao({ cheng_gong: true })

@@ -1,12 +1,17 @@
 import { 数据库 } from '../数据库'
 import { redis } from '../redis'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
+import { peiZhi } from '../config'
+import { debug日志 } from '../utils/debug日志'
 import { shengChengLingPai } from '../utils/jwt'
 import { huoQuFanYi } from '../config/translations'
+import { yinBiShouJiHao } from '../utils/掩码'
 import { huoQuJieDuanMing } from './好感度'
 import { huoQuAIJiaoSeXinXi } from './AI输入准备'
 import { jiaoSeShiFouBeiDuoShe } from './夺舍'
 import { yingSheYongHu } from './认证'
+import { qingChuGuanLiYuanHuanCun } from '../middleware/管理员'
 import type { YongHuXinXi } from '../types'
 
 export interface YongHuLieBiaoXiang {
@@ -43,12 +48,10 @@ export interface DuiHuaXiangQing {
     qu_wei_du: number
     guan_huai_du: number
   } | null
-  ji_yi_lie_biao: unknown[]
 }
 
 export interface JiaoSeXinXiXiangYing {
   jiao_se: Awaited<ReturnType<typeof huoQuAIJiaoSeXinXi>>
-  ji_yi_lie_biao: unknown[]
   duo_she_zhuang_tai: boolean
 }
 
@@ -80,17 +83,6 @@ function yingSheXiaoXi(row: Record<string, unknown>): Record<string, unknown> {
   }
 }
 
-function yingSheJiYi(row: Record<string, unknown>): Record<string, unknown> {
-  return {
-    id: String(row.ID),
-    zhai_yao: String(row.摘要),
-    zhong_yao_du: Number(row.重要度 || 0),
-    guan_jian_ci: Array.isArray(row.关键词) ? row.关键词.map(String) : [],
-    shi_jian_lei_xing: row.事件类型 ? String(row.事件类型) : null,
-    chuang_jian_shi_jian: row.创建时间 ? String(row.创建时间) : new Date().toISOString(),
-  }
-}
-
 function yingSheShenJiRiZhi(row: Record<string, unknown>): Record<string, unknown> {
   return {
     id: String(row.ID),
@@ -115,7 +107,7 @@ export async function huoQuYongHuLieBiao(): Promise<YongHuLieBiaoXiang[]> {
 
   return jieGuo.rows.map((row): YongHuLieBiaoXiang => ({
     id: String(row.ID),
-    shou_ji_hao: String(row.手机号),
+    shou_ji_hao: yinBiShouJiHao(String(row.手机号)),
     yong_hu_ming: row.用户名 ? String(row.用户名) : null,
     guan_li_yuan: Boolean(row.管理员),
     ce_shi: Boolean(row.测试),
@@ -189,17 +181,11 @@ export async function huoQuDuiHuaXiangQing(jiao_se_id: string): Promise<DuiHuaXi
       }
     : null
 
-  const jiYiJieGuo = await 数据库.query(
-    `SELECT * FROM "记忆" WHERE "角色ID" = $1 ORDER BY "创建时间" DESC LIMIT 20`,
-    [jiao_se_id],
-  )
-
   return {
     jiao_se: jiaoSe,
     yong_hu: yongHu,
     xiao_xi_lie_biao: xiaoXiJieGuo.rows.reverse().map(yingSheXiaoXi),
     hao_gan_du: haoGanDu,
-    ji_yi_lie_biao: jiYiJieGuo.rows.map(yingSheJiYi),
   }
 }
 
@@ -207,14 +193,8 @@ export async function huoQuJiaoSeXinXi(jiao_se_id: string): Promise<JiaoSeXinXiX
   const jiaoSe = await huoQuAIJiaoSeXinXi(jiao_se_id)
   if (!jiaoSe) return null
 
-  const jiYiJieGuo = await 数据库.query(
-    `SELECT * FROM "记忆" WHERE "角色ID" = $1 ORDER BY "重要度" DESC, "创建时间" DESC LIMIT 30`,
-    [jiao_se_id],
-  )
-
   return {
     jiao_se: jiaoSe,
-    ji_yi_lie_biao: jiYiJieGuo.rows.map(yingSheJiYi),
     duo_she_zhuang_tai: await jiaoSeShiFouBeiDuoShe(jiao_se_id),
   }
 }
@@ -222,6 +202,7 @@ export async function huoQuJiaoSeXinXi(jiao_se_id: string): Promise<JiaoSeXinXiX
 export interface ChuangJianCeShiYongHuJieGuo {
   cheng_gong: boolean
   yong_hu?: YongHuXinXi
+  chu_shi_mi_ma?: string
   ti_shi?: string
   zhuang_tai_ma?: number
 }
@@ -238,7 +219,9 @@ export async function chuangJianCeShiYongHu(
     return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'shouJiHaoYiZhuCe'), zhuang_tai_ma: 409 }
   }
 
-  const miMaHaXi = await bcrypt.hash('test123456', 10)
+  // P2-2：随机强密码，仅在本次创建响应中一次性返回明文，之后任何接口不可再查询
+  const chuShiMiMa = crypto.randomBytes(18).toString('base64url')
+  const miMaHaXi = await bcrypt.hash(chuShiMiMa, 12)
   const chaRuJieGuo = await 数据库.query(
     `INSERT INTO "用户" ("手机号", "用户名", "密码哈希", "管理员", "测试")
      VALUES ($1, $2, $3, false, true)
@@ -246,7 +229,11 @@ export async function chuangJianCeShiYongHu(
     [shou_ji_hao, yong_hu_ming, miMaHaXi],
   )
 
-  return { cheng_gong: true, yong_hu: yingSheYongHu(chaRuJieGuo.rows[0]) }
+  return {
+    cheng_gong: true,
+    yong_hu: yingSheYongHu(chaRuJieGuo.rows[0]),
+    chu_shi_mi_ma: chuShiMiMa,
+  }
 }
 
 export async function dengLuCeShiYongHu(
@@ -314,4 +301,77 @@ export async function huoQuXiTongZhuangTai(): Promise<XiTongZhuangTai> {
     redis_jian_shu: redisJianShu,
     shen_ji_ri_zhi: shenJiJieGuo.rows.map(yingSheShenJiRiZhi),
   }
+}
+
+export interface SheZhiGuanLiYuanJieGuo {
+  cheng_gong: boolean
+  yi_bian_geng: boolean
+  ti_shi?: string
+  zhuang_tai_ma?: number
+}
+
+export async function sheZhiGuanLiYuanZhuangTai(
+  mu_biao_yong_hu_id: string,
+  mu_biao_zhuang_tai: boolean,
+): Promise<SheZhiGuanLiYuanJieGuo> {
+  const chaXun = await 数据库.query(
+    `SELECT "管理员" FROM "用户" WHERE "ID" = $1 LIMIT 1`,
+    [mu_biao_yong_hu_id],
+  )
+  if (chaXun.rows.length === 0) {
+    return {
+      cheng_gong: false,
+      yi_bian_geng: false,
+      ti_shi: huoQuFanYi('tongYong', 'ziYuanBuCunZai'),
+      zhuang_tai_ma: 404,
+    }
+  }
+
+  const dangQianZhuangTai = Boolean(chaXun.rows[0].管理员)
+  if (dangQianZhuangTai === mu_biao_zhuang_tai) {
+    qingChuGuanLiYuanHuanCun(mu_biao_yong_hu_id)
+    return { cheng_gong: true, yi_bian_geng: false }
+  }
+
+  await 数据库.query(
+    `UPDATE "用户" SET "管理员" = $1, "更新时间" = NOW() WHERE "ID" = $2`,
+    [mu_biao_zhuang_tai, mu_biao_yong_hu_id],
+  )
+  qingChuGuanLiYuanHuanCun(mu_biao_yong_hu_id)
+  return { cheng_gong: true, yi_bian_geng: true }
+}
+
+export async function zhiXingGuanLiYuanZhongZi(): Promise<number> {
+  const baiMingDan = peiZhi.shenYongYuan.yunXuLieBiao
+  if (baiMingDan.length === 0) {
+    debug日志.info('管理员种子引导', '[管理员种子引导] ADMIN_PHONES 为空，跳过')
+    return 0
+  }
+
+  let tiShengShu = 0
+  for (const shouJiHao of baiMingDan) {
+    const jieGuo = await 数据库.query(
+      `UPDATE "用户" SET "管理员" = TRUE, "更新时间" = NOW()
+       WHERE "手机号" = $1 AND "管理员" = FALSE
+       RETURNING "ID"`,
+      [shouJiHao],
+    )
+    if (jieGuo.rows.length > 0) {
+      qingChuGuanLiYuanHuanCun(String(jieGuo.rows[0].ID))
+      tiShengShu += jieGuo.rows.length
+    }
+  }
+  debug日志.info(
+    '管理员种子引导',
+    `[管理员种子引导] 白名单共 ${baiMingDan.length} 个手机号，本次提升 ${tiShengShu} 个账号为管理员`,
+  )
+  return tiShengShu
+}
+
+if (peiZhi.shenYongYuan.zhongZiYinDaoKaiGuan && !process.env.VITEST) {
+  void zhiXingGuanLiYuanZhongZi().catch((cuoWu) => {
+    debug日志.error('管理员种子引导', '[管理员种子引导] 执行失败，请检查数据库后手动处理', {
+      xiang_qing: { cuo_wu: String(cuoWu) },
+    })
+  })
 }

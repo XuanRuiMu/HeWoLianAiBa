@@ -1,1 +1,5 @@
 export const 令牌键 = '令牌'
+export const 刷新令牌键 = '刷新令牌'
+export const 刷新令牌ID键 = '刷新令牌ID'
+export const 记住密码键 = 'jiZhuMiMa'
+export const 自动登录键 = 'ziDongDengLu'

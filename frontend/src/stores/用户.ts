@@ -1,23 +1,57 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { 用户, 登录状态 } from '@/types'
-import { dengLu, zhuCe, huoQuYongHuXinXi } from '@/api/认证'
+import { dengLu, zhuCe, huoQuYongHuXinXi, zhuXiaoZhangHao } from '@/api/认证'
 import { huoQuCuoWuXiangYing } from '@/api/请求'
+import { track } from '@/utils/埋点'
 import { baoCunShuJu, duQuShuJu, shanChuShuJu } from '@/utils/storage'
-import { 令牌键 } from '@/constants/auth'
+import {
+  duQuLingPai,
+  baoCunLingPai,
+  qingChuLingPai,
+  baoCunShuaXinLingPai,
+  qingChuShuaXinLingPai,
+} from '@/utils/令牌存储'
 import { 使用认证表单仓库 } from './认证表单'
 import { 使用聊天仓库 } from './聊天'
 
+const TU_PIAN_SHOU_QUAN_JIAN = 'hewolianba_tuPianShouQuan'
+
 export const 使用用户仓库 = defineStore('用户', () => {
   const dangQianYongHu = ref<用户 | null>(null)
-  const 令牌 = ref<string | null>(localStorage.getItem(令牌键))
+  const 令牌 = ref<string | null>(duQuLingPai())
   const shiFouGuanLiYuan = ref(false)
   const mingChengKeJian = ref(true)
   const tuiChuQingQiu = ref(false)
+  // C4：多媒体外发授权（图片/表情包/语音是否可送入视觉理解链路），默认关闭
+  const tuPianShouQuan = ref<boolean>(duQuShuJu<boolean>(TU_PIAN_SHOU_QUAN_JIAN) === true)
   const zhuangTai = ref<登录状态>({
     deng_lu_zhong: false,
     cuo_wu_xin_xi: null,
   })
+
+  function sheZhiTuPianShouQuan(zhi: boolean): void {
+    tuPianShouQuan.value = zhi
+    baoCunShuJu(TU_PIAN_SHOU_QUAN_JIAN, zhi)
+  }
+
+  // C3 账号注销：调后端注销接口并清理本地登录态
+  async function zhiXingZhuXiao(): Promise<void> {
+    zhuangTai.value.deng_lu_zhong = true
+    zhuangTai.value.cuo_wu_xin_xi = null
+    try {
+      await zhuXiaoZhangHao()
+    } catch {
+      zhuangTai.value.cuo_wu_xin_xi = '注销失败，请稍后再试'
+      throw new Error('zhuXiaoShiBai')
+    } finally {
+      zhuangTai.value.deng_lu_zhong = false
+    }
+    shanChuShuJu('yonghu')
+    dangQianYongHu.value = null
+    sheZhiTuPianShouQuan(false)
+    tuiChuDengLu()
+  }
 
   // 身份就绪门（Identity Readiness Gate）
   //
@@ -55,13 +89,14 @@ export const 使用用户仓库 = defineStore('用户', () => {
     return jiuXuNuoYan
   }
 
-  async function zhiXingDengLu(shouJiHao: string, miMa: string): Promise<boolean> {
+  async function zhiXingDengLu(shouJiHao: string, miMa: string, jiZhuMiMa = true): Promise<boolean> {
     zhuangTai.value.deng_lu_zhong = true
     zhuangTai.value.cuo_wu_xin_xi = null
     try {
       const jieGuo = await dengLu(shouJiHao, miMa)
       令牌.value = jieGuo.令牌
-      localStorage.setItem(令牌键, jieGuo.令牌)
+      baoCunLingPai(jieGuo.令牌, jiZhuMiMa)
+      baoCunShuaXinLingPai(jieGuo.刷新令牌, jieGuo.刷新令牌ID, jiZhuMiMa)
       dangQianYongHu.value = jieGuo.用户
       shiFouGuanLiYuan.value = jieGuo.是否管理员
       shenFenYiJiuXu.value = true
@@ -91,17 +126,21 @@ export const 使用用户仓库 = defineStore('用户', () => {
     yongHuMing: string,
     miMa: string,
     tongYiXieYi: boolean,
+    chuShengRiQi: string,
+    jiZhuMiMa = true,
   ): Promise<boolean> {
     zhuangTai.value.deng_lu_zhong = true
     zhuangTai.value.cuo_wu_xin_xi = null
     try {
-      const jieGuo = await zhuCe(shouJiHao, yanZhengMa, yongHuMing, miMa, tongYiXieYi)
+      const jieGuo = await zhuCe(shouJiHao, yanZhengMa, yongHuMing, miMa, tongYiXieYi, chuShengRiQi)
       令牌.value = jieGuo.令牌
-      localStorage.setItem(令牌键, jieGuo.令牌)
+      baoCunLingPai(jieGuo.令牌, jiZhuMiMa)
+      baoCunShuaXinLingPai(jieGuo.刷新令牌, jieGuo.刷新令牌ID, jiZhuMiMa)
       dangQianYongHu.value = jieGuo.用户
       shiFouGuanLiYuan.value = jieGuo.是否管理员
       shenFenYiJiuXu.value = true
       await jiaZaiYongHu()
+      track('zhuCeChengGong')
       return true
     } catch (cuoWu: unknown) {
       const xiaoXi = cuoWu instanceof Error ? cuoWu.message : '注册失败'
@@ -157,17 +196,40 @@ export const 使用用户仓库 = defineStore('用户', () => {
     tuiChuQingQiu.value = false
     shenFenYiJiuXu.value = true
     zhuangTai.value = { deng_lu_zhong: false, cuo_wu_xin_xi: null }
-    localStorage.removeItem(令牌键)
+    qingChuLingPai()
+    qingChuShuaXinLingPai()
     shanChuShuJu('yonghu')
     const 认证表单仓库 = 使用认证表单仓库()
     认证表单仓库.qingKongDengLuZhuCe()
     认证表单仓库.qingKongZiLiao()
   }
 
-  function sheZhiLingPai(令牌值: string, guanLiYuan: boolean) {
+  /** 清空用户状态（不调用后端注销接口，用于 401 令牌过期时的本地清理） */
+  function 清空用户状态() {
+    dangQianYongHu.value = null
+    令牌.value = null
+    shiFouGuanLiYuan.value = false
+    mingChengKeJian.value = true
+    tuiChuQingQiu.value = false
+    shenFenYiJiuXu.value = true
+    zhuangTai.value = { deng_lu_zhong: false, cuo_wu_xin_xi: null }
+    qingChuLingPai()
+    qingChuShuaXinLingPai()
+    shanChuShuJu('yonghu')
+  }
+
+  function sheZhiLingPai(令牌值: string, guanLiYuan: boolean, chiJiu = true) {
     令牌.value = 令牌值
-    localStorage.setItem(令牌键, 令牌值)
+    baoCunLingPai(令牌值, chiJiu)
     shiFouGuanLiYuan.value = guanLiYuan
+  }
+
+  /** 资料同步：头像/签名保存成功后刷新本地用户与缓存，保持各端一致 */
+  function tongBuZiLiao(canShu: { tou_xiang?: string | null; qian_ming?: string | null }): void {
+    if (!dangQianYongHu.value) return
+    if (canShu.tou_xiang !== undefined) dangQianYongHu.value.tou_xiang = canShu.tou_xiang
+    if (canShu.qian_ming !== undefined) dangQianYongHu.value.qian_ming = canShu.qian_ming
+    baoCunShuJu('yonghu', dangQianYongHu.value)
   }
 
   shuiHeBenDiShenFen()
@@ -179,6 +241,7 @@ export const 使用用户仓库 = defineStore('用户', () => {
     mingChengKeJian,
     tuiChuQingQiu,
     zhuangTai,
+    tuPianShouQuan,
     shenFenYiJiuXu,
     zhiXingDengLu,
     zhiXingZhuCe,
@@ -187,5 +250,9 @@ export const 使用用户仓库 = defineStore('用户', () => {
     qingQiuTuiChu,
     tuiChuDengLu,
     sheZhiLingPai,
+    sheZhiTuPianShouQuan,
+    tongBuZiLiao,
+    zhiXingZhuXiao,
+    清空用户状态,
   }
 })

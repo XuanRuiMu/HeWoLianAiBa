@@ -1,6 +1,7 @@
-import { 数据库 } from '../数据库'
+﻿import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import type { YouXiJieGuoLeiXing } from '../types'
+import { huoQuJunShiJiLuLieBiao, type JunShiJiLuXiang } from './军师缓存'
 
 export interface FuPanShiJianXianTiaoMu {
   shi_jian: string
@@ -41,12 +42,14 @@ export interface DangAnLieBiaoXiang {
   zui_hou_xiao_xi_shi_jian: string | null
   you_xi_jie_shu_shi_jian: string | null
   mbti_lei_xing?: string
+  mo_shi?: 'putong' | 'tiaozhan'
 }
 
 export interface DangAnXiangQing extends DangAnLieBiaoXiang {
   fu_pan_shu_ju: FuPanShiJianXianTiaoMu[] | null
   fu_pan_nei_rong?: string | null
   fu_pan_pi_zhu: FuPanPiZhu[] | null
+  jun_shi_ji_lu: JunShiJiLuXiang[]
 }
 
 // 结局枚举与 jieJu 翻译键一一对应。运行时从翻译文件生成「当前文案 -> 枚举」映射，
@@ -64,6 +67,7 @@ const 结局枚举列表: YouXiJieGuoLeiXing[] = [
   'shi_bai_bei_qi_pian',
   'shi_bai_bei_zha_xing_qi_pian',
   'shi_bai_shen_jing_bing',
+  'shi_bai_fang_qi_tiao_zhan',
 ]
 
 const 当前结局文本映射: Record<string, YouXiJieGuoLeiXing> = {}
@@ -106,12 +110,13 @@ export async function huoQuDangAnLieBiao(yong_hu_id: string): Promise<DangAnLieB
     `SELECT d."ID", d."用户ID", d."角色ID", d."角色名字", r."微信昵称", d."是否渣型",
             d."结果类型", d."是否封存", d."好感度总分", d."关系阶段",
             d."聊天天数", d."消息总数", d."创建时间", r."MBTI",
-            (SELECT MAX("创建时间") FROM "消息" m
-             WHERE m."用户ID" = d."用户ID" AND m."角色ID" = d."角色ID") AS "最后消息时间"
-     FROM "游戏档案" d
-     LEFT JOIN "角色" r ON r."ID" = d."角色ID"
-     WHERE d."用户ID" = $1
-     ORDER BY d."创建时间" DESC`,
+            d."最后消息时间", d."模式"
+      FROM "游戏档案" d
+      LEFT JOIN "角色" r ON r."ID" = d."角色ID"
+      WHERE d."用户ID" = $1
+      -- 挑战模式进行中的对局不进入过往战绩（结束后进入胜利/失败分组）
+        AND NOT (d."模式" = 'tiaozhan' AND COALESCE(d."结果类型", '') = '')
+      ORDER BY d."创建时间" DESC`,
     [yong_hu_id],
   )
 
@@ -139,6 +144,7 @@ export async function huoQuDangAnLieBiao(yong_hu_id: string): Promise<DangAnLieB
       zui_hou_xiao_xi_shi_jian: row.最后消息时间 ? String(row.最后消息时间) : null,
       you_xi_jie_shu_shi_jian: youXiJieShu ? chuangJianShiJian : null,
       mbti_lei_xing: row.MBTI ? String(row.MBTI) : undefined,
+      mo_shi: row.模式 === 'tiaozhan' ? 'tiaozhan' : 'putong',
     }
   })
 }
@@ -150,14 +156,14 @@ export async function huoQuDangAnXiangQing(
   const jieGuo = await 数据库.query(
     `SELECT d."ID", d."用户ID", d."角色ID", d."角色名字", r."微信昵称", d."是否渣型",
             d."结果类型", d."是否封存", d."好感度总分", d."关系阶段",
-            d."聊天天数", d."消息总数", d."复盘数据", d."复盘内容", d."创建时间",
+            d."聊天天数", d."消息总数", d."创建时间",
             r."MBTI",
-            (SELECT MAX("创建时间") FROM "消息" m
-             WHERE m."用户ID" = d."用户ID" AND m."角色ID" = d."角色ID") AS "最后消息时间"
-     FROM "游戏档案" d
-     LEFT JOIN "角色" r ON r."ID" = d."角色ID"
-     WHERE d."ID" = $1 AND d."用户ID" = $2
-     LIMIT 1`,
+            d."复盘内容", d."复盘数据",
+            d."最后消息时间"
+      FROM "游戏档案" d
+      LEFT JOIN "角色" r ON r."ID" = d."角色ID"
+      WHERE d."ID" = $1 AND d."用户ID" = $2
+      LIMIT 1`,
     [dang_an_id, yong_hu_id],
   )
 
@@ -207,6 +213,8 @@ export async function huoQuDangAnXiangQing(
     }
   }
 
+  const junShiJiLu = await huoQuJunShiJiLuLieBiao(yong_hu_id, row.角色ID)
+
   return {
     id: String(row.ID),
     yong_hu_id: String(row.用户ID),
@@ -227,6 +235,7 @@ export async function huoQuDangAnXiangQing(
     zui_hou_xiao_xi_shi_jian: row.最后消息时间 ? String(row.最后消息时间) : null,
     you_xi_jie_shu_shi_jian: youXiJieShu ? chuangJianShiJian : null,
     mbti_lei_xing: row.MBTI ? String(row.MBTI) : undefined,
+    jun_shi_ji_lu: junShiJiLu,
   }
 }
 

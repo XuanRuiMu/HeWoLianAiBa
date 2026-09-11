@@ -55,6 +55,7 @@ async function chuangJianCeShiYongHu(): Promise<{ shouJiHao: string; lingPai: st
       yongHuMing: `测试用户${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       miMa: 'testPassword123',
       tongYiXieYi: true,
+      chuShengRiQi: '2000-01-01',
     })
     .expect(200)
 
@@ -104,11 +105,26 @@ async function shangChuanMeiTi(
   wenJianMing: string,
   mime: string,
 ): Promise<ShangChuanJieGuo> {
+  // 魔数嗅探上线：图片类 MIME 需带真实 PNG 头（签名 + IHDR）
+  const shiTuPiang = mime.startsWith('image/')
+  let neiRongHuanChong = Buffer.from(neiRong)
+  if (shiTuPiang && mime === 'image/png') {
+    const b = Buffer.alloc(33)
+    b.writeUInt32BE(0x89504e47, 0)
+    b.writeUInt32BE(0x0d0a1a0a, 4)
+    b.writeUInt32BE(13, 8)
+    b.write('IHDR', 12, 'ascii')
+    b.writeUInt32BE(16, 16)
+    b.writeUInt32BE(16, 20)
+    b[24] = 8
+    b[25] = 6
+    neiRongHuanChong = Buffer.concat([b, neiRongHuanChong.subarray(0, Math.max(0, 1024 - b.length))])
+  }
   const xiangYing = await request(yingYong)
     .post(`/api/聊天/会话/${jiaoSeId}/媒体`)
     .query({ leiBie })
     .set('Authorization', `Bearer ${lingPai}`)
-    .attach('file', Buffer.from(neiRong), { filename: wenJianMing, contentType: mime })
+    .attach('file', neiRongHuanChong, { filename: wenJianMing, contentType: mime })
     .expect(200)
 
   const shuJu = xiangYing.body.shu_ju
@@ -464,7 +480,7 @@ describe('FP-04 AI视觉管道', () => {
     expect(promptWenBen).toContain('[文件:testfile.pdf]')
   })
 
-  it('检测类调用：最新用户消息为未撤回图片 → 四类检测输入均附input_image且文本兜底为[图片]', async () => {
+  it('检测类调用：最新用户消息为未撤回图片 → 合并检测输入附input_image且文本兜底为[图片]', async () => {
     const tuPian = await shangChuanMeiTi(
       ceShiYongHu.lingPai,
       jiaoSeId,
@@ -480,17 +496,19 @@ describe('FP-04 AI视觉管道', () => {
     const jiLu: TiaoYongCanShu[] = []
     sheZhiMockTiaoYong(async (canShu) => {
       jiLu.push(canShu)
-      const xiTongWenBen = String(canShu.xiaoXi[0]?.neiRong ?? '')
-      let neiRong = '{}'
-      if (xiTongWenBen.includes('表白')) {
-        neiRong = JSON.stringify({ 是否表白: false, 表白类型: '非表白', 确信度: 0.1, 理由: '' })
-      } else if (xiTongWenBen.includes('互删')) {
-        neiRong = JSON.stringify({ 是否互删: false, 确信度: 0.1, 理由: '' })
-      } else if (xiTongWenBen.includes('识破')) {
-        neiRong = JSON.stringify({ 是否识破: false, 确信度: 0.1, 理由: '' })
-      } else if (xiTongWenBen.includes('神经病') || xiTongWenBen.includes('莫名其妙')) {
-        neiRong = JSON.stringify({ 是否神经病: false, 人设能接受: true, 确信度: 0.1, 理由: '' })
-      }
+      const neiRong = JSON.stringify({
+        是否表白: false,
+        表白类型: '非表白',
+        表白确信度: 0.1,
+        是否互删: false,
+        互删确信度: 0.1,
+        是否识破: false,
+        识破确信度: 0.1,
+        是否神经病: false,
+        人设能接受: true,
+        确信度: 0.1,
+        理由: '',
+      })
       return {
         neiRong,
         xinXi: { role: 'assistant', content: neiRong },
@@ -498,27 +516,19 @@ describe('FP-04 AI视觉管道', () => {
       }
     })
 
-    const jieGuo = await jianCeYongHuXiaoXi('', liShi, chuangJianAIJiaoSe())
+      const jieGuo = await jianCeYongHuXiaoXi('', liShi, chuangJianAIJiaoSe(), undefined, true)
 
     expect(jieGuo.biao_bai.shi_fou_biao_bai).toBe(false)
-    expect(jiLu.length).toBeGreaterThanOrEqual(4)
-    const jianCeYaoQiu: Record<string, string> = {
-      表白: '消息内容：[图片]',
-      互删: '消息内容：[图片]',
-      识破: '消息内容：[图片]',
-      莫名其妙: '用户消息：[图片]',
-    }
-    for (const [guanJianCi_, biaoJi] of Object.entries(jianCeYaoQiu)) {
-      const muBiao = jiLu.find(
-        (c) => String(c.xiaoXi[0]?.neiRong ?? '').includes(guanJianCi_),
-      )
-      expect(muBiao).toBeDefined()
-      const userNeiRong = muBiao!.xiaoXi[1].neiRong
-      expect(shiHanTuXiangKuai(userNeiRong)).toBe(true)
-      const kuai = userNeiRong as DuiHuaKuai[]
-      expect(kuai.some((k) => k.type === 'input_image' && (k.image_url as string).startsWith('data:image/png;base64,'))).toBe(true)
-      expect(kuai.some((k) => k.type === 'input_text' && k.text.includes(biaoJi))).toBe(true)
-    }
+    // M2：四连检合并后仅一次调用
+    expect(jiLu.length).toBe(1)
+    const muBiao = jiLu[0]
+    const userNeiRong = muBiao.xiaoXi[1].neiRong
+    expect(shiHanTuXiangKuai(userNeiRong)).toBe(true)
+    const kuai = userNeiRong as DuiHuaKuai[]
+    expect(kuai.some((k) => k.type === 'input_image' && (k.image_url as string).startsWith('data:image/png;base64,'))).toBe(true)
+    // 文本兜底为 [图片]（媒体消息内容为空时的统一语义表示）
+    const wenBenKuai = kuai.find((k) => k.type === 'input_text')
+    expect(wenBenKuai && 'text' in wenBenKuai ? wenBenKuai.text : '').toContain('[图片]')
   })
 
   it('军师Prompt对非文本消息文本化描述且不注入图像数据', async () => {

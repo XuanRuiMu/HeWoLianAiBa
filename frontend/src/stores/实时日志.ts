@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 import { io, Socket } from 'socket.io-client'
-import { 令牌键 } from '@/constants/auth'
+import { duQuLingPai } from '@/utils/令牌存储'
 import { 使用用户仓库 } from '@/stores/用户'
 
 export type RiZhiJiBie = 'debug' | 'info' | 'warn' | 'error'
@@ -87,7 +87,7 @@ export const 使用实时日志仓库 = defineStore('实时日志', () => {
     if (!用户仓库.shiFouGuanLiYuan) return
     if (socketLianJie.value) return
 
-    const 令牌 = localStorage.getItem(令牌键)
+    const 令牌 = duQuLingPai()
     if (!令牌) return
 
     const socket = io({

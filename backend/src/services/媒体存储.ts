@@ -12,6 +12,7 @@ import {
   shiHeFaLeiBie,
   shiYunXuMIME,
 } from '../config/媒体配置'
+import { shenHeTuPianAnQuan } from './DeepSeek视觉审核'
 
 export interface MeiTiBaoCunJieGuo {
   mediaId: string
@@ -33,6 +34,36 @@ export class MeiTiCunChuCuoWu extends Error {
 }
 
 const SHA256_GE_SHI = /^[0-9a-f]{64}$/
+
+// A9：媒体签名使用独立密钥，与 JWT 令牌密钥隔离——
+// 显式配置 MEI_TI_QIAN_MING_MI_YAO 时直接使用；未配置时从 JWT 密钥 HKDF 派生独立子钥，
+// 保证「持有媒体签名 URL」无法反推或复用为有效 JWT，反之亦然。
+let meiTiQianMingMiYaoHuanCun: string | null = null
+
+export function huoQuMeiTiQianMingMiYao(): string {
+  if (meiTiQianMingMiYaoHuanCun) return meiTiQianMingMiYaoHuanCun
+
+  const xianShiPeiZhi = peiZhi.meiTiQianMingMiYao
+  if (xianShiPeiZhi && xianShiPeiZhi.trim() !== '') {
+    meiTiQianMingMiYaoHuanCun = xianShiPeiZhi
+    return meiTiQianMingMiYaoHuanCun
+  }
+
+  const paiShengZhi = crypto.hkdfSync(
+    'sha256',
+    peiZhi.jwtMiYao,
+    'mei-ti-qian-ming-mi-yao-v1',
+    'hewolianba-media-signing',
+    32,
+  )
+  meiTiQianMingMiYaoHuanCun = Buffer.from(paiShengZhi).toString('hex')
+  return meiTiQianMingMiYaoHuanCun
+}
+
+/** 测试专用：清空派生缓存（环境变量变更后需重新派生） */
+export function chongZhiMeiTiQianMingMiYao(): void {
+  meiTiQianMingMiYaoHuanCun = null
+}
 
 async function queBaoMuLu(cunZai: string): Promise<void> {
   await fs.promises.mkdir(cunZai, { recursive: true })
@@ -75,6 +106,11 @@ export async function liuShiBaoCunMeiTi(
   await queBaoMuLu(linShiMuLu)
   const linShiLuJing = path.join(linShiMuLu, `${crypto.randomUUID()}.tmp`)
 
+  // 低危顺手项：魔数嗅探——图片类 MIME 必须与文件头匹配，防止伪装成图片的可执行内容；
+  // PNG/JPEG 像素尺寸设上限，防解码炸弹
+  const shiTuPiangLei = qingLiMIME.startsWith('image/')
+  let touBuHuanChong: Buffer | null = null
+
   let ziJieShu = 0
   let yiChaoXian = false
   const haXi = crypto.createHash('sha256')
@@ -91,6 +127,11 @@ export async function liuShiBaoCunMeiTi(
         yiChaoXian = true
         huiDiao(null)
         return
+      }
+      if (shiTuPiangLei && touBuHuanChong === null) {
+        touBuHuanChong = Buffer.from(kuai.subarray(0, 64))
+      } else if (shiTuPiangLei && touBuHuanChong !== null && touBuHuanChong.length < 64) {
+        touBuHuanChong = Buffer.concat([touBuHuanChong, kuai.subarray(0, 64 - touBuHuanChong.length)])
       }
       haXi.update(kuai)
       huiDiao(null, kuai)
@@ -109,7 +150,53 @@ export async function liuShiBaoCunMeiTi(
     throw new MeiTiCunChuCuoWu('meiTiGuoDa')
   }
 
-  const sha256 = haXi.digest('hex').toLowerCase()
+  // 魔数嗅探：图片类 MIME 与文件头不符即拒绝（落库 MIME 以客户端声明为准，故必须强校验）
+  if (shiTuPiangLei) {
+    const touBu = touBuHuanChong || Buffer.alloc(0)
+    let moShuPiPei = false
+    if (qingLiMIME === 'image/png') {
+      moShuPiPei =
+        touBu.length >= 8 &&
+        touBu[0] === 0x89 && touBu[1] === 0x50 && touBu[2] === 0x4e && touBu[3] === 0x47
+      // PNG IHDR：宽高位于第 16-23 字节，上限 10000×10000
+      if (moShuPiPei && touBu.length >= 24) {
+        const kuan = touBu.readUInt32BE(16)
+        const gao = touBu.readUInt32BE(20)
+        if (kuan > 10000 || gao > 10000) {
+          await qingChuWenJian(linShiLuJing)
+          throw new MeiTiCunChuCuoWu('meiTiMIMEBuZhiChi')
+        }
+      }
+    } else if (qingLiMIME === 'image/jpeg') {
+      moShuPiPei = touBu.length >= 3 && touBu[0] === 0xff && touBu[1] === 0xd8 && touBu[2] === 0xff
+    } else if (qingLiMIME === 'image/gif') {
+      moShuPiPei = touBu.length >= 6 && touBu.subarray(0, 6).toString('ascii').startsWith('GIF8')
+    } else if (qingLiMIME === 'image/webp') {
+      moShuPiPei =
+        touBu.length >= 12 &&
+        touBu.subarray(0, 4).toString('ascii') === 'RIFF' &&
+        touBu.subarray(8, 12).toString('ascii') === 'WEBP'
+    }
+    if (!moShuPiPei) {
+      await qingChuWenJian(linShiLuJing)
+      throw new MeiTiCunChuCuoWu('meiTiNeiRongYuMIMEBuFu')
+    }
+  }
+
+const sha256 = haXi.digest('hex').toLowerCase()
+
+  // 图片类别（tupian、biaoqingshu）进行 DeepSeek 视觉安全审核
+  // 审核在文件移动到 CAS 之前进行，使用临时文件路径
+  const shiTuPianLeiBie = leiBie === 'tupian' || leiBie === 'biaoqingshu'
+  if (shiTuPianLeiBie) {
+    const shenHeJieGuo = await shenHeTuPianAnQuan(linShiLuJing)
+    if (shenHeJieGuo.wei_gui) {
+      await qingChuWenJian(linShiLuJing)
+      // 直接使用六大类别键作为翻译键，路由层识别这些键返回 403
+      throw new MeiTiCunChuCuoWu(shenHeJieGuo.lei_xing as FanYiJian<'liaoTian'>)
+    }
+  }
+
   const muBiaoMuLu = path.join(MEI_TI_PEI_ZHI.cunChuGenMuLu, sha256.slice(0, 2))
   const muBiaoLuJing = path.join(muBiaoMuLu, sha256)
   await queBaoMuLu(muBiaoMuLu)
@@ -150,24 +237,16 @@ export async function liuShiBaoCunMeiTi(
     }
   }
 
+  // 同一 SHA256 允许多条记录（不同上传者各持有一条，指向同一 CAS 物理文件），
+  // 避免复用他人记录 ID 导致后续归属校验误判"无权使用该媒体文件"
   const chaRuJieGuo = await 数据库.query(
     `INSERT INTO "媒体文件" ("SHA256", "原始文件名", "MIME", "大小字节", "类别", "上传者ID")
      VALUES ($1, $2, $3, $4, $5, $6)
-     ON CONFLICT ("SHA256") DO NOTHING
      RETURNING "ID"`,
     [sha256, yuanShiWenJianMing, qingLiMIME, ziJieShu, leiBie, yongHuId],
   )
 
-  let meiTiId: string
-  if (chaRuJieGuo.rows.length > 0) {
-    meiTiId = String(chaRuJieGuo.rows[0].ID)
-  } else {
-    const yiYouJieGuo = await 数据库.query(
-      `SELECT "ID" FROM "媒体文件" WHERE "SHA256" = $1 LIMIT 1`,
-      [sha256],
-    )
-    meiTiId = String(yiYouJieGuo.rows[0].ID)
-  }
+  const meiTiId = String(chaRuJieGuo.rows[0].ID)
 
   return {
     mediaId: meiTiId,
@@ -179,12 +258,12 @@ export async function liuShiBaoCunMeiTi(
   }
 }
 
-/** 生成带过期时间与 HMAC-SHA256 签名的下载 URL */
+/** 生成带过期时间与 HMAC-SHA256 签名的下载 URL（A9：使用独立媒体签名密钥） */
 export function shengChengQianMingURL(sha256: string, youXiaoMiao?: number): string {
   const youXiaoQi = youXiaoMiao ?? MEI_TI_PEI_ZHI.qianMingYouXiaoMiaoRenZheng
   const guoQiMiao = Math.floor(Date.now() / 1000) + youXiaoQi
   const qianMing = crypto
-    .createHmac('sha256', peiZhi.jwtMiYao)
+    .createHmac('sha256', huoQuMeiTiQianMingMiYao())
     .update(`${sha256}:${guoQiMiao}`)
     .digest('hex')
   return `/api/媒体/${sha256}?e=${guoQiMiao}&s=${qianMing}`
@@ -198,7 +277,7 @@ export function yanZhengQianMing(sha256: unknown, e: unknown, s: unknown): boole
   const guoQiMiao = parseInt(e, 10)
   if (guoQiMiao * 1000 <= Date.now()) return false
   const yuQiQianMing = crypto
-    .createHmac('sha256', peiZhi.jwtMiYao)
+    .createHmac('sha256', huoQuMeiTiQianMingMiYao())
     .update(`${sha256}:${e}`)
     .digest('hex')
   const a = Buffer.from(yuQiQianMing, 'utf8')

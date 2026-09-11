@@ -1,10 +1,10 @@
-import { 数据库 } from '../数据库'
+﻿import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import { HAO_GAN_DU_PEI_ZHI, HaoGanDuJieDuanYingShe } from '../config/好感度配置'
-import { xieRuJiYi } from './记忆'
 import { chuLiYouXiJieShu } from './胜利失败条件'
-import { jiLuHaoGanDuBianHua } from '../utils/debug日志'
+import { debug日志, jiLuHaoGanDuBianHua } from '../utils/debug日志'
 import type { HaoGanDuXinXi, GongKaiHaoGanDuXinXi, WanZhengHaoGanDuXinXi } from '../types'
+import { jiLuZengLiang } from './好感度缓存'
 
 export interface HaoGanDuSiWeiBianHua {
   xin_ren_du_bian_hua: number
@@ -18,6 +18,7 @@ export interface HaoGanDuGengXinJieGuo {
   hao_gan_du?: HaoGanDuXinXi
   ti_shi?: string
   zhuang_tai_ma?: number
+  shuaiJianHouZengLiang?: number
 }
 
 function qieGeFanWei(zhi: number, zuiDi: number, zuiGao: number): number {
@@ -37,7 +38,10 @@ export function jiSuanZongFen(siWei: { xin_ren_du: number; qin_mi_du: number; qu
 
 export function jiSuanShuaiJianBianHua(dangQianFen: number, bianHua: number): number {
   const qieGeFen = qieGeFanWei(dangQianFen, HAO_GAN_DU_PEI_ZHI.fanWei.zuiDiFen, HAO_GAN_DU_PEI_ZHI.fanWei.zuiGaoFen)
-  const shuaiJianXiShu = Math.max(1 - qieGeFen / HAO_GAN_DU_PEI_ZHI.fanWei.zuiGaoFen, HAO_GAN_DU_PEI_ZHI.shuaiJian.zuiDiBaoLiu)
+  const shuaiJianXiShu = Math.max(
+    1 - qieGeFen / HAO_GAN_DU_PEI_ZHI.fanWei.zuiGaoFen,
+    HAO_GAN_DU_PEI_ZHI.shuaiJian.zuiDiBaoLiu,
+  )
   return bianHua * shuaiJianXiShu
 }
 
@@ -141,77 +145,88 @@ export async function huoQuGongKaiHaoGanDuXinXi(
   }
 }
 
-async function xieRuJieDuanBianGengJiYi(
-  yong_hu_id: string,
-  jiao_se_id: string,
-  jiuJieDuan: string,
-  xinJieDuan: string,
-  zongFen: number,
-): Promise<void> {
-  const shiShengJi =
-    Object.keys(HAO_GAN_DU_PEI_ZHI.jieDuan).indexOf(
-      Object.entries(HAO_GAN_DU_PEI_ZHI.jieDuan).find(([, v]) => v.jieDuanMing === xinJieDuan)?.[0] || '',
-    ) >=
-    Object.keys(HAO_GAN_DU_PEI_ZHI.jieDuan).indexOf(
-      Object.entries(HAO_GAN_DU_PEI_ZHI.jieDuan).find(([, v]) => v.jieDuanMing === jiuJieDuan)?.[0] || '',
-    )
 
-  await xieRuJiYi({
-    yong_hu_id,
-    jiao_se_id,
-    zhai_yao: `关系阶段从「${jiuJieDuan}」变为「${xinJieDuan}」，当前好感度总分 ${zongFen}`,
-    zhong_yao_du: shiShengJi
-      ? HAO_GAN_DU_PEI_ZHI.jiYi.shengJiZhongYaoDu
-      : HAO_GAN_DU_PEI_ZHI.jiYi.jiangJiZhongYaoDu,
-    guan_jian_ci: ['好感度阶段变化', jiuJieDuan, xinJieDuan],
-    shi_jian_lei_xing: '好感度阶段变化',
-  })
-}
 
 export async function gengXinHaoGanDu(
   yong_hu_id: string,
   jiao_se_id: string,
   bianHua: HaoGanDuSiWeiBianHua,
+  xiShu?: number,
+  muBiaoQuXian?: number,
+  lianXuWeiDaBiao?: number,
 ): Promise<HaoGanDuGengXinJieGuo> {
   try {
+    const { quanZhong } = HAO_GAN_DU_PEI_ZHI
+    const yuanShiBianHua =
+      bianHua.xin_ren_du_bian_hua * quanZhong.xinRenDu +
+      bianHua.qin_mi_du_bian_hua * quanZhong.qinMiDu +
+      bianHua.qu_wei_du_bian_hua * quanZhong.quWeiDu +
+      bianHua.guan_huai_du_bian_hua * quanZhong.guanHuaiDu
+
+    // 先读取旧总分，用于计算衰减后增量
     const jiuHaoGanDu = await huoQuWanZhengHaoGanDu(yong_hu_id, jiao_se_id)
     if (!jiuHaoGanDu) {
       return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'ziYuanBuCunZai'), zhuang_tai_ma: 404 }
     }
+    const jiuZongFen = jiuHaoGanDu.zong_fen
 
-    const xinZongFen = jiSuanSiWeiBianHuaHouDeZongFen(jiuHaoGanDu.zong_fen, bianHua)
+    // R2 单语句原子更新：加权、衰减、截断全部在 SQL 内基于当前行值完成，
+    // 并发更新不再发生"读-改-写"丢失覆盖
+    const gengXinJieGuo = await 数据库.query(
+      `UPDATE "好感度" SET
+         "总分" = GREATEST($1, LEAST($2, ROUND(
+           "总分" + ($3::numeric) * GREATEST(1 - "总分"::numeric / $2::numeric, $4::numeric)
+         ))),
+         "互动次数" = "互动次数" + 1,
+         "最后互动时间" = NOW()
+       WHERE "用户ID" = $5 AND "角色ID" = $6
+       RETURNING "总分"`,
+      [
+        HAO_GAN_DU_PEI_ZHI.fanWei.zuiDiFen,
+        HAO_GAN_DU_PEI_ZHI.fanWei.zuiGaoFen,
+        yuanShiBianHua,
+        HAO_GAN_DU_PEI_ZHI.shuaiJian.zuiDiBaoLiu,
+        yong_hu_id,
+        jiao_se_id,
+      ],
+    )
+
+    if ((gengXinJieGuo.rowCount ?? 0) === 0) {
+      return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'ziYuanBuCunZai'), zhuang_tai_ma: 404 }
+    }
+
+    const xinZongFen = Number(gengXinJieGuo.rows[0].总分)
+    const shuaiJianHouZengLiang = xinZongFen - jiuZongFen
     const xinSiWei = fenJieSiWei(xinZongFen)
     const xinJieDuanMing = huoQuJieDuanMing(xinZongFen)
 
+    // 四维与关系阶段是总分的派生展示数据，基于原子更新后的返回值回写
     await 数据库.query(
       `UPDATE "好感度" SET
         "信任度" = $1,
         "亲密度" = $2,
         "趣味度" = $3,
         "关怀度" = $4,
-        "总分" = $5,
-        "关系阶段" = $6,
-        "互动次数" = "互动次数" + 1,
-        "最后互动时间" = NOW()
-       WHERE "用户ID" = $7 AND "角色ID" = $8`,
+        "关系阶段" = $5
+       WHERE "用户ID" = $6 AND "角色ID" = $7`,
       [
         xinSiWei.xin_ren_du,
         xinSiWei.qin_mi_du,
         xinSiWei.qu_wei_du,
         xinSiWei.guan_huai_du,
-        xinZongFen,
         xinJieDuanMing,
         yong_hu_id,
         jiao_se_id,
       ],
     )
 
-    const jiuJieDuanMing = huoQuJieDuanMing(jiuHaoGanDu.zong_fen)
-    if (jiuJieDuanMing !== xinJieDuanMing) {
-      await xieRuJieDuanBianGengJiYi(yong_hu_id, jiao_se_id, jiuJieDuanMing, xinJieDuanMing, xinZongFen)
-    }
-
     jiLuHaoGanDuBianHua(yong_hu_id, jiao_se_id, { ...bianHua }, xinZongFen)
+
+    // 记录增量到 Redis + PG 统计表（用于隐形保底曲线判定）
+    const xiShuYingYong = xiShu ?? 1
+    const muBiao = muBiaoQuXian ?? 0
+    const lianXu = lianXuWeiDaBiao ?? 0
+    await jiLuZengLiang(yong_hu_id, jiao_se_id, yuanShiBianHua, shuaiJianHouZengLiang, xiShuYingYong, muBiao, lianXu)
 
     return {
       cheng_gong: true,
@@ -219,9 +234,10 @@ export async function gengXinHaoGanDu(
         ...xinSiWei,
         guan_xi_jie_duan: xinJieDuanMing,
       },
+      shuaiJianHouZengLiang,
     }
   } catch (cuoWu) {
-    console.error('更新好感度失败', cuoWu)
+    debug日志.error('好感度服务', '更新好感度失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'), zhuang_tai_ma: 500 }
   }
 }
@@ -240,15 +256,17 @@ export async function sheZhiMiJiHaoGanDu(
     return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'ziYuanBuCunZai'), zhuang_tai_ma: 404 }
   }
 
-  // 查询角色是否为渣型，决定秘籍通关对应的胜利分支
+  // 查询角色是否为渣型，决定秘籍通关对应的胜利分支；同时校验对局模式
   const jiaoSeJieGuo = await 数据库.query(
-    `SELECT "是否渣型" FROM "角色" WHERE "ID" = $1 LIMIT 1`,
+    `SELECT "是否渣型", "对局模式" FROM "角色" WHERE "ID" = $1 LIMIT 1`,
     [jiao_se_id],
   )
   const shiFouZhaXing = Boolean(jiaoSeJieGuo.rows[0]?.是否渣型)
 
-  // 快照秘籍使用前的真实好感度总分，并标记本局为秘籍通关，
-  // 供后续复盘仅评秘籍使用前的真实表现
+  // 排位赛同样允许秘籍（用户口径优先）：挑战与普通对局一致生效
+  void String(jiaoSeJieGuo.rows[0]?.对局模式 || 'putong')
+
+  // 快照秘籍使用前的真实好感度总分，并标记本局为秘籍通关
   const miJiQianZongFen = jiuHaoGanDu.zong_fen
   await 数据库.query(
     `INSERT INTO "游戏档案" ("用户ID", "角色ID", "是否秘籍通关", "秘籍前好感度")
@@ -286,22 +304,17 @@ export async function sheZhiMiJiHaoGanDu(
     ],
   )
 
-  const jiuJieDuanMing = huoQuJieDuanMing(jiuHaoGanDu.zong_fen)
-  if (jiuJieDuanMing !== xinJieDuanMing) {
-    await xieRuJieDuanBianGengJiYi(yong_hu_id, jiao_se_id, jiuJieDuanMing, xinJieDuanMing, muBiaoFen)
-  }
+const jiuJieDuanMing = huoQuJieDuanMing(jiuHaoGanDu.zong_fen)
+    if (jiuJieDuanMing !== xinJieDuanMing) {
+    }
 
-  jiLuHaoGanDuBianHua(yong_hu_id, jiao_se_id, {
+    jiLuHaoGanDuBianHua(yong_hu_id, jiao_se_id, {
     xin_ren_du_bian_hua: xinSiWei.xin_ren_du - jiuHaoGanDu.xin_ren_du,
     qin_mi_du_bian_hua: xinSiWei.qin_mi_du - jiuHaoGanDu.qin_mi_du,
     qu_wei_du_bian_hua: xinSiWei.qu_wei_du - jiuHaoGanDu.qu_wei_du,
     guan_huai_du_bian_hua: xinSiWei.guan_huai_du - jiuHaoGanDu.guan_huai_du,
   }, muBiaoFen)
 
-  // 顺带完成通关结算：复用现有胜利逻辑，写入胜利战绩并异步触发复盘。
-  // 秘籍语义=好感度直接拉满，对应「爱情胜利」通关分支（正常角色与渣型角色均复用该胜利类型；
-  // 渣型角色的人设差异由复盘分支单独标注，不改变秘籍本身「好感度拉满」的胜利语义）。
-  // 注：若后续要求渣型角色走专属的渣型胜利分支（如 sheng_li_shi_po），仅需修改下方这一行。
   const miJiJieGuoLeiXing = 'sheng_li_ai_qing' as const
   await chuLiYouXiJieShu(yong_hu_id, jiao_se_id, miJiJieGuoLeiXing, {
     lei_xing: '秘籍通关',

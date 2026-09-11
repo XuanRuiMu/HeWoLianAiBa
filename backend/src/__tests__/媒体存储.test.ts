@@ -10,6 +10,7 @@ import { MEI_TI_PEI_ZHI } from '../config/媒体配置'
 import { peiZhi } from '../config'
 import { huoQuFanYi } from '../config/translations'
 import { sheZhiKaiChangBaiMock } from '../services/开场白生成'
+import { huoQuMeiTiQianMingMiYao } from '../services/媒体存储'
 import { sheZhiMockTiaoYong, chongZhiDeepSeekKeHuDuan } from '../utils/DeepSeek客户端'
 
 function suiJiShouJiHao(): string {
@@ -36,6 +37,7 @@ async function chuangJianCeShiYongHu(): Promise<{ shouJiHao: string; lingPai: st
       yongHuMing: `测试用户${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       miMa: 'testPassword123',
       tongYiXieYi: true,
+      chuShengRiQi: '2000-01-01',
     })
     .expect(200)
 
@@ -98,6 +100,20 @@ interface ShangChuanXiangYing {
   headers: Record<string, unknown>
 }
 
+// 魔数嗅探上线后，图片类上传需带真实 PNG 头（签名 + IHDR 宽高）
+function zhenShiPNG(kuan = 16, gao = 16): Buffer {
+  const b = Buffer.alloc(33)
+  b.writeUInt32BE(0x89504e47, 0)
+  b.writeUInt32BE(0x0d0a1a0a, 4)
+  b.writeUInt32BE(13, 8)
+  b.write('IHDR', 12, 'ascii')
+  b.writeUInt32BE(kuan, 16)
+  b.writeUInt32BE(gao, 20)
+  b[24] = 8
+  b[25] = 6
+  return b
+}
+
 async function shangChuanMeiTi(
   xuanXiang: {
     lingPai?: string
@@ -128,7 +144,11 @@ async function shangChuanMeiTi(
 }
 
 function jiSuanQianMing(sha256: string, e: number): string {
-  return crypto.createHmac('sha256', peiZhi.jwtMiYao).update(`${sha256}:${e}`).digest('hex')
+  // A9：媒体签名使用独立密钥（与 JWT 密钥隔离）
+  return crypto
+    .createHmac('sha256', huoQuMeiTiQianMingMiYao())
+    .update(`${sha256}:${e}`)
+    .digest('hex')
 }
 
 describe('FP-20 媒体存储与多媒体消息', () => {
@@ -174,13 +194,13 @@ describe('FP-20 媒体存储与多媒体消息', () => {
     await redis.quit()
   })
 
-  it('CAS去重：同一内容两次上传，媒体文件表仅1条且磁盘单文件', async () => {
+  it('CAS去重：同一内容两次上传，物理磁盘单文件，各自持有归属记录', async () => {
     const jiaoSeId = await chuangJianCeShiJiaoSe(yongHuA!.lingPai)
     const diYiCi = await shangChuanMeiTi({
       lingPai: yongHuA!.lingPai,
       jiaoSeId,
       leiBie: 'tupian',
-      neiRong: 'quanchongneirong-dup-test',
+      neiRong: zhenShiPNG(),
       wenJianMing: 'chongfu.png',
       mime: 'image/png',
     })
@@ -188,24 +208,25 @@ describe('FP-20 媒体存储与多媒体消息', () => {
       lingPai: yongHuA!.lingPai,
       jiaoSeId,
       leiBie: 'tupian',
-      neiRong: 'quanchongneirong-dup-test',
+      neiRong: zhenShiPNG(),
       wenJianMing: 'chongfu2.png',
       mime: 'image/png',
     })
 
     expect(diYiCi.status).toBe(200)
     expect(diErCi.status).toBe(200)
-    expect(diYiCi.body.shu_ju!.mediaId).toBe(diErCi.body.shu_ju!.mediaId)
+    // 去重修复后：两次上传各得一条归属记录（mediaId 不同），但内容哈希一致
+    expect(diYiCi.body.shu_ju!.mediaId).not.toBe(diErCi.body.shu_ju!.mediaId)
+    expect(diYiCi.body.shu_ju!.sha256).toBe(diErCi.body.shu_ju!.sha256)
     const sha256 = String(diYiCi.body.shu_ju!.sha256)
 
-    const chaXun = await 数据库.query(
-      `SELECT COUNT(*)::int AS tiao_shu FROM "媒体文件" WHERE "SHA256" = $1`,
-      [sha256],
-    )
-    expect(chaXun.rows[0].tiao_shu).toBe(1)
-
+    // 物理文件仍只有一份（CAS 单文件）
     const luJing = path.join(MEI_TI_PEI_ZHI.cunChuGenMuLu, sha256.slice(0, 2), sha256)
     expect(fs.existsSync(luJing)).toBe(true)
+
+    // 清理本次测试产生的两条记录
+    await 数据库.query(`DELETE FROM "媒体文件" WHERE "SHA256" = $1`, [sha256])
+    yiChuanSha256JiHe.add(sha256)
   })
 
   it('SHA256正确性：上传固定内容得到已知哈希', async () => {
@@ -213,10 +234,10 @@ describe('FP-20 媒体存储与多媒体消息', () => {
     const xiangYing = await shangChuanMeiTi({
       lingPai: yongHuA!.lingPai,
       jiaoSeId,
-      leiBie: 'tupian',
+      leiBie: 'wenjian',
       neiRong: 'abc',
-      wenJianMing: 'abc.png',
-      mime: 'image/png',
+      wenJianMing: 'abc.txt',
+      mime: 'text/plain',
     })
 
     expect(xiangYing.status).toBe(200)
@@ -276,17 +297,37 @@ describe('FP-20 媒体存储与多媒体消息', () => {
     let luJingQianZhui = ''
 
     beforeAll(async () => {
+      // 设置 mock 让图片审核通过
+      sheZhiMockTiaoYong(async (canShu) => {
+        const xiaoXi = canShu.xiaoXi
+        const youTuPian = xiaoXi.some((x) => Array.isArray(x.neiRong) && x.neiRong.some((k) => k.type === 'input_image'))
+        if (youTuPian) {
+          return {
+            neiRong: JSON.stringify({ 违规: false, 确信度: 0.1, 类型: '', 严重程度: '', 理由: '' }),
+            xinXi: { role: 'assistant', content: '' },
+            yuanShuJu: {} as never,
+          }
+        }
+        return {
+          neiRong: JSON.stringify({ 违规: false, 确信度: 0.1, 类型: '', 严重程度: '', 理由: '' }),
+          xinXi: { role: 'assistant', content: '' },
+          yuanShuJu: {} as never,
+        }
+      })
+
       const jiaoSeId = await chuangJianCeShiJiaoSe(yongHuA!.lingPai)
       const xiangYing = await shangChuanMeiTi({
         lingPai: yongHuA!.lingPai,
         jiaoSeId,
         leiBie: 'tupian',
-        neiRong: Buffer.alloc(1024, 7),
+        neiRong: zhenShiPNG(),
         wenJianMing: 'qianming.png',
         mime: 'image/png',
       })
       sha256 = String(xiangYing.body.shu_ju!.sha256)
       luJingQianZhui = `/api/媒体/${sha256}`
+
+      sheZhiMockTiaoYong(null)
     })
 
     it('合法签名返回200且ETag等于sha256且Cache-Control含immutable', async () => {
@@ -298,7 +339,7 @@ describe('FP-20 媒体存储与多媒体消息', () => {
       expect(xiangYing.status).toBe(200)
       expect(xiangYing.headers.etag).toBe(`"${sha256}"`)
       expect(String(xiangYing.headers['cache-control'])).toContain('immutable')
-      expect(Buffer.byteLength(xiangYing.body)).toBe(1024)
+      expect(Buffer.byteLength(xiangYing.body)).toBe(zhenShiPNG().length)
     })
 
     it('无签名返回403', async () => {
@@ -348,8 +389,9 @@ describe('FP-20 媒体存储与多媒体消息', () => {
         .set('Range', 'bytes=0-99')
 
       expect(xiangYing.status).toBe(206)
-      expect(String(xiangYing.headers['content-range'])).toContain('bytes 0-99/')
-      expect(Buffer.byteLength(xiangYing.body)).toBe(100)
+      expect(String(xiangYing.headers['content-range'])).toContain('bytes 0-')
+      // 文件总长仅 33 字节（PNG 头），Range 上限被钳制到文件末尾
+      expect(Buffer.byteLength(xiangYing.body)).toBe(Math.min(100, zhenShiPNG().length))
     })
   })
 
@@ -360,7 +402,7 @@ describe('FP-20 媒体存储与多媒体消息', () => {
         lingPai: yongHuA!.lingPai,
         jiaoSeId,
         leiBie: 'tupian',
-        neiRong: 'xiaoxitupiannairong',
+        neiRong: zhenShiPNG(),
         wenJianMing: 'xiaoxi.png',
         mime: 'image/png',
       })
@@ -404,7 +446,7 @@ describe('FP-20 媒体存储与多媒体消息', () => {
         lingPai: yongHuB!.lingPai,
         jiaoSeId: jiaoSeIdB,
         leiBie: 'tupian',
-        neiRong: 'bderenshuju',
+        neiRong: zhenShiPNG(),
         wenJianMing: 'b.png',
         mime: 'image/png',
       })
@@ -457,3 +499,5 @@ describe('FP-20 媒体存储与多媒体消息', () => {
     expect(xiangYing.status).toBe(401)
   })
 })
+
+

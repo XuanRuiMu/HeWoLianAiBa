@@ -746,6 +746,7 @@ async function shanChuZhanJi(dangAn: 档案详情) {
     fenLeiZu[fenLei] = fenLeiZu[fenLei].filter((item) => item.id !== dangAn.id)
     xuanZhongIds.value.delete(dangAn.id)
   } catch (cuoWu) {
+     
     console.error('删除战绩失败', cuoWu)
   }
 }
@@ -768,6 +769,7 @@ async function piLiangShanChu() {
       xuanZhongIds.value.clear()
     }
   } catch (cuoWu) {
+     
     console.error('批量删除战绩失败', cuoWu)
   }
 }
@@ -848,7 +850,7 @@ function yingYongFlip() {
   void r.offsetHeight
   requestAnimationFrame(() => {
     for (const c of pending) {
-      c.style.transition = 'transform 0.32s cubic-bezier(0.22, 1, 0.36, 1)'
+      c.style.transition = `transform 0.32s var(--quxian-huan-ying)`
       c.style.transform = ''
       const onEnd = () => {
         c.style.transition = ''
@@ -1706,7 +1708,7 @@ defineExpose({
 /* 实时预览：TransitionGroup 在模型重排时给移动的卡片加 .zhanji-kapian-move，
    这里用 transform 过渡实现「其它卡片实时滑动让位」的 FLIP 动画（force-fallback 下库自身不提供）。 */
 .zhanji-kapian-move {
-  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.32s var(--quxian-huan-ying);
 }
 
 .zhanji-kapian.sortable-drag {

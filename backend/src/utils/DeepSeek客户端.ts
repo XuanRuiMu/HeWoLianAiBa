@@ -2,7 +2,7 @@ import OpenAI from 'openai'
 import { AI_PEI_ZHI } from '../config/AI配置'
 import { peiZhi } from '../config'
 import { jiSuanAIChanShu, type CanShuShangXiaWen } from '../config/AI参数策略'
-import { jiLuAIJiLu } from './debug日志'
+import { jiLuAIJiLu, debug日志 } from './debug日志'
 
 /** Responses API 内容块：文本或内联图像（仅 user 消息允许图像块，官方限制）。
  *  注意：Responses API 中 image_url 为字符串（data URL / http URL），
@@ -119,12 +119,21 @@ function tiQuXiangYing(xiangYing: unknown): { neiRong: string; siKaoNeiRong: str
   return { neiRong: neiRong.trim(), siKaoNeiRong: siKaoNeiRong.trim() }
 }
 
+function shiFouJinZhiCeShiWaiHu(): boolean {
+  return process.env.VITEST === 'true' && process.env.XU_KE_ZHEN_SHI_WAI_HU !== 'true'
+}
+
 export async function tiaoYongDeepSeek(
   canShu: TiaoYongCanShu,
   moXingLeiXing: string = 'DeepSeek',
 ): Promise<TiaoYongJieGuo> {
   if (mockTiaoYong) {
     return mockTiaoYong(canShu)
+  }
+  if (shiFouJinZhiCeShiWaiHu()) {
+    throw new Error(
+      `[DeepSeek客户端] VITEST 测试环境禁止真实外呼（moXingLeiXing=${moXingLeiXing}）：请用 sheZhiMockTiaoYong 注入 mock，或显式设置 XU_KE_ZHEN_SHI_WAI_HU=true 允许联调`,
+    )
   }
 
   const kaiShiShiJian = Date.now()
@@ -133,14 +142,16 @@ export async function tiaoYongDeepSeek(
   const xiangYingGeShi = canShu.xiangYingGeShi || { type: 'text' as const }
 
   if (peiZhi.kaiFaMoShi) {
-    console.debug('[AI参数] 最终生效参数', {
-      moXingLeiXing,
-      moXing,
-      wenDu: canShu.wenDu,
-      top_p: canShu.top_p,
-      zuiDaTokens: canShu.zuiDaTokens,
-      siKaoMoShi: canShu.siKaoMoShi,
-      reasoningEffort: canShu.reasoningEffort,
+    debug日志.debug('DeepSeek客户端', '[AI参数] 最终生效参数', {
+      xiang_qing: {
+        moXingLeiXing,
+        moXing,
+        wenDu: canShu.wenDu,
+        top_p: canShu.top_p,
+        zuiDaTokens: canShu.zuiDaTokens,
+        siKaoMoShi: canShu.siKaoMoShi,
+        reasoningEffort: canShu.reasoningEffort,
+      },
     })
   }
 
@@ -173,14 +184,23 @@ export async function tiaoYongDeepSeek(
     const { neiRong, siKaoNeiRong } = tiQuXiangYing(xiangYing)
 
     if (peiZhi.kaiFaMoShi && siKaoNeiRong) {
-      console.debug('[AI思考过程]', siKaoNeiRong.slice(0, 500))
+      debug日志.debug('DeepSeek客户端', '[AI思考过程]', {
+        xiang_qing: { nei_rong: siKaoNeiRong.slice(0, 500) },
+      })
     }
     if ((xiangYing as { status?: string }).status === 'incomplete') {
-      console.warn('[AI调用] 响应被截断（达到 max_output_tokens），思考强度可能过高或上限偏低')
+      debug日志.warn(
+        'DeepSeek客户端',
+        '[AI调用] 响应被截断（达到 max_output_tokens），思考强度可能过高或上限偏低',
+      )
     }
 
     const haoShi = Date.now() - kaiShiShiJian
     jiLuAIJiLu(moXingLeiXing, moXing, haoShi, true)
+
+    // A12：AI 调用成功，重置连续失败告警计数
+    const { jiLuAIChengGong } = await import('./邮件告警')
+    jiLuAIChengGong()
 
     return {
       neiRong,
@@ -192,6 +212,8 @@ export async function tiaoYongDeepSeek(
     const haoShi = Date.now() - kaiShiShiJian
     const cuoWuXinXi = cuoWu instanceof Error ? cuoWu.message : String(cuoWu)
     jiLuAIJiLu(moXingLeiXing, moXing, haoShi, false, cuoWuXinXi)
+    // A12：连续 AI 失败达到阈值时触发邮件/日志告警（异步不阻塞错误传播）
+    void import('./邮件告警').then(({ jiLuAIShiBai }) => jiLuAIShiBai(cuoWuXinXi)).catch(() => {})
     throw cuoWu
   }
 }

@@ -1,21 +1,41 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+﻿import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
   sheZhiMockTiaoYong,
   chongZhiDeepSeekKeHuDuan,
   type TiaoYongCanShu,
   type TiaoYongJieGuo,
 } from '../utils/DeepSeek客户端'
+import { redis } from '../redis'
+import { huoQuIo } from '../socket/io'
+import { huoQuFanYi } from '../config/translations'
 import {
   yunXingAIYinQing,
   shengChengDirectorCeLue,
   shengChengWriterHuiFu,
   fenXiQingGan,
   pingPanHaoGanDuBianHua,
-  shengChengJiYiZhaiYao,
   shenHeNeiRongAnQuan,
   shengChengJunShiZhiDao,
   tiQuGuanJianShiJian,
 } from '../services/AI引擎'
+
+const socketMoKuai = vi.hoisted(() => {
+  const emit = vi.fn()
+  const io = { to: vi.fn(() => ({ emit })) }
+  return { emit, io, huoQuIo: vi.fn(() => io) }
+})
+
+vi.mock('../redis', () => ({
+  redis: {
+    incr: vi.fn().mockResolvedValue(1),
+    expire: vi.fn().mockResolvedValue(1),
+    set: vi.fn().mockResolvedValue(null),
+  },
+}))
+
+vi.mock('../socket/io', () => ({
+  huoQuIo: socketMoKuai.huoQuIo,
+}))
 import { JUN_SHI_PEI_ZHI_MO_REN } from '../config/军师配置'
 import { gouJianWriterPrompt, gouJianDirectorPrompt } from '../services/Prompt构建器'
 import type {
@@ -124,6 +144,8 @@ function chuangJianMock(): {
 describe('FP-09 AI对话引擎', () => {
   beforeEach(() => {
     chongZhiDeepSeekKeHuDuan()
+    socketMoKuai.emit.mockClear()
+    socketMoKuai.io.to.mockClear()
   })
 
   afterEach(() => {
@@ -320,6 +342,39 @@ describe('FP-09 AI对话引擎', () => {
       expect(jieGuo.jiang_ji_mo_shi).toBe(false)
     })
 
+    it('Director/Writer 思考过程透传 → si_kao 含双方 reasoning 供管理员监控展示', async () => {
+      sheZhiMockTiaoYong(async (canShu) => {
+        if (canShu.xiaoXi[0]?.neiRong?.includes('小纸条')) {
+          return {
+            neiRong: JSON.stringify({
+              用户意图: '继续聊天',
+              情感分析: '中性',
+              回复策略: '自然回复',
+              是否回复: true,
+              回复条数: 1,
+              时间情绪: '轻松',
+              是否撤回: false,
+            }),
+            siKaoNeiRong: '导演思考：用户在试探，先接住情绪',
+            xinXi: { role: 'assistant', content: 'director' },
+            yuanShuJu: {} as TiaoYongJieGuo['yuanShuJu'],
+          }
+        }
+        return {
+          neiRong: '只有一条回复',
+          siKaoNeiRong: '写手思考：用短句留白回应',
+          xinXi: { role: 'assistant', content: 'writer' },
+          yuanShuJu: {} as TiaoYongJieGuo['yuanShuJu'],
+        }
+      })
+
+      const jieGuo = await yunXingAIYinQing(chuangJianCeShiShuRu())
+
+      expect(jieGuo.shi_fou_hui_fu).toBe(true)
+      expect(jieGuo.si_kao?.director).toBe('导演思考：用户在试探，先接住情绪')
+      expect(jieGuo.si_kao?.writer).toBe('写手思考：用短句留白回应')
+    })
+
     it('Director失败 → 降级为单代理模式并记录错误日志', async () => {
       const jiLu: TiaoYongCanShu[] = []
       const cuoWuXinXi = 'Director API错误'
@@ -500,15 +555,6 @@ describe('FP-09 AI对话引擎', () => {
       expect(jieGuo.guan_huai_du_bian_hua).toBe(-60)
     })
 
-    it('记忆摘要调用 → 返回摘要文本', async () => {
-      const { sheZhiXiangYing } = chuangJianMock()
-      sheZhiXiangYing({ neiRong: '用户分享了画画爱好，关系处于朋友阶段。' })
-
-      const jieGuo = await shengChengJiYiZhaiYao('用户：你好\nAI：你好呀', '雨夜的猫')
-
-      expect(jieGuo.zhai_yao.length).toBeGreaterThan(0)
-    })
-
     it('安全审核 → 确信度>0.8才判定违规', async () => {
       const { sheZhiXiangYing } = chuangJianMock()
       sheZhiXiangYing({
@@ -667,6 +713,89 @@ describe('FP-09 AI对话引擎', () => {
       expect(jiLu[0].wenDu).toBeLessThan(0.3)
       expect(typeof jiLu[0].top_p).toBe('number')
       expect(jiLu[0].top_p as number).toBeGreaterThan(0)
+    })
+  })
+
+  describe('P1-5 AI日预算用户感知', () => {
+    const YU_SUAN = 600
+
+    afterEach(() => {
+      vi.mocked(redis.incr).mockResolvedValue(1)
+      vi.mocked(redis.expire).mockResolvedValue(1)
+      vi.mocked(redis.set).mockResolvedValue(null)
+    })
+
+    function daJianZhengChangLiuLiang(): void {
+      sheZhiMockTiaoYong(async (canShu) => {
+        if (canShu.xiaoXi[0]?.neiRong?.includes('小纸条')) {
+          return {
+            neiRong: JSON.stringify({
+              用户意图: '继续聊天',
+              情感分析: '中性',
+              回复策略: '自然回复',
+              是否回复: true,
+              回复条数: 2,
+              时间情绪: '轻松',
+              是否撤回: false,
+            }),
+            xinXi: { role: 'assistant', content: 'director' },
+            yuanShuJu: {} as TiaoYongJieGuo['yuanShuJu'],
+          }
+        }
+        return {
+          neiRong: '第一条回复\n第二条回复',
+          xinXi: { role: 'assistant', content: 'writer' },
+          yuanShuJu: {} as TiaoYongJieGuo['yuanShuJu'],
+        }
+      })
+    }
+
+    it('预算触顶 → 推送系统提示且不发起任何AI请求', async () => {
+      vi.mocked(redis.incr).mockResolvedValue(YU_SUAN + 1)
+      const { jiLu } = chuangJianMock()
+
+      const jieGuo = await yunXingAIYinQing(chuangJianCeShiShuRu())
+
+      expect(jieGuo.shi_fou_hui_fu).toBe(false)
+      expect(jieGuo.xiao_xi_lie_biao).toEqual([])
+      expect(jieGuo.cuo_wu_xin_xi).toBe(huoQuFanYi('liaoTian', 'aiYuSuanYiYongJin'))
+      expect(jiLu.length).toBe(0)
+      expect(socketMoKuai.emit).toHaveBeenCalledTimes(1)
+      const [shiJian, fuZai] = socketMoKuai.emit.mock.calls[0]
+      expect(shiJian).toBe('角色回复')
+      expect(fuZai.消息列表[0].lei_xing).toBe('xitong_ti_shi')
+      expect(fuZai.消息列表[0].nei_rong).toBe(huoQuFanYi('liaoTian', 'aiYuSuanYiYongJin'))
+    })
+
+    it('余量≤50 → 推送预警一次并正常生成回复', async () => {
+      vi.mocked(redis.incr).mockResolvedValue(YU_SUAN - 50)
+      vi.mocked(redis.set).mockResolvedValue('OK')
+      daJianZhengChangLiuLiang()
+
+      const jieGuo = await yunXingAIYinQing(chuangJianCeShiShuRu())
+
+      expect(jieGuo.shi_fou_hui_fu).toBe(true)
+      expect(socketMoKuai.emit).toHaveBeenCalledTimes(1)
+      const [shiJian, fuZai] = socketMoKuai.emit.mock.calls[0]
+      expect(shiJian).toBe('角色回复')
+      expect(fuZai.消息列表[0].lei_xing).toBe('xitong_ti_shi')
+      expect(fuZai.消息列表[0].nei_rong).toBe(huoQuFanYi('liaoTian', 'yuSuanYuJing'))
+    })
+
+    it('同日第二次进入预警区间 → SET NX 失败不重复推送', async () => {
+      vi.mocked(redis.incr)
+        .mockResolvedValueOnce(YU_SUAN - 50)
+        .mockResolvedValueOnce(YU_SUAN - 49)
+      vi.mocked(redis.set)
+        .mockResolvedValueOnce('OK')
+        .mockResolvedValueOnce(null)
+      daJianZhengChangLiuLiang()
+
+      await yunXingAIYinQing(chuangJianCeShiShuRu())
+      await yunXingAIYinQing(chuangJianCeShiShuRu())
+
+      expect(socketMoKuai.emit).toHaveBeenCalledTimes(1)
+      expect(socketMoKuai.emit.mock.calls[0][1].消息列表[0].nei_rong).toBe(huoQuFanYi('liaoTian', 'yuSuanYuJing'))
     })
   })
 })

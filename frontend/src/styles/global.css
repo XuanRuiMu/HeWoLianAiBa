@@ -45,20 +45,31 @@ a {
 button {
   cursor: pointer;
   border: none;
-  outline: none;
   font-family: inherit;
   font-size: inherit;
   background: transparent;
 }
 
 input,
-textarea {
+textarea,
+select {
   border: none;
-  outline: none;
   font-family: inherit;
   font-size: inherit;
   color: inherit;
   background: transparent;
+}
+
+:focus-visible {
+  outline: none;
+}
+
+.shuru-kuang:focus-visible,
+.xinmuzhong-shurukuang:focus-visible,
+.xiugai-shuru:focus-visible,
+.fenlie-shuru:focus-visible,
+select:focus-visible {
+  outline: none;
 }
 
 ul,
@@ -76,6 +87,7 @@ img {
   align-items: center;
   justify-content: center;
   padding: 12px 24px;
+  min-height: 44px;
   background: var(--zhuse);
   color: var(--beijing-kaopian);
   border-radius: var(--yuanjiao-zhong);
@@ -107,7 +119,7 @@ img {
 }
 
 .shuru-kuang:focus {
-  border-color: var(--zhuse);
+  border-color: var(--biankuang-yanse);
 }
 
 .shuru-kuang::placeholder {

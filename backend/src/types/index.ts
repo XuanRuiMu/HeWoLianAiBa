@@ -26,10 +26,13 @@ export interface YongHuXinXi {
   geng_xin_shi_jian: string
   mo_ren_xing_bie: string | null
   mi_ma?: string
+  tu_pian_shou_quan?: boolean
 }
 
 export interface DengLuXiangYing {
   令牌: string
+  刷新令牌?: string
+  刷新令牌ID?: string
   用户: YongHuXinXi
   新用户: boolean
   是否管理员: boolean
@@ -89,6 +92,7 @@ export interface AIJiaoSeXinXi {
   bao_lu_fang_shi?: string
   shi_po_xian_suo?: string[]
   shi_jie_xin_xi: Record<string, unknown>
+  voice_id?: string
   ba_da_mo_kuai: {
     ji_ben_xin_xi: string
     wai_mao: string
@@ -108,6 +112,7 @@ export interface HaoGanDuXinXi {
   guan_huai_du: number
   zong_fen: number
   guan_xi_jie_duan: string
+  互动次数?: number
 }
 
 export interface GongKaiHaoGanDuXinXi {
@@ -147,6 +152,7 @@ export interface DirectorCeLue {
 export interface WriterJieGuo {
   xiao_xi_lie_biao: string[]
   yuan_wen?: string
+  si_kao?: string
 }
 
 export interface AIYinQingShuRu {
@@ -155,10 +161,10 @@ export interface AIYinQingShuRu {
   jiao_se: AIJiaoSeXinXi
   hao_gan_du: HaoGanDuXinXi
   dui_hua_li_shi: DuiHuaLiShiXiang[]
-  ji_yi_zhai_yao?: string
   yong_hu_xin_xiao_xi: string
   shi_fou_di_yi_lun: boolean
   shi_jian_chang_jing?: string
+  tu_pian_shou_quan: boolean
 }
 
 export interface AIYinQingShuChu {
@@ -168,6 +174,7 @@ export interface AIYinQingShuChu {
   ce_lue?: DirectorCeLue
   jiang_ji_mo_shi: boolean
   cuo_wu_xin_xi?: string
+  si_kao?: { director?: string; writer?: string }
 }
 
 export interface QingGanFenXiJieGuo {
@@ -214,6 +221,8 @@ export type YouXiJieGuoLeiXing =
   | 'shi_bai_bei_qi_pian'
   | 'shi_bai_bei_zha_xing_qi_pian'
   | 'shi_bai_shen_jing_bing'
+  | 'shi_bai_fang_qi_tiao_zhan'
+  | 'shi_bai_mian_da_rao'
 
 export interface YouXiJieShuJieGuo {
   jie_guo_lei_xing: YouXiJieGuoLeiXing

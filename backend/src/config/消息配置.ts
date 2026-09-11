@@ -2,4 +2,6 @@ export const XIAO_XI_PEI_ZHI = {
   cheHuiShiXian: 2 * 60 * 1000,
   zuiDaXiaoXiChangDu: 500,
   heBingShiJianYuZhi: 60 * 1000,
+  lianFaMianDaRaoTiaoShu: 20,
+  lianFaYuJingTiaoShu: 12,
 }

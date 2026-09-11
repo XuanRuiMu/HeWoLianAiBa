@@ -195,6 +195,12 @@
                 <span class="mbti-miaoShu">{{ huoQuFanYi('ziLiaoSheZhi', 'suiJiMiaoShu') }}</span>
               </button>
             </div>
+            <p class="suiji-xingge-tishi">
+              {{ huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongSuiJiXingGeTiShi') }}
+            </p>
+            <p class="yixuan-jiangu-tishi">
+              {{ huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongYiXuanJianGuTiShi') }}
+            </p>
 
             <label class="zhaNv-gouxuan">
               <input
@@ -208,6 +214,78 @@
             <p v-show="ziLiaoShuJu.yunXuZhaNanZhaNv" class="zhaNv-tishi zhaNv-tishi-huaxian">
               {{ 渣型提示文案 }}
             </p>
+
+            <div class="xinmuzhong-ta-qukuai">
+              <button
+                type="button"
+                class="xinmuzhong-ta-kaiguan"
+                :aria-expanded="xinMuZhongDeTaZhanKai"
+                @click="xinMuZhongDeTaZhanKai = !xinMuZhongDeTaZhanKai"
+              >
+                <span class="xinmuzhong-ta-biaoti">{{
+                  huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongDeTaBiaoTi')
+                }}</span>
+                <span class="xinmuzhong-ta-zhuangtai">{{
+                  xinMuZhongDeTaZhanKai
+                    ? huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongDeTaShouQi')
+                    : huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongDeTaZhanKai')
+                }}</span>
+              </button>
+              <p class="xinmuzhong-ta-tishi">
+                {{ huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongDeTaTiShi') }}
+              </p>
+              <div v-show="xinMuZhongDeTaZhanKai" class="xinmuzhong-ta-biaodan">
+                <label class="xinmuzhong-xiangmu">
+                  <span class="xinmuzhong-biaoqian">{{
+                    huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongWeiXinMing')
+                  }}</span>
+                  <input
+                    v-model="ziLiaoShuJu.xinMuZhongDeTa.weiXinMing"
+                    type="text"
+                    class="xinmuzhong-shurukuang"
+                    maxlength="30"
+                    :placeholder="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongWeiXinMingZhanwei')"
+                  />
+                </label>
+                <label class="xinmuzhong-xiangmu">
+                  <span class="xinmuzhong-biaoqian">{{
+                    huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongZhenShiMing')
+                  }}</span>
+                  <input
+                    v-model="ziLiaoShuJu.xinMuZhongDeTa.zhenShiMing"
+                    type="text"
+                    class="xinmuzhong-shurukuang"
+                    maxlength="20"
+                    :placeholder="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongZhenShiMingZhanwei')"
+                  />
+                </label>
+                <label class="xinmuzhong-xiangmu">
+                  <span class="xinmuzhong-biaoqian">{{
+                    huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongNianLing')
+                  }}</span>
+                  <input
+                    v-model="ziLiaoShuJu.xinMuZhongDeTa.nianLing"
+                    type="number"
+                    :step="1"
+                    class="xinmuzhong-shurukuang"
+                    :placeholder="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongNianLingZhanwei')"
+                    @blur="guiYiNianLingShuRu"
+                  />
+                </label>
+                <label class="xinmuzhong-xiangmu">
+                  <span class="xinmuzhong-biaoqian">{{
+                    huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongTongYongTiShiCi')
+                  }}</span>
+                  <textarea
+                    v-model="ziLiaoShuJu.xinMuZhongDeTa.tongYongTiShiCi"
+                    class="xinmuzhong-shurukuang xinmuzhong-wenbenyu"
+                    maxlength="500"
+                    rows="3"
+                    :placeholder="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongTongYongTiShiCiZhanwei')"
+                  />
+                </label>
+              </div>
+            </div>
           </div>
         </Transition>
       </div>
@@ -245,6 +323,9 @@ import { 使用用户仓库 } from '@/stores/用户'
 import type { MBTI类型, 性格选择 } from '@/types'
 import { 性格选择映射 } from '@/types'
 import { huoQuFanYi } from '@/config/translations'
+import { congTongYongTiShiCiTuiCeXingGe } from '@/utils/通用提示词性格'
+import { guiYiNianLing } from '@/utils/输入验证'
+import { track } from '@/utils/埋点'
 
 const 仓库 = 使用认证表单仓库()
 const 用户仓库 = 使用用户仓库()
@@ -333,6 +414,11 @@ const 可以开始 = computed(() => !!ziLiaoShuJu.xingGeXuanZe)
 
 const 随机选中 = ref(false)
 const 随机性格标记 = ref(false)
+const xinMuZhongDeTaZhanKai = ref(false)
+
+function guiYiNianLingShuRu() {
+  ziLiaoShuJu.xinMuZhongDeTa.nianLing = guiYiNianLing(ziLiaoShuJu.xinMuZhongDeTa.nianLing)
+}
 
 function xuanZeXingGe(mbti: MBTI类型) {
   ziLiaoShuJu.xingGeXuanZe = mbti as 性格选择
@@ -340,9 +426,19 @@ function xuanZeXingGe(mbti: MBTI类型) {
   随机性格标记.value = false
 }
 
+function anTongYongTiShiCiXuanZuiJinMbti(tiShiCi: string): MBTI类型 | null {
+  return congTongYongTiShiCiTuiCeXingGe(tiShiCi)
+}
+
 function suiJiXuanZe() {
-  const suiJiSuoyin = Math.floor(Math.random() * mbti列表.length)
-  ziLiaoShuJu.xingGeXuanZe = mbti列表[suiJiSuoyin] as 性格选择
+  const tiShiCi = ziLiaoShuJu.xinMuZhongDeTa.tongYongTiShiCi.trim()
+  const jinSi = anTongYongTiShiCiXuanZuiJinMbti(tiShiCi)
+  if (jinSi) {
+    ziLiaoShuJu.xingGeXuanZe = jinSi as 性格选择
+  } else {
+    const suiJiSuoyin = Math.floor(Math.random() * mbti列表.length)
+    ziLiaoShuJu.xingGeXuanZe = mbti列表[suiJiSuoyin] as 性格选择
+  }
   随机选中.value = true
   随机性格标记.value = true
 }
@@ -354,7 +450,10 @@ const 渣型文案 = computed(() =>
 )
 
 const 渣型提示文案 = computed(() => {
-  const daiTi = ziLiaoShuJu.muBiaoXingBie === 'male' ? '他' : '她'
+  const daiTi =
+    ziLiaoShuJu.muBiaoXingBie === 'male'
+      ? huoQuFanYi('ziLiaoSheZhi', 'taDaiTiNan')
+      : huoQuFanYi('ziLiaoSheZhi', 'taDaiTiNv')
   return huoQuFanYi('ziLiaoSheZhi', 'zhaXingTiShi').replace('{ta}', daiTi)
 })
 
@@ -366,9 +465,11 @@ async function kaiShiLiaoTian() {
     xingGeXuanZe: ziLiaoShuJu.xingGeXuanZe,
     yunXuZhaNanZhaNv: ziLiaoShuJu.yunXuZhaNanZhaNv,
     随机性格标记: 随机性格标记.value,
+    xinMuZhongDeTa: 仓库.huoQuXinMuZhongDeTaYouXiao(),
   }
   sessionStorage.setItem('ziLiaoSheZhiLinShi', JSON.stringify(linShiZiLiao))
   仓库.sheZhiZiLiaoSheZhiYiWanCheng(true)
+  track('xiangDaoWanCheng')
   router.push('/tian-jia-wei-xin')
 }
 </script>
@@ -411,7 +512,7 @@ async function kaiShiLiaoTian() {
   background: rgba(255, 255, 255, 0.2);
   border: none;
   cursor: pointer;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.35s var(--quxian-biao-zhun);
   padding: 0;
 }
 
@@ -495,7 +596,7 @@ async function kaiShiLiaoTian() {
   border: 2px solid rgba(255, 255, 255, 0.12);
   border-radius: 18px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s var(--quxian-biao-zhun);
   min-width: 120px;
 }
 
@@ -687,6 +788,134 @@ async function kaiShiLiaoTian() {
   text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
 }
 
+.suiji-xingge-tishi,
+.yixuan-jiangu-tishi {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  margin: 0 0 4px;
+  line-height: 1.5;
+}
+
+.xinmuzhong-ta-qukuai {
+  width: 100%;
+  margin-top: 4px;
+  padding: 12px 14px;
+  background: var(--xinmuzhong-qukuai-beijing);
+  border: 1px solid var(--xinmuzhong-qukuai-biankuang);
+  border-radius: 14px;
+}
+
+.xinmuzhong-ta-kaiguan {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.xinmuzhong-ta-biaoti {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--xinmuzhong-duibi-se);
+  letter-spacing: 0.5px;
+}
+
+.xinmuzhong-ta-zhuangtai {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--xinmuzhong-duibi-se);
+  transition: transform 0.25s ease;
+}
+
+.xinmuzhong-ta-kaiguan:hover .xinmuzhong-ta-zhuangtai {
+  transform: translateX(2px);
+}
+
+.xinmuzhong-ta-tishi {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: left;
+}
+
+.xinmuzhong-ta-biaodan {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.xinmuzhong-xiangmu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.xinmuzhong-biaoqian {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.xinmuzhong-shurukuang {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  transition:
+    border-color 0.25s ease,
+    background 0.25s ease;
+}
+
+.xinmuzhong-shurukuang::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.xinmuzhong-shurukuang:focus {
+  border-color: var(--nuanhui-lan);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.xinmuzhong-wenbenyu {
+  min-height: 72px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+:root[data-theme='light'] .xinmuzhong-ta-tishi {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme='light'] .xinmuzhong-biaoqian {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme='light'] .xinmuzhong-shurukuang {
+  color: #191919;
+  background: #f7f7f7;
+  border-color: #e5e5e5;
+}
+
+:root[data-theme='light'] .xinmuzhong-shurukuang::placeholder {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme='light'] .xinmuzhong-shurukuang:focus {
+  border-color: var(--nuanhui-lan);
+  background: #ffffff;
+}
+
 .caoZuo-anNiu {
   display: flex;
   gap: 12px;
@@ -714,10 +943,10 @@ async function kaiShiLiaoTian() {
 }
 
 .anniu-zhuYao {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 14px 32px;
+  padding: 14px 28px;
   background: linear-gradient(135deg, var(--nuanhui-lan), var(--roufen-zi));
   color: #ffffff;
   border: none;
@@ -725,7 +954,7 @@ async function kaiShiLiaoTian() {
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.35s var(--quxian-biao-zhun);
   letter-spacing: 0.5px;
   position: relative;
   overflow: hidden;
@@ -787,8 +1016,8 @@ async function kaiShiLiaoTian() {
 .buZhou-houTui-enter-active,
 .buZhou-houTui-leave-active {
   transition:
-    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transform 0.35s var(--quxian-biao-zhun),
+    opacity 0.35s var(--quxian-biao-zhun);
 }
 
 .buZhou-qianJin-enter-from {

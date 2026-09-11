@@ -1,6 +1,6 @@
-process.env.ADMIN_PHONES = '13800000000'
+﻿process.env.ADMIN_PHONES = '13800000000'
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = 'postgres://lovewithme:BXYXblupz542284@localhost:5432/lovewithme'
+  process.env.DATABASE_URL = 'postgres://lovewithme:test-password@localhost:5432/lovewithme'
 }
 if (!process.env.REDIS_URL) {
   process.env.REDIS_URL = 'redis://localhost:6379'
@@ -23,7 +23,6 @@ import { chuShiHuaDuoSheSocket } from '../socket/夺舍'
 import { sheZhiIo } from '../socket/io'
 import { huoQuFanYi } from '../config/translations'
 import { chuShiHuaHaoGanDu } from '../services/好感度'
-import { xieRuJiYi } from '../services/记忆'
 import { sheZhiMockTiaoYong, chongZhiDeepSeekKeHuDuan } from '../utils/DeepSeek客户端'
 
 function suiJiShouJiHao(): string {
@@ -64,6 +63,7 @@ async function zhuCeYongHu(
       yongHuMing,
       miMa: 'Test123456',
       tongYiXieYi: true,
+      chuShengRiQi: '2000-01-01',
     })
     .expect(200)
 
@@ -110,22 +110,6 @@ async function chuangJianXiaoXi(
     [yongHuId, jiaoSeId, neiRong, faSongZhe],
   )
   return String(jieGuo.rows[0].ID)
-}
-
-async function chuangJianJiYi(
-  yongHuId: string,
-  jiaoSeId: string,
-  zhaiYao: string,
-  zhongYaoDu: number,
-): Promise<void> {
-  await xieRuJiYi({
-    yong_hu_id: yongHuId,
-    jiao_se_id: jiaoSeId,
-    zhai_yao: zhaiYao,
-    zhong_yao_du: zhongYaoDu,
-    guan_jian_ci: ['测试'],
-    shi_jian_lei_xing: '测试事件',
-  })
 }
 
 function dengDaiLianJie(socket: Socket): Promise<void> {
@@ -240,6 +224,12 @@ describe.sequential('FP-16 管理员后台', () => {
       expect(puTongYongHu).toBeDefined()
       expect(puTongYongHu.jiao_se_shu).toBeGreaterThanOrEqual(1)
       expect(puTongYongHu.xiao_xi_shu).toBeGreaterThanOrEqual(2)
+
+      // P2-2：管理端用户列表手机号必须掩码展示，不回明文
+      expect(puTongYongHu.shou_ji_hao).toBe(
+        `${puTongShouJiHao.slice(0, 3)}****${puTongShouJiHao.slice(-4)}`,
+      )
+      expect(puTongYongHu.shou_ji_hao).not.toBe(puTongShouJiHao)
     } finally {
       await qingChuCeShiYongHu(guanLiYuanShouJiHao)
       await qingChuCeShiYongHu(puTongShouJiHao)
@@ -273,67 +263,7 @@ describe.sequential('FP-16 管理员后台', () => {
     }
   })
 
-  it('对话详情API返回角色信息+用户信息+最多200条消息+好感度+最多20条记忆', async () => {
-    const { lingPai: guanLiYuanLingPai, shouJiHao: guanLiYuanShouJiHao } = await zhuCeGuanLiYuan(`管理员${Date.now()}`)
-    const puTongShouJiHao = suiJiShouJiHao()
-    const { yongHuId: puTongYongHuId } = await zhuCeYongHu(puTongShouJiHao, `普通用户${Date.now()}`)
-
-    try {
-      const jiaoSeId = await chuangJianJiaoSe(puTongYongHuId, '对话详情角色')
-      await chuangJianXiaoXi(puTongYongHuId, jiaoSeId, '消息1')
-      await chuangJianJiYi(puTongYongHuId, jiaoSeId, '记忆1', 5)
-      await chuangJianJiYi(puTongYongHuId, jiaoSeId, '记忆2', 7)
-
-      const xiangYing = await request(yingYong)
-        .get(`/api/管理/对话/${jiaoSeId}`)
-        .set('Authorization', `Bearer ${guanLiYuanLingPai}`)
-        .expect(200)
-
-      expect(xiangYing.body.cheng_gong).toBe(true)
-      expect(xiangYing.body.shu_ju.jiao_se).toBeDefined()
-      expect(xiangYing.body.shu_ju.yong_hu).toBeDefined()
-      expect(Array.isArray(xiangYing.body.shu_ju.xiao_xi_lie_biao)).toBe(true)
-      expect(xiangYing.body.shu_ju.xiao_xi_lie_biao.length).toBeLessThanOrEqual(200)
-      expect(xiangYing.body.shu_ju.hao_gan_du).toBeDefined()
-      expect(xiangYing.body.shu_ju.hao_gan_du.zong_fen).toBeDefined()
-      expect(Array.isArray(xiangYing.body.shu_ju.ji_yi_lie_biao)).toBe(true)
-      expect(xiangYing.body.shu_ju.ji_yi_lie_biao.length).toBeLessThanOrEqual(20)
-    } finally {
-      await qingChuCeShiYongHu(guanLiYuanShouJiHao)
-      await qingChuCeShiYongHu(puTongShouJiHao)
-    }
-  })
-
-  it('角色信息API返回最多30条记忆且按重要度倒序排列', async () => {
-    const { lingPai: guanLiYuanLingPai, shouJiHao: guanLiYuanShouJiHao } = await zhuCeGuanLiYuan(`管理员${Date.now()}`)
-    const puTongShouJiHao = suiJiShouJiHao()
-    const { yongHuId: puTongYongHuId } = await zhuCeYongHu(puTongShouJiHao, `普通用户${Date.now()}`)
-
-    try {
-      const jiaoSeId = await chuangJianJiaoSe(puTongYongHuId, '角色信息角色')
-      for (let i = 0; i < 5; i++) {
-        await chuangJianJiYi(puTongYongHuId, jiaoSeId, `记忆${i}`, i + 1)
-      }
-
-      const xiangYing = await request(yingYong)
-        .get(`/api/管理/角色/${jiaoSeId}`)
-        .set('Authorization', `Bearer ${guanLiYuanLingPai}`)
-        .expect(200)
-
-      expect(xiangYing.body.cheng_gong).toBe(true)
-      expect(xiangYing.body.shu_ju.jiao_se).toBeDefined()
-      expect(Array.isArray(xiangYing.body.shu_ju.ji_yi_lie_biao)).toBe(true)
-      expect(xiangYing.body.shu_ju.ji_yi_lie_biao.length).toBeLessThanOrEqual(30)
-
-      const jiYi = xiangYing.body.shu_ju.ji_yi_lie_biao
-      for (let i = 0; i < jiYi.length - 1; i++) {
-        expect(jiYi[i].zhong_yao_du).toBeGreaterThanOrEqual(jiYi[i + 1].zhong_yao_du)
-      }
-    } finally {
-      await qingChuCeShiYongHu(guanLiYuanShouJiHao)
-      await qingChuCeShiYongHu(puTongShouJiHao)
-    }
-  })
+  
 
   it('管理员夺舍角色后Redis存在夺舍键', async () => {
     const { lingPai: guanLiYuanLingPai, yongHuId: guanLiYuanYongHuId, shouJiHao: guanLiYuanShouJiHao } = await zhuCeGuanLiYuan(`管理员${Date.now()}`)
@@ -519,6 +449,34 @@ describe.sequential('FP-16 管理员后台', () => {
       expect(xiangYing.body.cheng_gong).toBe(true)
       expect(xiangYing.body.shu_ju.yong_hu.ce_shi).toBe(true)
 
+      // P2-2：初始密码为随机强密码，仅在创建响应中一次性返回明文
+      const chuShiMiMa = xiangYing.body.shu_ju.chu_shi_mi_ma
+      expect(typeof chuShiMiMa).toBe('string')
+      expect(chuShiMiMa.length).toBeGreaterThanOrEqual(16)
+      expect(chuShiMiMa).not.toBe('test123456')
+
+      const haXiJieGuo = await 数据库.query(
+        `SELECT "密码哈希" FROM "用户" WHERE "手机号" = $1`,
+        [ceShiShouJiHao],
+      )
+      expect(haXiJieGuo.rows[0].密码哈希).toBeTruthy()
+      expect(String(haXiJieGuo.rows[0].密码哈希)).not.toBe(chuShiMiMa)
+      expect(String(haXiJieGuo.rows[0].密码哈希)).not.toContain('test123456')
+
+      // 再次创建的账号密码不同（非固定值）
+      const diErShouJiHao = suiJiShouJiHao()
+      await qingChuCeShiYongHu(diErShouJiHao)
+      try {
+        const diErXiangYing = await request(yingYong)
+          .post('/api/管理/测试用户')
+          .set('Authorization', `Bearer ${guanLiYuanLingPai}`)
+          .send({ shouJiHao: diErShouJiHao, yongHuMing: `测试用户${Date.now()}B` })
+          .expect(200)
+        expect(diErXiangYing.body.shu_ju.chu_shi_mi_ma).not.toBe(chuShiMiMa)
+      } finally {
+        await qingChuCeShiYongHu(diErShouJiHao)
+      }
+
       const jieGuo = await 数据库.query(
         `SELECT "测试" FROM "用户" WHERE "手机号" = $1`,
         [ceShiShouJiHao],
@@ -602,7 +560,7 @@ describe.sequential('FP-16 管理员后台', () => {
     }
   })
 
-  it('所有管理员操作后审计日志表新增记录', async () => {
+  it('所有管理员操作后审计日志表新增记录且IP来自真实IP工具函数', async () => {
     const { lingPai: guanLiYuanLingPai, yongHuId: guanLiYuanYongHuId, shouJiHao: guanLiYuanShouJiHao } = await zhuCeGuanLiYuan(`管理员${Date.now()}`)
 
     try {
@@ -611,12 +569,21 @@ describe.sequential('FP-16 管理员后台', () => {
         .set('Authorization', `Bearer ${guanLiYuanLingPai}`)
         .expect(200)
 
+      // P2-2：伪造 X-Forwarded-For 不得进入审计 IP，审计记录的是 TCP 对端真实地址
+      await request(yingYong)
+        .get('/api/管理/系统状态')
+        .set('Authorization', `Bearer ${guanLiYuanLingPai}`)
+        .set('X-Forwarded-For', '9.9.9.9')
+        .expect(200)
+
       const jieGuo = await 数据库.query(
         `SELECT * FROM "审计日志" WHERE "用户ID" = $1 ORDER BY "创建时间" DESC LIMIT 1`,
         [guanLiYuanYongHuId],
       )
       expect(jieGuo.rows.length).toBeGreaterThanOrEqual(1)
       expect(jieGuo.rows[0].IP).toBeDefined()
+      expect(jieGuo.rows[0].IP).not.toBe('9.9.9.9')
+      expect(['127.0.0.1', '::1']).toContain(jieGuo.rows[0].IP)
       expect(jieGuo.rows[0].事件类型).toBeDefined()
       expect(jieGuo.rows[0].详情).toBeDefined()
     } finally {

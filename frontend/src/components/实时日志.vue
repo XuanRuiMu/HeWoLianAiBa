@@ -21,12 +21,12 @@
       </div>
       <div class="rizhi-biaoti-you">
         <span class="rizhi-jishu">
-          {{ huoQuFanYi('shiShiRiZhi', 'tiaoShu') }} {{ 日志仓库.guoLvHouLieBiao.length }}/{{
+          {{ huoQuFanYi('shiShiRiZhi', 'tiaoShu') }}{{ 日志仓库.guoLvHouLieBiao.length }}/{{
             日志仓库.zongTiaoShu
           }}
         </span>
         <span v-if="日志仓库.diuQiZongShu > 0" class="rizhi-diuqi">
-          {{ huoQuFanYi('shiShiRiZhi', 'diuQi') }} {{ 日志仓库.diuQiZongShu }}
+          {{ huoQuFanYi('shiShiRiZhi', 'diuQi') }}{{ 日志仓库.diuQiZongShu }}
         </span>
         <button class="rizhi-guanbi" type="button" @click="日志仓库.qieHuanKeJian()">
           {{ huoQuFanYi('shiShiRiZhi', 'guanBi') }}
@@ -427,7 +427,6 @@ onBeforeUnmount(() => {
   padding: 3px 8px;
   font-size: 11px;
   color: #d6e6ff;
-  outline: none;
 }
 
 .rizhi-gundong-qu {

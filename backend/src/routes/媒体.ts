@@ -1,3 +1,4 @@
+﻿import { debug日志 } from '../utils/debug日志'
 import { Router } from 'express'
 import type { Request, Response } from 'express'
 import fs from 'fs'
@@ -25,7 +26,7 @@ luYou.get('/:sha256', async (qingQiu: Request, xiangYing: Response) => {
     }
 
     const chaXun = await 数据库.query(
-      `SELECT "MIME" FROM "媒体文件" WHERE "SHA256" = $1 LIMIT 1`,
+      `SELECT "MIME", "原始文件名", "类别" FROM "媒体文件" WHERE "SHA256" = $1 LIMIT 1`,
       [di],
     )
     if (chaXun.rows.length === 0) {
@@ -40,6 +41,14 @@ luYou.get('/:sha256', async (qingQiu: Request, xiangYing: Response) => {
     }
     if (!wenJianCunZai) {
       return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('liaoTian', 'meiTiBuCunZai'))
+    }
+
+    // 低危顺手项：wenjian 类下载强制附件形式，防止内联渲染 HTML/SVG 类内容
+    if (String(chaXun.rows[0].类别 || '') === 'wenjian') {
+      const anQuanWenJianMing = String(chaXun.rows[0].原始文件名 || 'download')
+        .replace(/[\r\n"\\]/g, '_')
+      xiangYing.setHeader('Content-Disposition', `attachment; filename="${anQuanWenJianMing}"`)
+      xiangYing.setHeader('X-Content-Type-Options', 'nosniff')
     }
 
     // 关闭 send 自带的 ETag/Cache-Control/Last-Modified，改用内容哈希作为强校验器
@@ -61,7 +70,7 @@ luYou.get('/:sha256', async (qingQiu: Request, xiangYing: Response) => {
       }
     })
   } catch (cuoWu) {
-    console.error('媒体下载失败', cuoWu)
+    debug日志.error('媒体下载', '媒体下载失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
   }
 })

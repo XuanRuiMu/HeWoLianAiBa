@@ -1,3 +1,4 @@
+﻿import { debug日志 } from '../utils/debug日志'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianDirectorPrompt } from './Prompt构建器'
 import { gouJianYongHuTuXiangKuai } from './AI视觉辅助'
@@ -9,6 +10,7 @@ export interface DirectorJieGuo {
   cheng_gong: boolean
   ce_lue: DirectorCeLue
   cuo_wu?: string
+  si_kao?: string
 }
 
 function moRenCeLue(): DirectorCeLue {
@@ -20,6 +22,7 @@ function moRenCeLue(): DirectorCeLue {
     hui_fu_tiao_shu: 1,
     shi_jian_qing_xu: '正常',
     shi_fou_che_hui: false,
+    shi_fou_zhu_dong_biao_bai: false,
   }
 }
 
@@ -75,10 +78,10 @@ export async function shengChengDirectorCeLue(
     ], shangXiaWen)
 
     const ceLue = jieXiDirectorXiangYing(xiangYing.neiRong)
-    return { cheng_gong: true, ce_lue: ceLue }
+    return { cheng_gong: true, ce_lue: ceLue, si_kao: xiangYing.siKaoNeiRong || undefined }
   } catch (cuoWu) {
     const cuoWuXinXi = cuoWu instanceof Error ? cuoWu.message : String(cuoWu)
-    console.error('Director调用失败', cuoWuXinXi)
+    debug日志.error('AI导演', 'Director调用失败', { xiang_qing: { cuo_wu: String(cuoWuXinXi) } })
     return {
       cheng_gong: false,
       ce_lue: moRenCeLue(),

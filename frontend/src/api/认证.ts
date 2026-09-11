@@ -11,6 +11,7 @@ export interface 注册请求 {
   yongHuMing: string
   miMa: string
   tongYiXieYi: boolean
+  chuShengRiQi: string
 }
 
 export interface 登录请求 {
@@ -44,6 +45,7 @@ export async function zhuCe(
   yongHuMing: string,
   miMa: string,
   tongYiXieYi: boolean,
+  chuShengRiQi: string,
 ): Promise<DengLuXiangYing> {
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: DengLuXiangYing }>('/认证/注册', {
     shouJiHao,
@@ -51,6 +53,7 @@ export async function zhuCe(
     yongHuMing,
     miMa,
     tongYiXieYi,
+    chuShengRiQi,
   })
   return 响应.data.shu_ju
 }
@@ -91,6 +94,11 @@ export async function gengGaiMoRenXingBie(moRenXingBie: XingBie): Promise<Yonghu
 export async function huoQuYongHuXinXi(): Promise<Yonghu> {
   const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: Yonghu }>('/认证/信息')
   return 响应.data.shu_ju
+}
+
+// C3 账号注销：匿名化用户并清理关联数据，旧令牌吊销
+export async function zhuXiaoZhangHao(): Promise<void> {
+  await http.delete<{ cheng_gong: boolean; ti_shi?: string }>('/认证/注销')
 }
 
 export async function sheZhiZiLiao(shuJu: 资料请求): Promise<Yonghu> {

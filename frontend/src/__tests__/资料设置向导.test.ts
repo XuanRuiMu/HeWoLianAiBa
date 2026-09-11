@@ -6,6 +6,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import 资料设置向导 from '@/views/资料设置向导.vue'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
 import { huoQuFanYi } from '@/config/translations'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
 type ZuJianBaoZhuang = VueWrapper
 
@@ -366,5 +368,204 @@ describe('资料设置向导组件', () => {
     expect(xinWrapper.text()).toContain(huoQuFanYi('ziLiaoSheZhi', 'buZhou2BiaoTi'))
     const xinDuiXiangKaPian = xinWrapper.findAll('.duiXiang-xingBie-kaPian')
     expect(xinDuiXiangKaPian[0].classes()).toContain('beiXuanZhong')
+  })
+
+  it('心目中的TA：默认折叠，点击开关展开表单', async () => {
+    const { wrapper } = await 挂载组件()
+    await 进入步骤三(wrapper)
+
+    const biaoDan = wrapper.find('.xinmuzhong-ta-biaodan')
+    expect(biaoDan.exists()).toBe(true)
+    expect(biaoDan.isVisible()).toBe(false)
+
+    await wrapper.find('.xinmuzhong-ta-kaiguan').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('.xinmuzhong-ta-biaodan').isVisible()).toBe(true)
+  })
+
+  it('心目中的TA：填写的自定义信息随开始聊天透传到加载页', async () => {
+    const { wrapper } = await 挂载组件()
+    await 进入步骤三(wrapper)
+    await wrapper.find('.xinmuzhong-ta-kaiguan').trigger('click')
+    await flushPromises()
+
+    const shuruKuang = wrapper.findAll('.xinmuzhong-shurukuang')
+    // 顺序：微信名 / 真实姓名 / 年龄 / 通用提示词(textarea)
+    expect(shuruKuang.length).toBe(4)
+    await shuruKuang[0].setValue('柠檬味的风')
+    await shuruKuang[1].setValue('林晚晚')
+    await shuruKuang[2].setValue('21')
+    await shuruKuang[3].setValue('开朗爱笑，喜欢看电影')
+
+    const mbtiKaPian = wrapper.findAll('.mbti-kaPian')
+    await mbtiKaPian[0].trigger('click')
+    await flushPromises()
+
+    await wrapper.find('.kaiShiLiaoTian').trigger('click')
+    await flushPromises()
+
+    const linShi = sessionStorage.getItem('ziLiaoSheZhiLinShi')
+    expect(linShi).toBeTruthy()
+    const ziLiao = JSON.parse(linShi!)
+    expect(ziLiao.xinMuZhongDeTa).toEqual({
+      weiXinMing: '柠檬味的风',
+      zhenShiMing: '林晚晚',
+      nianLing: '21',
+      tongYongTiShiCi: '开朗爱笑，喜欢看电影',
+    })
+  })
+
+  it('心目中的TA：仅填通用提示词也能透传', async () => {
+    const { wrapper } = await 挂载组件()
+    await 进入步骤三(wrapper)
+    await wrapper.find('.xinmuzhong-ta-kaiguan').trigger('click')
+    await flushPromises()
+
+    const shuruKuang = wrapper.findAll('.xinmuzhong-shurukuang')
+    await shuruKuang[3].setValue('喜欢打篮球的开朗同学')
+
+    const mbtiKaPian = wrapper.findAll('.mbti-kaPian')
+    await mbtiKaPian[0].trigger('click')
+    await flushPromises()
+
+    await wrapper.find('.kaiShiLiaoTian').trigger('click')
+    await flushPromises()
+
+    const linShi = sessionStorage.getItem('ziLiaoSheZhiLinShi')
+    expect(linShi).toBeTruthy()
+    const ziLiao = JSON.parse(linShi!)
+    expect(ziLiao.xinMuZhongDeTa).toEqual({
+      weiXinMing: '',
+      zhenShiMing: '',
+      nianLing: '',
+      tongYongTiShiCi: '喜欢打篮球的开朗同学',
+    })
+  })
+
+  it('心目中的TA：全部留空时透传值为null', async () => {
+    const { wrapper } = await 挂载组件()
+    await 进入步骤三(wrapper)
+
+    const mbtiKaPian = wrapper.findAll('.mbti-kaPian')
+    await mbtiKaPian[1].trigger('click')
+    await flushPromises()
+
+    await wrapper.find('.kaiShiLiaoTian').trigger('click')
+    await flushPromises()
+
+    const linShi = sessionStorage.getItem('ziLiaoSheZhiLinShi')
+    expect(linShi).toBeTruthy()
+    const ziLiao = JSON.parse(linShi!)
+    expect(ziLiao.xinMuZhongDeTa).toBeNull()
+  })
+
+  it('心目中的TA：旧职业城市家乡身份字段已删，仅三框加提示词', async () => {
+    const { wrapper } = await 挂载组件()
+    await 进入步骤三(wrapper)
+    await wrapper.find('.xinmuzhong-ta-kaiguan').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('select.xinmuzhong-xuanze').exists()).toBe(false)
+    expect(wrapper.find('.xinmuzhong-shuangLie').exists()).toBe(false)
+    const wenBen = wrapper.text()
+    expect(wenBen).not.toContain('职业')
+    expect(wenBen).not.toContain('城市')
+    expect(wenBen).not.toContain('家乡')
+    expect(wenBen).not.toContain('身份')
+    expect(wenBen).toContain(huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongWeiXinMing'))
+    expect(wenBen).toContain(huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongZhenShiMing'))
+    expect(wenBen).toContain(huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongNianLing'))
+    expect(wenBen).toContain(huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongTongYongTiShiCi'))
+    expect(wrapper.find('textarea.xinmuzhong-wenbenyu').exists()).toBe(true)
+  })
+
+  it('心目中的TA：年龄输入框选填越界自动归一到最近合法数字', async () => {
+    const { wrapper } = await 挂载组件()
+    await 进入步骤三(wrapper)
+    await wrapper.find('.xinmuzhong-ta-kaiguan').trigger('click')
+    await flushPromises()
+
+    const nianLingKuang = wrapper.findAll('.xinmuzhong-shurukuang')[2]
+    expect(nianLingKuang.attributes('type')).toBe('number')
+    expect(nianLingKuang.attributes('step')).toBe('1')
+    expect(nianLingKuang.attributes('placeholder')).toBe(
+      huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongNianLingZhanwei'),
+    )
+    await nianLingKuang.setValue('150')
+    await nianLingKuang.trigger('blur')
+    await flushPromises()
+    expect((nianLingKuang.element as HTMLInputElement).value).toBe('100')
+    await nianLingKuang.setValue('-5')
+    await nianLingKuang.trigger('blur')
+    await flushPromises()
+    expect((nianLingKuang.element as HTMLInputElement).value).toBe('0')
+  })
+
+  it('心目中的TA：三框加提示词文案走翻译无硬编码', async () => {
+    const xiangDaoYuanMa = readFileSync(resolve(__dirname, '../views/资料设置向导.vue'), 'utf8')
+    for (const jian of [
+      'xinMuZhongWeiXinMing',
+      'xinMuZhongWeiXinMingZhanwei',
+      'xinMuZhongZhenShiMing',
+      'xinMuZhongZhenShiMingZhanwei',
+      'xinMuZhongNianLing',
+      'xinMuZhongNianLingZhanwei',
+      'xinMuZhongTongYongTiShiCi',
+      'xinMuZhongTongYongTiShiCiZhanwei',
+      'xinMuZhongSuiJiXingGeTiShi',
+      'xinMuZhongYiXuanJianGuTiShi',
+      'taDaiTiNan',
+      'taDaiTiNv',
+    ] as const) {
+      expect(xiangDaoYuanMa).toContain(`huoQuFanYi('ziLiaoSheZhi', '${jian}')`)
+    }
+    expect(xiangDaoYuanMa).not.toContain('xinMuZhongShenFen')
+    expect(xiangDaoYuanMa).not.toContain('xinMuZhongZhiYe')
+    expect(xiangDaoYuanMa).not.toContain('xinMuZhongChengShi')
+    expect(xiangDaoYuanMa).not.toContain('xinMuZhongJiaXiang')
+    expect(xiangDaoYuanMa).not.toContain("'他'")
+    expect(xiangDaoYuanMa).not.toContain("'她'")
+  })
+
+  it('心目中的TA：随机性格与已选冲突提示走翻译渲染', async () => {
+    const { wrapper } = await 挂载组件()
+    await 进入步骤三(wrapper)
+
+    expect(wrapper.text()).toContain(huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongSuiJiXingGeTiShi'))
+    expect(wrapper.text()).toContain(huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongYiXuanJianGuTiShi'))
+  })
+
+  it('心目中的TA：随机加通用提示词时选中最接近性格', async () => {
+    const { wrapper, cangKu } = await 挂载组件()
+    await 进入步骤三(wrapper)
+    await wrapper.find('.xinmuzhong-ta-kaiguan').trigger('click')
+    await flushPromises()
+
+    const shuruKuang = wrapper.findAll('.xinmuzhong-shurukuang')
+    await shuruKuang[3].setValue('热情开朗喜欢交朋友，脑洞大有想象力，温柔体贴爱笑，随性自由爱冒险')
+
+    await wrapper.find('.suiJi-kaPian').trigger('click')
+    await flushPromises()
+
+    expect(cangKu.ziLiaoShuJu.xingGeXuanZe).toBe('ENFP')
+  })
+
+  it('心目中的TA：展开收起对比色走主题变量单源，深白浅黑无hover变色', async () => {
+    const xiangDaoYuanMa = readFileSync(resolve(__dirname, '../views/资料设置向导.vue'), 'utf8')
+    const bianLiangCss = readFileSync(resolve(__dirname, '../styles/variables.css'), 'utf8')
+
+    expect(xiangDaoYuanMa).toContain('color: var(--xinmuzhong-duibi-se)')
+    expect(xiangDaoYuanMa).toContain('background: var(--xinmuzhong-qukuai-beijing)')
+    expect(xiangDaoYuanMa).toContain('border: 1px solid var(--xinmuzhong-qukuai-biankuang)')
+    expect(bianLiangCss).toContain('--xinmuzhong-duibi-se:')
+    expect(bianLiangCss).toMatch(/--xinmuzhong-duibi-se:\s*#ffffff/)
+    expect(bianLiangCss).toMatch(/--xinmuzhong-duibi-se:\s*#191919/)
+    expect(xiangDaoYuanMa).not.toMatch(
+      /\.xinmuzhong-ta-kaiguan:hover\s+\.xinmuzhong-ta-zhuangtai\s*\{[^}]*filter:/,
+    )
+    expect(xiangDaoYuanMa).toMatch(
+      /\.xinmuzhong-ta-kaiguan:hover\s+\.xinmuzhong-ta-zhuangtai\s*\{[^}]*transform:\s*translateX\(2px\)/,
+    )
   })
 })

@@ -1,4 +1,4 @@
-import type { Server } from 'socket.io'
+﻿import type { Server } from 'socket.io'
 import type { RenZhengSocket } from './认证'
 import { yanZhengUUID } from '../utils/验证'
 import { huoQuFanYi } from '../config/translations'
@@ -6,11 +6,12 @@ import { huoQuJiaoSeSuoYouZhe } from '../services/消息'
 import {
   faQi,
   yongHuQuXiao,
+  yongHuJuJie,
   yongHuGuaDuan,
   sheZhiTongHuaIo,
   type TongHuaLeiXing,
 } from '../services/通话'
-import { jiLuSocketShiJian } from '../utils/debug日志'
+import { debug日志, jiLuSocketShiJian } from '../utils/debug日志'
 
 const YUN_XU_LEI_XING: TongHuaLeiXing[] = ['yuYin', 'shiPin']
 
@@ -63,7 +64,7 @@ export function chuShiHuaTongHuaSocket(io: Server): void {
         const jieGuo = await faQi(用户ID, jiaoSeId, leiXing as TongHuaLeiXing)
         huiDiao?.(jieGuo)
       } catch (cuoWu) {
-        console.error('通话邀请处理失败', cuoWu)
+        debug日志.error('通话Socket', '通话邀请处理失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
         huiDiao?.({ chengGong: false, tiShi: huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu') })
       }
     })
@@ -81,7 +82,25 @@ export function chuShiHuaTongHuaSocket(io: Server): void {
         const jieGuo = await yongHuQuXiao(用户ID, tongHuaId)
         huiDiao?.(jieGuo)
       } catch (cuoWu) {
-        console.error('通话取消处理失败', cuoWu)
+        debug日志.error('通话Socket', '通话取消处理失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+        huiDiao?.({ chengGong: false, tiShi: huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu') })
+      }
+    })
+
+    socket.on('通话拒绝', async (shuJu: unknown, huiDiao?: (jieGuo: unknown) => void) => {
+      try {
+        const tongHuaId = quZiFuChuan(
+          (shuJu as { tongHuaId?: unknown } | null)?.tongHuaId,
+        )
+        if (!yanZhengUUID(tongHuaId)) {
+          huiDiao?.({ chengGong: false, tiShi: huoQuFanYi('tongHua', 'canShuBuHeFa') })
+          return
+        }
+
+        const jieGuo = await yongHuJuJie(用户ID, tongHuaId)
+        huiDiao?.(jieGuo)
+      } catch (cuoWu) {
+        debug日志.error('通话Socket', '通话拒绝处理失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
         huiDiao?.({ chengGong: false, tiShi: huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu') })
       }
     })
@@ -99,7 +118,7 @@ export function chuShiHuaTongHuaSocket(io: Server): void {
         const jieGuo = await yongHuGuaDuan(用户ID, tongHuaId)
         huiDiao?.(jieGuo)
       } catch (cuoWu) {
-        console.error('通话挂断处理失败', cuoWu)
+        debug日志.error('通话Socket', '通话挂断处理失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
         huiDiao?.({ chengGong: false, tiShi: huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu') })
       }
     })

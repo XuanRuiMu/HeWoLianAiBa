@@ -70,6 +70,8 @@ export interface Yonghu {
 
 export interface DengLuXiangYing {
   令牌: string
+  刷新令牌?: string
+  刷新令牌ID?: string
   用户: Yonghu
   新用户: boolean
   是否管理员: boolean
@@ -80,6 +82,8 @@ export interface Xiaoxi {
   hui_hua_id: string
   fa_song_zhe_id: string
   fa_song_zhe_lei_xing: 'yonghu' | 'jiaose' | 'xitong'
+  /** C1 GB 45438-2025 隐式元数据标识：AI 生成消息为 true（机器可读，禁止渲染或移除） */
+  ai_biao_shi?: boolean
   nei_rong: string
   lei_xing:
     | 'wenben'
@@ -152,6 +156,7 @@ export interface Jiaose {
   hua_shu?: string[]
   bao_lu_fang_shi?: string
   shi_po_xian_suo?: string[]
+  voice_id?: string
 }
 
 export interface ShengChengJiaoSeJieGuo {
@@ -294,6 +299,7 @@ export interface DangAnXiangQing {
   you_xi_jie_shu_shi_jian: string | null
   sui_ji_xing_ge?: boolean
   mbti_lei_xing?: string
+  jun_shi_ji_lu: JunShiJiLu[]
 }
 
 export interface FuPanTiaoMu {

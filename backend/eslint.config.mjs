@@ -15,7 +15,7 @@ export default tseslint.config(
       },
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-unused-expressions': 'off',
@@ -25,7 +25,7 @@ export default tseslint.config(
       'no-useless-escape': 'off',
       'no-empty': 'off',
       'no-irregular-whitespace': 'off',
-      'no-console': 'off',
+      'no-console': 'error',
       'preserve-caught-error': 'off',
     },
   },

@@ -237,9 +237,9 @@ describe('FP-03 军师指导面板单级菜单化', () => {
 
       const touXiangLieBiao = wrapper.findAll('.junshi-kapian .touxiang-tu')
       expect(touXiangLieBiao.length).toBe(3)
-      expect(touXiangLieBiao[0].attributes('src')).toBe('/图片/军师头像/军师玄锐暮头像.png')
-      expect(touXiangLieBiao[1].attributes('src')).toBe('/图片/军师头像/军师测试军师1头像.png')
-      expect(touXiangLieBiao[2].attributes('src')).toBe('/图片/军师头像/军师测试军师2头像.png')
+      expect(touXiangLieBiao[0].attributes('src')).toBe(encodeURI('/图片/军师头像/军师玄锐暮头像.png'))
+      expect(touXiangLieBiao[1].attributes('src')).toBe(encodeURI('/图片/军师头像/军师测试军师1头像.png'))
+      expect(touXiangLieBiao[2].attributes('src')).toBe(encodeURI('/图片/军师头像/军师测试军师2头像.png'))
     })
 
     it('缺少jiaoSeId时请求按钮禁用', async () => {

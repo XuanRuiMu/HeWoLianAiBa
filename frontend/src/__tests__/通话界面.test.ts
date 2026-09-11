@@ -309,6 +309,23 @@ describe('FP-21 通话仓库状态机', () => {
     expect(通话仓库.zuiHouZhongTai).toBeNull()
   })
 
+  it('振铃期收到 通话拒绝 直接进入终态，通话结束(yiJuJie) 记录原因并归位', async () => {
+    vi.useFakeTimers()
+    const { 通话仓库, jianTingQi } = await chuangJianTongHuaHuanJing()
+    await expect(通话仓库.faQiTongHua('j1', 'yuYin')).resolves.toBe(true)
+    expect(通话仓库.zhuangTai).toBe('zhenLing')
+
+    jianTingQi.get('通话拒绝')?.({ tongHuaId: 't-1' })
+    expect(通话仓库.zhuangTai).toBe('yiJieShu')
+
+    jianTingQi.get('通话结束')?.({ tongHuaId: 't-1', zhuangTai: 'yiJuJie', shiChangMiao: 0 })
+    expect(通话仓库.zuiHouZhongTai).toBe('yiJuJie')
+
+    vi.advanceTimersByTime(3000)
+    expect(通话仓库.zhuangTai).toBe('kongXian')
+    expect(通话仓库.zuiHouZhongTai).toBeNull()
+  })
+
   it('getUserMedia 被拒：报翻译错误且不进入振铃、不发邀请', async () => {
     const getUserMediaMock = vi.fn().mockRejectedValue(new Error('NotAllowedError'))
     anzhuangMeiTiSheBei(getUserMediaMock)
@@ -509,6 +526,17 @@ describe('FP-21 通话界面组件渲染', () => {
     wrapper.unmount()
   })
 
+  it('拒绝终态：状态文本显示对方拒绝了通话', async () => {
+    const { wrapper, 通话仓库 } = guaZaiZuJian()
+    通话仓库.leiXing = 'yuYin'
+    通话仓库.zhuangTai = 'yiJieShu'
+    通话仓库.zuiHouZhongTai = 'yiJuJie'
+    await nextTick()
+
+    expect(wrapper.find('.zhuangtai-wenben').text()).toBe(huoQuFanYi('tongHua', 'tongHuaYiJuJie'))
+    wrapper.unmount()
+  })
+
   it('组件卸载兜底清理铃声资源', async () => {
     const { wrapper } = guaZaiZuJian()
     qiDongZhenLing()
@@ -524,6 +552,7 @@ describe('FP-21 翻译键存在性', () => {
       'yiLianJie',
       'yiJieShu',
       'tongHuaYiQuXiao',
+      'tongHuaYiJuJie',
       'quXiao',
       'guaDuan',
       'kaiQiSheXiangTouShiBai',

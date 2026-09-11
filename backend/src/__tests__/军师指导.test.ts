@@ -9,7 +9,6 @@ import {
   type TiaoYongCanShu,
   type TiaoYongJieGuo,
 } from '../utils/DeepSeek客户端'
-import { xieRuFuPanTiaoMu } from '../services/复盘条目'
 import { JUN_SHI_PEI_ZHI, JUN_SHI_PEI_ZHI_MO_REN } from '../config/军师配置'
 import { huoQuFanYi } from '../config/translations'
 import { aiQingQiuXianLiu } from '../middleware/限流'
@@ -38,6 +37,7 @@ async function chuangJianCeShiYongHu(): Promise<{ shouJiHao: string; lingPai: st
       yongHuMing: `测试用户${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       miMa: 'testPassword123',
       tongYiXieYi: true,
+      chuShengRiQi: '2000-01-01',
     })
     .expect(200)
 
@@ -77,7 +77,6 @@ async function qingLiJiaoSeHeYongHu(yongHuId: string): Promise<void> {
 async function qingLiJunShiRedis(yongHuId: string, jiaoSeId: string): Promise<void> {
   await redis.del(`军师哈希:${yongHuId}:${jiaoSeId}`)
   await redis.del(`军师记录:${yongHuId}:${jiaoSeId}`)
-  await redis.del(`复盘条目:${yongHuId}:${jiaoSeId}`)
   await redis.del(`军师指导状态:${yongHuId}:${jiaoSeId}`)
 }
 
@@ -244,43 +243,6 @@ describe('FP-12 军师指导系统', () => {
       expect(junShiTiaoYong).toBeDefined()
       expect(junShiTiaoYong!.xiaoXi[0].neiRong).toBe(JUN_SHI_PEI_ZHI.ceShiJunShi1.xiTongTiShi)
       expect(junShiTiaoYong!.xiaoXi[0].neiRong).toBe(JUN_SHI_PEI_ZHI.xuanRuiMu.xiTongTiShi)
-    })
-
-    it('军师 Prompt 包含好感度四维分数、复盘条目和撤回消息原始内容', async () => {
-      mock.sheZhiXiangYing({ neiRong: '这是指导内容。' })
-
-      await xieRuFuPanTiaoMu(ceShiYongHu!.yongHuId, jiaoSeId, {
-        shi_jian: new Date().toISOString(),
-        yong_hu_xiao_xi: '用户消息',
-        ai_hui_fu: 'AI回复',
-        ai_xin_li_huo_dong: 'AI内心活动',
-        hao_gan_du_bian_hua: {
-          xin_ren_bian_hua: 1,
-          qin_mi_bian_hua: 1,
-          qu_wei_bian_hua: 0,
-          guan_huai_bian_hua: 0,
-          zong_fen_bian_hua: 2,
-        },
-      })
-
-      const xiaoXiId = await faSongCeShiXiaoXi(ceShiYongHu!.lingPai, jiaoSeId, '这条会撤回')
-      await cheHuiCeShiXiaoXi(ceShiYongHu!.lingPai, jiaoSeId, xiaoXiId)
-
-      await request(yingYong)
-        .post('/api/聊天/军师')
-        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
-        .send({ jiaoSeId })
-        .expect(200)
-
-      const junShiTiaoYong = mock.jiLu.find((ji) => ji.zuiDaTokens === 64000)
-      expect(junShiTiaoYong).toBeDefined()
-      const yongHuPrompt = junShiTiaoYong!.xiaoXi[1]?.neiRong || ''
-      expect(yongHuPrompt).toContain('信任')
-      expect(yongHuPrompt).toContain('亲密')
-      expect(yongHuPrompt).toContain('趣味')
-      expect(yongHuPrompt).toContain('关怀')
-      expect(yongHuPrompt).toContain('复盘条目')
-      expect(yongHuPrompt).toContain('原始内容：这条会撤回')
     })
 
     it('军师 Prompt 包含自然度提升要素', async () => {

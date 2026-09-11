@@ -1,9 +1,8 @@
-import { JUN_SHI_PEI_ZHI, JUN_SHI_PEI_ZHI_MO_REN, JUN_SHI_QIU_ZHU_FU_PAN_TIAO_MU_SHU_LIANG } from '../config/军师配置'
+﻿import { JUN_SHI_PEI_ZHI, JUN_SHI_PEI_ZHI_MO_REN } from '../config/军师配置'
 import { AI_PEI_ZHI } from '../config/AI配置'
 import { huoQuFanYi } from '../config/translations'
 import { gouJianJiaoSeShangXiaWen } from '../config/AI参数策略'
 import { huoQuWanZhengHaoGanDu } from './好感度'
-import { huoQuFuPanTiaoMuLieBiao } from './复盘条目'
 import { huoQuXiaoXiLieBiao, huoQuJiaoSeSuoYouZhe } from './消息'
 import { shengChengJunShiZhiDao } from './军师求助'
 import { huoQuAIJiaoSeXinXi } from './AI输入准备'
@@ -20,7 +19,7 @@ import {
   type JunShiJiLuLiaoTianXiaoXi,
   type JunShiZhiDaoZhuangTaiXinXi,
 } from './军师缓存'
-import { jiLuJunShiQiuZhu } from '../utils/debug日志'
+import { debug日志, jiLuJunShiQiuZhu } from '../utils/debug日志'
 import type { HaoGanDuXinXi } from '../types'
 
 export interface JunShiLieBiaoXiangYing {
@@ -185,22 +184,6 @@ export async function qingQiuJunShiZhiDao(
 
   try {
     const haoGanDu = await huoQuHaoGanDu(canShu.yong_hu_id, canShu.jiao_se_id)
-    const fuPanTiaoMu = await huoQuFuPanTiaoMuLieBiao(
-      canShu.yong_hu_id,
-      canShu.jiao_se_id,
-      JUN_SHI_QIU_ZHU_FU_PAN_TIAO_MU_SHU_LIANG,
-    )
-
-    const fuPanWenBenLieBiao = fuPanTiaoMu.map((tiaoMu) => {
-      const bianHua = tiaoMu.hao_gan_du_bian_hua
-      return [
-        `时间：${tiaoMu.shi_jian}`,
-        `用户消息：${tiaoMu.yong_hu_xiao_xi}`,
-        `AI回复：${tiaoMu.ai_hui_fu}`,
-        `AI内心活动：${tiaoMu.ai_xin_li_huo_dong}`,
-        `好感度变化：信任${bianHua.xin_ren_bian_hua} 亲密${bianHua.qin_mi_bian_hua} 趣味${bianHua.qu_wei_bian_hua} 关怀${bianHua.guan_huai_bian_hua} 总分${bianHua.zong_fen_bian_hua}`,
-      ].join('\n')
-    })
 
     const zhiDaoJieGuo = await shengChengJunShiZhiDao(
       {
@@ -209,7 +192,7 @@ export async function qingQiuJunShiZhiDao(
         jiao_se_ming: jiaoSeXinXi.wei_xin_ming,
         dui_hua_li_shi: duiHuaLiShi,
         hao_gan_du: haoGanDu,
-        fu_pan_tiao_mu: fuPanWenBenLieBiao,
+        fu_pan_tiao_mu: [],
         jun_shi_pei_zhi: {
           id: junShiPeiZhi.id,
           mingCheng: junShiPeiZhi.mingCheng,
@@ -245,7 +228,7 @@ export async function qingQiuJunShiZhiDao(
           guan_huai_du: haoGanDu.guan_huai_du,
           guan_xi_jie_duan: haoGanDu.guan_xi_jie_duan,
         },
-        fu_pan_tiao_mu: fuPanTiaoMu,
+        fu_pan_tiao_mu: [],
       },
     }
 
@@ -282,7 +265,7 @@ export async function qingQiuJunShiZhiDao(
   } catch (cuoWu) {
     await shanChuJunShiZhiDaoZhuangTai(canShu.yong_hu_id, canShu.jiao_se_id)
     jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, false, 'XI_TONG_YI_CHANG')
-    console.error('请求军师指导异常', cuoWu)
+    debug日志.error('军师指导', '请求军师指导异常', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return {
       cheng_gong: false,
       cuo_wu_ma: 'XI_TONG_YI_CHANG',

@@ -41,5 +41,6 @@ export async function shengChengWriterHuiFu(
   return {
     xiao_xi_lie_biao: xiaoXiLieBiao,
     yuan_wen: xiangYing.neiRong,
+    si_kao: xiangYing.siKaoNeiRong || undefined,
   }
 }

@@ -1,3 +1,4 @@
+﻿import { debug日志 } from '../utils/debug日志'
 import { createHash } from 'crypto'
 import { redis } from '../redis'
 import type { XiaoXiXinXi } from './消息'
@@ -50,19 +51,7 @@ export interface JunShiJiLuHouTaiShuJu {
     guan_huai_du: number
     guan_xi_jie_duan: string
   }
-  fu_pan_tiao_mu: {
-    shi_jian: string
-    yong_hu_xiao_xi: string
-    ai_hui_fu: string
-    ai_xin_li_huo_dong: string
-    hao_gan_du_bian_hua: {
-      xin_ren_bian_hua: number
-      qin_mi_bian_hua: number
-      qu_wei_bian_hua: number
-      guan_huai_bian_hua: number
-      zong_fen_bian_hua: number
-    }
-  }[]
+  fu_pan_tiao_mu: never[]
 }
 
 export interface JunShiJiLuXiang {
@@ -109,7 +98,7 @@ export async function jianChaJunShiChongFu(
     const lie_biao = await redis.lrange(`${JUN_SHI_HA_XI_KEY}:${yong_hu_id}:${jiao_se_id}`, 0, -1)
     return lie_biao.includes(ha_xi)
   } catch (cuo_wu) {
-    console.error('检查军师重复失败', cuo_wu)
+    debug日志.error('军师缓存', '检查军师重复失败', { xiang_qing: { cuo_wu: String(cuo_wu) } })
     return false
   }
 }
@@ -124,7 +113,7 @@ export async function baoCunJunShiHaXi(
     await redis.lpush(key, ha_xi)
     await redis.expire(key, TTL_MIAO)
   } catch (cuo_wu) {
-    console.error('保存军师哈希失败', cuo_wu)
+    debug日志.error('军师缓存', '保存军师哈希失败', { xiang_qing: { cuo_wu: String(cuo_wu) } })
   }
 }
 
@@ -139,7 +128,7 @@ export async function baoCunJunShiJiLu(
     await redis.ltrim(key, 0, JI_LU_ZUI_DA_SHU_LIANG - 1)
     await redis.expire(key, TTL_MIAO)
   } catch (cuo_wu) {
-    console.error('保存军师记录失败', cuo_wu)
+    debug日志.error('军师缓存', '保存军师记录失败', { xiang_qing: { cuo_wu: String(cuo_wu) } })
   }
 }
 
@@ -152,7 +141,7 @@ export async function huoQuJunShiJiLuLieBiao(
     const lie_biao = await redis.lrange(key, 0, -1)
     return lie_biao.map((xiang) => JSON.parse(xiang) as JunShiJiLuXiang)
   } catch (cuo_wu) {
-    console.error('读取军师记录失败', cuo_wu)
+    debug日志.error('军师缓存', '读取军师记录失败', { xiang_qing: { cuo_wu: String(cuo_wu) } })
     return []
   }
 }
@@ -166,7 +155,7 @@ export async function sheZhiJunShiZhiDaoZhuangTai(
     const key = `${JUN_SHI_ZHI_DAO_ZHUANG_TAI_KEY}:${yong_hu_id}:${jiao_se_id}`
     await redis.set(key, JSON.stringify(zhuang_tai), 'EX', ZHUANG_TAI_TTL_MIAO)
   } catch (cuo_wu) {
-    console.error('设置军师指导状态失败', cuo_wu)
+    debug日志.error('军师缓存', '设置军师指导状态失败', { xiang_qing: { cuo_wu: String(cuo_wu) } })
   }
 }
 
@@ -180,7 +169,7 @@ export async function huoQuJunShiZhiDaoZhuangTai(
     if (!zhi) return null
     return JSON.parse(zhi) as JunShiZhiDaoZhuangTaiXinXi
   } catch (cuo_wu) {
-    console.error('获取军师指导状态失败', cuo_wu)
+    debug日志.error('军师缓存', '获取军师指导状态失败', { xiang_qing: { cuo_wu: String(cuo_wu) } })
     return null
   }
 }
@@ -193,6 +182,6 @@ export async function shanChuJunShiZhiDaoZhuangTai(
     const key = `${JUN_SHI_ZHI_DAO_ZHUANG_TAI_KEY}:${yong_hu_id}:${jiao_se_id}`
     await redis.del(key)
   } catch (cuo_wu) {
-    console.error('删除军师指导状态失败', cuo_wu)
+    debug日志.error('军师缓存', '删除军师指导状态失败', { xiang_qing: { cuo_wu: String(cuo_wu) } })
   }
 }

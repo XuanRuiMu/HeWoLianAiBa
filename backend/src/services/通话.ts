@@ -1,11 +1,12 @@
-import { randomUUID } from 'crypto'
+﻿import { randomUUID } from 'crypto'
 import type { Server } from 'socket.io'
 import { 数据库 } from '../数据库'
 import { huoQuIo } from '../socket/io'
 import { huoQuFanYi } from '../config/translations'
 import { TONG_HUA_PEI_ZHI } from '../config/通话配置'
-import { jiLuSocketShiJian } from '../utils/debug日志'
+import { debug日志, jiLuSocketShiJian } from '../utils/debug日志'
 import type { XiaoXiXinXi } from './消息'
+import { shiXiaoXiaoXiZongShuHuanCun } from './消息'
 
 export type TongHuaLeiXing = 'yuYin' | 'shiPin'
 export type TongHuaZhongTai = 'yiJieTong' | 'yiQuXiao' | 'yiJuJie' | 'yiChaoShi'
@@ -79,11 +80,13 @@ async function chaRuXiTongXiaoXi(huiHua: TongHuaHuiHua, neiRong: string): Promis
   )
 
   const row = jieGuo.rows[0]
+  await shiXiaoXiaoXiZongShuHuanCun(huiHua.yongHuId, huiHua.jiaoSeId).catch(() => {})
   return {
     id: String(row.ID),
     hui_hua_id: huiHua.jiaoSeId,
     fa_song_zhe_id: '',
     fa_song_zhe_lei_xing: 'xitong',
+    ai_biao_shi: false,
     nei_rong: String(row.内容),
     lei_xing: String(row.类型 || 'wenben'),
     shi_jian_chuo: new Date(String(row.创建时间)).getTime(),
@@ -143,7 +146,7 @@ export async function faQi(
   const yanChiHaoMiao = TONG_HUA_PEI_ZHI.zhenLingZuiXiaoHaoMiao + Math.random() * zhenLingQuJian
   huiHua.jieTingDingShiQi = setTimeout(() => {
     huiHua.jieTingDingShiQi = null
-    void AIziDongJieTing(tongHuaId).catch((cuoWu) => console.error('AI自动接听失败', cuoWu))
+    void AIziDongJieTing(tongHuaId).catch((cuoWu) => debug日志.error('通话服务', 'AI自动接听失败', { xiang_qing: { cuo_wu: String(cuoWu) } }))
   }, yanChiHaoMiao)
 
   jiLuSocketShiJian('通话邀请', yongHuId, {
@@ -164,7 +167,7 @@ export async function AIziDongJieTing(tongHuaId: string): Promise<void> {
   const chaoShiHaoMiao = TONG_HUA_PEI_ZHI.yingJianShangXianMiao * 1000
   huiHua.chaoShiDingShiQi = setTimeout(() => {
     huiHua.chaoShiDingShiQi = null
-    void yingJianChaoShi(tongHuaId).catch((cuoWu) => console.error('通话硬上限超时处理失败', cuoWu))
+    void yingJianChaoShi(tongHuaId).catch((cuoWu) => debug日志.error('通话服务', '通话硬上限超时处理失败', { xiang_qing: { cuo_wu: String(cuoWu) } }))
   }, chaoShiHaoMiao)
 
   tuiSongDaoYongHu(huiHua.yongHuId, '通话接受', {
@@ -221,6 +224,26 @@ export async function yongHuGuaDuan(
   return { chengGong: true, shiChangMiao }
 }
 
+export async function yongHuJuJie(
+  yongHuId: string,
+  tongHuaId: string,
+): Promise<TongHuaCaoZuoJieGuo> {
+  const huiHua = huiHuaMap.get(tongHuaId)
+  if (!huiHua || huiHua.zhuangTai === 'yiJieShu') {
+    return { chengGong: false, tiShi: huoQuFanYi('tongHua', 'huiHuaBuCunZai') }
+  }
+  if (huiHua.yongHuId !== yongHuId) {
+    return { chengGong: false, tiShi: huoQuFanYi('tongHua', 'wuQuanXian') }
+  }
+  if (huiHua.zhuangTai !== 'zhenLing') {
+    return { chengGong: false, tiShi: huoQuFanYi('tongHua', 'zhuangTaiCuoWu') }
+  }
+
+  tuiSongDaoYongHu(huiHua.yongHuId, '通话拒绝', { tongHuaId })
+  await jieShuDianHua(huiHua, 'yiJuJie')
+  return { chengGong: true }
+}
+
 export async function jieShuDianHua(
   huiHua: TongHuaHuiHua,
   zhongTai: TongHuaZhongTai,
@@ -267,7 +290,7 @@ export async function jieShuDianHua(
       lei_xing: 'xi_tong',
     })
   } catch (cuoWu) {
-    console.error('通话终态落库失败', cuoWu)
+    debug日志.error('通话服务', '通话终态落库失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
   }
 
   tuiSongDaoYongHu(huiHua.yongHuId, '通话结束', {

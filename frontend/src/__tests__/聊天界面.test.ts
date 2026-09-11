@@ -677,6 +677,19 @@ describe('FP-05 聊天界面', () => {
       expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('')
       expect(faSongXiaoXi).not.toHaveBeenCalled()
     })
+
+    it('输入 greedisgood 时直接打开管理员监控且无提示浮窗', async () => {
+      const { wrapper } = await mountLiaoTianYeMian()
+      const shuRuKuang = wrapper.find('.shuru-kuang')
+      await shuRuKuang.setValue('greedisgood')
+      await flushPromises()
+
+      await wrapper.find('.fasong-anniu').trigger('click')
+      await flushPromises()
+
+      expect(document.body.querySelector('.miji-fuchuang')).toBeNull()
+      expect(document.body.querySelector('.guanli-jiankong-fuchuang')).not.toBeNull()
+    })
   })
 
   describe('表情面板外部点击收起（捕获阶段）', () => {
@@ -725,6 +738,22 @@ describe('FP-05 聊天界面', () => {
       expect(wrapper.find('.shuru-kuang').attributes('placeholder')).toBe(
         huoQuFanYi('liaoTian', 'shuRuXiaoXi'),
       )
+    })
+  })
+
+  describe('P0-3 GB45438 AI披露提示条', () => {
+    it('聊天页顶部存在常驻AI披露提示条且文本来自翻译文件', async () => {
+      const { wrapper } = await mountLiaoTianYeMian()
+      const tiShiTiao = wrapper.find('.aitishi-tiao')
+      expect(tiShiTiao.exists()).toBe(true)
+      expect(tiShiTiao.text()).toBe(huoQuFanYi('tongYong', 'aiTiShiTiao'))
+    })
+
+    it('提示条渲染在消息区之外不受复盘模式影响且非硬编码文本', async () => {
+      const { wrapper } = await mountLiaoTianYeMian()
+      const yemian = wrapper.find('.liaotian-yemian')
+      expect(yemian.element.children[0].classList.contains('aitishi-tiao')).toBe(true)
+      expect(liaoTianYeMianYuanMa).not.toContain('仅供娱乐参考')
     })
   })
 
@@ -811,7 +840,6 @@ describe('FP-05 聊天界面', () => {
 
     it('emoji面板展开时不为消息区域额外增加底部内边距（由 grid 布局处理间距，消除空白）', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
-      const xiaoXiQuYu = wrapper.find('.xiaoxi-quyu')
 
       // 已彻底移除：类绑定、补偿变量、补偿样式
       expect(liaoTianYeMianYuanMa).not.toMatch(/emoji-mianban-zhankai/)
@@ -912,7 +940,7 @@ describe('FP-05 聊天界面', () => {
   })
 })
 
-describe('FP-01 聊天输入字数统计常驻显示与右侧定位', () => {
+describe('FP-01 聊天输入字数统计阈值显隐与右侧定位', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.useFakeTimers({ shouldAdvanceTime: true })
@@ -923,16 +951,15 @@ describe('FP-01 聊天输入字数统计常驻显示与右侧定位', () => {
     vi.clearAllMocks()
   })
 
-  it('空输入框时常驻显示字数统计 0/500', async () => {
+  it('空输入框时不显示字数统计', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
     await flushPromises()
 
     const jiShi = wrapper.find('.shuru-dibu-hang .zifu-jishu')
-    expect(jiShi.exists()).toBe(true)
-    expect(jiShi.text()).toBe(`0/${XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu}`)
+    expect(jiShi.exists()).toBe(false)
   })
 
-  it('输入字符数小于阈值时常驻显示字数统计', async () => {
+  it('输入字符数小于阈值时不显示字数统计', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
     const shuRuKuang = wrapper.find('.shuru-kuang')
     const duanNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi - 1)
@@ -941,10 +968,21 @@ describe('FP-01 聊天输入字数统计常驻显示与右侧定位', () => {
     await flushPromises()
 
     const jiShi = wrapper.find('.shuru-dibu-hang .zifu-jishu')
-    expect(jiShi.exists()).toBe(true)
-    expect(jiShi.text()).toBe(
-      `${XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi - 1}/${XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu}`,
-    )
+    expect(jiShi.exists()).toBe(false)
+  })
+
+  it('清空输入后字数统计重新隐藏', async () => {
+    const { wrapper } = await mountLiaoTianYeMian()
+    const shuRuKuang = wrapper.find('.shuru-kuang')
+    const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
+
+    await shuRuKuang.setValue(changNeiRong)
+    await flushPromises()
+    expect(wrapper.find('.shuru-dibu-hang .zifu-jishu').exists()).toBe(true)
+
+    await shuRuKuang.setValue('')
+    await flushPromises()
+    expect(wrapper.find('.shuru-dibu-hang .zifu-jishu').exists()).toBe(false)
   })
 
   it('输入字符数达到阈值时显示字数统计', async () => {
@@ -965,7 +1003,7 @@ describe('FP-01 聊天输入字数统计常驻显示与右侧定位', () => {
   it('字数统计位于输入框之外、表情按钮之前', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
     const shuRuKuang = wrapper.find('.shuru-kuang')
-    const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianZhiYuZhi)
+    const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
 
     await shuRuKuang.setValue(changNeiRong)
     await flushPromises()
@@ -1173,7 +1211,11 @@ describe('FP-02b 输入框声明式高度与滚动条', () => {
     vi.clearAllMocks()
   })
 
-  function jiShuYuDanXingKuang(wrapper: any, scroll: number, client: number) {
+  function jiShuYuDanXingKuang(
+    wrapper: { find: (xuanZeQi: string) => { element: Element } },
+    scroll: number,
+    client: number,
+  ) {
     const shuRuKuang = wrapper.find('.shuru-kuang')
     vi.spyOn(shuRuKuang.element, 'scrollHeight', 'get').mockReturnValue(scroll)
     vi.spyOn(shuRuKuang.element, 'clientHeight', 'get').mockReturnValue(client)
@@ -1618,7 +1660,7 @@ describe('FP-01 发送顺序与钉底滚动根因修复', () => {
           hui_hua_id: 'h1',
           fa_song_zhe_id: 'u1',
           fa_song_zhe_lei_xing: 'yonghu',
-          nei_rong,
+          nei_rong: neiRong,
           lei_xing: 'wenben',
           shi_jian_chuo: Date.now(),
           yi_du: true,

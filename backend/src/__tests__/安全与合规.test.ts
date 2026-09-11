@@ -1,12 +1,12 @@
-process.env.ADMIN_PHONES = '13800000000'
+﻿process.env.ADMIN_PHONES = '13800000000'
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = 'postgres://lovewithme:BXYXblupz542284@localhost:5432/lovewithme'
+  process.env.DATABASE_URL = 'postgres://lovewithme:test-password@localhost:5432/lovewithme'
 }
 if (!process.env.REDIS_URL) {
   process.env.REDIS_URL = 'redis://localhost:6379'
 }
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from 'vitest'
 import request from 'supertest'
 import * as fs from 'fs/promises'
 import * as path from 'path'
@@ -15,6 +15,8 @@ import { 数据库 } from '../数据库'
 import { redis } from '../redis'
 import { huoQuFanYi } from '../config/translations'
 import { sheZhiMockTiaoYong, chongZhiDeepSeekKeHuDuan } from '../utils/DeepSeek客户端'
+import { shenHeNeiRongAnQuan } from '../services/安全审核'
+import { peiZhi } from '../config'
 
 function suiJiShouJiHao(): string {
   return `138${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`
@@ -47,6 +49,7 @@ async function zhuCeYongHu(
       yongHuMing,
       miMa,
       tongYiXieYi: true,
+      chuShengRiQi: '2000-01-01',
     })
     .expect(200)
 
@@ -176,6 +179,7 @@ describe.sequential('FP-17 安全与合规', () => {
           yongHuMing: 'a!@#',
           miMa: 'Test123456',
           tongYiXieYi: true,
+          chuShengRiQi: '2000-01-01',
         })
         .expect(400)
 
@@ -364,6 +368,7 @@ describe.sequential('FP-17 安全与合规', () => {
           yongHuMing: '<script>alert(1)</script>',
           miMa: 'Test123456',
           tongYiXieYi: true,
+          chuShengRiQi: '2000-01-01',
         })
         .expect(200)
 
@@ -576,6 +581,54 @@ describe.sequential('FP-17 安全与合规', () => {
     }
   })
 
+  it('AI审核异常时含输入侧违禁词的消息被新版本地词库拦截', async () => {
+    const weiJinCi = peiZhi.shuRuWeiJinCiLieBiao[0]
+    sheZhiMockTiaoYong(async () => {
+      throw new Error('模拟AI审核服务故障')
+    })
+
+    const jieGuo = await shenHeNeiRongAnQuan(`这句话包含${weiJinCi}词语测试`)
+    expect(jieGuo.wei_gui).toBe(true)
+    expect(jieGuo.lei_xing).toBe('淫秽色情')
+    expect(jieGuo.li_you).toContain(weiJinCi)
+  })
+
+  it('AI审核异常时普通消息新版词库未命中则放行', async () => {
+    sheZhiMockTiaoYong(async () => {
+      throw new Error('模拟AI审核服务故障')
+    })
+
+    const jieGuo = await shenHeNeiRongAnQuan('今天天气真不错，一起散步吧')
+
+    expect(jieGuo.wei_gui).toBe(false)
+  })
+
+  it('AI审核异常且新旧词库均失败时按违规拦截并提示稍后再试', async () => {
+    const yuanCiBiao = peiZhi.shuRuWeiJinCiLieBiao
+    Object.defineProperty(peiZhi, 'shuRuWeiJinCiLieBiao', {
+      configurable: true,
+      get() {
+        throw new Error('模拟词库访问失败')
+      },
+    })
+    try {
+      sheZhiMockTiaoYong(async () => {
+        throw new Error('模拟AI审核服务故障')
+      })
+
+      const jieGuo = await shenHeNeiRongAnQuan('普通消息')
+
+      expect(jieGuo.wei_gui).toBe(true)
+      expect(jieGuo.li_you).toContain('稍后再试')
+    } finally {
+      Object.defineProperty(peiZhi, 'shuRuWeiJinCiLieBiao', {
+        configurable: true,
+        writable: true,
+        value: yuanCiBiao,
+      })
+    }
+  })
+
   it('60秒内101次常规请求第101次返回429', async () => {
     const qingQiuLieBiao: Promise<request.Response>[] = []
     for (let i = 0; i < 101; i++) {
@@ -591,6 +644,9 @@ describe.sequential('FP-17 安全与合规', () => {
   it('60秒内6次登录失败第6次返回429', async () => {
     const shouJiHao = suiJiShouJiHao()
     await qingChuCeShiYongHu(shouJiHao)
+    // 登录失败锁定阈值生产/非生产环境不同（5/100），测试内显式固定为5，用例结束恢复
+    const yuanZuiDa = peiZhi.xianLiu.dengLu.zuiDa
+    peiZhi.xianLiu.dengLu.zuiDa = 5
 
     try {
       for (let i = 0; i < 5; i++) {
@@ -607,6 +663,7 @@ describe.sequential('FP-17 安全与合规', () => {
       expect(xiangYing.body.cheng_gong).toBe(false)
       expect(xiangYing.body.ti_shi).toBe(huoQuFanYi('renZheng', 'dengLuShiBaiPinFan'))
     } finally {
+      peiZhi.xianLiu.dengLu.zuiDa = yuanZuiDa
       await qingChuCeShiYongHu(shouJiHao)
     }
   })

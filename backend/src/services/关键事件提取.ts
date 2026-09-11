@@ -1,3 +1,4 @@
+﻿import { debug日志 } from '../utils/debug日志'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianGuanJianShiJianPrompt } from './Prompt构建器'
 import type { GongJianShiJianJieGuo } from '../types'
@@ -16,7 +17,7 @@ export async function tiQuGuanJianShiJian(
 
     return jieXiShiJianShuZu(xiangYing.neiRong)
   } catch (cuoWu) {
-    console.error('关键事件提取失败', cuoWu)
+    debug日志.error('关键事件提取', '关键事件提取失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return []
   }
 }

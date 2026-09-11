@@ -5,6 +5,7 @@ import {
   yanZhengXingBie,
   yanZhengLiaoTianNeiRong,
   yanZhengMiMa,
+  guiYiNianLing,
 } from '../utils/输入验证'
 import { huoQuFanYi } from '../config/translations'
 
@@ -79,5 +80,19 @@ describe('输入验证工具', () => {
     const jieGuo = yanZhengMiMa('')
     expect(jieGuo.heFa).toBe(false)
     expect(jieGuo.xiaoXi).toBe(huoQuFanYi('renZheng', 'miMaKong'))
+  })
+
+  it('年龄归一：空值保持空（选填）', () => {
+    expect(guiYiNianLing('')).toBe('')
+    expect(guiYiNianLing(null)).toBe('')
+    expect(guiYiNianLing(undefined)).toBe('')
+    expect(guiYiNianLing('abc')).toBe('')
+  })
+
+  it('年龄归一：越界取最近合法数字', () => {
+    expect(guiYiNianLing('150')).toBe('100')
+    expect(guiYiNianLing('-5')).toBe('0')
+    expect(guiYiNianLing('21.5')).toBe('22')
+    expect(guiYiNianLing('25')).toBe('25')
   })
 })

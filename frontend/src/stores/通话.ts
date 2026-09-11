@@ -117,12 +117,17 @@ export const 使用通话仓库 = defineStore('通话', () => {
     chuLiTongHuaJieShu(zaiHe)
   }
 
+  function chuLiTongHuaJuJue(zaiHe: { tongHuaId?: string }) {
+    chuLiTongHuaJieShu(zaiHe)
+  }
+
   function queBaoXinLingJianTing(socket: XinLingSocket) {
     if (yiZhuCeSocket === socket) return
     yiZhuCeSocket = socket
     socket.on('通话接受', chuLiTongHuaJieShou)
     socket.on('通话结束', chuLiTongHuaJieShu)
     socket.on('通话超时', chuLiTongHuaChaoShi)
+    socket.on('通话拒绝', chuLiTongHuaJuJue)
   }
 
   async function faQiTongHua(

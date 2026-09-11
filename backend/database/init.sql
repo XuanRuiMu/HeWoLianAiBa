@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS "用户" (
     "头像" TEXT,
     "生日" VARCHAR(20),
     "签名" TEXT,
+    "签名可见性" VARCHAR(20) NOT NULL DEFAULT 'gong_kai',
+    "签名白名单" UUID[] NOT NULL DEFAULT '{}',
     "管理员" BOOLEAN DEFAULT FALSE,
     "活跃角色ID" UUID,
     "测试" BOOLEAN DEFAULT FALSE,

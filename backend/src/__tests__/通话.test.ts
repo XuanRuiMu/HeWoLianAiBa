@@ -1,6 +1,6 @@
-process.env.ADMIN_PHONES = ''
+﻿process.env.ADMIN_PHONES = ''
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = 'postgres://lovewithme:BXYXblupz542284@localhost:5432/lovewithme'
+  process.env.DATABASE_URL = 'postgres://lovewithme:test-password@localhost:5432/lovewithme'
 }
 if (!process.env.REDIS_URL) {
   process.env.REDIS_URL = 'redis://localhost:6379'
@@ -21,6 +21,7 @@ import { TONG_HUA_PEI_ZHI } from '../config/通话配置'
 import {
   faQi,
   yongHuQuXiao,
+  yongHuJuJie,
   yongHuGuaDuan,
   yingJianChaoShi,
   qingKongQuanBuHuiHua,
@@ -33,6 +34,7 @@ const MO_REN_PEI_ZHI = { ...TONG_HUA_PEI_ZHI }
 let ceShiYongHuId = ''
 let ceShiJiaoSeId = ''
 let qiTaYongHuJiaoSeId = ''
+let qiTaYongHuId = ''
 
 async function chaRuCeShiYongHuYuJiaoSe(shouJiHao: string): Promise<{ yongHuId: string; jiaoSeId: string }> {
   const yongHuJieGuo = await 数据库.query(
@@ -74,6 +76,7 @@ beforeAll(async () => {
   ceShiJiaoSeId = zhuYongHu.jiaoSeId
   const qiTaYongHu = await chaRuCeShiYongHuYuJiaoSe('13800008888')
   qiTaYongHuJiaoSeId = qiTaYongHu.jiaoSeId
+  qiTaYongHuId = qiTaYongHu.yongHuId
 })
 
 afterAll(async () => {
@@ -182,6 +185,70 @@ describe('FP-21 通话状态机（服务层）', () => {
 
     const jiLu = await huoQuZuiXinTongHuaJiLu(ceShiYongHuId)
     expect(String(jiLu[0].类型)).toBe('shiPin')
+  })
+
+  it('振铃期拒绝：发出 通话拒绝+通话结束(yiJuJie)、落库 yiJuJie 并清理会话', async () => {
+    const faQiJieGuo = await faQi(ceShiYongHuId, ceShiJiaoSeId, 'yuYin')
+
+    const juJueJieGuo = await yongHuJuJie(ceShiYongHuId, faQiJieGuo.tongHuaId!)
+    expect(juJueJieGuo.chengGong).toBe(true)
+
+    const juJueDiaoYong = emitSpy.mock.calls.find((canShu: unknown[]) => canShu[0] === '通话拒绝')
+    expect(juJueDiaoYong).toBeDefined()
+    expect((juJueDiaoYong![1] as Record<string, unknown>).tongHuaId).toBe(faQiJieGuo.tongHuaId)
+
+    const jieShuDiaoYong = emitSpy.mock.calls.find((canShu: unknown[]) => canShu[0] === '通话结束')
+    const jieShuZaiHe = jieShuDiaoYong![1] as Record<string, unknown>
+    expect(jieShuZaiHe.zhuangTai).toBe('yiJuJie')
+    expect(jieShuZaiHe.shiChangMiao).toBe(0)
+
+    const jiLu = await huoQuZuiXinTongHuaJiLu(ceShiYongHuId)
+    expect(String(jiLu[0].状态)).toBe('yiJuJie')
+    expect(Number(jiLu[0].时长秒)).toBe(0)
+    expect(jiLu[0].接通时间).toBeNull()
+
+    const neiRong = await huoQuZuiXinXiTongXiaoXi(ceShiYongHuId)
+    expect(neiRong).toBe('[语音通话] 已取消')
+
+    await expect(yongHuJuJie(ceShiYongHuId, faQiJieGuo.tongHuaId!)).resolves.toMatchObject({
+      chengGong: false,
+      tiShi: expect.any(String),
+    })
+  })
+
+  it('非法拒绝均被拒：无会话拒绝幂等忽略、非属主伪造拒绝被拒、接通后拒绝状态错误', async () => {
+    await expect(yongHuJuJie(ceShiYongHuId, crypto.randomUUID())).resolves.toMatchObject({
+      chengGong: false,
+      tiShi: expect.any(String),
+    })
+    expect(quShiJianMingLieBiao()).not.toContain('通话拒绝')
+
+    const faQiJieGuo = await faQi(ceShiYongHuId, ceShiJiaoSeId, 'yuYin')
+    const tongHuaId = faQiJieGuo.tongHuaId!
+
+    await expect(yongHuJuJie('fei-shou-jiao-fang-yong-hu', tongHuaId)).resolves.toMatchObject({
+      chengGong: false,
+      tiShi: expect.any(String),
+    })
+    expect(quShiJianMingLieBiao()).not.toContain('通话拒绝')
+
+    await vi.advanceTimersByTimeAsync(TONG_HUA_PEI_ZHI.zhenLingZuiXiaoHaoMiao + 100)
+
+    await expect(yongHuJuJie(ceShiYongHuId, tongHuaId)).resolves.toMatchObject({
+      chengGong: false,
+      tiShi: expect.any(String),
+    })
+    expect(quShiJianMingLieBiao()).not.toContain('通话拒绝')
+
+    const juJueQianJiLu = await huoQuZuiXinTongHuaJiLu(ceShiYongHuId)
+    expect(juJueQianJiLu.length).toBe(0)
+
+    const guaDuanJieGuo = await yongHuGuaDuan(ceShiYongHuId, tongHuaId)
+    expect(guaDuanJieGuo.chengGong).toBe(true)
+
+    const jiLu = await huoQuZuiXinTongHuaJiLu(ceShiYongHuId)
+    expect(jiLu.length).toBe(1)
+    expect(String(jiLu[0].状态)).toBe('yiJieTong')
   })
 
   it('非法跃迁均返回错误不抛异常：无会话挂断/取消、振铃中挂断、接通后取消、已结束后重复操作', async () => {
@@ -435,6 +502,83 @@ describe('FP-21 通话信令（Socket 集成）', () => {
 
     const neiRong = await huoQuZuiXinXiTongXiaoXi(ceShiYongHuId)
     expect(neiRong).toBe('[视频通话] 已取消')
+  }, 15000)
+
+  it('振铃期发送 通话拒绝：ack成功、主叫收到 通话拒绝与通话结束(yiJuJie)、落库 yiJuJie', async () => {
+    Object.assign(TONG_HUA_PEI_ZHI, { zhenLingZuiXiaoHaoMiao: 5000, zhenLingZuiDaHaoMiao: 6000 })
+    const yaoQingQueRen = (await keHuDuan!.emitWithAck('通话邀请', {
+      jiaoSeId: ceShiJiaoSeId,
+      leiXing: 'yuYin',
+    })) as { chengGong: boolean; tongHuaId?: string }
+    expect(yaoQingQueRen.chengGong).toBe(true)
+
+    const juJueZaiHeWeiLai = dengDaiShiJian<{ tongHuaId: string }>('通话拒绝')
+    const jieShuZaiHeWeiLai = dengDaiShiJian<{ zhuangTai: string; shiChangMiao: number }>('通话结束')
+
+    const juJueQueRen = (await keHuDuan!.emitWithAck('通话拒绝', {
+      tongHuaId: yaoQingQueRen.tongHuaId,
+    })) as { chengGong: boolean; tiShi?: string }
+    expect(juJueQueRen.chengGong).toBe(true)
+
+    const juJueZaiHe = await juJueZaiHeWeiLai
+    expect(juJueZaiHe.tongHuaId).toBe(yaoQingQueRen.tongHuaId)
+
+    const jieShuZaiHe = await jieShuZaiHeWeiLai
+    expect(jieShuZaiHe.zhuangTai).toBe('yiJuJie')
+    expect(jieShuZaiHe.shiChangMiao).toBe(0)
+
+    const jiLu = await huoQuZuiXinTongHuaJiLu(ceShiYongHuId)
+    expect(String(jiLu[0].状态)).toBe('yiJuJie')
+
+    const neiRong = await huoQuZuiXinXiTongXiaoXi(ceShiYongHuId)
+    expect(neiRong).toBe('[语音通话] 已取消')
+  }, 15000)
+
+  it('他人socket伪造 通话拒绝 被拒且原会话不受影响', async () => {
+    Object.assign(TONG_HUA_PEI_ZHI, { zhenLingZuiXiaoHaoMiao: 5000, zhenLingZuiDaHaoMiao: 6000 })
+    const yaoQingQueRen = (await keHuDuan!.emitWithAck('通话邀请', {
+      jiaoSeId: ceShiJiaoSeId,
+      leiXing: 'yuYin',
+    })) as { chengGong: boolean; tongHuaId?: string }
+    expect(yaoQingQueRen.chengGong).toBe(true)
+
+    const taFangKeHuDuan = lianJieKeHuDuan(`http://127.0.0.1:${duanKou}`, {
+      path: '/socket.io',
+      transports: ['websocket'],
+      forceNew: true,
+      auth: { token: shengChengLingPai({ yongHuId: qiTaYongHuId, shouJiHao: '13800008888' }) },
+    } as never)
+    await new Promise<void>((jieJue, juJue) => {
+      taFangKeHuDuan.once('connect', () => jieJue())
+      taFangKeHuDuan.once('connect_error', (cuoWu) => juJue(cuoWu))
+    })
+
+    const weiZaoQueRen = (await taFangKeHuDuan.emitWithAck('通话拒绝', {
+      tongHuaId: yaoQingQueRen.tongHuaId,
+    })) as { chengGong: boolean; tiShi?: string }
+    expect(weiZaoQueRen.chengGong).toBe(false)
+    expect(typeof weiZaoQueRen.tiShi).toBe('string')
+    taFangKeHuDuan.disconnect()
+
+    const jieShuZaiHeWeiLai = dengDaiShiJian<{ zhuangTai: string }>('通话结束')
+    const benRenQueRen = (await keHuDuan!.emitWithAck('通话拒绝', {
+      tongHuaId: yaoQingQueRen.tongHuaId,
+    })) as { chengGong: boolean }
+    expect(benRenQueRen.chengGong).toBe(true)
+
+    const jieShuZaiHe = await jieShuZaiHeWeiLai
+    expect(jieShuZaiHe.zhuangTai).toBe('yiJuJie')
+  }, 15000)
+
+  it('无进行中呼叫时发送 通话拒绝：ack失败不崩溃', async () => {
+    const juJueQueRen = (await keHuDuan!.emitWithAck('通话拒绝', {
+      tongHuaId: crypto.randomUUID(),
+    })) as { chengGong: boolean; tiShi?: string }
+    expect(juJueQueRen.chengGong).toBe(false)
+    expect(typeof juJueQueRen.tiShi).toBe('string')
+
+    const jiLu = await huoQuZuiXinTongHuaJiLu(ceShiYongHuId)
+    expect(jiLu.length).toBe(0)
   }, 15000)
 
   it('非本人jiaoSeId发起邀请被拒绝', async () => {

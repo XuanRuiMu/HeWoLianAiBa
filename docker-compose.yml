@@ -5,15 +5,17 @@ services:
     image: postgres:16-alpine
     container_name: lovewithme-postgres
     restart: unless-stopped
+    # A6：数据库不暴露公网；仅本机调试需要时绑定 127.0.0.1
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-lovewithme}
       POSTGRES_USER: ${POSTGRES_USER:-lovewithme}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lovewithme_dev}
+      # A6：密码必须从 .env 显式注入，去掉危险默认值（缺失时 compose 变量替换报错）
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请在 .env 中设置 POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database:/docker-entrypoint-initdb.d
+      - ./database:/docker-entrypoint-initdb.d:ro
     networks:
       - lovewithme-network
     healthcheck:
@@ -26,15 +28,19 @@ services:
     image: redis:7-alpine
     container_name: lovewithme-redis
     restart: unless-stopped
+    # A6：Redis 不暴露公网；仅本机调试需要时绑定 127.0.0.1
     ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes
+      - "127.0.0.1:6379:6379"
+    # P1-4：Redis 强制访问控制，密码必须从 .env 显式注入（缺失时 compose 变量替换报错）
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?请在 .env 中设置 REDIS_PASSWORD}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?请在 .env 中设置 REDIS_PASSWORD}
     volumes:
       - redis_data:/data
     networks:
       - lovewithme-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -45,26 +51,57 @@ services:
       dockerfile: Dockerfile
     container_name: lovewithme-backend
     restart: unless-stopped
+    # P2-2#4：backend 端口仅绑定本机回环，绕过 nginx 的直连面收敛
     ports:
-      - "3001:3000"
+      - "127.0.0.1:3001:3000"
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: postgresql://${POSTGRES_USER:-lovewithme}:${POSTGRES_PASSWORD:-lovewithme_dev}@postgres:5432/${POSTGRES_DB:-lovewithme}
-      REDIS_URL: redis://redis:6379
-      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-lovewithme}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lovewithme}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      # P1-4：生产启动校验依赖该变量（config 启动检查）
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?请在 .env 中设置 REDIS_PASSWORD}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:?请在 .env 中设置 DEEPSEEK_API_KEY}
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
-      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-v4-flash-vision-exp}
-      JWT_SECRET: ${JWT_SECRET}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-v4.1-flash-expires-on-0910}
+      JWT_SECRET: ${JWT_SECRET:?请在 .env 中设置至少32字节的 JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       ALIYUN_ACCESS_KEY_ID: ${ALIYUN_ACCESS_KEY_ID:-}
       ALIYUN_ACCESS_KEY_SECRET: ${ALIYUN_ACCESS_KEY_SECRET:-}
       ALIYUN_SMS_SIGN_NAME: ${ALIYUN_SMS_SIGN_NAME:-}
       ALIYUN_SMS_TEMPLATE_CODE: ${ALIYUN_SMS_TEMPLATE_CODE:-}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost,http://127.0.0.1,http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080,http://127.0.0.1:8080,http://localhost:8090,http://127.0.0.1:8090}
-      ADMIN_PHONES: ${ADMIN_PHONES:-13800138001}
+      # A6：管理员手机号必须显式配置，去除默认值 13800138001
+      ADMIN_PHONES: ${ADMIN_PHONES:?请在 .env 中设置 ADMIN_PHONES}
+      LOG_COLD_RETENTION_DAYS: ${LOG_COLD_RETENTION_DAYS:-183}
+      # C6：审计日志保留天数（定期归档删除，≥6个月）
+      SHEN_JI_RI_ZHI_BAO_LIU_TIAN: ${SHEN_JI_RI_ZHI_BAO_LIU_TIAN:-185}
+      # A12：OTLP 导出端点（配置后开启链路采集）与 SMTP 告警通道
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      SMTP_ZHU_JI: ${SMTP_ZHU_JI:-}
+      SMTP_DUAN_KOU: ${SMTP_DUAN_KOU:-465}
+      SMTP_YONG_HU_MING: ${SMTP_YONG_HU_MING:-}
+      SMTP_MI_MA: ${SMTP_MI_MA:-}
+      GAO_JING_FA_JIAN_REN: ${GAO_JING_FA_JIAN_REN:-}
+      GAO_JING_SHOU_JIAN_REN: ${GAO_JING_SHOU_JIAN_REN:-}
+      AI_LIAN_XU_SHI_BAI_GAO_JING_YU_ZHI: ${AI_LIAN_XU_SHI_BAI_GAO_JING_YU_ZHI:-5}
+      # A9：媒体下载签名的独立密钥（未设置时从 JWT 密钥 HKDF 派生独立子钥）
+      MEI_TI_QIAN_MING_MI_YAO: ${MEI_TI_QIAN_MING_MI_YAO:-}
+      # A7：短信验证码每日发送上限（每手机号 / 每IP）
+      DUAN_XIN_MEI_SHOU_JI_HAO_MEI_RI: ${DUAN_XIN_MEI_SHOU_JI_HAO_MEI_RI:-10}
+      DUAN_XIN_MEI_IP_MEI_RI: ${DUAN_XIN_MEI_IP_MEI_RI:-30}
+      # A8：前端日志上报限流（每分钟每IP）
+      RI_ZHI_JIE_SHOU_XIAN_LIU_MEI_FEN_ZUI_DA: ${RI_ZHI_JIE_SHOU_XIAN_LIU_MEI_FEN_ZUI_DA:-10}
+      # R7：数据库连接池显式参数
+      SHU_JU_KU_LIAN_CHI_ZUI_DA: ${SHU_JU_KU_LIAN_CHI_ZUI_DA:-20}
+      SHU_JU_KU_LIAN_JIE_CHAO_SHI_HAO_MIAO: ${SHU_JU_KU_LIAN_JIE_CHAO_SHI_HAO_MIAO:-10000}
+      SHU_JU_KU_YU_JU_CHAO_SHI_HAO_MIAO: ${SHU_JU_KU_YU_JU_CHAO_SHI_HAO_MIAO:-30000}
     volumes:
       - ./微信昵称:/微信昵称:ro
+      # A5：用户上传媒体持久化到 named volume，容器重建不丢失
+      - media_uploads:/app/uploads/media
+      # A12：容器内日志持久化
+      - backend_logs:/app/logs
     depends_on:
       postgres:
         condition: service_healthy
@@ -108,3 +145,5 @@ volumes:
   redis_data:
   certbot-www:
   certbot-conf:
+  media_uploads:
+  backend_logs:

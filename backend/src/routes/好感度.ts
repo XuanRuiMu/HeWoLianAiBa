@@ -1,3 +1,4 @@
+﻿import { debug日志 } from '../utils/debug日志'
 import { Router } from 'express'
 import type { Response } from 'express'
 import { 数据库 } from '../数据库'
@@ -47,7 +48,7 @@ luYou.get(
       }
       return chengGongXiangYing(xiangYing, jieGuo)
     } catch (cuoWu) {
-      console.error('获取好感度失败', cuoWu)
+      debug日志.error('好感度接口', '获取好感度失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -78,7 +79,7 @@ luYou.get(
       }
       return chengGongXiangYing(xiangYing, jieGuo)
     } catch (cuoWu) {
-      console.error('获取好感度详情失败', cuoWu)
+      debug日志.error('好感度接口', '获取好感度详情失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -121,7 +122,7 @@ luYou.post(
       }
       return chengGongXiangYing(xiangYing, jieGuo.hao_gan_du)
     } catch (cuoWu) {
-      console.error('更新好感度失败', cuoWu)
+      debug日志.error('好感度接口', '更新好感度失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -151,7 +152,7 @@ luYou.post(
       }
       return chengGongXiangYing(xiangYing, jieGuo.hao_gan_du)
     } catch (cuoWu) {
-      console.error('秘籍设置好感度失败', cuoWu)
+      debug日志.error('好感度接口', '秘籍设置好感度失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },

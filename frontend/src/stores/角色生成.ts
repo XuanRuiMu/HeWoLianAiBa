@@ -1,8 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { chuangJianHuiHua, queRenJiaoSe, shengChengJiaoSe } from '@/api/聊天'
+import { kaiShiTiaoZhan } from '@/api/挑战'
 import { huoQuFanYi } from '@/config/translations'
 import type { ShengChengJiaoSeJieGuo } from '@/types'
+
+export interface 心目中的TA资料 {
+  weiXinMing?: string
+  zhenShiMing?: string
+  nianLing?: string
+  tongYongTiShiCi?: string
+}
 
 export interface 生成流程资料 {
   xingBie?: string | null
@@ -10,6 +18,11 @@ export interface 生成流程资料 {
   xingGeXuanZe?: string | null
   yunXuZhaNanZhaNv?: boolean
   随机性格标记?: boolean
+  xinMuZhongDeTa?: 心目中的TA资料 | null
+  /** 对局模式：普通模式（默认）或挑战模式 */
+  moshi?: 'putong' | 'tiaozhan'
+  /** 挑战模式：玩家自身性别（男/女） */
+  woDeXingBie?: '男' | '女'
 }
 
 export type 生成流程状态 = 'kong_xian' | 'jin_xing_zhong' | 'yi_wan_cheng' | 'shi_bai'
@@ -70,19 +83,31 @@ export const 使用角色生成仓库 = defineStore('角色生成', () => {
     }, 800)
 
     try {
-      const jiaoSe = await shengChengJiaoSe(
-        ziLiao.muBiaoXingBie || 'female',
-        ziLiao.xingGeXuanZe || 'INFP',
-        ziLiao.yunXuZhaNanZhaNv ?? false,
-        ziLiao.随机性格标记 ?? false,
-        ziLiao.xingBie || undefined,
-      )
+      // 挑战模式：服务端一次性随机生成并保存角色（MBTI/渣型等全部隐藏），
+      // 无需本地选性格、也无需再走确认接口；普通模式保持原三步流程。
+      const shiTiaoZhan = ziLiao.moshi === 'tiaozhan'
+      let jiaoSe: ShengChengJiaoSeJieGuo
+      if (shiTiaoZhan) {
+        jiaoSe = await kaiShiTiaoZhan(
+          ziLiao.woDeXingBie || '男',
+          (ziLiao.muBiaoXingBie === 'male' ? '男' : '女') as '男' | '女',
+        )
+      } else {
+        jiaoSe = await shengChengJiaoSe(
+          ziLiao.muBiaoXingBie || 'female',
+          ziLiao.xingGeXuanZe || 'INFP',
+          ziLiao.yunXuZhaNanZhaNv ?? false,
+          ziLiao.随机性格标记 ?? false,
+          ziLiao.xingBie || undefined,
+          ziLiao.xinMuZhongDeTa ?? null,
+        )
+      }
       jiaoSeXinXi.value = jiaoSe
       qingChuDingShiQi()
 
       suoYin = 3
       gengXinBuZhou(suoYin) // 生成人设
-      const queRenHouJiaoSe = await queRenJiaoSe(jiaoSe)
+      const queRenHouJiaoSe = shiTiaoZhan ? jiaoSe : await queRenJiaoSe(jiaoSe)
       const jiaoSeId = queRenHouJiaoSe.id || queRenHouJiaoSe.jiao_se_id || ''
       if (!jiaoSeId) throw new Error('缺少角色ID')
 
@@ -102,6 +127,7 @@ export const 使用角色生成仓库 = defineStore('角色生成', () => {
         cuoWuXinXi.value = huoQuFanYi('tianJiaWeiXin', 'shengChengShiBai')
       } else {
         // 已离开：静默记录，不弹全局打扰
+         
         console.warn('生成角色流程在用户离开加载页后失败：', cuoWu)
       }
       zhuangTai.value = 'shi_bai'

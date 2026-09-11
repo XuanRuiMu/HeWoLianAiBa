@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>草地×吴昊阳 集中测试台</title>
+    <style>
+        html, body { margin: 0; height: 100%; overflow: hidden; background: #0a0a12; }
+        iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; }
+        #hud {
+            position: fixed; top: 12px; left: 12px; z-index: 10;
+            background: rgba(6, 8, 20, 0.78); color: #9fe8b0;
+            padding: 10px 14px; font: 13px/1.65 Consolas, 'Courier New', monospace;
+            white-space: pre; border-radius: 8px; border: 1px solid rgba(159, 232, 176, 0.25);
+            pointer-events: none;
+        }
+        #tips {
+            position: fixed; bottom: 12px; left: 12px; z-index: 10;
+            background: rgba(6, 8, 20, 0.66); color: rgba(255, 255, 255, 0.75);
+            padding: 8px 12px; font: 12px/1.7 Consolas, monospace;
+            border-radius: 8px; pointer-events: none;
+        }
+        #baogao {
+            position: fixed; inset: 5% 8%; z-index: 20; display: none;
+            background: rgba(6, 8, 20, 0.94); color: #cfe8d8;
+            border: 1px solid rgba(159, 232, 176, 0.4); border-radius: 10px;
+            padding: 16px; font: 12px/1.6 Consolas, monospace;
+        }
+        #baogao h3 { margin: 0 0 8px; color: #9fe8b0; font-size: 14px; }
+        #baogao textarea {
+            width: 100%; height: calc(100% - 90px); box-sizing: border-box;
+            background: #0a0f1a; color: #bfe8c8; border: 1px solid #2a4a3a;
+            font: 11px/1.5 Consolas, monospace; white-space: pre; padding: 8px;
+        }
+        #baogao .btns { margin-top: 8px; display: flex; gap: 10px; }
+        #baogao button {
+            padding: 6px 14px; cursor: pointer; border-radius: 6px;
+            border: 1px solid #3a6a5a; background: #16302a; color: #cfe8d8; font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <iframe id="bg" src="./grass-bg.html?ts=ceshi"></iframe>
+    <div id="hud">初始化中…</div>
+    <div id="tips">鼠标：压草 / 扫过吴昊阳看反馈 ｜ 点击草坪：移动身体压弯中心 ｜
+        [ ]：压弯强度 −/+ ｜ ; '：范围 −/+ ｜ b：呼吸开关 ｜ 0：参数复位 ｜
+        C：导出测试报告（含 A/B 压弯像素差分自检）</div>
+    <div id="baogao">
+        <h3>测试报告（Ctrl+A 全选复制，发给开发者）</h3>
+        <textarea id="baogao_wen" spellcheck="false"></textarea>
+        <div class="btns">
+            <button id="copy_btn">复制到剪贴板</button>
+            <button id="close_btn">关闭 (Esc)</button>
+        </div>
+    </div>
+    <script>
+    (function () {
+        var bg = document.getElementById('bg');
+        var hud = document.getElementById('hud');
+
+        /* --- 会话记录器：每 2 秒采样，保留全程 --- */
+        var caiYang = [];
+        var caiYangStart = Date.now();
+
+        /* --- 实时调参：localStorage 持久化（刷新不丢） --- */
+        var cunChuJian = 'ceshi_yawan_tiao';
+        var moRen = { strength: 0.75, r0: 0.12, r1: 0.68, huxi: 0.08 };
+        function dangQian() {
+            var w = bg.contentWindow;
+            if (!w) return null;
+            if (!w.__yaWanTiao) w.__yaWanTiao = {};
+            return w.__yaWanTiao;
+        }
+        function duQuCunChu() {
+            try {
+                var raw = localStorage.getItem(cunChuJian);
+                if (!raw) return null;
+                var v = JSON.parse(raw);
+                return v && typeof v === 'object' ? v : null;
+            } catch (e) { return null; }
+        }
+        function baoCunCunChu(t) {
+            try { localStorage.setItem(cunChuJian, JSON.stringify(t)); } catch (e) {}
+        }
+        function yingYongCunChu() {
+            var cun = duQuCunChu();
+            var t = dangQian(); if (!t) return;
+            if (cun) {
+                if (cun.strength != null) t.strength = cun.strength;
+                if (cun.r0 != null) t.r0 = cun.r0;
+                if (cun.r1 != null) t.r1 = cun.r1;
+                if (cun.huxi != null) t.huxi = cun.huxi;
+            }
+        }
+
+        /* --- 快捷键（父页与内页都挂载） --- */
+        function jianPan(e) {
+            var t = dangQian(); if (!t) return;
+            var jing = function (v, a, b) { return Math.min(b, Math.max(a, v)); };
+            var genXin = false;
+            if (e.key === '[') { t.strength = jing((t.strength != null ? t.strength : moRen.strength) - 0.1, 0, 1.2); genXin = true; }
+            if (e.key === ']') { t.strength = jing((t.strength != null ? t.strength : moRen.strength) + 0.1, 0, 1.2); genXin = true; }
+            if (e.key === ';') { t.r1 = jing((t.r1 != null ? t.r1 : moRen.r1) - 0.1, 0.2, 1.5); genXin = true; }
+            if (e.key === "'" || e.key === '#') { t.r1 = jing((t.r1 != null ? t.r1 : moRen.r1) + 0.1, 0.2, 1.5); genXin = true; }
+            if (e.key === 'b' || e.key === 'B') { t.huxi = (t.huxi != null && t.huxi > 0) ? 0 : moRen.huxi; genXin = true; }
+            if (e.key === '0') { delete t.strength; delete t.r0; delete t.r1; delete t.huxi; genXin = true; }
+            if (e.key === 'c' || e.key === 'C') { daKaiBaoGao(); }
+            if (e.key === 'Escape') {
+                var m = document.getElementById('baogao');
+                if (m && m.style.display === 'block') m.style.display = 'none';
+            }
+            if (genXin) baoCunCunChu(t);
+        }
+        function dianJiNeiYe(e) {
+            var w = bg.contentWindow;
+            if (!w || !w.__experience || !w.THREE) return;
+            var exp = w.__experience;
+            var cam = exp.engine && exp.engine.camera && exp.engine.camera.instance;
+            if (!cam) return;
+            var v = new w.THREE.Vector3(
+                (e.clientX / w.innerWidth) * 2 - 1,
+                -(e.clientY / w.innerHeight) * 2 + 1,
+                0.5
+            ).unproject(cam);
+            var dir = v.sub(cam.position).normalize();
+            var targets = [];
+            exp.engine.scene.traverse(function (o) {
+                if (o.isMesh && o.name !== '__reveal_mesh__') targets.push(o);
+            });
+            var ray = new w.THREE.Raycaster();
+            ray.set(cam.position, dir);
+            var hits = ray.intersectObjects(targets, false);
+            for (var i = 0; i < hits.length; i++) {
+                var n = hits[i].face.normal.clone().transformDirection(hits[i].object.matrixWorld);
+                if (n.y >= 0.7) {
+                    var dian = hits[i].point;
+                    exp.engine.scene.traverse(function (o) {
+                        var m = o.material;
+                        if (m && m.uniforms && m.uniforms.uCharPos) m.uniforms.uCharPos.value.set(dian.x, dian.z);
+                    });
+                    dangQian().__weiZhong = [ +dian.x.toFixed(2), +dian.z.toFixed(2) ];
+                    baoCunCunChu(dangQian());
+                    return;
+                }
+            }
+        }
+        function guaZaiJianTing(ww, wenDang) {
+            if (!ww || !wenDang) return;
+            wenDang.addEventListener('keydown', jianPan);
+            if (ww !== window) wenDang.addEventListener('click', dianJiNeiYe);
+        }
+        guaZaiJianTing(window, document);
+        function guaZaiNeiYe() {
+            var w = bg.contentWindow;
+            if (w && w.document && w.document.body) {
+                guaZaiJianTing(w, w.document);
+                yingYongCunChu();
+                return;
+            }
+            setTimeout(guaZaiNeiYe, 400);
+        }
+        bg.addEventListener('load', guaZaiNeiYe);
+        guaZaiNeiYe();
+
+        /* ============================================================
+         * A/B 压弯像素差分自检（报告 v2 核心）
+         * 目的：抓住「数据正常、画面无效」类 bug —— 着色器注入了、uniform
+         * 在动，但画面上草根本没压弯（v9 历史真实 bug）。
+         * 方法（已在无头环境实测验证）：
+         *   1. 钩 composer.render 加「门闩」：门闩打开期间引擎循环的渲染被
+         *      跳过（画面冻结在最后一帧），引擎循环本身无感继续运转；
+         *   2. 同步手动渲染序列（单任务内引擎回调/动画/tick 均无法插入，
+         *      风/昼夜/粒子/TAA 历史 全部零漂移）：
+         *      写强度0 → 渲染抓 A → 渲染抓 A2（确定性校验，应=0）
+         *      → 写基准强度 → 渲染抓 B；
+         *   3. 强度写入走双通道：v9 立即收敛钩（__yaWanShouLian，让平滑层
+         *      目标归位）+ 直接遍历写 uCharStrength（同步序列内无 tick 竞争）；
+         *   4. 像素差分：diff 像素数 + 包围盒，按角色屏幕矩形 vs 对照区
+         *      （角色矩形平移出的同尺寸纯背景区）分别统计；
+         *   5. 判定：角色矩形差分密度 ≥5% 且 ≥3× 对照区 → 生效；否则
+         *      「数据正常、画面无效」（报 bug 必附此结论）。
+         *   自检后：参数/风相位/TAA/门闩全部恢复，引擎无感。
+         * ============================================================ */
+        var ziJianZhuangTai = 'idle';   // idle | running | done | error
+        var ziJianJieGuo = null;
+        var ziJianCuoWu = null;
+
+        function queBaoGouZi(w) {
+            // 钩 composer.render：挂门闩开关。正常路径透传渲染；门闩打开时跳过渲染。
+            var exp = w.__experience;
+            var composer = exp && exp.postProcessing && exp.postProcessing.effectComposer;
+            if (!composer || composer.__caiYangGou) return !!composer;
+            if (typeof composer.render !== 'function') return false;
+            composer.__caiYangYuan = composer.render.bind(composer);
+            composer.render = function () {
+                if (w.__caiYangMenShuan) return; // 门闩：引擎循环本次渲染跳过
+                return composer.__caiYangYuan.apply(composer, arguments);
+            };
+            composer.__caiYangGou = true;
+            return true;
+        }
+        function xieQiangDu(w, qiangDu, r1) {
+            // 双通道写入：v9 平滑层目标立即归位 + 直接写全部 uCharStrength
+            if (w.__yaWanShouLian) w.__yaWanShouLian(qiangDu);
+            try {
+                w.__experience.engine.scene.traverse(function (o) {
+                    var m = o.material;
+                    if (!m || !m.uniforms || !m.uniforms.uCharStrength) return;
+                    var list = Array.isArray(m) ? m : [m];
+                    for (var k = 0; k < list.length; k++) {
+                        var u = list[k].uniforms;
+                        if (u && u.uCharStrength) u.uCharStrength.value = qiangDu;
+                        if (u && u.uCharR1 && r1 != null) u.uCharR1.value = r1;
+                    }
+                });
+            } catch (e) {}
+        }
+        function taATingYong(w, kai) {
+            // 自检期间暂停 TAA（多帧历史混合累积会引入帧间 jitter 差异），结束恢复
+            try {
+                var composer = w.__experience.postProcessing.effectComposer;
+                composer.passes.forEach(function (p) {
+                    var nm = p.name || (p.constructor && p.constructor.name) || '';
+                    if (/taa/i.test(nm)) {
+                        if (kai === false) { p.__ziJianYuan = p.enabled; p.enabled = false; }
+                        else if (p.__ziJianYuan !== undefined) { p.enabled = p.__ziJianYuan; p.__ziJianYuan = undefined; }
+                    }
+                });
+            } catch (e) {}
+        }
+        function jiaoSeJuXiang(w) {
+            // 角色屏幕矩形：世界锚点投影 + chiCun 按相机距离/FOV 换算像素尺寸
+            try {
+                var exp = w.__experience;
+                var plane = w.__wuPlane, cam = exp.engine.camera.instance;
+                if (!plane || !cam) return null;
+                var W = w.innerWidth, H = w.innerHeight;
+                var ndc = plane.position.clone().project(cam);
+                var cx = Math.round((ndc.x + 1) / 2 * W), cy = Math.round((1 - ndc.y) / 2 * H);
+                var dist = plane.position.distanceTo(cam.position);
+                var size = Math.round(1.1755 * (H / 2) / (dist * Math.tan((cam.fov || 60) * Math.PI / 360)));
+                var R = Math.round(size / 2) + 60;
+                return { center: [cx, cy], size: size, rect: [Math.max(0, cx - R), Math.max(0, cy - R), Math.min(W, cx + R), Math.min(H, cy + R)] };
+            } catch (e) { return null; }
+        }
+        function chaFenTongJi(a, b, W, H, quYu, th, tiaoGuo) {
+            // quYu: [x0,y0,x1,y1]；tiaoGuo: 需排除的矩形列表（HUD/tips）
+            var count = 0, minX = 1e9, minY = 1e9, maxX = -1, maxY = -1;
+            for (var y = quYu[1]; y < quYu[3]; y++) {
+                for (var x = quYu[0]; x < quYu[2]; x++) {
+                    var tiaoKai = false;
+                    if (tiaoGuo) for (var g = 0; g < tiaoGuo.length; g++) {
+                        var q = tiaoGuo[g];
+                        if (x >= q[0] && x < q[2] && y >= q[1] && y < q[3]) { tiaoKai = true; break; }
+                    }
+                    if (tiaoKai) continue;
+                    var i = (y * W + x) * 4;
+                    var dd = Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]);
+                    if (dd > th) {
+                        count++;
+                        if (x < minX) minX = x; if (x > maxX) maxX = x;
+                        if (y < minY) minY = y; if (y > maxY) maxY = y;
+                    }
+                }
+            }
+            return { count: count, bbox: maxX < 0 ? null : [minX, minY, maxX, maxY] };
+        }
+        function huanJingXinXi(w) {
+            var exp = w.__experience;
+            var cam = exp && exp.engine && exp.engine.camera && exp.engine.camera.instance;
+            var juXiang = jiaoSeJuXiang(w);
+            var s = w.__wuD ? w.__wuD.state() : {};
+            return {
+                shiKou: w.innerWidth + 'x' + w.innerHeight,
+                dpr: w.devicePixelRatio,
+                zhuTi: (document.documentElement.getAttribute('data-theme') || 'dark'),
+                xuanRanZhen: s.drawFrames,
+                reveal: s.revealSource + ' 进度=' + s.revealProgress + ' 角色不透明度=' + s.opacity,
+                xiangJiWeiZhi: cam ? cam.position.toArray().map(function (v) { return +v.toFixed(3); }) : null,
+                xiangJiSiYuan: cam && cam.quaternion ? cam.quaternion.toArray().map(function (v) { return +v.toFixed(4); }) : null,
+                jiaoSeJuXiang: juXiang,
+                yaWanZhuRu: s.crushInjected,
+                yaWanZhongXin: s.crushCenter,
+                yaWanR: s.crushR0 + '/' + s.crushR1
+            };
+        }
+        function chaFenZiJian(w) {
+            // 同步执行：门闩暂停引擎渲染 → 手动渲染 3 帧 → diff → 恢复（全程数毫秒）
+            var t = w.__yaWanTiao;
+            var yuan = { strength: t.strength, r0: t.r0, r1: t.r1, huxi: t.huxi };
+            var jiZhunQiangDu = (yuan.strength != null ? yuan.strength : moRen.strength);
+            var jiZhunR1 = (yuan.r1 != null ? yuan.r1 : moRen.r1);
+            var jieGuo = { fangFa: '门闩暂停引擎渲染 → 同步手动渲染 3 帧（风/昼夜/粒子零漂移）→ 恢复' };
+            try {
+                var composer = w.__experience.postProcessing.effectComposer;
+                var cvs = w.document.querySelector('canvas.webgl');
+                var W = w.innerWidth, H = w.innerHeight;
+                var off = w.document.createElement('canvas');
+                off.width = W; off.height = H;
+                var ctx = off.getContext('2d', { willReadFrequently: true });
+                function shouDong() {
+                    // 手动渲染一帧 + 同任务内抓帧（合成前读取，帧有效）
+                    composer.__caiYangYuan(0.016);
+                    ctx.drawImage(cvs, 0, 0, W, H);
+                    return ctx.getImageData(0, 0, W, H);
+                }
+                t.huxi = 0;                    // 消除呼吸波动
+                taATingYong(w, false);         // TAA 暂停
+                w.__caiYangMenShuan = true;    // 门闩：引擎循环渲染跳过（回调/tick 无法插入本同步序列）
+                xieQiangDu(w, 0, jiZhunR1);    // A：强度 0
+                var A = shouDong(), A2 = shouDong();
+                xieQiangDu(w, jiZhunQiangDu, jiZhunR1); // B：恢复基准强度
+                var B = shouDong();
+                w.__caiYangMenShuan = false;   // 恢复引擎渲染
+
+                var juXiang = jiaoSeJuXiang(w);
+                var rect = juXiang ? juXiang.rect : [W * 0.4, H * 0.5, W * 0.75, H];
+                // 对照区：与角色矩形同尺寸的纯背景区（优先放角色左侧，空间不足放右侧）
+                var rectW = rect[2] - rect[0];
+                var ctrlW = Math.min(rectW, 550);
+                var cx0 = rect[0] - ctrlW - 60;
+                if (cx0 < 20) cx0 = Math.min(W - ctrlW - 20, rect[2] + 60);
+                var ctrl = [Math.max(0, Math.round(cx0)), rect[1], Math.min(W, Math.round(cx0 + ctrlW)), rect[3]];
+                var tiaoGuo = [[0, 0, 260, 160], [0, H - 60, 760, H]]; // HUD / tips
+                jieGuo.jiaoSeJuXiang = juXiang;
+                jieGuo.duiZhaoQu = ctrl;
+                jieGuo.jiZhunQiangDu = jiZhunQiangDu;
+                jieGuo.quFen = {};
+                [30, 60, 120].forEach(function (th) {
+                    var queDing = chaFenTongJi(A.data, A2.data, W, H, [0, 0, W, H], th, tiaoGuo); // 确定性：应=0
+                    var jiaoSe = chaFenTongJi(A.data, B.data, W, H, rect, th, null);              // 压弯效果：角色矩形
+                    var duiZhao = chaFenTongJi(A.data, B.data, W, H, ctrl, th, null);             // 压弯效果：对照区（应≈0）
+                    jieGuo.quFen['th' + th] = {
+                        queDingXing: queDing.count,
+                        jiaoSe: { count: jiaoSe.count, bbox: jiaoSe.bbox,
+                                  miDu: +(jiaoSe.count / ((rect[2] - rect[0]) * (rect[3] - rect[1])) * 100).toFixed(2) },
+                        duiZhao: { count: duiZhao.count,
+                                   miDu: +(duiZhao.count / ((ctrl[2] - ctrl[0]) * (ctrl[3] - ctrl[1])) * 100).toFixed(2) }
+                    };
+                });
+                // 判定（th60）：角色矩形密度 ≥5% 且 ≥3× 对照区 → 生效
+                var z = jieGuo.quFen.th60;
+                jieGuo.jieLun = (z.jiaoSe.miDu >= 5 && z.jiaoSe.miDu >= z.duiZhao.miDu * 3)
+                    ? '✔ 压弯在画面上生效（角色矩形 ' + z.jiaoSe.miDu + '% >> 对照区 ' + z.duiZhao.miDu + '%，包围盒 ' + JSON.stringify(z.jiaoSe.bbox) + '）'
+                    : '× 未检测到压弯画面差异（角色矩形 ' + z.jiaoSe.miDu + '% ≈ 对照区 ' + z.duiZhao.miDu + '%）——属「数据正常、画面无效」类 bug 信号';
+                return jieGuo;
+            } catch (e) {
+                jieGuo.cuoWu = String(e && e.message || e);
+                return jieGuo;
+            } finally {
+                // 恢复：引擎渲染（门闩）、TAA、用户原参数
+                w.__caiYangMenShuan = false;
+                taATingYong(w, true);
+                t.strength = yuan.strength; t.r0 = yuan.r0; t.r1 = yuan.r1; t.huxi = yuan.huxi;
+            }
+        }
+        function qiDongZiJian(w) {
+            if (ziJianZhuangTai === 'running') return;
+            if (!w || !w.__experience || !w.__experience.postProcessing) { ziJianZhuangTai = 'error'; ziJianCuoWu = '引擎/后处理未就绪'; return; }
+            if (!queBaoGouZi(w)) { ziJianZhuangTai = 'error'; ziJianCuoWu = '无法钩住 composer.render'; return; }
+            ziJianZhuangTai = 'running'; ziJianJieGuo = null; ziJianCuoWu = null;
+            // 让 HUD 先显示"运行中"，下一轮再执行（同步序列只占几毫秒）
+            setTimeout(function () {
+                try {
+                    ziJianJieGuo = chaFenZiJian(w);
+                    ziJianZhuangTai = ziJianJieGuo.cuoWu ? 'error' : 'done';
+                    if (ziJianZhuangTai === 'error') ziJianCuoWu = ziJianJieGuo.cuoWu;
+                } catch (e) {
+                    ziJianCuoWu = String(e && e.message || e); ziJianZhuangTai = 'error';
+                }
+                if (document.getElementById('baogao').style.display === 'block') {
+                    document.getElementById('baogao_wen').value = shengChengBaoGao();
+                }
+            }, 50);
+        }
+
+        /* --- 报告生成与展示 --- */
+        function daKaiBaoGao() {
+            var m = document.getElementById('baogao');
+            document.getElementById('baogao_wen').value = shengChengBaoGao();
+            m.style.display = 'block';
+            var cb = document.getElementById('copy_btn');
+            cb.onclick = function () {
+                var ta = document.getElementById('baogao_wen');
+                ta.select();
+                try {
+                    navigator.clipboard.writeText(ta.value).then(function () {
+                        cb.textContent = '已复制 ✓';
+                        setTimeout(function () { cb.textContent = '复制到剪贴板'; }, 1500);
+                    }, function () { document.execCommand('copy'); });
+                } catch (e) { document.execCommand('copy'); }
+            };
+            // 自动启动 A/B 差分自检（完成后自动刷新报告）
+            qiDongZiJian(bg.contentWindow);
+        }
+        document.getElementById('close_btn').onclick = function () {
+            document.getElementById('baogao').style.display = 'none';
+        };
+        function shengChengBaoGao() {
+            var w = bg.contentWindow;
+            var s = w && w.__wuD ? w.__wuD.state() : {};
+            var t = dangQian() || {};
+            var cun = duQuCunChu() || {};
+            var hj = w ? huanJingXinXi(w) : {};
+            var yangBenZuiHou = caiYang.slice(-8).map(function (x) {
+                return '  t+' + x.t + 's reveal=' + x.rv + ' 透明度=' + x.op + ' 强度=' + x.st + (x.hover ? ' [光标hover]' : '');
+            }).join('\n');
+            var zuiQiang = 0, zuiRuo = 9;
+            caiYang.forEach(function (x) {
+                if (!isFinite(x.st)) return;
+                zuiQiang = Math.max(zuiQiang, x.st);
+                if (x.st > 0) zuiRuo = Math.min(zuiRuo, x.st);
+            });
+
+            var hang = [];
+            hang.push('=== 草地×吴昊阳 测试报告 v2 ===');
+            hang.push('时间: ' + new Date().toLocaleString());
+            hang.push('页面: ' + location.href.split('?')[0]);
+            hang.push('浏览器: ' + navigator.userAgent);
+
+            hang.push('');
+            hang.push('--- 环境信息 ---');
+            hang.push('视口: ' + hj.shiKou + '  DPR: ' + hj.dpr + '  主题: ' + hj.zhuTi + '  渲染帧: ' + hj.xuanRanZhen);
+            hang.push('相机位姿: pos=' + JSON.stringify(hj.xiangJiWeiZhi) + '  quat=' + JSON.stringify(hj.xiangJiSiYuan));
+            hang.push('角色屏幕矩形: ' + (hj.jiaoSeJuXiang
+                ? '中心[' + hj.jiaoSeJuXiang.center.join(',') + '] 尺寸' + hj.jiaoSeJuXiang.size + 'px 矩形' + JSON.stringify(hj.jiaoSeJuXiang.rect)
+                : '（角色未就绪）'));
+            hang.push('reveal: ' + hj.reveal);
+            hang.push('压弯注入: ' + hj.yaWanZhuRu + '  中心: ' + JSON.stringify(hj.yaWanZhongXin) + '  r0/r1: ' + hj.yaWanR);
+
+            hang.push('');
+            hang.push('--- 当前状态 ---');
+            hang.push('压弯注入: ' + (s.crushInjected || '?'));
+            hang.push('压弯强度(实时): ' + s.crushStrength + '  中心: ' + (s.crushCenter ? s.crushCenter.join(', ') : '-') + '  r0/r1: ' + s.crushR0 + '/' + s.crushR1);
+            hang.push('reveal 源: ' + (s.revealSource || '?') + '  进度: ' + s.revealProgress);
+            hang.push('角色不透明度: ' + s.opacity);
+
+            hang.push('');
+            hang.push('--- A/B 压弯像素差分自检 ---');
+            if (ziJianZhuangTai === 'running') {
+                hang.push('自检运行中…（数秒内完成，结束后自动刷新本报告）');
+            } else if (ziJianZhuangTai === 'error') {
+                hang.push('自检失败: ' + ziJianCuoWu);
+            } else if (ziJianZhuangTai === 'done' && ziJianJieGuo) {
+                var j = ziJianJieGuo;
+                hang.push('方式: ' + j.fangFa);
+                hang.push('基准强度: ' + j.jiZhunQiangDu);
+                if (j.cuoWu) {
+                    hang.push('自检错误: ' + j.cuoWu);
+                } else if (j.quFen) {
+                    ['th30', 'th60', 'th120'].forEach(function (k) {
+                        var q = j.quFen[k];
+                        hang.push('[' + k + '] 确定性(A vs A2): ' + q.queDingXing + ' px  |  压弯(A vs B) 角色矩形: ' +
+                            q.jiaoSe.count + ' px (' + q.jiaoSe.miDu + '%) 包围盒 ' + JSON.stringify(q.jiaoSe.bbox) +
+                            '  |  对照区: ' + q.duiZhao.count + ' px (' + q.duiZhao.miDu + '%)');
+                    });
+                    hang.push('结论: ' + j.jieLun);
+                }
+            } else {
+                hang.push('（未运行）');
+            }
+
+            hang.push('');
+            hang.push('--- 本次调参（持久化，刷新不丢） ---');
+            hang.push(JSON.stringify(Object.keys(t).length ? t : '（默认参数，未调整）'));
+            hang.push('存储覆盖: ' + JSON.stringify(cun));
+            hang.push('');
+            hang.push('--- 会话采样统计（共 ' + caiYang.length + ' 条） ---');
+            hang.push('强度范围: ' + (zuiRuo === 9 ? '无' : zuiRuo.toFixed(2) + ' ~ ' + zuiQiang.toFixed(2)));
+            hang.push('最近采样:');
+            hang.push(yangBenZuiHou || '  （无）');
+            hang.push('');
+            hang.push('--- 时间线（__wuD.logs 全量） ---');
+            hang.push(w && w.__wuD ? w.__wuD.logs.join('\n') : '（无）');
+            hang.push('=== 报告结束 ===');
+            return hang.join('\n');
+        }
+
+        /* --- HUD 刷新 + 采样 --- */
+        function shuaXin() {
+            var w = bg.contentWindow;
+            if (!w || !w.__experience || !w.__experience.engine) {
+                hud.textContent = '引擎加载中…';
+                return;
+            }
+            if (!w.__wuD) { hud.textContent = '覆盖层初始化中…'; return; }
+            var s = w.__wuD.state();
+            var t = dangQian() || {};
+            var tiaoStr = (t.strength != null ? ' strength=' + (+t.strength).toFixed(2) : '') +
+                (t.r0 != null ? ' r0=' + (+t.r0).toFixed(2) : '') +
+                (t.r1 != null ? ' r1=' + (+t.r1).toFixed(2) : '') +
+                (t.huxi != null ? ' huxi=' + t.huxi : '') +
+                (t.__weiZhong ? ' 中心=' + t.__weiZhong.join(',') : '');
+            hud.textContent =
+                '注入: ' + s.crushInjected + ' 个草材质\n' +
+                '当前强度: ' + s.crushStrength + '  范围: ' + s.crushR0 + '~' + s.crushR1 + '\n' +
+                '压弯中心: ' + (s.crushCenter ? s.crushCenter.join(', ') : '-') + '\n' +
+                'reveal 进度: ' + s.revealProgress + '  角色不透明度: ' + s.opacity + '\n' +
+                '渲染帧: ' + s.drawFrames + '\n' +
+                '调参覆盖: ' + (tiaoStr || '（默认）') + '\n' +
+                '主题: ' + (document.documentElement.getAttribute('data-theme') || 'dark') +
+                '  DPR: ' + w.devicePixelRatio +
+                (ziJianZhuangTai === 'running' ? '\n[A/B 自检运行中…]' : '');
+            // 采样
+            caiYang.push({
+                t: Math.round((Date.now() - caiYangStart) / 1000),
+                rv: s.revealProgress,
+                op: s.opacity,
+                st: s.crushStrength
+            });
+            if (caiYang.length > 240) caiYang.shift();
+        }
+        setInterval(shuaXin, 2000);
+    })();
+    </script>
+</body>
+</html>

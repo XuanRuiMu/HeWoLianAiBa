@@ -55,3 +55,15 @@ export function yanZhengMiMa(zhi: unknown): YanZhengJieGuo {
   }
   return { heFa: false, xiaoXi: huoQuFanYi('renZheng', 'miMaKong') }
 }
+
+const NIAN_LING_ZUI_XIAO = 0
+const NIAN_LING_ZUI_DA = 100
+
+export function guiYiNianLing(zhi: unknown): string {
+  if (zhi === null || zhi === undefined) return ''
+  const wenBen = String(zhi).trim()
+  if (!wenBen) return ''
+  const shu = Number(wenBen)
+  if (!Number.isFinite(shu)) return ''
+  return String(Math.max(NIAN_LING_ZUI_XIAO, Math.min(NIAN_LING_ZUI_DA, Math.round(shu))))
+}

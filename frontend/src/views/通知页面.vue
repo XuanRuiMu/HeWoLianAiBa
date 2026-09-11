@@ -66,6 +66,7 @@ async function biaoJiYiDu(tongZhiId: string) {
   try {
     await 通知仓库.biaoJiYiDu(tongZhiId)
   } catch (e) {
+     
     console.warn('标记已读失败', e)
   }
 }
@@ -75,6 +76,7 @@ async function biaoJiQuanBuYiDu() {
   try {
     await 通知仓库.biaoJiQuanBuYiDu()
   } catch (e) {
+     
     console.warn('标记全部已读失败', e)
   } finally {
     caoZuoZhong.value = false
@@ -151,7 +153,7 @@ onMounted(() => {
   border-radius: 16px;
 }
 
-:root[data-theme='浅色'] .tongzhi-kong {
+:root[data-theme='light'] .tongzhi-kong {
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
@@ -168,7 +170,7 @@ onMounted(() => {
   margin: 0;
 }
 
-:root[data-theme='浅色'] .kong-wenben {
+:root[data-theme='light'] .kong-wenben {
   color: rgba(0, 0, 0, 0.6);
 }
 
@@ -178,7 +180,7 @@ onMounted(() => {
   margin: 0;
 }
 
-:root[data-theme='浅色'] .kong-fuwen {
+:root[data-theme='light'] .kong-fuwen {
   color: rgba(0, 0, 0, 0.35);
 }
 
@@ -209,12 +211,12 @@ onMounted(() => {
   background: rgba(255, 107, 157, 0.1);
 }
 
-:root[data-theme='浅色'] .tongzhi-xiang {
+:root[data-theme='light'] .tongzhi-xiang {
   background: rgba(255, 255, 255, 0.74);
   border-color: rgba(0, 0, 0, 0.06);
 }
 
-:root[data-theme='浅色'] .tongzhi-xiang.weidu {
+:root[data-theme='light'] .tongzhi-xiang.weidu {
   background: rgba(255, 107, 157, 0.08);
   border-color: rgba(255, 107, 157, 0.22);
 }
@@ -252,11 +254,11 @@ onMounted(() => {
 }
 
 .liebiao-guodu-enter-active {
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.35s var(--quxian-biao-zhun);
 }
 
 .liebiao-guodu-leave-active {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s var(--quxian-biao-zhun);
 }
 
 .liebiao-guodu-enter-from {
@@ -270,7 +272,7 @@ onMounted(() => {
 }
 
 .liebiao-guodu-move {
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.35s var(--quxian-biao-zhun);
 }
 
 @keyframes jianbian-liudong {

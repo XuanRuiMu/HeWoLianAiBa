@@ -32,6 +32,7 @@ async function chuangJianCeShiYongHu(): Promise<{ shouJiHao: string; lingPai: st
       yongHuMing: `测试用户${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       miMa: 'testPassword123',
       tongYiXieYi: true,
+      chuShengRiQi: '2000-01-01',
     })
     .expect(200)
 
@@ -180,6 +181,25 @@ describe('FP-06 消息发送与显示', () => {
 
       expect(xiangYing.body.shu_ju.shi_mi_ji).not.toBe(true)
       expect(xiangYing.body.shu_ju.nei_rong).toBe('你好呀')
+    })
+
+    it('挑战模式对局发送秘籍同样生效（排位赛可用秘籍）', async () => {
+      const jiaoSeId = await chuangJianCeShiJiaoSe(ceShiYongHu!.lingPai, { 性别: 'nv', mbti类型: 'INFP' })
+      await 数据库.query(`UPDATE "角色" SET "对局模式" = 'tiaozhan' WHERE "ID" = $1`, [jiaoSeId])
+
+      const xiangYing = await request(yingYong)
+        .post(`/api/聊天/会话/${jiaoSeId}/消息`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ neiRong: 'whosyourdaddy' })
+        .expect(200)
+
+      expect(xiangYing.body.shu_ju.shi_mi_ji).toBe(true)
+
+      const fenHou = await 数据库.query(
+        `SELECT "总分" FROM "好感度" WHERE "用户ID" = $1 AND "角色ID" = $2`,
+        [ceShiYongHu!.yongHuId, jiaoSeId],
+      )
+      expect(Number(fenHou.rows[0].总分)).toBe(1000)
     })
   })
 

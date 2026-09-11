@@ -13,6 +13,7 @@ import {
   huoQuLiuCengJiMingCheng,
   jiSuanSiWeiBianHuaHouDeZongFen,
 } from '../services/好感度'
+import { sheZhiMockTiaoYong } from '../utils/DeepSeek客户端'
 
 function suiJiShouJiHao(): string {
   return `138${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`
@@ -38,6 +39,7 @@ async function chuangJianCeShiYongHu(): Promise<{ shouJiHao: string; lingPai: st
       yongHuMing: `测试用户${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       miMa: 'testPassword123',
       tongYiXieYi: true,
+      chuShengRiQi: '2000-01-01',
     })
     .expect(200)
 
@@ -99,10 +101,16 @@ describe('FP-10 好感度系统', () => {
   let ceShiYongHu: { shouJiHao: string; lingPai: string; yongHuId: string } | null = null
 
   beforeAll(async () => {
+    sheZhiMockTiaoYong(async () => ({
+      neiRong: JSON.stringify({ 违规: false, 确信度: 0.1, 类型: '', 严重程度: '', 理由: '' }),
+      xinXi: { role: 'assistant', content: '' },
+      yuanShuJu: {} as never,
+    }))
     ceShiYongHu = await chuangJianCeShiYongHu()
   })
 
   afterAll(async () => {
+    sheZhiMockTiaoYong(null)
     if (ceShiYongHu) {
       await qingLiJiaoSeHeYongHu(ceShiYongHu.yongHuId)
     }
@@ -344,80 +352,6 @@ describe('FP-10 好感度系统', () => {
     })
   })
 
-  describe('阶段变更记忆写入', () => {
-    it('从朋友升级到好友 → 记忆表新增记录且重要度为8', async () => {
-      const jiaoSeId = await chuangJianCeShiJiaoSe(ceShiYongHu!.lingPai, { 性别: 'nv', mbti类型: 'INFP' })
-      await zhiJieChuShiHuaHaoGanDu(ceShiYongHu!.yongHuId, jiaoSeId, 500)
-
-      await 数据库.query(`DELETE FROM "记忆" WHERE "用户ID" = $1 AND "角色ID" = $2`, [
-        ceShiYongHu!.yongHuId,
-        jiaoSeId,
-      ])
-
-      const bianHua = jiSuanSiWeiBianHuaHouDeZongFen(500, {
-        xin_ren_du_bian_hua: 3,
-        qin_mi_du_bian_hua: 3,
-        qu_wei_du_bian_hua: 3,
-        guan_huai_du_bian_hua: 3,
-      })
-      expect(huoQuJieDuanMing(bianHua)).toBe('好友')
-
-      await request(yingYong)
-        .post(`/api/好感度/${jiaoSeId}/更新`)
-        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
-        .send({
-          信任度变化: 3,
-          亲密度变化: 3,
-          趣味度变化: 3,
-          关怀度变化: 3,
-        })
-        .expect(200)
-
-      const jiYiJieGuo = await 数据库.query(
-        `SELECT * FROM "记忆" WHERE "用户ID" = $1 AND "角色ID" = $2 AND "事件类型" = '好感度阶段变化'`,
-        [ceShiYongHu!.yongHuId, jiaoSeId],
-      )
-      expect(jiYiJieGuo.rows.length).toBeGreaterThan(0)
-      expect(Number(jiYiJieGuo.rows[0].重要度)).toBe(8)
-    })
-
-    it('从好友降级到朋友 → 记忆表新增记录且重要度为3', async () => {
-      const jiaoSeId = await chuangJianCeShiJiaoSe(ceShiYongHu!.lingPai, { 性别: 'nv', mbti类型: 'INFP' })
-      await zhiJieChuShiHuaHaoGanDu(ceShiYongHu!.yongHuId, jiaoSeId, 501)
-
-      await 数据库.query(`DELETE FROM "记忆" WHERE "用户ID" = $1 AND "角色ID" = $2`, [
-        ceShiYongHu!.yongHuId,
-        jiaoSeId,
-      ])
-
-      const bianHua = jiSuanSiWeiBianHuaHouDeZongFen(501, {
-        xin_ren_du_bian_hua: -3,
-        qin_mi_du_bian_hua: -3,
-        qu_wei_du_bian_hua: -3,
-        guan_huai_du_bian_hua: -3,
-      })
-      expect(huoQuJieDuanMing(bianHua)).toBe('朋友')
-
-      await request(yingYong)
-        .post(`/api/好感度/${jiaoSeId}/更新`)
-        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
-        .send({
-          信任度变化: -3,
-          亲密度变化: -3,
-          趣味度变化: -3,
-          关怀度变化: -3,
-        })
-        .expect(200)
-
-      const jiYiJieGuo = await 数据库.query(
-        `SELECT * FROM "记忆" WHERE "用户ID" = $1 AND "角色ID" = $2 AND "事件类型" = '好感度阶段变化'`,
-        [ceShiYongHu!.yongHuId, jiaoSeId],
-      )
-      expect(jiYiJieGuo.rows.length).toBeGreaterThan(0)
-      expect(Number(jiYiJieGuo.rows[0].重要度)).toBe(3)
-    })
-  })
-
   describe('秘籍功能', () => {
     it('输入正确秘籍 → 好感度拉满到1000', async () => {
       const jiaoSeId = await chuangJianCeShiJiaoSe(ceShiYongHu!.lingPai, { 性别: 'nv', mbti类型: 'INFP' })
@@ -441,6 +375,24 @@ describe('FP-10 好感度系统', () => {
         .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
         .send({ 秘籍: 'cuowu' })
         .expect(401)
+    })
+
+    it('挑战模式对局秘籍同样生效（排位赛可用秘籍）', async () => {
+      const jiaoSeId = await chuangJianCeShiJiaoSe(ceShiYongHu!.lingPai, { 性别: 'nv', mbti类型: 'INFP' })
+      await 数据库.query(`UPDATE "角色" SET "对局模式" = 'tiaozhan' WHERE "ID" = $1`, [jiaoSeId])
+
+      const xiangYing = await request(yingYong)
+        .post(`/api/好感度/${jiaoSeId}/秘籍`)
+        .set('Authorization', `Bearer ${ceShiYongHu!.lingPai}`)
+        .send({ 秘籍: 'whosyourdaddy' })
+        .expect(200)
+
+      expect(xiangYing.body.cheng_gong).toBe(true)
+      const fenHou = await 数据库.query(
+        `SELECT "总分" FROM "好感度" WHERE "用户ID" = $1 AND "角色ID" = $2`,
+        [ceShiYongHu!.yongHuId, jiaoSeId],
+      )
+      expect(Number(fenHou.rows[0].总分)).toBe(1000)
     })
   })
 })

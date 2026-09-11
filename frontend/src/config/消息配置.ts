@@ -30,3 +30,17 @@ export const WEN_JIAN_SHURU_JIE_SHOU_KUO_ZHAN = [
   '.mp4',
   '.mov',
 ].join(',')
+
+export const LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI = {
+  yuYinCaiDanXiang: ['yuYinZhuanWenZi', 'yinYong'],
+  wenBenCaiDanXiang: ['fuZhi', 'fanYi', 'yinYong', 'cheHui'],
+  changAnChuFaHaoMiao: 500,
+  yinYongZhaiYaoZuiDaZiFu: 30,
+  yuYinZhuanXieChaoShiHaoMiao: 70000,
+} as const
+
+export type YuYinCaiDanXiang =
+  (typeof LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI)['yuYinCaiDanXiang'][number]
+
+export type WenBenCaiDanXiang =
+  (typeof LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI)['wenBenCaiDanXiang'][number]

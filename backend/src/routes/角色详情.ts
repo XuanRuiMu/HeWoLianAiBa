@@ -1,3 +1,4 @@
+﻿import { debug日志 } from '../utils/debug日志'
 import { Router } from 'express'
 import type { Response } from 'express'
 import { huoQuFanYi } from '../config/translations'
@@ -46,7 +47,7 @@ luYou.get(
         },
       })
     } catch (cuoWu) {
-      console.error('获取角色详情失败', cuoWu)
+      debug日志.error('角色接口', '获取角色详情失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },

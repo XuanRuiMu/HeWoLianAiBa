@@ -1,9 +1,11 @@
+﻿import { debug日志 } from '../utils/debug日志'
 import { Router } from 'express'
 import type { Request, Response } from 'express'
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import { chengGongXiangYing, shiBaiXiangYing } from '../utils/xiangying'
 import { huoQuIo } from '../socket/io'
+import { huoQuZhenShiIP } from '../utils/真实IP'
 import type { RenZhengQingQiu } from '../middleware/认证'
 import {
   huoQuTongZhiLieBiao,
@@ -15,11 +17,8 @@ import {
 const luYou = Router()
 
 function huoQuIp(qingQiu: Request): string {
-  const xForwardedFor = qingQiu.headers['x-forwarded-for']
-  if (typeof xForwardedFor === 'string') {
-    return xForwardedFor.split(',')[0].trim()
-  }
-  return qingQiu.ip || '127.0.0.1'
+  // 审计场景一律使用可信链路推导的真实来源 IP，不解析客户端可控 XFF
+  return huoQuZhenShiIP(qingQiu)
 }
 
 function jieXiZiFuChuan(
@@ -76,7 +75,7 @@ luYou.get(
         wei_du_shu: jieGuo.wei_du_shu,
       })
     } catch (cuoWu) {
-      console.error('获取通知列表失败', cuoWu)
+      debug日志.error('通知接口', '获取通知列表失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -102,7 +101,7 @@ luYou.put(
       }
       return chengGongXiangYing(xiangYing, jieGuo)
     } catch (cuoWu) {
-      console.error('标记通知已读失败', cuoWu)
+      debug日志.error('通知接口', '标记通知已读失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -120,7 +119,7 @@ luYou.put(
       await biaoJiSuoYouTongZhiYiDu(yongHu.yongHuId)
       return chengGongXiangYing(xiangYing, null)
     } catch (cuoWu) {
-      console.error('标记全部已读失败', cuoWu)
+      debug日志.error('通知接口', '标记全部已读失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -168,7 +167,7 @@ luYou.post(
       }
       return chengGongXiangYing(xiangYing, { fa_song_shu: jieGuo.fa_song_shu })
     } catch (cuoWu) {
-      console.error('管理员发送通知失败', cuoWu)
+      debug日志.error('通知接口', '管理员发送通知失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },

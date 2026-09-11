@@ -17,10 +17,16 @@
           </div>
           <div class="jilu-junshi-xinxi">
             <img
+              v-if="!touXiangShiBai"
               :src="shengChengTouXiangURL(jiLuShuJu.jun_shi_tou_xiang)"
               :alt="jiLuShuJu.jun_shi_ming_chen"
               class="jilu-junshi-touxiang"
+              loading="lazy"
+              @error="touXiangShiBai = true"
             />
+            <span v-else class="jilu-junshi-touxiang jilu-junshi-moren">{{
+              (jiLuShuJu.jun_shi_ming_chen || '军').slice(0, 1)
+            }}</span>
             <span class="jilu-junshi-ming">{{ jiLuShuJu.jun_shi_ming_chen }}</span>
           </div>
         </div>
@@ -45,7 +51,7 @@
                   <span class="chehui-neirong">{{ xiaoXi.yuan_shi_nei_rong }}</span>
                 </div>
                 <div v-if="xiaoXi.yi_che_hui && xiaoXi.che_hui_shi_jian" class="chehui-shijian">
-                  {{ huoQuFanYi('junShi', 'cheHuiYu') }} {{ xiaoXi.che_hui_shi_jian }}
+                  {{ huoQuFanYi('junShi', 'cheHuiYu') }}{{ xiaoXi.che_hui_shi_jian }}
                 </div>
               </div>
               <span v-if="xiaoXi.shi_jian" class="xiaoxi-shijian">{{ xiaoXi.shi_jian }}</span>
@@ -58,6 +64,7 @@
           <p class="jianyi-neirong">
             {{ jiLuShuJu.jian_yi }}
           </p>
+          <p class="ai-tishi" role="note">{{ huoQuFanYi('tongYong', 'aiTiShiTiao') }}</p>
         </div>
       </div>
     </template>
@@ -76,6 +83,7 @@ const route = useRoute()
 const router = useRouter()
 const jiLuShuJu = ref<JunShiJiLu | null>(null)
 const jiaZaiZhong = ref(true)
+const touXiangShiBai = ref(false)
 
 async function jiaZaiShuJu() {
   jiaZaiZhong.value = true
@@ -113,6 +121,8 @@ onMounted(() => {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: var(--gundong-tiao-beijing) transparent;
+  background: var(--liaotian-beijing);
+  background-size: 18px 18px;
 }
 
 .junshi-jilu-yemian::-webkit-scrollbar {
@@ -141,8 +151,8 @@ onMounted(() => {
   font-size: 14px;
 }
 
-:root[data-theme='浅色'] .jiaZai-zhuangtai,
-:root[data-theme='浅色'] .kong-zhuangtai {
+:root[data-theme='light'] .jiaZai-zhuangtai,
+:root[data-theme='light'] .kong-zhuangtai {
   color: rgba(0, 0, 0, 0.4);
 }
 
@@ -161,7 +171,7 @@ onMounted(() => {
   gap: 20px;
 }
 
-:root[data-theme='浅色'] .jilu-xiangqing-kapian {
+:root[data-theme='light'] .jilu-xiangqing-kapian {
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
@@ -184,7 +194,7 @@ onMounted(() => {
   transition: background 0.2s ease;
 }
 
-:root[data-theme='浅色'] .fanhui-anniu {
+:root[data-theme='light'] .fanhui-anniu {
   color: rgba(0, 0, 0, 0.6);
 }
 
@@ -199,7 +209,7 @@ onMounted(() => {
   margin: 0;
 }
 
-:root[data-theme='浅色'] .jilu-biaoti {
+:root[data-theme='light'] .jilu-biaoti {
   color: #191919;
 }
 
@@ -214,7 +224,7 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.4);
 }
 
-:root[data-theme='浅色'] .jilu-shijian {
+:root[data-theme='light'] .jilu-shijian {
   color: rgba(0, 0, 0, 0.35);
 }
 
@@ -224,7 +234,7 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.8);
 }
 
-:root[data-theme='浅色'] .jilu-jiaose-ming {
+:root[data-theme='light'] .jilu-jiaose-ming {
   color: rgba(0, 0, 0, 0.7);
 }
 
@@ -243,13 +253,23 @@ onMounted(() => {
   background: var(--beijing-ciuse);
 }
 
+.jilu-junshi-moren {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #8b6914, #d4a843);
+}
+
 .jilu-junshi-ming {
   font-size: 14px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.8);
 }
 
-:root[data-theme='浅色'] .jilu-junshi-ming {
+:root[data-theme='light'] .jilu-junshi-ming {
   color: rgba(0, 0, 0, 0.7);
 }
 
@@ -263,7 +283,7 @@ onMounted(() => {
   gap: 6px;
 }
 
-:root[data-theme='浅色'] .quyu-biaoti {
+:root[data-theme='light'] .quyu-biaoti {
   color: rgba(0, 0, 0, 0.6);
 }
 
@@ -281,7 +301,7 @@ onMounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-:root[data-theme='浅色'] .liaotian-jilu {
+:root[data-theme='light'] .liaotian-jilu {
   background: rgba(0, 0, 0, 0.02);
   border: 1px solid rgba(0, 0, 0, 0.04);
 }
@@ -311,7 +331,7 @@ onMounted(() => {
   min-width: 24px;
 }
 
-:root[data-theme='浅色'] .xiaoxi-jiaose {
+:root[data-theme='light'] .xiaoxi-jiaose {
   color: rgba(0, 0, 0, 0.6);
 }
 
@@ -327,7 +347,7 @@ onMounted(() => {
   word-break: break-word;
 }
 
-:root[data-theme='浅色'] .xiaoxi-neirong {
+:root[data-theme='light'] .xiaoxi-neirong {
   color: rgba(0, 0, 0, 0.5);
 }
 
@@ -353,7 +373,7 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.3);
 }
 
-:root[data-theme='浅色'] .chehui-shijian {
+:root[data-theme='light'] .chehui-shijian {
   color: rgba(0, 0, 0, 0.25);
 }
 
@@ -363,7 +383,7 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-:root[data-theme='浅色'] .xiaoxi-shijian {
+:root[data-theme='light'] .xiaoxi-shijian {
   color: rgba(0, 0, 0, 0.25);
 }
 
@@ -375,7 +395,16 @@ onMounted(() => {
   white-space: pre-wrap;
 }
 
-:root[data-theme='浅色'] .jianyi-neirong {
+.ai-tishi {
+  margin-top: 12px;
+  padding: 4px 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: right;
+  color: var(--wenben-ciuse);
+}
+
+:root[data-theme='light'] .jianyi-neirong {
   color: rgba(0, 0, 0, 0.75);
 }
 </style>

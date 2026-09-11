@@ -198,7 +198,7 @@ function guanBi() {
 
 .motaikuang-enter-active .xieyi-tanchuang {
   transition:
-    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.3s var(--quxian-tan-chu),
     opacity 0.3s ease;
 }
 
@@ -252,44 +252,44 @@ function guanBi() {
   }
 }
 
-:root[data-theme='浅色'] .xieyi-zhezhao {
+:root[data-theme='light'] .xieyi-zhezhao {
   background: rgba(0, 0, 0, 0.25);
 }
 
-:root[data-theme='浅色'] .xieyi-tanchuang {
+:root[data-theme='light'] .xieyi-tanchuang {
   background: rgba(255, 255, 255, 0.95);
   border-color: rgba(0, 0, 0, 0.08);
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.12);
 }
 
-:root[data-theme='浅色'] .tanchuang-toubu {
+:root[data-theme='light'] .tanchuang-toubu {
   border-bottom-color: rgba(0, 0, 0, 0.06);
 }
 
-:root[data-theme='浅色'] .tanchuang-biaoti {
+:root[data-theme='light'] .tanchuang-biaoti {
   color: #1a1a2e;
 }
 
-:root[data-theme='浅色'] .guanbi-anniu {
+:root[data-theme='light'] .guanbi-anniu {
   background: rgba(0, 0, 0, 0.04);
   border-color: rgba(0, 0, 0, 0.08);
   color: rgba(0, 0, 0, 0.5);
 }
 
-:root[data-theme='浅色'] .guanbi-anniu:hover {
+:root[data-theme='light'] .guanbi-anniu:hover {
   background: rgba(0, 0, 0, 0.08);
   color: #1a1a2e;
 }
 
-:root[data-theme='浅色'] .tanchuang-neirong::-webkit-scrollbar-thumb {
+:root[data-theme='light'] .tanchuang-neirong::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.15);
 }
 
-:root[data-theme='浅色'] .xieyi-wenben {
+:root[data-theme='light'] .xieyi-wenben {
   color: rgba(0, 0, 0, 0.75);
 }
 
-:root[data-theme='浅色'] .tanchuang-dibu {
+:root[data-theme='light'] .tanchuang-dibu {
   border-top-color: rgba(0, 0, 0, 0.06);
 }
 </style>

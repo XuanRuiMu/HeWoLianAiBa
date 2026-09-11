@@ -564,7 +564,7 @@ describe('FP-05 输入栏"+"面板与表情双Tab', () => {
     vi.restoreAllMocks()
   })
 
-  it('点击+按钮展开四入口面板并可关闭', async () => {
+  it('点击+按钮展开两入口面板并可关闭（通话不做）', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
     qingLiQi = () => wrapper.unmount()
 
@@ -576,32 +576,12 @@ describe('FP-05 输入栏"+"面板与表情双Tab', () => {
     expect(wrapper.find('.gengduo-mianban').isVisible()).toBe(true)
 
     const ruKou = wrapper.findAll('.gengduo-rukou')
-    expect(ruKou.length).toBe(4)
+    expect(ruKou.length).toBe(2)
     const ruKouWenBen = ruKou.map((r) => r.text())
     expect(ruKouWenBen).toContain(huoQuFanYi('duoMeiTi', 'xiangCe'))
     expect(ruKouWenBen).toContain(huoQuFanYi('duoMeiTi', 'wenJian'))
-    expect(ruKouWenBen).toContain(huoQuFanYi('duoMeiTi', 'yuYinTongHua'))
-    expect(ruKouWenBen).toContain(huoQuFanYi('duoMeiTi', 'shiPinTongHua'))
-
-    const 通话仓库 = 使用通话仓库()
-    const faQiJianShi = vi.spyOn(通话仓库, 'faQiTongHua').mockResolvedValue(true)
-    await ruKou[2].trigger('click')
-    await flushPromises()
-    expect(faQiJianShi).toHaveBeenCalledWith('j1', 'yuYin')
-    expect(wrapper.find('.gengduo-mianban').isVisible()).toBe(false)
-  })
-
-  it('视频通话入口调用通话仓库并发送 shiPin 类型', async () => {
-    const { wrapper } = await mountLiaoTianYeMian()
-    qingLiQi = () => wrapper.unmount()
-
-    await wrapper.find('.gengduo-plus-anniu').trigger('click')
-    await flushPromises()
-    const 通话仓库 = 使用通话仓库()
-    const faQiJianShi = vi.spyOn(通话仓库, 'faQiTongHua').mockResolvedValue(true)
-    await wrapper.findAll('.gengduo-rukou')[3].trigger('click')
-    await flushPromises()
-    expect(faQiJianShi).toHaveBeenCalledWith('j1', 'shiPin')
+    expect(ruKouWenBen).not.toContain(huoQuFanYi('duoMeiTi', 'yuYinTongHua'))
+    expect(ruKouWenBen).not.toContain(huoQuFanYi('duoMeiTi', 'shiPinTongHua'))
   })
 
   it('表情面板为双Tab：Emoji默认激活，切到表情包显示贴纸网格', async () => {

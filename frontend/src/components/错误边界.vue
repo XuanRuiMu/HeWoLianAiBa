@@ -65,7 +65,7 @@ onErrorCaptured((cuoWu, shiLi, xinXi) => {
     shiJianChuo: Date.now(),
   }
   emit('cuoWuBuHuo', xinXiRong)
-  console.error('[错误边界] 捕获渲染错误:', cuoWu, xinXi)
+  if (import.meta.env.DEV) console.error('[错误边界] 捕获渲染错误:', cuoWu, xinXi)
   return false
 })
 
@@ -174,27 +174,27 @@ defineExpose({
   background: rgba(255, 255, 255, 0.14);
 }
 
-:root[data-theme='浅色'] .cuowu-tishi {
+:root[data-theme='light'] .cuowu-tishi {
   color: rgba(0, 0, 0, 0.75);
   background: rgba(255, 255, 255, 0.9);
   border-color: rgba(0, 0, 0, 0.08);
 }
 
-:root[data-theme='浅色'] .cuowu-biaoti {
+:root[data-theme='light'] .cuowu-biaoti {
   color: #1a1a2e;
 }
 
-:root[data-theme='浅色'] .cuowu-miaoshu {
+:root[data-theme='light'] .cuowu-miaoshu {
   color: rgba(0, 0, 0, 0.6);
 }
 
-:root[data-theme='浅色'] .chongzhi-anniu {
+:root[data-theme='light'] .chongzhi-anniu {
   background: rgba(0, 0, 0, 0.04);
   color: rgba(0, 0, 0, 0.7);
   border-color: rgba(0, 0, 0, 0.1);
 }
 
-:root[data-theme='浅色'] .chongzhi-anniu:hover {
+:root[data-theme='light'] .chongzhi-anniu:hover {
   background: rgba(0, 0, 0, 0.08);
 }
 

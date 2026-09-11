@@ -1,8 +1,9 @@
-import { Router } from 'express'
+﻿import { Router } from 'express'
 import type { Response } from 'express'
 import Busboy from 'busboy'
 import { huoQuFanYi } from '../config/translations'
 import { chengGongXiangYing, shiBaiXiangYing } from '../utils/xiangying'
+import { debug日志 } from '../utils/debug日志'
 import { liaoTianXianLiu, aiQingQiuXianLiu } from '../middleware/限流'
 import type { RenZhengQingQiu } from '../middleware/认证'
 import {
@@ -15,6 +16,7 @@ import { liuShiBaoCunMeiTi, MeiTiCunChuCuoWu, shengChengQianMingURL } from '../s
 import { shiHeFaLeiBie, shiHeFaXiaoXiLeiXing } from '../config/媒体配置'
 import { shenHeNeiRongAnQuan } from '../services/安全审核'
 import { 获取IP, 记录违规 } from '../services/IP封禁'
+import { chaXunZhangHaoFengJin, jiLuZhangHaoWeiGui } from '../services/账号封禁'
 import { 聊天内容验证中间件 } from '../middleware/输入验证'
 import {
   huoQuJunShiLieBiao,
@@ -32,6 +34,15 @@ import { huoQuIo } from '../socket/io'
 import { 数据库 } from '../数据库'
 import { HAO_GAN_DU_PEI_ZHI } from '../config/好感度配置'
 import { sheZhiMiJiHaoGanDu } from '../services/好感度'
+import { fanYiWenBen } from '../services/翻译'
+import { mianFeiZhuanXieYuYin } from '../services/语音转写'
+import { huoQuDuoMoTaiQianDuanShiTu, chongZaiDuoMoTaiHuanJing } from '../config/多模态配置'
+import { gouJianYuYinKeDuWenBen } from '../services/语音理解'
+import { yanZhengShengTuTiShiCi, shengChengTuXiang } from '../services/图像生成'
+import { yanZhengShiPinTiShiCi, shengChengShiPin, gouJianShiPinKeDuWenBen } from '../services/视频多模态'
+import { yanZhengGuanLiYuan } from '../middleware/管理员'
+import { baoCunJiaoSeMeiTiXiaoXi, huoQuJiaoSeSuoYouZhe } from '../services/消息'
+import { Readable } from 'stream'
 
 const luYou = Router()
 
@@ -75,7 +86,7 @@ luYou.get(
       }))
       return chengGongXiangYing(xiangYing, lieBiao)
     } catch (cuoWu) {
-      console.error('获取会话列表失败', cuoWu)
+      debug日志.error('消息接口', '获取会话列表失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -114,7 +125,7 @@ luYou.post(
         wei_du_shu: 0,
       })
     } catch (cuoWu) {
-      console.error('创建会话失败', cuoWu)
+      debug日志.error('消息接口', '创建会话失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -136,16 +147,40 @@ luYou.get(
     const yeMa = huoQuShuZi(qingQiu.query.ye_ma, 1)
     const meiYeTiaoShu = huoQuShuZi(qingQiu.query.mei_ye_tiao_shu, 50)
 
+    // M6 keyset 游标（可选）：上滑加载更早消息时由前端携带上一页末条消息的定位信息
+    let youBiaoXuHao: number | null = null
+    if (qingQiu.query.you_biao_xu_hao !== undefined && /^\d+$/.test(String(qingQiu.query.you_biao_xu_hao))) {
+      youBiaoXuHao = Number(qingQiu.query.you_biao_xu_hao)
+    }
+    let youBiaoShiJianChuo: number | null = null
+    if (
+      qingQiu.query.you_biao_shi_jian_chuo !== undefined &&
+      /^\d+$/.test(String(qingQiu.query.you_biao_shi_jian_chuo))
+    ) {
+      youBiaoShiJianChuo = Number(qingQiu.query.you_biao_shi_jian_chuo)
+    }
+    const youBiaoId =
+      typeof qingQiu.query.you_biao_id === 'string' && qingQiu.query.you_biao_id.length > 0
+        ? qingQiu.query.you_biao_id
+        : null
+
     try {
       const jieGuo = await huoQuXiaoXiLieBiao({
         yong_hu_id: yongHu.yongHuId,
         jiao_se_id: jiaoSeId,
         ye_ma: yeMa,
         mei_ye_tiao_shu: meiYeTiaoShu,
+        you_biao_xu_hao: youBiaoXuHao,
+        you_biao_shi_jian_chuo: youBiaoShiJianChuo,
+        you_biao_id: youBiaoId,
       })
-      return chengGongXiangYing(xiangYing, { lie_biao: jieGuo.lie_biao, zong_shu: jieGuo.zong_shu })
+      return chengGongXiangYing(xiangYing, {
+        lie_biao: jieGuo.lie_biao,
+        zong_shu: jieGuo.zong_shu,
+        hai_you_geng_duo: jieGuo.hai_you_geng_duo,
+      })
     } catch (cuoWu) {
-      console.error('获取消息列表失败', cuoWu)
+      debug日志.error('消息接口', '获取消息列表失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -158,6 +193,11 @@ luYou.post(
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {
       return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+    // 任务3：账号封禁中禁止上传任何媒体
+    const shangChuanFengJin = await chaXunZhangHaoFengJin(yongHu.yongHuId)
+    if (shangChuanFengJin.beiFengJin) {
+      return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'zhangHaoYiBeiFengJin'))
     }
 
     const jiaoSeId = String(qingQiu.params.huiHuaId || '')
@@ -208,13 +248,32 @@ luYou.post(
               mei_ti_url: shengChengQianMingURL(jieGuo.sha256),
             })
           })
-          .catch((cuoWu) => {
+          .catch(async (cuoWu) => {
             yiXiangYing = true
             if (cuoWu instanceof MeiTiCunChuCuoWu) {
-              shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', cuoWu.fanYiJian))
+              // 图片审核违规返回 403，其他媒体存储错误返回 400
+              const shenHeLeiBieLieBiao = ['涉政有害', '淫秽色情', '暴力恐怖', '邪教', '赌博诈骗', '侵害未成年人', '审核服务不可用']
+              const shiFouTuPianShenHeShiBai = cuoWu.fanYiJian === 'tuPianWeiGui' || shenHeLeiBieLieBiao.includes(cuoWu.fanYiJian)
+              const zhuangTaiMa = shiFouTuPianShenHeShiBai ? 403 : 400
+              // 任务3：真实违规图片记账号违规一次（审核服务自身不可用不计）；文件已在存储层销毁，等同撤回
+              if (zhuangTaiMa === 403 && String(cuoWu.fanYiJian) !== '审核服务不可用') {
+                await jiLuZhangHaoWeiGui({
+                  yongHuId: yongHu.yongHuId,
+                  ip: 获取IP(qingQiu),
+                  yuanYin: String(cuoWu.fanYiJian),
+                  leiXing: 'AI聊天图片',
+                })
+              }
+              // 审核类别键在 shenHeLeiBie 分类下，其他错误在 liaoTian 分类下
+              const fanYiFenLei = shenHeLeiBieLieBiao.includes(cuoWu.fanYiJian) ? 'shenHeLeiBie' : 'liaoTian'
+              const fanYiJian = cuoWu.fanYiJian as string
+              const tiShi = fanYiFenLei === 'shenHeLeiBie'
+                ? huoQuFanYi('shenHeLeiBie', fanYiJian as keyof typeof import('../config/translations').fanYi.shenHeLeiBie)
+                : huoQuFanYi('liaoTian', fanYiJian as keyof typeof import('../config/translations').fanYi.liaoTian)
+              shiBaiXiangYing(xiangYing, zhuangTaiMa, tiShi)
               return
             }
-            console.error('媒体上传失败', cuoWu)
+            debug日志.error('消息接口', '媒体上传失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
             shiBaiXiangYing(xiangYing, 500, huoQuFanYi('liaoTian', 'meiTiShangChuanShiBai'))
           })
           .finally(() => {
@@ -228,7 +287,7 @@ luYou.post(
       busboy.on('error', (cuoWu) => {
         if (!yiXiangYing) {
           yiXiangYing = true
-          console.error('媒体解析失败', cuoWu)
+          debug日志.error('消息接口', '媒体解析失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
           shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
         }
       })
@@ -254,6 +313,11 @@ luYou.post(
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {
       return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+    // 任务3：账号封禁中禁止发送任何内容（申诉入口不受影响，见资料路由）
+    const zhangHaoFengJin = await chaXunZhangHaoFengJin(yongHu.yongHuId)
+    if (zhangHaoFengJin.beiFengJin) {
+      return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'zhangHaoYiBeiFengJin'))
     }
 
     const jiaoSeId = String(qingQiu.params.huiHuaId || '')
@@ -298,10 +362,19 @@ luYou.post(
     }
 
     try {
-      // 安全审核仅对文本消息内容执行
-      if (!shiMeiTi) {
+      // 安全审核：文本消息审正文；媒体消息审附带的文字说明（如有）。
+      // 拦截在落库前（非法数据直接销毁，等同撤回）；审核服务自身不可用不计为用户违规。
+      if (!shiMeiTi || neiRong.trim()) {
         const anQuanJieGuo = await shenHeNeiRongAnQuan(neiRong)
         if (anQuanJieGuo.wei_gui) {
+          if (anQuanJieGuo.lei_xing !== '审核服务不可用') {
+            await jiLuZhangHaoWeiGui({
+              yongHuId: yongHu.yongHuId,
+              ip: 获取IP(qingQiu),
+              yuanYin: anQuanJieGuo.li_you || anQuanJieGuo.lei_xing || '内容违规',
+              leiXing: 'AI聊天',
+            })
+          }
           const jiLuJieGuo = await 记录违规(
             获取IP(qingQiu),
             '内容违规',
@@ -367,7 +440,7 @@ luYou.post(
 
       return chengGongXiangYing(xiangYing, jieGuo.xiao_xi)
     } catch (cuoWu) {
-      console.error('发送消息失败', cuoWu)
+      debug日志.error('消息接口', '发送消息失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('liaoTian', 'faSongShiBai'))
     }
   },
@@ -402,13 +475,13 @@ luYou.put(
       if (io) {
         io.to(yongHu.yongHuId).emit('管理员_隐藏信息', {
           类型: '用户撤回',
-          内容: `用户撤回了消息（ID: ${xiaoXiId}），AI 上下文已重置`,
+          内容: `用户撤回了消息（ID: ${xiaoXiId}），AI上下文已重置`,
           时间: Date.now(),
         })
       }
       return chengGongXiangYing(xiangYing, jieGuo.xiao_xi)
     } catch (cuoWu) {
-      console.error('撤回消息失败', cuoWu)
+      debug日志.error('消息接口', '撤回消息失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('liaoTian', 'cheHuiShiBai'))
     }
   },
@@ -431,7 +504,7 @@ luYou.put(
       await biaoJiSuoYouWeiDu(yongHu.yongHuId, jiaoSeId)
       return chengGongXiangYing(xiangYing, null)
     } catch (cuoWu) {
-      console.error('标记已读失败', cuoWu)
+      debug日志.error('消息接口', '标记已读失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -449,7 +522,7 @@ luYou.get(
       const jieGuo = await huoQuJunShiLieBiao()
       return chengGongXiangYing(xiangYing, { junShiLieBiao: jieGuo.junShiLieBiao })
     } catch (cuoWu) {
-      console.error('获取军师列表失败', cuoWu)
+      debug日志.error('消息接口', '获取军师列表失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -482,7 +555,7 @@ luYou.post(
       }
       return chengGongXiangYing(xiangYing, jieGuo.jie_guo)
     } catch (cuoWu) {
-      console.error('请求军师指导失败', cuoWu)
+      debug日志.error('消息接口', '请求军师指导失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -505,7 +578,7 @@ luYou.get(
       const jieGuo = await huoQuJunShiJiLu(yongHu.yongHuId, jiaoSeId)
       return chengGongXiangYing(xiangYing, { jiLuLieBiao: jieGuo.jiLuLieBiao })
     } catch (cuoWu) {
-      console.error('获取军师记录失败', cuoWu)
+      debug日志.error('消息接口', '获取军师记录失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },
@@ -532,7 +605,299 @@ luYou.get(
         youLiaoTianJiLu: jieGuo.you_liao_tian_ji_lu,
       })
     } catch (cuoWu) {
-      console.error('获取军师指导状态失败', cuoWu)
+      debug日志.error('消息接口', '获取军师指导状态失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
+    }
+  },
+)
+
+// V8：签名 URL 过期后前端 @error 触发重签（校验会话归属与媒体归属）
+luYou.get(
+  '/会话/:huiHuaId/媒体签名/:meiTiId',
+  liaoTianXianLiu,
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+
+    const jiaoSeId = String(qingQiu.params.huiHuaId || '')
+    const meiTiId = String(qingQiu.params.meiTiId || '')
+    if (!yanZhengUUID(jiaoSeId) || !yanZhengUUID(meiTiId)) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
+    }
+
+    try {
+      // 会话必须属于当前用户，且该媒体必须出现在当前会话的消息中
+      const guiShuJieGuo = await 数据库.query(
+        `SELECT 1 FROM "角色" WHERE "ID" = $1 AND "用户ID" = $2 LIMIT 1`,
+        [jiaoSeId, yongHu.yongHuId],
+      )
+      if (guiShuJieGuo.rows.length === 0) {
+        return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('liaoTian', 'wuQuanXian'))
+      }
+
+      const meiTiJieGuo = await 数据库.query(
+        `SELECT mf."SHA256"
+           FROM "消息" m
+           JOIN "媒体文件" mf ON m."媒体ID" = mf."ID"
+          WHERE m."媒体ID" = $1 AND m."用户ID" = $2 AND m."角色ID" = $3
+          LIMIT 1`,
+        [meiTiId, yongHu.yongHuId, jiaoSeId],
+      )
+      if (meiTiJieGuo.rows.length === 0) {
+        return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('liaoTian', 'meiTiBuCunZai'))
+      }
+
+      return chengGongXiangYing(xiangYing, {
+        mei_ti_url: shengChengQianMingURL(String(meiTiJieGuo.rows[0].SHA256).toLowerCase()),
+      })
+    } catch (cuoWu) {
+      debug日志.error('消息接口', '重签媒体URL失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
+    }
+  },
+)
+
+luYou.post(
+  '/翻译',
+  aiQingQiuXianLiu,
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+    const body = qingQiu.body as Record<string, unknown>
+    const neiRong = huoQuZiFuChuan(body, 'neiRong', 'nei_rong')
+    if (!neiRong.trim()) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'xiaoXiNeiRongWeiKong'))
+    }
+    const yuanYu = body['yuanYu'] ?? body['yuan_yu']
+    const muBiaoYu = body['muBiaoYu'] ?? body['mu_biao_yu']
+    try {
+      const jieGuo = await fanYiWenBen(neiRong, yuanYu, muBiaoYu)
+      if (!jieGuo.cheng_gong) {
+        return shiBaiXiangYing(xiangYing, 500, jieGuo.ti_shi || huoQuFanYi('liaoTian', 'fanYiShiBai'))
+      }
+      return chengGongXiangYing(xiangYing, { fanYiWenBen: jieGuo.fan_yi })
+    } catch (cuoWu) {
+      debug日志.error('消息接口', '文本翻译失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('liaoTian', 'fanYiShiBai'))
+    }
+  },
+)
+
+luYou.post(
+  '/语音/转写',
+  liaoTianXianLiu,
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+    const body = qingQiu.body as Record<string, unknown>
+    const meiTiId = huoQuZiFuChuan(body, 'meiTiId', 'mei_ti_id')
+    if (!meiTiId.trim()) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    }
+    try {
+      const wenBen = await mianFeiZhuanXieYuYin({ meiTiId: meiTiId.trim() })
+      if (!wenBen) {
+        return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('liaoTian', 'yuYinZhuanWenZiShiBai'))
+      }
+      return chengGongXiangYing(xiangYing, { zhuanXieWenBen: wenBen })
+    } catch (cuoWu) {
+      debug日志.error('消息接口', '语音转写失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('liaoTian', 'yuYinZhuanWenZiShiBai'))
+    }
+  },
+)
+
+luYou.get(
+  '/多模态配置',
+  liaoTianXianLiu,
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+    return chengGongXiangYing(xiangYing, huoQuDuoMoTaiQianDuanShiTu())
+  },
+)
+
+luYou.post(
+  '/多模态配置/重载',
+  liaoTianXianLiu,
+  yanZhengGuanLiYuan,
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+    try {
+      const jianLieBiao = chongZaiDuoMoTaiHuanJing()
+      return chengGongXiangYing(xiangYing, { yiZhongZaiJianShu: jianLieBiao.length })
+    } catch (cuoWu) {
+      debug日志.error('消息接口', '多模态配置重载失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
+    }
+  },
+)
+
+luYou.post(
+  '/会话/:huiHuaId/语音理解',
+  liaoTianXianLiu,
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+    const jiaoSeId = String(qingQiu.params.huiHuaId || '')
+    if (!jiaoSeId) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    }
+    const body = qingQiu.body as Record<string, unknown>
+    const zhuanXie = typeof body['zhuanXieWenBen'] === 'string' ? String(body['zhuanXieWenBen']).trim().slice(0, 500) : typeof body['zhuan_xie_wen_ben'] === 'string' ? String(body['zhuan_xie_wen_ben']).trim().slice(0, 500) : ''
+    const shiJianMiaoShu = typeof body['yinPinShiJianMiaoShu'] === 'string' ? String(body['yinPinShiJianMiaoShu']).trim().slice(0, 200) : typeof body['yin_pin_shi_jian_miao_shu'] === 'string' ? String(body['yin_pin_shi_jian_miao_shu']).trim().slice(0, 200) : ''
+    const yuanShiChang = body['shiChangHaoMiao'] ?? body['shi_chang_hao_miao']
+    const shiChang = typeof yuanShiChang === 'number' && Number.isFinite(yuanShiChang) && yuanShiChang > 0 ? yuanShiChang : null
+    try {
+      const suoYou = await huoQuJiaoSeSuoYouZhe(jiaoSeId)
+      if (!suoYou || suoYou.yong_hu_id !== yongHu.yongHuId) {
+        return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('liaoTian', 'wuQuanXian'))
+      }
+      const keDuWenBen = gouJianYuYinKeDuWenBen({ zhuanXieWenBen: zhuanXie || null, yinPinShiJianMiaoShu: shiJianMiaoShu || null, shiChangHaoMiao: shiChang })
+      return chengGongXiangYing(xiangYing, { keDuWenBen })
+    } catch (cuoWu) {
+      debug日志.error('消息接口', '语音理解失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('liaoTian', 'yuYinLiJieShiBai'))
+    }
+  },
+)
+
+luYou.post(
+  '/会话/:huiHuaId/生图',
+  aiQingQiuXianLiu,
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+    const jiaoSeId = String(qingQiu.params.huiHuaId || '')
+    const body = qingQiu.body as Record<string, unknown>
+    const tiShiCi = typeof body['tiShiCi'] === 'string' ? body['tiShiCi'] : typeof body['ti_shi_ci'] === 'string' ? body['ti_shi_ci'] : ''
+    const yanZheng = yanZhengShengTuTiShiCi(tiShiCi)
+    if (!yanZheng.heFa) {
+      return shiBaiXiangYing(xiangYing, 400, yanZheng.ti_shi || huoQuFanYi('liaoTian', 'xiaoXiNeiRongWeiKong'))
+    }
+    try {
+      const suoYou = await huoQuJiaoSeSuoYouZhe(jiaoSeId)
+      if (!suoYou) {
+        return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('liaoTian', 'jiaoSeBuCunZai'))
+      }
+      if (suoYou.yong_hu_id !== yongHu.yongHuId) {
+        return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('liaoTian', 'wuQuanXian'))
+      }
+      const jieGuo = await shengChengTuXiang({ tiShiCi: yanZheng.qingXiHou, yongHuId: yongHu.yongHuId })
+      if (!jieGuo.cheng_gong || !jieGuo.tuPianZiJie) {
+        const tiShi = jieGuo.ti_shi || huoQuFanYi('liaoTian', 'shengTuShiBai')
+        const zhuangTaiMa = tiShi === huoQuFanYi('liaoTian', 'shengTuPeiEYongJin') ? 429 : 400
+        return shiBaiXiangYing(xiangYing, zhuangTaiMa, tiShi)
+      }
+      const cunChu = await liuShiBaoCunMeiTi(Readable.from(jieGuo.tuPianZiJie), `shengtu-${Date.now()}.png`, jieGuo.mime || 'image/png', 'tupian', yongHu.yongHuId)
+      const xiaoXi = await baoCunJiaoSeMeiTiXiaoXi({ yong_hu_id: yongHu.yongHuId, jiao_se_id: jiaoSeId, nei_rong: yanZheng.qingXiHou, lei_xing: 'tuPian', mei_ti_id: cunChu.mediaId })
+      const io = huoQuIo()
+      if (io) {
+        io.to(yongHu.yongHuId).emit('角色回复', { 角色ID: jiaoSeId, 消息列表: [xiaoXi] })
+      }
+      return chengGongXiangYing(xiangYing, xiaoXi)
+    } catch (cuoWu) {
+      if (cuoWu instanceof Error && cuoWu.name === 'MeiTiCunChuCuoWu') {
+        return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'meiTiShangChuanShiBai'))
+      }
+      debug日志.error('消息接口', '生图失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('liaoTian', 'shengTuShiBai'))
+    }
+  },
+)
+
+luYou.post(
+  '/会话/:huiHuaId/生成视频',
+  aiQingQiuXianLiu,
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+    const jiaoSeId = String(qingQiu.params.huiHuaId || '')
+    const body = qingQiu.body as Record<string, unknown>
+    const tiShiCi = typeof body['tiShiCi'] === 'string' ? body['tiShiCi'] : typeof body['ti_shi_ci'] === 'string' ? body['ti_shi_ci'] : ''
+    const yanZheng = yanZhengShiPinTiShiCi(tiShiCi)
+    if (!yanZheng.heFa) {
+      return shiBaiXiangYing(xiangYing, 400, yanZheng.ti_shi || huoQuFanYi('liaoTian', 'xiaoXiNeiRongWeiKong'))
+    }
+    try {
+      const suoYou = await huoQuJiaoSeSuoYouZhe(jiaoSeId)
+      if (!suoYou) {
+        return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('liaoTian', 'jiaoSeBuCunZai'))
+      }
+      if (suoYou.yong_hu_id !== yongHu.yongHuId) {
+        return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('liaoTian', 'wuQuanXian'))
+      }
+      const jieGuo = await shengChengShiPin({ tiShiCi: yanZheng.qingXiHou, yongHuId: yongHu.yongHuId })
+      if (!jieGuo.cheng_gong || !jieGuo.shiPinZiJie) {
+        const tiShi = jieGuo.ti_shi || huoQuFanYi('liaoTian', 'shiPinShengChengShiBai')
+        const zhuangTaiMa = tiShi === huoQuFanYi('liaoTian', 'shiPinPeiEYongJin') ? 429 : 400
+        return shiBaiXiangYing(xiangYing, zhuangTaiMa, tiShi)
+      }
+      const cunChu = await liuShiBaoCunMeiTi(Readable.from(jieGuo.shiPinZiJie), `shengshipin-${Date.now()}.mp4`, jieGuo.mime || 'video/mp4', 'wenjian', yongHu.yongHuId)
+      const xiaoXi = await baoCunJiaoSeMeiTiXiaoXi({ yong_hu_id: yongHu.yongHuId, jiao_se_id: jiaoSeId, nei_rong: yanZheng.qingXiHou, lei_xing: 'wenJian', mei_ti_id: cunChu.mediaId })
+      const io = huoQuIo()
+      if (io) {
+        io.to(yongHu.yongHuId).emit('角色回复', { 角色ID: jiaoSeId, 消息列表: [xiaoXi] })
+      }
+      return chengGongXiangYing(xiangYing, xiaoXi)
+    } catch (cuoWu) {
+      if (cuoWu instanceof Error && cuoWu.name === 'MeiTiCunChuCuoWu') {
+        return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'meiTiShangChuanShiBai'))
+      }
+      debug日志.error('消息接口', '生成视频失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('liaoTian', 'shiPinShengChengShiBai'))
+    }
+  },
+)
+
+luYou.get(
+  '/会话/:huiHuaId/视频理解',
+  liaoTianXianLiu,
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+    const jiaoSeId = String(qingQiu.params.huiHuaId || '')
+    if (!jiaoSeId) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    }
+    try {
+      const suoYou = await huoQuJiaoSeSuoYouZhe(jiaoSeId)
+      if (!suoYou || suoYou.yong_hu_id !== yongHu.yongHuId) {
+        return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('liaoTian', 'wuQuanXian'))
+      }
+      const wenJianMing = typeof qingQiu.query.wenJianMing === 'string' ? String(qingQiu.query.wenJianMing).slice(0, 100) : '视频'
+      const body = (qingQiu.body || {}) as Record<string, unknown>
+      const meiTiId = typeof body['meiTiId'] === 'string' ? body['meiTiId'] : typeof body['mei_ti_id'] === 'string' ? String(body['mei_ti_id']) : ''
+      let sha256: string | null = null
+      if (meiTiId && yanZhengUUID(meiTiId)) {
+        const meiTiChaXun = await 数据库.query(`SELECT "SHA256" FROM "媒体文件" WHERE "ID" = $1 AND "上传者ID" = $2 LIMIT 1`, [meiTiId, yongHu.yongHuId])
+        if (meiTiChaXun.rows.length > 0) sha256 = String(meiTiChaXun.rows[0]['SHA256'] || '').toLowerCase()
+      }
+      const { huoQuHuoJieXiShiPinMiaoShu } = await import('../services/视频理解')
+      const jieXi = await huoQuHuoJieXiShiPinMiaoShu(sha256)
+      const keDuWenBen = gouJianShiPinKeDuWenBen({ wenJianMing, huaMianMiaoShu: jieXi.huaMianMiaoShu, zhuanXieWenBen: jieXi.zhuanXieWenBen })
+      return chengGongXiangYing(xiangYing, { keDuWenBen })
+    } catch (cuoWu) {
+      debug日志.error('消息接口', '视频理解失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     }
   },

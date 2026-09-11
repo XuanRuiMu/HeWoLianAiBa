@@ -100,22 +100,32 @@ export const nvXingMingZiKu = [
   '崔若兮',
 ]
 
+export type ShenFenLeiXing = '大学生' | '大专生' | '工作人' | '自由职业'
+
+export const shenFenLieBiao: readonly ShenFenLeiXing[] = ['大学生', '大专生', '工作人', '自由职业']
+
+export function shiXueShengShenFen(shenFen: string): boolean {
+  return shenFen === '大学生' || shenFen === '大专生'
+}
+
 export interface ShenFenSheZhi {
-  leiXing: string
+  leiXing: ShenFenLeiXing
   gaiLv: number
   nianLingFanWei: [number, number]
 }
 
 export const shenFenPeiZhi: ShenFenSheZhi[] = [
-  { leiXing: '大学生', gaiLv: 0.5, nianLingFanWei: [18, 22] },
-  { leiXing: '大专生', gaiLv: 0.3, nianLingFanWei: [18, 21] },
+  { leiXing: '大学生', gaiLv: 0.4, nianLingFanWei: [18, 22] },
+  { leiXing: '大专生', gaiLv: 0.25, nianLingFanWei: [18, 21] },
   { leiXing: '工作人', gaiLv: 0.2, nianLingFanWei: [22, 28] },
+  { leiXing: '自由职业', gaiLv: 0.15, nianLingFanWei: [22, 30] },
 ]
 
-export const nianJiPeiZhi: Record<string, string[]> = {
+export const nianJiPeiZhi: Record<ShenFenLeiXing, string[]> = {
   大学生: ['大一', '大二', '大三', '大四'],
   大专生: ['大一', '大二', '大三'],
   工作人: ['职场新人', '工作两年', '工作三年', '工作四年', '工作五年以上'],
+  自由职业: ['接单初期', '稳定接单', '资深自由职业', '自由职业五年以上'],
 }
 
 export const chengShiKu = [
@@ -668,4 +678,82 @@ export interface JiaoSePeiZhi {
   mbti: MBTILeiXing
   xingBie: 'nan' | 'nv'
   shiFouZhaXing: boolean
+}
+
+export const huiFuYanChiJiZhunHaoMiao = 10000
+export const huiFuYanChiEPianYiHaoMiao = -1500
+export const huiFuYanChiIPianYiHaoMiao = 1000
+export const huiFuYanChiKuaiRePianYiHaoMiao = -1000
+export const huiFuYanChiManRePianYiHaoMiao = 1500
+export const huiFuYanChiZhaXingPianYiHaoMiao = -500
+export const huiFuYanChiReQingCiPianYiHaoMiao = -500
+export const huiFuYanChiGaoLengCiPianYiHaoMiao = 1000
+export const huiFuYanChiZuiXiaoHaoMiao = 8000
+export const huiFuYanChiZuiDaHaoMiao = 12000
+export const huiFuYanChiDouDongFuDuHaoMiao = 300
+
+export const reQingCiBiao = ['热情', '活泼', '自来熟', '话痨', '元气', '开朗', '健谈', '爱笑', '阳光', '外向']
+export const gaoLengCiBiao = ['高冷', '冷淡', '寡言', '疏离', '淡漠', '清冷', '内向', '安静', '矜持', '沉默']
+
+export interface HuiFuYanChiShuRu {
+  ieLeiXing: 'I' | 'E'
+  reShenLeiXing: '快热' | '慢热'
+  shiFouZhaXing: boolean
+  xingGeWenBen: string
+  yanYuFengGeWenBen: string
+}
+
+function qianZhiHaoMiao(haoMiao: number): number {
+  return Math.min(huiFuYanChiZuiDaHaoMiao, Math.max(huiFuYanChiZuiXiaoHaoMiao, haoMiao))
+}
+
+function wenBenMingZhongCiBiao(wenBen: string, ciBiao: string[]): boolean {
+  return ciBiao.some((ci) => wenBen.includes(ci))
+}
+
+export function jiSuanHuiFuYanChiHaoMiao(
+  shuRu: HuiFuYanChiShuRu,
+  douDongHaoMiao?: number,
+): number {
+  const heBingWenBen = `${shuRu.xingGeWenBen}${shuRu.yanYuFengGeWenBen}`
+  let jieGuo = huiFuYanChiJiZhunHaoMiao
+  jieGuo += shuRu.ieLeiXing === 'E' ? huiFuYanChiEPianYiHaoMiao : huiFuYanChiIPianYiHaoMiao
+  jieGuo += shuRu.reShenLeiXing === '快热' ? huiFuYanChiKuaiRePianYiHaoMiao : huiFuYanChiManRePianYiHaoMiao
+  if (shuRu.shiFouZhaXing) {
+    jieGuo += huiFuYanChiZhaXingPianYiHaoMiao
+  }
+  if (wenBenMingZhongCiBiao(heBingWenBen, reQingCiBiao)) {
+    jieGuo += huiFuYanChiReQingCiPianYiHaoMiao
+  }
+  if (wenBenMingZhongCiBiao(heBingWenBen, gaoLengCiBiao)) {
+    jieGuo += huiFuYanChiGaoLengCiPianYiHaoMiao
+  }
+  jieGuo = qianZhiHaoMiao(jieGuo)
+  const douDong = douDongHaoMiao ?? Math.floor(Math.random() * (2 * huiFuYanChiDouDongFuDuHaoMiao + 1)) - huiFuYanChiDouDongFuDuHaoMiao
+  return qianZhiHaoMiao(jieGuo + douDong)
+}
+
+export const 默认音色映射: Record<string, Record<'nan' | 'nv', string>> = {
+  ISTJ: { nan: 'male-qn-qingse', nv: 'female-shaonv' },
+  ISFJ: { nan: 'male-qn-qingse', nv: 'female-shaonv' },
+  INFJ: { nan: 'male-qn-chenqing', nv: 'female-chengshu' },
+  INTJ: { nan: 'male-qn-chenqing', nv: 'female-chengshu' },
+  ISTP: { nan: 'male-qn-qingse', nv: 'female-shaonv' },
+  ISFP: { nan: 'male-qn-qingse', nv: 'female-loli' },
+  INFP: { nan: 'male-qn-qingse', nv: 'female-loli' },
+  INTP: { nan: 'male-qn-qingse', nv: 'female-shaonv' },
+  ESTP: { nan: 'male-qn-chenqing', nv: 'female-chengshu' },
+  ESFP: { nan: 'male-qn-chenqing', nv: 'female-chengshu' },
+  ENFP: { nan: 'male-qn-chenqing', nv: 'female-chengshu' },
+  ENFJ: { nan: 'male-qn-chenqing', nv: 'female-chengshu' },
+  ENTJ: { nan: 'male-qn-chenqing', nv: 'female-chengshu' },
+  ESTJ: { nan: 'male-qn-chenqing', nv: 'female-chengshu' },
+  ESFJ: { nan: 'male-qn-chenqing', nv: 'female-chengshu' },
+  ENTP: { nan: 'male-qn-chenqing', nv: 'female-chengshu' },
+}
+
+export function 获取默认音色(mbti: string, xingBie: 'nan' | 'nv'): string {
+  const 映射 = 默认音色映射[mbti]
+  if (映射) return 映射[xingBie]
+  return xingBie === 'nv' ? 'female-shaonv' : 'male-qn-qingse'
 }

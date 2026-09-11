@@ -344,7 +344,7 @@ describe('FP-06 消息发送与显示', () => {
       expect(faSongMock).not.toHaveBeenCalledWith('发送消息')
     })
 
-    it('API发送失败时临时消息从列表移除并显示错误提示', async () => {
+    it('API发送失败时气泡保留原位并显示红色感叹号角标且显示错误提示', async () => {
       const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
       vi.mocked(faSongXiaoXi).mockRejectedValue(new Error(huoQuFanYi('liaoTian', 'faSongShiBai')))
 
@@ -353,7 +353,12 @@ describe('FP-06 消息发送与显示', () => {
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
 
-      expect(聊天仓库.xiaoXiLieBiao.some((x) => x.nei_rong === '失败测试')).toBe(false)
+      expect(聊天仓库.xiaoXiLieBiao.some((x) => x.nei_rong === '失败测试')).toBe(true)
+      const shiBaiXiaoXi = wrapper.findAll('.xiaoxi-xiangmu.yonghu-xiaoxi')
+      expect(shiBaiXiaoXi.length).toBeGreaterThan(0)
+      expect(shiBaiXiaoXi[shiBaiXiaoXi.length - 1].find('.fasong-shibai-jiaobiao').exists()).toBe(
+        true,
+      )
       expect(聊天仓库.cuoWuXinXi).toBeTruthy()
       expect(wrapper.find('.fasong-cuowu').exists()).toBe(true)
     })

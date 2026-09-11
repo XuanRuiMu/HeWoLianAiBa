@@ -30,7 +30,7 @@ export function chuFaCuoWuShangBao(canShu: CuoWuShangBaoCanShu): void {
     try {
       dangQianShangBaoHanShu(canShu)
     } catch (shangBaoCuoWu) {
-      console.error('[全局错误处理] 上报函数自身抛错:', shangBaoCuoWu)
+      if (import.meta.env.DEV) console.error('[全局错误处理] 上报函数自身抛错:', shangBaoCuoWu)
     }
   }
 }
@@ -137,7 +137,7 @@ export function anZhuangQuanJuCuoWuJianTingQi(): void {
 
   window.addEventListener('unhandledrejection', (shiJian) => {
     const cuoWu = shiJian.reason
-    console.error('[全局错误处理] 未处理的 Promise rejection:', cuoWu)
+    if (import.meta.env.DEV) console.error('[全局错误处理] 未处理的 Promise rejection:', cuoWu)
     chuFaCuoWuShangBao({
       leiBie: 'chengNuo',
       cuoWu,
@@ -149,7 +149,7 @@ export function anZhuangQuanJuCuoWuJianTingQi(): void {
   window.addEventListener('error', (shiJian) => {
     const cuoWu = shiJian.error || shiJian.message
     const shiZiYuanCuoWu = Boolean(shiJian.target && (shiJian.target as Element).tagName)
-    console.error('[全局错误处理] 资源或运行时错误:', cuoWu)
+    if (import.meta.env.DEV) console.error('[全局错误处理] 资源或运行时错误:', cuoWu)
     chuFaCuoWuShangBao({
       leiBie: shiZiYuanCuoWu ? 'ziYuan' : 'weiZhi',
       cuoWu,

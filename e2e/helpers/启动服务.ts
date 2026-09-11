@@ -113,13 +113,34 @@ async function qiDongWindowsFuWu(fuWuMing: string): Promise<void> {
 }
 
 export async function queRenShuJuKu(): Promise<void> {
-  const postgresRunning = await jianChaFuWuZhuangTai(peiZhi.postgresFuWuMing)
-  if (!postgresRunning) {
-    await qiDongWindowsFuWu(peiZhi.postgresFuWuMing)
+  // 部署形态适配：数据库/缓存优先按「端口可达」判断（Docker Compose 形态，127.0.0.1:5432/6379）；
+  // 不可达时先尝试 docker compose 拉起，最后回退 Windows 服务（本机直装形态）
+  const [pgReady, redisReady] = await Promise.all([
+    duanKouShiFouJiuXu('localhost', 5432, 3000),
+    duanKouShiFouJiuXu('localhost', 6379, 3000),
+  ])
+
+  if (!pgReady || !redisReady) {
+    try {
+      await execAsync('docker compose up -d postgres redis')
+      // 等待容器健康
+      await new Promise((resolve) => setTimeout(resolve, 5000))
+    } catch {
+      // docker 不可用则回退 Windows 服务路径
+    }
   }
-  const redisRunning = await jianChaFuWuZhuangTai(peiZhi.redisFuWuMing)
-  if (!redisRunning) {
-    await qiDongWindowsFuWu(peiZhi.redisFuWuMing)
+
+  if (!pgReady) {
+    const postgresRunning = await jianChaFuWuZhuangTai(peiZhi.postgresFuWuMing)
+    if (!postgresRunning) {
+      await qiDongWindowsFuWu(peiZhi.postgresFuWuMing)
+    }
+  }
+  if (!redisReady) {
+    const redisRunning = await jianChaFuWuZhuangTai(peiZhi.redisFuWuMing)
+    if (!redisRunning) {
+      await qiDongWindowsFuWu(peiZhi.redisFuWuMing)
+    }
   }
   await new Promise((resolve) => setTimeout(resolve, 2000))
 }

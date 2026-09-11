@@ -1,3 +1,4 @@
+﻿import { debug日志 } from '../utils/debug日志'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianQingGanFenXiPrompt } from './Prompt构建器'
 import type { QingGanFenXiJieGuo } from '../types'
@@ -22,7 +23,7 @@ export async function fenXiQingGan(
       fen_xi: String(shuJu['分析'] ?? shuJu['fen_xi'] ?? ''),
     }
   } catch (cuoWu) {
-    console.error('情感分析失败', cuoWu)
+    debug日志.error('情感分析', '情感分析失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return { fen_shu: 0, fen_xi: '' }
   }
 }

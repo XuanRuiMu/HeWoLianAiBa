@@ -1,6 +1,6 @@
-process.env.ADMIN_PHONES = '13800000000'
+﻿process.env.ADMIN_PHONES = '13800000000'
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = 'postgres://lovewithme:BXYXblupz542284@localhost:5432/lovewithme'
+  process.env.DATABASE_URL = 'postgres://lovewithme:test-password@localhost:5432/lovewithme'
 }
 if (!process.env.REDIS_URL) {
   process.env.REDIS_URL = 'redis://localhost:6379'

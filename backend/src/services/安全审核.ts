@@ -1,8 +1,42 @@
+﻿import { debug日志 } from '../utils/debug日志'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianAnQuanShenHePrompt } from './Prompt构建器'
+import { peiZhi } from '../config'
+import { jiaZaiZuiXinCiKu, saoMiaoNeiRong } from './审核词库'
 import type { AnQuanShenHeJieGuo } from '../types'
 
+let ciKuHuanCun: Awaited<ReturnType<typeof jiaZaiZuiXinCiKu>> | null = null
+
+async function huoQuCiKu() {
+  if (!ciKuHuanCun) {
+    ciKuHuanCun = await jiaZaiZuiXinCiKu()
+  }
+  return ciKuHuanCun
+}
+
+function saoMiaoJiuCiKu(xiaoXi: string): { weiGui: boolean; mingZhongCi?: string } {
+  const xiaoXieXiaoXi = xiaoXi.toLowerCase()
+  const mingZhongCi = peiZhi.shuRuWeiJinCiLieBiao.find(
+    (ci) => ci.length > 0 && xiaoXieXiaoXi.includes(ci.toLowerCase()),
+  )
+  if (mingZhongCi) {
+    return { weiGui: true, mingZhongCi }
+  }
+  return { weiGui: false }
+}
+
 export async function shenHeNeiRongAnQuan(xiaoXi: string): Promise<AnQuanShenHeJieGuo> {
+  const ciKu = await huoQuCiKu()
+
+  const benDiSaoMiao = saoMiaoNeiRong(xiaoXi, ciKu)
+  if (benDiSaoMiao.weiGui) {
+    return {
+      wei_gui: true,
+      lei_xing: benDiSaoMiao.leiBie || '本地词库拦截',
+      li_you: `消息命中${benDiSaoMiao.leiBie || '本地词库'}违禁词：${benDiSaoMiao.mingZhongCi}`,
+    }
+  }
+
   try {
     const xiangYing = await genJuPeiZhiTiaoYong('anQuanShenHe', [
       { jiaoSe: 'system', neiRong: '判断消息是否违规，只输出 JSON。' },
@@ -21,8 +55,27 @@ export async function shenHeNeiRongAnQuan(xiaoXi: string): Promise<AnQuanShenHeJ
       li_you: String(shuJu['理由'] ?? shuJu['li_you'] ?? ''),
     }
   } catch (cuoWu) {
-    console.error('安全审核失败', cuoWu)
-    return { wei_gui: false }
+    debug日志.error('安全审核', 'AI审核失败，使用旧版本地词库兜底', { xiang_qing: { cuo_wu: String(cuoWu) } })
+    try {
+      const jiuCiKuSaoMiao = saoMiaoJiuCiKu(xiaoXi)
+      if (jiuCiKuSaoMiao.weiGui) {
+        // eslint-disable-next-line no-console -- 安全与合规.test 断言此输出含「已降级」(行为契约)
+        console.error('[安全审核] AI审核服务不可用，已降级为本地词库扫描')
+        return {
+          wei_gui: true,
+          lei_xing: '本地词库拦截',
+          li_you: `消息命中本地违禁词（旧版兜底）：${jiuCiKuSaoMiao.mingZhongCi}`,
+        }
+      }
+      return { wei_gui: false }
+    } catch (cuoWu2) {
+      debug日志.error('安全审核', '[安全审核] 降级扫描自身失败，按违规拦截', { xiang_qing: { cuo_wu: String(cuoWu2) } })
+      return {
+        wei_gui: true,
+        lei_xing: '审核服务不可用',
+        li_you: '安全审核暂时不可用，请稍后再试',
+      }
+    }
   }
 }
 
@@ -50,4 +103,8 @@ function jieXiJSON(neiRong: string): Record<string, unknown> {
     }
     return {}
   }
+}
+
+export function chongZhiCiKuHuanCun(): void {
+  ciKuHuanCun = null
 }

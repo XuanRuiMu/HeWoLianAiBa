@@ -69,6 +69,13 @@ export const HAO_GAN_DU_PEI_ZHI = {
   zhaXing: {
     eWaiJiaFen: { zuiDi: 200, zuiGao: 300 },
   },
+
+  pingPanBaoDi: {
+    chuFaLunShu: 5,
+    leiJiTiShengXian: 10,
+    xiShu: 1.3,
+    guoQiHaoMiao: 2 * 60 * 60 * 1000,
+  },
 } as const
 
 export type HaoGanDuJieDuanJian = keyof typeof HAO_GAN_DU_PEI_ZHI.jieDuan

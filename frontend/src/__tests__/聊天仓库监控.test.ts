@@ -25,6 +25,7 @@ vi.mock('@/api/聊天')
 describe('聊天 store 管理员实时监控事件', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    localStorage.clear()
     Object.keys(shiJianChuLiQi).forEach((jian) => delete shiJianChuLiQi[jian])
     vi.clearAllMocks()
   })
@@ -100,6 +101,120 @@ describe('聊天 store 管理员实时监控事件', () => {
     expect(cangKu.gouJianGuoChengLieBiao.length).toBe(1)
     expect(cangKu.haoGanDuBianHuaLieBiao.length).toBe(1)
     expect(cangKu.yinCangXinXiLieBiao.length).toBe(1)
+  })
+
+  it('管理员_深度思考 推入深度思考列表并透传轮次', () => {
+    const cangKu = 使用聊天仓库()
+    cangKu.lianJieSocket('h1')
+    shiJianChuLiQi['管理员_深度思考']({ 来源: 'Director', 内容: '先接住情绪', 时间: 100, 轮次: 9 })
+    shiJianChuLiQi['管理员_构建过程']({ 阶段: '输出回复', 说明: 's', 内容: '你好', 时间: 200, 轮次: 9 })
+    expect(cangKu.shenDuSiKaoLieBiao.length).toBe(1)
+    expect(cangKu.shenDuSiKaoLieBiao[0]).toEqual({ 来源: 'Director', 内容: '先接住情绪', 时间: 100, 轮次: 9 })
+    expect(cangKu.gouJianGuoChengLieBiao[0].内容).toBe('你好')
+    expect(cangKu.gouJianGuoChengLieBiao[0].轮次).toBe(9)
+  })
+
+  it('监控历史按会话持久化：切走再回来直接看到', async () => {
+    const cangKu = 使用聊天仓库()
+    cangKu.lianJieSocket('h1')
+    cangKu.dangQianHuiHuaId = 'h1'
+    shiJianChuLiQi['管理员_构建过程']({ 阶段: '思考启动', 说明: 's', 时间: 1, 轮次: 3 })
+    shiJianChuLiQi['管理员_深度思考']({ 来源: 'Writer', 内容: '短句回复', 时间: 2, 轮次: 3 })
+    expect(cangKu.gouJianGuoChengLieBiao.length).toBe(1)
+    await cangKu.jiaZaiXiaoXi('h2')
+    expect(cangKu.gouJianGuoChengLieBiao.length).toBe(0)
+    expect(cangKu.shenDuSiKaoLieBiao.length).toBe(0)
+    await cangKu.jiaZaiXiaoXi('h1')
+    expect(cangKu.gouJianGuoChengLieBiao.length).toBe(1)
+    expect(cangKu.gouJianGuoChengLieBiao[0].阶段).toBe('思考启动')
+    expect(cangKu.shenDuSiKaoLieBiao.length).toBe(1)
+    expect(cangKu.shenDuSiKaoLieBiao[0].内容).toBe('短句回复')
+  })
+})
+
+describe('聊天 store 旧内心消息统一持久化补全', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    localStorage.clear()
+    Object.keys(shiJianChuLiQi).forEach((jian) => delete shiJianChuLiQi[jian])
+    vi.clearAllMocks()
+  })
+
+  function 旧内心消息(id: string, neiRong: string, shiJian = 500) {
+    return {
+      id,
+      hui_hua_id: 'h1',
+      fa_song_zhe_id: 'r1',
+      fa_song_zhe_lei_xing: 'jiaose',
+      nei_rong: neiRong,
+      lei_xing: 'neiXinHuoDong',
+      shi_jian_chuo: shiJian,
+      yi_du: true,
+    }
+  }
+
+  it('旧内心消息补全进深度思考列表并持久化', () => {
+    const cangKu = 使用聊天仓库()
+    cangKu.dangQianHuiHuaId = 'h1'
+    cangKu.xiaoXiLieBiao = [旧内心消息('m1', '内心独白旧数据')]
+    cangKu.补全旧内心消息()
+    expect(cangKu.shenDuSiKaoLieBiao.length).toBe(1)
+    expect(cangKu.shenDuSiKaoLieBiao[0]).toEqual({ 来源: '历史消息', 内容: '内心独白旧数据', 时间: 500 })
+    const 存档 = JSON.parse(localStorage.getItem('guanli-jiankong:h1') as string)
+    expect(存档.shenDuSiKao.length).toBe(1)
+    expect(存档.shenDuSiKao[0].内容).toBe('内心独白旧数据')
+  })
+
+  it('重复补全不产生重复条目', () => {
+    const cangKu = 使用聊天仓库()
+    cangKu.dangQianHuiHuaId = 'h1'
+    cangKu.xiaoXiLieBiao = [旧内心消息('m1', '内心独白旧数据')]
+    cangKu.补全旧内心消息()
+    cangKu.补全旧内心消息()
+    expect(cangKu.shenDuSiKaoLieBiao.length).toBe(1)
+  })
+
+  it('localStorage已有复用并补全缺口：存档保留+旧消息追加', () => {
+    localStorage.setItem(
+      'guanli-jiankong:h9',
+      JSON.stringify({
+        gouJian: [],
+        haoGanDu: [],
+        yinCang: [],
+        shenDuSiKao: [{ 来源: 'Director', 内容: '存档思考', 时间: 100, 轮次: 3 }],
+      }),
+    )
+    const cangKu = 使用聊天仓库()
+    cangKu.dangQianHuiHuaId = 'h9'
+    cangKu.lianJieSocket('h9')
+    shiJianChuLiQi['管理员_深度思考']({ 来源: 'Director', 内容: '存档思考', 时间: 100, 轮次: 3 })
+    cangKu.xiaoXiLieBiao = [旧内心消息('m1', '内心独白旧数据', 200)]
+    cangKu.补全旧内心消息()
+    const 内容表 = cangKu.shenDuSiKaoLieBiao.map((项) => 项.内容)
+    expect(内容表).toContain('存档思考')
+    expect(内容表).toContain('内心独白旧数据')
+  })
+
+  it('非内心消息不被补全，空列表直接返回', () => {
+    const cangKu = 使用聊天仓库()
+    cangKu.dangQianHuiHuaId = 'h1'
+    cangKu.xiaoXiLieBiao = [
+      {
+        id: 'm2',
+        hui_hua_id: 'h1',
+        fa_song_zhe_id: 'u1',
+        fa_song_zhe_lei_xing: 'yonghu',
+        nei_rong: '普通文本',
+        lei_xing: 'wenben',
+        shi_jian_chuo: 600,
+        yi_du: true,
+      },
+    ]
+    cangKu.补全旧内心消息()
+    expect(cangKu.shenDuSiKaoLieBiao.length).toBe(0)
+    cangKu.xiaoXiLieBiao = []
+    cangKu.补全旧内心消息()
+    expect(cangKu.shenDuSiKaoLieBiao.length).toBe(0)
   })
 })
 

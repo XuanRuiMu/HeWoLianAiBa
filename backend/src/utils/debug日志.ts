@@ -75,7 +75,13 @@ export function xieRuRiZhi(
   const shangXiaWen = gouJianShangXiaWen(xuanXiang)
   const heBingDuiXiang = { lei_xing: leiXing, ...shangXiaWen }
   const guoLvXiaoXi = String(guoLvMinGanZiDuan(xiaoXi))
-  ;(yinQing as any)[jiBie](heBingDuiXiang, guoLvXiaoXi)
+  const jiBieFangFaBiao: Record<RiZhiJiBie, (obj: object, msg?: string) => void> = {
+    debug: (...canShu) => yinQing.debug(...canShu),
+    info: (...canShu) => yinQing.info(...canShu),
+    warn: (...canShu) => yinQing.warn(...canShu),
+    error: (...canShu) => yinQing.error(...canShu),
+  }
+  jiBieFangFaBiao[jiBie](heBingDuiXiang, guoLvXiaoXi)
   if (yinQing.isLevelEnabled(jiBie)) {
     fenFaRiZhi(jiBie, leiXing, guoLvXiaoXi, shangXiaWen)
   }

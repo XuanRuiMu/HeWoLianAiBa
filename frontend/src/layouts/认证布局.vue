@@ -80,12 +80,24 @@ function chuLiDengLuChengGong() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* 内容超高时顶部可达：flex 居中会裁掉顶部溢出，改用子元素 margin auto 居中，
+     内容不足时居中、超出时顶部可滚动到达 */
+  justify-content: flex-start;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   position: relative;
   padding: 5vh 0;
   flex: 1;
+}
+
+.yemian-buju > * {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.yemian-buju.quanping-moshi > * {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .yemian-buju.zhujiemian-moshi {
@@ -101,11 +113,11 @@ function chuLiDengLuChengGong() {
 }
 
 .huadong-qiehuan-leave-active {
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.5s var(--quxian-biao-zhun);
 }
 
 .huadong-qiehuan-enter-active {
-  transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
+  transition: all 0.6s var(--quxian-tan-chu) 0.15s;
 }
 
 .huadong-qiehuan-leave-to {
@@ -121,8 +133,8 @@ function chuLiDengLuChengGong() {
 
 .yemian-nei-guodu-enter-active {
   transition:
-    opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 0.3s var(--quxian-tan-chu),
+    transform 0.3s var(--quxian-tan-chu);
 }
 
 .yemian-nei-guodu-leave-active {

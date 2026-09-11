@@ -131,6 +131,11 @@
   --tiao-hao-beijing: #eeeeee;
   --tiao-hao-wenben: #999999;
   --chahua-beijing: #F5F0EB;
+  --zhuye-kaishi-wenben: rgba(0, 0, 0, 0.55);
+  --zhuye-kaishi-jiantou: rgba(0, 0, 0, 0.1);
+  --xinmuzhong-duibi-se: #191919;
+  --xinmuzhong-qukuai-beijing: #ffffff;
+  --xinmuzhong-qukuai-biankuang: #e5e5e5;
   --nuanhui-lan: #6B8CA6;
   --roufen-zi: #C4A0B0;
   --nuanhui-lan-qian: #8EAFC5;
@@ -367,6 +372,11 @@
   --tiao-hao-beijing: #222222;
   --tiao-hao-wenben: #48484a;
   --chahua-beijing: #1a1a2e;
+  --zhuye-kaishi-wenben: rgba(255, 255, 255, 0.45);
+  --zhuye-kaishi-jiantou: rgba(255, 255, 255, 0.12);
+  --xinmuzhong-duibi-se: #ffffff;
+  --xinmuzhong-qukuai-beijing: rgba(255, 255, 255, 0.04);
+  --xinmuzhong-qukuai-biankuang: rgba(255, 255, 255, 0.1);
   --beijing-jianbian-1: #1A2836;
   --beijing-jianbian-2: #0F1C28;
   --beijing-jianbian-3: #2A1A24;
@@ -478,4 +488,10 @@
   --quxiao-anniu-hover-beijing: rgba(255, 255, 255, 0.1);
   --tuichu-hover-beijing: rgba(250, 81, 81, 0.12);
   --banben-hao: "1.0.0";
+
+  /* 缓动曲线令牌 */
+  --quxian-biao-zhun: cubic-bezier(0.4, 0, 0.2, 1);
+  --quxian-tan-chu: cubic-bezier(0.16, 1, 0.3, 1);
+  --quxian-ruan: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --quxian-huan-ying: cubic-bezier(0.22, 1, 0.36, 1);
 }

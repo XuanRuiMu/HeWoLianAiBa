@@ -1,3 +1,4 @@
+﻿import { debug日志 } from '../utils/debug日志'
 import { huoQuFanYi } from '../config/translations'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianJunShiQiuZhuPrompt, geShiHuaJunShiLiShi } from './Prompt构建器'
@@ -25,14 +26,13 @@ export async function shengChengJunShiZhiDao(
           duiHuaWenBen,
           canShu.jiao_se_ming,
           canShu.hao_gan_du,
-          canShu.fu_pan_tiao_mu,
         ),
       },
     ], shangXiaWenShiJi)
 
     return { zhi_dao_nei_rong: xiangYing.neiRong.trim() || huoQuJiangJiWenBen() }
   } catch (cuoWu) {
-    console.error('军师指导生成失败', cuoWu)
+    debug日志.error('军师指导', '军师指导生成失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return { zhi_dao_nei_rong: huoQuJiangJiWenBen() }
   }
 }

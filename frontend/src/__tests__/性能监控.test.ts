@@ -137,4 +137,19 @@ describe('FP-04 性能监控', () => {
     const lcp2 = huiDiaoMap.LCP
     expect(lcp1).toBe(lcp2)
   })
+
+  it('FP-01 根因：空指标与缺字段安全吞掉不上报不抛错', () => {
+    const shangBao = vi.fn()
+    sheZhiCuoWuShangBaoHanShu(shangBao)
+    chuShiHuaXingNengJianKong()
+
+    expect(() => {
+      huiDiaoMap.LCP(undefined as unknown as Metric)
+      huiDiaoMap.LCP(null as unknown as Metric)
+      huiDiaoMap.LCP({} as unknown as Metric)
+      huiDiaoMap.LCP({ name: 'LCP' } as unknown as Metric)
+      huiDiaoMap.LCP({ name: 'LCP', value: NaN } as unknown as Metric)
+    }).not.toThrow()
+    expect(shangBao).not.toHaveBeenCalled()
+  })
 })

@@ -1,6 +1,6 @@
-process.env.ADMIN_PHONES = '13800000000'
+﻿process.env.ADMIN_PHONES = '13800000000'
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = 'postgres://lovewithme:BXYXblupz542284@localhost:5432/lovewithme'
+  process.env.DATABASE_URL = 'postgres://lovewithme:test-password@localhost:5432/lovewithme'
 }
 if (!process.env.REDIS_URL) {
   process.env.REDIS_URL = 'redis://localhost:6379'
@@ -60,6 +60,7 @@ async function zhuCeYongHu(
       yongHuMing,
       miMa: 'Test123456',
       tongYiXieYi: true,
+      chuShengRiQi: '2000-01-01',
     })
     .expect(200)
 
@@ -424,6 +425,34 @@ describe.sequential('FP-15 通知系统', () => {
       expect(shenJiJieGuo.rows[0].IP).toBeDefined()
       expect(shenJiJieGuo.rows[0].详情).toHaveProperty('mu_biao')
       expect(shenJiJieGuo.rows[0].详情).toHaveProperty('jie_shou_ren_shu')
+    } finally {
+      await qingChuCeShiYongHu(shouJiHao)
+    }
+  })
+
+  it('伪造X-Forwarded-For不写入通知发送审计日志IP', async () => {
+    const { lingPai, yongHuId, shouJiHao } = await zhuCeGuanLiYuan(`测试管理员${Date.now()}`)
+
+    try {
+      await request(yingYong)
+        .post('/api/通知/发送')
+        .set('Authorization', `Bearer ${lingPai}`)
+        .set('X-Forwarded-For', '203.0.113.99')
+        .send({
+          目标: '指定',
+          接收者ID列表: [yongHuId],
+          标题: 'XFF测试通知',
+          内容: 'XFF测试内容',
+        })
+        .expect(200)
+
+      const shenJiJieGuo = await 数据库.query(
+        `SELECT * FROM "审计日志" WHERE "事件类型" = $1 AND "用户ID" = $2 ORDER BY "创建时间" DESC LIMIT 1`,
+        [huoQuFanYi('shenJi', 'faSongTongZhi'), yongHuId],
+      )
+      expect(shenJiJieGuo.rows.length).toBe(1)
+      expect(shenJiJieGuo.rows[0].IP).not.toBe('203.0.113.99')
+      expect(shenJiJieGuo.rows[0].IP).toBe('127.0.0.1')
     } finally {
       await qingChuCeShiYongHu(shouJiHao)
     }

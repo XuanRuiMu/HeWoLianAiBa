@@ -4,15 +4,16 @@ export default defineConfig({
   test: {
     fileParallelism: false,
     testTimeout: 15000,
+    setupFiles: ['./src/test-setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'text-summary', 'html', 'lcov'],
       reportsDirectory: './coverage',
       thresholds: {
-        lines: 60,
-        functions: 60,
-        branches: 50,
-        statements: 60,
+        lines: 76,
+        functions: 84,
+        branches: 61,
+        statements: 74,
       },
       exclude: [
         'node_modules/',

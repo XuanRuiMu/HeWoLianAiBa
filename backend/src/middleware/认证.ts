@@ -1,7 +1,8 @@
 import type { Request, Response, NextFunction } from 'express'
-import { yanZhengLingPai, shengChengLingPai, type LingPaiZaiHe } from '../utils/jwt'
+import { yanZhengLingPai, lingPaiShiFouYiCheXiao, type LingPaiZaiHe } from '../utils/jwt'
 import { huoQuFanYi } from '../config/translations'
 import { shiBaiXiangYing } from '../utils/xiangying'
+import { redis } from '../redis'
 
 export interface RenZhengQingQiu extends Request {
   yong_hu?: LingPaiZaiHe
@@ -33,11 +34,11 @@ function luJingPiPei(qingQiuLuJing: string, muBiaoLuJing: string): boolean {
   return qingQiuLuJing === muBiaoLuJing
 }
 
-export function renZhengZhongJianJian(
+export async function renZhengZhongJianJian(
   qingQiu: RenZhengQingQiu,
   xiangYing: Response,
   xiaYiBu: NextFunction,
-): void {
+): Promise<void> {
   const fangFa = qingQiu.method
   const luJing = decodeURIComponent(qingQiu.path)
 
@@ -62,24 +63,21 @@ export function renZhengZhongJianJian(
   const lingPai = authorization.slice(7)
   try {
     const zaiHe = yanZhengLingPai(lingPai)
+    // V5/C3：JWT 黑名单吊销检查——注销/改密后的旧令牌立即失效
+    if (zaiHe.jti) {
+      const yiDiaoXiao = await redis.get(`jwt_blacklist:${zaiHe.jti}`)
+      if (yiDiaoXiao) {
+        shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), 'LING_PAI_WU_XIAO')
+        return
+      }
+    }
+    if (await lingPaiShiFouYiCheXiao(zaiHe.yongHuId, zaiHe.iat, zaiHe.qianFaHaoMiao)) {
+      shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), 'LING_PAI_WU_XIAO')
+      return
+    }
     qingQiu.yong_hu = zaiHe
     xiaYiBu()
   } catch {
     shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), 'LING_PAI_WU_XIAO')
   }
-}
-
-export function chongXinShengChengLingPai(
-  qingQiu: RenZhengQingQiu,
-  xiangYing: Response,
-  xiaYiBu: NextFunction,
-): void {
-  if (qingQiu.yong_hu) {
-    const xinLingPai = shengChengLingPai({
-      yongHuId: qingQiu.yong_hu.yongHuId,
-      shouJiHao: qingQiu.yong_hu.shouJiHao,
-    })
-    xiangYing.setHeader('X-Renew-Token', xinLingPai)
-  }
-  xiaYiBu()
 }

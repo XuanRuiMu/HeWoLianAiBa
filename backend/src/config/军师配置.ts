@@ -26,7 +26,7 @@ export const JUN_SHI_PEI_ZHI: Record<string, JunShiPeiZhiXiang> = {
     fuBiaoTi: '拥有大量旁观经验的指导老师',
     biaoQian: '损友军师',
     miaoShu: '毒舌但真心，先损你再帮你',
-    touXiang: '图片/军师头像/军师玄锐暮头像.png',
+    touXiang: '图片/军师头像/军师玄锐暮头像.webp',
     xiTongTiShi: XUAN_RUI_MU_XI_TONG_TI_SHI,
   },
   ceShiJunShi1: {
@@ -35,7 +35,7 @@ export const JUN_SHI_PEI_ZHI: Record<string, JunShiPeiZhiXiang> = {
     fuBiaoTi: '拥有大量旁观经验的指导老师',
     biaoQian: '损友军师',
     miaoShu: '毒舌但真心，先损你再帮你',
-    touXiang: '图片/军师头像/军师测试军师1头像.png',
+    touXiang: '图片/军师头像/军师测试军师1头像.webp',
     xiTongTiShi: XUAN_RUI_MU_XI_TONG_TI_SHI,
   },
   ceShiJunShi2: {
@@ -44,14 +44,9 @@ export const JUN_SHI_PEI_ZHI: Record<string, JunShiPeiZhiXiang> = {
     fuBiaoTi: '拥有大量旁观经验的指导老师',
     biaoQian: '损友军师',
     miaoShu: '毒舌但真心，先损你再帮你',
-    touXiang: '图片/军师头像/军师测试军师2头像.png',
+    touXiang: '图片/军师头像/军师测试军师2头像.webp',
     xiTongTiShi: XUAN_RUI_MU_XI_TONG_TI_SHI,
   },
 }
 
 export const JUN_SHI_PEI_ZHI_MO_REN = JUN_SHI_PEI_ZHI.xuanRuiMu
-
-// 军师求助的 AI 调用参数（zuiDaTokens/wenDu/liShiXiaoXiShuLiang）统一收敛于
-// AI_PEI_ZHI.moXing.junShiQiuZhu 与 AI_PEI_ZHI.prompt.junShiLiShiXiaoXiShuLiang（单一数据源），
-// 此处仅保留无重复的复盘条目数
-export const JUN_SHI_QIU_ZHU_FU_PAN_TIAO_MU_SHU_LIANG = 10

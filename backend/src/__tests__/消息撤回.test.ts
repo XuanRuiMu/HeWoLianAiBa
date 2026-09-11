@@ -17,6 +17,7 @@ import {
 } from '../services/胜利失败条件'
 import { jiaoSeShiFouBeiDuoShe } from '../services/夺舍'
 import { huoQuIo } from '../socket/io'
+import { sheZhiMockTiaoYong } from '../utils/DeepSeek客户端'
 import { 数据库 } from '../数据库'
 import { redis } from '../redis'
 import yingYong from '../server'
@@ -60,6 +61,7 @@ async function chuangJianCeShiYongHu(): Promise<{ shouJiHao: string; lingPai: st
       yongHuMing: `测试用户${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       miMa: 'testPassword123',
       tongYiXieYi: true,
+      chuShengRiQi: '2000-01-01',
     })
     .expect(200)
 
@@ -179,6 +181,11 @@ describe('FP-08 消息撤回', () => {
   let jiaoSeId = ''
 
   beforeAll(async () => {
+    sheZhiMockTiaoYong(async () => ({
+      neiRong: JSON.stringify({ 违规: false, 确信度: 0.1, 类型: '', 严重程度: '', 理由: '' }),
+      xinXi: { role: 'assistant', content: '' },
+      yuanShuJu: {} as never,
+    }))
     const jieGuo = await chuangJianCeShiYongHu()
     lingPai = jieGuo.lingPai
     yongHuId = jieGuo.yongHuId
@@ -186,6 +193,7 @@ describe('FP-08 消息撤回', () => {
   })
 
   afterAll(async () => {
+    sheZhiMockTiaoYong(null)
     if (yongHuId) {
       await qingLiJiaoSeHeYongHu(yongHuId)
     }

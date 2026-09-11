@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import { 令牌键 } from '@/constants/auth'
+import { 自动登录键 } from '@/constants/auth'
+import { duQuLingPai } from '@/utils/令牌存储'
+import { duQuShuJu } from '@/utils/storage'
 
 const luYou: RouteRecordRaw[] = [
   {
@@ -50,9 +52,39 @@ const luYou: RouteRecordRaw[] = [
         meta: { xuYaoDengLu: true },
       },
       {
+        path: 'zhang-hao-an-quan',
+        name: 'zhangHaoAnQuan',
+        component: () => import('@/views/账号与安全.vue'),
+        meta: { xuYaoDengLu: true },
+      },
+      {
         path: 'junshi-jilu/:jiaoSeId/:jiLuId',
         name: 'junShiJiLuXiangQing',
         component: () => import('@/views/军师记录详情.vue'),
+        meta: { xuYaoDengLu: true },
+      },
+      {
+        path: 'tiao-zhan',
+        name: 'tiaoZhanZhuYe',
+        component: () => import('@/views/挑战主页.vue'),
+        meta: { xuYaoDengLu: true },
+      },
+      {
+        path: 'tiao-zhan/pai-hang',
+        name: 'tiaoZhanPaiHangBang',
+        component: () => import('@/views/挑战积分榜.vue'),
+        meta: { xuYaoDengLu: true },
+      },
+      {
+        path: 'hao-you',
+        name: 'haoYouLieBiao',
+        component: () => import('@/views/好友列表.vue'),
+        meta: { xuYaoDengLu: true },
+      },
+      {
+        path: 'hao-you/:haoYouId',
+        name: 'haoYouLiaoTian',
+        component: () => import('@/views/好友聊天.vue'),
         meta: { xuYaoDengLu: true },
       },
     ],
@@ -70,7 +102,13 @@ const router = createRouter({
 
 function huoQuLingPai(): string | null {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem(令牌键)
+  return duQuLingPai()
+}
+
+function ziDongDengLuKaiQi(): boolean {
+  const zhi = duQuShuJu<boolean>(自动登录键, null)
+  if (zhi === null) return true
+  return zhi === true
 }
 
 router.beforeEach(async (to, _from) => {
@@ -78,7 +116,7 @@ router.beforeEach(async (to, _from) => {
   if (to.meta.xuYaoDengLu && !youLingPai) {
     return { name: 'dengLu', replace: true }
   }
-  if ((to.name === 'dengLu' || to.path === '/login') && youLingPai) {
+  if ((to.name === 'dengLu' || to.path === '/login') && youLingPai && ziDongDengLuKaiQi()) {
     return { name: 'zhuJieMian', replace: true }
   }
 })
