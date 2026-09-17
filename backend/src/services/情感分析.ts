@@ -4,16 +4,22 @@ import { gouJianQingGanFenXiPrompt } from './Prompt构建器'
 import type { QingGanFenXiJieGuo } from '../types'
 import type { CanShuShangXiaWen } from '../config/AI参数策略'
 
+// YH-052 情感分析悬空收敛：主链路已由Director内聚情感分析，本模块复用为轻量兜底
+// 复用语义：Director失败或未携带情感分析时，调用方可用本函数补算一次；禁全量常态调用烧token
 export async function fenXiQingGan(
   xiaoXi: string,
   jiaoSeMing: string,
   shangXiaWen?: CanShuShangXiaWen,
+  waiBuXinHao?: AbortSignal,
 ): Promise<QingGanFenXiJieGuo> {
   try {
+    if (waiBuXinHao?.aborted) {
+      return { fen_shu: 0, fen_xi: '' }
+    }
     const xiangYing = await genJuPeiZhiTiaoYong('qingGanFenXi', [
       { jiaoSe: 'system', neiRong: '判断用户消息的情绪倾向，只输出 JSON。' },
       { jiaoSe: 'user', neiRong: gouJianQingGanFenXiPrompt(xiaoXi, jiaoSeMing) },
-    ], shangXiaWen)
+    ], shangXiaWen, waiBuXinHao)
 
     const shuJu = jieXiJSON(xiangYing.neiRong)
     const fenShu = Number(shuJu['分数'] ?? shuJu['fen_shu'] ?? 0)

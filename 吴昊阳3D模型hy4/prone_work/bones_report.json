@@ -1,0 +1,807 @@
+{
+  "blender": "5.3.0 Alpha",
+  "imported": true,
+  "error": null,
+  "armature_objects": [
+    "Armature"
+  ],
+  "mesh_objects": [
+    "Icosphere",
+    "Proxy"
+  ],
+  "scene_object_types": {
+    "Armature": "ARMATURE",
+    "Icosphere": "MESH",
+    "Proxy": "MESH",
+    "Z_UP": "EMPTY"
+  },
+  "armature_matrix_world": [
+    [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      -0.0,
+      1.0,
+      0.0
+    ],
+    [
+      0.0,
+      -1.0,
+      -0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "armature_scale": [
+    1.0,
+    1.0,
+    1.0
+  ],
+  "armature_rotation_euler": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "bones": [
+    {
+      "name": "torso_joint_1",
+      "parent": null,
+      "children": [
+        "torso_joint_2",
+        "leg_joint_L_1",
+        "leg_joint_R_1"
+      ],
+      "head_local": [
+        0.0,
+        -0.686,
+        -0.0
+      ],
+      "tail_local": [
+        0.0,
+        -0.678491,
+        0.098783
+      ],
+      "head_world": [
+        0.0,
+        -0.0,
+        0.686
+      ],
+      "tail_world": [
+        0.0,
+        0.098783,
+        0.678491
+      ],
+      "length": 0.099068,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "torso_joint_2",
+      "parent": "torso_joint_1",
+      "children": [
+        "torso_joint_3"
+      ],
+      "head_local": [
+        -0.0,
+        -0.857,
+        0.013
+      ],
+      "tail_local": [
+        -0.0,
+        -1.074998,
+        0.01
+      ],
+      "head_world": [
+        -0.0,
+        0.013,
+        0.857001
+      ],
+      "tail_world": [
+        -0.0,
+        0.01,
+        1.074998
+      ],
+      "length": 0.218018,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "torso_joint_3",
+      "parent": "torso_joint_2",
+      "children": [
+        "neck_joint_1",
+        "arm_joint_L_1",
+        "arm_joint_R_1"
+      ],
+      "head_local": [
+        -0.0,
+        -1.074998,
+        0.01
+      ],
+      "tail_local": [
+        -0.0,
+        -1.085498,
+        0.0615
+      ],
+      "head_world": [
+        -0.0,
+        0.01,
+        1.074998
+      ],
+      "tail_world": [
+        -0.0,
+        0.061501,
+        1.085498
+      ],
+      "length": 0.05256,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "neck_joint_1",
+      "parent": "torso_joint_3",
+      "children": [
+        "neck_joint_2"
+      ],
+      "head_local": [
+        -0.0,
+        -1.126498,
+        -0.0005
+      ],
+      "tail_local": [
+        -0.0,
+        -1.193002,
+        -0.001
+      ],
+      "head_world": [
+        -0.0,
+        -0.0005,
+        1.126498
+      ],
+      "tail_world": [
+        -0.0,
+        -0.001,
+        1.193002
+      ],
+      "length": 0.066506,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "neck_joint_2",
+      "parent": "neck_joint_1",
+      "children": [],
+      "head_local": [
+        -0.0,
+        -1.193002,
+        -0.001
+      ],
+      "tail_local": [
+        -0.0,
+        -1.259507,
+        -0.000757
+      ],
+      "head_world": [
+        -0.0,
+        -0.001,
+        1.193002
+      ],
+      "tail_world": [
+        -0.0,
+        -0.000757,
+        1.259507
+      ],
+      "length": 0.066506,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "arm_joint_L_1",
+      "parent": "torso_joint_3",
+      "children": [
+        "arm_joint_L_2"
+      ],
+      "head_local": [
+        0.088,
+        -1.074,
+        0.01
+      ],
+      "tail_local": [
+        0.306,
+        -0.963999,
+        0.023
+      ],
+      "head_world": [
+        0.088,
+        0.01,
+        1.074
+      ],
+      "tail_world": [
+        0.306,
+        0.023,
+        0.963999
+      ],
+      "length": 0.244526,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "arm_joint_L_2",
+      "parent": "arm_joint_L_1",
+      "children": [
+        "arm_joint_L_3"
+      ],
+      "head_local": [
+        0.306,
+        -0.963999,
+        0.023
+      ],
+      "tail_local": [
+        0.447,
+        -0.881589,
+        -0.065
+      ],
+      "head_world": [
+        0.306,
+        0.023,
+        0.963999
+      ],
+      "tail_world": [
+        0.447,
+        -0.065,
+        0.881589
+      ],
+      "length": 0.185517,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "arm_joint_L_3",
+      "parent": "arm_joint_L_2",
+      "children": [],
+      "head_local": [
+        0.447,
+        -0.881589,
+        -0.065
+      ],
+      "tail_local": [
+        0.567453,
+        -0.780697,
+        -0.163632
+      ],
+      "head_world": [
+        0.447,
+        -0.065,
+        0.881589
+      ],
+      "tail_world": [
+        0.567453,
+        -0.163632,
+        0.780697
+      ],
+      "length": 0.185517,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "arm_joint_R_1",
+      "parent": "torso_joint_3",
+      "children": [
+        "arm_joint_R_2"
+      ],
+      "head_local": [
+        -0.088001,
+        -1.074,
+        0.01
+      ],
+      "tail_local": [
+        -0.306,
+        -0.964,
+        0.023
+      ],
+      "head_world": [
+        -0.088001,
+        0.01,
+        1.074
+      ],
+      "tail_world": [
+        -0.306,
+        0.023,
+        0.964
+      ],
+      "length": 0.244526,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "arm_joint_R_2",
+      "parent": "arm_joint_R_1",
+      "children": [
+        "arm_joint_R_3"
+      ],
+      "head_local": [
+        -0.306,
+        -0.964,
+        0.023
+      ],
+      "tail_local": [
+        -0.447,
+        -0.88159,
+        -0.065
+      ],
+      "head_world": [
+        -0.306,
+        0.023,
+        0.964
+      ],
+      "tail_world": [
+        -0.447,
+        -0.065,
+        0.88159
+      ],
+      "length": 0.185517,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "arm_joint_R_3",
+      "parent": "arm_joint_R_2",
+      "children": [],
+      "head_local": [
+        -0.447,
+        -0.88159,
+        -0.065001
+      ],
+      "tail_local": [
+        -0.567453,
+        -0.780697,
+        -0.163632
+      ],
+      "head_world": [
+        -0.447,
+        -0.065,
+        0.88159
+      ],
+      "tail_world": [
+        -0.567453,
+        -0.163632,
+        0.780697
+      ],
+      "length": 0.185517,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "leg_joint_L_1",
+      "parent": "torso_joint_1",
+      "children": [
+        "leg_joint_L_2"
+      ],
+      "head_local": [
+        0.068039,
+        -0.614,
+        -0.001
+      ],
+      "tail_local": [
+        0.07708,
+        -0.354218,
+        -0.057987
+      ],
+      "head_world": [
+        0.068039,
+        -0.001,
+        0.614
+      ],
+      "tail_world": [
+        0.07708,
+        -0.057987,
+        0.354218
+      ],
+      "length": 0.266112,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "leg_joint_L_2",
+      "parent": "leg_joint_L_1",
+      "children": [
+        "leg_joint_L_3"
+      ],
+      "head_local": [
+        0.07708,
+        -0.354218,
+        -0.057987
+      ],
+      "tail_local": [
+        0.078495,
+        -0.085,
+        0.002
+      ],
+      "head_world": [
+        0.07708,
+        -0.057987,
+        0.354218
+      ],
+      "tail_world": [
+        0.078495,
+        0.002,
+        0.085
+      ],
+      "length": 0.275824,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "leg_joint_L_3",
+      "parent": "leg_joint_L_2",
+      "children": [
+        "leg_joint_L_5"
+      ],
+      "head_local": [
+        0.078495,
+        -0.085,
+        0.002
+      ],
+      "tail_local": [
+        0.080557,
+        -0.129728,
+        0.058175
+      ],
+      "head_world": [
+        0.078495,
+        0.002,
+        0.085
+      ],
+      "tail_world": [
+        0.080557,
+        0.058175,
+        0.129728
+      ],
+      "length": 0.071836,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "leg_joint_L_5",
+      "parent": "leg_joint_L_3",
+      "children": [],
+      "head_local": [
+        0.079576,
+        -0.022,
+        -0.0325
+      ],
+      "tail_local": [
+        0.087424,
+        -0.020649,
+        -0.103893
+      ],
+      "head_world": [
+        0.079576,
+        -0.0325,
+        0.022
+      ],
+      "tail_world": [
+        0.087424,
+        -0.103893,
+        0.020649
+      ],
+      "length": 0.071836,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "leg_joint_R_1",
+      "parent": "torso_joint_1",
+      "children": [
+        "leg_joint_R_2"
+      ],
+      "head_local": [
+        -0.068039,
+        -0.614,
+        -0.001
+      ],
+      "tail_local": [
+        -0.07708,
+        -0.354218,
+        -0.057987
+      ],
+      "head_world": [
+        -0.068039,
+        -0.001,
+        0.614
+      ],
+      "tail_world": [
+        -0.07708,
+        -0.057987,
+        0.354218
+      ],
+      "length": 0.266112,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "leg_joint_R_2",
+      "parent": "leg_joint_R_1",
+      "children": [
+        "leg_joint_R_3"
+      ],
+      "head_local": [
+        -0.07708,
+        -0.354218,
+        -0.057987
+      ],
+      "tail_local": [
+        -0.078495,
+        -0.085,
+        0.002
+      ],
+      "head_world": [
+        -0.07708,
+        -0.057987,
+        0.354218
+      ],
+      "tail_world": [
+        -0.078495,
+        0.002,
+        0.085
+      ],
+      "length": 0.275824,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "leg_joint_R_3",
+      "parent": "leg_joint_R_2",
+      "children": [
+        "leg_joint_R_5"
+      ],
+      "head_local": [
+        -0.078495,
+        -0.085,
+        0.002
+      ],
+      "tail_local": [
+        -0.07643,
+        -0.129654,
+        0.058234
+      ],
+      "head_world": [
+        -0.078495,
+        0.002,
+        0.085
+      ],
+      "tail_world": [
+        -0.07643,
+        0.058234,
+        0.129654
+      ],
+      "length": 0.071836,
+      "use_connect": false,
+      "roll": 0.0
+    },
+    {
+      "name": "leg_joint_R_5",
+      "parent": "leg_joint_R_3",
+      "children": [],
+      "head_local": [
+        -0.079576,
+        -0.022,
+        -0.0325
+      ],
+      "tail_local": [
+        -0.087424,
+        -0.020649,
+        -0.103893
+      ],
+      "head_world": [
+        -0.079576,
+        -0.0325,
+        0.022
+      ],
+      "tail_world": [
+        -0.087424,
+        -0.103893,
+        0.020649
+      ],
+      "length": 0.071836,
+      "use_connect": false,
+      "roll": 0.0
+    }
+  ],
+  "bone_count": 19,
+  "topology_lines": [
+    "torso_joint_1 -> parent=None children=torso_joint_2,leg_joint_L_1,leg_joint_R_1",
+    "torso_joint_2 -> parent=torso_joint_1 children=torso_joint_3",
+    "torso_joint_3 -> parent=torso_joint_2 children=neck_joint_1,arm_joint_L_1,arm_joint_R_1",
+    "neck_joint_1 -> parent=torso_joint_3 children=neck_joint_2",
+    "neck_joint_2 -> parent=neck_joint_1 children=",
+    "arm_joint_L_1 -> parent=torso_joint_3 children=arm_joint_L_2",
+    "arm_joint_L_2 -> parent=arm_joint_L_1 children=arm_joint_L_3",
+    "arm_joint_L_3 -> parent=arm_joint_L_2 children=",
+    "arm_joint_R_1 -> parent=torso_joint_3 children=arm_joint_R_2",
+    "arm_joint_R_2 -> parent=arm_joint_R_1 children=arm_joint_R_3",
+    "arm_joint_R_3 -> parent=arm_joint_R_2 children=",
+    "leg_joint_L_1 -> parent=torso_joint_1 children=leg_joint_L_2",
+    "leg_joint_L_2 -> parent=leg_joint_L_1 children=leg_joint_L_3",
+    "leg_joint_L_3 -> parent=leg_joint_L_2 children=leg_joint_L_5",
+    "leg_joint_L_5 -> parent=leg_joint_L_3 children=",
+    "leg_joint_R_1 -> parent=torso_joint_1 children=leg_joint_R_2",
+    "leg_joint_R_2 -> parent=leg_joint_R_1 children=leg_joint_R_3",
+    "leg_joint_R_3 -> parent=leg_joint_R_2 children=leg_joint_R_5",
+    "leg_joint_R_5 -> parent=leg_joint_R_3 children="
+  ],
+  "meshes": [
+    {
+      "name": "Icosphere",
+      "vertices": 42,
+      "polygons": 80,
+      "vertex_groups": [],
+      "modifiers": [],
+      "world_bbox_min": [
+        -0.951058,
+        -1.0,
+        -1.0
+      ],
+      "world_bbox_max": [
+        0.951058,
+        1.0,
+        1.0
+      ],
+      "matrix_world": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "materials": []
+    },
+    {
+      "name": "Proxy",
+      "vertices": 370,
+      "polygons": 256,
+      "vertex_groups": [
+        "torso_joint_1",
+        "torso_joint_2",
+        "torso_joint_3",
+        "neck_joint_1",
+        "neck_joint_2",
+        "arm_joint_L_1",
+        "arm_joint_R_1",
+        "arm_joint_L_2",
+        "arm_joint_R_2",
+        "arm_joint_L_3",
+        "arm_joint_R_3",
+        "leg_joint_L_1",
+        "leg_joint_R_1",
+        "leg_joint_L_2",
+        "leg_joint_R_2",
+        "leg_joint_L_3",
+        "leg_joint_R_3",
+        "leg_joint_L_5",
+        "leg_joint_R_5"
+      ],
+      "modifiers": [
+        [
+          "Armature",
+          "ARMATURE",
+          "Armature"
+        ]
+      ],
+      "world_bbox_min": [
+        -0.589461,
+        -0.194977,
+        0.0
+      ],
+      "world_bbox_max": [
+        0.589461,
+        0.130918,
+        1.44992
+      ],
+      "matrix_world": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          -0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "materials": [
+        "Default-effect"
+      ]
+    }
+  ],
+  "rest_scene_bbox_min": [
+    -0.951058,
+    -1.0,
+    -1.0
+  ],
+  "rest_scene_bbox_max": [
+    0.951058,
+    1.0,
+    1.44992
+  ],
+  "keybone_candidates": {
+    "hip": [],
+    "spine": [],
+    "chest": [],
+    "neck": [
+      "neck_joint_1",
+      "neck_joint_2"
+    ],
+    "head": [],
+    "shoulder": [],
+    "arm": [
+      "arm_joint_L_1",
+      "arm_joint_L_2",
+      "arm_joint_L_3",
+      "arm_joint_R_1",
+      "arm_joint_R_2",
+      "arm_joint_R_3"
+    ],
+    "forearm": [],
+    "hand": [],
+    "thigh": [],
+    "shin": [],
+    "leg": [
+      "leg_joint_L_1",
+      "leg_joint_L_2",
+      "leg_joint_L_3",
+      "leg_joint_L_5",
+      "leg_joint_R_1",
+      "leg_joint_R_2",
+      "leg_joint_R_3",
+      "leg_joint_R_5"
+    ],
+    "foot": [],
+    "toe": [],
+    "root": [],
+    "pelvis": []
+  }
+}

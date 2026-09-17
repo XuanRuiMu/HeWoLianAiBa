@@ -1,5 +1,6 @@
 import { 数据库 } from '../数据库'
 import { huiFuYanChiJiZhunHaoMiao } from '../config/角色配置'
+import { AI_PEI_ZHI } from '../config/AI配置'
 import { jiLuXiaoXiCaoZuo } from '../utils/debug日志'
 import type {
   AIJiaoSeXinXi,
@@ -86,6 +87,7 @@ export async function huoQuAIJiaoSeXinXi(
   const xiHuanDeLeiXing = anQuanZiFuChuan(row.喜欢的类型)
   const jiaTingBeiJing = anQuanZiFuChuan(row.家庭背景)
   const qingGanJingLi = anQuanZiFuChuan(row.情感经历)
+  const yinSeId = anQuanZiFuChuan(row.音色ID)
 
   return {
     id: jiao_se_id,
@@ -112,6 +114,7 @@ export async function huoQuAIJiaoSeXinXi(
     hua_shu: row.是否渣型 ? anQuanZiFuChuanShuZu(row.话术) : undefined,
     bao_lu_fang_shi: row.是否渣型 ? anQuanZiFuChuan(row.暴露方式) : undefined,
     shi_po_xian_suo: row.是否渣型 ? anQuanZiFuChuanShuZu(row.识破线索) : undefined,
+    voice_id: yinSeId || undefined,
     shi_jie_xin_xi: typeof shiJieXinXi === 'object' && shiJieXinXi !== null
       ? (shiJieXinXi as Record<string, unknown>)
       : {},
@@ -131,7 +134,7 @@ export async function huoQuAIJiaoSeXinXi(
 export async function huoQuZuiJinDuiHuaLiShi(
   yong_hu_id: string,
   jiao_se_id: string,
-  shu_liang: number = 20,
+  shu_liang: number = AI_PEI_ZHI.prompt.liShiXiaoXiShuLiang,
 ): Promise<DuiHuaLiShiXiang[]> {
   const jieGuo = await 数据库.query(
     `SELECT m.*, mf."SHA256" AS "媒体SHA256", mf."MIME" AS "媒体MIME", mf."类别" AS "媒体类别",
@@ -185,6 +188,12 @@ export async function baoCunJiaoSeXiaoXi(
   const ZUI_DA_CHONG_SHI_CI_SHU = 10
   const CHU_SHI_CHONG_SHI_YAN_CHI_MS = 50
 
+  // R8 原子序号：pg_advisory_xact_lock按会话串行取号+落库，禁MAX+1并发重复
+  // 根因：50并发同读MAX得同号，ON CONFLICT读回同一行致50条变2条；收敛为事务内串行取号
+  const huiHuaSuoJian = Math.abs(
+    [...`${canShu.yong_hu_id}:${canShu.jiao_se_id}`].reduce((lei, zi) => (lei * 31 + zi.charCodeAt(0)) | 0, 7),
+  ) % 2147483647
+
   async function huoQuCiXuHao(yongHuId: string, jiaoSeId: string): Promise<number> {
     const xuHaoJieGuo = await 数据库.query(
       `SELECT COALESCE(MAX("客户端序号"), 0) as zui_da FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
@@ -194,23 +203,120 @@ export async function baoCunJiaoSeXiaoXi(
   }
 
   let keHuDuanXuHao = canShu.ke_hu_duan_xu_hao ?? null
-  
-  if (keHuDuanXuHao == null) {
-    keHuDuanXuHao = await huoQuCiXuHao(canShu.yong_hu_id, canShu.jiao_se_id)
+
+  // 前端指定序号走幂等快径；服务端分配走会话锁串行取号+落库，禁MAX+1并发重复
+  if (keHuDuanXuHao != null) {
+    const jieGuo = await 数据库.query(
+      `INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "客户端序号")
+       VALUES ($1, $2, $3, 'jiaose', 'wenben', true, $4)
+       ON CONFLICT ("用户ID", "角色ID", "客户端序号") DO NOTHING
+       RETURNING *`,
+      [canShu.yong_hu_id, canShu.jiao_se_id, canShu.nei_rong, keHuDuanXuHao],
+    )
+    if (jieGuo.rows.length === 0) {
+      const yiCun = await 数据库.query(
+        `SELECT * FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2 AND "客户端序号" = $3 LIMIT 1`,
+        [canShu.yong_hu_id, canShu.jiao_se_id, keHuDuanXuHao],
+      )
+      const row = yiCun.rows[0]
+      await shiXiaoXiaoXiZongShuHuanCun(canShu.yong_hu_id, canShu.jiao_se_id).catch(() => {})
+      return {
+        id: String(row.ID),
+        hui_hua_id: canShu.jiao_se_id,
+        fa_song_zhe_id: canShu.jiao_se_id,
+        fa_song_zhe_lei_xing: 'jiaose' as const,
+        ai_biao_shi: true,
+        nei_rong: String(row.内容),
+        lei_xing: String(row.类型 || 'wenben'),
+        shi_jian_chuo: new Date(String(row.创建时间)).getTime(),
+        yi_du: Boolean(row.已读),
+        yi_che_hui: Boolean(row.已撤回),
+        che_hui_shi_jian: row.撤回时间 ? String(row.撤回时间) : null,
+        yuan_shi_nei_rong: null,
+        ke_hu_duan_xu_hao: row.客户端序号 != null ? Number(row.客户端序号) : null,
+        mei_ti_id: row.媒体ID ? String(row.媒体ID) : null,
+        mei_ti_url: null,
+      }
+    }
+    const row = jieGuo.rows[0]
+    const xiaoXi = {
+      id: String(row.ID),
+      hui_hua_id: canShu.jiao_se_id,
+      fa_song_zhe_id: canShu.jiao_se_id,
+      fa_song_zhe_lei_xing: 'jiaose' as const,
+      ai_biao_shi: true,
+      nei_rong: String(row.内容),
+      lei_xing: String(row.类型 || 'wenben'),
+      shi_jian_chuo: new Date(String(row.创建时间)).getTime(),
+      yi_du: Boolean(row.已读),
+      yi_che_hui: Boolean(row.已撤回),
+      che_hui_shi_jian: row.撤回时间 ? String(row.撤回时间) : null,
+      yuan_shi_nei_rong: null,
+      ke_hu_duan_xu_hao: row.客户端序号 != null ? Number(row.客户端序号) : null,
+      mei_ti_id: row.媒体ID ? String(row.媒体ID) : null,
+      mei_ti_url: null,
+    }
+    jiLuXiaoXiCaoZuo('角色消息发送', canShu.yong_hu_id, canShu.jiao_se_id, 'jiaose', { xiao_xi_id: xiaoXi.id })
+    await shiXiaoXiaoXiZongShuHuanCun(canShu.yong_hu_id, canShu.jiao_se_id).catch(() => {})
+    return xiaoXi
   }
 
   let lastError: Error | null = null
-  
+
   for (let ciShu = 0; ciShu <= ZUI_DA_CHONG_SHI_CI_SHU; ciShu++) {
+    const keHuDuan = await 数据库.connect()
     try {
-      const jieGuo = await 数据库.query(
+      await keHuDuan.query('BEGIN')
+      await keHuDuan.query('SELECT pg_advisory_xact_lock($1)', [huiHuaSuoJian])
+      keHuDuanXuHao = await (async () => {
+        const xuHaoJieGuo = await keHuDuan.query(
+          `SELECT COALESCE(MAX("客户端序号"), 0) as zui_da FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
+          [canShu.yong_hu_id, canShu.jiao_se_id],
+        )
+        return Number(xuHaoJieGuo.rows[0]?.zui_da ?? 0) + 1
+      })()
+      // YH-059 角色消息统一ON CONFLICT幂等：冲突即读回已落库行，禁双AI回复
+      const jieGuo = await keHuDuan.query(
         `INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "客户端序号")
          VALUES ($1, $2, $3, 'jiaose', 'wenben', true, $4)
+         ON CONFLICT ("用户ID", "角色ID", "客户端序号") DO NOTHING
          RETURNING *`,
         [canShu.yong_hu_id, canShu.jiao_se_id, canShu.nei_rong, keHuDuanXuHao],
       )
+      if (jieGuo.rows.length === 0) {
+        await keHuDuan.query('ROLLBACK')
+        keHuDuan.release()
+        const yiCun = await 数据库.query(
+          `SELECT * FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2 AND "客户端序号" = $3 LIMIT 1`,
+          [canShu.yong_hu_id, canShu.jiao_se_id, keHuDuanXuHao],
+        )
+        if (yiCun.rows.length > 0) {
+          const row = yiCun.rows[0]
+          await shiXiaoXiaoXiZongShuHuanCun(canShu.yong_hu_id, canShu.jiao_se_id).catch(() => {})
+          return {
+            id: String(row.ID),
+            hui_hua_id: canShu.jiao_se_id,
+            fa_song_zhe_id: canShu.jiao_se_id,
+            fa_song_zhe_lei_xing: 'jiaose' as const,
+            ai_biao_shi: true,
+            nei_rong: String(row.内容),
+            lei_xing: String(row.类型 || 'wenben'),
+            shi_jian_chuo: new Date(String(row.创建时间)).getTime(),
+            yi_du: Boolean(row.已读),
+            yi_che_hui: Boolean(row.已撤回),
+            che_hui_shi_jian: row.撤回时间 ? String(row.撤回时间) : null,
+            yuan_shi_nei_rong: null,
+            ke_hu_duan_xu_hao: row.客户端序号 != null ? Number(row.客户端序号) : null,
+            mei_ti_id: row.媒体ID ? String(row.媒体ID) : null,
+            mei_ti_url: null,
+          }
+        }
+        continue
+      }
 
       const row = jieGuo.rows[0]
+      await keHuDuan.query('COMMIT')
+      keHuDuan.release()
       const faSongZheLeiXing = 'jiaose' as const
       const xiaoXi = {
         id: String(row.ID),
@@ -233,20 +339,25 @@ export async function baoCunJiaoSeXiaoXi(
       await shiXiaoXiaoXiZongShuHuanCun(canShu.yong_hu_id, canShu.jiao_se_id).catch(() => {})
       return xiaoXi
     } catch (cuoWu) {
+      try {
+        await keHuDuan.query('ROLLBACK')
+      } catch {
+        // 忽略回滚失败
+      }
+      keHuDuan.release()
       lastError = cuoWu as Error
       const pgError = cuoWu as { code?: string; constraint?: string }
-      
+
       if (pgError.code === '23505' && pgError.constraint?.includes('客户端序号')) {
         if (ciShu < ZUI_DA_CHONG_SHI_CI_SHU) {
           const yanChi = CHU_SHI_CHONG_SHI_YAN_CHI_MS * Math.pow(2, ciShu)
           await new Promise(resolve => setTimeout(resolve, yanChi))
-          keHuDuanXuHao = await huoQuCiXuHao(canShu.yong_hu_id, canShu.jiao_se_id)
           continue
         }
       }
       throw cuoWu
     }
   }
-  
+
   throw lastError
 }

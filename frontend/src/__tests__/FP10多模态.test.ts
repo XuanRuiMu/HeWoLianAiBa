@@ -12,9 +12,6 @@ import {
   shiShiPinXiaoXi,
   yanZhengShengChengTiShiCi,
   gouJianYuYinFaSongNeiRong,
-  shiShengTuMingLing,
-  shiShengShiPinMingLing,
-  jieXiShengTuMingLing,
 } from '@/utils/多模态'
 import { use语音转文字 } from '@/composables/use语音转文字'
 import type { 消息 } from '@/types'
@@ -134,10 +131,11 @@ describe('FP-10 多模态工具函数', () => {
     expect(gouJianYuYinFaSongNeiRong(null)).toBe('')
   })
 
-  it('斜杠指令解析生图与视频且普通文本返回空', () => {
-    expect(shiShengTuMingLing('/生图 夕阳海边')).toBe(true)
-    expect(shiShengShiPinMingLing('/视频 海边散步')).toBe(true)
-    expect(jieXiShengTuMingLing('/生图 夕阳海边')).toBe('夕阳海边')
+  it('FP-05 YH-036 用户手动斜杠指令已删除：恒返否定', async () => {
+    const { shiShengTuMingLing, shiShengShiPinMingLing, jieXiShengTuMingLing } = await import('@/utils/多模态')
+    expect(shiShengTuMingLing('/生图 夕阳海边')).toBe(false)
+    expect(shiShengShiPinMingLing('/视频 海边散步')).toBe(false)
+    expect(jieXiShengTuMingLing('/生图 夕阳海边')).toBeNull()
     expect(jieXiShengTuMingLing('普通聊天')).toBeNull()
   })
 })
@@ -278,18 +276,16 @@ describe('FP-10 聊天页面视频与生成一致', () => {
     }
   })
 
-  it('更多面板保持两项且生成入口为独立类名（通话不做）', async () => {
+  it('FP-05 YH-036/YH-037 更多面板仅两项且无用户手动生成入口（AI主动发起）', async () => {
     const { wrapper } = await mountDaiShiPin()
     try {
       await flushPromises()
       await new Promise((r) => setTimeout(r, 0))
       await flushPromises()
-      expect(duoMoTaiPeiZhiMock).toHaveBeenCalled()
       await wrapper.find('.gengduo-plus-anniu').trigger('click')
       await flushPromises()
       expect(wrapper.findAll('.gengduo-rukou').length).toBe(2)
-      expect(wrapper.findAll('.duomotai-rukou').length).toBe(2)
-      expect(wrapper.find('.duomotai-rukou').text()).toContain(huoQuFanYi('duoMeiTi', 'shengTu'))
+      expect(wrapper.findAll('.duomotai-rukou').length).toBe(0)
     } finally {
       wrapper.unmount()
     }
@@ -347,11 +343,11 @@ describe('FP-10 聊天页面视频与生成一致', () => {
     expect(聊天仓库.cuoWuXinXi).toBe(huoQuFanYi('duoMeiTi', 'shiPinShengChengShiBai'))
   })
 
-  it('新增翻译键存在且无硬编码残留', () => {
+  it('FP-05 YH-036/YH-037 用户手动按钮删除：无生成翻译键残留引用', () => {
     const yuanMa = readFileSync(resolve(__dirname, '../views/聊天页面.vue'), 'utf8')
-    expect(yuanMa).toContain("huoQuFanYi('duoMeiTi', 'shengTu')")
-    expect(yuanMa).toContain("huoQuFanYi('duoMeiTi', 'shengChengShiPin')")
+    expect(yuanMa).not.toContain("huoQuFanYi('duoMeiTi', 'shengTu')")
+    expect(yuanMa).not.toContain("huoQuFanYi('duoMeiTi', 'shengChengShiPin')")
+    expect(yuanMa).not.toContain('duomotai-rukou')
     expect(yuanMa).toContain('shipin-xianshi')
-    expect(yuanMa).toContain('duomotai-rukou')
   })
 })

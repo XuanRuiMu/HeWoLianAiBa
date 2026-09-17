@@ -17,6 +17,13 @@ describe('public资源体积清理验证', () => {
       'grass-bg/references/-assets-index-G3tB3Owe.patched.js',
       // 3D GLB 方案已废弃（吴昊阳改用 2D 覆盖层 wuhaoyang-2d.png）
       'models/wuhaoyang.glb',
+      // FP-08 YH-076：r128 断裂残留全套删除（2021 版与 0.186 不兼容，失败即隐藏背景）
+      'three-r128.min.js',
+      'GLTFLoader-r128.js',
+      'OrbitControls-r128.js',
+      'TransformControls-r128.js',
+      // FP-08 YH-076：草地调试测试台零引用，删
+      'grass-bg/ceshi.html',
     ]
 
     for (const file of deletedFiles) {
@@ -27,8 +34,6 @@ describe('public资源体积清理验证', () => {
 
   it('应保留3D首页必需资源', () => {
     const retainedFiles = [
-      'three-r128.min.js',
-      'GLTFLoader-r128.js',
       'grass-bg/draco/draco_decoder.wasm',
       'grass-bg/models/islands/islands-2.glb',
       // 草地引擎本体与样式（grass-bg.html 动态加载，勿删）

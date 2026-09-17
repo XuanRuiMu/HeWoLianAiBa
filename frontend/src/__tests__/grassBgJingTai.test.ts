@@ -37,12 +37,13 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).not.toMatch(/yuanError\.apply\(console, arguments\);\s*\n\s*\};\s*\n\s*window\.addEventListener\('error'/)
   })
 
-  it('缺失三维库回退静默：打印需debug门控但回退照常', () => {
+  it('FP-08 YH-076 缺失三维库即隐藏背景：零 r128 残留引用，失败走静态兜底', () => {
     const yuanMa = duQuCaoDi()
-    expect(yuanMa).toContain('../three-r128.min.js')
-    expect(yuanMa).toContain('../GLTFLoader-r128.js')
-    expect(yuanMa).toContain("if (/[?&]debug=1/.test(location.search)) console.error('[WuHaoYang] 父页面未提供 THREE")
-    expect(yuanMa).toContain("if (/[?&]debug=1/.test(location.search)) console.warn('[WuHaoYang] 父页面未提供 GLTFLoader")
+    expect(yuanMa).not.toContain('three-r128.min.js')
+    expect(yuanMa).not.toContain('GLTFLoader-r128.js')
+    expect(yuanMa).not.toContain('OrbitControls-r128')
+    expect(yuanMa).not.toContain('TransformControls-r128')
+    expect(yuanMa).toContain('__wuXianShiJingTai')
   })
 
   it('主引擎像素比封顶：改写devicePixelRatio上限为配置值', () => {
@@ -240,5 +241,12 @@ describe('FP-01 草地静态兜底', () => {
     expect(bundle).toContain('_experienceReady')
     expect(bundle).toContain('experience:ready')
     expect(bundle).toContain('reveal:complete')
+  })
+
+  it('芦苇已删除：Pampa默认实例数为0且无残留400配置', () => {
+    const bundleLuJing = path.resolve(process.cwd(), 'public', 'grass-bg', 'references', '-assets-index-G3tB3Owe-purple.patched.js')
+    const bundle = fs.readFileSync(bundleLuJing, 'utf-8')
+    expect(bundle).toContain('pampa:{lightColor:"#fff0cf",darkColor:"#e4dec7",count:0}')
+    expect(bundle).not.toContain('count:400')
   })
 })

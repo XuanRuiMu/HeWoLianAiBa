@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { randomUUID, randomBytes } from 'crypto'
+import { randomUUID } from 'crypto'
 import { peiZhi } from '../config'
 import { redis } from '../redis'
 
@@ -7,7 +7,7 @@ export { randomUUID } from 'crypto'
 
 export interface LingPaiZaiHe {
   yongHuId: string
-  shouJiHao: string
+  shouJiHao?: string
   jti?: string
   iat?: number
   exp?: number
@@ -16,59 +16,80 @@ export interface LingPaiZaiHe {
   refreshTokenId?: string
 }
 
-/** 生成 refresh token（opaque 随机串，不含敏感信息） */
-export function shengChengRefreshToken(): string {
-  return randomBytes(32).toString('base64url')
-}
-
 /** Refresh token Redis key 前缀 */
 const REFRESH_TOKEN_PREFIX = 'refresh_token:'
 const REFRESH_TOKEN_USER_PREFIX = 'refresh_token_user:'
-const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60
+const REFRESH_TOKEN_XIAO_HAO_PREFIX = 'xiao_hao_refresh_token:'
+const REFRESH_TOKEN_TTL = peiZhi.shuaXinLingPaiYouXiaoMiao
+const XIAO_HAO_BIAO_JI_TTL = 24 * 60 * 60
 
-/** 存储 refresh token 到 Redis */
+/** 存储 refresh token 到 Redis（仅存用户标识，不存手机号等敏感信息） */
 export async function cunChuRefreshToken(
   yongHuId: string,
   tokenId: string,
-  shouJiHao: string,
 ): Promise<void> {
   const key = `${REFRESH_TOKEN_PREFIX}${yongHuId}:${tokenId}`
-  const value = JSON.stringify({ yongHuId, shouJiHao, chuangJianShiJian: Date.now() })
-  await redis.set(key, value, 'EX', REFRESH_TOKEN_TTL)
-  // 用户级索引：记录该用户拥有的所有 tokenId，便于全家吊销
+  await redis.set(key, yongHuId, 'EX', REFRESH_TOKEN_TTL)
   await redis.sadd(`${REFRESH_TOKEN_USER_PREFIX}${yongHuId}`, tokenId)
   await redis.expire(`${REFRESH_TOKEN_USER_PREFIX}${yongHuId}`, REFRESH_TOKEN_TTL)
 }
 
-/** 验证并消费 refresh token（单次使用，消费后删除，防重放） */
+function duQuRefreshTokenYongHuId(cunChuZhi: string): string | null {
+  if (!cunChuZhi.includes('{')) return cunChuZhi
+  try {
+    const jieXi = JSON.parse(cunChuZhi) as { yongHuId?: unknown }
+    return typeof jieXi.yongHuId === 'string' ? jieXi.yongHuId : null
+  } catch {
+    return null
+  }
+}
+
+void duQuRefreshTokenYongHuId
+
+/** 单飞行锁串行化：同凭证并发刷新排队，避免双兑现绕开 Lua（内存锁仅防同进程并发） */
+
+/** 验证并消费 refresh token（Lua原子验活删活立碑：并发双刷仅一胜，另一路见墓碑走复用链） */
+const XIAO_HAO_LUA = `
+local huo = redis.call('GET', KEYS[1])
+if not huo then return 0 end
+local yongHu = huo
+if string.find(huo, '{', 1, true) then
+  local ok, jie = pcall(cjson.decode, huo)
+  if ok and jie and jie.yongHuId then yongHu = jie.yongHuId end
+end
+if yongHu ~= ARGV[1] then return -1 end
+redis.call('DEL', KEYS[1])
+redis.call('SREM', KEYS[2], ARGV[2])
+redis.call('SET', KEYS[3], '1', 'EX', ARGV[3])
+return 1
+`
+
 export async function xiaoHaoRefreshToken(
   tokenId: string,
   yongHuId: string,
-): Promise<{ chengGong: boolean; shouJiHao?: string; cuoWu?: string }> {
+): Promise<{ chengGong: boolean; cuoWu?: string }> {
   const key = `${REFRESH_TOKEN_PREFIX}${yongHuId}:${tokenId}`
-  const value = await redis.get(key)
-  if (!value) {
-    return { chengGong: false, cuoWu: 'refresh token不存在或已过期' }
-  }
-  const data = JSON.parse(value)
-  if (data.yongHuId !== yongHuId) {
-    return { chengGong: false, cuoWu: 'refresh token用户不匹配' }
-  }
-  // 删除该 token（单次使用）
-  await redis.del(key)
-  // 从用户索引中移除
-  await redis.srem(`${REFRESH_TOKEN_USER_PREFIX}${yongHuId}`, tokenId)
-  return { chengGong: true, shouJiHao: data.shouJiHao }
+  const userKey = `${REFRESH_TOKEN_USER_PREFIX}${yongHuId}`
+  const tombKey = `${REFRESH_TOKEN_XIAO_HAO_PREFIX}${yongHuId}:${tokenId}`
+  const jieGuo = (await (redis as unknown as {
+    eval: (jiaoBen: string, jianShu: number, ...canShu: string[]) => Promise<unknown>
+  }).eval(XIAO_HAO_LUA, 3, key, userKey, tombKey, yongHuId, tokenId, String(XIAO_HAO_BIAO_JI_TTL))) as number
+  if (jieGuo === 1) return { chengGong: true }
+  if (jieGuo === -1) return { chengGong: false, cuoWu: 'refresh token用户不匹配' }
+  return { chengGong: false, cuoWu: 'refresh token不存在或已过期' }
 }
 
-/** 检测 refresh token 是否已被使用（复用检测） */
+/** 检测 refresh token 是否被复用（仅消费墓碑命中才算复用，有确凿重放证据；
+ * 未知键一律按普通无效处理，不触发全家吊销，避免网络重试/多标签并发误伤全部会话） */
 export async function jianCeRefreshTokenChongFu(
   tokenId: string,
   yongHuId: string,
 ): Promise<boolean> {
-  const key = `${REFRESH_TOKEN_PREFIX}${yongHuId}:${tokenId}`
-  const exists = await redis.exists(key)
-  return exists === 0 // 不存在说明已被消费过（疑似复用）
+  const xiaoHaoJian = `${REFRESH_TOKEN_XIAO_HAO_PREFIX}${yongHuId}:${tokenId}`
+  const beiXiaoHao = await redis.exists(xiaoHaoJian)
+  if (beiXiaoHao === 0) return false
+  const huoJian = `${REFRESH_TOKEN_PREFIX}${yongHuId}:${tokenId}`
+  return (await redis.exists(huoJian)) === 0
 }
 
 /** 吊销用户所有 refresh token（全家吊销） */
@@ -92,7 +113,7 @@ export async function shanChuRefreshToken(tokenId: string, yongHuId: string): Pr
 export function huoQuLingPaiZuiDaYouXiaoQiMiao(): number {
   const piPei = /^(\d+)([smhd])$/.exec(peiZhi.jwtGuoQi.trim())
   const danWeiHaoMiao: Record<string, number> = { s: 1, m: 60, h: 3600, d: 86400 }
-  if (!piPei) return 7 * danWeiHaoMiao.d
+  if (!piPei) return 25 * danWeiHaoMiao.m
   return Number(piPei[1]) * danWeiHaoMiao[piPei[2]]
 }
 
@@ -128,16 +149,18 @@ export async function lingPaiShiFouYiCheXiao(
 }
 
 export function shengChengLingPai(zaiHe: LingPaiZaiHe): string {
+  // YH-031 JWT算法白名单HS256显式声明，禁none/RS256混淆
   return jwt.sign(
     { ...zaiHe, qianFaHaoMiao: Date.now() },
     peiZhi.jwtMiYao as jwt.Secret,
     {
       expiresIn: peiZhi.jwtGuoQi,
+      algorithm: 'HS256',
       jwtid: randomUUID(),
     } as jwt.SignOptions,
   )
 }
 
 export function yanZhengLingPai(lingPai: string): LingPaiZaiHe {
-  return jwt.verify(lingPai, peiZhi.jwtMiYao as jwt.Secret) as LingPaiZaiHe
+  return jwt.verify(lingPai, peiZhi.jwtMiYao as jwt.Secret, { algorithms: ['HS256'] }) as LingPaiZaiHe
 }

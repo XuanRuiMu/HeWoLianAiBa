@@ -1,14 +1,16 @@
 import type { Response } from 'express'
 import type { ApiXiangYing } from '../types'
+import { taoYiShuChu } from '../middleware/安全'
 
 export function chengGongXiangYing<T>(
   xiangYing: Response,
   shuJu: T,
   tiShi?: string,
 ): void {
+  // YH-021 输出转义为主：成功体字符串字段服务端统一编码
   const jieGuo: ApiXiangYing<T> = {
     cheng_gong: true,
-    shu_ju: shuJu,
+    shu_ju: taoYiShuChu(shuJu) as T,
     ti_shi: tiShi,
   }
   xiangYing.json(jieGuo)

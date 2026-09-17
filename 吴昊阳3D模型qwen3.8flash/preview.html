@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>吴昊阳趴姿 · 登录页视角预览</title>
+<style>
+  html,body{margin:0;height:100%;background:#111;overflow:hidden;font-family:monospace}
+  #wrap{display:flex;height:100%}
+  #stage{flex:1;position:relative}
+  canvas{display:block;width:100%;height:100%}
+  #ref{width:38%;max-width:520px;position:relative;border-left:2px solid #333}
+  #ref img{width:100%;height:100%;object-fit:cover;display:block}
+  #hud{position:absolute;left:8px;top:8px;color:#fff;background:rgba(0,0,0,.55);padding:6px 10px;font-size:12px;white-space:pre;line-height:1.5;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage"><canvas id="c"></canvas><div id="hud">loading…</div></div>
+  <div id="ref"><img src="吴昊阳2D图片.png" alt="2D基准"></div>
+</div>
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three.module.js",
+  "three/addons/": "./vendor/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "./vendor/loaders/GLTFLoader.js";
+import { DRACOLoader } from "./vendor/loaders/DRACOLoader.js";
+import { OrbitControls } from "./vendor/OrbitControls.js";
+
+const hud = document.getElementById("hud");
+const errors = [];
+window.__errors = errors;
+window.addEventListener("error", e => errors.push(String(e.message)));
+
+const P = new URLSearchParams(location.search);
+const ry = Number(P.get("ry") ?? 180);          // 模型绕Y旋转（度）
+const scale = Number(P.get("scale") ?? 0.85);   // 尺寸档位
+const px = Number(P.get("px") ?? 0);            // 位置微调
+const pz = Number(P.get("pz") ?? 0);
+
+const canvas = document.getElementById("c");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+// 白天登录页配色：金黄草地 + 暖阳光
+scene.background = new THREE.Color(0x9db6c8);
+scene.fog = new THREE.Fog(0xc8b98a, 18, 60);
+
+// 引擎登录页相机参数（实测）
+const CAM = new THREE.Vector3(5.75, 1.34, 5.27);
+const ANCHOR = new THREE.Vector3(3.24, 0.161, 2.77);
+const camera = new THREE.PerspectiveCamera(52, 1, 0.05, 200);
+camera.position.copy(CAM);
+camera.lookAt(ANCHOR);
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== w || canvas.height !== h) {
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+}
+
+// 光照：暖色主光 + 天光半球，色温对齐草地
+const sun = new THREE.DirectionalLight(0xffe3b0, 2.6);
+sun.position.set(9, 7, 12);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -6; sun.shadow.camera.right = 6;
+sun.shadow.camera.top = 6; sun.shadow.camera.bottom = -6;
+sun.shadow.camera.near = 1; sun.shadow.camera.far = 40;
+sun.shadow.bias = -0.0006;
+scene.add(sun);
+scene.add(new THREE.HemisphereLight(0xbfd4e8, 0x8a7a4a, 0.85));
+
+// 地形：平坦草地替代（锚点处实测地表高 0.161）
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(120, 120),
+  new THREE.MeshStandardMaterial({ color: 0xb8a45c, roughness: 0.95 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = 0.161;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// 草叶层近似：锚点周围实例化小草片，让角色"埋"进草里（前景遮挡验证用）
+const bladeGeo = new THREE.PlaneGeometry(0.05, 0.16, 1, 2);
+bladeGeo.translate(0, 0.08, 0);
+const bladeMat = new THREE.MeshStandardMaterial({
+  color: 0xa89a52, roughness: 1, side: THREE.DoubleSide, alphaTest: 0.5, transparent: false,
+});
+const blades = new THREE.InstancedMesh(bladeGeo, bladeMat, 2600);
+{
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), s = new THREE.Vector3();
+  let i = 0;
+  const rnd = (a => () => (a = (a * 16807) % 2147483647) / 2147483647)(42);
+  while (i < 2600) {
+    const x = ANCHOR.x + (rnd() - 0.5) * 9, z = ANCHOR.z + (rnd() - 0.5) * 9;
+    if (rnd() < 0.35) continue;
+    e.set(0, rnd() * Math.PI * 2, (rnd() - 0.5) * 0.5);
+    q.setFromEuler(e);
+    v.set(x, 0.161, z);
+    s.setScalar(0.7 + rnd() * 0.9);
+    m.compose(v, q, s);
+    blades.setMatrixAt(i++, m);
+  }
+  blades.castShadow = false;
+  blades.receiveShadow = true;
+  scene.add(blades);
+}
+
+const loader = new GLTFLoader();
+const draco = new DRACOLoader();
+draco.setDecoderPath("./vendor/draco/");
+loader.setDRACOLoader(draco);
+
+let model = null;
+loader.load("./吴昊阳趴姿.glb", (gltf) => {
+  model = gltf.scene;
+  model.traverse(o => {
+    if (o.isMesh) {
+      o.castShadow = true; o.receiveShadow = true;
+      const ms = Array.isArray(o.material) ? o.material : [o.material];
+      ms.forEach(m => { m.side = THREE.DoubleSide; });
+    }
+  });
+  model.position.set(ANCHOR.x + px, 0.161, ANCHOR.z + pz);
+  model.rotation.y = THREE.MathUtils.degToRad(ry);
+  model.scale.setScalar(scale);
+  scene.add(model);
+  window.__ready = true;
+  report();
+}, undefined, (err) => {
+  errors.push("load:" + String(err && err.message || err));
+  hud.textContent = "LOAD FAILED: " + err;
+  window.__ready = "failed";
+});
+
+function report() {
+  if (!model) return;
+  model.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(model);
+  const pts = [];
+  for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z])
+    pts.push(new THREE.Vector3(x, y, z).project(camera));
+  const hNdc = Math.max(...pts.map(p => p.y)) - Math.min(...pts.map(p => p.y));
+  const pct = (hNdc / 2 * 100).toFixed(1);
+  hud.textContent = `scale=${scale} ry=${ry} 画面高占比=${pct}%\nbbox y=[${box.min.y.toFixed(2)},${box.max.y.toFixed(2)}] errors=${errors.length}`;
+  window.__pct = Number(pct);
+}
+
+function loop() {
+  resize();
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+loop();
+window.__report = report;
+</script>
+</body>
+</html>

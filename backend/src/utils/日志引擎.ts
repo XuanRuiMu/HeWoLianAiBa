@@ -167,7 +167,9 @@ async function qingLiJiuDangAn(): Promise<void> {
     if (!fs.existsSync(lengCunMuLu)) return
 
     const xianZai = Date.now()
-    const baoLiuQi = 90 * 24 * 60 * 60 * 1000
+    // YH-139 日志保留打架收敛：冷存读配置统一数字，归档加冷存
+    // 根因：三处各说各的删了找不回；收敛为LOG_COLD_RETENTION_DAYS唯一出处
+    const baoLiuHaoMiao = peiZhi.riZhiLengCunBaoLiuTian * 24 * 60 * 60 * 1000
 
     const yueMuLuLieBiao = fs.readdirSync(lengCunMuLu)
     for (const yueMuLu of yueMuLuLieBiao) {
@@ -179,7 +181,7 @@ async function qingLiJiuDangAn(): Promise<void> {
       for (const wenJian of wenJianLieBiao) {
         const wenJianLuJing = path.join(wanZhengLuJing, wenJian)
         const wenJianTongJi = fs.statSync(wenJianLuJing)
-        if (xianZai - wenJianTongJi.mtimeMs > baoLiuQi) {
+        if (xianZai - wenJianTongJi.mtimeMs > baoLiuHaoMiao) {
           fs.unlinkSync(wenJianLuJing)
         }
       }

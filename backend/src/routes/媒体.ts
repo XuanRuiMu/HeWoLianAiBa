@@ -12,9 +12,11 @@ const luYou = Router()
 luYou.get('/:sha256', async (qingQiu: Request, xiangYing: Response) => {
   const sha256 = String(qingQiu.params.sha256 || '')
   const eCanShu = qingQiu.query.e
+  const uCanShu = qingQiu.query.u
   const sCanShu = qingQiu.query.s
+  const tCanShu = qingQiu.query.t
 
-  if (!yanZhengQianMing(sha256, eCanShu, sCanShu)) {
+  if (!(await yanZhengQianMing(sha256, eCanShu, uCanShu, sCanShu, tCanShu))) {
     return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('liaoTian', 'qianMingWuXiao'))
   }
 

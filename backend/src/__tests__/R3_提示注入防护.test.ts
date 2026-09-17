@@ -227,10 +227,20 @@ describe('R3 提示注入防护 - Writer 输出安全审核', () => {
       neiRong: '你好呀，很高兴见到你~',
       shiYongLiang: { promptTokens: 100, completionTokens: 50 },
     })
-    
+
     vi.mocked(shenHeNeiRongAnQuan).mockResolvedValue({
       wei_gui: false,
     })
+    vi.mocked(huoQuFanYi).mockImplementation(((fenLei: unknown, jian: unknown) => {
+      if (fenLei === 'AI' && jian === 'ShenHeWeiGui') return '这条消息不太合适，已拦住'
+      if (fenLei === 'AI' && jian === 'aiXianLiuQingShaoHou') return '对方正在忙，稍后再聊'
+      if (fenLei === 'AI' && jian === 'aiYuEBuZuQingLianXiRenGong') return '余额不足'
+      if (fenLei === 'AI' && jian === 'DirectorDiaoYongShiBai') return undefined as never
+      if (fenLei === 'AI' && jian === 'WriterDiaoYongShiBai') return undefined as never
+      if (fenLei === 'liaoTian' && jian === 'aiYuSuanYiYongJin') return '预算用尽'
+      if (fenLei === 'liaoTian' && jian === 'yuSuanYuJing') return '预算预警'
+      return undefined as never
+    }) as typeof huoQuFanYi)
     
     const shuRu = createMockAIYinQingShuRu()
     const result = await yunXingAIYinQing(shuRu)

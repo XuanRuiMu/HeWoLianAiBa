@@ -3,15 +3,17 @@
     <div class="app-rongqi">
       <DuanWangHengFu />
       <QuanJuCaiDan />
-      <div class="app-zhuti">
+      <main class="app-zhuti">
         <router-view v-slot="{ Component }">
           <Transition name="yemian-guodu" mode="out-in">
             <KeepAlive :include="['liaoTian']">
-              <component :is="Component" v-if="Component" :key="route.path" />
+              <CuoWuBianJie :key="`nei-${String(route.name)}`">
+                <component :is="Component" v-if="Component" :key="route.path" />
+              </CuoWuBianJie>
             </KeepAlive>
           </Transition>
         </router-view>
-      </div>
+      </main>
     </div>
     <!-- 草地 3D 背景：全局单例常驻。加载完全独立于正常功能——应用启动并进入空闲后才
          挂载 iframe（yingJiaZaiBeiJing），主线程先服务登录/主页等真实交互；
@@ -178,6 +180,7 @@ function chuLiBeiJingJiaZaiShiBai() {
 
 function qiDongBeiJingJiaZai() {
   yuJiaZaiCaoDiZiYuan()
+  void import('@/utils/sanWei').then((moKuai) => moKuai.yuJiaZaiSanWei().catch(() => null))
   const kongXian = 'requestIdleCallback' in window ? window.requestIdleCallback : null
   if (kongXian) {
     kongXian(

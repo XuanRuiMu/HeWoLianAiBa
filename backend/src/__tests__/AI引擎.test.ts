@@ -443,8 +443,7 @@ describe('FP-09 AI对话引擎', () => {
       expect(jieGuo.xiao_xi_lie_biao).toEqual([])
     })
 
-    it('yunXingAIYinQing：渣型+E+快热 角色 → Director/Writer 温度高于基座（人设驱动在主路径生效）', async () => {
-      const jiLu: TiaoYongCanShu[] = []
+    it('yunXingAIYinQing：渣型+E+快热 角色 → Director/Writer 温度高于基座（人设驱动在主路径生效）', async () => {      const jiLu: TiaoYongCanShu[] = []
       sheZhiMockTiaoYong(async (canShu) => {
         jiLu.push(canShu)
         if (canShu.wenDu === 0.1) {
@@ -796,6 +795,38 @@ describe('FP-09 AI对话引擎', () => {
 
       expect(socketMoKuai.emit).toHaveBeenCalledTimes(1)
       expect(socketMoKuai.emit.mock.calls[0][1].消息列表[0].nei_rong).toBe(huoQuFanYi('liaoTian', 'yuSuanYuJing'))
+    })
+  })
+
+  describe('FP-05 YH-043 去AI味运行时采样', () => {
+    it('Writer 输出命中规则词 → 采样命中时入抽检队列（mock 重试队列不断言外呼）', async () => {
+      vi.mocked(redis.incr).mockResolvedValue(1)
+      vi.mocked(redis.set).mockResolvedValue(null)
+      sheZhiMockTiaoYong(async (canShu) => {
+        if (canShu.xiaoXi[0]?.neiRong?.includes('小纸条')) {
+          return {
+            neiRong: JSON.stringify({
+              用户意图: '继续聊天',
+              情感分析: '中性',
+              回复策略: '自然回复',
+              是否回复: true,
+              回复条数: 1,
+              时间情绪: '轻松',
+              是否撤回: false,
+            }),
+            xinXi: { role: 'assistant', content: 'director' },
+            yuanShuJu: {} as TiaoYongJieGuo['yuanShuJu'],
+          }
+        }
+        return {
+          neiRong: '作为 AI 助手为你总结一下要点',
+          xinXi: { role: 'assistant', content: 'writer' },
+          yuanShuJu: {} as TiaoYongJieGuo['yuanShuJu'],
+        }
+      })
+      const jieGuo = await yunXingAIYinQing(chuangJianCeShiShuRu())
+      expect(jieGuo.shi_fou_hui_fu).toBe(true)
+      expect(jieGuo.xiao_xi_lie_biao.length).toBeGreaterThan(0)
     })
   })
 })

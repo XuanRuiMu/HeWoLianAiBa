@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { AI_PEI_ZHI, AIMoXingLeiXing } from '../config/AI配置'
+import { AI_PEI_ZHI, AIMoXingLeiXing, MO_XING_HUI_DU_CE_LUE, xuanZeHuiDuFenZu, yingYongHuiDuCanShu } from '../config/AI配置'
 
 const QI_WANG_MO_XING = 'deepseek-v4.1-flash-expires-on-0910'
 
@@ -47,5 +47,20 @@ describe('FP-04 AI模型配置', () => {
         expect(['json_object', 'text'], `${leiXing}.xiangYingGeShi.type 非法`).toContain(canShu.xiangYingGeShi.type)
       }
     }
+  })
+
+  it('多模型灰度：六大生成模块分组比例合法且默认关闭不改行为', () => {
+    for (const leiXing of ['writer', 'director', 'junShiQiuZhu', 'kaiChangBai', 'jiYiZhaiYao', 'fuPanShengCheng']) {
+      const ceLue = MO_XING_HUI_DU_CE_LUE[leiXing]
+      expect(ceLue, `${leiXing} 灰度策略缺失`).toBeDefined()
+      expect(ceLue.fenZu.length).toBeGreaterThan(0)
+      expect(ceLue.fenZu.every((zu) => zu.biLi > 0)).toBe(true)
+    }
+    expect(MO_XING_HUI_DU_CE_LUE.writer.qiYong).toBe(false)
+    const jiChu = AI_PEI_ZHI.moXing.writer
+    expect(yingYongHuiDuCanShu('writer', jiChu, 0.05)).toEqual(jiChu)
+    const qiangZhi = { qiYong: true, fenZu: [{ mingCheng: 'a', biLi: 30 }, { mingCheng: 'b', biLi: 70 }] }
+    expect(xuanZeHuiDuFenZu(qiangZhi, 0.29).mingCheng).toBe('a')
+    expect(xuanZeHuiDuFenZu(qiangZhi, 0.31).mingCheng).toBe('b')
   })
 })

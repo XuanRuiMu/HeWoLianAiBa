@@ -154,7 +154,7 @@ export async function gengXinHaoGanDu(
   xiShu?: number,
   muBiaoQuXian?: number,
   lianXuWeiDaBiao?: number,
-): Promise<HaoGanDuGengXinJieGuo> {
+  ): Promise<HaoGanDuGengXinJieGuo> {
   try {
     const { quanZhong } = HAO_GAN_DU_PEI_ZHI
     const yuanShiBianHua =
@@ -172,6 +172,8 @@ export async function gengXinHaoGanDu(
 
     // R2 单语句原子更新：加权、衰减、截断全部在 SQL 内基于当前行值完成，
     // 并发更新不再发生"读-改-写"丢失覆盖
+    // YH-035+YH-068：评判失败标 unknown 时调用方直接跳过落库；本语句内落分与互动计数同语句原子，
+    // 正常零分（如用户发空洞消息）仍计数，unknown 失败由调度器前置拦截不进库
     const gengXinJieGuo = await 数据库.query(
       `UPDATE "好感度" SET
          "总分" = GREATEST($1, LEAST($2, ROUND(
@@ -180,7 +182,7 @@ export async function gengXinHaoGanDu(
          "互动次数" = "互动次数" + 1,
          "最后互动时间" = NOW()
        WHERE "用户ID" = $5 AND "角色ID" = $6
-       RETURNING "总分"`,
+       RETURNING "总分", "互动次数"`,
       [
         HAO_GAN_DU_PEI_ZHI.fanWei.zuiDiFen,
         HAO_GAN_DU_PEI_ZHI.fanWei.zuiGaoFen,

@@ -60,7 +60,7 @@ describe('C5 未成年人拦截', () => {
     await redis.quit()
   })
 
-  it('16周岁生日当天可以注册', async () => {
+  it('18周岁生日当天可以注册', async () => {
     const shouJiHao = suiJiShouJiHao()
     await qingLiCeShiYongHu(shouJiHao)
     try {
@@ -70,18 +70,18 @@ describe('C5 未成年人拦截', () => {
         yongHuMing: `成年边界${zhuCeYongHuMingJiShu}_a`,
         miMa: 'Test123456',
         tongYiXieYi: true,
-        chuShengRiQi: chengNianShengRiDangTian(16),
+        chuShengRiQi: chengNianShengRiDangTian(18),
       })
       expect(jieGuo.zhuangTaiMa).toBe(200)
       expect(jieGuo.chengGong).toBe(true)
       const xingCun = await 数据库.query(`SELECT "生日" FROM "用户" WHERE "手机号" = $1`, [shouJiHao])
-      expect(String(xingCun.rows[0].生日)).toBe(chengNianShengRiDangTian(16))
+      expect(String(xingCun.rows[0].生日)).toBe(chengNianShengRiDangTian(18))
     } finally {
       await qingLiCeShiYongHu(shouJiHao)
     }
   })
 
-  it('差一天满16周岁注册被拒并返回翻译文案', async () => {
+  it('差一天满18周岁注册被拒并返回翻译文案', async () => {
     const shouJiHao = suiJiShouJiHao()
     await qingLiCeShiYongHu(shouJiHao)
     try {
@@ -91,7 +91,7 @@ describe('C5 未成年人拦截', () => {
         yongHuMing: `未成年边界${zhuCeYongHuMingJiShu}_b`,
         miMa: 'Test123456',
         tongYiXieYi: true,
-        chuShengRiQi: chaYiTianManZhouSui(16),
+        chuShengRiQi: chaYiTianManZhouSui(18),
       })
       expect(jieGuo.zhuangTaiMa).toBe(400)
       expect(jieGuo.chengGong).toBe(false)
@@ -144,11 +144,32 @@ describe('C5 未成年人拦截', () => {
     }
   })
 
-  it('最小年龄阈值走配置（默认16）', () => {
-    expect(jiSuanZhouSuiNianLing(chengNianShengRiDangTian(16))).toBe(16)
-    expect(jiSuanZhouSuiNianLing(chaYiTianManZhouSui(16))).toBe(15)
+  it('最小年龄阈值走配置（默认18）', () => {
+    expect(jiSuanZhouSuiNianLing(chengNianShengRiDangTian(18))).toBe(18)
+    expect(jiSuanZhouSuiNianLing(chaYiTianManZhouSui(18))).toBe(17)
     expect(jiSuanZhouSuiNianLing('2000-02-29')).toBeGreaterThan(20)
     expect(jiSuanZhouSuiNianLing('2100-01-01')).toBeLessThanOrEqual(0)
+  })
+
+  it('体验内测满员后新注册被拒并返回翻译文案', async () => {
+    const zongShu = await 数据库.query(`SELECT COUNT(*) AS "总数" FROM "用户"`)
+    if (Number(zongShu.rows[0]?.总数 || 0) >= 100000) {
+      const shouJiHao = suiJiShouJiHao()
+      try {
+        const jieGuo = await faSongMaBingZhuCe({
+          shouJiHao,
+          yanZhengMa: '123456',
+          yongHuMing: `满员${zhuCeYongHuMingJiShu}_e`,
+          miMa: 'Test123456',
+          tongYiXieYi: true,
+          chuShengRiQi: chengNianShengRiDangTian(20),
+        })
+        expect(jieGuo.chengGong).toBe(false)
+        expect(jieGuo.tiShi).toBe(huoQuFanYi('renZheng', 'tiYanBanManYuan'))
+      } finally {
+        await qingLiCeShiYongHu(shouJiHao)
+      }
+    }
   })
 
   it('周岁计算：生日当天+1、未到生日-1（固定参照日期）', () => {

@@ -5,7 +5,7 @@
     :class="{ 'zui-xiao-hua': 最小化状态 }"
     :style="位移样式"
     role="dialog"
-    aria-label="管理员实时监控"
+    :aria-label="huoQuFanYi('guanLiJianKong', 'biaoTi')"
   >
     <header class="jiankong-biaoti-lan" @pointerdown="开始拖动">
       <div class="jiankong-biaoti">

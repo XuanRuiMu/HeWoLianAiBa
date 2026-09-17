@@ -2,6 +2,7 @@
 import { AI_PEI_ZHI } from '../config/AI配置'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianHaoGanDuPingPanPrompt } from './Prompt构建器'
+import { paiRuZhongShiDuiLie } from './重试队列'
 import type { HaoGanDuPingPanJieGuo } from '../types'
 import type { CanShuShangXiaWen } from '../config/AI参数策略'
 import { shiFouManRe, MAN_RE_HAO_GAN_DU_JIA_CHENG } from '../config/AI参数策略'
@@ -81,6 +82,25 @@ async function pingPanHaoGanDuBianHuaNei(
     ], shangXiaWen)
 
     const shuJu = jieXiJSON(xiangYing.neiRong)
+    if (!shiFouYouXiaoPingPan(shuJu)) {
+      debug日志.error('好感度评判', '好感度评判解析失败，已标unknown不落分并入重试队列', {
+        xiang_qing: { yuan_wen_chang_du: xiangYing.neiRong.length },
+      })
+      void paiRuZhongShiDuiLie({ leiXing: 'haoGanDuPingPan', yuanYin: 'jie_xi_shi_bai' })
+      return {
+        jieGuo: {
+          xin_ren_du_bian_hua: 0,
+          qin_mi_du_bian_hua: 0,
+          qu_wei_du_bian_hua: 0,
+          guan_huai_du_bian_hua: 0,
+          li_you: 'unknown',
+        },
+        xiShu: 1,
+        muBiaoQuXian,
+        lianXuWeiDaBiao,
+        pingJunShuaiJianHou,
+      }
+    }
 
     const manReJiaCheng = shiFouManRe(shangXiaWen) ? MAN_RE_HAO_GAN_DU_JIA_CHENG : 1
 
@@ -108,13 +128,14 @@ async function pingPanHaoGanDuBianHuaNei(
     return { jieGuo, xiShu, muBiaoQuXian, lianXuWeiDaBiao, pingJunShuaiJianHou }
   } catch (cuoWu) {
     debug日志.error('好感度评判', '好感度评判失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+    void paiRuZhongShiDuiLie({ leiXing: 'haoGanDuPingPan', yuanYin: 'diao_yong_yi_chang' })
     return {
       jieGuo: {
         xin_ren_du_bian_hua: 0,
         qin_mi_du_bian_hua: 0,
         qu_wei_du_bian_hua: 0,
         guan_huai_du_bian_hua: 0,
-        li_you: '',
+        li_you: 'unknown',
       },
       xiShu: 1,
       muBiaoQuXian: 0,
@@ -206,6 +227,25 @@ async function pingPanHaoGanDuPiLiangNei(
     ], shangXiaWen)
 
     const shuJu = jieXiJSON(xiangYing.neiRong)
+    if (!shiFouYouXiaoPingPan(shuJu)) {
+      debug日志.error('好感度评判', '好感度批量评判解析失败，已标unknown不落分并入重试队列', {
+        xiang_qing: { yuan_wen_chang_du: xiangYing.neiRong.length },
+      })
+      void paiRuZhongShiDuiLie({ leiXing: 'haoGanDuPingPan', yuanYin: 'pi_liang_jie_xi_shi_bai' })
+      return {
+        jieGuo: {
+          xin_ren_du_bian_hua: 0,
+          qin_mi_du_bian_hua: 0,
+          qu_wei_du_bian_hua: 0,
+          guan_huai_du_bian_hua: 0,
+          li_you: 'unknown',
+        },
+        xiShu,
+        muBiaoQuXian,
+        lianXuWeiDaBiao,
+        pingJunShuaiJianHou,
+      }
+    }
     const manReJiaCheng = shiFouManRe(shangXiaWen) ? MAN_RE_HAO_GAN_DU_JIA_CHENG : 1
 
     const yuanShiJieGuo: HaoGanDuPingPanJieGuo = {
@@ -232,13 +272,14 @@ async function pingPanHaoGanDuPiLiangNei(
     return { jieGuo, xiShu, muBiaoQuXian, lianXuWeiDaBiao, pingJunShuaiJianHou }
   } catch (cuoWu) {
     debug日志.error('好感度评判', '好感度批量评判失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+    void paiRuZhongShiDuiLie({ leiXing: 'haoGanDuPingPan', yuanYin: 'pi_liang_diao_yong_yi_chang' })
     return {
       jieGuo: {
         xin_ren_du_bian_hua: 0,
         qin_mi_du_bian_hua: 0,
         qu_wei_du_bian_hua: 0,
         guan_huai_du_bian_hua: 0,
-        li_you: '',
+        li_you: 'unknown',
       },
       xiShu: 1,
       muBiaoQuXian: 0,
@@ -262,6 +303,20 @@ export async function pingPanHaoGanDuPiLiang(
 }
 
 export { pingPanHaoGanDuBianHuaNei, pingPanHaoGanDuPiLiangNei }
+
+const PING_PAN_BI_TIAN_JIAN = ['信任度变化', '亲密度变化', '趣味度变化', '关怀度变化'] as const
+
+function shiFouYouXiaoPingPan(shuJu: Record<string, unknown>): boolean {
+  if (!shuJu || Object.keys(shuJu).length === 0) return false
+  return PING_PAN_BI_TIAN_JIAN.some((jian) => shuJu[jian] !== undefined || shuJu[zhuanXiaHuaXian(jian)] !== undefined)
+}
+
+function zhuanXiaHuaXian(jian: string): string {
+  if (jian === '信任度变化') return 'xin_ren_du_bian_hua'
+  if (jian === '亲密度变化') return 'qin_mi_du_bian_hua'
+  if (jian === '趣味度变化') return 'qu_wei_du_bian_hua'
+  return 'guan_huai_du_bian_hua'
+}
 
 function jieXiJSON(neiRong: string): Record<string, unknown> {
   const qingLi = neiRong.trim()

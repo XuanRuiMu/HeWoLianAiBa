@@ -685,17 +685,17 @@ describe('FP-18 主题与UI', () => {
       expect(caiDanYuanMa).not.toContain('zhangHaoSheZhiZhanKai')
     })
 
-    it('FP-02 用户下拉仅含战绩/好友/退出登录/账号设置4项，退出登录紧随好友', async () => {
+    it('FP-02 用户下拉顺序为账号设置/战绩/好友/退出登录，退出登录紧随好友', async () => {
       const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
       await wrapper.find('.yonghu-xuanxiang').trigger('click')
       await flushPromises()
       const xiala = wrapper.find('.yonghu-xiala')
       const zhuRuKou = xiala.findAll('.xiala-xiangmu').map((b) => b.text())
       expect(zhuRuKou).toEqual([
+        huoQuFanYi('caidan', 'zhangHaoSheZhi'),
         huoQuFanYi('caidan', 'guoWangZhanJi'),
         huoQuFanYi('caidan', 'haoYou'),
         huoQuFanYi('caidan', 'tuiChuDengLu'),
-        huoQuFanYi('caidan', 'zhangHaoSheZhi'),
       ])
       expect(xiala.find('.tuichu-xiangmu').text()).toBe(huoQuFanYi('caidan', 'tuiChuDengLu'))
     })
@@ -739,7 +739,7 @@ describe('FP-18 主题与UI', () => {
       expect(caiDanYuanMa).not.toContain('>▾<')
     })
 
-    it('「过往战绩」「好友」「账号设置」同级且点击走对应路由', async () => {
+    it('「账号设置」「过往战绩」「好友」同级且点击走对应路由', async () => {
       const { wrapper, luYou } = await mountCaiDan({ luJing: '/', dengLu: true })
       const pushSpy = vi.spyOn(luYou, 'push')
       const dianJiRuKou = async (wenBen: string) => {
@@ -753,12 +753,12 @@ describe('FP-18 主题与UI', () => {
         await anNiu[0].trigger('click')
         await flushPromises()
       }
+      await dianJiRuKou(huoQuFanYi('caidan', 'zhangHaoSheZhi'))
+      expect(pushSpy).toHaveBeenCalledWith('/zhang-hao-an-quan')
       await dianJiRuKou(huoQuFanYi('caidan', 'guoWangZhanJi'))
       expect(pushSpy).toHaveBeenCalledWith('/guo-wang-zhan-ji')
       await dianJiRuKou(huoQuFanYi('caidan', 'haoYou'))
       expect(pushSpy).toHaveBeenCalledWith('/hao-you')
-      await dianJiRuKou(huoQuFanYi('caidan', 'zhangHaoSheZhi'))
-      expect(pushSpy).toHaveBeenCalledWith('/zhang-hao-an-quan')
     })
 
     it('FP-02 主页点击退出登录发起退出请求', async () => {

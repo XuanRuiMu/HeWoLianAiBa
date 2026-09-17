@@ -30,12 +30,21 @@ export function chongZhiTeZhengKaiGuan(): void {
 }
 
 export async function laQuTeZhengKaiGuan(): Promise<void> {
+  // 根因收敛：后端未启动时vite代理穿透502刷控制台error；收敛为fetch失败静默+禁资源error冒泡
+  // 502为环境缺后端，非代码缺陷；沿用默认值，待后端就绪下次可见即拉取
   try {
     const fetchRef = (
       globalThis as { fetch?: (url: string, init?: RequestInit) => Promise<Response> }
     ).fetch
     if (typeof fetchRef !== 'function') return
-    const xiangYing = await fetchRef('/api/config/feature-flags', { cache: 'no-store' })
+    const kongZhi = new AbortController()
+    const dingShi = setTimeout(() => kongZhi.abort(), 5000)
+    let xiangYing: Response
+    try {
+      xiangYing = await fetchRef('/api/config/feature-flags', { cache: 'no-store', signal: kongZhi.signal })
+    } finally {
+      clearTimeout(dingShi)
+    }
     if (!xiangYing.ok) return
     const jieXi: unknown = await xiangYing.json()
     const heFa = yingYongHeFaKaiGuan(jieXi)

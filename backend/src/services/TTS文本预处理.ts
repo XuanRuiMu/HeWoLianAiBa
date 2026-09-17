@@ -166,10 +166,15 @@ function 数字转中文(文本: string): string {
   })
 }
 
+function 转义正则(文本: string): string {
+  return 文本.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 function 展开缩写(文本: string): string {
   let 结果 = 文本
   for (const [缩写, 展开] of Object.entries(缩写映射)) {
-    const 正则 = new RegExp(`\\b${缩写}\\b`, 'gi')
+    // YH-055 同类收敛：缩写键含正则元字符（C++/C#）必须转义，禁裸插值抛异常
+    const 正则 = new RegExp(`\\b${转义正则(缩写)}\\b`, 'gi')
     结果 = 结果.replace(正则, 展开)
   }
   return 结果
@@ -192,6 +197,22 @@ function 保护语气词(文本: string): string {
   return 结果
 }
 
+// YH-055 TTS穿帮后处理：英文数字之外，修重复人称与穿帮式自称
+// 根因：预处理只管英文数字，不管“我是XX我是XX”重复与机器自曝，后处理统一收敛
+function 修重复人称穿帮(文本: string): string {
+  let 结果 = 文本
+  // 连续重复人称压缩：我是，我是我是→我是；你你你→你
+  结果 = 结果.replace(/(我是|你是|他是|她是)([，,、\s]*\1)+/g, '$1')
+  结果 = 结果.replace(/([我你他她它])\1{2,}/g, '$1$1')
+  // 穿帮式自称收敛：作为AI/作为人工智能/我是机器人→自然第一人称
+  结果 = 结果.replace(/作为\s*(AI|人工智能|机器.?人|语言模型)/gi, '我')
+  结果 = 结果.replace(/我是(一个|一名)?(AI|人工智能|机器.?人|语言模型|助手)/gi, '我')
+  // 重复标点压缩：！！！→！，。。。→…
+  结果 = 结果.replace(/([！!])\1{2,}/g, '$1$1')
+  结果 = 结果.replace(/([。…])\1{2,}/g, '$1$1')
+  return 结果
+}
+
 export function 转换TTS文本(原始文本: string): string {
   if (!原始文本 || !原始文本.trim()) {
     return ''
@@ -201,6 +222,7 @@ export function 转换TTS文本(原始文本: string): string {
 
   文本 = 数字转中文(文本)
   文本 = 展开缩写(文本)
+  文本 = 修重复人称穿帮(文本)
   文本 = 添加停顿标记(文本)
   文本 = 保护语气词(文本)
 

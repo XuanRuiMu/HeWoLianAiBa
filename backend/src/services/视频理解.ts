@@ -13,6 +13,7 @@ const execFileAsync = promisify(execFile)
 export interface ShiPinJieXiJieGuo {
   huaMianMiaoShu: string | null
   zhuanXieWenBen: string | null
+  jiangJiZhaiYao?: string | null
 }
 
 export interface ShiPinJieXiYiLai {
@@ -133,10 +134,11 @@ async function moRenZhuanXieYinPin(yinPinZiJie: Buffer, mime: string): Promise<s
 export async function jieXiShiPin(sha256: string, yiLai: ShiPinJieXiYiLai = {}): Promise<ShiPinJieXiJieGuo> {
   const huanCun = await duQuJieXiHuanCun(sha256)
   if (huanCun) return huanCun
-  const kong: ShiPinJieXiJieGuo = { huaMianMiaoShu: null, zhuanXieWenBen: null }
+  const kong: ShiPinJieXiJieGuo = { huaMianMiaoShu: null, zhuanXieWenBen: null, jiangJiZhaiYao: null }
   const ffmpegLuJing = huoQuFFmpegLuJing()
   const benDiLuJing = huoQuBenDiLuJing(sha256)
   if (!ffmpegLuJing || !benDiLuJing) {
+    kong.jiangJiZhaiYao = '视频理解降级：转码链路暂不可用，已保留占位'
     await xieRuJieXiHuanCun(sha256, kong)
     return kong
   }
@@ -168,15 +170,19 @@ export async function jieXiShiPin(sha256: string, yiLai: ShiPinJieXiYiLai = {}):
     }
   } catch (cuoWu) {
     debug日志.warn('视频理解', '解析视频失败，已降级为占位', { xiang_qing: { cuo_wu: String(cuoWu) } })
+    kong.jiangJiZhaiYao = '视频理解降级：解析失败，已保留占位'
   } finally {
     await fs.promises.rm(linShiMuLu, { recursive: true, force: true })
+  }
+  if (!kong.huaMianMiaoShu && !kong.zhuanXieWenBen && !kong.jiangJiZhaiYao) {
+    kong.jiangJiZhaiYao = '视频理解降级：画面与声音暂不可用，已保留占位'
   }
   await xieRuJieXiHuanCun(sha256, kong)
   return kong
 }
 
 export async function huoQuHuoJieXiShiPinMiaoShu(sha256: string | null | undefined): Promise<ShiPinJieXiJieGuo> {
-  const kong: ShiPinJieXiJieGuo = { huaMianMiaoShu: null, zhuanXieWenBen: null }
+  const kong: ShiPinJieXiJieGuo = { huaMianMiaoShu: null, zhuanXieWenBen: null, jiangJiZhaiYao: '视频理解降级：转码链路暂不可用，已保留占位' }
   if (!sha256 || !/^[0-9a-f]{64}$/.test(sha256)) return kong
   const huanCun = await duQuJieXiHuanCun(sha256)
   if (huanCun) return huanCun

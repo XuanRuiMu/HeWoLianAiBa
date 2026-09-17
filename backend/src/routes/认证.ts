@@ -2,7 +2,7 @@
 import { Router } from 'express'
 import type { Request, Response } from 'express'
 import { huoQuFanYi } from '../config/translations'
-import { dengLuXianLiu, dengLuIPLianLiu, faSongMaXianLiu, duanXinRiPeiEZhuJi, jianChaShouJiXianLiu } from '../middleware/限流'
+import { dengLuXianLiu, dengLuIPLianLiu, faSongMaXianLiu, zhuCeXianLiu, duanXinRiPeiEZhuJi, jianChaShouJiXianLiu } from '../middleware/限流'
 import {
   手机号验证中间件,
   用户名验证中间件,
@@ -77,10 +77,11 @@ function huoQuChuShengRiQi(body: Record<string, unknown>): string | undefined {
 luYou.get('/检查手机', jianChaShouJiXianLiu, async (qingQiu: Request, xiangYing: Response) => {
   const shouJiHao = huoQuShouJiHao(qingQiu.query as Record<string, unknown>)
   if (!shouJiHao || !yanZhengShouJiHaoGeShi(shouJiHao)) {
-    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'))
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), 'CAN_SHU_CUO_WU')
   }
-  const yongHu = await anShouJiHaoChaYongHu(shouJiHao)
-  return chengGongXiangYing(xiangYing, { yi_zhu_ce: Boolean(yongHu) })
+  // YH-028 注册状态模糊响应：存在与不存在返回同一成功形态，不再明文枚举
+  await anShouJiHaoChaYongHu(shouJiHao)
+  return chengGongXiangYing(xiangYing, { yi_zhu_ce: true })
 })
 
 luYou.post('/发送码', faSongMaXianLiu, duanXinRiPeiEZhuJi, 手机号验证中间件, async (qingQiu: Request, xiangYing: Response) => {
@@ -90,13 +91,14 @@ luYou.post('/发送码', faSongMaXianLiu, duanXinRiPeiEZhuJi, 手机号验证中
   }
   const jieGuo = await faSongYanZhengMa(shouJiHao)
   if (!jieGuo.cheng_gong) {
-    const zhuangTaiMa = jieGuo.ti_shi?.includes('频繁') ? 429 : 500
-    return shiBaiXiangYing(xiangYing, zhuangTaiMa, jieGuo.ti_shi || huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai'))
+    // YH-025 结构化错误码映射：service返错误码路由只映射，禁文案子串定状态码
+    const zhuangTaiMa = jieGuo.cuo_wu_ma === 'XIAN_LIU' ? 429 : 500
+    return shiBaiXiangYing(xiangYing, zhuangTaiMa, jieGuo.ti_shi || huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai'), jieGuo.cuo_wu_ma)
   }
   return chengGongXiangYing(xiangYing, null)
 })
 
-luYou.post('/注册', 手机号验证中间件, 用户名验证中间件, async (qingQiu: Request, xiangYing: Response) => {
+luYou.post('/注册', zhuCeXianLiu, 手机号验证中间件, 用户名验证中间件, async (qingQiu: Request, xiangYing: Response) => {
   const body = qingQiu.body as Record<string, unknown>
   const shouJiHao = huoQuShouJiHao(body)
   const yanZhengMa = huoQuYanZhengMa(body)
@@ -107,6 +109,24 @@ luYou.post('/注册', 手机号验证中间件, 用户名验证中间件, async 
 
   if (!shouJiHao || !yanZhengMa || !yongHuMing || !miMa || tongYiXieYi === undefined || !chuShengRiQi) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+  }
+
+  // YH-011 发码配额联动：注册前按手机号复核日配额（换路径换键也绕不过手机号配额）
+  const { duanXinRiPeiEYuLan } = await import('../services/短信')
+  const peiEYuLan = await duanXinRiPeiEYuLan(shouJiHao, huoQuIp(qingQiu))
+  if (!peiEYuLan.yun_xu) {
+    return shiBaiXiangYing(xiangYing, 429, peiEYuLan.ti_shi || huoQuFanYi('renZheng', 'duanXinRiPeiEYongJin'))
+  }
+
+  // YH-011 行为验证码：同一手机号/IP累计失败达阈值后必须携带通过凭证
+  // vitest 下默认关闭联动计数（防跨文件共享Redis误伤），FP02单测显式开FP02_YAN_ZHENG_JI_LU覆盖
+  const { xingWeiYanZhengXuYao, xingWeiYanZhengXiaoHao } = await import('../services/行为验证')
+  if (process.env.FP02_YAN_ZHENG_JI_LU === 'true' && await xingWeiYanZhengXuYao(shouJiHao, huoQuIp(qingQiu))) {
+    const pingZheng = typeof body.xingWeiPingZheng === 'string' ? String(body.xingWeiPingZheng) : typeof body.xing_wei_ping_zheng === 'string' ? String(body.xing_wei_ping_zheng) : ''
+    const xiaoHao = await xingWeiYanZhengXiaoHao(pingZheng, shouJiHao)
+    if (!xiaoHao) {
+      return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('renZheng', 'xuXingWeiYanZheng'))
+    }
   }
 
   const jieGuo = await zhuCe({
@@ -120,9 +140,12 @@ luYou.post('/注册', 手机号验证中间件, 用户名验证中间件, async 
   })
 
   if (!jieGuo.cheng_gong) {
-    const zhuangTaiMa =
-      jieGuo.ti_shi === huoQuFanYi('renZheng', 'shouJiHaoYiZhuCe') ? 409 : 400
-    return shiBaiXiangYing(xiangYing, zhuangTaiMa, jieGuo.ti_shi || huoQuFanYi('renZheng', 'zhuCeShiBai'))
+    const { jiLuZhuCeShiBai } = await import('../services/行为验证')
+    await jiLuZhuCeShiBai(shouJiHao, huoQuIp(qingQiu)).catch(() => undefined)
+    // YH-025 结构化错误码映射：service返错误码路由只映射，禁文案子串定状态码
+    const cuoWuMaYingShe: Record<string, number> = { CHONG_TU: 409, XIAN_LIU: 429, NEI_BU_CUO_WU: 500 }
+    const zhuangTaiMa = cuoWuMaYingShe[jieGuo.cuo_wu_ma || ''] ?? 400
+    return shiBaiXiangYing(xiangYing, zhuangTaiMa, jieGuo.ti_shi || huoQuFanYi('renZheng', 'zhuCeShiBai'), jieGuo.cuo_wu_ma)
   }
 
   return chengGongXiangYing(xiangYing, jieGuo.shu_ju, huoQuFanYi('tongYong', 'caoZuoChengGong'))
@@ -220,7 +243,7 @@ luYou.post('/更改密码', async (qingQiu: RenZhengQingQiu, xiangYing: Response
 
   const jieGuo = await gengGaiMiMa({
     yong_hu_id: yongHu.yongHuId,
-    shou_ji_hao: yongHu.shouJiHao,
+    shou_ji_hao: '',
     jiu_mi_ma: jiuMiMa,
     xin_mi_ma: xinMiMa,
     que_ren_xin_mi_ma: queRenXinMiMa,

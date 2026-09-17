@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync, statSync } from 'fs'
 import { resolve } from 'path'
 import { fanYi } from '../config/translations'
+import { QU_AI_WEI_PEI_ZHI, jianChaAiWei, panDuanShiFouCaiYang, panDuanShiFouMoXingChouJian } from '../config/去AI味配置'
 import {
   gouJianWriterPrompt,
   gouJianDirectorPrompt,
@@ -14,19 +15,7 @@ import {
 } from '../services/Prompt构建器'
 import type { AIYinQingShuRu, AIJiaoSeXinXi, HaoGanDuXinXi } from '../types'
 
-const jinYongCi = [
-  '作为 AI',
-  '作为AI',
-  '作为人工智能',
-  '我会',
-  '我会',
-  '请注意',
-  '注意：',
-  '总结',
-  '根据以上',
-  '根据设定',
-  '元话语',
-]
+const jinYongCi = [...QU_AI_WEI_PEI_ZHI.ciBiao]
 
 function tiQuSuoYouZiFuChuan(obj: unknown): string[] {
   const jieGuo: string[] = []
@@ -208,5 +197,16 @@ describe('FP-16 去 AI 味', () => {
   it('关键事件提取 prompt 不含 AI 味关键词', () => {
     const prompt = gouJianGuanJianShiJianPrompt('[14:30] 对方：在干嘛', '雨夜的猫')
     jianChaJinYongCi(prompt, 'Prompt构建器.gouJianGuanJianShiJianPrompt')
+  })
+
+  it('FP-05 YH-043 运行时采样正则二遍：命中词走采样判定，词表可配', () => {
+    expect(QU_AI_WEI_PEI_ZHI.ciBiao.length).toBeGreaterThan(0)
+    expect(jianChaAiWei('作为 AI 助手为你总结一下').tongGuo).toBe(false)
+    expect(jianChaAiWei('作为 AI 助手为你总结一下').mingZhong.length).toBeGreaterThan(0)
+    expect(jianChaAiWei('今晚月色真美，要一起散步吗').tongGuo).toBe(true)
+    expect(typeof panDuanShiFouCaiYang(0)).toBe('boolean')
+    expect(typeof panDuanShiFouMoXingChouJian(0)).toBe('boolean')
+    expect(panDuanShiFouCaiYang(0)).toBe(true)
+    expect(panDuanShiFouCaiYang(1)).toBe(false)
   })
 })

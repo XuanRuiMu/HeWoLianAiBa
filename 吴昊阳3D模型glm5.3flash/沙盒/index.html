@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>吴昊阳3D融合沙盒-父页</title>
+  <link rel="icon" href="data:,">
+  <style>
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+    #caodiIframe { width: 100vw; height: 100vh; border: 0; display: block; }
+  </style>
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.js" } }
+  </script>
+</head>
+<body>
+  <script type="module">
+    // 复刻主项目 main.ts 的全局暴露（three 0.186 ESM），供 iframe 内 window.parent.THREE 消费
+    import * as THREE from 'three'
+    import { GLTFLoader } from './vendor/GLTFLoader.js'
+    window.THREE = THREE
+    window.GLTFLoader = GLTFLoader
+    console.log('[沙盒父页] window.THREE / window.GLTFLoader 已暴露, three版本=', THREE.REVISION)
+    // 先暴露后建 iframe（复刻主项目 main.ts → Vue 渲染 iframe 的时序，避免 grass-bg.html 回退 r128）
+    const iframe = document.createElement('iframe')
+    iframe.id = 'caodiIframe'
+    iframe.src = './grass-bg/grass-bg.html'
+    document.body.appendChild(iframe)
+  </script>
+</body>
+</html>

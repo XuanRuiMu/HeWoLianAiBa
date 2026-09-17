@@ -88,6 +88,16 @@ export async function jianChaShiPinPeiE(yongHuId: string): Promise<{ yunXu: bool
   }
 }
 
+/** YH-062 失败回补：下载/生成失败不扣配额 */
+export async function huiTuiShiPinPeiE(yongHuId: string): Promise<void> {
+  const jian = `sheng_cheng_ji_fei:${yongHuId}:${new Date().toISOString().slice(0, 10)}:shipin`
+  try {
+    await redis.decr(jian)
+  } catch {
+    return
+  }
+}
+
 export async function shengChengShiPin(canShu: { tiShiCi: string; yongHuId: string }): Promise<ShengShiPinJieGuo> {
   if (shengShiPinMock) return shengShiPinMock(canShu)
   const yanZheng = yanZhengShiPinTiShiCi(canShu.tiShiCi)
@@ -117,14 +127,21 @@ export async function shengChengShiPin(canShu: { tiShiCi: string; yongHuId: stri
     }
     if (!tiJiao.ok) {
       debug日志.warn('视频生成', '生成视频服务返回非成功状态，已降级', { xiang_qing: { zhuang_tai_ma: tiJiao.status, ti_shi_ci_chang: yanZheng.qingXiHou.length } })
+      await huiTuiShiPinPeiE(canShu.yongHuId)
       return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shiPinShengChengShiBai') }
     }
     const tiJiaoShuJu = (await tiJiao.json()) as Record<string, unknown>
     const renWuId = typeof tiJiaoShuJu['requestId'] === 'string' ? String(tiJiaoShuJu['requestId']) : ''
-    if (!renWuId) return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shiPinShengChengShiBai') }
+    if (!renWuId) {
+      await huiTuiShiPinPeiE(canShu.yongHuId)
+      return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shiPinShengChengShiBai') }
+    }
     const jieZhi = Date.now() + 280000
     for (;;) {
-      if (Date.now() > jieZhi) return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shiPinShengChengShiBai') }
+      if (Date.now() > jieZhi) {
+        await huiTuiShiPinPeiE(canShu.yongHuId)
+        return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shiPinShengChengShiBai') }
+      }
       await new Promise((jieJue) => setTimeout(jieJue, 15000))
       const lunXunKongZhi = new AbortController()
       const lunXunDingShi = setTimeout(() => lunXunKongZhi.abort(), danCiChaoShi)
@@ -144,26 +161,45 @@ export async function shengChengShiPin(canShu: { tiShiCi: string; yongHuId: stri
       if (!zhuangTaiXiangYing.ok) continue
       const zhuangTaiShuJu = (await zhuangTaiXiangYing.json()) as Record<string, unknown>
       const zhuangTai = String(zhuangTaiShuJu['status'] || '')
-      if (zhuangTai === 'Failed') return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shiPinShengChengShiBai') }
+      if (zhuangTai === 'Failed') {
+        await huiTuiShiPinPeiE(canShu.yongHuId)
+        return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shiPinShengChengShiBai') }
+      }
       if (zhuangTai !== 'Succeed') continue
       const jieGuo = (zhuangTaiShuJu['results'] as Record<string, unknown>) || {}
       const shiPinLieBiao = (jieGuo['videos'] as Array<Record<string, unknown>>) || []
       const shiPinURL = typeof shiPinLieBiao[0]?.['url'] === 'string' ? String(shiPinLieBiao[0]?.['url']) : ''
-      if (!shiPinURL) return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shiPinShengChengShiBai') }
-      const xiaZaiKongZhi = new AbortController()
-      const xiaZaiDingShi = setTimeout(() => xiaZaiKongZhi.abort(), 180000)
+      if (!shiPinURL) {
+        await huiTuiShiPinPeiE(canShu.yongHuId)
+        return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shiPinShengChengShiBai') }
+      }
+      // YH-015+YH-062 流式落盘+失败不扣配额
+      const { yanZhengYuanChengURL, liuShiXiaZaiYuanChengWenJian } = await import('../utils/远端拉取')
+      const urlHeFa = await yanZhengYuanChengURL(shiPinURL)
+      if (!urlHeFa.he_fa) {
+        await huiTuiShiPinPeiE(canShu.yongHuId)
+        return { cheng_gong: false, ti_shi: urlHeFa.ti_shi }
+      }
+      const linShiLuJing = `${require('os').tmpdir()}/shengshipin-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`
+      const xiaZai = await liuShiXiaZaiYuanChengWenJian(shiPinURL, linShiLuJing)
+      if (!xiaZai.cheng_gong) {
+        await huiTuiShiPinPeiE(canShu.yongHuId)
+        return { cheng_gong: false, ti_shi: xiaZai.ti_shi || huoQuFanYi('liaoTian', 'shiPinShengChengShiBai') }
+      }
       try {
-        const shiPinXiangYing = await fetch(shiPinURL, { signal: xiaZaiKongZhi.signal })
-        if (!shiPinXiangYing.ok) return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shiPinShengChengShiBai') }
-        const shiPinZiJie = Buffer.from(await shiPinXiangYing.arrayBuffer())
-        if (!shiPinZiJie.length) return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shiPinShengChengShiBai') }
+        const shiPinZiJie = await require('fs').promises.readFile(linShiLuJing)
+        if (!shiPinZiJie.length) {
+          await huiTuiShiPinPeiE(canShu.yongHuId)
+          return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shiPinShengChengShiBai') }
+        }
         return { cheng_gong: true, shiPinZiJie, mime: 'video/mp4' }
       } finally {
-        clearTimeout(xiaZaiDingShi)
+        await require('fs').promises.unlink(linShiLuJing).catch(() => undefined)
       }
     }
   } catch (cuoWu) {
     debug日志.warn('视频生成', '生成视频调用失败，已降级', { xiang_qing: { cuo_wu: String(cuoWu), ti_shi_ci_chang: yanZheng.qingXiHou.length } })
+    await huiTuiShiPinPeiE(canShu.yongHuId)
     return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shiPinShengChengShiBai') }
   }
 }

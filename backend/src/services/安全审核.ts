@@ -2,6 +2,7 @@
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianAnQuanShenHePrompt } from './Prompt构建器'
 import { peiZhi } from '../config'
+import { huoQuFanYi } from '../config/translations'
 import { jiaZaiZuiXinCiKu, saoMiaoNeiRong } from './审核词库'
 import type { AnQuanShenHeJieGuo } from '../types'
 
@@ -23,6 +24,28 @@ function saoMiaoJiuCiKu(xiaoXi: string): { weiGui: boolean; mingZhongCi?: string
     return { weiGui: true, mingZhongCi }
   }
   return { weiGui: false }
+}
+
+export interface WeiJiGanYuJieGuo {
+  wei_ji: boolean
+  ming_zhong_ci?: string
+  yuan_zhu_re_xian: string
+  ti_shi: string
+}
+
+export function jianCeWeiJiXinHao(xiaoXi: string): WeiJiGanYuJieGuo | null {
+  const wenBen = typeof xiaoXi === 'string' ? xiaoXi : ''
+  if (!wenBen.trim()) return null
+  const mingZhong = peiZhi.weiJiGanYu.guanJianCi.find(
+    (ci) => ci.length > 0 && wenBen.includes(ci),
+  )
+  if (!mingZhong) return null
+  return {
+    wei_ji: true,
+    ming_zhong_ci: mingZhong,
+    yuan_zhu_re_xian: peiZhi.weiJiGanYu.yuanZhuReXian,
+    ti_shi: huoQuFanYi('anQuan', 'weiJiGanYuTiShi'),
+  }
 }
 
 export async function shenHeNeiRongAnQuan(xiaoXi: string): Promise<AnQuanShenHeJieGuo> {
@@ -67,13 +90,17 @@ export async function shenHeNeiRongAnQuan(xiaoXi: string): Promise<AnQuanShenHeJ
           li_you: `消息命中本地违禁词（旧版兜底）：${jiuCiKuSaoMiao.mingZhongCi}`,
         }
       }
-      return { wei_gui: false }
+      return {
+        wei_gui: true,
+        lei_xing: '审核服务不可用',
+        li_you: huoQuFanYi('anQuan', 'shenHeFuWuBuKeYong'),
+      }
     } catch (cuoWu2) {
       debug日志.error('安全审核', '[安全审核] 降级扫描自身失败，按违规拦截', { xiang_qing: { cuo_wu: String(cuoWu2) } })
       return {
         wei_gui: true,
         lei_xing: '审核服务不可用',
-        li_you: '安全审核暂时不可用，请稍后再试',
+        li_you: huoQuFanYi('anQuan', 'shenHeFuWuBuKeYong'),
       }
     }
   }

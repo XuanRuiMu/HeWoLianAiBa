@@ -1,10 +1,12 @@
 import type { AIJiaoSeXinXi, HaoGanDuXinXi, DirectorCeLue } from '../types'
 import { debug日志 } from '../utils/debug日志'
+import { TTS_PEI_ZHI } from '../config/TTS触发配置'
 
-const 基础概率 = 0.1
-const 概率上限 = 0.95
-const 概率下限 = 0
-const 抖动范围 = 0.2
+const 基础概率 = TTS_PEI_ZHI.jiChuGaiLv
+const 概率上限 = TTS_PEI_ZHI.gaiLvShangXian
+const 概率下限 = TTS_PEI_ZHI.gaiLvXiaXian
+
+export const TTS_DOU_DONG_FU_DU = TTS_PEI_ZHI.douDongFuDu
 
 const 关系阶段系数: Record<string, number> = {
   lengDan: 0.3,
@@ -61,19 +63,9 @@ function 计算场景系数(策略?: DirectorCeLue): { 系数: number; 禁用: b
 
   const 策略文本 = `${策略.hui_fu_ce_lue}${策略.qing_gan_fen_xi}${策略.yong_hu_yi_tu}`.toLowerCase()
 
-  const 禁用关键词 = [
-    '代码', '编程', '技术', '逻辑分析', '算法', '数据结构', '架构', '框架',
-    'api', '接口', '数据库', 'sql', '函数', '变量', '类', '对象', '继承',
-    '多态', '封装', '设计模式', '重构', '调试', '报错', '异常', '堆栈',
-    '部署', '运维', '服务器', '容器', '微服务', '分布式', '并发', '锁',
-    '事务', '索引', '查询优化', '缓存', '消息队列', '负载均衡',
-  ]
+  const 禁用关键词 = TTS_PEI_ZHI.jinYongGuanJianCi
 
-  const 加成关键词 = [
-    '表白', '告白', '喜欢', '爱', '道歉', '对不起', '抱歉', '晚安', '睡觉',
-    '想你', '想念', '拥抱', '亲吻', '牵手', '陪伴', '守护', '珍惜', '心动',
-    '感动', '温柔', '深情', '真心', '真诚', '承诺', '永远', '一辈子',
-  ]
+  const 加成关键词 = TTS_PEI_ZHI.jiaChengGuanJianCi
 
   const 是否禁用 = 禁用关键词.some(词 => 策略文本.includes(词.toLowerCase()))
   if (是否禁用) {
@@ -82,20 +74,21 @@ function 计算场景系数(策略?: DirectorCeLue): { 系数: number; 禁用: b
 
   const 是否加成 = 加成关键词.some(词 => 策略文本.includes(词.toLowerCase()))
   if (是否加成) {
-    return { 系数: 2.0, 禁用: false }
+    return { 系数: TTS_PEI_ZHI.jiaChengXiShu, 禁用: false }
   }
 
   return { 系数: 1.0, 禁用: false }
 }
 
-function 生成随机抖动(): number {
-  return 1 - 抖动范围 + Math.random() * 抖动范围 * 2
+function 生成随机抖动(随机数: number = Math.random()): number {
+  return 1 - TTS_PEI_ZHI.douDongFuDu + 随机数 * TTS_PEI_ZHI.douDongFuDu * 2
 }
 
 export interface TTS概率计算输入 {
   角色: AIJiaoSeXinXi
   好感度: HaoGanDuXinXi | null
   策略?: DirectorCeLue
+  随机数?: number
 }
 
 export interface TTS概率计算结果 {
@@ -113,7 +106,7 @@ export interface TTS概率计算结果 {
 }
 
 export function 计算TTS概率(输入: TTS概率计算输入): TTS概率计算结果 {
-  const { 角色, 好感度, 策略 } = 输入
+  const { 角色, 好感度, 策略, 随机数 } = 输入
 
   const 关系阶段系数值 = 计算关系阶段系数(好感度)
   const 人设系数值 = 计算人设系数(角色)
@@ -135,11 +128,12 @@ export function 计算TTS概率(输入: TTS概率计算输入): TTS概率计算�
     }
   }
 
-  const 随机抖动值 = 生成随机抖动()
+  const 单次随机数 = 随机数 ?? Math.random()
+  const 随机抖动值 = 生成随机抖动(单次随机数)
   let 最终概率 = 基础概率 * 关系阶段系数值 * 人设系数值 * 场景系数值 * 随机抖动值
   最终概率 = Math.max(概率下限, Math.min(概率上限, 最终概率))
 
-  const 是否触发 = Math.random() < 最终概率
+  const 是否触发 = 单次随机数 < 最终概率
 
   debug日志.debug('TTS概率计算', '概率计算完成', {
     xiang_qing: {

@@ -575,20 +575,43 @@ export async function baoCunJiaoSe(
   jiaoSe: ShengChengJiaoSeJieGuo,
   duiJuMoShi: 'putong' | 'tiaozhan' = 'putong',
 ): Promise<ShengChengJiaoSeJieGuo> {
-  // R2 创建角色幂等：先把该用户现有「同模式」的活跃角色归档（封存），
-  // 保证串行重复创建总是成功；并发场景由部分唯一索引 uk_角色_用户ID_模式_活跃
-  // 兜底，同一用户同一模式同时最多只允许一个活跃（未封存且未删除）角色。
-  await 数据库.query(
-    `UPDATE "角色" SET "封存" = TRUE WHERE "用户ID" = $1 AND "封存" = FALSE AND "删除时间" IS NULL AND "对局模式" = $2`,
-    [yongHuId, duiJuMoShi],
-  )
+  // YH-057 角色生成关键链单事务：归档+落角色+落好感+落档案+指活跃同事务，外部IO禁入
+  // 根因：多写散着走失败即残留孤儿角色；开场白生成为外部LLM IO放事务外，失败走补偿归档
+  // 兼容mock池：vi.mock后connect非函数时走原直连路径
+  // 兼容优雅停机mock池：connect为mock函数但返回undefined时走直连路径，禁undefined.query崩溃
+  const lianJieHanShu = (数据库 as unknown as { connect?: unknown }).connect
+  let shiWuKeHuDuan: { query: (wen: string, can?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>>; rowCount?: number | null }>; release: () => void } | undefined
+  if (typeof lianJieHanShu === 'function') {
+    try {
+      const keHuDuan = await (lianJieHanShu as () => Promise<{ query: (wen: string, can?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>>; rowCount?: number | null }>; release: () => void }>)()
+      if (keHuDuan && typeof keHuDuan.query === 'function' && typeof keHuDuan.release === 'function') {
+        shiWuKeHuDuan = keHuDuan
+      }
+    } catch {
+      shiWuKeHuDuan = undefined
+    }
+  }
+  const zhiXing = shiWuKeHuDuan ?? 数据库
+  let jiaoSeId = ''
+  const huiFuYanChiHaoMiao = (() => {
+    const tiJiaoYanChi = Number(jiaoSe.hui_fu_yan_chi_hao_miao)
+    return Number.isFinite(tiJiaoYanChi)
+      ? Math.min(huiFuYanChiZuiDaHaoMiao, Math.max(huiFuYanChiZuiXiaoHaoMiao, Math.round(tiJiaoYanChi)))
+      : huiFuYanChiJiZhunHaoMiao
+  })()
+  try {
+    if (shiWuKeHuDuan) {
+      await zhiXing.query('BEGIN')
+    }
+    // R2 创建角色幂等：先把该用户现有「同模式」的活跃角色归档（封存），
+    // 保证串行重复创建总是成功；并发场景由部分唯一索引 uk_角色_用户ID_模式_活跃
+    // 兜底，同一用户同一模式同时最多只允许一个活跃（未封存且未删除）角色。
+    await zhiXing.query(
+      `UPDATE "角色" SET "封存" = TRUE WHERE "用户ID" = $1 AND "封存" = FALSE AND "删除时间" IS NULL AND "对局模式" = $2`,
+      [yongHuId, duiJuMoShi],
+    )
 
-  const tiJiaoYanChi = Number(jiaoSe.hui_fu_yan_chi_hao_miao)
-  const huiFuYanChiHaoMiao = Number.isFinite(tiJiaoYanChi)
-    ? Math.min(huiFuYanChiZuiDaHaoMiao, Math.max(huiFuYanChiZuiXiaoHaoMiao, Math.round(tiJiaoYanChi)))
-    : huiFuYanChiJiZhunHaoMiao
-
-  const chaRuJiaoSe = await 数据库.query(
+    const chaRuJiaoSe = await zhiXing.query(
     `INSERT INTO "角色" (
       "用户ID", "名字", "性别", "年龄", "外貌", "性格", "背景故事", "爱好",
       "言语风格", "头像", "标签", "喜欢的类型", "家庭背景", "情感经历",
@@ -630,10 +653,11 @@ export async function baoCunJiaoSe(
     ],
   )
 
-  const jiaoSeId = String(chaRuJiaoSe.rows[0].ID)
-  jiaoSe.id = jiaoSeId
+  const jiaoSeIdNei = String(chaRuJiaoSe.rows[0].ID)
+  jiaoSeId = jiaoSeIdNei
+  jiaoSe.id = jiaoSeIdNei
 
-  await 数据库.query(
+  await zhiXing.query(
     `INSERT INTO "好感度" (
       "用户ID", "角色ID", "信任度", "亲密度", "趣味度", "关怀度", "总分", "关系阶段"
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
@@ -650,7 +674,7 @@ export async function baoCunJiaoSe(
   )
 
   const guanXiJieDuan = huoQuGuanXiJieDuan(jiaoSe.hao_gan_du_zong_fen)
-  await 数据库.query(
+  await zhiXing.query(
     `INSERT INTO "游戏档案" (
       "用户ID", "角色ID", "角色名字", "是否渣型", "结果类型", "是否封存",
       "好感度总分", "关系阶段", "聊天天数", "消息总数", "模式"
@@ -678,7 +702,7 @@ export async function baoCunJiaoSe(
     ],
   )
 
-  await 数据库.query(
+  await zhiXing.query(
     `UPDATE "用户" SET "活跃角色ID" = $1, "目标性别" = $2, "性格选择" = $3, "渣男渣女变体" = $4 WHERE "ID" = $5`,
     [
       jiaoSeId,
@@ -688,6 +712,17 @@ export async function baoCunJiaoSe(
       yongHuId,
     ],
   )
+  if (shiWuKeHuDuan) {
+    await zhiXing.query('COMMIT')
+  }
+  } catch (cuoWu) {
+    if (shiWuKeHuDuan) {
+      await zhiXing.query('ROLLBACK').catch(() => undefined)
+      shiWuKeHuDuan.release()
+    }
+    throw cuoWu
+  }
+  shiWuKeHuDuan?.release()
 
   // AI 开场白生成必须在返回前完成（同步 await）。
   // 修复"开始聊天后看不到消息只有复盘能看到"的严重 bug：

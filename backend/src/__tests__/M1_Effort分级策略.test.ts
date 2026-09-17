@@ -24,10 +24,10 @@ describe('FP-22 M1 Effort分级策略', () => {
     }
   })
 
-  it('Director/Writer → 维持 siKaoMoShi=enabled 且 reasoningEffort=max', () => {
+  it('Director/Writer → 维持 siKaoMoShi=enabled；writer=max 其余 medium（FP-05 YH-041 裁决）', () => {
     const director = AI_PEI_ZHI.moXing.director
     expect(director.siKaoMoShi).toBe('enabled')
-    expect(director.reasoningEffort).toBe('max')
+    expect(director.reasoningEffort).toBe('medium')
 
     const writer = AI_PEI_ZHI.moXing.writer
     expect(writer.siKaoMoShi).toBe('enabled')
@@ -40,7 +40,7 @@ describe('FP-22 M1 Effort分级策略', () => {
     expect(junShi.reasoningEffort).toBe('medium')
   })
 
-  it('生成类模型 → 维持 siKaoMoShi=enabled 且 reasoningEffort=max', () => {
+  it('生成类模型 → 维持 siKaoMoShi=enabled 且 reasoningEffort=medium（FP-05 YH-041 裁决，writer 外）', () => {
     const shengChengLei: AIMoXingLeiXing[] = [
       'jiYiZhaiYao',
       'kaiChangBai',
@@ -49,7 +49,7 @@ describe('FP-22 M1 Effort分级策略', () => {
     for (const leiXing of shengChengLei) {
       const canShu = AI_PEI_ZHI.moXing[leiXing]
       expect(canShu.siKaoMoShi, `${leiXing} 应启用思考模式`).toBe('enabled')
-      expect(canShu.reasoningEffort, `${leiXing} 应为 max`).toBe('max')
+      expect(canShu.reasoningEffort, `${leiXing} 应为 medium`).toBe('medium')
     }
   })
 

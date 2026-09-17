@@ -1,7 +1,17 @@
 import dotenv from 'dotenv'
+import fs from 'fs'
 import path from 'path'
+import { HAO_GAN_DU_PEI_ZHI } from './好感度配置'
 
 function duQu(ming: string, moRen: string = ''): string {
+  const wenJianLuJing = process.env[`${ming}_FILE`]
+  if (wenJianLuJing) {
+    try {
+      return fs.readFileSync(wenJianLuJing, 'utf8').trim() || moRen
+    } catch {
+      // fall through to env
+    }
+  }
   const zhi = process.env[ming]
   return zhi === undefined ? moRen : zhi
 }
@@ -33,6 +43,9 @@ export interface DuoMoTaiPeiZhi {
   qingQiuChaoShiHaoMiao: number
   shengTuTiShiCiZuiDaZiFu: number
   shiPinTiShiCiZuiDaZiFu: number
+  zhuDongShengTuZuiDiZongFen: number
+  zhuDongShengTuGaiLv: number
+  zhuDongShengTuRiShangXian: number
 }
 
 export function huoQuDuoMoTaiPeiZhi(): DuoMoTaiPeiZhi {
@@ -51,6 +64,14 @@ export function huoQuDuoMoTaiPeiZhi(): DuoMoTaiPeiZhi {
     qingQiuChaoShiHaoMiao: duQuZhengShu('DUO_MO_TAI_QING_QIU_CHAO_SHI_HAO_MIAO', 8000, 1000, 60000),
     shengTuTiShiCiZuiDaZiFu: duQuZhengShu('SHENG_TU_TI_SHI_CI_ZUI_DA_ZI_FU', 200, 10, 500),
     shiPinTiShiCiZuiDaZiFu: duQuZhengShu('SHI_PIN_TI_SHI_CI_ZUI_DA_ZI_FU', 200, 10, 500),
+    zhuDongShengTuZuiDiZongFen: duQuZhengShu(
+      'ZHU_DONG_SHENG_TU_ZUI_DI_ZONG_FEN',
+      HAO_GAN_DU_PEI_ZHI.jieDuan.aiMei.xiaXian,
+      0,
+      1000,
+    ),
+    zhuDongShengTuGaiLv: Math.max(0, Math.min(1, Number(duQu('ZHU_DONG_SHENG_TU_GAI_LV', '0.08')) || 0)),
+    zhuDongShengTuRiShangXian: duQuZhengShu('ZHU_DONG_SHENG_TU_RI_SHANG_XIAN', 3, 0, 100),
   }
 }
 

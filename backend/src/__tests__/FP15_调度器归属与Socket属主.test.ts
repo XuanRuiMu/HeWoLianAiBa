@@ -296,7 +296,7 @@ describe('FP-15 R1+R4 调度器归属与Socket属主', () => {
       expect(调度器已清理).toBeNull()
     })
 
-    it('旧调度器的10秒定时器应被重置，不再触发AI处理', async () => {
+    it('旧调度器的2秒定时器应被重置，不再触发AI处理', async () => {
       // 第一个标签页加入并发送消息，启动定时器
       模拟连接(mockSocket1)
       触发加入聊天(mockSocket1, 测试角色ID)
@@ -382,8 +382,8 @@ describe('FP-15 R1+R4 调度器归属与Socket属主', () => {
       触发发送消息(mockSocket2)
       await vi.runAllTimersAsync()
 
-      // 推进10秒触发AI处理
-      await vi.advanceTimersByTimeAsync(10000)
+      // 推进2秒触发AI处理
+      await vi.advanceTimersByTimeAsync(2000)
       await vi.runAllTimersAsync()
 
       const 角色回复调用 = 获取角色回复调用()

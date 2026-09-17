@@ -7,7 +7,7 @@ const WEN_JIAN_LU_JING = path.resolve(
   '..',
   '..',
   '微信昵称',
-  '昵称大全.txt',
+  '昵称大全.md',
 )
 
 export interface NiChengKu {
@@ -35,11 +35,11 @@ export function jieXiNiChengKu(): NiChengKu {
 
   for (const hang of hangLieBiao) {
     if (!hang) continue
-    if (hang === '男：') {
+    if (hang === '男：' || hang === '# 男') {
       dangQianLeiXing = 'nan'
       continue
     }
-    if (hang === '女：') {
+    if (hang === '女：' || hang === '# 女') {
       dangQianLeiXing = 'nv'
       continue
     }

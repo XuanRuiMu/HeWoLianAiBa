@@ -1,6 +1,7 @@
 import OpenAI from 'openai'
 import { AI_PEI_ZHI } from '../config/AI配置'
 import { peiZhi } from '../config'
+import { huoQuFanYi } from '../config/translations'
 import { jiSuanAIChanShu, type CanShuShangXiaWen } from '../config/AI参数策略'
 import { jiLuAIJiLu, debug日志 } from './debug日志'
 
@@ -32,6 +33,116 @@ export interface TiaoYongJieGuo {
   siKaoNeiRong?: string
   yuanShuJu: unknown
   xinXi: { role: string; content: string }
+  shiYongLiang?: { shuRuToken: number; shuChuToken: number; zongToken: number }
+}
+
+export type CuoWuFenLei = 'keZhongShi' | 'buKeZhongShi'
+
+export interface FenLeiCuoWu extends Error {
+  fenLei: CuoWuFenLei
+  zhuangTaiMa?: number
+}
+
+const KE_ZHONG_SHI_ZUI_DA_CI_SHU = AI_PEI_ZHI.zhongShi.keZhongShiZuiDaCiShu
+const RONG_DUAN_LIAN_XU_SHI_BAI_YU_ZHI = AI_PEI_ZHI.zhongShi.rongDuanLianXuShiBaiYuZhi
+const RONG_DUAN_LENG_QUE_HAO_MIAO = AI_PEI_ZHI.zhongShi.rongDuanLengQueHaoMiao
+
+let rongDuanKaiQiShiJian = 0
+let lianXuShiBaiCiShu = 0
+
+export function chongZhiRongDuan(): void {
+  rongDuanKaiQiShiJian = 0
+  lianXuShiBaiCiShu = 0
+}
+
+function rongDuanShiFouKaiQi(): boolean {
+  if (!rongDuanKaiQiShiJian) return false
+  if (Date.now() - rongDuanKaiQiShiJian > RONG_DUAN_LENG_QUE_HAO_MIAO) {
+    rongDuanKaiQiShiJian = 0
+    lianXuShiBaiCiShu = 0
+    return false
+  }
+  return true
+}
+
+function jiLuChengGongRongDuan(): void {
+  lianXuShiBaiCiShu = 0
+}
+
+function jiLuShiBaiRongDuan(): void {
+  lianXuShiBaiCiShu += 1
+  if (lianXuShiBaiCiShu >= RONG_DUAN_LIAN_XU_SHI_BAI_YU_ZHI) {
+    rongDuanKaiQiShiJian = Date.now()
+  }
+}
+
+function fenLeiDiaoYongCuoWu(cuoWu: unknown): FenLeiCuoWu {
+  const yuanXinXi = cuoWu instanceof Error ? cuoWu.message : String(cuoWu)
+  const zhuangTaiMa = tiQuZhuangTaiMa(cuoWu)
+  const keZhongShi = zhuangTaiMa === null ? true : zhuangTaiMa === 429 || zhuangTaiMa >= 500
+  const fenLeiCuoWu = new Error(yuanXinXi) as FenLeiCuoWu
+  fenLeiCuoWu.fenLei = keZhongShi ? 'keZhongShi' : 'buKeZhongShi'
+  if (zhuangTaiMa !== null) fenLeiCuoWu.zhuangTaiMa = zhuangTaiMa
+  return fenLeiCuoWu
+}
+
+function tiQuZhuangTaiMa(cuoWu: unknown): number | null {
+  const houXuan: unknown[] = [cuoWu]
+  if (cuoWu instanceof Error) {
+    const mingMing = cuoWu as Error & { status?: unknown; statusCode?: unknown; code?: unknown; cause?: unknown }
+    houXuan.push(mingMing.status, mingMing.statusCode, mingMing.code, mingMing.cause)
+  } else if (typeof cuoWu === 'object' && cuoWu !== null) {
+    const duiXiang = cuoWu as Record<string, unknown>
+    houXuan.push(duiXiang['status'], duiXiang['statusCode'], duiXiang['code'])
+  }
+  for (const xiang of houXuan) {
+    const jieGuo = jieXiZhuangTaiMa(xiang)
+    if (jieGuo !== null) return jieGuo
+  }
+  const wenBen = cuoWu instanceof Error ? `${cuoWu.name} ${cuoWu.message}` : String(cuoWu)
+  const piPei = wenBen.match(/(?:status|状态码)[^\d]{0,5}(\d{3})|(\d{3})/)
+  if (piPei) {
+    const shuZhi = Number(piPei[1] ?? piPei[2])
+    if (Number.isInteger(shuZhi) && shuZhi >= 400 && shuZhi < 600) return shuZhi
+  }
+  return null
+}
+
+function jieXiZhuangTaiMa(zhi: unknown): number | null {
+  if (typeof zhi === 'number' && Number.isInteger(zhi) && zhi >= 400 && zhi < 600) return zhi
+  if (typeof zhi === 'string') {
+    const piPei = zhi.match(/(\d{3})/)
+    if (piPei) {
+      const shuZhi = Number(piPei[1])
+      if (shuZhi >= 400 && shuZhi < 600) return shuZhi
+    }
+  }
+  return null
+}
+
+function jiSuanTuiBiHaoMiao(changCi: number): number {
+  return Math.min(AI_PEI_ZHI.zhongShi.tuiBiJiChuHaoMiao * 2 ** changCi, AI_PEI_ZHI.zhongShi.tuiBiZuiDaHaoMiao)
+}
+
+function dengDai(haoMiao: number): Promise<void> {
+  return new Promise((jieJue) => setTimeout(jieJue, haoMiao))
+}
+
+function tiQuShiYongLiang(xiangYing: unknown): { shuRuToken: number; shuChuToken: number; zongToken: number } | undefined {
+  const yuan = xiangYing as { usage?: { input_tokens?: unknown; output_tokens?: unknown; total_tokens?: unknown; prompt_tokens?: unknown; completion_tokens?: unknown } | null }
+  const yongLiang = yuan?.usage
+  if (!yongLiang || typeof yongLiang !== 'object') return undefined
+  const shuRu = Number(yongLiang.input_tokens ?? yongLiang.prompt_tokens ?? NaN)
+  const shuChu = Number(yongLiang.output_tokens ?? yongLiang.completion_tokens ?? NaN)
+  const zong = Number(yongLiang.total_tokens ?? NaN)
+  if (!Number.isFinite(shuRu) && !Number.isFinite(shuChu) && !Number.isFinite(zong)) return undefined
+  const shuRuZheng = Number.isFinite(shuRu) ? Math.max(0, Math.floor(shuRu)) : 0
+  const shuChuZheng = Number.isFinite(shuChu) ? Math.max(0, Math.floor(shuChu)) : 0
+  return {
+    shuRuToken: shuRuZheng,
+    shuChuToken: shuChuZheng,
+    zongToken: Number.isFinite(zong) ? Math.max(0, Math.floor(zong)) : shuRuZheng + shuChuZheng,
+  }
 }
 
 let mockTiaoYong: ((canShu: TiaoYongCanShu) => Promise<TiaoYongJieGuo>) | null = null
@@ -126,6 +237,7 @@ function shiFouJinZhiCeShiWaiHu(): boolean {
 export async function tiaoYongDeepSeek(
   canShu: TiaoYongCanShu,
   moXingLeiXing: string = 'DeepSeek',
+  waiBuXinHao?: AbortSignal,
 ): Promise<TiaoYongJieGuo> {
   if (mockTiaoYong) {
     return mockTiaoYong(canShu)
@@ -167,6 +279,11 @@ export async function tiaoYongDeepSeek(
   if (xiangYingGeShi.type === 'json_object') {
     body.text = { format: { type: 'json_object' } }
   }
+  // YH-049 OpenAI SDK透传外部signal：在途fetch可被取消，不再照烧token
+  const qingQiuXuanXiang: Record<string, unknown> = {}
+  if (waiBuXinHao) {
+    qingQiuXuanXiang.signal = waiBuXinHao
+  }
   // 官方规范（Responses API）：思考模式用 reasoning.effort 控制，不再使用 thinking/reasoning_effort。
   // effort 取值 none/minimal/low/medium/high/xhigh/max；max = 最高思考强度。
   if (canShu.siKaoMoShi === 'enabled') {
@@ -176,52 +293,122 @@ export async function tiaoYongDeepSeek(
   if (typeof canShu.wenDu === 'number') body.temperature = canShu.wenDu
   if (typeof canShu.top_p === 'number') body.top_p = canShu.top_p
 
-  try {
-    const xiangYing = await keHuDuan.responses.create(
-      body as unknown as OpenAI.Responses.ResponseCreateParamsNonStreaming,
-    )
-
-    const { neiRong, siKaoNeiRong } = tiQuXiangYing(xiangYing)
-
-    if (peiZhi.kaiFaMoShi && siKaoNeiRong) {
-      debug日志.debug('DeepSeek客户端', '[AI思考过程]', {
-        xiang_qing: { nei_rong: siKaoNeiRong.slice(0, 500) },
-      })
-    }
-    if ((xiangYing as { status?: string }).status === 'incomplete') {
-      debug日志.warn(
-        'DeepSeek客户端',
-        '[AI调用] 响应被截断（达到 max_output_tokens），思考强度可能过高或上限偏低',
-      )
-    }
-
-    const haoShi = Date.now() - kaiShiShiJian
-    jiLuAIJiLu(moXingLeiXing, moXing, haoShi, true)
-
-    // A12：AI 调用成功，重置连续失败告警计数
-    const { jiLuAIChengGong } = await import('./邮件告警')
-    jiLuAIChengGong()
-
-    return {
-      neiRong,
-      siKaoNeiRong,
-      yuanShuJu: xiangYing,
-      xinXi: { role: 'assistant', content: neiRong },
-    }
-  } catch (cuoWu) {
-    const haoShi = Date.now() - kaiShiShiJian
-    const cuoWuXinXi = cuoWu instanceof Error ? cuoWu.message : String(cuoWu)
-    jiLuAIJiLu(moXingLeiXing, moXing, haoShi, false, cuoWuXinXi)
-    // A12：连续 AI 失败达到阈值时触发邮件/日志告警（异步不阻塞错误传播）
-    void import('./邮件告警').then(({ jiLuAIShiBai }) => jiLuAIShiBai(cuoWuXinXi)).catch(() => {})
-    throw cuoWu
+  let zuiHouCuoWu: unknown = null
+  // YH-049 取消透传到底层：外部signal已中止直接短路，不再发起新的LLM外呼烧token
+  if (waiBuXinHao?.aborted) {
+    throw new Error('[DeepSeek客户端] 调用已取消，不再发起外呼')
   }
+  const jianChaQuXiao = (): void => {
+    if (waiBuXinHao?.aborted) {
+      throw new Error('[DeepSeek客户端] 调用已取消，中止重试等待')
+    }
+  }
+  for (let changCi = 0; changCi <= KE_ZHONG_SHI_ZUI_DA_CI_SHU; changCi++) {
+    jianChaQuXiao()
+    if (rongDuanShiFouKaiQi()) {
+      const rongDuanCuoWu = new Error(huoQuFanYi('AI', 'aiDiaoYongShiBai')) as FenLeiCuoWu
+      rongDuanCuoWu.fenLei = 'buKeZhongShi'
+      throw rongDuanCuoWu
+    }
+    try {
+      // YH-049 分级超时：轻量判定类短超时，沉浸生成类长超时；外部取消优先于超时
+      const benCiChaoShi = moXingLeiXing === 'writer' ? 120 * 1000 : 60 * 1000
+      const chaoShiKongZhi = new AbortController()
+      const chaoShiDingShi = setTimeout(() => chaoShiKongZhi.abort(), benCiChaoShi)
+      const youXiaoXinHao = waiBuXinHao ?? chaoShiKongZhi.signal
+      if (waiBuXinHao) {
+        clearTimeout(chaoShiDingShi)
+      }
+      const xiangYing = await keHuDuan.responses.create(
+        body as unknown as OpenAI.Responses.ResponseCreateParamsNonStreaming,
+        { signal: youXiaoXinHao } as unknown as Record<string, unknown>,
+      )
+      if (!waiBuXinHao) {
+        clearTimeout(chaoShiDingShi)
+      }
+
+      const { neiRong, siKaoNeiRong } = tiQuXiangYing(xiangYing)
+      const shiYongLiang = tiQuShiYongLiang(xiangYing)
+
+      if (peiZhi.kaiFaMoShi && siKaoNeiRong) {
+        debug日志.debug('DeepSeek客户端', '[AI思考过程]', {
+          xiang_qing: { nei_rong: siKaoNeiRong.slice(0, 500) },
+        })
+      }
+      if ((xiangYing as { status?: string }).status === 'incomplete') {
+        debug日志.warn(
+          'DeepSeek客户端',
+          '[AI调用] 响应被截断（达到 max_output_tokens），思考强度可能过高或上限偏低',
+        )
+      }
+
+      const haoShi = Date.now() - kaiShiShiJian
+      jiLuAIJiLu(moXingLeiXing, moXing, haoShi, true)
+      jiLuChengGongRongDuan()
+
+      // A12：AI 调用成功，重置连续失败告警计数
+      const { jiLuAIChengGong } = await import('./邮件告警')
+      jiLuAIChengGong()
+
+      if (shiYongLiang) {
+        void import('../services/用量统计').then(({ jiLuShiYongLiang }) => jiLuShiYongLiang({
+          moXingLeiXing,
+          moXing,
+          shuRuToken: shiYongLiang.shuRuToken,
+          shuChuToken: shiYongLiang.shuChuToken,
+          zongToken: shiYongLiang.zongToken,
+        })).catch(() => {})
+      }
+
+      return {
+        neiRong,
+        siKaoNeiRong,
+        yuanShuJu: xiangYing,
+        xinXi: { role: 'assistant', content: neiRong },
+        shiYongLiang,
+      }
+    } catch (cuoWu) {
+      // YH-049 取消即停：外部取消不再分类重试，直接向上传播，禁在途照烧
+      if (waiBuXinHao?.aborted) {
+        throw cuoWu
+      }
+      const fenLeiCuoWu = fenLeiDiaoYongCuoWu(cuoWu)
+      zuiHouCuoWu = cuoWu
+      if (fenLeiCuoWu.fenLei === 'buKeZhongShi') {
+        const haoShi = Date.now() - kaiShiShiJian
+        const cuoWuXinXi = cuoWu instanceof Error ? cuoWu.message : String(cuoWu)
+        jiLuAIJiLu(moXingLeiXing, moXing, haoShi, false, cuoWuXinXi)
+        jiLuShiBaiRongDuan()
+        void import('./邮件告警').then(({ jiLuAIShiBai }) => jiLuAIShiBai(cuoWuXinXi)).catch(() => {})
+        throw cuoWu
+      }
+      if (changCi >= KE_ZHONG_SHI_ZUI_DA_CI_SHU) break
+      // YH-049 退避等待可取消：等待期被取消直接停，不再发起下一轮外呼
+      const tuiBiHaoMiao = jiSuanTuiBiHaoMiao(changCi)
+      if (waiBuXinHao) {
+        await Promise.race([
+          dengDai(tuiBiHaoMiao),
+          new Promise((_, juJue) => waiBuXinHao.addEventListener('abort', () => juJue(new Error('[DeepSeek客户端] 调用已取消，中止重试等待')), { once: true })),
+        ])
+      } else {
+        await dengDai(tuiBiHaoMiao)
+      }
+    }
+  }
+  const haoShi = Date.now() - kaiShiShiJian
+  const cuoWuXinXi = zuiHouCuoWu instanceof Error ? zuiHouCuoWu.message : String(zuiHouCuoWu)
+  jiLuAIJiLu(moXingLeiXing, moXing, haoShi, false, cuoWuXinXi)
+  jiLuShiBaiRongDuan()
+  // A12：连续 AI 失败达到阈值时触发邮件/日志告警（异步不阻塞错误传播）
+  void import('./邮件告警').then(({ jiLuAIShiBai }) => jiLuAIShiBai(cuoWuXinXi)).catch(() => {})
+  throw fenLeiDiaoYongCuoWu(zuiHouCuoWu)
 }
 
 export function genJuPeiZhiTiaoYong(
   moXingLeiXing: keyof typeof AI_PEI_ZHI.moXing,
   xiaoXi: DuiHuaXiaoXi[],
   shangXiaWen?: CanShuShangXiaWen,
+  waiBuXinHao?: AbortSignal,
 ): Promise<TiaoYongJieGuo> {
   const moXingCanShu = jiSuanAIChanShu(moXingLeiXing, shangXiaWen)
   return tiaoYongDeepSeek(
@@ -236,5 +423,6 @@ export function genJuPeiZhiTiaoYong(
       xiaoXi,
     },
     moXingLeiXing,
+    waiBuXinHao,
   )
 }

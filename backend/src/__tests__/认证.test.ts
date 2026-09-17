@@ -27,6 +27,7 @@ async function zhuCeCeShiYongHu(shouJiHao: string, yongHuMing: string, miMa: str
   await redis.setex(`yan_zheng_ma:${shouJiHao}`, 300, '123456')
   const xiangYing = await request(yingYong)
     .post('/api/认证/注册')
+    .set('X-Real-IP', huoQuDuTeIP())
     .send({
       shouJiHao,
       yanZhengMa: '123456',
@@ -64,6 +65,10 @@ async function qingLiCeShiYongHu(shouJiHao: string): Promise<void> {
 }
 
 let duTeIPXuHao = 0
+function huoQuDuTeIP(): string {
+  duTeIPXuHao += 1
+  return `198.51.100.${duTeIPXuHao % 250 + 1}`
+}
 describe('FP-01 用户认证模块', () => {
   const ceShiShouJiHao = suiJiShouJiHao()
   const ceShiYongHuMing = `测试用户${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
@@ -87,6 +92,17 @@ describe('FP-01 用户认证模块', () => {
 
     expect(xiangYing.body.cheng_gong).toBe(false)
     expect(xiangYing.body.ti_shi).toBe(huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'))
+  })
+
+  it('检查手机模糊响应：已注册与未注册返回同一成功形态（YH-028防枚举）', async () => {
+    const yiZhuCe = await request(yingYong)
+      .get(`/api/认证/检查手机?shouJiHao=${ceShiShouJiHao}`)
+      .expect(200)
+    const weiZhuCe = await request(yingYong)
+      .get('/api/认证/检查手机?shouJiHao=13900000000')
+      .expect(200)
+    expect(yiZhuCe.body.cheng_gong).toBe(weiZhuCe.body.cheng_gong)
+    expect(JSON.stringify(yiZhuCe.body)).toBe(JSON.stringify(weiZhuCe.body))
   })
 
   it('发送验证码：首次成功，60秒内重复返回429', async () => {
@@ -131,11 +147,13 @@ describe('FP-01 用户认证模块', () => {
   it('注册：成功返回200并含令牌与用户字段', async () => {
     await request(yingYong)
       .post('/api/认证/发送码')
+      .set('X-Real-IP', huoQuDuTeIP())
       .send({ shouJiHao: ceShiShouJiHao })
       .expect(200)
 
     const xiangYing = await request(yingYong)
       .post('/api/认证/注册')
+      .set('X-Real-IP', huoQuDuTeIP())
       .send({
         shouJiHao: ceShiShouJiHao,
         yanZhengMa: '123456',
@@ -159,6 +177,7 @@ describe('FP-01 用户认证模块', () => {
   it('注册：已注册手机号返回409', async () => {
     const xiangYing = await request(yingYong)
       .post('/api/认证/注册')
+      .set('X-Real-IP', huoQuDuTeIP())
       .send({
         shouJiHao: ceShiShouJiHao,
         yanZhengMa: '123456',
@@ -361,6 +380,7 @@ describe('FP-01 用户认证模块', () => {
 
       const dengLuXiangYing = await request(yingYong)
         .post('/api/认证/登录')
+        .set('X-Real-IP', huoQuDuTeIP())
         .send({ shouJiHao, miMa: ceShiMiMaXin })
         .expect(200)
       const xinLingPai = dengLuXiangYing.body.shu_ju.令牌
@@ -393,6 +413,7 @@ describe('FP-01 用户认证模块', () => {
 
       const dengLuXiangYing = await request(yingYong)
         .post('/api/认证/登录')
+        .set('X-Real-IP', huoQuDuTeIP())
         .send({ shouJiHao, miMa: ceShiMiMaXin })
         .expect(200)
       const xinLingPai = dengLuXiangYing.body.shu_ju.令牌
@@ -496,7 +517,7 @@ describe('FP-15 bcrypt cost 12 与旧哈希重哈希', () => {
 
   function huoQuDuTeIP(): string {
     duTeIPXuHao += 1
-    return `198.51.100.${200 + duTeIPXuHao}`
+    return `198.51.100.${200 + (duTeIPXuHao % 50) + 1}`
   }
 
   beforeAll(async () => {
@@ -504,6 +525,8 @@ describe('FP-15 bcrypt cost 12 与旧哈希重哈希', () => {
     ceShiShouJiHaoXin = suiJiShouJiHao()
     await redis.setex(`yan_zheng_ma:${ceShiShouJiHaoJiu}`, 300, '123456')
     await redis.setex(`yan_zheng_ma:${ceShiShouJiHaoXin}`, 300, '123456')
+    await 数据库.query(`DELETE FROM "用户" WHERE "手机号" = $1`, [ceShiShouJiHaoJiu])
+    await 数据库.query(`DELETE FROM "用户" WHERE "手机号" = $1`, [ceShiShouJiHaoXin])
   })
 
   afterAll(async () => {

@@ -1,7 +1,32 @@
+function duQuQueXinDu(ming: string, moRen: number): number {
+  const yuan = Number(process.env[ming])
+  if (!Number.isFinite(yuan)) return moRen
+  return Math.max(0, Math.min(1, yuan))
+}
+
+// YH-056 阈值进配置热重载：0.7禁硬编码，环境变量可配；三处判定统一读此出处
+export const QUE_XIN_DU_YUE_SHU = {
+  get shenJingBing(): number {
+    return duQuQueXinDu('SHEN_JING_BING_QUE_XIN_DU_YUE_SHU', 0.7)
+  },
+  get biaoBaiHuiFu(): number {
+    return duQuQueXinDu('BIAO_BAI_HUI_FU_QUE_XIN_DU_YUE_SHU', 0.7)
+  },
+  get tongYongJianCe(): number {
+    return duQuQueXinDu('TONG_YONG_JIAN_CE_QUE_XIN_DU_YUE_SHU', 0.7)
+  },
+}
+
 export const SHENG_LI_SHI_BAI_PEI_ZHI = {
-  shenJingBingQueXinDuYueShu: 0.7,
-  biaoBaiHuiFuQueXinDuYueShu: 0.7,
+  get shenJingBingQueXinDuYueShu(): number {
+    return QUE_XIN_DU_YUE_SHU.shenJingBing
+  },
+  get biaoBaiHuiFuQueXinDuYueShu(): number {
+    return QUE_XIN_DU_YUE_SHU.biaoBaiHuiFu
+  },
   biaoBaiPanDuanLiShiTiaoShu: 10,
+  // YH-039：表白数值阈值统一出处（用户表白 800 / AI 主动表白 800 同源，禁各处硬编码 800）
+  biaoBaiHaoGanDuYuZhi: 800,
   shenJingBingJingGao: {
     haoGanDuKouFenZong: 30,
     kouFenFenPei: {

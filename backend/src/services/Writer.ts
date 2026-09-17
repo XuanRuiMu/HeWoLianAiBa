@@ -23,6 +23,7 @@ export async function shengChengWriterHuiFu(
   shuRu: AIYinQingShuRu,
   ceLue?: DirectorCeLue,
   shangXiaWen?: CanShuShangXiaWen,
+  waiBuXinHao?: AbortSignal,
 ): Promise<WriterJieGuo> {
   const prompt = gouJianWriterPrompt(shuRu, ceLue)
 
@@ -31,10 +32,21 @@ export async function shengChengWriterHuiFu(
   const yongHuNeiRong: string | DuiHuaKuai[] =
     tuXiangKuai.length > 0 ? [{ type: 'input_text', text: prompt }, ...tuXiangKuai] : prompt
 
+  // YH-050 人设卡写法：沉浸指令放首轮user最稳，谈情与判分互不干扰；director走纯分析不动三字段
+  const chenJinZhiLing = shuRu.shi_fou_di_yi_lun
+    ? `\n${'【从现在起，你就是TA】'}：用第一人称在心里嘀咕，完全变成对方眼中的恋人，别跳出来分析。`
+    : ''
+  const yongHuNeiRongFuJia: string | DuiHuaKuai[] =
+    typeof yongHuNeiRong === 'string'
+      ? `${yongHuNeiRong}${chenJinZhiLing}`
+      : chenJinZhiLing
+        ? [{ type: 'input_text', text: chenJinZhiLing }, ...yongHuNeiRong]
+        : yongHuNeiRong
+
   const xiangYing = await genJuPeiZhiTiaoYong('writer', [
     { jiaoSe: 'system', neiRong: '完全代入下面这个角色，只输出你要发的消息。像真实大学生/青年恋人聊微信，自然口语化，允许短句、留白、省略号和真实停顿。' },
-    { jiaoSe: 'user', neiRong: yongHuNeiRong },
-  ], shangXiaWen)
+    { jiaoSe: 'user', neiRong: yongHuNeiRongFuJia },
+  ], shangXiaWen, waiBuXinHao)
 
   const xiaoXiLieBiao = qingLiXiaoXi(xiangYing.neiRong)
 

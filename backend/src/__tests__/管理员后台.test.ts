@@ -150,7 +150,7 @@ chuShiHuaTongZhiSocket(testIo)
 chuShiHuaDuoSheSocket(testIo)
 let testDuanKou = 0
 
-describe.sequential('FP-16 管理员后台', () => {
+describe('FP-16 管理员后台', () => {
   beforeAll(async () => {
     await new Promise<void>((resolve) => {
       testFuWuQi.listen(0, () => {

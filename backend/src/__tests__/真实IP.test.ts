@@ -23,7 +23,7 @@ function jiaQingQiu(duiXiangDiZhi?: string, touBuLiang?: Record<string, string>)
   } as unknown as Request
 }
 
-describe.sequential('FP-02 真实IP信任链', () => {
+describe('FP-02 真实IP信任链', () => {
   describe('huoQuZhenShiIP 单元', () => {
     it('直连场景无任何代理头时取socket.remoteAddress', () => {
       const jieGuo = huoQuZhenShiIP(jiaQingQiu('203.0.113.50'))

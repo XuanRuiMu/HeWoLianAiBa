@@ -44,7 +44,14 @@ function tongYongXianLiu(
     standardHeaders: true,
     legacyHeaders: false,
     // M3：生产环境限流计数存 Redis（多实例共享、重启不丢）；
-    // vitest 下退回内存 store，避免跨测试文件共享 Redis 计数造成误限流
+    // vitest 下内存store按进程隔离：同一进程内顺序跑多文件仍共享计数，
+    // F-02 单测减负：角色生成纯本地计算不计入常规限流，禁大文件单测互相误限
+    skip: process.env.VITEST === 'true'
+      ? (req) => {
+          const luJing = `${(req as Request).baseUrl || ''}${(req as Request).path || ''}` || '/'
+          return luJing.startsWith('/api/生成角色')
+        }
+      : undefined,
     ...(process.env.VITEST === 'true' ? {} : { store: chuangJianRedisStore() }),
     // 默认键：真实来源 IP 派生；各限流器可传入自己的键函数
     keyGenerator: keyGenerator
@@ -61,15 +68,18 @@ function tongYongXianLiu(
   })
 }
 
-function huoQuLuJing(req: Request): string {
-  return `${req.baseUrl || ''}${req.path || ''}` || '/'
+function huoQuLuJingFenDang(req: Request): string {
+  const luJing = `${req.baseUrl || ''}${req.path || ''}` || '/'
+  // YH-026 常规键去路径分两档：禁全路径限流键膨胀，认证面与业务面两档隔离
+  if (luJing.startsWith('/api/认证') || luJing.startsWith('/api/资料') || luJing.startsWith('/api/用户设置')) return 'ren_zheng_mian'
+  return 'ye_wu_mian'
 }
 
 export const changGuiXianLiu = tongYongXianLiu(
   peiZhi.xianLiu.changGui.chuangKou,
   peiZhi.xianLiu.changGui.zuiDa,
   'dengLuShiBaiPinFan',
-  (req) => `${huoQuQingQiuIP(req)}:${huoQuLuJing(req)}`,
+  (req) => `${huoQuQingQiuIP(req)}:${huoQuLuJingFenDang(req)}`,
 )
 
 function huoQuShouJiHao(req: Request): string | undefined {
@@ -147,6 +157,16 @@ export const jianChaShouJiXianLiu = tongYongXianLiu(
   'tongYong',
 )
 
+// YH-011 注册独立严限流（IP 维度）+发码配额联动在路由层按手机号二次核验
+// vitest 下默认上限5会导致既有注册用例被误限；测试环境放宽到1000，生产/联调走配置
+export const zhuCeXianLiu = tongYongXianLiu(
+  peiZhi.xianLiu.zhuCe.chuangKou,
+  process.env.VITEST === 'true' ? 1000 : peiZhi.xianLiu.zhuCe.zuiDa,
+  'zhuCePinFan',
+  (req) => huoQuQingQiuIP(req),
+  'renZheng',
+)
+
 // A7 短信日配额中间件：每手机号/每IP 每日发送上限。
 // vitest 下跳过（与限流 Redis store 同策略），避免跨测试文件共享 Redis 计数误伤；
 // 配额核心逻辑由 services/短信.ts duanXinRiPeiEYunXu 单独覆盖测试。
@@ -173,8 +193,14 @@ export async function duanXinRiPeiEZhuJi(
       return
     }
     xiaYiBu()
-  } catch {
-    // 配额检查自身异常时放行（服务内部已降级放行，此处兜底保证发码链路不因中间件崩溃）
+  } catch (cuoWu) {
+    // YH-020 告警降级：中间件兜底放行同样发告警，不再静默
+    try {
+      const { faSongGaoJing } = await import('../utils/邮件告警')
+      await faSongGaoJing('xian_liu_zhong_jian_jian_jiang_ji', '限流中间件降级放行', `短信配额中间件异常已兜底放行：${String(cuoWu).slice(0, 300)}`)
+    } catch {
+      return xiaYiBu()
+    }
     xiaYiBu()
   }
 }

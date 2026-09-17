@@ -109,7 +109,7 @@ function yingSheXiaoXi(row: Record<string, unknown>): XiaoXiXinXi {
     ke_hu_duan_xu_hao: row.客户端序号 != null ? Number(row.客户端序号) : null,
     mei_ti_id: row.媒体ID ? String(row.媒体ID) : null,
     mei_ti_url: row.媒体SHA256
-      ? shengChengQianMingURL(String(row.媒体SHA256).toLowerCase())
+      ? shengChengQianMingURL(String(row.媒体SHA256).toLowerCase(), String(row.用户ID))
       : null,
     mei_ti_lei_bie: row.媒体类别 ? String(row.媒体类别) : null,
     mei_ti_shi_chang_hao_miao: row.媒体时长毫秒 != null ? Number(row.媒体时长毫秒) : null,
@@ -315,16 +315,38 @@ export async function chuangJianYongHuXiaoXi(
     }
   }
 
-  const jieGuo = await 数据库.query(
-    `WITH xin AS (
-       INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "客户端序号", "媒体ID")
-       VALUES ($1, $2, $3, 'yonghu', $4, true, $5, $6)
-       RETURNING *
-     )
-     SELECT xin.*, mf."SHA256" AS "媒体SHA256"
-     FROM xin LEFT JOIN "媒体文件" mf ON xin."媒体ID" = mf."ID"`,
-    [canShu.yong_hu_id, canShu.jiao_se_id, qingLiNeiRong, leiXing, canShu.ke_hu_duan_xu_hao ?? null, canShu.mei_ti_id ?? null],
-  )
+  // YH-059 三类写统一ON CONFLICT重试：用户消息/角色消息/通话记录双发即幂等返回
+  // 根因：裸INSERT双发即双AI回复，通话记录静默丢；吞错改告警
+  let jieGuo
+  try {
+    jieGuo = await 数据库.query(
+      `WITH xin AS (
+         INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "客户端序号", "媒体ID")
+         VALUES ($1, $2, $3, 'yonghu', $4, true, $5, $6)
+         ON CONFLICT ("用户ID", "角色ID", "客户端序号") DO NOTHING
+         RETURNING *
+       )
+       SELECT xin.*, mf."SHA256" AS "媒体SHA256"
+       FROM xin LEFT JOIN "媒体文件" mf ON xin."媒体ID" = mf."ID"`,
+      [canShu.yong_hu_id, canShu.jiao_se_id, qingLiNeiRong, leiXing, canShu.ke_hu_duan_xu_hao ?? null, canShu.mei_ti_id ?? null],
+    )
+  } catch (cuoWu) {
+    const { faSongGaoJing } = await import('../utils/邮件告警')
+    await faSongGaoJing('xiao_xi_luo_ku_shi_bai', '消息落库失败告警', `用户消息落库失败：${String(cuoWu).slice(0, 300)}`).catch(() => undefined)
+    throw cuoWu
+  }
+  if (jieGuo.rows.length === 0) {
+    const chongFu = await 数据库.query(
+      `SELECT m.*, mf."SHA256" AS "媒体SHA256"
+       FROM "消息" m LEFT JOIN "媒体文件" mf ON m."媒体ID" = mf."ID"
+       WHERE m."用户ID" = $1 AND m."角色ID" = $2 AND m."客户端序号" = $3 LIMIT 1`,
+      [canShu.yong_hu_id, canShu.jiao_se_id, canShu.ke_hu_duan_xu_hao ?? null],
+    )
+    if (chongFu.rows.length > 0) {
+      return { cheng_gong: true, xiao_xi: yingSheXiaoXi(chongFu.rows[0]) }
+    }
+    return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'faSongShiBai'), zhuang_tai_ma: 500 }
+  }
 
   const xiaoXi = yingSheXiaoXi(jieGuo.rows[0])
   await shiXiaoXiaoXiZongShuHuanCun(canShu.yong_hu_id, canShu.jiao_se_id)
@@ -446,16 +468,31 @@ export async function baoCunJiaoSeMeiTiXiaoXi(
   canShu: BaoCunJiaoSeMeiTiCanShu,
 ): Promise<XiaoXiXinXi> {
   const qingLiNeiRong = (canShu.nei_rong || '').trim().slice(0, 500)
-  const jieGuo = await 数据库.query(
-    `WITH xin AS (
-       INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "媒体ID")
-       VALUES ($1, $2, $3, 'jiaose', $4, true, $5)
-       RETURNING *
-     )
-     SELECT xin.*, mf."SHA256" AS "媒体SHA256"
-     FROM xin LEFT JOIN "媒体文件" mf ON xin."媒体ID" = mf."ID"`,
-    [canShu.yong_hu_id, canShu.jiao_se_id, qingLiNeiRong, canShu.lei_xing, canShu.mei_ti_id],
-  )
+  // YH-059 角色多媒体消息统一ON CONFLICT幂等：禁裸INSERT双落库
+  let jieGuo
+  try {
+    jieGuo = await 数据库.query(
+      `WITH xin AS (
+         INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "媒体ID")
+         VALUES ($1, $2, $3, 'jiaose', $4, true, $5)
+         ON CONFLICT DO NOTHING
+         RETURNING *
+       )
+       SELECT xin.*, mf."SHA256" AS "媒体SHA256"
+       FROM xin LEFT JOIN "媒体文件" mf ON xin."媒体ID" = mf."ID"`,
+      [canShu.yong_hu_id, canShu.jiao_se_id, qingLiNeiRong, canShu.lei_xing, canShu.mei_ti_id],
+    )
+  } catch (cuoWu) {
+    const { faSongGaoJing } = await import('../utils/邮件告警')
+    await faSongGaoJing('xiao_xi_luo_ku_shi_bai', '消息落库失败告警', `角色多媒体消息落库失败：${String(cuoWu).slice(0, 300)}`).catch(() => undefined)
+    throw cuoWu
+  }
+  if (jieGuo.rows.length === 0) {
+    // 无唯一约束兜底时冲突走异常已抛；空行视为未知失败，告警后抛错禁静默
+    const { faSongGaoJing } = await import('../utils/邮件告警')
+    await faSongGaoJing('xiao_xi_luo_ku_shi_bai', '消息落库失败告警', '角色多媒体消息落库返回空行').catch(() => undefined)
+    throw new Error('角色多媒体消息落库返回空行')
+  }
   const xiaoXi = yingSheXiaoXi(jieGuo.rows[0])
   await shiXiaoXiaoXiZongShuHuanCun(canShu.yong_hu_id, canShu.jiao_se_id)
   jiLuXiaoXiCaoZuo('角色多媒体消息发送', canShu.yong_hu_id, canShu.jiao_se_id, 'jiaose', { xiao_xi_id: xiaoXi.id })

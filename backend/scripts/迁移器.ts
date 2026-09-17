@@ -74,6 +74,8 @@ export class 迁移器 {
       const 客户端 = await 数据库.connect()
       try {
         await 客户端.query('BEGIN')
+        // YH-132 迁移并发加锁：多副本同时up建表打架收敛为advisory锁串行
+        await 客户端.query(`SELECT pg_advisory_xact_lock(987654321)`)
         await 客户端.query(sql)
         await 客户端.query(
           `INSERT INTO "schema_migrations" (version, checksum) VALUES ($1, $2)`,

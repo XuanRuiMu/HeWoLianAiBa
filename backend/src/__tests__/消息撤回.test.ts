@@ -310,8 +310,11 @@ describe('FP-08 消息撤回', () => {
 
     beforeEach(() => {
       vi.useFakeTimers()
+      vi.clearAllMocks()
+      vi.mocked(yunXingAIYinQing).mockReset()
       io = chuangJianMockIo()
       调度器 = new AI回复调度器('jiao-se-id', 'yong-hu-id', 'I', io)
+      调度器.设置回复延迟毫秒(2000)
 
       vi.mocked(huoQuAIJiaoSeXinXi).mockResolvedValue(chuangJianCeShiJiaoSeXinXi())
       vi.mocked(huoQuWanZhengHaoGanDu).mockResolvedValue({
@@ -362,7 +365,7 @@ describe('FP-08 消息撤回', () => {
       vi.clearAllMocks()
     })
 
-    it('10秒延迟期内再次调用处理用户消息 → 计时器从第二次调用重新计时', async () => {
+    it('2秒延迟期内再次调用处理用户消息 → 计时器从第二次调用重新计时', async () => {
       vi.mocked(yunXingAIYinQing).mockResolvedValue({
         xiao_xi_lie_biao: ['回复'],
         shi_fou_hui_fu: true,
@@ -371,17 +374,17 @@ describe('FP-08 消息撤回', () => {
       })
 
       await 调度器.处理用户消息()
-      await vi.advanceTimersByTimeAsync(5000)
+      await vi.advanceTimersByTimeAsync(1000)
       await 调度器.处理用户消息()
-      await vi.advanceTimersByTimeAsync(5000)
+      await vi.advanceTimersByTimeAsync(1000)
 
       expect(yunXingAIYinQing).not.toHaveBeenCalled()
 
-      await vi.advanceTimersByTimeAsync(5000)
+      await vi.advanceTimersByTimeAsync(1000)
       expect(yunXingAIYinQing).toHaveBeenCalledTimes(1)
     })
 
-    it('AI处理中调用处理用户消息 → 中断当前请求并重新计时10秒', async () => {
+    it('AI处理中调用处理用户消息 → 中断当前请求并重新计时2秒', async () => {
       let jieXiCuoWu: (value: unknown) => void = () => {}
       vi.mocked(yunXingAIYinQing).mockImplementation(
         () =>
@@ -391,7 +394,7 @@ describe('FP-08 消息撤回', () => {
       )
 
       await 调度器.处理用户消息()
-      await vi.advanceTimersByTimeAsync(10000)
+      await vi.advanceTimersByTimeAsync(2000)
 
       expect(yunXingAIYinQing).toHaveBeenCalledTimes(1)
 
@@ -413,7 +416,7 @@ describe('FP-08 消息撤回', () => {
       )
       expect(xiaoXiZongShu).toBe(0)
 
-      await vi.advanceTimersByTimeAsync(9999)
+      await vi.advanceTimersByTimeAsync(1999)
       expect(yunXingAIYinQing).toHaveBeenCalledTimes(1)
 
       await vi.advanceTimersByTimeAsync(1)
@@ -429,7 +432,7 @@ describe('FP-08 消息撤回', () => {
       })
 
       await 调度器.处理用户消息()
-      await vi.advanceTimersByTimeAsync(10000)
+      await vi.advanceTimersByTimeAsync(2000)
       await vi.runAllTimersAsync()
 
       expect(cheHuiJiaoSeXiaoXi).toHaveBeenCalledWith({

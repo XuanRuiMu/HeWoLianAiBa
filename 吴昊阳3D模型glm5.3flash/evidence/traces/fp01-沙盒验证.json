@@ -1,0 +1,52 @@
+{
+ "canvas信息": {
+  "存在": true,
+  "宽": 1280,
+  "高": 720,
+  "数量": 2
+ },
+ "断言": {
+  "父页THREE": true,
+  "父页GLTFLoader": true,
+  "父页three版本": "186"
+ },
+ "iframe断言": {
+  "parentTHREE版本": "186",
+  "wuXuanRanQiHuoZai": true,
+  "wuPEIZHI存在": true,
+  "wuPEIZHI": {
+   "weiZhi": {
+    "x": 5.05,
+    "y": -0.0133,
+    "z": 3.0928
+   },
+   "chiCun": 1.1755
+  },
+  "覆盖画布存在": true,
+  "wuD存在": true,
+  "wu状态": {
+   "mode": "独立画布 + reveal 同步",
+   "canvasVisible": "0.987752",
+   "drawFrames": 12,
+   "revealSource": "revealMesh.uRevealProgress",
+   "revealProgress": 0,
+   "opacity": 0.988,
+   "daoLu": "zhuDao",
+   "jieDuan": "fuYeYiTongZhi",
+   "crushInjected": "100/100",
+   "crushStrength": 0.811,
+   "crushCenter": [
+    5.05,
+    3.09
+   ],
+   "crushR0": 0.12,
+   "crushR1": 0.68
+  },
+  "静态图存在": true
+ },
+ "网络失败": [],
+ "控制台错误数量": 0,
+ "控制台错误样例": [],
+ "截图": "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\吴昊阳3D模型glm5.3flash\\evidence\\traces\\fp01-沙盒草地.png",
+ "结论": "FP01_SANDBOX_PASS"
+}

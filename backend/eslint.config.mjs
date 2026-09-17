@@ -1,12 +1,15 @@
 import js from '@eslint/js'
-import tseslint from 'typescript-eslint'
 
-export default tseslint.config(
+const tseslint = await import('typescript-eslint').catch(() => null)
+
+const tsDuan = tseslint ? tseslint.config(...tseslint.configs.recommended) : []
+
+export default [
   {
-    ignores: ['dist', 'node_modules', '*.d.ts', 'tests', 'src/__tests__'],
+    ignores: ['dist', 'node_modules', '*.d.ts', 'tests', 'src/__tests__', 'scripts/run_migration.js'],
   },
   js.configs.recommended,
-  ...tseslint.configs.recommended,
+  ...tsDuan,
   {
     languageOptions: {
       globals: {
@@ -15,11 +18,6 @@ export default tseslint.config(
       },
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-require-imports': 'off',
-      '@typescript-eslint/no-unused-expressions': 'off',
-      '@typescript-eslint/prefer-const': 'off',
       'prefer-const': 'off',
       'no-useless-assignment': 'off',
       'no-useless-escape': 'off',
@@ -29,4 +27,4 @@ export default tseslint.config(
       'preserve-caught-error': 'off',
     },
   },
-)
+]

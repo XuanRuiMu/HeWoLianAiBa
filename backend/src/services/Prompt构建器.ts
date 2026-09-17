@@ -1,4 +1,6 @@
 import { AI_PEI_ZHI } from '../config/AI配置'
+import { SHENG_LI_SHI_BAI_PEI_ZHI } from '../config/胜利失败配置'
+import { huoQuShiJianChangJingWenBen } from '../config/时间场景配置'
 import { meiTiZhanShiWenBen } from './AI视觉辅助'
 import { gouJianYuYinKeDuWenBen, tiQuYinPinShiJian } from './语音理解'
 import { gouJianShiPinKeDuWenBen } from './视频多模态'
@@ -146,9 +148,10 @@ function gouJianDiSanCeng(shuRu: AIYinQingShuRu): string {
     `关系阶段：${jieDuan}`,
     `对 TA 的态度：${guanXiJieDuanMiaoShu[jieDuan] || '还不太清楚'}`,
     `当下心情：${xinQing}`,
+    `当前好感数值：总分${haoGanDu.zong_fen}（信任${haoGanDu.xin_ren_du}、亲密${haoGanDu.qin_mi_du}、趣味${haoGanDu.qu_wei_du}、关怀${haoGanDu.guan_huai_du}）`,
     '知道一件事：对方加你聊天是想谈恋爱，你也知道这回事。',
     '没什么特别的',
-    `现在的情况：${shuRu.shi_jian_chang_jing || '正常聊天时间'}`,
+    `现在的情况：${shuRu.shi_jian_chang_jing || huoQuShiJianChangJingWenBen()}`,
     '回复节奏：内向的人可能想半天才回一句，外向的人可能噼里啪啦连发几条，按你的性格来。',
     '如果对方说的话让你不舒服、被冒犯或者被逼迫，不用硬迎合，按你的人设自然回应就行。',
     '聊天可以撒娇、可以吃醋、可以故意冷淡、可以开玩笑、可以岔开话题。不用每次都正面回答，反问、省略、发个 emoji 都可以。',
@@ -175,12 +178,13 @@ function gouJianDiWuCeng(shuRu: AIYinQingShuRu): string {
     shuRu.jiao_se.wei_xin_ming,
     yongHuMing,
   )
+  const zhaiYaoHang = shuRu.ji_yi_zhai_yao ? `${shuRu.ji_yi_zhai_yao}\n` : ''
 
   return [
     '【刚才聊了什么】',
     `最近 ${AI_PEI_ZHI.prompt.liShiXiaoXiShuLiang} 条消息，格式是“发送者(HH:MM): 内容”。撤回的消息会标[已撤回]。`,
     '时间只是帮你判断情境和节奏，你回复的时候不要带时间戳，也别复制上面的格式。',
-    liShiWenBen,
+    `${zhaiYaoHang}${liShiWenBen}`,
   ].join('\n')
 }
 
@@ -275,6 +279,7 @@ export function gouJianDirectorPrompt(shuRu: AIYinQingShuRu): string {
     shuRu.jiao_se.shi_fou_zha_xing ? '这人设带点渣，会诱导对方上头。' : '正常角色，跟着感觉走。',
     `现在关系大概处在：${huoQuGuanXiJieDuanMing(shuRu.hao_gan_du)}`,
     `当下心情：${huoQuXinQing(shuRu.hao_gan_du)}`,
+    `当前好感数值：总分${shuRu.hao_gan_du.zong_fen}（信任${shuRu.hao_gan_du.xin_ren_du}、亲密${shuRu.hao_gan_du.qin_mi_du}、趣味${shuRu.hao_gan_du.qu_wei_du}、关怀${shuRu.hao_gan_du.guan_huai_du}）`,
     '',
     '【对方的目的】',
     '对方加 TA 聊天是想谈恋爱。',
@@ -283,6 +288,7 @@ export function gouJianDirectorPrompt(shuRu: AIYinQingShuRu): string {
       : '正常角色也知道这点，但会按真实好感和性格顺其自然。',
     '',
     '【刚才聊了什么】',
+    shuRu.ji_yi_zhai_yao ? shuRu.ji_yi_zhai_yao : '',
     liShiWenBen,
     '',
     DING_JIE_FU_SHENG_MING,
@@ -308,7 +314,8 @@ export function gouJianDirectorPrompt(shuRu: AIYinQingShuRu): string {
     '}',
     '',
     '【主动表白】',
-    '只有当好感度已经≥800，而且角色真的自然想表白时，才把"是否主动表白"设成 true。',
+    `只有当好感度已经≥${SHENG_LI_SHI_BAI_PEI_ZHI.biaoBaiHaoGanDuYuZhi}，而且角色真的自然想表白时，才把"是否主动表白"设成 true。`,
+    '是否主动表白只允许两种取值：true=表白，false=不表白，不存在中间态；重复表白意图合并为一次判定。',
     '正常角色表白成功 → 恋爱胜利；渣男渣女表白成功（对方接受）→ 对方被骗，算失败。',
     '对方主动表白不归这个字段管，有单独的判定逻辑。',
   ].join('\n')

@@ -1,0 +1,34 @@
+--- images ---
+img 'baked_color_v2' size=(0, 0) filepath='//baked_color_v2.png' packed=False
+img 'Render Result' size=(0, 0) filepath='' packed=False
+--- materials/nodes ---
+MAT '地面材质' use_nodes=True
+  node BSDF_PRINCIPLED      name='Principled BSDF' -> ['Material Output.Surface']
+  node OUTPUT_MATERIAL      name='Material Output' -> []
+  BSDF.Base Color = (0.2800000011920929, 0.46000000834465027, 0.18000000715255737, 1.0)
+  BSDF.Roughness = 0.5
+  BSDF.Metallic = 0.0
+  BSDF.Normal = (0.0, 0.0, 0.0)
+MAT '手机材质' use_nodes=True
+  node BSDF_PRINCIPLED      name='Principled BSDF' -> ['Material Output.Surface']
+  node OUTPUT_MATERIAL      name='Material Output' -> []
+  BSDF.Base Color = (0.019999999552965164, 0.019999999552965164, 0.02500000037252903, 1.0)
+  BSDF.Roughness = 0.3499999940395355
+  BSDF.Metallic = 0.0
+  BSDF.Normal = (0.0, 0.0, 0.0)
+MAT '最终材质' use_nodes=True
+  node BSDF_PRINCIPLED      name='Principled BSDF' -> ['Material Output.Surface']
+  node OUTPUT_MATERIAL      name='Material Output' -> []
+  node TEX_IMAGE            name='Image Texture' image='baked_color_v2' size=(0, 0) -> ['Principled BSDF.Base Color']
+  BSDF.Base Color <- Image Texture.Color
+  BSDF.Roughness = 0.8500000238418579
+  BSDF.Metallic = 0.0
+  BSDF.Normal = (0.0, 0.0, 0.0)
+loaded 'baked_color_v2' size=(4096, 4096)
+scaled -> (2048, 2048)
+地面材质: linked BakedColor -> Base Color
+最终材质: Base Color already linked from Image Texture
+thumb saved D:\xuanr\Desktop\燃烧之陨我的世界服务端\和我恋爱吧\吴昊阳3D模型qwen3.8flash\证据\FP-01-贴图核对.png
+decimated -> 159718 verts
+glb D:\xuanr\Desktop\燃烧之陨我的世界服务端\和我恋爱吧\吴昊阳3D模型qwen3.8flash\吴昊阳趴姿.glb = 10.5MB
+blend saved

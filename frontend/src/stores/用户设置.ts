@@ -1,11 +1,53 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
-import { huoQuYongHuSheZhi, baoCunLiaoTianBeiJing, baoCunYinSiSheZhi, qingKongPaiWeiShuJu } from '@/api/社交'
+import { ref, computed } from 'vue'
+import { huoQuYongHuSheZhi, baoCunLiaoTianBeiJing, baoCunQiPao, baoCunYinSiSheZhi, qingKongPaiWeiShuJu } from '@/api/社交'
 import { shiHeFaKeJianXing, type KeJianXing } from '@/api/资料'
+import {
+  QI_PAO_ZI_JI_MO_REN,
+  QI_PAO_AI_MO_REN,
+  guiYiHuaQiPao,
+  huoQuQiPaoCSSBianLiang,
+  shiHeFaQiPao,
+  type QiPaoYuShe,
+} from '@/config/气泡主题'
+import { huoQuFanYi } from '@/config/translations'
 
 export const LIAO_TIAN_BEI_JING_XUAN_XIANG = ['moRen', 'miWuSenLin', 'haiYangZhiLan', 'fenSeMengJing', 'yeKongXingHe', 'miSeTianYuan'] as const
 
-export type LiaoTianBeiJing = (typeof LIAO_TIAN_BEI_JING_XUAN_XIANG)[number]
+export type LiaoTianBeiJing = string
+
+export const BEI_JING_URL_ZUI_DA_CHANG_DU = 2000
+
+const MEI_TI_QIAN_MING_LU_JING = /^\/api\/媒体\/[0-9a-f]{64}(\?e=\d{1,12}&s=[0-9a-f]+)?$/
+
+export function shiYuSheBeiJing(zhi: unknown): boolean {
+  return typeof zhi === 'string' && (LIAO_TIAN_BEI_JING_XUAN_XIANG as readonly string[]).includes(zhi)
+}
+
+export function shiZiDingYiBeiJingURL(zhi: unknown): boolean {
+  if (typeof zhi !== 'string') return false
+  const qingLi = zhi.trim()
+  if (!qingLi || qingLi.length > BEI_JING_URL_ZUI_DA_CHANG_DU) return false
+  if (qingLi.startsWith('/')) return MEI_TI_QIAN_MING_LU_JING.test(qingLi)
+  let jieXi: URL
+  try {
+    jieXi = new URL(qingLi)
+  } catch {
+    return false
+  }
+  return jieXi.protocol === 'https:'
+}
+
+export function huoQuBeiJingNeiLianYangShi(beiJing: string): Record<string, string> {
+  if (!shiZiDingYiBeiJingURL(beiJing)) return {}
+  const anQuanURL = beiJing.trim().replace(/["\\\n\r]/g, '')
+  return {
+    backgroundImage: `url("${anQuanURL}")`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+  }
+}
 
 export const 使用用户设置仓库 = defineStore('用户设置', () => {
   const uid = ref('')
@@ -14,7 +56,9 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
   const qianMing = ref<string | null>(null)
   const qianMingKeJianXing = ref<KeJianXing>('gong_kai')
   const qianMingBaiMingDan = ref<string[]>([])
-  const liaoTianBeiJing = ref<LiaoTianBeiJing>('moRen')
+  const liaoTianBeiJing = ref<string>('moRen')
+  const qiPaoZiJi = ref<QiPaoYuShe>(QI_PAO_ZI_JI_MO_REN)
+  const qiPaoAI = ref<QiPaoYuShe>(QI_PAO_AI_MO_REN)
   const gongKaiZhangHao = ref(true)
   const gongKaiShouJiHao = ref(false)
   const gongKaiYouXiang = ref(false)
@@ -43,9 +87,11 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
         qianMingKeJianXing.value = sheZhi.qian_ming_ke_jian_xing
       }
       qianMingBaiMingDan.value = Array.isArray(sheZhi.qian_ming_bai_ming_dan) ? sheZhi.qian_ming_bai_ming_dan : []
-      if ((LIAO_TIAN_BEI_JING_XUAN_XIANG as readonly string[]).includes(sheZhi.liao_tian_bei_jing)) {
-        liaoTianBeiJing.value = sheZhi.liao_tian_bei_jing as LiaoTianBeiJing
+      if (typeof sheZhi.liao_tian_bei_jing === 'string' && (shiYuSheBeiJing(sheZhi.liao_tian_bei_jing) || shiZiDingYiBeiJingURL(sheZhi.liao_tian_bei_jing))) {
+        liaoTianBeiJing.value = sheZhi.liao_tian_bei_jing
       }
+      qiPaoZiJi.value = guiYiHuaQiPao(sheZhi.qi_pao_zi_ji, QI_PAO_ZI_JI_MO_REN)
+      qiPaoAI.value = guiYiHuaQiPao(sheZhi.qi_pao_ai, QI_PAO_AI_MO_REN)
       gongKaiZhangHao.value = sheZhi.gong_kai_zhang_hao
       gongKaiShouJiHao.value = sheZhi.gong_kai_shou_ji_hao
       gongKaiYouXiang.value = sheZhi.gong_kai_you_xiang
@@ -57,7 +103,7 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     }
   }
 
-  async function qieHuanBeiJing(beiJing: LiaoTianBeiJing): Promise<void> {
+  async function qieHuanBeiJing(beiJing: string): Promise<void> {
     liaoTianBeiJing.value = beiJing
     try {
       await baoCunLiaoTianBeiJing(beiJing)
@@ -65,6 +111,31 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
       /* 离线时仅本地生效 */
     }
   }
+
+  async function baoCunZiDingYiBeiJing(beiJingURL: string): Promise<void> {
+    if (!shiZiDingYiBeiJingURL(beiJingURL)) throw new Error(huoQuFanYi('tongYong', 'canShuBuHeFa'))
+    await qieHuanBeiJing(beiJingURL.trim())
+  }
+
+  async function qingChuZiDingYiBeiJing(): Promise<void> {
+    await qieHuanBeiJing('moRen')
+  }
+
+  async function qieHuanQiPao(buWei: 'ziJi' | 'ai', yuShe: QiPaoYuShe): Promise<void> {
+    if (!shiHeFaQiPao(yuShe)) throw new Error(huoQuFanYi('tongYong', 'canShuBuHeFa'))
+    if (buWei === 'ziJi') qiPaoZiJi.value = yuShe
+    else qiPaoAI.value = yuShe
+    try {
+      await baoCunQiPao(buWei === 'ziJi' ? { ziJi: yuShe } : { ai: yuShe })
+    } catch {
+      /* 离线时仅本地生效 */
+    }
+  }
+
+  const shiYuShe = computed(() => shiYuSheBeiJing(liaoTianBeiJing.value))
+  const shiZiDingYi = computed(() => shiZiDingYiBeiJingURL(liaoTianBeiJing.value))
+  const beiJingNeiLianYangShi = computed(() => huoQuBeiJingNeiLianYangShi(liaoTianBeiJing.value))
+  const ziJiQiPaoCSSBianLiang = computed(() => huoQuQiPaoCSSBianLiang(qiPaoZiJi.value, qiPaoAI.value))
 
   async function baoCunYinSi(canShu: { gongKaiZhangHao?: boolean; gongKaiShouJiHao?: boolean; gongKaiYouXiang?: boolean }): Promise<void> {
     if (canShu.gongKaiZhangHao !== undefined) gongKaiZhangHao.value = canShu.gongKaiZhangHao
@@ -81,5 +152,5 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     await qingKongPaiWeiShuJu()
   }
 
-  return { uid, shouJiHao, touXiang, qianMing, qianMingKeJianXing, qianMingBaiMingDan, liaoTianBeiJing, gongKaiZhangHao, gongKaiShouJiHao, gongKaiYouXiang, bangDingYouXiang, yiJiaZai, jiaZai, qieHuanBeiJing, baoCunYinSi, qingKongPaiWei }
+  return { uid, shouJiHao, touXiang, qianMing, qianMingKeJianXing, qianMingBaiMingDan, liaoTianBeiJing, qiPaoZiJi, qiPaoAI, ziJiQiPaoCSSBianLiang, shiYuShe, shiZiDingYi, beiJingNeiLianYangShi, gongKaiZhangHao, gongKaiShouJiHao, gongKaiYouXiang, bangDingYouXiang, yiJiaZai, jiaZai, qieHuanBeiJing, baoCunZiDingYiBeiJing, qingChuZiDingYiBeiJing, qieHuanQiPao, baoCunYinSi, qingKongPaiWei }
 })

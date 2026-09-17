@@ -9,11 +9,9 @@ export function 验证手机号(值: unknown): 值 is string {
 
 export function 验证用户名(值: unknown): 值 is string {
   if (typeof 值 !== 'string') return false
-  const 清理 = 值.trim()
-  if (清理.length < peiZhi.yongHuMing.zuiXiao || 清理.length > peiZhi.yongHuMing.zuiDa) {
-    return false
-  }
-  return !peiZhi.yongHuMing.teShuZiFu.test(清理)
+  // YH-021 白名单优先：仅中文/字母/数字/下划线/中划线，黑名单正则同步保留作纵深
+  if (!peiZhi.yongHuMing.baiMingDan.test(值.trim())) return false
+  return !peiZhi.yongHuMing.teShuZiFu.test(值.trim())
 }
 
 export function 验证性别(值: unknown): 值 is string {

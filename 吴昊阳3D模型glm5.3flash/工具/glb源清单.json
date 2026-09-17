@@ -1,0 +1,56 @@
+{
+ "文件": "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\吴昊阳3D模型glm5.3flash\\吴昊阳模型v2.glb",
+ "文件大小字节": 57084044,
+ "glTF版本": 2,
+ "声明总长": 57084044,
+ "asset": {
+  "generator": "Khronos glTF Blender I/O v5.3.19",
+  "version": "2.0"
+ },
+ "extensionsUsed": [],
+ "meshes": [
+  {
+   "name": "node_0",
+   "faces": 1476748
+  }
+ ],
+ "实际总面数": 1476748,
+ "materials": [
+  {
+   "name": "最终材质",
+   "baseColorTexture": {
+    "texture": 0,
+    "image": "baked_color_v2",
+    "imageIndex": 0
+   },
+   "baseColorFactor": null,
+   "normalTexture": false,
+   "metallicRoughnessTexture": false
+  }
+ ],
+ "images": [
+  {
+   "index": 0,
+   "name": "baked_color_v2",
+   "mimeType": "image/png",
+   "bufferView": 4,
+   "bytes": 10239912,
+   "png头有效": true,
+   "尺寸": [
+    4096,
+    4096
+   ]
+  }
+ ],
+ "textures数": 1,
+ "nodes数": 1,
+ "提取": {
+  "来源image": "baked_color_v2",
+  "提取路径": "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\吴昊阳3D模型glm5.3flash\\工具\\提取贴图\\baked_color_v2.png",
+  "字节数": 10239912,
+  "尺寸": [
+   4096,
+   4096
+  ]
+ }
+}

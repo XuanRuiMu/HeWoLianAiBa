@@ -1,0 +1,22 @@
+material='最终材质' node_count=3
+  NODE 'Principled BSDF' type=BSDF_PRINCIPLED label=
+  NODE 'Material Output' type=OUTPUT_MATERIAL label=
+  NODE 'Image Texture' type=TEX_IMAGE label=
+     image='baked_color_v2' size=(0, 0) has_data=False source=FILE filepath_raw='//baked_color_v2.png' users=1
+  LINK Principled BSDF.BSDF -> Material Output.Surface
+  LINK Image Texture.Color -> Principled BSDF.Base Color
+--- all images in file ---
+IMG 'baked_color_v2' size=(0, 0) has_data=False source=FILE filepath='//baked_color_v2.png' packed=False colorspace=sRGB
+IMG 'ref_inp_back.png' size=(0, 0) has_data=False source=FILE filepath='//ref_inp_back.png' packed=False colorspace=sRGB
+IMG 'ref_inp_front.png' size=(0, 0) has_data=False source=FILE filepath='//ref_inp_front.png' packed=False colorspace=sRGB
+IMG 'ref_inp_left.png' size=(0, 0) has_data=False source=FILE filepath='//ref_inp_left.png' packed=False colorspace=sRGB
+IMG 'ref_inp_right.png' size=(0, 0) has_data=False source=FILE filepath='//ref_inp_right.png' packed=False colorspace=sRGB
+IMG 'texture_pbr_20250901' size=(4096, 4096) has_data=True source=FILE filepath='' packed=True colorspace=sRGB
+IMG 'texture_pbr_20250901_metallic-texture_pbr_20250901_roughness' size=(4096, 4096) has_data=True source=FILE filepath='' packed=True colorspace=Non-Color
+IMG 'texture_pbr_20250901_normal' size=(4096, 4096) has_data=True source=FILE filepath='' packed=True colorspace=Non-Color
+head verts=125080 y_mean=0.0069
+torso y range=[-0.0793,0.0946] mean=-0.0004
+--- after glb import ---
+OBJ MESH 'lo'
+GLBIMG 'baked_color_v2' size=(4096, 4096) has_data=True source=FILE
+   saved -> D:\xuanr\Desktop\燃烧之陨我的世界服务端\和我恋爱吧\吴昊阳3D模型qwen3.8flash\证据\_tex_baked_color_v2.png

@@ -24,12 +24,24 @@ describe('视频理解', () => {
     const jieGuo = await jieXiShiPin(sha)
     expect(jieGuo.huaMianMiaoShu).toBeNull()
     expect(jieGuo.zhuanXieWenBen).toBeNull()
+    expect(typeof jieGuo.jiangJiZhaiYao).toBe('string')
     expect(await duQuJieXiHuanCun(sha)).toEqual(jieGuo)
   })
 
   it('非法哈希直接返回空', async () => {
-    expect(await huoQuHuoJieXiShiPinMiaoShu(null)).toEqual({ huaMianMiaoShu: null, zhuanXieWenBen: null })
-    expect(await huoQuHuoJieXiShiPinMiaoShu('bu-he-fa')).toEqual({ huaMianMiaoShu: null, zhuanXieWenBen: null })
+    const kong1 = await huoQuHuoJieXiShiPinMiaoShu(null)
+    const kong2 = await huoQuHuoJieXiShiPinMiaoShu('bu-he-fa')
+    for (const kong of [kong1, kong2]) {
+      expect(kong.huaMianMiaoShu).toBeNull()
+      expect(kong.zhuanXieWenBen).toBeNull()
+      expect(typeof kong.jiangJiZhaiYao).toBe('string')
+    }
+  })
+
+  it('FP-05 YH-046 降级文本带事件摘要：无链路时摘要非空可入上下文', async () => {
+    const sha = suiJiSha()
+    const jieGuo = await jieXiShiPin(sha)
+    expect(jieGuo.jiangJiZhaiYao).toContain('降级')
   })
 
   it('缓存命中不再执行解析', async () => {

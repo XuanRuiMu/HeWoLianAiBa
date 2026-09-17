@@ -1,0 +1,11 @@
+﻿base_model_v2_verify.json
+blender_render.log
+blender_version.txt
+bones_report.json
+candidates_stats.json
+download_candidates.ps1
+inspect_bones.py
+inspect_console.log
+render_candidates.py
+verify_base_v2.log
+verify_base_v2.py

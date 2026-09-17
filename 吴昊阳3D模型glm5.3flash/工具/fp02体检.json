@@ -1,0 +1,64 @@
+{
+ "体检对象": "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\吴昊阳3D模型glm5.3flash\\成品\\吴昊阳趴姿优化.glb",
+ "体积字节": 6439664,
+ "体积MB": 6.14,
+ "SHA256": "2a0abec567fc7907f1c11f7dd0bca191a9a5655629f6985d859a899728cadc4c",
+ "glTF版本": 2,
+ "asset": {
+  "generator": "Khronos glTF Blender I/O v5.3.19",
+  "version": "2.0"
+ },
+ "extensionsUsed": [
+  "KHR_draco_mesh_compression"
+ ],
+ "Draco图元数": 1,
+ "meshes": [
+  {
+   "name": "node_0",
+   "faces": 250000
+  }
+ ],
+ "实际总面数": 250000,
+ "images": [
+  {
+   "index": 0,
+   "name": "baked_color_v2",
+   "mimeType": "image/png",
+   "bufferView": 1,
+   "bytes": 5044910,
+   "PNG头有效": true,
+   "尺寸": [
+    2048,
+    2048
+   ]
+  }
+ ],
+ "materials": [
+  {
+   "name": "最终材质",
+   "baseColor绑定": {
+    "texture": 0,
+    "image": "baked_color_v2"
+   },
+   "normalTexture": false
+  }
+ ],
+ "textures数": 1,
+ "nodes数": 1,
+ "scenes数": 1,
+ "对照_源glb": {
+  "文件": "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\吴昊阳3D模型glm5.3flash\\吴昊阳模型v2.glb",
+  "面数": 1476748
+ },
+ "减面比例": "83.07%",
+ "验收": {
+  "①Blender后台导出无错误(FP02_RESULT: OK)": true,
+  "②体积≤20MB": true,
+  "②目标体积≤15MB": true,
+  "③面数15万~30万": true,
+  "④Draco压缩生效": true,
+  "⑤贴图内嵌且PNG可用": true,
+  "⑤材质绑定baseColor贴图": true
+ },
+ "结论": "PASS"
+}

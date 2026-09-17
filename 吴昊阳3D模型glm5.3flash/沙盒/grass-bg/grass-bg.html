@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <title>草地背景</title>
+    <link rel="icon" href="data:,">
+    <link rel="preload" href="./fonts/orbitron.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/grass-bg/wuhaoyang-2d.png" as="image">
+    <link rel="stylesheet" crossorigin href="./references/-assets-index-DF8svE4a.css">
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #0a0a12;
+        }
+        /* 草地背景页：只显示 canvas 草地，隐藏一切原型 UI 叠层 */
+        body.simplified nav,
+        body.simplified .viewpoints-progress,
+        body.simplified .sound-icon,
+        body.simplified #home .look-around-hint,
+        body.simplified #home .explore-hint,
+        body.simplified #about,
+        body.simplified #contact,
+        body.simplified .update,
+        body.simplified #point-template,
+        body.simplified .loading,
+        body.simplified #dayNightSwitch {
+            display: none !important;
+        }
+        /* 默认即隐藏所有非 canvas 元素（不依赖 .simplified 类） */
+        nav, .viewpoints-progress, .sound-icon,
+        #home .look-around-hint, #home .explore-hint,
+        #about, #contact, .update, #point-template, #dayNightSwitch {
+            display: none !important;
+        }
+        /* bundle 点击 Start 后给 .loading 加 .loaded / .hidden，隐藏它以免遮挡 canvas */
+        .loading.loaded, .loading.hidden { display: none !important; }
+        /* 静默加载：隐藏圆形进度动画与百分比文字，仅保留不透明遮罩覆盖画布，
+           避免加载期间透出夜景/紫色的瞬时帧（背景应无声无息地备好）。 */
+        .progress-percentage, .loading-text { visibility: hidden !important; opacity: 0 !important; }
+        /* loading 保持原生可见与可点击；bundle 进入后会自行隐藏它。背景页在 iframe 中，
+           真实项目主页的 UI 会覆盖其上，因此 Loading 闪光只会在页面加载最初 1-2s 透出。 */
+        /* canvas 铺满 */
+        canvas.webgl {
+            position: fixed;
+            inset: 0;
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+    </style>
+
+    <script>
+        (function () {
+            function duCanShu(ming) {
+                try {
+                    var m = location.search.match(new RegExp('[?&]' + ming + '=([^&]*)'));
+                    return m ? decodeURIComponent(m[1]) : '';
+                } catch (e) { return ''; }
+            }
+            var banBen = duCanShu('v') || '1.1.0';
+            var fenXiQiYong = duCanShu('fenXi') === '1';
+            var xiangSuBiFengDing = parseFloat(duCanShu('xiangSuBi')) || 1.25;
+            var caiYangJianGeMiao = parseInt(duCanShu('caiYangMiao'), 10) || 60;
+            var zhenJianGeHaoMiao = parseInt(duCanShu('zhenJianGe'), 10) || 33;
+            var chongShiShangXian = parseInt(duCanShu('chongShi'), 10) || 5;
+            var pingBi = ['ingest.analytics.invantis.tech'];
+            window.__caoDiPeiZhi = { banBen: banBen, fenXiQiYong: fenXiQiYong, xiangSuBiFengDing: xiangSuBiFengDing, pingBiYuMing: pingBi, zuiDaChongShi: chongShiShangXian, zuiXiaoZhenJianGeHaoMiao: zhenJianGeHaoMiao, fenXiCaiYangZuiXiaoJianGeMiao: caiYangJianGeMiao };
+            function shiFouDiaoShi() { try { return /[?&]debug=1/.test(location.search); } catch (e) { return false; } }
+            try {
+                var yuanMiaoShu = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio') || Object.getOwnPropertyDescriptor(Window.prototype, 'devicePixelRatio');
+                var yuanQu = (yuanMiaoShu && yuanMiaoShu.get) ? yuanMiaoShu.get : null;
+                var yuanZhiDPR = window.devicePixelRatio || 1;
+                Object.defineProperty(window, 'devicePixelRatio', { configurable: true, get: function () {
+                    var shiJi = yuanQu ? yuanQu.call(window) : yuanZhiDPR;
+                    var ding = (window.__caoDiPeiZhi && window.__caoDiPeiZhi.xiangSuBiFengDing) || 1.25;
+                    return Math.min(shiJi || 1, ding);
+                } });
+            } catch (e) {}
+            window.__errors = [];
+            var shangCiYunXu = 0;
+            function jiLu(kind, wen) {
+                try {
+                    if (window.__errors.length >= 50) window.__errors.shift();
+                    window.__errors.push(kind + ': ' + String(wen).slice(0, 200));
+                } catch (e) {}
+            }
+            var yuanError = console.error;
+            var yuanTrace = console.trace ? console.trace.bind(console) : null;
+            var yuanWarn = console.warn ? console.warn.bind(console) : null;
+            var yuanDebug = console.debug ? console.debug.bind(console) : null;
+            var yuanInfo = console.info ? console.info.bind(console) : null;
+            var yuanLog = console.log ? console.log.bind(console) : null;
+            function shiYinPinHuoZhaoSeQiZaoYin(wen) {
+                try {
+                    var s = String(wen);
+                    if (s.indexOf('/grass-bg/audio/') >= 0) return true;
+                    if (s.indexOf('trying to load resource sound') >= 0) return true;
+                    if (s.indexOf('Core.Resources') >= 0 && s.indexOf('sound') >= 0) return true;
+                    if (s.indexOf('X4122') >= 0 || s.indexOf('X4008') >= 0) return true;
+                    if (s.indexOf('cannot be represented accurately') >= 0) return true;
+                    if (s.indexOf('floating point division by zero') >= 0) return true;
+                    if (s.indexOf('THREE.WebGLProgram') >= 0) return true;
+                    /* 引擎遮挡剔除 PBO 回读的 GPU 驱动层性能提示（testAndStartReadback 调用栈归因）：
+                       Chromium 侧呈 [WebGL-0x…]GL Driver Message / GPU stall due to ReadPixels，
+                       Firefox 侧呈 performance warning: READ-usage …。驱动层直接输出，
+                       页面 console 补丁收不到也屏蔽不掉；加载期有限次、随后不再重复，无害。
+                       此处过滤的是经 console.* 发出的同名噪音；驱动层原文不在 bundle 内
+                       （全库 grep READ-usage 文案零命中），不要再往过滤器里加词。 */
+                    if (s.indexOf('READ-usage buffer') >= 0) return true;
+                    if (s.indexOf('testAndStartReadback') >= 0) return true;
+                    if (s.indexOf('shadow copy') >= 0) return true;
+                    if (s.indexOf('GPU stall') >= 0) return true;
+                    if (s.indexOf('ReadPixels') >= 0) return true;
+                    if (s.indexOf('GL Driver Message') >= 0) return true;
+                    if (s.indexOf('GL_INVALID_ENUM') >= 0) return true;
+                    if (s.indexOf('performance warning') >= 0 && s.indexOf('.js') >= 0) return true;
+                } catch (e) {}
+                return false;
+            }
+            console.error = function () {
+                try {
+                    var wen = '';
+                    for (var i = 0; i < arguments.length; i++) {
+                        var a = arguments[i];
+                        wen += (typeof a === 'string' ? a : (a && a.message) ? a.message : JSON.stringify(a).slice(0, 120)) + ' | ';
+                    }
+                    jiLu('error', wen);
+                    if (shiYinPinHuoZhaoSeQiZaoYin(wen)) return;
+                } catch (e) {}
+                try { if (shiFouDiaoShi()) yuanError.apply(console, arguments); } catch (e) {}
+            };
+            if (yuanTrace) {
+                console.trace = function () {
+                    try {
+                        var wen = '';
+                        for (var i = 0; i < arguments.length; i++) {
+                            var a = arguments[i];
+                            wen += (typeof a === 'string' ? a : (a && a.message) ? a.message : JSON.stringify(a).slice(0, 120)) + ' | ';
+                        }
+                        jiLu('trace', wen);
+                        if (shiYinPinHuoZhaoSeQiZaoYin(wen)) return;
+                    } catch (e) {}
+                    try { if (shiFouDiaoShi()) yuanTrace.apply(console, arguments); } catch (e) {}
+                };
+            }
+            if (yuanWarn) {
+                console.warn = function () {
+                    try {
+                        var wen = '';
+                        for (var i = 0; i < arguments.length; i++) {
+                            var a = arguments[i];
+                            wen += (typeof a === 'string' ? a : (a && a.message) ? a.message : JSON.stringify(a).slice(0, 120)) + ' | ';
+                        }
+                        jiLu('warn', wen);
+                        if (shiYinPinHuoZhaoSeQiZaoYin(wen)) return;
+                    } catch (e) {}
+                    try { if (shiFouDiaoShi()) yuanWarn.apply(console, arguments); } catch (e) {}
+                };
+            }
+            /* debug/info/log 同样收敛：bundle 可能经任意方法输出，全部先进内存，
+               非 debug 不落控制台（与 error/trace/warn 同策略，避免绕行刷屏）。 */
+            function fengZhuangRizhi(fangFa, yuanFangFa, leiBie) {
+                try {
+                    console[fangFa] = function () {
+                        try {
+                            var wen = '';
+                            for (var i = 0; i < arguments.length; i++) {
+                                var a = arguments[i];
+                                wen += (typeof a === 'string' ? a : (a && a.message) ? a.message : JSON.stringify(a).slice(0, 120)) + ' | ';
+                            }
+                            jiLu(leiBie, wen);
+                            if (shiYinPinHuoZhaoSeQiZaoYin(wen)) return;
+                        } catch (e) {}
+                        try { if (shiFouDiaoShi() && yuanFangFa) yuanFangFa.apply(console, arguments); } catch (e) {}
+                    };
+                } catch (e) {}
+            }
+            if (yuanDebug) fengZhuangRizhi('debug', yuanDebug, 'debug');
+            if (yuanInfo) fengZhuangRizhi('info', yuanInfo, 'info');
+            if (yuanLog) fengZhuangRizhi('log', yuanLog, 'log');
+            window.addEventListener('error', function (e) { jiLu('uncaught', (e.message || '') + ' @' + (e.filename || '') + ':' + e.lineno); });
+            function yingPingBi(url) {
+                try {
+                    var wen = String(url);
+                    for (var i = 0; i < pingBi.length; i++) {
+                        if (wen.indexOf(pingBi[i]) >= 0) return true;
+                    }
+                } catch (e) {}
+                return false;
+            }
+            function fenXiKeFa() {
+                if (!fenXiQiYong) return false;
+                var jianGe = ((window.__caoDiPeiZhi && window.__caoDiPeiZhi.fenXiCaiYangZuiXiaoJianGeMiao) || 60) * 1000;
+                var xianZai = Date.now();
+                if (xianZai - shangCiYunXu < jianGe) return false;
+                shangCiYunXu = xianZai;
+                return true;
+            }
+            var yuanFetch = window.fetch;
+            window.fetch = function (input, init) {
+                var u = (input && input.url) ? input.url : input;
+                if (yingPingBi(u) && !fenXiKeFa()) return Promise.resolve(new Response(null, { status: 204 }));
+                return yuanFetch.apply(this, arguments);
+            };
+            var yuanOpen = XMLHttpRequest.prototype.open;
+            var yuanSend = XMLHttpRequest.prototype.send;
+            XMLHttpRequest.prototype.open = function (method, url) {
+                this._caoDiPingBi = yingPingBi(url) && !fenXiKeFa();
+                return yuanOpen.apply(this, arguments);
+            };
+            XMLHttpRequest.prototype.send = function () {
+                if (this._caoDiPingBi) {
+                    try { yuanOpen.call(this, 'GET', 'data:text/plain,', true); } catch (e) {}
+                    return yuanSend.apply(this, arguments);
+                }
+                return yuanSend.apply(this, arguments);
+            };
+            try {
+                if (navigator.sendBeacon) {
+                    var yuanBeacon = navigator.sendBeacon.bind(navigator);
+                    navigator.sendBeacon = function (url) {
+                        if (yingPingBi(url) && !fenXiKeFa()) return true;
+                        return yuanBeacon.apply(navigator, arguments);
+                    };
+                }
+            } catch (e) {}
+            function qingChuJieDian(gen) {
+                try {
+                    var src = gen.src || gen.href || '';
+                    if (src && yingPingBi(src) && gen.parentNode) gen.parentNode.removeChild(gen);
+                } catch (e) {}
+            }
+            try {
+                new MutationObserver(function (bianGeng) {
+                    for (var i = 0; i < bianGeng.length; i++) {
+                        var tianJia = bianGeng[i].addedNodes;
+                        for (var j = 0; j < tianJia.length; j++) {
+                            var gen = tianJia[j];
+                            if (gen && gen.tagName && (gen.tagName === 'SCRIPT' || gen.tagName === 'IMG' || gen.tagName === 'LINK')) qingChuJieDian(gen);
+                        }
+                    }
+                }).observe(document.documentElement, { childList: true, subtree: true });
+            } catch (e) {}
+        })();
+    </script>
+    <script>
+        (function () {
+            var tiHuan = [
+                ['uResolution.x/uResolution.y', 'uResolution.x/max(uResolution.y,1.0)'],
+                ['uThickness/uResolution', 'uThickness/max(uResolution,vec2(1.0))'],
+                ['1.0/uResolution', '1.0/max(uResolution,vec2(1.0))'],
+                ['gl_FragCoord.xy/uResolution.xy', 'gl_FragCoord.xy/max(uResolution.xy,vec2(1.0))'],
+                ['toLightVec/dist', 'toLightVec/max(dist,1e-4)'],
+                ['uFireflyGlow/distanceToCenter', 'uFireflyGlow/max(distanceToCenter,1e-4)']
+            ];
+            function xiuFu(yuanMa) {
+                if (typeof yuanMa !== 'string' || yuanMa.indexOf('void main') === -1) return yuanMa;
+                var jieGuo = yuanMa;
+                for (var i = 0; i < tiHuan.length; i++) {
+                    var cong = tiHuan[i][0], dao = tiHuan[i][1];
+                    if (jieGuo.indexOf(cong) >= 0) jieGuo = jieGuo.split(cong).join(dao);
+                }
+                if (jieGuo.indexOf('precision') === -1) jieGuo = 'precision highp float;\n' + jieGuo;
+                return jieGuo;
+            }
+            function buDing(leiXing) {
+                try {
+                    var yuan = leiXing.prototype.shaderSource;
+                    if (!yuan || yuan.__caoDiBuDing) return;
+                    var xin = function (shader, yuanMa) {
+                        return yuan.call(this, shader, xiuFu(yuanMa));
+                    };
+                    xin.__caoDiBuDing = true;
+                    leiXing.prototype.shaderSource = xin;
+                } catch (e) {}
+            }
+            try { buDing(WebGLRenderingContext); } catch (e) {}
+            try { if (window.WebGL2RenderingContext) buDing(window.WebGL2RenderingContext); } catch (e) {}
+            window.__caoDiXiuFuZhaoSeQi = xiuFu;
+        })();
+    </script>
+
+        // 音频根上禁用（真实背景应保持安静；且未复制 17MB 音频资源）
+        (function () {
+            function killSource(src) {
+                try {
+                    src.connect = function () { return src; };
+                    src.start = function () {};
+                    src.stop = function () {};
+                    src.disconnect = function () {};
+                } catch (e) {}
+                return src;
+            }
+            function patchAC(AC) {
+                if (!AC) return;
+                try {
+                    var cbs = AC.prototype.createBufferSource;
+                    if (cbs) AC.prototype.createBufferSource = function () { return killSource(cbs.call(this)); };
+                    var co = AC.prototype.createOscillator;
+                    if (co) AC.prototype.createOscillator = function () { return killSource(co.call(this)); };
+                    var cms = AC.prototype.createMediaElementSource;
+                    if (cms) AC.prototype.createMediaElementSource = function () { return killSource(cms.call(this)); };
+                } catch (e) {}
+            }
+            patchAC(window.AudioContext);
+            patchAC(window.webkitAudioContext);
+            try {
+                var M = window.HTMLMediaElement && window.HTMLMediaElement.prototype;
+                if (M) {
+                    Object.defineProperty(M, 'volume', { get: function () { return 0; }, set: function () {}, configurable: true });
+                    var op = M.play; M.play = function () { return (op ? op.call(this) : Promise.resolve()); };
+                }
+            } catch (e) {}
+            try { localStorage.setItem('audio:muted', '1'); localStorage.setItem('audio:volume', '0'); } catch (e) {}
+        })();
+
+        // 未复制音频资源：拦截 /grass-bg/audio/* 请求，返回一段静音 WAV，
+        // 避免 404 与 decodeAudioData 报错（不影响草地渲染）
+        (function () {
+            function silentWav() {
+                var sr = 8000, dur = 0.05, n = Math.floor(sr * dur);
+                var buf = new ArrayBuffer(44 + n * 2), dv = new DataView(buf);
+                function ws(o, s) { for (var i = 0; i < s.length; i++) dv.setUint8(o + i, s.charCodeAt(i)); }
+                ws(0, 'RIFF'); dv.setUint32(4, 36 + n * 2, true); ws(8, 'WAVE'); ws(12, 'fmt ');
+                dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+                dv.setUint32(24, sr, true); dv.setUint32(28, sr * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true);
+                ws(36, 'data'); dv.setUint32(40, n * 2, true);
+                return buf;
+            }
+            var WAV = silentWav();
+            function isAudio(u) { try { return String(u).indexOf('/grass-bg/audio/') >= 0; } catch (e) { return false; } }
+            var of = window.fetch;
+            window.fetch = function (input, init) {
+                var u = (input && input.url) ? input.url : input;
+                if (isAudio(u)) return Promise.resolve(new Response(WAV, { status: 200, headers: { 'Content-Type': 'audio/wav' } }));
+                return of.apply(this, arguments);
+            };
+            var oOpen = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function (m, u) { this.__a = isAudio(u); return oOpen.apply(this, arguments); };
+            var oSend = XMLHttpRequest.prototype.send;
+            XMLHttpRequest.prototype.send = function () {
+                if (this.__a) {
+                    Object.defineProperty(this, 'response', { value: WAV });
+                    Object.defineProperty(this, 'responseText', { value: '' });
+                    this.status = 200; this.readyState = 4;
+                    if (this.onreadystatechange) this.onreadystatechange();
+                    if (this.onload) this.onload();
+                    if (this.onloadend) this.onloadend();
+                    return;
+                }
+                if (this._caoDiPingBi) {
+                    try { oOpen.call(this, 'GET', 'data:text/plain,', true); } catch (e) {}
+                    return oSend.apply(this, arguments);
+                }
+                return oSend.apply(this, arguments);
+            };
+        })();
+    </script>
+</head>
+<body data-section="home">
+    <canvas class="webgl"></canvas>
+    <div id="root">
+        <nav class="hidden">
+            <a class="glass-effect active" href="#home">Explore</a>
+            <a class="glass-effect" href="#about">About</a>
+            <a class="glass-effect" href="#contact">Contact</a>
+        </nav>
+        <div class="viewpoints-progress glass-effect hidden">
+            <div class="circle-container visited">
+                <div class="ring"></div>
+                <div class="circle"></div>
+            </div>
+            <span></span>
+        </div>
+        <!-- 昼夜开关：保留在 DOM 供 bundle 绑定，但隐藏（默认白天静态，不显示切换按钮） -->
+        <div class="switch" id="dayNightSwitch" style="display:none">
+            <div class="stars">
+                <div class="star"></div><div class="star"></div><div class="star"></div>
+                <div class="star"></div><div class="star"></div>
+            </div>
+            <div class="clouds"><div class="cloud"></div><div class="cloud"></div></div>
+            <div class="switch-handle">
+                <svg class="sun-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="6.5" fill="#FFA500"/><path d="M12 3.5V1" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/></svg>
+                <svg class="moon-icon" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="#C4C4C4"/></svg>
+            </div>
+        </div>
+        <div class="sound-icon glass-effect hidden" data-sound="on"><span></span><span></span><span></span></div>
+        <section id="home">
+            <div class="look-around-hint"><span class="orbit"></span><span class="glass-effect">Touch &amp; move to look around</span></div>
+            <div class="explore-hint"><svg></svg><span class="glass-effect">Tap here to explore</span></div>
+        </section>
+        <section id="about" class="hidden"><div class="about-container glass-effect"><span class="close">+</span><h1>Jordan Breton</h1></div></section>
+        <!-- 注意：下面 .swarm-switch / .social-media 必须保留在 DOM 中（即使被 CSS 隐藏）：
+             引擎的社交媒体/群岛控制器（NU 类）在 init 时 document.querySelector(".swarm-switch .left")
+             等并立即 addEventListener，缺失会抛「Cannot read properties of null (reading 'addEventListener')」，
+             进而中断体验初始化。原页 主页-真实草地.html 本就含此结构；精简背景页漏掉导致崩溃。
+             #contact 已被 CSS display:none!important 隐藏，故不可见、不影响背景。 -->
+        <section id="contact" class="hidden">
+            <div class="header">
+                <h1>Your brand deserves to stand out!</h1>
+                <p>Let's get in touch to make it happen.</p>
+            </div>
+            <div class="container">
+                <div class="swarm-switch">
+                    <button class="left">&#8249;</button>
+                    <span class="empty"></span>
+                    <button class="right">&#8250;</button>
+                </div>
+                <div class="social-media">
+                    <button class="left-arrow">
+                        <span>&#8636;</span>
+                        <span>&#8637;</span>
+                    </button>
+                    <ul>
+                        <li class="active">
+                            <a class="glass-effect" data-social-media="default" href="mailto:contact@jordan-breton.com">contact@jordan-breton.com</a>
+                        </li>
+                        <li>
+                            <a class="glass-effect" data-social-media="linkedin" href="https://www.linkedin.com/in/jordan-breton/" target="_blank" rel="noopener noreferrer">Linkedin</a>
+                        </li>
+                        <li>
+                            <a class="glass-effect" data-social-media="x" href="https://x.com/JordanBretonDev" target="_blank" rel="noopener noreferrer">X</a>
+                        </li>
+                        <li>
+                            <a class="glass-effect" data-social-media="youtube" href="https://youtube.com/@JordanBretonDev" target="_blank" rel="noopener noreferrer">Youtube</a>
+                        </li>
+                    </ul>
+                    <button class="right-arrow">
+                        <span>&#8640;</span>
+                        <span>&#8641;</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+    <div class="loading">
+        <div class="progress-percentage">
+            <div class="circle-container animated">
+                <div class="ring"></div>
+                <div class="circle"><span>0%</span><button>Start</button></div>
+            </div>
+        </div>
+        <div class="loading-text">Initializing...</div>
+    </div>
+    <template id="point-template">
+        <div class="circle-container"><div class="ring"></div><div class="circle"></div></div>
+    </template>
+
+    <script>
+        // 加载暮紫草场 purple 副本（仅改草色 config 一处的独立 JS）
+        (function () {
+            var s = document.createElement('script');
+            s.type = 'module';
+            s.crossOrigin = 'anonymous';
+            s.src = './references/-assets-index-G3tB3Owe-purple.patched.js?v=' + ((window.__caoDiPeiZhi && window.__caoDiPeiZhi.banBen) || '1.1.0');
+            document.head.appendChild(s);
+        })();
+    </script>
+    <script>
+        /* 真正删除（从 DOM 移除，而非隐藏）：设置齿轮/面板、声音按钮、360°游览、视角热点。
+           以上由 bundle 在事件后创建，用 MutationObserver 出现即删。跳过 .loading 内的 Start 按钮。 */
+        (function () {
+            // 注意：.sound-icon 不能从 DOM 删除——引擎的声音控制器（RU 类）在 init 时
+            // 会 document.querySelector(".sound-icon") 并立即 setAttribute / addEventListener，
+            // 删掉它会导致 init 抛「Cannot read properties of null (reading 'setAttribute')」，
+            // 进而中断整个体验初始化。该元素已被 CSS display:none!important 隐藏，留 DOM 即可。
+            // 注意：.update 是原始作品集站点的「Portfolio update!」庆祝式浮框。
+            // 仅用 CSS display:none!important 隐藏不够——bundle 加载后可注入后发/更高优先级的
+            // .update 样式覆盖之，导致右上角间歇弹出。故将其纳入「出现即销毁」清扫，从 DOM 层面
+            // 彻底消除；其静态节点已在上文 HTML 中删除。
+            var REMOVE = ['.settings-icon', '.settings-panel', '.tour-button', '.update'];
+            function removeSel(sel) {
+                var nodes = document.querySelectorAll(sel);
+                for (var i = 0; i < nodes.length; i++) {
+                    var n = nodes[i];
+                    if (n && n.parentNode) { try { n.parentNode.removeChild(n); } catch (e) {} }
+                }
+            }
+            function sweep() {
+                for (var s = 0; s < REMOVE.length; s++) removeSel(REMOVE[s]);
+                var pts = document.querySelectorAll('.circle-container');
+                for (var i = 0; i < pts.length; i++) {
+                    var p = pts[i];
+                    if (p.closest && p.closest('.loading')) continue;
+                    if (p.parentNode) { try { p.parentNode.removeChild(p); } catch (e) {} }
+                }
+            }
+            if (document.readyState !== 'loading') sweep();
+            var mo = new MutationObserver(function () { sweep(); });
+            mo.observe(document.documentElement, { childList: true, subtree: true });
+            var t = setInterval(sweep, 300);
+            setTimeout(function () { clearInterval(t); }, 8000);
+        })();
+    </script>
+    <script>
+        (function () {
+            window.__jieLuYiFaQi = false;
+            function baoZhuangDanFei(duiXiang, fangFaMing) {
+                try {
+                    if (!duiXiang) return;
+                    var yuanFangFa = duiXiang[fangFaMing];
+                    if (typeof yuanFangFa !== 'function') return;
+                    if (yuanFangFa.__danFeiYiBao) return;
+                    function danFeiFangFa() {
+                        if (danFeiFangFa.__yiDiaoYong) return;
+                        var jieGuo = yuanFangFa.apply(this, arguments);
+                        danFeiFangFa.__yiDiaoYong = true;
+                        return jieGuo;
+                    }
+                    danFeiFangFa.__danFeiYiBao = true;
+                    danFeiFangFa.__yiDiaoYong = false;
+                    duiXiang[fangFaMing] = danFeiFangFa;
+                } catch (e) {}
+            }
+            function zhongHe(tiYan) {
+                try {
+                    if (!tiYan) return;
+                    try {
+                        if (typeof tiYan.tryStartReveal === 'function' && !tiYan.tryStartReveal.__danFeiYiBao) {
+                            function kongCao() {}
+                            kongCao.__danFeiYiBao = true;
+                            tiYan.tryStartReveal = kongCao;
+                        }
+                    } catch (e) {}
+                    try {
+                        if (tiYan.revealMesh) baoZhuangDanFei(tiYan.revealMesh, 'startReveal');
+                    } catch (e) {}
+                    try {
+                        if (tiYan.postProcessing) baoZhuangDanFei(tiYan.postProcessing, 'startReveal');
+                    } catch (e) {}
+                } catch (e) {}
+            }
+            window.__zhongHeJieLu = zhongHe;
+            try {
+                if (window.__experience) zhongHe(window.__experience);
+            } catch (e) {}
+            try {
+                var yiCun = window.__experience;
+                Object.defineProperty(window, '__experience', {
+                    configurable: true,
+                    enumerable: true,
+                    get: function () { return yiCun; },
+                    set: function (xinZhi) {
+                        yiCun = xinZhi;
+                        try { zhongHe(xinZhi); } catch (e) {}
+                    }
+                });
+            } catch (e) {}
+        })();
+    </script>
+    <script>
+        /* 背景预染 + 事件驱动主题跟随：
+            - 预染 + 揭示前置：首帧即按父页主题定色（__grassOverride 先行）；
+              但解析期材质尚不存在，首跑只能空跑——揭示与染色曾是两条独立竞态，
+              慢加载时揭示先于首次成功染色即“未染色先展现”。故染色是揭示的前置条件：
+              门控 fire() 双 startReveal 前同步调 __caoDiTongBuZhuTi，
+              __caoDiYiRanSe 未置位不揭示；补齐线程揭示后未染不自停，染上才停。
+              真就绪以 experience:ready 为准（__dcm 出生即置位太早，草块流式构建中即放行是复发根因）；
+              reveal:complete 落定再压一次（最多 3 次），覆盖尾部草块/天气重上色。
+              稳态零轮询——此前 400ms 常驻 setInterval 持续 setPhase/全场景 traverse，
+              是控制台 429 高频触发的根因之一，已删除。
+            - 稳态跟随：父页 data-theme 变化走 MutationObserver（事件驱动）；
+              引擎相位变化走 phaseChanged 单次跟随；启动期引擎未就绪时至多 30 次
+              1 秒间隔补齐（自停），就绪/揭示后无任何定时器。
+            - 所有 bundle 对象访问均带空守卫 + try-catch（startTime 类空指针同口径防护）。 */
+        (function () {
+            var DAY = ['#d9a441', '#9c6b1e', '#b08746', '#8a6a38'];
+            var NIGHT = ['#b07be0', '#7a3fa0', '#5e2d8a', '#2e1450'];
+
+            function parentTheme() {
+                try {
+                    var el = (window.parent && window.parent !== window)
+                        ? window.parent.document.documentElement : document.documentElement;
+                    var t = el && el.getAttribute('data-theme');
+                    return t === 'light' ? 'light' : (t === 'dark' ? 'dark' : 'light');
+                } catch (e) { return 'light'; }
+            }
+            function paletteFor(theme) { return theme === 'dark' ? NIGHT : DAY; }
+            function phaseFor(theme) { return theme === 'dark' ? 'night' : 'day'; }
+
+            function setMo(m, palette) {
+                try {
+                    var u = m && m.uniforms;
+                    if (!u) return false;
+                    var xieRu = false;
+                    if (u.uLightGreen && u.uLightGreen.value && u.uLightGreen.value.set) { u.uLightGreen.value.set(palette[0]); xieRu = true; }
+                    if (u.uDarkGreen && u.uDarkGreen.value && u.uDarkGreen.value.set) { u.uDarkGreen.value.set(palette[1]); xieRu = true; }
+                    if (u.uLightDirt && u.uLightDirt.value && u.uLightDirt.value.set) { u.uLightDirt.value.set(palette[2]); xieRu = true; }
+                    if (u.uDarkDirt && u.uDarkDirt.value && u.uDarkDirt.value.set) { u.uDarkDirt.value.set(palette[3]); xieRu = true; }
+                    if (u.uGrassLightColor && u.uGrassLightColor.value && u.uGrassLightColor.value.set) { u.uGrassLightColor.value.set(palette[0]); xieRu = true; }
+                    if (u.uGrassDarkColor && u.uGrassDarkColor.value && u.uGrassDarkColor.value.set) { u.uGrassDarkColor.value.set(palette[1]); xieRu = true; }
+                    return xieRu;
+                } catch (e) { return false; }
+            }
+
+            function applyGrass(palette) {
+                var jiShu = 0;
+                try {
+                    window.__grassOverride = palette;
+                    var mats = window.__grassMats;
+                    if (mats && mats.length) {
+                        for (var i = 0; i < mats.length; i++) { try { if (setMo(mats[i], palette)) jiShu++; } catch (e) {} }
+                    }
+                    var exp = window.__experience;
+                    var sc = exp && exp.engine && exp.engine.scene;
+                    if (sc && sc.traverse) {
+                        sc.traverse(function (o) {
+                            try {
+                                var m = o && o.material;
+                                if (!m) return;
+                                var list = Array.isArray(m) ? m : [m];
+                                for (var k = 0; k < list.length; k++) { try { if (setMo(list[k], palette)) jiShu++; } catch (e) {} }
+                            } catch (e) {}
+                        });
+                    }
+                } catch (e) {}
+                return jiShu;
+            }
+
+            var terrainCaptured = null;
+            var TERRAIN_KEYS = ['uGrassColor', 'uGrassColorAlt', 'uDirtColor', 'uRockColor', 'uWaterColor', 'uSnowColor'];
+            var PURPLE_MAP = { uGrassColor: '#b07be0', uGrassColorAlt: '#7a3fa0', uDirtColor: '#5e2d8a', uRockColor: '#2e1450', uWaterColor: '#2a1245', uSnowColor: '#c89be8' };
+
+            function applyTerrain(theme, palette) {
+                try {
+                    var exp = window.__experience;
+                    var sc = exp && exp.engine && exp.engine.scene;
+                    if (!sc || !sc.traverse) return false;
+                    var isDark = (theme === 'dark');
+                    var found = false;
+                    sc.traverse(function (o) {
+                        try {
+                            var m = o && o.material; if (!m) return;
+                            var list = Array.isArray(m) ? m : [m];
+                            for (var i = 0; i < list.length; i++) {
+                                var u = list[i] && list[i].uniforms;
+                                if (!u || !u.uGrassColor) continue;
+                                found = true;
+                                if (!terrainCaptured) {
+                                    terrainCaptured = {};
+                                    for (var k = 0; k < TERRAIN_KEYS.length; k++) {
+                                        var key = TERRAIN_KEYS[k];
+                                        try { if (u[key] && u[key].value && u[key].value.clone) terrainCaptured[key] = u[key].value.clone(); } catch (e) {}
+                                    }
+                                }
+                                for (var j = 0; j < TERRAIN_KEYS.length; j++) {
+                                    var key2 = TERRAIN_KEYS[j];
+                                    try {
+                                        if (!u[key2] || !u[key2].value || !u[key2].value.set) continue;
+                                        if (isDark) u[key2].value.set(PURPLE_MAP[key2] || palette[3]);
+                                        else if (terrainCaptured[key2]) u[key2].value.copy(terrainCaptured[key2]);
+                                    } catch (e) {}
+                                }
+                            }
+                        } catch (e) {}
+                    });
+                    return found;
+                } catch (e) { return false; }
+            }
+
+            // 染色证据位：syncTheme 实际触及材质才置 true；门控揭示前置依赖它。
+            // （解析期首跑时材质尚不存在，只能空跑——此前揭示与染色是两条独立竞态，
+            // 慢加载时揭示先于首次成功染色，即“未染色先展现”的根因。）
+            window.__caoDiYiRanSe = false;
+            var phaseDingYue = false;
+            function syncTheme() {
+                try {
+                    var theme = parentTheme();
+                    var palette = paletteFor(theme);
+                    var d = null;
+                    try { d = window.__dcm || null; } catch (e) { d = null; }
+                    if (d) {
+                        try {
+                            if (!phaseDingYue && d.on) {
+                                phaseDingYue = true;
+                                d.on('phaseChanged', function () { try { setTimeout(syncTheme, 50); } catch (e) {} });
+                            }
+                        } catch (e) {}
+                        try {
+                            var want = phaseFor(theme);
+                            if (d.getPhase && d.setPhase && d.getPhase() !== want) d.setPhase(want);
+                        } catch (e) {}
+                    }
+                    var jiShu = 0;
+                    try { jiShu = applyGrass(palette); } catch (e) { jiShu = 0; }
+                    var diXing = false;
+                    try { diXing = applyTerrain(theme, palette); } catch (e) { diXing = false; }
+                    if (jiShu > 0 || diXing) window.__caoDiYiRanSe = true;
+                    return diXing;
+                } catch (e) { return false; }
+            }
+            // 门控 fire() 在双 startReveal 之前同步调用它，保证揭示首帧已染色。
+            window.__caoDiTongBuZhuTi = syncTheme;
+            try { syncTheme(); } catch (e) {}
+
+            var dengDaiCiShu = 0;
+            var dengDaiQi = setInterval(function () {
+                try {
+                    dengDaiCiShu++;
+                    try { syncTheme(); } catch (e) {}
+                    var yiJiuXu = false;
+                    try { yiJiuXu = !!window.__caoDiYiJieLu; } catch (e) {}
+                    var yiJiuXuDcm = false;
+                    try { yiJiuXuDcm = !!window.__dcm; } catch (e) {}
+                    var yiRanSe = false;
+                    try { yiRanSe = !!window.__caoDiYiRanSe; } catch (e) {}
+                    // 揭示后若仍未染色不自停（此前 yiJiuXu 单独停是未染色永久化的另一半根因）；
+                    // 染上且引擎见过（或已揭示）才停，30 次兜底，稳态仍零定时器。
+                    if ((yiRanSe && (yiJiuXuDcm || yiJiuXu)) || dengDaiCiShu >= 30) clearInterval(dengDaiQi);
+                } catch (e) { try { clearInterval(dengDaiQi); } catch (e2) {} }
+            }, 1000);
+
+            try {
+                var pDoc = (window.parent && window.parent !== window) ? window.parent.document : document;
+                var pEl = pDoc && pDoc.documentElement;
+                if (pEl && pEl.addEventListener) {
+                    new MutationObserver(function () { try { syncTheme(); } catch (e) {} }).observe(pEl, { attributes: true, attributeFilter: ['data-theme'] });
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <script>
+        /* 门控揭示（分阶段机 + 三道路证据）：
+           背景加载的每一步都有名有姓，卡在哪一步失败原因就写哪一步：
+             S0 qiBu           门控启动
+             S1 yinQingJiuXu   引擎就绪（window.__dcm 真值）
+             S2 huaBuJiuXu     主画布存在且有尺寸（canvas.webgl）
+             S3 jieShiQiJiuXu  揭示器双方法可用（revealMesh/postProcessing.startReveal）
+             S4 wuZiYuanJiuXu  吴昊阳资源就绪（覆盖层贴图就绪，或静态兜底图完整）
+              S5 wuDaoLuQueRen  吴昊阳道路确认（三选一，带证据）：
+                  zhuDao  主道路（T3 引擎平面：已证明挂载+贴图完整，主道路标记为真）；
+                          同场景、同管线、有前景草遮挡——真正的融入；
+                  fuCeng  覆盖层（v9 独立画布：渲染器存活且心跳新鲜）；
+                  jingTai 静态兜底（兜底图完整，揭示时即显现）。
+                  任一道路就绪才算吴昊阳“加载出来”——贴图在但三路全盲，
+                  与没加载出来同等处理：不揭示、报错、隐藏。
+              S5+ ranSeJiuXu    染色已作用到材质（揭示前同步跑 __caoDiTongBuZhuTi，
+                  __caoDiYiRanSe 未置位不揭示；慢加载揭示先于材质就绪即未染色先展现，
+                  故染色是揭示的前置条件而非并行竞态）。
+              S6 jieLuYiChuFa   双揭示已触发（revealMesh + postProcessing 双成功才算）
+             S7 fuYeYiTongZhi  父页已通知（jiu-xu）。
+           S1-S3 任一失败 → 原因草地；S4-S5 任一失败 → 原因吴昊阳；
+           30 秒总时限到仍未走完 → 报错并隐藏全部画布（草地与吴昊阳均不加载）。 */
+        (function () {
+            var done = false;
+            var yiBaoShiBai = false;
+            var MEN_XIAN_HAO_MIAO = 30000;
+            var qiShi = Date.now();
+            window.__caoDiYiJieLu = false;
+            window.__wuJingTaiDaiXianShi = false;
+            window.__caoDiJieDuan = 'qiBu';
+            window.__wuDaoLu = null;
+            var jieDuanShiJian = { qiBu: qiShi };
+            function jiJieDuan(ming) {
+                if (window.__caoDiJieDuan !== ming) {
+                    window.__caoDiJieDuan = ming;
+                    try { jieDuanShiJian[ming] = Date.now(); } catch (e) {}
+                }
+            }
+            // __dcm 在 DayCycleManager 构造时即置位（引擎出生），不代表资源/草块就绪；
+            // _experienceReady 由引擎 experience:ready 同步置位（initializePhase 已跑、场景已载）
+            // 在 engine 对象上（非 experience 本体，bundle 内 this.once 的 this 是 engine），
+            // 才是真就绪。此前只认 __dcm，慢加载时门控在草块流式构建完成前即放行，
+            // 揭示时 __grassMats 为空、草叶保持构造默认色——这才是复发的根因。
+            function yinQingJiuXu() {
+                try {
+                    if (!window.__dcm) return false;
+                    var tiYan = null;
+                    try { tiYan = window.__experience || null; } catch (err) { tiYan = null; }
+                    var eng = (tiYan && tiYan.engine) || null;
+                    return !!(eng && eng._experienceReady);
+                } catch (err) { return false; }
+            }
+            function huaBuJiuXu() {
+                try {
+                    var huaBu = document.querySelector('canvas.webgl');
+                    return !!(huaBu && huaBu.clientWidth >= 2 && huaBu.clientHeight >= 2);
+                } catch (err) { return false; }
+            }
+            function jieShiQiJiuXu() {
+                var e = window.__experience;
+                return !!(e && e.revealMesh && e.revealMesh.startReveal &&
+                          e.postProcessing && e.postProcessing.startReveal);
+            }
+            function wuZiYuanJiuXu() {
+                try {
+                    if (window.__wuOverlayReady) return true;
+                    var tu = window.__wuJingTaiTu;
+                    if (tu && tu.complete && tu.naturalWidth > 0) return true;
+                } catch (err) {}
+                return false;
+            }
+            /* 道路确认（带证据，不认“占位”）：
+               - zhuDao：主道路标记为真（T3 仅在证明后才置位）且网格仍在场景中；
+               - fuCeng：覆盖层贴图就绪且渲染器存活且心跳新鲜（2.5 秒内）；
+               - jingTai：静态兜底图完整（揭示触发时即显现）。 */
+            function wuDaoLu() {
+                try {
+                    if (window.__wuZhuJueZhuGuan) {
+                        var mesh = window.__wuZhuJueMesh;
+                        if (mesh && mesh.parent) { window.__wuDaoLu = 'zhuDao'; return 'zhuDao'; }
+                    }
+                } catch (err) {}
+                try {
+                    if (window.__wuOverlayReady && window.__wuXuanRanQiHuoZai) {
+                        var xinTiao = window.__wuTickXinTiao || 0;
+                        if (Date.now() - xinTiao < 2500) { window.__wuDaoLu = 'fuCeng'; return 'fuCeng'; }
+                    }
+                } catch (err) {}
+                try {
+                    var tu = window.__wuJingTaiTu;
+                    if (tu && tu.complete && tu.naturalWidth > 0) { window.__wuDaoLu = 'jingTai'; return 'jingTai'; }
+                } catch (err) {}
+                window.__wuDaoLu = null;
+                return null;
+            }
+            function tongZhiFuYe(zhuangTai, yuanYin) {
+                try {
+                    window.parent.postMessage(
+                        { source: 'cao-di-bei-jing', zhuangTai: zhuangTai, yuanYin: yuanYin || '' },
+                        '*'
+                    );
+                } catch (err) {}
+            }
+            // 事件补染（零轮询）：两类引擎事件触发同步染色，全是加载期一次性，稳态无定时器。
+            // ① component:ready——每个子系统初始化完成即报到（含草/帕姆草/地形/水体；
+            // 类名已压缩无法按名过滤，故不挑食全接：加载期约十几次全场景 traverse，
+            // 只写染色 uniform，开销一次付清，专治子系统级滞后构建）。
+            // ② reveal:complete——自揭示动画落定再压（最多 3 次），覆盖尾部流式构建。
+            // 引擎一出现即订阅，不依赖门控时序；揭示前同步染仍是保底下限。
+            function dingYueShiJianBuRan() {
+                try {
+                    var tiYan = null;
+                    try { tiYan = window.__experience || null; } catch (err) { tiYan = null; }
+                    var eng = tiYan && tiYan.engine;
+                    if (!eng || !eng.on) return;
+                    if (!window.__buJianDingYue) {
+                        window.__buJianDingYue = true;
+                        eng.on('component:ready', function () { try { if (window.__caoDiTongBuZhuTi) window.__caoDiTongBuZhuTi(); } catch (e) {} });
+                    }
+                    if (!window.__jieLuDingYue) {
+                        window.__jieLuDingYue = true;
+                        window.__jieLuDingYueCiShu = 0;
+                        eng.on('reveal:complete', function () {
+                            try {
+                                if ((window.__jieLuDingYueCiShu || 0) >= 3) return;
+                                window.__jieLuDingYueCiShu = (window.__jieLuDingYueCiShu || 0) + 1;
+                                if (window.__caoDiTongBuZhuTi) window.__caoDiTongBuZhuTi();
+                            } catch (e) {}
+                        });
+                    }
+                } catch (err) {}
+            }
+            function fire() {
+                if (done) return false;
+                try {
+                    if (window.__jieLuYiFaQi) return false;
+                } catch (err) {}
+                try {
+                    if (window.__zhongHeJieLu && window.__experience) window.__zhongHeJieLu(window.__experience);
+                } catch (err) {}
+                dingYueShiJianBuRan();
+                if (!yinQingJiuXu()) { jiJieDuan('yinQingJiuXu'); return false; }
+                if (!huaBuJiuXu()) { jiJieDuan('huaBuJiuXu'); return false; }
+                jiJieDuan('huaBuJiuXu');
+                if (!jieShiQiJiuXu()) return false;
+                jiJieDuan('jieShiQiJiuXu');
+                if (!wuZiYuanJiuXu()) return false;
+                jiJieDuan('wuZiYuanJiuXu');
+                if (!wuDaoLu()) return false;
+                jiJieDuan('wuDaoLuQueRen');
+                // 揭示前置染色：此刻引擎与场景必存在，同步染一次必命中；
+                // 未染上则本轮不揭示（250ms 后再试），绝不带着未染色帧去揭示。
+                jiJieDuan('ranSeJiuXu');
+                try {
+                    if (!window.__caoDiYiRanSe && window.__caoDiTongBuZhuTi) window.__caoDiTongBuZhuTi();
+                } catch (err) {}
+                if (!window.__caoDiYiRanSe) return false;
+                var okA = false, okB = false;
+                try { window.__experience.revealMesh.startReveal(); okA = true; }
+                catch (err) { try { if (window.__wuD && window.__wuD.log) window.__wuD.log('揭示失败:revealMesh ' + err); } catch (e) {} }
+                try { window.__experience.postProcessing.startReveal(); okB = true; }
+                catch (err) { try { if (window.__wuD && window.__wuD.log) window.__wuD.log('揭示失败:postProcessing ' + err); } catch (e) {} }
+                if (!okA || !okB) return false;
+                done = true;
+                try { window.__jieLuYiFaQi = true; } catch (err) {}
+                window.__caoDiYiJieLu = true;
+                try {
+                    var gai = document.querySelector('.loading');
+                    if (gai) {
+                        if (gai.classList) {
+                            gai.classList.add('loaded');
+                            gai.classList.add('hidden');
+                        }
+                        gai.style.display = 'none';
+                    }
+                } catch (err) {}
+                jiJieDuan('jieLuYiChuFa');
+                try {
+                    if (window.__wuJingTaiDaiXianShi && window.__wuXianShiJingTai) {
+                        window.__wuJingTaiDaiXianShi = false;
+                        window.__wuXianShiJingTai();
+                    }
+                } catch (err) {}
+                tongZhiFuYe('jiu-xu');
+                try {
+                    var buFaYinQing = window.__experience && window.__experience.engine;
+                    if (buFaYinQing && typeof buFaYinQing.emit === 'function') {
+                        try { buFaYinQing.emit('reveal:started'); } catch (buErr) {}
+                        try {
+                            setTimeout(function () {
+                                try { buFaYinQing.emit('reveal:complete'); } catch (buErr2) {}
+                            }, 2000);
+                        } catch (buErr3) {}
+                    }
+                } catch (err) {}
+                jiJieDuan('fuYeYiTongZhi');
+                return true;
+            }
+            function baoShiBai() {
+                if (done || yiBaoShiBai) return;
+                yiBaoShiBai = true;
+                // 先停我们自己的循环，再藏画布，避免卸载中的 GL 上下文竞态
+                window.__wuYiXiaoHui = true;
+                var jieduan = window.__caoDiJieDuan || 'qiBu';
+                var yuanYin;
+                if (jieduan === 'yinQingJiuXu' || jieduan === 'huaBuJiuXu' || jieduan === 'jieShiQiJiuXu' || jieduan === 'ranSeJiuXu' || jieduan === 'qiBu') {
+                    yuanYin = wuZiYuanJiuXu() || wuDaoLu() ? 'caoDi' : 'caoDiHeWuHaoYang';
+                } else {
+                    yuanYin = 'wuHaoYang';
+                }
+                yuanYin = yuanYin + ':' + jieduan;
+                try {
+                    var huaBuLieBiao = document.querySelectorAll('canvas.webgl, #wuhaoyang-overlay, #wuhaoyang-static');
+                    for (var i = 0; i < huaBuLieBiao.length; i++) {
+                        huaBuLieBiao[i].style.display = 'none';
+                    }
+                } catch (err) {}
+                tongZhiFuYe('shi-bai', yuanYin);
+            }
+            window.__caoDiMenKongZhuangTai = function () {
+                return {
+                    caoDi: yinQingJiuXu() && huaBuJiuXu() && jieShiQiJiuXu(),
+                    wuHaoYang: !!wuDaoLu(),
+                    daoLu: window.__wuDaoLu,
+                    jieduan: window.__caoDiJieDuan,
+                    yiJieLu: done,
+                    yiRanSe: !!window.__caoDiYiRanSe,
+                    haoShi: Date.now() - qiShi
+                };
+            };
+            window.__caoDiQiangZhiJieLu = fire;
+            (function loop() {
+                if (done || yiBaoShiBai) return;
+                if (Date.now() - qiShi >= MEN_XIAN_HAO_MIAO) { baoShiBai(); return; }
+                fire();
+                if (!done) setTimeout(loop, 250);
+            })();
+        })();
+    </script>
+
+
+    <!-- 吴昊阳独立覆盖层：独立 three 场景 + 相机逐帧同步主场景，
+         绕开主引擎渲染管线（主引擎的 GLTF 集成路径加载后不进入渲染队列）。
+         使用父页面提供的 Three.js（避免多实例），经典脚本无需模块加载。 -->
+    <script>
+    /* 吴昊阳覆盖层 v9：独立画布渲染 + reveal 同步出现 + 草地身体感知
+       - 架构决策：引擎的渲染管线为自定义路径（renderSceneOverride/TAA 多子采样/通道链动态重建），
+         场景图挂载与 EffectComposer 通道注入均会被管线丢弃或覆盖（v7/v8 已验证），
+         故采用独立透明画布 + 逐帧相机矩阵同步（v5/v6 已长期验证稳定）。
+       - 与背景同一时序：画布不透明度 = 引擎中心扩散 reveal 进度（uRevealProgress 0→1），
+         背景由中心扩散显现时，吴昊阳随同一进度淡入（12 秒未就绪则时间兜底）。
+       - 身体感知（吴昊阳→草地）：草着色器注入压弯源，草与花在角色轮廓处向四周分开，
+         强度随呼吸起伏、光标扫过时增强（__yaWanTiao 可外部调参）。
+       - 世界锚定：位置/缩放恒定，比例与方向永不改变。
+       - 调试：window.__wuD（logs/state）+ debug 面板（d 键 / ?debug=1）。
+       - Three.js 从父页面获取（window.parent.THREE），避免多实例警告。 */
+    (function () {
+        // 调试面板引用：chuShiHua 与 initWuHaoYang 两个作用域共用（须为 IIFE 级变量）
+        var tiaoShiMian = null;
+        // 从父页面获取 Three.js 和 GLTFLoader，避免多实例
+        var parentWin = window.parent;
+        var THREE = parentWin && parentWin.THREE;
+        var GLTFLoader = parentWin && parentWin.GLTFLoader;
+        // FP-03：3D 模式开关（URL ?wu3d=1 启用）。须在本 IIFE 执行时同步置位，
+        // 供后执行的 T3 块判定跳过；2D billboard 逻辑零删除，可经 __wuQieHuanMoShi 切回。
+        var moShi3D = /[?&]wu3d=1/.test(location.search);
+        window.__wuMoShi3D = moShi3D;
+        
+        function chuShiHua(THREE, GLTFLoader) {
+            var PEI_ZHI = {
+                weiZhi:  { x: 5.05, y: -0.0133, z: 3.0928 },
+                chiCun:  1.1755
+            };
+            var YA_WAN = { r0: 0.12, r1: 0.68, strength: 0.75, huxi: 0.08, shuBiaoJia: 1.5 };
+            // 暴露给 T3 主道路（引擎内角色平面）：共用同一套位置/尺寸配置
+            window.__wuPEIZHI = PEI_ZHI;
+
+            /* --- 调试系统 --- */
+            window.__wuD = {
+                logs: [],
+                log: function (msg) {
+                    var line = '[' + new Date().toISOString().slice(11, 19) + '] ' + msg;
+                    this.logs.push(line);
+                    if (this.logs.length > 60) this.logs.shift();
+                    // 默认静默：内存日志照常记录（调试面板/d键可查），控制台仅 ?debug=1 时输出
+                    try {
+                        if (/[?&]debug=1/.test(location.search)) console.debug('[WuHaoYang]', msg);
+                    } catch (e) {}
+                },
+                state: function () {
+                    var inj = 0, total = 0, qiangDu = NaN, zhongXin = null, r0 = NaN, r1 = NaN;
+                    var exp = window.__experience;
+                    if (exp && exp.engine && exp.engine.scene) {
+                        exp.engine.scene.traverse(function (o) {
+                            var m = o.material;
+                            if (m && m.uniforms && m.uniforms.uBendingTexture) {
+                                total++;
+                                if (m.__yaWanYiZhu) inj++;
+                            }
+                        });
+                    }
+                    var mats = window.__grassMats || [];
+                    for (var i = 0; i < mats.length; i++) {
+                        var u = mats[i].uniforms;
+                        if (u && u.uCharStrength) {
+                            qiangDu = +u.uCharStrength.value.toFixed(3);
+                            zhongXin = u.uCharPos.value.toArray().map(function (v) { return +v.toFixed(2); });
+                            r0 = +u.uCharR0.value.toFixed(2);
+                            r1 = +u.uCharR1.value.toFixed(2);
+                            break;
+                        }
+                    }
+                    return {
+                        mode: '独立画布 + reveal 同步',
+                        canvasVisible: canvas.style.opacity,
+                        drawFrames: tongHuaBuCi,
+                        revealSource: revealSourceName || '未找到(时间兜底)',
+                        revealProgress: revealUniform ? +revealUniform.value.toFixed(3) : null,
+                        opacity: +buTouMingDu.toFixed(3),
+                        crushInjected: inj + '/' + total,
+                        crushStrength: qiangDu,
+                        crushCenter: zhongXin,
+                        crushR0: r0,
+                        crushR1: r1
+                    };
+                }
+            };
+            function __wuDLog(msg) { try { if (window.__wuD && window.__wuD.log) window.__wuD.log(msg); } catch (e) {} }
+            var canvas = document.createElement('canvas');
+            canvas.id = 'wuhaoyang-overlay';
+            canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:5;opacity:0;display:none;';
+            document.body.appendChild(canvas);
+            var jingTai = document.createElement('img');
+            jingTai.id = 'wuhaoyang-static';
+            jingTai.alt = '';
+            jingTai.setAttribute('aria-hidden', 'true');
+            jingTai.style.cssText = 'position:fixed;right:6vw;bottom:10vh;width:24vmin;max-width:280px;pointer-events:none;z-index:5;opacity:0;transition:opacity 1.2s ease;display:none;';
+            jingTai.src = '/grass-bg/wuhaoyang-2d.png';
+            document.body.appendChild(jingTai);
+            window.__wuJingTaiTu = jingTai;
+            window.__wuXianShiJingTai = function () {
+                try {
+                    if (!window.__caoDiYiJieLu) { window.__wuJingTaiDaiXianShi = true; return; }
+                    if (canvas) canvas.style.display = 'none';
+                    jingTai.style.display = '';
+                    requestAnimationFrame(function () { jingTai.style.opacity = '1'; });
+                    window.__wuJingTaiDouDi = true;
+                } catch (e) {}
+            };
+            window.__wuYiXiaoHui = false;
+            try {
+                window.addEventListener('pagehide', function () { window.__wuYiXiaoHui = true; });
+            } catch (e) {}
+            var renderer = null;
+            try {
+                renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: false, preserveDrawingBuffer: false, premultipliedAlpha: true, powerPreference: 'low-power' });
+                renderer.outputColorSpace = THREE.SRGBColorSpace || THREE.sRGBEncoding;
+                renderer.setClearColor(0x000000, 0);
+                window.__wuXuanRanQiHuoZai = true;
+            } catch (e) {
+                window.__wuXuanRanQiHuoZai = false;
+                if (!window.__wuYiXiaoHui) window.__wuXianShiJingTai();
+            }
+            window.__wuTickXinTiao = 0;
+            return { renderer, canvas, THREE, GLTFLoader, PEI_ZHI, YA_WAN, __wuDLog };
+        }
+        
+        if (!THREE) {
+            try { if (/[?&]debug=1/.test(location.search)) console.error('[WuHaoYang] 父页面未提供 THREE，回退加载本地 three-r128.min.js'); } catch (e) {}
+            var s = document.createElement('script');
+            s.src = '../three-r128.min.js';
+            s.onload = function () { 
+                THREE = window.THREE; 
+                var GLTFLoader = window.GLTFLoader;
+                if (!GLTFLoader) {
+                    var s2 = document.createElement('script');
+                    s2.src = '../GLTFLoader-r128.js';
+                    s2.onload = function () { 
+                        GLTFLoader = window.GLTFLoader; 
+                        var ctx = chuShiHua(THREE, GLTFLoader);
+                        initWuHaoYang(ctx);
+                    };
+                    document.head.appendChild(s2);
+                } else {
+                    var ctx = chuShiHua(THREE, GLTFLoader);
+                    initWuHaoYang(ctx);
+                }
+            };
+            document.head.appendChild(s);
+            return;
+        }
+        if (!GLTFLoader) {
+            try { if (/[?&]debug=1/.test(location.search)) console.warn('[WuHaoYang] 父页面未提供 GLTFLoader，回退加载本地 GLTFLoader-r128.js'); } catch (e) {}
+            var s2 = document.createElement('script');
+            s2.src = '../GLTFLoader-r128.js';
+            s2.onload = function () { 
+                GLTFLoader = window.GLTFLoader; 
+                var ctx = chuShiHua(THREE, GLTFLoader);
+                initWuHaoYang(ctx);
+            };
+            document.head.appendChild(s2);
+            return;
+        }
+        
+        var ctx = chuShiHua(THREE, GLTFLoader);
+        initWuHaoYang(ctx);
+        
+        function initWuHaoYang(ctx) {
+            var THREE = ctx.THREE;
+            var GLTFLoader = ctx.GLTFLoader;
+            var canvas = ctx.canvas;
+            var PEI_ZHI = ctx.PEI_ZHI;
+            var YA_WAN = ctx.YA_WAN;
+            var __wuDLog = ctx.__wuDLog;
+            var renderer = ctx.renderer;
+
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(60, 1, 0.01, 100);
+
+        function resize() {
+            if (!renderer) return;
+            var w = window.innerWidth, h = window.innerHeight;
+            if (w < 1 || h < 1) return;
+            var fengDing = (window.__caoDiPeiZhi && window.__caoDiPeiZhi.xiangSuBiFengDing) || 1.25;
+            renderer.setSize(w, h, false);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, fengDing));
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+        }
+        if (renderer) resize();
+        window.addEventListener('resize', resize);
+
+        /* ================= FP-03：3D 模型分支（?wu3d=1 启用） =================
+           GLTFLoader 加载占位 glb 进本覆盖层场景，按 __wuPEIZHI 世界锚点放置；
+           材质吃引擎同款暖阳色温光照；接触面烘焙阴影片（渐变贴图，不写深度）；
+           引擎草的“深度占位克隆”进本画布写深度，实现前景草遮挡模型。
+           2D billboard 全部保留：模式可经 __wuQieHuanMoShi('2d') 切回，零删除。 */
+        var yunXingMoShi = moShi3D ? '3d' : '2d';
+        var wuMoXingZu = null, wuYingMian = null, wu3DJiuXu = false;
+        var zheDangKelong = [], zheDangCaiZhiHuanCun = {}, zheDangYiJianHao = false, zheDangZhenShu = 0;
+        var sanWeiCaiZhiShu = 0;
+        // 调参口：window.__wu3DTiao = { luJing, xuanZhuanDu, gaoDuPianYi, suoFangBeiShu,
+        //   zheDangBanJing, buTouMingDu, huanJingQiangDu, taiYangQiangDu } 运行时可覆写（debug 同类机制）
+        function wu3DTiao(ming, moRen) {
+            var t = window.__wu3DTiao;
+            return (t && t[ming] != null) ? t[ming] : moRen;
+        }
+        function yingYongMoShi() {
+            if (plane) plane.visible = (yunXingMoShi === '2d');
+            if (wuMoXingZu) wuMoXingZu.visible = (yunXingMoShi === '3d');
+            if (wuYingMian) wuYingMian.visible = (yunXingMoShi === '3d');
+            for (var i = 0; i < zheDangKelong.length; i++) zheDangKelong[i].visible = (yunXingMoShi === '3d');
+        }
+        window.__wuQieHuanMoShi = function (xinMoShi) {
+            if (xinMoShi === '2d' || xinMoShi === '3d') yunXingMoShi = xinMoShi;
+            else yunXingMoShi = (yunXingMoShi === '3d') ? '2d' : '3d';
+            yingYongMoShi();
+            __wuDLog('运行模式切换 → ' + yunXingMoShi);
+            return yunXingMoShi;
+        };
+        // 草遮挡克隆显隐开关（验证“草在模型前正确遮挡”用：关掉对比差分即遮挡像素证据）
+        window.__wu3DZheDang = function (xianShi) {
+            for (var i = 0; i < zheDangKelong.length; i++) zheDangKelong[i].visible = !!xianShi;
+            return zheDangKelong.length;
+        };
+        // 阴影片开关（验证脚本差分取证用，与 __wu3DZheDang 同类调试口）
+        window.__wu3DYingMian = function (xianShi) {
+            if (wuYingMian) wuYingMian.visible = !!xianShi;
+            return !!wuYingMian;
+        };
+        window.__wu3DZhuangTai = function () {
+            return {
+                moShi: yunXingMoShi, yiJiuXu: wu3DJiuXu,
+                caiZhiShu: sanWeiCaiZhiShu, zheDangKeLongShu: zheDangKelong.length,
+                yingMian: !!wuYingMian
+            };
+        };
+        // 模型包围盒八投影到屏幕（NDC→0..1），验证脚本定位模型像素区用
+        window.__wu3DTouYing = function () {
+            if (!wuMoXingZu || !wu3DJiuXu) return null;
+            var he = new THREE.Box3().setFromObject(wuMoXingZu);
+            var jiaoDian = [
+                [he.min.x, he.min.y, he.min.z], [he.max.x, he.min.y, he.min.z],
+                [he.min.x, he.max.y, he.min.z], [he.max.x, he.max.y, he.min.z],
+                [he.min.x, he.min.y, he.max.z], [he.max.x, he.min.y, he.max.z],
+                [he.min.x, he.max.y, he.max.z], [he.max.x, he.max.y, he.max.z]
+            ];
+            var v = new THREE.Vector3(), minX = 2, minY = 2, maxX = -2, maxY = -2;
+            for (var i = 0; i < jiaoDian.length; i++) {
+                v.set(jiaoDian[i][0], jiaoDian[i][1], jiaoDian[i][2]).project(camera);
+                var x = (v.x + 1) / 2, y = (1 - v.y) / 2;
+                if (x < minX) minX = x; if (x > maxX) maxX = x;
+                if (y < minY) minY = y; if (y > maxY) maxY = y;
+            }
+            return { ndcX0: minX, ndcY0: minY, ndcX1: maxX, ndcY1: maxY };
+        };
+        if (moShi3D) {
+            if (!GLTFLoader) {
+                __wuDLog('3D: 无 GLTFLoader，保持 2D billboard');
+            } else {
+                // 引擎同款暖阳色温：金绿天光 + 暖阳直射（与场景 #d9a441 主色同族）
+                var huanJingGuang = new THREE.HemisphereLight(0xd9b98a, 0x5a4a30, wu3DTiao('huanJingQiangDu', 1.1));
+                var taiYangGuang = new THREE.DirectionalLight(0xffe0b0, wu3DTiao('taiYangQiangDu', 2.4));
+                taiYangGuang.position.set(2.5, 6, 1.8);
+                scene.add(huanJingGuang);
+                scene.add(taiYangGuang);
+                // 引擎同款色调映射：复制引擎 renderer 的 toneMapping/exposure（存在才复制，失败降级默认）
+                try {
+                    var engRenderer = window.__experience && window.__experience.engine && window.__experience.engine.renderer;
+                    if (engRenderer) {
+                        if (engRenderer.toneMapping != null) renderer.toneMapping = engRenderer.toneMapping;
+                        if (engRenderer.toneMappingExposure != null) renderer.toneMappingExposure = engRenderer.toneMappingExposure;
+                        __wuDLog('3D: 已复制引擎色调映射 tm=' + engRenderer.toneMapping + ' exposure=' + engRenderer.toneMappingExposure);
+                    } else {
+                        __wuDLog('3D: 引擎 renderer 不可达，使用覆盖层默认色调映射');
+                    }
+                } catch (e) { __wuDLog('3D: 色调映射复制失败: ' + e.message); }
+                // 暖色程序化环境贴图（PMREM）：glTF 金属材质无 envMap 在纯灯光下渲染为纯黑，此为防黑保底。
+                // 天顶暖金→地平暖褐→地面深褐，与场景黄昏色温同族。
+                try {
+                    var pmrem = new THREE.PMREMGenerator(renderer);
+                    var huanScene = new THREE.Scene();
+                    var qiuCai = new THREE.MeshBasicMaterial({ side: THREE.BackSide, vertexColors: true });
+                    var qiu = new THREE.Mesh(new THREE.SphereGeometry(10, 16, 12), qiuCai);
+                    var weiZhiShu = qiu.geometry.attributes.position;
+                    var yanShu = weiZhiShu.count;
+                    var yanSeZu = new Float32Array(yanShu * 3);
+                    var dingBu = new THREE.Color(0xd9b98a), zhongBu = new THREE.Color(0x8a6d45), diBu = new THREE.Color(0x3a2f1e);
+                    var linSe = new THREE.Color();
+                    for (var ysi = 0; ysi < yanShu; ysi++) {
+                        var gyF = weiZhiShu.getY(ysi) / 10;
+                        if (gyF >= 0) linSe.copy(zhongBu).lerp(dingBu, Math.min(1, gyF * 1.6));
+                        else linSe.copy(zhongBu).lerp(diBu, Math.min(1, -gyF * 2.2));
+                        yanSeZu[ysi * 3] = linSe.r; yanSeZu[ysi * 3 + 1] = linSe.g; yanSeZu[ysi * 3 + 2] = linSe.b;
+                    }
+                    qiu.geometry.setAttribute('color', new THREE.BufferAttribute(yanSeZu, 3));
+                    huanScene.add(qiu);
+                    scene.environment = pmrem.fromScene(huanScene, 0.04).texture;
+                    pmrem.dispose();
+                    qiu.geometry.dispose(); qiuCai.dispose();
+                } catch (e) { __wuDLog('3D: 环境贴图生成失败(降级纯灯光): ' + e.message); }
+                var zaiRu3D = new GLTFLoader();
+                zaiRu3D.load(wu3DTiao('luJing', '/grass-bg/models/wuhaoyang-3d-占位.glb'), function (gltf) {
+                    if (window.__wuYiXiaoHui) return;
+                    if (!gltf || !gltf.scene) { __wuDLog('3D: glb 无场景内容'); return; }
+                    try {
+                        var moXing = gltf.scene;
+                        var zu = new THREE.Group();
+                        zu.add(moXing);
+                        zu.updateMatrixWorld(true);
+                        // 包围盒归一化：最大边对齐 2D billboard 尺寸（chiCun），再落位
+                        var he = new THREE.Box3().setFromObject(zu);
+                        var daXiao = he.getSize(new THREE.Vector3());
+                        var zuiDaBian = Math.max(daXiao.x, daXiao.y, daXiao.z);
+                        if (!zuiDaBian || !isFinite(zuiDaBian)) { __wuDLog('3D: 包围盒无效'); return; }
+                        var suoFang = (PEI_ZHI.chiCun * wu3DTiao('suoFangBeiShu', 1)) / zuiDaBian;
+                        moXing.scale.setScalar(suoFang);
+                        moXing.rotation.y = wu3DTiao('xuanZhuanDu', 0) * Math.PI / 180;
+                        zu.updateMatrixWorld(true);
+                        he.setFromObject(zu);
+                        var zhongXin = he.getCenter(new THREE.Vector3());
+                        var gaoDuPianYi = wu3DTiao('gaoDuPianYi', 0.02);
+                        // 中心对齐锚点 x/z，底面落到锚点地表 + 轻微偏移
+                        moXing.position.x += PEI_ZHI.weiZhi.x - zhongXin.x;
+                        moXing.position.z += PEI_ZHI.weiZhi.z - zhongXin.z;
+                        moXing.position.y += PEI_ZHI.weiZhi.y + gaoDuPianYi - he.min.y;
+                        zu.updateMatrixWorld(true);
+                        he.setFromObject(zu);
+                        var zuJi = he.getSize(new THREE.Vector3());
+                        zu.traverse(function (o) {
+                            if (!o.isMesh) return;
+                            o.renderOrder = 2; // 阴影片(1) 先于模型，草遮挡克隆(0) 最先写深度
+                            var list = Array.isArray(o.material) ? o.material : [o.material];
+                            for (var i = 0; i < list.length; i++) {
+                                if (list[i]) sanWeiCaiZhiShu++;
+                            }
+                        });
+                        // 接触面烘焙阴影：径向渐变贴图平面，不写深度（让位给草遮挡克隆）
+                        var yingMianPei = { buTouMingDu: wu3DTiao('buTouMingDu', 0.55), kuoZhan: 1.35 };
+                        var huBu = document.createElement('canvas');
+                        huBu.width = huBu.height = 128;
+                        var huaBi = huBu.getContext('2d');
+                        var tiDu = huaBi.createRadialGradient(64, 64, 4, 64, 64, 62);
+                        tiDu.addColorStop(0, 'rgba(0,0,0,' + yingMianPei.buTouMingDu + ')');
+                        tiDu.addColorStop(0.55, 'rgba(0,0,0,' + (yingMianPei.buTouMingDu * 0.5).toFixed(3) + ')');
+                        tiDu.addColorStop(1, 'rgba(0,0,0,0)');
+                        huaBi.fillStyle = tiDu;
+                        huaBi.fillRect(0, 0, 128, 128);
+                        var yingTu = new THREE.CanvasTexture(huBu);
+                        var yingMian = new THREE.Mesh(
+                            new THREE.PlaneGeometry(zuJi.x * yingMianPei.kuoZhan, zuJi.z * yingMianPei.kuoZhan),
+                            new THREE.MeshBasicMaterial({ map: yingTu, transparent: true, depthWrite: false })
+                        );
+                        yingMian.rotation.x = -Math.PI / 2;
+                        yingMian.renderOrder = 1;
+                        yingMian.position.set(PEI_ZHI.weiZhi.x, he.min.y + 0.004, PEI_ZHI.weiZhi.z);
+                        wuYingMian = yingMian;
+                        scene.add(yingMian);
+                        wuMoXingZu = zu;
+                        scene.add(zu);
+                        wu3DJiuXu = true;
+                        window.__wu3DYiJiuXu = true;
+                        yingYongMoShi();
+                        __wuDLog('3D: 模型就绪（缩放 ' + suoFang.toFixed(3) + '，脚底 y=' + he.min.y.toFixed(4) + '），阴影片已挂');
+                    } catch (e) {
+                        __wuDLog('3D: 模型装配失败: ' + e.message);
+                    }
+                }, undefined, function (cuo) {
+                    __wuDLog('3D: glb 加载失败: ' + (cuo && cuo.message || cuo));
+                });
+            }
+        }
+        /* 草遮挡：克隆锚点附近引擎草的 InstancedMesh（共享几何体/实例矩阵快照/uniforms 引用，
+           ShaderMaterial 关 colorWrite 只写深度），renderOrder=0 最先渲染——前景草在
+           本画布深度上挡住模型片元。风摆是着色器侧逐帧共享 uniforms，位置与主画布一致。 */
+        function daJianCaoZheDang() {
+            var exp = window.__experience;
+            var mats = window.__grassMats;
+            if (!exp || !exp.engine || !exp.engine.scene || !mats || !mats.length) return false;
+            var banJing = wu3DTiao('zheDangBanJing', 5);
+            var xinJian = 0;
+            exp.engine.scene.traverse(function (o) {
+                if (!o.isInstancedMesh || !o.geometry || o.material == null) return;
+                var list = Array.isArray(o.material) ? o.material : [o.material];
+                if (list.length !== 1) return;
+                var yuanCaiZhi = list[0];
+                if (!yuanCaiZhi || !yuanCaiZhi.uniforms || !yuanCaiZhi.uniforms.uBendingTexture) return;
+                try {
+                    if (!o.boundingSphere && o.computeBoundingSphere) o.computeBoundingSphere();
+                    if (banJing > 0 && o.boundingSphere) {
+                        // 距离粗滤：锚点 N 米外的草块不值得克隆（实例矩阵承载世界位，块组恒等近似）
+                        var w = o.matrixWorld.elements;
+                        var dx = (o.boundingSphere.center.x + w[12]) - PEI_ZHI.weiZhi.x;
+                        var dz = (o.boundingSphere.center.z + w[14]) - PEI_ZHI.weiZhi.z;
+                        var juli = Math.sqrt(dx * dx + dz * dz) - o.boundingSphere.radius;
+                        if (juli > banJing) return;
+                    }
+                    var zheCai = zheDangCaiZhiHuanCun[yuanCaiZhi.uuid];
+                    if (!zheCai) {
+                        zheCai = new THREE.ShaderMaterial({
+                            vertexShader: yuanCaiZhi.vertexShader,
+                            fragmentShader: yuanCaiZhi.fragmentShader,
+                            uniforms: yuanCaiZhi.uniforms,
+                            defines: yuanCaiZhi.defines,
+                            lights: !!yuanCaiZhi.lights,
+                            fog: !!yuanCaiZhi.fog,
+                            glslVersion: yuanCaiZhi.glslVersion
+                        });
+                        zheCai.colorWrite = false;
+                        zheDangCaiZhiHuanCun[yuanCaiZhi.uuid] = zheCai;
+                    }
+                    // 引擎草块 userData 携带 _chunkedParent 循环引用，o.clone() 内部
+                    // JSON.stringify(userData) 会抛 Converting circular structure to JSON
+                    // （诊断实证）——改手工构造 InstancedMesh：共享几何体、快照实例矩阵、
+                    // 直拷 matrix/matrixWorld，完全不触碰 userData。
+                    var keLong = new THREE.InstancedMesh(o.geometry, zheCai, o.count);
+                    if (o.instanceMatrix && o.instanceMatrix.array &&
+                        o.instanceMatrix.array.length === keLong.instanceMatrix.array.length) {
+                        keLong.instanceMatrix.array.set(o.instanceMatrix.array);
+                        keLong.instanceMatrix.needsUpdate = true;
+                    }
+                    if (o.instanceColor && o.instanceColor.array) {
+                        keLong.instanceColor = new THREE.InstancedBufferAttribute(
+                            new Float32Array(o.instanceColor.array), o.instanceColor.itemSize);
+                    }
+                    keLong.frustumCulled = false;
+                    keLong.matrixAutoUpdate = false;
+                    keLong.matrixWorldNeedsUpdate = false;
+                    keLong.matrix.copy(o.matrix);
+                    keLong.matrixWorld.copy(o.matrixWorld);
+                    keLong.renderOrder = 0;
+                    scene.add(keLong);
+                    zheDangKelong.push(keLong);
+                    xinJian++;
+                } catch (e) {
+                    __wuDLog('3D: 草块克隆失败: ' + e.message);
+                }
+            });
+            return xinJian > 0;
+        }
+
+        var plane = null;
+        var buTouMingDu = 0;
+        var revealUniform = null;
+        var revealSourceName = '';
+        var tongHuaBuCi = 0;
+        var yaWanWanCheng = false;
+        var yaWanCaiZhi = [];
+        var yaWanCachedMats = []; // 缓存已注入的材质，避免重复遍历场景
+        var yaWanCacheTime = 0; // 缓存时间戳
+        var YA_WAN_CACHE_TTL = 30000; // 30秒缓存有效期
+        var yaWanQiangDuDangQian = YA_WAN.strength;
+        var yaWanZhongXin = null;
+        var yaWanZhenShu = 0;
+        var guBiao = { x: -9999, y: -9999 };
+        // 复用临时对象，避免 GC 压力
+        var tmpVec3 = new THREE.Vector3();
+        var tmpVec2 = new THREE.Vector2();
+        var tmpQuat = new THREE.Quaternion();
+        var tmpMat4 = new THREE.Matrix4();
+        var tmpM = new THREE.Matrix4();
+        var t0 = Date.now();
+        var shangCiZhenShiJian = 0;
+        // 调参钩子补充：立即收敛（绕过每帧 8% 平滑层，供测试台 A/B 差分自检在低帧率环境下使用）
+        window.__yaWanShouLian = function (qiangDu) { yaWanQiangDuDangQian = qiangDu; };
+
+        if (window.__wuD) window.__wuD.state = function () {
+            var inj = 0, total = 0, qiangDu = NaN, zhongXin = null, r0 = NaN, r1 = NaN;
+            var exp = window.__experience;
+            if (exp && exp.engine && exp.engine.scene) {
+                exp.engine.scene.traverse(function (o) {
+                    var m = o.material;
+                    if (m && m.uniforms && m.uniforms.uBendingTexture) {
+                        total++;
+                        if (m.__yaWanYiZhu) inj++;
+                    }
+                });
+            }
+            var mats = window.__grassMats || [];
+            for (var i = 0; i < mats.length; i++) {
+                var u = mats[i].uniforms;
+                if (u && u.uCharStrength) {
+                    qiangDu = +u.uCharStrength.value.toFixed(3);
+                    zhongXin = u.uCharPos.value.toArray().map(function (v) { return +v.toFixed(2); });
+                    r0 = +u.uCharR0.value.toFixed(2);
+                    r1 = +u.uCharR1.value.toFixed(2);
+                    break;
+                }
+            }
+            return {
+                mode: '独立画布 + reveal 同步',
+                canvasVisible: canvas.style.opacity,
+                drawFrames: tongHuaBuCi,
+                revealSource: revealSourceName || '未找到(时间兜底)',
+                revealProgress: revealUniform ? +revealUniform.value.toFixed(3) : null,
+                opacity: +buTouMingDu.toFixed(3),
+                daoLu: window.__wuDaoLu || (window.__wuZhuJueZhuGuan ? 'zhuDao' : (window.__wuZhuJueDaiQueRen ? 'daiQueRen' : null)),
+                jieDuan: window.__caoDiJieDuan || 'qiBu',
+                crushInjected: inj + '/' + total,
+                crushStrength: qiangDu,
+                crushCenter: zhongXin,
+                crushR0: r0,
+                crushR1: r1
+            };
+        };
+
+        document.addEventListener('pointermove', function (e) {
+            guBiao.x = e.clientX;
+            guBiao.y = e.clientY;
+        }, { passive: true });
+
+        /* --- 吴昊阳平面：贴图就绪后进入场景，不透明度由 reveal 驱动 --- */
+        var texLoader = new THREE.TextureLoader();
+        texLoader.setCrossOrigin('');
+        var tieTuChongShiCiShu = 0;
+        function jiaZaiTieTu() {
+            if (window.__wuYiXiaoHui) return;
+            // 绝对路径：v9 复用父页面 THREE 时 Image 建在父文档下，相对路径会解析到站点根并命中 SPA 回退页导致解码失败
+            texLoader.load('/grass-bg/wuhaoyang-2d.png', function (tex) {
+                if (window.__wuYiXiaoHui) return;
+                tex.magFilter = THREE.LinearFilter;
+                tex.minFilter = THREE.LinearMipmapLinearFilter;
+                plane = new THREE.Mesh(
+                    new THREE.PlaneGeometry(PEI_ZHI.chiCun, PEI_ZHI.chiCun),
+                    new THREE.MeshBasicMaterial({
+                        map: tex, transparent: true,
+                        depthWrite: false, depthTest: false, side: THREE.DoubleSide
+                    })
+                );
+                plane.position.set(PEI_ZHI.weiZhi.x, PEI_ZHI.weiZhi.y, PEI_ZHI.weiZhi.z);
+                plane.renderOrder = 2;
+                scene.add(plane);
+                plane.visible = (yunXingMoShi === '2d'); // FP-03：3D 模式下 2D billboard 隐藏（可切回）
+                window.__wuPlane = plane;
+                window.__wuOverlayReady = true;
+                __wuDLog('贴图就绪，平面进入覆盖层场景');
+            }, undefined, function (err) {
+                if (window.__wuYiXiaoHui) return;
+                tieTuChongShiCiShu++;
+                var xinXi = (err && err.type) ? err.type : String(err);
+                if (err && err.target && err.target.src) xinXi += ' src=' + err.target.src;
+                __wuDLog('贴图加载失败(第' + tieTuChongShiCiShu + '次): ' + xinXi);
+                var zuiDa = (window.__caoDiPeiZhi && window.__caoDiPeiZhi.zuiDaChongShi) || 5;
+                if (tieTuChongShiCiShu < zuiDa) {
+                    var yanChi = Math.min(600 * Math.pow(2, tieTuChongShiCiShu - 1), 5000);
+                    setTimeout(jiaZaiTieTu, yanChi);
+                } else if (window.__wuXianShiJingTai) {
+                    window.__wuXianShiJingTai();
+                }
+            });
+        }
+        jiaZaiTieTu();
+        setTimeout(function () {
+            try {
+                var touMing = 0;
+                try { touMing = Number(window.__wuTouMingDu) || 0; } catch (e) {}
+                if (!window.__wuYiXiaoHui && (!window.__wuOverlayReady || touMing < 0.05) && !window.__wuJingTaiDouDi && window.__wuXianShiJingTai) {
+                    window.__wuXianShiJingTai();
+                }
+            } catch (e) {}
+        }, 6000);
+
+        /* --- reveal 进度源（草地中心扩散的同一驱动值） --- */
+        function zhaoReveal() {
+            var exp = window.__experience;
+            if (exp && exp.revealMesh && exp.revealMesh.material && exp.revealMesh.material.uniforms &&
+                exp.revealMesh.material.uniforms.uRevealProgress) {
+                revealUniform = exp.revealMesh.material.uniforms.uRevealProgress;
+                revealSourceName = 'revealMesh.uRevealProgress';
+                __wuDLog('reveal 进度源已接入（与背景扩散同步）');
+                return true;
+            }
+            return false;
+        }
+
+        /* --- 草地身体感知注入（吴昊阳→草地） --- */
+        function zhuRuYaWan() {
+            var exp = window.__experience;
+            var mats = window.__grassMats;
+            if (!mats || !mats.length || !exp || !exp.engine || !exp.engine.scene) return false;
+            // 压弯中心 = 角色锚点（世界坐标恒定，不随相机状态漂移）
+            if (!yaWanZhongXin) yaWanZhongXin = { x: PEI_ZHI.weiZhi.x, z: PEI_ZHI.weiZhi.z };
+            // uniform 声明必须位于全局作用域，插在 void main 之前，否则编译失败草叶片整体消失
+            var shengMing = 'uniform vec2 uCharPos;uniform float uCharR0;uniform float uCharR1;uniform float uCharStrength;\n';
+            var zhuRuDuan = 'vec2 tocW=(modelMatrix*vec4(grassOrigin,1.0)).xz-uCharPos;' +
+                'float dcW=length(tocW);' +
+                'float charInfl=(1.0-smoothstep(uCharR0,uCharR1,dcW))*uCharStrength;' +
+                'bendingIntensity=clamp(bendingIntensity+charInfl,0.0,1.0);' +
+                'bendingDirection=mix(bendingDirection,normalize(vec3(tocW.x,0.0,tocW.y)+vec3(0.01,0.0001,0.0)),charInfl*0.9);';
+            var biaoJi = 'bendingDirection=-bendingDirection;';
+            var houXuan = {};
+            // 优先使用缓存的材质列表，避免遍历场景
+            var sourceMats = yaWanCachedMats.length > 0 ? yaWanCachedMats : mats;
+            for (var i = 0; i < sourceMats.length; i++) houXuan[sourceMats[i].uuid] = sourceMats[i];
+            
+            // 只有在缓存为空时才遍历场景补充
+            if (yaWanCachedMats.length === 0) {
+                exp.engine.scene.traverse(function (o) {
+                    var m = o.material;
+                    if (!m || !m.uniforms || !m.uniforms.uBendingTexture || m.__yaWanYiZhu) return;
+                    var list = Array.isArray(m) ? m : [m];
+                    for (var k = 0; k < list.length; k++) houXuan[list[k].uuid] = list[k];
+                });
+            }
+            var youXin = false;
+            for (var key in houXuan) {
+                var m = houXuan[key];
+                if (m.__yaWanYiZhu) continue;
+                var vs = m.vertexShader || '';
+                var weiZhi = vs.indexOf(biaoJi);
+                var mainIdx = vs.indexOf('void main');
+                if (weiZhi === -1 || mainIdx === -1 || !m.uniforms) { m.__yaWanYiZhu = true; continue; }
+                m.uniforms.uCharPos = { value: new THREE.Vector2(yaWanZhongXin.x, yaWanZhongXin.z) };
+                m.uniforms.uCharR0 = { value: YA_WAN.r0 };
+                m.uniforms.uCharR1 = { value: YA_WAN.r1 };
+                m.uniforms.uCharStrength = { value: YA_WAN.strength };
+                m.vertexShader = vs.slice(0, mainIdx) + shengMing + vs.slice(mainIdx, weiZhi + biaoJi.length) + zhuRuDuan + vs.slice(weiZhi + biaoJi.length);
+                m.needsUpdate = true;
+                m.__yaWanYiZhu = true;
+                yaWanCaiZhi.push(m);
+                yaWanCachedMats.push(m); // 缓存已注入的材质
+                youXin = true;
+            }
+            if (youXin) __wuDLog('草着色器压弯注入推进至 ' + yaWanCaiZhi.length + ' 个材质');
+            return youXin || yaWanCaiZhi.length > 0;
+        }
+
+        /* --- 每帧驱动（独立 rAF） --- */
+        var shangCiWeiZhi = new THREE.Vector3(Infinity, 0, 0);
+        var shangCiJieHeiZuo = new THREE.Quaternion();
+        function tick() {
+            if (window.__wuYiXiaoHui) return;
+            requestAnimationFrame(tick);
+            if (!renderer || document.hidden) return;
+            var zhenJianGe = (window.__caoDiPeiZhi && window.__caoDiPeiZhi.zuiXiaoZhenJianGeHaoMiao) || 33;
+            var dangQian = Date.now();
+            if (dangQian - shangCiZhenShiJian < zhenJianGe) return;
+            shangCiZhenShiJian = dangQian;
+            try { window.__wuTickXinTiao = dangQian; } catch (e) {}
+            var exp = window.__experience;
+            if (exp && exp.engine && exp.engine.camera && exp.engine.camera.instance) {
+                var src = exp.engine.camera.instance;
+                src.updateMatrixWorld(true);
+                tmpQuat.setFromRotationMatrix(src.matrixWorld);
+                if (src.position.distanceToSquared(shangCiWeiZhi) > 1e-8 || !shangCiJieHeiZuo.equals(tmpQuat)) {
+                    camera.matrixWorld.copy(src.matrixWorld);
+                    camera.matrixWorldInverse.copy(src.matrixWorld).invert();
+                    camera.projectionMatrix.copy(src.projectionMatrix);
+                    camera.projectionMatrixInverse.copy(src.projectionMatrixInverse);
+                    camera.quaternion.copy(tmpQuat);
+                    tmpVec3.set(0, 0, -1).applyQuaternion(tmpQuat);
+                    camera.position.copy(src.position);
+                    camera.lookAt(tmpVec3.add(src.position));
+                    shangCiWeiZhi.copy(src.position);
+                    shangCiJieHeiZuo.copy(tmpQuat);
+                }
+
+                if (!revealUniform && Date.now() - t0 > 500) zhaoReveal();
+                var bu = 0;
+                // FP-03：3D 模式下模型已就绪时即使 2D 平面缺席也驱动不透明度（3D 分支不依赖 2D 贴图成败）
+                if (plane || wu3DJiuXu) {
+                    if (plane) plane.quaternion.setFromRotationMatrix(tmpMat4);
+                    if (revealUniform) {
+                        var p = Math.min(1, Math.max(0, (revealUniform.value - 0.02) / 0.30));
+                        bu = p * p * (3 - 2 * p);
+                        var qt = Math.min(1, Math.max(0, (Date.now() - t0 - 2500) / 7500));
+                        var timeBu = qt * qt * (3 - 2 * qt);
+                        if (timeBu > bu) bu = timeBu;
+                    } else if (Date.now() - t0 > 2500) {
+                        var q = Math.min(1, (Date.now() - t0 - 2500) / 1500);
+                        bu = q * q * (3 - 2 * q);
+                    }
+                    buTouMingDu = bu;
+                    canvas.style.opacity = String(bu);
+                    window.__wuTouMingDu = bu;
+                    /* 静态回收守卫：仅当已证明的主道路接管，或覆盖层自身活着（plane 非空即活，
+                       本 tick 即证据）才回收静态兜底——杜绝“主道路盲占领导致吴昊阳彻底隐身”。 */
+                    if (bu > 0.05 && window.__wuJingTaiDouDi && (window.__wuZhuJueZhuGuan || plane)) {
+                        try {
+                            window.__wuJingTaiDouDi = false;
+                            var jt = window.__wuJingTaiTu;
+                            if (jt) { jt.style.opacity = '0'; jt.style.display = 'none'; }
+                        } catch (e) {}
+                    }
+                }
+
+                // 草地身体感知：降低检查频率，缓存材质列表
+                var now = Date.now();
+                if (yaWanZhenShu++ % 120 === 0 || !yaWanWanCheng || now - yaWanCacheTime > YA_WAN_CACHE_TTL) {
+                    yaWanWanCheng = zhuRuYaWan();
+                    yaWanCacheTime = now;
+                }
+                var t = (now - t0) / 1000;
+                if (yaWanWanCheng && yaWanCaiZhi.length && plane) {
+                    var tiao = window.__yaWanTiao || {};
+                    var jiZhunQiangDu = tiao.strength != null ? tiao.strength : YA_WAN.strength;
+                    var huXiFuDu = tiao.huxi != null ? tiao.huxi : YA_WAN.huxi;
+                    var muBiao = jiZhunQiangDu;
+                    tmpVec3.copy(plane.position).project(camera);
+                    var jiaoX = (tmpVec3.x + 1) / 2 * window.innerWidth;
+                    var jiaoY = (1 - tmpVec3.y) / 2 * window.innerHeight;
+                    if (Math.abs(guBiao.x - jiaoX) < 260 && Math.abs(guBiao.y - jiaoY) < 230) {
+                        muBiao = jiZhunQiangDu * (tiao.shuBiaoJia != null ? tiao.shuBiaoJia : YA_WAN.shuBiaoJia);
+                    }
+                    yaWanQiangDuDangQian += (muBiao - yaWanQiangDuDangQian) * 0.08;
+                    var zuiZhong = yaWanQiangDuDangQian + Math.sin(t * 0.9) * huXiFuDu;
+                    for (var i = 0; i < yaWanCaiZhi.length; i++) {
+                        var caiZhi = yaWanCaiZhi[i].uniforms;
+                        caiZhi.uCharStrength.value = zuiZhong;
+                        if (tiao.r0 != null) caiZhi.uCharR0.value = tiao.r0;
+                        if (tiao.r1 != null) caiZhi.uCharR1.value = tiao.r1;
+                    }
+                }
+                // FP-03：草遮挡克隆构建（模型就绪后周期尝试直到成功，成功即止）
+                if (moShi3D && wu3DJiuXu && !zheDangYiJianHao && ++zheDangZhenShu % 90 === 0) {
+                    zheDangYiJianHao = daJianCaoZheDang();
+                    if (zheDangYiJianHao) __wuDLog('草遮挡克隆完成：' + zheDangKelong.length + ' 个草块');
+                }
+                // 仅在角色真正可见时参与合成：opacity:0 的画布仍会被浏览器读回做 alpha 混合，
+                // 驱动层报 GPU stall due to ReadPixels；display:none 才能让它脱离合成管线。
+                var yingGaiXianShi = bu > 0.001 && !window.__wuZhuJueZhuGuan;
+                if (yingGaiXianShi && canvas.style.display === 'none') canvas.style.display = '';
+                else if (!yingGaiXianShi && canvas.style.display !== 'none') canvas.style.display = 'none';
+                if (bu > 0.001 && canvas.style.display !== 'none') {
+                    renderer.render(scene, camera);
+                }
+                tongHuaBuCi++;
+            }
+        }
+        if (renderer && !window.__wuJingTaiDouDi) tick();
+
+        /* --- 调试面板：d 键切换；?debug=1 默认开启 --- */
+        function gengXinMianBan() {
+            if (!tiaoShiMian) return;
+            var s = window.__wuD.state();
+            tiaoShiMian.textContent =
+                '[WuHaoYang 调试]  (d 键关闭)\n' +
+                '模式: ' + s.mode + '  渲染帧: ' + s.drawFrames + '  画布透明度: ' + s.canvasVisible + '\n' +
+                '道路: ' + (s.daoLu || '-') + '  阶段: ' + (s.jieDuan || s.jieduan || '-') + '\n' +
+                'reveal 源: ' + s.revealSource + '\n' +
+                'reveal 进度: ' + s.revealProgress + '  → 角色不透明度: ' + s.opacity + '\n' +
+                '─ 吴昊阳→草地 ─\n' +
+                '压弯注入: ' + s.crushInjected + '  强度: ' + s.crushStrength + '\n' +
+                '压弯中心: ' + (s.crushCenter ? s.crushCenter.join(', ') : '-') + '  r0/r1: ' + s.crushR0 + '/' + s.crushR1 + '\n' +
+                '─ 草地→吴昊阳 ─\n' +
+                'reveal 进度驱动角色淡入（上方进度/透明度）\n' +
+                '─ 日志 ─\n' + window.__wuD.logs.slice(-4).join('\n');
+        }
+        function qieHuanTiaoShi() {
+            if (tiaoShiMian) {
+                tiaoShiMian.parentNode.removeChild(tiaoShiMian);
+                tiaoShiMian = null;
+                return;
+            }
+            tiaoShiMian = document.createElement('div');
+            tiaoShiMian.style.cssText = 'position:fixed;top:12px;right:12px;z-index:9999;background:rgba(6,8,20,0.82);color:#9fe8b0;padding:10px 14px;font:12px/1.7 Consolas,monospace;white-space:pre;border-radius:8px;border:1px solid rgba(159,232,176,0.3);pointer-events:none;max-width:420px;';
+            document.body.appendChild(tiaoShiMian);
+            gengXinMianBan();
+        }
+        if (location.search.indexOf('debug=1') !== -1) {
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'd' || e.key === 'D') qieHuanTiaoShi();
+            });
+            qieHuanTiaoShi();
+            setInterval(function () { if (tiaoShiMian) gengXinMianBan(); }, 400);
+            __wuDLog('debug 面板已由 URL 参数开启');
+        }
+
+        /* pure=1 纯背景模式：隐藏模板自带 UI（loading 界面/操作提示/进度点/音效图标/昼夜开关），
+           只留草地背景 + 吴昊阳（v9 覆盖层与 T3 引擎平面不受影响，交互保留可拖拽旋转）。
+           不影响默认无参数行为（主页 iframe 嵌入时零变化）。 */
+        if (location.search.indexOf('pure=1') !== -1) {
+            var pureYangShi = document.createElement('style');
+            pureYangShi.id = 'pureModeYangShi';
+            pureYangShi.textContent = '.loading,.look-around-hint,.explore-hint,.viewpoints-progress,.sound-icon,.switch{display:none!important}';
+            document.head.appendChild(pureYangShi);
+            __wuDLog('pure 纯背景模式已开启（模板 UI 已隐藏）');
+        }
+        }   /* 闭合 initWuHaoYang（其内部含 tick/调试面板/pure 块） */
+    })();   /* 闭合 v9 IIFE */
+    </script>
+
+    <script>
+    /* 吴昊阳主道路 T3：角色平面进入引擎渲染管线（renderSceneOverride 路线 B）
+       - 逆向结论：引擎 postProcessing 的 RenderPass(FN) 以 .scene 属性持有真正渲染的场景
+         （= engine.scene），directRenderMode=false 时经 EffectComposer 通道链渲染。
+         挂入 engine.scene 的对象会进入渲染队列（旧失败案例的根因是用 r128 的 THREE
+         构造对象挂新版 THREE 场景——双实例协议不兼容，而非场景挂载路径被堵）。
+       - 本块全部用引擎自己的类构造：构造器从场景现有对象运行时反构（禁硬编码混淆类名），
+         geometry 复用 revealMesh 的 2×2 PlaneGeometry，材质 MeshBasicMaterial(depthTest=true)。
+       - 纹理必须与引擎同类：克隆场景内已有完整图片的纹理（flipY/色彩空间与引擎一致），
+         无 image 的纹理一律视为失败、绝不带病进场景（曾因此“揭露但吴昊阳不染色”）。
+       - 遮挡：角色平面 depthTest=true、depthWrite=false → 前景草自然遮挡角色，
+         角色吃引擎后处理（TAA/色彩通道），视觉与草地统一。
+       - billboard：每帧 quaternion 复制主相机（保持 wuhaoyang-2d.png 比例/方向不变）。
+       - 显现：不透明度与 v9 覆盖层同源（reveal 进度 → __wuTouMingDu）。
+       - 降级：健康监测发现平面被引擎移除时 __wuZhuJueZhuGuan 复位，v9 覆盖层自动恢复。 */
+    (function () {
+        // FP-03：3D 模式（?wu3d=1）下 T3 引擎内 2D 平面整套让位给 v9 覆盖层 3D 分支，逻辑保留不删
+        if (window.__wuMoShi3D === true) {
+            try { if (/[?&]debug=1/.test(location.search)) console.debug('[WuHaoYang][T3] 3D 模式，本块跳过'); } catch (e) {}
+            return;
+        }
+        var PEI_ZHI = window.__wuPEIZHI || { weiZhi: { x: 5.05, y: -0.0133, z: 3.0928 }, chiCun: 1.1755 };
+        // 引擎内平面锚点高度：轻微埋脚（下缘没入草地，前景草自然遮挡）。
+        // 注意 weiZhi.y=-0.0133 是 v9 覆盖层专用（覆盖层无深度不遮挡，取值偏下）；
+        // 引擎平面有真实 depthTest，沿用会把约整个身体埋进地形（PoC3 实证）。
+        var YIN_QING_GAO_DU = 0.42;
+        // 调参口：URL 带 ?wuY=<数值> 时临时覆盖锚点高度（下移/上移验证用，与 debug=1/pure=1 同类调试参数）。
+        var wuYpiPei = location.search.match(/[?&]wuY=(-?[\d.]+)/);
+        if (wuYpiPei) YIN_QING_GAO_DU = parseFloat(wuYpiPei[1]);
+        // 调参口：URL 带 ?wuX=<数值> 时临时覆盖锚点横向位置（同上，验证用）
+        var wuXpiPei = location.search.match(/[?&]wuX=(-?[\d.]+)/);
+        if (wuXpiPei) PEI_ZHI.weiZhi.x = parseFloat(wuXpiPei[1]);
+        // 修复「飘」的根因：__wuDLog 原为 v9 IIFE 局部函数，T3 块访问不到 →
+        // ReferenceError 使本块启动即崩，角色平面从未进入引擎场景（诊断探针实证）。
+        function __wuDLog(msg) {
+            if (window.__wuD && window.__wuD.log) window.__wuD.log(msg);
+            else { try { if (/[?&]debug=1/.test(location.search)) console.debug('[WuHaoYang][T3] ' + msg); } catch (e) {} }
+        }
+        var mesh = null, yiJiuXu = false, zhenShu = 0;
+        var daiQueRen = false, lianXuKeJian = 0, linShiXiangLiang = null;
+        window.__wuZhuJueDaiQueRen = false;
+
+        function fanGouZao(exp) {
+            var out = { meshCtor: null, basicMatCtor: null, basicTemplate: null, texCtor: null };
+            exp.engine.scene.traverse(function (o) {
+                try {
+                    if (o.isMesh && !o.isInstancedMesh && !out.meshCtor) out.meshCtor = o.constructor;
+                    var m = o.material;
+                    if (!m) return;
+                    var list = Array.isArray(m) ? m : [m];
+                    for (var i = 0; i < list.length; i++) {
+                        var mm = list[i];
+                        if (!mm) continue;
+                        if (mm.type === 'MeshBasicMaterial' && !out.basicMatCtor) {
+                            out.basicMatCtor = mm.constructor; out.basicTemplate = mm;
+                        }
+                        if (mm.uniforms && !out.texCtor) {
+                            for (var k in mm.uniforms) {
+                                var v = mm.uniforms[k].value;
+                                if (v && v.isTexture) { out.texCtor = v.constructor; break; }
+                            }
+                        }
+                    }
+                } catch (e) {}
+            });
+            var FALBACK = window.parent && window.parent.THREE;
+            if (!out.meshCtor && FALBACK) out.meshCtor = FALBACK.Mesh;
+            if (!out.basicMatCtor && FALBACK) out.basicMatCtor = FALBACK.MeshBasicMaterial;
+            if (!out.texCtor && FALBACK) out.texCtor = FALBACK.CanvasTexture || FALBACK.Texture;
+            return out;
+        }
+
+        function chuangJian(exp) {
+            var gz = fanGouZao(exp);
+            if (!gz.meshCtor || !gz.basicMatCtor) {
+                __wuDLog('[T3] 网格/材质构造器反构不完整，等待引擎后放弃本次');
+                return false;
+            }
+            /* 纹理必须与引擎上传路径同类：优先克隆场景内已有完整图片的纹理
+               （同类+同参，flipY/色彩空间与引擎一致，真正的融入）；
+               反构出的 texCtor 曾是非图片语义的自定义类，造出的 map 没有 image，
+               平面进场景也渲染不出吴昊阳——线上“揭露但吴昊阳不染色”的根因。
+               无可克隆源时才回退旧构造，且无 image 一律视为失败，绝不带病进场景。 */
+            function quWenLiKeLongYuan() {
+                var zhaoDao = null;
+                try {
+                    exp.engine.scene.traverse(function (o) {
+                        if (zhaoDao) return;
+                        var m = o.material;
+                        if (!m) return;
+                        var list = Array.isArray(m) ? m : [m];
+                        for (var i = 0; i < list.length; i++) {
+                            var mm = list[i];
+                            if (!mm) continue;
+                            var houXuan = [mm.map, mm.emissiveMap, mm.alphaMap];
+                            for (var j = 0; j < houXuan.length; j++) {
+                                var tx = houXuan[j];
+                                var ti = tx && tx.image;
+                                if (tx && ti && ti.complete && (ti.naturalWidth === undefined || ti.naturalWidth > 0) && tx.clone) {
+                                    zhaoDao = tx; return;
+                                }
+                            }
+                            if (mm.uniforms) {
+                                for (var k in mm.uniforms) {
+                                    var vv = mm.uniforms[k] && mm.uniforms[k].value;
+                                    var vi = vv && vv.image;
+                                    if (vv && vv.isTexture && vi && vi.complete && (vi.naturalWidth === undefined || vi.naturalWidth > 0) && vv.clone) {
+                                        zhaoDao = vv; return;
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } catch (e) {}
+                return zhaoDao;
+            }
+            var geo = exp.revealMesh.mesh.geometry.clone();
+            var mat = new gz.basicMatCtor({});
+            var tieTuChongShi = 0;
+            var yiDaYinWuKeLong = false;
+            function anPaiZhongShi() {
+                var zuiDa = (window.__caoDiPeiZhi && window.__caoDiPeiZhi.zuiDaChongShi) || 5;
+                if (tieTuChongShi < zuiDa) {
+                    var yanChi = Math.min(600 * Math.pow(2, tieTuChongShi - 1), 5000);
+                    setTimeout(zaiRuTieTu, yanChi);
+                } else if (window.__wuXianShiJingTai) {
+                    try { window.__wuXianShiJingTai(); } catch (e) {}
+                }
+            }
+            function zaiRuTieTu() {
+                if (window.__wuYiXiaoHui) return;
+                var tu = new Image();
+                tu.onload = function () {
+                    try {
+                        /* 克隆源现找现用：岛屿等纹理异步到达，创建时找太早必然落空。
+                           每次 onload 重找，找不到可克隆源或纹理无效一律按失败重试，
+                           绝不带病进场景。 */
+                        var yuan = quWenLiKeLongYuan();
+                        if (yuan && !yiDaYinWuKeLong) {
+                            yiDaYinWuKeLong = true;
+                            __wuDLog('[T3] 纹理采用场景同类克隆（与引擎同参）');
+                        }
+                        var tex;
+                        if (yuan) {
+                            tex = yuan.clone();
+                            tex.image = tu;
+                            tex.needsUpdate = true;
+                        } else {
+                            /* 次选：父页三维库的 Texture（图片语义确定，上传走数据字段，
+                               跨实例仅当数据载体，比场景内未知自定义类可靠）；
+                               直造未知类已被实证为无 image 废纹理，不再使用。 */
+                            var PW2 = window.parent && window.parent.THREE;
+                            if (PW2 && PW2.Texture) {
+                                if (!yiDaYinWuKeLong) {
+                                    yiDaYinWuKeLong = true;
+                                    __wuDLog('[T3] 暂无场景纹理可克隆，改用父页 Texture 承载图片');
+                                }
+                                try {
+                                    tex = new PW2.Texture(tu);
+                                    tex.needsUpdate = true;
+                                    try { tex.colorSpace = 'srgb'; } catch (e) {}
+                                } catch (e) {
+                                    tex = null;
+                                }
+                            } else {
+                                if (!yiDaYinWuKeLong) {
+                                    yiDaYinWuKeLong = true;
+                                    __wuDLog('[T3] 暂无场景纹理可克隆且无父页三维库');
+                                }
+                                tex = null;
+                            }
+                        }
+                        var tuPian = tex && tex.image;
+                        if (!tex || !tuPian || tuPian !== tu || !tu.complete ||
+                            (tu.naturalWidth !== undefined && tu.naturalWidth <= 0)) {
+                            throw new Error('wenLiWuXiao');
+                        }
+                        mat.map = tex;
+                    mat.transparent = true;
+                    mat.depthTest = true;     // 前景草自然遮挡角色（路线 B 核心）
+                    mat.depthWrite = false;
+                    mat.side = (gz.basicTemplate && gz.basicTemplate.side != null) ? gz.basicTemplate.side : 2;
+                    mat.toneMapped = false;   // 贴图颜色不漂移（TAA/色彩通道仍生效）
+                    mesh = new gz.meshCtor(geo, mat);
+                    mesh.position.set(PEI_ZHI.weiZhi.x, YIN_QING_GAO_DU, PEI_ZHI.weiZhi.z);
+                    mesh.scale.setScalar(PEI_ZHI.chiCun / 2); // 2×2 平面 → 角色尺寸
+                    mesh.name = '__wu_zhujue_plane__';
+                    exp.engine.scene.add(mesh);
+                    window.__wuZhuJueMesh = mesh;
+                    /* 接管必须先证明：仅标记待确认，不直接置主道路标记。
+                       盲占领曾导致覆盖层隐藏+静态回收而平面实际不可见——
+                       吴昊阳彻底隐身却门控放行（线上实证）。证明见 tongBu。 */
+                    daiQueRen = true;
+                    lianXuKeJian = 0;
+                    window.__wuZhuJueDaiQueRen = true;
+                    yiJiuXu = true;
+                    __wuDLog('[T3] 角色平面已进入引擎场景（depthTest 开启，前景草遮挡生效），待可见证明');
+                } catch (e) {
+                    __wuDLog('[T3] 创建失败: ' + e.message);
+                    tieTuChongShi++;
+                    anPaiZhongShi();
+                }
+                };
+                tu.onerror = function () {
+                    tieTuChongShi++;
+                    __wuDLog('[T3] 角色贴图加载失败(第' + tieTuChongShi + '次)');
+                    anPaiZhongShi();
+                };
+                tu.src = '/grass-bg/wuhaoyang-2d.png';
+            }
+            zaiRuTieTu();
+            return true;
+        }
+
+        function dengJiChu() {
+            var exp = window.__experience;
+            if (!exp || !exp.engine || !exp.engine.scene || !exp.revealMesh || !exp.revealMesh.mesh) {
+                setTimeout(dengJiChu, 400);
+                return;
+            }
+            if (!chuangJian(exp)) setTimeout(dengJiChu, 800);
+        }
+        dengJiChu();
+
+        /* 可见证明：网格仍挂载 + 材质贴图完整解码 + 锚点在相机视锥内。
+           父页 THREE 不可用时退化为前两项（基础证据），证明等级写入日志。 */
+        function shiFouKeJian(exp, cam) {
+            try {
+                if (!mesh || !mesh.parent) return false;
+                var caiZhi = mesh.material;
+                var tieTu = caiZhi && caiZhi.map;
+                if (!tieTu) return false;
+                var tu = tieTu.image;
+                if (!tu || !tu.complete) return false;
+                if (tu.naturalWidth !== undefined && tu.naturalWidth <= 0) return false;
+                var PW = window.parent && window.parent.THREE;
+                if (PW && PW.Vector3 && cam && cam.projectionMatrix && cam.matrixWorldInverse) {
+                    if (!linShiXiangLiang) {
+                        try { linShiXiangLiang = new PW.Vector3(); }
+                        catch (e) { return true; }
+                    }
+                    linShiXiangLiang.setFromMatrixPosition(mesh.matrixWorld);
+                    linShiXiangLiang.project(cam);
+                    if (!(linShiXiangLiang.z > -1 && linShiXiangLiang.z < 1 &&
+                          Math.abs(linShiXiangLiang.x) < 1.2 && Math.abs(linShiXiangLiang.y) < 1.2)) {
+                        return false;
+                    }
+                }
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        /* 每帧：billboard 同步 + reveal 驱动透明度 + 健康监测 */
+        (function tongBu() {
+            requestAnimationFrame(tongBu);
+            if (!yiJiuXu || !mesh || document.hidden) return;
+            zhenShu++;
+            try { window.__wuTongBuXinTiao = Date.now(); } catch (e) {}
+            var exp = window.__experience;
+            // 健康监测每 60 帧：必须放在 %2 跳过之前——60 是偶数，
+            // 放在跳过之后则恒被吞掉、降级永不执行（旧 %240 同理自始未生效，实测定位）。
+            if (zhenShu % 60 === 0 && exp && exp.engine && exp.engine.scene) {
+                var rengZai = false;
+                try {
+                    exp.engine.scene.traverse(function (o) { if (o === mesh) rengZai = true; });
+                } catch (e) {}
+                if (window.__wuZhuJueZhuGuan && !rengZai) {
+                    window.__wuZhuJueZhuGuan = false;
+                    daiQueRen = false;
+                    lianXuKeJian = 0;
+                    window.__wuZhuJueDaiQueRen = false;
+                    try {
+                        var __fuHuo = window.__wuOverlayReady && window.__wuXuanRanQiHuoZai &&
+                            (Date.now() - (window.__wuTickXinTiao || 0) < 2500);
+                        var __jingTu = window.__wuJingTaiTu;
+                        window.__wuDaoLu = __fuHuo ? 'fuCeng' :
+                            (__jingTu && __jingTu.complete && __jingTu.naturalWidth > 0 ? 'jingTai' : null);
+                    } catch (e) {}
+                    __wuDLog('[T3] 平面已丢失，主道路降级');
+                    try {
+                        var fuCengHuo = window.__wuOverlayReady && window.__wuXuanRanQiHuoZai &&
+                            (Date.now() - (window.__wuTickXinTiao || 0) < 2500);
+                        var jingTu = window.__wuJingTaiTu;
+                        if (!fuCengHuo && jingTu && jingTu.complete && jingTu.naturalWidth > 0 && window.__wuXianShiJingTai) {
+                            window.__wuXianShiJingTai();
+                        }
+                    } catch (e) {}
+                } else if (!window.__wuZhuJueZhuGuan && rengZai && !daiQueRen) {
+                    daiQueRen = true;
+                    lianXuKeJian = 0;
+                    window.__wuZhuJueDaiQueRen = true;
+                    __wuDLog('[T3] 平面回到引擎场景，重新证明接管');
+                }
+            }
+            if (zhenShu % 2 === 0) return;
+            var cam = exp && exp.engine && exp.engine.camera && exp.engine.camera.instance;
+            if (!cam) return;
+            mesh.quaternion.copy(cam.quaternion);
+            // 不透明度与覆盖层同源（v9 每帧写 __wuTouMingDu；未就绪时按 reveal 直算）
+            var bu = window.__wuTouMingDu;
+            if (bu == null) {
+                var u = exp.revealMesh.material.uniforms.uRevealProgress;
+                var p = u ? Math.min(1, Math.max(0, (u.value - 0.02) / 0.30)) : 0;
+                bu = p * p * (3 - 2 * p);
+            }
+            mesh.material.opacity = bu;
+            /* 可见证明（连续 5 帧）：挂载中 + 贴图完整 + 视锥内。
+               未证明前覆盖层/静态照常兜底，证明后主道路独占——
+               同场景、同管线、有遮挡，真正的融入。 */
+            if (daiQueRen && !window.__wuZhuJueZhuGuan) {
+                if (shiFouKeJian(exp, cam)) {
+                    lianXuKeJian++;
+                    if (lianXuKeJian >= 5) {
+                        daiQueRen = false;
+                        window.__wuZhuJueDaiQueRen = false;
+                        window.__wuZhuJueZhuGuan = true;
+                        window.__wuDaoLu = 'zhuDao';
+                        __wuDLog('[T3] 主道路已证明接管（连续可见帧），覆盖层退场');
+                    }
+                } else {
+                    lianXuKeJian = 0;
+                }
+            }
+        })();
+    })();
+    </script>
+
+
+</body>
+</html>

@@ -85,6 +85,30 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   const keJiXuLiaoTian = ref(false)
   const yiDuBuHuiZhuangTai = ref(false)
   const cuoWuXinXi = ref<string | null>(null)
+  const weiJiGanYu = ref<{ yuanZhuReXian: string; ganYuTiShi: string; chaoShiTiXingMiao: number } | null>(null)
+  let weiJiChaoShiQi: ReturnType<typeof setTimeout> | null = null
+
+  function sheZhiWeiJiGanYu(ganYu: { yuanZhuReXian: string; ganYuTiShi: string; chaoShiTiXingMiao: number }): void {
+    weiJiGanYu.value = ganYu
+    if (weiJiChaoShiQi) {
+      clearTimeout(weiJiChaoShiQi)
+      weiJiChaoShiQi = null
+    }
+    weiJiChaoShiQi = setTimeout(() => {
+      if (weiJiGanYu.value) {
+        sheZhiCuoWu(huoQuFanYi('liaoTian', 'weiJiChaoShiTiXing'))
+      }
+      weiJiChaoShiQi = null
+    }, Math.max(1, ganYu.chaoShiTiXingMiao) * 1000)
+  }
+
+  function guanBiWeiJiGanYu(): void {
+    weiJiGanYu.value = null
+    if (weiJiChaoShiQi) {
+      clearTimeout(weiJiChaoShiQi)
+      weiJiChaoShiQi = null
+    }
+  }
   const yeMa = ref(1)
   const meiYeTiaoShu = ref(50)
   const zongShu = ref(0)
@@ -232,10 +256,18 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     }
 
     const 令牌 = duQuLingPai()
+    // YH-097 Socket令牌刷新：建连前刷新，auth用回调，重连退避禁拿旧票
+    // 根因：401刷新了socket还拿旧票；收敛为建连前刷新+动态auth+退避
     const socket = io({
       path: '/socket.io',
-      auth: { token: 令牌 },
+      auth: (cb) => {
+        cb({ token: duQuLingPai() })
+      },
       transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 8000,
     })
 
     socket.on('connect', () => {
@@ -536,7 +568,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     )
 
     try {
-      const { xiaoXi, shiMiJi } = await paiDuiRenWu
+      const { xiaoXi, shiMiJi, weiJiGanYu, yuanZhuReXian, ganYuTiShi, chaoShiTiXingMiao } = await paiDuiRenWu
       // 服务端可能回写更大的序号（如角色消息回填），同步抬高本地计数器避免后续冲突
       ke_hu_duan_xu_hao = Math.max(ke_hu_duan_xu_hao, xiaoXi.ke_hu_duan_xu_hao ?? 0)
       const suoYin = xiaoXiLieBiao.value.findIndex(
@@ -550,6 +582,13 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       }
       if (xiaoXiLieBiao.value.filter((m) => m.fa_song_zhe_lei_xing === 'yonghu').length === 1) {
         track('shouTiaoXiaoXi')
+      }
+      if (weiJiGanYu === true) {
+        sheZhiWeiJiGanYu({
+          yuanZhuReXian: yuanZhuReXian ?? '',
+          ganYuTiShi: ganYuTiShi ?? huoQuFanYi('liaoTian', 'weiJiGanYuTiShi'),
+          chaoShiTiXingMiao: chaoShiTiXingMiao ?? 300,
+        })
       }
       return xiaoXi
     } catch (cuoWu: unknown) {
@@ -774,6 +813,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     lianJieZhong,
     yiDuBuHuiZhuangTai,
     cuoWuXinXi,
+    weiJiGanYu,
     yeMa,
     meiYeTiaoShu,
     zongShu,
@@ -800,6 +840,8 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     qingKongZhuangTai,
     qingChuCuoWu,
     sheZhiCuoWu,
+    sheZhiWeiJiGanYu,
+    guanBiWeiJiGanYu,
     补全旧内心消息,
   }
 })

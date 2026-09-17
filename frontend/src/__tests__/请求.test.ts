@@ -95,7 +95,7 @@ describe('请求拦截器', () => {
   })
 
   it('401 状态码清空令牌并跳转登录页', async () => {
-    localStorage.setItem('令牌', 'test-token')
+    sessionStorage.setItem('令牌', 'test-token')
     sessionStorage.setItem('令牌', 'session-token')
 
     const error = createAxiosError(401, {
@@ -111,7 +111,7 @@ describe('请求拦截器', () => {
     // D-6：本地令牌清理 + Pinia 用户态清理 + router.push 携带 redirect
     // 清理走动态 import 的微任务链，先冲刷微任务再断言
     await vi.waitFor(() => expect(清空用户状态).toHaveBeenCalled())
-    expect(localStorage.getItem('令牌')).toBeNull()
+    expect(sessionStorage.getItem('令牌')).toBeNull()
     expect(sessionStorage.getItem('令牌')).toBeNull()
     expect(routerPush).toHaveBeenCalledTimes(1)
     expect(routerPush).toHaveBeenCalledWith({

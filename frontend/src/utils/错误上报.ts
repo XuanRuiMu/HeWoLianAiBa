@@ -1,3 +1,5 @@
+import { yingYongBanBen } from '@/config/站点配置'
+
 export type CuoWuLeiBie = 'vue' | 'chengNuo' | 'ziYuan' | 'weiZhi'
 
 export interface CuoWuShangBaoCanShu {
@@ -21,8 +23,60 @@ interface ShangBaoTi {
 let dangQianShangBaoHanShu: CuoWuShangBaoHanShu | null = null
 let yiAnZhuang = false
 
+// YH-085 错误上报收敛：指纹去重+采样+批量队列+统一版本，禁直发被限流腰斩
+// 根因：直发还被后端限流腰斩查不出线上问题；收敛为指纹去重采样批量
+const SHANG_BAO_ZHI_WEN = new Map<string, number>()
+const ZHI_WEN_LENG_QUE_HAO_MIAO = 60000
+const CAI_YANG_LV = 1
+const PI_LIANG_CHI_CUN = 10
+const PI_LIANG_SHUA_XIN_HAO_MIAO = 5000
+let piLiangDuiLie: ShangBaoTi[] = []
+let piLiangDingShi: ReturnType<typeof setTimeout> | null = null
+
+function zhiWen(cuoWu: unknown, leiBie: string): string {
+  const ming = cuoWu instanceof Error ? `${cuoWu.name}:${cuoWu.message}` : String(cuoWu)
+  let haXi = 0
+  const yuan = `${leiBie}:${ming}`
+  for (let i = 0; i < yuan.length; i++) {
+    haXi = (haXi * 31 + yuan.charCodeAt(i)) | 0
+  }
+  return String(haXi)
+}
+
+function paiKongPiLiang(): void {
+  if (piLiangDuiLie.length === 0) return
+  const daiFa = piLiangDuiLie
+  piLiangDuiLie = []
+  for (const ti of daiFa) {
+    faSongRiZhi(ti)
+  }
+}
+
+function paiDuiPiLiang(ti: ShangBaoTi): void {
+  piLiangDuiLie.push(ti)
+  if (piLiangDuiLie.length >= PI_LIANG_CHI_CUN) {
+    paiKongPiLiang()
+    return
+  }
+  if (!piLiangDingShi) {
+    piLiangDingShi = setTimeout(() => {
+      piLiangDingShi = null
+      paiKongPiLiang()
+    }, PI_LIANG_SHUA_XIN_HAO_MIAO)
+  }
+}
+
 export function sheZhiCuoWuShangBaoHanShu(hanShu: CuoWuShangBaoHanShu | null): void {
   dangQianShangBaoHanShu = hanShu
+}
+
+export function chongZhiCuoWuShangBaoZhuangTai(): void {
+  SHANG_BAO_ZHI_WEN.clear()
+  piLiangDuiLie = []
+  if (piLiangDingShi) {
+    clearTimeout(piLiangDingShi)
+    piLiangDingShi = null
+  }
 }
 
 export function chuFaCuoWuShangBao(canShu: CuoWuShangBaoCanShu): void {
@@ -65,22 +119,11 @@ function faSongRiZhi(shuJuTi: ShangBaoTi): void {
     return
   }
 
-  try {
-    const navigatorRef = (
-      globalThis as { navigator?: { sendBeacon?: (url: string, body: Blob) => boolean } }
-    ).navigator
-    if (navigatorRef && typeof navigatorRef.sendBeacon === 'function') {
-      const blob = new Blob([wenBen], { type: 'application/json' })
-      const ok = navigatorRef.sendBeacon(SHANG_BAO_URL, blob)
-      if (ok) return
-    }
-  } catch {
-    // 静默
-  }
-
+  // 根因收敛：sendBeacon对502无状态回执，失败静默但浏览器记资源error刷控制台；
+  // 收敛为fetch直发（非2xx判错catch静默，不记资源error）
   try {
     const fetchRef = (
-      globalThis as { fetch?: (url: string, init?: RequestInit) => Promise<unknown> }
+      globalThis as { fetch?: (url: string, init?: RequestInit) => Promise<Response> }
     ).fetch
     if (typeof fetchRef === 'function') {
       void fetchRef(SHANG_BAO_URL, {
@@ -90,6 +133,10 @@ function faSongRiZhi(shuJuTi: ShangBaoTi): void {
         keepalive: true,
         mode: 'same-origin',
         credentials: 'same-origin',
+      }).then((xiangYing) => {
+        if (!xiangYing.ok) {
+          throw new Error(`日志上报非成功状态:${xiangYing.status}`)
+        }
       }).catch(() => {
         // 静默
       })
@@ -121,9 +168,52 @@ export function moRenShangBaoHanShu(canShu: CuoWuShangBaoCanShu): void {
 
   const ti: ShangBaoTi = {
     lei_xing: shangBaoLeiXing,
-    xiang_qing: xiangQing,
+    // YH-085 统一版本：上报带应用版本，禁版本分裂查不出线上问题
+    xiang_qing: { ...xiangQing, ban_ben: yingYongBanBen },
   }
+  // 同步直发语义：默认上报函数立即发送，批量队列仅供高频调用方显式使用
+  // YH-085 指纹去重仍生效，禁同错刷屏；采样仅作用于批量入口，默认上报不采样
+  const wen = zhiWen(canShu.cuoWu, canShu.leiBie)
+  const shangCi = SHANG_BAO_ZHI_WEN.get(wen)
+  if (shangCi && Date.now() - shangCi < ZHI_WEN_LENG_QUE_HAO_MIAO) {
+    return
+  }
+  SHANG_BAO_ZHI_WEN.set(wen, Date.now())
   faSongRiZhi(ti)
+}
+
+// YH-085 高频批量上报：显式批量入口，指纹去重+采样+批量，禁直发被限流腰斩
+export function moRenPiLiangShangBao(canShu: CuoWuShangBaoCanShu): void {
+  const wen = zhiWen(canShu.cuoWu, canShu.leiBie)
+  const shangCi = SHANG_BAO_ZHI_WEN.get(wen)
+  if (shangCi && Date.now() - shangCi < ZHI_WEN_LENG_QUE_HAO_MIAO) {
+    return
+  }
+  if (Math.random() > CAI_YANG_LV) {
+    return
+  }
+  SHANG_BAO_ZHI_WEN.set(wen, Date.now())
+  const shangBaoLeiXing: ShangBaoLeiXing =
+    canShu.fuJia?.shangBaoLeiXing === 'xingNengZhiBiao' ? 'xingNengZhiBiao' : 'cuoWu'
+  let xiangQing: Record<string, unknown>
+  if (shangBaoLeiXing === 'xingNengZhiBiao') {
+    const zhiBiaoShuJu =
+      canShu.cuoWu && typeof canShu.cuoWu === 'object'
+        ? (canShu.cuoWu as Record<string, unknown>)
+        : { zhi: canShu.cuoWu }
+    xiangQing = { ...zhiBiaoShuJu, shiJianChuo: canShu.shiJianChuo }
+  } else {
+    xiangQing = {
+      leiBie: canShu.leiBie,
+      cuoWu: xuLieHuaCuoWu(canShu.cuoWu),
+      shiJianChuo: canShu.shiJianChuo,
+      fuJia: canShu.fuJia,
+    }
+  }
+  paiDuiPiLiang({
+    lei_xing: shangBaoLeiXing,
+    xiang_qing: { ...xiangQing, ban_ben: yingYongBanBen },
+  })
 }
 
 export function chuShiHuaCuoWuShangBao(): void {

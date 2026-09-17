@@ -10,7 +10,8 @@ import { huoQuDuoMoTaiPeiZhi, huoQuDuoMoTaiQianDuanShiTu, chongZaiDuoMoTaiHuanJi
 import { gouJianYuYinKeDuWenBen, rongHeYuYinXiaoXiNeiRong, sheZhiYuYinLiJieMock, huoQuYinPinShiJianMiaoShu, tiQuYinPinShiJian } from '../services/语音理解'
 import { yanZhengShengTuTiShiCi, shengChengTuXiang, sheZhiShengTuMock } from '../services/图像生成'
 import { shiShiPinMIME, shiShiPinWenJian, gouJianShiPinKeDuWenBen, yanZhengShiPinTiShiCi, shengChengShiPin, sheZhiShengShiPinMock } from '../services/视频多模态'
-import { meiTiZhanShiWenBen, shiShiPinNeiRong } from '../services/AI视觉辅助'
+import { meiTiZhanShiWenBen, shiShiPinNeiRong, gouJianYongHuTuXiangKuai } from '../services/AI视觉辅助'
+import { sheZhiMockTiaoYong, chongZhiDeepSeekKeHuDuan } from '../utils/DeepSeek客户端'
 import { fanYi } from '../config/translations'
 import { peiZhi } from '../config'
 
@@ -66,6 +67,8 @@ describe('FP-10 多模态C混合省钱', () => {
     sheZhiYuYinLiJieMock(null)
     sheZhiShengTuMock(null)
     sheZhiShengShiPinMock(null)
+    sheZhiMockTiaoYong(null)
+    chongZhiDeepSeekKeHuDuan()
   })
 
   afterAll(async () => {
@@ -177,6 +180,23 @@ describe('FP-10 多模态C混合省钱', () => {
     expect(yanZhengShiPinTiShiCi('  ').heFa).toBe(false)
   })
 
+  it('FP-05 YH-048 图像注入8张low：超限只保留最近8张且detail全low', async () => {
+    const { AI_PEI_ZHI } = await import('../config/AI配置')
+    expect(AI_PEI_ZHI.prompt.liShiTuXiangZuiDuoZhuRuShu).toBe(8)
+    const liShi = Array.from({ length: 10 }, (_, i) => ({
+      fa_song_zhe_lei_xing: 'yonghu' as const,
+      fa_song_zhe_ming: '对方',
+      nei_rong: '',
+      shi_jian: '14:30',
+      meiTiLeiBie: 'tupian',
+      meiTiSha256: '0'.repeat(63) + String(i),
+      meiTiMIME: 'image/png',
+    }))
+    const kuai = await gouJianYongHuTuXiangKuai(liShi)
+    expect(kuai.filter((k) => k.type === 'input_image').every((k) => k.type !== 'input_image' || k.detail === 'low')).toBe(true)
+    expect(kuai.filter((k) => k.type === 'input_image').length).toBeLessThanOrEqual(8)
+  })
+
   it('视频生成未开启降级走翻译且mock可成功', async () => {
     process.env.SHI_PIN_SHENG_CHENG_QI_YONG = 'false'
     process.env.SHI_PIN_SHENG_CHENG_API_MI_YAO = ''
@@ -220,10 +240,10 @@ describe('FP-10 多模态C混合省钱', () => {
     try {
       const jiaoSeId = await huoQuCeShiJiaoSeId(yongHu.lingPai)
       const { sheZhiMockTiaoYong } = await import('../utils/DeepSeek客户端')
+      // 上传与发送全程保持mock：安全审核走mock判无违规，禁VITEST禁外呼兜底误拦截正常文本
       sheZhiMockTiaoYong(async () => ({ neiRong: JSON.stringify({ 违规: false, 确信度: 0.1 }), xinXi: { role: 'assistant', content: '' }, yuanShuJu: {} as never }))
       const shangChuan = await request(yingYong).post(`/api/聊天/会话/${jiaoSeId}/媒体`).query({ leiBie: 'yuyin' }).set('Authorization', `Bearer ${yongHu.lingPai}`).attach('file', Buffer.from('yuyin-neirong'), { filename: 'yuyin.wav', contentType: 'audio/wav' })
       yiChuan.push(String(shangChuan.body.shu_ju.sha256))
-      sheZhiMockTiaoYong(null)
       const faSong = await request(yingYong).post(`/api/聊天/会话/${jiaoSeId}/消息`).set('Authorization', `Bearer ${yongHu.lingPai}`).send({ leiXing: 'yuYin', meiTiId: String(shangChuan.body.shu_ju.mediaId), neiRong: '混合文字歌声汪汪' }).expect(200)
       expect(String(faSong.body.shu_ju.nei_rong)).toContain('混合文字歌声汪汪')
     } finally {
@@ -244,18 +264,12 @@ describe('FP-10 多模态C混合省钱', () => {
   })
 
   it('生图接口mock成功落库为角色图片消息', async () => {
+    // YH-036 用户手动按钮已删：生图/视频走AI主动偶发，用户手动触发一律403由AI代发；此处断言契约而非旧落库链路
     const yongHu = await chuangJianCeShiYongHu()
-    const yiChuan: string[] = []
-    sheZhiShengTuMock(async () => ({ cheng_gong: true, tuPianZiJie: gouJianCeShiPng(), mime: 'image/png' }))
-    const { sheZhiMockTiaoYong } = await import('../utils/DeepSeek客户端')
-    sheZhiMockTiaoYong(async () => ({ neiRong: JSON.stringify({ 违规: false, 确信度: 0.1 }), xinXi: { role: 'assistant', content: '' }, yuanShuJu: {} as never }))
     try {
       const jiaoSeId = await huoQuCeShiJiaoSeId(yongHu.lingPai)
-      const xiangYing = await request(yingYong).post(`/api/聊天/会话/${jiaoSeId}/生图`).set('Authorization', `Bearer ${yongHu.lingPai}`).send({ tiShiCi: '夕阳海边' }).expect(200)
-      expect(String(xiangYing.body.shu_ju.lei_xing)).toBe('tuPian')
-      const chaXun = await 数据库.query(`SELECT "SHA256" FROM "媒体文件" WHERE "上传者ID" = $1 LIMIT 1`, [yongHu.yongHuId])
-      expect(chaXun.rows.length).toBeGreaterThan(0)
-      yiChuan.push(String(chaXun.rows[0].SHA256))
+      const xiangYing = await request(yingYong).post(`/api/聊天/会话/${jiaoSeId}/生图`).set('Authorization', `Bearer ${yongHu.lingPai}`).send({ tiShiCi: '夕阳海边' }).expect(403)
+      expect(String(xiangYing.body.ti_shi)).toBe('图片与视频由AI对象在合适时主动发起，无需手动触发')
     } finally {
       sheZhiShengTuMock(null)
       sheZhiMockTiaoYong(null)
@@ -267,9 +281,6 @@ describe('FP-10 多模态C混合省钱', () => {
       await 数据库.query(`DELETE FROM "媒体文件" WHERE "上传者ID" = $1`, [yongHu.yongHuId])
       await 数据库.query(`DELETE FROM "角色" WHERE "用户ID" = $1`, [yongHu.yongHuId])
       await 数据库.query(`DELETE FROM "用户" WHERE "ID" = $1`, [yongHu.yongHuId])
-      for (const sha of yiChuan) {
-        await fs.promises.rm(path.join(MEI_TI_PEI_ZHI.cunChuGenMuLu, sha.slice(0, 2), sha), { force: true }).catch(() => {})
-      }
     }
   })
 })

@@ -155,6 +155,8 @@ describe('资料接口：签名与名片', () => {
       .expect(200)
     expect(String(shangChuan.body.shu_ju.tou_xiang)).toContain('/api/媒体/')
     const mingPian = await request(yingYong).get(`/api/资料/名片/${a.yongHuId}`).set('Authorization', `Bearer ${b.lingPai}`).expect(200)
-    expect(mingPian.body.shu_ju.tou_xiang).toBe(String(shangChuan.body.shu_ju.tou_xiang))
+    // YH-014 读取重签：落库为无参引用，名片返回绑定查看者的新鲜短效URL；同一文件不同查看者签名不同，只断言同文件前缀
+    const shangChuanQianZhui = String(shangChuan.body.shu_ju.tou_xiang).split('?')[0]
+    expect(String(mingPian.body.shu_ju.tou_xiang).split('?')[0]).toBe(shangChuanQianZhui)
   })
 })

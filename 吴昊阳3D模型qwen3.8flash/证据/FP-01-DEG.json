@@ -1,0 +1,22 @@
+{
+ "yaw": 0.0,
+ "spine": 8.0,
+ "chest": 16.0,
+ "neck": -16.0,
+ "head": -10.0,
+ "head_turn": 0.0,
+ "upper_L": 90.0,
+ "arm_in_L": 17.0,
+ "fore_L": 140.0,
+ "twist_L": 0.0,
+ "upper_R": 90.0,
+ "arm_in_R": 17.0,
+ "fore_R": 140.0,
+ "twist_R": 0.0,
+ "thigh_L": -4.0,
+ "shin_L": -4.0,
+ "hip_spread_L": 8.0,
+ "thigh_R": -4.0,
+ "shin_R": -4.0,
+ "hip_spread_R": -8.0
+}

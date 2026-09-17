@@ -154,21 +154,14 @@ describe('FP-03 A-2 连发12条预警', () => {
   }
 
   describe('12条触发预警', () => {
-    it('连发12条时触发预警消息（走Writer生成角色口吻消息）', async () => {
-      // Mock Writer生成预警消息
-      vi.mocked(yunXingAIYinQing).mockResolvedValue({
-        xiao_xi_lie_biao: ['别刷屏啦，我在认真听呢~'],
-        shi_fou_hui_fu: true,
-        shi_fou_che_hui: false,
-        jiang_ji_mo_shi: false,
-      })
+    it('连发12条时触发预警消息（YH-053轻量通道：本地模板零LLM调用不计预算）', async () => {
       vi.mocked(baoCunJiaoSeXiaoXi).mockResolvedValue(chuangJianXiaoXi('yj-1', '别刷屏啦，我在认真听呢~'))
 
       // 发送12条用户消息
       await lianFa(12)
 
-      // 验证Writer被调用生成预警消息
-      expect(yunXingAIYinQing).toHaveBeenCalled()
+      // YH-053轻量通道：预警不再调用全量引擎，零LLM调用
+      expect(yunXingAIYinQing).not.toHaveBeenCalled()
       const emit = huoQuEmit(io)
       const jiaoSeHuiFuCalls = emit.mock.calls.filter((call) => call[0] === '角色回复')
       expect(jiaoSeHuiFuCalls.length).toBeGreaterThan(0)
@@ -180,42 +173,23 @@ describe('FP-03 A-2 连发12条预警', () => {
     })
 
     it('预警后计数清零：再连发11条不触发预警', async () => {
-      vi.mocked(yunXingAIYinQing).mockResolvedValue({
-        xiao_xi_lie_biao: ['别刷屏啦'],
-        shi_fou_hui_fu: true,
-        shi_fou_che_hui: false,
-        jiang_ji_mo_shi: false,
-      })
       vi.mocked(baoCunJiaoSeXiaoXi).mockResolvedValue(chuangJianXiaoXi('yj-1', '别刷屏啦'))
 
       // 先发12条触发预警
       await lianFa(12)
-      expect(yunXingAIYinQing).toHaveBeenCalledTimes(1)
+      expect(yunXingAIYinQing).not.toHaveBeenCalled()
 
       vi.clearAllMocks()
-      vi.mocked(yunXingAIYinQing).mockResolvedValue({
-        xiao_xi_lie_biao: ['正常回复'],
-        shi_fou_hui_fu: true,
-        shi_fou_che_hui: false,
-        jiang_ji_mo_shi: false,
-      })
       vi.mocked(baoCunJiaoSeXiaoXi).mockResolvedValue(chuangJianXiaoXi('normal-1', '正常回复'))
 
       // 再发11条（没到12条）
       await lianFa(11)
 
-      // 不应该再次触发预警（Writer不应被调用生成预警消息）
-      // 这里因为10秒延迟，Writer不会被立即调用，所以不检查调用次数
-      // 关键是计数器已清零，不会在11条时触发预警
+      // 不应该再次触发预警（轻量通道同样计数清零）
+      expect(vi.mocked(baoCunJiaoSeXiaoXi).mock.calls.length).toBe(0)
     })
 
     it('预警不阻断后续流程：预警后用户继续发消息正常计数', async () => {
-      vi.mocked(yunXingAIYinQing).mockResolvedValue({
-        xiao_xi_lie_biao: ['别刷屏啦'],
-        shi_fou_hui_fu: true,
-        shi_fou_che_hui: false,
-        jiang_ji_mo_shi: false,
-      })
       vi.mocked(baoCunJiaoSeXiaoXi).mockResolvedValue(chuangJianXiaoXi('yj-1', '别刷屏啦'))
 
       await lianFa(12)
@@ -249,8 +223,8 @@ describe('FP-03 A-2 连发12条预警', () => {
       )
 
       await vi.runAllTimersAsync()
-      // 预警时已调用 yunXingAIYinQing 生成预警消息
-      expect(yunXingAIYinQing).toHaveBeenCalledTimes(1)
+      // YH-053轻量通道：预警不再调用全量引擎
+      expect(yunXingAIYinQing).not.toHaveBeenCalled()
     })
 
     it('预警后继续连发20条（无角色回复）触发判负', async () => {
@@ -273,24 +247,17 @@ describe('FP-03 A-2 连发12条预警', () => {
 
   describe('预警消息文案走翻译文件', () => {
     it('预警消息使用翻译键生成', async () => {
-      // 这个测试验证预警提示词包含翻译键相关内容
-      // 实际的翻译文件键值在后端配置中
-      vi.mocked(yunXingAIYinQing).mockResolvedValue({
-        xiao_xi_lie_biao: ['别刷屏啦'],
-        shi_fou_hui_fu: true,
-        shi_fou_che_hui: false,
-        jiang_ji_mo_shi: false,
-      })
       vi.mocked(baoCunJiaoSeXiaoXi).mockResolvedValue(chuangJianXiaoXi('yj-1', '别刷屏啦'))
 
       await lianFa(12)
 
-      expect(yunXingAIYinQing).toHaveBeenCalled()
-      // 验证传给Writer的输入包含预警相关指令
-      const callArgs = vi.mocked(yunXingAIYinQing).mock.calls[0][0] as {
-        yong_hu_xin_xiao_xi: string
-      }
-      // 预警消息应该由Writer基于特定prompt生成，包含"别刷屏"语义
+      // YH-053轻量通道：预警文案直接走翻译文件，不再经Writer生成
+      expect(yunXingAIYinQing).not.toHaveBeenCalled()
+      expect(vi.mocked(baoCunJiaoSeXiaoXi)).toHaveBeenCalledWith({
+        yong_hu_id: 'yong-hu-id',
+        jiao_se_id: 'jiao-se-id',
+        nei_rong: expect.stringContaining('刷屏'),
+      })
     })
   })
 })

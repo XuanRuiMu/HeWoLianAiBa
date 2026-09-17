@@ -4,7 +4,7 @@ import { gengXinHaoGanDu, huoQuWanZhengHaoGanDu } from './好感度'
 import { huoQuIo } from '../socket/io'
 import { redis } from '../redis'
 import { baoCunJiaoSeXiaoXi } from './AI输入准备'
-import { SHENG_LI_SHI_BAI_PEI_ZHI } from '../config/胜利失败配置'
+import { SHENG_LI_SHI_BAI_PEI_ZHI, QUE_XIN_DU_YUE_SHU } from '../config/胜利失败配置'
 import {
   gouJianDanTiaoTuXiangKuai,
   huoQuZuiXinYongHuMeiTiXiang,
@@ -384,11 +384,63 @@ export async function chuLiYouXiJieShu(
 
   jiLuYouXiJieJu(yong_hu_id, jiao_se_id, huoQuJieGuoWenBen(jie_guo_lei_xing))
 
-  const [, jieJuXieRuChengGong] = await Promise.all([
-    gengXinJiaoSeJieJuZhuangTai(jiao_se_id, jie_guo_lei_xing),
-    xieRuYouXiJieJu(yong_hu_id, jiao_se_id, jie_guo_lei_xing, zhai_yao),
-    gengXinYouXiDangAn(yong_hu_id, jiao_se_id, jie_guo_lei_xing),
-  ])
+  // YH-057 关键链单事务：结算先算分后落库，外部IO（socket推送/复盘/挑战结算）禁入事务
+  // 根因：失败即残留孤儿角色，分永久丢失；事务只包行变更，外部IO放事务外
+  // 兼容mock池：vi.mock后connect非函数或抛错，一律降级原三写并行
+  const lianJieHanShu = (数据库 as unknown as { connect?: unknown }).connect
+  let shiWuKeHuDuan: { query: (wen: string, can?: unknown[]) => Promise<{ rowCount?: number | null }>; release: () => void } | undefined
+  if (typeof lianJieHanShu === 'function') {
+    try {
+      shiWuKeHuDuan = await (lianJieHanShu as () => Promise<typeof shiWuKeHuDuan>)()
+    } catch {
+      shiWuKeHuDuan = undefined
+    }
+  }
+  let jieJuXieRuChengGong = false
+  if (!shiWuKeHuDuan) {
+    const [, jieJuXieRu] = await Promise.all([
+      gengXinJiaoSeJieJuZhuangTai(jiao_se_id, jie_guo_lei_xing),
+      xieRuYouXiJieJu(yong_hu_id, jiao_se_id, jie_guo_lei_xing, zhai_yao),
+      gengXinYouXiDangAn(yong_hu_id, jiao_se_id, jie_guo_lei_xing),
+    ])
+    jieJuXieRuChengGong = jieJuXieRu
+  } else {
+    const keHuDuan = shiWuKeHuDuan as { query: (wen: string, can?: unknown[]) => Promise<{ rowCount?: number | null }>; release: () => void }
+    try {
+      await keHuDuan.query('BEGIN')
+      await keHuDuan.query(
+        `UPDATE "角色" SET "封存" = $1, "可继续聊天" = $2, "结局状态" = $3 WHERE "ID" = $4`,
+        [!keJiXuLiaoTian, keJiXuLiaoTian, huoQuJieGuoWenBen(jie_guo_lei_xing), jiao_se_id],
+      )
+      const jieJuXieRu = await keHuDuan.query(
+        `INSERT INTO "游戏结局" ("用户ID", "角色ID", "结果状态", "摘要") VALUES ($1, $2, $3, $4)
+         ON CONFLICT ("用户ID", "角色ID") DO NOTHING`,
+        [yong_hu_id, jiao_se_id, huoQuJieGuoWenBen(jie_guo_lei_xing), zhai_yao ? JSON.stringify(zhai_yao) : JSON.stringify({})],
+      )
+      jieJuXieRuChengGong = (jieJuXieRu.rowCount ?? 0) > 0
+      await keHuDuan.query('COMMIT')
+    } catch (cuoWu) {
+      await keHuDuan.query('ROLLBACK').catch(() => undefined)
+      throw cuoWu
+    } finally {
+      keHuDuan.release()
+    }
+
+    // 档案为派生快照，事务外单独落库加重试，失败不污染主结算
+    let zhongShiCiShu = 0
+    for (;;) {
+      try {
+        await gengXinYouXiDangAn(yong_hu_id, jiao_se_id, jie_guo_lei_xing)
+        break
+      } catch (cuoWu) {
+        zhongShiCiShu += 1
+        if (zhongShiCiShu >= 3) {
+          throw cuoWu
+        }
+        await new Promise((jieJue) => setTimeout(jieJue, 100 * zhongShiCiShu))
+      }
+    }
+  }
 
   const jieGuo: YouXiJieShuJieGuo = {
     jie_guo_lei_xing: jie_guo_lei_xing,
@@ -421,7 +473,7 @@ export async function chuLiYongHuBiaoBai(
     })
   }
 
-  if (hao_gan_du_zong_fen >= 800) {
+  if (hao_gan_du_zong_fen >= SHENG_LI_SHI_BAI_PEI_ZHI.biaoBaiHaoGanDuYuZhi) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'sheng_li_ai_qing', {
       lei_xing: '用户主动表白成功',
       hao_gan_du: hao_gan_du_zong_fen,
@@ -707,15 +759,17 @@ export async function jianCeYongHuXiaoXiBingChuLi(
     return chuLiYongHuJuJueAIHuoJieShou(yong_hu_id, jiao_se_id, jiao_se, xiao_xi, undefined, dui_hua_li_shi)
   }
 
-  if (jianCeJieGuo.biao_bai.shi_fou_biao_bai && jianCeJieGuo.biao_bai.que_xin_du > 0.7) {
+  // YH-056 三处判定阈值统一读配置出处，禁硬编码0.7
+  const tongYongYueShu = QUE_XIN_DU_YUE_SHU.tongYongJianCe
+  if (jianCeJieGuo.biao_bai.shi_fou_biao_bai && jianCeJieGuo.biao_bai.que_xin_du > tongYongYueShu) {
     return chuLiYongHuBiaoBai(yong_hu_id, jiao_se_id, hao_gan_du_zong_fen)
   }
 
-  if (jianCeJieGuo.hu_shan.shi_fou_hu_shan && jianCeJieGuo.hu_shan.que_xin_du > 0.7) {
+  if (jianCeJieGuo.hu_shan.shi_fou_hu_shan && jianCeJieGuo.hu_shan.que_xin_du > tongYongYueShu) {
     return chuLiHuShan(yong_hu_id, jiao_se_id)
   }
 
-  if (jianCeJieGuo.shi_po.shi_fou_shi_po && jianCeJieGuo.shi_po.que_xin_du > 0.7) {
+  if (jianCeJieGuo.shi_po.shi_fou_shi_po && jianCeJieGuo.shi_po.que_xin_du > tongYongYueShu) {
     return chuLiShiPo(yong_hu_id, jiao_se_id)
   }
 

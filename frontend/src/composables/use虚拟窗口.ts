@@ -14,12 +14,12 @@ interface Use虚拟窗口依赖 {
 }
 
 // ---- M5 自研轻量虚拟渲染（窗口化）----
-// 目标：千条消息场景下 DOM 恒定有界（仅渲染「起始索引之后」的条目），
-// 滚动帧率稳定；同时严格保留 FP-05#11「保留查看位置」语义——
-// .xiaoxi-quyu 仍是唯一滚动容器，任何窗口扩展都通过锚点差值回补 scrollTop，绝不强制回底。
+// YH-086 真窗口头尾双裁：千条消息DOM有界，低端机不卡死
+// 根因：只尾裁不回收头，DOM无界增长；收敛为自动尾部窗口定长120，显式窗口定长100
 const XU_NI_MAN_RENDER_YU_ZHI = 150
 const XU_NI_CHU_SHI_WEI_BU = 120
 const XU_NI_KUO_ZHAN_BU_CHANG = 80
+const XU_NI_XIAN_SHI_CHUANG_KOU = 100
 
 export function use虚拟窗口(yiLai: Use虚拟窗口依赖) {
   // 渲染窗口的绝对起始索引；null = 自动尾部窗口（始终渲染最新 XU_NI_CHU_SHI_WEI_BU 条）
@@ -36,14 +36,20 @@ export function use虚拟窗口(yiLai: Use虚拟窗口依赖) {
     xuNiXinHao.value++
   }
 
-  /** 实际进入渲染管线的消息列表（窗口切片；消息量低于阈值时全量渲染，行为与旧版一致） */
+  /** 实际进入渲染管线的消息列表（真窗口头尾双裁定长；低于阈值全量渲染） */
   const xuanRanXiaoXiLieBiao = computed<消息[]>(() => {
     void xuNiXinHao.value
     const lieBiao = yiLai.huoQuXiaoXiLieBiao()
     if (!Array.isArray(lieBiao)) return []
     if (lieBiao.length <= XU_NI_MAN_RENDER_YU_ZHI) return lieBiao
-    const qi = Math.min(huoQuYouXiaoQiSuoYin(lieBiao.length), Math.max(0, lieBiao.length - 1))
-    return lieBiao.slice(qi)
+    // 自动尾部窗口：最新120条；显式起始索引：该索引起100条；尾部天然有界，头部天然回收
+    // 显式窗口扩展中途（起始索引>0且窗口未贴顶）：向上多揭示一个步长，保滚动扩展语义
+    if (xuNiQiSuoYin.value === null) {
+      return lieBiao.slice(Math.max(0, lieBiao.length - XU_NI_CHU_SHI_WEI_BU))
+    }
+    const qi = Math.min(xuNiQiSuoYin.value, Math.max(0, lieBiao.length - 1))
+    const wei = Math.min(lieBiao.length, qi + XU_NI_XIAN_SHI_CHUANG_KOU + (qi > 0 ? XU_NI_KUO_ZHAN_BU_CHANG : 0))
+    return lieBiao.slice(qi, wei)
   })
 
   /** 已加载但尚未挂载到 DOM 的更早消息条数（>0 时向上滚动可继续扩展窗口） */

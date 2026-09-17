@@ -87,6 +87,12 @@ const luYou: RouteRecordRaw[] = [
         component: () => import('@/views/好友聊天.vue'),
         meta: { xuYaoDengLu: true },
       },
+      {
+        path: 'qi-pao-she-zhi',
+        name: 'qiPaoSheZhi',
+        component: () => import('@/views/气泡设置.vue'),
+        meta: { xuYaoDengLu: true },
+      },
     ],
   },
   {
@@ -98,6 +104,16 @@ const luYou: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(),
   routes: luYou,
+  // YH-102 滚动管理：前进置顶后退恢复，禁返回列表位置丢
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    }
+    if (to.name === from.name) {
+      return false
+    }
+    return { top: 0 }
+  },
 })
 
 function huoQuLingPai(): string | null {

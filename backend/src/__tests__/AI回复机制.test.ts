@@ -501,7 +501,7 @@ describe('FP-07 AI回复机制', () => {
       await lianFa(XIAO_XI_PEI_ZHI.lianFaYuJingTiaoShu - 1)
       expect(chuLiYouXiJieShu).not.toHaveBeenCalled()
 
-      // 第12条：触发预警（会调用 yunXingAIYinQing 生成预警消息）
+      // 第12条：触发预警（YH-053轻量通道：本地模板零LLM调用）
       await 调度器.处理用户消息()
 
       // 预警后计数清零，再发20条触发判负
@@ -515,8 +515,8 @@ describe('FP-07 AI回复机制', () => {
       )
 
       await vi.runAllTimersAsync()
-      // 预警时已调用 yunXingAIYinQing 生成预警消息，正常AI流程未启动
-      expect(yunXingAIYinQing).toHaveBeenCalledTimes(1)
+      // YH-053轻量通道：预警不再调用全量引擎，正常AI流程未启动
+      expect(yunXingAIYinQing).not.toHaveBeenCalled()
     })
 
     it('AI发出角色回复后计数清零：再连发19条不触发判负', async () => {
@@ -581,8 +581,8 @@ describe('FP-07 AI回复机制', () => {
       await zaiTu
       await vi.runAllTimersAsync()
 
-      // 预警时已调用 yunXingAIYinQing 生成预警消息，正常AI流程未启动
-      expect(yunXingAIYinQing).toHaveBeenCalledTimes(1)
+      // YH-053轻量通道：预警不再调用全量引擎，正常AI流程未启动
+      expect(yunXingAIYinQing).not.toHaveBeenCalled()
     })
   })
 

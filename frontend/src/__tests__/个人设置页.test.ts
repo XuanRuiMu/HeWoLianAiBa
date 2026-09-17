@@ -150,7 +150,7 @@ describe('FP-02 菜单治理', () => {
     expect(caiDanYuanMa).not.toContain('feiChuKaiQi')
   })
 
-  it('下拉保留好友/战绩/账号设置入口，退出登录在好友之下', async () => {
+  it('下拉顺序为账号设置→过往战绩→好友→退出登录，退出登录在好友之下', async () => {
     const { wrapper } = await mountCaiDan()
     await wrapper.find('.yonghu-xuanxiang').trigger('click')
     await flushPromises()
@@ -162,9 +162,13 @@ describe('FP-02 菜单治理', () => {
     expect(tuiChu.exists()).toBe(true)
     expect(tuiChu.text()).toBe(huoQuFanYi('caidan', 'tuiChuDengLu'))
     const anNiuWenBen = xiala.findAll('button').map((b) => b.text())
+    const sheZhiWeiZhi = anNiuWenBen.findIndex((t) => t === huoQuFanYi('caidan', 'zhangHaoSheZhi'))
+    const zhanJiWeiZhi = anNiuWenBen.findIndex((t) => t === huoQuFanYi('caidan', 'guoWangZhanJi'))
     const haoYouWeiZhi = anNiuWenBen.findIndex((t) => t === huoQuFanYi('caidan', 'haoYou'))
     const tuiChuWeiZhi = anNiuWenBen.findIndex((t) => t === huoQuFanYi('caidan', 'tuiChuDengLu'))
-    expect(haoYouWeiZhi).toBeGreaterThanOrEqual(0)
+    expect(sheZhiWeiZhi).toBeGreaterThanOrEqual(0)
+    expect(zhanJiWeiZhi).toBe(sheZhiWeiZhi + 1)
+    expect(haoYouWeiZhi).toBe(zhanJiWeiZhi + 1)
     expect(tuiChuWeiZhi).toBe(haoYouWeiZhi + 1)
   })
 

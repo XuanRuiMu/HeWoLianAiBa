@@ -540,7 +540,7 @@ describe('FP-04 AI角色生成', () => {
     }
   })
 
-  it('生成结果包含回复延迟毫秒且在 8000~12000 区间', async () => {
+  it('生成结果包含回复延迟毫秒且在 1000~3000 区间', async () => {
     for (const mbti of ['INTJ', 'ESFP']) {
       const xiangYing = await request(yingYong)
         .post('/api/生成角色/MBTI生成')
@@ -550,8 +550,8 @@ describe('FP-04 AI角色生成', () => {
 
       const yanChi = xiangYing.body.shu_ju.hui_fu_yan_chi_hao_miao
       expect(Number.isInteger(yanChi)).toBe(true)
-      expect(yanChi).toBeGreaterThanOrEqual(8000)
-      expect(yanChi).toBeLessThanOrEqual(12000)
+      expect(yanChi).toBeGreaterThanOrEqual(1000)
+      expect(yanChi).toBeLessThanOrEqual(3000)
     }
   })
 

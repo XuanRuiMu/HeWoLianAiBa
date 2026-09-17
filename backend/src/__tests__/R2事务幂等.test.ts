@@ -14,7 +14,7 @@ function suiJiShouJiHao(): string {
 
 function huoQuChengNianRiQi(): string {
   const d = new Date()
-  d.setFullYear(d.getFullYear() - 17)
+  d.setFullYear(d.getFullYear() - 20)
   return d.toISOString().split('T')[0]
 }
 

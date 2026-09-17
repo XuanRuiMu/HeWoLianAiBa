@@ -53,9 +53,13 @@ export async function jiLuZengLiang(
         lianXu: lianXuWeiDaBiao,
     }
 
-    await redis.lpush(key, JSON.stringify(jiLu))
-    await redis.ltrim(key, 0, ZENG_LIANG_MAX_LEN - 1)
-    await redis.pexpire(key, ZENG_LIANG_TTL)
+    try {
+        await redis.lpush(key, JSON.stringify(jiLu))
+        await redis.ltrim(key, 0, ZENG_LIANG_MAX_LEN - 1)
+        await redis.pexpire(key, ZENG_LIANG_TTL)
+    } catch (cuoWu) {
+        debug日志.error('好感度缓存', '增量缓存写入失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+    }
 
     try {
         await 数据库.query(
@@ -78,7 +82,13 @@ export async function jiSuanXiShu(
     huDongCiShu: number,
 ): Promise<XiShuJiSuanJieGuo> {
     const key = huoQuKey(yongHuId, jiaoSeId)
-    const lieBiao = await redis.lrange(key, 0, 7)
+    let lieBiao: string[] = []
+    try {
+        lieBiao = await redis.lrange(key, 0, 7)
+    } catch (cuoWu) {
+        debug日志.error('好感度缓存', '增量缓存读取失败，按无增量降级', { xiang_qing: { cuo_wu: String(cuoWu) } })
+        lieBiao = []
+    }
 
     if (lieBiao.length === 0) {
         const muBiao = jiSuanMuBiaoQuXian(dangQianFen, huDongCiShu)

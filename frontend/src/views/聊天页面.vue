@@ -3,7 +3,7 @@
     <div class="aitishi-tiao" role="note">
       {{ huoQuFanYi('tongYong', 'aiTiShiTiao') }}
     </div>
-    <main ref="xiaoxiQuYuRef" class="xiaoxi-quyu weixin-beijing" :class="liaoTianBeiJingLeiMing" @scroll="chuLiGunDong">
+    <main ref="xiaoxiQuYuRef" class="xiaoxi-quyu weixin-beijing" :class="liaoTianBeiJingLeiMing" :style="[liaoTianBeiJingYangShi, qiPaoYangShi]" role="log" aria-live="polite" :aria-label="huoQuFanYi('liaoTian', 'xiaoXiLieBiao')" @scroll="chuLiGunDong">
       <div v-if="聊天仓库.haiYouGengDuo && !fuPanMoShi" class="jiazaigengduo-qu">
         <button
           class="jiazaigengduo-anniu"
@@ -447,6 +447,36 @@
       </div>
     </main>
 
+    <div
+      v-if="聊天仓库.weiJiGanYu"
+      class="wei-ji-tan-chuang"
+      role="alertdialog"
+      aria-modal="true"
+      :aria-label="huoQuFanYi('liaoTian', 'weiJiGanYuBiaoTi')"
+      data-testid="wei-ji-tan-chuang"
+    >
+      <div class="wei-ji-nei">
+        <h2>{{ huoQuFanYi('liaoTian', 'weiJiGanYuBiaoTi') }}</h2>
+        <p>{{ 聊天仓库.weiJiGanYu.ganYuTiShi }}</p>
+        <p class="wei-ji-re-xian">{{ 聊天仓库.weiJiGanYu.yuanZhuReXian }}</p>
+        <div class="wei-ji-an-niu-zu">
+          <a
+            class="wei-ji-bo-da"
+            :href="`tel:${String(聊天仓库.weiJiGanYu.yuanZhuReXian).split(',')[0]}`"
+            data-testid="wei-ji-bo-da"
+          >{{ huoQuFanYi('liaoTian', 'weiJiBoDaReXian') }}</a>
+          <button
+            type="button"
+            class="wei-ji-guan-bi"
+            data-testid="wei-ji-guan-bi"
+            @click="聊天仓库.guanBiWeiJiGanYu()"
+          >
+            {{ huoQuFanYi('liaoTian', 'weiJiZhiXiao') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <footer class="shuru-quyu weixin-shuru">
       <div v-if="fuPanMoShi" class="fupan-dibu-lan">
         <button class="fupan-tuichu-anniu" @click="tuiChuFuPan">
@@ -572,6 +602,9 @@
       <div v-if="!fuPanMoShi && 聊天仓库.cuoWuXinXi" class="shuru-fu-zhu">
         <span class="fasong-cuowu">{{ 聊天仓库.cuoWuXinXi }}</span>
       </div>
+      <div v-if="caoGaoYiHuiFu" class="shuru-fu-zhu" role="status">
+        <span class="fasong-cuowu">{{ huoQuFanYi('tongYong', 'caoGaoYiHuiFu') }}</span>
+      </div>
       <Transition name="emoji-zhankai">
         <div v-show="!fuPanMoShi && emojiMianBanZhanKai" class="emoji-mianban">
           <div class="mianban-tab-hang">
@@ -631,24 +664,7 @@
             </svg>
             <span>{{ huoQuFanYi('duoMeiTi', 'wenJian') }}</span>
           </button>
-          <button
-            v-if="duoMoTaiPeiZhi?.tuXiangShengChengQiYong"
-            class="duomotai-rukou"
-            :disabled="shengChengZhong"
-            @click="chuLiShengTuDianJi"
-          >
-            <span aria-hidden="true">🎨</span>
-            <span>{{ huoQuFanYi('duoMeiTi', 'shengTu') }}</span>
-          </button>
-          <button
-            v-if="duoMoTaiPeiZhi?.shiPinShengChengQiYong"
-            class="duomotai-rukou"
-            :disabled="shengChengZhong"
-            @click="chuLiShengShiPinDianJi"
-          >
-            <span aria-hidden="true">🎬</span>
-            <span>{{ huoQuFanYi('duoMeiTi', 'shengChengShiPin') }}</span>
-          </button>
+          <!-- FP-05 YH-036/YH-037：用户手动生图/生视频按钮已删除（图片与视频由AI对象在合适时主动发起）；通话入口已砍，仅保留TTS语音推送 -->
         </div>
       </Transition>
 
@@ -823,9 +839,8 @@
         </div>
       </div>
     </Teleport>
-    <Teleport to="body">
-      <TongHuaJieMian v-if="通话仓库.zhuangTai !== 'kongXian'" />
-    </Teleport>
+
+    <!-- FP-05 YH-037：通话实时链路界面已砍（预留 provider 插槽填 KEY 即用）；TTS 合成经 socket 推 mediaId 语音消息照常 -->
 
     <!-- C4 首次多媒体授权弹窗：图片/表情包外发视觉理解前单独征得同意 -->
     <DuoMeiTiShouQuanDanChuang
@@ -850,7 +865,6 @@ import {
 import { useRoute, useRouter } from 'vue-router'
 import { 使用聊天仓库 } from '@/stores/聊天'
 import { 使用用户仓库 } from '@/stores/用户'
-import { 使用通话仓库 } from '@/stores/通话'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
 
 import { huoQuFanYi } from '@/config/translations'
@@ -869,10 +883,9 @@ import {
 import type { 消息 } from '@/types'
 import JunShiZhiDao from '@/components/军师指导.vue'
 import GuanLiJianKong from '@/components/管理员监控.vue'
-import TongHuaJieMian from '@/components/通话界面.vue'
 import DuoMeiTiShouQuanDanChuang from '@/components/多媒体授权弹窗.vue'
-import { chongQianMeiTiURL, fanYiWenBen as fanYiWenBenApi, zhuanXieYuYin, huoQuDuoMoTaiPeiZhi } from '@/api/聊天'
-import { shiShiPinXiaoXi, shiShengTuMingLing, shiShengShiPinMingLing, jieXiShengTuMingLing } from '@/utils/多模态'
+import { chongQianMeiTiURL, fanYiWenBen as fanYiWenBenApi, zhuanXieYuYin } from '@/api/聊天'
+import { shiShiPinXiaoXi } from '@/utils/多模态'
 import { use复盘 } from '@/composables/use复盘'
 import { use长按菜单 } from '@/composables/use长按菜单'
 import { use语音转文字 } from '@/composables/use语音转文字'
@@ -881,6 +894,7 @@ import { use虚拟窗口 } from '@/composables/use虚拟窗口'
 import { use表情面板 } from '@/composables/use表情面板'
 import { use语音播放 } from '@/composables/use语音播放'
 import { use输入框 } from '@/composables/use输入框'
+import { CAO_GAO_JIAN, useCaoGao } from '@/composables/use草稿'
 
 defineOptions({
   name: 'liaoTian',
@@ -890,11 +904,18 @@ const route = useRoute()
 const router = useRouter()
 const 聊天仓库 = 使用聊天仓库()
 const 用户仓库 = 使用用户仓库()
-const 通话仓库 = 使用通话仓库()
 const 设置仓库 = 使用用户设置仓库()
-const liaoTianBeiJingLeiMing = computed(() => `beijing-${设置仓库.liaoTianBeiJing || 'moRen'}`)
+const liaoTianBeiJingLeiMing = computed(() => (设置仓库.shiYuShe ? `beijing-${设置仓库.liaoTianBeiJing}` : 'beijing-ziDingYi'))
+const liaoTianBeiJingYangShi = computed(() => 设置仓库.beiJingNeiLianYangShi)
+const qiPaoYangShi = computed(() => 设置仓库.ziJiQiPaoCSSBianLiang)
 
 const shuRuNeiRong = ref('')
+const caoGaoJian = computed(() => {
+  const huiHuaId = typeof route.params.huiHuaId === 'string' ? route.params.huiHuaId : ''
+  return huiHuaId ? CAO_GAO_JIAN.aiLiaoTian(huiHuaId) : ''
+})
+const { huiFuCaoGao, qingChuCaoGao } = useCaoGao(caoGaoJian, shuRuNeiRong)
+const caoGaoYiHuiFu = ref(false)
 const faSongZhong = ref(false)
 const gaoBaiJinXingZhong = ref(false)
 const junShiZhanKai = ref(false)
@@ -1082,16 +1103,7 @@ function shouQuanJuJue() {
   shouQuanDaiQueRenHuiDiao = null
 }
 
-const duoMoTaiPeiZhi = ref<{ tuXiangShengChengQiYong: boolean; shiPinShengChengQiYong: boolean } | null>(null)
-const shengChengZhong = ref(false)
-
-async function jiaZaiDuoMoTaiPeiZhi() {
-  try {
-    duoMoTaiPeiZhi.value = await huoQuDuoMoTaiPeiZhi()
-  } catch {
-    duoMoTaiPeiZhi.value = null
-  }
-}
+// FP-05 YH-036/YH-037：用户手动生图/生视频与通话相关状态已删除（图片与视频由AI对象在合适时主动发起）
 
 async function benDiZhuanXieYuYinBlob(blob: Blob): Promise<string> {
   try {
@@ -1329,12 +1341,7 @@ function guanBiGengDuoMianBan() {
   gengDuoMianBanZhanKai.value = false
 }
 
-async function faQiGengDuoTongHua(leiXing: 'yuYin' | 'shiPin') {
-  guanBiGengDuoMianBan()
-  const jiaoSeId = 聊天仓库.jiaoSeXinXi?.id
-  if (!jiaoSeId) return
-  await 通话仓库.faQiTongHua(jiaoSeId, leiXing)
-}
+// FP-05 YH-037：通话实时链路入口已砍（预留 provider 插槽），不再发起语音/视频通话
 
 function daKaiXiangCe() {
   guanBiGengDuoMianBan()
@@ -1604,25 +1611,9 @@ async function faSong() {
     聊天仓库.sheZhiCuoWu(huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'))
     return
   }
-  if (shiShengTuMingLing(neiRong) || shiShengShiPinMingLing(neiRong)) {
-    const tiShiCi = jieXiShengTuMingLing(neiRong)
-    shuRuNeiRong.value = ''
-    shuRuKuangZhanKai.value = false
-    if (!tiShiCi) {
-      聊天仓库.sheZhiCuoWu(huoQuFanYi('liaoTian', 'xiaoXiNeiRongWeiKong'))
-      return
-    }
-    shengChengZhong.value = true
-    try {
-      if (shiShengTuMingLing(neiRong)) await 聊天仓库.qingQiuShengTu(tiShiCi)
-      else await 聊天仓库.qingQiuShengChengShiPin(tiShiCi)
-      gunDongDaoDiBu()
-    } finally {
-      shengChengZhong.value = false
-    }
-    return
-  }
+  // FP-05 YH-036：用户手动 /生图 /视频 指令已删除，改为普通文本发送（图片与视频由AI对象在合适时主动发起）
   shuRuNeiRong.value = ''
+  qingChuCaoGao()
   shuRuKuangZhanKai.value = false
   faSongZhong.value = true
   try {
@@ -1690,33 +1681,7 @@ function fanhuiShouYe() {
   router.push('/')
 }
 
-async function chuLiShengTuDianJi() {
-  guanBiGengDuoMianBan()
-  const tiShiCi = shuRuNeiRong.value.trim()
-  if (!tiShiCi || shengChengZhong.value) return
-  shengChengZhong.value = true
-  try {
-    shuRuNeiRong.value = ''
-    await 聊天仓库.qingQiuShengTu(tiShiCi)
-    gunDongDaoDiBu()
-  } finally {
-    shengChengZhong.value = false
-  }
-}
-
-async function chuLiShengShiPinDianJi() {
-  guanBiGengDuoMianBan()
-  const tiShiCi = shuRuNeiRong.value.trim()
-  if (!tiShiCi || shengChengZhong.value) return
-  shengChengZhong.value = true
-  try {
-    shuRuNeiRong.value = ''
-    await 聊天仓库.qingQiuShengChengShiPin(tiShiCi)
-    gunDongDaoDiBu()
-  } finally {
-    shengChengZhong.value = false
-  }
-}
+// FP-05 YH-036：用户手动生图/生视频点击入口已删除（图片与视频由AI对象在合适时主动发起）
 
 function chakanZhanJi() {
   youXiShiJianZhanKai.value = false
@@ -1762,7 +1727,6 @@ async function chuShiHuaLiaoTian() {
   fuPanMoShi.value = false
   聊天仓库.meiYeTiaoShu = 50
   await 聊天仓库.jiaZaiXiaoXi(huiHuaId)
-  void jiaZaiDuoMoTaiPeiZhi()
   // M5：会话数据载入完成后重置虚拟渲染窗口
   chongZhiXuNiChuangKou()
   聊天仓库.lianJieSocket(huiHuaId)
@@ -1771,7 +1735,7 @@ async function chuShiHuaLiaoTian() {
 
 onMounted(async () => {
   void 设置仓库.jiaZai()
-  void jiaZaiDuoMoTaiPeiZhi()
+  caoGaoYiHuiFu.value = huiFuCaoGao()
   window.addEventListener('junshi-zhankai', junShiZhanKaiJianTingQi)
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', chuLiShiJiaoKouBianHua)
@@ -2035,8 +1999,8 @@ onBeforeUnmount(() => {
 }
 
 .yonghu-xiaoxi .qipao-neirong {
-  background: var(--xiaoxi-yonghu-beijing);
-  color: var(--xiaoxi-yonghu-wenben);
+  background: var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing));
+  color: var(--qipao-ziJi-wenBen, var(--xiaoxi-yonghu-wenben));
   border-radius: 6px;
 }
 
@@ -2047,14 +2011,14 @@ onBeforeUnmount(() => {
   top: 13px;
   width: 0;
   height: 0;
-  border-left: 6px solid var(--xiaoxi-yonghu-beijing);
+  border-left: 6px solid var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing));
   border-top: 5px solid transparent;
   border-bottom: 5px solid transparent;
 }
 
 .jiaose-xiaoxi .qipao-neirong {
-  background: var(--xiaoxi-jiaose-beijing);
-  color: var(--xiaoxi-jiaose-wenben);
+  background: var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing));
+  color: var(--qipao-duiFang-wenBen, var(--xiaoxi-jiaose-wenben));
   border: none;
   border-radius: 6px;
 }
@@ -2066,7 +2030,7 @@ onBeforeUnmount(() => {
   top: 13px;
   width: 0;
   height: 0;
-  border-right: 6px solid var(--xiaoxi-jiaose-beijing);
+  border-right: 6px solid var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing));
   border-top: 5px solid transparent;
   border-bottom: 5px solid transparent;
 }
@@ -3183,26 +3147,7 @@ span.yuyin-zhuanwenzi {
   margin-bottom: 6px;
 }
 
-.duomotai-rukou {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border: none;
-  background: transparent;
-  color: var(--wenben-zhuti);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  border-radius: 10px;
-  width: 100%;
-  text-align: left;
-}
-
-.duomotai-rukou:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
+/* FP-05 YH-036/YH-037：用户手动生图/生视频按钮已删除，残留样式一并清理 */
 
 .wenjian-qipao {
   display: flex;
@@ -3478,6 +3423,32 @@ span.yuyin-zhuanwenzi {
 .luyin-anzhu-an.yao-quxiao {
   background: var(--cuowu-yanse);
   color: var(--fasong-anniu-wenben);
+}
+
+/* FP-03 气泡主题单源：派生气泡（语音/文件/转写）统一跟随 --qipao-*；
+   置于样式末尾，以同权后胜覆盖上方各派生规则，文本气泡基规则已在原位直引变量 */
+.yonghu-xiaoxi .yuyin-qipao,
+.yonghu-xiaoxi .wenjian-qipao,
+.yonghu-xiaoxi .yuyin-zhuanwenzi {
+  background: var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing));
+  color: var(--qipao-ziJi-wenBen, var(--xiaoxi-yonghu-wenben));
+}
+.jiaose-xiaoxi .yuyin-qipao,
+.jiaose-xiaoxi .wenjian-qipao,
+.jiaose-xiaoxi .yuyin-zhuanwenzi,
+.yuyin-zhuanwenzi {
+  background: var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing));
+  color: var(--qipao-duiFang-wenBen, var(--xiaoxi-jiaose-wenben));
+}
+.yonghu-xiaoxi .yuyin-qipao::after {
+  border-left: 6px solid var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing));
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+.jiaose-xiaoxi .yuyin-qipao::after {
+  border-right: 6px solid var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing));
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
 }
 
 .luyin-zhuangtai-hang {

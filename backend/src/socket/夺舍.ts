@@ -7,6 +7,8 @@ import {
   shanChuDuoSheZhuangTai,
   huoQuDuoSheGuanLiYuan,
   huoQuJiaoSeYongHuId,
+  duoSheXinTiao,
+  shiFangGuanLiYuanQuanBuDuoShe,
 } from '../services/夺舍'
 import { anYongHuIdPanDuanGuanLiYuan } from '../middleware/管理员'
 import { debug日志, jiLuSocketShiJian, jiLuXiaoXiCaoZuo } from '../utils/debug日志'
@@ -45,10 +47,6 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
       }
 
       await sheZhiDuoSheZhuangTai(jiaoSeId, yongHu.yongHuId)
-      await 数据库.query(
-        `INSERT INTO "夺舍日志" ("管理员ID", "角色ID") VALUES ($1, $2)`,
-        [yongHu.yongHuId, jiaoSeId],
-      )
       socket.join(shengChengDuoSheFangJian(jiaoSeId))
       jiLuSocketShiJian('夺舍', yongHu.yongHuId, { jiao_se_id: jiaoSeId, socket_id: socket.id })
       if (huiDiao) huiDiao({ cheng_gong: true, jiao_se_id: jiaoSeId })
@@ -80,6 +78,20 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
       socket.leave(shengChengDuoSheFangJian(jiaoSeId))
       jiLuSocketShiJian('归还', yongHu.yongHuId, { jiao_se_id: jiaoSeId, socket_id: socket.id })
       if (huiDiao) huiDiao({ cheng_gong: true, jiao_se_id: jiaoSeId })
+    })
+
+    socket.on('夺舍心跳', async (jiao_se_id: unknown, huiDiao?: (jieGuo: unknown) => void) => {
+      if (!(await panDuanShiGuanLiYuan(yongHu.yongHuId))) {
+        if (huiDiao) huiDiao({ cheng_gong: false, ti_shi: '无权操作' })
+        return
+      }
+      const jiaoSeId = typeof jiao_se_id === 'string' ? jiao_se_id : ''
+      if (!jiaoSeId) {
+        if (huiDiao) huiDiao({ cheng_gong: false, ti_shi: '缺少角色ID' })
+        return
+      }
+      const xuZu = await duoSheXinTiao(jiaoSeId, yongHu.yongHuId)
+      if (huiDiao) huiDiao(xuZu ? { cheng_gong: true, jiao_se_id: jiaoSeId } : { cheng_gong: false, ti_shi: '不是当前夺舍者' })
     })
 
     socket.on('开始输入', async (shuJu: unknown) => {
@@ -122,6 +134,12 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
 
     socket.on('disconnect', () => {
       jiLuSocketShiJian('Socket断开', yongHu.yongHuId, { socket_id: socket.id, shi_jian: 'duo_she' })
+      // YH-012 断线自动释放加审计：不断线不清会永久静默，断线即释放该管理员全部租约
+      void shiFangGuanLiYuanQuanBuDuoShe(yongHu.yongHuId).then((shiFang) => {
+        if (shiFang.length > 0) {
+          jiLuSocketShiJian('夺舍断线释放', yongHu.yongHuId, { socket_id: socket.id, jiao_se_lie_biao: shiFang })
+        }
+      }).catch(() => undefined)
     })
   })
 }

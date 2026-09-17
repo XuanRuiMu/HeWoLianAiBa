@@ -40,7 +40,14 @@ export async function renZhengZhongJianJian(
   xiaYiBu: NextFunction,
 ): Promise<void> {
   const fangFa = qingQiu.method
-  const luJing = decodeURIComponent(qingQiu.path)
+  let luJing = qingQiu.path
+  // YH-029 畸形编码转400：path解码失败不再抛500
+  try {
+    luJing = decodeURIComponent(qingQiu.path)
+  } catch {
+    shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), 'CAN_SHU_CUO_WU')
+    return
+  }
 
   const zaiBaiMingDan = gongKaiLuJingBaiMingDan.some((xiang) => {
     const fangFaPiPei = Array.isArray(xiang.fang_fa)
@@ -63,17 +70,32 @@ export async function renZhengZhongJianJian(
   const lingPai = authorization.slice(7)
   try {
     const zaiHe = yanZhengLingPai(lingPai)
-    // V5/C3：JWT 黑名单吊销检查——注销/改密后的旧令牌立即失效
-    if (zaiHe.jti) {
-      const yiDiaoXiao = await redis.get(`jwt_blacklist:${zaiHe.jti}`)
-      if (yiDiaoXiao) {
-        shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), 'LING_PAI_WU_XIAO')
-        return
+    // YH-063 认证链明确失败语义：Redis熔断/超时直接降级为可信校验，禁全站hang
+    // 根因：吊销检查无限等待等于全站雪崩；收敛为熔断开路时跳过吊销检查放行并告警
+    try {
+      const { redisRongDuanShiFouKaiLu } = await import('../redis')
+      if (!redisRongDuanShiFouKaiLu()) {
+        // V5/C3：JWT 黑名单吊销检查——注销/改密后的旧令牌立即失效
+        if (zaiHe.jti) {
+          const { daiRongDuanZhiXing } = await import('../redis')
+          const yiDiaoXiao = await daiRongDuanZhiXing(`jwt_blacklist:${zaiHe.jti}`, () => redis.get(`jwt_blacklist:${zaiHe.jti}`))
+          if (yiDiaoXiao) {
+            shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), 'LING_PAI_WU_XIAO')
+            return
+          }
+        }
+        if (await lingPaiShiFouYiCheXiao(zaiHe.yongHuId, zaiHe.iat, zaiHe.qianFaHaoMiao)) {
+          shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), 'LING_PAI_WU_XIAO')
+          return
+        }
+      } else {
+        const { debug日志 } = await import('../utils/debug日志')
+        debug日志.warn('认证中间件', 'Redis熔断开路，吊销检查降级放行', { xiang_qing: { yong_hu_id: zaiHe.yongHuId } })
       }
-    }
-    if (await lingPaiShiFouYiCheXiao(zaiHe.yongHuId, zaiHe.iat, zaiHe.qianFaHaoMiao)) {
-      shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), 'LING_PAI_WU_XIAO')
-      return
+    } catch {
+      // 吊销检查失败降级放行：签名已验过，禁因缓存故障全站401
+      const { debug日志 } = await import('../utils/debug日志')
+      debug日志.warn('认证中间件', '吊销检查失败降级放行', { xiang_qing: { yong_hu_id: zaiHe.yongHuId } })
     }
     qingQiu.yong_hu = zaiHe
     xiaYiBu()

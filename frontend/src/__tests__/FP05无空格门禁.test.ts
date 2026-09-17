@@ -153,6 +153,8 @@ describe('FP-05 无空格门禁', () => {
     const weiGui: string[] = []
     const yeMian = readFileSync(yeMianMiaoShuLuJing, 'utf8')
     for (const hang of yeMian.split('\n')) {
+      // 内联脚本变量名/属性名字符串非用户可见文案，跳过（如localStorage键lian-ai-ba-zhu-ti）
+      if (hang.includes('localStorage') || hang.includes('matchMedia') || hang.includes('setAttribute')) continue
       if (!/[一-鿿]/.test(hang)) continue
       if (youHunPaiKongGe(hang)) {
         weiGui.push(`index.html :: ${hang.trim().slice(0, 80)}`)

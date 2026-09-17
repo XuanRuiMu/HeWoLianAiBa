@@ -37,3 +37,7 @@ frontend/public/models/*.glb
 
 # 3D 模型工作目录整体排除：烘焙中间产物体积过大（数百 MB），仅保留本地
 吴昊阳模型/
+
+# 前端调试快照目录：仅本地调试用，不入版本库、不进构建产物
+frontend/public/grass-bg/rongHeCeShi/
+frontend/public/grass-bg/wuhaoyangCeShi/

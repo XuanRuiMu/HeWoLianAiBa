@@ -680,17 +680,17 @@ export interface JiaoSePeiZhi {
   shiFouZhaXing: boolean
 }
 
-export const huiFuYanChiJiZhunHaoMiao = 10000
-export const huiFuYanChiEPianYiHaoMiao = -1500
-export const huiFuYanChiIPianYiHaoMiao = 1000
-export const huiFuYanChiKuaiRePianYiHaoMiao = -1000
-export const huiFuYanChiManRePianYiHaoMiao = 1500
-export const huiFuYanChiZhaXingPianYiHaoMiao = -500
-export const huiFuYanChiReQingCiPianYiHaoMiao = -500
-export const huiFuYanChiGaoLengCiPianYiHaoMiao = 1000
-export const huiFuYanChiZuiXiaoHaoMiao = 8000
-export const huiFuYanChiZuiDaHaoMiao = 12000
-export const huiFuYanChiDouDongFuDuHaoMiao = 300
+export const huiFuYanChiJiZhunHaoMiao = 2000
+export const huiFuYanChiEPianYiHaoMiao = -500
+export const huiFuYanChiIPianYiHaoMiao = 300
+export const huiFuYanChiKuaiRePianYiHaoMiao = -300
+export const huiFuYanChiManRePianYiHaoMiao = 500
+export const huiFuYanChiZhaXingPianYiHaoMiao = -200
+export const huiFuYanChiReQingCiPianYiHaoMiao = -200
+export const huiFuYanChiGaoLengCiPianYiHaoMiao = 300
+export const huiFuYanChiZuiXiaoHaoMiao = 1000
+export const huiFuYanChiZuiDaHaoMiao = 3000
+export const huiFuYanChiDouDongFuDuHaoMiao = 200
 
 export const reQingCiBiao = ['热情', '活泼', '自来熟', '话痨', '元气', '开朗', '健谈', '爱笑', '阳光', '外向']
 export const gaoLengCiBiao = ['高冷', '冷淡', '寡言', '疏离', '淡漠', '清冷', '内向', '安静', '矜持', '沉默']

@@ -14,7 +14,15 @@ export interface TTS合成响应 {
 }
 
 const TTS服务地址 = peiZhi.ttsServiceUrl || 'http://localhost:8001'
-const 内部令牌 = peiZhi.internalToken
+
+function huoQuNeiBuLingPai(): string {
+  const lingPai = (peiZhi.internalToken || '').trim()
+  // YH-022 空令牌禁止发出：生产启动已强校验，此处为纵深兜底
+  if (!lingPai || lingPai.length < 16) {
+    throw new Error('TTS内部令牌未配置或长度不足，拒绝发起内部调用')
+  }
+  return lingPai
+}
 
 async function 内部调用<T>(路径: string, body: unknown): Promise<T> {
   const url = `${TTS服务地址}${路径}`
@@ -22,7 +30,7 @@ async function 内部调用<T>(路径: string, body: unknown): Promise<T> {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Internal-Token': 内部令牌 || '',
+      'X-Internal-Token': huoQuNeiBuLingPai(),
     },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(35000),
@@ -72,7 +80,7 @@ export async function 合成语音(请求: TTS合成请求): Promise<TTS合成�
       durationMs: 响应.duration_ms,
     }
   } catch (错误) {
-    debug日志.debug('TTS服务', '语音合成失败，静默降级', {
+    debug日志.debug('TTS服务', '语音合成失败，已告警降级', {
       xiang_qing: {
         roleId: 请求.roleId,
         voiceId: 请求.voiceId,
@@ -80,6 +88,8 @@ export async function 合成语音(请求: TTS合成请求): Promise<TTS合成�
         耗时: Date.now() - 开始时间,
       },
     })
+    const { faSongGaoJing } = await import('../utils/邮件告警')
+    await faSongGaoJing('tts_he_cheng_shi_bai', 'TTS合成失败降级', `TTS合成失败已降级为空：${String(错误).slice(0, 300)}`).catch(() => undefined)
     throw 错误
   }
 }

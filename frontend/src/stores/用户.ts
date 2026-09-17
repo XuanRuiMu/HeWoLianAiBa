@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import type { 用户, 登录状态 } from '@/types'
 import { dengLu, zhuCe, huoQuYongHuXinXi, zhuXiaoZhangHao } from '@/api/认证'
 import { huoQuCuoWuXiangYing } from '@/api/请求'
+import { huoQuFanYi } from '@/config/translations'
 import { track } from '@/utils/埋点'
 import { baoCunShuJu, duQuShuJu, shanChuShuJu } from '@/utils/storage'
 import {
@@ -42,7 +43,7 @@ export const 使用用户仓库 = defineStore('用户', () => {
     try {
       await zhuXiaoZhangHao()
     } catch {
-      zhuangTai.value.cuo_wu_xin_xi = '注销失败，请稍后再试'
+      zhuangTai.value.cuo_wu_xin_xi = huoQuFanYi('renZheng', 'zhuXiaoShiBai')
       throw new Error('zhuXiaoShiBai')
     } finally {
       zhuangTai.value.deng_lu_zhong = false
@@ -89,21 +90,22 @@ export const 使用用户仓库 = defineStore('用户', () => {
     return jiuXuNuoYan
   }
 
-  async function zhiXingDengLu(shouJiHao: string, miMa: string, jiZhuMiMa = true): Promise<boolean> {
+  async function zhiXingDengLu(shouJiHao: string, miMa: string, _jiZhuMiMa = true): Promise<boolean> {
+    void _jiZhuMiMa
     zhuangTai.value.deng_lu_zhong = true
     zhuangTai.value.cuo_wu_xin_xi = null
     try {
       const jieGuo = await dengLu(shouJiHao, miMa)
       令牌.value = jieGuo.令牌
-      baoCunLingPai(jieGuo.令牌, jiZhuMiMa)
-      baoCunShuaXinLingPai(jieGuo.刷新令牌, jieGuo.刷新令牌ID, jiZhuMiMa)
+      baoCunLingPai(jieGuo.令牌, false)
+      baoCunShuaXinLingPai(jieGuo.刷新令牌, jieGuo.刷新令牌ID, false)
       dangQianYongHu.value = jieGuo.用户
       shiFouGuanLiYuan.value = jieGuo.是否管理员
       shenFenYiJiuXu.value = true
       await jiaZaiYongHu()
       return jieGuo.新用户
     } catch (cuoWu: unknown) {
-      const xiaoXi = cuoWu instanceof Error ? cuoWu.message : '登录失败'
+      const xiaoXi = cuoWu instanceof Error ? cuoWu.message : huoQuFanYi('renZheng', 'dengLuShiBai')
       if (typeof cuoWu === 'object' && cuoWu !== null && 'response' in cuoWu) {
         const xiangYing = huoQuCuoWuXiangYing(cuoWu)
         if (xiangYing?.data?.ti_shi) {
@@ -127,15 +129,16 @@ export const 使用用户仓库 = defineStore('用户', () => {
     miMa: string,
     tongYiXieYi: boolean,
     chuShengRiQi: string,
-    jiZhuMiMa = true,
+    _jiZhuMiMa = true,
   ): Promise<boolean> {
+    void _jiZhuMiMa
     zhuangTai.value.deng_lu_zhong = true
     zhuangTai.value.cuo_wu_xin_xi = null
     try {
       const jieGuo = await zhuCe(shouJiHao, yanZhengMa, yongHuMing, miMa, tongYiXieYi, chuShengRiQi)
       令牌.value = jieGuo.令牌
-      baoCunLingPai(jieGuo.令牌, jiZhuMiMa)
-      baoCunShuaXinLingPai(jieGuo.刷新令牌, jieGuo.刷新令牌ID, jiZhuMiMa)
+      baoCunLingPai(jieGuo.令牌, false)
+      baoCunShuaXinLingPai(jieGuo.刷新令牌, jieGuo.刷新令牌ID, false)
       dangQianYongHu.value = jieGuo.用户
       shiFouGuanLiYuan.value = jieGuo.是否管理员
       shenFenYiJiuXu.value = true
@@ -143,7 +146,7 @@ export const 使用用户仓库 = defineStore('用户', () => {
       track('zhuCeChengGong')
       return true
     } catch (cuoWu: unknown) {
-      const xiaoXi = cuoWu instanceof Error ? cuoWu.message : '注册失败'
+      const xiaoXi = cuoWu instanceof Error ? cuoWu.message : huoQuFanYi('renZheng', 'zhuCeShiBai')
       if (typeof cuoWu === 'object' && cuoWu !== null && 'response' in cuoWu) {
         const xiangYing = huoQuCuoWuXiangYing(cuoWu)
         if (xiangYing?.data?.ti_shi) {
@@ -202,6 +205,12 @@ export const 使用用户仓库 = defineStore('用户', () => {
     const 认证表单仓库 = 使用认证表单仓库()
     认证表单仓库.qingKongDengLuZhuCe()
     认证表单仓库.qingKongZiLiao()
+    // YH-088 多标签同步：登出广播，他标签页同登出禁还活着
+    try {
+      localStorage.setItem('lian-ai-ba-deng-chu', String(Date.now()))
+    } catch {
+      // 存储不可用忽略
+    }
   }
 
   /** 清空用户状态（不调用后端注销接口，用于 401 令牌过期时的本地清理） */
@@ -218,9 +227,10 @@ export const 使用用户仓库 = defineStore('用户', () => {
     shanChuShuJu('yonghu')
   }
 
-  function sheZhiLingPai(令牌值: string, guanLiYuan: boolean, chiJiu = true) {
+  function sheZhiLingPai(令牌值: string, guanLiYuan: boolean, _chiJiu = true) {
+    void _chiJiu
     令牌.value = 令牌值
-    baoCunLingPai(令牌值, chiJiu)
+    baoCunLingPai(令牌值, false)
     shiFouGuanLiYuan.value = guanLiYuan
   }
 
@@ -233,6 +243,15 @@ export const 使用用户仓库 = defineStore('用户', () => {
   }
 
   shuiHeBenDiShenFen()
+
+  // YH-088 多标签同步：监听登出/主题/资料广播，他页退出本页同退
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', (shiJian) => {
+      if (shiJian.key === 'lian-ai-ba-deng-chu') {
+        清空用户状态()
+      }
+    })
+  }
 
   return {
     dangQianYongHu,

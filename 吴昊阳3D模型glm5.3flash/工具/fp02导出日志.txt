@@ -1,0 +1,48 @@
+==== FP-02 处理开始 ====
+Blender: 5.3.0 Alpha
+工作文件: D:\xuanr\Desktop\燃烧之陨我的世界服务端\和我恋爱吧\吴昊阳3D模型glm5.3flash\工具\fp02工作.blend
+网格对象: lo 顶点=831407 面=1476748 尺寸=[0.4113, 0.1992, 1.1344]
+---- 步骤A: 贴图还原 ----
+D:\xuanr\Desktop\燃烧之陨我的世界服务端\和我恋爱吧\吴昊阳3D模型glm5.3flash\工具\fp02处理.py:77: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  if not mat.use_nodes or mat.node_tree is None:
+{"处理前": {"图像": "baked_color_v2", "引用节点数": 1, "原路径": "//baked_color_v2.png", "原尺寸": [0, 0], "已加载": false, "已打包": false}}
+用源glb提取贴图全新加载并重绑 baked_color_v2 -> 4096x4096
+清理孤立缺失数据块 baked_color_v2_missing
+缩放 baked_color_v2 4096x4096 -> 2048x2048
+已打包 baked_color_v2（随导出内嵌）
+{"处理后": {"图像": "baked_color_v2", "尺寸": [2048, 2048], "已打包": true}}
+---- 步骤B: 材质绑定核验 ----
+D:\xuanr\Desktop\燃烧之陨我的世界服务端\和我恋爱吧\吴昊阳3D模型glm5.3flash\工具\fp02处理.py:148: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  entry = {"材质": mat.name, "有节点树": bool(mat.use_nodes)}
+D:\xuanr\Desktop\燃烧之陨我的世界服务端\和我恋爱吧\吴昊阳3D模型glm5.3flash\工具\fp02处理.py:149: DeprecationWarning: 'Material.use_nodes' is expected to be removed in Blender 6.0
+  if mat.use_nodes and mat.node_tree:
+[{"材质": "最终材质", "有节点树": true, "BaseColor连接": "TEX_IMAGE->baked_color_v2(2048x2048)", "图像节点": ["baked_color_v2"]}]
+---- 步骤C: Decimate 减面 ----
+减面前: 顶点=831407 面=1476748 UV层=['UVMap'] 材质槽=1
+迭代0: ratio=0.16929 -> 评估面数=250000
+采用 ratio=0.16929（预估面数=250000）
+减面后: 顶点=208334 面=250000 UV层=['UVMap'] 材质槽=1
+---- 步骤D: 导出 GLB (Draco) ----
+{"导出丢弃参数": [], "导出使用参数": {"filepath": "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\吴昊阳3D模型glm5.3flash\\成品\\吴昊阳趴姿优化.glb", "export_format": "GLB", "export_draco_mesh_compression_enable": "True", "export_draco_mesh_compression_level": "6", "export_draco_position_quantization": "14", "export_draco_normal_quantization": "10", "export_draco_texcoord_quantization": "12", "export_image_format": "AUTO", "export_materials": "EXPORT", "export_texcoords": "True", "export_normals": "True", "export_yup": "True", "export_apply": "False", "use_selection": "False"}}
+INFO Draco is available, use library at D:\Blender 5.3\5.3\scripts\addons_core\io_scene_gltf2\bf_intern_draco_bridge.dll
+INFO MeshOptimizer is available, use library at D:\Blender 5.3\5.3\scripts\addons_core\io_scene_gltf2\bf_intern_meshopt_bridge.dll
+08:00:09 | INFO: Starting glTF 2.0 export
+08:00:09 | INFO: Extracting primitive: node_0
+D:\Blender 5.3\5.3\python\Lib\site-packages\numpy\_core\getlimits.py:559: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+D:\Blender 5.3\5.3\python\Lib\site-packages\numpy\_core\getlimits.py:91: UserWarning: The value of the smallest subnormal for <class 'numpy.float32'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+D:\Blender 5.3\5.3\python\Lib\site-packages\numpy\_core\getlimits.py:559: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  setattr(self, word, getattr(machar, word).flat[0])
+D:\Blender 5.3\5.3\python\Lib\site-packages\numpy\_core\getlimits.py:91: UserWarning: The value of the smallest subnormal for <class 'numpy.float64'> type is zero.
+  return self._float_to_str(self.smallest_subnormal)
+08:00:09 | INFO: Primitives created: 1
+08:00:09 | INFO: Draco encoder: Encoding mesh lo.
+08:00:09 | INFO: Finished glTF 2.0 export in 0.6002357006072998 s
+
+export_scene.gltf 返回: {'FINISHED'}
+==== 导出自检 ====
+{"generator": "Khronos glTF Blender I/O v5.3.19", "extensionsUsed": ["KHR_draco_mesh_compression"], "meshes": [{"名称": "node_0", "面数": 250000}], "实际面数": 250000, "images": [{"index": 0, "name": "baked_color_v2", "mimeType": "image/png", "bufferView": 1, "bytes": 5044910, "尺寸": [2048, 2048]}], "materials": [{"name": "最终材质", "baseColorTexture": {"index": 0}, "baseColor图像": "baked_color_v2"}], "draco图元数": 1, "体积字节": 6439664}
+==== FP-02 汇总 ====
+{"贴图动作": ["用源glb提取贴图全新加载并重绑 baked_color_v2 -> 4096x4096", "清理孤立缺失数据块 baked_color_v2_missing", "缩放 baked_color_v2 4096x4096 -> 2048x2048", "已打包 baked_color_v2（随导出内嵌）"], "减面前面数": 1476748, "减面后实际面数": 250000, "减面比例": "83.07%", "输出路径": "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\吴昊阳3D模型glm5.3flash\\成品\\吴昊阳趴姿优化.glb", "体积MB": 6.14, "Draco": true}
+FP02_RESULT: OK

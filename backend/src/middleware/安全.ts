@@ -44,8 +44,42 @@ export const puTongSQLZhuRuMoShi = [
   /";\s*--/i,
 ]
 
-export function qingLiShuRu(neiRong: string): string {
-  return neiRong.replace(/[<>]/g, '')
+export function taoYiHTML(neiRong: string): string {
+  // YH-021 输出转义为主：服务端统一转义兜底
+  return neiRong
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/\//g, '&#x2F;')
+}
+
+/** YH-021+YH-024 服务端统一输出编码中间件：递归转义响应体用户内容键，输出编码纵深 */
+const SHU_CHU_MIAN_TAO_YI_JIAN: ReadonlySet<string> = new Set(['nei_rong', 'qian_ming', 'yong_hu_ming', 'ni_cheng', 'neiRong', 'qianMing', 'yongHuMing', 'niCheng', 'biao_ti', 'biaoTi', 'yuan_yin', 'yuanYin', 'li_you', 'liYou', 'shou_ji_hao'])
+
+export function taoYiShuChu(zhi: unknown): unknown {
+  if (typeof zhi === 'string') return taoYiHTML(zhi)
+  if (Array.isArray(zhi)) return zhi.map((xiang) => taoYiShuChu(xiang))
+  if (typeof zhi === 'object' && zhi !== null) {
+    const jieGuo: Record<string, unknown> = {}
+    for (const [jian, jia] of Object.entries(zhi as Record<string, unknown>)) {
+      jieGuo[jian] = SHU_CHU_MIAN_TAO_YI_JIAN.has(jian) ? taoYiShuChu(jia) : jia
+    }
+    return jieGuo
+  }
+  return zhi
+}
+
+/** YH-024 输出编码中间件：响应发送前统一转义用户内容键，输出编码纵深兜底 */
+export function shuChuBianMaZhongJianJian(
+  _qingQiu: Request,
+  xiangYing: Response,
+  xiaYiBu: NextFunction,
+): void {
+  const yuanJson = xiangYing.json.bind(xiangYing)
+  xiangYing.json = ((ti: unknown) => yuanJson(taoYiShuChu(ti) as never)) as typeof xiangYing.json
+  xiaYiBu()
 }
 
 function jianCeGaoWeiSQLZhuRu(zhi: unknown, zuiShaoGongXian = 1): boolean {
@@ -112,7 +146,13 @@ export function qingQiuHanYouSQLZhuRu(qingQiu: Request): boolean {
 }
 
 function panDuanShiLiaoTianLuJing(qingQiu: Request): boolean {
-  const wanZhengLuJing = decodeURIComponent(`${qingQiu.baseUrl || ''}${qingQiu.path || ''}`)
+  let wanZhengLuJing = `${qingQiu.baseUrl || ''}${qingQiu.path || ''}`
+  // YH-029 畸形编码转400：decode失败不再抛500
+  try {
+    wanZhengLuJing = decodeURIComponent(wanZhengLuJing)
+  } catch {
+    return false
+  }
   return wanZhengLuJing.includes('/聊天/会话') && qingQiu.method !== 'GET'
 }
 
@@ -156,30 +196,9 @@ export async function anQuanZhongJianJian(
       return
     }
 
-    if (qingQiu.body && typeof qingQiu.body === 'object') {
-      qingQiu.body = qingLiBody(qingQiu.body)
-    }
-
     xiaYiBu()
   } catch (cuoWu) {
     debug日志.error('安全中间件', '安全中间件执行失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
     shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
   }
-}
-
-function qingLiBody(body: unknown): unknown {
-  if (typeof body === 'string') {
-    return qingLiShuRu(body)
-  }
-  if (Array.isArray(body)) {
-    return body.map((xiang) => qingLiBody(xiang))
-  }
-  if (typeof body === 'object' && body !== null) {
-    const jieGuo: Record<string, unknown> = {}
-    for (const [jian, zhi] of Object.entries(body)) {
-      jieGuo[jian] = qingLiBody(zhi)
-    }
-    return jieGuo
-  }
-  return body
 }

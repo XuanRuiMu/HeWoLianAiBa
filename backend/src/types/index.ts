@@ -165,6 +165,7 @@ export interface AIYinQingShuRu {
   shi_fou_di_yi_lun: boolean
   shi_jian_chang_jing?: string
   tu_pian_shou_quan: boolean
+  ji_yi_zhai_yao?: string
 }
 
 export interface AIYinQingShuChu {
@@ -174,6 +175,8 @@ export interface AIYinQingShuChu {
   ce_lue?: DirectorCeLue
   jiang_ji_mo_shi: boolean
   cuo_wu_xin_xi?: string
+  cuo_wu_ma?: 'XIAN_LIU_429' | 'YU_E_BU_ZU_402'
+  yong_hu_id?: string
   si_kao?: { director?: string; writer?: string }
 }
 

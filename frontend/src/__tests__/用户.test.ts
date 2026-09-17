@@ -52,15 +52,15 @@ describe('用户 store', () => {
     vi.resetAllMocks()
   })
 
-  it('登录成功：写入 localStorage.令牌 并设置用户状态', async () => {
+  it('登录成功：写入 sessionStorage 令牌并设置用户状态', async () => {
     vi.mocked(dengLu).mockResolvedValue(moNiDengLuXiangYing)
     vi.mocked(huoQuYongHuXinXi).mockResolvedValue(moNiYongHu)
 
     const yongHuCangKu = 使用用户仓库()
     await yongHuCangKu.zhiXingDengLu('13800138000', 'password123')
 
-    expect(localStorage.getItem(令牌键)).toBe('test-jwt-token')
-    expect(sessionStorage.getItem(令牌键)).toBeNull()
+    expect(localStorage.getItem(令牌键)).toBeNull()
+    expect(sessionStorage.getItem(令牌键)).toBe('test-jwt-token')
     expect(yongHuCangKu.令牌).toBe('test-jwt-token')
     expect(yongHuCangKu.dangQianYongHu?.shou_ji_hao).toBe('13800138000')
   })
@@ -77,14 +77,15 @@ describe('用户 store', () => {
     expect(yongHuCangKu.令牌).toBe('test-jwt-token')
   })
 
-  it('注册成功：写入 localStorage.令牌 并设置用户状态', async () => {
+  it('注册成功：写入 sessionStorage 令牌并设置用户状态', async () => {
     vi.mocked(zhuCe).mockResolvedValue({ ...moNiDengLuXiangYing, 新用户: true })
     vi.mocked(huoQuYongHuXinXi).mockResolvedValue(moNiYongHu)
 
     const yongHuCangKu = 使用用户仓库()
     await yongHuCangKu.zhiXingZhuCe('13800138000', '123456', '测试用户', 'password123', true)
 
-    expect(localStorage.getItem(令牌键)).toBe('test-jwt-token')
+    expect(localStorage.getItem(令牌键)).toBeNull()
+    expect(sessionStorage.getItem(令牌键)).toBe('test-jwt-token')
     expect(yongHuCangKu.dangQianYongHu?.yong_hu_ming).toBe('测试用户')
   })
 
@@ -117,7 +118,7 @@ describe('用户 store', () => {
     await yongHuCangKu.jiaZaiYongHu()
 
     expect(yongHuCangKu.令牌).toBeNull()
-    expect(localStorage.getItem(令牌键)).toBeNull()
+    expect(sessionStorage.getItem(令牌键)).toBeNull()
     expect(yongHuCangKu.dangQianYongHu).toBeNull()
   })
 
@@ -132,7 +133,7 @@ describe('用户 store', () => {
     await yongHuCangKu.jiaZaiYongHu()
 
     expect(yongHuCangKu.令牌).toBe('test-jwt-token')
-    expect(localStorage.getItem(令牌键)).toBe('test-jwt-token')
+    expect(sessionStorage.getItem(令牌键)).toBe('test-jwt-token')
   })
 
   it('jiaZaiYongHu 遇到 500 错误：保留本地登录态', async () => {
@@ -151,7 +152,7 @@ describe('用户 store', () => {
     await yongHuCangKu.jiaZaiYongHu()
 
     expect(yongHuCangKu.令牌).toBe('test-jwt-token')
-    expect(localStorage.getItem(令牌键)).toBe('test-jwt-token')
+    expect(sessionStorage.getItem(令牌键)).toBe('test-jwt-token')
   })
 
   it('jiaZaiYongHu 成功：管理员标识与服务端用户信息同步（整页刷新场景）', async () => {
@@ -195,11 +196,10 @@ describe('用户 store', () => {
     renZhengBiaoDanCangKu.tongYiXieYi = true
 
     await yongHuCangKu.zhiXingDengLu('13800138000', 'password123')
-    expect(localStorage.getItem(令牌键)).toBeTruthy()
+    expect(sessionStorage.getItem(令牌键)).toBeTruthy()
 
     yongHuCangKu.tuiChuDengLu()
 
-    expect(localStorage.getItem(令牌键)).toBeNull()
     expect(sessionStorage.getItem(令牌键)).toBeNull()
     expect(yongHuCangKu.令牌).toBeNull()
     expect(yongHuCangKu.dangQianYongHu).toBeNull()

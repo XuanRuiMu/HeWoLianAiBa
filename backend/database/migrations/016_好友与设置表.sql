@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS "好友消息" (
 
 CREATE TABLE IF NOT EXISTS "用户设置" (
     "用户ID" UUID PRIMARY KEY REFERENCES "用户"("ID") ON DELETE CASCADE,
-    "聊天背景" VARCHAR(50) NOT NULL DEFAULT 'moRen',
+    "聊天背景" TEXT NOT NULL DEFAULT 'moRen',
     "公开账号" BOOLEAN NOT NULL DEFAULT TRUE,
     "公开手机号" BOOLEAN NOT NULL DEFAULT FALSE,
     "公开邮箱" BOOLEAN NOT NULL DEFAULT FALSE,
@@ -37,6 +37,14 @@ CREATE TABLE IF NOT EXISTS "用户设置" (
     "创建时间" TIMESTAMPTZ DEFAULT NOW(),
     "更新时间" TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- YH-014 聊天背景存无参引用（/api/媒体/<sha256>）：VARCHAR(50)装不下，扩TEXT；幂等
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = '用户设置' AND column_name = '聊天背景' AND character_maximum_length IS NOT NULL AND character_maximum_length < 200) THEN
+    ALTER TABLE "用户设置" ALTER COLUMN "聊天背景" TYPE TEXT;
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS "idx_好友申请_接收者状态" ON "好友申请" ("接收者ID", "状态");
 CREATE INDEX IF NOT EXISTS "idx_好友申请_申请者状态" ON "好友申请" ("申请者ID", "状态");

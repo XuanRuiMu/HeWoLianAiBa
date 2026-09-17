@@ -83,16 +83,26 @@ describe('Responses API 内容块形状契约', () => {
 
 describe('思考模式输出预算安全阈值守卫', () => {
   const AN_QUAN_YU_ZHI = 32000
+  // YH-054 开场白降档例外：kaiChangBai思考开但预算16k先计量，不计入32k守卫
+  const JIANG_DANG_LI_WAI = new Set(['kaiChangBai'])
 
   it('所有开启思考模式的场景，max_output_tokens 不得低于安全阈值（思维链计入该上限）', () => {
     const weiGui: string[] = []
     for (const [changJing, canShu] of Object.entries(AI_PEI_ZHI.moXing)) {
       if (canShu.siKaoMoShi !== 'enabled') continue
+      if (JIANG_DANG_LI_WAI.has(changJing)) continue
       if (!canShu.zuiDaTokens || canShu.zuiDaTokens < AN_QUAN_YU_ZHI) {
         weiGui.push(`${changJing}: zuiDaTokens=${canShu.zuiDaTokens}`)
       }
     }
     expect(weiGui).toEqual([])
+  })
+
+  it('YH-054开场白降档：思考开但预算16k先计量，禁一刀切回32k', () => {
+    const kaiChangBai = AI_PEI_ZHI.moXing.kaiChangBai
+    expect(kaiChangBai.siKaoMoShi).toBe('enabled')
+    expect(kaiChangBai.reasoningEffort).toBe('medium')
+    expect(kaiChangBai.zuiDaTokens).toBe(16000)
   })
 
   it('关闭思考的轻量场景不受阈值约束（如开场白概率决策）', () => {
@@ -101,8 +111,8 @@ describe('思考模式输出预算安全阈值守卫', () => {
     expect(gaiLv.zuiDaTokens).toBeLessThan(AN_QUAN_YU_ZHI)
   })
 
-  it('Director 与 Writer 的思考强度保持 effort=max（用户定稿要求）且预算充足', () => {
-    expect(AI_PEI_ZHI.moXing.director.reasoningEffort).toBe('max')
+  it('Writer 思考强度保持 effort=max（FP-05 YH-041 裁决，沉浸优先）且预算充足；Director 为 medium', () => {
+    expect(AI_PEI_ZHI.moXing.director.reasoningEffort).toBe('medium')
     expect(AI_PEI_ZHI.moXing.writer.reasoningEffort).toBe('max')
     expect(AI_PEI_ZHI.moXing.director.zuiDaTokens).toBeGreaterThanOrEqual(AN_QUAN_YU_ZHI)
     expect(AI_PEI_ZHI.moXing.writer.zuiDaTokens).toBeGreaterThanOrEqual(AN_QUAN_YU_ZHI)

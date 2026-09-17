@@ -48,6 +48,8 @@ export interface YongHuSheZhi {
   qian_ming_ke_jian_xing: string
   qian_ming_bai_ming_dan: string[]
   liao_tian_bei_jing: string
+  qi_pao_zi_ji?: string
+  qi_pao_ai?: string
   gong_kai_zhang_hao: boolean
   gong_kai_shou_ji_hao: boolean
   gong_kai_you_xiang: boolean
@@ -92,19 +94,26 @@ export async function shanChuHaoYou(haoYouId: string): Promise<void> {
   await http.delete(`/好友/${haoYouId}`)
 }
 
-export async function huoQuHaoYouXiaoXi(haoYouId: string, xianZhi = 20): Promise<HaoYouXiaoXi[]> {
+export async function huoQuHaoYouXiaoXi(
+  haoYouId: string,
+  xianZhi = 20,
+  youBiao?: { xu_hao: number | null; shi_jian: number; id: string },
+): Promise<HaoYouXiaoXi[]> {
   const xiangYing = await http.get<{ cheng_gong: boolean; shu_ju: { lie_biao: HaoYouXiaoXi[] } }>(`/好友/消息/${haoYouId}`, {
-    params: { limit: xianZhi },
+    params: {
+      limit: xianZhi,
+      ...(youBiao ? { you_biao_xu_hao: youBiao.xu_hao ?? '', you_biao_shi_jian_chuo: youBiao.shi_jian, you_biao_id: youBiao.id } : {}),
+    },
   })
   return xiangYing.data.shu_ju.lie_biao || []
 }
 
-export async function faSongHaoYouXiaoXi(jieShouZheId: string, neiRong: string): Promise<{ id: string; shi_jian_chuo: number }> {
+export async function faSongHaoYouXiaoXi(jieShouZheId: string, neiRong: string, miDengJian?: string): Promise<{ id: string; shi_jian_chuo: number }> {
   const xiangYing = await http.post<{ cheng_gong: boolean; shu_ju: { id: string; shi_jian_chuo: number } }>('/好友/消息', {
     jieShouZheId,
     neiRong,
     leiXing: 'wenben',
-  })
+  }, miDengJian ? { miDengJian } as unknown as Record<string, unknown> : undefined)
   return xiangYing.data.shu_ju
 }
 
@@ -123,6 +132,24 @@ export async function huoQuYongHuSheZhi(): Promise<YongHuSheZhi> {
 
 export async function baoCunLiaoTianBeiJing(beiJing: string): Promise<void> {
   await http.put('/用户设置/聊天背景', { beiJing })
+}
+
+export async function shangChuanLiaoTianBeiJing(wenJian: Blob): Promise<string> {
+  const biaoDan = new FormData()
+  biaoDan.append('file', wenJian, wenJian instanceof File && wenJian.name ? wenJian.name : 'liaotian-beijing')
+  const xiangYing = await http.post<{ cheng_gong: boolean; shu_ju: { bei_jing: string } }>(
+    '/用户设置/聊天背景/上传',
+    biaoDan,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000,
+    },
+  )
+  return xiangYing.data.shu_ju.bei_jing
+}
+
+export async function baoCunQiPao(canShu: { ziJi?: string; ai?: string }): Promise<void> {
+  await http.put('/用户设置/气泡', canShu)
 }
 
 export async function baoCunYinSiSheZhi(canShu: { gongKaiZhangHao?: boolean; gongKaiShouJiHao?: boolean; gongKaiYouXiang?: boolean }): Promise<void> {

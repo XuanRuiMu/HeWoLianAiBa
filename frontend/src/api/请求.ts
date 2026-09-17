@@ -8,7 +8,6 @@ import {
   baoCunShuaXinLingPai,
   qingChuShuaXinLingPai,
 } from '@/utils/令牌存储'
-import { 令牌键 } from '@/constants/auth'
 import { huoQuFanYi } from '@/config/translations'
 import { fenLeiCuoWu } from '@/utils/错误处理'
 import { chuFaCuoWuShangBao } from '@/utils/错误上报'
@@ -81,14 +80,8 @@ async function zhiXingShuaXin(): Promise<boolean> {
     )('/api/认证/刷新', { refreshToken: pingZheng }, { timeout: 10000 })
     const shuJu = xiangYing?.data?.shu_ju
     if (!shuJu || !shuJu.令牌) return false
-    let chiJiu = true
-    try {
-      chiJiu = window.localStorage.getItem(令牌键) !== null
-    } catch {
-      chiJiu = true
-    }
-    baoCunLingPai(shuJu.令牌, chiJiu)
-    baoCunShuaXinLingPai(shuJu.刷新令牌, shuJu.刷新令牌ID, chiJiu)
+    baoCunLingPai(shuJu.令牌, false)
+    baoCunShuaXinLingPai(shuJu.刷新令牌, shuJu.刷新令牌ID, false)
     return true
   } catch {
     return false
@@ -111,10 +104,40 @@ function shengChengQingQiuKey(配置: InternalAxiosRequestConfig): string {
   return `${配置.method?.toUpperCase() || 'GET'}:${配置.url}`
 }
 
+function qingLiJinXingZhong(配置: InternalAxiosRequestConfig): void {
+  try {
+    进行中请求.delete(shengChengQingQiuKey(配置))
+  } catch {
+    // 清理失败不影响主流程
+  }
+}
+
+// YH-140 trace断链收敛：前端透传trace，后端日志透传查问题对得上
+// 根因：前后两截；收敛为请求头透传trace+响应回传requestId
+function huoQuHuoShengChengTraceId(): string {
+  try {
+    let xianYou = sessionStorage.getItem('lian-ai-ba-trace-id')
+    if (!xianYou) {
+      xianYou = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`
+      sessionStorage.setItem('lian-ai-ba-trace-id', xianYou)
+    }
+    return xianYou
+  } catch {
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`
+  }
+}
+
 实例.interceptors.request.use((配置) => {
   const 令牌 = duQuLingPai()
   if (令牌 && 配置.headers) {
     配置.headers.Authorization = `Bearer ${令牌}`
+  }
+  if (配置.headers) {
+    try {
+      ;(配置.headers as Record<string, string>)['X-Trace-Id'] = huoQuHuoShengChengTraceId()
+    } catch {
+      // 头写入失败不阻断
+    }
   }
 
   // D-6: AbortController 支持请求取消
@@ -123,29 +146,37 @@ function shengChengQingQiuKey(配置: InternalAxiosRequestConfig): string {
   const key = shengChengQingQiuKey(配置)
   进行中请求.set(key, 控制器)
 
-  // 响应后自动清理
-  const 请求配置 = 配置 as any
-  const 原始完成 = (请求配置 as any).onDownloadProgress
-  ;(请求配置 as any).onDownloadProgress = (event: ProgressEvent) => {
-    if (原始完成) 原始完成(event)
-    if (配置.signal?.aborted) {
-      进行中请求.delete(shengChengQingQiuKey(配置))
-    }
-  }
-
   return 配置
 })
 
+实例.interceptors.response.use(
+  (响应) => {
+    if (响应.config) qingLiJinXingZhong(响应.config as InternalAxiosRequestConfig)
+    return 响应
+  },
+  (错误) => {
+    if (axios.isAxiosError(错误) && 错误.config)
+      qingLiJinXingZhong(错误.config as InternalAxiosRequestConfig)
+    return Promise.reject(错误)
+  },
+)
+
 // D-6: 指数退避重试配置
+// FP-08 YH-078：仅幂等方法默认重试；POST 默认不重试，携带幂等键才重试
+// 根因收敛：502多为后端未启动的代理穿透，重试只放大雪崩；502禁重试直接抛
 const 重试配置 = {
   maxRetries: 3,
   baseDelay: 1000,
   maxDelay: 10000,
-  retryableStatuses: [408, 429, 500, 502, 503, 504],
+  retryableStatuses: [408, 429, 500, 503, 504],
   retryableCodes: ['ECONNABORTED', 'ETIMEDOUT', 'ENOTFOUND', 'ENETUNREACH', 'EAI_AGAIN'],
 }
 
-async function 执行带重试<T>(请求函数: () => Promise<T>, 尝试次数 = 0): Promise<T> {
+async function 执行带重试<T>(
+  请求函数: () => Promise<T>,
+  尝试次数 = 0,
+  配置?: { method?: string } | null,
+): Promise<T> {
   try {
     return await 请求函数()
   } catch (错误: unknown) {
@@ -160,21 +191,30 @@ async function 执行带重试<T>(请求函数: () => Promise<T>, 尝试次数 =
         重试配置.maxDelay,
       )
       await new Promise((resolve) => setTimeout(resolve, 延迟))
-      return 执行带重试(请求函数, 尝试次数 + 1)
+      return 执行带重试(请求函数, 尝试次数 + 1, 配置)
     }
     throw 错误
   }
 }
 
 const 包装实例 = {
-  get: <T = any>(url: string, 配置?: any) => 执行带重试(() => 实例.get<T>(url, 配置)),
-  post: <T = any>(url: string, 数据?: any, 配置?: any) =>
-    执行带重试(() => 实例.post<T>(url, 数据, 配置)),
+  get: <T = any>(url: string, 配置?: any) =>
+    执行带重试(() => 实例.get<T>(url, 配置), 0, 配置),
+  post: <T = any>(url: string, 数据?: any, 配置?: any) => {
+    if (typeof 配置?.miDengJian === 'string' && 配置.miDengJian) {
+      const daiMiDengJianPeiZhi = {
+        ...(配置 || {}),
+        headers: { ...(配置?.headers || {}), 'Idempotency-Key': 配置.miDengJian as string },
+      }
+      return 执行带重试(() => 实例.post<T>(url, 数据, daiMiDengJianPeiZhi), 0, 配置)
+    }
+    return 实例.post<T>(url, 数据, 配置)
+  },
   put: <T = any>(url: string, 数据?: any, 配置?: any) =>
-    执行带重试(() => 实例.put<T>(url, 数据, 配置)),
+    执行带重试(() => 实例.put<T>(url, 数据, 配置), 0, 配置),
   patch: <T = any>(url: string, 数据?: any, 配置?: any) =>
-    执行带重试(() => 实例.patch<T>(url, 数据, 配置)),
-  delete: <T = any>(url: string, 配置?: any) => 执行带重试(() => 实例.delete<T>(url, 配置)),
+    执行带重试(() => 实例.patch<T>(url, 数据, 配置), 0, 配置),
+  delete: <T = any>(url: string, 配置?: any) => 执行带重试(() => 实例.delete<T>(url, 配置), 0, 配置),
   // 取消所有进行中请求
   取消所有请求: () => {
     进行中请求.forEach((控制器) => 控制器.abort())

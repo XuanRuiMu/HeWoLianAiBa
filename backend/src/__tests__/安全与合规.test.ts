@@ -108,7 +108,7 @@ async function souSuoYuanMaZiFuChuan(muBiao: string): Promise<boolean> {
   return false
 }
 
-describe.sequential('FP-17 安全与合规', () => {
+describe('FP-17 安全与合规', () => {
   beforeAll(async () => {
     await qingChuIpWeiGuiFengJin()
   })
@@ -354,7 +354,7 @@ describe.sequential('FP-17 安全与合规', () => {
     }
   })
 
-  it('请求body含<script>字符被清理为script', async () => {
+  it('请求body含<script>用户名被输入白名单直接拒绝', async () => {
     await qingChuIpWeiGuiFengJin()
     const shouJiHao = suiJiShouJiHao()
     await qingChuCeShiYongHu(shouJiHao)
@@ -370,11 +370,12 @@ describe.sequential('FP-17 安全与合规', () => {
           tongYiXieYi: true,
           chuShengRiQi: '2000-01-01',
         })
-        .expect(200)
+        .expect(400)
 
-      expect(xiangYing.body.cheng_gong).toBe(true)
+      expect(xiangYing.body.cheng_gong).toBe(false)
+      expect(xiangYing.body.ti_shi).toBe(huoQuFanYi('renZheng', 'yongHuMingTeShuZiFu'))
       const yongHu = await 数据库.query(`SELECT "用户名" FROM "用户" WHERE "手机号" = $1`, [shouJiHao])
-      expect(yongHu.rows[0].用户名).toBe('scriptalert(1)/script')
+      expect(yongHu.rows.length).toBe(0)
     } finally {
       await qingChuIpWeiGuiFengJin()
       await qingChuCeShiYongHu(shouJiHao)
@@ -456,13 +457,13 @@ describe.sequential('FP-17 安全与合规', () => {
     }
   })
 
-  it('第四次违规IP永久封禁', async () => {
+  it('第五次违规IP封禁30天封顶（YH-027收敛禁永封）', async () => {
     await qingChuIpWeiGuiFengJin()
     const shouJiHao = suiJiShouJiHao()
     await qingChuCeShiYongHu(shouJiHao)
 
     try {
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 4; i++) {
         await request(yingYong)
           .post('/api/认证/登录')
           .send({ shouJiHao: "13812345678' OR '1'='1", miMa: 'test' })
@@ -478,7 +479,8 @@ describe.sequential('FP-17 安全与合规', () => {
       const fengJinXinXi = await redis.get('封禁:127.0.0.1')
       expect(fengJinXinXi).toBeDefined()
       const shuJu = JSON.parse(fengJinXinXi!)
-      expect(shuJu.解封时间).toBeNull()
+      expect(shuJu.解封时间).not.toBeNull()
+      expect(new Date(shuJu.解封时间).getTime() - Date.now()).toBeLessThanOrEqual(30 * 24 * 60 * 60 * 1000)
     } finally {
       await qingChuIpWeiGuiFengJin()
       await qingChuCeShiYongHu(shouJiHao)
@@ -593,14 +595,15 @@ describe.sequential('FP-17 安全与合规', () => {
     expect(jieGuo.li_you).toContain(weiJinCi)
   })
 
-  it('AI审核异常时普通消息新版词库未命中则放行', async () => {
+  it('AI审核异常时普通消息新版词库未命中则拦截并提示稍后再试', async () => {
     sheZhiMockTiaoYong(async () => {
       throw new Error('模拟AI审核服务故障')
     })
 
     const jieGuo = await shenHeNeiRongAnQuan('今天天气真不错，一起散步吧')
 
-    expect(jieGuo.wei_gui).toBe(false)
+    expect(jieGuo.wei_gui).toBe(true)
+    expect(jieGuo.li_you).toContain('稍后再试')
   })
 
   it('AI审核异常且新旧词库均失败时按违规拦截并提示稍后再试', async () => {
@@ -630,9 +633,11 @@ describe.sequential('FP-17 安全与合规', () => {
   })
 
   it('60秒内101次常规请求第101次返回429', async () => {
+    // 常规限流按配置上限验证：独立X-Real-IP隔离计数，101次并发第101次必429
+    const duTeIP = `198.51.100.${Math.floor(Math.random() * 200) + 1}`
     const qingQiuLieBiao: Promise<request.Response>[] = []
     for (let i = 0; i < 101; i++) {
-      qingQiuLieBiao.push(request(yingYong).get('/api/健康'))
+      qingQiuLieBiao.push(request(yingYong).get('/api/健康').set('X-Real-IP', duTeIP))
     }
     const jieGuo = await Promise.all(qingQiuLieBiao)
     const xiangYing429 = jieGuo.find((x) => x.status === 429)

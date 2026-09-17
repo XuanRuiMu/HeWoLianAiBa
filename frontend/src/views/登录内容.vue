@@ -723,7 +723,7 @@ const zhuCeYongHuMingHeFa = computed(() => {
   )
 })
 
-// C5 未成年人保护：出生日期必填且年满16周岁
+// C5 未成年人保护：出生日期必填且年满18周岁，不满14另需监护人分支本阶段直接拦截
 function geShiHuaBenDiRiQi(d: Date): string {
   const nian = d.getFullYear()
   const yue = String(d.getMonth() + 1).padStart(2, '0')
@@ -755,7 +755,7 @@ function jiSuanZhouSui(chuShengRiQi: string): number | null {
   return nianLing
 }
 
-const ZHU_CE_ZUI_XIAO_NIAN_LING = 16
+const ZHU_CE_ZUI_XIAO_NIAN_LING = 18
 
 const chuShengRiQiZhouSui = computed(() => jiSuanZhouSui(zhuCeChuShengRiQi.value))
 
@@ -780,11 +780,8 @@ async function zhiXingFaSongMa() {
   faSongZhong.value = true
   cuoWuXinXi.value = ''
   try {
-    const jianChaJieGuo = await jianChaShouJiHao(zhuCeShouJiHao.value)
-    if (jianChaJieGuo.yi_zhu_ce) {
-      cuoWuXinXi.value = huoQuFanYi('renZheng', 'shouJiHaoYiZhuCe')
-      return
-    }
+    // YH-028 注册状态模糊化：不再前端预检枚举，直接发码由服务端统一返回
+    await jianChaShouJiHao(zhuCeShouJiHao.value).catch(() => undefined)
     await faSongMa(zhuCeShouJiHao.value)
     bd.yanZhengMaFaSongShiJian = Date.now()
     kaiShiDaoJiShi()
@@ -1007,7 +1004,7 @@ async function zhiXingZhuCe() {
       // C5：出生日期缺失或非法
       cuoWuXinXi.value = huoQuFanYi('renZheng', 'chuShengRiQiGeShiCuoWu')
     } else if ((chuShengRiQiZhouSui.value ?? -1) < ZHU_CE_ZUI_XIAO_NIAN_LING) {
-      // C5：未满16周岁硬拦截
+      // C5：未满18周岁硬拦截，不满14另需监护人分支本阶段直接拦截
       cuoWuXinXi.value = huoQuFanYi('renZheng', 'weiChengNianRenJinZhi')
     }
     return

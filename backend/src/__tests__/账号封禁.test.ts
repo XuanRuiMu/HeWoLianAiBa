@@ -62,12 +62,13 @@ function mockShenHeWeiGui(): void {
   }))
 }
 
-describe('账号封禁三级时长', () => {
-  it('第1次1分钟、第2次1天、第3次及以上永封', () => {
+describe('账号封禁四级时长（YH-027收敛：30天封顶）', () => {
+  it('第1次1分钟、第2次1天、第3次7天、第4次及以上30天封顶', () => {
     expect(jiSuanZhangHaoFengJinShiChang(1)).toBe(60 * 1000)
     expect(jiSuanZhangHaoFengJinShiChang(2)).toBe(24 * 60 * 60 * 1000)
-    expect(jiSuanZhangHaoFengJinShiChang(3)).toBe(-1)
-    expect(jiSuanZhangHaoFengJinShiChang(9)).toBe(-1)
+    expect(jiSuanZhangHaoFengJinShiChang(3)).toBe(7 * 24 * 60 * 60 * 1000)
+    expect(jiSuanZhangHaoFengJinShiChang(4)).toBe(30 * 24 * 60 * 60 * 1000)
+    expect(jiSuanZhangHaoFengJinShiChang(9)).toBe(30 * 24 * 60 * 60 * 1000)
     expect(jiSuanZhangHaoFengJinShiChang(0)).toBeUndefined()
   })
 })
@@ -96,7 +97,7 @@ describe('账号封禁全链路', () => {
     sheZhiMockTiaoYong(null)
   })
 
-  it('三级升级：1分钟→1天→永封', async () => {
+  it('四级升级：1分钟→1天→7天→30天封顶（YH-027收敛）', async () => {
     const u = yongHu[0]
     const di1 = await jiLuZhangHaoWeiGui({ yongHuId: u.yongHuId, ip: '127.0.0.1', yuanYin: '测试1', leiXing: '测试' })
     expect(di1.ciShu).toBe(1)
@@ -111,7 +112,7 @@ describe('账号封禁全链路', () => {
     const di3 = await jiLuZhangHaoWeiGui({ yongHuId: u.yongHuId, ip: '127.0.0.1', yuanYin: '测试3', leiXing: '测试' })
     expect(di3.ciShu).toBe(3)
     expect(di3.jiBie).toBe('yong_feng')
-    expect(di3.jieFengShiJian).toBeNull()
+    expect(di3.jieFengShiJian).not.toBeNull()
     const zhuangTai = await chaXunZhangHaoFengJin(u.yongHuId)
     expect(zhuangTai.beiFengJin).toBe(true)
     expect(zhuangTai.jiBie).toBe('yong_feng')

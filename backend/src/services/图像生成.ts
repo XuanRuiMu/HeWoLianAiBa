@@ -58,6 +58,17 @@ export async function jianChaShengTuPeiE(yongHuId: string): Promise<{ yunXu: boo
   }
 }
 
+/** YH-062 失败回补：下载/生成失败不扣配额 */
+export async function huiTuiShengTuPeiE(yongHuId: string): Promise<void> {
+  const jian = `sheng_cheng_ji_fei:${yongHuId}:${huoQuRiQi()}:tuxiang`
+  try {
+    await redis.decr(jian)
+  } catch {
+    const jiLu = peiENeiCun.get(jian)
+    if (jiLu && jiLu.count > 0) jiLu.count -= 1
+  }
+}
+
 export async function shengChengTuXiang(canShu: { tiShiCi: string; yongHuId: string }): Promise<ShengTuJieGuo> {
   if (shengTuMock) return shengTuMock(canShu)
   const yanZheng = yanZhengShengTuTiShiCi(canShu.tiShiCi)
@@ -93,21 +104,34 @@ export async function shengChengTuXiang(canShu: { tiShiCi: string; yongHuId: str
       (((shuJu['images'] as Array<Record<string, unknown>>)?.[0]?.['url']) as string) ||
       (((shuJu['data'] as Array<Record<string, unknown>>)?.[0]?.['url']) as string) ||
       ''
-    if (!tuURL) return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shengTuShiBai') }
-    clearTimeout(dingShi)
-    const xiaZaiKongZhi = new AbortController()
-    const xiaZaiDingShi = setTimeout(() => xiaZaiKongZhi.abort(), 180000)
-    let tuXiangYing: Response
-    try {
-      tuXiangYing = await fetch(tuURL, { signal: xiaZaiKongZhi.signal })
-    } finally {
-      clearTimeout(xiaZaiDingShi)
+  if (!tuURL) {
+    await huiTuiShengTuPeiE(canShu.yongHuId)
+    return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shengTuShiBai') }
+  }
+  clearTimeout(dingShi)
+  // YH-015+YH-062 流式落盘+失败不扣配额：SSRF收敛下载，失败回补配额
+  const { yanZhengYuanChengURL, liuShiXiaZaiYuanChengWenJian } = await import('../utils/远端拉取')
+  const urlHeFa = await yanZhengYuanChengURL(tuURL)
+  if (!urlHeFa.he_fa) {
+    await huiTuiShengTuPeiE(canShu.yongHuId)
+    return { cheng_gong: false, ti_shi: urlHeFa.ti_shi }
+  }
+  const linShiLuJing = `${require('os').tmpdir()}/shengtu-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`
+  const xiaZai = await liuShiXiaZaiYuanChengWenJian(tuURL, linShiLuJing)
+  if (!xiaZai.cheng_gong) {
+    await huiTuiShengTuPeiE(canShu.yongHuId)
+    return { cheng_gong: false, ti_shi: xiaZai.ti_shi || huoQuFanYi('liaoTian', 'shengTuShiBai') }
+  }
+  try {
+    const tuPianZiJie = await require('fs').promises.readFile(linShiLuJing)
+    if (!tuPianZiJie.length) {
+      await huiTuiShengTuPeiE(canShu.yongHuId)
+      return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shengTuShiBai') }
     }
-    if (!tuXiangYing.ok) return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shengTuShiBai') }
-    const tuPianZiJie = Buffer.from(await tuXiangYing.arrayBuffer())
-    if (!tuPianZiJie.length) return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shengTuShiBai') }
-    const xiangYingMIME = (tuXiangYing.headers.get('content-type') || '').split(';')[0].trim().toLowerCase()
-    return { cheng_gong: true, tuPianZiJie, mime: xiangYingMIME.startsWith('image/') ? xiangYingMIME : 'image/png' }
+    return { cheng_gong: true, tuPianZiJie, mime: xiaZai.mime.startsWith('image/') ? xiaZai.mime : 'image/png' }
+  } finally {
+    await require('fs').promises.unlink(linShiLuJing).catch(() => undefined)
+  }
   } catch (cuoWu) {
     debug日志.warn('图像生成', '生图调用失败，已降级', { xiang_qing: { cuo_wu: String(cuoWu), ti_shi_ci_chang: yanZheng.qingXiHou.length } })
     return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shengTuShiBai') }

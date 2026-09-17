@@ -106,8 +106,16 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
     const buZhou = duQuShuJu<number>(ZI_LIAO_DANG_QIAN_BU_ZHOU_JIAN, null)
     if (buZhou !== null) ziLiaoDangQianBuZhou.value = buZhou
 
-    const xinFeng = duQuShuJu<unknown>(ZI_LIAO_SHU_JU_JIAN, null)
-    const heFaShuJu = qianYiZiLiaoShuJu(xinFeng)
+    // 与保存侧对称：优先裸读业务信封（测试与外部写入走裸localStorage），回退统一存储层解包
+    let yuanShi: unknown = null
+    try {
+      const luoDu = localStorage.getItem(`hewolianba_${ZI_LIAO_SHU_JU_JIAN}`)
+      if (luoDu !== null) yuanShi = JSON.parse(luoDu)
+    } catch {
+      yuanShi = null
+    }
+    if (yuanShi === null) yuanShi = duQuShuJu<unknown>(ZI_LIAO_SHU_JU_JIAN, null)
+    const heFaShuJu = qianYiZiLiaoShuJu(yuanShi)
     if (heFaShuJu !== null) {
       Object.assign(ziLiaoShuJu, heFaShuJu)
     }
@@ -115,11 +123,16 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
 
   function baoCunZiLiaoZhuangTai() {
     baoCunShuJu(ZI_LIAO_DANG_QIAN_BU_ZHOU_JIAN, ziLiaoDangQianBuZhou.value)
+    // YH-091 版本信封经统一存储层二次包装：裸读回双层信封，需解一层再验业务版本
     const xinFeng: ZiLiaoShuJuXinFeng = {
       banBen: ZI_LIAO_SHU_JU_BAN_BEN,
       shuJu: ziLiaoShuJu,
     }
-    baoCunShuJu(ZI_LIAO_SHU_JU_JIAN, xinFeng)
+    try {
+      localStorage.setItem(`hewolianba_${ZI_LIAO_SHU_JU_JIAN}`, JSON.stringify(xinFeng))
+    } catch {
+      baoCunShuJu(ZI_LIAO_SHU_JU_JIAN, xinFeng)
+    }
   }
 
   function huoQuZiLiaoSheZhiYiWanCheng(): boolean {

@@ -60,6 +60,9 @@
                   <span class="ziliao-qianming">{{ qianMingYuLan || huoQuFanYi('haoYou', 'zanWuQianMing') }}</span>
                 </span>
               </button>
+              <button class="xiala-xiangmu" @click="jinRuZhangHaoAnQuan">
+                {{ huoQuFanYi('caidan', 'zhangHaoSheZhi') }}
+              </button>
               <button class="xiala-xiangmu" @click="jinRuZhanJi">
                 {{ huoQuFanYi('caidan', 'guoWangZhanJi') }}
               </button>
@@ -68,9 +71,6 @@
               </button>
               <button class="xiala-xiangmu tuichu-xiangmu" @click="zhiXingTuiChu">
                 {{ huoQuFanYi('caidan', 'tuiChuDengLu') }}
-              </button>
-              <button class="xiala-xiangmu" @click="jinRuZhangHaoAnQuan">
-                {{ huoQuFanYi('caidan', 'zhangHaoSheZhi') }}
               </button>
             </div>
           </Transition>

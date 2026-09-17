@@ -20,7 +20,7 @@
       @chong-shi="chongShiJiaZai"
     />
     <template v-else>
-    <main ref="xiaoxiQuYuRef" class="xiaoxi-quyu" :class="beiJingLeiMing">
+    <main ref="xiaoxiQuYuRef" class="xiaoxi-quyu" :class="beiJingLeiMing" :style="[beiJingYangShi, qiPaoYangShi]" role="log" aria-live="polite" :aria-label="huoQuFanYi('liaoTian', 'xiaoXiLieBiao')">
       <div v-for="xiaoXi in xiaoXiLieBiao" :key="xiaoXi.id" class="xiaoxi-xiangmu" :class="xiaoXi.fa_song_zhe_id === woDeId ? 'yonghu-xiaoxi' : 'jiaose-xiaoxi'">
         <div class="xiaoxi-touxiang">
           <img
@@ -28,9 +28,9 @@
             :src="xianShiTouXiang(xiaoXi) || undefined"
             class="touxiang-tu"
             loading="lazy"
-            alt=""
+            :alt="huoQuFanYi('haoYou', 'touXiang')"
           />
-          <span v-else class="touxiang-moren">{{ touXiangMoRenZi(xiaoXi) }}</span>
+          <span v-else class="touxiang-moren" aria-hidden="true">{{ touXiangMoRenZi(xiaoXi) }}</span>
         </div>
         <div class="qipao-waike">
           <div class="qipao-neirong">{{ xiaoXi.yi_che_hui ? cheHuiWenBen : xiaoXi.nei_rong }}</div>
@@ -50,20 +50,24 @@
         </button>
       </div>
       <p v-if="faSongTiShi" class="fasong-tishi">{{ faSongTiShi }}</p>
+      <p v-if="caoGaoYiHuiFu" class="fasong-tishi" role="status">{{ huoQuFanYi('tongYong', 'caoGaoYiHuiFu') }}</p>
     </footer>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { huoQuFanYi } from '@/config/translations'
 import { 使用用户仓库 } from '@/stores/用户'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
 import { huoQuHaoYouXiaoXi, faSongHaoYouXiaoXi, cheHuiHaoYouXiaoXi, biaoJiHaoYouYiDu, huoQuHaoYouLieBiao, type HaoYouXiaoXi } from '@/api/社交'
+import { huoQuMingPian } from '@/api/资料'
+import { guiYiHuaQiPao, huoQuQiPaoCSSBianLiang } from '@/config/气泡主题'
 import { huoQuCuoWuXiangYing } from '@/api/请求'
 import { shiTuPianDiZhi } from '@/utils/头像'
+import { CAO_GAO_JIAN, useCaoGao } from '@/composables/use草稿'
 import KongTai from '@/components/空态.vue'
 
 const route = useRoute()
@@ -74,15 +78,23 @@ const haoYouId = String(route.params.haoYouId || '')
 const woDeId = 用户仓库.dangQianYongHu?.id || ''
 const xiaoXiLieBiao = ref<HaoYouXiaoXi[]>([])
 const shuRuNeiRong = ref('')
+const { huiFuCaoGao, qingChuCaoGao } = useCaoGao(CAO_GAO_JIAN.haoYouLiaoTian(haoYouId), shuRuNeiRong)
+const caoGaoYiHuiFu = ref(false)
 const faSongZhong = ref(false)
 const xiaoxiQuYuRef = ref<HTMLElement | null>(null)
-const beiJingLeiMing = computed(() => `beijing-${设置仓库.liaoTianBeiJing || 'moRen'}`)
-const cheHuiWenBen = '对方撤回了一条消息'
+const beiJingLeiMing = computed(() => (设置仓库.shiYuShe ? `beijing-${设置仓库.liaoTianBeiJing || 'moRen'}` : 'beijing-ziDingYi'))
+const beiJingYangShi = computed(() => 设置仓库.beiJingNeiLianYangShi)
+const cheHuiWenBen = huoQuFanYi('liaoTian', 'duiFangCheHuiLeYiTiaoXiaoXi')
 const feiHaoYou = ref(false)
 const jiaZaiShiBai = ref(false)
 const faSongTiShi = ref('')
 const haoYouTouXiang = ref<string | null>(null)
 const haoYouMing = ref('')
+const haoYouQiPao = ref<string | null>(null)
+const lunXunDingShi = ref<number | null>(null)
+const qiPaoYangShi = computed(() =>
+  huoQuQiPaoCSSBianLiang(设置仓库.qiPaoZiJi, guiYiHuaQiPao(haoYouQiPao.value, 设置仓库.qiPaoAI)),
+)
 
 function xianShiTouXiang(xiaoXi: HaoYouXiaoXi): string | null {
   const diZhi = xiaoXi.fa_song_zhe_id === woDeId ? 用户仓库.dangQianYongHu?.tou_xiang : haoYouTouXiang.value
@@ -107,9 +119,19 @@ function gunDongDaoDiBu() {
   })
 }
 
-async function shuaXin() {
+async function shuaXin(youBiao?: { xu_hao: number | null; shi_jian: number; id: string }) {
   try {
-    xiaoXiLieBiao.value = await huoQuHaoYouXiaoXi(haoYouId, 50)
+    // YH-087 好友聊天实时分页：游标分页+轮询增量，发送乐观更新禁全量刷新
+    const xinLieBiao = await huoQuHaoYouXiaoXi(haoYouId, 50, youBiao)
+    if (youBiao) {
+      if (xinLieBiao.length > 0) {
+        const yiCunId = new Set(xiaoXiLieBiao.value.map((x) => x.id))
+        const zengLiang = xinLieBiao.filter((x) => !yiCunId.has(x.id))
+        xiaoXiLieBiao.value = [...zengLiang, ...xiaoXiLieBiao.value]
+      }
+    } else {
+      xiaoXiLieBiao.value = xinLieBiao
+    }
     jiaZaiShiBai.value = false
   } catch (cuoWu: unknown) {
     // 非好友或加载失败都走空态，不让整页崩进错误边界
@@ -143,14 +165,23 @@ async function chongShiJiaZai() {
 async function faSong() {
   const wenBen = shuRuNeiRong.value.trim()
   if (!wenBen) return
+  if (faSongZhong.value) return
   faSongZhong.value = true
   faSongTiShi.value = ''
+  const miDengJian = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+  // YH-087 发送乐观更新：先本地落一条再调接口，失败回滚禁全量刷新
+  const leGuanId = `le-guan-${miDengJian}`
+  const leGuanXiaoXi = { id: leGuanId, nei_rong: wenBen, fa_song_zhe_id: woDeId, shi_jian_chuo: Date.now(), yi_che_hui: false } as HaoYouXiaoXi
   try {
     shuRuNeiRong.value = ''
-    await faSongHaoYouXiaoXi(haoYouId, wenBen)
+    qingChuCaoGao()
+    xiaoXiLieBiao.value = [...xiaoXiLieBiao.value, leGuanXiaoXi]
+    gunDongDaoDiBu()
+    await faSongHaoYouXiaoXi(haoYouId, wenBen, miDengJian)
     await shuaXin()
   } catch (cuoWu: unknown) {
     // 发送失败（含账号封禁403）就地提示，不抛到全局
+    xiaoXiLieBiao.value = xiaoXiLieBiao.value.filter((x) => x.id !== leGuanId)
     shuRuNeiRong.value = wenBen
     faSongTiShi.value = duQuTiShi(cuoWu)
   } finally {
@@ -178,6 +209,7 @@ async function cheHui(xiaoXiId: string) {
 
 onMounted(async () => {
   await 设置仓库.jiaZai()
+  caoGaoYiHuiFu.value = huiFuCaoGao()
   try {
     const lieBiao = await huoQuHaoYouLieBiao()
     const haoYou = lieBiao.find((xiang) => xiang.id === haoYouId)
@@ -188,7 +220,26 @@ onMounted(async () => {
   } catch {
     /* 好友信息加载失败时仅用默认头像 */
   }
+  try {
+    const mingPian = await huoQuMingPian(haoYouId)
+    haoYouQiPao.value = typeof mingPian.qi_pao_zi_ji === 'string' ? mingPian.qi_pao_zi_ji : null
+  } catch {
+    /* 对方气泡偏好不可用时回退到自身AI气泡 */
+  }
   await shuaXin()
+  // YH-087 轮询增量：socket缺席时30s轮询兜底，禁固定50全量
+  lunXunDingShi.value = window.setInterval(() => {
+    if (document.visibilityState !== 'visible') return
+    const zuiXin = xiaoXiLieBiao.value[xiaoXiLieBiao.value.length - 1]
+    void shuaXin(zuiXin ? { xu_hao: null, shi_jian: zuiXin.shi_jian_chuo, id: zuiXin.id } : undefined)
+  }, 30000)
+})
+
+onBeforeUnmount(() => {
+  if (lunXunDingShi.value !== null) {
+    window.clearInterval(lunXunDingShi.value)
+    lunXunDingShi.value = null
+  }
 })
 </script>
 
@@ -282,12 +333,15 @@ onMounted(async () => {
   position: relative;
   display: inline-block;
 }
-.yonghu-xiaoxi .qipao-neirong { background: var(--xiaoxi-yonghu-beijing); color: var(--xiaoxi-yonghu-wenben); }
-.jiaose-xiaoxi .qipao-neirong { background: var(--xiaoxi-jiaose-beijing); color: var(--xiaoxi-jiaose-wenben); }
+.yonghu-xiaoxi .qipao-neirong { background: var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing)); color: var(--qipao-ziJi-wenBen, var(--xiaoxi-yonghu-wenben)); }
+.jiaose-xiaoxi .qipao-neirong { background: var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing)); color: var(--qipao-duiFang-wenBen, var(--xiaoxi-jiaose-wenben)); }
 .chehui-xiao-anniu {
   font-size: 12px;
   color: var(--wenben-tishi);
   padding: 4px 8px;
+  /* YH-101 触屏目标：最小24px推荐44px，12px点不到收敛为最小可点 */
+  min-width: 24px;
+  min-height: 24px;
 }
 .shuru-quyu {
   background: var(--shuru-quyu-beijing);

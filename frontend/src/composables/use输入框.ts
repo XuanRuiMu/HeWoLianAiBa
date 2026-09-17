@@ -17,13 +17,13 @@ export function use输入框(yiLai: Use输入框依赖) {
 
   function jiSuanDanXingGaoDu(el: HTMLTextAreaElement): number {
     const cs = getComputedStyle(el)
+    // jsdom无布局时lineHeight常为normal/空，此时有限用clientHeight兜底，禁NaN误算55px
     const lineHeight = parseFloat(cs.lineHeight)
+    if (!Number.isFinite(lineHeight) || lineHeight <= 0) {
+      return el.clientHeight || 0
+    }
     const fontSize = parseFloat(cs.fontSize)
-    const xingGao = Number.isFinite(lineHeight)
-      ? lineHeight
-      : Number.isFinite(fontSize)
-        ? fontSize * 1.4
-        : 0
+    const xingGao = Number.isFinite(fontSize) && fontSize > 0 ? Math.max(lineHeight, fontSize * 1.4) : lineHeight
     const padShang = parseFloat(cs.paddingTop) || 0
     const padXia = parseFloat(cs.paddingBottom) || 0
     const bianKuang = (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0)

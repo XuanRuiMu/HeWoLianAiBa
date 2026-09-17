@@ -4,7 +4,7 @@ import { gengXinFuPanNeiRong } from './战绩'
 import type { FuPanPiZhu, FuPanShiJianXianTiaoMu } from './战绩'
 import { HAO_GAN_DU_PEI_ZHI } from '../config/好感度配置'
 import { huoQuWanZhengHaoGanDu, huoQuJieDuanMing } from './好感度'
-import { tiQuGuanJianShiJian } from './关键事件提取'
+import { tiQuGuanJianShiJian, tiQuBingLuoKuGuanJianShiJian } from './关键事件提取'
 import { zhaXingBianTi, type MBTILeiXing } from '../config/角色配置'
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
@@ -475,7 +475,10 @@ export async function shengChengFuPan(
     const duiHuaWenBen = gouJianDuiHuaWenBen(xiaoXiLieBiao)
     if (duiHuaWenBen) {
       try {
-        guanJianShiJian = await tiQuGuanJianShiJian(
+        // YH-051 事件抽取进记忆检索注入：复盘链路抽取即落表，供上下文检索
+        guanJianShiJian = await tiQuBingLuoKuGuanJianShiJian(
+          yong_hu_id,
+          jiao_se_id,
           duiHuaWenBen,
           fuPanJiaoSeXinXi.weiXinNiCheng,
           fuPanShangXiaWen,

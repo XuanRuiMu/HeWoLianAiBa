@@ -1,6 +1,7 @@
 <template>
   <div v-if="shiXianDuanWang" class="duan-wang-heng-fu" role="alert" aria-live="polite">
     <span class="duan-wang-wen-ben">{{ huoQuFanYi('tongYong', 'duanWang') }}</span>
+    <span v-if="daiFaSongShu > 0" class="dai-fa-song">{{ daiFaSongShu }}{{ huoQuFanYi('tongYong', 'daiFaSong') }}</span>
     <button
       class="duan-wang-guan-bi"
       :aria-label="huoQuFanYi('tongYong', 'guanBi')"
@@ -17,10 +18,14 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { huoQuFanYi } from '@/config/translations'
+import { duQuDaiFaSongShu, jianTingDaiFaSong } from '@/utils/发件箱'
 
 const shiXianDuanWang = ref(false)
 const yiZhuYi = ref(false)
 const zaiXianZhuangTai = ref(true)
+// YH-098 离线发件箱：断网写操作进outbox，恢复后重发+冲突提示，禁静默分叉
+const daiFaSongShu = ref(0)
+let quXiaoJianTing: (() => void) | null = null
 
 function xianShiDuanWang() {
   if (!zaiXianZhuangTai.value) {
@@ -59,10 +64,15 @@ onMounted(() => {
     xianShiDuanWang()
   }
   guanChaWangLuoBianHua()
+  daiFaSongShu.value = duQuDaiFaSongShu()
+  quXiaoJianTing = jianTingDaiFaSong((shu) => {
+    daiFaSongShu.value = shu
+  })
 })
 
 onBeforeUnmount(() => {
   quXiaoGuanCha()
+  quXiaoJianTing?.()
 })
 
 defineExpose({

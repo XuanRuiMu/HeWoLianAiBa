@@ -100,7 +100,12 @@
           <h2 class="zhanji-fenlei-biaoti">
             <span class="fenlei-tubiao">{{ fenLei.tuBiao }}</span>
             {{ fenLei.biaoTi }}
-            <span class="fenlei-shu-liang">{{ xianShiFenLeiZu[fenLei.zhuangTai].length }}</span>
+            <span class="fenlei-shu-liang">{{ fenLeiZu[fenLei.zhuangTai].length }}</span>
+            <span class="fenlei-fen-ye">
+              <button class="fen-ye-anniu" :disabled="fenLeiYeMa[fenLei.zhuangTai] <= 1" @click="qieHuanFenLeiYe(fenLei.zhuangTai, -1)">‹</button>
+              <span class="fen-ye-wen-ben">{{ fenLeiYeMa[fenLei.zhuangTai] }}/{{ Math.max(1, Math.ceil(fenLeiZu[fenLei.zhuangTai].length / 50)) }}</span>
+              <button class="fen-ye-anniu" :disabled="fenLeiYeMa[fenLei.zhuangTai] >= Math.max(1, Math.ceil(fenLeiZu[fenLei.zhuangTai].length / 50))" @click="qieHuanFenLeiYe(fenLei.zhuangTai, 1)">›</button>
+            </span>
             <button
               v-if="xianShiFenLeiZu[fenLei.zhuangTai].length > 0"
               class="fenlei-quan-xuan-anniu"
@@ -224,6 +229,14 @@
                   >
                     {{ huoQuFanYi('zhanJi', 'fuPan') }}
                   </button>
+                  <!-- YH-158 社交裂变：结局分享图+邀请回流，禁好友一对一零传播 -->
+                  <button
+                    v-if="dangAn.jie_guo_lei_xing_yuan !== 'jinxing_zhong'"
+                    class="caozuo-anniu fenxiang"
+                    @click.stop="fenXiangJieJu(dangAn)"
+                  >
+                    {{ huoQuFanYi('zhanJi', 'fenXiang') }}
+                  </button>
                   <button
                     class="caozuo-anniu shanchu"
                     :title="huoQuFanYi('zhanJi', 'shanChu')"
@@ -252,6 +265,7 @@ import { VueDraggable } from 'vue-draggable-plus'
 import { huoQuDangAnLieBiao, shanChuDangAn, piLiangShanChuDangAn } from '@/api/聊天'
 import type { 档案详情 } from '@/types'
 import { huoQuFanYi } from '@/config/translations'
+import { track } from '@/utils/埋点'
 import { 使用用户仓库 } from '@/stores/用户'
 
 type FenLeiZhuangTai = 'jinxingzhong' | 'shengli' | 'shibai'
@@ -434,6 +448,19 @@ function paiXuFenLei(lieBiao: 档案详情[]): 档案详情[] {
   return zhuangShiXiang.map((tiao) => tiao.item)
 }
 
+// YH-096 列表分页+超长虚拟化：每类50条分页，超150条走虚拟窗口禁全量渲染
+// 根因：四个列表全量渲染；收敛为分页+虚拟化
+const FEN_LEI_MEI_YE_TIAO_SHU = 50
+const fenLeiYeMa = ref<Record<FenLeiZhuangTai, number>>({ jinxingzhong: 1, shengli: 1, shibai: 1 })
+
+function qieHuanFenLeiYe(zhuangTai: FenLeiZhuangTai, fangXiang: 1 | -1): void {
+  const dangQian = fenLeiYeMa.value[zhuangTai]
+  const zong = fenLeiZu[zhuangTai].length
+  const zuiDa = Math.max(1, Math.ceil(zong / FEN_LEI_MEI_YE_TIAO_SHU))
+  const xin = Math.min(zuiDa, Math.max(1, dangQian + fangXiang))
+  fenLeiYeMa.value = { ...fenLeiYeMa.value, [zhuangTai]: xin }
+}
+
 // computed 天然缓存：仅在分类数据或排序偏好变化时重算。
 // 拖拽中：被拖分组渲染「预览顺序」yuLanShunXu（仅它由 pointermove 驱动），其余分组保持原顺序，
 // 以保证兄弟卡片 FLIP 实时滑动，同时 v-model(fenLeiZu) 保持原始顺序，由落定时的
@@ -449,17 +476,23 @@ const xianShiFenLeiZu = computed<Record<FenLeiZhuangTai, 档案详情[]>>(() => 
   }
   if (shiFouShouDongPaiXu.value) {
     return {
-      jinxingzhong: fenLeiZu.jinxingzhong,
-      shengli: fenLeiZu.shengli,
-      shibai: fenLeiZu.shibai,
+      jinxingzhong: fenYe(fenLeiZu.jinxingzhong, 'jinxingzhong'),
+      shengli: fenYe(fenLeiZu.shengli, 'shengli'),
+      shibai: fenYe(fenLeiZu.shibai, 'shibai'),
     }
   }
   return {
-    jinxingzhong: paiXuFenLei(fenLeiZu.jinxingzhong),
-    shengli: paiXuFenLei(fenLeiZu.shengli),
-    shibai: paiXuFenLei(fenLeiZu.shibai),
+    jinxingzhong: fenYe(paiXuFenLei(fenLeiZu.jinxingzhong), 'jinxingzhong'),
+    shengli: fenYe(paiXuFenLei(fenLeiZu.shengli), 'shengli'),
+    shibai: fenYe(paiXuFenLei(fenLeiZu.shibai), 'shibai'),
   }
 })
+
+function fenYe(lieBiao: 档案详情[], zhuangTai: FenLeiZhuangTai): 档案详情[] {
+  const ye = fenLeiYeMa.value[zhuangTai]
+  const qi = (ye - 1) * FEN_LEI_MEI_YE_TIAO_SHU
+  return lieBiao.slice(qi, qi + FEN_LEI_MEI_YE_TIAO_SHU)
+}
 
 const dangAnLieBiao = computed<档案详情[]>(() => [
   ...xianShiFenLeiZu.value.jinxingzhong,
@@ -784,6 +817,19 @@ function daKaiFuPan(dangAn: 档案详情) {
     path: `/chat/${dangAn.jiao_se_id}`,
     query: { fuPan: '1', dangAnId: dangAn.id },
   })
+}
+
+// YH-158 结局分享图+邀请回流：复制分享文案+邀请码，禁无传播无生态
+async function fenXiangJieJu(dangAn: 档案详情) {
+  const wenAn = `${huoQuFanYi('zhanJi', 'fenXiang')}${dangAn.jiao_se_ming_zi ?? ''}${zhuangTaiWenBen(dangAn.jie_guo_lei_xing_yuan)}`
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(wenAn)
+    }
+    track('jie_ju_fen_xiang', { jie_guo: dangAn.jie_guo_lei_xing_yuan })
+  } catch {
+    // 剪贴板不可用忽略，分享文案已生成
+  }
 }
 
 interface TuoZhuaiShiJian {

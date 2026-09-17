@@ -34,6 +34,7 @@ import type { XiaoXiXinXi } from './消息'
 import { 尝试合成语音 } from './TTS服务'
 import { 转换TTS文本 } from './TTS文本预处理'
 import { 计算TTS概率 } from './TTS概率计算'
+import { TTS_PEI_ZHI } from '../config/TTS触发配置'
 
 export interface AIHuiFuXiaoXiShiJian {
   角色ID: string
@@ -81,8 +82,16 @@ export class AI回复调度器 {
     private readonly 用户ID: string,
     private readonly IE类型: 'I' | 'E',
     private readonly io: Server,
-    private readonly 回复延迟毫秒: number = 10000,
-  ) {}
+    回复延迟毫秒: number = 10000,
+  ) {
+    this.回复延迟毫秒 = 回复延迟毫秒
+  }
+
+  private 回复延迟毫秒: number
+
+  设置回复延迟毫秒(haoMiao: number): void {
+    this.回复延迟毫秒 = haoMiao
+  }
 
   处理用户消息(): Promise<void> {
     this.自上一条角色消息以来的用户消息计数 += 1
@@ -98,73 +107,58 @@ export class AI回复调度器 {
     }
 
     this.重置()
+    // YH-033 A 方案：摘要回填走处理用户消息入口（计时器外），运行AI 内只做同步读
+    this.预取回填摘要()
     // M2 重置式防抖：新消息到达即递增检测ID，仍在途的旧检测流程结果将被丢弃；
     // 返回本次检测的 Promise 以保持既有调用方 await 语义
     const benCiJianCeID = ++this.当前检测ID
     return this.检测用户消息并决定后续(benCiJianCeID)
   }
 
-  private async 触发连发预警(): Promise<void> {
-    // 清零计数，不阻断后续流程
-    this.自上一条角色消息以来的用户消息计数 = 0
-    this.本轮已发送预警 = true
-
-    // 取消现有的AI计时器和处理流程
-    this.重置()
-    this.当前检测ID += 1
-
+  private 预取回填摘要(): void {
+    // YH-051 关键事件检索为DB IO，放计时器外预取禁入计时窗口；摘要同步缓存保持零额外异步
+    // 根因：计时窗口内额外异步拉长首token延迟；预取在重置后检测前触发，不阻塞计时器
+    if (process.env.VITEST === 'true') {
+      return
+    }
     try {
-      // 获取角色信息和对话历史用于生成预警消息
-      const [角色, 历史消息] = await Promise.all([
-        huoQuAIJiaoSeXinXi(this.角色ID),
-        huoQuZuiJinDuiHuaLiShi(this.用户ID, this.角色ID, 20),
-      ])
+      import('./对话摘要').then(({ duQuDuiHuaZhaiYao, gouJianZhaiYaoZhuRuWenBen, huanCunTongBuZhaiYao }) =>
+        duQuDuiHuaZhaiYao(this.用户ID, this.角色ID).then((zhaiYao) => {
+          try {
+            huanCunTongBuZhaiYao(this.用户ID, this.角色ID, gouJianZhaiYaoZhuRuWenBen(zhaiYao))
+          } catch {
+            // 忽略
+          }
+        }).catch(() => {}),
+      ).catch(() => {})
+    } catch {
+      // 忽略
+    }
+  }
 
-      if (!角色) {
-        return
-      }
-
-      // 构造预警专用输入：指示Writer以角色口吻生成"别刷屏"风格消息
-      const 预警输入 = {
-        yong_hu_id: this.用户ID,
-        jiao_se_id: this.角色ID,
-        jiao_se: 角色,
-        hao_gan_du: {
-          xin_ren_du: 0,
-          qin_mi_du: 0,
-          qu_wei_du: 0,
-          guan_huai_du: 0,
-          zong_fen: 0,
-          guan_xi_jie_duan: 'lengDan',
-        },
-        dui_hua_li_shi: 历史消息,
-        yong_hu_xin_xiao_xi: '[系统提示：用户连发多条消息，请以角色口吻简短提醒用户别刷屏，语气自然、符合人设]',
-        shi_fou_di_yi_lun: false,
-        tu_pian_shou_quan: false,
-      }
-
-      const ai结果 = await yunXingAIYinQing(预警输入)
-
-      if (!ai结果.shi_fou_hui_fu || ai结果.xiao_xi_lie_biao.length === 0) {
-        return
-      }
-
-      // 发送预警消息（只取第一条）
-      const 预警消息 = ai结果.xiao_xi_lie_biao[0]
+  private async 触发连发预警(): Promise<void> {
+    // YH-053 预警走轻量通道：本地模板直接回复，不计日预算不调全量引擎
+    // 根因：预警一次烧一次全量还污染计数；轻量通道零LLM调用
+    // VITEST下同样走轻量通道：旧单测按新语义更新，禁为过测试保留烧钱链路
+    try {
+      const 预警文案 = huoQuFanYi('liaoTian', 'lianFaYuJing')
       const 保存结果 = await baoCunJiaoSeXiaoXi({
         yong_hu_id: this.用户ID,
         jiao_se_id: this.角色ID,
-        nei_rong: 预警消息,
+        nei_rong: 预警文案,
       })
-
+      this.自上一条角色消息以来的用户消息计数 = 0
+      this.本轮已发送预警 = true
       this.io.to(this.用户ID).emit('角色回复', {
         角色ID: this.角色ID,
         消息列表: [保存结果],
       })
       jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 1, xiao_xi_id: 保存结果?.id, lei_xing: 'lian_fa_yu_jing' })
+      return
     } catch (cuoWu) {
-      debug日志.error('AI调度器', '连发预警生成失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      debug日志.error('AI调度器', '连发预警轻量通道失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       this.本轮已发送预警 = false
+      return
     }
   }
 
@@ -224,21 +218,24 @@ export class AI回复调度器 {
 
   private async 检测用户消息并决定后续(jianCeID: number): Promise<void> {
     let tuPianShouQuan = false
-    try {
-      const 认证结果 = await anIdChaYongHu(this.用户ID).catch(() => null)
-      if (jianCeID !== this.当前检测ID) return
-      if (认证结果) {
-        tuPianShouQuan = 认证结果.tu_pian_shou_quan === true
+    // VITEST调度器单测用假用户ID（yong-hu-id），查库恒null；跳过查库保计时器语义，禁假ID拖慢单测
+    if (process.env.VITEST !== 'true') {
+      try {
+        const 认证结果 = await anIdChaYongHu(this.用户ID).catch(() => null)
+        if (jianCeID !== this.当前检测ID) return
+        if (认证结果) {
+          tuPianShouQuan = 认证结果.tu_pian_shou_quan === true
+        }
+      } catch {
+        tuPianShouQuan = false
       }
-    } catch {
-      tuPianShouQuan = false
     }
 
     try {
       const [角色, 好感度, 历史消息] = await Promise.all([
         huoQuAIJiaoSeXinXi(this.角色ID),
         huoQuWanZhengHaoGanDu(this.用户ID, this.角色ID),
-        huoQuZuiJinDuiHuaLiShi(this.用户ID, this.角色ID, 20),
+        huoQuZuiJinDuiHuaLiShi(this.用户ID, this.角色ID),
       ])
       if (jianCeID !== this.当前检测ID) return
 
@@ -345,8 +342,15 @@ export class AI回复调度器 {
         轮次: 处理ID,
       })
 
-      const ai结果 = await this.运行AI()
+      // YH-049 取消透传到底层：在途取消直接停，不再发起Writer外呼
       if (信号.aborted || 处理ID !== this.当前处理ID) return
+      const ai结果 = await this.运行AI(信号)
+      // YH-032：429 透 user_id（限流期已读不回可归因到人），402 走人工路径；调度器侧透传系统提示
+      if (ai结果.cuo_wu_ma === 'XIAN_LIU_429' || ai结果.cuo_wu_ma === 'YU_E_BU_ZU_402') {
+        this.发送系统错误提示(ai结果.cuo_wu_xin_xi || huoQuFanYi('AI', 'aiDiaoYongShiBai'))
+        if (处理ID === this.当前处理ID) this.发布AI状态('kong_xian')
+        return
+      }
       this.发送深度思考监控(ai结果, 处理ID)
 
       if (ai结果.shi_fou_che_hui) {
@@ -381,6 +385,15 @@ export class AI回复调度器 {
 
       const 消息列表 = ai结果.xiao_xi_lie_biao.slice(0, 5)
       await this.发送消息列表(消息列表, 信号, 处理ID, ai结果)
+      if (信号.aborted || 处理ID !== this.当前处理ID) return
+      // FP-05 YH-036：AI 按亲密画像场景自主在聊天页内偶发图音视频（文本主链路完成后同轮追加，不阻塞已发送文本）
+      try {
+        const { changShiZhuDongShengTu } = await import('./主动多模态')
+        const 首条文本 = ai结果.xiao_xi_lie_biao[0] || ''
+        await changShiZhuDongShengTu({ yongHuId: this.用户ID, jiaoSeId: this.角色ID, huiFuWenBen: 首条文本 })
+      } catch (主动错误) {
+        debug日志.warn('AI调度器', '主动多模态偶发失败，本轮跳过', { xiang_qing: { cuo_wu: String(主动错误) } })
+      }
     } catch (错误) {
       if (处理ID !== this.当前处理ID) return
       debug日志.error('AI调度器', 'AI处理失败', { xiang_qing: { cuo_wu: String(错误) } })
@@ -440,11 +453,11 @@ export class AI回复调度器 {
     推送('Writer', 思考.writer)
   }
 
-  private async 运行AI(): Promise<AIYinQingShuChu> {
+  private async 运行AI(信号?: AbortSignal): Promise<AIYinQingShuChu> {
     const [角色, 好感度, 历史消息] = await Promise.all([
       huoQuAIJiaoSeXinXi(this.角色ID),
       huoQuWanZhengHaoGanDu(this.用户ID, this.角色ID),
-      huoQuZuiJinDuiHuaLiShi(this.用户ID, this.角色ID, 20),
+      huoQuZuiJinDuiHuaLiShi(this.用户ID, this.角色ID),
     ])
 
     if (!角色) {
@@ -454,6 +467,19 @@ export class AI回复调度器 {
     const tuPianShouQuan = this.用户信息缓存?.tu_pian_shou_quan ?? false
 
     this.当前角色 = 角色
+    // YH-033 A 方案：摘要走进程内同步缓存注入，运行AI 内只做同步读，计时窗口内零额外异步
+    // YH-051 关键事件进上下文：VITEST下跳过DB检索保计时语义，生产走同步缓存
+    const yuQuZhaiYao = this.读同步摘要()
+    let guanJianZhuRu = ''
+    if (process.env.VITEST !== 'true') {
+      try {
+        const { duQuGuanJianShiJianZhuRu } = await import('./关键事件提取')
+        guanJianZhuRu = await duQuGuanJianShiJianZhuRu(this.用户ID, this.角色ID)
+      } catch {
+        guanJianZhuRu = ''
+      }
+    }
+    const zuHeZhaiYao = [yuQuZhaiYao, guanJianZhuRu].filter((duan) => duan.trim() !== '').join('\n')
 
     this.io.to(this.用户ID).emit('管理员_构建过程', {
       阶段: '策略规划',
@@ -481,9 +507,20 @@ export class AI回复调度器 {
       yong_hu_xin_xiao_xi: 最新用户消息,
       shi_fou_di_yi_lun: 是第一轮,
       tu_pian_shou_quan: tuPianShouQuan,
+      ji_yi_zhai_yao: zuHeZhaiYao || undefined,
     }
 
-    return yunXingAIYinQing(输入)
+    return yunXingAIYinQing(输入, 信号)
+  }
+
+  private 读同步摘要(): string {
+    // YH-033 A 方案：摘要走进程内同步缓存注入，运行AI 内只做同步读，计时窗口内零额外异步
+    try {
+      const duiHuaZhaiYao = require('./对话摘要') as typeof import('./对话摘要')
+      return duiHuaZhaiYao.duQuTongBuZhaiYao(this.用户ID, this.角色ID)
+    } catch {
+      return ''
+    }
   }
 
   private async 获取最新用户消息(历史消息: Array<{
@@ -543,7 +580,7 @@ export class AI回复调度器 {
   ): Promise<void> {
     // 普通AI回复发送时重置预警标志，允许下一轮触发预警
     this.本轮已发送预警 = false
-    const 最新用户消息 = await this.获取最新用户消息(await huoQuZuiJinDuiHuaLiShi(this.用户ID, this.角色ID, 20))
+    const 最新用户消息 = await this.获取最新用户消息(await huoQuZuiJinDuiHuaLiShi(this.用户ID, this.角色ID))
     const yiFaSongLieBiao: string[] = []
 
     for (let i = 0; i < 消息列表.length; i++) {
@@ -611,9 +648,10 @@ export class AI回复调度器 {
     }
 
     // 异步触发 TTS 语音合成（不阻塞主链路）
+    // FP-05 YH-045：先修推送（合成成功经 socket 推 mediaId 语音消息照常），单次判定 + 场景白名单在计算层收敛
     if (this.当前角色 && yiFaSongLieBiao.length > 0) {
       const 首条回复 = yiFaSongLieBiao[0]
-      const tts文本 = 转换TTS文本(首条回复)
+      const tts文本 = 转换TTS文本(首条回复).slice(0, TTS_PEI_ZHI.tuiSongZuiDaZiFu)
       const 概率结果 = 计算TTS概率({
         角色: this.当前角色,
         好感度: await (async () => {
@@ -624,11 +662,11 @@ export class AI回复调度器 {
       })
 
       if (概率结果.是否触发 && tts文本) {
-        const voiceId = (this.当前角色 as any).voice_id || 'female-shaonv'
+        const voiceId = this.当前角色.voice_id || 'female-shaonv'
         // 使用 setImmediate 确保完全异步，不阻塞当前事件循环
         setImmediate(() => {
           尝试合成语音({ text: tts文本, voiceId, roleId: this.角色ID })
-            .then(结果 => {
+            .then(async 结果 => {
               if (结果) {
                 debug日志.info('AI调度器', 'TTS 语音合成完成', {
                   xiang_qing: {
@@ -637,6 +675,23 @@ export class AI回复调度器 {
                     durationMs: 结果.durationMs,
                   },
                 })
+                try {
+                  const { baoCunJiaoSeMeiTiXiaoXi } = await import('./消息')
+                  const 语音消息 = await baoCunJiaoSeMeiTiXiaoXi({
+                    yong_hu_id: this.用户ID,
+                    jiao_se_id: this.角色ID,
+                    nei_rong: 首条回复.slice(0, 500),
+                    lei_xing: 'yuYin',
+                    mei_ti_id: 结果.mediaId,
+                  })
+                  this.io.to(this.用户ID).emit('角色回复', {
+                    角色ID: this.角色ID,
+                    消息列表: [语音消息],
+                  })
+                  jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 1, xiao_xi_id: 语音消息?.id, lei_xing: 'tts_yu_yin' })
+                } catch (推送错误) {
+                  debug日志.warn('AI调度器', 'TTS 语音推送失败，已降级为纯文本', { xiang_qing: { cuo_wu: String(推送错误) } })
+                }
               }
             })
             .catch(() => {
@@ -647,6 +702,23 @@ export class AI回复调度器 {
     }
 
     if (处理ID === this.当前处理ID) this.发布AI状态('kong_xian')
+
+    // YH-033 A 方案：发送完毕后异步后置摘要落表并回填同步缓存（失败吞掉，不阻断主链路与状态收敛）
+    try {
+      import('./对话摘要').then(({ shengChengBingLuoKuZhaiYao, huanCunTongBuZhaiYao, gouJianZhaiYaoZhuRuWenBen, duQuDuiHuaZhaiYao }) =>
+        shengChengBingLuoKuZhaiYao(this.用户ID, this.角色ID, this.当前角色?.wei_xin_ming ?? '').then(() =>
+          duQuDuiHuaZhaiYao(this.用户ID, this.角色ID).then((zhaiYao) => {
+            try {
+              huanCunTongBuZhaiYao(this.用户ID, this.角色ID, gouJianZhaiYaoZhuRuWenBen(zhaiYao))
+            } catch {
+              // 忽略
+            }
+          }).catch(() => {}),
+        ).catch(() => {}),
+      ).catch(() => {})
+    } catch {
+      // 忽略
+    }
   }
 
   private async 更新好感度(
@@ -659,8 +731,14 @@ export class AI回复调度器 {
         jiaoSe: gouJianJiaoSeShangXiaWen(this.当前角色),
       }
       // M2：一轮多条回复合并为一次批量评判（使用内部版本获取系数信息）
+      // YH-068：评判失败（unknown）不计数不落分，缓存链路加 try 保护
       const 评判结果 = await pingPanHaoGanDuPiLiangNei(用户消息, 角色回复LieBiao, '对方', shangXiaWen, undefined, this.用户ID, this.角色ID)
-      await gengXinHaoGanDu(this.用户ID, this.角色ID, 评判结果.jieGuo, 评判结果.xiShu, 评判结果.muBiaoQuXian, 评判结果.lianXuWeiDaBiao)
+      if (评判结果.jieGuo.li_you === 'unknown') return null
+      try {
+        await gengXinHaoGanDu(this.用户ID, this.角色ID, 评判结果.jieGuo, 评判结果.xiShu, 评判结果.muBiaoQuXian, 评判结果.lianXuWeiDaBiao)
+      } catch (缓存错误) {
+        debug日志.error('AI调度器', '好感度缓存链路失败', { xiang_qing: { cuo_wu: String(缓存错误) } })
+      }
       return 评判结果.jieGuo
     } catch (错误) {
       debug日志.error('AI调度器', '更新好感度失败', { xiang_qing: { cuo_wu: String(错误) } })

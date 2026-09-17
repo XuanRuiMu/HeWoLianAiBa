@@ -6,6 +6,10 @@ import {
   reQingCiBiao,
   gaoLengCiBiao,
   huiFuYanChiJiZhunHaoMiao,
+  huiFuYanChiEPianYiHaoMiao,
+  huiFuYanChiManRePianYiHaoMiao,
+  huiFuYanChiReQingCiPianYiHaoMiao,
+  huiFuYanChiGaoLengCiPianYiHaoMiao,
   huiFuYanChiZuiXiaoHaoMiao,
   huiFuYanChiZuiDaHaoMiao,
   huiFuYanChiDouDongFuDuHaoMiao,
@@ -62,7 +66,7 @@ describe('回复延迟纯函数 jiSuanHuiFuYanChiHaoMiao', () => {
   it('注入抖动叠加在基准钳制值上，且越界后再次钳制', () => {
     const ruCan = { ieLeiXing: 'E' as const, reShenLeiXing: '慢热' as const, shiFouZhaXing: false, xingGeWenBen: '平静温和', yanYuFengGeWenBen: '平铺直叙' }
     const jiZhun = jiSuanHuiFuYanChiHaoMiao(ruCan, 0)
-    expect(jiZhun).toBe(huiFuYanChiJiZhunHaoMiao + (-1500) + 1500)
+    expect(jiZhun).toBe(huiFuYanChiJiZhunHaoMiao + huiFuYanChiEPianYiHaoMiao + huiFuYanChiManRePianYiHaoMiao)
     expect(jiSuanHuiFuYanChiHaoMiao(ruCan, huiFuYanChiDouDongFuDuHaoMiao)).toBe(jiZhun + huiFuYanChiDouDongFuDuHaoMiao)
     expect(jiSuanHuiFuYanChiHaoMiao(ruCan, -huiFuYanChiDouDongFuDuHaoMiao)).toBe(jiZhun - huiFuYanChiDouDongFuDuHaoMiao)
 
@@ -72,7 +76,7 @@ describe('回复延迟纯函数 jiSuanHuiFuYanChiHaoMiao', () => {
     expect(jiSuanHuiFuYanChiHaoMiao(dingDiRuCan, -huiFuYanChiDouDongFuDuHaoMiao)).toBe(huiFuYanChiZuiXiaoHaoMiao)
   })
 
-  it('16 种 MBTI 各采样 20 次（随机抖动）→ 全部落在 [8000, 12000] 且为整数', () => {
+  it('16 种 MBTI 各采样 20 次（随机抖动）→ 全部落在 [1000, 3000] 且为整数', () => {
     for (const mbti of mbtiLieBiao) {
       for (const zha of [false, true]) {
         for (let i = 0; i < 20; i++) {
@@ -142,7 +146,7 @@ describe('回复延迟纯函数 jiSuanHuiFuYanChiHaoMiao', () => {
     const gaoLengRuCan = { ...puTongRuCan, xingGeWenBen: '高冷淡漠疏离清冷内向安静矜持寡言沉默' }
 
     const puTong = jiSuanHuiFuYanChiHaoMiao(puTongRuCan, 0)
-    expect(jiSuanHuiFuYanChiHaoMiao(reQingRuCan, 0)).toBe(puTong - 500)
-    expect(jiSuanHuiFuYanChiHaoMiao(gaoLengRuCan, 0)).toBe(puTong + 1000)
+    expect(jiSuanHuiFuYanChiHaoMiao(reQingRuCan, 0)).toBe(puTong + huiFuYanChiReQingCiPianYiHaoMiao)
+    expect(jiSuanHuiFuYanChiHaoMiao(gaoLengRuCan, 0)).toBe(puTong + huiFuYanChiGaoLengCiPianYiHaoMiao)
   })
 })

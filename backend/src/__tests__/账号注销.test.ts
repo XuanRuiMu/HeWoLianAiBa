@@ -19,8 +19,12 @@ function suiJiYongHuMing(): string {
 
 function huoQuChengNianRiQi(): string {
   const d = new Date()
-  d.setFullYear(d.getFullYear() - 17)
+  d.setFullYear(d.getFullYear() - 20)
   return d.toISOString().split('T')[0]
+}
+
+function suiJiIP(): string {
+  return `203.0.113.${Math.floor(Math.random() * 250) + 1}`
 }
 
 const ceShiMiMa = 'testPassword123'
@@ -50,11 +54,13 @@ describe('FP-07 账号注销闭环', () => {
     ceShiYongHuMing = suiJiYongHuMing()
     await request(yingYong)
       .post('/api/认证/发送码')
+      .set('X-Real-IP', suiJiIP())
       .send({ shouJiHao: ceShiShouJiHao })
       .expect(200)
 
     const zhuCeXiangYing = await request(yingYong)
       .post('/api/认证/注册')
+      .set('X-Real-IP', suiJiIP())
       .send({
         shouJiHao: ceShiShouJiHao,
         yanZhengMa: '123456',

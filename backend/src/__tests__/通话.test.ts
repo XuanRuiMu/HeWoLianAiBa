@@ -370,6 +370,11 @@ describe('FP-21 通话状态机（服务层）', () => {
     expect(quShiJianMingLieBiao()).not.toContain('通话超时')
     expect(quShiJianMingLieBiao()).not.toContain('通话结束')
   })
+
+  it('FP-05 YH-037 provider插槽：缺KEY默认不可用，填KEY即用', async () => {
+    const { shiTongHuaProviderKeYong } = await import('../config/通话配置')
+    expect(shiTongHuaProviderKeYong()).toBe(false)
+  })
 })
 
 describe('FP-21 通话信令（Socket 集成）', () => {

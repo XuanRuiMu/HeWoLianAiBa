@@ -1,0 +1,33 @@
+verts=831407 open=0.7s
+weights 3.1s
+skin 2.6s
+bbox x=[-0.30,+0.29] y=[-1.51,+0.08] z=[+0.00,+0.37]
+J pelvis       (+0.00,-0.76,+0.12)
+J spine        (+0.00,-0.56,+0.15)
+J chest        (+0.00,-0.38,+0.24)
+J neck         (+0.00,-0.16,+0.27)
+J head         (+0.00,-0.07,+0.23)
+J clav_L       (-0.10,-0.23,+0.30)
+J shoulder_L   (-0.21,-0.24,+0.26)
+J elbow_L      (-0.19,-0.12,-0.00)
+J wrist_L      (-0.25,-0.04,+0.25)
+J clav_R       (+0.10,-0.23,+0.30)
+J shoulder_R   (+0.21,-0.24,+0.26)
+J elbow_R      (+0.19,-0.12,-0.00)
+J wrist_R      (+0.25,-0.04,+0.25)
+J hip_L        (-0.12,-0.79,+0.14)
+J knee_L       (-0.12,-1.10,+0.17)
+J ankle_L      (-0.11,-1.39,+0.21)
+J hip_R        (+0.12,-0.79,+0.14)
+J knee_R       (+0.12,-1.10,+0.17)
+J ankle_R      (+0.11,-1.39,+0.21)
+normals recomputed on full mesh
+phone mid=(+0.00,-0.04,+0.25)
+render 侧
+render 后上
+render 前低
+scaled tex texture_pbr_20250901 -> 2048
+scaled tex texture_pbr_20250901_metallic-texture_pbr_20250901_roughness -> 2048
+scaled tex texture_pbr_20250901_normal -> 2048
+saved D:\xuanr\Desktop\燃烧之陨我的世界服务端\和我恋爱吧\吴昊阳3D模型qwen3.8flash\吴昊阳模型v3-趴姿.blend
+glb D:\xuanr\Desktop\燃烧之陨我的世界服务端\和我恋爱吧\吴昊阳3D模型qwen3.8flash\吴昊阳趴姿.glb = 3.8MB draco=True

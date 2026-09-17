@@ -1,0 +1,9 @@
+--- a/frontend/public/grass-bg/grass-bg.html
++++ b/frontend/public/grass-bg/grass-bg.html
+@@ -1814,5 +1814,6 @@
+     </script>
+ 
+ 
++    <script src="../ceShiZiYuan/wu3D-ronghe.js"></script>
+ </body>
+ </html>

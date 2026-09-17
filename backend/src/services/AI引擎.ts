@@ -5,6 +5,7 @@ import { redis } from '../redis'
 import { huoQuIo } from '../socket/io'
 import { shengChengDirectorCeLue } from './Director'
 import { shengChengWriterHuiFu } from './Writer'
+import { jianChaAiWei, panDuanShiFouCaiYang, panDuanShiFouMoXingChouJian } from '../config/去AI味配置'
 import { gouJianJiaoSeShangXiaWen, type CanShuShangXiaWen } from '../config/AI参数策略'
 import type {
   AIYinQingShuRu,
@@ -56,7 +57,10 @@ function tuiSongXiTongTiShi(yongHuId: string, jiaoSeId: string, wenBen: string):
 }
 
 // 本地内存兜底计数器（Redis 故障时使用）
+// YH-066 预算Map无界收敛：定容LRU+定时清理，禁每次全表扫描
+// 根因：无界增长+每次全扫，Redis一挂更慢；收敛为500上限LRU+过期即删
 const yuSuanNeiCunJiShu = new Map<string, { count: number; riQi: string; resetTime: number }>()
+const YU_SUAN_NEI_CUN_ZUI_DA = 500
 
 function qingLiGuoQiNeiCun(): void {
   const xianZai = Date.now()
@@ -64,6 +68,12 @@ function qingLiGuoQiNeiCun(): void {
     if (xianZai > value.resetTime) {
       yuSuanNeiCunJiShu.delete(key)
     }
+  }
+  // 定容LRU：超限删最旧（Map插入序即LRU近似）
+  while (yuSuanNeiCunJiShu.size > YU_SUAN_NEI_CUN_ZUI_DA) {
+    const shouJian = yuSuanNeiCunJiShu.keys().next().value
+    if (shouJian === undefined) break
+    yuSuanNeiCunJiShu.delete(shouJian)
   }
 }
 
@@ -113,9 +123,23 @@ async function jianChaMeiRiYuSuan(yongHuId: string): Promise<{ yunXu: boolean; c
 
 export async function yunXingAIYinQing(
   shuRu: AIYinQingShuRu,
+  waiBuXinHao?: AbortSignal,
 ): Promise<AIYinQingShuChu> {
-  // 检查点0：每用户日预算护栏（触顶推送系统提示，不再静默已读不回）
-  const yuSuanJieGuo = await jianChaMeiRiYuSuan(shuRu.yong_hu_id)
+  // YH-049 取消透传：入口已取消直接返回空，不再烧预算与token
+  if (waiBuXinHao?.aborted) {
+    return {
+      xiao_xi_lie_biao: [],
+      shi_fou_hui_fu: false,
+      shi_fou_che_hui: false,
+      jiang_ji_mo_shi: false,
+    }
+  }
+
+  // YH-053 预警走轻量通道：连发预警与预算触顶提示不计日预算，禁污染计数
+  const shiYuJingTongDao = shuRu.yong_hu_xin_xiao_xi.startsWith('[系统提示：用户连发多条消息')
+  const yuSuanJieGuo = shiYuJingTongDao
+    ? { yunXu: true, chuFaYuJing: false }
+    : await jianChaMeiRiYuSuan(shuRu.yong_hu_id)
   if (yuSuanJieGuo.chuFaYuJing) {
     tuiSongXiTongTiShi(shuRu.yong_hu_id, shuRu.jiao_se_id, huoQuFanYi('liaoTian', 'yuSuanYuJing'))
   }
@@ -160,11 +184,31 @@ export async function yunXingAIYinQing(
       : undefined,
   }
 
-  // Director调用
-  const directorJieGuo = await shengChengDirectorCeLue(shuRu, shangXiaWen)
+  // Director调用：429 透 user_id（限流期已读不回可归因到人，不误判为 AI 已死）；
+  // 402 走人工路径提示（不再吞为通用失败）；其余失败降级为单代理模式
+  const directorJieGuo = await shengChengDirectorCeLue(shuRu, shangXiaWen, waiBuXinHao)
   const directorSiKao = directorJieGuo.si_kao || undefined
   if (directorJieGuo.cheng_gong) {
     ceLue = directorJieGuo.ce_lue
+  } else if (directorJieGuo.cuo_wu === 'XIAN_LIU_429') {
+    return {
+      xiao_xi_lie_biao: [],
+      shi_fou_hui_fu: false,
+      shi_fou_che_hui: false,
+      jiang_ji_mo_shi: false,
+      cuo_wu_xin_xi: huoQuFanYi('AI', 'aiXianLiuQingShaoHou'),
+      cuo_wu_ma: 'XIAN_LIU_429',
+      yong_hu_id: shuRu.yong_hu_id,
+    }
+  } else if (directorJieGuo.cuo_wu === 'YU_E_BU_ZU_402') {
+    return {
+      xiao_xi_lie_biao: [],
+      shi_fou_hui_fu: false,
+      shi_fou_che_hui: false,
+      jiang_ji_mo_shi: false,
+      cuo_wu_xin_xi: huoQuFanYi('AI', 'aiYuEBuZuQingLianXiRenGong'),
+      cuo_wu_ma: 'YU_E_BU_ZU_402',
+    }
   } else {
     // Director失败降级为单代理模式
     jiang_ji_mo_shi = true
@@ -186,7 +230,16 @@ export async function yunXingAIYinQing(
 
   try {
     // Writer调用（Director失败时降级为单代理，ceLue为undefined）
-    const writerJieGuo = await shengChengWriterHuiFu(shuRu, ceLue, shangXiaWen)
+    // YH-049 取消透传到底层：在途取消直接停，不再发起Writer外呼
+    if (waiBuXinHao?.aborted) {
+      return {
+        xiao_xi_lie_biao: [],
+        shi_fou_hui_fu: false,
+        shi_fou_che_hui: false,
+        jiang_ji_mo_shi: false,
+      }
+    }
+    const writerJieGuo = await shengChengWriterHuiFu(shuRu, ceLue, shangXiaWen, waiBuXinHao)
 
     // 检查点2：Writer后 - R3 输出侧本地违禁词兜底（零额外 LLM 调用）
     const zuiZhongTiaoShu = ceLue
@@ -208,6 +261,19 @@ export async function yunXingAIYinQing(
         shi_fou_che_hui: false,
         jiang_ji_mo_shi,
         cuo_wu_xin_xi: huoQuFanYi('AI', 'ShenHeWeiGui'),
+      }
+    }
+
+    // FP-05 YH-043 去 AI 味：先规则全量（零成本正则二遍），采样命中再进模型抽检队列（禁全量重检烧钱）
+    const aiWeiWenBen = xiaoXiLieBiao.join('\n')
+    const aiWeiJianCha = jianChaAiWei(aiWeiWenBen)
+    if (!aiWeiJianCha.tongGuo && panDuanShiFouCaiYang()) {
+      debug日志.warn('AI引擎', 'Writer输出命中去AI味规则，采样送检', {
+        xiang_qing: { jiao_se_id: shuRu.jiao_se_id, ming_zhong: aiWeiJianCha.mingZhong.slice(0, 5) },
+      })
+      if (panDuanShiFouMoXingChouJian()) {
+        const { paiRuZhongShiDuiLie } = await import('./重试队列')
+        await paiRuZhongShiDuiLie({ leiXing: 'quAiWeiChouJian', yuanYin: aiWeiJianCha.mingZhong.slice(0, 3).join(',') || 'gui_ze_ming_zhong' }).catch(() => undefined)
       }
     }
 

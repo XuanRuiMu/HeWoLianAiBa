@@ -10,6 +10,7 @@ import {
   anZhuangQuanJuCuoWuJianTingQi,
   moRenShangBaoHanShu,
   chuShiHuaCuoWuShangBao,
+  chongZhiCuoWuShangBaoZhuangTai,
 } from '@/utils/错误上报'
 
 function chuangJianPaoCuoZuJian(cuoWu: unknown) {
@@ -319,11 +320,12 @@ describe('FP-03 前端全局错误边界', () => {
     afterEach(() => {
       vi.unstubAllGlobals()
       sheZhiCuoWuShangBaoHanShu(null)
+      chongZhiCuoWuShangBaoZhuangTai()
     })
 
-    it('moRenShangBaoHanShu 使用 sendBeacon 上报到 /api/logs', async () => {
-      const sendBeaconSpy = vi.fn(() => true)
-      vi.stubGlobal('navigator', { sendBeacon: sendBeaconSpy })
+    it('moRenShangBaoHanShu 使用 fetch keepalive 上报到 /api/logs（禁sendBeacon：502无回执刷资源error）', async () => {
+      const fetchSpy = vi.fn(() => Promise.resolve({} as Response))
+      vi.stubGlobal('fetch', fetchSpy)
 
       moRenShangBaoHanShu({
         leiBie: 'vue',
@@ -331,12 +333,13 @@ describe('FP-03 前端全局错误边界', () => {
         shiJianChuo: 123,
       })
 
-      expect(sendBeaconSpy).toHaveBeenCalledOnce()
-      const [url, blob] = sendBeaconSpy.mock.calls[0] as [string, Blob]
+      expect(fetchSpy).toHaveBeenCalledOnce()
+      const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit]
       expect(url).toBe('/api/logs')
-      expect(blob).toBeInstanceOf(Blob)
-      expect(blob.type).toBe('application/json')
-      const wenBen = await blob.text()
+      expect(init.method).toBe('POST')
+      expect(init.keepalive).toBe(true)
+      expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json')
+      const wenBen = String(init.body)
       const ti = JSON.parse(wenBen)
       expect(ti.lei_xing).toBe('cuoWu')
       expect(ti.xiang_qing.leiBie).toBe('vue')
@@ -345,8 +348,8 @@ describe('FP-03 前端全局错误边界', () => {
     })
 
     it('Error 对象被序列化为 name/message/stack', async () => {
-      const sendBeaconSpy = vi.fn(() => true)
-      vi.stubGlobal('navigator', { sendBeacon: sendBeaconSpy })
+      const fetchSpy = vi.fn(() => Promise.resolve({} as Response))
+      vi.stubGlobal('fetch', fetchSpy)
 
       const cuoWu = new Error('序列化测试')
       cuoWu.name = 'CustomError'
@@ -356,18 +359,17 @@ describe('FP-03 前端全局错误边界', () => {
         shiJianChuo: 1,
       })
 
-      const blob = sendBeaconSpy.mock.calls[0][1] as Blob
-      const wenBen = await blob.text()
+      const init = fetchSpy.mock.calls[0][1] as RequestInit
+      const wenBen = String(init.body)
       const ti = JSON.parse(wenBen)
       expect(ti.xiang_qing.cuoWu.name).toBe('CustomError')
       expect(ti.xiang_qing.cuoWu.message).toBe('序列化测试')
       expect(typeof ti.xiang_qing.cuoWu.stack).toBe('string')
     })
 
-    it('sendBeacon 不可用时回退到 fetch keepalive', () => {
+    it('fetch 直发 keepalive 负载正确', () => {
       const fetchSpy = vi.fn(() => Promise.resolve({} as Response))
       vi.stubGlobal('fetch', fetchSpy)
-      vi.stubGlobal('navigator', {})
 
       moRenShangBaoHanShu({
         leiBie: 'vue',
@@ -383,23 +385,9 @@ describe('FP-03 前端全局错误边界', () => {
       expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json')
     })
 
-    it('sendBeacon 返回 false 时回退到 fetch', () => {
+    it('性能指标（fuJia.shangBaoLeiXing=xingNengZhiBiao）上报 lei_xing=xingNengZhiBiao', async () => {
       const fetchSpy = vi.fn(() => Promise.resolve({} as Response))
       vi.stubGlobal('fetch', fetchSpy)
-      vi.stubGlobal('navigator', { sendBeacon: () => false })
-
-      moRenShangBaoHanShu({
-        leiBie: 'vue',
-        cuoWu: new Error('x'),
-        shiJianChuo: 1,
-      })
-
-      expect(fetchSpy).toHaveBeenCalledOnce()
-    })
-
-    it('性能指标（fuJia.shangBaoLeiXing=xingNengZhiBiao）上报 lei_xing=xingNengZhiBiao', async () => {
-      const sendBeaconSpy = vi.fn(() => true)
-      vi.stubGlobal('navigator', { sendBeacon: sendBeaconSpy })
 
       moRenShangBaoHanShu({
         leiBie: 'weiZhi',
@@ -408,8 +396,8 @@ describe('FP-03 前端全局错误边界', () => {
         fuJia: { shangBaoLeiXing: 'xingNengZhiBiao' },
       })
 
-      const blob = sendBeaconSpy.mock.calls[0][1] as Blob
-      const wenBen = await blob.text()
+      const init = fetchSpy.mock.calls[0][1] as RequestInit
+      const wenBen = String(init.body)
       const ti = JSON.parse(wenBen)
       expect(ti.lei_xing).toBe('xingNengZhiBiao')
       expect(ti.xiang_qing.zhiBiaoMing).toBe('LCP')
@@ -418,9 +406,9 @@ describe('FP-03 前端全局错误边界', () => {
       expect(ti.xiang_qing.shiJianChuo).toBe(456)
     })
 
-    it('chuShiHuaCuoWuShangBao 设置默认 hook 后 chuFaCuoWuShangBao 触发 sendBeacon', () => {
-      const sendBeaconSpy = vi.fn(() => true)
-      vi.stubGlobal('navigator', { sendBeacon: sendBeaconSpy })
+    it('chuShiHuaCuoWuShangBao 设置默认 hook 后 chuFaCuoWuShangBao 触发 fetch', () => {
+      const fetchSpy = vi.fn(() => Promise.resolve({} as Response))
+      vi.stubGlobal('fetch', fetchSpy)
 
       chuShiHuaCuoWuShangBao()
       chuFaCuoWuShangBao({
@@ -429,7 +417,7 @@ describe('FP-03 前端全局错误边界', () => {
         shiJianChuo: 1,
       })
 
-      expect(sendBeaconSpy).toHaveBeenCalledOnce()
+      expect(fetchSpy).toHaveBeenCalledOnce()
     })
   })
 })

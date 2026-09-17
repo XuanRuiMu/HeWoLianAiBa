@@ -1,4 +1,4 @@
-import { AI_PEI_ZHI } from './AI配置'
+import { AI_PEI_ZHI, yingYongHuiDuCanShu } from './AI配置'
 import type { MoXingCanShu } from './AI配置'
 import type { AIJiaoSeXinXi } from '../types'
 
@@ -116,7 +116,7 @@ export function jiSuanAIChanShu(
 
   wenDu = qianZhiWenDu(wenDu)
 
-  return {
+  const jiChu: MoXingCanShu = {
     moXing: ji.moXing,
     wenDu,
     top_p: hanHanPeiZhi(ji.top_p, moXingLeiXing),
@@ -125,4 +125,5 @@ export function jiSuanAIChanShu(
     reasoningEffort: ji.reasoningEffort,
     xiangYingGeShi: ji.xiangYingGeShi,
   }
+  return yingYongHuiDuCanShu(moXingLeiXing, jiChu)
 }

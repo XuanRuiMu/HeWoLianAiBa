@@ -1,4 +1,6 @@
 ﻿import { debug日志 } from '../utils/debug日志'
+import Dysmsapi, { SendSmsRequest } from '@alicloud/dysmsapi20170525'
+import { $OpenApiUtil } from '@alicloud/openapi-core'
 import crypto from 'crypto'
 import { peiZhi } from '../config'
 import { redis } from '../redis'
@@ -23,13 +25,19 @@ export function shengChengSuiJiYanZhengMa(): string {
   return crypto.randomInt(100000, 1000000).toString()
 }
 
+export type DuanXinFaSongJieGuo =
+  | { cheng_gong: true }
+  | { cheng_gong: false; cuo_wu_ma: 'XIAN_LIU' | 'NEI_BU_CUO_WU'; ti_shi?: string }
+
+/** YH-025 测试兼容：旧调用方仅读cheng_gong/ti_shi，新路由读cuo_wu_ma映射状态码 */
 export async function faSongYanZhengMa(
   shouJiHao: string,
-): Promise<{ cheng_gong: boolean; ti_shi?: string }> {
+): Promise<DuanXinFaSongJieGuo> {
   const jianGeJian = huoQuFaSongJianGeJian(shouJiHao)
   const yiFaSong = await redis.get(jianGeJian)
   if (yiFaSong) {
-    return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'faSongYanZhengMaPinFan') }
+    // YH-025 结构化错误码：路由只映射不再文案子串定状态码
+    return { cheng_gong: false, cuo_wu_ma: 'XIAN_LIU', ti_shi: huoQuFanYi('renZheng', 'faSongYanZhengMaPinFan') }
   }
 
   const yanZhengMa = peiZhi.kaiFaMoShi
@@ -39,23 +47,12 @@ export async function faSongYanZhengMa(
   if (!peiZhi.kaiFaMoShi) {
     const { fangWenMiYaoId, fangWenMiYaoMiMa, qianMing, moBanDaiMa } = peiZhi.duanXin
     if (!fangWenMiYaoId || !fangWenMiYaoMiMa || !qianMing || !moBanDaiMa) {
-      return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai') }
-    }
-
-    const moKuai = await import('@alicloud/dysmsapi20170525').catch(() => null)
-    if (!moKuai || !moKuai.default) {
-      return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai') }
+      return { cheng_gong: false, cuo_wu_ma: 'NEI_BU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai') }
     }
 
     try {
-      const Client = moKuai.default
-      const SendSmsRequest = moKuai.SendSmsRequest
-      const openApiHeXin = await import('@alicloud/openapi-core').catch(() => null)
-      if (!openApiHeXin) {
-        return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai') }
-      }
-      const client = new Client(
-        new openApiHeXin.$OpenApiUtil.Config({
+      const client = new Dysmsapi(
+        new $OpenApiUtil.Config({
           accessKeyId: fangWenMiYaoId,
           accessKeySecret: fangWenMiYaoMiMa,
           endpoint: 'dysmsapi.aliyuncs.com',
@@ -71,7 +68,7 @@ export async function faSongYanZhengMa(
       )
     } catch (cuoWu) {
       debug日志.error('短信服务', '阿里云短信发送失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
-      return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai') }
+      return { cheng_gong: false, cuo_wu_ma: 'NEI_BU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai') }
     }
   }
 
@@ -155,7 +152,7 @@ async function zengJiaRiPeiEJianShu(jian: string): Promise<number> {
 
 /**
  * A7：检查并占用今日短信发送配额（先查后占，超限不消耗任何一侧配额以外的资源）。
- * Redis 故障时降级放行，避免配额检查拖垮发码主链路（与 IP 封禁降级策略一致）。
+ * YH-020 告警降级：Redis故障/降级放行必须发运维告警，不再静默放行。
  */
 export async function duanXinRiPeiEYunXu(
   shouJiHao: string,
@@ -178,6 +175,28 @@ export async function duanXinRiPeiEYunXu(
     return { yun_xu: true }
   } catch (cuoWu) {
     debug日志.error('短信服务', '短信日配额检查失败，降级放行', { xiang_qing: { cuo_wu: String(cuoWu) } })
+    const { faSongGaoJing } = await import('../utils/邮件告警')
+    await faSongGaoJing('duan_xin_pei_e_jiang_ji', '短信配额检查降级放行', `短信日配额Redis检查失败已降级放行：${String(cuoWu).slice(0, 300)}`).catch(() => undefined)
+    return { yun_xu: true }
+  }
+}
+
+/** YH-011 注册联动只读预检：只查不占，供注册路由复核配额（占额仍由发码链路完成） */
+export async function duanXinRiPeiEYuLan(
+  shouJiHao: string,
+  ip: string,
+): Promise<{ yun_xu: boolean; ti_shi?: string }> {
+  try {
+    const shouJiHaoZhi = Number(await redis.get(huoQuShouJiHaoRiPeiEJian(shouJiHao))) || 0
+    const ipZhi = Number(await redis.get(huoQuIpRiPeiEJian(ip))) || 0
+    if (shouJiHaoZhi >= peiZhi.duanXinRiPeiE.meiShouJiHaoMeiRi) {
+      return { yun_xu: false, ti_shi: huoQuFanYi('renZheng', 'duanXinRiPeiEYongJin') }
+    }
+    if (ipZhi >= peiZhi.duanXinRiPeiE.meiIPMeiRi) {
+      return { yun_xu: false, ti_shi: huoQuFanYi('renZheng', 'duanXinRiPeiEYongJin') }
+    }
+    return { yun_xu: true }
+  } catch {
     return { yun_xu: true }
   }
 }

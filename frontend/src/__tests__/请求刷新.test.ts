@@ -47,7 +47,7 @@ describe('401静默刷新', () => {
       使用用户仓库: () => Promise.resolve({ 清空用户状态 }),
     }))
 
-    localStorage.clear()
+    sessionStorage.clear()
     sessionStorage.clear()
     await import('@/api/请求')
   })
@@ -61,8 +61,8 @@ describe('401静默刷新', () => {
   }
 
   it('有刷新凭证时静默刷新并重放原请求，不跳转', async () => {
-    localStorage.setItem(令牌键, 'guo-qi-ling-pai')
-    localStorage.setItem(刷新令牌ID键, 'yong-hu-1:shua-xin-id')
+    sessionStorage.setItem(令牌键, 'guo-qi-ling-pai')
+    sessionStorage.setItem(刷新令牌ID键, 'yong-hu-1:shua-xin-id')
     yuanShengPost.mockResolvedValue({
       data: { cheng_gong: true, shu_ju: { 令牌: 'xin-ling-pai', 刷新令牌: 'xin-shua', 刷新令牌ID: 'yong-hu-1:xin-id' } },
     })
@@ -70,7 +70,7 @@ describe('401静默刷新', () => {
 
     const jieGuo = await errorHandler!(chuangJian401())
     expect(yuanShengPost).toHaveBeenCalledWith('/api/认证/刷新', { refreshToken: 'yong-hu-1:shua-xin-id' }, { timeout: 10000 })
-    expect(localStorage.getItem(令牌键)).toBe('xin-ling-pai')
+    expect(sessionStorage.getItem(令牌键)).toBe('xin-ling-pai')
     expect(shiLiHanShu).toHaveBeenCalledTimes(1)
     const zhongFang = shiLiHanShu.mock.calls[0][0] as { headers: Record<string, string> }
     expect(zhongFang.headers.Authorization).toBe('Bearer xin-ling-pai')
@@ -80,7 +80,7 @@ describe('401静默刷新', () => {
   })
 
   it('无刷新凭证时走原有登出流程', async () => {
-    localStorage.setItem(令牌键, 'guo-qi-ling-pai')
+    sessionStorage.setItem(令牌键, 'guo-qi-ling-pai')
     await expect(errorHandler!(chuangJian401())).rejects.toMatchObject({ message: '未授权' })
     expect(yuanShengPost).not.toHaveBeenCalled()
     await vi.waitFor(() => expect(清空用户状态).toHaveBeenCalled())
@@ -88,15 +88,15 @@ describe('401静默刷新', () => {
   })
 
   it('认证接口自身401不触发刷新', async () => {
-    localStorage.setItem(令牌键, 'guo-qi-ling-pai')
-    localStorage.setItem(刷新令牌ID键, 'yong-hu-1:shua-xin-id')
+    sessionStorage.setItem(令牌键, 'guo-qi-ling-pai')
+    sessionStorage.setItem(刷新令牌ID键, 'yong-hu-1:shua-xin-id')
     await expect(errorHandler!(chuangJian401('/认证/登录'))).rejects.toMatchObject({ message: '未授权' })
     expect(yuanShengPost).not.toHaveBeenCalled()
   })
 
   it('刷新失败时走原有登出流程', async () => {
-    localStorage.setItem(令牌键, 'guo-qi-ling-pai')
-    localStorage.setItem(刷新令牌ID键, 'yong-hu-1:shua-xin-id')
+    sessionStorage.setItem(令牌键, 'guo-qi-ling-pai')
+    sessionStorage.setItem(刷新令牌ID键, 'yong-hu-1:shua-xin-id')
     yuanShengPost.mockRejectedValue(new Error('wang-luo-duan-kai'))
     await expect(errorHandler!(chuangJian401())).rejects.toMatchObject({ message: '未授权' })
     await vi.waitFor(() => expect(清空用户状态).toHaveBeenCalled())

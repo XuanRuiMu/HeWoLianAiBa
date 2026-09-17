@@ -37,7 +37,11 @@ luYou.get('/搜索', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing
   const yongHu = qingQiu.yong_hu
   if (!yongHu) return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
   const guanJianZi = String(qingQiu.query.q || '').trim().slice(0, 50)
-  if (!guanJianZi) return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+  if (!guanJianZi) return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), 'CAN_SHU_CUO_WU')
+  // YH-028 好友搜索统一码：命中与未命中返回同一成功形态，禁404探测枚举
+  if (!yanZhengUUID(guanJianZi) && !/^1[3-9]\d{9}$/.test(guanJianZi) && !/^[\u4e00-\u9fa5A-Za-z0-9_-]{1,30}$/.test(guanJianZi)) {
+    return chengGongXiangYing(xiangYing, { lie_biao: [] })
+  }
   try {
     const jieGuo = await 数据库.query(
       `SELECT u."ID", u."手机号", u."用户名", u."昵称", u."头像", u."签名", u."签名可见性", u."签名白名单", s."公开账号", s."公开手机号"
@@ -74,7 +78,7 @@ luYou.get('/搜索', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing
         shi_hao_you: youShiHaoYou,
       })
     }
-    if (!lieBiao.length) return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('haoYou', 'souSuoWuJieGuo'))
+    if (!lieBiao.length) return chengGongXiangYing(xiangYing, { lie_biao: [] })
     return chengGongXiangYing(xiangYing, { lie_biao: lieBiao })
   } catch (cuoWu) {
     debug日志.error('好友接口', '搜索用户失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
@@ -335,18 +339,54 @@ luYou.post('/消息', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
     if (haoYouFengJin.beiFengJin) {
       return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'zhangHaoYiBeiFengJin'))
     }
-    if (neiRong) {
-      const shenHe = await shenHeNeiRongAnQuan(neiRong)
-      if (shenHe.wei_gui && shenHe.lei_xing !== '审核服务不可用') {
-        await jiLuZhangHaoWeiGui({
-          yongHuId: yongHu.yongHuId,
-          ip: 获取IP(qingQiu),
-          yuanYin: shenHe.li_you || shenHe.lei_xing || '内容违规',
-          leiXing: '好友聊天',
-        })
-        return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'xiaoXiNeiRongWeiGui'))
+    // YH-013 好友媒体IDOR+审核绕过：复用AI链路媒体归属函数统一校验+不可用统一拦截
+    const { yanZhengHaoYouMeiTiGuiShu } = await import('../services/好友媒体')
+    if (leiXing !== 'wenben' || meiTiId) {
+      if (!meiTiId || !yanZhengUUID(meiTiId)) {
+        return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'meiTiBiXuXianChuanShu'))
       }
+      const guiShu = await yanZhengHaoYouMeiTiGuiShu(meiTiId, yongHu.yongHuId)
+      if (!guiShu.he_fa) {
+        return shiBaiXiangYing(xiangYing, 400, guiShu.ti_shi)
+      }
+    }
+    if (neiRong) {
+      let shenHe: Awaited<ReturnType<typeof shenHeNeiRongAnQuan>>
+      try {
+        shenHe = await shenHeNeiRongAnQuan(neiRong)
+      } catch (cuoWu) {
+        debug日志.error('好友接口', '好友消息审核异常拦截', { xiang_qing: { cuo_wu: String(cuoWu) } })
+        return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
+      }
+      // YH-013 统一审核不可用策略：与AI链路一致降级拦截（文本不可用=不可发）
+      // 注意：VITEST无mock外呼时审核必回不可用，测试链路用sheZhiMockTiaoYong注入后通过
       if (shenHe.wei_gui) {
+        if (shenHe.lei_xing !== '审核服务不可用') {
+          await jiLuZhangHaoWeiGui({
+            yongHuId: yongHu.yongHuId,
+            ip: 获取IP(qingQiu),
+            yuanYin: shenHe.li_you || shenHe.lei_xing || '内容违规',
+            leiXing: '好友聊天',
+          })
+          return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'xiaoXiNeiRongWeiGui'))
+        }
+        return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
+      }
+    }
+    // YH-013 纯媒体零审核：媒体消息同样走AI归属审核函数（查库归属已在上步完成，此处补文本化审核）
+    if (!neiRong && meiTiId) {
+      const { shenHeHaoYouMeiTi } = await import('../services/好友媒体')
+      const meiTiShenHe = await shenHeHaoYouMeiTi(meiTiId)
+      if (meiTiShenHe.wei_gui) {
+        if (meiTiShenHe.lei_xing !== '审核服务不可用') {
+          await jiLuZhangHaoWeiGui({
+            yongHuId: yongHu.yongHuId,
+            ip: 获取IP(qingQiu),
+            yuanYin: meiTiShenHe.li_you || meiTiShenHe.lei_xing || '媒体违规',
+            leiXing: '好友媒体',
+          })
+          return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'xiaoXiNeiRongWeiGui'))
+        }
         return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
       }
     }

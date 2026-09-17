@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>注入测试壳 v2（r186，模拟真实登录页父页）</title>
+<script type="importmap">
+{ "imports": { "three": "/wu3d/vendor/three.module.js" } }
+</script>
+<script type="module">
+// 复刻真实登录页：父页暴露全局 THREE(r186) + GLTFLoader，供 grass-bg iframe 读取
+import * as THREE from "three";
+import { GLTFLoader } from "/wu3d/vendor/loaders/GLTFLoader.js";
+window.THREE = THREE;
+window.GLTFLoader = GLTFLoader;
+</script>
+<style>html,body{margin:0;height:100%;overflow:hidden}iframe{width:100vw;height:100vh;border:0;display:block}</style>
+</head>
+<body>
+<iframe id="bg"></iframe>
+<script>
+// 等 THREE 就绪后再加载 iframe，确保引擎解析期能读到 parent.THREE
+(function waitReady() {
+  if (!window.THREE || !window.GLTFLoader) { setTimeout(waitReady, 30); return; }
+  document.getElementById("bg").src = "/grass-bg/grass-bg.html?debug=1";
+})();
+</script>
+</body>
+</html>

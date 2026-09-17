@@ -22,7 +22,7 @@ import {
   huoQuXiTongZhuangTai,
   sheZhiGuanLiYuanZhuangTai,
 } from '../services/管理员'
-import { jiLuDuoShe, jieShuDuoShe, huoQuJiaoSeYongHuId, sheZhiDuoSheZhuangTai } from '../services/夺舍'
+import { jieShuDuoShe, huoQuJiaoSeYongHuId, sheZhiDuoSheZhuangTai, duoSheXinTiao } from '../services/夺舍'
 import {
   lieChuFengJinShenSu,
   jieChuZhangHaoFengJin,
@@ -151,8 +151,7 @@ luYou.post('/夺舍/:jiaoSeId', async (qingQiu: RenZhengQingQiu, xiangYing: Resp
   }
 
   try {
-    await sheZhiDuoSheZhuangTai(jiaoSeId, yongHu.yongHuId)
-    await jiLuDuoShe(yongHu.yongHuId, jiaoSeId)
+    const jieGuo = await sheZhiDuoSheZhuangTai(jiaoSeId, yongHu.yongHuId)
     const muBiaoYongHuId = await huoQuJiaoSeYongHuId(jiaoSeId)
     if (muBiaoYongHuId) {
       zhongDuanJiaoSeTiaoDuQi(muBiaoYongHuId, jiaoSeId)
@@ -164,11 +163,24 @@ luYou.post('/夺舍/:jiaoSeId', async (qingQiu: RenZhengQingQiu, xiangYing: Resp
       xiang_qing: { jiao_se_id: jiaoSeId },
       lei_xing: '管理',
     })
-    return chengGongXiangYing(xiangYing, { jiao_se_id: jiaoSeId, duo_she_zhuang_tai: true })
+    return chengGongXiangYing(xiangYing, { jiao_se_id: jiaoSeId, duo_she_zhuang_tai: true, qiang_zhan: jieGuo.qiang_zhan === true })
   } catch (cuoWu) {
     debug日志.error('管理接口', '夺舍角色失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
   }
+})
+
+luYou.post('/夺舍/:jiaoSeId/心跳', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+  const yongHu = qingQiu.yong_hu!
+  const jiaoSeId = String(qingQiu.params.jiaoSeId || '')
+  if (!jiaoSeId) {
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+  }
+  const xuZu = await duoSheXinTiao(jiaoSeId, yongHu.yongHuId)
+  if (!xuZu) {
+    return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('tongYong', 'weiShouQuan'))
+  }
+  return chengGongXiangYing(xiangYing, { jiao_se_id: jiaoSeId, duo_she_zhuang_tai: true })
 })
 
 luYou.post('/归还/:jiaoSeId', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
@@ -276,12 +288,15 @@ luYou.get('/系统状态', async (qingQiu: RenZhengQingQiu, xiangYing: Response)
 })
 
 // M3 管理端用量看板：聚合每用户当日 AI 调用量与预算余量（数据源为 Redis ai_yu_suan:* 计数）
+// FP-04 YH-040：叠加 LLM 网关 usage 真实口径（按模型类型聚合 token），字符估算不再作为成本口径
 luYou.get('/用量看板', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu!
   try {
     const riQi = new Date().toISOString().slice(0, 10)
     const qianZhui = `ai_yu_suan:`
     const moShiJian = `${qianZhui}*:${riQi}`
+    const { huoQuJinRiHuiZong } = await import('../services/用量统计')
+    const { duQuZhongShiDuiLieChangDu } = await import('../services/重试队列').catch(() => ({ duQuZhongShiDuiLieChangDu: async () => 0 }))
 
     // SCAN 收集当日全部计数键（生产多库共享 Redis，避免 KEYS 阻塞）
     const jiShuJian: string[] = []
@@ -337,6 +352,14 @@ luYou.get('/用量看板', async (qingQiu: RenZhengQingQiu, xiangYing: Response)
       lieBiao.sort((a, b) => b.yi_yong - a.yi_yong)
     }
 
+    const anLeiXing = await huoQuJinRiHuiZong(riQi)
+    let zhongShiChangDu = 0
+    try {
+      zhongShiChangDu = await duQuZhongShiDuiLieChangDu(riQi)
+    } catch {
+      zhongShiChangDu = 0
+    }
+
     await jiLuShenJiRiZhi({
       yong_hu_id: yongHu.yongHuId,
       ip: huoQuIp(qingQiu),
@@ -348,6 +371,14 @@ luYou.get('/用量看板', async (qingQiu: RenZhengQingQiu, xiangYing: Response)
       ri_qi: riQi,
       mei_ri_yu_suan: peiZhi.meiRiAIQingQiuYuSuan,
       lie_biao: lieBiao,
+      an_lei_xing: anLeiXing.map((xiang) => ({
+        mo_xing_lei_xing: xiang.moXingLeiXing,
+        ci_shu: xiang.ciShu,
+        shu_ru_token: xiang.shuRuToken,
+        shu_chu_token: xiang.shuChuToken,
+        zong_token: xiang.zongToken,
+      })),
+      zhong_shi_dui_lie_chang_du: zhongShiChangDu,
     })
   } catch (cuoWu) {
     debug日志.error('管理接口', '获取AI用量看板失败', { xiang_qing: { cuo_wu: String(cuoWu) } })

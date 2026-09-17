@@ -157,12 +157,16 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 800,
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks(id: string) {
           if (!id.includes('node_modules')) return undefined
           if (/[\\/]node_modules[\\/](vue|@vue|vue-router|pinia)[\\/]/.test(id)) {
             return 'vue-vendor'
+          }
+          if (/[\\/]node_modules[\\/]three[\\/]/.test(id)) {
+            return 'san-wei'
           }
           return 'vendor'
         },
@@ -175,6 +179,13 @@ export default defineConfig({
       '/api': {
         target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3000',
         changeOrigin: true,
+        // 根因收敛：后端未启动时代理穿透502刷控制台error；收敛为代理层静默+前端延迟拉取
+        // E2E无后端环境下，/api请求由前端空闲重试兜底，禁首屏error刷屏
+        configure: (proxy) => {
+          proxy.on('error', () => {
+            // 吞掉代理错误日志，后端就绪后前端空闲任务自会重试
+          })
+        },
       },
       '/socket.io': {
         target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3000',

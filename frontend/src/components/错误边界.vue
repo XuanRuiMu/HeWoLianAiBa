@@ -11,6 +11,9 @@
       <p class="cuowu-miaoshu">
         {{ huoQuFanYi('tongYong', 'cuoWuBianJieTiShi') }}
       </p>
+      <p v-if="caoGaoTiShi" class="cuowu-miaoshu" role="status">
+        {{ caoGaoTiShi }}
+      </p>
       <div class="cuowu-anniu-zu">
         <button class="shuaxin-anniu" type="button" @click="shuaXinYeMian">
           {{ huoQuFanYi('tongYong', 'cuoWuBianJieShuaXin') }}
@@ -43,6 +46,22 @@ const emit = defineEmits<{
 
 const cuoWuZhuangTai = ref(false)
 const dangQianCuoWu = ref<unknown>(null)
+const caoGaoTiShi = ref('')
+
+function shouJiWeiFaCaoGao(): void {
+  caoGaoTiShi.value = ''
+  try {
+    if (typeof sessionStorage === 'undefined') return
+    const jianLieBiao: string[] = []
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const jian = sessionStorage.key(i)
+      if (jian && jian.startsWith('caoGao:')) jianLieBiao.push(jian)
+    }
+    if (jianLieBiao.length > 0) caoGaoTiShi.value = huoQuFanYi('tongYong', 'caoGaoYiHuiFu')
+  } catch {
+    caoGaoTiShi.value = ''
+  }
+}
 
 function guoLeiXing(cuoWu: unknown): CuoWuLeiXing {
   if (cuoWu instanceof TypeError) return 'leiXing'
@@ -57,6 +76,7 @@ function guoLeiXing(cuoWu: unknown): CuoWuLeiXing {
 onErrorCaptured((cuoWu, shiLi, xinXi) => {
   cuoWuZhuangTai.value = true
   dangQianCuoWu.value = cuoWu
+  shouJiWeiFaCaoGao()
   const xinXiRong: CuoWuXinXi = {
     cuoWu,
     shiLi,
@@ -78,6 +98,7 @@ function shuaXinYeMian() {
 function chongZhiCuoWu() {
   cuoWuZhuangTai.value = false
   dangQianCuoWu.value = null
+  caoGaoTiShi.value = ''
 }
 
 defineExpose({

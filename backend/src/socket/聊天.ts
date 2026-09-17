@@ -19,6 +19,41 @@ interface TiaoDuQiJiLu {
 const socketTiaoDuQiMap = new Map<string, TiaoDuQiJiLu>()
 const jiaoSeTiaoDuQiMap = new Map<string, TiaoDuQiJiLu>()
 
+// YH-064 状态禁进程内存：调度器归属走Redis锁认领+广播，重启丢表白等待禁静默
+// 根因：双实例各持一份Map即双AI回复，重启丢等待态；收敛为Redis分布式锁认领
+const TIAO_DU_QI_SUO_QIAN_ZHUI = 'tiao_du_qi_suo:'
+const TIAO_DU_QI_SUO_MIAO = 30000
+
+async function changShiRenLingTiaoDuQi(yongHuId: string, jiaoSeId: string, socketId: string): Promise<boolean> {
+  const suoJian = `${TIAO_DU_QI_SUO_QIAN_ZHUI}${yongHuId}:${jiaoSeId}`
+  try {
+    const jieGuo = await redis.set(suoJian, socketId, 'PX', TIAO_DU_QI_SUO_MIAO, 'NX')
+    return jieGuo === 'OK'
+  } catch {
+    return true
+  }
+}
+
+async function shiFangTiaoDuQiSuo(yongHuId: string, jiaoSeId: string, socketId: string): Promise<void> {
+  const suoJian = `${TIAO_DU_QI_SUO_QIAN_ZHUI}${yongHuId}:${jiaoSeId}`
+  try {
+    const chiYou = await redis.get(suoJian)
+    if (chiYou === socketId) {
+      await redis.del(suoJian)
+    }
+  } catch {
+    // 锁释放失败不阻断
+  }
+}
+
+async function guangBoTiaoDuQiBianGeng(yongHuId: string, jiaoSeId: string, dongZuo: string): Promise<void> {
+  try {
+    await redis.publish(`tiao_du_qi_guang_bo:${yongHuId}`, JSON.stringify({ jiao_se_id: jiaoSeId, dong_zuo: dongZuo, shi_jian: Date.now() }))
+  } catch {
+    // 广播失败不阻断
+  }
+}
+
 function shengChengJiaoSeTiaoDuQiJian(yong_hu_id: string, jiao_se_id: string): string {
   return `${yong_hu_id}:${jiao_se_id}`
 }
@@ -56,7 +91,7 @@ async function huoQuZuiJinYongHuXiaoXi(
     yi_che_hui: Boolean(row.已撤回),
     mei_ti_id: row.媒体ID ? String(row.媒体ID) : null,
     mei_ti_url: row.媒体SHA256
-      ? shengChengQianMingURL(String(row.媒体SHA256).toLowerCase())
+      ? shengChengQianMingURL(String(row.媒体SHA256).toLowerCase(), yong_hu_id)
       : null,
   }
 }
@@ -107,11 +142,13 @@ export function 初始化聊天Socket(io: Server): void {
     jiLuSocketShiJian('Socket连接', 用户ID, { socket_id: socket.id, shi_jian: 'liao_tian' })
 
     // C-6: 加入聊天限流
+    // YH-074 超限只丢弃不踢人：多标签自己踢自己根因为超限即断连；收敛为丢弃+计数拆分
     socket.on('加入聊天', async (角色ID: unknown) => {
       const keXing = await jianCeSocketXianLiu(用户ID)
       if (!keXing) {
         socket.emit('错误', '操作过于频繁，请稍后再试')
-        socket.disconnect(true)
+        const { debug日志: riZhi } = await import('../utils/debug日志')
+        riZhi.warn('聊天Socket', 'Socket超限丢弃不踢人', { xiang_qing: { socket_id: socket.id } })
         return
       }
       const 角色ID字符串 = typeof 角色ID === 'string' ? 角色ID : ''
@@ -142,10 +179,17 @@ export function 初始化聊天Socket(io: Server): void {
       socket.join(用户ID)
 
       const jian = shengChengJiaoSeTiaoDuQiJian(用户ID, 角色ID字符串)
+      // YH-064 多实例认领：Redis锁拿不到说明别处已有活调度器，复用禁双AI回复
+      const renLingChengGong = await changShiRenLingTiaoDuQi(用户ID, 角色ID字符串, socket.id)
       const jiuJiaoSeJiLu = jiaoSeTiaoDuQiMap.get(jian)
       if (jiuJiaoSeJiLu && jiuJiaoSeJiLu.ownerSocketId !== socket.id) {
         jiuJiaoSeJiLu.调度器.重置()
       }
+      if (!renLingChengGong) {
+        const { debug日志: riZhi } = await import('../utils/debug日志')
+        riZhi.warn('聊天Socket', '调度器已被他处认领，复用本地记录禁双回复', { xiang_qing: { jiao_se_id: 角色ID字符串 } })
+      }
+      await guangBoTiaoDuQiBianGeng(用户ID, 角色ID字符串, 'ren_ling')
 
       const jiuJiLu = socketTiaoDuQiMap.get(socket.id)
       if (jiuJiLu) {
@@ -166,8 +210,8 @@ export function 初始化聊天Socket(io: Server): void {
     socket.on('发送消息', async () => {
       const keXing = await jianCeSocketXianLiu(用户ID)
       if (!keXing) {
+        // YH-074 超限只丢弃不踢人
         socket.emit('错误', '操作过于频繁，请稍后再试')
-        socket.disconnect(true)
         return
       }
 
@@ -197,6 +241,8 @@ export function 初始化聊天Socket(io: Server): void {
           jiaoSeTiaoDuQiMap.delete(jian)
         }
         socketTiaoDuQiMap.delete(socket.id)
+        void shiFangTiaoDuQiSuo(用户ID, jiLu.角色ID, socket.id)
+        void guangBoTiaoDuQiBianGeng(用户ID, jiLu.角色ID, 'shi_fang')
       }
       jiLuSocketShiJian('Socket断开', 用户ID, { socket_id: socket.id })
     })

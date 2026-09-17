@@ -28,60 +28,62 @@ function keYongCunChu(): boolean {
   return typeof window !== 'undefined'
 }
 
-export function duQuLingPai(): string | null {
+function huiHuaCunChu(): Storage | null {
   if (!keYongCunChu()) return null
-  return anQuanDuQu(localStorage, 令牌键) ?? anQuanDuQu(sessionStorage, 令牌键)
-}
-
-export function baoCunLingPai(lingPai: string, chiJiu: boolean): void {
-  if (!keYongCunChu()) return
-  if (chiJiu) {
-    anQuanXieRu(localStorage, 令牌键, lingPai)
-    anQuanShanChu(sessionStorage, 令牌键)
-  } else {
-    anQuanXieRu(sessionStorage, 令牌键, lingPai)
-    anQuanShanChu(localStorage, 令牌键)
+  try {
+    return sessionStorage
+  } catch {
+    return null
   }
 }
 
+export function duQuLingPai(): string | null {
+  const cunChu = huiHuaCunChu()
+  if (!cunChu) return null
+  return anQuanDuQu(cunChu, 令牌键)
+}
+
+export function baoCunLingPai(lingPai: string, _chiJiu: boolean): void {
+  void _chiJiu
+  const cunChu = huiHuaCunChu()
+  if (!cunChu) return
+  anQuanXieRu(cunChu, 令牌键, lingPai)
+}
+
 export function qingChuLingPai(): void {
-  if (!keYongCunChu()) return
-  anQuanShanChu(localStorage, 令牌键)
-  anQuanShanChu(sessionStorage, 令牌键)
+  const cunChu = huiHuaCunChu()
+  if (!cunChu) return
+  anQuanShanChu(cunChu, 令牌键)
 }
 
 export function duQuShuaXinLingPai(): { shuaXinLingPai: string | null; shuaXinLingPaiID: string | null } {
-  if (!keYongCunChu()) return { shuaXinLingPai: null, shuaXinLingPaiID: null }
-  const shuaXinLingPai =
-    anQuanDuQu(localStorage, 刷新令牌键) ?? anQuanDuQu(sessionStorage, 刷新令牌键)
-  const shuaXinLingPaiID =
-    anQuanDuQu(localStorage, 刷新令牌ID键) ?? anQuanDuQu(sessionStorage, 刷新令牌ID键)
+  const cunChu = huiHuaCunChu()
+  if (!cunChu) return { shuaXinLingPai: null, shuaXinLingPaiID: null }
+  const shuaXinLingPai = anQuanDuQu(cunChu, 刷新令牌键)
+  const shuaXinLingPaiID = anQuanDuQu(cunChu, 刷新令牌ID键)
   return { shuaXinLingPai, shuaXinLingPaiID }
 }
 
 export function baoCunShuaXinLingPai(
   shuaXinLingPai: string | undefined,
   shuaXinLingPaiID: string | undefined,
-  chiJiu: boolean,
+  _chiJiu: boolean,
 ): void {
-  if (!keYongCunChu()) return
+  void _chiJiu
+  const cunChu = huiHuaCunChu()
+  if (!cunChu) return
   if (shuaXinLingPai === undefined && shuaXinLingPaiID === undefined) return
-  const xieRu = chiJiu ? localStorage : sessionStorage
-  const lingYiGe = chiJiu ? sessionStorage : localStorage
   if (shuaXinLingPai !== undefined) {
-    anQuanXieRu(xieRu, 刷新令牌键, shuaXinLingPai)
-    anQuanShanChu(lingYiGe, 刷新令牌键)
+    anQuanXieRu(cunChu, 刷新令牌键, shuaXinLingPai)
   }
   if (shuaXinLingPaiID !== undefined) {
-    anQuanXieRu(xieRu, 刷新令牌ID键, shuaXinLingPaiID)
-    anQuanShanChu(lingYiGe, 刷新令牌ID键)
+    anQuanXieRu(cunChu, 刷新令牌ID键, shuaXinLingPaiID)
   }
 }
 
 export function qingChuShuaXinLingPai(): void {
-  if (!keYongCunChu()) return
-  anQuanShanChu(localStorage, 刷新令牌键)
-  anQuanShanChu(sessionStorage, 刷新令牌键)
-  anQuanShanChu(localStorage, 刷新令牌ID键)
-  anQuanShanChu(sessionStorage, 刷新令牌ID键)
+  const cunChu = huiHuaCunChu()
+  if (!cunChu) return
+  anQuanShanChu(cunChu, 刷新令牌键)
+  anQuanShanChu(cunChu, 刷新令牌ID键)
 }

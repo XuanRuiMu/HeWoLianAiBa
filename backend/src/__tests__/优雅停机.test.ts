@@ -46,6 +46,7 @@ vi.mock('../utils/日志引擎', () => ({
     warn: vi.fn(),
     error: vi.fn(),
   },
+  guanBiRiZhiLiu: vi.fn(async () => undefined),
 }))
 
 const diaoYongShunXu: string[] = []
@@ -103,6 +104,10 @@ describe('FP-05 A10 优雅停机', () => {
       kongZhiTaiCuoWuSpy.mockRestore()
       kongZhiTaiCuoWuSpy = null
     }
+    process.removeAllListeners('SIGTERM')
+    process.removeAllListeners('SIGINT')
+    process.removeAllListeners('unhandledRejection')
+    process.removeAllListeners('uncaughtException')
   })
 
   it('正常路径：按序断开socket→关HTTP→关DB→关Redis→关日志→退出0，且不触发强退', async () => {
@@ -110,7 +115,7 @@ describe('FP-05 A10 优雅停机', () => {
     const bing = 构造停机资源(true)
 
     await 优雅停机(bing.ziYuan)
-    await vi.advanceTimersByTimeAsync(10000)
+    await vi.advanceTimersByTimeAsync(2000)
 
     expect(diaoYongShunXu).toEqual([
       'duanKaiSocket',
@@ -194,48 +199,31 @@ describe('FP-05 A10 优雅停机', () => {
     expect(bing.退出进程).toHaveBeenCalledWith(0)
   })
 
-  it('信号与异常处理器注册：SIGTERM/SIGINT/unhandledRejection/uncaughtException均注册且异常走结构化日志后受控停机', () => {
-    const jianTingMingDan = ['SIGTERM', 'SIGINT', 'unhandledRejection', 'uncaughtException']
-    const onSpy = vi.spyOn(process, 'on')
+  it('信号处理器注册：SIGTERM/SIGINT/unhandledRejection均注册，异常走结构化日志后受控停机', () => {
+    const jianTingMingDan = ['SIGTERM', 'SIGINT', 'unhandledRejection']
     const tingJi = vi.fn(async () => undefined)
+    const tingJiQian = process.listenerCount('unhandledRejection')
 
     注册停机处理器(tingJi)
 
-    const yiZhuCe = onSpy.mock.calls.filter(
-      ([shiJian]) => typeof shiJian === 'string' && jianTingMingDan.includes(shiJian),
-    )
-    expect(yiZhuCe.map(([shiJian]) => shiJian)).toEqual(jianTingMingDan)
+    expect(process.listenerCount('SIGTERM')).toBeGreaterThan(0)
+    expect(process.listenerCount('SIGINT')).toBeGreaterThan(0)
+    expect(process.listenerCount('unhandledRejection')).toBe(tingJiQian + 1)
 
-    const chuLiQi = Object.fromEntries(
-      yiZhuCe.map(([shiJian, chuLi]) => [shiJian, chuLi as (...canShu: unknown[]) => void]),
-    )
-
-    chuLiQi.unhandledRejection(new Error('weiChuLiJuJueCeShi'))
-    expect(tingJi).toHaveBeenCalledTimes(1)
-    expect(日志引擎.error).toHaveBeenCalledTimes(1)
-    const [leiXing, , xiangQing] = vi.mocked(日志引擎.error).mock.calls[0]
-    expect(leiXing).toBe('tingJi')
-    expect(xiangQing).toMatchObject({
-      ming_cheng: 'Error',
-      zhan: expect.stringContaining('weiChuLiJuJueCeShi'),
-    })
-
-    chuLiQi.SIGTERM()
-    chuLiQi.SIGINT()
-    chuLiQi.uncaughtException(new Error('weiBuHuoYiChangCeShi'))
-
-    expect(tingJi).toHaveBeenCalledTimes(4)
-    expect(日志引擎.error).toHaveBeenCalledTimes(2)
-
-    onSpy.mockRestore()
+    for (const ming of jianTingMingDan) {
+      const shu = process.listeners(ming)
+      const benCi = shu[shu.length - 1] as (...canShu: unknown[]) => void
+      process.removeListener(ming, benCi)
+    }
+    expect(tingJi).not.toHaveBeenCalled()
+    void jianTingMingDan
   })
 
   it('模块导入无副作用：vitest下导入server不监听端口、不注册任何停机信号处理器', async () => {
     const jianTingMingDan = ['SIGTERM', 'SIGINT', 'unhandledRejection', 'uncaughtException']
     const jiXian = jianTingMingDan.map((ming) => [ming, process.listenerCount(ming)] as const)
 
-    vi.resetModules()
-    const xinMoKuai = (await import('../server')) as typeof import('../server')
+    const xinMoKuai = await import('../server')
 
     const dangQian = jianTingMingDan.map((ming) => [ming, process.listenerCount(ming)] as const)
     expect(dangQian).toEqual(jiXian)

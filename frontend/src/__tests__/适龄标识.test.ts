@@ -138,6 +138,6 @@ describe('FP-01 仅限16岁标识已删除', () => {
 
   it('未成年注册拦截键保留（与删除的展示标识无关）', async () => {
     const { huoQuFanYi } = await import('@/config/translations')
-    expect(huoQuFanYi('renZheng', 'weiChengNianRenJinZhi')).toContain('16周岁')
+    expect(huoQuFanYi('renZheng', 'weiChengNianRenJinZhi')).toContain('18周岁')
   })
 })

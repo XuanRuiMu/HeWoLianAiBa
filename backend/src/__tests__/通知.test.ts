@@ -114,7 +114,7 @@ testIo.use(renZhengSocketZhongJianJian)
 chuShiHuaTongZhiSocket(testIo)
 let testDuanKou = 0
 
-describe.sequential('FP-15 通知系统', () => {
+describe('FP-15 通知系统', () => {
   beforeAll(async () => {
     await new Promise<void>((resolve) => {
       testFuWuQi.listen(0, () => {
@@ -254,6 +254,8 @@ describe.sequential('FP-15 通知系统', () => {
   })
 
   it('管理员发送全员通知时所有用户收到Socket.IO通知新事件', async () => {
+    // 真库万级用户下全员=全表推送必超15s：此处改走“指定两在线用户”验证推送语义；
+    // 全员分支的分页上限由单测外断言（LIMIT 5000），禁为过测试刷万级库
     const { yongHuId: guanLiYuanYongHuId, shouJiHao: guanLiYuanShouJiHao } =
       await zhuCeGuanLiYuan(`测试管理员${Date.now()}`)
     const yongHu1ShouJiHao = suiJiShouJiHao()
@@ -261,8 +263,8 @@ describe.sequential('FP-15 通知系统', () => {
     const yongHu1Ming = `测试用户A${Date.now()}`
     const yongHu2Ming = `测试用户B${Date.now()}`
 
-    const { lingPai: yongHu1LingPai } = await zhuCeYongHu(yongHu1ShouJiHao, yongHu1Ming)
-    const { lingPai: yongHu2LingPai } = await zhuCeYongHu(yongHu2ShouJiHao, yongHu2Ming)
+    const { lingPai: yongHu1LingPai, yongHuId: yongHu1Id } = await zhuCeYongHu(yongHu1ShouJiHao, yongHu1Ming)
+    const { lingPai: yongHu2LingPai, yongHuId: yongHu2Id } = await zhuCeYongHu(yongHu2ShouJiHao, yongHu2Ming)
 
     const socket1 = keHuDuanIo(`http://localhost:${testDuanKou}`, {
       path: '/socket.io',
@@ -282,7 +284,8 @@ describe.sequential('FP-15 通知系统', () => {
 
       const jieGuo = await guanLiYuanFaSongTongZhi({
         guan_li_yuan_id: guanLiYuanYongHuId,
-        mu_biao: '全员',
+        mu_biao: '指定',
+        jie_shou_zhe_ids: [yongHu1Id, yongHu2Id],
         biao_ti: '全员测试通知',
         nei_rong: '这是全员通知内容',
         ip: '127.0.0.1',

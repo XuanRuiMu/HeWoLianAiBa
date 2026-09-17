@@ -248,7 +248,7 @@ export async function dengLuCeShiYongHu(
   }
 
   const yongHu = yingSheYongHu(jieGuo.rows[0])
-  const lingPai = shengChengLingPai({ yongHuId: yongHu.id, shouJiHao: yongHu.shou_ji_hao })
+  const lingPai = shengChengLingPai({ yongHuId: yongHu.id })
   return { cheng_gong: true, ling_pai: lingPai, yong_hu: yongHu }
 }
 

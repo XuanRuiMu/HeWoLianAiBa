@@ -1,0 +1,41 @@
+obj=lo verts=831407 mats=['最终材质'] open=0.4s
+weights 1.1s zero=0
+skin 1.1s
+zmin=0.8904 k=1.4991
+posed bbox x=[-0.503,+0.536] y=[-1.540,+0.023] z=[+0.000,+1.051]
+J pelvis       (+0.317,-0.727,+0.217)
+J spine        (+0.240,-0.555,+0.309)
+J chest        (+0.185,-0.432,+0.470)
+J neck         (+0.094,-0.226,+0.526)
+J head         (+0.042,-0.145,+0.492)
+J clav_L       (+0.043,-0.369,+0.598)
+J shoulder_L   (-0.067,-0.341,+0.643)
+J elbow_L      (-0.204,-0.168,+0.859)
+J wrist_L      (-0.383,-0.034,+1.035)
+J clav_R       (+0.234,-0.284,+0.598)
+J shoulder_R   (+0.310,-0.318,+0.508)
+J elbow_R      (+0.090,-0.274,+0.720)
+J wrist_R      (-0.077,-0.181,+0.932)
+J hip_L        (+0.229,-0.823,+0.231)
+J knee_L       (+0.276,-1.149,+0.250)
+J ankle_L      (+0.203,-1.446,+0.273)
+J hip_R        (+0.434,-0.673,+0.237)
+J knee_R       (+0.435,-1.003,+0.224)
+J ankle_R      (+0.303,-1.278,+0.187)
+GROUND elbow_L    z=0.859
+GROUND elbow_R    z=0.720
+GROUND wrist_L    z=1.035
+GROUND wrist_R    z=0.932
+GROUND hip_L      z=0.231
+GROUND hip_R      z=0.237
+GROUND knee_L     z=0.250
+GROUND knee_R     z=0.224
+GROUND ankle_L    z=0.273
+GROUND ankle_R    z=0.187
+GROUND head       z=0.492
+phone loc=(-0.230,-0.073,+1.003) rot_z=-25.7
+engine cam(Blender coords)=(5.750,-5.270,1.340) anchor=(3.240,-0.161,2.770)
+render 后上45
+render 侧后
+render 正前
+render 引擎视角

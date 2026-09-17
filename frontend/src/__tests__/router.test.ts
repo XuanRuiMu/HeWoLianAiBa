@@ -66,7 +66,7 @@ describe('路由认证守卫', () => {
   })
 
   it('已登录访问登录页应重定向到主页', async () => {
-    localStorage.setItem(令牌键, 'valid-token')
+    sessionStorage.setItem(令牌键, 'valid-token')
     const luYou = chuangJianCeShiLuYou()
     await luYou.push({ name: 'dengLu' })
     await luYou.isReady()
@@ -82,7 +82,7 @@ describe('路由认证守卫', () => {
   })
 
   it('关闭自动登录时有令牌也停留在登录页', async () => {
-    localStorage.setItem(令牌键, 'valid-token')
+    sessionStorage.setItem(令牌键, 'valid-token')
     baoCunShuJu(自动登录键, false)
     const luYou = chuangJianCeShiLuYou()
     await luYou.push({ name: 'dengLu' })
@@ -91,7 +91,7 @@ describe('路由认证守卫', () => {
   })
 
   it('已登录可访问受保护路由', async () => {
-    localStorage.setItem(令牌键, 'valid-token')
+    sessionStorage.setItem(令牌键, 'valid-token')
     const luYou = chuangJianCeShiLuYou()
     await luYou.push({ name: 'zhuJieMian' })
     await luYou.isReady()

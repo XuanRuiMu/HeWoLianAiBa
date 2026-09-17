@@ -1,0 +1,116 @@
+{
+ "objects": [
+  {
+   "name": "lo",
+   "type": "MESH",
+   "dims": [
+    0.4113,
+    0.1992,
+    1.1344
+   ],
+   "loc_world": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "parent": null,
+   "verts": 831407,
+   "polys": 1476748,
+   "materials": [
+    "最终材质"
+   ]
+  }
+ ],
+ "armatures": [],
+ "materials": [
+  {
+   "name": "最终材质",
+   "use_nodes": true,
+   "textures": [
+    {
+     "node": "Image Texture",
+     "image": "baked_color_v2",
+     "filepath": "//baked_color_v2.png",
+     "size": [
+      0,
+      0
+     ]
+    }
+   ]
+  }
+ ],
+ "images": [
+  {
+   "name": "baked_color_v2",
+   "filepath": "//baked_color_v2.png",
+   "size": [
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ref_inp_back.png",
+   "filepath": "//ref_inp_back.png",
+   "size": [
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ref_inp_front.png",
+   "filepath": "//ref_inp_front.png",
+   "size": [
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ref_inp_left.png",
+   "filepath": "//ref_inp_left.png",
+   "size": [
+    0,
+    0
+   ]
+  },
+  {
+   "name": "ref_inp_right.png",
+   "filepath": "//ref_inp_right.png",
+   "size": [
+    0,
+    0
+   ]
+  },
+  {
+   "name": "texture_pbr_20250901",
+   "filepath": "",
+   "size": [
+    4096,
+    4096
+   ]
+  },
+  {
+   "name": "texture_pbr_20250901_metallic-texture_pbr_20250901_roughness",
+   "filepath": "",
+   "size": [
+    4096,
+    4096
+   ]
+  },
+  {
+   "name": "texture_pbr_20250901_normal",
+   "filepath": "",
+   "size": [
+    4096,
+    4096
+   ]
+  }
+ ],
+ "actions": [],
+ "scene": {
+  "name": "Scene",
+  "unit_scale": 1.0,
+  "frame_start": 1,
+  "frame_end": 250,
+  "objects_total": 1
+ }
+}

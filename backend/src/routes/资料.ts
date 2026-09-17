@@ -20,7 +20,8 @@ import { shenHeNeiRongAnQuan } from '../services/安全审核'
 import {
   liuShiBaoCunMeiTi,
   MeiTiCunChuCuoWu,
-  shengChengQianMingURL,
+  shengChengMeiTiYinYong,
+  zhongXinQianMingMeiTiURL,
 } from '../services/媒体存储'
 import {
   chaXunZhangHaoFengJin,
@@ -28,8 +29,12 @@ import {
   tiJiaoShenSu,
 } from '../services/账号封禁'
 import { 获取IP } from '../services/IP封禁'
+import { QI_PAO_AI_MO_REN, QI_PAO_YU_SHE_XUAN_XIANG, QI_PAO_ZI_JI_MO_REN } from '../config/气泡主题'
 
 const luYou = Router()
+
+/** FP-03 气泡单源：预设白名单与云端默认值收敛至 config/气泡主题 */
+const QI_PAO_YU_SHE = new Set<string>(QI_PAO_YU_SHE_XUAN_XIANG as readonly string[])
 
 /** 真实违规图片类别（审核服务自身不可用不计为用户违规） */
 const TU_PIAN_WEI_GUI_LEI_BIE = new Set([
@@ -50,8 +55,6 @@ const BAI_MING_DAN_ZUI_DA_REN_SHU = 200
 const TOU_XIANG_ZUI_DA_ZI_JIE = 2 * 1024 * 1024
 /** 头像允许的 MIME（前端 canvas 统一输出以下格式，各种源图均可选取） */
 const TOU_XIANG_MIME_BAI_MING_DAN = new Set(['image/jpeg', 'image/png', 'image/webp'])
-/** 头像签名 URL 有效期10年（内容哈希寻址、不可变，换头像即换地址，天然防陈旧缓存） */
-const TOU_XIANG_QIAN_MING_YOU_XIAO_MIAO = 10 * 365 * 24 * 3600
 
 function quZiFuChuan(body: Record<string, unknown>, ...jians: string[]): string {
   for (const jian of jians) {
@@ -194,8 +197,10 @@ luYou.post('/头像', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
             huiYing(() => shiBaiXiangYing(xiangYing, 400, huoQuFanYi('ziLiao', 'touXiangTaiDa')))
             return
           }
-          const touXiangURL = shengChengQianMingURL(jieGuo.sha256, TOU_XIANG_QIAN_MING_YOU_XIAO_MIAO)
-          数据库.query(`UPDATE "用户" SET "头像" = $1, "更新时间" = NOW() WHERE "ID" = $2`, [touXiangURL, yongHu.yongHuId])
+          // YH-014 头像同背景绑定用户短效：持久化仅存无参引用，读取重签（认证映射已重签）
+          const touXiangYinYong = shengChengMeiTiYinYong(jieGuo.sha256)
+          const touXiangURL = zhongXinQianMingMeiTiURL(touXiangYinYong, yongHu.yongHuId) || touXiangYinYong
+          数据库.query(`UPDATE "用户" SET "头像" = $1, "更新时间" = NOW() WHERE "ID" = $2`, [touXiangYinYong, yongHu.yongHuId])
             .then(() => {
               huiYing(() => chengGongXiangYing(xiangYing, { tou_xiang: touXiangURL }))
             })
@@ -242,6 +247,15 @@ luYou.post('/头像', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
 })
 
 /** 微信式个人名片：手机号永不返回；签名按可见性“类”过滤 */
+async function duQuDuiFangQiPao(muBiaoId: string, lie: string, moRen: string): Promise<string> {
+  try {
+    const jieGuo = await 数据库.query(`SELECT * FROM "用户设置" WHERE "用户ID" = $1 LIMIT 1`, [muBiaoId])
+    const zhi = jieGuo.rows[0]?.[lie]
+    return typeof zhi === 'string' && QI_PAO_YU_SHE.has(zhi) ? zhi : moRen
+  } catch {
+    return moRen
+  }
+}
 luYou.get('/名片/:userId', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
@@ -252,7 +266,7 @@ luYou.get('/名片/:userId', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, x
       `SELECT "ID", "用户名", "昵称", "头像" FROM "用户" WHERE "ID" = $1 LIMIT 1`,
       [muBiaoId],
     )
-    if (!jiChu.rows.length) return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('ziLiao', 'mingPianBuCunZai'))
+    if (!jiChu.rows.length) return shiBaiXiangYing(xiangYing, 200, huoQuFanYi('ziLiao', 'mingPianBuCunZai'), 'WEI_ZHAO_DAO')
     const hang = jiChu.rows[0] as Record<string, unknown>
     const shiZiJi = muBiaoId === yongHu.yongHuId
     const shiHaoYou = shiZiJi ? true : await chaXunShiHaoYou(yongHu.yongHuId, muBiaoId)
@@ -278,6 +292,8 @@ luYou.get('/名片/:userId', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, x
       qian_ming: qianMing,
       shi_hao_you: shiHaoYou,
       shi_zi_ji: shiZiJi,
+      qi_pao_zi_ji: await duQuDuiFangQiPao(muBiaoId, '气泡自己', QI_PAO_ZI_JI_MO_REN),
+      qi_pao_ai: await duQuDuiFangQiPao(muBiaoId, '气泡AI', QI_PAO_AI_MO_REN),
     })
   } catch (cuoWu) {
     debug日志.error('资料接口', '查询名片失败', { xiang_qing: { cuo_wu: String(cuoWu) } })

@@ -575,7 +575,7 @@ describe('FP-05 聊天界面', () => {
       expect(yongHuXiaoXi.exists()).toBe(true)
       expect(yongHuXiaoXi.classes()).toContain('yonghu-xiaoxi')
       expect(liaoTianYeMianYuanMa).toMatch(
-        /\.yonghu-xiaoxi\s*\.qipao-neirong\s*\{[^}]*background:\s*var\(--xiaoxi-yonghu-beijing\)/,
+        /\.yonghu-xiaoxi\s*\.qipao-neirong\s*\{[^}]*background:\s*var\(--qipao-ziJi-beiJing,\s*var\(--xiaoxi-yonghu-beijing\)\)/,
       )
       expect(bianLiangCss).toContain('--xiaoxi-yonghu-beijing: #95EC69')
     })
@@ -601,7 +601,7 @@ describe('FP-05 聊天界面', () => {
       expect(jiaoSeXiaoXi.exists()).toBe(true)
       expect(jiaoSeXiaoXi.classes()).toContain('jiaose-xiaoxi')
       expect(liaoTianYeMianYuanMa).toMatch(
-        /\.jiaose-xiaoxi\s*\.qipao-neirong\s*\{[^}]*background:\s*var\(--xiaoxi-jiaose-beijing\)/,
+        /\.jiaose-xiaoxi\s*\.qipao-neirong\s*\{[^}]*background:\s*var\(--qipao-duiFang-beiJing,\s*var\(--xiaoxi-jiaose-beijing\)\)/,
       )
     })
 
@@ -609,7 +609,7 @@ describe('FP-05 聊天界面', () => {
       const bianLiangCssLuJing = resolve(__dirname, '../styles/variables.css')
       const bianLiangCss = readFileSync(bianLiangCssLuJing, 'utf8')
       expect(liaoTianYeMianYuanMa).toMatch(
-        /\.jiaose-xiaoxi\s*\.qipao-neirong\s*\{[^}]*background:\s*var\(--xiaoxi-jiaose-beijing\)/,
+        /\.jiaose-xiaoxi\s*\.qipao-neirong\s*\{[^}]*background:\s*var\(--qipao-duiFang-beiJing,\s*var\(--xiaoxi-jiaose-beijing\)\)/,
       )
       expect(bianLiangCss).toContain('--xiaoxi-jiaose-beijing: #FFFFFF')
       expect(bianLiangCss).toContain('--xiaoxi-jiaose-beijing: #3A3A3C')

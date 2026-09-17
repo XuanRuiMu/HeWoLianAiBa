@@ -26,7 +26,40 @@ const qingQiuHaoShi = new promClient.Histogram({
 
 const luYou = Router()
 
+// YH-126 健康分级：liveness只看进程，readiness查依赖，禁DB抖一下全站503
+// 根因：健康语义错，依赖抖动即503；收敛为分级探针+compose探活
 luYou.get('/health', async (_qingQiu: Request, xiangYing: Response) => {
+  let shuJuKu: 'zhengChang' | 'yiChang' = 'yiChang'
+  let huanCun: 'zhengChang' | 'yiChang' = 'yiChang'
+
+  try {
+    await 数据库.query('SELECT 1')
+    shuJuKu = 'zhengChang'
+  } catch {
+    shuJuKu = 'yiChang'
+  }
+
+  try {
+    const jieGuo = await redis.ping()
+    if (jieGuo === 'PONG') {
+      huanCun = 'zhengChang'
+    }
+  } catch {
+    huanCun = 'yiChang'
+  }
+
+  const zhuangTai = shuJuKu === 'zhengChang' && huanCun === 'zhengChang' ? 'jianKang' : 'yiChang'
+  const zhuangTaiMa = zhuangTai === 'jianKang' ? 200 : 503
+
+  xiangYing.status(zhuangTaiMa).json({
+    zhuangTai,
+    shu_ju_ku: shuJuKu,
+    huan_cun: huanCun,
+    shi_jian_chuo: new Date().toISOString(),
+  })
+})
+
+luYou.get('/readyz', async (_qingQiu: Request, xiangYing: Response) => {
   let shuJuKu: 'zhengChang' | 'yiChang' = 'yiChang'
   let huanCun: 'zhengChang' | 'yiChang' = 'yiChang'
 

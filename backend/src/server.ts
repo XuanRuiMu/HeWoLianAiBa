@@ -8,7 +8,8 @@ import { huoQuFanYi } from './config/translations'
 import { debug日志 } from './utils/debug日志'
 import { renZhengZhongJianJian } from './middleware/认证'
 import { changGuiXianLiu, riZhiJieShouXianLiu } from './middleware/限流'
-import { anQuanZhongJianJian } from './middleware/安全'
+import { anQuanZhongJianJian, shuChuBianMaZhongJianJian } from './middleware/安全'
+import { huoQuZhenShiIP } from './utils/真实IP'
 import { IP封禁中间件 } from './middleware/IP封禁'
 import { 日志追踪中间件 } from './middleware/日志追踪'
 import renZhengLuYou from './routes/认证'
@@ -26,6 +27,7 @@ import yongHuSheZhiLuYou from './routes/用户设置'
 import ziLiaoLuYou from './routes/资料'
 import { chengGongXiangYing, shiBaiXiangYing } from './utils/xiangying'
 import { qiDongShenJiRiZhiGuiDangDingShiQi, tingZhiShenJiRiZhiGuiDang } from './services/审计日志归档'
+import { qiDongShuJuBaoCunQingLiDingShiQi, tingZhiShuJuBaoCunQingLi } from './services/数据保存期限'
 import { chuangJianHTTPRiZhiZhongJianJian } from './utils/debug日志'
 import jianKangJianChaLuYou, { qingQiuJiShu, qingQiuHaoShi } from './routes/健康检查'
 import riZhiJieShouLuYou from './routes/日志接收'
@@ -103,12 +105,30 @@ yingYong.use(cors({
   credentials: true,
 }))
 
-yingYong.use((qingQiu, _xiangYing, xiaYiBu) => {
-  qingQiu.url = decodeURI(qingQiu.url)
+yingYong.use((qingQiu, xiangYing, xiaYiBu) => {
+  // YH-029 畸形编码转400加计数：decode失败不再抛500，畸形计数触发封禁阶梯
+  try {
+    qingQiu.url = decodeURI(qingQiu.url)
+  } catch {
+    try {
+      const ip = huoQuZhenShiIP(qingQiu as never)
+      if (ip) {
+        void import('./services/IP封禁').then(({ 记录违规 }) => 记录违规(`ji_xing_bian_ma:${ip}`, '畸形编码', '轻微').catch(() => undefined))
+      }
+    } catch {
+      // 计数失败不阻断400响应
+    }
+    shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), 'CAN_SHU_CUO_WU')
+    return
+  }
   xiaYiBu()
 })
 
 yingYong.use(express.json({ limit: '1mb' }))
+
+// YH-127 上传对齐：nginx 60m分级，应用上限对齐禁413
+// 根因：nginx 1MB对应用50MB，上传必413；收敛为应用侧文种分级上限
+yingYong.use('/api/聊天/会话', express.json({ limit: '60mb' }))
 
 yingYong.use((qingQiu, _xiangYing, xiaYiBu) => {
   ;(qingQiu as unknown as Record<string, number>).kai_shi_shi_jian = Date.now()
@@ -156,6 +176,8 @@ yingYong.use('/api/挑战/配置', (async (_qingQiu, xiangYing) => {
 }) as import('express').RequestHandler)
 yingYong.use(renZhengZhongJianJian)
 yingYong.use(anQuanZhongJianJian)
+// YH-024 服务端输出编码中间件：响应发送前统一转义兜底
+yingYong.use(shuChuBianMaZhongJianJian)
 
 yingYong.get('/api/健康', (_qingQiu, xiangYing) => {
   chengGongXiangYing(xiangYing, { zhuang_tai: 'ok' })
@@ -176,7 +198,16 @@ yingYong.use('/api/用户设置', yongHuSheZhiLuYou)
 yingYong.use('/api/资料', ziLiaoLuYou)
 
 yingYong.use((_qingQiu, xiangYing) => {
-  shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
+  // YH-026 404单独计数触发封禁阶梯：未知路径探测计入违规，轮换路径扫描触发IP封禁
+  try {
+    const ip = _qingQiu ? huoQuZhenShiIP(_qingQiu as never) : ''
+    if (ip) {
+      void import('./services/IP封禁').then(({ 记录违规 }) => 记录违规(`si_ling_ling_si:${ip}`, '404探测', '轻微').catch(() => undefined))
+    }
+  } catch {
+    // 计数失败不阻断404响应
+  }
+  shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'), 'WEI_ZHAO_DAO')
 })
 
 yingYong.use((
@@ -223,6 +254,10 @@ export async function 优雅停机(ziYuan: 停机资源): Promise<void> {
   if (yiZhiXingTingJiZiYuan.has(ziYuan)) return
   yiZhiXingTingJiZiYuan.add(ziYuan)
 
+  // YH-073 崩溃exit语义：异常停机exit 1，OTel flush，崩溃计数告警
+  // 根因：崩了还报正常，尾部链路全丢；收敛为正常停机0异常1+flush+告警
+  const { guanBiOTel } = await import('./utils/OTel').catch(() => ({ guanBiOTel: async () => {} }))
+
   const buLuoQiangTui = (buZhou: string, dongZuo: () => Promise<unknown>) =>
     dongZuo().catch((cuoWu) => {
       // eslint-disable-next-line no-console -- 优雅停机.test 将日志引擎mock为空实现,logger调用会在停机容错路径抛错
@@ -247,6 +282,7 @@ export async function 优雅停机(ziYuan: 停机资源): Promise<void> {
     await ziYuan.Redis客户端.quit()
   })
   await buLuoQiangTui('riZhi', guanBiRiZhiYinQing)
+  await buLuoQiangTui('otel', guanBiOTel)
 
   ziYuan.退出进程(0)
 }
@@ -264,14 +300,18 @@ export function 注册停机处理器(tingJi: () => Promise<void>): void {
       ming_cheng: cuoWu.name,
       zhan: String(cuoWu.stack || cuoWu.message),
     })
-    void tingJi()
+    // YH-073 崩溃计数告警+exit 1：禁崩了还报正常
+    void import('./utils/邮件告警').then(({ faSongGaoJing }) => faSongGaoJing('jin_cheng_beng_kui', '进程未处理拒绝告警', String(cuoWu.stack || cuoWu.message).slice(0, 500)).catch(() => undefined))
+    void tingJi().finally(() => process.exit(1))
   })
   process.on('uncaughtException', (cuoWu) => {
     日志引擎.error('tingJi', '未捕获异常', {
       ming_cheng: cuoWu.name,
       zhan: String(cuoWu.stack || cuoWu.message),
     })
-    void tingJi()
+    // YH-073 崩溃计数告警+exit 1
+    void import('./utils/邮件告警').then(({ faSongGaoJing }) => faSongGaoJing('jin_cheng_beng_kui', '进程未捕获异常告警', String(cuoWu.stack || cuoWu.message).slice(0, 500)).catch(() => undefined))
+    void tingJi().finally(() => process.exit(1))
   })
 }
 
@@ -280,29 +320,70 @@ async function 启动前强校验(): Promise<void> {
   const { 数据库 } = await import('./数据库')
   const { redis } = await import('./redis')
 
-  // 1. Redis 连通性（单次尝试，超时 3s）
+  // YH-023 rediss启动校验告警：加密连接串必须走TLS，传输层异常启动期即告警
   try {
-    await Promise.race([
-      redis.ping(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Redis连接超时')), 3000))
-    ])
-    debug日志.info('启动校验', 'Redis 连接正常')
-  } catch (e) {
-    debug日志.error('启动校验', 'Redis 不可用，拒绝启动', { xiang_qing: { cuo_wu: String(e) } })
+    const lianJie = String(peiZhi.redisLianJie || '')
+    const yaoQiuTLS = /^rediss:\/\//i.test(lianJie.trim())
+    const shiJiTLS = Boolean((redis.options as unknown as Record<string, unknown>)?.['tls'])
+    if (yaoQiuTLS && !shiJiTLS) {
+      debug日志.error('启动校验', 'rediss连接未启用TLS，拒绝明文降级启动', { xiang_qing: { lian_jie_qian_zhui: 'rediss://***' } })
+      process.exit(1)
+    }
+    if (yaoQiuTLS && shiJiTLS) {
+      debug日志.info('启动校验', 'rediss加密传输已启用')
+    }
+  } catch (cuoWu) {
+    debug日志.error('启动校验', 'rediss传输校验失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
     process.exit(1)
   }
 
-  // 2. PostgreSQL 连通性（单次查询，超时 3s）
-  try {
-    await Promise.race([
-      数据库.query('SELECT 1'),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('PostgreSQL连接超时')), 3000))
-    ])
-    debug日志.info('启动校验', 'PostgreSQL 连接正常')
-  } catch (e) {
-    debug日志.error('启动校验', 'PostgreSQL 不可用，拒绝启动', { xiang_qing: { cuo_wu: String(e) } })
+  // 1. Redis 连通性（重试 5 次，每次超时 3s；容器编排下依赖服务可能晚就绪）
+  let redisLianTong = false
+  let redisZuiHouCuoWu: unknown = null
+  for (let ci = 0; ci < 5 && !redisLianTong; ci++) {
+    try {
+      await Promise.race([
+        redis.ping(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis连接超时')), 3000))
+      ])
+      redisLianTong = true
+    } catch (e) {
+      redisZuiHouCuoWu = e
+      await new Promise((jieJue) => setTimeout(jieJue, 2000))
+    }
+  }
+  if (!redisLianTong) {
+    debug日志.error('启动校验', 'Redis 不可用，拒绝启动', { xiang_qing: { cuo_wu: String(redisZuiHouCuoWu) } })
+    try {
+      await redis.quit()
+    } catch {
+      // 忽略关闭错误
+    }
+    await new Promise((jieJue) => setTimeout(jieJue, 500))
     process.exit(1)
   }
+  debug日志.info('启动校验', 'Redis 连接正常')
+
+  // 2. PostgreSQL 连通性（重试 5 次，每次超时 3s）
+  let pgLianTong = false
+  let pgZuiHouCuoWu: unknown = null
+  for (let ci = 0; ci < 5 && !pgLianTong; ci++) {
+    try {
+      await Promise.race([
+        数据库.query('SELECT 1'),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('PostgreSQL连接超时')), 3000))
+      ])
+      pgLianTong = true
+    } catch (e) {
+      pgZuiHouCuoWu = e
+      await new Promise((jieJue) => setTimeout(jieJue, 2000))
+    }
+  }
+  if (!pgLianTong) {
+    debug日志.error('启动校验', 'PostgreSQL 不可用，拒绝启动', { xiang_qing: { cuo_wu: String(pgZuiHouCuoWu) } })
+    process.exit(1)
+  }
+  debug日志.info('启动校验', 'PostgreSQL 连接正常')
 }
 
 if (require.main === module) {
@@ -315,9 +396,12 @@ if (require.main === module) {
 
     // C6：审计日志定期归档删除（保留期配置化，磁盘占用有上限）
     qiDongShenJiRiZhiGuiDangDingShiQi()
+    // YH-071 保存期限执行器：聊天30天通知90天每日清理
+    qiDongShuJuBaoCunQingLiDingShiQi()
 
     const tingJi = async (): Promise<void> => {
       tingZhiShenJiRiZhiGuiDang()
+      tingZhiShuJuBaoCunQingLi()
       await 优雅停机({
         SocketIO: io,
         HTTP服务器: fuWuQi,

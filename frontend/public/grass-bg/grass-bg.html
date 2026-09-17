@@ -905,9 +905,9 @@
                 } catch (err) {}
                 jiJieDuan('jieLuYiChuFa');
                 try {
-                    if (window.__wuJingTaiDaiXianShi && window.__wuXianShiJingTai) {
+                    if (window.__wuJingTaiDaiXianShi && typeof window.__wuXianShiJingTai === 'function') {
                         window.__wuJingTaiDaiXianShi = false;
-                        window.__wuXianShiJingTai();
+                        typeof window.__wuXianShiJingTai === 'function' && window.__wuXianShiJingTai();
                     }
                 } catch (err) {}
                 tongZhiFuYe('jiu-xu');
@@ -1084,46 +1084,18 @@
                 window.__wuXuanRanQiHuoZai = true;
             } catch (e) {
                 window.__wuXuanRanQiHuoZai = false;
-                if (!window.__wuYiXiaoHui) window.__wuXianShiJingTai();
+                if (!window.__wuYiXiaoHui) typeof window.__wuXianShiJingTai === 'function' && window.__wuXianShiJingTai();
             }
             window.__wuTickXinTiao = 0;
             return { renderer, canvas, THREE, GLTFLoader, PEI_ZHI, YA_WAN, __wuDLog };
         }
         
         if (!THREE) {
-            try { if (/[?&]debug=1/.test(location.search)) console.error('[WuHaoYang] 父页面未提供 THREE，回退加载本地 three-r128.min.js'); } catch (e) {}
-            var s = document.createElement('script');
-            s.src = '../three-r128.min.js';
-            s.onload = function () { 
-                THREE = window.THREE; 
-                var GLTFLoader = window.GLTFLoader;
-                if (!GLTFLoader) {
-                    var s2 = document.createElement('script');
-                    s2.src = '../GLTFLoader-r128.js';
-                    s2.onload = function () { 
-                        GLTFLoader = window.GLTFLoader; 
-                        var ctx = chuShiHua(THREE, GLTFLoader);
-                        initWuHaoYang(ctx);
-                    };
-                    document.head.appendChild(s2);
-                } else {
-                    var ctx = chuShiHua(THREE, GLTFLoader);
-                    initWuHaoYang(ctx);
-                }
-            };
-            document.head.appendChild(s);
+            typeof window.__wuXianShiJingTai === 'function' && window.__wuXianShiJingTai();
             return;
         }
         if (!GLTFLoader) {
-            try { if (/[?&]debug=1/.test(location.search)) console.warn('[WuHaoYang] 父页面未提供 GLTFLoader，回退加载本地 GLTFLoader-r128.js'); } catch (e) {}
-            var s2 = document.createElement('script');
-            s2.src = '../GLTFLoader-r128.js';
-            s2.onload = function () { 
-                GLTFLoader = window.GLTFLoader; 
-                var ctx = chuShiHua(THREE, GLTFLoader);
-                initWuHaoYang(ctx);
-            };
-            document.head.appendChild(s2);
+            typeof window.__wuXianShiJingTai === 'function' && window.__wuXianShiJingTai();
             return;
         }
         
@@ -1260,7 +1232,7 @@
                     var yanChi = Math.min(600 * Math.pow(2, tieTuChongShiCiShu - 1), 5000);
                     setTimeout(jiaZaiTieTu, yanChi);
                 } else if (window.__wuXianShiJingTai) {
-                    window.__wuXianShiJingTai();
+                    typeof window.__wuXianShiJingTai === 'function' && window.__wuXianShiJingTai();
                 }
             });
         }
@@ -1270,7 +1242,7 @@
                 var touMing = 0;
                 try { touMing = Number(window.__wuTouMingDu) || 0; } catch (e) {}
                 if (!window.__wuYiXiaoHui && (!window.__wuOverlayReady || touMing < 0.05) && !window.__wuJingTaiDouDi && window.__wuXianShiJingTai) {
-                    window.__wuXianShiJingTai();
+                    typeof window.__wuXianShiJingTai === 'function' && window.__wuXianShiJingTai();
                 }
             } catch (e) {}
         }, 6000);
@@ -1610,7 +1582,7 @@
                     var yanChi = Math.min(600 * Math.pow(2, tieTuChongShi - 1), 5000);
                     setTimeout(zaiRuTieTu, yanChi);
                 } else if (window.__wuXianShiJingTai) {
-                    try { window.__wuXianShiJingTai(); } catch (e) {}
+                    try { typeof window.__wuXianShiJingTai === 'function' && window.__wuXianShiJingTai(); } catch (e) {}
                 }
             }
             function zaiRuTieTu() {
@@ -1770,7 +1742,7 @@
                             (Date.now() - (window.__wuTickXinTiao || 0) < 2500);
                         var jingTu = window.__wuJingTaiTu;
                         if (!fuCengHuo && jingTu && jingTu.complete && jingTu.naturalWidth > 0 && window.__wuXianShiJingTai) {
-                            window.__wuXianShiJingTai();
+                            typeof window.__wuXianShiJingTai === 'function' && window.__wuXianShiJingTai();
                         }
                     } catch (e) {}
                 } else if (!window.__wuZhuJueZhuGuan && rengZai && !daiQueRen) {

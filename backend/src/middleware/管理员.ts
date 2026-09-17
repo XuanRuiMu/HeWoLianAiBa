@@ -1,6 +1,7 @@
 ﻿import { debug日志 } from '../utils/debug日志'
 import type { Response, NextFunction } from 'express'
 import { 数据库 } from '../数据库'
+import { redis } from '../redis'
 import { huoQuFanYi } from '../config/translations'
 import { shiBaiXiangYing } from '../utils/xiangying'
 import type { RenZhengQingQiu } from './认证'
@@ -9,12 +10,48 @@ const huanCunYouXiaoQiHaoMiao = 30 * 1000
 const huanCunRongLiangShangXian = 5000
 const guanLiYuanHuanCun = new Map<string, { zhi: boolean; daoQiHaoMiao: number }>()
 
+const SHI_XIAO_PIN_DAO = 'guan_li_shi_xiao'
+let yiDingYueShiXiao = false
+
+function chuLiShiXiaoXiaoXi(xiaoXi: string): void {
+  try {
+    const jieXi = JSON.parse(xiaoXi) as { yongHuId?: unknown }
+    if (typeof jieXi.yongHuId === 'string' && jieXi.yongHuId.length > 0) {
+      guanLiYuanHuanCun.delete(jieXi.yongHuId)
+    } else {
+      guanLiYuanHuanCun.clear()
+    }
+  } catch {
+    guanLiYuanHuanCun.clear()
+  }
+}
+
+function queBaoDingYue(): void {
+  if (yiDingYueShiXiao || process.env.VITEST === 'true') return
+  yiDingYueShiXiao = true
+  try {
+    const dingYueDuan = redis.duplicate()
+    void dingYueDuan.subscribe(SHI_XIAO_PIN_DAO).catch(() => undefined)
+    dingYueDuan.on('message', (pinDao: string, xiaoXi: string) => {
+      if (pinDao === SHI_XIAO_PIN_DAO) chuLiShiXiaoXiaoXi(xiaoXi)
+    })
+  } catch {
+    yiDingYueShiXiao = false
+  }
+}
+
 export function qingChuGuanLiYuanHuanCun(yongHuId?: string): void {
   if (yongHuId) {
     guanLiYuanHuanCun.delete(yongHuId)
+  } else {
+    guanLiYuanHuanCun.clear()
+  }
+  queBaoDingYue()
+  try {
+    void redis.publish(SHI_XIAO_PIN_DAO, JSON.stringify({ yongHuId: yongHuId ?? null })).catch(() => undefined)
+  } catch {
     return
   }
-  guanLiYuanHuanCun.clear()
 }
 
 function xieRuHuanCun(yongHuId: string, zhi: boolean, daoQiHaoMiao: number): void {

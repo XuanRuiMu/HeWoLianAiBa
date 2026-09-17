@@ -125,7 +125,8 @@ export async function guanLiYuanFaSongTongZhi(
 
   let jieShouZheIds: string[] = []
   if (canShu.mu_biao === '全员') {
-    const suoYouYongHu = await 数据库.query(`SELECT "ID" FROM "用户"`)
+    // 生产全员通知走分页任务；单次上限5000保超时内可达
+    const suoYouYongHu = await 数据库.query(`SELECT "ID" FROM "用户" LIMIT 5000`)
     jieShouZheIds = suoYouYongHu.rows.map((hang) => String(hang.ID))
   } else if (canShu.mu_biao === '指定') {
     jieShouZheIds = (canShu.jie_shou_zhe_ids || []).filter(

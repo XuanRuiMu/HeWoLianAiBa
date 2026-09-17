@@ -133,8 +133,8 @@ export async function faSongXiaoXi(
   keHuDuanXuHao?: number | null,
   leiXing?: string,
   meiTiId?: string | null,
-): Promise<{ xiaoXi: Xiaoxi; shiMiJi: boolean }> {
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: Xiaoxi & { shi_mi_ji?: boolean } }>(
+): Promise<{ xiaoXi: Xiaoxi; shiMiJi: boolean; weiJiGanYu?: boolean; yuanZhuReXian?: string; ganYuTiShi?: string; chaoShiTiXingMiao?: number }> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: Xiaoxi & { shi_mi_ji?: boolean; wei_ji_gan_yu?: boolean; yuan_zhu_re_xian?: string; gan_yu_ti_shi?: string; chao_shi_ti_xing_miao?: number } }>(
     `/聊天/会话/${huiHuaId}/消息`,
     {
       neiRong,
@@ -147,6 +147,10 @@ export async function faSongXiaoXi(
   return {
     xiaoXi: shuJu,
     shiMiJi: shuJu.shi_mi_ji === true,
+    weiJiGanYu: shuJu.wei_ji_gan_yu === true,
+    yuanZhuReXian: shuJu.yuan_zhu_re_xian,
+    ganYuTiShi: shuJu.gan_yu_ti_shi,
+    chaoShiTiXingMiao: shuJu.chao_shi_ti_xing_miao,
   }
 }
 

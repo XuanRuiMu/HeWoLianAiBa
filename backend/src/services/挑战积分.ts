@@ -57,6 +57,19 @@ export async function kaiShiTiaoZhan(
   wan_jia_xing_bie: '男' | '女',
   dui_xiang_xing_bie: '男' | '女',
 ): Promise<ShengChengJiaoSeJieGuo> {
+  // 挑战模式：MBTI 全随机、渣型按配置概率隐藏随机，其余系统随机
+  const jiaoSe = shengChengJiaoSe({
+    yong_hu_id,
+    xing_bie: dui_xiang_xing_bie === '男' ? 'nan' : 'nv',
+    mu_biao_xing_bie: dui_xiang_xing_bie === '男' ? 'nan' : 'nv',
+    mbti_lei_xing: null,
+    shi_fou_zha_xing: Math.random() < TIAO_ZHAN_PEI_ZHI.zhaXingGaiLv,
+    sui_ji_xing_ge: false,
+  })
+
+  // YH-060 挑战并发原子占位：先查后插并发靠500兜底收敛为原子占位+409常态化
+  // 根因：占位非原子；收敛：SELECT查进行中+INSERT占位冲突23505即409，禁500兜底
+  // 占位键用落库后角色ID回填：mock/真库一致先落角色再占位，占位冲突409补偿归档角色
   const jinXingZhong = await 数据库.query(
     `SELECT "ID" FROM "挑战对局" WHERE "用户ID" = $1 AND "状态" = '进行中' LIMIT 1`,
     [yong_hu_id],
@@ -69,23 +82,31 @@ export async function kaiShiTiaoZhan(
     throw cuoWu
   }
 
-  // 挑战模式：MBTI 全随机、渣型按配置概率隐藏随机，其余系统随机
-  const jiaoSe = shengChengJiaoSe({
-    yong_hu_id,
-    xing_bie: dui_xiang_xing_bie === '男' ? 'nan' : 'nv',
-    mu_biao_xing_bie: dui_xiang_xing_bie === '男' ? 'nan' : 'nv',
-    mbti_lei_xing: null,
-    shi_fou_zha_xing: Math.random() < TIAO_ZHAN_PEI_ZHI.zhaXingGaiLv,
-    sui_ji_xing_ge: false,
-  })
+  try {
+    await baoCunJiaoSe(yong_hu_id, jiaoSe, 'tiaozhan')
+  } catch (cuoWu) {
+    throw cuoWu
+  }
 
-  await baoCunJiaoSe(yong_hu_id, jiaoSe, 'tiaozhan')
-
-  await 数据库.query(
-    `INSERT INTO "挑战对局" ("用户ID", "角色ID", "玩家性别", "对象性别")
-     VALUES ($1, $2, $3, $4)`,
-    [yong_hu_id, jiaoSe.id, wan_jia_xing_bie, dui_xiang_xing_bie],
-  )
+  try {
+    await 数据库.query(
+      `INSERT INTO "挑战对局" ("用户ID", "角色ID", "玩家性别", "对象性别")
+       VALUES ($1, $2, $3, $4)`,
+      [yong_hu_id, jiaoSe.id, wan_jia_xing_bie, dui_xiang_xing_bie],
+    )
+  } catch (cuoWu) {
+    // 占位冲突即补偿归档刚落库角色，禁残留孤儿角色
+    await 数据库.query(`UPDATE "角色" SET "封存" = TRUE WHERE "ID" = $1`, [jiaoSe.id]).catch(() => undefined)
+    const pgCuoWu = cuoWu as { code?: string }
+    if (pgCuoWu.code === '23505') {
+      const chongTu = new Error(huoQuFanYi('tiaoZhan', 'yiYouJinXingZhongDuiJu')) as Error & {
+        zhuang_tai_ma?: number
+      }
+      chongTu.zhuang_tai_ma = 409
+      throw chongTu
+    }
+    throw cuoWu
+  }
 
   return jiaoSe
 }

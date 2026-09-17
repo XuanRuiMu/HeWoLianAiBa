@@ -234,7 +234,7 @@ describe('登录内容组件', () => {
     expect((fuXuan[2].element as HTMLInputElement).checked).toBe(false)
   })
 
-  it('勾选记住密码登录：令牌写入 localStorage 且绝不明文存密码', async () => {
+  it('勾选记住密码登录：令牌写入会话存储且绝不明文存密码', async () => {
     const yuanShiAnimate = Element.prototype.animate
     Element.prototype.animate = vi.fn(function () {
       return {
@@ -289,14 +289,14 @@ describe('登录内容组件', () => {
       await dengLuAnNiu.trigger('submit')
       await flushPromises()
 
-      // 记住密码 = 令牌持久化，localStorage 中不得出现明文密码
+      // 记住密码仅决定账号回填，令牌一律会话存储，localStorage 中不得出现明文密码与令牌
       expect(localStorage.getItem('hewolianba_baoCunZhangHao')).toBe(JSON.stringify('13800138000'))
       expect(localStorage.getItem('hewolianba_baoCunMiMa')).toBeNull()
       expect(localStorage.getItem('hewolianba_jiZhuZhangHao')).toBe('true')
       expect(localStorage.getItem('hewolianba_jiZhuMiMa')).toBe('true')
       expect(localStorage.getItem('hewolianba_ziDongDengLu')).toBe('false')
-      expect(localStorage.getItem('令牌')).toBe('test-token')
-      expect(sessionStorage.getItem('令牌')).toBeNull()
+      expect(localStorage.getItem('令牌')).toBeNull()
+      expect(sessionStorage.getItem('令牌')).toBe('test-token')
     } finally {
       Element.prototype.animate = yuanShiAnimate
     }

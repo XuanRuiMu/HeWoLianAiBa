@@ -79,7 +79,7 @@ describe('C5 注册出生日期与未成年拦截', () => {
     expect(zhuCeAnNiu.attributes('disabled')).toBeDefined()
   })
 
-  it('未满16周岁时注册按钮禁用', async () => {
+  it('未满18周岁时注册按钮禁用', async () => {
     const { wrapper } = await mountZhuCe()
     await wrapper.find('#zhuce-chushengriqi').setValue(chengNianShengRi(10))
     const fuXuan = wrapper.find('.xieyi-fuxuan input[type="checkbox"]')
@@ -89,9 +89,9 @@ describe('C5 注册出生日期与未成年拦截', () => {
     expect(zhuCeAnNiu.attributes('disabled')).toBeDefined()
   })
 
-  it('年满16周岁（生日当天）且勾选协议后注册按钮可用', async () => {
+  it('年满18周岁（生日当天）且勾选协议后注册按钮可用', async () => {
     const { wrapper } = await mountZhuCe()
-    await wrapper.find('#zhuce-chushengriqi').setValue(chengNianShengRi(16))
+    await wrapper.find('#zhuce-chushengriqi').setValue(chengNianShengRi(18))
     const fuXuan = wrapper.find('.xieyi-fuxuan input[type="checkbox"]')
     await fuXuan.setValue(true)
     await flushPromises()
@@ -163,7 +163,7 @@ describe('C5 注册出生日期与未成年拦截', () => {
   })
 
   it('翻译文件包含未成年拦截文案', () => {
-    expect(huoQuFanYi('renZheng', 'weiChengNianRenJinZhi')).toContain('16周岁')
+    expect(huoQuFanYi('renZheng', 'weiChengNianRenJinZhi')).toContain('18周岁')
     expect(huoQuFanYi('ui', 'chuShengRiQi')).toBe('出生日期')
   })
 })

@@ -60,8 +60,37 @@ select {
   background: transparent;
 }
 
+#ban-ben-ti-shi {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #1a1a1a;
+  background: #ffd666;
+}
+
+#ban-ben-ti-shi[hidden] {
+  display: none;
+}
+
+#ban-ben-shua-xin {
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #fff;
+  background: #1a1a1a;
+}
+
 :focus-visible {
-  outline: none;
+  outline: 2px solid var(--wenben-zhuse);
+  outline-offset: 2px;
 }
 
 .shuru-kuang:focus-visible,
@@ -69,7 +98,8 @@ select {
 .xiugai-shuru:focus-visible,
 .fenlie-shuru:focus-visible,
 select:focus-visible {
-  outline: none;
+  outline: 2px solid var(--wenben-zhuse);
+  outline-offset: 2px;
 }
 
 ul,

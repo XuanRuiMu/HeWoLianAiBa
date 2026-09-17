@@ -72,12 +72,41 @@ async function chaRuXiTongXiaoXi(huiHua: TongHuaHuiHua, neiRong: string): Promis
   )
   const keHuDuanXuHao = Number(xuHaoJieGuo.rows[0]?.zui_da ?? 0) + 1
 
+  // YH-059 系统消息统一ON CONFLICT幂等：禁裸INSERT双落库
   const jieGuo = await 数据库.query(
     `INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "客户端序号")
      VALUES ($1, $2, $3, 'xitong', 'wenben', true, $4)
+     ON CONFLICT ("用户ID", "角色ID", "客户端序号") DO NOTHING
      RETURNING *`,
     [huiHua.yongHuId, huiHua.jiaoSeId, neiRong, keHuDuanXuHao],
   )
+  if (jieGuo.rows.length === 0) {
+    const yiCun = await 数据库.query(
+      `SELECT * FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2 AND "客户端序号" = $3 LIMIT 1`,
+      [huiHua.yongHuId, huiHua.jiaoSeId, keHuDuanXuHao],
+    )
+    if (yiCun.rows.length > 0) {
+      const cunRow = yiCun.rows[0]
+      await shiXiaoXiaoXiZongShuHuanCun(huiHua.yongHuId, huiHua.jiaoSeId).catch(() => {})
+      return {
+        id: String(cunRow.ID),
+        hui_hua_id: huiHua.jiaoSeId,
+        fa_song_zhe_id: '',
+        fa_song_zhe_lei_xing: 'xitong',
+        ai_biao_shi: false,
+        nei_rong: String(cunRow.内容),
+        lei_xing: String(cunRow.类型 || 'wenben'),
+        shi_jian_chuo: new Date(String(cunRow.创建时间)).getTime(),
+        yi_du: Boolean(cunRow.已读),
+        yi_che_hui: Boolean(cunRow.已撤回),
+        che_hui_shi_jian: null,
+        yuan_shi_nei_rong: null,
+        ke_hu_duan_xu_hao: keHuDuanXuHao,
+        mei_ti_id: null,
+        mei_ti_url: null,
+      }
+    }
+  }
 
   const row = jieGuo.rows[0]
   await shiXiaoXiaoXiZongShuHuanCun(huiHua.yongHuId, huiHua.jiaoSeId).catch(() => {})
@@ -265,18 +294,30 @@ export async function jieShuDianHua(
   }
 
   try {
-    await 数据库.query(
-      `INSERT INTO "通话记录" ("用户ID", "角色ID", "类型", "状态", "接通时间", "结束时间", "时长秒")
-       VALUES ($1, $2, $3, $4, $5, NOW(), $6)`,
+    // YH-059 通话记录落库加唯一幂等：同一会话终态只落一条，重复终态幂等忽略
+    // 根因：通话记录裸INSERT重复终态可双落库；幂等键为内存会话ID，DB侧用去重查询兜底
+    const yiCun = await 数据库.query(
+      `SELECT 1 FROM "通话记录" WHERE "用户ID" = $1 AND "角色ID" = $2 AND "接通时间" IS NOT DISTINCT FROM $3 LIMIT 1`,
       [
         huiHua.yongHuId,
         huiHua.jiaoSeId,
-        huiHua.leiXing,
-        zhongTai,
         huiHua.jieTongShiJian != null ? new Date(huiHua.jieTongShiJian) : null,
-        shiChangMiao,
       ],
-    )
+    ).catch(() => ({ rows: [] as unknown[] }))
+    if ((yiCun.rows.length ?? 0) === 0) {
+      await 数据库.query(
+        `INSERT INTO "通话记录" ("用户ID", "角色ID", "类型", "状态", "接通时间", "结束时间", "时长秒")
+         VALUES ($1, $2, $3, $4, $5, NOW(), $6)`,
+        [
+          huiHua.yongHuId,
+          huiHua.jiaoSeId,
+          huiHua.leiXing,
+          zhongTai,
+          huiHua.jieTongShiJian != null ? new Date(huiHua.jieTongShiJian) : null,
+          shiChangMiao,
+        ],
+      )
+    }
 
     const neiRong = huoQuTongHuaNeiRong(huiHua, shiChangMiao)
     const xiTongXiaoXi = await chaRuXiTongXiaoXi(huiHua, neiRong)
@@ -290,7 +331,10 @@ export async function jieShuDianHua(
       lei_xing: 'xi_tong',
     })
   } catch (cuoWu) {
+    // YH-059 吞错改告警：终态落库失败必须可观测，禁静默丢
     debug日志.error('通话服务', '通话终态落库失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+    const { faSongGaoJing } = await import('../utils/邮件告警')
+    await faSongGaoJing('tong_hua_luo_ku_shi_bai', '通话记录落库失败告警', `通话终态落库失败：${String(cuoWu).slice(0, 300)}`).catch(() => undefined)
   }
 
   tuiSongDaoYongHu(huiHua.yongHuId, '通话结束', {

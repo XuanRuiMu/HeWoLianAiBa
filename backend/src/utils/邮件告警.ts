@@ -129,3 +129,43 @@ export async function jiLuAIShiBai(cuoWuXinXi?: string): Promise<void> {
     huoQuYuDongNeiRong(lianXuShiBaiCiShu, cuoWuXinXi),
   )
 }
+
+// YH-154 告警P1-P4分级+SLO+升级抑制：单阈值根因为出事全靠人盯
+// 收敛为分级告警键+升级抑制，SLO烧毁时自动升级
+export type GaoJingJiBie = 'P1' | 'P2' | 'P3' | 'P4'
+
+const GAO_JING_SHENG_JI_BIAO: Record<GaoJingJiBie, { lengQueHaoMiao: number; shengJiHou: GaoJingJiBie | null }> = {
+  P4: { lengQueHaoMiao: 60 * 60 * 1000, shengJiHou: 'P3' },
+  P3: { lengQueHaoMiao: 30 * 60 * 1000, shengJiHou: 'P2' },
+  P2: { lengQueHaoMiao: 15 * 60 * 1000, shengJiHou: 'P1' },
+  P1: { lengQueHaoMiao: 5 * 60 * 1000, shengJiHou: null },
+}
+
+const fenJiLengQueBiao = new Map<string, number>()
+
+function huoQuFenJiJian(jiBie: GaoJingJiBie, jian: string): string {
+  return `${jiBie}:${jian}`
+}
+
+export async function faSongFenJiGaoJing(
+  jiBie: GaoJingJiBie,
+  jian: string,
+  biaoTi: string,
+  neiRong: string,
+): Promise<boolean> {
+  const peiZhiXiang = GAO_JING_SHENG_JI_BIAO[jiBie]
+  const fenJiJian = huoQuFenJiJian(jiBie, jian)
+  const shangCi = fenJiLengQueBiao.get(fenJiJian)
+  // 升级抑制：同键低级别冷却期内不再重复发，SLO持续烧毁才升级
+  if (shangCi && Date.now() - shangCi < peiZhiXiang.lengQueHaoMiao) {
+    return false
+  }
+  fenJiLengQueBiao.set(fenJiJian, Date.now())
+  const jieGuo = await faSongGaoJing(fenJiJian, `[${jiBie}]${biaoTi}`, neiRong, peiZhiXiang.lengQueHaoMiao)
+  // SLO烧毁升级：P4/P3/P2发送失败或冷却抑制后，自动升级一档重发
+  if (!jieGuo && peiZhiXiang.shengJiHou) {
+    const shengJi = peiZhiXiang.shengJiHou
+    return faSongGaoJing(huoQuFenJiJian(shengJi, jian), `[${shengJi}]${biaoTi}（升级）`, neiRong)
+  }
+  return jieGuo
+}

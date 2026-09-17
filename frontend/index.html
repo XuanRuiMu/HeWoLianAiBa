@@ -8,6 +8,13 @@
     <meta name="description" content="和我恋爱吧 - AI恋爱模拟聊天应用" />
     <link rel="apple-touch-icon" href="/pwa-192x192.png" />
     <title>和我恋爱吧</title>
+    <script>
+      try {
+        var 主题 = localStorage.getItem('lian-ai-ba-zhu-ti') || '';
+        if (!主题 && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) 主题 = 'an-se';
+        if (主题) document.documentElement.setAttribute('data-zhu-ti', 主题);
+      } catch (e) {}
+    </script>
     <style>
       input:-webkit-autofill,
       input:-webkit-autofill:hover,
