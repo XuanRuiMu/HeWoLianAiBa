@@ -10,6 +10,8 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/XuanRuiMu/HeWoLianAiBa/ci.yml?label=CI)](https://github.com/XuanRuiMu/HeWoLianAiBa/actions)
 [![Stack](https://img.shields.io/badge/stack-Vue3%20%2B%20Express5%20%2B%20PostgreSQL%20%2B%20Redis-blue)](https://github.com/XuanRuiMu/HeWoLianAiBa)
 
+> 🌐 简体中文 ｜ [English](README_EN.md)
+
 ---
 
 ## 这是什么？
