@@ -4,6 +4,7 @@
 
 [![Stars](https://img.shields.io/github/stars/XuanRuiMu/HeWoLianAiBa?style=flat&logo=github)](https://github.com/XuanRuiMu/HeWoLianAiBa/stargazers)
 [![Forks](https://img.shields.io/github/forks/XuanRuiMu/HeWoLianAiBa?style=flat&logo=github)](https://github.com/XuanRuiMu/HeWoLianAiBa/forks)
+[![License: MIT](https://img.shields.io/github/license/XuanRuiMu/HeWoLianAiBa)](LICENSE)
 [![Last Commit](https://img.shields.io/github/last-commit/XuanRuiMu/HeWoLianAiBa)](https://github.com/XuanRuiMu/HeWoLianAiBa/commits/main)
 [![Issues](https://img.shields.io/github/issues/XuanRuiMu/HeWoLianAiBa)](https://github.com/XuanRuiMu/HeWoLianAiBa/issues)
 [![Repo Size](https://img.shields.io/github/repo-size/XuanRuiMu/HeWoLianAiBa)](https://github.com/XuanRuiMu/HeWoLianAiBa)
@@ -157,4 +158,4 @@ npm --prefix backend test           # 后端单元 / 集成测试
 
 ## 许可证
 
-本仓库仅作项目开源展示。**Made with ❤️ —— 认真谈一场 AI 恋爱。**
+[MIT](LICENSE) —— 本仓库仅作项目开源展示。**Made with ❤️ —— 认真谈一场 AI 恋爱。**
