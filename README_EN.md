@@ -1,101 +1,102 @@
-# HeWoLianAiBa · 和我恋爱吧
+# 和我恋爱吧 · HeWoLianAiBa
 
-> A full-stack AI romance simulation game — fall in love with a character who has memory, personality, and growth. Real-time chat, a favor-ability system, an AI advisor ("军师"), 3D character interactions, and voice calls. Built end-to-end in TypeScript.
+> 全栈 AI 恋爱模拟游戏 —— 和一个有记忆、有性格、会成长的角色恋爱。实时聊天、好感度系统、AI 军师支招、3D 角色互动、语音通话，全栈 TypeScript 构建。
 
 [![Stars](https://img.shields.io/github/stars/XuanRuiMu/HeWoLianAiBa?style=flat&logo=github)](https://github.com/XuanRuiMu/HeWoLianAiBa/stargazers)
 [![Forks](https://img.shields.io/github/forks/XuanRuiMu/HeWoLianAiBa?style=flat&logo=github)](https://github.com/XuanRuiMu/HeWoLianAiBa/forks)
+[![License: MIT](https://img.shields.io/github/license/XuanRuiMu/HeWoLianAiBa)](LICENSE)
 [![Last Commit](https://img.shields.io/github/last-commit/XuanRuiMu/HeWoLianAiBa)](https://github.com/XuanRuiMu/HeWoLianAiBa/commits/main)
 [![Issues](https://img.shields.io/github/issues/XuanRuiMu/HeWoLianAiBa)](https://github.com/XuanRuiMu/HeWoLianAiBa/issues)
 [![Repo Size](https://img.shields.io/github/repo-size/XuanRuiMu/HeWoLianAiBa)](https://github.com/XuanRuiMu/HeWoLianAiBa)
 [![CI](https://img.shields.io/github/actions/workflow/status/XuanRuiMu/HeWoLianAiBa/ci.yml?label=CI)](https://github.com/XuanRuiMu/HeWoLianAiBa/actions)
 [![Stack](https://img.shields.io/badge/stack-Vue3%20%2B%20Express5%20%2B%20PostgreSQL%20%2B%20Redis-blue)](https://github.com/XuanRuiMu/HeWoLianAiBa)
 
-> 🌐 [中文](README.md) ｜ English
+> 🌐 简体中文 ｜ [English](README_EN.md)
 
 ---
 
-## What is this?
+## 这是什么？
 
-**和我恋爱吧 (HeWoLianAiBa)** is an AI romance simulation game that runs in your browser:
+**和我恋爱吧** 是一款跑在浏览器里的 AI 恋爱模拟游戏：
 
-- Fall in love with an AI character with **long-term memory, personality, and favor-ability-driven change**;
-- **Real-time chat** (Socket.IO), instant replies;
-- The better you chat, the higher the **favor-ability**, shifting the character's attitude and story direction;
-- Ask the **AI advisor ("军师")** for relationship advice;
-- **3D character** with **voice** interaction, **voice/video calls**, **screenshots**, and **challenges / records**;
-- Ships with a **dedicated ops console** ([恋爱吧管理中心](https://github.com/XuanRuiMu/LianAiBaGuanLiZhongXin)) — accounts / chat / bans / audit / stats in one screen.
+- 与一个 **有长期记忆、有角色性格、会随好感度变化** 的 AI 角色恋爱；
+- **实时聊天**（Socket.IO），随时秒回；
+- 聊得越好 **好感度** 越高，角色对你的态度与剧情随之改变；
+- 可以把你 AI 角色的烦恼抛给 **AI 军师**，让它给你支招；
+- 支持 **3D 角色形象** 与 **语音** 互动、**语音 / 视频通话**、**截图留念**、**挑战 / 战绩** 玩法；
+- 附带**专属管理后台**（[恋爱吧管理中心](https://github.com/XuanRuiMu/LianAiBaGuanLiZhongXin)），账号 / 聊天 / 封禁 / 审计 / 统计一屏管理。
 
 ---
 
-## Core gameplay
+## 核心玩法
 
-| Feature | Description |
+| 玩法 | 说明 |
 | --- | --- |
-| 💬 Real-time AI chat | Socket.IO messaging with multimodal input (text / voice / images) |
-| 💝 Favor-ability system | Conversation-driven favor changes, affecting attitude & story |
-| 👤 Character setup | Generate your own AI character (user persona / profile / memory) |
-| 🧠 AI advisor | Toss relationship problems to the 军师 for advice (configurable strategy) |
-| 🎭 3D character | Three.js character with movement / pose interaction |
-| 🗣️ Voice | TTS voice playback, ASR input, AI voice understanding |
-| 📞 Voice / video calls | Real-time calls (WebRTC / Socket.IO signaling) |
-| 🏆 Challenges & records | Challenge system, leaderboard, past-record replay |
-| 📸 Screenshots | Capture your precious moments |
-| 🛡️ Safety & compliance | Content review, safety lexicon, behavior verification, crisis intervention, consent records, data retention |
+| 💬 AI 实时聊天 | Socket.IO 实时消息，多模态输入（文字 / 语音 / 图片）|
+| 💝 好感度系统 | 对话驱动好感度变化，影响角色态度与剧情走向 |
+| 👤 角色设定 | 可生成专属 AI 角色（用户人设 / 角色档案 / 记忆系统）|
+| 🧠 AI 军师 | 恋爱难题抛给军师，AI 给建议（策略配置可调）|
+| 🎭 3D 角色互动 | Three.js 角色形象，动作 / 姿态互动 |
+| 🗣️ 语音能力 | TTS 播放角色语音、ASR 语音输入、AI 语音理解 |
+| 📞 语音 / 视频通话 | 实时通话（WebRTC / Socket.IO 信令）|
+| 🏆 挑战与战绩 | 挑战任务体系、积分榜、过往战绩回看 |
+| 📸 截图留念 | 记录你们的美好瞬间 |
+| 🛡️ 安全合规 | 内容审核、安全词库、行为验证、危机干预、协议留痕、数据保存期限 |
 
 ---
 
-## Tech stack
+## 技术栈
 
-| Layer | Technology |
+| 层 | 技术 |
 | --- | --- |
-| **Frontend** (`frontend/`) | Vue 3 + Vite + TypeScript + Pinia + Vue Router + Socket.IO Client + Three.js + PWA |
-| **Backend** (`backend/`) | Node.js + Express 5 + TypeScript + PostgreSQL + Redis + Socket.IO + OpenTelemetry + pino logging |
-| **AI** | DeepSeek & other LLMs (`AI引擎.ts`) + Prompt builder + sentiment analysis + conversation summaries + key-event extraction |
-| **Multimodal** | TTS / ASR / image generation / video understanding (Alibaba Cloud & other vendors) |
-| **Deploy** | Docker Compose + nginx + Let's Encrypt (`deploy/`) |
-| **Engineering** | husky + commitlint + gitleaks (secret scanning) + CI + Playwright E2E + Vitest |
+| **前端**（`frontend/`）| Vue 3 + Vite + TypeScript + Pinia + Vue Router + Socket.IO Client + Three.js + PWA |
+| **后端**（`backend/`）| Node.js + Express 5 + TypeScript + PostgreSQL + Redis + Socket.IO + OpenTelemetry + pino 日志 |
+| **AI** | DeepSeek 等 LLM 接入（`AI引擎.ts`）+ Prompt 构建器 + 情感分析 + 对话摘要 + 关键事件提取 |
+| **多模态** | TTS / ASR / 图像生成 / 视频理解（阿里云等供应商接入）|
+| **部署** | Docker Compose + nginx + Let's Encrypt（`deploy/`）|
+| **工程规范** | husky + commitlint + gitleaks（密钥扫描）+ CI + Playwright E2E + Vitest |
 
 ---
 
-## Quick start
+## 快速开始
 
-### Local development
+### 本地开发
 
 ```bash
-# 1. Install deps
-npm install                      # root (husky/commitlint)
+# 1. 安装依赖
+npm install                      # 根目录（husky/commitlint）
 npm --prefix frontend install
 npm --prefix backend install
 
-# 2. Configure env (see .env.example files)
-cp .env.example .env
+# 2. 配置环境变量（参照 .env.example）
+cp .env.example .env             # 根配置
 cp frontend/.env.example frontend/.env
 cp backend/.env.example backend/.env
 
-# 3. Init the database
-psql -f database/000_baseline.sql        # base tables
-psql -f database/001_haoyou_yu_shezhi.sql # friends/settings
+# 3. 初始化数据库
+psql -f database/000_baseline.sql        # 基础表
+psql -f database/001_haoyou_yu_shezhi.sql # 好友/设置
 
-# 4. Start
-npm --prefix backend run dev     # backend (port 3000)
-npm --prefix frontend run dev    # frontend (Vite dev server)
+# 4. 启动
+npm --prefix backend run dev     # 后端（默认 3000）
+npm --prefix frontend run dev    # 前端（Vite dev server）
 ```
 
-> Windows: just run `start.ps1` at the repo root.
+> Windows 用户也可直接在根目录运行 `start.ps1` 一键启动。
 
-### Docker
+### Docker 部署
 
 ```bash
 docker compose up -d             # backend + frontend + postgres + redis + nginx
 ```
 
-> See [deploy/备份与恢复.md](deploy/备份与恢复.md) and [deploy/nginx.conf](deploy/nginx.conf).
+> 完整部署与备份见 [deploy/备份与恢复.md](deploy/备份与恢复.md)、[deploy/nginx.conf](deploy/nginx.conf)。
 
 ---
 
-## Database design
+## 数据库设计
 
-The schema reflects the full product domain (`database/`):
+表结构体现完整的产品域建模（`database/`）：
 
 ```text
 用户 · 角色 · 消息 · 好感度 · 记忆 · 对话摘要 · 用户人设 · 游戏档案 · 游戏结局
@@ -103,58 +104,58 @@ The schema reflects the full product domain (`database/`):
 挑战积分 · 战绩 · 封禁记录 · 审计日志 · 关键事件 · 协议留痕 · 夺舍日志 · schema_migrations
 ```
 
-> AI-facing calls live in `DeepSeek客户端.ts`, `AI引擎.ts` etc., so providers can be swapped easily.
+> 详细 API 见 [docs/API文档](docs/)；面向 AI 的调用有 `DeepSeek客户端.ts`、`AI引擎.ts` 等独立模块，便于替换供应商。
 
 ---
 
-## Project structure
+## 项目结构
 
 ```text
 HeWoLianAiBa/
-├── frontend/                 # Vue 3 frontend
+├── frontend/                  # Vue 3 前端
 │   └── src/
-│       ├── views/            # chat · auth · friend-chat · friend-list · challenges · leaderboard ·
-│       │                     # advisor records · past records · notifications · account/security · WeChat · bubble settings …
-│       ├── components/       # call UI · advisor guide · profile card · avatar crop · challenge hints …
-│       ├── layouts/          # auth layout (login/register)
-│       └── … (stores / router / api / config)
-├── backend/                  # Express 5 backend
+│       ├── views/             # 聊天页面·登录·好友聊天·好友列表·挑战主页·挑战积分榜·
+│       │                      # 军师记录详情·过往战绩·通知·账号与安全·添加微信·气泡设置…
+│       ├── components/        # 通话界面·军师指导·用户资料卡·头像裁剪·挑战渣型提示…
+│       ├── layouts/           # 认证布局（登录/注册）
+│       └── …（stores / router / api / config）
+├── backend/                   # Express 5 后端
 │   └── src/
-│       ├── routes/           # auth · message · character · character-detail · friends · favor ·
-│       │                     # advisor · challenges · records · media · notifications · settings …
-│       ├── services/         # AI engine · AI reply scheduler · favor · memory · summaries · sentiment ·
-│       │                     # advisor · TTS · ASR · calls · media · review · audit · records · challenges …
-│       ├── socket/           # realtime: chat · calls · auth · notifications · takeover · log push
-│       ├── middleware/       # auth · admin · rate limit · security · input validation · IP ban · log tracing
-│       └── config/           # AI · favor · character · advisor · challenges · multimodal · TTS · calls · bubble themes …
-├── database/                 # SQL schemas (baseline + increments)
-├── deploy/                   # docker / nginx / letsencrypt / backups
-├── docs/                     # project docs
-├── 吴昊阳3D模型*/             # 3D character assets (GLB/Blender)
-├── .github/workflows/ci.yml  # CI
+│       ├── routes/            # 认证·消息·角色·角色详情·好友·好感度·军师·挑战·战绩·
+│       │                      # 媒体·通知·用户设置·资料·管理员·功能开关·健康检查…
+│       ├── services/          # AI引擎·AI回复调度器·好感度·记忆·对话摘要·情感分析·
+│       │                      # 军师·TTS·语音转写·通话·媒体·审核·审计·战绩·挑战·通知…
+│       ├── socket/            # 实时通信：聊天·通话·认证·通知·夺舍·日志推送
+│       ├── middleware/        # 认证·管理员·限流·安全·输入验证·IP封禁·日志追踪
+│       └── config/            # AI·好感度·角色·军师·挑战·多模态·TTS·通话·气泡主题…
+├── database/                  # SQL 建表（基线 + 增量）
+├── deploy/                    # docker/nginx/letsencrypt/备份
+├── docs/                      # 项目文档
+├── 吴昊阳3D模型*/              # 3D 角色模型资产（GLB/Blender）
+├── .github/workflows/ci.yml   # CI
 └── docker-compose.yml
 ```
 
 ---
 
-## Tests
+## 测试
 
 ```bash
-npm --prefix frontend test          # Vitest unit + component tests
-npm --prefix frontend run test:e2e  # Playwright E2E (fp-*.spec.ts full journeys)
-npm --prefix backend test           # backend unit / integration
+npm --prefix frontend test          # Vitest 单测 + 组件测试
+npm --prefix frontend run test:e2e  # Playwright E2E（fp-*.spec.ts 全流程）
+npm --prefix backend test           # 后端单元 / 集成测试
 ```
 
-Frontend E2E covers the full user journey: auth → chat → friends → advisor → challenges → wrap-up (see `frontend/tests/`).
+前端 E2E 覆盖完整用户旅程：认证 → 聊天 → 好友 → 军师 → 挑战 → 收尾（见 `frontend/tests/`）。
 
 ---
 
-## Related projects
+## 相关项目
 
-- 🛠️ [恋爱吧管理中心](https://github.com/XuanRuiMu/LianAiBaGuanLiZhongXin) — dedicated ops console (accounts / chat / review / bans / audit / stats)
+- 🛠️ [恋爱吧管理中心](https://github.com/XuanRuiMu/LianAiBaGuanLiZhongXin) —— 专属运营管理后台（账号 / 聊天 / 审核 / 封禁 / 审计 / 统计）
 
 ---
 
-## License
+## 许可证
 
-Open-source showcase repository. **Made with ❤️ — take an AI romance seriously.**
+[MIT](LICENSE) —— 本仓库仅作项目开源展示。**Made with ❤️ —— 认真谈一场 AI 恋爱。**
