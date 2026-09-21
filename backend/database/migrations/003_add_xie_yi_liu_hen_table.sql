@@ -1,0 +1,14 @@
+-- FP-10 C8 协议留痕表
+-- 记录用户同意协议的版本、时间、IP
+
+CREATE TABLE IF NOT EXISTS "协议留痕" (
+    "ID" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "用户ID" UUID NOT NULL REFERENCES "用户"("ID") ON DELETE CASCADE,
+    "协议版本" VARCHAR(50) NOT NULL,
+    "同意时间戳" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    "客户端IP" VARCHAR(45) NOT NULL,
+    "创建时间" TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_协议留痕_用户ID ON "协议留痕"("用户ID");
+CREATE INDEX IF NOT EXISTS idx_协议留痕_创建时间 ON "协议留痕"("创建时间" DESC);

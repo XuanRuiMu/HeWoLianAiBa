@@ -1,0 +1,10 @@
+# 镜像入口脚本必须以 LF 签出：Windows core.autocrlf 会把它改成 CRLF，
+# 使 `exec ./entrypoint.sh` 在 Linux 容器内报 no such file or directory。
+backend/entrypoint.sh text eol=lf
+
+# FP-15 迁移文件字节口径：schema_migrations.checksum 登记的就是迁移文件字节，
+# 平台检出的行尾差异会让同一份内容算出两种哈希（L-01 台账漂移根因，
+# 且 docker build 的构建上下文用的就是工作树字节）。显式锁 eol=lf，
+# 使 Windows/Linux/CI/镜像内检出为同一串字节。
+backend/database/*.sql text eol=lf
+backend/database/migrations/*.sql text eol=lf

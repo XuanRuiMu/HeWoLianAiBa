@@ -1,0 +1,367 @@
+[
+  {
+    "tag": "desktop-1920x1080",
+    "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/测试截图/FP-15-grass-bg-desktop-1920x1080-after.png",
+    "ready": true,
+    "pollTail": [
+      {
+        "i": 0,
+        "st": {
+          "jieLu": false,
+          "daoLu": "zhuDao",
+          "mesh": true,
+          "jieDuan": "yinQingJiuXu"
+        }
+      },
+      {
+        "i": 1,
+        "st": {
+          "jieLu": true,
+          "daoLu": "zhuDao",
+          "mesh": true,
+          "tm": 0,
+          "jieDuan": "fuYeYiTongZhi"
+        }
+      }
+    ],
+    "errors": [],
+    "warnings": [
+      "[.WebGL-0x2ec0018dc00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "The resource http://localhost:5173/grass-bg/wuhaoyang-3d.png was preloaded using link preload but not used within a few seconds from the window's load event. Pl"
+    ],
+    "screenshotOk": true,
+    "info": {
+      "menKong": {
+        "caoDi": true,
+        "wuHaoYang": true,
+        "daoLu": "zhuDao",
+        "jieduan": "fuYeYiTongZhi",
+        "yiJieLu": true,
+        "yiRanSe": true,
+        "haoShi": 33929
+      },
+      "jieDuan": "fuYeYiTongZhi",
+      "daoLu": "zhuDao",
+      "zhuJueZhuGuan": true,
+      "yinYing": "挂载",
+      "yiJieLu": true,
+      "touMingDu": 1,
+      "ceLiang": {
+        "gaoDu": null,
+        "laiYuan": "huiTui",
+        "liYangShu": 0
+      },
+      "diaoShi": {
+        "mode": "T3 引擎平面（铰链贴地固定朝向）+ reveal 同步",
+        "revealSource": "revealMesh.uRevealProgress",
+        "revealProgress": 1,
+        "jieLuWanChengHaoMiao": 8000,
+        "xiangJi": null,
+        "opacity": 1,
+        "daoLu": "zhuDao",
+        "jieDuan": "fuYeYiTongZhi",
+        "crushInjected": "0/100",
+        "crushStrength": null,
+        "crushCenter": null,
+        "crushR0": null,
+        "crushR1": null,
+        "maskZhuRu": false,
+        "maskUV": "有效(0.50,0.00)",
+        "shiCeJiaoLianGaoDu": null,
+        "ceLiangLaiYuan": "huiTui",
+        "ceLiangYangBenShu": 0,
+        "yinYing": "挂载",
+        "tieDi": {
+          "jiaoLian": [
+            2.9,
+            0.14,
+            2.92
+          ],
+          "qingJiaoDu": 10,
+          "pianHangDu": 240,
+          "chiCun": 2.55,
+          "ndc": null
+        }
+      },
+      "logs": [
+        "[02:37:16] pure 纯背景模式已开启（模板 UI 已隐藏）",
+        "[02:37:17] [T3] 网格/材质构造器反构不完整，等待引擎后放弃本次",
+        "[02:37:19] [T3] 铰链贴地：草根 y=0.1416 锚点 (2.900,2.920) 边长 2.550",
+        "[02:37:19] [T3] 压伏 mask 已克隆接入（草压弯切换为人物轮廓场）",
+        "[02:37:19] [T3] 接触阴影片已贴地挂载（渐变纹理走引擎同类克隆）",
+        "[02:37:19] [T3] 角色平面已进入引擎场景（铰链贴地固定朝向，depthTest+depthWrite，草可双向遮挡）",
+        "[02:37:19] reveal 进度源已接入（与背景扩散同步）"
+      ],
+      "plane": {
+        "pos": [
+          2.9,
+          0.1416,
+          2.92
+        ],
+        "rotDeg": [
+          -80,
+          240
+        ],
+        "order": "YXZ",
+        "scale": 1.275,
+        "worldYmin": 0.1416,
+        "worldYmax": 0.5844,
+        "flipY": false,
+        "maskFlipY": false,
+        "v0edge": [
+          2.9113,
+          0.1439,
+          2.9265
+        ],
+        "v1edge": [
+          5.0635,
+          0.5821,
+          4.1691
+        ],
+        "v0n": 194,
+        "v1n": 194
+      },
+      "camPos": [
+        5.75,
+        1.34,
+        5.27
+      ],
+      "fov": 60
+    }
+  },
+  {
+    "tag": "desktop-flipY-AB(=true)",
+    "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/测试截图/FP-15-grass-bg-desktop-FLIPY-AB.png",
+    "screenshotOk": true,
+    "info": {
+      "menKong": {
+        "caoDi": true,
+        "wuHaoYang": true,
+        "daoLu": "zhuDao",
+        "jieduan": "fuYeYiTongZhi",
+        "yiJieLu": true,
+        "yiRanSe": true,
+        "haoShi": 51251
+      },
+      "jieDuan": "fuYeYiTongZhi",
+      "daoLu": "zhuDao",
+      "zhuJueZhuGuan": true,
+      "yinYing": "挂载",
+      "yiJieLu": true,
+      "touMingDu": 1,
+      "ceLiang": {
+        "gaoDu": null,
+        "laiYuan": "huiTui",
+        "liYangShu": 0
+      },
+      "diaoShi": {
+        "mode": "T3 引擎平面（铰链贴地固定朝向）+ reveal 同步",
+        "revealSource": "revealMesh.uRevealProgress",
+        "revealProgress": 1,
+        "jieLuWanChengHaoMiao": 8000,
+        "xiangJi": null,
+        "opacity": 1,
+        "daoLu": "zhuDao",
+        "jieDuan": "fuYeYiTongZhi",
+        "crushInjected": "0/100",
+        "crushStrength": null,
+        "crushCenter": null,
+        "crushR0": null,
+        "crushR1": null,
+        "maskZhuRu": false,
+        "maskUV": "有效(0.50,0.00)",
+        "shiCeJiaoLianGaoDu": null,
+        "ceLiangLaiYuan": "huiTui",
+        "ceLiangYangBenShu": 0,
+        "yinYing": "挂载",
+        "tieDi": {
+          "jiaoLian": [
+            2.9,
+            0.14,
+            2.92
+          ],
+          "qingJiaoDu": 10,
+          "pianHangDu": 240,
+          "chiCun": 2.55,
+          "ndc": null
+        }
+      },
+      "logs": [
+        "[02:37:16] pure 纯背景模式已开启（模板 UI 已隐藏）",
+        "[02:37:17] [T3] 网格/材质构造器反构不完整，等待引擎后放弃本次",
+        "[02:37:19] [T3] 铰链贴地：草根 y=0.1416 锚点 (2.900,2.920) 边长 2.550",
+        "[02:37:19] [T3] 压伏 mask 已克隆接入（草压弯切换为人物轮廓场）",
+        "[02:37:19] [T3] 接触阴影片已贴地挂载（渐变纹理走引擎同类克隆）",
+        "[02:37:19] [T3] 角色平面已进入引擎场景（铰链贴地固定朝向，depthTest+depthWrite，草可双向遮挡）",
+        "[02:37:19] reveal 进度源已接入（与背景扩散同步）"
+      ],
+      "plane": {
+        "pos": [
+          2.9,
+          0.1416,
+          2.92
+        ],
+        "rotDeg": [
+          -80,
+          240
+        ],
+        "order": "YXZ",
+        "scale": 1.275,
+        "worldYmin": 0.1416,
+        "worldYmax": 0.5844,
+        "flipY": true,
+        "maskFlipY": true,
+        "v0edge": [
+          2.9113,
+          0.1439,
+          2.9265
+        ],
+        "v1edge": [
+          5.0635,
+          0.5821,
+          4.1691
+        ],
+        "v0n": 194,
+        "v1n": 194
+      },
+      "camPos": [
+        5.75,
+        1.34,
+        5.27
+      ],
+      "fov": 60
+    }
+  },
+  {
+    "tag": "mobile-375x667",
+    "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/测试截图/FP-15-grass-bg-mobile-375x667-after.png",
+    "ready": true,
+    "pollTail": [
+      {
+        "i": 0,
+        "st": {
+          "jieLu": false,
+          "daoLu": "zhuDao",
+          "mesh": true,
+          "tm": 0,
+          "jieDuan": "wuZiYuanJiuXu"
+        }
+      },
+      {
+        "i": 1,
+        "st": {
+          "jieLu": true,
+          "daoLu": "zhuDao",
+          "mesh": true,
+          "tm": 0.34004282407407416,
+          "jieDuan": "fuYeYiTongZhi"
+        }
+      }
+    ],
+    "errors": [],
+    "warnings": [
+      "The resource http://localhost:5173/grass-bg/wuhaoyang-3d.png was preloaded using link preload but not used within a few seconds from the window's load event. Pl"
+    ],
+    "screenshotOk": true,
+    "info": {
+      "menKong": {
+        "caoDi": true,
+        "wuHaoYang": true,
+        "daoLu": "zhuDao",
+        "jieduan": "fuYeYiTongZhi",
+        "yiJieLu": true,
+        "yiRanSe": true,
+        "haoShi": 22225
+      },
+      "jieDuan": "fuYeYiTongZhi",
+      "daoLu": "zhuDao",
+      "zhuJueZhuGuan": true,
+      "yinYing": "挂载",
+      "yiJieLu": true,
+      "touMingDu": 1,
+      "ceLiang": {
+        "gaoDu": 0.1411847801769481,
+        "laiYuan": "shiLiGenDiXing",
+        "liYangShu": 961
+      },
+      "diaoShi": {
+        "mode": "T3 引擎平面（铰链贴地固定朝向）+ reveal 同步",
+        "revealSource": "revealMesh.uRevealProgress",
+        "revealProgress": 1,
+        "jieLuWanChengHaoMiao": 8000,
+        "xiangJi": null,
+        "opacity": 1,
+        "daoLu": "zhuDao",
+        "jieDuan": "fuYeYiTongZhi",
+        "crushInjected": "0/100",
+        "crushStrength": null,
+        "crushCenter": null,
+        "crushR0": null,
+        "crushR1": null,
+        "maskZhuRu": false,
+        "maskUV": "有效(0.50,0.00)",
+        "shiCeJiaoLianGaoDu": 0.1412,
+        "ceLiangLaiYuan": "shiLiGenDiXing",
+        "ceLiangYangBenShu": 961,
+        "yinYing": "挂载",
+        "tieDi": {
+          "jiaoLian": [
+            2.9,
+            0.14,
+            2.92
+          ],
+          "qingJiaoDu": 10,
+          "pianHangDu": 240,
+          "chiCun": 2.55,
+          "ndc": null
+        }
+      },
+      "logs": [
+        "[02:38:08] pure 纯背景模式已开启（模板 UI 已隐藏）",
+        "[02:38:08] [T3] 网格/材质构造器反构不完整，等待引擎后放弃本次",
+        "[02:38:17] 草根实测 y=0.1412 来源=shiLiGenDiXing 样本=961 地形增量=0.0529",
+        "[02:38:17] [T3] 铰链贴地：草根 y=0.1412 锚点 (2.900,2.920) 边长 2.550",
+        "[02:38:17] [T3] 压伏 mask 已克隆接入（草压弯切换为人物轮廓场）",
+        "[02:38:17] 草根实测 y=0.1412 来源=shiLiGenDiXing 样本=961 地形增量=0.0529",
+        "[02:38:17] [T3] 接触阴影片已贴地挂载（渐变纹理走引擎同类克隆）",
+        "[02:38:17] [T3] 角色平面已进入引擎场景（铰链贴地固定朝向，depthTest+depthWrite，草可双向遮挡）",
+        "[02:38:17] reveal 进度源已接入（与背景扩散同步）"
+      ],
+      "plane": {
+        "pos": [
+          2.9,
+          0.1412,
+          2.92
+        ],
+        "rotDeg": [
+          -80,
+          240
+        ],
+        "order": "YXZ",
+        "scale": 1.275,
+        "worldYmin": 0.1412,
+        "worldYmax": 0.584,
+        "flipY": false,
+        "maskFlipY": false,
+        "v0edge": [
+          2.9113,
+          0.1435,
+          2.9265
+        ],
+        "v1edge": [
+          5.0635,
+          0.5817,
+          4.1691
+        ],
+        "v0n": 194,
+        "v1n": 194
+      },
+      "camPos": [
+        5.75,
+        1.34,
+        5.27
+      ],
+      "fov": 60
+    }
+  }
+]

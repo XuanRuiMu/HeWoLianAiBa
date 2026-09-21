@@ -1,0 +1,163 @@
+﻿import { debug日志 } from '../utils/debug日志'
+import { Router } from 'express'
+import type { Request, Response } from 'express'
+import { huoQuFanYi } from '../config/translations'
+import { chengGongXiangYing, shiBaiXiangYing } from '../utils/xiangying'
+import { huoQuIo } from '../socket/io'
+import { huoQuZhenShiIP } from '../utils/真实IP'
+import { guanLiGaoWeiMenKong } from '../middleware/管理员'
+import type { RenZhengQingQiu } from '../middleware/认证'
+import {
+  huoQuTongZhiLieBiao,
+  biaoJiTongZhiYiDu,
+  biaoJiSuoYouTongZhiYiDu,
+  guanLiYuanFaSongTongZhi,
+} from '../services/通知'
+
+const luYou = Router()
+
+function huoQuIp(qingQiu: Request): string {
+  // 审计场景一律使用可信链路推导的真实来源 IP，不解析客户端可控 XFF
+  return huoQuZhenShiIP(qingQiu)
+}
+
+function jieXiZiFuChuan(
+  body: Record<string, unknown>,
+  jian: string,
+  tianChongJian?: string,
+): string {
+  const zhi = body[jian]
+  if (typeof zhi === 'string') return zhi
+  if (tianChongJian && typeof body[tianChongJian] === 'string') return String(body[tianChongJian])
+  return ''
+}
+
+function jieXiZiFuChuanShuZu(body: Record<string, unknown>, jian: string): string[] {
+  const zhi = body[jian]
+  if (Array.isArray(zhi)) {
+    return zhi.filter((xiang) => typeof xiang === 'string') as string[]
+  }
+  return []
+}
+
+function huoQuShuZi(zhi: unknown, moRen: number): number {
+  if (typeof zhi === 'number') return zhi
+  if (typeof zhi === 'string') {
+    const jieXi = parseInt(zhi, 10)
+    return Number.isNaN(jieXi) ? moRen : jieXi
+  }
+  return moRen
+}
+
+luYou.get(
+  '/',
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+
+    const xianShiShu = huoQuShuZi(qingQiu.query.xian_shi_shu, 100)
+
+    try {
+      const jieGuo = await huoQuTongZhiLieBiao(yongHu.yongHuId, xianShiShu)
+      return chengGongXiangYing(xiangYing, {
+        lie_biao: jieGuo.lie_biao,
+        wei_du_shu: jieGuo.wei_du_shu,
+      })
+    } catch (cuoWu) {
+      debug日志.error('通知接口', '获取通知列表失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
+    }
+  },
+)
+
+luYou.put(
+  '/:tongZhiId/已读',
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+
+    const tongZhiId = String(qingQiu.params.tongZhiId || '')
+    if (!tongZhiId) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    }
+
+    try {
+      const jieGuo = await biaoJiTongZhiYiDu(yongHu.yongHuId, tongZhiId)
+      if (!jieGuo) {
+        return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
+      }
+      return chengGongXiangYing(xiangYing, jieGuo)
+    } catch (cuoWu) {
+      debug日志.error('通知接口', '标记通知已读失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
+    }
+  },
+)
+
+luYou.put(
+  '/全部已读',
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+
+    try {
+      await biaoJiSuoYouTongZhiYiDu(yongHu.yongHuId)
+      return chengGongXiangYing(xiangYing, null)
+    } catch (cuoWu) {
+      debug日志.error('通知接口', '标记全部已读失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
+    }
+  },
+)
+
+luYou.post(
+  '/发送',
+  guanLiGaoWeiMenKong,
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+
+    const body = qingQiu.body as Record<string, unknown>
+    const muBiao = jieXiZiFuChuan(body, '目标', 'mu_biao')
+    const biaoTi = jieXiZiFuChuan(body, '标题', 'biao_ti')
+    const neiRong = jieXiZiFuChuan(body, '内容', 'nei_rong')
+    const jieShouZheIds = jieXiZiFuChuanShuZu(body, '接收者ID列表')
+
+    if (!muBiao || !biaoTi || !neiRong) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    }
+
+    try {
+      const jieGuo = await guanLiYuanFaSongTongZhi({
+        guan_li_yuan_id: yongHu.yongHuId,
+        mu_biao: muBiao,
+        jie_shou_zhe_ids: jieShouZheIds,
+        biao_ti: biaoTi,
+        nei_rong: neiRong,
+        ip: huoQuIp(qingQiu),
+        io: huoQuIo(),
+      })
+      if (!jieGuo.cheng_gong) {
+        return shiBaiXiangYing(
+          xiangYing,
+          jieGuo.zhuang_tai_ma || 400,
+          jieGuo.ti_shi || huoQuFanYi('tongZhi', 'faSongShiBai'),
+        )
+      }
+      return chengGongXiangYing(xiangYing, { fa_song_shu: jieGuo.fa_song_shu })
+    } catch (cuoWu) {
+      debug日志.error('通知接口', '管理员发送通知失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
+    }
+  },
+)
+
+export default luYou

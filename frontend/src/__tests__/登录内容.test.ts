@@ -1,0 +1,603 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
+import { createRouter, createWebHistory } from 'vue-router'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import 登录内容 from '@/views/登录内容.vue'
+import { 使用认证表单仓库 } from '@/stores/认证表单'
+import { huoQuFanYi } from '@/config/translations'
+import { 声明块清单, 按档解析全部, 声明位置 } from './主题令牌真源'
+
+const 登录内容源码 = readFileSync(resolve(__dirname, '../views/登录内容.vue'), 'utf8')
+const 认证布局源码 = readFileSync(resolve(__dirname, '../layouts/认证布局.vue'), 'utf8')
+
+/** 只取 <style> 段并剥掉注释：断言针对真实声明，不被解释性注释文字误伤 */
+function 样式源码(源码: string): string {
+  const 块 = /<style[^>]*>([\s\S]*?)<\/style>/.exec(源码)
+  expect(块, '未找到 <style> 段').not.toBeNull()
+  return (块 as RegExpMatchArray)[1].replace(/\/\*[\s\S]*?\*\//g, '')
+}
+
+const 登录内容样式 = 样式源码(登录内容源码)
+const 认证布局样式 = 样式源码(认证布局源码)
+
+function 样式块(源码: string, 选择器: string): string {
+  const 转义 = 选择器.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const 匹配 = new RegExp(`${转义}\\s*\\{([^}]*)\\}`).exec(源码)
+  expect(匹配, `未找到样式块 ${选择器}`).not.toBeNull()
+  return (匹配 as RegExpMatchArray)[1]
+}
+
+vi.mock('@/api/认证', () => ({
+  faSongMa: vi.fn(),
+  jianChaShouJiHao: vi.fn(),
+  dengLu: vi.fn(),
+  zhuCe: vi.fn(),
+  huoQuYongHuXinXi: vi.fn(),
+}))
+
+vi.mock('@/api/请求', () => ({
+  huoQuCuoWuXiangYing: vi.fn((cuoWu) => (cuoWu as { response?: unknown }).response),
+}))
+
+import { faSongMa, jianChaShouJiHao, dengLu, huoQuYongHuXinXi } from '@/api/认证'
+
+describe('登录内容组件', () => {
+  function chuangJianLuYou() {
+    return createRouter({
+      history: createWebHistory(),
+      routes: [
+        { path: '/', name: 'zhuJieMian', component: { template: '<div>主页</div>' } },
+        { path: '/login', name: 'dengLu', component: 登录内容 },
+      ],
+    })
+  }
+
+  async function mountZuJian(moShi: 'dengLu' | 'zhuCe' = 'dengLu') {
+    const luYou = chuangJianLuYou()
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const biaoDanCangKu = 使用认证表单仓库()
+    biaoDanCangKu.moShi = moShi
+
+    const wrapper = mount(登录内容, {
+      global: {
+        plugins: [pinia, luYou],
+      },
+      attachTo: document.body,
+    })
+    await luYou.isReady()
+    await flushPromises()
+    return { wrapper, luYou }
+  }
+
+  beforeEach(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+    vi.resetAllMocks()
+  })
+
+  it('使用翻译文件渲染登录标题', () => {
+    const biaoTi = huoQuFanYi('renZheng', 'yingYongMing')
+    expect(biaoTi).toBe('和我恋爱吧')
+  })
+
+  it('登录按钮在手机号格式错误时应禁用', async () => {
+    const { wrapper } = await mountZuJian('dengLu')
+    const shouJiHaoInput = wrapper.find('#denglu-shoujihao')
+    const miMaInput = wrapper.find('#denglu-mima')
+
+    await shouJiHaoInput.setValue('12345')
+    await miMaInput.setValue('password')
+    await flushPromises()
+
+    const dengLuAnNiu = wrapper.find('form button[type="submit"]')
+    expect(dengLuAnNiu.attributes('disabled')).toBeDefined()
+  })
+
+  it('登录按钮在合法手机号和密码时不应禁用', async () => {
+    const { wrapper } = await mountZuJian('dengLu')
+    const shouJiHaoInput = wrapper.find('#denglu-shoujihao')
+    const miMaInput = wrapper.find('#denglu-mima')
+
+    await shouJiHaoInput.setValue('13800138000')
+    await miMaInput.setValue('password123')
+    await flushPromises()
+
+    const dengLuAnNiu = wrapper.find('form button[type="submit"]')
+    expect(dengLuAnNiu.attributes('disabled')).toBeUndefined()
+  })
+
+  it('未勾选用户协议时注册按钮禁用', async () => {
+    const { wrapper } = await mountZuJian('zhuCe')
+
+    const shouJiHaoInput = wrapper.find('#zhuce-shoujihao')
+    const yanZhengMaInput = wrapper.find('#zhuce-yanzhengma')
+    const yongHuMingInput = wrapper.find('#zhuce-yonghuming')
+    const miMaInput = wrapper.find('#zhuce-mima')
+
+    expect(shouJiHaoInput.exists()).toBe(true)
+
+    await shouJiHaoInput.setValue('13800138000')
+    await yanZhengMaInput.setValue('123456')
+    await yongHuMingInput.setValue('测试用户')
+    await miMaInput.setValue('password123')
+    await flushPromises()
+
+    const zhuCeAnNiu = wrapper.find('form button[type="submit"]')
+    expect(zhuCeAnNiu.attributes('disabled')).toBeDefined()
+  })
+
+  it('60秒内重复请求验证码：按钮禁用并显示倒计时', async () => {
+    vi.useFakeTimers()
+    vi.mocked(jianChaShouJiHao).mockResolvedValue({ yi_zhu_ce: false })
+    vi.mocked(faSongMa).mockResolvedValue(undefined)
+
+    const { wrapper } = await mountZuJian('zhuCe')
+
+    const shouJiHaoInput = wrapper.find('#zhuce-shoujihao')
+    await shouJiHaoInput.setValue('13800138000')
+
+    const faSongAnNiu = wrapper.find('.fasong-anniu')
+    await faSongAnNiu.trigger('click')
+    await vi.advanceTimersByTimeAsync(100)
+    await flushPromises()
+
+    expect(faSongAnNiu.attributes('disabled')).toBeDefined()
+    vi.useRealTimers()
+  })
+
+  it('登录成功后路由跳转到主页路径', async () => {
+    const yuanShiAnimate = Element.prototype.animate
+    Element.prototype.animate = vi.fn(function () {
+      return {
+        finished: Promise.resolve(),
+        cancel: vi.fn(),
+      } as unknown as Animation
+    }) as unknown as typeof Element.prototype.animate
+
+    try {
+      const ceShiYongHu = {
+        id: '1',
+        shou_ji_hao: '13800138000',
+        yong_hu_ming: '测试用户',
+        ni_cheng: null,
+        xing_bie: null,
+        mu_biao_xing_bie: null,
+        xing_ge_xuan_ze: null,
+        ren_she_biao_qian: null,
+        yun_xu_zha_nan_zha_nv: false,
+        tou_xiang: null,
+        sheng_ri: null,
+        qian_ming: null,
+        huo_yue_ren_she_id: null,
+        hai_wang_fen_shu: 0,
+        chuang_jian_shi_jian: new Date().toISOString(),
+        geng_xin_shi_jian: new Date().toISOString(),
+      }
+
+      vi.mocked(dengLu).mockResolvedValue({
+        令牌: 'test-token',
+        用户: ceShiYongHu,
+        新用户: false,
+      })
+      vi.mocked(huoQuYongHuXinXi).mockResolvedValue(ceShiYongHu)
+
+      const { wrapper, luYou } = await mountZuJian('dengLu')
+
+      const shouJiHaoInput = wrapper.find('#denglu-shoujihao')
+      const miMaInput = wrapper.find('#denglu-mima')
+      await shouJiHaoInput.setValue('13800138000')
+      await miMaInput.setValue('password123')
+      await flushPromises()
+
+      const dengLuAnNiu = wrapper.find('form button[type="submit"]')
+      await dengLuAnNiu.trigger('submit')
+      await flushPromises()
+
+      expect(luYou.currentRoute.value.path).toBe('/')
+    } finally {
+      Element.prototype.animate = yuanShiAnimate
+    }
+  })
+
+  it('登录表单包含记住账号/记住密码/自动登录三个复选框', async () => {
+    const { wrapper } = await mountZuJian('dengLu')
+    const xuanXiang = wrapper.findAll('.ji-zhu-xuan-ze')
+    expect(xuanXiang.length).toBe(3)
+
+    const wenBen = xuanXiang.map((item) => item.text())
+    expect(wenBen).toContain(huoQuFanYi('renZheng', 'jiZhuZhangHao'))
+    expect(wenBen).toContain(huoQuFanYi('renZheng', 'jiZhuMiMa'))
+    expect(wenBen).toContain(huoQuFanYi('renZheng', 'ziDongDengLu'))
+
+    const fuXuan = wrapper.findAll('.ji-zhu-fu-xuan')
+    expect(fuXuan.length).toBe(3)
+  })
+
+  it('自动登录未勾选记住密码时禁用', async () => {
+    const { wrapper } = await mountZuJian('dengLu')
+    const fuXuan = wrapper.findAll('.ji-zhu-fu-xuan')
+    expect((fuXuan[2].element as HTMLInputElement).disabled).toBe(true)
+
+    await fuXuan[1].setValue(true)
+    await flushPromises()
+    expect((fuXuan[2].element as HTMLInputElement).disabled).toBe(false)
+  })
+
+  it('级联：勾选自动登录自动勾选记住密码与记住账号', async () => {
+    const { wrapper } = await mountZuJian('dengLu')
+    const fuXuan = wrapper.findAll('.ji-zhu-fu-xuan')
+
+    await fuXuan[1].setValue(true)
+    await flushPromises()
+    await fuXuan[2].setValue(true)
+    await flushPromises()
+
+    expect((fuXuan[0].element as HTMLInputElement).checked).toBe(true)
+    expect((fuXuan[1].element as HTMLInputElement).checked).toBe(true)
+    expect((fuXuan[2].element as HTMLInputElement).checked).toBe(true)
+  })
+
+  it('级联：取消记住账号同时取消记住密码与自动登录', async () => {
+    const { wrapper } = await mountZuJian('dengLu')
+    const fuXuan = wrapper.findAll('.ji-zhu-fu-xuan')
+
+    await fuXuan[1].setValue(true)
+    await flushPromises()
+    await fuXuan[2].setValue(true)
+    await flushPromises()
+    await fuXuan[0].setValue(false)
+    await flushPromises()
+
+    expect((fuXuan[1].element as HTMLInputElement).checked).toBe(false)
+    expect((fuXuan[2].element as HTMLInputElement).checked).toBe(false)
+  })
+
+  it('勾选记住密码登录：令牌写入会话存储且绝不明文存密码', async () => {
+    const yuanShiAnimate = Element.prototype.animate
+    Element.prototype.animate = vi.fn(function () {
+      return {
+        finished: Promise.resolve(),
+        cancel: vi.fn(),
+      } as unknown as Animation
+    }) as unknown as typeof Element.prototype.animate
+
+    try {
+      const ceShiYongHu = {
+        id: '1',
+        shou_ji_hao: '13800138000',
+        yong_hu_ming: '测试用户',
+        ni_cheng: null,
+        xing_bie: null,
+        mu_biao_xing_bie: null,
+        xing_ge_xuan_ze: null,
+        ren_she_biao_qian: null,
+        yun_xu_zha_nan_zha_nv: false,
+        tou_xiang: null,
+        sheng_ri: null,
+        qian_ming: null,
+        huo_yue_ren_she_id: null,
+        hai_wang_fen_shu: 0,
+        chuang_jian_shi_jian: new Date().toISOString(),
+        geng_xin_shi_jian: new Date().toISOString(),
+      }
+
+      vi.mocked(dengLu).mockResolvedValue({
+        令牌: 'test-token',
+        用户: ceShiYongHu,
+        新用户: false,
+      })
+      vi.mocked(huoQuYongHuXinXi).mockResolvedValue(ceShiYongHu)
+
+      const { wrapper } = await mountZuJian('dengLu')
+
+      const shouJiHaoInput = wrapper.find('#denglu-shoujihao')
+      const miMaInput = wrapper.find('#denglu-mima')
+      await shouJiHaoInput.setValue('13800138000')
+      await miMaInput.setValue('password123')
+      await flushPromises()
+
+      const xuanZe = wrapper.findAll('.ji-zhu-xuan-ze')
+      const fuXuan = xuanZe[1].find('input')
+      await fuXuan.setValue(true)
+      await flushPromises()
+
+      const dengLuAnNiu = wrapper.find('form button[type="submit"]')
+      await dengLuAnNiu.trigger('submit')
+      await flushPromises()
+
+      // 记住密码仅决定账号回填，令牌一律会话存储，localStorage 中不得出现明文密码与令牌
+      expect(localStorage.getItem('hewolianba_baoCunZhangHao')).toBe(JSON.stringify('13800138000'))
+      expect(localStorage.getItem('hewolianba_baoCunMiMa')).toBeNull()
+      expect(localStorage.getItem('hewolianba_jiZhuZhangHao')).toBe('true')
+      expect(localStorage.getItem('hewolianba_jiZhuMiMa')).toBe('true')
+      expect(localStorage.getItem('hewolianba_ziDongDengLu')).toBe('false')
+      expect(localStorage.getItem('令牌')).toBeNull()
+      expect(sessionStorage.getItem('令牌')).toBe('test-token')
+    } finally {
+      Element.prototype.animate = yuanShiAnimate
+    }
+  })
+
+  it('未勾选记住密码登录：令牌仅写入 sessionStorage', async () => {
+    const yuanShiAnimate = Element.prototype.animate
+    Element.prototype.animate = vi.fn(function () {
+      return {
+        finished: Promise.resolve(),
+        cancel: vi.fn(),
+      } as unknown as Animation
+    }) as unknown as typeof Element.prototype.animate
+
+    try {
+      const ceShiYongHu = {
+        id: '1',
+        shou_ji_hao: '13800138000',
+        yong_hu_ming: '测试用户',
+        ni_cheng: null,
+        xing_bie: null,
+        mu_biao_xing_bie: null,
+        xing_ge_xuan_ze: null,
+        ren_she_biao_qian: null,
+        yun_xu_zha_nan_zha_nv: false,
+        tou_xiang: null,
+        sheng_ri: null,
+        qian_ming: null,
+        huo_yue_ren_she_id: null,
+        hai_wang_fen_shu: 0,
+        chuang_jian_shi_jian: new Date().toISOString(),
+        geng_xin_shi_jian: new Date().toISOString(),
+      }
+
+      vi.mocked(dengLu).mockResolvedValue({
+        令牌: 'test-token',
+        用户: ceShiYongHu,
+        新用户: false,
+      })
+      vi.mocked(huoQuYongHuXinXi).mockResolvedValue(ceShiYongHu)
+
+      const { wrapper } = await mountZuJian('dengLu')
+
+      const shouJiHaoInput = wrapper.find('#denglu-shoujihao')
+      const miMaInput = wrapper.find('#denglu-mima')
+      await shouJiHaoInput.setValue('13800138000')
+      await miMaInput.setValue('password123')
+      await flushPromises()
+
+      const dengLuAnNiu = wrapper.find('form button[type="submit"]')
+      await dengLuAnNiu.trigger('submit')
+      await flushPromises()
+
+      expect(localStorage.getItem('令牌')).toBeNull()
+      expect(sessionStorage.getItem('令牌')).toBe('test-token')
+      expect(localStorage.getItem('hewolianba_jiZhuMiMa')).toBe('false')
+      expect(localStorage.getItem('hewolianba_baoCunMiMa')).toBeNull()
+    } finally {
+      Element.prototype.animate = yuanShiAnimate
+    }
+  })
+
+  it('store 在取消记住账号时删除已保存数据', () => {
+    localStorage.setItem('hewolianba_baoCunZhangHao', JSON.stringify('13800138000'))
+    localStorage.setItem('hewolianba_baoCunMiMa', JSON.stringify('password123'))
+
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const biaoDanCangKu = 使用认证表单仓库()
+    biaoDanCangKu.sheZhiJiZhuZhangHaoMiMa('13800138000', 'password123', false, false, false)
+
+    expect(localStorage.getItem('hewolianba_baoCunZhangHao')).toBeNull()
+    // 历史遗留的明文密码一并清除
+    expect(localStorage.getItem('hewolianba_baoCunMiMa')).toBeNull()
+    expect(localStorage.getItem('hewolianba_jiZhuZhangHao')).toBe('false')
+    expect(localStorage.getItem('hewolianba_jiZhuMiMa')).toBe('false')
+    expect(localStorage.getItem('hewolianba_ziDongDengLu')).toBe('false')
+  })
+
+  it('登录表单仅含一组账号密码字段（禁多密码启发式警告）', async () => {
+    const { wrapper } = await mountZuJian('dengLu')
+    const form = wrapper.find('form')
+    expect(form.exists()).toBe(true)
+    expect(form.findAll('input[type="password"]').length).toBe(1)
+    expect(wrapper.find('#denglu-shoujihao').attributes('autocomplete')).toBe('username')
+    expect(wrapper.find('#denglu-mima').attributes('autocomplete')).toBe('current-password')
+  })
+
+  it('组件加载时仅回填记住的账号（密码不再持久化）', async () => {
+    localStorage.setItem('hewolianba_baoCunZhangHao', JSON.stringify('13800138000'))
+    localStorage.setItem('hewolianba_jiZhuZhangHao', 'true')
+
+    const { wrapper } = await mountZuJian('dengLu')
+    const biaoDanCangKu = 使用认证表单仓库()
+    biaoDanCangKu.jiaZaiJiZhuSheZhi()
+    await flushPromises()
+
+    const shouJiHaoInput = wrapper.find('#denglu-shoujihao')
+    const xuanZe = wrapper.findAll('.ji-zhu-xuan-ze')
+
+    expect((shouJiHaoInput.element as HTMLInputElement).value).toBe('13800138000')
+    expect((xuanZe[0].find('input').element as HTMLInputElement).checked).toBe(true)
+  })
+
+  it('FP-02：空态标签不浮、有值上浮（登录密码）', async () => {
+    const { wrapper } = await mountZuJian('dengLu')
+    const miMaZu = wrapper.find('#denglu-mima').element.closest('.shuru-zu')
+    expect(miMaZu?.classList.contains('shangFu')).toBe(false)
+    await wrapper.find('#denglu-mima').setValue('mima123')
+    await flushPromises()
+    expect(miMaZu?.classList.contains('shangFu')).toBe(true)
+    await wrapper.find('#denglu-mima').setValue('')
+    await flushPromises()
+    expect(miMaZu?.classList.contains('shangFu')).toBe(false)
+  })
+
+  it('FP-02：聚焦上浮、失焦空态回落（登录密码）', async () => {
+    const { wrapper } = await mountZuJian('dengLu')
+    const miMaInput = wrapper.find('#denglu-mima')
+    const miMaZu = miMaInput.element.closest('.shuru-zu')
+    await miMaInput.trigger('focus')
+    await flushPromises()
+    expect(miMaZu?.classList.contains('shangFu')).toBe(true)
+    await miMaInput.trigger('blur')
+    await flushPromises()
+    expect(miMaZu?.classList.contains('shangFu')).toBe(false)
+  })
+
+  it('FP-02：自动填充与程序回填均上浮（登录密码）', async () => {
+    const { wrapper } = await mountZuJian('dengLu')
+    const miMaInput = wrapper.find('#denglu-mima')
+    const miMaZu = miMaInput.element.closest('.shuru-zu')
+    const yuanSu = miMaInput.element as HTMLInputElement
+    yuanSu.value = 'ziDongTianChongMiMa'
+    await miMaInput.trigger('input')
+    await flushPromises()
+    expect(miMaZu?.classList.contains('shangFu')).toBe(true)
+    const dongHua = new Event('animationstart', { bubbles: true }) as Event & { animationName: string }
+    dongHua.animationName = 'ziDongTianChongKaiShi'
+    yuanSu.dispatchEvent(dongHua)
+    await flushPromises()
+    expect(miMaZu?.classList.contains('shangFu')).toBe(true)
+  })
+
+  it('FP-02：显隐切换保持上浮且值不丢（登录/注册一致）', async () => {
+    const { wrapper: dengLuWrapper } = await mountZuJian('dengLu')
+    const dengLuMiMa = dengLuWrapper.find('#denglu-mima')
+    await dengLuMiMa.setValue('qieHuanBaoChi123')
+    await flushPromises()
+    const qieHuan1 = dengLuWrapper.find('.mima-qiehuan')
+    expect((dengLuMiMa.element as HTMLInputElement).type).toBe('password')
+    await qieHuan1.trigger('click')
+    await flushPromises()
+    expect((dengLuMiMa.element as HTMLInputElement).type).toBe('text')
+    expect((dengLuMiMa.element as HTMLInputElement).value).toBe('qieHuanBaoChi123')
+    expect(dengLuMiMa.element.closest('.shuru-zu')?.classList.contains('shangFu')).toBe(true)
+    await qieHuan1.trigger('click')
+    await flushPromises()
+    expect((dengLuMiMa.element as HTMLInputElement).type).toBe('password')
+    expect(dengLuMiMa.element.closest('.shuru-zu')?.classList.contains('shangFu')).toBe(true)
+
+    const { wrapper: zhuCeWrapper } = await mountZuJian('zhuCe')
+    const zhuCeMiMa = zhuCeWrapper.find('#zhuce-mima')
+    expect(zhuCeMiMa.element.closest('.shuru-zu')?.classList.contains('shangFu')).toBe(false)
+    await zhuCeMiMa.setValue('zhuCeQieHuan123')
+    await flushPromises()
+    expect(zhuCeMiMa.element.closest('.shuru-zu')?.classList.contains('shangFu')).toBe(true)
+    const qieHuan2 = zhuCeWrapper.find('.mima-qiehuan')
+    await qieHuan2.trigger('click')
+    await flushPromises()
+    expect((zhuCeMiMa.element as HTMLInputElement).type).toBe('text')
+    expect(zhuCeMiMa.element.closest('.shuru-zu')?.classList.contains('shangFu')).toBe(true)
+  })
+
+  it('FP-02：切换登录/注册不再给表单容器留下内联高度锁（注册内容被裁切根因）', async () => {
+    const { wrapper } = await mountZuJian('dengLu')
+    const rongqi = wrapper.find('.biaodan-rongqi').element as HTMLElement
+    expect(rongqi.style.height).toBe('')
+    await wrapper.findAll('.biaoqian-anniu')[1].trigger('click')
+    await flushPromises()
+    expect(wrapper.find('#zhuce-shoujihao').exists()).toBe(true)
+    expect(rongqi.style.height, '切换模式后 .biaodan-rongqi 残留内联 height').toBe('')
+    expect(rongqi.style.overflow, '切换模式后 .biaodan-rongqi 残留内联 overflow').toBe('')
+    expect(rongqi.style.transition).toBe('')
+    await wrapper.findAll('.biaoqian-anniu')[0].trigger('click')
+    await flushPromises()
+    expect(wrapper.find('#denglu-shoujihao').exists()).toBe(true)
+    expect(rongqi.style.height).toBe('')
+    expect(rongqi.style.overflow).toBe('')
+    const gundong = wrapper.find('.biaodan-gundong').element as HTMLElement
+    expect(gundong.style.maxHeight, '内层滚动区残留内联 max-height').toBe('')
+    expect(gundong.style.overflow, '内层滚动区残留内联 overflow').toBe('')
+  })
+
+  it('FP-02：根节点不再用 margin:0auto 抢认证布局的纵向自动外边距', () => {
+    const ku = 样式块(登录内容样式, '.denglu-neirong')
+    expect(ku).toMatch(/margin:\s*auto/)
+    expect(ku).not.toMatch(/margin:\s*0\s+auto/)
+    expect(登录内容源码).not.toMatch(/zhuce-gundong-qiangzhi/)
+  })
+
+  it('FP-02：登录内容私有滚动条全部改走 FP-01 滚动条令牌', () => {
+    const ku = 样式块(登录内容样式, '.biaodan-gundong.xuyao-gundong::-webkit-scrollbar')
+    expect(ku).toMatch(/width:\s*var\(--gundong-tiao-kuan-du\)/)
+    expect(
+      样式块(登录内容样式, '.biaodan-gundong.xuyao-gundong::-webkit-scrollbar-thumb'),
+    ).toMatch(/background:\s*var\(--gundong-tiao-huakuai\)/)
+    expect(
+      样式块(登录内容样式, '.biaodan-gundong.xuyao-gundong::-webkit-scrollbar-track'),
+    ).toMatch(/background:\s*var\(--gundong-tiao-guidao\)/)
+    expect(登录内容样式).not.toMatch(/::-webkit-scrollbar\s*\{\s*width:\s*3px/)
+    expect(登录内容样式).not.toMatch(/::-webkit-scrollbar[a-z-]*\s*\{[^}]*rgba\(/)
+  })
+
+  it('FP-02：表单项垂直节奏——字段间距走 --jiange-da 令牌、上浮标签留出间距', () => {
+    expect(样式块(登录内容样式, '.shuru-zu')).toMatch(/margin-bottom:\s*var\(--jiange-da\)(?!,)/)
+    expect(样式块(登录内容样式, '.fenlie-shuru')).toMatch(/padding:\s*18px 0 10px/)
+    expect(样式块(登录内容样式, '.fudong-biaoqian')).toMatch(/top:\s*18px/)
+    const 上浮 = new RegExp(
+      '\\.shuru-zu\\.shangFu \\.fudong-biaoqian,[\\s\\S]*?\\{([^}]*)\\}',
+    ).exec(登录内容样式)
+    expect(上浮, '未找到上浮标签规则').not.toBeNull()
+    expect((上浮 as RegExpMatchArray)[1]).toMatch(/top:\s*-5px/)
+  })
+
+  it('FP-12：间距/字号真源上收到共用 :root 块——授权文件零兜底补丁，深浅两档解析逐值相等', () => {
+    const 块们 = 声明块清单()
+    const 浅色 = 按档解析全部('light', 块们)
+    const 深色 = 按档解析全部('dark', 块们)
+    const 被引用: string[] = []
+    const 带兜底: string[] = []
+    for (const [文件, 样式] of [
+      ['登录内容.vue', 登录内容样式],
+      ['认证布局.vue', 认证布局样式],
+    ] as const) {
+      for (const 匹配 of 样式.matchAll(/var\(\s*(--(?:jiange|ziti)-[a-z-]+)\s*(,([^)]*))?\)/g)) {
+        const [, 令牌, 兜底] = 匹配
+        被引用.push(令牌)
+        const 位置 = 声明位置(令牌, 块们)
+        expect(位置, `${文件} 用了 variables.css 不存在的令牌 ${令牌}`).toEqual({
+          共用: true,
+          浅色: false,
+          深色: false,
+        })
+        if (兜底) 带兜底.push(`${文件}: var(${令牌}, ${兜底.trim()})`)
+      }
+    }
+    expect([...new Set(被引用)].sort(), '两文件应仍在用 --jiange-*/--ziti-* 真源').toEqual([
+      '--jiange-da',
+      '--jiange-xiao',
+      '--jiange-zhong',
+      '--ziti-xiao',
+      '--ziti-zhong',
+    ])
+    expect(带兜底, 'FP-02 遗留的绕真源同值兜底未删净：\n' + 带兜底.join('\n')).toEqual([])
+    for (const 令牌 of new Set(被引用)) {
+      expect(深色.get(令牌), `${令牌} 深色档未定义（F23 塌陷复发）`).toBeDefined()
+      expect(`${令牌}:${深色.get(令牌)}`, `${令牌} 深浅两档取值不等`).toBe(`${令牌}:${浅色.get(令牌)}`)
+    }
+  })
+
+  it('FP-02：0×0 原生勾选框的键盘焦点环转移到自绘方框并走焦点环令牌', () => {
+    const 选择器 = '.ji-zhu-fu-xuan:focus-visible + .ji-zhu-wen-ben::before'
+    const ku = 样式块(登录内容样式, 选择器)
+    expect(ku).toMatch(/outline:\s*var\(--jujiao-huan-kuan-du\)\s+solid\s+var\(--jujiao-huan-yanse\)/)
+    expect(ku).toMatch(/outline-offset:\s*var\(--jujiao-huan-pian-yi\)/)
+  })
+
+  it('FP-02：认证布局滚动口高度锁定可用区，私有滚动条走令牌且保留全屏豁免', () => {
+    expect(认证布局样式).not.toMatch(/min-height:\s*calc\(100vh/)
+    const rongqi = 样式块(认证布局样式, '.yemian-rongqi')
+    expect(rongqi).toMatch(/height:\s*100%/)
+    expect(rongqi).toMatch(/min-height:\s*0/)
+    expect(样式块(认证布局样式, '.yemian-buju')).toMatch(/min-height:\s*0/)
+    expect(
+      样式块(认证布局样式, '.yemian-buju:not(.quanping-moshi)::-webkit-scrollbar'),
+    ).toMatch(/width:\s*var\(--gundong-tiao-kuan-du\)/)
+    expect(
+      样式块(认证布局样式, '.yemian-buju:not(.quanping-moshi)::-webkit-scrollbar-thumb'),
+    ).toMatch(/background:\s*var\(--gundong-tiao-huakuai\)/)
+    expect(认证布局样式).not.toMatch(/rgba\(255,\s*255,\s*255,\s*0\.3\)/)
+    expect(认证布局样式).not.toMatch(/::-webkit-scrollbar\s*\{\s*width:\s*4px/)
+    expect(认证布局源码).toMatch(/\.yemian-buju\.quanping-moshi\s*\{[\s\S]*?overflow-y:\s*auto/)
+  })
+})

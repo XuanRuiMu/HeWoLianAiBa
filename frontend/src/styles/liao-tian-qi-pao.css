@@ -1,0 +1,54 @@
+/*
+ * 两个聊天页共用的气泡操作层：图片/文本气泡的长按右键菜单 +「我的表情」状态条。
+ * 类名沿用聊天页既有的 .chehui-* 与 .shuru-fu-zhu / .biaoqing-tishi，样式只写这一份，
+ * 由 AI 聊天页与好友聊天页共享（不再各自复制一套视觉语言）。
+ */
+.chehui-zhezhao {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1500;
+}
+
+.chehui-caidan {
+  position: fixed;
+  background: var(--chehui-caidan-beijing);
+  border-radius: 8px;
+  padding: 4px 0;
+  min-width: 90px;
+  box-shadow: var(--caidan-yinying);
+  overflow: hidden;
+}
+
+.chehui-xiangmu {
+  display: block;
+  width: 100%;
+  padding: 8px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--chehui-caidan-wenben);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.chehui-xiangmu:hover {
+  background: var(--chehui-caidan-hover);
+}
+
+.shuru-fu-zhu {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 4px;
+  margin-top: 4px;
+}
+
+/* FP-20「添加到表情」的状态反馈：非错误语义，故不复用红色错误行 */
+.biaoqing-tishi {
+  font-size: 12px;
+  color: var(--chenggong-yanse);
+}
