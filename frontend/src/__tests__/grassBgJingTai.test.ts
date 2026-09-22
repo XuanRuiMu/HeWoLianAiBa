@@ -251,12 +251,16 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).toContain('zhenShu % 120 === 0')
   })
 
-  it('FP-02 贴地化：billboard 死刑，人物为固定朝向世界物体（任意相机运动零错位）', () => {
+  it('FP-11 billboard 朝向：法线对准镜头走 rotation 分量解算（禁 quaternion.copy 旧病），俯卧公式仅作兜底', () => {
     const yuanMa = duQuCaoDi()
+    // 旧病回归守卫：曾用 quaternion.copy(相机) 致镜像/翻转失控，禁复活
     expect(yuanMa).not.toContain('quaternion.copy(cam')
-    // 朝向一次性设置函数存在，且在创建路径被调用（重建走同一函数）
+    // 朝向解算钉死：每帧 atan2 分量法（水平 yaw + 俯仰 pitch，YXZ 序），不整块拷相机四元数
+    expect(yuanMa).toContain('function mianXiangJingTou(m)')
+    expect(yuanMa).toContain('mianXiangJingTou(mesh)')
+    // 俯卧固定朝向仅作镜头未就绪时的一次性兜底（FP-11 前的旧路径，禁止当主路径）
     expect(yuanMa).toContain('function guDingChaoXiang(m)')
-    expect(yuanMa).toContain('guDingChaoXiang(mesh)')
+    expect(yuanMa).toContain('if (!mianXiangJingTou(mesh)) guDingChaoXiang(mesh);')
   })
 
   it('FP-02 贴地化：铰链几何（底边过原点）+ YXZ 欧拉序 + 倾角公式', () => {
@@ -274,22 +278,23 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).not.toContain('YIN_QING_GAO_DU')
   })
 
-  it('FP-02 贴地化：参数集中于 CAN_SHU 配置对象，URL 覆盖一处解析', () => {
+  it('FP-02 贴地化：参数集中于 CAN_SHU 配置对象，URL 覆盖一处解析（FP-11 定案值）', () => {
     const yuanMa = duQuCaoDi()
-    expect(yuanMa).toContain('weiZhi:  { x: 2.9, y: -0.0133, z: 2.92 }')
+    // FP-12 定案：锚点 (4.48,3.63)、尺寸乘数 0.32（旧俯卧锚点 2.9/2.92 已废弃）
+    expect(yuanMa).toContain('weiZhi:  { x: 4.48, y: -0.0133, z: 3.63 }')
     expect(yuanMa).toContain('chiCun:  2.55')
     expect(yuanMa).toContain(
-      'var PEI_ZHI = window.__wuPEIZHI || { weiZhi: { x: 2.9, y: -0.0133, z: 2.92 }, chiCun: 2.55 }',
+      'var PEI_ZHI = window.__wuPEIZHI || { weiZhi: { x: 4.48, y: -0.0133, z: 3.63 }, chiCun: 2.55 }',
     )
     expect(yuanMa).toContain(
-      'var CAN_SHU = { jiaoLianGaoDu: 0.1416, qingJiao: 10, pianHang: 240, chiCunBeiShu: 1 }',
+      'var CAN_SHU = { jiaoLianGaoDu: 0.1416, qingJiao: 10, pianHang: 240, chiCunBeiShu: 0.32 }',
     )
     expect(yuanMa).toContain('function duQuURLShuZhi(ming)')
     for (const canShu of ['wuTheta', 'wuYaw', 'wuScale', 'wuY', 'wuX', 'wuZ']) {
       expect(yuanMa).toContain(`duQuURLShuZhi('${canShu}')`)
     }
     expect(yuanMa).toContain("duQuURLShuZhi('wuZ')")
-    // 尺寸乘数在缩放处生效（倾角视觉压缩的补偿口）
+    // 尺寸乘数在缩放处生效（billboard 下=等比缩放口，比例不变）
     expect(yuanMa).toContain('(PEI_ZHI.chiCun / 2) * CAN_SHU.chiCunBeiShu')
   })
 
@@ -353,10 +358,13 @@ describe('FP-01 草地静态兜底', () => {
     // 逆偏航局部化：lx/zhou 计算（世界 XZ → 人物局部）
     expect(yuanMa).toContain('wuLx=tocW.x*wuCos-tocW.y*wuSin')
     expect(yuanMa).toContain('wuZhou=-(tocW.x*wuSin+tocW.y*wuCos)')
-    // 驱动侧投影长含 cosθ 修正（每帧同步 uniforms）
-    expect(yuanMa).toContain('touYingChang = touYingKuan * Math.cos(CAN_SHU.qingJiao * Math.PI / 180)')
-    // CAN_SHU → uniforms 每帧同步（URL 调参实时生效）
-    expect(yuanMa).toContain('caiZhi.uCharYaw.value = CAN_SHU.pianHang * Math.PI / 180')
+    // FP-12：驱动侧投影长改按 billboard 实时俯仰推导（卡高×sin 后仰角），
+    // 旧俯卧 cosθ 公式会把压伏区甩到角色前方一大片，零残留
+    expect(yuanMa).toContain('touYingChang = touYingKuan * Math.sin(Math.max(0, -(mesh.rotation.x || 0)))')
+    expect(yuanMa).not.toContain('touYingChang = touYingKuan * Math.cos(CAN_SHU.qingJiao * Math.PI / 180)')
+    // uniforms 每帧同步 billboard 实时偏航（投影轴=卡片后仰侧）
+    expect(yuanMa).toContain('caiZhi.uCharYaw.value = mesh.rotation.y')
+    expect(yuanMa).not.toContain('caiZhi.uCharYaw.value = CAN_SHU.pianHang * Math.PI / 180')
   })
 
   it('FP-06 地形扫描入口：草叶 instanceMatrix 根部世界 y 实测锚定铰链高度', () => {
@@ -368,8 +376,8 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).toMatch(/ceLiangZhuangTai/)
     expect(yuanMa).toMatch(/shiLiGenZhong|shiLiGenDiXing/)
     expect(yuanMa).toContain('var yaoGaoDu = CAN_SHU.jiaoLianGaoDu')
-    // 阴影片 y 与人物同源（实测 + eP）
-    expect(yuanMa).toMatch(/yaoGaoDu \+ YIN_YING\.eP/)
+    // 阴影片 y 与人物同源（FP-12 起直接跟人物实时铰链 y，比一次性 yaoGaoDu 更新）+ eP
+    expect(yuanMa).toMatch(/mesh\.position\.y \+ YIN_YING\.eP/)
   })
 
   it('FP-06 触碰箱：mask 四点 alpha 梯度外法线 + 轮廓内强度驱动可到 1.0', () => {

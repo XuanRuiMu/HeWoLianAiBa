@@ -110,13 +110,57 @@ describe('FP-10 吴昊阳立体化', () => {
     expect(yuanMa).toContain('caiZhi.uWuCaoAODu.value = tiao.aoDu != null ? tiao.aoDu : LI_TI.aoQiangDu')
   })
 
-  it('构图终值对齐最终效果图（FP-07 复核，禁止 drift 回 3.2/4.0/15）', () => {
+  it('构图终值对齐最终效果图（FP-12 billboard 复核，禁止 drift 回旧俯卧锚点）', () => {
     const yuanMa = duQuCaoDi()
-    expect(yuanMa).toContain('weiZhi:  { x: 2.9, y: -0.0133, z: 2.92 }')
+    // FP-12 定案：锚点 (4.48,3.63)（屏幕左移 40px 解析算出）、尺寸乘数 0.32（缩 1/5 治悬空）
+    expect(yuanMa).toContain('weiZhi:  { x: 4.48, y: -0.0133, z: 3.63 }')
     expect(yuanMa).toContain('chiCun:  2.55')
+    expect(yuanMa).toContain('chiCunBeiShu: 0.32')
+    // 地面层参数保留（阴影投影/压草场身体轴用），禁止当角色姿态调
     expect(yuanMa).toContain('qingJiao: 10, pianHang: 240')
-    expect(yuanMa).not.toContain('weiZhi:  { x: 3.2, y: -0.0133, z: 3.2 }')
-    expect(yuanMa).not.toContain('qingJiao: 15')
+    // 旧俯卧构图终值禁止回潮（billboard 下会把角色顶到树后高处且必然压扁）
+    expect(yuanMa).not.toContain('weiZhi:  { x: 2.9, y: -0.0133, z: 2.92 }')
+    expect(yuanMa).not.toContain('weiZhi:  { x: 4.62, y: -0.0133, z: 3.47 }')
+    expect(yuanMa).not.toContain('chiCunBeiShu: 1 }')
+  })
+
+  it('FP-11 比例保真 billboard：法线每帧对准镜头 + flipY/镜像构图钉死', () => {
+    const yuanMa = duQuCaoDi()
+    // 核心不变式【用户裁定】比例永不可改：billboard 是唯一数学正解
+    // （平面⟂视线 ⇒ 投影=纯等比缩放；俯卧贴地在低机位下必然压扁，已废弃为兜底）
+    expect(yuanMa).toContain('function mianXiangJingTou(m)')
+    // 每帧驱动：tongBu 内调用（唯一 rotation 写入点），创建时失败回退 guDingChaoXiang
+    expect(yuanMa).toContain('mianXiangJingTou(mesh); // FP-11：法线每帧对准镜头')
+    expect(yuanMa).toContain('if (!mianXiangJingTou(mesh)) guDingChaoXiang(mesh);')
+    // 朝向数学钉死：水平 atan2(dx,dz) + 俯仰 -atan2(dy,水平距)，绕铰链 YXZ 序
+    expect(yuanMa).toContain('m.rotation.y = Math.atan2(dx, dz);')
+    expect(yuanMa).toContain('m.rotation.x = -Math.atan2(dy, Math.sqrt(dx * dx + dz * dz));')
+    // 贴图纵向翻转默认 true（图像底行=头侧落铰链边=画面下方）+ 水平镜像默认 true
+    // （贴合效果图"头右下/脚左上"构图，像素/比例零改动）
+    expect(yuanMa).toContain('var TIE_TU_FLIP_Y = true;')
+    expect(yuanMa).toContain('var TIE_TU_JING_XIANG = true;')
+    expect(yuanMa).toContain('if (TIE_TU_JING_XIANG) { tex.repeat.x = -1; tex.offset.x = 1; }')
+    // 压伏 mask 与 plane map 同签 flipY（轮廓场沿身体轴映射自洽，方向梯度自洽）
+    expect(yuanMa).toContain('maskKeLong.flipY = TIE_TU_FLIP_Y;')
+    // 俯卧朝向仅作兜底存在，禁止复活为默认路径
+    expect(yuanMa).not.toContain('guDingChaoXiang(mesh); // 固定朝向一次性设置')
+  })
+
+  it('FP-12 地面层跟随 billboard：阴影片与压草场均按实时姿态推导（贴地不脱节）', () => {
+    const yuanMa = duQuCaoDi()
+    // 阴影片：统一几何入口（后仰 sin 修正 + 后仰侧偏移 + 贴地 epsilon），创建与每帧共用
+    expect(yuanMa).toContain('function gengXinYinYing()')
+    expect(yuanMa).toContain('var changTou = 2 * s * Math.sin(e);')
+    expect(yuanMa).toContain('var touX = -Math.sin(psi), touZ = -Math.cos(psi);')
+    // 每帧同步（在呼吸微动之前刷新基准，避免被旧基准覆盖）
+    expect(yuanMa).toContain('gengXinYinYing();')
+    // 压草场：投影长/投影轴改读 billboard 实时角度，不再吃 CAN_SHU 俯卧姿态
+    expect(yuanMa).toContain('touYingChang = touYingKuan * Math.sin(Math.max(0, -(mesh.rotation.x || 0)))')
+    expect(yuanMa).toContain('caiZhi.uCharYaw.value = mesh.rotation.y')
+    // FP-12 去依赖：uCharPos 是 vec2（.x/.y 直读），不再强依赖 __fuZhenSanWei 反构的
+    // THREE.Vector2——该出口在部分环境永不解析，会把整条压弯注入静默掐死（草永不被压）
+    expect(yuanMa).toContain('m.uniforms.uCharPos = { value: { x: yaWanZhongXin.x, y: yaWanZhongXin.z } }')
+    expect(yuanMa).not.toContain('new THREE.Vector2(yaWanZhongXin')
   })
 
   it('父页预载深度贴图（App.vue 双图预载）', () => {

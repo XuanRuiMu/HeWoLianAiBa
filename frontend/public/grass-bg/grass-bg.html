@@ -1065,19 +1065,17 @@
     (function () {
         /* 人物平面参数（全工程唯一来源，勿在他处再写一份默认值——曾因两处各写一份，
            真正生效的是共享块这份，T3 块里的"新值"被静默忽略，调参全部白做）。
-           标定方法（FP-01，可复现）：把 4 个贴图关键点（球衣 3 号字、头、手机、白袜）
-           用引擎相机（fov60 / pos[5.75,1.34,5.27]）解析投影，与「最终效果图」同名点做
-           非线性最小二乘反解；同时把「投影后角色包围盒长宽比 = 源图 alpha 包围盒长宽比
-           1.408」作为残差一起最小化——否则透视会把角色横向拉宽（实测旧值长宽比 1.99，
-           即用户看到的“扁扁的”）。反解在等效解族内给出多组解，交付态取 FP-07 构图终值
-           （锚点 (2.90, 2.92)、chiCun 2.55、θ=10°、yaw=240°，逐条依据见 T3 块 CAN_SHU 注释）。
-           weiZhi 是平面【铰链点】＝贴图底边（脚/腿侧）中点的世界坐标；本层几何为底边过原点
-           的 2×2 平面（T3 块 geo.translate(0, 1, 0)），mesh.position 即铰链、头侧在局部 +Y。
-           qingJiao/pianHang 是铰链贴地的倾角与偏航终值，运行时不再需要"镜头补偿"类乘数。
+           FP-11 定案：角色平面为 billboard（法线每帧对准镜头，见 T3 mianXiangJingTou），
+           投影无掠射压缩，角色不再被压扁【用户裁定：比例永不可改】。
+           FP-12 定案锚点 (4.48, 3.63)：由"屏幕左移 40px"的世界偏移解析算出（相机右向量
+           水平分量 [0.65,-0.76] × 40px/190px每单位），实测角色中心落到 x≈578/960，
+           与「最终效果图」头部 x≈610 对齐；旧 FP-11 锚点 (4.62,3.47) 偏右。
+           weiZhi 是平面【铰链点】＝贴图底边（头/手机侧）中点的世界坐标；本层几何为底边过原点
+           的 2×2 平面（T3 块 geo.translate(0, 1, 0)），mesh.position 即铰链。
            weiZhi.y 只作标定基准；真实落位由草根高度实测（gongYong.ceLiangCaoGenGaoDu）写入
            mesh.position.y，测量未就绪才回退 CAN_SHU.jiaoLianGaoDu。 */
         var PEI_ZHI = {
-            weiZhi:  { x: 2.9, y: -0.0133, z: 2.92 },
+            weiZhi:  { x: 4.48, y: -0.0133, z: 3.63 },
             chiCun:  2.55
         };
         var YA_WAN = { r0: 0.12, r1: 0.68, strength: 0.75, huxi: 0.08, shuBiaoJia: 1.5, neiQiangDu: 1.0, wenLiBu: 0.02 };
@@ -1303,9 +1301,11 @@
             var exp = window.__experience;
             var mats = window.__grassMats;
             if (!mats || !mats.length || !exp || !exp.engine || !exp.engine.scene) return false;
-            var fuZhen = window.__fuZhenSanWei ? window.__fuZhenSanWei.qu() : null;
-            var THREE = fuZhen && fuZhen.THREE;
-            if (!THREE || !THREE.Vector2) return false;
+            /* uCharPos 是 vec2：带 x/y 的普通对象即可（three 的 vec2 uniform 直读 .x/.y）。
+               旧实现强依赖 __fuZhenSanWei 反构出的 THREE.Vector2——该出口在部分环境永不
+               解析（实测本页返回 null），整条压弯注入被静默掐死：草永不被压、轮廓场与
+               接触 AO 全部失效，而日志只有"mask 已接入"所以极易误判为已生效。
+               去掉这层依赖后，注入只依赖场景与草材质本身（FP-12）。 */
             // 压弯中心 = 角色锚点（世界坐标恒定，不随相机状态漂移）
             if (!yaWanZhongXin) yaWanZhongXin = { x: PEI_ZHI.weiZhi.x, z: PEI_ZHI.weiZhi.z };
             // uniform 声明必须位于全局作用域，插在 void main 之前，否则编译失败草叶片整体消失
@@ -1386,7 +1386,7 @@
                 var weiZhi = vs.indexOf(biaoJi);
                 var mainIdx = vs.indexOf('void main');
                 if (weiZhi === -1 || mainIdx === -1 || !m.uniforms) { m.__yaWanYiZhu = true; continue; }
-                m.uniforms.uCharPos = { value: new THREE.Vector2(yaWanZhongXin.x, yaWanZhongXin.z) };
+                m.uniforms.uCharPos = { value: { x: yaWanZhongXin.x, y: yaWanZhongXin.z } }; // FP-12：vec2 直读 .x/.y，不再依赖 THREE
                 m.uniforms.uCharR0 = { value: YA_WAN.r0 };
                 m.uniforms.uCharR1 = { value: YA_WAN.r1 };
                 m.uniforms.uCharStrength = { value: YA_WAN.strength };
@@ -1607,11 +1607,11 @@
          无 image 的纹理一律视为失败、绝不带病进场景（曾因此“揭露但吴昊阳不染色”）。
        - 遮挡：角色平面 depthTest=true、depthWrite=false → 前景草自然遮挡角色，
          角色吃引擎后处理（TAA/色彩通道），视觉与草地统一。
-       - 朝向（FP-02 贴地化）：固定朝向的世界物体（billboard 已删，人物不再随相机旋转）。
-         贴图底边（脚/腿侧）为铰链边贴地，平面自地面抬起倾角 θ（头侧上抬），
-         偏航 yaw 对齐默认构图——与草地同场景同相机渲染，任意相机运动（指针视差平移 +
-         lookAround 旋转漂移）下数学上零错位。朝向在 mesh 创建时一次性设置（guDingChaoXiang），
-         健康监测重建时经同一函数重设同样值。
+       - 朝向（FP-11 比例保真 billboard）：平面法线每帧对准真实镜头（mianXiangJingTou，
+         绕铰链点旋转、底边始终贴地），镜头永远正视贴图——投影为纯等比缩放，角色长宽比
+         与源图逐像素一致，任意相机运动（指针视差平移 + lookAround 旋转漂移）下比例零变化。
+         【用户裁定】比例永不可改；旧"俯卧贴地固定朝向"在低机位下必然压扁，已废弃为
+         镜头未就绪时的一次性兜底（guDingChaoXiang）。
        - 显现：不透明度由 reveal 进度直算（经 __wuGongYong.zhaoReveal 缓存进度源），
          导出 __wuTouMingDu 供调试面板。
        - 草压弯驱动：每帧强度更新（呼吸 sin + 鼠标增强 + 0.08 平滑）在本块 tongBu 内，
@@ -1622,22 +1622,33 @@
         /* 参数唯一来源：共享基础设施块已导出 window.__wuPEIZHI（含标定说明）。
            此处 || 后的兜底只覆盖"共享块缺席"一种情形，且必须与那份逐字同值——两份默认值
            各写一套曾导致"改了不生效"的静默失效，禁止在此另立新默认值。 */
-        var PEI_ZHI = window.__wuPEIZHI || { weiZhi: { x: 2.9, y: -0.0133, z: 2.92 }, chiCun: 2.55 };
+        var PEI_ZHI = window.__wuPEIZHI || { weiZhi: { x: 4.48, y: -0.0133, z: 3.63 }, chiCun: 2.55 };
         /* 贴地化参数（全部集中于此，URL 覆盖统一解析，禁止散落硬编码）：
-           - jiaoLianGaoDu  铰链点（脚边贴地点）世界 y：FP-07 新锚点 (2.90,2.92) 浏览器实测
-             草根+地形增量≈0.1416（measured）；仅作测量未就绪时的回退默认
-           - qingJiao       倾角 θ（度）：平面自地面抬起角；FP-07 取 10° 使俯卧更贴地、头侧投影落入效果图
-           - pianHang       偏航 yaw（度）：取 240°（正面朝相机、全身可见）。
-             贴图曾被水平镜像（旧 240° 渲染头左脚右），已翻转回正：
-             240° 下脚左上/头右下贴合效果图；阴影板/压草场/AO 同读此值自动跟随
-           - chiCunBeiShu   尺寸乘数：与 PEI_ZHI.chiCun 二选一放大；FP-07 体量主因在 chiCun=2.55 */
-        var CAN_SHU = { jiaoLianGaoDu: 0.1416, qingJiao: 10, pianHang: 240, chiCunBeiShu: 1 };
-        /* 贴图纵向翻转位：俯卧姿态构图的组成部分（与 qingJiao/pianHang 同属 FP-07 终值），
-           独立成常量而不进 CAN_SHU——那份字面量由单测钉死为四项贴地参数，不得夹带。
-           false ⇒ v=0（铰链＝贴地边）落在图像顶行（脚/腿侧），头侧随局部 +Y 抬起。
-           调参口 ?wuFlip=1 翻转（仅调试）。 */
-        var TIE_TU_FLIP_Y = false;
-        if (duQuURLShuZhi('wuFlip') === 1) TIE_TU_FLIP_Y = true;
+           - jiaoLianGaoDu  铰链点（贴地边中点）世界 y：仅作测量未就绪时的回退默认
+             （FP-11 起锚点移至 (4.62,3.47)，运行时以草根实测为准，此值不再是实测值）
+           - qingJiao/pianHang  FP-11 起【不再是角色朝向】（朝向由 mianXiangJingTou 每帧
+             对准镜头），仅作为地面层参数保留：接触阴影片的地面投影（cosθ 修正）与
+             压草轮廓场的身体轴映射（uCharYaw/uCharChang）仍读此二值——它们描述
+             "角色在地面上的落位故事"（头向 240° 方位、投影长 cos10° 修正），与
+             billboard 屏幕朝向解耦。禁止把这两个值当角色姿态调。
+           - chiCunBeiShu   尺寸乘数：FP-12 定案 0.32（FP-11 的 0.40 缩 1/5——缩小后卡片矮、
+             腿部不再大段悬在地面之上）；billboard 下屏上体量随此值线性缩放（等比、比例不变） */
+        var CAN_SHU = { jiaoLianGaoDu: 0.1416, qingJiao: 10, pianHang: 240, chiCunBeiShu: 0.32 };
+        /* 贴图纵向翻转位（FP-11 比例保真构图的组成部分）：
+           true ⇒ v=0（铰链＝贴地边）落在图像底行（头/手机侧），脚/腿侧随局部 +Y 在画面上方。
+           FP-11 billboard 正面朝镜头时，flipY=true 使屏幕显示=图像原样读法（头在下、脚在上），
+           与「最终效果图」头右下/脚左上的构图配合水平镜像（TIE_TU_JING_XIANG）达成。
+           压伏 mask 同读此值：flipY=true 后 mask v=0=图像底行=头侧，与"铰链=头侧贴地"的
+           billboard 语义一致，轮廓场沿身体轴的映射自洽（梯度在重映射空间内采样，方向自洽）。
+           调参口 ?wuFlip=0 退回不翻转（仅调试）。 */
+        var TIE_TU_FLIP_Y = true;
+        if (duQuURLShuZhi('wuFlip') === 0) TIE_TU_FLIP_Y = false;
+        /* 水平镜像位（FP-11）：billboard 正面朝镜头时图像按原样显示（头在画面左），
+           而「最终效果图」定案构图是头在右——FP-07 俯卧时代即以镜像构图贴合效果图
+           （旧 240° 俯卧渲染＝头右下/脚左上），此处经纹理 repeat.x=-1/offset.x=1 实现
+           同一构图，不改动 PNG 像素、不改比例。调参口 ?wuJingXiang=0 关闭（仅调试）。 */
+        var TIE_TU_JING_XIANG = true;
+        if (duQuURLShuZhi('wuJingXiang') === 0) TIE_TU_JING_XIANG = false;
         /* FP-09 构图镜头（扩权，可选）：绝对机位会破坏引擎已有朝向（曾指向天空）。
            默认关闭；仅调试时 ?xiangJi=1 配合 camX/camY/camZ、lookX/lookY/lookZ、camFov 打开。
            ⚠️ 块注释体内禁止出现星号斜杠相邻的两个字符（URL 名一律写全，不用通配号）：
@@ -1801,9 +1812,61 @@
         var gongYong = window.__wuGongYong || null;
         var yaWanWanCheng = false, yaWanCacheTime = 0;
 
-        /* 固定朝向（FP-02 核心替换 billboard）：创建时一次性设置，之后永不随相机变化。
-           前置：geometry 已 translate(0,1,0)——2×2 平面底边过原点（局部 y∈[0,2]），
-           mesh.position 即铰链点（贴图底边=脚/腿侧贴地点），头侧在局部 +Y。
+        /* FP-11 比例保真 billboard（核心朝向，每帧调用）：平面法线对准真实镜头（绕铰链点旋转），
+           镜头永远正视贴图 ⇒ 投影=纯等比缩放，角色长宽比与源图逐像素一致，
+           鼠标晃动时比例零变化。【用户裁定】比例永不可改——俯卧贴地姿态在低机位下
+           必然以 sin(视角差) 压扁（θ=10° 时屏上高度只剩约 15%~25%），任何标定都救不了，
+           故废弃俯卧朝向，改用唯一数学正解：平面 ⟂ 视线。
+           数学（YXZ 序 world=Ry·Rx·local，绕 mesh 原点=铰链旋转，底边始终贴地）：
+             dir = normalize(镜头世界位 - 铰链)（取 cam.matrixWorld 平移分量，含父级组偏移）
+             rotation.y = atan2(dir.x, dir.z)   —— 水平对准：Ry·(0,0,1)=(sinψ,0,cosψ)∝(dx,dz)
+             rotation.x = -atan2(dir.y, √(dx²+dz²)) —— 俯仰对准：镜头高于铰链时卡片后仰 e
+           边界自检：dir 水平（dy=0）⇒ rotation.x=0（竖直卡片）；镜头升高 ⇒ e 增大、卡片后仰。
+           镜头不可解析时返回 false，调用方回退 guDingChaoXiang（下一帧 billboard 接管）。 */
+        function mianXiangJingTou(m) {
+            var exp = window.__experience;
+            var camWrap = exp && exp.engine && exp.engine.camera;
+            var cam = camWrap && (camWrap.instance || (camWrap.group && camWrap.group.children && camWrap.group.children[0]));
+            if (!cam || !cam.matrixWorld || !cam.matrixWorld.elements || !m.position) return false;
+            var be = cam.matrixWorld.elements;
+            var dx = be[12] - m.position.x, dy = be[13] - m.position.y, dz = be[14] - m.position.z;
+            var dm = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            if (!(dm > 1e-4) || !isFinite(dm)) return false;
+            dx /= dm; dy /= dm; dz /= dm;
+            m.rotation.order = 'YXZ';
+            m.rotation.y = Math.atan2(dx, dz);
+            m.rotation.x = -Math.atan2(dy, Math.sqrt(dx * dx + dz * dz));
+            return true;
+        }
+        /* FP-12 接触阴影片几何：与压草场同款推导——地面落位=卡片的地面投影。
+           卡片绕铰链后仰 e（rotation.x=-e）⇒ 顶端地面偏移长 = 卡高×sin e，
+           方向 (−sinψ,−cosψ)=卡片后仰侧（远离镜头）；横向宽=卡宽 2s（不随倾角缩短）。
+           旧俯卧公式用 cos(倾角)×卡长，在 billboard 下会把阴影甩到角色前方一大片，
+           与"身体压在下面"的观感对不上。地面投影随镜头俯仰/偏航变化，故每帧按
+           billboard 实时姿态同步——阴影始终压在身体正下方，屏幕上表现为角色剪影
+           周围与身下的草被压暗，即贴地感。
+           ⚠️ 作用域：必须留在 T3 IIFE 顶层（tongBu 每帧与创建路径共用），
+           挪进 chuangJian 内会让每帧调用抛 ReferenceError 并静默掐断整条每帧链。 */
+        function gengXinYinYing() {
+            if (!yinYingMesh || !mesh) return;
+            var s = mesh.scale.x || 1;
+            var e = -(mesh.rotation.x || 0); if (!(e > 0)) e = 0;
+            var psi = mesh.rotation.y || 0;
+            var changTou = 2 * s * Math.sin(e); // 卡片顶端地面偏移长（后仰 sin 修正）
+            var touX = -Math.sin(psi), touZ = -Math.cos(psi); // 后仰侧地面单位向量（远离镜头）
+            var zhongXinJu = changTou * (0.5 + YIN_YING.pianYi);
+            yinYingMesh.rotation.order = 'YXZ';
+            yinYingMesh.rotation.y = psi;
+            yinYingMesh.rotation.x = -Math.PI / 2;
+            yinYingMesh.position.set(mesh.position.x + touX * zhongXinJu,
+                mesh.position.y + YIN_YING.eP,
+                mesh.position.z + touZ * zhongXinJu);
+            yinJiChuX = s * YIN_YING.waiKuo;             // plane 宽 2 → 全宽 2s×1.15
+            yinJiChuY = (changTou * YIN_YING.waiKuo) / 2; // plane 高 2 → 全投影长 ×1.15
+            yinYingMesh.scale.set(yinJiChuX, yinJiChuY, 1);
+        }
+        /* 回退固定朝向（仅 mianXiangJingTou 失败时的一次性姿态，原 FP-02 俯卧几何）。
+           创建时一次性设置，之后每帧由 mianXiangJingTou 接管（重建时同样先经此兜底）。
            Euler 序 'YXZ'：世界向量 = Ry(yaw)·Rx(pitch)·v——偏航绕世界竖直轴（先外层），
            俯仰在其后，符合“偏航定整体朝向、俯仰定抬起角”的直觉模型。
            倾角符号推导（右手系，绕 +X 正角 φ 的旋转矩阵 Rx(φ)：
@@ -2071,34 +2134,15 @@
                     });
                     var yinGeo = exp.revealMesh.mesh.geometry.clone(); // 2×2 中心原点（阴影中心=投影矩形中心，非铰链）
                     yinYingMesh = new gz.meshCtor(yinGeo, yinMat);
-                    /* 贴地朝向：与人物同 yaw，rotation.x=-π/2 躺平——plane 局部 +Y（贴图 v+）
-                       经此旋转指向 (−sinψ,0,−cosψ)=身体头侧地面方向（与人物投影轴一致），
-                       渐变长轴自然对齐身体轴。 */
-                    yinYingMesh.rotation.order = 'YXZ';
-                    yinYingMesh.rotation.y = CAN_SHU.pianHang * Math.PI / 180;
-                    yinYingMesh.rotation.x = -Math.PI / 2;
-                    var s = (PEI_ZHI.chiCun / 2) * CAN_SHU.chiCunBeiShu;
-                    var changTou = 2 * s * Math.cos(CAN_SHU.qingJiao * Math.PI / 180); // 地面投影长（倾角 cos 修正）
-                    var psi = CAN_SHU.pianHang * Math.PI / 180;
-                    var touX = -Math.sin(psi), touZ = -Math.cos(psi); // 头侧地面单位向量（身体遮挡光线方向）
-                    /* 铰链语义：人物 mesh.position 是贴图底边中点（脚侧），地面投影矩形自铰链
-                       向头侧延伸 changTou，其矩形中心在铰链 + 头侧×半长；pianYi 再向身体头侧
-                       （遮光方向）微偏。 */
-                    var zhongXinJu = changTou * (0.5 + YIN_YING.pianYi);
-                    /* FP-06 R1：阴影片 y 与草根实测同源；测量失败才回退 CAN_SHU.jiaoLianGaoDu */
+                    /* 贴地朝向与几何全部交给 gengXinYinYing（按 billboard 实时姿态推导，
+                       见函数注）：创建时量一次草根高度，之后每帧随镜头晃动同步。 */
                     var yaoGaoDu = CAN_SHU.jiaoLianGaoDu;
                     if (gongYong && gongYong.ceLiangCaoGenGaoDu) {
                         var ceYin = gongYong.ceLiangCaoGenGaoDu(PEI_ZHI.weiZhi.x, PEI_ZHI.weiZhi.z);
                         if (ceYin != null && isFinite(ceYin)) yaoGaoDu = ceYin;
                     }
                     dangQianGaoDu = yaoGaoDu;
-                    yinYingMesh.position.set(
-                        (mesh ? mesh.position.x : PEI_ZHI.weiZhi.x) + touX * zhongXinJu,
-                        yaoGaoDu + YIN_YING.eP,
-                        (mesh ? mesh.position.z : PEI_ZHI.weiZhi.z) + touZ * zhongXinJu);
-                    yinJiChuX = s * YIN_YING.waiKuo;                // plane 宽 2 → 全宽 2s×1.15
-                    yinJiChuY = (changTou * YIN_YING.waiKuo) / 2;    // plane 高 2 → 全投影长 ×1.15
-                    yinYingMesh.scale.set(yinJiChuX, yinJiChuY, 1);
+                    gengXinYinYing();
                     yinYingMesh.renderOrder = -1;
                     yinYingMesh.name = '__wu_yinying_plane__';
                     exp.engine.scene.add(yinYingMesh);
@@ -2169,6 +2213,10 @@
                            贴地边是脚/腿侧＝图像顶行，故 v=0 ↔ 图像顶 ⇒ flipY=false。
                            plane map / 压伏 mask / 深度法线图共用 TIE_TU_FLIP_Y，三者必须同签。 */
                         tex.flipY = TIE_TU_FLIP_Y;
+                        /* FP-11 水平镜像（构图贴合效果图，像素/比例零改动）：
+                           repeat.x=-1 + offset.x=1 ⇒ u'=1-u ∈[0,1]，屏幕显示=图像水平镜像
+                           （头右下/脚左上）。offset 保证采样域不越界，无需改 wrap 模式。 */
+                        if (TIE_TU_JING_XIANG) { tex.repeat.x = -1; tex.offset.x = 1; }
                         tex.needsUpdate = true;
                         /* 材质在构造参数里带 map（已验证可用路径）；贴图源用 keLongDuLi 拆源克隆，
                            .image 读写代理共享 Source 的串改陷阱见 keLongDuLi 注。 */
@@ -2214,7 +2262,7 @@
                     __wuDLog('[T3] 铰链贴地：草根 y=' + yaoGaoDu.toFixed(4) +
                         ' 锚点 (' + PEI_ZHI.weiZhi.x.toFixed(3) + ',' + PEI_ZHI.weiZhi.z.toFixed(3) +
                         ') 边长 ' + (PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu).toFixed(3));
-                    guDingChaoXiang(mesh); // 固定朝向一次性设置（永不随相机变化；重建时经此重设）
+                    if (!mianXiangJingTou(mesh)) guDingChaoXiang(mesh); // FP-11 billboard 优先，镜头未就绪回退俯卧兜底
                     mesh.name = '__wu_zhujue_plane__';
                     exp.engine.scene.add(mesh);
                     window.__wuZhuJueMesh = mesh;
@@ -2264,11 +2312,13 @@
         }
         dengJiChu();
 
-        /* 每帧：reveal 直算透明度 + 压弯驱动 + 健康监测（固定朝向为世界物体，无需每帧同步） */
+        /* 每帧：billboard 对准镜头（FP-11 唯一 rotation 写入点）+ reveal 直算透明度 +
+           压弯驱动 + 健康监测（比例保真：镜头每帧被正视，晃动下投影零形变） */
         (function tongBu() {
             requestAnimationFrame(tongBu);
             if (!yiJiuXu || !mesh || document.hidden) return;
             zhenShu++;
+            mianXiangJingTou(mesh); // FP-11：法线每帧对准镜头，角色比例时时刻刻与源图逐像素一致
             try { window.__wuTongBuXinTiao = Date.now(); } catch (e) {}
             var exp = window.__experience;
             // 健康监测每 60 帧：mesh 挂载中即主道路为真；被引擎移除 → 降级并经 dengJiChu 重建
@@ -2361,6 +2411,9 @@
             window.__wuTouMingDu = bu;
             mesh.material.opacity = bu;
             var huXiZhen = gongYong ? Math.sin((nowMs - gongYong.t0) / 1000 * 0.9) : 0;
+            /* FP-12：阴影片每帧跟 billboard 姿态（地面落位随镜头俯仰/偏航变化），
+               随后呼吸微动在最新基准上摆动 */
+            gengXinYinYing();
             /* 阴影片呼吸微动（FP-03）：随压伏呼吸 sin 同相位 1-2% 尺寸/不透明度微调（活物感），
                不透明度上限 YIN_YING.shangXian；随 reveal 淡入（与人物同显现节奏） */
             if (yinYingMesh) {
@@ -2463,7 +2516,11 @@
                 // mask 纹理后到（草材质先注入）时在此即时接入，双时序都不崩
                 var maskKeLongCur = gongYong.quMaskWenLi();
                 var touYingKuan = PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu;
-                var touYingChang = touYingKuan * Math.cos(CAN_SHU.qingJiao * Math.PI / 180);
+                /* FP-12：压草场几何改按 billboard 实时姿态推导（与阴影片同款）——
+                   卡片后仰 e ⇒ 身体地面投影长 = 卡高×sin e（旧俯卧式 cos θ 会让压伏区
+                   甩到角色前方一大片）；投影轴 = 卡片后仰侧（远离镜头），与屏幕上
+                   "身体自近向远铺开"一致。压伏于是落在角色剪影周围与身下的草上。 */
+                var touYingChang = touYingKuan * Math.sin(Math.max(0, -(mesh.rotation.x || 0)));
                 for (var i = 0; i < gongYong.yaWanCaiZhi.length; i++) {
                     var caiZhi = gongYong.yaWanCaiZhi[i].uniforms;
                     caiZhi.uCharStrength.value = zuiZhong;
@@ -2471,7 +2528,7 @@
                     if (tiao.r1 != null) caiZhi.uCharR1.value = tiao.r1;
                     caiZhi.uCharMask.value = maskKeLongCur;
                     caiZhi.uCharMaskOn.value = maskKeLongCur ? 1 : 0;
-                    caiZhi.uCharYaw.value = CAN_SHU.pianHang * Math.PI / 180;
+                    caiZhi.uCharYaw.value = mesh.rotation.y; // FP-12：billboard 实时偏航（投影轴=后仰侧）
                     caiZhi.uCharKuan.value = touYingKuan;
                     caiZhi.uCharChang.value = touYingChang;
                     // FP-06：轮廓内强度 / 梯度采样步长走统一配置（URL/调参钩子可覆盖）
