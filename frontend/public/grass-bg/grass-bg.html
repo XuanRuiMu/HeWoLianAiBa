@@ -1461,6 +1461,18 @@
                     'float qWd=max(dWd-uCharKuan*0.5,0.0);' +
                     'bendingIntensity=bendingIntensity*(1.0-step(0.15,1.0-smoothstep(uCharKuan*0.7,uCharKuan*1.6,qWd)));}';
             }
+            /* FP-R14 统一压感场：身下判定写入所有吃弯折的层。
+               草叶=顶点弯折；草坪/地皮=片元染色（uBendingColorIntensity）。
+               被压部分对鼠标/风一律永静态。 */
+            function diXingDingSi() {
+                return '{vec2 twd=vWorldPos.xz-uCharPos;' +
+                    'float dWd=length(twd);' +
+                    'float cWd=cos(uCharYaw);float sWd=sin(uCharYaw);' +
+                    'float lWd=twd.x*cWd-twd.y*sWd;' +
+                    'float zWd=-(twd.x*sWd+twd.y*cWd);' +
+                    'float qWd=length(vec2(lWd,zWd-clamp(zWd,0.0,uCharChang)));' +
+                    'bendingIntensity=bendingIntensity*(1.0-step(0.40,1.0-smoothstep(uCharKuan*0.7,uCharKuan*1.6,qWd)));}';
+            }
             var youXin = false;
             for (var key in houXuan) {
                 var m = houXuan[key];
@@ -1470,9 +1482,30 @@
                 var caoWei = vs.indexOf(biaoJiCao);
                 var huaWei = vs.indexOf(biaoJiHua);
                 if (mainIdx === -1 || !m.uniforms) { continue; }
-                /* FP-R12：只注入带草标记的材质。花/点精灵/其它弯折材质一律跳过——
-                   给它们改 shader 会把 WebGL 打挂、iframe 崩溃（实测 ya 到 6 即帧死）。
-                   身下零交互由草的钉死场 + 前景遮挡完成。 */
+                var fsYuan = m.fragmentShader || '';
+                var diXingBiao = 'float bendingIntensity=abs(bendData.r*uBendingFactor*uBendingColorIntensity);';
+                var diXingWei = fsYuan.indexOf(diXingBiao);
+                /* FP-R14：草坪/地皮片元压感（染色随鼠标 → 身下永不变色） */
+                if (diXingWei !== -1 && !m.__yaWanYiZhu) {
+                    m.uniforms.uCharPos = { value: { x: yaWanZhongXin.x, y: yaWanZhongXin.z } };
+                    m.uniforms.uCharPos.value.toArray = function (a) { a = a || []; a[0] = this.x; a[1] = this.y; return a; };
+                    m.uniforms.uCharYaw = { value: 0 };
+                    m.uniforms.uCharKuan = { value: 1 };
+                    m.uniforms.uCharChang = { value: 1 };
+                    var diSheng = 'uniform vec2 uCharPos;uniform float uCharYaw;uniform float uCharKuan;uniform float uCharChang;\n';
+                    var fsMain = fsYuan.indexOf('void main');
+                    if (fsMain !== -1) {
+                        m.fragmentShader = fsYuan.slice(0, fsMain) + diSheng +
+                            fsYuan.slice(fsMain, diXingWei + diXingBiao.length) + diXingDingSi() + fsYuan.slice(diXingWei + diXingBiao.length);
+                    }
+                    m.needsUpdate = true;
+                    m.__yaWanYiZhu = true;
+                    yaWanCaiZhi.push(m);
+                    yaWanCachedMats.push(m);
+                    youXin = true;
+                    continue;
+                }
+                /* 花/点精灵不改 shader（曾把 WebGL 打挂） */
                 if (caoWei === -1) { continue; }
                 m.uniforms.uCharPos = { value: { x: yaWanZhongXin.x, y: yaWanZhongXin.z } }; // FP-12：vec2 直读 .x/.y，不再依赖 THREE
                 // three 的 vec2 上传会调 value.toArray：纯 {x,y} 会每帧抛 TypeError 并打断 uniform 上传
