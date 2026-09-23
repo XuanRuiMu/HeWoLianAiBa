@@ -1371,7 +1371,7 @@
                引擎草顶点着色器执行序：terrainAdjustedNormal → 风 → 本注入段 → 压弯：
                 ① 风动抑制：把 finalGrassInclination 按"被压度"拉回 terrainAdjustedNormal。
                 ② 前景高草：中等倾角倒向身体（重力搭在身上，不是压平），稀疏高草叠上剪影。 */
-            var zhuRuDuan = 'vWuCaoAO=0.0;float wuYa=0.0;float wuBian=0.0;float wuWai=0.0;float wuQianRou=0.0;float wuPinTi=0.0;' +
+            var zhuRuDuan = 'vWuCaoAO=0.0;float wuYa=0.0;float wuBian=0.0;float wuWai=0.0;float wuQianRou=0.0;float wuPinTi=0.0;float wuNei=0.0;' +
                 'vec2 tocW=(modelMatrix*vec4(grassOrigin,1.0)).xz-uCharPos;' +
                 'float dcW=length(tocW);' +
                 'float charInfl=(1.0-smoothstep(uCharR0,uCharR1,dcW))*uCharStrength;' +
@@ -1396,7 +1396,7 @@
                 'vec2 wuDirLocal;' +
                 'if(wuGradLen>0.001){wuDirLocal=normalize(vec2(-wuGrad.x,-wuGrad.y));}' +
                 'else{wuDirLocal=normalize(vec2(wuLx,wuZhou-uCharChang*0.5)+vec2(0.0001,0.0001));}' +
-                'float wuNei=smoothstep(uCharEdge,uCharEdge+0.2,wuA);' +
+                'wuNei=smoothstep(uCharEdge,uCharEdge+0.2,wuA);' +
                 'wuBian=smoothstep(0.0,uCharEdge,wuA)*(1.0-wuNei);' +
                 'float wuHuanR=max(uCharWaiHuan,0.001);' +
                 'float wuAd=texture2D(uCharMask,clamp(wuUV+vec2(wuHuanR,0.0),0.0,1.0)).a;' +
