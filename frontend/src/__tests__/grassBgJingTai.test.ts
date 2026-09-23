@@ -177,7 +177,7 @@ describe('FP-01 草地静态兜底', () => {
     // FP-R1：接触物理层参数（足迹倍数/压塌环/身前高草微搭）
     expect(yuanMa).toContain('var YA_WAN = { r0: 0.12, r1: 0.68, strength: 1.15, huxi: 0.08, shuBiaoJia: 1.5, neiQiangDu: 1.15, wenLiBu: 0.02,')
     expect(yuanMa).toContain('fengYiZhi: 1.0, qianJingChang: 0.32, qianJingQiang: 0.7, yaSui: 0.04, chuanTou: 1.0, zaSheng: 0.4,')
-    expect(yuanMa).toContain('qianGao: 2.4, qianQing: 0.45, qianXi: 0.18 };')
+    expect(yuanMa).toContain('qianGao: 3.0, qianQing: 0.55, qianXi: 0.08 };')
     expect(yuanMa).toContain('zuKuanXi: 1.0, zuChangXi: 1.0,')
     expect(yuanMa).toContain('waiHuan: 0.3, waiSui: 0.14, waiFan: 0.85,')
     expect(yuanMa).toContain('bendingIntensity=bendingIntensity*(1.0-step(0.40,wuPin));')

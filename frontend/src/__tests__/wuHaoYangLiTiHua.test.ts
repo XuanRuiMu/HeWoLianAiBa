@@ -189,7 +189,7 @@ describe('FP-10 吴昊阳立体化', () => {
     expect(yuanMa).toContain('fengYiZhi: 1.0, qianJingChang: 0.32, qianJingQiang: 0.7, yaSui: 0.04, chuanTou: 1.0, zaSheng: 0.4,')
     expect(yuanMa).toContain('zuKuanXi: 1.0, zuChangXi: 1.0,')
     expect(yuanMa).toContain('waiHuan: 0.3, waiSui: 0.14, waiFan: 0.85,')
-    expect(yuanMa).toContain('qianGao: 2.4, qianQing: 0.45, qianXi: 0.18 };')
+    expect(yuanMa).toContain('qianGao: 3.0, qianQing: 0.55, qianXi: 0.08 };')
     expect(yuanMa).toContain('var DI_BIAN = { jianYin: 0.035 };')
   })
 
@@ -203,7 +203,7 @@ describe('FP-10 吴昊阳立体化', () => {
     expect(yuanMa).toContain("'float wuWaiSui=mix(1.0,uCharWaiSui,wuWai);'")
     expect(yuanMa).toContain("'grassScale*=(wuYaSui*wuWaiSui*(1.0+wuGai*uCharQianGao));'")
     // ③ 周身倒伏回盖：轮廓边+外环+身前全覆盖，高草向身体倒
-    expect(yuanMa).toContain("'float wuGaiZhou=clamp(max(max(wuBian,wuWai*0.9),wuQianRou),0.0,1.0);'")
+    expect(yuanMa).toContain("'float wuGaiZhou=clamp(max(max(wuBian*1.2,wuWai),wuQianRou*1.1),0.0,1.0);'")
     expect(yuanMa).toContain("'float wuGai=wuGaiZhou*step(uCharQianXi,wuHash);'")
     // ⑤ 倒伏带自然起伏
     expect(yuanMa).toContain("'wuQianRou*=mix(1.0-uCharZaSheng,1.0,wuZao);'")
