@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>吴昊阳草地测试</title>
+  <style>
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0a0a12; }
+    iframe {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      pointer-events: auto;
+      z-index: 0;
+    }
+    .ti-shi {
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
+      z-index: 10;
+      color: #9fe8b0;
+      background: rgba(6, 8, 20, 0.72);
+      border: 1px solid rgba(159, 232, 176, 0.35);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font: 12px/1.6 Consolas, monospace;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="caoDi" src="/grass-bg/grass-bg.html?v=1.2.2&debug=0" allow="autoplay"></iframe>
+  <div class="ti-shi">草地测试页 · 无登录框<br>鼠标直接划过草地：正常草会动，吴昊阳身下应不动</div>
+  <script>
+    // 版本跟随站点配置时改这里的 v=
+  </script>
+</body>
+</html>
