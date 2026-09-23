@@ -2,7 +2,8 @@
 
 > 精简版 · 2026-09-23 · 供下一位接手。**先读完再动手。**
 > 已推送：`0a6758b`（FP-11/12）、`c22447b`（FP-13），版本 `1.1.4`。
-> 前后对比截图：`临时日志/FP11-终验截图.jpg`（修复前→比例已正）、`FP12`（缩小左移）、`FP13`（伪3D深化）。
+> **FP-14（本段，版本 `1.1.5`）已落地未推送**——按项目规则走「总控制台」推送，禁手动 `git push`。
+> 前后对比截图：`临时日志/FP11-终验截图.jpg`（修复前→比例已正）、`FP12`（缩小左移）、`FP13`（伪3D深化）、`测试截图/FP-14-物理深化-*.png`。
 
 ## 一、用户的根本目的（原文精炼 + 历次裁定）
 
@@ -25,9 +26,11 @@
 | 贴图 | `flipY=true` + `repeat.x=-1/offset.x=1` | 头右下/脚左上贴合参考构图 |
 | 地面层 | 阴影片+压草场按 billboard 实时姿态：投影长=卡宽×sin(后仰角)、轴=远离镜头侧 | 压在身体正下方 |
 | 伪3D | `fengYiZhi=1.0`（身下草不随风）、`qianJingChang=0.28`/`qianJingQiang=0.6`（前景草遮角色）、`DI_BIAN.jianYin=0.035`（底边渐隐）、压伏与 AO 乘 `bu` 淡入 | 见"执行序" |
+| FP-14 物理深化 | **原则：一切效果服从现实物理**（压在身下的草被体重钉死不动）。`yaSui=0.06`（体重压塌草高至 6%）、身下 `bendingIntensity` 归零（切断鼠标弯折贴图）、`chuanTou=0.85`/哈希稀疏（边缘长草受重力倒伏回盖角色）、`zaSheng=0.45`（倒伏带自然起伏）、阴影=人物剪影软接触痕（非圆斑）、`WEI_CHEN.biLi=0.018`（体重微沉卡高 1.8%，只改 y） | 比例零改动 |
 
 **比例自证方法**（看不到图也能验）：浏览器内把平面四角投影到屏幕，量"底边/侧边"长度比。
-旧俯卧≈**6.7**（压扁 85%）→ 现在 **1.073**（余下是卡片后仰的正常透视）。**这条线只能更小，不许回退。**
+旧俯卧≈**6.7**（压扁 85%）→ FP-13 **1.073** → FP-14 屏幕像素距 **0.99**（方卡正视应≈1.0）。
+**这条线只能更接近 1.0，不许回退。** ⚠️ 量 NDC 距离必须乘宽高比，否则会误报 0.62。
 
 ## 三、踩过的坑（务必别重犯）
 
@@ -43,6 +46,7 @@
 **JS/工程类（最致命）**
 6. **每帧调用的函数必须定义在 T3 IIFE 顶层**。我一度把 `gengXinYinYing` 定义在 `chuangJian()` 里 ⇒ tongBu 抛 `ReferenceError`，**每帧后半段（阴影片/压弯驱动/注入检查）被整条静默掐断**，而日志仍报"mask 已接入"，极易误判已生效。
 7. **压弯注入曾因 `__fuZhenSanWei.qu()` 永不解析而静默失效**：它强依赖反构出的 `THREE.Vector2`，该出口在部分环境返回 null ⇒ `zhuRuYaWan` 直接 return false，**草一次都没被压过**。vec2 uniform 用普通对象 `{x,y}` 即可（three 直读 .x/.y），已去掉该依赖。
+7b. **但纯 `{x,y}` 还不够**：three 的 vec2 上传会调 `value.toArray()`，缺了会**每帧抛 `TypeError`** 并打断后续 uniform（压弯强度变 NaN、面板报 0/0）。必须补 `toArray`（FP-14 已修，测试有钉）。
 8. **PEI_ZHI 有两份默认值**（共享块 + T3 兜底），改一处不生效——必须两处逐字同值。
 
 **验证类**
@@ -57,14 +61,15 @@
 - 测试：`src/__tests__/wuHaoYangLiTiHua.test.ts`、`src/__tests__/grassBgJingTai.test.ts`（钉子很多，改代码先跑这两个，当前 65 项全绿）
 - 版本：`src/config/站点配置.ts`（**改 grass-bg.html 必升版本**，否则 iframe 缓存不刷新）
 - 调参 URL：`?wuX/wuZ/wuScale/wuTheta/wuYaw/wuFlip=0/wuJingXiang=0/wuDiBian=0.05/wuYinYing=0/debug=1`
-- 运行时调参：控制台 `__yaWanTiao = { strength, huxi, shuBiaoJia, r0, r1, neiQiangDu, wenLiBu, aoDu, fengYiZhi, qianJingChang, qianJingQiang }`
+- 运行时调参：控制台 `__yaWanTiao = { strength, huxi, shuBiaoJia, r0, r1, neiQiangDu, wenLiBu, aoDu, fengYiZhi, qianJingChang, qianJingQiang, yaSui, chuanTou, zaSheng }`
 
 ## 五、未做 / 下一步可选（都要先问用户）
 
 - **⑤ 的取舍**：中心对准让比例更准（1.073），但卡片更直立（俯仰 −21.4° vs −31.1°）、"趴"的感觉略回退。若用户觉得"又站起来了"，**回退⑤一行即可**（改回对准铰链，梯形回 1.11）。
-- 呼吸微动（y 平移 ±0.003，不缩放）：更"活物压在草上"，但与"悬空"观感冲突，需用户定夺。
-- 光照染色融合（让角色吃草地环境紫光）：融入度更高，但有毁原色风险。
+- 呼吸微动（y 平移 ±0.003，不缩放）：更"活物压在草上"，但与"身下草钉死"的物理原则冲突（活物会带动身下草），需用户定夺。
+- 光照染色融合（让角色吃草地环境紫光）：融入度更高，但有毁原色风险。**用户本轮未选 G**。
 - 死代码清理：`wuhaoyang-3d.png` 预载 + LI_TI shader 段（测试有钉，需先解钉）。
+- FP-14 调参口：`__yaWanTiao` 新增 `yaSui / chuanTou / zaSheng`；URL 新增 `?wuChen=`（微沉比例）。
 
 ## 六、环境备注（本机沙箱实测）
 

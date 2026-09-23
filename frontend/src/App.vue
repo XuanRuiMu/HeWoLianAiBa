@@ -107,10 +107,6 @@ function yuJiaZaiCaoDiZiYuan() {
     const tu = new Image()
     tu.decoding = 'async'
     tu.src = '/grass-bg/wuhaoyang-2d.png'
-    // FP-10 立体化：深度法线打包贴图同步预载（深度就绪越早，浮雕淡入越早）
-    const shenDuTu = new Image()
-    shenDuTu.decoding = 'async'
-    shenDuTu.src = '/grass-bg/wuhaoyang-3d.png'
   } catch {
     // 预载失败不影响正常功能，下次仍走网络加载
   }
@@ -122,7 +118,6 @@ function yuJiaZaiCaoDiZiYuan() {
         .then((huanCun) =>
           Promise.all([
             huanCun.add('/grass-bg/wuhaoyang-2d.png').catch(() => {}),
-            huanCun.add('/grass-bg/wuhaoyang-3d.png').catch(() => {}),
           ]).then(() => {}),
         )
         .catch(() => {})

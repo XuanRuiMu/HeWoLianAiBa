@@ -7,30 +7,38 @@ function duQuCaoDi(): string {
   return fs.readFileSync(wenJian, 'utf-8')
 }
 
-/* FP-10 吴昊阳立体化（2.5D 深度浮雕）：
-   纯 2D 平面在镜头晃动时无内部视差/轮廓起伏/光照变化，一眼纸片。
-   不变式：深度贴图走引擎同类克隆路径；顶点位移+片元视差+法线重光照注入
-   MeshBasicMaterial.onBeforeCompile；uWuShenDuKai=0 时与纯平面逐像素一致（优雅降级）；
-   草地接触 AO 与压伏场同 mask；构图终值对齐最终效果图（FP-07 实测）。 */
+/* FP-R2 吴昊阳立体化链路冗余清除：
+   深度浮雕（LI_TI 顶点位移/片元视差/法线重光照 + wuhaoyang-3d 预载）已整段删除。
+   本文件其余不变式仍钉：GANG_TI 参考保留、细分几何、DI_BIAN、billboard 比例、
+   接触 AO / 压伏场 / 阴影片、FP-R1 全身足迹（禁止回退 sin 压缩）。 */
 describe('FP-10 吴昊阳立体化', () => {
-  it('深度法线打包贴图存在且在体积预算内', () => {
-    const luJing = path.resolve(process.cwd(), 'public', 'grass-bg', 'wuhaoyang-3d.png')
-    expect(fs.existsSync(luJing)).toBe(true)
-    const daXiao = fs.statSync(luJing).size
-    expect(daXiao).toBeGreaterThan(10 * 1024)
-    expect(daXiao).toBeLessThan(2 * 1024 * 1024)
-  })
-
-  it('立体化配置集中 LI_TI 且深度浮雕永不禁用 URL 强开', () => {
+  it('FP-R2 深度浮雕链路零残留：无 LI_TI / zaiRuShenDu / wuhaoyang-3d 引用', () => {
     const yuanMa = duQuCaoDi()
-    expect(yuanMa).toContain('var LI_TI = { shenDuZuiDa: 0.32, shiCha: 0.028, aoQiangDu: 0.55, guangQiang: 1.0, qiYong: false }')
-    // 深度浮雕退役：qiYong 写死 false，wuLiTi/wuDepth/wuShiCha/wuAO/wuGuangQiang
-    // URL 强开全部移除——角色像素永不形变，无任何路径可重新激活 shader 形变
+    expect(yuanMa).not.toContain('var LI_TI')
+    expect(yuanMa).not.toContain('LI_TI_DING_DIAN')
+    expect(yuanMa).not.toContain('LI_TI_PIAN_YUAN')
+    expect(yuanMa).not.toContain('LI_TI_SHI_CHA_TI')
+    expect(yuanMa).not.toContain('LI_TI_MAP_TI')
+    expect(yuanMa).not.toContain('LI_TI_GUANG_TI')
+    expect(yuanMa).not.toContain('LI_TI_ZHU_TI')
+    expect(yuanMa).not.toContain('function zaiRuShenDu')
+    expect(yuanMa).not.toContain('wuhaoyang-3d')
+    expect(yuanMa).not.toContain('wu-liTi')
+    expect(yuanMa).not.toContain('uWuShenDu')
+    expect(yuanMa).not.toContain('__wuLiTi')
+    expect(yuanMa).not.toContain('liTi.tongYi')
+    // URL 强开保持删除
     expect(yuanMa).not.toContain("duQuURLShuZhi('wuLiTi')")
     expect(yuanMa).not.toContain("duQuURLShuZhi('wuDepth')")
     expect(yuanMa).not.toContain("duQuURLShuZhi('wuShiCha')")
     expect(yuanMa).not.toContain("duQuURLShuZhi('wuAO')")
     expect(yuanMa).not.toContain("duQuURLShuZhi('wuGuangQiang')")
+  })
+
+  it('FP-R2 页头无 wuhaoyang-3d preload（unused-preload 根因已除）', () => {
+    const yuanMa = duQuCaoDi()
+    expect(yuanMa).not.toContain('rel="preload" href="/grass-bg/wuhaoyang-3d.png"')
+    expect(yuanMa).toContain('rel="preload" href="/grass-bg/wuhaoyang-2d.png"')
   })
 
   it('GANG_TI 刚体立体化：配置集中 + 贴地写入点叠加呼吸 + 每帧 transform 驱动', () => {
@@ -39,7 +47,7 @@ describe('FP-10 吴昊阳立体化', () => {
     // 角色时时刻刻保持原 2D 图比例；代码保留供后续非比例类方案参考）
     expect(yuanMa).toContain('var GANG_TI = { qiYong: false, fuDu: 0.01, suoFang: 0.004, yaoYe: 0.006 }')
     // 呼吸浮动融入 FP-06 唯一 y 写入点（避免独立写入被健康监测覆盖），与阴影片同源同频 sin
-    expect(yuanMa).toContain('mesh.position.y = ceXin + (GANG_TI.qiYong ? Math.sin((Date.now() - gongYong.t0) / 1000 * 0.9) * GANG_TI.fuDu : 0)')
+    expect(yuanMa).toContain('mesh.position.y = ceXin - chenRu2 + (GANG_TI.qiYong ? Math.sin((Date.now() - gongYong.t0) / 1000 * 0.9) * GANG_TI.fuDu : 0)')
     // 每帧驱动：缩放基准随 mesh 重建重取 + 同相位脉动 + 半频错相摇曳（绕铰链，底边固定）
     expect(yuanMa).toContain('GANG_TI._jiZhunSuoFang = mesh.scale.x')
     expect(yuanMa).toContain('var gangSuo = GANG_TI._jiZhunSuoFang * (1 + huXiZhen * GANG_TI.suoFang)')
@@ -57,47 +65,34 @@ describe('FP-10 吴昊阳立体化', () => {
     expect(yuanMa).toContain('geo.translate(0, 1, 0)')
   })
 
-  it('onBeforeCompile 注入三段 GLSL：位移/视差/重光照，kai=0 全归零', () => {
+  it('onBeforeCompile 只剩底边渐隐注入，深度浮雕三段 GLSL 已删', () => {
     const yuanMa = duQuCaoDi()
     expect(yuanMa).toContain('mat.onBeforeCompile = function (sq)')
     expect(yuanMa).toContain('mat.customProgramCacheKey = function ()')
-    expect(yuanMa).toContain("'wu-liTi-v1'")
-    // 顶点位移：深度 × 峰值 × 开关 × 呼吸
-    expect(yuanMa).toContain('transformed.z += wuShenD * uWuShenDuZuiDa * uWuShenDuKai * uWuHuXi;')
-    // 片元视差：深度驱动 UV 偏移并 clamp 防纹理游移（GLSL3 里 vMapUv 只读，自建 wuUv2）
-    expect(yuanMa).toContain('vec2 wuUv2 = vMapUv - clamp(wuPian, vec2(-0.03), vec2(0.03));')
-    expect(yuanMa).toContain('diffuseColor *= texture2D( map, wuUv2 );')
-    // 法线重光照：kai=0 时 mix 到原色零影响（未就绪与纯平面一致）
-    expect(yuanMa).toContain('diffuseColor.rgb *= mix(vec3(1.0), wuGuang, uWuGuangQiang * uWuShenDuKai);')
-    expect(yuanMa).toContain('diffuseColor.rgb += uWuLunKuo * pow(1.0 - wuNdV, 2.5) * 0.30 * uWuShenDuKai;')
-    // uniforms 由 liTi.tongYi 合入
-    expect(yuanMa).toContain('for (var uk in liTi.tongYi) sq.uniforms[uk] = liTi.tongYi[uk];')
+    expect(yuanMa).toContain("return 'wu-diBian-v1'")
+    expect(yuanMa).not.toContain('wu-liTi-v1')
+    // 深度位移/视差/重光照片段零残留
+    expect(yuanMa).not.toContain('transformed.z += wuShenD')
+    expect(yuanMa).not.toContain('vec2 wuUv2 = vMapUv')
+    expect(yuanMa).not.toContain('diffuseColor.rgb *= mix(vec3(1.0), wuGuang')
+    expect(yuanMa).not.toContain('for (var uk in liTi.tongYi)')
   })
 
-  it('深度贴图走引擎同类克隆路径（拆源），失败仅记日志不带病进场景', () => {
+  it('人物/mask/阴影片仍走引擎同类拆源克隆（keLongDuLi 保留）', () => {
     const yuanMa = duQuCaoDi()
-    expect(yuanMa).toContain('function zaiRuShenDu(yuan)')
-    expect(yuanMa).toContain('var stex = keLongDuLi(yuan, tp)')
-    expect(yuanMa).toContain("st.src = '/grass-bg/wuhaoyang-3d.png'")
-    expect(yuanMa).toContain("if (LI_TI.qiYong) zaiRuShenDu(yuan)")
-    expect(yuanMa).toContain('深度贴图加载失败（保持纯平面，主道路不受影响）')
-    // 与人物贴图共用 donor，严禁第二纹理源
+    expect(yuanMa).toContain('function keLongDuLi(yuan, tuPian)')
+    // 与人物贴图共用 donor，严禁第二纹理源；深度贴图加载器已删
     expect(yuanMa.match(/keLongDuLi\(yuan, /g) || []).not.toHaveLength(0)
+    expect(yuanMa).not.toContain("st.src = '/grass-bg/wuhaoyang-3d.png'")
   })
 
-  it('每帧驱动：深度淡入爬坡/呼吸/基向量提取/引擎主光与主题同步', () => {
+  it('FP-R2 每帧驱动无 liTi 块；主线同步（yaw/足迹/压弯）仍在', () => {
     const yuanMa = duQuCaoDi()
-    expect(yuanMa).toContain('liTi.tongYi.uWuShenDuKai.value = Math.min(1, liTi.tongYi.uWuShenDuKai.value + 0.04)')
-    expect(yuanMa).toContain('liTi.tongYi.uWuHuXi.value = 1 + huXiZhen * 0.03')
-    expect(yuanMa).toContain('mesh.updateMatrixWorld(true)')
-    expect(yuanMa).toContain('liTi.zhouYiTiQu = true')
-    // flipY 预签：法线 y 轴方向与引擎纹理一致
-    expect(yuanMa).toContain('mesh.material.map.flipY) ? -1 : 1')
-    // 主光与草地同源（uLightDirection 同步）
-    expect(yuanMa).toContain('gm0.uniforms.uLightDirection.value')
-    // 主题两套预设
-    expect(yuanMa).toContain('var LI_TI_ZHU_TI = {')
-    expect(yuanMa).toContain("LI_TI_ZHU_TI[th2 === 'light' ? 'light' : 'dark']")
+    expect(yuanMa).not.toContain('liTi.tongYi.uWuShenDuKai')
+    expect(yuanMa).not.toContain('liTi.zhouYiTiQu')
+    expect(yuanMa).not.toContain('LI_TI_ZHU_TI[')
+    // flipY 预签注释不得再指向已删的深度法线图路径（实现仍钉 mask/plane 同签）
+    expect(yuanMa).toContain('maskKeLong.flipY = TIE_TU_FLIP_Y;')
   })
 
   it('草地接触 AO：varying 传递 + 片元压暗 + uniforms 同步', () => {
@@ -106,9 +101,10 @@ describe('FP-10 吴昊阳立体化', () => {
     expect(yuanMa).toContain('m.uniforms.uWuCaoAODu = { value: 0.55 }')
     expect(yuanMa).toContain("var caoFsMao = 'gl_FragColor=vec4(vGrassColor,1.0);'")
     expect(yuanMa).toContain('gl_FragColor=vec4(vGrassColor*(1.0-vWuCaoAO*uWuCaoAODu),1.0);')
-    expect(yuanMa).toContain('vWuCaoAO=clamp(wuA*1.05+wuAoYuan*0.5,0.0,1.0);')
-    // FP-13：接触 AO 随 reveal 淡入（与压伏同一节奏），故尾部多一个 * bu
-    expect(yuanMa).toContain('caiZhi.uWuCaoAODu.value = (tiao.aoDu != null ? tiao.aoDu : LI_TI.aoQiangDu) * bu')
+    expect(yuanMa).toContain('vWuCaoAO=clamp(wuA*1.05+wuAoYuan*0.5+wuWai*0.35,0.0,1.0);')
+    // FP-13：接触 AO 随 reveal 淡入；强度源=独立 CAO_AO_QIANG_DU（原 LI_TI.aoQiangDu）
+    expect(yuanMa).toContain('var CAO_AO_QIANG_DU = 0.55')
+    expect(yuanMa).toContain('caiZhi.uWuCaoAODu.value = (tiao.aoDu != null ? tiao.aoDu : CAO_AO_QIANG_DU) * bu')
   })
 
   it('构图终值对齐最终效果图（FP-12 billboard 复核，禁止 drift 回旧俯卧锚点）', () => {
@@ -149,51 +145,116 @@ describe('FP-10 吴昊阳立体化', () => {
 
   it('FP-12 地面层跟随 billboard：阴影片与压草场均按实时姿态推导（贴地不脱节）', () => {
     const yuanMa = duQuCaoDi()
-    // 阴影片：统一几何入口（后仰 sin 修正 + 后仰侧偏移 + 贴地 epsilon），创建与每帧共用
+    // 阴影片：统一几何入口（FP-R1 全身足迹 + 身体轴方向 + 贴地 epsilon），创建与每帧共用
     expect(yuanMa).toContain('function gengXinYinYing()')
-    expect(yuanMa).toContain('var changTou = 2 * s * Math.sin(e);')
+    expect(yuanMa).toContain('var changTou = 2 * s * zuChangXiY;')
+    expect(yuanMa).not.toContain('var changTou = 2 * s * Math.sin(e);')
     expect(yuanMa).toContain('var touX = -Math.sin(psi), touZ = -Math.cos(psi);')
     // 每帧同步（在呼吸微动之前刷新基准，避免被旧基准覆盖）
     expect(yuanMa).toContain('gengXinYinYing();')
-    // 压草场：投影长/投影轴改读 billboard 实时角度，不再吃 CAN_SHU 俯卧姿态
-    expect(yuanMa).toContain('touYingChang = touYingKuan * Math.sin(Math.max(0, -(mesh.rotation.x || 0)))')
+    // 压草场：投影长=全身足迹（FP-R1），投影轴改读 billboard 实时角度
+    expect(yuanMa).toContain('var touYingChang = PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu * zuChangXi;')
     expect(yuanMa).toContain('caiZhi.uCharYaw.value = mesh.rotation.y')
     // FP-12 去依赖：uCharPos 是 vec2（.x/.y 直读），不再强依赖 __fuZhenSanWei 反构的
     // THREE.Vector2——该出口在部分环境永不解析，会把整条压弯注入静默掐死（草永不被压）
     expect(yuanMa).toContain('m.uniforms.uCharPos = { value: { x: yaWanZhongXin.x, y: yaWanZhongXin.z } }')
     expect(yuanMa).not.toContain('new THREE.Vector2(yaWanZhongXin')
+    // FP-14：纯 {x,y} 还需 toArray——three 的 vec2 上传会调它，缺了会每帧抛 TypeError
+    expect(yuanMa).toContain('m.uniforms.uCharPos.value.toArray = function (a)')
   })
 
   it('FP-13 伪3D深化：风动抑制 / 前景草带 / 底边渐隐 / 压伏淡入 / 中心对准', () => {
     const yuanMa = duQuCaoDi()
     // ① 身下草风动抑制：注入段位于风之后、压弯之前，按被压度把朝向拉回无风朝向
     expect(yuanMa).toContain('finalGrassInclination=inclineVectorTowardSlerp(finalGrassInclination,terrainAdjustedNormal,clamp(wuYa*uCharFengYiZhi,0.0,1.0));')
-    expect(yuanMa).toContain("'wuYa=clamp(wuNei+wuBian*0.6,0.0,1.0);'")
+    expect(yuanMa).toContain("'wuYa=clamp(wuNei+wuBian*0.6+wuWai*0.35,0.0,1.0);'")
     // ② 卡片前方窄带内的草朝身体弯折（草微微遮住角色），带头尾/两侧淡出
     expect(yuanMa).toContain("'float wuQianFu=-wuZhou;'")
-    expect(yuanMa).toContain("'charInfl=max(charInfl,wuQianRou*uCharQianJingQiang);}'")
+    expect(yuanMa).toContain("'charInfl=clamp(wuNei*uCharNeiQiangDu+wuBian*charInfl+wuWai*uCharWaiFan,0.0,1.0);'")
     // 新增三项 uniform 声明 + 注入 + 每帧同步
     expect(yuanMa).toContain('uniform float uCharFengYiZhi;uniform float uCharQianJingChang;uniform float uCharQianJingQiang;')
     expect(yuanMa).toContain('m.uniforms.uCharFengYiZhi = { value: YA_WAN.fengYiZhi };')
     expect(yuanMa).toContain('caiZhi.uCharQianJingQiang.value = tiao.qianJingQiang != null ? tiao.qianJingQiang : gongYong.YA_WAN.qianJingQiang;')
-    // ③ 底边渐隐：只改 alpha，不动几何；与 FP-10 注入合并同一回调避免互相覆盖
+    // ③ 底边渐隐：只改 alpha，不动几何；cache key 固定 wu-diBian-v1（深度浮雕键已删）
     expect(yuanMa).toContain("var DI_BIAN_JIAN_YIN_TI = 'diffuseColor.a*=smoothstep(0.0,max(uWuDiBianJianYin,0.0001),vMapUv.y);\\n'")
     expect(yuanMa).toContain("sq.uniforms.uWuDiBianJianYin = { value: DI_BIAN.jianYin }")
-    expect(yuanMa).toContain("return LI_TI.qiYong ? 'wu-liTi-v1' : 'wu-diBian-v1'")
+    expect(yuanMa).toContain("return 'wu-diBian-v1'")
     // ④ 压伏与接触 AO 随揭示进度淡入（草是逐渐被趴下去的）
     expect(yuanMa).toContain('caiZhi.uCharStrength.value = zuiZhong * bu;')
-    expect(yuanMa).toContain('caiZhi.uWuCaoAODu.value = (tiao.aoDu != null ? tiao.aoDu : LI_TI.aoQiangDu) * bu;')
+    expect(yuanMa).toContain('caiZhi.uWuCaoAODu.value = (tiao.aoDu != null ? tiao.aoDu : CAO_AO_QIANG_DU) * bu;')
     // ⑤ billboard 对准基准点改卡片中心（迭代两轮收敛），比例红线不变
     expect(yuanMa).toContain('for (var ci = 0; ci < 2; ci++) {')
     expect(yuanMa).toContain('var ux = Math.sin(m.rotation.x) * Math.sin(m.rotation.y);')
-    // 配置集中且默认开启
-    expect(yuanMa).toContain('fengYiZhi: 1.0, qianJingChang: 0.28, qianJingQiang: 0.6')
+    // 配置集中且默认开启 + FP-R1 接触物理层参数
+    expect(yuanMa).toContain('fengYiZhi: 1.0, qianJingChang: 0.28, qianJingQiang: 0.6, yaSui: 0.06, chuanTou: 0.85, zaSheng: 0.45,')
+    expect(yuanMa).toContain('zuKuanXi: 1.0, zuChangXi: 1.0,')
+    expect(yuanMa).toContain('waiHuan: 0.22, waiSui: 0.32, waiFan: 0.55,')
+    expect(yuanMa).toContain('qianGao: 1.5, qianQing: 0.35, qianXi: 0.68 };')
     expect(yuanMa).toContain('var DI_BIAN = { jianYin: 0.035 };')
   })
 
-  it('父页预载深度贴图（App.vue 双图预载）', () => {
+  it('FP-14 物理深化：体重钉死 / 压塌 / 稀疏倒伏回盖 / 轮廓阴影 / 微沉', () => {
+    const yuanMa = duQuCaoDi()
+    // ① 体重钉死：身下草切断鼠标弯折贴图（bending 贴图读入后归零），风抑制保留
+    expect(yuanMa).toContain("'bendingIntensity=bendingIntensity*(1.0-wuYa);'")
+    expect(yuanMa).toContain("'bendingDirection=mix(bendingDirection,charDir,max(charInfl*0.9,wuYa));'")
+    // ② 体重压塌：身下/轮廓内草高压到近贴地；外环明显变矮（FP-R1 waiSui）
+    expect(yuanMa).toContain("'float wuYaSui=mix(1.0,uCharYaSui,wuYa);'")
+    expect(yuanMa).toContain("'float wuWaiSui=mix(1.0,uCharWaiSui,wuWai);'")
+    expect(yuanMa).toContain("'grassScale*=(wuYaSui*wuWaiSui*(1.0+wuQianGao*uCharQianGao+wuChuan*uCharChuanTou));'")
+    // ③ 稀疏倒伏回盖：边缘带按哈希选高草探过角色；身前稀疏高草独立增高（FP-R1）
+    expect(yuanMa).toContain("'float wuHash=fract(sin(dot(grassOrigin.xz,vec2(12.9898,78.233)))*43758.5453);'")
+    expect(yuanMa).toContain("'float wuChuan=wuBian*step(0.70,wuHash);'")
+    expect(yuanMa).toContain("'float wuQianGao=wuQianRou*step(uCharQianXi,wuHash);'")
+    // ⑤ 倒伏带自然起伏
+    expect(yuanMa).toContain("'wuQianRou*=mix(1.0-uCharZaSheng,1.0,wuZao);'")
+    // ④ 轮廓形接触阴影（人物剪影软接触痕，回退径向渐变）
+    expect(yuanMa).toContain('chuangJianYinYing(tuPian);')
+    expect(yuanMa).toContain('youJianYing')
+    // ⑥ 体重微沉（只改位置 y，比例零改动）；阴影 y 用草根高度不随下沉
+    expect(yuanMa).toContain('var WEI_CHEN = { biLi: 0.018 };')
+    expect(yuanMa).toContain('mesh.position.set(PEI_ZHI.weiZhi.x, yaoGaoDu - chenRu, PEI_ZHI.weiZhi.z);')
+    expect(yuanMa).toContain('(dangQianGaoDu != null ? dangQianGaoDu : mesh.position.y) + YIN_YING.eP')
+    // 新 uniform 全链路
+    expect(yuanMa).toContain('uniform float uCharYaSui;uniform float uCharChuanTou;uniform float uCharZaSheng;')
+    expect(yuanMa).toContain('m.uniforms.uCharYaSui = { value: YA_WAN.yaSui };')
+    expect(yuanMa).toContain('caiZhi.uCharYaSui.value = tiao.yaSui != null ? tiao.yaSui : gongYong.YA_WAN.yaSui;')
+  })
+
+  it('FP-R1 接触物理层根因：全身足迹场长 / 压塌环 / 高草微搭 / 阴影同尺度', () => {
+    const yuanMa = duQuCaoDi()
+    // H1 根因：场长=全身足迹（与卡高同量级），不再乘 sin(后仰角)
+    expect(yuanMa).toContain('var touYingChang = PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu * zuChangXi;')
+    expect(yuanMa).not.toContain('touYingKuan * Math.sin(Math.max(0, -(mesh.rotation.x || 0)))')
+    // H5：阴影长同足迹尺度，不再 sin 压缩
+    expect(yuanMa).toContain('var changTou = 2 * s * zuChangXiY;')
+    expect(yuanMa).not.toContain('2 * s * Math.sin(e)')
+    // H4：轮廓外压塌环（mask 膨胀采样 → wuWai；明显变矮 waiSui + 外翻 waiFan）
+    expect(yuanMa).toContain("'float wuHuanR=max(uCharWaiHuan,0.001);'")
+    expect(yuanMa).toContain("'wuWai=clamp(wuWaiNei-wuNei,0.0,1.0);'")
+    expect(yuanMa).toContain("'charInfl=clamp(wuNei*uCharNeiQiangDu+wuBian*charInfl+wuWai*uCharWaiFan,0.0,1.0);'")
+    expect(yuanMa).toContain("'wuYa=clamp(wuNei+wuBian*0.6+wuWai*0.35,0.0,1.0);'")
+    // H3：身前稀疏高草中等倾角微搭（不是压平）；高度明显增加
+    expect(yuanMa).toContain("'bendingIntensity=mix(bendingIntensity,clamp(uCharQianQing,0.0,1.0),wuQianGao);'")
+    expect(yuanMa).toContain("'bendingDirection=mix(bendingDirection,charDir,wuQianGao);'")
+    expect(yuanMa).not.toContain("'charInfl=max(charInfl,wuQianRou*uCharQianJingQiang);}'")
+    // 新 uniform 全链路：声明 + 注入初值 + 每帧同步（__yaWanTiao 可覆盖）
+    expect(yuanMa).toContain('uniform float uCharWaiHuan;uniform float uCharWaiSui;uniform float uCharWaiFan;')
+    expect(yuanMa).toContain('uniform float uCharQianGao;uniform float uCharQianQing;uniform float uCharQianXi;')
+    expect(yuanMa).toContain('m.uniforms.uCharWaiHuan = { value: YA_WAN.waiHuan };')
+    expect(yuanMa).toContain('m.uniforms.uCharQianQing = { value: YA_WAN.qianQing };')
+    expect(yuanMa).toContain('caiZhi.uCharWaiHuan.value = tiao.waiHuan != null ? tiao.waiHuan : gongYong.YA_WAN.waiHuan;')
+    expect(yuanMa).toContain('caiZhi.uCharQianQing.value = tiao.qianQing != null ? tiao.qianQing : gongYong.YA_WAN.qianQing;')
+    // 身下草钉死保留：无风、无鼠标弯折、高度近 0
+    expect(yuanMa).toContain("'bendingIntensity=bendingIntensity*(1.0-wuYa);'")
+    expect(yuanMa).toContain("'finalGrassInclination=inclineVectorTowardSlerp(finalGrassInclination,terrainAdjustedNormal,clamp(wuYa*uCharFengYiZhi,0.0,1.0));'")
+  })
+
+  it('FP-R2 父页只预载 wuhaoyang-2d，深度图预载/入缓存已删', () => {
     const appVue = fs.readFileSync(path.resolve(process.cwd(), 'src', 'App.vue'), 'utf-8')
-    expect(appVue).toContain("shenDuTu.src = '/grass-bg/wuhaoyang-3d.png'")
-    expect(appVue).toContain("huanCun.add('/grass-bg/wuhaoyang-3d.png')")
+    expect(appVue).toContain("tu.src = '/grass-bg/wuhaoyang-2d.png'")
+    expect(appVue).toContain("huanCun.add('/grass-bg/wuhaoyang-2d.png')")
+    expect(appVue).not.toContain('wuhaoyang-3d')
+    expect(appVue).not.toContain('shenDuTu')
   })
 })

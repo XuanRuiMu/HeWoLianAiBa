@@ -12,7 +12,6 @@
          「preloaded but not used within a few seconds」。@font-face 仍在样式表里，
          真出现文本时按需加载即可。 -->
     <link rel="preload" href="/grass-bg/wuhaoyang-2d.png" as="image">
-    <link rel="preload" href="/grass-bg/wuhaoyang-3d.png" as="image">
     <link rel="stylesheet" crossorigin href="./references/-assets-index-DF8svE4a.css">
 
     <style>
@@ -284,7 +283,7 @@
             window.__caoDiXiuFuZhaoSeQi = xiuFu;
         })();
     </script>
-
+    <script>
         // 音频根上禁用（真实背景应保持安静；且未复制 17MB 音频资源）
         (function () {
             function killSource(src) {
@@ -1078,13 +1077,29 @@
             weiZhi:  { x: 4.48, y: -0.0133, z: 3.63 },
             chiCun:  2.55
         };
-        /* 草压弯/交互参数（fp-13 新增三项）：
-           - fengYiZhi       风动抑制系数（1=身下的草完全不受风影响，0=关闭抑制）
-           - qianJingChang   前景草带深度（世界单位，自铰链向镜头方向的窄带，带内草朝身体弯折）
-           - qianJingQiang   前景草带弯折强度（0=关闭"草微微遮住角色"效果）
-           调参口：__yaWanTiao 可覆盖 fengYiZhi/qianJingChang/qianJingQiang（见每帧驱动）。 */
+        /* 草压弯/交互参数（FP-13 三项 + FP-14 物理深化三项 + FP-R1 接触物理层根因）。
+           物理原则：吴昊阳体重把身下草钉死——压塌、不随风、不响应鼠标；周围草被身体挤开；
+           轮廓外一圈过渡带明显变矮并外翻；身前稀疏高草保持/增加高度并微倾向身体（重力搭在身上）。
+           - fengYiZhi       风动抑制系数（1=身下草完全不受风，0=关闭）
+           - qianJingChang   前景草带深度（靠近镜头侧窄带）
+           - qianJingQiang   前景带对弯曲强度的贡献上限
+           - yaSui           身下/轮廓内草高保留比（0.06=压到近贴地，1=不压塌）
+           - chuanTou        边缘倒伏草增高倍（稀疏草叶探过角色轮廓）
+           - zaSheng         倒伏带自然起伏（0=整齐一条带，1=全随机）
+           - zuKuanXi        接触场宽向倍数（×卡高；1.0=全身足迹宽）
+           - zuChangXi       接触场长向倍数（×卡高；1.0=全身足迹长，不再乘 sin 后仰角）
+           - waiHuan         轮廓外压塌环宽度（mask UV 采样半径）
+           - waiSui          压塌环草高保留比（0.32=明显变矮但仍可见）
+           - waiFan          压塌环向外翻开强度
+           - qianGao         身前稀疏高草增高倍（明显更高，可叠上角色剪影）
+           - qianQing        身前高草向身体倾角（中等倾角，重力微搭非压平）
+           - qianXi          身前高草哈希稀疏阈值（step 阈值，越大越稀疏）
+           调参口：__yaWanTiao 可覆盖（见每帧驱动）。 */
         var YA_WAN = { r0: 0.12, r1: 0.68, strength: 0.75, huxi: 0.08, shuBiaoJia: 1.5, neiQiangDu: 1.0, wenLiBu: 0.02,
-            fengYiZhi: 1.0, qianJingChang: 0.28, qianJingQiang: 0.6 };
+            fengYiZhi: 1.0, qianJingChang: 0.28, qianJingQiang: 0.6, yaSui: 0.06, chuanTou: 0.85, zaSheng: 0.45,
+            zuKuanXi: 1.0, zuChangXi: 1.0,
+            waiHuan: 0.22, waiSui: 0.32, waiFan: 0.55,
+            qianGao: 1.5, qianQing: 0.35, qianXi: 0.68 };
         /* FP-08 揭示完成下限（毫秒）：门控通过后引擎 uRevealProgress 低帧率爬行时的进度底。
            共享出口 gongYong.jieLuWanChengHaoMiao；uniform getter 强制 max(engine, floor)，
            避免引擎动画每帧在 tongBu 之后回写把下限冲掉。URL ?jieLuWanCheng= 可覆盖。 */
@@ -1319,34 +1334,38 @@
                 'uniform sampler2D uCharMask;uniform float uCharMaskOn;uniform float uCharYaw;uniform float uCharKuan;uniform float uCharChang;uniform float uCharEdge;' +
                 'uniform float uCharNeiQiangDu;uniform float uCharWenLiBu;' +
                 'uniform float uCharFengYiZhi;uniform float uCharQianJingChang;uniform float uCharQianJingQiang;' +
+                'uniform float uCharYaSui;uniform float uCharChuanTou;uniform float uCharZaSheng;' +
+                'uniform float uCharWaiHuan;uniform float uCharWaiSui;uniform float uCharWaiFan;' +
+                'uniform float uCharQianGao;uniform float uCharQianQing;uniform float uCharQianXi;' +
                 'varying float vWuCaoAO;\n';
-            /* 压伏场几何推导（FP-03 几何 + FP-06 根因修复，与 T3 guDingChaoXiang 铰链几何严格对应）：
-               人物平面 2×2 经 translate(0,1,0)：局部 x∈[-1,1]、y∈[0,2]（底边=脚/腿侧过原点），
-               scale s=(chiCun/2)×chiCunBeiShu，world=Ry(yaw)·Rx(φ)·local，φ=-(π/2−θ)。
-               Rx(φ) 对 z=0 的点：y'=y·sinθ、z'=−y·cosθ，故局部点 (x,y,0) 的世界 XZ：
-                 worldXZ = 铰链XZ + s·( x·cosψ − y·cosθ·sinψ , −x·sinψ − y·cosθ·cosψ )
-               地面投影：宽（局部 X 向）= 2s 不随倾角缩短；长（身体轴向）= 2s·cosθ（倾角压缩）。
-               逆映射（草叶世界 XZ 偏移 tocW，锚点=铰链=贴图底边中点，非矩形中心）：
+            /* 压伏场几何推导（FP-R1 根因重构：全身足迹语义，废除 sin 后仰压缩）：
+               人物是俯卧人体（wuhaoyang-2d.png 逐像素），观众读到的接触面是全身；
+               旧几何用直立卡片的地面投影（长=卡高×sin 后仰角，rotation.x≈-0.36 ⇒ 仅 ~35%），
+               压塌/倒伏几乎全落在角色平面遮挡后方 ⇒ 用户看不见。FP-R1 场长改为全身足迹尺度。
+               人物平面 2×2 经 translate(0,1,0)：局部 x∈[-1,1]、y∈[0,2]，
+               scale s=(chiCun/2)×chiCunBeiShu，uCharKuan=uCharChang=2s=卡高（全身足迹，flipY/mask
+               的 v 全程映射头→脚）。逆映射（草叶世界 XZ 偏移 tocW，锚点=铰链=贴图底边中点）：
                  wuLx   = tocW.x·cosψ − tocW.y·sinψ      局部横向，范围 [-s, s]
-                 wuZhou = −(tocW.x·sinψ + tocW.y·cosψ)  沿身体轴地面投影，铰链=0、头侧为正，范围 [0, 2s·cosθ]
-               uv（与 T3 PlaneGeometry 同 v 语义：脚侧/铰链 v=0、头侧 v=1）：
-                 u = wuLx/uCharKuan + 0.5   uCharKuan = 2s（全宽）
-                 v = wuZhou/uCharChang      uCharChang = 2s·cosθ（全投影长，含倾角 cos 修正）
-               历史错误（FP-06 已根治）：v 曾额外 +0.5，把铰链错映到 v=0.5、轮廓场采样错半身。
-               压伏语义（FP-06 触碰箱）：
+                 wuZhou = −(tocW.x·sinψ + tocW.y·cosψ)  沿身体轴，铰链=0、头侧为正，范围 [0, 2s]
+               uv（与 T3 PlaneGeometry 同 v 语义：铰链 v=0、头侧/脚侧 v=1，flipY 全程头→脚）：
+                 u = wuLx/uCharKuan + 0.5   uCharKuan = 2s·zuKuanXi
+                 v = wuZhou/uCharChang      uCharChang = 2s·zuChangXi（全身足迹长，无 sin）
+               可见物理落在（H2：身下草永远被角色不透明平面挡住）：
+                 ① 轮廓外压塌环：mask 膨胀采样出外环，草明显变矮（waiSui）+ 向外翻开（waiFan）；
+                 ② 身前高草微搭：哈希稀疏选高（qianGao），中等倾角向身体（qianQing），草尖叠上剪影。
+               压伏语义：
                  - mask alpha 四点采样求梯度，外法线 = -gradient（alpha 下降方向=体型轮廓外侧）；
-                 - 轮廓内（alpha 高）强度强制 uCharNeiQiangDu（默认 1.0，真压平，风吹不动）；
+                 - 轮廓内（alpha 高）强度强制 uCharNeiQiangDu（真压平，风吹不动，高度近 0）；
                  - 边缘带沿真实体型轮廓外法线把草向外分开；
-                 - 轮廓外无影响；
+                 - 轮廓外一圈过渡带（膨胀环）明显变矮并外翻（肉眼可见）；
                  - 降级：uCharMaskOn=0（mask 克隆失败/未就绪）走原圆形径向场（r0/r1 语义不变）。
                WebGL 兼容：texture2D 顶点采样在 WebGL2（现代 three 引擎）保证 ≥16 vertex texture
                units，GLSL1 语法与草着色器现有注入代码一致（引擎实测渲染正常）。
-               FP-13 新增两处（引擎草顶点着色器执行序：terrainAdjustedNormal → 风 → 本注入段 → 压弯）：
-                ① 风动抑制：本段位于风之后、压弯之前，故可把 finalGrassInclination 按"被压度"拉回
-                   terrainAdjustedNormal（无风自然朝向），即抵消风的倾斜——真被压在身下的草不动。
-                ② 前景草带：卡片前方（wuZhou 为负=靠近镜头侧）窄带内的草朝 +wuZhou（朝身体）弯折，
-                   越过卡片下缘盖住角色边缘；带首尾与两侧用 smoothstep 淡出，避免出现整齐带界。 */
-            var zhuRuDuan = 'vWuCaoAO=0.0;float wuYa=0.0;vec2 tocW=(modelMatrix*vec4(grassOrigin,1.0)).xz-uCharPos;' +
+               引擎草顶点着色器执行序：terrainAdjustedNormal → 风 → 本注入段 → 压弯：
+                ① 风动抑制：把 finalGrassInclination 按"被压度"拉回 terrainAdjustedNormal。
+                ② 前景高草：中等倾角倒向身体（重力搭在身上，不是压平），稀疏高草叠上剪影。 */
+            var zhuRuDuan = 'vWuCaoAO=0.0;float wuYa=0.0;float wuBian=0.0;float wuWai=0.0;float wuQianRou=0.0;' +
+                'vec2 tocW=(modelMatrix*vec4(grassOrigin,1.0)).xz-uCharPos;' +
                 'float dcW=length(tocW);' +
                 'float charInfl=(1.0-smoothstep(uCharR0,uCharR1,dcW))*uCharStrength;' +
                 'vec3 charDir=normalize(vec3(tocW.x,0.0,tocW.y)+vec3(0.01,0.0001,0.0));' +
@@ -1367,26 +1386,39 @@
                 'if(wuGradLen>0.001){wuDirLocal=normalize(vec2(-wuGrad.x,-wuGrad.y));}' +
                 'else{wuDirLocal=normalize(vec2(wuLx,wuZhou-uCharChang*0.5)+vec2(0.0001,0.0001));}' +
                 'float wuNei=smoothstep(uCharEdge,uCharEdge+0.2,wuA);' +
-                'float wuBian=smoothstep(0.0,uCharEdge,wuA)*(1.0-wuNei);' +
+                'wuBian=smoothstep(0.0,uCharEdge,wuA)*(1.0-wuNei);' +
+                'float wuHuanR=max(uCharWaiHuan,0.001);' +
+                'float wuAd=texture2D(uCharMask,clamp(wuUV+vec2(wuHuanR,0.0),0.0,1.0)).a;' +
+                'wuAd=max(wuAd,texture2D(uCharMask,clamp(wuUV-vec2(wuHuanR,0.0),0.0,1.0)).a);' +
+                'wuAd=max(wuAd,texture2D(uCharMask,clamp(wuUV+vec2(0.0,wuHuanR),0.0,1.0)).a);' +
+                'wuAd=max(wuAd,texture2D(uCharMask,clamp(wuUV-vec2(0.0,wuHuanR),0.0,1.0)).a);' +
+                'float wuWaiNei=smoothstep(uCharEdge,uCharEdge+0.2,wuAd);' +
+                'wuWai=clamp(wuWaiNei-wuNei,0.0,1.0);' +
                 'charDir=normalize(vec3(wuDirLocal.x*wuCos-wuDirLocal.y*wuSin,0.0,-wuDirLocal.x*wuSin-wuDirLocal.y*wuCos)+vec3(0.01,0.0001,0.0));' +
-                'charInfl=clamp(wuNei*uCharNeiQiangDu+wuBian*charInfl,0.0,1.0);' +
-                /* FP-13 ①：本叶片"被压度"= 轮廓内全压 + 边缘带部分（供风抑制用） */
-                'wuYa=clamp(wuNei+wuBian*0.6,0.0,1.0);' +
-                /* FP-13 ②：前景草带——卡片前方（wuZhou<0）窄带内朝 +wuZhou（身体）弯折，
-                   越界与两侧 smoothstep 淡出，避免整齐带界 */
+                'charInfl=clamp(wuNei*uCharNeiQiangDu+wuBian*charInfl+wuWai*uCharWaiFan,0.0,1.0);' +
+                'wuYa=clamp(wuNei+wuBian*0.6+wuWai*0.35,0.0,1.0);' +
+                'float wuZao=fract(sin(dot(grassOrigin.xz,vec2(12.9898,78.233)))*43758.5453);' +
                 'float wuQianFu=-wuZhou;' +
-                'float wuQianRou=smoothstep(0.02,0.07,wuQianFu)*(1.0-smoothstep(uCharQianJingChang-0.09,uCharQianJingChang,wuQianFu))*(1.0-smoothstep(uCharKuan*0.42,uCharKuan*0.60,abs(wuLx)));' +
+                'wuQianRou=smoothstep(0.02,0.07,wuQianFu)*(1.0-smoothstep(uCharQianJingChang-0.09,uCharQianJingChang,wuQianFu))*(1.0-smoothstep(uCharKuan*0.42,uCharKuan*0.60,abs(wuLx)));' +
+                'wuQianRou*=mix(1.0-uCharZaSheng,1.0,wuZao);' +
                 'if(wuQianRou>0.003){' +
-                'charDir=normalize(vec3(-wuSin,0.0,-wuCos)+vec3(0.01,0.0001,0.0));' +
-                'charInfl=max(charInfl,wuQianRou*uCharQianJingQiang);}' +
+                'charDir=normalize(vec3(-wuSin,0.0,-wuCos)+vec3(0.01,0.0001,0.0));}' +
+                'charInfl=clamp(charInfl+wuQianRou*uCharQianJingQiang*0.35,0.0,1.0);' +
                 'float wuAoYuan=(texture2D(uCharMask,clamp(wuUV+vec2(0.075,0.0),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV-vec2(0.075,0.0),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV+vec2(0.0,0.075),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV-vec2(0.0,0.075),0.0,1.0)).a)*0.25;' +
-                'vWuCaoAO=clamp(wuA*1.05+wuAoYuan*0.5,0.0,1.0);' +
-                '}else{vWuCaoAO=charInfl*0.7;wuYa=clamp(charInfl,0.0,1.0);}' +
-                /* FP-13 ① 风动抑制：把朝向按被压度拉回无风自然朝向（terrainAdjustedNormal）。
-                   本段处在风之后、压弯之前，故抑制风而不影响随后的压弯。 */
+                'vWuCaoAO=clamp(wuA*1.05+wuAoYuan*0.5+wuWai*0.35,0.0,1.0);' +
+                '}else{vWuCaoAO=charInfl*0.7;wuYa=clamp(charInfl,0.0,1.0);wuBian=charInfl;}' +
+                'bendingIntensity=bendingIntensity*(1.0-wuYa);' +
                 'finalGrassInclination=inclineVectorTowardSlerp(finalGrassInclination,terrainAdjustedNormal,clamp(wuYa*uCharFengYiZhi,0.0,1.0));' +
                 'bendingIntensity=clamp(bendingIntensity+charInfl,0.0,1.0);' +
-                'bendingDirection=mix(bendingDirection,charDir,charInfl*0.9);';
+                'bendingDirection=mix(bendingDirection,charDir,max(charInfl*0.9,wuYa));' +
+                'float wuHash=fract(sin(dot(grassOrigin.xz,vec2(12.9898,78.233)))*43758.5453);' +
+                'float wuYaSui=mix(1.0,uCharYaSui,wuYa);' +
+                'float wuWaiSui=mix(1.0,uCharWaiSui,wuWai);' +
+                'float wuQianGao=wuQianRou*step(uCharQianXi,wuHash);' +
+                'float wuChuan=wuBian*step(0.70,wuHash);' +
+                'grassScale*=(wuYaSui*wuWaiSui*(1.0+wuQianGao*uCharQianGao+wuChuan*uCharChuanTou));' +
+                'bendingIntensity=mix(bendingIntensity,clamp(uCharQianQing,0.0,1.0),wuQianGao);' +
+                'bendingDirection=mix(bendingDirection,charDir,wuQianGao);';
             var biaoJi = 'bendingDirection=-bendingDirection;';
             var houXuan = {};
             // 优先使用缓存的材质列表，避免遍历场景
@@ -1411,6 +1443,8 @@
                 var mainIdx = vs.indexOf('void main');
                 if (weiZhi === -1 || mainIdx === -1 || !m.uniforms) { m.__yaWanYiZhu = true; continue; }
                 m.uniforms.uCharPos = { value: { x: yaWanZhongXin.x, y: yaWanZhongXin.z } }; // FP-12：vec2 直读 .x/.y，不再依赖 THREE
+                // three 的 vec2 上传会调 value.toArray：纯 {x,y} 会每帧抛 TypeError 并打断 uniform 上传
+                m.uniforms.uCharPos.value.toArray = function (a) { a = a || []; a[0] = this.x; a[1] = this.y; return a; };
                 m.uniforms.uCharR0 = { value: YA_WAN.r0 };
                 m.uniforms.uCharR1 = { value: YA_WAN.r1 };
                 m.uniforms.uCharStrength = { value: YA_WAN.strength };
@@ -1428,6 +1462,17 @@
                 m.uniforms.uCharFengYiZhi = { value: YA_WAN.fengYiZhi };
                 m.uniforms.uCharQianJingChang = { value: YA_WAN.qianJingChang };
                 m.uniforms.uCharQianJingQiang = { value: YA_WAN.qianJingQiang };
+                // FP-14 物理：体重压塌比 / 边缘倒伏增高 / 倒伏带自然起伏
+                m.uniforms.uCharYaSui = { value: YA_WAN.yaSui };
+                m.uniforms.uCharChuanTou = { value: YA_WAN.chuanTou };
+                m.uniforms.uCharZaSheng = { value: YA_WAN.zaSheng };
+                // FP-R1：轮廓外压塌环 / 身前稀疏高草微搭
+                m.uniforms.uCharWaiHuan = { value: YA_WAN.waiHuan };
+                m.uniforms.uCharWaiSui = { value: YA_WAN.waiSui };
+                m.uniforms.uCharWaiFan = { value: YA_WAN.waiFan };
+                m.uniforms.uCharQianGao = { value: YA_WAN.qianGao };
+                m.uniforms.uCharQianQing = { value: YA_WAN.qianQing };
+                m.uniforms.uCharQianXi = { value: YA_WAN.qianXi };
                 // FP-10 接触 AO：草叶片元按人物轮廓压暗（身下真接触阴影，与压伏场同 mask）
                 m.uniforms.uWuCaoAODu = { value: 0.55 };
                 m.vertexShader = vs.slice(0, mainIdx) + shengMing + vs.slice(mainIdx, weiZhi + biaoJi.length) + zhuRuDuan + vs.slice(weiZhi + biaoJi.length);
@@ -1655,10 +1700,8 @@
            - jiaoLianGaoDu  铰链点（贴地边中点）世界 y：仅作测量未就绪时的回退默认
              （FP-11 起锚点移至 (4.62,3.47)，运行时以草根实测为准，此值不再是实测值）
            - qingJiao/pianHang  FP-11 起【不再是角色朝向】（朝向由 mianXiangJingTou 每帧
-             对准镜头），仅作为地面层参数保留：接触阴影片的地面投影（cosθ 修正）与
-             压草轮廓场的身体轴映射（uCharYaw/uCharChang）仍读此二值——它们描述
-             "角色在地面上的落位故事"（头向 240° 方位、投影长 cos10° 修正），与
-             billboard 屏幕朝向解耦。禁止把这两个值当角色姿态调。
+             对准镜头），仅作为地面层参数保留。FP-R1 起接触场长=全身足迹（无 sin/cos
+             压缩），身体轴映射（uCharYaw）仍读实时 billboard 偏航。禁止把这两个值当角色姿态调。
            - chiCunBeiShu   尺寸乘数：FP-12 定案 0.32（FP-11 的 0.40 缩 1/5——缩小后卡片矮、
              腿部不再大段悬在地面之上）；billboard 下屏上体量随此值线性缩放（等比、比例不变） */
         var CAN_SHU = { jiaoLianGaoDu: 0.1416, qingJiao: 10, pianHang: 240, chiCunBeiShu: 0.32 };
@@ -1729,19 +1772,17 @@
            - eP         贴地 epsilon（防与草 z-fighting）
            URL 调参：?wuYinYing=0 关闭；?wuYinYingBuTouMingDu= 不透明度（>0 生效，上限内） */
         var YIN_YING = { waiKuo: 1.15, touMingDu: 0.32, shangXian: 0.35, pianYi: 0.06, eP: 0.012 };
+        /* FP-14 ⑥ 体重微沉：铰链 y 再下沉卡高比例，底边埋进草里（只改位置，比例零改动）。
+           物理：人趴在草上会陷进草层一点，不是浮在草尖。 */
+        var WEI_CHEN = { biLi: 0.018 };
+        var wuChenU = duQuURLShuZhi('wuChen');
+        if (wuChenU != null) WEI_CHEN.biLi = Math.max(0, Math.min(0.08, wuChenU));
         var wuYinYingOff = duQuURLShuZhi('wuYinYing') === 0;
         var wuYinYingBuTouMingDu = duQuURLShuZhi('wuYinYingBuTouMingDu');
         if (wuYinYingBuTouMingDu != null && wuYinYingBuTouMingDu > 0) YIN_YING.touMingDu = Math.min(wuYinYingBuTouMingDu, YIN_YING.shangXian);
-         /* FP-10 立体化配置演进说明：
-            深度浮雕路线（顶点位移/片元视差/法线重光照）已退役——离线深度图把 2D
-            亮度当深度，位移后角色五官/衣纹被撕裂（qiYong 写死 false 永不激活，
-            不提供 URL 强开，角色像素永不形变）。
-            立体感改由 GANG_TI 刚体立体化承担：呼吸浮动/缩放脉动/微摇曳全部作用在
-            mesh transform 上，配合既有 3D 融合层（铰链贴地/接触阴影/压草轮廓场/
-            草地接触 AO）与镜头天然透视。
-            LI_TI 保留字段供草地接触 AO（aoQiangDu）与深度系统死代码引用，
-            深度系统待后续清理。 */
-         var LI_TI = { shenDuZuiDa: 0.32, shiCha: 0.028, aoQiangDu: 0.55, guangQiang: 1.0, qiYong: false };
+        /* 草地接触 AO 强度（FP-10；深度浮雕链路整段删除后从原 LI_TI.aoQiangDu 独立保留，
+           仍由 tongBu 同步到草材质 uWuCaoAODu，随 reveal 淡入）。 */
+        var CAO_AO_QIANG_DU = 0.55;
          /* GANG_TI 刚体立体化（全部 mesh transform 级动画，可配置）：
             - fuDu     呼吸浮动幅度（世界单位，铰链 y 偏移）
             - suoFang  呼吸缩放脉动（相对基准的 ±比例）
@@ -1750,91 +1791,6 @@
             用户要求吴昊阳时时刻刻保持原 2D 图比例，禁止任何比例改动。
             相位与阴影片呼吸（FP-03）同源 sin，活物感统一 */
          var GANG_TI = { qiYong: false, fuDu: 0.01, suoFang: 0.004, yaoYe: 0.006 };
-        /* 主题光色预设：dark=紫夜（环境紫 + 冷月主光 + 紫辉轮廓），light=白昼暖阳 */
-        var LI_TI_ZHU_TI = {
-            dark: { huanJing: [0.34, 0.27, 0.55], zhuGuang: [0.66, 0.72, 0.95], lunKuo: [0.55, 0.40, 0.88] },
-            light: { huanJing: [0.66, 0.60, 0.50], zhuGuang: [1.00, 0.96, 0.85], lunKuo: [0.95, 0.88, 0.70] }
-        };
-        /* FP-10 GLSL 注入段（顶点位移/片元视差/法线重光照；uWuShenDuKai=0 时全部退化为零，
-           深度贴图未就绪前与纯平面逐像素一致） */
-        var LI_TI_DING_DIAN_SHENG_MING =
-            'uniform sampler2D uWuShenDuTu;\n' +
-            'uniform float uWuShenDuKai;\n' +
-            'uniform float uWuShenDuZuiDa;\n' +
-            'uniform float uWuHuXi;\n' +
-            'varying vec3 vWuWp;\n' +
-            'varying float vWuShen;\n';
-        var LI_TI_DING_DIAN_TI =
-            'float wuShenD = 0.0;\n' +
-            '#ifdef USE_MAP\n' +
-            'wuShenD = texture2D(uWuShenDuTu, vMapUv).r;\n' +
-            '#endif\n' +
-            'vWuShen = wuShenD;\n' +
-            'transformed.z += wuShenD * uWuShenDuZuiDa * uWuShenDuKai * uWuHuXi;\n' +
-            'vWuWp = (modelMatrix * vec4(transformed, 1.0)).xyz;\n';
-        var LI_TI_PIAN_YUAN_SHENG_MING =
-            'uniform sampler2D uWuShenDuTu;\n' +
-            'uniform float uWuShenDuKai;\n' +
-            'uniform float uWuShiCha;\n' +
-            'uniform vec3 uWuZhouX;\n' +
-            'uniform vec3 uWuZhouY;\n' +
-            'uniform vec3 uWuZhouZ;\n' +
-            'uniform vec3 uWuGuangXiang;\n' +
-            'uniform vec3 uWuHuanJing;\n' +
-            'uniform vec3 uWuZhuGuang;\n' +
-            'uniform vec3 uWuLunKuo;\n' +
-            'uniform float uWuGuangQiang;\n' +
-            'varying vec3 vWuWp;\n' +
-            'varying float vWuShen;\n';
-        /* 视差：深度高处（头/躯干，更靠近镜头）随视角移动更多，低处（贴地轮廓边）近乎不动，
-           中心偏移 -0.18 让高/低区反向微移，强化相对运动；clamp 防纹理游移。
-           GLSL3 里 vMapUv 是只读 in（不可赋值），自建 wuUv2 供 map 采样与法线采样 */
-        var LI_TI_SHI_CHA_TI =
-            'vec3 wuVshi = normalize(cameraPosition - vWuWp);\n' +
-            'float wuVz = max(dot(wuVshi, uWuZhouZ), 0.15);\n' +
-            'vec2 wuVT = vec2(dot(wuVshi, uWuZhouX), dot(wuVshi, uWuZhouY)) / wuVz;\n' +
-            'vec2 wuPian = wuVT * (texture2D(uWuShenDuTu, vMapUv).r - 0.18) * uWuShiCha * uWuShenDuKai;\n' +
-            'vec2 wuUv2 = vMapUv - clamp(wuPian, vec2(-0.03), vec2(0.03));\n';
-        /* 替换内建 map 采样：与 map_fragment 同语义，唯 uv 换成视差修正后的 wuUv2 */
-        var LI_TI_MAP_TI =
-            '#ifdef USE_MAP\n' +
-            'diffuseColor *= texture2D( map, wuUv2 );\n' +
-            '#endif\n';
-        /* 重光照：法线贴图（g/b=n.xy）经平面基向量（y 已按 flipY 预签）转世界系；
-           环境紫 + 引擎主光 NdotL + 视角轮廓光；kai=0 时 mix 到原色零影响 */
-        var LI_TI_GUANG_TI =
-            '{\n' +
-            'vec2 wuN2 = texture2D(uWuShenDuTu, wuUv2).gb * 2.0 - 1.0;\n' +
-            'float wuNz = sqrt(max(0.06, 1.0 - dot(wuN2, wuN2)));\n' +
-            'vec3 wuN = normalize(uWuZhouX * wuN2.x + uWuZhouY * wuN2.y + uWuZhouZ * wuNz);\n' +
-            'float wuNdL = max(dot(wuN, uWuGuangXiang), 0.0);\n' +
-            'float wuNdV = max(dot(wuN, wuVshi), 0.0);\n' +
-            'vec3 wuGuang = uWuHuanJing + uWuZhuGuang * wuNdL;\n' +
-            'diffuseColor.rgb *= mix(vec3(1.0), wuGuang, uWuGuangQiang * uWuShenDuKai);\n' +
-            'diffuseColor.rgb += uWuLunKuo * pow(1.0 - wuNdV, 2.5) * 0.30 * uWuShenDuKai;\n' +
-            '}\n';
-        /* FP-10 立体化运行状态：uniform 承载体（onBeforeCompile 合入材质）、深度贴图就绪位、
-           基向量提取位；jiHuo 于材质配置后置真，tongBu 据此每帧驱动 */
-        var liTi = window.__wuLiTi = {
-            jiHuo: false,
-            shenDuJiuXu: false,
-            zhouYiTiQu: false,
-            tongYi: {
-                uWuShenDuTu: { value: null },
-                uWuShenDuKai: { value: 0 },
-                uWuShenDuZuiDa: { value: LI_TI.shenDuZuiDa },
-                uWuShiCha: { value: LI_TI.shiCha },
-                uWuHuXi: { value: 1 },
-                uWuZhouX: { value: { x: 1, y: 0, z: 0 } },
-                uWuZhouY: { value: { x: 0, y: 1, z: 0 } },
-                uWuZhouZ: { value: { x: 0, y: 0, z: 1 } },
-                uWuGuangXiang: { value: { x: 0.3, y: 0.85, z: 0.42 } },
-                uWuHuanJing: { value: { x: 0.34, y: 0.27, z: 0.55 } },
-                uWuZhuGuang: { value: { x: 0.66, y: 0.72, z: 0.95 } },
-                uWuLunKuo: { value: { x: 0.55, y: 0.40, z: 0.88 } },
-                uWuGuangQiang: { value: LI_TI.guangQiang }
-            }
-        };
         // 日志经共享调试系统（__wuD 由共享基础设施 IIFE 提供）
         function __wuDLog(msg) {
             if (window.__wuD && window.__wuD.log) window.__wuD.log(msg);
@@ -1887,31 +1843,33 @@
             }
             return true;
         }
-        /* FP-12 接触阴影片几何：与压草场同款推导——地面落位=卡片的地面投影。
-           卡片绕铰链后仰 e（rotation.x=-e）⇒ 顶端地面偏移长 = 卡高×sin e，
-           方向 (−sinψ,−cosψ)=卡片后仰侧（远离镜头）；横向宽=卡宽 2s（不随倾角缩短）。
-           旧俯卧公式用 cos(倾角)×卡长，在 billboard 下会把阴影甩到角色前方一大片，
-           与"身体压在下面"的观感对不上。地面投影随镜头俯仰/偏航变化，故每帧按
-           billboard 实时姿态同步——阴影始终压在身体正下方，屏幕上表现为角色剪影
-           周围与身下的草被压暗，即贴地感。
+        /* FP-R1 接触阴影片几何：与压草场同款全身足迹推导（H5：阴影尺寸与全身足迹一致）。
+           图像是俯卧人体，接触面=全身；阴影长=卡高×zuChangXi（默认 1.0=全身足迹），
+           方向 (−sinψ,−cosψ)=身体轴（铰链→全身足迹远端）；横向宽=卡宽 2s。
+           旧 sin 后仰压缩使阴影只剩卡高 ~35%，接触面故事不自洽。每帧按 billboard
+           实时偏航同步——阴影始终压在身体正下方，屏幕上表现为角色剪影周围与身下草被压暗。
            ⚠️ 作用域：必须留在 T3 IIFE 顶层（tongBu 每帧与创建路径共用），
            挪进 chuangJian 内会让每帧调用抛 ReferenceError 并静默掐断整条每帧链。 */
         function gengXinYinYing() {
             if (!yinYingMesh || !mesh) return;
             var s = mesh.scale.x || 1;
-            var e = -(mesh.rotation.x || 0); if (!(e > 0)) e = 0;
             var psi = mesh.rotation.y || 0;
-            var changTou = 2 * s * Math.sin(e); // 卡片顶端地面偏移长（后仰 sin 修正）
-            var touX = -Math.sin(psi), touZ = -Math.cos(psi); // 后仰侧地面单位向量（远离镜头）
+            /* FP-R1 H5：阴影长=全身足迹（与接触场同尺度），不再 *sin(e)。
+               图像是俯卧人体，接触面故事必须全身一致；sin 压缩使阴影只剩卡高 ~35%。 */
+            var yaWanZu = (gongYong && gongYong.YA_WAN) || {};
+            var tiaoZu = window.__yaWanTiao || {};
+            var zuChangXiY = tiaoZu.zuChangXi != null ? tiaoZu.zuChangXi : (yaWanZu.zuChangXi != null ? yaWanZu.zuChangXi : 1.0);
+            var changTou = 2 * s * zuChangXiY;
+            var touX = -Math.sin(psi), touZ = -Math.cos(psi); // 身体轴地面单位向量（铰链→全身足迹远端）
             var zhongXinJu = changTou * (0.5 + YIN_YING.pianYi);
             yinYingMesh.rotation.order = 'YXZ';
             yinYingMesh.rotation.y = psi;
             yinYingMesh.rotation.x = -Math.PI / 2;
             yinYingMesh.position.set(mesh.position.x + touX * zhongXinJu,
-                mesh.position.y + YIN_YING.eP,
+                (dangQianGaoDu != null ? dangQianGaoDu : mesh.position.y) + YIN_YING.eP,
                 mesh.position.z + touZ * zhongXinJu);
             yinJiChuX = s * YIN_YING.waiKuo;             // plane 宽 2 → 全宽 2s×1.15
-            yinJiChuY = (changTou * YIN_YING.waiKuo) / 2; // plane 高 2 → 全投影长 ×1.15
+            yinJiChuY = (changTou * YIN_YING.waiKuo) / 2; // plane 高 2 → 全身足迹长 ×1.15
             yinYingMesh.scale.set(yinJiChuX, yinJiChuY, 1);
         }
         /* 回退固定朝向（仅 mianXiangJingTou 失败时的一次性姿态，原 FP-02 俯卧几何）。
@@ -2158,18 +2116,53 @@
                引擎材质，跨实例陷阱），无克隆源即不建（人物主道路不受影响）。
                renderOrder=-1：数值低于人物平面（默认 0）——透明队列里草（不透明先画）之后、
                人物之前被正确遮挡叠加。 */
-            function chuangJianYinYing() {
+            function chuangJianYinYing(jiaoSeHuaBu) {
                 if (wuYinYingOff) { window.__wuYinYingZhuangTai = '关闭'; return; }
                 try {
                     var cv = document.createElement('canvas');
-                    cv.width = 128; cv.height = 128;
+                    cv.width = 256; cv.height = 256;
                     var cx = cv.getContext('2d');
-                    var jianBian = cx.createRadialGradient(64, 64, 10, 64, 64, 62);
-                    jianBian.addColorStop(0, 'rgba(0,0,0,1)');
-                    jianBian.addColorStop(0.55, 'rgba(0,0,0,0.55)');
-                    jianBian.addColorStop(1, 'rgba(0,0,0,0)');
-                    cx.fillStyle = jianBian;
-                    cx.fillRect(0, 0, 128, 128);
+                    /* FP-14 ④ 轮廓形接触阴影：体重压出的接触痕贴合体型剪影，不是圆形光斑。
+                       物理：人趴在草上，阴影是身体与草的接触面——躯干厚实处最暗，四肢渐淡。
+                       实现：人物画布 → 黑剪影 → 多层模糊成软接触痕；无剪影时回退径向渐变。 */
+                    var youJianYing = false;
+                    if (jiaoSeHuaBu && jiaoSeHuaBu.width > 0 && jiaoSeHuaBu.height > 0) {
+                        try {
+                            var siYing = document.createElement('canvas');
+                            siYing.width = 256; siYing.height = 256;
+                            var sc = siYing.getContext('2d');
+                            // 与人物贴图同构图（flipY + 镜像），使阴影剪影落在同一身体朝向
+                            sc.save();
+                            if (TIE_TU_JING_XIANG) { sc.translate(256, 0); sc.scale(-1, 1); }
+                            sc.translate(0, 256); sc.scale(1, -1); // 对应 flipY=true 的行序
+                            sc.drawImage(jiaoSeHuaBu, 0, 0, 256, 256);
+                            sc.restore();
+                            sc.globalCompositeOperation = 'source-in';
+                            sc.fillStyle = 'rgba(0,0,0,1)';
+                            sc.fillRect(0, 0, 256, 256);
+                            // 软接触痕：中心实、边缘散（体重压痕不是硬剪影）
+                            cx.save();
+                            if (typeof cx.filter === 'string') cx.filter = 'blur(14px)';
+                            cx.globalAlpha = 0.55;
+                            cx.drawImage(siYing, 0, 0);
+                            cx.filter = 'blur(6px)';
+                            cx.globalAlpha = 0.45;
+                            cx.drawImage(siYing, 0, 0);
+                            cx.filter = 'none';
+                            cx.globalAlpha = 0.35;
+                            cx.drawImage(siYing, 0, 0);
+                            cx.restore();
+                            youJianYing = true;
+                        } catch (eYj) { youJianYing = false; }
+                    }
+                    if (!youJianYing) {
+                        var jianBian = cx.createRadialGradient(128, 128, 20, 128, 128, 124);
+                        jianBian.addColorStop(0, 'rgba(0,0,0,1)');
+                        jianBian.addColorStop(0.55, 'rgba(0,0,0,0.55)');
+                        jianBian.addColorStop(1, 'rgba(0,0,0,0)');
+                        cx.fillStyle = jianBian;
+                        cx.fillRect(0, 0, 256, 256);
+                    }
                     var yinYuan = quWenLiKeLongYuan();
                     if (!yinYuan || !cv.width) { window.__wuYinYingZhuangTai = '未创建'; __wuDLog('[T3] 阴影片无引擎同类纹理可克隆，跳过（不带病进场景）'); return; }
                     var yinTex = keLongDuLi(yinYuan, cv); // 拆源克隆：阴影片赋 image 不得串改共享源（见 keLongDuLi 注）
@@ -2204,26 +2197,6 @@
                 }
             }
             var mat = null; // 贴图就绪后在 onload 内带 map 构造（引擎只认构造参数路径）
-            /* FP-10 深度法线贴图加载：与人物贴图同路径（img → 引擎同类画布 → 拆源克隆），
-               失败仅记日志，uWuShenDuKai 保持 0，主道路与纯平面行为一致（优雅降级）。 */
-            function zaiRuShenDu(yuan) {
-                if (!LI_TI.qiYong || !yuan) return;
-                var st = new Image();
-                st.onload = function () {
-                    try {
-                        var tp = huaWeiYuanHuaBu(st);
-                        if (!tp) throw new Error('shenDuWuXiao');
-                        var stex = keLongDuLi(yuan, tp);
-                        stex.flipY = TIE_TU_FLIP_Y; // 与 plane map 同签（深度/法线图由同一张 2D 图离线生成，行序一致）
-                        if (!stex || !stex.image) throw new Error('shenDuWuXiao');
-                        liTi.tongYi.uWuShenDuTu.value = stex;
-                        liTi.shenDuJiuXu = true;
-                        __wuDLog('[T3] 深度法线贴图已接入（立体浮雕开启）');
-                    } catch (eS) { __wuDLog('[T3] 深度贴图接入失败: ' + eS.message); }
-                };
-                st.onerror = function () { __wuDLog('[T3] 深度贴图加载失败（保持纯平面，主道路不受影响）'); };
-                st.src = '/grass-bg/wuhaoyang-3d.png';
-            }
             var tieTuChongShi = 0;
             function anPaiZhongShi() {
                 var zuiDa = (window.__caoDiPeiZhi && window.__caoDiPeiZhi.zuiDaChongShi) || 5;
@@ -2260,7 +2233,7 @@
                         /* 贴图纵向朝向显式钉死：不随克隆源的隐式 flipY 漂移（漂移即上下颠倒
                            而无人察觉）。铰链几何把 v=0 放在贴地的那条边，吴昊阳是俯卧体——
                            贴地边是脚/腿侧＝图像顶行，故 v=0 ↔ 图像顶 ⇒ flipY=false。
-                           plane map / 压伏 mask / 深度法线图共用 TIE_TU_FLIP_Y，三者必须同签。 */
+                           plane map / 压伏 mask 共用 TIE_TU_FLIP_Y，两者必须同签。 */
                         tex.flipY = TIE_TU_FLIP_Y;
                         /* FP-11 水平镜像（构图贴合效果图，像素/比例零改动）：
                            repeat.x=-1 + offset.x=1 ⇒ u'=1-u ∈[0,1]，屏幕显示=图像水平镜像
@@ -2278,27 +2251,13 @@
                             side: (gz.basicTemplate && gz.basicTemplate.side != null) ? gz.basicTemplate.side : 2,
                             toneMapped: false    // 贴图颜色不漂移（TAA/色彩通道仍生效）
                         });
-                        /* FP-10 立体化注入：顶点位移（深度浮雕）+ 片元视差 + 法线重光照。
-                           uniforms 由 liTi.tongYi 承载（tongBu 每帧驱动）；
-                           uWuShenDuKai=0 时全部效果归零，与纯平面逐像素一致。 */
-                        /* FP-13 ③ 底边渐隐常驻注入：与已退役的 FP-10 立体化注入合并进同一回调
-                           （两者都改 fragmentShader，拆成两个回调会互相覆盖）。 */
+                        /* FP-13 ③ 底边渐隐常驻注入（FP-10 深度浮雕注入已整段删除，本回调只改 alpha）。 */
                         mat.onBeforeCompile = function (sq) {
                             sq.uniforms.uWuDiBianJianYin = { value: DI_BIAN.jianYin };
                             sq.fragmentShader = 'uniform float uWuDiBianJianYin;\n' + sq.fragmentShader
                                 .replace('#include <map_fragment>', '#include <map_fragment>\n' + DI_BIAN_JIAN_YIN_TI);
-                            if (LI_TI.qiYong) {
-                                for (var uk in liTi.tongYi) sq.uniforms[uk] = liTi.tongYi[uk];
-                                sq.vertexShader = sq.vertexShader
-                                    .replace('#include <common>', '#include <common>\n' + LI_TI_DING_DIAN_SHENG_MING)
-                                    .replace('#include <begin_vertex>', '#include <begin_vertex>\n' + LI_TI_DING_DIAN_TI);
-                                sq.fragmentShader = sq.fragmentShader
-                                    .replace('#include <common>', '#include <common>\n' + LI_TI_PIAN_YUAN_SHENG_MING)
-                                    .replace('#include <map_fragment>', LI_TI_SHI_CHA_TI + LI_TI_MAP_TI + LI_TI_GUANG_TI);
-                            }
                         };
-                        mat.customProgramCacheKey = function () { return LI_TI.qiYong ? 'wu-liTi-v1' : 'wu-diBian-v1'; };
-                        if (LI_TI.qiYong) liTi.jiHuo = true;
+                        mat.customProgramCacheKey = function () { return 'wu-diBian-v1'; };
                         mesh = new gz.meshCtor(geo, mat);
                     /* FP-02 铰链贴地定位：几何已 translate(0, 1, 0)（底边过原点），故
                        mesh.position 即铰链点＝贴图底边（脚/腿侧）中点的世界坐标。
@@ -2311,7 +2270,8 @@
                         if (ce != null && isFinite(ce)) yaoGaoDu = ce;
                     }
                     dangQianGaoDu = yaoGaoDu;
-                    mesh.position.set(PEI_ZHI.weiZhi.x, yaoGaoDu, PEI_ZHI.weiZhi.z);
+                    var chenRu = (PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu) * WEI_CHEN.biLi;
+                    mesh.position.set(PEI_ZHI.weiZhi.x, yaoGaoDu - chenRu, PEI_ZHI.weiZhi.z);
                     mesh.scale.setScalar((PEI_ZHI.chiCun / 2) * CAN_SHU.chiCunBeiShu);
                     __wuDLog('[T3] 铰链贴地：草根 y=' + yaoGaoDu.toFixed(4) +
                         ' 锚点 (' + PEI_ZHI.weiZhi.x.toFixed(3) + ',' + PEI_ZHI.weiZhi.z.toFixed(3) +
@@ -2336,8 +2296,7 @@
                         gongYong.sheZhiMaskWenLi(maskKeLong);
                         __wuDLog('[T3] 压伏 mask 已克隆接入（草压弯切换为人物轮廓场）');
                     }
-                    chuangJianYinYing();
-                    if (LI_TI.qiYong) zaiRuShenDu(yuan);
+                    chuangJianYinYing(tuPian);
                     __wuDLog('[T3] 角色平面已进入引擎场景（铰链贴地固定朝向，depthTest+depthWrite，草可双向遮挡）');
                 } catch (e) {
                     __wuDLog('[T3] 创建失败: ' + e.message);
@@ -2405,7 +2364,8 @@
                     var ceXin = gongYong.ceLiangCaoGenGaoDu(PEI_ZHI.weiZhi.x, PEI_ZHI.weiZhi.z);
                     if (ceXin != null && isFinite(ceXin)) {
                         dangQianGaoDu = ceXin;
-                        if (mesh) mesh.position.y = ceXin + (GANG_TI.qiYong ? Math.sin((Date.now() - gongYong.t0) / 1000 * 0.9) * GANG_TI.fuDu : 0);
+                        var chenRu2 = (PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu) * WEI_CHEN.biLi;
+                        if (mesh) mesh.position.y = ceXin - chenRu2 + (GANG_TI.qiYong ? Math.sin((Date.now() - gongYong.t0) / 1000 * 0.9) * GANG_TI.fuDu : 0);
                         if (yinYingMesh) yinYingMesh.position.y = ceXin + YIN_YING.eP;
                     }
                 }
@@ -2490,54 +2450,6 @@
                 var gangYaoXiang = gongYong ? Math.sin((nowMs - gongYong.t0) / 1000 * 0.48) : 0;
                 mesh.rotation.z = gangYaoXiang * GANG_TI.yaoYe;
             }
-            /* FP-10 立体化每帧驱动：深度淡入爬坡 / 胸腔呼吸 / 基向量提取 / 引擎主光与主题同步 */
-            if (liTi && liTi.jiHuo && mesh) {
-                if (liTi.shenDuJiuXu && liTi.tongYi.uWuShenDuKai.value < 1) {
-                    liTi.tongYi.uWuShenDuKai.value = Math.min(1, liTi.tongYi.uWuShenDuKai.value + 0.04);
-                }
-                window.__wuLiTiKai = liTi.tongYi.uWuShenDuKai.value;
-                liTi.tongYi.uWuShenDuZuiDa.value = LI_TI.shenDuZuiDa;
-                liTi.tongYi.uWuShiCha.value = LI_TI.shiCha;
-                liTi.tongYi.uWuGuangQiang.value = LI_TI.guangQiang;
-                // 胸腔呼吸：深度峰值 ±3%（与阴影片同相位，活物感）
-                liTi.tongYi.uWuHuXi.value = 1 + huXiZhen * 0.03;
-                if (!liTi.zhouYiTiQu) {
-                    try {
-                        mesh.updateMatrixWorld(true);
-                        var be = mesh.matrixWorld.elements;
-                        var bs = mesh.scale.x || 1;
-                        liTi.tongYi.uWuZhouX.value = { x: be[0] / bs, y: be[1] / bs, z: be[2] / bs };
-                        liTi.tongYi.uWuZhouZ.value = { x: be[8] / bs, y: be[9] / bs, z: be[10] / bs };
-                        /* 法线贴图 y 轴 = 图像向下方向的世界映射：flipY 纹理图像顶在 v=1，
-                           图像向下对应局部 -Y（取 -1）；非 flipY 对应局部 +Y（取 +1） */
-                        var fy = (mesh.material && mesh.material.map && mesh.material.map.flipY) ? -1 : 1;
-                        liTi.tongYi.uWuZhouY.value = { x: (be[4] / bs) * fy, y: (be[5] / bs) * fy, z: (be[6] / bs) * fy };
-                        liTi.zhouYiTiQu = true;
-                    } catch (eZ) {}
-                }
-                // 主光方向：与草地同光源（草材质 uLightDirection 同步，找不到保留默认）
-                if (zhenShu % 30 === 0) {
-                    try {
-                        var gm0 = (window.__grassMats && window.__grassMats[0]) || null;
-                        var ld = gm0 && gm0.uniforms && gm0.uniforms.uLightDirection && gm0.uniforms.uLightDirection.value;
-                        if (ld && isFinite(ld.x) && isFinite(ld.y) && isFinite(ld.z)) {
-                            var ll = Math.sqrt(ld.x * ld.x + ld.y * ld.y + ld.z * ld.z);
-                            if (ll > 0.0001) liTi.tongYi.uWuGuangXiang.value = { x: ld.x / ll, y: ld.y / ll, z: ld.z / ll };
-                        }
-                    } catch (eL) {}
-                }
-                // 主题光色：跟随父页 data-theme（与草地染色同源）
-                if (zhenShu % 60 === 0) {
-                    try {
-                        var pEl2 = (window.parent && window.parent !== window) ? window.parent.document.documentElement : document.documentElement;
-                        var th2 = pEl2 && pEl2.getAttribute('data-theme');
-                        var ys = LI_TI_ZHU_TI[th2 === 'light' ? 'light' : 'dark'];
-                        liTi.tongYi.uWuHuanJing.value = { x: ys.huanJing[0], y: ys.huanJing[1], z: ys.huanJing[2] };
-                        liTi.tongYi.uWuZhuGuang.value = { x: ys.zhuGuang[0], y: ys.zhuGuang[1], z: ys.zhuGuang[2] };
-                        liTi.tongYi.uWuLunKuo.value = { x: ys.lunKuo[0], y: ys.lunKuo[1], z: ys.lunKuo[2] };
-                    } catch (eT) {}
-                }
-            }
             /* 草压弯强度驱动（每帧）：基准强度 + 鼠标扫过增强 + 0.08 平滑 + 呼吸 sin；
                调参钩子 __yaWanTiao（整体覆盖）/ __yaWanShouLian（立即收敛）由共享基础设施承载。
                鼠标增强的屏幕投影是 cam 在本循环的唯一消费者（billboard 已删），
@@ -2569,12 +2481,13 @@
                 // FP-03：轮廓场参数每帧同步——CAN_SHU 当前值（θ/yaw/尺寸）随 URL 调参实时生效；
                 // mask 纹理后到（草材质先注入）时在此即时接入，双时序都不崩
                 var maskKeLongCur = gongYong.quMaskWenLi();
-                var touYingKuan = PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu;
-                /* FP-12：压草场几何改按 billboard 实时姿态推导（与阴影片同款）——
-                   卡片后仰 e ⇒ 身体地面投影长 = 卡高×sin e（旧俯卧式 cos θ 会让压伏区
-                   甩到角色前方一大片）；投影轴 = 卡片后仰侧（远离镜头），与屏幕上
-                   "身体自近向远铺开"一致。压伏于是落在角色剪影周围与身下的草上。 */
-                var touYingChang = touYingKuan * Math.sin(Math.max(0, -(mesh.rotation.x || 0)));
+                var zuKuanXi = tiao.zuKuanXi != null ? tiao.zuKuanXi : gongYong.YA_WAN.zuKuanXi;
+                var zuChangXi = tiao.zuChangXi != null ? tiao.zuChangXi : gongYong.YA_WAN.zuChangXi;
+                var touYingKuan = PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu * zuKuanXi;
+                /* FP-R1 根因：场长=全身足迹尺度（与卡高同量级），不再乘 sin(后仰角)。
+                   图像是俯卧人体，观众读到的接触面是全身；旧 sin 压缩使场长只剩卡高 ~35%
+                   且挤在铰链旁，压塌/倒伏几乎全落在角色平面遮挡后方 ⇒ 用户看不见。 */
+                var touYingChang = PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu * zuChangXi;
                 for (var i = 0; i < gongYong.yaWanCaiZhi.length; i++) {
                     var caiZhi = gongYong.yaWanCaiZhi[i].uniforms;
                     /* FP-13 ④：压伏随草地揭示进度淡入（草是"逐渐被趴下去"的，不是一上来就平）；
@@ -2594,8 +2507,19 @@
                     caiZhi.uCharFengYiZhi.value = tiao.fengYiZhi != null ? tiao.fengYiZhi : gongYong.YA_WAN.fengYiZhi;
                     caiZhi.uCharQianJingChang.value = tiao.qianJingChang != null ? tiao.qianJingChang : gongYong.YA_WAN.qianJingChang;
                     caiZhi.uCharQianJingQiang.value = tiao.qianJingQiang != null ? tiao.qianJingQiang : gongYong.YA_WAN.qianJingQiang;
+                    // FP-14：体重压塌比 / 边缘倒伏增高 / 倒伏带自然起伏（调参钩子可覆盖）
+                    if (caiZhi.uCharYaSui) caiZhi.uCharYaSui.value = tiao.yaSui != null ? tiao.yaSui : gongYong.YA_WAN.yaSui;
+                    if (caiZhi.uCharChuanTou) caiZhi.uCharChuanTou.value = tiao.chuanTou != null ? tiao.chuanTou : gongYong.YA_WAN.chuanTou;
+                    if (caiZhi.uCharZaSheng) caiZhi.uCharZaSheng.value = tiao.zaSheng != null ? tiao.zaSheng : gongYong.YA_WAN.zaSheng;
+                    // FP-R1：轮廓外压塌环 / 身前稀疏高草微搭（调参钩子可覆盖）
+                    if (caiZhi.uCharWaiHuan) caiZhi.uCharWaiHuan.value = tiao.waiHuan != null ? tiao.waiHuan : gongYong.YA_WAN.waiHuan;
+                    if (caiZhi.uCharWaiSui) caiZhi.uCharWaiSui.value = tiao.waiSui != null ? tiao.waiSui : gongYong.YA_WAN.waiSui;
+                    if (caiZhi.uCharWaiFan) caiZhi.uCharWaiFan.value = tiao.waiFan != null ? tiao.waiFan : gongYong.YA_WAN.waiFan;
+                    if (caiZhi.uCharQianGao) caiZhi.uCharQianGao.value = tiao.qianGao != null ? tiao.qianGao : gongYong.YA_WAN.qianGao;
+                    if (caiZhi.uCharQianQing) caiZhi.uCharQianQing.value = tiao.qianQing != null ? tiao.qianQing : gongYong.YA_WAN.qianQing;
+                    if (caiZhi.uCharQianXi) caiZhi.uCharQianXi.value = tiao.qianXi != null ? tiao.qianXi : gongYong.YA_WAN.qianXi;
                     // FP-10/FP-13：草地接触 AO 强度同步（随 reveal 淡入，URL/调参钩子可覆盖）
-                    if (caiZhi.uWuCaoAODu) caiZhi.uWuCaoAODu.value = (tiao.aoDu != null ? tiao.aoDu : LI_TI.aoQiangDu) * bu;
+                    if (caiZhi.uWuCaoAODu) caiZhi.uWuCaoAODu.value = (tiao.aoDu != null ? tiao.aoDu : CAO_AO_QIANG_DU) * bu;
                 }
             }
         })();

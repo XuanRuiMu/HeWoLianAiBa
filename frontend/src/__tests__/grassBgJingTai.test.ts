@@ -159,8 +159,12 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).toContain('window.__wuD = {')
     expect(yuanMa).toContain('function zhuRuYaWan()')
     // FP-13：新增风抑制/前景草带三项（fengYiZhi、qianJingChang、qianJingQiang）
+    // FP-R1：接触物理层参数（足迹倍数/压塌环/身前高草微搭）
     expect(yuanMa).toContain('var YA_WAN = { r0: 0.12, r1: 0.68, strength: 0.75, huxi: 0.08, shuBiaoJia: 1.5, neiQiangDu: 1.0, wenLiBu: 0.02,')
-    expect(yuanMa).toContain('fengYiZhi: 1.0, qianJingChang: 0.28, qianJingQiang: 0.6 };')
+    expect(yuanMa).toContain('fengYiZhi: 1.0, qianJingChang: 0.28, qianJingQiang: 0.6, yaSui: 0.06, chuanTou: 0.85, zaSheng: 0.45,')
+    expect(yuanMa).toContain('zuKuanXi: 1.0, zuChangXi: 1.0,')
+    expect(yuanMa).toContain('waiHuan: 0.22, waiSui: 0.32, waiFan: 0.55,')
+    expect(yuanMa).toContain('qianGao: 1.5, qianQing: 0.35, qianXi: 0.68 };')
     expect(yuanMa).toContain('window.__yaWanTiao')
     expect(yuanMa).toContain('window.__yaWanShouLian')
     expect(yuanMa).toContain('window.__wuGongYong = gongYong')
@@ -271,7 +275,8 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).toContain("m.rotation.x = -(Math.PI / 2 - CAN_SHU.qingJiao * Math.PI / 180)")
     expect(yuanMa).toContain('m.rotation.y = CAN_SHU.pianHang * Math.PI / 180')
     // 铰链点即 mesh.position（脚边贴地）：测量成功用实测 yaoGaoDu，失败回退 CAN_SHU
-    expect(yuanMa).toContain('mesh.position.set(PEI_ZHI.weiZhi.x, yaoGaoDu, PEI_ZHI.weiZhi.z)')
+    // FP-14 体重微沉：铰链再下沉 chenRu（只改位置，比例零改动）
+    expect(yuanMa).toContain('mesh.position.set(PEI_ZHI.weiZhi.x, yaoGaoDu - chenRu, PEI_ZHI.weiZhi.z)')
     expect(yuanMa).toMatch(/var yaoGaoDu = CAN_SHU\.jiaoLianGaoDu/)
     expect(yuanMa).toMatch(/ceLiangCaoGenGaoDu\(PEI_ZHI\.weiZhi\.x, PEI_ZHI\.weiZhi\.z\)/)
     // 旧锚点常量已死
@@ -322,6 +327,17 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).toContain('camInst.lookAt(XIANG_JI_GOU_TU.muBiao.x')
   })
 
+  it('FP-R2 深度浮雕/3d 预载链路已从本页清干净（无 LI_TI 实体、无 wuhaoyang-3d）', () => {
+    const yuanMa = duQuCaoDi()
+    expect(yuanMa).not.toContain('var LI_TI')
+    expect(yuanMa).not.toContain('function zaiRuShenDu')
+    expect(yuanMa).not.toContain('wuhaoyang-3d')
+    expect(yuanMa).not.toContain('uWuShenDu')
+    expect(yuanMa).not.toContain('wu-liTi')
+    // aoQiangDu 语义保留为独立常量（草地接触 AO 仍消费）
+    expect(yuanMa).toContain('CAO_AO_QIANG_DU')
+  })
+
   it('FP-03/06 压伏场：人物 alpha 轮廓 mask uniforms 与采样代码注入', () => {
     const yuanMa = duQuCaoDi()
     for (const u of [
@@ -358,11 +374,11 @@ describe('FP-01 草地静态兜底', () => {
     // 逆偏航局部化：lx/zhou 计算（世界 XZ → 人物局部）
     expect(yuanMa).toContain('wuLx=tocW.x*wuCos-tocW.y*wuSin')
     expect(yuanMa).toContain('wuZhou=-(tocW.x*wuSin+tocW.y*wuCos)')
-    // FP-12：驱动侧投影长改按 billboard 实时俯仰推导（卡高×sin 后仰角），
-    // 旧俯卧 cosθ 公式会把压伏区甩到角色前方一大片，零残留
-    expect(yuanMa).toContain('touYingChang = touYingKuan * Math.sin(Math.max(0, -(mesh.rotation.x || 0)))')
+    // FP-R1 根因：投影长=全身足迹尺度（不再 sin 后仰压缩），旧俯卧 cos 公式零残留
+    expect(yuanMa).toContain('var touYingChang = PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu * zuChangXi;')
+    expect(yuanMa).not.toContain('touYingChang = touYingKuan * Math.sin(Math.max(0, -(mesh.rotation.x || 0)))')
     expect(yuanMa).not.toContain('touYingChang = touYingKuan * Math.cos(CAN_SHU.qingJiao * Math.PI / 180)')
-    // uniforms 每帧同步 billboard 实时偏航（投影轴=卡片后仰侧）
+    // uniforms 每帧同步 billboard 实时偏航（投影轴=身体轴）
     expect(yuanMa).toContain('caiZhi.uCharYaw.value = mesh.rotation.y')
     expect(yuanMa).not.toContain('caiZhi.uCharYaw.value = CAN_SHU.pianHang * Math.PI / 180')
   })
@@ -376,8 +392,8 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).toMatch(/ceLiangZhuangTai/)
     expect(yuanMa).toMatch(/shiLiGenZhong|shiLiGenDiXing/)
     expect(yuanMa).toContain('var yaoGaoDu = CAN_SHU.jiaoLianGaoDu')
-    // 阴影片 y 与人物同源（FP-12 起直接跟人物实时铰链 y，比一次性 yaoGaoDu 更新）+ eP
-    expect(yuanMa).toMatch(/mesh\.position\.y \+ YIN_YING\.eP/)
+    // 阴影片 y 走草根高度 dangQianGaoDu + eP（FP-14：人物微沉不带着阴影沉进草里）
+    expect(yuanMa).toMatch(/dangQianGaoDu != null \? dangQianGaoDu : mesh\.position\.y\) \+ YIN_YING\.eP/)
   })
 
   it('FP-06 触碰箱：mask 四点 alpha 梯度外法线 + 轮廓内强度驱动可到 1.0', () => {
@@ -435,7 +451,7 @@ describe('FP-01 草地静态兜底', () => {
 
   it('FP-03 阴影片：引擎材质构造、贴地 epsilon、depthWrite=false、生命周期同人物', () => {
     const yuanMa = duQuCaoDi()
-    expect(yuanMa).toContain('function chuangJianYinYing()')
+    expect(yuanMa).toContain('function chuangJianYinYing(jiaoSeHuaBu)')
     expect(yuanMa).toContain("duQuURLShuZhi('wuYinYing')")
     expect(yuanMa).toContain('wuYinYingBuTouMingDu')
     // 渐变纹理走 quWenLiKeLongYuan 同类克隆路径
@@ -602,6 +618,39 @@ describe('FP-01 草地静态兜底', () => {
     expect(zheng).toContain('return -1;')
     // 三类可用源（OffscreenCanvas=2 / HTMLCanvasElement=1 / HTMLImageElement=1），其余一律 -1
     expect(zheng.match(/\?\s*[12]\s*:\s*-1/g) || []).toHaveLength(3)
+  })
+
+  it('FP-R3 页源干净：audio 禁用 IIFE 位于合法 script 内，标签外无悬空 JS 文本节点', () => {
+    const yuanMa = duQuCaoDi()
+    // ① audio 逻辑保留（禁 AudioContext + 静音 WAV 拦截），未误删
+    expect(yuanMa).toContain('function killSource(src)')
+    expect(yuanMa).toContain('patchAC(window.AudioContext)')
+    expect(yuanMa).toContain('function silentWav()')
+    // ② script 开闭配对，无孤立 </script>
+    const kai = (yuanMa.match(/<script\b/g) || []).length
+    const bi = (yuanMa.match(/<\/script>/g) || []).length
+    expect(kai).toBe(bi)
+    // ③ 去掉合法 script/style/注释后，标签外不得残留 IIFE/函数声明（曾致可见文本节点）
+    const wai = yuanMa
+      .replace(/<script\b[\s\S]*?<\/script>/g, '')
+      .replace(/<style\b[\s\S]*?<\/style>/g, '')
+      .replace(/<!--[\s\S]*?-->/g, '')
+    expect(wai).not.toContain('(function')
+    expect(wai).not.toContain('killSource')
+    expect(wai).not.toContain('silentWav')
+    expect(wai).not.toContain('patchAC')
+  })
+
+  it('FP-R3 audio 禁用 IIFE 整体落在 script 内（禁止再落回标签外）', () => {
+    const yuanMa = duQuCaoDi()
+    // 两段 IIFE 的锚点必须出现在某个 <script>…</script> 内
+    const haoBen = yuanMa.match(/<script\b[\s\S]*?<\/script>/g) || []
+    const audioKuai = haoBen.filter((s) => s.includes('killSource') || s.includes('silentWav'))
+    expect(audioKuai.length).toBeGreaterThanOrEqual(1)
+    for (const kuai of audioKuai) {
+      expect(kuai).toContain('(function')
+      expect(kuai).toMatch(/<script\b[\s\S]*<\/script>/)
+    }
   })
 
   it('块注释体内不得出现注释终止符：单行两处即判红', () => {
