@@ -302,13 +302,13 @@ describe('FP-01 草地静态兜底', () => {
   it('FP-02 贴地化：参数集中于 CAN_SHU 配置对象，URL 覆盖一处解析（FP-11 定案值）', () => {
     const yuanMa = duQuCaoDi()
     // FP-12 定案：锚点 (4.48,3.63)、尺寸乘数 0.32（旧俯卧锚点 2.9/2.92 已废弃）
-    expect(yuanMa).toContain('weiZhi:  { x: 4.48, y: -0.0133, z: 3.63 }')
+    expect(yuanMa).toContain('weiZhi:  { x: 4.48, y: -0.0133, z: 3.78 }')
     expect(yuanMa).toContain('chiCun:  2.55')
     expect(yuanMa).toContain(
-      'var PEI_ZHI = window.__wuPEIZHI || { weiZhi: { x: 4.48, y: -0.0133, z: 3.63 }, chiCun: 2.55 }',
+      'var PEI_ZHI = window.__wuPEIZHI || { weiZhi: { x: 4.48, y: -0.0133, z: 3.78 }, chiCun: 2.55 }',
     )
     expect(yuanMa).toContain(
-      'var CAN_SHU = { jiaoLianGaoDu: 0.024, qingJiao: 10, pianHang: 240, chiCunBeiShu: 0.32 }',
+      'var CAN_SHU = { jiaoLianGaoDu: 0.024, qingJiao: 10, pianHang: 240, chiCunBeiShu: 0.38 }',
     )
     expect(yuanMa).toContain('function duQuURLShuZhi(ming)')
     for (const canShu of ['wuTheta', 'wuYaw', 'wuScale', 'wuY', 'wuX', 'wuZ']) {

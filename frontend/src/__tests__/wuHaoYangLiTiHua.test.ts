@@ -110,9 +110,9 @@ describe('FP-10 吴昊阳立体化', () => {
   it('构图终值对齐最终效果图（FP-12 billboard 复核，禁止 drift 回旧俯卧锚点）', () => {
     const yuanMa = duQuCaoDi()
     // FP-12 定案：锚点 (4.48,3.63)（屏幕左移 40px 解析算出）、尺寸乘数 0.32（缩 1/5 治悬空）
-    expect(yuanMa).toContain('weiZhi:  { x: 4.48, y: -0.0133, z: 3.63 }')
+    expect(yuanMa).toContain('weiZhi:  { x: 4.48, y: -0.0133, z: 3.78 }')
     expect(yuanMa).toContain('chiCun:  2.55')
-    expect(yuanMa).toContain('chiCunBeiShu: 0.32')
+    expect(yuanMa).toContain('chiCunBeiShu: 0.38')
     // 地面层参数保留（阴影投影/压草场身体轴用），禁止当角色姿态调
     expect(yuanMa).toContain('qingJiao: 10, pianHang: 240')
     // 旧俯卧构图终值禁止回潮（billboard 下会把角色顶到树后高处且必然压扁）

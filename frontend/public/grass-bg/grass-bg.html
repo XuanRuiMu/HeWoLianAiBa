@@ -1074,7 +1074,7 @@
            weiZhi.y 只作标定基准；真实落位由草根高度实测（gongYong.ceLiangCaoGenGaoDu）写入
            mesh.position.y，测量未就绪才回退 CAN_SHU.jiaoLianGaoDu。 */
         var PEI_ZHI = {
-            weiZhi:  { x: 4.48, y: -0.0133, z: 3.63 },
+            weiZhi:  { x: 4.48, y: -0.0133, z: 3.78 },
             chiCun:  2.55
         };
         /* 草压弯/交互参数（FP-13 三项 + FP-14 物理深化三项 + FP-R1 接触物理层根因）。
@@ -1384,7 +1384,7 @@
                 /* FP-R5 体重钉死场改到身体轴线段距离（不是铰链径向）：中段/脚端 dcW 大，
                    旧径向场几乎钉不住，鼠标仍可拨动“身下的草”。体育场形=足迹+外沿。 */
                 'float wuDaoZhou=length(vec2(wuLx,wuZhou-clamp(wuZhou,0.0,uCharChang)));' +
-                'float wuPinTi=1.0-smoothstep(uCharKuan*0.55,uCharKuan*1.25,wuDaoZhou);' +
+                'float wuPinTi=1.0-smoothstep(uCharKuan*0.70,uCharKuan*1.6,wuDaoZhou);' +
                 'float wuA=texture2D(uCharMask,clamp(wuUV,0.0,1.0)).a;' +
                 'float wuEps=uCharWenLiBu;' +
                 'float wuAu1=texture2D(uCharMask,clamp(wuUV+vec2(wuEps,0.0),0.0,1.0)).a;' +
@@ -1467,7 +1467,7 @@
                     'float lWd=twd.x*cWd-twd.y*sWd;' +
                     'float zWd=-(twd.x*sWd+twd.y*cWd);' +
                     'float qWd=length(vec2(lWd,zWd-clamp(zWd,0.0,uCharChang)));' +
-                    'float pWd=1.0-smoothstep(uCharKuan*0.55,uCharKuan*1.25,qWd);' +
+                    'float pWd=1.0-smoothstep(uCharKuan*0.70,uCharKuan*1.6,qWd);' +
                     'float yWd=1.0-smoothstep(uCharR0*0.5,uCharR1*1.4,dWd);' +
                     'bendingIntensity=bendingIntensity*(1.0-step(0.40,clamp(max(pWd,yWd),0.0,1.0)));}';
             }
@@ -1742,7 +1742,7 @@
         /* 参数唯一来源：共享基础设施块已导出 window.__wuPEIZHI（含标定说明）。
            此处 || 后的兜底只覆盖"共享块缺席"一种情形，且必须与那份逐字同值——两份默认值
            各写一套曾导致"改了不生效"的静默失效，禁止在此另立新默认值。 */
-        var PEI_ZHI = window.__wuPEIZHI || { weiZhi: { x: 4.48, y: -0.0133, z: 3.63 }, chiCun: 2.55 };
+        var PEI_ZHI = window.__wuPEIZHI || { weiZhi: { x: 4.48, y: -0.0133, z: 3.78 }, chiCun: 2.55 };
         /* 贴地化参数（全部集中于此，URL 覆盖统一解析，禁止散落硬编码）：
            - jiaoLianGaoDu  铰链点（贴地边中点）世界 y：仅作测量未就绪时的回退默认
              （FP-11 起锚点移至 (4.62,3.47)，运行时以草根实测为准，此值不再是实测值）
@@ -1751,7 +1751,7 @@
              压缩），身体轴映射（uCharYaw）仍读实时 billboard 偏航。禁止把这两个值当角色姿态调。
            - chiCunBeiShu   尺寸乘数：FP-12 定案 0.32（FP-11 的 0.40 缩 1/5——缩小后卡片矮、
              腿部不再大段悬在地面之上）；billboard 下屏上体量随此值线性缩放（等比、比例不变） */
-        var CAN_SHU = { jiaoLianGaoDu: 0.024, qingJiao: 10, pianHang: 240, chiCunBeiShu: 0.32 };
+        var CAN_SHU = { jiaoLianGaoDu: 0.024, qingJiao: 10, pianHang: 240, chiCunBeiShu: 0.38 };
         /* 贴图纵向翻转位（FP-11 比例保真构图的组成部分）：
            true ⇒ v=0（铰链＝贴地边）落在图像底行（头/手机侧），脚/腿侧随局部 +Y 在画面上方。
            FP-11 billboard 正面朝镜头时，flipY=true 使屏幕显示=图像原样读法（头在下、脚在上），
@@ -2379,6 +2379,11 @@
             if (!yiJiuXu || !mesh || document.hidden) return;
             zhenShu++;
             mianXiangJingTou(mesh); // FP-11：法线每帧对准镜头，角色比例时时刻刻与源图逐像素一致
+            /* FP-R11 镜头拉远：加大 FOV 取更广视角（只改相机，不动角色比例） */
+            try {
+                var camK = exp && exp.engine && exp.engine.camera && exp.engine.camera.instance;
+                if (camK && camK.fov !== 68) { camK.fov = 68; if (camK.updateProjectionMatrix) camK.updateProjectionMatrix(); }
+            } catch (eCam) {}
             /* FP-R7：贴地高度每帧应用（实测就绪后立即压到草根，不等 60 帧健康检查——
                曾因过早测量写 0 样本 + 回退标定偏高，角色悬空约 0.1，接触效果全假） */
             var tudiGao = (gongYong && gongYong.ceLiangZhuangTai && gongYong.ceLiangZhuangTai.gaoDu != null && isFinite(gongYong.ceLiangZhuangTai.gaoDu))
