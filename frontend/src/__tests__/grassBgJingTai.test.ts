@@ -158,9 +158,9 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).toContain('window.__wuPEIZHI = PEI_ZHI')
     expect(yuanMa).toContain('window.__wuD = {')
     expect(yuanMa).toContain('function zhuRuYaWan()')
-    expect(yuanMa).toContain(
-      'var YA_WAN = { r0: 0.12, r1: 0.68, strength: 0.75, huxi: 0.08, shuBiaoJia: 1.5, neiQiangDu: 1.0, wenLiBu: 0.02 }',
-    )
+    // FP-13：新增风抑制/前景草带三项（fengYiZhi、qianJingChang、qianJingQiang）
+    expect(yuanMa).toContain('var YA_WAN = { r0: 0.12, r1: 0.68, strength: 0.75, huxi: 0.08, shuBiaoJia: 1.5, neiQiangDu: 1.0, wenLiBu: 0.02,')
+    expect(yuanMa).toContain('fengYiZhi: 1.0, qianJingChang: 0.28, qianJingQiang: 0.6 };')
     expect(yuanMa).toContain('window.__yaWanTiao')
     expect(yuanMa).toContain('window.__yaWanShouLian')
     expect(yuanMa).toContain('window.__wuGongYong = gongYong')

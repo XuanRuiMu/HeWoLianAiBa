@@ -107,7 +107,8 @@ describe('FP-10 吴昊阳立体化', () => {
     expect(yuanMa).toContain("var caoFsMao = 'gl_FragColor=vec4(vGrassColor,1.0);'")
     expect(yuanMa).toContain('gl_FragColor=vec4(vGrassColor*(1.0-vWuCaoAO*uWuCaoAODu),1.0);')
     expect(yuanMa).toContain('vWuCaoAO=clamp(wuA*1.05+wuAoYuan*0.5,0.0,1.0);')
-    expect(yuanMa).toContain('caiZhi.uWuCaoAODu.value = tiao.aoDu != null ? tiao.aoDu : LI_TI.aoQiangDu')
+    // FP-13：接触 AO 随 reveal 淡入（与压伏同一节奏），故尾部多一个 * bu
+    expect(yuanMa).toContain('caiZhi.uWuCaoAODu.value = (tiao.aoDu != null ? tiao.aoDu : LI_TI.aoQiangDu) * bu')
   })
 
   it('构图终值对齐最终效果图（FP-12 billboard 复核，禁止 drift 回旧俯卧锚点）', () => {
@@ -161,6 +162,33 @@ describe('FP-10 吴昊阳立体化', () => {
     // THREE.Vector2——该出口在部分环境永不解析，会把整条压弯注入静默掐死（草永不被压）
     expect(yuanMa).toContain('m.uniforms.uCharPos = { value: { x: yaWanZhongXin.x, y: yaWanZhongXin.z } }')
     expect(yuanMa).not.toContain('new THREE.Vector2(yaWanZhongXin')
+  })
+
+  it('FP-13 伪3D深化：风动抑制 / 前景草带 / 底边渐隐 / 压伏淡入 / 中心对准', () => {
+    const yuanMa = duQuCaoDi()
+    // ① 身下草风动抑制：注入段位于风之后、压弯之前，按被压度把朝向拉回无风朝向
+    expect(yuanMa).toContain('finalGrassInclination=inclineVectorTowardSlerp(finalGrassInclination,terrainAdjustedNormal,clamp(wuYa*uCharFengYiZhi,0.0,1.0));')
+    expect(yuanMa).toContain("'wuYa=clamp(wuNei+wuBian*0.6,0.0,1.0);'")
+    // ② 卡片前方窄带内的草朝身体弯折（草微微遮住角色），带头尾/两侧淡出
+    expect(yuanMa).toContain("'float wuQianFu=-wuZhou;'")
+    expect(yuanMa).toContain("'charInfl=max(charInfl,wuQianRou*uCharQianJingQiang);}'")
+    // 新增三项 uniform 声明 + 注入 + 每帧同步
+    expect(yuanMa).toContain('uniform float uCharFengYiZhi;uniform float uCharQianJingChang;uniform float uCharQianJingQiang;')
+    expect(yuanMa).toContain('m.uniforms.uCharFengYiZhi = { value: YA_WAN.fengYiZhi };')
+    expect(yuanMa).toContain('caiZhi.uCharQianJingQiang.value = tiao.qianJingQiang != null ? tiao.qianJingQiang : gongYong.YA_WAN.qianJingQiang;')
+    // ③ 底边渐隐：只改 alpha，不动几何；与 FP-10 注入合并同一回调避免互相覆盖
+    expect(yuanMa).toContain("var DI_BIAN_JIAN_YIN_TI = 'diffuseColor.a*=smoothstep(0.0,max(uWuDiBianJianYin,0.0001),vMapUv.y);\\n'")
+    expect(yuanMa).toContain("sq.uniforms.uWuDiBianJianYin = { value: DI_BIAN.jianYin }")
+    expect(yuanMa).toContain("return LI_TI.qiYong ? 'wu-liTi-v1' : 'wu-diBian-v1'")
+    // ④ 压伏与接触 AO 随揭示进度淡入（草是逐渐被趴下去的）
+    expect(yuanMa).toContain('caiZhi.uCharStrength.value = zuiZhong * bu;')
+    expect(yuanMa).toContain('caiZhi.uWuCaoAODu.value = (tiao.aoDu != null ? tiao.aoDu : LI_TI.aoQiangDu) * bu;')
+    // ⑤ billboard 对准基准点改卡片中心（迭代两轮收敛），比例红线不变
+    expect(yuanMa).toContain('for (var ci = 0; ci < 2; ci++) {')
+    expect(yuanMa).toContain('var ux = Math.sin(m.rotation.x) * Math.sin(m.rotation.y);')
+    // 配置集中且默认开启
+    expect(yuanMa).toContain('fengYiZhi: 1.0, qianJingChang: 0.28, qianJingQiang: 0.6')
+    expect(yuanMa).toContain('var DI_BIAN = { jianYin: 0.035 };')
   })
 
   it('父页预载深度贴图（App.vue 双图预载）', () => {
