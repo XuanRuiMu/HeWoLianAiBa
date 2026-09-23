@@ -1,6 +1,28 @@
 -- 和我恋爱吧 - 数据库中文初始化脚本
 -- PostgreSQL 16
 -- 所有表名/字段名使用中文标识符，SQL 中用双引号包裹
+--
+-- 【本文件自述更正（FP-15a 落地 L-07 的用户裁决：退役自述，不重生成内容）】
+--   本文件**仅供开发参考，不是建库路径**。以下四条是实测事实，不是推测：
+--   ① 正式建库走 `database/000_baseline.sql`：docker-compose.yml:22 把 `./database` 挂成
+--      docker-entrypoint-initdb.d（本文件所在的 backend/database 不在挂载范围内），
+--      CI 同样是 `psql -f ../database/000_baseline.sql`（.github/workflows/ci.yml:120/182/261），
+--      之后由 backend/entrypoint.sh:16 重放 `backend/database/migrations/`。
+--   ② 「跑本文件 + 顺序跑迁移」这条路**本身跑不通**：本文件不建 `媒体文件` 表（全文件命中 0 次），
+--      依赖它的迁移一上来就 `relation "媒体文件" does not exist` 硬报错。本单 2026-09-22 于临时库
+--      `fp15a_manual_init` 复跑实测：本文件单独执行 EXIT=0，随后 008/023 各 EXIT=3；
+--      FP-22f 记录的同一现象另含 027（它同时引用 好友消息/媒体文件，见
+--      database/001_haoyou_yu_shezhi.sql 与 backend/database/migrations/027 的表依赖）。
+--   ③ 因此本文件的表/列集合**不构成契约**：列集合一致性一律按 `000_baseline.sql` + 迁移链**两方**判定，
+--      本文件不再参与该判定，也不再被任何门禁要求与 baseline 逐列相同。
+--   ④ FP-15a 那次更正**只改注释**：以下 SQL 语义一字未动（未增删改任何语句、列、约束）；
+--      文件是否物理删除不在本单授权内，归 FP-20 的收口审计。
+--      追加登记（FP-28c → FP-28d，2026-09-23，第六轮裁定②）：FP-28c 曾与 `database/000_baseline.sql`
+--      同步删去 `用户`.`性别` 死列定义；**FP-28d 已成对回退** —— 管理端已提交版本仍读 `用户.性别`、
+--      容器启动自动迁移链会打挂管理端，故 `backend/database/migrations/038_删除用户性别死列.sql`
+--      暂移入其 `pending/` 子目录（顶层非递归扫描不进链），本文件与 baseline 的该列定义**暂时保留**。
+--      放行条件见 `.agents/evidence/traces/FP-28d放行条件-20260923.md`。这仍是与 baseline 的成对同步，
+--      不改变 ③ 的结论：本文件的表/列集合仍**不构成契约**、仍不参与列集合一致性判定。
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -16,6 +38,7 @@ CREATE TABLE IF NOT EXISTS "用户" (
     "昵称" VARCHAR(50),
     "性别" VARCHAR(10),
     "目标性别" VARCHAR(10),
+    "默认性别" VARCHAR(10),
     "性格选择" VARCHAR(50),
     "人设标签" VARCHAR(50),
     "渣男渣女变体" BOOLEAN DEFAULT FALSE,
@@ -84,6 +107,10 @@ CREATE TABLE IF NOT EXISTS "消息" (
     "撤回时间" TIMESTAMPTZ,
     "原始内容" TEXT,
     "客户端序号" BIGINT,
+    "媒体ID" UUID,
+    "幂等键" UUID,
+    "内容块" JSONB,
+    "被引用消息ID" UUID REFERENCES "消息"("ID") ON DELETE SET NULL,
     "创建时间" TIMESTAMPTZ DEFAULT NOW()
 );
 

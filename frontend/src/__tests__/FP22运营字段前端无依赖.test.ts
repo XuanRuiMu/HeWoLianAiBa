@@ -23,8 +23,9 @@ vi.mock('@/api/聊天')
  *   加上这两个字段的展示，这里立刻红灯，必须回 PROGRESS 重新裁决而不是静默改 UI；
  * - 管理侧（有 cha_kan）仍拿得到内心行，管理员监控的深度思考补全链不受影响。
  *
- * 唯一确有可见依赖的面是 军师记录详情.vue（它确实渲染撤回原文）⇒ 该面本轮不收口，
- * 登记 L-45 交用户裁决，并在此钉住「该依赖存在」这一事实。
+ * 唯一曾有可见依赖的面是 军师记录详情.vue（它确实渲染撤回原文）⇒ FP-26 按用户裁决②
+ * 「撤回即原文不再可见」把该展示段（`.chehui-yuanshi`）连同类型键一起删除：
+ * 后端军师记录快照不再产该键、读侧按白名单重建，前端渲染层对撤回原文**零消费点**（下面的账本）。
  */
 
 const 撤回占位文案 = huoQuFanYi('liaoTian', 'duiFangCheHuiLeYiTiaoXiaoXi')
@@ -100,23 +101,32 @@ describe('FP-22 前端消费面清单（谁可以依赖运营字段、谁不可�
     expect(聊天页源).toContain("xiaoXi.lei_xing !== 'neiXinHuoDong'")
   })
 
-  it('该字段在前端类型里是可选键，缺键是合法响应而不是渲染异常', () => {
+  it('该字段在前端类型里只保留在「按能力下发」的消息面上，军师记录类型不带该键', () => {
     const 类型源 = 读源('types/index.ts')
+    const 军师记录段 = /interface JunShiJiLuLiaoTianXiaoXi \{([\s\S]*?)\n\}/.exec(类型源)?.[1]
 
+    // 消息面：可选键 —— 缺键（普通用户）是合法响应，而不是渲染异常
     expect(类型源).toContain('yuan_shi_nei_rong?:')
     expect(类型源).not.toMatch(/^\s*yuan_shi_nei_rong:\s*string\s*$/m)
+    // FP-26：军师记录是普通用户可读面 ⇒ 类型层就不携带撤回原文（旧：`yuan_shi_nei_rong?: string | null`）
+    expect(军师记录段).toBeDefined()
+    expect(军师记录段).not.toMatch(/^\s*yuan_shi_nei_rong\??:/m)
   })
 
-  it('军师记录详情面确有可见依赖：该面未收口，改动前必须先拿到 L-45 用户裁决', () => {
+  it('FP-26 反转：军师记录详情面已删除撤回原文展示（旧断言钉的是「该依赖存在」）', () => {
     const 军师详情源 = 读源('views/军师记录详情.vue')
-    const 翻译源 = 读源('config/translations.ts')
 
-    expect(军师详情源).toContain('xiaoXi.yuan_shi_nei_rong')
-    expect(军师详情源).toContain("huoQuFanYi('junShi', 'cheHuiYuanWen')")
-    expect(翻译源).toMatch(/cheHuiYuanWen/)
+    // 旧→新：expect(军师详情源).toContain('xiaoXi.yuan_shi_nei_rong') → 零引用
+    expect(军师详情源).not.toContain('yuan_shi_nei_rong')
+    expect(军师详情源).not.toContain('chehui-yuanshi')
+    // 撤回态仍可见：撤回时间块保留（可辨识性不退）
+    expect(军师详情源).toContain('chehui-shijian')
+    // 行为级证据在 军师记录详情.test.ts 的「FP-26 军师记录详情不显示撤回原文」组（渲染结果断言）
+    // 翻译键 junShi.cheHuiYuanWen 原地保留、消费者归零（删键属另一裁决面，本单不动 config/translations.ts）
+    expect(读源('config/translations.ts')).toMatch(/cheHuiYuanWen/)
   })
 
-  it('全库对撤回原文的读取点只有军师记录详情一处（新消费点必须先过裁决）', () => {
+  it('全库对撤回原文的读取点归零（新消费点必须先过裁决）', () => {
     const 命中文件 = [
       'views/聊天页面.vue',
       'views/军师记录详情.vue',
@@ -126,7 +136,8 @@ describe('FP-22 前端消费面清单（谁可以依赖运营字段、谁不可�
       'components/军师指导.vue',
     ].filter((路径) => 读源(路径).includes('yuan_shi_nei_rong'))
 
-    expect(命中文件).toEqual(['views/军师记录详情.vue'])
+    // 旧：['views/军师记录详情.vue'] —— FP-26 收口后应无任何渲染面读取该键
+    expect(命中文件).toEqual([])
   })
 
   it('渣型「答案」字段（话术/暴露方式/识破线索）在渲染层零消费点：L-45 的可收口证据', () => {

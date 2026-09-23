@@ -479,13 +479,18 @@ describe('FP-07 聊天页面语音菜单两项可用', () => {
     await flushPromises()
     chaXunCaiDanAnNiu()[1].click()
     await flushPromises()
-    const yuLan = wrapper.find('.yinyong-yulan')
+    // FP-09：预览条形态作废，重做为 components/聊天/引用条.vue（类名 yinyong-tiao*）。
+    // 断言逐条对齐旧口径并加严：关闭钮必须是原生 button（键盘可达可激活）
+    const yuLan = wrapper.find('.yinyong-tiao')
     expect(yuLan.exists()).toBe(true)
     expect(yuLan.text()).toContain(huoQuFanYi('liaoTian', 'yinYong'))
     expect(yuLan.text()).toContain(huoQuFanYi('liaoTian', 'yinYongYuYinZhanWei'))
-    await wrapper.find('.yinyong-quxiao').trigger('click')
+    const guanBi = yuLan.find('button.yinyong-tiao-guanbi')
+    expect(guanBi.attributes('type'), '关闭钮必须是真 button').toBe('button')
+    expect(guanBi.attributes('aria-label')).toBe(huoQuFanYi('liaoTian', 'quXiaoYinYong'))
+    await guanBi.trigger('click')
     await flushPromises()
-    expect(wrapper.find('.yinyong-yulan').exists()).toBe(false)
+    expect(wrapper.find('.yinyong-tiao').exists()).toBe(false)
   })
 
   it('语音转文字可用：失败仅内联红字不抛输入框错误并关闭菜单', async () => {

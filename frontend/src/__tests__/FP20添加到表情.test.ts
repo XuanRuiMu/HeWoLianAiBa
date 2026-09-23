@@ -353,25 +353,44 @@ describe('FP-20 图片菜单归属（use长按菜单第四套状态机）', () =
     return use长按菜单({
       dangQianShiJian: ref(Date.now()),
       cheHuiXiaoXi: vi.fn().mockResolvedValue(undefined),
+      // FP-08d：AI 聊天页接了引用条与被引用槽 ⇒ 打开图片菜单的引用项（好友页不传该参，故无此项）
+      zhiChiTuPianYinYong: true,
       ...gengDuo,
     } as never)
   }
 
-  it('菜单清单声明为「添加到表情 + 撤回」，撤回项按窗口期裁剪', () => {
+  it('图片菜单的引用项按页面开关出现（未接引用条的页面不给入口）', () => {
+    const 未接线 = use长按菜单({
+      dangQianShiJian: ref(Date.now()),
+      cheHuiXiaoXi: vi.fn().mockResolvedValue(undefined),
+    })
+    expect(未接线.huoQuTuPianCaiDanXiang(zaoXiaoXi())).toEqual(['tianJiaDaoBiaoQing', 'cheHui'])
+    expect([...LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.tuPianCaiDanXiang]).toContain('yinYong')
+  })
+
+  it('菜单清单声明为「添加到表情 + 引用 + 撤回」，撤回项按窗口期裁剪', () => {
+    // FP-08d（需求 #5）在 FP-20 的两项里补了 yinYong：图片此前是三个菜单里唯一不能被引用的类型。
+    // 旧清单 ['tianJiaDaoBiaoQing','cheHui'] 钉的正是这个缺口，按新契约改判（撤回裁剪逻辑不动）。
     expect([...LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.tuPianCaiDanXiang]).toEqual([
       'tianJiaDaoBiaoQing',
+      'yinYong',
       'cheHui',
     ])
     const { huoQuTuPianCaiDanXiang } = zaoCaoZuo()
-    expect(huoQuTuPianCaiDanXiang(zaoXiaoXi())).toEqual(['tianJiaDaoBiaoQing', 'cheHui'])
+    expect(huoQuTuPianCaiDanXiang(zaoXiaoXi())).toEqual([
+      'tianJiaDaoBiaoQing',
+      'yinYong',
+      'cheHui',
+    ])
     expect(huoQuTuPianCaiDanXiang(zaoXiaoXi({ fa_song_zhe_lei_xing: 'jiaose' }))).toEqual([
       'tianJiaDaoBiaoQing',
+      'yinYong',
     ])
     expect(
       huoQuTuPianCaiDanXiang(
         zaoXiaoXi({ shi_jian_chuo: Date.now() - XIAO_XI_PEI_ZHI.cheHuiShiXian - 1000 }),
       ),
-    ).toEqual(['tianJiaDaoBiaoQing'])
+    ).toEqual(['tianJiaDaoBiaoQing', 'yinYong'])
   })
 
   it('右键图片气泡打开图片菜单并记录坐标', () => {
@@ -446,6 +465,7 @@ describe('FP-20 图片菜单归属（use长按菜单第四套状态机）', () =
       dangQianShiJian: ref(Date.now()),
       cheHuiXiaoXi: async () => undefined,
       tianJiaDaoBiaoQing: async () => undefined,
+      zhiChiTuPianYinYong: true,
     }
     const caiDan = use长按菜单(yiLai)
     caiDan.daKaiWenBenCaiDan(zaoXiaoXi({ lei_xing: 'tuPian' }), {} as MouseEvent)
@@ -456,7 +476,9 @@ describe('FP-20 图片菜单归属（use长按菜单第四套状态机）', () =
     expect(caiDan.huoQuYuYinCaiDanXiang()).not.toContain('tianJiaDaoBiaoQing')
     caiDan.daKaiTuPianCaiDan(zaoXiaoXi(), {} as MouseEvent)
     expect(caiDan.huoQuTuPianCaiDanXiang()).not.toContain('fuZhi')
-    expect(caiDan.huoQuTuPianCaiDanXiang()).not.toContain('yinYong')
+    // FP-08d：图片菜单补了引用项（旧断言 not.toContain('yinYong') 钉的正是「图片无法被引用」这个缺口）。
+    // 页面级「点它 = 设引用态、且不误调添加到表情」的接线归 __tests__/FP08d媒体引用与直发.test.ts。
+    expect(caiDan.huoQuTuPianCaiDanXiang()).toContain('yinYong')
   })
 })
 
@@ -612,11 +634,13 @@ describe('FP-20 聊天页面：图片气泡长按/右键入口', () => {
     await flushPromises()
   }
 
-  it('自己发的图片右键出「添加到表情」+「撤回」，点它即取图并上传一次', async () => {
+  it('自己发的图片右键出「添加到表情」+「引用」+「撤回」，点它即取图并上传一次', async () => {
     const { wrapper, 聊天仓库 } = await guaZai([zaoXiaoXi({ mei_ti_yuan_shi_wen_jian_ming: 'wo.png' })])
     await daKaiDiTiaoQiPaoCaiDan(wrapper)
+    // FP-08d：中间多出的「引用」项是图片可被引用的唯一入口（旧两项清单钉的是这个缺口）
     expect(caiDanAnNiu().map((anNiu) => anNiu.textContent)).toEqual([
       huoQuFanYi('liaoTian', 'tianJiaDaoBiaoQing'),
+      huoQuFanYi('liaoTian', 'yinYong'),
       huoQuFanYi('liaoTian', 'cheHui'),
     ])
     caiDanAnNiu()[0].click()
@@ -639,6 +663,7 @@ describe('FP-20 聊天页面：图片气泡长按/右键入口', () => {
     await daKaiDiTiaoQiPaoCaiDan(wrapper)
     expect(caiDanAnNiu().map((anNiu) => anNiu.textContent)).toEqual([
       huoQuFanYi('liaoTian', 'tianJiaDaoBiaoQing'),
+      huoQuFanYi('liaoTian', 'yinYong'),
     ])
     caiDanAnNiu()[0].click()
     await flushPromises()
@@ -678,18 +703,20 @@ describe('FP-20 聊天页面：图片气泡长按/右键入口', () => {
       await vi.advanceTimersByTimeAsync(haoMiao + 50)
       expect(document.body.querySelector('.chehui-zhezhao')).toBeNull()
 
-      // 到阈值：出菜单，项集与右键同源（自己发的图 = 添加到表情 + 撤回）
+      // 到阈值：出菜单，项集与右键同源（自己发的图 = 添加到表情 + 引用 + 撤回）
+      // FP-08d 在图片菜单补了「引用」，旧的两项清单钉的是「图片无法被引用」这个缺口。
       await qiPao.trigger('touchstart')
       await vi.advanceTimersByTimeAsync(haoMiao)
       expect(caiDanAnNiu().map((anNiu) => anNiu.textContent)).toEqual([
         huoQuFanYi('liaoTian', 'tianJiaDaoBiaoQing'),
+        huoQuFanYi('liaoTian', 'yinYong'),
         huoQuFanYi('liaoTian', 'cheHui'),
       ])
 
       // 菜单已弹出后浏览器补发的 touchmove/touchend 只清待触发定时器，不得把菜单收掉
       await qiPao.trigger('touchmove')
       await qiPao.trigger('touchend')
-      expect(caiDanAnNiu()).toHaveLength(2)
+      expect(caiDanAnNiu()).toHaveLength(3)
 
       caiDanAnNiu()[0].click()
       await vi.advanceTimersByTimeAsync(0)
@@ -761,7 +788,7 @@ describe('FP-20 聊天页面：图片气泡长按/右键入口', () => {
     caiDanAnNiu()[0].click()
     await flushPromises()
     expect(聊天仓库.cuoWuXinXi).toBeFalsy()
-    expect(wrapper.find('.fasong-cuowu').exists()).toBe(false)
+    expect(wrapper.find('.tishi-dai-cuowu').exists()).toBe(false)
     const zhuangTai = wrapper.find('[role="status"] .biaoqing-tishi')
     expect(zhuangTai.exists()).toBe(true)
     expect(zhuangTai.text()).toBe(huoQuFanYi('duoMeiTi', 'biaoQingYiZaiKu'))
@@ -829,11 +856,19 @@ describe('FP-20 聊天页面：图片气泡长按/右键入口', () => {
     expect(document.body.querySelector('.shouquan-zhezhao')).not.toBeNull()
   })
 
+  /**
+   * 【FP-10a 改判】旧用例点的是媒体分支的 `.tupian-qipao`；判据反转（只认「含图片块」）后
+   * 图片行改派块渲染，触屏补发的 click 落在块图 `.tuwen-kuai-tu` 上 —— 两条分支的 click
+   * 走的是同一个 `daKaiTuPianYuLan` 出口（`tuPianCaiDanZhanKai` 那道守卫也在同一个函数里），
+   * 所以本用例钉的行为不变，只是选择器跟着渲染形态走。媒体分支自身的可达性（脏行兜底）
+   * 由 __tests__/FP10a判据反转与贴纸待发.test.ts 钉住。
+   */
   it('长按已出菜单时补发的 click 不再叠加图片预览', async () => {
     const { wrapper } = await guaZai([zaoXiaoXi({ id: 'yu-lan' })])
     await daKaiDiTiaoQiPaoCaiDan(wrapper)
     expect(document.body.querySelector('.chehui-zhezhao')).not.toBeNull()
-    await wrapper.find('.tupian-qipao').trigger('click')
+    expect(wrapper.findAll('.tuwen-kuai-tu')).toHaveLength(1)
+    await wrapper.find('.tuwen-kuai-tu').trigger('click')
     await flushPromises()
     expect(wrapper.find('.tupian-yulan-zhezhao').exists()).toBe(false)
     expect(document.body.querySelector('.chehui-zhezhao')).not.toBeNull()
@@ -863,10 +898,14 @@ describe('FP-20 聊天页面：图片气泡长按/右键入口', () => {
       const { wrapper } = await guaZai([
         zaoXiaoXi({ id: 'zi-dong-xiao-shi', fa_song_zhe_lei_xing: 'jiaose', fa_song_zhe_id: 'j1' }),
       ])
-      const jiZhun = vi.getTimerCount()
+      // 基准点必须落在「点开菜单之后、点添加之前」这一静止时刻。FP-10c 契约演进说明：
+      // 旧版在开菜单前取 jiZhun，并在点击后先 advanceTimersByTimeAsync(0) —— 那一步会把挂载链上
+      // 任何 0 延时定时器一并排掉，于是"净增一只"变成"增一只又漏掉一只"，计数判定从此不确定。
+      // 改造前 use输入框.ts 的量高定时器恰好把它掩盖了；量高链删除后立刻暴露。
+      // 现在不推进任何假时钟、只 flush 微任务，增减项才真的只有反馈条这一只，判据比旧版更严。
       await daKaiDiTiaoQiPaoCaiDan(wrapper)
+      const jiZhun = vi.getTimerCount()
       caiDanAnNiu()[0].click()
-      await vi.advanceTimersByTimeAsync(0)
       await flushPromises()
       const tiShi = document.body.querySelector('.biaoqing-tishi')
       expect(tiShi?.textContent).toBe(huoQuFanYi('duoMeiTi', 'biaoQingYiTianJia'))
@@ -1000,8 +1039,8 @@ describe('FP-20 单源与越界守卫（源码扫描）', () => {
     //   use长按菜单.ts —— 图片菜单判定的唯一真源 shiTuPianXiaoXi（FP-20）
     //   聊天页面.vue   —— 右键 + 长按两个派发点的分流（下方计数钉死恒 2）
     // （FP-21 的好友聊天页原先也写 `lei_xing === 'tuPian'`，现已收敛到 config/消息配置 的唯一
-    //  清单 TU_PIAN_XIAO_XI_LEI_XING，故本清单由三处降为两处；好友页仍不派发任何菜单、不含表情上传，
-    //  见下方「好友聊天页只渲染图片、不接表情入口」用例）
+    //  清单 TU_PIAN_XIAO_XI_LEI_XING，故本清单由三处降为两处；好友页接线后经 chuLiYouJianCaiDan
+    //  派发菜单、经本地 shiTuPianXiaoXi 分流，不含表情上传第二份实现）
     const panDingDian = mingZhong("lei_xing === 'tuPian'")
     expect(panDingDian).toEqual(['composables/use长按菜单.ts', 'views/聊天页面.vue'])
     // 页面两处派发（右键 + 长按）只做分流，判定真源仍是 use长按菜单 的 shiTuPianXiaoXi
@@ -1030,7 +1069,10 @@ describe('FP-20 单源与越界守卫（源码扫描）', () => {
     expect(haoYouYe).toContain('use图片授权门')
     expect(haoYouYe).toContain('use长按菜单')
     expect(haoYouYe).toContain('tianJiaTuPianDaoBiaoQing')
-    expect(haoYouYe).toContain('@contextmenu.prevent="daKaiTuPianCaiDan(xiaoXi, $event)"')
+    expect(haoYouYe).toContain('@contextmenu.prevent="chuLiYouJianCaiDan(xiaoXi, $event)"')
+    expect(haoYouYe, '好友页分流禁写 lei_xing === \'tuPian\' 字面量（FP-20 清单两处）').not.toContain(
+      "lei_xing === 'tuPian'",
+    )
     // 两个聊天页都不再自带授权门实现，全部指向唯一真源
     expect(mingZhong('function queRenTuPianShouQuan')).toEqual(['composables/use图片授权门.ts'])
     expect(shouQuanMenWen).toContain('queRenTuPianShouQuan')

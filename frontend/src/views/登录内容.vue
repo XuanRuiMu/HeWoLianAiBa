@@ -13,7 +13,7 @@
           </p>
         </div>
 
-        <div class="biaodan-gundong" :class="{ 'xuyao-gundong': moShi === 'zhuCe' }">
+        <div class="biaodan-gundong">
           <div class="biaoqian-qiehuan">
             <button
               class="biaoqian-anniu"
@@ -35,7 +35,8 @@
             {{ cuoWuXinXi }}
           </div>
 
-          <form v-if="moShi === 'dengLu'" @submit.prevent="zhiXingDengLu">
+          <Transition name="biaodan-qiehuan">
+          <form v-if="moShi === 'dengLu'" key="dengLu" @submit.prevent="zhiXingDengLu">
               <div class="shuru-zu" :class="{ shangFu: dengLuShouJiShangFu }">
                 <input
                   id="denglu-shoujihao"
@@ -55,7 +56,6 @@
                 <label for="denglu-shoujihao" class="fudong-biaoqian">{{
                   huoQuFanYi('ui', 'shouJiHao')
                 }}</label>
-                <div class="dixian-dixian" />
               </div>
 
               <div class="shuru-zu" :class="{ shangFu: dengLuMiMaShangFu }">
@@ -78,7 +78,6 @@
                   <label for="denglu-mima" class="fudong-biaoqian">{{
                     huoQuFanYi('ui', 'miMa')
                   }}</label>
-                  <div class="dixian-dixian" />
                   <button
                     type="button"
                     class="mima-qiehuan"
@@ -164,7 +163,7 @@
                 }}
               </button>
           </form>
-          <form v-else @submit.prevent="zhiXingZhuCe">
+          <form v-else key="zhuCe" @submit.prevent="zhiXingZhuCe">
               <div class="shuru-zu" :class="{ shangFu: zhuCeShouJiShangFu }">
                 <input
                   id="zhuce-shoujihao"
@@ -184,7 +183,6 @@
                 <label for="zhuce-shoujihao" class="fudong-biaoqian">{{
                   huoQuFanYi('ui', 'shouJiHao')
                 }}</label>
-                <div class="dixian-dixian" />
               </div>
 
               <div class="shuru-zu" :class="{ shangFu: zhuCeYanZhengMaShangFu }">
@@ -209,7 +207,6 @@
                     <label for="zhuce-yanzhengma" class="fudong-biaoqian">{{
                       huoQuFanYi('ui', 'yanZhengMa')
                     }}</label>
-                    <div class="dixian-dixian" />
                   </div>
                   <button
                     type="button"
@@ -241,7 +238,6 @@
                 <label for="zhuce-yonghuming" class="fudong-biaoqian">{{
                   huoQuFanYi('ui', 'yongHuMing')
                 }}</label>
-                <div class="dixian-dixian" />
               </div>
 
               <div class="shuru-zu" :class="{ shangFu: zhuCeMiMaShangFu }">
@@ -264,7 +260,6 @@
                   <label for="zhuce-mima" class="fudong-biaoqian">{{
                     huoQuFanYi('ui', 'miMa')
                   }}</label>
-                  <div class="dixian-dixian" />
                   <button
                     type="button"
                     class="mima-qiehuan"
@@ -305,21 +300,18 @@
                 </div>
               </div>
 
-              <!-- C5 未成年人保护：注册强制采集出生日期 -->
+              <!-- C5 未成年人保护：注册强制采集出生日期（FP-14：自绘分段控件，显示口径 YYYY-MM-DD） -->
               <div class="shuru-zu shangFu">
-                <input
-                  id="zhuce-chushengriqi"
+                <ChuShengRiQiXuanZeQi
                   v-model="zhuCeChuShengRiQi"
-                  type="date"
-                  class="fenlie-shuru shengri-shuru"
-                  :min="'1900-01-01'"
-                  :max="jinRiRiQi"
-                  required
+                  class="fenlie-shuru"
+                  :id-qian-zhui="'zhuce-chushengriqi'"
+                  :zui-xiao="'1900-01-01'"
+                  :zui-da="jinRiRiQi"
                 />
                 <label for="zhuce-chushengriqi" class="fudong-biaoqian">{{
                   huoQuFanYi('ui', 'chuShengRiQi')
                 }}</label>
-                <div class="dixian-dixian" />
               </div>
 
               <div class="xieyi-gouxuan">
@@ -350,6 +342,7 @@
                 }}
               </button>
           </form>
+          </Transition>
         </div>
       </div>
       <div class="juanzhou-gan juanzhou-gan-xia" />
@@ -375,6 +368,7 @@ import { huoQuCuoWuXiangYing } from '@/api/请求'
 import { huoQuFanYi } from '@/config/translations'
 import { quXian } from '@/config/设计令牌'
 import 协议模态框 from '@/components/协议模态框.vue'
+import ChuShengRiQiXuanZeQi from '@/components/认证/出生日期选择器.vue'
 
 const emit = defineEmits<{
   (e: 'dengLuChengGong'): void
@@ -587,6 +581,18 @@ watch(zhuCeChuShengRiQi, (val) => (bd.zhuCeChuShengRiQi = val))
 
 function qieHuanMoShi(xinMoShi: MoShiLeiXing) {
   if (xinMoShi === moShi.value) return
+  const dangQianJiaoDian = document.activeElement as HTMLElement | null
+  if (
+    dangQianJiaoDian &&
+    dangQianJiaoDian !== document.body &&
+    dangQianJiaoDian.closest('form') &&
+    biaodanRongqi.value?.contains(dangQianJiaoDian)
+  ) {
+    dangQianJiaoDian.blur()
+  }
+  // FP-02：离场表单在过渡窗口内仍是 DOM 节点（含三段日期控件的段级焦点），
+  // 先注销其中焦点，切换后 activeElement 不残留上一表单
+  // 滚动口先归零：离场层已脱流覆在顶部，滚动复位藏在淡切之下，不产生可见的滚动甩动
   const gundongQu = biaodanRongqi.value?.querySelector('.biaodan-gundong') as HTMLElement | null
   if (gundongQu) gundongQu.scrollTop = 0
   moShi.value = xinMoShi
@@ -717,152 +723,127 @@ function kaiShiDaoJiShi(qiShiZhi = 60) {
   }, 1000)
 }
 
-async function qiDongJuanZhouDongHua(mubiaoLuJing: string) {
-  const pianHaoJianShaoDongHua = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  用户仓库.mingChengKeJian = false
-  const biaodan = biaodanRongqi.value
-  if (!biaodan) {
-    用户仓库.mingChengKeJian = true
-    router.push(mubiaoLuJing)
-    return
+/* ============ FP-05（需求 #15）：登录/注册成功后的真定格飞行 ============
+   整段动画由一次性快照层（活卡片的克隆）承载：活 DOM 一个内联样式都不写，
+   快照层上的每条 fill:'forwards' 动画都进 定格动画们，收尾无条件全部注销。 */
+
+let 定格层: HTMLElement | null = null
+let 定格动画们: Animation[] = []
+
+/** 关键帧的数值端一律向 CSS 要：读回类上的解析结果再写进动画，脚本里不留像素/色值字面量 */
+function 计算帧(元素: HTMLElement, 属性清单: string[]): Record<string, string> {
+  const 样式 = getComputedStyle(元素)
+  const 帧: Record<string, string> = {}
+  for (const 属性 of 属性清单) {
+    const 值 = 样式.getPropertyValue(属性).trim()
+    // 真浏览器在此只会给出已解析值；样式表未注入的宿主（jsdom）会退回 var()/calc() 原文或空串，
+    // 那种值不能当关键帧用 —— 丢掉该属性即可，动画退化为隐式起值，不抛错也不影响导航
+    if (值 && !值.includes('var(') && !值.includes('calc(')) 帧[属性] = 值
   }
+  return 帧
+}
 
-  if (pianHaoJianShaoDongHua) {
-    biaodan.style.opacity = '0'
-    用户仓库.mingChengKeJian = true
-    router.push(mubiaoLuJing)
-    return
+function 记动画(动画: Animation): Animation {
+  定格动画们.push(动画)
+  return 动画
+}
+
+function 清理定格层(): void {
+  for (const 动画 of 定格动画们) 动画.cancel()
+  定格动画们 = []
+  定格层?.remove()
+  定格层 = null
+}
+
+function 建定格层(活卡: HTMLElement): HTMLElement {
+  const 矩形 = 活卡.getBoundingClientRect()
+  const 层 = 活卡.cloneNode(true) as HTMLElement
+  层.classList.add('juan-zhou-dingge')
+  // 快照不是第二份可交互表单：摘净 id（否则与活表单撞 id）、整棵子树退出无障碍树并冻结交互
+  层.removeAttribute('id')
+  for (const 子 of 层.querySelectorAll('[id]')) 子.removeAttribute('id')
+  层.setAttribute('aria-hidden', 'true')
+  层.setAttribute('inert', '')
+  // cloneNode 不带 input 的当前值（value/checked 是 property 而非 attribute），逐位回填才定格得住真正那一帧
+  const 源输入们 = 活卡.querySelectorAll('input')
+  层.querySelectorAll('input').forEach((克隆输入, 序) => {
+    const 源 = 源输入们[序] as HTMLInputElement | undefined
+    if (!源) return
+    克隆输入.value = 源.value
+    克隆输入.checked = 源.checked
+  })
+  层.style.position = 'fixed'
+  层.style.setProperty('--dingge-zuo', `${矩形.left}px`)
+  层.style.setProperty('--dingge-shang', `${矩形.top}px`)
+  层.style.setProperty('--dingge-kuan', `${矩形.width}px`)
+  层.style.setProperty('--dingge-gao', `${矩形.height}px`)
+  document.body.appendChild(层)
+  return 层
+}
+
+async function 定格飞向用户位(层: HTMLElement, 用户位: HTMLElement): Promise<void> {
+  const 收束 = (() => {
+    层.classList.add('juan-zhou-dingge-shousuo')
+    const 帧 = 计算帧(层, ['height', 'border-radius', 'padding'])
+    层.classList.remove('juan-zhou-dingge-shousuo')
+    return 帧
+  })()
+  for (const 杆 of 层.querySelectorAll<HTMLElement>('.juanzhou-gan')) {
+    杆.classList.add('juan-zhou-dingge-gan')
+    const 杆帧 = 计算帧(杆, ['height', 'opacity'])
+    杆.classList.remove('juan-zhou-dingge-gan')
+    // 属性式关键帧（单端点）= 起点取元素当前计算值，端点取 CSS 解析值 ⇒ 首帧零跳变
+    记动画(杆.animate(杆帧, { duration: 250, easing: quXian.biaoZhun, fill: 'forwards' }))
   }
-
-  const caidanYongHu = document.querySelector('.yonghu-xuanxiang') as HTMLElement | null
-  const shangGan = biaodan.querySelector('.juanzhou-gan-shang') as HTMLElement | null
-  const xiaGan = biaodan.querySelector('.juanzhou-gan-xia') as HTMLElement | null
-  const neirongQu = biaodan.querySelector('.biaodan-neirong-qu') as HTMLElement | null
-
-  biaodan.style.pointerEvents = 'none'
-  biaodan.style.overflow = 'hidden'
-  biaodan.style.willChange = 'height, border-radius, background-color, padding, transform, opacity'
-
-  const yuanShiGaoDu = biaodan.offsetHeight
-  const yuanShiKuanDu = biaodan.offsetWidth
-  const juanTongGaoDu = 28
-
-  if (shangGan) {
-    shangGan.animate(
-      [
-        { opacity: 0, height: '0px' },
-        { opacity: 1, height: '14px' },
-      ],
-      { duration: 250, easing: 'ease-out', fill: 'forwards' },
+  const 内容区 = 层.querySelector<HTMLElement>('.biaodan-neirong-qu')
+  if (内容区) {
+    记动画(
+      内容区.animate([{ opacity: '0' }], {
+        duration: 500,
+        easing: quXian.biaoZhun,
+        fill: 'forwards',
+      }),
     )
   }
-  if (xiaGan) {
-    xiaGan.animate(
-      [
-        { opacity: 0, height: '0px' },
-        { opacity: 1, height: '14px' },
-      ],
-      { duration: 250, easing: 'ease-out', fill: 'forwards' },
-    )
-  }
+  const 卷轴 = 记动画(层.animate([收束], { duration: 700, easing: quXian.biaoZhun, fill: 'forwards' }))
+  await 卷轴.finished
 
-  if (neirongQu) {
-    neirongQu.animate([{ opacity: 1 }, { opacity: 0 }], {
-      duration: 500,
-      easing: quXian.biaoZhun,
-      fill: 'forwards',
-    })
-  }
-
-  const juanQiDongHua = biaodan.animate(
-    [
-      {
-        height: `${yuanShiGaoDu}px`,
-        borderRadius: '24px',
-        backgroundColor: 'rgba(20, 24, 40, 0.6)',
-        padding: '28px 28px 24px',
-      },
-      {
-        height: `${yuanShiGaoDu * 0.35}px`,
-        borderRadius: '18px',
-        backgroundColor: 'rgba(20, 24, 40, 0.7)',
-        padding: '6px 10px',
-        offset: 0.5,
-      },
-      {
-        height: `${juanTongGaoDu}px`,
-        borderRadius: '14px',
-        backgroundColor: 'rgba(20, 24, 40, 0.75)',
-        padding: '0px',
-      },
-    ],
-    { duration: 700, easing: quXian.biaoZhun, fill: 'forwards' },
-  )
-
-  await juanQiDongHua.finished
-
-  biaodan.style.opacity = '0'
-  biaodan.style.height = `${juanTongGaoDu}px`
-  biaodan.style.width = `${yuanShiKuanDu}px`
-  biaodan.style.borderRadius = '14px'
-  biaodan.style.background = 'var(--boli-beijing-shen)'
-  biaodan.style.backdropFilter = 'blur(16px)'
-  biaodan.style.setProperty('-webkit-backdrop-filter', 'blur(16px)')
-  biaodan.style.border = '1px solid var(--boli-biankuang-liang)'
-  biaodan.style.padding = '0'
-  biaodan.style.boxShadow =
-    '0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.08)'
-
-  if (shangGan) {
-    shangGan.style.display = 'none'
-  }
-  if (xiaGan) {
-    xiaGan.style.display = 'none'
-  }
-  if (neirongQu) {
-    neirongQu.style.display = 'none'
-  }
-
-  juanQiDongHua.cancel()
-
-  await new Promise<void>((jieJue) =>
-    requestAnimationFrame(() => requestAnimationFrame(() => jieJue())),
-  )
-
-  biaodan.style.opacity = '1'
-
-  if (caidanYongHu) {
-    const biaodanJu = biaodan.getBoundingClientRect()
-    const mubiaoJu = caidanYongHu.getBoundingClientRect()
-    const qiShiX = biaodanJu.left + biaodanJu.width / 2
-    const qiShiY = biaodanJu.top + biaodanJu.height / 2
-    const muBiaoX = mubiaoJu.left + mubiaoJu.width / 2
-    const muBiaoY = mubiaoJu.top + mubiaoJu.height / 2
-    const pianYiX = muBiaoX - qiShiX
-    const pianYiY = muBiaoY - qiShiY
-
-    biaodan.style.willChange = 'transform, opacity'
-
-    const feiXingDongHua = biaodan.animate(
-      [
-        { transform: 'translate(0, 0) scale(1)', opacity: 1 },
-        {
-          transform: `translate(${pianYiX * 0.5}px, ${pianYiY * 0.5}px) scale(0.6)`,
-          opacity: 0.7,
-          offset: 0.4,
-        },
-        { transform: `translate(${pianYiX}px, ${pianYiY}px) scale(0.15)`, opacity: 0 },
-      ],
+  const 起点 = 层.getBoundingClientRect()
+  const 落点 = 用户位.getBoundingClientRect()
+  const 位移X = 落点.left + 落点.width / 2 - (起点.left + 起点.width / 2)
+  const 位移Y = 落点.top + 落点.height / 2 - (起点.top + 起点.height / 2)
+  const 落点缩放 = 起点.width > 0 ? Math.min(1, Math.max(0, 落点.width / 起点.width)) : 1
+  const 飞行 = 记动画(
+    层.animate(
+      [{ transform: `translate(${位移X}px, ${位移Y}px) scale(${落点缩放})`, opacity: '0' }],
       { duration: 600, easing: quXian.ruan, fill: 'forwards' },
-    )
+    ),
+  )
+  await 飞行.finished
+}
 
-    await feiXingDongHua.finished
-    biaodan.style.opacity = '0'
-    feiXingDongHua.cancel()
+async function qiDongDinggeFeixing(mubiaoLuJing: string) {
+  const 活卡 = biaodanRongqi.value
+  const 用户位 = document.querySelector<HTMLElement>('.yonghu-xuanxiang')
+  const 减动效 = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  if (!活卡 || !用户位 || 减动效) {
+    // 缺宿主 / 缺落点 / 用户要求减动效：不做位移、直接切换，活 DOM 与动画集合都不留痕
+    router.push(mubiaoLuJing)
+    return
   }
-
-  用户仓库.mingChengKeJian = true
+  用户仓库.mingChengKeJian = false
+  const 快照 = 建定格层(活卡)
+  定格层 = 快照
+  // 快照先落地、页面随即切走：真定格浮在下一屏之上飞向左上角，而不是原地改写还在屏幕上的表单
   router.push(mubiaoLuJing)
+  try {
+    await 定格飞向用户位(快照, 用户位)
+  } catch {
+    // 装饰性动画的任何失败都不许挡住登录成功后的导航
+  } finally {
+    清理定格层()
+    用户仓库.mingChengKeJian = true
+  }
 }
 
 async function zhiXingDengLu() {
@@ -880,7 +861,7 @@ async function zhiXingDengLu() {
     )
     bd.qingKongDengLuZhuCe()
     emit('dengLuChengGong')
-    await qiDongJuanZhouDongHua('/')
+    await qiDongDinggeFeixing('/')
   } catch (cuoWu) {
     if (typeof cuoWu === 'object' && cuoWu !== null && 'response' in cuoWu) {
       const xiangYing = huoQuCuoWuXiangYing(cuoWu)
@@ -930,7 +911,7 @@ async function zhiXingZhuCe() {
       zhuCeChuShengRiQi.value,
     )
     bd.qingKongDengLuZhuCe()
-    await qiDongJuanZhouDongHua('/')
+    await qiDongDinggeFeixing('/')
   } catch (cuoWu) {
     if (typeof cuoWu === 'object' && cuoWu !== null && 'response' in cuoWu) {
       const xiangYing = huoQuCuoWuXiangYing(cuoWu)
@@ -948,26 +929,38 @@ async function zhiXingZhuCe() {
 .denglu-neirong {
   width: 100%;
   max-width: 420px;
+  /* 高度吃满认证布局的内容盒：.yemian-buju 由 flex:1 + min-height:0 拿到确定高（认证布局.vue:83/94），
+     本层由此成为「确定高」的居中参照，卡片高≤本层 ⇒ 任何分辨率下卡片都装得下视口 */
+  height: 100%;
   padding: 0 32px;
-  /* 四边 auto：纵向自动外边距负责在认证布局滚动口内居中（内容超高时自动归零、顶部可达）。
-     原 `margin: 0 auto` 与认证布局 `.yemian-buju > *` 的 margin auto 同权重，
-     谁后注入谁生效，导致登录卡片纵向居中随样式加载顺序漂移 */
+  /* 四边 auto 保留（FP-02 契约：不得写回 `margin: 0 auto` 与认证布局 .yemian-buju>* 的同权重外边距抢序）；
+     本层高度已确定为 100%，自动外边距吸收的自由空间恒为 0 ⇒ 居中实际由下面的网格承担 */
   margin: auto;
+  /* minmax(0,1fr) 让这一行「等于本层高度、且可小于内容高」，卡片的 max-height:100% 才有确定参照；
+     auto 行只会被 align-content:stretch 撑大不会被压小，写成普通 grid 就封不住顶 */
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  place-items: center;
 }
 
 /* 鎏金年代 · Gilded Deco：午夜蓝象牙双档 + 香槟金双线框 + 扇形放射纹 */
 .biaodan-rongqi {
   display: flex;
   flex-direction: column;
-  background: #161b2e;
+  /* 卡面色单一真源（FP-03c）：标签缺口衬底与它必须是同一枚令牌，故写成 longhand
+     （带 var() 的 background 简写在 jsdom 里整条被丢，层叠结果读不出来） */
+  background-color: var(--renzheng-mian-se);
   border: 1px solid rgba(201, 169, 106, 0.34);
   border-radius: 6px;
   box-shadow:
     0 20px 50px rgba(2, 4, 14, 0.55),
-    inset 0 0 0 4px #161b2e,
+    inset 0 0 0 4px var(--renzheng-mian-se),
     inset 0 0 0 5px rgba(201, 169, 106, 0.28);
   padding: 30px 28px 24px;
   position: relative;
+  /* 视口内上界：相对 .denglu-neirong 的确定高（网格区域）封顶，超出量交给内层恒定滚动口。
+     卡片自身仍是 overflow:hidden —— 它要裁掉 .juanzhou-gan 的 110% 宽与圆角，不是多余裁切层 */
+  max-height: 100%;
   overflow: hidden;
 }
 
@@ -1007,7 +1000,11 @@ async function zhiXingZhuCe() {
 
 .biaodan-neirong-qu {
   flex: 1;
-  overflow: hidden;
+  /* min-height:0 才让 flex:1 真的能缩；overflow:hidden 是 R2 点名的多余裁切层，删 ——
+     卡片被封顶后需要有人吸收溢出量，那是 .biaodan-gundong 的职责，两层都裁就成了切掉内容 */
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .biaodan-tou {
@@ -1055,29 +1052,44 @@ async function zhiXingZhuCe() {
 }
 
 .biaodan-gundong {
-  overflow: visible;
+  /* 恒定滚动口（需求 #2「登录和注册都必须始终有滚动条」）：
+     scroll 而非 auto ⇒ 内容不足一屏时滚动口依然存在可见；条宽/颜色/cursor 全走 global.css 单一真源。
+     旧实现是 `overflow:visible` + JS 条件类 xuyao-gundong 才给 50vh/auto，登录态根本没有滚动口 */
+  flex: 1;
+  min-height: 0;
+  overflow-y: scroll;
+  /* 登录↔注册过渡的离场层定位宿主（FP-02） */
+  position: relative;
 }
 
-.biaodan-gundong.xuyao-gundong {
-  max-height: 50vh;
-  overflow-y: auto;
+/* 登录↔注册同层切换过渡（FP-02，复用认证布局 yemian-nei-guodu 的类驱动机制）：
+   离场表单脱流覆在滚动口顶部原位淡出，入场表单即刻承担盒高 ⇒ 两列内容不叠排；
+   位移量与缓动全部吃既有共用 :root 令牌（--jiange-xiao / --quxian-*），零新量纲字面量 */
+.biaodan-qiehuan-enter-active {
+  transition:
+    opacity 0.3s var(--quxian-tan-chu),
+    transform 0.3s var(--quxian-tan-chu);
 }
 
-.biaodan-gundong.xuyao-gundong::-webkit-scrollbar {
-  width: var(--gundong-tiao-kuan-du);
+.biaodan-qiehuan-leave-active {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
-.biaodan-gundong.xuyao-gundong::-webkit-scrollbar-track {
-  background: var(--gundong-tiao-guidao);
+.biaodan-qiehuan-enter-from {
+  opacity: 0;
+  transform: translateY(var(--jiange-xiao));
 }
 
-.biaodan-gundong.xuyao-gundong::-webkit-scrollbar-thumb {
-  background: var(--gundong-tiao-huakuai);
-  border-radius: var(--gundong-tiao-kuan-du);
-}
-
-.biaodan-gundong.xuyao-gundong::-webkit-scrollbar-thumb:hover {
-  background: var(--gundong-tiao-huakuai-hover);
+.biaodan-qiehuan-leave-to {
+  opacity: 0;
+  transform: translateY(calc(var(--jiange-xiao) * -1));
 }
 
 /* 标签页：金线分隔 + 活动项菱形指示符（衬线宽距） */
@@ -1086,7 +1098,6 @@ async function zhiXingZhuCe() {
   gap: 0;
   margin-bottom: var(--jiange-zhong);
   border-radius: 0;
-  overflow: visible;
   background: transparent;
   border: none;
   border-bottom: 1px solid rgba(201, 169, 106, 0.4);
@@ -1122,14 +1133,18 @@ async function zhiXingZhuCe() {
   bottom: -7px;
   font-size: 8px;
   color: #c9a96a;
-  background: #161b2e;
+  background: var(--renzheng-mian-se);
   padding: 0 6px;
   line-height: 1;
 }
 
 .shuru-zu {
   position: relative;
-  margin-bottom: var(--jiange-da);
+  /* FP-04b 字段纵向间距：局部量纲令牌，值只由共用 :root 的节奏令牌派生（24+8=32），
+     禁裸 px、禁镜像字面量。上浮标签向上侵入本间距 5px、上一项的发丝线+下内边距占 11px，
+     故「上一项底线→本标签顶」净空 = 本值 − 16（旧 24 时净空只剩 8，标签贴着上一项字脚） */
+  --ziduan-jian-ju: calc(var(--jiange-da) + var(--jiange-xiao));
+  margin-bottom: var(--ziduan-jian-ju);
 }
 
 .fenlie-shuru {
@@ -1139,6 +1154,12 @@ async function zhiXingZhuCe() {
   background-image: none;
   border: none;
   border-radius: 0;
+  /* 静置发丝线（FP-03c）：FP-03 删 .dixian-dixian 后未聚焦输入框零可见边界。
+     刻意写成三条 longhand——带 var() 的 border-bottom 简写在 jsdom 里整条被丢，
+     门禁就退回到读源码字符串；longhand 让「宽度/样式吃层叠结果、颜色吃令牌」可被解析值断言 */
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--renzheng-shuru-xian-se);
   color: #efe9dc;
   font-size: 15px;
   letter-spacing: 0.06em;
@@ -1182,6 +1203,12 @@ async function zhiXingZhuCe() {
   font-size: 15px;
   color: rgba(239, 233, 220, 0.62);
   pointer-events: none;
+  /* 标签缺口衬底（FP-03c）：与卡面同一枚令牌色，使上浮态的焦点环上边线在标签处断开而不是
+     打穿字脚。左右各 4px 由 margin-left 抵消，标签文字仍与输入文本同一起线 */
+  background-color: var(--renzheng-mian-se);
+  padding-left: 4px;
+  padding-right: 4px;
+  margin-left: -4px;
   transition: all 0.3s var(--quxian-biao-zhun);
   transform-origin: left center;
 }
@@ -1191,45 +1218,12 @@ async function zhiXingZhuCe() {
 .shuru-zu:has(.fenlie-shuru:-webkit-autofill) .fudong-biaoqian {
   top: -5px;
   font-size: 11px;
+  /* 缺口盒高写死，不靠 UA 的 normal（随字族漂移）：环带 [-1,0] 必须落在标签盒 [-5,8] 内 */
+  line-height: 13px;
   color: #d5b878;
   letter-spacing: 0.12em;
 }
 
-.dixian-dixian {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: rgba(201, 169, 106, 0.28);
-  transition: background 0.3s ease;
-}
-
-.dixian-dixian::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 100%;
-  background: linear-gradient(90deg, #e3c98e, #c9a96a);
-  transform: scaleX(0);
-  transform-origin: center center;
-  transition: transform 0.4s var(--quxian-biao-zhun);
-}
-
-.shuru-zu:focus-within .dixian-dixian {
-  background: transparent;
-}
-
-.shuru-zu:focus-within .dixian-dixian::after {
-  transform: scaleX(1);
-}
-
-.shuru-zu.shangFu .dixian-dixian,
-.shuru-zu:has(.fenlie-shuru:-webkit-autofill) .dixian-dixian {
-  background: rgba(201, 169, 106, 0.45);
-}
 
 .mima-zu {
   display: flex;
@@ -1240,10 +1234,6 @@ async function zhiXingZhuCe() {
 .mima-zu .fenlie-shuru {
   flex: 1;
   padding-right: 40px;
-}
-
-.mima-zu .dixian-dixian {
-  right: 40px;
 }
 
 .mima-qiehuan {
@@ -1276,16 +1266,6 @@ async function zhiXingZhuCe() {
 .fenlie-shuru::-ms-reveal,
 .fenlie-shuru::-ms-clear {
   display: none;
-}
-
-/* C5：日期输入在深色主题下保持可读 */
-.shengri-shuru {
-  color-scheme: dark;
-}
-
-.shengri-shuru::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  opacity: 0.6;
 }
 
 .ji-zhu-xuan-xiang {
@@ -1522,11 +1502,10 @@ async function zhiXingZhuCe() {
 
 /* ============ 浅色主题：鎏金年代象牙白档（登录页固定星夜 3D 背景） ============ */
 :root[data-theme='light'] .biaodan-rongqi {
-  background: #fffcf3;
   border-color: rgba(163, 129, 62, 0.4);
   box-shadow:
     0 20px 50px rgba(2, 4, 14, 0.5),
-    inset 0 0 0 4px #fffcf3,
+    inset 0 0 0 4px var(--renzheng-mian-se),
     inset 0 0 0 5px rgba(163, 129, 62, 0.3);
 }
 
@@ -1561,7 +1540,6 @@ async function zhiXingZhuCe() {
 
 :root[data-theme='light'] .biaoqian-anniu.huoyue::after {
   color: #a3813e;
-  background: #fffcf3;
 }
 
 :root[data-theme='light'] .fenlie-shuru {
@@ -1588,34 +1566,12 @@ async function zhiXingZhuCe() {
   color: #8a6a2f;
 }
 
-:root[data-theme='light'] .dixian-dixian {
-  background: rgba(163, 129, 62, 0.35);
-}
-
-:root[data-theme='light'] .dixian-dixian::after {
-  background: linear-gradient(90deg, #b3924f, #8a6a2f);
-}
-
-:root[data-theme='light'] .shuru-zu.shangFu .dixian-dixian,
-:root[data-theme='light'] .shuru-zu:has(.fenlie-shuru:-webkit-autofill) .dixian-dixian {
-  background: rgba(163, 129, 62, 0.5);
-}
-
 :root[data-theme='light'] .mima-qiehuan {
   color: rgba(46, 42, 32, 0.6);
 }
 
 :root[data-theme='light'] .mima-qiehuan:hover {
   color: #8a6a2f;
-}
-
-:root[data-theme='light'] .shengri-shuru {
-  color-scheme: light;
-}
-
-:root[data-theme='light'] .shengri-shuru::-webkit-calendar-picker-indicator {
-  filter: none;
-  opacity: 0.6;
 }
 
 :root[data-theme='light'] .ji-zhu-xuan-ze {
@@ -1666,12 +1622,45 @@ async function zhiXingZhuCe() {
 
 @media (prefers-reduced-motion: reduce) {
   .fudong-biaoqian,
-  .dixian-dixian::after,
   .biaoqian-anniu,
   .anniu-zhuyao,
   .fasong-anniu,
   .mima-qiehuan {
     transition: none !important;
   }
+
+  /* 登录↔注册切换在减动效下退化为无位移淡切：淡入淡出的 opacity 过渡保留，位移归零 */
+  .biaodan-qiehuan-enter-from,
+  .biaodan-qiehuan-leave-to {
+    transform: none;
+  }
+}
+
+/* ============ FP-05（需求 #15）登录/注册成功的一次性定格快照层 ============
+   快照层是 .biaodan-rongqi 的克隆，故卡片本体的所有规则（裁切、金线、::before 放射纹）自动跟随；
+   下面三条只补"它已脱离文档流、浮在全站之上"与"收束后的目标态"，几何端一律由令牌给出、
+   由脚本读回解析值当关键帧 ⇒ 脚本内零像素/色值字面量，改令牌即改动画。 */
+.juan-zhou-dingge {
+  position: fixed;
+  /* 几何端 = 脚本按实测矩形写进快照层的内联自定义属性，本规则只做转接 ⇒ 组件内零像素字面量 */
+  left: var(--dingge-zuo);
+  top: var(--dingge-shang);
+  width: var(--dingge-kuan);
+  height: var(--dingge-gao);
+  margin: 0;
+  z-index: var(--ceng-jingge);
+  pointer-events: none;
+}
+
+.juan-zhou-dingge-shousuo {
+  height: var(--juanzhou-tong-gao-du);
+  border-radius: calc(var(--juanzhou-tong-gao-du) * 0.5);
+  padding: 0;
+}
+
+/* 卷轴杆的目标态：杆高取筒高之半（与 .juanzhou-gan 同特异度、源码在后而生效） */
+.juan-zhou-dingge-gan {
+  height: calc(var(--juanzhou-tong-gao-du) * 0.5);
+  opacity: 1;
 }
 </style>

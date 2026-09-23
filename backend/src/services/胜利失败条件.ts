@@ -11,6 +11,7 @@ import {
 } from './AI视觉辅助'
 import {
   fenGeZuiXinYongHuXiaoXi,
+  gouJianYinYongChaXun,
   zhanShiLiShiWenBen,
   zhanShiXiaoXiZhengWen,
 } from './对话渲染'
@@ -103,7 +104,9 @@ export async function jianCeSiLianHeYi(
   )
   const tuXiangKuai =
     shiZuiXinTuPian && tuPianShouQuan ? await gouJianDanTiaoTuXiangKuai(zuiXinYongHu!) : []
-  const zhanShiWenBen = xiaoXi || (zuiXinYongHu ? zhanShiXiaoXiZhengWen(zuiXinYongHu) : '')
+  const zhanShiWenBen =
+    xiaoXi ||
+    (zuiXinYongHu ? zhanShiXiaoXiZhengWen(zuiXinYongHu, undefined, gouJianYinYongChaXun(duiHuaLiShi)) : '')
 
   const liShiWenBen = zhanShiLiShiWenBen(背景, {
     角色名: '角色',

@@ -1,16 +1,11 @@
 <template>
   <div class="tianjia-yemian">
     <div class="tianjia-kaPian">
-      <div class="touxiang-wrap">
-        <img
-          v-if="shiTuPianDiZhi(仓库.jiaoSeXinXi?.tou_xiang)"
-          :src="仓库.jiaoSeXinXi?.tou_xiang"
-          class="jiaoSe-touxiang"
-          alt=""
+      <div class="jiaose-wei">
+        <TouXiang
+          :tou-xiang="仓库.jiaoSeXinXi?.tou_xiang"
+          :mo-ren-zi="仓库.jiaoSeXinXi?.tou_xiang || moRenTouXiang"
         />
-        <span v-else class="jiaoSe-touxiang-more">{{
-          仓库.jiaoSeXinXi?.tou_xiang || moRenTouXiang
-        }}</span>
       </div>
       <h2 class="weiXin-mingCheng">{{ weiXinMingCheng }}</h2>
       <div class="jinDu-tiao">
@@ -30,7 +25,7 @@ import { computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { 使用角色生成仓库 } from '@/stores/角色生成'
 import { huoQuFanYi } from '@/config/translations'
-import { shiTuPianDiZhi } from '@/utils/头像'
+import TouXiang from '@/components/头像.vue'
 import type { 生成流程资料 } from '@/stores/角色生成'
 
 const router = useRouter()
@@ -119,7 +114,7 @@ onBeforeUnmount(() => {
   gap: 16px;
 }
 
-.touxiang-wrap {
+.jiaose-wei {
   width: 88px;
   height: 88px;
   border-radius: 20px;
@@ -129,15 +124,6 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   box-shadow: var(--touxiang-yinying);
-}
-
-.jiaoSe-touxiang {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.jiaoSe-touxiang-more {
   font-size: 48px;
   line-height: 1;
 }
@@ -195,18 +181,6 @@ onBeforeUnmount(() => {
 
 .tianjia-fan-hui:hover {
   background: rgba(255, 255, 255, 0.08);
-}
-
-@keyframes jianbian-liudong {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
 }
 
 @media (max-width: 480px) {

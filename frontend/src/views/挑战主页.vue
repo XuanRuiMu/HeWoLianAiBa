@@ -8,7 +8,13 @@
     <!-- 进行中对局横幅 -->
     <div v-if="dangQianDuiJu" class="jinxing-zhong-hengfu">
       <div class="hengfu-xinxi">
-        <span class="hengfu-tubiao">{{ dangQianDuiJu.tou_xiang || '⚔️' }}</span>
+        <div class="hengfu-wei">
+          <TouXiang
+            :tou-xiang="dangQianDuiJu.tou_xiang"
+            :mo-ren-zi="dangQianDuiJu.tou_xiang"
+            shen-fen="duijue"
+          />
+        </div>
         <div class="hengfu-wenzi">
           <span class="hengfu-miaoshu">{{ huoQuFanYi('tiaoZhan', 'jinXingZhong') }}</span>
           <span class="hengfu-duixiang">{{ dangQianDuiJu.wei_xin_ming }}</span>
@@ -149,6 +155,7 @@ import {
 import { huoQuFanYi } from '@/config/translations'
 import { 用户形态, type 性别选择形态 } from '@/utils/性别'
 import 挑战渣型提示 from '@/components/挑战渣型提示.vue'
+import TouXiang from '@/components/头像.vue'
 
 const router = useRouter()
 
@@ -318,7 +325,9 @@ function quXiaoFangQi() {
   min-width: 0;
 }
 
-.hengfu-tubiao {
+.hengfu-wei {
+  width: 26px;
+  height: 26px;
   font-size: 26px;
   line-height: 1;
 }
@@ -636,12 +645,15 @@ function quXiaoFangQi() {
   text-indent: 0.2em;
 }
 
+/* 性别符号色单源：深浅两档由 --xingbie-{nan,nv}-1 成对令牌各自取值。
+   改前此处深档写死 #7eb6ff/#ff8fb8、浅档另写一份 #3d7cc9/#d4568a（被禁字面量），
+   是 R1「深色为 baseline + 组件零令牌」在性别色上的第二处实例 */
 .xingbie-kaPian.nan .xingbie-fuhao {
-  color: #7eb6ff;
+  color: var(--xingbie-nan-1);
 }
 
 .xingbie-kaPian.nv .xingbie-fuhao {
-  color: #ff8fb8;
+  color: var(--xingbie-nv-1);
 }
 
 .xingbie-kaPian:hover {
@@ -665,14 +677,6 @@ function quXiaoFangQi() {
   color: #1f1a22;
   background: rgba(255, 255, 255, 0.7);
   border-color: rgba(31, 26, 34, 0.1);
-}
-
-:root[data-theme='light'] .xingbie-kaPian.nan .xingbie-fuhao {
-  color: #3d7cc9;
-}
-
-:root[data-theme='light'] .xingbie-kaPian.nv .xingbie-fuhao {
-  color: #d4568a;
 }
 
 :root[data-theme='light'] .xingbie-kaPian:hover {

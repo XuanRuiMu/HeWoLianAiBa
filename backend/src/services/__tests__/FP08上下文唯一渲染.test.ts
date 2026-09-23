@@ -282,7 +282,8 @@ describe('FP-08 同一条用户消息在同一轮 prompt 内只出现一次', ()
       meiTiShiChangHaoMiao: 3000,
     }
     expect(zhanShiXiaoXiZhengWen(语音)).toContain('语音转写')
-    expect(zhanShiXiaoXiZhengWen({ ...表情包消息(), yi_che_hui: true, yuan_shi_nei_rong: null })).toBe(
+    // FP-26：撤回行的模型形态只有占位；带媒体的撤回行仍保留「撤回 + 载体」的可辨识性
+    expect(zhanShiXiaoXiZhengWen({ ...表情包消息(), yi_che_hui: true })).toBe(
       '[用户撤回了一个表情包]',
     )
     expect(出现次数(gouJianWriterPrompt(构输入([语音], zhanShiXiaoXiZhengWen(语音))), '语音转写')).toBe(1)

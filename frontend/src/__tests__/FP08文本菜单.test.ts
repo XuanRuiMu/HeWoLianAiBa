@@ -425,13 +425,17 @@ describe('FP-08 聊天页面文本菜单四项可用', () => {
     await flushPromises()
     chaXunWenBenCaiDanAnNiu()[2].click()
     await flushPromises()
-    const yuLan = wrapper.find('.yinyong-yulan')
+    // FP-09：预览条形态作废，重做为 components/聊天/引用条.vue（类名 yinyong-tiao*）
+    const yuLan = wrapper.find('.yinyong-tiao')
     expect(yuLan.exists()).toBe(true)
     expect(yuLan.text()).toContain(huoQuFanYi('liaoTian', 'yinYong'))
     expect(yuLan.text()).toContain('引用这句')
-    await wrapper.find('.yinyong-quxiao').trigger('click')
+    const guanBi = yuLan.find('button.yinyong-tiao-guanbi')
+    expect(guanBi.attributes('type'), '关闭钮必须是真 button').toBe('button')
+    expect(guanBi.attributes('aria-label')).toBe(huoQuFanYi('liaoTian', 'quXiaoYinYong'))
+    await guanBi.trigger('click')
     await flushPromises()
-    expect(wrapper.find('.yinyong-yulan').exists()).toBe(false)
+    expect(wrapper.find('.yinyong-tiao').exists()).toBe(false)
   })
 
   it('翻译可用成功后气泡下展示译文失败报翻译文件信息', async () => {

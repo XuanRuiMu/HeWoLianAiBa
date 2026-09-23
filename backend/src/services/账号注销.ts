@@ -88,13 +88,15 @@ export async function zhuXiaoYongHu(
       await keHuDuan.query(语句, [yong_hu_id])
     }
 
+    // FP-28b：本 UPDATE 不再含 "性别"——注销置 NULL 是该死列在本仓的最后一个写点（FP-09/FP-10
+    // 真库夹具已改吃 默认性别），留着它 FP-28c 删列后注销直接 500。脱敏面不受影响：下面仍逐列清空
+    // 全部身份与画像列（含 目标性别/默认性别）；存量库 用户.性别 的历史值随 FP-28c 删列一并消失。
     await keHuDuan.query(
       `UPDATE "用户" SET
          "手机号" = $2,
          "用户名" = $3,
          "密码哈希" = NULL,
          "昵称" = NULL,
-         "性别" = NULL,
          "目标性别" = NULL,
          "默认性别" = NULL,
          "性格选择" = NULL,

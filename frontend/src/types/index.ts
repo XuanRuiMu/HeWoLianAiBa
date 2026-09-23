@@ -55,7 +55,8 @@ export interface Yonghu {
   shou_ji_hao: string
   yong_hu_ming: string | null
   ni_cheng: string | null
-  xing_bie: XingBie | null
+  // FP-28b：后端 /信息 与登录/注册的 用户 出参不再有 xing_bie 键（用户.性别 死列收口）。
+  // 用户侧性别的唯一出参口径是 mo_ren_xing_bie（用户.默认性别）；角色性别看 Jiaose.xing_bie，两码事。
   /** 用户.目标性别 由后端以展示形态落库（内部转展示），非 male/female */
   mu_biao_xing_bie: 性别展示形态 | null
   mo_ren_xing_bie: XingBie | null
@@ -83,6 +84,26 @@ export interface DengLuXiangYing {
   新用户: boolean
 }
 
+/**
+ * FP-10b（缺陷9）消息内容块 —— 与 backend/src/services/消息内容块.ts 同一契约。
+ * 块类型是一个**独立命名空间**（只允许 wenzi/tupian），既不是消息类型（tuPian/biaoQingBao/…），
+ * 也不是媒体类别（tupian/biaoqingshu/yuyin/wenjian）；三者的对应表只在服务端存在，前端不建第二份。
+ */
+export type XiaoXiKuaiLeiXing = 'wenzi' | 'tupian'
+
+/** 提交形态：只允许携带正文与媒体 ID，地址一律由服务端签发（防越权直传 URL） */
+export interface XiaoXiKuai {
+  lei_xing: XiaoXiKuaiLeiXing
+  nei_rong?: string
+  mei_ti_id?: string | null
+}
+
+/** 出参形态：服务端在图片块上补签名地址与媒体类别 */
+export interface XiaoXiKuaiChuCan extends XiaoXiKuai {
+  mei_ti_url?: string | null
+  mei_ti_lei_bie?: string | null
+}
+
 export interface Xiaoxi {
   id: string
   hui_hua_id: string
@@ -91,9 +112,29 @@ export interface Xiaoxi {
   /** C1 GB 45438-2025 隐式元数据标识：AI 生成消息为 true（机器可读，禁止渲染或移除） */
   ai_biao_shi?: boolean
   nei_rong: string
+  /**
+   * FP-10b 拼写债收口：这里曾是 `'tupian'` / `'tuPian'` 两套并存。`'tupian'` 是**媒体类别**
+   * （媒体文件.类别 的 CHECK 值域，见 database/000_baseline.sql:275 与
+   * api/聊天.ts::DUO_MEI_TI_LEI_XING_SHANG_CHUAN_LEI_BIE）被误写进**消息类型**值域，
+   * 故删除该非法成员，消息侧图片码唯一权威值是 `'tuPian'`（由 config/消息配置.ts::MEI_TI_XIAO_XI_LEI_XING 单源）。
+   * 读取边界的归一见 utils/消息内容块.ts::guiYiXiaoXiLeiXing —— 归一只发生在读取，已落库行的语义不变。
+   *
+   * 值域由谁守护（FP-22f 更正；**旧注释的「后端 `消息`.`类型` 的 CHECK 从来只允许 …」是假前提**）：
+   *  `消息`.`类型` 在 `database/000_baseline.sql:88` 与 `backend/database/init.sql:82` 两处建表语句里
+   *  都是裸 `VARCHAR(20) DEFAULT 'wenBen'`，**没有任何 CHECK**（有 CHECK 的是 `好友消息`.`类型`，
+   *  见 `database/001_haoyou_yu_shezhi.sql:39` 与 `backend/database/migrations/027_好友消息媒体ID统一UUID外键.sql:82`）；
+   *  上面那五个值（wenben/tuPian/biaoQingBao/yuYin/wenJian）的真实来源是应用层发送白名单
+   *  `backend/src/config/媒体配置.ts:102` 的 `YUN_XU_XIAO_XI_LEI_XING`，判定在 `services/消息.ts:516`。
+   *  另有 4 处生产 INSERT 全部显式写 `"类型"`（`services/消息.ts:590`/`:805`、`services/AI输入准备.ts:221`、
+   *  `services/通话.ts:77`），所以 DB 默认值 `'wenBen'`（注意大写 B，**不在本联合类型里**）落不到行上
+   *  —— FP-22f 在本地库实测 217 行的类型分布为 wenben212/tuPian2/biaoQingBao1/wenJian1/yuYin1，
+   *  无 `'wenBen'` 也无 NULL 行；但这是「当前没人踩」，不是「有约束挡着」：
+   *  一旦有人写出不带 `"类型"` 的 INSERT，它就会绕过全部守护进库，而 `guiYiXiaoXiLeiXing` 对
+   *  `'wenBen'` 是原样返回（只归一 tupian/biaoqingbao/yuyin/wenjian 四个媒体类别形态）⇒ 值域事实由
+   *  这两层应用代码承担，不存在的 DB 约束不可作为依据。守卫见 `__tests__/FP22fSQL列集合三方一致.test.ts`。
+   */
   lei_xing:
     | 'wenben'
-    | 'tupian'
     | 'xitong'
     | 'neiXinHuoDong'
     | 'tuPian'
@@ -108,6 +149,11 @@ export interface Xiaoxi {
   tong_guan_xin_xi?: TongGuanXinXi | null
   yi_che_hui?: boolean
   che_hui_shi_jian?: string
+  /**
+   * FP-26：撤回原文。它**只对具备 cha_kan 运营读取能力的调用者出现**（后端 services/消息出参收口
+   * 按能力整键剥离），普通用户的会话列表里该键根本不存在。渲染层零消费点，
+   * 账本见 `__tests__/FP22运营字段前端无依赖.test.ts`；要新增加展示必须先回 PROGRESS 取裁决。
+   */
   yuan_shi_nei_rong?: string
   fa_song_zhong?: boolean
   ke_hu_duan_id?: string
@@ -115,6 +161,19 @@ export interface Xiaoxi {
   ke_hu_duan_xu_hao?: number | null
   /** FP-09b 投递幂等键：客户端为每条待发消息生成的稳定 UUID，重发复用同一把，服务端唯一约束据此去重 */
   mi_deng_jian?: string | null
+  /**
+   * FP-10b（缺陷9）顺序化内容块：出参恒非空（服务端对历史行按 内容+媒体ID+类型 反构），
+   * 前端仍按「可能缺失」处理，缺失时由 utils/消息内容块.ts 自行反构，绝不因缺字段渲染成空气泡。
+   */
+  nei_rong_kuai?: XiaoXiKuaiChuCan[] | null
+  /**
+   * FP-08a（缺陷5）引用槽：本条消息引用的**同会话另一条消息** ID，null/缺失 = 未引用。
+   * 服务端只下发身份、不下发摘要副本（摘要落第二处存就必然与原文漂移），
+   * 呈现所需的原文/发送者/撤回态一律按本 ID 在会话消息列表内解析（列表本就整会话下发）。
+   * 写侧由 `api/聊天.ts::faSongXiaoXi` 的第 7 位 `yinYong` 透传，
+   * 五道非法形态（非 UUID / 不存在 / 跨会话 / 跨用户 / 已撤回）一律 4xx，不会静默丢引用。
+   */
+  bei_yong_xiao_xi_id?: string | null
   mei_ti_id?: string | null
   mei_ti_url?: string | null
   mei_ti_lei_bie?: string | null
@@ -283,7 +342,7 @@ export interface JunShiJiLuLiaoTianXiaoXi {
   nei_rong: string
   shi_jian: string
   yi_che_hui: boolean
-  yuan_shi_nei_rong?: string | null
+  /** FP-26：撤回原文不再随军师记录下发（该面普通用户可读），故本类型不带 `yuan_shi_nei_rong` */
   che_hui_shi_jian?: string | null
 }
 

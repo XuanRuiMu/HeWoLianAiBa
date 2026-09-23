@@ -235,7 +235,7 @@ describe('FP-03 军师指导面板单级菜单化', () => {
 
       const { wrapper } = await mountJunShiZhiDao()
 
-      const touXiangLieBiao = wrapper.findAll('.junshi-kapian .touxiang-tu')
+      const touXiangLieBiao = wrapper.findAll('.junshi-kapian .touxiang')
       expect(touXiangLieBiao.length).toBe(3)
       expect(touXiangLieBiao[0].attributes('src')).toBe(encodeURI('/图片/军师头像/军师玄锐暮头像.png'))
       expect(touXiangLieBiao[1].attributes('src')).toBe(encodeURI('/图片/军师头像/军师测试军师1头像.png'))
@@ -1057,7 +1057,7 @@ describe('FP-11 军师指导分区协议在面板内的渲染', () => {
     const { wrapper } = await mountJunShiZhiDao()
     await zhanKaiXuanRuiMuJieGuo(wrapper)
 
-    const aiTiShi = wrapper.find('.zhidao-jieguo .ai-tishi')
+    const aiTiShi = wrapper.find('.zhidao-jieguo .tishi-dai-shengming')
     expect(aiTiShi.exists()).toBe(true)
     expect(aiTiShi.text()).toBe(huoQuFanYi('tongYong', 'aiTiShiTiao'))
   })

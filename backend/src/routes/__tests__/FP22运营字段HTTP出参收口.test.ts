@@ -331,6 +331,8 @@ describe('FP-22 普通用户读取自己会话：运营侧字段整键不下发'
       // FP-10 唯一新增键：撤回行只给「与 nei_rong 逐字相同」的一个文字块，
       // 库里的原块（含图片顺序与被撤回正文）绝不随撤回行下发
       nei_rong_kuai: [{ lei_xing: 'wenzi', nei_rong: 撤回占位文案 }],
+      // FP-08a 唯一新增键：引用槽恒在下发白名单里（撤回行自身不带引用 ⇒ null）
+      bei_yong_xiao_xi_id: null,
       lei_xing: 'wenben',
       shi_jian_chuo: 会话创建时间戳,
       yi_du: true,
@@ -383,8 +385,8 @@ describe('FP-22 具备运营读取能力的调用者照旧全量下发（不得�
   })
 })
 
-describe('FP-22 收口只作用于出参，取数口与 AI 上下文一律不变', () => {
-  it('取数口仍原样产出撤回原文与内心活动行', async () => {
+describe('FP-22 收口只作用于出参，取数口保持不变', () => {
+  it('取数口仍原样产出撤回原文与内心活动行（运营读取面的数据源，不是模型面）', async () => {
     const 取数 = await huoQuXiaoXiLieBiao({ yong_hu_id: 平民ID, jiao_se_id: 角色ID })
 
     const AI撤回 = 取数.lie_biao.find((项) => 项.id === AI撤回消息ID)
@@ -392,7 +394,9 @@ describe('FP-22 收口只作用于出参，取数口与 AI 上下文一律不变
     expect(取数.lie_biao.map((项) => 项.lei_xing)).toContain('neiXinHuoDong')
   })
 
-  it('对话渲染入口仍把撤回原文喂给模型（没有被出参收口削弱）', () => {
+  it('FP-26：对话渲染入口不再携带撤回原文（旧 `[已撤回，原始内容：X]` → 新撤回占位）', () => {
+    // 旧断言（FP-08c 契约）：撤回行渲染为 `[已撤回，原始内容：${AI隐藏原文}]`，并靠该键把原文送进模型。
+    // 新断言（FP-26，用户裁决②「撤回即原文不再进模型」）：一律只出既有撤回占位。
     expect(
       zhanShiXiaoXiZhengWen({
         fa_song_zhe_lei_xing: 'jiaose',
@@ -400,9 +404,28 @@ describe('FP-22 收口只作用于出参，取数口与 AI 上下文一律不变
         nei_rong: 撤回占位文案,
         shi_jian: 会话创建时间,
         yi_che_hui: true,
-        yuan_shi_nei_rong: AI隐藏原文,
       }),
-    ).toBe(`[已撤回，原始内容：${AI隐藏原文}]`)
+    ).toBe(撤回占位文案)
+    // 撤回写口不清空 `内容` 列 ⇒ 读到的正文即便就是原文，也不能进语料（这条是本次扩面的真正漏洞）
+    expect(
+      zhanShiXiaoXiZhengWen({
+        fa_song_zhe_lei_xing: 'jiaose',
+        fa_song_zhe_ming: '小甜心',
+        nei_rong: AI隐藏原文,
+        shi_jian: 会话创建时间,
+        yi_che_hui: true,
+      }),
+    ).toBe(撤回占位文案)
+    // 模型装配面的入参形态已无该键（类型层收口；反证：把键加回来 vue-tsc/tsc 直接报错）
+    expect(
+      Object.keys({
+        fa_song_zhe_lei_xing: 'jiaose' as const,
+        fa_song_zhe_ming: '小甜心',
+        nei_rong: 撤回占位文案,
+        shi_jian: 会话创建时间,
+        yi_che_hui: true,
+      }),
+    ).not.toContain('yuan_shi_nei_rong')
   })
 })
 
@@ -580,15 +603,21 @@ describe('FP-22 收口点唯一性与同类面逐条判定', () => {
     expect(军师服务源).toContain('huoQuWanZhengHaoGanDu')
   })
 
-  it('军师记录面仍带撤回原文且前端有可见依赖：本面未收口，属 L-45 待用户裁决', () => {
+  it('FP-26：军师记录面已收口——快照不再产原文、读侧按白名单重建、展示面无该键', () => {
+    // 旧断言（L-45 待裁决期）：`expect(军师源).toContain('yuan_shi_nei_rong: xiaoXi.yuan_shi_nei_rong')`
+    //   且 `expect(前端源).toContain('xiaoXi.yuan_shi_nei_rong')` —— 钉的是「该泄漏面存在」。
+    // 新断言：用户裁决② 落地后两侧都必须为零产出口（行为级证据见
+    //   services/__tests__/FP26撤回原文不外泄.test.ts 的读侧白名单用例）。
     const 军师源 = 源文件('services/军师.ts')
     const 前端源 = readFileSync(
       resolve(__dirname, '../../../../frontend/src/views/军师记录详情.vue'),
       'utf8',
     )
 
-    expect(军师源).toContain('yuan_shi_nei_rong: xiaoXi.yuan_shi_nei_rong')
-    expect(前端源).toContain('xiaoXi.yuan_shi_nei_rong')
-    expect(前端源).toContain('junShi')
+    expect(军师源).not.toMatch(/yuan_shi_nei_rong\s*:/)
+    expect(军师源).toContain('liao_tian_ji_lu')
+    expect(前端源).not.toContain('yuan_shi_nei_rong')
+    expect(前端源).not.toContain('chehui-yuanshi')
+    expect(前端源).toContain('chehui-shijian')
   })
 })

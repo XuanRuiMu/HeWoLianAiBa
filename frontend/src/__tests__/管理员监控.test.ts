@@ -8,6 +8,7 @@ import { huoQuFanYi } from '@/config/translations'
 import type { 角色, Yonghu } from '@/types'
 import type { GuanLiJiaoSe } from '@/utils/角色能力'
 import GuanLiJianKong from '@/components/管理员监控.vue'
+import { 缩放方向清单 } from '@/composables/use可拖动浮窗'
 import { 使用聊天仓库 } from '@/stores/聊天'
 import { 使用用户仓库 } from '@/stores/用户'
 import { huoQuYongHuXinXi } from '@/api/认证'
@@ -162,6 +163,10 @@ describe('管理员监控 组件', () => {
     expect(组件源码).not.toContain('vh')
     expect(组件源码).not.toMatch(/height:\s*auto/)
     expect(组件源码).not.toMatch(/width:\s*auto/)
+    // 契约演进（FP-06 需求 #7 根因）：宿主一旦用 right/bottom 钉盒，盒子右下角被钉死，
+    // 宽度增只能向左扩、高度增只能向上扩 ⇒ 缩放方向必然反向。锚定边归 composable 自持。
+    expect(组件源码).not.toMatch(/^\s*(right|bottom):\s*var\(--fu-chuang-ting-kao-bian-jv\)/m)
+    expect(组件源码).toMatch(/will-change:\s*left,\s*top/)
     // 层级收敛到 variables.css 档位令牌，组件内不得再出现 z-index 数字
     expect(组件源码).toMatch(/--jiankong-z-index:\s*var\(--ceng-tiaoshi-mianban\)/)
     expect(组件源码).not.toMatch(/z-index:\s*-?\d/)
@@ -247,21 +252,27 @@ describe('管理员监控 组件', () => {
     expect(wrapper.find('.jiankong-wangge').attributes('style') || '').toBe(内容样式)
   })
 
-  it('最小化拖到最顶后展开不会飞出屏外（尺寸突变重新钳制位移）', async () => {
+  it('最小化拖到最顶后展开不会飞出屏外（尺寸突变重新钳制几何）', async () => {
     const wrapper = mount(GuanLiJianKong)
     await wrapper.find('.jiankong-zuiXiao').trigger('click')
     await wrapper.find('.jiankong-biaoti-lan').element.dispatchEvent(指针('pointerdown', 300, 300))
     window.dispatchEvent(指针('pointermove', -9000, -9000))
     await nextTick()
+    // 契约演进（FP-06）：改前该用例读的是 `translate(-580px, -688px)`（右下锚角上的偏移），
+    // 锚定边既已收归 composable 自持并下发绝对 left/top，同一钳制不变量的现代表述是「整盒贴回视口左上角」
     expect(wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || '').toContain(
-      `translate(${420 + 24 - 1024}px, ${标题栏高 + 24 - 768}px)`,
+      'left: 0px',
+    )
+    expect(wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || '').toContain(
+      'top: 0px',
     )
     window.dispatchEvent(指针('pointerup', -9000, -9000))
     await wrapper.find('.jiankong-zuiXiao').trigger('click')
     await nextTick()
-    expect(wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || '').toContain(
-      `translate(${420 + 24 - 1024}px, ${默认高 + 24 - 768}px)`,
-    )
+    const 样式 = wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || ''
+    expect(样式).toContain('left: 0px')
+    expect(样式).toContain('top: 0px')
+    expect(样式).toContain(`height: ${默认高}px`)
     wrapper.unmount()
   })
 
@@ -388,18 +399,23 @@ describe('管理员监控 组件', () => {
     wrapper.unmount()
   })
 
-  it('FP-04 标题栏拖动更新位移且超视口钳制', async () => {
+  it('FP-04 标题栏拖动更新位置且超视口钳制', async () => {
     const wrapper = mount(GuanLiJianKong)
+    const 根 = () => wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || ''
+    // 首帧停靠与改前逐像素同位：改前 right:24/bottom:24 钉盒 ⇒ 左 = 1024-24-420、上 = 768-24-422
+    expect(根()).toContain('left: 580px')
+    expect(根()).toContain('top: 322px')
     await wrapper.find('.jiankong-biaoti-lan').element.dispatchEvent(指针('pointerdown', 200, 200))
     window.dispatchEvent(指针('pointermove', 140, 170))
     await nextTick()
-    const 位移后 = wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || ''
-    expect(位移后).toContain('translate(-60px')
-    expect(位移后).toContain('translate(-60px, -30px)')
+    // 契约演进（FP-06）：位移不再是 transform 偏移，而是下发的绝对 left/top
+    expect(根()).not.toContain('transform')
+    expect(根()).toContain('left: 520px')
+    expect(根()).toContain('top: 292px')
     window.dispatchEvent(指针('pointermove', 5000, 5000))
     await nextTick()
-    const 钳制后 = wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || ''
-    expect(钳制后).toContain('translate(24px, 24px)')
+    expect(根()).toContain('left: 604px')
+    expect(根()).toContain('top: 346px')
     window.dispatchEvent(指针('pointerup', 5000, 5000))
     wrapper.unmount()
   })
@@ -414,8 +430,13 @@ describe('管理员监控 组件', () => {
     window.dispatchEvent(指针('pointermove', 600, 560))
     await nextTick()
     const 样式 = wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || ''
-    expect(样式).toContain('width: 520px')
-    expect(样式).toContain(`height: ${默认高 + 60}px`)
+    // 需求 #7 的宿主侧现形：往右下拖右下手柄 ⇒ left/top 一动不动，盒只向右/向下长。
+    // 契约演进（FP-06）：旧期望 520x482 是右下钉盒把 100/60px 的拖拽折成向左/向上扩张的结果；
+    // 新契约下被拖动的边止于视口边界（左 580 ⇒ 宽至多 1024-580，上 322 ⇒ 高至多 768-322）
+    expect(样式).toContain('left: 580px')
+    expect(样式).toContain('top: 322px')
+    expect(样式).toContain('width: 444px')
+    expect(样式).toContain('height: 446px')
     expect(样式).toContain('transition: none')
     window.dispatchEvent(指针('pointerup', 600, 560))
     await nextTick()
@@ -423,7 +444,7 @@ describe('管理员监控 组件', () => {
       'transition: none',
     )
     const 原文 = localStorage.getItem('guanli-jiankong:fu-chuang') || ''
-    expect(原文).toContain('520')
+    expect(原文).toContain('444')
     wrapper.unmount()
   })
 
@@ -432,21 +453,26 @@ describe('管理员监控 组件', () => {
     await wrapper
       .find('.jiankong-shouBing-you')
       .element.dispatchEvent(指针('pointerdown', 500, 500))
-    window.dispatchEvent(指针('pointermove', 560, 990))
+    window.dispatchEvent(指针('pointermove', 520, 990))
     await nextTick()
-    const 样式 = wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || ''
-    expect(样式).toContain('width: 480px')
+    let 样式 = wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || ''
+    // 契约演进（FP-06）：旧期望 480px 读的是右下钉盒下「往右拖却向左长」的尺寸通道；新契约 left 恒 580，
+    // 且把偏移收小到此值以钉住「方向」而不是钉住视口边界钳制值
+    expect(样式).toContain('left: 580px')
+    expect(样式).toContain('width: 440px')
     expect(样式).toContain(`height: ${默认高}px`)
-    window.dispatchEvent(指针('pointerup', 560, 990))
+    window.dispatchEvent(指针('pointerup', 520, 990))
     await wrapper
       .find('.jiankong-shouBing-xia')
       .element.dispatchEvent(指针('pointerdown', 500, 500))
-    window.dispatchEvent(指针('pointermove', 990, 540))
+    window.dispatchEvent(指针('pointermove', 990, 520))
     await nextTick()
-    const 再缩放 = wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || ''
-    expect(再缩放).toContain('width: 480px')
-    expect(再缩放).toContain(`height: ${默认高 + 40}px`)
-    window.dispatchEvent(指针('pointerup', 990, 540))
+    样式 = wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || ''
+    // 同上：旧期望 462 的下缘扩张其实发生在视觉上的「向上长」，新契约 top 恒 322、只有下缘在动
+    expect(样式).toContain('top: 322px')
+    expect(样式).toContain('width: 440px')
+    expect(样式).toContain('height: 442px')
+    window.dispatchEvent(指针('pointerup', 990, 520))
     wrapper.unmount()
   })
 
@@ -474,7 +500,11 @@ describe('管理员监控 组件', () => {
     window.dispatchEvent(指针('pointermove', 40, 70))
     await nextTick()
     expect(wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || '').toContain(
-      'translate(-60px, -30px)',
+      'left: 520px',
+    )
+    // 最小化态长条的下缘锚点用标题栏高（56）算：上 = 768-24-56-30 = 658
+    expect(wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || '').toContain(
+      'top: 658px',
     )
     window.dispatchEvent(指针('pointerup', 40, 70))
     wrapper.unmount()
@@ -509,6 +539,9 @@ describe('管理员监控 组件', () => {
     expect(日志源码).not.toMatch(/\d+vh/)
     expect(日志源码).toContain('touch-action: none')
     expect(日志源码).toContain('@pointerdown="开始拖动"')
+    // 契约演进（FP-06）：本浮窗只消费几何、不可缩放，宿主同样不得再钉任何一条边（改前为 left/bottom）
+    expect(日志源码).not.toMatch(/^\s*(left|right|top|bottom):\s*var\(--fu-chuang-ting-kao-bian-jv\)/m)
+    expect(日志源码).toMatch(/will-change:\s*left,\s*top/)
   })
 
   it('浮层层级收敛为档位令牌：档位数字序单调（通话<军师<协议<授权<调试<断网<版本）', () => {
@@ -565,37 +598,65 @@ describe('管理员监控 组件', () => {
     expect(浮窗源码).toContain("if (缩放中.value) 样式.transition = 'none'")
   })
 
-  it('三个缩放手柄均不自标题栏起算，不抢标题栏与标题栏按钮命中区', () => {
-    expect(组件源码).toMatch(
-      /\.jiankong-shouBing-you\s*\{[^}]*top:\s*var\(--fu-chuang-biaoti-lan-gao\)/,
-    )
-    expect(组件源码).toMatch(/\.jiankong-shouBing-xia\s*\{[^}]*bottom:\s*0/)
-    expect(组件源码).toMatch(/\.jiankong-shouBing-youXia\s*\{[^}]*bottom:\s*0/)
-    expect(组件源码).not.toMatch(/\.jiankong-shouBing-(xia|youXia)\s*\{[^}]*top:/)
+  it('八个缩放手柄逐边就位：侧缘与下缘不自标题栏起算，上缘只占标题栏顶部 10px', () => {
+    const wrapper = mount(GuanLiJianKong)
+    expect(缩放方向清单).toHaveLength(8)
+    for (const 方向 of 缩放方向清单) {
+      expect(wrapper.find(`.jiankong-shouBing-${方向}`).exists(), `缺少 ${方向} 向手柄`).toBe(true)
+      expect(组件源码).toMatch(
+        new RegExp(`\\.jiankong-shouBing-${方向}\\s*\\{[^}]*cursor:`),
+        `${方向} 向手柄无 cursor`,
+      )
+    }
+    // 契约演进（FP-06）：改前宿主只挂 you/xia/youXia 三向，其余五向在 composable 里根本没实现
+    for (const 侧缘 of ['you', 'zuo']) {
+      expect(组件源码).toMatch(
+        new RegExp(
+          `\\.jiankong-shouBing-${侧缘}\\s*\\{[^}]*top:\\s*var\\(--fu-chuang-biaoti-lan-gao\\)`,
+        ),
+        `${侧缘} 缘手柄应自标题栏下沿起算`,
+      )
+    }
+    for (const 下缘 of ['xia', 'youXia', 'zuoXia']) {
+      expect(组件源码).toMatch(
+        new RegExp(`\\.jiankong-shouBing-${下缘}\\s*\\{[^}]*bottom:\\s*0`),
+        `${下缘} 手柄应贴下缘`,
+      )
+      expect(组件源码).not.toMatch(
+        new RegExp(`\\.jiankong-shouBing-${下缘}\\s*\\{[^}]*top:`),
+        `${下缘} 手柄不得自标题栏起算`,
+      )
+    }
+    // 上缘带不得吃掉标题栏按钮的命中区：只占 10px 顶带（按钮在 --fu-chuang-biaoti-lan-gao 内垂直居中）
+    expect(组件源码).toMatch(/\.jiankong-shouBing-shang\s*\{[^}]*top:\s*0/)
+    expect(组件源码).toMatch(/\.jiankong-shouBing-shang\s*\{[^}]*height:\s*10px/)
+    wrapper.unmount()
   })
 
-  it('visualViewport 收窄后尺寸与位移同步重钳制，展开态永不越出视口', async () => {
+  it('visualViewport 收窄后尺寸与位置同步重钳制，展开态永不越出视口', async () => {
     const vv = 视觉视口(1024, 768)
     const wrapper = mount(GuanLiJianKong)
     await wrapper.find('.jiankong-biaoti-lan').element.dispatchEvent(指针('pointerdown', 300, 300))
     window.dispatchEvent(指针('pointermove', -9000, -9000))
     window.dispatchEvent(指针('pointerup', -9000, -9000))
     await nextTick()
-    expect(wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || '').toContain(
-      `translate(${默认宽 + 边距 - 1024}px, ${默认高 + 边距 - 768}px)`,
-    )
+    const 读样式 = () => wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || ''
+    // 契约演进（FP-06）：left/top 取代 translate 偏移，「拖到锚点极值」的现代表述即整盒贴左上角
+    expect(读样式()).toContain('left: 0px')
+    expect(读样式()).toContain('top: 0px')
     vv.width = 500
     vv.height = 400
     vv.派发('resize')
     await nextTick()
     const 收窄高 = Math.round(400 * 0.55)
-    const 样式 = wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || ''
+    const 样式 = 读样式()
     expect(样式).toContain(`height: ${收窄高}px`)
-    expect(样式).toContain(`translate(${默认宽 + 边距 - 500}px, ${收窄高 + 边距 - 400}px)`)
+    expect(样式).toContain('left: 0px')
+    expect(样式).toContain('top: 0px')
     wrapper.unmount()
   })
 
-  it('最小化态位移按标题栏高重新钳制：视口收窄不会把长条推出屏外', async () => {
+  it('最小化态位置按标题栏高重新钳制：视口收窄不会把长条推出屏外', async () => {
     const vv = 视觉视口(1024, 768)
     const wrapper = mount(GuanLiJianKong)
     await wrapper.find('.jiankong-zuiXiao').trigger('click')
@@ -603,15 +664,15 @@ describe('管理员监控 组件', () => {
     window.dispatchEvent(指针('pointermove', -9000, -9000))
     window.dispatchEvent(指针('pointerup', -9000, -9000))
     await nextTick()
-    expect(wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || '').toContain(
-      `translate(${默认宽 + 边距 - 1024}px, ${标题栏高 + 边距 - 768}px)`,
-    )
+    const 读样式 = () => wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || ''
+    expect(读样式()).toContain('left: 0px')
+    expect(读样式()).toContain('top: 0px')
     vv.height = 500
     vv.派发('resize')
     await nextTick()
-    expect(wrapper.find('.guanli-jiankong-fuchuang').attributes('style') || '').toContain(
-      `translate(${默认宽 + 边距 - 1024}px, ${标题栏高 + 边距 - 500}px)`,
-    )
+    expect(读样式()).toContain('left: 0px')
+    expect(读样式()).toContain('top: 0px')
+    expect(读样式()).toContain(`height: ${标题栏高}px`)
     wrapper.unmount()
   })
 

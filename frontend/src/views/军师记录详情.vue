@@ -16,17 +16,13 @@
             <span class="jilu-jiaose-ming">{{ jiLuShuJu.jiao_se_ming_zi }}</span>
           </div>
           <div class="jilu-junshi-xinxi">
-            <img
-              v-if="!touXiangShiBai"
-              :src="shengChengTouXiangURL(jiLuShuJu.jun_shi_tou_xiang)"
-              :alt="jiLuShuJu.jun_shi_ming_chen"
-              class="jilu-junshi-touxiang"
-              loading="lazy"
-              @error="touXiangShiBai = true"
-            />
-            <span v-else class="jilu-junshi-touxiang jilu-junshi-moren">{{
-              (jiLuShuJu.jun_shi_ming_chen || '军').slice(0, 1)
-            }}</span>
+            <div class="jilu-junshi-wei">
+              <TouXiang
+                :tou-xiang="touXiangShiBai ? null : shengChengTouXiangURL(jiLuShuJu.jun_shi_tou_xiang)"
+                :mo-ren-zi="(jiLuShuJu.jun_shi_ming_chen || '军').slice(0, 1)"
+                @error="touXiangShiBai = true"
+              />
+            </div>
             <span class="jilu-junshi-ming">{{ jiLuShuJu.jun_shi_ming_chen }}</span>
           </div>
         </div>
@@ -46,10 +42,7 @@
               <span class="xiaoxi-jiaose">{{ xiaoXi.jiao_se }}</span>
               <div class="xiaoxi-neirong-qu">
                 <span class="xiaoxi-neirong">{{ xiaoXi.nei_rong }}</span>
-                <div v-if="xiaoXi.yi_che_hui && xiaoXi.yuan_shi_nei_rong" class="chehui-yuanshi">
-                  <span class="chehui-biaoqian">{{ huoQuFanYi('junShi', 'cheHuiYuanWen') }}</span>
-                  <span class="chehui-neirong">{{ xiaoXi.yuan_shi_nei_rong }}</span>
-                </div>
+                <!-- FP-26：撤回原文不再下发也不再展示（撤回语义＝不再可见），只保留撤回时间与撤回态类名 -->
                 <div v-if="xiaoXi.yi_che_hui && xiaoXi.che_hui_shi_jian" class="chehui-shijian">
                   {{ huoQuFanYi('junShi', 'cheHuiYu') }}{{ xiaoXi.che_hui_shi_jian }}
                 </div>
@@ -66,7 +59,7 @@
             :fen-duan="jiLuShuJu.jian_yi_fen_duan ?? null"
             :zheng-duan="jiLuShuJu.jian_yi"
           />
-          <p class="ai-tishi" role="note">{{ huoQuFanYi('tongYong', 'aiTiShiTiao') }}</p>
+          <component :is="提示带" />
         </div>
       </div>
     </template>
@@ -79,7 +72,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { huoQuJunShiJiLu } from '@/api/聊天'
 import { huoQuFanYi } from '@/config/translations'
 import { shengChengTouXiangURL } from '@/utils/头像'
+import TouXiang from '@/components/头像.vue'
 import 军师指导分段 from '@/components/军师指导分段.vue'
+import 提示带 from '@/components/提示带.vue'
 import type { JunShiJiLu } from '@/types'
 
 const route = useRoute()
@@ -128,6 +123,7 @@ onMounted(() => {
   background-size: 18px 18px;
 }
 
+/* FP-20 保留特例：记录详情页需要 6px 窄条+透明轨道+beijing/hover 旧令牌滑块（global 为 8px+huakuai 令牌族+半透明灰轨道），宽度/令牌/悬停三项被 军师记录详情.test 钉死，整块保留 */
 .junshi-jilu-yemian::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -248,16 +244,12 @@ onMounted(() => {
   margin-top: 4px;
 }
 
-.jilu-junshi-touxiang {
+.jilu-junshi-wei {
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  object-fit: cover;
-  background: var(--beijing-ciuse);
-}
-
-.jilu-junshi-moren {
-  display: inline-flex;
+  overflow: hidden;
+  display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
@@ -354,23 +346,6 @@ onMounted(() => {
   color: rgba(0, 0, 0, 0.5);
 }
 
-.chehui-yuanshi {
-  font-size: 11px;
-  padding: 4px 8px;
-  background: rgba(255, 152, 0, 0.08);
-  border-radius: 4px;
-  border-left: 2px solid rgba(255, 152, 0, 0.4);
-}
-
-.chehui-biaoqian {
-  color: rgba(255, 152, 0, 0.7);
-  font-weight: 600;
-}
-
-.chehui-neirong {
-  color: rgba(255, 152, 0, 0.9);
-}
-
 .chehui-shijian {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.3);
@@ -388,14 +363,5 @@ onMounted(() => {
 
 :root[data-theme='light'] .xiaoxi-shijian {
   color: rgba(0, 0, 0, 0.25);
-}
-
-.ai-tishi {
-  margin-top: 12px;
-  padding: 4px 8px;
-  font-size: 11px;
-  line-height: 1.4;
-  text-align: right;
-  color: var(--wenben-ciuse);
 }
 </style>

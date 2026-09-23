@@ -175,7 +175,7 @@ async function queRen() {
     })
     const geShi = jueDingShuChuGeShi(props.yuanMime)
     const jieGuo = await xuanRanTouXiang(tu, yuanQu, geShi.mime)
-    emit('que-ren', new File([jieGuo], `touxiang.${geShi.houZhui}`, { type: geShi.mime }))
+    emit('que-ren', new File([jieGuo], `touXiang.${geShi.houZhui}`, { type: geShi.mime }))
   } finally {
     zhengZaiShengCheng.value = false
   }

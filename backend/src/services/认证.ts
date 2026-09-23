@@ -48,6 +48,11 @@ export function yingSheYongHu(row: Record<string, unknown>): YongHuXinXi {
   const yongHuId = String(row.ID)
   // FP-18 身份回传唯一口径：角色与能力一律由服务端按用户表三旗标推导，
   // 不再回传 guan_li_yuan 二值旗标（授权判定本就在服务端，回传值仅视图门）
+  // FP-28b 出参契约演进：`xing_bie` 键随 用户.性别 死列移除。该列在本仓已无任何写入者
+  // （唯一写点 账号注销 的置 NULL 与两个真库测试夹具的 'nv'/'nan' 均在 FP-28b 摘除），
+  // 存量行里剩下的只可能是无人维护的历史值（024 只洗过 角色/挑战对局，未动本列）——
+  // 用户侧性别展示的唯一口径是 mo_ren_xing_bie（用户.默认性别）。
+  // 反证在 routes/__tests__/FP08认证信息出参能力位.test.ts（HTTP 面逐键钉死不得再出现 xing_bie）。
   const jiaoSe: GuanLiJiaoSe | null = 取管理角色(row)
   const nengLi: GuanLiNengLi[] = [...取角色能力(jiaoSe)]
   return {
@@ -55,7 +60,6 @@ export function yingSheYongHu(row: Record<string, unknown>): YongHuXinXi {
     shou_ji_hao: yinBiShouJiHao(String(row.手机号)),
     yong_hu_ming: row.用户名 ? String(row.用户名) : null,
     ni_cheng: row.昵称 ? String(row.昵称) : null,
-    xing_bie: row.性别 ? String(row.性别) : null,
     mu_biao_xing_bie: row.目标性别 ? String(row.目标性别) : null,
     mo_ren_xing_bie: row.默认性别 ? String(row.默认性别) : null,
     xing_ge_xuan_ze: row.性格选择 ? String(row.性格选择) : null,

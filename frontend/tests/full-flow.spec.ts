@@ -47,7 +47,12 @@ test.describe('全流程 E2E 测试：登录 -> 挑战模式 -> 完成游戏 -> 
 
     // === 步骤 3：完成一局游戏 ===
     console.log('步骤 3：完成一局游戏');
-    const chatInput = page.locator('input[placeholder*="消息"], textarea[placeholder*="消息"]').first();
+    // FP-10c 改判：输入区换成图文真内联的 contenteditable，占位符不再是 placeholder 属性
+    // （contenteditable 没有 ::placeholder），改吃 data-zhan-wei + ::before ⇒ 旧的两条属性选择器都不再命中。
+    // 判据等价且不放宽：仍然要求「带『消息』提示语的那只输入控件」，并额外钉住它必须是 contenteditable。
+    const chatInput = page
+      .locator('[contenteditable="true"].shuru-kuang[data-zhan-wei*="消息"], input[placeholder*="消息"], textarea[placeholder*="消息"]')
+      .first();
     if (await chatInput.isVisible({ timeout: 5000 })) {
       await chatInput.fill('你好');
       await page.keyboard.press('Enter');

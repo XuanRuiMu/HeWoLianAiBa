@@ -104,3 +104,38 @@ export async function zhuRuJiaJuShenFen(yeMian: Page, shenFen: JiaJuShenFen): Pr
     for (const [jian, zhi] of Object.entries(ju)) window.sessionStorage.setItem(jian, zhi)
   }, { 令牌: shenFen.lingPai, ...(shenFen.shuaXinLingPai ? { 刷新令牌: shenFen.shuaXinLingPai } : {}), ...(shenFen.shuaXinLingPaiId ? { 刷新令牌ID: shenFen.shuaXinLingPaiId } : {}) })
 }
+
+/**
+ * 迁移 034（自测提权）把「用户」表三旗标全置真 ⇒ 夹具账号在服务端拿到 `chao_guan` + 五位能力。
+ * 「无权限账号」这一档因此在真实数据里不复存在，但缺陷11 的无权限反馈链必须继续被覆盖。
+ *
+ * 做法：只把 `/api/认证/信息` 响应体里的 `jiao_se` / `neng_li` 钉成「无身份」，其余一律透传。
+ * HTTP 请求、序列化形状、`huoQuYongHuXinXi → jiaZaiYongHu → 归一管理能力列表 → keGuanLiZhiDu`
+ * 整条真链路照常跑，被钉住的只是**服务端下发的那一位权限真值**；不去改判定代码、也不去
+ * 动共享库里的旗标（后者会污染并行 worker 里其它场景）。
+ *
+ * 必须**在导航到受控页面之前**挂载：身份解析发生在聊天页首个文档的启动阶段。
+ */
+export async function dingZhuWuQuanXianShenFen(yeMian: Page): Promise<void> {
+  await yeMian.route((url) => {
+    try {
+      return decodeURIComponent(url.pathname) === '/api/认证/信息'
+    } catch {
+      return false
+    }
+  }, async (luYou) => {
+    const xiangYing = await luYou.fetch()
+    const ti = await xiangYing.json().catch(() => null)
+    if (!ti || typeof ti !== 'object' || !ti.shu_ju || typeof ti.shu_ju !== 'object') {
+      await luYou.fulfill({ response: xiangYing })
+      return
+    }
+    const shenFenTi = { ...(ti as Record<string, unknown>), shu_ju: { ...(ti.shu_ju as Record<string, unknown>), jiao_se: null, neng_li: [] } }
+    const tou: Record<string, string> = {}
+    for (const [jian, zhi] of Object.entries(xiangYing.headers())) {
+      if (['content-length', 'content-encoding', 'transfer-encoding', 'connection'].includes(jian.toLowerCase())) continue
+      tou[jian] = zhi
+    }
+    await luYou.fulfill({ status: xiangYing.status(), headers: tou, body: JSON.stringify(shenFenTi) })
+  })
+}

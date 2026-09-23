@@ -8,7 +8,9 @@ import { MEI_TI_KE_DU_YU_JU, shengChengQianMingURL, yanZhengQianMing } from '../
 /**
  * FP-21 真库取证（遗留 L-19 的结案证据）。三件事必须由真 Postgres 写出，而不是由注释推定：
  *  ① 两条建库路径（现网＝baseline+migrations；干净卷＝baseline+initdb 001_haoyou）在迁移 027
- *     之后 好友消息.媒体ID 的形态与约束**全等**，且与现网库当前形态一致；
+ *     之后 好友消息.媒体ID 的形态与约束**全等**；现网库侧只做只读取证，且比对目标由**台账**决定
+ *     （FP-21/036 起：台账尚未登记的迁移所引入的对象允许在现网库里缺席，已登记则一条都不许缺）——
+ *     本地主库按红线永不执行 DDL，拿「重放完整链」的形态死比现网库只会产生假红灯。
  *  ② 媒体读取判定 SQL（services/媒体存储.ts::MEI_TI_KE_DU_YU_JU）在真数据上的授权边界：
  *     上传者本人 / 好友消息的收发双方可读，陌生用户、被撤回的消息、已解除的好友一律不可读；
  *  ③ 签名 URL 的「换不了人」性质：为甲签的地址在乙的请求下不成立（第三方拿到 URL 也读不到）。
@@ -116,15 +118,36 @@ describe.skipIf(!有真库)('FP-21 ⑤ 两条建库路径的 好友消息.媒体
     expect(路径A!.约束.join('\n')).toContain('好友消息_类型合法')
   })
 
-  it('现网库（只读取证）当前形态与两条路径一致，且 027/028 已在台账', async () => {
+  it('现网库（只读取证）形态 = 台账所记录那一版的形态，且 027/028 已在台账', async () => {
     const 池 = new Pool({ connectionString: 取可连通连接串(), max: 1 })
     try {
       const 现网 = await 取好友消息形态(池)
-      expect(现网).toEqual(路径A)
       const 台账 = await 池.query(
-        `SELECT version FROM schema_migrations WHERE version IN ('027','028') ORDER BY version`,
+        `SELECT version FROM schema_migrations WHERE version IN ('027','028','036') ORDER BY version`,
       )
-      expect(台账.rows.map((r: Record<string, unknown>) => String(r['version']))).toEqual(['027', '028'])
+      const 版 = 台账.rows.map((r: Record<string, unknown>) => String(r['version']))
+      expect(版.filter((v) => v === '027' || v === '028')).toEqual(['027', '028'])
+      // 【FP-21 契约演进（本单，非放宽）】旧断言是 `expect(现网).toEqual(路径A)`，即拿「重放完整迁移链」
+      // 的形态去比现网库。036 落地后这句话在**任何**新迁移尚未应用的库上都会红，而本地主库按红线
+      // （PROGRESS L-02：与「恋爱吧管理中心」共用 ⇒ 禁止对主库任何 DDL）永远不会由本用例去应用迁移。
+      // 新断言把「未应用」显式建模：现网形态必须等于「路径A 减去台账里尚未登记的迁移所引入的对象」。
+      // 判据反而更强，不是更弱 ——
+      //  ① 036 引入的对象必须**恰好两条**（FK + 自引用 CHECK），少一条就是 036 自己漏建（红）；
+      //  ② 036 已在台账时差集必须为空，缺列即红（旧断言原样保留）；
+      //  ③ 036 未在台账时，现网**多**出这两条同样红（deepEqual 双向，不是单向包含）。
+      const 已登记036 = 版.includes('036')
+      const 由〇三六引入 = 路径A!.约束.filter(
+        (d) => d.startsWith('好友消息_被引用消息ID_fkey ::') || d.startsWith('好友消息_不得自引用 ::'),
+      )
+      expect(由〇三六引入, '036 应且仅应给 好友消息 增加两条约束（FK + 自引用 CHECK）').toHaveLength(2)
+      expect(由〇三六引入.join('\n')).toContain(
+        'FOREIGN KEY ("被引用消息ID") REFERENCES "好友消息"("ID") ON DELETE SET NULL',
+      )
+      expect(由〇三六引入.join('\n')).toContain('CHECK (("ID" <> "被引用消息ID"))')
+      const 期望约束 = 已登记036
+        ? 路径A!.约束
+        : 路径A!.约束.filter((d) => !由〇三六引入.includes(d))
+      expect({ 列: 现网.列, 约束: 现网.约束 }).toEqual({ 列: 路径A!.列, 约束: 期望约束 })
       const 索引 = await 池.query(
         `SELECT indexname FROM pg_indexes WHERE tablename = '好友消息' AND indexname = 'idx_好友消息_媒体ID'`,
       )

@@ -4,6 +4,7 @@ import {
   type MeiTiShangChuanJieGuo,
   type ShangChuanLeiBie,
 } from './聊天'
+import type { XiaoXiKuai, XiaoXiKuaiChuCan } from '@/types'
 
 export interface HaoYouSouSuoXiang {
   id: string
@@ -49,6 +50,10 @@ export interface HaoYouXiaoXi {
   yi_du: boolean
   yi_che_hui: boolean
   shi_jian_chuo: number
+  /** FP-21：服务端投影的内容块数组（恒在，未落块时为等价反构结果）；无时长字段（后端出参无此列） */
+  nei_rong_kuai?: XiaoXiKuaiChuCan[] | null
+  /** FP-21：被引用消息主键；未引用为 null 而非缺键 */
+  bei_yong_xiao_xi_id?: string | null
 }
 
 export interface YongHuSheZhi {
@@ -154,12 +159,15 @@ export async function faSongHaoYouXiaoXi(
   neiRong: string,
   miDengJian?: string,
   meiTi?: { leiXing: string; meiTiId: string },
+  zhuiJia?: { neiRongKuai?: XiaoXiKuai[]; beiYongXiaoXiId?: string | null },
 ): Promise<{ id: string; shi_jian_chuo: number }> {
   const xiangYing = await http.post<{ cheng_gong: boolean; shu_ju: { id: string; shi_jian_chuo: number } }>('/好友/消息', {
     jieShouZheId,
     neiRong,
     leiXing: meiTi?.leiXing || 'wenben',
     meiTiId: meiTi?.meiTiId ?? null,
+    ...(zhuiJia?.neiRongKuai ? { neiRongKuai: zhuiJia.neiRongKuai } : {}),
+    ...(zhuiJia?.beiYongXiaoXiId ? { beiYongXiaoXiId: zhuiJia.beiYongXiaoXiId } : {}),
   }, miDengJian ? { miDengJian } as unknown as Record<string, unknown> : undefined)
   return xiangYing.data.shu_ju
 }

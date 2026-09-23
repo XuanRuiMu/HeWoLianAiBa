@@ -2,14 +2,56 @@ import { ref } from 'vue'
 import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
 import type { 消息 } from '@/types'
 
-export const YU_YIN_BO_XING_TIAO_SHU = 12
-
 interface Use语音播放依赖 {
   huoQuDiZhi: (xiaoXi: 消息) => string | undefined
 }
 
+/**
+ * 时长几何的唯一载体要求：只有毫秒时长这一个字段。
+ * 聊天页的 消息 与好友页的 HaoYouXiaoXi 都满足它 ⇒ 语音气泡的宽度/时长口径两页同源，
+ * 好友页哪天补上时长字段就直接复用同一份组件，不必再抄第二套算式。
+ */
+export interface YuYinShiChangZaiTi {
+  mei_ti_shi_chang_hao_miao?: number | null
+}
+
 function xiaoXiJian(xiaoXi: 消息): string {
   return xiaoXi.ke_hu_duan_id || xiaoXi.id
+}
+
+/** 语音时长的唯一取秒口径：毫秒→整秒，夹在配置的上下秒之间（气泡宽度与总时长都吃它） */
+export function yuYinShiChangMiao(xiaoXi: YuYinShiChangZaiTi): number {
+  return Math.min(
+    DUO_MEI_TI_PEI_ZHI.yuYinZuiDaMiao,
+    Math.max(
+      DUO_MEI_TI_PEI_ZHI.yuYinZuiDuanMiao,
+      Math.round((xiaoXi.mei_ti_shi_chang_hao_miao ?? 0) / 1000),
+    ),
+  )
+}
+
+/** 时长文本（未播放态与进度行共用）：秒数 + 半角逐引号，与取证 §1-A 的 `12"` 同口径 */
+export function geShiHuaYuYinShiChang(xiaoXi: YuYinShiChangZaiTi): string {
+  return `${yuYinShiChangMiao(xiaoXi)}″`
+}
+
+/**
+ * 「时长越长气泡越宽」的唯一算式（取证 §1-A：`data.second * 10 + 20`，§1-A 上限 max-width 300px）：
+ * 结果夹进配置上下限，一秒不塌成一条线、六十秒不撑破会话栏。
+ */
+export function yuYinKuanDuPx(xiaoXi: YuYinShiChangZaiTi): number {
+  const tu =
+    yuYinShiChangMiao(xiaoXi) * DUO_MEI_TI_PEI_ZHI.yuYinMeiMiaoKuanPx +
+    DUO_MEI_TI_PEI_ZHI.yuYinJiChuKuanPx
+  return Math.min(
+    DUO_MEI_TI_PEI_ZHI.yuYinZuiChangKuanPx,
+    Math.max(DUO_MEI_TI_PEI_ZHI.yuYinZuiDuanKuanPx, tu),
+  )
+}
+
+/** 气泡宽度的唯一出口：页面与组件都不许再自己拼 px */
+export function yuYinKuanYangShi(xiaoXi: YuYinShiChangZaiTi): { width: string } {
+  return { width: `${yuYinKuanDuPx(xiaoXi)}px` }
 }
 
 export function use语音播放(yiLai: Use语音播放依赖) {
@@ -18,21 +60,6 @@ export function use语音播放(yiLai: Use语音播放依赖) {
   const boFangZongMiao = ref(0)
   let dangQianYinPin: HTMLAudioElement | null = null
   let jinDuDingShiQi: ReturnType<typeof setInterval> | null = null
-
-  function geShiHuaYuYinShiChang(xiaoXi: 消息): string {
-    const miao = Math.max(1, Math.round((xiaoXi.mei_ti_shi_chang_hao_miao ?? 0) / 1000))
-    return `${miao}″`
-  }
-
-  function yuYinShiChangMiao(xiaoXi: 消息): number {
-    return Math.min(
-      DUO_MEI_TI_PEI_ZHI.yuYinZuiDaMiao,
-      Math.max(
-        DUO_MEI_TI_PEI_ZHI.yuYinZuiDuanMiao,
-        Math.round((xiaoXi.mei_ti_shi_chang_hao_miao ?? 0) / 1000),
-      ),
-    )
-  }
 
   function shiYuYinBoFangZhong(xiaoXi: 消息): boolean {
     return boFangZhongXiaoXiKey.value === xiaoXiJian(xiaoXi)
@@ -46,17 +73,6 @@ export function use语音播放(yiLai: Use语音播放依赖) {
   function huoQuBoFangZongMiao(xiaoXi: 消息): number {
     if (shiYuYinBoFangZhong(xiaoXi) && boFangZongMiao.value > 0) return boFangZongMiao.value
     return yuYinShiChangMiao(xiaoXi)
-  }
-
-  function yuYinKuanYangShi(xiaoXi: 消息) {
-    const { yuYinZuiDuanKuanPx, yuYinZuiChangKuanPx, yuYinZuiDaMiao, yuYinZuiDuanMiao } =
-      DUO_MEI_TI_PEI_ZHI
-    const miao = yuYinShiChangMiao(xiaoXi)
-    const biLi = (miao - yuYinZuiDuanMiao) / Math.max(1, yuYinZuiDaMiao - yuYinZuiDuanMiao)
-    const kuanDu = Math.round(
-      yuYinZuiDuanKuanPx + biLi * (yuYinZuiChangKuanPx - yuYinZuiDuanKuanPx),
-    )
-    return { width: `${kuanDu}px` }
   }
 
   function qingLiJinDuDingShiQi() {
@@ -146,10 +162,7 @@ export function use语音播放(yiLai: Use语音播放依赖) {
   }
 
   return {
-    YU_YIN_BO_XING_TIAO_SHU,
     shiYuYinBoFangZhong,
-    yuYinKuanYangShi,
-    geShiHuaYuYinShiChang,
     tingZhiYinPinBoFang,
     qieHuanYuYinBoFang,
     boFangJinDuMiao,

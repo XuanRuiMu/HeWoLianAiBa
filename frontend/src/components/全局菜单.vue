@@ -23,14 +23,8 @@
           <span class="zhuye-wenzi">{{ huoQuFanYi('caidan', 'zhuYe') }}</span>
         </button>
         <div class="yonghu-xuanxiang" @click="dianJiYongHuQuYu">
-          <div class="yonghu-touxiang-xiao">
-            <img
-              v-if="touXiangDiZhi && shiTuPianDiZhi(touXiangDiZhi)"
-              :src="touXiangDiZhi"
-              class="touxiang-xiao-tu"
-              alt=""
-            />
-            <span v-else class="touxiang-moren">{{ huoQuFanYi('caidan', 'yongHu') }}</span>
+          <div class="yonghu-xiao-wei">
+            <TouXiang :tou-xiang="touXiangDiZhi" :mo-ren-zi="huoQuFanYi('caidan', 'yongHu')" />
           </div>
           <span class="yonghu-mingcheng">{{ xianShiNiCheng }}</span>
           <span
@@ -46,14 +40,8 @@
               @click.stop
             >
               <button class="yonghu-ziliao-tou" @click="tiaoZhuanZhangHao('tou-xiang')">
-                <span class="ziliao-touxiang">
-                  <img
-                    v-if="touXiangDiZhi && shiTuPianDiZhi(touXiangDiZhi)"
-                    :src="touXiangDiZhi"
-                    class="ziliao-touxiang-tu"
-                    alt=""
-                  />
-                  <span v-else class="ziliao-touxiang-moren">{{ xianShiNiCheng.slice(0, 1) }}</span>
+                <span class="ziliao-wei">
+                  <TouXiang :tou-xiang="touXiangDiZhi" :mo-ren-zi="xianShiNiCheng.slice(0, 1)" />
                 </span>
                 <span class="ziliao-wenzi">
                   <span class="ziliao-mingcheng">{{ xianShiNiCheng }}</span>
@@ -156,10 +144,10 @@ import { 使用认证表单仓库 } from '@/stores/认证表单'
 import { 使用聊天仓库 } from '@/stores/聊天'
 import { 使用主题仓库, 浅色值 } from '@/stores/主题'
 import { 使用通知仓库 } from '@/stores/通知'
-import { shiTuPianDiZhi } from '@/utils/头像'
 import { huoQuFanYi } from '@/config/translations'
 import { huoQuJunShiKaiGuan } from '@/utils/teZhengKaiGuan'
 import { yingYongBanBen } from '@/config/站点配置'
+import TouXiang from '@/components/头像.vue'
 import 协议模态框 from '@/components/协议模态框.vue'
 
 const 用户仓库 = 使用用户仓库()
@@ -531,7 +519,7 @@ watch(
   background: var(--daohanglan-hover);
 }
 
-.yonghu-touxiang-xiao {
+.yonghu-xiao-wei {
   width: 28px;
   height: 28px;
   border-radius: 8px;
@@ -544,16 +532,6 @@ watch(
   font-size: 11px;
   color: var(--daohanglan-ciwenben);
   font-weight: 600;
-}
-
-.touxiang-xiao-tu {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.touxiang-moren {
-  font-size: 11px;
 }
 
 .yonghu-mingcheng {
@@ -620,7 +598,7 @@ watch(
   background: var(--xiala-hover-beijing);
 }
 
-.ziliao-touxiang {
+.ziliao-wei {
   width: 40px;
   height: 40px;
   border-radius: 10px;
@@ -631,17 +609,6 @@ watch(
   justify-content: center;
   background: linear-gradient(135deg, #07c160, #0a8a44);
   color: #fff;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.ziliao-touxiang-tu {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.ziliao-touxiang-moren {
   font-size: 18px;
   font-weight: 700;
 }
@@ -846,7 +813,6 @@ watch(
   background: var(--daohanglan-qianbeijing);
   border: 1px solid var(--daohanglan-qianbiankuang);
   flex-shrink: 0;
-  user-select: none;
 }
 
 .qita-xuanxiang {

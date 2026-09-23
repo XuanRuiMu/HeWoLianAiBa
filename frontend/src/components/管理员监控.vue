@@ -157,28 +157,22 @@
       </section>
 
     </div>
-    <div
-      v-if="!最小化"
-      class="jiankong-shouBing jiankong-shouBing-you"
-      @pointerdown="开始缩放($event, 'you')"
-    />
-    <div
-      v-if="!最小化"
-      class="jiankong-shouBing jiankong-shouBing-xia"
-      @pointerdown="开始缩放($event, 'xia')"
-    />
-    <div
-      v-if="!最小化"
-      class="jiankong-shouBing jiankong-shouBing-youXia"
-      @pointerdown="开始缩放($event, 'youXia')"
-    />
+    <template v-if="!最小化">
+      <div
+        v-for="方向 in 缩放方向清单"
+        :key="方向"
+        class="jiankong-shouBing"
+        :class="`jiankong-shouBing-${方向}`"
+        @pointerdown="开始缩放($event, 方向)"
+      />
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, reactive } from 'vue'
 import { 使用聊天仓库 } from '@/stores/聊天'
-import { use可拖动浮窗 } from '@/composables/use可拖动浮窗'
+import { use可拖动浮窗, 缩放方向清单 } from '@/composables/use可拖动浮窗'
 import { huoQuFanYi } from '@/config/translations'
 import { guiYiXingBie } from '@/utils/输入验证'
 
@@ -388,9 +382,9 @@ function 格式化时间(时间: number): string {
   --jiankong-anniu-hover: var(--liuli-anniu-hover);
   --jiankong-lengxian: var(--liuli-lengxian);
 
+  /* 锚定边与 left/top/width/height 一律由 use可拖动浮窗 以 px 下发。
+     宿主一旦改用 right/bottom 钉盒，盒子右下角被钉死 ⇒ 宽度增只向左扩、高度增只向上扩 ⇒ 缩放方向必然反向 */
   position: fixed;
-  right: var(--fu-chuang-ting-kao-bian-jv);
-  bottom: var(--fu-chuang-ting-kao-bian-jv);
   z-index: var(--jiankong-z-index);
   display: flex;
   flex-direction: column;
@@ -402,7 +396,7 @@ function 格式化时间(时间: number): string {
     var(--jiankong-yinying);
   overflow: hidden;
   touch-action: none;
-  will-change: transform;
+  will-change: left, top;
 }
 
 /* 顶部棱线高光（宝石切面感），随卡片宽度伸缩 */
@@ -495,10 +489,18 @@ function 格式化时间(时间: number): string {
   touch-action: none;
 }
 
-/* 右缘手柄自标题栏下沿起算，不压标题栏按钮命中区；尺寸通道只有这一个，CSS resize 已移除 */
+/* 侧缘手柄自标题栏下沿起算，不压标题栏按钮命中区；尺寸通道只有这一个，CSS resize 已移除 */
 .jiankong-shouBing-you {
   top: var(--fu-chuang-biaoti-lan-gao);
   right: 0;
+  width: 10px;
+  height: calc(100% - var(--fu-chuang-biaoti-lan-gao));
+  cursor: ew-resize;
+}
+
+.jiankong-shouBing-zuo {
+  top: var(--fu-chuang-biaoti-lan-gao);
+  left: 0;
   width: 10px;
   height: calc(100% - var(--fu-chuang-biaoti-lan-gao));
   cursor: ew-resize;
@@ -512,11 +514,45 @@ function 格式化时间(时间: number): string {
   cursor: ns-resize;
 }
 
+/* 上缘手柄只占标题栏顶部 10px（按钮在 --fu-chuang-biaoti-lan-gao 内垂直居中，其顶沿在本条带之下），
+   因此改上缘不抢标题栏拖动与按钮点击 */
+.jiankong-shouBing-shang {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  cursor: ns-resize;
+}
+
 .jiankong-shouBing-youXia {
   right: 0;
   bottom: 0;
   width: 18px;
   height: 18px;
+  cursor: nwse-resize;
+}
+
+.jiankong-shouBing-zuoXia {
+  left: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: nesw-resize;
+}
+
+.jiankong-shouBing-youShang {
+  top: 0;
+  right: 0;
+  width: 18px;
+  height: 10px;
+  cursor: nesw-resize;
+}
+
+.jiankong-shouBing-zuoShang {
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 10px;
   cursor: nwse-resize;
 }
 

@@ -45,7 +45,6 @@ function chuangJianMoNiJiLu() {
           nei_rong: '你好',
           shi_jian: '10:00',
           yi_che_hui: false,
-          yuan_shi_nei_rong: null,
           che_hui_shi_jian: null,
         },
       ],
@@ -75,7 +74,7 @@ describe('FP-A10/A12 军师记录详情页', () => {
   it('渲染军师头像并使用正确路径', async () => {
     const { wrapper } = await mountJunShiJiLuXiangQing()
 
-    const touXiang = wrapper.find('.jilu-junshi-touxiang')
+    const touXiang = wrapper.find('.jilu-junshi-wei img')
     expect(touXiang.exists()).toBe(true)
     expect(touXiang.attributes('src')).toBe(encodeURI('/图片/军师头像/军师玄锐暮头像.png'))
     expect(wrapper.text()).toContain(huoQuFanYi('junShi', 'junShiMing'))
@@ -169,7 +168,6 @@ describe('FP-11 军师记录详情分区渲染', () => {
             nei_rong: '你好',
             shi_jian: '10:00',
             yi_che_hui: false,
-            yuan_shi_nei_rong: null,
             che_hui_shi_jian: null,
           },
         ],
@@ -195,7 +193,7 @@ describe('FP-11 军师记录详情分区渲染', () => {
     expect(wrapper.find('[data-duan="weiShenMeZheMeLiao"] .duan-neirong').text()).toBe(
       fenDuan.weiShenMeZheMeLiao,
     )
-    expect(wrapper.find('.jianyi-quyu .ai-tishi').text()).toBe(huoQuFanYi('tongYong', 'aiTiShiTiao'))
+    expect(wrapper.find('.jianyi-quyu .tishi-dai-shengming').text()).toBe(huoQuFanYi('tongYong', 'aiTiShiTiao'))
     expect(wrapper.text()).not.toContain('undefined')
     expect(wrapper.text()).not.toContain('null')
   })
@@ -224,7 +222,7 @@ describe('FP-11 军师记录详情分区渲染', () => {
     expect(wrapper.find('.jianyi-quyu .junshi-fenduan').exists()).toBe(false)
     expect(wrapper.find('.jianyi-quyu .jieguo-neirong').text()).toBe('这是指导建议')
     expect(wrapper.find('.jianyi-quyu .fuzhi-anniu').exists()).toBe(false)
-    expect(wrapper.find('.jianyi-quyu .ai-tishi').exists()).toBe(true)
+    expect(wrapper.find('.jianyi-quyu .tishi-dai-shengming').exists()).toBe(true)
   })
 
   it('jian_yi_fen_duan 为 null 的半旧记录同样整段兜底', async () => {
@@ -236,5 +234,74 @@ describe('FP-11 军师记录详情分区渲染', () => {
     const { wrapper } = await mountJunShiJiLuXiangQing()
 
     expect(wrapper.find('.jianyi-quyu .jieguo-neirong').text()).toBe('只有整段的半旧记录')
+  })
+})
+
+/**
+ * FP-26（用户裁决②「撤回即原文不再可见」）：撤回原文的展示段 `.chehui-yuanshi` 已删。
+ * 这里按「万一数据里还带着原文」来打（FP-26 之前的 Redis 快照、以及任何未收口的产线数据），
+ * 断言的是渲染结果，不是源码字符串 —— 把展示段加回来，本组必红。
+ */
+describe('FP-26 军师记录详情不显示撤回原文', () => {
+  const 撤回原文 = '这句已经被撤回了，不该再出现在界面上'
+  const 撤回占位文案 = huoQuFanYi('liaoTian', 'duiFangCheHuiLeYiTiaoXiaoXi')
+
+  function 带原文的撤回快照() {
+    return [
+      {
+        jian_yi: '建议正文',
+        jian_yi_fen_duan: null,
+        shi_jian: '2026-07-07T10:00:00.000Z',
+        jiao_se_id: 'j1',
+        jiao_se_ming_zi: '小甜心',
+        jun_shi_id: 'xuanRuiMu',
+        jun_shi_ming_chen: huoQuFanYi('junShi', 'junShiMing'),
+        jun_shi_tou_xiang: '图片/军师头像/军师玄锐暮头像.png',
+        dui_hua_zhai_yao: '摘要内容',
+        liao_tian_ji_lu: [
+          {
+            jiao_se: '用户',
+            nei_rong: 撤回占位文案,
+            shi_jian: '10:00',
+            yi_che_hui: true,
+            che_hui_shi_jian: '10:05',
+            yuan_shi_nei_rong: 撤回原文,
+          },
+          {
+            jiao_se: '用户',
+            nei_rong: '正常的一句',
+            shi_jian: '10:01',
+            yi_che_hui: false,
+            che_hui_shi_jian: null,
+          },
+        ],
+      },
+    ]
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(huoQuJunShiJiLu).mockResolvedValue(带原文的撤回快照() as never)
+  })
+
+  it('界面上零处出现撤回原文，且撤回原文的展示段不存在', async () => {
+    const { wrapper } = await mountJunShiJiLuXiangQing()
+
+    expect(wrapper.text()).not.toContain(撤回原文)
+    expect(wrapper.find('.chehui-yuanshi').exists()).toBe(false)
+    expect(wrapper.find('.chehui-neirong').exists()).toBe(false)
+    expect(wrapper.find('.chehui-biaoqian').exists()).toBe(false)
+    expect(wrapper.html()).not.toContain(撤回原文)
+  })
+
+  it('撤回态仍可辨识：撤回标记类名 + 占位文案 + 撤回时间都还在', async () => {
+    const { wrapper } = await mountJunShiJiLuXiangQing()
+    const 撤回项 = wrapper.findAll('.xiaoxi-xiangmu')[0]
+
+    expect(撤回项.classes()).toContain('chehui-xiaoxi')
+    expect(撤回项.find('.xiaoxi-neirong').text()).toBe(撤回占位文案)
+    expect(撤回项.find('.chehui-shijian').text()).toContain('10:05')
+    // 未撤回那条不受影响
+    expect(wrapper.findAll('.xiaoxi-xiangmu')[1].text()).toContain('正常的一句')
   })
 })

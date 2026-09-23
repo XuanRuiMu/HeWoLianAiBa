@@ -181,8 +181,11 @@
                   </svg>
                 </button>
                 <div class="zhanji-zuo">
-                  <div class="jiaose-touxiang">
-                    {{ jiaoSeBiaoQing(dangAn) }}
+                  <div class="zhanji-wei">
+                    <TouXiang
+                      :tou-xiang="jiaoSeBiaoQing(dangAn)"
+                      :mo-ren-zi="jiaoSeBiaoQing(dangAn)"
+                    />
                   </div>
                   <div class="zhanji-xinxi">
                     <div class="jiaose-mingcheng">
@@ -266,6 +269,7 @@ import { VueDraggable } from 'vue-draggable-plus'
 import { huoQuDangAnLieBiao, shanChuDangAn, piLiangShanChuDangAn } from '@/api/聊天'
 import type { 档案详情 } from '@/types'
 import { huoQuFanYi } from '@/config/translations'
+import TouXiang, { MO_REN_ZI } from '@/components/头像.vue'
 import { track } from '@/utils/埋点'
 import { 使用用户仓库 } from '@/stores/用户'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
@@ -684,7 +688,7 @@ function zhuangTaiYangShi(jieGuoLeiXing: string | undefined): string {
 function jiaoSeBiaoQing(dangAn: 档案详情): string {
   if (dangAn.shi_fou_zha_xing) return '😈'
   if (dangAn.jie_guo_lei_xing_yuan === 'sheng_li_ai_qing') return '💕'
-  return '👤'
+  return MO_REN_ZI.jiaose
 }
 
 async function jiaZaiShuJu() {
@@ -1546,22 +1550,9 @@ defineExpose({
   --kapian-liu-wei: transform 0.32s var(--quxian-huan-ying);
 }
 
-.zhanji-liebiao::-webkit-scrollbar {
-  width: var(--gundong-tiao-kuan-du);
-  height: var(--gundong-tiao-kuan-du);
-}
-
+/* FP-20 保留特例：过往战绩列表需要透明轨道露出页面渐变底，global 轨道 --gundong-tiao-guidao 是半透明灰会显出灰带，故轨道不能用 global 默认；宽/滑块/悬停三规则与 global 同令牌纯重复已删，外观吃单一真源 */
 .zhanji-liebiao::-webkit-scrollbar-track {
   background: transparent;
-}
-
-.zhanji-liebiao::-webkit-scrollbar-thumb {
-  background: var(--gundong-tiao-huakuai);
-  border-radius: var(--gundong-tiao-kuan-du);
-}
-
-.zhanji-liebiao::-webkit-scrollbar-thumb:hover {
-  background: var(--gundong-tiao-huakuai-hover);
 }
 
 .zhanji-liebiao.tuo-zhuai-zhong {
@@ -1933,9 +1924,9 @@ defineExpose({
 
 .zhanji-kapian.xuanZhong > .zhanji-kapian-nei {
   background: #241722;
-  border-color: #ff2d95;
+  border-color: var(--xuanzhong-huan-yanse);
   box-shadow:
-    inset 0 0 0 2px #ff2d95,
+    inset 0 0 0 2px var(--xuanzhong-huan-yanse),
     4px 4px 0 rgba(255, 45, 149, 0.35);
 }
 
@@ -1961,8 +1952,8 @@ defineExpose({
 }
 
 .gouxuan-anniu:focus-visible {
-  outline: 2px solid #ffd500;
-  outline-offset: 2px;
+  outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
+  outline-offset: var(--jujiao-huan-pian-yi);
 }
 
 .gouxuan-anniu svg {
@@ -2023,7 +2014,7 @@ defineExpose({
   min-width: 0;
 }
 
-.jiaose-touxiang {
+.zhanji-wei {
   width: 44px;
   height: 44px;
   border-radius: 12px;
@@ -2179,8 +2170,8 @@ defineExpose({
 }
 
 .caozuo-anniu.fenxiang:focus-visible {
-  outline: 2px solid #ffd500;
-  outline-offset: 2px;
+  outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
+  outline-offset: var(--jujiao-huan-pian-yi);
 }
 
 .caozuo-anniu.shanchu {
@@ -2210,10 +2201,10 @@ defineExpose({
   /* 实时预览：被拖卡片的「落点空位」——霓虹虚线轮廓，隐藏卡片内容，仅作落点提示。
      用 outline 而非 border：外层此刻是纯定位槽，加 border 会把这一格撑高，兄弟卡片跟着跳一次。 */
   background: rgba(255, 45, 149, 0.06) !important;
-  outline: 2px dashed #ff2d95;
+  outline: var(--jujiao-huan-kuan-du) dashed var(--jujiao-huan-yanse);
   border-radius: 16px;
   box-shadow:
-    0 0 0 4px rgba(255, 45, 149, 0.12),
+    0 0 0 4px var(--xuanzhong-guangyun-yanse),
     0 10px 26px rgba(255, 45, 149, 0.2) !important;
   pointer-events: none;
   /* Req1：拖拽预览空位同样禁止选中文字 */
@@ -2268,18 +2259,6 @@ defineExpose({
   }
   to {
     transform: rotate(2deg) scale(1.02);
-  }
-}
-
-@keyframes jianbian-liudong {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
   }
 }
 
@@ -2414,9 +2393,9 @@ defineExpose({
 
 :root[data-theme='light'] .zhanji-kapian.xuanZhong > .zhanji-kapian-nei {
   background: #fff0f6;
-  border-color: #ff2d95;
+  border-color: var(--xuanzhong-huan-yanse);
   box-shadow:
-    inset 0 0 0 2px #ff2d95,
+    inset 0 0 0 2px var(--xuanzhong-huan-yanse),
     4px 4px 0 rgba(255, 45, 149, 0.45);
 }
 
@@ -2446,7 +2425,7 @@ defineExpose({
   background: #14141a;
 }
 
-:root[data-theme='light'] .jiaose-touxiang {
+:root[data-theme='light'] .zhanji-wei {
   background: linear-gradient(145deg, #ffffff, #f0f0ea);
   border-color: rgba(20, 20, 26, 0.88);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);

@@ -185,9 +185,11 @@ beforeAll(async () => {
   池 = new 池类({ connectionString: 取连接串(), connectionTimeoutMillis: 3000, max: 2 })
   客户端 = await 池.connect()
   await 客户端.query('BEGIN')
+  // FP-28b：夹具不再写真值进 用户.性别（待删死列），改吃有真实写入者的同族列 用户.默认性别，
+  // 值域按 037/utils/性别 的 male|female。本文件断言不涉及性别取值 ⇒ 强度不变。
   await 客户端.query(
-    `INSERT INTO "用户" ("ID","手机号","用户名","昵称","性别","管理员","测试")
-     VALUES ($1,$2,$3,'FP09探针','nv',false,true)`,
+    `INSERT INTO "用户" ("ID","手机号","用户名","昵称","默认性别","管理员","测试")
+     VALUES ($1,$2,$3,'FP09探针','female',false,true)`,
     [用户ID, `fp09-${randomUUID()}`.slice(0, 20), `fp09_${randomUUID()}`.slice(0, 20)],
   )
   await 客户端.query(
@@ -195,8 +197,13 @@ beforeAll(async () => {
      VALUES ($1,$2,'FP09探针角色','nv','测试用','I','慢热',false,true,2000)`,
     [角色ID, 用户ID],
   )
-  const 迁移文件 = resolve(迁移目录, '032_FP09消息幂等键.sql')
-  if (existsSync(迁移文件)) await 客户端.query(readFileSync(迁移文件, 'utf-8'))
+  // 现网库应已由 run_migration 跑过 032/035；这两句只为「库比代码旧」的开发环境兜底
+  // （整个 beforeAll 在显式事务里、afterAll 无条件 ROLLBACK ⇒ 现网库不留任何 DDL/数据），
+  // 且顺带证明两条迁移的 SQL 自身可重复执行。
+  for (const 名 of ['032_FP09消息幂等键.sql', '035_引用消息.sql']) {
+    const 迁移文件 = resolve(迁移目录, 名)
+    if (existsSync(迁移文件)) await 客户端.query(readFileSync(迁移文件, 'utf-8'))
+  }
 }, 60000)
 
 afterAll(async () => {

@@ -13,6 +13,7 @@ import type {
   Jiaose,
   FanKuiTiJiao,
   DuoMeiTiLeiXing,
+  XiaoXiKuai,
 } from '@/types'
 
 export const DUO_MEI_TI_LEI_XING_SHANG_CHUAN_LEI_BIE: Record<DuoMeiTiLeiXing, ShangChuanLeiBie> = {
@@ -131,18 +132,44 @@ export async function shangChuanMeiTi(
 }
 
 /**
- * FP-09b 投递契约：`miDengJian` 是客户端为这条消息生成的稳定 UUID（幂等键）。
- * 序号自 FP-09 起由服务端事务内权威分配，前端不再上报自增序号；重发同一条必须复用同一把键，
- * 服务端 `UNIQUE(用户ID,角色ID,幂等键)` 才能把网络抖动/重试的重放压成一条。
- * 键同时经 `Idempotency-Key` 头交给请求层，使这条 POST 落入「带幂等键才重试」的通道。
+ * FP-08b（缺陷5）入参形态收口：`faSongXiaoXi` 由「6 位置参 + 末位引用对象」→ **单一入参对象**。
+ *
+ * 为什么非收不可（PROGRESS 盲区 B11#2，不是风格问题而是错值面问题）：
+ * 旧签名里 `miDengJian?: string | null`、`leiXing?: string`、`meiTiId?: string | null`
+ * 三个相邻实参两两同型（都是 `string` 可空的近邻），调用点少写/写反一位**编译器不报错**，
+ * 结果是「把媒体 ID 当幂等键发出去」这类静默错值——它一路走到服务端落库才表现为脏数据。
+ * 收口成对象后每个实参都自带字段名，错位当场编译失败；新增槽位也不再靠位置。
  */
+export interface FaSongXiaoXiCanShu {
+  huiHuaId: string
+  neiRong: string
+  /**
+   * FP-09b 投递契约：客户端为这条消息生成的稳定 UUID（幂等键）。
+   * 序号自 FP-09 起由服务端事务内权威分配，前端不再上报自增序号；重发同一条必须复用同一把键，
+   * 服务端 `UNIQUE(用户ID,角色ID,幂等键)` 才能把网络抖动/重试的重放压成一条。
+   * 键同时经 `Idempotency-Key` 头交给请求层，使这条 POST 落入「带幂等键才重试」的通道。
+   */
+  miDengJian?: string | null
+  leiXing?: string
+  meiTiId?: string | null
+  /**
+   * FP-10b（缺陷9）图文混排：有序内容块。带上它 ⇒ 块是唯一真源，服务端据此派生
+   * `neiRong/leiXing/meiTiId` 三个兼容投影（客户端同时报的那三个值会被忽略）。
+   * 不带时请求体与改造前逐字相同（纯文本/单媒体老链路零改动）。
+   */
+  neiRongKuai?: XiaoXiKuai[]
+  /**
+   * FP-08a（缺陷5）引用槽：`{ beiYongXiaoXiId }` 是**这条消息引用了哪条消息**，服务端按
+   * 存在性/同会话/同用户/未撤回/非自引用五道裁定后落库，非法值 4xx（不许静默丢引用）。
+   * 不传/传 null/传空串时请求体与改造前逐字相同（老调用点零改动，`发件箱.test.ts` 的等值断言即为证据）。
+   */
+  yinYong?: { beiYongXiaoXiId?: string | null }
+}
+
 export async function faSongXiaoXi(
-  huiHuaId: string,
-  neiRong: string,
-  miDengJian?: string | null,
-  leiXing?: string,
-  meiTiId?: string | null,
+  canShu: FaSongXiaoXiCanShu,
 ): Promise<{ xiaoXi: Xiaoxi; shiMiJi: boolean; weiJiGanYu?: boolean; yuanZhuReXian?: string; ganYuTiShi?: string; chaoShiTiXingMiao?: number }> {
+  const { huiHuaId, neiRong, miDengJian, leiXing, meiTiId, neiRongKuai, yinYong } = canShu
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: Xiaoxi & { shi_mi_ji?: boolean; wei_ji_gan_yu?: boolean; yuan_zhu_re_xian?: string; gan_yu_ti_shi?: string; chao_shi_ti_xing_miao?: number } }>(
     `/聊天/会话/${huiHuaId}/消息`,
     {
@@ -150,6 +177,8 @@ export async function faSongXiaoXi(
       幂等键: miDengJian ?? null,
       leiXing: leiXing || 'wenben',
       meiTiId: meiTiId ?? null,
+      ...(neiRongKuai ? { neiRongKuai } : {}),
+      ...(yinYong?.beiYongXiaoXiId ? { beiYongXiaoXiId: yinYong.beiYongXiaoXiId } : {}),
     },
     miDengJian ? ({ miDengJian } as unknown as Record<string, unknown>) : undefined,
   )

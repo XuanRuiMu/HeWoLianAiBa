@@ -3,8 +3,11 @@ import type { RouteRecordRaw } from 'vue-router'
 import { 自动登录键 } from '@/constants/auth'
 import { duQuLingPai } from '@/utils/令牌存储'
 import { duQuShuJu } from '@/utils/storage'
+import { jiaZaiShiBaiLuYou, zhuCeLuYouCuoWuChuLi } from './错误处理'
 
 const luYou: RouteRecordRaw[] = [
+  // 路由/分块加载失败时的落地页：静态组件，不经懒载，保证失败态自身不再依赖网络
+  jiaZaiShiBaiLuYou,
   {
     path: '/',
     component: () => import('@/layouts/认证布局.vue'),
@@ -136,5 +139,7 @@ router.beforeEach(async (to, _from) => {
     return { name: 'zhuJieMian', replace: true }
   }
 })
+
+zhuCeLuYouCuoWuChuLi(router)
 
 export default router

@@ -25,11 +25,152 @@
   --quxian-tan-chu: cubic-bezier(0.16, 1, 0.3, 1);
   --quxian-ruan: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --quxian-huan-ying: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* 单行几何：量纲与主题档无关，同 --jiange-* 只能住共用 :root 块。
+     --shuru-kuang-* 六枚 + --shuru-anniu-re-ku 是聊天输入区（外壳 .shuru-kuang-waike / textarea
+     .shuru-kuang / 发送按钮 .fasong-anniu 与其 ::before 热区）度量的唯一真源。FP-22c 之前它们在
+     聊天页面.vue 与 好友聊天.vue 的 .shuru-rongqi 各抄一份局部字面量，那份局部才是生效值，全局
+     --shuru-danxing-gao-du 反而是它的镜像 —— 现在把方向反过来，两页只准 var() 吃这里。
+     --shuru-danxing-gao-du 是聊天输入框折叠态单行高度的唯一真源（行高 16px×1.4 + 上下内边距 6px×2，
+     use输入框.ts 运行时 Math.ceil 同一算式得 35px）。
+     --shuru-tubiao-chicun 就是它的一次引用，消费者为输入区全部图标盒：聊天页面.vue 的
+     .yuyin-anniu / .biaoqing-anniu / .gengduo-plus-anniu / .zhan-kai-anniu 与 好友聊天.vue 的
+     .meiti-rukou —— 即图标与输入框只有一套高度。FP-01 交出这两枚令牌时消费者为 0，
+     当时的注释却写"图标盒吃它"，那是假陈述；FP-23 才把线接上（等比性与"热区不得缩到盒宽"
+     一并由 __tests__/FP23图标几何等高.test.ts 以解析值断言，不再靠注释）。
+     字形侧两轴引用同一枚 --shuru-tubiao-glyph-chicun ⇒ 方形 viewBox 下不可能被拉扁。
+     44px 触控热区一律由 ::before 以 --shuru-anniu-re-ku 向外扩出来，不靠撑大可见盒兑换。
+     热区令牌族名一律 --shuru-<部件>-<属性>（anniu=发送按钮），FP-01 那枚无部件名的 --shuru-re-ku
+     与局部 --shuru-anniu-re-ku 是同值两套拼法，FP-22c 起收敛为后者 */
+  --shuru-kuang-zihao: 16px;
+  --shuru-kuang-hangao: 1.4;
+  --shuru-kuang-hangxing-gao: calc(var(--shuru-kuang-zihao) * var(--shuru-kuang-hangao));
+  --shuru-kuang-shang-xia-neidian: 6px;
+  --shuru-kuang-zuo-you-neidian: 12px;
+  --shuru-kuang-biankuang: 0.5px;
+  /* FP-10c：输入区外壳与编辑器的圆角。改造前这两条规则各写死 `border-radius: 6px`
+     （聊天页面.vue 改前 :2486 与 :2500，两处同值），真内联时组件按零硬编码口径改吃令牌，
+     令牌却没人定义 ⇒ 失效值为 0，圆角静默消失。此处补上实体值，值即改前实测值 */
+  --shuru-kuang-yuanjiao: 6px;
+  --shuru-anniu-re-ku: 44px;
+  --shuru-danxing-gao-du: 35px;
+  --shuru-tubiao-chicun: var(--shuru-danxing-gao-du);
+  /* FP-10c：输入区展开档的上限。改造前这个数是 use输入框.ts 在 JS 里算的 min(内容高, 50vh)，
+     那条量高链已随真内联输入区删除，展开只剩纯 CSS 的 .zhan-kai 上那一条 max-height —— 数值口径
+     逐字沿用 50vh（零视觉变化），只是从"第二处量高真源"上收成本枚令牌 */
+  --shuru-zhan-kai-gao-du: 50vh;
+  --shuru-tubiao-glyph-chicun: 22px;
+  /* 待发块与气泡内图文块的图片几何：量纲与主题档无关，同 --shuru-* 只能住共用 :root 块。
+     FP-22b 前这两组数字在 聊天页面.vue / 好友聊天.vue 各抄一份且已漂移（好友页缺 --daifa-kuai-tu-gao），
+     现收敛为唯一真源。待发侧的消费者自 FP-10c 起是 components/聊天/图文输入区.vue 里那条缩略图规则
+     （原 components/聊天/待发图文块序列.vue 随真内联输入区退役，见 __tests__/FP10c真内联输入区.test.ts ①） */
+  --daifa-kuai-tu-kuan: 64px;
+  --daifa-kuai-tu-gao: 64px;
+  /* 待发缩略图的圆角：与"同一张图发出去之后"的 聊天页面.vue .tuwen-kuai-tu 实测值同为一个 6px。
+     FP-10c 把待发序列并进图文输入区组件时按零硬编码口径改吃本令牌，但令牌当时零定义，
+     失效值塌成 0 ⇒ 待发期方角、发出期圆角，同一张图两个样子。补实体值把这段漂移收掉 */
+  --daifa-kuai-tu-yuanjiao: 6px;
+  --tuwen-tu-zuidakuan: 180px;
+  --tuwen-tu-zuida-gao: 200px;
+  /* --daifa-kuai-jian-ju（FP-10b 上收的待发块序列 gap:8px）已随其唯一消费者 待发图文块序列.vue
+     一并退役：真内联后块住在文字流里，块间距由文字排版承担，不再有一只 flex 容器需要 gap。
+     留一枚零消费者令牌就是幻影令牌（FP-12 成对性口径「定义与消费成对存在」），故删除；
+     "不得复活"由 __tests__/FP10b图文同区视觉排布.test.ts ② 的墓碑判定钉住 */
+  /* 表情包/贴纸的方形展示尺寸（FP-24a 实体化）：此前全库零定义，聊天页面.vue 的 .biaoqingbao-tu
+     靠带 120px 兜底字面量的 var() 取值（R1 幻影令牌实例），兜底已随本单删除。
+     消费者是 聊天页面.vue 的媒体分支 .biaoqingbao-tu 与块渲染的 .tuwen-kuai-tu--biaoqingbao
+     两处贴纸呈现（同一判据来自 utils/消息内容块.ts::shiBiaoQingBaoKuai），必须同源同值 */
+  --duomeiti-biaoqingbao-chicun: 120px;
+  /* 引用两件套（FP-09，需求 #5 表现层）几何真源：量纲与主题档无关，同 --shuru-* 只能住共用 :root 块。
+     每个数值的出处记在 .agents/evidence/references/FP-13-引用条-20260921.md（§1.1 引用条本体与关闭钮、
+     §1.2 气泡内引用块与两行截断、§3 左侧色条 3px + 9px），消费者是
+     components/聊天/引用条.vue 与 components/聊天/引用气泡块.vue 两个唯一实现 ——
+     聊天页与未来的好友页（FP-21）一律经组件取值，页面内不得再出现第二份引用字面量。
+     --yinyong-hang-shu 是"最多彩两行"的唯一次数源（用户裁决），两条 max-height 由它乘以各自行高派生，
+     与取证 §1.2 注释「max-height ≈ 2 × 16.8px 行高」同式；--yinyong-kuai-zuo-neidian 复现
+     §3 的「3px 色条 + 9px 间距」= 12px，与 §1.2 的 padding:12px 同值不同源，故按算式而非抄数字 */
+  --yinyong-kuang-yuanjiao: 8px;
+  --yinyong-kuang-neidian: 12px;
+  --yinyong-kuang-zihao: 12px;
+  --yinyong-tiao-hangao: 16px;
+  --yinyong-kuai-hangao: 16.8px;
+  --yinyong-hang-shu: 2;
+  --yinyong-tiao-zuida-gao-du: calc(var(--yinyong-tiao-hangao) * var(--yinyong-hang-shu));
+  --yinyong-kuai-zuida-gao-du: calc(var(--yinyong-kuai-hangao) * var(--yinyong-hang-shu));
+  --yinyong-kuai-zuo-neidian: calc(var(--yinyong-se-tiao-kuan-du) + var(--yinyong-se-tiao-ju-li));
+  --yinyong-kuai-zuida-kuan: 272px;
+  --yinyong-kuai-shang-jian-ju: 4px;
+  --yinyong-se-tiao-kuan-du: 3px;
+  --yinyong-se-tiao-ju-li: 9px;
+  --yinyong-guanbi-chicun: 11px;
+  --yinyong-guanbi-neidian: 5px;
+  /* 声明/错误提示带（components/提示带.vue，需求 #8）量纲真源（FP-31 H2）：量纲与主题档无关，
+     同 --yinyong-* 只能住共用 :root 块。四个数值逐字沿用 FP-07 改前实测的 .aitishi-tiao 原值
+     （列间距 10px / 内边距 3px 12px / 字号 11px；行高 1.4 是无量纲比值，留在组件内不成令牌）——
+     FP-07 时该单禁改本文件，字面值就留在了新组件里（第三波 Standards 轴 H2 点名）。
+     唯一消费者 = 提示带.vue（"一条带两槽"的唯一实现，聊天页/军师指导/军师记录详情三页共用），
+     定义与消费成对存在，不造零消费者令牌 */
+  --tishi-dai-lie-ju: 10px;
+  --tishi-dai-neidian-shang-xia: 3px;
+  --tishi-dai-neidian-zuo-you: 12px;
+  --tishi-dai-zihao: 11px;
+  /* 滚动条三态光标：滑块可拖（grab）、轨道可翻页（pointer）、整体与角落不走文本光标 */
+  --gundong-tiao-cursor: default;
+  --gundong-tiao-huakuai-cursor: grab;
+  --gundong-tiao-guidao-cursor: pointer;
+  /* 文本控件焦点环只改粗细与偏移（贴住控件，不与装饰线争位），颜色仍用 --jujiao-huan-yanse */
+  --jujiao-huan-kuan-du-wenben: 1px;
+  --jujiao-huan-pian-yi-wenben: 0px;
+  /* 自绘出生日期选择器（FP-14，components/认证/出生日期选择器.vue）的分段宽度真源：量纲与主题档无关，
+     同 --jiange-* 与 --ziti-* 只能住共用 :root 块。年段须容 4 位数字零填充显示、月/日段容 2 位，
+     取值由既有节奏令牌派生（18*2+8=44、18+8=26），月/日段宽 ≥24px 是不小于触控下限的那一档；
+     唯一消费者 = 该组件的 .duan-shuru--nian 与 .duan-shuru--yue/.duan-shuru--ri 两条宽度声明，
+     由 __tests__/FP14出生日期选择器.test.ts 按解析值钉住（组件内不留任何像素字面量） */
+  --rili-nian-kuan: calc(var(--ziti-da) * 2 + var(--jiange-xiao));
+  --rili-erwei-kuan: calc(var(--ziti-da) + var(--jiange-xiao));
+  /* 登录/注册成功定格飞行（FP-05，需求 #15）的两枚量纲/层级真源：量纲与主题档无关，同 --jiange-*
+     只能住共用 :root 块。
+     --juanzhou-tong-gao-du 是"卡片收束成的卷轴筒高"，杆高与筒圆角都由它乘 0.5 派生 —— 改前脚本里
+     28px（筒高）与 14px（杆高/圆角）两个字面量在此收编成一枚令牌；唯一消费者 = 登录内容.vue 的
+     .juan-zhou-dingge-shousuo 与 .juan-zhou-dingge-gan（动画脚本只读这两条规则的解析结果，不再自带数字）。
+     --ceng-jingge 续在本文件开头那条浮层层级序（… < 断网 < 版本提示）之上：定格快照层从 t=0 起覆盖全站，
+     直到动画全部注销即整层移除，那 1.3s 内不该有任何东西压住它 */
+  --juanzhou-tong-gao-du: 28px;
+  --ceng-jingge: 4200;
+  /* 语音条（FP-11，需求 #10 语音条部分）几何真源：量纲与主题档无关，同 --yinyong-* 只能住本共用
+     :root 块。逐值出处 = .agents/evidence/references/FP-13-语音条-20260921.md：喇叭 16×20 与
+     喇叭到时长 7px 间距见 §1-A，气泡 12px 内边距见 §1-B 的 message-body-content，波形条
+     2px 宽 + 2px 间距 + 30px 轨道见 §3，进度滑块 8px 与 1px 轨见 §3 的 SeekBar，42px 命中区见 §5。
+     唯一消费者 = components/聊天/语音气泡.vue（两页共用的那一份实现），页面内不得再出现第二套语音字面量。
+     --yuyin-pao-neidian 与 --yuyin-bo-xing-* 两枚与 config/消息配置.ts::DUO_MEI_TI_PEI_ZHI 的
+     yuYinPaoNeidianPx、yuYinCaoYangTiaoKuanPx、yuYinCaoYangJianJuPx 同值（JS 要按轨道净宽算采样条数），
+     --yuyin-jindu-zui-xiao-kuan 与 yuYinZuiDuanKuanPx 同值；同值性由
+     __tests__/FP11语音气泡.test.ts 解析本文件把守（成对性口径同 FP-23，不留零消费者令牌） */
+  --yuyin-pao-neidian: 12px;
+  --yuyin-pao-yuanjiao: 6px;
+  --yuyin-pao-zui-xiao-gao: 38px;
+  --yuyin-laba-kuan: 16px;
+  --yuyin-laba-gao: 20px;
+  --yuyin-laba-jian-ju: 7px;
+  --yuyin-bo-xing-tiao-kuan: 2px;
+  --yuyin-bo-xing-jian-ju: 2px;
+  --yuyin-bo-xing-gao: 30px;
+  --yuyin-jindu-gao: 1px;
+  --yuyin-huakuai-chicun: 8px;
+  --yuyin-re-ku: 42px;
+  --yuyin-jindu-zui-xiao-kuan: 60px;
+  /* 时间条（FP-11 验收点 B）：聊天页与好友页共用 components/聊天/时间条.vue，量纲同上只能住本共用
+     :root 块。四枚数值逐字沿用改前 聊天页面.vue 的 .shijian-biaoqian 实测值（上下内边距 2px、
+     左右 6px、圆角 4px、下间距 12px）；上间距与字号直接复用到期的 --jiange-zhong 与 --ziti-xiao，
+     不另造同值令牌。配色仍吃既有主题令牌 --shijian-biaoqian-beijing 与 --wenben-tishi，本单零新增色值 */
+  --shijian-tiao-neidian-shang-xia: 2px;
+  --shijian-tiao-neidian-zuo-you: 6px;
+  --shijian-tiao-yuanjiao: 4px;
+  --shijian-tiao-xia-jian-ju: 12px;
 }
 
 :root[data-theme="light"] {
   --zhuse: #07C160;
-  --zhuse-qian: #4CD964;
   --zhuse-shen: #06AD56;
   --beijing-zhuse: #EDEDED;
   --beijing-ciuse: #F7F7F7;
@@ -45,8 +186,6 @@
   --xiaoxi-yonghu-beijing: #95EC69;
   --xiaoxi-jiaose-beijing: #FFFFFF;
   --yinying-yanse: rgba(0, 0, 0, 0.08);
-  --qia-ban-se: #ffffff;
-  --yin-ying: 0 2px 8px rgba(0, 0, 0, 0.1);
   --yuanjiao-da: 16px;
   --yuanjiao-zhong: 12px;
   --yuanjiao-xiao: 8px;
@@ -55,27 +194,11 @@
     'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --anquan-quyu-shang: env(safe-area-inset-top, 0px);
   --anquan-quyu-xia: env(safe-area-inset-bottom, 0px);
-  --anquan-quyu-zuo: env(safe-area-inset-left, 0px);
-  --anquan-quyu-you: env(safe-area-inset-right, 0px);
-  --bei-jing-se: #f5f5f5;
-  --wen-zi-se: #333333;
   --wen-zi-ci-se: #666666;
-  --bian-jie-se: #e0e0e0;
-  --tou-ming-bei-jing: rgba(255, 255, 255, 0.9);
-  --shu-ru-bei-jing: #ffffff;
-  --an-niu-bei-jing: #ff6b9d;
-  --an-niu-wen-zi: #ffffff;
-  --ka-xuan-bei-jing: #fff0f5;
-  --cheng-gong-se: #4caf50;
-  --cuo-wu-se: #f44336;
   --jing-gao-se: #ff9800;
-  --zhe-zhao-bei-jing: rgba(0, 0, 0, 0.5);
-  --shu-ru-bian-kuang: #E5E5E5;
   --xiaoxi-yonghu-wenben: #000000;
   --xiaoxi-jiaose-wenben: #000000;
   --dingbu-lan-beijing: #EDEDED;
-  --dingbu-lan-wenben: #191919;
-  --dingbu-lan-biankuang: #d6d6d6;
   --liaotian-beijing: #ededed;
   /* 滚动条三件套（滑块/轨道/宽度）：beijing、hover 为旧名保留（军师指导/军师记录详情/过往战绩仍消费），取值与 huakuai 系一致，禁止再退回半透明白压白底 */
   --gundong-tiao-beijing: rgba(110, 110, 110, 0.85);
@@ -90,90 +213,101 @@
   --jujiao-huan-pian-yi: 2px;
   /* 页面底板/卡片表面：半透明，搭配 --boli-mohu 使用（alpha 对齐通知页面浅色 0.7 先例） */
   --yemian-di-beijing: rgba(245, 245, 245, 0.7);
-  /* 性别主按钮配色三态：蒸馏自资料设置向导既有蓝/粉硬编码与银灰档，明暗同值保持视觉连续 */
+  /* 性别主按钮配色三态：蒸馏自资料设置向导既有蓝/粉硬编码与银灰档；深色档另起一套取值（需求 #16） */
   --xingbie-nan-1: #4a90d9;
   --xingbie-nan-2: #3a7bc8;
   --xingbie-nan-wenben: #ffffff;
-  --xingbie-nv-1: #e6a9be;
+  /* FP-15b 修 FP-01 已知缺陷：旧值 #e6a9be + 白字实测 1.95:1（低于 WCAG AA 4.5:1）。
+     新值 #a34f74 压在自身上不透明，白字实测 5.35:1；与深色档 --xingbie-nv-1 (#c77b98) 通道差 44（≥24） */
+  --xingbie-nv-1: #a34f74;
   --xingbie-nv-2: #c77b98;
   --xingbie-nv-wenben: #ffffff;
   --xingbie-zhongxing-1: #8e8e93;
   --xingbie-zhongxing-2: #636366;
   --xingbie-zhongxing-wenben: #ffffff;
-  --junshi-beijing: #F7F7F7;
+  /* 性别选中框三件套（需求 #16：对象性别 → 蓝/粉选中框；边框/底色/文字同源） */
+  --xingbie-nan-xuan-biankuang: #3a7bc8;
+  --xingbie-nan-xuan-beijing: rgba(74, 144, 217, 0.2);
+  --xingbie-nan-xuan-wenben: #1f4a7a;
+  --xingbie-nv-xuan-biankuang: #c77b98;
+  --xingbie-nv-xuan-beijing: rgba(199, 123, 152, 0.2);
+  --xingbie-nv-xuan-wenben: #7a2f4d;
+  --xingbie-zhongxing-xuan-biankuang: #636366;
+  --xingbie-zhongxing-xuan-beijing: rgba(99, 99, 102, 0.2);
+  --xingbie-zhongxing-xuan-wenben: #3a3a3c;
+  /* FP-15b 选中环两层（需求 #16：男女各一档，旧值把两性统一写死成粉）。
+     环=零偏移零模糊非零扩散的描边层，晕=投影层；色相与本档 --xingbie-*-xuan-biankuang 同源，
+     alpha 沿用改前实测（环 .15 / 晕 .22），形状 3px/10px 26px 仍由消费方写死（FP-22e 冻的是环形状） */
+  --xingbie-nan-xuan-huan: rgba(58, 123, 200, 0.15);
+  --xingbie-nan-xuan-guangyun: rgba(58, 123, 200, 0.22);
+  --xingbie-nv-xuan-huan: rgba(199, 123, 152, 0.15);
+  --xingbie-nv-xuan-guangyun: rgba(199, 123, 152, 0.22);
+  /* 向导内"非性别语义"的柔粉强调档（MBTI 卡选中/悬停）：改前深浅两档字面 #c4577e / #d98ca6，
+     原样收编成令牌，避免把 6 个被禁字面量换个地方继续写死 */
+  --qiangdiao-fen: #c4577e;
+  /* 卡面组：半透明卡面底 + 边框 + 卡面内正文/标题。取"压在 --beijing-zhuse 与 --beijing-ciuse
+     两档底色上正文与标题实测对比均 ≥7:1"的最小不透明度（主页模式卡、录音浮层面板共用） */
+  --kapian-mian-beijing: rgba(255, 255, 255, 0.92);
+  --kapian-mian-biankuang: rgba(23, 32, 55, 0.5);
+  --kapian-mian-zhengwen: #2b3038;
+  --kapian-mian-biaoti: #14181f;
+  /* 认证卡（鎏金年代 · 象牙白档）卡面色 + 其上输入框的静置发丝线（FP-03c）：
+     FP-03 删掉 .dixian-dixian 装饰线后未聚焦输入框零可见边界，成对补回。
+     两档均有定义，数值判据（可见 / 不刺眼 / 标签缺口与卡面同色）由
+     __tests__/FP03c输入框静置边界.test.ts 按解析值钉住 */
+  --renzheng-mian-se: #fffcf3;
+  --renzheng-shuru-xian-se: rgba(46, 42, 32, 0.11);
+  /* 选中态文字/强调辉光（**浅色档**：本块 = :root[data-theme="light"]）。口径：浅色档=暗于卡面的
+     阴影、深色档=亮于卡面的辉光；黑色阴影写在深底上与底色同明度 = 零指示。
+     FP-29（需求 #17）是这两枚令牌落地后的**首个消费者**（性格卡选中态，views/资料设置向导.vue），
+     并按实测重定 alpha：旧值（文字 .55 / 辉光 .5）压在云白卡面上 Δmax 125.6 / 127.5、
+     亮度差 -.72 / -.46，比改前组件字面量（黑 @.4，Δmax 100.3）还重，正是用户报的"标题阴影很重"；
+     两枚统一降到 .22 后 Δmax 50.2 / 56.1、亮度差 -.36 / -.22（页底纯白夹逼），
+     仍 ≥ 本项目"可见"下限 Δ24（FP-03/FP-27 同口径），且文字按高斯峰值稀释后仍 Δmax 26.7。
+     整串可直接喂 text-shadow/box-shadow，消费方勿再补数字；全部数值判据由
+     __tests__/FP29性格卡选中态阴影.test.ts 按解析值钉住 */
+  --xuanzhong-wenben-yinying: 0px 1px 3px rgba(20, 24, 33, 0.22);
+  --xuanzhong-qiangdiao-yinying: 0px 0px 8px rgba(176, 132, 0, 0.22);
+  /* FP-22g 过往战绩选中态 magenta 两枚（改前字面量原样收编，深浅两档同值）：环 = 选中卡
+     border-color / inset 内描边，晕 = 拖拽落点空位光晕；与 --jujiao-huan-yanse 异色即
+     「选中 vs 焦点」语义分界（环/光晕职责结论见 FP22e焦点环单一真源.test.ts 账本注释） */
+  --xuanzhong-huan-yanse: #ff2d95;
+  --xuanzhong-guangyun-yanse: rgba(255, 45, 149, 0.12);
   --junshi-biankuang: #E5E5E5;
-  --junshi-qipao-beijing: #FFFFFF;
-  --junshi-qipao-wenben: #333333;
   --shijian-biaoqian-beijing: #DADADA;
-  --dazi-dian-se: #999999;
-  --dazi-tishi-beijing: #ffffff;
-  --dazi-wenben-se: #999999;
   --shuru-zhanwei-se: #C8C8C8;
   --shuru-fu-anniu-se: #191919;
   --shuru-quyu-biankuang: #d6d6d6;
-  --jinyong-beijing: #D9D9D9;
-  --jinyong-wenben: #C8C8C8;
   --guanbi-anniu-beijing: #F5F5F5;
   --guanbi-anniu-hover: #EBEBEB;
   --junshi-zhuse: #8B6914;
   --junshi-zhuse-touming: rgba(212, 165, 116, 0.1);
-  --junshi-zhuse-touming-hover: rgba(212, 165, 116, 0.2);
-  --junshi-zhuse-touming-qian: rgba(139, 105, 20, 0.05);
-  --junshi-lianjie-se: #4a90d9;
-  --junshi-jinggao-beijing: #FFF7E6;
   --junshi-jinggao-wenben: #D48806;
   --junshi-zhaiyao-beijing: #f0f5ff;
   --caidan-hover: #F5F5F5;
   --caidan-active: #E8E8E8;
-  --chexiao-wenben: #576B95;
   --chehui-caidan-beijing: #2c2c2c;
   --chehui-caidan-wenben: #ffffff;
   --chehui-caidan-hover: rgba(255, 255, 255, 0.1);
-  --shibai-biankuang: #FF4D4F;
   --biankuang-qianse: #D9D9D9;
   --biankuang-fenqu: #f0f0f0;
   --beijing-qianse: #fafafa;
   --biankuang-zhongjian: #d0d0d0;
-  --wenben-huijiu: #bbbbbb;
-  --zhuse-lianjie-se: #4a90d9;
-  --zhuse-lianjie-hover: #3a7bc8;
   --touxiang-yinying: 0 1px 3px rgba(0,0,0,0.08);
   --qipao-yinying: 0 1px 2px rgba(0,0,0,0.06);
   --chuangkou-yinying: 0 12px 40px rgba(0,0,0,0.25);
   --caidan-yinying: 0 4px 16px rgba(0,0,0,0.15);
-  --tiaozhan-se: #ea580c;
   --biao-qian-chenggong-beijing: #eef9f0;
   --biao-qian-chenggong-wenben: #15803d;
   --biao-qian-shibai-beijing: #fef2f2;
   --biao-qian-shibai-wenben: #dc2626;
   --biao-qian-jinggao-beijing: #fff8ed;
   --biao-qian-jinggao-wenben: #c2410c;
-  --biao-qian-xinxi-beijing: #eff6ff;
-  --biao-qian-xinxi-wenben: #2563eb;
-  --duihua-yonghu-beijing: #f0fdf4;
-  --duihua-yonghu-wenben: #166534;
-  --duihua-jiaose-beijing: #f8fafc;
-  --duihua-jiaose-wenben: #334155;
-  --sikao-beijing: #eff6ff;
-  --sikao-biankuang: #3b82f6;
-  --sikao-wenben: #2563eb;
   --silu-beijing: #fdf4ff;
   --silu-biankuang: #a855f7;
   --silu-wenben: #9333ea;
   --gandu-zheng-se: #16a34a;
   --gandu-fu-se: #dc2626;
-  --anniu-zhu-beijing: #191919;
-  --anniu-zhu-wenben: #ffffff;
-  --anniu-zhu-hover: #333333;
-  --anniu-ci-biankuang: #dddddd;
-  --anniu-ci-wenben: #888888;
-  --anniu-ci-hover-biankuang: #bbbbbb;
-  --anniu-ci-hover-wenben: #555555;
-  --fengcun-beijing: #eeeeee;
-  --fengcun-wenben: #777777;
-  --tiao-hao-beijing: #eeeeee;
-  --tiao-hao-wenben: #999999;
-  --chahua-beijing: #F5F0EB;
   --zhuye-kaishi-wenben: rgba(0, 0, 0, 0.55);
   --zhuye-kaishi-jiantou: rgba(0, 0, 0, 0.1);
   --xinmuzhong-duibi-se: #191919;
@@ -181,67 +315,25 @@
   --xinmuzhong-qukuai-biankuang: #e5e5e5;
   --nuanhui-lan: #6B8CA6;
   --roufen-zi: #C4A0B0;
-  --nuanhui-lan-qian: #8EAFC5;
-  --roufen-zi-qian: #D4B8C4;
-  --nuanhui-lan-shen: #5A7A94;
-  --roufen-zi-shen: #B38A9E;
   --beijing-jianbian-1: #E8F4FD;
   --beijing-jianbian-2: #D0E4F0;
   --beijing-jianbian-3: #F5DDE5;
   --beijing-jianbian-4: #FAEBF0;
   --boli-beijing: rgba(255, 255, 255, 0.06);
-  --boli-beijing-qian: rgba(255, 255, 255, 0.03);
   --boli-beijing-shen: rgba(255, 255, 255, 0.12);
   --boli-mohu: blur(12px);
-  --boli-mohu-shen: blur(24px);
   --boli-biankuang: rgba(255, 255, 255, 0.1);
-  --boli-biankuang-liang: rgba(255, 255, 255, 0.2);
   --boli-yinying: 0 8px 32px rgba(0, 0, 0, 0.08);
-  --boli-yinying-shen: 0 24px 64px rgba(0, 0, 0, 0.15);
-  --boli-faguang: 0 0 20px rgba(107, 140, 166, 0.2);
-  --boli-faguang-shen: 0 0 30px rgba(107, 140, 166, 0.3);
-  --chouti-beijing: rgba(20, 24, 40, 0.85);
-  --chouti-mohu: blur(24px);
   --zhezhao-beijing: rgba(0, 0, 0, 0.4);
-  --jianbian-jindu: linear-gradient(90deg, var(--nuanhui-lan), var(--roufen-zi));
-  --yonghu-qipao-1: #FF6B9D;
-  --yonghu-qipao-2: #FF8FB1;
-  --yonghu-qipao-wenben: #ffffff;
-  --fasong-anniu-1: #FF6B9D;
-  --fasong-anniu-2: #FF8FB1;
   --fasong-anniu-wenben: #ffffff;
   /* 发送按钮不可发送态：比常态更深的主色（非降透明度），深浅两套主题各自取 --zhuse-shen */
   --fasong-anniu-jinyong-beijing: var(--zhuse-shen);
-  --yanse-chenggong: #00B894;
-  --yanse-chenggong-qian: #55EFC4;
   --yanse-zhanji: #6C5CE7;
   --yanse-zhanji-qian: #A29BFE;
-  --yanse-jinpai: #D4A017;
-  --yanse-yinpai: #8E8E93;
-  --yanse-tongpai: #B87333;
   --yanse-weixian: #ff6b6b;
   --yanse-weixian-shen: #ff4444;
   --yanse-qiangdiao: #a78bfa;
-  --yanse-huashan: #e17055;
   --yanse-biaobai: #ff6b9d;
-  --yanse-taotuo-beijing: rgba(0, 184, 148, 0.15);
-  --yanse-huashan-beijing: rgba(214, 48, 49, 0.15);
-  --yanse-biaobai-beijing: rgba(255, 107, 157, 0.15);
-  --yanse-zhanji-beijing: rgba(108, 92, 231, 0.15);
-  --yanse-zhanji-shuxian: rgba(108, 92, 231, 0.25);
-  --yanse-xinli: #FDCB6E;
-  --yanse-fumian: #D63031;
-  --yanse-zhongxing: #B2BEC3;
-  --yanse-zhongxing-beijing: rgba(178, 190, 195, 0.15);
-  --yanse-junshi-beijing: rgba(167, 139, 250, 0.06);
-  --yanse-junshi-biankuang: rgba(167, 139, 250, 0.15);
-  --yanse-junshi-xiangmu-beijing: rgba(167, 139, 250, 0.08);
-  --yanse-junshi-xiangmu-biankuang: rgba(167, 139, 250, 0.1);
-  --yanse-junshi-xuhao-beijing: rgba(167, 139, 250, 0.15);
-  --yanse-junshi-haogandu-beijing: rgba(167, 139, 250, 0.06);
-  --yanse-junshi-haogandu-jieduan: rgba(167, 139, 250, 0.12);
-  --yanse-junshi-biaoqian: rgba(167, 139, 250, 0.8);
-  --yanse-junshi-zongfen: rgba(167, 139, 250, 0.9);
   --daohanglan-beijing: rgba(255, 255, 255, 0.72);
   --daohanglan-xiabiankuang: rgba(0, 0, 0, 0.06);
   --daohanglan-yinying: 0 2px 16px rgba(0, 0, 0, 0.06);
@@ -259,43 +351,24 @@
   --xiala-wenben: rgba(0, 0, 0, 0.75);
   --xiala-hover-beijing: rgba(0, 0, 0, 0.05);
   --xiala-hover-wenben: rgba(0, 0, 0, 0.9);
-  --xiala-fenge: rgba(0, 0, 0, 0.06);
   --tanchuang-beijing: rgba(255, 255, 255, 0.95);
   --tanchuang-biankuang: rgba(0, 0, 0, 0.08);
   --tanchuang-yinying: 0 24px 64px rgba(0, 0, 0, 0.1);
   --tanchuang-biaoti: #191919;
   --tanchuang-fanhui-beijing: #f2f2f2;
-  --shuru-touming-beijing: rgba(0, 0, 0, 0.03);
-  --shuru-touming-biankuang: rgba(0, 0, 0, 0.1);
-  --shuru-touming-wenben: #191919;
-  --shuru-zhanwei-touming: rgba(0, 0, 0, 0.3);
   --cuowu-touming-beijing: rgba(250, 81, 81, 0.08);
   --cuowu-touming-biankuang: rgba(250, 81, 81, 0.2);
-  --cuowu-qianse: #e63956;
   --tongzhi-badge-beijing: #e63956;
   --tongzhi-badge-wenben: #ffffff;
   --touxiang-touming-beijing: rgba(0, 0, 0, 0.06);
   --touxiang-beijing-moren: #d6d6d6;
-  --wenzi-baise: #1a1a2e;
   --shuru-quyu-beijing: #f7f7f7;
-  --xiaoxi-jiaose-maoli-beijing: rgba(255, 255, 255, 0.72);
-  --xiaoxi-jiaose-maoli-biankuang: rgba(0, 0, 0, 0.06);
-  --roufen-touming: rgba(230, 57, 86, 0.2);
-  --roufen-qian-touming: rgba(230, 57, 86, 0.1);
-  --emoji-anniu-beijing: rgba(0, 0, 0, 0.06);
   --emoji-huoyue-beijing: rgba(255, 193, 7, 0.15);
-  --emoji-hover-beijing: rgba(255, 193, 7, 0.1);
-  --emoji-xiangmu-hover: rgba(0, 0, 0, 0.04);
-  --emoji-gundong-tiao: rgba(0, 0, 0, 0.15);
-  --shengli-touming-biankuang: rgba(255, 193, 7, 0.2);
-  --shibai-touming-biankuang: rgba(250, 81, 81, 0.15);
   --nuanhui-lan-touming-yinying: rgba(107, 140, 166, 0.2);
   --junshi-anniu-beijing: rgba(167, 139, 250, 0.08);
   --junshi-anniu-hover-beijing: rgba(167, 139, 250, 0.15);
   --quxiao-anniu-beijing: rgba(0, 0, 0, 0.03);
-  --quxiao-anniu-biankuang: rgba(0, 0, 0, 0.1);
   --quxiao-anniu-wenben: rgba(0, 0, 0, 0.6);
-  --quxiao-anniu-hover-beijing: rgba(0, 0, 0, 0.06);
   --tuichu-hover-beijing: rgba(250, 81, 81, 0.08);
 
   /* 星夜琉璃浮窗套件（管理员监控 · 浅色档：云白玻璃 + 玫瑰金） */
@@ -313,13 +386,11 @@
   --liuli-jishu-di: #b34a68;
   --liuli-jishu-wenben: #ffffff;
   --liuli-lengxian: linear-gradient(90deg, transparent, rgba(255, 255, 255, 1), transparent);
-  --banben-hao: "1.0.0";
 }
 
 :root,
 :root[data-theme="dark"] {
   --zhuse: #34C759;
-  --zhuse-qian: #30D158;
   --zhuse-shen: #28A745;
   --beijing-zhuse: #000000;
   --beijing-ciuse: #1C1C1E;
@@ -335,30 +406,14 @@
   --xiaoxi-yonghu-beijing: #95EC69;
   --xiaoxi-jiaose-beijing: #3A3A3C;
   --yinying-yanse: rgba(255, 255, 255, 0.08);
-  --qia-ban-se: #3A3A3C;
-  --yin-ying: 0 2px 8px rgba(0, 0, 0, 0.3);
   /* 暗色主题同步字体族：canvas 手绘只读此令牌，缺档即视为主题错误 */
   --ziti-jiazu: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --bei-jing-se: #1a1a2e;
-  --wen-zi-se: #eaeaea;
   --wen-zi-ci-se: #b0b0b0;
-  --bian-jie-se: #2a2a4a;
-  --tou-ming-bei-jing: rgba(26, 26, 46, 0.95);
-  --shu-ru-bei-jing: #1f1f38;
-  --an-niu-bei-jing: #ff6b9d;
-  --an-niu-wen-zi: #ffffff;
-  --ka-xuan-bei-jing: #2d1f3d;
-  --cheng-gong-se: #66bb6a;
-  --cuo-wu-se: #ef5350;
   --jing-gao-se: #ffa726;
-  --zhe-zhao-bei-jing: rgba(0, 0, 0, 0.7);
-  --shu-ru-bian-kuang: #38383A;
   --xiaoxi-yonghu-wenben: #000000;
   --xiaoxi-jiaose-wenben: #E0E0E0;
   --dingbu-lan-beijing: #1C1C1E;
-  --dingbu-lan-wenben: #F5F5F7;
-  --dingbu-lan-biankuang: #2c2c2e;
   --liaotian-beijing: #111111;
   /* 滚动条三件套（滑块/轨道/宽度）：beijing、hover 为旧名保留（军师指导/军师记录详情/过往战绩仍消费），深档取亮灰保证压深底可见可拖 */
   --gundong-tiao-beijing: rgba(150, 150, 150, 0.9);
@@ -373,90 +428,92 @@
   --jujiao-huan-pian-yi: 2px;
   /* 页面底板/卡片表面：半透明，搭配 --boli-mohu 使用（alpha 对齐挑战概况卡深色 0.5~0.6 先例） */
   --yemian-di-beijing: rgba(41, 41, 41, 0.6);
-  /* 性别主按钮配色三态：与浅色档同值（蒸馏自既有硬编码，明暗不另起炉灶） */
-  --xingbie-nan-1: #4a90d9;
-  --xingbie-nan-2: #3a7bc8;
+  /* 性别主按钮配色三态：深色档取值与浅色档分离——同一灰蓝/浅粉压在深卡面上会糊成一片，
+     故加深并提饱和，保证「字 ≥3:1 于底色」与「底色 ≥3:1 于卡面」同时成立；中性档带冷钢调同理 */
+  --xingbie-nan-1: #2f7fe0;
+  --xingbie-nan-2: #1f6ac8;
   --xingbie-nan-wenben: #ffffff;
-  --xingbie-nv-1: #e6a9be;
-  --xingbie-nv-2: #c77b98;
+  --xingbie-nv-1: #c77b98;
+  --xingbie-nv-2: #a85f7d;
   --xingbie-nv-wenben: #ffffff;
-  --xingbie-zhongxing-1: #8e8e93;
-  --xingbie-zhongxing-2: #636366;
+  --xingbie-zhongxing-1: #6f84a0;
+  --xingbie-zhongxing-2: #5b6f8a;
   --xingbie-zhongxing-wenben: #ffffff;
-  --junshi-beijing: #1C1C1E;
+  /* 性别选中框三件套：浅色档的深字浅框在深底上读不出来，改为亮框 + 深底染色 + 亮字 */
+  --xingbie-nan-xuan-biankuang: #6aa8e8;
+  --xingbie-nan-xuan-beijing: rgba(106, 168, 232, 0.22);
+  --xingbie-nan-xuan-wenben: #cfe4fb;
+  --xingbie-nv-xuan-biankuang: #f2a3c4;
+  --xingbie-nv-xuan-beijing: rgba(242, 163, 196, 0.22);
+  --xingbie-nv-xuan-wenben: #ffd9e8;
+  --xingbie-zhongxing-xuan-biankuang: #a8b4c8;
+  --xingbie-zhongxing-xuan-beijing: rgba(168, 180, 200, 0.22);
+  --xingbie-zhongxing-xuan-wenben: #dfe6f2;
+  /* FP-15b 选中环两层（深色档，与浅色档成对，理由见浅色档同名令牌注释）；
+     alpha 沿用改前实测（环 .14 / 晕 .22） */
+  --xingbie-nan-xuan-huan: rgba(106, 168, 232, 0.14);
+  --xingbie-nan-xuan-guangyun: rgba(106, 168, 232, 0.22);
+  --xingbie-nv-xuan-huan: rgba(242, 163, 196, 0.14);
+  --xingbie-nv-xuan-guangyun: rgba(242, 163, 196, 0.22);
+  /* 向导内非性别语义的柔粉强调档（深色侧），与浅色档成对 */
+  --qiangdiao-fen: #d98ca6;
+  /* 卡面组：深卡面压在深底上仍需与底分离，正文/标题对比 ≥7:1（原 alpha .05–.11 卡面 + .42 白正文实测 3.7:1） */
+  --kapian-mian-beijing: rgba(26, 30, 40, 0.92);
+  --kapian-mian-biankuang: rgba(226, 232, 240, 0.45);
+  --kapian-mian-zhengwen: #dfe4ec;
+  --kapian-mian-biaoti: #ffffff;
+  /* 认证卡（星夜档）卡面色 + 其上输入框的静置发丝线（FP-03c），与浅色档成对，见上 */
+  --renzheng-mian-se: #161b2e;
+  --renzheng-shuru-xian-se: rgba(226, 232, 240, 0.11);
+  /* 选中态文字/强调辉光（**深色档**：本块 = :root, :root[data-theme="dark"]，是主题 baseline）。
+     需求 #17 的"深色看不见"病灶在改前的**组件字面量**上（`0 1px 3px rgba(0,0,0,.35)` 压在深卡面
+     Δmax 12.3、亮度差 -.004 ⇒ 比本项目"可见"下限 Δ24 低一个数量级，且与底同明度），不在本块色相上。
+     FP-29 落地时改两处、留一处：
+     ① 颜色仍是唯一的亮色方向（近冷白，压在深卡面 Δmax 120.9 / 亮度差 +.2535，名义 alpha 口径）；
+     ② 几何从 `0 0 8px` 收到与浅色档同形的 `0 1px 3px`——8px 模糊把 .55 稀释到峰值 ≈.11
+       （高斯 σ=4、2px 笔画 ⇒ 峰值系数 ≈ 2/(σ√2π)≈.20），亮色辉光摊成一片雾反而读不出边界；
+       3px 模糊 σ=1.5 ⇒ 峰值系数 ≈.53，同 alpha 下峰值亮差 .055（改前 -.002）；
+     ③ 辉光（画在父面＝向导卡面上，大面积半影不被笔画稀释）alpha/几何一字不动，沿用 FP-01 取值 */
+  --xuanzhong-wenben-yinying: 0px 1px 3px rgba(226, 236, 255, 0.55);
+  --xuanzhong-qiangdiao-yinying: 0px 0px 10px rgba(255, 215, 0, 0.55);
+  /* FP-22g 选中态 magenta 两枚（与浅色档成对，取值改前两档同为字面量，理由见浅色档同名令牌注释） */
+  --xuanzhong-huan-yanse: #ff2d95;
+  --xuanzhong-guangyun-yanse: rgba(255, 45, 149, 0.12);
   --junshi-biankuang: #38383A;
-  --junshi-qipao-beijing: #2C2C2E;
-  --junshi-qipao-wenben: #F5F5F7;
   --shijian-biaoqian-beijing: #2A2A2A;
-  --dazi-dian-se: #8E8E93;
-  --dazi-tishi-beijing: #2c2c2e;
-  --dazi-wenben-se: #8e8e93;
   --shuru-zhanwei-se: #636366;
   --shuru-fu-anniu-se: #d1d1d6;
   --shuru-quyu-biankuang: #2c2c2e;
-  --jinyong-beijing: #3A3A3C;
-  --jinyong-wenben: #636366;
   --guanbi-anniu-beijing: #2C2C2E;
   --guanbi-anniu-hover: #3A3A3C;
   --junshi-zhuse: #d4a843;
   --junshi-zhuse-touming: rgba(212, 168, 67, 0.08);
-  --junshi-zhuse-touming-hover: rgba(212, 168, 67, 0.15);
-  --junshi-zhuse-touming-qian: rgba(212, 168, 67, 0.08);
-  --junshi-lianjie-se: #6ab0f0;
-  --junshi-jinggao-beijing: #2a2000;
   --junshi-jinggao-wenben: #d4a843;
   --junshi-zhaiyao-beijing: #1a2030;
   --caidan-hover: #333333;
   --caidan-active: #444444;
-  --chexiao-wenben: #6ab0f0;
   --chehui-caidan-beijing: #3a3a3c;
   --chehui-caidan-wenben: #ffffff;
   --chehui-caidan-hover: rgba(255, 255, 255, 0.1);
-  --shibai-biankuang: #FF453A;
   --biankuang-qianse: #38383A;
   --biankuang-fenqu: #333333;
   --beijing-qianse: #252525;
   --biankuang-zhongjian: #444444;
-  --wenben-huijiu: #636366;
-  --zhuse-lianjie-se: #6ab0f0;
-  --zhuse-lianjie-hover: #5a9ad8;
   --touxiang-yinying: 0 1px 3px rgba(0,0,0,0.2);
   --qipao-yinying: 0 1px 2px rgba(0,0,0,0.15);
   --chuangkou-yinying: 0 12px 40px rgba(0,0,0,0.6);
   --caidan-yinying: 0 4px 16px rgba(0,0,0,0.3);
-  --tiaozhan-se: #ff8a4c;
   --biao-qian-chenggong-beijing: #0a1810;
   --biao-qian-chenggong-wenben: #30d158;
   --biao-qian-shibai-beijing: #2a1010;
   --biao-qian-shibai-wenben: #ff453a;
   --biao-qian-jinggao-beijing: #2a2000;
   --biao-qian-jinggao-wenben: #ffa726;
-  --biao-qian-xinxi-beijing: #0c1525;
-  --biao-qian-xinxi-wenben: #0a84ff;
-  --duihua-yonghu-beijing: #0a1810;
-  --duihua-yonghu-wenben: #30d158;
-  --duihua-jiaose-beijing: #111111;
-  --duihua-jiaose-wenben: #d1d1d6;
-  --sikao-beijing: #0c1525;
-  --sikao-biankuang: #0a84ff;
-  --sikao-wenben: #0a84ff;
   --silu-beijing: #170e1f;
   --silu-biankuang: #bf5af2;
   --silu-wenben: #bf5af2;
   --gandu-zheng-se: #30d158;
   --gandu-fu-se: #ff453a;
-  --anniu-zhu-beijing: #f5f5f7;
-  --anniu-zhu-wenben: #111111;
-  --anniu-zhu-hover: #d1d1d6;
-  --anniu-ci-biankuang: #333333;
-  --anniu-ci-wenben: #636366;
-  --anniu-ci-hover-biankuang: #48484a;
-  --anniu-ci-hover-wenben: #98989d;
-  --fengcun-beijing: #222222;
-  --fengcun-wenben: #8e8e93;
-  --tiao-hao-beijing: #222222;
-  --tiao-hao-wenben: #48484a;
-  --chahua-beijing: #1a1a2e;
   --zhuye-kaishi-wenben: rgba(255, 255, 255, 0.45);
   --zhuye-kaishi-jiantou: rgba(255, 255, 255, 0.12);
   --xinmuzhong-duibi-se: #ffffff;
@@ -467,57 +524,19 @@
   --beijing-jianbian-3: #2A1A24;
   --beijing-jianbian-4: #1A0F16;
   --boli-beijing: rgba(255, 255, 255, 0.06);
-  --boli-beijing-qian: rgba(255, 255, 255, 0.03);
   --boli-beijing-shen: rgba(255, 255, 255, 0.12);
   --boli-mohu: blur(12px);
-  --boli-mohu-shen: blur(24px);
   --boli-biankuang: rgba(255, 255, 255, 0.1);
-  --boli-biankuang-liang: rgba(255, 255, 255, 0.2);
   --boli-yinying: 0 8px 32px rgba(0, 0, 0, 0.2);
-  --boli-yinying-shen: 0 24px 64px rgba(0, 0, 0, 0.4);
-  --boli-faguang: 0 0 20px rgba(107, 140, 166, 0.25);
-  --boli-faguang-shen: 0 0 30px rgba(107, 140, 166, 0.4);
-  --chouti-beijing: rgba(20, 24, 40, 0.9);
-  --chouti-mohu: blur(24px);
   --zhezhao-beijing: rgba(0, 0, 0, 0.6);
-  --jianbian-jindu: linear-gradient(90deg, var(--nuanhui-lan), var(--roufen-zi));
-  --yonghu-qipao-1: #FF6B9D;
-  --yonghu-qipao-2: #FF8FB1;
-  --yonghu-qipao-wenben: #ffffff;
-  --fasong-anniu-1: #FF6B9D;
-  --fasong-anniu-2: #FF8FB1;
   --fasong-anniu-wenben: #ffffff;
   --fasong-anniu-jinyong-beijing: var(--zhuse-shen);
-  --yanse-chenggong: #00B894;
-  --yanse-chenggong-qian: #55EFC4;
   --yanse-zhanji: #6C5CE7;
   --yanse-zhanji-qian: #A29BFE;
-  --yanse-jinpai: #D4A017;
-  --yanse-yinpai: #8E8E93;
-  --yanse-tongpai: #B87333;
   --yanse-weixian: #ff6b6b;
   --yanse-weixian-shen: #ff4444;
   --yanse-qiangdiao: #a78bfa;
-  --yanse-huashan: #e17055;
   --yanse-biaobai: #ff6b9d;
-  --yanse-taotuo-beijing: rgba(0, 184, 148, 0.15);
-  --yanse-huashan-beijing: rgba(214, 48, 49, 0.15);
-  --yanse-biaobai-beijing: rgba(255, 107, 157, 0.15);
-  --yanse-zhanji-beijing: rgba(108, 92, 231, 0.15);
-  --yanse-zhanji-shuxian: rgba(108, 92, 231, 0.25);
-  --yanse-xinli: #FDCB6E;
-  --yanse-fumian: #D63031;
-  --yanse-zhongxing: #B2BEC3;
-  --yanse-zhongxing-beijing: rgba(178, 190, 195, 0.15);
-  --yanse-junshi-beijing: rgba(167, 139, 250, 0.06);
-  --yanse-junshi-biankuang: rgba(167, 139, 250, 0.15);
-  --yanse-junshi-xiangmu-beijing: rgba(167, 139, 250, 0.08);
-  --yanse-junshi-xiangmu-biankuang: rgba(167, 139, 250, 0.1);
-  --yanse-junshi-xuhao-beijing: rgba(167, 139, 250, 0.15);
-  --yanse-junshi-haogandu-beijing: rgba(167, 139, 250, 0.06);
-  --yanse-junshi-haogandu-jieduan: rgba(167, 139, 250, 0.12);
-  --yanse-junshi-biaoqian: rgba(167, 139, 250, 0.8);
-  --yanse-junshi-zongfen: rgba(167, 139, 250, 0.9);
   --daohanglan-beijing: rgba(20, 24, 40, 0.72);
   --daohanglan-xiabiankuang: rgba(255, 255, 255, 0.08);
   --daohanglan-yinying: 0 2px 16px rgba(0, 0, 0, 0.15);
@@ -535,43 +554,24 @@
   --xiala-wenben: rgba(255, 255, 255, 0.8);
   --xiala-hover-beijing: rgba(255, 255, 255, 0.1);
   --xiala-hover-wenben: #ffffff;
-  --xiala-fenge: rgba(255, 255, 255, 0.08);
   --tanchuang-beijing: rgba(20, 24, 40, 0.92);
   --tanchuang-biankuang: rgba(255, 255, 255, 0.12);
   --tanchuang-yinying: 0 24px 64px rgba(0, 0, 0, 0.4);
   --tanchuang-biaoti: #ffffff;
   --tanchuang-fanhui-beijing: #3a3a3c;
-  --shuru-touming-beijing: rgba(255, 255, 255, 0.06);
-  --shuru-touming-biankuang: rgba(255, 255, 255, 0.12);
-  --shuru-touming-wenben: #ffffff;
-  --shuru-zhanwei-touming: rgba(255, 255, 255, 0.4);
   --cuowu-touming-beijing: rgba(250, 81, 81, 0.12);
   --cuowu-touming-biankuang: rgba(250, 81, 81, 0.25);
-  --cuowu-qianse: #ff8a8a;
   --tongzhi-badge-beijing: #ff4d6d;
   --tongzhi-badge-wenben: #ffffff;
   --touxiang-touming-beijing: rgba(255, 255, 255, 0.1);
   --touxiang-beijing-moren: #3a3a3c;
-  --wenzi-baise: #ffffff;
   --shuru-quyu-beijing: #1c1c1e;
-  --xiaoxi-jiaose-maoli-beijing: rgba(58, 58, 60, 0.72);
-  --xiaoxi-jiaose-maoli-biankuang: rgba(255, 255, 255, 0.08);
-  --roufen-touming: rgba(255, 107, 157, 0.3);
-  --roufen-qian-touming: rgba(255, 107, 157, 0.15);
-  --emoji-anniu-beijing: rgba(255, 255, 255, 0.3);
   --emoji-huoyue-beijing: rgba(255, 193, 7, 0.25);
-  --emoji-hover-beijing: rgba(255, 193, 7, 0.2);
-  --emoji-xiangmu-hover: rgba(0, 0, 0, 0.06);
-  --emoji-gundong-tiao: rgba(255, 255, 255, 0.2);
-  --shengli-touming-biankuang: rgba(255, 193, 7, 0.3);
-  --shibai-touming-biankuang: rgba(250, 81, 81, 0.2);
   --nuanhui-lan-touming-yinying: rgba(107, 140, 166, 0.3);
   --junshi-anniu-beijing: rgba(167, 139, 250, 0.12);
   --junshi-anniu-hover-beijing: rgba(167, 139, 250, 0.22);
   --quxiao-anniu-beijing: rgba(255, 255, 255, 0.06);
-  --quxiao-anniu-biankuang: rgba(255, 255, 255, 0.12);
   --quxiao-anniu-wenben: rgba(255, 255, 255, 0.7);
-  --quxiao-anniu-hover-beijing: rgba(255, 255, 255, 0.1);
   --tuichu-hover-beijing: rgba(250, 81, 81, 0.12);
 
   /* 星夜琉璃浮窗套件（管理员监控 · 深色档：午夜蓝玻璃 + 玫瑰金） */
@@ -589,5 +589,4 @@
   --liuli-jishu-di: #b35f7e;
   --liuli-jishu-wenben: #ffffff;
   --liuli-lengxian: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-  --banben-hao: "1.0.0";
 }

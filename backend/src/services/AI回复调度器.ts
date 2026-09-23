@@ -10,7 +10,7 @@ import {
 import { anIdChaYongHu } from './认证'
 import { cheHuiJiaoSeXiaoXi } from './消息'
 import { huoQuHuoJieXiShiPinMiaoShu } from './视频理解'
-import { quBenLunJiaoDianXiaoXiXiang, zhanShiXiaoXiZhengWen } from './对话渲染'
+import { gouJianYinYongChaXun, quBenLunJiaoDianXiaoXiXiang, zhanShiXiaoXiZhengWen } from './对话渲染'
 import {
   jianCeYongHuXiaoXiBingChuLi,
   chuLiAIHuiFuHouJieShuJianCha,
@@ -601,6 +601,8 @@ export class AI回复调度器 {
     // FP-09：焦点=「触发本轮的那条」，只有拿不到 ID 时才回落到「DB 末条用户消息」旧口径
     const 焦点消息 = quBenLunJiaoDianXiaoXiXiang(历史消息, 驱动消息ID)
     if (!焦点消息) return ''
+    // FP-08c：焦点那条若带引用槽，原文按同一份历史列表现取（引用只在这一处入口渲染，不再第二份实现）
+    const 引用回口 = gouJianYinYongChaXun(历史消息)
     if (焦点消息.meiTiLeiBie === 'wenjian' && !焦点消息.yi_che_hui) {
       const ming = 焦点消息.yuanShiWenJianMing || ''
       const xiaoMIME = (焦点消息.meiTiMIME || '').toLowerCase()
@@ -610,10 +612,10 @@ export class AI回复调度器 {
         return zhanShiXiaoXiZhengWen(焦点消息, {
           视频画面描述: jieXi.huaMianMiaoShu,
           视频转写文本: jieXi.zhuanXieWenBen,
-        })
+        }, 引用回口)
       }
     }
-    return zhanShiXiaoXiZhengWen(焦点消息)
+    return zhanShiXiaoXiZhengWen(焦点消息, undefined, 引用回口)
   }
 
   private async 发送消息列表(

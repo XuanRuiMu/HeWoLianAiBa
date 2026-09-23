@@ -37,16 +37,12 @@
                 'yi-wan-cheng': huoQuJunShiZhuangTai(junShi.id) === 'yi_wan_cheng',
               }"
             >
-              <div class="junshi-touxiang">
-                <img
-                  v-if="!touXiangShiBai[junShi.id]"
-                  :src="shengChengTouXiangURL(junShi.touXiang)"
-                  :alt="huoQuJunShiMingCheng(junShi) || ''"
-                  class="touxiang-tu"
-                  loading="lazy"
+              <div class="junshi-wei">
+                <TouXiang
+                  :tou-xiang="touXiangShiBai[junShi.id] ? null : shengChengTouXiangURL(junShi.touXiang)"
+                  :mo-ren-zi="junShiMoRenWenZi(junShi)"
                   @error="biaoJiTouXiangShiBai(junShi.id)"
                 />
-                <span v-else class="touxiang-moren">{{ junShiMoRenWenZi(junShi) }}</span>
               </div>
               <div class="junshi-xiangqing">
                 <span class="junshi-mingcheng">{{ huoQuJunShiMingCheng(junShi) }}</span>
@@ -98,7 +94,7 @@
                   :fen-duan="huoQuZhiDaoFenDuan(junShi.id)"
                   :zheng-duan="huoQuZhiDaoJieGuo(junShi.id) || ''"
                 />
-                <p class="ai-tishi" role="note">{{ huoQuFanYi('tongYong', 'aiTiShiTiao') }}</p>
+                <component :is="提示带" />
               </div>
             </div>
           </div>
@@ -154,9 +150,11 @@ import {
 import { fanYi, huoQuFanYi } from '@/config/translations'
 import { 是业务错误 } from '@/api/请求'
 import { shengChengTouXiangURL, junShiMoRenTouXiang } from '@/utils/头像'
+import TouXiang from '@/components/头像.vue'
 import { 使用军师仓库, shiYouXiaoJiaoSeId } from '@/stores/军师'
 import { track } from '@/utils/埋点'
 import 军师指导分段 from './军师指导分段.vue'
+import 提示带 from './提示带.vue'
 import type {
   JunShiXinXi,
   JunShiJiLu,
@@ -525,6 +523,7 @@ onUnmounted(() => {
   scrollbar-color: var(--gundong-tiao-beijing) transparent;
 }
 
+/* FP-20 保留特例：军师指导内容区需要 6px 窄条+透明轨道+--gundong-tiao-beijing 滑块（global 为 8px+半透明灰轨道+huakuai 令牌），且宽度/滑块令牌/悬停选择器被 军师指导.test 钉死，整块保留 */
 .junshi-neirong::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -578,24 +577,12 @@ onUnmounted(() => {
   border-color: var(--junshi-biankuang);
 }
 
-.junshi-touxiang {
+.junshi-wei {
   width: 48px;
   height: 48px;
   border-radius: 12px;
   overflow: hidden;
   flex-shrink: 0;
-  background: var(--beijing-ciuse);
-}
-
-.touxiang-tu {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.touxiang-moren {
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -708,15 +695,6 @@ onUnmounted(() => {
   margin-bottom: 8px;
 }
 
-.ai-tishi {
-  margin-top: 12px;
-  padding: 4px 8px;
-  font-size: 11px;
-  line-height: 1.4;
-  text-align: right;
-  color: var(--wenben-ciuse);
-}
-
 .zhidao-jilu-zhezhao {
   position: absolute;
   top: 0;
@@ -760,17 +738,13 @@ onUnmounted(() => {
   scrollbar-color: var(--gundong-tiao-beijing) transparent;
 }
 
+/* FP-20 保留特例：指导记录区需要 6px 窄条与透明轨道露出面板底（global 为 8px+半透明灰轨道，视觉不同）；thumb 与 global --gundong-tiao-huakuai 同值纯重复已删，无测试钉它 */
 .zhidao-jilu-neirong::-webkit-scrollbar {
   width: 6px;
 }
 
 .zhidao-jilu-neirong::-webkit-scrollbar-track {
   background: transparent;
-}
-
-.zhidao-jilu-neirong::-webkit-scrollbar-thumb {
-  background: var(--gundong-tiao-beijing);
-  border-radius: 3px;
 }
 
 .zhidao-jilu-liebiao {

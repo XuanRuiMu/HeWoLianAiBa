@@ -326,13 +326,13 @@ describe('FP-10 聊天页面视频与生成一致', () => {
     })
     expect(jieGuo?.id).toBe('srv-yu-yin')
     // FP-09b：第三位是投递幂等键（稳定 UUID），不再是前端自增的客户端序号
-    expect(faSongXiaoXiApiMock).toHaveBeenCalledWith(
-      'h1',
-      '混合文字歌声汪汪',
-      expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/),
-      'yuYin',
-      'm-yu-yin',
-    )
+    expect(faSongXiaoXiApiMock).toHaveBeenCalledWith({
+      huiHuaId: 'h1',
+      neiRong: '混合文字歌声汪汪',
+      miDengJian: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/),
+      leiXing: 'yuYin',
+      meiTiId: 'm-yu-yin',
+    })
   })
 
   it('生成动作成功追加角色消息且失败走翻译提示', async () => {

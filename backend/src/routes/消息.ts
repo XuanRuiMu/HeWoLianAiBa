@@ -351,6 +351,19 @@ luYou.post(
       meiTiId = yuanMeiTiId
     }
 
+    // FP-08a（缺陷5）引用槽：形状（是不是 UUID）在路由判，与 媒体ID 同口径直接 400；
+    // 存在性/同会话/同用户/未撤回/非自引用在消息服务判（只有它拿得到会话归属与事务边界）。
+    // 绝不容忍脏值降级为「无引用」继续落库 —— 幂等键脏了只影响去重，引用脏了是把别人的消息
+    // 当作本会话内容渲染出来的越权面，两种脏值的后果不同级，不可套用同一条「不丢消息」的宽容口径。
+    const yuanShiBeiYongZhi = body['beiYongXiaoXiId'] ?? body['bei_yong_xiao_xi_id'] ?? body['被引用消息ID']
+    let beiYongXiaoXiId: string | null = null
+    if (yuanShiBeiYongZhi !== undefined && yuanShiBeiYongZhi !== null && yuanShiBeiYongZhi !== '') {
+      if (!yanZhengUUID(yuanShiBeiYongZhi)) {
+        return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'yinYongXiaoXiFeiFa'))
+      }
+      beiYongXiaoXiId = yuanShiBeiYongZhi
+    }
+
     // 带了合法块 ⇒ 正文要求由「块里有没有用户文字」变成「有没有块」：纯图片块消息（一张图 + 零文字）
     // 是图文混排的合法形态，老口径在这里就会把它 400 掉。块全被判脏丢光时仍由消息服务给出明确 400。
     if (!jiaoSeId || (!shiMeiTi && daiKuai === null && !shenHeWenBen.trim())) {
@@ -392,6 +405,7 @@ luYou.post(
             mi_deng_jian: miDengJian,
             lei_xing: leiXing,
             mei_ti_id: meiTiId,
+            bei_yong_xiao_xi_id: beiYongXiaoXiId,
           })
           if (!jieGuo.cheng_gong) {
             return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('liaoTian', 'faSongShiBai'))
@@ -455,6 +469,7 @@ luYou.post(
         mi_deng_jian: miDengJian,
         lei_xing: leiXing,
         mei_ti_id: meiTiId,
+        bei_yong_xiao_xi_id: beiYongXiaoXiId,
       })
       if (!jieGuo.cheng_gong) {
         return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('liaoTian', 'faSongShiBai'))

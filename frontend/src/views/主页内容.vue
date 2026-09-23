@@ -454,44 +454,51 @@ watch(
     box-shadow 0.4s var(--quxian-biao-zhun);
 }
 
+/* FP-16（需求 #3「卡面太透、字看不清」）：卡面底色与边框全部上收为 FP-01 卡面令牌，组件内不留数字。
+   alpha 定值理由——不取新值、直接吃 --kapian-mian-beijing 的 .92：该 .92 是 FP-01 按「压在
+   --beijing-zhuse / --beijing-ciuse 两档底色上，正文与标题实测对比均 ≥7:1」反解出的**最小**不透明度，
+   即"仍透出 8% 背景"与"卡面够实"的交点，再低就跌破 7:1、再高就丢光背景层次；改它只能改令牌，
+   禁止在本文件补数字。原来的 .11/.07/.05 wash 降级为纯色相层（background-image），不再承担可读性。
+   实测对比度表见 .agents/evidence/traces/FP-16-20260922.md */
 .putong-moshi-kapian {
-  background: linear-gradient(
+  background-color: var(--kapian-mian-beijing);
+  background-image: linear-gradient(
     135deg,
     rgba(107, 140, 166, 0.11) 0%,
     rgba(147, 130, 186, 0.07) 50%,
     rgba(107, 140, 166, 0.05) 100%
   );
-  border: 1px solid rgba(107, 140, 166, 0.13);
+  border: 1px solid var(--kapian-mian-biankuang);
 }
 
 .tiaozhan-moshi-kapian {
-  background: linear-gradient(
+  background-color: var(--kapian-mian-beijing);
+  background-image: linear-gradient(
     135deg,
     rgba(255, 107, 157, 0.11) 0%,
     rgba(251, 146, 60, 0.07) 50%,
     rgba(255, 107, 157, 0.05) 100%
   );
-  border: 1px solid rgba(255, 107, 157, 0.13);
+  border: 1px solid var(--kapian-mian-biankuang);
 }
 
+/* 浅色档只保留色相 wash；底色与边框已由上面的令牌按档自动切换 */
 :root[data-theme='light'] .putong-moshi-kapian {
-  background: linear-gradient(
+  background-image: linear-gradient(
     135deg,
     rgba(245, 248, 252, 0.82) 0%,
     rgba(240, 244, 250, 0.78) 50%,
     rgba(245, 248, 252, 0.74) 100%
   );
-  border: 1px solid rgba(107, 140, 166, 0.22);
 }
 
 :root[data-theme='light'] .tiaozhan-moshi-kapian {
-  background: linear-gradient(
+  background-image: linear-gradient(
     135deg,
     rgba(255, 248, 250, 0.82) 0%,
     rgba(255, 245, 240, 0.78) 50%,
     rgba(255, 248, 250, 0.74) 100%
   );
-  border: 1px solid rgba(255, 107, 157, 0.22);
 }
 
 .moshi-kapian:hover {
@@ -580,26 +587,21 @@ watch(
   min-width: 0;
 }
 
+/* FP-16：卡内文字色上收为卡面令牌族，深浅两档各一套值由 variables.css 单源切换。
+   真主因在此——副标题原为 rgba(255,255,255,.42)，实测压在卡面上仅 3.7:1；只提背景 alpha 治不好它。
+   标题原 #ffffff 本就 ≥13:1（不是"看不清"的主因），一并改吃令牌以消灭组件内第二处色值字面量 */
 .kapian-biaoti {
   font-size: 16px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--kapian-mian-biaoti);
   margin: 0;
   letter-spacing: 0.5px;
 }
 
-:root[data-theme='light'] .kapian-biaoti {
-  color: #191919;
-}
-
 .kapian-fubiaoti {
   font-size: 11.5px;
-  color: rgba(255, 255, 255, 0.42);
+  color: var(--kapian-mian-zhengwen);
   margin: 0;
-}
-
-:root[data-theme='light'] .kapian-fubiaoti {
-  color: rgba(0, 0, 0, 0.55);
 }
 
 .kapian-yulan-qu {
@@ -609,18 +611,26 @@ watch(
   gap: 7px;
 }
 
+/* FP-16b（需求 #3 的卡内残留）：预览行的「渐显」从 opacity 通道整体搬到颜色通道。
+   旧形态是 .yulan-xiangmu{opacity:.62} 与 .yulan-wenzi{color:rgba(255,255,255,.55)} **相乘** ⇒ 有效 alpha
+   .34 ⇒ 静止实测 2.49(浅)/3.01(深)（FP-16 遗留的契约两档口径；本 FP 的夹逼口径为 2.5/2.8），抬卡面 alpha 对它无效（与 FP-16 证伪 I3 同构）。透明度现在只有这一处真源：
+   静止 = 卡面正文令牌压到 75%（色相 100% 仍来自 --kapian-mian-zhengwen，与 .kapian-fubiaoti 同源，组件内零色值字面量），
+   hover = 满 alpha。0.3s ease 与三条 transition-delay 的错峰时序、translateX 位移一字未动，改的只有颜色通道。
+   75% 的定值理由：夹逼任意主页背景（纯黑/纯白/--beijing-{zhuse,ciuse} × 卡面 3 停靠点 wash × 两模式）下静止态
+   仍 ≥4.5:1（实测 深 5.8 / 浅 5.6），hover 8.8 / 11.8 ⇒ 渐显跨度可见。算式与冻结值见
+   __tests__/FP16模式卡可读性.test.ts 的 FP-16b 节与 .agents/evidence/traces/FP-16b-20260922.md */
 .yulan-xiangmu {
   display: flex;
   align-items: center;
   gap: 10px;
-  opacity: 0.62;
+  color: color-mix(in srgb, var(--kapian-mian-zhengwen) 75%, transparent);
   transition:
-    opacity 0.3s ease,
+    color 0.3s ease,
     transform 0.3s ease;
 }
 
 .moshi-kapian:hover .yulan-xiangmu {
-  opacity: 1;
+  color: var(--kapian-mian-zhengwen);
 }
 
 .yulan-dian {
@@ -640,14 +650,11 @@ watch(
   box-shadow: 0 0 5px rgba(255, 107, 157, 0.35);
 }
 
+/* FP-16b：本规则不再自带 color —— 预览行的颜色只有 `.yulan-xiangmu` 一处真源，
+   文字按继承吃它，于是静止/hover 的透明度与字色永远不会乘出第二个通道（R3）。 */
 .yulan-wenzi {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.55);
   font-weight: 400;
-}
-
-:root[data-theme='light'] .yulan-wenzi {
-  color: rgba(0, 0, 0, 0.58);
 }
 
 .yulan-xiangmu-1 {

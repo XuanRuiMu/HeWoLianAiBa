@@ -620,13 +620,28 @@ describe('资料设置向导组件', () => {
       const { qingLi } = zhuRuYangShiKuai(zhuTi)
       try {
         const { wrapper } = await 挂载组件()
-        const 校验收 = (ming: string, xuan: string) => {
+        // FP-15b/#16 契约同步（旧→新）：性别卡的"选中态底色恒定"改为"底色按性别档染色"，
+        // 因为 --xingbie-*-xuan-{biankuang,beijing,wenben} 三件套把染色底写进了选中语义（FP-01 自测
+        // 亦以「文字对染色底 ≥7:1」为准）。本用例真正保护的「底色不参与补间」由下面的
+        // transition-property 断言与 background-image 断言原样守住，未放宽。
+        // MBTI/随机卡不承担性别语义，底色恒定判据一字未改。
+        const 校验收 = (ming: string, xuan: string, 底色随选中改变 = false) => {
           const yuan = wrapper.find(xuan).element as HTMLElement
           const qian = jiSuanYangShi(yuan)
           yuan.classList.add('beiXuanZhong')
           const hou = jiSuanYangShi(yuan)
           yuan.classList.remove('beiXuanZhong')
-          expect(hou.beiJingSe, `${ming}：选中态改变了 background-color`).toBe(qian.beiJingSe)
+          if (底色随选中改变) {
+            // 判据换轨（不是放宽）：底色被令牌化后 jsdom 既不求值 var()、也不按特异度裁
+            // shorthand(`background`) 与 longhand(`background-color`) 的胜负（实测浅档返回静置值、
+            // 深档返回 'var(--xuan-bei)' 原始串），此处再断言"相等/不等"都是假证据。
+            // 「选中态底色是否随性别档改变、改变成哪一色」由 FP15b性别驱动选中框.test.ts 以
+            // 层叠结果 + variables.css 真源求值把守（四组合 × 深浅两档 × 边框/底色/文字三项）；
+            // 本用例继续独立守住下面两条 jsdom 判得准的：background-image 恒定 + 底色不参与补间。
+            expect(hou.beiJingSe, `${ming}：底色读空`).not.toBe('')
+          } else {
+            expect(hou.beiJingSe, `${ming}：选中态改变了 background-color`).toBe(qian.beiJingSe)
+          }
           expect(hou.beiJingTu, `${ming}：选中态改变了 background-image`).toBe(qian.beiJingTu)
           expect(hou.beiJingSe + hou.beiJingTu, `${ming}：底色读空，断言会假绿`).not.toBe('')
           for (const jin of ['all', 'background', 'background-color', 'background-image']) {
@@ -637,7 +652,7 @@ describe('资料设置向导组件', () => {
           }
           expect(hou.buJian, `${ming}：transition-property 读不到值`).not.toBe('')
         }
-        校验收(`自身性别卡(${zhuTi})`, '.ziJi-xingBie-kaPian')
+        校验收(`自身性别卡(${zhuTi})`, '.ziJi-xingBie-kaPian', true)
         await 进入步骤三(wrapper)
         校验收(`MBTI卡(${zhuTi})`, '.mbti-kaPian')
         校验收(`随机卡(${zhuTi})`, '.suiJi-kaPian')
@@ -680,9 +695,11 @@ describe('资料设置向导组件', () => {
     const xiangDaoYuanMa = readFileSync(resolve(__dirname, '../views/资料设置向导.vue'), 'utf8')
     const yangShiKuai = quYangShiKuai()
 
-    expect(xiangDaoYuanMa).toContain("import { 解析性别配色档 } from '@/utils/性别'")
-    expect(xiangDaoYuanMa).toContain(':data-xingbie="自身性别配色档"')
-    expect(xiangDaoYuanMa).toContain(':data-xingbie="目标性别配色档"')
+    // FP-15b/#16：配色档出口由「自身/目标性别配色档」改为「主色档/选中框配色档」——
+    // 两者的入参都多了「用户默认性别」，因为 #16 规定未选对象时取默认性别的反色、无默认时粉框+蓝按钮。
+    expect(xiangDaoYuanMa).toContain("import { 解析主色档, 解析选中框配色档 } from '@/utils/性别'")
+    expect(xiangDaoYuanMa).toContain(':data-xingbie="主色档"')
+    expect(xiangDaoYuanMa).toContain(':data-xingbie="选中框配色档"')
     // 配色路径上不再存在 === 'male' 字面量（勾选框强调色曾走该分支）
     expect(xiangDaoYuanMa).not.toContain('zhaNan-gouxuan')
 
@@ -721,10 +738,13 @@ describe('资料设置向导组件', () => {
     expect(yangShiKuai).not.toMatch(/\.jindu-dian\.dangQian\s*\{[^}]*#c4577e/)
   })
 
-  it('缺陷3b：未选性别为中性档，选男为蓝档，选女为粉档（data-xingbie 实测）', async () => {
+  it('缺陷3b + 需求#16：无默认性别兜底为蓝钮/粉框，选男为蓝档，选女为粉档（data-xingbie 实测）', async () => {
     const { wrapper, cangKu } = await 挂载组件()
     const gen = () => wrapper.find('.ziliao-kapian').attributes('data-xingbie')
-    expect(gen()).toBe('zhongxing')
+    // 旧→新（需求 #16 明文「用户没有默认性别时 → 粉色框 + 蓝色按钮」）：
+    // 兜底档由中性灰 zhongxing 改为主色 nan。中性灰仍在 CSS 局部回退里（.ziliao-kapian 基块），
+    // 只是不再作为"无任何信息"时的界面档——判据未放宽，只是换到用户明定的那一档。
+    expect(gen()).toBe('nan')
     await wrapper.findAll('.ziJi-xingBie-kaPian')[0].trigger('click')
     expect(gen()).toBe('nan')
     await wrapper.findAll('.ziJi-xingBie-kaPian')[1].trigger('click')
@@ -738,6 +758,7 @@ describe('资料设置向导组件', () => {
     expect(fuXuan()).toBe('nan')
     cangKu.ziLiaoShuJu.muBiaoXingBie = null
     await flushPromises()
-    expect(fuXuan()).toBe('zhongxing')
+    // 旧→新：对象未选不再是中性灰，而是"无默认性别 ⇒ 粉框"（本夹具里用户未登录 = 无默认性别）
+    expect(fuXuan()).toBe('nv')
   })
 })

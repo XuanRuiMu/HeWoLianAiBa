@@ -21,16 +21,8 @@
     />
     <div v-if="souSuoJieGuo.length" class="jieguo-qu">
       <div v-for="yongHu in souSuoJieGuo" :key="yongHu.id" class="yonghu-xiangmu">
-        <button class="touxiang-anniu" :aria-label="huoQuFanYi('haoYou', 'ziLiaoKa')" @click="daKaiZiLiaoKa(yongHu.id)">
-          <img
-            v-if="shiTuPianDiZhi(yongHu.tou_xiang)"
-            :src="yongHu.tou_xiang || undefined"
-            class="lie-biao-touxiang"
-            alt=""
-            loading="lazy"
-            decoding="async"
-          />
-          <span v-else class="lie-biao-touxiang-moren">{{ (yongHu.ni_cheng || yongHu.yong_hu_ming || '?').slice(0, 1) }}</span>
+        <button class="ziliao-anniu" :aria-label="huoQuFanYi('haoYou', 'ziLiaoKa')" @click="daKaiZiLiaoKa(yongHu.id)">
+          <TouXiang :tou-xiang="yongHu.tou_xiang" :mo-ren-zi="(yongHu.ni_cheng || yongHu.yong_hu_ming || '?').slice(0, 1)" />
         </button>
         <div class="yonghu-wen-zi">
           <span class="yonghu-ming">{{ yongHu.ni_cheng || yongHu.yong_hu_ming || yongHu.shou_ji_hao }}</span>
@@ -58,16 +50,8 @@
     <h2 class="quyu-biaoti">{{ huoQuFanYi('haoYou', 'haoYouLieBiao') }}</h2>
     <KongTai v-if="!haoYouLieBiao.length" :biao-ti="huoQuFanYi('haoYou', 'zanWuHaoYou')" />
     <div v-for="haoYou in haoYouLieBiao" :key="haoYou.id" class="haoyou-xiangmu">
-      <button class="touxiang-anniu" :aria-label="huoQuFanYi('haoYou', 'ziLiaoKa')" @click="daKaiZiLiaoKa(haoYou.id)">
-        <img
-          v-if="shiTuPianDiZhi(haoYou.tou_xiang)"
-          :src="haoYou.tou_xiang || undefined"
-          class="lie-biao-touxiang"
-          alt=""
-          loading="lazy"
-          decoding="async"
-        />
-        <span v-else class="lie-biao-touxiang-moren">{{ (haoYou.ni_cheng || haoYou.yong_hu_ming || '?').slice(0, 1) }}</span>
+      <button class="ziliao-anniu" :aria-label="huoQuFanYi('haoYou', 'ziLiaoKa')" @click="daKaiZiLiaoKa(haoYou.id)">
+        <TouXiang :tou-xiang="haoYou.tou_xiang" :mo-ren-zi="(haoYou.ni_cheng || haoYou.yong_hu_ming || '?').slice(0, 1)" />
       </button>
       <div class="yonghu-wen-zi">
         <span class="yonghu-ming">{{ haoYou.ni_cheng || haoYou.yong_hu_ming }}</span>
@@ -108,7 +92,7 @@ import {
   type HaoYouXiang,
 } from '@/api/社交'
 import { huoQuCuoWuXiangYing } from '@/api/请求'
-import { shiTuPianDiZhi } from '@/utils/头像'
+import TouXiang from '@/components/头像.vue'
 import YongHuZiLiaoKa from '@/components/用户资料卡.vue'
 import KongTai from '@/components/空态.vue'
 
@@ -310,27 +294,16 @@ onMounted(shuaXinLieBiao)
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.touxiang-anniu {
+.ziliao-anniu {
   flex: none;
-  padding: 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-.lie-biao-touxiang {
-  display: block;
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  object-fit: cover;
-}
-.lie-biao-touxiang-moren {
   display: flex;
-  align-items: center;
-  justify-content: center;
   width: 40px;
   height: 40px;
+  padding: 0;
+  border: none;
   border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
   font-size: 18px;
   font-weight: 700;
   color: #fff;

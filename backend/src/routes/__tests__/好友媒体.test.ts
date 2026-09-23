@@ -115,6 +115,15 @@ vi.mock('../../数据库', () => ({
         const 行 = 库.媒体行.filter((m) => String(m['SHA256']) === 参数[0]).slice(0, 1)
         return { rows: 行, rowCount: 行.length }
       }
+      if (是('SELECT "ID", "SHA256", "类别" FROM "媒体文件" WHERE "ID" = ANY')) {
+        // FP-21：出参块引用的图片媒体按页批量补查（services/消息.ts::gouKuaiShangXiaWen）。
+        // 本替身按声明逐条应答，未声明的语句直接抛错 —— 这正是本文件的设计意图。
+        const 名单 = ((参数[0] ?? []) as unknown[]).map((x) => String(x))
+        const 行 = 库.媒体行
+          .filter((m) => 名单.includes(String(m['ID'])))
+          .map((m) => ({ ID: m['ID'], SHA256: m['SHA256'], 类别: m['类别'] }))
+        return { rows: 行, rowCount: 行.length }
+      }
       if (是('FROM "媒体文件" mf')) {
         // 媒体可读谓词：真 SQL 的命中结果在本文件里由 可读键 显式给出（见文件头说明）
         if (库.谓词抛错) throw new Error('假库：判定查询被打断')
@@ -144,6 +153,10 @@ vi.mock('../../数据库', () => ({
           内容: 参数[2],
           类型: 参数[3],
           媒体ID: 参数[4],
+          // FP-21（迁移 036）：$6 是 JSON.stringify 后的块数组（真库由 ::jsonb 还原），
+          // 这里同口径解回数组，免得替身把字符串当成块数组交给出参投影
+          内容块: typeof 参数[5] === 'string' ? JSON.parse(参数[5]) : (参数[5] ?? null),
+          被引用消息ID: 参数[6] ?? null,
           已读: false,
           撤回: false,
           创建时间,

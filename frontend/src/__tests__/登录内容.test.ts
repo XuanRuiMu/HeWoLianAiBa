@@ -8,6 +8,7 @@ import 登录内容 from '@/views/登录内容.vue'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
 import { huoQuFanYi } from '@/config/translations'
 import { 声明块清单, 按档解析全部, 声明位置 } from './主题令牌真源'
+import { 拆分选择器组, 规则清单, 读取全局基线 } from './CSS级联真源'
 
 const 登录内容源码 = readFileSync(resolve(__dirname, '../views/登录内容.vue'), 'utf8')
 const 认证布局源码 = readFileSync(resolve(__dirname, '../layouts/认证布局.vue'), 'utf8')
@@ -21,6 +22,7 @@ function 样式源码(源码: string): string {
 
 const 登录内容样式 = 样式源码(登录内容源码)
 const 认证布局样式 = 样式源码(认证布局源码)
+const 全局基线样式 = 读取全局基线()
 
 function 样式块(源码: string, 选择器: string): string {
   const 转义 = 选择器.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -517,21 +519,38 @@ describe('登录内容组件', () => {
     expect(登录内容源码).not.toMatch(/zhuce-gundong-qiangzhi/)
   })
 
-  it('FP-02：登录内容私有滚动条全部改走 FP-01 滚动条令牌', () => {
-    const ku = 样式块(登录内容样式, '.biaodan-gundong.xuyao-gundong::-webkit-scrollbar')
-    expect(ku).toMatch(/width:\s*var\(--gundong-tiao-kuan-du\)/)
-    expect(
-      样式块(登录内容样式, '.biaodan-gundong.xuyao-gundong::-webkit-scrollbar-thumb'),
-    ).toMatch(/background:\s*var\(--gundong-tiao-huakuai\)/)
-    expect(
-      样式块(登录内容样式, '.biaodan-gundong.xuyao-gundong::-webkit-scrollbar-track'),
-    ).toMatch(/background:\s*var\(--gundong-tiao-guidao\)/)
+  it('FP-02→FP-04a：认证视图不再自带任何 ::-webkit-scrollbar 规则，滚动条外观单一真源在 global.css', () => {
+    // 旧契约（FP-02）钉的是「私有 .biaodan-gundong.xuyao-gundong::-webkit-scrollbar 三件套要引用 FP-01 令牌」；
+    // FP-04a 把 JS 条件类连同类里的四条私有滚动条规则一并删除 ⇒ 旧选择器已不存在，按新契约改为「视图内零定义点」。
+    const 视图滚动条规则 = 规则清单(登录内容样式)
+      .flatMap((规则) => 拆分选择器组(规则.选择器))
+      .filter((串) => 串.includes('::-webkit-scrollbar'))
+    expect(视图滚动条规则, 'FP-04a 回归：登录内容里又出现第二处滚动条定义').toEqual([])
     expect(登录内容样式).not.toMatch(/::-webkit-scrollbar\s*\{\s*width:\s*3px/)
     expect(登录内容样式).not.toMatch(/::-webkit-scrollbar[a-z-]*\s*\{[^}]*rgba\(/)
+    expect(
+      登录内容源码.slice(0, 登录内容源码.indexOf('<script')),
+      'FP-04a 回归：模板里又挂回了 JS 条件滚动类',
+    ).not.toMatch(/xuyao-gundong/)
+    expect(登录内容样式, 'FP-04a 回归：样式里又长回了 JS 条件滚动类的规则').not.toMatch(/xuyao-gundong/)
+    expect(
+      规则清单(全局基线样式)
+        .flatMap((规则) => 拆分选择器组(规则.选择器))
+        .filter((串) => 串.trim() === '::-webkit-scrollbar').length,
+      'global.css 的滚动条单一真源不在了',
+    ).toBe(1)
+    expect(样式块(登录内容样式, '.biaodan-gundong')).toMatch(/overflow-y:\s*scroll/)
   })
 
-  it('FP-02：表单项垂直节奏——字段间距走 --jiange-da 令牌、上浮标签留出间距', () => {
-    expect(样式块(登录内容样式, '.shuru-zu')).toMatch(/margin-bottom:\s*var\(--jiange-da\)(?!,)/)
+  it('FP-02→FP-04b：表单项垂直节奏——字段间距走派生令牌、上浮标签留出间距', () => {
+    // 旧契约（FP-02）钉 `margin-bottom: var(--jiange-da)` = 24px。FP-04b 按需求 #2「标签太挤」把间距
+    // 在 8px 节奏上抬一档：.shuru-zu 声明局部量纲令牌 --ziduan-jian-ju = calc(--jiange-da + --jiange-xiao)
+    // = 32px，margin-bottom 吃它 ⇒ 净空（间距 − 上浮标签侵入 5 − 发丝线+下内边距 11）8 → 16px。
+    // 判据维度一字未放宽（仍是「间距走令牌 + 标签几何」），只是取值演进；裸 px 仍为 0。逐对实测见
+    // FP04b字段纵向间距.test.ts。
+    const 组块 = 样式块(登录内容样式, '.shuru-zu')
+    expect(组块).toMatch(/--ziduan-jian-ju:\s*calc\(var\(--jiange-da\)\s*\+\s*var\(--jiange-xiao\)\)/)
+    expect(组块).toMatch(/margin-bottom:\s*var\(--ziduan-jian-ju\)(?!,)/)
     expect(样式块(登录内容样式, '.fenlie-shuru')).toMatch(/padding:\s*18px 0 10px/)
     expect(样式块(登录内容样式, '.fudong-biaoqian')).toMatch(/top:\s*18px/)
     const 上浮 = new RegExp(
@@ -584,18 +603,21 @@ describe('登录内容组件', () => {
     expect(ku).toMatch(/outline-offset:\s*var\(--jujiao-huan-pian-yi\)/)
   })
 
-  it('FP-02：认证布局滚动口高度锁定可用区，私有滚动条走令牌且保留全屏豁免', () => {
+  it('FP-02：认证布局滚动口高度锁定可用区，零私有滚动条定义点且 global 同令牌供给', () => {
     expect(认证布局样式).not.toMatch(/min-height:\s*calc\(100vh/)
     const rongqi = 样式块(认证布局样式, '.yemian-rongqi')
     expect(rongqi).toMatch(/height:\s*100%/)
     expect(rongqi).toMatch(/min-height:\s*0/)
     expect(样式块(认证布局样式, '.yemian-buju')).toMatch(/min-height:\s*0/)
-    expect(
-      样式块(认证布局样式, '.yemian-buju:not(.quanping-moshi)::-webkit-scrollbar'),
-    ).toMatch(/width:\s*var\(--gundong-tiao-kuan-du\)/)
-    expect(
-      样式块(认证布局样式, '.yemian-buju:not(.quanping-moshi)::-webkit-scrollbar-thumb'),
-    ).toMatch(/background:\s*var\(--gundong-tiao-huakuai\)/)
+    // FP-20：认证布局私有 ::-webkit-scrollbar 四条已删（与 global 同令牌纯重复），全库宽度/令牌由 global 单一真源供给
+    const 私有滚动条选择器 = 规则清单(认证布局样式)
+      .flatMap((规则) => 拆分选择器组(规则.选择器))
+      .filter((选择器) => 选择器.includes('::-webkit-scrollbar'))
+    expect(私有滚动条选择器, '认证布局不得再有私有滚动条定义点').toEqual([])
+    const global滚动条规则 = 规则清单(全局基线样式).find(
+      (规则) => 拆分选择器组(规则.选择器).includes('::-webkit-scrollbar'),
+    )
+    expect(global滚动条规则?.声明.get('width')).toBe('var(--gundong-tiao-kuan-du)')
     expect(认证布局样式).not.toMatch(/rgba\(255,\s*255,\s*255,\s*0\.3\)/)
     expect(认证布局样式).not.toMatch(/::-webkit-scrollbar\s*\{\s*width:\s*4px/)
     expect(认证布局源码).toMatch(/\.yemian-buju\.quanping-moshi\s*\{[\s\S]*?overflow-y:\s*auto/)

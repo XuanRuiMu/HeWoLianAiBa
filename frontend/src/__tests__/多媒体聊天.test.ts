@@ -11,6 +11,7 @@ import { huoQuFanYi, fanYi } from '@/config/translations'
 import { yaSuoTuPiang, YA_SUO_CHANG_BIAN_SHANG_XIAN, YA_SUO_ZHI_LIANG } from '@/utils/图片压缩'
 import { xuanRanBiaoQingBao, BIAO_QING_BAO_LIE_BIAO, BIAO_QING_BAO_CHICUN } from '@/utils/表情包库'
 import { BIAO_QING_TIAN_JIA_PEI_ZHI } from '@/config/表情配置'
+import { XIAO_XI_KUAI_PEI_ZHI } from '@/config/消息配置'
 import type { 消息 } from '@/types'
 
 const shangChuanMeiTiMock = vi.fn()
@@ -406,13 +407,13 @@ describe('FP-05 store 多媒体发送动作 faSongMeiTiXiaoXi', () => {
     expect(linShi.mi_deng_jian).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
     )
-    expect(faSongXiaoXiApiMock).toHaveBeenCalledWith(
-      'h1',
-      '',
-      linShi.mi_deng_jian,
-      'tuPian',
-      'm1',
-    )
+    expect(faSongXiaoXiApiMock).toHaveBeenCalledWith({
+      huiHuaId: 'h1',
+      neiRong: '',
+      miDengJian: linShi.mi_deng_jian,
+      leiXing: 'tuPian',
+      meiTiId: 'm1',
+    })
     expect(jieGuo?.id).toBe('srv-1')
     expect(聊天仓库.xiaoXiLieBiao[0].id).toBe('srv-1')
     expect(聊天仓库.xiaoXiLieBiao[0].ke_hu_duan_id).toBe(linShi.ke_hu_duan_id)
@@ -494,7 +495,7 @@ describe('FP-05 四类媒体气泡渲染', () => {
     expect(tu.attributes('src')).toBe('/api/media/bq-qianming')
   })
 
-  it('yuYin 含波形条与时长文本，点击经 Audio 播放且同时只有一个在播', async () => {
+  it('yuYin 含 3 格喇叭与时长文本，点击经 Audio 播放且同时只有一个在播', async () => {
     const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
     qingLiQi = () => wrapper.unmount()
     聊天仓库.xiaoXiLieBiao = [
@@ -513,9 +514,11 @@ describe('FP-05 四类媒体气泡渲染', () => {
     ]
     await flushPromises()
 
+    // FP-11 契约演进：未播放态从「12 条波形」改为用户裁定的 3 格喇叭（12 无成熟出处，取证 §8-2）
     const yuYinAnNiu = wrapper.findAll('.yuyin-qipao')
     expect(yuYinAnNiu.length).toBe(2)
-    expect(wrapper.find('.boxing-tiao').exists()).toBe(true)
+    expect(wrapper.findAll('.laba-ge').length).toBe(6)
+    expect(wrapper.find('.bo-xing-tiao').exists()).toBe(false)
     const shiChangWenBen = wrapper.findAll('.yuyin-shichang').map((j) => j.text())
     expect(shiChangWenBen).toContain('12″')
     expect(shiChangWenBen).toContain('5″')
@@ -526,6 +529,8 @@ describe('FP-05 四类媒体气泡渲染', () => {
     expect(JiaAudio.shiLiLieBiao[0].src).toBe('/api/media/yuyin-a')
     expect(JiaAudio.shiLiLieBiao[0].play).toHaveBeenCalledTimes(1)
     expect(yuYinAnNiu[0].classes()).toContain('bofangzhong')
+    // 播放中：波形采样出现、喇叭退场（进度指示另由 .yuyin-jindu-tiao 承担）
+    expect(wrapper.findAll('.bo-xing-tiao').length).toBeGreaterThan(0)
 
     // 点击第二条：第一条停止、只保留一个播放实例
     await yuYinAnNiu[1].trigger('click')
@@ -804,19 +809,25 @@ describe('FP-06b 表情面板「我的表情」分区', () => {
 
     expect(biaoQingTianJiaMock).not.toHaveBeenCalled()
     expect(shangChuanMeiTiMock).not.toHaveBeenCalled()
-    expect(faSongXiaoXiApiMock).toHaveBeenCalledWith(
-      'h1',
-      '',
-      expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/),
-      'biaoQingBao',
-      'mt-x1',
-    )
+    expect(faSongXiaoXiApiMock).toHaveBeenCalledWith({
+      huiHuaId: 'h1',
+      neiRong: '',
+      miDengJian: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/),
+      leiXing: 'biaoQingBao',
+      meiTiId: 'mt-x1',
+    })
     const 末条 = 聊天仓库.xiaoXiLieBiao[聊天仓库.xiaoXiLieBiao.length - 1]
     expect(末条.lei_xing).toBe('biaoQingBao')
     expect(末条.mei_ti_url).toBe('/api/媒体/qianming')
   })
 
-  it('点内置贴纸：canvas 现渲染后按 biaoqingshu 类别上传，不写 用户表情 表', async () => {
+  /**
+   * 【FP-10a 改判】旧用例钉的是"点内置贴纸即上传即发"（贴纸不经待发区、直发一条媒体消息）。
+   * 需求 #6 的裁决是贴纸也进待发序列（照 QQ 输入框口径），故点贴纸这一刻只落本地待发块，
+   * 上传与发送后移到「发送」那一刻 —— 与粘贴/相册的图片同一条链路。
+   * 「不写 用户表情 表」这条旧契约原样保留（贴纸不是收藏动作）。
+   */
+  it('点内置贴纸：先进待发区（这一刻零上传零发送），按发送才按 biaoqingshu 类别上传，且不写 用户表情 表', async () => {
     const { toBlobSpy, huiFu } = anzhuangCanvasZhuangZhi()
     try {
       const { wrapper } = await daKaiBiaoQingBaoMianBan()
@@ -827,14 +838,36 @@ describe('FP-06b 表情面板「我的表情」分区', () => {
       await flushPromises()
       expect(toBlobSpy).toHaveBeenCalled()
       expect(biaoQingTianJiaMock).not.toHaveBeenCalled()
+      expect(shangChuanMeiTiMock).not.toHaveBeenCalled()
+      expect(faSongXiaoXiApiMock).not.toHaveBeenCalled()
+      // 待发区里那一格按贴纸档画（FP-24a 的修饰类自此有了真实生产者）
+      expect(wrapper.findAll('.dai-fa-kuai-tu--biaoqingbao')).toHaveLength(1)
+
+      // 待发路径的提交侧按 UUID 校验块级媒体 ID（`keTiJiaoKuai`），故本用例把上传回执换成合法
+      // UUID —— describe 默认桩的 'mt-nei-zhi' 是媒体直发那套历史形态，不该被当作块 ID。
+      const TIE_ZHI_MEI_TI_ID = '9c9c9c9c-9c9c-4c9c-8c9c-9c9c9c9c9c9c'
+      shangChuanMeiTiMock.mockResolvedValueOnce({
+        mediaId: TIE_ZHI_MEI_TI_ID,
+        sha256: 'f'.repeat(64),
+      })
+      await wrapper.find('.fasong-anniu').trigger('click')
+      await flushPromises()
+      await flushPromises()
       expect(shangChuanMeiTiMock).toHaveBeenCalledWith('h1', expect.any(Blob), 'biaoqingshu')
-      expect(faSongXiaoXiApiMock).toHaveBeenCalledWith(
-        'h1',
-        '',
-        expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/),
-        'biaoQingBao',
-        'mt-nei-zhi',
-      )
+      expect(faSongXiaoXiApiMock).toHaveBeenCalledWith({
+        huiHuaId: 'h1',
+        neiRong: XIAO_XI_KUAI_PEI_ZHI.biaoQingBaoZhanWei,
+        miDengJian: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/),
+        leiXing: 'biaoQingBao',
+        meiTiId: TIE_ZHI_MEI_TI_ID,
+        neiRongKuai: [
+          {
+            lei_xing: 'tupian',
+            mei_ti_id: TIE_ZHI_MEI_TI_ID,
+            mei_ti_lei_bie: 'biaoqingshu',
+          },
+        ],
+      })
     } finally {
       huiFu()
     }

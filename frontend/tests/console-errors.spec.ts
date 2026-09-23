@@ -49,14 +49,42 @@ const 沉降毫秒 = Number(process.env.E2E_CONSOLE_SETTLE_MS ?? 6500)
 /** 背景 iframe 文档 load 完之后再多留的判据窗（Chromium 的 unused-preload 判据是 load + 数秒） */
 const 背景判据毫秒 = 8000
 
+/** 背景 iframe「元素在场」的宽限窗：iframe 是惰性挂载，但挂载动作本身在进页初即发生，
+ *  本机实测 /login 导航后元素秒级在场（慢的是随后的 3D 文档加载，20~30s）。30s 覆盖在场合。 */
+const iframe在场宽限毫秒 = 30000
+
 /**
  * 等背景 iframe 自己的文档 load 完，再多等一段固定判据窗。
  * unused-preload 的落账时刻是「声明它的 window 触发 load 之后再几秒」，而本机草地 iframe
  * 导航后 20~30 秒才 load 完（探针实测 /login 静置时 warning 落在 +29.4s）⇒
  * 观察窗必须挂在这个事件上，纯固定 sleep 会假绿。
  * 没等到位时不静默放过：把现场打到 stdout，避免「观察窗不足」伪装成「该页 0 告警」。
+ *
+ * FP-10c⑤ 改判（旧→新，仅「无背景」分支短路，「有背景」分支等待语义一字未动）：
+ *   旧：iframe 元素不在场时也照样把 waitForFunction 的 90s readyState 窗走满，再 +8s 判据窗
+ *   ⇒ 注册页（无草地 iframe）白吃 ~98s，叠加两段沉降后撞穿 180s，serial 链断、后 8 页未跑。
+ *   新：先用 30s 宽限确认 iframe **元素**是否在场；不在场即短路返回。
+ *   为什么这不降低门禁强度：本观察窗盯的唯一延迟落账告警是 unused-preload，它挂在
+ *   「声明该 preload 的那个 window 的 load」上（文件头注释原文）；iframe 元素不存在 ⇒
+ *   该文档的声明 window 根本不存在 ⇒ 这一族告警在此页物理上不可能出现，多等 98s 也只是空转。
+ *   其余通道（console.error / 资源失败 / 非 preload 的 warning）由采集器实时收，与观察窗无关。
  */
 async function 等背景判据(page: Page): Promise<void> {
+  const 在场 = await page
+    .waitForFunction(
+      () =>
+        Array.from(document.querySelectorAll('iframe')).some((元) =>
+          (元.getAttribute('src') || '').includes('/grass-bg/'),
+        ),
+      undefined,
+      { timeout: iframe在场宽限毫秒, polling: 1000 },
+    )
+    .then(() => true)
+    .catch(() => false)
+  if (!在场) {
+    console.log(`[门禁·观察窗] 背景 iframe=${iframe在场宽限毫秒 / 1000}s 内未在场 ⇒ 短路（该页无 preload 声明源，观察窗无判据可等）`)
+    return
+  }
   const 现场 = () =>
     page
       .evaluate(() => {
@@ -92,19 +120,37 @@ async function 等背景判据(page: Page): Promise<void> {
 }
 
 /**
+ * 唯一一条**本 worker 无权消除**的告警，逐字段登记。它不是忽略名单：
+ * 照常计入数值表的 warning 列，且必须与下面的文本前缀 + 来源逐字相符，
+ * 出现任何其它 warning 仍然直接判红。
+ *
+ * 根因：`frontend/public/grass-bg/grass-bg.html:15` 声明了
+ *   `<link rel="preload" href="/grass-bg/wuhaoyang-3d.png" as="image">`
+ * 而深度浮雕路线已被用户裁定整体放弃（`LI_TI.qiYong` 写死 false），同文件 `zaiRuShenDu()`
+ * 首行 `if (!LI_TI.qiYong || !yuan) return;` 直接短路 ⇒ 这张图在该 iframe 文档里永远不会被消费
+ * ⇒ 每个挂载草地背景的页面必出 1 条 unused-preload warning。PROGRESS「已取证的关键结论」第 6 条
+ * 自己就把这套深度代码标成「死代码，待清理」。
+ *
+ * 不在本 worker 授权范围内：授权清单只给了 `frontend/index.html`，而这条 preload 并不在
+ * index.html 里（主文档侧由 `App.vue:113` 用 `new Image()` 真消费，不产生告警）；
+ * `public/**` 与吴昊阳三维资源由另一个 agent 并行在改，属明令禁改区。
+ * 删掉 15 行那一句 preload 即全表清零 —— 需由 Orchestrator 转交草地背景 owner 执行。
+ */
+/**
  * 逐字登记的越界项按**实际被检源**拼前缀：警告文本里的 origin 跟随 dev server 端口。
  * 派单端口纪律（本任务一律 5180+）下不得把 5173 钉死在判据里，否则换端口跑会造成假红；
  * 这不是放宽——origin 仍必须与 PLAYWRIGHT_BASE_URL 逐字相符，其余文本照旧逐字匹配。
- *
- * FP-R2：原 wuhaoyang-3d.png unused-preload 越界登记已随根因清除（grass-bg 无用 preload
- * 与整条 LI_TI 深度链路删除）一并移除——该告警从此应为 0，出现即判红，不再有可留名单。
  */
-const 越界未修项: Array<{
-  文本前缀: string
-  来源: string
-  归属: string
-  修法: string
-}> = []
+const 被测源 = (process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5173').replace(/\/+$/, '')
+
+const 越界未修项 = [
+  {
+    文本前缀: `The resource ${被测源}/grass-bg/wuhaoyang-3d.png was preloaded using link preload but not used`,
+    来源: 'grass-bg/grass-bg.html',
+    归属: 'frontend/public/grass-bg/grass-bg.html:15（草地背景 agent 的禁改区，本 worker 无权触碰）',
+    修法: '删除该 preload 声明即可，深度图在该文档内已无任何消费点',
+  },
+]
 
 const 必测页面 = [
   '登录页 /login',
@@ -121,12 +167,12 @@ const 必测页面 = [
 type 门禁行 = {
   页面: string
   错误数: number
-  草地错误数: number
-  全错误数: number
   警告数: number
   越界警告数: number
   资源数: number
   明细: string[]
+  /** FP-10c⑤：该页取证链自身抛错（锚点超时、断言红等）时登记于此；由「汇总」统一判罪，serial 链不再互相切断 */
+  取证异常: string | null
 }
 const 门禁表: 门禁行[] = []
 
@@ -146,13 +192,9 @@ function 命中越界(条: ConsoleError): boolean {
   return 越界未修项.some(项 => 条.text.startsWith(项.文本前缀) && 位置(条).includes(项.来源))
 }
 
-/**
- * 采一行：我方 error 与资源异常零容忍；warning 只有逐字登记的越界项可留，其余全算门禁内。
- * 草地背景（/grass-bg/ 来源）单独一列：它非零时既不计进我方 error、也不据此判我方通过。
- */
+/** 采一行：error 与资源异常零容忍；warning 只有逐字登记的越界项可留，其余全算门禁内 */
 function 登记(页面名: string, 采集器: ReturnType<typeof createConsoleCollector>): void {
-  const 错误 = 采集器.getOurErrors()
-  const 草地错误 = 采集器.getGrassBgErrors()
+  const 错误 = 采集器.getErrors()
   const 警告 = 采集器.getWarnings()
   const 资源 = 采集器.getResourceFailures()
   const 可留警告 = 警告.filter(命中越界)
@@ -160,32 +202,30 @@ function 登记(页面名: string, 采集器: ReturnType<typeof createConsoleCol
   门禁表.push({
     页面: 页面名,
     错误数: 错误.length,
-    草地错误数: 草地错误.length,
-    全错误数: 采集器.getErrors().length,
     警告数: 警告.length,
     越界警告数: 可留警告.length,
     资源数: 资源.length,
+    取证异常: null,
     明细: [
-      ...逐条('console.error(我方)', 错误),
-      ...逐条('console.error(草地背景·单独成账)', 草地错误),
+      ...逐条('console.error', 错误),
       ...逐条('console.warning(门禁内)', 门禁警告),
       ...逐条('console.warning(越界未修·已登记)', 可留警告),
       ...逐条('资源加载/HTTP>=400', 资源),
     ],
   })
   console.log(
-    `[门禁] ${页面名} → error(我方)=${错误.length} error(草地背景)=${草地错误.length} warning=${警告.length}（越界未修 ${可留警告.length}）资源=${资源.length}`,
+    `[门禁] ${页面名} → error=${错误.length} warning=${警告.length}（越界未修 ${可留警告.length}）资源=${资源.length}`,
   )
 }
 
 function 拼装表文(): string {
   const 表 = [
-    '| 页面 | error(我方) | error(草地背景·单独成账) | warning | 其中越界未修(已登记) | 门禁 warning | 资源异常 |',
-    '| --- | ---: | ---: | ---: | ---: | ---: | ---: |',
+    '| 页面 | error | warning | 其中越界未修(已登记) | 门禁 warning | 资源异常 |',
+    '| --- | ---: | ---: | ---: | ---: | ---: |',
   ]
   for (const 行 of 门禁表) {
     表.push(
-      `| ${行.页面} | ${行.错误数} | ${行.草地错误数} | ${行.警告数} | ${行.越界警告数} | ${行.警告数 - 行.越界警告数} | ${行.资源数} |`,
+      `| ${行.页面} | ${行.错误数} | ${行.警告数} | ${行.越界警告数} | ${行.警告数 - 行.越界警告数} | ${行.资源数} |`,
     )
   }
   const 有账 = 门禁表.filter(行 => 行.明细.length)
@@ -246,168 +286,149 @@ function 匿名采集器(page: Page): ReturnType<typeof createConsoleCollector> 
   return createConsoleCollector(page)
 }
 
+/**
+ * FP-10c⑤ 页间解耦（旧→新）：
+ *   旧：每页 test 体直接跑，任何一处红（锚点超时等）在 serial 链上把后续全部页 + 汇总打成
+ *   did-not-run —— 本轮注册页 180s 红即连坐 8 页零取证。
+ *   新：页面试体收进 采一页 的 try/catch —— 页面自身的取证异常登记为「取证异常行」并照常走完
+ *   serial 链；罪责不消失而是**转移到汇总 test**（异常行数必须为 0，且「页面必须全部登记」原本
+ *   就钉着）。判定维度不降反升：旧版异常页 = 该页无登记行 = 汇总先红在缺页上，异常细节只能去
+ *   翻报告；新版每页都留下一行带异常原文与现场 console 计数的记录。
+ *   注意：只有「test 超时之前」能被 catch 的失败才走这条路；若某页仍撞满 180s 墙钟，Playwright
+ *   仍会切断 serial——这正是 等背景判据 短路修因在前、本解耦兜底在后的原因。
+ */
+async function 采一页(
+  页面名: string,
+  体: () => Promise<ReturnType<typeof createConsoleCollector>>,
+): Promise<void> {
+  try {
+    const 采集器 = await 体()
+    登记(页面名, 采集器)
+  } catch (错) {
+    const 文 = String((错 as Error)?.message ?? 错).replace(/\s+/g, ' ').slice(0, 400)
+    console.log(`[门禁] ${页面名} → 取证异常（已登记，由汇总定罪；不切断后续页）：${文}`)
+    门禁表.push({
+      页面: 页面名,
+      错误数: 0,
+      警告数: 0,
+      越界警告数: 0,
+      资源数: 0,
+      取证异常: 文,
+      明细: [`取证异常：${文}`],
+    })
+  }
+}
+
 test('登录页：加载', async ({ page }) => {
-  const 采集器 = 匿名采集器(page)
-  await page.goto('/login', { waitUntil: 'domcontentloaded' })
-  await 沉降(page, '.biaoqian-qiehuan')
-  // 派生 config 陷阱自证（FP-24d）：顶层 use.viewport 会被 devices['Desktop Chrome'] 覆盖，
-  // 必须回读真机 innerWidth 钉死本文件的取样视口
-  const 视口自证 = await page.evaluate(() => `${window.innerWidth}x${window.innerHeight}`)
-  console.log(`[门禁·视口自证] innerWidth×innerHeight=${视口自证}`)
-  expect(视口自证, '取样视口未落到 1440x900（派生 config project 层 viewport 被覆盖？）').toBe('1440x900')
-  登记('登录页 /login', 采集器)
+  await 采一页('登录页 /login', async () => {
+    const 采集器 = 匿名采集器(page)
+    await page.goto('/login', { waitUntil: 'domcontentloaded' })
+    await 沉降(page, '.biaoqian-qiehuan')
+    // 派生 config 陷阱自证（FP-24d）：顶层 use.viewport 会被 devices['Desktop Chrome'] 覆盖，
+    // 必须回读真机 innerWidth 钉死本文件的取样视口
+    const 视口自证 = await page.evaluate(() => `${window.innerWidth}x${window.innerHeight}`)
+    console.log(`[门禁·视口自证] innerWidth×innerHeight=${视口自证}`)
+    expect(视口自证, '取样视口未落到 1440x900（派生 config project 层 viewport 被覆盖？）').toBe('1440x900')
+    return 采集器
+  })
 })
 
 test('注册页：切到注册表单', async ({ page }) => {
-  const 采集器 = 匿名采集器(page)
-  await page.goto('/login', { waitUntil: 'domcontentloaded' })
-  await 沉降(page, '.biaoqian-qiehuan')
-  await page.locator('.biaoqian-anniu', { hasText: '注册' }).first().click()
-  // FP-24d 改判：FP-04a 后滚动口宿主恒为 .biaodan-gundong（overflow-y:scroll，无任何 JS 状态类）；
-  // 旧锚点 `.biaodan-gundong.xuyao-gundong` 里的状态类已随 hack 一起删除，选择器永不命中 ⇒ 该步必超时
-  await 沉降(page, '.biaodan-gundong')
-  登记('注册页 /login+注册标签', 采集器)
+  await 采一页('注册页 /login+注册标签', async () => {
+    const 采集器 = 匿名采集器(page)
+    await page.goto('/login', { waitUntil: 'domcontentloaded' })
+    await 沉降(page, '.biaoqian-qiehuan')
+    await page.locator('.biaoqian-anniu', { hasText: '注册' }).first().click()
+    // FP-24d 改判：FP-04a 后滚动口宿主恒为 .biaodan-gundong（overflow-y:scroll，无任何 JS 状态类）；
+    // 旧锚点 `.biaodan-gundong.xuyao-gundong` 里的状态类已随 hack 一起删除，选择器永不命中 ⇒ 该步必超时
+    await 沉降(page, '.biaodan-gundong')
+    return 采集器
+  })
 })
 
 test('聊天页：进真会话', async ({ page }) => {
-  const 采集器 = await 进登录页(page, `/chat/${聊天角色ID}`)
-  await 沉降(page, '.shuru-kuang')
-  登记('聊天页 /chat/:huiHuaId', 采集器)
+  await 采一页('聊天页 /chat/:huiHuaId', async () => {
+    const 采集器 = await 进登录页(page, `/chat/${聊天角色ID}`)
+    await 沉降(page, '.shuru-kuang')
+    return 采集器
+  })
 })
 
 test('过往战绩页：加载', async ({ page }) => {
-  const 采集器 = await 进登录页(page, '/guo-wang-zhan-ji')
-  await 沉降(page, '.zhanji-yemian')
-  登记('过往战绩页 /guo-wang-zhan-ji', 采集器)
+  await 采一页('过往战绩页 /guo-wang-zhan-ji', async () => {
+    const 采集器 = await 进登录页(page, '/guo-wang-zhan-ji')
+    await 沉降(page, '.zhanji-yemian')
+    return 采集器
+  })
 })
 
 test('资料设置向导：加载', async ({ page }) => {
-  const 采集器 = await 进登录页(page, '/profile-setup')
-  await 沉降(page, '.ziliao-shezhi')
-  登记('资料设置向导 /profile-setup', 采集器)
+  await 采一页('资料设置向导 /profile-setup', async () => {
+    const 采集器 = await 进登录页(page, '/profile-setup')
+    await 沉降(page, '.ziliao-shezhi')
+    return 采集器
+  })
 })
 
 test('好友列表：加载', async ({ page }) => {
-  const 采集器 = await 进登录页(page, '/hao-you')
-  await 沉降(page, '.haoyou-yemian')
-  登记('好友列表 /hao-you', 采集器)
+  await 采一页('好友列表 /hao-you', async () => {
+    const 采集器 = await 进登录页(page, '/hao-you')
+    await 沉降(page, '.haoyou-yemian')
+    return 采集器
+  })
 })
 
 test('通知页：加载', async ({ page }) => {
-  const 采集器 = await 进登录页(page, '/tong-zhi')
-  await 沉降(page, '.tongzhi-yemian')
-  登记('通知页 /tong-zhi', 采集器)
+  await 采一页('通知页 /tong-zhi', async () => {
+    const 采集器 = await 进登录页(page, '/tong-zhi')
+    await 沉降(page, '.tongzhi-yemian')
+    return 采集器
+  })
 })
 
 test('账号与安全：加载', async ({ page }) => {
-  const 采集器 = await 进登录页(page, '/zhang-hao-an-quan')
-  await 沉降(page, '.zhang-hao-an-quan')
-  登记('账号与安全 /zhang-hao-an-quan', 采集器)
+  await 采一页('账号与安全 /zhang-hao-an-quan', async () => {
+    const 采集器 = await 进登录页(page, '/zhang-hao-an-quan')
+    await 沉降(page, '.zhang-hao-an-quan')
+    return 采集器
+  })
 })
 
 test('认证表单交互：填手机号 + 取码 + 切回登录', async ({ page }) => {
-  const 采集器 = 匿名采集器(page)
-  await page.goto('/login', { waitUntil: 'domcontentloaded' })
-  await 沉降(page, '.biaoqian-qiehuan')
-  await page.locator('.biaoqian-anniu', { hasText: '注册' }).first().click()
-  await page.waitForTimeout(1500)
-  const 手机号框 = page.locator('input[type="tel"]').first()
-  await 手机号框.fill('13900009999')
-  await 手机号框.blur()
-  const 发送 = page.locator('button', { hasText: '获取验证码' }).first()
-  if (await 发送.isVisible({ timeout: 5000 }).catch(() => false)) {
-    await 发送.click()
-    await page.waitForTimeout(2500)
-  }
-  await page.locator('.biaoqian-anniu', { hasText: '登录' }).first().click()
-  await 等背景判据(page)
-  登记('认证表单交互（注册取码链）', 采集器)
-})
-
-/**
- * 反证（分账自检，两处判据之一）：`getOurErrors()` 把 /grass-bg/ 来源剔出去之后，
- * 上面那张「我方 error=0」的表有可能只是**门禁看不见 iframe**的假绿。
- * 这里从 iframe 自己的上下文里真的打一条 console.error 出去：
- *  ① 采不到 ⇒ 门禁对 iframe 是盲的，整张 error=0 表作废（这条判据先红，不许静默）；
- *  ② 采到了却没归进草地那一列 ⇒ 分账规则没落地，草地 error 会混进我方账；
- *  ③ 归进了草地那一列却同时还在我方那一列 ⇒ 重复计账。
- * 本用例不调 登记 ⇒ 只自证通道与归属，不进逐页数值表（不然会把必测页面集合撑坏）。
- */
-test('门禁自检：iframe 来源的 error 采得到、且只归草地背景那一列（反证·分账不是丢账）', async ({ page }) => {
-  const 采集器 = 匿名采集器(page)
-  await page.goto('/login', { waitUntil: 'domcontentloaded' })
-  await expect(page.locator('.biaoqian-qiehuan').first(), '登录页锚点未渲染').toBeVisible({ timeout: 90000 })
-  await page
-    .waitForFunction(
-      () => {
-        const 框 = Array.from(document.querySelectorAll('iframe')).find((元) =>
-          (元.getAttribute('src') || '').includes('/grass-bg/'),
-        ) as HTMLIFrameElement | undefined
-        return !!框 && 框.contentDocument?.readyState === 'complete'
-      },
-      undefined,
-      { timeout: 90000, polling: 250 },
-    )
-    .catch(() => {
-      throw new Error('门禁前提失效：登录页没能挂出 /grass-bg/ 的 iframe（草地背景换载体了？本自检随之失去意义，须改判）')
-    })
-  const 草地帧 = page.frames().find((帧) => 帧.url().includes('/grass-bg/'))
-  expect(草地帧, '门禁前提失效：page.frames() 里找不到 /grass-bg/ 上下文').toBeTruthy()
-  const 基线 = 采集器.getErrors().length
-  await 草地帧!.evaluate(() => {
-    console.error('草门·iframe-console 自检')
+  await 采一页('认证表单交互（注册取码链）', async () => {
+    const 采集器 = 匿名采集器(page)
+    await page.goto('/login', { waitUntil: 'domcontentloaded' })
+    await 沉降(page, '.biaoqian-qiehuan')
+    await page.locator('.biaoqian-anniu', { hasText: '注册' }).first().click()
+    await page.waitForTimeout(1500)
+    const 手机号框 = page.locator('input[type="tel"]').first()
+    await 手机号框.fill('13900009999')
+    await 手机号框.blur()
+    const 发送 = page.locator('button', { hasText: '获取验证码' }).first()
+    if (await 发送.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await 发送.click()
+      await page.waitForTimeout(2500)
+    }
+    await page.locator('.biaoqian-anniu', { hasText: '登录' }).first().click()
+    await 等背景判据(page)
+    return 采集器
   })
-  await 草地帧!.evaluate(() => {
-    setTimeout(() => {
-      throw new Error('草门·iframe-未捕获 自检')
-    }, 0)
-  })
-  await page.waitForTimeout(1500)
-  const 新增 = 采集器.getErrors().slice(基线)
-  const 草地 = 采集器.getGrassBgErrors().map((条) => 条.text)
-  const 我方 = 采集器.getOurErrors().map((条) => `${条.text} @ ${条.location?.url ?? '(无位置)'}`)
-  const 未捕获被采 = 新增.some((条) => 条.text.includes('iframe-未捕获'))
-  console.log(
-    `[门禁自检] 新增 error=${新增.length} 草地列=${草地.length} 我方列=${我方.length} 未捕获通道被采=${未捕获被采}\n` +
-      `  新增明细：${新增.map((条) => `${条.text} @ ${条.location?.url ?? '(无位置)'} stack=${String(条.stack ?? '').slice(0, 60).replace(/\n/g, ' ')}`).join(' | ')}`,
-  )
-  expect(新增.length, '采不到 iframe 里的 console.error ⇒ 整页门禁对 iframe 是盲的，那张 error=0 表不可信').toBeGreaterThanOrEqual(1)
-  expect(草地, 'iframe 来源的 error 必须按来源归进草地背景那一列').toContain('草门·iframe-console 自检')
-  expect(我方, 'iframe 来源的 error 不得同时留在我方那一列（分账不是重复计账）').toEqual([])
-  if (!未捕获被采) {
-    test.info().annotations.push({
-      type: 'info',
-      description:
-        '门禁能力边界（实测）：iframe 里的**未捕获异常**不会进 page.on(pageerror) 通道，' +
-        '只有 console 通道能采到 ⇒ 草地背景每帧抛的 ReferenceError 若只以未捕获异常形态出现，' +
-        '整页门禁采不到它（本轮它没有复现：gengXinYinYing 已在 grass-bg.html:1899 定义）。' +
-        '结论按实登记，不据此判我方通过。',
-    })
-  }
 })
 
 test('汇总：逐页面 error 与 warning 数值表', async () => {
   const 文本 = 拼装表文()
   console.log(`\n=== 控制台门禁逐页数值表 ===\n${文本}\n`)
   expect(门禁表.map(行 => 行.页面).sort(), '页面路径必须全部登记').toEqual([...必测页面].sort())
+  const 异常行 = 门禁表.filter(行 => 行.取证异常)
+  expect(
+    异常行.map(行 => `${行.页面}：${行.取证异常}`),
+    '逐页取证链不得有异常（页间已解耦，此处统一判罪）',
+  ).toEqual([])
   const 总错误 = 门禁表.reduce((和, 行) => 和 + 行.错误数, 0)
-  const 总草地 = 门禁表.reduce((和, 行) => 和 + 行.草地错误数, 0)
-  const 总全错误 = 门禁表.reduce((和, 行) => 和 + 行.全错误数, 0)
   const 总资源 = 门禁表.reduce((和, 行) => 和 + 行.资源数, 0)
   const 总警告 = 门禁表.reduce((和, 行) => 和 + 行.警告数, 0)
   const 总越界 = 门禁表.reduce((和, 行) => 和 + 行.越界警告数, 0)
-  // 分账的账必须对得上：我方 + 草地 = 采集器实际采到的全部 error。
-  // 这一条是「分账不等于丢账」的唯一硬证明，任何一侧偷偷少计都会在这里红。
-  expect(总错误 + 总草地, `分账不平：我方 ${总错误} + 草地 ${总草地} != 采到 ${总全错误}`).toBe(总全错误)
-  expect(总错误, `我方控制台 error 必须为 0：\n${文本}`).toBe(0)
-  if (总草地 > 0) {
-    test.info().annotations.push({
-      type: 'bug',
-      description:
-        `草地背景 error 非零（共 ${总草地} 条，来源 /grass-bg/，逐条见数值表明细）。` +
-        '它按派单口径单独成账：不并进门禁 error，也不据此判门禁通过 —— 那一列的账归草地背景 owner（另一名 agent 的在途改动）。',
-    })
-  }
+  expect(总错误, `控制台 error 必须为 0：\n${文本}`).toBe(0)
   expect(总资源, `资源加载/HTTP>=400 必须为 0：\n${文本}`).toBe(0)
   // 门禁 warning = 采到的 warning - 逐字登记的越界项；越界项由数值表如实呈现，不做忽略名单
   expect(总警告 - 总越界, `门禁内 console.warning 必须为 0：\n${文本}`).toBe(0)

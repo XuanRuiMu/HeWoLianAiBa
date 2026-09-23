@@ -10,26 +10,24 @@
     <div class="tonghua-zhongyang">
       <template v-if="!shiShiPin">
         <div class="huxi-waiquan" aria-hidden="true" />
-        <div class="tonghua-touxiang">
-          <img
-            v-if="shiTuPianDiZhi(tongHua.duiFangTouXiang)"
-            :src="tongHua.duiFangTouXiang || undefined"
-            alt=""
+        <div class="tonghua-wei">
+          <TouXiang
+            :tou-xiang="tongHua.duiFangTouXiang"
+            :mo-ren-zi="tongHua.duiFangTouXiang"
+            shen-fen="jiaose"
           />
-          <span v-else>{{ tongHua.duiFangTouXiang || '👤' }}</span>
         </div>
         <p v-if="shiYiJieTong" class="jishi-da-ziti">{{ jiShiWenBen }}</p>
       </template>
       <template v-else>
         <div class="yuanduan-zhanwei">
           <div class="rouguang-huan" aria-hidden="true" />
-          <div class="tonghua-touxiang touxiang-xiao">
-            <img
-              v-if="shiTuPianDiZhi(tongHua.duiFangTouXiang)"
-              :src="tongHua.duiFangTouXiang || undefined"
-              alt=""
+          <div class="tonghua-wei wei-xiao">
+            <TouXiang
+              :tou-xiang="tongHua.duiFangTouXiang"
+              :mo-ren-zi="tongHua.duiFangTouXiang"
+              shen-fen="jiaose"
             />
-            <span v-else>{{ tongHua.duiFangTouXiang || '👤' }}</span>
           </div>
           <p class="zhanwei-tishi">{{ huoQuFanYi('tongHua', 'duiFangHuaMianZanShiBuKeYong') }}</p>
           <p v-if="shiYiJieTong" class="jishi-wenben">{{ jiShiWenBen }}</p>
@@ -123,7 +121,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { 使用通话仓库 } from '@/stores/通话'
 import { huoQuFanYi } from '@/config/translations'
-import { shiTuPianDiZhi } from '@/utils/头像'
+import TouXiang from '@/components/头像.vue'
 
 const tongHua = 使用通话仓库()
 
@@ -348,7 +346,7 @@ onBeforeUnmount(() => {
   }
 }
 
-.tonghua-touxiang {
+.tonghua-wei {
   width: 96px;
   height: 96px;
   border-radius: 50%;
@@ -359,12 +357,6 @@ onBeforeUnmount(() => {
   font-size: 44px;
   background: var(--touxiang-beijing-moren);
   box-shadow: var(--touxiang-yinying);
-}
-
-.tonghua-touxiang img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .jishi-da-ziti {
@@ -407,7 +399,7 @@ onBeforeUnmount(() => {
   }
 }
 
-.touxiang-xiao {
+.wei-xiao {
   width: 84px;
   height: 84px;
   font-size: 38px;

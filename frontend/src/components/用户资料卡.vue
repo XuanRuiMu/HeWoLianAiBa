@@ -8,16 +8,13 @@
         <button class="anniu-fu-zhu" @click="jiaZai">{{ huoQuFanYi('liaoTian', 'chongShi') }}</button>
       </div>
       <div v-else-if="mingPian" class="ziliaoka-neirong">
-        <div class="ziliaoka-touxiang-hang">
-          <img
-            v-if="shiTuPianDiZhi(mingPian.tou_xiang)"
-            :src="mingPian.tou_xiang || undefined"
-            class="ziliaoka-touxiang"
-            alt=""
-            loading="lazy"
-            decoding="async"
-          />
-          <span v-else class="ziliaoka-touxiang-moren">{{ mingPian.ni_cheng?.slice(0, 1) || mingPian.yong_hu_ming?.slice(0, 1) || '友' }}</span>
+        <div class="ziliaoka-hang">
+          <div class="ziliaoka-wei">
+            <TouXiang
+              :tou-xiang="mingPian.tou_xiang"
+              :mo-ren-zi="mingPian.ni_cheng?.slice(0, 1) || mingPian.yong_hu_ming?.slice(0, 1) || '友'"
+            />
+          </div>
           <div class="ziliaoka-mingcheng-qu">
             <p class="ziliaoka-mingcheng">{{ mingPian.ni_cheng || mingPian.yong_hu_ming || huoQuFanYi('haoYou', 'weiMingMing') }}</p>
             <p class="ziliaoka-uid">UID：{{ mingPian.id.slice(0, 8) }}</p>
@@ -42,7 +39,7 @@
 import { ref, onMounted } from 'vue'
 import { huoQuFanYi } from '@/config/translations'
 import { huoQuMingPian, type MingPian } from '@/api/资料'
-import { shiTuPianDiZhi } from '@/utils/头像'
+import TouXiang from '@/components/头像.vue'
 import { huoQuCuoWuXiangYing } from '@/api/请求'
 
 const props = defineProps<{
@@ -135,22 +132,14 @@ onMounted(() => {
   font-size: 14px;
 }
 
-.ziliaoka-touxiang-hang {
+.ziliaoka-hang {
   display: flex;
   gap: 14px;
   align-items: center;
   margin-bottom: 14px;
 }
 
-.ziliaoka-touxiang {
-  width: 64px;
-  height: 64px;
-  border-radius: 10px;
-  object-fit: cover;
-  flex: none;
-}
-
-.ziliaoka-touxiang-moren {
+.ziliaoka-wei {
   width: 64px;
   height: 64px;
   border-radius: 10px;
@@ -158,6 +147,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   font-size: 26px;
   font-weight: 700;
   color: #fff;

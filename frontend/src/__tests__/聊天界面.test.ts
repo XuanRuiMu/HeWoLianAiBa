@@ -21,6 +21,10 @@ import type { Yonghu } from '@/types'
 import type { GuanLiJiaoSe, GuanLiNengLi } from '@/utils/角色能力'
 import { io } from 'socket.io-client'
 import router from '@/router'
+import { parse } from '@vue/compiler-sfc'
+import { 层叠胜出, 令牌名, 规则清单, 读取全局基线, type 探针 } from './CSS级联真源'
+import { 解析几何数值 } from './主题令牌真源'
+import { duQuShuRuQuText, xieRuShuRuQu } from './输入区夹具'
 
 vi.mock('@/router', () => ({
   default: { push: vi.fn().mockResolvedValue(true) },
@@ -435,8 +439,8 @@ describe('FP-05 聊天界面', () => {
       await flushPromises()
 
       expect(wrapper.find('.weiXin-mingCheng').text()).toBe('小甜心')
-      expect(wrapper.find('.jiaoSe-touxiang').exists()).toBe(true)
-      expect(wrapper.find('.jiaoSe-touxiang').attributes('src')).toBe(
+      expect(wrapper.find('.jiaose-wei img').exists()).toBe(true)
+      expect(wrapper.find('.jiaose-wei img').attributes('src')).toBe(
         'https://example.com/avatar.png',
       )
       // 过渡页只展示进度文案，不展示真实开场白内容元素
@@ -601,7 +605,7 @@ describe('FP-05 聊天界面', () => {
 
       const fasong = wrapper.find('.fasong-anniu')
       // 先确定性地清空输入（草稿恢复可能带入历史内容），再断言空内容态
-      await wrapper.find('.shuru-kuang').setValue('')
+      await xieRuShuRuQu(wrapper, '')
       await flushPromises()
       expect(fasong.exists()).toBe(true)
       // 空内容时发送按钮仍在文档流中且可见（不是被别的按钮顶替位置），只是不可点
@@ -716,8 +720,7 @@ describe('FP-05 聊天界面', () => {
       await emojiXiangMu[0].trigger('click')
       await flushPromises()
 
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('😀')
+      expect(duQuShuRuQuText(wrapper)).toBe('😀')
     })
   })
 
@@ -738,22 +741,20 @@ describe('FP-05 聊天界面', () => {
 
     it('输入 greedisgood 时清空输入框且不发送消息', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('greedisgood')
+      await xieRuShuRuQu(wrapper, 'greedisgood')
       await flushPromises()
 
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
 
-      expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('')
+      expect(duQuShuRuQuText(wrapper)).toBe('')
       expect(faSongXiaoXi).not.toHaveBeenCalled()
       wrapper.unmount()
     })
 
     it('管理员输入 greedisgood 时直接打开管理员监控且无提示浮窗', async () => {
       const { wrapper } = await mountLiaoTianYeMian({ 管理员: true })
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('greedisgood')
+      await xieRuShuRuQu(wrapper, 'greedisgood')
       await flushPromises()
 
       await wrapper.find('.fasong-anniu').trigger('click')
@@ -766,8 +767,7 @@ describe('FP-05 聊天界面', () => {
 
     it('非管理员输入 greedisgood：不开面板、不弹提示浮窗（反馈只走输入框下方状态行）、也不把指令发给 AI', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('greedisgood')
+      await xieRuShuRuQu(wrapper, 'greedisgood')
       await flushPromises()
 
       await wrapper.find('.fasong-anniu').trigger('click')
@@ -775,7 +775,7 @@ describe('FP-05 聊天界面', () => {
 
       expect(document.body.querySelector('.guanli-jiankong-fuchuang')).toBeNull()
       expect(document.body.querySelector('.miji-fuchuang')).toBeNull()
-      expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('')
+      expect(duQuShuRuQuText(wrapper)).toBe('')
       expect(faSongXiaoXi).not.toHaveBeenCalled()
       wrapper.unmount()
     })
@@ -786,8 +786,7 @@ describe('FP-05 聊天界面', () => {
       const 用户仓库 = 使用用户仓库()
       expect(用户仓库.keGuanLiZhiDu).toBe(false)
 
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('greedisgood')
+      await xieRuShuRuQu(wrapper, 'greedisgood')
       await flushPromises()
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
@@ -797,11 +796,11 @@ describe('FP-05 聊天界面', () => {
       expect(用户仓库.nengLieBiao).toEqual([])
       expect(document.body.querySelector('.guanli-jiankong-fuchuang')).toBeNull()
       expect(聊天仓库.cuoWuXinXi).toBe(huoQuFanYi('liaoTian', 'guanLiMianBanWuQuanXian'))
-      const 提示 = wrapper.find('.shuru-fu-zhu .fasong-cuowu')
+      const 提示 = wrapper.find('.tishi-dai .tishi-dai-cuowu')
       expect(提示.exists()).toBe(true)
       expect(提示.text()).toBe(huoQuFanYi('liaoTian', 'guanLiMianBanWuQuanXian'))
       expect(faSongXiaoXi).not.toHaveBeenCalled()
-      expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('')
+      expect(duQuShuRuQuText(wrapper)).toBe('')
       wrapper.unmount()
     })
 
@@ -813,8 +812,7 @@ describe('FP-05 聊天界面', () => {
       const 用户仓库 = 使用用户仓库()
       const 补挂 = vi.spyOn(聊天仓库, 'queBaoJianKongDingYue')
 
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('greedisgood')
+      await xieRuShuRuQu(wrapper, 'greedisgood')
       await flushPromises()
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
@@ -823,7 +821,7 @@ describe('FP-05 聊天界面', () => {
       expect(document.body.querySelector('.guanli-jiankong-fuchuang')).not.toBeNull()
       expect(补挂).toHaveBeenCalledTimes(1)
       expect(聊天仓库.cuoWuXinXi).toBeNull()
-      expect(wrapper.find('.shuru-fu-zhu .fasong-cuowu').exists()).toBe(false)
+      expect(wrapper.find('.tishi-dai .tishi-dai-cuowu').exists()).toBe(false)
       expect(faSongXiaoXi).not.toHaveBeenCalled()
       // 已授予能力的账号不得重复拉取身份
       expect(huoQuYongHuXinXi).toHaveBeenCalledTimes(1)
@@ -846,8 +844,7 @@ describe('FP-05 聊天界面', () => {
       expect(huoQuYongHuXinXi).toHaveBeenCalledTimes(1)
       const 补挂 = vi.spyOn(聊天仓库, 'queBaoJianKongDingYue')
 
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('greedisgood')
+      await xieRuShuRuQu(wrapper, 'greedisgood')
       await flushPromises()
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
@@ -856,15 +853,14 @@ describe('FP-05 聊天界面', () => {
       expect(用户仓库.keGuanLiZhiDu).toBe(true)
       expect(document.body.querySelector('.guanli-jiankong-fuchuang')).not.toBeNull()
       expect(补挂).toHaveBeenCalledTimes(1)
-      expect(wrapper.find('.shuru-fu-zhu .fasong-cuowu').exists()).toBe(false)
+      expect(wrapper.find('.tishi-dai .tishi-dai-cuowu').exists()).toBe(false)
       补挂.mockRestore()
       wrapper.unmount()
     })
 
     it('身份由管理员降级后，已展开的面板随渲染门一并消失', async () => {
       const { wrapper } = await mountLiaoTianYeMian({ 管理员: true })
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('greedisgood')
+      await xieRuShuRuQu(wrapper, 'greedisgood')
       await flushPromises()
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
@@ -920,26 +916,37 @@ describe('FP-05 聊天界面', () => {
       expect(wrapper.find('.fasong-anniu').text()).toBe(huoQuFanYi('liaoTian', 'faSong'))
     })
 
-    it('输入框placeholder来自翻译文件', async () => {
+    // FP-10c 契约演进：contenteditable 没有 ::placeholder，占位文本改由 .wei-kong::before 的
+    // attr(data-zhan-wei) 渲染。判定不降反升：既要取到翻译键的值（旧口径），又要求无障碍名
+    // 同一来源（屏幕阅读器读得到的才是真文案），还要求占位类只在真空态挂着。
+    it('输入框占位文本来自翻译文件且挂在无障碍名上', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
-      expect(wrapper.find('.shuru-kuang').attributes('placeholder')).toBe(
-        huoQuFanYi('liaoTian', 'shuRuXiaoXi'),
-      )
+      const kuang = wrapper.find('.shuru-kuang')
+      expect(kuang.attributes('data-zhan-wei')).toBe(huoQuFanYi('liaoTian', 'shuRuXiaoXi'))
+      expect(kuang.attributes('aria-label')).toBe(huoQuFanYi('liaoTian', 'shuRuXiaoXi'))
+      await xieRuShuRuQu(wrapper, '有内容了')
+      expect(wrapper.find('.shuru-kuang').classes()).not.toContain('wei-kong')
+      await xieRuShuRuQu(wrapper, '')
+      expect(wrapper.find('.shuru-kuang').classes()).toContain('wei-kong')
     })
   })
 
   describe('P0-3 GB45438 AI披露提示条', () => {
     it('聊天页顶部存在常驻AI披露提示条且文本来自翻译文件', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
-      const tiShiTiao = wrapper.find('.aitishi-tiao')
+      const tiShiTiao = wrapper.find('.tishi-dai')
       expect(tiShiTiao.exists()).toBe(true)
-      expect(tiShiTiao.text()).toBe(huoQuFanYi('tongYong', 'aiTiShiTiao'))
+      expect(tiShiTiao.find('.tishi-dai-shengming').text()).toBe(
+        huoQuFanYi('tongYong', 'aiTiShiTiao'),
+      )
+      // FP-07：无错误时右侧槽不得留空节点
+      expect(tiShiTiao.find('.tishi-dai-cuowu').exists()).toBe(false)
     })
 
     it('提示条渲染在消息区之外不受复盘模式影响且非硬编码文本', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
       const yemian = wrapper.find('.liaotian-yemian')
-      expect(yemian.element.children[0].classList.contains('aitishi-tiao')).toBe(true)
+      expect(yemian.element.children[0].classList.contains('tishi-dai')).toBe(true)
       expect(liaoTianYeMianYuanMa).not.toContain('仅供娱乐参考')
     })
   })
@@ -959,8 +966,10 @@ describe('FP-05 聊天界面', () => {
       // 不声明标准 scrollbar-width / scrollbar-color，否则会覆盖下方 WebKit 自定义样式
       expect(liaoTianYeMianYuanMa).not.toMatch(/\.xiaoxi-quyu\s*\{[^}]*scrollbar-width:/)
       expect(liaoTianYeMianYuanMa).not.toMatch(/\.xiaoxi-quyu\s*\{[^}]*scrollbar-color:/)
-      expect(liaoTianYeMianYuanMa).toMatch(
-        /\.xiaoxi-quyu::-webkit-scrollbar\s*\{[^}]*width:\s*\d+px/,
+      // FP-20：私有 width/height（8px，与 global 同值）已删，宽度吃单一真源；轨道/滑块/悬停仍私有（局部量名族钉死）
+      expect(liaoTianYeMianYuanMa).not.toMatch(/\.xiaoxi-quyu::-webkit-scrollbar\s*\{/)
+      expect(读取全局基线()).toMatch(
+        /::-webkit-scrollbar\s*\{\s*width:\s*var\(--gundong-tiao-kuan-du\)/,
       )
       // 使用独立可见色变量，避免沿用近乎不可见的 --gundong-tiao-beijing
       expect(liaoTianYeMianYuanMa).toMatch(
@@ -1148,10 +1157,9 @@ describe('FP-01 聊天输入字数统计阈值显隐与右侧定位', () => {
 
   it('输入字符数小于阈值时不显示字数统计', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
     const duanNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi - 1)
 
-    await shuRuKuang.setValue(duanNeiRong)
+    await xieRuShuRuQu(wrapper, duanNeiRong)
     await flushPromises()
 
     const jiShi = wrapper.find('.shuru-dibu-hang .zifu-jishu')
@@ -1160,24 +1168,22 @@ describe('FP-01 聊天输入字数统计阈值显隐与右侧定位', () => {
 
   it('清空输入后字数统计重新隐藏', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
     const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
 
-    await shuRuKuang.setValue(changNeiRong)
+    await xieRuShuRuQu(wrapper, changNeiRong)
     await flushPromises()
     expect(wrapper.find('.shuru-dibu-hang .zifu-jishu').exists()).toBe(true)
 
-    await shuRuKuang.setValue('')
+    await xieRuShuRuQu(wrapper, '')
     await flushPromises()
     expect(wrapper.find('.shuru-dibu-hang .zifu-jishu').exists()).toBe(false)
   })
 
   it('输入字符数达到阈值时显示字数统计', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
     const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
 
-    await shuRuKuang.setValue(changNeiRong)
+    await xieRuShuRuQu(wrapper, changNeiRong)
     await flushPromises()
 
     const jiShi = wrapper.find('.shuru-dibu-hang .zifu-jishu')
@@ -1189,10 +1195,9 @@ describe('FP-01 聊天输入字数统计阈值显隐与右侧定位', () => {
 
   it('字数统计位于输入框之外、表情按钮之前', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
     const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
 
-    await shuRuKuang.setValue(changNeiRong)
+    await xieRuShuRuQu(wrapper, changNeiRong)
     await flushPromises()
 
     const rongQi = wrapper.find('.shuru-rongqi')
@@ -1216,10 +1221,9 @@ describe('FP-01 聊天输入字数统计阈值显隐与右侧定位', () => {
 
   it('超出最大长度时计数器应用错误样式', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
     const chaoChuNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu + 1)
 
-    await shuRuKuang.setValue(chaoChuNeiRong)
+    await xieRuShuRuQu(wrapper, chaoChuNeiRong)
     await flushPromises()
 
     const jiShi = wrapper.find('.shuru-dibu-hang .zifu-jishu')
@@ -1229,10 +1233,9 @@ describe('FP-01 聊天输入字数统计阈值显隐与右侧定位', () => {
 
   it('字数统计显示时不影响表情与发送按钮，且不出现告白按钮', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
     const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
 
-    await shuRuKuang.setValue(changNeiRong)
+    await xieRuShuRuQu(wrapper, changNeiRong)
     await flushPromises()
 
     expect(wrapper.find('.shuru-dibu-hang .zifu-jishu').exists()).toBe(true)
@@ -1249,10 +1252,9 @@ describe('FP-01 聊天输入字数统计阈值显隐与右侧定位', () => {
 
   it('原输入框下方辅助区域不再显示字数统计', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
     const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
 
-    await shuRuKuang.setValue(changNeiRong)
+    await xieRuShuRuQu(wrapper, changNeiRong)
     await flushPromises()
 
     const fuZhuQuYu = wrapper.find('.shuru-fu-zhu')
@@ -1322,19 +1324,17 @@ describe('FP-05 输入栏发送按钮恒常驻与加深禁用态', () => {
 
   it('空内容→有内容→仅空白全程发送按钮存在且禁用态随内容切换', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
-
-    await shuRuKuang.setValue('')
+    await xieRuShuRuQu(wrapper, '')
     await flushPromises()
     const chuShi = wrapper.find('.fasong-anniu')
     expect(chuShi.exists()).toBe(true)
     expect(chuShi.attributes('disabled')).toBeDefined()
 
-    await shuRuKuang.setValue('在吗')
+    await xieRuShuRuQu(wrapper, '在吗')
     await flushPromises()
     expect(wrapper.find('.fasong-anniu').attributes('disabled')).toBeUndefined()
 
-    await shuRuKuang.setValue('   ')
+    await xieRuShuRuQu(wrapper, '   ')
     await flushPromises()
     const chongXin = wrapper.find('.fasong-anniu')
     expect(chongXin.exists()).toBe(true)
@@ -1381,57 +1381,73 @@ describe('FP-02 聊天输入多行展开/折叠', () => {
     vi.clearAllMocks()
   })
 
-  it('输入框为 textarea 且保持 maxlength=500', async () => {
+  // FP-10c 契约演进（载体换血，判定升级不是放松）：textarea 被图文真内联的 <div contenteditable>
+  // 取代，旧断言钉的「tagName === TEXTAREA」+「maxlength 属性」正是被作废的旧形态本身。
+  // 新契约下可机器验证的等价物更多：① 它仍是**语义完整的多行可编辑文本区**
+  //    （role=textbox + aria-multiline=true，缺一条屏幕阅读器就再也读不出"这是能换行的输入框"）；
+  // ② 长度上限仍在，只是从"属性声明"升级为"插入前拦截"——消息发送与显示.test.ts 与本文件
+  //    各自的用例都把「超限那次插入必须 defaultPrevented」钉成行为断言，比旧的存在性断言更强。
+  it('输入区为 contenteditable 且多行 ARIA 语义与长度上限拦截齐备', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
-    expect(shuRuKuang.element.tagName).toBe('TEXTAREA')
-    expect(shuRuKuang.attributes('maxlength')).toBe(String(XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu))
+    const kuang = wrapper.find('.shuru-kuang')
+    expect(kuang.element.tagName).toBe('DIV')
+    expect(kuang.attributes('contenteditable')).toBe('true')
+    expect(kuang.attributes('role')).toBe('textbox')
+    expect(kuang.attributes('aria-multiline')).toBe('true')
+    const chaoChang = new Event('beforeinput', { bubbles: true, cancelable: true }) as Event & {
+      inputType: string
+      data: string
+    }
+    chaoChang.inputType = 'insertText'
+    chaoChang.data = 'a'.repeat(XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu + 1)
+    kuang.element.dispatchEvent(chaoChang)
+    expect(chaoChang.defaultPrevented, '超限插入没被拦 = maxlength 契约丢了').toBe(true)
   })
 
   it('Enter 键发送消息', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
-    await shuRuKuang.setValue('测试消息')
-    await shuRuKuang.trigger('keydown.enter')
+    await xieRuShuRuQu(wrapper, '测试消息')
+    await wrapper.find('.shuru-kuang').trigger('keydown.enter')
     await flushPromises()
-    expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('')
+    expect(duQuShuRuQuText(wrapper)).toBe('')
   })
 
   it('Shift+Enter 不发送消息', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
-    await shuRuKuang.setValue('测试消息')
-    await shuRuKuang.trigger('keydown.enter.shift')
+    await xieRuShuRuQu(wrapper, '测试消息')
+    await wrapper.find('.shuru-kuang').trigger('keydown.enter.shift')
     await flushPromises()
-    expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('测试消息')
+    expect(duQuShuRuQuText(wrapper)).toBe('测试消息\n')
   })
 
-  it('单行输入时展开按钮常驻显示但 disabled', async () => {
+  // FP-10c 契约演进：展开按钮的 disabled 门控（旧 shuRuKuangKeZhanKai）只为 JS 量高链服务，
+  // 那条链随 use输入框.ts 一并删除 ⇒ 门控失去唯一消费者。旧断言「单行/空态必须 disabled」钉的
+  // 就是这条已作废门控；等价新契约＝按钮恒常驻恒可点，且点击真的换到展开档几何（下两条用例把
+  // 「点击 → .zhan-kai → max-height 吃展开令牌」钉成行为 + 层叠双证，比旧的"能不能点"更可验）。
+  it('单行输入时展开按钮常驻显示且不再是 JS 量高门控的禁用态', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
-    await shuRuKuang.setValue('短消息')
+    await xieRuShuRuQu(wrapper, '短消息')
     await flushPromises()
     const zhanKaiAnNiu = wrapper.find('.zhan-kai-anniu')
     expect(zhanKaiAnNiu.exists()).toBe(true)
-    expect(zhanKaiAnNiu.attributes('disabled')).toBeDefined()
+    expect(zhanKaiAnNiu.attributes('disabled')).toBeUndefined()
+    expect(zhanKaiAnNiu.attributes('aria-label')).toBe(huoQuFanYi('liaoTian', 'zhanKai'))
   })
 
-  it('空输入框时展开按钮常驻显示且 disabled', async () => {
+  it('空输入框时展开按钮常驻显示且同样不带量高门控', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
+    await xieRuShuRuQu(wrapper, '')
     await flushPromises()
     const zhanKaiAnNiu = wrapper.find('.zhan-kai-anniu')
     expect(zhanKaiAnNiu.exists()).toBe(true)
-    expect(zhanKaiAnNiu.attributes('disabled')).toBeDefined()
+    expect(zhanKaiAnNiu.attributes('disabled')).toBeUndefined()
   })
 
+  // 旧版这里 spy scrollHeight/clientHeight 逼 JS 量高链判"超一行"，那条链已删 ⇒ spy 成了
+  // 无消费者的空转仪器（删掉它判定结果不变）。折叠/展开现在只认 .zhan-kai 类。
   it('多行输入时显示展开按钮且可点击', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
-
-    vi.spyOn(shuRuKuang.element, 'scrollHeight', 'get').mockReturnValue(60)
-    vi.spyOn(shuRuKuang.element, 'clientHeight', 'get').mockReturnValue(38)
-
-    await shuRuKuang.setValue('这是一段比较长的消息内容，应该会折行显示展开按钮')
+    await xieRuShuRuQu(wrapper, '这是一段比较长的消息内容，应该会折行显示展开按钮')
     await flushPromises()
 
     const zhanKaiAnNiu = wrapper.find('.zhan-kai-anniu')
@@ -1441,29 +1457,24 @@ describe('FP-02 聊天输入多行展开/折叠', () => {
 
   it('点击展开按钮后输入框添加展开类', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
-
-    vi.spyOn(shuRuKuang.element, 'scrollHeight', 'get').mockReturnValue(60)
-    vi.spyOn(shuRuKuang.element, 'clientHeight', 'get').mockReturnValue(38)
-
-    await shuRuKuang.setValue('这是一段比较长的消息内容')
+    await xieRuShuRuQu(wrapper, '这是一段比较长的消息内容')
     await flushPromises()
+    expect(wrapper.find('.shuru-kuang').classes()).not.toContain('zhan-kai')
 
     await wrapper.find('.zhan-kai-anniu').trigger('click')
     await flushPromises()
 
-    expect(shuRuKuang.classes()).toContain('zhan-kai')
+    expect(wrapper.find('.shuru-kuang').classes()).toContain('zhan-kai')
+    expect(wrapper.find('.zhan-kai-anniu').attributes('aria-label')).toBe(
+      huoQuFanYi('liaoTian', 'zheDie'),
+    )
   })
 
   it('展开按钮位于字数统计之后且在输入栏右侧', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
     const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
 
-    vi.spyOn(shuRuKuang.element, 'scrollHeight', 'get').mockReturnValue(60)
-    vi.spyOn(shuRuKuang.element, 'clientHeight', 'get').mockReturnValue(38)
-
-    await shuRuKuang.setValue(changNeiRong)
+    await xieRuShuRuQu(wrapper, changNeiRong)
     await flushPromises()
 
     const dibuHang = wrapper.find('.shuru-dibu-hang')
@@ -1480,27 +1491,22 @@ describe('FP-02 聊天输入多行展开/折叠', () => {
 
   it('发送后输入框清空并折叠', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = wrapper.find('.shuru-kuang')
-
-    const scrollSpy = vi.spyOn(shuRuKuang.element, 'scrollHeight', 'get').mockReturnValue(60)
-    vi.spyOn(shuRuKuang.element, 'clientHeight', 'get').mockReturnValue(38)
-
-    await shuRuKuang.setValue('测试消息\n第二行')
+    await xieRuShuRuQu(wrapper, '测试消息\n第二行')
     await wrapper.find('.zhan-kai-anniu').trigger('click')
     await flushPromises()
 
-    expect(shuRuKuang.classes()).toContain('zhan-kai')
+    expect(wrapper.find('.shuru-kuang').classes()).toContain('zhan-kai')
 
-    // 发送前：内容将清空，高度回落单行（mock 反映清空后内容）
-    scrollSpy.mockReturnValue(38)
     await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
 
-    expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('')
-    expect(shuRuKuang.classes()).not.toContain('zhan-kai')
+    expect(duQuShuRuQuText(wrapper)).toBe('')
+    expect(wrapper.find('.shuru-kuang').classes()).not.toContain('zhan-kai')
     const zhanKaiAnNiu = wrapper.find('.zhan-kai-anniu')
     expect(zhanKaiAnNiu.exists()).toBe(true)
-    expect(zhanKaiAnNiu.attributes('disabled')).toBeDefined()
+    // 折叠回单行后按钮依旧常驻可点（量高门控已废），只把 aria-label 换回"展开"
+    expect(zhanKaiAnNiu.attributes('disabled')).toBeUndefined()
+    expect(zhanKaiAnNiu.attributes('aria-label')).toBe(huoQuFanYi('liaoTian', 'zhanKai'))
   })
 })
 
@@ -1514,110 +1520,120 @@ describe('FP-02b 输入框声明式高度与滚动条', () => {
     vi.clearAllMocks()
   })
 
-  function jiShuYuDanXingKuang(
-    wrapper: { find: (xuanZeQi: string) => { element: Element } },
-    scroll: number,
-    client: number,
-  ) {
-    const shuRuKuang = wrapper.find('.shuru-kuang')
-    vi.spyOn(shuRuKuang.element, 'scrollHeight', 'get').mockReturnValue(scroll)
-    vi.spyOn(shuRuKuang.element, 'clientHeight', 'get').mockReturnValue(client)
-    return shuRuKuang
+  // FP-10c 契约演进：折叠/展开高度曾是 use输入框.ts 写进内联 style 的 JS 计算值，故旧用例判
+  // `attributes('style')` 里那串像素。那条量高链已整体删除（输入区组件内零内联 style），旧形态
+  // 本身作废。改判为「组件样式体的层叠胜出值 == variables.css 解析值」，三条合起来强于旧的
+  // 字符串包含：①内联 style 必须为空（证明全站只剩一处量高＝CSS）；②折叠档 min/max-height
+  // 双双**严格等于** --shuru-danxing-gao-du 的解析值（FP-20⑦ 那 0.61px 差正是"约等"漏掉的）；
+  // ③展开档只换 max-height，min-height 不动且两态都无 height 声明 ⇒ 高度由内容驱动，
+  // 与旧的 min(内容高, 50vh) 逐值等价，但没有第二处实现。
+  const 图文输入区源 = readFileSync(resolve(__dirname, '../components/聊天/图文输入区.vue'), 'utf8')
+  const 样式描述 = parse(图文输入区源, { filename: '图文输入区.vue' }).descriptor.styles[0]
+  if (!样式描述) throw new Error('图文输入区.vue 没有 style 段 ⇒ 折叠档几何无处可查')
+  const 组件样式规则们 = 规则清单(样式描述.content)
+  const 图文输入区样式 = 样式描述.content
+  /** 剥掉 CSS 注释：注释里出现令牌名不构成"局部声明"，只有真声明才算第二真源 */
+  function quZhiShu(源: string): string {
+    return 源.replace(/\/\*[\s\S]*?\*\//g, '')
+  }
+  const 编辑器探针: 探针 = { 标签: 'div', 类: ['shuru-kuang'] }
+  const 展开探针: 探针 = { 标签: 'div', 类: ['shuru-kuang', 'zhan-kai'] }
+  function 胜出令牌(属性: string, 探测: 探针): string {
+    const 声明 = 层叠胜出(组件样式规则们, 探测, 属性)
+    expect(声明, `.shuru-kuang 缺 ${属性} 声明`).toBeTruthy()
+    return 令牌名(声明?.值 as string, 属性)
   }
 
-  function yangShiShuXing(yangShi: string): string[] {
-    return yangShi
-      .split(';')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((s) => s.split(':')[0].trim())
-  }
-
-  it('折叠态单行：仅绑定 max-height 单行高度、展开按钮隐藏、无 height 绑定', async () => {
+  it('折叠态单行：输入框零内联 style，min/max-height 双双严格等于折叠令牌，且无 height 声明', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = jiShuYuDanXingKuang(wrapper, 38, 38)
-    await shuRuKuang.setValue('短')
+    await xieRuShuRuQu(wrapper, '短')
     await flushPromises()
+    const kuang = wrapper.find('.shuru-kuang')
 
-    const shuXing = yangShiShuXing(shuRuKuang.attributes('style') || '')
-    expect(shuXing).toContain('max-height')
-    expect(shuXing).not.toContain('height')
-    expect(wrapper.find('.zhan-kai-anniu').attributes('disabled')).toBeDefined()
+    expect(kuang.attributes('style') ?? '', '输入区又出现内联 style = 第二处量高').toBe('')
+    expect(kuang.classes()).not.toContain('zhan-kai')
+    expect(解析几何数值('--shuru-danxing-gao-du')).toBe(35)
+    for (const 属性 of ['min-height', 'max-height']) {
+      expect(胜出令牌(属性, 编辑器探针), `折叠态 ${属性} 未吃单行令牌`).toBe('--shuru-danxing-gao-du')
+    }
+    expect(层叠胜出(组件样式规则们, 编辑器探针, 'height')).toBeNull()
   })
 
-  it('折叠态多行：展开按钮可点击、max-height 仍为精确单行高度', async () => {
+  it('折叠态多行：展开按钮可点击，盒高仍钉在单行档并由 overflow 承接溢出', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = jiShuYuDanXingKuang(wrapper, 60, 38)
-    await shuRuKuang.setValue('这是一段比较长的消息内容，应该会折行显示展开按钮')
+    await xieRuShuRuQu(wrapper, '这是一段比较长的消息内容，应该会折行显示展开按钮')
     await flushPromises()
 
     expect(wrapper.find('.zhan-kai-anniu').attributes('disabled')).toBeUndefined()
-    expect(shuRuKuang.attributes('style')).toContain('max-height: 38px')
+    expect(wrapper.find('.shuru-kuang').classes()).not.toContain('zhan-kai')
+    expect(胜出令牌('max-height', 编辑器探针)).toBe('--shuru-danxing-gao-du')
+    expect(层叠胜出(组件样式规则们, 编辑器探针, 'overflow-y')?.值).toBe('auto')
   })
 
-  it('展开态：height = min(内容高度, 50vh)，max-height = 50vh', async () => {
+  it('展开态：只放开 max-height 到展开档令牌，min-height 不动且两态均无 height 声明', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = jiShuYuDanXingKuang(wrapper, 60, 38)
-    await shuRuKuang.setValue('这是一段比较长的消息内容')
+    await xieRuShuRuQu(wrapper, '这是一段比较长的消息内容')
     await flushPromises()
 
     await wrapper.find('.zhan-kai-anniu').trigger('click')
     await flushPromises()
 
-    const qiShiVh = Math.round(window.innerHeight * 0.5)
-    const qiWangHeight = Math.min(60, qiShiVh)
-    const yangShi = shuRuKuang.attributes('style') || ''
-    expect(yangShi).toContain(`height: ${qiWangHeight}px`)
-    expect(yangShi).toContain(`max-height: ${qiShiVh}px`)
+    expect(wrapper.find('.shuru-kuang').classes()).toContain('zhan-kai')
+    expect(胜出令牌('max-height', 展开探针)).toBe('--shuru-zhan-kai-gao-du')
+    expect(胜出令牌('min-height', 展开探针)).toBe('--shuru-danxing-gao-du')
+    expect(层叠胜出(组件样式规则们, 展开探针, 'height')).toBeNull()
   })
 
-  it('清空内容后：折叠回单行、展开按钮隐藏、max-height 回到单行', async () => {
+  it('清空内容后：折叠回单行档令牌、展开类摘掉、按钮常驻可点', async () => {
     const { wrapper } = await mountLiaoTianYeMian()
-    const shuRuKuang = jiShuYuDanXingKuang(wrapper, 60, 38)
-    await shuRuKuang.setValue('测试消息\n第二行')
+    await xieRuShuRuQu(wrapper, '测试消息\n第二行')
     await wrapper.find('.zhan-kai-anniu').trigger('click')
     await flushPromises()
-    expect(shuRuKuang.classes()).toContain('zhan-kai')
+    expect(wrapper.find('.shuru-kuang').classes()).toContain('zhan-kai')
 
-    const scrollSpy = vi.spyOn(shuRuKuang.element, 'scrollHeight', 'get')
-    scrollSpy.mockReturnValue(38)
     await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
 
-    expect((shuRuKuang.element as HTMLTextAreaElement).value).toBe('')
-    expect(shuRuKuang.classes()).not.toContain('zhan-kai')
-    expect(wrapper.find('.zhan-kai-anniu').attributes('disabled')).toBeDefined()
-    expect(shuRuKuang.attributes('style')).toContain('max-height: 38px')
+    expect(duQuShuRuQuText(wrapper)).toBe('')
+    expect(wrapper.find('.shuru-kuang').classes()).not.toContain('zhan-kai')
+    expect(wrapper.find('.zhan-kai-anniu').attributes('disabled')).toBeUndefined()
+    expect(胜出令牌('max-height', 编辑器探针)).toBe('--shuru-danxing-gao-du')
   })
 
   it('输入框折叠态溢出走全局滚动条基线，与发送按钮同一套度量等高', () => {
     // 缺陷6 新契约（废除旧断言）：折叠态曾钉死 scrollbar-width:none + ::-webkit-scrollbar 宽 0，
     // 那正是用户投诉「只能滚轮滚动、没有可点可拖的滚动条」的根因，故旧断言整体作废并反向锁定。
-    const kuang = liaoTianYeMianYuanMa.match(/\.shuru-kuang\s*\{[^}]*\}/)?.[0] ?? ''
+    // FP-10c 契约演进：.shuru-kuang / .shuru-kuang-waike 两条规则随载体换血一起从页面搬进了
+    // 唯一实现 图文输入区.vue（两页再无自己的输入区样式，那条迁移本身由 FP10c① 以"页面内不得
+    // 出现 .shuru-kuang 规则"钉住）。这里的读取点因此跟着搬家，判定一条不减反而多一条：
+    // 页面侧必须彻底没有这两条规则，否则就是第二份度量。
+    const kuang = 图文输入区样式.match(/\.shuru-kuang\s*\{[^}]*\}/)?.[0] ?? ''
     expect(kuang).not.toBe('')
     expect(kuang).toMatch(/overflow-y:\s*auto/)
     expect(kuang).not.toMatch(/scrollbar-width:\s*none/)
     expect(kuang).not.toMatch(/-ms-overflow-style:\s*none/)
     // 私有隐藏与私有配色规则全部删除，滚动条规格统一由 FP-01 的 --gundong-tiao-* 全局基线供给
-    expect(liaoTianYeMianYuanMa).not.toMatch(/\.shuru-kuang::?-webkit-scrollbar/)
+    expect(图文输入区样式).not.toMatch(/\.shuru-kuang::?-webkit-scrollbar/)
     expect(liaoTianYeMianYuanMa).not.toMatch(/--shuru-kuang-gundong-tiao/)
-    expect(liaoTianYeMianYuanMa).not.toMatch(/\.shuru-kuang\.zhan-kai\s*\{/)
-    // 缺陷5 新契约：单行尺度量只在 .shuru-rongqi 写一次，输入框与发送按钮都吃同一组变量
-    const rongqi = liaoTianYeMianYuanMa.match(/\.shuru-rongqi\s*\{[^}]*\}/)?.[0] ?? ''
-    for (const 令牌 of [
-      '--shuru-kuang-zihao',
-      '--shuru-kuang-hangao',
-      '--shuru-kuang-hangxing-gao',
-      '--shuru-kuang-shang-xia-neidian',
-      '--shuru-kuang-biankuang',
-      '--shuru-anniu-re-ku',
-    ]) {
-      expect(rongqi).toContain(令牌 + ':')
-    }
+    expect(图文输入区样式).not.toMatch(/\.shuru-kuang\.zhan-kai\s*\{[^}]*scrollbar/)
+    expect(liaoTianYeMianYuanMa, '页面又自带 .shuru-kuang 规则 = 第二份度量').not.toMatch(
+      /\.shuru-kuang[^-\w]*\s*\{/,
+    )
+    // 缺陷5 新契约：输入框与发送按钮吃同一组单行尺度量。
+    // FP-22c 契约演进（是收紧不是放松，理由如下，勿再改回）：本用例旧版要求 .shuru-rongqi 内逐字出现
+    // `--shuru-kuang-zihao: 16px` 等六行**局部字面量**，即把「页面必须自己再声明一份度量」钉成契约。
+    // 字符串存在 ≠ 数值同源：那份局部声明才是生效值，全局 --shuru-danxing-gao-du 只能镜像它，
+    // 于是「改全局不改两页」静默无效，单一几何真源永远立不起来（审计 B4/S2 的成因）。
+    // 现真源已上收到 variables.css 共用 :root 块，本用例改为：①局部一律不得再声明（全站第二真源由
+    // 主题令牌成对审计.test.ts 兜底）；②消费点仍须 var() 吃全局令牌；③解析后的计算值由下一条用例
+    // 逐一钉回改前实测值 —— 这三条合起来强于旧的「字面量存在」。
+    const rongqi = quZhiShu(liaoTianYeMianYuanMa).match(/\.shuru-rongqi\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(rongqi).not.toBe('')
+    expect(rongqi, '.shuru-rongqi 又局部声明度量 = 第二真源').not.toMatch(/--shuru-(kuang|anniu)-/)
     expect(kuang).toMatch(/padding:\s*var\(--shuru-kuang-shang-xia-neidian\)\s+var\(--shuru-kuang-zuo-you-neidian\)/)
     expect(kuang).toMatch(/line-height:\s*var\(--shuru-kuang-hangao\)/)
     expect(kuang).not.toMatch(/line-height:\s*1\.4/)
-    const waike = liaoTianYeMianYuanMa.match(/\.shuru-kuang-waike\s*\{[^}]*\}/)?.[0] ?? ''
+    const waike = 图文输入区样式.match(/\.shuru-kuang-waike\s*\{[^}]*\}/)?.[0] ?? ''
     expect(waike).toMatch(/border:\s*var\(--shuru-kuang-biankuang\)\s+solid/)
     const anniu = liaoTianYeMianYuanMa.match(/\.fasong-anniu\s*\{[^}]*\}/)?.[0] ?? ''
     // 按钮不再自带任何高度字面值：同内边距 + 同行高基准 + 同宽透明边框 ⇒ 与外壳必然等高
@@ -1634,20 +1650,65 @@ describe('FP-02b 输入框声明式高度与滚动条', () => {
     expect(reku).toMatch(/position:\s*absolute/)
   })
 
-  it('好友聊天页输入区与聊天页同规格：同一组同源度量令牌，无独立高度字面值', () => {
+  /**
+   * FP-10c 契约演进：输入区四条规则里，外壳与编辑器两条随载体换血搬进了唯一实现，
+   * 页面侧只剩发送按钮与其热区两条。因此"引用了哪批度量令牌"的取数点也一分为二：
+   * 框侧读组件、按钮侧读页面。两页比较仍取页面的按钮侧（框侧两页物理同源，比都不必比）。
+   */
+  function shuruQuYinLingPai(源: string): string[] {
+    const 规则们 = [/\.fasong-anniu\s*\{[^}]*\}/, /\.fasong-anniu::before\s*\{[^}]*\}/]
+    const 名 = 规则们.flatMap((正则) => [
+      ...(正则.exec(源)?.[0] ?? '').matchAll(/var\(\s*(--shuru-[a-z-]+)\s*[,)]/g),
+    ])
+    return [...new Set(名.map((项) => 项[1]))].sort()
+  }
+
+  function shuRuKuangYinLingPai(源: string): string[] {
+    const 规则们 = [/\.shuru-kuang-waike\s*\{[^}]*\}/, /\.shuru-kuang\s*\{[^}]*\}/]
+    const 名 = 规则们.flatMap((正则) => [
+      ...(正则.exec(源)?.[0] ?? '').matchAll(/var\(\s*(--shuru-[a-z-]+)\s*[,)]/g),
+    ])
+    return [...new Set(名.map((项) => 项[1]))].sort()
+  }
+
+  it('好友聊天页输入区与聊天页同规格：两页引用同一批全局令牌，页面侧无独立高度字面值', () => {
     const haoYouYuanMa = readFileSync(resolve(__dirname, '../views/好友聊天.vue'), 'utf8')
-    const rongqi = haoYouYuanMa.match(/\.shuru-rongqi\s*\{[^}]*\}/)?.[0] ?? ''
-    for (const 令牌 of [
-      '--shuru-kuang-zihao: 16px',
-      '--shuru-kuang-hangao: 1.4',
-      '--shuru-kuang-shang-xia-neidian: 6px',
-      '--shuru-kuang-zuo-you-neidian: 12px',
-      '--shuru-kuang-biankuang: 0.5px',
-      '--shuru-anniu-re-ku: 44px',
-    ]) {
-      expect(rongqi, `好友聊天页缺少同源度量令牌 ${令牌}`).toContain(令牌)
+    // FP-22c 契约演进：旧断言要求本页 .shuru-rongqi 内含 `--shuru-kuang-zihao: 16px` 等字面量，
+    // 那等于承认「每页各留一份局部度量」。字面量在位只证明字符串存在，证明不了两页与全局同源，
+    // 而且它才是全局 --shuru-danxing-gao-du 长期停在镜像值、无法成真源的原因。
+    // 现在同规格由「两页引用同一批全局令牌 + 令牌解析值（下一条用例）」证明，并反向锁定局部不得声明。
+    const rongqi = quZhiShu(haoYouYuanMa).match(/\.shuru-rongqi\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(rongqi).not.toBe('')
+    expect(rongqi, '.shuru-rongqi 又局部声明度量 = 第二真源').not.toMatch(/--shuru-(kuang|anniu)-/)
+    expect(
+      shuruQuYinLingPai(haoYouYuanMa),
+      '两页引用的度量令牌不再是同一批',
+    ).toEqual(shuruQuYinLingPai(liaoTianYeMianYuanMa))
+    expect(shuruQuYinLingPai(liaoTianYeMianYuanMa), '引用集为空 = 判定失效').toEqual([
+      '--shuru-anniu-re-ku',
+      '--shuru-kuang-biankuang',
+      '--shuru-kuang-hangxing-gao',
+      '--shuru-kuang-shang-xia-neidian',
+    ])
+    // 框侧四枚度量的引用点从"每页一份"变成"全库一份"：消费者只剩图文输入区组件，
+    // 两页再无自己的 .shuru-kuang 规则（下面这条反向锁定就是旧"两页各自声明"形态的墓碑）。
+    for (const 页 of [liaoTianYeMianYuanMa, haoYouYuanMa]) {
+      expect(页, '页面又自带 .shuru-kuang / .shuru-kuang-waike 规则 = 第二份度量').not.toMatch(
+        /\.shuru-kuang(-waike)?\s*\{/,
+      )
     }
-    const kuang = haoYouYuanMa.match(/\.shuru-kuang\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(shuRuKuangYinLingPai(haoYouYuanMa), '页面侧不该再有框侧度量引用').toEqual([])
+    expect(shuRuKuangYinLingPai(图文输入区样式), '框侧度量令牌引用集变了').toEqual([
+      '--shuru-danxing-gao-du',
+      '--shuru-kuang-biankuang',
+      '--shuru-kuang-hangao',
+      '--shuru-kuang-shang-xia-neidian',
+      '--shuru-kuang-yuanjiao',
+      '--shuru-kuang-zihao',
+      '--shuru-kuang-zuo-you-neidian',
+      '--shuru-quyu-biankuang',
+    ])
+    const kuang = 图文输入区样式.match(/\.shuru-kuang\s*\{[^}]*\}/)?.[0] ?? ''
     expect(kuang).toMatch(/padding:\s*var\(--shuru-kuang-shang-xia-neidian\)\s+var\(--shuru-kuang-zuo-you-neidian\)/)
     expect(kuang).toMatch(/line-height:\s*var\(--shuru-kuang-hangao\)/)
     expect(kuang).toMatch(/border:\s*none/)
@@ -1658,6 +1719,41 @@ describe('FP-02b 输入框声明式高度与滚动条', () => {
     expect(anniu).toMatch(/border:\s*var\(--shuru-kuang-biankuang\)\s+solid\s+transparent/)
     expect(anniu).not.toMatch(/(?:^|[;\s])(min-)?height\s*:/)
     expect(haoYouYuanMa).toMatch(/\.fasong-anniu::before\s*\{[^}]*height:\s*var\(--shuru-anniu-re-ku\)/)
+  })
+
+  it('FP-22c 几何真源解析：全局令牌计算值逐一等于改前实测值，且热宽只有一套拼法', () => {
+    // 「解析后的计算值」而非「字符串在位」：页面吃 var(--shuru-*) 后，唯一能证明数值没漂的办法，
+    // 是把 variables.css 里的取值按 CSS 规则代入 var()/calc() 求出来再对数（jsdom 不做 var 计算）。
+    // 右列全部是上收前两页局部实测值 —— 逐条钉住 = 本次改动零视觉变化。
+    const 实测 = {
+      '--shuru-kuang-zihao': 16,
+      '--shuru-kuang-hangao': 1.4,
+      '--shuru-kuang-hangxing-gao': 22.4,
+      '--shuru-kuang-shang-xia-neidian': 6,
+      '--shuru-kuang-zuo-you-neidian': 12,
+      '--shuru-kuang-biankuang': 0.5,
+      '--shuru-anniu-re-ku': 44,
+      '--shuru-danxing-gao-du': 35,
+      '--shuru-tubiao-chicun': 35,
+    } as const
+    for (const [令牌, 值] of Object.entries(实测)) {
+      expect(解析几何数值(令牌), `${令牌} 计算值与改前实测不符`).toBeCloseTo(值, 6)
+    }
+    // 折叠态单行高度 = ceil(行高 16×1.4 + 上下内边距 6×2)，与 use输入框.ts 的算式同一条
+    expect(
+      Math.ceil(
+        解析几何数值('--shuru-kuang-zihao') * 解析几何数值('--shuru-kuang-hangao') +
+          解析几何数值('--shuru-kuang-shang-xia-neidian') * 2,
+      ),
+    ).toBe(解析几何数值('--shuru-danxing-gao-du'))
+    // 两套拼法合一：FP-01 的 --shuru-re-ku 与局部的 --shuru-anniu-re-ku 同值 44px，
+    // 保留带部件名的后者（与 --shuru-tubiao-chicun / --daifa-kuai-tu-kuan 的 --shuru-<部件>-<属性> 同族），
+    // 旧名必须在定义与引用两侧同时归零，否则它会变成一枚无人可查的悬空令牌
+    const 令牌源 = readFileSync(resolve(__dirname, '../styles/variables.css'), 'utf8')
+    expect(令牌源, '旧拼法 --shuru-re-ku 仍在定义 = 两套并存').not.toMatch(/--shuru-re-ku\s*:/)
+    for (const 源 of [liaoTianYeMianYuanMa, readFileSync(resolve(__dirname, '../views/好友聊天.vue'), 'utf8')]) {
+      expect(源, '页面仍引用已作废的 --shuru-re-ku').not.toMatch(/--shuru-re-ku/)
+    }
   })
 })
 
@@ -1756,8 +1852,7 @@ describe('FP-A11 军师指导后AI回复机制保持正常', () => {
       shiMiJi: false,
     })
 
-    const shuRuKuang = wrapper.find('.shuru-kuang')
-    await shuRuKuang.setValue('返回后消息')
+    await xieRuShuRuQu(wrapper, '返回后消息')
     await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
 
@@ -2010,7 +2105,7 @@ describe('FP-01 发送顺序与钉底滚动根因修复', () => {
     const diaoYongJiLu: Array<{ neiRong: string; miDengJian: string | null }> = []
     // FP-09b：序号由服务端权威分配 —— 这里由「服务端」自己取号，前端只消费回显值
     let fuWuQiFuHao = 40
-    vi.mocked(faSongXiaoXi).mockImplementation(async (_huiHuaId, neiRong, miDengJian) => {
+    vi.mocked(faSongXiaoXi).mockImplementation(async ({ neiRong, miDengJian }) => {
       diaoYongJiLu.push({ neiRong, miDengJian: miDengJian ?? null })
       // 模拟轻微网络延迟，使两次点击在首个请求完成前都已入串行队列
       await new Promise((r) => setTimeout(r, 5))
@@ -2032,10 +2127,9 @@ describe('FP-01 发送顺序与钉底滚动根因修复', () => {
       }
     })
 
-    const shuRuKuang = wrapper.find('.shuru-kuang')
-    await shuRuKuang.setValue('A')
+    await xieRuShuRuQu(wrapper, 'A')
     await wrapper.find('.fasong-anniu').trigger('click')
-    await shuRuKuang.setValue('B')
+    await xieRuShuRuQu(wrapper, 'B')
     await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
     await vi.advanceTimersByTimeAsync(50)

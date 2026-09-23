@@ -11,8 +11,10 @@ import { huoQuFanYi } from '../config/translations'
 import { 渲染性别变体文案 } from '../utils/结局'
 import { 归一角色性别, type 角色性别 } from '../utils/性别'
 import { type CanShuShangXiaWen } from '../config/AI参数策略'
-import { meiTiZhanShiWenBen } from './AI视觉辅助'
-import type { GongJianShiJianJieGuo } from '../types'
+import { gouJianYinYongChaXun, zhanShiXiaoXiZhengWen } from './对话渲染'
+import { shiTuWenHunPaiKuai, type XiaoXiKuai } from './消息内容块'
+import { buQiWenJianTiQuWenBen } from './文档文本提取'
+import type { DuiHuaLiShiXiang, GongJianShiJianJieGuo } from '../types'
 
 export interface FuPanShengChengJieGuo {
   fu_pan_nei_rong: string
@@ -52,19 +54,8 @@ interface HaoGanDuGuiJi {
   guanXiJieDuan: string
 }
 
-interface FuPanXiaoXiXiang {
-  fa_song_zhe: string
-  nei_rong: string
-  shi_jian: string
-  yi_che_hui?: boolean
-  yuan_shi_nei_rong?: string | null
-  mei_ti_lei_bie?: string | null
-  mei_ti_shi_chang_hao_miao?: number | null
-  mei_ti_yuan_shi_wen_jian_ming?: string | null
-}
-
 interface FuPanPromptCanShu {
-  xiaoXiLieBiao: FuPanXiaoXiXiang[]
+  xiaoXiLieBiao: DuiHuaLiShiXiang[]
   jiaoSeJiBenXinXi: JiaoSeJiBenXinXi
   zhaXingTeZhi?: ZhaXingTeZhi
   haoGanDuGuiJi?: HaoGanDuGuiJi
@@ -92,24 +83,23 @@ function jieXiJSONXiangYing(neiRong: string): FuPanJSONJieGou {
   }
 }
 
-function xiaoXiZhanShiWenBen(xiaoXi: FuPanXiaoXiXiang): string {
-  const meiTiMiaoShu = meiTiZhanShiWenBen(xiaoXi.mei_ti_lei_bie, {
-    yiCheHui: xiaoXi.yi_che_hui,
-    shiChangHaoMiao: xiaoXi.mei_ti_shi_chang_hao_miao,
-    yuanShiWenJianMing: xiaoXi.mei_ti_yuan_shi_wen_jian_ming,
-  })
-  return meiTiMiaoShu || xiaoXi.nei_rong
-}
-
-function gouJianXiaoXiWenBen(
-  xiaoXiLieBiao: FuPanPromptCanShu['xiaoXiLieBiao'],
+/**
+ * 复盘聊天文本的唯一行格式化（FP-08c）：两处调用点（带序号的复盘 Prompt / 不带序号的关键事件抽取）
+ * 只差行首的 `序号. `，正文一律走 services/对话渲染 那一份入口。
+ * 原先这里的 `xiaoXiZhanShiWenBen` + `gouJianXiaoXiWenBen` 第二份渲染器已删：
+ * 它把媒体占位符盖在图文混排正文上（半条消息）、语音/视频不给可读文本，
+ * 撤回行的口径也一并收敛进那一份入口（不再在此拼第二遍）：FP-26 起该入口只出撤回占位，
+ * 复盘/军师/主聊天三条语料都不再携带撤回原文。
+ */
+function zhanShiFuPanXiaoXiWenBen(
+  xiaoXiLieBiao: DuiHuaLiShiXiang[],
+  带序号: boolean,
 ): string {
+  const chaXun = gouJianYinYongChaXun(xiaoXiLieBiao)
   return xiaoXiLieBiao
     .map(
       (xiaoXi, xuHao) =>
-        `${xuHao + 1}. [${xiaoXi.shi_jian}] ${xiaoXi.fa_song_zhe}: ${xiaoXiZhanShiWenBen(xiaoXi)}${
-          xiaoXi.yi_che_hui && xiaoXi.yuan_shi_nei_rong ? `（已撤回，原始内容：${xiaoXi.yuan_shi_nei_rong}）` : ''
-        }`,
+        `${带序号 ? `${xuHao + 1}. ` : ''}[${xiaoXi.shi_jian}] ${xiaoXi.fa_song_zhe_ming}: ${zhanShiXiaoXiZhengWen(xiaoXi, undefined, chaXun)}`,
     )
     .join('\n')
 }
@@ -182,7 +172,7 @@ function gouJianGuanJianShiJianBuFen(shiJian: GongJianShiJianJieGuo[]): string {
 }
 
 function gouJianFuPanPrompt(canShu: FuPanPromptCanShu): string {
-  const xiaoXiWenBen = gouJianXiaoXiWenBen(canShu.xiaoXiLieBiao)
+  const xiaoXiWenBen = zhanShiFuPanXiaoXiWenBen(canShu.xiaoXiLieBiao, true)
   const jiaoSeBuFen = gouJianJiaoSeXinXiBuFen(canShu.jiaoSeJiBenXinXi)
   const tiaoJianBuFen = canShu.jiaoSeJiBenXinXi.shiFouZhaXing && canShu.zhaXingTeZhi
     ? gouJianZhaXingBuFen(canShu.zhaXingTeZhi)
@@ -353,18 +343,6 @@ async function huoQuHaoGanDuGuiJi(
   }
 }
 
-function gouJianDuiHuaWenBen(xiaoXiLieBiao: FuPanXiaoXiXiang[]): string {
-  if (xiaoXiLieBiao.length === 0) return ''
-  return xiaoXiLieBiao
-    .map(
-      (xiaoXi) =>
-        `[${xiaoXi.shi_jian}] ${xiaoXi.fa_song_zhe}: ${xiaoXiZhanShiWenBen(xiaoXi)}${
-          xiaoXi.yi_che_hui && xiaoXi.yuan_shi_nei_rong ? `（已撤回，原始：${xiaoXi.yuan_shi_nei_rong}）` : ''
-        }`,
-    )
-    .join('\n')
-}
-
 function gouJianZhaDianTiShi(
   jieGou: FuPanJSONJieGou,
   xingBie: 角色性别,
@@ -412,19 +390,28 @@ export async function shengChengFuPan(
     mei_ye_tiao_shu: FU_PAN_MAX_XIAO_XI,
   })
 
-  let xiaoXiLieBiao = xiaoXiJieGuo.lie_biao
+  // FP-08c：复盘的消息条目直接用 DuiHuaLiShiXiang（唯一渲染入口的入参形态），
+  // 复盘语料里的发送者标签仍逐字不变（jiaose⇒「对方」、yonghu⇒「你」），只是搬进 fa_song_zhe_ming
+  let xiaoXiLieBiao: DuiHuaLiShiXiang[] = xiaoXiJieGuo.lie_biao
     .filter((xiaoXi) => xiaoXi.fa_song_zhe_lei_xing !== 'xitong')
     .reverse()
     .map((xiaoXi) => ({
-      fa_song_zhe: xiaoXi.fa_song_zhe_lei_xing === 'jiaose' ? '对方' : '你',
+      id: xiaoXi.id,
+      fa_song_zhe_lei_xing: xiaoXi.fa_song_zhe_lei_xing,
+      fa_song_zhe_ming: xiaoXi.fa_song_zhe_lei_xing === 'jiaose' ? '对方' : '你',
       nei_rong: xiaoXi.nei_rong,
       shi_jian: geShiHuaShiJian(xiaoXi.shi_jian_chuo),
       yi_che_hui: xiaoXi.yi_che_hui,
-      yuan_shi_nei_rong: xiaoXi.yuan_shi_nei_rong,
-      mei_ti_lei_bie: xiaoXi.mei_ti_lei_bie,
-      mei_ti_shi_chang_hao_miao: xiaoXi.mei_ti_shi_chang_hao_miao,
-      mei_ti_yuan_shi_wen_jian_ming: xiaoXi.mei_ti_yuan_shi_wen_jian_ming,
+      meiTiLeiBie: xiaoXi.mei_ti_lei_bie ?? undefined,
+      meiTiShiChangHaoMiao: xiaoXi.mei_ti_shi_chang_hao_miao ?? null,
+      yuanShiWenJianMing: xiaoXi.mei_ti_yuan_shi_wen_jian_ming ?? undefined,
+      meiTiId: xiaoXi.mei_ti_id ?? undefined,
+      tuWenHunPai: shiTuWenHunPaiKuai(xiaoXi.nei_rong_kuai),
+      beiYongXiaoXiId: xiaoXi.bei_yong_xiao_xi_id ?? null,
     }))
+
+  // FP-12：复盘语料与军师/主聊天共用同一个文档正文补全口（渲染仍只有 对话渲染 那一份）
+  xiaoXiLieBiao = await buQiWenJianTiQuWenBen(xiaoXiLieBiao)
 
   // 秘籍通关：截断到秘籍使用前，仅保留秘籍前的真实对话
   let miJiTiShi: string | undefined
@@ -432,7 +419,7 @@ export async function shengChengFuPan(
     const miJiMiLing = (HAO_GAN_DU_PEI_ZHI.miJi.miLing || '').trim().toLowerCase()
     const miJiSuoYin = miJiMiLing
       ? xiaoXiLieBiao.findIndex(
-          (x) => x.fa_song_zhe === '你' && x.nei_rong.trim().toLowerCase() === miJiMiLing,
+          (x) => x.fa_song_zhe_lei_xing === 'yonghu' && x.nei_rong.trim().toLowerCase() === miJiMiLing,
         )
       : -1
 
@@ -479,7 +466,7 @@ export async function shengChengFuPan(
 
   let guanJianShiJian: GongJianShiJianJieGuo[] = []
   if (xiaoXiLieBiao.length > 0) {
-    const duiHuaWenBen = gouJianDuiHuaWenBen(xiaoXiLieBiao)
+    const duiHuaWenBen = zhanShiFuPanXiaoXiWenBen(xiaoXiLieBiao, false)
     if (duiHuaWenBen) {
       try {
         // YH-051 事件抽取进记忆检索注入：复盘链路抽取即落表，供上下文检索

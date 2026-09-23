@@ -264,12 +264,11 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .rizhi-fuchuang {
-  /* 宽高、位移与停靠边距由 use可拖动浮窗 以 px 下发，禁止再写视口单位尺寸与魔法数字 */
+  /* 几何（left/top/width/height）与停靠边距由 use可拖动浮窗 以 px 下发，
+     宿主不得再用 left/right/top/bottom 钉盒，也不得再写视口单位尺寸与魔法数字 */
   --rizhi-z-index: var(--ceng-tiaoshi-riji);
 
   position: fixed;
-  left: var(--fu-chuang-ting-kao-bian-jv);
-  bottom: var(--fu-chuang-ting-kao-bian-jv);
   z-index: var(--rizhi-z-index);
   display: flex;
   flex-direction: column;
@@ -279,7 +278,7 @@ onBeforeUnmount(() => {
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.6);
   overflow: hidden;
   touch-action: none;
-  will-change: transform;
+  will-change: left, top;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 

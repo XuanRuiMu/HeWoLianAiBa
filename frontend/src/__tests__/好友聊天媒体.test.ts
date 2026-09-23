@@ -17,8 +17,12 @@ import { 使用表情仓库 } from '@/stores/表情'
 import type { HaoYouXiaoXi } from '@/api/社交'
 
 /**
- * FP-21 好友聊天媒体通路的前端行为用例（补 L-48(3)：此前该页的媒体能力只有源码扫描，
+ * 好友聊天媒体通路的前端行为用例（补 L-48(3)：此前该页的媒体能力只有源码扫描，
  * 一条挂载级行为断言都没有）。
+ *
+ * 本文件的 describe 名一律**不带 FP 编号**：`FP-21` 这个功能点留给「好友侧对等改造
+ * （`好友消息` 加 `内容块` + `被引用消息ID` 两列）」自己的用例文件，避免将来
+ * `vitest --grep FP-21` 一次命中两个不相关集合。本文件的用例只按行为命名。
  *
  * 覆盖：相册/文件/粘贴三个入口、图片与文件两种气泡、乐观气泡与失败回滚、
  * 发送中（blob 预览）态、签名过期时的合并重拉、blob 地址在刷新与离页两处的回收、
@@ -144,13 +148,17 @@ function 假粘贴事件(项列表: Array<{ kind: string; 类型: string; 文件
       getAsFile: () => (项.文件 === undefined ? null : 项.文件),
     })),
     files: [],
+    // 真 DataTransfer 恒有 getData：桩缺它会让图文输入区在 clipboardData.getData(...) 上抛
+    // TypeError，用例只是"运气好地"崩在 preventDefault 之前，把真实的"拦截并插纯文本"伪装成
+    // defaultPrevented === false 的假绿（并给 vitest 留一颗 unhandled error）。
+    getData: (leiXing: string) => (leiXing === 'text/plain' ? '' : ''),
   }
   return 事件
 }
 
 function 贴入(wrapper: ReturnType<typeof mount>, 项列表: Array<{ kind: string; 类型: string; 文件?: File | null }>) {
   const 事件 = 假粘贴事件(项列表)
-  wrapper.find('textarea.shuru-kuang').element.dispatchEvent(事件)
+  wrapper.find('.shuru-kuang').element.dispatchEvent(事件)
   return 事件
 }
 
@@ -184,23 +192,37 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-describe('FP-21 好友媒体气泡渲染', () => {
-  it('图片消息出 .tupian-qipao，src 就是服务端现签的绑定读者地址', async () => {
+describe('好友媒体气泡渲染', () => {
+  it('图片消息走块渲染：src 就是服务端现签的绑定读者地址（FP-10a 含图片块即块渲染）', async () => {
     const 地址 = '/api/媒体/' + 'b'.repeat(64) + '?e=1&u=2&t=3&s=4'
     const wrapper = await 挂载([媒体消息({ mei_ti_url: 地址 })])
-    const 图 = wrapper.find('img.tupian-qipao')
+    const 图 = wrapper.find('img.tuwen-kuai-tu')
     expect(图.exists()).toBe(true)
     expect(图.attributes('src')).toBe(地址)
     expect(图.attributes('alt')).toBe(huoQuFanYi('duoMeiTi', 'tuPianYuLan'))
+    expect(wrapper.find('img.tupian-qipao').exists()).toBe(false)
     expect(wrapper.find('.wenjian-qipao').exists()).toBe(false)
-    expect(wrapper.find('.qipao-neirong').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('脏行兜底：mei_ti_id 为空反构不出图片块 ⇒ 媒体分支按消息级地址画 .tupian-qipao', async () => {
+    const 地址 = '/api/媒体/' + 'c'.repeat(64) + '?e=1&u=2&t=3&s=4'
+    const wrapper = await 挂载([媒体消息({ mei_ti_id: null, mei_ti_url: 地址 })])
+    const 图 = wrapper.find('img.tupian-qipao')
+    expect(图.exists()).toBe(true)
+    expect(图.attributes('src')).toBe(地址)
     wrapper.unmount()
   })
 
   it('文件消息出文件泡：文件名 + 大小 + 带 download 的链接；缺名时回落翻译文案', async () => {
     const wrapper = await 挂载([
       媒体消息({ lei_xing: 'wenJian', mei_ti_lei_bie: 'wenjian', mei_ti_yuan_shi_wen_jian_ming: '笔记.pdf' }),
-      媒体消息({ id: 'x-2', lei_xing: 'wenJian', mei_ti_yuan_shi_wen_jian_ming: null }),
+      媒体消息({
+        id: 'x-2',
+        lei_xing: 'wenJian',
+        mei_ti_lei_bie: 'wenjian',
+        mei_ti_yuan_shi_wen_jian_ming: null,
+      }),
     ])
     const 泡 = wrapper.findAll('.wenjian-qipao')
     expect(泡).toHaveLength(2)
@@ -208,18 +230,24 @@ describe('FP-21 好友媒体气泡渲染', () => {
     expect(泡[0].find('.wenjian-daxiao').text()).toBe('2.0MB')
     const 链 = 泡[0].find('a.wenjian-xiazai')
     expect(链.attributes('download')).toBe('笔记.pdf')
-    expect(链.text()).toBe(huoQuFanYi('duoMeiTi', 'xiaZaiWenJian'))
+    // FP-12b 起文件卡片统一为 components/聊天/文件气泡.vue：下载链从文字链接改为图标链，
+    // 可达名称仍逐字取翻译文件（行为等价改判，不弱化可访问名称契约）
+    expect(链.attributes('aria-label')).toBe(huoQuFanYi('duoMeiTi', 'xiaZaiWenJian'))
     expect(泡[1].find('.wenjian-ming').text()).toBe(huoQuFanYi('haoYou', 'weiMingMing'))
     wrapper.unmount()
   })
 
-  it('类型清单只有一个真源：表情包走图片泡、语音/文件走文件泡，都不各写一份', async () => {
+  it('类型清单只有一个真源：表情包走块渲染、语音走语音泡（FP-10a/FP-11），都不各写一份', async () => {
     const wrapper = await 挂载([
       媒体消息({ id: 'a', lei_xing: 'biaoQingBao', mei_ti_lei_bie: 'biaoqingshu' }),
       媒体消息({ id: 'b', lei_xing: 'yuYin', mei_ti_lei_bie: 'yuyin' }),
     ])
-    expect(wrapper.findAll('img.tupian-qipao')).toHaveLength(1)
-    expect(wrapper.findAll('.wenjian-qipao')).toHaveLength(1)
+    const 贴纸块 = wrapper.findAll('img.tuwen-kuai-tu')
+    expect(贴纸块).toHaveLength(1)
+    expect(贴纸块[0].classes()).toContain('tuwen-kuai-tu--biaoqingbao')
+    expect(wrapper.findAll('.yuyin-waike')).toHaveLength(1)
+    expect(wrapper.findAll('.wenjian-qipao')).toHaveLength(0)
+    expect(wrapper.findAll('img.tupian-qipao')).toHaveLength(0)
     expect([...MEI_TI_XIAO_XI_LEI_XING].sort()).toEqual(['biaoQingBao', 'tuPian', 'wenJian', 'yuYin'])
     expect([...TU_PIAN_XIAO_XI_LEI_XING].sort()).toEqual(['biaoQingBao', 'tuPian'])
     wrapper.unmount()
@@ -246,7 +274,7 @@ describe('FP-21 好友媒体气泡渲染', () => {
   })
 })
 
-describe('FP-21 三个发送入口：相册 / 文件 / 粘贴', () => {
+describe('好友媒体三个发送入口：相册 / 文件 / 粘贴', () => {
   it('相册入口：压缩后按 tupian 上传，再按 tuPian 发送，成功后回收 blob 预览地址', async () => {
     const wrapper = await 挂载()
     const 原图 = 文件()
@@ -254,6 +282,11 @@ describe('FP-21 三个发送入口：相册 / 文件 / 粘贴', () => {
     const 输入 = wrapper.find('input.yincang-wenjian-shuru')
     Object.defineProperty(输入.element, 'files', { value: [原图], configurable: true })
     await 输入.trigger('change')
+    await flushPromises()
+    // FP-10b（缺陷9）：选图只是把图放进待发区，不直发；点发送才走上传链
+    expect(传媒体).not.toHaveBeenCalled()
+    expect(wrapper.find('.shuru-kuang .dai-fa-kuai--tu').exists()).toBe(true)
+    await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
     expect(压缩图片).toHaveBeenCalledTimes(1)
     expect(传媒体).toHaveBeenCalledTimes(1)
@@ -286,12 +319,18 @@ describe('FP-21 三个发送入口：相册 / 文件 / 粘贴', () => {
     wrapper.unmount()
   })
 
-  it('粘贴入口复用唯一实现：白名单图片走同一条上传链，非白名单只提示零发送', async () => {
+  it('粘贴入口复用唯一实现：白名单图片先进待发区（不直发），点发送才走同一条上传链；非白名单只提示零发送', async () => {
     const wrapper = await 挂载()
     const 图 = 文件('clip.png', 'image/png')
     const 事件 = 贴入(wrapper, [{ kind: 'file', 类型: 'image/png', 文件: 图 }])
     await flushPromises()
     expect(事件.defaultPrevented).toBe(true)
+    // FP-10b（缺陷9）：粘贴只把图放进本条消息的待发区，一个请求都不该发出去
+    expect(传媒体).not.toHaveBeenCalled()
+    expect(发消息).not.toHaveBeenCalled()
+    expect(wrapper.find('.shuru-kuang .dai-fa-kuai--tu').exists()).toBe(true)
+    await wrapper.find('.fasong-anniu').trigger('click')
+    await flushPromises()
     expect(传媒体).toHaveBeenCalledTimes(1)
     expect(传媒体.mock.calls[0][1]).toBe(图)
     expect(发消息).toHaveBeenCalledTimes(1)
@@ -305,13 +344,15 @@ describe('FP-21 三个发送入口：相册 / 文件 / 粘贴', () => {
     expect(发消息).not.toHaveBeenCalled()
     expect(wrapper.find('.fasong-tishi').text()).toBe(huoQuFanYi('duoMeiTi', 'zhanTieMIMEBuZhiChi'))
 
-    // 纯文本粘贴完全不拦截：交回浏览器原生行为
+    // 契约演进（FP-10c）：旧注释「纯文本粘贴完全不拦截：交回浏览器原生行为」随 textarea 载体失效——
+    // 图文输入区对纯文本一律 preventDefault 后自己插纯文本，绝不让浏览器塞富文本
+    // （同口径见 __tests__/FP10c真内联输入区.test.ts ③）。
     const 文本事件 = 贴入(wrapper, [{ kind: 'string', 类型: 'text/plain' }])
-    expect(文本事件.defaultPrevented).toBe(false)
+    expect(文本事件.defaultPrevented).toBe(true)
     wrapper.unmount()
   })
 
-  it('未开启图片授权时不外发：拒绝即提示，一个请求都不发；确认后同一文件立即发出', async () => {
+  it('未开启图片授权时不外发：进待发区不弹窗也不请求，点发送才弹窗；拒绝即提示且待发区保留，确认后同一图立即发出', async () => {
     const wrapper = await 挂载()
     const 用户仓库 = 使用用户仓库()
     用户仓库.sheZhiTuPianShouQuan(false)
@@ -320,6 +361,13 @@ describe('FP-21 三个发送入口：相册 / 文件 / 粘贴', () => {
     Object.defineProperty(输入.element, 'files', { value: [原图], configurable: true })
     await 输入.trigger('change')
     await flushPromises()
+    // FP-10b：C4 授权门从「贴图那一刻」后移到「发送那一刻」——图还留在本地就不该要授权
+    // （弹窗组件恒挂载，判「有没有要授权」只能看 xianShi 这个 prop，与 粘贴图片.test.ts 同一口径）
+    expect(wrapper.findComponent(ShouQuanDanChuang).props('xianShi')).toBe(false)
+    expect(传媒体).not.toHaveBeenCalled()
+
+    await wrapper.find('.fasong-anniu').trigger('click')
+    await flushPromises()
     const 弹窗 = wrapper.findComponent(ShouQuanDanChuang)
     expect(弹窗.exists()).toBe(true)
     expect(传媒体).not.toHaveBeenCalled()
@@ -327,9 +375,10 @@ describe('FP-21 三个发送入口：相册 / 文件 / 粘贴', () => {
     await flushPromises()
     expect(wrapper.find('.fasong-tishi').text()).toBe(huoQuFanYi('duoMeiTi', 'shouQuanWeiKaiQiTiShi'))
     expect(传媒体).not.toHaveBeenCalled()
+    // 拒绝授权不得吃掉用户排好的图文：待发区还在原地，可以直接再点一次发送
+    expect(wrapper.find('.shuru-kuang .dai-fa-kuai--tu').exists()).toBe(true)
 
-    Object.defineProperty(输入.element, 'files', { value: [原图], configurable: true })
-    await 输入.trigger('change')
+    await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
     const 第二个 = wrapper.findComponent(ShouQuanDanChuang)
     第二个.vm.$emit('que-ren')
@@ -338,7 +387,7 @@ describe('FP-21 三个发送入口：相册 / 文件 / 粘贴', () => {
     wrapper.unmount()
   })
 
-  it('授权窗未关时连点两次：两条都发出去（队列承载，不复制聊天页 L-23 的单变量缺陷）', async () => {
+  it('授权窗未关时连点两次：两张都上传（FP-21 单次提交合成一条消息，发消息只调一次）', async () => {
     const wrapper = await 挂载()
     使用用户仓库().sheZhiTuPianShouQuan(false)
     const 输入 = wrapper.find('input.yincang-wenjian-shuru')
@@ -348,26 +397,35 @@ describe('FP-21 三个发送入口：相册 / 文件 / 粘贴', () => {
       await flushPromises()
     }
     expect(传媒体).not.toHaveBeenCalled()
+    // FP-10b：两张都堆在待发区里（FP-10b 之后连点两次相册=同一条消息里的两张图）
+    expect(wrapper.findAll('.dai-fa-kuai--tu')).toHaveLength(2)
+    await wrapper.find('.fasong-anniu').trigger('click')
+    await flushPromises()
     wrapper.findComponent(ShouQuanDanChuang).vm.$emit('que-ren')
     await flushPromises()
+    // FP-21 单次提交：两张串行上传后合成一条消息发出（不再逐条拆发）
     expect(传媒体).toHaveBeenCalledTimes(2)
-    expect(发消息).toHaveBeenCalledTimes(2)
+    expect(发消息).toHaveBeenCalledTimes(1)
+    expect(wrapper.findAll('.dai-fa-kuai--tu')).toHaveLength(0)
     wrapper.unmount()
   })
 })
 
-describe('FP-21 发送中/失败态与资源回收', () => {
-  it('上传在途时先出乐观气泡（blob 预览地址），成功后由服务端签名地址接管', async () => {
+describe('好友媒体发送中/失败态与资源回收', () => {
+  it('上传完成后先出乐观气泡（blob 预览地址），成功后由服务端签名地址接管', async () => {
     const wrapper = await 挂载()
     let 放行: (值: unknown) => void = () => undefined
-    传媒体.mockReturnValueOnce(new Promise((resolve) => (放行 = resolve)))
+    发消息.mockReturnValueOnce(new Promise((resolve) => (放行 = resolve)))
     const 输入 = wrapper.find('input.yincang-wenjian-shuru')
     Object.defineProperty(输入.element, 'files', { value: [文件()], configurable: true })
     await 输入.trigger('change')
     await flushPromises()
-    const 在途 = wrapper.findAll('img.tupian-qipao')
+    await wrapper.find('.fasong-anniu').trigger('click')
+    await flushPromises()
+    // FP-21 单次提交：全部上传完成、POST 在途时才落乐观气泡（含图片块 ⇒ 块渲染）
+    const 在途 = wrapper.findAll('img.tuwen-kuai-tu')
     expect(在途).toHaveLength(1)
-    expect(在途[0].attributes('src')).toBe('blob:yu-lan')
+    expect(在途[0].attributes('src')).toContain('blob:')
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1)
     expect(wrapper.find('.fasong-tishi').exists()).toBe(false)
     放行({ mediaId: '33333333-3333-4333-8333-333333333333' })
@@ -376,16 +434,19 @@ describe('FP-21 发送中/失败态与资源回收', () => {
     wrapper.unmount()
   })
 
-  it('上传失败：乐观气泡撤掉、就地显示后端文案，不整页崩', async () => {
+  it('上传失败：不落乐观气泡、就地显示后端文案，待发区整单保留，不整页崩', async () => {
     const wrapper = await 挂载([媒体消息({ id: '保-1' })])
     传媒体.mockRejectedValueOnce(拒绝(413, '文件超出大小限制'))
     const 输入 = wrapper.find('input.yincang-wenjian-shuru')
     Object.defineProperty(输入.element, 'files', { value: [文件()], configurable: true })
     await 输入.trigger('change')
     await flushPromises()
+    await wrapper.find('.fasong-anniu').trigger('click')
+    await flushPromises()
     expect(wrapper.findAll('.xiaoxi-xiangmu')).toHaveLength(1)
     expect(wrapper.find('.fasong-tishi').text()).toBe('文件超出大小限制')
-    expect(wrapper.find('img.tupian-qipao').attributes('src')).not.toContain('blob:')
+    expect(wrapper.find('img.tuwen-kuai-tu').attributes('src')).not.toContain('blob:')
+    expect(wrapper.find('.shuru-kuang .dai-fa-kuai--tu').exists()).toBe(true)
     wrapper.unmount()
   })
 
@@ -395,6 +456,8 @@ describe('FP-21 发送中/失败态与资源回收', () => {
     const 输入 = wrapper.find('input.yincang-wenjian-shuru')
     Object.defineProperty(输入.element, 'files', { value: [文件()], configurable: true })
     await 输入.trigger('change')
+    await flushPromises()
+    await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
     expect(wrapper.findAll('.xiaoxi-xiangmu')).toHaveLength(0)
     expect(wrapper.find('.fasong-tishi').text()).toBe('对方还不是你的好友')
@@ -432,14 +495,14 @@ describe('FP-21 发送中/失败态与资源回收', () => {
       媒体消息({ id: 'm4' }),
     ])
     const 起点 = 取消息.mock.calls.length
-    const 图 = wrapper.findAll('img.tupian-qipao')
+    const 图 = wrapper.findAll('img.tuwen-kuai-tu')
     expect(图).toHaveLength(4)
     // 四张图在同一批事件循环里各自报失效：整页只允许发一次重拉（旧实现是四次整表重拉）
-    await Promise.all(图.map((一张) => 一张.trigger('error')))
+    await Promise.all(图.map((一张) =>一张.trigger('error')))
     await flushPromises()
     expect(取消息.mock.calls.length - 起点).toBe(1)
     // 同一批消息再报一次也不加请求：每条在一个页面生命周期内只登记一次
-    await Promise.all(wrapper.findAll('img.tupian-qipao').map((一张) => 一张.trigger('error')))
+    await Promise.all(wrapper.findAll('img.tuwen-kuai-tu').map((一张) => 一张.trigger('error')))
     await flushPromises()
     expect(取消息.mock.calls.length - 起点).toBe(1)
     wrapper.unmount()
@@ -452,6 +515,8 @@ describe('FP-21 发送中/失败态与资源回收', () => {
     const 输入 = wrapper.find('input.yincang-wenjian-shuru')
     Object.defineProperty(输入.element, 'files', { value: [文件()], configurable: true })
     await 输入.trigger('change')
+    await flushPromises()
+    await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1)
     wrapper.unmount()
@@ -481,7 +546,7 @@ describe('FP-21 发送中/失败态与资源回收', () => {
   })
 })
 
-describe('FP-21/FP-20 好友页图片气泡「添加到表情」（与聊天页同一份实现）', () => {
+describe('好友页图片气泡「添加到表情」（与聊天页同一份实现）', () => {
   const 原取图 = globalThis.fetch
   let 取图: ReturnType<typeof vi.fn>
 
@@ -524,11 +589,12 @@ describe('FP-21/FP-20 好友页图片气泡「添加到表情」（与聊天页�
     globalThis.fetch = 原取图
   })
 
-  it('图片气泡右键只出「添加到表情」，点它即取图一次、写入一次并亮状态条', async () => {
+  it('图片气泡右键出「添加到表情 + 引用」（FP-21 引用接线），点添加即取图一次、写入一次并亮状态条', async () => {
     const wrapper = await 挂载([媒体消息({ mei_ti_url: 旧地址 })])
     await 右键第几条(wrapper)
     expect(菜单按钮().map((钮) => 钮.textContent?.trim())).toEqual([
       huoQuFanYi('liaoTian', 'tianJiaDaoBiaoQing'),
+      huoQuFanYi('liaoTian', 'yinYong'),
     ])
     菜单按钮()[0].click()
     await flushPromises()
@@ -558,10 +624,9 @@ describe('FP-21/FP-20 好友页图片气泡「添加到表情」（与聊天页�
     wrapper.unmount()
   })
 
-  it('文件/文本/已撤回/表情包气泡一律不出菜单，也不写任何请求', async () => {
+  it('文件/已撤回/表情包气泡不出菜单；文本出文本菜单（FP-21 引用/翻译接线），且都不写表情请求', async () => {
     const wrapper = await 挂载([
       媒体消息({ id: 'f-1', lei_xing: 'wenJian', mei_ti_lei_bie: 'wenjian' }),
-      媒体消息({ id: 't-1', lei_xing: 'wenben', mei_ti_id: null, mei_ti_url: null, nei_rong: '在吗' }),
       媒体消息({
         id: 'c-1',
         yi_che_hui: true,
@@ -572,12 +637,20 @@ describe('FP-21/FP-20 好友页图片气泡「添加到表情」（与聊天页�
       }),
       媒体消息({ id: 'e-1', lei_xing: 'biaoQingBao', mei_ti_lei_bie: 'biaoqingshu' }),
     ])
-    for (const 序号 of [0, 1, 2, 3]) {
+    for (const 序号 of [0, 1, 2]) {
       await 右键第几条(wrapper, 序号)
       expect(document.body.querySelector('.chehui-zhezhao')).toBeNull()
     }
+    // 文本消息 FP-21 接了文本菜单：出菜单但不触发表情取图/写入
+    const 文本 = await 挂载([媒体消息({ id: 't-1', lei_xing: 'wenben', mei_ti_id: null, mei_ti_url: null, nei_rong: '在吗' })])
+    await 右键第几条(文本)
+    expect(document.body.querySelector('.chehui-zhezhao')).not.toBeNull()
+    expect(菜单按钮().map((钮) => 钮.textContent?.trim())).toEqual(
+      expect.arrayContaining([huoQuFanYi('liaoTian', 'fuZhi')]),
+    )
     expect(取图).not.toHaveBeenCalled()
     expect(表情写入).not.toHaveBeenCalled()
+    文本.unmount()
     wrapper.unmount()
   })
 
@@ -647,12 +720,12 @@ describe('FP-21/FP-20 好友页图片气泡「添加到表情」（与聊天页�
     await 项.trigger('touchstart')
     await new Promise((解决) => setTimeout(解决, LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao + 120))
     expect(document.body.querySelector('.chehui-zhezhao')).not.toBeNull()
-    expect(菜单按钮()).toHaveLength(1)
+    expect(菜单按钮()).toHaveLength(2)
     wrapper.unmount()
   })
 })
 
-describe('FP-21 同类点穷尽（前端不写第二套）', () => {
+describe('好友媒体同类点穷尽（前端不写第二套）', () => {
   const 前端根 = resolve(__dirname, '..')
   const 仓库根 = resolve(__dirname, '../..')
   const 后端配置 = resolve(仓库根, '../backend/src/config/媒体配置.ts')

@@ -145,6 +145,7 @@ function guanBi() {
   -webkit-overflow-scrolling: touch;
 }
 
+/* FP-20 保留特例：协议弹窗正文需要 4px 极窄条+半透明白滑块露出弹窗玻璃底（global 为 8px+不透明灰滑块+半透明灰轨道，视觉不同且无测试可改判），整块保留 */
 .tanchuang-neirong::-webkit-scrollbar {
   width: 4px;
 }
@@ -281,6 +282,7 @@ function guanBi() {
   color: #1a1a2e;
 }
 
+/* FP-20 保留特例：浅色档弹窗滑块手写覆盖为浅灰半透明，删则吃 global 档位滑块色改变弹窗既有视觉 */
 :root[data-theme='light'] .tanchuang-neirong::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.15);
 }

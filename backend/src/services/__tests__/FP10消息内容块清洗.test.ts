@@ -67,6 +67,7 @@ vi.mock('../../数据库', () => ({
 vi.mock('../../utils/邮件告警', () => ({ faSongGaoJing: vi.fn(async () => undefined) }))
 
 const 迁移033 = resolve(__dirname, '..', '..', '..', 'database', 'migrations', '033_FP10顺序化内容块.sql')
+const 迁移035 = resolve(__dirname, '..', '..', '..', 'database', 'migrations', '035_引用消息.sql')
 
 function 取连接串(): string {
   const 显式 = (process.env.TEST_DATABASE_URL ?? '').trim()
@@ -136,12 +137,17 @@ beforeAll(async () => {
   池 = new 池类({ connectionString: 取连接串(), connectionTimeoutMillis: 3000, max: 2 })
   事务客户端 = await 池.connect()
   await 事务客户端.query('BEGIN')
-  // 现网库应已由 run_migration 跑过 033；本句只为「库比代码旧」的开发环境兜底，
-  // 且顺带证明 033 的 SQL 自身可重复执行（ADD COLUMN IF NOT EXISTS + COMMENT）。
+  // 现网库应已由 run_migration 跑过 033/035；本句只为「库比代码旧」的开发环境兜底，
+  // 且顺带证明 033/035 的 SQL 自身可重复执行（ADD COLUMN IF NOT EXISTS + COMMENT）。
+  // 整个 beforeAll 跑在一个显式事务里、afterAll 无条件 ROLLBACK ⇒ 现网库不留任何 DDL/数据。
   await 事务客户端.query(readFileSync(迁移033, 'utf-8'))
+  await 事务客户端.query(readFileSync(迁移035, 'utf-8'))
+  // FP-28b：夹具不再写真值进 用户.性别（该列是待删死列，FP-28c 删列后本条 INSERT 会 42703）；
+  // 改吃同族且有真实写入者的 用户.默认性别，值域按 037/utils/性别 的 male|female。
+  // 本文件的断言不涉及性别取值，故列清单从 "性别" 换成 "默认性别" 后强度不变。
   await 事务客户端.query(
-    `INSERT INTO "用户" ("ID","手机号","用户名","昵称","性别","管理员","测试")
-     VALUES ($1,$2,$3,'FP10甲','nv',false,true), ($4,$5,$6,'FP10乙','nan',false,true)`,
+    `INSERT INTO "用户" ("ID","手机号","用户名","昵称","默认性别","管理员","测试")
+     VALUES ($1,$2,$3,'FP10甲','female',false,true), ($4,$5,$6,'FP10乙','male',false,true)`,
     [
       归属用户, `fp10a-${randomUUID()}`.slice(0, 20), `fp10a_${randomUUID()}`.slice(0, 20),
       他人用户, `fp10b-${randomUUID()}`.slice(0, 20), `fp10b_${randomUUID()}`.slice(0, 20),

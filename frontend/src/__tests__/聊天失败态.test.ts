@@ -8,6 +8,7 @@ import { 使用聊天仓库 } from '@/stores/聊天'
 import { 使用用户仓库 } from '@/stores/用户'
 import { huoQuFanYi } from '@/config/translations'
 import { faSongXiaoXi, huoQuXiaoXi } from '@/api/聊天'
+import { xieRuShuRuQu } from './输入区夹具'
 
 vi.mock('@/api/聊天', () => ({
   huoQuXiaoXi: vi.fn().mockResolvedValue({ lie_biao: [], zong_shu: 0 }),
@@ -251,8 +252,7 @@ describe('P1-7 聊天链路失败态治理', () => {
       vi.mocked(faSongXiaoXi).mockRejectedValue(new Error(huoQuFanYi('liaoTian', 'faSongShiBai')))
       const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
 
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('会失败的消息')
+      await xieRuShuRuQu(wrapper, '会失败的消息')
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
 
@@ -283,8 +283,7 @@ describe('P1-7 聊天链路失败态治理', () => {
         })
       const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
 
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('会失败的消息')
+      await xieRuShuRuQu(wrapper, '会失败的消息')
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
       expect(vi.mocked(faSongXiaoXi)).toHaveBeenCalledTimes(1)
@@ -303,8 +302,7 @@ describe('P1-7 聊天链路失败态治理', () => {
       vi.mocked(faSongXiaoXi).mockRejectedValue(new Error('网络异常'))
       const { wrapper } = await mountLiaoTianYeMian()
 
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('连续失败')
+      await xieRuShuRuQu(wrapper, '连续失败')
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
 
@@ -318,7 +316,7 @@ describe('P1-7 聊天链路失败态治理', () => {
     it('FP-09b 重发复用同一把幂等键，列表始终只有这一条用户消息', async () => {
       const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
       const 上报的键: Array<string | null | undefined> = []
-      vi.mocked(faSongXiaoXi).mockImplementation(async (_huiHuaId, neiRong, miDengJian) => {
+      vi.mocked(faSongXiaoXi).mockImplementation(async ({ neiRong, miDengJian }) => {
         上报的键.push(miDengJian)
         if (上报的键.length === 1) throw new Error('网络异常')
         return {
@@ -338,8 +336,7 @@ describe('P1-7 聊天链路失败态治理', () => {
       })
       const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
 
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('重发这一句')
+      await xieRuShuRuQu(wrapper, '重发这一句')
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
       expect(聊天仓库.xiaoXiLieBiao.filter((m) => m.nei_rong === '重发这一句')).toHaveLength(1)

@@ -2,14 +2,17 @@ import { test, expect, type APIRequestContext, type Browser, type Page } from '@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { 读文本 } from './输入区取样'
 import {
   daKaiJiaJuQingQiu,
   baoZhengCeShiZhangHao,
   zhuRuJiaJuShenFen,
+  dingZhuWuQuanXianShenFen,
   type JiaJuShenFen,
 } from './测试夹具'
 import { createConsoleCollector } from './console-error-collector'
 import { scanScrollStrip } from './滚动条像素取样'
+import { 卡内白条普查 } from './焦点白条取样-fp03'
 
 /**
  * FP-11 浏览器取证与零错误总门禁（末道验收）。
@@ -30,14 +33,34 @@ import { scanScrollStrip } from './滚动条像素取样'
  *   F25 core.autocrlf=true ⇒ 源码正则一律 `\r?\n`。
  *   主线程可被认证页 3D 背景压到 0.03~2.3 帧/秒 ⇒ 判据一律走协议帧/事件/时间戳，不设帧距上限。
  *   禁止与 `npx vitest run` 并发运行本文件。
+ *
+ * 定点复跑必踩的两个坑（FP-10c⑤ 备案，给后人省事）：
+ *   ① `--grep` 匹配的是 Playwright **完整标题**（`<文件相对路径> › <test 标题>`），所以
+ *      `--grep="^场景D"`、`-g "^场景E"` 这类锚定开头一律 `No tests found`（上一名在此浪费两轮）。
+ *      正确用法：直接给标题子串，如 `--grep="场景D"`，或更稳的 `--grep "fp11-menjin.*场景E"`；
+ *      只跑单条也可用 `--grep-invert` 排除法或 `--last-failed`。
+ *   ② 证据目录常量默认值按主树深度解析（`../../../.agents`）——worktree（`.wt/<lane>`）里会落到
+ *      `.wt/.agents`。已按 fp32 的 FP32_EVIDENCE_DIR 先例支持 `FP11_EVIDENCE_DIR` 覆盖
+ *      （复跑另换 `FP11_PREFIX` / `FP11_EVIDENCE_SUFFIX`，L-10 覆盖事故纪律）。
  */
 
 const 本目录 = path.dirname(fileURLToPath(import.meta.url))
 const 截图目录 = path.resolve(本目录, '../../测试截图')
-const 证据目录 = path.resolve(本目录, '../../../.agents/evidence/traces')
+/*
+ * 证据目录：主树里 `tests/../../../.agents` 命中仓库根的 .agents，但在 worktree（`.wt/<lane>`）里
+ * 同一串相对路径会落到 `.wt/.agents`（深度差一层），取证产物就地分裂。
+ * 与 fp32 的 FP32_EVIDENCE_DIR 同一条先例：一律允许 env 覆盖，默认值不动，免得改契约。
+ */
+const 证据目录 = process.env.FP11_EVIDENCE_DIR ?? path.resolve(本目录, '../../../.agents/evidence/traces')
 const 后端翻译路径 = path.resolve(本目录, '../../backend/src/config/translations.ts')
 const 日期 = '20260921'
-const 前缀 = 'fp11'
+/**
+ * 取证落盘命名（FP-24c）：`测试截图/` 与 `.agents/evidence/traces/` 均不在 git 内，
+ * 复跑本文件若沿用默认名会**覆盖上一轮的取证产物**（L-10 已发生过一次不可恢复事故）。
+ * 故定点复跑一律用 `FP11_PREFIX` / `FP11_EVIDENCE_SUFFIX` 换名，默认值保持原样不改契约。
+ */
+const 前缀 = process.env.FP11_PREFIX || 'fp11'
+const 证据后缀 = process.env.FP11_EVIDENCE_SUFFIX ? `-${process.env.FP11_EVIDENCE_SUFFIX}` : ''
 
 const 视口清单 = [
   { 名: '桌面1440x900', 宽: 1440, 高: 900 },
@@ -455,7 +478,17 @@ async function 采认证与草地(浏览器: Browser, 组: 组合, 收敛探针:
   }
   记行('A 草地背景(A1)', 组, 草地值, 截图.filter((项) => 项.includes('-caodi-')), 探针值)
 
-  /* —— 缺陷1：文本输入框焦点不绘 outline；缺陷2：表单居中 —— */
+  /* —— 缺陷1（FP-03 契约演进）：白线真因是 .dixian-dixian 字段下划线装饰，已删；
+     焦点反馈改由 FP-01 的 --jujiao-huan-*-wenben 令牌窄环承担。
+     旧断言「输入框 outline=none 且金色下划线 matrix(1,0,0,1,0,0) 在位」把本缺陷钉成了契约，
+     现改为像素判据：聚焦时输入框上下各 ±6px 判定带内不得存在任何亮条/近白横向条带。
+     FP-27 取证结论（本 test 的 1 处命中不是产品缺陷，也不是取样模式问题）：命中的是那 1px
+     焦点环自身的跨行栅格化残影——环色 --jujiao-huan-yanse #8eafc5 被摊到相邻两设备行
+     （实测 47%/43% 覆盖率，残影行 rgb(75,93,113)、Δ=67、连续 241px；该行 elementsFromPoint 只有
+     .biaodan-rongqi 卡面，无任何自绘线元素），而取样真源只按算式排除了环「自己那一行」，
+     漏掉跨过去的第二行。已在 tests/焦点白条取样-fp03.ts 按『像素取证口径定案』④
+     「焦点环跨行 ±2 行容差」补齐：距环 ≤2 行且与环色同色相（base→outline 线性内插）的行才豁免，
+     香槟金那类异色装饰线（Δ=192）依旧落网。±6px 判定带 / 连续 ≥40px / Δ24 三个判据一字未改。 —— */
   await page.click('#denglu-shoujihao')
   await page.waitForTimeout(500)
   const 焦点态 = await page.evaluate(() => {
@@ -463,8 +496,8 @@ async function 采认证与草地(浏览器: Browser, 组: 组合, 收敛探针:
     const cs = getComputedStyle(元)
     const 口 = document.querySelector('.yemian-rongqi') as HTMLElement | null
     const 表单 = document.querySelector('.denglu-neirong') as HTMLElement | null
-    const 线 = document.querySelector('.dixian-dixian') as HTMLElement | null
     const 标 = document.querySelector('.fudong-biaoqian') as HTMLElement | null
+    const 根 = getComputedStyle(document.documentElement)
     const 偏 =
       口 && 表单
         ? Math.round(
@@ -478,25 +511,71 @@ async function 采认证与草地(浏览器: Browser, 组: 组合, 收敛探针:
     return {
       outline式: cs.outlineStyle,
       outline宽: cs.outlineWidth,
-      下划线: 线 ? getComputedStyle(线, '::after').transform : 'n/a',
+      outline色: cs.outlineColor,
+      outline偏: cs.outlineOffset,
+      环令牌宽: 根.getPropertyValue('--jujiao-huan-kuan-du-wenben').trim(),
+      环令牌色: 根.getPropertyValue('--jujiao-huan-yanse').trim(),
+      装置像素比: window.devicePixelRatio,
+      装饰线元素数: document.querySelectorAll('.dixian-dixian').length,
       标签色: 标 ? getComputedStyle(标).color : 'n/a',
       居中偏差: 偏,
       滚动口: 口 ? `${口.scrollHeight}/${口.clientHeight}` : 'n/a',
     }
   })
+  // FP-24c 的像素取证图：判据用的那张图直接落盘（一次截图两用），文件名带组合以免互相覆盖
+  const 焦点带 = await 卡内白条普查(
+    page,
+    '.biaodan-rongqi',
+    ['#denglu-shoujihao', '#denglu-mima'],
+    path.join(截图目录, `${前缀}-pass-${组合名(组)}-baitiao-pucha-20260922.png`),
+  )
   const 登录值: Record<string, string | number> = {
     主题属性: await 读主题属性(page),
-    输入框outline: `${焦点态.outline式} ${焦点态.outline宽}`,
-    焦点下划线: 焦点态.下划线,
+    输入框outline: `${焦点态.outline式} ${焦点态.outline宽} ${焦点态.outline色} offset ${焦点态.outline偏}`,
+    焦点环令牌: `${焦点态.环令牌宽} ${焦点态.环令牌色}`,
+    装饰线元素数: 焦点态.装饰线元素数,
+    判定带亮条命中: 焦点带.判定带命中.length,
+    判定带明细: 焦点带.判定带命中
+      .map((命) => `${命.选择器}${命.段} ${命.条带.厚度}px ${命.条带.中位亮条色} L=${命.条带.相对亮度} Δ=${命.条带.对卡面色差}`)
+      .join(' / ') || '无',
     焦点标签色: 焦点态.标签色,
     表单水平偏差px: 焦点态.居中偏差,
     滚动口scrollH除clientH: 焦点态.滚动口,
   }
-  expect(焦点态.outline式, '缺陷1 回归：文本输入框仍绘制 outline（白线）').toBe('none')
-  // 缺陷1 摘掉 outline 后，金色下划线 scaleX(1) 就是文本框唯一的焦点指示，必须在位（FP-02 契约）
-  expect(焦点态.下划线, `缺陷1 副作用：文本输入框既无 outline 也无下划线焦点指示（${焦点态.下划线}）`).toMatch(
-    /matrix\(1,\s*0,\s*0,\s*1,\s*0,\s*0\)/,
-  )
+  // 契约①：文本框必须带 FP-01 令牌窄环（不得退回"无焦点反馈"）
+  //  FP-24c 改判维度：旧断言拿 `getComputedStyle().outlineWidth` 的**字符串**与令牌文本做 `toBe`，
+  //  而本文件按 F21/『像素取证口径定案』必须 headed 跑（同场景要取滚动条像素，headless 的
+  //  --hide-scrollbars 会抹掉自绘滚动条，白条带取样除外——那一处归 fp03 取证 spec 的 headless 档），
+  //  headed 下 Chromium 把 1px 描边读成 0.8px（相邻两行栅格化分摊）⇒ 该断言恒红，
+  //  并把排在它后面的契约②③（需求 #1 的真正判据）整体挡在门外。
+  //  现按「解析值 + 亚像素容差」判：容差上限 0.5 CSS px（DPR=1 时一个设备像素的一半），
+  //  既吃掉 0.8↔1.0 的栅格化误差，又保得住 1px 窄环与 2px 标准环的区分度（相差 1px > 0.5px 必红）。
+  expect(焦点态.outline式, `FP-03 回归：文本输入框无可见焦点环（${焦点态.outline式}）`).toBe('solid')
+  const 令牌环宽 = Number.parseFloat(焦点态.环令牌宽)
+  const 实测环宽 = Number.parseFloat(焦点态.outline宽)
+  const 环宽容差 = Math.min(0.5, Math.max(0.2, 0.5 / (焦点态.装置像素比 || 1)))
+  expect(令牌环宽, `FP-03 契约前提：--jujiao-huan-kuan-du-wenben 解析不出数值（${焦点态.环令牌宽}）`).not.toBeNaN()
+  expect(实测环宽, `FP-03 契约前提：outline-width 解析不出数值（${焦点态.outline宽}）`).not.toBeNaN()
+  expect(实测环宽, 'FP-03 回归：焦点环宽度为 0（无可见焦点反馈）').toBeGreaterThan(0)
+  expect(
+    Math.abs(实测环宽 - 令牌环宽),
+    `FP-03 回归：焦点环宽度未走 --jujiao-huan-kuan-du-wenben（实测 ${实测环宽}px / 令牌 ${令牌环宽}px / DPR ${焦点态.装置像素比} / 容差 ${环宽容差}px）`,
+  ).toBeLessThanOrEqual(环宽容差)
+  登录值.焦点环实测宽px = 实测环宽
+  登录值.焦点环令牌宽px = 令牌环宽
+  登录值.装置像素比 = 焦点态.装置像素比
+  登录值.焦点环容差px = 环宽容差
+  // 派生 config 陷阱自证：project 层钉死的 viewport/deviceScaleFactor 是否真的落到取样上下文
+  登录值.取样视口 = `${焦点带.几何.视口.宽}x${焦点带.几何.视口.高}`
+  登录值.取样设备像素比 = 焦点带.几何.设备像素比
+  // 契约②：白线根因已除——装饰线元素与判定带内亮条条带双双为零（环残影容差见取样真源）
+  expect(焦点态.装饰线元素数, 'FP-03 回归：.dixian-dixian 装饰线元素仍存在').toBe(0)
+  expect(
+    焦点带.判定带命中.length,
+    `FP-03 回归：聚焦时输入框 ±6px 判定带内出现 ${焦点带.判定带命中.length} 处亮条横向条带（需求 #1 白线）：${
+      登录值.判定带明细
+    }`,
+  ).toBe(0)
   expect(Math.abs(焦点态.居中偏差), '缺陷2 回归：登录表单水平不居中').toBeLessThanOrEqual(1)
   截图.push(await 拍照(page, 组, 'denglu', 'jujiao'))
 
@@ -520,7 +599,11 @@ async function 采认证与草地(浏览器: Browser, 组: 组合, 收敛探针:
   expect(parseFloat(环.宽), `缺陷1 回归：焦点环宽度为 0（${环.元}）`).toBeGreaterThan(0)
   记行('B 认证页-登录(缺陷1/2)', 组, 登录值, 截图.filter((项) => 项.includes('-denglu-')), 探针值)
 
-  /* —— 缺陷2 注册态：滚动口必须真的出条 —— */
+  /* —— 缺陷2 注册态：滚动口必须真的出条（FP-24d 按 FP-04a 新契约改判）——
+     旧判据钉的是 R2 时代的 JS 状态类形态：`overflow:visible` + 条件类 xuyao-gundong 才给滚动口。
+     新契约：宿主恒为 .biaodan-gundong、overflow-y:scroll、**不再有任何 JS 状态类**；
+     条宽按已定案口径 ≥7px 恒可见（不随溢出与否变化），可拖/像素只在溢出时判。
+     判据不吃具体溢出像素，对 FP-04b（即将调字段上下间距）不敏感。 */
   await page.locator('.biaoqian-anniu').filter({ hasText: '注册' }).first().click()
   await page.waitForTimeout(1500)
   const 注册态 = await page.evaluate(() => {
@@ -532,19 +615,23 @@ async function 采认证与草地(浏览器: Browser, 组: 组合, 收敛探针:
       scrollH: 条.scrollHeight,
       clientH: 条.clientHeight,
       溢出: 条.scrollHeight > 条.clientHeight,
-      需类: 条.classList.contains('xuyao-gundong'),
+      额外类: [...条.classList].filter((名) => 名 !== 'biaodan-gundong').join(' '),
+      overflowY: cs.overflowY,
       scrollbarWidth属: cs.scrollbarWidth,
       生效条宽: Math.round((条.offsetWidth - 条.clientWidth) * 100) / 100,
     }
   })
   const 注册值: Record<string, string | number> = { 主题属性: await 读主题属性(page), 注册滚动口: JSON.stringify(注册态) }
-  expect(注册态.在场, '缺陷2 前提：注册滚动口 .biaodan-gundong 不在场').toBe(true)
+  expect(注册态.在场, 'FP-04a 回归：滚动口宿主 .biaodan-gundong 不在场（宿主须恒定存在）').toBe(true)
+  if (注册态.在场) {
+    expect(注册态.overflowY, `FP-04a 回归：滚动口不再是恒定 overflow-y:scroll（${注册值.注册滚动口}）`).toBe('scroll')
+    expect(注册态.额外类, `FP-04a 回归：滚动口宿主又长出了 JS 状态类（R2 的 xuyao-gundong 形态）：${注册态.额外类}`).toBe('')
+    expect(注册态.生效条宽, `FP-04 回归：滚动条条宽 <7px，未恒可见（${注册值.注册滚动口}）`).toBeGreaterThanOrEqual(7)
+  }
   if (注册态.在场 && 注册态.溢出) {
     const 带 = await 条带取色(page, '.biaodan-gundong', Math.max(4, 注册态.生效条宽))
     注册值.注册条带色 = 带.条带色
     注册值.注册内容色 = 带.内容色
-    expect(注册态.需类, `缺陷2 回归：注册口溢出却未挂 xuyao-gundong（${注册值.注册滚动口}）`).toBe(true)
-    expect(注册态.生效条宽, `缺陷2 回归：注册滚动条不占位/不可点（生效条宽 ${注册态.生效条宽}）`).toBeGreaterThanOrEqual(4)
     expect(带.条带色, `缺陷2 回归：滚动条条带与内容同色（画不出来）：${带.条带色}`).not.toBe(带.内容色)
   }
   截图.push(await 拍照(page, 组, 'zhuCe', 'full'))
@@ -583,6 +670,37 @@ async function 采向导(浏览器: Browser, 组: 组合, 身份: JiaJuShenFen) 
   }
   await page.waitForTimeout(4000)
 
+  /* —— 场景C 判据（FP-31 改判，旧→新逐条）——
+     旧：①`读()` 只取 `backgroundColor`；②`expect(三档唯一(按钮底色)).toBe(3)`、③`toBe(3)`（圆点）。
+     红的两件事与改判依据：
+       (a) 主按钮 `.anniu-zhuYao` 自**基线**起就是 `background: linear-gradient(135deg,
+           var(--xingbie-se-1), var(--xingbie-se-2))`（`git show HEAD:...资料设置向导.vue:1038`），
+           shorthand 把 background-color 复位为 transparent ⇒ 三态底色恒等 `rgba(0, 0, 0, 0)`，
+           "三档互异"在 background-color 通道上**永不可满足**（FP-30 实跑报出的即是这条死红，
+           非 FP-15b 引入；属 R6「门禁把缺陷钉成契约」同族）。判据换到承载性别色的
+           **background-image** 通道，并逐元素回读该卡自己的 `--xingbie-se-*` 解析值做等式，
+           不在 spec 里抄第二份色值真源（那会制造 R1 的第二真源）。
+       (b) FP-15b 按需求 #16 明文把"未选对象 + 无默认性别"的档由中性灰改为**蓝按钮**
+           （`utils/性别.ts::解析选中框配色档/解析主色档`，证据 FP-15b §⑥「需求兜底档」）
+           ⇒ 未选与男两态**本应同源**，"三档唯一"这个判定维度本身是错的。
+     新（判定维度只增不减）：档序三态逐一核（nan/nan/nv）＋ 渐变两色标 == 本档 --xingbie-se-1/-2
+     ＋ 文字色 == --xingbie-se-wenben ＋ 圆点当前底色 == --xingbie-se-2 ＋ 男女两档两两互异（区分度
+     保留）＋ 未选与男同源（需求 #16 兜底）＋ 浅色圆点不被主题覆写压成 rgba(55,42,63,.5) 原样保留。 */
+  const 色三元 = (原始: string): string => {
+    const 串 = 原始.trim()
+    const 长 = /^#([0-9a-fA-F]{6})$/.exec(串)
+    if (长) {
+      const 值 = 长[1]
+      return `rgb(${parseInt(值.slice(0, 2), 16)}, ${parseInt(值.slice(2, 4), 16)}, ${parseInt(值.slice(4, 6), 16)})`
+    }
+    const 短 = /^#([0-9a-fA-F]{3})$/.exec(串)
+    if (短) {
+      const 值 = 短[1]
+      return `rgb(${parseInt(值[0] + 值[0], 16)}, ${parseInt(值[1] + 值[1], 16)}, ${parseInt(值[2] + 值[2], 16)})`
+    }
+    return 串.replace(/\s+/g, ' ')
+  }
+
   const 取色 = () =>
     page.evaluate(() => {
       const 读 = (选: string) => {
@@ -591,12 +709,31 @@ async function 采向导(浏览器: Browser, 组: 组合, 身份: JiaJuShenFen) 
         const cs = getComputedStyle(元)
         return {
           底: cs.backgroundColor,
+          渐变: cs.backgroundImage,
           文字: cs.color,
           属性: 元.closest('.ziliao-kapian')?.getAttribute('data-xingbie') ?? '(无)',
+          档一: cs.getPropertyValue('--xingbie-se-1').trim(),
+          档二: cs.getPropertyValue('--xingbie-se-2').trim(),
+          档文: cs.getPropertyValue('--xingbie-se-wenben').trim(),
         }
       }
       return { 按钮: 读('.anniu-zhuYao'), 圆点: 读('.jindu-dian.dangQian'), 卡: 读('.ziliao-kapian') }
     })
+
+  type 采 = Awaited<ReturnType<typeof 取色>>
+  const 档核 = (项: 采, 标签: string, 期望档: 'nan' | 'nv') => {
+    const 按 = `${标签}：`
+    expect(项.按钮, `${按}主按钮 .anniu-zhuYao 未渲染`).not.toBeNull()
+    expect(项.圆点, `${按}当前进度圆点 .jindu-dian.dangQian 未渲染`).not.toBeNull()
+    expect(项.卡?.属性, `${按}.ziliao-kapian 的 data-xingbie 档与需求 #16 不符`).toBe(期望档)
+    const 钮 = 项.按钮!
+    expect(钮.渐变, `${按}主按钮渐变不再等于本档 --xingbie-se-1/-2 的解析值（性别色被改写或令牌断链）`).toBe(
+      `linear-gradient(135deg, ${色三元(钮.档一)}, ${色三元(钮.档二)})`,
+    )
+    expect(色三元(钮.档一), `${按}同一张卡的两枚档色标同色 ⇒ 档映射塌陷`).not.toBe(色三元(钮.档二))
+    expect(钮.文字, `${按}主按钮文字色不吃 --xingbie-se-wenben`).toBe(色三元(钮.档文))
+    expect(项.圆点!.底, `${按}进度圆点当前底色不吃本档 --xingbie-se-2`).toBe(色三元(项.圆点!.档二))
+  }
 
   const 未选 = await 取色()
   截图.push(await 拍照(page, 组, 'xiangDao', 'wei-xuan', '.ziliao-kapian'))
@@ -608,15 +745,26 @@ async function 采向导(浏览器: Browser, 组: 组合, 身份: JiaJuShenFen) 
   const 男 = await 点档('男')
   const 女 = await 点档('女')
   值.主题属性 = await 读主题属性(page)
+  // 派生 config 的 viewport 陷阱（2026-09-22『Playwright 派生配置陷阱』）：档位标注必须回读自证
+  值.取样视口 = await page.evaluate(() => `${innerWidth}x${innerHeight}`)
+  expect(值.取样视口, `viewport 未生效，档位标注 ${组合名(组)} 不可信`).toBe(`${组.视口.宽}x${组.视口.高}`)
   值.性别档 = `${未选.卡?.属性} → ${男.卡?.属性} → ${女.卡?.属性}`
   值.按钮底色 = [未选.按钮?.底, 男.按钮?.底, 女.按钮?.底].join(' | ')
+  值.按钮渐变 = [未选.按钮?.渐变, 男.按钮?.渐变, 女.按钮?.渐变].join(' | ')
   值.按钮文字 = [未选.按钮?.文字, 男.按钮?.文字, 女.按钮?.文字].join(' | ')
   值.圆点底色 = [未选.圆点?.底, 男.圆点?.底, 女.圆点?.底].join(' | ')
+  值.档色标 = [未选, 男, 女].map((项) => `${项.卡?.属性}=${项.按钮?.档一}/${项.按钮?.档二}`).join(' | ')
   截图.push(await 拍照(page, 组, 'xiangDao', 'nv', '.ziliao-kapian'))
-  const 三档唯一 = (取: (项: typeof 未选) => string | undefined) =>
-    new Set([未选, 男, 女].map((项) => 取(项))).size
-  expect(三档唯一((项) => 项.按钮?.底), `缺陷3 回归：主按钮底色不随性别三档变化 → ${值.按钮底色}`).toBe(3)
-  expect(三档唯一((项) => 项.圆点?.底), `缺陷3/F24 回归：进度圆点不随性别三档变化 → ${值.圆点底色}`).toBe(3)
+
+  档核(未选, '未选对象+服务端默认性别钉成 null（需求 #16 兜底档）', 'nan')
+  档核(男, '对象=男', 'nan')
+  档核(女, '对象=女', 'nv')
+  // 区分度：男女两档不得串色（旧"三档互异"里唯一仍然成立的那一半）
+  expect(色三元(男.按钮!.档一), `男/女两档串色：${值.档色标}`).not.toBe(色三元(女.按钮!.档一))
+  expect(色三元(男.按钮!.档二), `男/女两档串色：${值.档色标}`).not.toBe(色三元(女.按钮!.档二))
+  // 需求 #16 明文：无默认性别的未选态 = 蓝按钮 ⇒ 与男档同源（FP-15b 的"需求兜底档"改判）
+  expect(色三元(未选.按钮!.档一), `未选档未与男档同源（蓝按钮）：${值.档色标}`).toBe(色三元(男.按钮!.档一))
+  expect(色三元(未选.按钮!.档二), `未选档未与男档同源（蓝按钮）：${值.档色标}`).toBe(色三元(男.按钮!.档二))
   expect(值.圆点底色, 'F24 回归：浅色档圆点又被主题覆写压成 rgba(55,42,63,.5)').not.toContain('rgba(55, 42, 63, 0.5)')
   await page.context().close()
   return 记行('C 向导性别配色(缺陷3)', 组, 值, 截图, 探针值)
@@ -638,8 +786,15 @@ async function 开聊天页(浏览器: Browser, 组: 组合, 身份: JiaJuShenFe
   return { page, 探针值, 连接 }
 }
 
-async function 进聊天页(浏览器: Browser, 组: 组合, 身份: JiaJuShenFen, 角色ID: string) {
+async function 进聊天页(
+  浏览器: Browser,
+  组: 组合,
+  身份: JiaJuShenFen,
+  角色ID: string,
+  导航前?: (页: Page) => Promise<void>,
+) {
   const 开 = await 开聊天页(浏览器, 组, 身份)
+  if (导航前) await 导航前(开.page)
   await 开.page.goto(`/chat/${角色ID}`, { waitUntil: 'domcontentloaded' })
   await expect(开.page.locator('.shuru-kuang'), `聊天输入区未渲染：${组合名(组)}`).toBeVisible({ timeout: 90000 })
   await 开.page.waitForTimeout(2500)
@@ -647,7 +802,10 @@ async function 进聊天页(浏览器: Browser, 组: 组合, 身份: JiaJuShenFe
 }
 
 async function 采聊天静态(浏览器: Browser, 组: 组合, 身份: JiaJuShenFen, 角色ID: string) {
-  const { page, 探针值 } = await 进聊天页(浏览器, 组, 身份, 角色ID)
+  // 缺陷11 的「无权限」档：迁移 034（自测提权）已把全库三旗标置真，夹具账号在服务端拿到 chao_guan，
+  // 库里不再天然存在无权限账号。这里只把 `/api/认证/信息` 下发的 jiao_se/neng_li 钉成空，
+  // 真链路（HTTP → jiaZaiYongHu → 归一 → keGuanLiZhiDu → 秘籍分支）照跑，断言一条不减。
+  const { page, 探针值 } = await 进聊天页(浏览器, 组, 身份, 角色ID, dingZhuWuQuanXianShenFen)
   const 值: Record<string, string | number> = {}
   const 截图: string[] = []
 
@@ -756,21 +914,97 @@ async function 采聊天静态(浏览器: Browser, 组: 组合, 身份: JiaJuShe
   await page.click('.shuru-kuang', { timeout: 30000 })
   await page.fill('.shuru-kuang', 无权限口令)
   await page.press('.shuru-kuang', 'Enter')
-  const 提示 = page.locator('.fasong-cuowu')
+  /* FP-07 契约演进（需求 #8）：发送错误行 `.fasong-cuowu` 已并入 components/提示带.vue，
+     与 AI 声明同一条带、错误占右槽 `.tishi-dai-cuowu`（`.fasong-cuowu` 现只承载「草稿已恢复」，
+     旧选择器在本场景永远等不到 ⇒ 30s 超时红 ⇒ 需求 #8 唯一的行为级门禁从未执行）。
+     断言同时加严：不止"元素在位"，还要真机计算值允许选中 + 真机 getSelection() 真的选得中。 */
+  const 提示带 = page.locator('.tishi-dai')
+  const 提示 = 提示带.locator('.tishi-dai-cuowu')
   await 提示.waitFor({ state: 'visible', timeout: 30000 })
   const 提示文本 = (await 提示.innerText()).trim()
   const 提示可见 = await 提示.isVisible()
   const 提示色 = await 提示.evaluate((元) => getComputedStyle(元).color)
+  const 槽在带内 = await 提示.evaluate((元) => !!(元.parentElement && 元.parentElement.classList.contains('tishi-dai')))
+  const 带内右槽 = await 提示带.evaluate((带元) => {
+    const 槽们 = [...带元.querySelectorAll(':scope > span')]
+    const 右 = 槽们[槽们.length - 1]
+    const 声明 = 槽们[0]
+    return {
+      槽数: 槽们.length,
+      右槽类: 右 ? String(右.className) : '(无)',
+      右槽在最右: !!(右 && 声明 && 右.getBoundingClientRect().left >= 声明.getBoundingClientRect().left),
+    }
+  })
+  const 选中计算值 = await 提示.evaluate((元) => {
+    const 自 = getComputedStyle(元)
+    const 父 = getComputedStyle(元.parentElement ?? 元)
+    const 可选族 = new Set(['text', 'auto', 'all', '-webkit-auto'])
+    const 取 = (cs: CSSStyleDeclaration) => (cs.userSelect || cs.getPropertyValue('-webkit-user-select') || '').trim()
+    return {
+      槽userSelect: 取(自),
+      槽webkitUserSelect: 自.getPropertyValue('-webkit-user-select'),
+      槽pointerEvents: 自.pointerEvents,
+      带userSelect: 取(父),
+      带pointerEvents: 父.pointerEvents,
+      槽允许选中: 可选族.has(取(自)) && 自.pointerEvents !== 'none',
+      带允许选中: 可选族.has(取(父)) && 父.pointerEvents !== 'none',
+    }
+  })
+  const 槽盒 = await 提示.boundingBox()
+  expect(槽盒, '需求 #8 取证前提：取不到错误提示槽的几何').toBeTruthy()
+  await page.evaluate(() => (window as unknown as { getSelection(): Selection | null }).getSelection()?.removeAllRanges())
+  await 提示.dblclick({ position: { x: Math.max(2, (槽盒?.width ?? 0) / 2), y: Math.max(2, (槽盒?.height ?? 0) / 2) } })
+  const 双击选区 = (await page.evaluate(() => String(window.getSelection()?.toString() ?? ''))).trim()
+  await page.evaluate(() => window.getSelection()?.removeAllRanges())
+  await page.mouse.move(槽盒!.x + 1, 槽盒!.y + 1)
+  await page.mouse.down()
+  await page.mouse.move(槽盒!.x + 槽盒!.width - 1, 槽盒!.y + 槽盒!.height - 1, { steps: 12 })
+  await page.mouse.up()
+  const 拖选文本 = (await page.evaluate(() => String(window.getSelection()?.toString() ?? ''))).trim()
+  // 需求 #8 的可见证据：趁选区还在时把整条带截下来（选中底纹即"能选中"的像素级证明）
+  await 提示带.screenshot({
+    path: path.join(截图目录, `${前缀}-pass-${组合名(组)}-20260922.png`),
+    timeout: 120000,
+  })
+  await page.evaluate(() => window.getSelection()?.removeAllRanges())
   const 面板开 = await page.locator('.guanli-jiankong-fuchuang').count()
-  const 输入已清 = (await page.inputValue('.shuru-kuang')) === ''
+  // FP-10c 改判：载体从 <textarea> 换成图文真内联的 contenteditable 后，inputValue() 直接抛
+  // 「Node is not an <input>」（Playwright 1.63 只认 input/textarea）。语义不变：那条指令发完
+  // 输入区必须清空 ⇒ 改读同一条文字流投影（读文本 与组件 xuLieHua 同口径：图片原子块不计文字、
+  // 空态那个只供光标落脚的 <br> 不计换行），判据仍是「等于空串」，不放宽。
+  const 输入已清 = (await 读文本(page)) === ''
   值.无权限提示 = 提示文本
   值.提示可见 = 提示可见 ? '是' : '否'
   值.提示颜色 = 提示色
+  值.提示槽计算值 = `槽 user-select=${选中计算值.槽userSelect}/${选中计算值.槽webkitUserSelect} pointer-events=${选中计算值.槽pointerEvents}；带 user-select=${选中计算值.带userSelect} pointer-events=${选中计算值.带pointerEvents}`
+  值.带内槽数 = 带内右槽.槽数
+  值.双击选中文本 = 双击选区 || '(空选区)'
+  值.拖选选中文本 = 拖选文本 || '(空选区)'
   值.管理员面板开 = 面板开
   值.指令后输入清空 = 输入已清 ? '是' : '否'
   expect(提示文本, '缺陷11 回归：无权限提示文案不是翻译值').toBe(无权限文案)
   expect(面板开, '缺陷11 回归：无权限账号仍弹出了管理员面板').toBe(0)
   expect(输入已清, '缺陷11：秘籍指令未被吃掉（输入框残留）').toBe(true)
+  // 需求 #8：错误提示必须在「一条带」的右侧槽内，且真机可选中文本
+  expect(槽在带内, '需求 #8 回归：.tishi-dai-cuowu 不在 .tishi-dai 带内').toBe(true)
+  expect(带内右槽.槽数, '需求 #8 回归：提示带内槽数不是 2（AI 声明 + 错误）').toBe(2)
+  expect(带内右槽.右槽类, '需求 #8 回归：带内最右槽不是错误槽').toContain('tishi-dai-cuowu')
+  expect(带内右槽.右槽在最右, '需求 #8 回归：错误提示不在带的右侧').toBe(true)
+  expect(选中计算值.槽userSelect, '需求 #8 回归：错误槽计算值仍是 user-select:none').not.toBe('none')
+  expect(选中计算值.槽pointerEvents, '需求 #8 回归：错误槽 pointer-events:none 导致无法命中选中').not.toBe('none')
+  expect(选中计算值.带userSelect, '需求 #8 回归：带体 user-select:none 会继承到槽上').not.toBe('none')
+  expect(选中计算值.带pointerEvents, '需求 #8 回归：带体 pointer-events:none 屏蔽整条命中').not.toBe('none')
+  expect(选中计算值.槽允许选中 && 选中计算值.带允许选中, `需求 #8 回归：真机计算值不允许选中（${值.提示槽计算值}）`).toBe(true)
+  expect(双击选区.length, '需求 #8 回归：错误提示双击选不中任何字符（真机仍不可选中）').toBeGreaterThan(0)
+  expect(
+    提示文本.includes(双击选区),
+    `需求 #8：双击选出的文本不属于该提示（选到别处）：${双击选区}`,
+  ).toBe(true)
+  expect(拖选文本.length, '需求 #8 回归：错误提示整段拖选得到空选区').toBeGreaterThan(0)
+  expect(
+    拖选文本,
+    `需求 #8 回归：整段拖选未能覆盖错误提示关键文本（实测选区「${拖选文本}」）`,
+  ).toContain('管理员面板')
   截图.push(await 拍照(page, 组, 'liaotian', 'wuquanxian'))
   值.主题属性 = await 读主题属性(page)
   await page.context().close()
@@ -778,6 +1012,9 @@ async function 采聊天静态(浏览器: Browser, 组: 组合, 身份: JiaJuShe
 }
 
 /* ───────────────────────── 场景E：过往战绩底板 + 真拖拽跟手（缺陷7） ───────────────────────── */
+
+/** Chromium 把派发的鼠标坐标落到整数 CSS px（实测 82.8 → 82），取样目标一律先取整再算名义位移 */
+const 整 = (n: number) => Math.round(n)
 
 async function 采战绩(浏览器: Browser, 组: 组合, 身份: JiaJuShenFen, 拖一把: boolean) {
   const { page, 探针值 } = await 开上下文(浏览器, 组)
@@ -787,67 +1024,147 @@ async function 采战绩(浏览器: Browser, 组: 组合, 身份: JiaJuShenFen, 
   await page.goto('/guo-wang-zhan-ji', { waitUntil: 'domcontentloaded' })
   await expect(page.locator('.zhanji-kapian').first(), `战绩卡片未渲染：${组合名(组)}`).toBeVisible({ timeout: 90000 })
   await page.waitForTimeout(2500)
+  /* —— 场景E 判据（FP-31 改判，旧→新）——
+     旧：`expect(卡背景).toBe(令牌)` —— 读的是 `.zhanji-kapian`（拖拽外壳）。
+     红因归属（FP-31 实查，与 FP-30 的"未做功能"猜测不同）：**不是**未做功能的既有红，
+     而是断言面从基线起就指错元素 ⇒ 自基线恒红的死门禁（FP-24c 同族："门禁把缺陷钉成契约"）。
+     依据：①`git show HEAD:frontend/src/views/过往战绩.vue` 的 `.zhanji-kapian` 只声明
+     `display/cursor`，无 background ⇒ 计算值恒 `rgba(0, 0, 0, 0)`，永不可能等于令牌；
+     ②令牌面**已落地**：`--yemian-di-beijing` 由 `.zhanji-yemian` 唯一消费（`过往战绩.vue:1532`），
+     且单测 `__tests__/过往战绩.test.ts:928/931` 反向钉住"页面底板唯一 = .zhanji-yemian、
+     列表/卡片不得自带第二块底板"——旧断言要的正是单测判为违规的那一半；
+     ③FP-22g 管的是落点空位环/选中串色，与底板无关。⇒ 本单不动 src，只把断言搬到已落地的那一面，
+     判定维度由 1 条增到 3 条（底板吃令牌 + 外壳不得自带底板 + 滚动层不得自带底板）。 */
   const 底板 = await page.evaluate(() => {
     const 卡 = document.querySelector('.zhanji-kapian') as HTMLElement
+    const 面 = document.querySelector('.zhanji-yemian') as HTMLElement | null
     const 列 = document.querySelector('.zhanji-liebiao') as HTMLElement | null
     return {
       卡背景: getComputedStyle(卡).backgroundColor,
+      面背景: 面 ? getComputedStyle(面).backgroundColor : '(缺 .zhanji-yemian)',
       列背景: 列 ? getComputedStyle(列).backgroundColor : 'n/a',
       令牌: getComputedStyle(document.documentElement).getPropertyValue('--yemian-di-beijing').trim(),
       卡数: document.querySelectorAll('.zhanji-kapian').length,
     }
   })
   值.卡片背景 = 底板.卡背景
+  值.页面底板背景 = 底板.面背景
   值.列表背景 = 底板.列背景
   值.令牌值 = 底板.令牌
   值.卡片数 = 底板.卡数
-  expect(底板.卡背景, '缺陷7 回归：卡片底板未走 --yemian-di-beijing 令牌').toBe(底板.令牌)
+  expect(底板.面背景, `缺陷7 回归：页面底板 .zhanji-yemian 未吃 --yemian-di-beijing 令牌（实际 ${底板.面背景} / 令牌 ${底板.令牌}）`).toBe(
+    底板.令牌,
+  )
+  expect(底板.卡背景, '缺陷7 回归：卡片外壳自带第二块底板（与页面底板叠加）').toBe('rgba(0, 0, 0, 0)')
   expect(底板.列背景, '缺陷7 回归：滚动层自带第二块底板（与卡片叠加）').toBe('rgba(0, 0, 0, 0)')
   截图.push(await 拍照(page, 组, 'zhanji', 'full'))
 
   if (拖一把) {
     expect(底板.卡数, `缺陷7 取证前提：夹具账号真实战绩卡片 ${底板.卡数} 张，不足 2 张`).toBeGreaterThanOrEqual(2)
+    /* —— 跟手取样口径（FP-32 改判，旧→新；0.892 定性与根因）——
+       旧：`let y = 卡中心; move(y-14); y -= 130; move(y)` ⇒ 第二段**指针实际只走 116px**
+       （`y` 从「卡中心」起算，没接住起手探针那 14px），分母却写死名义 130
+       ⇒ 比值恒为 116/130 = 0.892307… → `0.892`。「两次独立实跑同值、与负载无关」正是算术常量的特征，
+       不是行为红。
+       实测（同页同参复跑，逐点表见 `.agents/evidence/traces/FP-32-*`）：
+       ① 目标改成 中心-14-130 后，鬼影内联矩阵 f 由 -14 走到 -144.001，顶边 431.2 → 301.2
+          = 130.00px / 指针 130.00px ⇒ 比值 1.000；
+       ② 逐点 8×30px 每步位移都是 30.00px（累计比值 1.0000），且全程
+          `.zhanji-kapian.sortable-drag` 命中数 = 1、命中元素恒为 `document.body` 直属子、
+          内层 `rotate(2deg) scale(1.02)` 与外层矩阵 a=1 恒定 ⇒ 假设①「拖影与指针不同源」
+          （鬼影被替换/多命中）与假设②「量法吃进 scale」双双被排除——注意 `getBoundingClientRect()`
+          取的是元素**自身**边框盒（实测顶边与「内联 top + 矩阵 f − 页滚动」逐帧等值），
+          不吃内层倾斜的外扩，所以这里没有缩放污染面；
+       ③ 假设③「真实不跟手」由 ① 的 1.000 直接证伪。
+       与需求 #7 浮窗那条 R3「单一几何真源」对照：本件的几何真源**已经是单一的**——库只往鬼影写
+       `matrix` 平移，倾斜/缩放全沉在内层（`过往战绩.vue:2238-2267` + 单测 `过往战绩.test.ts:859`
+       的 F9 钉，正是「外层带 scale ⇒ 卡片只走指针位移的 1/scale」这一类，历史上量出 0.981），
+       故 0.892 **不是**同类 R3 根因，根因在测试自己的分母 ⇒ 只改取样器，不碰 src，
+       更不给比值乘任何补偿系数（那会把一条算术错钉成契约）。
+       新口径：分母改用**页内实测**的指针位移（页面自己记的 mousemove clientY 差），并先钉
+       「实测指针位移 == 名义位移」——算术与真值一旦脱钩，当场红在取样器上，不再伪装成产品缺陷。 */
+    await page.evaluate(() => {
+      window.addEventListener(
+        'mousemove',
+        (事) => {
+          ;(window as unknown as { __fp11指针Y?: number }).__fp11指针Y =
+            Math.round(事.clientY * 100) / 100
+        },
+        { capture: true },
+      )
+    })
     const 卡 = page.locator('.zhanji-liebiao .zhanji-kapian').nth(1)
     const 盒 = await 卡.boundingBox()
     expect(盒, '缺陷7 取证前提：取不到卡片几何').toBeTruthy()
-    const x = 盒!.x + 盒!.width / 2
-    let y = 盒!.y + 盒!.height / 2
-    await page.mouse.move(x, y)
+    const x = 整(盒!.x + 盒!.width / 2)
+    const 中心 = 整(盒!.y + 盒!.height / 2)
+    const 探针 = 14
+    await page.mouse.move(x, 中心)
     await page.mouse.down()
-    await page.mouse.move(x, y - 14, { steps: 5 })
+    await page.mouse.move(x, 中心 - 探针, { steps: 5 })
     await page.waitForTimeout(400)
-    const 甲 = await page.evaluate(() => {
-      const g = document.querySelector('.zhanji-kapian.sortable-drag') as HTMLElement | null
-      const 内 = g?.querySelector('.zhanji-kapian-nei') as HTMLElement | null
-      return {
-        顶: g ? Math.round(g.getBoundingClientRect().top * 100) / 100 : null,
-        外层变换: g ? getComputedStyle(g).transform : 'n/a',
-        内层变换: 内 ? getComputedStyle(内).transform : 'n/a',
-        外层过渡: g ? getComputedStyle(g).transitionDuration : 'n/a',
-        内层动画: 内 ? getComputedStyle(内).animationName : 'n/a',
-      }
-    })
+    const 读鬼 = () =>
+      page.evaluate(() => {
+        const 列 = Array.from(document.querySelectorAll<HTMLElement>('.zhanji-kapian.sortable-drag'))
+        const g = 列[0] ?? null
+        const 内 = g?.querySelector('.zhanji-kapian-nei') as HTMLElement | null
+        return {
+          顶: g ? Math.round(g.getBoundingClientRect().top * 100) / 100 : null,
+          外层变换: g ? getComputedStyle(g).transform : 'n/a',
+          内层变换: 内 ? getComputedStyle(内).transform : 'n/a',
+          外层过渡: g ? getComputedStyle(g).transitionDuration : 'n/a',
+          内层动画: 内 ? getComputedStyle(内).animationName : 'n/a',
+          命中数: 列.length,
+          是body子: !!g && g.parentElement === document.body,
+          指针Y: (window as unknown as { __fp11指针Y?: number }).__fp11指针Y ?? null,
+        }
+      })
+    const 甲 = await 读鬼()
     expect(甲.顶, '缺陷7 取证前提：拖拽未激活（无 sortable-drag 鬼影）').not.toBeNull()
+    expect(甲.指针Y, '缺陷7 取证前提：页内没收到 mousemove（指针通道断了）').not.toBeNull()
+    expect(
+      Math.abs(Number(甲.指针Y) - (中心 - 探针)),
+      `缺陷7 取证前提：起手探针位实测 ${甲.指针Y} 偏离名义 ${中心 - 探针} 1px 以上（派发与页内读数不同源）`,
+    ).toBeLessThanOrEqual(1)
     const 再移 = 130
-    y -= 再移
-    await page.mouse.move(x, y, { steps: 14 })
+    await page.mouse.move(x, 中心 - 探针 - 再移, { steps: 14 })
     await page.waitForTimeout(400)
-    const 乙 = await page.evaluate(
-      () => Math.round((document.querySelector('.zhanji-kapian.sortable-drag') as HTMLElement).getBoundingClientRect().top * 100) / 100,
-    )
+    const 乙 = await 读鬼()
     await page.mouse.up()
     await page.waitForTimeout(1000)
-    const 位移 = Math.round((Number(甲.顶) - 乙) * 100) / 100
-    const 比值 = Math.round(((位移 / 再移) as number) * 1000) / 1000
+    /* 同源三钉：被量的元素只有一个、它就是库跟着指针写位移的那一个（`fallback-on-body` ⇒ body 直属）、
+       且分母是页内实测指针位移。三条任一不成立，比值就没有意义。 */
+    for (const [名, 读] of [
+      ['甲', 甲],
+      ['乙', 乙],
+    ] as const) {
+      expect(读.命中数, `缺陷7 取证前提：${名} 处 .zhanji-kapian.sortable-drag 命中 ${读.命中数} 个，鬼影不唯一`).toBe(1)
+      expect(读.是body子, `缺陷7 取证前提：${名} 处鬼影不在 document.body 直属层（量的不是跟随指针的那一个）`).toBe(
+        true,
+      )
+    }
+    const 指针位移 = Math.round((Number(甲.指针Y) - Number(乙.指针Y)) * 100) / 100
+    expect(
+      Math.abs(指针位移 - 再移),
+      `缺陷7 取证前提：页内实测指针位移 ${指针位移} 偏离名义 ${再移} 1px 以上 ⇒ 取样器自己的目标算错了（FP-32 的 0.892 就是这一格：旧式 y -= 再移 把起手探针 14px 丢了，指针实走 116 而分母写 130）`,
+    ).toBeLessThanOrEqual(1)
+    const 位移 = Math.round((Number(甲.顶) - Number(乙.顶)) * 100) / 100
+    const 比值 = Math.round(((位移 / 指针位移) as number) * 1000) / 1000
     值.鬼影外层 = 甲.外层变换
     值.鬼影内层 = 甲.内层变换
     值.鬼影外层过渡 = 甲.外层过渡
     值.鬼影内层动画 = 甲.内层动画
+    值.鬼影命中数 = 甲.命中数
+    值.鬼影是body子 = 甲.是body子 ? '是' : '否'
     值.指针位移px = 再移
+    值.指针实测位移px = 指针位移
     值.鬼影位移px = 位移
     值.跟手比值 = 比值
     截图.push(await 拍照(page, 组, 'zhanji', 'luoding'))
-    expect(比值, `缺陷7 回归：拖拽跟手比值 ${比值}（改前 0.981，FP-04b 实测 1.000）越出 ±3%`).toBeGreaterThanOrEqual(0.97)
+    expect(
+      比值,
+      `缺陷7 回归：拖拽跟手比值 ${比值}（鬼影 ${位移}px / 实测指针 ${指针位移}px）越出 ±3%；改前 0.981 = 外层带 scale 被库归一化吃掉（F9，已由 过往战绩.test.ts:859 钉住），FP-04b 与 FP-32 逐点实测均为 1.000`,
+    ).toBeGreaterThanOrEqual(0.97)
     expect(比值, `缺陷7 回归：拖拽跟手比值 ${比值} 越出 ±3%`).toBeLessThanOrEqual(1.03)
     expect(甲.外层变换, `缺陷7 回归：鬼影外层又带上 scale（位移被库归一化吃掉，F9）`).not.toMatch(/matrix\((?!1, 0, 0, 1)/)
     expect(甲.内层变换, `缺陷7 起手倾斜（F10/7d）：tilt 不在内层了`).toContain('matrix')
@@ -1270,7 +1587,7 @@ function 写证据(时机: string) {
     '',
     ...行集.flatMap((项) => 项.截图.map((路) => `- ${路}（${项.场景} / ${项.组合}）`)),
   ]
-  fs.writeFileSync(path.join(证据目录, `FP-11-门禁-${日期}.md`), 行.join('\n'), 'utf8')
+  fs.writeFileSync(path.join(证据目录, `FP-11-门禁-${日期}${证据后缀}.md`), 行.join('\n'), 'utf8')
 }
 
 /* ───────────────────────── 编排：workers=1 串行；场景G 最先（外部 AI 链路最慢） ───────────────────────── */
@@ -1281,7 +1598,7 @@ test.use({ headless: false })
 test.use({ actionTimeout: 90000, navigationTimeout: 120000 })
 
 /** 进度打印：Playwright 会把用例内 stdout 攒到用例结束才吐，所以同时落文件才能区分「慢」与「挂死」 */
-const 运行日志 = path.join(证据目录, `FP-11-门禁-运行日志-${日期}.txt`)
+const 运行日志 = path.join(证据目录, `FP-11-门禁-运行日志-${日期}${证据后缀}.txt`)
 function 志(步: string) {
   const 线 = `[${new Date().toISOString()}] ${步}`
   try {

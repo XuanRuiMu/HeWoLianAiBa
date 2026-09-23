@@ -12,6 +12,7 @@ import { YA_SUO_CHANG_BIAN_SHANG_XIAN, YA_SUO_ZHI_LIANG } from '@/utils/图片�
 import { huoQuFanYi, fanYi } from '@/config/translations'
 import { 使用聊天仓库 } from '@/stores/聊天'
 import { 使用用户仓库 } from '@/stores/用户'
+import { duQuShuRuQuText } from './输入区夹具'
 
 /**
  * FP-06a 剪贴板图片粘贴发送。
@@ -92,7 +93,10 @@ function jiaShuJu(xiangList: JiaXiang[], files: File[] = []) {
       return xiang.wenJian === undefined ? null : xiang.wenJian
     },
   }))
-  return { items, files }
+  // 真 DataTransfer 恒有 getData（FP-10c 的图文输入区就按这一条兜纯文本粘贴）。桩不给 getData 会让
+  // 组件在 clipboardData.getData(...) 上抛 TypeError，用例只是"运气好地"在 preventDefault 之前崩掉，
+  // 于是把"组件拦截了原生粘贴"这一真实终态伪装成 defaultPrevented === false 的假绿。
+  return { items, files, getData: (leiXing: string) => (leiXing === 'text/plain' ? '' : '') }
 }
 
 function jiaZhanTieShiJian(shuJu: unknown) {
@@ -109,23 +113,23 @@ function tuPianWenJian(mime: string, ming = 'zhan-tie.png'): File {
 }
 
 function xuShiComposable() {
-  const faSongTuPian = vi.fn().mockResolvedValue(undefined)
+  const fanJiaTuPian = vi.fn().mockResolvedValue(undefined)
   const sheZhiCuoWu = vi.fn()
-  return { ...use粘贴图片({ faSongTuPian, sheZhiCuoWu }), faSongTuPian, sheZhiCuoWu }
+  return { ...use粘贴图片({ fanJiaTuPian, sheZhiCuoWu }), fanJiaTuPian, sheZhiCuoWu }
 }
 
 describe('FP-06a use粘贴图片 判定矩阵', () => {
   it.each(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])(
     '白名单 %s：拦截原生粘贴并把原文件交既有发送链路',
     (mime) => {
-      const { chuLiZhanTie, faSongTuPian, sheZhiCuoWu } = xuShiComposable()
+      const { chuLiZhanTie, fanJiaTuPian, sheZhiCuoWu } = xuShiComposable()
       const wenJian = tuPianWenJian(mime)
       const { shiJian, fangZhiMoRen } = jiaZhanTieShiJian(
         jiaShuJu([{ kind: 'file', type: mime, wenJian }]),
       )
       chuLiZhanTie(shiJian)
-      expect(faSongTuPian).toHaveBeenCalledTimes(1)
-      expect(faSongTuPian).toHaveBeenCalledWith(wenJian)
+      expect(fanJiaTuPian).toHaveBeenCalledTimes(1)
+      expect(fanJiaTuPian).toHaveBeenCalledWith(wenJian)
       expect(fangZhiMoRen).toHaveBeenCalledTimes(1)
       expect(sheZhiCuoWu).not.toHaveBeenCalled()
     },
@@ -134,50 +138,50 @@ describe('FP-06a use粘贴图片 判定矩阵', () => {
   it.each(['image/svg+xml', 'image/tiff', 'image/heic', 'image/avif'])(
     '非白名单 %s：翻译提示且零发送（服务端同一白名单二次把守）',
     (mime) => {
-      const { chuLiZhanTie, faSongTuPian, sheZhiCuoWu } = xuShiComposable()
+      const { chuLiZhanTie, fanJiaTuPian, sheZhiCuoWu } = xuShiComposable()
       const { shiJian, fangZhiMoRen } = jiaZhanTieShiJian(
         jiaShuJu([{ kind: 'file', type: mime, wenJian: tuPianWenJian(mime) }]),
       )
       chuLiZhanTie(shiJian)
-      expect(faSongTuPian).not.toHaveBeenCalled()
+      expect(fanJiaTuPian).not.toHaveBeenCalled()
       expect(sheZhiCuoWu).toHaveBeenCalledWith(huoQuFanYi('duoMeiTi', 'zhanTieMIMEBuZhiChi'))
       expect(fangZhiMoRen).toHaveBeenCalledTimes(1)
     },
   )
 
   it('MIME 为空但 kind=file：按非白名单拒绝而非猜测类型', () => {
-    const { chuLiZhanTie, faSongTuPian, sheZhiCuoWu } = xuShiComposable()
+    const { chuLiZhanTie, fanJiaTuPian, sheZhiCuoWu } = xuShiComposable()
     const { shiJian } = jiaZhanTieShiJian(
       jiaShuJu([{ kind: 'file', type: 'image/png', wenJian: { size: 10, type: '' } as File }]),
     )
     chuLiZhanTie(shiJian)
-    expect(faSongTuPian).not.toHaveBeenCalled()
+    expect(fanJiaTuPian).not.toHaveBeenCalled()
     expect(sheZhiCuoWu).toHaveBeenCalledWith(huoQuFanYi('duoMeiTi', 'zhanTieMIMEBuZhiChi'))
   })
 
   it('超过配置上限：提示且零发送', () => {
-    const { chuLiZhanTie, faSongTuPian, sheZhiCuoWu } = xuShiComposable()
+    const { chuLiZhanTie, fanJiaTuPian, sheZhiCuoWu } = xuShiComposable()
     const chaoGuo = { size: ZHAN_TIE_TU_PIAN_PEI_ZHI.zuiDaZiJieZiJie + 1, type: 'image/png' } as File
     const { shiJian } = jiaZhanTieShiJian(
       jiaShuJu([{ kind: 'file', type: 'image/png', wenJian: chaoGuo }]),
     )
     chuLiZhanTie(shiJian)
-    expect(faSongTuPian).not.toHaveBeenCalled()
+    expect(fanJiaTuPian).not.toHaveBeenCalled()
     expect(sheZhiCuoWu).toHaveBeenCalledWith(huoQuFanYi('duoMeiTi', 'zhanTieTuPianGuoDa'))
   })
 
   it('恰好等于上限不拦（上限口径与后端一致为「不得超过」）', () => {
-    const { chuLiZhanTie, faSongTuPian } = xuShiComposable()
+    const { chuLiZhanTie, fanJiaTuPian } = xuShiComposable()
     const bianJie = { size: ZHAN_TIE_TU_PIAN_PEI_ZHI.zuiDaZiJieZiJie, type: 'image/png' } as File
     const { shiJian } = jiaZhanTieShiJian(
       jiaShuJu([{ kind: 'file', type: 'image/png', wenJian: bianJie }]),
     )
     chuLiZhanTie(shiJian)
-    expect(faSongTuPian).toHaveBeenCalledWith(bianJie)
+    expect(fanJiaTuPian).toHaveBeenCalledWith(bianJie)
   })
 
   it('0 字节图片：提示且零发送', () => {
-    const { chuLiZhanTie, faSongTuPian, sheZhiCuoWu } = xuShiComposable()
+    const { chuLiZhanTie, fanJiaTuPian, sheZhiCuoWu } = xuShiComposable()
     const { shiJian } = jiaZhanTieShiJian(
       jiaShuJu([
         {
@@ -188,60 +192,60 @@ describe('FP-06a use粘贴图片 判定矩阵', () => {
       ]),
     )
     chuLiZhanTie(shiJian)
-    expect(faSongTuPian).not.toHaveBeenCalled()
+    expect(fanJiaTuPian).not.toHaveBeenCalled()
     expect(sheZhiCuoWu).toHaveBeenCalledWith(huoQuFanYi('duoMeiTi', 'zhanTieTuPianWeiKong'))
   })
 
   it('纯文本粘贴：不拦截、不发送、不提示（textarea 原生行为保持）', () => {
-    const { chuLiZhanTie, faSongTuPian, sheZhiCuoWu } = xuShiComposable()
+    const { chuLiZhanTie, fanJiaTuPian, sheZhiCuoWu } = xuShiComposable()
     const { shiJian, fangZhiMoRen } = jiaZhanTieShiJian(
       jiaShuJu([{ kind: 'string', type: 'text/plain' }]),
     )
     chuLiZhanTie(shiJian)
-    expect(faSongTuPian).not.toHaveBeenCalled()
+    expect(fanJiaTuPian).not.toHaveBeenCalled()
     expect(sheZhiCuoWu).not.toHaveBeenCalled()
     expect(fangZhiMoRen).not.toHaveBeenCalled()
   })
 
   it('剪贴板为空（无 items 无 files）：零副作用且不抛异常', () => {
-    const { chuLiZhanTie, faSongTuPian, sheZhiCuoWu } = xuShiComposable()
+    const { chuLiZhanTie, fanJiaTuPian, sheZhiCuoWu } = xuShiComposable()
     const { shiJian, fangZhiMoRen } = jiaZhanTieShiJian(jiaShuJu([]))
     expect(() => chuLiZhanTie(shiJian)).not.toThrow()
-    expect(faSongTuPian).not.toHaveBeenCalled()
+    expect(fanJiaTuPian).not.toHaveBeenCalled()
     expect(sheZhiCuoWu).not.toHaveBeenCalled()
     expect(fangZhiMoRen).not.toHaveBeenCalled()
   })
 
   it('clipboardData 整体缺失（旧引擎）：零副作用且不抛异常', () => {
-    const { chuLiZhanTie, faSongTuPian, sheZhiCuoWu } = xuShiComposable()
+    const { chuLiZhanTie, fanJiaTuPian, sheZhiCuoWu } = xuShiComposable()
     const { shiJian } = jiaZhanTieShiJian(null)
     expect(() => chuLiZhanTie(shiJian)).not.toThrow()
-    expect(faSongTuPian).not.toHaveBeenCalled()
+    expect(fanJiaTuPian).not.toHaveBeenCalled()
     expect(sheZhiCuoWu).not.toHaveBeenCalled()
   })
 
   it('剪贴板权限被拒：有 image 项却取不到文件 → 提示且零发送', () => {
-    const { chuLiZhanTie, faSongTuPian, sheZhiCuoWu } = xuShiComposable()
+    const { chuLiZhanTie, fanJiaTuPian, sheZhiCuoWu } = xuShiComposable()
     const { shiJian } = jiaZhanTieShiJian(
       jiaShuJu([{ kind: 'file', type: 'image/png', wenJian: null }]),
     )
     chuLiZhanTie(shiJian)
-    expect(faSongTuPian).not.toHaveBeenCalled()
+    expect(fanJiaTuPian).not.toHaveBeenCalled()
     expect(sheZhiCuoWu).toHaveBeenCalledWith(huoQuFanYi('duoMeiTi', 'zhanTieShuJuBuKeYong'))
   })
 
   it('getAsFile 抛异常（iOS/Android WebView 差异）：归一为不可读提示，异常不外溢', () => {
-    const { chuLiZhanTie, faSongTuPian, sheZhiCuoWu } = xuShiComposable()
+    const { chuLiZhanTie, fanJiaTuPian, sheZhiCuoWu } = xuShiComposable()
     const { shiJian } = jiaZhanTieShiJian(
       jiaShuJu([{ kind: 'file', type: 'image/png', wenJian: null, yeChuang: 'pao-yi-chang' }]),
     )
     expect(() => chuLiZhanTie(shiJian)).not.toThrow()
-    expect(faSongTuPian).not.toHaveBeenCalled()
+    expect(fanJiaTuPian).not.toHaveBeenCalled()
     expect(sheZhiCuoWu).toHaveBeenCalledWith(huoQuFanYi('duoMeiTi', 'zhanTieShuJuBuKeYong'))
   })
 
   it('图文同存（复制富文本带图）：按 QQ 口径只发图片并拦文本', () => {
-    const { chuLiZhanTie, faSongTuPian } = xuShiComposable()
+    const { chuLiZhanTie, fanJiaTuPian } = xuShiComposable()
     const wenJian = tuPianWenJian('image/png')
     const { shiJian, fangZhiMoRen } = jiaZhanTieShiJian(
       jiaShuJu([
@@ -250,48 +254,52 @@ describe('FP-06a use粘贴图片 判定矩阵', () => {
       ]),
     )
     chuLiZhanTie(shiJian)
-    expect(faSongTuPian).toHaveBeenCalledTimes(1)
-    expect(faSongTuPian).toHaveBeenCalledWith(wenJian)
+    expect(fanJiaTuPian).toHaveBeenCalledTimes(1)
+    expect(fanJiaTuPian).toHaveBeenCalledWith(wenJian)
     expect(fangZhiMoRen).toHaveBeenCalledTimes(1)
   })
 
-  it('一次粘贴多图：只发第一张，不连发刷屏', () => {
-    const { chuLiZhanTie, faSongTuPian } = xuShiComposable()
+  it('一次粘贴多图：按出现顺序全部交给同一条待发序列，不各自成一条刷屏', () => {
+    // FP-10b（缺陷9）收口：旧口径「只认第一张 + 立即发出」正是用户投诉的点。
+    // 现在 N 张图进的是**同一条**消息的待发块序列 ⇒ 既一张不丢，也不会连发 N 条刷屏。
+    const { chuLiZhanTie, fanJiaTuPian } = xuShiComposable()
     const diYiZhang = tuPianWenJian('image/png')
+    const diErZhang = tuPianWenJian('image/jpeg')
     const { shiJian } = jiaZhanTieShiJian(
       jiaShuJu([
         { kind: 'file', type: 'image/png', wenJian: diYiZhang },
-        { kind: 'file', type: 'image/jpeg', wenJian: tuPianWenJian('image/jpeg') },
+        { kind: 'file', type: 'image/jpeg', wenJian: diErZhang },
       ]),
     )
     chuLiZhanTie(shiJian)
-    expect(faSongTuPian).toHaveBeenCalledTimes(1)
-    expect(faSongTuPian).toHaveBeenCalledWith(diYiZhang)
+    expect(fanJiaTuPian).toHaveBeenCalledTimes(2)
+    expect(fanJiaTuPian.mock.calls[0][0]).toBe(diYiZhang)
+    expect(fanJiaTuPian.mock.calls[1][0]).toBe(diErZhang)
   })
 
   it('items 无图片项时退化到 files（部分 WebView 只填 files）', () => {
-    const { chuLiZhanTie, faSongTuPian } = xuShiComposable()
+    const { chuLiZhanTie, fanJiaTuPian } = xuShiComposable()
     const wenJian = tuPianWenJian('image/webp')
     const { shiJian } = jiaZhanTieShiJian(jiaShuJu([], [wenJian]))
     chuLiZhanTie(shiJian)
-    expect(faSongTuPian).toHaveBeenCalledWith(wenJian)
+    expect(fanJiaTuPian).toHaveBeenCalledWith(wenJian)
   })
 
   it('files 里只有非图片文件：不拦截，交回原生粘贴', () => {
-    const { chuLiZhanTie, faSongTuPian, sheZhiCuoWu } = xuShiComposable()
+    const { chuLiZhanTie, fanJiaTuPian, sheZhiCuoWu } = xuShiComposable()
     const { shiJian, fangZhiMoRen } = jiaZhanTieShiJian(
       jiaShuJu([], [new File(['shu-ju'], 'wenjian.pdf', { type: 'application/pdf' })]),
     )
     chuLiZhanTie(shiJian)
-    expect(faSongTuPian).not.toHaveBeenCalled()
+    expect(fanJiaTuPian).not.toHaveBeenCalled()
     expect(sheZhiCuoWu).not.toHaveBeenCalled()
     expect(fangZhiMoRen).not.toHaveBeenCalled()
   })
 
   it('发送链路异步失败：提示发送失败且不产生未捕获异常', async () => {
-    const faSongTuPian = vi.fn().mockRejectedValue(new Error('wang-luo'))
+    const fanJiaTuPian = vi.fn().mockRejectedValue(new Error('wang-luo'))
     const sheZhiCuoWu = vi.fn()
-    const { chuLiZhanTie } = use粘贴图片({ faSongTuPian, sheZhiCuoWu })
+    const { chuLiZhanTie } = use粘贴图片({ fanJiaTuPian, sheZhiCuoWu })
     const { shiJian } = jiaZhanTieShiJian(
       jiaShuJu([{ kind: 'file', type: 'image/png', wenJian: tuPianWenJian('image/png') }]),
     )
@@ -301,11 +309,11 @@ describe('FP-06a use粘贴图片 判定矩阵', () => {
   })
 
   it('发送链路同步抛异常：同样就地提示', () => {
-    const faSongTuPian = vi.fn(() => {
+    const fanJiaTuPian = vi.fn(() => {
       throw new Error('boom')
     })
     const sheZhiCuoWu = vi.fn()
-    const { chuLiZhanTie } = use粘贴图片({ faSongTuPian, sheZhiCuoWu })
+    const { chuLiZhanTie } = use粘贴图片({ fanJiaTuPian, sheZhiCuoWu })
     const { shiJian } = jiaZhanTieShiJian(
       jiaShuJu([{ kind: 'file', type: 'image/png', wenJian: tuPianWenJian('image/png') }]),
     )
@@ -396,19 +404,43 @@ describe('FP-06a 同类点穷尽', () => {
       .join('\n')
   }
 
+  // FP-10c 契约演进：载体从"页面里的 textarea"换成共用的 contenteditable 组件，于是
+  // clipboardData / class="shuru-kuang" / @paste 三处命中点都搬了家。旧断言钉的是"命中在哪两个文件"，
+  // 钉不出"实现是否只有一份"。下面三条各自升级为**正向唯一 + 反向越界即红**两条断言，是收紧：
+  //  ① clipboardData 允许出现的文件集合精确到两枚，且组件那一枚只准读 text/plain（图片项一律交回
+  //     use粘贴图片，绝不在组件里长出第二条取文件通路）；
+  //  ② "输入框同类点恒为两处"变为"输入框实现恒为一处 + 两页必须各自接上它"（少接一页就是假功能）；
+  //  ③ 原生 paste 监听器全库唯一（在组件上），页面侧改为监听组件再抛出的 zhan-tie，
+  //     少一处绑定 = 那一页粘贴失效；多一处原生监听 = 第二套通路。
   it('剪贴板读取全库只有一份实现，未另起第二套粘贴通路', () => {
-    expect(hanShiJian(/clipboardData/)).toEqual(['src/composables/use粘贴图片.ts'])
+    expect(hanShiJian(/clipboardData/)).toEqual([
+      'src/components/聊天/图文输入区.vue',
+      'src/composables/use粘贴图片.ts',
+    ])
+    const 组件源 = quDiaoZhuShi(
+      readFileSync(resolve(yuanGenLu, 'components/聊天/图文输入区.vue'), 'utf-8'),
+    )
+    // 组件这一侧只准碰纯文本：读 items / files / getData 之外的任何剪贴板面就是第二条通路
+    expect(组件源.match(/clipboardData[^\n]*/g)).toEqual([
+      "clipboardData?.getData('text/plain') ?? ''",
+    ])
+    expect(组件源).not.toMatch(/clipboardData[^\n]*\.(items|files)/)
   })
 
-  it('聊天输入框同类点恒为两处（出现第三处裸输入框即失败）', () => {
-    expect(hanShiJian(/class="shuru-kuang"/)).toEqual([
+  it('聊天输入框实现恒为一处且两页都接上它（出现第二处裸输入框即失败）', () => {
+    expect(hanShiJian(/class="shuru-kuang"/)).toEqual(['src/components/聊天/图文输入区.vue'])
+    expect(hanShiJian(/<TuWenShuRuQu\b/)).toEqual([
       'src/views/好友聊天.vue',
       'src/views/聊天页面.vue',
     ])
   })
 
   it('粘贴入口恒绑定在两处聊天页（少绑一处即假功能，多出一处即第二套通路）', () => {
-    expect(hanShiJian(/@paste=/)).toEqual(['src/views/好友聊天.vue', 'src/views/聊天页面.vue'])
+    expect(hanShiJian(/@paste=/)).toEqual(['src/components/聊天/图文输入区.vue'])
+    expect(hanShiJian(/@zhan-tie="chuLiZhanTie"/)).toEqual([
+      'src/views/好友聊天.vue',
+      'src/views/聊天页面.vue',
+    ])
   })
 
   it('好友聊天已具备媒体通路（FP-21）：粘贴实现唯一、上传走好友端点、不借 AI 会话端点', () => {
@@ -420,7 +452,7 @@ describe('FP-06a 同类点穷尽', () => {
 
     // ① 具备媒体发送点，且必须绑唯一粘贴实现（原「一旦出现就必须绑定」的触发条件已成立，此处直接断言）
     expect(/shangChuanHaoYouMeiTi/.test(`${yeMianDaiMa}\n${apiDaiMa}`)).toBe(true)
-    expect(/@paste="chuLiZhanTie"/.test(yeMianDaiMa)).toBe(true)
+    expect(/@zhan-tie="chuLiZhanTie"/.test(yeMianDaiMa)).toBe(true)
     expect(yeMianDaiMa.includes('use粘贴图片')).toBe(true)
 
     // ② 页面侧不得另起第二套剪贴板读取或第二份压缩实现
@@ -549,7 +581,7 @@ describe('FP-06a 聊天页 paste → 授权门 → 压缩 → 既有媒体发送
     vi.clearAllMocks()
   })
 
-  it('未开启图片授权时粘贴：弹既有授权窗且零上传', async () => {
+  it('未开启图片授权时粘贴：只进待发区（不弹窗零上传），点发送才弹既有授权窗', async () => {
     const { wrapper, 用户仓库 } = await miaoShuTuLiaoTianYe()
     qingLi = () => wrapper.unmount()
     用户仓库.sheZhiTuPianShouQuan(false)
@@ -561,6 +593,13 @@ describe('FP-06a 聊天页 paste → 授权门 → 压缩 → 既有媒体发送
     await flushPromises()
 
     expect(lanJie).toBe(true)
+    // FP-10b（缺陷9）：粘贴只是把图留在本地 ⇒ C4 授权门后移到「发送那一刻」，一个请求都不该发
+    expect(wrapper.find('.shuru-kuang .dai-fa-kuai--tu').exists()).toBe(true)
+    expect(wrapper.findComponent(DuoMeiTiShouQuanDanChuang).props('xianShi')).toBe(false)
+    expect(shangChuanMeiTiMock).not.toHaveBeenCalled()
+
+    await wrapper.find('.fasong-anniu').trigger('click')
+    await flushPromises()
     expect(wrapper.findComponent(DuoMeiTiShouQuanDanChuang).props('xianShi')).toBe(true)
     expect(shangChuanMeiTiMock).not.toHaveBeenCalled()
   })
@@ -570,7 +609,8 @@ describe('FP-06a 聊天页 paste → 授权门 → 压缩 → 既有媒体发送
     qingLi = () => wrapper.unmount()
     用户仓库.sheZhiTuPianShouQuan(false)
     shangChuanMeiTiMock.mockResolvedValue({
-      mediaId: 'm1',
+      // 图文混排提交侧按后端同一口径要求媒体 ID 是 UUID（keTiJiaoKuai），非 UUID 的块逐块丢弃
+      mediaId: '3f2b7c9d-4a1e-4f6b-9c2d-1e5f7a3b8c0d',
       sha256: 'abc',
       mime: 'image/jpeg',
       daXiao: 100,
@@ -588,6 +628,12 @@ describe('FP-06a 聊天页 paste → 授权门 → 压缩 → 既有媒体发送
           ]),
         )
       }
+      // FP-10b：三次粘贴落在**同一条**消息的待发块序列里，三张三张都不丢、也一条都没发出去
+      expect(wrapper.findAll('.dai-fa-kuai--tu')).toHaveLength(3)
+      expect(shangChuanMeiTiMock).not.toHaveBeenCalled()
+
+      await wrapper.find('.fasong-anniu').trigger('click')
+      await flushPromises()
       const danChuang = wrapper.findComponent(DuoMeiTiShouQuanDanChuang)
       expect(danChuang.props('xianShi')).toBe(true)
       expect(shangChuanMeiTiMock).not.toHaveBeenCalled()
@@ -601,12 +647,13 @@ describe('FP-06a 聊天页 paste → 授权门 → 压缩 → 既有媒体发送
     }
   })
 
-  it('粘贴图片：先压缩成 jpeg 再以 tupian 类别上传，输入框不被写入文本', async () => {
+  it('粘贴图片：先进待发区压缩，点发送才以 tupian 类别上传 jpeg，输入框不被写入文本', async () => {
     const { wrapper, 用户仓库, 聊天仓库 } = await miaoShuTuLiaoTianYe()
     qingLi = () => wrapper.unmount()
     用户仓库.sheZhiTuPianShouQuan(true)
     shangChuanMeiTiMock.mockResolvedValue({
-      mediaId: 'm1',
+      // 图文混排提交侧按后端同一口径要求媒体 ID 是 UUID（keTiJiaoKuai），非 UUID 的块逐块丢弃
+      mediaId: '3f2b7c9d-4a1e-4f6b-9c2d-1e5f7a3b8c0d',
       sha256: 'abc',
       mime: 'image/jpeg',
       daXiao: 100,
@@ -621,6 +668,9 @@ describe('FP-06a 聊天页 paste → 授权门 → 压缩 → 既有媒体发送
         wrapper.find('.shuru-kuang').element,
         jiaShuJu([{ kind: 'file', type: 'image/png', wenJian: yuanWenJian }]),
       )
+      // FP-10b：粘贴这一刻零请求（压缩已在后台跑）；点发送才上传，且发送会先等在途压缩落回块里
+      expect(shangChuanMeiTiMock).not.toHaveBeenCalled()
+      await wrapper.find('.fasong-anniu').trigger('click')
       await vi.waitFor(() => expect(shangChuanMeiTiMock).toHaveBeenCalledTimes(1))
 
       expect(lanJie).toBe(true)
@@ -635,7 +685,7 @@ describe('FP-06a 聊天页 paste → 授权门 → 压缩 → 既有媒体发送
       expect(shangChuanWenJian).not.toBe(yuanWenJian)
       expect(shangChuanMeiTiMock.mock.calls[0][0]).toBe('h1')
       expect(shangChuanMeiTiMock.mock.calls[0][2]).toBe('tupian')
-      expect(wrapper.find('.shuru-kuang').element.value).toBe('')
+      expect(duQuShuRuQuText(wrapper)).toBe('')
       expect(聊天仓库.cuoWuXinXi).toBeNull()
       await vi.waitFor(() =>
         expect(聊天仓库.xiaoXiLieBiao.some((xiaoXi) => xiaoXi.lei_xing === 'tuPian')).toBe(true),
@@ -658,10 +708,10 @@ describe('FP-06a 聊天页 paste → 授权门 → 压缩 → 既有媒体发送
 
     expect(shangChuanMeiTiMock).not.toHaveBeenCalled()
     expect(聊天仓库.cuoWuXinXi).toBe(huoQuFanYi('duoMeiTi', 'zhanTieMIMEBuZhiChi'))
-    expect(wrapper.find('.fasong-cuowu').text()).toBe(huoQuFanYi('duoMeiTi', 'zhanTieMIMEBuZhiChi'))
+    expect(wrapper.find('.tishi-dai-cuowu').text()).toBe(huoQuFanYi('duoMeiTi', 'zhanTieMIMEBuZhiChi'))
   })
 
-  it('粘贴纯文本：不拦截原生粘贴且零媒体上传', async () => {
+  it('粘贴纯文本：交图文输入区按纯文本插入（拦截原生），页面零媒体上传', async () => {
     const { wrapper, 用户仓库 } = await miaoShuTuLiaoTianYe()
     qingLi = () => wrapper.unmount()
     用户仓库.sheZhiTuPianShouQuan(true)
@@ -672,7 +722,10 @@ describe('FP-06a 聊天页 paste → 授权门 → 压缩 → 既有媒体发送
     )
     await flushPromises()
 
-    expect(lanJie).toBe(false)
+    // 契约演进（FP-10c）：旧判定「纯文本粘贴不拦截、交回浏览器原生行为」随 textarea 载体失效——
+    // 图文输入区对纯文本一律 preventDefault 后自己插纯文本，绝不让浏览器塞富文本
+    // （同口径见 __tests__/FP10c真内联输入区.test.ts ③）。本用例守的仍是页面侧零上传这条不变式。
+    expect(lanJie).toBe(true)
     expect(shangChuanMeiTiMock).not.toHaveBeenCalled()
   })
 
@@ -684,7 +737,9 @@ describe('FP-06a 聊天页 paste → 授权门 → 压缩 → 既有媒体发送
     const lanJie = await chuFaZhanTie(wrapper.find('.shuru-kuang').element, jiaShuJu([]))
     await flushPromises()
 
-    expect(lanJie).toBe(false)
+    // 契约演进（FP-10c）：同上——空剪贴板也被输入区拦下（插入结果为空），但页面一个请求都不发、
+    // 不产生错误提示，这三条才是本用例的实质。
+    expect(lanJie).toBe(true)
     expect(shangChuanMeiTiMock).not.toHaveBeenCalled()
     expect(聊天仓库.cuoWuXinXi).toBeNull()
   })

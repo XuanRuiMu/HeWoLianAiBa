@@ -80,6 +80,9 @@ function yingSheXiaoXi(row: Record<string, unknown>): Record<string, unknown> {
     shi_jian: row.创建时间 ? String(row.创建时间) : new Date().toISOString(),
     yi_du: Boolean(row.已读),
     yi_che_hui: Boolean(row.已撤回),
+    // FP-26 边界：撤回原文在出参面上只留这一处（管理面）。它的授权**不靠前端不显示**，
+    // 而由 `routes/管理员.ts` 整条路由挂的 `guanLiZhiDuMenKong`（只读运营门禁，查库判角色）承担；
+    // 普通用户读自己的会话走 services/消息出参收口 的 cha_kan 能力判定，与本函数无关。
     yuan_shi_nei_rong: row.原始内容 ? String(row.原始内容) : null,
   }
 }

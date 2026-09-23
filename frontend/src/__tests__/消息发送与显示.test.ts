@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
 import 聊天页面 from '@/views/聊天页面.vue'
+import TuWenShuRuQu from '@/components/聊天/图文输入区.vue'
 import 添加微信 from '@/views/添加微信.vue'
 import QuanJuCaiDan from '@/components/全局菜单.vue'
 import { 使用聊天仓库 } from '@/stores/聊天'
@@ -13,6 +14,7 @@ import { huoQuXiaoXi, faSongXiaoXi } from '@/api/聊天'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
+import { duQuShuRuQuText, xieRuShuRuQu } from './输入区夹具'
 
 const dangQianMuLu = dirname(fileURLToPath(import.meta.url))
 
@@ -189,8 +191,7 @@ describe('FP-06 消息发送与显示', () => {
           }),
       )
 
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('你好')
+      await xieRuShuRuQu(wrapper, '你好')
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
 
@@ -219,20 +220,18 @@ describe('FP-06 消息发送与显示', () => {
       const { wrapper } = await mountLiaoTianYeMian()
       vi.mocked(faSongXiaoXi).mockImplementation(() => new Promise(() => {}))
 
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('立即清空测试')
+      await xieRuShuRuQu(wrapper, '立即清空测试')
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
 
-      expect((shuRuKuang.element as HTMLInputElement).value).toBe('')
+      expect(duQuShuRuQuText(wrapper)).toBe('')
     })
 
     it('发送中的临时消息显示发送动画标记', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
       vi.mocked(faSongXiaoXi).mockImplementation(() => new Promise(() => {}))
 
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('动画测试')
+      await xieRuShuRuQu(wrapper, '动画测试')
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
 
@@ -249,8 +248,7 @@ describe('FP-06 消息发送与显示', () => {
       const { wrapper } = await mountLiaoTianYeMian()
       vi.mocked(faSongXiaoXi).mockImplementation(() => new Promise(() => {}))
 
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('位置测试')
+      await xieRuShuRuQu(wrapper, '位置测试')
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
 
@@ -281,8 +279,7 @@ describe('FP-06 消息发送与显示', () => {
           }),
       )
 
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('稳定键测试')
+      await xieRuShuRuQu(wrapper, '稳定键测试')
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
 
@@ -334,8 +331,7 @@ describe('FP-06 消息发送与显示', () => {
         shiMiJi: true,
       })
 
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('whosyourdaddy')
+      await xieRuShuRuQu(wrapper, 'whosyourdaddy')
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
 
@@ -346,8 +342,7 @@ describe('FP-06 消息发送与显示', () => {
       const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
       vi.mocked(faSongXiaoXi).mockRejectedValue(new Error(huoQuFanYi('liaoTian', 'faSongShiBai')))
 
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue('失败测试')
+      await xieRuShuRuQu(wrapper, '失败测试')
       await wrapper.find('.fasong-anniu').trigger('click')
       await flushPromises()
 
@@ -358,22 +353,36 @@ describe('FP-06 消息发送与显示', () => {
         true,
       )
       expect(聊天仓库.cuoWuXinXi).toBeTruthy()
-      expect(wrapper.find('.fasong-cuowu').exists()).toBe(true)
+      expect(wrapper.find('.tishi-dai-cuowu').exists()).toBe(true)
     })
   })
 
   describe('输入验证', () => {
-    it('输入框存在 maxlength 属性且等于最大消息长度', async () => {
+    // FP-10c 契约演进：载体从 <textarea maxlength> 换成 <div contenteditable>，浏览器不再有可声明的
+    // maxlength 属性，长度上限改由 beforeinput 拦截（FP10c③ 已在组件级证明「再插就超才拦、组合输入不拦」）。
+    // 这里按页面级等价且更严的口径判定：① 页面确实把配置里的上限传给了唯一实现（不是组件内写死）；
+    // ② 超限的那次插入在 DOM 落地前就被 preventDefault ⇒ 用户根本打不进第 501 个字符。
+    it('长度上限由页面把配置注入唯一实现并在插入前拦截', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      expect(shuRuKuang.attributes('maxlength')).toBe(String(XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu))
+      const cao = wrapper.find('.shuru-kuang')
+      expect(cao.attributes('contenteditable')).toBe('true')
+      expect(wrapper.findComponent(TuWenShuRuQu).props('zuiDaChangDu')).toBe(
+        XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu,
+      )
+      const chaoChang = new Event('beforeinput', { bubbles: true, cancelable: true }) as Event & {
+        inputType: string
+        data: string
+      }
+      chaoChang.inputType = 'insertText'
+      chaoChang.data = 'a'.repeat(XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu + 1)
+      cao.element.dispatchEvent(chaoChang)
+      expect(chaoChang.defaultPrevented, '超限的纯文本插入没被拦 = maxlength 契约丢了').toBe(true)
     })
 
     it('输入超过500字符后发送按钮禁用', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
       const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu + 1)
-      const shuRuKuang = wrapper.find('.shuru-kuang')
-      await shuRuKuang.setValue(changNeiRong)
+      await xieRuShuRuQu(wrapper, changNeiRong)
       await flushPromises()
 
       const faSongAnNiu = wrapper.find('.fasong-anniu')
@@ -382,9 +391,8 @@ describe('FP-06 消息发送与显示', () => {
 
     it('字符计数在达到阈值后显示当前长度/最大长度', async () => {
       const { wrapper } = await mountLiaoTianYeMian()
-      const shuRuKuang = wrapper.find('.shuru-kuang')
       const changNeiRong = 'a'.repeat(XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi)
-      await shuRuKuang.setValue(changNeiRong)
+      await xieRuShuRuQu(wrapper, changNeiRong)
       await flushPromises()
 
       expect(wrapper.find('.zifu-jishu').text()).toBe(
@@ -641,7 +649,7 @@ describe('FP-09b 投递幂等键与气泡对齐（点击发送真实链路）', 
     const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
     let 派发时的键: string | null | undefined
     let 派发时的序号: unknown
-    vi.mocked(faSongXiaoXi).mockImplementation(async (_huiHuaId, _neiRong, miDengJian) => {
+    vi.mocked(faSongXiaoXi).mockImplementation(async ({ miDengJian }) => {
       派发时的键 = miDengJian
       派发时的序号 = 聊天仓库.xiaoXiLieBiao[0].ke_hu_duan_xu_hao
       return {
@@ -661,8 +669,7 @@ describe('FP-09b 投递幂等键与气泡对齐（点击发送真实链路）', 
       }
     })
 
-    const shuRuKuang = wrapper.find('.shuru-kuang')
-    await shuRuKuang.setValue('幂等键这句话')
+    await xieRuShuRuQu(wrapper, '幂等键这句话')
     await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
 
@@ -691,8 +698,7 @@ describe('FP-09b 投递幂等键与气泡对齐（点击发送真实链路）', 
       shiMiJi: false,
     })
 
-    const shuRuKuang = wrapper.find('.shuru-kuang')
-    await shuRuKuang.setValue('旧响应')
+    await xieRuShuRuQu(wrapper, '旧响应')
     await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
 
@@ -714,8 +720,7 @@ describe('FP-09b 投递幂等键与气泡对齐（点击发送真实链路）', 
         }),
     )
 
-    const shuRuKuang = wrapper.find('.shuru-kuang')
-    await shuRuKuang.setValue('我插进去的话')
+    await xieRuShuRuQu(wrapper, '我插进去的话')
     await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
     expect(聊天仓库.xiaoXiLieBiao.map((m) => m.nei_rong)).toEqual(['我插进去的话'])

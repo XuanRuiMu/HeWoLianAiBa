@@ -5,6 +5,7 @@ import { gouJianJiaoSeShangXiaWen } from '../config/AI参数策略'
 import { huoQuWanZhengHaoGanDu } from './好感度'
 import { huoQuXiaoXiLieBiao, huoQuJiaoSeSuoYouZhe } from './消息'
 import { shiTuWenHunPaiKuai, type XiaoXiKuai } from './消息内容块'
+import { buQiWenJianTiQuWenBen } from './文档文本提取'
 import { shengChengJunShiZhiDao } from './军师求助'
 import { huoQuAIJiaoSeXinXi } from './AI输入准备'
 import {
@@ -68,12 +69,16 @@ interface QianDuanJunShiJiLuXiang {
   jun_shi_ming_chen: string
   jun_shi_tou_xiang: string
   dui_hua_zhai_yao: string
+  /**
+   * FP-26：军师记录是**普通用户可读**的下发面（`GET /api/聊天/军师记录/:jiaoSeId`），
+   * 因此这一段不再携带撤回原文——写侧 `zhuanHuanLiaoTianJiLu` 已不产出该键，
+   * 读侧 `huoQuJunShiJiLu` 另按白名单重建，兜住 FP-26 之前已落进 Redis 快照的历史记录。
+   */
   liao_tian_ji_lu: {
     jiao_se: string
     nei_rong: string
     shi_jian: string
     yi_che_hui: boolean
-    yuan_shi_nei_rong?: string | null
     che_hui_shi_jian?: string | null
   }[]
 }
@@ -110,7 +115,15 @@ export async function huoQuJunShiJiLu(
     jun_shi_ming_chen: ji_lu.jun_shi_ming_chen,
     jun_shi_tou_xiang: ji_lu.jun_shi_tou_xiang,
     dui_hua_zhai_yao: ji_lu.dui_hua_zhai_yao,
-    liao_tian_ji_lu: ji_lu.liao_tian_ji_lu,
+    // FP-26 白名单重建（不是「删掉某个键」）：Redis 里的历史快照可能仍带撤回原文，
+    // 缺键/空数组都不抛，只按用户面允许的键位下发
+    liao_tian_ji_lu: (ji_lu.liao_tian_ji_lu ?? []).map((xiaoXi) => ({
+      jiao_se: xiaoXi.jiao_se,
+      nei_rong: xiaoXi.nei_rong,
+      shi_jian: xiaoXi.shi_jian,
+      yi_che_hui: Boolean(xiaoXi.yi_che_hui),
+      che_hui_shi_jian: xiaoXi.che_hui_shi_jian ?? null,
+    })),
   }))
   return { jiLuLieBiao: qianDuanLieBiao }
 }
@@ -168,7 +181,10 @@ export async function qingQiuJunShiZhiDao(
     }
   }
 
-  const duiHuaLiShi = zhuanHuanXiaoXiDaoDuiHuaLiShi(youXiaoXiaoXi, jiaoSeXinXi.wei_xin_ming)
+  // FP-12：先按同一个补全口挂上阈值内文档正文，再交给唯一渲染入口（军师不再有第二份取文本逻辑）
+  const duiHuaLiShi = await buQiWenJianTiQuWenBen(
+    zhuanHuanXiaoXiDaoDuiHuaLiShi(youXiaoXiaoXi, jiaoSeXinXi.wei_xin_ming),
+  )
   const haXi = jiSuanLiaoTianHaXi(youXiaoXiaoXi)
 
   const shiChongFu = await jianChaJunShiChongFu(canShu.yong_hu_id, canShu.jiao_se_id, haXi)
@@ -351,21 +367,26 @@ async function huoQuHaoGanDu(
 
 function zhuanHuanXiaoXiDaoDuiHuaLiShi(
   xiaoXiLieBiao: {
+    id: string
     fa_song_zhe_lei_xing: 'yonghu' | 'jiaose' | 'xitong'
     fa_song_zhe_ming?: string
     nei_rong: string
     shi_jian_chuo: number
     yi_che_hui?: boolean
-    yuan_shi_nei_rong?: string | null
     mei_ti_lei_bie?: string | null
     mei_ti_shi_chang_hao_miao?: number | null
     mei_ti_yuan_shi_wen_jian_ming?: string | null
+    /** FP-12：媒体行身份（XiaoXiXinXi 自带），文档正文按它批量取，不在本文件里另查一份 */
+    mei_ti_id?: string | null
     /** FP-10：出参块数组（XiaoXiXinXi 自带）；带图文混排块时正文已是按序投影，禁止再被占位符覆盖 */
     nei_rong_kuai?: XiaoXiKuai[]
+    /** FP-08c：引用槽身份（XiaoXiXinXi 自带），原文由 对话渲染 按 ID 在整列表里现取 */
+    bei_yong_xiao_xi_id?: string | null
   }[],
   jiaoSeWeiXinMing: string,
 ) {
   return xiaoXiLieBiao.map((xiaoXi) => ({
+    id: xiaoXi.id,
     fa_song_zhe_lei_xing: xiaoXi.fa_song_zhe_lei_xing,
     fa_song_zhe_ming:
       xiaoXi.fa_song_zhe_lei_xing === 'jiaose'
@@ -374,11 +395,13 @@ function zhuanHuanXiaoXiDaoDuiHuaLiShi(
     nei_rong: xiaoXi.nei_rong,
     shi_jian: geShiHuaShiJian(xiaoXi.shi_jian_chuo),
     yi_che_hui: xiaoXi.yi_che_hui,
-    yuan_shi_nei_rong: xiaoXi.yuan_shi_nei_rong,
+    // FP-26：不映射 yuan_shi_nei_rong —— 军师提示词侧的撤回行只出撤回占位
     meiTiLeiBie: xiaoXi.mei_ti_lei_bie || undefined,
     tuWenHunPai: shiTuWenHunPaiKuai(xiaoXi.nei_rong_kuai),
     meiTiShiChangHaoMiao: xiaoXi.mei_ti_shi_chang_hao_miao ?? null,
     yuanShiWenJianMing: xiaoXi.mei_ti_yuan_shi_wen_jian_ming || undefined,
+    meiTiId: xiaoXi.mei_ti_id || undefined,
+    beiYongXiaoXiId: xiaoXi.bei_yong_xiao_xi_id ?? null,
   }))
 }
 
@@ -389,7 +412,6 @@ function zhuanHuanLiaoTianJiLu(
     shi_jian_chuo: number
     yi_che_hui?: boolean
     che_hui_shi_jian?: string | null
-    yuan_shi_nei_rong?: string | null
   }[],
   jiaoSeWeiXinMing: string,
 ): JunShiJiLuLiaoTianXiaoXi[] {
@@ -398,7 +420,6 @@ function zhuanHuanLiaoTianJiLu(
     nei_rong: xiaoXi.nei_rong,
     shi_jian: geShiHuaShiJian(xiaoXi.shi_jian_chuo),
     yi_che_hui: Boolean(xiaoXi.yi_che_hui),
-    yuan_shi_nei_rong: xiaoXi.yuan_shi_nei_rong || null,
     che_hui_shi_jian: xiaoXi.che_hui_shi_jian || null,
   }))
 }

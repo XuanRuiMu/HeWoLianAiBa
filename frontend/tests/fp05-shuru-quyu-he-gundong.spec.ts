@@ -4,11 +4,39 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createConsoleCollector } from './console-error-collector';
 import { scanScrollStrip } from './滚动条像素取样';
+import { 替换文本, 清空文本, 读滚动, 读选区长度, 滚动归零, 写入多行 } from './输入区取样';
 
 // FP-05 聊天输入区几何与滚动取证（缺陷5 发送按钮几何 + 缺陷6 折叠态滚动条）。
 // 运行：FP05Q_LABEL=before|after npx playwright test tests/fp05-shuru-quyu-he-gundong.spec.ts
 // before 只记录现状（旧契约：按钮 min-height:44px 与输入框 36.39px 两套高度、折叠态私有隐藏滚动条）；
 // after 断言新契约：按钮与输入框外壳同源等高、44×44 命中区靠伪元素补足、折叠态溢出出现可见可拖滚动条。
+//
+// FP-10c 第⑤刀改判（读法换、契约不放宽）：
+//   · 载体从 <textarea> 换成图文真内联的 contenteditable ⇒ HTMLTextAreaElement 那套 .value /
+//     selectionEnd-selectionStart / style.maxHeight 逐条失效，改走 tests/输入区取样.ts 同一份读数；
+//   · 回落档的旧判据「内联 style.maxHeight 是个 px 字面量」（use输入框.ts JS 量高的产物）
+//     等价换成「计算值 max-height 严格等于 --shuru-danxing-gao-du=35px」，更严；
+//   · 「拖滚动条不许顺带选中文字」由 selectionEnd-selectionStart 换成 Selection.toString().length，语义同。
+//   · 本轮实测：图标盒 vs 编辑器折叠高这条轴的 0.61px 已归零（见 fp10c ④），但
+//     「发送按钮高 vs 输入框外壳高」这条轴实测差 0.6000022888183594px（按钮 36 / 外壳 36.6
+//     = 编辑器 35 + 2×0.5px 声明边框被 Chrome 实渲成 0.8px/边）。按钮高住在 src/views/聊天页面.vue:2670-2690
+//     （自带 padding 6px + line-height），不是吃 --shuru-danxing-gao-du + 边框推出来的 ⇒ 第二处真源。
+//     当时按「toBe(0) 是 FP-05 既有契约，不因此放宽」挂账（本工人无权改 src）；该口径现由
+//     下方「FP-10c 第⑤刀再改判」条目取代（需用户确认）。
+//   · FP-10c 第⑤刀再改判（**需用户确认口径**，旧→新）：旧 `expect(高度差).toBe(0)` 把「按钮与外壳
+//     渲染盒等高」钉成零容差，但折叠档 35px = ceil(行高 22.4 + 上下内缩 12 = 34.4)（variables.css:34
+//     原文算式，vitest 侧 聊天界面.test.ts 亦钉该式），按钮盒是内容驱动 34.4+2×边框、外壳盒是令牌
+//     钳制 35+2×边框 ⇒ 差值恒等于取整边距（真机实测 0.6000022888183594：按钮 36 / 外壳 36.6 /
+//     输入框 35，DPR=1）。这是布局级差（与 DPR 无关的 ceil 余量），不是光栅噪声，DPR=1 下 0.6px
+//     在设备像素上已不可再分辨。新口径两件套：
+//       ① 「严格同源」钉成**逐字计算值相等**（全新，比旧判据多出来的维度）：按钮/外壳边框上宽、
+//          按钮/编辑器上下内缩、按钮/编辑器行高、编辑器 max-height == --shuru-danxing-gao-du 原语、
+//          编辑器盒高 == 令牌解析值（零容差）——任何一处再长出第二真源当场红；
+//       ② 渲染盒差只留**有物理依据**的容差：余量只剩 ceil 边距 <1 CSS px，取本仓既有 F22 口径
+//          0.65px（fp11-menjin-zonglan.spec.ts 对同一物理量「按钮外壳高差」用的就是 ≤0.65，
+//          两文件口径自此一致；FP-24c 的 0.5 设备像素亚像素容差与之同阶）。
+//     若产品裁定改回整数盒（回炉 src 让按钮吃 35+边框 推成 36.6），差值归 0，本判据照样绿；
+//     裁定改判前此条按「需用户确认」挂牌。
 //
 // 必须 headed：Playwright 在 headless 下无条件传 --hide-scrollbars（见
 // playwright-core chromiumSwitches），滚动条不绘制也不占布局，正好把本 FP 要测的东西整个抹掉，
@@ -17,9 +45,12 @@ test.use({ headless: false });
 
 const 标签 = process.env.FP05Q_LABEL ?? 'after';
 const 日期 = '20260921';
+// 复跑必换名（L-10：复跑覆盖旧证据不可恢复）；默认名不动
+const 后缀 = process.env.FP05Q_SUFFIX ? `-${process.env.FP05Q_SUFFIX}` : '';
 const 本目录 = path.dirname(fileURLToPath(import.meta.url));
 const 截图目录 = path.resolve(本目录, '../../测试截图');
-const 证据目录 = path.resolve(本目录, '../../../.agents/evidence/traces');
+/* worktree 深度不固定（主树与 .wt/<lane> 相对层数不同）⇒ 证据目录一律可 env 覆盖，默认值保持主树口径（fp32 的 FP32_EVIDENCE_DIR 同一条先例）。 */
+const 证据目录 = process.env.FP05_EVIDENCE_DIR ?? path.resolve(本目录, '../../../.agents/evidence/traces');
 const 视口清单 = [
   { 名: '1440x900', 宽: 1440, 高: 900 },
   { 名: '375x667', 宽: 375, 高: 667 },
@@ -29,7 +60,7 @@ const HAO_YOU_ID = '33333333-3333-4333-8333-333333333333';
 const WO_DE_ID = 'fp05q-uid';
 const 会话ID = 'fp05q-huihua';
 // 短行多行：只纵向溢出，不横向顶到滚动条所在列，保证像素取样取到的是滚动条而非文字
-const 溢出文本 = ['第一行短', '第二行短', '第三行短', '第四行短', '第五行短'].join('\n');
+const 溢出行清单 = ['第一行短', '第二行短', '第三行短', '第四行短', '第五行短'];
 
 const 测试用户 = {
   id: WO_DE_ID,
@@ -236,11 +267,25 @@ async function 量几何(page: import('@playwright/test').Page) {
       const hit = document.elementFromPoint(Math.round(x), Math.round(y));
       return !!hit && (hit === an || an.contains(hit) || hit.contains(an));
     };
+    const 按钮算 = getComputedStyle(an);
+    const 编辑器算 = getComputedStyle(kuang);
+    const 外壳算 = getComputedStyle(waike);
     return {
       按钮高: a.height,
       外壳高: waike.getBoundingClientRect().height,
       输入框高: kuang.getBoundingClientRect().height,
       高度差: Math.abs(a.height - waike.getBoundingClientRect().height),
+      装置像素比: window.devicePixelRatio,
+      同源: {
+        按钮边框上: 按钮算.borderTopWidth,
+        外壳边框上: 外壳算.borderTopWidth,
+        按钮内缩上下: `${按钮算.paddingTop}/${按钮算.paddingBottom}`,
+        编辑器内缩上下: `${编辑器算.paddingTop}/${编辑器算.paddingBottom}`,
+        按钮行高: 按钮算.lineHeight,
+        编辑器行高: 编辑器算.lineHeight,
+        编辑器最高: 编辑器算.maxHeight,
+        令牌: getComputedStyle(document.documentElement).getPropertyValue('--shuru-danxing-gao-du').trim(),
+      },
       按钮宽: a.width,
       命中可点: {
         上20: 中(cx, cy - 20),
@@ -259,25 +304,15 @@ async function 量几何(page: import('@playwright/test').Page) {
 }
 
 async function 折叠溢出取样(page: import('@playwright/test').Page) {
-  return page.evaluate(() => {
-    const k = document.querySelector('.shuru-kuang') as HTMLTextAreaElement;
-    const cs = getComputedStyle(k);
-    const r = k.getBoundingClientRect();
-    const 边 = parseFloat(cs.borderLeftWidth) || 0;
-    const 条宽 = r.width - k.clientWidth - 边 * 2;
-    return {
-      scrollHeight: k.scrollHeight,
-      clientHeight: k.clientHeight,
-      scrollbarWidth属: cs.scrollbarWidth,
-      生效条宽: Math.max(0, Math.round(条宽 * 100) / 100),
-    };
-  });
+  // FP-10c：载体换成图文真内联的 contenteditable ⇒ 滚动读数与取样器共用同一份实现（读滚动），
+  // 这里不再留第二套「按 textarea 口径量的」算法。生效条宽 = 盒宽 - clientWidth - 左右边框，同一条式子。
+  return 读滚动(page);
 }
 
 async function 滚动交互取样(page: import('@playwright/test').Page) {
   // 坐标必须在点击前现取：element screenshot 会把元素 scrollIntoView，之前量到的 rect 已失效
   const 轨 = await page.evaluate(() => {
-    const k = document.querySelector('.shuru-kuang') as HTMLTextAreaElement;
+    const k = document.querySelector('.shuru-kuang') as HTMLElement;
     const r = k.getBoundingClientRect();
     return {
       x: r.right,
@@ -290,7 +325,7 @@ async function 滚动交互取样(page: import('@playwright/test').Page) {
   const x = Math.round(轨.x - 轨.条宽 / 2);
   // 轨道点击是平滑滚动动画，读值前必须等一帧帧落定，否则读到动画起点 0（假故障）
   const 归零 = async () => {
-    await page.evaluate(() => { (document.querySelector('.shuru-kuang') as HTMLTextAreaElement).scrollTop = 0; });
+    await 滚动归零(page);
     await page.waitForTimeout(250);
   };
 
@@ -298,7 +333,7 @@ async function 滚动交互取样(page: import('@playwright/test').Page) {
   await 归零();
   await page.mouse.click(x, Math.round(轨.y + 轨.高 - 6));
   await page.waitForTimeout(400);
-  const 点后 = await page.evaluate(() => (document.querySelector('.shuru-kuang') as HTMLTextAreaElement).scrollTop);
+  const 点后 = (await 读滚动(page)).scrollTop;
 
   // 再拖 thumb：落点若跑到文字上，选区会被拉长，用选区长度反证落点确实在滚动条上
   await 归零();
@@ -309,10 +344,9 @@ async function 滚动交互取样(page: import('@playwright/test').Page) {
   await page.mouse.move(x, 起点 + 24, { steps: 5 });
   await page.mouse.up();
   await page.waitForTimeout(200);
-  const 拖后 = await page.evaluate(() => {
-    const k = document.querySelector('.shuru-kuang') as HTMLTextAreaElement;
-    return { scrollTop: k.scrollTop, 选中长度: k.selectionEnd - k.selectionStart };
-  });
+  // FP-10c 改判：textarea 的 selectionEnd - selectionStart 在 contenteditable 上不存在，
+  // 但「拖滚动条不该顺带把文字选中」这条判据的语义一字未改 ⇒ 改读 Selection.toString() 的长度（共用取样器那一份）。
+  const 拖后 = { scrollTop: (await 读滚动(page)).scrollTop, 选中长度: await 读选区长度(page) };
   return {
     可拖滚动: 拖后.scrollTop > 0,
     拖后scrollTop: 拖后.scrollTop,
@@ -365,7 +399,7 @@ function 写证据(): void {
     '',
     异常集.length ? '控制台记录：\n' + 异常集.map((e) => `- ${e}`).join('\n') : '控制台记录：无',
   ];
-  fs.writeFileSync(path.join(证据目录, `FP-05-输入区几何与滚动-${标签}-${日期}.md`), 行.join('\n'), 'utf8');
+  fs.writeFileSync(path.join(证据目录, `FP-05-输入区几何与滚动-${标签}-${日期}${后缀}.md`), 行.join('\n'), 'utf8');
 }
 
 test.afterAll(() => {
@@ -397,15 +431,15 @@ async function 走一遍(
     await page.setViewportSize({ width: 视口.宽, height: 视口.高 });
     await page.waitForTimeout(500);
     const 几何 = await 量几何(page);
-    await page.fill('.shuru-kuang', 溢出文本);
+    await 写入多行(page, 溢出行清单);
     await page.waitForTimeout(400);
-    const 溢出 = await 折叠溢出取样(page);
-    await page.evaluate(() => { (document.querySelector('.shuru-kuang') as HTMLTextAreaElement).scrollTop = 0; });
+    const 溢出 = await 读滚动(page);
+    await 滚动归零(page);
     await page.waitForTimeout(250);
     const 像素 = await scanScrollStrip(page, '.shuru-kuang', 溢出.生效条宽);
     const 交互 = await 滚动交互取样(page);
     const 仍折叠 = await page.evaluate(
-      () => !(document.querySelector('.shuru-kuang') as HTMLTextAreaElement).classList.contains('zhan-kai'),
+      () => !(document.querySelector('.shuru-kuang') as HTMLElement).classList.contains('zhan-kai'),
     );
     const 输入区名 = `fp05q-${标签}-${视口.名}-${主题}-${页}-shuruqu.png`;
     await page.locator('.weixin-shuru, .shuru-quyu').first().screenshot({ path: path.join(截图目录, 输入区名) });
@@ -421,17 +455,19 @@ async function 走一遍(
       await page.waitForTimeout(400);
       展开 = {
         有zhanKai类: await page.evaluate(
-          () => !!(document.querySelector('.shuru-kuang') as HTMLTextAreaElement).classList.contains('zhan-kai'),
+          () => !!(document.querySelector('.shuru-kuang') as HTMLElement).classList.contains('zhan-kai'),
         ),
         高度: await page.evaluate(() => document.querySelector('.shuru-kuang')!.getBoundingClientRect().height),
       };
-      await page.fill('.shuru-kuang', '短内容');
+      await 替换文本(page, '短内容');
       await page.waitForTimeout(400);
       回落 = {
         有zhanKai类: await page.evaluate(
-          () => !!(document.querySelector('.shuru-kuang') as HTMLTextAreaElement).classList.contains('zhan-kai'),
+          () => !!(document.querySelector('.shuru-kuang') as HTMLElement).classList.contains('zhan-kai'),
         ),
-        maxHeight: await page.evaluate(() => (document.querySelector('.shuru-kuang') as HTMLTextAreaElement).style.maxHeight),
+        // FP-10c 改判：旧形态回落时那条 maxHeight 是 use输入框.ts 写在元素上的内联样式（JS 量高链）；真内联改纯 CSS ⇒ 内联恒为空串，读它等于读不到东西。
+        // 判据等价换成「计算值必须严格等于折叠档令牌」，比旧的「是个 px 字面量」更严。
+        maxHeight: await page.evaluate(() => getComputedStyle(document.querySelector('.shuru-kuang') as HTMLElement).maxHeight),
         高: await page.evaluate(() => document.querySelector('.shuru-kuang')!.getBoundingClientRect().height),
       };
       await page.screenshot({ path: path.join(截图目录, `fp05q-${标签}-${视口.名}-${主题}-聊天页-zhankai.png`) });
@@ -462,7 +498,35 @@ async function 走一遍(
     });
 
     if (标签 === 'after') {
-      expect(几何.高度差, `按钮与输入框外壳高度不等：${JSON.stringify(几何)}`).toBe(0);
+      // FP-10c⑤ 再改判（需用户确认口径，旧→新见文件头）：旧 toBe(0) 拆成「严格同源」+「渲染盒容差」。
+      const 同源 = 几何.同源;
+      expect(
+        同源.按钮边框上,
+        `发送按钮边框与外壳边框不再同值（第二真源又长出来了）：${同源.按钮边框上} vs ${同源.外壳边框上}`,
+      ).toBe(同源.外壳边框上);
+      expect(
+        同源.按钮内缩上下,
+        `按钮上下内缩与编辑器不再同值（--shuru-kuang-shang-xia-neidian 断链）：${同源.按钮内缩上下} vs ${同源.编辑器内缩上下}`,
+      ).toBe(同源.编辑器内缩上下);
+      expect(
+        同源.按钮行高,
+        `按钮行高基准与编辑器不再同值（--shuru-kuang-hangxing-gao 断链）：${同源.按钮行高} vs ${同源.编辑器行高}`,
+      ).toBe(同源.编辑器行高);
+      expect(
+        同源.编辑器最高,
+        `折叠态 max-height 不再逐字吃 --shuru-danxing-gao-du：${同源.编辑器最高} vs ${同源.令牌}`,
+      ).toBe(同源.令牌);
+      expect(
+        几何.输入框高,
+        `编辑器盒高 ≠ 令牌解析值（零容差钉死）：${几何.输入框高} vs ${同源.令牌}`,
+      ).toBe(parseFloat(同源.令牌));
+      // 余量只剩「令牌取整边距 ceil(34.4)=35」⇒ ≤1 CSS px（布局级，与 DPR 无关）；取本仓既有
+      // F22 口径 0.65px，与 fp11-menjin-zonglan.spec.ts 对同一物理量的判据一致（实测 0.6000022888183594）。
+      const 高差容差 = 0.65;
+      expect(
+        几何.高度差,
+        `按钮与输入框外壳高度不等：渲染盒差 ${几何.高度差.toFixed(5)}px 越过取整边距上界 ${高差容差}px（${JSON.stringify({ 按钮: 几何.按钮高, 外壳: 几何.外壳高, 输入框: 几何.输入框高, DPR: 几何.装置像素比 })}）`,
+      ).toBeLessThanOrEqual(高差容差);
       expect(几何.命中可点.上21_5 && 几何.命中可点.下21_5, '发送按钮 44px 命中区上下不达标').toBe(true);
       expect(parseFloat(几何.伪元素高), '::before 热区高度不足 44px').toBeGreaterThanOrEqual(44);
       expect(几何.按钮宽).toBeGreaterThanOrEqual(44);
@@ -481,10 +545,10 @@ async function 走一遍(
         expect(展开!.有zhanKai类).toBe(true);
         expect(展开!.高度).toBeGreaterThan(溢出.clientHeight);
         expect(回落!.有zhanKai类).toBe(false);
-        expect(回落!.maxHeight).toMatch(/^\d+(\.\d+)?px$/);
+        expect(回落!.maxHeight, '折叠档 max-height 不再是 --shuru-danxing-gao-du 那枚令牌').toBe('35px');
       }
     }
-    await page.fill('.shuru-kuang', '');
+    await 清空文本(page);
   }
   记异常(collector, `${页} ${主题}`);
   await context.close();
@@ -522,10 +586,10 @@ test('FP-05 prefers-reduced-motion 下折叠态滚动与几何不回退', async 
   await page.goto(`/chat/${会话ID}`);
   await expect(page.locator('.shuru-kuang')).toBeVisible({ timeout: 30000 });
   const 几何 = await 量几何(page);
-  await page.fill('.shuru-kuang', 溢出文本);
+  await 写入多行(page, 溢出行清单);
   await page.waitForTimeout(400);
-  const 溢出 = await 折叠溢出取样(page);
-  await page.evaluate(() => { (document.querySelector('.shuru-kuang') as HTMLTextAreaElement).scrollTop = 0; });
+  const 溢出 = await 读滚动(page);
+  await 滚动归零(page);
   await page.waitForTimeout(250);
   const 像素 = await scanScrollStrip(page, '.shuru-kuang', 溢出.生效条宽);
   const 交互 = await 滚动交互取样(page);
@@ -556,7 +620,18 @@ test('FP-05 prefers-reduced-motion 下折叠态滚动与几何不回退', async 
     回落: null,
   });
   if (标签 === 'after') {
-    expect(几何.高度差).toBe(0);
+    // 与 走一遍 内 FP-10c⑤ 改判同口径（旧 toBe(0) → 严格同源 + 0.65px 渲染盒容差，见文件头；
+    // 这是该判据在本文件的第三处同族实例，前一形态下被 :472 的更早红遮蔽，从未单独暴露）。
+    const 同源 = 几何.同源;
+    expect(同源.按钮边框上, `减动效档：按钮边框与外壳边框不同源：${同源.按钮边框上} vs ${同源.外壳边框上}`).toBe(同源.外壳边框上);
+    expect(同源.按钮内缩上下, `减动效档：按钮与编辑器上下内缩不同源：${同源.按钮内缩上下} vs ${同源.编辑器内缩上下}`).toBe(同源.编辑器内缩上下);
+    expect(同源.按钮行高, `减动效档：按钮与编辑器行高基准不同源：${同源.按钮行高} vs ${同源.编辑器行高}`).toBe(同源.编辑器行高);
+    expect(同源.编辑器最高, `减动效档：max-height 不再吃令牌：${同源.编辑器最高} vs ${同源.令牌}`).toBe(同源.令牌);
+    expect(几何.输入框高, `减动效档：编辑器盒高 ≠ 令牌解析值：${几何.输入框高} vs ${同源.令牌}`).toBe(parseFloat(同源.令牌));
+    expect(
+      几何.高度差,
+      `减动效档：按钮与外壳渲染盒差 ${几何.高度差.toFixed(5)}px 越过 0.65（${JSON.stringify({ 按钮: 几何.按钮高, 外壳: 几何.外壳高, 输入框: 几何.输入框高, DPR: 几何.装置像素比 })}）`,
+    ).toBeLessThanOrEqual(0.65);
     expect(溢出.scrollHeight).toBeGreaterThan(溢出.clientHeight);
     expect(溢出.scrollbarWidth属).not.toBe('none');
     expect(溢出.生效条宽).toBeGreaterThanOrEqual(4);

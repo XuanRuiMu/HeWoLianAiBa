@@ -274,16 +274,4 @@ onMounted(() => {
 .liebiao-guodu-move {
   transition: transform 0.35s var(--quxian-biao-zhun);
 }
-
-@keyframes jianbian-liudong {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
 </style>

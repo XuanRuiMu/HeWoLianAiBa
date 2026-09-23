@@ -10,6 +10,7 @@ import type {
 import type { XiaoXiXinXi } from './消息'
 import { huiHuaXiaoXiSuoJian, shiXiaoXiaoXiZongShuHuanCun } from './消息'
 import { qingLiLuoKuKuai, shiTuWenHunPaiKuai } from './消息内容块'
+import { buQiWenJianTiQuWenBen } from './文档文本提取'
 
 export interface BaoCunJiaoSeXiaoXiCanShu {
   yong_hu_id: string
@@ -150,7 +151,7 @@ export async function huoQuZuiJinDuiHuaLiShi(
     [yong_hu_id, jiao_se_id, shu_liang],
   )
 
-  return jieGuo.rows.reverse().map((row): DuiHuaLiShiXiang => {
+  const liShi = jieGuo.rows.reverse().map((row): DuiHuaLiShiXiang => {
     const faSongZheLeiXing =
       row.发送者 === 'yonghu'
         ? 'yonghu'
@@ -179,16 +180,21 @@ export async function huoQuZuiJinDuiHuaLiShi(
       nei_rong: String(row.内容 || ''),
       shi_jian: `${shi}:${fen}`,
       yi_che_hui: Boolean(row.已撤回),
-      yuan_shi_nei_rong: row.原始内容 ? String(row.原始内容) : null,
+      // FP-26：模型装配口不再读取 `原始内容`（撤回原文不进语料），故此处不映射该列
       meiTiLeiBie,
       tuWenHunPai,
       meiTiSha256: (shiTuXiang || shiShiPin) && row.媒体SHA256 ? String(row.媒体SHA256).toLowerCase() : undefined,
       meiTiMIME: (shiTuXiang || shiShiPin) && row.媒体MIME ? String(row.媒体MIME) : undefined,
       meiTiShiChangHaoMiao: row.媒体时长毫秒 != null ? Number(row.媒体时长毫秒) : null,
       yuanShiWenJianMing: row.媒体原始文件名 ? String(row.媒体原始文件名) : undefined,
+      // FP-12：文档正文提取按媒体行 ID 批量取 MIME/哈希，故这里只带身份不带正文副本
+      meiTiId: row.媒体ID ? String(row.媒体ID) : undefined,
       duiHuaZongTiaoShu: row.对话总条数 != null ? Number(row.对话总条数) : undefined,
+      beiYongXiaoXiId: row.被引用消息ID ? String(row.被引用消息ID) : null,
     }
   })
+  // FP-12：阈值内的文档消息在送模前挂上提取正文（军师/军事分析/复盘/主聊天共用这一个补全口）
+  return await buQiWenJianTiQuWenBen(liShi)
 }
 
 export async function baoCunJiaoSeXiaoXi(

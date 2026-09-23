@@ -1,6 +1,6 @@
 <template>
   <div class="cuowu-bianjie">
-    <slot v-if="!cuoWuZhuangTai" />
+    <slot v-if="!xianShiCuoWu" />
     <div v-else class="cuowu-tishi" role="alert" aria-live="assertive">
       <div class="cuowu-toubu">
         <span class="cuowu-tubiao" aria-hidden="true">⚠</span>
@@ -9,7 +9,7 @@
         </h2>
       </div>
       <p class="cuowu-miaoshu">
-        {{ huoQuFanYi('tongYong', 'cuoWuBianJieTiShi') }}
+        {{ miaoShuWenAn || huoQuFanYi('tongYong', 'cuoWuBianJieTiShi') }}
       </p>
       <p v-if="caoGaoTiShi" class="cuowu-miaoshu" role="status">
         {{ caoGaoTiShi }}
@@ -18,7 +18,7 @@
         <button class="shuaxin-anniu" type="button" @click="shuaXinYeMian">
           {{ huoQuFanYi('tongYong', 'cuoWuBianJieShuaXin') }}
         </button>
-        <button class="chongzhi-anniu" type="button" @click="chongZhiCuoWu">
+        <button v-if="!qiangZhiXianShi" class="chongzhi-anniu" type="button" @click="chongZhiCuoWu">
           {{ huoQuFanYi('tongYong', 'cuoWuBianJieChongZhi') }}
         </button>
       </div>
@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onErrorCaptured } from 'vue'
+import { ref, computed, onErrorCaptured } from 'vue'
 import { huoQuFanYi } from '@/config/translations'
 
 type CuoWuLeiXing = 'leiXing' | 'yuFa' | 'ziYuan' | 'weiZhi'
@@ -40,11 +40,19 @@ interface CuoWuXinXi {
   shiJianChuo: number
 }
 
+// qiangZhiXianShi：由外部（路由失败页）直接借用本边界的失败态呈现，禁新造第二套错误 UI。
+// miaoShuWenAn：已翻译好的描述文案（调用方按错误类别选键），留空则用渲染异常的默认文案。
+const props = withDefaults(
+  defineProps<{ qiangZhiXianShi?: boolean; miaoShuWenAn?: string }>(),
+  { qiangZhiXianShi: false, miaoShuWenAn: '' },
+)
+
 const emit = defineEmits<{
   (e: 'cuoWuBuHuo', xinXi: CuoWuXinXi): void
 }>()
 
 const cuoWuZhuangTai = ref(false)
+const xianShiCuoWu = computed(() => cuoWuZhuangTai.value || props.qiangZhiXianShi)
 const dangQianCuoWu = ref<unknown>(null)
 const caoGaoTiShi = ref('')
 

@@ -6,6 +6,8 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import 过往战绩 from '@/views/过往战绩.vue'
 import { huoQuFanYi } from '@/config/translations'
+import { 解析几何数值 } from './主题令牌真源'
+import { 读取全局基线 } from './CSS级联真源'
 import type { DangAnXiangQing } from '@/types'
 
 // 忠实 stub：持有 modelValue 并渲染 slot，使父组件 v-for 真实落 DOM，
@@ -582,15 +584,25 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(lieBiao[1].text()).toContain('高冷姐')
     })
 
-    it('战绩列表容器存在统一纵向滚动条样式（FP-01 令牌族）', () => {
+    it('战绩列表容器存在统一纵向滚动条样式（FP-20 单一真源：私有宽/滑块/悬停已删，只留透明轨道）', () => {
       expect(guoWangZhanJiYuanMa).toMatch(/\.zhanji-liebiao\s*\{[^}]*overflow-y:\s*auto/)
+      // FP-20：私有 width/thumb/thumb:hover 三规则与 global 同令牌纯重复，已删——负断言钉住不许回归
+      expect(guoWangZhanJiYuanMa).not.toMatch(/\.zhanji-liebiao::-webkit-scrollbar\s*\{/)
+      expect(guoWangZhanJiYuanMa).not.toMatch(/\.zhanji-liebiao::-webkit-scrollbar-thumb\s*\{/)
+      expect(guoWangZhanJiYuanMa).not.toMatch(/\.zhanji-liebiao::-webkit-scrollbar-thumb:hover\s*\{/)
+      // 保留特例：透明轨道露出页面渐变底，global 半透明灰轨道会显出灰带
       expect(guoWangZhanJiYuanMa).toMatch(
-        /\.zhanji-liebiao::-webkit-scrollbar\s*\{[^}]*width:\s*var\(--gundong-tiao-kuan-du\)/,
+        /\.zhanji-liebiao::-webkit-scrollbar-track\s*\{\s*background:\s*transparent/,
       )
-      expect(guoWangZhanJiYuanMa).toMatch(
-        /\.zhanji-liebiao::-webkit-scrollbar-thumb\s*\{[^}]*background:\s*var\(--gundong-tiao-huakuai\)/,
+      // 宽/滑块/悬停吃 global 单一真源（同令牌）
+      const 全局 = 读取全局基线()
+      expect(全局).toMatch(
+        /::-webkit-scrollbar\s*\{\s*width:\s*var\(--gundong-tiao-kuan-du\)/,
       )
-      expect(guoWangZhanJiYuanMa).toMatch(/\.zhanji-liebiao::-webkit-scrollbar-thumb:hover/)
+      expect(全局).toMatch(
+        /::-webkit-scrollbar-thumb\s*\{\s*background:\s*var\(--gundong-tiao-huakuai\)/,
+      )
+      expect(全局).toMatch(/::-webkit-scrollbar-thumb:hover\s*\{/)
     })
   })
 
@@ -836,9 +848,18 @@ describe('FP-13 过往战绩与复盘前端', () => {
       expect(wrapper.findAll('.zhanji-kapian.xuanZhong').length).toBe(1)
     })
 
-    it('拖拽时源卡片隐藏、目标处显示霓虹虚线落点空位（FP-04：外层定位槽画框，内容隐藏）', () => {
+    it('拖拽时源卡片隐藏、目标处显示虚线落点空位（FP-04：外层定位槽画框，内容隐藏；FP-22e：环宽/环色吃焦点环令牌）', () => {
       // 落点空位用 outline 而非 border：外层是纯定位槽，加 border 会撑高一格、兄弟卡片跟着跳
-      expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-ghost\s*\{[^}]*outline:\s*2px\s+dashed\s+#ff2d95/)
+      const guiYingKuai =
+        /\.zhanji-kapian\.sortable-ghost\s*\{([\s\S]*?)\n\}/.exec(guoWangZhanJiYuanMa)?.[1] ?? ''
+      // 契约随实现演进（FP-22e）：旧断言把 `2px … #ff2d95` 两个字面量钉在落点空位上，
+      // 正是"三套并行环色体系"里的一套。现升级为「声明必须吃 --jujiao-huan-* 令牌」+
+      // 「解析后环宽仍是 2px、仍是虚线」，判定条件比旧版更严（旧版只比字符串，不比解析值）。
+      expect(guiYingKuai).toMatch(
+        /outline:\s*var\(--jujiao-huan-kuan-du\)\s+dashed\s+var\(--jujiao-huan-yanse\)/,
+      )
+      expect(解析几何数值('--jujiao-huan-kuan-du'), '落点空位环宽解析后应仍为 2px').toBe(2)
+      expect(guiYingKuai).not.toMatch(/outline:\s*[^;]*#/)
       expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-ghost\s*\{[^}]*rgba\(255,\s*45,\s*149/)
       // 落点空位内卡片内容隐藏，仅保留轮廓
       expect(guoWangZhanJiYuanMa).toMatch(/\.sortable-ghost\s*>\s*\*\s*\{[^}]*opacity:\s*0/)
@@ -1024,11 +1045,12 @@ describe('FP-13 过往战绩与复盘前端', () => {
     })
 
     it('选中行使用霓虹粉全边框 + 内圈描边高亮（FP-04 后视觉在内层）', () => {
+      // FP-22g：霓虹粉两处字面量收编进 --xuanzhong-huan-yanse（值仍 #ff2d95），断言随契约演进改钉令牌
       expect(guoWangZhanJiYuanMa).toMatch(
-        /\.zhanji-kapian\.xuanZhong\s*>\s*\.zhanji-kapian-nei\s*\{[^}]*border-color:\s*#ff2d95/,
+        /\.zhanji-kapian\.xuanZhong\s*>\s*\.zhanji-kapian-nei\s*\{[^}]*border-color:\s*var\(--xuanzhong-huan-yanse\)/,
       )
       expect(guoWangZhanJiYuanMa).toMatch(
-        /\.zhanji-kapian\.xuanZhong\s*>\s*\.zhanji-kapian-nei\s*\{[^}]*inset\s+0\s+0\s+0\s+2px\s+#ff2d95/,
+        /\.zhanji-kapian\.xuanZhong\s*>\s*\.zhanji-kapian-nei\s*\{[^}]*inset\s+0\s+0\s+0\s+2px\s+var\(--xuanzhong-huan-yanse\)/,
       )
     })
 

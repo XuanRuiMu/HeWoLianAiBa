@@ -1,5 +1,6 @@
 import type { 性别内部形态 } from '../utils/性别'
 import type { GuanLiJiaoSe, GuanLiNengLi } from '../utils/角色能力'
+import type { XiaoXiKuaiChuCan } from '../services/消息'
 
 export interface ApiXiangYing<T> {
   cheng_gong: boolean
@@ -13,7 +14,7 @@ export interface YongHuXinXi {
   shou_ji_hao: string
   yong_hu_ming: string | null
   ni_cheng: string | null
-  xing_bie: string | null
+  // FP-28b：不再有 xing_bie 键（用户.性别 死列出参收口）；用户侧性别只看 mo_ren_xing_bie
   mu_biao_xing_bie: string | null
   xing_ge_xuan_ze: string | null
   ren_she_biao_qian: string | null
@@ -128,6 +129,14 @@ export interface WanZhengHaoGanDuXinXi extends HaoGanDuXinXi {
   jiao_se_id: string
 }
 
+/** FP-12：文档正文提取的结果形态（`services/文档文本提取` 产出、`services/对话渲染` 消费） */
+export interface DuiHuaWenJianTiQu {
+  /** 已按码点截断到 config 上限的纯文本 */
+  wenBen: string
+  /** 是否因超出 `tiQuWenBenZiFuShangXian` 而被截断 */
+  beiCaiDuan: boolean
+}
+
 export interface DuiHuaLiShiXiang {
   /** 消息行 ID：FP-09 起用于把「本轮焦点消息」精确锁定到触发本轮的那一条 */
   id?: string
@@ -135,13 +144,25 @@ export interface DuiHuaLiShiXiang {
   fa_song_zhe_ming: string
   nei_rong: string
   shi_jian: string
+  /**
+   * FP-26：撤回原文**不进模型语料**，本类型自始不携带该字段（旧 `yuan_shi_nei_rong` 键已删）。
+   * 撤回行由 `services/对话渲染` 渲染成既有撤回占位；库里的 `原始内容` 列保留，
+   * 只作运营读取面的数据源，不再被任何模型装配口读取。
+   */
   yi_che_hui?: boolean
-  yuan_shi_nei_rong?: string | null
   meiTiLeiBie?: string
   meiTiSha256?: string
   meiTiMIME?: string
   meiTiShiChangHaoMiao?: number | null
   yuanShiWenJianMing?: string
+  /** FP-12：本行引用的媒体行 ID（文档正文提取按它批量取 媒体文件 行，不再各路径自带第二套查表） */
+  meiTiId?: string
+  /**
+   * FP-12：阈值内文档消息的提取正文（已由 services/文档文本提取 按码点截断）。
+   * 只由那一个补全口写入、只由 services/对话渲染 那唯一入口消费；
+   * 缺失/为 null ⇒ 该条仍按 `[文件:名]` 占位呈现（不支持、超阈值、解析失败都是这个形态）。
+   */
+  wenJianTiQu?: DuiHuaWenJianTiQu | null
   /**
    * FP-10（缺陷9）：本行的 内容 是**有序图文块**的投影（同时含文字块与图片块）。
    * 此时 内容 里已经按用户排的顺序内联了载体占位符，任何「媒体消息 ⇒ 用单个占位符覆盖正文」
@@ -149,11 +170,49 @@ export interface DuiHuaLiShiXiang {
    */
   tuWenHunPai?: boolean
   /**
+   * FP-08c（缺陷5）引用槽身份：本条引用的另一条消息 ID。
+   * 只带身份、不带摘要副本（摘要落第二处存就必然与原文漂移）；渲染时由
+   * `services/对话渲染` 按它在**整会话列表**里现取原文。
+   */
+  beiYongXiaoXiId?: string | null
+  /**
    * 该会话的消息总条数（取数时由 COUNT(*) OVER() 带出，同一次取数内恒定）。
    * 历史窗口的淘汰边界要按总条数量化，才能做到「攒满一个步长才整体前移」；
    * 若只按取到的数组长度对齐，取数窗口每轮滑动一条就会让前缀每轮都变。
    */
   duiHuaZongTiaoShu?: number
+}
+
+/**
+ * FP-21（迁移 036）：`GET /api/好友/消息/:haoYouId` 的单行出参形态。
+ * 这里是好友出参形态的**唯一声明处**（`routes/好友.ts` 只实现、不再自带一份 interface），
+ * 两个新键与 AI 侧 `services/消息.ts::XiaoXiXinXi` 同名同形 —— 名字一致是前端两页
+ * 能共用 `frontend/src/utils/消息内容块` 那一份真源的前提；各起一个名字就会在接线当天分裂。
+ * 键集合的绝对值由 `backend/src/routes/__tests__/FP21好友引用与内容块.test.ts` 钉死。
+ */
+export interface HaoYouXiaoXiChuCan {
+  id: string
+  fa_song_zhe_id: string
+  jie_shou_zhe_id: string
+  /** `nei_rong_kuai` 的兼容投影（文字块原文 + 图片块载体占位符），逐字不变地继续给老读取方 */
+  nei_rong: string
+  lei_xing: string
+  /** 恒非空：库里有块就采信，历史行/旧客户端按 内容 + 媒体ID + 类型 反构等价块数组 */
+  nei_rong_kuai: XiaoXiKuaiChuCan[]
+  /**
+   * 引用槽：恒在（未引用是 null，不是缺键）。只下发身份、不下发摘要副本 ——
+   * 摘要一律由消费方按该 ID 在本列表内现取（列表本就整段下发这一对好友的消息）。
+   */
+  bei_yong_xiao_xi_id: string | null
+  mei_ti_id: string | null
+  /** 签名主体是**当前读者**；已撤回行一律 null（留着等于让撤回失效） */
+  mei_ti_url: string | null
+  mei_ti_lei_bie: string | null
+  mei_ti_yuan_shi_wen_jian_ming: string | null
+  mei_ti_da_xiao_zi_jie: number | null
+  yi_du: boolean
+  yi_che_hui: boolean
+  shi_jian_chuo: number
 }
 
 export interface DirectorCeLue {

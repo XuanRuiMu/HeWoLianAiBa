@@ -317,8 +317,21 @@ describe('FP-06b 判定口径与唯一实现（源码扫描）', () => {
   })
 
   it('主动添加的本地图按 biaoQingBao 复用已有媒体发送（不二次上传），相册/粘贴仍走压缩后按 tupian 发', () => {
-    expect(聊天页).toMatch(/faSongMeiTiXiaoXi\(\s*'biaoQingBao',\s*null,\s*{[^}]*yiYouMeiTi/s)
-    expect(聊天页).toContain('faSongYaSuoTuPian')
+    // FP-08d（需求 #5）把「带引用 + 成功必清」收进页面侧唯一出口 faSongMeiTiZhiFa，
+    // 旧的直调形态（页面各处各自调 store）会让四条入口漏接引用态 ⇒ 出口内只剩一处 store 调用点。
+    expect(聊天页).toMatch(/faSongMeiTiZhiFa\(\s*'biaoQingBao',\s*null,\s*{[^}]*yiYouMeiTi/s)
+    const 页面直调点 = readdirSync(resolve(__dirname, '../views'))
+      .filter((名) => 名.endsWith('.vue'))
+      .flatMap(
+        (名) =>
+          readFileSync(resolve(__dirname, '../views', 名), 'utf-8').match(
+            /聊天仓库\.faSongMeiTiXiaoXi\(/g,
+          ) ?? [],
+      )
+    expect(页面直调点, '媒体直发的 store 调用点必须只剩出口内那一处').toHaveLength(1)
+    // FP-10b：压缩后发图的那唯一一处入口已从 faSongYaSuoTuPian 改名为 jiaruDaiFaTuPian
+    // （粘贴/相册先进待发区、点发送才压缩上传），扫描仍钉住「页面只有这一处入口」
+    expect(聊天页).toContain('jiaruDaiFaTuPian')
     expect(表情提交页.match(/表情仓库\.tianJia\(/g)).toHaveLength(1)
   })
 

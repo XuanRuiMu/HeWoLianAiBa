@@ -19,8 +19,10 @@ import type { XiaoXiXinXi } from './消息'
  * 能力判定唯一走 FP-18/FP-19 同源入口 `anYongHuIdJuBeiNengLi`（查库 + 30s 缓存 + 跨实例失效广播），
  * 本模块不再自写第二套判定；能力未知、入参缺失、查库异常一律按无权限处理（fail-closed）。
  *
- * 只在**路由出参**处调用：`huoQuXiaoXiLieBiao` 等取数口保持原样，因为服务端内部消费面
- * （`services/对话渲染` 的 AI 上下文、`军师`、`复盘`）本就需要撤回原文，那不是对外下发通道。
+ * 只在**路由出参**处调用：`huoQuXiaoXiLieBiao` 等取数口保持原样，因为本模块的职责是「按读取方
+ * 能力决定下不下发」，而不是数据源。FP-26 更新事实：模型装配面（`services/对话渲染`、
+ * `services/AI输入准备`、`军师`、`复盘`）**已不再读取撤回原文**（撤回语义＝原文不进语料），
+ * 故本入口的运营读取面只剩人侧（管理路由 / 有 cha_kan 能力的用户读会话）两处消费者。
  */
 
 async function yunYingZiDuanKeDu(duFangYongHuId: string): Promise<boolean> {

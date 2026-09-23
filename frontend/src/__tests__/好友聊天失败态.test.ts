@@ -4,6 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
 import HaoYouLiaoTian from '@/views/好友聊天.vue'
 import { huoQuFanYi } from '@/config/translations'
+import { xieRuShuRuQu } from './输入区夹具'
 
 vi.mock('@/api/社交', () => ({
   huoQuHaoYouXiaoXi: vi.fn(),
@@ -84,7 +85,7 @@ describe('好友聊天失败态不出戏', () => {
     vi.mocked(sheJiao.huoQuHaoYouXiaoXi).mockResolvedValueOnce([])
     vi.mocked(sheJiao.faSongHaoYouXiaoXi).mockRejectedValueOnce(juJueCuoWu(403))
     const wrapper = await mountLiaoTian()
-    await wrapper.find('.shuru-kuang').setValue('你好')
+    await xieRuShuRuQu(wrapper, '你好')
     await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
     expect(wrapper.find('.fasong-tishi').exists()).toBe(true)
@@ -96,7 +97,7 @@ describe('好友聊天失败态不出戏', () => {
     vi.mocked(sheJiao.huoQuHaoYouXiaoXi).mockResolvedValueOnce([])
     const wrapper = await mountLiaoTian()
 
-    await wrapper.find('.shuru-kuang').setValue('')
+    await xieRuShuRuQu(wrapper, '')
     await flushPromises()
     const kong = wrapper.find('.fasong-anniu')
     expect(kong.exists()).toBe(true)
@@ -108,7 +109,7 @@ describe('好友聊天失败态不出戏', () => {
     await flushPromises()
     expect(sheJiao.faSongHaoYouXiaoXi).not.toHaveBeenCalled()
 
-    await wrapper.find('.shuru-kuang').setValue('在吗')
+    await xieRuShuRuQu(wrapper, '在吗')
     const feiKong = wrapper.find('.fasong-anniu')
     expect(feiKong.exists()).toBe(true)
     expect(feiKong.attributes('disabled')).toBeUndefined()

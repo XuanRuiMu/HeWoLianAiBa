@@ -1,8 +1,6 @@
 <template>
   <div class="liaotian-yemian">
-    <div class="aitishi-tiao" role="note">
-      {{ huoQuFanYi('tongYong', 'aiTiShiTiao') }}
-    </div>
+    <TiShiDai :cuo-wu="fuPanMoShi ? null : 聊天仓库.cuoWuXinXi" />
     <main ref="xiaoxiQuYuRef" class="xiaoxi-quyu weixin-beijing" :class="liaoTianBeiJingLeiMing" :style="[liaoTianBeiJingYangShi, qiPaoYangShi]" role="log" aria-live="polite" :aria-label="huoQuFanYi('liaoTian', 'xiaoXiLieBiao')" @scroll="chuLiGunDong">
       <div v-if="聊天仓库.haiYouGengDuo && !fuPanMoShi" class="jiazaigengduo-qu">
         <button
@@ -24,9 +22,9 @@
           class="gujia-xiangmu"
           :class="qiPao.shiYouCe ? 'gujia-youce' : 'gujia-zuoce'"
         >
-          <span v-if="!qiPao.shiYouCe" class="gujia-touxiang" />
+          <span v-if="!qiPao.shiYouCe" class="gujia-wei" />
           <span class="gujia-qipao" :style="{ width: qiPao.kuanDu }" />
-          <span v-if="qiPao.shiYouCe" class="gujia-touxiang" />
+          <span v-if="qiPao.shiYouCe" class="gujia-wei" />
         </div>
       </div>
       <div v-else-if="聊天仓库.jiaZaiShiBai" class="jiazai-shibai-qu">
@@ -48,12 +46,11 @@
       </div>
       <TransitionGroup name="xiaoxi-guodu" tag="div" class="xiaoxi-liebiao">
         <template v-for="(zu, suoYin) in xiaoXiFenZu" :key="'zu-' + suoYin">
-          <div class="shijian-biaoqian">
-            {{ zu.shiJian }}
-          </div>
+          <ShiJianTiao :shi-jian="zu.shiJian" :shi-jian-chuo="zu.shiJianChuo" />
           <template v-for="xiaoXi in zu.xiaoXiLieBiao" :key="xiaoXi.ke_hu_duan_id || xiaoXi.id">
             <div
               v-if="xiaoXi.lei_xing !== 'neiXinHuoDong'"
+              :id="yinYongXiangId(xiaoXi)"
               class="xiaoxi-xiangmu"
               :class="{
                 'yonghu-xiaoxi': xiaoXi.fa_song_zhe_lei_xing === 'yonghu',
@@ -78,37 +75,19 @@
                 </div>
               </template>
               <template v-else>
-                <div
-                  v-if="xiaoXi.fa_song_zhe_lei_xing === 'jiaose'"
-                  class="xiaoxi-touxiang jiaose-touxiang-xiaoxi"
-                >
-                  <img
-                    v-if="shiTuPianDiZhi(聊天仓库.jiaoSeXinXi?.tou_xiang)"
-                    :src="聊天仓库.jiaoSeXinXi?.tou_xiang || undefined"
-                    class="touxiang-tu"
-                    loading="lazy"
-                    decoding="async"
-                    alt=""
+                <div v-if="xiaoXi.fa_song_zhe_lei_xing === 'jiaose'" class="xiaoxi-wei">
+                  <TouXiang
+                    :tou-xiang="聊天仓库.jiaoSeXinXi?.tou_xiang"
+                    :mo-ren-zi="聊天仓库.jiaoSeXinXi?.tou_xiang"
+                    shen-fen="jiaose"
                   />
-                  <span v-else class="touxiang-moren-xiaoxi">{{
-                    聊天仓库.jiaoSeXinXi?.tou_xiang || '👤'
-                  }}</span>
                 </div>
-                <div
-                  v-if="xiaoXi.fa_song_zhe_lei_xing === 'yonghu'"
-                  class="xiaoxi-touxiang yonghu-touxiang-xiaoxi"
-                >
-                  <img
-                    v-if="shiTuPianDiZhi(用户仓库.dangQianYongHu?.tou_xiang)"
-                    :src="用户仓库.dangQianYongHu?.tou_xiang || undefined"
-                    class="touxiang-tu"
-                    loading="lazy"
-                    decoding="async"
-                    alt=""
+                <div v-if="xiaoXi.fa_song_zhe_lei_xing === 'yonghu'" class="xiaoxi-wei">
+                  <TouXiang
+                    :tou-xiang="用户仓库.dangQianYongHu?.tou_xiang"
+                    :mo-ren-zi="用户仓库.dangQianYongHu?.tou_xiang"
+                    shen-fen="yonghu"
                   />
-                  <span v-else class="touxiang-moren-xiaoxi">{{
-                    用户仓库.dangQianYongHu?.tou_xiang || '🧑'
-                  }}</span>
                 </div>
                 <button
                   v-if="!fuPanMoShi && xianShiCheHuiAnNiu(xiaoXi)"
@@ -117,7 +96,13 @@
                 >
                   {{ huoQuFanYi('liaoTian', 'cheHui') }}
                 </button>
-                <div v-if="xiaoXi.lei_xing === 'tuPian'" class="qipao-waike tupian-waike">
+                <!-- FP-10a 反转后这两支（图片 / 表情包媒体气泡）只接住"反构不出图片块"的脏行：
+                     旧服务端行缺 nei_rong_kuai 且 mei_ti_id 为空/非法时判据为 false，仍由这里按
+                     消息级地址兜底画，不至于空气泡。正常行一律改走下面的块渲染，勿当死分支删除 -->
+                <div
+                  v-if="xiaoXi.lei_xing === 'tuPian' && !shiXuYaoKuaiXuanRan(xiaoXi)"
+                  class="qipao-waike tupian-waike"
+                >
                   <button
                     class="tupian-qipao"
                     :aria-label="huoQuFanYi('duoMeiTi', 'tuPianYuLan')"
@@ -135,7 +120,7 @@
                   </button>
                 </div>
                 <div
-                  v-else-if="xiaoXi.lei_xing === 'biaoQingBao'"
+                  v-else-if="xiaoXi.lei_xing === 'biaoQingBao' && !shiXuYaoKuaiXuanRan(xiaoXi)"
                   class="qipao-waike biaoqingbao-waike"
                 >
                   <img
@@ -146,64 +131,15 @@
                   />
                 </div>
                 <div v-else-if="xiaoXi.lei_xing === 'yuYin'" class="qipao-waike yuyin-waike">
-                  <button
-                    class="yuyin-qipao"
-                    :class="{ bofangzhong: shiYuYinBoFangZhong(xiaoXi) }"
-                    :style="yuYinKuanYangShi(xiaoXi)"
-                    :aria-label="
-                      shiYuYinBoFangZhong(xiaoXi)
-                        ? huoQuFanYi('duoMeiTi', 'zanTingYuYin')
-                        : huoQuFanYi('duoMeiTi', 'boFangYuYin')
-                    "
-                    @click.stop="qieHuanYuYinBoFang(xiaoXi)"
-                  >
-                    <svg
-                      v-if="!shiYuYinBoFangZhong(xiaoXi)"
-                      class="yuyin-shengyin-tubiao"
-                      :class="{
-                        'tubiao-youce': xiaoXi.fa_song_zhe_lei_xing === 'yonghu',
-                      }"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M11 5 6 9H3v6h3l5 4z"
-                        fill="currentColor"
-                        stroke="none"
-                      />
-                      <path d="M15 9a4 4 0 0 1 0 6" />
-                      <path d="M17.5 6.5a8 8 0 0 1 0 11" opacity="0.6" />
-                    </svg>
-                    <span v-else class="yuyin-jindu-qu">
-                      <input
-                        class="yuyin-jindu-tiao"
-                        type="range"
-                        :min="0"
-                        :max="huoQuBoFangZongMiao(xiaoXi)"
-                        :step="0.1"
-                        :value="huoQuBoFangJinDu(xiaoXi)"
-                        :aria-label="huoQuFanYi('duoMeiTi', 'boFangYuYin')"
-                        @click.stop
-                        @input.stop="tiaoZhuanYuYinJinDu(xiaoXi, ($event.target as HTMLInputElement).valueAsNumber)"
-                      />
-                      <span class="yuyin-jindu-wenben"
-                        >{{ geShiHuaBoFangJinDu(xiaoXi) }} / {{ geShiHuaYuYinShiChang(xiaoXi) }}</span
-                      >
-                    </span>
-                    <span class="boxing-zu" aria-hidden="true">
-                      <span
-                        v-for="tiao in YU_YIN_BO_XING_TIAO_SHU"
-                        :key="tiao"
-                        class="boxing-tiao"
-                      />
-                    </span>
-                    <span class="yuyin-shichang">{{ geShiHuaYuYinShiChang(xiaoXi) }}</span>
-                  </button>
+                  <YuYinQiPao
+                    :xiao-xi="xiaoXi"
+                    :bo-fang-zhong="shiYuYinBoFangZhong(xiaoXi)"
+                    :jin-du-miao="huoQuBoFangJinDu(xiaoXi)"
+                    :zong-miao="huoQuBoFangZongMiao(xiaoXi)"
+                    :shi-ben-ren="xiaoXi.fa_song_zhe_lei_xing === 'yonghu'"
+                    @qie-huan="qieHuanYuYinBoFang(xiaoXi)"
+                    @tiao-zhuan="tiaoZhuanYuYinJinDu(xiaoXi, $event)"
+                  />
                   <div
                     v-if="shiYuYinZhuanXieZhong(xiaoXi)"
                     class="yuyin-zhuanwenzi-zhuangtai"
@@ -237,86 +173,51 @@
                     :aria-label="huoQuFanYi('duoMeiTi', 'boFangShiPin')"
                     @error="shuaXinMeiTiURL(xiaoXi, $event)"
                   />
-                  <div class="wenjian-qipao">
-                    <span class="wenjian-tubiao" aria-hidden="true">
-                      <svg
-                        v-if="huoQuWenJianTuBiaoLeiXing(xiaoXi) === 'pdf'"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                        <polyline points="14 2 14 8 20 8" />
-                        <text
-                          x="12"
-                          y="17"
-                          text-anchor="middle"
-                          font-size="6"
-                          stroke="none"
-                          fill="currentColor"
-                        >
-                          PDF
-                        </text>
-                      </svg>
-                      <svg
-                        v-else-if="huoQuWenJianTuBiaoLeiXing(xiaoXi) === 'yasuo'"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
-                        <path d="M21 8v13H3V8" />
-                        <path d="M1 3h22v5H1z" />
-                        <line x1="10" y1="12" x2="14" y2="12" />
-                      </svg>
-                      <svg
-                        v-else-if="huoQuWenJianTuBiaoLeiXing(xiaoXi) === 'yinshipin'"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
-                        <polygon points="23 7 16 12 23 17 23 7" />
-                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-                      </svg>
-                      <svg
-                        v-else
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                      >
-                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
-                        <polyline points="13 2 13 9 20 9" />
-                      </svg>
-                    </span>
-                    <span class="wenjian-xinxi">
-                      <span class="wenjian-ming">{{ geShiHuaWenJianMing(xiaoXi) }}</span>
-                      <span v-if="huoQuWenJianDaXiaoWenBen(xiaoXi)" class="wenjian-daxiao">{{
-                        huoQuWenJianDaXiaoWenBen(xiaoXi)
-                      }}</span>
-                    </span>
-                    <a
-                      class="wenjian-xiazai"
-                      :href="huoQuXiaoXiMeiTiURL(xiaoXi)"
-                      :download="huoQuWenJianMing(xiaoXi)"
-                      :aria-label="huoQuFanYi('duoMeiTi', 'xiaZaiWenJian')"
-                      :title="huoQuFanYi('duoMeiTi', 'xiaZaiWenJian')"
-                      @click.stop
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
-                    </a>
-                  </div>
+                  <WenJianQiPao
+                    :shi-ben-ren="xiaoXi.fa_song_zhe_lei_xing === 'yonghu'"
+                    :ming-cheng="huoQuWenJianMing(xiaoXi)"
+                    :da-xiao="huoQuWenJianDaXiaoWenBen(xiaoXi)"
+                    :xia-zai-di-zhi="huoQuXiaoXiMeiTiURL(xiaoXi)"
+                    :xia-zai-ming="huoQuWenJianMing(xiaoXi)"
+                  />
                 </div>
                 <div v-else class="qipao-waike">
                   <div class="qipao-neirong">
-                    {{ xiaoXi.nei_rong }}
+                    <!-- FP-10b（缺陷9）：服务端回读的块数组按原序渲染，刷新后与发送时同序；
+                         FP-10a 反转判据后「含图片块」即走这里（纯图/纯贴纸单块行也不例外），
+                         纯文本行与反构不出图片块的脏行仍走 v-else / 上面的媒体分支兜底 -->
+                    <template v-if="shiXuYaoKuaiXuanRan(xiaoXi)">
+                      <span
+                        v-for="(kuai, kuaiSuoYin) in huoQuXianShiKuai(xiaoXi)"
+                        :key="`${xiaoXiKey(xiaoXi)}-${kuaiSuoYin}`"
+                        class="tuwen-kuai"
+                        :class="kuai.lei_xing === 'tupian' ? 'tuwen-kuai--tu' : 'tuwen-kuai--wen'"
+                      >
+                        <img
+                          v-if="kuai.lei_xing === 'tupian'"
+                          class="tuwen-kuai-tu"
+                          :class="{ 'tuwen-kuai-tu--biaoqingbao': shiBiaoQingBaoKuai(kuai) }"
+                          :src="kuai.mei_ti_url || huoQuXiaoXiMeiTiURL(xiaoXi)"
+                          :alt="huoQuFanYi('duoMeiTi', 'tuPianYuLan')"
+                          loading="lazy"
+                          decoding="async"
+                          @click.stop="daKaiTuPianYuLan(xiaoXi, kuai.mei_ti_url)"
+                          @error="shuaXinMeiTiURL(xiaoXi, $event)"
+                        />
+                        <template v-else>{{ kuai.nei_rong }}</template>
+                      </span>
+                    </template>
+                    <template v-else>{{ xiaoXi.nei_rong }}</template>
                   </div>
+                  <!-- FP-09（需求 #5 表现层）气泡内引用块：摘要按 bei_yong_xiao_xi_id 在会话列表里现取，
+                       点它滚动定位原消息并高亮；已撤回/取不到一律走既有撤回占位文案，不空白也不抛错 -->
+                  <YinYongQiPaoKuai
+                    v-if="xiaoXi.bei_yong_xiao_xi_id"
+                    :bei-yong-xiao-xi-id="xiaoXi.bei_yong_xiao_xi_id"
+                    :lie-biao="聊天仓库.xiaoXiLieBiao"
+                    :gun-dong-rong-qi="huoQuXiaoXiGunDongRongQi"
+                    :fa-song-zhe-ming="yinYongFaSongZheMing"
+                  />
                   <div
                     v-if="shiFanYiZhong(xiaoXi) || shiFanYiZhanKai(xiaoXi)"
                     class="fanyi-yuyan-hang"
@@ -487,17 +388,14 @@
         {{ huoQuFanYi('liaoTian', 'youXiYiJieShu') }}
       </div>
       <div v-else class="shuru-rongqi">
-        <div v-if="yinYongXiaoXi" class="yinyong-yulan">
-          <span class="yinyong-biaoqian">{{ huoQuFanYi('liaoTian', 'yinYong') }}</span>
-          <span class="yinyong-zhaiyao">{{ huoQuYinYongZhaiYao(yinYongXiaoXi) }}</span>
-          <button
-            class="yinyong-quxiao"
-            :aria-label="huoQuFanYi('liaoTian', 'quXiaoYinYong')"
-            @click="quXiaoYinYong"
-          >
-            ×
-          </button>
-        </div>
+        <!-- FP-09（需求 #5 表现层）发送前引用条：落在编辑器上方的同一 flex 槽位（输入区几何一字未动），
+             摘要两行溢出省略，关闭钮是原生 button ⇒ 键盘可达可激活；形态与数值全部由组件唯一实现承载 -->
+        <YinYongTiao
+          v-if="yinYongXiaoXi"
+          :zhai-yao="huoQuYinYongZhaiYao(yinYongXiaoXi)"
+          :fa-song-zhe-ming="yinYongFaSongZheMing(yinYongXiaoXi)"
+          @guan-bi="quXiaoYinYong"
+        />
         <button
           class="yuyin-anniu"
           :class="{ huoyue: luYinMoShi }"
@@ -524,22 +422,30 @@
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
         </button>
-        <div class="shuru-kuang-waike">
-          <textarea
-            ref="shuruKuangRef"
-            v-model="shuRuNeiRong"
-            class="shuru-kuang"
-            :class="{ 'zhan-kai': shuRuKuangZhanKai }"
-            :style="shuRuKuangYangShi"
-            :placeholder="huoQuFanYi('liaoTian', 'shuRuXiaoXi')"
-            :maxlength="XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu"
-            rows="1"
-            @keydown.enter="chuLiShuRuKuangAnJian"
-            @focus="chuLiShuRuKuangJuJiao"
-            @input="chuLiShuRuBianHua"
-            @paste="chuLiZhanTie"
-          />
-        </div>
+        <!-- FP-10c（需求 #6 终态）图文真内联：文字段与图片/贴纸块在同一条 contenteditable 文字流里，
+             块插在光标处、随文字排版、整块一次退格删除、块可拖拽改序与单块删除。
+             本区唯一的输入区实现就是 components/聊天/图文输入区.vue（好友页共用同一份），
+             页面只持有「展开档」这一个布尔量与真源出口，不再有 JS 量高、不再有第二份块状态。
+             引用条（FP-09）仍是输入区上方的整行槽位，与本盒互不顶开；
+             FP-05 的等高构造、FP-23 的图标等高与 FP-04a 的滚动口机制一字未动。 -->
+        <TuWenShuRuQu
+          ref="shuruQuRef"
+          :kuai-lie-biao="daiFaKuai"
+          :wen-ben="shuRuNeiRong"
+          :guang-biao="daiFaGuangBiao"
+          :zhan-wei-fu="huoQuFanYi('liaoTian', 'shuRuXiaoXi')"
+          :zui-da-chang-du="XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu"
+          :zhan-kai="shuRuKuangZhanKai"
+          @geng-xin-guang-biao="daiFaGengXinGuangBiao"
+          @bian-ji="chuLiShuRuQuBianJi"
+          @cha-ru-wen-ben="chaRuShuRuQuWenBen"
+          @fa-song="faSong"
+          @ju-jiao="chuLiShuRuKuangJuJiao"
+          @zhan-tie="chuLiZhanTie"
+          @tuo-fang="chuLiTuoFang"
+          @shan-chu="shanChuDaiFaKuai"
+          @yi-dong="yiDongDaiFaKuai"
+        />
         <div class="shuru-dibu-hang">
           <span
             v-if="shuRuNeiRong.length >= XIAO_XI_PEI_ZHI.ziFuTongJiXianShiYuZhi"
@@ -551,7 +457,6 @@
           <button
             class="zhan-kai-anniu"
             :class="{ 'zhan-kai': shuRuKuangZhanKai }"
-            :disabled="!zhanKaiAnNiuKeYong"
             :title="
               shuRuKuangZhanKai
                 ? huoQuFanYi('liaoTian', 'zheDie')
@@ -591,9 +496,6 @@
         >
           {{ huoQuFanYi('liaoTian', 'faSong') }}
         </button>
-      </div>
-      <div v-if="!fuPanMoShi && 聊天仓库.cuoWuXinXi" class="shuru-fu-zhu">
-        <span class="fasong-cuowu">{{ 聊天仓库.cuoWuXinXi }}</span>
       </div>
       <div v-if="caoGaoYiHuiFu" class="shuru-fu-zhu" role="status">
         <span class="fasong-cuowu">{{ huoQuFanYi('tongYong', 'caoGaoYiHuiFu') }}</span>
@@ -724,7 +626,7 @@
                   v-for="tieZhi in BIAO_QING_BAO_LIE_BIAO"
                   :key="tieZhi.id"
                   class="biaoqingbao-xiangmu"
-                  @click="faSongTieZhi(tieZhi)"
+                  @click="jiaRuDaiFaTieZhi(tieZhi)"
                 >
                   <span class="biaoqingbao-emoji">{{ tieZhi.emoji }}</span>
                   <span class="biaoqingbao-wenzi">{{ tieZhi.wenZi }}</span>
@@ -943,11 +845,11 @@
             <span v-else>{{ huoQuFanYi('duoMeiTi', 'songKaiFaSong') }}</span>
           </button>
           <div v-if="luYinZhong" class="luyin-zhuangtai-hang">
-            <span class="boxing-zu luyin-boxing-zu" aria-hidden="true">
+            <span class="luyin-dianping-zu" aria-hidden="true">
               <span
-                v-for="tiao in YU_YIN_BO_XING_TIAO_SHU"
+                v-for="tiao in LU_YIN_PEI_ZHI.dianPingTiaoShu"
                 :key="tiao"
-                class="boxing-tiao bo-xing-huo"
+                class="luyin-dianping-tiao luyin-dianping-huo"
               />
             </span>
             <span class="luyin-jishi">{{ luYinMiao }}s</span>
@@ -983,7 +885,7 @@ import {
   watch,
 } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { 使用聊天仓库 } from '@/stores/聊天'
+import { 使用聊天仓库, type MeiTiFuJia } from '@/stores/聊天'
 import { 使用用户仓库 } from '@/stores/用户'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
 import { 使用表情仓库 } from '@/stores/表情'
@@ -991,12 +893,13 @@ import { 使用表情仓库 } from '@/stores/表情'
 import { huoQuFanYi } from '@/config/translations'
 import {
   XIAO_XI_PEI_ZHI,
-  DUO_MEI_TI_PEI_ZHI,
   WEN_JIAN_SHURU_JIE_SHOU_KUO_ZHAN,
   MEI_TI_XIAO_XI_LEI_XING,
+  YIN_YONG_DING_WEI_PEI_ZHI,
+  huoQuMeiTiYinYongZhanWei,
+  LU_YIN_PEI_ZHI,
 } from '@/config/消息配置'
 import { BIAO_QING_TIAN_JIA_PEI_ZHI } from '@/config/表情配置'
-import { shiTuPianDiZhi } from '@/utils/头像'
 import { yaSuoTuPiang } from '@/utils/图片压缩'
 import {
   xuanRanBiaoQingBao,
@@ -1004,14 +907,22 @@ import {
   type BiaoQingBaoDingYi,
 } from '@/utils/表情包库'
 import type { BiaoQingXiang } from '@/api/表情'
-import type { 消息 } from '@/types'
+import type { 消息, DuoMeiTiLeiXing } from '@/types'
 import JunShiZhiDao from '@/components/军师指导.vue'
 import GuanLiJianKong from '@/components/管理员监控.vue'
 import DuoMeiTiShouQuanDanChuang from '@/components/多媒体授权弹窗.vue'
+import TuWenShuRuQu from '@/components/聊天/图文输入区.vue'
+import YinYongTiao from '@/components/聊天/引用条.vue'
+import YinYongQiPaoKuai from '@/components/聊天/引用气泡块.vue'
+import YuYinQiPao from '@/components/聊天/语音气泡.vue'
+import WenJianQiPao from '@/components/聊天/文件气泡.vue'
+import ShiJianTiao from '@/components/聊天/时间条.vue'
+import TiShiDai from '@/components/提示带.vue'
+import TouXiang from '@/components/头像.vue'
 import { chongQianMeiTiURL, fanYiWenBen as fanYiWenBenApi, zhuanXieYuYin } from '@/api/聊天'
 import { shiShiPinXiaoXi } from '@/utils/多模态'
 import { use复盘 } from '@/composables/use复盘'
-import { use长按菜单 } from '@/composables/use长按菜单'
+import { use长按菜单, type CaiDanXiaoXi } from '@/composables/use长按菜单'
 import { use添加到表情 } from '@/composables/use添加到表情'
 import { use表情提交 } from '@/composables/use表情提交'
 import { use表情提示条 } from '@/composables/use表情提示条'
@@ -1021,8 +932,15 @@ import { use录音 } from '@/composables/use录音'
 import { use虚拟窗口 } from '@/composables/use虚拟窗口'
 import { use表情面板 } from '@/composables/use表情面板'
 import { use语音播放 } from '@/composables/use语音播放'
-import { use输入框 } from '@/composables/use输入框'
 import { use粘贴图片 } from '@/composables/use粘贴图片'
+import { use待发图文, type BianJiQiDuan, type DaiFaGuangBiao } from '@/composables/use待发图文'
+import { use输入区展开档 } from '@/composables/use输入区展开档'
+import {
+  BIAO_QING_BAO_MEI_TI_LEI_BIE,
+  huoQuXianShiKuai,
+  shiBiaoQingBaoKuai,
+  shiXuYaoKuaiXuanRan,
+} from '@/utils/消息内容块'
 import { CAO_GAO_JIAN, useCaoGao } from '@/composables/use草稿'
 
 defineOptions({
@@ -1052,7 +970,10 @@ const youXiShiJianZhanKai = ref(false)
 const youXiShiJianLeiXing = ref<'shengli' | 'shibai'>('shengli')
 const youXiShiJianNeiRong = ref('')
 const xiaoxiQuYuRef = ref<HTMLElement | null>(null)
-const shuruKuangRef = ref<HTMLTextAreaElement | null>(null)
+const shuruQuRef = ref<InstanceType<typeof TuWenShuRuQu> | null>(null)
+// FP-10c：展开档只剩一个布尔量（纯 CSS 的 .zhan-kai 类），JS 量高链已随 use输入框.ts 一起删除；
+// 因此展开按钮不再按「内容是否超一行」禁用。FP-10c⑤ 缺陷1：这个布尔量的**置位与复位判定**
+// 全部住在 composables/use输入区展开档.ts（全库唯一真源），本页只取出口、不再自己写值。
 const guanLiJianKongZhanKai = ref(false)
 const dangQianShiJian = ref(Date.now())
 let cheHuiFanZhuanDingShiQi: ReturnType<typeof setTimeout> | null = null
@@ -1150,9 +1071,10 @@ const {
   fanYiMuBiaoYu,
   yinYongXiaoXi,
   quXiaoYinYong,
-  huoQuYinYongZhaiYao,
+  huoQuYinYongZhaiYao: zhengWenZhaiYaoChuKou,
 } = use长按菜单({
   dangQianShiJian,
+  zhiChiTuPianYinYong: true,
   cheHuiXiaoXi: (xiaoXiId) => 聊天仓库.cheHuiXiaoXi(xiaoXiId),
   qieHuanYuYinZhuanWenZi: (xiaoXi) => qieHuanZhuanWenZiXianShi(xiaoXi),
   fanYiQingQiu: (wenBen, yuanYu, muBiaoYu) => fanYiWenBenApi(wenBen, yuanYu, muBiaoYu),
@@ -1173,6 +1095,61 @@ const { tianJiaTuPianDaoBiaoQing } = use添加到表情({
 
 function chongXinFanYi(xiaoXi: 消息) {
   void qiangZhiFanYi(xiaoXi)
+}
+
+/**
+ * FP-09（需求 #5 表现层）引用两件套的接线点。定位锚的 DOM id 前缀与被定位的组件同源
+ * （`YIN_YONG_DING_WEI_PEI_ZHI.domQianZhui`），滚动容器就是消息列表那个 `<main>`。
+ */
+function yinYongXiangId(xiaoXi: 消息): string {
+  return `${YIN_YONG_DING_WEI_PEI_ZHI.domQianZhui}${xiaoXi.id}`
+}
+
+function huoQuXiaoXiGunDongRongQi(): HTMLElement | null {
+  return xiaoxiQuYuRef.value
+}
+
+/** 被引用那条的发送者展示名：只取真实角色名/昵称，取不到就不渲染前缀（取证 §3：author 存在才渲染） */
+function yinYongFaSongZheMing(muBiao: CaiDanXiaoXi): string {
+  if (muBiao.fa_song_zhe_lei_xing === 'yonghu') {
+    return 用户仓库.dangQianYongHu?.ni_cheng || 用户仓库.dangQianYongHu?.yong_hu_ming || ''
+  }
+  return 聊天仓库.jiaoSeXinXi?.ming_zi || ''
+}
+
+/**
+ * FP-08d（需求 #5）发送前引用条的摘要口径：被引用那条是**媒体消息**时先取它自己的占位
+ * （`config/消息配置.ts::huoQuMeiTiYinYongZhanWei` 单源映射，语音仍归截断出口），
+ * 其余一律交给唯一截断出口 `use长按菜单.ts::huoQuYinYongZhaiYao`（改名接进本作用域）。
+ * `引用气泡块.vue` 内是同一行组合式；两条呈现路径（引用条 / 气泡内引用块）解析值必须相同，
+ * 由 `__tests__/FP08d媒体引用与直发.test.ts` 断言把守，防的就是两处各写一份占位。
+ */
+function huoQuYinYongZhaiYao(muBiao: CaiDanXiaoXi): string {
+  return huoQuMeiTiYinYongZhanWei(muBiao.lei_xing) ?? zhengWenZhaiYaoChuKou(muBiao)
+}
+
+// FP-08d（需求 #5）：图片菜单的「引用」与文本 / 语音菜单同一个状态机、同一个引用态真源
+// （`use长按菜单.ts`），本页面已接引用条与被引用槽 ⇒ 用 zhiChiTuPianYinYong 开这一项。
+
+/**
+ * FP-08d（需求 #5）媒体直发的页面侧唯一出口：把「发送那一刻」的引用态交进 store，
+ * 成功后清引用条 —— 与文本 / 图文混排的「成功必清、失败不清」同一口径。
+ * 旧形态既不带引用也不清引用态 ⇒ 引用条在直发一条语音后残留悬挂，
+ * 用户接着敲的文字还会继承上一条的引用（新 bug），三方案里选「补引用参数 + 成功必清」。
+ */
+async function faSongMeiTiZhiFa(
+  leiXing: DuoMeiTiLeiXing,
+  wenJian: File | Blob | null,
+  fuJia?: MeiTiFuJia,
+): Promise<消息 | null> {
+  const jieGuo = await 聊天仓库.faSongMeiTiXiaoXi(
+    leiXing,
+    wenJian,
+    fuJia ?? {},
+    yinYongXiaoXi.value?.id ?? null,
+  )
+  if (jieGuo) quXiaoYinYong()
+  return jieGuo
 }
 
 function chuLiYouJianCaiDan(xiaoXi: 消息, shiJian: MouseEvent) {
@@ -1351,16 +1328,13 @@ const {
   sheZhiCuoWu: (xinXi) => 聊天仓库.sheZhiCuoWu(xinXi),
   faSongYuYin: async (blob, fuJia) => {
     const zhuanXie = await benDiZhuanXieYuYinBlob(blob)
-    await 聊天仓库.faSongMeiTiXiaoXi('yuYin', blob, { ...fuJia, zhuanXieWenBen: zhuanXie })
+    await faSongMeiTiZhiFa('yuYin', blob, { ...fuJia, zhuanXieWenBen: zhuanXie })
   },
   gunDongDaoDiBu: () => gunDongDaoDiBu(),
 })
 
 const {
-  YU_YIN_BO_XING_TIAO_SHU,
   shiYuYinBoFangZhong,
-  yuYinKuanYangShi,
-  geShiHuaYuYinShiChang,
   tingZhiYinPinBoFang,
   qieHuanYuYinBoFang,
   huoQuBoFangJinDu,
@@ -1370,27 +1344,88 @@ const {
   huoQuDiZhi: huoQuXiaoXiMeiTiURL,
 })
 
-function geShiHuaBoFangJinDu(xiaoXi: 消息): string {
-  const miao = Math.max(0, Math.floor(huoQuBoFangJinDu(xiaoXi)))
-  return `${miao}″`
-}
-
-const {
-  shuRuKuangZhanKai,
-  zhanKaiAnNiuKeYong,
-  shuRuKuangYangShi,
-  ceLiangShuRuKuang,
-  qieHuanShuRuKuangZhanKai,
-  chongSuanShuRuKuangGaoDu,
-} = use输入框({
-  shuruKuangRef,
-  shuRuNeiRong,
-})
-
-const { chuLiZhanTie } = use粘贴图片({
-  faSongTuPian: (wenJian) => faSongYaSuoTuPian(wenJian),
+const { chuLiZhanTie, chuLiTuoLuo } = use粘贴图片({
+  // FP-10b（缺陷9）：粘贴不再直发，图片按出现顺序进本条消息的待发块序列，文字回到输入区
+  fanJiaTuPian: (wenJian) => jiaruDaiFaTuPian(wenJian),
+  fanJiaWenZi: (wenBen) => chaRuShuRuQuWenBen(wenBen),
   sheZhiCuoWu: (xinXi) => 聊天仓库.sheZhiCuoWu(xinXi),
 })
+
+/**
+ * FP-10c 图文真内联编辑区：文字段与图片/贴纸块在同一条 contenteditable 流里，块插在光标处。
+ * 块序列与光标的真源都在 use待发图文 这一份里，图文输入区.vue 只是呈现层（DOM ⇄ data-kuai-id 对齐）；
+ * 没插过图片时块列表恒为空 ⇒ 纯文字链路逐字照旧。
+ * 这里整体解构：模板要吃的都是顶层 ref（Vue 只自动解构顶层，嵌套在对象里的 ref 不解包）。
+ */
+const {
+  kuaiLieBiao: daiFaKuai,
+  guangBiao: daiFaGuangBiao,
+  youTuPianKuai: daiFaYouTuPian,
+  chaRuTuPian: chaRuDaiFaTuPian,
+  chaRuWenZi: daiFaChaRuWenZi,
+  gengXinGuangBiao: daiFaGengXinGuangBiao,
+  tongBuCongBianJiQi: daiFaTongBuCongBianJiQi,
+  daiHuanKuaiWenJian: daiHuanDaiFaKuaiWenJian,
+  dengJiYaSuo: dengJiDaiFaYaSuo,
+  dengDaiYaSuoWanCheng: dengDaiDaiFaYaSuoWanCheng,
+  shanChuKuai: shanChuDaiFaKuai,
+  yiDongKuai: yiDongDaiFaKuai,
+  daiFaKuaiLieBiao: shouJiDaiFaKuai,
+  chaoXianYuJian: daiFaKuaiChaoXian,
+  qingKong: qingKongDaiFaKuai,
+} = use待发图文({
+  shuRuNeiRong,
+  chuangJianYuLan: (wenJian) => URL.createObjectURL(wenJian),
+  huiShouYuLan: (diZhi) => {
+    if (diZhi) URL.revokeObjectURL(diZhi)
+  },
+})
+
+/**
+ * 输入区展开档：布尔量与「内容回到单行档 ⇒ 回落」这条复位判定都住在 composables/use输入区展开档
+ * 这一份里（FP-10c⑤ 缺陷1 的根因就是那条复位触发源随 JS 量高链一起被删没了）。
+ * 本页只取出口：按钮翻转走 qieHuanZhanKaiDang，发送/清面板走 shouQiZhanKaiDang。
+ * FP-10c-⑥：待发图文块出现由真源自动置位（64px 块会被 35px 折叠裁掉），删块自动回落。
+ */
+const { shuRuKuangZhanKai, qieHuanZhanKaiDang, shouQiZhanKaiDang } = use输入区展开档({
+  shuRuNeiRong,
+  youTuPianKuai: daiFaYouTuPian,
+})
+
+/**
+ * 展开/折叠：只向真源要一次翻转，高度由图文输入区的纯 CSS min-/max-height 决定
+ * （FP-10c 删掉 use输入框.ts 的 JS 量高链后，这里不再有测量、视口监听与「内容超一行才可点」的门控）。
+ */
+function qieHuanShuRuKuangZhanKai(): void {
+  qieHuanZhanKaiDang()
+  void nextTick(() => {
+    shuruQuRef.value?.focus()
+  })
+}
+
+/** 编辑器 DOM → 真源：这是唯一的写回口（合并相邻文字段、退化回纯文本态都住在 composable 里） */
+function chuLiShuRuQuBianJi(duan: BianJiQiDuan[], xianShiXuanRanIds: string[]): void {
+  daiFaTongBuCongBianJiQi(duan, xianShiXuanRanIds)
+  chuLiShuRuBianHua()
+}
+
+/**
+ * 纯文本插入（粘贴文本 / Shift+Enter 换行）：沿用既有超限口径 —— 只塞得下多少塞多少，
+ * 一个字符都塞不下才提示，绝不像改造前那样把整段文字丢弃。
+ */
+function chaRuShuRuQuWenBen(wenBen: string, guangBiao?: DaiFaGuangBiao | null): void {
+  const shengYu = XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu - shuRuNeiRong.value.length
+  if (shengYu <= 0) {
+    聊天仓库.sheZhiCuoWu(huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'))
+    return
+  }
+  daiFaChaRuWenZi(wenBen.slice(0, shengYu), guangBiao ?? null)
+}
+
+function chuLiTuoFang(shiJian: DragEvent): void {
+  chuLiTuoLuo(shiJian)
+}
+
 
 const {
   fuPanMoShi,
@@ -1455,10 +1490,11 @@ function biaoJiTuPianYiJiaZai(xiaoXi: 消息) {
   tuPianJiaZaiJiHe.value.add(xiaoXiKey(xiaoXi))
 }
 
-function daKaiTuPianYuLan(xiaoXi: 消息) {
+function daKaiTuPianYuLan(xiaoXi: 消息, kuaiDiZhi?: string | null) {
   // 触屏长按已弹出图片菜单后，浏览器还会补发一次 click：此时只当收起菜单，不得再叠一层预览
   if (tuPianCaiDanZhanKai.value) return
-  const diZhi = huoQuXiaoXiMeiTiURL(xiaoXi)
+  // FP-10b：图文混排气泡按块预览那一张；不传块地址就仍是改造前的消息级单图口径
+  const diZhi = kuaiDiZhi || huoQuXiaoXiMeiTiURL(xiaoXi)
   if (!diZhi) return
   tuPianYuLanURL.value = diZhi
 }
@@ -1523,27 +1559,29 @@ function daKaiWenJianXuanZe() {
   wenJianInputRef.value?.click()
 }
 
-async function faSongYaSuoTuPian(wenJian: File | Blob, yuanWenJianMing?: string) {
+/**
+ * FP-10b（缺陷9）：相册与粘贴的图片统一**进本条消息的待发块序列**，不再直接发出去。
+ * 压缩在后台做，完成后换回块里的文件；压缩失败保留原图并提示 —— 图片不该因为压缩挂了
+ * 就从用户眼前消失（C4 图片授权门也随之后移到「发送」那一刻：粘贴只是留在本地）。
+ */
+function jiaruDaiFaTuPian(wenJian: File | Blob): void {
   if (!聊天仓库.dangQianHuiHuaId) return
-  // C4：图片外发视觉理解前需单独授权，拒绝则给出翻译占位提示且不发送
-  const yunXu = await queRenTuPianShouQuan()
-  if (!yunXu) {
-    聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'shouQuanWeiKaiQiTiShi'))
-    return
+  const jieGuo = chaRuDaiFaTuPian(wenJian, 'tupian')
+  if (jieGuo.yuanYin === 'chao_xian') {
+    聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'kuaiChaoXian'))
   }
-  try {
-    const yaSuoBlob = await yaSuoTuPiang(wenJian)
-    await 聊天仓库.faSongMeiTiXiaoXi('tuPian', yaSuoBlob, {
-      wenJianMing: yuanWenJianMing || (wenJian instanceof File ? wenJian.name : ''),
+  const zaiTu = yaSuoTuPiang(wenJian)
+    .then((yaSuoBlob) => {
+      daiHuanDaiFaKuaiWenJian(jieGuo.kuaiId, yaSuoBlob)
     })
-    gunDongDaoDiBu()
-  } catch (cuoWu: unknown) {
-    聊天仓库.sheZhiCuoWu(
-      cuoWu instanceof Error && cuoWu.message
-        ? cuoWu.message
-        : huoQuFanYi('duoMeiTi', 'yaSuoShiBai'),
-    )
-  }
+    .catch((cuoWu: unknown) => {
+      聊天仓库.sheZhiCuoWu(
+        cuoWu instanceof Error && cuoWu.message
+          ? cuoWu.message
+          : huoQuFanYi('duoMeiTi', 'yaSuoShiBai'),
+      )
+    })
+  dengJiDaiFaYaSuo(zaiTu)
 }
 
 async function chuLiXiangCeXuanZe(event: Event) {
@@ -1551,7 +1589,7 @@ async function chuLiXiangCeXuanZe(event: Event) {
   const wenJian = shuRu.files?.[0]
   shuRu.value = ''
   if (!wenJian) return
-  await faSongYaSuoTuPian(wenJian)
+  jiaruDaiFaTuPian(wenJian)
 }
 
 async function chuLiWenJianXuanZe(event: Event) {
@@ -1559,23 +1597,28 @@ async function chuLiWenJianXuanZe(event: Event) {
   const wenJian = shuRu.files?.[0]
   shuRu.value = ''
   if (!wenJian || !聊天仓库.dangQianHuiHuaId) return
-  await 聊天仓库.faSongMeiTiXiaoXi('wenJian', wenJian)
+  await faSongMeiTiZhiFa('wenJian', wenJian)
   gunDongDaoDiBu()
 }
 
-async function faSongTieZhi(tieZhi: BiaoQingBaoDingYi) {
+/**
+ * FP-10a（需求 #6）：表情面板选中的内置贴纸**进本条消息的待发块序列**，不再直发 —— 与图片走
+ * 同一条插入链路（同一插入序语义、同一上限预检、同样可拖拽改序），于是待发缩略图能按贴纸档
+ * （`contain` + 方形）画。贴纸类别取值只经 `utils/消息内容块.ts` 的唯一出口
+ * `BIAO_QING_BAO_MEI_TI_LEI_BIE`，页内不留那个存量码的字面量（FP24a 的守门连注释一起扫）。
+ * canvas 渲染只发生在本地，故 C4 图片授权门与粘贴/相册的口径一致：后移到「发送」那一刻
+ * （`faSongDaiFaTuWen` 内的 `queRenTuPianShouQuan`），不进待发就不该索要授权。
+ */
+async function jiaRuDaiFaTieZhi(tieZhi: BiaoQingBaoDingYi) {
   if (!聊天仓库.dangQianHuiHuaId) return
-  // C4：表情包同样外发视觉理解，需单独授权
-  const yunXu = await queRenTuPianShouQuan()
   emojiMianBanZhanKai.value = false
-  if (!yunXu) {
-    聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'shouQuanWeiKaiQiTiShi'))
-    return
-  }
   try {
     const blob = await xuanRanBiaoQingBao(tieZhi.emoji, tieZhi.wenZi)
-    await 聊天仓库.faSongMeiTiXiaoXi('biaoQingBao', blob, { wenJianMing: `${tieZhi.id}.png` })
-    gunDongDaoDiBu()
+    const wenJian = new File([blob], `${tieZhi.id}.png`, { type: blob.type || 'image/png' })
+    const jieGuo = chaRuDaiFaTuPian(wenJian, BIAO_QING_BAO_MEI_TI_LEI_BIE)
+    if (jieGuo.yuanYin === 'chao_xian') {
+      聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'kuaiChaoXian'))
+    }
   } catch (cuoWu: unknown) {
     聊天仓库.sheZhiCuoWu(
       cuoWu instanceof Error && cuoWu.message
@@ -1618,7 +1661,7 @@ async function faSongBiaoQing(biaoQing: BiaoQingXiang) {
     聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'shouQuanWeiKaiQiTiShi'))
     return
   }
-  await 聊天仓库.faSongMeiTiXiaoXi('biaoQingBao', null, {
+  await faSongMeiTiZhiFa('biaoQingBao', null, {
     yiYouMeiTi: { meiTiId: biaoQing.mei_ti_id, meiTiUrl: biaoQing.mei_ti_url },
     wenJianMing: biaoQing.duan_ming || undefined,
   })
@@ -1657,28 +1700,10 @@ watch(emojiMianBanZhanKai, (zhanKai) => {
   if (yongHuId) void 表情仓库.jiaZai(yongHuId)
 })
 
-const WEN_JIAN_KUO_ZHAN_TU_BIAO: Array<{ kuoZhan: string[]; leiXing: string }> = [
-  { kuoZhan: ['pdf'], leiXing: 'pdf' },
-  { kuoZhan: ['zip', 'rar', '7z'], leiXing: 'yasuo' },
-  { kuoZhan: ['mp4', 'mov'], leiXing: 'yinshipin' },
-]
-
-function huoQuKuoZhanMing(mingZi?: string | null): string {
-  if (!mingZi) return ''
-  const dian = mingZi.lastIndexOf('.')
-  return dian === -1 ? '' : mingZi.slice(dian + 1).toLowerCase()
-}
-
 function huoQuWenJianMing(xiaoXi: 消息): string {
   return (
     xiaoXi.mei_ti_yuan_shi_wen_jian_ming || xiaoXi.nei_rong || huoQuFanYi('duoMeiTi', 'wenJian')
   )
-}
-
-function geShiHuaWenJianMing(xiaoXi: 消息): string {
-  const ming = huoQuWenJianMing(xiaoXi)
-  if (ming.length <= DUO_MEI_TI_PEI_ZHI.wenJianMingZuiDaXianShiZiFu) return ming
-  return `${ming.slice(0, DUO_MEI_TI_PEI_ZHI.wenJianMingZuiDaXianShiZiFu)}...`
 }
 
 function huoQuWenJianDaXiaoWenBen(xiaoXi: 消息): string {
@@ -1687,14 +1712,6 @@ function huoQuWenJianDaXiaoWenBen(xiaoXi: 消息): string {
   const MB = 1024 * 1024
   if (ziJie >= MB) return `${(ziJie / MB).toFixed(1)}MB`
   return `${Math.max(1, Math.round(ziJie / 1024))}KB`
-}
-
-function huoQuWenJianTuBiaoLeiXing(xiaoXi: 消息): string {
-  const kuoZhan = huoQuKuoZhanMing(huoQuWenJianMing(xiaoXi))
-  for (const tiaoMu of WEN_JIAN_KUO_ZHAN_TU_BIAO) {
-    if (tiaoMu.kuoZhan.includes(kuoZhan)) return tiaoMu.leiXing
-  }
-  return 'qita'
 }
 
 // 表情面板展开时，点击页面任意「非表情面板、非表情按钮」区域即收起；更多面板同理
@@ -1717,7 +1734,9 @@ const liaoTianSuoDing = computed(() => {
 
 const keYiFaSong = computed(() => {
   const neiRong = shuRuNeiRong.value.trim()
-  return neiRong.length > 0 && neiRong.length <= XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu
+  if (neiRong.length > XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu) return false
+  // FP-10b：待发区里有图片 ⇒ 没有文字也能发（QQ 口径：纯图片消息是合法形态）
+  return neiRong.length > 0 || daiFaYouTuPian.value
 })
 
 const {
@@ -1826,13 +1845,46 @@ function chuLiShuRuBianHua() {
   }
 }
 
-function chuLiShuRuKuangAnJian(event: KeyboardEvent) {
-  if (event.shiftKey) return
-  event.preventDefault()
-  faSong()
-}
-
 const 管理员调试指令 = 'greedisgood'
+
+/**
+ * FP-10b：把待发块序列按**用户排的顺序**发出去（一次一条消息，图文同条）。
+ * C4 图片授权门从「粘贴时」后移到「发送时」——粘贴只是把图留在本地，不发就不该要授权。
+ * 发送失败时待发区保持原样，用户可以直接再点一次发送（气泡上的重试走同一把幂等键）。
+ */
+async function faSongDaiFaTuWen(): Promise<void> {
+  if (daiFaKuaiChaoXian()) {
+    聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'kuaiChaoXian'))
+    return
+  }
+  const yunXu = await queRenTuPianShouQuan()
+  if (!yunXu) {
+    聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'shouQuanWeiKaiQiTiShi'))
+    return
+  }
+  // 压缩在后台跑，块里可能还压着原图：先等在途压缩全部落回块，再取待发序列
+  faSongZhong.value = true
+  await dengDaiDaiFaYaSuoWanCheng()
+  const daiFa = shouJiDaiFaKuai()
+  if (daiFa.length === 0) {
+    faSongZhong.value = false
+    return
+  }
+  try {
+    // FP-08b：引用态（真源只在此处的 `yinYongXiaoXi`）必须在发送这一刻进 store，
+    // 否则会像改前那样停在 UI 死胡同里（需求 #5 的"严重 bug"本体）。
+    const jieGuo = await 聊天仓库.faSongTuWenXiaoXi(daiFa, yinYongXiaoXi.value?.id ?? null)
+    if (jieGuo) {
+      qingKongDaiFaKuai()
+      qingChuCaoGao()
+      shouQiZhanKaiDang()
+      quXiaoYinYong()
+      if (yiDingZaiDiBu.value) gunDongDaoDiBu()
+    }
+  } finally {
+    faSongZhong.value = false
+  }
+}
 
 async function faSong() {
   const neiRong = shuRuNeiRong.value.trim()
@@ -1860,12 +1912,18 @@ async function faSong() {
     return
   }
   // FP-05 YH-036：用户手动 /生图 /视频 指令已删除，改为普通文本发送（图片与视频由AI对象在合适时主动发起）
+  if (daiFaYouTuPian.value) {
+    await faSongDaiFaTuWen()
+    return
+  }
   shuRuNeiRong.value = ''
   qingChuCaoGao()
-  shuRuKuangZhanKai.value = false
+  shouQiZhanKaiDang()
   faSongZhong.value = true
   try {
-    const jieGuo = await 聊天仓库.faSongXiaoXi(neiRong)
+    // FP-08b（需求 #5）：把右键引用态随这条文本一起交给 store ⇒ 进 HTTP body。
+    // 引用态的唯一真源仍是 `use长按菜单.ts::yinYongXiaoXi`，这里只在发送瞬间读一次。
+    const jieGuo = await 聊天仓库.faSongXiaoXi(neiRong, yinYongXiaoXi.value?.id ?? null)
     if (jieGuo) {
       quXiaoYinYong()
       if (yiDingZaiDiBu.value) {
@@ -1938,7 +1996,7 @@ function qingLiUIMianBan() {
   guanBiYuYinCaiDan()
   guanBiTuPianCaiDan()
   tingZhiBiaoQingTiShi()
-  shuRuKuangZhanKai.value = false
+  shouQiZhanKaiDang()
   gengDuoMianBanZhanKai.value = false
   guanBiTuPianYuLan()
   if (luYinZhong.value) {
@@ -1981,10 +2039,9 @@ onMounted(async () => {
     window.visualViewport.addEventListener('resize', chuLiShiJiaoKouBianHua)
     window.visualViewport.addEventListener('scroll', chuLiShiJiaoKouBianHua)
   }
-  window.addEventListener('resize', chongSuanShuRuKuangGaoDu)
   document.addEventListener('click', chuLiWenDangDianJi, true)
   document.addEventListener('visibilitychange', chuLiYeMianKeJianXing)
-  nextTick(() => ceLiangShuRuKuang())
+  // FP-10c：输入区高度改由 CSS 承担（min-/max-height 吃令牌），挂载后不再测量、也不再挂 resize 重算
   // 进入聊天页即把表情面板离屏克隆并以 opacity:0 真实绘制，强制浏览器一次性
   // rasterize 全部 emoji 系统字形并缓存；这样首次点开表情面板（v-show display:none→block）不再卡顿。
   // 该预加载不触发任何滚动；面板开合对聊天区的滚动补偿由 use表情面板 自行挂载
@@ -1996,7 +2053,6 @@ onMounted(async () => {
 
 onActivated(async () => {
   anPaiCheHuiFanZhuan()
-  nextTick(() => ceLiangShuRuKuang())
   if (!yiTongGuoMountedChuShiHua) {
     return
   }
@@ -2013,7 +2069,6 @@ onBeforeUnmount(() => {
   tingZhiYinPinBoFang()
   qingLiLuYinZiYuan()
   window.removeEventListener('junshi-zhankai', junShiZhanKaiJianTingQi)
-  window.removeEventListener('resize', chongSuanShuRuKuangGaoDu)
   document.removeEventListener('click', chuLiWenDangDianJi, true)
   document.removeEventListener('visibilitychange', chuLiYeMianKeJianXing)
   if (window.visualViewport) {
@@ -2040,18 +2095,6 @@ onBeforeUnmount(() => {
     sans-serif;
 }
 
-.aitishi-tiao {
-  pointer-events: none;
-  user-select: none;
-  flex-shrink: 0;
-  padding: 3px 12px;
-  font-size: 11px;
-  line-height: 1.4;
-  text-align: center;
-  color: var(--wenben-ciuse);
-  background: var(--beijing-ciuse);
-}
-
 .xiaoxi-quyu {
   /* 聊天区滚动条：独立可见色，避免标准属性覆盖 WebKit 自定义样式 */
   --liaotian-gundong-tiao: rgba(110, 110, 110, 0.85);
@@ -2076,11 +2119,7 @@ onBeforeUnmount(() => {
   scrollbar-gutter: stable;
 }
 
-.xiaoxi-quyu::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
+/* FP-20 保留特例：消息区滑块/轨道/悬停钉在 --liaotian-gundong-tiao* 局部量名族（聊天界面.test 钉死）；宽高 8px 与 global --gundong-tiao-kuan-du 同值纯重复已删，宽度吃单一真源 */
 .xiaoxi-quyu::-webkit-scrollbar-track {
   background: var(--liaotian-gundong-tiao-track);
 }
@@ -2146,18 +2185,6 @@ onBeforeUnmount(() => {
   cursor: not-allowed;
 }
 
-.shijian-biaoqian {
-  display: inline-block;
-  align-self: center;
-  padding: 2px 6px;
-  margin: 16px 0 12px;
-  border-radius: 4px;
-  background: var(--shijian-biaoqian-beijing);
-  color: var(--wenben-tishi);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
 .xiaoxi-xiangmu {
   display: flex;
   align-items: flex-start;
@@ -2188,7 +2215,7 @@ onBeforeUnmount(() => {
   margin-bottom: 10px;
 }
 
-.xiaoxi-touxiang {
+.xiaoxi-wei {
   width: 40px;
   height: 40px;
   border-radius: 6px;
@@ -2198,25 +2225,16 @@ onBeforeUnmount(() => {
   justify-content: center;
   background: var(--touxiang-beijing-moren);
   flex-shrink: 0;
+  font-size: 18px;
+  color: var(--wenben-zhuse);
 }
 
-.yonghu-xiaoxi .xiaoxi-touxiang {
+.yonghu-xiaoxi .xiaoxi-wei {
   margin-left: 10px;
 }
 
-.jiaose-xiaoxi .xiaoxi-touxiang {
+.jiaose-xiaoxi .xiaoxi-wei {
   margin-right: 10px;
-}
-
-.touxiang-tu {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.touxiang-moren-xiaoxi {
-  font-size: 18px;
-  color: var(--wenben-zhuse);
 }
 
 .qipao-waike {
@@ -2339,7 +2357,7 @@ onBeforeUnmount(() => {
   align-self: flex-end;
 }
 
-.gujia-touxiang {
+.gujia-wei {
   width: 40px;
   height: 40px;
   border-radius: 6px;
@@ -2347,11 +2365,11 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
 }
 
-.gujia-zuoce .gujia-touxiang {
+.gujia-zuoce .gujia-wei {
   margin-right: 10px;
 }
 
-.gujia-youce .gujia-touxiang {
+.gujia-youce .gujia-wei {
   margin-left: 10px;
 }
 
@@ -2428,14 +2446,8 @@ onBeforeUnmount(() => {
 
 .shuru-rongqi {
   /* 缺陷5 同源几何：输入框外壳与发送按钮吃同一套度量（字号/行高/上下内边距/边框宽），
-     两盒高度由同一来源构造，禁止在任一侧再补一个高度字面值 */
-  --shuru-kuang-zihao: 16px;
-  --shuru-kuang-hangao: 1.4;
-  --shuru-kuang-hangxing-gao: calc(var(--shuru-kuang-zihao) * var(--shuru-kuang-hangao));
-  --shuru-kuang-shang-xia-neidian: 6px;
-  --shuru-kuang-zuo-you-neidian: 12px;
-  --shuru-kuang-biankuang: 0.5px;
-  --shuru-anniu-re-ku: 44px;
+     两盒高度由同一来源构造，禁止在任一侧再补一个高度字面值。
+     FP-22c：这组度量住在 styles/variables.css 的共用 :root 块，本容器一律不再局部声明 */
   display: flex;
   align-items: flex-end;
   flex-wrap: wrap;
@@ -2450,11 +2462,16 @@ onBeforeUnmount(() => {
   opacity: 0.8;
 }
 
+/* FP-23（需求 #9）：语音/表情/加号三枚主图标盒与输入框折叠态单行等高。两轴同吃
+   --shuru-tubiao-chicun（它的定义就是 var(--shuru-danxing-gao-du)），不再留 44/35 两套高度。
+   触控热区不让位：与 .fasong-anniu 同用 --shuru-anniu-re-ku 的 ::before 外扩；差别在发送按钮靠
+   min-width 已达热区宽、只需纵向补，图标盒两轴都只有单行高，故横纵两轴一并扩 */
 .yuyin-anniu,
 .biaoqing-anniu,
 .gengduo-plus-anniu {
-  width: 44px;
-  height: 44px;
+  position: relative;
+  width: var(--shuru-tubiao-chicun);
+  height: var(--shuru-tubiao-chicun);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2466,11 +2483,24 @@ onBeforeUnmount(() => {
   padding: 0;
 }
 
+/* 字形宽高引用同一枚令牌 ⇒ 方形 viewBox 下不可能出现非等比缩放（原 28×28 等比收到 22×22） */
 .yuyin-anniu svg,
 .biaoqing-anniu svg,
 .gengduo-plus-anniu svg {
-  width: 28px;
-  height: 28px;
+  width: var(--shuru-tubiao-glyph-chicun);
+  height: var(--shuru-tubiao-glyph-chicun);
+}
+
+.yuyin-anniu::before,
+.biaoqing-anniu::before,
+.gengduo-plus-anniu::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--shuru-anniu-re-ku);
+  height: var(--shuru-anniu-re-ku);
+  transform: translate(-50%, -50%);
 }
 
 .biaoqing-anniu.huoyue,
@@ -2479,39 +2509,9 @@ onBeforeUnmount(() => {
   color: var(--zhuse);
 }
 
-.shuru-kuang-waike {
-  flex: 1;
-  min-width: 0;
-  background: var(--beijing-kaopian);
-  border-radius: 6px;
-  display: block;
-  border: var(--shuru-kuang-biankuang) solid var(--shuru-quyu-biankuang);
-}
-
-.shuru-kuang {
-  width: 100%;
-  min-width: 0;
-  padding: var(--shuru-kuang-shang-xia-neidian) var(--shuru-kuang-zuo-you-neidian);
-  border: none;
-  background: transparent;
-  font-size: var(--shuru-kuang-zihao);
-  color: var(--wenben-zhuse);
-  line-height: var(--shuru-kuang-hangao);
-  border-radius: 6px;
-  box-sizing: border-box;
-  /* 改为块级，消除 textarea 作为 inline-block 时在父容器中产生的基线对齐下方空隙，
-     使 placeholder 在折叠态视觉上垂直居中 */
-  display: block;
-  resize: none;
-  /* 缺陷6：折叠态与展开态一律走 FP-01 的 --gundong-tiao-* 全局基线。
-     旧实现在这里私有隐藏滚动条（scrollbar-width none 且 webkit 伪元素 display none），
-     把滚动条整个抹掉，只剩滚轮可滚——正是用户要的「能看见、能点着拖」的反面。 */
-  overflow-y: auto;
-}
-
-.shuru-kuang::placeholder {
-  color: var(--shuru-zhanwei-se);
-}
+/* FP-10c：输入区本体（外壳 .shuru-kuang-waike 与编辑器 .shuru-kuang）的模板与 CSS 已随
+   components/聊天/图文输入区.vue 一起唯一化，本页不再持有第二份度量；折叠/展开两档高度都在组件里
+   吃 --shuru-danxing-gao-du / --shuru-zhan-kai-gao-du，滚动条仍只有 styles/global.css 一处真源。 */
 
 .fasong-anniu {
   position: relative;
@@ -2578,9 +2578,14 @@ onBeforeUnmount(() => {
   color: var(--cuowu-yanse);
 }
 
+/* FP-23：展开/折叠按钮同样收进 --shuru-tubiao-chicun。它此前写死 44px，经 .shuru-dibu-hang
+   传到 .shuru-rongqi 那条 align-items: flex-end 的行上，把整行顶到 44 高 —— 输入框侧辛苦构造的
+   单行等高被这一个按钮破坏。字形保留 14×14（两轴同值 ⇒ 等比）：chevron 是二级指示符，
+   刻意小于主 glyph，全站仅此一处，不构成第二真源。热区仍由 ::before 扩到热区令牌 */
 .zhan-kai-anniu {
-  width: 44px;
-  height: 44px;
+  position: relative;
+  width: var(--shuru-tubiao-chicun);
+  height: var(--shuru-tubiao-chicun);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2593,6 +2598,16 @@ onBeforeUnmount(() => {
   margin-right: 4px;
 }
 
+.zhan-kai-anniu::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--shuru-anniu-re-ku);
+  height: var(--shuru-anniu-re-ku);
+  transform: translate(-50%, -50%);
+}
+
 .zhan-kai-anniu svg {
   width: 14px;
   height: 14px;
@@ -2603,10 +2618,8 @@ onBeforeUnmount(() => {
   transform: rotate(180deg);
 }
 
-.zhan-kai-anniu:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+/* FP-10c：:disabled 态随那条门控一起删除——展开按钮不再按「内容是否超一行」禁用，
+   它只切换 CSS 的 .zhan-kai 类，任何时刻都可用（折叠/展开是纯 CSS 两档，没有 JS 量高可判） */
 
 .emoji-mianban {
   display: grid;
@@ -2629,6 +2642,7 @@ onBeforeUnmount(() => {
   --emoji-mianban-gundong-tiao-hover: var(--gundong-tiao-huakuai-hover);
 }
 
+/* FP-20 保留特例：表情面板需要 6px 窄条+透明轨道（global 为 8px+半透明灰轨道），--emoji-mianban-gundong-tiao* 局部量名被 我的表情/聊天界面 测试钉死（值已代理 --gundong-tiao-*），整块保留 */
 .emoji-mianban::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -3063,107 +3077,62 @@ onBeforeUnmount(() => {
 }
 
 .biaoqingbao-tu {
-  width: var(--duomeiti-biaoqingbao-chicun, 120px);
-  height: var(--duomeiti-biaoqingbao-chicun, 120px);
+  width: var(--duomeiti-biaoqingbao-chicun);
+  height: var(--duomeiti-biaoqingbao-chicun);
   object-fit: contain;
   display: block;
 }
 
-/* ─── 多媒体消息：语音条胶囊气泡 ─── */
+/* ─── 多媒体消息：语音条 ───
+   气泡本体（3 格喇叭 / 波形采样 / 进度轨道 / 全部几何）只有 components/聊天/语音气泡.vue 一份，
+   本页只留外层容器与语音转写行。改前的 .yuyin-qipao / .boxing-* / .yuyin-jindu-* 内联实现
+   与本页 12 条波形常量已随 FP-11 全删，不得在此复活第二份。 */
 .yuyin-waike {
-  --duomeiti-boxing-tiaokuan: 3px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
 
-.yuyin-qipao {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 13px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--xiaoxi-yonghu-wenben);
-  background: var(--xiaoxi-yonghu-beijing);
-  min-height: 38px;
-  position: relative;
-}
-
-.yonghu-xiaoxi .yuyin-qipao {
-  flex-direction: row-reverse;
-}
-
-.yonghu-xiaoxi .yuyin-qipao::after {
-  content: '';
-  position: absolute;
-  right: -5px;
-  top: 13px;
-  width: 0;
-  height: 0;
-  border-left: 6px solid var(--xiaoxi-yonghu-beijing);
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-}
-
-.jiaose-xiaoxi .yuyin-qipao {
-  background: var(--xiaoxi-jiaose-beijing);
-  color: var(--xiaoxi-jiaose-wenben);
-}
-
-.jiaose-xiaoxi .yuyin-qipao::after {
-  content: '';
-  position: absolute;
-  left: -5px;
-  top: 13px;
-  width: 0;
-  height: 0;
-  border-right: 6px solid var(--xiaoxi-jiaose-beijing);
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-}
-
-.yuyin-qipao.bofangzhong {
-  box-shadow: var(--qipao-yinying);
-}
-
-.boxing-zu {
+/* 录音浮层的电平计（FP-11 起改名自 .boxing-*：它与语音条只是长得像，共名才会被再读成
+   同一条「波形条数」需求；条宽改前住在 .yuyin-waike 上，而浮层 Teleport 在 body 下取不到 ⇒
+   一直是失效值，现在住在电平计自己的盒上） */
+.luyin-dianping-zu {
+  --luyin-dianping-tiaokuan: 3px;
   display: flex;
   align-items: center;
   gap: 2px;
-  height: 16px;
+  height: 20px;
   flex-shrink: 0;
 }
 
-.boxing-tiao {
-  width: var(--duomeiti-boxing-tiaokuan);
+.luyin-dianping-tiao {
+  width: var(--luyin-dianping-tiaokuan);
   height: 100%;
   border-radius: 2px;
   background: currentColor;
   opacity: 0.85;
   transform-origin: center;
-  animation: boxing-baidong 1s ease-in-out infinite;
+  animation: luyin-dianping-baidong 1s ease-in-out infinite;
 }
 
-.boxing-tiao:nth-child(2n) {
+.luyin-dianping-tiao:nth-child(2n) {
   animation-delay: -0.15s;
 }
 
-.boxing-tiao:nth-child(3n) {
+.luyin-dianping-tiao:nth-child(3n) {
   animation-delay: -0.35s;
   height: 65%;
 }
 
-.boxing-tiao:nth-child(4n) {
+.luyin-dianping-tiao:nth-child(4n) {
   height: 40%;
 }
 
-.boxing-tiao:nth-child(5n) {
+.luyin-dianping-tiao:nth-child(5n) {
   animation-delay: -0.55s;
 }
 
-@keyframes boxing-baidong {
+@keyframes luyin-dianping-baidong {
   0%,
   100% {
     transform: scaleY(0.35);
@@ -3173,44 +3142,8 @@ onBeforeUnmount(() => {
   }
 }
 
-.yuyin-qipao.bofangzhong .boxing-tiao {
-  animation-duration: 0.45s;
-}
-
-.yuyin-shichang {
-  font-size: 14px;
-  white-space: nowrap;
-}
-
-.yuyin-shengyin-tubiao {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-  opacity: 0.9;
-}
-
-.yuyin-shengyin-tubiao.tubiao-youce {
-  transform: scaleX(-1);
-}
-
-.yuyin-jindu-qu {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
-}
-
-.yuyin-jindu-tiao {
-  flex: 1;
-  min-width: 60px;
-  accent-color: currentColor;
-}
-
-.yuyin-jindu-wenben {
-  font-size: 11px;
-  opacity: 0.85;
-  white-space: nowrap;
+.luyin-dianping-huo {
+  animation-duration: 0.7s;
 }
 
 .yuyin-zhuanwenzi {
@@ -3286,40 +3219,28 @@ span.yuyin-zhuanwenzi {
   padding: 2px 4px;
 }
 
-.yinyong-yulan {
-  flex-basis: 100%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
+/* 气泡内的图文块：图片独占一行、文字保持原有气泡文本形态（FP-22b：尺寸上收为全局令牌） */
+.tuwen-kuai--tu {
+  display: block;
+}
+
+.tuwen-kuai-tu {
+  display: block;
+  max-width: var(--tuwen-tu-zuidakuan);
+  max-height: var(--tuwen-tu-zuida-gao);
   border-radius: 6px;
-  background: var(--beijing-ciuse);
-  border-left: 3px solid var(--zhuse);
-  font-size: 13px;
+  object-fit: cover;
 }
 
-.yinyong-biaoqian {
-  color: var(--zhuse);
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.yinyong-zhaiyao {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--wenben-ciuse);
-}
-
-.yinyong-quxiao {
-  border: none;
-  background: transparent;
-  color: var(--wenben-tishi);
-  font-size: 16px;
-  cursor: pointer;
-  padding: 0 4px;
+/* 块渲染里的贴纸（FP-24a）：表情包类别不许按照片画 —— cover + 180×200 会裁掉贴纸边缘的透明区，
+   故与媒体分支的 .biaoqingbao-tu 同吃 --duomeiti-biaoqingbao-chicun + contain。
+   与基础类同为 (0,1,0)，只能靠源码序压制 ⇒ 本块必须排在 .tuwen-kuai-tu 之后（FP24a 用例钉住这一点） */
+.tuwen-kuai-tu--biaoqingbao {
+  width: var(--duomeiti-biaoqingbao-chicun);
+  height: var(--duomeiti-biaoqingbao-chicun);
+  max-width: var(--duomeiti-biaoqingbao-chicun);
+  max-height: var(--duomeiti-biaoqingbao-chicun);
+  object-fit: contain;
 }
 
 /* ─── 多媒体消息：文件卡片气泡 ─── */
@@ -3337,78 +3258,6 @@ span.yuyin-zhuanwenzi {
 }
 
 /* FP-05 YH-036/YH-037：用户手动生图/生视频按钮已删除，残留样式一并清理 */
-
-.wenjian-qipao {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  border-radius: var(--yuanjiao-xiao);
-}
-
-.yonghu-xiaoxi .wenjian-qipao {
-  background: var(--xiaoxi-yonghu-beijing);
-  color: var(--xiaoxi-yonghu-wenben);
-}
-
-.jiaose-xiaoxi .wenjian-qipao {
-  background: var(--xiaoxi-jiaose-beijing);
-  color: var(--xiaoxi-jiaose-wenben);
-}
-
-.wenjian-tubiao {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.wenjian-tubiao svg {
-  width: 34px;
-  height: 34px;
-}
-
-.wenjian-xinxi {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-  flex: 1;
-}
-
-.wenjian-ming {
-  font-size: 14px;
-  word-break: break-all;
-  line-height: 1.3;
-}
-
-.wenjian-daxiao {
-  font-size: 12px;
-  opacity: 0.7;
-}
-
-.wenjian-xiazai {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  border-left: 0.5px solid currentColor;
-  padding-left: 8px;
-  margin-left: 2px;
-  color: inherit;
-  opacity: 0.75;
-}
-
-.wenjian-xiazai:hover {
-  opacity: 1;
-}
-
-.wenjian-xiazai svg {
-  width: 20px;
-  height: 20px;
-}
 
 /* ─── 图片全屏预览 ─── */
 .tupian-yulan-zhezhao {
@@ -3774,20 +3623,21 @@ span.yuyin-zhuanwenzi {
   gap: 16px;
   padding: 28px 32px;
   border-radius: var(--yuanjiao-da);
-  background: rgba(20, 20, 22, 0.92);
-  border: 0.5px solid rgba(255, 255, 255, 0.12);
+  background: var(--tanchuang-beijing);
+  border: 0.5px solid var(--tanchuang-biankuang);
   box-shadow: var(--tanchuang-yinying);
-  color: #f5f5f7;
+  color: var(--tanchuang-biaoti);
 }
 
 .luyin-mianban .luyin-tishi-wen,
 .luyin-mianban .luyin-jishi {
-  color: rgba(245, 245, 247, 0.85);
+  color: var(--tanchuang-biaoti);
+  opacity: 0.85;
 }
 
 .luyin-mianban .luyin-guanbi-anniu {
-  background: rgba(255, 255, 255, 0.12);
-  color: #f5f5f7;
+  background: var(--tanchuang-biankuang);
+  color: var(--tanchuang-biaoti);
 }
 
 .luyin-anzhu-an {
@@ -3817,44 +3667,23 @@ span.yuyin-zhuanwenzi {
   color: var(--fasong-anniu-wenben);
 }
 
-/* FP-03 气泡主题单源：派生气泡（语音/文件/转写）统一跟随 --qipao-*；
+/* FP-03 气泡主题单源：转写统一跟随 --qipao-*；文件气泡的同源色自 FP-12b 起住在
+   components/聊天/文件气泡.vue 内（按 shiBenRen 取同一串令牌），本页不再插手（FP-11）
    置于样式末尾，以同权后胜覆盖上方各派生规则，文本气泡基规则已在原位直引变量 */
-.yonghu-xiaoxi .yuyin-qipao,
-.yonghu-xiaoxi .wenjian-qipao,
 .yonghu-xiaoxi .yuyin-zhuanwenzi {
   background: var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing));
   color: var(--qipao-ziJi-wenBen, var(--xiaoxi-yonghu-wenben));
 }
-.jiaose-xiaoxi .yuyin-qipao,
-.jiaose-xiaoxi .wenjian-qipao,
 .jiaose-xiaoxi .yuyin-zhuanwenzi,
 .yuyin-zhuanwenzi {
   background: var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing));
   color: var(--qipao-duiFang-wenBen, var(--xiaoxi-jiaose-wenben));
-}
-.yonghu-xiaoxi .yuyin-qipao::after {
-  border-left: 6px solid var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing));
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-}
-.jiaose-xiaoxi .yuyin-qipao::after {
-  border-right: 6px solid var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing));
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
 }
 
 .luyin-zhuangtai-hang {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.luyin-boxing-zu {
-  height: 20px;
-}
-
-.bo-xing-huo {
-  animation-duration: 0.7s;
 }
 
 .luyin-jishi {

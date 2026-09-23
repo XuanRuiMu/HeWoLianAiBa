@@ -21,6 +21,7 @@ type 取样 = {
   outlineWidth: string
   outlineColor: string
   outlineOffset: string
+  装饰线元素数?: number
   按钮outlineStyle?: string
   按钮outlineWidth?: string
   按钮outlineColor?: string
@@ -125,14 +126,21 @@ test('登录页输入框焦点 outline 取证', async ({ browser }) => {
       if (ting.outlineStyle !== 'none' && ting.outlineWidth !== '0px') huanCunZai = true
       if (!an) an = ting
     }
-    const lingPaiZhi = await page.evaluate(
-      () =>
-        getComputedStyle(document.documentElement).getPropertyValue('--jujiao-huan-yanse').trim(),
-    )
+    const 环令牌 = await page.evaluate(() => {
+      const 根 = getComputedStyle(document.documentElement)
+      return {
+        色: 根.getPropertyValue('--jujiao-huan-yanse').trim(),
+        文本档宽: 根.getPropertyValue('--jujiao-huan-kuan-du-wenben').trim(),
+        装饰线元素数: document.querySelectorAll('.dixian-dixian').length,
+      }
+    })
+    const lingPaiZhi = 环令牌.色
+    const 装饰线元素数 = 环令牌.装饰线元素数
 
     取样集.push({
       主题: `${主题}(${shiJiZhuTi})`,
       输入框ID: 'denglu-shoujihao',
+      装饰线元素数,
       ...yang,
       按钮outlineStyle: an?.outlineStyle,
       按钮outlineWidth: an?.outlineWidth,
@@ -141,11 +149,12 @@ test('登录页输入框焦点 outline 取证', async ({ browser }) => {
     })
 
     if (标签 === 'after') {
-      // 根因断言 1：文本输入控件点击后不再绘制 outline（白线彻底消失，非登录页局部补丁）
-      expect(
-        yang.outlineStyle === 'none' || yang.outlineWidth === '0px',
-        `输入框仍绘制 outline：${JSON.stringify(yang)}`,
-      ).toBe(true)
+      // 根因断言 1（FP-03 契约演进）：白线的真因是 .dixian-dixian 装饰线而非 outline。
+      // 旧断言「点击后 outline 必须为 none」把 FP-01 的令牌窄环判成了回归，且允许"零焦点反馈"；
+      // 新断言更强：装饰元素归零 + 文本框必须画出走令牌的可见窄环。
+      expect(装饰线元素数, 'FP-03 回归：.dixian-dixian 装饰线仍存在（需求 #1 白线真因）').toBe(0)
+      expect(yang.outlineStyle, `文本框无可见焦点环：${JSON.stringify(yang)}`).toBe('solid')
+      expect(yang.outlineWidth, `焦点环宽度未走 --jujiao-huan-kuan-du-wenben（${环令牌.文本档宽}）`).toBe(环令牌.文本档宽)
       // 根因断言 2：非文本控件键盘聚焦仍有可见焦点环（组件自有环或新令牌全局环）
       expect(huanCunZai, '非文本控件键盘聚焦无任何可见焦点环').toBe(true)
       // 根因断言 3：焦点环令牌按主题解析为品牌暖灰蓝档

@@ -14,6 +14,16 @@ import {
 } from '@/api/聊天'
 import { huoQuFanYi } from '@/config/translations'
 import { queDingMiDengJian } from '@/utils/发件箱'
+import {
+  BIAO_QING_BAO_MEI_TI_LEI_BIE,
+  guiYiXiaoXiLeiXing,
+  keTiJiaoKuai,
+  kuaiDaoXiaoXiLeiXing,
+  kuaiDaoZhengWen,
+  shiBenDiLinShiXiaoXi,
+} from '@/utils/消息内容块'
+import type { DaiFaKuai } from '@/composables/use待发图文'
+import type { XiaoXiKuai, XiaoXiKuaiChuCan } from '@/types'
 import { track } from '@/utils/埋点'
 import { 使用用户仓库 } from '@/stores/用户'
 
@@ -285,11 +295,38 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     return true
   }
 
-  // FP-04 消息唯一入口：所有进入 xiaoXiLieBiao 的路径都经此处，按 消息.id 幂等去重，
-  // 并把「临时乐观 ID → 服务端 ID」做成原子替换（同 ke_hu_duan_id 占位就地替换，位置不变）。
+  /**
+   * FP-10b 拼写债收口：把历史/异常数据里 'tupian' 一类的误写收回权威消息类型。
+   * 只在真的不同才改写，保持对象身份不变（调用方会按引用比对列表项）。
+   * 非字符串（缺字段的畸形行）不动：模板的默认分支本就是文本气泡，改写它等于伪造服务端数据。
+   */
+  function guiYiDanTiaoLeiXing(xiaoXi: 消息): void {
+    const guiYiLeiXing = guiYiXiaoXiLeiXing(xiaoXi.lei_xing)
+    if (guiYiLeiXing !== xiaoXi.lei_xing && typeof xiaoXi.lei_xing === 'string') {
+      xiaoXi.lei_xing = guiYiLeiXing as 消息['lei_xing']
+    }
+  }
+
+  /**
+   * FP-22a：整表进入 xiaoXiLieBiao 的归一出口。首屏快照（jiaZaiXiaoXi）与上拉加载
+   * （jiaZaiGengDuoXiaoXi）两处都是「拿到服务端列表后整体赋值」，早先直接透传裸 lei_xing，
+   * 于是同一条 'tupian' 历史行经单条推送是图片气泡、经列表加载就变成空气泡。
+   * 现在这两条路径与 jiaRuXiaoXi 共用 guiYiDanTiaoLeiXing 那一份实现：逐条原地改写，
+   * 原样返回同一个数组（不改身份、不重排），因此赋值语义与改前完全一致。
+   */
+  function guiYiXiaoXiLieBiao<T extends 消息>(lieBiao: T[]): T[] {
+    for (const xiaoXi of lieBiao) guiYiDanTiaoLeiXing(xiaoXi)
+    return lieBiao
+  }
+
+  // FP-04 单条消息入口：socket 推送、乐观气泡、服务端回读行都经此处进入 xiaoXiLieBiao，
+  // 按 消息.id 幂等去重，并把「临时乐观 ID → 服务端 ID」做成原子替换
+  // （同 ke_hu_duan_id 占位就地替换，位置不变）。整表赋值的两条路径不走这里，
+  // 但归一口径经上面的 guiYiXiaoXiLieBiao 与本函数共用同一份实现。
   // 旧实现是纯 push 且无 ID 去重，与历史加载路径的去重口径不一致，重复推送即渲染两条。
   function jiaRuXiaoXi(xiaoXi: 消息): boolean {
     if (!xiaoXi || typeof xiaoXi.id !== 'string' || !xiaoXi.id) return false
+    guiYiDanTiaoLeiXing(xiaoXi)
     if (!Array.isArray(xiaoXiLieBiao.value)) xiaoXiLieBiao.value = []
     const lieBiao = xiaoXiLieBiao.value
     if (xiaoXi.ke_hu_duan_id) {
@@ -604,7 +641,9 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
           (m) =>
             !yiYouId.has(m.id) && !(m.mi_deng_jian && yiYouMiDengJian.has(m.mi_deng_jian)),
         )
-        xiaoXiLieBiao.value = buDing.length > 0 ? [...fuWuLieBiao, ...buDing] : fuWuLieBiao
+        xiaoXiLieBiao.value = guiYiXiaoXiLieBiao(
+          buDing.length > 0 ? [...fuWuLieBiao, ...buDing] : fuWuLieBiao,
+        )
         zongShu.value = jieGuo.zong_shu
         // M6：优先使用后端 keyset 分页的「还有更多」标记，旧后端回退计数比较
         haiYouGengDuo.value = jieGuo.hai_you_geng_duo ?? jieGuo.lie_biao.length < jieGuo.zong_shu
@@ -658,7 +697,10 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       const xinLieBiao = jieGuo.lie_biao.filter(
         (xiaoXi) => !xiaoXiLieBiao.value.some((xianYou) => xianYou.id === xiaoXi.id),
       )
-      xiaoXiLieBiao.value = [...xinLieBiao.reverse(), ...xiaoXiLieBiao.value]
+      xiaoXiLieBiao.value = guiYiXiaoXiLieBiao([
+        ...xinLieBiao.reverse(),
+        ...xiaoXiLieBiao.value,
+      ])
       补全旧内心消息()
       yeMa.value += 1
       zongShu.value = jieGuo.zong_shu
@@ -711,8 +753,35 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   async function faSongYiTiaoYongHuXiaoXi(乐观消息: 消息): Promise<消息 | null> {
     const miDengJian = queDingMiDengJian(乐观消息)
     const dangQianHuiHua = 乐观消息.hui_hua_id
+    // FP-10b：图文混排的气泡重发必须带着**同一份块数组**（顺序就是用户排的），
+    // 纯文字气泡保持改造前的三参调用，请求体一字不变。
+    const tiJiaoKuai: XiaoXiKuai[] | undefined = Array.isArray(乐观消息.nei_rong_kuai)
+      ? keTiJiaoKuai(乐观消息.nei_rong_kuai)
+      : undefined
+    const daiKuai = tiJiaoKuai && tiJiaoKuai.length > 0 ? tiJiaoKuai : undefined
+    // FP-08b（缺陷5）：引用槽就钉在**这条气泡**上（服务端同名出参字段 `bei_yong_xiao_xi_id`），
+    // 于是首发与失败重发（`chongShiFaSongXiaoXi` 复用同一颗气泡 + 同一把幂等键）带的永远是
+    // 同一个引用——引用是这条消息的身份之一，不是"当前输入框碰巧选中的那条"。
+    const yinYong = 乐观消息.bei_yong_xiao_xi_id
+      ? { beiYongXiaoXiId: 乐观消息.bei_yong_xiao_xi_id }
+      : undefined
     const paiDuiRenWu = faSongDuiLie.then(() =>
-      faSongXiaoXiApi(dangQianHuiHua, 乐观消息.nei_rong, miDengJian),
+      daiKuai
+        ? faSongXiaoXiApi({
+            huiHuaId: dangQianHuiHua,
+            neiRong: 乐观消息.nei_rong,
+            miDengJian,
+            leiXing: 乐观消息.lei_xing,
+            meiTiId: 乐观消息.mei_ti_id ?? null,
+            neiRongKuai: daiKuai,
+            yinYong,
+          })
+        : faSongXiaoXiApi({
+            huiHuaId: dangQianHuiHua,
+            neiRong: 乐观消息.nei_rong,
+            miDengJian,
+            yinYong,
+          }),
     )
     // 无论成败都推进队列，不阻断后续发送
     faSongDuiLie = paiDuiRenWu.then(
@@ -751,7 +820,37 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     }
   }
 
-  async function faSongXiaoXi(neiRong: string): Promise<消息 | null> {
+  /**
+   * 引用入参的前端守卫（`backend/src/services/消息.ts` 那条「被引用消息 ID 必须是 UUID」的客户端那一半）：
+   * 被引用者若**还是本地乐观气泡**，它的 id 是本 store 自己造的临时串，服务端从不认得 ⇒ 请求必 400
+   * （`yinYongXiaoXiFeiFa`），而那条气泡还躺在列表里，用户只会看到一句「引用的消息不合法」。
+   * 所以这里按「无引用」处理，消息本体照发（与后端 `qingLiMiDengJian` 对脏幂等键的降级口径一致：
+   * 脏引用不该顺手把用户刚打的字一起丢掉）。
+   *
+   * 根因不在这里，而在引用槽：唯一的拒绝口是 `composables/use长按菜单.ts::sheZhiYinYongMuBiao`
+   * （临时气泡既没有「引用」菜单项、也进不了槽）。本函数只挡「调用方绕过菜单直接传 id」这一条旁路，
+   * 不参与服务端的最终裁定——合法但已被删/越权的引用仍由服务端 4xx。
+   */
+  function qingLiYinYongId(zhi: string | null | undefined): string | null {
+    if (!zhi) return null
+    const beiYongXing = xiaoXiLieBiao.value.find((m) => m.id === zhi)
+    if (beiYongXing && shiBenDiLinShiXiaoXi(beiYongXing)) {
+      console.warn('聊天仓库：引用目标仍是本地乐观气泡（未落库），本次按无引用发送', { id: zhi })
+      return null
+    }
+    return zhi
+  }
+
+  /**
+   * 文本发送唯一入口。`yinYongXiaoXiId` 是**发送那一刻**右键引用态指向的消息 ID
+   * （真源只在 `composables/use长按菜单.ts::yinYongXiaoXi` 一处，由调用方读出来传进来，
+   * store 不另存第二份）。它被钉在乐观气泡的 `bei_yong_xiao_xi_id` 上，
+   * 由 `faSongYiTiaoYongHuXiaoXi` 经 `api/聊天.ts::faSongXiaoXi` 的 `yinYong` 进 HTTP body。
+   */
+  async function faSongXiaoXi(
+    neiRong: string,
+    yinYongXiaoXiId?: string | null,
+  ): Promise<消息 | null> {
     if (!dangQianHuiHuaId.value || !neiRong.trim()) return null
     const qingLiNeiRong = neiRong.trim()
     if (qingLiNeiRong.length > zuiDaXiaoXiChangDu) {
@@ -761,6 +860,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     qingChuCuoWu()
     linShiXiaoXiXuHao += 1
     const linShiId = `linshi-${Date.now()}-${linShiXiaoXiXuHao}`
+    const beiYongId = qingLiYinYongId(yinYongXiaoXiId)
     const linShiXiaoXi: 消息 = {
       id: linShiId,
       ke_hu_duan_id: linShiId,
@@ -772,6 +872,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       shi_jian_chuo: Date.now(),
       yi_du: false,
       fa_song_zhong: true,
+      ...(beiYongId ? { bei_yong_xiao_xi_id: beiYongId } : {}),
     }
     jiaRuXiaoXi(linShiXiaoXi)
     return faSongYiTiaoYongHuXiaoXi(linShiXiaoXi)
@@ -795,16 +896,27 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     return jieGuo !== null
   }
 
+  /**
+   * 媒体直发唯一入口（语音 / 文件 / 表情包 / 已有媒体的表情）。
+   * `yinYongXiaoXiId` 与 `faSongXiaoXi` 的第二参同一语义：**发送那一刻**右键引用态指向的消息 ID，
+   * 由调用方从 `use长按菜单.ts::yinYongXiaoXi` 读出来传进来（store 不存第二份）。
+   * FP-08d（需求 #5）：媒体消息同样带 `beiYongXiaoXiId` —— 右键能引用的一切消息，发出去的那条
+   * 就必须带上被引用者；旧形态「既不带上也不清除」会让引用条在直发后残留悬挂、
+   * 并被下一条文字消息继承（作废 FP-08b 的「媒体直发不该带引用」判定，理由见
+   * `.agents/evidence/traces/FP-08d-20260922.md`）。
+   */
   async function faSongMeiTiXiaoXi(
     leiXing: DuoMeiTiLeiXing,
     wenJian: File | Blob | null,
     fuJia: MeiTiFuJia = {},
+    yinYongXiaoXiId?: string | null,
   ): Promise<消息 | null> {
     if (!dangQianHuiHuaId.value) return null
     if (!wenJian && !fuJia.yiYouMeiTi) return null
     qingChuCuoWu()
     linShiXiaoXiXuHao += 1
     const linShiId = `linshi-${Date.now()}-${linShiXiaoXiXuHao}`
+    const beiYongId = qingLiYinYongId(yinYongXiaoXiId)
     const benDiYuLan = wenJian ? dengJiYuLanURL(wenJian) : null
     const chuShiURL = fuJia.yiYouMeiTi ? fuJia.yiYouMeiTi.meiTiUrl : null
     const yuanWenJianMing =
@@ -827,6 +939,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       mei_ti_shi_chang_hao_miao:
         typeof fuJia.shiChangHaoMiao === 'number' ? fuJia.shiChangHaoMiao : null,
       mei_ti_yuan_shi_wen_jian_ming: yuanWenJianMing || null,
+      ...(beiYongId ? { bei_yong_xiao_xi_id: beiYongId } : {}),
     }
     // FP-09b：媒体消息同样带稳定幂等键，上传成功但投递重试时不再落两条
     const benCiMiDengJian = queDingMiDengJian(linShiXiaoXi)
@@ -847,13 +960,17 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
         leiXing === 'yuYin' && typeof fuJia.zhuanXieWenBen === 'string'
           ? fuJia.zhuanXieWenBen.trim().slice(0, 500)
           : ''
-      const { xiaoXi } = await faSongXiaoXiApi(
+      // FP-08d（需求 #5）：媒体直发**带**引用，且带的是「发送那一刻」引用条指向的那条，
+      // 与文本 / 图文混排同一口径（引用是这条消息的身份之一）。无引用态时 body 逐键不变，
+      // 服务端 `services/消息.ts::yanZhengBeiYinYong` 对 6 种非法引用形态一律 4xx，不因类型是媒体而旁路。
+      const { xiaoXi } = await faSongXiaoXiApi({
         huiHuaId,
-        suiWenBen,
-        benCiMiDengJian,
+        neiRong: suiWenBen,
+        miDengJian: benCiMiDengJian,
         leiXing,
         meiTiId,
-      )
+        ...(beiYongId ? { yinYong: { beiYongXiaoXiId: beiYongId } } : {}),
+      })
       const fuWuQiURL = xiaoXi.mei_ti_url || benDiYuLan || chuShiURL || ''
       if (xiaoXi.mei_ti_url) {
         cheXiaoYuLanURL(benDiYuLan)
@@ -876,6 +993,149 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
         xiaoXiLieBiao.value.splice(suoYin, 1)
       }
       cheXiaoYuLanURL(benDiYuLan)
+      const tiShi =
+        cuoWu instanceof Error && cuoWu.message
+          ? cuoWu.message
+          : huoQuFanYi('duoMeiTi', 'faSongShiBai')
+      sheZhiCuoWu(tiShi)
+      return null
+    }
+  }
+
+  /**
+   * FP-10b（缺陷9）图文混排发送：一条消息携带**有序块数组**，图片按用户排的顺序逐张上传，
+   * 再把 内容/类型/媒体ID 三个兼容投影按服务端同口径派生后交给 `faSongXiaoXiApi`。
+   *
+   * 三条硬口径：
+   *  ①顺序即用户排的顺序 —— 上传串行（并发会打乱媒体台账与失败定位），块数组不做任何排序；
+   *  ②FP-09b 幂等键在**这条消息**上钉死一次，重发（含单张上传失败后整条重试）不换键；
+   *  ③单张上传失败 ⇒ 只丢那一张并明确提示，其余块照发；全丢光 ⇒ 走既有「发送失败」提示，
+   *    绝不让服务器收到一条空消息，也绝不因脏块抛异常（服务端同样只降级不 500）。
+   */
+  async function faSongTuWenXiaoXi(
+    daiFaKuai: DaiFaKuai[],
+    yinYongXiaoXiId?: string | null,
+  ): Promise<消息 | null> {
+    if (!dangQianHuiHuaId.value || daiFaKuai.length === 0) return null
+    qingChuCuoWu()
+    linShiXiaoXiXuHao += 1
+    const linShiId = `linshi-${Date.now()}-${linShiXiaoXiXuHao}`
+    const beiYongId = qingLiYinYongId(yinYongXiaoXiId)
+    const huiHuaId = dangQianHuiHuaId.value
+    interface KeBianKuai {
+      lei_xing: DaiFaKuai['lei_xing']
+      nei_rong: string
+      mei_ti_id: string | null
+      mei_ti_lei_bie: string | null
+      yu_lan_url: string | null
+      diu_qi: boolean
+    }
+    const kuai: KeBianKuai[] = daiFaKuai.map((xiang) => ({
+      lei_xing: xiang.lei_xing,
+      nei_rong: xiang.nei_rong,
+      mei_ti_id: xiang.mei_ti_id,
+      mei_ti_lei_bie: xiang.mei_ti_lei_bie,
+      yu_lan_url: xiang.yu_lan_url,
+      diu_qi: false,
+    }))
+
+    let youDiuQi = false
+    for (let xiaBiao = 0; xiaBiao < kuai.length; xiaBiao++) {
+      const xiang = kuai[xiaBiao]
+      const yuan = daiFaKuai[xiaBiao]
+      if (xiang.lei_xing !== 'tupian' || xiang.mei_ti_id) continue
+      const wenJian = yuan?.wen_jian ?? null
+      if (!wenJian) {
+        youDiuQi = true
+        xiang.diu_qi = true
+        continue
+      }
+      try {
+        const shangChuan = await shangChuanMeiTi(
+          huiHuaId,
+          wenJian,
+          xiang.mei_ti_lei_bie === BIAO_QING_BAO_MEI_TI_LEI_BIE ? BIAO_QING_BAO_MEI_TI_LEI_BIE : 'tupian',
+        )
+        xiang.mei_ti_id = shangChuan.mediaId
+        if (shangChuan.leiBie) xiang.mei_ti_lei_bie = shangChuan.leiBie
+      } catch {
+        youDiuQi = true
+        xiang.diu_qi = true
+      }
+    }
+
+    const keYongKuai = kuai.filter((xiang) => !xiang.diu_qi)
+    const chuCanKuai: XiaoXiKuaiChuCan[] = keYongKuai
+      .filter((xiang) => xiang.lei_xing === 'tupian' || (xiang.nei_rong ?? '').trim() !== '')
+      .map((xiang) =>
+        xiang.lei_xing === 'tupian'
+          ? {
+              lei_xing: 'tupian' as const,
+              mei_ti_id: xiang.mei_ti_id,
+              mei_ti_url: xiang.yu_lan_url,
+              ...(xiang.mei_ti_lei_bie ? { mei_ti_lei_bie: xiang.mei_ti_lei_bie } : {}),
+            }
+          : { lei_xing: 'wenzi' as const, nei_rong: xiang.nei_rong },
+      )
+    const tiJiaoKuai = keTiJiaoKuai(chuCanKuai)
+    if (tiJiaoKuai.length === 0) {
+      sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'faSongShiBai'))
+      return null
+    }
+    if (youDiuQi) sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'buFenTuPianShangChuanShiBai'))
+
+    const shouTuKuai = chuCanKuai.find((xiang) => xiang.lei_xing === 'tupian')
+    const linShiXiaoXi: 消息 = {
+      id: linShiId,
+      ke_hu_duan_id: linShiId,
+      hui_hua_id: huiHuaId,
+      fa_song_zhe_id: '',
+      fa_song_zhe_lei_xing: 'yonghu',
+      nei_rong: kuaiDaoZhengWen(tiJiaoKuai, {
+        leiBieOf: (meiTiId) =>
+          chuCanKuai.find((xiang) => xiang.mei_ti_id === meiTiId)?.mei_ti_lei_bie,
+      }),
+      lei_xing: kuaiDaoXiaoXiLeiXing(chuCanKuai) as 消息['lei_xing'],
+      shi_jian_chuo: Date.now(),
+      yi_du: false,
+      fa_song_zhong: true,
+      nei_rong_kuai: chuCanKuai,
+      mei_ti_id: shouTuKuai?.mei_ti_id ?? null,
+      mei_ti_url: shouTuKuai?.mei_ti_url ?? null,
+      ben_di_yu_lan_url: shouTuKuai?.mei_ti_url ?? null,
+      ...(beiYongId ? { bei_yong_xiao_xi_id: beiYongId } : {}),
+    }
+    const benCiMiDengJian = queDingMiDengJian(linShiXiaoXi)
+    jiaRuXiaoXi(linShiXiaoXi)
+
+    try {
+      const { xiaoXi } = await faSongXiaoXiApi({
+        huiHuaId,
+        neiRong: linShiXiaoXi.nei_rong,
+        miDengJian: benCiMiDengJian,
+        leiXing: linShiXiaoXi.lei_xing,
+        meiTiId: linShiXiaoXi.mei_ti_id ?? null,
+        neiRongKuai: tiJiaoKuai,
+        ...(linShiXiaoXi.bei_yong_xiao_xi_id
+          ? { yinYong: { beiYongXiaoXiId: linShiXiaoXi.bei_yong_xiao_xi_id } }
+          : {}),
+      })
+      duiQiLeDaXiangXiaoXi(linShiXiaoXi, xiaoXi, (fuWuQiXiaoXi) => ({
+        ...fuWuQiXiaoXi,
+        // 服务端没回块数组（旧服务端）时保留本地块，至少顺序与缩略图不丢
+        nei_rong_kuai: Array.isArray(fuWuQiXiaoXi.nei_rong_kuai)
+          ? fuWuQiXiaoXi.nei_rong_kuai
+          : chuCanKuai,
+      }))
+      return xiaoXi
+    } catch (cuoWu: unknown) {
+      console.error('发送图文混排消息失败', cuoWu)
+      // 微信式失败态：气泡留在原位标失败，重发复用同一把幂等键与同一份块数组
+      faSongShiBaiJiHe.value.add(linShiId)
+      const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.ke_hu_duan_id === linShiId)
+      if (suoYin !== -1) {
+        xiaoXiLieBiao.value[suoYin] = { ...xiaoXiLieBiao.value[suoYin], fa_song_zhong: false }
+      }
       const tiShi =
         cuoWu instanceof Error && cuoWu.message
           ? cuoWu.message
@@ -1007,6 +1267,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     faSongXiaoXi,
     chongShiFaSongXiaoXi,
     faSongMeiTiXiaoXi,
+    faSongTuWenXiaoXi,
     qingQiuShengTu,
     qingQiuShengChengShiPin,
     cheHuiXiaoXi,

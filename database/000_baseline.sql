@@ -3,6 +3,12 @@
 -- 所有表名/字段名使用中文标识符，SQL 中用双引号包裹
 -- 此文件为 docker-entrypoint-initdb.d 空卷首启执行的唯一基线脚本
 -- 包含：用户、角色、消息、好感度、记忆、对话摘要、审计日志、封禁记录、通知、游戏档案、游戏结局、用户人设、反馈、评估、夺舍日志、关键事件、媒体文件、通话记录、schema_migrations 版本表
+-- FP-28c 删列声明已由 FP-28d（2026.09.23，第六轮裁定②）**成对回退**：`用户` 表的 "性别" 列定义
+--   暂时保留 —— 管理端已提交版本仍读 `用户.性别`、容器启动自动迁移链会打挂管理端，
+--   故迁移 038_删除用户性别死列.sql 暂移 backend/database/migrations/pending/（不在自动扫描面内），
+--   本文件与 backend/database/init.sql 的该列定义同步回带；列定义/存量值分布/剩余消费者=0 的
+--   实测证据登记在该迁移的头注释里，放行条件见 .agents/evidence/traces/FP-28d放行条件-20260923.md。
+--   注意：本文件的 角色 表 "性别" VARCHAR(10) NOT NULL 与 用户 表同名不同列，**不在处置范围内**。
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -92,6 +98,9 @@ CREATE TABLE IF NOT EXISTS "消息" (
     "原始内容" TEXT,
     "客户端序号" BIGINT,
     "媒体ID" UUID,
+    "幂等键" UUID,
+    "内容块" JSONB,
+    "被引用消息ID" UUID REFERENCES "消息"("ID") ON DELETE SET NULL,
     "创建时间" TIMESTAMPTZ DEFAULT NOW()
 );
 

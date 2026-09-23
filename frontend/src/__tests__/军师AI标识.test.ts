@@ -131,7 +131,7 @@ describe('FP-09 B-8 军师AI标识', () => {
       await flushPromises()
 
       // 断言 AI 标识存在
-      const aiTiShi = wrapper.find('.zhidao-jieguo .ai-tishi')
+      const aiTiShi = wrapper.find('.zhidao-jieguo .tishi-dai-shengming')
       expect(aiTiShi.exists()).toBe(true)
       expect(aiTiShi.text()).toBe(huoQuFanYi('tongYong', 'aiTiShiTiao'))
     })
@@ -145,10 +145,10 @@ describe('FP-09 B-8 军师AI标识', () => {
       await xuanRuiMuKapian?.find('.qingqiu-anniu').trigger('click')
       await flushPromises()
 
-      const aiTiShi = wrapper.find('.zhidao-jieguo .ai-tishi')
+      const aiTiShi = wrapper.find('.zhidao-jieguo .tishi-dai-shengming')
       expect(aiTiShi.exists()).toBe(true)
       // 样式类名验证
-      expect(aiTiShi.classes()).toContain('ai-tishi')
+      expect(aiTiShi.classes()).toContain('tishi-dai-shengming')
     })
   })
 
@@ -157,7 +157,7 @@ describe('FP-09 B-8 军师AI标识', () => {
       const { wrapper } = await mountJunShiJiLuXiangQing()
 
       // 断言 AI 标识存在于建议区域
-      const aiTiShi = wrapper.find('.jianyi-quyu .ai-tishi')
+      const aiTiShi = wrapper.find('.jianyi-quyu .tishi-dai-shengming')
       expect(aiTiShi.exists()).toBe(true)
       expect(aiTiShi.text()).toBe(huoQuFanYi('tongYong', 'aiTiShiTiao'))
     })
@@ -165,9 +165,9 @@ describe('FP-09 B-8 军师AI标识', () => {
     it('AI 标识使用小字、灰色样式', async () => {
       const { wrapper } = await mountJunShiJiLuXiangQing()
 
-      const aiTiShi = wrapper.find('.jianyi-quyu .ai-tishi')
+      const aiTiShi = wrapper.find('.jianyi-quyu .tishi-dai-shengming')
       expect(aiTiShi.exists()).toBe(true)
-      expect(aiTiShi.classes()).toContain('ai-tishi')
+      expect(aiTiShi.classes()).toContain('tishi-dai-shengming')
     })
   })
 
@@ -203,7 +203,7 @@ describe('FP-09 B-8 军师AI标识', () => {
       await flushPromises()
 
       expect(wrapper.find('.zhidao-jieguo .junshi-fenduan').exists()).toBe(true)
-      const aiTiShi = wrapper.find('.zhidao-jieguo .ai-tishi')
+      const aiTiShi = wrapper.find('.zhidao-jieguo .tishi-dai-shengming')
       expect(aiTiShi.exists()).toBe(true)
       expect(aiTiShi.text()).toBe(huoQuFanYi('tongYong', 'aiTiShiTiao'))
     })
@@ -227,7 +227,7 @@ describe('FP-09 B-8 军师AI标识', () => {
       const { wrapper } = await mountJunShiJiLuXiangQing()
 
       expect(wrapper.find('.jianyi-quyu .junshi-fenduan').exists()).toBe(true)
-      const aiTiShi = wrapper.find('.jianyi-quyu .ai-tishi')
+      const aiTiShi = wrapper.find('.jianyi-quyu .tishi-dai-shengming')
       expect(aiTiShi.exists()).toBe(true)
       expect(aiTiShi.text()).toBe(huoQuFanYi('tongYong', 'aiTiShiTiao'))
     })

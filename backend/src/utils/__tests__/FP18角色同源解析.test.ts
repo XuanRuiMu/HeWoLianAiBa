@@ -41,7 +41,6 @@ function 用户行(用户编号: string): Record<string, unknown> {
     手机号: `1380000${用户编号.slice(0, 4).replace(/\D/g, '') || '0000'}`.slice(0, 11),
     用户名: `yonghu_${用户编号.slice(0, 8)}`,
     昵称: null,
-    性别: null,
     目标性别: null,
     默认性别: null,
     性格选择: null,

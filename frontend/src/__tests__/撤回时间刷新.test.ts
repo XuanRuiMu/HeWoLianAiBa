@@ -189,7 +189,7 @@ describe('P1-11 撤回窗口时间刷新策略', () => {
     // 手灌 xiaoXiLieBiao 只能证明渲染，证不了「发送链路上屏的那条也带得上撤回窗口」——
     // FP-09b 之后气泡靠幂等键对齐成落库行，本例把这条链钉成事实。
     const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
-    vi.mocked(faSongXiaoXi).mockImplementation(async (_huiHuaId, neiRong, miDengJian) => ({
+    vi.mocked(faSongXiaoXi).mockImplementation(async ({ neiRong, miDengJian }) => ({
       xiaoXi: {
         id: 'luo-ku-chehui',
         hui_hua_id: 'h1',

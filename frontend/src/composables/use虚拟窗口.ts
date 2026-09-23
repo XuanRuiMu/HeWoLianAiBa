@@ -1,12 +1,8 @@
 import { computed, nextTick, ref, type Ref } from 'vue'
-import { XIAO_XI_PEI_ZHI } from '@/config/消息配置'
-import { huoQuFanYi } from '@/config/translations'
+import { fenZuXiaoXiAnShiJian, type XiaoXiFenZuXiang } from '@/utils/消息时间分组'
 import type { 消息 } from '@/types'
 
-export interface XiaoXiFenZuXiang {
-  shiJian: string
-  xiaoXiLieBiao: 消息[]
-}
+export type { XiaoXiFenZuXiang }
 
 interface Use虚拟窗口依赖 {
   huoQuXiaoXiLieBiao: () => 消息[]
@@ -94,93 +90,9 @@ export function use虚拟窗口(yiLai: Use虚拟窗口依赖) {
     })
   }
 
-  const xiaoXiFenZu = computed<XiaoXiFenZuXiang[]>(() => {
-    const lieBiao = xuanRanXiaoXiLieBiao.value
-    if (!Array.isArray(lieBiao)) return []
-
-    function zhuanBeiJing(shiJianChuo: number): Date {
-      const riQi = new Date(shiJianChuo)
-      const utc = riQi.getTime() + riQi.getTimezoneOffset() * 60000
-      return new Date(utc + 8 * 3600000)
-    }
-
-    function geShiHuaShiJian(beiJing: Date): string {
-      const xianZai = zhuanBeiJing(Date.now())
-      const shi = String(beiJing.getHours()).padStart(2, '0')
-      const fen = String(beiJing.getMinutes()).padStart(2, '0')
-      const shiJianBuFen = `${shi}:${fen}`
-
-      const shiFouTongYiTian =
-        beiJing.getFullYear() === xianZai.getFullYear() &&
-        beiJing.getMonth() === xianZai.getMonth() &&
-        beiJing.getDate() === xianZai.getDate()
-
-      if (shiFouTongYiTian) {
-        return shiJianBuFen
-      }
-
-      const zuoTian = new Date(xianZai.getTime() - 24 * 3600000)
-      const shiFouZuoTian =
-        beiJing.getFullYear() === zuoTian.getFullYear() &&
-        beiJing.getMonth() === zuoTian.getMonth() &&
-        beiJing.getDate() === zuoTian.getDate()
-
-      if (shiFouZuoTian) {
-        return `${huoQuFanYi('shiJian', 'zuoTian')} ${shiJianBuFen}`
-      }
-
-      const benZhouKaiShi = new Date(xianZai.getTime())
-      benZhouKaiShi.setDate(xianZai.getDate() - xianZai.getDay() + 1)
-      benZhouKaiShi.setHours(0, 0, 0, 0)
-      const zaiBenZhou = beiJing.getTime() >= benZhouKaiShi.getTime()
-
-      if (zaiBenZhou) {
-        const xingQiLieBiao = [
-          huoQuFanYi('shiJian', 'xingQiRi'),
-          huoQuFanYi('shiJian', 'xingQiYi'),
-          huoQuFanYi('shiJian', 'xingQiEr'),
-          huoQuFanYi('shiJian', 'xingQiSan'),
-          huoQuFanYi('shiJian', 'xingQiSi'),
-          huoQuFanYi('shiJian', 'xingQiWu'),
-          huoQuFanYi('shiJian', 'xingQiLiu'),
-        ]
-        return `${xingQiLieBiao[beiJing.getDay()]} ${shiJianBuFen}`
-      }
-
-      if (beiJing.getFullYear() === xianZai.getFullYear()) {
-        const yue = String(beiJing.getMonth() + 1).padStart(2, '0')
-        const ri = String(beiJing.getDate()).padStart(2, '0')
-        return `${yue}-${ri} ${shiJianBuFen}`
-      }
-
-      const nian = beiJing.getFullYear()
-      const yue = String(beiJing.getMonth() + 1).padStart(2, '0')
-      const ri = String(beiJing.getDate()).padStart(2, '0')
-      return `${nian}-${yue}-${ri} ${shiJianBuFen}`
-    }
-
-    const jieGuo: XiaoXiFenZuXiang[] = []
-    let shangYiGeShiJianChuo: number | null = null
-
-    for (const xiaoXi of lieBiao) {
-      const beiJing = zhuanBeiJing(xiaoXi.shi_jian_chuo)
-      const xuYaoXinBiaoQian =
-        shangYiGeShiJianChuo === null ||
-        xiaoXi.shi_jian_chuo - shangYiGeShiJianChuo > XIAO_XI_PEI_ZHI.heBingShiJianYuZhi
-
-      if (xuYaoXinBiaoQian) {
-        jieGuo.push({
-          shiJian: geShiHuaShiJian(beiJing),
-          xiaoXiLieBiao: [xiaoXi],
-        })
-        shangYiGeShiJianChuo = xiaoXi.shi_jian_chuo
-      } else {
-        jieGuo[jieGuo.length - 1].xiaoXiLieBiao.push(xiaoXi)
-      }
-    }
-
-    return jieGuo
-  })
+  const xiaoXiFenZu = computed<XiaoXiFenZuXiang[]>(() =>
+    fenZuXiaoXiAnShiJian(xuanRanXiaoXiLieBiao.value),
+  )
 
   return {
     xuNiQiSuoYin,

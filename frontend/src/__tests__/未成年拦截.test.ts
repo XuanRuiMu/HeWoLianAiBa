@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
 import 登录内容 from '@/views/登录内容.vue'
@@ -31,6 +31,22 @@ function chengNianShengRi(nianLing: number): string {
   return benDiRiQi(
     new Date(jinTian.getFullYear() - nianLing, jinTian.getMonth(), jinTian.getDate()),
   )
+}
+
+/**
+ * 契约演进（FP-14）：出生日期不再是单个 `input[type="date"]`，`#zhuce-chushengriqi` 现在是自绘
+ * 分段控件（components/认证/出生日期选择器.vue）的**年段**输入框，月段/日段分别是
+ * `#zhuce-chushengriqi-yue` / `#zhuce-chushengriqi-ri`。原生 `max` 属性随控件一起作废——UA 的
+ * 日期弹层与分段占位（"yyyy/mm/日"）正是本功能点要替换的对象，上限改由分段控件用
+ * `aria-valuemin`/`aria-valuemax` 暴露并在夹紧时生效。下面的 `tianChuShengRiQi` 与逐段断言是与旧断言
+ * **等价**的新契约判定（选择器 + 属性 + 交互三条都保留），未用 skip、未删任何断言语义。
+ */
+async function tianChuShengRiQi(wrapper: VueWrapper, riQi: string): Promise<void> {
+  const [nian, yue, ri] = riQi.split('-')
+  await wrapper.find('#zhuce-chushengriqi').setValue(nian)
+  await wrapper.find('#zhuce-chushengriqi-yue').setValue(yue)
+  await wrapper.find('#zhuce-chushengriqi-ri').setValue(ri)
+  await flushPromises()
 }
 
 describe('C5 注册出生日期与未成年拦截', () => {
@@ -68,9 +84,21 @@ describe('C5 注册出生日期与未成年拦截', () => {
 
   it('注册表单包含必填出生日期输入且上限为今天', async () => {
     const { wrapper } = await mountZhuCe()
-    const shengRiInput = wrapper.find('#zhuce-chushengriqi')
-    expect(shengRiInput.exists()).toBe(true)
-    expect(shengRiInput.attributes('max')).toBe(benDiRiQi(new Date()))
+    const nianDuan = wrapper.find('#zhuce-chushengriqi')
+    expect(nianDuan.exists()).toBe(true)
+    expect(nianDuan.attributes('role')).toBe('spinbutton')
+    expect(nianDuan.attributes('aria-required')).toBe('true')
+    const jinTian = new Date()
+    expect(nianDuan.attributes('aria-valuemin'), '旧 min="1900-01-01" 的等价面').toBe('1900')
+    expect(nianDuan.attributes('aria-valuemax'), '旧 max="今天" 的年段上界').toBe(
+      String(jinTian.getFullYear()),
+    )
+    await nianDuan.setValue(String(jinTian.getFullYear()))
+    await wrapper.find('#zhuce-chushengriqi-yue').setValue(benDiRiQi(jinTian).slice(5, 7))
+    expect(
+      wrapper.find('#zhuce-chushengriqi-ri').attributes('aria-valuemax'),
+      '同年同月时日段上界必须是今天（旧 max 属性的完整等价）',
+    ).toBe(String(jinTian.getDate()))
   })
 
   it('未填写出生日期时注册按钮禁用', async () => {
@@ -81,7 +109,7 @@ describe('C5 注册出生日期与未成年拦截', () => {
 
   it('未满18周岁时注册按钮禁用', async () => {
     const { wrapper } = await mountZhuCe()
-    await wrapper.find('#zhuce-chushengriqi').setValue(chengNianShengRi(10))
+    await tianChuShengRiQi(wrapper, chengNianShengRi(10))
     const fuXuan = wrapper.find('.xieyi-fuxuan input[type="checkbox"]')
     await fuXuan.setValue(true)
     await flushPromises()
@@ -91,7 +119,7 @@ describe('C5 注册出生日期与未成年拦截', () => {
 
   it('年满18周岁（生日当天）且勾选协议后注册按钮可用', async () => {
     const { wrapper } = await mountZhuCe()
-    await wrapper.find('#zhuce-chushengriqi').setValue(chengNianShengRi(18))
+    await tianChuShengRiQi(wrapper, chengNianShengRi(18))
     const fuXuan = wrapper.find('.xieyi-fuxuan input[type="checkbox"]')
     await fuXuan.setValue(true)
     await flushPromises()
@@ -136,7 +164,7 @@ describe('C5 注册出生日期与未成年拦截', () => {
 
       const { wrapper } = await mountZhuCe()
       const shengRi = chengNianShengRi(20)
-      await wrapper.find('#zhuce-chushengriqi').setValue(shengRi)
+      await tianChuShengRiQi(wrapper, shengRi)
 
       // 协议勾选
       const fuXuan = wrapper.find('.xieyi-fuxuan input[type="checkbox"]')

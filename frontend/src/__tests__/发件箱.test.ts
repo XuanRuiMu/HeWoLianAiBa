@@ -143,7 +143,11 @@ describe('FP-09b api 层真实请求体（幂等键上报 + 退出序号权威�
 
   it('请求体带 幂等键、不带 客户端序号，并把键交给 Idempotency-Key 重试通道', async () => {
     vi.mocked(http.post).mockResolvedValue(回包({ mi_deng_jian: 'a'.repeat(8) }))
-    const jieGuo = await faSongXiaoXi('h1', '你好', 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee')
+    const jieGuo = await faSongXiaoXi({
+      huiHuaId: 'h1',
+      neiRong: '你好',
+      miDengJian: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+    })
 
     const [url, 请求体, 配置] = vi.mocked(http.post).mock.calls[0]
     expect(url).toBe('/聊天/会话/h1/消息')
@@ -160,7 +164,13 @@ describe('FP-09b api 层真实请求体（幂等键上报 + 退出序号权威�
 
   it('媒体消息把类别与媒体 ID 一并上报，幂等键仍是第三条消息自己的', async () => {
     vi.mocked(http.post).mockResolvedValue(回包())
-    await faSongXiaoXi('h1', '', 'bbbbbbbb-1111-4111-8111-111111111111', 'tuPian', 'm1')
+    await faSongXiaoXi({
+      huiHuaId: 'h1',
+      neiRong: '',
+      miDengJian: 'bbbbbbbb-1111-4111-8111-111111111111',
+      leiXing: 'tuPian',
+      meiTiId: 'm1',
+    })
 
     const [, 请求体] = vi.mocked(http.post).mock.calls[0]
     expect(请求体).toEqual({
@@ -173,7 +183,7 @@ describe('FP-09b api 层真实请求体（幂等键上报 + 退出序号权威�
 
   it('没有幂等键（旧调用方）时按 null 上报且不走重试通道', async () => {
     vi.mocked(http.post).mockResolvedValue(回包())
-    await faSongXiaoXi('h1', '你好')
+    await faSongXiaoXi({ huiHuaId: 'h1', neiRong: '你好' })
 
     const [, 请求体, 配置] = vi.mocked(http.post).mock.calls[0]
     expect(请求体.幂等键).toBeNull()

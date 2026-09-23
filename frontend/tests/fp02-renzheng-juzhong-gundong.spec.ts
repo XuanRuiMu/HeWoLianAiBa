@@ -11,6 +11,10 @@ import { fileURLToPath } from 'node:url'
 const 标签 = process.env.FP02_LABEL ?? 'after'
 // FP02_SOLO='桌面1440x900/暗色/zhuCe' 只跑一个组合、证据另存 -solo，用于定点复现；正式取证不带该变量
 const 只跑 = process.env.FP02_SOLO ?? ''
+// L-10 纪律（FP-24d）：复跑任何带写盘副作用的取证 spec 必须先换输出文件名。
+// 证据/截图基名默认不变（不破坏原契约），定点复跑用 FP02_EVIDENCE_SUFFIX=fp24d 换名，
+// 以免覆盖 FP-02 历史 before/after 证据。
+const 证据后缀 = process.env.FP02_EVIDENCE_SUFFIX ? `-${process.env.FP02_EVIDENCE_SUFFIX}` : ''
 const 日期 = '20260921'
 const 本目录 = path.dirname(fileURLToPath(import.meta.url))
 const 截图目录 = path.resolve(本目录, '../../测试截图')
@@ -26,13 +30,17 @@ test.use({
 })
 
 type 视口规格 = { 名称: string; width: number; height: number }
+// FP-24d 按 FP-04a 已定案口径钉档：登录/注册两态 × 960x500 / 1024x600 / 375x667 / 320x480 四档，
+// 滚动条条宽 ≥7px **恒可见**（宿主 .biaodan-gundong 恒定 overflow-y:scroll，与内容是否溢出无关）；
+// 「可拖」只在 scrollHeight>clientHeight 时断言——禁止为凑「两态都可拖」去改视图代码加高度上界。
+// 旧档（桌面1440x900 + 异常380x420）钉的是 R2 时代形态：登录态无滚动口、只有把窗口压到异常小
+// 让外层 .yemian-buju 溢出才有条——该前提已随 FP-04a 落地失效，按新契约改判，不是卸门禁。
 const 视口清单: 视口规格[] = [
-  { 名称: '桌面1440x900', width: 1440, height: 900 },
+  { 名称: '矮桌960x500', width: 960, height: 500 },
+  { 名称: '低桌1024x600', width: 1024, height: 600 },
   { 名称: '移动375x667', width: 375, height: 667 },
+  { 名称: '极小320x480', width: 320, height: 480 },
 ]
-// 用户原话「分辨率不正常的网页（比如手机网页），他们的滚动条应该都会有」——登录表单在正常
-// 视口不溢出，只有异常小视口才必然溢出，用它证明登录页同样具备可见可拖滚动条。
-const 异常小视口: 视口规格 = { 名称: '异常380x420', width: 380, height: 420 }
 
 type 矩形 = {
   left: number
@@ -48,14 +56,16 @@ type 矩形 = {
 type 项度量 = {
   字段: string
   组: 矩形
-  下划线: 矩形 | null
+  /** 原 .dixian-dixian 装饰线的着墨位置＝组盒底边（bottom:0; height:2px 画在输入框下内边距区内）。
+      FP-03 契约演进：装饰线已删，几何真源改取组盒底边，阈值与语义逐值不变 */
+  底线: number | null
   输入框: 矩形 | null
   标签: 矩形 | null
   标签计算top: string
   标签字号: string
   标签颜色: string
   与下一项间隙: number | null
-  上一项下划线底到本标签顶: number | null
+  上一项底线到本标签顶: number | null
   标签底到输入文字顶: number | null
 }
 
@@ -77,7 +87,7 @@ type 快照 = {
     scrollTop: number
     paddingTop: string
   }
-  内层滚动区: (矩形 & { clientWidth: number; offsetWidth: number; scrollHeight: number; clientHeight: number; 滚动条宽: number; 计算overflowY: string; 计算maxHeight: string }) | null
+  内层滚动区: (矩形 & { clientWidth: number; offsetWidth: number; scrollHeight: number; clientHeight: number; 滚动条宽: number; 计算overflowY: string; 计算maxHeight: string; 额外类: string }) | null
   卡片: 矩形 & { 内联样式: Record<string, string> }
   内容盒: { rect: 矩形; 计算paddingBottom: string }
   居中: {
@@ -105,11 +115,14 @@ type 快照 = {
   }
   焦点?: {
     活动元素: string
-    过渡: string
     outlineStyle: string
     outlineWidth: string
     outlineColor: string
-    下划线伪元素transform: string
+    outlineOffset: string
+    环令牌宽: string
+    环令牌色: string
+    装置像素比: number
+    装饰线元素数: number
     标签颜色: string
     组含focusWithin: boolean
   } | null
@@ -164,32 +177,29 @@ const 页内采集 = (): Omit<快照, '阶段' | '视口' | '主题' | '模式'>
   const 组清单 = Array.from(
     document.querySelectorAll('.biaodan-neirong-qu form > .shuru-zu'),
   ) as HTMLElement[]
-  const 下划线于 = (z: HTMLElement) => z.querySelector('.dixian-dixian') as HTMLElement | null
   const 表单项: 项度量[] = 组清单.map((z, i) => {
     const biao = z.querySelector('.fudong-biaoqian') as HTMLElement | null
-    const xia = 下划线于(z)
     const shu = z.querySelector('.fenlie-shuru') as HTMLElement | null
     const 组 = ju(z) as 矩形
-    const 下划线 = ju(xia)
+    const 底线 = 组 ? +组.bottom.toFixed(2) : null
     const 输入框 = ju(shu)
     const 标签 = ju(biao)
     const cs = biao ? getComputedStyle(biao) : null
     let 输入文字顶: number | null = null
     if (shu && 输入框) 输入文字顶 = 输入框.top + parseFloat(getComputedStyle(shu).paddingTop)
     const 下一 = 组清单[i + 1] ?? null
-    const 前下划线 = i > 0 ? ju(下划线于(组清单[i - 1])) : null
+    const 前底线 = i > 0 ? +组清单[i - 1].getBoundingClientRect().bottom.toFixed(2) : null
     return {
       字段: shu?.id ?? `#${i}`,
       组,
-      下划线,
+      底线,
       输入框,
       标签,
       标签计算top: cs?.top ?? '',
       标签字号: cs?.fontSize ?? '',
       标签颜色: cs?.color ?? '',
       与下一项间隙: 下一 && 组 ? +(下一.getBoundingClientRect().top - 组.bottom).toFixed(2) : null,
-      上一项下划线底到本标签顶:
-        前下划线 && 标签 ? +(标签.top - 前下划线.bottom).toFixed(2) : null,
+      上一项底线到本标签顶: 前底线 !== null && 标签 ? +(标签.top - 前底线).toFixed(2) : null,
       标签底到输入文字顶: 标签 && 输入文字顶 !== null ? +(输入文字顶 - 标签.bottom).toFixed(2) : null,
     }
   })
@@ -235,6 +245,8 @@ const 页内采集 = (): Omit<快照, '阶段' | '视口' | '主题' | '模式'>
           滚动条宽: nei.offsetWidth - nei.clientWidth,
           计算overflowY: getComputedStyle(nei).overflowY,
           计算maxHeight: getComputedStyle(nei).maxHeight,
+          // FP-24d：宿主类名里除基准类外不得再长出任何 JS 状态类（R2 的 xuyao-gundong 形态已删）
+          额外类: [...nei.classList].filter((名) => 名 !== 'biaodan-gundong').join(' '),
         }
       : null,
     卡片: { ...卡, 内联样式: 内联 },
@@ -271,16 +283,18 @@ const 页内焦点 = (输入框ID: string) => {
   const shu = document.getElementById(输入框ID) as HTMLElement | null
   if (!shu) return null
   const zzu = shu.closest('.shuru-zu') as HTMLElement | null
-  const xia = zzu?.querySelector('.dixian-dixian') as HTMLElement | null
   const biao = zzu?.querySelector('.fudong-biaoqian') as HTMLElement | null
   const s = getComputedStyle(shu)
   return {
     活动元素: document.activeElement?.id || document.activeElement?.tagName || '',
-    过渡: xia ? getComputedStyle(xia, '::after').transition : '',
     outlineStyle: s.outlineStyle,
     outlineWidth: s.outlineWidth,
     outlineColor: s.outlineColor,
-    下划线伪元素transform: xia ? getComputedStyle(xia, '::after').transform : '',
+    outlineOffset: s.outlineOffset,
+    环令牌宽: getComputedStyle(document.documentElement).getPropertyValue('--jujiao-huan-kuan-du-wenben').trim(),
+    环令牌色: getComputedStyle(document.documentElement).getPropertyValue('--jujiao-huan-yanse').trim(),
+    装置像素比: window.devicePixelRatio,
+    装饰线元素数: document.querySelectorAll('.dixian-dixian').length,
     标签颜色: biao ? getComputedStyle(biao).color : '',
     组含focusWithin: !!zzu && zzu.matches(':focus-within'),
   }
@@ -556,24 +570,24 @@ function 写证据(记录: 快照[], 截图: string[]) {
     '',
     '## 表单项垂直间距',
     '',
-    '| 视口 | 主题 | 模式 | 阶段 | 项 | 组高 | 与下一项间隙px | 标签计算top | 标签字号 | 上一项下划线底→本标签顶 | 标签底→输入文字顶 |',
+    '| 视口 | 主题 | 模式 | 阶段 | 项 | 组高 | 与下一项间隙px | 标签计算top | 标签字号 | 上一项底线→本标签顶 | 标签底→输入文字顶 |',
     '| ---- | ---- | ---- | ---- | -- | ---- | ---- | ---- | ---- | ---- | ---- |',
     ...记录.flatMap((s) =>
       s.表单项.map(
         (f) =>
-          `| ${s.视口} | ${s.实际主题属性} | ${s.模式} | ${s.阶段} | ${f.字段} | ${f.组.height} | ${f.与下一项间隙 ?? '-'} | ${f.标签计算top} | ${f.标签字号} | ${f.上一项下划线底到本标签顶 ?? '-'} | ${f.标签底到输入文字顶 ?? '-'} |`,
+          `| ${s.视口} | ${s.实际主题属性} | ${s.模式} | ${s.阶段} | ${f.字段} | ${f.组.height} | ${f.与下一项间隙 ?? '-'} | ${f.标签计算top} | ${f.标签字号} | ${f.上一项底线到本标签顶 ?? '-'} | ${f.标签底到输入文字顶 ?? '-'} |`,
       ),
     ),
     '',
     '## 输入框焦点（点击手机号后）',
     '',
-    '| 视口 | 主题 | 模式 | activeElement | outline-style | outline-width | outline-color | 下划线::after transform | ::after transition | 标签颜色 | :focus-within | 勾选框::before outline |',
+    '| 视口 | 主题 | 模式 | activeElement | outline-style | outline-width | outline-color | outline-offset | 令牌环宽/色 | .dixian-dixian 元素数 | 标签颜色 | :focus-within | 勾选框::before outline |',
     '| ---- | ---- | ---- | ------------- | ------------- | ------------- | ------------- | ----------------------- | ---------------- | -------- | ----------- | -------------------- |',
     ...记录
       .filter((s) => s.焦点)
       .map(
         (s) =>
-          `| ${s.视口} | ${s.实际主题属性} | ${s.模式} | ${s.焦点?.活动元素} | ${s.焦点?.outlineStyle} | ${s.焦点?.outlineWidth} | ${s.焦点?.outlineColor} | ${s.焦点?.下划线伪元素transform} | ${s.焦点?.过渡} | ${s.焦点?.标签颜色} | ${s.焦点?.组含focusWithin} | ${s.勾选框焦点 ? `${s.勾选框焦点.outlineStyle}/${s.勾选框焦点.outlineWidth}/${s.勾选框焦点.outlineColor}` : '-'} |`,
+          `| ${s.视口} | ${s.实际主题属性} | ${s.模式} | ${s.焦点?.活动元素} | ${s.焦点?.outlineStyle} | ${s.焦点?.outlineWidth} | ${s.焦点?.outlineColor} | ${s.焦点?.outlineOffset} | ${s.焦点?.环令牌宽}/${s.焦点?.环令牌色} | ${s.焦点?.装饰线元素数} | ${s.焦点?.标签颜色} | ${s.焦点?.组含focusWithin} | ${s.勾选框焦点 ? `${s.勾选框焦点.outlineStyle}/${s.勾选框焦点.outlineWidth}/${s.勾选框焦点.outlineColor}` : '-'} |`,
       ),
     '',
     '## 滚动条令牌与像素（滚动条条带截图取样，纯色 = 不可见）',
@@ -614,12 +628,28 @@ function 写证据(记录: 快照[], 截图: string[]) {
     `- warning ${记录.reduce((a, s) => a + (s.控制台?.warning.length ?? 0), 0)} 条`,
     ...[...new Set(记录.flatMap((s) => s.控制台?.warning ?? []))].map((e) => `  - ${e}`),
     '',
+    '## 档位取样自证（派生 config 陷阱回读：真机 innerWidth×innerHeight 必须等于档位名）',
+    '',
+    '| 档位名 | innerWidth×innerHeight | 快照数 |',
+    '| ------ | -------------------- | ------ |',
+    ...[
+      ...new Map(
+        记录.map(
+          (s) =>
+            [
+              s.视口,
+              `${s.视口信息.innerWidth}x${s.视口信息.innerHeight}`,
+            ] as const,
+        ),
+      ).entries(),
+    ].map(([名, 实测]) => `| ${名} | ${实测} | ${记录.filter((s) => s.视口 === 名).length} |`),
+    '',
     '截图：',
     ...截图.map((p) => `- ${p}`),
     '',
     `完整数值见同名 .json`,
   ]
-  const 基名 = `FP-02-认证表单-${标签}-${日期}${只跑 ? '-solo' : ''}`
+  const 基名 = `FP-02-认证表单-${标签}-${日期}${只跑 ? '-solo' : ''}${证据后缀}`
   fs.writeFileSync(path.join(证据目录, `${基名}.md`), 行.join('\n'), 'utf8')
   fs.writeFileSync(path.join(证据目录, `${基名}.json`), JSON.stringify({ 标签, 记录, 截图 }, null, 2), 'utf8')
 }
@@ -644,15 +674,17 @@ function 断言可拖(s: 快照, 标: string): void {
 
 test.describe('FP-02 认证布局与登录注册表单取证', () => {
   test('居中/间距/滚动条/焦点 全组合量测', async ({ browser }) => {
-    test.setTimeout(600000)
+    // FP-24d：档位由 2+1 扩为定案四档 × 两态 × 双主题（16 个 context），草地 WebGL 背景拖慢主线程，
+    // 放宽墙钟超时；这只影响超时，不放宽任何断言。
+    test.setTimeout(1500000)
     fs.mkdirSync(截图目录, { recursive: true })
 
     const 组合: Array<{ 视口: 视口规格; 主题: string; 模式: 'dengLu' | 'zhuCe' }> = []
     for (const 视口 of 视口清单)
       for (const 主题 of ['暗色', '浅色'])
         for (const 模式 of ['dengLu', 'zhuCe'] as const) 组合.push({ 视口, 主题, 模式 })
-    for (const 主题 of ['暗色', '浅色'])
-      组合.push({ 视口: 异常小视口, 主题, 模式: 'dengLu' })
+    // 旧版在此另推「异常小视口 × 登录」两组合来逼登录页出条；FP-04a 新契约下滚动口恒在，
+    // 登录/注册两态 × 四档已由上面的全组合逐一覆盖，无需再补特殊档。
 
     for (const { 视口, 主题, 模式 } of 组合.filter(
       (c) => !只跑 || `${c.视口.名称}/${c.主题}/${c.模式}` === 只跑,
@@ -737,18 +769,21 @@ test.describe('FP-02 认证布局与登录注册表单取证', () => {
         }
       }
 
-      const 名 = `fp02-${标签}-${视口.名称}-${上浮.实际主题属性}-${模式}`
+      const 名 = `fp02-${标签}${证据后缀}-${视口.名称}-${上浮.实际主题属性}-${模式}`
       await page.screenshot({ path: path.join(截图目录, `${名}.png`) })
       截图集.push(`测试截图/${名}.png`)
 
-      const 用内层 =
-        !!上浮.内层滚动区 && 上浮.内层滚动区.scrollHeight > 上浮.内层滚动区.clientHeight
-      const 目标 = 用内层
+      // FP-24d 改判（FP-04a 新契约）：取样/拖拽目标恒为滚动口宿主 .biaodan-gundong，
+      // 不再按「内层是否溢出」在宿主与 .yemian-buju 之间二选一——旧二选一判的是
+      // `.biaodan-gundong.xuyao-gundong` 状态类时代（JS 条件类决定谁是滚动口），该类已删。
+      // 溢出标志仅决定是否断言「可拖」，不决定取样目标。
+      const 内层溢出 = !!上浮.内层滚动区 && 上浮.内层滚动区.scrollHeight > 上浮.内层滚动区.clientHeight
+      const 目标 = 上浮.内层滚动区
         ? {
-            rect: 上浮.内层滚动区!,
-            滚动条宽: 上浮.内层滚动区!.滚动条宽,
-            clientHeight: 上浮.内层滚动区!.clientHeight,
-            选择器: '.biaodan-gundong.xuyao-gundong',
+            rect: 上浮.内层滚动区 as 矩形,
+            滚动条宽: 上浮.内层滚动区.滚动条宽,
+            clientHeight: 上浮.内层滚动区.clientHeight,
+            选择器: '.biaodan-gundong',
           }
         : {
             rect: 上浮.滚动容器.rect,
@@ -797,25 +832,20 @@ test.describe('FP-02 认证布局与登录注册表单取证', () => {
             `${标} 溢出时卡片顶部不可达（零滚动顶 ${零滚动顶} vs 口顶 ${s.滚动容器.rect.top}）`,
           ).toBeGreaterThanOrEqual(s.滚动容器.rect.top - 1)
         }
-        if (s.模式 === 'zhuCe') {
-          const 内 = s.内层滚动区
-          const 内滚动 = !!内 && 内.scrollHeight > 内.clientHeight
-          const 外滚动 = s.滚动容器.scrollHeight > s.滚动容器.clientHeight
-          expect(内滚动 || 外滚动, `${标} 注册页无滚动了的滚动口`).toBe(true)
-          const 宽 = 内滚动 ? 内!.滚动条宽 : s.滚动容器.滚动条宽
-          expect(宽, `${标} 滚动条占位宽度 <6px：${宽}`).toBeGreaterThanOrEqual(6)
-          expect(s.滚动条像素, `${标} 未采到滚动条像素`).not.toBeNull()
+        // FP-24d 新契约（FP-04a 已定案口径，判据对 FP-04b 不敏感：只断言机制与条宽，
+        // 不钉具体溢出像素/具体 scrollTop）：登录/注册两态 × 全部档位恒判——
+        // 宿主 .biaodan-gundong 必在场、类名里不得再长出任何 JS 状态类（xuyao-gundong 形态已删）、
+        // 恒 overflow-y:scroll、滚动条条宽 ≥7px 恒可见；
+        // 仅当 scrollHeight>clientHeight 时加判像素层次与真鼠标可拖。
+        const 内 = s.内层滚动区
+        expect(内, `${标} 滚动口宿主 .biaodan-gundong 不在场（FP-04a 回归：宿主必须两态恒在）`).not.toBeNull()
+        expect(内!.额外类, `${标} 滚动口宿主又长出了 JS 状态类（R2 的 xuyao-gundong 形态）：${内!.额外类}`).toBe('')
+        expect(内!.计算overflowY, `${标} 滚动口不再是恒定 overflow-y:scroll（实测 ${内!.计算overflowY}）`).toBe('scroll')
+        expect(内!.滚动条宽, `${标} 滚动条条宽 <7px，未恒可见：${内!.滚动条宽}`).toBeGreaterThanOrEqual(7)
+        if (内!.scrollHeight > 内!.clientHeight) {
+          expect(s.滚动条像素, `${标} 滚动口溢出却未采到滚动条像素`).not.toBeNull()
           expect(s.滚动条像素!.不同颜色数, `${标} 滚动条条带是纯色（不可见）`).toBeGreaterThan(2)
           expect(s.滚动条像素!.极差, `${标} 滚动条条带明度无层次（不可见）`).toBeGreaterThan(8)
-          断言可拖(s, 标)
-        }
-        if (s.视口 === 异常小视口.名称) {
-          expect(s.居中.溢出, `${标} 异常小视口登录页未溢出`).toBe(true)
-          expect(
-            s.滚动容器.滚动条宽,
-            `${标} 登录页异常小视口无可见滚动条：${s.滚动容器.滚动条宽}`,
-          ).toBeGreaterThanOrEqual(6)
-          expect(s.滚动条像素!.不同颜色数, `${标} 登录页滚动条条带是纯色`).toBeGreaterThan(2)
           断言可拖(s, 标)
         }
         // 焦点：白线消失 + 组件自有焦点指示确实出现（可访问性未被削弱）
@@ -825,16 +855,26 @@ test.describe('FP-02 认证布局与登录注册表单取证', () => {
             f.活动元素,
             `${标} 点击后焦点未落在输入框（activeElement=${f.活动元素}）`,
           ).toBe(s.模式 === 'dengLu' ? 'denglu-shoujihao' : 'zhuce-shoujihao')
-          expect(
-            f.outlineStyle === 'none' || f.outlineWidth === '0px',
-            `${标} 输入框仍绘制 outline：${f.outlineStyle}/${f.outlineWidth}/${f.outlineColor}`,
-          ).toBe(true)
+          // FP-03 契约演进：白线的真因是 .dixian-dixian 装饰线（已删），焦点反馈改由 FP-01 令牌窄环承担。
+          // 旧断言把「输入框 outline=none」+「金色下划线 matrix(1,0,0,1,0,0) 在位」钉成契约，等于要求缺陷存在；
+          // 新断言更强：装饰元素归零 且 文本框确实画出可见令牌环（旧断言允许“零焦点反馈”这一 a11y 回归）。
+          expect(f.装饰线元素数, `${标} .dixian-dixian 装饰线仍存在（需求 #1 白线根因）`).toBe(0)
           expect(f.组含focusWithin, `${标} :focus-within 未命中`).toBe(true)
-          const 展开 = /matrix\(([-\d.e]+)/.exec(f.下划线伪元素transform)
+          expect(f.outlineStyle, `${标} 文本框无可见焦点环`).toBe('solid')
+          // 同类点一并收（FP-24d，穷尽纪律）：此处与 FP-24c 修掉的 fp11:512-515 是同一病灶——
+          // 拿 outlineWidth **字符串**与令牌文本 toBe。本文件 headed 跑（test.use headless:false），
+          // Chromium 会把 1px 描边读成 0.8px（相邻两行栅格化分摊）⇒ 恒红。
+          // 改为解析值 + 亚像素容差（同一算式），仍保得住 1px 窄环 vs 2px 标准环的区分度。
+          const 令牌环宽 = Number.parseFloat(f.环令牌宽)
+          const 实测环宽 = Number.parseFloat(f.outlineWidth)
+          const 环宽容差 = Math.min(0.5, Math.max(0.2, 0.5 / (f.装置像素比 || 1)))
+          expect(令牌环宽, `${标} 契约前提：--jujiao-huan-kuan-du-wenben 解析不出数值（${f.环令牌宽}）`).not.toBeNaN()
+          expect(实测环宽, `${标} 契约前提：outline-width 解析不出数值（${f.outlineWidth}）`).not.toBeNaN()
+          expect(实测环宽, `${标} 回归：焦点环宽度为 0（无可见焦点反馈）`).toBeGreaterThan(0)
           expect(
-            !!展开 && Math.abs(parseFloat(展开[1])) >= 0.99,
-            `${标} 金色下划线未展开：transform=${f.下划线伪元素transform} transition=${f.过渡}`,
-          ).toBe(true)
+            Math.abs(实测环宽 - 令牌环宽),
+            `${标} 焦点环宽度未走 --jujiao-huan-kuan-du-wenben（实测 ${实测环宽}px / 令牌 ${令牌环宽}px / DPR ${f.装置像素比} / 容差 ${环宽容差}px）`,
+          ).toBeLessThanOrEqual(环宽容差)
           const 静止标签 = 集.get(`${s.视口}|${s.主题}|${s.模式}|静止`)?.表单项[0]?.标签颜色 ?? ''
           expect(f.标签颜色, `${标} 聚焦标签未变色（静止=${静止标签}）`).not.toBe(静止标签)
           if (s.勾选框焦点) {
@@ -853,20 +893,20 @@ test.describe('FP-02 认证布局与登录注册表单取证', () => {
           const 标 = `${s.视口}/${s.主题}/${s.模式}`
           if (f.与下一项间隙 !== null)
             expect(f.与下一项间隙, `${标} ${f.字段} 相邻项间隙 ${f.与下一项间隙}px`).toBeGreaterThanOrEqual(16)
-          if (f.上一项下划线底到本标签顶 !== null)
+          if (f.上一项底线到本标签顶 !== null)
             expect(
-              f.上一项下划线底到本标签顶,
-              `${标} ${f.字段} 上浮标签压上一项下划线（${f.上一项下划线底到本标签顶}px）`,
+              f.上一项底线到本标签顶,
+              `${标} ${f.字段} 上浮标签压上一项字段底线（${f.上一项底线到本标签顶}px）`,
             ).toBeGreaterThanOrEqual(12)
           if (f.标签底到输入文字顶 !== null)
             expect(
               f.标签底到输入文字顶,
               `${标} ${f.字段} 上浮标签与输入文字太挤（${f.标签底到输入文字顶}px）`,
             ).toBeGreaterThanOrEqual(7)
-          if (f.下划线 && f.标签)
+          if (f.底线 !== null && f.标签)
             expect(
-              f.下划线.top - f.标签.bottom,
-              `${标} ${f.字段} 下划线与上浮标签相交`,
+              f.底线 - f.标签.bottom,
+              `${标} ${f.字段} 字段底线与上浮标签相交`,
             ).toBeGreaterThanOrEqual(0)
         }
       }

@@ -157,23 +157,6 @@ function chuLiDengLuChengGong() {
   transform: translateY(-6px);
 }
 
-.yemian-buju:not(.quanping-moshi)::-webkit-scrollbar {
-  width: var(--gundong-tiao-kuan-du);
-}
-
-.yemian-buju:not(.quanping-moshi)::-webkit-scrollbar-track {
-  background: var(--gundong-tiao-guidao);
-}
-
-.yemian-buju:not(.quanping-moshi)::-webkit-scrollbar-thumb {
-  background: var(--gundong-tiao-huakuai);
-  border-radius: var(--gundong-tiao-kuan-du);
-}
-
-.yemian-buju:not(.quanping-moshi)::-webkit-scrollbar-thumb:hover {
-  background: var(--gundong-tiao-huakuai-hover);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .huadong-qiehuan-leave-active,
   .huadong-qiehuan-enter-active,

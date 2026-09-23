@@ -143,6 +143,8 @@ vi.mock('../../services/对话渲染', () => {
     // FP-09：调度器改由「本轮驱动消息 ID」定位焦点，同一条桩实现保持口径一致
     quBenLunJiaoDianXiaoXiXiang: 焦点,
     zhanShiXiaoXiZhengWen: vi.fn(() => '你好呀'),
+    // FP-08c：调度器新增「按 ID 现取被引用原文」的回口，本用例不测引用 ⇒ 桩成取不到（不渲染引用段）
+    gouJianYinYongChaXun: vi.fn(() => () => null),
   }
 })
 

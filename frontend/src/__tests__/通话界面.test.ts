@@ -429,7 +429,7 @@ describe('FP-21 通话界面组件渲染', () => {
     expect(wrapper.find('.zhuangtai-wenben').text()).toBe(
       huoQuFanYi('tongHua', 'zhengZaiDengDaiDuiFangJieShu'),
     )
-    expect(wrapper.find('.tonghua-touxiang').exists()).toBe(true)
+    expect(wrapper.find('.tonghua-wei').exists()).toBe(true)
     expect(wrapper.find('.huxi-waiquan').exists()).toBe(true)
 
     const quXiaoAn = wrapper.find('.quxiao-cijian')
@@ -650,7 +650,7 @@ describe('FP-21 聊天页系统消息渲染', () => {
     for (const xiang of xiTongXiangMu) {
       expect(xiang.find('.xitong-neirong').exists()).toBe(true)
       expect(xiang.find('.qipao-neirong').exists()).toBe(false)
-      expect(xiang.find('.xiaoxi-touxiang').exists()).toBe(false)
+      expect(xiang.find('.xiaoxi-wei').exists()).toBe(false)
     }
     wrapper.unmount()
   })

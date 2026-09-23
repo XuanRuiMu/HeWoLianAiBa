@@ -15,6 +15,19 @@ import { panDuanKeJian, shiHeFaKeJianXing } from '../services/可见性'
 import { shenHeNeiRongAnQuan } from '../services/安全审核'
 import { chaXunZhangHaoFengJin, jiLuZhangHaoWeiGui } from '../services/账号封禁'
 import { 获取IP } from '../services/IP封禁'
+// FP-21：内容块与引用槽一律复用 AI 链路那**一份**算式（清洗 / 派生 / 裁定 / 投影全在 services/消息.ts）。
+// 好友侧不得再写第二份 —— 两页两套判定必然漂移，正是 R5 病灶的原形态。
+import {
+  HAO_YOU_BEI_YIN_YONG_MIAN_XIANG,
+  gouKuaiShangXiaWen,
+  haoYouKuaiTouYing,
+  qingLiXiaoXiKuaiXieRu,
+  yanZhengBeiYinYong,
+  yingSheKuaiChuCan,
+  type KuaiShangXiaWen,
+} from '../services/消息'
+import { kuaiShenHeWenBen } from '../services/消息内容块'
+import type { HaoYouXiaoXiChuCan } from '../types'
 
 const luYou = Router()
 
@@ -298,7 +311,7 @@ const HAO_YOU_XIAO_XI_LEI_XING = new Set<string>(YUN_XU_XIAO_XI_LEI_XING)
 export const HAO_YOU_YU_JU = {
   查消息列表: `
   SELECT m."ID", m."发送者ID", m."接收者ID", m."内容", m."类型", m."媒体ID",
-         m."已读", m."撤回", m."创建时间",
+         m."已读", m."撤回", m."创建时间", m."内容块", m."被引用消息ID",
          f."SHA256", f."类别", f."原始文件名", f."大小字节"
     FROM "好友消息" m
     LEFT JOIN "媒体文件" f ON f."ID" = m."媒体ID"
@@ -306,34 +319,27 @@ export const HAO_YOU_YU_JU = {
        OR (m."发送者ID" = $2 AND m."接收者ID" = $1))
    ORDER BY m."创建时间" DESC LIMIT $3`,
   插入消息: `
-  INSERT INTO "好友消息" ("发送者ID", "接收者ID", "内容", "类型", "媒体ID")
-  VALUES ($1, $2, $3, $4, $5)
+  INSERT INTO "好友消息" ("发送者ID", "接收者ID", "内容", "类型", "媒体ID", "内容块", "被引用消息ID")
+  VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
   RETURNING "ID", "创建时间"`,
 } as const
-
-interface HaoYouXiaoXiChuCan {
-  id: string
-  fa_song_zhe_id: string
-  jie_shou_zhe_id: string
-  nei_rong: string
-  lei_xing: string
-  mei_ti_id: string | null
-  mei_ti_url: string | null
-  mei_ti_lei_bie: string | null
-  mei_ti_yuan_shi_wen_jian_ming: string | null
-  mei_ti_da_xiao_zi_jie: number | null
-  yi_du: boolean
-  yi_che_hui: boolean
-  shi_jian_chuo: number
-}
 
 /**
  * FP-21 出参收口：媒体引用换成**绑定读者**的新鲜签名 URL（同 services/消息.ts::yingSheXiaoXi 的
  * 签发口径，读者用户编号进 HMAC，故 URL 换不了人、也不可枚举）。
  * 已撤回的消息既不回内容也不回媒体地址——撤回语义是「对方再也看不到这条」，
  * 留着 URL 等于让撤回失效（媒体读取判定 services/媒体存储.ts::MEI_TI_KE_DU_YU_JU 同步排除撤回行）。
+ * FP-21（迁移 036）追加两键，口径与 AI 侧逐字同构：
+ *  - `nei_rong_kuai` 恒非空：投影算式就是 AI 侧那一份 `yingSheKuaiChuCan`（好友面只交出
+ *    「撤回列名 + 签名主体是读者 + 本行 JOIN 媒体用的原始列名」这三个差异点）；
+ *    撤回行只给一条与 `nei_rong` 逐字相同的空文字块，图文顺序里含着的正文与图片不外泄；
+ *  - `bei_yong_xiao_xi_id` 恒在（未引用为 null 而非缺键），且**只给身份不给摘要副本**。
  */
-function yingSheHaoYouXiaoXi(row: Record<string, unknown>, duZheId: string): HaoYouXiaoXiChuCan {
+function yingSheHaoYouXiaoXi(
+  row: Record<string, unknown>,
+  duZheId: string,
+  kuaiShangXiaWen: KuaiShangXiaWen,
+): HaoYouXiaoXiChuCan {
   const yiCheHui = row['撤回'] === true
   const sha256 = row['SHA256'] ? String(row['SHA256']).toLowerCase() : ''
   return {
@@ -342,6 +348,8 @@ function yingSheHaoYouXiaoXi(row: Record<string, unknown>, duZheId: string): Hao
     jie_shou_zhe_id: String(row['接收者ID']),
     nei_rong: yiCheHui ? '' : String(row['内容'] || ''),
     lei_xing: String(row['类型']),
+    nei_rong_kuai: yingSheKuaiChuCan(row, kuaiShangXiaWen, '', haoYouKuaiTouYing(duZheId)),
+    bei_yong_xiao_xi_id: row['被引用消息ID'] ? String(row['被引用消息ID']) : null,
     mei_ti_id: yiCheHui || !row['媒体ID'] ? null : String(row['媒体ID']),
     mei_ti_url: yiCheHui || sha256 === '' ? null : shengChengQianMingURL(sha256, duZheId),
     mei_ti_lei_bie: yiCheHui || !row['类别'] ? null : String(row['类别']),
@@ -366,8 +374,14 @@ luYou.get('/消息/:haoYouId', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu,
       return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('haoYou', 'feiHaoYou'))
     }
     const jieGuo = await 数据库.query(HAO_YOU_YU_JU.查消息列表, [yongHu.yongHuId, haoYouId, xianZhi])
+    const hangLie = jieGuo.rows as Record<string, unknown>[]
+    // 块里的图片要出签名地址就得拿到每个媒体 ID 的 SHA256 与类别：按页一次性批量补查（禁逐条 N+1）。
+    // 取数口与 AI 侧同为 services/消息.ts::gouKuaiShangXiaWen（好友面只交出列名/签名主体这几个差异点）。
+    const kuaiShangXiaWen = await gouKuaiShangXiaWen(hangLie, haoYouKuaiTouYing(yongHu.yongHuId))
     return chengGongXiangYing(xiangYing, {
-      lie_biao: jieGuo.rows.map((r) => yingSheHaoYouXiaoXi(r as Record<string, unknown>, yongHu.yongHuId)).reverse(),
+      lie_biao: hangLie
+        .map((r) => yingSheHaoYouXiaoXi(r, yongHu.yongHuId, kuaiShangXiaWen))
+        .reverse(),
     })
   } catch (cuoWu) {
     debug日志.error('好友接口', '查询好友消息失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
@@ -498,12 +512,16 @@ luYou.post('/消息', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
   if (!yongHu) return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
   const body = qingQiu.body as Record<string, unknown>
   const jieShouZheId = huoQuZiFuChuan(body, 'jieShouZheId') || huoQuZiFuChuan(body, 'jie_shou_zhe_id')
-  const neiRong = (huoQuZiFuChuan(body, 'neiRong') || huoQuZiFuChuan(body, 'nei_rong')).trim().slice(0, 500)
-  const leiXing = huoQuZiFuChuan(body, 'leiXing') || huoQuZiFuChuan(body, 'lei_xing') || 'wenben'
-  const meiTiId = huoQuZiFuChuan(body, 'meiTiId') || huoQuZiFuChuan(body, 'mei_ti_id') || null
+  const yuanNeiRong = (huoQuZiFuChuan(body, 'neiRong') || huoQuZiFuChuan(body, 'nei_rong')).trim().slice(0, 500)
+  const yuanLeiXing = huoQuZiFuChuan(body, 'leiXing') || huoQuZiFuChuan(body, 'lei_xing') || 'wenben'
+  const yuanMeiTiId = huoQuZiFuChuan(body, 'meiTiId') || huoQuZiFuChuan(body, 'mei_ti_id') || null
   if (!yanZhengUUID(jieShouZheId)) return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
-  if (!HAO_YOU_XIAO_XI_LEI_XING.has(leiXing)) return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
-  if (!neiRong && !meiTiId) return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('haoYou', 'xiaoXiWeiKong'))
+  if (!HAO_YOU_XIAO_XI_LEI_XING.has(yuanLeiXing)) return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
+  // FP-21（迁移 036）新增两个入参：内容块 与 引用槽（别名键与 AI 链路逐字相同）。
+  // 两者的**判定**都不在本路由里做：块走 services/消息.ts 那一份清洗序列、引用走
+  // yanZhengBeiYinYong 那一条裁定（好友面向）。这里只取值，不判形状 —— 判形状就是第二份实现。
+  const tiJiaoKuaiZhi = body['nei_rong_kuai'] ?? body['neiRongKuai'] ?? body['内容块']
+  const yuanShiBeiYongZhi = body['beiYongXiaoXiId'] ?? body['bei_yong_xiao_xi_id'] ?? body['被引用消息ID']
   try {
     if (!(await shiHaoYou(yongHu.yongHuId, jieShouZheId))) {
       return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('haoYou', 'feiHaoYou'))
@@ -513,10 +531,37 @@ luYou.post('/消息', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
     if (haoYouFengJin.beiFengJin) {
       return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'zhangHaoYiBeiFengJin'))
     }
+    // FP-21（迁移 036）图文混排：块是唯一真源。清洗与派生一律走 AI 链路那一份
+    // （services/消息.ts::qingLiXiaoXiKuaiXieRu：结构清洗 → 长度策略 → 媒体判定 → 丢弃留痕 → 兼容投影）。
+    // 带了块 ⇒ 内容/类型/媒体ID 由块派生，客户端同时上报的那三个字段被忽略（不给第二套值留活口）。
+    const kuaiXieRu = await qingLiXiaoXiKuaiXieRu(tiJiaoKuaiZhi, yongHu.yongHuId, '好友消息发送')
+    if (!kuaiXieRu.cheng_gong) {
+      return shiBaiXiangYing(
+        xiangYing,
+        kuaiXieRu.zhuang_tai_ma ?? 400,
+        kuaiXieRu.ti_shi ?? huoQuFanYi('tongYong', 'canShuBuHeFa'),
+      )
+    }
+    const luoKuKuai = kuaiXieRu.kuai
+    const jianYing = kuaiXieRu.jianYing
+    const leiXing = jianYing ? jianYing.lei_xing : yuanLeiXing
+    const meiTiId = jianYing ? jianYing.mei_ti_id : yuanMeiTiId
+    const neiRong = jianYing ? jianYing.nei_rong : yuanNeiRong
+    // 派生出的类型仍然只认那一份白名单（不给第二套值域留开口）
+    if (!HAO_YOU_XIAO_XI_LEI_XING.has(leiXing)) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
+    }
+    if (!neiRong && !meiTiId) return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('haoYou', 'xiaoXiWeiKong'))
+    // 送审文本：有块就取块里用户自己打的那些字 —— 图文混排的文字必须逐字进安全审核，
+    // 「带块」绝不是绕过审核的口子（与 routes/消息.ts 的 shenHeWenBen 同一口径）。
+    const shenHeWenBen = luoKuKuai ? kuaiShenHeWenBen(luoKuKuai) : neiRong
     // YH-013 好友媒体IDOR+审核绕过：复用AI链路媒体归属函数统一校验+不可用统一拦截
-    // 归属之外还判「类型↔类别」对应（tuPian 只能挂 tupian 行），否则前端按图片渲染得到破图
+    // 归属之外还判「类型↔类别」对应（tuPian 只能挂 tupian 行），否则前端按图片渲染得到破图。
+    // FP-21：这道闸只覆盖**老口径**（无块、单媒体）。带了块时同一件事已由 yingYongMeiTiPanDing
+    // 逐块判过（存在 + 归属 + 图像类别）；而图文行的 类型 按投影规则是 wenben 却带着首个图片块的
+    // 媒体ID，套老规则会把合法图文消息当成「文本消息带媒体ID」误杀。
     const { yanZhengHaoYouMeiTiGuiShu } = await import('../services/好友媒体')
-    if (leiXing !== 'wenben' || meiTiId) {
+    if (luoKuKuai === null && (leiXing !== 'wenben' || meiTiId)) {
       if (!meiTiId || !yanZhengUUID(meiTiId)) {
         return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'meiTiBiXuXianChuanShu'))
       }
@@ -525,10 +570,10 @@ luYou.post('/消息', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
         return shiBaiXiangYing(xiangYing, 400, guiShu.ti_shi)
       }
     }
-    if (neiRong) {
+    if (shenHeWenBen) {
       let shenHe: Awaited<ReturnType<typeof shenHeNeiRongAnQuan>>
       try {
-        shenHe = await shenHeNeiRongAnQuan(neiRong)
+        shenHe = await shenHeNeiRongAnQuan(shenHeWenBen)
       } catch (cuoWu) {
         debug日志.error('好友接口', '好友消息审核异常拦截', { xiang_qing: { cuo_wu: String(cuoWu) } })
         return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
@@ -565,12 +610,33 @@ luYou.post('/消息', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
         return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
       }
     }
+    // FP-21 引用槽：裁定一律走 services/消息.ts::yanZhengBeiYinYong 那**一条**判定（好友面向）。
+    // 与 AI 侧同理，脏引用绝不容忍成「降级为无引用后继续落库」：幂等键脏了只影响去重，
+    // 引用脏了是把别人的对话内容当成本对话渲染出来的越权读取面。六种非法形态一律 4xx。
+    const beiYong = await yanZhengBeiYinYong(
+      yuanShiBeiYongZhi,
+      yongHu.yongHuId,
+      jieShouZheId,
+      HAO_YOU_BEI_YIN_YONG_MIAN_XIANG,
+    )
+    if (!beiYong.cheng_gong) {
+      return shiBaiXiangYing(
+        xiangYing,
+        beiYong.zhuang_tai_ma ?? 400,
+        beiYong.ti_shi ?? huoQuFanYi('liaoTian', 'yinYongXiaoXiFeiFa'),
+      )
+    }
+    // 自引用（第六种非法形态）在好友链路上构造不出：新行 ID 由建表语句的 gen_random_uuid() 现生成，
+    // 且本路由没有 幂等键 重放口径；判据仍是 services/消息.ts::shiZiYinYong 那一份，
+    // 结构面由迁移 036 的 CHECK ("ID" <> "被引用消息ID") 兜底（任何写口都落不进自引用）。
     const chaRu = await 数据库.query(HAO_YOU_YU_JU.插入消息, [
       yongHu.yongHuId,
       jieShouZheId,
       neiRong,
       leiXing,
       meiTiId || null,
+      luoKuKuai ? JSON.stringify(luoKuKuai) : null,
+      beiYong.id ?? null,
     ])
     try {
       const { chuangJianTongZhi } = await import('../services/通知')

@@ -6,6 +6,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useCaoGao, CAO_GAO_JIAN } from '@/composables/use草稿'
 import HaoYouLiaoTian from '@/views/好友聊天.vue'
 import { huoQuFanYi } from '@/config/translations'
+import { duQuShuRuQuText, xieRuShuRuQu } from './输入区夹具'
 
 vi.mock('@/api/社交', () => ({
   huoQuHaoYouXiaoXi: vi.fn().mockResolvedValue([]),
@@ -41,6 +42,11 @@ vi.mock('@/api/资料', () => ({
 }))
 
 describe('FP-08 YH-077 草稿保护', () => {
+  // 契约演进（FP-10c）：输入区从 <textarea> 换成图文真内联的 <div contenteditable> 后，
+  // `wrapper.find('.shuru-kuang').setValue(x)` 与 `element.value` 在 div 上是**静默 no-op**
+  // （VTU 的 setValue 只认 input/textarea/select），旧写法会让"发了什么"永远是空串 ⇒ 假绿。
+  // 故本文件的写入一律走 __tests__/输入区夹具.ts::xieRuShuRuQu（按真实编辑形态写 DOM 再派发 input，
+  // 命中组件自己那条 DOM → 段序列 → 真源路径），读取一律走 duQuShuRuQuText；不给 div 造 value 访问器。
   beforeEach(() => {
     vi.clearAllMocks()
     setActivePinia(createPinia())
@@ -98,7 +104,7 @@ describe('FP-08 YH-077 草稿保护', () => {
       attachTo: document.body,
     })
     await flushPromises()
-    await wrapper.find('.shuru-kuang').setValue('待发送改后发')
+    await xieRuShuRuQu(wrapper, '待发送改后发')
     await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
     expect(sessionStorage.getItem('caoGao:haoYou:hao-you-1')).toBeNull()
@@ -119,7 +125,7 @@ describe('FP-08 YH-077 草稿保护', () => {
     })
     await flushPromises()
     await nextTick()
-    expect((wrapper.find('.shuru-kuang').element as HTMLTextAreaElement).value).toBe('上次没发完')
+    expect(duQuShuRuQuText(wrapper)).toBe('上次没发完')
     wrapper.unmount()
   })
 
@@ -136,7 +142,7 @@ describe('FP-08 YH-077 草稿保护', () => {
       attachTo: document.body,
     })
     await flushPromises()
-    await wrapper.find('.shuru-kuang').setValue('连点只发一次')
+    await xieRuShuRuQu(wrapper, '连点只发一次')
     await wrapper.find('.fasong-anniu').trigger('click')
     await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()

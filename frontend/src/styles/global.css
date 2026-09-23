@@ -87,13 +87,15 @@ select {
   background: #1a1a1a;
 }
 
-:focus-visible {
+/* 焦点环单一规则源：:where(:focus-visible) 特异度 0，文本控件档 (0,1,0) 结构上必然压过它，
+   不再靠"同特异度 + 源码顺序"这种一改就翻车的压制关系。
+   文本控件只收窄环（1px / 零偏移，贴住控件不与装饰线争位），不撤环——豁免后仍有等效可见焦点指示 */
+:where(:focus-visible) {
   outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
   outline-offset: var(--jujiao-huan-pian-yi);
 }
 
-/* 文本输入类控件焦点可见性由组件自有指示承担（下划线动画/浮动标签变色），不再叠画全局 outline；
-   checkbox/radio/按钮类等非文本 input 不在此列，保留焦点环 */
+/* checkbox/radio/按钮类等非文本 input 不在此列，吃上面的标准环 */
 :where(
   input:not([type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color']),
   textarea,
@@ -103,25 +105,37 @@ select {
   .xiugai-shuru,
   .fenlie-shuru
 ):focus-visible {
-  outline: none;
+  outline: var(--jujiao-huan-kuan-du-wenben) solid var(--jujiao-huan-yanse);
+  outline-offset: var(--jujiao-huan-pian-yi-wenben);
 }
 
+/* 滚动条单一真源：组件内保留的私有 ::-webkit-scrollbar 特例均在各自文件内以「FP-20 保留特例」注释逐项写明理由（宽度差异/测试钉死/透明轨道），此处不重复登记 */
 ::-webkit-scrollbar {
   width: var(--gundong-tiao-kuan-du);
   height: var(--gundong-tiao-kuan-du);
+  cursor: var(--gundong-tiao-cursor);
 }
 
 ::-webkit-scrollbar-track {
   background: var(--gundong-tiao-guidao);
+  cursor: var(--gundong-tiao-guidao-cursor);
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--gundong-tiao-huakuai);
   border-radius: var(--gundong-tiao-kuan-du);
+  cursor: var(--gundong-tiao-huakuai-cursor);
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--gundong-tiao-huakuai-hover);
+  cursor: var(--gundong-tiao-huakuai-cursor);
+}
+
+/* 交汇角落（横竖滚动条同时存在时的方块）：全库无一处给它设值，此处补齐才使 global 是完备单一真源 */
+::-webkit-scrollbar-corner {
+  background: transparent;
+  cursor: var(--gundong-tiao-cursor);
 }
 
 /* 不支持 ::-webkit-scrollbar 的浏览器（Firefox）走标准属性基线，避免与 Chromium 自绘路径互斥 */

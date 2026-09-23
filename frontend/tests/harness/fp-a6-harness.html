@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FP-A6 浮窗缩放取证 harness</title>
+    <style>
+      /* 空白底：不引入草地背景（grass-bg 属另一 agent 在途 WIP），只隔离出浮窗本身 */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #1a1d24;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="fp-a6-app"></div>
+    <script type="module" src="./fp-a6-main.ts"></script>
+  </body>
+</html>

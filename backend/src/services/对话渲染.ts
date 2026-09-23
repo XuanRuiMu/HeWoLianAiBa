@@ -1,4 +1,5 @@
 import { AI_PEI_ZHI } from '../config/AI配置'
+import { huoQuFanYi } from '../config/translations'
 import { gouJianDanTiaoTuXiangKuai, meiTiZhanShiWenBen, shiTuXiangLeiBie } from './AI视觉辅助'
 import { gouJianYuYinKeDuWenBen, tiQuYinPinShiJian } from './语音理解'
 import { gouJianShiPinKeDuWenBen } from './视频多模态'
@@ -34,11 +35,83 @@ function shiShiPinWenjian(xiaoXi: DuiHuaLiShiXiang): boolean {
   )
 }
 
+/**
+ * FP-08c（缺陷5）引用段在模型文本里的**唯一形态**：`引用[发送者]: 原文`，独占一行、排在本条正文之前。
+ * 例：`引用[小美]: 我明天有空\n那你来找我`。可解析性判据＝行首 `引用[` 到该行行尾是引用段，
+ * 其后到本条结束是正文；正文本身逐字不变（不改 内容 投影的既有语义）。
+ * 原文一律按 `beiYongXiaoXiId` 在整会话列表里现取（引用摘要不落库，见 services/消息.ts），
+ * 目标已撤回 ⇒ 只出撤回占位（既有翻译键，撤回的语义＝原文不再进模型），
+ * 目标不在列表（窗口外/已被 FK SET NULL）⇒ 整段不渲染且不抛异常。
+ * 引用只展开一层：被引用的那条自己带的引用不再递归渲染，避免模型看到无界嵌套。
+ * 注入面：引用原文与消息正文同为用户可控文本，此处只加机器可判定的行前缀，不加任何指令语、
+ * 不改写内容，也不新增长度口径（截断与清洗沿正文既有面，见 FP-12 的提取阈值单点定义）。
+ */
+export const YIN_YONG_ZHAN_SHI_QIAN_ZHUI = '引用'
+
+/** 按行 ID 现取被引用消息的回口：唯一由整会话列表构造，禁止第二份查表实现 */
+export type YinYongChaXun = (xiaoXiId: string) => DuiHuaLiShiXiang | null
+
+export function gouJianYinYongChaXun(liShi: DuiHuaLiShiXiang[]): YinYongChaXun {
+  const suo = new Map<string, DuiHuaLiShiXiang>()
+  for (const xiang of liShi) {
+    if (xiang.id && !suo.has(xiang.id)) suo.set(xiang.id, xiang)
+  }
+  return (xiaoXiId: string) => suo.get(xiaoXiId) ?? null
+}
+
+/** 引用段一行；无引用槽 / 自引用 / 目标取不到 ⇒ 空串（调用方据此不加分隔换行） */
+function zhanShiYinYongHang(xiaoXi: DuiHuaLiShiXiang, chaXun: YinYongChaXun): string {
+  const beiYongId = xiaoXi.beiYongXiaoXiId
+  if (!beiYongId || beiYongId === xiaoXi.id) return ''
+  const muBiao = chaXun(beiYongId)
+  if (!muBiao) return ''
+  const neiRong = muBiao.yi_che_hui
+    ? huoQuFanYi('liaoTian', 'duiFangCheHuiLeYiTiaoXiaoXi')
+    : zhanShiZaiTiZhengWen(muBiao)
+  return `${YIN_YONG_ZHAN_SHI_QIAN_ZHUI}[${muBiao.fa_song_zhe_ming}]: ${neiRong}`
+}
+
 /** 唯一「一条消息 → prompt 正文」入口：语音/视频给可读文本，其余载体给占位符，撤回走撤回口径 */
 export function zhanShiXiaoXiZhengWen(
   xiaoXi: DuiHuaLiShiXiang,
   buFen?: ZhuangZaiBuFen,
+  chaXun?: YinYongChaXun,
 ): string {
+  const zhengWen = zhanShiZaiTiZhengWen(xiaoXi, buFen)
+  if (!chaXun) return zhengWen
+  const yinYong = zhanShiYinYongHang(xiaoXi, chaXun)
+  return yinYong ? `${yinYong}\n${zhengWen}` : zhengWen
+}
+
+/**
+ * FP-12：文件正文进模型的**唯一**边界围栏。文件正文是不可信数据，因此形态必须机器可判定且
+ * 用户无法伪造边界：先中和正文里出现的成对围栏字面量与 `<|` `|>` 分隔符，再整体包进围栏；
+ * 围栏之后的声明行走翻译键（`liaoTian.wenJianZhengWenShengMing`），截断标注只在真截断时追加。
+ * 本函数不查库、不读盘、不解析文档：正文一律由 services/文档文本提取 预先挂在 `wenJianTiQu` 上。
+ */
+export const WEN_JIAN_KUAI_KAI = '<WEN_JIAN_ZHENG_WEN>'
+export const WEN_JIAN_KUAI_BI = '</WEN_JIAN_ZHENG_WEN>'
+
+function zhongHeFengLanNeiBiaoJi(wenBen: string): string {
+  return wenBen
+    .split(WEN_JIAN_KUAI_BI)
+    .join('⟨/WEN_JIAN_ZHENG_WEN⟩')
+    .split(WEN_JIAN_KUAI_KAI)
+    .join('⟨WEN_JIAN_ZHENG_WEN⟩')
+    .replace(/<\|/g, '⟨|')
+    .replace(/\|>/g, '|⟩')
+}
+
+/** 文档正文块：只给「未撤回 + 阈值内提取成功」的文件行产生，其余返回空串（沿用 `[文件:名]` 占位） */
+function zhanShiWenJianNeiRongKuai(xiaoXi: DuiHuaLiShiXiang): string {
+  const tiQu = xiaoXi.wenJianTiQu
+  if (xiaoXi.yi_che_hui || !tiQu || tiQu.wenBen.trim() === '') return ''
+  const shengMing = [huoQuFanYi('liaoTian', 'wenJianZhengWenShengMing')]
+  if (tiQu.beiCaiDuan) shengMing.push(huoQuFanYi('liaoTian', 'wenJianZhengWenBeiCaiDuan'))
+  return `${WEN_JIAN_KUAI_KAI}\n${zhongHeFengLanNeiBiaoJi(tiQu.wenBen)}\n${WEN_JIAN_KUAI_BI}\n${shengMing.join('')}`
+}
+
+function zhanShiZaiTiZhengWen(xiaoXi: DuiHuaLiShiXiang, buFen?: ZhuangZaiBuFen): string {
   if (xiaoXi.meiTiLeiBie === 'yuyin' && !xiaoXi.yi_che_hui) {
     const zhuanXie = (xiaoXi.nei_rong || '').trim()
     if (zhuanXie) {
@@ -68,13 +141,21 @@ export function zhanShiXiaoXiZhengWen(
       yuanShiWenJianMing: xiaoXi.yuanShiWenJianMing,
       mime: xiaoXi.meiTiMIME,
     })
-    if (meiTiMiaoShu) return meiTiMiaoShu
+    if (meiTiMiaoShu) {
+      // FP-12：阈值内的文档正文紧跟载体占位符同处一行段落下；拿不到正文就是原来的占位形态，
+      // 不是「空正文」也不是报错 —— 超阈值/不支持/解析失败三类都收敛成这一条出口
+      const wenJianKuai = zhanShiWenJianNeiRongKuai(xiaoXi)
+      return wenJianKuai ? `${meiTiMiaoShu}\n${wenJianKuai}` : meiTiMiaoShu
+    }
   }
-  let neiRong = xiaoXi.nei_rong
-  if (xiaoXi.yi_che_hui && xiaoXi.yuan_shi_nei_rong) {
-    neiRong = `[已撤回，原始内容：${xiaoXi.yuan_shi_nei_rong}]`
-  }
-  return neiRong
+  // FP-26（撤回语义＝原文不再进模型）：撤回行一律只出撤回占位，且**不得回落 `nei_rong`**——
+  // 撤回写口（services/消息.ts、services/账号封禁.ts）只把 `原始内容 = 内容` 另存一份，
+  // `内容` 列本身没清空，而 `AI输入准备` 的历史正文正是读 `内容` 列，
+  // 所以「删掉旧 `[已撤回，原始内容：X]` 分支」等于把原文换个字段继续喂模型。
+  // 旧形态 `[已撤回，原始内容：X]` → 新形态 `对方撤回了一条消息`（既有翻译键，未新造文案）；
+  // 带媒体的撤回行仍走上面的媒体撤回占位（如 `[用户撤回了一张图片]`），载体可辨识性不退。
+  if (xiaoXi.yi_che_hui) return huoQuFanYi('liaoTian', 'duiFangCheHuiLeYiTiaoXiaoXi')
+  return xiaoXi.nei_rong
 }
 
 /** 历史里最后一条用户消息（与「对方刚发给你的消息」同源，扫描规则唯一） */
@@ -149,14 +230,17 @@ export function zhanShiLiShiWenBen(
     : Math.floor(Math.max(0, liShi.length - zuiDa) / buZhang) * buZhang
   const zuiJin = liShi.slice(liQi)
   if (zuiJin.length === 0) return ''
+  // 引用回口按**取到的整份列表**建索引（含窗口头部被淘汰的那一段）：被引用那条往往就在紧邻的
+  // 旧消息里，只按渲染切片建索引会让刚发出的引用读不到原文
+  const chaXun = gouJianYinYongChaXun(liShi)
 
   return zuiJin
     .map((xiaoXi) => {
       const faSongZhe =
         xiaoXi.fa_song_zhe_lei_xing === 'jiaose' ? xuanXiang.角色名 : xuanXiang.用户名
       return xuanXiang.时间在前
-        ? `[${xiaoXi.shi_jian}] ${faSongZhe}: ${zhanShiXiaoXiZhengWen(xiaoXi)}`
-        : `${faSongZhe}(${xiaoXi.shi_jian}): ${zhanShiXiaoXiZhengWen(xiaoXi)}`
+        ? `[${xiaoXi.shi_jian}] ${faSongZhe}: ${zhanShiXiaoXiZhengWen(xiaoXi, undefined, chaXun)}`
+        : `${faSongZhe}(${xiaoXi.shi_jian}): ${zhanShiXiaoXiZhengWen(xiaoXi, undefined, chaXun)}`
     })
     .join('\n')
 }

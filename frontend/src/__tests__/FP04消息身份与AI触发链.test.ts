@@ -379,9 +379,9 @@ describe('FP-09b 幂等键投递 / 轮次闸门 / 乐观气泡对齐', () => {
   it('发送即带稳定 UUID 幂等键，重发复用同一把且列表只有一条', async () => {
     const 实例 = await 建连(聊天仓库)
     let 第一次的键: string | null = null
-    vi.mocked(faSongXiaoXi).mockImplementation(async (_huiHuaId, _neiRong, miDengJian) => {
+    vi.mocked(faSongXiaoXi).mockImplementation(async (canShu) => {
       if (!第一次的键) {
-        第一次的键 = miDengJian ?? null
+        第一次的键 = canShu.miDengJian ?? null
         throw new Error('网络异常')
       }
       return { xiaoXi: 落库用户消息('luo-ku-tong-yi-jian', '插话内容', 第一次的键), shiMiJi: false }
@@ -398,7 +398,7 @@ describe('FP-09b 幂等键投递 / 轮次闸门 / 乐观气泡对齐', () => {
     expect(重发成功).toBe(true)
     // 两次派发用的是同一把键 ⇒ 服务端唯一约束把重放压成一条
     expect(faSongXiaoXi).toHaveBeenCalledTimes(2)
-    expect(vi.mocked(faSongXiaoXi).mock.calls[1][2]).toBe(第一次的键)
+    expect(vi.mocked(faSongXiaoXi).mock.calls[1][0].miDengJian).toBe(第一次的键)
     expect(聊天仓库.xiaoXiLieBiao).toHaveLength(1)
     expect(聊天仓库.xiaoXiLieBiao[0].id).toBe('luo-ku-tong-yi-jian')
     expect(聊天仓库.xiaoXiLieBiao[0].mi_deng_jian).toBe(第一次的键)
@@ -489,8 +489,8 @@ describe('FP-09b 幂等键投递 / 轮次闸门 / 乐观气泡对齐', () => {
   it('用户插入消息的乐观气泡不会被返回体里的角色消息替换掉', async () => {
     const 实例 = await 建连(聊天仓库)
     const 第一次的键: string[] = []
-    vi.mocked(faSongXiaoXi).mockImplementation(async (_huiHuaId, _neiRong, miDengJian) => {
-      第一次的键.push(miDengJian ?? '')
+    vi.mocked(faSongXiaoXi).mockImplementation(async (canShu) => {
+      第一次的键.push(canShu.miDengJian ?? '')
       return { xiaoXi: 角色消息('pao-lu-de-jiao-se-xing', 'AI 抢先落库的回复'), shiMiJi: false }
     })
 
