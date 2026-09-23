@@ -2376,9 +2376,12 @@
             mianXiangJingTou(mesh); // FP-11：法线每帧对准镜头，角色比例时时刻刻与源图逐像素一致
             /* FP-R7：贴地高度每帧应用（实测就绪后立即压到草根，不等 60 帧健康检查——
                曾因过早测量写 0 样本 + 回退标定偏高，角色悬空约 0.1，接触效果全假） */
-            if (dangQianGaoDu != null && isFinite(dangQianGaoDu) && mesh) {
+            var tudiGao = (gongYong && gongYong.ceLiangZhuangTai && gongYong.ceLiangZhuangTai.gaoDu != null && isFinite(gongYong.ceLiangZhuangTai.gaoDu))
+                ? gongYong.ceLiangZhuangTai.gaoDu : dangQianGaoDu;
+            if (tudiGao != null && isFinite(tudiGao) && mesh) {
+                dangQianGaoDu = tudiGao;
                 var chenRuF = (PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu) * WEI_CHEN.biLi;
-                mesh.position.y = dangQianGaoDu - chenRuF + (GANG_TI.qiYong ? Math.sin((Date.now() - gongYong.t0) / 1000 * 0.9) * GANG_TI.fuDu : 0);
+                mesh.position.y = tudiGao - chenRuF + (GANG_TI.qiYong ? Math.sin((Date.now() - gongYong.t0) / 1000 * 0.9) * GANG_TI.fuDu : 0);
             }
             try { window.__wuTongBuXinTiao = Date.now(); } catch (e) {}
             var exp = window.__experience;
