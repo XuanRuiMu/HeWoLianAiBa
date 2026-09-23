@@ -1211,13 +1211,17 @@
             try {
                 var exp = window.__experience;
                 if (!exp || !exp.engine || !exp.engine.scene) return null;
+                if (maoX == null || maoZ == null || !isFinite(maoX) || !isFinite(maoZ)) return null;
                 var banJing = ceLiangZhuangTai.banJing || 0.5;
                 var banJingFang = banJing * banJing;
                 var yangBenY = [];
                 var diXingTu = null;
+                var saoMiaoLiang = 0;
                 exp.engine.scene.traverse(function (o) {
                     try {
-                        if (!o || !o.isInstancedMesh || !o.instanceMatrix || !o.instanceMatrix.array) return;
+                        if (!o || !o.isInstancedMesh || !o.instanceMatrix) return;
+                        var arr = o.instanceMatrix.array;
+                        if (!arr || !arr.length) return;
                         var mat = o.material;
                         var matList = mat ? (Array.isArray(mat) ? mat : [mat]) : [];
                         var shiCao = false;
@@ -1231,8 +1235,9 @@
                             }
                         }
                         if (!shiCao) return;
-                        var arr = o.instanceMatrix.array;
-                        var n = o.instanceMatrix.count != null ? o.instanceMatrix.count : Math.floor(arr.length / 16);
+                        saoMiaoLiang++;
+                        var n = Math.floor(arr.length / 16);
+                        if (o.instanceMatrix.count > 0) n = Math.min(n, o.instanceMatrix.count);
                         var e = (o.matrixWorld && o.matrixWorld.elements) ? o.matrixWorld.elements : null;
                         for (var k = 0; k < n; k++) {
                             var b = k * 16;
@@ -1244,9 +1249,7 @@
                                 wy = e[1] * ix + e[5] * iy + e[9] * iz + e[13];
                                 wz = e[2] * ix + e[6] * iy + e[10] * iz + e[14];
                             } else {
-                                wx = ix + (o.position ? o.position.x : 0);
-                                wy = iy + (o.position ? o.position.y : 0);
-                                wz = iz + (o.position ? o.position.z : 0);
+                                wx = ix; wy = iy; wz = iz;
                             }
                             var dx = wx - maoX, dz = wz - maoZ;
                             if (dx * dx + dz * dz > banJingFang) continue;
@@ -1258,6 +1261,7 @@
                     ceLiangZhuangTai.gaoDu = null;
                     ceLiangZhuangTai.laiYuan = 'huiTui';
                     ceLiangZhuangTai.liYangShu = 0;
+                    try { if (window.__wuD && window.__wuD.log) window.__wuD.log('草根实测空: 扫描实例网格=' + saoMiaoLiang + ' 锚点=' + maoX.toFixed(2) + ',' + maoZ.toFixed(2)); } catch (e0) {}
                     return null;
                 }
                 yangBenY.sort(function (a, b) { return a - b; });
@@ -1742,7 +1746,7 @@
              压缩），身体轴映射（uCharYaw）仍读实时 billboard 偏航。禁止把这两个值当角色姿态调。
            - chiCunBeiShu   尺寸乘数：FP-12 定案 0.32（FP-11 的 0.40 缩 1/5——缩小后卡片矮、
              腿部不再大段悬在地面之上）；billboard 下屏上体量随此值线性缩放（等比、比例不变） */
-        var CAN_SHU = { jiaoLianGaoDu: 0.1416, qingJiao: 10, pianHang: 240, chiCunBeiShu: 0.32 };
+        var CAN_SHU = { jiaoLianGaoDu: 0.024, qingJiao: 10, pianHang: 240, chiCunBeiShu: 0.32 };
         /* 贴图纵向翻转位（FP-11 比例保真构图的组成部分）：
            true ⇒ v=0（铰链＝贴地边）落在图像底行（头/手机侧），脚/腿侧随局部 +Y 在画面上方。
            FP-11 billboard 正面朝镜头时，flipY=true 使屏幕显示=图像原样读法（头在下、脚在上），

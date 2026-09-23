@@ -307,7 +307,7 @@ describe('FP-01 草地静态兜底', () => {
       'var PEI_ZHI = window.__wuPEIZHI || { weiZhi: { x: 4.48, y: -0.0133, z: 3.63 }, chiCun: 2.55 }',
     )
     expect(yuanMa).toContain(
-      'var CAN_SHU = { jiaoLianGaoDu: 0.1416, qingJiao: 10, pianHang: 240, chiCunBeiShu: 0.32 }',
+      'var CAN_SHU = { jiaoLianGaoDu: 0.024, qingJiao: 10, pianHang: 240, chiCunBeiShu: 0.32 }',
     )
     expect(yuanMa).toContain('function duQuURLShuZhi(ming)')
     for (const canShu of ['wuTheta', 'wuYaw', 'wuScale', 'wuY', 'wuX', 'wuZ']) {
