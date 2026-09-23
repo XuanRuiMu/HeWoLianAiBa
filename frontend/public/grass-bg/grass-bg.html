@@ -1099,7 +1099,7 @@
             fengYiZhi: 1.0, qianJingChang: 0.32, qianJingQiang: 0.7, yaSui: 0.04, chuanTou: 1.0, zaSheng: 0.4,
             zuKuanXi: 1.0, zuChangXi: 1.0,
             waiHuan: 0.3, waiSui: 0.14, waiFan: 0.85,
-            qianGao: 0.22, qianQing: 0.5, qianXi: 0.42 };
+            qianGao: 0.35, qianQing: 0.5, qianXi: 0.35 };
         /* FP-08 揭示完成下限（毫秒）：门控通过后引擎 uRevealProgress 低帧率爬行时的进度底。
            共享出口 gongYong.jieLuWanChengHaoMiao；uniform getter 强制 max(engine, floor)，
            避免引擎动画每帧在 tongBu 之后回写把下限冲掉。URL ?jieLuWanCheng= 可覆盖。 */
@@ -1418,26 +1418,21 @@
                 'float wuAoYuan=(texture2D(uCharMask,clamp(wuUV+vec2(0.075,0.0),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV-vec2(0.075,0.0),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV+vec2(0.0,0.075),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV-vec2(0.0,0.075),0.0,1.0)).a)*0.25;' +
                 'vWuCaoAO=clamp(wuA*1.05+wuAoYuan*0.5+wuWai*0.35,0.0,1.0);' +
                 '}else{vWuCaoAO=charInfl*0.7;wuYa=clamp(charInfl,0.0,1.0);wuBian=charInfl;wuPinTi=1.0-smoothstep(uCharR0,uCharR1*1.6,dcW);}' +
-                /* FP-R10 体重钉死=零交互：压住的草二值化切断一切外部弯折（鼠标/风贴图）。
-                   正常草地随鼠标；身下草物理上被压死，完全不动。 */
-                'float wuPinYuan=1.0-smoothstep(uCharR0*0.5,uCharR1*1.4,dcW);' +
-                'float wuPin=clamp(max(max(wuYa,wuPinTi),wuPinYuan),0.0,1.0);' +
-                'bendingIntensity=bendingIntensity*(1.0-step(0.40,wuPin));' +
-                'finalGrassInclination=inclineVectorTowardSlerp(finalGrassInclination,terrainAdjustedNormal,clamp(wuYa*uCharFengYiZhi,0.0,1.0));' +
+                /* FP-R13 身下草坪永静态：仅轮廓内切断交互与风并压平；身前草保持可交互 */
+                'float wuJing=clamp(wuNei,0.0,1.0);' +
+                'bendingIntensity=bendingIntensity*(1.0-step(0.45,wuJing));' +
+                'finalGrassInclination=inclineVectorTowardSlerp(finalGrassInclination,terrainAdjustedNormal,step(0.45,wuJing));' +
                 'bendingIntensity=clamp(bendingIntensity+charInfl,0.0,1.0);' +
-                'bendingDirection=mix(bendingDirection,charDir,max(charInfl*0.9,wuYa));' +
+                'bendingDirection=mix(bendingDirection,charDir,max(charInfl*0.9,wuJing));' +
                 'float wuHash=fract(sin(dot(grassOrigin.xz,vec2(12.9898,78.233)))*43758.5453);' +
-                'float wuYaSui=mix(1.0,uCharYaSui,wuYa);' +
+                'float wuYaSui=mix(1.0,uCharYaSui,step(0.45,wuJing));' +
                 'float wuWaiSui=mix(1.0,uCharWaiSui,wuWai);' +
-                /* FP-R10 周身遮挡：轮廓边+外环+身前全部可能回盖，高草向身体倒伏（周身都是草） */
-                /* FP-R10 接触圈微搭：身体与草地接缝上的普通草微微盖过轮廓（不是巨草）。
-                   物理：人趴草丛里，接触缝草梢搭在身上；尺寸与周围草同级。 */
-                'float wuGaiZhou=clamp(wuBian*1.15+wuQianRou*0.55,0.0,1.0);' +
+                /* 手臂前方遮挡草：身前/接缝稀疏普通草微搭，约盖半臂（不剥夺交互） */
+                'float wuGaiZhou=clamp(wuBian*0.9+wuQianRou*1.2,0.0,1.0);' +
                 'float wuGai=wuGaiZhou*step(uCharQianXi,wuHash);' +
                 'vec3 wuGaiDir=normalize(vec3(-charDir.x,0.0,-charDir.z)+vec3(0.01,0.0,0.01));' +
                 'grassScale*=(wuYaSui*wuWaiSui*(1.0+wuGai*uCharQianGao));' +
-                'bendingIntensity=mix(bendingIntensity,clamp(uCharQianQing,0.0,1.0),wuGai);' +
-                'bendingDirection=mix(bendingDirection,wuGaiDir,wuGai);';
+                'bendingDirection=mix(bendingDirection,wuGaiDir,wuGai*0.65);';
             var biaoJiCao = 'bendingDirection=-bendingDirection;';
             var biaoJiHua = 'bendingDirection=bendingDirection;';
             var houXuan = {};
