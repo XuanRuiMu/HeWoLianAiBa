@@ -1384,7 +1384,7 @@
                 /* FP-R5 体重钉死场改到身体轴线段距离（不是铰链径向）：中段/脚端 dcW 大，
                    旧径向场几乎钉不住，鼠标仍可拨动“身下的草”。体育场形=足迹+外沿。 */
                 'float wuDaoZhou=length(vec2(wuLx,wuZhou-clamp(wuZhou,0.0,uCharChang)));' +
-                'float wuPinTi=1.0-smoothstep(uCharKuan*0.70,uCharKuan*1.6,wuDaoZhou);' +
+                'wuPinTi=1.0-smoothstep(uCharKuan*0.70,uCharKuan*1.6,wuDaoZhou);' +
                 'float wuA=texture2D(uCharMask,clamp(wuUV,0.0,1.0)).a;' +
                 'float wuEps=uCharWenLiBu;' +
                 'float wuAu1=texture2D(uCharMask,clamp(wuUV+vec2(wuEps,0.0),0.0,1.0)).a;' +
