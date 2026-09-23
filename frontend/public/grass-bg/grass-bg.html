@@ -1367,7 +1367,7 @@
                引擎草顶点着色器执行序：terrainAdjustedNormal → 风 → 本注入段 → 压弯：
                 ① 风动抑制：把 finalGrassInclination 按"被压度"拉回 terrainAdjustedNormal。
                 ② 前景高草：中等倾角倒向身体（重力搭在身上，不是压平），稀疏高草叠上剪影。 */
-            var zhuRuDuan = 'vWuCaoAO=0.0;float wuYa=0.0;float wuBian=0.0;float wuWai=0.0;float wuQianRou=0.0;' +
+            var zhuRuDuan = 'vWuCaoAO=0.0;float wuYa=0.0;float wuBian=0.0;float wuWai=0.0;float wuQianRou=0.0;float wuPinTi=0.0;' +
                 'vec2 tocW=(modelMatrix*vec4(grassOrigin,1.0)).xz-uCharPos;' +
                 'float dcW=length(tocW);' +
                 'float charInfl=(1.0-smoothstep(uCharR0,uCharR1,dcW))*uCharStrength;' +
@@ -1377,6 +1377,10 @@
                 'float wuLx=tocW.x*wuCos-tocW.y*wuSin;' +
                 'float wuZhou=-(tocW.x*wuSin+tocW.y*wuCos);' +
                 'vec2 wuUV=vec2(wuLx/uCharKuan+0.5,wuZhou/uCharChang);' +
+                /* FP-R5 体重钉死场改到身体轴线段距离（不是铰链径向）：中段/脚端 dcW 大，
+                   旧径向场几乎钉不住，鼠标仍可拨动“身下的草”。体育场形=足迹+外沿。 */
+                'float wuDaoZhou=length(vec2(wuLx,wuZhou-clamp(wuZhou,0.0,uCharChang)));' +
+                'float wuPinTi=1.0-smoothstep(uCharKuan*0.55,uCharKuan*1.25,wuDaoZhou);' +
                 'float wuA=texture2D(uCharMask,clamp(wuUV,0.0,1.0)).a;' +
                 'float wuEps=uCharWenLiBu;' +
                 'float wuAu1=texture2D(uCharMask,clamp(wuUV+vec2(wuEps,0.0),0.0,1.0)).a;' +
@@ -1409,11 +1413,10 @@
                 'charInfl=clamp(charInfl+wuQianRou*uCharQianJingQiang*0.35,0.0,1.0);' +
                 'float wuAoYuan=(texture2D(uCharMask,clamp(wuUV+vec2(0.075,0.0),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV-vec2(0.075,0.0),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV+vec2(0.0,0.075),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV-vec2(0.0,0.075),0.0,1.0)).a)*0.25;' +
                 'vWuCaoAO=clamp(wuA*1.05+wuAoYuan*0.5+wuWai*0.35,0.0,1.0);' +
-                '}else{vWuCaoAO=charInfl*0.7;wuYa=clamp(charInfl,0.0,1.0);wuBian=charInfl;}' +
-                /* FP-R4b 体重钉死场：足迹+压塌环+体重影响圈一律切断外部弯折（鼠标/弯折贴图）。
-                   物理：重物压住的草不会被触碰拨动；影响圈按距离衰减，盖住用户手指所及的身下草。 */
+                '}else{vWuCaoAO=charInfl*0.7;wuYa=clamp(charInfl,0.0,1.0);wuBian=charInfl;wuPinTi=1.0-smoothstep(uCharR0,uCharR1*1.6,dcW);}' +
+                /* FP-R4b/FP-R5 体重钉死场：足迹轴向体育场 + 压塌环 + 影响圈，切断外部弯折。 */
                 'float wuPinYuan=1.0-smoothstep(uCharR0*0.5,uCharR1*1.4,dcW);' +
-                'float wuPin=clamp(max(wuYa,wuPinYuan*0.92),0.0,1.0);' +
+                'float wuPin=clamp(max(max(wuYa,wuPinTi),wuPinYuan*0.92),0.0,1.0);' +
                 'bendingIntensity=bendingIntensity*(1.0-wuPin);' +
                 'finalGrassInclination=inclineVectorTowardSlerp(finalGrassInclination,terrainAdjustedNormal,clamp(wuYa*uCharFengYiZhi,0.0,1.0));' +
                 'bendingIntensity=clamp(bendingIntensity+charInfl,0.0,1.0);' +
@@ -1426,7 +1429,8 @@
                 'grassScale*=(wuYaSui*wuWaiSui*(1.0+wuQianGao*uCharQianGao+wuChuan*uCharChuanTou));' +
                 'bendingIntensity=mix(bendingIntensity,clamp(uCharQianQing,0.0,1.0),wuQianGao);' +
                 'bendingDirection=mix(bendingDirection,charDir,wuQianGao);';
-            var biaoJi = 'bendingDirection=-bendingDirection;';
+            var biaoJiCao = 'bendingDirection=-bendingDirection;';
+            var biaoJiHua = 'bendingDirection=bendingDirection;';
             var houXuan = {};
             var keXuan = window.__grassMats;
             if (keXuan && keXuan.length) {
@@ -1444,22 +1448,35 @@
                     if (mm && mm.uuid && mm.uniforms && mm.uniforms.uBendingTexture) houXuan[mm.uuid] = mm;
                 }
             });
+            /* FP-R5：弯折贴图材质有两套注入点——草 = -bendingDirection，花/点精灵 = bendingDirection。
+               只认草标记会把花整套标成已处理却零钉死（用户“身下草仍可拨动”的根因）。
+               通用退路：凡有 bendingIntensity=bendData 者，在其后插入最小钉死。 */
+            function zuiXiaoDingSi(originVar) {
+                return '{vec2 twd=(modelMatrix*vec4(' + originVar + ',1.0)).xz-uCharPos;' +
+                    'float dWd=length(twd);' +
+                    'float cWd=cos(uCharYaw);float sWd=sin(uCharYaw);' +
+                    'float lWd=twd.x*cWd-twd.y*sWd;' +
+                    'float zWd=-(twd.x*sWd+twd.y*cWd);' +
+                    'float qWd=length(vec2(lWd,zWd-clamp(zWd,0.0,uCharChang)));' +
+                    'float pWd=1.0-smoothstep(uCharKuan*0.55,uCharKuan*1.25,qWd);' +
+                    'float yWd=1.0-smoothstep(uCharR0*0.5,uCharR1*1.4,dWd);' +
+                    'bendingIntensity=bendingIntensity*(1.0-clamp(max(pWd,yWd*0.92),0.0,1.0));}';
+            }
             var youXin = false;
             for (var key in houXuan) {
                 var m = houXuan[key];
                 if (m.__yaWanYiZhu) continue;
                 var vs = m.vertexShader || '';
-                var weiZhi = vs.indexOf(biaoJi);
                 var mainIdx = vs.indexOf('void main');
-                if (weiZhi === -1 || mainIdx === -1 || !m.uniforms) { m.__yaWanYiZhu = true; continue; }
+                var caoWei = vs.indexOf(biaoJiCao);
+                var huaWei = vs.indexOf(biaoJiHua);
+                if (mainIdx === -1 || !m.uniforms) { continue; }
                 m.uniforms.uCharPos = { value: { x: yaWanZhongXin.x, y: yaWanZhongXin.z } }; // FP-12：vec2 直读 .x/.y，不再依赖 THREE
                 // three 的 vec2 上传会调 value.toArray：纯 {x,y} 会每帧抛 TypeError 并打断 uniform 上传
                 m.uniforms.uCharPos.value.toArray = function (a) { a = a || []; a[0] = this.x; a[1] = this.y; return a; };
                 m.uniforms.uCharR0 = { value: YA_WAN.r0 };
                 m.uniforms.uCharR1 = { value: YA_WAN.r1 };
                 m.uniforms.uCharStrength = { value: YA_WAN.strength };
-                // FP-03 轮廓场 uniforms：mask 为 null（贴图未到/克隆失败）时 uCharMaskOn=0 走圆形降级；
-                // 草材质先注入、贴图后到也不崩——T3 每帧驱动把就绪后的 mask/几何参数塞进来
                 m.uniforms.uCharMask = { value: maskWenLi };
                 m.uniforms.uCharMaskOn = { value: maskWenLi ? 1 : 0 };
                 m.uniforms.uCharYaw = { value: 0 };
@@ -1468,36 +1485,47 @@
                 m.uniforms.uCharEdge = { value: YA_WAN_LUN_KUO };
                 m.uniforms.uCharNeiQiangDu = { value: YA_WAN.neiQiangDu };
                 m.uniforms.uCharWenLiBu = { value: YA_WAN.wenLiBu };
-                // FP-13：风动抑制系数 / 前景草带深度与弯折强度
                 m.uniforms.uCharFengYiZhi = { value: YA_WAN.fengYiZhi };
                 m.uniforms.uCharQianJingChang = { value: YA_WAN.qianJingChang };
                 m.uniforms.uCharQianJingQiang = { value: YA_WAN.qianJingQiang };
-                // FP-14 物理：体重压塌比 / 边缘倒伏增高 / 倒伏带自然起伏
                 m.uniforms.uCharYaSui = { value: YA_WAN.yaSui };
                 m.uniforms.uCharChuanTou = { value: YA_WAN.chuanTou };
                 m.uniforms.uCharZaSheng = { value: YA_WAN.zaSheng };
-                // FP-R1：轮廓外压塌环 / 身前稀疏高草微搭
                 m.uniforms.uCharWaiHuan = { value: YA_WAN.waiHuan };
                 m.uniforms.uCharWaiSui = { value: YA_WAN.waiSui };
                 m.uniforms.uCharWaiFan = { value: YA_WAN.waiFan };
                 m.uniforms.uCharQianGao = { value: YA_WAN.qianGao };
                 m.uniforms.uCharQianQing = { value: YA_WAN.qianQing };
                 m.uniforms.uCharQianXi = { value: YA_WAN.qianXi };
-                // FP-10 接触 AO：草叶片元按人物轮廓压暗（身下真接触阴影，与压伏场同 mask）
                 m.uniforms.uWuCaoAODu = { value: 0.55 };
-                m.vertexShader = vs.slice(0, mainIdx) + shengMing + vs.slice(mainIdx, weiZhi + biaoJi.length) + zhuRuDuan + vs.slice(weiZhi + biaoJi.length);
-                var caoFs = m.fragmentShader || '';
-                var caoFsMao = 'gl_FragColor=vec4(vGrassColor,1.0);';
-                var caoFsMainIdx = caoFs.indexOf('void main(){');
-                if (caoFs.indexOf(caoFsMao) !== -1 && caoFsMainIdx !== -1) {
-                    m.fragmentShader = caoFs.slice(0, caoFsMainIdx) +
-                        'varying float vWuCaoAO;uniform float uWuCaoAODu;\n' +
-                        caoFs.slice(caoFsMainIdx).split(caoFsMao).join('gl_FragColor=vec4(vGrassColor*(1.0-vWuCaoAO*uWuCaoAODu),1.0);');
+                if (caoWei !== -1) {
+                    m.vertexShader = vs.slice(0, mainIdx) + shengMing + vs.slice(mainIdx, caoWei + biaoJiCao.length) + zhuRuDuan + vs.slice(caoWei + biaoJiCao.length);
+                    var caoFs = m.fragmentShader || '';
+                    var caoFsMao = 'gl_FragColor=vec4(vGrassColor,1.0);';
+                    var caoFsMainIdx = caoFs.indexOf('void main(){');
+                    if (caoFs.indexOf(caoFsMao) !== -1 && caoFsMainIdx !== -1) {
+                        m.fragmentShader = caoFs.slice(0, caoFsMainIdx) +
+                            'varying float vWuCaoAO;uniform float uWuCaoAODu;\n' +
+                            caoFs.slice(caoFsMainIdx).split(caoFsMao).join('gl_FragColor=vec4(vGrassColor*(1.0-vWuCaoAO*uWuCaoAODu),1.0);');
+                    }
+                } else {
+                    var chaRuDian;
+                    if (huaWei !== -1) {
+                        chaRuDian = huaWei + biaoJiHua.length;
+                    } else {
+                        var biJian = 'float bendingIntensity=bendData.r*uBendingFactor;';
+                        var biWei = vs.indexOf(biJian);
+                        chaRuDian = biWei >= 0 ? biWei + biJian.length : -1;
+                    }
+                    if (chaRuDian < 0) continue;
+                    var yuanBianLiang = vs.indexOf('flowerOrigin') >= 0 ? 'flowerOrigin' : (vs.indexOf('grassOrigin') >= 0 ? 'grassOrigin' : 'position');
+                    var xiaoShengMing = 'uniform vec2 uCharPos;uniform float uCharR0;uniform float uCharR1;uniform float uCharYaw;uniform float uCharKuan;uniform float uCharChang;\n';
+                    m.vertexShader = vs.slice(0, mainIdx) + xiaoShengMing + vs.slice(mainIdx, chaRuDian) + zuiXiaoDingSi(yuanBianLiang) + vs.slice(chaRuDian);
                 }
                 m.needsUpdate = true;
                 m.__yaWanYiZhu = true;
                 yaWanCaiZhi.push(m);
-                yaWanCachedMats.push(m); // 缓存已注入的材质
+                yaWanCachedMats.push(m);
                 youXin = true;
             }
             if (youXin && window.__wuD && window.__wuD.log) window.__wuD.log('草着色器压弯注入推进至 ' + yaWanCaiZhi.length + ' 个材质');

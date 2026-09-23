@@ -164,6 +164,11 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).toContain('exp.engine.scene.traverse(function (o) {')
     // FP-R4b 体重钉死场：足迹+影响圈切断外部弯折
     expect(yuanMa).toContain('bendingIntensity=bendingIntensity*(1.0-wuPin);')
+    // FP-R5 钉死场按身体轴线段（非铰链径向），否则中段/脚端钉不住
+    expect(yuanMa).toContain('float wuDaoZhou=length(vec2(wuLx,wuZhou-clamp(wuZhou,0.0,uCharChang)));')
+    // FP-R5 花/点精灵弯折材质也必须钉死（只认草标记会漏 6/8 套）
+    expect(yuanMa).toContain('biaoJiHua')
+    expect(yuanMa).toContain('zuiXiaoDingSi')
     // FP-R4 根因：禁止 __grassMats 硬前置（真实页引擎不填 ⇒ 注入永不生效）
     expect(yuanMa).not.toContain('if (!mats || !mats.length || !exp || !exp.engine || !exp.engine.scene) return false;')
     expect(yuanMa).toContain('禁止把 window.__grassMats 当前置')
