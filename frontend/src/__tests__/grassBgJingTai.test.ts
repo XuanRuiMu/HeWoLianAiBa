@@ -158,6 +158,16 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).toContain('window.__wuPEIZHI = PEI_ZHI')
     expect(yuanMa).toContain('window.__wuD = {')
     expect(yuanMa).toContain('function zhuRuYaWan()')
+    // FP-R4 根因：禁止 __grassMats 硬前置（真实页引擎不填 ⇒ 注入永不生效）
+    expect(yuanMa).not.toContain('if (!mats || !mats.length || !exp || !exp.engine || !exp.engine.scene) return false;')
+    expect(yuanMa).toContain('禁止把 window.__grassMats 当前置')
+    expect(yuanMa).toContain('exp.engine.scene.traverse(function (o) {')
+    // FP-R4b 体重钉死场：足迹+影响圈切断外部弯折
+    expect(yuanMa).toContain('bendingIntensity=bendingIntensity*(1.0-wuPin);')
+    // FP-R4 根因：禁止 __grassMats 硬前置（真实页引擎不填 ⇒ 注入永不生效）
+    expect(yuanMa).not.toContain('if (!mats || !mats.length || !exp || !exp.engine || !exp.engine.scene) return false;')
+    expect(yuanMa).toContain('禁止把 window.__grassMats 当前置')
+    expect(yuanMa).toContain('exp.engine.scene.traverse(function (o) {')
     // FP-13：新增风抑制/前景草带三项（fengYiZhi、qianJingChang、qianJingQiang）
     // FP-R1：接触物理层参数（足迹倍数/压塌环/身前高草微搭）
     expect(yuanMa).toContain('var YA_WAN = { r0: 0.12, r1: 0.68, strength: 0.75, huxi: 0.08, shuBiaoJia: 1.5, neiQiangDu: 1.0, wenLiBu: 0.02,')

@@ -1320,8 +1320,11 @@
         }
         function zhuRuYaWan() {
             var exp = window.__experience;
-            var mats = window.__grassMats;
-            if (!mats || !mats.length || !exp || !exp.engine || !exp.engine.scene) return false;
+            if (!exp || !exp.engine || !exp.engine.scene) return false;
+            /* FP-R4 根因：禁止把 window.__grassMats 当前置。
+               真实 iframe/登录页引擎不填该变量，旧式 `if (!mats||!mats.length) return false`
+               会静默掐死整条压弯/钉死注入（身下草可被鼠标拨动的根因）。
+               材质一律场景 traverse 自发现（uBendingTexture）；__grassMats 仅可选加速。 */
             /* uCharPos 是 vec2：带 x/y 的普通对象即可（three 的 vec2 uniform 直读 .x/.y）。
                旧实现强依赖 __fuZhenSanWei 反构出的 THREE.Vector2——该出口在部分环境永不
                解析（实测本页返回 null），整条压弯注入被静默掐死：草永不被压、轮廓场与
@@ -1396,7 +1399,7 @@
                 'wuWai=clamp(wuWaiNei-wuNei,0.0,1.0);' +
                 'charDir=normalize(vec3(wuDirLocal.x*wuCos-wuDirLocal.y*wuSin,0.0,-wuDirLocal.x*wuSin-wuDirLocal.y*wuCos)+vec3(0.01,0.0001,0.0));' +
                 'charInfl=clamp(wuNei*uCharNeiQiangDu+wuBian*charInfl+wuWai*uCharWaiFan,0.0,1.0);' +
-                'wuYa=clamp(wuNei+wuBian*0.6+wuWai*0.35,0.0,1.0);' +
+                'wuYa=clamp(wuNei+wuBian*0.85+wuWai*0.70,0.0,1.0);' +
                 'float wuZao=fract(sin(dot(grassOrigin.xz,vec2(12.9898,78.233)))*43758.5453);' +
                 'float wuQianFu=-wuZhou;' +
                 'wuQianRou=smoothstep(0.02,0.07,wuQianFu)*(1.0-smoothstep(uCharQianJingChang-0.09,uCharQianJingChang,wuQianFu))*(1.0-smoothstep(uCharKuan*0.42,uCharKuan*0.60,abs(wuLx)));' +
@@ -1407,7 +1410,11 @@
                 'float wuAoYuan=(texture2D(uCharMask,clamp(wuUV+vec2(0.075,0.0),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV-vec2(0.075,0.0),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV+vec2(0.0,0.075),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV-vec2(0.0,0.075),0.0,1.0)).a)*0.25;' +
                 'vWuCaoAO=clamp(wuA*1.05+wuAoYuan*0.5+wuWai*0.35,0.0,1.0);' +
                 '}else{vWuCaoAO=charInfl*0.7;wuYa=clamp(charInfl,0.0,1.0);wuBian=charInfl;}' +
-                'bendingIntensity=bendingIntensity*(1.0-wuYa);' +
+                /* FP-R4b 体重钉死场：足迹+压塌环+体重影响圈一律切断外部弯折（鼠标/弯折贴图）。
+                   物理：重物压住的草不会被触碰拨动；影响圈按距离衰减，盖住用户手指所及的身下草。 */
+                'float wuPinYuan=1.0-smoothstep(uCharR0*0.5,uCharR1*1.4,dcW);' +
+                'float wuPin=clamp(max(wuYa,wuPinYuan*0.92),0.0,1.0);' +
+                'bendingIntensity=bendingIntensity*(1.0-wuPin);' +
                 'finalGrassInclination=inclineVectorTowardSlerp(finalGrassInclination,terrainAdjustedNormal,clamp(wuYa*uCharFengYiZhi,0.0,1.0));' +
                 'bendingIntensity=clamp(bendingIntensity+charInfl,0.0,1.0);' +
                 'bendingDirection=mix(bendingDirection,charDir,max(charInfl*0.9,wuYa));' +
@@ -1421,19 +1428,22 @@
                 'bendingDirection=mix(bendingDirection,charDir,wuQianGao);';
             var biaoJi = 'bendingDirection=-bendingDirection;';
             var houXuan = {};
-            // 优先使用缓存的材质列表，避免遍历场景
-            var sourceMats = yaWanCachedMats.length > 0 ? yaWanCachedMats : mats;
-            for (var i = 0; i < sourceMats.length; i++) houXuan[sourceMats[i].uuid] = sourceMats[i];
-
-            // 只有在缓存为空时才遍历场景补充
-            if (yaWanCachedMats.length === 0) {
-                exp.engine.scene.traverse(function (o) {
-                    var m = o.material;
-                    if (!m || !m.uniforms || !m.uniforms.uBendingTexture || m.__yaWanYiZhu) return;
-                    var list = Array.isArray(m) ? m : [m];
-                    for (var k = 0; k < list.length; k++) houXuan[list[k].uuid] = list[k];
-                });
+            var keXuan = window.__grassMats;
+            if (keXuan && keXuan.length) {
+                for (var i = 0; i < keXuan.length; i++) {
+                    if (keXuan[i] && keXuan[i].uuid) houXuan[keXuan[i].uuid] = keXuan[i];
+                }
             }
+            for (var c = 0; c < yaWanCachedMats.length; c++) houXuan[yaWanCachedMats[c].uuid] = yaWanCachedMats[c];
+            exp.engine.scene.traverse(function (o) {
+                var m = o.material;
+                if (!m || !m.uniforms || !m.uniforms.uBendingTexture) return;
+                var list = Array.isArray(m) ? m : [m];
+                for (var k = 0; k < list.length; k++) {
+                    var mm = list[k];
+                    if (mm && mm.uuid && mm.uniforms && mm.uniforms.uBendingTexture) houXuan[mm.uuid] = mm;
+                }
+            });
             var youXin = false;
             for (var key in houXuan) {
                 var m = houXuan[key];
@@ -1568,7 +1578,7 @@
                         }
                     });
                 }
-                var mats = window.__grassMats || [];
+                var mats = (yaWanCaiZhi && yaWanCaiZhi.length) ? yaWanCaiZhi : (window.__grassMats || []);
                 for (var i = 0; i < mats.length; i++) {
                     var u = mats[i].uniforms;
                     if (u && u.uCharStrength) {

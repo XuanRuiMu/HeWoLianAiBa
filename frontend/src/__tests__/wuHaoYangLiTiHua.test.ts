@@ -167,7 +167,7 @@ describe('FP-10 吴昊阳立体化', () => {
     const yuanMa = duQuCaoDi()
     // ① 身下草风动抑制：注入段位于风之后、压弯之前，按被压度把朝向拉回无风朝向
     expect(yuanMa).toContain('finalGrassInclination=inclineVectorTowardSlerp(finalGrassInclination,terrainAdjustedNormal,clamp(wuYa*uCharFengYiZhi,0.0,1.0));')
-    expect(yuanMa).toContain("'wuYa=clamp(wuNei+wuBian*0.6+wuWai*0.35,0.0,1.0);'")
+    expect(yuanMa).toContain("'wuYa=clamp(wuNei+wuBian*0.85+wuWai*0.70,0.0,1.0);'")
     // ② 卡片前方窄带内的草朝身体弯折（草微微遮住角色），带头尾/两侧淡出
     expect(yuanMa).toContain("'float wuQianFu=-wuZhou;'")
     expect(yuanMa).toContain("'charInfl=clamp(wuNei*uCharNeiQiangDu+wuBian*charInfl+wuWai*uCharWaiFan,0.0,1.0);'")
@@ -196,7 +196,7 @@ describe('FP-10 吴昊阳立体化', () => {
   it('FP-14 物理深化：体重钉死 / 压塌 / 稀疏倒伏回盖 / 轮廓阴影 / 微沉', () => {
     const yuanMa = duQuCaoDi()
     // ① 体重钉死：身下草切断鼠标弯折贴图（bending 贴图读入后归零），风抑制保留
-    expect(yuanMa).toContain("'bendingIntensity=bendingIntensity*(1.0-wuYa);'")
+    expect(yuanMa).toContain("'bendingIntensity=bendingIntensity*(1.0-wuPin);'")
     expect(yuanMa).toContain("'bendingDirection=mix(bendingDirection,charDir,max(charInfl*0.9,wuYa));'")
     // ② 体重压塌：身下/轮廓内草高压到近贴地；外环明显变矮（FP-R1 waiSui）
     expect(yuanMa).toContain("'float wuYaSui=mix(1.0,uCharYaSui,wuYa);'")
@@ -233,7 +233,7 @@ describe('FP-10 吴昊阳立体化', () => {
     expect(yuanMa).toContain("'float wuHuanR=max(uCharWaiHuan,0.001);'")
     expect(yuanMa).toContain("'wuWai=clamp(wuWaiNei-wuNei,0.0,1.0);'")
     expect(yuanMa).toContain("'charInfl=clamp(wuNei*uCharNeiQiangDu+wuBian*charInfl+wuWai*uCharWaiFan,0.0,1.0);'")
-    expect(yuanMa).toContain("'wuYa=clamp(wuNei+wuBian*0.6+wuWai*0.35,0.0,1.0);'")
+    expect(yuanMa).toContain("'wuYa=clamp(wuNei+wuBian*0.85+wuWai*0.70,0.0,1.0);'")
     // H3：身前稀疏高草中等倾角微搭（不是压平）；高度明显增加
     expect(yuanMa).toContain("'bendingIntensity=mix(bendingIntensity,clamp(uCharQianQing,0.0,1.0),wuQianGao);'")
     expect(yuanMa).toContain("'bendingDirection=mix(bendingDirection,charDir,wuQianGao);'")
@@ -246,7 +246,7 @@ describe('FP-10 吴昊阳立体化', () => {
     expect(yuanMa).toContain('caiZhi.uCharWaiHuan.value = tiao.waiHuan != null ? tiao.waiHuan : gongYong.YA_WAN.waiHuan;')
     expect(yuanMa).toContain('caiZhi.uCharQianQing.value = tiao.qianQing != null ? tiao.qianQing : gongYong.YA_WAN.qianQing;')
     // 身下草钉死保留：无风、无鼠标弯折、高度近 0
-    expect(yuanMa).toContain("'bendingIntensity=bendingIntensity*(1.0-wuYa);'")
+    expect(yuanMa).toContain("'bendingIntensity=bendingIntensity*(1.0-wuPin);'")
     expect(yuanMa).toContain("'finalGrassInclination=inclineVectorTowardSlerp(finalGrassInclination,terrainAdjustedNormal,clamp(wuYa*uCharFengYiZhi,0.0,1.0));'")
   })
 
