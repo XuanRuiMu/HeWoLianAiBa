@@ -1099,7 +1099,7 @@
             fengYiZhi: 1.0, qianJingChang: 0.32, qianJingQiang: 0.7, yaSui: 0.04, chuanTou: 1.0, zaSheng: 0.4,
             zuKuanXi: 1.0, zuChangXi: 1.0,
             waiHuan: 0.3, waiSui: 0.14, waiFan: 0.85,
-            qianGao: 1.9, qianQing: 0.3, qianXi: 0.55 };
+            qianGao: 2.4, qianQing: 0.45, qianXi: 0.18 };
         /* FP-08 揭示完成下限（毫秒）：门控通过后引擎 uRevealProgress 低帧率爬行时的进度底。
            共享出口 gongYong.jieLuWanChengHaoMiao；uniform getter 强制 max(engine, floor)，
            避免引擎动画每帧在 tongBu 之后回写把下限冲掉。URL ?jieLuWanCheng= 可覆盖。 */
@@ -1407,7 +1407,7 @@
                 'wuWai=clamp(wuWaiNei-wuNei,0.0,1.0);' +
                 'charDir=normalize(vec3(wuDirLocal.x*wuCos-wuDirLocal.y*wuSin,0.0,-wuDirLocal.x*wuSin-wuDirLocal.y*wuCos)+vec3(0.01,0.0001,0.0));' +
                 'charInfl=clamp(wuNei*uCharNeiQiangDu+wuBian*charInfl+wuWai*uCharWaiFan,0.0,1.0);' +
-                'wuYa=clamp(wuNei+wuBian*0.85+wuWai*0.70,0.0,1.0);' +
+                'wuYa=clamp(wuNei+wuBian+wuWai*0.85,0.0,1.0);' +
                 'float wuZao=fract(sin(dot(grassOrigin.xz,vec2(12.9898,78.233)))*43758.5453);' +
                 'float wuQianFu=-wuZhou;' +
                 'wuQianRou=smoothstep(0.02,0.07,wuQianFu)*(1.0-smoothstep(uCharQianJingChang-0.09,uCharQianJingChang,wuQianFu))*(1.0-smoothstep(uCharKuan*0.42,uCharKuan*0.60,abs(wuLx)));' +
@@ -1418,21 +1418,24 @@
                 'float wuAoYuan=(texture2D(uCharMask,clamp(wuUV+vec2(0.075,0.0),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV-vec2(0.075,0.0),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV+vec2(0.0,0.075),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV-vec2(0.0,0.075),0.0,1.0)).a)*0.25;' +
                 'vWuCaoAO=clamp(wuA*1.05+wuAoYuan*0.5+wuWai*0.35,0.0,1.0);' +
                 '}else{vWuCaoAO=charInfl*0.7;wuYa=clamp(charInfl,0.0,1.0);wuBian=charInfl;wuPinTi=1.0-smoothstep(uCharR0,uCharR1*1.6,dcW);}' +
-                /* FP-R4b/FP-R5 体重钉死场：足迹轴向体育场 + 压塌环 + 影响圈，切断外部弯折。 */
+                /* FP-R10 体重钉死=零交互：压住的草二值化切断一切外部弯折（鼠标/风贴图）。
+                   正常草地随鼠标；身下草物理上被压死，完全不动。 */
                 'float wuPinYuan=1.0-smoothstep(uCharR0*0.5,uCharR1*1.4,dcW);' +
-                'float wuPin=clamp(max(max(wuYa,wuPinTi),wuPinYuan*0.92),0.0,1.0);' +
-                'bendingIntensity=bendingIntensity*(1.0-wuPin);' +
+                'float wuPin=clamp(max(max(wuYa,wuPinTi),wuPinYuan),0.0,1.0);' +
+                'bendingIntensity=bendingIntensity*(1.0-step(0.40,wuPin));' +
                 'finalGrassInclination=inclineVectorTowardSlerp(finalGrassInclination,terrainAdjustedNormal,clamp(wuYa*uCharFengYiZhi,0.0,1.0));' +
                 'bendingIntensity=clamp(bendingIntensity+charInfl,0.0,1.0);' +
                 'bendingDirection=mix(bendingDirection,charDir,max(charInfl*0.9,wuYa));' +
                 'float wuHash=fract(sin(dot(grassOrigin.xz,vec2(12.9898,78.233)))*43758.5453);' +
                 'float wuYaSui=mix(1.0,uCharYaSui,wuYa);' +
                 'float wuWaiSui=mix(1.0,uCharWaiSui,wuWai);' +
-                'float wuQianGao=wuQianRou*step(uCharQianXi,wuHash);' +
-                'float wuChuan=wuBian*step(0.70,wuHash);' +
-                'grassScale*=(wuYaSui*wuWaiSui*(1.0+wuQianGao*uCharQianGao+wuChuan*uCharChuanTou));' +
-                'bendingIntensity=mix(bendingIntensity,clamp(uCharQianQing,0.0,1.0),wuQianGao);' +
-                'bendingDirection=mix(bendingDirection,charDir,wuQianGao);';
+                /* FP-R10 周身遮挡：轮廓边+外环+身前全部可能回盖，高草向身体倒伏（周身都是草） */
+                'float wuGaiZhou=clamp(max(max(wuBian,wuWai*0.9),wuQianRou),0.0,1.0);' +
+                'float wuGai=wuGaiZhou*step(uCharQianXi,wuHash);' +
+                'vec3 wuGaiDir=normalize(vec3(-charDir.x,0.0,-charDir.z)+vec3(0.01,0.0,0.01));' +
+                'grassScale*=(wuYaSui*wuWaiSui*(1.0+wuGai*uCharQianGao));' +
+                'bendingIntensity=mix(bendingIntensity,clamp(uCharQianQing,0.0,1.0),wuGai);' +
+                'bendingDirection=mix(bendingDirection,wuGaiDir,wuGai);';
             var biaoJiCao = 'bendingDirection=-bendingDirection;';
             var biaoJiHua = 'bendingDirection=bendingDirection;';
             var houXuan = {};
@@ -1464,7 +1467,7 @@
                     'float qWd=length(vec2(lWd,zWd-clamp(zWd,0.0,uCharChang)));' +
                     'float pWd=1.0-smoothstep(uCharKuan*0.55,uCharKuan*1.25,qWd);' +
                     'float yWd=1.0-smoothstep(uCharR0*0.5,uCharR1*1.4,dWd);' +
-                    'bendingIntensity=bendingIntensity*(1.0-clamp(max(pWd,yWd*0.92),0.0,1.0));}';
+                    'bendingIntensity=bendingIntensity*(1.0-step(0.40,clamp(max(pWd,yWd),0.0,1.0)));}';
             }
             var youXin = false;
             for (var key in houXuan) {
