@@ -1463,13 +1463,8 @@
             function zuiXiaoDingSi(originVar) {
                 return '{vec2 twd=(modelMatrix*vec4(' + originVar + ',1.0)).xz-uCharPos;' +
                     'float dWd=length(twd);' +
-                    'float cWd=cos(uCharYaw);float sWd=sin(uCharYaw);' +
-                    'float lWd=twd.x*cWd-twd.y*sWd;' +
-                    'float zWd=-(twd.x*sWd+twd.y*cWd);' +
-                    'float qWd=length(vec2(lWd,zWd-clamp(zWd,0.0,uCharChang)));' +
-                    'float pWd=1.0-smoothstep(uCharKuan*0.70,uCharKuan*1.6,qWd);' +
-                    'float yWd=1.0-smoothstep(uCharR0*0.5,uCharR1*1.4,dWd);' +
-                    'bendingIntensity=bendingIntensity*(1.0-step(0.40,clamp(max(pWd,yWd),0.0,1.0)));}';
+                    'float qWd=max(dWd-uCharKuan*0.5,0.0);' +
+                    'bendingIntensity=bendingIntensity*(1.0-step(0.15,1.0-smoothstep(uCharKuan*0.7,uCharKuan*1.6,qWd)));}';
             }
             var youXin = false;
             for (var key in houXuan) {
@@ -1480,6 +1475,10 @@
                 var caoWei = vs.indexOf(biaoJiCao);
                 var huaWei = vs.indexOf(biaoJiHua);
                 if (mainIdx === -1 || !m.uniforms) { continue; }
+                /* FP-R12：只注入带草标记的材质。花/点精灵/其它弯折材质一律跳过——
+                   给它们改 shader 会把 WebGL 打挂、iframe 崩溃（实测 ya 到 6 即帧死）。
+                   身下零交互由草的钉死场 + 前景遮挡完成。 */
+                if (caoWei === -1) { continue; }
                 m.uniforms.uCharPos = { value: { x: yaWanZhongXin.x, y: yaWanZhongXin.z } }; // FP-12：vec2 直读 .x/.y，不再依赖 THREE
                 // three 的 vec2 上传会调 value.toArray：纯 {x,y} 会每帧抛 TypeError 并打断 uniform 上传
                 m.uniforms.uCharPos.value.toArray = function (a) { a = a || []; a[0] = this.x; a[1] = this.y; return a; };
@@ -1518,6 +1517,7 @@
                             caoFs.slice(caoFsMainIdx).split(caoFsMao).join('gl_FragColor=vec4(vGrassColor*(1.0-vWuCaoAO*uWuCaoAODu),1.0);');
                     }
                 } else {
+                    /* FP-R12：花/点精灵只做最小钉死。禁止再插复杂块——曾把 WebGL 打挂、iframe 整页崩溃。 */
                     var chaRuDian;
                     if (huaWei !== -1) {
                         chaRuDian = huaWei + biaoJiHua.length;
@@ -1528,8 +1528,12 @@
                     }
                     if (chaRuDian < 0) continue;
                     var yuanBianLiang = vs.indexOf('flowerOrigin') >= 0 ? 'flowerOrigin' : (vs.indexOf('grassOrigin') >= 0 ? 'grassOrigin' : 'position');
-                    var xiaoShengMing = 'uniform vec2 uCharPos;uniform float uCharR0;uniform float uCharR1;uniform float uCharYaw;uniform float uCharKuan;uniform float uCharChang;\n';
-                    m.vertexShader = vs.slice(0, mainIdx) + xiaoShengMing + vs.slice(mainIdx, chaRuDian) + zuiXiaoDingSi(yuanBianLiang) + vs.slice(chaRuDian);
+                    var xiaoShengMing = 'uniform vec2 uCharPos;uniform float uCharR0;uniform float uCharR1;uniform float uCharKuan;uniform float uCharChang;\n';
+                    var xiaoDing = '{vec2 twd=(modelMatrix*vec4(' + yuanBianLiang + ',1.0)).xz-uCharPos;' +
+                        'float dWd=length(twd);' +
+                        'float qWd=max(dWd-uCharKuan*0.5,0.0);' +
+                        'bendingIntensity=bendingIntensity*(1.0-step(0.15,1.0-smoothstep(uCharKuan*0.7,uCharKuan*1.6,qWd)));}';
+                    m.vertexShader = vs.slice(0, mainIdx) + xiaoShengMing + vs.slice(mainIdx, chaRuDian) + xiaoDing + vs.slice(chaRuDian);
                 }
                 m.needsUpdate = true;
                 m.__yaWanYiZhu = true;
