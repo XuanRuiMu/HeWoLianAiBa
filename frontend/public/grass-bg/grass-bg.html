@@ -2327,6 +2327,14 @@
                     mesh.name = '__wu_zhujue_plane__';
                     exp.engine.scene.add(mesh);
                     window.__wuZhuJueMesh = mesh;
+                    /* FP-R11 镜头拉远（一次性，只改 FOV 不改比例）：每帧强写会与引擎相机抢控制导致门控失败 */
+                    try {
+                        var camYiCi = exp.engine.camera && exp.engine.camera.instance;
+                        if (camYiCi && camYiCi.fov && camYiCi.fov < 62) {
+                            camYiCi.fov = 62;
+                            if (camYiCi.updateProjectionMatrix) camYiCi.updateProjectionMatrix();
+                        }
+                    } catch (eFov) {}
                     /* FP-01 后已无覆盖层需要“接管证明”：mesh 挂载中即主道路为真
                        （门控 S4/S5 自有贴图解码与挂载验证，不会被创建即接管欺骗）；
                        健康监测每 60 帧复核挂载，被移除即降级并重建。 */
@@ -2379,11 +2387,6 @@
             if (!yiJiuXu || !mesh || document.hidden) return;
             zhenShu++;
             mianXiangJingTou(mesh); // FP-11：法线每帧对准镜头，角色比例时时刻刻与源图逐像素一致
-            /* FP-R11 镜头拉远：加大 FOV 取更广视角（只改相机，不动角色比例） */
-            try {
-                var camK = exp && exp.engine && exp.engine.camera && exp.engine.camera.instance;
-                if (camK && camK.fov !== 68) { camK.fov = 68; if (camK.updateProjectionMatrix) camK.updateProjectionMatrix(); }
-            } catch (eCam) {}
             /* FP-R7：贴地高度每帧应用（实测就绪后立即压到草根，不等 60 帧健康检查——
                曾因过早测量写 0 样本 + 回退标定偏高，角色悬空约 0.1，接触效果全假） */
             var tudiGao = (gongYong && gongYong.ceLiangZhuangTai && gongYong.ceLiangZhuangTai.gaoDu != null && isFinite(gongYong.ceLiangZhuangTai.gaoDu))
