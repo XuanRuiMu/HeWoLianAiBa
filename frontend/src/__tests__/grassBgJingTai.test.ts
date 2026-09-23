@@ -175,11 +175,11 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).toContain('exp.engine.scene.traverse(function (o) {')
     // FP-13：新增风抑制/前景草带三项（fengYiZhi、qianJingChang、qianJingQiang）
     // FP-R1：接触物理层参数（足迹倍数/压塌环/身前高草微搭）
-    expect(yuanMa).toContain('var YA_WAN = { r0: 0.12, r1: 0.68, strength: 0.75, huxi: 0.08, shuBiaoJia: 1.5, neiQiangDu: 1.0, wenLiBu: 0.02,')
-    expect(yuanMa).toContain('fengYiZhi: 1.0, qianJingChang: 0.28, qianJingQiang: 0.6, yaSui: 0.06, chuanTou: 0.85, zaSheng: 0.45,')
+    expect(yuanMa).toContain('var YA_WAN = { r0: 0.12, r1: 0.68, strength: 1.15, huxi: 0.08, shuBiaoJia: 1.5, neiQiangDu: 1.15, wenLiBu: 0.02,')
+    expect(yuanMa).toContain('fengYiZhi: 1.0, qianJingChang: 0.32, qianJingQiang: 0.7, yaSui: 0.04, chuanTou: 1.0, zaSheng: 0.4,')
     expect(yuanMa).toContain('zuKuanXi: 1.0, zuChangXi: 1.0,')
-    expect(yuanMa).toContain('waiHuan: 0.22, waiSui: 0.32, waiFan: 0.55,')
-    expect(yuanMa).toContain('qianGao: 1.5, qianQing: 0.35, qianXi: 0.68 };')
+    expect(yuanMa).toContain('waiHuan: 0.3, waiSui: 0.14, waiFan: 0.85,')
+    expect(yuanMa).toContain('qianGao: 1.9, qianQing: 0.3, qianXi: 0.55 };')
     expect(yuanMa).toContain('window.__yaWanTiao')
     expect(yuanMa).toContain('window.__yaWanShouLian')
     expect(yuanMa).toContain('window.__wuGongYong = gongYong')
@@ -423,7 +423,7 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).toContain('normalize(vec2(-wuGrad.x,-wuGrad.y))')
     // 轮廓内强度走统一配置，默认 1.0（真压平）
     expect(yuanMa).toContain('wuNei*uCharNeiQiangDu')
-    expect(yuanMa).toContain('neiQiangDu: 1.0')
+    expect(yuanMa).toContain('neiQiangDu: 1.15')
     // tongBu 同步 uniforms 时生效
     expect(yuanMa).toMatch(/caiZhi\.uCharNeiQiangDu\.value\s*=/)
   })

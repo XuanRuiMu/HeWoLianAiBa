@@ -1095,11 +1095,11 @@
            - qianQing        身前高草向身体倾角（中等倾角，重力微搭非压平）
            - qianXi          身前高草哈希稀疏阈值（step 阈值，越大越稀疏）
            调参口：__yaWanTiao 可覆盖（见每帧驱动）。 */
-        var YA_WAN = { r0: 0.12, r1: 0.68, strength: 0.75, huxi: 0.08, shuBiaoJia: 1.5, neiQiangDu: 1.0, wenLiBu: 0.02,
-            fengYiZhi: 1.0, qianJingChang: 0.28, qianJingQiang: 0.6, yaSui: 0.06, chuanTou: 0.85, zaSheng: 0.45,
+        var YA_WAN = { r0: 0.12, r1: 0.68, strength: 1.15, huxi: 0.08, shuBiaoJia: 1.5, neiQiangDu: 1.15, wenLiBu: 0.02,
+            fengYiZhi: 1.0, qianJingChang: 0.32, qianJingQiang: 0.7, yaSui: 0.04, chuanTou: 1.0, zaSheng: 0.4,
             zuKuanXi: 1.0, zuChangXi: 1.0,
-            waiHuan: 0.22, waiSui: 0.32, waiFan: 0.55,
-            qianGao: 1.5, qianQing: 0.35, qianXi: 0.68 };
+            waiHuan: 0.3, waiSui: 0.14, waiFan: 0.85,
+            qianGao: 1.9, qianQing: 0.3, qianXi: 0.55 };
         /* FP-08 揭示完成下限（毫秒）：门控通过后引擎 uRevealProgress 低帧率爬行时的进度底。
            共享出口 gongYong.jieLuWanChengHaoMiao；uniform getter 强制 max(engine, floor)，
            避免引擎动画每帧在 tongBu 之后回写把下限冲掉。URL ?jieLuWanCheng= 可覆盖。 */
@@ -1824,7 +1824,7 @@
         if (wuYinYingBuTouMingDu != null && wuYinYingBuTouMingDu > 0) YIN_YING.touMingDu = Math.min(wuYinYingBuTouMingDu, YIN_YING.shangXian);
         /* 草地接触 AO 强度（FP-10；深度浮雕链路整段删除后从原 LI_TI.aoQiangDu 独立保留，
            仍由 tongBu 同步到草材质 uWuCaoAODu，随 reveal 淡入）。 */
-        var CAO_AO_QIANG_DU = 0.55;
+        var CAO_AO_QIANG_DU = 0.85;
          /* GANG_TI 刚体立体化（全部 mesh transform 级动画，可配置）：
             - fuDu     呼吸浮动幅度（世界单位，铰链 y 偏移）
             - suoFang  呼吸缩放脉动（相对基准的 ±比例）

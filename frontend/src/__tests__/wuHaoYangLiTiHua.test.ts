@@ -103,7 +103,7 @@ describe('FP-10 吴昊阳立体化', () => {
     expect(yuanMa).toContain('gl_FragColor=vec4(vGrassColor*(1.0-vWuCaoAO*uWuCaoAODu),1.0);')
     expect(yuanMa).toContain('vWuCaoAO=clamp(wuA*1.05+wuAoYuan*0.5+wuWai*0.35,0.0,1.0);')
     // FP-13：接触 AO 随 reveal 淡入；强度源=独立 CAO_AO_QIANG_DU（原 LI_TI.aoQiangDu）
-    expect(yuanMa).toContain('var CAO_AO_QIANG_DU = 0.55')
+    expect(yuanMa).toContain('var CAO_AO_QIANG_DU = 0.85')
     expect(yuanMa).toContain('caiZhi.uWuCaoAODu.value = (tiao.aoDu != null ? tiao.aoDu : CAO_AO_QIANG_DU) * bu')
   })
 
@@ -186,10 +186,10 @@ describe('FP-10 吴昊阳立体化', () => {
     expect(yuanMa).toContain('for (var ci = 0; ci < 2; ci++) {')
     expect(yuanMa).toContain('var ux = Math.sin(m.rotation.x) * Math.sin(m.rotation.y);')
     // 配置集中且默认开启 + FP-R1 接触物理层参数
-    expect(yuanMa).toContain('fengYiZhi: 1.0, qianJingChang: 0.28, qianJingQiang: 0.6, yaSui: 0.06, chuanTou: 0.85, zaSheng: 0.45,')
+    expect(yuanMa).toContain('fengYiZhi: 1.0, qianJingChang: 0.32, qianJingQiang: 0.7, yaSui: 0.04, chuanTou: 1.0, zaSheng: 0.4,')
     expect(yuanMa).toContain('zuKuanXi: 1.0, zuChangXi: 1.0,')
-    expect(yuanMa).toContain('waiHuan: 0.22, waiSui: 0.32, waiFan: 0.55,')
-    expect(yuanMa).toContain('qianGao: 1.5, qianQing: 0.35, qianXi: 0.68 };')
+    expect(yuanMa).toContain('waiHuan: 0.3, waiSui: 0.14, waiFan: 0.85,')
+    expect(yuanMa).toContain('qianGao: 1.9, qianQing: 0.3, qianXi: 0.55 };')
     expect(yuanMa).toContain('var DI_BIAN = { jianYin: 0.035 };')
   })
 
