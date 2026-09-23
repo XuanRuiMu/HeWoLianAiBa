@@ -1099,7 +1099,7 @@
             fengYiZhi: 1.0, qianJingChang: 0.32, qianJingQiang: 0.7, yaSui: 0.04, chuanTou: 1.0, zaSheng: 0.4,
             zuKuanXi: 1.0, zuChangXi: 1.0,
             waiHuan: 0.3, waiSui: 0.14, waiFan: 0.85,
-            qianGao: 3.0, qianQing: 0.55, qianXi: 0.08 };
+            qianGao: 0.22, qianQing: 0.5, qianXi: 0.42 };
         /* FP-08 揭示完成下限（毫秒）：门控通过后引擎 uRevealProgress 低帧率爬行时的进度底。
            共享出口 gongYong.jieLuWanChengHaoMiao；uniform getter 强制 max(engine, floor)，
            避免引擎动画每帧在 tongBu 之后回写把下限冲掉。URL ?jieLuWanCheng= 可覆盖。 */
@@ -1430,7 +1430,9 @@
                 'float wuYaSui=mix(1.0,uCharYaSui,wuYa);' +
                 'float wuWaiSui=mix(1.0,uCharWaiSui,wuWai);' +
                 /* FP-R10 周身遮挡：轮廓边+外环+身前全部可能回盖，高草向身体倒伏（周身都是草） */
-                'float wuGaiZhou=clamp(max(max(wuBian*1.2,wuWai),wuQianRou*1.1),0.0,1.0);' +
+                /* FP-R10 接触圈微搭：身体与草地接缝上的普通草微微盖过轮廓（不是巨草）。
+                   物理：人趴草丛里，接触缝草梢搭在身上；尺寸与周围草同级。 */
+                'float wuGaiZhou=clamp(wuBian*1.15+wuQianRou*0.55,0.0,1.0);' +
                 'float wuGai=wuGaiZhou*step(uCharQianXi,wuHash);' +
                 'vec3 wuGaiDir=normalize(vec3(-charDir.x,0.0,-charDir.z)+vec3(0.01,0.0,0.01));' +
                 'grassScale*=(wuYaSui*wuWaiSui*(1.0+wuGai*uCharQianGao));' +

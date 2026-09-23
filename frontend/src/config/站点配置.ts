@@ -1,6 +1,6 @@
 // 应用版本号：全站唯一来源（UI 展示、埋点 ban_ben 均引用此处）；
 // 发版时与 package.json 的 version 一并更新。
-export const yingYongBanBen = '1.1.14'
+export const yingYongBanBen = '1.1.15'
 
 export interface CaoDiPeiZhi {
   fenXiQiYong: boolean
