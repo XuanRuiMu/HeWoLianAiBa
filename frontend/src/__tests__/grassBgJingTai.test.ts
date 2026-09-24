@@ -163,9 +163,9 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).toContain('禁止把 window.__grassMats 当前置')
     expect(yuanMa).toContain('exp.engine.scene.traverse(function (o) {')
     // FP-R4b 体重钉死场：足迹+影响圈切断外部弯折
-    expect(yuanMa).toContain('bendingIntensity=bendingIntensity*(1.0-step(0.45,wuJing));')
+    expect(yuanMa).toContain('bendingIntensity=bendingIntensity*(1.0-step(0.45,wuYuYa));')
     // FP-R5 钉死场按身体轴线段（非铰链径向），否则中段/脚端钉不住
-    expect(yuanMa).toContain('float wuDaoZhou=length(vec2(wuLx,wuZhou-clamp(wuZhou,0.0,uCharChang)));')
+    expect(yuanMa).toContain('vec3 wuQ=wuC+wuD*wuT;')
     // FP-R5 花/点精灵弯折材质也必须钉死（只认草标记会漏 6/8 套）
     expect(yuanMa).toContain('biaoJiHua')
     expect(yuanMa).toContain('zuiXiaoDingSi')
@@ -180,7 +180,7 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).toContain('qianGao: 0.35, qianQing: 0.5, qianXi: 0.35 };')
     expect(yuanMa).toContain('zuKuanXi: 1.0, zuChangXi: 1.0,')
     expect(yuanMa).toContain('waiHuan: 0.3, waiSui: 0.14, waiFan: 0.85,')
-    expect(yuanMa).toContain('bendingIntensity=bendingIntensity*(1.0-step(0.45,wuJing));')
+    expect(yuanMa).toContain('bendingIntensity=bendingIntensity*(1.0-step(0.45,wuYuYa));')
     expect(yuanMa).toContain('window.__yaWanTiao')
     expect(yuanMa).toContain('window.__yaWanShouLian')
     expect(yuanMa).toContain('window.__wuGongYong = gongYong')
@@ -373,7 +373,7 @@ describe('FP-01 草地静态兜底', () => {
     expect(yuanMa).toContain('smoothstep(uCharEdge,uCharEdge+0.2,')
     expect(yuanMa).toContain('smoothstep(0.0,uCharEdge,')
     // 圆形降级分支保留：mask 缺失（uCharMaskOn=0）时走旧径向逻辑
-    expect(yuanMa).toContain('if(uCharMaskOn>0.5)')
+    expect(yuanMa).toContain('if(wuZaiKuang>0.5)')
     expect(yuanMa).toContain('smoothstep(uCharR0,uCharR1,dcW)')
     // FP-06 边缘带：局部外法线（梯度）→ 世界方向旋转
     expect(yuanMa).toContain('wuDirLocal.x*wuCos-wuDirLocal.y*wuSin')
@@ -383,7 +383,7 @@ describe('FP-01 草地静态兜底', () => {
   it('FP-06 压伏 UV：v 锚点与 T3 平面同语义（铰链 v=0、头侧 v=1），错误公式零残留', () => {
     const yuanMa = duQuCaoDi()
     // 正确公式：u 宽向居中 +0.5；v 轴向自铰链起算，不再 +0.5（历史错误把铰链映到 v=0.5 错半身）
-    expect(yuanMa).toContain('wuUV=vec2(wuLx/uCharKuan+0.5,wuZhou/uCharChang)')
+    expect(yuanMa).toContain('float wuU=1.0-(wuLoc.x*0.5+0.5);float wuV=wuLoc.y*0.5;')
     // 错误期望公式不得作为实现/测试期望出现
     expect(yuanMa).not.toContain('wuUV=vec2(wuLx/uCharKuan+0.5,wuZhou/uCharChang+0.5)')
     expect(yuanMa).not.toMatch(/wuZhou\/uCharChang\+0\.5/)
@@ -415,10 +415,10 @@ describe('FP-01 草地静态兜底', () => {
   it('FP-06 触碰箱：mask 四点 alpha 梯度外法线 + 轮廓内强度驱动可到 1.0', () => {
     const yuanMa = duQuCaoDi()
     // 四点采样求梯度
-    expect(yuanMa).toMatch(/wuAu1=texture2D\(uCharMask,clamp\(wuUV\+vec2\(wuEps,0\.0\)/)
-    expect(yuanMa).toMatch(/wuAu0=texture2D\(uCharMask,clamp\(wuUV-vec2\(wuEps,0\.0\)/)
-    expect(yuanMa).toMatch(/wuAv1=texture2D\(uCharMask,clamp\(wuUV\+vec2\(0\.0,wuEps\)/)
-    expect(yuanMa).toMatch(/wuAv0=texture2D\(uCharMask,clamp\(wuUV-vec2\(0\.0,wuEps\)/)
+    expect(yuanMa).toMatch(/wuAu1=texture2D\(uCharMask,clamp\(vec2\(wuU,wuV\)\+vec2\(wuEps,0\.0\)/)
+    expect(yuanMa).toMatch(/wuAu0=texture2D\(uCharMask,clamp\(vec2\(wuU,wuV\)-vec2\(wuEps,0\.0\)/)
+    expect(yuanMa).toMatch(/wuAv1=texture2D\(uCharMask,clamp\(vec2\(wuU,wuV\)\+vec2\(0\.0,wuEps\)/)
+    expect(yuanMa).toMatch(/wuAv0=texture2D\(uCharMask,clamp\(vec2\(wuU,wuV\)-vec2\(0\.0,wuEps\)/)
     expect(yuanMa).toContain('wuGrad=vec2(wuAu1-wuAu0,wuAv1-wuAv0)')
     // 外法线 = -梯度（alpha 下降方向 = 体型轮廓外侧）
     expect(yuanMa).toContain('normalize(vec2(-wuGrad.x,-wuGrad.y))')

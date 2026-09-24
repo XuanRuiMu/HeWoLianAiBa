@@ -1344,7 +1344,8 @@
                 'uniform float uCharYaSui;uniform float uCharChuanTou;uniform float uCharZaSheng;' +
                 'uniform float uCharWaiHuan;uniform float uCharWaiSui;uniform float uCharWaiFan;' +
                 'uniform float uCharQianGao;uniform float uCharQianQing;uniform float uCharQianXi;' +
-                'varying float vWuCaoAO;\n';
+                'uniform mat4 uCharMat;uniform mat4 uCharMatInv;uniform vec3 uCharCam;uniform float uWuShiTu;' +
+                'varying float vWuCaoAO;varying float vWuYuYa;\n';
             /* 压伏场几何推导（FP-R1 根因重构：全身足迹语义，废除 sin 后仰压缩）：
                人物是俯卧人体（wuhaoyang-2d.png 逐像素），观众读到的接触面是全身；
                旧几何用直立卡片的地面投影（长=卡高×sin 后仰角，rotation.x≈-0.36 ⇒ 仅 ~35%），
@@ -1371,63 +1372,64 @@
                引擎草顶点着色器执行序：terrainAdjustedNormal → 风 → 本注入段 → 压弯：
                 ① 风动抑制：把 finalGrassInclination 按"被压度"拉回 terrainAdjustedNormal。
                 ② 前景高草：中等倾角倒向身体（重力搭在身上，不是压平），稀疏高草叠上剪影。 */
-            var zhuRuDuan = 'vWuCaoAO=0.0;float wuYa=0.0;float wuBian=0.0;float wuWai=0.0;float wuQianRou=0.0;float wuPinTi=0.0;float wuNei=0.0;' +
-                'vec2 tocW=(modelMatrix*vec4(grassOrigin,1.0)).xz-uCharPos;' +
+            var zhuRuDuan = 'vWuCaoAO=0.0;vWuYuYa=0.0;float wuYa=0.0;float wuBian=0.0;float wuWai=0.0;float wuQianRou=0.0;float wuPinTi=0.0;float wuNei=0.0;' +
+                /* FP-R15 屏幕 2D 人形压感：草根射线与角色平面求交 → 落在不透明轮廓内且在人后 = 被压 */
+                'vec3 wuP=(modelMatrix*vec4(grassOrigin,1.0)).xyz;' +
+                'vec3 wuC=uCharCam;vec3 wuD=wuP-wuC;float wuDist=length(wuD);wuD/=max(wuDist,1e-5);' +
+                'vec3 wuH=vec3(uCharMat[3][0],uCharMat[3][1],uCharMat[3][2]);' +
+                'vec3 wuN=normalize(vec3(uCharMat[2][0],uCharMat[2][1],uCharMat[2][2]));' +
+                'float wuDen=dot(wuD,wuN);float wuT=dot(wuH-wuC,wuN)/(abs(wuDen)<1e-5?1e-5:wuDen);' +
+                'float wuZaiHou=step(0.0,wuT)*step(wuT,wuDist-0.03);' +
+                'vec3 wuQ=wuC+wuD*wuT;' +
+                'vec4 wuLoc=uCharMatInv*vec4(wuQ,1.0);' +
+                'float wuU=1.0-(wuLoc.x*0.5+0.5);float wuV=wuLoc.y*0.5;' +
+                'float wuZaiKuang=step(0.0,wuU)*step(wuU,1.0)*step(0.0,wuV)*step(wuV,1.0);' +
+                'float wuA=texture2D(uCharMask,clamp(vec2(wuU,wuV),0.002,0.998)).a;' +
+                'float wuYuYa=wuA*wuZaiKuang*wuZaiHou;' +
+                'vWuYuYa=wuYuYa;' +
+                'wuNei=smoothstep(uCharEdge,uCharEdge+0.2,wuA)*wuZaiKuang;' +
+                'float wuAd=texture2D(uCharMask,clamp(vec2(wuU,wuV)+vec2(uCharWaiHuan,0.0),0.002,0.998)).a;' +
+                'wuAd=max(wuAd,texture2D(uCharMask,clamp(vec2(wuU,wuV)-vec2(uCharWaiHuan,0.0),0.002,0.998)).a);' +
+                'wuAd=max(wuAd,texture2D(uCharMask,clamp(vec2(wuU,wuV)+vec2(0.0,uCharWaiHuan),0.002,0.998)).a);' +
+                'wuAd=max(wuAd,texture2D(uCharMask,clamp(vec2(wuU,wuV)-vec2(0.0,uCharWaiHuan),0.002,0.998)).a);' +
+                'float wuWaiNei=smoothstep(uCharEdge,uCharEdge+0.2,wuAd);' +
+                'wuWai=clamp((wuWaiNei-wuNei)*wuZaiKuang,0.0,1.0);' +
+                'wuBian=clamp(smoothstep(0.0,uCharEdge,wuA)-wuNei,0.0,1.0)*wuZaiKuang;' +
+                'vec2 tocW=wuP.xz-uCharPos;' +
                 'float dcW=length(tocW);' +
                 'float charInfl=(1.0-smoothstep(uCharR0,uCharR1,dcW))*uCharStrength;' +
                 'vec3 charDir=normalize(vec3(tocW.x,0.0,tocW.y)+vec3(0.01,0.0001,0.0));' +
-                'if(uCharMaskOn>0.5){' +
+                'if(wuZaiKuang>0.5){' +
                 'float wuCos=cos(uCharYaw);float wuSin=sin(uCharYaw);' +
                 'float wuLx=tocW.x*wuCos-tocW.y*wuSin;' +
                 'float wuZhou=-(tocW.x*wuSin+tocW.y*wuCos);' +
-                'vec2 wuUV=vec2(wuLx/uCharKuan+0.5,wuZhou/uCharChang);' +
-                /* FP-R5 体重钉死场改到身体轴线段距离（不是铰链径向）：中段/脚端 dcW 大，
-                   旧径向场几乎钉不住，鼠标仍可拨动“身下的草”。体育场形=足迹+外沿。 */
-                'float wuDaoZhou=length(vec2(wuLx,wuZhou-clamp(wuZhou,0.0,uCharChang)));' +
-                'wuPinTi=1.0-smoothstep(uCharKuan*0.70,uCharKuan*1.6,wuDaoZhou);' +
-                'float wuA=texture2D(uCharMask,clamp(wuUV,0.0,1.0)).a;' +
                 'float wuEps=uCharWenLiBu;' +
-                'float wuAu1=texture2D(uCharMask,clamp(wuUV+vec2(wuEps,0.0),0.0,1.0)).a;' +
-                'float wuAu0=texture2D(uCharMask,clamp(wuUV-vec2(wuEps,0.0),0.0,1.0)).a;' +
-                'float wuAv1=texture2D(uCharMask,clamp(wuUV+vec2(0.0,wuEps),0.0,1.0)).a;' +
-                'float wuAv0=texture2D(uCharMask,clamp(wuUV-vec2(0.0,wuEps),0.0,1.0)).a;' +
+                'float wuAu1=texture2D(uCharMask,clamp(vec2(wuU,wuV)+vec2(wuEps,0.0),0.002,0.998)).a;' +
+                'float wuAu0=texture2D(uCharMask,clamp(vec2(wuU,wuV)-vec2(wuEps,0.0),0.002,0.998)).a;' +
+                'float wuAv1=texture2D(uCharMask,clamp(vec2(wuU,wuV)+vec2(0.0,wuEps),0.002,0.998)).a;' +
+                'float wuAv0=texture2D(uCharMask,clamp(vec2(wuU,wuV)-vec2(0.0,wuEps),0.002,0.998)).a;' +
                 'vec2 wuGrad=vec2(wuAu1-wuAu0,wuAv1-wuAv0);' +
-                'float wuGradLen=length(wuGrad);' +
                 'vec2 wuDirLocal;' +
-                'if(wuGradLen>0.001){wuDirLocal=normalize(vec2(-wuGrad.x,-wuGrad.y));}' +
-                'else{wuDirLocal=normalize(vec2(wuLx,wuZhou-uCharChang*0.5)+vec2(0.0001,0.0001));}' +
-                'wuNei=smoothstep(uCharEdge,uCharEdge+0.2,wuA);' +
-                'wuBian=smoothstep(0.0,uCharEdge,wuA)*(1.0-wuNei);' +
-                'float wuHuanR=max(uCharWaiHuan,0.001);' +
-                'float wuAd=texture2D(uCharMask,clamp(wuUV+vec2(wuHuanR,0.0),0.0,1.0)).a;' +
-                'wuAd=max(wuAd,texture2D(uCharMask,clamp(wuUV-vec2(wuHuanR,0.0),0.0,1.0)).a);' +
-                'wuAd=max(wuAd,texture2D(uCharMask,clamp(wuUV+vec2(0.0,wuHuanR),0.0,1.0)).a);' +
-                'wuAd=max(wuAd,texture2D(uCharMask,clamp(wuUV-vec2(0.0,wuHuanR),0.0,1.0)).a);' +
-                'float wuWaiNei=smoothstep(uCharEdge,uCharEdge+0.2,wuAd);' +
-                'wuWai=clamp(wuWaiNei-wuNei,0.0,1.0);' +
+                'if(length(wuGrad)>0.001){wuDirLocal=normalize(vec2(-wuGrad.x,-wuGrad.y));}' +
+                'else{wuDirLocal=normalize(vec2(wuLx,wuZhou)+vec2(0.0001,0.0001));}' +
                 'charDir=normalize(vec3(wuDirLocal.x*wuCos-wuDirLocal.y*wuSin,0.0,-wuDirLocal.x*wuSin-wuDirLocal.y*wuCos)+vec3(0.01,0.0001,0.0));' +
                 'charInfl=clamp(wuNei*uCharNeiQiangDu+wuBian*charInfl+wuWai*uCharWaiFan,0.0,1.0);' +
-                'wuYa=clamp(wuNei+wuBian+wuWai*0.85,0.0,1.0);' +
                 'float wuZao=fract(sin(dot(grassOrigin.xz,vec2(12.9898,78.233)))*43758.5453);' +
                 'float wuQianFu=-wuZhou;' +
                 'wuQianRou=smoothstep(0.02,0.07,wuQianFu)*(1.0-smoothstep(uCharQianJingChang-0.09,uCharQianJingChang,wuQianFu))*(1.0-smoothstep(uCharKuan*0.42,uCharKuan*0.60,abs(wuLx)));' +
                 'wuQianRou*=mix(1.0-uCharZaSheng,1.0,wuZao);' +
-                'if(wuQianRou>0.003){' +
-                'charDir=normalize(vec3(-wuSin,0.0,-wuCos)+vec3(0.01,0.0001,0.0));}' +
+                'if(wuQianRou>0.003){charDir=normalize(vec3(-wuSin,0.0,-wuCos)+vec3(0.01,0.0001,0.0));}' +
                 'charInfl=clamp(charInfl+wuQianRou*uCharQianJingQiang*0.35,0.0,1.0);' +
-                'float wuAoYuan=(texture2D(uCharMask,clamp(wuUV+vec2(0.075,0.0),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV-vec2(0.075,0.0),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV+vec2(0.0,0.075),0.0,1.0)).a+texture2D(uCharMask,clamp(wuUV-vec2(0.0,0.075),0.0,1.0)).a)*0.25;' +
-                'vWuCaoAO=clamp(wuA*1.05+wuAoYuan*0.5+wuWai*0.35,0.0,1.0);' +
-                '}else{vWuCaoAO=charInfl*0.7;wuYa=clamp(charInfl,0.0,1.0);wuBian=charInfl;wuPinTi=1.0-smoothstep(uCharR0,uCharR1*1.6,dcW);}' +
-                /* FP-R13 身下草坪永静态：仅轮廓内切断交互与风并压平；身前草保持可交互 */
-                'float wuJing=clamp(wuNei,0.0,1.0);' +
-                'bendingIntensity=bendingIntensity*(1.0-step(0.45,wuJing));' +
-                'finalGrassInclination=inclineVectorTowardSlerp(finalGrassInclination,terrainAdjustedNormal,step(0.45,wuJing));' +
+                'vWuCaoAO=clamp(wuYuYa*1.1+wuWai*0.35,0.0,1.0);' +
+                '}else{vWuCaoAO=wuWai*0.35;charInfl=clamp(charInfl,0.0,1.0);}' +
+                /* 被压=永静态（现实：体重钉死） */
+                'bendingIntensity=bendingIntensity*(1.0-step(0.45,wuYuYa));' +
+                'finalGrassInclination=inclineVectorTowardSlerp(finalGrassInclination,terrainAdjustedNormal,step(0.45,wuYuYa));' +
                 'bendingIntensity=clamp(bendingIntensity+charInfl,0.0,1.0);' +
-                'bendingDirection=mix(bendingDirection,charDir,max(charInfl*0.9,wuJing));' +
+                'bendingDirection=mix(bendingDirection,charDir,max(charInfl*0.9,step(0.45,wuYuYa)));' +
                 'float wuHash=fract(sin(dot(grassOrigin.xz,vec2(12.9898,78.233)))*43758.5453);' +
-                'float wuYaSui=mix(1.0,uCharYaSui,step(0.45,wuJing));' +
+                'float wuYaSui=mix(1.0,uCharYaSui,step(0.45,wuYuYa));' +
                 'float wuWaiSui=mix(1.0,uCharWaiSui,wuWai);' +
-                /* 手臂前方遮挡草：身前/接缝稀疏普通草微搭，约盖半臂（不剥夺交互） */
                 'float wuGaiZhou=clamp(wuBian*0.9+wuQianRou*1.2,0.0,1.0);' +
                 'float wuGai=wuGaiZhou*step(uCharQianXi,wuHash);' +
                 'vec3 wuGaiDir=normalize(vec3(-charDir.x,0.0,-charDir.z)+vec3(0.01,0.0,0.01));' +
@@ -1534,6 +1536,11 @@
                 m.uniforms.uCharQianQing = { value: YA_WAN.qianQing };
                 m.uniforms.uCharQianXi = { value: YA_WAN.qianXi };
                 m.uniforms.uWuCaoAODu = { value: 0.55 };
+                /* FP-R15 屏幕人形压感：角色矩阵/逆矩阵/相机（每帧 tongBu 同步） */
+                m.uniforms.uCharMat = { value: { elements: new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]) } };
+                m.uniforms.uCharMatInv = { value: { elements: new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]) } };
+                m.uniforms.uCharCam = { value: { x: 0, y: 0, z: 0, toArray: function (a) { a = a || []; a[0] = this.x; a[1] = this.y; a[2] = this.z; return a; } } };
+                m.uniforms.uWuShiTu = { value: 0 };
                 if (caoWei !== -1) {
                     m.vertexShader = vs.slice(0, mainIdx) + shengMing + vs.slice(mainIdx, caoWei + biaoJiCao.length) + zhuRuDuan + vs.slice(caoWei + biaoJiCao.length);
                     var caoFs = m.fragmentShader || '';
@@ -1541,8 +1548,8 @@
                     var caoFsMainIdx = caoFs.indexOf('void main(){');
                     if (caoFs.indexOf(caoFsMao) !== -1 && caoFsMainIdx !== -1) {
                         m.fragmentShader = caoFs.slice(0, caoFsMainIdx) +
-                            'varying float vWuCaoAO;uniform float uWuCaoAODu;\n' +
-                            caoFs.slice(caoFsMainIdx).split(caoFsMao).join('gl_FragColor=vec4(vGrassColor*(1.0-vWuCaoAO*uWuCaoAODu),1.0);');
+                            'varying float vWuCaoAO;uniform float uWuCaoAODu;varying float vWuYuYa;uniform float uWuShiTu;\n' +
+                            caoFs.slice(caoFsMainIdx).split(caoFsMao).join('gl_FragColor=vec4(mix(vGrassColor*(1.0-vWuCaoAO*uWuCaoAODu),vec3(1.0,0.15,0.15),uWuShiTu*step(0.5,vWuYuYa)),1.0);');
                     }
                 } else {
                     /* FP-R12：花/点精灵只做最小钉死。禁止再插复杂块——曾把 WebGL 打挂、iframe 整页崩溃。 */
@@ -2552,6 +2559,45 @@
                读取与投影均局部化于此，cam/向量不可用时跳过增强不跳过基准驱动。 */
             if (gongYong && yaWanWanCheng && gongYong.yaWanCaiZhi.length) {
                 var tiao = window.__yaWanTiao || {};
+                /* FP-R15：每帧写入角色矩阵/逆矩阵/相机（屏幕人形压感判定源） */
+                try {
+                    if (mesh) {
+                        mesh.updateMatrixWorld(true);
+                        var eM = mesh.matrixWorld.elements;
+                        var eI = [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1];
+                        (function niJuZhen(e, o) {
+                            var a00=e[0],a01=e[1],a02=e[2],a03=e[3],a10=e[4],a11=e[5],a12=e[6],a13=e[7],
+                                a20=e[8],a21=e[9],a22=e[10],a23=e[11],a30=e[12],a31=e[13],a32=e[14],a33=e[15];
+                            var b00=a00*a11-a01*a10,b01=a00*a12-a02*a10,b02=a00*a13-a03*a10,
+                                b03=a01*a12-a02*a11,b04=a01*a13-a03*a11,b05=a02*a13-a03*a12,
+                                b06=a20*a31-a21*a30,b07=a20*a32-a22*a30,b08=a20*a33-a23*a30,
+                                b09=a21*a32-a22*a31,b10=a21*a33-a23*a31,b11=a22*a33-a23*a32;
+                            var det=b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
+                            if (!det) return;
+                            det=1/det;
+                            o[0]=(a11*b11-a12*b10+a13*b09)*det; o[1]=(a02*b10-a01*b11-a03*b09)*det;
+                            o[2]=(a31*b05-a32*b04+a33*b03)*det; o[3]=(a22*b04-a21*b05-a23*b03)*det;
+                            o[4]=(a12*b08-a10*b11-a13*b07)*det; o[5]=(a00*b11-a02*b08+a03*b07)*det;
+                            o[6]=(a32*b02-a30*b05-a33*b01)*det; o[7]=(a20*b05-a22*b02+a23*b01)*det;
+                            o[8]=(a10*b10-a11*b08+a13*b06)*det; o[9]=(a01*b08-a00*b10-a03*b06)*det;
+                            o[10]=(a30*b04-a31*b02+a33*b00)*det; o[11]=(a21*b02-a20*b04-a23*b00)*det;
+                            o[12]=(a11*b07-a10*b09-a12*b06)*det; o[13]=(a00*b09-a01*b07+a02*b06)*det;
+                            o[14]=(a31*b01-a30*b03-a32*b00)*det; o[15]=(a20*b03-a21*b01+a22*b00)*det;
+                        })(eM, eI);
+                        var camXY = exp && exp.engine && exp.engine.camera && exp.engine.camera.instance;
+                        var camP = camXY ? camXY.position : null;
+                        var shiTu = (window.__wuShiTu === true || window.__wuShiTu === 1) ? 1 : 0;
+                        for (var mi = 0; mi < gongYong.yaWanCaiZhi.length; mi++) {
+                            var uu = gongYong.yaWanCaiZhi[mi].uniforms;
+                            if (uu.uCharMat && uu.uCharMat.value && uu.uCharMat.value.elements) {
+                                for (var ei = 0; ei < 16; ei++) uu.uCharMat.value.elements[ei] = eM[ei];
+                                for (var ej = 0; ej < 16; ej++) uu.uCharMatInv.value.elements[ej] = eI[ej];
+                            }
+                            if (uu.uCharCam && camP) { uu.uCharCam.value.x = camP.x; uu.uCharCam.value.y = camP.y; uu.uCharCam.value.z = camP.z; }
+                            if (uu.uWuShiTu) uu.uWuShiTu.value = shiTu;
+                        }
+                    }
+                } catch (eMat) {}
                 var jiZhunQiangDu = tiao.strength != null ? tiao.strength : gongYong.YA_WAN.strength;
                 var huXiFuDu = tiao.huxi != null ? tiao.huxi : gongYong.YA_WAN.huxi;
                 var muBiao = jiZhunQiangDu;
