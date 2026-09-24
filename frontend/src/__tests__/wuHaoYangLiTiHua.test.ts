@@ -149,7 +149,7 @@ describe('FP-10 吴昊阳立体化', () => {
     expect(yuanMa).toContain('function gengXinYinYing()')
     expect(yuanMa).toContain('var changTou = 2 * s * zuChangXiY;')
     expect(yuanMa).not.toContain('var changTou = 2 * s * Math.sin(e);')
-    expect(yuanMa).toContain('var touX = -Math.sin(psi), touZ = -Math.cos(psi);')
+    expect(yuanMa).toContain('var touX = guangX, touZ = guangZ;')
     // 每帧同步（在呼吸微动之前刷新基准，避免被旧基准覆盖）
     expect(yuanMa).toContain('gengXinYinYing();')
     // 压草场：投影长=全身足迹（FP-R1），投影轴改读 billboard 实时角度

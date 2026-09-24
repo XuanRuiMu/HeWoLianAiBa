@@ -1940,13 +1940,25 @@
             if (!yinYingMesh || !mesh) return;
             var s = mesh.scale.x || 1;
             var psi = mesh.rotation.y || 0;
-            /* FP-R1 H5：阴影长=全身足迹（与接触场同尺度），不再 *sin(e)。
-               图像是俯卧人体，接触面故事必须全身一致；sin 压缩使阴影只剩卡高 ~35%。 */
+            /* FP-R16 光影跟场景主光：阴影投向 = −地面光向（与树石阴影同源 uLightDirection） */
+            var guangX = -Math.sin(psi), guangZ = -Math.cos(psi);
+            try {
+                var gm = (gongYong && gongYong.yaWanCaiZhi && gongYong.yaWanCaiZhi[0] && gongYong.yaWanCaiZhi[0].uniforms && gongYong.yaWanCaiZhi[0].uniforms.uLightDirection) || null;
+                var ld = gm && gm.value;
+                if (ld && isFinite(ld.x) && isFinite(ld.z)) {
+                    var lx = ld.x, lz = ld.z, ll = Math.sqrt(lx * lx + lz * lz);
+                    if (ll > 0.02) {
+                        guangX = -lx / ll;
+                        guangZ = -lz / ll;
+                    }
+                }
+            } catch (eG) {}
+            /* FP-R1 全身足迹投影（保留）+ 阴影投向=−地面光向 */
             var yaWanZu = (gongYong && gongYong.YA_WAN) || {};
             var tiaoZu = window.__yaWanTiao || {};
             var zuChangXiY = tiaoZu.zuChangXi != null ? tiaoZu.zuChangXi : (yaWanZu.zuChangXi != null ? yaWanZu.zuChangXi : 1.0);
             var changTou = 2 * s * zuChangXiY;
-            var touX = -Math.sin(psi), touZ = -Math.cos(psi); // 身体轴地面单位向量（铰链→全身足迹远端）
+            var touX = guangX, touZ = guangZ;
             var zhongXinJu = changTou * (0.5 + YIN_YING.pianYi);
             yinYingMesh.rotation.order = 'YXZ';
             yinYingMesh.rotation.y = psi;
@@ -2340,8 +2352,10 @@
                         /* FP-13 ③ 底边渐隐常驻注入（FP-10 深度浮雕注入已整段删除，本回调只改 alpha）。 */
                         mat.onBeforeCompile = function (sq) {
                             sq.uniforms.uWuDiBianJianYin = { value: DI_BIAN.jianYin };
-                            sq.fragmentShader = 'uniform float uWuDiBianJianYin;\n' + sq.fragmentShader
-                                .replace('#include <map_fragment>', '#include <map_fragment>\n' + DI_BIAN_JIAN_YIN_TI);
+                            sq.uniforms.uWuHuanJingSe = { value: 0.06 };
+                            sq.fragmentShader = 'uniform float uWuDiBianJianYin;uniform float uWuHuanJingSe;\n' + sq.fragmentShader
+                                .replace('#include <map_fragment>', '#include <map_fragment>\n' + DI_BIAN_JIAN_YIN_TI)
+                                .replace('#include <dithering_fragment>', 'diffuseColor.rgb*=mix(vec3(1.0),vec3(0.78,0.72,0.95),uWuHuanJingSe);\n#include <dithering_fragment>');
                         };
                         mat.customProgramCacheKey = function () { return 'wu-diBian-v1'; };
                         mesh = new gz.meshCtor(geo, mat);
