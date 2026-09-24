@@ -17,12 +17,12 @@ import {
 } from './CSS级联真源'
 
 /**
- * FP-04a（需求 #2 的前半）：认证卡片居中 + 登录/注册两态恒定滚动口。
+ * FP-04a（需求 #2 的前半）：认证卡片居中 + 登录/注册两态按需滚动口。
  *
  * 判据口径（FP-24b 立的规矩，本文件不拿「源码包含某字符串」冒充行为断言）：
  *  ①**探针取样自真实挂载结果**——两态各自 mount，滚动口元素的 class 列表直接来自 DOM。模板里
- *    只要把 `xuyao-gundong` 那套 JS 条件类写回来，探针立刻多出一枚类且切换两态类名不再恒定；再把
- *    私有 `.biaodan-gundong.xuyao-gundong{overflow-y:auto}` 加回来，注册态的层叠结果就变成 auto。
+ *    只要把认证滚动口改回 `scroll`，无溢出时就会占位；认证专属伪元素只允许作用域挂在滚动口上，
+ *    颜色恢复仍消费 global.css 既有滚动条令牌。
  *  ②**属性取值走层叠真源**——`CSS级联真源.层叠胜出` 按「命中 → 特异度 → 文档序」裁决，与书写
  *    位置/换行/块内声明先后无关；像素值一律由 `主题令牌真源.解析几何数值` 求 var() 与 calc()。
  *  ③真机像素级（条宽可辨、四档中心偏差 ≤4px）由后续取证工人复核，见 traces/FP-04a。
@@ -161,7 +161,7 @@ async function 挂载(moShi: 'dengLu' | 'zhuCe'): Promise<{ wrapper: VueWrapper;
 
 function 滚动口类(wrapper: VueWrapper): string[] {
   const 元 = wrapper.findAll('.biaodan-gundong')
-  expect(元.length, '滚动口宿主数量不是 1——恒定滚动口只有一个容器').toBe(1)
+  expect(元.length, '滚动口宿主数量不是 1——认证滚动口只有一个容器').toBe(1)
   return [...(元[0].element as HTMLElement).classList]
 }
 
@@ -188,18 +188,16 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-describe('FP-04a ①：登录与注册两态的滚动口恒在（不再由 JS 条件类决定）', () => {
+describe('FP-04a ①：登录与注册两态的认证滚动口按需出现（不改变宿主类契约）', () => {
   for (const moShi of ['dengLu', 'zhuCe'] as const) {
-    it(`${moShi} 态：滚动口层叠结果 overflow-y = scroll，宿主上不挂任何状态类`, async () => {
+    it(`${moShi} 态：滚动口层叠结果 overflow-y = auto，宿主上不挂任何状态类`, async () => {
       const { wrapper } = await 挂载(moShi)
       const 类 = 滚动口类(wrapper)
       expect(
         类.filter((名) => 名 !== 'biaodan-gundong'),
         'FP-04a 回归：滚动口宿主又长出了 JS 状态类（R2 的 xuyao-gundong 形态）',
       ).toEqual([])
-      expect(生效值('overflow-y', 类), '滚动口不是恒定可滚（要的是始终有，不是溢出才有）').toBe(
-        'scroll',
-      )
+      expect(生效值('overflow-y', 类), '滚动口不是按需可滚（无溢出时也会占滚动条）').toBe('auto')
       expect(生效值('min-height', 类), 'min-height 不为 0 ⇒ flex:1 缩不下去，溢出无人吸收').toBe('0')
       expect(生效值('flex', 类)).toBe('1')
       wrapper.unmount()
@@ -220,13 +218,17 @@ describe('FP-04a ①：登录与注册两态的滚动口恒在（不再由 JS �
     wrapper.unmount()
   })
 
-  it('认证视图内不存在第二份 ::-webkit-scrollbar 规则；单一真源仍只有 global.css 那一处', () => {
+  it('认证视图滚动条覆盖仅限滚动口，颜色恢复走 global.css 既有令牌', () => {
     const 滚动条选择器 = (源: string): string[] =>
       规则清单(剔帧(源))
         .flatMap((规则) => 拆分选择器组(规则.选择器))
         .filter((串) => 串.includes('::-webkit-scrollbar'))
         .map((串) => 串.trim())
-    expect(滚动条选择器(视图样式), 'FP-04a 回归：认证视图里又自带私有滚动条规则').toEqual([])
+    const 本地选择器 = 滚动条选择器(视图样式)
+    expect(本地选择器.length).toBeGreaterThan(0)
+    expect(本地选择器.every((串) => 串.startsWith('.biaodan-gundong'))).toBe(true)
+    expect(本地选择器.some((串) => 串.includes(':hover'))).toBe(true)
+    expect(本地选择器.some((串) => 串.includes(':focus-within'))).toBe(true)
     expect(滚动条选择器(全局样式).sort()).toEqual(
       [
         '::-webkit-scrollbar',
@@ -236,6 +238,8 @@ describe('FP-04a ①：登录与注册两态的滚动口恒在（不再由 JS �
         '::-webkit-scrollbar-track',
       ].sort(),
     )
+    expect(视图源).toMatch(/\.biaodan-gundong\s*\{[^}]*scrollbar-color:\s*transparent\s+transparent/)
+    expect(视图源).toMatch(/\.biaodan-gundong:hover,\s*\.biaodan-gundong:focus-within\s*\{[^}]*scrollbar-color:\s*var\(--gundong-tiao-huakuai\)\s+var\(--gundong-tiao-guidao\)/)
   })
 
   it('条宽 ≥7px 且浅/深两档同源（取值走令牌解析，不读源码字面量）', () => {
@@ -248,7 +252,7 @@ describe('FP-04a ①：登录与注册两态的滚动口恒在（不再由 JS �
   })
 })
 
-describe('FP-04a ②：R2 的三层滚动口收敛为「卡片圆角裁切 + 一层恒定滚动口」', () => {
+describe('FP-04a ②：R2 的三层滚动口收敛为「卡片圆角裁切 + 一层认证滚动口」', () => {
   it('中间层 .biaodan-neirong-qu 的 overflow:hidden 裁切层已删，且真的可被压缩', () => {
     const 类 = ['biaodan-neirong-qu']
     未声明('overflow', 类)

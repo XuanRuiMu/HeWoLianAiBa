@@ -210,7 +210,7 @@ describe('FP-02 ①：切换后 DOM 只存在目标表单（离场层随过渡�
     const 节 = document.createElement('style')
     节.dataset.fp02 = '1'
     节.textContent =
-      '.biaodan-qiehuan-leave-active{transition-property:opacity;transition-duration:0.5s}.biaodan-qiehuan-enter-active{transition-property:opacity;transition-duration:0.5s}'
+      '.biaodan-qiehuan-you-leave-active,.biaodan-qiehuan-zuo-leave-active{transition-property:opacity;transition-duration:0.5s}.biaodan-qiehuan-you-enter-active,.biaodan-qiehuan-zuo-enter-active{transition-property:opacity;transition-duration:0.5s}'
     document.head.appendChild(节)
     try {
       const wrapper = await 挂载('dengLu', true)
@@ -220,9 +220,12 @@ describe('FP-02 ①：切换后 DOM 只存在目标表单（离场层随过渡�
       )
       const 离场 = 含选择器的表单(wrapper, '#denglu-shoujihao')
       expect(离场, '离场层未进入过渡窗口（Transition 未接上 v-if/v-else 分支）').toBeDefined()
-      expect(离场!.classes()).toContain('biaodan-qiehuan-leave-active')
+      expect(离场!.classes()).toContain('biaodan-qiehuan-you-leave-active')
+      const 入场 = 含选择器的表单(wrapper, '#zhuce-shoujihao')
+      expect(入场).toBeDefined()
+      expect(入场!.classes()).toContain('biaodan-qiehuan-you-enter-active')
       await 等待帧(3)
-      expect(离场!.classes()).toContain('biaodan-qiehuan-leave-to')
+      expect(离场!.classes()).toContain('biaodan-qiehuan-you-leave-to')
       await new Promise((解决) => {
         setTimeout(解决, 700)
       })
@@ -250,7 +253,12 @@ describe('FP-02 ①：切换后 DOM 只存在目标表单（离场层随过渡�
       expect(表单们.length, '离场层未卸载 ⇒ 两套表单在 DOM 里重叠共存').toBe(1)
       expect(表单们[0].element.querySelector(起选择器), '上一表单残留').toBeNull()
       expect(表单们[0].element.querySelector(终选择器), '目标表单不在了').not.toBeNull()
-      for (const 类 of ['biaodan-qiehuan-leave-active', 'biaodan-qiehuan-enter-active'])
+      for (const 类 of [
+        'biaodan-qiehuan-you-leave-active',
+        'biaodan-qiehuan-you-enter-active',
+        'biaodan-qiehuan-zuo-leave-active',
+        'biaodan-qiehuan-zuo-enter-active',
+      ])
         expect(表单们[0].classes(), `过渡结束后仍挂着 ${类}`).not.toContain(类)
       if (终段) expect(wrapper.find(终段).exists(), '注册态三段日期控件未就位').toBe(true)
       wrapper.unmount()
@@ -310,45 +318,101 @@ describe('FP-02 ②：切换后焦点不残留上一表单（含段级焦点）'
   })
 })
 
-describe('FP-02 ③：过渡几何吃既有令牌；减动效档退化为无位移淡切', () => {
-  it('入场/离场位移由 --jiange-xiao 派生（无像素字面量），两档解析同值 8px', () => {
-    const 入场 = 层叠('transform', ['biaodan-qiehuan-enter-from'])
-    const 离场 = 层叠('transform', ['biaodan-qiehuan-leave-to'])
-    expect(/\d+(?:\.\d+)?px/i.test(入场), `入场位移含像素字面量：${入场}`).toBe(false)
-    expect(/\d+(?:\.\d+)?px/i.test(离场), `离场位移含像素字面量：${离场}`).toBe(false)
-    const 入场匹 = /translateY\(\s*var\(\s*(--[a-z-]+)\s*\)\s*\)/.exec(入场)
-    expect(入场匹, `入场位移不是单一令牌 translateY：${入场}`).not.toBeNull()
-    expect(入场匹![1]).toBe('--jiange-xiao')
+describe('FP-02 ③：过渡几何按目标模式横向派生；减动效档退化为无位移淡切', () => {
+  it('登录→注册向右、注册→登录向左，入场与离场反向且吃 --jiange-xiao', () => {
+    const 方向们 = [
+      ['you', 'translateX(var(--jiange-xiao))', 'translateX(calc(var(--jiange-xiao) * -1))'],
+      ['zuo', 'translateX(calc(var(--jiange-xiao) * -1))', 'translateX(var(--jiange-xiao))'],
+    ] as const
+    for (const [方向, 入场值, 离场值] of 方向们) {
+      const 入场 = 层叠('transform', [`biaodan-qiehuan-${方向}-enter-from`])
+      const 离场 = 层叠('transform', [`biaodan-qiehuan-${方向}-leave-to`])
+      expect(入场, `${方向} 入场位移不应含像素字面量`).toBe(入场值)
+      expect(离场, `${方向} 离场位移不应含像素字面量`).toBe(离场值)
+      expect(入场).not.toMatch(/translateY/)
+      expect(离场).not.toMatch(/translateY/)
+    }
     expect(解析几何数值('--jiange-xiao')).toBeGreaterThan(0)
-    const 离场匹 = /translateY\(\s*(calc\(.+\))\s*\)/.exec(离场)
-    expect(离场匹, `离场位移不是令牌派生 calc：${离场}`).not.toBeNull()
-    expect(离场匹![1], `离场位移必须是入场位移的反向：${离场匹![1]}`).toBe(
-      'calc(var(--jiange-xiao) * -1)',
-    )
     expect(求几何算式('calc(var(--jiange-xiao) * 1)')).toBe(解析几何数值('--jiange-xiao'))
+    const 过渡位移规则 = 规则清单(样式全).filter(
+      (规则) => 规则.选择器.includes('biaodan-qiehuan') && 规则.声明.has('transform'),
+    )
+    expect(过渡位移规则.length).toBeGreaterThan(0)
+    expect(过渡位移规则.some((规则) => 规则.声明.get('transform')?.includes('translateY'))).toBe(
+      false,
+    )
+  })
+
+  it('目标模式派生过渡名：注册→登录真实窗口使用 zuo 方向类', async () => {
+    const wrapper = await 挂载('zhuCe', true)
+    await 点标签(wrapper, 0)
+    const 离场 = 含选择器的表单(wrapper, '#zhuce-shoujihao')
+    const 入场 = 含选择器的表单(wrapper, '#denglu-shoujihao')
+    expect(离场).toBeDefined()
+    expect(入场).toBeDefined()
+    expect(离场!.classes()).toContain('biaodan-qiehuan-zuo-leave-active')
+    expect(入场!.classes()).toContain('biaodan-qiehuan-zuo-enter-active')
+    wrapper.unmount()
+  })
+
+  it('双向切换保留两表单已输入值', async () => {
+    const wrapper = await 挂载('dengLu')
+    const miMa = wrapper.find('#denglu-mima')
+    await miMa.setValue('dengLuBaoChi123')
+    await 点标签(wrapper, 1)
+    expect(wrapper.find('#zhuce-shoujihao').exists()).toBe(true)
+    await 点标签(wrapper, 0)
+    expect((wrapper.find('#denglu-mima').element as HTMLInputElement).value).toBe('dengLuBaoChi123')
+    wrapper.unmount()
+
+    const zhuCeWrapper = await 挂载('zhuCe')
+    const shouJiHao = zhuCeWrapper.find('#zhuce-shoujihao')
+    await shouJiHao.setValue('13800138000')
+    await 点标签(zhuCeWrapper, 0)
+    expect(zhuCeWrapper.find('#denglu-shoujihao').exists()).toBe(true)
+    await 点标签(zhuCeWrapper, 1)
+    expect((zhuCeWrapper.find('#zhuce-shoujihao').element as HTMLInputElement).value).toBe('13800138000')
+    zhuCeWrapper.unmount()
   })
 
   it('离场层脱流覆顶 + 禁交互：position:absolute / pointer-events:none 为层叠生效值，宿主为滚动口本体', () => {
-    expect(层叠('position', ['biaodan-qiehuan-leave-active'])).toBe('absolute')
-    expect(层叠('pointer-events', ['biaodan-qiehuan-leave-active'])).toBe('none')
-    expect(层叠('top', ['biaodan-qiehuan-leave-active'])).toBe('0')
+    for (const 类 of ['biaodan-qiehuan-you-leave-active', 'biaodan-qiehuan-zuo-leave-active']) {
+      expect(层叠('position', [类])).toBe('absolute')
+      expect(层叠('pointer-events', [类])).toBe('none')
+      expect(层叠('top', [类])).toBe('0')
+    }
     expect(层叠('position', ['biaodan-gundong'])).toBe('relative')
   })
 
-  it('淡切通道常挂：enter/leave-active 的 transition 生效值同时含 opacity 与 transform', () => {
-    for (const 类 of ['biaodan-qiehuan-enter-active', 'biaodan-qiehuan-leave-active']) {
+  it('淡切通道常挂：双向 enter/leave-active 的 transition 生效值同时含 opacity 与 transform', () => {
+    for (const 类 of [
+      'biaodan-qiehuan-you-enter-active',
+      'biaodan-qiehuan-you-leave-active',
+      'biaodan-qiehuan-zuo-enter-active',
+      'biaodan-qiehuan-zuo-leave-active',
+    ]) {
       const 值 = 层叠('transition', [类])
       expect(值, `${类} 未过渡 opacity ⇒ 退化为硬切`).toMatch(/opacity/)
       expect(值, `${类} 未过渡 transform ⇒ 位移档形同虚设`).toMatch(/transform/)
     }
   })
 
-  it('视图内条件块只此一档 prefers-reduced-motion（无视口条件块，与 FP-04b 同前提），其内位移归零、淡切不被掐', () => {
+  it('视图内条件块只此一档 prefers-reduced-motion（无视口条件块，与 FP-04b 同前提），其内双向位移归零、淡切不被掐', () => {
     expect(媒体段.map((段) => 段.条件)).toEqual(['(prefers-reduced-motion: reduce)'])
-    for (const 类 of ['biaodan-qiehuan-enter-from', 'biaodan-qiehuan-leave-to']) {
+    for (const 类 of [
+      'biaodan-qiehuan-you-enter-from',
+      'biaodan-qiehuan-you-leave-to',
+      'biaodan-qiehuan-zuo-enter-from',
+      'biaodan-qiehuan-zuo-leave-to',
+    ]) {
       expect(层叠('transform', [类], 减档表), `${类} 在减动效档仍有位移`).toBe('none')
     }
-    for (const 类 of ['biaodan-qiehuan-enter-active', 'biaodan-qiehuan-leave-active'])
+    for (const 类 of [
+      'biaodan-qiehuan-you-enter-active',
+      'biaodan-qiehuan-you-leave-active',
+      'biaodan-qiehuan-zuo-enter-active',
+      'biaodan-qiehuan-zuo-leave-active',
+    ])
       expect(
         层叠胜出(减档表, { 标签: 'div', 类, 属性: {} }, 'transition')?.值 ?? null,
         `${类} 的淡切在减动效档被掐成硬切`,
@@ -391,8 +455,8 @@ describe('FP-02 层叠判定的形态账本（判定盲区必须显式登记，F
 })
 
 describe('FP-02 ④：FP-03c / FP-04a / FP-04b 既有契约逐点复测', () => {
-  it('FP-04a：滚动口层叠结果不变（overflow-y:scroll、min-height:0、flex:1、无局部高度上界）', () => {
-    expect(层叠('overflow-y', ['biaodan-gundong'])).toBe('scroll')
+  it('FP-04a：滚动口层叠结果改为 auto（无溢出不占滚动条、溢出仍可滚），其余高度契约不变', () => {
+    expect(层叠('overflow-y', ['biaodan-gundong'])).toBe('auto')
     expect(层叠('min-height', ['biaodan-gundong'])).toBe('0')
     expect(层叠('flex', ['biaodan-gundong'])).toBe('1')
     expect(

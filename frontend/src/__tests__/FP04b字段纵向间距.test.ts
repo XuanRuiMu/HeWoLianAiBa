@@ -16,7 +16,7 @@ import { 拆分选择器组, 令牌名, 规则清单 } from './CSS级联真源'
  *  ① 间距数值由 variables.css 共用 `:root` 真源求出（`解析几何数值`），两档逐值相等；
  *  ② 几何量（标签 top/line-height、输入框 padding/border、组 margin）取自挂载后的 jsdom 层叠结果；
  *  ③ jsdom 无布局引擎 ⇒ 这里量的是「盒模型算式」。真机 getBoundingClientRect 由取证工人用
- *     tests/fp02-renzheng-juzhong-gundong.spec.ts 已有的三列（与下一项间隙 / 上一项底线→本标签顶 /
+ *     浏览器现场取证已有的三列（与下一项间隙 / 上一项底线→本标签顶 /
  *     标签底→输入文字顶）复采；本文件三列与那三列**逐字同定义**，预测值可与实测直接对照。
  *
  * 「太挤」有两个净空口径，都被钉在本文件：

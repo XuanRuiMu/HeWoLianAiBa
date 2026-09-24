@@ -11,9 +11,9 @@ import { duQuShuRuQuText, xieRuShuRuQu, fangZhiGuangBiao } from './输入区夹�
 import { huoQuFanYi } from '@/config/translations'
 
 /**
- * FP-10c 第⑤刀真机暴露缺陷 #1 的 jsdom 双钉之一（另一钉 = tests/fp05-shuru-quyu-he-gundong.spec.ts:547 真机）。
+ * FP-10c 第⑤刀真机暴露缺陷 #1 的 jsdom 双钉之一（另一钉由浏览器现场取证）。
  *
- * 现场（.agents/evidence/traces/FP-10c5-Playwright改判收尾-20260923.md 缺陷2）：
+ * 现场（FP-10c5 浏览器取证）：
  * 点 .zhan-kai-anniu 把输入区撑开后，再把内容换成短内容，`.zhan-kai` 类不移除（暗/浅两档、两视口全复现）
  * ⇒ 展开态不退回收。根因：FP-10c 把 use输入框.ts 的 JS 量高链删成纯 CSS 两档时，
  * 连带删掉了「内容变化 ⇒ 重新判定还需要不需要展开档」这一条**复位触发源**，

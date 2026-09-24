@@ -54,7 +54,7 @@
 | **AI** | DeepSeek & other LLMs (`AI引擎.ts`) + Prompt builder + sentiment analysis + conversation summaries + key-event extraction |
 | **Multimodal** | TTS / ASR / image generation / video understanding (Alibaba Cloud & other vendors) |
 | **Deploy** | Docker Compose + nginx + Let's Encrypt (`deploy/`) |
-| **Engineering** | husky + commitlint + gitleaks (secret scanning) + CI + Playwright E2E + Vitest |
+| **Engineering** | husky + commitlint + gitleaks (secret scanning) + CI + Vitest |
 
 ---
 
@@ -141,11 +141,8 @@ HeWoLianAiBa/
 
 ```bash
 npm --prefix frontend test          # Vitest unit + component tests
-npm --prefix frontend run test:e2e  # Playwright E2E (fp-*.spec.ts full journeys)
 npm --prefix backend test           # backend unit / integration
 ```
-
-Frontend E2E covers the full user journey: auth → chat → friends → advisor → challenges → wrap-up (see `frontend/tests/`).
 
 ---
 

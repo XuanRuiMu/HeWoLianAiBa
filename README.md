@@ -54,7 +54,7 @@
 | **AI** | DeepSeek 等 LLM 接入（`AI引擎.ts`）+ Prompt 构建器 + 情感分析 + 对话摘要 + 关键事件提取 |
 | **多模态** | TTS / ASR / 图像生成 / 视频理解（阿里云等供应商接入）|
 | **部署** | Docker Compose + nginx + Let's Encrypt（`deploy/`）|
-| **工程规范** | husky + commitlint + gitleaks（密钥扫描）+ CI + Playwright E2E + Vitest |
+| **工程规范** | husky + commitlint + gitleaks（密钥扫描）+ CI + Vitest |
 
 ---
 
@@ -141,11 +141,8 @@ HeWoLianAiBa/
 
 ```bash
 npm --prefix frontend test          # Vitest 单测 + 组件测试
-npm --prefix frontend run test:e2e  # Playwright E2E（fp-*.spec.ts 全流程）
 npm --prefix backend test           # 后端单元 / 集成测试
 ```
-
-前端 E2E 覆盖完整用户旅程：认证 → 聊天 → 好友 → 军师 → 挑战 → 收尾（见 `frontend/tests/`）。
 
 ---
 

@@ -83,6 +83,23 @@ function 环声明清单(文件: '账号' | '战绩') {
   return 环声明清单of源(视图源码[视图别名[文件]])
 }
 
+const 认证撤环选择器 = [
+  '.denglu-neirong :deep(.fenlie-shuru):focus-visible',
+  '.denglu-neirong :deep(.duan-shuru):focus-visible',
+] as const
+
+function 是认证输入撤环(文件: string, 条: { 属性: string; 值: string }) {
+  if (文件 !== '登录内容.vue' || 条.属性 !== 'outline' || 条.值 !== 'none') return false
+  return 规则清单(视图源码[文件]).some(
+    (块) =>
+      块.选择器
+        .split(',')
+        .map((选择器) => 选择器.trim())
+        .some((选择器) => 认证撤环选择器.includes(选择器 as (typeof 认证撤环选择器)[number])) &&
+      块.声明.get('outline') === 'none',
+  )
+}
+
 type RGB = [number, number, number]
 
 function 解析色(值: string): { rgb: RGB; alpha: number } {
@@ -128,7 +145,7 @@ function 对比度(a: RGB, b: RGB): number {
 }
 
 describe('FP-22e 声明文法：本地 outline 环只剩令牌一种写法', () => {
-  it('全部视图每一条 outline / outline-offset / outline-width 声明的取值全部来自 --jujiao-huan-* 族', () => {
+  it('除认证输入本地撤环外，全部视图 outline 声明取值来自 --jujiao-huan-* 族', () => {
     const 允许值 = new Set<string>([
       ...Object.values(环),
       偏移.标准,
@@ -139,22 +156,30 @@ describe('FP-22e 声明文法：本地 outline 环只剩令牌一种写法', () 
     for (const 文件 of 视图清单) {
       for (const 条 of 环声明清单of源(视图源码[文件])) {
         expect(
-          允许值.has(条.值),
+          允许值.has(条.值) || 是认证输入撤环(文件, 条),
           `${文件} 视图残留非令牌环声明：${条.属性}: ${条.值}`,
         ).toBe(true)
       }
     }
   })
 
-  it('全视图 outline:none 与四套并行环色（--yeLv/--taoTu/#ffd500/#ff2d95）在环声明中归零', () => {
+  it('认证输入撤环是唯一 outline:none 豁免，其他撤环与并行环色归零', () => {
     for (const 文件 of 视图清单) {
       for (const 条 of 环声明清单of源(视图源码[文件])) {
+        if (是认证输入撤环(文件, 条)) continue
         expect(条.值, `${文件} 视图仍有撤环写法`).not.toMatch(/none|0/)
         expect(条.值, `${文件} 视图环声明仍混用并行环色`).not.toMatch(
           /#|--yeLv|--taoTu|\d+px/,
         )
       }
     }
+    const 规则 = 规则清单(视图源码['登录内容.vue']).find((项) =>
+      项.选择器
+        .split(',')
+        .map((选择器) => 选择器.trim())
+        .some((选择器) => 认证撤环选择器.includes(选择器 as (typeof 认证撤环选择器)[number])),
+    )
+    expect(规则?.声明.get('outline')).toBe('none')
   })
 
   it('收口点总数 = 14 条收口 + 1 条按控件类型拆档新增 + 1 条减动效长写法（少一条即有点跑掉）', () => {
@@ -453,7 +478,7 @@ const 状态环违规账本: { 键: string; 归属: string; 理由: string }[] =
 describe('FP-24a ④ 扩面：outline 声明点在全部视图被冻结成账本', () => {
   const 收口视图计数: Record<string, number> = {
     '过往战绩.vue': 5, // 3 outline + 2 outline-offset（FP-22e 收口）
-    '登录内容.vue': 2, // 1 + 1（FP-03 交付）
+    '登录内容.vue': 3, // 2 + 1（FP-03 交付 + FP-01 认证输入撤环）
     '账号与安全.vue': 25, // 12 + 12 + 1 条减动效长写法（FP-22e 收口）
   }
 

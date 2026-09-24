@@ -10,14 +10,10 @@
     "lint": "eslint . --fix",
     "format": "prettier --write src/",
     "test": "vitest run",
-    "test:e2e": "playwright test",
-    "test:console": "playwright test tests/console-errors.spec.ts",
-    "test:upgrade": "npx npm-check-updates -u -f '@playwright/test' && npm i && npx playwright install",
     "generate-icons": "node scripts/generate-pwa-icons.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.63.0",
     "@types/three": "^0.186.0",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vitest/coverage-v8": "^5.0.0",
@@ -28,7 +24,6 @@
     "eslint-plugin-vue": "^10.11.0",
     "globals": "^17.6.0",
     "jsdom": "^30.0.1",
-    "npm-check-updates": "^23.1.0",
     "prettier": "^3.8.3",
     "sharp": "^0.35.4",
     "typescript": "^6.0.3",

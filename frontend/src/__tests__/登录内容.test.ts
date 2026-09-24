@@ -462,6 +462,129 @@ describe('登录内容组件', () => {
     expect(miMaZu?.classList.contains('shangFu')).toBe(true)
   })
 
+  it('FP-01：DOM晚填且无input/change/animationstart时，认证容器focusin同步登录按钮状态', async () => {
+    const { wrapper } = await mountZuJian('dengLu')
+    const shouJiHao = wrapper.find('#denglu-shoujihao').element as HTMLInputElement
+    const miMa = wrapper.find('#denglu-mima').element as HTMLInputElement
+    shouJiHao.value = '13800138000'
+    miMa.value = 'password123'
+
+    const dengLuAnNiu = wrapper.find('form button[type="submit"]')
+    expect((dengLuAnNiu.element as HTMLButtonElement).disabled).toBe(true)
+
+    wrapper.find('.biaodan-rongqi').element.dispatchEvent(new Event('focusin', { bubbles: true }))
+    await flushPromises()
+
+    expect((dengLuAnNiu.element as HTMLButtonElement).disabled).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('FP-01：DOM清空且无input/change/animationstart时同步清空登录按钮状态', async () => {
+    const { wrapper } = await mountZuJian('dengLu')
+    const shouJiHao = wrapper.find('#denglu-shoujihao')
+    const miMa = wrapper.find('#denglu-mima')
+    await shouJiHao.setValue('13800138000')
+    await miMa.setValue('password123')
+    await flushPromises()
+
+    const dengLuAnNiu = wrapper.find('form button[type="submit"]')
+    const miMaZu = miMa.element.closest('.shuru-zu')
+    expect((dengLuAnNiu.element as HTMLButtonElement).disabled).toBe(false)
+    expect(miMaZu?.classList.contains('shangFu')).toBe(true)
+
+    const shouJiHaoYuanSu = shouJiHao.element as HTMLInputElement
+    const miMaYuanSu = miMa.element as HTMLInputElement
+    shouJiHaoYuanSu.value = ''
+    miMaYuanSu.value = ''
+    wrapper.find('.biaodan-rongqi').element.dispatchEvent(new Event('focusin', { bubbles: true }))
+    await flushPromises()
+
+    expect((dengLuAnNiu.element as HTMLButtonElement).disabled).toBe(true)
+    expect(miMaZu?.classList.contains('shangFu')).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('FP-01：已聚焦后无事件晚填在pointerdown或键盘提交前同步登录按钮', async () => {
+    const 验证 = async (事件: 'pointerdown' | 'keydown') => {
+      const { wrapper } = await mountZuJian('dengLu')
+      try {
+        const shouJiHao = wrapper.find('#denglu-shoujihao')
+        const miMa = wrapper.find('#denglu-mima')
+        const shouJiHaoYuanSu = shouJiHao.element as HTMLInputElement
+        const miMaYuanSu = miMa.element as HTMLInputElement
+        shouJiHaoYuanSu.focus()
+        await flushPromises()
+        expect(document.activeElement).toBe(shouJiHaoYuanSu)
+        shouJiHaoYuanSu.value = '13800138000'
+        miMaYuanSu.value = 'password123'
+
+        const dengLuAnNiu = wrapper.find('form button[type="submit"]')
+        expect((dengLuAnNiu.element as HTMLButtonElement).disabled).toBe(true)
+
+        if (事件 === 'pointerdown') {
+          dengLuAnNiu.element.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+        } else {
+          shouJiHao.element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+        }
+        await flushPromises()
+
+        expect((dengLuAnNiu.element as HTMLButtonElement).disabled).toBe(false)
+      } finally {
+        wrapper.unmount()
+      }
+    }
+
+    await 验证('pointerdown')
+    await 验证('keydown')
+  })
+
+  it('FP-01：首帧同步会捕获挂载后无事件填入的值', async () => {
+    const yuanShiRequestAnimationFrame = window.requestAnimationFrame
+    const huDong: FrameRequestCallback[] = []
+    window.requestAnimationFrame = ((huoDiao: FrameRequestCallback) => {
+      huDong.push(huoDiao)
+      return huDong.length
+    }) as typeof window.requestAnimationFrame
+    try {
+      const { wrapper } = await mountZuJian('dengLu')
+      const shouJiHao = wrapper.find('#denglu-shoujihao').element as HTMLInputElement
+      const miMa = wrapper.find('#denglu-mima').element as HTMLInputElement
+      shouJiHao.value = '13800138000'
+      miMa.value = 'password123'
+
+      for (const huoDiao of huDong) huoDiao(0)
+      await flushPromises()
+
+      const dengLuAnNiu = wrapper.find('form button[type="submit"]')
+      expect((dengLuAnNiu.element as HTMLButtonElement).disabled).toBe(false)
+      wrapper.unmount()
+    } finally {
+      window.requestAnimationFrame = yuanShiRequestAnimationFrame
+    }
+  })
+
+  it('FP-01：页面恢复事件会重新同步无事件晚填值', async () => {
+    const { wrapper } = await mountZuJian('dengLu')
+    const shouJiHao = wrapper.find('#denglu-shoujihao').element as HTMLInputElement
+    const miMa = wrapper.find('#denglu-mima').element as HTMLInputElement
+    shouJiHao.value = '13800138000'
+    miMa.value = 'password123'
+
+    const dengLuAnNiu = wrapper.find('form button[type="submit"]')
+    window.dispatchEvent(new Event('pageshow'))
+    await flushPromises()
+
+    expect((dengLuAnNiu.element as HTMLButtonElement).disabled).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('FP-01：认证输入不绘制蓝色焦点环，非认证全局焦点规则保持不变', () => {
+    expect(登录内容样式).toMatch(
+      /\.denglu-neirong :deep\(\.fenlie-shuru\):focus-visible,\s*\.denglu-neirong :deep\(\.duan-shuru\):focus-visible\s*\{[^}]*outline:\s*none/,
+    )
+    expect(全局基线样式).toMatch(/\.fenlie-shuru\s*\)\s*:focus-visible\s*\{[^}]*outline:/)
+  })
+
   it('FP-02：显隐切换保持上浮且值不丢（登录/注册一致）', async () => {
     const { wrapper: dengLuWrapper } = await mountZuJian('dengLu')
     const dengLuMiMa = dengLuWrapper.find('#denglu-mima')
@@ -519,14 +642,14 @@ describe('登录内容组件', () => {
     expect(登录内容源码).not.toMatch(/zhuce-gundong-qiangzhi/)
   })
 
-  it('FP-02→FP-04a：认证视图不再自带任何 ::-webkit-scrollbar 规则，滚动条外观单一真源在 global.css', () => {
-    // 旧契约（FP-02）钉的是「私有 .biaodan-gundong.xuyao-gundong::-webkit-scrollbar 三件套要引用 FP-01 令牌」；
-    // FP-04a 把 JS 条件类连同类里的四条私有滚动条规则一并删除 ⇒ 旧选择器已不存在，按新契约改为「视图内零定义点」。
+  it('FP-02→FP-04a：认证滚动口使用 auto，认证专属滚动条规则只作用域自身', () => {
     const 视图滚动条规则 = 规则清单(登录内容样式)
       .flatMap((规则) => 拆分选择器组(规则.选择器))
       .filter((串) => 串.includes('::-webkit-scrollbar'))
-    expect(视图滚动条规则, 'FP-04a 回归：登录内容里又出现第二处滚动条定义').toEqual([])
-    expect(登录内容样式).not.toMatch(/::-webkit-scrollbar\s*\{\s*width:\s*3px/)
+    expect(视图滚动条规则.length).toBeGreaterThan(0)
+    expect(视图滚动条规则.every((串) => 串.trim().startsWith('.biaodan-gundong'))).toBe(true)
+    expect(视图滚动条规则.some((串) => 串.includes(':hover'))).toBe(true)
+    expect(视图滚动条规则.some((串) => 串.includes(':focus-within'))).toBe(true)
     expect(登录内容样式).not.toMatch(/::-webkit-scrollbar[a-z-]*\s*\{[^}]*rgba\(/)
     expect(
       登录内容源码.slice(0, 登录内容源码.indexOf('<script')),
@@ -539,7 +662,29 @@ describe('登录内容组件', () => {
         .filter((串) => 串.trim() === '::-webkit-scrollbar').length,
       'global.css 的滚动条单一真源不在了',
     ).toBe(1)
-    expect(样式块(登录内容样式, '.biaodan-gundong')).toMatch(/overflow-y:\s*scroll/)
+    expect(样式块(登录内容样式, '.biaodan-gundong')).toMatch(/overflow-y:\s*auto/)
+    expect(样式块(登录内容样式, '.biaodan-gundong')).toMatch(/overflow-x:\s*hidden/)
+  })
+
+  it('FP-04a：认证滚动口空闲隐藏，hover 与 focus-within 恢复全局滚动条令牌', () => {
+    expect(登录内容样式).toMatch(
+      /\.biaodan-gundong\s*\{[^}]*overflow-y:\s*auto[^}]*scrollbar-color:\s*transparent\s+transparent/,
+    )
+    expect(登录内容样式).toMatch(
+      /\.biaodan-gundong::\-webkit-scrollbar-track\s*\{[^}]*background:\s*transparent/,
+    )
+    expect(登录内容样式).toMatch(
+      /\.biaodan-gundong::\-webkit-scrollbar-thumb\s*\{[^}]*background:\s*transparent/,
+    )
+    expect(登录内容样式).toMatch(
+      /\.biaodan-gundong:hover,\s*\.biaodan-gundong:focus-within\s*\{[^}]*scrollbar-color:\s*var\(--gundong-tiao-huakuai\)\s+var\(--gundong-tiao-guidao\)/,
+    )
+    expect(登录内容样式).toMatch(
+      /\.biaodan-gundong:hover::\-webkit-scrollbar-track,\s*\.biaodan-gundong:focus-within::\-webkit-scrollbar-track\s*\{[^}]*background:\s*var\(--gundong-tiao-guidao\)/,
+    )
+    expect(登录内容样式).toMatch(
+      /\.biaodan-gundong:hover::\-webkit-scrollbar-thumb,\s*\.biaodan-gundong:focus-within::\-webkit-scrollbar-thumb\s*\{[^}]*background:\s*var\(--gundong-tiao-huakuai\)/,
+    )
   })
 
   it('FP-02→FP-04b：表单项垂直节奏——字段间距走派生令牌、上浮标签留出间距', () => {

@@ -231,7 +231,7 @@ const 夹逼页底: Record<主题档, { 名: string; 底: RGB; 真实: boolean }
 }
 
 function 源码清单(相对目录 = ''): string[] {
-  const 跳过 = new Set(['node_modules', 'dist', '__tests__', 'coverage', 'playwright-report'])
+  const 跳过 = new Set(['node_modules', 'dist', '__tests__', 'coverage'])
   const 出: string[] = []
   const 走 = (目录: string): void => {
     for (const 项 of readdirSync(目录, { withFileTypes: true })) {

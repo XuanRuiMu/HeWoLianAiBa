@@ -35,7 +35,7 @@ AuthLayout.vue (父布局: 左侧动画 + 右侧内容区)
 
 ## 其他规则
 
-- Playwright MCP 测试截图统一保存到和我恋爱吧/测试截图目录
+- 浏览器 MCP 测试截图统一保存到和我恋爱吧/测试截图目录
 
 ## GitHub 备份规则
 
@@ -66,7 +66,7 @@ AuthLayout.vue (父布局: 左侧动画 + 右侧内容区)
 总控制台推送前会自动清理以下过程性文件（配置在 `GIT_REPOS` 的 `清理路径` 与 `日志清理路径` 中）：
 
 - 编译产物：`backend/node_modules`、`frontend/node_modules`、`frontend/dist`、`backend/dist`、`frontend/eslint-report.json`、`frontend/tsconfig.tsbuildinfo`
-- 日志与测试产物：`tests`、`frontend/test-results`、`frontend/playwright-report`、`测试截图`
+- 日志与测试产物：`tests`、`测试截图`
 
 若开发过程中产生新的过程性文件类型，应同步补充到本项目的 `.gitignore` 以及总控制台 `GIT_REPOS` 对应条目的清理路径中。
 

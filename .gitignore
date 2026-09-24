@@ -10,11 +10,8 @@ deploy/certbot/
 可以优化的地方.txt
 小米MiMo人设词.md
 /tests/
-test-results/
-playwright-report/
 *.tsbuildinfo
 测试截图/
-e2e/.fu-wu-zhuang-tai.json
 coverage/
 
 # 运行时日志/截图（不入库，避免总控制台 git add -A 误带）
@@ -46,12 +43,3 @@ backend/.env.example
 
 # 循环工程过程性文件，不入库
 /PROGRESS.md
-
-# FP-31 H4（第三波 Standards 轴·工作区卫生）：Playwright 取证产物目录的带后缀变体。
-# 上面的 test-results/ 与 playwright-report/ 只匹配**同名**目录，复跑取证时按 FP-24c/L-10 纪律
-# 换出的 `test-results-fp24d/`、`playwright-report-fpXX/` 一类变体此前漏网 ⇒ 总控制台 `git add -A`
-# 会把过程产物一并入库（L-08 同族风险）。派生 config `playwright.config-fp*.ts` **不**忽略：
-# 它们是可复跑门禁的组成部分，哪些属临时留档见 .agents/evidence/traces/FP-31-20260922.md
-frontend/test-results*/
-frontend/playwright-report*/
-frontend/tests/test-results*/

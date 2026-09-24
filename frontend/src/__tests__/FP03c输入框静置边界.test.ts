@@ -1,12 +1,14 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { compileStyle } from '@vue/compiler-sfc'
 import { describe, expect, it, afterEach, vi } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
 import 登录内容 from '@/views/登录内容.vue'
-import { 按档解析全部, 声明位置, 塌陷令牌清单, 解析几何数值, type 主题档 } from './主题令牌真源'
-import { 令牌名 } from './CSS级联真源'
+import { 使用认证表单仓库 } from '@/stores/认证表单'
+import { 按档解析全部, 声明位置, 塌陷令牌清单, type 主题档 } from './主题令牌真源'
+import { 令牌名, 读取全局基线 } from './CSS级联真源'
 
 /**
  * FP-03c：FP-03 为治理需求 #1 删掉 `.dixian-dixian` 装饰线后引入的两个可用性回归。
@@ -108,7 +110,40 @@ function 注入样式(档: 主题档): () => void {
   }
 }
 
-async function 挂载登录(档: 主题档): Promise<{ wrapper: VueWrapper; 清理: () => void }> {
+function 编译认证样式(作用域: string): string {
+  const 结果 = compileStyle({
+    source: 视图样式源,
+    filename: resolve(__dirname, '../views/登录内容.vue'),
+    id: 作用域,
+    scoped: true,
+  })
+  expect(结果.errors).toEqual([])
+  return 结果.code
+}
+
+function 注入编译认证样式(根: Element, 档: 主题档): () => void {
+  const 作用域 = [...根.attributes].find((属性) => 属性.name.startsWith('data-v-'))?.name
+  expect(作用域, '认证视图根节点缺少 scoped 属性').toBeDefined()
+  if (!作用域) throw new Error('认证视图根节点缺少 scoped 属性')
+  const 节 = document.createElement('style')
+  节.dataset.fp03c = '1'
+  节.textContent = [
+    readFileSync(resolve(__dirname, '../styles/variables.css'), 'utf8'),
+    读取全局基线().replace(/@import[^;]+;/, ''),
+    编译认证样式(作用域),
+  ].join('\n')
+  document.head.appendChild(节)
+  document.documentElement.setAttribute('data-theme', 档)
+  return () => {
+    节.remove()
+    document.documentElement.removeAttribute('data-theme')
+  }
+}
+
+async function 挂载登录(
+  档: 主题档,
+  moShi: 'dengLu' | 'zhuCe' = 'dengLu',
+): Promise<{ wrapper: VueWrapper; 清理: () => void }> {
   const 路由: Router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -116,7 +151,9 @@ async function 挂载登录(档: 主题档): Promise<{ wrapper: VueWrapper; 清�
       { path: '/login', name: 'dengLu', component: 登录内容 },
     ],
   })
-  setActivePinia(createPinia())
+  const pinia = createPinia()
+  setActivePinia(pinia)
+  使用认证表单仓库().moShi = moShi
   const wrapper = mount(登录内容, { attachTo: document.body, global: { plugins: [路由] } })
   await flushPromises()
   return { wrapper, 清理: 注入样式(档) }
@@ -204,47 +241,55 @@ describe('FP-03c ①：未聚焦输入框必须有「可见但不刺眼」的静
   })
 })
 
-describe('FP-03c ②：焦点环上边线不得穿过上浮标签字脚', () => {
-  const 环宽 = 解析几何数值('--jujiao-huan-kuan-du-wenben')
-  const 环偏 = 解析几何数值('--jujiao-huan-pian-yi-wenben')
+describe('FP-01：认证输入不绘制焦点环，浮标签与光标承担焦点状态', () => {
+  it('认证输入的 focus-visible 规则同时覆盖普通字段与分段 input', () => {
+    expect(视图样式源).toMatch(
+      /\.denglu-neirong :deep\(\.fenlie-shuru\):focus-visible,\s*\.denglu-neirong :deep\(\.duan-shuru\):focus-visible\s*\{\s*outline:\s*none/,
+    )
+  })
 
-  it('窄环仍是 1px 零偏移——解法只能是标签留缺口，不许把环推远', () => {
-    expect(环偏, 'outline-offset 被加大＝把缺陷搬走而不是修掉（派单明令禁止）').toBe(0)
-    expect(环宽, '窄环宽度不再吃 --jujiao-huan-kuan-du-wenben 的 1px').toBe(1)
+  it('真实注册 DOM：分段 input 无可见 outline，非认证文本 input 仍保留全局焦点环', async () => {
+    const { wrapper, 清理: 清理原样 } = await 挂载登录('dark', 'zhuCe')
+    const 根 = wrapper.find('.denglu-neirong').element
+    const 清理编译 = 注入编译认证样式(根, 'dark')
+    let 非认证输入: HTMLInputElement | null = null
+    try {
+      const 认证输入们 = [
+        wrapper.find('#zhuce-shoujihao').element as HTMLInputElement,
+        wrapper.find('#zhuce-chushengriqi-yue').element as HTMLInputElement,
+      ]
+      for (const 输入 of 认证输入们) {
+        输入.focus()
+        await flushPromises()
+        expect(计算(输入).outline, '认证文本 input 的可见焦点环未撤掉').toBe('none')
+      }
+      非认证输入 = document.createElement('input')
+      document.body.appendChild(非认证输入)
+      非认证输入.focus()
+      await flushPromises()
+      const 非认证样式 = 计算(非认证输入)
+      expect(非认证样式.outline, '非认证文本 input 的全局焦点环被误撤').toMatch(/\bsolid\b/)
+      expect(Number.parseFloat(非认证样式.outlineWidth)).toBeGreaterThan(0)
+    } finally {
+      非认证输入?.remove()
+      清理编译()
+      清理原样()
+      wrapper.unmount()
+    }
   })
 
   for (const 档 of ['light', 'dark'] as 主题档[]) {
-    it(`${档} 档：上浮标签的衬底盒完整盖住环带，并留 ≥1px 富余`, async () => {
+    it(`${档} 档：聚焦后认证输入仍进入上浮态，标签衬底保持可读`, async () => {
       const { wrapper, 清理 } = await 挂载登录(档)
       await wrapper.find('#denglu-shoujihao').trigger('focus')
       await flushPromises()
       const 组 = wrapper.find('#denglu-shoujihao').element.parentElement as HTMLElement
       expect(组.classList.contains('shangFu'), '聚焦后标签未进入上浮态，取样无效').toBe(true)
       const 标 = 计算(组.querySelector('.fudong-biaoqian'))
-      expect(标.position, '标签不再是定位元素，衬底盖不住环').toBe('absolute')
-      const 上 = 像素(标.top, 'top')
-      const 高 = 像素(标.lineHeight, 'line-height')
-      const 环上沿 = -环宽 - 环偏
-      expect(上, `标签盒上沿 ${上} 没盖住环带上沿 ${环上沿}`).toBeLessThanOrEqual(环上沿 - 1)
-      expect(上 + 高, `标签盒下沿 ${上 + 高} 没盖住环带下沿 0`).toBeGreaterThanOrEqual(1)
-      清理()
-      wrapper.unmount()
-    })
-
-    it(`${档} 档：衬底色与卡面同一枚令牌且不透明，缺口左右留白不吃掉文字起线`, async () => {
-      const { wrapper, 清理 } = await 挂载登录(档)
-      const 组 = (wrapper.find('#denglu-shoujihao').element as HTMLElement)
-        .parentElement as HTMLElement
-      const 标 = 计算(组.querySelector('.fudong-biaoqian'))
+      expect(标.position, '标签不再是定位元素，衬底不可用').toBe('absolute')
       const 令牌 = 令牌名(标.backgroundColor, 'background-color')
       expect(令牌, '标签衬底与卡面不是同一枚令牌（缺口会露出色差）').toBe('--renzheng-mian-se')
-      expect(解析色(令牌表[档].get(令牌) as string).alpha, '半透明衬底盖不住环').toBe(1)
-      const 左内边距 = 像素(标.paddingLeft, 'padding-left')
-      expect(左内边距, '衬底没有横向留白，环仍在字脚起笔处穿过').toBeGreaterThanOrEqual(2)
-      expect(像素(标.marginLeft, 'margin-left'), '留白没被 margin 抵消，标签文字会与输入文字错开').toBe(
-        -左内边距,
-      )
-      expect(像素(标.paddingRight, 'padding-right'), '右半边留白不对称').toBeGreaterThanOrEqual(左内边距)
+      expect(解析色(令牌表[档].get(令牌) as string).alpha, '半透明衬底不可用').toBe(1)
       清理()
       wrapper.unmount()
     })
@@ -254,8 +299,8 @@ describe('FP-03c ②：焦点环上边线不得穿过上浮标签字脚', () => 
     const { wrapper, 清理 } = await 挂载登录('dark')
     const 输入框元素 = wrapper.find('#denglu-shoujihao').element as HTMLElement
     const 组 = 输入框元素.parentElement as HTMLElement
-    expect(像素(计算(组).paddingTop, 'padding-top'), '宿主组有上内边距，标签 top 与环不同源').toBe(0)
-    expect(像素(计算(输入框元素).marginTop, 'margin-top'), '输入框有上外边距，标签 top 与环不同源').toBe(0)
+    expect(像素(计算(组).paddingTop, 'padding-top'), '宿主组有上内边距，标签与输入原点分叉').toBe(0)
+    expect(像素(计算(输入框元素).marginTop, 'margin-top'), '输入框有上外边距，标签与输入原点分叉').toBe(0)
     清理()
     wrapper.unmount()
   })

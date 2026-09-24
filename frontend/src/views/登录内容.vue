@@ -1,6 +1,12 @@
 <template>
   <div class="denglu-neirong">
-    <div ref="biaodanRongqi" class="biaodan-rongqi">
+    <div
+      ref="biaodanRongqi"
+      class="biaodan-rongqi"
+      @focusin="tongBuSuoYouHuiTian"
+      @pointerdown.capture="tongBuSuoYouHuiTian"
+      @keydown.capture="tongBuSuoYouHuiTian"
+    >
       <div class="juanzhou-gan juanzhou-gan-shang" />
       <div class="biaodan-neirong-qu">
         <div class="biaodan-tou">
@@ -35,8 +41,12 @@
             {{ cuoWuXinXi }}
           </div>
 
-          <Transition name="biaodan-qiehuan">
-          <form v-if="moShi === 'dengLu'" key="dengLu" @submit.prevent="zhiXingDengLu">
+          <Transition :name="qieHuanDongHua">
+          <form
+            v-if="moShi === 'dengLu'"
+            key="dengLu"
+            @submit.prevent="zhiXingDengLu"
+          >
               <div class="shuru-zu" :class="{ shangFu: dengLuShouJiShangFu }">
                 <input
                   id="denglu-shoujihao"
@@ -163,7 +173,11 @@
                 }}
               </button>
           </form>
-          <form v-else key="zhuCe" @submit.prevent="zhiXingZhuCe">
+          <form
+            v-else
+            key="zhuCe"
+            @submit.prevent="zhiXingZhuCe"
+          >
               <div class="shuru-zu" :class="{ shangFu: zhuCeShouJiShangFu }">
                 <input
                   id="zhuce-shoujihao"
@@ -382,6 +396,8 @@ const router = useRouter()
 type MoShiLeiXing = 'dengLu' | 'zhuCe'
 const fuMoShi = inject<Ref<MoShiLeiXing>>('denglu-moshi', ref(bd.moShi))
 const moShi = ref<MoShiLeiXing>(bd.moShi)
+const qieHuanFangXiang = ref<'you' | 'zuo'>('you')
+const qieHuanDongHua = computed(() => `biaodan-qiehuan-${qieHuanFangXiang.value}`)
 
 watch(moShi, (xinMoShi) => {
   bd.moShi = xinMoShi
@@ -516,8 +532,8 @@ function tongBuSuoYouHuiTian() {
     const muBiao = fuDongZhiYingShe[xiang.ziDuanMing]
     const ziDongBiaoZhi = fuDongZiDongYingShe[xiang.ziDuanMing]
     const shiJiZhi = yuanSu.value ?? ''
-    if (shiJiZhi.length > 0 && muBiao.value !== shiJiZhi) muBiao.value = shiJiZhi
-    if (shiJiZhi.length > 0) ziDongBiaoZhi.value = true
+    if (muBiao.value !== shiJiZhi) muBiao.value = shiJiZhi
+    ziDongBiaoZhi.value = shiJiZhi.length > 0
     try {
       if (yuanSu.matches(':-webkit-autofill')) ziDongBiaoZhi.value = true
     } catch {
@@ -525,6 +541,12 @@ function tongBuSuoYouHuiTian() {
     }
   }
 }
+
+function tongBuYeMianKeJianXing() {
+  if (document.visibilityState === 'visible') tongBuSuoYouHuiTian()
+}
+
+let shouZhenTongBuId: number | null = null
 
 const dengLuMiMaShuRuKuang = ref<HTMLInputElement | null>(null)
 const zhuCeMiMaShuRuKuang = ref<HTMLInputElement | null>(null)
@@ -581,6 +603,7 @@ watch(zhuCeChuShengRiQi, (val) => (bd.zhuCeChuShengRiQi = val))
 
 function qieHuanMoShi(xinMoShi: MoShiLeiXing) {
   if (xinMoShi === moShi.value) return
+  qieHuanFangXiang.value = xinMoShi === 'zhuCe' ? 'you' : 'zuo'
   const dangQianJiaoDian = document.activeElement as HTMLElement | null
   if (
     dangQianJiaoDian &&
@@ -609,12 +632,26 @@ onMounted(() => {
     const shengYu = Math.max(0, 60 - Math.floor((Date.now() - bd.yanZhengMaFaSongShiJian) / 1000))
     if (shengYu > 0) kaiShiDaoJiShi(shengYu)
   }
+  document.addEventListener('visibilitychange', tongBuYeMianKeJianXing)
+  window.addEventListener('pageshow', tongBuSuoYouHuiTian)
   nextTick(() => {
     tongBuSuoYouHuiTian()
+    if (typeof requestAnimationFrame === 'function') {
+      shouZhenTongBuId = requestAnimationFrame(() => {
+        shouZhenTongBuId = null
+        tongBuSuoYouHuiTian()
+      })
+    }
   })
 })
 
 onBeforeUnmount(() => {
+  document.removeEventListener('visibilitychange', tongBuYeMianKeJianXing)
+  window.removeEventListener('pageshow', tongBuSuoYouHuiTian)
+  if (shouZhenTongBuId !== null) {
+    if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(shouZhenTongBuId)
+    shouZhenTongBuId = null
+  }
   if (daoJiShiDingShiQi) {
     clearInterval(daoJiShiDingShiQi)
     daoJiShiDingShiQi = null
@@ -958,7 +995,7 @@ async function zhiXingZhuCe() {
     inset 0 0 0 5px rgba(201, 169, 106, 0.28);
   padding: 30px 28px 24px;
   position: relative;
-  /* 视口内上界：相对 .denglu-neirong 的确定高（网格区域）封顶，超出量交给内层恒定滚动口。
+  /* 视口内上界：相对 .denglu-neirong 的确定高（网格区域）封顶，超出量交给内层认证滚动口。
      卡片自身仍是 overflow:hidden —— 它要裁掉 .juanzhou-gan 的 110% 宽与圆角，不是多余裁切层 */
   max-height: 100%;
   overflow: hidden;
@@ -1052,26 +1089,46 @@ async function zhiXingZhuCe() {
 }
 
 .biaodan-gundong {
-  /* 恒定滚动口（需求 #2「登录和注册都必须始终有滚动条」）：
-     scroll 而非 auto ⇒ 内容不足一屏时滚动口依然存在可见；条宽/颜色/cursor 全走 global.css 单一真源。
-     旧实现是 `overflow:visible` + JS 条件类 xuyao-gundong 才给 50vh/auto，登录态根本没有滚动口 */
   flex: 1;
   min-height: 0;
-  overflow-y: scroll;
-  /* 登录↔注册过渡的离场层定位宿主（FP-02） */
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-color: transparent transparent;
   position: relative;
 }
 
-/* 登录↔注册同层切换过渡（FP-02，复用认证布局 yemian-nei-guodu 的类驱动机制）：
-   离场表单脱流覆在滚动口顶部原位淡出，入场表单即刻承担盒高 ⇒ 两列内容不叠排；
-   位移量与缓动全部吃既有共用 :root 令牌（--jiange-xiao / --quxian-*），零新量纲字面量 */
-.biaodan-qiehuan-enter-active {
+.biaodan-gundong::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.biaodan-gundong::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+.biaodan-gundong:hover,
+.biaodan-gundong:focus-within {
+  scrollbar-color: var(--gundong-tiao-huakuai) var(--gundong-tiao-guidao);
+}
+
+.biaodan-gundong:hover::-webkit-scrollbar-track,
+.biaodan-gundong:focus-within::-webkit-scrollbar-track {
+  background: var(--gundong-tiao-guidao);
+}
+
+.biaodan-gundong:hover::-webkit-scrollbar-thumb,
+.biaodan-gundong:focus-within::-webkit-scrollbar-thumb {
+  background: var(--gundong-tiao-huakuai);
+}
+
+.biaodan-qiehuan-you-enter-active,
+.biaodan-qiehuan-zuo-enter-active {
   transition:
     opacity 0.3s var(--quxian-tan-chu),
     transform 0.3s var(--quxian-tan-chu);
 }
 
-.biaodan-qiehuan-leave-active {
+.biaodan-qiehuan-you-leave-active,
+.biaodan-qiehuan-zuo-leave-active {
   position: absolute;
   left: 0;
   right: 0;
@@ -1082,14 +1139,24 @@ async function zhiXingZhuCe() {
     transform 0.2s ease;
 }
 
-.biaodan-qiehuan-enter-from {
+.biaodan-qiehuan-you-enter-from {
   opacity: 0;
-  transform: translateY(var(--jiange-xiao));
+  transform: translateX(var(--jiange-xiao));
 }
 
-.biaodan-qiehuan-leave-to {
+.biaodan-qiehuan-you-leave-to {
   opacity: 0;
-  transform: translateY(calc(var(--jiange-xiao) * -1));
+  transform: translateX(calc(var(--jiange-xiao) * -1));
+}
+
+.biaodan-qiehuan-zuo-enter-from {
+  opacity: 0;
+  transform: translateX(calc(var(--jiange-xiao) * -1));
+}
+
+.biaodan-qiehuan-zuo-leave-to {
+  opacity: 0;
+  transform: translateX(var(--jiange-xiao));
 }
 
 /* 标签页：金线分隔 + 活动项菱形指示符（衬线宽距） */
@@ -1169,6 +1236,11 @@ async function zhiXingZhuCe() {
   box-shadow: none;
   -webkit-text-fill-color: #efe9dc;
   transition: background-color 5000s ease-in-out 0s;
+}
+
+.denglu-neirong :deep(.fenlie-shuru):focus-visible,
+.denglu-neirong :deep(.duan-shuru):focus-visible {
+  outline: none;
 }
 
 .fenlie-shuru::placeholder {
@@ -1630,8 +1702,10 @@ async function zhiXingZhuCe() {
   }
 
   /* 登录↔注册切换在减动效下退化为无位移淡切：淡入淡出的 opacity 过渡保留，位移归零 */
-  .biaodan-qiehuan-enter-from,
-  .biaodan-qiehuan-leave-to {
+  .biaodan-qiehuan-you-enter-from,
+  .biaodan-qiehuan-you-leave-to,
+  .biaodan-qiehuan-zuo-enter-from,
+  .biaodan-qiehuan-zuo-leave-to {
     transform: none;
   }
 }

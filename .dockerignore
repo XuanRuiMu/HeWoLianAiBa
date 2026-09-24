@@ -9,18 +9,11 @@ frontend/node_modules
 frontend/dist
 frontend/scripts
 frontend/coverage
-frontend/test-results
-frontend/playwright-report
 frontend/public/grass-bg/rongHeCeShi
 frontend/public/grass-bg/wuhaoyangCeShi
-测试截图/
-test-results/
-e2e/test-results/
-e2e/playwright-report/
 # YH-144 构建上下文收窄：大目录禁进构建，又慢又脏
 备用资源（重要，勿删）/
 图片/
-测试截图/
 .venv/
 __pycache__/
 *.pyc

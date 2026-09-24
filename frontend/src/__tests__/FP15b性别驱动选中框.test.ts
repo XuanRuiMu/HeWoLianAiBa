@@ -436,7 +436,7 @@ describe('FP-15b 浅色档粉按钮对比度（修 FP-01 已知缺陷账本：�
 
 describe('FP-15b 零硬编码穷尽：被禁字面量只准住在令牌声明行', () => {
   const 被禁 = ['#d98ca6', 'rgba(217, 140, 166', '#9ecbff', '#ffb1cc', '#3d7cc9', '#d4568a']
-  const 跳过目录 = new Set(['node_modules', 'dist', '__tests__', 'coverage', 'playwright-report'])
+  const 跳过目录 = new Set(['node_modules', 'dist', '__tests__', 'coverage'])
   const 源文件 = /\.(vue|ts|js|css|html|sql)$/
 
   function 收集(dir: string, 累加: string[] = []): string[] {
@@ -460,7 +460,6 @@ describe('FP-15b 零硬编码穷尽：被禁字面量只准住在令牌声明行
     const 前端根 = resolve(__dirname, '../..')
     const 文件们 = [
       ...收集(join(前端根, 'src')),
-      ...收集(join(前端根, 'tests')),
       ...收集(resolve(前端根, '../backend/src')),
       ...收集(resolve(前端根, '../backend/database')),
       ...收集(resolve(前端根, '../database')),
@@ -484,7 +483,7 @@ describe('FP-15b 零硬编码穷尽：被禁字面量只准住在令牌声明行
     return { 命中, 令牌行 }
   }
 
-  it('前端 src/tests + 后端 src/database（注释已剥）命中 0，只有 variables.css 的令牌声明行可留', () => {
+  it('前端 src + 后端 src/database（注释已剥）命中 0，只有 variables.css 的令牌声明行可留', () => {
     expect(扫描().命中).toStrictEqual([])
   })
 

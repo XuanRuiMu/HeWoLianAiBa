@@ -5,7 +5,7 @@
  * 图后插入落位），本夹具把**生产同一份** 图文输入区.vue + use待发图文.ts 挂进真实 DOM，
  * 页面外壳用 inline style 复刻 .tui-mian  flex 列（聊天页面.vue 只准读不准改）：
  * 折叠档输入框被顶成一条色带的真机形态要能原样复现。
- * 驱动脚本住在仓库外：`.agents/scratch/FP10c-fix-verify.cjs`（playwright-core 直连）。
+ * 驱动脚本住在仓库外：`.agents/scratch/FP10c-fix-verify.cjs`。
  */
 import { createApp, defineComponent, h, ref } from 'vue'
 import TuWenShuRuQu from '@/components/聊天/图文输入区.vue'
