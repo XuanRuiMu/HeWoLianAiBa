@@ -236,6 +236,9 @@ describe('FP-04a ①：登录与注册两态的认证滚动口按需出现（不
         '::-webkit-scrollbar-thumb',
         '::-webkit-scrollbar-thumb:hover',
         '::-webkit-scrollbar-track',
+        '::-webkit-scrollbar-track:hover',
+        ':where(*:focus, *:focus-visible, *:focus-within)::-webkit-scrollbar-thumb',
+        ':where(*:focus, *:focus-visible, *:focus-within)::-webkit-scrollbar-track',
       ].sort(),
     )
     expect(视图源).toMatch(/\.biaodan-gundong\s*\{[^}]*scrollbar-color:\s*transparent\s+transparent/)

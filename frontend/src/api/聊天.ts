@@ -14,6 +14,11 @@ import type {
   FanKuiTiJiao,
   DuoMeiTiLeiXing,
   XiaoXiKuai,
+  ZhanJiDangAnYiDongJieGuo,
+  ZhanJiFenLei,
+  ZhanJiFenLeiLieBiao,
+  ZhanJiFenLeiPaiXuJieGuo,
+  ZhanJiFenLeiShanChuJieGuo,
 } from '@/types'
 
 export const DUO_MEI_TI_LEI_XING_SHANG_CHUAN_LEI_BIE: Record<DuoMeiTiLeiXing, ShangChuanLeiBie> = {
@@ -277,12 +282,80 @@ export async function huoQuJunShiZhiDaoZhuangTai(jiaoSeId: string): Promise<{
   }
 }
 
-export async function huoQuDangAnLieBiao(): Promise<DangAnXiangQing[]> {
+export async function huoQuZhanJiFenLeiLieBiao(): Promise<ZhanJiFenLeiLieBiao> {
   const 响应 = await http.get<{
     cheng_gong: boolean
-    shu_ju: { dangAnLieBiao: DangAnXiangQing[] }
-  }>('/战绩/列表')
+    shu_ju: ZhanJiFenLeiLieBiao
+  }>('/战绩/分类')
+  return 响应.data.shu_ju
+}
+
+export async function chuangJianZhanJiFenLei(mingCheng: string): Promise<ZhanJiFenLei> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: ZhanJiFenLei }>('/战绩/分类', {
+    mingCheng,
+  })
+  return 响应.data.shu_ju
+}
+
+export async function gengMingZhanJiFenLei(
+  fenLeiId: string,
+  mingCheng: string,
+  expectedVersion: number,
+): Promise<ZhanJiFenLei> {
+  const 响应 = await http.put<{ cheng_gong: boolean; shu_ju: ZhanJiFenLei }>(
+    `/战绩/分类/${fenLeiId}`,
+    { mingCheng, expectedVersion },
+  )
+  return 响应.data.shu_ju
+}
+
+export async function shanChuZhanJiFenLei(
+  fenLeiId: string,
+  expectedVersion: number,
+): Promise<ZhanJiFenLeiShanChuJieGuo> {
+  const 响应 = await http.delete<{
+    cheng_gong: boolean
+    shu_ju: ZhanJiFenLeiShanChuJieGuo
+  }>(`/战绩/分类/${fenLeiId}`, { params: { expectedVersion } })
+  return 响应.data.shu_ju
+}
+
+export async function huoQuDangAnLieBiao(categoryId?: string): Promise<DangAnXiangQing[]> {
+  const 响应 = categoryId
+    ? await http.get<{
+        cheng_gong: boolean
+        shu_ju: { dangAnLieBiao: DangAnXiangQing[] }
+      }>('/战绩/列表', { params: { categoryId } })
+    : await http.get<{
+        cheng_gong: boolean
+        shu_ju: { dangAnLieBiao: DangAnXiangQing[] }
+      }>('/战绩/列表')
   return 响应.data.shu_ju?.dangAnLieBiao || []
+}
+
+export async function yiDongDangAnDaoFenLei(
+  sourceCategoryId: string,
+  recordId: string,
+  targetCategoryId: string,
+  expectedVersion: number,
+): Promise<ZhanJiDangAnYiDongJieGuo> {
+  const 响应 = await http.put<{ cheng_gong: boolean; shu_ju: ZhanJiDangAnYiDongJieGuo }>(
+    `/战绩/分类/${sourceCategoryId}/记录/${recordId}`,
+    { targetCategoryId, expectedVersion },
+  )
+  return 响应.data.shu_ju
+}
+
+export async function paiXuFenLeiNeiZhanJi(
+  categoryId: string,
+  recordIds: string[],
+  expectedVersion: number,
+): Promise<ZhanJiFenLeiPaiXuJieGuo> {
+  const 响应 = await http.put<{ cheng_gong: boolean; shu_ju: ZhanJiFenLeiPaiXuJieGuo }>(
+    `/战绩/分类/${categoryId}/排序`,
+    { recordIds, expectedVersion },
+  )
+  return 响应.data.shu_ju
 }
 
 export async function huoQuDangAnXiangQing(dangAnId: string): Promise<DangAnXiangQing> {

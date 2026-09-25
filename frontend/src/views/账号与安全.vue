@@ -23,6 +23,17 @@
       </button>
     </div>
 
+    <RequestError
+      v-if="bangQianTaiCuoWu"
+      :cuo-wu="bangQianTaiCuoWu"
+      @chong-shi="chongShiBang"
+    />
+    <RequestError
+      v-if="设置仓库.caoZuoCuoWu"
+      :cuo-wu="设置仓库.caoZuoCuoWu || undefined"
+      @chong-shi="设置仓库.chongShi()"
+    />
+
     <section class="ming-pian" :aria-label="huoQuFanYi('sheZhi', 'geRenSheZhiBiaoTi')">
       <div class="ming-pian-nei">
         <div class="blob-tou">
@@ -33,7 +44,9 @@
           <h1 class="xing-ming">{{ dangQianMingCheng }}</h1>
           <p class="qian-ming-dan">{{ 设置仓库.qianMing || huoQuFanYi('haoYou', 'zanWuQianMing') }}</p>
           <div class="uid-hang">
-            <span class="uid-wenben">{{ 设置仓库.uid || 用戶ID }}</span>
+            <span class="uid-wenben">
+              {{ 设置仓库.uid || 用戶ID || huoQuFanYi('sheZhi', 'uidWeiZaiFuZhouZhong') }}
+            </span>
             <button class="anniu-fu-zhu uid-fu-zhi" @click="fuZhiUID">
               {{ huoQuFanYi('sheZhi', 'fuZhiBianHao') }}
             </button>
@@ -115,6 +128,12 @@
             {{ touXiangShangChuanZhong ? huoQuFanYi('sheZhi', 'shangChuanZhong') : huoQuFanYi('sheZhi', 'gengHuanTouXiang') }}
           </button>
         </div>
+        <RequestError
+          v-if="fenQuanCuoWu.touXiang"
+          :cuo-wu="fenQuanCuoWu.touXiang || undefined"
+          :zhong-zai="touXiangShangChuanZhong"
+          @chong-shi="chongShiFenQuan('touXiang')"
+        />
         <p v-if="touXiangTiShi" class="ti-shi-wen" :class="{ 'ti-shi-cuowu': touXiangShiBai }">
           {{ touXiangTiShi }}
         </p>
@@ -156,6 +175,12 @@
         <button class="anniu-fu-zhu xiao-anniu" :disabled="qianMingBaoCunZhong" @click="baoCunQianMing">
           {{ qianMingBaoCunZhong ? huoQuFanYi('sheZhi', 'baoCunZhong') : huoQuFanYi('sheZhi', 'baoCunQianMing') }}
         </button>
+        <RequestError
+          v-if="fenQuanCuoWu.qianMing"
+          :cuo-wu="fenQuanCuoWu.qianMing || undefined"
+          :zhong-zai="qianMingBaoCunZhong"
+          @chong-shi="chongShiFenQuan('qianMing')"
+        />
         <p v-if="qianMingTiShi" class="ti-shi-wen" :class="{ 'ti-shi-cuowu': qianMingShiBai }">
           {{ qianMingTiShi }}
         </p>
@@ -184,7 +209,13 @@
           >
             {{ yongHuMingBaoCunZhong ? huoQuFanYi('sheZhi', 'baoCunZhong') : huoQuFanYi('renZheng', 'queRen') }}
           </button>
-          <p v-if="yongHuMingTiShi" class="ti-shi-wen" :class="{ 'ti-shi-cuowu': yongHuMingShiBai }">
+          <RequestError
+          v-if="fenQuanCuoWu.yongHuMing"
+          :cuo-wu="fenQuanCuoWu.yongHuMing || undefined"
+          :zhong-zai="yongHuMingBaoCunZhong"
+          @chong-shi="chongShiFenQuan('yongHuMing')"
+        />
+        <p v-if="yongHuMingTiShi" class="ti-shi-wen" :class="{ 'ti-shi-cuowu': yongHuMingShiBai }">
             {{ yongHuMingTiShi }}
           </p>
         </div>
@@ -228,7 +259,13 @@
           >
             {{ moRenXingBieBaoCunZhong ? huoQuFanYi('sheZhi', 'baoCunZhong') : huoQuFanYi('renZheng', 'queRen') }}
           </button>
-          <p v-if="moRenXingBieTiShi" class="ti-shi-wen" :class="{ 'ti-shi-cuowu': moRenXingBieShiBai }">
+          <RequestError
+          v-if="fenQuanCuoWu.moRenXingBie"
+          :cuo-wu="fenQuanCuoWu.moRenXingBie || undefined"
+          :zhong-zai="moRenXingBieBaoCunZhong"
+          @chong-shi="chongShiFenQuan('moRenXingBie')"
+        />
+        <p v-if="moRenXingBieTiShi" class="ti-shi-wen" :class="{ 'ti-shi-cuowu': moRenXingBieShiBai }">
             {{ moRenXingBieTiShi }}
           </p>
         </div>
@@ -297,7 +334,13 @@
           >
             {{ miMaBaoCunZhong ? huoQuFanYi('sheZhi', 'baoCunZhong') : huoQuFanYi('renZheng', 'queRen') }}
           </button>
-          <p v-if="miMaTiShi" class="ti-shi-wen" :class="{ 'ti-shi-cuowu': miMaShiBai }">
+          <RequestError
+          v-if="fenQuanCuoWu.miMa"
+          :cuo-wu="fenQuanCuoWu.miMa || undefined"
+          :zhong-zai="miMaBaoCunZhong || miMaFaSongZhong"
+          @chong-shi="chongShiFenQuan('miMa')"
+        />
+        <p v-if="miMaTiShi" class="ti-shi-wen" :class="{ 'ti-shi-cuowu': miMaShiBai }">
             {{ miMaTiShi }}
           </p>
         </div>
@@ -346,6 +389,12 @@
             <p v-if="shenSuCaoGaoYiHuiFu" class="ti-shi-wen" role="status">{{ huoQuFanYi('tongYong', 'caoGaoYiHuiFu') }}</p>
           </template>
         </template>
+        <RequestError
+          v-if="fenQuanCuoWu.shenSu"
+          :cuo-wu="fenQuanCuoWu.shenSu || undefined"
+          :zhong-zai="shenSuTiJiaoZhong"
+          @chong-shi="chongShiFenQuan('shenSu')"
+        />
         <p v-if="shenSuTiShi" class="ti-shi-wen" :class="{ 'ti-shi-cuowu': shenSuShiBai }">
           {{ shenSuTiShi }}
         </p>
@@ -358,7 +407,9 @@
         :class="{ 'sou-zhong-gao-liang': 搜索中 && 命中搜索(uidSouSuoWenBen) }"
       >
         <h2 class="kapian-biao-ti">{{ huoQuFanYi('sheZhi', 'uidBiaoTi') }}</h2>
-        <p class="kapian-miao-shu uid-wenben">{{ 设置仓库.uid || 用戶ID }}</p>
+        <p class="kapian-miao-shu uid-wenben">
+          {{ 设置仓库.uid || 用戶ID || huoQuFanYi('sheZhi', 'uidWeiZaiFuZhouZhong') }}
+        </p>
         <button class="anniu-fu-zhu xiao-anniu" @click="fuZhiUID">{{ huoQuFanYi('sheZhi', 'fuZhiUID') }}</button>
       </div>
 
@@ -515,7 +566,13 @@
                 : huoQuFanYi('sheZhi', 'shangChuanZiDingYiBeiJing')
             }}
           </button>
-          <p v-if="beiJingTiShi" class="ti-shi-wen" :class="{ 'ti-shi-cuowu': beiJingShiBai }">
+          <RequestError
+          v-if="fenQuanCuoWu.beiJing"
+          :cuo-wu="fenQuanCuoWu.beiJing || undefined"
+          :zhong-zai="beiJingShangChuanZhong"
+          @chong-shi="chongShiFenQuan('beiJing')"
+        />
+        <p v-if="beiJingTiShi" class="ti-shi-wen" :class="{ 'ti-shi-cuowu': beiJingShiBai }">
             {{ beiJingTiShi }}
           </p>
           <input
@@ -603,8 +660,14 @@ import { 使用用户仓库 } from '@/stores/用户'
 import { 使用用户设置仓库, type LiaoTianBeiJing } from '@/stores/用户设置'
 import { huoQuFanYi } from '@/config/translations'
 import TouXiang from '@/components/头像.vue'
+import RequestError from '@/components/请求错误.vue'
 import { 用户形态 } from '@/utils/性别'
-import { huoQuCuoWuXiangYing } from '@/api/请求'
+import {
+  chuangJianQianTaiCuoWu,
+  归一前台错误,
+  type QianTaiCuoWu,
+} from '@/utils/前台错误'
+import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
 import { gengGaiYongHuMing, gengGaiMiMa, gengGaiMoRenXingBie, faSongMa } from '@/api/认证'
 import type { XingBie } from '@/types'
 import {
@@ -742,11 +805,13 @@ async function fuZhiUID() {
   try {
     await navigator.clipboard.writeText(wenBen)
   } catch {
-    /* 剪贴板不可用时静默 */
+    /* 剪贴板不可用时按安全文案提示，不抛出 */
+    jieShouBenDiQingQiuCuoWu('uid', huoQuFanYi('sheZhi', 'fuZhiShiBai'))
   }
 }
 
 async function xuanZeBeiJing(zhi: LiaoTianBeiJing) {
+  qingFenQuanCuoWu('beiJing')
   await 设置仓库.qieHuanBeiJing(zhi)
 }
 
@@ -757,6 +822,7 @@ const beiJingShiBai = ref(false)
 
 function daKaiBeiJingXuanZe() {
   beiJingTiShi.value = ''
+  qingFenQuanCuoWu('beiJing')
   beiJingInputRef.value?.click()
 }
 
@@ -766,12 +832,14 @@ async function chuLiBeiJingXuanZe() {
   if (!wenJian) return
   if (!wenJian.type.startsWith('image/')) {
     beiJingShiBai.value = true
-    beiJingTiShi.value = huoQuFanYi('sheZhi', 'beiJingFeiFaWenJianTiShi')
+    beiJingTiShi.value = ''
+    jieShouBenDiQingQiuCuoWu('beiJing', huoQuFanYi('sheZhi', 'beiJingFeiFaWenJianTiShi'))
     return
   }
   beiJingShangChuanZhong.value = true
   beiJingShiBai.value = false
   beiJingTiShi.value = ''
+  qingFenQuanCuoWu('beiJing')
   try {
     const yaSuo = await yaSuoTuPiang(wenJian)
     const diZhi = await shangChuanLiaoTianBeiJing(yaSuo)
@@ -779,7 +847,7 @@ async function chuLiBeiJingXuanZe() {
     beiJingTiShi.value = huoQuFanYi('sheZhi', 'baoCunChengGong')
   } catch (cuoWu: unknown) {
     beiJingShiBai.value = true
-    beiJingTiShi.value = duQuTiShi(cuoWu)
+    jieShouFenQuanCuoWu('beiJing', cuoWu, chuLiBeiJingXuanZe)
   } finally {
     beiJingShangChuanZhong.value = false
   }
@@ -789,18 +857,20 @@ async function shanChuZiDingYiBeiJing() {
   beiJingShangChuanZhong.value = true
   beiJingShiBai.value = false
   beiJingTiShi.value = ''
+  qingFenQuanCuoWu('beiJing')
   try {
     await 设置仓库.qingChuZiDingYiBeiJing()
     beiJingTiShi.value = huoQuFanYi('sheZhi', 'baoCunChengGong')
   } catch (cuoWu: unknown) {
     beiJingShiBai.value = true
-    beiJingTiShi.value = duQuTiShi(cuoWu)
+    jieShouFenQuanCuoWu('beiJing', cuoWu, shanChuZiDingYiBeiJing)
   } finally {
     beiJingShangChuanZhong.value = false
   }
 }
 
 async function qieHuanGongKai(xiang: 'gongKaiZhangHao' | 'gongKaiShouJiHao' | 'gongKaiYouXiang') {
+  qingFenQuanCuoWu('gongKai')
   if (xiang === 'gongKaiZhangHao') await 设置仓库.baoCunYinSi({ gongKaiZhangHao: !设置仓库.gongKaiZhangHao })
   if (xiang === 'gongKaiShouJiHao') await 设置仓库.baoCunYinSi({ gongKaiShouJiHao: !设置仓库.gongKaiShouJiHao })
   if (xiang === 'gongKaiYouXiang') await 设置仓库.baoCunYinSi({ gongKaiYouXiang: !设置仓库.gongKaiYouXiang })
@@ -808,6 +878,7 @@ async function qieHuanGongKai(xiang: 'gongKaiZhangHao' | 'gongKaiShouJiHao' | 'g
 
 async function zhiXingQingKongPaiWei() {
   xianShiQingKongQueRen.value = false
+  qingFenQuanCuoWu('paiWei')
   await 设置仓库.qingKongPaiWei()
 }
 
@@ -826,6 +897,7 @@ const caiJianXianShi = ref(false)
 
 function daKaiTouXiangXuanZe() {
   touXiangTiShi.value = ''
+  qingFenQuanCuoWu('touXiang')
   touXiangInputRef.value?.click()
 }
 
@@ -835,7 +907,8 @@ function chuLiTouXiangXuanZe() {
   if (!wenJian) return
   if (!wenJian.type.startsWith('image/')) {
     touXiangShiBai.value = true
-    touXiangTiShi.value = huoQuFanYi('sheZhi', 'touXiangCaiJianTiShi')
+    touXiangTiShi.value = ''
+    jieShouBenDiQingQiuCuoWu('touXiang', huoQuFanYi('sheZhi', 'touXiangLeiXingBuZhichi'))
     return
   }
   if (caiJianTuYuan.value) URL.revokeObjectURL(caiJianTuYuan.value)
@@ -853,6 +926,7 @@ async function queRenCaiJian(wenJian: Blob) {
   touXiangShangChuanZhong.value = true
   touXiangShiBai.value = false
   touXiangTiShi.value = ''
+  qingFenQuanCuoWu('touXiang')
   try {
     const diZhi = await shangChuanTouXiang(wenJian)
     设置仓库.touXiang = diZhi
@@ -860,7 +934,7 @@ async function queRenCaiJian(wenJian: Blob) {
     touXiangTiShi.value = huoQuFanYi('sheZhi', 'baoCunChengGong')
   } catch (cuoWu: unknown) {
     touXiangShiBai.value = true
-    touXiangTiShi.value = duQuTiShi(cuoWu)
+    jieShouFenQuanCuoWu('touXiang', cuoWu, daKaiTouXiangXuanZe)
   } finally {
     touXiangShangChuanZhong.value = false
   }
@@ -901,10 +975,54 @@ function keJianXingWenZi(zhi: KeJianXing): string {
 }
 
 function duQuTiShi(cuoWu: unknown): string {
-  if (typeof cuoWu === 'object' && cuoWu !== null && 'response' in cuoWu) {
-    return huoQuCuoWuXiangYing(cuoWu)?.data?.ti_shi || huoQuFanYi('tongYong', 'caoZuoShiBai')
+  return 归一前台错误(cuoWu).yingXiang
+}
+
+const fenQuanCuoWu = ref<Record<string, QianTaiCuoWu | null>>({})
+const fenQuanChongShi: Record<string, (() => unknown) | undefined> = {}
+
+function jieShouFenQuanCuoWu(fenQuan: string, cuoWu: unknown, chongShi?: () => unknown): void {
+  const zhengChangHua = 归一前台错误(cuoWu)
+  if (!zhengChangHua.xianShi) return
+  fenQuanCuoWu.value = { ...fenQuanCuoWu.value, [fenQuan]: zhengChangHua }
+  fenQuanChongShi[fenQuan] = chongShi
+}
+
+function jieShouBenDiQingQiuCuoWu(fenQuan: string, yingXiang: string): void {
+  jieShouFenQuanCuoWu(fenQuan, chuangJianQianTaiCuoWu({
+    code: QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID,
+    retryable: false,
+    yingXiang,
+    xiaYiBu: huoQuFanYi('tongYong', 'qingQiuWenTiXiaYiBu'),
+  }))
+}
+
+function chongShiFenQuan(fenQuan: string): void {
+  const daiZhi = fenQuanChongShi[fenQuan]
+  if (!daiZhi) return
+  fenQuanCuoWu.value = { ...fenQuanCuoWu.value, [fenQuan]: null }
+  void daiZhi()
+}
+
+function qingFenQuanCuoWu(fenQuan: string): void {
+  fenQuanCuoWu.value = { ...fenQuanCuoWu.value, [fenQuan]: null }
+  delete fenQuanChongShi[fenQuan]
+}
+
+const BANG_FEN_QUAN = ['uid', 'fengJin', 'paiWei', 'gongKai', 'zhuXiao'] as const
+
+const bangQianTaiCuoWu = computed<QianTaiCuoWu | null>(() => {
+  for (const fenQuan of BANG_FEN_QUAN) {
+    const cuoWu = fenQuanCuoWu.value[fenQuan]
+    if (cuoWu) return cuoWu
   }
-  return cuoWu instanceof Error ? cuoWu.message : huoQuFanYi('tongYong', 'caoZuoShiBai')
+  return null
+})
+
+function chongShiBang(): void {
+  const xianZai = BANG_FEN_QUAN.find((fenQuan) => fenQuanCuoWu.value[fenQuan])
+  if (!xianZai) return
+  chongShiFenQuan(xianZai)
 }
 
 async function jiaZaiHaoYouKeXuan() {
@@ -919,6 +1037,7 @@ async function baoCunQianMing() {
   qianMingBaoCunZhong.value = true
   qianMingShiBai.value = false
   qianMingTiShi.value = ''
+  qingFenQuanCuoWu('qianMing')
   try {
     await baoCunQianMingApi({
       qianMing: qianMingCaoGao.value.trim(),
@@ -933,7 +1052,7 @@ async function baoCunQianMing() {
     qianMingTiShi.value = huoQuFanYi('sheZhi', 'baoCunChengGong')
   } catch (cuoWu: unknown) {
     qianMingShiBai.value = true
-    qianMingTiShi.value = duQuTiShi(cuoWu)
+    jieShouFenQuanCuoWu('qianMing', cuoWu, baoCunQianMing)
   } finally {
     qianMingBaoCunZhong.value = false
   }
@@ -987,13 +1106,14 @@ async function baoCunYongHuMing() {
   yongHuMingBaoCunZhong.value = true
   yongHuMingShiBai.value = false
   yongHuMingTiShi.value = ''
+  qingFenQuanCuoWu('yongHuMing')
   try {
     await gengGaiYongHuMing(yongHuMingCaoGao.value.trim())
     await 用户仓库.jiaZaiYongHu()
     yongHuMingTiShi.value = huoQuFanYi('sheZhi', 'baoCunChengGong')
   } catch (cuoWu: unknown) {
     yongHuMingShiBai.value = true
-    yongHuMingTiShi.value = duQuTiShi(cuoWu)
+    jieShouFenQuanCuoWu('yongHuMing', cuoWu, baoCunYongHuMing)
   } finally {
     yongHuMingBaoCunZhong.value = false
   }
@@ -1004,6 +1124,7 @@ async function zhiXingFaSongMiMaMa() {
   miMaFaSongZhong.value = true
   miMaShiBai.value = false
   miMaTiShi.value = ''
+  qingFenQuanCuoWu('miMa')
   try {
     await faSongMa(用户仓库.dangQianYongHu!.shou_ji_hao)
     miMaDaoJiShi.value = 60
@@ -1020,7 +1141,7 @@ async function zhiXingFaSongMiMaMa() {
     }, 1000)
   } catch (cuoWu: unknown) {
     miMaShiBai.value = true
-    miMaTiShi.value = duQuTiShi(cuoWu)
+    jieShouFenQuanCuoWu('miMa', cuoWu, zhiXingFaSongMiMaMa)
   } finally {
     miMaFaSongZhong.value = false
   }
@@ -1030,12 +1151,14 @@ async function baoCunMiMa() {
   if (!keYiBaoCunMiMa.value) return
   if (xinMiMa.value !== queRenXinMiMa.value) {
     miMaShiBai.value = true
-    miMaTiShi.value = huoQuFanYi('renZheng', 'miMaBuYiZhi')
+    miMaTiShi.value = ''
+    jieShouBenDiQingQiuCuoWu('miMa', huoQuFanYi('renZheng', 'miMaBuYiZhi'))
     return
   }
   miMaBaoCunZhong.value = true
   miMaShiBai.value = false
   miMaTiShi.value = ''
+  qingFenQuanCuoWu('miMa')
   try {
     await gengGaiMiMa(jiuMiMa.value, xinMiMa.value, queRenXinMiMa.value, miMaYanZhengMa.value)
     jiuMiMa.value = ''
@@ -1045,7 +1168,7 @@ async function baoCunMiMa() {
     miMaTiShi.value = huoQuFanYi('sheZhi', 'baoCunChengGong')
   } catch (cuoWu: unknown) {
     miMaShiBai.value = true
-    miMaTiShi.value = duQuTiShi(cuoWu)
+    jieShouFenQuanCuoWu('miMa', cuoWu, baoCunMiMa)
   } finally {
     miMaBaoCunZhong.value = false
   }
@@ -1056,13 +1179,14 @@ async function baoCunMoRenXingBie() {
   moRenXingBieBaoCunZhong.value = true
   moRenXingBieShiBai.value = false
   moRenXingBieTiShi.value = ''
+  qingFenQuanCuoWu('moRenXingBie')
   try {
     await gengGaiMoRenXingBie(moRenXingBieXuanZhong.value)
     await 用户仓库.jiaZaiYongHu()
     moRenXingBieTiShi.value = huoQuFanYi('sheZhi', 'baoCunChengGong')
   } catch (cuoWu: unknown) {
     moRenXingBieShiBai.value = true
-    moRenXingBieTiShi.value = duQuTiShi(cuoWu)
+    jieShouFenQuanCuoWu('moRenXingBie', cuoWu, baoCunMoRenXingBie)
   } finally {
     moRenXingBieBaoCunZhong.value = false
   }
@@ -1206,8 +1330,10 @@ const shenSuShiBai = ref(false)
 async function jiaZaiFengJinZhuangTai() {
   try {
     fengJinZhuangTai.value = await huoQuFengJinZhuangTai()
-  } catch {
+    qingFenQuanCuoWu('fengJin')
+  } catch (cuoWu: unknown) {
     fengJinZhuangTai.value = null
+    jieShouFenQuanCuoWu('fengJin', cuoWu, jiaZaiFengJinZhuangTai)
   }
 }
 
@@ -1250,12 +1376,14 @@ const keTiJiaoShenSu = computed(() => {
 async function tiJiaoShenSu() {
   if (!shenSuLiYou.value.trim()) {
     shenSuShiBai.value = true
-    shenSuTiShi.value = huoQuFanYi('tongYong', 'queShaoCanShu')
+    shenSuTiShi.value = ''
+    jieShouBenDiQingQiuCuoWu('shenSu', huoQuFanYi('sheZhi', 'shenSuLiYouWeiXie'))
     return
   }
   shenSuTiJiaoZhong.value = true
   shenSuShiBai.value = false
   shenSuTiShi.value = ''
+  qingFenQuanCuoWu('shenSu')
   try {
     await tiJiaoShenSuApi(shenSuLiYou.value.trim())
     shenSuLiYou.value = ''
@@ -1263,7 +1391,7 @@ async function tiJiaoShenSu() {
     await jiaZaiFengJinZhuangTai()
   } catch (cuoWu: unknown) {
     shenSuShiBai.value = true
-    shenSuTiShi.value = duQuTiShi(cuoWu)
+    jieShouFenQuanCuoWu('shenSu', cuoWu, tiJiaoShenSu)
   } finally {
     shenSuTiJiaoZhong.value = false
   }
@@ -1293,11 +1421,14 @@ async function qieHuanTuPianShouQuan() {
 
 async function zhiXingZhuXiao() {
   xianShiQueRen.value = false
+  qingFenQuanCuoWu('zhuXiao')
   try {
     await 用户仓库.zhiXingZhuXiao()
     router.push('/login')
-  } catch {
-    // 错误已在仓库中处理
+  } catch (cuoWu: unknown) {
+    jieShouFenQuanCuoWu('zhuXiao', cuoWu, () => {
+      xianShiQueRen.value = true
+    })
   }
 }
 </script>

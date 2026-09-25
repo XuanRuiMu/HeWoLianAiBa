@@ -49,7 +49,7 @@ const xinZengLingPai = [
   'xingbie-zhongxing-2',
   'xingbie-zhongxing-wenben',
   // FP-01 令牌基座追加：卡面组 / 选中态阴影与辉光 / 性别选中框三件套（共用块里的几何与光标令牌不在此列）
-  'kapian-mian-beijing',
+  'moshi-kapian-zheyan',
   'kapian-mian-biankuang',
   'kapian-mian-zhengwen',
   'kapian-mian-biaoti',

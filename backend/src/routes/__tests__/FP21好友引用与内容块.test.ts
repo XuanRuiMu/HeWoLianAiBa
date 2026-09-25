@@ -41,7 +41,11 @@ const { MEI_TI_PEI_ZHI } = await import('../../config/媒体配置')
 
 function 取连接串(库名?: string): string {
   const 显式 = (process.env.TEST_DATABASE_URL ?? '').trim()
-  const 基 = 显式 !== '' ? 显式 : String(peiZhiRef.shuJuKuLianJie ?? '')
+  const 基 = 显式 !== ''
+    ? 显式
+    : process.env.XU_KE_ZHEN_SHI_WAI_HU === 'true'
+      ? String(peiZhiRef.shuJuKuLianJie ?? '')
+      : ''
   if (基 === '') return ''
   const 换主机 = 基.includes('@postgres:') ? 基.replace('@postgres:', '@127.0.0.1:') : 基
   if (!库名) return 换主机

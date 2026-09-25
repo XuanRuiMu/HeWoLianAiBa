@@ -324,3 +324,169 @@ CAS 元数据；语音转写的先例是存 `消息.内容` 而非媒体表派�
 | --- | --- |
 | 阈值单点 / 白名单分派 / 归档永不解析 / 边界 ±1 / 码点截断 / 畸形输入 / 注入围栏 / 三条出参捕获级断言 / 单一实现点 | `backend/src/services/__tests__/FP12文档文本提取.test.ts` |
 
+## 战绩分类与分类内排序（FP-11）
+
+战绩采用单分类：一个 `游戏档案` 行只属于一个 `战绩分类`。默认分类按用户初始化且ID稳定；默认分类可改名但不可删除。删除自定义分类时，其全部记录（含玩家列表暂不可见的进行中挑战）在同一事务内按原分类顺序追加到默认分类，默认分类原有顺序不变。
+
+迁移真源为 `backend/database/migrations/039_FP11战绩分类排序.sql`。`游戏档案.分类ID` 与 `用户ID` 组成外键，数据库层禁止跨用户挂载分类；`游戏档案.排序` 非负且分类内唯一。所有写接口都使用用户级事务锁和分类/记录行锁，`version` 是分类并发令牌。
+
+请求体使用camelCase，响应体使用snake_case；全部接口沿用战绩接口现有鉴权与限流。
+
+### 分类
+
+#### GET `/api/战绩/分类`
+
+首次读取会为尚无战绩的新用户初始化默认分类。成功返回：
+
+```json
+{
+  "cheng_gong": true,
+  "shu_ju": {
+    "moRenFenLeiId": "uuid",
+    "fenLeiLieBiao": [
+      {
+        "id": "uuid",
+        "name": "默认分类",
+        "is_default": true,
+        "record_count": 2,
+        "version": 0
+      }
+    ]
+  }
+}
+```
+
+`record_count`只统计现有战绩列表可见的记录；进行中的挑战对局不进入过往战绩。
+
+#### POST `/api/战绩/分类`
+
+请求体：
+
+```json
+{"mingCheng":"收藏夹"}
+```
+
+名称先trim，再校验非空、最多20个Unicode码点、同用户内重名。成功返回新建分类对象；ID为服务端生成的稳定UUID。
+
+#### PUT `/api/战绩/分类/:fenLeiId`
+
+请求体：
+
+```json
+{"mingCheng":"重要回忆","expectedVersion":0}
+```
+
+默认分类和自定义分类均可改名，ID不变。`expectedVersion`必须等于当前版本；旧版本并发请求返回`409`，不会覆盖新状态。
+
+#### DELETE `/api/战绩/分类/:fenLeiId?expectedVersion=0`
+
+删除自定义分类。成功返回：
+
+```json
+{
+  "deleted_id": "uuid",
+  "fallback_category_id": "uuid",
+  "moved_record_count": 3
+}
+```
+
+重复删除或分类不属于当前用户返回`404`，不再返回旧ID；删除默认分类返回`409`。
+
+### 记录分类与顺序
+
+#### GET `/api/战绩/列表?categoryId=<uuid>`
+
+`categoryId`可选。携带时只返回该分类的完整可见记录，并按`sort_order`、稳定ID读取；缺省时保持旧接口语义，返回该用户全部可见记录。每个记录新增两个键：
+
+|键|类型|说明|
+|---|---|---|
+|`category_id`|string|唯一所属分类ID|
+|`sort_order`|number|分类内持久化顺序|
+
+分类不存在或不属于当前用户返回`404`。
+
+#### PUT `/api/战绩/分类/:fenLeiId/记录/:dangAnId`
+
+跨分类移动单条记录。请求体：
+
+```json
+{"targetCategoryId":"uuid","expectedVersion":0}
+```
+
+`fenLeiId`必须是记录当前所属分类。服务端校验来源分类、目标分类、记录归属和来源版本后，在一个事务内完成移动、来源顺序归一、目标追加及双方版本递增。
+
+#### PUT `/api/战绩/分类/:fenLeiId/排序`
+
+分类内完整排序。请求体：
+
+```json
+{"recordIds":["uuid-b","uuid-a"],"expectedVersion":0}
+```
+
+`recordIds`必须恰好包含该分类全部当前可见记录，不能重复、缺失或包含他人/其他分类ID；进行中的挑战记录由服务端保持在可见记录之后。空分类允许空数组。成功返回：
+
+```json
+{
+  "category_id": "uuid",
+  "record_ids": ["uuid-b","uuid-a"],
+  "version": 1
+}
+```
+
+相同顺序的重复提交幂等返回当前版本；不同顺序使用同一旧版本并发提交时，仅一个成功，另一个返回`409`。
+
+### 业务错误
+
+|状态码|`cuo_wu_ma`|`ti_shi`|
+|---|---|---|
+|400|`ZHAN_JI_FEN_LEI_MING_CHENG_WU_XIAO`|分类名称不能为空|
+|400|`ZHAN_JI_FEN_LEI_MING_CHENG_CHANG`|分类名称不能超过20个字|
+|400|`ZHAN_JI_PAI_XU_ID_CHONG_FU`|排序ID不能重复|
+|400|`ZHAN_JI_BU_NENG_YIDONG_DAO_DANG_QIAN_FEN_LEI`|不能移动到当前分类|
+|404|`ZHAN_JI_FEN_LEI_BU_CUN_ZAI`|战绩分类不存在|
+|404|`ZHAN_JI_DANG_AN_BU_CUN_ZAI`|战绩记录不存在|
+|409|`ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU`|分类名称已存在|
+|409|`ZHAN_JI_MO_REN_FEN_LEI_BU_NENG_SHAN_CHU`|默认分类不能删除|
+|409|`ZHAN_JI_DANG_AN_BU_SHU_YU_FEN_LEI`|战绩记录不属于该分类|
+|409|`ZHAN_JI_PAI_XU_JI_LU_BU_WU_ZHEN`|排序必须包含该分类全部可见战绩|
+|409|`ZHAN_JI_FEN_LEI_BIAN_GENG`|分类已发生变化，请刷新后重试|
+
+数据库唯一约束、外键、检查约束、序列化失败与死锁只映射到既有`shiBaiXiangYing`出口；未知数据库错误仍返回通用`500`，不会把内部错误详情下发玩家。
+
+## 错误响应与追踪ID（FP-13）
+
+所有错误出口保留既有 `cheng_gong:false`、`shu_ju:null`、`ti_shi` 与 `cuo_wu_ma` 字段，并增加稳定的 `code`、中文 `message`、`traceId`、`retryable`。`code` 只由后端错误码注册表决定，文案变化不会改变错误码。
+
+```json
+{
+  "cheng_gong": false,
+  "shu_ju": null,
+  "ti_shi": "服务暂时不可用，请稍后重试",
+  "cuo_wu_ma": "SERVICE_UNAVAILABLE",
+  "code": "SERVICE_UNAVAILABLE",
+  "message": "服务暂时不可用，请稍后重试",
+  "traceId": "request-0123456789abcdef",
+  "retryable": true,
+  "retryAfterMs": 1000
+}
+```
+
+追踪ID规则：服务端优先接收格式合法且长度受限的 `X-Request-Id`；缺失或非法时生成高熵UUID。响应头 `X-Request-Id`、响应体 `traceId` 与同一请求日志的 `trace_id` 使用同一值。日志可以记录脱敏后的内部诊断信息，但不得记录密码、JWT、API key或连接串凭据；SQL原文、堆栈和文件路径不得下发给客户端。
+
+状态与重试语义：
+
+| 状态 | 典型边界 | `retryable` |
+|---|---|---|
+| 400/401/403/404/409 | 参数、认证、权限、资源、版本或业务冲突 | `false` |
+| 413 | 请求体或上传内容过大 | `false` |
+| 422 | 业务输入无法处理 | `false` |
+| 429 | 限流或配额 | `true`，可带 `retryAfterMs` |
+| 500 | 未知内部错误或不可安全重试的逻辑错误 | `false` |
+| 502 | 模型或其他上游网络/响应错误 | `true` |
+| 503 | 数据库、Redis、依赖或服务暂不可用 | `true` |
+| 504 | 上游响应超时 | `true` |
+
+`fieldErrors` 只允许后端白名单字段，当前不输出密码、手机号、验证码、令牌、SQL字段名或任意内部键。Docker启动迁移、Redis、PostgreSQL、审核资源失败使用 `DOCKER_STARTUP_*` 稳定码；`/health` 与 `/readyz` 的依赖失败使用 `DEPENDENCY_*` 或 `DEPENDENCIES_UNAVAILABLE`，成功响应结构保持不变。角色生成按初始化、模型调用、响应解析、持久化阶段返回 `ROLE_GENERATION_*` 阶段码，不以空开场白或伪装成功掩盖失败。
+
+FP-11 战绩分类与排序继续复用既有稳定码；完整错误码注册表由后端单一真源维护，本节不复制维护第二份码表。
+

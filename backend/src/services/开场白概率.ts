@@ -3,6 +3,10 @@ import { peiZhi } from '../config'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { 内部转展示 } from '../utils/性别'
 import type { KaiChangBaiShengChengCanShu } from './开场白生成'
+import {
+  CUO_WU_DAI_MA,
+  JiaoSeShengChengCuoWu,
+} from '../config/错误码注册表'
 
 // 兜底概率（无 AI key / 概率计算失败时退回），与 config 中 kaiChangBaiFaSongGaiLv 对齐。
 const DOU_BEI_GAI_LV = AI_PEI_ZHI.prompt.kaiChangBaiFaSongGaiLv
@@ -54,7 +58,11 @@ export async function jiSuanKaiChangBaiGaiLv(
   canShu: KaiChangBaiShengChengCanShu,
 ): Promise<number> {
   const apiMiYao = peiZhi.deepSeek.apiMiYao || AI_PEI_ZHI.deepSeek.apiMiYao
-  if (!apiMiYao || process.env.VITEST === 'true') {
+  if (!apiMiYao) {
+    if (process.env.VITEST === 'true') return DOU_BEI_GAI_LV
+    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_MODEL_UNAVAILABLE)
+  }
+  if (process.env.VITEST === 'true') {
     return DOU_BEI_GAI_LV
   }
   try {
@@ -62,8 +70,13 @@ export async function jiSuanKaiChangBaiGaiLv(
       'kaiChangBaiGaiLv' as keyof typeof AI_PEI_ZHI.moXing,
       [{ jiaoSe: 'user', neiRong: gouJianGaiLvTiShi(canShu) }],
     )
-    return jieXiGaiLv(xiangYing.neiRong) ?? DOU_BEI_GAI_LV
-  } catch {
-    return DOU_BEI_GAI_LV
+    const gaiLv = jieXiGaiLv(xiangYing.neiRong)
+    if (gaiLv === null) {
+      throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID)
+    }
+    return gaiLv
+  } catch (cuoWu) {
+    if (cuoWu instanceof JiaoSeShengChengCuoWu) throw cuoWu
+    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_MODEL_CALL_FAILED, cuoWu)
   }
 }

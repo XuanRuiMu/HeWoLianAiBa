@@ -1,8 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import { 自动登录键 } from '@/constants/auth'
 import { duQuLingPai } from '@/utils/令牌存储'
-import { duQuShuJu } from '@/utils/storage'
 import { jiaZaiShiBaiLuYou, zhuCeLuYouCuoWuChuLi } from './错误处理'
 
 const luYou: RouteRecordRaw[] = [
@@ -124,19 +122,10 @@ function huoQuLingPai(): string | null {
   return duQuLingPai()
 }
 
-function ziDongDengLuKaiQi(): boolean {
-  const zhi = duQuShuJu<boolean>(自动登录键, null)
-  if (zhi === null) return true
-  return zhi === true
-}
-
 router.beforeEach(async (to, _from) => {
   const youLingPai = Boolean(huoQuLingPai())
   if (to.meta.xuYaoDengLu && !youLingPai) {
     return { name: 'dengLu', replace: true }
-  }
-  if ((to.name === 'dengLu' || to.path === '/login') && youLingPai && ziDongDengLuKaiQi()) {
-    return { name: 'zhuJieMian', replace: true }
   }
 })
 

@@ -21,7 +21,7 @@
 
       <div class="you-ce-xuanze-qu">
         <div class="moshi-kapian-zu">
-          <button class="moshi-kapian putong-moshi-kapian" @click="jinRuPuTongMoShi">
+          <MoShiKa class="moshi-kapian putong-moshi-kapian" @xuan-ze="jinRuPuTongMoShi">
             <div class="kapian-dingbu">
               <div class="kapian-tubiao-qu">
                 <svg
@@ -55,9 +55,9 @@
               <span class="kaishi-wenben">{{ huoQuFanYi('zhuYe', 'kaiShiTiYan') }}</span>
               <span class="kaishi-jiantou">→</span>
             </div>
-          </button>
+          </MoShiKa>
 
-          <button class="moshi-kapian tiaozhan-moshi-kapian" @click="jinRuTiaoZhanMoShi">
+          <MoShiKa class="moshi-kapian tiaozhan-moshi-kapian" @xuan-ze="jinRuTiaoZhanMoShi">
             <div class="kapian-dingbu">
               <div class="kapian-tubiao-qu">
                 <svg
@@ -93,7 +93,7 @@
               <span class="kaishi-wenben">{{ huoQuFanYi('zhuYe', 'jieShouTiaoZhan') }}</span>
               <span class="kaishi-jiantou">→</span>
             </div>
-          </button>
+          </MoShiKa>
         </div>
 
         <div class="zhuye-diwei-shuoming">
@@ -118,6 +118,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import MoShiKa from '@/components/模式卡.vue'
 import { 使用用户仓库 } from '@/stores/用户'
 import { huoQuFanYi } from '@/config/translations'
 import { quXian } from '@/config/设计令牌'
@@ -244,24 +245,22 @@ watch(
   align-items: center;
   text-align: center;
   gap: 6px;
+  padding: 10px 28px;
+  max-width: 100%;
+  border: 1px solid var(--kapian-mian-biankuang);
+  border-radius: var(--yuanjiao-da);
+  background-color: var(--moshi-kapian-zheyan);
+  background-image: none;
+  backdrop-filter: var(--boli-mohu);
+  box-shadow: var(--boli-yinying);
 }
 
 .biaoti-wenzi {
   font-size: 32px;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--wenben-zhuse);
   letter-spacing: 8px;
   line-height: 1.2;
-  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.7) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-
-:root[data-theme='light'] .biaoti-wenzi {
-  color: #191919;
-  background: linear-gradient(135deg, #191919 0%, rgba(25, 25, 25, 0.7) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
 }
 
 .biaoti-fenge {
@@ -274,14 +273,10 @@ watch(
 
 .biaoti-zhushi {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--wenben-zhuse);
   letter-spacing: 2px;
   font-weight: 400;
   text-transform: uppercase;
-}
-
-:root[data-theme='light'] .biaoti-zhushi {
-  color: rgba(0, 0, 0, 0.45);
 }
 
 @keyframes biaoti-ruchang {
@@ -322,6 +317,12 @@ watch(
   padding: 24px 28px;
   width: 100%;
   max-width: 420px;
+  border: 1px solid var(--kapian-mian-biankuang);
+  border-radius: var(--yuanjiao-da);
+  background-color: var(--moshi-kapian-zheyan);
+  background-image: none;
+  backdrop-filter: var(--boli-mohu);
+  box-shadow: var(--boli-yinying);
 }
 
 .pinpai-qu {
@@ -361,26 +362,18 @@ watch(
 .pinpai-mingcheng {
   font-size: 18px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--wenben-zhuse);
   letter-spacing: 1.5px;
-}
-
-:root[data-theme='light'] .pinpai-mingcheng {
-  color: #191919;
 }
 
 .zuoce-slogan {
   text-align: center;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--wenben-zhuse);
   margin: 0;
   letter-spacing: 1px;
   line-height: 1.6;
   animation: slogan-ruchang 0.6s var(--quxian-tan-chu) 0.5s both;
-}
-
-:root[data-theme='light'] .zuoce-slogan {
-  color: rgba(0, 0, 0, 0.32);
 }
 
 .you-ce-xuanze-qu {
@@ -405,36 +398,27 @@ watch(
 }
 
 .putong-moshi-kapian {
+  --moshi-kapian-zhu: var(--nuanhui-lan);
   justify-self: start;
   margin-right: 48px;
-  animation: kapian-zuo-shang 0.75s var(--quxian-tan-chu) 0.3s both;
+  animation: moshi-kapian-jinru var(--moshi-kapian-dong-xiao) var(--quxian-tan-chu) both;
 }
 
 .tiaozhan-moshi-kapian {
+  --moshi-kapian-zhu: var(--yanse-biaobai);
   justify-self: end;
   margin-left: 48px;
-  animation: kapian-you-xia 0.75s var(--quxian-tan-chu) 0.45s both;
+  animation: moshi-kapian-jinru var(--moshi-kapian-dong-xiao) var(--quxian-tan-chu) both;
 }
 
-@keyframes kapian-zuo-shang {
+@keyframes moshi-kapian-jinru {
   from {
     opacity: 0;
-    transform: translateX(30px) translateY(10px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateX(0) translateY(0);
-  }
-}
-
-@keyframes kapian-you-xia {
-  from {
-    opacity: 0;
-    transform: translateX(-30px) translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) translateY(0);
+    transform: translateY(0);
   }
 }
 
@@ -443,96 +427,28 @@ watch(
   max-width: 360px;
   position: relative;
   padding: 0;
-  border: none;
+  border: 1px solid var(--kapian-mian-biankuang);
   border-radius: 22px;
   cursor: pointer;
   overflow: hidden;
   text-align: left;
-  background: transparent;
-  transition:
-    transform 0.4s var(--quxian-biao-zhun),
-    box-shadow 0.4s var(--quxian-biao-zhun);
+  background-color: var(--moshi-kapian-zheyan);
+  transition: transform var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun);
 }
 
-/* FP-16（需求 #3「卡面太透、字看不清」）：卡面底色与边框全部上收为 FP-01 卡面令牌，组件内不留数字。
-   alpha 定值理由——不取新值、直接吃 --kapian-mian-beijing 的 .92：该 .92 是 FP-01 按「压在
-   --beijing-zhuse / --beijing-ciuse 两档底色上，正文与标题实测对比均 ≥7:1」反解出的**最小**不透明度，
-   即"仍透出 8% 背景"与"卡面够实"的交点，再低就跌破 7:1、再高就丢光背景层次；改它只能改令牌，
-   禁止在本文件补数字。原来的 .11/.07/.05 wash 降级为纯色相层（background-image），不再承担可读性。
-   实测对比度表见 .agents/evidence/traces/FP-16-20260922.md */
-.putong-moshi-kapian {
-  background-color: var(--kapian-mian-beijing);
-  background-image: linear-gradient(
-    135deg,
-    rgba(107, 140, 166, 0.11) 0%,
-    rgba(147, 130, 186, 0.07) 50%,
-    rgba(107, 140, 166, 0.05) 100%
-  );
-  border: 1px solid var(--kapian-mian-biankuang);
-}
-
-.tiaozhan-moshi-kapian {
-  background-color: var(--kapian-mian-beijing);
-  background-image: linear-gradient(
-    135deg,
-    rgba(255, 107, 157, 0.11) 0%,
-    rgba(251, 146, 60, 0.07) 50%,
-    rgba(255, 107, 157, 0.05) 100%
-  );
-  border: 1px solid var(--kapian-mian-biankuang);
-}
-
-/* 浅色档只保留色相 wash；底色与边框已由上面的令牌按档自动切换 */
-:root[data-theme='light'] .putong-moshi-kapian {
-  background-image: linear-gradient(
-    135deg,
-    rgba(245, 248, 252, 0.82) 0%,
-    rgba(240, 244, 250, 0.78) 50%,
-    rgba(245, 248, 252, 0.74) 100%
-  );
-}
-
-:root[data-theme='light'] .tiaozhan-moshi-kapian {
-  background-image: linear-gradient(
-    135deg,
-    rgba(255, 248, 250, 0.82) 0%,
-    rgba(255, 245, 240, 0.78) 50%,
-    rgba(255, 248, 250, 0.74) 100%
-  );
-}
-
-.moshi-kapian:hover {
+.moshi-kapian:hover:not(:disabled) {
   transform: translateY(-4px);
+  border-color: var(--moshi-kapian-zhu);
+  box-shadow: var(--moshi-kapian-hover-yinying);
 }
 
-.putong-moshi-kapian:hover {
-  box-shadow:
-    0 14px 40px rgba(0, 0, 0, 0.22),
-    0 0 36px rgba(107, 140, 166, 0.1);
-  border-color: rgba(107, 140, 166, 0.25);
-}
-
-.tiaozhan-moshi-kapian:hover {
-  box-shadow:
-    0 14px 40px rgba(0, 0, 0, 0.22),
-    0 0 36px rgba(255, 107, 157, 0.1);
-  border-color: rgba(255, 107, 157, 0.25);
-}
-
-:root[data-theme='light'] .putong-moshi-kapian:hover {
-  box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.05),
-    0 0 28px rgba(107, 140, 166, 0.06);
-}
-
-:root[data-theme='light'] .tiaozhan-moshi-kapian:hover {
-  box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.05),
-    0 0 28px rgba(255, 107, 157, 0.06);
-}
-
-.moshi-kapian:active {
+.moshi-kapian:active:not(:disabled) {
   transform: translateY(-1px) scale(0.99);
+}
+
+.moshi-kapian:disabled {
+  cursor: not-allowed;
+  transform: none;
 }
 
 .kapian-dingbu {
@@ -550,26 +466,12 @@ watch(
   align-items: center;
   justify-content: center;
   border-radius: 14px;
-  transition: transform 0.3s ease;
+  color: var(--moshi-kapian-zhu);
+  background: color-mix(in srgb, var(--moshi-kapian-zhu) 18%, transparent);
+  transition: transform var(--moshi-kapian-dong-xiao) ease;
 }
 
-.putong-moshi-kapian .kapian-tubiao-qu {
-  background: linear-gradient(135deg, rgba(107, 140, 166, 0.28), rgba(196, 160, 176, 0.18));
-}
-
-.tiaozhan-moshi-kapian .kapian-tubiao-qu {
-  background: linear-gradient(135deg, rgba(255, 107, 157, 0.28), rgba(251, 191, 36, 0.18));
-}
-
-:root[data-theme='light'] .putong-moshi-kapian .kapian-tubiao-qu {
-  background: linear-gradient(135deg, rgba(107, 140, 166, 0.1), rgba(196, 160, 176, 0.06));
-}
-
-:root[data-theme='light'] .tiaozhan-moshi-kapian .kapian-tubiao-qu {
-  background: linear-gradient(135deg, rgba(255, 107, 157, 0.1), rgba(251, 191, 36, 0.06));
-}
-
-.moshi-kapian:hover .kapian-tubiao-qu {
+.moshi-kapian:hover:not(:disabled) .kapian-tubiao-qu {
   transform: scale(1.08) rotate(-3deg);
 }
 
@@ -587,9 +489,6 @@ watch(
   min-width: 0;
 }
 
-/* FP-16：卡内文字色上收为卡面令牌族，深浅两档各一套值由 variables.css 单源切换。
-   真主因在此——副标题原为 rgba(255,255,255,.42)，实测压在卡面上仅 3.7:1；只提背景 alpha 治不好它。
-   标题原 #ffffff 本就 ≥13:1（不是"看不清"的主因），一并改吃令牌以消灭组件内第二处色值字面量 */
 .kapian-biaoti {
   font-size: 16px;
   font-weight: 700;
@@ -611,26 +510,12 @@ watch(
   gap: 7px;
 }
 
-/* FP-16b（需求 #3 的卡内残留）：预览行的「渐显」从 opacity 通道整体搬到颜色通道。
-   旧形态是 .yulan-xiangmu{opacity:.62} 与 .yulan-wenzi{color:rgba(255,255,255,.55)} **相乘** ⇒ 有效 alpha
-   .34 ⇒ 静止实测 2.49(浅)/3.01(深)（FP-16 遗留的契约两档口径；本 FP 的夹逼口径为 2.5/2.8），抬卡面 alpha 对它无效（与 FP-16 证伪 I3 同构）。透明度现在只有这一处真源：
-   静止 = 卡面正文令牌压到 75%（色相 100% 仍来自 --kapian-mian-zhengwen，与 .kapian-fubiaoti 同源，组件内零色值字面量），
-   hover = 满 alpha。0.3s ease 与三条 transition-delay 的错峰时序、translateX 位移一字未动，改的只有颜色通道。
-   75% 的定值理由：夹逼任意主页背景（纯黑/纯白/--beijing-{zhuse,ciuse} × 卡面 3 停靠点 wash × 两模式）下静止态
-   仍 ≥4.5:1（实测 深 5.8 / 浅 5.6），hover 8.8 / 11.8 ⇒ 渐显跨度可见。算式与冻结值见
-   __tests__/FP16模式卡可读性.test.ts 的 FP-16b 节与 .agents/evidence/traces/FP-16b-20260922.md */
 .yulan-xiangmu {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: color-mix(in srgb, var(--kapian-mian-zhengwen) 75%, transparent);
-  transition:
-    color 0.3s ease,
-    transform 0.3s ease;
-}
-
-.moshi-kapian:hover .yulan-xiangmu {
   color: var(--kapian-mian-zhengwen);
+  transition: transform var(--moshi-kapian-dong-xiao) ease;
 }
 
 .yulan-dian {
@@ -640,42 +525,29 @@ watch(
   flex-shrink: 0;
 }
 
-.putong-moshi-kapian .yulan-dian {
-  background: var(--nuanhui-lan);
-  box-shadow: 0 0 5px rgba(107, 140, 166, 0.35);
+.yulan-dian {
+  background: var(--moshi-kapian-zhu);
+  box-shadow: 0 0 5px currentColor;
 }
 
-.tiaozhan-moshi-kapian .yulan-dian {
-  background: var(--yanse-biaobai);
-  box-shadow: 0 0 5px rgba(255, 107, 157, 0.35);
-}
-
-/* FP-16b：本规则不再自带 color —— 预览行的颜色只有 `.yulan-xiangmu` 一处真源，
-   文字按继承吃它，于是静止/hover 的透明度与字色永远不会乘出第二个通道（R3）。 */
 .yulan-wenzi {
   font-size: 12px;
   font-weight: 400;
 }
 
-.yulan-xiangmu-1 {
-  transform-origin: left center;
-}
-.yulan-xiangmu-2 {
-  transform-origin: left center;
-  transition-delay: 0.05s;
-}
+.yulan-xiangmu-1,
+.yulan-xiangmu-2,
 .yulan-xiangmu-3 {
   transform-origin: left center;
-  transition-delay: 0.1s;
 }
 
-.moshi-kapian:hover .yulan-xiangmu-1 {
+.moshi-kapian:hover:not(:disabled) .yulan-xiangmu-1 {
   transform: translateX(4px);
 }
-.moshi-kapian:hover .yulan-xiangmu-2 {
+.moshi-kapian:hover:not(:disabled) .yulan-xiangmu-2 {
   transform: translateX(5px);
 }
-.moshi-kapian:hover .yulan-xiangmu-3 {
+.moshi-kapian:hover:not(:disabled) .yulan-xiangmu-3 {
   transform: translateX(4px);
 }
 
@@ -684,28 +556,23 @@ watch(
   align-items: center;
   justify-content: space-between;
   padding: 12px 22px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid var(--kapian-mian-biankuang);
   margin: 0 22px;
-}
-
-:root[data-theme='light'] .kapian-dibu {
-  border-top-color: rgba(0, 0, 0, 0.03);
 }
 
 .kaishi-wenben {
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--zhuye-kaishi-wenben);
-  transition: color 0.3s ease;
+  color: var(--kapian-mian-zhengwen);
 }
 
 .kaishi-jiantou {
   font-size: 20px;
-  color: var(--zhuye-kaishi-jiantou);
-  transition: transform 0.3s ease;
+  color: color-mix(in srgb, var(--moshi-kapian-zhu) 72%, transparent);
+  transition: transform var(--moshi-kapian-dong-xiao) ease;
 }
 
-.moshi-kapian:hover .kaishi-jiantou {
+.moshi-kapian:hover:not(:disabled) .kaishi-jiantou {
   transform: translateX(4px);
 }
 
@@ -899,6 +766,11 @@ watch(
   .qinggan-neirong-ceng {
     gap: 8px;
     padding: 8px;
+    border: none;
+    background-color: transparent;
+    background-image: none;
+    backdrop-filter: none;
+    box-shadow: none;
   }
 
   .pinpai-qu {
@@ -989,13 +861,13 @@ watch(
     transform: none;
   }
 
-  .moshi-kapian:hover .kapian-tubiao-qu {
+  .moshi-kapian:hover:not(:disabled) .kapian-tubiao-qu {
     transform: none;
   }
 
-  .moshi-kapian:hover .yulan-xiangmu-1,
-  .moshi-kapian:hover .yulan-xiangmu-2,
-  .moshi-kapian:hover .yulan-xiangmu-3 {
+  .moshi-kapian:hover:not(:disabled) .yulan-xiangmu-1,
+  .moshi-kapian:hover:not(:disabled) .yulan-xiangmu-2,
+  .moshi-kapian:hover:not(:disabled) .yulan-xiangmu-3 {
     transform: none;
   }
 

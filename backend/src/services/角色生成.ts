@@ -1,6 +1,9 @@
-﻿import { debug日志 } from '../utils/debug日志'
-import { 数据库 } from '../数据库'
+﻿import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
+import {
+  CUO_WU_DAI_MA,
+  JiaoSeShengChengCuoWu,
+} from '../config/错误码注册表'
 import { AI_PEI_ZHI } from '../config/AI配置'
 import { huoQuNiChengKu } from '../utils/昵称解析'
 import { 内部转展示, 落库性别或拒绝, 读回性别, 性别内部形态列表, type 性别内部形态 } from '../utils/性别'
@@ -579,7 +582,12 @@ export async function baoCunJiaoSe(
   // FP-13 落库卡口：xing_bie 可能来自客户端回传（/确认 经 qingXiRenSheDuiXiang 白名单原样透传），
   // 必须先过唯一解析入口归一为内部规范形态再进事务；不可识别者以 400 拒绝，
   // 绝不允许把第三种写法送进迁移 024 的 CHECK 而炸成 500。
-  const xingBieLuoKu = 落库性别或拒绝(jiaoSe.xing_bie, '角色生成', yongHuId)
+  let xingBieLuoKu: 性别内部形态
+  try {
+    xingBieLuoKu = 落库性别或拒绝(jiaoSe.xing_bie, '角色生成', yongHuId)
+  } catch (cuoWu) {
+    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_INPUT_INVALID, cuoWu)
+  }
   // YH-057 角色生成关键链单事务：归档+落角色+落好感+落档案+指活跃同事务，外部IO禁入
   // 根因：多写散着走失败即残留孤儿角色；开场白生成为外部LLM IO放事务外，失败走补偿归档
   // 兼容mock池：vi.mock后connect非函数时走原直连路径
@@ -725,7 +733,8 @@ export async function baoCunJiaoSe(
       await zhiXing.query('ROLLBACK').catch(() => undefined)
       shiWuKeHuDuan.release()
     }
-    throw cuoWu
+    if (cuoWu instanceof JiaoSeShengChengCuoWu) throw cuoWu
+    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_PERSISTENCE_FAILED, cuoWu)
   }
   shiWuKeHuDuan?.release()
 
@@ -743,6 +752,7 @@ export async function baoCunJiaoSe(
   //        无 AI key / 测试环境退回固定兜底概率（kaiChangBaiFaSongGaiLv）。
   // 第二步：系统随机选 [0,1) 一个数，小于概率则发送——概率高的角色更常发，低的更少发。
   // 测试环境强制 faSongGaiLv=1（必发）以保证确定性。
+  let jieDuan: 'model' | 'persistence' = 'model'
   try {
     const kcbCanShu: Parameters<typeof shengChengKaiChangBai>[0] = {
       mbti_lei_xing: jiaoSe.mbti_lei_xing,
@@ -766,6 +776,7 @@ export async function baoCunJiaoSe(
       Math.random() < faSongGaiLv
         ? await shengChengKaiChangBai(kcbCanShu)
         : { xiao_xi_lie_biao: [] as string[] }
+    jieDuan = 'persistence'
     for (const neiRong of kaiChangBai.xiao_xi_lie_biao.slice(0, 5)) {
       if (neiRong.trim()) {
         await baoCunJiaoSeXiaoXi({
@@ -776,7 +787,13 @@ export async function baoCunJiaoSe(
       }
     }
   } catch (cuoWu) {
-    debug日志.error('角色生成', '生成开场白消息失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+    if (cuoWu instanceof JiaoSeShengChengCuoWu) throw cuoWu
+    throw new JiaoSeShengChengCuoWu(
+      jieDuan === 'persistence'
+        ? CUO_WU_DAI_MA.ROLE_GENERATION_PERSISTENCE_FAILED
+        : CUO_WU_DAI_MA.ROLE_GENERATION_MODEL_CALL_FAILED,
+      cuoWu,
+    )
   }
 
   return jiaoSe

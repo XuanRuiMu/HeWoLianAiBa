@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import { peiZhi } from '../config'
 import { huoQuFanYi } from '../config/translations'
+import { CUO_WU_DAI_MA } from '../config/错误码注册表'
 import { shiBaiXiangYing } from '../utils/xiangying'
 import { 是可识别性别 } from '../utils/性别'
 import { qingLiTiJiaoKuai } from '../services/消息内容块'
@@ -45,7 +46,7 @@ export function 手机号验证中间件(
 ): void {
   const 手机号 = 获取请求字符串(请求, 'shouJiHao', 'shou_ji_hao')
   if (!手机号 || !验证手机号(手机号)) {
-    shiBaiXiangYing(响应, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'))
+    shiBaiXiangYing(响应, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
     return
   }
   下一步()
@@ -58,7 +59,7 @@ export function 用户名验证中间件(
 ): void {
   const 用户名 = 获取请求字符串(请求, 'yongHuMing', 'yong_hu_ming')
   if (!用户名 || !验证用户名(用户名)) {
-    shiBaiXiangYing(响应, 400, huoQuFanYi('renZheng', 'yongHuMingTeShuZiFu'))
+    shiBaiXiangYing(响应, 400, huoQuFanYi('renZheng', 'yongHuMingTeShuZiFu'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
     return
   }
   下一步()
@@ -71,7 +72,7 @@ export function 性别验证中间件(
 ): void {
   const 性别 = 获取请求字符串(请求, '性别', 'xing_bie')
   if (!性别 || !验证性别(性别)) {
-    shiBaiXiangYing(响应, 400, huoQuFanYi('anQuan', 'shenFenBuHeFa'))
+    shiBaiXiangYing(响应, 400, huoQuFanYi('anQuan', 'shenFenBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
     return
   }
   下一步()
@@ -101,7 +102,7 @@ export function 聊天内容验证中间件(
   const kuaiQingLi = qingLiTiJiaoKuai(tiJiaoKuai, '聊天内容验证')
   if (kuaiQingLi.kuai !== null) {
     if (kuaiQingLi.chaoXian) {
-      shiBaiXiangYing(响应, 400, huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'))
+      shiBaiXiangYing(响应, 400, huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
       return
     }
     下一步()

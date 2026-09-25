@@ -1,7 +1,16 @@
 <template>
   <div class="junshi-jilu-yemian" style="overflow-y: auto">
-    <div v-if="jiaZaiZhong" class="jiaZai-zhuangtai">{{ huoQuFanYi('junShi', 'jiaZaiZhong') }}</div>
-    <div v-else-if="!jiLuShuJu" class="kong-zhuangtai">
+    <div v-if="qianTaiCuoWu">
+      <RequestError
+        :cuo-wu="qianTaiCuoWu"
+        :zhong-zai="qianTaiZhuangTai === 'loading'"
+        @chong-shi="chongShi"
+      />
+    </div>
+    <div v-else-if="qianTaiZhuangTai === 'loading'" class="jiaZai-zhuangtai" role="status">
+      {{ huoQuFanYi('junShi', 'jiaZaiZhong') }}
+    </div>
+    <div v-else-if="!jiLuShuJu" class="kong-zhuangtai" role="status">
       {{ huoQuFanYi('junShi', 'weiZhaoDaoJiLu') }}
     </div>
     <template v-else>
@@ -67,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { huoQuJunShiJiLu } from '@/api/聊天'
 import { huoQuFanYi } from '@/config/translations'
@@ -75,35 +84,39 @@ import { shengChengTouXiangURL } from '@/utils/头像'
 import TouXiang from '@/components/头像.vue'
 import 军师指导分段 from '@/components/军师指导分段.vue'
 import 提示带 from '@/components/提示带.vue'
+import RequestError from '@/components/请求错误.vue'
+import { use前台错误 } from '@/composables/use前台错误'
 import type { JunShiJiLu } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
 const jiLuShuJu = ref<JunShiJiLu | null>(null)
-const jiaZaiZhong = ref(true)
 const touXiangShiBai = ref(false)
+const { cuoWu: qianTaiCuoWu, zhuangTai: qianTaiZhuangTai, yunXing, chongShi } = use前台错误()
 
 async function jiaZaiShuJu() {
-  jiaZaiZhong.value = true
-  try {
-    const jiaoSeId = route.params.jiaoSeId as string
-    const jiLuId = route.params.jiLuId as string
-    const lieBiao = await huoQuJunShiJiLu(jiaoSeId)
-    jiLuShuJu.value = lieBiao.find((j) => j.shi_jian === jiLuId) || null
-  } catch {
-    jiLuShuJu.value = null
-  } finally {
-    jiaZaiZhong.value = false
-  }
+  await yunXing(
+    async () => {
+      const jiaoSeId = route.params.jiaoSeId as string
+      const jiLuId = route.params.jiLuId as string
+      const lieBiao = await huoQuJunShiJiLu(jiaoSeId)
+      jiLuShuJu.value = lieBiao.find((j) => j.shi_jian === jiLuId) || null
+    },
+    { chongShi: jiaZaiShuJu },
+  )
 }
 
 function fanhui() {
   router.back()
 }
 
-onMounted(() => {
-  jiaZaiShuJu()
-})
+watch(
+  () => [route.params.jiaoSeId, route.params.jiLuId],
+  () => {
+    void jiaZaiShuJu()
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped>

@@ -129,6 +129,7 @@ const 迁移目录 = resolve(__dirname, '..', '..', '..', 'database', 'migration
 function 取连接串(): string {
   const 显式 = (process.env.TEST_DATABASE_URL ?? '').trim()
   if (显式 !== '') return 显式.includes('@postgres:') ? 显式.replace('@postgres:', '@127.0.0.1:') : 显式
+  if (process.env.XU_KE_ZHEN_SHI_WAI_HU !== 'true') return ''
   const 运行值 = String(peiZhi.shuJuKuLianJie ?? '')
   if (运行值 === '') return ''
   return 运行值.includes('@postgres:') ? 运行值.replace('@postgres:', '@127.0.0.1:') : 运行值

@@ -6,6 +6,11 @@ export interface ApiXiangYing<T> {
   shu_ju: T | null
   ti_shi?: string
   cuo_wu_ma?: string
+  code?: string
+  message?: string
+  traceId?: string
+  retryable?: boolean
+  retryAfterMs?: number
 }
 
 export type GuanxiJieduan =
@@ -359,6 +364,40 @@ export interface JunShiJiLu {
   liao_tian_ji_lu?: JunShiJiLuLiaoTianXiaoXi[]
 }
 
+export interface ZhanJiFenLei {
+  id: string
+  name: string
+  is_default: boolean
+  record_count: number
+  version: number
+}
+
+export interface ZhanJiFenLeiLieBiao {
+  moRenFenLeiId: string
+  fenLeiLieBiao: ZhanJiFenLei[]
+}
+
+export interface ZhanJiFenLeiShanChuJieGuo {
+  deleted_id: string
+  fallback_category_id: string
+  moved_record_count: number
+}
+
+export interface ZhanJiDangAnYiDongJieGuo {
+  record_id: string
+  source_category_id: string
+  category_id: string
+  sort_order: number
+  source_version: number
+  target_version: number
+}
+
+export interface ZhanJiFenLeiPaiXuJieGuo {
+  category_id: string
+  record_ids: string[]
+  version: number
+}
+
 export interface DangAnXiangQing {
   id: string
   jiao_se_id: string
@@ -377,6 +416,8 @@ export interface DangAnXiangQing {
   sui_ji_xing_ge?: boolean
   mbti_lei_xing?: string
   jun_shi_ji_lu: JunShiJiLu[]
+  category_id: string
+  sort_order: number
 }
 
 export interface FuPanTiaoMu {

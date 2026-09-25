@@ -160,8 +160,6 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
   function jiaZaiJiZhuSheZhi() {
     const baoCunZhangHao = duQuShuJu<string>(BAO_CUN_ZHANG_HAO_JIAN, null)
     jiZhuZhangHao.value = baoCunZhangHao !== null
-    // 记住密码 = 持久化登录令牌（localStorage），绝不明文存密码；
-    // 不勾选则令牌仅放 sessionStorage，关浏览器即失效
     jiZhuMiMa.value = duQuShuJu<boolean>(记住密码键, false) === true
     if (!jiZhuZhangHao.value) jiZhuMiMa.value = false
     // 自动登录是记住密码的子选项：仅记住密码勾选时有效
@@ -179,7 +177,6 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
     jiZhuMiMaZhi: boolean,
     ziDongDengLuZhi = false,
   ) {
-    // 记住密码只决定令牌持久层级，明文密码禁止写入任何存储
     void _miMa
     baoCunShuJu(JI_ZHU_ZHANG_HAO_JIAN, jiZhuZhangHaoZhi)
     baoCunShuJu(记住密码键, jiZhuMiMaZhi)

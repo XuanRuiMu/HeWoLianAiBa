@@ -108,7 +108,7 @@ export function huoQuDuoMoTaiQianDuanShiTu(): DuoMoTaiQianDuanShiTu {
 
 export function chongZaiDuoMoTaiHuanJing(): string[] {
   const envLuJing = path.join(__dirname, '../../.env')
-  const jieGuo = dotenv.config({ path: envLuJing, override: true })
+  const jieGuo = dotenv.config({ path: envLuJing, override: process.env.VITEST !== 'true', quiet: true })
   if (jieGuo.error) return []
   return Object.keys(jieGuo.parsed || {})
 }

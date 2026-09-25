@@ -346,7 +346,8 @@ describe('FP-10 聊天页面视频与生成一致', () => {
     expect(聊天仓库.xiaoXiLieBiao.at(-1)?.id).toBe('sheng-tu-1')
     shengShiPinApiMock.mockRejectedValue(new Error(huoQuFanYi('duoMeiTi', 'shiPinShengChengShiBai')))
     expect(await 聊天仓库.qingQiuShengChengShiPin('海边')).toBeNull()
-    expect(聊天仓库.cuoWuXinXi).toBe(huoQuFanYi('duoMeiTi', 'shiPinShengChengShiBai'))
+    expect(聊天仓库.cuoWuXinXi).toBe(huoQuFanYi('tongYong', 'tongYongWenTiYingXiang'))
+      expect(聊天仓库.cuoWuXinXi).not.toBe(huoQuFanYi('duoMeiTi', 'shiPinShengChengShiBai'))
   })
 
   it('FP-05 YH-036/YH-037 用户手动按钮删除：无生成翻译键残留引用', () => {

@@ -1,6 +1,11 @@
 <template>
   <div class="qipao-she-zhi-ye" :style="sheZhi.ziJiQiPaoCSSBianLiang">
     <h2 class="qipao-ye-biao-ti">{{ QI_PAO_WEN_AN.biaoTi }}</h2>
+    <RequestError
+      v-if="sheZhi.caoZuoCuoWu"
+      :cuo-wu="sheZhi.caoZuoCuoWu"
+      @chong-shi="sheZhi.chongShi()"
+    />
     <QiPaoXuanZeQi />
     <div class="qipao-yu-lan-qu">
       <div class="qipao-yu-lan-xiang yonghu-xiaoxi">
@@ -17,6 +22,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import QiPaoXuanZeQi from '@/components/气泡主题选择器.vue'
+import RequestError from '@/components/请求错误.vue'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
 import { QI_PAO_WEN_AN, huoQuQiPaoMingCheng } from '@/config/气泡主题文案'
 

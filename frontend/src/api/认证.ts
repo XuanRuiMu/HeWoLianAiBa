@@ -28,13 +28,17 @@ export interface 资料请求 {
   yunXuZhaNanZhaNv: boolean
 }
 
-export async function faSongMa(shouJiHao: string): Promise<void> {
-  await http.post('/认证/发送码', { shouJiHao })
+export async function faSongMa(shouJiHao: string, peiZhi?: { signal?: AbortSignal }): Promise<void> {
+  await http.post('/认证/发送码', { shouJiHao }, peiZhi)
 }
 
-export async function jianChaShouJiHao(shouJiHao: string): Promise<{ yi_zhu_ce: boolean }> {
+export async function jianChaShouJiHao(
+  shouJiHao: string,
+  peiZhi?: { signal?: AbortSignal },
+): Promise<{ yi_zhu_ce: boolean }> {
   const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: { yi_zhu_ce: boolean } }>(
     `/认证/检查手机?shouJiHao=${shouJiHao}`,
+    peiZhi,
   )
   return 响应.data.shu_ju
 }
@@ -46,23 +50,36 @@ export async function zhuCe(
   miMa: string,
   tongYiXieYi: boolean,
   chuShengRiQi: string,
+  peiZhi?: { signal?: AbortSignal },
 ): Promise<DengLuXiangYing> {
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: DengLuXiangYing }>('/认证/注册', {
-    shouJiHao,
-    yanZhengMa,
-    yongHuMing,
-    miMa,
-    tongYiXieYi,
-    chuShengRiQi,
-  })
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: DengLuXiangYing }>(
+    '/认证/注册',
+    {
+      shouJiHao,
+      yanZhengMa,
+      yongHuMing,
+      miMa,
+      tongYiXieYi,
+      chuShengRiQi,
+    },
+    peiZhi,
+  )
   return 响应.data.shu_ju
 }
 
-export async function dengLu(shouJiHao: string, miMa: string): Promise<DengLuXiangYing> {
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: DengLuXiangYing }>('/认证/登录', {
-    shouJiHao,
-    miMa,
-  })
+export async function dengLu(
+  shouJiHao: string,
+  miMa: string,
+  peiZhi?: { signal?: AbortSignal },
+): Promise<DengLuXiangYing> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: DengLuXiangYing }>(
+    '/认证/登录',
+    {
+      shouJiHao,
+      miMa,
+    },
+    peiZhi,
+  )
   return 响应.data.shu_ju
 }
 
@@ -91,14 +108,14 @@ export async function gengGaiMoRenXingBie(moRenXingBie: XingBie): Promise<Yonghu
   return 响应.data.shu_ju.yong_hu
 }
 
-export async function huoQuYongHuXinXi(): Promise<Yonghu> {
-  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: Yonghu }>('/认证/信息')
+export async function huoQuYongHuXinXi(peiZhi?: { signal?: AbortSignal }): Promise<Yonghu> {
+  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: Yonghu }>('/认证/信息', peiZhi)
   return 响应.data.shu_ju
 }
 
 // C3 账号注销：匿名化用户并清理关联数据，旧令牌吊销
-export async function zhuXiaoZhangHao(): Promise<void> {
-  await http.delete<{ cheng_gong: boolean; ti_shi?: string }>('/认证/注销')
+export async function zhuXiaoZhangHao(peiZhi?: { signal?: AbortSignal }): Promise<void> {
+  await http.delete<{ cheng_gong: boolean; ti_shi?: string }>('/认证/注销', peiZhi)
 }
 
 export async function sheZhiZiLiao(shuJu: 资料请求): Promise<Yonghu> {

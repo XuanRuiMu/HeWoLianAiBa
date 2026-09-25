@@ -444,7 +444,8 @@ describe('好友媒体发送中/失败态与资源回收', () => {
     await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
     expect(wrapper.findAll('.xiaoxi-xiangmu')).toHaveLength(1)
-    expect(wrapper.find('.fasong-tishi').text()).toBe('文件超出大小限制')
+    expect(wrapper.find('.fasong-tishi').text()).toBe(huoQuFanYi('tongYong', 'qingQiuWenTiYingXiang'))
+    expect(wrapper.find('.fasong-tishi').text()).not.toContain('文件超出大小限制')
     expect(wrapper.find('img.tuwen-kuai-tu').attributes('src')).not.toContain('blob:')
     expect(wrapper.find('.shuru-kuang .dai-fa-kuai--tu').exists()).toBe(true)
     wrapper.unmount()
@@ -460,7 +461,8 @@ describe('好友媒体发送中/失败态与资源回收', () => {
     await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
     expect(wrapper.findAll('.xiaoxi-xiangmu')).toHaveLength(0)
-    expect(wrapper.find('.fasong-tishi').text()).toBe('对方还不是你的好友')
+    expect(wrapper.find('.fasong-tishi').text()).toBe(huoQuFanYi('tongYong', 'quanXianWenTiYingXiang'))
+    expect(wrapper.find('.fasong-tishi').text()).not.toContain('对方还不是你的好友')
     wrapper.unmount()
   })
 
@@ -478,7 +480,8 @@ describe('好友媒体发送中/失败态与资源回收', () => {
     await 输入.trigger('change')
     await flushPromises()
     expect(传媒体).not.toHaveBeenCalled()
-    expect(wrapper.find('.fasong-tishi').text()).toContain('浏览器拒绝解码')
+    expect(wrapper.find('.fasong-tishi').text()).toBe(huoQuFanYi('tongYong', 'tongYongWenTiYingXiang'))
+    expect(wrapper.find('.fasong-tishi').text()).not.toContain('浏览器拒绝解码')
     ;(globalThis as unknown as { removeEventListener: (k: string, f: unknown) => void }).removeEventListener(
       'unhandledrejection',
       记录 as never,

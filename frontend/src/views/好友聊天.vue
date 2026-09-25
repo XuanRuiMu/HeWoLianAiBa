@@ -1,5 +1,5 @@
 <template>
-  <div class="liaotian-yemian">
+  <div class="liaotian-yemian" data-chat-scope="true">
     <div class="haoyou-dingbu">
       <button class="haoyou-fanhui" @click="fanHui">
         <span class="haoyou-fanhui-jiantou" aria-hidden="true" />
@@ -14,11 +14,19 @@
       @chong-shi="fanHuiLieBiao"
     />
     <KongTai
-      v-else-if="jiaZaiShiBai"
+      v-else-if="qianTaiCuoWu"
       :biao-ti="huoQuFanYi('haoYou', 'xiaoXiJiaZaiShiBai')"
+      :ti-shi="qianTaiCuoWu.yingXiang"
       :chong-shi-wen-zi="huoQuFanYi('liaoTian', 'chongShi')"
-      @chong-shi="chongShiJiaZai"
-    />
+      @chong-shi="chongShi"
+    >
+      <RequestError
+        :cuo-wu="qianTaiCuoWu"
+        :xian-shi-chong-shi="false"
+        mi-xi
+        @chong-shi="chongShi"
+      />
+    </KongTai>
     <template v-else>
     <main ref="xiaoxiQuYuRef" class="xiaoxi-quyu" :class="beiJingLeiMing" :style="[beiJingYangShi, qiPaoYangShi]" role="log" aria-live="polite" :aria-label="huoQuFanYi('liaoTian', 'xiaoXiLieBiao')">
       <template v-for="zu in xiaoXiFenZu" :key="'zu-' + zu.shiJianChuo">
@@ -112,6 +120,24 @@
             :lie-biao="xiaoXiLieBiao"
             :gun-dong-rong-qi="huoQuXiaoXiGunDongRongQi"
             :fa-song-zhe-ming="yinYongFaSongZheMing"
+          />
+          <FanYiJieGuo
+            v-if="
+              !xiaoXi.yi_che_hui &&
+              (shiFanYiZhong(xiaoXi) ||
+                shiFanYiZhanKai(xiaoXi) ||
+                shiFanYiChuCuo(xiaoXi) ||
+                shiFanYiKong(xiaoXi))
+            "
+            :zhuang-tai="huoQuFanYiZhuangTai(xiaoXi)"
+            :jie-guo="huoQuFanYiJieGuo(xiaoXi) || ''"
+            :cuo-wu="huoQuFanYiCuoWu(xiaoXi)"
+            :yuan-yu="fanYiYuanYu"
+            :mu-biao-yu="fanYiMuBiaoYu"
+            :fu-zhi-wen-ben="fuZhiWenBen"
+            @geng-xin-yuan-yu="gaiFanYiYuanYu($event, xiaoXi)"
+            @geng-xin-mu-biao-yu="gaiFanYiMuBiaoYu($event, xiaoXi)"
+            @chong-shi="chongXinFanYi(xiaoXi)"
           />
         </div>
         <button v-if="keCheHui(xiaoXi)" class="chehui-xiao-anniu" @click="cheHui(xiaoXi.id)">
@@ -276,7 +302,7 @@ import {
 } from '@/api/社交'
 import { huoQuMingPian } from '@/api/资料'
 import { guiYiHuaQiPao, huoQuQiPaoCSSBianLiang } from '@/config/气泡主题'
-import { huoQuCuoWuXiangYing } from '@/api/请求'
+import { 归一前台错误 } from '@/utils/前台错误'
 import { shiTuPianDiZhi } from '@/utils/头像'
 import { fenZuXiaoXiAnShiJian } from '@/utils/消息时间分组'
 import { yaSuoTuPiang } from '@/utils/图片压缩'
@@ -284,7 +310,7 @@ import { use粘贴图片 } from '@/composables/use粘贴图片'
 import { use待发图文, type BianJiQiDuan, type DaiFaGuangBiao } from '@/composables/use待发图文'
 import { use输入区展开档 } from '@/composables/use输入区展开档'
 import { use图片授权门 } from '@/composables/use图片授权门'
-import { use长按菜单, type CaiDanXiaoXi } from '@/composables/use长按菜单'
+import { fuZhiWenBen, use长按菜单, type CaiDanXiaoXi } from '@/composables/use长按菜单'
 import { use添加到表情 } from '@/composables/use添加到表情'
 import { use表情提交 } from '@/composables/use表情提交'
 import { use表情提示条 } from '@/composables/use表情提示条'
@@ -309,11 +335,14 @@ import {
   huoQuMeiTiYinYongZhanWei,
 } from '@/config/消息配置'
 import { CAO_GAO_JIAN, useCaoGao } from '@/composables/use草稿'
+import RequestError from '@/components/请求错误.vue'
 import KongTai from '@/components/空态.vue'
+import { use前台错误 } from '@/composables/use前台错误'
 import DuoMeiTiShouQuanDanChuang from '@/components/多媒体授权弹窗.vue'
 import TuWenShuRuQu from '@/components/聊天/图文输入区.vue'
 import YinYongTiao from '@/components/聊天/引用条.vue'
 import YinYongQiPaoKuai from '@/components/聊天/引用气泡块.vue'
+import FanYiJieGuo from '@/components/聊天/翻译结果框.vue'
 import YuYinQiPao from '@/components/聊天/语音气泡.vue'
 import WenJianQiPao from '@/components/聊天/文件气泡.vue'
 import ShiJianTiao from '@/components/聊天/时间条.vue'
@@ -337,8 +366,8 @@ const xiaoxiQuYuRef = ref<HTMLElement | null>(null)
 const beiJingLeiMing = computed(() => (设置仓库.shiYuShe ? `beijing-${设置仓库.liaoTianBeiJing || 'moRen'}` : 'beijing-ziDingYi'))
 const beiJingYangShi = computed(() => 设置仓库.beiJingNeiLianYangShi)
 const cheHuiWenBen = huoQuFanYi('liaoTian', 'duiFangCheHuiLeYiTiaoXiaoXi')
+const { cuoWu: qianTaiCuoWu, zhuangTai: qianTaiZhuangTai, yunXing, chongShi } = use前台错误()
 const feiHaoYou = ref(false)
-const jiaZaiShiBai = ref(false)
 const faSongTiShi = ref('')
 const haoYouTouXiang = ref<string | null>(null)
 const haoYouMing = ref('')
@@ -372,30 +401,33 @@ function gunDongDaoDiBu() {
 }
 
 async function shuaXin(youBiao?: { xu_hao: number | null; shi_jian: number; id: string }) {
-  try {
-    // YH-087 好友聊天实时分页：游标分页+轮询增量，发送乐观更新禁全量刷新
-    const xinLieBiao = await huoQuHaoYouXiaoXi(haoYouId, 50, youBiao)
-    if (youBiao) {
-      if (xinLieBiao.length > 0) {
-        const yiCunId = new Set(xiaoXiLieBiao.value.map((x) => x.id))
-        const zengLiang = xinLieBiao.filter((x) => !yiCunId.has(x.id))
-        xiaoXiLieBiao.value = [...zengLiang, ...xiaoXiLieBiao.value]
+  await yunXing(
+    async () => {
+      feiHaoYou.value = false
+      const xinLieBiao = await huoQuHaoYouXiaoXi(haoYouId, 50, youBiao)
+      if (youBiao) {
+        if (xinLieBiao.length > 0) {
+          const yiCunId = new Set(xiaoXiLieBiao.value.map((x) => x.id))
+          const zengLiang = xinLieBiao.filter((x) => !yiCunId.has(x.id))
+          xiaoXiLieBiao.value = [...zengLiang, ...xiaoXiLieBiao.value]
+        }
+      } else {
+        xiaoXiLieBiao.value = xinLieBiao
       }
-    } else {
-      xiaoXiLieBiao.value = xinLieBiao
-    }
-    jiaZaiShiBai.value = false
-  } catch (cuoWu: unknown) {
-    // 非好友或加载失败都走空态，不让整页崩进错误边界
-    if (huoQuCuoWuXiangYing(cuoWu)?.status === 403) {
-      feiHaoYou.value = true
-    } else {
-      jiaZaiShiBai.value = true
-    }
-    return
-  }
-  gunDongDaoDiBu()
-  void biaoJiHaoYouYiDu(haoYouId)
+      gunDongDaoDiBu()
+      try {
+        await biaoJiHaoYouYiDu(haoYouId)
+      } catch {
+        /* 已读回执失败不打断消息展示 */
+      }
+    },
+    {
+      chongShi: () => shuaXin(),
+      chuLiCuoWu: (zhengChangHua) => {
+        feiHaoYou.value = zhengChangHua.httpStatus === 403
+      },
+    },
+  )
 }
 
 function fanHui() {
@@ -407,11 +439,6 @@ function fanHui() {
 function fanHuiLieBiao() {
   // 空态返回用替换而非推入：避免“返回又回来”导致多点一次
   router.replace('/hao-you')
-}
-
-async function chongShiJiaZai() {
-  jiaZaiShiBai.value = false
-  await shuaXin()
 }
 
 async function faSongYiDuanWenBen(wenBen: string, miDengJian: string): Promise<boolean> {
@@ -590,10 +617,7 @@ async function faSongDaiFaTuWen(): Promise<void> {
 }
 
 function duQuTiShi(cuoWu: unknown): string {
-  if (typeof cuoWu === 'object' && cuoWu !== null && 'response' in cuoWu) {
-    return huoQuCuoWuXiangYing(cuoWu)?.data?.ti_shi || huoQuFanYi('tongYong', 'caoZuoShiBai')
-  }
-  return cuoWu instanceof Error ? cuoWu.message : huoQuFanYi('tongYong', 'caoZuoShiBai')
+  return 归一前台错误(cuoWu).yingXiang
 }
 
 // ---------------------------------------------------------------------------
@@ -877,6 +901,15 @@ const {
   guanBiTuPianCaiDan,
   huoQuTuPianCaiDanXiang,
   zhiXingTuPianCaiDanXiang,
+  huoQuFanYiJieGuo,
+  huoQuFanYiCuoWu,
+  shiFanYiZhong,
+  shiFanYiZhanKai,
+  shiFanYiChuCuo,
+  shiFanYiKong,
+  qiangZhiFanYi,
+  fanYiYuanYu,
+  fanYiMuBiaoYu,
   huoQuYinYongZhaiYao: zhengWenZhaiYaoChuKou,
   yinYongXiaoXi,
   quXiaoYinYong,
@@ -889,6 +922,27 @@ const {
   tianJiaDaoBiaoQing: (xiaoXi) => tianJiaTuPianDaoBiaoQing(xiaoXi),
   sheZhiCuoWu: jiuDiTiShi,
 })
+
+function huoQuFanYiZhuangTai(xiaoXi: HaoYouXiaoXi): 'loading' | 'success' | 'empty' | 'error' {
+  if (shiFanYiZhong(xiaoXi)) return 'loading'
+  if (shiFanYiChuCuo(xiaoXi)) return 'error'
+  if (shiFanYiKong(xiaoXi) || !huoQuFanYiJieGuo(xiaoXi)?.trim()) return 'empty'
+  return 'success'
+}
+
+function gaiFanYiYuanYu(zhi: string, xiaoXi: HaoYouXiaoXi): void {
+  fanYiYuanYu.value = zhi
+  chongXinFanYi(xiaoXi)
+}
+
+function gaiFanYiMuBiaoYu(zhi: string, xiaoXi: HaoYouXiaoXi): void {
+  fanYiMuBiaoYu.value = zhi
+  chongXinFanYi(xiaoXi)
+}
+
+function chongXinFanYi(xiaoXi: HaoYouXiaoXi): void {
+  void qiangZhiFanYi(xiaoXi)
+}
 
 // FP-11：好友页语音播放与转写（转写菜单项 yuYinZhuanWenZi 在 yuYinCaiDanXiang 里恒在，
 // 不接 qieHuanZhuanWenZiXianShi 则菜单点下去无效）。地址源用 mei_ti_url；转写 API 与 AI 页同源。

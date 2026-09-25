@@ -4,6 +4,10 @@ import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { 内部转展示, type 性别内部形态 } from '../utils/性别'
 import type { MBTILeiXing } from '../config/角色配置'
 import type { CanShuShangXiaWen } from '../config/AI参数策略'
+import {
+  CUO_WU_DAI_MA,
+  JiaoSeShengChengCuoWu,
+} from '../config/错误码注册表'
 
 export interface KaiChangBaiShengChengCanShu {
   mbti_lei_xing: MBTILeiXing
@@ -115,19 +119,32 @@ function anQuanGuoLvXiaoXi(neiRong: string, mingZi?: string): string | null {
   return qingLi
 }
 
-function jieXiJSONNeiRong(neiRong: string, mingZi?: string): string[] {
-  try {
-    const jieGuo = JSON.parse(neiRong)
-    if (Array.isArray(jieGuo.xiao_xi_lie_biao)) {
-      return jieGuo.xiao_xi_lie_biao
-        .map((x: unknown) => (typeof x === 'string' ? anQuanGuoLvXiaoXi(x, mingZi) : null))
-        .filter((x: string | null): x is string => x !== null)
-        .slice(0, 5)
-    }
-  } catch {
-    return []
+function jieXiJSONNeiRong(neiRong: unknown, mingZi?: string): string[] {
+  if (typeof neiRong !== 'string') {
+    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID)
   }
-  return []
+  const kaiShi = neiRong.indexOf('{')
+  const jieShu = neiRong.lastIndexOf('}')
+  if (kaiShi < 0 || jieShu <= kaiShi) {
+    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID)
+  }
+  let jieGuo: unknown
+  try {
+    jieGuo = JSON.parse(neiRong.slice(kaiShi, jieShu + 1))
+  } catch (cuoWu) {
+    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID, cuoWu)
+  }
+  if (!jieGuo || typeof jieGuo !== 'object' || !Array.isArray((jieGuo as { xiao_xi_lie_biao?: unknown }).xiao_xi_lie_biao)) {
+    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID)
+  }
+  const xiaoXiLieBiao = (jieGuo as { xiao_xi_lie_biao: unknown[] }).xiao_xi_lie_biao
+    .map((x: unknown) => (typeof x === 'string' ? anQuanGuoLvXiaoXi(x, mingZi) : null))
+    .filter((x: string | null): x is string => x !== null)
+    .slice(0, 5)
+  if (xiaoXiLieBiao.length === 0) {
+    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID)
+  }
+  return xiaoXiLieBiao
 }
 
 function jiangJiKaiChangBai(canShu: KaiChangBaiShengChengCanShu): KaiChangBaiShengChengJieGuo {
@@ -171,7 +188,11 @@ export async function shengChengKaiChangBai(
   }
 
   const apiMiYao = peiZhi.deepSeek.apiMiYao || AI_PEI_ZHI.deepSeek.apiMiYao
-  if (!apiMiYao || process.env.VITEST === 'true') {
+  if (!apiMiYao) {
+    if (process.env.VITEST === 'true') return jiangJiKaiChangBai(canShu)
+    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_MODEL_UNAVAILABLE)
+  }
+  if (process.env.VITEST === 'true') {
     return jiangJiKaiChangBai(canShu)
   }
 
@@ -186,17 +207,15 @@ export async function shengChengKaiChangBai(
     },
   }
 
+  let xiangYing: Awaited<ReturnType<typeof genJuPeiZhiTiaoYong>>
   try {
-    const xiangYing = await genJuPeiZhiTiaoYong('kaiChangBai' as keyof typeof AI_PEI_ZHI.moXing, [
+    xiangYing = await genJuPeiZhiTiaoYong('kaiChangBai' as keyof typeof AI_PEI_ZHI.moXing, [
       { jiaoSe: 'system', neiRong: '你正在帮一个刚加上微信的中国大学生想主动发出的开场消息，是否主动发、发几条、说什么由你根据 TA 的完整画像深度思考决定。' },
       { jiaoSe: 'user', neiRong: gouJianKaiChangBaiTiShi(canShu) },
     ], shangXiaWenShiJi)
-    const xiaoXiLieBiao = jieXiJSONNeiRong(xiangYing.neiRong, canShu.ming_zi)
-    if (xiaoXiLieBiao.length === 0) {
-      return jiangJiKaiChangBai(canShu)
-    }
-    return { xiao_xi_lie_biao: xiaoXiLieBiao.slice(0, 5) }
-  } catch {
-    return jiangJiKaiChangBai(canShu)
+  } catch (cuoWu) {
+    if (cuoWu instanceof JiaoSeShengChengCuoWu) throw cuoWu
+    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_MODEL_CALL_FAILED, cuoWu)
   }
+  return { xiao_xi_lie_biao: jieXiJSONNeiRong(xiangYing.neiRong, canShu.ming_zi) }
 }

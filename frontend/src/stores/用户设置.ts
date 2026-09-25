@@ -11,6 +11,7 @@ import {
   type QiPaoYuShe,
 } from '@/config/气泡主题'
 import { huoQuFanYi } from '@/config/translations'
+import { 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
 
 export const LIAO_TIAN_BEI_JING_XUAN_XIANG = ['moRen', 'miWuSenLin', 'haiYangZhiLan', 'fenSeMengJing', 'yeKongXingHe', 'miSeTianYuan'] as const
 
@@ -64,7 +65,27 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
   const gongKaiYouXiang = ref(false)
   const bangDingYouXiang = ref('')
   const yiJiaZai = ref(false)
+  const caoZuoCuoWu = ref<QianTaiCuoWu | null>(null)
   let jiaZaiZhong: Promise<void> | null = null
+  let chongShiCaoZuo: (() => unknown) | null = null
+
+  function jiLuCuoWu(cuoWu: unknown, chongShi?: () => unknown): void {
+    const zhengChangHua = 归一前台错误(cuoWu)
+    if (!zhengChangHua.xianShi) return
+    caoZuoCuoWu.value = zhengChangHua
+    chongShiCaoZuo = chongShi || null
+  }
+
+  function qingCuoWu(): void {
+    caoZuoCuoWu.value = null
+    chongShiCaoZuo = null
+  }
+
+  async function chongShi(): Promise<void> {
+    const daiZhi = chongShiCaoZuo
+    if (!daiZhi) return
+    await daiZhi()
+  }
 
   async function jiaZai(): Promise<void> {
     if (yiJiaZai.value) return
@@ -96,8 +117,8 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
       gongKaiShouJiHao.value = sheZhi.gong_kai_shou_ji_hao
       gongKaiYouXiang.value = sheZhi.gong_kai_you_xiang
       bangDingYouXiang.value = sheZhi.bang_ding_you_xiang
-    } catch {
-      /* 未登录或后端未迁移时保持本地默认值 */
+    } catch (cuoWu: unknown) {
+      jiLuCuoWu(cuoWu, jiaZai)
     } finally {
       yiJiaZai.value = true
     }
@@ -107,8 +128,8 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     liaoTianBeiJing.value = beiJing
     try {
       await baoCunLiaoTianBeiJing(beiJing)
-    } catch {
-      /* 离线时仅本地生效 */
+    } catch (cuoWu: unknown) {
+      jiLuCuoWu(cuoWu, () => baoCunLiaoTianBeiJing(beiJing))
     }
   }
 
@@ -127,8 +148,8 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     else qiPaoAI.value = yuShe
     try {
       await baoCunQiPao(buWei === 'ziJi' ? { ziJi: yuShe } : { ai: yuShe })
-    } catch {
-      /* 离线时仅本地生效 */
+    } catch (cuoWu: unknown) {
+      jiLuCuoWu(cuoWu, () => baoCunQiPao(buWei === 'ziJi' ? { ziJi: yuShe } : { ai: yuShe }))
     }
   }
 
@@ -143,14 +164,18 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     if (canShu.gongKaiYouXiang !== undefined) gongKaiYouXiang.value = canShu.gongKaiYouXiang
     try {
       await baoCunYinSiSheZhi(canShu)
-    } catch {
-      /* 离线时仅本地生效 */
+    } catch (cuoWu: unknown) {
+      jiLuCuoWu(cuoWu, () => baoCunYinSiSheZhi(canShu))
     }
   }
 
   async function qingKongPaiWei(): Promise<void> {
-    await qingKongPaiWeiShuJu()
+    try {
+      await qingKongPaiWeiShuJu()
+    } catch (cuoWu: unknown) {
+      jiLuCuoWu(cuoWu, qingKongPaiWei)
+    }
   }
 
-  return { uid, shouJiHao, touXiang, qianMing, qianMingKeJianXing, qianMingBaiMingDan, liaoTianBeiJing, qiPaoZiJi, qiPaoAI, ziJiQiPaoCSSBianLiang, shiYuShe, shiZiDingYi, beiJingNeiLianYangShi, gongKaiZhangHao, gongKaiShouJiHao, gongKaiYouXiang, bangDingYouXiang, yiJiaZai, jiaZai, qieHuanBeiJing, baoCunZiDingYiBeiJing, qingChuZiDingYiBeiJing, qieHuanQiPao, baoCunYinSi, qingKongPaiWei }
+  return { uid, shouJiHao, touXiang, qianMing, qianMingKeJianXing, qianMingBaiMingDan, liaoTianBeiJing, qiPaoZiJi, qiPaoAI, ziJiQiPaoCSSBianLiang, shiYuShe, shiZiDingYi, beiJingNeiLianYangShi, gongKaiZhangHao, gongKaiShouJiHao, gongKaiYouXiang, bangDingYouXiang, yiJiaZai, caoZuoCuoWu, qingCuoWu, chongShi, jiaZai, qieHuanBeiJing, baoCunZiDingYiBeiJing, qingChuZiDingYiBeiJing, qieHuanQiPao, baoCunYinSi, qingKongPaiWei }
 })

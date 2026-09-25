@@ -77,7 +77,7 @@ describe('媒体审核出参：审核服务不可用与系统错误都不记违�
     expect(huoQuFanYi('liaoTian', '系统错误' as never)).toBeUndefined()
     const 出参 = panDingMeiTiShenHeChuCan('系统错误')
     expect(出参.tiShi).toBe(liaoTian.tuPianShenHeShiBai)
-    expect(出参.tiShi).toBe('图片安全审核失败，请稍后再试')
+    expect(出参.tiShi).toBe('图片安全审核没有完成，本次没有发送，请重试当前操作')
     expect(出参.xuYaoJiWeiGui).toBe(false)
     expect(出参.zhuangTaiMa).toBe(400)
     expect(debug日志.warn).not.toHaveBeenCalled()

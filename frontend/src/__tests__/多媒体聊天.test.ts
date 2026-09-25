@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
@@ -439,7 +439,7 @@ describe('FP-05 store 多媒体发送动作 faSongMeiTiXiaoXi', () => {
 
     expect(jieGuo).toBeNull()
     expect(聊天仓库.xiaoXiLieBiao.length).toBe(0)
-    expect(聊天仓库.cuoWuXinXi).toBe(huoQuFanYi('duoMeiTi', 'faSongShiBai'))
+    expect(聊天仓库.cuoWuXinXi).toBe(huoQuFanYi('tongYong', 'tongYongWenTiYingXiang'))
     expect(faSongXiaoXiApiMock).not.toHaveBeenCalled()
   })
 })

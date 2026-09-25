@@ -2,6 +2,8 @@ import { ref, shallowRef, type Ref } from 'vue'
 import { XIAO_XI_PEI_ZHI, LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI } from '@/config/消息配置'
 import type { TuPianCaiDanXiang, WenBenCaiDanXiang, YuYinCaiDanXiang } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/translations'
+import { QIAN_TAI_DAI_MA, type QianTaiDaiMa } from '@/config/前台错误码'
+import { chuangJianQianTaiCuoWu, 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
 import { shiBenDiLinShiXiaoXi } from '@/utils/消息内容块'
 import type { 消息 } from '@/types'
 
@@ -66,30 +68,41 @@ function wenBenJian(xiaoXi: CaiDanXiaoXi): string {
   return xiaoXi.ke_hu_duan_id || xiaoXi.id
 }
 
-async function moRenFuZhi(wenBen: string): Promise<boolean> {
+function fuZhiWenBenLuoBei(wenBen: string): boolean {
+  if (typeof document === 'undefined' || !document.body) return false
+  const yuanHuoYue = document.activeElement as HTMLElement | null
+  const wenBenYu = document.createElement('textarea')
+  wenBenYu.value = wenBen
+  wenBenYu.setAttribute('readonly', '')
+  wenBenYu.setAttribute('aria-hidden', 'true')
+  wenBenYu.tabIndex = -1
+  wenBenYu.style.position = 'fixed'
+  wenBenYu.style.opacity = '0'
+  document.body.appendChild(wenBenYu)
   try {
-    const daoHang = globalThis.navigator as Navigator & {
-      clipboard?: { writeText: (wenBen: string) => Promise<void> }
-    }
-    if (daoHang?.clipboard?.writeText) {
-      await daoHang.clipboard.writeText(wenBen)
-      return true
-    }
-    if (typeof document !== 'undefined') {
-      const wenBenYu = document.createElement('textarea')
-      wenBenYu.value = wenBen
-      wenBenYu.style.position = 'fixed'
-      wenBenYu.style.opacity = '0'
-      document.body.appendChild(wenBenYu)
-      wenBenYu.select()
-      const jieGuo = typeof document.execCommand === 'function' ? document.execCommand('copy') : false
-      document.body.removeChild(wenBenYu)
-      return !!jieGuo
-    }
-    return false
+    wenBenYu.select()
+    return typeof document.execCommand === 'function' ? document.execCommand('copy') : false
   } catch {
     return false
+  } finally {
+    wenBenYu.remove()
+    yuanHuoYue?.focus()
   }
+}
+
+export async function fuZhiWenBen(wenBen: string): Promise<boolean> {
+  const daoHang = globalThis.navigator as Navigator & {
+    clipboard?: { writeText: (wenBen: string) => Promise<void> }
+  }
+  if (daoHang?.clipboard?.writeText) {
+    try {
+      await daoHang.clipboard.writeText(wenBen)
+      return true
+    } catch {
+      return fuZhiWenBenLuoBei(wenBen)
+    }
+  }
+  return fuZhiWenBenLuoBei(wenBen)
 }
 
 /**
@@ -140,6 +153,10 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
   const fanYiJieGuoJiLu = ref(new Map<string, string>())
   const fanYiZhongJiHe = ref(new Set<string>())
   const fanYiZhanKaiJiHe = ref(new Set<string>())
+  const fanYiChuCuoJiHe = ref(new Set<string>())
+  const fanYiCuoWuJiLu = ref(new Map<string, QianTaiCuoWu>())
+  const fanYiQingQiuDaiCi = new Map<string, number>()
+  const fanYiKongJiHe = ref(new Set<string>())
   const fanYiYuanYu = ref('auto')
   const fanYiMuBiaoYu = ref('zh')
   let changAnDingShiQi: ReturnType<typeof setTimeout> | null = null
@@ -294,11 +311,41 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
     return fanYiZhanKaiJiHe.value.has(wenBenJian(xiaoXi))
   }
 
+  function shiFanYiChuCuo(xiaoXi: T): boolean {
+    return fanYiChuCuoJiHe.value.has(wenBenJian(xiaoXi))
+  }
+
+  function huoQuFanYiCuoWu(xiaoXi: T): QianTaiCuoWu | null {
+    return fanYiCuoWuJiLu.value.get(wenBenJian(xiaoXi)) || null
+  }
+
+  function sheZhiFanYiWenTiCuoWu(jian: string, cuoWu: QianTaiCuoWu): void {
+    fanYiCuoWuJiLu.value.set(jian, cuoWu)
+    fanYiChuCuoJiHe.value.add(jian)
+    fanYiKongJiHe.value.delete(jian)
+    yiLai.sheZhiCuoWu?.(cuoWu.yingXiang)
+  }
+
+  function shiFanYiKong(xiaoXi: T): boolean {
+    return fanYiKongJiHe.value.has(wenBenJian(xiaoXi))
+  }
+
   async function qiangZhiFanYi(xiaoXi: T): Promise<string | null> {
     const jian = wenBenJian(xiaoXi)
     fanYiJieGuoJiLu.value.delete(jian)
     fanYiZhanKaiJiHe.value.delete(jian)
+    fanYiChuCuoJiHe.value.delete(jian)
+    fanYiCuoWuJiLu.value.delete(jian)
+    fanYiKongJiHe.value.delete(jian)
     return qingQiuWenBenFanYi(xiaoXi)
+  }
+
+  function chuangJianFanYiCuoWu(daiMa: QianTaiDaiMa, keChongShi: boolean): QianTaiCuoWu {
+    return chuangJianQianTaiCuoWu({
+      code: daiMa,
+      retryable: keChongShi,
+      yingXiang: huoQuFanYi('liaoTian', 'fanYiShiBai'),
+    })
   }
 
   async function qingQiuWenBenFanYi(xiaoXi: T): Promise<string | null> {
@@ -309,35 +356,57 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
     }
     const yiCun = fanYiJieGuoJiLu.value.get(jian)
     if (yiCun) {
+      fanYiChuCuoJiHe.value.delete(jian)
+      fanYiCuoWuJiLu.value.delete(jian)
+      fanYiKongJiHe.value.delete(jian)
       fanYiZhanKaiJiHe.value.add(jian)
       return yiCun
     }
     if (fanYiZhongJiHe.value.has(jian)) return null
-    const yuanWen = (xiaoXi.nei_rong || '').trim()
+    const benCi = (fanYiQingQiuDaiCi.get(jian) || 0) + 1
+    fanYiQingQiuDaiCi.set(jian, benCi)
+    const yuanWen = typeof xiaoXi.nei_rong === 'string' ? xiaoXi.nei_rong.trim() : ''
     if (!yuanWen) {
-      yiLai.sheZhiCuoWu?.(huoQuFanYi('liaoTian', 'fanYiShiBai'))
+      sheZhiFanYiWenTiCuoWu(jian, chuangJianFanYiCuoWu(QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID, false))
       return null
     }
+    fanYiChuCuoJiHe.value.delete(jian)
+    fanYiCuoWuJiLu.value.delete(jian)
+    fanYiKongJiHe.value.delete(jian)
     fanYiZhongJiHe.value.add(jian)
     try {
       if (!yiLai.fanYiQingQiu) {
-        yiLai.sheZhiCuoWu?.(huoQuFanYi('liaoTian', 'fanYiShiBai'))
+        sheZhiFanYiWenTiCuoWu(jian, chuangJianFanYiCuoWu(QIAN_TAI_DAI_MA.WEI_ZHI, false))
         return null
       }
       const jieGuo = await yiLai.fanYiQingQiu(yuanWen, fanYiYuanYu.value, fanYiMuBiaoYu.value)
+      if (benCi !== fanYiQingQiuDaiCi.get(jian)) return null
       const qingLi = (jieGuo || '').trim()
       if (!qingLi) {
+        fanYiKongJiHe.value.add(jian)
+        fanYiChuCuoJiHe.value.delete(jian)
+        fanYiCuoWuJiLu.value.delete(jian)
         yiLai.sheZhiCuoWu?.(huoQuFanYi('liaoTian', 'fanYiShiBai'))
         return null
       }
       fanYiJieGuoJiLu.value.set(jian, qingLi)
+      fanYiChuCuoJiHe.value.delete(jian)
+      fanYiCuoWuJiLu.value.delete(jian)
+      fanYiKongJiHe.value.delete(jian)
       fanYiZhanKaiJiHe.value.add(jian)
       return qingLi
-    } catch {
-      yiLai.sheZhiCuoWu?.(huoQuFanYi('liaoTian', 'fanYiShiBai'))
+    } catch (错误: unknown) {
+      if (benCi !== fanYiQingQiuDaiCi.get(jian)) return null
+      const zhengChangHua = 归一前台错误(错误)
+      if (zhengChangHua.xianShi) {
+        sheZhiFanYiWenTiCuoWu(jian, chuangJianFanYiCuoWu(zhengChangHua.code, zhengChangHua.retryable))
+      }
       return null
     } finally {
-      fanYiZhongJiHe.value.delete(jian)
+      if (benCi === fanYiQingQiuDaiCi.get(jian)) {
+        fanYiZhongJiHe.value.delete(jian)
+        fanYiQingQiuDaiCi.delete(jian)
+      }
     }
   }
 
@@ -354,7 +423,7 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
       return
     }
     if (xiang === 'fuZhi') {
-      const fuZhiHanShu = yiLai.fuZhiWenBen ?? moRenFuZhi
+      const fuZhiHanShu = yiLai.fuZhiWenBen ?? fuZhiWenBen
       const chengGong = await fuZhiHanShu(muBiao.nei_rong || '')
       if (!chengGong) {
         yiLai.sheZhiCuoWu?.(huoQuFanYi('liaoTian', 'fuZhiShiBai'))
@@ -490,8 +559,11 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
     huoQuTuPianCaiDanXiang,
     zhiXingTuPianCaiDanXiang,
     huoQuFanYiJieGuo,
+    huoQuFanYiCuoWu,
     shiFanYiZhong,
     shiFanYiZhanKai,
+    shiFanYiChuCuo,
+    shiFanYiKong,
     qingQiuWenBenFanYi,
     qiangZhiFanYi,
     fanYiYuanYu,

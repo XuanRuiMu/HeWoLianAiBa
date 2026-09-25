@@ -4,6 +4,7 @@ import { 使用用户仓库 } from '@/stores/用户'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
 import { 使用聊天仓库 } from '@/stores/聊天'
 import { 令牌键 } from '@/constants/auth'
+import { huoQuFanYi } from '@/config/translations'
 
 const moNiYongHu = {
   id: 'u1',
@@ -99,7 +100,8 @@ describe('用户 store', () => {
 
     const yongHuCangKu = 使用用户仓库()
     await expect(yongHuCangKu.zhiXingDengLu('13800138000', 'wrong')).rejects.toBeDefined()
-    expect(yongHuCangKu.zhuangTai.cuo_wu_xin_xi).toBe('密码错误')
+    expect(yongHuCangKu.zhuangTai.cuo_wu_xin_xi).toBe(huoQuFanYi('tongYong', 'tongYongWenTiYingXiang'))
+    expect(yongHuCangKu.zhuangTai.cuo_wu_xin_xi).not.toContain('密码错误')
   })
 
   it('jiaZaiYongHu 遇到 401 错误：清除本地登录态', async () => {

@@ -5,7 +5,7 @@ import http from 'http'
 import { Server } from 'socket.io'
 import { peiZhi } from './config'
 import { huoQuFanYi } from './config/translations'
-import { debug日志 } from './utils/debug日志'
+import { debug日志, qingLiNeiBuCuoWu } from './utils/debug日志'
 import { ziJianMoXingMingKeYong } from './utils/DeepSeek客户端'
 import { renZhengZhongJianJian } from './middleware/认证'
 import { changGuiXianLiu, riZhiJieShouXianLiu } from './middleware/限流'
@@ -28,6 +28,8 @@ import yongHuSheZhiLuYou from './routes/用户设置'
 import biaoQingLuYou from './routes/表情'
 import ziLiaoLuYou from './routes/资料'
 import { chengGongXiangYing, shiBaiXiangYing } from './utils/xiangying'
+import { 全YuZhanCuoWuChuLi } from './middleware/错误处理'
+import { CUO_WU_DAI_MA, YingYongCuoWu } from './config/错误码注册表'
 import { qiDongShenJiRiZhiGuiDangDingShiQi, tingZhiShenJiRiZhiGuiDang } from './services/审计日志归档'
 import { qiDongShuJuBaoCunQingLiDingShiQi, tingZhiShuJuBaoCunQingLi } from './services/数据保存期限'
 import { chuangJianHTTPRiZhiZhongJianJian } from './utils/debug日志'
@@ -51,6 +53,7 @@ const yingYong = express()
 // P2-2：可信代理链路由 utils/真实IP.shiDuanKeXinDaiLi 统一管理（KE_XIN_DAI_LI_WANG_DUAN 可配）；
 // Express 层一律不信代理头，req.ip 恒等于 TCP 对端地址，防止旁路代码误读客户端可控 XFF
 yingYong.set('trust proxy', false)
+yingYong.use(日志追踪中间件())
 
 yingYong.use(helmet({
   contentSecurityPolicy: {
@@ -102,7 +105,7 @@ yingYong.use(cors({
     } catch {
       // 解析失败则按不允许处理
     }
-    huiDiao(new Error('不允许的来源'))
+    huiDiao(new YingYongCuoWu(CUO_WU_DAI_MA.ORIGIN_DENIED))
   },
   credentials: true,
 }))
@@ -120,7 +123,7 @@ yingYong.use((qingQiu, xiangYing, xiaYiBu) => {
     } catch {
       // 计数失败不阻断400响应
     }
-    shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), 'CAN_SHU_CUO_WU')
+    shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
     return
   }
   xiaYiBu()
@@ -157,7 +160,6 @@ yingYong.use((qingQiu, xiangYing, xiaYiBu) => {
 yingYong.use(jianKangJianChaLuYou)
 
 yingYong.use(IP封禁中间件)
-yingYong.use(日志追踪中间件())
 yingYong.use(changGuiXianLiu)
 // A8：前端日志上报走独立路由（内部已做字段截断），独立严限流防匿名刷量
 yingYong.use('/api/logs', riZhiJieShouXianLiu, riZhiJieShouLuYou)
@@ -191,7 +193,7 @@ yingYong.use('/api/角色', jiaoSeXiangQingLuYou)
 yingYong.use('/api/聊天', xiaoXiLuYou)
 yingYong.use('/api/媒体', meiTiLuYou)
 yingYong.use('/api/好感度', haoGanDuLuYou)
-yingYong.use('/api/战绩', zhanJiLuYou)
+yingYong.use(encodeURI('/api/战绩'), zhanJiLuYou)
 yingYong.use('/api/通知', tongZhiLuYou)
 yingYong.use('/api/挑战', tiaoZhanLuYou)
 yingYong.use('/api/管理', guanLiYuanLuYou)
@@ -210,18 +212,10 @@ yingYong.use((_qingQiu, xiangYing) => {
   } catch {
     // 计数失败不阻断404响应
   }
-  shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'), 'WEI_ZHAO_DAO')
+  shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'), CUO_WU_DAI_MA.RESOURCE_NOT_FOUND)
 })
 
-yingYong.use((
-  cuoWu: unknown,
-  _qingQiu: express.Request,
-  xiangYing: express.Response,
-  _xiaYiBu: express.NextFunction,
-) => {
-  debug日志.error('服务器生命周期', '未捕获错误', { xiang_qing: { cuo_wu: String(cuoWu) } })
-  shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
-})
+yingYong.use(全YuZhanCuoWuChuLi)
 
 const fuWuQi = http.createServer(yingYong)
 const io = new Server(fuWuQi, {
@@ -299,21 +293,15 @@ export function 注册停机处理器(tingJi: () => Promise<void>): void {
   })
   process.on('unhandledRejection', (yuanYin) => {
     const cuoWu = yuanYin instanceof Error ? yuanYin : new Error(String(yuanYin))
-    日志引擎.error('tingJi', '未处理的Promise拒绝', {
-      ming_cheng: cuoWu.name,
-      zhan: String(cuoWu.stack || cuoWu.message),
-    })
-    // YH-073 崩溃计数告警+exit 1：禁崩了还报正常
-    void import('./utils/邮件告警').then(({ faSongGaoJing }) => faSongGaoJing('jin_cheng_beng_kui', '进程未处理拒绝告警', String(cuoWu.stack || cuoWu.message).slice(0, 500)).catch(() => undefined))
+    const neiBu = qingLiNeiBuCuoWu(cuoWu)
+    日志引擎.error('tingJi', '未处理的Promise拒绝', neiBu)
+    void import('./utils/邮件告警').then(({ faSongGaoJing }) => faSongGaoJing('jin_cheng_beng_kui', '进程未处理拒绝告警', neiBu.cuo_wu).catch(() => undefined))
     void tingJi().finally(() => process.exit(1))
   })
   process.on('uncaughtException', (cuoWu) => {
-    日志引擎.error('tingJi', '未捕获异常', {
-      ming_cheng: cuoWu.name,
-      zhan: String(cuoWu.stack || cuoWu.message),
-    })
-    // YH-073 崩溃计数告警+exit 1
-    void import('./utils/邮件告警').then(({ faSongGaoJing }) => faSongGaoJing('jin_cheng_beng_kui', '进程未捕获异常告警', String(cuoWu.stack || cuoWu.message).slice(0, 500)).catch(() => undefined))
+    const neiBu = qingLiNeiBuCuoWu(cuoWu)
+    日志引擎.error('tingJi', '未捕获异常', neiBu)
+    void import('./utils/邮件告警').then(({ faSongGaoJing }) => faSongGaoJing('jin_cheng_beng_kui', '进程未捕获异常告警', neiBu.cuo_wu).catch(() => undefined))
     void tingJi().finally(() => process.exit(1))
   })
 }
@@ -329,14 +317,14 @@ async function 启动前强校验(): Promise<void> {
     const yaoQiuTLS = /^rediss:\/\//i.test(lianJie.trim())
     const shiJiTLS = Boolean((redis.options as unknown as Record<string, unknown>)?.['tls'])
     if (yaoQiuTLS && !shiJiTLS) {
-      debug日志.error('启动校验', 'rediss连接未启用TLS，拒绝明文降级启动', { xiang_qing: { lian_jie_qian_zhui: 'rediss://***' } })
+      debug日志.error('启动校验', 'rediss连接未启用TLS，拒绝明文降级启动', { xiang_qing: { cuo_wu_ma: CUO_WU_DAI_MA.DOCKER_STARTUP_REDIS_TLS_INVALID, lian_jie_qian_zhui: 'rediss://***' } })
       process.exit(1)
     }
     if (yaoQiuTLS && shiJiTLS) {
       debug日志.info('启动校验', 'rediss加密传输已启用')
     }
   } catch (cuoWu) {
-    debug日志.error('启动校验', 'rediss传输校验失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+    debug日志.error('启动校验', 'rediss传输校验失败', { xiang_qing: { cuo_wu_ma: CUO_WU_DAI_MA.DOCKER_STARTUP_REDIS_TLS_INVALID, cuo_wu: String(cuoWu) } })
     process.exit(1)
   }
 
@@ -356,7 +344,7 @@ async function 启动前强校验(): Promise<void> {
     }
   }
   if (!redisLianTong) {
-    debug日志.error('启动校验', 'Redis 不可用，拒绝启动', { xiang_qing: { cuo_wu: String(redisZuiHouCuoWu) } })
+    debug日志.error('启动校验', 'Redis 不可用，拒绝启动', { xiang_qing: { cuo_wu_ma: CUO_WU_DAI_MA.DOCKER_STARTUP_REDIS_UNAVAILABLE, cuo_wu: String(redisZuiHouCuoWu) } })
     try {
       await redis.quit()
     } catch {
@@ -383,7 +371,7 @@ async function 启动前强校验(): Promise<void> {
     }
   }
   if (!pgLianTong) {
-    debug日志.error('启动校验', 'PostgreSQL 不可用，拒绝启动', { xiang_qing: { cuo_wu: String(pgZuiHouCuoWu) } })
+    debug日志.error('启动校验', 'PostgreSQL 不可用，拒绝启动', { xiang_qing: { cuo_wu_ma: CUO_WU_DAI_MA.DOCKER_STARTUP_POSTGRES_UNAVAILABLE, cuo_wu: String(pgZuiHouCuoWu) } })
     process.exit(1)
   }
   debug日志.info('启动校验', 'PostgreSQL 连接正常')
@@ -396,7 +384,7 @@ async function 启动前强校验(): Promise<void> {
     debug日志.info('启动校验', '审核词库已加载', { xiang_qing: { ban_ben: ciKu.banBen, lu_jing: huoQuCiKuMuLu() } })
   } catch (cuoWu) {
     debug日志.error('启动校验', '审核词库不可加载，拒绝启动（构建产物缺非 TS 资源时会出现）', {
-      xiang_qing: { cuo_wu: String(cuoWu), zhan: cuoWu instanceof Error ? cuoWu.stack : undefined },
+      xiang_qing: { cuo_wu_ma: CUO_WU_DAI_MA.DOCKER_STARTUP_MODERATION_RESOURCE_UNAVAILABLE, cuo_wu: String(cuoWu), zhan: cuoWu instanceof Error ? cuoWu.stack : undefined },
     })
     process.exit(1)
   }

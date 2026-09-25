@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { huoQuJunShiZhiDaoZhuangTai } from '@/api/聊天'
+import { 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
 import type { JunShiZhiDaoZhuangTaiXinXi } from '@/types'
 
 // 角色 ID（UUID v4）格式白名单，防止非法会话污染跨导航持久状态（P0 输入验证）
@@ -18,6 +19,7 @@ export const 使用军师仓库 = defineStore('军师', () => {
   const zhuangTai = ref<JunShiZhiDaoZhuangTaiXinXi | null>(null)
   const keZaiCiZhiDao = ref(true)
   const youLiaoTianJiLu = ref(true)
+  const zhuangTaiCuoWu = ref<QianTaiCuoWu | null>(null)
 
   // 仅当 store 持有的会话与当前组件会话一致时，派生函数才采用本 store 状态，
   // 避免会话切换竞态窗口下误用旧会话状态。
@@ -40,8 +42,11 @@ export const 使用军师仓库 = defineStore('军师', () => {
       zhuangTai.value = zt
       keZaiCiZhiDao.value = kz
       if (ylt !== undefined) youLiaoTianJiLu.value = ylt
-    } catch {
-      // 拉取失败保留既有状态，不打断交互
+      zhuangTaiCuoWu.value = null
+    } catch (cuoWu: unknown) {
+      // 拉取失败保留既有状态，不打断交互，但仍登记稳定错误码供界面展示
+      const zhengChangHua = 归一前台错误(cuoWu)
+      if (zhengChangHua.xianShi && jiaoSeId.value === 会话ID) zhuangTaiCuoWu.value = zhengChangHua
     }
   }
 
@@ -100,6 +105,7 @@ export const 使用军师仓库 = defineStore('军师', () => {
     zhuangTai,
     keZaiCiZhiDao,
     youLiaoTianJiLu,
+    zhuangTaiCuoWu,
     shiDangQianHuiHua,
     chuShiHuaZhuangTai,
     gengXinZhuangTai,

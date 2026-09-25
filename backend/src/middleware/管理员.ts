@@ -6,6 +6,7 @@ import { huoQuFanYi } from '../config/translations'
 import { shiBaiXiangYing } from '../utils/xiangying'
 import { 取管理角色, 角色具备能力, type GuanLiJiaoSe, type GuanLiNengLi } from '../utils/角色能力'
 import type { RenZhengQingQiu } from './认证'
+import { CUO_WU_DAI_MA, JIU_DAI_MA } from '../config/错误码注册表'
 
 export interface GuanLiQingQiu extends RenZhengQingQiu {
   guan_li_jiao_se?: GuanLiJiaoSe
@@ -114,21 +115,21 @@ async function menKong(
 ): Promise<void> {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
-    shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), 'WEI_SHOU_QUAN')
+    shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
     return
   }
 
   try {
     const jiaoSe = await anYongHuIdQuJiaoSe(yongHu.yongHuId)
     if (!角色具备能力(jiaoSe, xuYaoNengLi)) {
-      shiBaiXiangYing(xiangYing, 403, huoQuFanYi('guanLiYuan', 'wuGuanLiQuanXian'), 'WU_GUAN_LI_QUAN_XIAN')
+      shiBaiXiangYing(xiangYing, 403, huoQuFanYi('guanLiYuan', 'wuGuanLiQuanXian'), JIU_DAI_MA.WU_GUAN_LI_QUAN_XIAN)
       return
     }
     ;(qingQiu as GuanLiQingQiu).guan_li_jiao_se = jiaoSe as GuanLiJiaoSe
     xiaYiBu()
   } catch (cuoWu) {
     debug日志.error('管理员门禁', '管理身份校验失败', { xiang_qing: { cuo_wu: String(cuoWu), men_kong: xuYaoNengLi } })
-    shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'), 'NEI_BU_CUO_WU')
+    shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'), CUO_WU_DAI_MA.DATABASE_ERROR)
   }
 }
 

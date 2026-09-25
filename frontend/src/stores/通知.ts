@@ -4,6 +4,7 @@ import { io, Socket } from 'socket.io-client'
 import type { 通知 } from '@/types'
 import { duQuLingPai } from '@/utils/令牌存储'
 import { biaoJiQuanBuTongZhiYiDu, biaoJiTongZhiYiDu, huoQuTongZhiLieBiao } from '@/api/通知'
+import { 归一前台错误 } from '@/utils/前台错误'
 
 export const 使用通知仓库 = defineStore('通知', () => {
   const tongZhiLieBiao = ref<通知[]>([])
@@ -17,9 +18,8 @@ export const 使用通知仓库 = defineStore('通知', () => {
       const shuJu = await huoQuTongZhiLieBiao()
       tongZhiLieBiao.value = shuJu.lie_biao
       weiDuShu.value = shuJu.wei_du_shu
-    } catch {
-      tongZhiLieBiao.value = []
-      weiDuShu.value = 0
+    } catch (错误: unknown) {
+      throw 归一前台错误(错误)
     } finally {
       jiaZaiZhong.value = false
     }

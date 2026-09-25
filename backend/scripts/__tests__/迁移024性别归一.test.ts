@@ -1,6 +1,7 @@
-import { describe, it, expect, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { randomUUID } from 'node:crypto'
 import { Pool } from 'pg'
 import { peiZhi } from '../../src/config'
 import { 解析性别, 读回性别 } from '../../src/utils/性别'
@@ -42,6 +43,7 @@ function 抽取SQL识别表(来源: string): Map<string, string> {
 function 取可连通连接串(): string {
   const 显式 = (process.env.TEST_DATABASE_URL ?? '').trim()
   if (显式 !== '') return 显式
+  if (process.env.XU_KE_ZHEN_SHI_WAI_HU !== 'true') return ''
   const 运行值 = String(peiZhi.shuJuKuLianJie ?? '')
   if (运行值 === '') return ''
   return 运行值.includes('@postgres:') ? 运行值.replace('@postgres:', '@127.0.0.1:') : 运行值
@@ -62,9 +64,48 @@ async function 取真库池(): Promise<Pool | null> {
 
 const 真库池 = await 取真库池()
 const 有真库 = 真库池 !== null
+const 夹具后缀 = randomUUID().replace(/-/g, '').slice(0, 12)
+const 夹具手机号 = `19${randomUUID().replace(/\D/g, '').padEnd(9, '0').slice(0, 9)}`
+let 夹具用户ID = ''
+let 夹具角色ID = ''
+let 夹具男性角色ID = ''
+let 夹具挑战ID = ''
+
+beforeAll(async () => {
+  if (!真库池) return
+  const 用户 = await 真库池.query(
+    `INSERT INTO "用户" ("手机号", "用户名", "昵称", "测试")
+     VALUES ($1, $2, $3, TRUE) RETURNING "ID"`,
+    [夹具手机号, `fp13-${夹具后缀}`, `fp13-${夹具后缀}`],
+  )
+  夹具用户ID = String(用户.rows[0].ID)
+  const 角色 = await 真库池.query(
+    `INSERT INTO "角色" ("用户ID", "名字", "性别", "封存")
+     VALUES ($1, $2, 'nv', TRUE) RETURNING "ID"`,
+    [夹具用户ID, `fp13-${夹具后缀}`],
+  )
+  夹具角色ID = String(角色.rows[0].ID)
+  const 男性角色 = await 真库池.query(
+    `INSERT INTO "角色" ("用户ID", "名字", "性别", "封存")
+     VALUES ($1, $2, 'nan', TRUE) RETURNING "ID"`,
+    [夹具用户ID, `fp13-${夹具后缀}-男`],
+  )
+  夹具男性角色ID = String(男性角色.rows[0].ID)
+  const 挑战 = await 真库池.query(
+    `INSERT INTO "挑战对局" ("用户ID", "角色ID", "玩家性别", "对象性别", "状态")
+     VALUES ($1, $2, 'nan', 'nv', '已结束') RETURNING "ID"`,
+    [夹具用户ID, 夹具角色ID],
+  )
+  夹具挑战ID = String(挑战.rows[0].ID)
+})
 
 afterAll(async () => {
-  if (真库池) await 真库池.end().catch(() => undefined)
+  if (!真库池) return
+  if (夹具挑战ID) await 真库池.query('DELETE FROM "挑战对局" WHERE "ID" = $1', [夹具挑战ID])
+  if (夹具男性角色ID) await 真库池.query('DELETE FROM "角色" WHERE "ID" = $1', [夹具男性角色ID])
+  if (夹具角色ID) await 真库池.query('DELETE FROM "角色" WHERE "ID" = $1', [夹具角色ID])
+  if (夹具用户ID) await 真库池.query('DELETE FROM "用户" WHERE "ID" = $1', [夹具用户ID])
+  await 真库池.end().catch(() => undefined)
 })
 
 describe('迁移 024 与唯一解析入口同源（无库依赖）', () => {
@@ -200,16 +241,15 @@ describe.skipIf(!有真库)('迁移 024 真库行为', () => {
       await 客户端.query('BEGIN')
       const 甲 = await 客户端.query(
         `INSERT INTO "角色" ("用户ID","名字","性别","封存")
-         VALUES ((SELECT "ID" FROM "用户" ORDER BY "创建时间" LIMIT 1),$1,$2,TRUE)
+         VALUES ($1,$2,$3,TRUE)
          RETURNING "性别"`,
-        ['fp13-探针-女', '女'],
+        [夹具用户ID, `fp13-${夹具后缀}-探针-女`, '女'],
       )
       const 乙 = await 客户端.query(
         `INSERT INTO "挑战对局" ("用户ID","角色ID","玩家性别","对象性别","状态")
-         VALUES ((SELECT "ID" FROM "用户" ORDER BY "创建时间" LIMIT 1),
-                 (SELECT "ID" FROM "角色" ORDER BY "创建时间" LIMIT 1),$1,$2,'已结束')
+         VALUES ($1,$2,$3,$4,'已结束')
          RETURNING "玩家性别","对象性别"`,
-        ['男', '女'],
+        [夹具用户ID, 夹具角色ID, '男', '女'],
       )
       await 客户端.query('ROLLBACK')
       expect(甲.rows[0].性别).toBe('nv')
@@ -228,8 +268,8 @@ describe.skipIf(!有真库)('迁移 024 真库行为', () => {
       try {
         await 客户端.query(
           `INSERT INTO "角色" ("用户ID","名字","性别","封存")
-           VALUES ((SELECT "ID" FROM "用户" ORDER BY "创建时间" LIMIT 1),$1,NULL,TRUE)`,
-          ['fp13-探针-NULL'],
+           VALUES ($1,$2,NULL,TRUE)`,
+          [夹具用户ID, `fp13-${夹具后缀}-探针-NULL`],
         )
       } catch (捕获) {
         错误 = 捕获
@@ -250,8 +290,8 @@ describe.skipIf(!有真库)('迁移 024 真库行为', () => {
       try {
         await 客户端.query(
           `INSERT INTO "角色" ("用户ID","名字","性别","封存")
-           VALUES ((SELECT "ID" FROM "用户" ORDER BY "创建时间" LIMIT 1),$1,$2,TRUE)`,
-          ['fp13-探针-CHECK', '女'],
+           VALUES ($1,$2,$3,TRUE)`,
+          [夹具用户ID, `fp13-${夹具后缀}-探针-CHECK`, '女'],
         )
       } catch (捕获) {
         错误 = 捕获
@@ -285,9 +325,7 @@ describe.skipIf(!有真库)('迁移 024 真库行为', () => {
   })
 
   it('同一角色：清洗前公式判成 nan、清洗后 AI输入准备 判成 nv（缺陷对照）', async () => {
-    const 样本 = await 池.query(
-      `SELECT "ID" FROM "角色" WHERE "性别" = 'nv' ORDER BY "创建时间" LIMIT 1`,
-    )
+    const 样本 = await 池.query('SELECT "ID" FROM "角色" WHERE "ID" = $1', [夹具角色ID])
     expect(样本.rows).toHaveLength(1)
     const 角色Id = String(样本.rows[0].ID)
     // 旧实现：`存储值 === '女' ? 'nv' : 'nan'` —— 对库内规范形态 nv 判成男性

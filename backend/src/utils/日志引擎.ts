@@ -88,8 +88,9 @@ export function chuangJianRiZhiYinQing(): pino.Logger {
     mixin() {
       const shangXiaWen = qingQiuShangXiaWen.getStore()
       return {
-        trace_id: huoQuDangQianTraceId(),
+        trace_id: shangXiaWen?.trace_id || huoQuDangQianTraceId(),
         span_id: huoQuDangQianSpanId(),
+        ...(shangXiaWen?.otel_trace_id ? { otel_trace_id: shangXiaWen.otel_trace_id } : {}),
         ...(shangXiaWen?.qing_qiu_id ? { qing_qiu_id: shangXiaWen.qing_qiu_id } : {}),
       }
     },

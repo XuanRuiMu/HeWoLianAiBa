@@ -5,6 +5,7 @@
       class="shuru-kuang"
       :class="{ 'zhan-kai': zhanKai, 'wei-kong': buYouNeiRong }"
       contenteditable="true"
+      data-chat-input="true"
       spellcheck="false"
       role="textbox"
       aria-multiline="true"

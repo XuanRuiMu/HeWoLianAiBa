@@ -490,7 +490,8 @@ describe('FP-18 能力矩阵与门禁语义', () => {
     角色查询抛错 = true
     const 应用 = 建应用(超管编号)
     const 响应 = await request(应用).get('/api/管理/用户')
-    expect(响应.status).toBe(500)
+    expect(响应.status).toBe(503)
+    expect(响应.body.code).toBe('DATABASE_ERROR')
     expect(响应.body.ti_shi).toBe(huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
     expect(JSON.stringify(响应.body)).not.toMatch(/connection refused|SHU_JU_KU_CUO_WU|SELECT/)
   })

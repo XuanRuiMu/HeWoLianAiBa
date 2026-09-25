@@ -455,7 +455,9 @@ describe('登录内容组件', () => {
     await miMaInput.trigger('input')
     await flushPromises()
     expect(miMaZu?.classList.contains('shangFu')).toBe(true)
-    const dongHua = new Event('animationstart', { bubbles: true }) as Event & { animationName: string }
+    const dongHua = new Event('animationstart', { bubbles: true }) as Event & {
+      animationName: string
+    }
     dongHua.animationName = 'ziDongTianChongKaiShi'
     yuanSu.dispatchEvent(dongHua)
     await flushPromises()
@@ -524,7 +526,9 @@ describe('登录内容组件', () => {
         if (事件 === 'pointerdown') {
           dengLuAnNiu.element.dispatchEvent(new Event('pointerdown', { bubbles: true }))
         } else {
-          shouJiHao.element.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+          shouJiHao.element.dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+          )
         }
         await flushPromises()
 
@@ -655,7 +659,9 @@ describe('登录内容组件', () => {
       登录内容源码.slice(0, 登录内容源码.indexOf('<script')),
       'FP-04a 回归：模板里又挂回了 JS 条件滚动类',
     ).not.toMatch(/xuyao-gundong/)
-    expect(登录内容样式, 'FP-04a 回归：样式里又长回了 JS 条件滚动类的规则').not.toMatch(/xuyao-gundong/)
+    expect(登录内容样式, 'FP-04a 回归：样式里又长回了 JS 条件滚动类的规则').not.toMatch(
+      /xuyao-gundong/,
+    )
     expect(
       规则清单(全局基线样式)
         .flatMap((规则) => 拆分选择器组(规则.选择器))
@@ -694,7 +700,9 @@ describe('登录内容组件', () => {
     // 判据维度一字未放宽（仍是「间距走令牌 + 标签几何」），只是取值演进；裸 px 仍为 0。逐对实测见
     // FP04b字段纵向间距.test.ts。
     const 组块 = 样式块(登录内容样式, '.shuru-zu')
-    expect(组块).toMatch(/--ziduan-jian-ju:\s*calc\(var\(--jiange-da\)\s*\+\s*var\(--jiange-xiao\)\)/)
+    expect(组块).toMatch(
+      /--ziduan-jian-ju:\s*calc\(var\(--jiange-da\)\s*\+\s*var\(--jiange-xiao\)\)/,
+    )
     expect(组块).toMatch(/margin-bottom:\s*var\(--ziduan-jian-ju\)(?!,)/)
     expect(样式块(登录内容样式, '.fenlie-shuru')).toMatch(/padding:\s*18px 0 10px/)
     expect(样式块(登录内容样式, '.fudong-biaoqian')).toMatch(/top:\s*18px/)
@@ -703,6 +711,35 @@ describe('登录内容组件', () => {
     ).exec(登录内容样式)
     expect(上浮, '未找到上浮标签规则').not.toBeNull()
     expect((上浮 as RegExpMatchArray)[1]).toMatch(/top:\s*-5px/)
+  })
+
+  it('FP-17b：浮标上浮越出字段盒时不被滚动口上沿裁切，且输入高度与字段坐标不变', () => {
+    const 滚动口 = 样式块(登录内容样式, '.biaodan-gundong')
+    const 上补 = Number(滚动口.match(/padding-top:\s*(-?[\d.]+)px/)?.[1])
+    const 上移 = Number(滚动口.match(/margin-top:\s*(-?[\d.]+)px/)?.[1])
+    expect(上补).toBe(5)
+    expect(上移).toBe(-5)
+    expect(上补 + 上移, '滚动口补偿不闭合会让整张表单跳动').toBe(0)
+    expect(滚动口).toMatch(/overflow-y:\s*auto/)
+
+    for (const 选择器 of ['.shuru-zu', '.mima-zu']) {
+      expect(样式块(登录内容样式, 选择器)).toMatch(/overflow:\s*visible/)
+    }
+
+    const 浮标规则 = 规则清单(登录内容样式).filter(
+      (项) => 项.选择器.includes('fudong-biaoqian') && 项.声明.has('top'),
+    )
+    expect([...new Set(浮标规则.map((项) => 项.声明.get('top')))].sort()).toEqual(['-5px', '18px'])
+    const 上浮 = 浮标规则.find((项) => 项.选择器.includes(':focus-within'))
+    expect(上浮?.选择器).toContain('.shuru-zu.shangFu')
+    expect(上浮?.选择器).toContain(':has(.fenlie-shuru:-webkit-autofill)')
+    expect(
+      浮标规则.some((项) => /cuoWu|error|aria-invalid/i.test(项.选择器)),
+      '错误态不得另写一份会裁切标签的几何',
+    ).toBe(false)
+
+    expect(样式块(登录内容样式, '.fenlie-shuru')).toMatch(/padding:\s*18px 0 10px/)
+    expect(样式块(登录内容样式, '.shuru-zu')).not.toMatch(/padding-top:|padding-bottom:/)
   })
 
   it('FP-12：间距/字号真源上收到共用 :root 块——授权文件零兜底补丁，深浅两档解析逐值相等', () => {
@@ -737,14 +774,18 @@ describe('登录内容组件', () => {
     expect(带兜底, 'FP-02 遗留的绕真源同值兜底未删净：\n' + 带兜底.join('\n')).toEqual([])
     for (const 令牌 of new Set(被引用)) {
       expect(深色.get(令牌), `${令牌} 深色档未定义（F23 塌陷复发）`).toBeDefined()
-      expect(`${令牌}:${深色.get(令牌)}`, `${令牌} 深浅两档取值不等`).toBe(`${令牌}:${浅色.get(令牌)}`)
+      expect(`${令牌}:${深色.get(令牌)}`, `${令牌} 深浅两档取值不等`).toBe(
+        `${令牌}:${浅色.get(令牌)}`,
+      )
     }
   })
 
   it('FP-02：0×0 原生勾选框的键盘焦点环转移到自绘方框并走焦点环令牌', () => {
     const 选择器 = '.ji-zhu-fu-xuan:focus-visible + .ji-zhu-wen-ben::before'
     const ku = 样式块(登录内容样式, 选择器)
-    expect(ku).toMatch(/outline:\s*var\(--jujiao-huan-kuan-du\)\s+solid\s+var\(--jujiao-huan-yanse\)/)
+    expect(ku).toMatch(
+      /outline:\s*var\(--jujiao-huan-kuan-du\)\s+solid\s+var\(--jujiao-huan-yanse\)/,
+    )
     expect(ku).toMatch(/outline-offset:\s*var\(--jujiao-huan-pian-yi\)/)
   })
 
@@ -759,8 +800,8 @@ describe('登录内容组件', () => {
       .flatMap((规则) => 拆分选择器组(规则.选择器))
       .filter((选择器) => 选择器.includes('::-webkit-scrollbar'))
     expect(私有滚动条选择器, '认证布局不得再有私有滚动条定义点').toEqual([])
-    const global滚动条规则 = 规则清单(全局基线样式).find(
-      (规则) => 拆分选择器组(规则.选择器).includes('::-webkit-scrollbar'),
+    const global滚动条规则 = 规则清单(全局基线样式).find((规则) =>
+      拆分选择器组(规则.选择器).includes('::-webkit-scrollbar'),
     )
     expect(global滚动条规则?.声明.get('width')).toBe('var(--gundong-tiao-kuan-du)')
     expect(认证布局样式).not.toMatch(/rgba\(255,\s*255,\s*255,\s*0\.3\)/)

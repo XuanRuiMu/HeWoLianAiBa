@@ -78,7 +78,8 @@
         {{ huoQuFanYi('tiaoZhan', 'paiHangBang') }}
       </button>
     </div>
-    <p v-if="cuoWuXinXi" class="cuowu-tishi">{{ cuoWuXinXi }}</p>
+    <p v-if="cuoWuXinXi" class="cuowu-tishi" role="status">{{ cuoWuXinXi }}</p>
+    <RequestError :cuo-wu="qianTaiCuoWu" :zhong-zai="qianTaiZhuangTai === 'loading'" @chong-shi="chongShi" />
 
     <!-- 性别选择弹层 -->
     <div v-if="xingBieXuanZeKeJian" class="xingbie-zhezhao" @click.self="guanBiXingBieXuanZe">
@@ -156,6 +157,8 @@ import { huoQuFanYi } from '@/config/translations'
 import { 用户形态, type 性别选择形态 } from '@/utils/性别'
 import 挑战渣型提示 from '@/components/挑战渣型提示.vue'
 import TouXiang from '@/components/头像.vue'
+import RequestError from '@/components/请求错误.vue'
+import { use前台错误 } from '@/composables/use前台错误'
 
 const router = useRouter()
 
@@ -172,6 +175,8 @@ const zhaXingGaiLv = ref(0.3)
 const zhengZaiFangQiQueRen = ref(false)
 const fangQiQingQiuZhong = ref(false)
 const kaiShiQingQiuZhong = ref(false)
+const { cuoWu: qianTaiCuoWu, zhuangTai: qianTaiZhuangTai, yunXing, jieShou, chongShi, qingLi } =
+  use前台错误()
 
 function zuBieMingCheng(zuBie: ZuBie): string {
   const yingShe: Record<ZuBie, string> = {
@@ -183,14 +188,14 @@ function zuBieMingCheng(zuBie: ZuBie): string {
   return yingShe[zuBie]
 }
 
+async function jiaZaiShuJuNei() {
+  const [duiJu, gaiKuang] = await Promise.all([huoQuDangQianDuiJu(), huoQuWoDeGaiKuang()])
+  dangQianDuiJu.value = duiJu
+  gaiKuangLieBiao.value = gaiKuang
+}
+
 async function jiaZaiShuJu() {
-  try {
-    const [duiJu, gaiKuang] = await Promise.all([huoQuDangQianDuiJu(), huoQuWoDeGaiKuang()])
-    dangQianDuiJu.value = duiJu
-    gaiKuangLieBiao.value = gaiKuang
-  } catch {
-    cuoWuXinXi.value = huoQuFanYi('tiaoZhan', 'jiaZaiShiBai')
-  }
+  await yunXing(jiaZaiShuJuNei, { chongShi: jiaZaiShuJu })
 }
 
 onMounted(jiaZaiShuJu)
@@ -206,12 +211,13 @@ async function daKaiXingBieXuanZe() {
   duiXiangXingBie.value = null
   xuanZeBuZhou.value = 1
   xingBieXuanZeKeJian.value = true
-  // 拉取挑战配置（渣型概率）
+  qingLi()
   try {
     const peiZhi = await huoQuTiaoZhanPeiZhi()
     zhaXingGaiLv.value = peiZhi.zha_xing_gai_lv ?? 0.3
-  } catch {
+  } catch (错误: unknown) {
     zhaXingGaiLv.value = 0.3
+    jieShou(错误, daKaiXingBieXuanZe)
   }
 }
 
@@ -253,13 +259,14 @@ function jiXuDuiJu() {
 async function queRenFangQi() {
   if (!dangQianDuiJu.value || fangQiQingQiuZhong.value) return
   fangQiQingQiuZhong.value = true
+  qingLi()
   try {
     await fangQiDuiJu()
     zhengZaiFangQiQueRen.value = false
     dangQianDuiJu.value = null
     await jiaZaiShuJu()
-  } catch {
-    cuoWuXinXi.value = huoQuFanYi('tiaoZhan', 'fangQiShiBai')
+  } catch (错误: unknown) {
+    jieShou(错误, queRenFangQi)
   } finally {
     fangQiQingQiuZhong.value = false
   }

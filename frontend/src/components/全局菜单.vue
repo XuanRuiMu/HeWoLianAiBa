@@ -76,6 +76,18 @@
       </div>
 
       <div class="caidan-you">
+        <div
+          v-if="shiLiaoTianYe && 聊天仓库.jiaoSeXinXi && junShiKaiQi && teZhengKaiGuanCuoWu"
+          class="junshi-kaiGuanWeiQueRen"
+        >
+          <RequestError
+            :cuo-wu="teZhengKaiGuanCuoWu"
+            mi-xi
+            :zhong-zai="chongShiTeZhengKaiGuan"
+            :xian-shi-chong-shi="false"
+            @chong-shi="chongShiKaiGuan"
+          />
+        </div>
         <button
           v-if="shiLiaoTianYe && 聊天仓库.jiaoSeXinXi && junShiKaiQi"
           class="junshi-anniu"
@@ -145,9 +157,10 @@ import { 使用聊天仓库 } from '@/stores/聊天'
 import { 使用主题仓库, 浅色值 } from '@/stores/主题'
 import { 使用通知仓库 } from '@/stores/通知'
 import { huoQuFanYi } from '@/config/translations'
-import { huoQuJunShiKaiGuan } from '@/utils/teZhengKaiGuan'
+import { huoQuJunShiKaiGuan, laQuTeZhengKaiGuan, teZhengKaiGuanCuoWu } from '@/utils/teZhengKaiGuan'
 import { yingYongBanBen } from '@/config/站点配置'
 import TouXiang from '@/components/头像.vue'
+import RequestError from '@/components/请求错误.vue'
 import 协议模态框 from '@/components/协议模态框.vue'
 
 const 用户仓库 = 使用用户仓库()
@@ -305,6 +318,18 @@ function tongZhiJunShiZhiDao() {
   window.dispatchEvent(new CustomEvent('junshi-zhankai'))
 }
 
+const chongShiTeZhengKaiGuan = ref(false)
+
+async function chongShiKaiGuan(): Promise<void> {
+  if (chongShiTeZhengKaiGuan.value) return
+  chongShiTeZhengKaiGuan.value = true
+  try {
+    await laQuTeZhengKaiGuan()
+  } finally {
+    chongShiTeZhengKaiGuan.value = false
+  }
+}
+
 function jinRuZhanJi() {
   qitaCaiDanZhanKai.value = false
   yongHuCaiDanZhanKai.value = false
@@ -417,10 +442,14 @@ watch(
   min-width: 0;
 }
 
+.junshi-kaiGuanWeiQueRen {
+  max-width: 220px;
+  min-width: 0;
+}
+
 .caidan-zuo {
   justify-content: flex-start;
-  gap: 8px;
-}
+  gap: 8px;}
 
 .fanhui-anniu {
   font-size: 14px;

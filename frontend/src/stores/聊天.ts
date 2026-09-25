@@ -25,6 +25,7 @@ import {
 import type { DaiFaKuai } from '@/composables/use待发图文'
 import type { XiaoXiKuai, XiaoXiKuaiChuCan } from '@/types'
 import { track } from '@/utils/埋点'
+import { 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
 import { 使用用户仓库 } from '@/stores/用户'
 
 export interface MeiTiFuJia {
@@ -143,6 +144,9 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   // 首屏加载态：加载中驱动骨架屏，失败驱动错误插画+重试（与「真的没消息」空态严格分离）
   const shouPingJiaZaiZhong = ref(false)
   const jiaZaiShiBai = ref(false)
+  const shouPingQianTaiCuoWu = ref<QianTaiCuoWu | null>(null)
+  const jiaoSeQianTaiCuoWu = ref<QianTaiCuoWu | null>(null)
+  let jiaZaiDaiCi = 0
   const gouJianGuoChengLieBiao = ref<{ 阶段: string; 说明: string; 内容?: string; 时间: number; 轮次?: number }[]>([])
   const haoGanDuBianHuaLieBiao = ref<{ 变化: Record<string, number>; 时间: number; 轮次?: number }[]>([])
   const yinCangXinXiLieBiao = ref<{ 类型: string; 内容: string; 时间: number; 轮次?: number }[]>([])
@@ -607,6 +611,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   }
 
   async function jiaZaiXiaoXi(huiHuaId: string) {
+    const benCi = ++jiaZaiDaiCi
     if (dangQianHuiHuaId.value && dangQianHuiHuaId.value !== huiHuaId) 持久化监控()
     dangQianHuiHuaId.value = huiHuaId
     读取监控历史(huiHuaId)
@@ -623,14 +628,13 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     jiaZaiGengDuoZhong.value = false
     shouPingJiaZaiZhong.value = true
     jiaZaiShiBai.value = false
+    shouPingQianTaiCuoWu.value = null
+    jiaoSeQianTaiCuoWu.value = null
     try {
       try {
         const jieGuo = await huoQuXiaoXi(huiHuaId, yeMa.value, meiYeTiaoShu.value)
+        if (benCi !== jiaZaiDaiCi) return
         const fuWuLieBiao = [...jieGuo.lie_biao].reverse()
-        // FP-04：快照请求在途期间可能已收到 socket 推送或乐观气泡，整体覆盖会把它们吞掉
-        // （观感即「AI 回了但我没看到」）。按 消息.id 与幂等键双口径判重，只补入快照缺失的部分，
-        // 与 jiaZaiGengDuoXiaoXi 的去重口径保持一致。FP-09b：判重不再依赖前端自增序号
-        // （序号已归服务端权威，本地自增值与服务端落库值对不上，正是「吞消息」的成因）。
         const yiYouId = new Set(fuWuLieBiao.map((m) => m.id))
         const yiYouMiDengJian = new Set(
           fuWuLieBiao
@@ -645,32 +649,39 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
           buDing.length > 0 ? [...fuWuLieBiao, ...buDing] : fuWuLieBiao,
         )
         zongShu.value = jieGuo.zong_shu
-        // M6：优先使用后端 keyset 分页的「还有更多」标记，旧后端回退计数比较
         haiYouGengDuo.value = jieGuo.hai_you_geng_duo ?? jieGuo.lie_biao.length < jieGuo.zong_shu
         补全旧内心消息()
-        Promise.resolve(biaoJiYiDu(huiHuaId)).catch(() => {})
+        try {
+          await biaoJiYiDu(huiHuaId)
+        } catch {
+          /* 已读回执失败不打断首屏渲染 */
+        }
       } catch (cuoWu: unknown) {
-         
+        if (benCi !== jiaZaiDaiCi) return
         console.error('聊天首屏消息加载失败', cuoWu)
         xiaoXiLieBiao.value = []
         zongShu.value = 0
         haiYouGengDuo.value = false
         jiaZaiShiBai.value = true
+        shouPingQianTaiCuoWu.value = 归一前台错误(cuoWu)
       }
       try {
         const { jiao_se, dang_an_zhuang_tai } = await huoQuJiaoSeXiangQing(huiHuaId)
+        if (benCi !== jiaZaiDaiCi) return
         jiaoSeXinXi.value = jiao_se
+        jiaoSeQianTaiCuoWu.value = null
         if (dang_an_zhuang_tai) {
           youXiYiJieShu.value = dang_an_zhuang_tai.you_xi_yi_jie_shu
           keJiXuLiaoTian.value = dang_an_zhuang_tai.ke_ji_xu_liao_tian
         }
       } catch (cuoWu: unknown) {
-         
+        if (benCi !== jiaZaiDaiCi) return
         console.error('聊天角色详情加载失败', cuoWu)
         jiaoSeXinXi.value = null
+        jiaoSeQianTaiCuoWu.value = 归一前台错误(cuoWu)
       }
     } finally {
-      shouPingJiaZaiZhong.value = false
+      if (benCi === jiaZaiDaiCi) shouPingJiaZaiZhong.value = false
     }
   }
 
@@ -814,7 +825,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       if (suoYin !== -1) {
         xiaoXiLieBiao.value[suoYin] = { ...xiaoXiLieBiao.value[suoYin], fa_song_zhong: false }
       }
-      const xiaoXi = cuoWu instanceof Error ? cuoWu.message : huoQuFanYi('liaoTian', 'faSongShiBai')
+      const xiaoXi = 归一前台错误(cuoWu).yingXiang
       sheZhiCuoWu(xiaoXi)
       return null
     }
@@ -993,10 +1004,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
         xiaoXiLieBiao.value.splice(suoYin, 1)
       }
       cheXiaoYuLanURL(benDiYuLan)
-      const tiShi =
-        cuoWu instanceof Error && cuoWu.message
-          ? cuoWu.message
-          : huoQuFanYi('duoMeiTi', 'faSongShiBai')
+      const tiShi = 归一前台错误(cuoWu).yingXiang
       sheZhiCuoWu(tiShi)
       return null
     }
@@ -1136,10 +1144,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       if (suoYin !== -1) {
         xiaoXiLieBiao.value[suoYin] = { ...xiaoXiLieBiao.value[suoYin], fa_song_zhong: false }
       }
-      const tiShi =
-        cuoWu instanceof Error && cuoWu.message
-          ? cuoWu.message
-          : huoQuFanYi('duoMeiTi', 'faSongShiBai')
+      const tiShi = 归一前台错误(cuoWu).yingXiang
       sheZhiCuoWu(tiShi)
       return null
     }
@@ -1159,10 +1164,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       jiaRuXiaoXi(xiaoXi)
       return xiaoXi
     } catch (cuoWu: unknown) {
-      const tiShi =
-        cuoWu instanceof Error && cuoWu.message
-          ? cuoWu.message
-          : huoQuFanYi('duoMeiTi', 'shengTuShiBai')
+      const tiShi = 归一前台错误(cuoWu).yingXiang
       sheZhiCuoWu(tiShi)
       return null
     }
@@ -1182,10 +1184,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       jiaRuXiaoXi(xiaoXi)
       return xiaoXi
     } catch (cuoWu: unknown) {
-      const tiShi =
-        cuoWu instanceof Error && cuoWu.message
-          ? cuoWu.message
-          : huoQuFanYi('duoMeiTi', 'shiPinShengChengShiBai')
+      const tiShi = 归一前台错误(cuoWu).yingXiang
       sheZhiCuoWu(tiShi)
       return null
     }
@@ -1210,6 +1209,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   }
 
   function qingKongZhuangTai() {
+    jiaZaiDaiCi += 1
     持久化监控()
     dangQianHuiHuaId.value = null
     xiaoXiLieBiao.value = []
@@ -1228,6 +1228,8 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     jiaZaiGengDuoZhong.value = false
     shouPingJiaZaiZhong.value = false
     jiaZaiShiBai.value = false
+    shouPingQianTaiCuoWu.value = null
+    jiaoSeQianTaiCuoWu.value = null
     faSongShiBaiJiHe.value = new Set()
     duanKaiSocket()
   }
@@ -1253,6 +1255,8 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     haiYouGengDuo,
     shouPingJiaZaiZhong,
     jiaZaiShiBai,
+    shouPingQianTaiCuoWu,
+    jiaoSeQianTaiCuoWu,
     faSongShiBaiJiHe,
     gouJianGuoChengLieBiao,
     haoGanDuBianHuaLieBiao,

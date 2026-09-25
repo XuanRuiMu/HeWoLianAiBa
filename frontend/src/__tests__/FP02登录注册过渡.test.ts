@@ -23,7 +23,7 @@ import {
  *  ① 切换后 DOM 只剩目标表单（离场层必须随过渡卸载，不残留、不与目标表单长期共存）；
  *  ② 切换后 activeElement 不残留在上一表单（含 FP-14 三段日期控件的段级焦点）；
  *  ③ 位移量吃既有共用 :root 令牌（--jiange-xiao），prefers-reduced-motion 档内位移归零、
- *    淡切（opacity 过渡）保留；离场层脱流由层叠结果 position:absolute + pointer-events:none 钉住；
+ *    减动效下切换立即稳定；离场层留在独立行且由层叠结果 position:relative + pointer-events:none 钉住；
  *  ④ FP-03c / FP-04a / FP-04b 既有契约逐点复测（滚动口宿主恒类、发丝线令牌、字段间距令牌）。
  */
 
@@ -318,7 +318,7 @@ describe('FP-02 ②：切换后焦点不残留上一表单（含段级焦点）'
   })
 })
 
-describe('FP-02 ③：过渡几何按目标模式横向派生；减动效档退化为无位移淡切', () => {
+describe('FP-02 ③：过渡几何按目标模式横向派生；减动效档立即稳定切换', () => {
   it('登录→注册向右、注册→登录向左，入场与离场反向且吃 --jiange-xiao', () => {
     const 方向们 = [
       ['you', 'translateX(var(--jiange-xiao))', 'translateX(calc(var(--jiange-xiao) * -1))'],
@@ -375,11 +375,11 @@ describe('FP-02 ③：过渡几何按目标模式横向派生；减动效档退�
     zhuCeWrapper.unmount()
   })
 
-  it('离场层脱流覆顶 + 禁交互：position:absolute / pointer-events:none 为层叠生效值，宿主为滚动口本体', () => {
+  it('离场层留在独立行且禁交互：position:relative / pointer-events:none 为层叠生效值，宿主为滚动口本体', () => {
     for (const 类 of ['biaodan-qiehuan-you-leave-active', 'biaodan-qiehuan-zuo-leave-active']) {
-      expect(层叠('position', [类])).toBe('absolute')
+      expect(层叠('position', [类])).toBe('relative')
       expect(层叠('pointer-events', [类])).toBe('none')
-      expect(层叠('top', [类])).toBe('0')
+      expect(层叠胜出(常档表, { 标签: 'form', 类: [类], 属性: {} }, 'top')).toBeNull()
     }
     expect(层叠('position', ['biaodan-gundong'])).toBe('relative')
   })
@@ -397,7 +397,7 @@ describe('FP-02 ③：过渡几何按目标模式横向派生；减动效档退�
     }
   })
 
-  it('视图内条件块只此一档 prefers-reduced-motion（无视口条件块，与 FP-04b 同前提），其内双向位移归零、淡切不被掐', () => {
+  it('视图内条件块只此一档 prefers-reduced-motion（无视口条件块，与 FP-04b 同前提），其内双向位移与过渡归零', () => {
     expect(媒体段.map((段) => 段.条件)).toEqual(['(prefers-reduced-motion: reduce)'])
     for (const 类 of [
       'biaodan-qiehuan-you-enter-from',
@@ -415,8 +415,8 @@ describe('FP-02 ③：过渡几何按目标模式横向派生；减动效档退�
     ])
       expect(
         层叠胜出(减档表, { 标签: 'div', 类, 属性: {} }, 'transition')?.值 ?? null,
-        `${类} 的淡切在减动效档被掐成硬切`,
-      ).toBeNull()
+        `${类} 在减动效档仍有过渡`,
+      ).toBe('none')
   })
 
   it('零新增令牌：本单消费的两枚量纲/缓动真源都在共用 :root 且两档同值', () => {
@@ -449,6 +449,12 @@ describe('FP-02 层叠判定的形态账本（判定盲区必须显式登记，F
         '.shuru-zu:focus-within .fudong-biaoqian {top}',
         '.shuru-zu:has(.fenlie-shuru:-webkit-autofill) .fudong-biaoqian {top}',
         ":root[data-theme='light'] .biaoqian-qiehuan {border-bottom-color}",
+        ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']) {border-bottom-color}",
+        ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']):disabled {border-bottom-color}",
+        ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']):focus {border-bottom-color}",
+        ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']):focus-visible {border-bottom-color}",
+        ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']):is([aria-invalid='true'], [data-error='true'], .is-error) {border-bottom-color}",
+        ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']):read-only {border-bottom-color}",
       ].sort(),
     )
   })

@@ -37,19 +37,64 @@ type QingQiuRiZhiDuiXiang = {
   error: (leiXing: string, xiaoXi: string, xiangQing?: Record<string, unknown>) => void
 }
 
-function guoLvMinGanZiDuan(shuJu: unknown): unknown {
-  if (typeof shuJu !== 'string') return shuJu
+const TUO_MIN_ZHI = '***'
+const ZUI_DA_RiZhiShenDu = 8
+const ZUI_DA_RiZhiShuZu = 100
+const JWT_ZHENG_ZE = /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g
+const DAI_MING_ZHI = /([A-Za-z][A-Za-z0-9+.-]*:\/\/[^:/\s]+:)[^@\s/]+@/g
 
-  let jieGuo = shuJu
-  const minGanGuanJianZi = peiZhi.minGanZiDuan.guanJianZi
-  for (const guanJianZi of minGanGuanJianZi) {
-    const zhengZe = new RegExp(`"${guanJianZi}"\\s*:\\s*"[^"]*"`, 'gi')
-    jieGuo = jieGuo.replace(zhengZe, `"${guanJianZi}":"***"`)
+function zhuanYiZhengZe(zhi: string): string {
+  return zhi.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+export function tuoMinRiZhiWenBen(zhi: string): string {
+  let jieGuo = zhi
+  for (const jian of peiZhi.minGanZiDuan.guanJianZi) {
+    const anQuanJian = zhuanYiZhengZe(jian)
+    const dengHao = new RegExp(`(["']?${anQuanJian}["']?\\s*[:=]\\s*)(["'])(.*?)\\2`, 'gi')
+    jieGuo = jieGuo.replace(dengHao, '$1$2***$2')
+    const meiYinHao = new RegExp(`\\b${anQuanJian}\\b\\s*[:=]\\s*[^\\s,;]+`, 'gi')
+    jieGuo = jieGuo.replace(meiYinHao, '$1***')
   }
-  if (/^[A-Za-z0-9+/=_-]+(\.[A-Za-z0-9+/=_-]+){2,}$/.test(jieGuo) && jieGuo.length > 40) {
-    return '***'
+  jieGuo = jieGuo.replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, 'Bearer ***')
+  jieGuo = jieGuo.replace(JWT_ZHENG_ZE, TUO_MIN_ZHI)
+  jieGuo = jieGuo.replace(DAI_MING_ZHI, '$1***@')
+  return jieGuo
+}
+
+function shiMinGanJianMing(jian: string): boolean {
+  const xiaoXie = jian.toLowerCase()
+  return peiZhi.minGanZiDuan.ziDuanMing.some((ziDuan) => ziDuan.toLowerCase() === xiaoXie)
+}
+
+function tuoMinZhi(zhi: unknown, shenDu: number): unknown {
+  if (typeof zhi === 'string') return tuoMinRiZhiWenBen(zhi)
+  if (zhi === null || typeof zhi !== 'object') return zhi
+  if (zhi instanceof Error) {
+    return {
+      ming_cheng: tuoMinRiZhiWenBen(zhi.name),
+      xiao_xi: tuoMinRiZhiWenBen(zhi.message),
+      zhan: tuoMinRiZhiWenBen(zhi.stack || ''),
+    }
+  }
+  if (shenDu <= 0) return TUO_MIN_ZHI
+  if (Array.isArray(zhi)) return zhi.slice(0, ZUI_DA_RiZhiShuZu).map((xiang) => tuoMinZhi(xiang, shenDu - 1))
+  const jieGuo: Record<string, unknown> = {}
+  for (const [jian, zhiXiang] of Object.entries(zhi as Record<string, unknown>).slice(0, ZUI_DA_RiZhiShuZu)) {
+    jieGuo[jian] = shiMinGanJianMing(jian) ? TUO_MIN_ZHI : tuoMinZhi(zhiXiang, shenDu - 1)
   }
   return jieGuo
+}
+
+export function qingLiNeiBuCuoWu(cuoWu: unknown): Record<string, string> {
+  if (cuoWu instanceof Error) {
+    return {
+      ming_cheng: tuoMinRiZhiWenBen(cuoWu.name),
+      cuo_wu: tuoMinRiZhiWenBen(cuoWu.message),
+      zhan: tuoMinRiZhiWenBen(cuoWu.stack || ''),
+    }
+  }
+  return { ming_cheng: 'UnknownError', cuo_wu: tuoMinRiZhiWenBen(String(cuoWu)) }
 }
 
 function gouJianShangXiaWen(xuanXiang: RiZhiXuanXiang | undefined): Record<string, unknown> {
@@ -57,7 +102,7 @@ function gouJianShangXiaWen(xuanXiang: RiZhiXuanXiang | undefined): Record<strin
   if (xuanXiang?.yong_hu_id) shangXiaWen.yong_hu_id = xuanXiang.yong_hu_id
   if (xuanXiang?.jiao_se_id) shangXiaWen.jiao_se_id = xuanXiang.jiao_se_id
   if (xuanXiang?.qing_qiu_id) shangXiaWen.qing_qiu_id = xuanXiang.qing_qiu_id
-  if (xuanXiang?.xiang_qing) shangXiaWen.xiang_qing = xuanXiang.xiang_qing
+  if (xuanXiang?.xiang_qing) shangXiaWen.xiang_qing = tuoMinZhi(xuanXiang.xiang_qing, ZUI_DA_RiZhiShenDu)
   return shangXiaWen
 }
 
@@ -74,7 +119,7 @@ export function xieRuRiZhi(
   const yinQing = chuangJianRiZhiYinQing()
   const shangXiaWen = gouJianShangXiaWen(xuanXiang)
   const heBingDuiXiang = { lei_xing: leiXing, ...shangXiaWen }
-  const guoLvXiaoXi = String(guoLvMinGanZiDuan(xiaoXi))
+  const guoLvXiaoXi = tuoMinRiZhiWenBen(String(xiaoXi))
   const jiBieFangFaBiao: Record<RiZhiJiBie, (obj: object, msg?: string) => void> = {
     debug: (...canShu) => yinQing.debug(...canShu),
     info: (...canShu) => yinQing.info(...canShu),

@@ -126,9 +126,21 @@ export const 使用表情仓库 = defineStore('表情', () => {
   }
 })
 
+/**
+ * 后端 ti_shi 已在响应层过滤（SQL/路径/驱动词会被替换为兜底文案），这里再挡一层：
+ * 只有含中文且不含拉丁字母的文本才允许直接上屏，其余一律回落到调用点给定的安全默认文案。
+ * 目的是不让「服务端改了文案」或「异常路径塞进 ti_shi」把英文/内部原文带到玩家眼前。
+ */
+function duQuKeXianShiWenBen(wenBen: unknown): string | null {
+  if (typeof wenBen !== 'string') return null
+  const jieGuo = wenBen.trim()
+  if (jieGuo === '' || jieGuo.length > 200) return null
+  if (!/[\u4e00-\u9fff]/.test(jieGuo)) return null
+  if (/[A-Za-z]/.test(jieGuo)) return null
+  return jieGuo
+}
+
 function quCuoWuWenBen(cuoWu: unknown, moRen: string): string {
-  const cuoWuTi = cuoWu as { response?: { data?: { ti_shi?: unknown } }; message?: string }
-  const tiShi = cuoWuTi?.response?.data?.ti_shi
-  if (typeof tiShi === 'string' && tiShi.trim() !== '') return tiShi
-  return moRen
+  const cuoWuTi = cuoWu as { response?: { data?: { ti_shi?: unknown } } }
+  return duQuKeXianShiWenBen(cuoWuTi?.response?.data?.ti_shi) ?? moRen
 }

@@ -310,9 +310,11 @@ describe('FP-03 军师指导面板单级菜单化', () => {
       await xuanRuiMuKapian?.find('.qingqiu-anniu').trigger('click')
       await flushPromises()
 
-      expect(xuanRuiMuKapian?.find('.cuowu-tishi').text()).toBe(
+      expect(xuanRuiMuKapian?.find('.cuowu-tishi').exists()).toBe(true)
+      expect(xuanRuiMuKapian?.find('.qian-tai-cuo-wu-ying-xiang').text()).toBe(
         huoQuFanYi('junShi', 'junShiChongFu'),
       )
+      expect(xuanRuiMuKapian?.find('.qian-tai-cuo-wu-dai-ma').text()).toBe('JUN_SHI_CHONG_FU')
       expect(wrapper.find('.jieguo-neirong').exists()).toBe(false)
     })
 
@@ -326,9 +328,11 @@ describe('FP-03 军师指导面板单级菜单化', () => {
       await xuanRuiMuKapian?.find('.qingqiu-anniu').trigger('click')
       await flushPromises()
 
-      expect(xuanRuiMuKapian?.find('.cuowu-tishi').text()).toBe(
+      expect(xuanRuiMuKapian?.find('.cuowu-tishi').exists()).toBe(true)
+      expect(xuanRuiMuKapian?.find('.qian-tai-cuo-wu-ying-xiang').text()).toBe(
         huoQuFanYi('junShi', 'wuLiaoTianJiLu'),
       )
+      expect(xuanRuiMuKapian?.find('.qian-tai-cuo-wu-dai-ma').text()).toBe('WU_LIAO_TIAN_JI_LU')
     })
 
     it('未知错误显示通用失败提示', async () => {
@@ -339,9 +343,10 @@ describe('FP-03 军师指导面板单级菜单化', () => {
       await xuanRuiMuKapian?.find('.qingqiu-anniu').trigger('click')
       await flushPromises()
 
-      expect(xuanRuiMuKapian?.find('.cuowu-tishi').text()).toBe(
-        huoQuFanYi('junShi', 'qingQiuShiBai'),
-      )
+      const tiShiWenBen = xuanRuiMuKapian?.find('.cuowu-tishi').text() || ''
+      expect(tiShiWenBen).toContain(huoQuFanYi('tongYong', 'tongYongWenTiYingXiang'))
+      expect(tiShiWenBen).toContain(huoQuFanYi('tongYong', 'tongYongWenTiXiaYiBu'))
+      expect(tiShiWenBen).not.toContain('网络错误')
     })
   })
 

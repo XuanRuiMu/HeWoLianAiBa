@@ -25,6 +25,7 @@
   --quxian-tan-chu: cubic-bezier(0.16, 1, 0.3, 1);
   --quxian-ruan: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --quxian-huan-ying: cubic-bezier(0.22, 1, 0.36, 1);
+  --moshi-kapian-dong-xiao: 240ms;
 
   /* 单行几何：量纲与主题档无关，同 --jiange-* 只能住共用 :root 块。
      --shuru-kuang-* 六枚 + --shuru-anniu-re-ku 是聊天输入区（外壳 .shuru-kuang-waike / textarea
@@ -114,10 +115,12 @@
   --tishi-dai-neidian-shang-xia: 3px;
   --tishi-dai-neidian-zuo-you: 12px;
   --tishi-dai-zihao: 11px;
-  /* 滚动条三态光标：滑块可拖（grab）、轨道可翻页（pointer）、整体与角落不走文本光标 */
   --gundong-tiao-cursor: default;
-  --gundong-tiao-huakuai-cursor: grab;
-  --gundong-tiao-guidao-cursor: pointer;
+  --gundong-tiao-huakuai-cursor: default;
+  --gundong-tiao-guidao-cursor: default;
+  --shuru-xian-changtai-kuan-du: 1px;
+  --shuru-xian-jujiao-kuan-du: 2px;
+  --shuru-juzhong-dong-xiao: 0.2s;
   /* 文本控件焦点环只改粗细与偏移（贴住控件，不与装饰线争位），颜色仍用 --jujiao-huan-yanse */
   --jujiao-huan-kuan-du-wenben: 1px;
   --jujiao-huan-pian-yi-wenben: 0px;
@@ -207,10 +210,20 @@
   --gundong-tiao-huakuai-hover: rgba(80, 80, 80, 0.95);
   --gundong-tiao-guidao: rgba(140, 140, 140, 0.16);
   --gundong-tiao-kuan-du: 8px;
+  --gundong-tiao-guidao-hover: var(--gundong-tiao-guidao);
+  --gundong-tiao-huakuai-jujiao: var(--gundong-tiao-huakuai-hover);
+  --gundong-tiao-guidao-jujiao: var(--gundong-tiao-guidao-hover);
   /* 焦点环令牌：品牌暖灰蓝档，取代文本色（修复深色模式输入框白线根因） */
   --jujiao-huan-yanse: #5a7a94;
   --jujiao-huan-kuan-du: 2px;
   --jujiao-huan-pian-yi: 2px;
+  --shuru-xian-changtai-se: var(--renzheng-shuru-xian-se);
+  --shuru-xian-jujiao-se: var(--jujiao-huan-yanse);
+  --shuru-xian-cuowu-se: var(--cuowu-yanse);
+  --shuru-xian-jinyong-se: var(--wenben-tishi);
+  --shuru-xian-zhi-du-se: var(--wenben-ciuse);
+  --shuru-beijing-zidong-tianchong: var(--beijing-kaopian);
+  --shuru-wenben-zidong-tianchong: var(--wenben-zhuse);
   /* 页面底板/卡片表面：半透明，搭配 --boli-mohu 使用（alpha 对齐通知页面浅色 0.7 先例） */
   --yemian-di-beijing: rgba(245, 245, 245, 0.7);
   /* 性别主按钮配色三态：蒸馏自资料设置向导既有蓝/粉硬编码与银灰档；深色档另起一套取值（需求 #16） */
@@ -245,12 +258,11 @@
   /* 向导内"非性别语义"的柔粉强调档（MBTI 卡选中/悬停）：改前深浅两档字面 #c4577e / #d98ca6，
      原样收编成令牌，避免把 6 个被禁字面量换个地方继续写死 */
   --qiangdiao-fen: #c4577e;
-  /* 卡面组：半透明卡面底 + 边框 + 卡面内正文/标题。取"压在 --beijing-zhuse 与 --beijing-ciuse
-     两档底色上正文与标题实测对比均 ≥7:1"的最小不透明度（主页模式卡、录音浮层面板共用） */
-  --kapian-mian-beijing: rgba(255, 255, 255, 0.92);
   --kapian-mian-biankuang: rgba(23, 32, 55, 0.5);
   --kapian-mian-zhengwen: #2b3038;
   --kapian-mian-biaoti: #14181f;
+  --moshi-kapian-zheyan: rgba(255, 255, 255, 0.75);
+  --moshi-kapian-hover-yinying: 0 10px 28px rgba(20, 24, 33, 0.12);
   /* 认证卡（鎏金年代 · 象牙白档）卡面色 + 其上输入框的静置发丝线（FP-03c）：
      FP-03 删掉 .dixian-dixian 装饰线后未聚焦输入框零可见边界，成对补回。
      两档均有定义，数值判据（可见 / 不刺眼 / 标签缺口与卡面同色）由
@@ -308,8 +320,6 @@
   --silu-wenben: #9333ea;
   --gandu-zheng-se: #16a34a;
   --gandu-fu-se: #dc2626;
-  --zhuye-kaishi-wenben: rgba(0, 0, 0, 0.55);
-  --zhuye-kaishi-jiantou: rgba(0, 0, 0, 0.1);
   --xinmuzhong-duibi-se: #191919;
   --xinmuzhong-qukuai-beijing: #ffffff;
   --xinmuzhong-qukuai-biankuang: #e5e5e5;
@@ -422,10 +432,20 @@
   --gundong-tiao-huakuai-hover: rgba(180, 180, 180, 0.95);
   --gundong-tiao-guidao: rgba(140, 140, 140, 0.25);
   --gundong-tiao-kuan-du: 8px;
+  --gundong-tiao-guidao-hover: var(--gundong-tiao-guidao);
+  --gundong-tiao-huakuai-jujiao: var(--gundong-tiao-huakuai-hover);
+  --gundong-tiao-guidao-jujiao: var(--gundong-tiao-guidao-hover);
   /* 焦点环令牌：品牌暖灰蓝浅档，深底上清晰可辨 */
   --jujiao-huan-yanse: #8eafc5;
   --jujiao-huan-kuan-du: 2px;
   --jujiao-huan-pian-yi: 2px;
+  --shuru-xian-changtai-se: var(--renzheng-shuru-xian-se);
+  --shuru-xian-jujiao-se: var(--jujiao-huan-yanse);
+  --shuru-xian-cuowu-se: var(--cuowu-yanse);
+  --shuru-xian-jinyong-se: var(--wenben-tishi);
+  --shuru-xian-zhi-du-se: var(--wenben-ciuse);
+  --shuru-beijing-zidong-tianchong: var(--beijing-kaopian);
+  --shuru-wenben-zidong-tianchong: var(--wenben-zhuse);
   /* 页面底板/卡片表面：半透明，搭配 --boli-mohu 使用（alpha 对齐挑战概况卡深色 0.5~0.6 先例） */
   --yemian-di-beijing: rgba(41, 41, 41, 0.6);
   /* 性别主按钮配色三态：深色档取值与浅色档分离——同一灰蓝/浅粉压在深卡面上会糊成一片，
@@ -457,11 +477,11 @@
   --xingbie-nv-xuan-guangyun: rgba(242, 163, 196, 0.22);
   /* 向导内非性别语义的柔粉强调档（深色侧），与浅色档成对 */
   --qiangdiao-fen: #d98ca6;
-  /* 卡面组：深卡面压在深底上仍需与底分离，正文/标题对比 ≥7:1（原 alpha .05–.11 卡面 + .42 白正文实测 3.7:1） */
-  --kapian-mian-beijing: rgba(26, 30, 40, 0.92);
   --kapian-mian-biankuang: rgba(226, 232, 240, 0.45);
   --kapian-mian-zhengwen: #dfe4ec;
   --kapian-mian-biaoti: #ffffff;
+  --moshi-kapian-zheyan: rgba(26, 30, 40, 0.75);
+  --moshi-kapian-hover-yinying: 0 14px 40px rgba(0, 0, 0, 0.28);
   /* 认证卡（星夜档）卡面色 + 其上输入框的静置发丝线（FP-03c），与浅色档成对，见上 */
   --renzheng-mian-se: #161b2e;
   --renzheng-shuru-xian-se: rgba(226, 232, 240, 0.11);
@@ -513,9 +533,7 @@
   --silu-biankuang: #bf5af2;
   --silu-wenben: #bf5af2;
   --gandu-zheng-se: #30d158;
-  --gandu-fu-se: #ff453a;
-  --zhuye-kaishi-wenben: rgba(255, 255, 255, 0.45);
-  --zhuye-kaishi-jiantou: rgba(255, 255, 255, 0.12);
+  --gandu-fu-se: #dc2626;
   --xinmuzhong-duibi-se: #ffffff;
   --xinmuzhong-qukuai-beijing: rgba(255, 255, 255, 0.04);
   --xinmuzhong-qukuai-biankuang: rgba(255, 255, 255, 0.1);

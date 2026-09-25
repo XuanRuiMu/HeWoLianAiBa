@@ -1,12 +1,19 @@
 import type { 性别内部形态 } from '../utils/性别'
 import type { GuanLiJiaoSe, GuanLiNengLi } from '../utils/角色能力'
 import type { XiaoXiKuaiChuCan } from '../services/消息'
+import type { CuoWuDaiMa } from '../config/错误码注册表'
 
 export interface ApiXiangYing<T> {
   cheng_gong: boolean
   shu_ju: T | null
   ti_shi?: string
   cuo_wu_ma?: string
+  code?: CuoWuDaiMa
+  message?: string
+  traceId?: string
+  retryable?: boolean
+  retryAfterMs?: number
+  fieldErrors?: Record<string, string>
 }
 
 export interface YongHuXinXi {

@@ -261,7 +261,7 @@ describe('FP-14 ②：非法日期与越界只夹紧，不产出非法值；报�
     const { wrapper } = await 挂载注册()
     await wrapper.find('form').trigger('submit')
     await flushPromises()
-    expect(wrapper.find('.cuowu-tishi').text()).toBe(huoQuFanYi('renZheng', 'chuShengRiQiGeShiCuoWu'))
+    expect(wrapper.find('.qian-tai-cuo-wu-ying-xiang').text()).toBe('请选择有效的出生日期')
     expect(huoQuFanYi('renZheng', 'chuShengRiQiGeShiCuoWu')).toBe('请选择有效的出生日期')
     const { zhuCe } = await import('@/api/认证')
     expect(vi.mocked(zhuCe)).not.toHaveBeenCalled()
@@ -295,7 +295,9 @@ describe('FP-14 ③：未满 18 周岁拦截不回归', () => {
     expect(wrapper.find('form button[type="submit"]').attributes('disabled')).toBeDefined()
     await wrapper.find('form').trigger('submit')
     await flushPromises()
-    expect(wrapper.find('.cuowu-tishi').text()).toBe(huoQuFanYi('renZheng', 'weiChengNianRenJinZhi'))
+    expect(wrapper.find('.qian-tai-cuo-wu-ying-xiang').text()).toBe(
+      huoQuFanYi('renZheng', 'weiChengNianRenJinZhi'),
+    )
     const { zhuCe } = await import('@/api/认证')
     expect(vi.mocked(zhuCe)).not.toHaveBeenCalled()
     wrapper.unmount()

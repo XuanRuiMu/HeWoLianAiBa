@@ -1,4 +1,4 @@
-import { describe, it, expect, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { randomUUID } from 'node:crypto'
 import type { Pool, PoolClient } from 'pg'
 import { Pool as 池类 } from 'pg'
@@ -17,11 +17,18 @@ import { BIAO_QING_PEI_ZHI, BIAO_QING_MEI_TI_LEI_BIE } from '../../config/表情
  * 连不上库时整组跳过（不伪造通过）。
  */
 
-const 标记 = 'fp06b-真库形态'
+const 标记 = `fp06b-${randomUUID().replace(/-/g, '').slice(0, 12)}`
+const 夹具手机号甲 = `19${randomUUID().replace(/\D/g, '').padEnd(9, '0').slice(0, 9)}`
+const 夹具手机号乙 = `18${randomUUID().replace(/\D/g, '').padEnd(9, '0').slice(0, 9)}`
+const 夹具用户名甲 = `fp06b-${标记}-a`
+const 夹具用户名乙 = `fp06b-${标记}-b`
+let 夹具用户甲ID = ''
+let 夹具用户乙ID = ''
 
 function 取可连通连接串(): string {
   const 显式 = (process.env.TEST_DATABASE_URL ?? '').trim()
   if (显式 !== '') return 显式
+  if (process.env.XU_KE_ZHEN_SHI_WAI_HU !== 'true') return ''
   const 运行值 = String(peiZhi.shuJuKuLianJie ?? '')
   if (运行值 === '') return ''
   return 运行值.includes('@postgres:') ? 运行值.replace('@postgres:', '@127.0.0.1:') : 运行值
@@ -43,12 +50,32 @@ async function 取真库池(): Promise<Pool | null> {
 const 真库池 = await 取真库池()
 const 有真库 = 真库池 !== null
 
+beforeAll(async () => {
+  if (!真库池) return
+  const 结果 = await 真库池.query(
+    `INSERT INTO "用户" ("手机号", "用户名", "昵称", "测试")
+     VALUES ($1, $2, $3, TRUE), ($4, $5, $6, TRUE)
+     RETURNING "ID"`,
+    [
+      夹具手机号甲,
+      夹具用户名甲,
+      夹具用户名甲,
+      夹具手机号乙,
+      夹具用户名乙,
+      夹具用户名乙,
+    ],
+  )
+  夹具用户甲ID = String(结果.rows[0].ID)
+  夹具用户乙ID = String(结果.rows[1].ID)
+})
+
 afterAll(async () => {
   if (!真库池) return
-  // 兜底清理：只删本文件按 标记 建过的行，正常路径下事务已回滚，这里再确认一次
   await 真库池
     .query(`DELETE FROM "媒体文件" WHERE "原始文件名" = $1`, [标记])
     .catch(() => undefined)
+  if (夹具用户甲ID) await 真库池.query('DELETE FROM "用户" WHERE "ID" = $1', [夹具用户甲ID])
+  if (夹具用户乙ID) await 真库池.query('DELETE FROM "用户" WHERE "ID" = $1', [夹具用户乙ID])
   await 真库池.end().catch(() => undefined)
 })
 
@@ -110,9 +137,8 @@ const 该内容被登记次数 = `
     FROM "用户表情" b JOIN "媒体文件" m ON m."ID" = b."媒体ID"
    WHERE b."用户ID" = $1 AND m."SHA256" = $2`
 
-async function 取两个用户(客户端: PoolClient): Promise<string[]> {
-  const 结果 = await 客户端.query(`SELECT "ID"::text AS id FROM "用户" ORDER BY "ID" LIMIT 2`)
-  return 结果.rows.map((行: Record<string, unknown>) => String(行['id']))
+async function 取两个用户(_客户端: PoolClient): Promise<string[]> {
+  return [夹具用户甲ID, 夹具用户乙ID]
 }
 
 describe.runIf(有真库)('FP-06b 用户表情真库形态（不可达即整组跳过）', () => {
@@ -268,17 +294,8 @@ describe.runIf(有真库)('FP-06b 用户表情真库形态（不可达即整组�
  */
 describe.runIf(有真库)('L-46 登记读改写在库侧串行化（真库两条连接）', () => {
   async function 取一个用户(): Promise<string> {
-    const 客户端 = await 真库池!.connect()
-    try {
-      const 结果 = await 客户端.query(
-        `SELECT "ID"::text AS id FROM "用户" ORDER BY "ID" LIMIT 1`,
-      )
-      const 标识 = String(结果.rows[0]?.['id'] ?? '')
-      expect(标识, '库中无用户，无法验证').toBeTruthy()
-      return 标识
-    } finally {
-      客户端.release()
-    }
+    expect(夹具用户甲ID, '本文件夹具用户未建立').toBeTruthy()
+    return 夹具用户甲ID
   }
 
   /** 复刻 routes/表情.ts::dengJiBiaoQing 的语句与次序；同一句 SQL 与参数形态由 BIAO_QING_YU_JU 单源 */
@@ -477,11 +494,5 @@ describe.runIf(有真库)('L-46 登记读改写在库侧串行化（真库两条
         .catch(() => undefined)
       await 清测试行(甲, 内容哈希)
     }
-  })
-})
-
-describe.runIf(!有真库)('FP-06b 真库不可达（显式暴露跳过，不伪造通过）', () => {
-  it('跳过真库形态验证', () => {
-    expect(有真库).toBe(false)
   })
 })

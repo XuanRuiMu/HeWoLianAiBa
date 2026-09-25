@@ -1,5 +1,6 @@
 import http from './请求'
 import { BIAO_QING_TIAN_JIA_PEI_ZHI } from '@/config/表情配置'
+import { huoQuFanYi } from '@/config/translations'
 
 export interface BiaoQingXiang {
   id: string
@@ -50,7 +51,7 @@ export async function tianJiaBiaoQing(
     timeout: BIAO_QING_TIAN_JIA_PEI_ZHI.chaoShiHaoMiao,
   })
   const shuJu = xiangYing.data?.shu_ju
-  if (!shuJu || !shuJu.biao_qing) throw new Error('表情添加响应缺少数据')
+  if (!shuJu || !shuJu.biao_qing) throw new Error(huoQuFanYi('duoMeiTi', 'biaoQingTianJiaShiBai'))
   return { xiang: shuJu.biao_qing, yiCunZai: shuJu.yi_cun_zai === true }
 }
 

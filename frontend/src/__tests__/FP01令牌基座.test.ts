@@ -95,12 +95,12 @@ function 档内底色(档: 'light' | 'dark'): RGB[] {
 }
 
 function 卡面实色(档: 'light' | 'dark'): RGB[] {
-  const 面 = 解析色(取值(档, '--kapian-mian-beijing'))
+  const 面 = 解析色(取值(档, '--moshi-kapian-zheyan'))
   return 档内底色(档).map((底) => 压合(面, 底))
 }
 
 const 卡面令牌 = [
-  '--kapian-mian-beijing',
+  '--moshi-kapian-zheyan',
   '--kapian-mian-biankuang',
   '--kapian-mian-zhengwen',
   '--kapian-mian-biaoti',
@@ -195,16 +195,14 @@ describe('FP-01 令牌基座：三段式与作用域', () => {
     expect(共用取值('--shuru-kuang-biankuang')).toBe('0.5px')
   })
 
-  it('滚动条三态光标齐备且滚动条上不出现 text 光标', () => {
+  it('滚动条光标统一为普通箭头且不出现 text、pointer 或 grab', () => {
     for (const 名 of [
       '--gundong-tiao-cursor',
       '--gundong-tiao-huakuai-cursor',
       '--gundong-tiao-guidao-cursor',
     ] as const) {
-      expect(共用取值(名)).toMatch(/^(default|grab|pointer|move)$/)
-      expect(共用取值(名)).not.toBe('text')
+      expect(共用取值(名)).toBe('default')
     }
-    expect(共用取值('--gundong-tiao-huakuai-cursor')).toBe('grab')
   })
 })
 

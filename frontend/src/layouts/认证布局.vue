@@ -2,13 +2,23 @@
   <div class="yemian-rongqi" :class="{ 'quanping-rongqi': shiQuanPing }">
     <div
       class="yemian-buju"
-      :class="{ 'zhujiemian-moshi': shiZhuJieMian, 'quanping-moshi': shiQuanPing }"
+      :class="{
+        'zhujiemian-moshi': shiZhuJieMian,
+        'quanping-moshi': shiQuanPing,
+        'denglu-moshi': shiDengLu,
+      }"
     >
+      <div v-if="keYiChongShiHuiFu">
+        <RequestError class="renzheng-huifu-zhuangtai" :cuo-wu="huiFuQianTaiCuoWu" @chong-shi="chongShiHuiFu" />
+      </div>
+      <div v-else-if="zhengZaiHuiFu" class="renzheng-huifu-zhuangtai" role="status" aria-live="polite">
+        {{ huoQuFanYi('tongZhi', 'jiaZaiZhong') }}
+      </div>
       <router-view v-slot="{ Component, route: dangQianLuYou }">
         <Transition :name="qieHuanDongHua || 'yemian-nei-guodu'" mode="out-in">
           <component
             :is="Component"
-            v-if="Component"
+            v-if="Component && keXuJinLuYou"
             :key="dangQianLuYou.path"
             @deng-lu-cheng-gong="chuLiDengLuChengGong"
             @geng-xin-moshi="gengXinMoShi"
@@ -20,12 +30,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, provide, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onBeforeUnmount, provide, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
+import { 使用用户仓库 } from '@/stores/用户'
+import { huoQuFanYi } from '@/config/translations'
+import RequestError from '@/components/请求错误.vue'
+import { chuangJianQianTaiCuoWu } from '@/utils/前台错误'
 
 const bd = 使用认证表单仓库()
+const user = 使用用户仓库()
 const route = useRoute()
+const router = useRouter()
 
 type MoShiLeiXing = 'dengLu' | 'zhuCe'
 const dangQianMoShi = ref<MoShiLeiXing>(bd.moShi)
@@ -35,6 +51,20 @@ provide('denglu-moshi', dangQianMoShi)
 const qieHuanDongHua = ref('')
 
 const shiZhuJieMian = computed(() => route.name === 'zhuJieMian')
+const shiDengLu = computed(() => route.name === 'dengLu')
+const xuYaoDengLu = computed(() => route.meta.xuYaoDengLu === true)
+const zhengZaiHuiFu = computed(
+  () =>
+    Boolean(user.令牌) &&
+    (user.认证状态 === '冷启动' || user.认证状态 === '恢复中' || user.认证状态 === '恢复失败可重试'),
+)
+const keYiChongShiHuiFu = computed(() => user.认证状态 === '恢复失败可重试')
+const huiFuQianTaiCuoWu = computed(
+  () => user.恢复错误 || chuangJianQianTaiCuoWu({ retryable: true }),
+)
+const keXuJinLuYou = computed(
+  () => !xuYaoDengLu.value || shiDengLu.value || user.认证状态 === '已认证',
+)
 const shiQuanPing = computed(() => {
   const quanPingLuYou = ['liaoTian', 'tianJiaWeiXin', 'guoWangZhanJi']
   return quanPingLuYou.includes(route.name as string)
@@ -44,12 +74,41 @@ function gengXinMoShi(moshi: MoShiLeiXing) {
   dangQianMoShi.value = moshi
 }
 
+function chongShiHuiFu(): void {
+  void user.queBaoShenFenJiuXu(true)
+}
+
+let qieHuanJiShi: ReturnType<typeof setTimeout> | null = null
+
 function chuLiDengLuChengGong() {
   qieHuanDongHua.value = 'huadong-qiehuan'
-  setTimeout(() => {
+  if (qieHuanJiShi !== null) clearTimeout(qieHuanJiShi)
+  qieHuanJiShi = setTimeout(() => {
+    qieHuanJiShi = null
     qieHuanDongHua.value = ''
   }, 1200)
 }
+
+watch(
+  [() => user.认证状态, () => route.name],
+  ([zhuangTai, luYouMingCheng]) => {
+    if (luYouMingCheng === 'dengLu' && zhuangTai === '已认证' && bd.ziDongDengLu) {
+      void router.replace({ name: 'zhuJieMian' })
+      return
+    }
+    if (route.meta.xuYaoDengLu === true && zhuangTai === '匿名') {
+      void router.replace({ name: 'dengLu' })
+    }
+  },
+  { immediate: true },
+)
+
+onBeforeUnmount(() => {
+  if (qieHuanJiShi !== null) {
+    clearTimeout(qieHuanJiShi)
+    qieHuanJiShi = null
+  }
+})
 </script>
 
 <style scoped>
@@ -92,6 +151,28 @@ function chuLiDengLuChengGong() {
   position: relative;
   padding: 5vh 0;
   flex: 1;
+}
+
+.yemian-buju.denglu-moshi {
+  overflow-y: hidden;
+}
+
+.renzheng-huifu-zhuangtai {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--jiange-xiao);
+  padding: var(--jiange-xiao) var(--jiange-zhong);
+  color: var(--gundong-tiao-huakuai);
+  font-size: var(--ziti-xiao);
+}
+
+.renzheng-huifu-chongshi {
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: var(--jiange-xiao) var(--jiange-xiao);
 }
 
 .yemian-buju > * {
@@ -169,6 +250,16 @@ function chuLiDengLuChengGong() {
 @media (max-width: 767px) {
   .yemian-buju:not(.zhujiemian-moshi):not(.quanping-moshi) {
     padding: var(--jiange-da) 0;
+  }
+
+  .yemian-buju.denglu-moshi :deep(.denglu-neirong) {
+    padding-left: var(--jiange-zhong);
+    padding-right: var(--jiange-zhong);
+  }
+
+  .yemian-buju.denglu-moshi :deep(.biaodan-rongqi) {
+    padding-left: var(--jiange-zhong);
+    padding-right: var(--jiange-zhong);
   }
 }
 </style>

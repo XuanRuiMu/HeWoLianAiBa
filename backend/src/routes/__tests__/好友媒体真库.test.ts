@@ -27,7 +27,12 @@ function 读文件(...段: string[]): string {
 }
 
 function 取可连通连接串(库名?: string): string {
-  const 基 = (process.env.TEST_DATABASE_URL ?? '').trim() || String(peiZhi.shuJuKuLianJie ?? '')
+  const 显式 = (process.env.TEST_DATABASE_URL ?? '').trim()
+  const 基 = 显式 !== ''
+    ? 显式
+    : process.env.XU_KE_ZHEN_SHI_WAI_HU === 'true'
+      ? String(peiZhi.shuJuKuLianJie ?? '')
+      : ''
   const 换主机 = 基.includes('@postgres:') ? 基.replace('@postgres:', '@127.0.0.1:') : 基
   if (!库名) return 换主机
   return 换主机.replace(/\/[^/?#]*(\?.*)?$/, `/${库名}$1`)

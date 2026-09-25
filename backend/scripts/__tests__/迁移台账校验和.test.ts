@@ -232,7 +232,12 @@ describe('FP-15 B 组：re-baseline 能力（内存假库）', () => {
   })
 })
 
-const 连接串 = ((process.env.TEST_DATABASE_URL || process.env.DATABASE_URL || '').trim()).replace('@postgres:', '@127.0.0.1:')
+const 测试连接串 = (process.env.TEST_DATABASE_URL ?? '').trim()
+const 连接串 = (
+  测试连接串 || (process.env.XU_KE_ZHEN_SHI_WAI_HU === 'true' ? process.env.DATABASE_URL ?? '' : '')
+)
+  .trim()
+  .replace('@postgres:', '@127.0.0.1:')
 const 真库池 = 连接串 === '' ? null : new Pool({ connectionString: 连接串, connectionTimeoutMillis: 3000 })
 
 async function 真库可达(): Promise<boolean> {

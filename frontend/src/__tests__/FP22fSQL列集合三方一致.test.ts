@@ -66,7 +66,7 @@ import { resolve } from 'node:path'
  *  `.sql` 过滤 ⇒ `pending/` 不进链），baseline/init 成对回退删列（列暂时保留）。本文件判据对应翻回：
  *  ① `期望用户基线列` 19 → 20 列（`性别` 回列）、`期望收敛用户列` 23 → 24、`期望用户删除列` 归 `[]`；
  *  ② 顶层 `迁移删除列集合` = `[]`，原「readFileSync 038」改钉「038 恰在 `pending/` 且不在顶层」；
- *  ③ 「038 恰在顶层一次 / 最大号 038」翻为「顶层无 038 / 最大号 037 / pending/ 恰含 038」；
+ *  ③ 「038 恰在顶层一次 / 最大号 038」翻为「顶层无 038 / pending/ 恰含 038」；顶层号位后续由真实目录继续推进；
  *  ④ 原「已删列回流 baseline 必红」反证**语义反转**为「038 不得回到顶层」：把 `性别` 模拟塞进删除集
  *     （= 有人移回 038 且不改 baseline）时收敛面必红；删向反证三列全数回到在位清单。
  *  放行条件与四本守卫对照表：`.agents/evidence/traces/FP-28d放行条件-20260923.md`。
@@ -87,6 +87,12 @@ const 迁移目录 = resolve(根目录, 'backend/database/migrations')
 
 /** 034 是未入库的本地自测提权脚本（PROGRESS『阻塞与遗留问题』L-02），禁止执行 ⇒ 也不参与扫描 */
 const 跳过迁移 = /^034_/
+
+function 顶层迁移文件(目录 = 迁移目录): string[] {
+  return readdirSync(目录)
+    .filter((名) => 名.endsWith('.sql') && !跳过迁移.test(名))
+    .sort()
+}
 
 function 读(路径: string): string {
   return readFileSync(路径, 'utf-8').replace(/\r\n/g, '\n')
@@ -130,8 +136,7 @@ function 去注释(源: string): string {
 /** 迁移目录里对某表的全部 `ADD COLUMN`（含/不含 IF NOT EXISTS、同行或换行两种写法），升序去重 */
 function 迁移新增列集合(表名: string, 目录 = 迁移目录): string[] {
   const 集合 = new Set<string>()
-  for (const 文件 of readdirSync(目录).sort()) {
-    if (!文件.endsWith('.sql') || 跳过迁移.test(文件)) continue
+  for (const 文件 of 顶层迁移文件(目录)) {
     const 源 = 去注释(读(resolve(目录, 文件)))
     const 模式 = new RegExp(`ALTER TABLE "${表名}"\\s+ADD COLUMN (?:IF NOT EXISTS )?"([^"]+)"`, 'g')
     for (const 项 of 源.matchAll(模式)) 集合.add(项[1])
@@ -147,8 +152,7 @@ function 迁移新增列集合(表名: string, 目录 = 迁移目录): string[] 
  */
 function 迁移新增列明细(表名: string): Array<{ 文件: string; 列: string; 类型: string }> {
   const 明细: Array<{ 文件: string; 列: string; 类型: string }> = []
-  for (const 文件 of readdirSync(迁移目录).sort()) {
-    if (!文件.endsWith('.sql') || 跳过迁移.test(文件)) continue
+  for (const 文件 of 顶层迁移文件()) {
     const 源 = 去注释(读(resolve(迁移目录, 文件)))
     const 模式 = new RegExp(
       `ALTER TABLE "${表名}"\\s+ADD COLUMN (?:IF NOT EXISTS )?"([^"]+)"\\s+([^;]*?);`,
@@ -164,8 +168,7 @@ function 迁移新增列明细(表名: string): Array<{ 文件: string; 列: str
 /** 全部被迁移链 ADD COLUMN 过的表（台账判据的枚举面，不写死表名清单） */
 function 被补列的表(): string[] {
   const 表 = new Set<string>()
-  for (const 文件 of readdirSync(迁移目录).sort()) {
-    if (!文件.endsWith('.sql') || 跳过迁移.test(文件)) continue
+  for (const 文件 of 顶层迁移文件()) {
     const 源 = 去注释(读(resolve(迁移目录, 文件)))
     for (const 项 of 源.matchAll(/ALTER TABLE "([^"]+)"\s+ADD COLUMN /g)) 表.add(项[1])
   }
@@ -221,8 +224,7 @@ function 列类型(源: string, 表名: string, 列名: string): string | null {
  */
 function 迁移删除列集合(表名: string): string[] {
   const 集合 = new Set<string>()
-  for (const 文件 of readdirSync(迁移目录).sort()) {
-    if (!文件.endsWith('.sql') || 跳过迁移.test(文件)) continue
+  for (const 文件 of 顶层迁移文件()) {
     const 源 = 去注释(读(resolve(迁移目录, 文件)))
     const 模式 = new RegExp(`ALTER TABLE "${表名}"\\s+DROP COLUMN (?:IF EXISTS )?"([^"]+)"`, 'g')
     for (const 项 of 源.matchAll(模式)) 集合.add(项[1])
@@ -243,6 +245,114 @@ const 基线用户列 = 建表列集合(基线源, '用户')
 const 迁移消息列 = 迁移新增列集合('消息')
 const 迁移用户列 = 迁移新增列集合('用户')
 const 迁移删除用户列 = 迁移删除列集合('用户')
+
+interface 仅补迁移列身份 {
+  文件: string
+  表名: string
+  列名: string
+}
+
+interface 仅补迁移列登记项 extends 仅补迁移列身份 {
+  理由: string
+}
+
+const 仅补迁移列登记: readonly 仅补迁移列登记项[] = [
+  {
+    文件: '010_挑战模式.sql',
+    表名: '游戏档案',
+    列名: '模式',
+    理由: '挑战玩法在 baseline 快照后引入，由迁移补列',
+  },
+  {
+    文件: '010_挑战模式.sql',
+    表名: '角色',
+    列名: '对局模式',
+    理由: '挑战玩法在 baseline 快照后引入，由迁移补列',
+  },
+  {
+    文件: '013_角色音色ID.sql',
+    表名: '角色',
+    列名: '音色ID',
+    理由: '角色语音能力由迁移补列，baseline 不含该能力',
+  },
+  {
+    文件: '014_头像签名与可见性.sql',
+    表名: '用户',
+    列名: '签名可见性',
+    理由: '签名可见性由迁移补列，baseline 不含该隐私字段',
+  },
+  {
+    文件: '014_头像签名与可见性.sql',
+    表名: '用户',
+    列名: '签名白名单',
+    理由: '签名白名单由迁移补列，baseline 不含该隐私字段',
+  },
+  {
+    文件: '022_用户RBAC运营审核员列.sql',
+    表名: '用户',
+    列名: '审核员',
+    理由: '运营审核角色位由迁移补列，baseline 不含该 RBAC 字段',
+  },
+  {
+    文件: '022_用户RBAC运营审核员列.sql',
+    表名: '用户',
+    列名: '运营',
+    理由: '运营角色位由迁移补列，baseline 不含该 RBAC 字段',
+  },
+  {
+    文件: '026_对话摘要素材锚点.sql',
+    表名: '对话摘要',
+    列名: '素材锚点时间',
+    理由: '摘要素材锚点由迁移补列，baseline 不含该字段',
+  },
+  {
+    文件: '031_角色结局文案快照列.sql',
+    表名: '角色',
+    列名: '结局文案',
+    理由: '结局趣味文案快照由迁移补列，历史行不回填',
+  },
+  {
+    文件: '039_FP11战绩分类排序.sql',
+    表名: '游戏档案',
+    列名: '分类ID',
+    理由: '039 单点引入战绩分类模型；两条建库路径都会重放顶层迁移，baseline 不复制第二份列定义',
+  },
+  {
+    文件: '039_FP11战绩分类排序.sql',
+    表名: '游戏档案',
+    列名: '排序',
+    理由: '039 单点引入分类内持久顺序；两条建库路径都会重放顶层迁移，baseline 不复制第二份列定义',
+  },
+]
+
+function 仅补迁移列键(项: 仅补迁移列身份): string {
+  return `${项.文件.replace(/\.sql$/, '')}:${项.表名}.${项.列名}`
+}
+
+function 扫描仅补迁移列(): 仅补迁移列身份[] {
+  const 实际: 仅补迁移列身份[] = []
+  for (const 表名 of 被补列的表()) {
+    if (!建库侧有此表(表名)) continue
+    for (const 项 of 迁移新增列明细(表名)) {
+      if (建库侧列类型(表名, 项.列) === null) {
+        实际.push({ 文件: 项.文件, 表名, 列名: 项.列 })
+      }
+    }
+  }
+  return 实际.sort((甲, 乙) => 仅补迁移列键(甲).localeCompare(仅补迁移列键(乙)))
+}
+
+function 仅补迁移列登记差异(
+  实际: readonly 仅补迁移列身份[],
+  登记: readonly 仅补迁移列登记项[],
+): { 未登记: string[]; 失效登记: string[] } {
+  const 实际键 = new Set(实际.map(仅补迁移列键))
+  const 登记键 = new Set(登记.map(仅补迁移列键))
+  return {
+    未登记: [...实际键].filter((键) => !登记键.has(键)).sort(),
+    失效登记: [...登记键].filter((键) => !实际键.has(键)).sort(),
+  }
+}
 
 /**
  * `好友消息` 的建库侧真源（FP-21）：000_baseline.sql 不建这张表，空卷 initdb 由
@@ -569,29 +679,28 @@ describe('FP-15a 两方口径：用户表（默认性别 + 图片授权 由迁�
  *  ② 整个 migrations 目录**没有重号**——重号才是「已应用迁移字节级不可改 + 台账 checksum」
  *     那套机制唯一真正挡不住的失败形态（同版本号被两份内容抢注，谁先落库谁赢）。
  * 旧判据用「某个号还不存在」去近似「不许重号」，兑现预留的那天必然自毁（本文件刚踩到）。
- * 现在直接钉不变式本身：036 归 FP-21、每号恰好一次、最大号随事实推进。
- * 【FP-28d】038 已暂捏进 pending/ ⇒ 顶层版本集不含 038、最大号回到 037，
- *  并新增「038 恰好一份且只在 pending/」的正反两面钉（回顶层或双份都在这里红）。
+ * 现在直接钉不变式本身：关键号唯一、每号恰好一次、目录事实与登记同步推进。
+ * 【FP-28d】038 暂捏进 pending/ ⇒ 顶层版本集不含 038；
+ * 039 落地后不再钉死「最大号 037」，改为真实读取顶层目录并校验命名、无重号与 pending 边界。
  */
-  it('命名与编号：036=FP-21、037=FP-15a 唯一；038 按 FP-28d 暂捏于 pending/（顶层不得出现），全目录无重号', () => {
-    const 版本 = readdirSync(迁移目录)
-      .filter((名) => 名.endsWith('.sql'))
-      .map((名) => 名.split('_')[0])
+  it('命名与编号从真实顶层目录推进：035/036/037/039 唯一，034 与 pending 038 不进链，全目录无重号', () => {
+    const 顶层文件 = 顶层迁移文件()
+    const 版本 = 顶层文件.map((名) => 名.split('_')[0])
+    expect(顶层文件.every((名) => /^\d{3}_.+\.sql$/.test(名))).toBe(true)
+    expect(版本.filter((项) => 项 === '035')).toHaveLength(1)
     expect(版本.filter((项) => 项 === '036')).toHaveLength(1)
     expect(版本.filter((项) => 项 === '037')).toHaveLength(1)
+    expect(版本.filter((项) => 项 === '039')).toHaveLength(1)
+    expect(版本.filter((项) => 项 === '034')).toHaveLength(0)
     expect(
       版本.filter((项) => 项 === '038'),
       '038 回到顶层 ⇒ 容器启动自动迁移会 DROP 性别 打挂管理端',
     ).toHaveLength(0)
-    expect(版本.filter((项) => 项 === '035')).toHaveLength(1)
-    // 重号守卫：任何版本号出现两次都立刻红（旧写法只盯着一两个具体号，覆盖不到"新增时就撞号"）
     const 重号 = [...new Set(版本)].filter((项) => 版本.filter((它) => 它 === 项).length > 1)
     expect(重号, 'migrations 目录出现重号迁移 ⇒ 台账 checksum 与已应用迁移不可改那两条铁律都会被绕过').toEqual([])
-    expect(版本).toContain('035')
-    expect([...版本].sort()).toEqual([...new Set(版本)].sort())
-    expect([...版本].sort().at(-1)).toBe('037')
-    // FP-28d：038 恰好一份、且只存在于 pending/（顶层与 pending 双向钉）
-    expect(readdirSync(迁移目录)).not.toContain('038_删除用户性别死列.sql')
+    expect(版本).toEqual([...版本].sort())
+    expect(仅补迁移列登记.some((项) => 项.文件.startsWith('038_'))).toBe(false)
+    expect(顶层文件).not.toContain('038_删除用户性别死列.sql')
     expect(readdirSync(resolve(迁移目录, 'pending')).filter((名) => 名.startsWith('038'))).toEqual([
       '038_删除用户性别死列.sql',
     ])
@@ -754,8 +863,8 @@ describe('FP-21 两方口径：好友消息表在 001_haoyou_yu_shezhi.sql + 迁
    * 【本轮实测后新增的**唯一**一条通用判据 + 一条被否掉的候选判据（证据全部留在下面）】
    * 派单要求把「治理列两方俱在」从手写列清单泛化。两个方向都跑过一遍全仓（不推测）：
    *
-   *  ① 「同一列两侧都有依据 ⇒ 类型必须同形」 ⇒ **成立**，且当前零反例：全库 8 张被补列的表、
-   *     29 条 ADD COLUMN 里所有两侧俱在的列，类型 token 全部一致。已作为通用判据落在下面第一条用例。
+   *  ① 「同一列两侧都有依据 ⇒ 类型必须同形」 ⇒ **成立**，且当前零反例：全库被补列的表里，
+   *     所有两侧俱在的列，类型 token 全部一致。已作为通用判据落在下面第一条用例。
    *     （比"整行相等"更弱也更正确：035/036 把 REFERENCES 换行写、由 DO 块补同名约束，
    *      两份建表脚本的排版本就不同，整行相等会把排版差异钉成缺陷。）
    *
@@ -790,35 +899,57 @@ describe('FP-21 两方口径：好友消息表在 001_haoyou_yu_shezhi.sql + 迁
     expect(类型分叉, '同一列在建库侧与迁移链上类型不一致 ⇒ 两条路径得到的表结构不同形').toEqual([])
   })
 
-  it('判据边界（否决 ② 方向的通用红灯）：全库确有"只补迁移、未进建库脚本"的列且一切正常', () => {
-    const 只补在链上: string[] = []
-    for (const 表名 of 被补列的表()) {
-      if (!建库侧有此表(表名)) continue
-      for (const 项 of 迁移新增列明细(表名)) {
-        if (建库侧列类型(表名, 项.列) === null) 只补在链上.push(`${项.文件.replace(/\.sql$/, '')}:${表名}.${项.列}`)
-      }
+  it('仅补迁移列必须与显式登记逐条全等；039 两列有真实理由，038 pending 不在登记面', () => {
+    const 实际 = 扫描仅补迁移列()
+    expect(仅补迁移列登记差异(实际, 仅补迁移列登记)).toEqual({ 未登记: [], 失效登记: [] })
+    for (const 登记 of 仅补迁移列登记) {
+      expect(登记.理由.trim(), `${仅补迁移列键(登记)} 缺登记理由`).not.toBe('')
+      expect(顶层迁移文件(), `${仅补迁移列键(登记)} 指向的迁移不在顶层链`).toContain(登记.文件)
+      expect(
+        迁移新增列明细(登记.表名).some(
+          (项) => 项.文件 === 登记.文件 && 项.列 === 登记.列名,
+        ),
+        `${仅补迁移列键(登记)} 在登记中但迁移链没有对应 ADD COLUMN`,
+      ).toBe(true)
+      expect(
+        建库侧列类型(登记.表名, 登记.列名),
+        `${仅补迁移列键(登记)} 已进入建库侧，不再属于仅补迁移列`,
+      ).toBeNull()
     }
-    expect(
-      [...new Set(只补在链上)].sort(),
-      '"只补迁移、不写进建库脚本"是**合法常态**（迁移链总会重放）。本用例钉住这一事实，' +
-        '防止下一位工人把它误做成红灯；若哪天真把它全部补齐，本判据会红并提醒改判。',
-    ).toEqual([
-      '010_挑战模式:游戏档案.模式',
-      '010_挑战模式:角色.对局模式',
-      '013_角色音色ID:角色.音色ID',
-      '014_头像签名与可见性:用户.签名可见性',
-      '014_头像签名与可见性:用户.签名白名单',
-      '022_用户RBAC运营审核员列:用户.审核员',
-      '022_用户RBAC运营审核员列:用户.运营',
-      '026_对话摘要素材锚点:对话摘要.素材锚点时间',
-      '031_角色结局文案快照列:角色.结局文案',
+    const 零三九登记 = 仅补迁移列登记.filter((项) => 项.文件 === '039_FP11战绩分类排序.sql')
+    expect(零三九登记.map(仅补迁移列键)).toEqual([
+      '039_FP11战绩分类排序:游戏档案.分类ID',
+      '039_FP11战绩分类排序:游戏档案.排序',
     ])
-    // 本单治理列不得落进这一族（否则就是"存量库永远补不上"的反方向缺陷）
+    for (const 项 of 零三九登记) {
+      expect(项.理由).toContain('039')
+      expect(项.理由).toContain('baseline')
+    }
+    expect(实际.some((项) => 项.文件.startsWith('038_'))).toBe(false)
+    const 实际键 = new Set(实际.map(仅补迁移列键))
     for (const 项 of 迁移新增列明细('好友消息')) {
-      expect(只补在链上, `036 的 ${项.列} 只存在于迁移链 ⇒ 建库侧漏了`).not.toContain(
+      expect(实际键, `036 的 ${项.列} 只存在于迁移链 ⇒ 建库侧漏了`).not.toContain(
         `036_好友消息内容与引用:好友消息.${项.列}`,
       )
     }
+  })
+
+  it('登记守卫防空判：新增顶层迁移的仅补列未登记判红，补入登记后转绿', () => {
+    const 当前实际 = 扫描仅补迁移列()
+    const 合成登记: 仅补迁移列登记项 = {
+      文件: '040_合成验证新增顶层迁移.sql',
+      表名: '游戏档案',
+      列名: '合成未登记列',
+      理由: '仅用于验证未登记判红',
+    }
+    expect(仅补迁移列登记差异([...当前实际, 合成登记], 仅补迁移列登记)).toEqual({
+      未登记: ['040_合成验证新增顶层迁移:游戏档案.合成未登记列'],
+      失效登记: [],
+    })
+    expect(
+      仅补迁移列登记差异([...当前实际, 合成登记], [...仅补迁移列登记, 合成登记]),
+    ).toEqual({ 未登记: [], 失效登记: [] })
+    expect(顶层迁移文件()).not.toContain(合成登记.文件)
   })
 })
 

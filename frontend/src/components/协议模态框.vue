@@ -8,7 +8,9 @@
               {{ biaoTi }}
             </h2>
             <button
+              type="button"
               class="guanbi-anniu"
+              aria-busy="false"
               :aria-label="huoQuFanYi('caidan', 'guanBi')"
               @click="guanBi"
             >
@@ -19,7 +21,7 @@
             <pre class="xieyi-wenben">{{ yuanShiWenBen }}</pre>
           </div>
           <div class="tanchuang-dibu">
-            <button class="zhidao-anniu" @click="guanBi">
+            <button type="button" class="zhidao-anniu" aria-busy="false" @click="guanBi">
               {{ huoQuFanYi('caidan', 'yiYiZhiXiao') }}
             </button>
           </div>

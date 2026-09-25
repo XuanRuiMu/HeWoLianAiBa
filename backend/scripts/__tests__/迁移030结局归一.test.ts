@@ -1,6 +1,7 @@
-import { describe, it, expect, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { randomUUID } from 'node:crypto'
 import { Pool } from 'pg'
 import { peiZhi } from '../../src/config'
 import { fanYi } from '../../src/config/translations'
@@ -69,7 +70,11 @@ const 全部性别变体文案 = Object.entries(fanYi.xingBieBianTi)
 /** 真库可达连接串：与 迁移024性别归一.test.ts 同口径（不新抄任何凭据） */
 function 取可连通连接串(库名?: string): string {
   const 显式 = (process.env.TEST_DATABASE_URL ?? '').trim()
-  const 基 = 显式 !== '' ? 显式 : String(peiZhi.shuJuKuLianJie ?? '')
+  const 基 = 显式 !== ''
+    ? 显式
+    : process.env.XU_KE_ZHEN_SHI_WAI_HU === 'true'
+      ? String(peiZhi.shuJuKuLianJie ?? '')
+      : ''
   const 换主机 = 基.includes('@postgres:') ? 基.replace('@postgres:', '@127.0.0.1:') : 基
   if (!库名) return 换主机
   return 换主机.replace(/\/[^/?#]*(\?.*)?$/, `/${库名}$1`)
@@ -90,8 +95,28 @@ async function 取池(连接串: string): Promise<Pool | null> {
 const 现网池 = await 取池(取可连通连接串())
 const 管理池 = 现网池 === null ? null : await 取池(取可连通连接串('postgres'))
 const 有真库 = 现网池 !== null && 管理池 !== null
+const 现网夹具后缀 = randomUUID().replace(/-/g, '').slice(0, 12)
+const 现网夹具手机号 = `19${randomUUID().replace(/\D/g, '').padEnd(9, '0').slice(0, 9)}`
+let 现网夹具用户ID = ''
+let 现网夹具结局ID = ''
 const 后缀 = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
 const 已建库: string[] = []
+
+beforeAll(async () => {
+  if (!现网池) return
+  const 用户 = await 现网池.query(
+    `INSERT INTO "用户" ("手机号", "用户名", "昵称", "测试")
+     VALUES ($1, $2, $3, TRUE) RETURNING "ID"`,
+    [现网夹具手机号, `fp30-${现网夹具后缀}`, `fp30-${现网夹具后缀}`],
+  )
+  现网夹具用户ID = String(用户.rows[0].ID)
+  const 结局 = await 现网池.query(
+    `INSERT INTO "游戏结局" ("用户ID", "结果状态", "摘要")
+     VALUES ($1, 'sheng_li_ai_qing', '{}'::jsonb) RETURNING "ID"`,
+    [现网夹具用户ID],
+  )
+  现网夹具结局ID = String(结局.rows[0].ID)
+})
 
 async function 建临时库(用途: string): Promise<Pool | null> {
   if (管理池 === null) return null
@@ -118,13 +143,15 @@ const 存量: Array<{ 存储值: string; 期望枚举键: string | null }> = [
 
 let 临时池: Pool | null = null
 let 临时用户ID = ''
+const 临时用户手机号 = `17${randomUUID().replace(/\D/g, '').padEnd(9, '0').slice(0, 9)}`
 
 if (有真库) {
   临时池 = await 建临时库('clean')
   if (临时池 !== null) {
     await 临时池.query(readFileSync(resolve(建库根目录, '000_baseline.sql'), 'utf-8'))
     const 建用户 = await 临时池.query(
-      `INSERT INTO "用户" ("手机号") VALUES ('00000000000') RETURNING "ID"`,
+      `INSERT INTO "用户" ("手机号") VALUES ($1) RETURNING "ID"`,
+      [临时用户手机号],
     )
     临时用户ID = String(建用户.rows[0].ID)
     for (const 项 of 存量) {
@@ -157,7 +184,11 @@ async function 在回滚事务里跑(池: Pool, 语句: string): Promise<unknown
 const 有临时库 = 临时池 !== null
 
 afterAll(async () => {
-  if (现网池) await 现网池.end().catch(() => undefined)
+  if (现网池) {
+    if (现网夹具结局ID) await 现网池.query('DELETE FROM "游戏结局" WHERE "ID" = $1', [现网夹具结局ID])
+    if (现网夹具用户ID) await 现网池.query('DELETE FROM "用户" WHERE "ID" = $1', [现网夹具用户ID])
+    await 现网池.end().catch(() => undefined)
+  }
   if (临时池) await 临时池.end().catch(() => undefined)
   if (管理池) {
     for (const 库名 of 已建库) {
@@ -319,9 +350,9 @@ describe.skipIf(!有真库)('迁移 030 在现网库的落地证据（真库）'
         try {
           await 客户端.query(
             `INSERT INTO "游戏结局" ("用户ID", "角色ID", "结果状态", "摘要")
-             VALUES ((SELECT "ID" FROM "用户" ORDER BY "创建时间" LIMIT 1), NULL, $1, '{}'::jsonb)
+             VALUES ($1, NULL, $2, '{}'::jsonb)
              ON CONFLICT ("用户ID", "角色ID") DO NOTHING`,
-            [值],
+            [现网夹具用户ID, 值],
           )
         } catch (捕获) {
           错误 = 捕获
@@ -434,12 +465,5 @@ describe.skipIf(!有临时库)('归一脚本与 030 的顺序保护（自建临�
     ).rejects.toMatchObject({ code: '23514' })
     const 行数 = await 池.query('SELECT count(*)::int AS n FROM "游戏结局"')
     expect(行数.rows[0].n).toBe(存量.length - 1)
-  })
-})
-
-describe.skipIf(有真库)('真库不可达（显式暴露跳过，不伪造通过）', () => {
-  it('B/C 组未执行', () => {
-    expect(有真库).toBe(false)
-    expect(有临时库).toBe(false)
   })
 })

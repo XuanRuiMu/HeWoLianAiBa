@@ -10,6 +10,7 @@
     <button v-if="chongShiWenZi" class="kong-tai-anniu" @click="chuLiChongShi">
       {{ chongShiWenZi }}
     </button>
+    <slot />
   </div>
 </template>
 

@@ -16,8 +16,22 @@ import { mbtiLieBiao } from '../config/角色配置'
 import type { RenZhengQingQiu } from '../middleware/认证'
 import { 性别验证中间件 } from '../middleware/输入验证'
 import { 解析性别 } from '../utils/性别'
+import {
+  CUO_WU_DAI_MA,
+  JiaoSeShengChengCuoWu,
+} from '../config/错误码注册表'
 
 const luYou = Router()
+
+function chuLiJiaoSeCuoWu(
+  xiangYing: Response,
+  cuoWu: unknown,
+  houTuiDaiMa: typeof CUO_WU_DAI_MA.ROLE_GENERATION_INITIALIZATION_FAILED | typeof CUO_WU_DAI_MA.ROLE_GENERATION_PERSISTENCE_FAILED,
+): void {
+  const daiMa = cuoWu instanceof JiaoSeShengChengCuoWu ? cuoWu.code : houTuiDaiMa
+  debug日志.error('角色接口', '角色生成失败', { xiang_qing: { cuo_wu_ma: daiMa } })
+  shiBaiXiangYing(xiangYing, 500, '', daiMa)
+}
 
 function jieXiZiFuChuan(
   body: Record<string, unknown>,
@@ -104,7 +118,7 @@ function jieXiXinMuZhongDeTa(
 luYou.post('/MBTI生成', 性别验证中间件, (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
-    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
   }
 
   const body = qingQiu.body as Record<string, unknown>
@@ -117,40 +131,44 @@ luYou.post('/MBTI生成', 性别验证中间件, (qingQiu: RenZhengQingQiu, xian
   // FP-13：入参性别经唯一解析入口归一为内部规范形态，六种写法全收
   const zhengLiXingBie = 解析性别(xingBie)
   if (!zhengLiXingBie) {
-    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.ROLE_GENERATION_INPUT_INVALID)
   }
 
   const zhengLiMuBiaoXingBie = 解析性别(muBiaoXingBie) ?? undefined
 
   const xinMuZhongDeTaJieXi = jieXiXinMuZhongDeTa(body.xinMuZhongDeTa)
   if (!xinMuZhongDeTaJieXi.cheng_gong) {
-    return shiBaiXiangYing(xiangYing, 400, xinMuZhongDeTaJieXi.cuo_wu)
+    return shiBaiXiangYing(xiangYing, 400, xinMuZhongDeTaJieXi.cuo_wu, CUO_WU_DAI_MA.ROLE_GENERATION_INPUT_INVALID)
   }
 
-  const jiaoSe = shengChengJiaoSe({
-    yong_hu_id: yongHu.yongHuId,
-    xing_bie: zhengLiXingBie,
-    mu_biao_xing_bie: zhengLiMuBiaoXingBie || null,
-    mbti_lei_xing: mbtiLeiXing && yanZhengMbti(mbtiLeiXing) ? mbtiLeiXing : null,
-    shi_fou_zha_xing: shiFouZhaXing,
-    sui_ji_xing_ge: suiJiXingGe,
-    xin_mu_zhong_de_ta: xinMuZhongDeTaJieXi.shu_ju,
-  })
-
-  return chengGongXiangYing(xiangYing, jiaoSe)
+  try {
+    const jiaoSe = shengChengJiaoSe({
+      yong_hu_id: yongHu.yongHuId,
+      xing_bie: zhengLiXingBie,
+      mu_biao_xing_bie: zhengLiMuBiaoXingBie || null,
+      mbti_lei_xing: mbtiLeiXing && yanZhengMbti(mbtiLeiXing) ? mbtiLeiXing : null,
+      shi_fou_zha_xing: shiFouZhaXing,
+      sui_ji_xing_ge: suiJiXingGe,
+      xin_mu_zhong_de_ta: xinMuZhongDeTaJieXi.shu_ju,
+    })
+    return chengGongXiangYing(xiangYing, jiaoSe)
+  } catch (cuoWu) {
+    chuLiJiaoSeCuoWu(xiangYing, cuoWu, CUO_WU_DAI_MA.ROLE_GENERATION_INITIALIZATION_FAILED)
+    return
+  }
 })
 
 luYou.post('/确认', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
-    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
   }
 
   const body = qingQiu.body as Record<string, unknown>
   const xuanZhongJiaoSe = body.xuanZhongJiaoSe as ShengChengJiaoSeJieGuo | undefined
 
   if (!xuanZhongJiaoSe || typeof xuanZhongJiaoSe !== 'object') {
-    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.ROLE_GENERATION_INPUT_INVALID)
   }
 
   try {
@@ -161,17 +179,8 @@ luYou.post('/确认', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const baoCunHou = await baoCunJiaoSe(yongHu.yongHuId, xiZhengHouJiaoSe)
     return chengGongXiangYing(xiangYing, baoCunHou)
   } catch (cuoWu) {
-    // FP-13：落库卡口的非法性别以 zhuang_tai_ma=400 回传，不再一律炸成 500
-    const zhuangTaiMa = (cuoWu as Error & { zhuang_tai_ma?: number }).zhuang_tai_ma ?? 500
-    if (zhuangTaiMa === 500) {
-      debug日志.error('角色接口', '保存角色失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
-      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
-    }
-    return shiBaiXiangYing(
-      xiangYing,
-      zhuangTaiMa,
-      cuoWu instanceof Error && cuoWu.message ? cuoWu.message : huoQuFanYi('tongYong', 'queShaoCanShu'),
-    )
+    chuLiJiaoSeCuoWu(xiangYing, cuoWu, CUO_WU_DAI_MA.ROLE_GENERATION_PERSISTENCE_FAILED)
+    return
   }
 })
 

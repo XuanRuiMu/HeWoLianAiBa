@@ -2,10 +2,11 @@
   <div class="ziliaoka-zhezhao" @click.self="guanBi">
     <div class="ziliaoka-rongqi" role="dialog" aria-modal="true" :aria-label="huoQuFanYi('haoYou', 'ziLiaoKa')">
       <button class="ziliaoka-guanbi" :aria-label="huoQuFanYi('tongYong', 'guanBi')" @click="guanBi">×</button>
-      <div v-if="jiaZaiZhong" class="ziliaoka-jiazai">{{ huoQuFanYi('liaoTian', 'jiaZaiZhong') }}</div>
-      <div v-else-if="cuoWuXinXi" class="ziliaoka-cuowu">
-        <p>{{ cuoWuXinXi }}</p>
-        <button class="anniu-fu-zhu" @click="jiaZai">{{ huoQuFanYi('liaoTian', 'chongShi') }}</button>
+      <div v-if="qianTaiZhuangTai === 'loading'" class="ziliaoka-jiazai" role="status">
+        {{ huoQuFanYi('liaoTian', 'jiaZaiZhong') }}
+      </div>
+      <div v-else-if="qianTaiCuoWu" class="ziliaoka-cuowu">
+        <RequestError :cuo-wu="qianTaiCuoWu" mi-xi @chong-shi="chongShi" />
       </div>
       <div v-else-if="mingPian" class="ziliaoka-neirong">
         <div class="ziliaoka-hang">
@@ -40,7 +41,8 @@ import { ref, onMounted } from 'vue'
 import { huoQuFanYi } from '@/config/translations'
 import { huoQuMingPian, type MingPian } from '@/api/资料'
 import TouXiang from '@/components/头像.vue'
-import { huoQuCuoWuXiangYing } from '@/api/请求'
+import RequestError from '@/components/请求错误.vue'
+import { use前台错误 } from '@/composables/use前台错误'
 
 const props = defineProps<{
   yongHuId: string
@@ -53,23 +55,15 @@ const emit = defineEmits<{
 }>()
 
 const mingPian = ref<MingPian | null>(null)
-const jiaZaiZhong = ref(false)
-const cuoWuXinXi = ref('')
+const { cuoWu: qianTaiCuoWu, zhuangTai: qianTaiZhuangTai, yunXing, chongShi } = use前台错误()
 
 async function jiaZai() {
-  jiaZaiZhong.value = true
-  cuoWuXinXi.value = ''
-  try {
-    mingPian.value = await huoQuMingPian(props.yongHuId)
-  } catch (cuoWu: unknown) {
-    if (typeof cuoWu === 'object' && cuoWu !== null && 'response' in cuoWu) {
-      cuoWuXinXi.value = huoQuCuoWuXiangYing(cuoWu)?.data?.ti_shi || huoQuFanYi('tongYong', 'wangLuoCuoWu')
-    } else {
-      cuoWuXinXi.value = huoQuFanYi('tongYong', 'wangLuoCuoWu')
-    }
-  } finally {
-    jiaZaiZhong.value = false
-  }
+  await yunXing(
+    async () => {
+      mingPian.value = await huoQuMingPian(props.yongHuId)
+    },
+    { chongShi: jiaZai },
+  )
 }
 
 function guanBi() {

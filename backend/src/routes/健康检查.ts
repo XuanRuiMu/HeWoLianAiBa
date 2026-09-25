@@ -5,6 +5,9 @@ import promClient from 'prom-client'
 import { 数据库 } from '../数据库'
 import { redis } from '../redis'
 import { huoQuZhenShiIP, shiDuanKeXinDaiLi } from '../utils/真实IP'
+import { chuangJianCuoWuXiangYing, shiBaiXiangYing } from '../utils/xiangying'
+import { queDingXiangYingZhuanZongId } from '../middleware/日志追踪'
+import { CUO_WU_DAI_MA, type CuoWuDaiMa } from '../config/错误码注册表'
 
 const zhuCeBiao = new promClient.Registry()
 promClient.collectDefaultMetrics({ register: zhuCeBiao })
@@ -24,77 +27,68 @@ const qingQiuHaoShi = new promClient.Histogram({
   registers: [zhuCeBiao],
 })
 
-const luYou = Router()
+type JianKangZhuangTai = {
+  shuJuKu: 'zhengChang' | 'yiChang'
+  huanCun: 'zhengChang' | 'yiChang'
+  daiMa: CuoWuDaiMa | null
+}
 
-// YH-126 健康分级：liveness只看进程，readiness查依赖，禁DB抖一下全站503
-// 根因：健康语义错，依赖抖动即503；收敛为分级探针+compose探活
-luYou.get('/health', async (_qingQiu: Request, xiangYing: Response) => {
-  let shuJuKu: 'zhengChang' | 'yiChang' = 'yiChang'
-  let huanCun: 'zhengChang' | 'yiChang' = 'yiChang'
-
+async function jianChaJianKang(): Promise<JianKangZhuangTai> {
+  let shuJuKu: JianKangZhuangTai['shuJuKu'] = 'yiChang'
+  let huanCun: JianKangZhuangTai['huanCun'] = 'yiChang'
   try {
     await 数据库.query('SELECT 1')
     shuJuKu = 'zhengChang'
   } catch {
     shuJuKu = 'yiChang'
   }
-
   try {
     const jieGuo = await redis.ping()
-    if (jieGuo === 'PONG') {
-      huanCun = 'zhengChang'
-    }
+    if (jieGuo === 'PONG') huanCun = 'zhengChang'
   } catch {
     huanCun = 'yiChang'
   }
+  const daiMa = shuJuKu === 'yiChang' && huanCun === 'yiChang'
+    ? CUO_WU_DAI_MA.DEPENDENCIES_UNAVAILABLE
+    : shuJuKu === 'yiChang'
+      ? CUO_WU_DAI_MA.DEPENDENCY_POSTGRES_UNAVAILABLE
+      : huanCun === 'yiChang'
+        ? CUO_WU_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE
+        : null
+  return { shuJuKu, huanCun, daiMa }
+}
 
-  const zhuangTai = shuJuKu === 'zhengChang' && huanCun === 'zhengChang' ? 'jianKang' : 'yiChang'
-  const zhuangTaiMa = zhuangTai === 'jianKang' ? 200 : 503
-
-  xiangYing.status(zhuangTaiMa).json({
-    zhuangTai,
-    shu_ju_ku: shuJuKu,
-    huan_cun: huanCun,
+async function faSongJianKang(xiangYing: Response): Promise<void> {
+  const zhuangTai = await jianChaJianKang()
+  const shuJu = {
+    zhuangTai: zhuangTai.daiMa ? 'yiChang' : 'jianKang',
+    shu_ju_ku: zhuangTai.shuJuKu,
+    huan_cun: zhuangTai.huanCun,
     shi_jian_chuo: new Date().toISOString(),
-  })
+  }
+  if (!zhuangTai.daiMa) {
+    xiangYing.status(200).json(shuJu)
+    return
+  }
+  const traceId = queDingXiangYingZhuanZongId(xiangYing)
+  const cuoWu = chuangJianCuoWuXiangYing(503, '', zhuangTai.daiMa)
+  xiangYing.status(503).json({ ...cuoWu, traceId, ...shuJu })
+}
+
+const luYou = Router()
+
+luYou.get('/health', async (_qingQiu: Request, xiangYing: Response) => {
+  await faSongJianKang(xiangYing)
 })
 
 luYou.get('/readyz', async (_qingQiu: Request, xiangYing: Response) => {
-  let shuJuKu: 'zhengChang' | 'yiChang' = 'yiChang'
-  let huanCun: 'zhengChang' | 'yiChang' = 'yiChang'
-
-  try {
-    await 数据库.query('SELECT 1')
-    shuJuKu = 'zhengChang'
-  } catch {
-    shuJuKu = 'yiChang'
-  }
-
-  try {
-    const jieGuo = await redis.ping()
-    if (jieGuo === 'PONG') {
-      huanCun = 'zhengChang'
-    }
-  } catch {
-    huanCun = 'yiChang'
-  }
-
-  const zhuangTai = shuJuKu === 'zhengChang' && huanCun === 'zhengChang' ? 'jianKang' : 'yiChang'
-  const zhuangTaiMa = zhuangTai === 'jianKang' ? 200 : 503
-
-  xiangYing.status(zhuangTaiMa).json({
-    zhuangTai,
-    shu_ju_ku: shuJuKu,
-    huan_cun: huanCun,
-    shi_jian_chuo: new Date().toISOString(),
-  })
+  await faSongJianKang(xiangYing)
 })
 
-// A11：/metrics 仅限内网/本机监控系统抓取，公网请求一律 403
 luYou.get('/metrics', (qingQiu: Request, xiangYing: Response) => {
   const duiXiang = huoQuZhenShiIP(qingQiu)
   if (!shiDuanKeXinDaiLi(duiXiang) && !shiDuanKeXinDaiLi(qingQiu.socket.remoteAddress || '')) {
-    xiangYing.status(403).end('Forbidden')
+    shiBaiXiangYing(xiangYing, 403, '', CUO_WU_DAI_MA.PERMISSION_DENIED)
     return
   }
   void (async () => {
@@ -104,7 +98,7 @@ luYou.get('/metrics', (qingQiu: Request, xiangYing: Response) => {
       xiangYing.end(zhiBiaoWenBen)
     } catch (cuoWu) {
       debug日志.error('监控指标', '生成metrics失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
-      xiangYing.status(500).end('# 生成metrics失败\n')
+      shiBaiXiangYing(xiangYing, 500, '', CUO_WU_DAI_MA.INTERNAL_ERROR)
     }
   })()
 })

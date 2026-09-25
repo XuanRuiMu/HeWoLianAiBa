@@ -552,7 +552,10 @@ describe('FP-21 发送好友消息：媒体归属与类型↔类别对应', () =
       .send({ jieShouZheId: 用户甲, leiXing: 'tuPian', meiTiId: crypto.randomUUID() })
     expect(他人.status).toBe(400)
     expect(不存在.status).toBe(400)
-    expect(不存在.body).toEqual(他人.body)
+    const { traceId: 他人追踪, ...他人稳定字段 } = 他人.body
+    const { traceId: 不存在追踪, ...不存在稳定字段 } = 不存在.body
+    expect(不存在追踪).not.toBe(他人追踪)
+    expect(不存在稳定字段).toEqual(他人稳定字段)
     expect(库.消息行).toHaveLength(0)
   })
 

@@ -109,6 +109,171 @@ select {
   outline-offset: var(--jujiao-huan-pian-yi-wenben);
 }
 
+:where(
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='button'],
+    [type='submit'],
+    [type='reset'],
+    [type='file'],
+    [type='image'],
+    [type='range'],
+    [type='color'],
+    [type='hidden']
+  ),
+  textarea,
+  [contenteditable]:not([contenteditable='false'])
+):not([data-chat-scope='true'] *):not([data-chat-input='true']) {
+  border-bottom-width: var(--shuru-xian-changtai-kuan-du) !important;
+  border-bottom-style: solid !important;
+  border-bottom-color: var(--shuru-xian-changtai-se) !important;
+  transition-property: border-color !important;
+  transition-duration: var(--shuru-juzhong-dong-xiao) !important;
+  transition-timing-function: var(--quxian-tan-chu) !important;
+}
+
+:where(
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='button'],
+    [type='submit'],
+    [type='reset'],
+    [type='file'],
+    [type='image'],
+    [type='range'],
+    [type='color'],
+    [type='hidden']
+  ),
+  textarea,
+  [contenteditable]:not([contenteditable='false'])
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):disabled {
+  border-bottom-color: var(--shuru-xian-jinyong-se) !important;
+  cursor: not-allowed !important;
+}
+
+:where(
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='button'],
+    [type='submit'],
+    [type='reset'],
+    [type='file'],
+    [type='image'],
+    [type='range'],
+    [type='color'],
+    [type='hidden']
+  ),
+  textarea,
+  [contenteditable]:not([contenteditable='false'])
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):read-only {
+  border-bottom-color: var(--shuru-xian-zhi-du-se) !important;
+}
+
+:where(
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='button'],
+    [type='submit'],
+    [type='reset'],
+    [type='file'],
+    [type='image'],
+    [type='range'],
+    [type='color'],
+    [type='hidden']
+  ),
+  textarea,
+  [contenteditable]:not([contenteditable='false'])
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):is([aria-invalid='true'], [data-error='true'], .is-error) {
+  border-bottom-color: var(--shuru-xian-cuowu-se) !important;
+}
+
+:where(
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='button'],
+    [type='submit'],
+    [type='reset'],
+    [type='file'],
+    [type='image'],
+    [type='range'],
+    [type='color'],
+    [type='hidden']
+  ),
+  textarea,
+  [contenteditable]:not([contenteditable='false'])
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):focus {
+  border-bottom-width: var(--shuru-xian-jujiao-kuan-du) !important;
+  border-bottom-color: var(--shuru-xian-jujiao-se) !important;
+}
+
+:where(
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='button'],
+    [type='submit'],
+    [type='reset'],
+    [type='file'],
+    [type='image'],
+    [type='range'],
+    [type='color'],
+    [type='hidden']
+  ),
+  textarea,
+  [contenteditable]:not([contenteditable='false'])
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):focus-visible {
+  border-bottom-width: var(--shuru-xian-jujiao-kuan-du) !important;
+  border-bottom-color: var(--shuru-xian-jujiao-se) !important;
+}
+
+:where(
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='button'],
+    [type='submit'],
+    [type='reset'],
+    [type='file'],
+    [type='image'],
+    [type='range'],
+    [type='color'],
+    [type='hidden']
+  ),
+  textarea,
+  [contenteditable]:not([contenteditable='false'])
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):-webkit-autofill {
+  background-color: var(--shuru-beijing-zidong-tianchong) !important;
+  color: var(--shuru-wenben-zidong-tianchong) !important;
+  -webkit-text-fill-color: var(--shuru-wenben-zidong-tianchong) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(
+    input:not(
+      [type='checkbox'],
+      [type='radio'],
+      [type='button'],
+      [type='submit'],
+      [type='reset'],
+      [type='file'],
+      [type='image'],
+      [type='range'],
+      [type='color'],
+      [type='hidden']
+    ),
+    textarea,
+    [contenteditable]:not([contenteditable='false'])
+  ):not([data-chat-scope='true'] *):not([data-chat-input='true']) {
+    transition-property: none !important;
+    transition-duration: 0s !important;
+  }
+}
+
 /* 滚动条单一真源：组件内保留的私有 ::-webkit-scrollbar 特例均在各自文件内以「FP-20 保留特例」注释逐项写明理由（宽度差异/测试钉死/透明轨道），此处不重复登记 */
 ::-webkit-scrollbar {
   width: var(--gundong-tiao-kuan-du);
@@ -132,6 +297,21 @@ select {
   cursor: var(--gundong-tiao-huakuai-cursor);
 }
 
+::-webkit-scrollbar-track:hover {
+  background: var(--gundong-tiao-guidao-hover);
+  cursor: var(--gundong-tiao-guidao-cursor);
+}
+
+:where(*:focus, *:focus-visible, *:focus-within)::-webkit-scrollbar-track {
+  background: var(--gundong-tiao-guidao-jujiao);
+  cursor: var(--gundong-tiao-guidao-cursor);
+}
+
+:where(*:focus, *:focus-visible, *:focus-within)::-webkit-scrollbar-thumb {
+  background: var(--gundong-tiao-huakuai-jujiao);
+  cursor: var(--gundong-tiao-huakuai-cursor);
+}
+
 /* 交汇角落（横竖滚动条同时存在时的方块）：全库无一处给它设值，此处补齐才使 global 是完备单一真源 */
 ::-webkit-scrollbar-corner {
   background: transparent;
@@ -143,6 +323,10 @@ select {
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--gundong-tiao-huakuai) var(--gundong-tiao-guidao);
+  }
+
+  :where(*:focus, *:focus-visible, *:focus-within) {
+    scrollbar-color: var(--gundong-tiao-huakuai-jujiao) var(--gundong-tiao-guidao-jujiao);
   }
 }
 

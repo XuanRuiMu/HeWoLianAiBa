@@ -13,7 +13,15 @@
         </button>
       </div>
 
-      <div v-if="通知仓库.jiaZaiZhong" class="tongzhi-zhuangtai">
+      <div v-if="qianTaiCuoWu">
+        <RequestError
+          :cuo-wu="qianTaiCuoWu"
+          :zhong-zai="qianTaiZhuangTai === 'loading'"
+          @chong-shi="chongShi"
+        />
+      </div>
+
+      <div v-else-if="qianTaiZhuangTai === 'loading'" class="tongzhi-zhuangtai">
         {{ huoQuFanYi('tongZhi', 'jiaZaiZhong') }}
       </div>
 
@@ -48,9 +56,12 @@
 import { onMounted, ref } from 'vue'
 import { 使用通知仓库 } from '@/stores/通知'
 import { huoQuFanYi } from '@/config/translations'
+import RequestError from '@/components/请求错误.vue'
+import { use前台错误 } from '@/composables/use前台错误'
 
 const 通知仓库 = 使用通知仓库()
 const caoZuoZhong = ref(false)
+const { cuoWu: qianTaiCuoWu, zhuangTai: qianTaiZhuangTai, yunXing, chongShi } = use前台错误()
 
 function geShiHuaShiJian(shiJian: string) {
   const riQi = new Date(shiJian)
@@ -62,29 +73,26 @@ function geShiHuaShiJian(shiJian: string) {
   return `${riQi.getMonth() + 1}/${riQi.getDate()} ${shi}:${fen}`
 }
 
+async function jiaZaiTongZhi() {
+  await yunXing(() => 通知仓库.jiaZaiTongZhi(), { chongShi: jiaZaiTongZhi })
+}
+
 async function biaoJiYiDu(tongZhiId: string) {
-  try {
-    await 通知仓库.biaoJiYiDu(tongZhiId)
-  } catch (e) {
-     
-    console.warn('标记已读失败', e)
-  }
+  await yunXing(() => 通知仓库.biaoJiYiDu(tongZhiId), {
+    chongShi: () => biaoJiYiDu(tongZhiId),
+  })
 }
 
 async function biaoJiQuanBuYiDu() {
   caoZuoZhong.value = true
-  try {
-    await 通知仓库.biaoJiQuanBuYiDu()
-  } catch (e) {
-     
-    console.warn('标记全部已读失败', e)
-  } finally {
-    caoZuoZhong.value = false
-  }
+  await yunXing(() => 通知仓库.biaoJiQuanBuYiDu(), {
+    chongShi: biaoJiQuanBuYiDu,
+  })
+  caoZuoZhong.value = false
 }
 
 onMounted(() => {
-  通知仓库.jiaZaiTongZhi()
+  void jiaZaiTongZhi()
   通知仓库.lianJieSocket()
 })
 </script>

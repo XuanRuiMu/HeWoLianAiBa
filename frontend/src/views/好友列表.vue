@@ -12,9 +12,15 @@
         {{ souSuoZhong ? huoQuFanYi('haoYou', 'souSuoZhong') : huoQuFanYi('haoYou', 'souSuo') }}
       </button>
     </div>
-    <p v-if="cuoWuXinXi" class="cuowu-tishi">{{ cuoWuXinXi }}</p>
+    <RequestError
+      v-if="qianTaiCuoWu"
+      :cuo-wu="qianTaiCuoWu"
+      :zhong-zai="qianTaiZhuangTai === 'loading'"
+      @chong-shi="chongShi"
+    />
+    <p v-if="caoZuoTiShi" class="cuowu-tishi" role="status">{{ caoZuoTiShi }}</p>
     <KongTai
-      v-else-if="souSuoWuJieGuo"
+      v-if="souSuoWuJieGuo && !qianTaiCuoWu && !caoZuoTiShi"
       :biao-ti="huoQuFanYi('haoYou', 'souSuoWuJieGuo')"
       :chong-shi-wen-zi="huoQuFanYi('haoYou', 'souSuo')"
       @chong-shi="zhiXingSouSuo"
@@ -39,7 +45,10 @@
       </div>
     </div>
     <h2 class="quyu-biaoti">{{ huoQuFanYi('haoYou', 'shouDaoShenQing') }}</h2>
-    <KongTai v-if="!shouDaoLieBiao.length" :biao-ti="huoQuFanYi('haoYou', 'zanWuShenQing')" />
+    <KongTai
+      v-if="!shouDaoLieBiao.length && !qianTaiCuoWu"
+      :biao-ti="huoQuFanYi('haoYou', 'zanWuShenQing')"
+    />
     <div v-for="shenQing in shouDaoLieBiao" :key="shenQing.id" class="shenqing-xiangmu">
       <span class="yonghu-ming">{{ shenQing.ni_cheng || shenQing.yong_hu_ming }}</span>
       <div class="shenqing-anniu-zu">
@@ -48,7 +57,10 @@
       </div>
     </div>
     <h2 class="quyu-biaoti">{{ huoQuFanYi('haoYou', 'haoYouLieBiao') }}</h2>
-    <KongTai v-if="!haoYouLieBiao.length" :biao-ti="huoQuFanYi('haoYou', 'zanWuHaoYou')" />
+    <KongTai
+      v-if="!haoYouLieBiao.length && !qianTaiCuoWu"
+      :biao-ti="huoQuFanYi('haoYou', 'zanWuHaoYou')"
+    />
     <div v-for="haoYou in haoYouLieBiao" :key="haoYou.id" class="haoyou-xiangmu">
       <button class="ziliao-anniu" :aria-label="huoQuFanYi('haoYou', 'ziLiaoKa')" @click="daKaiZiLiaoKa(haoYou.id)">
         <TouXiang :tou-xiang="haoYou.tou_xiang" :mo-ren-zi="(haoYou.ni_cheng || haoYou.yong_hu_ming || '?').slice(0, 1)" />
@@ -91,7 +103,10 @@ import {
   type HaoYouShenQingXiang,
   type HaoYouXiang,
 } from '@/api/社交'
-import { huoQuCuoWuXiangYing } from '@/api/请求'
+import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { 归一前台错误 } from '@/utils/前台错误'
+import RequestError from '@/components/请求错误.vue'
+import { use前台错误 } from '@/composables/use前台错误'
 import TouXiang from '@/components/头像.vue'
 import YongHuZiLiaoKa from '@/components/用户资料卡.vue'
 import KongTai from '@/components/空态.vue'
@@ -103,8 +118,10 @@ const souSuoJieGuo = ref<HaoYouSouSuoXiang[]>([])
 const souSuoWuJieGuo = ref(false)
 const shouDaoLieBiao = ref<HaoYouShenQingXiang[]>([])
 const haoYouLieBiao = ref<HaoYouXiang[]>([])
-const cuoWuXinXi = ref('')
+const caoZuoTiShi = ref('')
 const zhengZaiShenQing = ref<string | null>(null)
+const { cuoWu: qianTaiCuoWu, zhuangTai: qianTaiZhuangTai, yunXing, jieShou: jieShouQianTai, chongShi, qingLi } =
+  use前台错误()
 const ziLiaoKaYongHuId = ref<string | null>(null)
 
 function daKaiZiLiaoKa(yongHuId: string) {
@@ -118,48 +135,43 @@ function guanBiZiLiaoKa() {
 async function chuLiZiLiaoKaTianJia(yongHuId: string) {
   guanBiZiLiaoKa()
   zhengZaiShenQing.value = yongHuId
-  cuoWuXinXi.value = ''
+  caoZuoTiShi.value = ''
+  qingLi()
   try {
     await faSongHaoYouShenQing(yongHuId)
-    cuoWuXinXi.value = huoQuFanYi('haoYou', 'shenQingYiFaSong')
+    caoZuoTiShi.value = huoQuFanYi('haoYou', 'shenQingYiFaSong')
   } catch (cuoWu: unknown) {
-    cuoWuXinXi.value = duQuCuoWu(cuoWu)
+    jieShouQianTai(cuoWu, () => chuLiZiLiaoKaTianJia(yongHuId))
   } finally {
     zhengZaiShenQing.value = null
   }
 }
 
-function duQuCuoWu(cuoWu: unknown): string {
-  if (typeof cuoWu === 'object' && cuoWu !== null && 'response' in cuoWu) {
-    return huoQuCuoWuXiangYing(cuoWu)?.data?.ti_shi || ''
-  }
-  return cuoWu instanceof Error ? cuoWu.message : ''
-}
-
 async function shuaXinLieBiao() {
-  try {
-    const [shouDao, haoYou] = await Promise.all([huoQuShouDaoShenQing(), huoQuHaoYouLieBiao()])
-    shouDaoLieBiao.value = shouDao
-    haoYouLieBiao.value = haoYou
-  } catch (cuoWu: unknown) {
-    cuoWuXinXi.value = duQuCuoWu(cuoWu)
-  }
+  await yunXing(
+    async () => {
+      const [shouDao, haoYou] = await Promise.all([huoQuShouDaoShenQing(), huoQuHaoYouLieBiao()])
+      shouDaoLieBiao.value = shouDao
+      haoYouLieBiao.value = haoYou
+    },
+    { chongShi: shuaXinLieBiao },
+  )
 }
 
 async function zhiXingSouSuo() {
   const wenBen = guanJianZi.value.trim()
   if (!wenBen) return
   souSuoZhong.value = true
-  cuoWuXinXi.value = ''
+  caoZuoTiShi.value = ''
   souSuoWuJieGuo.value = false
+  qingLi()
   try {
     souSuoJieGuo.value = await souSuoHaoYou(wenBen)
   } catch (cuoWu: unknown) {
-    // 404 无结果走中性空态而非红色报错，用户不“出戏”
-    if (huoQuCuoWuXiangYing(cuoWu)?.status === 404) {
+    if (归一前台错误(cuoWu).code === QIAN_TAI_DAI_MA.RESOURCE_NOT_FOUND) {
       souSuoWuJieGuo.value = true
     } else {
-      cuoWuXinXi.value = duQuCuoWu(cuoWu)
+      jieShouQianTai(cuoWu, zhiXingSouSuo)
     }
     souSuoJieGuo.value = []
   } finally {
@@ -173,30 +185,47 @@ async function faSongShenQing(yongHu: HaoYouSouSuoXiang) {
     return
   }
   zhengZaiShenQing.value = yongHu.id
-  cuoWuXinXi.value = ''
+  caoZuoTiShi.value = ''
+  qingLi()
   try {
     await faSongHaoYouShenQing(yongHu.id)
-    cuoWuXinXi.value = huoQuFanYi('haoYou', 'shenQingYiFaSong')
+    caoZuoTiShi.value = huoQuFanYi('haoYou', 'shenQingYiFaSong')
   } catch (cuoWu: unknown) {
-    cuoWuXinXi.value = duQuCuoWu(cuoWu)
+    jieShouQianTai(cuoWu, () => faSongShenQing(yongHu))
   } finally {
     zhengZaiShenQing.value = null
   }
 }
 
 async function jieShou(shenQingId: string) {
-  await jieShouHaoYouShenQing(shenQingId)
-  await shuaXinLieBiao()
+  qingLi()
+  try {
+    await jieShouHaoYouShenQing(shenQingId)
+    await shuaXinLieBiao()
+  } catch (cuoWu: unknown) {
+    jieShouQianTai(cuoWu, () => jieShou(shenQingId))
+  }
 }
 
 async function juJue(shenQingId: string) {
-  await juJueHaoYouShenQing(shenQingId)
-  await shuaXinLieBiao()
+  qingLi()
+  try {
+    await juJueHaoYouShenQing(shenQingId)
+    await shuaXinLieBiao()
+  } catch (cuoWu: unknown) {
+    jieShouQianTai(cuoWu, () => juJue(shenQingId))
+  }
 }
 
 async function shanChu(haoYouId: string) {
-  await shanChuHaoYou(haoYouId)
-  await shuaXinLieBiao()
+  if (!window.confirm(huoQuFanYi('haoYou', 'queRenShanChuHaoYou'))) return
+  qingLi()
+  try {
+    await shanChuHaoYou(haoYouId)
+    await shuaXinLieBiao()
+  } catch (cuoWu: unknown) {
+    jieShouQianTai(cuoWu, () => shanChu(haoYouId))
+  }
 }
 
 function jinRuLiaoTian(haoYouId: string) {

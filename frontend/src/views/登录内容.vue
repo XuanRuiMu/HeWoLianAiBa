@@ -3,9 +3,9 @@
     <div
       ref="biaodanRongqi"
       class="biaodan-rongqi"
-      @focusin="tongBuSuoYouHuiTian"
-      @pointerdown.capture="tongBuSuoYouHuiTian"
-      @keydown.capture="tongBuSuoYouHuiTian"
+      @focusin="tongBuSuoYouHuiTian(true)"
+      @pointerdown.capture="tongBuSuoYouHuiTian(true)"
+      @keydown.capture="tongBuSuoYouHuiTian(true)"
     >
       <div class="juanzhou-gan juanzhou-gan-shang" />
       <div class="biaodan-neirong-qu">
@@ -19,32 +19,52 @@
           </p>
         </div>
 
+        <div class="biaoqian-qiehuan">
+          <button
+            type="button"
+            class="biaoqian-anniu"
+            :class="{ huoyue: moShi === 'dengLu' }"
+            aria-busy="false"
+            @click="qieHuanMoShi('dengLu')"
+          >
+            {{ huoQuFanYi('renZheng', 'dengLu') }}
+          </button>
+          <button
+            type="button"
+            class="biaoqian-anniu"
+            :class="{ huoyue: moShi === 'zhuCe' }"
+            aria-busy="false"
+            @click="qieHuanMoShi('zhuCe')"
+          >
+            {{ huoQuFanYi('renZheng', 'zhuCe') }}
+          </button>
+        </div>
+
+        <RequestError
+          v-if="qianTaiCuoWu"
+          :cuo-wu="qianTaiCuoWu"
+          :zhong-zai="faSongZhong || dengLuZhong || zhuCeZhong"
+          @chong-shi="chongShi"
+        />
+
         <div class="biaodan-gundong">
-          <div class="biaoqian-qiehuan">
-            <button
-              class="biaoqian-anniu"
-              :class="{ huoyue: moShi === 'dengLu' }"
-              @click="qieHuanMoShi('dengLu')"
+          <div
+            class="biaodan-xingwei"
+            :class="moShi === 'dengLu' ? 'denglu-moshi' : 'zhuce-moshi'"
+          >
+            <div
+              class="biaodan-moshi-pane denglu-moshi-pane"
+              :class="{ 'shi-fu-yong': moShi === 'dengLu' }"
             >
-              {{ huoQuFanYi('renZheng', 'dengLu') }}
-            </button>
-            <button
-              class="biaoqian-anniu"
-              :class="{ huoyue: moShi === 'zhuCe' }"
-              @click="qieHuanMoShi('zhuCe')"
-            >
-              {{ huoQuFanYi('renZheng', 'zhuCe') }}
-            </button>
-          </div>
-
-          <div v-if="cuoWuXinXi" class="cuowu-tishi">
-            {{ cuoWuXinXi }}
-          </div>
-
-          <Transition :name="qieHuanDongHua">
+              <Transition :name="qieHuanDongHua" @before-leave="biaoJiLiChangBiaoDan">
           <form
             v-if="moShi === 'dengLu'"
             key="dengLu"
+            class="denglu-biaodan"
+            data-form-mode="dengLu"
+            :aria-hidden="moShi !== 'dengLu' ? 'true' : undefined"
+            :inert="moShi !== 'dengLu' ? true : undefined"
+            :tabindex="moShi !== 'dengLu' ? '-1' : undefined"
             @submit.prevent="zhiXingDengLu"
           >
               <div class="shuru-zu" :class="{ shangFu: dengLuShouJiShangFu }">
@@ -90,6 +110,7 @@
                   }}</label>
                   <button
                     type="button"
+                    aria-busy="false"
                     class="mima-qiehuan"
                     :aria-label="xianShiMiMa1 ? huoQuFanYi('ui', 'yinCangMiMa') : huoQuFanYi('ui', 'xianShiMiMa')"
                     :aria-pressed="xianShiMiMa1"
@@ -165,7 +186,12 @@
                 </label>
               </div>
 
-              <button type="submit" class="anniu-zhuyao" :disabled="dengLuZhong || !keYiDengLu">
+              <button
+                type="submit"
+                class="anniu-zhuyao"
+                :aria-busy="dengLuZhong ? 'true' : 'false'"
+                :disabled="dengLuZhong || !keYiDengLu"
+              >
                 {{
                   dengLuZhong
                     ? huoQuFanYi('renZheng', 'dengLuZhong')
@@ -173,9 +199,21 @@
                 }}
               </button>
           </form>
+              </Transition>
+            </div>
+            <div
+              class="biaodan-moshi-pane zhuce-moshi-pane"
+              :class="{ 'shi-fu-yong': moShi === 'zhuCe' }"
+            >
+              <Transition :name="qieHuanDongHua" @before-leave="biaoJiLiChangBiaoDan">
           <form
-            v-else
+            v-if="moShi === 'zhuCe'"
             key="zhuCe"
+            class="zhuce-biaodan"
+            data-form-mode="zhuCe"
+            :aria-hidden="moShi !== 'zhuCe' ? 'true' : undefined"
+            :inert="moShi !== 'zhuCe' ? true : undefined"
+            :tabindex="moShi !== 'zhuCe' ? '-1' : undefined"
             @submit.prevent="zhiXingZhuCe"
           >
               <div class="shuru-zu" :class="{ shangFu: zhuCeShouJiShangFu }">
@@ -224,6 +262,7 @@
                   </div>
                   <button
                     type="button"
+                    :aria-busy="faSongZhong ? 'true' : 'false'"
                     class="fasong-anniu"
                     :disabled="!keYiFaSong || faSongZhong"
                     @click="zhiXingFaSongMa"
@@ -276,6 +315,7 @@
                   }}</label>
                   <button
                     type="button"
+                    aria-busy="false"
                     class="mima-qiehuan"
                     :aria-label="xianShiMiMa2 ? huoQuFanYi('ui', 'yinCangMiMa') : huoQuFanYi('ui', 'xianShiMiMa')"
                     :aria-pressed="xianShiMiMa2"
@@ -347,6 +387,7 @@
               <button
                 type="submit"
                 class="anniu-zhuyao"
+                :aria-busy="zhuCeZhong ? 'true' : 'false'"
                 :disabled="zhuCeZhong || !keYiZhuCe || !tongYiXieYi"
               >
                 {{
@@ -357,6 +398,8 @@
               </button>
           </form>
           </Transition>
+          </div>
+          </div>
         </div>
       </div>
       <div class="juanzhou-gan juanzhou-gan-xia" />
@@ -378,10 +421,13 @@ import { useRouter } from 'vue-router'
 import { 使用用户仓库 } from '@/stores/用户'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
 import { faSongMa, jianChaShouJiHao } from '@/api/认证'
-import { huoQuCuoWuXiangYing } from '@/api/请求'
+import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { chuangJianQianTaiCuoWu, 归一前台错误 } from '@/utils/前台错误'
 import { huoQuFanYi } from '@/config/translations'
 import { quXian } from '@/config/设计令牌'
 import 协议模态框 from '@/components/协议模态框.vue'
+import RequestError from '@/components/请求错误.vue'
+import { use前台错误 } from '@/composables/use前台错误'
 import ChuShengRiQiXuanZeQi from '@/components/认证/出生日期选择器.vue'
 
 const emit = defineEmits<{
@@ -415,7 +461,12 @@ const zhuCeYanZhengMa = ref(bd.zhuCeYanZhengMa)
 const zhuCeYongHuMing = ref(bd.zhuCeYongHuMing)
 const zhuCeMiMa = ref(bd.zhuCeMiMa)
 const zhuCeChuShengRiQi = ref(bd.zhuCeChuShengRiQi)
-const cuoWuXinXi = ref('')
+const {
+  cuoWu: qianTaiCuoWu,
+  jieShou: jieShouQianTai,
+  chongShi,
+  qingLi: qingLiQianTai,
+} = use前台错误()
 const faSongZhong = ref(false)
 const dengLuZhong = ref(false)
 const zhuCeZhong = ref(false)
@@ -425,6 +476,25 @@ const xianShiMiMa2 = ref(false)
 const tongYiXieYi = ref(bd.tongYiXieYi)
 const xieYiXianShi = ref(false)
 const xieYiLeiXing = ref<'yongHuXieYi' | 'yinSiZhengCe'>('yongHuXieYi')
+let 认证操作代次 = 0
+let 认证操作控制器: AbortController | null = null
+
+function kaiShiJieMianCaoZuo(): number {
+  认证操作代次 += 1
+  认证操作控制器?.abort()
+  认证操作控制器 = new AbortController()
+  return 认证操作代次
+}
+
+function jieMianCaoZuoYouXiao(dai: number): boolean {
+  return dai === 认证操作代次
+}
+
+function zhiFouJieMianCaoZuo(): void {
+  认证操作代次 += 1
+  认证操作控制器?.abort()
+  认证操作控制器 = null
+}
 
 function daKaiXieYi(leiXing: 'yongHuXieYi' | 'yinSiZhengCe') {
   xieYiLeiXing.value = leiXing
@@ -513,10 +583,12 @@ function chuLiZiDongTianChong(shijian: Event, ziDuanMing: FuDongZiDuanMing) {
   const muBiao = fuDongZhiYingShe[ziDuanMing]
   ziDongBiaoZhi.value = true
   const shuRuKuang = shijian.target as HTMLInputElement | null
-  if (shuRuKuang && muBiao.value !== shuRuKuang.value) muBiao.value = shuRuKuang.value
+  if (shuRuKuang && shuRuKuang.value !== '' && muBiao.value !== shuRuKuang.value) {
+    muBiao.value = shuRuKuang.value
+  }
 }
 
-function tongBuSuoYouHuiTian() {
+function tongBuSuoYouHuiTian(baoLiuDangQianKongZhi = false) {
   const genRongQi = biaodanRongqi.value as HTMLElement | null
   const yingShe: Array<{ id: string; ziDuanMing: FuDongZiDuanMing }> = [
     { id: 'denglu-shoujihao', ziDuanMing: 'dengLuShouJiHao' },
@@ -532,6 +604,16 @@ function tongBuSuoYouHuiTian() {
     const muBiao = fuDongZhiYingShe[xiang.ziDuanMing]
     const ziDongBiaoZhi = fuDongZiDongYingShe[xiang.ziDuanMing]
     const shiJiZhi = yuanSu.value ?? ''
+    if (shiJiZhi === '' && muBiao.value !== '') {
+      if (baoLiuDangQianKongZhi) {
+        muBiao.value = ''
+        ziDongBiaoZhi.value = false
+      } else {
+        yuanSu.value = muBiao.value
+        ziDongBiaoZhi.value = true
+      }
+      continue
+    }
     if (muBiao.value !== shiJiZhi) muBiao.value = shiJiZhi
     ziDongBiaoZhi.value = shiJiZhi.length > 0
     try {
@@ -544,6 +626,10 @@ function tongBuSuoYouHuiTian() {
 
 function tongBuYeMianKeJianXing() {
   if (document.visibilityState === 'visible') tongBuSuoYouHuiTian()
+}
+
+function tongBuPageshow() {
+  tongBuSuoYouHuiTian()
 }
 
 let shouZhenTongBuId: number | null = null
@@ -601,8 +687,22 @@ watch(zhuCeYongHuMing, (val) => (bd.zhuCeYongHuMing = val))
 watch(zhuCeMiMa, (val) => (bd.zhuCeMiMa = val))
 watch(zhuCeChuShengRiQi, (val) => (bd.zhuCeChuShengRiQi = val))
 
+function biaoJiLiChangBiaoDan(yuanSu: Element) {
+  yuanSu.setAttribute('aria-hidden', 'true')
+  yuanSu.setAttribute('inert', '')
+  yuanSu.setAttribute('tabindex', '-1')
+}
+
 function qieHuanMoShi(xinMoShi: MoShiLeiXing) {
   if (xinMoShi === moShi.value) return
+  if (dengLuZhong.value || zhuCeZhong.value || faSongZhong.value) {
+    zhiFouJieMianCaoZuo()
+    用户仓库.取消待处理认证()
+    dengLuZhong.value = false
+    zhuCeZhong.value = false
+    faSongZhong.value = false
+    qingLiQianTai()
+  }
   qieHuanFangXiang.value = xinMoShi === 'zhuCe' ? 'you' : 'zuo'
   const dangQianJiaoDian = document.activeElement as HTMLElement | null
   if (
@@ -615,25 +715,32 @@ function qieHuanMoShi(xinMoShi: MoShiLeiXing) {
   }
   // FP-02：离场表单在过渡窗口内仍是 DOM 节点（含三段日期控件的段级焦点），
   // 先注销其中焦点，切换后 activeElement 不残留上一表单
-  // 滚动口先归零：离场层已脱流覆在顶部，滚动复位藏在淡切之下，不产生可见的滚动甩动
+  // 滚动口先归零：离场层已切到独立行，滚动复位藏在淡切之下，不产生可见的滚动甩动
   const gundongQu = biaodanRongqi.value?.querySelector('.biaodan-gundong') as HTMLElement | null
   if (gundongQu) gundongQu.scrollTop = 0
   moShi.value = xinMoShi
 }
 
 onMounted(() => {
+  tongBuSuoYouHuiTian()
   bd.jiaZaiJiZhuSheZhi()
   jiZhuZhangHao.value = bd.jiZhuZhangHao
   jiZhuMiMa.value = bd.jiZhuMiMa
   ziDongDengLu.value = bd.ziDongDengLu
-  dengLuShouJiHao.value = bd.dengLuShouJiHao
-  dengLuMiMa.value = bd.dengLuMiMa
+  const dengLuShouJiHaoYuanSu = biaodanRongqi.value?.querySelector('#denglu-shoujihao') as HTMLInputElement | null
+  const dengLuMiMaYuanSu = biaodanRongqi.value?.querySelector('#denglu-mima') as HTMLInputElement | null
+  if ((!dengLuShouJiHaoYuanSu || dengLuShouJiHaoYuanSu.value === '') && bd.dengLuShouJiHao) {
+    dengLuShouJiHao.value = bd.dengLuShouJiHao
+  }
+  if ((!dengLuMiMaYuanSu || dengLuMiMaYuanSu.value === '') && bd.dengLuMiMa) {
+    dengLuMiMa.value = bd.dengLuMiMa
+  }
   if (bd.yanZhengMaFaSongShiJian) {
     const shengYu = Math.max(0, 60 - Math.floor((Date.now() - bd.yanZhengMaFaSongShiJian) / 1000))
     if (shengYu > 0) kaiShiDaoJiShi(shengYu)
   }
   document.addEventListener('visibilitychange', tongBuYeMianKeJianXing)
-  window.addEventListener('pageshow', tongBuSuoYouHuiTian)
+  window.addEventListener('pageshow', tongBuPageshow)
   nextTick(() => {
     tongBuSuoYouHuiTian()
     if (typeof requestAnimationFrame === 'function') {
@@ -647,7 +754,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', tongBuYeMianKeJianXing)
-  window.removeEventListener('pageshow', tongBuSuoYouHuiTian)
+  window.removeEventListener('pageshow', tongBuPageshow)
   if (shouZhenTongBuId !== null) {
     if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(shouZhenTongBuId)
     shouZhenTongBuId = null
@@ -656,10 +763,20 @@ onBeforeUnmount(() => {
     clearInterval(daoJiShiDingShiQi)
     daoJiShiDingShiQi = null
   }
+  if (dengLuZhong.value || zhuCeZhong.value || faSongZhong.value) {
+    zhiFouJieMianCaoZuo()
+    用户仓库.取消待处理认证()
+  }
+  清理定格层()
+  bd.dengLuMiMa = ''
+  bd.zhuCeMiMa = ''
+  用户仓库.mingChengKeJian = true
 })
 
 const dengLuShouJiHeFa = computed(() => /^1[3-9]\d{9}$/.test(dengLuShouJiHao.value))
-const keYiDengLu = computed(() => dengLuShouJiHeFa.value && dengLuMiMa.value.length > 0)
+const keYiDengLu = computed(
+  () => dengLuShouJiHeFa.value && dengLuMiMa.value.length > 0 && !dengLuZhong.value,
+)
 
 const zhuCeShouJiHeFa = computed(() => /^1[3-9]\d{9}$/.test(zhuCeShouJiHao.value))
 const zhuCeYanZhengMaHeFa = computed(() => /^\d{6}$/.test(zhuCeYanZhengMa.value))
@@ -707,13 +824,14 @@ const ZHU_CE_ZUI_XIAO_NIAN_LING = 18
 
 const chuShengRiQiZhouSui = computed(() => jiSuanZhouSui(zhuCeChuShengRiQi.value))
 
-const keYiFaSong = computed(() => zhuCeShouJiHeFa.value && daoJiShi.value === 0)
+const keYiFaSong = computed(() => zhuCeShouJiHeFa.value && daoJiShi.value === 0 && !faSongZhong.value)
 const keYiZhuCe = computed(
   () =>
     zhuCeShouJiHeFa.value &&
     zhuCeYanZhengMaHeFa.value &&
     zhuCeYongHuMingHeFa.value &&
     zhuCeMiMa.value.length > 0 &&
+    !zhuCeZhong.value &&
     (chuShengRiQiZhouSui.value ?? -1) >= ZHU_CE_ZUI_XIAO_NIAN_LING,
 )
 
@@ -724,24 +842,31 @@ const faSongWenBen = computed(() => {
 })
 
 async function zhiXingFaSongMa() {
-  if (!keYiFaSong.value) return
+  if (!keYiFaSong.value || faSongZhong.value) return
+  const daiCi = kaiShiJieMianCaoZuo()
+  const shouJiHao = zhuCeShouJiHao.value
   faSongZhong.value = true
-  cuoWuXinXi.value = ''
+  qingLiQianTai()
   try {
-    // YH-028 注册状态模糊化：不再前端预检枚举，直接发码由服务端统一返回
-    await jianChaShouJiHao(zhuCeShouJiHao.value).catch(() => undefined)
-    await faSongMa(zhuCeShouJiHao.value)
+    try {
+      await jianChaShouJiHao(shouJiHao, { signal: 认证操作控制器?.signal })
+    } catch (jianChaCuoWu: unknown) {
+      if (!jieMianCaoZuoYouXiao(daiCi)) return
+      if (归一前台错误(jianChaCuoWu).code !== QIAN_TAI_DAI_MA.RESOURCE_NOT_FOUND) {
+        jieShouQianTai(jianChaCuoWu, zhiXingFaSongMa)
+        return
+      }
+    }
+    if (!jieMianCaoZuoYouXiao(daiCi)) return
+    await faSongMa(shouJiHao, { signal: 认证操作控制器?.signal })
+    if (!jieMianCaoZuoYouXiao(daiCi)) return
     bd.yanZhengMaFaSongShiJian = Date.now()
     kaiShiDaoJiShi()
   } catch (cuoWu) {
-    if (typeof cuoWu === 'object' && cuoWu !== null && 'response' in cuoWu) {
-      const xiangYing = huoQuCuoWuXiangYing(cuoWu)
-      cuoWuXinXi.value = xiangYing?.data?.ti_shi || huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai')
-    } else {
-      cuoWuXinXi.value = huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai')
-    }
+    if (!jieMianCaoZuoYouXiao(daiCi)) return
+    jieShouQianTai(cuoWu, zhiXingFaSongMa)
   } finally {
-    faSongZhong.value = false
+    if (jieMianCaoZuoYouXiao(daiCi)) faSongZhong.value = false
   }
 }
 
@@ -884,80 +1009,100 @@ async function qiDongDinggeFeixing(mubiaoLuJing: string) {
 }
 
 async function zhiXingDengLu() {
-  if (!keYiDengLu.value) return
+  if (!keYiDengLu.value || dengLuZhong.value) return
+  const daiCi = kaiShiJieMianCaoZuo()
+  const shouJiHao = dengLuShouJiHao.value
+  const miMa = dengLuMiMa.value
+  const jiZhuMiMaZhi = jiZhuMiMa.value
   dengLuZhong.value = true
-  cuoWuXinXi.value = ''
+  qingLiQianTai()
   try {
-    await 用户仓库.zhiXingDengLu(dengLuShouJiHao.value, dengLuMiMa.value, jiZhuMiMa.value)
+    await 用户仓库.zhiXingDengLu(shouJiHao, miMa, jiZhuMiMaZhi)
+    if (!jieMianCaoZuoYouXiao(daiCi)) return
     bd.sheZhiJiZhuZhangHaoMiMa(
-      dengLuShouJiHao.value,
-      dengLuMiMa.value,
+      shouJiHao,
+      miMa,
       jiZhuZhangHao.value,
-      jiZhuMiMa.value,
+      jiZhuMiMaZhi,
       ziDongDengLu.value,
     )
     bd.qingKongDengLuZhuCe()
     emit('dengLuChengGong')
     await qiDongDinggeFeixing('/')
   } catch (cuoWu) {
-    if (typeof cuoWu === 'object' && cuoWu !== null && 'response' in cuoWu) {
-      const xiangYing = huoQuCuoWuXiangYing(cuoWu)
-      cuoWuXinXi.value = xiangYing?.data?.ti_shi || huoQuFanYi('renZheng', 'dengLuShiBai')
-    } else {
-      cuoWuXinXi.value = 用户仓库.zhuangTai.cuo_wu_xin_xi || huoQuFanYi('renZheng', 'dengLuShiBai')
-    }
+    if (!jieMianCaoZuoYouXiao(daiCi)) return
+    jieShouQianTai(cuoWu, zhiXingDengLu)
   } finally {
-    dengLuZhong.value = false
+    if (jieMianCaoZuoYouXiao(daiCi)) {
+      dengLuZhong.value = false
+      认证操作控制器 = null
+    }
   }
 }
 
+function sheZhiBenDiYanZhengCuoWu(yingXiang: string) {
+  jieShouQianTai(
+    chuangJianQianTaiCuoWu({
+      code: QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID,
+      retryable: false,
+      yingXiang,
+    }),
+  )
+}
+
 async function zhiXingZhuCe() {
+  if (zhuCeZhong.value) return
   if (!keYiZhuCe.value) {
     if (!zhuCeShouJiHeFa.value) {
-      cuoWuXinXi.value = huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu')
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'))
     } else if (!zhuCeYanZhengMaHeFa.value) {
-      cuoWuXinXi.value = huoQuFanYi('renZheng', 'yanZhengMaGeShiCuoWu')
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'yanZhengMaGeShiCuoWu'))
     } else if (YONG_HU_MING_TE_SHU_ZI_FU.test(zhuCeYongHuMing.value.trim())) {
-      cuoWuXinXi.value = huoQuFanYi('renZheng', 'yongHuMingTeShuZiFu')
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'yongHuMingTeShuZiFu'))
     } else if (!zhuCeYongHuMingHeFa.value) {
-      cuoWuXinXi.value = huoQuFanYi('renZheng', 'yongHuMingChangDuCuoWu')
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'yongHuMingChangDuCuoWu'))
     } else if (zhuCeMiMa.value.length === 0) {
-      cuoWuXinXi.value = huoQuFanYi('renZheng', 'miMaKong')
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'miMaKong'))
     } else if (chuShengRiQiZhouSui.value === null) {
-      // C5：出生日期缺失或非法
-      cuoWuXinXi.value = huoQuFanYi('renZheng', 'chuShengRiQiGeShiCuoWu')
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'chuShengRiQiGeShiCuoWu'))
     } else if ((chuShengRiQiZhouSui.value ?? -1) < ZHU_CE_ZUI_XIAO_NIAN_LING) {
-      // C5：未满18周岁硬拦截，不满14另需监护人分支本阶段直接拦截
-      cuoWuXinXi.value = huoQuFanYi('renZheng', 'weiChengNianRenJinZhi')
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'weiChengNianRenJinZhi'))
     }
     return
   }
   if (!tongYiXieYi.value) {
-    cuoWuXinXi.value = huoQuFanYi('renZheng', 'weiTongYiXieYi')
+    sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'weiTongYiXieYi'))
     return
   }
+  const daiCi = kaiShiJieMianCaoZuo()
+  const shouJiHao = zhuCeShouJiHao.value
+  const yanZhengMa = zhuCeYanZhengMa.value
+  const yongHuMing = zhuCeYongHuMing.value
+  const miMa = zhuCeMiMa.value
+  const tongYiXieYiZhi = tongYiXieYi.value
+  const chuShengRiQi = zhuCeChuShengRiQi.value
   zhuCeZhong.value = true
-  cuoWuXinXi.value = ''
+  qingLiQianTai()
   try {
     await 用户仓库.zhiXingZhuCe(
-      zhuCeShouJiHao.value,
-      zhuCeYanZhengMa.value,
-      zhuCeYongHuMing.value,
-      zhuCeMiMa.value,
-      tongYiXieYi.value,
-      zhuCeChuShengRiQi.value,
+      shouJiHao,
+      yanZhengMa,
+      yongHuMing,
+      miMa,
+      tongYiXieYiZhi,
+      chuShengRiQi,
     )
+    if (!jieMianCaoZuoYouXiao(daiCi)) return
     bd.qingKongDengLuZhuCe()
     await qiDongDinggeFeixing('/')
   } catch (cuoWu) {
-    if (typeof cuoWu === 'object' && cuoWu !== null && 'response' in cuoWu) {
-      const xiangYing = huoQuCuoWuXiangYing(cuoWu)
-      cuoWuXinXi.value = xiangYing?.data?.ti_shi || huoQuFanYi('renZheng', 'zhuCeShiBai')
-    } else {
-      cuoWuXinXi.value = 用户仓库.zhuangTai.cuo_wu_xin_xi || huoQuFanYi('renZheng', 'zhuCeShiBai')
-    }
+    if (!jieMianCaoZuoYouXiao(daiCi)) return
+    jieShouQianTai(cuoWu, zhiXingZhuCe)
   } finally {
-    zhuCeZhong.value = false
+    if (jieMianCaoZuoYouXiao(daiCi)) {
+      zhuCeZhong.value = false
+      认证操作控制器 = null
+    }
   }
 }
 </script>
@@ -999,6 +1144,7 @@ async function zhiXingZhuCe() {
      卡片自身仍是 overflow:hidden —— 它要裁掉 .juanzhou-gan 的 110% 宽与圆角，不是多余裁切层 */
   max-height: 100%;
   overflow: hidden;
+  transition: height 0.45s var(--quxian-biao-zhun);
 }
 
 /* 卡顶扇形放射纹（Art Deco rising sun），置于金线内衬之内 */
@@ -1091,10 +1237,41 @@ async function zhiXingZhuCe() {
 .biaodan-gundong {
   flex: 1;
   min-height: 0;
+  padding-top: 5px;
+  margin-top: -5px;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  align-content: stretch;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-color: transparent transparent;
   position: relative;
+}
+
+.biaodan-xingwei {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+.biaodan-moshi-pane {
+  display: grid;
+  grid-template-rows: 0fr;
+  min-height: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: grid-template-rows 0.45s var(--quxian-biao-zhun);
+}
+
+.biaodan-moshi-pane.shi-fu-yong {
+  grid-template-rows: 1fr;
+  overflow: visible;
+}
+
+.denglu-biaodan,
+.zhuce-biaodan {
+  min-height: 0;
 }
 
 .biaodan-gundong::-webkit-scrollbar-track {
@@ -1129,10 +1306,7 @@ async function zhiXingZhuCe() {
 
 .biaodan-qiehuan-you-leave-active,
 .biaodan-qiehuan-zuo-leave-active {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
+  position: relative;
   pointer-events: none;
   transition:
     opacity 0.2s ease,
@@ -1171,6 +1345,13 @@ async function zhiXingZhuCe() {
   padding: 0 0 1px;
 }
 
+.biaoqian-anniu,
+.mima-qiehuan,
+.anniu-zhuyao:not(:disabled),
+.fasong-anniu:not(:disabled) {
+  cursor: pointer;
+}
+
 .biaoqian-anniu {
   flex: 1;
   padding: 10px 4px;
@@ -1207,6 +1388,7 @@ async function zhiXingZhuCe() {
 
 .shuru-zu {
   position: relative;
+  overflow: visible;
   /* FP-04b 字段纵向间距：局部量纲令牌，值只由共用 :root 的节奏令牌派生（24+8=32），
      禁裸 px、禁镜像字面量。上浮标签向上侵入本间距 5px、上一项的发丝线+下内边距占 11px，
      故「上一项底线→本标签顶」净空 = 本值 − 16（旧 24 时净空只剩 8，标签贴着上一项字脚） */
@@ -1301,6 +1483,7 @@ async function zhiXingZhuCe() {
   display: flex;
   align-items: center;
   position: relative;
+  overflow: visible;
 }
 
 .mima-zu .fenlie-shuru {
@@ -1701,7 +1884,16 @@ async function zhiXingZhuCe() {
     transition: none !important;
   }
 
-  /* 登录↔注册切换在减动效下退化为无位移淡切：淡入淡出的 opacity 过渡保留，位移归零 */
+  .biaodan-rongqi,
+  .biaodan-moshi-pane,
+  .biaodan-qiehuan-you-enter-active,
+  .biaodan-qiehuan-you-leave-active,
+  .biaodan-qiehuan-zuo-enter-active,
+  .biaodan-qiehuan-zuo-leave-active {
+    transition: none !important;
+  }
+
+  /* 登录↔注册切换在减动效下立即稳定，位移与高度过渡归零 */
   .biaodan-qiehuan-you-enter-from,
   .biaodan-qiehuan-you-leave-to,
   .biaodan-qiehuan-zuo-enter-from,

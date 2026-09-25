@@ -14,6 +14,12 @@
       </div>
 
       <div class="junshi-neirong">
+        <RequestError
+          v-if="军师仓库.zhuangTaiCuoWu"
+          :cuo-wu="军师仓库.zhuangTaiCuoWu"
+          :zhong-zai="jiaZaiZhong"
+          @chong-shi="chongShiZhuangTai"
+        />
         <div v-if="jiaZaiZhong" class="jiazai-zhuangtai">
           {{ huoQuFanYi('junShi', 'jiaZaiZhong') }}
         </div>
@@ -77,9 +83,13 @@
                 {{ huoQuFanYi('junShi', 'junShiChaKanJieGuo') }}
               </button>
 
-              <div v-if="cuoWuTiShiMap[junShi.id]" class="cuowu-tishi">
-                {{ cuoWuTiShiMap[junShi.id] }}
-              </div>
+              <RequestError
+                v-if="cuoWuTiShiMap[junShi.id]"
+                class="cuowu-tishi"
+                :cuo-wu="cuoWuTiShiMap[junShi.id] || undefined"
+                :zhong-zai="qingQiuZhongJunShiId === junShi.id"
+                @chong-shi="chongShiQingQiu(junShi)"
+              />
 
               <div
                 v-if="
@@ -148,7 +158,9 @@ import {
   huoQuJunShiZhiDaoZhuangTai,
 } from '@/api/聊天'
 import { fanYi, huoQuFanYi } from '@/config/translations'
-import { 是业务错误 } from '@/api/请求'
+import RequestError from '@/components/请求错误.vue'
+import { chuangJianQianTaiCuoWu, 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
+import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
 import { shengChengTouXiangURL, junShiMoRenTouXiang } from '@/utils/头像'
 import TouXiang from '@/components/头像.vue'
 import { 使用军师仓库, shiYouXiaoJiaoSeId } from '@/stores/军师'
@@ -184,7 +196,7 @@ const dangQianZhuangTai = computed(() => 军师仓库.zhuangTai)
 const youLiaoTianJiLu = computed(() => 军师仓库.youLiaoTianJiLu)
 const qingQiuZhongJunShiId = ref<string | null>(null)
 const zhanKaiJunShiId = ref<string | null>(null)
-const cuoWuTiShiMap = ref<Record<string, string>>({})
+const cuoWuTiShiMap = ref<Record<string, QianTaiCuoWu | null>>({})
 const jiaZaiZhong = ref(true)
 const xianShiZhiDaoJiLu = ref(false)
 const touXiangShiBai = ref<Record<string, boolean>>({})
@@ -299,11 +311,25 @@ function huoQuJunShiMingCheng(junShi: JunShiXinXi): string {
 }
 
 async function zhiXingQingQiu(junShi: JunShiXinXi) {
-  if (!props.jiaoSeId) return
   // 单一派生状态控制：当前聊天内容已指导过时禁止再次请求，避免点击后再检查再弹提示
   if (yiZhiDaoXiangTongNeiRong.value) return
+  await qingQiuZhiDao(junShi)
+}
+
+function chongShiZhuangTai(): void {
+  if (!props.jiaoSeId) return
+  void 军师仓库.chuShiHuaZhuangTai(props.jiaoSeId)
+}
+
+async function chongShiQingQiu(junShi: JunShiXinXi) {
+  if (qingQiuZhongJunShiId.value === junShi.id) return
+  await qingQiuZhiDao(junShi)
+}
+
+async function qingQiuZhiDao(junShi: JunShiXinXi) {
+  if (!props.jiaoSeId) return
   qingQiuZhongJunShiId.value = junShi.id
-  cuoWuTiShiMap.value = { ...cuoWuTiShiMap.value, [junShi.id]: '' }
+  cuoWuTiShiMap.value = { ...cuoWuTiShiMap.value, [junShi.id]: null }
   // 点击即乐观置为「指导中」黄色卡片（与后端真值一致），并启动轮询自校正，
   // 使「刚点击」与「离开再进入仍在指导中」渲染同一套黄色样式，不再出现灰底
   军师仓库.sheZhiZhiDaoZhong(props.jiaoSeId, junShi.id)
@@ -321,27 +347,30 @@ async function zhiXingQingQiu(junShi: JunShiXinXi) {
     qingQiuZhongJunShiId.value = null
     tingZhiLunXun()
   } catch (e: unknown) {
-    const cuoWuMa = 是业务错误(e) ? e.cuo_wu_ma : ''
-    if (cuoWuMa === 'JUN_SHI_ZAI_ZHI_DAO_ZHONG') {
+    const zhengChangHua = 归一前台错误(e)
+    if (zhengChangHua.code === QIAN_TAI_DAI_MA.JUN_SHI_ZAI_ZHI_DAO_ZHONG) {
       // 已在指导中：点击时已乐观置为「指导中」黄色卡片并启动轮询自校正，无需重复处理
       return
     }
     qingQiuZhongJunShiId.value = null
-    if (cuoWuMa === 'JUN_SHI_CHONG_FU') {
+    if (zhengChangHua.code === QIAN_TAI_DAI_MA.JUN_SHI_CHONG_FU) {
       cuoWuTiShiMap.value = {
         ...cuoWuTiShiMap.value,
-        [junShi.id]: huoQuFanYi('junShi', 'junShiChongFu'),
+        [junShi.id]: chuangJianQianTaiCuoWu({
+          code: QIAN_TAI_DAI_MA.JUN_SHI_CHONG_FU,
+          yingXiang: huoQuFanYi('junShi', 'junShiChongFu'),
+        }),
       }
-    } else if (cuoWuMa === 'WU_LIAO_TIAN_JI_LU') {
+    } else if (zhengChangHua.code === QIAN_TAI_DAI_MA.WU_LIAO_TIAN_JI_LU) {
       cuoWuTiShiMap.value = {
         ...cuoWuTiShiMap.value,
-        [junShi.id]: huoQuFanYi('junShi', 'wuLiaoTianJiLu'),
+        [junShi.id]: chuangJianQianTaiCuoWu({
+          code: QIAN_TAI_DAI_MA.WU_LIAO_TIAN_JI_LU,
+          yingXiang: huoQuFanYi('junShi', 'wuLiaoTianJiLu'),
+        }),
       }
     } else {
-      cuoWuTiShiMap.value = {
-        ...cuoWuTiShiMap.value,
-        [junShi.id]: huoQuFanYi('junShi', 'qingQiuShiBai'),
-      }
+      cuoWuTiShiMap.value = { ...cuoWuTiShiMap.value, [junShi.id]: zhengChangHua }
     }
   }
 }

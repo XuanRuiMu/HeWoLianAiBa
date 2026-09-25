@@ -1,5 +1,5 @@
-# YH-136 镜像浮动收敛：node基座固定20-alpine大版本，业务镜像digest由构建时锁定
-FROM node:20-alpine AS build
+# YH-136 镜像浮动收敛：node基座固定26.10.0-alpine3.24精确版本，业务镜像digest由构建时锁定
+FROM node:26.10.0-alpine3.24@sha256:0b36e8c136b94cd4fcf02188228e76c31ad5872eef3fec8cbd2eee500cfd9e80 AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -12,11 +12,11 @@ COPY scripts ./scripts
 COPY src ./src
 RUN npm run build
 
-# YH-136 镜像浮动收敛：node基座固定20-alpine大版本，业务镜像digest由构建时锁定
-FROM node:20-alpine AS production
+# YH-136 镜像浮动收敛：node基座固定26.10.0-alpine3.24精确版本，业务镜像digest由构建时锁定
+FROM node:26.10.0-alpine3.24@sha256:0b36e8c136b94cd4fcf02188228e76c31ad5872eef3fec8cbd2eee500cfd9e80 AS production
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --omit=dev && npm cache verify
 COPY --from=build /app/dist ./dist
 # YH-123 迁移进镜像：生产镜像含迁移文件与零依赖迁移脚本（纯 JS，仅依赖 pg，随生产依赖安装）
 COPY --from=build /app/database ./database

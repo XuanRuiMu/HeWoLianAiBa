@@ -1,6 +1,13 @@
 <template>
-  <div class="liaotian-yemian">
+  <div class="liaotian-yemian" data-chat-scope="true">
     <TiShiDai :cuo-wu="fuPanMoShi ? null : 聊天仓库.cuoWuXinXi" />
+    <div v-if="聊天仓库.jiaoSeQianTaiCuoWu">
+      <RequestError
+        :cuo-wu="聊天仓库.jiaoSeQianTaiCuoWu"
+        mi-xi
+        @chong-shi="chongShiJiaZai"
+      />
+    </div>
     <main ref="xiaoxiQuYuRef" class="xiaoxi-quyu weixin-beijing" :class="liaoTianBeiJingLeiMing" :style="[liaoTianBeiJingYangShi, qiPaoYangShi]" role="log" aria-live="polite" :aria-label="huoQuFanYi('liaoTian', 'xiaoXiLieBiao')" @scroll="chuLiGunDong">
       <div v-if="聊天仓库.haiYouGengDuo && !fuPanMoShi" class="jiazaigengduo-qu">
         <button
@@ -39,10 +46,13 @@
           />
         </svg>
         <p class="shibai-biaoti">{{ huoQuFanYi('liaoTian', 'jiaZaiShiBai') }}</p>
-        <p class="shibai-tishi">{{ huoQuFanYi('liaoTian', 'jiaZaiShiBaiTiShi') }}</p>
-        <button class="chongshi-anniu" @click="chongShiJiaZai">
-          {{ huoQuFanYi('liaoTian', 'chongShi') }}
-        </button>
+        <div class="shibai-tishi">
+          <RequestError
+            :cuo-wu="聊天仓库.shouPingQianTaiCuoWu"
+            mi-xi
+            @chong-shi="chongShiJiaZai"
+          />
+        </div>
       </div>
       <TransitionGroup name="xiaoxi-guodu" tag="div" class="xiaoxi-liebiao">
         <template v-for="(zu, suoYin) in xiaoXiFenZu" :key="'zu-' + suoYin">
@@ -218,52 +228,23 @@
                     :gun-dong-rong-qi="huoQuXiaoXiGunDongRongQi"
                     :fa-song-zhe-ming="yinYongFaSongZheMing"
                   />
-                  <div
-                    v-if="shiFanYiZhong(xiaoXi) || shiFanYiZhanKai(xiaoXi)"
-                    class="fanyi-yuyan-hang"
-                  >
-                    <label class="fanyi-yuyan-xiang">
-                      <span>{{ huoQuFanYi('liaoTian', 'fanYiYuanYu') }}</span>
-                      <select
-                        v-model="fanYiYuanYu"
-                        class="fanyi-yuyan-xiala"
-                        @change="chongXinFanYi(xiaoXi)"
-                      >
-                        <option value="auto">{{ huoQuFanYi('liaoTian', 'fanYiZiDong') }}</option>
-                        <option value="zh">{{ huoQuFanYi('liaoTian', 'fanYiYuYanZh') }}</option>
-                        <option value="en">{{ huoQuFanYi('liaoTian', 'fanYiYuYanEn') }}</option>
-                        <option value="ja">{{ huoQuFanYi('liaoTian', 'fanYiYuYanJa') }}</option>
-                        <option value="ko">{{ huoQuFanYi('liaoTian', 'fanYiYuYanKo') }}</option>
-                        <option value="fr">{{ huoQuFanYi('liaoTian', 'fanYiYuYanFr') }}</option>
-                        <option value="de">{{ huoQuFanYi('liaoTian', 'fanYiYuYanDe') }}</option>
-                        <option value="es">{{ huoQuFanYi('liaoTian', 'fanYiYuYanEs') }}</option>
-                        <option value="ru">{{ huoQuFanYi('liaoTian', 'fanYiYuYanRu') }}</option>
-                      </select>
-                    </label>
-                    <label class="fanyi-yuyan-xiang">
-                      <span>{{ huoQuFanYi('liaoTian', 'fanYiMuBiaoYu') }}</span>
-                      <select
-                        v-model="fanYiMuBiaoYu"
-                        class="fanyi-yuyan-xiala"
-                        @change="chongXinFanYi(xiaoXi)"
-                      >
-                        <option value="zh">{{ huoQuFanYi('liaoTian', 'fanYiYuYanZh') }}</option>
-                        <option value="en">{{ huoQuFanYi('liaoTian', 'fanYiYuYanEn') }}</option>
-                        <option value="ja">{{ huoQuFanYi('liaoTian', 'fanYiYuYanJa') }}</option>
-                        <option value="ko">{{ huoQuFanYi('liaoTian', 'fanYiYuYanKo') }}</option>
-                        <option value="fr">{{ huoQuFanYi('liaoTian', 'fanYiYuYanFr') }}</option>
-                        <option value="de">{{ huoQuFanYi('liaoTian', 'fanYiYuYanDe') }}</option>
-                        <option value="es">{{ huoQuFanYi('liaoTian', 'fanYiYuYanEs') }}</option>
-                        <option value="ru">{{ huoQuFanYi('liaoTian', 'fanYiYuYanRu') }}</option>
-                      </select>
-                    </label>
-                  </div>
-                  <div v-if="shiFanYiZhong(xiaoXi)" class="yuyin-zhuanwenzi-zhuangtai">
-                    {{ huoQuFanYi('liaoTian', 'fanYiZhong') }}
-                  </div>
-                  <div v-else-if="shiFanYiZhanKai(xiaoXi)" class="yuyin-zhuanwenzi">
-                    {{ huoQuFanYiJieGuo(xiaoXi) }}
-                  </div>
+                  <FanYiJieGuo
+                    v-if="
+                      shiFanYiZhong(xiaoXi) ||
+                      shiFanYiZhanKai(xiaoXi) ||
+                      shiFanYiChuCuo(xiaoXi) ||
+                      shiFanYiKong(xiaoXi)
+                    "
+                    :zhuang-tai="huoQuFanYiZhuangTai(xiaoXi)"
+            :jie-guo="huoQuFanYiJieGuo(xiaoXi) || ''"
+            :cuo-wu="huoQuFanYiCuoWu(xiaoXi)"
+            :yuan-yu="fanYiYuanYu"
+                    :mu-biao-yu="fanYiMuBiaoYu"
+                    :fu-zhi-wen-ben="fuZhiWenBen"
+                    @geng-xin-yuan-yu="gaiFanYiYuanYu($event, xiaoXi)"
+                    @geng-xin-mu-biao-yu="gaiFanYiMuBiaoYu($event, xiaoXi)"
+                    @chong-shi="chongXinFanYi(xiaoXi)"
+                  />
                 </div>
                 <div
                   v-if="
@@ -914,15 +895,17 @@ import DuoMeiTiShouQuanDanChuang from '@/components/多媒体授权弹窗.vue'
 import TuWenShuRuQu from '@/components/聊天/图文输入区.vue'
 import YinYongTiao from '@/components/聊天/引用条.vue'
 import YinYongQiPaoKuai from '@/components/聊天/引用气泡块.vue'
+import FanYiJieGuo from '@/components/聊天/翻译结果框.vue'
 import YuYinQiPao from '@/components/聊天/语音气泡.vue'
 import WenJianQiPao from '@/components/聊天/文件气泡.vue'
 import ShiJianTiao from '@/components/聊天/时间条.vue'
 import TiShiDai from '@/components/提示带.vue'
+import RequestError from '@/components/请求错误.vue'
 import TouXiang from '@/components/头像.vue'
 import { chongQianMeiTiURL, fanYiWenBen as fanYiWenBenApi, zhuanXieYuYin } from '@/api/聊天'
 import { shiShiPinXiaoXi } from '@/utils/多模态'
 import { use复盘 } from '@/composables/use复盘'
-import { use长按菜单, type CaiDanXiaoXi } from '@/composables/use长按菜单'
+import { fuZhiWenBen, use长按菜单, type CaiDanXiaoXi } from '@/composables/use长按菜单'
 import { use添加到表情 } from '@/composables/use添加到表情'
 import { use表情提交 } from '@/composables/use表情提交'
 import { use表情提示条 } from '@/composables/use表情提示条'
@@ -1064,8 +1047,11 @@ const {
   huoQuTuPianCaiDanXiang,
   zhiXingTuPianCaiDanXiang,
   huoQuFanYiJieGuo,
+  huoQuFanYiCuoWu,
   shiFanYiZhong,
   shiFanYiZhanKai,
+  shiFanYiChuCuo,
+  shiFanYiKong,
   qiangZhiFanYi,
   fanYiYuanYu,
   fanYiMuBiaoYu,
@@ -1092,6 +1078,23 @@ const { tianJiaTuPianDaoBiaoQing } = use添加到表情({
   sheZhiCuoWu: (xinXi) => 聊天仓库.sheZhiCuoWu(xinXi),
   sheZhiTiShi: (xinXi) => xianShiBiaoQingTiShi(xinXi),
 })
+
+function huoQuFanYiZhuangTai(xiaoXi: 消息): 'loading' | 'success' | 'empty' | 'error' {
+  if (shiFanYiZhong(xiaoXi)) return 'loading'
+  if (shiFanYiChuCuo(xiaoXi)) return 'error'
+  if (shiFanYiKong(xiaoXi) || !huoQuFanYiJieGuo(xiaoXi)?.trim()) return 'empty'
+  return 'success'
+}
+
+function gaiFanYiYuanYu(zhi: string, xiaoXi: 消息): void {
+  fanYiYuanYu.value = zhi
+  chongXinFanYi(xiaoXi)
+}
+
+function gaiFanYiMuBiaoYu(zhi: string, xiaoXi: 消息): void {
+  fanYiMuBiaoYu.value = zhi
+  chongXinFanYi(xiaoXi)
+}
 
 function chongXinFanYi(xiaoXi: 消息) {
   void qiangZhiFanYi(xiaoXi)
@@ -1574,12 +1577,8 @@ function jiaruDaiFaTuPian(wenJian: File | Blob): void {
     .then((yaSuoBlob) => {
       daiHuanDaiFaKuaiWenJian(jieGuo.kuaiId, yaSuoBlob)
     })
-    .catch((cuoWu: unknown) => {
-      聊天仓库.sheZhiCuoWu(
-        cuoWu instanceof Error && cuoWu.message
-          ? cuoWu.message
-          : huoQuFanYi('duoMeiTi', 'yaSuoShiBai'),
-      )
+    .catch(() => {
+      聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'yaSuoShiBai'))
     })
   dengJiDaiFaYaSuo(zaiTu)
 }
@@ -1619,12 +1618,8 @@ async function jiaRuDaiFaTieZhi(tieZhi: BiaoQingBaoDingYi) {
     if (jieGuo.yuanYin === 'chao_xian') {
       聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'kuaiChaoXian'))
     }
-  } catch (cuoWu: unknown) {
-    聊天仓库.sheZhiCuoWu(
-      cuoWu instanceof Error && cuoWu.message
-        ? cuoWu.message
-        : huoQuFanYi('duoMeiTi', 'biaoQingBaoXuanRanShiBai'),
-    )
+  } catch {
+    聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'biaoQingBaoXuanRanShiBai'))
   }
 }
 
@@ -2407,6 +2402,7 @@ onBeforeUnmount(() => {
   margin: 0 0 16px;
   font-size: 13px;
   color: var(--wenben-tishi);
+  max-width: 420px;
 }
 
 .chongshi-anniu {
@@ -3194,29 +3190,6 @@ span.yuyin-zhuanwenzi {
   margin-top: 6px;
   font-size: 12px;
   color: var(--wenben-tishi);
-}
-
-.fanyi-yuyan-hang {
-  display: flex;
-  gap: 8px;
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--wenben-tishi);
-}
-
-.fanyi-yuyan-xiang {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.fanyi-yuyan-xiala {
-  font-size: 12px;
-  color: inherit;
-  background: transparent;
-  border: 1px solid var(--biankuang-yanse);
-  border-radius: 4px;
-  padding: 2px 4px;
 }
 
 /* 气泡内的图文块：图片独占一行、文字保持原有气泡文本形态（FP-22b：尺寸上收为全局令牌） */

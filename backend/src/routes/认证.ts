@@ -24,8 +24,22 @@ import { faSongYanZhengMa } from '../services/短信'
 import { zhuXiaoYongHu } from '../services/账号注销'
 import { huoQuZhenShiIP } from '../utils/真实IP'
 import type { RenZhengQingQiu } from '../middleware/认证'
+import { CUO_WU_DAI_MA, type CuoWuDaiMa } from '../config/错误码注册表'
 
 const luYou = Router()
+
+function jieXiFaSongDaiMa(cuoWuMa: unknown): CuoWuDaiMa {
+  return cuoWuMa === 'XIAN_LIU'
+    ? CUO_WU_DAI_MA.AUTH_SMS_RATE_LIMITED
+    : CUO_WU_DAI_MA.AUTH_SMS_SEND_FAILED
+}
+
+function jieXiZhuCeDaiMa(cuoWuMa: unknown): CuoWuDaiMa {
+  if (cuoWuMa === 'CHONG_TU') return CUO_WU_DAI_MA.AUTH_ACCOUNT_ALREADY_EXISTS
+  if (cuoWuMa === 'XIAN_LIU') return CUO_WU_DAI_MA.AUTH_REGISTRATION_CLOSED
+  if (cuoWuMa === 'NEI_BU_CUO_WU') return CUO_WU_DAI_MA.AUTH_REGISTRATION_FAILED
+  return CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID
+}
 
 function huoQuIp(qingQiu: Request): string {
   // A2：审计/封禁场景一律使用可信链路推导的真实来源 IP，不解析客户端可控 XFF
@@ -77,7 +91,7 @@ function huoQuChuShengRiQi(body: Record<string, unknown>): string | undefined {
 luYou.get('/检查手机', jianChaShouJiXianLiu, async (qingQiu: Request, xiangYing: Response) => {
   const shouJiHao = huoQuShouJiHao(qingQiu.query as Record<string, unknown>)
   if (!shouJiHao || !yanZhengShouJiHaoGeShi(shouJiHao)) {
-    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), 'CAN_SHU_CUO_WU')
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
   }
   // YH-028 注册状态模糊响应：存在与不存在返回同一成功形态，不再明文枚举
   await anShouJiHaoChaYongHu(shouJiHao)
@@ -87,13 +101,12 @@ luYou.get('/检查手机', jianChaShouJiXianLiu, async (qingQiu: Request, xiangY
 luYou.post('/发送码', faSongMaXianLiu, duanXinRiPeiEZhuJi, 手机号验证中间件, async (qingQiu: Request, xiangYing: Response) => {
   const shouJiHao = huoQuShouJiHao(qingQiu.body as Record<string, unknown>)
   if (!shouJiHao || !yanZhengShouJiHaoGeShi(shouJiHao)) {
-    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'))
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
   }
   const jieGuo = await faSongYanZhengMa(shouJiHao)
   if (!jieGuo.cheng_gong) {
     // YH-025 结构化错误码映射：service返错误码路由只映射，禁文案子串定状态码
-    const zhuangTaiMa = jieGuo.cuo_wu_ma === 'XIAN_LIU' ? 429 : 500
-    return shiBaiXiangYing(xiangYing, zhuangTaiMa, jieGuo.ti_shi || huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai'), jieGuo.cuo_wu_ma)
+    return shiBaiXiangYing(xiangYing, 503, jieGuo.ti_shi || huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai'), jieXiFaSongDaiMa(jieGuo.cuo_wu_ma))
   }
   return chengGongXiangYing(xiangYing, null)
 })
@@ -108,14 +121,14 @@ luYou.post('/注册', zhuCeXianLiu, 手机号验证中间件, 用户名验证中
   const chuShengRiQi = huoQuChuShengRiQi(body)
 
   if (!shouJiHao || !yanZhengMa || !yongHuMing || !miMa || tongYiXieYi === undefined || !chuShengRiQi) {
-    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.REQUEST_MISSING_PARAMETER)
   }
 
   // YH-011 发码配额联动：注册前按手机号复核日配额（换路径换键也绕不过手机号配额）
   const { duanXinRiPeiEYuLan } = await import('../services/短信')
   const peiEYuLan = await duanXinRiPeiEYuLan(shouJiHao, huoQuIp(qingQiu))
   if (!peiEYuLan.yun_xu) {
-    return shiBaiXiangYing(xiangYing, 429, peiEYuLan.ti_shi || huoQuFanYi('renZheng', 'duanXinRiPeiEYongJin'))
+    return shiBaiXiangYing(xiangYing, 429, peiEYuLan.ti_shi || huoQuFanYi('renZheng', 'duanXinRiPeiEYongJin'), CUO_WU_DAI_MA.AUTH_SMS_RATE_LIMITED)
   }
 
   // YH-011 行为验证码：同一手机号/IP累计失败达阈值后必须携带通过凭证
@@ -125,7 +138,7 @@ luYou.post('/注册', zhuCeXianLiu, 手机号验证中间件, 用户名验证中
     const pingZheng = typeof body.xingWeiPingZheng === 'string' ? String(body.xingWeiPingZheng) : typeof body.xing_wei_ping_zheng === 'string' ? String(body.xing_wei_ping_zheng) : ''
     const xiaoHao = await xingWeiYanZhengXiaoHao(pingZheng, shouJiHao)
     if (!xiaoHao) {
-      return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('renZheng', 'xuXingWeiYanZheng'))
+      return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('renZheng', 'xuXingWeiYanZheng'), CUO_WU_DAI_MA.PERMISSION_DENIED)
     }
   }
 
@@ -143,9 +156,7 @@ luYou.post('/注册', zhuCeXianLiu, 手机号验证中间件, 用户名验证中
     const { jiLuZhuCeShiBai } = await import('../services/行为验证')
     await jiLuZhuCeShiBai(shouJiHao, huoQuIp(qingQiu)).catch(() => undefined)
     // YH-025 结构化错误码映射：service返错误码路由只映射，禁文案子串定状态码
-    const cuoWuMaYingShe: Record<string, number> = { CHONG_TU: 409, XIAN_LIU: 429, NEI_BU_CUO_WU: 500 }
-    const zhuangTaiMa = cuoWuMaYingShe[jieGuo.cuo_wu_ma || ''] ?? 400
-    return shiBaiXiangYing(xiangYing, zhuangTaiMa, jieGuo.ti_shi || huoQuFanYi('renZheng', 'zhuCeShiBai'), jieGuo.cuo_wu_ma)
+    return shiBaiXiangYing(xiangYing, 503, jieGuo.ti_shi || huoQuFanYi('renZheng', 'zhuCeShiBai'), jieXiZhuCeDaiMa(jieGuo.cuo_wu_ma))
   }
 
   return chengGongXiangYing(xiangYing, jieGuo.shu_ju, huoQuFanYi('tongYong', 'caoZuoChengGong'))
@@ -157,7 +168,7 @@ luYou.post('/登录', dengLuXianLiu, dengLuIPLianLiu, 手机号验证中间件, 
   const miMa = huoQuMiMa(body)
 
   if (!shouJiHao || !miMa) {
-    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.REQUEST_MISSING_PARAMETER)
   }
 
   const jieGuo = await dengLu({
@@ -169,8 +180,9 @@ luYou.post('/登录', dengLuXianLiu, dengLuIPLianLiu, 手机号验证中间件, 
   if (!jieGuo.cheng_gong) {
     return shiBaiXiangYing(
       xiangYing,
-      jieGuo.zhuang_tai_ma || 400,
+      401,
       jieGuo.ti_shi || huoQuFanYi('renZheng', 'dengLuShiBai'),
+      CUO_WU_DAI_MA.AUTH_INVALID_CREDENTIALS,
     )
   }
 
@@ -187,12 +199,12 @@ luYou.post('/刷新', async (qingQiu: Request, xiangYing: Response) => {
     (typeof body.refresh_token_id === 'string' ? body.refresh_token_id : undefined)
 
   if (!refreshToken) {
-    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.REQUEST_MISSING_PARAMETER)
   }
 
   const jieGuo = await shuaXinLingPai(refreshToken)
   if (!jieGuo.cheng_gong) {
-    return shiBaiXiangYing(xiangYing, 401, jieGuo.ti_shi || huoQuFanYi('tongYong', 'weiShouQuan'))
+    return shiBaiXiangYing(xiangYing, 401, jieGuo.ti_shi || huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTH_REFRESH_TOKEN_INVALID)
   }
 
   return chengGongXiangYing(xiangYing, jieGuo.shu_ju, huoQuFanYi('tongYong', 'caoZuoChengGong'))
@@ -202,7 +214,7 @@ luYou.post('/刷新', async (qingQiu: Request, xiangYing: Response) => {
 luYou.post('/吊销刷新令牌', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
-    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
   }
   const body = qingQiu.body as Record<string, unknown>
   const refreshTokenId =
@@ -223,7 +235,7 @@ luYou.post('/吊销刷新令牌', async (qingQiu: RenZhengQingQiu, xiangYing: Re
 luYou.post('/更改密码', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
-    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
   }
   const body = qingQiu.body as Record<string, unknown>
   const jiuMiMa =
@@ -238,7 +250,7 @@ luYou.post('/更改密码', async (qingQiu: RenZhengQingQiu, xiangYing: Response
   const yanZhengMa = huoQuYanZhengMa(body)
 
   if (!jiuMiMa || !xinMiMa || !queRenXinMiMa || !yanZhengMa) {
-    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.REQUEST_MISSING_PARAMETER)
   }
 
   const jieGuo = await gengGaiMiMa({
@@ -252,7 +264,7 @@ luYou.post('/更改密码', async (qingQiu: RenZhengQingQiu, xiangYing: Response
   })
 
   if (!jieGuo.cheng_gong) {
-    return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'xiuGaiShiBai'))
+    return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'xiuGaiShiBai'), CUO_WU_DAI_MA.AUTH_PASSWORD_CHANGE_FAILED)
   }
 
   return chengGongXiangYing(xiangYing, null, jieGuo.ti_shi)
@@ -261,12 +273,12 @@ luYou.post('/更改密码', async (qingQiu: RenZhengQingQiu, xiangYing: Response
 luYou.post('/更改用户名', 用户名验证中间件, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
-    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
   }
   const body = qingQiu.body as Record<string, unknown>
   const yongHuMing = huoQuYongHuMing(body)
   if (!yongHuMing) {
-    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.REQUEST_MISSING_PARAMETER)
   }
 
   const jieGuo = await gengGaiYongHuMing({
@@ -276,7 +288,7 @@ luYou.post('/更改用户名', 用户名验证中间件, async (qingQiu: RenZhen
   })
 
   if (!jieGuo.cheng_gong) {
-    return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'xiuGaiShiBai'))
+    return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'xiuGaiShiBai'), CUO_WU_DAI_MA.AUTH_USERNAME_CHANGE_FAILED)
   }
 
   return chengGongXiangYing(xiangYing, { yong_hu_ming: yongHuMing }, jieGuo.ti_shi)
@@ -285,21 +297,21 @@ luYou.post('/更改用户名', 用户名验证中间件, async (qingQiu: RenZhen
 luYou.post('/设置默认性别', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
-    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
   }
   const body = qingQiu.body as Record<string, unknown>
   const moRenXingBie =
     (typeof body.moRenXingBie === 'string' ? body.moRenXingBie : undefined) ||
     (typeof body.mo_ren_xing_bie === 'string' ? body.mo_ren_xing_bie : undefined)
   if (!moRenXingBie) {
-    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.REQUEST_MISSING_PARAMETER)
   }
   const jieGuo = await setMoRenXingBie({
     yong_hu_id: yongHu.yongHuId,
     mo_ren_xing_bie: moRenXingBie,
   })
   if (!jieGuo.cheng_gong) {
-    return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'xiuGaiShiBai'))
+    return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'xiuGaiShiBai'), CUO_WU_DAI_MA.AUTH_DEFAULT_GENDER_INVALID)
   }
   return chengGongXiangYing(xiangYing, { yong_hu: jieGuo.yong_hu }, jieGuo.ti_shi)
 })
@@ -307,11 +319,11 @@ luYou.post('/设置默认性别', async (qingQiu: RenZhengQingQiu, xiangYing: Re
 luYou.get('/信息', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
-    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
   }
   const shuJu = await anIdChaYongHu(yongHu.yongHuId)
   if (!shuJu) {
-    return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
+    return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'), CUO_WU_DAI_MA.RESOURCE_NOT_FOUND)
   }
   return chengGongXiangYing(xiangYing, shuJu)
 })
@@ -320,7 +332,7 @@ luYou.get('/信息', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
 luYou.delete('/注销', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
-    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
   }
 
   const authorization = qingQiu.headers.authorization || ''
@@ -329,12 +341,12 @@ luYou.delete('/注销', async (qingQiu: RenZhengQingQiu, xiangYing: Response) =>
   try {
     const jieGuo = await zhuXiaoYongHu(yongHu.yongHuId, lingPai, huoQuIp(qingQiu))
     if (!jieGuo.cheng_gong) {
-      return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'xiuGaiShiBai'))
+      return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'xiuGaiShiBai'), CUO_WU_DAI_MA.AUTH_ACCOUNT_DELETION_FAILED)
     }
     return chengGongXiangYing(xiangYing, {}, jieGuo.ti_shi)
   } catch (cuoWu) {
     debug日志.error('认证接口', '账号注销失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
-    return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
+    return shiBaiXiangYing(xiangYing, 503, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'), CUO_WU_DAI_MA.AUTH_ACCOUNT_DELETION_FAILED)
   }
 })
 

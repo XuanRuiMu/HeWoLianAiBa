@@ -61,8 +61,9 @@ export async function yaSuoTuPiang(file: File | Blob): Promise<Blob> {
   let weiTu: WeiTuYuan
   try {
     weiTu = await jiaZaiBitmap(file)
-  } catch (cuoWu) {
-    throw cuoWu instanceof Error ? cuoWu : new Error(huoQuFanYi('duoMeiTi', 'yaSuoShiBai'))
+  } catch {
+    // 浏览器解码失败的原文是驱动层英文（DOMException/EncodingError），禁止上屏，统一走翻译文案
+    throw new Error(huoQuFanYi('duoMeiTi', 'yaSuoShiBai'))
   }
 
   try {

@@ -71,7 +71,11 @@ const 迁移035 = resolve(__dirname, '..', '..', '..', 'database', 'migrations',
 
 function 取连接串(): string {
   const 显式 = (process.env.TEST_DATABASE_URL ?? '').trim()
-  const 基 = 显式 !== '' ? 显式 : String(peiZhi.shuJuKuLianJie ?? '')
+  const 基 = 显式 !== ''
+    ? 显式
+    : process.env.XU_KE_ZHEN_SHI_WAI_HU === 'true'
+      ? String(peiZhi.shuJuKuLianJie ?? '')
+      : ''
   if (基 === '') return ''
   return 基.includes('@postgres:') ? 基.replace('@postgres:', '@127.0.0.1:') : 基
 }

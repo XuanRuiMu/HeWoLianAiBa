@@ -182,6 +182,7 @@ describe('C5 注册出生日期与未成年拦截', () => {
         'password123',
         true,
         shengRi,
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
       )
     } finally {
       Element.prototype.animate = yuanShiAnimate

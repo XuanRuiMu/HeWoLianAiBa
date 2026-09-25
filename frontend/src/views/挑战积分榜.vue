@@ -16,7 +16,16 @@
       </button>
     </div>
 
-    <div v-if="jiaZaiZhong" class="zhuangtai-tishi">{{ huoQuFanYi('junShi', 'jiaZaiZhong') }}</div>
+    <div v-if="qianTaiCuoWu">
+      <RequestError
+        :cuo-wu="qianTaiCuoWu"
+        :zhong-zai="qianTaiZhuangTai === 'loading'"
+        @chong-shi="chongShi"
+      />
+    </div>
+    <div v-else-if="qianTaiZhuangTai === 'loading'" class="zhuangtai-tishi" role="status">
+      {{ huoQuFanYi('junShi', 'jiaZaiZhong') }}
+    </div>
     <div v-else-if="paiHangLieBiao.length === 0" class="zhuangtai-tishi">
       {{ huoQuFanYi('tiaoZhan', 'zanWuPaiHang') }}
     </div>
@@ -56,13 +65,15 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { huoQuPaiHangBang, type PaiHangXiangMu, type ZuBie } from '@/api/挑战'
 import { huoQuFanYi } from '@/config/translations'
+import RequestError from '@/components/请求错误.vue'
+import { use前台错误 } from '@/composables/use前台错误'
 
 const router = useRouter()
 
 const zuBieLieBiao: ZuBie[] = ['nan_nv', 'nv_nan', 'nan_nan', 'nv_nv']
 const dangQianZuBie = ref<ZuBie>('nan_nv')
 const paiHangLieBiao = ref<PaiHangXiangMu[]>([])
-const jiaZaiZhong = ref(false)
+const { cuoWu: qianTaiCuoWu, zhuangTai: qianTaiZhuangTai, yunXing, chongShi } = use前台错误()
 
 function zuBieMingCheng(zuBie: ZuBie): string {
   const yingShe: Record<ZuBie, string> = {
@@ -75,14 +86,12 @@ function zuBieMingCheng(zuBie: ZuBie): string {
 }
 
 async function jiaZaiPaiHang() {
-  jiaZaiZhong.value = true
-  try {
-    paiHangLieBiao.value = await huoQuPaiHangBang(dangQianZuBie.value)
-  } catch {
-    paiHangLieBiao.value = []
-  } finally {
-    jiaZaiZhong.value = false
-  }
+  await yunXing(
+    async () => {
+      paiHangLieBiao.value = await huoQuPaiHangBang(dangQianZuBie.value)
+    },
+    { chongShi: jiaZaiPaiHang },
+  )
 }
 
 function qieHuanZuBie(zuBie: ZuBie) {

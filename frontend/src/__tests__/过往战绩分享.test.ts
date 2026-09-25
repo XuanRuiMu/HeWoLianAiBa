@@ -249,6 +249,8 @@ function chuangJianDangAn(cha: Partial<DangAnXiangQing> = {}): DangAnXiangQing {
     you_xi_jie_shu_shi_jian: '2026-07-07T10:35:00.000Z',
     mbti_lei_xing: 'INFP',
     jun_shi_ji_lu: [],
+    category_id: '00000000-0000-4000-8000-000000000001',
+    sort_order: 0,
     ...cha,
   }
 }
@@ -269,8 +271,20 @@ function jiHeZhanBaoShuRu(cha: Partial<ZhanBaoShuRu> = {}): ZhanBaoShuRu {
 }
 
 async function mountZuJian(dangAn: DangAnXiangQing[] = [chuangJianDangAn()]) {
-  const { huoQuDangAnLieBiao } = await import('@/api/聊天')
+  const { huoQuDangAnLieBiao, huoQuZhanJiFenLeiLieBiao } = await import('@/api/聊天')
   vi.mocked(huoQuDangAnLieBiao).mockResolvedValue(dangAn)
+  vi.mocked(huoQuZhanJiFenLeiLieBiao).mockResolvedValue({
+    moRenFenLeiId: '00000000-0000-4000-8000-000000000001',
+    fenLeiLieBiao: [
+      {
+        id: '00000000-0000-4000-8000-000000000001',
+        name: '默认分类',
+        is_default: true,
+        record_count: dangAn.length,
+        version: 0,
+      },
+    ],
+  })
   const luYou = createRouter({
     history: createWebHistory(),
     routes: [{ path: '/', name: 'zhuJieMian', component: { template: '<div>主页</div>' } }],
@@ -696,9 +710,10 @@ describe('FP-10 分享出口三级降级', () => {
     const { wrapper } = await mountZuJian()
     await dianJiFenXiang(wrapper)
 
-    expect(wrapper.find('.zhanji-tishi').text()).toBe(
+    expect(wrapper.find('.qian-tai-cuo-wu-ying-xiang').text()).toBe(
       huoQuFanYi('zhanJi', 'haiBaoShengChengShiBai'),
     )
+    expect(wrapper.find('.qian-tai-cuo-wu-dai-ma').text()).toBe('FRONTEND_UNKNOWN_ERROR')
     expect(shareSpy).not.toHaveBeenCalled()
     expect(xieRu).not.toHaveBeenCalled()
     expect(zhuangZhi.dianJi).not.toHaveBeenCalled()
