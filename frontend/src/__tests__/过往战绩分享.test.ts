@@ -246,13 +246,26 @@ function chuangJianDangAn(cha: Partial<DangAnXiangQing> = {}): DangAnXiangQing {
     fu_pan_nei_rong: null,
     chuang_jian_shi_jian: '2026-07-07T10:00:00.000Z',
     zui_hou_xiao_xi_shi_jian: '2026-07-07T10:30:00.000Z',
-    you_xi_jie_shu_shi_jian: '2026-07-07T10:35:00.000Z',
+    you_xi_jie_shu_shi_jian: JIE_SHU_SHI_JIAN,
     mbti_lei_xing: 'INFP',
     jun_shi_ji_lu: [],
     category_id: '00000000-0000-4000-8000-000000000001',
     sort_order: 0,
     ...cha,
   }
+}
+
+/* 结局时间戳（UTC）。展示文本由 过往战绩.vue 的 geShiHuaRiQiShiJian 用
+   toLocaleString('zh-CN', {month,day,hour,minute}) 折算，随运行环境时区变化，
+   故期望值必须用同一规则现场算出，禁止写死字面量。 */
+const JIE_SHU_SHI_JIAN = '2026-07-07T10:35:00.000Z'
+function guoQiWenBen(utcWenBen: string): string {
+  return new Date(utcWenBen).toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 function jiHeZhanBaoShuRu(cha: Partial<ZhanBaoShuRu> = {}): ZhanBaoShuRu {
@@ -264,7 +277,7 @@ function jiHeZhanBaoShuRu(cha: Partial<ZhanBaoShuRu> = {}): ZhanBaoShuRu {
     liaoTianTianShu: 5,
     xiaoXiZongShu: 20,
     mbtiLeiXing: 'INFP',
-    jieShuShiJianWenBen: '07/07 18:35',
+    jieShuShiJianWenBen: guoQiWenBen(JIE_SHU_SHI_JIAN),
     qiPaoAI: 'yunBai',
     ...cha,
   }
@@ -359,7 +372,10 @@ describe('FP-10 战报海报绘制', () => {
     expect(huaZhi).toContain(huoQuFanYi('zhanJi', 'haiBaoJieShuBiaoQian'))
     expect(huaZhi).toContain('5')
     expect(huaZhi).toContain('20')
-    expect(huaZhi).toContain('07/07 18:35')
+    /* 结局时间走 geShiHuaRiQiShiJian 的 toLocaleString('zh-CN')，输出随运行环境时区变化
+       （本地 UTC+8 得 18:35，CI 的 UTC 得 10:35）。此处按同一规则现场折算，
+       断言不再与运行机器的时区绑定。 */
+    expect(huaZhi).toContain(guoQiWenBen('2026-07-07T10:35:00.000Z'))
   })
 
   it('海报文案全部来自翻译文件：不出现「分享」当前缀的错句，也不含任何链接', async () => {

@@ -126,64 +126,81 @@ describe('FP-02 HiZ 遮挡剔除 PBO 回读补丁', () => {
     expect(bundle).toContain('this.aabbTest.testAndStartReadback(this.hiZ,this.viewProjectionMatrix,this.hiZBaseSize,e.near,e.far)')
   })
 
-  it('补丁在页面加载点留痕（重新生成 bundle 时可见）', () => {
+  /* 2026-09-26：grass-bg.html 已整体重写，页面层不再承载任何补丁留痕注释。
+     补丁本体在 .patched.js 内（上方十条断言仍逐条守着），页面层只保留一条硬约束：
+     加载点必须指向打过补丁的 bundle，且不得出现任何未打补丁的同名替代物，
+     否则重新生成引擎时补丁会静默失效。 */
+  it('页面加载点只引用打过补丁的 bundle，无未打补丁的替代物', () => {
     const html = duHtml()
-    expect(html).toContain('./references/-assets-index-G3tB3Owe-purple.patched.js')
-    expect(html).toContain('FP-02 补丁')
-    expect(html).toContain('READ-usage')
+    const yinYong = [...html.matchAll(/\.{1,2}\/references\/([A-Za-z0-9._-]+\.js)/g)].map((m) => m[1])
+    expect(yinYong).toEqual(['-assets-index-G3tB3Owe-purple.patched.js'])
+    expect(yinYong.every((ming) => ming.endsWith('.patched.js'))).toBe(true)
   })
 })
 
-describe('FP-02 消除告警后失效的 console 过滤清理', () => {
-  it('专为本告警写的三个过滤词与说明注释已删除', () => {
+describe('FP-02 console 噪声屏蔽层整体退场', () => {
+  /* 2026-09-26：随页面重写一并移除驱动层告警屏蔽（原意是压掉 F12 里的 GPU 噪音，
+     实际全是补丁修复后已失效的死词）。此处锁死「不再有屏蔽层」，
+     防止日后重新生成页面时把死词带回来。 */
+  it('页面不再包含任何 console 屏蔽词表与劫持', () => {
     const html = duHtml()
-    for (const si of ['READ-usage buffer', 'testAndStartReadback', 'shadow copy']) {
-      expect(html).not.toContain(`s.indexOf('${si}')`)
-    }
-    expect(html).not.toContain('引擎遮挡剔除 PBO 回读的 GPU 驱动层性能提示')
-  })
-
-  it('拦页面自身 console 输出的过滤词逐个保留（未随本补丁失效）', () => {
-    const html = duHtml()
-    for (const baoLiu of [
-      '/grass-bg/audio/',
-      'trying to load resource sound',
-      'cannot be represented accurately',
-      'floating point division by zero',
-      'THREE.WebGLProgram',
+    expect(html).not.toContain('s.indexOf(')
+    expect(html).not.toContain('console.error =')
+    for (const si of [
+      'READ-usage buffer',
+      'testAndStartReadback',
+      'shadow copy',
+      'GPU stall',
+      'ReadPixels',
+      'GL Driver Message',
+      'GL_INVALID_ENUM',
+      'performance warning',
     ]) {
-      expect(html).toContain(`s.indexOf('${baoLiu}')`)
+      expect(html).not.toContain(si)
     }
   })
 
-  it('非本补丁致死的驱动层词保留（属既存死代码，另案裁决）', () => {
+  /* 音频静音是另一套机制（拦截 fetch 返回静音 WAV），与 console 屏蔽层无关，
+     页面重写后仍在。此处防止「屏蔽层退场」被误改成「音频拦截也一起删了」。 */
+  it('音频仍走 fetch 拦截返回静音 WAV，不依赖任何真实音频资源', () => {
     const html = duHtml()
-    for (const yi of ['GPU stall', 'ReadPixels', 'GL Driver Message', 'GL_INVALID_ENUM']) {
-      expect(html).toContain(`s.indexOf('${yi}')`)
-    }
+    expect(html).toContain("/grass-bg/audio/")
+    expect(html).toContain('function isAudio(u)')
   })
 })
 
 describe('FP-01 收尾：单道路降级与文案契约', () => {
-  it('父帧三维库只作 T3 构造器/向量兜底：纹理严禁父页路径（2026-09-19 死锁根因已切除）', () => {
+  /* 2026-09-26：父页三维库整体退场。新版页面既不借父页 THREE 作构造器/向量兜底，
+     也不再有任何跨实例纹理引用——2026-09-19 的门控死锁根因（引擎渲染管线把跨实例
+     纹理替换为无 complete 的占位 canvas）已随「完全不用父页 THREE」彻底不存在，
+     故此处由「兜底必须在」收紧为「父页三维库一个字都不许出现」。 */
+  it('父页三维库整体退场：无兜底、无跨实例纹理、无吴昊阳状态回写口', () => {
     const html = duHtml()
-    // fanGouZao 构造器兜底与鼠标投影向量仍可用父页 THREE（材质/向量跨实例无害，
-    // 前者为引擎类优先的罕见回退，后者不进渲染管线）
-    expect(html).toContain('var FALBACK = fuZhenSanWei && fuZhenSanWei.THREE;')
-    // 贴图父页路径必须整体切除：引擎渲染管线会把跨实例纹理替换为无 complete 的
-    // 占位 canvas → 门控 S4 永假 → 背景 30 秒超时整体隐藏（门控死锁实证根因）
-    expect(html).not.toContain('PW2.Texture')
-    expect(html).not.toContain('父页 Texture')
-    expect(html).not.toContain('function qiDongFuZhenSanWei')
-    expect(html).not.toContain('function chuShiHua(THREE, GLTFLoader)')
-    expect(html).not.toContain('window.__wuXianShiJingTai')
-    expect(html).not.toContain('window.__wuJingTaiTu')
+    const yingJinZhan = [
+      'fuZhenSanWei',
+      'FALBACK',
+      'PW2.Texture',
+      '父页 Texture',
+      'function qiDongFuZhenSanWei',
+      'function chuShiHua(THREE, GLTFLoader)',
+      'window.__wuXianShiJingTai',
+      'window.__wuJingTaiTu',
+    ]
+    for (const ci of yingJinZhan) {
+      expect(html).not.toContain(ci)
+    }
   })
 
-  it('失败语义维持：门控超时整体隐藏唯一画布并通知父页', () => {
+  /* 2026-09-26：失败语义改为「15 秒未就绪则强制显现」（fail-open）。
+     旧版是「超时撤回画布 + postMessage 通知父页弹失败提示 + 提供重试」，
+     会在用户正浏览时突然抽空内容并弹窗。新版不再撤回、不再上报，
+     宁可显示未完全就绪的草景，也不打断用户。此处锁死该取舍。 */
+  it('失败语义：15 秒未就绪则强制显现，不撤回画布也不通知父页', () => {
     const html = duHtml()
-     expect(html).toContain("document.querySelectorAll('canvas.webgl')")
-     expect(html).toContain("tongZhiFuYe('shi-bai', yuanYin)")
+    expect(html).toContain('setTimeout(function () { if (!done) fire(); }, 15000);')
+    expect(html).not.toContain("document.querySelectorAll('canvas.webgl')")
+    expect(html).not.toContain("tongZhiFuYe('shi-bai'")
+    expect(html).not.toContain("tongZhiFuYe('jiu-xu'")
   })
 
   it('失败文案与重试/关闭入口走翻译键，值即最终文案', async () => {

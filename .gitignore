@@ -42,4 +42,4 @@ frontend/public/grass-bg/wuhaoyangCeShi/
 backend/.env.example
 
 # 循环工程过程性文件，不入库
-/PROGRESS.md
+PROGRESS*.md
