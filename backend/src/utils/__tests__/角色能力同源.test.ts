@@ -9,11 +9,18 @@ import { 管理角色清单, 管理能力清单, 角色能力矩阵, type GuanLi
  * 手法与口径照抄 管理后端/tests/单元/RBAC矩阵.test.ts 的「前端消费点与角色能力矩阵同源」。
  * 改任一仓的角色或能力清单，必须两仓同改，否则此处红灯。
  */
-const 对端源文件 = resolve(__dirname, '../../../../../恋爱吧管理中心/管理后端/src/中间件/管理员.ts')
+/* 对端仓定位：本地工作区里两个项目是同级文件夹（位于本仓库根的父目录下）；
+   GitHub Actions 的 checkout 只能落在工作区内（即本仓库根下）。
+   两种布局都认，找不到仍抛错——同源守卫绝不允许因路径布局不同而静默跳过。 */
+const 仓库根 = resolve(__dirname, '../../../..')
+const 对端仓根 = [resolve(仓库根, '..', '恋爱吧管理中心'), resolve(仓库根, '恋爱吧管理中心')].find(
+  (候选) => existsSync(候选),
+)
+const 对端源文件 = 对端仓根 && resolve(对端仓根, '管理后端/src/中间件/管理员.ts')
 
 function 读对端(): string {
-  if (!existsSync(对端源文件)) {
-    throw new Error(`对端源文件缺失，同源断言无法执行: ${对端源文件}`)
+  if (!对端源文件 || !existsSync(对端源文件)) {
+    throw new Error(`对端源文件缺失，同源断言无法执行: ${对端源文件 ?? '恋爱吧管理中心 未检出'}`)
   }
   return readFileSync(对端源文件, 'utf8')
 }
