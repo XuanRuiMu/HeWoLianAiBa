@@ -7,11 +7,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
     <title>草地背景</title>
     <link rel="icon" href="data:,">
-    <!-- 上游 index.html 的 UI 字体 preload 已删：本页只当背景用，游戏自带 HUD 全程隐藏，
-         没有任何可见字形需要它，preload 于是白占首屏关键请求路径并被 Chrome 报
-         「preloaded but not used within a few seconds」。@font-face 仍在样式表里，
-         真出现文本时按需加载即可。 -->
-    <link rel="preload" href="/grass-bg/wuhaoyang-2d.png" as="image">
     <link rel="stylesheet" crossorigin href="./references/-assets-index-DF8svE4a.css">
 
     <style>
@@ -61,229 +56,37 @@
     </style>
 
     <script>
-        (function () {
-            function duCanShu(ming) {
+        // 屏蔽原站统计/分析域名，避免 CORS 报错
+        (function() {
+            const blockedHosts = ['ingest.analytics.invantis.tech'];
+            function shouldBlock(url) {
                 try {
-                    var m = location.search.match(new RegExp('[?&]' + ming + '=([^&]*)'));
-                    return m ? decodeURIComponent(m[1]) : '';
-                } catch (e) { return ''; }
+                    return blockedHosts.some(host => String(url).includes(host));
+                } catch (e) { return false; }
             }
-            var banBen = duCanShu('v') || '1.1.0';
-            var fenXiQiYong = duCanShu('fenXi') === '1';
-            var xiangSuBiFengDing = parseFloat(duCanShu('xiangSuBi')) || 1.25;
-            var caiYangJianGeMiao = parseInt(duCanShu('caiYangMiao'), 10) || 60;
-            var zhenJianGeHaoMiao = parseInt(duCanShu('zhenJianGe'), 10) || 33;
-            var chongShiShangXian = parseInt(duCanShu('chongShi'), 10) || 5;
-            var fuZhenLunXunJianGe = parseInt(duCanShu('fuZhenLunXun'), 10) || 60;
-            var fuZhenSanWeiChaoShi = parseInt(duCanShu('fuZhenChaoShi'), 10) || 12000;
-            var pingBi = ['ingest.analytics.invantis.tech'];
-            window.__caoDiPeiZhi = { banBen: banBen, fenXiQiYong: fenXiQiYong, xiangSuBiFengDing: xiangSuBiFengDing, pingBiYuMing: pingBi, zuiDaChongShi: chongShiShangXian, zuiXiaoZhenJianGeHaoMiao: zhenJianGeHaoMiao, fenXiCaiYangZuiXiaoJianGeMiao: caiYangJianGeMiao, fuZhenSanWeiLunXunJianGeHaoMiao: fuZhenLunXunJianGe, fuZhenSanWeiChaoShiHaoMiao: fuZhenSanWeiChaoShi };
-            function shiFouDiaoShi() { try { return /[?&]debug=1/.test(location.search); } catch (e) { return false; } }
-            try {
-                var yuanMiaoShu = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio') || Object.getOwnPropertyDescriptor(Window.prototype, 'devicePixelRatio');
-                var yuanQu = (yuanMiaoShu && yuanMiaoShu.get) ? yuanMiaoShu.get : null;
-                var yuanZhiDPR = window.devicePixelRatio || 1;
-                Object.defineProperty(window, 'devicePixelRatio', { configurable: true, get: function () {
-                    var shiJi = yuanQu ? yuanQu.call(window) : yuanZhiDPR;
-                    var ding = (window.__caoDiPeiZhi && window.__caoDiPeiZhi.xiangSuBiFengDing) || 1.25;
-                    return Math.min(shiJi || 1, ding);
-                } });
-            } catch (e) {}
-            window.__errors = [];
-            var shangCiYunXu = 0;
-            function jiLu(kind, wen) {
-                try {
-                    if (window.__errors.length >= 50) window.__errors.shift();
-                    window.__errors.push(kind + ': ' + String(wen).slice(0, 200));
-                } catch (e) {}
-            }
-            var yuanError = console.error;
-            var yuanTrace = console.trace ? console.trace.bind(console) : null;
-            var yuanWarn = console.warn ? console.warn.bind(console) : null;
-            var yuanDebug = console.debug ? console.debug.bind(console) : null;
-            var yuanInfo = console.info ? console.info.bind(console) : null;
-            var yuanLog = console.log ? console.log.bind(console) : null;
-            function shiYinPinHuoZhaoSeQiZaoYin(wen) {
-                try {
-                    var s = String(wen);
-                    if (s.indexOf('/grass-bg/audio/') >= 0) return true;
-                    if (s.indexOf('trying to load resource sound') >= 0) return true;
-                    if (s.indexOf('Core.Resources') >= 0 && s.indexOf('sound') >= 0) return true;
-                    if (s.indexOf('X4122') >= 0 || s.indexOf('X4008') >= 0) return true;
-                    if (s.indexOf('cannot be represented accurately') >= 0) return true;
-                    if (s.indexOf('floating point division by zero') >= 0) return true;
-                    if (s.indexOf('THREE.WebGLProgram') >= 0) return true;
-                    if (s.indexOf('GPU stall') >= 0) return true;
-                    if (s.indexOf('ReadPixels') >= 0) return true;
-                    if (s.indexOf('GL Driver Message') >= 0) return true;
-                    if (s.indexOf('GL_INVALID_ENUM') >= 0) return true;
-                    if (s.indexOf('performance warning') >= 0 && s.indexOf('.js') >= 0) return true;
-                } catch (e) {}
-                return false;
-            }
-            console.error = function () {
-                try {
-                    var wen = '';
-                    for (var i = 0; i < arguments.length; i++) {
-                        var a = arguments[i];
-                        wen += (typeof a === 'string' ? a : (a && a.message) ? a.message : JSON.stringify(a).slice(0, 120)) + ' | ';
-                    }
-                    jiLu('error', wen);
-                    if (shiYinPinHuoZhaoSeQiZaoYin(wen)) return;
-                } catch (e) {}
-                try { if (shiFouDiaoShi()) yuanError.apply(console, arguments); } catch (e) {}
+            const origFetch = window.fetch;
+            window.fetch = function(...args) {
+                if (shouldBlock(args[0])) return Promise.resolve(new Response('', { status: 204 }));
+                return origFetch.apply(this, args);
             };
-            if (yuanTrace) {
-                console.trace = function () {
-                    try {
-                        var wen = '';
-                        for (var i = 0; i < arguments.length; i++) {
-                            var a = arguments[i];
-                            wen += (typeof a === 'string' ? a : (a && a.message) ? a.message : JSON.stringify(a).slice(0, 120)) + ' | ';
-                        }
-                        jiLu('trace', wen);
-                        if (shiYinPinHuoZhaoSeQiZaoYin(wen)) return;
-                    } catch (e) {}
-                    try { if (shiFouDiaoShi()) yuanTrace.apply(console, arguments); } catch (e) {}
-                };
-            }
-            if (yuanWarn) {
-                console.warn = function () {
-                    try {
-                        var wen = '';
-                        for (var i = 0; i < arguments.length; i++) {
-                            var a = arguments[i];
-                            wen += (typeof a === 'string' ? a : (a && a.message) ? a.message : JSON.stringify(a).slice(0, 120)) + ' | ';
-                        }
-                        jiLu('warn', wen);
-                        if (shiYinPinHuoZhaoSeQiZaoYin(wen)) return;
-                    } catch (e) {}
-                    try { if (shiFouDiaoShi()) yuanWarn.apply(console, arguments); } catch (e) {}
-                };
-            }
-            /* debug/info/log 同样收敛：bundle 可能经任意方法输出，全部先进内存，
-               非 debug 不落控制台（与 error/trace/warn 同策略，避免绕行刷屏）。 */
-            function fengZhuangRizhi(fangFa, yuanFangFa, leiBie) {
-                try {
-                    console[fangFa] = function () {
-                        try {
-                            var wen = '';
-                            for (var i = 0; i < arguments.length; i++) {
-                                var a = arguments[i];
-                                wen += (typeof a === 'string' ? a : (a && a.message) ? a.message : JSON.stringify(a).slice(0, 120)) + ' | ';
-                            }
-                            jiLu(leiBie, wen);
-                            if (shiYinPinHuoZhaoSeQiZaoYin(wen)) return;
-                        } catch (e) {}
-                        try { if (shiFouDiaoShi() && yuanFangFa) yuanFangFa.apply(console, arguments); } catch (e) {}
-                    };
-                } catch (e) {}
-            }
-            if (yuanDebug) fengZhuangRizhi('debug', yuanDebug, 'debug');
-            if (yuanInfo) fengZhuangRizhi('info', yuanInfo, 'info');
-            if (yuanLog) fengZhuangRizhi('log', yuanLog, 'log');
-            window.addEventListener('error', function (e) { jiLu('uncaught', (e.message || '') + ' @' + (e.filename || '') + ':' + e.lineno); });
-            function yingPingBi(url) {
-                try {
-                    var wen = String(url);
-                    for (var i = 0; i < pingBi.length; i++) {
-                        if (wen.indexOf(pingBi[i]) >= 0) return true;
-                    }
-                } catch (e) {}
-                return false;
-            }
-            function fenXiKeFa() {
-                if (!fenXiQiYong) return false;
-                var jianGe = ((window.__caoDiPeiZhi && window.__caoDiPeiZhi.fenXiCaiYangZuiXiaoJianGeMiao) || 60) * 1000;
-                var xianZai = Date.now();
-                if (xianZai - shangCiYunXu < jianGe) return false;
-                shangCiYunXu = xianZai;
-                return true;
-            }
-            var yuanFetch = window.fetch;
-            window.fetch = function (input, init) {
-                var u = (input && input.url) ? input.url : input;
-                if (yingPingBi(u) && !fenXiKeFa()) return Promise.resolve(new Response(null, { status: 204 }));
-                return yuanFetch.apply(this, arguments);
+            const origOpen = XMLHttpRequest.prototype.open;
+            const origSend = XMLHttpRequest.prototype.send;
+            XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+                this._blocked = shouldBlock(url);
+                return origOpen.call(this, method, url, ...rest);
             };
-            var yuanOpen = XMLHttpRequest.prototype.open;
-            var yuanSend = XMLHttpRequest.prototype.send;
-            XMLHttpRequest.prototype.open = function (method, url) {
-                this._caoDiPingBi = yingPingBi(url) && !fenXiKeFa();
-                return yuanOpen.apply(this, arguments);
-            };
-            XMLHttpRequest.prototype.send = function () {
-                if (this._caoDiPingBi) {
-                    try { yuanOpen.call(this, 'GET', 'data:text/plain,', true); } catch (e) {}
-                    return yuanSend.apply(this, arguments);
+            XMLHttpRequest.prototype.send = function(...args) {
+                if (this._blocked) {
+                    this.status = 204;
+                    this.readyState = 4;
+                    if (this.onreadystatechange) this.onreadystatechange();
+                    if (this.onloadend) this.onloadend();
+                    return;
                 }
-                return yuanSend.apply(this, arguments);
+                return origSend.apply(this, args);
             };
-            try {
-                if (navigator.sendBeacon) {
-                    var yuanBeacon = navigator.sendBeacon.bind(navigator);
-                    navigator.sendBeacon = function (url) {
-                        if (yingPingBi(url) && !fenXiKeFa()) return true;
-                        return yuanBeacon.apply(navigator, arguments);
-                    };
-                }
-            } catch (e) {}
-            function qingChuJieDian(gen) {
-                try {
-                    var src = gen.src || gen.href || '';
-                    if (src && yingPingBi(src) && gen.parentNode) gen.parentNode.removeChild(gen);
-                } catch (e) {}
-            }
-            try {
-                new MutationObserver(function (bianGeng) {
-                    for (var i = 0; i < bianGeng.length; i++) {
-                        var tianJia = bianGeng[i].addedNodes;
-                        for (var j = 0; j < tianJia.length; j++) {
-                            var gen = tianJia[j];
-                            if (gen && gen.tagName && (gen.tagName === 'SCRIPT' || gen.tagName === 'IMG' || gen.tagName === 'LINK')) qingChuJieDian(gen);
-                        }
-                    }
-                }).observe(document.documentElement, { childList: true, subtree: true });
-            } catch (e) {}
         })();
-    </script>
-    <script>
-        (function () {
-            var tiHuan = [
-                ['uResolution.x/uResolution.y', 'uResolution.x/max(uResolution.y,1.0)'],
-                ['uThickness/uResolution', 'uThickness/max(uResolution,vec2(1.0))'],
-                ['1.0/uResolution', '1.0/max(uResolution,vec2(1.0))'],
-                ['gl_FragCoord.xy/uResolution.xy', 'gl_FragCoord.xy/max(uResolution.xy,vec2(1.0))'],
-                ['toLightVec/dist', 'toLightVec/max(dist,1e-4)'],
-                ['uFireflyGlow/distanceToCenter', 'uFireflyGlow/max(distanceToCenter,1e-4)']
-            ];
-            function xiuFu(yuanMa) {
-                if (typeof yuanMa !== 'string' || yuanMa.indexOf('void main') === -1) return yuanMa;
-                var jieGuo = yuanMa;
-                for (var i = 0; i < tiHuan.length; i++) {
-                    var cong = tiHuan[i][0], dao = tiHuan[i][1];
-                    if (jieGuo.indexOf(cong) >= 0) jieGuo = jieGuo.split(cong).join(dao);
-                }
-                if (jieGuo.indexOf('precision') === -1) jieGuo = 'precision highp float;\n' + jieGuo;
-                return jieGuo;
-            }
-            function buDing(leiXing) {
-                try {
-                    var yuan = leiXing.prototype.shaderSource;
-                    if (!yuan || yuan.__caoDiBuDing) return;
-                    var xin = function (shader, yuanMa) {
-                        return yuan.call(this, shader, xiuFu(yuanMa));
-                    };
-                    xin.__caoDiBuDing = true;
-                    leiXing.prototype.shaderSource = xin;
-                } catch (e) {}
-            }
-            try { buDing(WebGLRenderingContext); } catch (e) {}
-            try { if (window.WebGL2RenderingContext) buDing(window.WebGL2RenderingContext); } catch (e) {}
-            window.__caoDiXiuFuZhaoSeQi = xiuFu;
-        })();
-    </script>
-    <script>
+
         // 音频根上禁用（真实背景应保持安静；且未复制 17MB 音频资源）
         (function () {
             function killSource(src) {
@@ -352,10 +155,6 @@
                     if (this.onloadend) this.onloadend();
                     return;
                 }
-                if (this._caoDiPingBi) {
-                    try { oOpen.call(this, 'GET', 'data:text/plain,', true); } catch (e) {}
-                    return oSend.apply(this, arguments);
-                }
                 return oSend.apply(this, arguments);
             };
         })();
@@ -394,48 +193,7 @@
             <div class="explore-hint"><svg></svg><span class="glass-effect">Tap here to explore</span></div>
         </section>
         <section id="about" class="hidden"><div class="about-container glass-effect"><span class="close">+</span><h1>Jordan Breton</h1></div></section>
-        <!-- 注意：下面 .swarm-switch / .social-media 必须保留在 DOM 中（即使被 CSS 隐藏）：
-             引擎的社交媒体/群岛控制器（NU 类）在 init 时 document.querySelector(".swarm-switch .left")
-             等并立即 addEventListener，缺失会抛「Cannot read properties of null (reading 'addEventListener')」，
-             进而中断体验初始化。原页 主页-真实草地.html 本就含此结构；精简背景页漏掉导致崩溃。
-             #contact 已被 CSS display:none!important 隐藏，故不可见、不影响背景。 -->
-        <section id="contact" class="hidden">
-            <div class="header">
-                <h1>Your brand deserves to stand out!</h1>
-                <p>Let's get in touch to make it happen.</p>
-            </div>
-            <div class="container">
-                <div class="swarm-switch">
-                    <button class="left">&#8249;</button>
-                    <span class="empty"></span>
-                    <button class="right">&#8250;</button>
-                </div>
-                <div class="social-media">
-                    <button class="left-arrow">
-                        <span>&#8636;</span>
-                        <span>&#8637;</span>
-                    </button>
-                    <ul>
-                        <li class="active">
-                            <a class="glass-effect" data-social-media="default" href="mailto:contact@jordan-breton.com">contact@jordan-breton.com</a>
-                        </li>
-                        <li>
-                            <a class="glass-effect" data-social-media="linkedin" href="https://www.linkedin.com/in/jordan-breton/" target="_blank" rel="noopener noreferrer">Linkedin</a>
-                        </li>
-                        <li>
-                            <a class="glass-effect" data-social-media="x" href="https://x.com/JordanBretonDev" target="_blank" rel="noopener noreferrer">X</a>
-                        </li>
-                        <li>
-                            <a class="glass-effect" data-social-media="youtube" href="https://youtube.com/@JordanBretonDev" target="_blank" rel="noopener noreferrer">Youtube</a>
-                        </li>
-                    </ul>
-                    <button class="right-arrow">
-                        <span>&#8640;</span>
-                        <span>&#8641;</span>
-                    </button>
-                </div>
-            </div>
-        </section>
+        <section id="contact" class="hidden"><div class="header"><h1>Your brand deserves to stand out!</h1></div></section>
     </div>
     <div class="loading">
         <div class="progress-percentage">
@@ -446,36 +204,22 @@
         </div>
         <div class="loading-text">Initializing...</div>
     </div>
+    <div class="update hidden glass-effect active">
+        <h1>✨ Portfolio update!</h1>
+        <div class="text"><p>A new version is available.</p></div>
+        <button class="glass-effect">Reload now</button>
+    </div>
     <template id="point-template">
         <div class="circle-container"><div class="ring"></div><div class="circle"></div></div>
     </template>
 
     <script>
-        /* 加载暮紫草场 purple 副本（vendored bundle，不参与本仓构建，改动全部手工落在文件内）。
-           FP-02 补丁（遮挡剔除类 mL，共四处）：
-           1) 入口 if(this.hasPendingReadback)return; —— 上一轮回读未经 getBufferSubData 消费时
-              不再覆盖写同一块 PBO，也不再 deleteSync 掉尚未落地的那张 fence（否则该轮剔除结果作废）；
-           2) readPixels 前 bufferData(PIXEL_PACK_BUFFER, maxOccludees*4, STREAM_READ) 重新指定同一块缓冲
-              ——不可省：告警的充分条件是「同一块 READ-usage PBO 被二次异步回读」，与是否已
-              getBufferSubData 消费无关。旧实测（Edge/Chromium 153，强制 40 轮回读 ×3）：上游原样
-              40/40/40 条，只打补丁 1 仍 39/40 条，补丁 1+2 才 0/0/0 条；
-           3) 读回推迟一帧：testAndStartReadback 只渲染 visibility pass 并置 readbackArmed，
-              readPixels+fenceSync 移到次帧帧首的 startArmedReadback（由消费口
-              applyPreviousResults 每帧先调）。ANGLE 的 "GPU stall due to ReadPixels" 判据正是
-              「同一帧内刚渲染完就同步读回」，与本帧渲染解绑后归零；
-           4) setOccludees 换表即作废挂起轮（readbackArmed/hasPendingReadback 双双清零）——
-              挂起窗口里条目表被换掉时，旧表渲染出的像素会被按新表索引解读，可见性整体错位一帧。
-           实测（Playwright Chromium，FP-03 冷载桌面 ×3 次）：GPU stall / ReadPixels / GL Driver
-           Message / READ-usage / performance warning 五类口径全为 0；iframe 内逐帧计数证明
-           挂起→fence→消费→排空四环齐全（反向验证：把 startArmedReadback 掏空，守卫即在
-           fence=0 红灯，而挂起计数仍 31 次 ⇒ 不是「剔除没跑」造成的假绿）。
-           ⚠️ 用上游产物重新生成本 bundle 时这四处会丢，必须重打；
-           补丁串与回读消费出口由 src/__tests__/FP02遮挡剔除回读补丁.test.ts 钉死。 */
+        // 加载暮紫草场 purple 副本（仅改草色 config 一处的独立 JS）
         (function () {
             var s = document.createElement('script');
             s.type = 'module';
             s.crossOrigin = 'anonymous';
-            s.src = './references/-assets-index-G3tB3Owe-purple.patched.js?v=' + ((window.__caoDiPeiZhi && window.__caoDiPeiZhi.banBen) || '1.1.0');
+            s.src = './references/-assets-index-G3tB3Owe-purple.patched.js?v=' + Date.now();
             document.head.appendChild(s);
         })();
     </script>
@@ -483,15 +227,7 @@
         /* 真正删除（从 DOM 移除，而非隐藏）：设置齿轮/面板、声音按钮、360°游览、视角热点。
            以上由 bundle 在事件后创建，用 MutationObserver 出现即删。跳过 .loading 内的 Start 按钮。 */
         (function () {
-            // 注意：.sound-icon 不能从 DOM 删除——引擎的声音控制器（RU 类）在 init 时
-            // 会 document.querySelector(".sound-icon") 并立即 setAttribute / addEventListener，
-            // 删掉它会导致 init 抛「Cannot read properties of null (reading 'setAttribute')」，
-            // 进而中断整个体验初始化。该元素已被 CSS display:none!important 隐藏，留 DOM 即可。
-            // 注意：.update 是原始作品集站点的「Portfolio update!」庆祝式浮框。
-            // 仅用 CSS display:none!important 隐藏不够——bundle 加载后可注入后发/更高优先级的
-            // .update 样式覆盖之，导致右上角间歇弹出。故将其纳入「出现即销毁」清扫，从 DOM 层面
-            // 彻底消除；其静态节点已在上文 HTML 中删除。
-            var REMOVE = ['.settings-icon', '.settings-panel', '.tour-button', '.update'];
+            var REMOVE = ['.settings-icon', '.settings-panel', '.sound-icon', '.tour-button'];
             function removeSel(sel) {
                 var nodes = document.querySelectorAll(sel);
                 for (var i = 0; i < nodes.length; i++) {
@@ -516,79 +252,51 @@
         })();
     </script>
     <script>
+        // 自动进入真实草地背景：资源加载完（Start 按钮带 .show）后点击，触发 intro 相机过渡。
+        // 点击后 bundle 会给 .loading 加 .loaded（已被 CSS 隐藏）；并加硬兜底强制进入。
         (function () {
-            window.__jieLuYiFaQi = false;
-            function baoZhuangDanFei(duiXiang, fangFaMing) {
-                try {
-                    if (!duiXiang) return;
-                    var yuanFangFa = duiXiang[fangFaMing];
-                    if (typeof yuanFangFa !== 'function') return;
-                    if (yuanFangFa.__danFeiYiBao) return;
-                    function danFeiFangFa() {
-                        if (danFeiFangFa.__yiDiaoYong) return;
-                        var jieGuo = yuanFangFa.apply(this, arguments);
-                        danFeiFangFa.__yiDiaoYong = true;
-                        return jieGuo;
-                    }
-                    danFeiFangFa.__danFeiYiBao = true;
-                    danFeiFangFa.__yiDiaoYong = false;
-                    duiXiang[fangFaMing] = danFeiFangFa;
-                } catch (e) {}
+            var clicked = false;
+            function hideLoading() {
+                var l = document.querySelector('.loading');
+                if (l) l.style.display = 'none';
             }
-            function zhongHe(tiYan) {
-                try {
-                    if (!tiYan) return;
-                    try {
-                        if (typeof tiYan.tryStartReveal === 'function' && !tiYan.tryStartReveal.__danFeiYiBao) {
-                            function kongCao() {}
-                            kongCao.__danFeiYiBao = true;
-                            tiYan.tryStartReveal = kongCao;
-                        }
-                    } catch (e) {}
-                    try {
-                        if (tiYan.revealMesh) baoZhuangDanFei(tiYan.revealMesh, 'startReveal');
-                    } catch (e) {}
-                    try {
-                        if (tiYan.postProcessing) baoZhuangDanFei(tiYan.postProcessing, 'startReveal');
-                    } catch (e) {}
-                } catch (e) {}
+            function tryStart() {
+                if (clicked) return;
+                var btn = document.querySelector('.loading button');
+                var circle = document.querySelector('.loading .circle-container');
+                if (!circle) { setTimeout(tryStart, 200); return; }
+                // 引擎就绪（window.__dcm 存在）或 Start 按钮带 .show 时即可揭示，不再死等按钮
+                var ready = (btn && btn.classList.contains('show')) || window.__dcm;
+                if (!ready) { setTimeout(tryStart, 200); return; }
+                clicked = true;
+                try { circle.click(); } catch (e) {}
+                // 兜底：点击后若 loading 仍可见则强制隐藏
+                setTimeout(function () {
+                    var l = document.querySelector('.loading');
+                    if (l && getComputedStyle(l).display !== 'none') hideLoading();
+                }, 1200);
             }
-            window.__zhongHeJieLu = zhongHe;
-            try {
-                if (window.__experience) zhongHe(window.__experience);
-            } catch (e) {}
-            try {
-                var yiCun = window.__experience;
-                Object.defineProperty(window, '__experience', {
-                    configurable: true,
-                    enumerable: true,
-                    get: function () { return yiCun; },
-                    set: function (xinZhi) {
-                        yiCun = xinZhi;
-                        try { zhongHe(xinZhi); } catch (e) {}
-                    }
-                });
-            } catch (e) {}
+            window.addEventListener('load', function () { setTimeout(tryStart, 400); });
+            // 硬兜底：12s 仍卡在 loading 也强制进入（背景只是晚点到）
+            setTimeout(function () {
+                if (clicked) return;
+                var circle = document.querySelector('.loading .circle-container');
+                if (circle) { try { circle.click(); } catch (e) {} }
+                hideLoading();
+            }, 12000);
         })();
     </script>
     <script>
-        /* 背景预染 + 事件驱动主题跟随：
-            - 预染 + 揭示前置：首帧即按父页主题定色（__grassOverride 先行）；
-              但解析期材质尚不存在，首跑只能空跑——揭示与染色曾是两条独立竞态，
-              慢加载时揭示先于首次成功染色即“未染色先展现”。故染色是揭示的前置条件：
-              门控 fire() 双 startReveal 前同步调 __caoDiTongBuZhuTi，
-              __caoDiYiRanSe 未置位不揭示；补齐线程揭示后未染不自停，染上才停。
-              真就绪以 experience:ready 为准（__dcm 出生即置位太早，草块流式构建中即放行是复发根因）；
-              reveal:complete 落定再压一次（最多 3 次），覆盖尾部草块/天气重上色。
-              稳态零轮询——此前 400ms 常驻 setInterval 持续 setPhase/全场景 traverse，
-              是控制台 429 高频触发的根因之一，已删除。
-            - 稳态跟随：父页 data-theme 变化走 MutationObserver（事件驱动）；
-              引擎相位变化走 phaseChanged 单次跟随；启动期引擎未就绪时至多 30 次
-              1 秒间隔补齐（自停），就绪/揭示后无任何定时器。
-            - 所有 bundle 对象访问均带空守卫 + try-catch（startTime 类空指针同口径防护）。 */
+        /* 主题联动（深色=夜晚 / 浅色=白天）+ 草色 + 鼠标跟随视差：
+           - 读取父页（同源）data-theme：dark(暗色) → 夜晚相位 + 夜草色；light(浅色) → 白天 + 金草。
+             默认跟随用户设置（首次访问 data-theme=dark → 默认夜晚）。standalone 时退化为白天金草。
+             同时监听父页 postMessage('grass-theme') 作为跨域兜底。
+           - 鼠标视差：iframe 设了 pointer-events:none 且压在应用内容之下，收不到鼠标事件；
+             故由 App.vue 转发归一化光标到本页，本页用 rAF 轻推 CameraGroup 旋转，形成"跟随鼠标微晃"。 */
         (function () {
-            var DAY = ['#d9a441', '#9c6b1e', '#b08746', '#8a6a38'];
-            var NIGHT = ['#b07be0', '#7a3fa0', '#5e2d8a', '#2e1450'];
+            var DAY = ['#d9a441', '#9c6b1e', '#b08746', '#8a6a38'];        // 白天金草 L,D,dL,dD
+            var NIGHT = ['#b07be0', '#7a3fa0', '#5e2d8a', '#2e1450'];      // 夜晚紫草（深色模式=全紫草+紫地）
+            var themeOverride = null;
 
             function parentTheme() {
                 try {
@@ -598,2090 +306,213 @@
                     return t === 'light' ? 'light' : (t === 'dark' ? 'dark' : 'light');
                 } catch (e) { return 'light'; }
             }
+            function currentTheme() { return themeOverride || parentTheme(); }
             function paletteFor(theme) { return theme === 'dark' ? NIGHT : DAY; }
             function phaseFor(theme) { return theme === 'dark' ? 'night' : 'day'; }
 
-            function setMo(m, palette) {
-                try {
-                    var u = m && m.uniforms;
-                    if (!u) return false;
-                    var xieRu = false;
-                    if (u.uLightGreen && u.uLightGreen.value && u.uLightGreen.value.set) { u.uLightGreen.value.set(palette[0]); xieRu = true; }
-                    if (u.uDarkGreen && u.uDarkGreen.value && u.uDarkGreen.value.set) { u.uDarkGreen.value.set(palette[1]); xieRu = true; }
-                    if (u.uLightDirt && u.uLightDirt.value && u.uLightDirt.value.set) { u.uLightDirt.value.set(palette[2]); xieRu = true; }
-                    if (u.uDarkDirt && u.uDarkDirt.value && u.uDarkDirt.value.set) { u.uDarkDirt.value.set(palette[3]); xieRu = true; }
-                    if (u.uGrassLightColor && u.uGrassLightColor.value && u.uGrassLightColor.value.set) { u.uGrassLightColor.value.set(palette[0]); xieRu = true; }
-                    if (u.uGrassDarkColor && u.uGrassDarkColor.value && u.uGrassDarkColor.value.set) { u.uGrassDarkColor.value.set(palette[1]); xieRu = true; }
-                    return xieRu;
-                } catch (e) { return false; }
-            }
-
+            // 草（含脚下土地）颜色
             function applyGrass(palette) {
-                var jiShu = 0;
-                try {
-                    window.__grassOverride = palette;
-                    var mats = window.__grassMats;
-                    if (mats && mats.length) {
-                        for (var i = 0; i < mats.length; i++) { try { if (setMo(mats[i], palette)) jiShu++; } catch (e) {} }
+                window.__grassOverride = palette;
+                var mats = window.__grassMats;
+                if (mats && mats.length) {
+                    for (var i = 0; i < mats.length; i++) {
+                        var u = mats[i].uniforms;
+                        if (!u) continue;
+                        if (u.uLightGreen && u.uLightGreen.value) u.uLightGreen.value.set(palette[0]);
+                        if (u.uDarkGreen && u.uDarkGreen.value) u.uDarkGreen.value.set(palette[1]);
+                        if (u.uLightDirt && u.uLightDirt.value) u.uLightDirt.value.set(palette[2]);
+                        if (u.uDarkDirt && u.uDarkDirt.value) u.uDarkDirt.value.set(palette[3]);
                     }
-                    var exp = window.__experience;
-                    var sc = exp && exp.engine && exp.engine.scene;
-                    if (sc && sc.traverse) {
-                        sc.traverse(function (o) {
-                            try {
-                                var m = o && o.material;
-                                if (!m) return;
-                                var list = Array.isArray(m) ? m : [m];
-                                for (var k = 0; k < list.length; k++) { try { if (setMo(list[k], palette)) jiShu++; } catch (e) {} }
-                            } catch (e) {}
-                        });
-                    }
-                } catch (e) {}
-                return jiShu;
+                }
             }
 
+            // 远处地形地面（DistantTerrainGround）拥有独立颜色 uniform，
+            // nightConfig 不会改它，故深色模式下草变紫、远处地面仍停在白天金（黄）。
+            // 这里把地形颜色 uniform 一并压成主题色；首次记录白天金以便浅色还原。
             var terrainCaptured = null;
             var TERRAIN_KEYS = ['uGrassColor', 'uGrassColorAlt', 'uDirtColor', 'uRockColor', 'uWaterColor', 'uSnowColor'];
-            var PURPLE_MAP = { uGrassColor: '#b07be0', uGrassColorAlt: '#7a3fa0', uDirtColor: '#5e2d8a', uRockColor: '#2e1450', uWaterColor: '#2a1245', uSnowColor: '#c89be8' };
-
             function applyTerrain(theme, palette) {
-                try {
-                    var exp = window.__experience;
-                    var sc = exp && exp.engine && exp.engine.scene;
-                    if (!sc || !sc.traverse) return false;
-                    var isDark = (theme === 'dark');
-                    var found = false;
-                    sc.traverse(function (o) {
-                        try {
-                            var m = o && o.material; if (!m) return;
-                            var list = Array.isArray(m) ? m : [m];
-                            for (var i = 0; i < list.length; i++) {
-                                var u = list[i] && list[i].uniforms;
-                                if (!u || !u.uGrassColor) continue;
-                                found = true;
-                                if (!terrainCaptured) {
-                                    terrainCaptured = {};
-                                    for (var k = 0; k < TERRAIN_KEYS.length; k++) {
-                                        var key = TERRAIN_KEYS[k];
-                                        try { if (u[key] && u[key].value && u[key].value.clone) terrainCaptured[key] = u[key].value.clone(); } catch (e) {}
-                                    }
-                                }
-                                for (var j = 0; j < TERRAIN_KEYS.length; j++) {
-                                    var key2 = TERRAIN_KEYS[j];
-                                    try {
-                                        if (!u[key2] || !u[key2].value || !u[key2].value.set) continue;
-                                        if (isDark) u[key2].value.set(PURPLE_MAP[key2] || palette[3]);
-                                        else if (terrainCaptured[key2]) u[key2].value.copy(terrainCaptured[key2]);
-                                    } catch (e) {}
+                var exp = window.__experience; if (!exp) return;
+                var sc = exp.scene || (exp.engine && exp.engine.scene);
+                if (!sc || !sc.traverse) return;
+                var isDark = (theme === 'dark');
+                sc.traverse(function (o) {
+                    var m = o.material; if (!m) return;
+                    var list = Array.isArray(m) ? m : [m];
+                    for (var i = 0; i < list.length; i++) {
+                        var u = list[i].uniforms;
+                        if (!u) continue;
+                        if (u.uGrassLightColor && u.uGrassDarkColor) {
+                            if (u.uGrassLightColor.value) u.uGrassLightColor.value.set(palette[0]);
+                            if (u.uGrassDarkColor.value) u.uGrassDarkColor.value.set(palette[1]);
+                        }
+                        if (!u.uGrassColor) continue; // 仅处理远处地形地面材质
+                        if (!terrainCaptured) {
+                            terrainCaptured = {};
+                            for (var k = 0; k < TERRAIN_KEYS.length; k++) {
+                                var key = TERRAIN_KEYS[k];
+                                if (u[key] && u[key].value && u[key].value.clone) {
+                                    terrainCaptured[key] = u[key].value.clone();
                                 }
                             }
-                        } catch (e) {}
-                    });
-                    return found;
-                } catch (e) { return false; }
-            }
-
-            // 染色证据位：syncTheme 实际触及材质才置 true；门控揭示前置依赖它。
-            // （解析期首跑时材质尚不存在，只能空跑——此前揭示与染色是两条独立竞态，
-            // 慢加载时揭示先于首次成功染色，即“未染色先展现”的根因。）
-            window.__caoDiYiRanSe = false;
-            var phaseDingYue = false;
-            function syncTheme() {
-                try {
-                    var theme = parentTheme();
-                    var palette = paletteFor(theme);
-                    var d = null;
-                    try { d = window.__dcm || null; } catch (e) { d = null; }
-                    if (d) {
-                        try {
-                            if (!phaseDingYue && d.on) {
-                                phaseDingYue = true;
-                                d.on('phaseChanged', function () { try { setTimeout(syncTheme, 50); } catch (e) {} });
+                        }
+                        for (var j = 0; j < TERRAIN_KEYS.length; j++) {
+                            var key2 = TERRAIN_KEYS[j];
+                            if (!u[key2] || !u[key2].value || !u[key2].value.set) continue;
+                            if (isDark) {
+                                // 紫草配色映射到地形：草->浅紫, 草Alt->中紫, 泥->深紫, 岩->更深紫
+                                var purpleMap = { uGrassColor: palette[0], uGrassColorAlt: palette[1], uDirtColor: palette[2], uRockColor: palette[3], uWaterColor: '#2a1245', uSnowColor: '#c89be8' };
+                                u[key2].value.set(purpleMap[key2] || palette[3]);
+                            } else if (terrainCaptured[key2]) {
+                                u[key2].value.copy(terrainCaptured[key2]);
                             }
-                        } catch (e) {}
-                        try {
-                            var want = phaseFor(theme);
-                            if (d.getPhase && d.setPhase && d.getPhase() !== want) d.setPhase(want);
-                        } catch (e) {}
+                        }
                     }
-                    var jiShu = 0;
-                    try { jiShu = applyGrass(palette); } catch (e) { jiShu = 0; }
-                    var diXing = false;
-                    try { diXing = applyTerrain(theme, palette); } catch (e) { diXing = false; }
-                    if (jiShu > 0 || diXing) window.__caoDiYiRanSe = true;
-                    return diXing;
-                } catch (e) { return false; }
+                });
             }
-            // 门控 fire() 在双 startReveal 之前同步调用它，保证揭示首帧已染色。
-            window.__caoDiTongBuZhuTi = syncTheme;
-            try { syncTheme(); } catch (e) {}
 
-            var dengDaiCiShu = 0;
-            var dengDaiQi = setInterval(function () {
-                try {
-                    dengDaiCiShu++;
-                    try { syncTheme(); } catch (e) {}
-                    var yiJiuXu = false;
-                    try { yiJiuXu = !!window.__caoDiYiJieLu; } catch (e) {}
-                    var yiJiuXuDcm = false;
-                    try { yiJiuXuDcm = !!window.__dcm; } catch (e) {}
-                    var yiRanSe = false;
-                    try { yiRanSe = !!window.__caoDiYiRanSe; } catch (e) {}
-                    // 揭示后若仍未染色不自停（此前 yiJiuXu 单独停是未染色永久化的另一半根因）；
-                    // 染上且引擎见过（或已揭示）才停，30 次兜底，稳态仍零定时器。
-                    if ((yiRanSe && (yiJiuXuDcm || yiJiuXu)) || dengDaiCiShu >= 30) clearInterval(dengDaiQi);
-                } catch (e) { try { clearInterval(dengDaiQi); } catch (e2) {} }
-            }, 1000);
+            var subscribed = false;
+            function syncTheme() {
+                var theme = currentTheme();
+                var d = window.__dcm;
+                if (d && d.getPhase) {
+                    if (!subscribed) {
+                        try { d.on('phaseChanged', function () { setTimeout(syncTheme, 50); }); subscribed = true; } catch (e) {}
+                    }
+                    var want = phaseFor(theme);
+                    if (d.getPhase() !== want) { try { d.setPhase(want); } catch (e) {} }
+                }
+                var palette = paletteFor(theme);
+                applyGrass(palette);
+                applyTerrain(theme, palette);
+            }
+            setInterval(syncTheme, 400); // 持续确保相位/草色/地形匹配主题，覆盖引擎自带的昼夜循环
 
+            // 父页主题变化即时响应（避免轮询间隔内的短暂相位错位）
             try {
                 var pDoc = (window.parent && window.parent !== window) ? window.parent.document : document;
                 var pEl = pDoc && pDoc.documentElement;
                 if (pEl && pEl.addEventListener) {
-                    new MutationObserver(function () { try { syncTheme(); } catch (e) {} }).observe(pEl, { attributes: true, attributeFilter: ['data-theme'] });
+                    new MutationObserver(function () { syncTheme(); }).observe(pEl, { attributes: true, attributeFilter: ['data-theme'] });
                 }
             } catch (e) {}
+
+            // 鼠标跟随：接收父页转发的归一化光标(-1..1)，rAF 轻推 CameraGroup 旋转
+            window.__cursor = { x: 0, y: 0 };
+            window.addEventListener('message', function (e) {
+                try {
+                    var d = e.data;
+                    if (!d) return;
+                    if (d.type === 'grass-cursor') { window.__cursor.x = d.x || 0; window.__cursor.y = d.y || 0; }
+                    else if (d.type === 'grass-theme') { themeOverride = (d.mode === 'dark') ? 'dark' : 'light'; }
+                } catch (e2) {}
+            });
+            var MAX_Y = 0.025, MAX_X = 0.015;
+            function parallaxLoop() {
+                var cam = window.__experience && window.__experience.engine && window.__experience.engine.camera;
+                if (cam && cam.group) {
+                    var ty = window.__cursor.x * MAX_Y;
+                    var tx = -window.__cursor.y * MAX_X;
+                    cam.group.rotation.y += (ty - cam.group.rotation.y) * 0.05;
+                    cam.group.rotation.x += (tx - cam.group.rotation.x) * 0.05;
+                }
+                requestAnimationFrame(parallaxLoop);
+            }
+            (function waitCam() {
+                var ok = window.__experience && window.__experience.engine && window.__experience.engine.camera && window.__experience.engine.camera.group;
+                if (ok) { parallaxLoop(); return; }
+                setTimeout(waitCam, 200);
+            })();
         })();
     </script>
     <script>
-        /* 门控揭示（分阶段机 + 单道路证据）：
-           背景加载的每一步都有名有姓，卡在哪一步失败原因就写哪一步：
-             S0 qiBu           门控启动
-             S1 yinQingJiuXu   引擎就绪（window.__dcm 真值）
-             S2 huaBuJiuXu     主画布存在且有尺寸（canvas.webgl）
-             S3 jieShiQiJiuXu  揭示器双方法可用（revealMesh/postProcessing.startReveal）
-             S4 wuZiYuanJiuXu  吴昊阳资源就绪（T3 主道路：__wuZhuJueMesh 存在且其材质贴图解码完整）
-              S5 wuDaoLuQueRen  吴昊阳道路确认（单道路，带证据）：
-                  zhuDao  主道路（T3 引擎平面：网格仍挂载在引擎场景中）；
-                          同场景、同管线、有前景草遮挡——真正的融入。
-                  网格不在场即无道路——贴图在但网格全无，与没加载出来同等处理：
-                  不揭示、报错、隐藏。
-              S5+ ranSeJiuXu    染色已作用到材质（揭示前同步跑 __caoDiTongBuZhuTi，
-                  __caoDiYiRanSe 未置位不揭示；慢加载揭示先于材质就绪即未染色先展现，
-                  故染色是揭示的前置条件而非并行竞态）。
-              S6 jieLuYiChuFa   双揭示已触发（revealMesh + postProcessing 双成功才算）
-             S7 fuYeYiTongZhi  父页已通知（jiu-xu）。
-           S1-S3 任一失败 → 原因草地；S4-S5 任一失败 → 原因吴昊阳；
-           30 秒总时限到仍未走完 → 报错并隐藏全部画布（草地与吴昊阳均不加载）。 */
+        /* 缓慢移除滤镜、露出真实金色草地背景：
+           原生 reveal 被 swarmReady 卡死（生产环境 swarm 永不就绪），故在此手动触发完整 reveal：
+           - revealMesh.startReveal() 让卷须/描边辉光（uRevealProgress）0→1 淡出；
+           - postProcessing.startReveal() 让 line-glow 水体揭示（uProgress）0→1 淡出；
+           两者淡出后即露出底层真实金色草地。开场滤镜为紫色（bundle 中 lineGlowColor/glowColor=#b07be0），
+           随 reveal 渐隐，并非改色。引擎就绪(__dcm)且 reveal 方法可用后再延时触发，硬兜底 15s。 */
         (function () {
-            var done = false;
-            var yiBaoShiBai = false;
-            var MEN_XIAN_HAO_MIAO = 30000;
-            var qiShi = Date.now();
-            window.__caoDiYiJieLu = false;
-            window.__caoDiJieDuan = 'qiBu';
-            window.__wuDaoLu = null;
-            var jieDuanShiJian = { qiBu: qiShi };
-            function jiJieDuan(ming) {
-                if (window.__caoDiJieDuan !== ming) {
-                    window.__caoDiJieDuan = ming;
-                    try { jieDuanShiJian[ming] = Date.now(); } catch (e) {}
-                }
-            }
-            // __dcm 在 DayCycleManager 构造时即置位（引擎出生），不代表资源/草块就绪；
-            // _experienceReady 由引擎 experience:ready 同步置位（initializePhase 已跑、场景已载）
-            // 在 engine 对象上（非 experience 本体，bundle 内 this.once 的 this 是 engine），
-            // 才是真就绪。此前只认 __dcm，慢加载时门控在草块流式构建完成前即放行，
-            // 揭示时 __grassMats 为空、草叶保持构造默认色——这才是复发的根因。
-            function yinQingJiuXu() {
-                try {
-                    if (!window.__dcm) return false;
-                    var tiYan = null;
-                    try { tiYan = window.__experience || null; } catch (err) { tiYan = null; }
-                    var eng = (tiYan && tiYan.engine) || null;
-                    return !!(eng && eng._experienceReady);
-                } catch (err) { return false; }
-            }
-            function huaBuJiuXu() {
-                try {
-                    var huaBu = document.querySelector('canvas.webgl');
-                    return !!(huaBu && huaBu.clientWidth >= 2 && huaBu.clientHeight >= 2);
-                } catch (err) { return false; }
-            }
-            function jieShiQiJiuXu() {
+            var done = false, scheduled = false;
+            function ready() {
                 var e = window.__experience;
                 return !!(e && e.revealMesh && e.revealMesh.startReveal &&
                           e.postProcessing && e.postProcessing.startReveal);
             }
-            function wuZiYuanJiuXu() {
-                try {
-                    var mesh = window.__wuZhuJueMesh;
-                    if (!mesh) return false;
-                    var tieTu = mesh.material && mesh.material.map;
-                    var tu = tieTu && tieTu.image;
-                    if (!tu) return false;
-                    /* 可用性按源类型判定（与 T3 克隆源过滤同一语义）：贴图源是引擎同类
-                       画布（OffscreenCanvas/HTMLCanvasElement）查宽高，Image 才查 complete——
-                       引擎贴图源无 .complete 属性，统一按 Image 校验会把合法画布源误杀（S4 永假）。 */
-                    if (typeof OffscreenCanvas !== 'undefined' && tu instanceof OffscreenCanvas) {
-                        return !!(tu.width > 0 && tu.height > 0);
-                    }
-                    if (typeof HTMLCanvasElement !== 'undefined' && tu instanceof HTMLCanvasElement) {
-                        return !!(tu.width > 0 && tu.height > 0);
-                    }
-                    return !!(tu.complete && (tu.naturalWidth === undefined || tu.naturalWidth > 0));
-                } catch (err) {}
-                return false;
-            }
-            /* 道路确认（带证据，不认“占位”）：单道路——T3 网格仍挂载在引擎场景中即为 zhuDao；
-               被移除即无道路（null），门控不放行。 */
-            function wuDaoLu() {
-                try {
-                    var mesh = window.__wuZhuJueMesh;
-                    if (mesh && mesh.parent) { window.__wuDaoLu = 'zhuDao'; return 'zhuDao'; }
-                } catch (err) {}
-                window.__wuDaoLu = null;
-                return null;
-            }
-            function tongZhiFuYe(zhuangTai, yuanYin) {
-                try {
-                    window.parent.postMessage(
-                        { source: 'cao-di-bei-jing', zhuangTai: zhuangTai, yuanYin: yuanYin || '' },
-                        '*'
-                    );
-                } catch (err) {}
-            }
-            // 事件补染（零轮询）：两类引擎事件触发同步染色，全是加载期一次性，稳态无定时器。
-            // ① component:ready——每个子系统初始化完成即报到（含草/帕姆草/地形/水体；
-            // 类名已压缩无法按名过滤，故不挑食全接：加载期约十几次全场景 traverse，
-            // 只写染色 uniform，开销一次付清，专治子系统级滞后构建）。
-            // ② reveal:complete——自揭示动画落定再压（最多 3 次），覆盖尾部流式构建。
-            // 引擎一出现即订阅，不依赖门控时序；揭示前同步染仍是保底下限。
-            function dingYueShiJianBuRan() {
-                try {
-                    var tiYan = null;
-                    try { tiYan = window.__experience || null; } catch (err) { tiYan = null; }
-                    var eng = tiYan && tiYan.engine;
-                    if (!eng || !eng.on) return;
-                    if (!window.__buJianDingYue) {
-                        window.__buJianDingYue = true;
-                        eng.on('component:ready', function () { try { if (window.__caoDiTongBuZhuTi) window.__caoDiTongBuZhuTi(); } catch (e) {} });
-                    }
-                    if (!window.__jieLuDingYue) {
-                        window.__jieLuDingYue = true;
-                        window.__jieLuDingYueCiShu = 0;
-                        eng.on('reveal:complete', function () {
-                            try {
-                                if ((window.__jieLuDingYueCiShu || 0) >= 3) return;
-                                window.__jieLuDingYueCiShu = (window.__jieLuDingYueCiShu || 0) + 1;
-                                if (window.__caoDiTongBuZhuTi) window.__caoDiTongBuZhuTi();
-                            } catch (e) {}
-                        });
-                    }
-                } catch (err) {}
-            }
             function fire() {
-                if (done) return false;
+                if (done || !ready()) return;
                 try {
-                    if (window.__jieLuYiFaQi) return false;
-                } catch (err) {}
-                try {
-                    if (window.__zhongHeJieLu && window.__experience) window.__zhongHeJieLu(window.__experience);
-                } catch (err) {}
-                dingYueShiJianBuRan();
-                if (!yinQingJiuXu()) { jiJieDuan('yinQingJiuXu'); return false; }
-                if (!huaBuJiuXu()) { jiJieDuan('huaBuJiuXu'); return false; }
-                jiJieDuan('huaBuJiuXu');
-                if (!jieShiQiJiuXu()) return false;
-                jiJieDuan('jieShiQiJiuXu');
-                /* 阶段标签先记再验：失败时 baoShiBai 的归因才拿得到真实卡点
-                   （曾因标签滞后把 S4 卡死误归因为 caoDi:jieShiQiJiuXu）。 */
-                jiJieDuan('wuZiYuanJiuXu');
-                if (!wuZiYuanJiuXu()) return false;
-                jiJieDuan('wuDaoLuQueRen');
-                if (!wuDaoLu()) return false;
-                // 揭示前置染色：此刻引擎与场景必存在，同步染一次必命中；
-                // 未染上则本轮不揭示（250ms 后再试），绝不带着未染色帧去揭示。
-                jiJieDuan('ranSeJiuXu');
-                try {
-                    if (!window.__caoDiYiRanSe && window.__caoDiTongBuZhuTi) window.__caoDiTongBuZhuTi();
-                } catch (err) {}
-                if (!window.__caoDiYiRanSe) return false;
-                var okA = false, okB = false;
-                try { window.__experience.revealMesh.startReveal(); okA = true; }
-                catch (err) { try { if (window.__wuD && window.__wuD.log) window.__wuD.log('揭示失败:revealMesh ' + err); } catch (e) {} }
-                try { window.__experience.postProcessing.startReveal(); okB = true; }
-                catch (err) { try { if (window.__wuD && window.__wuD.log) window.__wuD.log('揭示失败:postProcessing ' + err); } catch (e) {} }
-                if (!okA || !okB) return false;
+                    window.__experience.revealMesh.startReveal();
+                    window.__experience.postProcessing.startReveal();
+                } catch (e) { scheduled = false; return; }
                 done = true;
-                try { window.__jieLuYiFaQi = true; } catch (err) {}
-                window.__caoDiYiJieLu = true;
-                try {
-                    var gai = document.querySelector('.loading');
-                    if (gai) {
-                        if (gai.classList) {
-                            gai.classList.add('loaded');
-                            gai.classList.add('hidden');
+            }
+            function loop() {
+                if (done || scheduled) return;
+                if (window.__dcm && ready()) { scheduled = true; setTimeout(fire, 2000); }
+                else setTimeout(loop, 300);
+            }
+            loop();
+            setTimeout(function () { if (!done) fire(); }, 15000);
+        })();
+    </script>
+    <script>
+        /* 鼠标划过草地的交互：
+           草背景 iframe 设了 pointer-events:none 且压在内容之下，草的 canvas 收不到真实指针事件，
+           导致引擎自带的 "bender"（弯曲贴图 brush）从不触发 —— 草对鼠标毫无反应。
+           解决：把父页（App.vue）转发来的归一化光标 window.__cursor(-1..1) 还原成画布 client 坐标，
+           向引擎 canvas 派发真实 pointermove，引擎 raycaster 会自行 raycast 地形并调用
+           bender.onPointerMove(uv, worldPos)，草随光标弯曲；光标停下约 2.5s 后自动回正。
+           同时给草/花材质保底 uBendingFactor，确保弯曲可见。 */
+        (function () {
+            var MAX_BEND = 0.7;
+            function boostBending() {
+                var exp = window.__experience; if (!exp) return;
+                var sc = exp.scene || (exp.engine && exp.engine.scene);
+                if (!sc || !sc.traverse) return;
+                sc.traverse(function (o) {
+                    var m = o.material; if (!m) return;
+                    var list = Array.isArray(m) ? m : [m];
+                    for (var i = 0; i < list.length; i++) {
+                        var u = list[i].uniforms;
+                        if (u && u.uBendingFactor && u.uBendingFactor.value < MAX_BEND) {
+                            u.uBendingFactor.value = MAX_BEND;
                         }
-                        gai.style.display = 'none';
                     }
-                } catch (err) {}
-                jiJieDuan('jieLuYiChuFa');
-                tongZhiFuYe('jiu-xu');
-                try {
-                    var buFaYinQing = window.__experience && window.__experience.engine;
-                    if (buFaYinQing && typeof buFaYinQing.emit === 'function') {
-                        try { buFaYinQing.emit('reveal:started'); } catch (buErr) {}
-                        try {
-                            setTimeout(function () {
-                                try { buFaYinQing.emit('reveal:complete'); } catch (buErr2) {}
-                            }, 2000);
-                        } catch (buErr3) {}
-                    }
-                } catch (err) {}
-                jiJieDuan('fuYeYiTongZhi');
-                return true;
+                });
             }
-            function baoShiBai() {
-                if (done || yiBaoShiBai) return;
-                yiBaoShiBai = true;
-                // 先停我们自己的循环，再藏画布，避免卸载中的 GL 上下文竞态
-                window.__wuYiXiaoHui = true;
-                var jieduan = window.__caoDiJieDuan || 'qiBu';
-                var yuanYin;
-                if (jieduan === 'yinQingJiuXu' || jieduan === 'huaBuJiuXu' || jieduan === 'jieShiQiJiuXu' || jieduan === 'ranSeJiuXu' || jieduan === 'qiBu') {
-                    yuanYin = wuZiYuanJiuXu() || wuDaoLu() ? 'caoDi' : 'caoDiHeWuHaoYang';
-                } else {
-                    yuanYin = 'wuHaoYang';
+            var lastX = null, lastY = null, frame = 0;
+            function dispatchMove(c, rect) {
+                var clientX = rect.left + (c.x * 0.5 + 0.5) * rect.width;
+                var clientY = rect.top + (-c.y * 0.5 + 0.5) * rect.height;
+                var ev;
+                try {
+                    ev = new PointerEvent('pointermove', {
+                        clientX: clientX, clientY: clientY, pointerId: 1,
+                        pointerType: 'mouse', bubbles: true, cancelable: true, view: window
+                    });
+                } catch (e) {
+                    ev = new MouseEvent('pointermove', { clientX: clientX, clientY: clientY, bubbles: true });
                 }
-                yuanYin = yuanYin + ':' + jieduan;
-                try {
-                    var huaBuLieBiao = document.querySelectorAll('canvas.webgl');
-                    for (var i = 0; i < huaBuLieBiao.length; i++) {
-                        huaBuLieBiao[i].style.display = 'none';
-                    }
-                } catch (err) {}
-                tongZhiFuYe('shi-bai', yuanYin);
+                try { window.__experience.engine.canvas.dispatchEvent(ev); } catch (e2) {}
             }
-            window.__caoDiMenKongZhuangTai = function () {
-                return {
-                    caoDi: yinQingJiuXu() && huaBuJiuXu() && jieShiQiJiuXu(),
-                    wuHaoYang: wuZiYuanJiuXu() && !!wuDaoLu(),
-                    daoLu: window.__wuDaoLu,
-                    jieduan: window.__caoDiJieDuan,
-                    yiJieLu: done,
-                    yiRanSe: !!window.__caoDiYiRanSe,
-                    haoShi: Date.now() - qiShi
-                };
-            };
-            window.__caoDiQiangZhiJieLu = fire;
-            (function loop() {
-                if (done || yiBaoShiBai) return;
-                if (Date.now() - qiShi >= MEN_XIAN_HAO_MIAO) { baoShiBai(); return; }
-                fire();
-                if (!done) setTimeout(loop, 250);
+            function loop() {
+                var exp = window.__experience;
+                if (exp && exp.engine && exp.engine.canvas) {
+                    if ((frame++ % 30) === 0) boostBending();
+                    var c = window.__cursor;
+                    if (c && (c.x !== lastX || c.y !== lastY)) {
+                        lastX = c.x; lastY = c.y;
+                        dispatchMove(c, exp.engine.canvas.getBoundingClientRect());
+                    }
+                }
+                requestAnimationFrame(loop);
+            }
+            (function wait() {
+                if (window.__experience && window.__experience.engine && window.__experience.engine.canvas) { loop(); return; }
+                setTimeout(wait, 200);
             })();
         })();
     </script>
-
-    <script>
-        /* 父帧三维库就绪提供者（全页唯一读取父帧 window 上 THREE / GLTFLoader 的入口）：
-           本 iframe 文档的内联脚本在「求值时」就要用父帧的三维库，而父帧何时挂上三维库
-           完全不受本文档控制——旧实现每处各写一份「求值时同步读一次」，读不到即静默 return，
-           这正是「背景第一次必加载不出来、点重试第二次一定好」的根因（第一次父帧还没设上，
-           第二次上一轮已设上）。
-           现统一为两条道路，调用方不再自己碰父帧：
-             qu()       非阻塞取当前值（三维库已就绪则返回，GLTFLoader 未就绪时为 null）；
-             dengDai(cb) 带上限轮询等到「三维库 + 加载器」双就绪，超时以 null 回调，
-                         调用方据此降级为静态兜底图，绝不静默失败。
-           超时/间隔走 __caoDiPeiZhi（父页经地址参数下发）。 */
-        (function () {
-            var PeiZhi = window.__caoDiPeiZhi || {};
-            var LUN_XUN_JIAN_GE_HAO_MIAO = PeiZhi.fuZhenSanWeiLunXunJianGeHaoMiao || 60;
-            var CHAO_SHI_HAO_MIAO = PeiZhi.fuZhenSanWeiChaoShiHaoMiao || 12000;
-
-            function du() {
-                var fu = null;
-                try {
-                    fu = window.parent && window.parent !== window ? window.parent : null;
-                } catch (e) { fu = null; }
-                if (!fu) return null;
-                var sanWei = null, jiaZaiQi = null;
-                try { sanWei = fu.THREE || null; } catch (e) { sanWei = null; }
-                try { jiaZaiQi = fu.GLTFLoader || null; } catch (e) { jiaZaiQi = null; }
-                if (!sanWei) return null;
-                return { THREE: sanWei, GLTFLoader: jiaZaiQi };
-            }
-
-            var dengDaiZhe = [];
-            var dingShiQi = null;
-
-            function lunXun() {
-                var jieGuo = du();
-                if (!jieGuo || !jieGuo.GLTFLoader) return;
-                tingZhiLunXun();
-                var huiDiaoLieBiao = dengDaiZhe.slice();
-                dengDaiZhe.length = 0;
-                for (var i = 0; i < huiDiaoLieBiao.length; i++) {
-                    try { huiDiaoLieBiao[i](jieGuo); } catch (e) {}
-                }
-            }
-
-            function tingZhiLunXun() {
-                if (dingShiQi !== null) { try { clearInterval(dingShiQi); } catch (e) {} dingShiQi = null; }
-            }
-
-            function qieShiLunXun() {
-                if (dingShiQi !== null) return;
-                var qiShi = Date.now();
-                dingShiQi = setInterval(function () {
-                    if (Date.now() - qiShi >= CHAO_SHI_HAO_MIAO) {
-                        tingZhiLunXun();
-                        var shouHui = dengDaiZhe.slice();
-                        dengDaiZhe.length = 0;
-                        for (var i = 0; i < shouHui.length; i++) {
-                            try { shouHui[i](null); } catch (e) {}
-                        }
-                        return;
-                    }
-                    lunXun();
-                }, LUN_XUN_JIAN_GE_HAO_MIAO);
-            }
-
-            window.__fuZhenSanWei = {
-                qu: du,
-                dengDai: function (huiDiao) {
-                    if (typeof huiDiao !== 'function') return;
-                    var xianYou = du();
-                    if (xianYou && xianYou.GLTFLoader) {
-                        try { huiDiao(xianYou); } catch (e) {}
-                        return;
-                    }
-                    dengDaiZhe.push(huiDiao);
-                    qieShiLunXun();
-                },
-            };
-        })();
-    </script>
-
-    <!-- 吴昊阳共享基础设施：FP-01 单道路化后自 v9 覆盖层迁出的公用设施，服务 T3 主道路 -->
-    <script>
-    /* 吴昊阳共享基础设施：配置 / 调试系统 / reveal 进度源 / 草压弯注入与调参钩子 / 调试面板 / pure=1。
-       - v9 覆盖层（独立画布）与静态兜底图已按用户裁决删除，吴昊阳只走 T3 主道路
-         （引擎场景内平面），本块只保留与渲染道路无关的公用设施。
-       - 草压弯的每帧强度驱动（呼吸 sin + 鼠标增强 + 0.08 平滑）由 T3 主循环 tongBu 执行，
-         本块负责注入（zhuRuYaWan，节流调用）与共享状态承载（window.__wuGongYong）。
-       - 调试：window.__wuD（logs/state）+ debug 面板（d 键 / ?debug=1）。 */
-    (function () {
-        /* 人物平面参数（全工程唯一来源，勿在他处再写一份默认值——曾因两处各写一份，
-           真正生效的是共享块这份，T3 块里的"新值"被静默忽略，调参全部白做）。
-           FP-11 定案：角色平面为 billboard（法线每帧对准镜头，见 T3 mianXiangJingTou），
-           投影无掠射压缩，角色不再被压扁【用户裁定：比例永不可改】。
-           FP-12 定案锚点 (4.48, 3.63)：由"屏幕左移 40px"的世界偏移解析算出（相机右向量
-           水平分量 [0.65,-0.76] × 40px/190px每单位），实测角色中心落到 x≈578/960，
-           与「最终效果图」头部 x≈610 对齐；旧 FP-11 锚点 (4.62,3.47) 偏右。
-           weiZhi 是平面【铰链点】＝贴图底边（头/手机侧）中点的世界坐标；本层几何为底边过原点
-           的 2×2 平面（T3 块 geo.translate(0, 1, 0)），mesh.position 即铰链。
-           weiZhi.y 只作标定基准；真实落位由草根高度实测（gongYong.ceLiangCaoGenGaoDu）写入
-           mesh.position.y，测量未就绪才回退 CAN_SHU.jiaoLianGaoDu。 */
-        var PEI_ZHI = {
-            weiZhi:  { x: 4.48, y: -0.0133, z: 3.78 },
-            chiCun:  2.55
-        };
-        /* 草压弯/交互参数（FP-13 三项 + FP-14 物理深化三项 + FP-R1 接触物理层根因）。
-           物理原则：吴昊阳体重把身下草钉死——压塌、不随风、不响应鼠标；周围草被身体挤开；
-           轮廓外一圈过渡带明显变矮并外翻；身前稀疏高草保持/增加高度并微倾向身体（重力搭在身上）。
-           - fengYiZhi       风动抑制系数（1=身下草完全不受风，0=关闭）
-           - qianJingChang   前景草带深度（靠近镜头侧窄带）
-           - qianJingQiang   前景带对弯曲强度的贡献上限
-           - yaSui           身下/轮廓内草高保留比（0.06=压到近贴地，1=不压塌）
-           - chuanTou        边缘倒伏草增高倍（稀疏草叶探过角色轮廓）
-           - zaSheng         倒伏带自然起伏（0=整齐一条带，1=全随机）
-           - zuKuanXi        接触场宽向倍数（×卡高；1.0=全身足迹宽）
-           - zuChangXi       接触场长向倍数（×卡高；1.0=全身足迹长，不再乘 sin 后仰角）
-           - waiHuan         轮廓外压塌环宽度（mask UV 采样半径）
-           - waiSui          压塌环草高保留比（0.32=明显变矮但仍可见）
-           - waiFan          压塌环向外翻开强度
-           - qianGao         身前稀疏高草增高倍（明显更高，可叠上角色剪影）
-           - qianQing        身前高草向身体倾角（中等倾角，重力微搭非压平）
-           - qianXi          身前高草哈希稀疏阈值（step 阈值，越大越稀疏）
-           调参口：__yaWanTiao 可覆盖（见每帧驱动）。 */
-        var YA_WAN = { r0: 0.12, r1: 0.68, strength: 1.15, huxi: 0.08, shuBiaoJia: 1.5, neiQiangDu: 1.15, wenLiBu: 0.02,
-            fengYiZhi: 1.0, qianJingChang: 0.32, qianJingQiang: 0.7, yaSui: 0.04, chuanTou: 1.0, zaSheng: 0.4,
-            zuKuanXi: 1.0, zuChangXi: 1.0,
-            waiHuan: 0.3, waiSui: 0.14, waiFan: 0.85,
-            qianGao: 0.35, qianQing: 0.5, qianXi: 0.35 };
-        /* FP-08 揭示完成下限（毫秒）：门控通过后引擎 uRevealProgress 低帧率爬行时的进度底。
-           共享出口 gongYong.jieLuWanChengHaoMiao；uniform getter 强制 max(engine, floor)，
-           避免引擎动画每帧在 tongBu 之后回写把下限冲掉。URL ?jieLuWanCheng= 可覆盖。 */
-        var JIE_LU_WAN_CHENG_HAO_MIAO = 8000;
-        var jieLuDiXianZhuangTai = { diXian: 0 };
-        function gouJianJieLuDiXian(un) {
-            if (!un || typeof un !== 'object' || un.__fp08JieLuDiXian) return un;
-            try {
-                var neiBu = un.value;
-                Object.defineProperty(un, 'value', {
-                    configurable: true,
-                    enumerable: true,
-                    get: function () {
-                        var di = jieLuDiXianZhuangTai.diXian || 0;
-                        var xianShi = typeof neiBu === 'number' ? neiBu : 0;
-                        return di > xianShi ? di : xianShi;
-                    },
-                    set: function (v) { neiBu = v; }
-                });
-                un.__fp08JieLuDiXian = true;
-            } catch (e) {}
-            return un;
-        }
-        function gengXinJieLuDiXian() {
-            var di = 0;
-            if (window.__caoDiYiJieLu) {
-                if (!window.__caoDiJieLuKaiShi) window.__caoDiJieLuKaiShi = Date.now();
-                di = Math.min(1, (Date.now() - window.__caoDiJieLuKaiShi) / JIE_LU_WAN_CHENG_HAO_MIAO);
-            }
-            jieLuDiXianZhuangTai.diXian = di;
-            return di;
-        }
-        var YA_WAN_LUN_KUO = 0.35; // 压伏轮廓判定阈值（FP-03/06）：mask alpha 高于此→轮廓内压平，以下→边缘带向外分开
-        var maskWenLi = null; // 人物贴图的引擎同类克隆纹理（FP-03 压伏 mask；T3 贴图就绪后塞入。禁父页 THREE 纹理直塞引擎草着色器——跨实例陷阱，只走 quWenLiKeLongYuan 同类克隆路径）
-        // 暴露给 T3 主道路（引擎内角色平面）：共用同一套位置/尺寸配置
-        window.__wuPEIZHI = PEI_ZHI;
-
-        window.__wuYiXiaoHui = false;
-        try {
-            window.addEventListener('pagehide', function () { window.__wuYiXiaoHui = true; });
-        } catch (e) {}
-
-        /* --- reveal 进度源（草地中心扩散的同一驱动值，T3 不透明度与调试面板共用） --- */
-        var revealUniform = null;
-        var revealSourceName = '';
-        function zhaoReveal() {
-            var exp = window.__experience;
-            if (exp && exp.revealMesh && exp.revealMesh.material && exp.revealMesh.material.uniforms &&
-                exp.revealMesh.material.uniforms.uRevealProgress) {
-                revealUniform = gouJianJieLuDiXian(exp.revealMesh.material.uniforms.uRevealProgress);
-                revealSourceName = 'revealMesh.uRevealProgress';
-                try { if (window.__wuD && window.__wuD.log) window.__wuD.log('reveal 进度源已接入（与背景扩散同步）'); } catch (e) {}
-                return true;
-            }
-            return false;
-        }
-
-        /* --- 草地身体感知注入（吴昊阳→草地） --- */
-        var guBiao = { x: -9999, y: -9999 };
-        document.addEventListener('pointermove', function (e) {
-            guBiao.x = e.clientX;
-            guBiao.y = e.clientY;
-        }, { passive: true });
-        var yaWanCaiZhi = [];
-        var yaWanCachedMats = []; // 缓存已注入的材质，避免重复遍历场景
-        var yaWanCacheTime = 0; // 缓存时间戳
-        var yaWanZhongXin = null;
-        /* 草根世界 y 实测（FP-06 R1）：扫 InstancedMesh 的 instanceMatrix 平移分量，
-           经 matrixWorld（modelMatrix）变换到世界空间，在锚点 XZ 邻域取中位数。
-           本 bundle 草着色器 elevation 不平移草根（只缩放草高/法线/颜色），根部真值 =
-           matrixWorld * instanceMatrix[3]；若 uDisplacementMap 像素可 JS 读取，则按
-           getElevation 同源公式 texture.r*0.15（UV=xz*0.3）追加地形增量，对齐岛屿地表。
-           测量失败返回 null，调用方回退 CAN_SHU.jiaoLianGaoDu。 */
-        var ceLiangZhuangTai = {
-            gaoDu: null,
-            laiYuan: 'weiCeLiang', // weiCeLiang | shiLiGenZhong | shiLiGenDiXing | huiTui
-            liYangShu: 0,
-            banJing: 0.5
-        };
-        /* 地形采样专用暂存画布：以 {willReadFrequently:true} 创建 ⇒ 浏览器把它放到 CPU 后端。
-           引擎贴图源自己的 2D 上下文早已按默认属性创建，再传该属性会被规范忽略（只在首次创建
-           生效），所以逐点 getImageData 必然触发 Chrome 的
-           `Canvas2D: Multiple readback operations using getImageData are faster with the
-           willReadFrequently attribute set to true` 性能告警。统一经自有画布读回才消得掉。 */
-        var dianCunHuaBu = null;
-        var dianCunKuan = 0, dianCunGao = 0;
-        function huoQuDuQuHuaBu(tu) {
-            if (typeof document === 'undefined' || !document.createElement) return null;
-            var kuan = tu.width, gao = tu.height;
-            if (!(kuan > 0 && gao > 0)) return null;
-            if (!dianCunHuaBu) {
-                dianCunHuaBu = document.createElement('canvas');
-                dianCunKuan = 0;
-                dianCunGao = 0;
-            }
-            if (dianCunKuan !== kuan || dianCunGao !== gao) {
-                dianCunHuaBu.width = kuan;
-                dianCunHuaBu.height = gao;
-                dianCunKuan = kuan;
-                dianCunGao = gao;
-            }
-            var mian = dianCunHuaBu.getContext('2d', { willReadFrequently: true });
-            if (!mian) return null;
-            mian.clearRect(0, 0, kuan, gao);
-            mian.drawImage(tu, 0, 0);
-            return mian;
-        }
-        function ceLiangCaoGenGaoDu(maoX, maoZ) {
-            try {
-                var exp = window.__experience;
-                if (!exp || !exp.engine || !exp.engine.scene) return null;
-                if (maoX == null || maoZ == null || !isFinite(maoX) || !isFinite(maoZ)) return null;
-                var banJing = ceLiangZhuangTai.banJing || 0.5;
-                var banJingFang = banJing * banJing;
-                var yangBenY = [];
-                var diXingTu = null;
-                var saoMiaoLiang = 0;
-                exp.engine.scene.traverse(function (o) {
-                    try {
-                        if (!o || !o.isInstancedMesh || !o.instanceMatrix) return;
-                        var arr = o.instanceMatrix.array;
-                        if (!arr || !arr.length) return;
-                        var mat = o.material;
-                        var matList = mat ? (Array.isArray(mat) ? mat : [mat]) : [];
-                        var shiCao = false;
-                        for (var i = 0; i < matList.length; i++) {
-                            var mm = matList[i];
-                            if (mm && mm.uniforms && (mm.uniforms.uBendingTexture || mm.uniforms.uDisplacementMap)) {
-                                shiCao = true;
-                                if (!diXingTu && mm.uniforms.uDisplacementMap && mm.uniforms.uDisplacementMap.value) {
-                                    diXingTu = mm.uniforms.uDisplacementMap.value;
-                                }
-                            }
-                        }
-                        if (!shiCao) return;
-                        saoMiaoLiang++;
-                        var n = Math.floor(arr.length / 16);
-                        if (o.instanceMatrix.count > 0) n = Math.min(n, o.instanceMatrix.count);
-                        var e = (o.matrixWorld && o.matrixWorld.elements) ? o.matrixWorld.elements : null;
-                        for (var k = 0; k < n; k++) {
-                            var b = k * 16;
-                            if (b + 14 >= arr.length) break;
-                            var ix = arr[b + 12], iy = arr[b + 13], iz = arr[b + 14];
-                            var wx, wy, wz;
-                            if (e) {
-                                wx = e[0] * ix + e[4] * iy + e[8] * iz + e[12];
-                                wy = e[1] * ix + e[5] * iy + e[9] * iz + e[13];
-                                wz = e[2] * ix + e[6] * iy + e[10] * iz + e[14];
-                            } else {
-                                wx = ix; wy = iy; wz = iz;
-                            }
-                            var dx = wx - maoX, dz = wz - maoZ;
-                            if (dx * dx + dz * dz > banJingFang) continue;
-                            yangBenY.push(wy);
-                        }
-                    } catch (eScan) {}
-                });
-                if (!yangBenY.length) {
-                    ceLiangZhuangTai.gaoDu = null;
-                    ceLiangZhuangTai.laiYuan = 'huiTui';
-                    ceLiangZhuangTai.liYangShu = 0;
-                    try { if (window.__wuD && window.__wuD.log) window.__wuD.log('草根实测空: 扫描实例网格=' + saoMiaoLiang + ' 锚点=' + maoX.toFixed(2) + ',' + maoZ.toFixed(2)); } catch (e0) {}
-                    return null;
-                }
-                yangBenY.sort(function (a, b) { return a - b; });
-                var mid = yangBenY.length % 2 === 1
-                    ? yangBenY[(yangBenY.length - 1) / 2]
-                    : (yangBenY[yangBenY.length / 2 - 1] + yangBenY[yangBenY.length / 2]) / 2;
-                var laiYuan = 'shiLiGenZhong';
-                var diXingZengLiang = 0;
-                var diXingKeDu = false;
-                if (diXingTu && diXingTu.image && diXingTu.image.width > 0 && diXingTu.image.height > 0) {
-                    try {
-                        var img = diXingTu.image;
-                        var cx = null;
-                        try { cx = huoQuDuQuHuaBu(img); } catch (eDu) { cx = null; }
-                        if (cx) {
-                            var zengLiangYangBen = [];
-                            // 邻域与锚点同源采样：每点 UV=xz*0.3，R 通道 *0.15（与 getElevation 一致）
-                            var caiYangDian = [{ x: maoX, z: maoZ }];
-                            // 邻域样本点：在锚点半径内均匀取环向点，提升地形增量代表性
-                            var huan = [[0.35, 0], [-0.35, 0], [0, 0.35], [0, -0.35]];
-                            for (var h = 0; h < huan.length; h++) {
-                                caiYangDian.push({ x: maoX + huan[h][0], z: maoZ + huan[h][1] });
-                            }
-                            for (var si = 0; si < caiYangDian.length; si++) {
-                                var pu = (caiYangDian[si].x * 0.3) % 1; if (pu < 0) pu += 1;
-                                var pv = (caiYangDian[si].z * 0.3) % 1; if (pv < 0) pv += 1;
-                                var qx = Math.min(img.width - 1, Math.max(0, Math.floor(pu * img.width)));
-                                var qy = Math.min(img.height - 1, Math.max(0, Math.floor(pv * img.height)));
-                                var pix = null;
-                                try { pix = cx.getImageData(qx, qy, 1, 1).data; } catch (ePix) { pix = null; }
-                                if (pix) zengLiangYangBen.push((pix[0] / 255) * 0.15);
-                            }
-                            if (zengLiangYangBen.length) {
-                                zengLiangYangBen.sort(function (a, b) { return a - b; });
-                                diXingZengLiang = zengLiangYangBen.length % 2 === 1
-                                    ? zengLiangYangBen[(zengLiangYangBen.length - 1) / 2]
-                                    : (zengLiangYangBen[zengLiangYangBen.length / 2 - 1] + zengLiangYangBen[zengLiangYangBen.length / 2]) / 2;
-                                diXingKeDu = true;
-                                laiYuan = 'shiLiGenDiXing';
-                            }
-                        }
-                    } catch (eDi) { diXingKeDu = false; }
-                }
-                var zuiZhong = diXingKeDu ? (mid + diXingZengLiang) : mid;
-                ceLiangZhuangTai.gaoDu = zuiZhong;
-                ceLiangZhuangTai.laiYuan = laiYuan;
-                ceLiangZhuangTai.liYangShu = yangBenY.length;
-                try {
-                    if (window.__wuD && window.__wuD.log) {
-                        window.__wuD.log('草根实测 y=' + zuiZhong.toFixed(4) + ' 来源=' + laiYuan + ' 样本=' + yangBenY.length + (diXingKeDu ? ' 地形增量=' + diXingZengLiang.toFixed(4) : ''));
-                    }
-                } catch (eLog) {}
-                return zuiZhong;
-            } catch (e) {
-                ceLiangZhuangTai.gaoDu = null;
-                ceLiangZhuangTai.laiYuan = 'huiTui';
-                ceLiangZhuangTai.liYangShu = 0;
-                return null;
-            }
-        }
-        function zhuRuYaWan() {
-            var exp = window.__experience;
-            if (!exp || !exp.engine || !exp.engine.scene) return false;
-            /* FP-R4 根因：禁止把 window.__grassMats 当前置。
-               真实 iframe/登录页引擎不填该变量，旧式 `if (!mats||!mats.length) return false`
-               会静默掐死整条压弯/钉死注入（身下草可被鼠标拨动的根因）。
-               材质一律场景 traverse 自发现（uBendingTexture）；__grassMats 仅可选加速。 */
-            /* uCharPos 是 vec2：带 x/y 的普通对象即可（three 的 vec2 uniform 直读 .x/.y）。
-               旧实现强依赖 __fuZhenSanWei 反构出的 THREE.Vector2——该出口在部分环境永不
-               解析（实测本页返回 null），整条压弯注入被静默掐死：草永不被压、轮廓场与
-               接触 AO 全部失效，而日志只有"mask 已接入"所以极易误判为已生效。
-               去掉这层依赖后，注入只依赖场景与草材质本身（FP-12）。 */
-            // 压弯中心 = 角色锚点（世界坐标恒定，不随相机状态漂移）
-            if (!yaWanZhongXin) yaWanZhongXin = { x: PEI_ZHI.weiZhi.x, z: PEI_ZHI.weiZhi.z };
-            // uniform 声明必须位于全局作用域，插在 void main 之前，否则编译失败草叶片整体消失
-            var shengMing = 'uniform vec2 uCharPos;uniform float uCharR0;uniform float uCharR1;uniform float uCharStrength;' +
-                'uniform sampler2D uCharMask;uniform float uCharMaskOn;uniform float uCharYaw;uniform float uCharKuan;uniform float uCharChang;uniform float uCharEdge;' +
-                'uniform float uCharNeiQiangDu;uniform float uCharWenLiBu;' +
-                'uniform float uCharFengYiZhi;uniform float uCharQianJingChang;uniform float uCharQianJingQiang;' +
-                'uniform float uCharYaSui;uniform float uCharChuanTou;uniform float uCharZaSheng;' +
-                'uniform float uCharWaiHuan;uniform float uCharWaiSui;uniform float uCharWaiFan;' +
-                'uniform float uCharQianGao;uniform float uCharQianQing;uniform float uCharQianXi;' +
-                'uniform mat4 uCharMat;uniform mat4 uCharMatInv;uniform vec3 uCharCam;uniform float uWuShiTu;' +
-                'varying float vWuCaoAO;varying float vWuYuYa;\n';
-            /* 压伏场几何推导（FP-R1 根因重构：全身足迹语义，废除 sin 后仰压缩）：
-               人物是俯卧人体（wuhaoyang-2d.png 逐像素），观众读到的接触面是全身；
-               旧几何用直立卡片的地面投影（长=卡高×sin 后仰角，rotation.x≈-0.36 ⇒ 仅 ~35%），
-               压塌/倒伏几乎全落在角色平面遮挡后方 ⇒ 用户看不见。FP-R1 场长改为全身足迹尺度。
-               人物平面 2×2 经 translate(0,1,0)：局部 x∈[-1,1]、y∈[0,2]，
-               scale s=(chiCun/2)×chiCunBeiShu，uCharKuan=uCharChang=2s=卡高（全身足迹，flipY/mask
-               的 v 全程映射头→脚）。逆映射（草叶世界 XZ 偏移 tocW，锚点=铰链=贴图底边中点）：
-                 wuLx   = tocW.x·cosψ − tocW.y·sinψ      局部横向，范围 [-s, s]
-                 wuZhou = −(tocW.x·sinψ + tocW.y·cosψ)  沿身体轴，铰链=0、头侧为正，范围 [0, 2s]
-               uv（与 T3 PlaneGeometry 同 v 语义：铰链 v=0、头侧/脚侧 v=1，flipY 全程头→脚）：
-                 u = wuLx/uCharKuan + 0.5   uCharKuan = 2s·zuKuanXi
-                 v = wuZhou/uCharChang      uCharChang = 2s·zuChangXi（全身足迹长，无 sin）
-               可见物理落在（H2：身下草永远被角色不透明平面挡住）：
-                 ① 轮廓外压塌环：mask 膨胀采样出外环，草明显变矮（waiSui）+ 向外翻开（waiFan）；
-                 ② 身前高草微搭：哈希稀疏选高（qianGao），中等倾角向身体（qianQing），草尖叠上剪影。
-               压伏语义：
-                 - mask alpha 四点采样求梯度，外法线 = -gradient（alpha 下降方向=体型轮廓外侧）；
-                 - 轮廓内（alpha 高）强度强制 uCharNeiQiangDu（真压平，风吹不动，高度近 0）；
-                 - 边缘带沿真实体型轮廓外法线把草向外分开；
-                 - 轮廓外一圈过渡带（膨胀环）明显变矮并外翻（肉眼可见）；
-                 - 降级：uCharMaskOn=0（mask 克隆失败/未就绪）走原圆形径向场（r0/r1 语义不变）。
-               WebGL 兼容：texture2D 顶点采样在 WebGL2（现代 three 引擎）保证 ≥16 vertex texture
-               units，GLSL1 语法与草着色器现有注入代码一致（引擎实测渲染正常）。
-               引擎草顶点着色器执行序：terrainAdjustedNormal → 风 → 本注入段 → 压弯：
-                ① 风动抑制：把 finalGrassInclination 按"被压度"拉回 terrainAdjustedNormal。
-                ② 前景高草：中等倾角倒向身体（重力搭在身上，不是压平），稀疏高草叠上剪影。 */
-            var zhuRuDuan = 'vWuCaoAO=0.0;vWuYuYa=0.0;float wuYa=0.0;float wuBian=0.0;float wuWai=0.0;float wuQianRou=0.0;float wuPinTi=0.0;float wuNei=0.0;' +
-                /* FP-R15 屏幕 2D 人形压感：草根射线与角色平面求交 → 落在不透明轮廓内且在人后 = 被压 */
-                'vec3 wuP=(modelMatrix*vec4(grassOrigin,1.0)).xyz;' +
-                'vec3 wuC=uCharCam;vec3 wuD=wuP-wuC;float wuDist=length(wuD);wuD/=max(wuDist,1e-5);' +
-                'vec3 wuH=vec3(uCharMat[3][0],uCharMat[3][1],uCharMat[3][2]);' +
-                'vec3 wuN=normalize(vec3(uCharMat[2][0],uCharMat[2][1],uCharMat[2][2]));' +
-                'float wuDen=dot(wuD,wuN);float wuT=dot(wuH-wuC,wuN)/(abs(wuDen)<1e-5?1e-5:wuDen);' +
-                'float wuZaiHou=step(0.0,wuT)*step(wuT,wuDist-0.03);' +
-                'vec3 wuQ=wuC+wuD*wuT;' +
-                'vec4 wuLoc=uCharMatInv*vec4(wuQ,1.0);' +
-                'float wuU=1.0-(wuLoc.x*0.5+0.5);float wuV=wuLoc.y*0.5;' +
-                'float wuZaiKuang=step(0.0,wuU)*step(wuU,1.0)*step(0.0,wuV)*step(wuV,1.0);' +
-                'float wuA=texture2D(uCharMask,clamp(vec2(wuU,wuV),0.002,0.998)).a;' +
-                'float wuYuYa=wuA*wuZaiKuang*wuZaiHou;' +
-                'vWuYuYa=wuYuYa;' +
-                'wuNei=smoothstep(uCharEdge,uCharEdge+0.2,wuA)*wuZaiKuang;' +
-                'float wuAd=texture2D(uCharMask,clamp(vec2(wuU,wuV)+vec2(uCharWaiHuan,0.0),0.002,0.998)).a;' +
-                'wuAd=max(wuAd,texture2D(uCharMask,clamp(vec2(wuU,wuV)-vec2(uCharWaiHuan,0.0),0.002,0.998)).a);' +
-                'wuAd=max(wuAd,texture2D(uCharMask,clamp(vec2(wuU,wuV)+vec2(0.0,uCharWaiHuan),0.002,0.998)).a);' +
-                'wuAd=max(wuAd,texture2D(uCharMask,clamp(vec2(wuU,wuV)-vec2(0.0,uCharWaiHuan),0.002,0.998)).a);' +
-                'float wuWaiNei=smoothstep(uCharEdge,uCharEdge+0.2,wuAd);' +
-                'wuWai=clamp((wuWaiNei-wuNei)*wuZaiKuang,0.0,1.0);' +
-                'wuBian=clamp(smoothstep(0.0,uCharEdge,wuA)-wuNei,0.0,1.0)*wuZaiKuang;' +
-                'vec2 tocW=wuP.xz-uCharPos;' +
-                'float dcW=length(tocW);' +
-                'float charInfl=(1.0-smoothstep(uCharR0,uCharR1,dcW))*uCharStrength;' +
-                'vec3 charDir=normalize(vec3(tocW.x,0.0,tocW.y)+vec3(0.01,0.0001,0.0));' +
-                'if(wuZaiKuang>0.5){' +
-                'float wuCos=cos(uCharYaw);float wuSin=sin(uCharYaw);' +
-                'float wuLx=tocW.x*wuCos-tocW.y*wuSin;' +
-                'float wuZhou=-(tocW.x*wuSin+tocW.y*wuCos);' +
-                'float wuEps=uCharWenLiBu;' +
-                'float wuAu1=texture2D(uCharMask,clamp(vec2(wuU,wuV)+vec2(wuEps,0.0),0.002,0.998)).a;' +
-                'float wuAu0=texture2D(uCharMask,clamp(vec2(wuU,wuV)-vec2(wuEps,0.0),0.002,0.998)).a;' +
-                'float wuAv1=texture2D(uCharMask,clamp(vec2(wuU,wuV)+vec2(0.0,wuEps),0.002,0.998)).a;' +
-                'float wuAv0=texture2D(uCharMask,clamp(vec2(wuU,wuV)-vec2(0.0,wuEps),0.002,0.998)).a;' +
-                'vec2 wuGrad=vec2(wuAu1-wuAu0,wuAv1-wuAv0);' +
-                'vec2 wuDirLocal;' +
-                'if(length(wuGrad)>0.001){wuDirLocal=normalize(vec2(-wuGrad.x,-wuGrad.y));}' +
-                'else{wuDirLocal=normalize(vec2(wuLx,wuZhou)+vec2(0.0001,0.0001));}' +
-                'charDir=normalize(vec3(wuDirLocal.x*wuCos-wuDirLocal.y*wuSin,0.0,-wuDirLocal.x*wuSin-wuDirLocal.y*wuCos)+vec3(0.01,0.0001,0.0));' +
-                'charInfl=clamp(wuNei*uCharNeiQiangDu+wuBian*charInfl+wuWai*uCharWaiFan,0.0,1.0);' +
-                'float wuZao=fract(sin(dot(grassOrigin.xz,vec2(12.9898,78.233)))*43758.5453);' +
-                'float wuQianFu=-wuZhou;' +
-                'wuQianRou=smoothstep(0.02,0.07,wuQianFu)*(1.0-smoothstep(uCharQianJingChang-0.09,uCharQianJingChang,wuQianFu))*(1.0-smoothstep(uCharKuan*0.42,uCharKuan*0.60,abs(wuLx)));' +
-                'wuQianRou*=mix(1.0-uCharZaSheng,1.0,wuZao);' +
-                'if(wuQianRou>0.003){charDir=normalize(vec3(-wuSin,0.0,-wuCos)+vec3(0.01,0.0001,0.0));}' +
-                'charInfl=clamp(charInfl+wuQianRou*uCharQianJingQiang*0.35,0.0,1.0);' +
-                'vWuCaoAO=clamp(wuYuYa*1.1+wuWai*0.35,0.0,1.0);' +
-                '}else{vWuCaoAO=wuWai*0.35;charInfl=clamp(charInfl,0.0,1.0);}' +
-                /* 被压=永静态（现实：体重钉死） */
-                'bendingIntensity=bendingIntensity*(1.0-step(0.45,wuYuYa));' +
-                'finalGrassInclination=inclineVectorTowardSlerp(finalGrassInclination,terrainAdjustedNormal,step(0.45,wuYuYa));' +
-                'bendingIntensity=clamp(bendingIntensity+charInfl,0.0,1.0);' +
-                'bendingDirection=mix(bendingDirection,charDir,max(charInfl*0.9,step(0.45,wuYuYa)));' +
-                'float wuHash=fract(sin(dot(grassOrigin.xz,vec2(12.9898,78.233)))*43758.5453);' +
-                'float wuYaSui=mix(1.0,uCharYaSui,step(0.45,wuYuYa));' +
-                'float wuWaiSui=mix(1.0,uCharWaiSui,wuWai);' +
-                'float wuGaiZhou=clamp(wuBian*0.9+wuQianRou*1.2,0.0,1.0);' +
-                'float wuGai=wuGaiZhou*step(uCharQianXi,wuHash);' +
-                'vec3 wuGaiDir=normalize(vec3(-charDir.x,0.0,-charDir.z)+vec3(0.01,0.0,0.01));' +
-                'grassScale*=(wuYaSui*wuWaiSui*(1.0+wuGai*uCharQianGao));' +
-                'bendingDirection=mix(bendingDirection,wuGaiDir,wuGai*0.65);';
-            var biaoJiCao = 'bendingDirection=-bendingDirection;';
-            var biaoJiHua = 'bendingDirection=bendingDirection;';
-            var houXuan = {};
-            var keXuan = window.__grassMats;
-            if (keXuan && keXuan.length) {
-                for (var i = 0; i < keXuan.length; i++) {
-                    if (keXuan[i] && keXuan[i].uuid) houXuan[keXuan[i].uuid] = keXuan[i];
-                }
-            }
-            for (var c = 0; c < yaWanCachedMats.length; c++) houXuan[yaWanCachedMats[c].uuid] = yaWanCachedMats[c];
-            exp.engine.scene.traverse(function (o) {
-                var m = o.material;
-                if (!m || !m.uniforms || !m.uniforms.uBendingTexture) return;
-                var list = Array.isArray(m) ? m : [m];
-                for (var k = 0; k < list.length; k++) {
-                    var mm = list[k];
-                    if (mm && mm.uuid && mm.uniforms && mm.uniforms.uBendingTexture) houXuan[mm.uuid] = mm;
-                }
-            });
-            /* FP-R5：弯折贴图材质有两套注入点——草 = -bendingDirection，花/点精灵 = bendingDirection。
-               只认草标记会把花整套标成已处理却零钉死（用户“身下草仍可拨动”的根因）。
-               通用退路：凡有 bendingIntensity=bendData 者，在其后插入最小钉死。 */
-            function zuiXiaoDingSi(originVar) {
-                return '{vec2 twd=(modelMatrix*vec4(' + originVar + ',1.0)).xz-uCharPos;' +
-                    'float dWd=length(twd);' +
-                    'float qWd=max(dWd-uCharKuan*0.5,0.0);' +
-                    'bendingIntensity=bendingIntensity*(1.0-step(0.15,1.0-smoothstep(uCharKuan*0.7,uCharKuan*1.6,qWd)));}';
-            }
-            /* FP-R14 统一压感场：身下判定写入所有吃弯折的层。
-               草叶=顶点弯折；草坪/地皮=片元染色（uBendingColorIntensity）。
-               被压部分对鼠标/风一律永静态。 */
-            function diXingDingSi() {
-                return '{vec2 twd=vWorldPos.xz-uCharPos;' +
-                    'float dWd=length(twd);' +
-                    'float cWd=cos(uCharYaw);float sWd=sin(uCharYaw);' +
-                    'float lWd=twd.x*cWd-twd.y*sWd;' +
-                    'float zWd=-(twd.x*sWd+twd.y*cWd);' +
-                    'float qWd=length(vec2(lWd,zWd-clamp(zWd,0.0,uCharChang)));' +
-                    'bendingIntensity=bendingIntensity*(1.0-step(0.40,1.0-smoothstep(uCharKuan*0.7,uCharKuan*1.6,qWd)));}';
-            }
-            var youXin = false;
-            for (var key in houXuan) {
-                var m = houXuan[key];
-                if (m.__yaWanYiZhu) continue;
-                var vs = m.vertexShader || '';
-                var mainIdx = vs.indexOf('void main');
-                var caoWei = vs.indexOf(biaoJiCao);
-                var huaWei = vs.indexOf(biaoJiHua);
-                if (mainIdx === -1 || !m.uniforms) { continue; }
-                var fsYuan = m.fragmentShader || '';
-                var diXingBiao = 'float bendingIntensity=abs(bendData.r*uBendingFactor*uBendingColorIntensity);';
-                var diXingWei = fsYuan.indexOf(diXingBiao);
-                /* FP-R14：草坪/地皮片元压感（染色随鼠标 → 身下永不变色） */
-                if (diXingWei !== -1 && !m.__yaWanYiZhu) {
-                    m.uniforms.uCharPos = { value: { x: yaWanZhongXin.x, y: yaWanZhongXin.z } };
-                    m.uniforms.uCharPos.value.toArray = function (a) { a = a || []; a[0] = this.x; a[1] = this.y; return a; };
-                    m.uniforms.uCharYaw = { value: 0 };
-                    m.uniforms.uCharKuan = { value: 1 };
-                    m.uniforms.uCharChang = { value: 1 };
-                    var diSheng = 'uniform vec2 uCharPos;uniform float uCharYaw;uniform float uCharKuan;uniform float uCharChang;\n';
-                    var fsMain = fsYuan.indexOf('void main');
-                    if (fsMain !== -1) {
-                        m.fragmentShader = fsYuan.slice(0, fsMain) + diSheng +
-                            fsYuan.slice(fsMain, diXingWei + diXingBiao.length) + diXingDingSi() + fsYuan.slice(diXingWei + diXingBiao.length);
-                    }
-                    m.needsUpdate = true;
-                    m.__yaWanYiZhu = true;
-                    yaWanCaiZhi.push(m);
-                    yaWanCachedMats.push(m);
-                    youXin = true;
-                    continue;
-                }
-                /* 花/点精灵不改 shader（曾把 WebGL 打挂） */
-                if (caoWei === -1) { continue; }
-                m.uniforms.uCharPos = { value: { x: yaWanZhongXin.x, y: yaWanZhongXin.z } }; // FP-12：vec2 直读 .x/.y，不再依赖 THREE
-                // three 的 vec2 上传会调 value.toArray：纯 {x,y} 会每帧抛 TypeError 并打断 uniform 上传
-                m.uniforms.uCharPos.value.toArray = function (a) { a = a || []; a[0] = this.x; a[1] = this.y; return a; };
-                m.uniforms.uCharR0 = { value: YA_WAN.r0 };
-                m.uniforms.uCharR1 = { value: YA_WAN.r1 };
-                m.uniforms.uCharStrength = { value: YA_WAN.strength };
-                m.uniforms.uCharMask = { value: maskWenLi };
-                m.uniforms.uCharMaskOn = { value: maskWenLi ? 1 : 0 };
-                m.uniforms.uCharYaw = { value: 0 };
-                m.uniforms.uCharKuan = { value: 1 };
-                m.uniforms.uCharChang = { value: 1 };
-                m.uniforms.uCharEdge = { value: YA_WAN_LUN_KUO };
-                m.uniforms.uCharNeiQiangDu = { value: YA_WAN.neiQiangDu };
-                m.uniforms.uCharWenLiBu = { value: YA_WAN.wenLiBu };
-                m.uniforms.uCharFengYiZhi = { value: YA_WAN.fengYiZhi };
-                m.uniforms.uCharQianJingChang = { value: YA_WAN.qianJingChang };
-                m.uniforms.uCharQianJingQiang = { value: YA_WAN.qianJingQiang };
-                m.uniforms.uCharYaSui = { value: YA_WAN.yaSui };
-                m.uniforms.uCharChuanTou = { value: YA_WAN.chuanTou };
-                m.uniforms.uCharZaSheng = { value: YA_WAN.zaSheng };
-                m.uniforms.uCharWaiHuan = { value: YA_WAN.waiHuan };
-                m.uniforms.uCharWaiSui = { value: YA_WAN.waiSui };
-                m.uniforms.uCharWaiFan = { value: YA_WAN.waiFan };
-                m.uniforms.uCharQianGao = { value: YA_WAN.qianGao };
-                m.uniforms.uCharQianQing = { value: YA_WAN.qianQing };
-                m.uniforms.uCharQianXi = { value: YA_WAN.qianXi };
-                m.uniforms.uWuCaoAODu = { value: 0.55 };
-                /* FP-R15 屏幕人形压感：角色矩阵/逆矩阵/相机（每帧 tongBu 同步） */
-                m.uniforms.uCharMat = { value: { elements: new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]) } };
-                m.uniforms.uCharMatInv = { value: { elements: new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]) } };
-                m.uniforms.uCharCam = { value: { x: 0, y: 0, z: 0, toArray: function (a) { a = a || []; a[0] = this.x; a[1] = this.y; a[2] = this.z; return a; } } };
-                m.uniforms.uWuShiTu = { value: 0 };
-                if (caoWei !== -1) {
-                    m.vertexShader = vs.slice(0, mainIdx) + shengMing + vs.slice(mainIdx, caoWei + biaoJiCao.length) + zhuRuDuan + vs.slice(caoWei + biaoJiCao.length);
-                    var caoFs = m.fragmentShader || '';
-                    var caoFsMao = 'gl_FragColor=vec4(vGrassColor,1.0);';
-                    var caoFsMainIdx = caoFs.indexOf('void main(){');
-                    if (caoFs.indexOf(caoFsMao) !== -1 && caoFsMainIdx !== -1) {
-                        m.fragmentShader = caoFs.slice(0, caoFsMainIdx) +
-                            'varying float vWuCaoAO;uniform float uWuCaoAODu;varying float vWuYuYa;uniform float uWuShiTu;\n' +
-                            caoFs.slice(caoFsMainIdx).split(caoFsMao).join('gl_FragColor=vec4(mix(vGrassColor*(1.0-vWuCaoAO*uWuCaoAODu),vec3(1.0,0.15,0.15),uWuShiTu*step(0.5,vWuYuYa)),1.0);');
-                    }
-                } else {
-                    /* FP-R12：花/点精灵只做最小钉死。禁止再插复杂块——曾把 WebGL 打挂、iframe 整页崩溃。 */
-                    var chaRuDian;
-                    if (huaWei !== -1) {
-                        chaRuDian = huaWei + biaoJiHua.length;
-                    } else {
-                        var biJian = 'float bendingIntensity=bendData.r*uBendingFactor;';
-                        var biWei = vs.indexOf(biJian);
-                        chaRuDian = biWei >= 0 ? biWei + biJian.length : -1;
-                    }
-                    if (chaRuDian < 0) continue;
-                    var yuanBianLiang = vs.indexOf('flowerOrigin') >= 0 ? 'flowerOrigin' : (vs.indexOf('grassOrigin') >= 0 ? 'grassOrigin' : 'position');
-                    var xiaoShengMing = 'uniform vec2 uCharPos;uniform float uCharR0;uniform float uCharR1;uniform float uCharKuan;uniform float uCharChang;\n';
-                    var xiaoDing = '{vec2 twd=(modelMatrix*vec4(' + yuanBianLiang + ',1.0)).xz-uCharPos;' +
-                        'float dWd=length(twd);' +
-                        'float qWd=max(dWd-uCharKuan*0.5,0.0);' +
-                        'bendingIntensity=bendingIntensity*(1.0-step(0.15,1.0-smoothstep(uCharKuan*0.7,uCharKuan*1.6,qWd)));}';
-                    m.vertexShader = vs.slice(0, mainIdx) + xiaoShengMing + vs.slice(mainIdx, chaRuDian) + xiaoDing + vs.slice(chaRuDian);
-                }
-                m.needsUpdate = true;
-                m.__yaWanYiZhu = true;
-                yaWanCaiZhi.push(m);
-                yaWanCachedMats.push(m);
-                youXin = true;
-            }
-            if (youXin && window.__wuD && window.__wuD.log) window.__wuD.log('草着色器压弯注入推进至 ' + yaWanCaiZhi.length + ' 个材质');
-            return youXin || yaWanCaiZhi.length > 0;
-        }
-
-        /* --- 共享状态出口：T3 主循环读取注入函数/参数/指针/强度承载，reveal 源共用 --- */
-        var gongYong = {
-            YA_WAN: YA_WAN,
-            yaWanCaiZhi: yaWanCaiZhi,
-            guBiao: guBiao,
-            qiangDu: YA_WAN.strength,
-            t0: Date.now(),
-            zhuRuYaWan: zhuRuYaWan,
-            zhaoReveal: zhaoReveal,
-            quRevealUniform: function () { return revealUniform; },
-            jieLuWanChengHaoMiao: JIE_LU_WAN_CHENG_HAO_MIAO,
-            sheZhiJieLuWanCheng: function (ms) { if (ms > 0) JIE_LU_WAN_CHENG_HAO_MIAO = ms; },
-            gengXinJieLuDiXian: gengXinJieLuDiXian,
-            gouJianJieLuDiXian: gouJianJieLuDiXian,
-            sheZhiMaskWenLi: function (tex) { maskWenLi = tex; },
-            quMaskWenLi: function () { return maskWenLi; },
-            ceLiangCaoGenGaoDu: ceLiangCaoGenGaoDu,
-            ceLiangZhuangTai: ceLiangZhuangTai
-        };
-        window.__wuGongYong = gongYong;
-        // 调参钩子：__yaWanTiao 由外部（控制台/测试台）整体覆盖各项参数；
-        // __yaWanShouLian 立即收敛（绕过 T3 每帧 8% 平滑层，供低帧率 A/B 差分自检）
-        window.__yaWanShouLian = function (qiangDu) { gongYong.qiangDu = qiangDu; };
-
-        /* --- 贴地化状态（FP-02）：从挂载中的 mesh 反读实际生效参数 + NDC 投影位置 --- */
-        function quTieDiZhuangTai() {
-            try {
-                var m = window.__wuZhuJueMesh;
-                if (!m) return null;
-                var exp = window.__experience;
-                var cam = exp && exp.engine && exp.engine.camera && exp.engine.camera.instance;
-                var fuZhen = window.__fuZhenSanWei ? window.__fuZhenSanWei.qu() : null;
-                var PW = fuZhen && fuZhen.THREE;
-                var ndc = null;
-                if (cam && PW && PW.Vector3) {
-                    var v = new PW.Vector3();
-                    v.setFromMatrixPosition(m.matrixWorld);
-                    v.project(cam);
-                    ndc = [+v.x.toFixed(2), +v.y.toFixed(2), +v.z.toFixed(2)];
-                }
-                return {
-                    jiaoLian: [+m.position.x.toFixed(2), +m.position.y.toFixed(2), +m.position.z.toFixed(2)],
-                    qingJiaoDu: +(90 + (m.rotation.x || 0) * 180 / Math.PI).toFixed(1), // θ = 90° + rotation.x（度）
-                    pianHangDu: +((m.rotation.y || 0) * 180 / Math.PI).toFixed(1),
-                    chiCun: +(m.scale.x * 2).toFixed(3), // 2×2 平面：chiCun = scale×2
-                    ndc: ndc
-                };
-            } catch (e) { return null; }
-        }
-
-        /* --- 调试系统 --- */
-        window.__wuD = {
-            logs: [],
-            log: function (msg) {
-                var line = '[' + new Date().toISOString().slice(11, 19) + '] ' + msg;
-                this.logs.push(line);
-                if (this.logs.length > 60) this.logs.shift();
-                // 默认静默：内存日志照常记录（调试面板/d键可查），控制台仅 ?debug=1 时输出
-                try {
-                    if (/[?&]debug=1/.test(location.search)) console.debug('[WuHaoYang]', msg);
-                } catch (e) {}
-            },
-            state: function () {
-                var inj = 0, total = 0, qiangDu = NaN, zhongXin = null, r0 = NaN, r1 = NaN, moZhuRu = false;
-                var exp = window.__experience;
-                if (exp && exp.engine && exp.engine.scene) {
-                    exp.engine.scene.traverse(function (o) {
-                        var m = o.material;
-                        if (m && m.uniforms && m.uniforms.uBendingTexture) {
-                            total++;
-                            if (m.__yaWanYiZhu) inj++;
-                        }
-                    });
-                }
-                var mats = (yaWanCaiZhi && yaWanCaiZhi.length) ? yaWanCaiZhi : (window.__grassMats || []);
-                for (var i = 0; i < mats.length; i++) {
-                    var u = mats[i].uniforms;
-                    if (u && u.uCharStrength) {
-                        qiangDu = +u.uCharStrength.value.toFixed(3);
-                        zhongXin = u.uCharPos.value.toArray().map(function (v) { return +v.toFixed(2); });
-                        r0 = +u.uCharR0.value.toFixed(2);
-                        r1 = +u.uCharR1.value.toFixed(2);
-                        if (u.uCharMaskOn) moZhuRu = u.uCharMaskOn.value > 0.5;
-                        break;
-                    }
-                }
-                // 压伏中心=铰链=贴图底边中点 → uv (0.50,0.00)（u 宽向居中、v 铰链=0）；采样有效性=mask 纹理图片就绪
-                var moImg = maskWenLi && maskWenLi.image;
-                var moYouXiao = !!(moImg && (moImg.complete === undefined || moImg.complete));
-                return {
-                    mode: 'T3 引擎平面（铰链贴地固定朝向）+ reveal 同步',
-                    revealSource: revealSourceName || '未找到',
-                    revealProgress: revealUniform ? +revealUniform.value.toFixed(3) : null,
-                    jieLuWanChengHaoMiao: (window.__wuGongYong && window.__wuGongYong.jieLuWanChengHaoMiao) || null,
-                    xiangJi: window.__wuXiangJi || null,
-                    opacity: +(Number(window.__wuTouMingDu) || 0).toFixed(3),
-                    daoLu: window.__wuDaoLu || null,
-                    jieDuan: window.__caoDiJieDuan || 'qiBu',
-                    crushInjected: inj + '/' + total,
-                    crushStrength: qiangDu,
-                    crushCenter: zhongXin,
-                    crushR0: r0,
-                    crushR1: r1,
-                    maskZhuRu: moZhuRu && moYouXiao,
-                    maskUV: moYouXiao ? '有效(0.50,0.00)' : '无效',
-                    shiCeJiaoLianGaoDu: ceLiangZhuangTai.gaoDu != null ? +ceLiangZhuangTai.gaoDu.toFixed(4) : null,
-                    ceLiangLaiYuan: ceLiangZhuangTai.laiYuan,
-                    ceLiangYangBenShu: ceLiangZhuangTai.liYangShu,
-                    yinYing: window.__wuYinYingZhuangTai || '未创建',
-                    tieDi: quTieDiZhuangTai()
-                };
-            }
-        };
-
-        /* --- 调试面板：d 键切换；?debug=1 默认开启 --- */
-        var tiaoShiMian = null;
-        function gengXinMianBan() {
-            if (!tiaoShiMian) return;
-            var s = window.__wuD.state();
-            var td = s.tieDi;
-            tiaoShiMian.textContent =
-                '[WuHaoYang 调试]  (d 键关闭)\n' +
-                '模式: ' + s.mode + '\n' +
-                '道路: ' + (s.daoLu || '-') + '  阶段: ' + (s.jieDuan || '-') + '\n' +
-                'reveal 源: ' + s.revealSource + '\n' +
-                'reveal 进度: ' + s.revealProgress + '  →  角色不透明度: ' + s.opacity + '\n' +
-                '─ 贴地参数（FP-02 铰链）─\n' +
-                '铰链锚点: ' + (td ? td.jiaoLian.join(', ') : '-') + '  θ: ' + (td ? td.qingJiaoDu + '°' : '-') + '  yaw: ' + (td ? td.pianHangDu + '°' : '-') + '\n' +
-                '尺寸: ' + (td ? td.chiCun : '-') + '  NDC 投影: ' + (td && td.ndc ? td.ndc.join(', ') : '-') + '\n' +
-                '─ 吴昊阳→草地 ─\n' +
-                '压弯注入: ' + s.crushInjected + '  强度: ' + s.crushStrength + '\n' +
-                '压弯中心: ' + (s.crushCenter ? s.crushCenter.join(', ') : '-') + '  r0/r1: ' + s.crushR0 + '/' + s.crushR1 + '\n' +
-                '─ 压伏轮廓（FP-03）─\n' +
-                'mask 注入: ' + (s.maskZhuRu ? '是' : '否') + '  铰链uv采样: ' + s.maskUV + '\n' +
-                '实测铰链高度: ' + (s.shiCeJiaoLianGaoDu != null ? s.shiCeJiaoLianGaoDu : '-') + '  来源: ' + (s.ceLiangLaiYuan || '-') + '  样本: ' + (s.ceLiangYangBenShu || 0) + '\n' +
-                '阴影片: ' + s.yinYing + '\n' +
-                '─ 草地→吴昊阳 ─\n' +
-                'reveal 进度驱动角色淡入（上方进度/透明度）\n' +
-                '─ 日志 ─\n' + window.__wuD.logs.slice(-4).join('\n');
-        }
-        function qieHuanTiaoShi() {
-            if (tiaoShiMian) {
-                tiaoShiMian.parentNode.removeChild(tiaoShiMian);
-                tiaoShiMian = null;
-                return;
-            }
-            tiaoShiMian = document.createElement('div');
-            tiaoShiMian.style.cssText = 'position:fixed;top:12px;right:12px;z-index:9999;background:rgba(6,8,20,0.82);color:#9fe8b0;padding:10px 14px;font:12px/1.7 Consolas,monospace;white-space:pre;border-radius:8px;border:1px solid rgba(159,232,176,0.3);pointer-events:none;max-width:420px;';
-            document.body.appendChild(tiaoShiMian);
-            gengXinMianBan();
-        }
-        if (location.search.indexOf('debug=1') !== -1) {
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'd' || e.key === 'D') qieHuanTiaoShi();
-            });
-            qieHuanTiaoShi();
-            setInterval(function () { if (tiaoShiMian) gengXinMianBan(); }, 400);
-            try { window.__wuD.log('debug 面板已由 URL 参数开启'); } catch (e) {}
-        }
-
-        /* pure=1 纯背景模式：隐藏模板自带 UI（loading 界面/操作提示/进度点/音效图标/昼夜开关），
-           只留草地背景 + 吴昊阳（T3 引擎平面不受影响，交互保留可拖拽旋转）。
-           不影响默认无参数行为（主页 iframe 嵌入时零变化）。 */
-        if (location.search.indexOf('pure=1') !== -1) {
-            var pureYangShi = document.createElement('style');
-            pureYangShi.id = 'pureModeYangShi';
-            pureYangShi.textContent = '.loading,.look-around-hint,.explore-hint,.viewpoints-progress,.sound-icon,.switch{display:none!important}';
-            document.head.appendChild(pureYangShi);
-            try { window.__wuD.log('pure 纯背景模式已开启（模板 UI 已隐藏）'); } catch (e) {}
-        }
-
-    })();
-    </script>
-
-    <script>
-    /* 吴昊阳主道路 T3：角色平面进入引擎渲染管线（renderSceneOverride 路线 B）
-       - 逆向结论：引擎 postProcessing 的 RenderPass(FN) 以 .scene 属性持有真正渲染的场景
-         （= engine.scene），directRenderMode=false 时经 EffectComposer 通道链渲染。
-         挂入 engine.scene 的对象会进入渲染队列（旧失败案例的根因是用 r128 的 THREE
-         构造对象挂新版 THREE 场景——双实例协议不兼容，而非场景挂载路径被堵）。
-       - 本块全部用引擎自己的类构造：构造器从场景现有对象运行时反构（禁硬编码混淆类名），
-         geometry 复用 revealMesh 的 2×2 PlaneGeometry，材质 MeshBasicMaterial(depthTest=true)。
-       - 纹理必须与引擎同类：克隆场景内已有完整图片的纹理（flipY/色彩空间与引擎一致），
-         无 image 的纹理一律视为失败、绝不带病进场景（曾因此“揭露但吴昊阳不染色”）。
-       - 遮挡：角色平面 depthTest=true、depthWrite=false → 前景草自然遮挡角色，
-         角色吃引擎后处理（TAA/色彩通道），视觉与草地统一。
-       - 朝向（FP-11 比例保真 billboard）：平面法线每帧对准真实镜头（mianXiangJingTou，
-         绕铰链点旋转、底边始终贴地），镜头永远正视贴图——投影为纯等比缩放，角色长宽比
-         与源图逐像素一致，任意相机运动（指针视差平移 + lookAround 旋转漂移）下比例零变化。
-         【用户裁定】比例永不可改；旧"俯卧贴地固定朝向"在低机位下必然压扁，已废弃为
-         镜头未就绪时的一次性兜底（guDingChaoXiang）。
-       - 显现：不透明度由 reveal 进度直算（经 __wuGongYong.zhaoReveal 缓存进度源），
-         导出 __wuTouMingDu 供调试面板。
-       - 草压弯驱动：每帧强度更新（呼吸 sin + 鼠标增强 + 0.08 平滑）在本块 tongBu 内，
-         注入节流复用 __wuGongYong.zhuRuYaWan。
-       - 降级：健康监测发现平面被引擎移除时 __wuZhuJueZhuGuan 复位、__wuDaoLu 清空，
-         并经 dengJiChu 重建（重建时重设固定朝向）。 */
-    (function () {
-        /* 参数唯一来源：共享基础设施块已导出 window.__wuPEIZHI（含标定说明）。
-           此处 || 后的兜底只覆盖"共享块缺席"一种情形，且必须与那份逐字同值——两份默认值
-           各写一套曾导致"改了不生效"的静默失效，禁止在此另立新默认值。 */
-        var PEI_ZHI = window.__wuPEIZHI || { weiZhi: { x: 4.48, y: -0.0133, z: 3.78 }, chiCun: 2.55 };
-        /* 贴地化参数（全部集中于此，URL 覆盖统一解析，禁止散落硬编码）：
-           - jiaoLianGaoDu  铰链点（贴地边中点）世界 y：仅作测量未就绪时的回退默认
-             （FP-11 起锚点移至 (4.62,3.47)，运行时以草根实测为准，此值不再是实测值）
-           - qingJiao/pianHang  FP-11 起【不再是角色朝向】（朝向由 mianXiangJingTou 每帧
-             对准镜头），仅作为地面层参数保留。FP-R1 起接触场长=全身足迹（无 sin/cos
-             压缩），身体轴映射（uCharYaw）仍读实时 billboard 偏航。禁止把这两个值当角色姿态调。
-           - chiCunBeiShu   尺寸乘数：FP-12 定案 0.32（FP-11 的 0.40 缩 1/5——缩小后卡片矮、
-             腿部不再大段悬在地面之上）；billboard 下屏上体量随此值线性缩放（等比、比例不变） */
-        var CAN_SHU = { jiaoLianGaoDu: 0.024, qingJiao: 10, pianHang: 240, chiCunBeiShu: 0.38 };
-        /* 贴图纵向翻转位（FP-11 比例保真构图的组成部分）：
-           true ⇒ v=0（铰链＝贴地边）落在图像底行（头/手机侧），脚/腿侧随局部 +Y 在画面上方。
-           FP-11 billboard 正面朝镜头时，flipY=true 使屏幕显示=图像原样读法（头在下、脚在上），
-           与「最终效果图」头右下/脚左上的构图配合水平镜像（TIE_TU_JING_XIANG）达成。
-           压伏 mask 同读此值：flipY=true 后 mask v=0=图像底行=头侧，与"铰链=头侧贴地"的
-           billboard 语义一致，轮廓场沿身体轴的映射自洽（梯度在重映射空间内采样，方向自洽）。
-           调参口 ?wuFlip=0 退回不翻转（仅调试）。 */
-        var TIE_TU_FLIP_Y = true;
-        if (duQuURLShuZhi('wuFlip') === 0) TIE_TU_FLIP_Y = false;
-        /* 水平镜像位（FP-11）：billboard 正面朝镜头时图像按原样显示（头在画面左），
-           而「最终效果图」定案构图是头在右——FP-07 俯卧时代即以镜像构图贴合效果图
-           （旧 240° 俯卧渲染＝头右下/脚左上），此处经纹理 repeat.x=-1/offset.x=1 实现
-           同一构图，不改动 PNG 像素、不改比例。调参口 ?wuJingXiang=0 关闭（仅调试）。 */
-        var TIE_TU_JING_XIANG = true;
-        if (duQuURLShuZhi('wuJingXiang') === 0) TIE_TU_JING_XIANG = false;
-        /* FP-13 ③：卡片底边（贴地/铰链边）渐隐宽度（uv 比例，0=保留硬切边）。
-           卡片底边是一条硬切边，硬边=悬浮感的来源之一；给最下缘一条极窄的 alpha 衰减，
-           配合 alphaTest 让它与草根自然交错（等效渐变剔掉最下缘约 1.5%）。
-           只改 alpha，不动几何、不动比例。调参口 ?wuDiBian=0.05 */
-        var DI_BIAN = { jianYin: 0.035 };
-        var wuDiBianU = duQuURLShuZhi('wuDiBian');
-        if (wuDiBianU != null) DI_BIAN.jianYin = Math.max(0, Math.min(0.2, wuDiBianU));
-        var DI_BIAN_JIAN_YIN_TI = 'diffuseColor.a*=smoothstep(0.0,max(uWuDiBianJianYin,0.0001),vMapUv.y);\n';
-        /* FP-09 构图镜头（扩权，可选）：绝对机位会破坏引擎已有朝向（曾指向天空）。
-           默认关闭；仅调试时 ?xiangJi=1 配合 camX/camY/camZ、lookX/lookY/lookZ、camFov 打开。
-           ⚠️ 块注释体内禁止出现星号斜杠相邻的两个字符（URL 名一律写全，不用通配号）：
-              那会提前终结注释，其后的中文变成表达式语句并抛 ReferenceError，整段补丁层 IIFE 中止。 */
-        var XIANG_JI_GOU_TU = {
-            qiYong: false,
-            fov: 55,
-            weiZhi: { x: 5.2, y: 1.2, z: 4.8 },
-            muBiao: { x: 3.2, y: 0.3, z: 3.0 }
-        };
-        var xiangJiURL = duQuURLShuZhi('xiangJi');
-        if (xiangJiURL === 1) XIANG_JI_GOU_TU.qiYong = true;
-        var camXU = duQuURLShuZhi('camX'); if (camXU != null) XIANG_JI_GOU_TU.weiZhi.x = camXU;
-        var camYU = duQuURLShuZhi('camY'); if (camYU != null) XIANG_JI_GOU_TU.weiZhi.y = camYU;
-        var camZU = duQuURLShuZhi('camZ'); if (camZU != null) XIANG_JI_GOU_TU.weiZhi.z = camZU;
-        var lookXU = duQuURLShuZhi('lookX'); if (lookXU != null) XIANG_JI_GOU_TU.muBiao.x = lookXU;
-        var lookYU = duQuURLShuZhi('lookY'); if (lookYU != null) XIANG_JI_GOU_TU.muBiao.y = lookYU;
-        var lookZU = duQuURLShuZhi('lookZ'); if (lookZU != null) XIANG_JI_GOU_TU.muBiao.z = lookZU;
-        var camFovU = duQuURLShuZhi('camFov'); if (camFovU != null) XIANG_JI_GOU_TU.fov = camFovU;
-        // 调参口（与 debug=1/pure=1 同类调试参数）：?wuTheta= ?wuYaw= ?wuScale= ?wuY= ?wuX= ?wuZ=
-        // （度数/乘数/铰链点世界y/锚点世界x/z），一处解析完成全部覆盖
-        function duQuURLShuZhi(ming) {
-            var piPei = location.search.match(new RegExp('[?&]' + ming + '=(-?[\\d.]+)'));
-            return piPei ? parseFloat(piPei[1]) : null;
-        }
-        var wuTheta = duQuURLShuZhi('wuTheta'); if (wuTheta != null) CAN_SHU.qingJiao = wuTheta;
-        var wuYaw = duQuURLShuZhi('wuYaw'); if (wuYaw != null) CAN_SHU.pianHang = wuYaw;
-        var wuScale = duQuURLShuZhi('wuScale'); if (wuScale != null) CAN_SHU.chiCunBeiShu = wuScale;
-        var wuYshuZhi = duQuURLShuZhi('wuY'); if (wuYshuZhi != null) CAN_SHU.jiaoLianGaoDu = wuYshuZhi;
-        var wuXshuZhi = duQuURLShuZhi('wuX'); if (wuXshuZhi != null) PEI_ZHI.weiZhi.x = wuXshuZhi;
-        var wuZshuZhi = duQuURLShuZhi('wuZ'); if (wuZshuZhi != null) PEI_ZHI.weiZhi.z = wuZshuZhi;
-        /* FP-08：揭示完成下限 URL 覆盖写回共享出口（默认值在共享 IIFE JIE_LU_WAN_CHENG_HAO_MIAO） */
-        var jieLuWanChengURL = duQuURLShuZhi('jieLuWanCheng');
-        if (jieLuWanChengURL != null && jieLuWanChengURL > 0 && window.__wuGongYong && window.__wuGongYong.sheZhiJieLuWanCheng) {
-            window.__wuGongYong.sheZhiJieLuWanCheng(jieLuWanChengURL);
-        }
-        /* 接触阴影片配置（FP-03，全部集中于此）：
-           - waiKuo     外扩倍数（地面投影矩形 ×1.15）
-           - touMingDu  中心不透明度（渐变峰值 0.32）
-           - shangXian  不透明度上限（呼吸微动后 clamp，0.35）
-           - pianYi     向身体头侧偏移比例（身体遮挡光线方向）
-           - eP         贴地 epsilon（防与草 z-fighting）
-           URL 调参：?wuYinYing=0 关闭；?wuYinYingBuTouMingDu= 不透明度（>0 生效，上限内） */
-        var YIN_YING = { waiKuo: 1.15, touMingDu: 0.32, shangXian: 0.35, pianYi: 0.06, eP: 0.012 };
-        /* FP-14 ⑥ 体重微沉：铰链 y 再下沉卡高比例，底边埋进草里（只改位置，比例零改动）。
-           物理：人趴在草上会陷进草层一点，不是浮在草尖。 */
-        var WEI_CHEN = { biLi: 0.018 };
-        var wuChenU = duQuURLShuZhi('wuChen');
-        if (wuChenU != null) WEI_CHEN.biLi = Math.max(0, Math.min(0.08, wuChenU));
-        var wuYinYingOff = duQuURLShuZhi('wuYinYing') === 0;
-        var wuYinYingBuTouMingDu = duQuURLShuZhi('wuYinYingBuTouMingDu');
-        if (wuYinYingBuTouMingDu != null && wuYinYingBuTouMingDu > 0) YIN_YING.touMingDu = Math.min(wuYinYingBuTouMingDu, YIN_YING.shangXian);
-        /* 草地接触 AO 强度（FP-10；深度浮雕链路整段删除后从原 LI_TI.aoQiangDu 独立保留，
-           仍由 tongBu 同步到草材质 uWuCaoAODu，随 reveal 淡入）。 */
-        var CAO_AO_QIANG_DU = 0.85;
-         /* GANG_TI 刚体立体化（全部 mesh transform 级动画，可配置）：
-            - fuDu     呼吸浮动幅度（世界单位，铰链 y 偏移）
-            - suoFang  呼吸缩放脉动（相对基准的 ±比例）
-            - yaoYe    微摇曳幅度（弧度，绕铰链点 rotation.z，底边固定头摆动）
-            【用户裁定 2026-09-21】qiYong 写死 false：缩放脉动会改变角色比例，
-            用户要求吴昊阳时时刻刻保持原 2D 图比例，禁止任何比例改动。
-            相位与阴影片呼吸（FP-03）同源 sin，活物感统一 */
-         var GANG_TI = { qiYong: false, fuDu: 0.01, suoFang: 0.004, yaoYe: 0.006 };
-        // 日志经共享调试系统（__wuD 由共享基础设施 IIFE 提供）
-        function __wuDLog(msg) {
-            if (window.__wuD && window.__wuD.log) window.__wuD.log(msg);
-            else { try { if (/[?&]debug=1/.test(location.search)) console.debug('[WuHaoYang][T3] ' + msg); } catch (e) {} }
-        }
-        var mesh = null, yiJiuXu = false, zhenShu = 0, jieLuShiKe = 0;
-        var yinYingMesh = null, yinJiChuX = 1, yinJiChuY = 1; // 阴影片与基础 scale（呼吸微动围绕其摆动）
-        var linShiXiangLiang = null; // 鼠标增强投影用临时向量（父页 THREE，惰性创建）
-        var dangQianGaoDu = null; // FP-06：铰链/阴影片当前生效世界 y（实测优先，失败回退 CAN_SHU）
-        // 共享基础设施出口（压弯注入/参数/指针/强度承载与 reveal 进度源）
-        var gongYong = window.__wuGongYong || null;
-        var yaWanWanCheng = false, yaWanCacheTime = 0;
-
-        /* FP-11 比例保真 billboard（核心朝向，每帧调用）：平面法线对准真实镜头（绕铰链点旋转），
-           镜头永远正视贴图 ⇒ 投影=纯等比缩放，角色长宽比与源图逐像素一致，
-           鼠标晃动时比例零变化。【用户裁定】比例永不可改——俯卧贴地姿态在低机位下
-           必然以 sin(视角差) 压扁（θ=10° 时屏上高度只剩约 15%~25%），任何标定都救不了，
-           故废弃俯卧朝向，改用唯一数学正解：平面 ⟂ 视线。
-           数学（YXZ 序 world=Ry·Rx·local，绕 mesh 原点=铰链旋转，底边始终贴地）：
-             dir = normalize(镜头世界位 - 铰链)（取 cam.matrixWorld 平移分量，含父级组偏移）
-             rotation.y = atan2(dir.x, dir.z)   —— 水平对准：Ry·(0,0,1)=(sinψ,0,cosψ)∝(dx,dz)
-             rotation.x = -atan2(dir.y, √(dx²+dz²)) —— 俯仰对准：镜头高于铰链时卡片后仰 e
-           边界自检：dir 水平（dy=0）⇒ rotation.x=0（竖直卡片）；镜头升高 ⇒ e 增大、卡片后仰。
-           镜头不可解析时返回 false，调用方回退 guDingChaoXiang（下一帧 billboard 接管）。 */
-        function mianXiangJingTou(m) {
-            var exp = window.__experience;
-            var camWrap = exp && exp.engine && exp.engine.camera;
-            var cam = camWrap && (camWrap.instance || (camWrap.group && camWrap.group.children && camWrap.group.children[0]));
-            if (!cam || !cam.matrixWorld || !cam.matrixWorld.elements || !m.position) return false;
-            var be = cam.matrixWorld.elements;
-            var s = m.scale.x || 1;
-            /* FP-13：对准基准点=卡片中心（不是铰链）。绕铰链对准时，卡片顶端离镜头更远，
-               整幅图自带"上小下大"的梯形（实测边长比 1.112）；改按中心对准后梯形上下对称
-               抵消，边长比降到约 1.05，画面更接近原图的观感，比例红线不动。
-               中心 = 铰链 + s·卡片 up（局部 +Y 的世界单位向量，卡片全高 2s、半高 s），
-               up 依赖当前朝向，故迭代两轮收敛（第二轮误差 <0.01°）。 */
-            for (var ci = 0; ci < 2; ci++) {
-                var ux = Math.sin(m.rotation.x) * Math.sin(m.rotation.y);
-                var uy = Math.cos(m.rotation.x);
-                var uz = Math.sin(m.rotation.x) * Math.cos(m.rotation.y);
-                var dx = be[12] - (m.position.x + ux * s);
-                var dy = be[13] - (m.position.y + uy * s);
-                var dz = be[14] - (m.position.z + uz * s);
-                var dm = Math.sqrt(dx * dx + dy * dy + dz * dz);
-                if (!(dm > 1e-4) || !isFinite(dm)) return false;
-                dx /= dm; dy /= dm; dz /= dm;
-                m.rotation.order = 'YXZ';
-                m.rotation.y = Math.atan2(dx, dz);
-                m.rotation.x = -Math.atan2(dy, Math.sqrt(dx * dx + dz * dz));
-            }
-            return true;
-        }
-        /* FP-R1 接触阴影片几何：与压草场同款全身足迹推导（H5：阴影尺寸与全身足迹一致）。
-           图像是俯卧人体，接触面=全身；阴影长=卡高×zuChangXi（默认 1.0=全身足迹），
-           方向 (−sinψ,−cosψ)=身体轴（铰链→全身足迹远端）；横向宽=卡宽 2s。
-           旧 sin 后仰压缩使阴影只剩卡高 ~35%，接触面故事不自洽。每帧按 billboard
-           实时偏航同步——阴影始终压在身体正下方，屏幕上表现为角色剪影周围与身下草被压暗。
-           ⚠️ 作用域：必须留在 T3 IIFE 顶层（tongBu 每帧与创建路径共用），
-           挪进 chuangJian 内会让每帧调用抛 ReferenceError 并静默掐断整条每帧链。 */
-        function gengXinYinYing() {
-            if (!yinYingMesh || !mesh) return;
-            var s = mesh.scale.x || 1;
-            var psi = mesh.rotation.y || 0;
-            /* FP-R16 光影跟场景主光：阴影投向 = −地面光向（与树石阴影同源 uLightDirection） */
-            var guangX = -Math.sin(psi), guangZ = -Math.cos(psi);
-            try {
-                var gm = (gongYong && gongYong.yaWanCaiZhi && gongYong.yaWanCaiZhi[0] && gongYong.yaWanCaiZhi[0].uniforms && gongYong.yaWanCaiZhi[0].uniforms.uLightDirection) || null;
-                var ld = gm && gm.value;
-                if (ld && isFinite(ld.x) && isFinite(ld.z)) {
-                    var lx = ld.x, lz = ld.z, ll = Math.sqrt(lx * lx + lz * lz);
-                    if (ll > 0.02) {
-                        guangX = -lx / ll;
-                        guangZ = -lz / ll;
-                    }
-                }
-            } catch (eG) {}
-            /* FP-R1 全身足迹投影（保留）+ 阴影投向=−地面光向 */
-            var yaWanZu = (gongYong && gongYong.YA_WAN) || {};
-            var tiaoZu = window.__yaWanTiao || {};
-            var zuChangXiY = tiaoZu.zuChangXi != null ? tiaoZu.zuChangXi : (yaWanZu.zuChangXi != null ? yaWanZu.zuChangXi : 1.0);
-            var changTou = 2 * s * zuChangXiY;
-            var touX = guangX, touZ = guangZ;
-            var zhongXinJu = changTou * (0.5 + YIN_YING.pianYi);
-            yinYingMesh.rotation.order = 'YXZ';
-            yinYingMesh.rotation.y = psi;
-            yinYingMesh.rotation.x = -Math.PI / 2;
-            yinYingMesh.position.set(mesh.position.x + touX * zhongXinJu,
-                (dangQianGaoDu != null ? dangQianGaoDu : mesh.position.y) + YIN_YING.eP,
-                mesh.position.z + touZ * zhongXinJu);
-            yinJiChuX = s * YIN_YING.waiKuo;             // plane 宽 2 → 全宽 2s×1.15
-            yinJiChuY = (changTou * YIN_YING.waiKuo) / 2; // plane 高 2 → 全身足迹长 ×1.15
-            yinYingMesh.scale.set(yinJiChuX, yinJiChuY, 1);
-        }
-        /* 回退固定朝向（仅 mianXiangJingTou 失败时的一次性姿态，原 FP-02 俯卧几何）。
-           创建时一次性设置，之后每帧由 mianXiangJingTou 接管（重建时同样先经此兜底）。
-           Euler 序 'YXZ'：世界向量 = Ry(yaw)·Rx(pitch)·v——偏航绕世界竖直轴（先外层），
-           俯仰在其后，符合“偏航定整体朝向、俯仰定抬起角”的直觉模型。
-           倾角符号推导（右手系，绕 +X 正角 φ 的旋转矩阵 Rx(φ)：
-           y'=y·cosφ−z·sinφ，z'=y·sinφ+z·cosφ）：
-             取 φ = −(π/2 − θ)：
-             头向 (0,1,0) → (0, cosφ, sinφ) = (0, sinθ, −cosθ)
-               —— y 分量 sinθ>0（头侧上抬✓），与水平面夹角 = asin(sinθ) = θ ✓
-             法线 (0,0,1) → (0, −sinφ, cosφ) = (0, cosθ, sinθ)
-               —— 与 +Y 竖直方向夹角 = acos(cosθ) = θ，即法线朝上且向 +Z（相机侧）倾斜 θ ✓
-             边界自检：θ=0° → φ=−π/2 → 平面躺平（法线正上）；θ=90° → φ=0 → 平面竖直。
-             故 rotation.x = −(π/2 − θRad)，与规格“从竖直(0°)向地面旋转到 (90°−θ)”一致。 */
-        function guDingChaoXiang(m) {
-            m.rotation.order = 'YXZ';
-            m.rotation.y = CAN_SHU.pianHang * Math.PI / 180;
-            m.rotation.x = -(Math.PI / 2 - CAN_SHU.qingJiao * Math.PI / 180);
-        }
-
-        function fanGouZao(exp) {
-            var out = { meshCtor: null, basicMatCtor: null, basicTemplate: null, texCtor: null };
-            exp.engine.scene.traverse(function (o) {
-                try {
-                    if (o.isMesh && !o.isInstancedMesh && !out.meshCtor) out.meshCtor = o.constructor;
-                    var m = o.material;
-                    if (!m) return;
-                    var list = Array.isArray(m) ? m : [m];
-                    for (var i = 0; i < list.length; i++) {
-                        var mm = list[i];
-                        if (!mm) continue;
-                        if (mm.type === 'MeshBasicMaterial' && !out.basicMatCtor) {
-                            out.basicMatCtor = mm.constructor; out.basicTemplate = mm;
-                        }
-                        if (mm.uniforms && !out.texCtor) {
-                            for (var k in mm.uniforms) {
-                                var v = mm.uniforms[k].value;
-                                if (v && v.isTexture) { out.texCtor = v.constructor; break; }
-                            }
-                        }
-                    }
-                } catch (e) {}
-            });
-            var fuZhenSanWei = window.__fuZhenSanWei ? window.__fuZhenSanWei.qu() : null;
-            var FALBACK = fuZhenSanWei && fuZhenSanWei.THREE;
-            if (!out.meshCtor && FALBACK) out.meshCtor = FALBACK.Mesh;
-            if (!out.basicMatCtor && FALBACK) out.basicMatCtor = FALBACK.MeshBasicMaterial;
-            if (!out.texCtor && FALBACK) out.texCtor = FALBACK.CanvasTexture || FALBACK.Texture;
-            return out;
-        }
-
-        /* FP-10 细分平面：96×96 网格承载深度位移（约 9.4k 顶点，单网格开销可忽略）。
-           几何体/属性构造器全部反构自场景现有几何体（引擎同类，同源同实例域）；
-           uv 排布不假设标准 PlaneGeometry 映射——从原几何顶点反解仿射映射
-           （u=a·x+b·y+c，v 同理），与克隆路径逐点一致，任意翻转/旋转零失真。
-           任一步失败返回 null，调用方回退 2×2 克隆（位移退化为 0，其余立体化仍生效）。 */
-        function gouJianXiFenJiHe(exp, fenGe) {
-            try {
-                var yuanGeo = exp.revealMesh.mesh.geometry;
-                var geoCtor = yuanGeo.constructor;
-                var attrCtor = yuanGeo.attributes.position.constructor;
-                var yuanPos = yuanGeo.attributes.position.array;
-                var yuanUv = yuanGeo.attributes.uv.array;
-                var minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
-                var i2;
-                for (i2 = 0; i2 < yuanPos.length; i2 += 3) {
-                    if (yuanPos[i2] < minX) minX = yuanPos[i2];
-                    if (yuanPos[i2] > maxX) maxX = yuanPos[i2];
-                    if (yuanPos[i2 + 1] < minY) minY = yuanPos[i2 + 1];
-                    if (yuanPos[i2 + 1] > maxY) maxY = yuanPos[i2 + 1];
-                }
-                // 从原平面互异三角点解仿射 uv 映射（u=au·x+bu·y+cu，v 同理）
-                var yangBen = [];
-                for (i2 = 0; i2 < yuanPos.length / 3 && yangBen.length < 64; i2++) {
-                    yangBen.push([yuanPos[i2 * 3], yuanPos[i2 * 3 + 1], yuanUv[i2 * 2], yuanUv[i2 * 2 + 1]]);
-                }
-                function niHe(touBiao) {
-                    var p0 = yangBen[0], p1 = null, p2 = null;
-                    var k;
-                    for (k = 1; k < yangBen.length; k++) {
-                        if (Math.abs(yangBen[k][0] - p0[0]) > 1e-4 || Math.abs(yangBen[k][1] - p0[1]) > 1e-4) { p1 = yangBen[k]; break; }
-                    }
-                    for (; k < yangBen.length; k++) {
-                        var q = yangBen[k];
-                        var c01x = p1[0] - p0[0], c01y = p1[1] - p0[1];
-                        var c02x = q[0] - p0[0], c02y = q[1] - p0[1];
-                        if (Math.abs(c01x * c02y - c01y * c02x) > 1e-6) { p2 = q; break; }
-                    }
-                    if (!p1 || !p2) return null;
-                    var d01x = p1[0] - p0[0], d01y = p1[1] - p0[1], d01t = p1[touBiao] - p0[touBiao];
-                    var d02x = p2[0] - p0[0], d02y = p2[1] - p0[1], d02t = p2[touBiao] - p0[touBiao];
-                    var fenMu = d01x * d02y - d01y * d02x;
-                    if (Math.abs(fenMu) < 1e-8) return null;
-                    var aa = (d01t * d02y - d02t * d01y) / fenMu;
-                    var bb = (d01x * d02t - d02x * d01t) / fenMu;
-                    return [aa, bb, p0[touBiao] - aa * p0[0] - bb * p0[1]];
-                }
-                var sheU = niHe(2), sheV = niHe(3);
-                if (!sheU || !sheV) return null;
-                var n = fenGe || 96;
-                var ge = new geoCtor();
-                var shu = (n + 1) * (n + 1);
-                var pos = new Float32Array(shu * 3);
-                var nor = new Float32Array(shu * 3);
-                var uv = new Float32Array(shu * 2);
-                var pi = 0, ui = 0;
-                for (var iy = 0; iy <= n; iy++) {
-                    var yy = maxY - (iy / n) * (maxY - minY);
-                    for (var ix = 0; ix <= n; ix++) {
-                        var xx = minX + (ix / n) * (maxX - minX);
-                        pos[pi] = xx; pos[pi + 1] = yy; pos[pi + 2] = 0; pi += 3;
-                        nor[pi - 1] = 1;
-                        uv[ui] = sheU[0] * xx + sheU[1] * yy + sheU[2];
-                        uv[ui + 1] = sheV[0] * xx + sheV[1] * yy + sheV[2];
-                        ui += 2;
-                    }
-                }
-                var idxArr = [];
-                var w1 = n + 1;
-                for (var gy = 0; gy < n; gy++) {
-                    for (var gx = 0; gx < n; gx++) {
-                        var a = gx + w1 * gy;
-                        var b = gx + w1 * (gy + 1);
-                        var c = (gx + 1) + w1 * (gy + 1);
-                        var d = (gx + 1) + w1 * gy;
-                        idxArr.push(a, b, d, b, c, d);
-                    }
-                }
-                ge.setAttribute('position', new attrCtor(pos, 3));
-                ge.setAttribute('normal', new attrCtor(nor, 3));
-                ge.setAttribute('uv', new attrCtor(uv, 2));
-                ge.setIndex(idxArr);
-                return ge;
-            } catch (eG) {
-                __wuDLog('[T3] 细分几何构建失败（回退 2x2 克隆）: ' + eG.message);
-                return null;
-            }
-        }
-
-        function chuangJian(exp) {
-            var gz = fanGouZao(exp);
-            if (!gz.meshCtor || !gz.basicMatCtor) {
-                __wuDLog('[T3] 网格/材质构造器反构不完整，等待引擎后放弃本次');
-                return false;
-            }
-            /* 纹理必须与引擎上传路径同类：克隆场景内引擎自己的纹理实例，再把 .image
-               换成人物贴图绘制的画布，needsUpdate 交引擎按同管线上传——同类、同参、
-               同实例域，色彩空间/flipY/过滤全部继承引擎值，真正的融入。
-               ⚠️ 2026-09-19 全场景枚举实证：引擎 41 个材质贴图的 image 全为
-               OffscreenCanvas/DataTexture/计算纹理，不存在任何 HTMLImage 贴图，
-               即不存在 .complete 属性——旧过滤条件"image.complete 为真"在本引擎
-               永假，重试窗口再长也找不到克隆源（贴图重试耗尽死锁的真根因）。
-               新过滤按源类型定义"可用"：画布要求宽高>0，Image 才查 complete。
-               严禁回退父页 THREE.Texture：跨 THREE 实例的 Source 类与上传管线互不兼容，
-               克隆拆源也救不了跨实例——2026-09-19 门控死锁实证。 */
-            function quWenLiKeLongYuan() {
-                var zuiJia = null, zuiJiaZhong = -1;
-                function kanYuan(ti) {
-                    // 源可用性：2=OffscreenCanvas（引擎 2D 颜色纹理同类，最优）
-                    // 1=HTMLCanvasElement 其它=不可用（-1）
-                    // ⚠️ 类 donor 兜底（旧版给 DataTexture/计算纹理记 0 分）已被证伪并删除：
-                    //    three.js 按**纹理类**选上传分支，isDataTexture 恒走
-                    //    `texSubImage2D(…, image.data)`，而克隆体的 image 已被换成画布
-                    //    （image.data 不存在）⇒ 上传被 ANGLE 整条拒绝并刷
-                    //    `INVALID_VALUE: texSubImage2D: no pixels`。这类 donor 不是「兜底」，
-                    //    是必然失败的上传，宁可找不到 donor 走重试/降级也不许选中。
-                    if (!ti) return -1;
-                    if (typeof OffscreenCanvas !== 'undefined' && ti instanceof OffscreenCanvas) {
-                        return ti.width > 0 && ti.height > 0 ? 2 : -1;
-                    }
-                    if (typeof HTMLCanvasElement !== 'undefined' && ti instanceof HTMLCanvasElement) {
-                        return ti.width > 0 && ti.height > 0 ? 1 : -1;
-                    }
-                    if (typeof HTMLImageElement !== 'undefined' && ti instanceof HTMLImageElement) {
-                        return (ti.complete && (ti.naturalWidth === undefined || ti.naturalWidth > 0)) ? 1 : -1;
-                    }
-                    return -1;
-                }
-                try {
-                    exp.engine.scene.traverse(function (o) {
-                        var m = o.material;
-                        if (!m) return;
-                        var list = Array.isArray(m) ? m : [m];
-                        for (var i = 0; i < list.length; i++) {
-                            var mm = list[i];
-                            if (!mm) continue;
-                            var houXuan = [mm.map, mm.emissiveMap, mm.alphaMap];
-                            if (mm.uniforms) {
-                                for (var k in mm.uniforms) {
-                                    houXuan.push(mm.uniforms[k] && mm.uniforms[k].value);
-                                }
-                            }
-                            for (var j = 0; j < houXuan.length; j++) {
-                                var tx = houXuan[j];
-                                if (!tx || !tx.isTexture || typeof tx.clone !== 'function') continue;
-                                var zhong = kanYuan(tx.image);
-                                if (zhong > zuiJiaZhong) { zuiJiaZhong = zhong; zuiJia = tx; }
-                            }
-                        }
-                    });
-                } catch (e) {}
-                return zuiJiaZhong >= 0 ? zuiJia : null;
-            }
-            /* 人物贴图 → 引擎同类画布源：把已解码 <img> 绘制进新建 OffscreenCanvas
-               （与引擎自身贴图 image 完全同类型，上传路径零差异）；环境无
-               OffscreenCanvas 时降级 HTMLCanvasElement（同为 2D 画布源）。 */
-            function huaWeiYuanHuaBu(tu) {
-                var kuan = tu.naturalWidth || tu.width, gao = tu.naturalHeight || tu.height;
-                if (!kuan || !gao) return null;
-                var mianBan;
-                if (typeof OffscreenCanvas !== 'undefined') mianBan = new OffscreenCanvas(kuan, gao);
-                else {
-                    mianBan = document.createElement('canvas');
-                    mianBan.width = kuan; mianBan.height = gao;
-                }
-                mianBan.getContext('2d').drawImage(tu, 0, 0);
-                return mianBan;
-            }
-            /* 克隆并拆源（共享 Source 自污染的真正根因）：Texture.copy 复制
-               this.source=e.source——克隆体与被克隆者共享同一 Source，而 .image 是
-               source.data 的读写代理：对任一克隆体赋 .image 即串改共享源，全场景
-               引用该源的纹理一起被改写（2026-09-19 实证：阴影片赋 128 画布后人物贴图、
-               mask、引擎原纹理同时变 128 画布；此前误诊为"引擎静默替换占位 canvas"）。
-               拆源=给克隆体配独立 Source，赋值只影响自己。 */
-            function keLongDuLi(yuan, tuPian) {
-                var tex = yuan.clone();
-                try {
-                    if (yuan.source && yuan.source.constructor) tex.source = new yuan.source.constructor(tuPian);
-                    else tex.image = tuPian; // 旧版无 Source 包装：直接赋值（无共享源问题）
-                } catch (e2) { tex.image = tuPian; }
-                tex.needsUpdate = true;
-                return tex;
-            }
-            var geo = gouJianXiFenJiHe(exp, 96) || exp.revealMesh.mesh.geometry.clone();
-            /* FP-02 铰链几何：2×2 平面（细分网格与克隆源同界）自中心原点抬起一条边长，使
-               底边过原点——局部 x∈[−1,1]、y∈[0,2]、z=0，底边（贴图脚/腿侧、uv v=0）即铰链。
-               translate 必在细分构建之后：gouJianXiFenJiHe 的 uv 仿射映射反解自未位移的原几何，
-               先位移会污染其 position 基准。mesh.position 即铰链点，俯仰/偏航语义见 guDingChaoXiang。 */
-            geo.translate(0, 1, 0);
-            /* 接触阴影贴地压暗片（FP-03）：与人物 mesh 同生命周期（同一成功路径创建，
-               健康监测随人物一起复核，任一被移除即整体重建）。材质走引擎 basicMatCtor，
-               渐变纹理必须引擎同类克隆（quWenLiKeLongYuan 同一路径——禁父页 THREE 纹理直塞
-               引擎材质，跨实例陷阱），无克隆源即不建（人物主道路不受影响）。
-               renderOrder=-1：数值低于人物平面（默认 0）——透明队列里草（不透明先画）之后、
-               人物之前被正确遮挡叠加。 */
-            function chuangJianYinYing(jiaoSeHuaBu) {
-                if (wuYinYingOff) { window.__wuYinYingZhuangTai = '关闭'; return; }
-                try {
-                    var cv = document.createElement('canvas');
-                    cv.width = 256; cv.height = 256;
-                    var cx = cv.getContext('2d');
-                    /* FP-14 ④ 轮廓形接触阴影：体重压出的接触痕贴合体型剪影，不是圆形光斑。
-                       物理：人趴在草上，阴影是身体与草的接触面——躯干厚实处最暗，四肢渐淡。
-                       实现：人物画布 → 黑剪影 → 多层模糊成软接触痕；无剪影时回退径向渐变。 */
-                    var youJianYing = false;
-                    if (jiaoSeHuaBu && jiaoSeHuaBu.width > 0 && jiaoSeHuaBu.height > 0) {
-                        try {
-                            var siYing = document.createElement('canvas');
-                            siYing.width = 256; siYing.height = 256;
-                            var sc = siYing.getContext('2d');
-                            // 与人物贴图同构图（flipY + 镜像），使阴影剪影落在同一身体朝向
-                            sc.save();
-                            if (TIE_TU_JING_XIANG) { sc.translate(256, 0); sc.scale(-1, 1); }
-                            sc.translate(0, 256); sc.scale(1, -1); // 对应 flipY=true 的行序
-                            sc.drawImage(jiaoSeHuaBu, 0, 0, 256, 256);
-                            sc.restore();
-                            sc.globalCompositeOperation = 'source-in';
-                            sc.fillStyle = 'rgba(0,0,0,1)';
-                            sc.fillRect(0, 0, 256, 256);
-                            // 软接触痕：中心实、边缘散（体重压痕不是硬剪影）
-                            cx.save();
-                            if (typeof cx.filter === 'string') cx.filter = 'blur(14px)';
-                            cx.globalAlpha = 0.55;
-                            cx.drawImage(siYing, 0, 0);
-                            cx.filter = 'blur(6px)';
-                            cx.globalAlpha = 0.45;
-                            cx.drawImage(siYing, 0, 0);
-                            cx.filter = 'none';
-                            cx.globalAlpha = 0.35;
-                            cx.drawImage(siYing, 0, 0);
-                            cx.restore();
-                            youJianYing = true;
-                        } catch (eYj) { youJianYing = false; }
-                    }
-                    if (!youJianYing) {
-                        var jianBian = cx.createRadialGradient(128, 128, 20, 128, 128, 124);
-                        jianBian.addColorStop(0, 'rgba(0,0,0,1)');
-                        jianBian.addColorStop(0.55, 'rgba(0,0,0,0.55)');
-                        jianBian.addColorStop(1, 'rgba(0,0,0,0)');
-                        cx.fillStyle = jianBian;
-                        cx.fillRect(0, 0, 256, 256);
-                    }
-                    var yinYuan = quWenLiKeLongYuan();
-                    if (!yinYuan || !cv.width) { window.__wuYinYingZhuangTai = '未创建'; __wuDLog('[T3] 阴影片无引擎同类纹理可克隆，跳过（不带病进场景）'); return; }
-                    var yinTex = keLongDuLi(yinYuan, cv); // 拆源克隆：阴影片赋 image 不得串改共享源（见 keLongDuLi 注）
-                    var yinMat = new gz.basicMatCtor({
-                        map: yinTex,
-                        transparent: true,
-                        opacity: 0, // 随 reveal 淡入（tongBu 每帧驱动，与人物同显现节奏）
-                        depthTest: true,
-                        depthWrite: false,
-                        toneMapped: false
-                    });
-                    var yinGeo = exp.revealMesh.mesh.geometry.clone(); // 2×2 中心原点（阴影中心=投影矩形中心，非铰链）
-                    yinYingMesh = new gz.meshCtor(yinGeo, yinMat);
-                    /* 贴地朝向与几何全部交给 gengXinYinYing（按 billboard 实时姿态推导，
-                       见函数注）：创建时量一次草根高度，之后每帧随镜头晃动同步。 */
-                    var yaoGaoDu = CAN_SHU.jiaoLianGaoDu;
-                    if (gongYong && gongYong.ceLiangCaoGenGaoDu) {
-                        var ceYin = gongYong.ceLiangCaoGenGaoDu(PEI_ZHI.weiZhi.x, PEI_ZHI.weiZhi.z);
-                        if (ceYin != null && isFinite(ceYin)) yaoGaoDu = ceYin;
-                    }
-                    dangQianGaoDu = yaoGaoDu;
-                    gengXinYinYing();
-                    yinYingMesh.renderOrder = -1;
-                    yinYingMesh.name = '__wu_yinying_plane__';
-                    exp.engine.scene.add(yinYingMesh);
-                    window.__wuYinYingZhuangTai = '挂载';
-                    __wuDLog('[T3] 接触阴影片已贴地挂载（渐变纹理走引擎同类克隆）');
-                } catch (e) {
-                    yinYingMesh = null;
-                    window.__wuYinYingZhuangTai = '未创建';
-                    __wuDLog('[T3] 阴影片创建失败: ' + e.message);
-                }
-            }
-            var mat = null; // 贴图就绪后在 onload 内带 map 构造（引擎只认构造参数路径）
-            var tieTuChongShi = 0;
-            function anPaiZhongShi() {
-                var zuiDa = (window.__caoDiPeiZhi && window.__caoDiPeiZhi.zuiDaChongShi) || 5;
-                if (tieTuChongShi < zuiDa) {
-                    var yanChi = Math.min(600 * Math.pow(2, tieTuChongShi - 1), 5000);
-                    setTimeout(zaiRuTieTu, yanChi);
-                } else {
-                    __wuDLog('[T3] 贴图重试耗尽，主道路放弃（门控超时将整体隐藏并通知父页）');
-                }
-            }
-            function zaiRuTieTu() {
-                if (window.__wuYiXiaoHui) return;
-                var tu = new Image();
-                tu.onload = function () {
-                    try {
-                        /* 克隆源现找现用：岛屿等纹理异步到达，创建时找太早必然落空。每次 onload 重找，
-                           找不到可克隆源一律按失败重试，绝不带病进场景。
-                           ⚠️ 严禁回退父页 THREE.Texture：跨 THREE 实例的 Source 类与上传管线互不兼容
-                           （见 quWenLiKeLongYuan 注）——2026-09-19 死锁实证。
-                           人物贴图被页头 preload 先于岛屿纹理到达，首轮必落空，必须走重试窗口
-                           等岛屿纹理到齐后克隆引擎同类。 */
-                        var yuan = quWenLiKeLongYuan();
-                        if (!yuan) { throw new Error('wuKeLongYuan'); }
-                        /* 源必须换成引擎同类型画布（huaWeiYuanHuaBu）：裸 HTMLImageElement
-                           不是引擎任一贴图的 image 类型——同类克隆的意义就在于上传路径零差异，
-                           源类型不换则克隆形同虚设（跨源上传路径未经验证，不带病进场景）。
-                           keLongDuLi 拆源：克隆体独立 Source，避免串改被克隆者与其共享源。 */
-                        var tuPian = huaWeiYuanHuaBu(tu);
-                        if (!tuPian) { throw new Error('wenLiWuXiao'); }
-                        var tex = keLongDuLi(yuan, tuPian);
-                        if (!tex || tex.image !== tuPian || !(tuPian.width > 0 && tuPian.height > 0)) {
-                            throw new Error('wenLiWuXiao');
-                        }
-                        /* 贴图纵向朝向显式钉死：不随克隆源的隐式 flipY 漂移（漂移即上下颠倒
-                           而无人察觉）。铰链几何把 v=0 放在贴地的那条边，吴昊阳是俯卧体——
-                           贴地边是脚/腿侧＝图像顶行，故 v=0 ↔ 图像顶 ⇒ flipY=false。
-                           plane map / 压伏 mask 共用 TIE_TU_FLIP_Y，两者必须同签。 */
-                        tex.flipY = TIE_TU_FLIP_Y;
-                        /* FP-11 水平镜像（构图贴合效果图，像素/比例零改动）：
-                           repeat.x=-1 + offset.x=1 ⇒ u'=1-u ∈[0,1]，屏幕显示=图像水平镜像
-                           （头右下/脚左上）。offset 保证采样域不越界，无需改 wrap 模式。 */
-                        if (TIE_TU_JING_XIANG) { tex.repeat.x = -1; tex.offset.x = 1; }
-                        tex.needsUpdate = true;
-                        /* 材质在构造参数里带 map（已验证可用路径）；贴图源用 keLongDuLi 拆源克隆，
-                           .image 读写代理共享 Source 的串改陷阱见 keLongDuLi 注。 */
-                        mat = new gz.basicMatCtor({
-                            map: tex,
-                            transparent: true,
-                            alphaTest: 0.5,      // FP-02：剪影之外不写深度，剪影之内正常写
-                            depthTest: true,     // 前景草自然遮挡角色（路线 B 核心）
-                            depthWrite: true,    // FP-02：角色必须能遮挡身后的草（旧值 false 使角色永远"浮在草后"）
-                            side: (gz.basicTemplate && gz.basicTemplate.side != null) ? gz.basicTemplate.side : 2,
-                            toneMapped: false    // 贴图颜色不漂移（TAA/色彩通道仍生效）
-                        });
-                        /* FP-13 ③ 底边渐隐常驻注入（FP-10 深度浮雕注入已整段删除，本回调只改 alpha）。 */
-                        mat.onBeforeCompile = function (sq) {
-                            sq.uniforms.uWuDiBianJianYin = { value: DI_BIAN.jianYin };
-                            sq.uniforms.uWuHuanJingSe = { value: 0.06 };
-                            sq.fragmentShader = 'uniform float uWuDiBianJianYin;uniform float uWuHuanJingSe;\n' + sq.fragmentShader
-                                .replace('#include <map_fragment>', '#include <map_fragment>\n' + DI_BIAN_JIAN_YIN_TI)
-                                .replace('#include <dithering_fragment>', 'diffuseColor.rgb*=mix(vec3(1.0),vec3(0.78,0.72,0.95),uWuHuanJingSe);\n#include <dithering_fragment>');
-                        };
-                        mat.customProgramCacheKey = function () { return 'wu-diBian-v1'; };
-                        mesh = new gz.meshCtor(geo, mat);
-                    /* FP-02 铰链贴地定位：几何已 translate(0, 1, 0)（底边过原点），故
-                       mesh.position 即铰链点＝贴图底边（脚/腿侧）中点的世界坐标。
-                       y 由草根高度实测（草叶 instanceMatrix 根部世界 y）锚定，测量未就绪时
-                       回退 CAN_SHU.jiaoLianGaoDu（同一标定量）；x/z 取标定锚点。
-                       等比缩放 s=(chiCun/2)×chiCunBeiShu，平面局部 y∈[0,2] → 世界身高 chiCun。 */
-                    var yaoGaoDu = CAN_SHU.jiaoLianGaoDu;
-                    if (gongYong && gongYong.ceLiangCaoGenGaoDu) {
-                        var ce = gongYong.ceLiangCaoGenGaoDu(PEI_ZHI.weiZhi.x, PEI_ZHI.weiZhi.z);
-                        if (ce != null && isFinite(ce)) yaoGaoDu = ce;
-                    }
-                    dangQianGaoDu = yaoGaoDu;
-                    var chenRu = (PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu) * WEI_CHEN.biLi;
-                    mesh.position.set(PEI_ZHI.weiZhi.x, yaoGaoDu - chenRu, PEI_ZHI.weiZhi.z);
-                    mesh.scale.setScalar((PEI_ZHI.chiCun / 2) * CAN_SHU.chiCunBeiShu);
-                    __wuDLog('[T3] 铰链贴地：草根 y=' + yaoGaoDu.toFixed(4) +
-                        ' 锚点 (' + PEI_ZHI.weiZhi.x.toFixed(3) + ',' + PEI_ZHI.weiZhi.z.toFixed(3) +
-                        ') 边长 ' + (PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu).toFixed(3));
-                    if (!mianXiangJingTou(mesh)) guDingChaoXiang(mesh); // FP-11 billboard 优先，镜头未就绪回退俯卧兜底
-                    mesh.name = '__wu_zhujue_plane__';
-                    exp.engine.scene.add(mesh);
-                    window.__wuZhuJueMesh = mesh;
-                    /* FP-R11 镜头拉远（一次性，只改 FOV 不改比例）：每帧强写会与引擎相机抢控制导致门控失败 */
-                    try {
-                        var camYiCi = exp.engine.camera && exp.engine.camera.instance;
-                        if (camYiCi && camYiCi.fov && camYiCi.fov < 62) {
-                            camYiCi.fov = 62;
-                            if (camYiCi.updateProjectionMatrix) camYiCi.updateProjectionMatrix();
-                        }
-                    } catch (eFov) {}
-                    /* FP-01 后已无覆盖层需要“接管证明”：mesh 挂载中即主道路为真
-                       （门控 S4/S5 自有贴图解码与挂载验证，不会被创建即接管欺骗）；
-                       健康监测每 60 帧复核挂载，被移除即降级并重建。 */
-                    window.__wuZhuJueZhuGuan = true;
-                    window.__wuDaoLu = 'zhuDao';
-                    yiJiuXu = true;
-                    /* FP-03 压伏 mask：独立一份同源克隆纹理（与 plane 的 map 解耦——plane 材质
-                       后续 FP-05 可能调色调，mask 只读 alpha 不受影响；同一张 PNG、同一克隆路径、
-                       引擎实例保证与草着色器兼容。禁父页 THREE 纹理直塞引擎草着色器——跨实例
-                       陷阱，克隆失败即保持圆形场降级，半径参数已存在） */
-                    if (yuan && gongYong && gongYong.sheZhiMaskWenLi) {
-                        var maskKeLong = keLongDuLi(yuan, tuPian); // 与 plane 同源画布，独立 Source（共享源自污染见 keLongDuLi 注）
-                        maskKeLong.flipY = TIE_TU_FLIP_Y; // 与 plane map 同签：草着色器 wuUV 与平面 uv 同语义，反号即压错半身
-                        gongYong.sheZhiMaskWenLi(maskKeLong);
-                        __wuDLog('[T3] 压伏 mask 已克隆接入（草压弯切换为人物轮廓场）');
-                    }
-                    chuangJianYinYing(tuPian);
-                    __wuDLog('[T3] 角色平面已进入引擎场景（铰链贴地固定朝向，depthTest+depthWrite，草可双向遮挡）');
-                } catch (e) {
-                    __wuDLog('[T3] 创建失败: ' + e.message);
-                    tieTuChongShi++;
-                    anPaiZhongShi();
-                }
-                };
-                tu.onerror = function () {
-                    tieTuChongShi++;
-                    __wuDLog('[T3] 角色贴图加载失败(第' + tieTuChongShi + '次)');
-                    anPaiZhongShi();
-                };
-                tu.src = '/grass-bg/wuhaoyang-2d.png';
-            }
-            zaiRuTieTu();
-            return true;
-        }
-
-        function dengJiChu() {
-            var exp = window.__experience;
-            if (!exp || !exp.engine || !exp.engine.scene || !exp.revealMesh || !exp.revealMesh.mesh) {
-                setTimeout(dengJiChu, 400);
-                return;
-            }
-            if (!chuangJian(exp)) setTimeout(dengJiChu, 800);
-        }
-        dengJiChu();
-
-        /* 每帧：billboard 对准镜头（FP-11 唯一 rotation 写入点）+ reveal 直算透明度 +
-           压弯驱动 + 健康监测（比例保真：镜头每帧被正视，晃动下投影零形变） */
-        (function tongBu() {
-            requestAnimationFrame(tongBu);
-            if (!yiJiuXu || !mesh || document.hidden) return;
-            zhenShu++;
-            mianXiangJingTou(mesh); // FP-11：法线每帧对准镜头，角色比例时时刻刻与源图逐像素一致
-            /* FP-R7：贴地高度每帧应用（实测就绪后立即压到草根，不等 60 帧健康检查——
-               曾因过早测量写 0 样本 + 回退标定偏高，角色悬空约 0.1，接触效果全假） */
-            var tudiGao = (gongYong && gongYong.ceLiangZhuangTai && gongYong.ceLiangZhuangTai.gaoDu != null && isFinite(gongYong.ceLiangZhuangTai.gaoDu))
-                ? gongYong.ceLiangZhuangTai.gaoDu : dangQianGaoDu;
-            if (tudiGao != null && isFinite(tudiGao) && mesh) {
-                dangQianGaoDu = tudiGao;
-                var chenRuF = (PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu) * WEI_CHEN.biLi;
-                mesh.position.y = tudiGao - chenRuF + (GANG_TI.qiYong ? Math.sin((Date.now() - gongYong.t0) / 1000 * 0.9) * GANG_TI.fuDu : 0);
-            }
-            try { window.__wuTongBuXinTiao = Date.now(); } catch (e) {}
-            var exp = window.__experience;
-            // 健康监测每 60 帧：mesh 挂载中即主道路为真；被引擎移除 → 降级并经 dengJiChu 重建
-            //（重建走同一 chuangJian，铰链几何与固定朝向随建随设，无需事后补偿）。
-            // FP-03：阴影片与人物 mesh 同生命周期——任一被移除即整体降级，清理残留阴影片后随人物重建
-            //（未建阴影片（关闭/未创建）时 yinRengZai 恒真，不参与判定）。
-            if (zhenShu % 60 === 0 && exp && exp.engine && exp.engine.scene) {
-                var rengZai = false, yinRengZai = !yinYingMesh;
-                try {
-                    exp.engine.scene.traverse(function (o) { if (o === mesh) rengZai = true; else if (o === yinYingMesh) yinRengZai = true; });
-                } catch (e) {}
-                if (window.__wuZhuJueZhuGuan && (!rengZai || !yinRengZai)) {
-                    if (yinYingMesh) { try { exp.engine.scene.remove(yinYingMesh); } catch (e) {} }
-                    yinYingMesh = null;
-                    window.__wuZhuJueZhuGuan = false;
-                    window.__wuDaoLu = null;
-                    window.__wuZhuJueMesh = null; // 已移除的引用不让门控 S4/S5 误判就绪
-                    mesh = null;
-                    yiJiuXu = false;
-                    __wuDLog('[T3] 平面已丢失，主道路降级，触发重建');
-                    setTimeout(dengJiChu, 800);
-                    return;
-                }
-                /* FP-06 R1：健康监测同频复测草根高度。铰链语义下 mesh.position 即铰链点
-                   （贴图底边中点，脚侧贴地），地形起伏只沿世界 y 平移，故直接改 position.y
-                   即为正确贴地；铰链几何与固定朝向随建随设，不需重跑任何定位求解。
-                   GANG_TI 呼吸浮动在此唯一 y 写入点叠加（自算相位，与 2359 行 huXiZhen
-                   同源同频，时间差 <1ms 相位不可辨），避免独立写入被本处覆盖。 */
-                if (gongYong && gongYong.ceLiangCaoGenGaoDu) {
-                    var ceXin = gongYong.ceLiangCaoGenGaoDu(PEI_ZHI.weiZhi.x, PEI_ZHI.weiZhi.z);
-                    if (ceXin != null && isFinite(ceXin)) {
-                        dangQianGaoDu = ceXin;
-                        var chenRu2 = (PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu) * WEI_CHEN.biLi;
-                        if (mesh) mesh.position.y = ceXin - chenRu2 + (GANG_TI.qiYong ? Math.sin((Date.now() - gongYong.t0) / 1000 * 0.9) * GANG_TI.fuDu : 0);
-                        if (yinYingMesh) yinYingMesh.position.y = ceXin + YIN_YING.eP;
-                    }
-                }
-            }
-            // 草压弯注入检查（低频节流，与每帧强度驱动解耦：未完成时每帧重试，
-            // 完成后每 120 帧/缓存过期补查新材质）
-            var nowMs = Date.now();
-            if (zhenShu % 120 === 0 || !yaWanWanCheng || nowMs - yaWanCacheTime > 30000) {
-                if (gongYong) yaWanWanCheng = gongYong.zhuRuYaWan();
-                yaWanCacheTime = nowMs;
-            }
-            // 不透明度直算（每帧）：reveal uniform 优先；本 bundle 实测无 uRevealProgress，
-            // 故揭示时刻起的时间通道是常轨（600ms 延迟 + 7.5s 平滑淡入，与背景中心扩散同步，
-            // 两者取大）；__wuTouMingDu 导出供调试面板
-            var u = gongYong ? (gongYong.quRevealUniform() || (gongYong.zhaoReveal() ? gongYong.quRevealUniform() : null)) : null;
-            /* FP-08：门控通过后刷新揭示进度下限；uniform 已挂钩 getter= max(engine,floor)。
-               再补写一次引擎引用，防 getter 尚未挂上时的首帧空窗。 */
-            if (window.__caoDiYiJieLu) {
-                if (!jieLuShiKe) jieLuShiKe = Date.now();
-                if (gongYong && gongYong.gengXinJieLuDiXian) gongYong.gengXinJieLuDiXian();
-                /* FP-09：每帧锁定构图机位（扩权后对齐效果图），压过引擎 lookAround/指针视差 */
-                try {
-                    if (XIANG_JI_GOU_TU && XIANG_JI_GOU_TU.qiYong) {
-                        var expCam = window.__experience;
-                        var camWrap = expCam && expCam.engine && expCam.engine.camera;
-                        var camInst = camWrap && (camWrap.instance || (camWrap.group && camWrap.group.children && camWrap.group.children[0]));
-                        if (camInst && camInst.position) {
-                            camInst.position.set(XIANG_JI_GOU_TU.weiZhi.x, XIANG_JI_GOU_TU.weiZhi.y, XIANG_JI_GOU_TU.weiZhi.z);
-                            if (camInst.fov !== XIANG_JI_GOU_TU.fov) {
-                                camInst.fov = XIANG_JI_GOU_TU.fov;
-                                if (camInst.updateProjectionMatrix) camInst.updateProjectionMatrix();
-                            }
-                            if (camInst.lookAt) {
-                                camInst.lookAt(XIANG_JI_GOU_TU.muBiao.x, XIANG_JI_GOU_TU.muBiao.y, XIANG_JI_GOU_TU.muBiao.z);
-                            }
-                            camInst.updateMatrixWorld(true);
-                            window.__wuXiangJi = { fov: camInst.fov, pos: camInst.position.toArray(), muBiao: XIANG_JI_GOU_TU.muBiao };
-                        }
-                    }
-                } catch (xiangJiErr) {}
-                try {
-                    var expJieLu = window.__experience;
-                    var uJieLu = expJieLu && expJieLu.revealMesh && expJieLu.revealMesh.material &&
-                        expJieLu.revealMesh.material.uniforms && expJieLu.revealMesh.material.uniforms.uRevealProgress;
-                    if (uJieLu && gongYong && gongYong.gouJianJieLuDiXian) gongYong.gouJianJieLuDiXian(uJieLu);
-                    if (u && gongYong && gongYong.gouJianJieLuDiXian) gongYong.gouJianJieLuDiXian(u);
-                } catch (jieLuErr) {}
-                u = gongYong ? (gongYong.quRevealUniform() || (gongYong.zhaoReveal() ? gongYong.quRevealUniform() : null)) : u;
-            }
-            var p = u ? Math.min(1, Math.max(0, (u.value - 0.02) / 0.30)) : 0;
-            var bu = p * p * (3 - 2 * p);
-            if (window.__caoDiYiJieLu) {
-                var qt = Math.min(1, Math.max(0, (Date.now() - jieLuShiKe - 600) / 7500));
-                var timeBu = qt * qt * (3 - 2 * qt);
-                if (timeBu > bu) bu = timeBu;
-            }
-            window.__wuTouMingDu = bu;
-            mesh.material.opacity = bu;
-            var huXiZhen = gongYong ? Math.sin((nowMs - gongYong.t0) / 1000 * 0.9) : 0;
-            /* FP-12：阴影片每帧跟 billboard 姿态（地面落位随镜头俯仰/偏航变化），
-               随后呼吸微动在最新基准上摆动 */
-            gengXinYinYing();
-            /* 阴影片呼吸微动（FP-03）：随压伏呼吸 sin 同相位 1-2% 尺寸/不透明度微调（活物感），
-               不透明度上限 YIN_YING.shangXian；随 reveal 淡入（与人物同显现节奏） */
-            if (yinYingMesh) {
-                var yinOpacity = YIN_YING.touMingDu * bu * (1 + huXiZhen * 0.02);
-                yinYingMesh.material.opacity = Math.min(YIN_YING.shangXian, Math.max(0, yinOpacity));
-                var weiDong = 1 + huXiZhen * 0.012;
-                yinYingMesh.scale.set(yinJiChuX * weiDong, yinJiChuY * weiDong, 1);
-            }
-            /* GANG_TI 刚体立体化每帧（像素永不形变，仅 mesh transform 级）：
-               呼吸缩放脉动与阴影片同相位（活物感统一）+ 微摇曳（约半频错相，
-               避免与浮动同步显机械）；绕铰链 rotation.z，底边贴地固定头摆动。
-               scale 基准随 mesh 重建自动重取；摇曳 0 为 gongYong 缺省时的静止态 */
-            if (GANG_TI.qiYong && mesh) {
-                if (GANG_TI._mesh !== mesh || !isFinite(GANG_TI._jiZhunSuoFang)) {
-                    GANG_TI._mesh = mesh;
-                    GANG_TI._jiZhunSuoFang = mesh.scale.x;
-                }
-                var gangSuo = GANG_TI._jiZhunSuoFang * (1 + huXiZhen * GANG_TI.suoFang);
-                mesh.scale.set(gangSuo, gangSuo, gangSuo);
-                var gangYaoXiang = gongYong ? Math.sin((nowMs - gongYong.t0) / 1000 * 0.48) : 0;
-                mesh.rotation.z = gangYaoXiang * GANG_TI.yaoYe;
-            }
-            /* 草压弯强度驱动（每帧）：基准强度 + 鼠标扫过增强 + 0.08 平滑 + 呼吸 sin；
-               调参钩子 __yaWanTiao（整体覆盖）/ __yaWanShouLian（立即收敛）由共享基础设施承载。
-               鼠标增强的屏幕投影是 cam 在本循环的唯一消费者（billboard 已删），
-               读取与投影均局部化于此，cam/向量不可用时跳过增强不跳过基准驱动。 */
-            if (gongYong && yaWanWanCheng && gongYong.yaWanCaiZhi.length) {
-                var tiao = window.__yaWanTiao || {};
-                /* FP-R15：每帧写入角色矩阵/逆矩阵/相机（屏幕人形压感判定源） */
-                try {
-                    if (mesh) {
-                        mesh.updateMatrixWorld(true);
-                        var eM = mesh.matrixWorld.elements;
-                        var eI = [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1];
-                        (function niJuZhen(e, o) {
-                            var a00=e[0],a01=e[1],a02=e[2],a03=e[3],a10=e[4],a11=e[5],a12=e[6],a13=e[7],
-                                a20=e[8],a21=e[9],a22=e[10],a23=e[11],a30=e[12],a31=e[13],a32=e[14],a33=e[15];
-                            var b00=a00*a11-a01*a10,b01=a00*a12-a02*a10,b02=a00*a13-a03*a10,
-                                b03=a01*a12-a02*a11,b04=a01*a13-a03*a11,b05=a02*a13-a03*a12,
-                                b06=a20*a31-a21*a30,b07=a20*a32-a22*a30,b08=a20*a33-a23*a30,
-                                b09=a21*a32-a22*a31,b10=a21*a33-a23*a31,b11=a22*a33-a23*a32;
-                            var det=b00*b11-b01*b10+b02*b09+b03*b08-b04*b07+b05*b06;
-                            if (!det) return;
-                            det=1/det;
-                            o[0]=(a11*b11-a12*b10+a13*b09)*det; o[1]=(a02*b10-a01*b11-a03*b09)*det;
-                            o[2]=(a31*b05-a32*b04+a33*b03)*det; o[3]=(a22*b04-a21*b05-a23*b03)*det;
-                            o[4]=(a12*b08-a10*b11-a13*b07)*det; o[5]=(a00*b11-a02*b08+a03*b07)*det;
-                            o[6]=(a32*b02-a30*b05-a33*b01)*det; o[7]=(a20*b05-a22*b02+a23*b01)*det;
-                            o[8]=(a10*b10-a11*b08+a13*b06)*det; o[9]=(a01*b08-a00*b10-a03*b06)*det;
-                            o[10]=(a30*b04-a31*b02+a33*b00)*det; o[11]=(a21*b02-a20*b04-a23*b00)*det;
-                            o[12]=(a11*b07-a10*b09-a12*b06)*det; o[13]=(a00*b09-a01*b07+a02*b06)*det;
-                            o[14]=(a31*b01-a30*b03-a32*b00)*det; o[15]=(a20*b03-a21*b01+a22*b00)*det;
-                        })(eM, eI);
-                        var camXY = exp && exp.engine && exp.engine.camera && exp.engine.camera.instance;
-                        var camP = camXY ? camXY.position : null;
-                        var shiTu = (window.__wuShiTu === true || window.__wuShiTu === 1) ? 1 : 0;
-                        for (var mi = 0; mi < gongYong.yaWanCaiZhi.length; mi++) {
-                            var uu = gongYong.yaWanCaiZhi[mi].uniforms;
-                            if (uu.uCharMat && uu.uCharMat.value && uu.uCharMat.value.elements) {
-                                for (var ei = 0; ei < 16; ei++) uu.uCharMat.value.elements[ei] = eM[ei];
-                                for (var ej = 0; ej < 16; ej++) uu.uCharMatInv.value.elements[ej] = eI[ej];
-                            }
-                            if (uu.uCharCam && camP) { uu.uCharCam.value.x = camP.x; uu.uCharCam.value.y = camP.y; uu.uCharCam.value.z = camP.z; }
-                            if (uu.uWuShiTu) uu.uWuShiTu.value = shiTu;
-                        }
-                    }
-                } catch (eMat) {}
-                var jiZhunQiangDu = tiao.strength != null ? tiao.strength : gongYong.YA_WAN.strength;
-                var huXiFuDu = tiao.huxi != null ? tiao.huxi : gongYong.YA_WAN.huxi;
-                var muBiao = jiZhunQiangDu;
-                var cam = exp && exp.engine && exp.engine.camera && exp.engine.camera.instance;
-                if (cam) {
-                    if (!linShiXiangLiang) {
-                        var fuZhen = window.__fuZhenSanWei ? window.__fuZhenSanWei.qu() : null;
-                        var PW = fuZhen && fuZhen.THREE;
-                        if (PW && PW.Vector3) linShiXiangLiang = new PW.Vector3();
-                    }
-                    if (linShiXiangLiang) {
-                        linShiXiangLiang.setFromMatrixPosition(mesh.matrixWorld);
-                        linShiXiangLiang.project(cam);
-                        var jiaoX = (linShiXiangLiang.x + 1) / 2 * window.innerWidth;
-                        var jiaoY = (1 - linShiXiangLiang.y) / 2 * window.innerHeight;
-                        if (Math.abs(gongYong.guBiao.x - jiaoX) < 260 && Math.abs(gongYong.guBiao.y - jiaoY) < 230) {
-                            muBiao = jiZhunQiangDu * (tiao.shuBiaoJia != null ? tiao.shuBiaoJia : gongYong.YA_WAN.shuBiaoJia);
-                        }
-                    }
-                }
-                gongYong.qiangDu += (muBiao - gongYong.qiangDu) * 0.08;
-                var zuiZhong = gongYong.qiangDu + Math.sin((nowMs - gongYong.t0) / 1000 * 0.9) * huXiFuDu;
-                // FP-03：轮廓场参数每帧同步——CAN_SHU 当前值（θ/yaw/尺寸）随 URL 调参实时生效；
-                // mask 纹理后到（草材质先注入）时在此即时接入，双时序都不崩
-                var maskKeLongCur = gongYong.quMaskWenLi();
-                var zuKuanXi = tiao.zuKuanXi != null ? tiao.zuKuanXi : gongYong.YA_WAN.zuKuanXi;
-                var zuChangXi = tiao.zuChangXi != null ? tiao.zuChangXi : gongYong.YA_WAN.zuChangXi;
-                var touYingKuan = PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu * zuKuanXi;
-                /* FP-R1 根因：场长=全身足迹尺度（与卡高同量级），不再乘 sin(后仰角)。
-                   图像是俯卧人体，观众读到的接触面是全身；旧 sin 压缩使场长只剩卡高 ~35%
-                   且挤在铰链旁，压塌/倒伏几乎全落在角色平面遮挡后方 ⇒ 用户看不见。 */
-                var touYingChang = PEI_ZHI.chiCun * CAN_SHU.chiCunBeiShu * zuChangXi;
-                for (var i = 0; i < gongYong.yaWanCaiZhi.length; i++) {
-                    var caiZhi = gongYong.yaWanCaiZhi[i].uniforms;
-                    /* FP-13 ④：压伏随草地揭示进度淡入（草是"逐渐被趴下去"的，不是一上来就平）；
-                       bu=reveal 进度 0→1，与人物/阴影片同一节奏。 */
-                    caiZhi.uCharStrength.value = zuiZhong * bu;
-                    if (tiao.r0 != null) caiZhi.uCharR0.value = tiao.r0;
-                    if (tiao.r1 != null) caiZhi.uCharR1.value = tiao.r1;
-                    caiZhi.uCharMask.value = maskKeLongCur;
-                    caiZhi.uCharMaskOn.value = maskKeLongCur ? 1 : 0;
-                    caiZhi.uCharYaw.value = mesh.rotation.y; // FP-12：billboard 实时偏航（投影轴=后仰侧）
-                    caiZhi.uCharKuan.value = touYingKuan;
-                    caiZhi.uCharChang.value = touYingChang;
-                    // FP-06：轮廓内强度 / 梯度采样步长走统一配置（URL/调参钩子可覆盖）
-                    caiZhi.uCharNeiQiangDu.value = tiao.neiQiangDu != null ? tiao.neiQiangDu : gongYong.YA_WAN.neiQiangDu;
-                    caiZhi.uCharWenLiBu.value = tiao.wenLiBu != null ? tiao.wenLiBu : gongYong.YA_WAN.wenLiBu;
-                    // FP-13：风抑制系数与前景草带参数（调参钩子可覆盖）
-                    caiZhi.uCharFengYiZhi.value = tiao.fengYiZhi != null ? tiao.fengYiZhi : gongYong.YA_WAN.fengYiZhi;
-                    caiZhi.uCharQianJingChang.value = tiao.qianJingChang != null ? tiao.qianJingChang : gongYong.YA_WAN.qianJingChang;
-                    caiZhi.uCharQianJingQiang.value = tiao.qianJingQiang != null ? tiao.qianJingQiang : gongYong.YA_WAN.qianJingQiang;
-                    // FP-14：体重压塌比 / 边缘倒伏增高 / 倒伏带自然起伏（调参钩子可覆盖）
-                    if (caiZhi.uCharYaSui) caiZhi.uCharYaSui.value = tiao.yaSui != null ? tiao.yaSui : gongYong.YA_WAN.yaSui;
-                    if (caiZhi.uCharChuanTou) caiZhi.uCharChuanTou.value = tiao.chuanTou != null ? tiao.chuanTou : gongYong.YA_WAN.chuanTou;
-                    if (caiZhi.uCharZaSheng) caiZhi.uCharZaSheng.value = tiao.zaSheng != null ? tiao.zaSheng : gongYong.YA_WAN.zaSheng;
-                    // FP-R1：轮廓外压塌环 / 身前稀疏高草微搭（调参钩子可覆盖）
-                    if (caiZhi.uCharWaiHuan) caiZhi.uCharWaiHuan.value = tiao.waiHuan != null ? tiao.waiHuan : gongYong.YA_WAN.waiHuan;
-                    if (caiZhi.uCharWaiSui) caiZhi.uCharWaiSui.value = tiao.waiSui != null ? tiao.waiSui : gongYong.YA_WAN.waiSui;
-                    if (caiZhi.uCharWaiFan) caiZhi.uCharWaiFan.value = tiao.waiFan != null ? tiao.waiFan : gongYong.YA_WAN.waiFan;
-                    if (caiZhi.uCharQianGao) caiZhi.uCharQianGao.value = tiao.qianGao != null ? tiao.qianGao : gongYong.YA_WAN.qianGao;
-                    if (caiZhi.uCharQianQing) caiZhi.uCharQianQing.value = tiao.qianQing != null ? tiao.qianQing : gongYong.YA_WAN.qianQing;
-                    if (caiZhi.uCharQianXi) caiZhi.uCharQianXi.value = tiao.qianXi != null ? tiao.qianXi : gongYong.YA_WAN.qianXi;
-                    // FP-10/FP-13：草地接触 AO 强度同步（随 reveal 淡入，URL/调参钩子可覆盖）
-                    if (caiZhi.uWuCaoAODu) caiZhi.uWuCaoAODu.value = (tiao.aoDu != null ? tiao.aoDu : CAO_AO_QIANG_DU) * bu;
-                }
-            }
-        })();
-    })();
-    </script>
-
-
 </body>
 </html>

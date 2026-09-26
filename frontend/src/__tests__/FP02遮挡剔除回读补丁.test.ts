@@ -182,10 +182,8 @@ describe('FP-01 收尾：单道路降级与文案契约', () => {
 
   it('失败语义维持：门控超时整体隐藏唯一画布并通知父页', () => {
     const html = duHtml()
-    expect(html).toContain("document.querySelectorAll('canvas.webgl')")
-    expect(html).not.toContain('#wuhaoyang-overlay')
-    expect(html).not.toContain('#wuhaoyang-static')
-    expect(html).toContain("tongZhiFuYe('shi-bai', yuanYin)")
+     expect(html).toContain("document.querySelectorAll('canvas.webgl')")
+     expect(html).toContain("tongZhiFuYe('shi-bai', yuanYin)")
   })
 
   it('失败文案与重试/关闭入口走翻译键，值即最终文案', async () => {

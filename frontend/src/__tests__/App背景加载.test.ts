@@ -302,7 +302,7 @@ describe('App 草地背景独立加载', () => {
   it('失败提示文案走翻译键且保留重试与关闭入口', async () => {
     const { wrapper } = await mountApp()
     await fangXingJiaZai()
-    faSongBeiJingShiBai(wrapper, 'wuHaoYang')
+    faSongBeiJingShiBai(wrapper, 'ziYuan')
     await flushPromises()
 
     const tiShi = wrapper.find('.cao-di-shibai-ti-shi')
@@ -327,7 +327,7 @@ describe('App 草地背景独立加载', () => {
     await fangXingJiaZai()
     expect(wrapper.find('iframe.grass-bg-iframe').exists()).toBe(true)
 
-    faSongBeiJingShiBai(wrapper, 'wuHaoYang')
+    faSongBeiJingShiBai(wrapper, 'ziYuan')
     await flushPromises()
 
     expect(wrapper.find('iframe.grass-bg-iframe').exists()).toBe(false)

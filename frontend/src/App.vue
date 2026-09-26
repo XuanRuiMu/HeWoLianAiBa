@@ -15,18 +15,6 @@
         </router-view>
       </main>
     </div>
-    <!-- 草地 3D 背景：全局单例常驻。加载完全独立于正常功能——应用启动后先等父帧三维库
-         （THREE/GLTFLoader）预热有结论、再等主线程空闲才挂载 iframe（yingJiaZaiBeiJing），
-         主线程先服务登录/主页等真实交互；
-         背景加载慢或失败都不影响任何页面功能。除聊天类路由外所有路由可见（含登录页，
-         登录页是吴昊阳×草地融合的主舞台）：
-         门控揭示——iframe 内部等草地与吴昊阳双就绪后才圆形扩散揭示，
-         父页收到 jiu-xu 前保持透明隐藏；任一方超时未就绪则报错并隐藏背景。
-         z-index:0 位于 body 渐变背景之上、z-index:1 的应用内容之下；
-         进入聊天类路由时缩为屏外 2px 微窗隐藏（文档常驻不销毁，WebGL 上下文保留，
-         引擎 rAF 链不断、重开无需重建；2px 正尺寸绘制避免零尺寸帧缓冲 GL 报错，
-         每帧开销可忽略），离开时恢复尺寸直接显示、无需重新加载，秒开。
-         iframe 挂载后常驻，src 永不切换——切 src 会销毁文档导致每次返回主页都重载。 -->
     <iframe
       v-if="yingJiaZaiBeiJing"
       ref="grassIframe"
@@ -35,6 +23,7 @@
       :class="{ 'is-active': shiYongCaoDiBeiJing && beiJingJiuXu, 'gua-qi': beiJingGuaQi }"
       :aria-hidden="!(shiYongCaoDiBeiJing && beiJingJiuXu)"
       :title="huoQuFanYi('caoDi', 'beiJingBiaoTi')"
+      @load="beiJingYiJiaZai"
       @error="chuLiBeiJingJiaZaiShiBai"
     ></iframe>
     <div v-if="beiJingShiBai" class="cao-di-shibai-ti-shi" role="alert">
@@ -69,12 +58,8 @@ import { huoQuFanYi } from '@/config/translations'
 
 const route = useRoute()
 const 用户仓库 = 使用用户仓库()
-// 聊天类路由（AI 聊天/好友聊天）使用各自的聊天背景，草地背景隐藏让位。
-// 登录页（dengLu）保留背景——它是「吴昊阳 × 草地融合」的主舞台，角色要趴在草地上
-// 与登录框同屏共存（横向锚定 wuX=5.05 让角色落在登录框右侧，零遮挡）。
-// 初始 route.name 为 undefined 时默认不显示，避免首屏闪烁草地 iframe
 const liaoTianLeiLuYou = new Set(['liaoTian', 'haoYouLiaoTian'])
-const shiYongCaoDiBeiJing = computed(() => route.name && !liaoTianLeiLuYou.has(route.name as string))
+const shiYongCaoDiBeiJing = computed(() => route.name !== undefined && !liaoTianLeiLuYou.has(route.name as string))
 
 // 背景页地址带版本防陈旧缓存：同版本命中浏览器缓存秒开，新版本自动失效重取
 const beiJingDiZhi = gouJianCaoDiDiZhi()
@@ -95,36 +80,13 @@ watch(
 // 避免 3D bundle 解析/WebGL 初始化与页面交互抢占主线程（此前"背景没加载好啥也点不了"）
 const yingJiaZaiBeiJing = ref(false)
 const beiJingChongShiCiShu = ref(0)
-// 门控揭示状态：iframe 内部等草地与吴昊阳双就绪后才圆形扩散揭示，
-// 并 postMessage 通知父页；父页收到 jiu-xu 前 iframe 保持透明隐藏，
-// 收到 shi-bai 则隐藏背景并提示（草地与吴昊阳均不加载，应用照常运行）。
+// 背景状态：iframe 加载完成后显示，失败时保留应用功能并提示。
 const beiJingJiuXu = ref(false)
 const beiJingShiBai = ref(false)
 const beiJingShiBaiYuanYin = ref('')
 
-function yuJiaZaiCaoDiZiYuan() {
-  try {
-    const tu = new Image()
-    tu.decoding = 'async'
-    tu.src = '/grass-bg/wuhaoyang-2d.png'
-  } catch {
-    // 预载失败不影响正常功能，下次仍走网络加载
-  }
-  try {
-    const cachesJieKou = (window as unknown as { caches?: CacheStorage }).caches
-    if (cachesJieKou && typeof cachesJieKou.open === 'function') {
-      cachesJieKou
-        .open('cao-di-zi-yuan')
-        .then((huanCun) =>
-          Promise.all([
-            huanCun.add('/grass-bg/wuhaoyang-2d.png').catch(() => {}),
-          ]).then(() => {}),
-        )
-        .catch(() => {})
-    }
-  } catch {
-    // Cache Storage 不可用时静默跳过
-  }
+function beiJingYiJiaZai() {
+  beiJingJiuXu.value = true
 }
 
 function chuLiBeiJingXiaoXi(shiJian: MessageEvent) {
@@ -184,11 +146,6 @@ function chuLiBeiJingJiaZaiShiBai() {
 }
 
 async function qiDongBeiJingJiaZai() {
-  yuJiaZaiCaoDiZiYuan()
-  // 时序确定性：先等父帧三维库预热出结果（THREE/GLTFLoader 已挂到 window），再空闲挂载 iframe。
-  // 此前预热与挂载并行竞态，而 iframe 的覆盖层脚本一求值就要用父帧三维库，首次必然读空、
-  // 第二次因上一轮已设上才好——即「首次必失败、重试必成功」根因。iframe 侧现在会等待兜底，
-  // 但若不先出结果就挂载，冷加载要白等一整个等待上限才降级为静态兜底图。
   try {
     const moKuai = await import('@/utils/sanWei')
     await moKuai.yuJiaZaiSanWei()
@@ -433,11 +390,7 @@ onBeforeUnmount(() => {
   transform: translateY(-8px);
 }
 
-/* 草地 3D 背景：全局固定层，位于内容之下（z-index:-1），不拦截鼠标。
-   默认 opacity:0 —— 后台静默加载（文档仍可见、脚本正常跑、WebGL 初始化），
-   门控通过（草地与吴昊阳双就绪，iframe 内部已圆形扩散揭示）后父页才加 .is-active
-   以 opacity 淡入显现（父层无圆形扩散，与内层解耦）。不用 visibility:hidden，
-   否则 iframe 被判定为隐藏、requestAnimationFrame 不触发，导致背景无法在后台预加载。 */
+/* 草地 3D 背景：全局固定层，位于内容之下，不拦截鼠标。 */
 .grass-bg-iframe {
   position: fixed;
   inset: 0;
