@@ -77,6 +77,9 @@ const BIAO_BAI_LEI_XING_YING_SHE: Record<string, BiaoBaiJianCeJieGuo['biao_bai_l
   要求确立关系: 'yao_qiu_que_li_guan_xi',
 }
 
+/** 结算主事务的最大尝试次数（含首次）：四表任一失败即整条回滚并重试，超过即向调用方抛错 */
+const ZHAN_JIE_ZHONG_SHI_CI_SHU = 3
+
 /**
  * M2 调用收敛：表白/互删/识破/神经病四连检合并为一次结构化输出调用。
  * 输入与原先四次独立调用完全一致（消息文本 + 最近历史 + 角色人设 + 可选图像块），
@@ -291,16 +294,17 @@ async function xieRuYouXiJieJu(
 }
 
 async function gengXinYouXiDangAn(
+  zhi_xing: (文本: string, 参数?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }>,
   yong_hu_id: string,
   jiao_se_id: string,
   jie_guo_lei_xing: YouXiJieGuoLeiXing,
 ): Promise<void> {
-  const jiaoSe = await 数据库.query(`SELECT "名字", "是否渣型" FROM "角色" WHERE "ID" = $1 LIMIT 1`, [jiao_se_id])
-  const haoGanDu = await 数据库.query(
+  const jiaoSe = await zhi_xing(`SELECT "名字", "是否渣型" FROM "角色" WHERE "ID" = $1 LIMIT 1`, [jiao_se_id])
+  const haoGanDu = await zhi_xing(
     `SELECT "总分", "关系阶段" FROM "好感度" WHERE "用户ID" = $1 AND "角色ID" = $2 LIMIT 1`,
     [yong_hu_id, jiao_se_id],
   )
-  const xiaoXiShu = await 数据库.query(
+  const xiaoXiShu = await zhi_xing(
     `SELECT COUNT(*) as shu FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
     [yong_hu_id, jiao_se_id],
   )
@@ -311,7 +315,7 @@ async function gengXinYouXiDangAn(
   const guanXiJieDuan = haoGanDu.rows[0]?.关系阶段 ? String(haoGanDu.rows[0].关系阶段) : ''
   const xiaoXiZongShu = xiaoXiShu.rows[0]?.shu ? Number(xiaoXiShu.rows[0].shu) : 0
 
-  await 数据库.query(
+  await zhi_xing(
     `INSERT INTO "游戏档案" (
       "用户ID", "角色ID", "角色名字", "是否渣型", "结果类型", "是否封存",
       "好感度总分", "关系阶段", "消息总数"
@@ -410,67 +414,75 @@ export async function chuLiYouXiJieShu(
 
   jiLuYouXiJieJu(yong_hu_id, jiao_se_id, jie_guo_lei_xing)
 
-  // YH-057 关键链单事务：结算先算分后落库，外部IO（socket推送/复盘/挑战结算）禁入事务
-  // 根因：失败即残留孤儿角色，分永久丢失；事务只包行变更，外部IO放事务外
-  // 兼容mock池：vi.mock后connect非函数或抛错，一律降级原三写并行
-  const lianJieHanShu = (数据库 as unknown as { connect?: unknown }).connect
-  let shiWuKeHuDuan: { query: (wen: string, can?: unknown[]) => Promise<{ rowCount?: number | null }>; release: () => void } | undefined
-  if (typeof lianJieHanShu === 'function') {
-    try {
-      shiWuKeHuDuan = await (lianJieHanShu as () => Promise<typeof shiWuKeHuDuan>)()
-    } catch {
-      shiWuKeHuDuan = undefined
-    }
-  }
+  // YH-057 结算四表同事务：角色状态（封存/可继续聊天/结局状态）、游戏结局、结局文案快照、
+  // 游戏档案四条写必须在同一瞬间一起落定；任何一条失败整条 ROLLBACK，绝不留下
+  // 「角色已结束但游戏档案仍进行中」的半套状态。
+  // 重试的是**整个事务**（最多 ZHAN_JIE_ZHONG_SHI_CI_SHU 次）而不是单条语句：
+  // 每次重试都从 BEGIN 重新走一遍四表，游戏结局的 ON CONFLICT DO NOTHING 保证幂等，
+  // 结局文案快照在重试周期之外一次性抽定 ⇒ 重试不会换句子、也不会重复推送。
+  // 外部 IO（socket 推送 / 复盘 / 挑战结算）一律在 COMMIT 之后才发生。
+  // 兼容mock池：vi.mock后connect非函数或抛错，降级为无事务的逐表并行写。
+  type ZhiXing = (文本: string, 参数?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>>; rowCount?: number | null }>
+  const jieRuZhiXing: ZhiXing = (文本, 参数) => 数据库.query(文本, 参数)
+  const zhaiYaoWen = zhai_yao ? JSON.stringify(zhai_yao) : JSON.stringify({})
   let jieJuXieRuChengGong = false
-  if (!shiWuKeHuDuan) {
-    const [, jieJuXieRu] = await Promise.all([
-      gengXinJiaoSeJieJuZhuangTai(jiao_se_id, jie_guo_lei_xing),
-      xieRuYouXiJieJu(yong_hu_id, jiao_se_id, jie_guo_lei_xing, zhai_yao),
-      gengXinYouXiDangAn(yong_hu_id, jiao_se_id, jie_guo_lei_xing),
-      xieRuJieGuoWenAnKuaiZhao((文本, 参数) => 数据库.query(文本, 参数), jiao_se_id, jieGuoWenAn),
-    ])
-    jieJuXieRuChengGong = jieJuXieRu
-  } else {
-    const keHuDuan = shiWuKeHuDuan as { query: (wen: string, can?: unknown[]) => Promise<{ rowCount?: number | null }>; release: () => void }
+  let zhongShiCiShu = 0
+  for (;;) {
+    const lianJieHanShu = (数据库 as unknown as { connect?: unknown }).connect
+    let keHuDuan: { query: ZhiXing; release: () => void } | undefined
+    if (typeof lianJieHanShu === 'function') {
+      try {
+        // 必须带接收者调用：pg 的 Pool.prototype.connect 内部读 this.ending / this._idle / this.options，
+        // 摘出来裸调必抛 TypeError，被下面的 catch 吞掉后连接恒为 undefined ⇒ 结算链退化成逐句自动提交，
+        // 「关键链单事务」形同虚设，一句失败就留下半套状态。
+        keHuDuan = await (lianJieHanShu as () => Promise<typeof keHuDuan>).call(数据库)
+      } catch {
+        keHuDuan = undefined
+      }
+    }
+    if (!keHuDuan) {
+      const [, jieJuXieRu] = await Promise.all([
+        gengXinJiaoSeJieJuZhuangTai(jiao_se_id, jie_guo_lei_xing),
+        xieRuYouXiJieJu(yong_hu_id, jiao_se_id, jie_guo_lei_xing, zhai_yao),
+        gengXinYouXiDangAn(jieRuZhiXing, yong_hu_id, jiao_se_id, jie_guo_lei_xing),
+        xieRuJieGuoWenAnKuaiZhao(jieRuZhiXing, jiao_se_id, jieGuoWenAn),
+      ])
+      jieJuXieRuChengGong = jieJuXieRu
+      break
+    }
+    const keHuDuanShiWu = keHuDuan
     try {
-      await keHuDuan.query('BEGIN')
-      await keHuDuan.query(
+      await keHuDuanShiWu.query('BEGIN')
+      await keHuDuanShiWu.query(
         `UPDATE "角色" SET "封存" = $1, "可继续聊天" = $2, "结局状态" = $3 WHERE "ID" = $4`,
         [!keJiXuLiaoTian, keJiXuLiaoTian, jie_guo_lei_xing, jiao_se_id],
       )
-      const jieJuXieRu = await keHuDuan.query(
+      const jieJuXieRu = await keHuDuanShiWu.query(
         `INSERT INTO "游戏结局" ("用户ID", "角色ID", "结果状态", "摘要") VALUES ($1, $2, $3, $4)
          ON CONFLICT ("用户ID", "角色ID") DO NOTHING`,
-        [yong_hu_id, jiao_se_id, jie_guo_lei_xing, zhai_yao ? JSON.stringify(zhai_yao) : JSON.stringify({})],
+        [yong_hu_id, jiao_se_id, jie_guo_lei_xing, zhaiYaoWen],
       )
-      jieJuXieRuChengGong = (jieJuXieRu.rowCount ?? 0) > 0
       await xieRuJieGuoWenAnKuaiZhao(
-        (文本, 参数) => keHuDuan.query(文本, 参数),
+        (文本, 参数) => keHuDuanShiWu.query(文本, 参数),
         jiao_se_id,
         jieGuoWenAn,
       )
-      await keHuDuan.query('COMMIT')
+      await gengXinYouXiDangAn(
+        (文本, 参数) => keHuDuanShiWu.query(文本, 参数),
+        yong_hu_id,
+        jiao_se_id,
+        jie_guo_lei_xing,
+      )
+      await keHuDuanShiWu.query('COMMIT')
+      jieJuXieRuChengGong = (jieJuXieRu.rowCount ?? 0) > 0
+      break
     } catch (cuoWu) {
-      await keHuDuan.query('ROLLBACK').catch(() => undefined)
-      throw cuoWu
+      await keHuDuanShiWu.query('ROLLBACK').catch(() => undefined)
+      zhongShiCiShu += 1
+      if (zhongShiCiShu >= ZHAN_JIE_ZHONG_SHI_CI_SHU) throw cuoWu
+      await new Promise((jieJue) => setTimeout(jieJue, 100 * zhongShiCiShu))
     } finally {
-      keHuDuan.release()
-    }
-
-    // 档案为派生快照，事务外单独落库加重试，失败不污染主结算
-    let zhongShiCiShu = 0
-    for (;;) {
-      try {
-        await gengXinYouXiDangAn(yong_hu_id, jiao_se_id, jie_guo_lei_xing)
-        break
-      } catch (cuoWu) {
-        zhongShiCiShu += 1
-        if (zhongShiCiShu >= 3) {
-          throw cuoWu
-        }
-        await new Promise((jieJue) => setTimeout(jieJue, 100 * zhongShiCiShu))
-      }
+      keHuDuanShiWu.release()
     }
   }
 

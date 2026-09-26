@@ -32,6 +32,7 @@ export interface YongHuXinXi {
   jiao_se: GuanLiJiaoSe | null
   neng_li: GuanLiNengLi[]
   ce_shi?: boolean
+  /** 自迁移 040 起仅表示「最近生成的角色ID」（普通模式可并存多个角色），不是排他/唯一入口 */
   huo_yue_ren_she_id: string | null
   hai_wang_fen_shu: number
   chuang_jian_shi_jian: string

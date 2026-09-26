@@ -7,6 +7,7 @@ import { Pool } from 'pg'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RenZhengQingQiu } from '../../middleware/认证'
 import { ZHAN_JI_PEI_ZHI } from '../../config/战绩配置'
+import { huoQuFanYi } from '../../config/translations'
 import zhanJiLuYou from '../战绩'
 
 const 真实库状态 = vi.hoisted(() => ({ 池: null as Pool | null }))
@@ -30,7 +31,22 @@ const 仓库根 = resolve(后端根, '..')
 const 迁移目录 = resolve(后端根, 'database', 'migrations')
 const 管理连接串 = String(process.env.TEST_DATABASE_URL ?? '').replace(/\/[^/?#]*(\?.*)?$/, '/postgres$1')
 const 库名 = `fp11_api_${randomUUID().replace(/-/g, '').slice(0, 12)}`
-let 管理库: Pool
+
+/** 与本仓其余真库测试同口径：显式探测可达性，连不上整组 skip（不伪造通过、也不让 beforeAll 直接 throw） */
+async function 取池(连接串: string): Promise<Pool | null> {
+  if (连接串 === '') return null
+  const 池 = new Pool({ connectionString: 连接串, connectionTimeoutMillis: 3000, max: 2 })
+  try {
+    await 池.query('SELECT 1')
+    return 池
+  } catch {
+    await 池.end().catch(() => undefined)
+    return null
+  }
+}
+
+const 管理库 = await 取池(管理连接串)
+const 有真库 = 管理库 !== null
 let 业务库: Pool
 let 应用: express.Express
 
@@ -61,9 +77,8 @@ async function 建立用户(标记: string): Promise<{ id: string; archiveIds: s
 }
 
 beforeAll(async () => {
-  if (!process.env.TEST_DATABASE_URL) throw new Error('TEST_DATABASE_URL 未配置')
-  管理库 = new Pool({ connectionString: 管理连接串, max: 2 })
-  await 管理库.query(`CREATE DATABASE "${库名}"`)
+  if (!有真库) return
+  await (管理库 as Pool).query(`CREATE DATABASE "${库名}"`)
   业务库 = new Pool({ connectionString: 管理连接串.replace(/\/[^/?#]*(\?.*)?$/, `/${库名}$1`), max: 8 })
   真实库状态.池 = 业务库
   await 重放(resolve(仓库根, 'database', '000_baseline.sql'))
@@ -83,6 +98,7 @@ beforeAll(async () => {
 }, 420000)
 
 beforeEach(async () => {
+  if (!有真库) return
   await 业务库.query(`DELETE FROM "用户" WHERE "用户名" LIKE 'fp11-%'`)
 })
 
@@ -95,12 +111,32 @@ afterAll(async () => {
   }
 }, 420000)
 
-describe('FP-11 战绩分类 HTTP 真库契约', () => {
+describe('FP-11 战绩分类 HTTP 出参文案（无库依赖）', () => {
   it('服务器以编码后的战绩挂载路径注册路由', () => {
     const 源 = readFileSync(服务器入口路径, 'utf8')
     expect(源).toContain("yingYong.use(encodeURI('/api/战绩'), zhanJiLuYou)")
   })
 
+  it('断言用到的每个文案键都解析成最终中文（禁回落成键名本身）', () => {
+    const 键位 = [
+      ['tongYong', 'weiShouQuan'],
+      ['tongYong', 'fuWuQiNeiBuCuoWu'],
+      ['zhanJi', 'fenLeiMingChengYiCunZai'],
+      ['zhanJi', 'fenLeiBuCunZai'],
+      ['zhanJi', 'fenLeiShuJuYiBianHua'],
+      ['zhanJi', 'paiXuIDChongFu'],
+      ['zhanJi', 'dangAnBuCunZai'],
+    ] as const
+    for (const [组, 键] of 键位) {
+      const 文案 = huoQuFanYi(组, 键)
+      expect(文案, `${组}.${键} 未登记`).not.toBe(键)
+      expect(文案.length).toBeGreaterThan(0)
+      expect(/[一-龥]/.test(文案), `${组}.${键} 不是中文文案`).toBe(true)
+    }
+  })
+})
+
+describe.skipIf(!有真库)('FP-11 战绩分类 HTTP 真库契约', () => {
   it('无战绩的新用户首次读取也初始化且重复读取保持同一默认分类 ID', async () => {
     const 用户ID = randomUUID()
     await 业务库.query(`INSERT INTO "用户" ("ID", "手机号", "用户名", "昵称") VALUES ($1, $2, $3, '新用户')`, [用户ID, 随机手机号(), `fp11-新用户-${randomUUID().slice(0, 8)}`])
@@ -116,7 +152,7 @@ describe('FP-11 战绩分类 HTTP 真库契约', () => {
   it('未登录不能读取或修改分类', async () => {
     const 响应 = await request(应用).get('/api/战绩/分类')
     expect(响应.status).toBe(401)
-    expect(响应.body).toMatchObject({ cheng_gong: false, ti_shi: '未授权，请先登录' })
+    expect(响应.body).toMatchObject({ cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'weiShouQuan') })
   })
 
   it('分类列表自动包含稳定默认分类，自定义名称创建时 trim', async () => {
@@ -189,7 +225,7 @@ describe('FP-11 战绩分类 HTTP 真库契约', () => {
       .set('x-fp11-user', 用户.id)
       .send({ mingCheng: '  archive  ' })
     expect(重名.status).toBe(409)
-    expect(重名.body).toMatchObject({ ti_shi: '分类名称已存在', cuo_wu_ma: 'ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU', code: 'ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU', retryable: false })
+    expect(重名.body).toMatchObject({ ti_shi: huoQuFanYi('zhanJi', 'fenLeiMingChengYiCunZai'), cuo_wu_ma: 'ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU', code: 'ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU', retryable: false })
     expect(重名.body.traceId).toBe(重名.headers['x-request-id'])
   })
 
@@ -219,13 +255,13 @@ describe('FP-11 战绩分类 HTTP 真库契约', () => {
       .set('x-fp11-user', 用户.id)
       .send({ mingCheng: '再次修改', expectedVersion: 0 })
     expect(旧版本.status).toBe(409)
-    expect(旧版本.body).toMatchObject({ ti_shi: '分类已发生变化，请刷新后重试' })
+    expect(旧版本.body).toMatchObject({ ti_shi: huoQuFanYi('zhanJi', 'fenLeiShuJuYiBianHua') })
     const 越权 = await request(应用)
       .put(`/api/战绩/分类/${默认分类.id}`)
       .set('x-fp11-user', 他人.id)
       .send({ mingCheng: '盗改', expectedVersion: 1 })
     expect(越权.status).toBe(404)
-    expect(越权.body.ti_shi).toBe('战绩分类不存在')
+    expect(越权.body.ti_shi).toBe(huoQuFanYi('zhanJi', 'fenLeiBuCunZai'))
   })
 
   it('列表可按分类筛选并承接完整持久顺序，未筛选仍返回全部既有战绩', async () => {
@@ -265,7 +301,7 @@ describe('FP-11 战绩分类 HTTP 真库契约', () => {
       .query({ categoryId: randomUUID() })
       .set('x-fp11-user', 用户.id)
     expect(不存在.status).toBe(404)
-    expect(不存在.body.ti_shi).toBe('战绩分类不存在')
+    expect(不存在.body.ti_shi).toBe(huoQuFanYi('zhanJi', 'fenLeiBuCunZai'))
   })
 
   it('默认分类禁止删除，自定义分类删除时全部记录同事务回落并保持完整顺序', async () => {
@@ -357,7 +393,7 @@ describe('FP-11 战绩分类 HTTP 真库契约', () => {
       .set('x-fp11-user', 用户.id)
       .send({ targetCategoryId: randomUUID(), expectedVersion: 0 })
     expect(不存在目标.status).toBe(404)
-    expect(不存在目标.body.ti_shi).toBe('战绩分类不存在')
+    expect(不存在目标.body.ti_shi).toBe(huoQuFanYi('zhanJi', 'fenLeiBuCunZai'))
     const 越权分类 = await request(应用)
       .put(路径)
       .set('x-fp11-user', 他人.id)
@@ -413,7 +449,7 @@ describe('FP-11 战绩分类 HTTP 真库契约', () => {
       .set('x-fp11-user', 用户.id)
       .send({ targetCategoryId: 目标ID, expectedVersion: 0 })
     expect(旧版本.status).toBe(409)
-    expect(旧版本.body.ti_shi).toBe('分类已发生变化，请刷新后重试')
+    expect(旧版本.body.ti_shi).toBe(huoQuFanYi('zhanJi', 'fenLeiShuJuYiBianHua'))
   })
 
   it('同一来源版本的并发移档只有一个成功，另一个确定冲突', async () => {
@@ -429,7 +465,7 @@ describe('FP-11 战绩分类 HTTP 真库契约', () => {
     ])
     expect([甲.status, 乙.status].sort()).toEqual([200, 409])
     const 冲突 = 甲.status === 409 ? 甲 : 乙
-    expect(冲突.body.ti_shi).toBe('分类已发生变化，请刷新后重试')
+    expect(冲突.body.ti_shi).toBe(huoQuFanYi('zhanJi', 'fenLeiShuJuYiBianHua'))
   })
 
   it('批量排序只接受完整无重复 ID 集合，并原子持久化后再次读取承接', async () => {
@@ -443,7 +479,7 @@ describe('FP-11 战绩分类 HTTP 真库契约', () => {
       .set('x-fp11-user', 用户.id)
       .send({ recordIds: [用户.archiveIds[0], 用户.archiveIds[0]], expectedVersion: 0 })
     expect(重复.status).toBe(400)
-    expect(重复.body.ti_shi).toBe('排序ID不能重复')
+    expect(重复.body.ti_shi).toBe(huoQuFanYi('zhanJi', 'paiXuIDChongFu'))
     const 缺失 = await request(应用)
       .put(路径)
       .set('x-fp11-user', 用户.id)
@@ -495,7 +531,7 @@ describe('FP-11 战绩分类 HTTP 真库契约', () => {
       .set('x-fp11-user', 用户.id)
       .send({ recordIds: 用户.archiveIds.slice(0, 2), expectedVersion: 0 })
     expect(旧版本.status).toBe(409)
-    expect(旧版本.body.ti_shi).toBe('分类已发生变化，请刷新后重试')
+    expect(旧版本.body.ti_shi).toBe(huoQuFanYi('zhanJi', 'fenLeiShuJuYiBianHua'))
   })
 
   it('同一分类同一版本的并发排序仅提交一次', async () => {
@@ -510,7 +546,7 @@ describe('FP-11 战绩分类 HTTP 真库契约', () => {
     ])
     expect([甲.status, 乙.status].sort()).toEqual([200, 409])
     const 冲突 = 甲.status === 409 ? 甲 : 乙
-    expect(冲突.body.ti_shi).toBe('分类已发生变化，请刷新后重试')
+    expect(冲突.body.ti_shi).toBe(huoQuFanYi('zhanJi', 'fenLeiShuJuYiBianHua'))
     const 版本 = await 业务库.query(`SELECT "版本" FROM "战绩分类" WHERE "ID" = $1`, [默认分类])
     expect(版本.rows[0].版本).toBe(1)
   })
@@ -543,7 +579,7 @@ describe('FP-11 战绩分类 HTTP 真库契约', () => {
         .query({ expectedVersion: 0 })
         .set('x-fp11-user', 用户.id)
       expect(响应.status).toBe(503)
-      expect(响应.body.ti_shi).toBe('出错了，稍后再试')
+      expect(响应.body.ti_shi).toBe(huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
       const 分类 = await 业务库.query(`SELECT "ID" FROM "战绩分类" WHERE "ID" = $1`, [自定义ID])
       expect(分类.rows).toHaveLength(1)
       const 记录 = await 业务库.query(`SELECT "分类ID", "排序" FROM "游戏档案" WHERE "ID" = $1`, [用户.archiveIds[0]])
@@ -579,7 +615,7 @@ describe('FP-11 战绩分类 HTTP 真库契约', () => {
         .send({ mingCheng: '数据库冲突' })
       expect(响应.status).toBe(409)
       expect(响应.body).toMatchObject({
-        ti_shi: '分类名称已存在',
+        ti_shi: huoQuFanYi('zhanJi', 'fenLeiMingChengYiCunZai'),
         cuo_wu_ma: 'ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU',
       })
     } finally {
@@ -604,13 +640,13 @@ describe('FP-11 战绩分类 HTTP 真库契约', () => {
       .set('x-fp11-user', 用户.id)
       .send({ targetCategoryId: 自定义.body.shu_ju.id, expectedVersion: 0 })
     expect(他人记录.status).toBe(404)
-    expect(他人记录.body.ti_shi).toBe('战绩记录不存在')
+    expect(他人记录.body.ti_shi).toBe(huoQuFanYi('zhanJi', 'dangAnBuCunZai'))
     const 不存在 = await request(应用)
       .put(`/api/战绩/分类/${默认分类}/记录/${randomUUID()}`)
       .set('x-fp11-user', 用户.id)
       .send({ targetCategoryId: 自定义.body.shu_ju.id, expectedVersion: 0 })
     expect(不存在.status).toBe(404)
-    expect(不存在.body.ti_shi).toBe('战绩记录不存在')
+    expect(不存在.body.ti_shi).toBe(huoQuFanYi('zhanJi', 'dangAnBuCunZai'))
   })
 
   it('空分类接受完整空数组并幂等返回当前版本', async () => {

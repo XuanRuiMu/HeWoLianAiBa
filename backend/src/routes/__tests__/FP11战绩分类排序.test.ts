@@ -2,7 +2,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { Pool } from 'pg'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it } from 'vitest'
 import { ZHAN_JI_PEI_ZHI } from '../../config/战绩配置'
 
 const 后端根 = resolve(__dirname, '..', '..', '..')
@@ -14,7 +14,22 @@ const 全量夹具路径 = resolve(仓库根, 'database', '001_haoyou_yu_shezhi.
 const 管理连接串 = String(process.env.TEST_DATABASE_URL ?? '').replace(/\/[^/?#]*(\?.*)?$/, '/postgres$1')
 const 后缀 = randomUUID().replace(/-/g, '').slice(0, 12)
 const 已建库: string[] = []
-let 管理库: Pool
+
+/** 与本仓其余真库测试同口径：显式探测可达性，连不上整组 skip（不伪造通过、也不让 beforeAll 直接 throw） */
+async function 取管理库(): Promise<Pool | null> {
+  if (!process.env.TEST_DATABASE_URL || 管理连接串 === '') return null
+  const 池 = new Pool({ connectionString: 管理连接串, connectionTimeoutMillis: 3000, max: 2 })
+  try {
+    await 池.query('SELECT 1')
+    return 池
+  } catch {
+    await 池.end().catch(() => undefined)
+    return null
+  }
+}
+
+const 管理库 = await 取管理库()
+const 有真库 = 管理库 !== null
 
 function 取连接串(库名: string): string {
   return 管理连接串.replace(/\/[^/?#]*(\?.*)?$/, `/${库名}$1`)
@@ -22,7 +37,7 @@ function 取连接串(库名: string): string {
 
 async function 建隔离库(用途: string): Promise<Pool> {
   const 库名 = `fp11_${用途}_${后缀}`.slice(0, 60)
-  await 管理库.query(`CREATE DATABASE "${库名}"`)
+  await (管理库 as Pool).query(`CREATE DATABASE "${库名}"`)
   已建库.push(库名)
   return new Pool({ connectionString: 取连接串(库名), max: 8 })
 }
@@ -37,12 +52,6 @@ async function 重放迁移(池: Pool, 排除: Set<string>): Promise<void> {
     .sort()
   for (const 名 of 文件) await 重放(池, resolve(迁移目录, 名))
 }
-
-beforeAll(async () => {
-  if (!管理连接串 || !process.env.TEST_DATABASE_URL) throw new Error('TEST_DATABASE_URL 未配置')
-  管理库 = new Pool({ connectionString: 管理连接串, max: 2 })
-  await 管理库.query('SELECT 1')
-}, 420000)
 
 afterAll(async () => {
   if (管理库) {
@@ -66,7 +75,9 @@ describe('FP-11 战绩分类迁移契约', () => {
     expect(sql).toContain('row_number() OVER')
     expect(sql).toContain(`"名称" VARCHAR(${ZHAN_JI_PEI_ZHI.fenLeiMingChengZuiDaChangDu})`)
   })
+})
 
+describe.skipIf(!有真库)('FP-11 战绩分类迁移契约（真库）', () => {
   it('升级既有用户时安全回填默认分类与原列表顺序，重复执行不改变终态', async () => {
     const 池 = await 建隔离库('upgrade')
     try {

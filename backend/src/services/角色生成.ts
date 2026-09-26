@@ -588,7 +588,7 @@ export async function baoCunJiaoSe(
   } catch (cuoWu) {
     throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_INPUT_INVALID, cuoWu)
   }
-  // YH-057 角色生成关键链单事务：归档+落角色+落好感+落档案+指活跃同事务，外部IO禁入
+  // YH-057 角色生成关键链单事务：落角色+落好感+落档案+记最近生成角色同事务，外部IO禁入
   // 根因：多写散着走失败即残留孤儿角色；开场白生成为外部LLM IO放事务外，失败走补偿归档
   // 兼容mock池：vi.mock后connect非函数时走原直连路径
   // 兼容优雅停机mock池：connect为mock函数但返回undefined时走直连路径，禁undefined.query崩溃
@@ -596,7 +596,10 @@ export async function baoCunJiaoSe(
   let shiWuKeHuDuan: { query: (wen: string, can?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>>; rowCount?: number | null }>; release: () => void } | undefined
   if (typeof lianJieHanShu === 'function') {
     try {
-      const keHuDuan = await (lianJieHanShu as () => Promise<{ query: (wen: string, can?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>>; rowCount?: number | null }>; release: () => void }>)()
+      // 必须带接收者调用：pg 的 Pool.prototype.connect 内部读 this.ending / this._idle / this.options，
+      // 摘出来裸调必抛 TypeError，被下面的 catch 吞掉后连接恒为 undefined ⇒ 整条链退化成逐句自动提交，
+      // 「关键链单事务」形同虚设、失败即残留孤儿角色与好感度行。call(数据库) 把 this 绑回池本身。
+      const keHuDuan = await (lianJieHanShu as () => Promise<{ query: (wen: string, can?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>>; rowCount?: number | null }>; release: () => void }>).call(数据库)
       if (keHuDuan && typeof keHuDuan.query === 'function' && typeof keHuDuan.release === 'function') {
         shiWuKeHuDuan = keHuDuan
       }
@@ -616,21 +619,28 @@ export async function baoCunJiaoSe(
     if (shiWuKeHuDuan) {
       await zhiXing.query('BEGIN')
     }
-    // R2 创建角色幂等：先把该用户现有「同模式」的活跃角色归档（封存），
-    // 保证串行重复创建总是成功；并发场景由部分唯一索引 uk_角色_用户ID_模式_活跃
-    // 兜底，同一用户同一模式同时最多只允许一个活跃（未封存且未删除）角色。
-    await zhiXing.query(
-      `UPDATE "角色" SET "封存" = TRUE WHERE "用户ID" = $1 AND "封存" = FALSE AND "删除时间" IS NULL AND "对局模式" = $2`,
-      [yongHuId, duiJuMoShi],
-    )
+    // 挑战模式保留原有口径：生成挑战角色前把该用户同模式（tiaozhan）的旧角色归档，
+    // 与 uk_挑战对局_用户_进行中 一起保证「同一用户仅一局挑战进行中」在角色侧也不堆旧局。
+    // 普通模式（迁移 040）绝不归档：多角色并存、各会话可并行聊天。
+    if (duiJuMoShi === 'tiaozhan') {
+      await zhiXing.query(
+        `UPDATE "角色" SET "封存" = TRUE WHERE "用户ID" = $1 AND "封存" = FALSE AND "删除时间" IS NULL AND "对局模式" = $2`,
+        [yongHuId, duiJuMoShi],
+      )
+    }
 
+    // 新角色的三个状态列显式写入，不吃列默认值：
+    // 结局状态=''（未结算）、封存=false（未封存）、可继续聊天=true（可继续聊天），
+    // 避免留下「未封存却不可继续聊天」的脏状态。角色表上两个「同模式唯一活跃」的部分
+    // 唯一索引已由迁移 040 删除，故并发与连续创建都不再有排他冲突。
     const chaRuJiaoSe = await zhiXing.query(
     `INSERT INTO "角色" (
       "用户ID", "名字", "性别", "年龄", "外貌", "性格", "背景故事", "爱好",
       "言语风格", "头像", "标签", "喜欢的类型", "家庭背景", "情感经历",
       "是否渣型", "渣法描述", "话术", "暴露方式", "识破线索", "预设类型",
-      "IE类型", "热身类型", "回复延迟毫秒", "开场白", "MBTI", "微信昵称", "真实姓名", "世界信息", "对局模式", "音色ID"
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30)
+      "IE类型", "热身类型", "回复延迟毫秒", "开场白", "MBTI", "微信昵称", "真实姓名", "世界信息", "对局模式", "音色ID",
+      "封存", "可继续聊天", "结局状态"
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
     RETURNING "ID"`,
     [
       yongHuId,
@@ -663,6 +673,9 @@ export async function baoCunJiaoSe(
       JSON.stringify(jiaoSe.shi_jie_xin_xi),
       duiJuMoShi,
       jiaoSe.voice_id || null,
+      false,
+      true,
+      '',
     ],
   )
 
@@ -715,6 +728,9 @@ export async function baoCunJiaoSe(
     ],
   )
 
+  // 用户.活跃角色ID 自迁移 040 起只承载「最近生成的角色ID」这层语义：
+  // 认证出参（huo_yue_ren_she_id）继续读它，但角色表已无排他唯一索引，
+  // 它不再是「唯一活跃角色」的入口，聊天/会话一律按角色ID 自行定位。
   await zhiXing.query(
     `UPDATE "用户" SET "活跃角色ID" = $1, "目标性别" = $2, "性格选择" = $3, "渣男渣女变体" = $4 WHERE "ID" = $5`,
     [
