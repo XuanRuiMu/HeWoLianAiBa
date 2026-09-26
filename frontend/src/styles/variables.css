@@ -121,6 +121,8 @@
   --shuru-xian-changtai-kuan-du: 1px;
   --shuru-xian-jujiao-kuan-du: 2px;
   --shuru-juzhong-dong-xiao: 0.2s;
+  --shuru-sao-chu-shi-chang: 0.38s;
+  --quxian-sao-chu: cubic-bezier(0.22, 0.9, 0.24, 1);
   /* 文本控件焦点环只改粗细与偏移（贴住控件，不与装饰线争位），颜色仍用 --jujiao-huan-yanse */
   --jujiao-huan-kuan-du-wenben: 1px;
   --jujiao-huan-pian-yi-wenben: 0px;
@@ -324,7 +326,12 @@
   --xinmuzhong-qukuai-beijing: #ffffff;
   --xinmuzhong-qukuai-biankuang: #e5e5e5;
   --nuanhui-lan: #6B8CA6;
+  --nuanhui-lan-shen: #4A6A84;
   --roufen-zi: #C4A0B0;
+  --pinpai-fen: #FF6B9D;
+  --pinpai-fen-shen: #D6457C;
+  --pinpai-cheng: #FB923C;
+  --pinpai-cheng-shen: #D97316;
   --beijing-jianbian-1: #E8F4FD;
   --beijing-jianbian-2: #D0E4F0;
   --beijing-jianbian-3: #F5DDE5;
@@ -537,6 +544,11 @@
   --xinmuzhong-duibi-se: #ffffff;
   --xinmuzhong-qukuai-beijing: rgba(255, 255, 255, 0.04);
   --xinmuzhong-qukuai-biankuang: rgba(255, 255, 255, 0.1);
+  --nuanhui-lan-shen: #8EAFc5;
+  --pinpai-fen: #FF6B9D;
+  --pinpai-fen-shen: #FF8FB8;
+  --pinpai-cheng: #FB923C;
+  --pinpai-cheng-shen: #FDBA74;
   --beijing-jianbian-1: #1A2836;
   --beijing-jianbian-2: #0F1C28;
   --beijing-jianbian-3: #2A1A24;

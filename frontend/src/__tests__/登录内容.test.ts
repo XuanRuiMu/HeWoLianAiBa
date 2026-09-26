@@ -567,6 +567,48 @@ describe('登录内容组件', () => {
     }
   })
 
+  it('FP-01：无事件延迟回填在轮询后同步登录按钮（强制刷新 autofill 竞态根治）', async () => {
+    vi.useFakeTimers()
+    try {
+      const { wrapper } = await mountZuJian('dengLu')
+      const shouJiHao = wrapper.find('#denglu-shoujihao').element as HTMLInputElement
+      const miMa = wrapper.find('#denglu-mima').element as HTMLInputElement
+      const dengLuAnNiu = wrapper.find('form button[type="submit"]')
+      expect((dengLuAnNiu.element as HTMLButtonElement).disabled).toBe(true)
+      shouJiHao.value = '13800138000'
+      miMa.value = 'password123'
+      await vi.advanceTimersByTimeAsync(600)
+      await flushPromises()
+      expect((dengLuAnNiu.element as HTMLButtonElement).disabled).toBe(false)
+      wrapper.unmount()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('FP-01：取消自动填充清空回填标志后登录按钮回到禁用', async () => {
+    const { wrapper } = await mountZuJian('dengLu')
+    const miMaInput = wrapper.find('#denglu-mima')
+    const yuanSu = miMaInput.element as HTMLInputElement
+    yuanSu.value = 'password123'
+    const kaiShi = new Event('animationstart', { bubbles: true }) as Event & {
+      animationName: string
+    }
+    kaiShi.animationName = 'ziDongTianChongKaiShi'
+    yuanSu.dispatchEvent(kaiShi)
+    await flushPromises()
+    yuanSu.value = ''
+    yuanSu.dispatchEvent(kaiShi)
+    await flushPromises()
+    const shouJiHao = wrapper.find('#denglu-shoujihao').element as HTMLInputElement
+    shouJiHao.value = '13800138000'
+    wrapper.find('.biaodan-rongqi').element.dispatchEvent(new Event('focusin', { bubbles: true }))
+    await flushPromises()
+    const dengLuAnNiu = wrapper.find('form button[type="submit"]')
+    expect((dengLuAnNiu.element as HTMLButtonElement).disabled).toBe(true)
+    wrapper.unmount()
+  })
+
   it('FP-01：页面恢复事件会重新同步无事件晚填值', async () => {
     const { wrapper } = await mountZuJian('dengLu')
     const shouJiHao = wrapper.find('#denglu-shoujihao').element as HTMLInputElement

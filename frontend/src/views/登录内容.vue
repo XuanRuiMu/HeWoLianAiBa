@@ -54,9 +54,19 @@
           >
             <div
               class="biaodan-moshi-pane denglu-moshi-pane"
-              :class="{ 'shi-fu-yong': moShi === 'dengLu' }"
+              :class="{
+                'shi-fu-yong': moShi === 'dengLu',
+                'qiehuan-wanding': qieHuanWanDing && moShi === 'dengLu',
+              }"
             >
-              <Transition :name="qieHuanDongHua" @before-leave="biaoJiLiChangBiaoDan">
+              <Transition
+                :name="qieHuanDongHua"
+                @before-leave="biaoJiLiChangBiaoDan"
+                @after-enter="biaoJiRuChangWanDing"
+                @after-leave="biaoJiRuChangWanDing"
+                @enter-cancelled="biaoJiRuChangWanDing"
+                @leave-cancelled="biaoJiRuChangWanDing"
+              >
           <form
             v-if="moShi === 'dengLu'"
             key="dengLu"
@@ -203,9 +213,19 @@
             </div>
             <div
               class="biaodan-moshi-pane zhuce-moshi-pane"
-              :class="{ 'shi-fu-yong': moShi === 'zhuCe' }"
+              :class="{
+                'shi-fu-yong': moShi === 'zhuCe',
+                'qiehuan-wanding': qieHuanWanDing && moShi === 'zhuCe',
+              }"
             >
-              <Transition :name="qieHuanDongHua" @before-leave="biaoJiLiChangBiaoDan">
+              <Transition
+                :name="qieHuanDongHua"
+                @before-leave="biaoJiLiChangBiaoDan"
+                @after-enter="biaoJiRuChangWanDing"
+                @after-leave="biaoJiRuChangWanDing"
+                @enter-cancelled="biaoJiRuChangWanDing"
+                @leave-cancelled="biaoJiRuChangWanDing"
+              >
           <form
             v-if="moShi === 'zhuCe'"
             key="zhuCe"
@@ -444,6 +464,11 @@ const fuMoShi = inject<Ref<MoShiLeiXing>>('denglu-moshi', ref(bd.moShi))
 const moShi = ref<MoShiLeiXing>(bd.moShi)
 const qieHuanFangXiang = ref<'you' | 'zuo'>('you')
 const qieHuanDongHua = computed(() => `biaodan-qiehuan-${qieHuanFangXiang.value}`)
+const qieHuanWanDing = ref(true)
+
+function biaoJiRuChangWanDing(): void {
+  qieHuanWanDing.value = true
+}
 
 watch(moShi, (xinMoShi) => {
   bd.moShi = xinMoShi
@@ -581,10 +606,16 @@ function chuLiZiDongTianChong(shijian: Event, ziDuanMing: FuDongZiDuanMing) {
   if (dongHuaShijian.animationName !== ZI_DONG_TIAN_CHONG_DONG_HUA_MING) return
   const ziDongBiaoZhi = fuDongZiDongYingShe[ziDuanMing]
   const muBiao = fuDongZhiYingShe[ziDuanMing]
-  ziDongBiaoZhi.value = true
   const shuRuKuang = shijian.target as HTMLInputElement | null
-  if (shuRuKuang && shuRuKuang.value !== '' && muBiao.value !== shuRuKuang.value) {
-    muBiao.value = shuRuKuang.value
+  const shiJiZhi = shuRuKuang?.value ?? ''
+  if (shiJiZhi === '') {
+    ziDongBiaoZhi.value = false
+    if (muBiao.value !== '') muBiao.value = ''
+    return
+  }
+  ziDongBiaoZhi.value = true
+  if (muBiao.value !== shiJiZhi) {
+    muBiao.value = shiJiZhi
   }
 }
 
@@ -633,6 +664,26 @@ function tongBuPageshow() {
 }
 
 let shouZhenTongBuId: number | null = null
+let huiTianLunXunId: ReturnType<typeof setInterval> | null = null
+const HUI_TIAN_LUN_XUN_CI_SHU = 20
+const HUI_TIAN_LUN_XUN_JIAN_GE = 250
+
+function tingZhiHuiTianLunXun(): void {
+  if (huiTianLunXunId !== null) {
+    clearInterval(huiTianLunXunId)
+    huiTianLunXunId = null
+  }
+}
+
+function qiDongHuiTianLunXun(): void {
+  tingZhiHuiTianLunXun()
+  let ciShu = 0
+  huiTianLunXunId = setInterval(() => {
+    ciShu += 1
+    tongBuSuoYouHuiTian()
+    if (ciShu >= HUI_TIAN_LUN_XUN_CI_SHU) tingZhiHuiTianLunXun()
+  }, HUI_TIAN_LUN_XUN_JIAN_GE)
+}
 
 const dengLuMiMaShuRuKuang = ref<HTMLInputElement | null>(null)
 const zhuCeMiMaShuRuKuang = ref<HTMLInputElement | null>(null)
@@ -718,6 +769,7 @@ function qieHuanMoShi(xinMoShi: MoShiLeiXing) {
   // 滚动口先归零：离场层已切到独立行，滚动复位藏在淡切之下，不产生可见的滚动甩动
   const gundongQu = biaodanRongqi.value?.querySelector('.biaodan-gundong') as HTMLElement | null
   if (gundongQu) gundongQu.scrollTop = 0
+  qieHuanWanDing.value = false
   moShi.value = xinMoShi
 }
 
@@ -750,11 +802,13 @@ onMounted(() => {
       })
     }
   })
+  qiDongHuiTianLunXun()
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', tongBuYeMianKeJianXing)
   window.removeEventListener('pageshow', tongBuPageshow)
+  tingZhiHuiTianLunXun()
   if (shouZhenTongBuId !== null) {
     if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(shouZhenTongBuId)
     shouZhenTongBuId = null
@@ -767,7 +821,7 @@ onBeforeUnmount(() => {
     zhiFouJieMianCaoZuo()
     用户仓库.取消待处理认证()
   }
-  清理定格层()
+  if (!定格飞行中) 清理定格层()
   bd.dengLuMiMa = ''
   bd.zhuCeMiMa = ''
   用户仓库.mingChengKeJian = true
@@ -775,7 +829,10 @@ onBeforeUnmount(() => {
 
 const dengLuShouJiHeFa = computed(() => /^1[3-9]\d{9}$/.test(dengLuShouJiHao.value))
 const keYiDengLu = computed(
-  () => dengLuShouJiHeFa.value && dengLuMiMa.value.length > 0 && !dengLuZhong.value,
+  () =>
+    dengLuShouJiHeFa.value &&
+    (dengLuMiMa.value.length > 0 || dengLuMiMaZiDong.value) &&
+    !dengLuZhong.value,
 )
 
 const zhuCeShouJiHeFa = computed(() => /^1[3-9]\d{9}$/.test(zhuCeShouJiHao.value))
@@ -891,6 +948,18 @@ function kaiShiDaoJiShi(qiShiZhi = 60) {
 
 let 定格层: HTMLElement | null = null
 let 定格动画们: Animation[] = []
+let 定格飞行中 = false
+
+async function dengDaiDongHua(
+  动画: Animation,
+  chaoShiHaoMiao: number,
+): Promise<void> {
+  const wanDing = 动画.finished.catch(() => undefined)
+  const chaoShi = new Promise<void>((jieJue) => {
+    window.setTimeout(jieJue, chaoShiHaoMiao)
+  })
+  await Promise.race([wanDing, chaoShi])
+}
 
 /** 关键帧的数值端一律向 CSS 要：读回类上的解析结果再写进动画，脚本里不留像素/色值字面量 */
 function 计算帧(元素: HTMLElement, 属性清单: string[]): Record<string, string> {
@@ -911,10 +980,31 @@ function 记动画(动画: Animation): Animation {
 }
 
 function 清理定格层(): void {
-  for (const 动画 of 定格动画们) 动画.cancel()
+  if (定格飞行中) return
+  for (const 动画 of 定格动画们) {
+    try {
+      动画.cancel()
+    } catch {
+      continue
+    }
+  }
   定格动画们 = []
   定格层?.remove()
   定格层 = null
+}
+
+function qiangZhiHuiShou定格层(): void {
+  for (const 动画 of 定格动画们) {
+    try {
+      动画.cancel()
+    } catch {
+      continue
+    }
+  }
+  定格动画们 = []
+  定格层?.remove()
+  定格层 = null
+  定格飞行中 = false
 }
 
 function 建定格层(活卡: HTMLElement): HTMLElement {
@@ -968,7 +1058,7 @@ async function 定格飞向用户位(层: HTMLElement, 用户位: HTMLElement): 
     )
   }
   const 卷轴 = 记动画(层.animate([收束], { duration: 700, easing: quXian.biaoZhun, fill: 'forwards' }))
-  await 卷轴.finished
+  await dengDaiDongHua(卷轴, 900)
 
   const 起点 = 层.getBoundingClientRect()
   const 落点 = 用户位.getBoundingClientRect()
@@ -981,7 +1071,7 @@ async function 定格飞向用户位(层: HTMLElement, 用户位: HTMLElement): 
       { duration: 600, easing: quXian.ruan, fill: 'forwards' },
     ),
   )
-  await 飞行.finished
+  await dengDaiDongHua(飞行, 800)
 }
 
 async function qiDongDinggeFeixing(mubiaoLuJing: string) {
@@ -993,9 +1083,14 @@ async function qiDongDinggeFeixing(mubiaoLuJing: string) {
     router.push(mubiaoLuJing)
     return
   }
+  const 卡矩形 = 活卡.getBoundingClientRect()
+  const 位矩形 = 用户位.getBoundingClientRect()
+  const 冻起点 = { zuo: 卡矩形.left, shang: 卡矩形.top, kuan: 卡矩形.width, gao: 卡矩形.height }
+  const 冻落点 = { zuo: 位矩形.left, shang: 位矩形.top, kuan: 位矩形.width, gao: 位矩形.height }
   用户仓库.mingChengKeJian = false
   const 快照 = 建定格层(活卡)
   定格层 = 快照
+  定格飞行中 = true
   // 快照先落地、页面随即切走：真定格浮在下一屏之上飞向左上角，而不是原地改写还在屏幕上的表单
   router.push(mubiaoLuJing)
   try {
@@ -1003,7 +1098,9 @@ async function qiDongDinggeFeixing(mubiaoLuJing: string) {
   } catch {
     // 装饰性动画的任何失败都不许挡住登录成功后的导航
   } finally {
-    清理定格层()
+    void 冻起点
+    void 冻落点
+    qiangZhiHuiShou定格层()
     用户仓库.mingChengKeJian = true
   }
 }
@@ -1239,12 +1336,10 @@ async function zhiXingZhuCe() {
   min-height: 0;
   padding-top: 5px;
   margin-top: -5px;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr);
-  align-content: stretch;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-color: transparent transparent;
+  scrollbar-gutter: stable;
   position: relative;
 }
 
@@ -1266,12 +1361,17 @@ async function zhiXingZhuCe() {
 
 .biaodan-moshi-pane.shi-fu-yong {
   grid-template-rows: 1fr;
+}
+
+.biaodan-moshi-pane.shi-fu-yong.qiehuan-wanding {
   overflow: visible;
 }
 
 .denglu-biaodan,
 .zhuce-biaodan {
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .biaodan-gundong::-webkit-scrollbar-track {
@@ -1300,8 +1400,8 @@ async function zhiXingZhuCe() {
 .biaodan-qiehuan-you-enter-active,
 .biaodan-qiehuan-zuo-enter-active {
   transition:
-    opacity 0.3s var(--quxian-tan-chu),
-    transform 0.3s var(--quxian-tan-chu);
+    opacity 0.45s var(--quxian-biao-zhun),
+    transform 0.45s var(--quxian-biao-zhun);
 }
 
 .biaodan-qiehuan-you-leave-active,
@@ -1309,8 +1409,8 @@ async function zhiXingZhuCe() {
   position: relative;
   pointer-events: none;
   transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+    opacity 0.45s var(--quxian-biao-zhun),
+    transform 0.45s var(--quxian-biao-zhun);
 }
 
 .biaodan-qiehuan-you-enter-from {

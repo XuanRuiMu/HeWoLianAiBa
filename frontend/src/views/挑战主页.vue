@@ -286,32 +286,40 @@ function quXiaoFangQi() {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  background: var(--yemian-di-beijing);
+  border-radius: 20px;
 }
 
 .tiaozhan-biaoti-qu {
   text-align: center;
+  position: relative;
+  padding-bottom: 12px;
+}
+
+.tiaozhan-biaoti-qu::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 72px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--pinpai-fen), var(--pinpai-cheng));
 }
 
 .tiaozhan-biaoti {
   margin: 0;
   font-size: 28px;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--wenben-zhuse);
   letter-spacing: 4px;
-}
-
-:root[data-theme='light'] .tiaozhan-biaoti {
-  color: #191919;
 }
 
 .tiaozhan-fubiaoti {
   margin: 6px 0 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
-}
-
-:root[data-theme='light'] .tiaozhan-fubiaoti {
-  color: rgba(0, 0, 0, 0.5);
+  color: var(--wenben-ciuse);
 }
 
 .jinxing-zhong-hengfu {
@@ -320,9 +328,10 @@ function quXiaoFangQi() {
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px;
-  background: linear-gradient(135deg, rgba(255, 107, 157, 0.14), rgba(251, 146, 60, 0.1));
-  border: 1px solid rgba(255, 107, 157, 0.3);
+  background: var(--beijing-kaopian);
+  border: 1px solid var(--pinpai-fen-shen);
   border-radius: 16px;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--pinpai-fen-shen) 18%, transparent);
 }
 
 .hengfu-xinxi {
@@ -347,21 +356,17 @@ function quXiaoFangQi() {
 
 .hengfu-miaoshu {
   font-size: 11px;
-  color: rgba(255, 107, 157, 0.9);
+  color: var(--pinpai-fen-shen);
   font-weight: 700;
 }
 
 .hengfu-duixiang {
   font-size: 15px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--wenben-zhuse);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-:root[data-theme='light'] .hengfu-duixiang {
-  color: #191919;
 }
 
 .hengfu-anniu {
@@ -384,28 +389,29 @@ function quXiaoFangQi() {
 }
 
 .anniu-jiXu {
-  background: linear-gradient(135deg, var(--nuanhui-lan), var(--roufen-zi));
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--pinpai-fen-shen), var(--pinpai-cheng-shen));
+  color: var(--beijing-kaopian);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--pinpai-fen-shen) 30%, transparent);
 }
 
 .anniu-fangqi {
   background: transparent;
-  border: 1px solid rgba(255, 107, 107, 0.5);
-  color: #ff6b6b;
+  border: 1px solid var(--yanse-weixian);
+  color: var(--yanse-weixian);
 }
 
 .anniu-fangqi.queRen {
-  background: rgba(255, 107, 107, 0.18);
+  background: color-mix(in srgb, var(--yanse-weixian) 14%, transparent);
 }
 
 .anniu-quxiao {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--biankuang-yanse);
+  color: var(--wenben-ciuse);
 }
 
 :root[data-theme='light'] .anniu-quxiao {
-  border-color: rgba(0, 0, 0, 0.2);
+  border-color: var(--biankuang-yanse);
   color: rgba(0, 0, 0, 0.6);
 }
 
@@ -432,55 +438,50 @@ function quXiaoFangQi() {
   flex-direction: column;
   gap: 4px;
   padding: 14px 16px;
-  background: rgba(20, 24, 40, 0.5);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--beijing-kaopian);
+  border: 1px solid var(--biankuang-yanse);
   border-radius: 16px;
+  box-shadow: var(--qipao-yinying);
+  position: relative;
+  overflow: hidden;
 }
 
-:root[data-theme='light'] .gaikuang-kapian {
-  background: rgba(245, 248, 252, 0.8);
-  border-color: rgba(0, 0, 0, 0.08);
+.gaikuang-kapian::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 14px;
+  height: 2px;
+  border-radius: 0 0 4px 4px;
+  background: linear-gradient(90deg, var(--pinpai-fen), var(--pinpai-cheng));
+  opacity: 0.75;
+  pointer-events: none;
 }
 
 .gaikuang-zubie {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: var(--nuanhui-lan);
+  color: var(--nuanhui-lan-shen);
 }
 
 .gaikuang-duanwei {
   font-size: 20px;
   font-weight: 800;
-  color: #ffffff;
-}
-
-:root[data-theme='light'] .gaikuang-duanwei {
-  color: #191919;
+  color: var(--wenben-zhuse);
 }
 
 .gaikuang-jifen,
 .gaikuang-zhanchang,
 .gaikuang-paiming {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.55);
-}
-
-:root[data-theme='light'] .gaikuang-jifen,
-:root[data-theme='light'] .gaikuang-zhanchang,
-:root[data-theme='light'] .gaikuang-paiming {
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--wenben-ciuse);
 }
 
 .gaikuang-weicanjia {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.35);
-}
-
-:root[data-theme='light'] .gaikuang-weicanjia {
-  color: rgba(0, 0, 0, 0.4);
+  color: var(--wenben-tishi);
 }
 
 .caozuo-qu {
@@ -502,14 +503,14 @@ function quXiaoFangQi() {
 }
 
 .anniu-kaiShi {
-  background: linear-gradient(135deg, #ff6b9d, #fb923c);
-  color: #ffffff;
-  box-shadow: 0 6px 24px rgba(255, 107, 157, 0.35);
+  background: linear-gradient(135deg, var(--pinpai-fen-shen), var(--pinpai-cheng-shen));
+  color: var(--beijing-kaopian);
+  box-shadow: 0 6px 24px color-mix(in srgb, var(--pinpai-fen-shen) 32%, transparent);
 }
 
 .anniu-kaiShi:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 32px rgba(255, 107, 157, 0.45);
+  box-shadow: 0 10px 32px color-mix(in srgb, var(--pinpai-fen-shen) 42%, transparent);
 }
 
 .anniu-kaiShi:disabled {
@@ -518,15 +519,9 @@ function quXiaoFangQi() {
 }
 
 .anniu-paihang {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: rgba(255, 255, 255, 0.85);
-}
-
-:root[data-theme='light'] .anniu-paihang {
-  background: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.12);
-  color: rgba(0, 0, 0, 0.75);
+  background: var(--beijing-kaopian);
+  border: 1px solid var(--biankuang-yanse);
+  color: var(--wenben-ciuse);
 }
 
 .anniu-paihang:hover {
@@ -558,8 +553,8 @@ function quXiaoFangQi() {
   width: 100%;
   max-width: 360px;
   padding: 28px 22px 22px;
-  background: linear-gradient(165deg, rgba(28, 32, 52, 0.96), rgba(16, 18, 32, 0.96));
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--tanchuang-beijing);
+  border: 1px solid var(--tanchuang-biankuang);
   border-radius: 22px;
   display: flex;
   flex-direction: column;
@@ -576,13 +571,13 @@ function quXiaoFangQi() {
   right: 22px;
   height: 3px;
   border-radius: 0 0 4px 4px;
-  background: linear-gradient(90deg, transparent, rgba(255, 107, 157, 0.75), rgba(251, 146, 60, 0.55), transparent);
+  background: linear-gradient(90deg, transparent, var(--pinpai-fen-shen), var(--pinpai-cheng-shen), transparent);
   pointer-events: none;
 }
 
 :root[data-theme='light'] .xingbie-tanchuang {
   background: linear-gradient(165deg, rgba(255, 253, 254, 0.98), rgba(248, 244, 248, 0.98));
-  border-color: rgba(255, 107, 157, 0.18);
+  border-color: color-mix(in srgb, var(--pinpai-fen-shen) 28%, transparent);
   box-shadow:
     0 24px 64px rgba(40, 20, 40, 0.16),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -593,12 +588,8 @@ function quXiaoFangQi() {
   font-size: 18px;
   font-weight: 800;
   letter-spacing: 0.08em;
-  color: #ffffff;
+  color: var(--wenben-zhuse);
   text-align: center;
-}
-
-:root[data-theme='light'] .tanchuang-biaoti {
-  color: #1f1a22;
 }
 
 .tanchuang-bu-zhou {
@@ -607,11 +598,7 @@ function quXiaoFangQi() {
   font-weight: 600;
   letter-spacing: 0.18em;
   text-align: center;
-  color: rgba(255, 255, 255, 0.38);
-}
-
-:root[data-theme='light'] .tanchuang-bu-zhou {
-  color: rgba(31, 26, 34, 0.4);
+  color: var(--wenben-tishi);
 }
 
 .xingbie-wangge {
@@ -627,9 +614,9 @@ function quXiaoFangQi() {
   justify-content: center;
   gap: 8px;
   padding: 20px 12px 18px;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  color: var(--wenben-zhuse);
+  background: var(--beijing-kaopian);
+  border: 1.5px solid var(--biankuang-yanse);
   border-radius: 16px;
   cursor: pointer;
   transition:
@@ -665,33 +652,19 @@ function quXiaoFangQi() {
 
 .xingbie-kaPian:hover {
   transform: translateY(-2px);
-  border-color: rgba(255, 107, 157, 0.55);
-  background: rgba(255, 107, 157, 0.1);
-  box-shadow: 0 10px 28px rgba(255, 107, 157, 0.12);
+  border-color: var(--pinpai-fen-shen);
+  background: color-mix(in srgb, var(--pinpai-fen-shen) 10%, var(--beijing-kaopian));
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--pinpai-fen-shen) 18%, transparent);
 }
 
 .xingbie-kaPian.nan:hover {
-  border-color: rgba(126, 182, 255, 0.55);
-  background: rgba(126, 182, 255, 0.1);
-  box-shadow: 0 10px 28px rgba(126, 182, 255, 0.12);
+  border-color: var(--xingbie-nan-1);
+  background: color-mix(in srgb, var(--xingbie-nan-1) 10%, var(--beijing-kaopian));
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--xingbie-nan-1) 18%, transparent);
 }
 
 .xingbie-kaPian:active {
   transform: translateY(0) scale(0.98);
-}
-
-:root[data-theme='light'] .xingbie-kaPian {
-  color: #1f1a22;
-  background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(31, 26, 34, 0.1);
-}
-
-:root[data-theme='light'] .xingbie-kaPian:hover {
-  background: rgba(255, 107, 157, 0.08);
-}
-
-:root[data-theme='light'] .xingbie-kaPian.nan:hover {
-  background: rgba(61, 124, 201, 0.08);
 }
 
 .tanchuang-caozuo {
@@ -715,9 +688,9 @@ function quXiaoFangQi() {
   font-weight: 600;
   letter-spacing: 0.06em;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: rgba(255, 255, 255, 0.78);
+  background: var(--beijing-kaopian);
+  border: 1px solid var(--biankuang-yanse);
+  color: var(--wenben-ciuse);
   transition:
     color 0.2s ease,
     border-color 0.2s ease,
@@ -725,44 +698,26 @@ function quXiaoFangQi() {
     transform 0.2s ease;
 }
 
-:root[data-theme='light'] .anniu-ciJi {
-  background: rgba(31, 26, 34, 0.03);
-  border-color: rgba(31, 26, 34, 0.12);
-  color: rgba(31, 26, 34, 0.68);
-}
-
 .anniu-ciJi:hover {
   transform: translateY(-1px);
-  border-color: rgba(255, 107, 157, 0.45);
-  color: #ffd0e0;
-  background: rgba(255, 107, 157, 0.08);
+  border-color: var(--pinpai-fen-shen);
+  color: var(--pinpai-fen-shen);
+  background: color-mix(in srgb, var(--pinpai-fen-shen) 8%, var(--beijing-kaopian));
 }
 
 .anniu-ciJi.fanSe:hover {
-  border-color: rgba(255, 107, 107, 0.55);
-  color: #ff8f8f;
-  background: rgba(255, 107, 107, 0.08);
-}
-
-:root[data-theme='light'] .anniu-ciJi:hover {
-  color: #c45a7a;
-}
-
-:root[data-theme='light'] .anniu-ciJi.fanSe:hover {
-  color: #d45656;
+  border-color: var(--yanse-weixian);
+  color: var(--yanse-weixian);
+  background: color-mix(in srgb, var(--yanse-weixian) 8%, var(--beijing-kaopian));
 }
 
 .tanchuang-tishi {
   margin: 0;
   font-size: 11px;
   line-height: 1.55;
-  color: rgba(255, 255, 255, 0.42);
+  color: var(--wenben-tishi);
   text-align: center;
   letter-spacing: 0.02em;
-}
-
-:root[data-theme='light'] .tanchuang-tishi {
-  color: rgba(31, 26, 34, 0.45);
 }
 
 @media (max-width: 480px) {

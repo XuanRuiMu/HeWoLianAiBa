@@ -128,9 +128,16 @@ select {
   border-bottom-width: var(--shuru-xian-changtai-kuan-du) !important;
   border-bottom-style: solid !important;
   border-bottom-color: var(--shuru-xian-changtai-se) !important;
-  transition-property: border-color !important;
-  transition-duration: var(--shuru-juzhong-dong-xiao) !important;
-  transition-timing-function: var(--quxian-tan-chu) !important;
+  background-image: linear-gradient(
+    var(--shuru-xian-jujiao-se),
+    var(--shuru-xian-jujiao-se)
+  ) !important;
+  background-repeat: no-repeat !important;
+  background-position: left bottom !important;
+  background-size: 0% var(--shuru-xian-jujiao-kuan-du) !important;
+  transition-property: border-color, background-size !important;
+  transition-duration: var(--shuru-juzhong-dong-xiao), var(--shuru-sao-chu-shi-chang) !important;
+  transition-timing-function: var(--quxian-tan-chu), var(--quxian-sao-chu) !important;
 }
 
 :where(
@@ -209,6 +216,7 @@ select {
 ):not([data-chat-scope='true'] *):not([data-chat-input='true']):focus {
   border-bottom-width: var(--shuru-xian-jujiao-kuan-du) !important;
   border-bottom-color: var(--shuru-xian-jujiao-se) !important;
+  background-size: 100% var(--shuru-xian-jujiao-kuan-du) !important;
 }
 
 :where(
@@ -229,6 +237,7 @@ select {
 ):not([data-chat-scope='true'] *):not([data-chat-input='true']):focus-visible {
   border-bottom-width: var(--shuru-xian-jujiao-kuan-du) !important;
   border-bottom-color: var(--shuru-xian-jujiao-se) !important;
+  background-size: 100% var(--shuru-xian-jujiao-kuan-du) !important;
 }
 
 :where(

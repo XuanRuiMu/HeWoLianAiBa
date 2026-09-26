@@ -180,6 +180,7 @@ describe('FP-05 全局文本输入契约', () => {
       ['--shuru-xian-changtai-kuan-du', '1px'],
       ['--shuru-xian-jujiao-kuan-du', '2px'],
       ['--shuru-juzhong-dong-xiao', '0.2s'],
+      ['--shuru-sao-chu-shi-chang', '0.38s'],
     ] as const) {
       expect(声明位置(名, 主题块), `${名} 主题作用域错误`).toEqual({
         共用: true,
@@ -207,9 +208,18 @@ describe('FP-05 全局文本输入契约', () => {
     expect(错误.some((规则) => 规则.声明.get('border-bottom-color') === 'var(--shuru-xian-cuowu-se)')).toBe(true)
     expect(自动填充.some((规则) => 规则.声明.get('background-color') === 'var(--shuru-beijing-zidong-tianchong)')).toBe(true)
     expect(自动填充.some((规则) => 规则.声明.get('-webkit-text-fill-color') === 'var(--shuru-wenben-zidong-tianchong)')).toBe(true)
-    expect(基础.some((规则) => 规则.声明.get('transition-property') === 'border-color')).toBe(true)
-    expect(基础.some((规则) => 规则.声明.get('transition-duration') === 'var(--shuru-juzhong-dong-xiao)')).toBe(true)
-    expect(基础.some((规则) => 规则.声明.get('transition-timing-function') === 'var(--quxian-tan-chu)')).toBe(true)
+    expect(
+      基础.some((规则) => {
+        const 值 = 规则.声明.get('transition-property') ?? ''
+        return 值.includes('border-color') && 值.includes('background-size')
+      }),
+    ).toBe(true)
+    expect(基础.some((规则) => 规则.声明.get('background-size') === '0% var(--shuru-xian-jujiao-kuan-du)')).toBe(true)
+    expect(聚焦.some((规则) => 规则.声明.get('background-size') === '100% var(--shuru-xian-jujiao-kuan-du)')).toBe(true)
+    expect(可见聚焦.some((规则) => 规则.声明.get('background-size') === '100% var(--shuru-xian-jujiao-kuan-du)')).toBe(true)
+    expect(基础.some((规则) => 规则.声明.get('transition-duration')?.includes('var(--shuru-juzhong-dong-xiao)'))).toBe(true)
+    expect(基础.some((规则) => 规则.声明.get('transition-duration')?.includes('var(--shuru-sao-chu-shi-chang)'))).toBe(true)
+    expect(基础.some((规则) => 规则.声明.get('transition-timing-function')?.includes('var(--quxian-tan-chu)'))).toBe(true)
     expect(禁用.some((规则) => 规则.声明.get('cursor') === 'not-allowed')).toBe(true)
     expect(全局源码).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*?transition-property:\s*none\s*!important/)
     expect(全局源码).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*?transition-duration:\s*0s\s*!important/)

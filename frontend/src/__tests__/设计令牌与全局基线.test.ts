@@ -64,6 +64,11 @@ const xinZengLingPai = [
   'xingbie-zhongxing-xuan-biankuang',
   'xingbie-zhongxing-xuan-beijing',
   'xingbie-zhongxing-xuan-wenben',
+  'nuanhui-lan-shen',
+  'pinpai-fen',
+  'pinpai-fen-shen',
+  'pinpai-cheng',
+  'pinpai-cheng-shen',
 ] as const
 
 describe('FP-01 设计令牌成对与取值', () => {

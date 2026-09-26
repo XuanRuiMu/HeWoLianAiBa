@@ -815,18 +815,18 @@ async function kaiShiLiaoTian() {
 }
 
 .mbti-kaPian.beiXuanZhong .mbti-daiMa {
-  color: #ffffff;
+  color: var(--wenben-zhuse);
   text-shadow: var(--xuanzhong-wenben-yinying);
 }
 
 .mbti-kaPian.beiXuanZhong .mbti-zhongWen {
-  color: #e8f0fe;
+  color: var(--wenben-zhuse);
   font-weight: 800;
   text-shadow: var(--xuanzhong-wenben-yinying);
 }
 
 .mbti-kaPian.beiXuanZhong .mbti-miaoShu {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--wenben-ciuse);
 }
 
 .suiJi-kaPian {
@@ -851,7 +851,7 @@ async function kaiShiLiaoTian() {
 .mbti-daiMa {
   font-size: 14px;
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--wenben-zhuse);
   letter-spacing: 0.5px;
   line-height: 1.2;
 }
@@ -859,13 +859,13 @@ async function kaiShiLiaoTian() {
 .mbti-zhongWen {
   font-size: 11px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--wenben-ciuse);
   line-height: 1.2;
 }
 
 .mbti-miaoShu {
   font-size: 9px;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--wenben-tishi);
   line-height: 1.3;
   overflow: hidden;
   display: -webkit-box;
@@ -1224,19 +1224,19 @@ async function kaiShiLiaoTian() {
 }
 
 :root[data-theme='light'] .mbti-kaPian.beiXuanZhong .mbti-zhongWen {
-  color: #5d3a4d;
+  color: var(--wenben-zhuse);
 }
 
 :root[data-theme='light'] .mbti-daiMa {
-  color: #372a3f;
+  color: var(--wenben-zhuse);
 }
 
 :root[data-theme='light'] .mbti-zhongWen {
-  color: rgba(55, 42, 63, 0.72);
+  color: var(--wenben-ciuse);
 }
 
 :root[data-theme='light'] .mbti-miaoShu {
-  color: rgba(55, 42, 63, 0.5);
+  color: var(--wenben-tishi);
 }
 
 :root[data-theme='light'] .zhaNv-gouxuan span {

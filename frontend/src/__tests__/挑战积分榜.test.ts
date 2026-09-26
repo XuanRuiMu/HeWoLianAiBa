@@ -105,4 +105,24 @@ describe('挑战积分榜组件', () => {
 
     expect(luYou.currentRoute.value.path).toBe('/tiao-zhan')
   })
+
+  it('浅色档全文本吃主题令牌：无白字残留、无深色容器字面量', async () => {
+    moPaiHang.mockResolvedValue(zhiPaiHang())
+    const { wrapper } = await guaZai()
+    await flushPromises()
+    const { readFileSync } = await import('node:fs')
+    const { resolve } = await import('node:path')
+    const 源 = readFileSync(resolve(__dirname, '../views/挑战积分榜.vue'), 'utf8')
+    const 样式 = (/<style[^>]*>([\s\S]*?)<\/style>/.exec(源)?.[1] ?? '').replace(
+      /\/\*[\s\S]*?\*\//g,
+      '',
+    )
+    expect(样式).not.toMatch(/color:\s*#ffffff/)
+    expect(样式).not.toMatch(/color:\s*rgba\(255,\s*255,\s*255/)
+    expect(样式).not.toMatch(/background:\s*rgba\(20,\s*24,\s*40/)
+    expect(样式).toMatch(/\.paihang-biaoti\s*\{[^}]*color:\s*var\(--wenben-zhuse\)/)
+    expect(样式).toMatch(/\.yonghu-ming\s*\{[^}]*color:\s*var\(--wenben-zhuse\)/)
+    expect(样式).toMatch(/\.jifen-zhi\s*\{[^}]*color:\s*var\(--pinpai-fen-shen\)/)
+    expect(wrapper.text()).toContain('玩家一')
+  })
 })
