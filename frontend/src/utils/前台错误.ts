@@ -4,8 +4,10 @@ import {
   QIAN_TAI_DAI_MA,
   daiMaHuoQuTongYongDaiMa,
   guiYiQianTaiDaiMa,
+  huoQuLianAiMa,
   huoQuWenBenLeiXing,
   moRenKeChongShi,
+  type LianAiMa,
   type QianTaiDaiMa,
   type QianTaiWenBenLeiXing,
 } from '@/config/前台错误码'
@@ -22,6 +24,8 @@ export type QianTaiCuoWuYuanLeiXing = 'houTai' | 'wangLuo' | 'chaoShi' | 'xieYi'
 
 export interface QianTaiCuoWuXinXi {
   code: QianTaiDaiMa
+  lianAiMa: LianAiMa
+  lianAiWenAn: string
   yingXiang: string
   xiaYiBu: string
   retryable: boolean
@@ -39,6 +43,8 @@ export interface QianTaiCuoWuXinXi {
 
 export class QianTaiCuoWu extends Error implements QianTaiCuoWuXinXi {
   readonly code: QianTaiDaiMa
+  readonly lianAiMa: LianAiMa
+  readonly lianAiWenAn: string
   readonly yingXiang: string
   readonly xiaYiBu: string
   readonly retryable: boolean
@@ -55,9 +61,11 @@ export class QianTaiCuoWu extends Error implements QianTaiCuoWuXinXi {
   cuo_wu_ma: QianTaiDaiMa
 
   constructor(xinXi: QianTaiCuoWuXinXi, yuanShiCuoWu?: unknown) {
-    super(xinXi.yingXiang)
+    super(xinXi.lianAiWenAn)
     this.name = 'QianTaiCuoWu'
     this.code = xinXi.code
+    this.lianAiMa = xinXi.lianAiMa
+    this.lianAiWenAn = xinXi.lianAiWenAn
     this.yingXiang = xinXi.yingXiang
     this.xiaYiBu = xinXi.xiaYiBu
     this.retryable = xinXi.retryable
@@ -229,6 +237,7 @@ export function chuangJianQianTaiCuoWu(
   yuanShiCuoWu?: unknown,
 ): QianTaiCuoWu {
   const code = canShu.code || QIAN_TAI_DAI_MA.WEI_ZHI
+  const lianAiMa = huoQuLianAiMa(code)
   const leiXing = canShu.leiXing || huoQuWenBenLeiXing(code)
   const wenBen = duQuWenBenLeiXing(leiXing)
   const houTaiBaoFeng = canShu.houTaiBaoFeng || null
@@ -242,6 +251,8 @@ export function chuangJianQianTaiCuoWu(
   return new QianTaiCuoWu(
     {
       code,
+      lianAiMa,
+      lianAiWenAn: huoQuFanYi('lianAi', lianAiMa),
       yingXiang: canShu.yingXiang || wenBen.yingXiang,
       xiaYiBu: canShu.xiaYiBu || wenBen.xiaYiBu,
       retryable: canShu.retryable ?? moRenKeChongShi(code),

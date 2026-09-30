@@ -2,11 +2,12 @@
   --shi-jiao-kou-gao-du: 100dvh;
 
   /* 浮层层级令牌：唯一事实源，组件内禁止再写 z-index 数字。
-     序（低→高）：通话 < 军师抽屉 < 军师记录 < 协议 < 多媒体授权 < 实时日志 < 管理员监控 < 断网 < 版本提示 */
-  --ceng-tonghua: 1050;
+     序（低→高）：军师抽屉 < 军师记录 < 协议 < 出生日期日历 < 多媒体授权 < 实时日志 < 管理员监控 < 断网 < 版本提示
+     （--ceng-tonghua 随 FP-H 删通话链退役，唯一档位读者 FP14出生日期选择器.test.ts 的层级序已同步删对） */
   --ceng-junshi: 1500;
   --ceng-junshi-jilu: 1600;
   --ceng-xieyi: 2000;
+  --ceng-rili: 2050;
   --ceng-shouquan: 2100;
   --ceng-tiaoshi-riji: 3000;
   --ceng-tiaoshi-mianban: 3100;
@@ -17,7 +18,32 @@
      一旦放进单侧主题块，另一档即按 CSS 规则塌陷（margin/gap→0、font-size→继承值、transition-timing-function→initial）。 */
   --jiange-da: 24px;
   --jiange-zhong: 16px;
+  /* FP-K1b批1：间距八档体系补齐五档（12/10/6/4/2px），与既有 大24/中16/小8 共同构成八档。
+     本轮五枚新令牌采用 **px 数值命名**（值→名机械映射，无歧义）：12px=--jiange-12、10px=--jiange-10、
+     6px=--jiange-6、4px=--jiange-4、2px=--jiange-2。
+     命名理由：三轴审查指出此前的语义名（zhong-xiao 12 与 xiao-zhong 10）描述的是同一区间（中16~小8），
+     两名字可互换而全部门禁仍绿，属真实误用陷阱；数值名彻底消除倒序歧义。
+     既有三枚锚 --jiange-da/zhong/xiao 保持不动（已被其他文件消费）。
+     FP-K1c 全站铺开时再评估是否把三枚锚一并归一为数值名。
+     序（大→小）：da 24 > zhong 16 > 12 > 10 > xiao 8 > 6 > 4 > 2。
+     量纲与主题档无关，八枚只能住本共用 :root 块（放进单侧主题块另一档即塌陷）。 */
+  --jiange-12: 12px;
+  --jiange-10: 10px;
   --jiange-xiao: 8px;
+  --jiange-6: 6px;
+  --jiange-4: 4px;
+  --jiange-2: 2px;
+  /* FP-K1c批3：间距八档体系的**补充档**——组件内边距/气泡内衬/网格细缝等不在8px节奏上的值。
+     这些值不能由八档正系数线性组合（无减法/除法），故各取一枚 px 数值名令牌，与上方命名法一致。
+     序：1 < 3 < 5 < 7 < 9 < 11 < 13 < 15。量纲与主题档无关，同样只能住共用 :root 块。 */
+  --jiange-15: 15px;
+  --jiange-13: 13px;
+  --jiange-11: 11px;
+  --jiange-9: 9px;
+  --jiange-7: 7px;
+  --jiange-5: 5px;
+  --jiange-3: 3px;
+  --jiange-1: 1px;
   --ziti-da: 18px;
   --ziti-zhong: 14px;
   --ziti-xiao: 12px;
@@ -26,6 +52,19 @@
   --quxian-ruan: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   --quxian-huan-ying: cubic-bezier(0.22, 1, 0.36, 1);
   --moshi-kapian-dong-xiao: 240ms;
+
+  /* 圆角三档/安全区/品牌双色：量纲、env() 环境函数与品牌色相均与主题档无关，深浅两档恒等，
+     同 --jiange-* 只能住共用 :root 块。此前单侧住在浅色档，深色档圆角塌陷为 0、
+     品牌色渐变按 IACVT 变透明（用户原始需求 7 的根因），上收即收口；
+     App.vue 对 --anquan-quyu-* 的运行时 setProperty 走 documentElement 内联样式，
+     优先级高于本表，上收与之正交不冲突 */
+  --yuanjiao-da: 16px;
+  --yuanjiao-zhong: 12px;
+  --yuanjiao-xiao: 8px;
+  --anquan-quyu-shang: env(safe-area-inset-top, 0px);
+  --anquan-quyu-xia: env(safe-area-inset-bottom, 0px);
+  --nuanhui-lan: #6B8CA6;
+  --roufen-zi: #C4A0B0;
 
   /* 单行几何：量纲与主题档无关，同 --jiange-* 只能住共用 :root 块。
      --shuru-kuang-* 六枚 + --shuru-anniu-re-ku 是聊天输入区（外壳 .shuru-kuang-waike / textarea
@@ -43,6 +82,15 @@
      44px 触控热区一律由 ::before 以 --shuru-anniu-re-ku 向外扩出来，不靠撑大可见盒兑换。
      热区令牌族名一律 --shuru-<部件>-<属性>（anniu=发送按钮），FP-01 那枚无部件名的 --shuru-re-ku
      与局部 --shuru-anniu-re-ku 是同值两套拼法，FP-22c 起收敛为后者 */
+  /* 浮标签几何（认证页 .fudong-biaoqian / 滚动口 .biaodan-gundong 耦合常量）：
+     标签上浮后向上越出字段盒 5px，滚动口必须给出等量 padding-top 再以等量负 margin-top 收回，
+     否则浮标被滚动口上沿裁切或整表单跳动（FP-17b）。此前两处各写死 5px，K1b 机械收编时被
+     误换成 --jiange-6（6px）打断耦合——5 不是间距节奏档，是几何常量，只能住本共用 :root 块。 */
+  --biaoqian-qin-ru: 5px;
+  /* FP-K1c批3：账号与安全页 sticky 标签栏（.biao-qian-lan, position:sticky; top:0）的有效高度，
+     是职位卡片（.zhi-wu-ka-pian）scroll-margin-top 的唯一真源——锚点滚动时卡片不得被标签栏遮挡。
+     76px ≈ 标签栏 padding(6×2) + 按钮 padding(12×2) + 字行高 + 边框与活跃底线，改标签栏度量须同步此值。 */
+  --biaoqian-lan-gao-du: 76px;
   --shuru-kuang-zihao: 16px;
   --shuru-kuang-hangao: 1.4;
   --shuru-kuang-hangxing-gao: calc(var(--shuru-kuang-zihao) * var(--shuru-kuang-hangao));
@@ -133,6 +181,21 @@
      由 __tests__/FP14出生日期选择器.test.ts 按解析值钉住（组件内不留任何像素字面量） */
   --rili-nian-kuan: calc(var(--ziti-da) * 2 + var(--jiange-xiao));
   --rili-erwei-kuan: calc(var(--ziti-da) + var(--jiange-xiao));
+  /* 出生日期日历浮层（FP-A2，同一组件的第二形态：components/认证/出生日期选择器.vue 的日历弹窗）
+     几何真源：量纲与主题档无关，同 --rili-* 只能住共用 :root 块。
+     浮层按视口居中（Teleport 到 body，认证卡 .biaodan-rongqi 是 overflow:hidden 且内有 transform 祖先，
+     就地定位必被裁切），所以总宽不吃字段宽度而由"日格边长 × 7 列 + 网格间距 × 6 + 左右内边距 × 2"求成：
+     320px 档下出生日期字段净宽只有 198px，吃字段宽会把 7 列压到触控下限以下。日格 32px 与日历内
+     方形按钮 36px 均 ≥24px 触控下限；网格间距 4px 恰好吃掉全局焦点环 2px 环宽 + 2px 偏移。
+     唯一消费者 = 该组件的 .rili-tanchuang / .rili-ri / .rili-anniu / .rili-da-kai / .rili-ri--jin-ri::after
+     五条几何声明，由 __tests__/FP14出生日期选择器.test.ts 按解析值钉住（组件内不留任何像素字面量） */
+  --rili-tanchuang-nei-pad: 16px;
+  --rili-tanchuang-zhou-ju: 4px;
+  --rili-tanchuang-yuan-jiao: 12px;
+  --rili-ri-ge-kuan: 32px;
+  --rili-anniu-chicun: 36px;
+  --rili-jin-ri-dian: 4px;
+  --rili-tanchuang-kuan: calc(var(--rili-ri-ge-kuan) * 7 + var(--rili-tanchuang-zhou-ju) * 6 + var(--rili-tanchuang-nei-pad) * 2);
   /* 登录/注册成功定格飞行（FP-05，需求 #15）的两枚量纲/层级真源：量纲与主题档无关，同 --jiange-*
      只能住共用 :root 块。
      --juanzhou-tong-gao-du 是"卡片收束成的卷轴筒高"，杆高与筒圆角都由它乘 0.5 派生 —— 改前脚本里
@@ -157,10 +220,8 @@
   --yuyin-laba-kuan: 16px;
   --yuyin-laba-gao: 20px;
   --yuyin-laba-jian-ju: 7px;
-  --yuyin-bo-xing-tiao-kuan: 2px;
-  --yuyin-bo-xing-jian-ju: 2px;
-  --yuyin-bo-xing-gao: 30px;
   --yuyin-jindu-gao: 1px;
+  --yuyin-jindu-xian-gao: 2px;
   --yuyin-huakuai-chicun: 8px;
   --yuyin-re-ku: 42px;
   --yuyin-jindu-zui-xiao-kuan: 60px;
@@ -172,6 +233,39 @@
   --shijian-tiao-neidian-zuo-you: 6px;
   --shijian-tiao-yuanjiao: 4px;
   --shijian-tiao-xia-jian-ju: 12px;
+  /* 文件卡片（FP-K4b 需求 #18/#20）几何与类型图标色真源：QQ/微信文件卡片度量唯一出处。
+     量纲与主题档无关，同 --jiange-* 只能住共用 :root 块。几何令牌族名 --wenjian-<部件>-<属性>，
+     与 --shuru-<部件>-<属性> 同族口径。类型图标色是文件类型身份色（非主题色），深浅两档恒等。
+     唯一消费者 = components/聊天/文件气泡.vue。 */
+  --wenjian-ka-zui-xiao-kuan: 200px;
+  --wenjian-tubiao-chicun: 34px;
+  --wenjian-xiazai-he-chicun: 30px;
+  --wenjian-xiazai-glyph-chicun: 20px;
+  --wenjian-fengexi-kuan: 0.5px;
+  /* 文件类型图标身份色（深浅恒等）：Word蓝 / Excel绿 / PPT橙红 / PDF红 / TXT灰 */
+  --wenjian-se-word: #2b579a;
+  --wenjian-se-excel: #217346;
+  --wenjian-se-ppt: #c43e1c;
+  --wenjian-se-pdf: #e5252a;
+  --wenjian-se-txt: #6b7280;
+  --wenjian-se-yasuo: #b45309;
+  --wenjian-se-yinshipin: #7c3aed;
+  /* FP-B 华丽激进版 + FP-J2 出画档：登录注册切换位移 + 华丽滚动条 + 定格飞行串行 glow。
+     全部量纲/时长与主题档无关，同 --jiange-* 只能住共用 :root 块，深浅两档同值、零 :root[data-theme] 分支。
+     --renzheng-qiehuan-weiyi 用户裁决改出画档：110%（translateX 百分比相对滑动表单自身宽，
+     旧表单须整体滑出可视区、新表单从另一侧整体入画，32px 小位移档已废）；
+     --renzheng-qiehuan-shi-chang 0.5s（出画行程变长，与 0.45s 网格行高度过渡保持连贯）；
+     --renzheng-gundong-yuan-jiao 认证滚动口圆角与 --renzheng-gundong-guo-du 平滑显隐时长；
+     --renzheng-dingge-guang-yun 是快照层飞行 glow（金色，与卡面金线同色相）。
+     FP-J2 自绘滚动滑块几何两枚：滑块宽 4px、右缘距 2px（精简金条，overlay 不占正文排版位，
+     位置/高度由 登录内容.vue 脚本按滚动比例写入 transform/height）。 */
+  --renzheng-qiehuan-weiyi: 110%;
+  --renzheng-qiehuan-shi-chang: 0.5s;
+  --renzheng-gundong-yuan-jiao: 8px;
+  --renzheng-gundong-guo-du: 0.3s;
+  --renzheng-dingge-guang-yun: 0 0 32px rgba(201, 169, 106, 0.45);
+  --renzheng-gundong-huakuai-kuan: 3px;
+  --renzheng-gundong-huakuai-you-ju: 1px;
 }
 
 :root[data-theme="light"] {
@@ -191,14 +285,9 @@
   --xiaoxi-yonghu-beijing: #95EC69;
   --xiaoxi-jiaose-beijing: #FFFFFF;
   --yinying-yanse: rgba(0, 0, 0, 0.08);
-  --yuanjiao-da: 16px;
-  --yuanjiao-zhong: 12px;
-  --yuanjiao-xiao: 8px;
   /* 全站唯一字体族：global.css 与 canvas 手绘（战报海报）共用，禁止另写字体栈 */
   --ziti-jiazu: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --anquan-quyu-shang: env(safe-area-inset-top, 0px);
-  --anquan-quyu-xia: env(safe-area-inset-bottom, 0px);
   --wen-zi-ci-se: #666666;
   --jing-gao-se: #ff9800;
   --xiaoxi-yonghu-wenben: #000000;
@@ -221,6 +310,16 @@
   --jujiao-huan-pian-yi: 2px;
   --shuru-xian-changtai-se: var(--renzheng-shuru-xian-se);
   --shuru-xian-jujiao-se: var(--jujiao-huan-yanse);
+  /* FPA1 六段扫出渐变（浅色档由左向右变深）：六段浓度吃共用浓度序，色相吃聚焦色 */
+  --shuru-sao-jianbian: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 10%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 26%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 44%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 62%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 80%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 98%, transparent)
+  );
   --shuru-xian-cuowu-se: var(--cuowu-yanse);
   --shuru-xian-jinyong-se: var(--wenben-tishi);
   --shuru-xian-zhi-du-se: var(--wenben-ciuse);
@@ -228,7 +327,6 @@
   --shuru-wenben-zidong-tianchong: var(--wenben-zhuse);
   /* 页面底板/卡片表面：半透明，搭配 --boli-mohu 使用（alpha 对齐通知页面浅色 0.7 先例） */
   --yemian-di-beijing: rgba(245, 245, 245, 0.7);
-  /* 性别主按钮配色三态：蒸馏自资料设置向导既有蓝/粉硬编码与银灰档；深色档另起一套取值（需求 #16） */
   --xingbie-nan-1: #4a90d9;
   --xingbie-nan-2: #3a7bc8;
   --xingbie-nan-wenben: #ffffff;
@@ -271,6 +369,12 @@
      __tests__/FP03c输入框静置边界.test.ts 按解析值钉住 */
   --renzheng-mian-se: #fffcf3;
   --renzheng-shuru-xian-se: rgba(46, 42, 32, 0.11);
+  /* FP-J2 自绘滚动滑块（浅色档）：深金压象牙卡面，取值与浅档既有强调金 --biaoqian-anniu 指示符同源 */
+  --renzheng-gundong-huakuai-se: #a3813e;
+  /* 出生日期日历浮层的遮罩（FP-A2）：色相与主题档相关（压深底才把浮层推出来），故与浅色档成对声明；
+     全库既有的 --zhezhao-beijing 只在深色档有定义，浅色档会塌陷成透明 ⇒ 这里另立本组件唯一一枚。
+     唯一消费者 = 出生日期选择器.vue 的 .rili-zhe-zhao */
+  --rili-zhe-zhao-beijing: rgba(24, 20, 12, 0.52);
   /* 选中态文字/强调辉光（**浅色档**：本块 = :root[data-theme="light"]）。口径：浅色档=暗于卡面的
      阴影、深色档=亮于卡面的辉光；黑色阴影写在深底上与底色同明度 = 零指示。
      FP-29（需求 #17）是这两枚令牌落地后的**首个消费者**（性格卡选中态，views/资料设置向导.vue），
@@ -309,7 +413,6 @@
   --biankuang-zhongjian: #d0d0d0;
   --touxiang-yinying: 0 1px 3px rgba(0,0,0,0.08);
   --qipao-yinying: 0 1px 2px rgba(0,0,0,0.06);
-  --chuangkou-yinying: 0 12px 40px rgba(0,0,0,0.25);
   --caidan-yinying: 0 4px 16px rgba(0,0,0,0.15);
   --biao-qian-chenggong-beijing: #eef9f0;
   --biao-qian-chenggong-wenben: #15803d;
@@ -325,13 +428,6 @@
   --xinmuzhong-duibi-se: #191919;
   --xinmuzhong-qukuai-beijing: #ffffff;
   --xinmuzhong-qukuai-biankuang: #e5e5e5;
-  --nuanhui-lan: #6B8CA6;
-  --nuanhui-lan-shen: #4A6A84;
-  --roufen-zi: #C4A0B0;
-  --pinpai-fen: #FF6B9D;
-  --pinpai-fen-shen: #D6457C;
-  --pinpai-cheng: #FB923C;
-  --pinpai-cheng-shen: #D97316;
   --beijing-jianbian-1: #E8F4FD;
   --beijing-jianbian-2: #D0E4F0;
   --beijing-jianbian-3: #F5DDE5;
@@ -384,8 +480,6 @@
   --nuanhui-lan-touming-yinying: rgba(107, 140, 166, 0.2);
   --junshi-anniu-beijing: rgba(167, 139, 250, 0.08);
   --junshi-anniu-hover-beijing: rgba(167, 139, 250, 0.15);
-  --quxiao-anniu-beijing: rgba(0, 0, 0, 0.03);
-  --quxiao-anniu-wenben: rgba(0, 0, 0, 0.6);
   --tuichu-hover-beijing: rgba(250, 81, 81, 0.08);
 
   /* 星夜琉璃浮窗套件（管理员监控 · 浅色档：云白玻璃 + 玫瑰金） */
@@ -448,6 +542,16 @@
   --jujiao-huan-pian-yi: 2px;
   --shuru-xian-changtai-se: var(--renzheng-shuru-xian-se);
   --shuru-xian-jujiao-se: var(--jujiao-huan-yanse);
+  /* FPA1 六段扫出渐变（深色档由左向右变浅）：同一共用浓度序反向，色相吃聚焦色 */
+  --shuru-sao-jianbian: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 98%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 80%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 62%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 44%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 26%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 10%, transparent)
+  );
   --shuru-xian-cuowu-se: var(--cuowu-yanse);
   --shuru-xian-jinyong-se: var(--wenben-tishi);
   --shuru-xian-zhi-du-se: var(--wenben-ciuse);
@@ -492,6 +596,10 @@
   /* 认证卡（星夜档）卡面色 + 其上输入框的静置发丝线（FP-03c），与浅色档成对，见上 */
   --renzheng-mian-se: #161b2e;
   --renzheng-shuru-xian-se: rgba(226, 232, 240, 0.11);
+  /* FP-J2 自绘滚动滑块（深色档，与浅色档成对）：亮金压星夜卡面，取值与深档副标题金同源 */
+  --renzheng-gundong-huakuai-se: #d5b878;
+  /* 出生日期日历浮层的遮罩（FP-A2 深色档，与浅色档成对；取更实的一档，深色页面上要压得住星夜底） */
+  --rili-zhe-zhao-beijing: rgba(4, 6, 16, 0.68);
   /* 选中态文字/强调辉光（**深色档**：本块 = :root, :root[data-theme="dark"]，是主题 baseline）。
      需求 #17 的"深色看不见"病灶在改前的**组件字面量**上（`0 1px 3px rgba(0,0,0,.35)` 压在深卡面
      Δmax 12.3、亮度差 -.004 ⇒ 比本项目"可见"下限 Δ24 低一个数量级，且与底同明度），不在本块色相上。
@@ -528,7 +636,6 @@
   --biankuang-zhongjian: #444444;
   --touxiang-yinying: 0 1px 3px rgba(0,0,0,0.2);
   --qipao-yinying: 0 1px 2px rgba(0,0,0,0.15);
-  --chuangkou-yinying: 0 12px 40px rgba(0,0,0,0.6);
   --caidan-yinying: 0 4px 16px rgba(0,0,0,0.3);
   --biao-qian-chenggong-beijing: #0a1810;
   --biao-qian-chenggong-wenben: #30d158;
@@ -544,11 +651,6 @@
   --xinmuzhong-duibi-se: #ffffff;
   --xinmuzhong-qukuai-beijing: rgba(255, 255, 255, 0.04);
   --xinmuzhong-qukuai-biankuang: rgba(255, 255, 255, 0.1);
-  --nuanhui-lan-shen: #8EAFc5;
-  --pinpai-fen: #FF6B9D;
-  --pinpai-fen-shen: #FF8FB8;
-  --pinpai-cheng: #FB923C;
-  --pinpai-cheng-shen: #FDBA74;
   --beijing-jianbian-1: #1A2836;
   --beijing-jianbian-2: #0F1C28;
   --beijing-jianbian-3: #2A1A24;
@@ -600,8 +702,6 @@
   --nuanhui-lan-touming-yinying: rgba(107, 140, 166, 0.3);
   --junshi-anniu-beijing: rgba(167, 139, 250, 0.12);
   --junshi-anniu-hover-beijing: rgba(167, 139, 250, 0.22);
-  --quxiao-anniu-beijing: rgba(255, 255, 255, 0.06);
-  --quxiao-anniu-wenben: rgba(255, 255, 255, 0.7);
   --tuichu-hover-beijing: rgba(250, 81, 81, 0.12);
 
   /* 星夜琉璃浮窗套件（管理员监控 · 深色档：午夜蓝玻璃 + 玫瑰金） */

@@ -497,7 +497,7 @@ async function kaiShiLiaoTian() {
   width: 100%;
   max-width: 520px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 calc(var(--jiange-zhong) + var(--jiange-4));
 }
 
 /* 星夜琉璃 · Starlit Glass：精工玻璃 + 顶部棱线高光 + 玫瑰金点缀 */
@@ -508,10 +508,10 @@ async function kaiShiLiaoTian() {
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 18px;
   box-shadow: 0 24px 60px rgba(4, 6, 20, 0.55);
-  padding: 32px 24px 24px;
+  padding: calc(var(--jiange-da) + var(--jiange-xiao)) var(--jiange-da) var(--jiange-da);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--jiange-da);
   position: relative;
   overflow: hidden;
 }
@@ -552,8 +552,8 @@ async function kaiShiLiaoTian() {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 12px;
-  padding: 8px 0 16px;
+  gap: var(--jiange-12);
+  padding: var(--jiange-xiao) 0 var(--jiange-zhong);
 }
 
 .jindu-dian {
@@ -600,7 +600,7 @@ async function kaiShiLiaoTian() {
 
 .buZuo3-gundong {
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: var(--jiange-4);
   overscroll-behavior: contain;
 }
 
@@ -623,7 +623,7 @@ async function kaiShiLiaoTian() {
   font-weight: 700;
   color: #f2f0fa;
   text-align: center;
-  margin-bottom: 4px;
+  margin-bottom: var(--jiange-4);
   letter-spacing: 0.04em;
 }
 
@@ -631,13 +631,13 @@ async function kaiShiLiaoTian() {
   font-size: 13px;
   color: rgba(242, 240, 250, 0.52);
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: calc(var(--jiange-zhong) + var(--jiange-4));
 }
 
 .xingBie-wangGe {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: calc(var(--jiange-12) + var(--jiange-2));
   justify-content: center;
   width: 100%;
   max-width: 320px;
@@ -654,8 +654,8 @@ async function kaiShiLiaoTian() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 24px 16px 22px;
+  gap: var(--jiange-10);
+  padding: var(--jiange-da) var(--jiange-zhong) calc(var(--jiange-zhong) + var(--jiange-6));
   background-color: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 16px;
@@ -773,9 +773,9 @@ async function kaiShiLiaoTian() {
 .mbti-wangGe {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: var(--jiange-xiao);
   width: 100%;
-  margin-bottom: 16px;
+  margin-bottom: var(--jiange-zhong);
 }
 
 .mbti-kaPian {
@@ -783,8 +783,8 @@ async function kaiShiLiaoTian() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 10px 6px 8px;
+  gap: var(--jiange-2);
+  padding: var(--jiange-10) var(--jiange-6) var(--jiange-xiao);
   background-color: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
@@ -876,8 +876,8 @@ async function kaiShiLiaoTian() {
 .zhaNv-gouxuan {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 0;
+  gap: var(--jiange-xiao);
+  padding: var(--jiange-10) 0;
   cursor: pointer;
   width: 100%;
   justify-content: center;
@@ -911,8 +911,8 @@ async function kaiShiLiaoTian() {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.35);
   text-align: center;
-  margin-top: -8px;
-  margin-bottom: 4px;
+  margin-top: calc(var(--jiange-xiao) * -1);
+  margin-bottom: var(--jiange-4);
   transition:
     color 0.3s ease,
     text-shadow 0.3s ease;
@@ -928,14 +928,14 @@ async function kaiShiLiaoTian() {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.4);
   text-align: center;
-  margin: 0 0 4px;
+  margin: 0 0 var(--jiange-4);
   line-height: 1.5;
 }
 
 .xinmuzhong-ta-qukuai {
   width: 100%;
-  margin-top: 4px;
-  padding: 12px 14px;
+  margin-top: var(--jiange-4);
+  padding: var(--jiange-12) calc(var(--jiange-12) + var(--jiange-2));
   background: var(--xinmuzhong-qukuai-beijing);
   border: 1px solid var(--xinmuzhong-qukuai-biankuang);
   border-radius: 14px;
@@ -974,7 +974,7 @@ async function kaiShiLiaoTian() {
 }
 
 .xinmuzhong-ta-tishi {
-  margin: 6px 0 0;
+  margin: var(--jiange-6) 0 0;
   font-size: 11px;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.4);
@@ -984,14 +984,14 @@ async function kaiShiLiaoTian() {
 .xinmuzhong-ta-biaodan {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 12px;
+  gap: var(--jiange-10);
+  margin-top: var(--jiange-12);
 }
 
 .xinmuzhong-xiangmu {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--jiange-4);
   text-align: left;
 }
 
@@ -1004,7 +1004,7 @@ async function kaiShiLiaoTian() {
 .xinmuzhong-shurukuang {
   width: 100%;
   box-sizing: border-box;
-  padding: 8px 10px;
+  padding: var(--jiange-xiao) var(--jiange-10);
   font-size: 13px;
   color: #ffffff;
   background: rgba(255, 255, 255, 0.06);
@@ -1055,14 +1055,14 @@ async function kaiShiLiaoTian() {
 
 .caoZuo-anNiu {
   display: flex;
-  gap: 12px;
+  gap: var(--jiange-12);
   justify-content: center;
-  padding-top: 8px;
+  padding-top: var(--jiange-xiao);
   flex-shrink: 0;
 }
 
 .anniu-fuZhu {
-  padding: 13px 28px;
+  padding: var(--jiange-13) calc(var(--jiange-da) + var(--jiange-4));
   background: transparent;
   color: rgba(242, 240, 250, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -1088,7 +1088,7 @@ async function kaiShiLiaoTian() {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 14px 28px;
+  padding: calc(var(--jiange-12) + var(--jiange-2)) calc(var(--jiange-da) + var(--jiange-4));
   background: linear-gradient(135deg, var(--xingbie-se-1), var(--xingbie-se-2));
   color: var(--xingbie-se-wenben);
   border: none;
@@ -1155,7 +1155,7 @@ async function kaiShiLiaoTian() {
   color: #ff6b6b;
   text-align: center;
   margin: 0;
-  padding: 8px 12px;
+  padding: var(--jiange-xiao) var(--jiange-12);
   background: rgba(255, 107, 107, 0.1);
   border: 1px solid rgba(255, 107, 107, 0.25);
   border-radius: 10px;
@@ -1322,11 +1322,11 @@ async function kaiShiLiaoTian() {
 @media (max-width: 480px) {
   .mbti-wangGe {
     grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
+    gap: var(--jiange-6);
   }
 
   .mbti-kaPian {
-    padding: 8px 4px 6px;
+    padding: var(--jiange-xiao) var(--jiange-4) var(--jiange-6);
     min-height: 70px;
   }
 

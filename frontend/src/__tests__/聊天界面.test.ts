@@ -901,11 +901,11 @@ describe('FP-05 聊天界面', () => {
 
   describe('发送状态转圈尺寸', () => {
     it('发送中转圈直径约等于一行气泡高度，使用 em 而非硬编码 px', () => {
-      expect(liaoTianYeMianYuanMa).toMatch(/\.fasong-zhuangtai-zhuanquan\s*\{[^}]*width:\s*1\.4em/)
-      expect(liaoTianYeMianYuanMa).toMatch(/\.fasong-zhuangtai-zhuanquan\s*\{[^}]*height:\s*1\.4em/)
+      expect(liaoTianYeMianYuanMa).toMatch(/\.fasong-zhuangtai-zhuanquan\s*\{[^}]*width:\s*1\.25em/)
+      expect(liaoTianYeMianYuanMa).toMatch(/\.fasong-zhuangtai-zhuanquan\s*\{[^}]*height:\s*1\.25em/)
       // 边框也用 em，整体不使用固定 px
       expect(liaoTianYeMianYuanMa).toMatch(
-        /\.fasong-zhuangtai-zhuanquan\s*\{[^}]*border:\s*0\.16em/,
+        /\.fasong-zhuangtai-zhuanquan\s*\{[^}]*border:\s*0\.15em/,
       )
     })
   })
@@ -1003,8 +1003,8 @@ describe('FP-05 聊天界面', () => {
     })
 
     it('消息区域底部保留滚动内边距，最后一条消息不被输入栏遮挡', () => {
-      expect(liaoTianYeMianYuanMa).toMatch(/\.xiaoxi-quyu\s*\{[^}]*padding-bottom:\s*\d+px/)
-      expect(liaoTianYeMianYuanMa).toMatch(/\.xiaoxi-quyu\s*\{[^}]*scroll-padding-bottom:\s*\d+px/)
+      expect(liaoTianYeMianYuanMa).toMatch(/\.xiaoxi-quyu\s*\{[^}]*padding-bottom:\s*0/)
+      expect(liaoTianYeMianYuanMa).toMatch(/\.xiaoxi-quyu\s*\{[^}]*scroll-padding-bottom:\s*calc\(/)
     })
     it('底部边界空隙与消息间空隙保持一致（单一起源：滚动容器不得叠加额外底部内边距）', () => {
       // 根因回归：纵向节奏只允许一个来源。若滚动容器再声明非零 padding-bottom，
@@ -1012,12 +1012,12 @@ describe('FP-05 聊天界面', () => {
       // 因此容器底部内边距必须归零，让最后一条消息的 margin-bottom 充当与底部边界的唯一间距。
       expect(liaoTianYeMianYuanMa).toContain('padding-bottom: 0')
       // 消息自身仍保留标准 16px 纵向节奏，作为消息间与到底部边界的统一间距来源
-      expect(liaoTianYeMianYuanMa).toContain('margin-bottom: 16px')
+      expect(liaoTianYeMianYuanMa).toContain('margin-bottom: var(--jiange-zhong)')
     })
 
     it('底部输入栏适配安全区域，padding-bottom包含安全区域变量', () => {
       expect(liaoTianYeMianYuanMa).toMatch(
-        /\.weixin-shuru\s*\{[^}]*padding-bottom:\s*calc\([^)]*var\(--anquan-quyu-xia\)/,
+        /\.weixin-shuru\s*\{[^}]*padding-bottom:\s*calc\(.*var\(--anquan-quyu-xia\)/,
       )
     })
 
@@ -1044,7 +1044,7 @@ describe('FP-05 聊天界面', () => {
         /\.xiaoxi-quyu\.emoji-mianban-zhankai\s*\{[^}]*padding-bottom/,
       )
       // 消息区仍保留基础底部内边距（最后一条消息不被输入栏遮挡）
-      expect(liaoTianYeMianYuanMa).toMatch(/\.xiaoxi-quyu\s*\{[^}]*padding-bottom:\s*\d+px/)
+      expect(liaoTianYeMianYuanMa).toMatch(/\.xiaoxi-quyu\s*\{[^}]*padding-bottom:\s*0/)
 
       // 点击表情按钮后，面板正常展开（由 emojiMianBanZhanKai 驱动，而非 xiaoxi-quyu 类）
       await wrapper.find('.emoji-anniu').trigger('click')
@@ -1076,11 +1076,13 @@ describe('FP-05 聊天界面', () => {
       expect(appYuanMa).not.toMatch(/\.app-zhuti\s*\{[^}]*margin-top:/)
     })
 
-    it('App.vue 容器高度采用三层 fallback 兼容旧版 iOS Safari 与 Android Chrome', () => {
+    it('App.vue 容器高度采用三层声明兼容旧版 iOS Safari 与 Android Chrome', () => {
       expect(appYuanMa).toMatch(/\.app-rongqi\s*\{[^}]*height:\s*100vh/)
       expect(appYuanMa).toMatch(/\.app-rongqi\s*\{[^}]*height:\s*100dvh/)
+      // 兜底值 100dvh 的真源在 variables.css 共用 :root（FP-G 删同值兜底），旧浏览器不支持 var() 时
+      // 该行在解析期被丢弃，前两层声明继续生效，兼容链不变
       expect(appYuanMa).toMatch(
-        /\.app-rongqi\s*\{[^}]*height:\s*var\(--shi-jiao-kou-gao-du,\s*100dvh\)/,
+        /\.app-rongqi\s*\{[^}]*height:\s*var\(--shi-jiao-kou-gao-du\)/,
       )
       expect(appYuanMa).not.toMatch(/\.app-rongqi\s*\{[^}]*min-height:\s*100dvh/)
     })

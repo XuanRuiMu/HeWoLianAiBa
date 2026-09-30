@@ -65,7 +65,7 @@ describe('好友聊天失败态不出戏', () => {
     wrapper.unmount()
   })
 
-  it('消息加载500时显示重试空态，重试成功恢复', async () => {
+  it('消息加载500时显示重试空态：外层无旧yingXiang残留，恋爱码由内层RequestError渲染，重试成功恢复', async () => {
     const sheJiao = await import('@/api/社交')
     vi.mocked(sheJiao.huoQuHaoYouXiaoXi)
       .mockRejectedValueOnce(juJueCuoWu(500))
@@ -73,6 +73,8 @@ describe('好友聊天失败态不出戏', () => {
     const wrapper = await mountLiaoTian()
     expect(wrapper.find('.kong-tai').exists()).toBe(true)
     expect(wrapper.text()).toContain(huoQuFanYi('haoYou', 'xiaoXiJiaZaiShiBai'))
+    expect(wrapper.find('.kong-tai-tishi').exists()).toBe(false)
+    expect(wrapper.find('.qian-tai-cuo-wu-lian-ai-ma').exists()).toBe(true)
     await wrapper.find('.kong-tai-anniu').trigger('click')
     await flushPromises()
     expect(wrapper.find('.kong-tai').exists()).toBe(false)

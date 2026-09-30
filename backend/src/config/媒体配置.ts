@@ -29,9 +29,11 @@ export const MEI_TI_PEI_ZHI = {
   ),
 
   daXiaoShangXianZiJie: {
-    tupian: 10 * ZI_JIE * ZI_JIE,
+    // 需求20：图片 20MB
+    tupian: 20 * ZI_JIE * ZI_JIE,
     biaoqingshu: 10 * ZI_JIE * ZI_JIE,
     yuyin: 10 * ZI_JIE * ZI_JIE,
+    /** wenjian 未命中细分类型时的兜底上限（归档/视频等） */
     wenjian: 50 * ZI_JIE * ZI_JIE,
   },
 
@@ -72,6 +74,67 @@ export const MEI_TI_PEI_ZHI = {
 
   zhanShiYouXiaoMiao: parseInt(huoQuHuanJingBianLiang('MEI_TI_ZHAN_SHI_YOU_XIAO_MIAO', '86400'), 10),
 } as const
+
+/**
+ * 需求20：wenjian 类别按文件类型细分的大小阈值。
+ * 文本类（txt/md）2MB、文档类（word/pdf/xlsx/ppt/html）10MB；
+ * 未命中细分的类型（csv/json/归档/视频等）回落 daXiaoShangXianZiJie.wenjian 兜底。
+ * 扩展名与 MIME 双线索分类：先扩展名、后 MIME，两者都不在表内即走兜底。
+ */
+export const WEN_JIAN_FEN_LEI_DA_XIAO_SHANG_XIAN: Readonly<Record<'wenben' | 'wendang', number>> = {
+  wenben: 2 * ZI_JIE * ZI_JIE,
+  wendang: 10 * ZI_JIE * ZI_JIE,
+}
+
+/** 文本类扩展名（纯文本，2MB） */
+export const WEN_BEN_KUO_ZHAN: readonly string[] = ['txt', 'md', 'markdown']
+
+/** 文档类扩展名（可含嵌入资源，10MB） */
+export const WEN_DANG_KUO_ZHAN: readonly string[] = [
+  'doc',
+  'docx',
+  'pdf',
+  'xls',
+  'xlsx',
+  'ppt',
+  'pptx',
+  'html',
+  'htm',
+]
+
+/** 文本类 MIME 线索 */
+const WEN_BEN_MIME: readonly string[] = ['text/plain', 'text/markdown']
+
+/** 文档类 MIME 线索 */
+const WEN_DANG_MIME: readonly string[] = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/html',
+]
+
+function huoQuKuoZhanMing(mingCheng: string): string {
+  const dian = (mingCheng || '').lastIndexOf('.')
+  return dian === -1 ? '' : mingCheng.slice(dian + 1).toLowerCase()
+}
+
+/**
+ * 需求20：按文件类型解析 wenjian 的大小上限（字节）。
+ * 分类顺序：扩展名 → MIME → 兜底 daXiaoShangXianZiJie.wenjian。
+ */
+export function huoQuWenJianDaXiaoShangXianZiJie(mingCheng: string, mime: string): number {
+  const kuoZhan = huoQuKuoZhanMing(mingCheng)
+  if (WEN_BEN_KUO_ZHAN.includes(kuoZhan)) return WEN_JIAN_FEN_LEI_DA_XIAO_SHANG_XIAN.wenben
+  if (WEN_DANG_KUO_ZHAN.includes(kuoZhan)) return WEN_JIAN_FEN_LEI_DA_XIAO_SHANG_XIAN.wendang
+  const qingLiMIME = String(mime || '').split(';')[0].trim().toLowerCase()
+  if (WEN_BEN_MIME.includes(qingLiMIME)) return WEN_JIAN_FEN_LEI_DA_XIAO_SHANG_XIAN.wenben
+  if (WEN_DANG_MIME.includes(qingLiMIME)) return WEN_JIAN_FEN_LEI_DA_XIAO_SHANG_XIAN.wendang
+  return MEI_TI_PEI_ZHI.daXiaoShangXianZiJie.wenjian
+}
 
 /**
  * FP-12（需求 #12）文档正文提取的唯一阈值口径：**所有数字只在这里出现一次**，

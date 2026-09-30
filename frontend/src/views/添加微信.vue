@@ -93,14 +93,14 @@ onBeforeUnmount(() => {
   justify-content: center;
   height: 100vh;
   width: 100%;
-  padding: 24px;
+  padding: var(--jiange-da);
   background: transparent;
 }
 
 .tianjia-kaPian {
   width: 100%;
   max-width: 360px;
-  padding: 40px 28px;
+  padding: calc(var(--jiange-da) + var(--jiange-zhong)) calc(var(--jiange-da) + var(--jiange-4));
   background: var(--beijing-kaopian);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -111,7 +111,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 16px;
+  gap: var(--jiange-zhong);
 }
 
 .jiaose-wei {
@@ -160,15 +160,15 @@ onBeforeUnmount(() => {
   font-size: 13px;
   color: #ff6b6b;
   margin: 0;
-  padding: 8px 12px;
+  padding: var(--jiange-xiao) var(--jiange-12);
   background: rgba(255, 107, 107, 0.1);
   border: 1px solid rgba(255, 107, 107, 0.25);
   border-radius: 10px;
 }
 
 .tianjia-fan-hui {
-  margin-top: 4px;
-  padding: 10px 24px;
+  margin-top: var(--jiange-4);
+  padding: var(--jiange-10) var(--jiange-da);
   background: transparent;
   color: #ffffff;
   border: 1.5px solid rgba(255, 255, 255, 0.3);
@@ -185,7 +185,7 @@ onBeforeUnmount(() => {
 
 @media (max-width: 480px) {
   .tianjia-kaPian {
-    padding: 32px 24px;
+    padding: calc(var(--jiange-da) + var(--jiange-xiao)) var(--jiange-da);
   }
 }
 </style>

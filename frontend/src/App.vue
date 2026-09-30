@@ -354,7 +354,7 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100vh;
   height: 100dvh;
-  height: var(--shi-jiao-kou-gao-du, 100dvh);
+  height: var(--shi-jiao-kou-gao-du);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -433,9 +433,9 @@ onBeforeUnmount(() => {
   z-index: 3;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--jiange-xiao);
   max-width: min(92vw, 480px);
-  padding: 10px 12px;
+  padding: var(--jiange-10) var(--jiange-12);
   border-radius: 12px;
   background: rgba(20, 24, 40, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -452,7 +452,7 @@ onBeforeUnmount(() => {
 
 .cao-di-shibai-anniu {
   flex: none;
-  padding: 6px 12px;
+  padding: var(--jiange-6) var(--jiange-12);
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: transparent;
@@ -462,6 +462,6 @@ onBeforeUnmount(() => {
 }
 
 .cao-di-shibai-anniu.guan-bi {
-  padding: 6px 10px;
+  padding: var(--jiange-6) var(--jiange-10);
 }
 </style>

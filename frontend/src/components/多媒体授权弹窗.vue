@@ -61,7 +61,7 @@ function juJue() {
   align-items: center;
   justify-content: center;
   z-index: var(--ceng-shouquan);
-  padding: 24px;
+  padding: var(--jiange-da);
 }
 
 .shouquan-tanchuang {
@@ -73,39 +73,39 @@ function juJue() {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
-  padding: 24px;
+  padding: var(--jiange-da);
 }
 
 .shouquan-biaoti {
   font-size: 18px;
   font-weight: 700;
   color: #ffffff;
-  margin: 0 0 12px;
+  margin: 0 0 var(--jiange-12);
 }
 
 .shouquan-zhengwen {
   font-size: 14px;
   line-height: 1.7;
   color: rgba(255, 255, 255, 0.85);
-  margin: 0 0 10px;
+  margin: 0 0 var(--jiange-10);
 }
 
 .shouquan-tishi {
   font-size: 12px;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.55);
-  margin: 0 0 20px;
+  margin: 0 0 calc(var(--jiange-zhong) + var(--jiange-4));
 }
 
 .shouquan-anNiuZu {
   display: flex;
-  gap: 12px;
+  gap: var(--jiange-12);
 }
 
 .cixiao-anniu,
 .zhuyao-anniu {
   flex: 1;
-  padding: 12px 16px;
+  padding: var(--jiange-12) var(--jiange-zhong);
   border-radius: 12px;
   font-size: 14px;
   font-weight: 600;
@@ -164,7 +164,7 @@ function juJue() {
 
 @media (max-width: 767px) {
   .shouquan-zhezhao {
-    padding: 16px;
+    padding: var(--jiange-zhong);
   }
 }
 

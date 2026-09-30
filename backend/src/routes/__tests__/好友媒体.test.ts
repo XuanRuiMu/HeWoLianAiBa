@@ -404,7 +404,8 @@ describe('FP-21 好友媒体上传：校验次序恒在读取请求体之前', (
 
 describe('FP-21 好友媒体上传：大小/MIME/魔数/审核四道闸与 AI 链路同一实现', () => {
   it('超出类别上限：400 且零落库、零残留半成品，服务照常应答（不崩）', async () => {
-    const 超限 = PNG('x'.repeat(10 * 1024 * 1024 + 4096))
+    // 需求20：tupian 上限已调到 20MB，超限样本须 > 20MB
+    const 超限 = PNG('x'.repeat(20 * 1024 * 1024 + 4096))
     const 响应 = await 上传(用户乙, 'tupian', 超限, 'da.png', 'image/png')
     expect(响应.status).toBe(400)
     expect(响应.body.ti_shi).toBe(huoQuFanYi('liaoTian', 'meiTiGuoDa'))

@@ -5,39 +5,39 @@ import { resolve } from 'node:path'
 import RequestError from '@/components/请求错误.vue'
 import FanYiJieGuo from '@/components/聊天/翻译结果框.vue'
 import { chuangJianQianTaiCuoWu } from '@/utils/前台错误'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { QIAN_TAI_DAI_MA, huoQuLianAiMa } from '@/config/前台错误码'
 import { huoQuFanYi } from '@/config/translations'
 
 describe('FP-16 翻译出口接入统一请求错误契约', () => {
-  it('翻译结果框在错误态渲染稳定码与具体中文原因，不再退化成 FRONTEND_UNKNOWN_ERROR', () => {
+  it('翻译结果框在错误态渲染沉浸文案与恋爱码，不再退化成 FRONTEND_UNKNOWN_ERROR', () => {
     const cuoWu = chuangJianQianTaiCuoWu({
       code: QIAN_TAI_DAI_MA.WANG_LUO,
       retryable: true,
       yingXiang: huoQuFanYi('liaoTian', 'fanYiShiBai'),
     })
+    expect(cuoWu.message).toBe(cuoWu.lianAiWenAn)
     const wrapper = mount(FanYiJieGuo, {
-      props: { zhuangTai: 'error', jieGuo: '', yuanYu: 'auto', cuoWu },
+      props: { zhuangTai: 'error', jieGuo: '', yuanYu: 'auto', muBiaoYu: 'zh', cuoWu },
     })
 
-    expect(wrapper.get('.qian-tai-cuo-wu-dai-ma').text()).toBe(QIAN_TAI_DAI_MA.WANG_LUO)
-    expect(wrapper.get('.qian-tai-cuo-wu-ying-xiang').text()).toBe(
-      huoQuFanYi('liaoTian', 'fanYiShiBai'),
+    expect(wrapper.get('.qian-tai-cuo-wu-wen-an').text()).toBe(cuoWu.lianAiWenAn)
+    expect(wrapper.get('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe(cuoWu.lianAiMa)
+    expect(wrapper.get('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe(
+      huoQuLianAiMa(QIAN_TAI_DAI_MA.WANG_LUO),
     )
-    expect(wrapper.get('.qian-tai-cuo-wu-xia-yi-bu').text()).toBe(
-      huoQuFanYi('tongYong', 'wangLuoWenTiXiaYiBu'),
-    )
+    expect(wrapper.find('.qian-tai-cuo-wu-fu-zhi').exists()).toBe(true)
     expect(wrapper.get('.qian-tai-cuo-wu-chong-shi').exists()).toBe(true)
   })
 
-  it('翻译结果框未接错误模型时也不得显示 FRONTEND_UNKNOWN_ERROR 这种无信息退化码', () => {
+  it('翻译结果框未接错误模型时用协议码兜底渲染沉浸文案与恋爱码', () => {
     const wrapper = mount(FanYiJieGuo, {
-      props: { zhuangTai: 'error', jieGuo: '', yuanYu: 'auto' },
+      props: { zhuangTai: 'error', jieGuo: '', yuanYu: 'auto', muBiaoYu: 'zh' },
     })
 
-    const daiMa = wrapper.get('.qian-tai-cuo-wu-dai-ma').text()
-    expect(daiMa).not.toBe(QIAN_TAI_DAI_MA.WEI_ZHI)
-    expect(wrapper.get('.qian-tai-cuo-wu-ying-xiang').text()).toBe(
-      huoQuFanYi('liaoTian', 'fanYiShiBai'),
+    const lianAiMa = wrapper.get('.qian-tai-cuo-wu-lian-ai-ma').text()
+    expect(lianAiMa).toBe(huoQuLianAiMa(QIAN_TAI_DAI_MA.XIE_YI))
+    expect(wrapper.get('.qian-tai-cuo-wu-wen-an').text()).toBe(
+      huoQuFanYi('lianAi', lianAiMa as never),
     )
   })
 

@@ -10,6 +10,7 @@ import { peiZhi } from '../config'
 import type { FanYiJian } from '../config/translations'
 import {
   MEI_TI_PEI_ZHI,
+  huoQuWenJianDaXiaoShangXianZiJie,
   shiHeFaLeiBie,
   shiYunXuMIME,
 } from '../config/媒体配置'
@@ -153,7 +154,11 @@ export async function liuShiBaoCunMeiTi(
     throw new MeiTiCunChuCuoWu('meiTiMIMEBuZhiChi')
   }
 
-  const daXiaoShangXian = MEI_TI_PEI_ZHI.daXiaoShangXianZiJie[leiBie]
+  // 需求20：wenjian 按文件类型细分大小阈值（文本2MB/文档10MB），其余类别仍走类别级上限
+  const daXiaoShangXian =
+    leiBie === 'wenjian'
+      ? huoQuWenJianDaXiaoShangXianZiJie(yuanShiWenJianMing, qingLiMIME)
+      : MEI_TI_PEI_ZHI.daXiaoShangXianZiJie[leiBie as keyof typeof MEI_TI_PEI_ZHI.daXiaoShangXianZiJie]
   const linShiMuLu = huoQuLinShiMuLu()
   await queBaoMuLu(MEI_TI_PEI_ZHI.cunChuGenMuLu)
   await queBaoMuLu(linShiMuLu)

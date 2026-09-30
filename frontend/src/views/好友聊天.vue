@@ -16,8 +16,7 @@
     <KongTai
       v-else-if="qianTaiCuoWu"
       :biao-ti="huoQuFanYi('haoYou', 'xiaoXiJiaZaiShiBai')"
-      :ti-shi="qianTaiCuoWu.yingXiang"
-      :chong-shi-wen-zi="huoQuFanYi('liaoTian', 'chongShi')"
+      :chong-shi-wen-zi="qianTaiCuoWu.retryable ? huoQuFanYi('liaoTian', 'chongShi') : undefined"
       @chong-shi="chongShi"
     >
       <RequestError
@@ -616,8 +615,9 @@ async function faSongDaiFaTuWen(): Promise<void> {
   }
 }
 
+// FP-JC 用户裁决：就地发送失败行与全站错误同口径，只出游戏化文案（yingXiang 技术口径不再上屏）
 function duQuTiShi(cuoWu: unknown): string {
-  return 归一前台错误(cuoWu).yingXiang
+  return 归一前台错误(cuoWu).lianAiWenAn
 }
 
 // ---------------------------------------------------------------------------
@@ -1123,8 +1123,8 @@ onBeforeUnmount(() => {
 .haoyou-dingbu {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: var(--jiange-xiao);
+  padding: var(--jiange-xiao) var(--jiange-12);
   background: var(--dingbu-lan-beijing);
   border-bottom: 0.5px solid var(--biankuang-yanse);
   flex: none;
@@ -1132,12 +1132,12 @@ onBeforeUnmount(() => {
 .haoyou-fanhui {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--jiange-2);
   border: none;
   background: transparent;
   color: var(--wenben-zhuse);
   font-size: 15px;
-  padding: 6px 8px 6px 2px;
+  padding: var(--jiange-6) var(--jiange-xiao) var(--jiange-6) var(--jiange-2);
   cursor: pointer;
 }
 .haoyou-fanhui-jiantou {
@@ -1158,7 +1158,7 @@ onBeforeUnmount(() => {
 .xiaoxi-quyu {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 16px;
+  padding: var(--jiange-12) var(--jiange-zhong);
   display: flex;
   flex-direction: column;
   background: var(--liaotian-beijing);
@@ -1171,7 +1171,7 @@ onBeforeUnmount(() => {
 .xiaoxi-xiangmu {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: var(--jiange-zhong);
   max-width: 100%;
 }
 .yonghu-xiaoxi { flex-direction: row-reverse; align-self: flex-end; }
@@ -1189,11 +1189,11 @@ onBeforeUnmount(() => {
   font-size: 18px;
   color: var(--wenben-zhuse);
 }
-.yonghu-xiaoxi .xiaoxi-wei { margin-left: 10px; }
-.jiaose-xiaoxi .xiaoxi-wei { margin-right: 10px; }
+.yonghu-xiaoxi .xiaoxi-wei { margin-left: var(--jiange-10); }
+.jiaose-xiaoxi .xiaoxi-wei { margin-right: var(--jiange-10); }
 .qipao-waike { max-width: min(calc(100vw - 126px), 520px); }
 .qipao-neirong {
-  padding: 9px 13px;
+  padding: var(--jiange-9) var(--jiange-13);
   border-radius: 6px;
   font-size: 16px;
   line-height: 1.45;
@@ -1206,7 +1206,7 @@ onBeforeUnmount(() => {
 .chehui-xiao-anniu {
   font-size: 12px;
   color: var(--wenben-tishi);
-  padding: 4px 8px;
+  padding: var(--jiange-4) var(--jiange-xiao);
   /* YH-101 触屏目标：最小24px推荐44px，12px点不到收敛为最小可点 */
   min-width: 24px;
   min-height: 24px;
@@ -1214,8 +1214,8 @@ onBeforeUnmount(() => {
 .shuru-quyu {
   background: var(--shuru-quyu-beijing);
   border-top: 0.5px solid var(--shuru-quyu-biankuang);
-  padding: 8px 10px;
-  padding-bottom: calc(8px + var(--anquan-quyu-xia));
+  padding: var(--jiange-xiao) var(--jiange-10);
+  padding-bottom: calc(var(--jiange-xiao) + var(--anquan-quyu-xia));
 }
 .shuru-rongqi {
   /* 缺陷5 同源几何：与聊天页同一套输入区度量令牌，两页高度必须由同一来源构造。
@@ -1226,7 +1226,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-end;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--jiange-xiao);
 }
 /* FP-21 媒体入口：与聊天页同用「相册/文件」语义，但好友页无「更多」面板，故恒常驻两个图标按钮。
    FP-23 起可见盒与聊天页三主图标同吃 --shuru-tubiao-chicun（= 输入框折叠态单行高），
@@ -1280,7 +1280,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   /* 与输入框外壳同一套量：同上下内边距 + 同行高基准 + 同宽透明边框 ⇒ 两盒等高 */
-  padding: var(--shuru-kuang-shang-xia-neidian) 14px;
+  padding: var(--shuru-kuang-shang-xia-neidian) calc(var(--jiange-12) + var(--jiange-2));
   border: var(--shuru-kuang-biankuang) solid transparent;
   min-width: var(--shuru-anniu-re-ku);
   line-height: var(--shuru-kuang-hangxing-gao);
@@ -1302,7 +1302,7 @@ onBeforeUnmount(() => {
 }
 .fasong-anniu:disabled { background: var(--fasong-anniu-jinyong-beijing); cursor: not-allowed; }
 .fasong-tishi {
-  margin: 6px 2px 0;
+  margin: var(--jiange-6) var(--jiange-2) 0;
   font-size: 12px;
   color: var(--cuowu-yanse, #ff6b6b);
 }
@@ -1326,8 +1326,8 @@ onBeforeUnmount(() => {
 .yuyin-waike { max-width: min(calc(100vw - 126px), 520px); }
 .yuyin-zhuanwenzi {
   display: block;
-  margin-top: 4px;
-  padding: 6px 8px;
+  margin-top: var(--jiange-4);
+  padding: var(--jiange-6) var(--jiange-xiao);
   font-size: 13px;
   line-height: 1.4;
   text-align: left;
@@ -1343,7 +1343,7 @@ onBeforeUnmount(() => {
 }
 .yuyin-zhuanwenzi-shibai { cursor: default; opacity: 0.7; }
 .yuyin-zhuanwenzi-zhuangtai {
-  margin-top: 4px;
+  margin-top: var(--jiange-4);
   font-size: 12px;
   color: var(--wenben-tishi);
 }

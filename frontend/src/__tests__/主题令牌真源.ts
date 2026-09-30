@@ -127,7 +127,7 @@ export function 求几何算式(原始: string, 块们 = 声明块清单()): num
     .reduce((累计, 项式) => {
       const 因子 = 项式.split('*').map((项) => 项.trim())
       for (const 项 of 因子) {
-        if (!/^\d*\.?\d+$/.test(项)) throw new Error(`不支持的算式：${原始}`)
+        if (!/^-?\d*\.?\d+$/.test(项)) throw new Error(`不支持的算式：${原始}`)
       }
       return 累计 + 因子.reduce((积, 项) => 积 * Number(项), 1)
     }, 0)

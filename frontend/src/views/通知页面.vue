@@ -101,7 +101,7 @@ onMounted(() => {
 .tongzhi-yemian {
   width: 100%;
   min-height: calc(100vh - 52px);
-  padding: 24px;
+  padding: var(--jiange-da);
   background: transparent;
 }
 
@@ -115,8 +115,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--jiange-12);
+  margin-bottom: var(--jiange-zhong);
 }
 
 .tongzhi-biaoti {
@@ -127,7 +127,7 @@ onMounted(() => {
 }
 
 .quanbu-anniu {
-  padding: 8px 14px;
+  padding: var(--jiange-xiao) calc(var(--jiange-12) + var(--jiange-2));
   border-radius: 10px;
   background: var(--boli-beijing-shen);
   color: var(--wenben-zhuse);
@@ -143,7 +143,7 @@ onMounted(() => {
 
 .tongzhi-zhuangtai {
   text-align: center;
-  padding: 48px 16px;
+  padding: calc(var(--jiange-da) * 2) var(--jiange-zhong);
   color: var(--wenben-ciuse);
   font-size: 14px;
 }
@@ -152,8 +152,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 60px 24px;
+  gap: var(--jiange-12);
+  padding: calc(var(--jiange-da) * 2 + var(--jiange-12)) var(--jiange-da);
   background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -195,11 +195,11 @@ onMounted(() => {
 .tongzhi-liebiao {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--jiange-10);
 }
 
 .tongzhi-xiang {
-  padding: 16px;
+  padding: var(--jiange-zhong);
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
@@ -233,8 +233,8 @@ onMounted(() => {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: var(--jiange-12);
+  margin-bottom: var(--jiange-xiao);
 }
 
 .tongzhi-xiang-biaoti {

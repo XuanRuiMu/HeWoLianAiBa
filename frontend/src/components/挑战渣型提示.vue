@@ -26,8 +26,8 @@ const zhaXingGaiLv = computed(() => props.zhaXingGaiLv)
 
 <style scoped>
 .zha-xing-ti-shi {
-  margin-top: 12px;
-  padding: 10px 12px;
+  margin-top: var(--jiange-12);
+  padding: var(--jiange-10) var(--jiange-12);
   background: rgba(255, 107, 107, 0.12);
   border: 1px solid rgba(255, 107, 107, 0.3);
   border-radius: 10px;

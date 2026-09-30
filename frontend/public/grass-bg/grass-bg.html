@@ -158,6 +158,61 @@
                 return oSend.apply(this, arguments);
             };
         })();
+
+        // ── FP-K5 报错收口：装饰背景的运行时异常与残留外联一律吞掉 ──
+        // 1) window.onerror / unhandledrejection：purple.patched.js 内 setAttribute(null) 等
+        //    运行时异常对宿主无意义，吞掉避免控制台 pageerror
+        // 2) sendBeacon / EventSource / WebSocket / Image / <script> 外链 / <link> 外链
+        //    —— 上面只补丁了 fetch/XHR，这几条通道仍会漏 404/统计请求
+        (function () {
+            function swallow(e) {
+                try {
+                    var s = String((e && (e.message || e.reason)) || e || '');
+                    var src = String((e && (e.filename || (e.reason && e.reason.stack))) || '');
+                    // 只吞 grass-bg 自己的异常，宿主应用异常继续上抛
+                    if (/grass-bg|purple\.patched|setAttribute|WebGL|THREE|AudioContext/i.test(s + ' ' + src)) {
+                        e.preventDefault && e.preventDefault();
+                        return true;
+                    }
+                } catch (_) {}
+                return false;
+            }
+            window.addEventListener('error', swallow, true);
+            window.addEventListener('unhandledrejection', function (e) { swallow(e); });
+            // 外联静默拦截（比照 blockedHosts + 相对外域）
+            function isExternal(u) {
+                try {
+                    var s = String(u || '');
+                    return /^https?:\/\//i.test(s) && !s.startsWith(location.origin);
+                } catch (_) { return false; }
+            }
+            try {
+                var oBeacon = navigator.sendBeacon;
+                if (oBeacon) navigator.sendBeacon = function (url) {
+                    if (isExternal(url)) return true;
+                    return oBeacon.apply(navigator, arguments);
+                };
+            } catch (_) {}
+            try {
+                window.EventSource = function () { return { close: function () {}, addEventListener: function () {} }; };
+                window.WebSocket = function () { return { close: function () {}, send: function () {}, addEventListener: function () {} }; };
+            } catch (_) {}
+            try {
+                var oImg = window.Image;
+                window.Image = function (w, h) {
+                    var img = (oImg ? new oImg(w, h) : document.createElement('img'));
+                    var oDesc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+                    if (oDesc && oDesc.set) {
+                        Object.defineProperty(img, 'src', {
+                            set: function (v) { if (!isExternal(v)) oDesc.set.call(this, v); },
+                            get: function () { return oDesc.get.call(this); },
+                            configurable: true
+                        });
+                    }
+                    return img;
+                };
+            } catch (_) {}
+        })();
     </script>
 </head>
 <body data-section="home">

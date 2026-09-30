@@ -94,7 +94,7 @@ beforeAll(async () => {
     if (用户ID) (qingQiu as RenZhengQingQiu).yong_hu = { yongHuId: 用户ID } as never
     xiaYiBu()
   })
-  应用.use(encodeURI('/api/战绩'), zhanJiLuYou)
+  应用.use('/api/战绩', zhanJiLuYou)
 }, 420000)
 
 beforeEach(async () => {
@@ -112,9 +112,27 @@ afterAll(async () => {
 }, 420000)
 
 describe('FP-11 战绩分类 HTTP 出参文案（无库依赖）', () => {
-  it('服务器以编码后的战绩挂载路径注册路由', () => {
+  it('服务器以中文战绩挂载路径注册路由（与 YH-029 全局 URL 解码一致）', () => {
     const 源 = readFileSync(服务器入口路径, 'utf8')
-    expect(源).toContain("yingYong.use(encodeURI('/api/战绩'), zhanJiLuYou)")
+    expect(源).toContain("yingYong.use('/api/战绩', zhanJiLuYou)")
+    expect(源).not.toContain("encodeURI('/api/战绩')")
+  })
+
+  it('YH-029 解码中间件之后战绩子路由仍匹配编码 URL（浏览器线上形式）', async () => {
+    const 小应用 = express()
+    小应用.use(express.json())
+    小应用.use((qingQiu, _xiangYing, xiaYiBu) => {
+      // 复刻 server.ts 的 YH-029：全局 decodeURI 后再进路由挂载
+      qingQiu.url = decodeURI(qingQiu.url)
+      xiaYiBu()
+    })
+    小应用.use('/api/战绩', zhanJiLuYou)
+    小应用.use((_qingQiu, xiangYing) => {
+      xiangYing.status(404).json({ douShiYongHu: true })
+    })
+    const 编码请求 = await request(小应用).get(encodeURI('/api/战绩/分类'))
+    expect(编码请求.status).not.toBe(404)
+    expect(编码请求.status).toBe(401)
   })
 
   it('断言用到的每个文案键都解析成最终中文（禁回落成键名本身）', () => {

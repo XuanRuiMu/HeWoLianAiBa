@@ -38,7 +38,6 @@ import riZhiJieShouLuYou from './routes/日志接收'
 import gongNengKaiGuanLuYou from './routes/功能开关'
 import { renZhengSocketZhongJianJian } from './socket/认证'
 import { 初始化聊天Socket } from './socket/聊天'
-import { chuShiHuaTongHuaSocket } from './socket/通话'
 import { chuShiHuaTongZhiSocket } from './socket/通知'
 import { chuShiHuaDuoSheSocket } from './socket/夺舍'
 import { sheZhiIo } from './socket/io'
@@ -193,7 +192,7 @@ yingYong.use('/api/角色', jiaoSeXiangQingLuYou)
 yingYong.use('/api/聊天', xiaoXiLuYou)
 yingYong.use('/api/媒体', meiTiLuYou)
 yingYong.use('/api/好感度', haoGanDuLuYou)
-yingYong.use(encodeURI('/api/战绩'), zhanJiLuYou)
+yingYong.use('/api/战绩', zhanJiLuYou)
 yingYong.use('/api/通知', tongZhiLuYou)
 yingYong.use('/api/挑战', tiaoZhanLuYou)
 yingYong.use('/api/管理', guanLiYuanLuYou)
@@ -229,7 +228,6 @@ const io = new Server(fuWuQi, {
 io.use(renZhengSocketZhongJianJian)
 sheZhiIo(io)
 初始化聊天Socket(io)
-chuShiHuaTongHuaSocket(io)
 chuShiHuaTongZhiSocket(io)
 chuShiHuaDuoSheSocket(io)
 

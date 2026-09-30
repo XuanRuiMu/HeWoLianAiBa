@@ -787,7 +787,8 @@ const 用戶ID = computed(() => 用户仓库.dangQianYongHu?.id || '')
 const 脱敏手机号 = computed(() => {
   const hao = 设置仓库.shouJiHao || 用户仓库.dangQianYongHu?.shou_ji_hao || ''
   if (/^1[3-9]\d{9}$/.test(hao)) return `${hao.slice(0, 3)}****${hao.slice(7)}`
-  return hao || '—'
+  if (hao.length > 7) return `${hao.slice(0, 3)}****${hao.slice(-4)}`
+  return '—'
 })
 
 const beiJingXuanXiang: Array<{ zhi: LiaoTianBeiJing; wenZi: string }> = [
@@ -950,7 +951,7 @@ const qianMingTiShi = ref('')
 const qianMingShiBai = ref(false)
 const haoYouKeXuan = ref<HaoYouXiang[]>([])
 
-const qianMingZiShu = computed(() => Array.from(qianMingCaoGao.value).length)
+const qianMingZiShu = computed(() => qianMingCaoGao.value.length)
 
 const keJianXingXuanXiang = computed(() =>
   (KE_JIAN_XING_LIE_BIAO as readonly KeJianXing[]).map((zhi) => ({
@@ -972,10 +973,6 @@ function keJianXingWenZi(zhi: KeJianXing): string {
     default:
       return huoQuFanYi('sheZhi', 'keJianXingJinZiJi')
   }
-}
-
-function duQuTiShi(cuoWu: unknown): string {
-  return 归一前台错误(cuoWu).yingXiang
 }
 
 const fenQuanCuoWu = ref<Record<string, QianTaiCuoWu | null>>({})
@@ -1225,11 +1222,11 @@ const touXiangSouSuoWenBen = computed(
 )
 const qianMingSouSuoWenBen = computed(
   () =>
-    `${huoQuFanYi('sheZhi', 'qianMingBiaoTi')} ${huoQuFanYi('sheZhi', 'keJianXingBiaoTi')} ${huoQuFanYi('sheZhi', 'baoCunQianMing')} ${qianMingCaoGao.value}`,
+    `${huoQuFanYi('sheZhi', 'qianMingBiaoTi')} ${huoQuFanYi('sheZhi', 'keJianXingBiaoTi')} ${huoQuFanYi('sheZhi', 'baoCunQianMing')}`,
 )
 const yongHuMingSouSuoWenBen = computed(
   () =>
-    `${huoQuFanYi('caidan', 'xiuGaiYongHuMing')} ${huoQuFanYi('sheZhi', 'yongHuMingMiaoShu')} ${yongHuMingCaoGao.value}`,
+    `${huoQuFanYi('caidan', 'xiuGaiYongHuMing')} ${huoQuFanYi('sheZhi', 'yongHuMingMiaoShu')}`,
 )
 const xingBieSouSuoWenBen = computed(
   () =>
@@ -1443,7 +1440,7 @@ async function zhiXingZhuXiao() {
   --yeLv: #5b8c5a;
   --yeLvShen: #3e6b3e;
   --moSe: #2e2a24;
-  --huiSe: #8a8175;
+  --huiSe: #6f695e;
   --danLv: #eaf2e8;
   --weiXian: #a83a2e;
   --yuanJiao: 20px;
@@ -1452,10 +1449,10 @@ async function zhiXingZhuXiao() {
   width: 100%;
   max-width: 960px;
   margin: 0 auto;
-  padding: 0 16px 64px;
+  padding: 0 var(--jiange-zhong) calc(var(--jiange-da) * 2 + var(--jiange-zhong));
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--jiange-zhong);
   min-width: 0;
   background-color: var(--miZhi);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.38 0 0 0 0 0.28 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -1463,7 +1460,12 @@ async function zhiXingZhuXiao() {
   font-family: var(--zhengWenZi);
 }
 
-:global(:root[data-theme='dark']) .zhang-hao-an-quan {
+/* FP-JC R2：深色块必须用普通选择器（编译后 .zhang-hao-an-quan 带上 scoped 属性）。
+   曾用 :global 包裹深色档判断再接本页根的写法 —— Vue scoped 编译器会丢弃
+   :global() 之后的后代段，深色变量落到文档根上、被下方页面根的浅色变量就地覆盖，
+   导致深色档整页用浅色文字令牌（浏览器实测截图 FP-I2-账号设置-深-21修复后.png 证实的根因） */
+:root[data-theme='dark'] .zhang-hao-an-quan,
+:root:not([data-theme]) .zhang-hao-an-quan {
   --miZhi: #1e1b16;
   --kaPian: #2a251e;
   --bianKuang: #4a4238;
@@ -1474,14 +1476,15 @@ async function zhiXingZhuXiao() {
   --moSe: #f3ede0;
   --huiSe: #a79e8e;
   --danLv: #2e3a2e;
-  --weiXian: #e0705f;
+  /* FP-JC：#e0705f 在草地亮场上界（卡面白合成）仅 4.2:1，提亮到 #ef8577 后 ≥4.5:1 */
+  --weiXian: #ef8577;
 }
 
 .sou-suo-hang {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 20px;
+  gap: var(--jiange-10);
+  margin-top: calc(var(--jiange-zhong) + var(--jiange-4));
   flex-wrap: wrap;
 }
 
@@ -1495,7 +1498,7 @@ async function zhiXingZhuXiao() {
 .sou-suo-shuru {
   flex: 1;
   min-width: 0;
-  padding: 12px 14px;
+  padding: var(--jiange-12) calc(var(--jiange-xiao) + var(--jiange-6));
   border-radius: 14px;
   border: 1.5px solid var(--bianKuang);
   background: var(--kaPian);
@@ -1518,20 +1521,20 @@ async function zhiXingZhuXiao() {
   background-color: var(--kaPian);
   border: 1.5px solid var(--bianKuang);
   border-radius: var(--yuanJiao);
-  padding: 20px 18px;
+  padding: calc(var(--jiange-zhong) + var(--jiange-4)) calc(var(--jiange-zhong) + var(--jiange-2));
   text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--jiange-12);
   align-items: center;
 }
 
 .ming-pian {
-  margin-top: 4px;
+  margin-top: var(--jiange-4);
   background-color: var(--kaPian);
   border: 1.5px solid var(--bianKuang);
   border-radius: var(--yuanJiao);
-  padding: 24px 22px;
+  padding: var(--jiange-da) calc(var(--jiange-zhong) + var(--jiange-6));
   position: relative;
   overflow: hidden;
   box-shadow: 0 8px 24px rgba(46, 42, 36, 0.08);
@@ -1540,7 +1543,7 @@ async function zhiXingZhuXiao() {
 
 .ming-pian-nei {
   display: flex;
-  gap: 20px;
+  gap: calc(var(--jiange-zhong) + var(--jiange-4));
   align-items: center;
   min-width: 0;
 }
@@ -1559,7 +1562,6 @@ async function zhiXingZhuXiao() {
   border: 3px solid var(--yeLv);
   border-radius: 42% 58% 61% 39% / 45% 42% 58% 55%;
   overflow: hidden;
-  overflow: hidden;
 }
 
 .ming-pian-wen {
@@ -1577,14 +1579,14 @@ async function zhiXingZhuXiao() {
 .xing-ming {
   font-family: var(--biaoTiZi);
   font-size: 28px;
-  margin: 4px 0 0;
+  margin: var(--jiange-4) 0 0;
   color: var(--moSe);
 }
 
 .qian-ming-dan {
   font-size: 14px;
   color: var(--huiSe);
-  margin: 6px 0 0;
+  margin: var(--jiange-6) 0 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1593,8 +1595,8 @@ async function zhiXingZhuXiao() {
 .uid-hang {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 8px;
+  gap: var(--jiange-xiao);
+  margin-top: var(--jiange-xiao);
   font-size: 13px;
   color: var(--huiSe);
   flex-wrap: wrap;
@@ -1602,8 +1604,8 @@ async function zhiXingZhuXiao() {
 
 .shu-zu {
   display: flex;
-  gap: 22px;
-  margin-top: 14px;
+  gap: calc(var(--jiange-zhong) + var(--jiange-6));
+  margin-top: calc(var(--jiange-xiao) + var(--jiange-6));
 }
 
 .shu-zu div b {
@@ -1619,7 +1621,7 @@ async function zhiXingZhuXiao() {
 }
 
 .wan-cheng {
-  margin-top: 14px;
+  margin-top: calc(var(--jiange-xiao) + var(--jiange-6));
 }
 
 .wan-cheng-wen {
@@ -1627,7 +1629,7 @@ async function zhiXingZhuXiao() {
   justify-content: space-between;
   font-size: 12px;
   color: var(--huiSe);
-  margin-bottom: 6px;
+  margin-bottom: var(--jiange-6);
 }
 
 .jin-du-cao {
@@ -1651,9 +1653,9 @@ async function zhiXingZhuXiao() {
   background-color: var(--miZhi);
   border: 1.5px solid var(--bianKuang);
   border-radius: var(--yuanJiao);
-  padding: 6px;
+  padding: var(--jiange-6);
   display: flex;
-  gap: 4px;
+  gap: var(--jiange-4);
 }
 
 .biao-qian-lan button {
@@ -1663,7 +1665,7 @@ async function zhiXingZhuXiao() {
   font-family: var(--biaoTiZi);
   font-size: 16px;
   color: var(--huiSe);
-  padding: 12px 4px;
+  padding: var(--jiange-12) var(--jiange-4);
   border-radius: 14px;
   cursor: pointer;
   min-width: 0;
@@ -1685,8 +1687,8 @@ async function zhiXingZhuXiao() {
 .fen-zu-tou {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 8px 0 14px;
+  gap: var(--jiange-xiao);
+  margin: var(--jiange-xiao) 0 calc(var(--jiange-xiao) + var(--jiange-6));
 }
 
 .fen-zu-bian-hao {
@@ -1695,7 +1697,7 @@ async function zhiXingZhuXiao() {
   color: var(--yeLvShen);
   border: 1.5px solid var(--yeLv);
   border-radius: 999px;
-  padding: 2px 10px;
+  padding: var(--jiange-2) var(--jiange-10);
   flex: none;
 }
 
@@ -1707,17 +1709,17 @@ async function zhiXingZhuXiao() {
 }
 
 .zhi-wu-ka-pian {
-  scroll-margin-top: 76px;
+  scroll-margin-top: var(--biaoqian-lan-gao-du);
   background-color: var(--kaPian);
   border: 1.5px solid var(--bianKuang);
   border-radius: var(--yuanJiao);
-  padding: 20px 18px;
-  margin-bottom: 14px;
+  padding: calc(var(--jiange-zhong) + var(--jiange-4)) calc(var(--jiange-zhong) + var(--jiange-2));
+  margin-bottom: calc(var(--jiange-xiao) + var(--jiange-6));
   box-shadow: 0 4px 14px rgba(46, 42, 36, 0.06);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.38 0 0 0 0 0.28 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--jiange-12);
   min-width: 0;
 }
 
@@ -1734,7 +1736,7 @@ async function zhiXingZhuXiao() {
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--jiange-xiao);
 }
 
 .kapian-biao-ti::before {
@@ -1755,7 +1757,7 @@ async function zhiXingZhuXiao() {
 
 .she-zhi-shuru {
   width: 100%;
-  padding: 12px 14px;
+  padding: var(--jiange-12) calc(var(--jiange-xiao) + var(--jiange-6));
   border-radius: 14px;
   border: 1.5px solid var(--bianKuang);
   background: var(--kaPian);
@@ -1777,7 +1779,7 @@ async function zhiXingZhuXiao() {
 
 .yanzhengma-hang {
   display: flex;
-  gap: 10px;
+  gap: var(--jiange-10);
 }
 
 .yanzhengma-hang .she-zhi-shuru {
@@ -1792,11 +1794,11 @@ async function zhiXingZhuXiao() {
 .xingbie-wangge {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: var(--jiange-10);
 }
 
 .xingbie-kapian {
-  padding: 14px;
+  padding: calc(var(--jiange-xiao) + var(--jiange-6));
   border-radius: 16px;
   border: 2px solid var(--bianKuang);
   background: var(--kaPian);
@@ -1829,7 +1831,7 @@ async function zhiXingZhuXiao() {
 .yulan-hang {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--jiange-zhong);
   flex-wrap: wrap;
 }
 
@@ -1867,7 +1869,7 @@ async function zhiXingZhuXiao() {
 .qianming-shuru {
   width: 100%;
   min-height: 72px;
-  padding: 12px 14px;
+  padding: var(--jiange-12) calc(var(--jiange-xiao) + var(--jiange-6));
   border-radius: 14px;
   border: 1.5px solid var(--bianKuang);
   background: var(--kaPian);
@@ -1900,14 +1902,14 @@ async function zhiXingZhuXiao() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--jiange-12);
   font-size: 14px;
   color: var(--moSe);
   flex-wrap: wrap;
 }
 
 .ke-jian-xing-xiala {
-  padding: 9px 12px;
+  padding: var(--jiange-10) var(--jiange-12);
   border-radius: 12px;
   border: 1.5px solid var(--bianKuang);
   background: var(--kaPian);
@@ -1919,18 +1921,18 @@ async function zhiXingZhuXiao() {
 .bai-ming-dan-qu {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--jiange-xiao);
   max-height: 180px;
   overflow-y: auto;
   border: 1.5px dashed var(--yeLv);
   border-radius: 14px;
-  padding: 12px;
+  padding: var(--jiange-12);
 }
 
 .bai-ming-dan-xiang {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--jiange-xiao);
   font-size: 14px;
   color: var(--moSe);
   cursor: pointer;
@@ -1943,7 +1945,7 @@ async function zhiXingZhuXiao() {
 }
 
 .xiao-anniu {
-  padding: 11px 22px;
+  padding: var(--jiange-12) calc(var(--jiange-zhong) + var(--jiange-6));
   font-size: 14px;
   align-self: flex-start;
 }
@@ -1952,8 +1954,8 @@ async function zhiXingZhuXiao() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 13px 2px;
+  gap: var(--jiange-12);
+  padding: var(--jiange-12) var(--jiange-2);
   border-bottom: 1px solid var(--bianKuang);
   font-size: 14px;
   color: var(--moSe);
@@ -2003,13 +2005,13 @@ async function zhiXingZhuXiao() {
 .beijing-wangge {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: var(--jiange-10);
 }
 
 .beijing-xiangmu {
   border-radius: 16px;
   border: 2px solid var(--bianKuang);
-  padding: 18px 6px;
+  padding: calc(var(--jiange-zhong) + var(--jiange-2)) var(--jiange-6);
   font-size: 13px;
   cursor: pointer;
   font-family: inherit;
@@ -2025,43 +2027,43 @@ async function zhiXingZhuXiao() {
 }
 
 .beijing-moRen {
-  background-color: #f6f1e7;
-  color: #2e2a24;
+  background-color: var(--danLv);
+  color: var(--moSe);
 }
 
 .beijing-miWuSenLin {
-  background-color: #2f5d3a;
-  color: #fffdf7;
+  background-color: var(--yeLvShen);
+  color: var(--kaPian);
 }
 
 .beijing-haiYangZhiLan {
-  background-color: #7fb9a8;
-  color: #2e2a24;
+  background-color: var(--bianKuang);
+  color: var(--moSe);
 }
 
 .beijing-fenSeMengJing {
-  background-color: #e8a0a0;
-  color: #2e2a24;
+  background-color: var(--bianKuang);
+  color: var(--moSe);
 }
 
 .beijing-yeKongXingHe {
-  background-color: #2e2a24;
-  color: #fffdf7;
+  background-color: var(--moSe);
+  color: var(--kaPian);
 }
 
 .beijing-miSeTianYuan {
-  background-color: #e8dcc3;
-  color: #2e2a24;
+  background-color: var(--bianKuang);
+  color: var(--moSe);
 }
 
 .yu-lan-nian {
-  margin-top: 4px;
+  margin-top: var(--jiange-4);
   border-radius: 14px;
-  padding: 16px;
+  padding: var(--jiange-zhong);
   border: 1.5px solid var(--bianKuang);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--jiange-xiao);
 }
 
 .yu-lan-biao-ti {
@@ -2074,7 +2076,7 @@ async function zhiXingZhuXiao() {
 .yu-lan-tou-hang {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--jiange-10);
 }
 
 .yu-lan-tou {
@@ -2107,7 +2109,7 @@ async function zhiXingZhuXiao() {
 .yu-lan-qi-pao-lai,
 .yu-lan-qi-pao-qu {
   max-width: 85%;
-  padding: 10px 14px;
+  padding: var(--jiange-10) calc(var(--jiange-xiao) + var(--jiange-6));
   border-radius: 14px;
   font-size: 13px;
   line-height: 1.6;
@@ -2136,7 +2138,7 @@ async function zhiXingZhuXiao() {
 }
 
 .uid-fu-zhi {
-  padding: 3px 12px;
+  padding: var(--jiange-4) var(--jiange-12);
   font-size: 12px;
   border-radius: 999px;
 }
@@ -2145,7 +2147,7 @@ async function zhiXingZhuXiao() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 14px 32px;
+  padding: calc(var(--jiange-xiao) + var(--jiange-6)) calc(var(--jiange-da) + var(--jiange-xiao));
   background-color: var(--weiXian);
   color: var(--kaPian);
   border: 1.5px solid var(--weiXian);
@@ -2172,7 +2174,7 @@ async function zhiXingZhuXiao() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 13px 28px;
+  padding: var(--jiange-12) calc(var(--jiange-da) + var(--jiange-4));
   background: transparent;
   color: var(--yeLvShen);
   border: 1.5px solid var(--yeLv);
@@ -2207,7 +2209,7 @@ async function zhiXingZhuXiao() {
 }
 
 .zhu-xiao-an-niu {
-  margin-top: 8px;
+  margin-top: var(--jiange-xiao);
 }
 
 .anniu-wei-xian {
@@ -2223,7 +2225,7 @@ async function zhiXingZhuXiao() {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: var(--jiange-da);
   z-index: 1000;
 }
 
@@ -2231,7 +2233,7 @@ async function zhiXingZhuXiao() {
   background-color: var(--kaPian);
   border: 1.5px solid var(--bianKuang);
   border-radius: var(--yuanJiao);
-  padding: 28px 24px;
+  padding: calc(var(--jiange-da) + var(--jiange-4)) var(--jiange-da);
   max-width: 400px;
   width: 100%;
   text-align: center;
@@ -2242,19 +2244,19 @@ async function zhiXingZhuXiao() {
   font-family: var(--biaoTiZi);
   font-size: 20px;
   color: var(--moSe);
-  margin: 0 0 12px;
+  margin: 0 0 var(--jiange-12);
 }
 
 .tan-chuang-miao-shu {
   font-size: 14px;
   color: var(--huiSe);
   line-height: 1.6;
-  margin: 0 0 24px;
+  margin: 0 0 var(--jiange-da);
 }
 
 .tan-chuang-an-niu-qun {
   display: flex;
-  gap: 12px;
+  gap: var(--jiange-12);
   justify-content: center;
 }
 
@@ -2282,7 +2284,7 @@ async function zhiXingZhuXiao() {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 8px;
+  margin-top: var(--jiange-xiao);
 }
 
 .kai-guan-rongqi input[type='checkbox'] {
@@ -2323,26 +2325,21 @@ async function zhiXingZhuXiao() {
 
 @media (min-width: 768px) {
   .zhang-hao-an-quan {
-    padding: 0 24px 72px;
+    padding: 0 var(--jiange-da) calc(var(--jiange-da) * 3);
   }
 
   .shuang-lie {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 14px;
+    gap: calc(var(--jiange-xiao) + var(--jiange-6));
   }
 
   .shuang-lie .zhi-wu-ka-pian {
-    margin-bottom: 14px;
+    margin-bottom: calc(var(--jiange-xiao) + var(--jiange-6));
   }
 
   .biao-qian-lan button {
     font-size: 17px;
-  }
-
-  .yu-lan-nian {
-    position: sticky;
-    top: 76px;
   }
 }
 
@@ -2352,7 +2349,7 @@ async function zhiXingZhuXiao() {
   }
 
   .ming-pian-nei {
-    gap: 28px;
+    gap: calc(var(--jiange-da) + var(--jiange-4));
   }
 }
 
@@ -2415,17 +2412,17 @@ async function zhiXingZhuXiao() {
 }
 
 .zi-ding-yi-bei-jing-qu {
-  margin-top: 12px;
+  margin-top: var(--jiange-12);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--jiange-10);
   align-items: flex-start;
 }
 
 .zi-ding-yi-yu-lan-hang {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--jiange-12);
   flex-wrap: wrap;
 }
 
@@ -2582,7 +2579,7 @@ async function zhiXingZhuXiao() {
 
 .zhang-hao-an-quan .wan-cheng-wen {
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--jiange-xiao);
 }
 
 .zhang-hao-an-quan .kapian-miao-shu {

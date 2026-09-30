@@ -213,6 +213,16 @@ const 判定账本: Array<{ 键: string; 判定: '必要' | '误用'; 理由: st
     判定: '必要',
     理由: '同上一条的 Safari 前缀',
   },
+  {
+    键: 'components/聊天/图文输入区.vue|.shuru-kuang|user-select',
+    判定: '必要',
+    理由: '零宽空格哨兵聚焦时被浏览器渲染成红色选区块，禁选区高亮防视觉污染',
+  },
+  {
+    键: 'components/聊天/图文输入区.vue|.shuru-kuang|-webkit-user-select',
+    判定: '必要',
+    理由: '同上一条的 Safari 前缀',
+  },
 ]
 
 /** FP-07 授权面之外、判为误用而未能清零的点（只准缩短，不准增长）。

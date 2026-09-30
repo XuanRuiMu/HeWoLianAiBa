@@ -96,8 +96,6 @@ const 令牌消费登记: { 文件: string; 声明: string; 数量: number }[] =
   { 文件: 'views/聊天页面.vue', 声明: 'background: var(--touxiang-beijing-moren);', 数量: 2 },
   { 文件: 'views/好友聊天.vue', 声明: 'background: var(--touxiang-beijing-moren);', 数量: 1 },
   { 文件: 'components/全局菜单.vue', 声明: 'background: var(--touxiang-touming-beijing);', 数量: 1 },
-  { 文件: 'components/通话界面.vue', 声明: 'background: var(--touxiang-beijing-moren);', 数量: 1 },
-  { 文件: 'components/通话界面.vue', 声明: 'box-shadow: var(--touxiang-yinying);', 数量: 1 },
   { 文件: 'views/添加微信.vue', 声明: 'background: var(--touxiang-touming-beijing);', 数量: 1 },
   { 文件: 'views/添加微信.vue', 声明: 'box-shadow: var(--touxiang-yinying);', 数量: 1 },
 ]
@@ -419,7 +417,6 @@ describe('FP-31 H1 兜底字形只在出口，调用点只传数据', () => {
 describe('FP-19b 第二波收口面：一律经 <TouXiang>，绑定纯数据、零字形、零头像样式行', () => {
   const 出口标签数: Record<string, number> = {
     'views/添加微信.vue': 1,
-    'components/通话界面.vue': 2,
     'views/账号与安全.vue': 3,
     'components/用户资料卡.vue': 1,
     'components/军师指导.vue': 1,
@@ -449,8 +446,8 @@ describe('FP-19b 第二波收口面：一律经 <TouXiang>，绑定纯数据、�
     })
   }
 
-  it('无头像数据可传的三面（通话界面×2/挑战主页）显式声明身份档，由出口给兜底字形', () => {
-    for (const 文件 of ['components/通话界面.vue', 'views/挑战主页.vue']) {
+  it('无头像数据可传的一面（挑战主页）显式声明身份档，由出口给兜底字形', () => {
+    for (const 文件 of ['views/挑战主页.vue']) {
       const 出口们 = 元素清单(文件).filter((元) => 元.tag === 'TouXiang')
       expect(出口们.length, 文件).toBeGreaterThan(0)
       for (const 元 of 出口们)

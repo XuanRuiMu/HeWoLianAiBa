@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import 翻译结果框 from '@/components/聊天/翻译结果框.vue'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { QIAN_TAI_DAI_MA, huoQuLianAiMa } from '@/config/前台错误码'
 import { fuZhiWenBen, use长按菜单 } from '@/composables/use长按菜单'
 import { huoQuFanYi } from '@/config/translations'
 import { 按档解析全部 } from './主题令牌真源'
@@ -167,15 +167,15 @@ describe('FP-10 翻译结果框', () => {
     expect(kong.find('.fanyi-jieguo-zhuangtai').attributes('role')).toBe('status')
     expect(kong.text()).toContain(huoQuFanYi('liaoTian', 'fanYiKong'))
 
-    const cuoWu = 造组件({ zhuangTai: 'error', jieGuo: '' })
+    const cuoWu = 造组件({ zhuangTai: 'error', jieGuo: '', muBiaoYu: 'zh' })
     expect(cuoWu.find('.fanyi-jieguo-zhuangtai').attributes('role')).toBe('alert')
-    expect(cuoWu.find('.qian-tai-cuo-wu-dai-ma').text()).toBe(QIAN_TAI_DAI_MA.XIE_YI)
-    expect(cuoWu.find('.qian-tai-cuo-wu-ying-xiang').text()).toBe(
-      huoQuFanYi('liaoTian', 'fanYiShiBai'),
+    expect(cuoWu.find('.qian-tai-cuo-wu-wen-an').text()).toBe(
+      huoQuFanYi('lianAi', huoQuLianAiMa(QIAN_TAI_DAI_MA.XIE_YI) as never),
     )
-    expect(cuoWu.find('.qian-tai-cuo-wu-xia-yi-bu').text()).toBe(
-      huoQuFanYi('tongYong', 'xieYiWenTiXiaYiBu'),
+    expect(cuoWu.find('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe(
+      huoQuLianAiMa(QIAN_TAI_DAI_MA.XIE_YI),
     )
+    expect(cuoWu.find('.qian-tai-cuo-wu-fu-zhi').exists()).toBe(true)
     expect(cuoWu.text()).not.toContain('internal stack')
   })
 

@@ -6,7 +6,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
 import 登录内容 from '@/views/登录内容.vue'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
-import { 声明位置, 求几何算式, 解析几何数值 } from './主题令牌真源'
+import { 声明位置, 求几何算式, 按档解析全部 } from './主题令牌真源'
 import {
   拆分选择器组,
   层叠胜出,
@@ -319,10 +319,18 @@ describe('FP-02 ②：切换后焦点不残留上一表单（含段级焦点）'
 })
 
 describe('FP-02 ③：过渡几何按目标模式横向派生；减动效档立即稳定切换', () => {
-  it('登录→注册向右、注册→登录向左，入场与离场反向且吃 --jiange-xiao', () => {
+  it('登录→注册向右、注册→登录向左，入场与离场反向且吃 --renzheng-qiehuan-weiyi（FP-J2 出画档）', () => {
     const 方向们 = [
-      ['you', 'translateX(var(--jiange-xiao))', 'translateX(calc(var(--jiange-xiao) * -1))'],
-      ['zuo', 'translateX(calc(var(--jiange-xiao) * -1))', 'translateX(var(--jiange-xiao))'],
+      [
+        'you',
+        'translateX(var(--renzheng-qiehuan-weiyi))',
+        'translateX(calc(var(--renzheng-qiehuan-weiyi) * -1))',
+      ],
+      [
+        'zuo',
+        'translateX(calc(var(--renzheng-qiehuan-weiyi) * -1))',
+        'translateX(var(--renzheng-qiehuan-weiyi))',
+      ],
     ] as const
     for (const [方向, 入场值, 离场值] of 方向们) {
       const 入场 = 层叠('transform', [`biaodan-qiehuan-${方向}-enter-from`])
@@ -332,8 +340,13 @@ describe('FP-02 ③：过渡几何按目标模式横向派生；减动效档立�
       expect(入场).not.toMatch(/translateY/)
       expect(离场).not.toMatch(/translateY/)
     }
-    expect(解析几何数值('--jiange-xiao')).toBeGreaterThan(0)
-    expect(求几何算式('calc(var(--jiange-xiao) * 1)')).toBe(解析几何数值('--jiange-xiao'))
+    // FP-J2 用户裁决：32px 小位移档已废，改为出画档——translateX 百分比以滑动表单自身宽为基准，
+    // ≥100% 才能保证旧表单整体滑出可视区、新表单从另一侧整体入画（共用 :root 内按档解析同值）
+    const 位移原始 = 按档解析全部('light').get('--renzheng-qiehuan-weiyi') ?? ''
+    expect(位移原始, '出画位移必须是百分比（相对表单自身宽）').toMatch(/%$/)
+    expect(Number.parseFloat(位移原始), '出画行程不足 100% ⇒ 表单滑不出可视区').toBeGreaterThanOrEqual(
+      100,
+    )
     const 过渡位移规则 = 规则清单(样式全).filter(
       (规则) => 规则.选择器.includes('biaodan-qiehuan') && 规则.声明.has('transform'),
     )
@@ -419,7 +432,14 @@ describe('FP-02 ③：过渡几何按目标模式横向派生；减动效档立�
       ).toBe('none')
   })
 
-  it('零新增令牌：本单消费的两枚量纲/缓动真源都在共用 :root 且两档同值', () => {
+  it('零新增令牌之外：本单消费的华丽位移/时长真源都在共用 :root 且两档同值（FP-B 追加档）', () => {
+    for (const 令牌 of ['--renzheng-qiehuan-weiyi', '--renzheng-qiehuan-shi-chang']) {
+      expect(声明位置(令牌), `${令牌} 不在共用 :root 块`).toEqual({
+        共用: true,
+        浅色: false,
+        深色: false,
+      })
+    }
     for (const 令牌 of ['--jiange-xiao', '--quxian-tan-chu']) {
       expect(声明位置(令牌), `${令牌} 不在共用 :root 块`).toEqual({
         共用: true,
@@ -441,6 +461,9 @@ describe('FP-02 层叠判定的形态账本（判定盲区必须显式登记，F
         '.biaodan-rongqi::before {position,top,pointer-events}',
         '.biaodan-zu label {margin-bottom}',
         '.biaoqian-anniu.huoyue::after {position,transform}',
+        // FP-J2：滚动口外壳上的 overlay 滑块 hover/focus 显形（组合器形态，进账本而非层叠判定）
+        '.gundong-waike:focus-within .gundong-huakuai {opacity}',
+        '.gundong-waike:hover .gundong-huakuai {opacity}',
         '.boli-kapian::after {position,top,pointer-events}',
         '.ji-zhu-wen-ben.yi-gou-xuan::after {position,top,transform}',
         '.ji-zhu-wen-ben::before {position,top,transform,transition}',
@@ -478,8 +501,16 @@ describe('FP-02 ④：FP-03c / FP-04a / FP-04b 既有契约逐点复测', () => 
     )
   })
 
-  it('FP-03c：未聚焦输入框发丝线颜色仍吃 --renzheng-shuru-xian-se', () => {
-    expect(层叠('border-bottom-color', ['fenlie-shuru'])).toBe('var(--renzheng-shuru-xian-se)')
+  it('FPA1：未聚焦输入框发丝线颜色吃 global 单真源 --shuru-xian-changtai-se', () => {
+    const 浅 = 按档解析全部('light')
+    const 深 = 按档解析全部('dark')
+    expect(浅.get('--shuru-xian-changtai-se')).toBe('var(--renzheng-shuru-xian-se)')
+    expect(深.get('--shuru-xian-changtai-se')).toBe('var(--renzheng-shuru-xian-se)')
+    expect(
+      规则清单(剔帧(读取全局基线())).some(
+        (项) => 项.声明.get('border-bottom-color') === 'var(--shuru-xian-changtai-se)',
+      ),
+    ).toBe(true)
   })
 
   it('切换不引入内联样式写点：两态来回后表单容器/滚动口仍零内联 style（FP-02 旧契约 + 无测量 hack）', async () => {

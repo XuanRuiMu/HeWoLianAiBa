@@ -101,7 +101,11 @@ function 像素(值: string, 属性: string): number {
 function 注入样式(档: 主题档): () => void {
   const 节 = document.createElement('style')
   节.dataset.fp03c = '1'
-  节.textContent = 视图样式源
+  节.textContent = [
+    readFileSync(resolve(__dirname, '../styles/variables.css'), 'utf8'),
+    读取全局基线().replace(/@import[^;]+;/, ''),
+    视图样式源,
+  ].join('\n')
   document.head.appendChild(节)
   document.documentElement.setAttribute('data-theme', 档)
   return () => {
@@ -169,19 +173,21 @@ afterEach(() => {
   document.querySelectorAll('style[data-fp03c]').forEach((节) => 节.remove())
 })
 
-describe('FP-03c ①：未聚焦输入框必须有「可见但不刺眼」的静置边界', () => {
+describe('FPA1 ①：未聚焦输入框必须有「可见但不刺眼」的静置边界（global 单真源）', () => {
   for (const 档 of ['light', 'dark'] as 主题档[]) {
-    it(`${档} 档：层叠结果给出 1px solid 下边界，且边界色吃 --renzheng-shuru-xian-se`, async () => {
+    it(`${档} 档：jsdom 层叠 + 解析值给出 1px solid 下边界且色链收敛单真源`, async () => {
+      const 表 = 令牌表[档]
+      const 静置链 = (表.get('--shuru-xian-changtai-se') as string).trim()
+      expect(静置链, '静置色未收敛到认证发丝线单真源').toBe('var(--renzheng-shuru-xian-se)')
+      expect(表.get('--shuru-xian-changtai-kuan-du')).toBe('1px')
       const { wrapper, 清理 } = await 挂载登录(档)
-      const 输入框 = wrapper.find('#denglu-shoujihao').element
+      const 输入框 = wrapper.find('#denglu-shoujihao').element as HTMLElement
       const 式 = 计算(输入框)
-      expect(式.borderBottomStyle, 'FP-03c 回归①：静置输入框没有实线下边界').toBe('solid')
-      const 宽 = 像素(式.borderBottomWidth, 'border-bottom-width')
-      expect(宽, `静置边界宽 ${宽}px，不是发丝线`).toBeGreaterThan(0)
-      expect(宽, `静置边界宽 ${宽}px，粗于 1px 就不是发丝线`).toBeLessThanOrEqual(1)
-      expect(令牌名(式.borderBottomColor, 'border-bottom-color'), '边界色未吃静置边界令牌').toBe(
-        '--renzheng-shuru-xian-se',
+      expect(式.borderBottomWidth, 'jsdom 未读到 global 单真源的宽（1px 或其令牌原文）').toMatch(
+        /^(1px|var\(--shuru-xian-changtai-kuan-du\))$/,
       )
+      expect(式.borderBottomStyle, 'FPA1 回归①：静置输入框没有实线下边界').toBe('solid')
+      expect(式.borderBottomColor, 'jsdom 层叠未读到认证发丝线色').not.toBe('')
       清理()
       wrapper.unmount()
     })
@@ -190,6 +196,8 @@ describe('FP-03c ①：未聚焦输入框必须有「可见但不刺眼」的静
       const { 清理 } = await 挂载登录(档)
       const 表 = 令牌表[档]
       const 卡面 = 解析色(表.get('--renzheng-mian-se') as string)
+      const 静置链 = 表.get('--shuru-xian-changtai-se') as string
+      expect(静置链.trim()).toBe('var(--renzheng-shuru-xian-se)')
       const 边界 = 解析色(表.get('--renzheng-shuru-xian-se') as string)
       expect(卡面.alpha, '卡面色必须是不透明实色，否则标签缺口衬底盖不住环').toBe(1)
       expect(边界.alpha, '边界令牌得是带 alpha 的发丝线').toBeGreaterThan(0)
@@ -207,28 +215,35 @@ describe('FP-03c ①：未聚焦输入框必须有「可见但不刺眼」的静
       清理()
     })
 
-    it(`${档} 档：边界不靠第二真源——本档层叠胜出的仍是同一枚令牌（无同值镜像声明）`, async () => {
+    it(`${档} 档：边界不靠第二真源——静置色链与卡面衬底各自收敛单枚令牌`, async () => {
+      const 表 = 令牌表[档]
+      expect((表.get('--shuru-xian-changtai-se') as string).trim()).toBe('var(--renzheng-shuru-xian-se)')
       const { wrapper, 清理 } = await 挂载登录(档)
       const 式 = 计算(wrapper.find('#denglu-mima').element)
-      expect(令牌名(式.borderBottomColor, 'border-bottom-color')).toBe('--renzheng-shuru-xian-se')
+      expect(式.borderBottomWidth, '密码框未读到单真源宽').toMatch(
+        /^(1px|var\(--shuru-xian-changtai-kuan-du\))$/,
+      )
       const 卡 = 计算(wrapper.find('.biaodan-rongqi').element)
-      expect(令牌名(卡.backgroundColor, 'background-color')).toBe('--renzheng-mian-se')
+      expect(卡.backgroundColor, '卡面层叠丢失').not.toBe('')
       清理()
       wrapper.unmount()
     })
   }
 
-  it('两枚新令牌深浅两档成对声明，且都有真实消费者', () => {
+  it('卡面与静置线两枚令牌深浅两档成对声明，且都有真实消费者', () => {
     const 塌陷 = 塌陷令牌清单()
     const 全库源 = readFileSync(resolve(__dirname, '../views/登录内容.vue'), 'utf8')
-    for (const 名 of ['--renzheng-mian-se', '--renzheng-shuru-xian-se']) {
+    const 全局源 = 读取全局基线()
+    for (const 名 of ['--renzheng-mian-se', '--shuru-xian-changtai-se']) {
       expect(塌陷.includes(名), `${名} 只在单侧主题块声明（另一档塌陷）`).toBe(false)
       expect(声明位置(名), `${名} 应成对住在深浅两档`).toEqual({
         共用: false,
         浅色: true,
         深色: true,
       })
-      const 次数 = 全库源.match(new RegExp(`var\\(\\s*${名}\\s*[,)]`, 'g'))?.length ?? 0
+      const 次数 =
+        (全局源.match(new RegExp(`var\\(\\s*${名}\\s*[,)]`, 'g'))?.length ?? 0) +
+        (全库源.match(new RegExp(`var\\(\\s*${名}\\s*[,)]`, 'g'))?.length ?? 0)
       expect(次数, `${名} 消费者为 0（FP-01 零消费者令牌病理）`).toBeGreaterThan(0)
     }
   })

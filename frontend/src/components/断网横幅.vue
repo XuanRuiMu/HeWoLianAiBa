@@ -91,8 +91,8 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 8px 16px;
+  gap: var(--jiange-12);
+  padding: var(--jiange-xiao) var(--jiange-zhong);
   background: var(--jinggao-yanse);
   color: #1a1a1a;
   font-size: var(--ziti-xiao);

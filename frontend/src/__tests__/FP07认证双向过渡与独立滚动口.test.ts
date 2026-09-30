@@ -6,6 +6,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createWebHistory, type Router } from 'vue-router'
 import 登录内容 from '@/views/登录内容.vue'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
+import { 按档解析全部 } from './主题令牌真源'
 
 vi.mock('@/api/认证', () => ({
   faSongMa: vi.fn(),
@@ -156,6 +157,77 @@ describe('FP-07 独立滚动口与响应式降级', () => {
     expect(wrapper.find('.biaodan-gundong').element).toBe(原节点)
     expect([...(原节点 as HTMLElement).classList]).toEqual(原类)
     wrapper.unmount()
+  })
+
+  it('FP-J2：原生条双路隐藏、占位槽移除——scrollbar-width:none 为生效声明且视图里不再有 scrollbar-gutter', () => {
+    expect(样式声明('.biaodan-gundong', 'scrollbar-width')).toBe('none')
+    expect(样式声明('.biaodan-gundong', 'overflow-y')).toBe('auto')
+    expect(样式声明('.biaodan-gundong', 'flex')).toBe('1')
+    expect(样式声明('.biaodan-gundong::-webkit-scrollbar', 'width')).toBe('0')
+    expect(视图样式, 'scrollbar-gutter: stable 会恒占正文排版位（挤压"获取验证码"行）').not.toMatch(
+      /scrollbar-gutter/,
+    )
+  })
+
+  it('FP-J2：overlay 滑块挂在外壳而非滚动坐标系内，几何/颜色走 --renzheng-gundong-huakuai-* 令牌且两档成对', async () => {
+    const wrapper = await 挂载('dengLu')
+    const 外壳 = wrapper.find('.gundong-waike')
+    const 滑块 = wrapper.find('.gundong-huakuai')
+    expect(外壳.exists()).toBe(true)
+    expect(滑块.exists()).toBe(true)
+    expect(滑块.element.parentElement).toBe(外壳.element)
+    expect((滑块.element as HTMLElement).getAttribute('aria-hidden')).toBe('true')
+    expect(样式声明('.gundong-huakuai', 'position')).toBe('absolute')
+    expect(样式声明('.gundong-huakuai', 'pointer-events')).toBe('none')
+    expect(样式声明('.gundong-huakuai', 'width')).toBe('var(--renzheng-gundong-huakuai-kuan)')
+    expect(样式声明('.gundong-huakuai', 'right')).toMatch(/calc\(/)
+    expect(样式声明('.gundong-huakuai', 'right')).toMatch(/--renzheng-gundong-huakuai-you-ju/)
+    expect(样式声明('.gundong-huakuai', 'background')).toMatch(/linear-gradient\(/)
+    expect(样式声明('.gundong-huakuai', 'opacity')).toBe('0')
+    expect(视图样式).toMatch(/\.gundong-huakuai\.xian-shi\s*\{[^}]*opacity:\s*1/)
+    expect(视图样式).toMatch(/\.gundong-waike:hover \.gundong-huakuai/)
+    expect(视图样式).toMatch(/\.gundong-waike:focus-within \.gundong-huakuai/)
+    for (const 档 of ['light', 'dark'] as const) {
+      const 表 = 按档解析全部(档)
+      expect(表.get('--renzheng-gundong-huakuai-kuan'), `${档} 档缺滑块宽真源`).toBe('3px')
+      expect(表.get('--renzheng-gundong-huakuai-you-ju'), `${档} 档缺右缘距真源`).toBe('1px')
+    }
+    expect(按档解析全部('light').get('--renzheng-gundong-huakuai-se')).toBe('#a3813e')
+    expect(按档解析全部('dark').get('--renzheng-gundong-huakuai-se')).toBe('#d5b878')
+    wrapper.unmount()
+  })
+
+  it('FP-J2：滚动同步——滚动更新滑块高度与位置并显形，静置 800ms 淡出，内容不溢出时滑块隐藏', async () => {
+    vi.useFakeTimers()
+    try {
+      const wrapper = await 挂载('dengLu')
+      const 滚动口元 = wrapper.find('.biaodan-gundong').element as HTMLElement
+      const 滑块元 = wrapper.find('.gundong-huakuai').element as HTMLElement
+      const 客户端高 = vi.spyOn(滚动口元, 'clientHeight', 'get').mockReturnValue(300)
+      const 滚动高 = vi.spyOn(滚动口元, 'scrollHeight', 'get').mockReturnValue(900)
+      const 滚动位 = vi.spyOn(滚动口元, 'scrollTop', 'get').mockReturnValue(150)
+      await 滚动口元.dispatchEvent(new Event('scroll'))
+      expect(滑块元.style.display, '内容溢出时滑块必须可显示').toBe('')
+      expect(滑块元.style.height, '滑块高 = 视口高×(视口高/内容高) = 300×(300/900)').toBe('100px')
+      expect(滑块元.style.transform, '顶进 150/600 ⇒ 滑块位移 (150/600)×(300-100)').toBe(
+        'translateY(50px)',
+      )
+      expect(滑块元.classList.contains('xian-shi')).toBe(true)
+      vi.advanceTimersByTime(799)
+      expect(滑块元.classList.contains('xian-shi'), '静置未满 800ms 不得提前淡出').toBe(true)
+      vi.advanceTimersByTime(1)
+      expect(滑块元.classList.contains('xian-shi'), '静置 800ms 后必须淡出').toBe(false)
+      滚动高.mockReturnValue(300)
+      滚动位.mockReturnValue(0)
+      await 滚动口元.dispatchEvent(new Event('scroll'))
+      expect(滑块元.style.display, '内容不溢出时滑块必须隐藏（不出现空滑块）').toBe('none')
+      客户端高.mockRestore()
+      滚动高.mockRestore()
+      滚动位.mockRestore()
+      wrapper.unmount()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('移动断点同时约束认证根层与卡片，不让长表单把外层滚动口撑开', () => {

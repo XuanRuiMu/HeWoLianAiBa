@@ -1,4 +1,4 @@
-﻿import { Router } from 'express'
+import { Router } from 'express'
 import type { Response } from 'express'
 import Busboy from 'busboy'
 import { huoQuFanYi } from '../config/translations'
@@ -435,15 +435,13 @@ luYou.post(
           })
         }
         const anQuanJieGuo = await shenHeNeiRongAnQuan(shenHeWenBen)
-        if (anQuanJieGuo.wei_gui) {
-          if (anQuanJieGuo.lei_xing !== SHEN_HE_FU_WU_BU_KE_YONG_JIAN) {
-            await jiLuZhangHaoWeiGui({
-              yongHuId: yongHu.yongHuId,
-              ip: 获取IP(qingQiu),
-              yuanYin: anQuanJieGuo.li_you || anQuanJieGuo.lei_xing || '内容违规',
-              leiXing: 'AI聊天',
-            })
-          }
+        if (anQuanJieGuo.wei_gui && anQuanJieGuo.lei_xing !== SHEN_HE_FU_WU_BU_KE_YONG_JIAN) {
+          await jiLuZhangHaoWeiGui({
+            yongHuId: yongHu.yongHuId,
+            ip: 获取IP(qingQiu),
+            yuanYin: anQuanJieGuo.li_you || anQuanJieGuo.lei_xing || '内容违规',
+            leiXing: 'AI聊天',
+          })
           const jiLuJieGuo = await 记录违规(
             获取IP(qingQiu),
             '内容违规',

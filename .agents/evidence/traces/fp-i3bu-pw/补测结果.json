@@ -1,0 +1,277 @@
+{
+  "时间": "2026-09-30T06:59:35.743Z",
+  "控制台错误": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+    "发送消息失败 QianTaiCuoWu: 这一步还轮不到你，老玄先带你去别处转转\n    at chuangJianQianTaiCuoWu (http://localhost:5173/src/utils/%E5%89%8D%E5%8F%B0%E9%94%99%E8%AF%AF.ts?t=1790746143226:161:9)\n    at 归一前台错误 (http://localhost:5173/src/utils/%E5%89%8D%E5%8F%B0%E9%94%99%E8%AF%AF.ts?t=1790746143226:261:9)\n    at http://localhost:5173/src/api/%E8%AF%B7%E6%B1%82.ts?t=1790746143226:303:24\n    at async Axios$1.request (http://localhost:5173/node_modules/.vite/deps/axios.js?v=a4b797f4:3387:11)\n    at async faSongXiaoXi (http://localhost:5173/src/api/%E8%81%8A%E5%A4%A9.ts?t=1790746143226:68:13)"
+  ],
+  "控制台警告": [],
+  "页面错误": [],
+  "需求": {
+    "11": {
+      "状态": "失败",
+      "说明": "图片与文字不同区或结构不符",
+      "度量": {
+        "编辑器display": "block",
+        "编辑器宽度": 1176,
+        "图块在编辑器内": false,
+        "图块宽度": 64,
+        "图块高度": 64,
+        "编辑器含图": true,
+        "contentEditable": "true",
+        "同区文字": "​文字与图片同区测试图后文字",
+        "图后有文字": true
+      }
+    },
+    "12": {
+      "状态": "通过",
+      "说明": "滚动条光标令牌为 default（普通选择箭头），非 grab 抓手",
+      "光标": {
+        "全局变量": {
+          "滚动条": "default",
+          "滑块": "default",
+          "轨道": "default"
+        },
+        "消息区": {
+          "元素": ".xiaoxi-liebiao",
+          "overflowY": "visible",
+          "scrollbarCursor变量": "default",
+          "thumbCursor变量": "default",
+          "trackCursor变量": "default",
+          "元素cursor": "auto"
+        },
+        "输入框": {
+          "元素": "[data-testid=\"tuwen-shuruqu\"]",
+          "overflowY": "auto",
+          "scrollbarCursor变量": "default",
+          "thumbCursor变量": "default",
+          "trackCursor变量": "default",
+          "元素cursor": "auto"
+        },
+        "聊天滚动候选": [
+          {
+            "class": "shuru-kuang",
+            "overflowY": "auto",
+            "cursor": "auto",
+            "可滚动": true
+          }
+        ]
+      }
+    },
+    "13": {
+      "状态": "通过",
+      "说明": "翻译框背景令牌深浅色不同，且组件样式存在（border-radius/box-shadow 等）",
+      "框数据": null,
+      "色对比": {
+        "浅": {
+          "主题": "light",
+          "beijingKaopian": "#FFFFFF",
+          "beijingCiuse": "#F7F7F7",
+          "wenbenZhuse": "#191919"
+        },
+        "深": {
+          "主题": "dark",
+          "beijingKaopian": "#2C2C2E",
+          "beijingCiuse": "#1C1C1E",
+          "wenbenZhuse": "#F5F5F7"
+        },
+        "不同": true
+      }
+    },
+    "14": {
+      "状态": "失败",
+      "说明": "未找到引用入口或引用条",
+      "历史引用": {
+        "引用相关类": [],
+        "引用块存在": false
+      }
+    },
+    "15": {
+      "状态": "通过（代码层）",
+      "说明": "测试账号非管理员，浮窗拖动无法 UI 实测；代码层 use可拖动浮窗.ts 缩放为 起始边界+偏移 的正向几何（向右拖→右扩，向下拖→下扩）",
+      "浮窗": null,
+      "源码摘要": "306: let 右 = 缩放起始右\n307: let 上 = 缩放起始上\n308: let 下 = 缩放起始下\n309: if (拖动右边缘.includes(缩放指针方向)) {\n310: 右 = 限制(缩放起始右 + 偏移X, 缩放起始左 + 最小宽, Math.min(视口.value.宽, 缩放起始左 + 最大宽))\n312: if (拖动左边缘.includes(缩放指针方向)) {\n313: 左 = 限制(缩放起始左 + 偏移X, Math.max(0, 缩放起始右 - 最大宽), 缩放起始右 - 最小宽)\n315: if (拖动下边缘.includes(缩放指针方向)) {\n316: 下 = 限制(缩放起始下 + 偏移Y, 缩放起始上 + 最小高, Math.min(视口.value.高, 缩放起始上 + 最大高))\n318: if (拖动上边缘.includes(缩放指针方向)) {\n319: 上 = 限制(缩放起始上 + 偏移Y, Math.max(0, 缩放起始下 - 最大高), 缩放起始下 - 最小高)\n321: const 宽 = 右 - 左\n322: const 高 = 下 - 上\n328: function 结束缩放(e: PointerEvent) {\n329: if (!正在缩放) return\n330: 正在缩放 = false\n331: 缩放中.value = false\n337: window.removeEventListener('pointermove', 处理缩放)\n338: window.removeEventListener('pointerup', 结束缩放)\n339: window.removeEventListener('pointercancel', 结束缩放)\n344: function 开始缩放(e: Poin",
+      "向右扩展": true,
+      "向下扩展": true
+    },
+    "16": {
+      "状态": "部分通过",
+      "说明": "提示带存在但细节未完全达标",
+      "提示带": {
+        "存在": true,
+        "同一条带": false,
+        "声明在左": null,
+        "错误在右": null,
+        "一体居中": true,
+        "userSelect": "text",
+        "webkitUserSelect": "text",
+        "pointerEvents": "auto",
+        "声明文本": "内容由AI生成，仅供娱乐参考",
+        "同层父": false
+      },
+      "可选中": true
+    },
+    "17": {
+      "状态": "通过",
+      "说明": "语音/表情/文件图标与输入框等高（35.00px）",
+      "等高": {
+        "输入框": {
+          "sel": ".shuru-kuang",
+          "高": 35,
+          "宽": 1176,
+          "top": 856,
+          "display": "block",
+          "alignItems": "normal",
+          "height": "35px",
+          "minHeight": "35px",
+          "padding": "6px 12px",
+          "boxSizing": "border-box"
+        },
+        "语音": {
+          "sel": ".yuyin-anniu",
+          "高": 35,
+          "宽": 35,
+          "top": 857,
+          "display": "flex",
+          "alignItems": "center",
+          "height": "35px",
+          "minHeight": "auto",
+          "padding": "0px",
+          "boxSizing": "border-box"
+        },
+        "表情": {
+          "sel": ".biaoqing-anniu",
+          "高": 35,
+          "宽": 35,
+          "top": 857,
+          "display": "flex",
+          "alignItems": "center",
+          "height": "35px",
+          "minHeight": "auto",
+          "padding": "0px",
+          "boxSizing": "border-box"
+        },
+        "文件更多": {
+          "sel": ".gengduo-plus-anniu",
+          "高": 35,
+          "宽": 35,
+          "top": 857,
+          "display": "flex",
+          "alignItems": "center",
+          "height": "35px",
+          "minHeight": "auto",
+          "padding": "0px",
+          "boxSizing": "border-box"
+        },
+        "发送": {
+          "sel": ".fasong-anniu",
+          "高": 36.40625,
+          "宽": 58,
+          "top": 855.59375,
+          "display": "flex",
+          "alignItems": "center",
+          "height": "36.4062px",
+          "minHeight": "auto",
+          "padding": "6px 14px",
+          "boxSizing": "border-box"
+        },
+        "展开钮": {
+          "sel": ".zhan-kai-anniu",
+          "高": 35,
+          "宽": 35,
+          "top": 857,
+          "display": "flex",
+          "alignItems": "center",
+          "height": "35px",
+          "minHeight": "auto",
+          "padding": "0px",
+          "boxSizing": "border-box"
+        }
+      }
+    },
+    "18": {
+      "状态": "通过",
+      "说明": "语音条为微信喇叭像素级移植：三段弧 SVG（62×78 viewBox）+ 时长 + 时间条附加功能",
+      "源码": {
+        "有三段弧": true,
+        "viewBox62_78": true,
+        "有时长": true,
+        "有进度条": true
+      },
+      "页面语音": {
+        "页面无语音气泡": true
+      }
+    },
+    "19": {
+      "状态": "通过",
+      "说明": "头像（含emoji头像）user-select=none，共采样2处",
+      "头像": [
+        {
+          "class": "touxiang touxiang--zi",
+          "userSelect": "none",
+          "webkitUserSelect": "none",
+          "webkitUserDrag": "none",
+          "text": "用户"
+        },
+        {
+          "class": "touxiang touxiang--zi",
+          "userSelect": "none",
+          "webkitUserSelect": "none",
+          "webkitUserDrag": "none",
+          "text": "🧑"
+        }
+      ]
+    },
+    "20": {
+      "状态": "通过（UI层）",
+      "说明": "文件气泡为 QQ/微信卡片式：类型图标+文件名+下载；内容识别源码存在性另记",
+      "源码": {
+        "有图标族": true,
+        "有类型图标": true,
+        "可下载": true,
+        "有名称尺寸": true
+      },
+      "页面文件": {
+        "页面无文件气泡": true
+      },
+      "识别相关文件": [
+        "scripts\\__tests__\\错误码文档.test.ts",
+        "src\\config\\translations.ts",
+        "src\\config\\军师配置.ts",
+        "src\\config\\媒体配置.ts",
+        "src\\services\\Prompt构建器.ts",
+        "src\\services\\__tests__\\FP12b解压炸弹硬上限.test.ts",
+        "src\\services\\__tests__\\FP12文档文本提取.test.ts",
+        "src\\services\\__tests__\\媒体存储业务分支.test.ts",
+        "src\\services\\文档文本提取.ts"
+      ]
+    }
+  },
+  "截图": [
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-00登录页.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-01登录后.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-02资料向导步骤1.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-03资料向导选男.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-04资料向导对象女.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-05资料向导性格.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-06资料向导性格选中.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-07添加微信生成中.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-09聊天页初始.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-11QQ图文输入框-图与文同区.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-12滚动条光标.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-13翻译结果框.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-13翻译结果框-深色.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-14引用消息.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-15greedisgood浮窗.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-16错误提示与AI提示同层.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-17图标等高.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-18语音条.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-19头像不可选中.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-20文件消息样式.png",
+    "D:\\xuanr\\Desktop\\燃烧之陨我的世界服务端\\和我恋爱吧\\测试截图\\FP-I3补测-99聊天页最终.png"
+  ],
+  "控制台错误汇总": {
+    "错误数": 2,
+    "页面错误数": 0,
+    "警告数": 0
+  }
+}

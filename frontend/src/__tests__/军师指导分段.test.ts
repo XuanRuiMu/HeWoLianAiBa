@@ -258,7 +258,7 @@ describe('FP-11 分区样式主题令牌', () => {
     expect(shiYongLingPai.size).toBeGreaterThan(0)
     for (const ming of shiYongLingPai) {
       const hanGai = fuGai.filter((duan) => new RegExp(`--${ming}\\s*:`).test(duan[2]))
-      const light = hanGai.some((duan) => duan[1].includes('light'))
+      const light = hanGai.some((duan) => duan[1].includes('light') || duan[1].trim() === ':root')
       const dark = hanGai.some((duan) => duan[1].includes('dark') || duan[1].trim() === ':root')
       expect(`${ming}:${light}:${dark}`, `令牌 --${ming} 缺明暗两套`).toBe(`${ming}:true:true`)
     }
@@ -290,6 +290,9 @@ describe('FP-11 分区样式主题令牌', () => {
     for (const ming of new Set(
       [...yangShiKuai.matchAll(/var\(--([a-z0-9-]+)/g)].map((p) => p[1]),
     )) {
+      // 量纲/间距/缓动令牌住共用 :root 块，深浅同值不塌陷——本断言只管主题相关令牌（颜色/圆角等分档令牌）
+      const zaiGongYong = new RegExp(`:root\\s*\\{[^}]*--${ming}\\s*:`).test(lingPaiYuanMa)
+      if (zaiGongYong) continue
       const mingZhi = quZhi('light', ming)
       const anZhi = quZhi('dark', ming)
       expect(`${ming}:${mingZhi}`, `令牌 --${ming} 明色取值转引了其它令牌`).not.toContain('var(')

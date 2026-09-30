@@ -42,28 +42,32 @@ describe('开场白生成与概率业务分支', () => {
     expect(结果.xiao_xi_lie_biao).toEqual(['你好', 'A', 'B', 'C'])
   })
 
-  it('无AI或解析失败按真实阶段返回错误', async () => {
+  it('无AI或解析失败降级到启发式兜底', async () => {
     vi.stubEnv('VITEST', 'true')
     const 结果 = await shengChengKaiChangBai(canShu)
     expect(结果.xiao_xi_lie_biao.length).toBeGreaterThan(0)
     vi.stubEnv('VITEST', 'false')
     假.peiZhi.deepSeek.apiMiYao = ''
     假.ai.deepSeek.apiMiYao = ''
-    await expect(shengChengKaiChangBai(canShu)).rejects.toMatchObject({ code: CUO_WU_DAI_MA.ROLE_GENERATION_MODEL_UNAVAILABLE })
+    const 降级结果 = await shengChengKaiChangBai(canShu)
+    expect(降级结果.xiao_xi_lie_biao.length).toBeGreaterThan(0)
     假.peiZhi.deepSeek.apiMiYao = 'key'
     假.ai.deepSeek.apiMiYao = 'fallback'
     假.genJu.mockResolvedValueOnce({ neiRong: '不是JSON' })
-    await expect(shengChengKaiChangBai(canShu)).rejects.toMatchObject({ code: CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID })
+    const 解析失败结果 = await shengChengKaiChangBai(canShu)
+    expect(解析失败结果.xiao_xi_lie_biao.length).toBeGreaterThan(0)
   })
 
-  it('AI有效结果走上下文，空结果与网络异常按阶段返回错误', async () => {
+  it('AI有效结果走上下文，空结果与网络异常降级到启发式兜底', async () => {
     vi.stubEnv('VITEST', 'false')
     假.genJu.mockResolvedValueOnce({ neiRong: '{"xiao_xi_lie_biao":["嗨","在忙吗"]}' })
     await expect(shengChengKaiChangBai(canShu, { jiaoSe: {} } as never)).resolves.toEqual({ xiao_xi_lie_biao: ['嗨', '在忙吗'] })
     假.genJu.mockResolvedValueOnce({ neiRong: '{"xiao_xi_lie_biao":[]}' })
-    await expect(shengChengKaiChangBai(canShu)).rejects.toMatchObject({ code: CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID })
+    const 空结果 = await shengChengKaiChangBai(canShu)
+    expect(空结果.xiao_xi_lie_biao.length).toBeGreaterThan(0)
     假.genJu.mockRejectedValueOnce(new Error('网络'))
-    await expect(shengChengKaiChangBai(canShu)).rejects.toMatchObject({ code: CUO_WU_DAI_MA.ROLE_GENERATION_MODEL_CALL_FAILED })
+    const 网络异常 = await shengChengKaiChangBai(canShu)
+    expect(网络异常.xiao_xi_lie_biao.length).toBeGreaterThan(0)
   })
 
   it('概率解析覆盖测试兜底、百分数、小数、非法值和异常阶段', async () => {

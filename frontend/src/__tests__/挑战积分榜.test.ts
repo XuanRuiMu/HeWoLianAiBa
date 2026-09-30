@@ -122,7 +122,7 @@ describe('挑战积分榜组件', () => {
     expect(样式).not.toMatch(/background:\s*rgba\(20,\s*24,\s*40/)
     expect(样式).toMatch(/\.paihang-biaoti\s*\{[^}]*color:\s*var\(--wenben-zhuse\)/)
     expect(样式).toMatch(/\.yonghu-ming\s*\{[^}]*color:\s*var\(--wenben-zhuse\)/)
-    expect(样式).toMatch(/\.jifen-zhi\s*\{[^}]*color:\s*var\(--pinpai-fen-shen\)/)
+    expect(样式).toMatch(/\.jifen-zhi\s*\{[^}]*color:\s*var\(--tiaozhan-zhu-1\)/)
     expect(wrapper.text()).toContain('玩家一')
   })
 })

@@ -290,8 +290,8 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 8px 12px;
+  gap: var(--jiange-12);
+  padding: var(--jiange-xiao) var(--jiange-12);
   border-bottom: 1px solid rgba(99, 179, 237, 0.18);
   background: rgba(99, 179, 237, 0.06);
   cursor: grab;
@@ -302,7 +302,7 @@ onBeforeUnmount(() => {
 .rizhi-biaoti {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--jiange-xiao);
   font-size: 13px;
   font-weight: 600;
   color: #d6e6ff;
@@ -311,7 +311,7 @@ onBeforeUnmount(() => {
 .rizhi-biaoti-you {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--jiange-10);
 }
 
 .rizhi-dian {
@@ -345,7 +345,7 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.05);
   color: #cdd7e6;
   border-radius: 6px;
-  padding: 3px 10px;
+  padding: var(--jiange-3) var(--jiange-10);
   font-size: 11px;
   cursor: pointer;
 }
@@ -358,8 +358,8 @@ onBeforeUnmount(() => {
 .rizhi-gongju-lan {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: var(--jiange-6);
+  padding: var(--jiange-6) var(--jiange-12);
   border-bottom: 1px solid rgba(99, 179, 237, 0.12);
   flex-wrap: wrap;
 }
@@ -367,7 +367,7 @@ onBeforeUnmount(() => {
 .rizhi-jibie-kai {
   border: 1px solid transparent;
   border-radius: 6px;
-  padding: 3px 9px;
+  padding: var(--jiange-3) var(--jiange-9);
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
@@ -383,7 +383,7 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(99, 179, 237, 0.18);
   border-radius: 6px;
-  padding: 3px 8px;
+  padding: var(--jiange-3) var(--jiange-xiao);
   font-size: 11px;
   color: #d6e6ff;
 }
@@ -412,8 +412,8 @@ onBeforeUnmount(() => {
 .rizhi-hang {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px;
+  gap: var(--jiange-xiao);
+  padding: 0 var(--jiange-12);
   font-size: 11px;
   line-height: 22px;
   white-space: nowrap;
@@ -479,14 +479,14 @@ onBeforeUnmount(() => {
 }
 
 .rizhi-kong {
-  padding-top: 40px;
+  padding-top: calc(var(--jiange-da) + var(--jiange-zhong));
   text-align: center;
   color: #5b6b82;
   font-size: 12px;
 }
 
 .rizhi-jiaobu {
-  padding: 5px 12px;
+  padding: var(--jiange-5) var(--jiange-12);
   border-top: 1px solid rgba(99, 179, 237, 0.12);
   font-size: 10px;
   color: #4d5c72;

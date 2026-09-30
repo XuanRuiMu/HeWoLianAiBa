@@ -190,7 +190,7 @@ function guoLvMinGanZiDuanXiangQing(
 }
 
 luYou.get(
-  encodeURI('/分类'),
+  '/分类',
   changGuiXianLiu,
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
@@ -207,7 +207,7 @@ luYou.get(
 )
 
 luYou.post(
-  encodeURI('/分类'),
+  '/分类',
   changGuiXianLiu,
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
@@ -224,7 +224,7 @@ luYou.post(
 )
 
 luYou.put(
-  encodeURI('/分类/:fenLeiId'),
+  '/分类/:fenLeiId',
   changGuiXianLiu,
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
@@ -251,7 +251,7 @@ luYou.put(
 )
 
 luYou.get(
-  encodeURI('/列表'),
+  '/列表',
   changGuiXianLiu,
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
@@ -277,7 +277,7 @@ luYou.get(
 )
 
 luYou.get(
-  encodeURI('/详情/:dangAnId'),
+  '/详情/:dangAnId',
   changGuiXianLiu,
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
@@ -304,7 +304,7 @@ luYou.get(
 )
 
 luYou.put(
-  encodeURI('/分类/:fenLeiId/排序'),
+  '/分类/:fenLeiId/排序',
   changGuiXianLiu,
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
@@ -338,7 +338,7 @@ luYou.put(
 )
 
 luYou.put(
-  encodeURI('/分类/:fenLeiId/记录/:dangAnId'),
+  '/分类/:fenLeiId/记录/:dangAnId',
   changGuiXianLiu,
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
@@ -374,7 +374,7 @@ luYou.put(
 )
 
 luYou.delete(
-  encodeURI('/分类/:fenLeiId'),
+  '/分类/:fenLeiId',
   changGuiXianLiu,
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
@@ -427,7 +427,7 @@ luYou.delete(
 )
 
 luYou.post(
-  encodeURI('/批量删除'),
+  '/批量删除',
   changGuiXianLiu,
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
@@ -455,7 +455,7 @@ luYou.post(
 )
 
 luYou.get(
-  encodeURI('/复盘/:dangAnId'),
+  '/复盘/:dangAnId',
   changGuiXianLiu,
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu

@@ -35,7 +35,7 @@ import { shiTuPianDiZhi } from '@/utils/头像'
 const props = defineProps<{
   touXiang?: string | null
   moRenZi?: string
-  shenFen?: 'jiaose' | 'yonghu' | 'duijue'
+  shenFen?: 'jiaose' | 'yonghu' | 'duiju'
 }>()
 
 // 图片加载失败的事件出口（FP-19b）：军师指导/军师记录详情 的「加载失败→落文字分支」手势

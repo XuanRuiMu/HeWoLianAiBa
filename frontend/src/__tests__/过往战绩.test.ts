@@ -169,9 +169,10 @@ describe('FP-12 过往战绩分类视图', () => {
 
     vi.mocked(huoQuDangAnLieBiao).mockRejectedValueOnce(new Error('network'))
     const { wrapper: failedWrapper } = await mountView()
-    expect(failedWrapper.find('.qian-tai-cuo-wu-ying-xiang').text()).toBe(
-      huoQuFanYi('tongYong', 'tongYongWenTiYingXiang'),
+    expect(failedWrapper.find('.qian-tai-cuo-wu-wen-an').text()).toBe(
+      huoQuFanYi('lianAi', 'LianAi_004'),
     )
+    expect(failedWrapper.find('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe('LianAi_004')
     expect(failedWrapper.find('.qian-tai-cuo-wu-chong-shi').exists()).toBe(true)
   })
 
@@ -348,9 +349,9 @@ describe('FP-12 过往战绩分类视图', () => {
     await exposed.yidongJiLu(ids[0]!, 1)
     await flushPromises()
 
-    expect(wrapper.find('.zhanji-tishi').text()).toContain(huoQuFanYi('tongYong', 'zhanJiWenTiYingXiang'))
+    expect(wrapper.find('.zhanji-tishi').text()).toContain(huoQuFanYi('lianAi', 'LianAi_055'))
     expect(wrapper.find('.zhanji-tishi').text()).not.toContain('分类已发生变化')
-    expect(wrapper.find('.qian-tai-cuo-wu-dai-ma').text()).toBe('ZHAN_JI_FEN_LEI_BIAN_GENG')
+    expect(wrapper.find('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe('LianAi_055')
     expect(wrapper.find('.qian-tai-cuo-wu-chong-shi').exists()).toBe(true)
     expect(wrapper.findAll('.jiaose-mingcheng').map((item) => item.text())).toEqual([
       '记录2',
@@ -372,8 +373,8 @@ describe('FP-12 过往战绩分类视图', () => {
       '记录1',
       '记录2',
     ])
-    expect(wrapper.find('.qian-tai-cuo-wu-ying-xiang').text()).toBe(
-      huoQuFanYi('tongYong', 'tongYongWenTiYingXiang'),
+    expect(wrapper.find('.qian-tai-cuo-wu-wen-an').text()).toBe(
+      huoQuFanYi('lianAi', 'LianAi_004'),
     )
   })
 

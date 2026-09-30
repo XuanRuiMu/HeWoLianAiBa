@@ -90,18 +90,16 @@ describe('FP-13 角色生成阶段错误', () => {
     })
   })
 
-  it('模型调用失败返回模型阶段码', async () => {
+  it('模型调用失败不阻断角色创建（开场白降级）', async () => {
     假.generate.mockRejectedValueOnce(new Error('上游网络错误'))
-    await expect(baoCunJiaoSe('用户-1', 角色())).rejects.toMatchObject({
-      code: CUO_WU_DAI_MA.ROLE_GENERATION_MODEL_CALL_FAILED,
-    })
+    const 结果 = await baoCunJiaoSe('用户-1', 角色())
+    expect(结果.id).toBe('角色-1')
   })
 
-  it('开场白消息持久化失败返回持久化阶段码', async () => {
+  it('开场白消息持久化失败不阻断角色创建（角色已入库）', async () => {
     假.saveMessage.mockRejectedValueOnce(new Error('消息落库失败'))
-    await expect(baoCunJiaoSe('用户-1', 角色())).rejects.toMatchObject({
-      code: CUO_WU_DAI_MA.ROLE_GENERATION_PERSISTENCE_FAILED,
-    })
+    const 结果 = await baoCunJiaoSe('用户-1', 角色())
+    expect(结果.id).toBe('角色-1')
   })
 
   it('角色持久化与开场白保存成功时保持原成功结果', async () => {

@@ -417,8 +417,8 @@ function 格式化时间(时间: number): string {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 0 16px;
+  gap: var(--jiange-xiao);
+  padding: 0 var(--jiange-zhong);
   border-bottom: 1px solid var(--jiankong-biankuang);
   background: var(--jiankong-kuai-beijing);
   cursor: grab;
@@ -433,7 +433,7 @@ function 格式化时间(时间: number): string {
 .jiankong-caoZuo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--jiange-xiao);
   flex: none;
 }
 
@@ -444,14 +444,14 @@ function 格式化时间(时间: number): string {
   background: var(--jiankong-anniu-beijing);
   color: var(--jiankong-anniu-wenben);
   border-radius: 8px;
-  padding: 6px 12px;
+  padding: var(--jiange-6) var(--jiange-12);
   font-size: 13px;
   cursor: pointer;
   transition: background 0.2s ease;
 }
 
 .jiankong-guanbi {
-  padding: 6px 16px;
+  padding: var(--jiange-6) var(--jiange-zhong);
 }
 
 .jiankong-paixu:hover,
@@ -468,7 +468,7 @@ function 格式化时间(时间: number): string {
   flex: none;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: var(--jiange-1);
   background: var(--jiankong-biankuang);
   overflow-y: auto;
   overflow-x: hidden;
@@ -559,7 +559,7 @@ function 格式化时间(时间: number): string {
 .jiankong-biaoti {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--jiange-xiao);
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -575,7 +575,7 @@ function 格式化时间(时间: number): string {
   color: var(--jiankong-jishu-wenben);
   background: var(--jiankong-jishu-di);
   border-radius: 999px;
-  padding: 1px 8px;
+  padding: var(--jiange-1) var(--jiange-xiao);
   flex: none;
 }
 
@@ -607,7 +607,7 @@ function 格式化时间(时间: number): string {
 
 .fenqu-biaoti {
   margin: 0;
-  padding: 10px 16px;
+  padding: var(--jiange-10) var(--jiange-zhong);
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -618,7 +618,7 @@ function 格式化时间(时间: number): string {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: var(--jiange-xiao);
 }
 
 .fenqu-zheDie {
@@ -633,7 +633,7 @@ function 格式化时间(时间: number): string {
 }
 
 .fenqu-neirong {
-  padding: 12px 16px;
+  padding: var(--jiange-12) var(--jiange-zhong);
   min-width: 0;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -643,20 +643,20 @@ function 格式化时间(时间: number): string {
   color: var(--jiankong-tishi);
   font-size: 13px;
   text-align: center;
-  padding-top: 32px;
+  padding-top: calc(var(--jiange-da) + var(--jiange-xiao));
 }
 
 .renshe-xinxi {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--jiange-xiao);
   min-width: 0;
 }
 
 .renshe-xiang {
   display: flex;
-  gap: 8px;
-  padding: 6px 0;
+  gap: var(--jiange-xiao);
+  padding: var(--jiange-6) 0;
   border-bottom: 1px solid var(--jiankong-kuai-biankuang);
   min-width: 0;
 }
@@ -683,14 +683,14 @@ function 格式化时间(时间: number): string {
 .lunci-liebiao {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--jiange-12);
   min-width: 0;
 }
 
 .lunci-kapian {
   border: 1px solid var(--jiankong-kuai-biankuang);
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: var(--jiange-10) var(--jiange-12);
   background: var(--jiankong-kuai-beijing);
   min-width: 0;
 }
@@ -699,8 +699,8 @@ function 格式化时间(时间: number): string {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: var(--jiange-xiao);
+  margin-bottom: var(--jiange-xiao);
   min-width: 0;
 }
 
@@ -717,34 +717,34 @@ function 格式化时间(时间: number): string {
 }
 
 .lunci-kuai {
-  margin-top: 8px;
-  padding-top: 8px;
+  margin-top: var(--jiange-xiao);
+  padding-top: var(--jiange-xiao);
   border-top: 1px dashed var(--jiankong-kuai-biankuang);
   min-width: 0;
 }
 
 .lunci-xiao-biaoti {
-  margin: 0 0 6px;
+  margin: 0 0 var(--jiange-6);
   font-size: 12px;
   font-weight: 700;
   color: var(--jiankong-ciwenben);
 }
 
 .lunci-huifu {
-  margin: 0 0 6px;
+  margin: 0 0 var(--jiange-6);
   font-size: 12px;
   line-height: 1.6;
   color: var(--wenben-zhuse);
   background: var(--jiankong-kuai-beijing);
   border-radius: 8px;
-  padding: 8px 10px;
+  padding: var(--jiange-xiao) var(--jiange-10);
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: anywhere;
 }
 
 .lunci-liyou {
-  margin: 6px 0 0;
+  margin: var(--jiange-6) 0 0;
   font-size: 12px;
   line-height: 1.6;
   color: var(--jiankong-ciwenben);
@@ -753,8 +753,8 @@ function 格式化时间(时间: number): string {
 }
 
 .shendusikao-xiang {
-  padding: 10px;
-  margin-bottom: 8px;
+  padding: var(--jiange-10);
+  margin-bottom: var(--jiange-xiao);
   border-radius: 8px;
   background: var(--silu-beijing);
   border: 1px solid var(--silu-biankuang);
@@ -768,20 +768,20 @@ function 格式化时间(时间: number): string {
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: anywhere;
-  margin-top: 6px;
+  margin-top: var(--jiange-6);
 }
 
 .shijian-xian {
   list-style: none;
   margin: 0;
-  padding: 0 0 0 12px;
+  padding: 0 0 0 var(--jiange-12);
   border-left: 1px solid var(--jiankong-kuai-biankuang);
   min-width: 0;
 }
 
 .shijian-xian-xiang {
   position: relative;
-  padding: 0 0 14px 16px;
+  padding: 0 0 calc(var(--jiange-12) + var(--jiange-2)) var(--jiange-zhong);
   min-width: 0;
 }
 
@@ -810,15 +810,15 @@ function 格式化时间(时间: number): string {
 .shijian-xian-shuoming {
   color: var(--jiankong-ciwenben);
   font-size: 12px;
-  margin-top: 2px;
+  margin-top: var(--jiange-2);
   line-height: 1.5;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
 .haogandu-xiang {
-  padding: 8px 10px;
-  margin-bottom: 8px;
+  padding: var(--jiange-xiao) var(--jiange-10);
+  margin-bottom: var(--jiange-xiao);
   border-radius: 8px;
   background: var(--jiankong-kuai-beijing);
   border: 1px solid var(--jiankong-kuai-biankuang);
@@ -827,13 +827,13 @@ function 格式化时间(时间: number): string {
 .haogandu-bianhua {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--jiange-xiao);
 }
 
 .haogandu-shuzhi {
   font-size: 13px;
   font-weight: 600;
-  padding: 2px 8px;
+  padding: var(--jiange-2) var(--jiange-xiao);
   border-radius: 6px;
 }
 
@@ -851,9 +851,9 @@ function 格式化时间(时间: number): string {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  margin-bottom: 8px;
+  gap: var(--jiange-xiao);
+  padding: var(--jiange-xiao) var(--jiange-10);
+  margin-bottom: var(--jiange-xiao);
   border-radius: 8px;
   background: var(--biao-qian-jinggao-beijing);
   border: 1px solid var(--jiankong-kuai-biankuang);
@@ -864,7 +864,7 @@ function 格式化时间(时间: number): string {
   font-size: 11px;
   font-weight: 600;
   color: var(--biao-qian-jinggao-wenben);
-  padding: 2px 8px;
+  padding: var(--jiange-2) var(--jiange-xiao);
   border-radius: 6px;
   flex: none;
 }

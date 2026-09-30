@@ -327,11 +327,11 @@ async function 提交表单(场景: 场景, 形: 'dengLu' | 'zhuCe'): Promise<vo
   await flushPromises()
 }
 
-/** 走完「收束 → 飞行」两段（700ms + 600ms），末尾留给清理的一拍微任务 */
+/** 走完「收束 → 飞行」两段（900ms + 800ms，FP-B 华丽加长档），末尾留给清理的一拍微任务 */
 async function 跑到结束(): Promise<void> {
-  await vi.advanceTimersByTimeAsync(700)
+  await vi.advanceTimersByTimeAsync(900)
   await flushPromises()
-  await vi.advanceTimersByTimeAsync(600)
+  await vi.advanceTimersByTimeAsync(800)
   await flushPromises()
 }
 
@@ -402,7 +402,7 @@ describe('FP-05 ①：飞行层存在期间活 DOM 一个样式都不被改写',
       expect(计算样式快照(元), `收束期 ${名} 的计算样式与入场前不一致`).toEqual(入场前[名])
     }
 
-    await vi.advanceTimersByTimeAsync(700)
+    await vi.advanceTimersByTimeAsync(900)
     await flushPromises()
     expect(定格层(), '收束结束后快照层被提前摘除').not.toBeNull()
     for (const [名, 元] of Object.entries(目标们)) {
@@ -410,7 +410,7 @@ describe('FP-05 ①：飞行层存在期间活 DOM 一个样式都不被改写',
       expect(计算样式快照(元), `飞行期 ${名} 的计算样式与入场前不一致`).toEqual(入场前[名])
     }
 
-    await vi.advanceTimersByTimeAsync(600)
+    await vi.advanceTimersByTimeAsync(800)
     await flushPromises()
     expect(定格层(), '飞行结束后快照层未移除').toBeNull()
     for (const [名, 元] of Object.entries(目标们)) {
@@ -443,12 +443,12 @@ describe('FP-05 ②：动画集合回到基线（改前的 fill:forwards 泄漏�
     expect(场景.基线, '基线应为 0（jsdom 无 CSS 动画）').toBe(0)
     await 提交表单(场景, 'dengLu')
     expect(活着的动画().length).toBeGreaterThan(场景.基线)
-    await vi.advanceTimersByTimeAsync(700)
+    await vi.advanceTimersByTimeAsync(900)
     await flushPromises()
     expect(document.getAnimations().length, '收束完成时就回落到基线 = 飞行段根本没建动画').toBeGreaterThan(
       场景.基线,
     )
-    await vi.advanceTimersByTimeAsync(600)
+    await vi.advanceTimersByTimeAsync(800)
     await flushPromises()
     expect(document.getAnimations().length, '动画集合未回到基线 ⇒ fill:forwards 泄漏').toBe(场景.基线)
     场景.wrapper.unmount()
@@ -468,7 +468,7 @@ describe('FP-05 ③：飞行终点与 .yonghu-xuanxiang 中心偏差 ≤2px', ()
   it('位移取两矩形中心差、缩放取落点宽/快照宽 ⇒ 两轴落点偏差均 ≤2px', async () => {
     const 场景 = await 建场景('dengLu')
     await 提交表单(场景, 'dengLu')
-    await vi.advanceTimersByTimeAsync(700)
+    await vi.advanceTimersByTimeAsync(900)
     await flushPromises()
     const 层 = 定格层() as HTMLElement
     const 飞行 = 活着的动画().filter((影) => 影.目标 === 层).at(-1) as 影动画 | undefined

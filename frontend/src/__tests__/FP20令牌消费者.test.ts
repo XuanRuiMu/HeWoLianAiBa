@@ -66,6 +66,8 @@ const 零消费白名单: { 令牌: string; 理由: string }[] = [
     理由:
       '共用 :root「尺度令牌与缓动曲线深浅两档恒等」基准族，量纲与主题档无关；零 var( 消费但由 FP-12 成对审计的共用块专属令牌与尺度真源取值钉住，非主题色对',
   },
+  // FP-H 删通话链后登记的 4 枚疑死令牌（--ceng-tonghua/--chuangkou-yinying/--quxiao-anniu-beijing/
+  // --quxiao-anniu-wenben）已由 FP-G 经主代理裁决删除定义并同步 FP14出生日期选择器.test.ts 层级序，销账。
 ]
 
 /** 已知非 var( 消费者：var( 扫描为零，但经字符串令牌名 + getPropertyValue 真实消费 */

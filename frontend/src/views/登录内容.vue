@@ -47,7 +47,8 @@
           @chong-shi="chongShi"
         />
 
-        <div class="biaodan-gundong">
+        <div class="gundong-waike">
+          <div ref="gundongRongQi" class="biaodan-gundong" @scroll="chuLiGundongGunDong">
           <div
             class="biaodan-xingwei"
             :class="moShi === 'dengLu' ? 'denglu-moshi' : 'zhuce-moshi'"
@@ -420,6 +421,8 @@
           </Transition>
           </div>
           </div>
+          </div>
+          <div ref="gundongHuaKuai" class="gundong-huakuai" aria-hidden="true" />
         </div>
       </div>
       <div class="juanzhou-gan juanzhou-gan-xia" />
@@ -706,6 +709,56 @@ function qieHuanMiMaXianShi(xuHao: 1 | 2) {
 
 const biaodanRongqi = ref<HTMLElement | null>(null)
 
+/* ============ FP-J2 自绘滚动滑块（认证滚动口唯一滚动指示） ============
+   原生滚动条已被 scrollbar-width: none 隐藏（本环境 Chromium 走 Fluent 绘制路径，
+   ::-webkit-scrollbar 定制失效、scrollbar-gutter: stable 恒占位挤压正文，均不可用）。
+   滑块挂在滚动口外壳（.gundong-waike）而非滚动坐标系内，脚本只写入小幅度 translateY；
+   高度 = 视口高 ×（视口高 / 内容高），最低 HUA_KUAI_ZUI_XIAO_GAO；静置淡出走 macOS overlay 行为。 */
+
+const gundongRongQi = ref<HTMLElement | null>(null)
+const gundongHuaKuai = ref<HTMLElement | null>(null)
+let gundongGuangChaQi: ResizeObserver | null = null
+let huaKuaiDanChuDingShiQi: ReturnType<typeof setTimeout> | null = null
+const HUA_KUAI_JING_ZHI_DAN_CHU_HAO_MIAO = 800
+const HUA_KUAI_ZUI_XIAO_GAO = 24
+
+function gengXinHuaKuai(): void {
+  const gunDongQuYuanSu = gundongRongQi.value
+  const huaKuaiYuanSu = gundongHuaKuai.value
+  if (!gunDongQuYuanSu || !huaKuaiYuanSu) return
+  const yiChuGao = gunDongQuYuanSu.scrollHeight - gunDongQuYuanSu.clientHeight
+  if (yiChuGao <= 0) {
+    huaKuaiYuanSu.style.display = 'none'
+    return
+  }
+  huaKuaiYuanSu.style.display = ''
+  const keJianGao = gunDongQuYuanSu.clientHeight
+  const huaKuaiGao = Math.max(
+    HUA_KUAI_ZUI_XIAO_GAO,
+    Math.round(keJianGao * (keJianGao / gunDongQuYuanSu.scrollHeight)),
+  )
+  const guiDaoGao = Math.max(0, keJianGao - huaKuaiGao)
+  const dingBu = Math.round((gunDongQuYuanSu.scrollTop / yiChuGao) * guiDaoGao)
+  huaKuaiYuanSu.style.height = `${huaKuaiGao}px`
+  huaKuaiYuanSu.style.transform = `translateY(${dingBu}px)`
+}
+
+function biaoJiHuaKuaiXianXing(): void {
+  const huaKuaiYuanSu = gundongHuaKuai.value
+  if (!huaKuaiYuanSu) return
+  huaKuaiYuanSu.classList.add('xian-shi')
+  if (huaKuaiDanChuDingShiQi !== null) clearTimeout(huaKuaiDanChuDingShiQi)
+  huaKuaiDanChuDingShiQi = setTimeout(() => {
+    huaKuaiDanChuDingShiQi = null
+    huaKuaiYuanSu.classList.remove('xian-shi')
+  }, HUA_KUAI_JING_ZHI_DAN_CHU_HAO_MIAO)
+}
+
+function chuLiGundongGunDong(): void {
+  gengXinHuaKuai()
+  biaoJiHuaKuaiXianXing()
+}
+
 let daoJiShiDingShiQi: ReturnType<typeof setInterval> | null = null
 
 watch(dengLuShouJiHao, (val) => (bd.dengLuShouJiHao = val))
@@ -803,12 +856,27 @@ onMounted(() => {
     }
   })
   qiDongHuiTianLunXun()
+  if (typeof ResizeObserver === 'function') {
+    gundongGuangChaQi = new ResizeObserver(() => gengXinHuaKuai())
+    const xingweiYuanSu = gundongRongQi.value?.querySelector('.biaodan-xingwei') ?? null
+    if (gundongRongQi.value) gundongGuangChaQi.observe(gundongRongQi.value)
+    if (xingweiYuanSu) gundongGuangChaQi.observe(xingweiYuanSu)
+  }
+  gengXinHuaKuai()
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', tongBuYeMianKeJianXing)
   window.removeEventListener('pageshow', tongBuPageshow)
   tingZhiHuiTianLunXun()
+  if (gundongGuangChaQi) {
+    gundongGuangChaQi.disconnect()
+    gundongGuangChaQi = null
+  }
+  if (huaKuaiDanChuDingShiQi !== null) {
+    clearTimeout(huaKuaiDanChuDingShiQi)
+    huaKuaiDanChuDingShiQi = null
+  }
   if (shouZhenTongBuId !== null) {
     if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(shouZhenTongBuId)
     shouZhenTongBuId = null
@@ -1045,20 +1113,20 @@ async function 定格飞向用户位(层: HTMLElement, 用户位: HTMLElement): 
     const 杆帧 = 计算帧(杆, ['height', 'opacity'])
     杆.classList.remove('juan-zhou-dingge-gan')
     // 属性式关键帧（单端点）= 起点取元素当前计算值，端点取 CSS 解析值 ⇒ 首帧零跳变
-    记动画(杆.animate(杆帧, { duration: 250, easing: quXian.biaoZhun, fill: 'forwards' }))
+    记动画(杆.animate(杆帧, { duration: 400, easing: quXian.biaoZhun, fill: 'forwards' }))
   }
   const 内容区 = 层.querySelector<HTMLElement>('.biaodan-neirong-qu')
   if (内容区) {
     记动画(
       内容区.animate([{ opacity: '0' }], {
-        duration: 500,
+        duration: 700,
         easing: quXian.biaoZhun,
         fill: 'forwards',
       }),
     )
   }
-  const 卷轴 = 记动画(层.animate([收束], { duration: 700, easing: quXian.biaoZhun, fill: 'forwards' }))
-  await dengDaiDongHua(卷轴, 900)
+  const 卷轴 = 记动画(层.animate([收束], { duration: 900, easing: quXian.biaoZhun, fill: 'forwards' }))
+  await dengDaiDongHua(卷轴, 1100)
 
   const 起点 = 层.getBoundingClientRect()
   const 落点 = 用户位.getBoundingClientRect()
@@ -1068,14 +1136,16 @@ async function 定格飞向用户位(层: HTMLElement, 用户位: HTMLElement): 
   const 飞行 = 记动画(
     层.animate(
       [{ transform: `translate(${位移X}px, ${位移Y}px) scale(${落点缩放})`, opacity: '0' }],
-      { duration: 600, easing: quXian.ruan, fill: 'forwards' },
+      { duration: 800, easing: quXian.ruan, fill: 'forwards' },
     ),
   )
-  await dengDaiDongHua(飞行, 800)
+  await dengDaiDongHua(飞行, 1000)
 }
 
 async function qiDongDinggeFeixing(mubiaoLuJing: string) {
   const 活卡 = biaodanRongqi.value
+  // 落点存在性必须在导航前判定：App 壳常驻全局菜单（含 .yonghu-xuanxiang），
+  // 认证路由下它同样在位（仅左槽按钮隐藏），故生产登录页恒能飞，不走测试-only 退化。
   const 用户位 = document.querySelector<HTMLElement>('.yonghu-xuanxiang')
   const 减动效 = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   if (!活卡 || !用户位 || 减动效) {
@@ -1211,7 +1281,7 @@ async function zhiXingZhuCe() {
   /* 高度吃满认证布局的内容盒：.yemian-buju 由 flex:1 + min-height:0 拿到确定高（认证布局.vue:83/94），
      本层由此成为「确定高」的居中参照，卡片高≤本层 ⇒ 任何分辨率下卡片都装得下视口 */
   height: 100%;
-  padding: 0 32px;
+  padding: 0 calc(var(--jiange-da) + var(--jiange-xiao));
   /* 四边 auto 保留（FP-02 契约：不得写回 `margin: 0 auto` 与认证布局 .yemian-buju>* 的同权重外边距抢序）；
      本层高度已确定为 100%，自动外边距吸收的自由空间恒为 0 ⇒ 居中实际由下面的网格承担 */
   margin: auto;
@@ -1235,7 +1305,7 @@ async function zhiXingZhuCe() {
     0 20px 50px rgba(2, 4, 14, 0.55),
     inset 0 0 0 4px var(--renzheng-mian-se),
     inset 0 0 0 5px rgba(201, 169, 106, 0.28);
-  padding: 30px 28px 24px;
+  padding: calc(var(--jiange-da) + var(--jiange-6)) calc(var(--jiange-da) + var(--jiange-4)) var(--jiange-da);
   position: relative;
   /* 视口内上界：相对 .denglu-neirong 的确定高（网格区域）封顶，超出量交给内层认证滚动口。
      卡片自身仍是 overflow:hidden —— 它要裁掉 .juanzhou-gan 的 110% 宽与圆角，不是多余裁切层 */
@@ -1317,7 +1387,7 @@ async function zhiXingZhuCe() {
   letter-spacing: 0.18em;
   text-indent: 0.18em;
   color: #efe9dc;
-  margin-bottom: 4px;
+  margin-bottom: var(--jiange-4);
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
@@ -1328,19 +1398,70 @@ async function zhiXingZhuCe() {
   letter-spacing: 0.3em;
   text-indent: 0.3em;
   text-shadow: none;
-  margin-top: 5px;
+  margin-top: var(--jiange-6);
 }
 
 .biaodan-gundong {
   flex: 1;
   min-height: 0;
-  padding-top: 5px;
-  margin-top: -5px;
+  /* FP-17b：浮标上浮越出字段盒 --biaoqian-qin-ru，滚动口给等量 padding-top 再以等量负 margin 收回，
+     两者必须同吃一枚几何令牌（此前 5px 被误收成 --jiange-6=6px 打断耦合） */
+  padding-top: var(--biaoqian-qin-ru);
+  margin-top: calc(var(--biaoqian-qin-ru) * -1);
   overflow-y: auto;
   overflow-x: hidden;
+  /* FP-J2 根因修复：本环境 Chromium 走 Fluent 滚动条绘制路径，::-webkit-scrollbar 定制失效、
+     scrollbar-gutter: stable 恒占 15px 槽位挤压正文（"获取验证码"按钮被压）——历次修复失败的根源。
+     标准属性 scrollbar-width: none 双端隐藏原生条，槽位随原生条一并消失（正文元素零占位）；
+     下面 width:0 兜不识别 scrollbar-width 的旧 Chromium（webkit 伪元素路径），双保险。
+     保留的 scrollbar-color/webkit 透明档在两路径下都不再绘制，仅钉住旧契约文本不断。 */
+  scrollbar-width: none;
   scrollbar-color: transparent transparent;
-  scrollbar-gutter: stable;
   position: relative;
+}
+
+.biaodan-gundong::-webkit-scrollbar {
+  width: 0;
+}
+
+/* FP-J2 自绘 overlay 滑块：外壳承接滚动口的弹性位（flex:1 + min-height:0 吸收溢出），
+   滑块绝对定位于外壳右缘 —— 不在滚动坐标系内，脚本只写小幅度 translateY，不随内容长距离位移。
+   金色取 --renzheng-gundong-huakuai-se（浅档深金/深档亮金），静置 800ms 后由脚本摘 xian-shi 淡出。 */
+.gundong-waike {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.gundong-huakuai {
+  position: absolute;
+  top: 0;
+  /* 贴卡片右缘：向外偏移卡片内边距，让细条落在边框右缘中线 */
+  right: calc(var(--renzheng-gundong-huakuai-you-ju) - var(--jiange-zhong) - var(--jiange-6));
+  width: var(--renzheng-gundong-huakuai-kuan);
+  border-radius: var(--renzheng-gundong-yuan-jiao);
+  /* 渐变细条：从上到下由浅金到深金再到浅金，高端感 */
+  background: linear-gradient(
+    180deg,
+    var(--renzheng-gundong-huakuai-se) 0%,
+    color-mix(in srgb, var(--renzheng-gundong-huakuai-se) 70%, #000) 50%,
+    var(--renzheng-gundong-huakuai-se) 100%
+  );
+  opacity: 0;
+  transition: opacity var(--renzheng-gundong-guo-du) var(--quxian-biao-zhun);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.gundong-huakuai.xian-shi {
+  opacity: 1;
+}
+
+.gundong-waike:hover .gundong-huakuai,
+.gundong-waike:focus-within .gundong-huakuai {
+  opacity: 1;
 }
 
 .biaodan-xingwei {
@@ -1376,10 +1497,12 @@ async function zhiXingZhuCe() {
 
 .biaodan-gundong::-webkit-scrollbar-track {
   background: transparent;
+  border-radius: var(--renzheng-gundong-yuan-jiao);
 }
 
 .biaodan-gundong::-webkit-scrollbar-thumb {
   background: transparent;
+  border-radius: var(--renzheng-gundong-yuan-jiao);
 }
 
 .biaodan-gundong:hover,
@@ -1400,8 +1523,8 @@ async function zhiXingZhuCe() {
 .biaodan-qiehuan-you-enter-active,
 .biaodan-qiehuan-zuo-enter-active {
   transition:
-    opacity 0.45s var(--quxian-biao-zhun),
-    transform 0.45s var(--quxian-biao-zhun);
+    opacity var(--renzheng-qiehuan-shi-chang) var(--quxian-biao-zhun),
+    transform var(--renzheng-qiehuan-shi-chang) var(--quxian-biao-zhun);
 }
 
 .biaodan-qiehuan-you-leave-active,
@@ -1409,28 +1532,28 @@ async function zhiXingZhuCe() {
   position: relative;
   pointer-events: none;
   transition:
-    opacity 0.45s var(--quxian-biao-zhun),
-    transform 0.45s var(--quxian-biao-zhun);
+    opacity var(--renzheng-qiehuan-shi-chang) var(--quxian-biao-zhun),
+    transform var(--renzheng-qiehuan-shi-chang) var(--quxian-biao-zhun);
 }
 
 .biaodan-qiehuan-you-enter-from {
   opacity: 0;
-  transform: translateX(var(--jiange-xiao));
+  transform: translateX(var(--renzheng-qiehuan-weiyi));
 }
 
 .biaodan-qiehuan-you-leave-to {
   opacity: 0;
-  transform: translateX(calc(var(--jiange-xiao) * -1));
+  transform: translateX(calc(var(--renzheng-qiehuan-weiyi) * -1));
 }
 
 .biaodan-qiehuan-zuo-enter-from {
   opacity: 0;
-  transform: translateX(calc(var(--jiange-xiao) * -1));
+  transform: translateX(calc(var(--renzheng-qiehuan-weiyi) * -1));
 }
 
 .biaodan-qiehuan-zuo-leave-to {
   opacity: 0;
-  transform: translateX(var(--jiange-xiao));
+  transform: translateX(var(--renzheng-qiehuan-weiyi));
 }
 
 /* 标签页：金线分隔 + 活动项菱形指示符（衬线宽距） */
@@ -1442,7 +1565,7 @@ async function zhiXingZhuCe() {
   background: transparent;
   border: none;
   border-bottom: 1px solid rgba(201, 169, 106, 0.4);
-  padding: 0 0 1px;
+  padding: 0 0 var(--jiange-2);
 }
 
 .biaoqian-anniu,
@@ -1454,7 +1577,7 @@ async function zhiXingZhuCe() {
 
 .biaoqian-anniu {
   flex: 1;
-  padding: 10px 4px;
+  padding: var(--jiange-10) var(--jiange-4);
   background: transparent;
   color: rgba(239, 233, 220, 0.55);
   font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', SimSun, serif;
@@ -1482,7 +1605,7 @@ async function zhiXingZhuCe() {
   font-size: 8px;
   color: #c9a96a;
   background: var(--renzheng-mian-se);
-  padding: 0 6px;
+  padding: 0 var(--jiange-6);
   line-height: 1;
 }
 
@@ -1498,17 +1621,20 @@ async function zhiXingZhuCe() {
 
 .fenlie-shuru {
   width: 100%;
-  padding: 18px 0 10px;
+  /* longhand：带 var()/calc() 的 padding 简写在 jsdom 里整条塌成 0（层叠结果读不出来，同 .biaodan-rongqi 的 background 先例） */
+  padding-top: calc(var(--jiange-zhong) + var(--jiange-2));
+  padding-right: 0;
+  padding-bottom: var(--jiange-10);
+  padding-left: 0;
   background-color: transparent;
-  background-image: none;
-  border: none;
   border-radius: 0;
-  /* 静置发丝线（FP-03c）：FP-03 删 .dixian-dixian 后未聚焦输入框零可见边界。
-     刻意写成三条 longhand——带 var() 的 border-bottom 简写在 jsdom 里整条被丢，
-     门禁就退回到读源码字符串；longhand 让「宽度/样式吃层叠结果、颜色吃令牌」可被解析值断言 */
-  border-bottom-width: 1px;
+  /* FPA1 单真源回落：global !important 是唯一生效轨；此处三条 longhand 只保无 global 宿主 */
+  border-top-width: 0;
+  border-right-width: 0;
+  border-left-width: 0;
+  border-bottom-width: var(--shuru-xian-changtai-kuan-du);
   border-bottom-style: solid;
-  border-bottom-color: var(--renzheng-shuru-xian-se);
+  border-bottom-color: var(--shuru-xian-changtai-se);
   color: #efe9dc;
   font-size: 15px;
   letter-spacing: 0.06em;
@@ -1553,16 +1679,16 @@ async function zhiXingZhuCe() {
 .fudong-biaoqian {
   position: absolute;
   left: 0;
-  top: 18px;
+  top: calc(var(--jiange-zhong) + var(--jiange-2));
   font-size: 15px;
   color: rgba(239, 233, 220, 0.62);
   pointer-events: none;
   /* 标签缺口衬底（FP-03c）：与卡面同一枚令牌色，使上浮态的焦点环上边线在标签处断开而不是
      打穿字脚。左右各 4px 由 margin-left 抵消，标签文字仍与输入文本同一起线 */
   background-color: var(--renzheng-mian-se);
-  padding-left: 4px;
-  padding-right: 4px;
-  margin-left: -4px;
+  padding-left: var(--jiange-4);
+  padding-right: var(--jiange-4);
+  margin-left: calc(var(--jiange-4) * -1);
   transition: all 0.3s var(--quxian-biao-zhun);
   transform-origin: left center;
 }
@@ -1570,7 +1696,7 @@ async function zhiXingZhuCe() {
 .shuru-zu.shangFu .fudong-biaoqian,
 .shuru-zu:focus-within .fudong-biaoqian,
 .shuru-zu:has(.fenlie-shuru:-webkit-autofill) .fudong-biaoqian {
-  top: -5px;
+  top: calc(var(--biaoqian-qin-ru) * -1);
   font-size: 11px;
   /* 缺口盒高写死，不靠 UA 的 normal（随字族漂移）：环带 [-1,0] 必须落在标签盒 [-5,8] 内 */
   line-height: 13px;
@@ -1588,14 +1714,14 @@ async function zhiXingZhuCe() {
 
 .mima-zu .fenlie-shuru {
   flex: 1;
-  padding-right: 40px;
+  padding-right: calc(var(--jiange-da) + var(--jiange-zhong));
 }
 
 .mima-qiehuan {
   position: absolute;
   right: 0;
   top: 12px;
-  padding: 6px;
+  padding: var(--jiange-6);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -1628,9 +1754,9 @@ async function zhiXingZhuCe() {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px 12px;
-  margin: -4px 0 20px;
-  padding: 0 2px;
+  gap: var(--jiange-xiao) var(--jiange-12);
+  margin: calc(var(--jiange-4) * -1) 0 calc(var(--jiange-zhong) + var(--jiange-4));
+  padding: 0 var(--jiange-2);
 }
 
 .ji-zhu-xuan-ze {
@@ -1661,7 +1787,7 @@ async function zhiXingZhuCe() {
 .ji-zhu-wen-ben {
   line-height: 1;
   position: relative;
-  padding-left: 22px;
+  padding-left: calc(var(--jiange-zhong) + var(--jiange-6));
 }
 
 .ji-zhu-wen-ben::before {
@@ -1704,7 +1830,7 @@ async function zhiXingZhuCe() {
 
 .yanzhengma-zu {
   display: flex;
-  gap: 12px;
+  gap: var(--jiange-12);
   align-items: flex-end;
 }
 
@@ -1715,7 +1841,7 @@ async function zhiXingZhuCe() {
 
 .fasong-anniu {
   flex-shrink: 0;
-  padding: 10px 14px;
+  padding: var(--jiange-10) calc(var(--jiange-xiao) + var(--jiange-6));
   min-height: 44px;
   background: transparent;
   color: #d5b878;
@@ -1726,7 +1852,7 @@ async function zhiXingZhuCe() {
   letter-spacing: 0.08em;
   white-space: nowrap;
   transition: all 0.3s ease;
-  margin-bottom: 2px;
+  margin-bottom: var(--jiange-2);
 }
 
 .fasong-anniu:hover:not(:disabled) {
@@ -1748,7 +1874,7 @@ async function zhiXingZhuCe() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 14px 28px;
+  padding: calc(var(--jiange-xiao) + var(--jiange-6)) calc(var(--jiange-da) + var(--jiange-4));
   background: linear-gradient(135deg, #e3c98e, #c9a96a 60%, #b3924f);
   color: #17130a;
   border: 1px solid #8a6a2f;
@@ -1763,7 +1889,7 @@ async function zhiXingZhuCe() {
   box-shadow:
     0 6px 18px rgba(201, 169, 106, 0.32),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  margin-top: 8px;
+  margin-top: var(--jiange-xiao);
   position: relative;
   overflow: hidden;
 }
@@ -1806,7 +1932,7 @@ async function zhiXingZhuCe() {
 }
 
 .cuowu-tishi {
-  padding: 10px 14px;
+  padding: var(--jiange-10) calc(var(--jiange-xiao) + var(--jiange-6));
   background: rgba(217, 138, 128, 0.1);
   border: 1px solid rgba(217, 138, 128, 0.35);
   border-radius: 4px;
@@ -1986,6 +2112,8 @@ async function zhiXingZhuCe() {
 
   .biaodan-rongqi,
   .biaodan-moshi-pane,
+  .biaodan-gundong,
+  .gundong-huakuai,
   .biaodan-qiehuan-you-enter-active,
   .biaodan-qiehuan-you-leave-active,
   .biaodan-qiehuan-zuo-enter-active,
@@ -2008,7 +2136,6 @@ async function zhiXingZhuCe() {
    由脚本读回解析值当关键帧 ⇒ 脚本内零像素/色值字面量，改令牌即改动画。 */
 .juan-zhou-dingge {
   position: fixed;
-  /* 几何端 = 脚本按实测矩形写进快照层的内联自定义属性，本规则只做转接 ⇒ 组件内零像素字面量 */
   left: var(--dingge-zuo);
   top: var(--dingge-shang);
   width: var(--dingge-kuan);
@@ -2016,6 +2143,7 @@ async function zhiXingZhuCe() {
   margin: 0;
   z-index: var(--ceng-jingge);
   pointer-events: none;
+  box-shadow: var(--renzheng-dingge-guang-yun);
 }
 
 .juan-zhou-dingge-shousuo {

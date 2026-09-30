@@ -2,6 +2,7 @@
   <div class="zhanji-yemian">
     <main class="zhanji-liebiao" :class="{ 'tuo-zhuai-zhong': tuoZhuaiZhong }">
       <ZhanJiFenLeiGuanLi
+        v-if="zhanKu.fenLeiKeYong"
         :fen-lei-lie-biao="zhanKu.fenLeiLieBiao"
         :dang-qian-fen-lei-id="zhanKu.dangQianFenLeiId"
         :cao-zuo-zhong="zhanKu.caoZuoZhong"
@@ -387,7 +388,9 @@ const paiXuXuanXiangList = computed<PaiXuXuanXiang[]>(() => [
   { zhi: 'xingGe', biaoTi: huoQuFanYi('zhanJi', 'paiXuXingGe') },
 ])
 
-const zhanJiXianShiTiShi = computed(() => zhanKu.cuoWuXinXi || tiShiXinXi.value)
+// FP-JC 用户裁决：错误只走 RequestError 唯一出口（游戏化文案+恋爱码），
+// 本横幅不再直显仓库的 yingXiang 口径，只保留非错误的操作提示
+const zhanJiXianShiTiShi = computed(() => tiShiXinXi.value)
 
 const zongYeShu = computed(() =>
   Math.max(1, Math.ceil(zhanKu.dangAnLieBiao.length / FEN_LEI_MEI_YE_TIAO_SHU)),
@@ -886,7 +889,6 @@ async function fenXiangJieJu(dangAn: 档案详情) {
     fenXiangCuoWu.value = chuangJianQianTaiCuoWu({
       code: QIAN_TAI_DAI_MA.WEI_ZHI,
       retryable: true,
-      yingXiang: huoQuFanYi('zhanJi', 'haiBaoShengChengShiBai'),
     })
     xianShiTiShi('')
     fenXiangZhong.value = false
@@ -904,7 +906,6 @@ async function fenXiangJieJu(dangAn: 档案详情) {
     fenXiangCuoWu.value = chuangJianQianTaiCuoWu({
       code: QIAN_TAI_DAI_MA.WEI_ZHI,
       retryable: true,
-      yingXiang: huoQuFanYi('zhanJi', 'fenXiangShiBai'),
     })
     xianShiTiShi('')
   } finally {
@@ -1025,14 +1026,23 @@ defineExpose({
   /* 底板：不随内容滚动的整页底。全屏路由下内容直接叠在动画背景上会糊成一片，
      浅色 #F5F5F5 / 深色 #292929 各带一档透明度，令牌见 styles/variables.css */
   background: var(--yemian-di-beijing);
+  /* 移动端卡片左右两列的横向基准：左列（勾选+头像+信息）宽 74px，由 .zhanji-zuo 的 flex-basis
+     与 .zhanji-you 的 margin-left 共读（几何常量，非间距档，故不占 --jiange-* 名额） */
+  --zhanji-yi-dong-zuo-kuan: 74px;
 }
 
 .zhanji-liebiao {
   flex: 1;
-  padding: 0 16px 16px;
+  /* 上间距由容器自身 margin 承担，容器内 padding-top 必须保持 0：
+     滚动容器一旦带 padding-top，其内 position:sticky;top:0 的后代（.zhanji-tishi / .zhanji-fenlei-biaoti）
+     会整体下移同样距离，滚动时上方露出内容穿透带（BlindSpot 实测复现，见
+     .agents/evidence/traces/FP-K1b批1-验证-20260929-2.md 修正1）。
+     margin 在 flex 列容器内不塌陷，故与下侧（标签栏 padding-bottom + gap + 空态卡 margin-top）等效对称。 */
+  margin-top: var(--jiange-zhong);
+  padding: 0 var(--jiange-zhong) var(--jiange-zhong);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--jiange-12);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
@@ -1053,8 +1063,9 @@ defineExpose({
 
 .jiazai-zhuangtai,
 .kong-zhuangtai {
-  margin: 8px 4px 4px;
-  padding: 40px 24px;
+  /* 纵向 margin 归零：与滚动容器的 gap 单机制收口（flex 内 margin 不与 gap 合并，改前叠加致下侧 +8/+4） */
+  margin: 0 var(--jiange-4);
+  padding: calc(var(--jiange-da) + var(--jiange-zhong)) var(--jiange-da);
   text-align: center;
   color: #f2f2ed;
   font-size: 14px;
@@ -1071,7 +1082,7 @@ defineExpose({
 .kong-tubiao {
   font-size: 28px;
   line-height: 1;
-  margin-bottom: 10px;
+  margin-bottom: var(--jiange-10);
   filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.08));
 }
 
@@ -1100,7 +1111,7 @@ defineExpose({
   align-self: center;
   z-index: 11;
   max-width: 100%;
-  padding: 10px 18px;
+  padding: var(--jiange-10) calc(var(--jiange-zhong) + var(--jiange-2));
   border-radius: 999px;
   background: #14141a;
   color: #ffd500;
@@ -1116,13 +1127,13 @@ defineExpose({
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  padding: 12px 14px;
+  padding: var(--jiange-12) calc(var(--jiange-xiao) + var(--jiange-6));
   background: rgba(27, 27, 36, 0.88);
   border: 1.5px solid rgba(242, 242, 237, 0.4);
   border-radius: 16px;
-  margin-top: 12px;
-  margin-bottom: 4px;
-  gap: 12px;
+  margin-top: var(--jiange-12);
+  margin-bottom: var(--jiange-4);
+  gap: var(--jiange-12);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   transition:
@@ -1142,7 +1153,7 @@ defineExpose({
 .quanju-gouxuan-zu {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--jiange-12);
 }
 
 .xuan-ze-shu-liang {
@@ -1159,11 +1170,11 @@ defineExpose({
 .piliang-anniu-zu {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--jiange-xiao);
 }
 
 .piliang-shanchu-anniu {
-  padding: 8px 16px;
+  padding: var(--jiange-xiao) var(--jiange-zhong);
   border-radius: 10px;
   font-size: 13px;
   font-weight: 800;
@@ -1190,7 +1201,7 @@ defineExpose({
 }
 
 .quan-xuan-anniu {
-  padding: 8px 16px;
+  padding: var(--jiange-xiao) var(--jiange-zhong);
   border-radius: 10px;
   font-size: 13px;
   font-weight: 700;
@@ -1206,7 +1217,7 @@ defineExpose({
 }
 
 .quxiao-quanxuan-anniu {
-  padding: 8px 16px;
+  padding: var(--jiange-xiao) var(--jiange-zhong);
   border-radius: 10px;
   font-size: 13px;
   font-weight: 700;
@@ -1230,8 +1241,8 @@ defineExpose({
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px 14px;
+  gap: var(--jiange-xiao);
+  padding: var(--jiange-10) calc(var(--jiange-xiao) + var(--jiange-6));
   background: rgba(27, 27, 36, 0.88);
   border: 1.5px solid rgba(242, 242, 237, 0.4);
   border-radius: 16px;
@@ -1250,7 +1261,7 @@ defineExpose({
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--jiange-6);
   flex: 1;
   min-width: 0;
 }
@@ -1258,7 +1269,7 @@ defineExpose({
 .paixu-weidu-anniu {
   font-size: 12px;
   font-weight: 700;
-  padding: 5px 10px;
+  padding: var(--jiange-4) var(--jiange-10);
   border-radius: 8px;
   background: transparent;
   color: #b9b9c4;
@@ -1281,7 +1292,7 @@ defineExpose({
 .paixu-fangxiang-anniu {
   font-size: 12px;
   font-weight: 700;
-  padding: 5px 10px;
+  padding: var(--jiange-4) var(--jiange-10);
   border-radius: 8px;
   background: transparent;
   color: #f2f2ed;
@@ -1303,19 +1314,19 @@ defineExpose({
 .zhanji-fenlei-zu {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--jiange-12);
 }
 
 .zhanji-fenlei-biaoti {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--jiange-xiao);
   font-size: 15px;
   font-weight: 900;
   letter-spacing: 0.04em;
   color: #f2f2ed;
-  padding: 10px 4px 8px;
+  padding: var(--jiange-10) var(--jiange-4) var(--jiange-xiao);
   position: sticky;
   top: 0;
   background: rgba(19, 19, 24, 0.92);
@@ -1332,7 +1343,7 @@ defineExpose({
 .fenlei-shu-liang {
   font-size: 12px;
   font-weight: 800;
-  padding: 2px 8px;
+  padding: var(--jiange-2) var(--jiange-xiao);
   border-radius: 8px;
   background: #ffd500;
   color: #14141a;
@@ -1343,7 +1354,7 @@ defineExpose({
 .fenlei-quan-xuan-anniu {
   font-size: 12px;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: var(--jiange-4) var(--jiange-10);
   border-radius: 8px;
   background: transparent;
   color: #f2f2ed;
@@ -1359,7 +1370,7 @@ defineExpose({
 
 .fenlei-kong-zhuangtai {
   text-align: center;
-  padding: 22px 16px;
+  padding: calc(var(--jiange-zhong) + var(--jiange-6)) var(--jiange-zhong);
   color: rgba(242, 242, 237, 0.72);
   font-size: 13px;
   font-weight: 600;
@@ -1372,7 +1383,7 @@ defineExpose({
 
 .fenlei-kong-nei-ron {
   display: inline-block;
-  padding: 0 8px;
+  padding: 0 var(--jiange-xiao);
 }
 
 :root[data-theme='light'] .fenlei-kong-zhuangtai {
@@ -1392,7 +1403,7 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 14px;
+  padding: calc(var(--jiange-xiao) + var(--jiange-6));
   background: linear-gradient(145deg, rgba(30, 30, 40, 0.94), rgba(22, 22, 30, 0.94));
   border: 1.5px solid rgba(242, 242, 237, 0.55);
   border-radius: 16px;
@@ -1435,7 +1446,7 @@ defineExpose({
   flex-shrink: 0;
   position: relative;
   padding: 0;
-  margin-right: 12px;
+  margin-right: var(--jiange-12);
 }
 
 .gouxuan-anniu:hover {
@@ -1487,7 +1498,7 @@ defineExpose({
 }
 
 .gouxuan-anniu--kapian {
-  margin-right: 12px;
+  margin-right: var(--jiange-12);
   opacity: 0.6;
 }
 
@@ -1500,7 +1511,7 @@ defineExpose({
 .zhanji-zuo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--jiange-12);
   flex: 1;
   min-width: 0;
 }
@@ -1522,7 +1533,7 @@ defineExpose({
 .zhanji-xinxi {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--jiange-4);
   min-width: 0;
 }
 
@@ -1538,7 +1549,7 @@ defineExpose({
 .zhanji-biaoqian-zu {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--jiange-6);
 }
 
 .mbti-biaoqian {
@@ -1547,7 +1558,7 @@ defineExpose({
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.06em;
-  padding: 2px 8px;
+  padding: var(--jiange-2) var(--jiange-xiao);
   border-radius: 999px;
   background: rgba(20, 20, 26, 0.85);
   color: #ffd500;
@@ -1557,11 +1568,11 @@ defineExpose({
 .zhuangtai-biaoqian {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--jiange-4);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.04em;
-  padding: 3px 10px;
+  padding: var(--jiange-2) var(--jiange-10);
   border-radius: 999px;
   border: 1.5px solid rgba(20, 20, 26, 0.88);
   box-shadow: 2px 2px 0 rgba(20, 20, 26, 0.28);
@@ -1601,7 +1612,7 @@ defineExpose({
 .zhanji-fu-jia-xin-xi {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--jiange-10);
   flex-wrap: wrap;
 }
 
@@ -1617,15 +1628,15 @@ defineExpose({
 
 .zhanji-you {
   flex-shrink: 0;
-  margin-left: 12px;
+  margin-left: var(--jiange-12);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
+  gap: var(--jiange-xiao);
 }
 
 .caozuo-anniu {
-  padding: 8px 16px;
+  padding: var(--jiange-xiao) var(--jiange-zhong);
   border-radius: 10px;
   font-size: 13px;
   font-weight: 800;
@@ -1670,7 +1681,7 @@ defineExpose({
   color: #b9b9c4;
   border: 2px solid #3a3a46;
   box-shadow: none;
-  padding: 6px 12px;
+  padding: var(--jiange-6) var(--jiange-12);
   font-size: 12px;
 }
 
@@ -1685,7 +1696,7 @@ defineExpose({
 .zhanji-liebiao-neirong {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--jiange-12);
 }
 
 .zhanji-kapian.sortable-ghost {
@@ -1758,7 +1769,7 @@ defineExpose({
   font-size: 14px;
   font-weight: 800;
   line-height: 1;
-  padding: 2px 10px;
+  padding: var(--jiange-2) var(--jiange-10);
   border-radius: 8px;
   background: transparent;
   color: #b9b9c4;
@@ -1785,12 +1796,12 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: var(--jiange-10);
 }
 
 .zhanji-tishi-chong-shi {
   flex: 0 0 auto;
-  padding: 3px 9px;
+  padding: var(--jiange-2) var(--jiange-xiao);
   border: 1px solid currentColor;
   border-radius: 8px;
   background: transparent;
@@ -1804,7 +1815,7 @@ defineExpose({
   min-width: 0;
   max-width: 180px;
   min-height: 36px;
-  padding: 5px 8px;
+  padding: var(--jiange-4) var(--jiange-xiao);
   border: 2px solid var(--biankuang-yanse);
   border-radius: 9px;
   background: var(--beijing-zhuse);
@@ -1815,7 +1826,7 @@ defineExpose({
 
 .paiXu-cao-zuo {
   display: flex;
-  gap: 6px;
+  gap: var(--jiange-6);
 }
 
 .paiXu-anniu {
@@ -2052,22 +2063,22 @@ defineExpose({
 
 @media (max-width: 640px) {
   .zhanji-liebiao {
-    padding-inline: 10px;
+    padding-inline: var(--jiange-10);
   }
 
   .zhanji-kapian-nei {
     align-items: flex-start;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: var(--jiange-10);
   }
 
   .zhanji-zuo {
-    flex-basis: calc(100% - 74px);
+    flex-basis: calc(100% - var(--zhanji-yi-dong-zuo-kuan));
   }
 
   .zhanji-you {
     width: 100%;
-    margin-left: 74px;
+    margin-left: var(--zhanji-yi-dong-zuo-kuan);
     align-items: stretch;
     flex-direction: row;
     flex-wrap: wrap;

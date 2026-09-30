@@ -45,7 +45,6 @@ const 浮层文件清单 = [
   'src/components/协议模态框.vue',
   'src/components/多媒体授权弹窗.vue',
   'src/components/断网横幅.vue',
-  'src/components/通话界面.vue',
 ]
 
 function 读源码(路径: string): string {
@@ -544,13 +543,12 @@ describe('管理员监控 组件', () => {
     expect(日志源码).toMatch(/will-change:\s*left,\s*top/)
   })
 
-  it('浮层层级收敛为档位令牌：档位数字序单调（通话<军师<协议<授权<调试<断网<版本）', () => {
+  it('浮层层级收敛为档位令牌：档位数字序单调（军师<协议<授权<调试<断网<版本）', () => {
     expect(档位('ceng-tiaoshi-mianban')).toBeGreaterThan(档位('ceng-tiaoshi-riji'))
     expect(档位('ceng-tiaoshi-riji')).toBeGreaterThan(档位('ceng-shouquan'))
     expect(档位('ceng-shouquan')).toBeGreaterThan(档位('ceng-xieyi'))
     expect(档位('ceng-xieyi')).toBeGreaterThan(档位('ceng-junshi-jilu'))
     expect(档位('ceng-junshi-jilu')).toBeGreaterThan(档位('ceng-junshi'))
-    expect(档位('ceng-junshi')).toBeGreaterThan(档位('ceng-tonghua'))
     expect(档位('ceng-duanwang')).toBeGreaterThan(档位('ceng-tiaoshi-mianban'))
     expect(档位('ceng-banben')).toBeGreaterThan(档位('ceng-duanwang'))
   })

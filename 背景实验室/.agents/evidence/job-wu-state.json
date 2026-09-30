@@ -1,0 +1,29 @@
+﻿{
+    "url":  "http://127.0.0.1:8937/lab-b.html?theme=dark",
+    "height":  720,
+    "args":  [
+                 "--no-sandbox",
+                 "--disable-setuid-sandbox",
+                 "--disable-dev-shm-usage",
+                 "--ignore-gpu-blocklist",
+                 "--enable-gpu-rasterization",
+                 "--hide-scrollbars",
+                 "--mute-audio"
+             ],
+    "headless":  false,
+    "maxMs":  100000,
+    "timeout":  60000,
+    "steps":  [
+                  {
+                      "ms":  20000,
+                      "type":  "wait"
+                  },
+                  {
+                      "label":  "wuState",
+                      "type":  "eval",
+                      "js":  "(function(){ try { var e=window.__experience; var cam=e.engine.camera.instance; var wu=window.__labWuMesh; if(!wu) return \u0027no-wu\u0027; var p=wu.position.clone(); p.project(cam); var sx=(p.x*0.5+0.5)*1280, sy=(-p.y*0.5+0.5)*720; return JSON.stringify({vis:wu.visible, pos:[+wu.position.x.toFixed(2),+wu.position.y.toFixed(2),+wu.position.z.toFixed(2)], screen:[Math.round(sx),Math.round(sy)], ndcZ:+p.z.toFixed(3), scale:[+wu.scale.x.toFixed(2),+wu.scale.y.toFixed(2)], hidden:(window.__labMoved||[]).filter(function(x){return String(x).indexOf(\u0027hide\u0027)\u003e=0;}).length}); } catch(err){ return String(err); } })()"
+                  }
+              ],
+    "width":  1280,
+    "initScript":  "setInterval(function(){ try { var e=window.__experience; if(e\u0026\u0026e.revealMesh){ e.revealMesh.visible=false; } } catch(err){} }, 50);"
+}

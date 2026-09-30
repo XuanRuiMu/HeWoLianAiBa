@@ -726,10 +726,10 @@ describe('FP-10 分享出口三级降级', () => {
     const { wrapper } = await mountZuJian()
     await dianJiFenXiang(wrapper)
 
-    expect(wrapper.find('.qian-tai-cuo-wu-ying-xiang').text()).toBe(
-      huoQuFanYi('zhanJi', 'haiBaoShengChengShiBai'),
+    expect(wrapper.find('.qian-tai-cuo-wu-wen-an').text()).toBe(
+      huoQuFanYi('lianAi', 'LianAi_004'),
     )
-    expect(wrapper.find('.qian-tai-cuo-wu-dai-ma').text()).toBe('FRONTEND_UNKNOWN_ERROR')
+    expect(wrapper.find('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe('LianAi_004')
     expect(shareSpy).not.toHaveBeenCalled()
     expect(xieRu).not.toHaveBeenCalled()
     expect(zhuangZhi.dianJi).not.toHaveBeenCalled()

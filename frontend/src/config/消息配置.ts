@@ -26,10 +26,10 @@ export const DUO_MEI_TI_PEI_ZHI = {
   yuYinZuiDuanKuanPx: 60,
   yuYinZuiChangKuanPx: 300,
   yuYinPaoNeidianPx: 12,
-  yuYinCaoYangTiaoKuanPx: 2,
-  yuYinCaoYangJianJuPx: 2,
   // 进度轨道的拖动步长（秒），改前实测值 0.1，唯一消费者 = 语音气泡.vue 的 input[type=range]
   yuYinJinDuBuZhouMiao: 0.1,
+  // 气泡底部进度线高（FP-K4b 额外功能），与 --yuyin-jindu-xian-gao 同值
+  yuYinJinDuXianGaoPx: 2,
   wenJianMingZuiDaXianShiZiFu: 24,
 } as const
 
@@ -54,8 +54,9 @@ export const XIAO_XI_KUAI_PEI_ZHI = {
 
 // FP-06a：粘贴图片的客户端边界，与 backend/src/config/媒体配置.ts 的 tupian 口径同源
 // （白名单/大小上限均由后端把守，此处只做发送前的即时提示；同源由 __tests__/粘贴图片.test.ts 断言把守）
+// 需求20：tupian 上限 20MB
 export const ZHAN_TIE_TU_PIAN_PEI_ZHI = {
-  zuiDaZiJieZiJie: 10 * 1024 * 1024,
+  zuiDaZiJieZiJie: 20 * 1024 * 1024,
   yunXuMIME: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as readonly string[],
 } as const
 

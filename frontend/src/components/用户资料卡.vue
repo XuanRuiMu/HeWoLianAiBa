@@ -93,7 +93,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: var(--jiange-da);
   z-index: 1000;
 }
 
@@ -102,7 +102,7 @@ onMounted(() => {
   background: rgba(20, 24, 40, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
-  padding: 28px 24px 24px;
+  padding: calc(var(--jiange-da) + var(--jiange-4)) var(--jiange-da) var(--jiange-da);
   max-width: 360px;
   width: 100%;
 }
@@ -128,9 +128,9 @@ onMounted(() => {
 
 .ziliaoka-hang {
   display: flex;
-  gap: 14px;
+  gap: calc(var(--jiange-12) + var(--jiange-2));
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: calc(var(--jiange-12) + var(--jiange-2));
 }
 
 .ziliaoka-wei {
@@ -156,7 +156,7 @@ onMounted(() => {
   font-size: 18px;
   font-weight: 700;
   color: #fff;
-  margin: 0 0 4px;
+  margin: 0 0 var(--jiange-4);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -172,7 +172,7 @@ onMounted(() => {
   font-size: 14px;
   line-height: 1.7;
   color: rgba(255, 255, 255, 0.85);
-  margin: 0 0 16px;
+  margin: 0 0 var(--jiange-zhong);
   word-break: break-word;
   white-space: pre-wrap;
   max-height: 160px;
@@ -182,17 +182,17 @@ onMounted(() => {
 .ziliaoka-qianming-kong {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.35);
-  margin: 0 0 16px;
+  margin: 0 0 var(--jiange-zhong);
 }
 
 .ziliaoka-anniu-zu {
   display: flex;
-  gap: 12px;
+  gap: var(--jiange-12);
   justify-content: center;
 }
 
 .anniu-fu-zhu {
-  padding: 12px 24px;
+  padding: var(--jiange-12) var(--jiange-da);
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
   border: 1.5px solid rgba(255, 255, 255, 0.2);
@@ -203,7 +203,7 @@ onMounted(() => {
 }
 
 .anniu-que-ren {
-  padding: 12px 28px;
+  padding: var(--jiange-12) calc(var(--jiange-da) + var(--jiange-4));
   background: linear-gradient(135deg, #07c160, #05a050);
   color: #fff;
   border: none;

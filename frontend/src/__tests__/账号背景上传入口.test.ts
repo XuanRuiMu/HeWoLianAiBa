@@ -127,7 +127,7 @@ describe('FP-A 背景自定义上传入口', () => {
     wrapper.unmount()
   })
 
-  it('非法文件拒绝上传并提示新键文案', async () => {
+  it('非法文件拒绝上传并走恋爱码错误出口', async () => {
     const wrapper = await mountSheZhi()
     const sheJiao = await import('@/api/社交')
     const wenJian = new File(['wen-ben'], 'e.txt', { type: 'text/plain' })
@@ -137,7 +137,8 @@ describe('FP-A 背景自定义上传入口', () => {
     await flushPromises()
     expect(vi.mocked(sheJiao.shangChuanLiaoTianBeiJing)).not.toHaveBeenCalled()
     expect(vi.mocked(sheJiao.baoCunLiaoTianBeiJing)).not.toHaveBeenCalled()
-    expect(wrapper.text()).toContain(huoQuFanYi('sheZhi', 'beiJingFeiFaWenJianTiShi'))
+    expect(wrapper.find('.qian-tai-cuo-wu-wen-an').exists()).toBe(true)
+    expect(wrapper.find('.qian-tai-cuo-wu-lian-ai-ma').exists()).toBe(true)
     wrapper.unmount()
   })
 

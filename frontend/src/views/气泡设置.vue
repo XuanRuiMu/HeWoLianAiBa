@@ -41,8 +41,8 @@ onMounted(() => {
 .qipao-she-zhi-ye {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px;
+  gap: var(--jiange-zhong);
+  padding: var(--jiange-zhong);
 }
 .qipao-ye-biao-ti {
   font-size: 16px;
@@ -51,11 +51,11 @@ onMounted(() => {
 .qipao-yu-lan-qu {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--jiange-xiao);
 }
 .qipao-neirong {
   display: inline-block;
-  padding: 8px 12px;
+  padding: var(--jiange-xiao) var(--jiange-12);
   border-radius: 12px;
   font-size: 14px;
 }

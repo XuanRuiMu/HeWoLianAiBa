@@ -9,10 +9,11 @@ import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/translations'
 
 /**
- * FP-11 语音条守卫（验收点 A + B）。
- * 需求口径由用户裁定：未播放态 = 3 格喇叭跳动 + 时长；播放中 = 进度指示 + 波形采样；
- * 「12 条波形」作废（任何成熟来源都没有它）。几何逐值出处 =
- * .agents/evidence/references/FP-13-语音条-20260921.md（§1-A/§1-B/§1-C、§3、§5、§6）。
+ * FP-K4b 语音条守卫（微信喇叭像素级移植）。
+ * 移植源 = TencentCloud/chat-uikit-vue message-audio.vue + msg-audio.svg（Apache-2.0）。
+ * 形态：三段弧 SVG + 时长 + 宽度缩放恒显；播放中 clip-path 阶梯揭开 + 底部 2px 进度线；
+ * 保留既有可拖动进度轴（时间条能力）。几何逐值出处 =
+ * .agents/evidence/traces/FP-K4b-语音条重搜-20260930-1.md（§二 候选1 五要素表）。
  */
 
 const 组件路径 = resolve(process.cwd(), 'src/components/聊天/语音气泡.vue')
@@ -60,22 +61,32 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-describe('FP-11 验收点 A：语音条两态组件', () => {
-  it('未播放态恰好 3 格喇叭 + 时长文本，且不残留任何波形条', () => {
+describe('FP-K4b 验收点 A：微信喇叭三段弧 + 时长 + 宽度缩放', () => {
+  it('三段弧 SVG + 时长文本恒显，fill=currentColor（必改①）', () => {
     const 泡 = 挂气泡()
     expect(泡.findAll('.laba-ge')).toHaveLength(3)
-    expect(泡.find('.laba-zhezhao').exists()).toBe(true)
+    expect(泡.find('.laba-tubiao').exists()).toBe(true)
+    expect(泡.find('.laba-tubiao').attributes('viewBox') ?? 泡.find('.laba-tubiao').attributes('viewbox')).toBe('0 0 62 78')
+    expect(泡.find('.laba-tubiao').attributes('fill')).toBe('currentColor')
     expect(泡.find('.yuyin-shichang').text()).toBe('12″')
-    expect(泡.find('.bo-xing-tiao').exists()).toBe(false)
-    // 反证一：12 是伪需求 ⇒ 条数既不等于 12，也不存在旧类名
-    expect(泡.findAll('.boxing-tiao')).toHaveLength(0)
+    // 必改③：零 IMessageModel/hasRiskContent/setAudioPlayed 耦合
+    expect(组件源).not.toContain('IMessageModel')
+    expect(组件源).not.toContain('hasRiskContent')
+    expect(组件源).not.toContain('setAudioPlayed')
+    // 波形条已废（微信喇叭不画波形）
     expect(泡.findAll('.bo-xing-tiao')).toHaveLength(0)
   })
 
-  it('播放中出波形采样与可拖动进度轴，喇叭与时长退场', () => {
+  it('播放中 clip-path 阶梯揭开 + 底部 2px 进度线 + 可拖动进度轴；喇叭与时长仍恒显', () => {
     const 泡 = 挂气泡({ boFangZhong: true, jinDuMiao: 6, zongMiao: 12 })
-    expect(泡.find('.laba-zu').exists()).toBe(false)
-    expect(泡.findAll('.bo-xing-tiao').length).toBeGreaterThan(0)
+    expect(泡.find('.laba-zu').exists()).toBe(true)
+    expect(泡.find('.laba-zu').classes()).toContain('laba-zu--bofang')
+    expect(泡.find('.yuyin-shichang').exists()).toBe(true)
+    // 2px 进度线
+    const 进度线 = 泡.find('.yuyin-jindu-xian')
+    expect(进度线.exists()).toBe(true)
+    expect(进度线.attributes('style')).toMatch(/width:\s*50(\.0+)?%/)
+    // 可拖动进度轴（时间条能力保留）
     const 轴 = 泡.find('.yuyin-jindu-tiao')
     expect(轴.exists()).toBe(true)
     expect(轴.attributes('type')).toBe('range')
@@ -84,30 +95,33 @@ describe('FP-11 验收点 A：语音条两态组件', () => {
     expect(泡.find('.yuyin-jindu-wenben').text()).toBe('6″ / 12″')
   })
 
-  it('波形条数按净宽采样：既不是 12，也随时长变宽而增多', () => {
-    const 短 = 挂气泡({ boFangZhong: true, xiaoXi: 语音消息(3000), zongMiao: 3 })
-    const 长 = 挂气泡({ boFangZhong: true, xiaoXi: 语音消息(28000), zongMiao: 28 })
-    const 短数 = 短.findAll('.bo-xing-tiao').length
-    const 长数 = 长.findAll('.bo-xing-tiao').length
-    expect(短数).not.toBe(12)
-    expect(长数).not.toBe(12)
-    expect(长数).toBeGreaterThan(短数)
-    // 反证二：与 config 算式逐值相符（(宽度−2×内边距)÷(条宽+间距)），换实现即红
-    const 净宽 = (秒: number) =>
-      Math.min(
-        DUO_MEI_TI_PEI_ZHI.yuYinZuiChangKuanPx,
-        Math.max(
-          DUO_MEI_TI_PEI_ZHI.yuYinZuiDuanKuanPx,
-          秒 * DUO_MEI_TI_PEI_ZHI.yuYinMeiMiaoKuanPx + DUO_MEI_TI_PEI_ZHI.yuYinJiChuKuanPx,
-        ),
-      ) -
-      DUO_MEI_TI_PEI_ZHI.yuYinPaoNeidianPx * 2
-    const 槽 = DUO_MEI_TI_PEI_ZHI.yuYinCaoYangTiaoKuanPx + DUO_MEI_TI_PEI_ZHI.yuYinCaoYangJianJuPx
-    expect(短数).toBe(Math.max(1, Math.floor(净宽(3) / 槽)))
-    expect(长数).toBe(Math.max(1, Math.floor(净宽(28) / 槽)))
+  it('clip-path 揭开参数与腾讯源一致：0.7056 / 0.3953 / 0，steps(1,end) 2s', () => {
+    const 揭开块 = 组件样式.slice(组件样式.indexOf('@keyframes laba-ji-kai'))
+    expect(揭开块).toContain('inset(0 70.56% 0 0)')
+    expect(揭开块).toContain('inset(0 39.53% 0 0)')
+    expect(组件样式).toContain('steps(1, end)')
+    // 本人档揭开方向反转（rotate180 后点弧朝向一致）
+    expect(揭开块).toContain('inset(0 0 0 70.56%)')
+    // 必改②：不再有硬编码气泡底色的 .mask 同色遮罩
+    expect(组件源).not.toContain('laba-zhezhao')
+    expect(组件样式).not.toMatch(/background(?:-color)?:\s*#/)
   })
 
-  it('气泡宽度随时长单调不降，且不再退回旧的 60→200 插值口径', () => {
+  it('进度线宽度随 currentTime/duration 比例推进且单调不降', () => {
+    const 序列 = [0, 2.4, 5, 5.9, 8, 11.8, 12]
+    let 上次比例 = -1
+    for (const 秒 of 序列) {
+      const 泡 = 挂气泡({ boFangZhong: true, jinDuMiao: 秒, zongMiao: 12 })
+      const 样式 = 泡.find('.yuyin-jindu-xian').attributes('style')!
+      const 比例 = Number(样式.match(/width:\s*([\d.]+)%/)![1])
+      expect(比例).toBeGreaterThanOrEqual(上次比例)
+      expect(比例).toBeLessThanOrEqual(100)
+      上次比例 = 比例
+    }
+    expect(上次比例).toBe(100)
+  })
+
+  it('气泡宽度随时长单调不降，且按取证 §1-A 的 second*10+20 映射', () => {
     let 上一条宽 = 0
     for (const 秒 of [1, 2, 5, 10, 20, 28, 40, 60]) {
       const 宽 = Number(
@@ -120,34 +134,10 @@ describe('FP-11 验收点 A：语音条两态组件', () => {
       expect(宽).toBeLessThanOrEqual(DUO_MEI_TI_PEI_ZHI.yuYinZuiChangKuanPx)
       上一条宽 = 宽
     }
-    // 反证三：20 秒在旧插值口径下是 130px，按取证 §1-A 必须是 220px
+    // 反证：20 秒按 second*10+20 必须是 220px
     const 二十秒 = 挂气泡({ xiaoXi: 语音消息(20000) }).find('.yuyin-qipao').attributes('style')!
     expect(二十秒).toContain('width: 220px')
     expect(二十秒).not.toContain('width: 130px')
-  })
-
-  it('进度推进时已播格数与进度轴读数单调不降、气泡宽度不缩', () => {
-    const 序列 = [0, 2.4, 5, 5.9, 8, 11.8, 12]
-    let 上次已播 = -1
-    let 上次读数 = -1
-    let 上次宽度 = 0
-    let 总条数 = 0
-    for (const 秒 of 序列) {
-      const 泡 = 挂气泡({ boFangZhong: true, jinDuMiao: 秒, zongMiao: 12 })
-      const 已播 = 泡.findAll('.bo-xing-tiao--yi-bo').length
-      总条数 = 泡.findAll('.bo-xing-tiao').length
-      const 读数 = Number((泡.find('.yuyin-jindu-tiao').element as HTMLInputElement).value)
-      const 宽度 = Number(
-        泡.find('.yuyin-qipao').attributes('style')!.match(/width:\s*(\d+(?:\.\d+)?)px/)![1],
-      )
-      expect(已播).toBeGreaterThanOrEqual(上次已播)
-      expect(读数).toBeGreaterThanOrEqual(上次读数)
-      expect(宽度).toBeGreaterThanOrEqual(上次宽度)
-      上次已播 = 已播
-      上次读数 = 读数
-      上次宽度 = 宽度
-    }
-    expect(上次已播).toBe(总条数)
   })
 
   it('交互：点击气泡只发「切换」意图，拖动进度轴只发「跳转」秒数', async () => {
@@ -164,38 +154,36 @@ describe('FP-11 验收点 A：语音条两态组件', () => {
     expect(播.emitted('qieHuan')).toBeUndefined()
   })
 
-  it('无障碍：气泡是 button、波形装饰对读屏隐藏、进度轴带配置化步长', () => {
+  it('无障碍：气泡是 button、喇叭装饰对读屏隐藏、进度轴带配置化步长', () => {
     const 泡 = 挂气泡()
     const 气泡 = 泡.find('.yuyin-qipao')
     expect(气泡.element.tagName).toBe('BUTTON')
     expect(气泡.attributes('type')).toBe('button')
     expect(气泡.attributes('aria-label')).toBe(huoQuFanYi('duoMeiTi', 'boFangYuYin'))
     expect(泡.find('.laba-zu').attributes('aria-hidden')).toBe('true')
-    expect(泡.find('.bo-xing-zu').exists()).toBe(false)
 
     const 播 = 挂气泡({ boFangZhong: true })
     expect(播.find('.yuyin-qipao').attributes('aria-label')).toBe(
       huoQuFanYi('duoMeiTi', 'zanTingYuYin'),
     )
-    expect(播.find('.bo-xing-zu').attributes('aria-hidden')).toBe('true')
     expect(
       Number(播.find('.yuyin-jindu-tiao').attributes('step')),
     ).toBe(DUO_MEI_TI_PEI_ZHI.yuYinJinDuBuZhouMiao)
   })
 
-  it('减动效退化：跳动与过渡关闭，时长与进度仍完整可读', () => {
+  it('减动效退化：揭开动画关闭，时长与进度线与进度轴仍完整可读', () => {
     const 减动效块 = 组件样式.slice(组件样式.indexOf('@media (prefers-reduced-motion: reduce)'))
     expect(减动效块).toContain('animation: none')
-    expect(取规则体(减动效块, '.laba-zhezhao')).toContain('animation: none')
-    // 反证四：退化不等于退场——未播态的时长与播放态的进度都必须还在
+    expect(取规则体(减动效块, '.laba-zu--bofang')).toContain('animation: none')
+    // 反证：退化不等于退场
     expect(挂气泡().find('.yuyin-shichang').text()).toBe('12″')
     const 播 = 挂气泡({ boFangZhong: true, jinDuMiao: 4, zongMiao: 12 })
     expect(播.find('.yuyin-jindu-wenben').text()).toContain('4″')
     expect(播.find('.yuyin-jindu-tiao').exists()).toBe(true)
+    expect(播.find('.yuyin-jindu-xian').exists()).toBe(true)
   })
 
   it('组件内零像素/色值字面量：所有量纲都吃令牌或 config', () => {
-    // 只判声明体（注释里允许写出处数值，那是取证台账不是字面量）
     const 去注释 = (源文本: string) => 源文本.replace(/\/\*[\s\S]*?\*\//g, '')
     const 扫描 = (源文本: string) => {
       const 正文 = 去注释(源文本)
@@ -217,12 +205,11 @@ describe('FP-11 验收点 A：语音条两态组件', () => {
       return 匹配 ? 匹配[1].trim() : ''
     }
     expect(令牌值('yuyin-pao-neidian')).toBe(`${DUO_MEI_TI_PEI_ZHI.yuYinPaoNeidianPx}px`)
-    expect(令牌值('yuyin-bo-xing-tiao-kuan')).toBe(
-      `${DUO_MEI_TI_PEI_ZHI.yuYinCaoYangTiaoKuanPx}px`,
-    )
-    expect(令牌值('yuyin-bo-xing-jian-ju')).toBe(`${DUO_MEI_TI_PEI_ZHI.yuYinCaoYangJianJuPx}px`)
     expect(令牌值('yuyin-jindu-zui-xiao-kuan')).toBe(
       `${DUO_MEI_TI_PEI_ZHI.yuYinZuiDuanKuanPx}px`,
+    )
+    expect(令牌值('yuyin-jindu-xian-gao')).toBe(
+      `${DUO_MEI_TI_PEI_ZHI.yuYinJinDuXianGaoPx}px`,
     )
     // 每条新令牌都要有真实消费者（禁止零消费者令牌）
     for (const 名 of [
@@ -232,10 +219,8 @@ describe('FP-11 验收点 A：语音条两态组件', () => {
       'yuyin-laba-kuan',
       'yuyin-laba-gao',
       'yuyin-laba-jian-ju',
-      'yuyin-bo-xing-tiao-kuan',
-      'yuyin-bo-xing-jian-ju',
-      'yuyin-bo-xing-gao',
       'yuyin-jindu-gao',
+      'yuyin-jindu-xian-gao',
       'yuyin-huakuai-chicun',
       'yuyin-re-ku',
       'yuyin-jindu-zui-xiao-kuan',
@@ -250,7 +235,7 @@ describe('FP-11 验收点 A：语音条两态组件', () => {
   })
 })
 
-describe('FP-11 治理面 R5：两页不得再有第二份实现', () => {
+describe('FP-K4b 治理面 R5：两页不得再有第二份实现', () => {
   it('两页都引用唯一组件，两页源码里旧内联语音气泡命中 0', () => {
     for (const 页源 of [聊天页源, 好友页源]) {
       expect(页源).toContain("@/components/聊天/语音气泡.vue")
@@ -274,17 +259,17 @@ describe('FP-11 治理面 R5：两页不得再有第二份实现', () => {
     expect(聊天页源).toContain('LU_YIN_PEI_ZHI.dianPingTiaoShu')
   })
 
-  it('语音气泡全站唯一：除组件文件外没有任何文件绘制喇叭格或波形条', () => {
+  it('语音气泡全站唯一：除组件文件外没有任何文件绘制喇叭段或进度线', () => {
     const 绘制方 = ['src/views/聊天页面.vue', 'src/views/好友聊天.vue', 'src/views/军师记录详情.vue']
     for (const 路径 of 绘制方) {
       expect(读源(resolve(process.cwd(), 路径)), `第二份实现：${路径}`).not.toMatch(
-        /laba-ge|bo-xing-tiao/,
+        /laba-ge|yuyin-jindu-xian/,
       )
     }
   })
 })
 
-describe('FP-11 验收点 B：时间条分档', () => {
+describe('FP-K4b 验收点 B：时间条分档', () => {
   function 组一条(时间戳: number): (ShiJianZaiTi & { id: string })[] {
     return [{ shi_jian_chuo: 时间戳, id: 'x' }]
   }
@@ -307,7 +292,7 @@ describe('FP-11 验收点 B：时间条分档', () => {
       `${huoQuFanYi('shiJian', 'xingQiYi')} 09:00`,
     )
     expect(标签(现在, '2026-06-20T09:00:00+08:00')).toBe('06-20 09:00')
-    // 反证五：跨年必须带年份，否则两条不同年份的 06-20 会撞成同一个标签
+    // 反证：跨年必须带年份
     expect(标签(现在, '2025-06-20T09:00:00+08:00')).toBe('2025-06-20 09:00')
   })
 
@@ -348,7 +333,6 @@ describe('FP-11 验收点 B：时间条分档', () => {
     }
     expect(聊天页源).toContain('xiaoXiFenZu')
     expect(好友页源).toContain('fenZuXiaoXiAnShiJian')
-    // 分档文案不再由页面自己拼：两页源码里零命中旧的秒/时:分手工格式化出口
     for (const 页源 of [聊天页源, 好友页源]) {
       expect(页源).not.toContain('xingQiLieBiao')
       expect(页源).not.toContain('geShiHuaShiJian')

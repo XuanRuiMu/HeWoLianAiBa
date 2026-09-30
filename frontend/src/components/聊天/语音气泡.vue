@@ -11,34 +11,24 @@
       "
       @click.stop="emit('qieHuan')"
     >
-      <template v-if="!boFangZhong">
-        <span class="laba-zu" aria-hidden="true">
-          <svg
-            class="laba-tubiao"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path class="laba-ti" d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none" />
-            <path class="laba-ge" d="M15 9a4 4 0 0 1 0 6" />
-            <path class="laba-ge" d="M17.5 6.5a8 8 0 0 1 0 11" />
-            <path class="laba-ge" d="M20 4a12 12 0 0 1 0 16" />
-          </svg>
-          <span class="laba-zhezhao" />
-        </span>
-        <span class="yuyin-shichang">{{ shiChangWenBen }}</span>
-      </template>
-      <span v-else class="bo-xing-zu" aria-hidden="true">
-        <span
-          v-for="(yiBo, suoYin) in boXingYiBo"
-          :key="suoYin"
-          class="bo-xing-tiao"
-          :class="{ 'bo-xing-tiao--yi-bo': yiBo }"
-        />
+      <span class="laba-zu" :class="{ 'laba-zu--bofang': boFangZhong }" aria-hidden="true">
+        <svg class="laba-tubiao" viewBox="0 0 62 78" fill="currentColor">
+          <path
+            class="laba-ge"
+            d="M7.75 47.23c4.28 0 7.75-3.479 7.75-7.77 0-4.29-3.47-7.77-7.75-7.77-4.28 0-7.75 3.48-7.75 7.77 0 4.291 3.47 7.77 7.75 7.77z"
+          />
+          <path
+            class="laba-ge"
+            d="M28 39.5c0-6.638-2.558-12.755-7-17l5-5.5c5.936 5.662 9 13.637 9 22.5 0 8.604-3.364 16.373-9 22L21 56c4.225-4.22 7-10.048 7-16.5z"
+          />
+          <path
+            class="laba-ge"
+            d="M46.025 78.002L41 73c8.457-8.442 13.25-20.631 13.25-33.54C54.25 26.147 48.925 13.493 40 5l5.084-5C55.503 9.91 62 23.924 62 39.46c0 15.062-6.108 28.694-15.975 38.542z"
+          />
+        </svg>
       </span>
+      <span class="yuyin-shichang">{{ shiChangWenBen }}</span>
+      <div class="yuyin-jindu-xian" :style="jinDuXianYangShi" />
     </button>
     <div v-if="boFangZhong" class="yuyin-jindu-qu">
       <input
@@ -58,24 +48,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/translations'
 import {
   geShiHuaYuYinShiChang,
-  yuYinKuanDuPx,
   yuYinKuanYangShi,
   type YuYinShiChangZaiTi,
 } from '@/composables/use语音播放'
 
 /**
- * 语音气泡（FP-11，用户需求 #10 语音条部分）：全站唯一实现，页面内不得再留第二份内联气泡。
- * 未播放态 = 3 格喇叭跳动 + 时长；播放中 = 波形采样 + 进度指示（可拖动/可键盘的进度条）。
- * 几何与状态语义取自 .agents/evidence/references/FP-13-语音条-20260921.md
- * （§1-A 时长→宽度映射、§1-C 三格 steps 跳动、§3 波形条与 SeekBar、§5 命中区、§6 slider 语义）。
+ * 语音气泡（FP-K4b 微信喇叭像素级移植）：全站唯一实现，页面内不得再留第二份内联气泡。
+ * 移植源 = TencentCloud/chat-uikit-vue message-audio.vue（Apache-2.0）+ msg-audio.svg。
+ * 五要素：三段弧 SVG（62×78 viewBox，fill=currentColor）+ 同底色遮罩 scaleX 阶梯揭开
+ * （0.7056/0.3953/0，`audio-play 2s steps(1,end)`）+ `N″` 时长 + 宽度 second*10+20 + 左右朝向。
+ * 必改三处：svg fill → currentColor；.mask 硬编码底色 → clip-path（适配深浅双主题）；
+ * 摘除腾讯引擎消息模型耦合（本项目自有消息模型 YuYinShiChangZaiTi）。
+ * 额外功能：气泡底部 2px 进度线（currentTime/duration），与既有可拖动进度轴并存。
  * 播放状态机不在此：它归各页面的 use语音播放 实例（全局互斥），本组件只收状态、只发意图。
- * 好友页当前仍按 FP-21 的契约把语音归入文件泡（HaoYouXiaoXi 没有时长字段），字段一到就把
- * 本组件挂上去：props 的 xiaoXi 只要求 YuYinShiChangZaiTi 那一个字段，两页的类型都满足。
  */
 const props = defineProps<{
   xiaoXi: YuYinShiChangZaiTi
@@ -99,74 +89,15 @@ const jinDuWenBen = computed(
   () => `${Math.max(0, Math.floor(props.jinDuMiao))}″`,
 )
 
-/** 渲染盒（含内边距）的实测净宽；0 = 尚未测得，此时退回映射宽 */
-const ceLiangJingKuanPx = ref(0)
-const qipaoEl = ref<HTMLElement | null>(null)
-let guanChaShiXianJi: ResizeObserver | null = null
-
-function ceLiangXianShiJingKuan(): void {
-  const ele = qipaoEl.value
-  if (!ele) return
-  // border:none ⇒ clientWidth 即含内边距的渲染盒宽，已吃过 max-width:100% 这道 CSS 夹取
-  const jing = ele.clientWidth - DUO_MEI_TI_PEI_ZHI.yuYinPaoNeidianPx * 2
-  if (jing > 0) ceLiangJingKuanPx.value = jing
-}
-
-/** 波形几何的唯一真源：映射净宽与实测净宽取小（条数与显示宽从此同一数值） */
-const xianShiJingKuanPx = computed(() => {
-  const yingSheJingKuan =
-    yuYinKuanDuPx(props.xiaoXi) - DUO_MEI_TI_PEI_ZHI.yuYinPaoNeidianPx * 2
-  if (yingSheJingKuan <= 0) return 0
-  if (ceLiangJingKuanPx.value <= 0) return yingSheJingKuan
-  return Math.min(yingSheJingKuan, ceLiangJingKuanPx.value)
-})
-
-onMounted(() => {
-  ceLiangXianShiJingKuan()
-  const ele = qipaoEl.value
-  if (!ele) return
-  if (typeof ResizeObserver === 'function') {
-    guanChaShiXianJi = new ResizeObserver(() => ceLiangXianShiJingKuan())
-    guanChaShiXianJi.observe(ele)
-  } else if (typeof window !== 'undefined') {
-    window.addEventListener('resize', ceLiangXianShiJingKuan)
-  }
-})
-
-onBeforeUnmount(() => {
-  guanChaShiXianJi?.disconnect()
-  guanChaShiXianJi = null
-  if (typeof window !== 'undefined') window.removeEventListener('resize', ceLiangXianShiJingKuan)
-})
-
-/**
- * 采样条数与显示宽**共用同一个夹取后的净宽**（本文件唯一的波形几何出口）。
- * 缺陷根因（第四波 BlindSpot M-6）：条数原本吃 `yuYinKuanDuPx()` 映射宽，而显示宽另外被
- * `.yuyin-qipao { max-width: 100% }` 夹进会话栏、被 `.bo-xing-zu { overflow: hidden }` 裁掉，
- * 两者各算各的 ⇒ 320/375 档下一条 60 秒语音按 300px 算出 69 条却只画得出前几十条，
- * `boXingYiBo` 用全量条数判点亮比例，可见区提前全亮，尾段进度画面不动。
- * 现在实测宽（已吃过 CSS 夹取的真实渲染盒）参与取小，条数与可见宽同源；测不到（SSR/jsdom
- * 首帧 clientWidth=0）才退回映射值，此时 CSS 也不会再夹，两者仍然一致。
- * 条数式 `floor(净宽 ÷（条宽+间距）)` 与取证 §4 的 `barCount` 同式，净余量恒 ≥ 0，
- * 即「条数 ×（条宽+间距）≤ 显示净宽」由构造成立（守卫见 __tests__/FP11b语音波形显示宽.test.ts）。
- */
-const caoYangTiaoShu = computed(() => {
-  const geKuan =
-    DUO_MEI_TI_PEI_ZHI.yuYinCaoYangTiaoKuanPx + DUO_MEI_TI_PEI_ZHI.yuYinCaoYangJianJuPx
-  return Math.max(1, Math.floor(xianShiJingKuanPx.value / geKuan))
-})
-
 const jinDuBiLi = computed(() => {
   if (props.zongMiao <= 0) return 0
   return Math.min(1, Math.max(0, props.jinDuMiao / props.zongMiao))
 })
 
-/** 逐条判定照抄取证 §3 的 `i / relHeights.length <= progress && progress > 0` */
-const boXingYiBo = computed<boolean[]>(() => {
-  const shu = caoYangTiaoShu.value
-  const bi = jinDuBiLi.value
-  return Array.from({ length: shu }, (_, i) => bi > 0 && i / shu <= bi)
-})
+/** 气泡底部 2px 进度线：宽度随时长比例推进，未播放时为 0（不可见） */
+const jinDuXianYangShi = computed(() => ({
+  width: `${(jinDuBiLi.value * 100).toFixed(2)}%`,
+}))
 
 function onSeek(shiJian: Event): void {
   const shuRu = shiJian.target as HTMLInputElement
@@ -175,7 +106,7 @@ function onSeek(shiJian: Event): void {
 </script>
 
 <style scoped>
-/* 未播放态：喇叭 + 时长；播放中：波形采样。宽度随时长映射由 kuanYangShi 逐条给值。 */
+/* 微信喇叭气泡：宽度随时长映射由 kuanYangShi 逐条给值；喇叭+时长恒显，播放中走 clip-path 揭开 */
 .yuyin-pao {
   display: flex;
   flex-direction: column;
@@ -188,6 +119,7 @@ function onSeek(shiJian: Event): void {
 }
 
 .yuyin-qipao {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--jiange-xiao);
@@ -223,7 +155,7 @@ function onSeek(shiJian: Event): void {
   outline-offset: var(--jujiao-huan-pian-yi);
 }
 
-/* 三格喇叭：图标 16×20，右侧同色遮罩按 steps(1,end) 硬切，一格→两格→三格循环 */
+/* 三段弧微信喇叭：62×78 viewBox，fill=currentColor；播放中用 clip-path 阶梯揭开（源 .mask 硬编码底色已改） */
 .laba-zu {
   position: relative;
   display: inline-flex;
@@ -247,31 +179,38 @@ function onSeek(shiJian: Event): void {
   transform: rotate(180deg);
 }
 
-.laba-zhezhao {
-  position: absolute;
-  inset: 0;
-  transform-origin: right;
-  transform: scaleX(0);
-  background: var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing));
-  animation: yuyin-laba-tiao 2s steps(1, end) infinite;
+/* clip-path 揭开：从右往左露出（对方），本人档从左往右露出——与 rotate180 后的点弧朝向一致 */
+.laba-zu--bofang {
+  animation: laba-ji-kai 2s steps(1, end) infinite;
 }
 
-.yuyin-qipao--benren .laba-zhezhao {
-  transform-origin: left;
-  background: var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing));
+.yuyin-qipao--benren .laba-zu--bofang {
+  animation-name: laba-ji-kai-benren;
 }
 
-@keyframes yuyin-laba-tiao {
+@keyframes laba-ji-kai {
   0% {
-    transform: scaleX(0.7056);
+    clip-path: inset(0 70.56% 0 0);
   }
   50% {
-    transform: scaleX(0.3953);
+    clip-path: inset(0 39.53% 0 0);
   }
   75%,
   100% {
-    transform: scaleX(0);
-    visibility: hidden;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes laba-ji-kai-benren {
+  0% {
+    clip-path: inset(0 0 0 70.56%);
+  }
+  50% {
+    clip-path: inset(0 0 0 39.53%);
+  }
+  75%,
+  100% {
+    clip-path: inset(0 0 0 0);
   }
 }
 
@@ -282,29 +221,15 @@ function onSeek(shiJian: Event): void {
   overflow: hidden;
 }
 
-/* 播放中：波形采样条即进度指示——已播段实色、未播段同色淡档（取证 §3 的着色切换） */
-.bo-xing-zu {
-  display: flex;
-  flex: 1 1 auto;
-  align-items: center;
-  gap: var(--yuyin-bo-xing-jian-ju);
-  min-width: 0;
-  height: var(--yuyin-bo-xing-gao);
-  overflow: hidden;
-}
-
-.bo-xing-tiao {
-  flex: 0 0 auto;
-  width: var(--yuyin-bo-xing-tiao-kuan);
-  height: 100%;
-  border-radius: var(--yuyin-bo-xing-tiao-kuan);
+/* 气泡底部 2px 进度线：currentTime/duration 比例推进，吃 currentColor 与主题同色 */
+.yuyin-jindu-xian {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: var(--yuyin-jindu-xian-gao);
   background: currentColor;
-  opacity: 0.35;
-  transition: opacity 250ms var(--quxian-biao-zhun);
-}
-
-.bo-xing-tiao--yi-bo {
-  opacity: 1;
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 /* 进度指示的可拖动轨道：1px 轨 + 8px 滑块 + 42px 命中区（取证 §3 SeekBar 与 §5 命中区） */
@@ -368,14 +293,9 @@ function onSeek(shiJian: Event): void {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .laba-zhezhao {
+  .laba-zu--bofang {
     animation: none;
-    transform: scaleX(0);
-    visibility: hidden;
-  }
-
-  .bo-xing-tiao {
-    transition: none;
+    clip-path: none;
   }
 }
 </style>

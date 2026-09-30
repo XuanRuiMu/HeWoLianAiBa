@@ -154,7 +154,7 @@ function queRenShanChu(fenLei: ZhanJiFenLei): void {
 .fenlei-guan-li-lan {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--jiange-10);
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -163,11 +163,13 @@ function queRenShanChu(fenLei: ZhanJiFenLei): void {
 .fenlei-biao-qian-lan {
   display: flex;
   align-items: stretch;
-  gap: 8px;
+  gap: var(--jiange-xiao);
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  padding-bottom: 4px;
+  /* overflow-x:auto 会把激活标签的 3px 偏移阴影与 2px 边框裁掉，故留一档底部内边距让阴影出画；
+     该值计入"默认分类"框下间距预算（滚动容器上内边距 = 此值 + 列表 gap + 空态卡上 margin） */
+  padding-bottom: var(--jiange-4);
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scrollbar-width: thin;
@@ -207,9 +209,9 @@ function queRenShanChu(fenLei: ZhanJiFenLei): void {
 .fenlei-biao-qian-an-niu {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--jiange-xiao);
   min-width: 0;
-  padding: 7px 10px;
+  padding: var(--jiange-6) var(--jiange-10);
   font: inherit;
   font-weight: 800;
 }
@@ -224,7 +226,7 @@ function queRenShanChu(fenLei: ZhanJiFenLei): void {
 .fenlei-ji-shu {
   flex: 0 0 auto;
   min-width: 24px;
-  padding: 1px 6px;
+  padding: var(--jiange-2) var(--jiange-6);
   border-radius: 999px;
   background: var(--yanse-zhanji);
   color: var(--beijing-zhuse);
@@ -254,7 +256,7 @@ function queRenShanChu(fenLei: ZhanJiFenLei): void {
 .fenlei-bian-ji {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 8px;
+  gap: var(--jiange-xiao);
   width: 100%;
   max-width: 100%;
   min-width: 0;
@@ -272,7 +274,7 @@ function queRenShanChu(fenLei: ZhanJiFenLei): void {
 .fenlei-ming-cheng-input {
   width: 100%;
   min-width: 0;
-  padding: 8px 10px;
+  padding: var(--jiange-xiao) var(--jiange-10);
   background: var(--beijing-zhuse);
   color: var(--wenben-zhuse);
 }
@@ -323,7 +325,7 @@ input:disabled {
   }
 
   .fenlei-bian-ji {
-    gap: 6px;
+    gap: var(--jiange-6);
   }
 }
 

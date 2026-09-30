@@ -225,10 +225,19 @@ describe('FP-04a ①：登录与注册两态的认证滚动口按需出现（不
         .filter((串) => 串.includes('::-webkit-scrollbar'))
         .map((串) => 串.trim())
     const 本地选择器 = 滚动条选择器(视图样式)
-    expect(本地选择器.length).toBeGreaterThan(0)
-    expect(本地选择器.every((串) => 串.startsWith('.biaodan-gundong'))).toBe(true)
-    expect(本地选择器.some((串) => 串.includes(':hover'))).toBe(true)
-    expect(本地选择器.some((串) => 串.includes(':focus-within'))).toBe(true)
+    // 裁决⑨-③：旧口径 length>0 + every/some 是惰性断言（多写/漏写 hover|focus-within 规则都不红），
+    // 收口为「精确集合相等」——认证滚动条的 7 条 webkit 规则一条不多一条不少，与 global.css 侧同级严格。
+    expect(本地选择器.sort()).toEqual(
+      [
+        '.biaodan-gundong::-webkit-scrollbar',
+        '.biaodan-gundong::-webkit-scrollbar-thumb',
+        '.biaodan-gundong::-webkit-scrollbar-track',
+        '.biaodan-gundong:focus-within::-webkit-scrollbar-thumb',
+        '.biaodan-gundong:focus-within::-webkit-scrollbar-track',
+        '.biaodan-gundong:hover::-webkit-scrollbar-thumb',
+        '.biaodan-gundong:hover::-webkit-scrollbar-track',
+      ].sort(),
+    )
     expect(滚动条选择器(全局样式).sort()).toEqual(
       [
         '::-webkit-scrollbar',

@@ -79,9 +79,19 @@ const 字段序: Record<'dengLu' | 'zhuCe', string[]> = {
 }
 
 function 像素(值: string, 属性: string): number {
-  const 数 = Number.parseFloat(值)
+  const 紧 = 值.trim()
+  // jsdom 对 var()/calc() 不做代入求值：长写原样返回字符串、简写塌成 0 —— 统一走求几何算式
+  if (/var\(|calc\(/.test(紧)) return 求几何算式(紧)
+  const 数 = Number.parseFloat(紧)
   expect(Number.isFinite(数), `${属性} 取不到像素值（实测 "${值}"）`).toBe(true)
   return 数
+}
+
+/** FPA1 后发丝线宽在 jsdom 下可能以令牌原文出现：经 variables 真源代入后再读数 */
+function 解发丝线宽(值: string, 属性: string): number {
+  const 紧 = 值.trim()
+  if (/^var\(\s*--shuru-xian-changtai-kuan-du\s*\)$/.test(紧)) return 解析几何数值('--shuru-xian-changtai-kuan-du')
+  return 像素(值, 属性)
 }
 
 function 注入样式(档: 主题档): () => void {
@@ -145,9 +155,11 @@ function 量一对(前: HTMLElement, 后: HTMLElement) {
   const 标签盒高 = 像素(标式.lineHeight, 'line-height')
   const 侵入 = Math.max(0, -标签顶)
   const 原点偏移 = 像素(组式.paddingTop, '组 padding-top') + 像素(组式.marginTop, '组 margin-top')
-  const 文字顶 = 原点偏移 + 像素(后式.paddingTop, 'padding-top') + 像素(后式.marginTop, '输入框 margin-top')
-  const 前文字底 =
-    像素(前式.paddingBottom, '前项 padding-bottom') + 像素(前式.borderBottomWidth, '前项 border-bottom-width')
+  // jsdom 把带 calc(var()) 的 padding 简写塌成 0（构建还会把 longhand 合并回简写）⇒ 输入盒边改从源码声明求值
+  const 输入上补 = 求几何算式(层叠声明('.fenlie-shuru', 'padding-top'))
+  const 输入下补 = 求几何算式(层叠声明('.fenlie-shuru', 'padding-bottom'))
+  const 文字顶 = 原点偏移 + 输入上补 + 像素(后式.marginTop, '输入框 margin-top')
+  const 前文字底 = 输入下补 + 解发丝线宽(前式.borderBottomWidth, '前项 border-bottom-width')
   return {
     间距令牌: 令牌名(组式.marginBottom, 'margin-bottom'),
     矩形间隙: 间距数值,

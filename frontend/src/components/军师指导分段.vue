@@ -119,17 +119,17 @@ onUnmounted(() => {
 .junshi-fenduan {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--jiange-12);
 }
 
 .junshi-duan {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--jiange-4);
 }
 
 .junshi-duan-zhidian {
-  padding: 12px;
+  padding: var(--jiange-12);
   background: var(--beijing-kaopian);
   border: 1px solid var(--junshi-zhuse);
   border-radius: 12px;
@@ -161,12 +161,12 @@ onUnmounted(() => {
 .duan-caozuo {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 4px;
+  gap: var(--jiange-xiao);
+  margin-top: var(--jiange-4);
 }
 
 .fuzhi-anniu {
-  padding: 6px 12px;
+  padding: var(--jiange-6) var(--jiange-12);
   background: var(--junshi-zhuse);
   color: #ffffff;
   border: 1px solid transparent;

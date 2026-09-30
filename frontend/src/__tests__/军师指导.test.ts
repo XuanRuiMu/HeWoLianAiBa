@@ -300,7 +300,7 @@ describe('FP-03 军师指导面板单级菜单化', () => {
       expect(wrapper.find('.jieguo-neirong').text()).toBe('测试军师1的建议。')
     })
 
-    it('军师重复错误显示对应翻译提示', async () => {
+    it('军师重复错误显示对应恋爱码沉浸文案', async () => {
       const cuoWu = new Error(huoQuFanYi('junShi', 'junShiChongFu'))
       ;(cuoWu as { cuo_wu_ma?: string }).cuo_wu_ma = 'JUN_SHI_CHONG_FU'
       vi.mocked(qingQiuJunShiZhiDao).mockRejectedValue(cuoWu)
@@ -311,14 +311,14 @@ describe('FP-03 军师指导面板单级菜单化', () => {
       await flushPromises()
 
       expect(xuanRuiMuKapian?.find('.cuowu-tishi').exists()).toBe(true)
-      expect(xuanRuiMuKapian?.find('.qian-tai-cuo-wu-ying-xiang').text()).toBe(
-        huoQuFanYi('junShi', 'junShiChongFu'),
+      expect(xuanRuiMuKapian?.find('.qian-tai-cuo-wu-wen-an').text()).toBe(
+        huoQuFanYi('lianAi', 'LianAi_041' as never),
       )
-      expect(xuanRuiMuKapian?.find('.qian-tai-cuo-wu-dai-ma').text()).toBe('JUN_SHI_CHONG_FU')
+      expect(xuanRuiMuKapian?.find('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe('LianAi_041')
       expect(wrapper.find('.jieguo-neirong').exists()).toBe(false)
     })
 
-    it('无聊天记录错误显示对应翻译提示', async () => {
+    it('无聊天记录错误显示对应恋爱码沉浸文案', async () => {
       const cuoWu = new Error(huoQuFanYi('junShi', 'wuLiaoTianJiLu'))
       ;(cuoWu as { cuo_wu_ma?: string }).cuo_wu_ma = 'WU_LIAO_TIAN_JI_LU'
       vi.mocked(qingQiuJunShiZhiDao).mockRejectedValue(cuoWu)
@@ -329,13 +329,13 @@ describe('FP-03 军师指导面板单级菜单化', () => {
       await flushPromises()
 
       expect(xuanRuiMuKapian?.find('.cuowu-tishi').exists()).toBe(true)
-      expect(xuanRuiMuKapian?.find('.qian-tai-cuo-wu-ying-xiang').text()).toBe(
-        huoQuFanYi('junShi', 'wuLiaoTianJiLu'),
+      expect(xuanRuiMuKapian?.find('.qian-tai-cuo-wu-wen-an').text()).toBe(
+        huoQuFanYi('lianAi', 'LianAi_042' as never),
       )
-      expect(xuanRuiMuKapian?.find('.qian-tai-cuo-wu-dai-ma').text()).toBe('WU_LIAO_TIAN_JI_LU')
+      expect(xuanRuiMuKapian?.find('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe('LianAi_042')
     })
 
-    it('未知错误显示通用失败提示', async () => {
+    it('未知错误显示恋爱码沉浸文案', async () => {
       vi.mocked(qingQiuJunShiZhiDao).mockRejectedValue(new Error('网络错误'))
 
       const { wrapper } = await mountJunShiZhiDao()
@@ -344,8 +344,8 @@ describe('FP-03 军师指导面板单级菜单化', () => {
       await flushPromises()
 
       const tiShiWenBen = xuanRuiMuKapian?.find('.cuowu-tishi').text() || ''
-      expect(tiShiWenBen).toContain(huoQuFanYi('tongYong', 'tongYongWenTiYingXiang'))
-      expect(tiShiWenBen).toContain(huoQuFanYi('tongYong', 'tongYongWenTiXiaYiBu'))
+      expect(tiShiWenBen).toContain(huoQuFanYi('lianAi', 'LianAi_004' as never))
+      expect(tiShiWenBen).toContain('LianAi_004')
       expect(tiShiWenBen).not.toContain('网络错误')
     })
   })

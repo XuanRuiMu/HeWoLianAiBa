@@ -6,8 +6,8 @@ import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 
 import 挑战积分榜 from '@/views/挑战积分榜.vue'
 import 通知页面 from '@/views/通知页面.vue'
 import 用户资料卡 from '@/components/用户资料卡.vue'
+import { QIAN_TAI_DAI_MA, huoQuLianAiMa } from '@/config/前台错误码'
 import { huoQuFanYi } from '@/config/translations'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
 import { huoQuPaiHangBang } from '@/api/挑战'
 import { huoQuTongZhiLieBiao } from '@/api/通知'
 import { huoQuMingPian } from '@/api/资料'
@@ -35,17 +35,19 @@ function houTaiCuoWu(zhuangTai: number, daiMa: string): AxiosError {
   return new AxiosError('request failed', 'ERR_BAD_RESPONSE', config, undefined, response)
 }
 
-function duYiGeChuKou(wrapper: ReturnType<typeof mount>): void {
-  const daiMa = wrapper.get('.qian-tai-cuo-wu-dai-ma').text()
-  const yingXiang = wrapper.get('.qian-tai-cuo-wu-ying-xiang').text()
-  const xiaYiBu = wrapper.get('.qian-tai-cuo-wu-xia-yi-bu').text()
-  expect(daiMa).toBe(QIAN_TAI_DAI_MA.INTERNAL_ERROR)
-  expect(yingXiang).toBe(huoQuFanYi('tongYong', 'fuWuWenTiYingXiang'))
-  expect(xiaYiBu).toBe(huoQuFanYi('tongYong', 'fuWuWenTiXiaYiBu'))
+function duYiGeChuKou(wrapper: ReturnType<typeof mount>, qiWangMa: string = QIAN_TAI_DAI_MA.INTERNAL_ERROR): void {
+  const lianAiMa = wrapper.get('.qian-tai-cuo-wu-lian-ai-ma').text()
+  expect(lianAiMa).toBe(huoQuLianAiMa(qiWangMa as never))
+  expect(wrapper.get('.qian-tai-cuo-wu-wen-an').text()).toBe(huoQuFanYi('lianAi', lianAiMa as never))
+  expect(wrapper.find('.qian-tai-cuo-wu-fu-zhi').exists()).toBe(true)
   expect(wrapper.text()).not.toContain(HOU_TAI_YU_WEN)
   expect(wrapper.text()).not.toContain('/srv/app')
+  expect(wrapper.text()).not.toContain('影响')
+  expect(wrapper.text()).not.toContain('下一步')
+  expect(wrapper.text()).not.toContain('诊断信息')
+  expect(wrapper.text()).not.toContain('错误码')
+  expect(wrapper.text()).not.toContain('追踪编号')
   expect(wrapper.get('[role="alert"]').exists()).toBe(true)
-  expect(wrapper.get('.qian-tai-cuo-wu-zhen-cha').text()).toContain('req-outlet-0001')
 }
 
 describe('FP-14 关键失败出口统一渲染', () => {
@@ -54,7 +56,7 @@ describe('FP-14 关键失败出口统一渲染', () => {
     localStorage.clear()
   })
 
-  it('挑战积分榜：加载失败给出码/影响/下一步与追踪编号，重试重新请求', async () => {
+  it('挑战积分榜：加载失败给出沉浸文案与恋爱码，重试重新请求', async () => {
     vi.mocked(huoQuPaiHangBang)
       .mockRejectedValueOnce(houTaiCuoWu(500, 'INTERNAL_ERROR'))
       .mockResolvedValueOnce([])
@@ -74,7 +76,7 @@ describe('FP-14 关键失败出口统一渲染', () => {
     expect(wrapper.find('.qian-tai-cuo-wu').exists()).toBe(false)
   })
 
-  it('通知页面：加载失败给出码/影响/下一步，重试重新请求', async () => {
+  it('通知页面：加载失败给出沉浸文案与恋爱码，重试重新请求', async () => {
     vi.mocked(huoQuTongZhiLieBiao)
       .mockRejectedValueOnce(houTaiCuoWu(500, 'INTERNAL_ERROR'))
       .mockResolvedValueOnce({ lie_biao: [], wei_du_shu: 0 } as never)
@@ -94,7 +96,7 @@ describe('FP-14 关键失败出口统一渲染', () => {
     expect(wrapper.find('.qian-tai-cuo-wu').exists()).toBe(false)
   })
 
-  it('用户资料卡：加载失败给出码/影响/下一步，重试重新请求', async () => {
+  it('用户资料卡：加载失败给出沉浸文案与恋爱码，重试重新请求', async () => {
     vi.mocked(huoQuMingPian)
       .mockRejectedValueOnce(houTaiCuoWu(500, 'INTERNAL_ERROR'))
       .mockResolvedValueOnce({
@@ -130,14 +132,11 @@ describe('FP-14 关键失败出口统一渲染', () => {
     const wrapper = mount(挑战积分榜, { global: { plugins: [pinia, luYou] } })
     await flushPromises()
 
-    expect(wrapper.get('.qian-tai-cuo-wu-dai-ma').text()).toBe(
-      QIAN_TAI_DAI_MA.AUTHENTICATION_REQUIRED,
+    expect(wrapper.get('.qian-tai-cuo-wu-wen-an').text()).toBe(
+      huoQuFanYi('lianAi', huoQuLianAiMa(QIAN_TAI_DAI_MA.AUTHENTICATION_REQUIRED)),
     )
-    expect(wrapper.get('.qian-tai-cuo-wu-ying-xiang').text()).toBe(
-      huoQuFanYi('tongYong', 'jianQuanWenTiYingXiang'),
-    )
-    expect(wrapper.get('.qian-tai-cuo-wu-xia-yi-bu').text()).toBe(
-      huoQuFanYi('tongYong', 'jianQuanWenTiXiaYiBu'),
+    expect(wrapper.get('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe(
+      huoQuLianAiMa(QIAN_TAI_DAI_MA.AUTHENTICATION_REQUIRED),
     )
     expect(wrapper.find('.qian-tai-cuo-wu-chong-shi').exists()).toBe(false)
   })

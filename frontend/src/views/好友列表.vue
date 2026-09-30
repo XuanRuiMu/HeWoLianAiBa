@@ -242,19 +242,19 @@ onMounted(shuaXinLieBiao)
   width: 100%;
   max-width: 560px;
   margin: 0 auto;
-  padding: 16px;
+  padding: var(--jiange-zhong);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--jiange-12);
   overflow-y: auto;
 }
 .sousuo-hang {
   display: flex;
-  gap: 8px;
+  gap: var(--jiange-xiao);
 }
 .sousuo-kuang {
   flex: 1;
-  padding: 10px 12px;
+  padding: var(--jiange-10) var(--jiange-12);
   border-radius: 8px;
   background: var(--beijing-kaopian);
   border: 1px solid var(--biankuang-yanse);
@@ -264,7 +264,7 @@ onMounted(shuaXinLieBiao)
 .tianjia-anniu,
 .jieshou-anniu,
 .liaotian-anniu {
-  padding: 8px 14px;
+  padding: var(--jiange-xiao) calc(var(--jiange-12) + var(--jiange-2));
   border-radius: 8px;
   background: var(--zhuse);
   color: #fff;
@@ -279,7 +279,7 @@ onMounted(shuaXinLieBiao)
   font-size: 14px;
   font-weight: 700;
   color: var(--wenben-zhuse);
-  margin: 8px 0 0;
+  margin: var(--jiange-xiao) 0 0;
 }
 .junshi-tishi {
   font-size: 12px;
@@ -294,8 +294,8 @@ onMounted(shuaXinLieBiao)
 .haoyou-xiangmu {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: var(--jiange-xiao);
+  padding: var(--jiange-10) var(--jiange-12);
   border-radius: 10px;
   background: var(--beijing-kaopian);
   border: 1px solid var(--biankuang-yanse);
@@ -314,7 +314,7 @@ onMounted(shuaXinLieBiao)
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--jiange-2);
 }
 .yonghu-qianming {
   font-size: 12px;
@@ -345,11 +345,11 @@ onMounted(shuaXinLieBiao)
 .shenqing-anniu-zu,
 .haoyou-anniu-zu {
   display: flex;
-  gap: 6px;
+  gap: var(--jiange-6);
 }
 .jujue-anniu,
 .shanchu-anniu {
-  padding: 8px 12px;
+  padding: var(--jiange-xiao) var(--jiange-12);
   border-radius: 8px;
   background: transparent;
   border: 1px solid var(--biankuang-yanse);

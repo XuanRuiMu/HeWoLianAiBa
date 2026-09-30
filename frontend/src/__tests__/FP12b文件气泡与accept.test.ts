@@ -13,6 +13,7 @@ import { huoQuFanYi } from '@/config/translations'
  * ② 单一组件：两个聊天页都 import components/聊天/文件气泡.vue 并渲染 <WenJianQiPao>，
  *    页面源码里不得再内联第二份 .wenjian-* 卡片（类名与样式只住在组件里）。
  * ③ 组件行为：文件名截断、大小行、下载 href/download/aria-label 由组件统一给出。
+ * ④ FP-K4b 需求 #18/#20：整卡可点下载（根元素即 <a>）、类型图标细分、零 IMessageModel 耦合、零硬编码像素。
  */
 
 const 前端源目录 = resolve(__dirname, '..')
@@ -85,7 +86,7 @@ describe('FP-12b 文件气泡单一组件', () => {
     }
   })
 
-  it('组件行为：文件名超长截断、大小行、下载 href/download/aria-label', () => {
+  it('组件行为：文件名超长截断、大小行、整卡下载 href/download/aria-label', () => {
     const changMing = `${'a'.repeat(30)}.pdf`
     const bao = mount(WenJianQiPao, {
       props: {
@@ -101,10 +102,11 @@ describe('FP-12b 文件气泡单一组件', () => {
       expect(xianShi.length).toBeLessThan(changMing.length)
       expect(xianShi.endsWith('...')).toBe(true)
       expect(bao.find('.wenjian-daxiao').text()).toBe('2.0MB')
-      const xiaZai = bao.find('a.wenjian-xiazai')
-      expect(xiaZai.attributes('href')).toBe('/api/media/qianming')
-      expect(xiaZai.attributes('download')).toBe(changMing)
-      expect(xiaZai.attributes('aria-label')).toBe(huoQuFanYi('duoMeiTi', 'xiaZaiWenJian'))
+      // 整卡可点：根元素即 <a>，href/download/aria-label 都在它身上
+      const ka = bao.find('a.wenjian-qipao')
+      expect(ka.attributes('href')).toBe('/api/media/qianming')
+      expect(ka.attributes('download')).toBe(changMing)
+      expect(ka.attributes('aria-label')).toBe(huoQuFanYi('duoMeiTi', 'xiaZaiWenJian'))
       expect(bao.find('.wenjian-qipao').classes()).toContain('wenjian-qipao--benren')
     } finally {
       bao.unmount()
@@ -121,12 +123,91 @@ describe('FP-12b 文件气泡单一组件', () => {
     })
     try {
       expect(bao.find('.wenjian-daxiao').exists()).toBe(false)
-      expect(bao.find('a.wenjian-xiazai').attributes('href')).toBeUndefined()
-      expect(bao.find('a.wenjian-xiazai').attributes('download')).toBeUndefined()
+      const ka = bao.find('a.wenjian-qipao')
+      expect(ka.attributes('href')).toBeUndefined()
+      expect(ka.attributes('download')).toBeUndefined()
       expect(bao.find('.wenjian-qipao').classes()).toContain('wenjian-qipao--duifang')
       expect(bao.find('.wenjian-ming').text()).toBe(huoQuFanYi('haoYou', 'weiMingMing'))
     } finally {
       bao.unmount()
     }
+  })
+})
+
+describe('FP-K4b 文件卡片 QQ/微信对齐', () => {
+  const dianXingMing: Array<[string, string]> = [
+    ['a.docx', 'word'],
+    ['a.doc', 'word'],
+    ['b.xlsx', 'excel'],
+    ['b.xls', 'excel'],
+    ['c.pptx', 'ppt'],
+    ['c.ppt', 'ppt'],
+    ['d.pdf', 'pdf'],
+    ['e.txt', 'txt'],
+    ['e.md', 'txt'],
+    ['f.zip', 'yasuo'],
+    ['g.mp4', 'yinshipin'],
+    ['h.qita', 'qita'],
+  ]
+
+  it('文件类型图标细分：word/excel/ppt/pdf/txt 等各走各的 SVG 分支', () => {
+    for (const [ming, qiWang] of dianXingMing) {
+      const bao = mount(WenJianQiPao, { props: { mingCheng: ming, shiBenRen: true } })
+      try {
+        const tuBiao = bao.find('.wenjian-tubiao')
+        expect(tuBiao.classes(), ming).toContain(`wenjian-tubiao--${qiWang}`)
+      } finally {
+        bao.unmount()
+      }
+    }
+  })
+
+  it('零 IMessageModel 耦合（摘除腾讯引擎消息模型依赖）', () => {
+    expect(组件源).not.toContain('IMessageModel')
+    expect(组件源).not.toContain('hasRiskContent')
+    expect(组件源).not.toContain('setAudioPlayed')
+    expect(组件源).not.toContain('@tencentcloud')
+  })
+
+  it('禁止硬编码像素：样式中零裸 px 长度字面量（全吃 --wenjian-* / --ziti-* / --jiange-* 令牌）', () => {
+    const yangShiKuai = [...组件源.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
+      .map((m) => m[1])
+      .join('\n')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+    // 剥掉 var(...) 再扫残留长度字面量
+    const boVar = yangShiKuai.replace(/var\([^)]*\)/g, '')
+    const luoPx = [...boVar.matchAll(/\b\d+(?:\.\d+)?px\b/g)].map((m) => m[0])
+    expect(luoPx, '文件气泡样式存在硬编码像素').toEqual([])
+  })
+
+  it('禁止硬编码色值：样式中零 #hex / rgb() / hsl() 色值', () => {
+    const yangShiKuai = [...组件源.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
+      .map((m) => m[1])
+      .join('\n')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+    expect(yangShiKuai).not.toMatch(/#[0-9a-fA-F]{3,8}\b/)
+    expect(yangShiKuai).not.toMatch(/rgba?\(/)
+    expect(yangShiKuai).not.toMatch(/hsla?\(/)
+  })
+
+  it('min-width 走令牌（--wenjian-ka-zui-xiao-kuan），整卡 cursor:pointer', () => {
+    const yangShiKuai = [...组件源.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
+      .map((m) => m[1])
+      .join('\n')
+    expect(yangShiKuai).toContain('min-width: var(--wenjian-ka-zui-xiao-kuan)')
+    expect(yangShiKuai).toContain('cursor: pointer')
+    // 下载箭头为装饰件，热区在整卡
+    expect(yangShiKuai).toContain('.wenjian-xiazai')
+    expect(组件源).toContain('aria-hidden="true"')
+  })
+
+  it('配色吃 --qipao-* 变量（本人/对方两档），与文本气泡同一真源', () => {
+    const yangShiKuai = [...组件源.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
+      .map((m) => m[1])
+      .join('\n')
+    expect(yangShiKuai).toContain('--qipao-ziJi-beiJing')
+    expect(yangShiKuai).toContain('--qipao-ziJi-wenBen')
+    expect(yangShiKuai).toContain('--qipao-duiFang-beiJing')
+    expect(yangShiKuai).toContain('--qipao-duiFang-wenBen')
   })
 })

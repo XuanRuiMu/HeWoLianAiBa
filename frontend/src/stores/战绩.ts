@@ -64,6 +64,7 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
   const yiDongZhongId = ref<string | null>(null)
   const cuoWuXinXi = ref('')
   const qianTaiCuoWu = ref<QianTaiCuoWu | null>(null)
+  const fenLeiZhuangTai = ref<'weiKaiShi' | 'chengGong' | 'shiBai'>('weiKaiShi')
   const jiLuXianShiPaiXu = ref<string[] | null>(null)
   let shenFenFu = 0
 
@@ -93,6 +94,8 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
     qianTaiCuoWu.value = null
     cuoWuXinXi.value = ''
   }
+
+  const fenLeiKeYong = computed(() => fenLeiZhuangTai.value === 'chengGong')
 
   const dangQianFenLei = computed(
     () => fenLeiLieBiao.value.find((item) => item.id === dangQianFenLeiId.value) ?? null,
@@ -135,6 +138,7 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
     qingCuoWu()
     try {
       const jieGuo = await duQuFenLeiLieBiao()
+      fenLeiZhuangTai.value = 'chengGong'
       const xianYou = fenLeiLieBiao.value.some((item) => item.id === dangQianFenLeiId.value)
       const mubiao = xianYou
         ? dangQianFenLeiId.value
@@ -143,6 +147,7 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
           : (fenLeiLieBiao.value[0]?.id ?? '')
       if (mubiao) await jiaZaiDangQianFenLei(mubiao)
     } catch (cuoWu) {
+      fenLeiZhuangTai.value = 'shiBai'
       jiLuCuoWu(cuoWu)
     } finally {
       jiaZaiZhong.value = false
@@ -176,7 +181,8 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
       return shiChengGong()
     } catch (cuoWu) {
       const zhengChangHua = jiLuCuoWu(cuoWu)
-      const message = zhengChangHua.yingXiang
+      // FP-JC 用户裁决：结果消息走游戏化口径（yingXiang 技术文案不再上屏，错误出口只剩 RequestError）
+      const message = zhengChangHua.lianAiWenAn
       if (shiChongTu(cuoWu)) {
         await jiaZai()
         sheZhiQianTaiCuoWu(zhengChangHua, true)
@@ -207,7 +213,8 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
       return shiChengGong()
     } catch (cuoWu) {
       const zhengChangHua = jiLuCuoWu(cuoWu)
-      const message = zhengChangHua.yingXiang
+      // FP-JC 用户裁决：结果消息走游戏化口径（yingXiang 技术文案不再上屏，错误出口只剩 RequestError）
+      const message = zhengChangHua.lianAiWenAn
       if (shiChongTu(cuoWu)) {
         await jiaZai()
         sheZhiQianTaiCuoWu(zhengChangHua, true)
@@ -248,7 +255,8 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
       })
     } catch (cuoWu) {
       const zhengChangHua = jiLuCuoWu(cuoWu)
-      const message = zhengChangHua.yingXiang
+      // FP-JC 用户裁决：结果消息走游戏化口径（yingXiang 技术文案不再上屏，错误出口只剩 RequestError）
+      const message = zhengChangHua.lianAiWenAn
       if (shiChongTu(cuoWu)) {
         await jiaZai()
         sheZhiQianTaiCuoWu(zhengChangHua, true)
@@ -297,7 +305,8 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
       return shiChengGong()
     } catch (cuoWu) {
       const zhengChangHua = jiLuCuoWu(cuoWu)
-      const message = zhengChangHua.yingXiang
+      // FP-JC 用户裁决：结果消息走游戏化口径（yingXiang 技术文案不再上屏，错误出口只剩 RequestError）
+      const message = zhengChangHua.lianAiWenAn
       if (shiChongTu(cuoWu)) {
         await jiaZai()
         sheZhiQianTaiCuoWu(zhengChangHua, true)
@@ -355,7 +364,8 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
       return shiChengGong()
     } catch (cuoWu) {
       const zhengChangHua = jiLuCuoWu(cuoWu)
-      const message = zhengChangHua.yingXiang
+      // FP-JC 用户裁决：结果消息走游戏化口径（yingXiang 技术文案不再上屏，错误出口只剩 RequestError）
+      const message = zhengChangHua.lianAiWenAn
       if (shiChongTu(cuoWu)) {
         await jiaZai()
         sheZhiQianTaiCuoWu(zhengChangHua, true)
@@ -377,6 +387,7 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
     moRenFenLeiId.value = ''
     dangQianFenLeiId.value = ''
     dangAnLieBiao.value = []
+    fenLeiZhuangTai.value = 'weiKaiShi'
     jiaZaiZhong.value = false
     jiLuJiaZaiZhong.value = false
     caoZuoZhong.value = false
@@ -399,6 +410,8 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
     yiDongZhongId,
     cuoWuXinXi,
     qianTaiCuoWu,
+    fenLeiZhuangTai,
+    fenLeiKeYong,
     jiLuXianShiPaiXu,
     jiaZai,
     qieHuanFenLei,

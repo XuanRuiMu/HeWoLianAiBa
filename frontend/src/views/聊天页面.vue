@@ -2101,7 +2101,7 @@ onBeforeUnmount(() => {
      此处内边距必须归零。若再声明非零 padding-bottom，就会与最后一条
      消息的 margin-bottom(16px) 叠加出 36px 的失真底部空隙，
      使底部边界空隙永远无法与消息间空隙(16px)保持一致。 */
-  padding: 12px 16px;
+  padding: var(--jiange-12) var(--jiange-zhong);
   padding-bottom: 0;
   display: flex;
   flex-direction: column;
@@ -2109,7 +2109,7 @@ onBeforeUnmount(() => {
   background-size: 18px 18px;
   -webkit-overflow-scrolling: touch;
   /* 注意：此处不声明 scrollbar-width / scrollbar-color，否则会覆盖下方 ::-webkit-scrollbar 自定义样式 */
-  scroll-padding-bottom: 20px;
+  scroll-padding-bottom: calc(var(--jiange-zhong) + var(--jiange-4));
   /* 常驻滚动条槽位：否则滚动条出现/消失会改变内容宽度，导致气泡与时间标签横向抖动 */
   scrollbar-gutter: stable;
 }
@@ -2162,11 +2162,11 @@ onBeforeUnmount(() => {
 .jiazaigengduo-qu {
   display: flex;
   justify-content: center;
-  padding: 10px 0 6px;
+  padding: var(--jiange-10) 0 var(--jiange-6);
 }
 
 .jiazaigengduo-anniu {
-  padding: 5px 14px;
+  padding: var(--jiange-5) calc(var(--jiange-12) + var(--jiange-2));
   border-radius: 4px;
   background: transparent;
   border: none;
@@ -2184,12 +2184,12 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-start;
   max-width: 100%;
-  margin-bottom: 16px;
+  margin-bottom: var(--jiange-zhong);
   position: relative;
 }
 
 .xiaoxi-xiangmu:first-of-type {
-  margin-top: 4px;
+  margin-top: var(--jiange-4);
 }
 
 .xiaoxi-xiangmu.yonghu-xiaoxi {
@@ -2207,7 +2207,7 @@ onBeforeUnmount(() => {
   align-self: center;
   justify-content: center;
   width: 100%;
-  margin-bottom: 10px;
+  margin-bottom: var(--jiange-10);
 }
 
 .xiaoxi-wei {
@@ -2225,11 +2225,11 @@ onBeforeUnmount(() => {
 }
 
 .yonghu-xiaoxi .xiaoxi-wei {
-  margin-left: 10px;
+  margin-left: var(--jiange-10);
 }
 
 .jiaose-xiaoxi .xiaoxi-wei {
-  margin-right: 10px;
+  margin-right: var(--jiange-10);
 }
 
 .qipao-waike {
@@ -2238,7 +2238,7 @@ onBeforeUnmount(() => {
 }
 
 .qipao-neirong {
-  padding: 9px 13px;
+  padding: var(--jiange-9) var(--jiange-13);
   border-radius: 6px;
   font-size: 16px;
   line-height: 1.45;
@@ -2288,15 +2288,16 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  padding: 0 6px;
+  /* 微信式：感叹号/转圈紧贴气泡左侧，间距仅 4px */
+  padding: 0 var(--jiange-4);
 }
 
 .fasong-zhuangtai-zhuanquan {
   display: inline-block;
-  /* 直径约等于一行气泡高度：以相对气泡字体的 em 设定，禁止硬编码 px */
-  width: 1.4em;
-  height: 1.4em;
-  border: 0.16em solid var(--wenben-tishi);
+  /* 与感叹号同径：约一行气泡高度（1.25em ≈ 20px @ 16px 字号） */
+  width: 1.25em;
+  height: 1.25em;
+  border: 0.15em solid var(--wenben-tishi);
   border-top-color: transparent;
   border-radius: 50%;
   animation: fasong-xuanzhuan 1s linear infinite;
@@ -2317,14 +2318,15 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 18px;
-  height: 18px;
+  /* 微信式：与转圈同径、与一行气泡同高 */
+  width: 1.25em;
+  height: 1.25em;
   padding: 0;
   border: none;
   border-radius: 50%;
   background: var(--cuowu-yanse);
   color: #ffffff;
-  font-size: 13px;
+  font-size: 0.8em;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
@@ -2339,7 +2341,7 @@ onBeforeUnmount(() => {
 .gujia-xiangmu {
   display: flex;
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: var(--jiange-zhong);
 }
 
 .gujia-xiangmu.gujia-zuoce {
@@ -2361,11 +2363,11 @@ onBeforeUnmount(() => {
 }
 
 .gujia-zuoce .gujia-wei {
-  margin-right: 10px;
+  margin-right: var(--jiange-10);
 }
 
 .gujia-youce .gujia-wei {
-  margin-left: 10px;
+  margin-left: var(--jiange-10);
 }
 
 .gujia-qipao {
@@ -2381,32 +2383,32 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   margin: auto 0;
-  padding: 24px 16px;
+  padding: var(--jiange-da) var(--jiange-zhong);
 }
 
 .shibai-chahua {
   width: 72px;
   height: 48px;
-  margin-bottom: 12px;
+  margin-bottom: var(--jiange-12);
   color: var(--wenben-tishi);
   opacity: 0.8;
 }
 
 .shibai-biaoti {
-  margin: 0 0 4px;
+  margin: 0 0 var(--jiange-4);
   font-size: 15px;
   color: var(--wenben-ciuse);
 }
 
 .shibai-tishi {
-  margin: 0 0 16px;
+  margin: 0 0 var(--jiange-zhong);
   font-size: 13px;
   color: var(--wenben-tishi);
   max-width: 420px;
 }
 
 .chongshi-anniu {
-  padding: 7px 28px;
+  padding: var(--jiange-7) calc(var(--jiange-da) + var(--jiange-4));
   border: none;
   border-radius: 6px;
   background: var(--shijian-biaoqian-beijing);
@@ -2419,14 +2421,14 @@ onBeforeUnmount(() => {
   font-size: 12px;
   color: var(--wenben-tishi);
   text-align: center;
-  padding: 4px 0;
+  padding: var(--jiange-4) 0;
 }
 
 .chehui-tishi {
   font-size: 12px;
   color: var(--wenben-tishi);
   text-align: center;
-  padding: 4px 0;
+  padding: var(--jiange-4) 0;
 }
 
 .chehui-anniu {
@@ -2436,8 +2438,8 @@ onBeforeUnmount(() => {
 .weixin-shuru {
   background: var(--shuru-quyu-beijing);
   border-top: 0.5px solid var(--shuru-quyu-biankuang);
-  padding: 8px 10px;
-  padding-bottom: calc(8px + var(--anquan-quyu-xia));
+  padding: var(--jiange-xiao) var(--jiange-10);
+  padding-bottom: calc(var(--jiange-xiao) + var(--anquan-quyu-xia));
 }
 
 .shuru-rongqi {
@@ -2447,14 +2449,14 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-end;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--jiange-xiao);
 }
 
 .suoding-tishi {
   text-align: center;
   font-size: 13px;
   color: var(--wenben-ciuse);
-  padding: 10px 0;
+  padding: var(--jiange-10) 0;
   opacity: 0.8;
 }
 
@@ -2517,7 +2519,7 @@ onBeforeUnmount(() => {
   /* 与输入框外壳同一套量：同上下内边距 + 同行高基准 + 同宽透明边框。
      浏览器对 <1px 边框的取整两边一致，所以两盒必然等高，8px 差值不再堆到按钮上方。
      视觉高度让位给输入框，44×44 触控热区改由 ::before 向外扩，不再靠撑大盒子换可达性 */
-  padding: var(--shuru-kuang-shang-xia-neidian) 14px;
+  padding: var(--shuru-kuang-shang-xia-neidian) calc(var(--jiange-12) + var(--jiange-2));
   border: var(--shuru-kuang-biankuang) solid transparent;
   min-width: var(--shuru-anniu-re-ku);
   line-height: var(--shuru-kuang-hangxing-gao);
@@ -2558,7 +2560,7 @@ onBeforeUnmount(() => {
 .shuru-dibu-hang {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--jiange-4);
   flex-shrink: 0;
   padding: 0;
 }
@@ -2591,7 +2593,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
   flex-shrink: 0;
   padding: 0;
-  margin-right: 4px;
+  margin-right: var(--jiange-4);
 }
 
 .zhan-kai-anniu::before {
@@ -2620,8 +2622,8 @@ onBeforeUnmount(() => {
 .emoji-mianban {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  gap: 2px;
-  padding: 8px;
+  gap: var(--jiange-2);
+  padding: var(--jiange-xiao);
   background: var(--beijing-ciuse);
   border-top: 0.5px solid var(--shuru-quyu-biankuang);
   max-height: 200px;
@@ -2697,13 +2699,13 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  padding: 24px;
+  padding: var(--jiange-da);
 }
 
 .youxi-tanchuang {
   width: 100%;
   max-width: 300px;
-  padding: 24px 20px;
+  padding: var(--jiange-da) calc(var(--jiange-zhong) + var(--jiange-4));
   background: var(--tanchuang-beijing);
   border-radius: 12px;
   text-align: center;
@@ -2713,31 +2715,31 @@ onBeforeUnmount(() => {
 
 .youxi-tubiao {
   font-size: 48px;
-  margin-bottom: 12px;
+  margin-bottom: var(--jiange-12);
 }
 
 .youxi-biaoti {
   font-size: 18px;
   font-weight: 600;
   color: var(--tanchuang-biaoti);
-  margin-bottom: 8px;
+  margin-bottom: var(--jiange-xiao);
 }
 
 .youxi-miaoshu {
   font-size: 14px;
   color: var(--wenben-ciuse);
-  margin-bottom: 20px;
+  margin-bottom: calc(var(--jiange-zhong) + var(--jiange-4));
   line-height: 1.5;
 }
 
 .youxi-anniu-zu {
   display: flex;
-  gap: 12px;
+  gap: var(--jiange-12);
 }
 
 .youxi-anniu {
   flex: 1;
-  padding: 10px;
+  padding: var(--jiange-10);
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
@@ -2802,7 +2804,7 @@ onBeforeUnmount(() => {
 .emoji-zhankai-leave-to {
   opacity: 0;
   max-height: 0;
-  padding: 0 8px;
+  padding: 0 var(--jiange-xiao);
   /* 与静止态 .emoji-mianban 的 overflow-y:auto 保持一致，确保 scrollbar-gutter:stable 预留的滚动条槽位在
      打开/静态/折叠三态恒等，消除滚动条出现/消失导致的 emoji 网格横向偏移（尾帧=首帧=静止态） */
   overflow-y: auto;
@@ -2814,9 +2816,9 @@ onBeforeUnmount(() => {
 
 .fupan-pizhu-xiangmu {
   display: flex;
-  margin-bottom: 12px;
-  margin-top: -8px;
-  padding: 0 50px;
+  margin-bottom: var(--jiange-12);
+  margin-top: calc(var(--jiange-xiao) * -1);
+  padding: 0 calc(var(--jiange-da) * 2 + var(--jiange-2));
 }
 
 .fupan-pizhu-xiangmu.yonghu-pizhu {
@@ -2829,7 +2831,7 @@ onBeforeUnmount(() => {
 
 .fupan-pizhu-qipao {
   max-width: min(calc(100vw - 126px), 520px);
-  padding: 8px 12px;
+  padding: var(--jiange-xiao) var(--jiange-12);
   border-radius: 8px;
   background: rgba(108, 92, 231, 0.12);
   border: 1px solid rgba(108, 92, 231, 0.25);
@@ -2839,7 +2841,7 @@ onBeforeUnmount(() => {
   word-break: break-word;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--jiange-4);
 }
 
 .fupan-pizhu-xiangmu.pizhu-positive .fupan-pizhu-qipao {
@@ -2887,14 +2889,14 @@ onBeforeUnmount(() => {
 .fupan-jiazai-qu {
   display: flex;
   justify-content: center;
-  padding: 24px 16px 16px;
+  padding: var(--jiange-da) var(--jiange-zhong) var(--jiange-zhong);
 }
 
 .fupan-jiazai-tishi {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: var(--jiange-xiao);
+  padding: var(--jiange-xiao) var(--jiange-zhong);
   border-radius: 12px;
   background: var(--shijian-biaoqian-beijing);
   color: var(--wenben-tishi);
@@ -2913,8 +2915,8 @@ onBeforeUnmount(() => {
 }
 
 .fupan-zongjie-qu {
-  margin: 20px 16px 24px;
-  padding: 16px;
+  margin: calc(var(--jiange-zhong) + var(--jiange-4)) var(--jiange-zhong) var(--jiange-da);
+  padding: var(--jiange-zhong);
   border-radius: 12px;
   background: rgba(108, 92, 231, 0.08);
   border: 1px solid rgba(108, 92, 231, 0.2);
@@ -2928,7 +2930,7 @@ onBeforeUnmount(() => {
   font-size: 15px;
   font-weight: 700;
   color: var(--yanse-zhanji, #6c5ce7);
-  margin-bottom: 10px;
+  margin-bottom: var(--jiange-10);
 }
 
 .fupan-zongjie-neirong {
@@ -2940,8 +2942,8 @@ onBeforeUnmount(() => {
 }
 
 .fupan-zongjie-fenkuai {
-  padding: 10px 12px;
-  margin-bottom: 8px;
+  padding: var(--jiange-10) var(--jiange-12);
+  margin-bottom: var(--jiange-xiao);
   border-radius: 8px;
   background: var(--beijing-kaopian, rgba(255, 255, 255, 0.5));
   border: 0.5px solid var(--shuru-quyu-biankuang, rgba(0, 0, 0, 0.08));
@@ -2961,11 +2963,11 @@ onBeforeUnmount(() => {
 .fupan-zongjie-fenkuai-biaoti {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--jiange-4);
   font-size: 13px;
   font-weight: 700;
   color: var(--yanse-zhanji, #6c5ce7);
-  margin-bottom: 4px;
+  margin-bottom: var(--jiange-4);
 }
 
 .fupan-zongjie-fenkuai.jinggao-fenkuai .fupan-zongjie-fenkuai-biaoti {
@@ -2986,8 +2988,8 @@ onBeforeUnmount(() => {
 }
 
 .fupan-zongjie-jinggao-tishi {
-  margin-top: 10px;
-  padding: 8px 12px;
+  margin-top: var(--jiange-10);
+  padding: var(--jiange-xiao) var(--jiange-12);
   border-radius: 6px;
   background: rgba(244, 67, 54, 0.1);
   border-left: 3px solid #f44336;
@@ -2999,11 +3001,11 @@ onBeforeUnmount(() => {
 .fupan-dibu-lan {
   display: flex;
   justify-content: center;
-  padding: 10px 0;
+  padding: var(--jiange-10) 0;
 }
 
 .fupan-tuichu-anniu {
-  padding: 8px 24px;
+  padding: var(--jiange-xiao) var(--jiange-da);
   border-radius: 8px;
   background: var(--zhuse);
   color: var(--fasong-anniu-wenben);
@@ -3096,7 +3098,7 @@ onBeforeUnmount(() => {
   --luyin-dianping-tiaokuan: 3px;
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--jiange-2);
   height: 20px;
   flex-shrink: 0;
 }
@@ -3143,8 +3145,8 @@ onBeforeUnmount(() => {
 }
 
 .yuyin-zhuanwenzi {
-  margin-top: 6px;
-  padding: 8px 12px;
+  margin-top: var(--jiange-6);
+  padding: var(--jiange-xiao) var(--jiange-12);
   border: none;
   border-radius: 6px;
   background: var(--xiaoxi-jiaose-beijing);
@@ -3187,7 +3189,7 @@ span.yuyin-zhuanwenzi {
 }
 
 .yuyin-zhuanwenzi-zhuangtai {
-  margin-top: 6px;
+  margin-top: var(--jiange-6);
   font-size: 12px;
   color: var(--wenben-tishi);
 }
@@ -3227,7 +3229,7 @@ span.yuyin-zhuanwenzi {
   max-height: 240px;
   border-radius: var(--yuanjiao-xiao);
   background: #000;
-  margin-bottom: 6px;
+  margin-bottom: var(--jiange-6);
 }
 
 /* FP-05 YH-036/YH-037：用户手动生图/生视频按钮已删除，残留样式一并清理 */
@@ -3241,7 +3243,7 @@ span.yuyin-zhuanwenzi {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: var(--jiange-da);
 }
 
 .tupian-yulan-da-tu {
@@ -3270,14 +3272,14 @@ span.yuyin-zhuanwenzi {
 .mianban-tab-hang {
   grid-column: 1 / -1;
   display: flex;
-  gap: 4px;
-  padding-bottom: 6px;
+  gap: var(--jiange-4);
+  padding-bottom: var(--jiange-6);
   border-bottom: 0.5px solid var(--shuru-quyu-biankuang);
 }
 
 .mianban-tab {
   flex: 1;
-  padding: 5px 0;
+  padding: var(--jiange-5) 0;
   border: none;
   border-radius: var(--yuanjiao-xiao);
   background: transparent;
@@ -3302,7 +3304,7 @@ span.yuyin-zhuanwenzi {
   /* FP-06：容器（.biaoqingbao-quyu）此前零规则、宽度由子元素 min-content 顶出来，
      固定 4 列在桌面档只有 218px 宽。改 auto-fill 后格子随面板宽度自适应密度，两档视口都铺满 */
   grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
-  gap: 6px;
+  gap: var(--jiange-6);
 }
 
 .biaoqingbao-wangge.guanli {
@@ -3314,9 +3316,9 @@ span.yuyin-zhuanwenzi {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: var(--jiange-2);
   min-width: 0;
-  padding: 6px 2px;
+  padding: var(--jiange-6) var(--jiange-2);
   /* FP-06：表情格要有"格子"的样子——卡面 + 发丝边框；--yuanjiao-xiao 是 light-only 令牌
      （深色档按 F23 同族塌陷为 0），故此处用字面圆角，保证两档一致 */
   border: 1px solid var(--biankuang-yanse);
@@ -3339,7 +3341,7 @@ span.yuyin-zhuanwenzi {
 }
 
 .biaoqingbao-xiangmu.wo-de {
-  padding: 5px;
+  padding: var(--jiange-5);
 }
 
 .biaoqingbao-emoji {
@@ -3372,7 +3374,7 @@ span.yuyin-zhuanwenzi {
 .biaoqingbao-fenqu {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--jiange-4);
   min-width: 0;
 }
 
@@ -3385,7 +3387,7 @@ span.yuyin-zhuanwenzi {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: var(--jiange-6);
 }
 
 .fenqu-biaoti {
@@ -3397,7 +3399,7 @@ span.yuyin-zhuanwenzi {
 .fenqu-guanli {
   flex-shrink: 0;
   min-height: 24px;
-  padding: 3px 10px;
+  padding: var(--jiange-3) var(--jiange-10);
   border: 1px solid var(--biankuang-zhongjian);
   border-radius: 6px;
   background: var(--beijing-kaopian);
@@ -3424,7 +3426,7 @@ span.yuyin-zhuanwenzi {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--jiange-4);
   min-width: 0;
 }
 
@@ -3441,7 +3443,7 @@ span.yuyin-zhuanwenzi {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 4px;
+  gap: var(--jiange-4);
 }
 
 .ge-caoZuo {
@@ -3482,7 +3484,7 @@ span.yuyin-zhuanwenzi {
 }
 
 .biaoqingbao-xiangmu.tian-jia {
-  gap: 6px;
+  gap: var(--jiange-6);
   min-height: 70px;
   border-style: dashed;
   border-color: var(--biankuang-zhongjian);
@@ -3541,9 +3543,9 @@ span.yuyin-zhuanwenzi {
 .gengduo-mianban {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  margin-top: 8px;
-  padding: 10px;
+  gap: var(--jiange-xiao);
+  margin-top: var(--jiange-xiao);
+  padding: var(--jiange-10);
   background: var(--beijing-ciuse);
   border-top: 0.5px solid var(--shuru-quyu-biankuang);
   border-radius: var(--yuanjiao-zhong);
@@ -3553,8 +3555,8 @@ span.yuyin-zhuanwenzi {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 12px 4px;
+  gap: var(--jiange-6);
+  padding: var(--jiange-12) var(--jiange-4);
   border: none;
   border-radius: var(--yuanjiao-xiao);
   background: var(--beijing-kaopian);
@@ -3593,8 +3595,8 @@ span.yuyin-zhuanwenzi {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 28px 32px;
+  gap: var(--jiange-zhong);
+  padding: calc(var(--jiange-da) + var(--jiange-4)) calc(var(--jiange-da) + var(--jiange-xiao));
   border-radius: var(--yuanjiao-da);
   background: var(--tanchuang-beijing);
   border: 0.5px solid var(--tanchuang-biankuang);
@@ -3656,7 +3658,7 @@ span.yuyin-zhuanwenzi {
 .luyin-zhuangtai-hang {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--jiange-10);
 }
 
 .luyin-jishi {
@@ -3673,7 +3675,7 @@ span.yuyin-zhuanwenzi {
 }
 
 .luyin-guanbi-anniu {
-  padding: 6px 22px;
+  padding: var(--jiange-6) calc(var(--jiange-zhong) + var(--jiange-6));
   border: none;
   border-radius: var(--yuanjiao-xiao);
   background: var(--guanbi-anniu-beijing);
@@ -3696,7 +3698,7 @@ span.yuyin-zhuanwenzi {
   }
 
   .xiaoxi-quyu {
-    padding: 10px 12px;
+    padding: var(--jiange-10) var(--jiange-12);
   }
 
   .fupan-pizhu-qipao {

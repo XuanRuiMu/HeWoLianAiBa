@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { QIAN_TAI_DAI_MA, huoQuLianAiMa } from '@/config/前台错误码'
 import { huoQuFanYi } from '@/config/translations'
 
 describe('请求拦截器', () => {
@@ -86,7 +86,9 @@ describe('请求拦截器', () => {
       name: 'QianTaiCuoWu',
       code: QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID,
     })
-    expect((cuoWu as Error).message).toBe(huoQuFanYi('tongYong', 'qingQiuWenTiYingXiang'))
+    expect((cuoWu as Error).message).toBe(
+      huoQuFanYi('lianAi', huoQuLianAiMa(QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID) as never),
+    )
   })
 
   it('2xx 业务失败归一为 FP-14 模型并完整保留 FP-13 包络', async () => {
@@ -153,7 +155,9 @@ describe('请求拦截器', () => {
       jiuDaiMa: 'FU_WU_QI_NEI_BU_CUO_WU',
       httpStatus: 500,
     })
-    expect((cuoWu as Error).message).toBe(huoQuFanYi('tongYong', 'tongYongWenTiYingXiang'))
+    expect((cuoWu as Error).message).toBe(
+      huoQuFanYi('lianAi', huoQuLianAiMa(QIAN_TAI_DAI_MA.WEI_ZHI) as never),
+    )
     expect((cuoWu as Error).message).not.toContain('服务器内部错误')
   })
 

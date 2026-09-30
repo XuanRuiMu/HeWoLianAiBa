@@ -5,7 +5,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import 聊天页面 from '@/views/聊天页面.vue'
 import QuanJuCaiDan from '@/components/全局菜单.vue'
 import { 使用聊天仓库 } from '@/stores/聊天'
-import { 使用通话仓库 } from '@/stores/通话'
 import { 使用用户仓库 } from '@/stores/用户'
 import { huoQuFanYi, fanYi } from '@/config/translations'
 import { yaSuoTuPiang, YA_SUO_CHANG_BIAN_SHANG_XIAN, YA_SUO_ZHI_LIANG } from '@/utils/图片压缩'
@@ -529,8 +528,10 @@ describe('FP-05 四类媒体气泡渲染', () => {
     expect(JiaAudio.shiLiLieBiao[0].src).toBe('/api/media/yuyin-a')
     expect(JiaAudio.shiLiLieBiao[0].play).toHaveBeenCalledTimes(1)
     expect(yuYinAnNiu[0].classes()).toContain('bofangzhong')
-    // 播放中：波形采样出现、喇叭退场（进度指示另由 .yuyin-jindu-tiao 承担）
-    expect(wrapper.findAll('.bo-xing-tiao').length).toBeGreaterThan(0)
+    // 播放中：喇叭 clip-path 揭开动画 + 底部进度线 + 可拖动进度轴（微信喇叭恒显）
+    expect(yuYinAnNiu[0].find('.laba-zu').classes()).toContain('laba-zu--bofang')
+    expect(yuYinAnNiu[0].find('.yuyin-jindu-xian').exists()).toBe(true)
+    expect(wrapper.find('.yuyin-jindu-tiao').exists()).toBe(true)
 
     // 点击第二条：第一条停止、只保留一个播放实例
     await yuYinAnNiu[1].trigger('click')
@@ -545,7 +546,7 @@ describe('FP-05 四类媒体气泡渲染', () => {
     expect(JiaAudio.shiLiLieBiao[1].pause).toHaveBeenCalled()
   })
 
-  it('wenJian 卡片含文件名、大小与下载链接', async () => {
+  it('wenJian 卡片含文件名、大小与整卡下载链接', async () => {
     const { wrapper, 聊天仓库 } = await mountLiaoTianYeMian()
     qingLiQi = () => wrapper.unmount()
     聊天仓库.xiaoXiLieBiao = [
@@ -561,10 +562,11 @@ describe('FP-05 四类媒体气泡渲染', () => {
 
     expect(wrapper.find('.wenjian-ming').text()).toBe('xinxi.pdf')
     expect(wrapper.find('.wenjian-daxiao').text()).toBe('2.0MB')
-    const xiaZai = wrapper.find('.wenjian-xiazai')
-    expect(xiaZai.exists()).toBe(true)
-    expect(xiaZai.attributes('href')).toBe('/api/media/wenjian-qianming')
-    expect(xiaZai.attributes('download')).toBe('xinxi.pdf')
+    // FP-K4b：整卡可点下载（根元素即 <a>），不再只有右侧箭头可点
+    const ka = wrapper.find('a.wenjian-qipao')
+    expect(ka.exists()).toBe(true)
+    expect(ka.attributes('href')).toBe('/api/media/wenjian-qianming')
+    expect(ka.attributes('download')).toBe('xinxi.pdf')
   })
 })
 
@@ -602,8 +604,7 @@ describe('FP-05 输入栏"+"面板与表情双Tab', () => {
     const ruKouWenBen = ruKou.map((r) => r.text())
     expect(ruKouWenBen).toContain(huoQuFanYi('duoMeiTi', 'xiangCe'))
     expect(ruKouWenBen).toContain(huoQuFanYi('duoMeiTi', 'wenJian'))
-    expect(ruKouWenBen).not.toContain(huoQuFanYi('duoMeiTi', 'yuYinTongHua'))
-    expect(ruKouWenBen).not.toContain(huoQuFanYi('duoMeiTi', 'shiPinTongHua'))
+    expect(ruKouWenBen.some((w) => w.includes('通话'))).toBe(false)
   })
 
   it('表情面板为双Tab：Emoji默认激活，切到表情包显示分区贴纸网格', async () => {
@@ -921,8 +922,6 @@ describe('FP-05 翻译键存在性', () => {
       'gengDuo',
       'xiangCe',
       'wenJian',
-      'yuYinTongHua',
-      'shiPinTongHua',
       'emojiBiaoQian',
       'biaoQingBaoBiaoQian',
       'anZhuShuoHua',

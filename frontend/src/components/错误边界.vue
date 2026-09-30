@@ -127,7 +127,7 @@ defineExpose({
   align-items: center;
   justify-content: center;
   min-height: 60vh;
-  padding: 32px 24px;
+  padding: calc(var(--jiange-da) + var(--jiange-xiao)) var(--jiange-da);
   text-align: center;
   color: rgba(255, 255, 255, 0.85);
   background: rgba(20, 24, 40, 0.6);
@@ -135,15 +135,15 @@ defineExpose({
   -webkit-backdrop-filter: blur(12px);
   border-radius: 16px;
   max-width: 480px;
-  margin: 24px auto;
+  margin: var(--jiange-da) auto;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .cuowu-toubu {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--jiange-12);
+  margin-bottom: var(--jiange-zhong);
 }
 
 .cuowu-tubiao {
@@ -161,20 +161,20 @@ defineExpose({
 .cuowu-miaoshu {
   font-size: 14px;
   line-height: 1.6;
-  margin: 0 0 24px;
+  margin: 0 0 var(--jiange-da);
   color: rgba(255, 255, 255, 0.7);
 }
 
 .cuowu-anniu-zu {
   display: flex;
-  gap: 12px;
+  gap: var(--jiange-12);
   flex-wrap: wrap;
   justify-content: center;
 }
 
 .shuaxin-anniu,
 .chongzhi-anniu {
-  padding: 10px 22px;
+  padding: var(--jiange-10) calc(var(--jiange-zhong) + var(--jiange-6));
   border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
@@ -230,8 +230,8 @@ defineExpose({
 @media (max-width: 767px) {
   .cuowu-tishi {
     min-height: 50vh;
-    padding: 24px 16px;
-    margin: 16px;
+    padding: var(--jiange-da) var(--jiange-zhong);
+    margin: var(--jiange-zhong);
   }
 
   .cuowu-tubiao {
@@ -244,7 +244,7 @@ defineExpose({
 
   .shuaxin-anniu,
   .chongzhi-anniu {
-    padding: 9px 18px;
+    padding: var(--jiange-9) calc(var(--jiange-zhong) + var(--jiange-2));
     font-size: 13px;
   }
 }

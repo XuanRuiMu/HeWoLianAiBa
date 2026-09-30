@@ -221,11 +221,11 @@ describe('FP-09 气泡下样式对标微信截图', () => {
   it('结果条样式：圆角6px/边距6px/字号14px/换行', () => {
     const yuanMa = readFileSync(resolve(__dirname, '../views/聊天页面.vue'), 'utf8')
     const quJian = yuanMa.slice(yuanMa.indexOf('.yuyin-zhuanwenzi {'), yuanMa.indexOf('.yuyin-zhuanwenzi {') + 600)
-    expect(quJian).toContain('margin-top: 6px')
+    expect(quJian).toContain('margin-top: var(--jiange-6)')
     expect(quJian).toContain('border-radius: 6px')
     expect(quJian).toContain('font-size: 14px')
     expect(quJian).toContain('word-break: break-word')
-    expect(quJian).toContain('padding: 8px 12px')
+    expect(quJian).toContain('padding: var(--jiange-xiao) var(--jiange-12)')
   })
 
   it('用户侧与角色侧分色：用户绿角色灰', () => {

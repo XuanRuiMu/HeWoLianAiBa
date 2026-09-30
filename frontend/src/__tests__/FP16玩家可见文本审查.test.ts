@@ -6,6 +6,7 @@ import { fanYi, huoQuFanYi, type FanYiJian, type FanYiZiJian } from '@/config/tr
 import {
   QIAN_TAI_DAI_MA,
   WEN_BEN_LEI_XING_QUAN_LU,
+  huoQuLianAiMa,
   type QianTaiDaiMa,
   type QianTaiWenBenLeiXing,
 } from '@/config/前台错误码'
@@ -111,9 +112,8 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
       expect(违规).toEqual([])
     })
 
-    it('判据③：错误标题不装可怜、不复述错误码', () => {
-      expect(huoQuFanYi('tongYong', 'qianTaiCuoWuBiaoTi')).toBe('这次没完成')
-      expect(huoQuFanYi('tongYong', 'qianTaiCuoWuBiaoTi')).not.toMatch(FU_YAN)
+    it('判据③：技术风错误标题已随用户裁决删除（只留游戏化文案+恋爱码）', () => {
+      expect('qianTaiCuoWuBiaoTi' in fanYi.tongYong).toBe(false)
     })
   })
 
@@ -121,7 +121,7 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
     const 装面板 = (daiMa: QianTaiDaiMa, traceId: string | null = 'fp16-trace-0001') =>
       mount(请求错误, { props: { cuoWu: chuangJianQianTaiCuoWu({ code: daiMa, traceId }) } })
 
-    it('判据①⑧：错误码只出现在折叠的诊断区，主区不得上屏错误码原形', () => {
+    it('判据①⑧：主区只渲染沉浸文案与恋爱码，不上屏技术码原形与诊断块', () => {
       for (const daiMa of Object.values(QIAN_TAI_DAI_MA)) {
         const wrapper = 装面板(daiMa)
         if (wrapper.find('.qian-tai-cuo-wu').exists() === false) {
@@ -129,13 +129,21 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
           expect(daiMa, `${daiMa} 不该渲染却渲染了`).toBe(QIAN_TAI_DAI_MA.QU_XIAO)
           continue
         }
-        const 主区 = wrapper.get('.qian-tai-cuo-wu-xin-xi').text()
-        expect(主区, `${daiMa} 的主区泄露了错误码`).not.toContain(daiMa)
+        const lianAiMa = huoQuLianAiMa(daiMa)
+        expect(wrapper.get('.qian-tai-cuo-wu-wen-an').text()).toBe(
+          huoQuFanYi('lianAi', lianAiMa as never),
+        )
+        expect(wrapper.get('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe(lianAiMa)
+        expect(wrapper.find('.qian-tai-cuo-wu-fu-zhi').exists()).toBe(true)
+        const 主区 = wrapper.get('.qian-tai-cuo-wu').text()
+        expect(主区, `${daiMa} 的主区泄露了技术码`).not.toContain(daiMa)
         expect(主区, `${daiMa} 的主区泄露了错误码形态`).not.toMatch(/[A-Z][A-Z0-9]{3,}(_[A-Z0-9]+)+/)
-        const 诊断 = wrapper.get('.qian-tai-cuo-wu-zhen-cha').text()
-        expect(诊断, `${daiMa} 的诊断区应保留错误码`).toContain(daiMa)
-        expect(wrapper.get('.qian-tai-cuo-wu-zhen-cha').element.tagName).toBe('DETAILS')
-        expect(wrapper.get('.qian-tai-cuo-wu-zhen-cha').attributes('open')).toBeUndefined()
+        expect(主区).not.toContain('影响')
+        expect(主区).not.toContain('下一步')
+        expect(主区).not.toContain('诊断信息')
+        expect(主区).not.toContain('错误码')
+        expect(主区).not.toContain('追踪编号')
+        expect(wrapper.find('details').exists()).toBe(false)
       }
     })
 
@@ -153,13 +161,16 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
       }
     })
 
-    it('判据②⑧：无追踪编号时不渲染空的诊断行，也不显示「追踪编号」字样', () => {
+    it('判据②⑧：恋爱码行只渲染恋爱码与复制按钮，不渲染追踪编号字样', () => {
       const wrapper = 装面板(QIAN_TAI_DAI_MA.SERVICE_UNAVAILABLE, null)
-      expect(wrapper.get('.qian-tai-cuo-wu-zhen-cha').text()).not.toContain(huoQuFanYi('tongYong', 'qianTaiCuoWuZhenZongBianHao'))
-      expect(wrapper.get('.qian-tai-cuo-wu-zhen-cha').text()).toContain(huoQuFanYi('tongYong', 'qianTaiCuoWuDaiMaBiaoQian'))
+      expect(wrapper.get('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe(
+        huoQuLianAiMa(QIAN_TAI_DAI_MA.SERVICE_UNAVAILABLE),
+      )
+      expect(wrapper.text()).not.toContain(huoQuFanYi('tongYong', 'qianTaiCuoWuZhenZongBianHao'))
+      expect(wrapper.text()).not.toContain(huoQuFanYi('tongYong', 'qianTaiCuoWuZhenCha'))
     })
 
-    it('判据②⑨：脏 traceId（SQL/路径/超长/含空格）一律不渲染', () => {
+    it('判据②⑨：脏 traceId（SQL/路径/超长/含空格）一律不渲染追踪编号', () => {
       for (const 脏 of [
         'SELECT * FROM 用户 password=x',
         'C:\\secret\\server.ts',
@@ -170,30 +181,36 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
         const wrapper = mount(请求错误, {
           props: { cuoWu: chuangJianQianTaiCuoWu({ code: QIAN_TAI_DAI_MA.WEI_ZHI, traceId: 脏 }) },
         })
-        const 文本 = wrapper.get('.qian-tai-cuo-wu-zhen-cha').text()
+        const 文本 = wrapper.text()
         expect(文本).not.toContain('password')
         expect(文本).not.toContain('server.ts')
+        if (脏 !== '') expect(文本).not.toContain(脏)
       }
     })
 
     it('判据②⑨：后端原文里的 SQL/堆栈/路径永不出现在任何可见位置', () => {
       const 原文 = 'SQL 失败 at /srv/app/server.js stack: at db.js:42 password=super-secret'
       const zhengChang = 归一前台错误(houTaiCuoWu(500, 'INTERNAL_ERROR', 原文))
+      expect(zhengChang.message).toBe(zhengChang.lianAiWenAn)
       const wrapper = mount(请求错误, { props: { cuoWu: zhengChang } })
       const 可见 = wrapper.text()
       expect(可见).not.toContain('SQL')
       expect(可见).not.toContain('/srv/app')
       expect(可见).not.toContain('password')
       expect(可见).not.toContain('db.js')
-      expect(可见).toContain(huoQuFanYi('tongYong', 'fuWuWenTiYingXiang'))
+      expect(可见).toContain(zhengChang.lianAiWenAn)
     })
 
-    it('判据③：错误不装成空态或加载中（面板标题与 aria 语义恒为错误）', () => {
+    it('判据③：错误不装成空态或加载中（aria 语义恒为错误，游戏化文案即主行）', () => {
       const wrapper = 装面板(QIAN_TAI_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE)
       expect(wrapper.get('[role="alert"]').exists()).toBe(true)
       expect(wrapper.get('[aria-live="assertive"]').exists()).toBe(true)
       expect(wrapper.text()).not.toContain(huoQuFanYi('tongYong', 'banBenYiGengXin'))
-      expect(wrapper.find('.qian-tai-cuo-wu-biaoti').text()).toBe(huoQuFanYi('tongYong', 'qianTaiCuoWuBiaoTi'))
+      // FP-JC 用户裁决：删"这次没完成"标题头后，沉浸文案成为面板主行
+      expect(wrapper.find('.qian-tai-cuo-wu-biaoti').exists()).toBe(false)
+      expect(wrapper.get('.qian-tai-cuo-wu-wen-an').text()).toBe(
+        huoQuFanYi('lianAi', huoQuLianAiMa(QIAN_TAI_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE) as never),
+      )
     })
 
     it('判据⑨：超长用户输入不被回显进错误面板（面板文本长度有界）', () => {
@@ -201,8 +218,9 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
       const wrapper = mount(请求错误, {
         props: { cuoWu: chuangJianQianTaiCuoWu({ code: QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID, yingXiang: 巨长 }) },
       })
-      // 组件不做长度截断是上游责任，此处只钉「错误码与追踪编号不参与长度增长」这一条不变量
-      expect(wrapper.get('.qian-tai-cuo-wu-dai-ma').text().length).toBeLessThan(80)
+      // 新契约主区只渲染沉浸文案与恋爱码，上游传入的超长影响文案不得回显
+      expect(wrapper.get('.qian-tai-cuo-wu-lian-ai-ma').text().length).toBeLessThan(80)
+      expect(wrapper.text()).not.toContain(巨长.slice(0, 20))
     })
   })
 

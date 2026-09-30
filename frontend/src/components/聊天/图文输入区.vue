@@ -628,6 +628,20 @@ defineExpose({
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   overflow-y: auto;
+  /* 零宽空格哨兵在聚焦时被浏览器渲染成红色选区块，禁掉选区高亮 */
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* 空态时零宽空格哨兵不可见（浏览器会把它渲染成红色色块） */
+.shuru-kuang.wei-kong {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  caret-color: var(--wenben-zhuse);
+}
+.shuru-kuang::selection,
+.shuru-kuang *::selection {
+  background: transparent;
+  color: inherit;
 }
 
 .shuru-kuang.zhan-kai {

@@ -214,7 +214,7 @@ describe('好友媒体气泡渲染', () => {
     wrapper.unmount()
   })
 
-  it('文件消息出文件泡：文件名 + 大小 + 带 download 的链接；缺名时回落翻译文案', async () => {
+  it('文件消息出文件泡：文件名 + 大小 + 整卡带 download 的链接；缺名时回落翻译文案', async () => {
     const wrapper = await 挂载([
       媒体消息({ lei_xing: 'wenJian', mei_ti_lei_bie: 'wenjian', mei_ti_yuan_shi_wen_jian_ming: '笔记.pdf' }),
       媒体消息({
@@ -228,11 +228,11 @@ describe('好友媒体气泡渲染', () => {
     expect(泡).toHaveLength(2)
     expect(泡[0].find('.wenjian-ming').text()).toBe('笔记.pdf')
     expect(泡[0].find('.wenjian-daxiao').text()).toBe('2.0MB')
-    const 链 = 泡[0].find('a.wenjian-xiazai')
-    expect(链.attributes('download')).toBe('笔记.pdf')
-    // FP-12b 起文件卡片统一为 components/聊天/文件气泡.vue：下载链从文字链接改为图标链，
+    // FP-K4b：整卡可点下载，根元素即 <a>，download/aria-label 在它身上
+    expect(泡[0].element.tagName).toBe('A')
+    expect(泡[0].attributes('download')).toBe('笔记.pdf')
     // 可达名称仍逐字取翻译文件（行为等价改判，不弱化可访问名称契约）
-    expect(链.attributes('aria-label')).toBe(huoQuFanYi('duoMeiTi', 'xiaZaiWenJian'))
+    expect(泡[0].attributes('aria-label')).toBe(huoQuFanYi('duoMeiTi', 'xiaZaiWenJian'))
     expect(泡[1].find('.wenjian-ming').text()).toBe(huoQuFanYi('haoYou', 'weiMingMing'))
     wrapper.unmount()
   })
@@ -444,7 +444,7 @@ describe('好友媒体发送中/失败态与资源回收', () => {
     await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
     expect(wrapper.findAll('.xiaoxi-xiangmu')).toHaveLength(1)
-    expect(wrapper.find('.fasong-tishi').text()).toBe(huoQuFanYi('tongYong', 'qingQiuWenTiYingXiang'))
+    expect(wrapper.find('.fasong-tishi').text()).toBe(huoQuFanYi('lianAi', 'LianAi_009'))
     expect(wrapper.find('.fasong-tishi').text()).not.toContain('文件超出大小限制')
     expect(wrapper.find('img.tuwen-kuai-tu').attributes('src')).not.toContain('blob:')
     expect(wrapper.find('.shuru-kuang .dai-fa-kuai--tu').exists()).toBe(true)
@@ -461,7 +461,7 @@ describe('好友媒体发送中/失败态与资源回收', () => {
     await wrapper.find('.fasong-anniu').trigger('click')
     await flushPromises()
     expect(wrapper.findAll('.xiaoxi-xiangmu')).toHaveLength(0)
-    expect(wrapper.find('.fasong-tishi').text()).toBe(huoQuFanYi('tongYong', 'quanXianWenTiYingXiang'))
+    expect(wrapper.find('.fasong-tishi').text()).toBe(huoQuFanYi('lianAi', 'LianAi_012'))
     expect(wrapper.find('.fasong-tishi').text()).not.toContain('对方还不是你的好友')
     wrapper.unmount()
   })
@@ -480,7 +480,7 @@ describe('好友媒体发送中/失败态与资源回收', () => {
     await 输入.trigger('change')
     await flushPromises()
     expect(传媒体).not.toHaveBeenCalled()
-    expect(wrapper.find('.fasong-tishi').text()).toBe(huoQuFanYi('tongYong', 'tongYongWenTiYingXiang'))
+    expect(wrapper.find('.fasong-tishi').text()).toBe(huoQuFanYi('lianAi', 'LianAi_004'))
     expect(wrapper.find('.fasong-tishi').text()).not.toContain('浏览器拒绝解码')
     ;(globalThis as unknown as { removeEventListener: (k: string, f: unknown) => void }).removeEventListener(
       'unhandledrejection',

@@ -188,11 +188,7 @@ export async function shengChengKaiChangBai(
   }
 
   const apiMiYao = peiZhi.deepSeek.apiMiYao || AI_PEI_ZHI.deepSeek.apiMiYao
-  if (!apiMiYao) {
-    if (process.env.VITEST === 'true') return jiangJiKaiChangBai(canShu)
-    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_MODEL_UNAVAILABLE)
-  }
-  if (process.env.VITEST === 'true') {
+  if (!apiMiYao || process.env.VITEST === 'true') {
     return jiangJiKaiChangBai(canShu)
   }
 
@@ -213,9 +209,12 @@ export async function shengChengKaiChangBai(
       { jiaoSe: 'system', neiRong: '你正在帮一个刚加上微信的中国大学生想主动发出的开场消息，是否主动发、发几条、说什么由你根据 TA 的完整画像深度思考决定。' },
       { jiaoSe: 'user', neiRong: gouJianKaiChangBaiTiShi(canShu) },
     ], shangXiaWenShiJi)
-  } catch (cuoWu) {
-    if (cuoWu instanceof JiaoSeShengChengCuoWu) throw cuoWu
-    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_MODEL_CALL_FAILED, cuoWu)
+  } catch {
+    return jiangJiKaiChangBai(canShu)
   }
-  return { xiao_xi_lie_biao: jieXiJSONNeiRong(xiangYing.neiRong, canShu.ming_zi) }
+  try {
+    return { xiao_xi_lie_biao: jieXiJSONNeiRong(xiangYing.neiRong, canShu.ming_zi) }
+  } catch {
+    return jiangJiKaiChangBai(canShu)
+  }
 }

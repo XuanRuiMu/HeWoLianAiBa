@@ -1,4 +1,4 @@
-﻿import { 数据库 } from '../数据库'
+import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import {
   CUO_WU_DAI_MA,
@@ -47,7 +47,6 @@ import {
 } from '../config/角色配置'
 import { baoCunJiaoSeXiaoXi } from './AI输入准备'
 import { shengChengKaiChangBai } from './开场白生成'
-import { jiSuanKaiChangBaiGaiLv } from './开场白概率'
 
 // R3 提示注入防护：人设文本长度上限与指令特征清洗
 const REN_SHE_WEN_BEN_ZUI_DA_CHANG_DU = 500
@@ -763,12 +762,8 @@ export async function baoCunJiaoSe(
   // 前端 queRenJiaoSe 已配置 60s timeout，DeepSeek 客户端 timeout=120s，
   // shengChengKaiChangBai 内部 try/catch 失败会降级到 jiangJi 不会抛出。
   //
-  // 开场白发送：画像驱动的 10%~90% 动态门控（两步，与内容生成解耦）。
-  // 第一步：AI 根据完整人物画像算出"发开场白"的概率（10%~90%）；
-  //        无 AI key / 测试环境退回固定兜底概率（kaiChangBaiFaSongGaiLv）。
-  // 第二步：系统随机选 [0,1) 一个数，小于概率则发送——概率高的角色更常发，低的更少发。
-  // 测试环境强制 faSongGaiLv=1（必发）以保证确定性。
-  let jieDuan: 'model' | 'persistence' = 'model'
+  // 开场白必发：每个新会话都必须有 AI 开场消息（用户裁决：会话创建后没有 AI 主动发的第一条消息 = 缺陷）。
+  // 内容生成失败时降级到 jiangJiKaiChangBai 启发式文案，不让开场白失败阻断角色创建。
   try {
     const kcbCanShu: Parameters<typeof shengChengKaiChangBai>[0] = {
       mbti_lei_xing: jiaoSe.mbti_lei_xing,
@@ -786,13 +781,7 @@ export async function baoCunJiaoSe(
       tou_xiang: jiaoSe.tou_xiang,
       biao_qian: jiaoSe.biao_qian,
     }
-    const faSongGaiLv =
-      process.env.VITEST === 'true' ? 1 : await jiSuanKaiChangBaiGaiLv(kcbCanShu)
-    const kaiChangBai =
-      Math.random() < faSongGaiLv
-        ? await shengChengKaiChangBai(kcbCanShu)
-        : { xiao_xi_lie_biao: [] as string[] }
-    jieDuan = 'persistence'
+    const kaiChangBai = await shengChengKaiChangBai(kcbCanShu)
     for (const neiRong of kaiChangBai.xiao_xi_lie_biao.slice(0, 5)) {
       if (neiRong.trim()) {
         await baoCunJiaoSeXiaoXi({
@@ -802,14 +791,9 @@ export async function baoCunJiaoSe(
         })
       }
     }
-  } catch (cuoWu) {
-    if (cuoWu instanceof JiaoSeShengChengCuoWu) throw cuoWu
-    throw new JiaoSeShengChengCuoWu(
-      jieDuan === 'persistence'
-        ? CUO_WU_DAI_MA.ROLE_GENERATION_PERSISTENCE_FAILED
-        : CUO_WU_DAI_MA.ROLE_GENERATION_MODEL_CALL_FAILED,
-      cuoWu,
-    )
+  } catch {
+    // 开场白生成/落库失败不阻断角色创建（角色已入库），
+    // shengChengKaiChangBai 内部已降级到 jiangJi，此处兜底防持久化异常
   }
 
   return jiaoSe

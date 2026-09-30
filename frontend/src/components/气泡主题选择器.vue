@@ -67,7 +67,7 @@ function xuanZe(buWei: 'ziJi' | 'ai', yuShe: QiPaoYuShe): void {
 .qipao-zhuTi-xuanZeQi {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--jiange-12);
 }
 .qipao-xuanZe-biaoTi {
   font-size: 15px;
@@ -76,15 +76,15 @@ function xuanZe(buWei: 'ziJi' | 'ai', yuShe: QiPaoYuShe): void {
 .qipao-fenZu-biaoTi {
   font-size: 13px;
   font-weight: 500;
-  margin-bottom: 8px;
+  margin-bottom: var(--jiange-xiao);
 }
 .qipao-xuanXiang-lieBiao {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--jiange-xiao);
 }
 .qipao-xuanXiang {
-  padding: 8px 14px;
+  padding: var(--jiange-xiao) calc(var(--jiange-12) + var(--jiange-2));
   border-radius: 16px;
   border: 2px solid transparent;
   font-size: 13px;

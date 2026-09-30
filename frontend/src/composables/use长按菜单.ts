@@ -238,7 +238,9 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
    */
   function sheZhiYinYongMuBiao(muBiao: T): boolean {
     if (!keYinYongXiaoXi(muBiao)) return false
-    yinYongXiaoXi.value = muBiao
+    // 存快照而非对象本身：列表元素在服务端确认后会被替换，旧对象上的 nei_rong 会 stale，
+    // 引用条摘要应以发送瞬间为准，快照同时切断与列表的引用关系。
+    yinYongXiaoXi.value = { ...muBiao }
     return true
   }
 

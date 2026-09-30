@@ -162,10 +162,10 @@ describe('FP-12 过往战绩服务端排序', () => {
       '记录1',
       '记录0',
     ])
-    expect(wrapper.find('.qian-tai-cuo-wu-ying-xiang').text()).toBe(
-      huoQuFanYi('tongYong', 'zhanJiWenTiYingXiang'),
+    expect(wrapper.find('.qian-tai-cuo-wu-wen-an').text()).toBe(
+      huoQuFanYi('lianAi', 'LianAi_055'),
     )
-    expect(wrapper.find('.qian-tai-cuo-wu-dai-ma').text()).toBe('ZHAN_JI_FEN_LEI_BIAN_GENG')
+    expect(wrapper.find('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe('LianAi_055')
   })
 
   it('自动排序只改变展示，不写排序 API；切回手动恢复服务端顺序', async () => {

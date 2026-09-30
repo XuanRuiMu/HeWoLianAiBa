@@ -35,22 +35,12 @@ interface 豁免项 {
 }
 
 /**
- * 已知塌陷令牌账本（FP-12 审计扫出的 13 枚 light-only 令牌，与 F23 同族；FP-20 删 6 枚零消费者后余 7 枚）：
- * - 越权阻塞：上收会让深色档在 FP-12 未授权 / 禁止触碰的文件里由"塌陷值"变成"设计值"，属改变既有视觉，
- *   须由主代理连同 FP-11 深色复取证一并裁决。
- * - 零消费者疑死令牌：全库无人引用，上收零风险，但更干净的下场是删除，删除须主代理确认。
- *   该类 6 枚已由 FP-20 按此路径删除（双向账本见 __tests__/FP20令牌消费者.test.ts），类别暂无在册条目。
- * 账本只允许缩短；新增任何单侧声明令牌都会红。
+ * 已知塌陷令牌账本：曾登记 FP-12 扫出的 7 枚 light-only"越权阻塞"令牌（--yuanjiao-da/zhong/xiao、
+ * --anquan-quyu-shang/xia、--nuanhui-lan、--roufen-zi）。FP-G 经主代理裁决把 7 枚全部上收共用 :root
+ * （尺度/安全区令牌与主题档无关，品牌色取浅色档同值），深色档圆角 0→16/12/8px、品牌色不再 IACVT
+ * 透明（用户原始需求 7 根因收口），账本随之清零。账本只允许缩短；新增任何单侧声明令牌都会红。
  */
-const 塌陷豁免: 豁免项[] = [
-  { 令牌: '--yuanjiao-da', 类别: '越权阻塞', 理由: 'global.css 之外还有 聊天页面.vue（禁止触碰）消费；上收使深色档圆角 0→16px' },
-  { 令牌: '--yuanjiao-zhong', 类别: '越权阻塞', 理由: 'global.css 之外还有 聊天页面.vue（禁止触碰）/通话界面.vue 消费；上收使深色档 0→12px' },
-  { 令牌: '--yuanjiao-xiao', 类别: '越权阻塞', 理由: 'global.css 之外还有 聊天页面.vue（禁止触碰）9 处消费；上收使深色档 0→8px' },
-  { 令牌: '--anquan-quyu-shang', 类别: '越权阻塞', 理由: 'App.vue/全局菜单.vue/通话界面.vue 用它拼 calc(52px + var(...))，深色档整条失效→height:auto；跨文件行为变更' },
-  { 令牌: '--anquan-quyu-xia', 类别: '越权阻塞', 理由: '消费者含 好友聊天.vue/聊天页面.vue（禁止触碰）的 padding-bottom calc 式' },
-  { 令牌: '--nuanhui-lan', 类别: '越权阻塞', 理由: '品牌暖灰蓝，10 个文件消费（含 资料设置向导.vue 的 FP-03 已交付 rgb 取证、挑战主页/主页内容/添加微信 渐变底色），深色档现为 IACVT 透明' },
-  { 令牌: '--roufen-zi', 类别: '越权阻塞', 理由: '品牌柔粉紫，与 --nuanhui-lan 同组渐变，深色档现为 IACVT 透明' },
-]
+const 塌陷豁免: 豁免项[] = []
 
 const 豁免令牌名 = 塌陷豁免.map((项) => 项.令牌).sort()
 
@@ -82,19 +72,11 @@ const 尺度真源取值: Record<string, string> = {
   '--quxian-huan-ying': 'cubic-bezier(0.22, 1, 0.36, 1)',
 }
 
-/** FP-02 那类"绕真源同值兜底"补丁账本（越权文件，已登记待清理；新增即红） */
-const 同值兜底待清理 = [
-  'src/App.vue|--shi-jiao-kou-gao-du|1',
-  'src/components/空态.vue|--liaotian-beijing|2',
-]
+/** FP-02 那类"绕真源同值兜底"补丁账本（越权文件；FP-G 已删净 App.vue 与 空态.vue 的两处兜底，账本归零；新增即红） */
+const 同值兜底待清理: string[] = []
 
-/** FP-12 授权文件里仍在引用单侧令牌的位置（越权阻塞豁免的直接后果，随主代理裁决归零） */
-const 授权内塌陷引用账本 = [
-  'src/styles/global.css|--nuanhui-lan|2',
-  'src/styles/global.css|--yuanjiao-da|1',
-  'src/styles/global.css|--yuanjiao-xiao|1',
-  'src/styles/global.css|--yuanjiao-zhong|2',
-].sort()
+/** FP-12 授权文件里仍在引用单侧令牌的位置（FP-G 上收后授权文件引用全部双档有源，账本归零；新增即红） */
+const 授权内塌陷引用账本: string[] = []
 
 /** variables.css 之外局部重声明全局令牌 = 第二真源。账本只允许缩短、不得陈化：
  *  FP-04 的那处 `过往战绩.vue|--quxian-huan-ying`（自陈"待令牌上收为全局后可删"）已由

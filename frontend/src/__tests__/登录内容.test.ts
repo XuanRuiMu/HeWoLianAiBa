@@ -7,7 +7,7 @@ import { resolve } from 'node:path'
 import 登录内容 from '@/views/登录内容.vue'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
 import { huoQuFanYi } from '@/config/translations'
-import { 声明块清单, 按档解析全部, 声明位置 } from './主题令牌真源'
+import { 声明块清单, 按档解析全部, 声明位置, 求几何算式 } from './主题令牌真源'
 import { 拆分选择器组, 规则清单, 读取全局基线 } from './CSS级联真源'
 
 const 登录内容源码 = readFileSync(resolve(__dirname, '../views/登录内容.vue'), 'utf8')
@@ -714,25 +714,62 @@ describe('登录内容组件', () => {
     expect(样式块(登录内容样式, '.biaodan-gundong')).toMatch(/overflow-x:\s*hidden/)
   })
 
-  it('FP-04a：认证滚动口空闲隐藏，hover 与 focus-within 恢复全局滚动条令牌', () => {
+  it('FP-04a→FP-J2：认证滚动口双路隐藏原生条，自绘金色滑块挂外壳、静置淡出', () => {
+    const 滚动口 = 样式块(登录内容样式, '.biaodan-gundong')
+    expect(滚动口, 'FP-J2 主路隐藏原生条（scrollbar-width:none）丢失').toMatch(/scrollbar-width:\s*none/)
+    expect(滚动口, 'FP-J2 回归：scrollbar-gutter 又长回来恒占槽位挤压正文').not.toMatch(/scrollbar-gutter/)
+    expect(
+      样式块(登录内容样式, '.biaodan-gundong::-webkit-scrollbar'),
+      '旧 Chromium 兜底（webkit 伪元素 width:0）丢失',
+    ).toMatch(/width:\s*0/)
+    const 外壳 = 样式块(登录内容样式, '.gundong-waike')
+    expect(外壳).toMatch(/position:\s*relative/)
+    expect(外壳).toMatch(/flex:\s*1/)
+    expect(外壳).toMatch(/min-height:\s*0/)
+    const 滑块 = 样式块(登录内容样式, '.gundong-huakuai')
+    expect(滑块, '滑块掉回滚动坐标系（应绝对定位于外壳右缘）').toMatch(/position:\s*absolute/)
+    expect(滑块).toMatch(/right:\s*calc\(/)
+    expect(滑块).toMatch(/--renzheng-gundong-huakuai-you-ju/)
+    expect(滑块).toMatch(/width:\s*var\(--renzheng-gundong-huakuai-kuan\)/)
+    expect(滑块, '滑块应为渐变细条（非纯色）').toMatch(/background:\s*linear-gradient\(/)
+    expect(滑块, '滑块空闲态不透明，静置无法淡出').toMatch(/opacity:\s*0/)
+    expect(滑块).toMatch(/pointer-events:\s*none/)
+    expect(样式块(登录内容样式, '.gundong-huakuai.xian-shi')).toMatch(/opacity:\s*1/)
     expect(登录内容样式).toMatch(
-      /\.biaodan-gundong\s*\{[^}]*overflow-y:\s*auto[^}]*scrollbar-color:\s*transparent\s+transparent/,
+      /\.gundong-waike:hover\s+\.gundong-huakuai,\s*\.gundong-waike:focus-within\s+\.gundong-huakuai\s*\{[^}]*opacity:\s*1/,
     )
-    expect(登录内容样式).toMatch(
-      /\.biaodan-gundong::\-webkit-scrollbar-track\s*\{[^}]*background:\s*transparent/,
+    expect(登录内容源码, '静置 800ms 摘 xian-shi 的淡出计时丢失').toMatch(
+      /HUA_KUAI_JING_ZHI_DAN_CHU_HAO_MIAO = 800/,
     )
-    expect(登录内容样式).toMatch(
-      /\.biaodan-gundong::\-webkit-scrollbar-thumb\s*\{[^}]*background:\s*transparent/,
-    )
-    expect(登录内容样式).toMatch(
-      /\.biaodan-gundong:hover,\s*\.biaodan-gundong:focus-within\s*\{[^}]*scrollbar-color:\s*var\(--gundong-tiao-huakuai\)\s+var\(--gundong-tiao-guidao\)/,
-    )
-    expect(登录内容样式).toMatch(
-      /\.biaodan-gundong:hover::\-webkit-scrollbar-track,\s*\.biaodan-gundong:focus-within::\-webkit-scrollbar-track\s*\{[^}]*background:\s*var\(--gundong-tiao-guidao\)/,
-    )
-    expect(登录内容样式).toMatch(
-      /\.biaodan-gundong:hover::\-webkit-scrollbar-thumb,\s*\.biaodan-gundong:focus-within::\-webkit-scrollbar-thumb\s*\{[^}]*background:\s*var\(--gundong-tiao-huakuai\)/,
-    )
+    expect(登录内容源码).toMatch(/classList\.remove\('xian-shi'\)/)
+    // 裁决⑨-①：断言口径从「顺序」收口为「包含」——旧正则 `外壳开标签[\s\S]*滑块` 只证源码先后，
+    // 滑块写在外壳闭标签之后仍能通过；这里按 div 深度配平抠出外壳本体，滑块必须落在壳内才成立。
+    const 模板源 = 登录内容源码.slice(0, 登录内容源码.indexOf('<script'))
+    const 外壳起 = 模板源.indexOf('<div class="gundong-waike">')
+    expect(外壳起, '模板里找不到滚动口外壳 .gundong-waike').toBeGreaterThan(-1)
+    let 深度 = 1
+    let 位 = 外壳起 + '<div class="gundong-waike">'.length
+    while (位 < 模板源.length && 深度 > 0) {
+      const 余 = 模板源.slice(位)
+      const 开匹 = /<div[\s>]/.exec(余)
+      const 闭匹 = /<\/div>/.exec(余)
+      if (闭匹 && (!开匹 || 闭匹.index < 开匹.index)) {
+        深度 -= 1
+        位 += 闭匹.index + 闭匹[0].length
+        continue
+      }
+      if (!开匹) break
+      const 标签止 = 余.indexOf('>', 开匹.index)
+      if (标签止 === -1) break
+      if (余[标签止 - 1] !== '/') 深度 += 1
+      位 += 标签止 + 1
+    }
+    expect(深度, '.gundong-waike 的 div 深度未配平，无法裁决包含关系').toBe(0)
+    const 外壳体 = 模板源.slice(外壳起, 位)
+    expect(
+      外壳体,
+      '滑块必须挂在滚动口外壳内（包含关系，不是源码先后）且对读屏隐藏',
+    ).toMatch(/class="gundong-huakuai" aria-hidden="true"/)
   })
 
   it('FP-02→FP-04b：表单项垂直节奏——字段间距走派生令牌、上浮标签留出间距', () => {
@@ -746,19 +783,29 @@ describe('登录内容组件', () => {
       /--ziduan-jian-ju:\s*calc\(var\(--jiange-da\)\s*\+\s*var\(--jiange-xiao\)\)/,
     )
     expect(组块).toMatch(/margin-bottom:\s*var\(--ziduan-jian-ju\)(?!,)/)
-    expect(样式块(登录内容样式, '.fenlie-shuru')).toMatch(/padding:\s*18px 0 10px/)
-    expect(样式块(登录内容样式, '.fudong-biaoqian')).toMatch(/top:\s*18px/)
+    const 输入块 = 样式块(登录内容样式, '.fenlie-shuru')
+    expect(输入块).toMatch(/padding-top:\s*calc\(var\(--jiange-zhong\)\s*\+\s*var\(--jiange-2\)\)/)
+    expect(求几何算式('calc(var(--jiange-zhong) + var(--jiange-2))')).toBe(18)
+    expect(求几何算式('var(--jiange-10)')).toBe(10)
+    expect(样式块(登录内容样式, '.fudong-biaoqian')).toMatch(
+      /top:\s*calc\(var\(--jiange-zhong\)\s*\+\s*var\(--jiange-2\)\)/,
+    )
     const 上浮 = new RegExp(
       '\\.shuru-zu\\.shangFu \\.fudong-biaoqian,[\\s\\S]*?\\{([^}]*)\\}',
     ).exec(登录内容样式)
     expect(上浮, '未找到上浮标签规则').not.toBeNull()
-    expect((上浮 as RegExpMatchArray)[1]).toMatch(/top:\s*-5px/)
+    expect((上浮 as RegExpMatchArray)[1]).toMatch(
+      /top:\s*calc\(var\(--biaoqian-qin-ru\)\s*\*\s*-1\)/,
+    )
+    expect(求几何算式('calc(var(--biaoqian-qin-ru) * -1)')).toBe(-5)
   })
 
   it('FP-17b：浮标上浮越出字段盒时不被滚动口上沿裁切，且输入高度与字段坐标不变', () => {
     const 滚动口 = 样式块(登录内容样式, '.biaodan-gundong')
-    const 上补 = Number(滚动口.match(/padding-top:\s*(-?[\d.]+)px/)?.[1])
-    const 上移 = Number(滚动口.match(/margin-top:\s*(-?[\d.]+)px/)?.[1])
+    expect(滚动口).toMatch(/padding-top:\s*var\(--biaoqian-qin-ru\)/)
+    expect(滚动口).toMatch(/margin-top:\s*calc\(var\(--biaoqian-qin-ru\)\s*\*\s*-1\)/)
+    const 上补 = 求几何算式('var(--biaoqian-qin-ru)')
+    const 上移 = 求几何算式('calc(var(--biaoqian-qin-ru) * -1)')
     expect(上补).toBe(5)
     expect(上移).toBe(-5)
     expect(上补 + 上移, '滚动口补偿不闭合会让整张表单跳动').toBe(0)
@@ -771,7 +818,12 @@ describe('登录内容组件', () => {
     const 浮标规则 = 规则清单(登录内容样式).filter(
       (项) => 项.选择器.includes('fudong-biaoqian') && 项.声明.has('top'),
     )
-    expect([...new Set(浮标规则.map((项) => 项.声明.get('top')))].sort()).toEqual(['-5px', '18px'])
+    const top取值 = [...new Set(浮标规则.map((项) => 项.声明.get('top') as string))].sort()
+    expect(top取值).toEqual([
+      'calc(var(--biaoqian-qin-ru) * -1)',
+      'calc(var(--jiange-zhong) + var(--jiange-2))',
+    ])
+    for (const 式 of top取值) expect(求几何算式(式)).toBeOneOf([-5, 18])
     const 上浮 = 浮标规则.find((项) => 项.选择器.includes(':focus-within'))
     expect(上浮?.选择器).toContain('.shuru-zu.shangFu')
     expect(上浮?.选择器).toContain(':has(.fenlie-shuru:-webkit-autofill)')
@@ -780,7 +832,7 @@ describe('登录内容组件', () => {
       '错误态不得另写一份会裁切标签的几何',
     ).toBe(false)
 
-    expect(样式块(登录内容样式, '.fenlie-shuru')).toMatch(/padding:\s*18px 0 10px/)
+    expect(样式块(登录内容样式, '.fenlie-shuru')).toMatch(/padding-top:\s*calc\(/)
     expect(样式块(登录内容样式, '.shuru-zu')).not.toMatch(/padding-top:|padding-bottom:/)
   })
 

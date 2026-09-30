@@ -430,8 +430,8 @@ watch(
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
-  gap: 12px;
-  padding: 0 20px;
+  gap: var(--jiange-12);
+  padding: 0 calc(var(--jiange-zhong) + var(--jiange-4));
 }
 
 .caidan-zuo,
@@ -449,7 +449,7 @@ watch(
 
 .caidan-zuo {
   justify-content: flex-start;
-  gap: 8px;}
+  gap: var(--jiange-xiao);}
 
 .fanhui-anniu {
   font-size: 14px;
@@ -457,7 +457,7 @@ watch(
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 6px 12px;
+  padding: var(--jiange-6) var(--jiange-12);
   border-radius: 8px;
   transition: background 0.2s ease;
   white-space: nowrap;
@@ -465,7 +465,7 @@ watch(
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--jiange-4);
 }
 
 .fanhui-wenzi {
@@ -491,7 +491,7 @@ watch(
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 6px 12px;
+  padding: var(--jiange-6) var(--jiange-12);
   border-radius: 8px;
   transition: background 0.2s ease;
   white-space: nowrap;
@@ -499,7 +499,7 @@ watch(
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--jiange-4);
 }
 
 .zhuye-anniu.yincang {
@@ -522,22 +522,22 @@ watch(
 
 .caidan-zhong {
   justify-content: center;
-  gap: 10px;
+  gap: var(--jiange-10);
   min-width: 0;
 }
 
 .caidan-you {
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--jiange-xiao);
   min-width: 0;
 }
 
 .yonghu-xuanxiang {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--jiange-xiao);
   cursor: pointer;
-  padding: 6px 12px;
+  padding: var(--jiange-6) var(--jiange-12);
   border-radius: 10px;
   transition: background 0.2s ease;
   position: relative;
@@ -598,7 +598,7 @@ watch(
   border: 1px solid var(--xiala-biankuang);
   border-radius: 12px;
   box-shadow: var(--xiala-yinying);
-  padding: 6px;
+  padding: var(--jiange-6);
   z-index: 200;
 }
 
@@ -611,10 +611,10 @@ watch(
 .yonghu-ziliao-tou {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--jiange-10);
   width: 100%;
-  padding: 10px 12px;
-  margin-bottom: 4px;
+  padding: var(--jiange-10) var(--jiange-12);
+  margin-bottom: var(--jiange-4);
   border: none;
   border-bottom: 1px solid var(--xiala-biankuang);
   border-radius: 8px 8px 0 0;
@@ -645,7 +645,7 @@ watch(
 .ziliao-wenzi {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--jiange-2);
   min-width: 0;
   flex: 1;
 }
@@ -675,7 +675,7 @@ watch(
 .xiala-xiangmu {
   display: block;
   width: 100%;
-  padding: 10px 14px;
+  padding: var(--jiange-10) calc(var(--jiange-12) + var(--jiange-2));
   text-align: left;
   font-size: 13px;
   font-weight: 500;
@@ -737,7 +737,7 @@ watch(
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: var(--jiange-2);
   min-width: 0;
 }
 
@@ -778,7 +778,7 @@ watch(
   background: var(--junshi-anniu-beijing);
   border: none;
   cursor: pointer;
-  padding: 6px 14px;
+  padding: var(--jiange-6) calc(var(--jiange-12) + var(--jiange-2));
   border-radius: 8px;
   transition: all 0.2s ease;
   white-space: nowrap;
@@ -823,7 +823,7 @@ watch(
   right: -2px;
   min-width: 18px;
   height: 18px;
-  padding: 0 5px;
+  padding: 0 var(--jiange-5);
   border-radius: 9px;
   background: var(--tongzhi-badge-beijing);
   color: var(--tongzhi-badge-wenben);
@@ -837,7 +837,7 @@ watch(
   font-size: 12px;
   font-weight: 600;
   color: var(--daohanglan-ciwenben);
-  padding: 4px 8px;
+  padding: var(--jiange-4) var(--jiange-xiao);
   border-radius: 6px;
   background: var(--daohanglan-qianbeijing);
   border: 1px solid var(--daohanglan-qianbiankuang);
@@ -847,12 +847,12 @@ watch(
 .qita-xuanxiang {
   position: relative;
   cursor: pointer;
-  padding: 6px 10px;
+  padding: var(--jiange-6) var(--jiange-10);
   border-radius: 10px;
   transition: background 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--jiange-4);
   flex-shrink: 0;
 }
 
@@ -898,13 +898,13 @@ watch(
   }
 
   .caidan-neirong {
-    padding: 0 10px;
-    gap: 6px;
+    padding: 0 var(--jiange-10);
+    gap: var(--jiange-6);
     grid-template-columns: auto minmax(0, 1fr) auto;
   }
 
   .fanhui-anniu {
-    padding: 6px 8px;
+    padding: var(--jiange-6) var(--jiange-xiao);
   }
 
   .fanhui-wenzi {
@@ -912,7 +912,7 @@ watch(
   }
 
   .zhuye-anniu {
-    padding: 6px 8px;
+    padding: var(--jiange-6) var(--jiange-xiao);
   }
 
   .zhuye-wenzi {
@@ -920,8 +920,8 @@ watch(
   }
 
   .yonghu-xuanxiang {
-    padding: 6px 8px;
-    gap: 6px;
+    padding: var(--jiange-6) var(--jiange-xiao);
+    gap: var(--jiange-6);
   }
 
   .yonghu-mingcheng {
@@ -941,7 +941,7 @@ watch(
   }
 
   .junshi-anniu {
-    padding: 6px 10px;
+    padding: var(--jiange-6) var(--jiange-10);
   }
 
   .junshi-wenzi-quan {
@@ -953,7 +953,7 @@ watch(
   }
 
   .qita-xuanxiang {
-    padding: 6px 8px;
+    padding: var(--jiange-6) var(--jiange-xiao);
   }
 
   .qita-wenzi {

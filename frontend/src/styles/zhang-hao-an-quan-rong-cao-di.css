@@ -6,7 +6,9 @@
 :root[data-theme="dark"] .zhang-hao-an-quan.zhang-hao-an-quan,
 :root:not([data-theme]) .zhang-hao-an-quan.zhang-hao-an-quan {
   --miZhi: transparent !important;
-  --kaPian: rgba(20, 24, 40, 0.62) !important;
+  /* FP-J3/JC：0.62 档压不住草地亮场（天空近白），卡片合成面被抬亮致全部文字对比度塌方；
+     0.9 档按草地亮场上界（纯白）合成后仍保住 ≥4.5:1，毛玻璃质感由 blur(12px) 继续承载 */
+  --kaPian: rgba(20, 24, 40, 0.9) !important;
   --bianKuang: rgba(255, 255, 255, 0.12) !important;
 }
 div.zhang-hao-an-quan.zhang-hao-an-quan {
@@ -14,6 +16,22 @@ div.zhang-hao-an-quan.zhang-hao-an-quan {
   background-image: none !important;
   position: relative;
   z-index: 1;
+}
+/* 统一半透明底板：盖在动态背景之上、全部内容之下。
+   浅色=半透明白、深色=半透明黑；防草地亮场/暗场把正文对比度吃掉。 */
+div.zhang-hao-an-quan.zhang-hao-an-quan::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+:root[data-theme='light'] div.zhang-hao-an-quan.zhang-hao-an-quan::before {
+  background-color: rgba(255, 255, 255, 0.55);
+}
+:root[data-theme='dark'] div.zhang-hao-an-quan.zhang-hao-an-quan::before,
+:root:not([data-theme]) div.zhang-hao-an-quan.zhang-hao-an-quan::before {
+  background-color: rgba(0, 0, 0, 0.45);
 }
 .zhang-hao-an-quan.zhang-hao-an-quan .ming-pian,
 .zhang-hao-an-quan.zhang-hao-an-quan .zhi-wu-ka-pian,
@@ -38,6 +56,19 @@ div.zhang-hao-an-quan.zhang-hao-an-quan {
 :root[data-theme="dark"] .zhang-hao-an-quan.zhang-hao-an-quan .tan-chuang-rong-qi,
 :root:not([data-theme]) .zhang-hao-an-quan.zhang-hao-an-quan .tan-chuang-rong-qi {
   background-color: rgba(20, 24, 40, 0.92);
+}
+/* FP-JC：搜索行标签与页顶错误面板直接坐在透明根上，深色档补卡面，
+   否则文字裸压草地亮场（对比度 <2:1，近乎不可见）。浅色档不动（浅色已达标） */
+:root[data-theme="dark"] .zhang-hao-an-quan.zhang-hao-an-quan .sou-suo-hang,
+:root:not([data-theme]) .zhang-hao-an-quan.zhang-hao-an-quan .sou-suo-hang {
+  background-color: var(--kaPian);
+  border: 1.5px solid var(--bianKuang);
+  border-radius: var(--yuanJiao, 16px);
+  padding: 10px 12px;
+}
+:root[data-theme="dark"] .zhang-hao-an-quan.zhang-hao-an-quan .qian-tai-cuo-wu,
+:root:not([data-theme]) .zhang-hao-an-quan.zhang-hao-an-quan .qian-tai-cuo-wu {
+  background-color: var(--kaPian);
 }
 @media (prefers-reduced-motion: reduce) {
   .zhang-hao-an-quan.zhang-hao-an-quan .ming-pian,

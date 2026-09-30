@@ -192,7 +192,7 @@ async function queRen() {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: var(--jiange-da);
   z-index: 1000;
 }
 
@@ -200,7 +200,7 @@ async function queRen() {
   background: rgba(20, 24, 40, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
-  padding: 24px;
+  padding: var(--jiange-da);
   max-width: 340px;
   width: 100%;
   text-align: center;
@@ -210,7 +210,7 @@ async function queRen() {
   font-size: 18px;
   font-weight: 700;
   color: #fff;
-  margin: 0 0 16px;
+  margin: 0 0 var(--jiange-zhong);
 }
 
 .caijian-shikou {
@@ -251,14 +251,14 @@ async function queRen() {
 .caijian-tishi {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.55);
-  margin: 12px 0;
+  margin: var(--jiange-12) 0;
 }
 
 .suofang-hang {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: var(--jiange-10);
+  margin-bottom: var(--jiange-zhong);
 }
 
 .suofang-anniu {
@@ -280,12 +280,12 @@ async function queRen() {
 
 .caijian-anniu-zu {
   display: flex;
-  gap: 12px;
+  gap: var(--jiange-12);
   justify-content: center;
 }
 
 .anniu-fu-zhu {
-  padding: 12px 24px;
+  padding: var(--jiange-12) var(--jiange-da);
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
   border: 1.5px solid rgba(255, 255, 255, 0.2);
@@ -296,7 +296,7 @@ async function queRen() {
 }
 
 .anniu-que-ren {
-  padding: 12px 24px;
+  padding: var(--jiange-12) var(--jiange-da);
   background: linear-gradient(135deg, #07c160, #05a050);
   color: #fff;
   border: none;

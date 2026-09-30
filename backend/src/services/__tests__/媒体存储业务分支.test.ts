@@ -16,7 +16,7 @@ vi.mock('../../redis', () => ({ redis: 假.redis }))
 vi.mock('../DeepSeek视觉审核', () => ({ shenHeTuPianAnQuan: 假.audit.shenHeTuPianAnQuan }))
 
 import { peiZhi } from '../../config'
-import { MEI_TI_PEI_ZHI } from '../../config/媒体配置'
+import { MEI_TI_PEI_ZHI, WEN_JIAN_FEN_LEI_DA_XIAO_SHANG_XIAN, huoQuWenJianDaXiaoShangXianZiJie } from '../../config/媒体配置'
 import { cheXiaoYongHuMeiTiQianMing, chongZhiMeiTiQianMingMiYao, huoQuBenDiLuJing, huoQuMeiTiQianMingMiYao, liuShiBaoCunMeiTi, shengChengMeiTiYinYong, shengChengQianMingURL, tiQuMeiTiSha, yanZhengMeiTiKeDu, yanZhengQianMing, zhiXingBingDuSaoMiao, zhongXinQianMingMeiTiURL } from '../媒体存储'
 
 const 媒体根 = { ...MEI_TI_PEI_ZHI }
@@ -96,5 +96,56 @@ describe('媒体存储业务分支', () => {
     await zhiXingBingDuSaoMiao(join(临时目录, 'none'))
     假.audit.shenHeTuPianAnQuan.mockResolvedValueOnce({ wei_gui: true, lei_xing: '暴力威胁' })
     await expect(liuShiBaoCunMeiTi(Readable.from(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0])), 'a.png', 'image/png', 'tupian', '用户')).rejects.toThrow()
+  })
+
+  it('需求20：wenjian 按文件类型细分大小阈值（文本2MB/文档10MB/其余兜底50MB）', () => {
+    const MI = 1024 * 1024
+    // 文本类
+    expect(huoQuWenJianDaXiaoShangXianZiJie('a.txt', 'text/plain')).toBe(2 * MI)
+    expect(huoQuWenJianDaXiaoShangXianZiJie('a.md', 'text/markdown')).toBe(2 * MI)
+    expect(huoQuWenJianDaXiaoShangXianZiJie('a.markdown', '')).toBe(2 * MI)
+    // 文档类
+    expect(huoQuWenJianDaXiaoShangXianZiJie('a.docx', '')).toBe(10 * MI)
+    expect(huoQuWenJianDaXiaoShangXianZiJie('a.doc', '')).toBe(10 * MI)
+    expect(huoQuWenJianDaXiaoShangXianZiJie('a.pdf', '')).toBe(10 * MI)
+    expect(huoQuWenJianDaXiaoShangXianZiJie('a.xlsx', '')).toBe(10 * MI)
+    expect(huoQuWenJianDaXiaoShangXianZiJie('a.xls', '')).toBe(10 * MI)
+    expect(huoQuWenJianDaXiaoShangXianZiJie('a.pptx', '')).toBe(10 * MI)
+    expect(huoQuWenJianDaXiaoShangXianZiJie('a.ppt', '')).toBe(10 * MI)
+    expect(huoQuWenJianDaXiaoShangXianZiJie('a.html', '')).toBe(10 * MI)
+    expect(huoQuWenJianDaXiaoShangXianZiJie('a.htm', '')).toBe(10 * MI)
+    // MIME 线索（无扩展名时）
+    expect(huoQuWenJianDaXiaoShangXianZiJie('无扩展名', 'text/plain')).toBe(2 * MI)
+    expect(huoQuWenJianDaXiaoShangXianZiJie('无扩展名', 'application/pdf')).toBe(10 * MI)
+    // 兜底：归档/视频/未分类
+    expect(huoQuWenJianDaXiaoShangXianZiJie('a.zip', '')).toBe(MEI_TI_PEI_ZHI.daXiaoShangXianZiJie.wenjian)
+    expect(huoQuWenJianDaXiaoShangXianZiJie('a.mp4', '')).toBe(MEI_TI_PEI_ZHI.daXiaoShangXianZiJie.wenjian)
+    expect(huoQuWenJianDaXiaoShangXianZiJie('a.csv', '')).toBe(MEI_TI_PEI_ZHI.daXiaoShangXianZiJie.wenjian)
+    // 配置值本身
+    expect(WEN_JIAN_FEN_LEI_DA_XIAO_SHANG_XIAN.wenben).toBe(2 * MI)
+    expect(WEN_JIAN_FEN_LEI_DA_XIAO_SHANG_XIAN.wendang).toBe(10 * MI)
+  })
+
+  it('需求20：tupian 上限 20MB（与前端 ZHAN_TIE_TU_PIAN_PEI_ZHI 同源）', () => {
+    expect(MEI_TI_PEI_ZHI.daXiaoShangXianZiJie.tupian).toBe(20 * 1024 * 1024)
+  })
+
+  it('需求20：wenjian 文本超 2MB 被拒、文档超 10MB 被拒', async () => {
+    临时目录 = await mkdtemp(join(tmpdir(), 'fp-k4b-size-'))
+    Object.assign(MEI_TI_PEI_ZHI, { cunChuGenMuLu: 临时目录 })
+    vi.stubEnv('BING_DU_SAO_MIAO_QI_YONG', 'false')
+    const MI = 1024 * 1024
+    // 文本 2MB+1 超限
+    await expect(
+      liuShiBaoCunMeiTi(Readable.from(Buffer.alloc(2 * MI + 1, 0x61)), 'a.txt', 'text/plain', 'wenjian', '用户'),
+    ).rejects.toThrow('meiTiGuoDa')
+    // 文档 10MB+1 超限
+    await expect(
+      liuShiBaoCunMeiTi(Readable.from(Buffer.alloc(10 * MI + 1, 0x61)), 'a.pdf', 'application/pdf', 'wenjian', '用户'),
+    ).rejects.toThrow('meiTiGuoDa')
+    // 文本 2MB 边界内通过
+    const jieGuo = await liuShiBaoCunMeiTi(Readable.from(Buffer.alloc(2 * MI, 0x61)), 'a.txt', 'text/plain', 'wenjian', '用户')
+    expect(jieGuo.leiBie).toBe('wenjian')
+    expect(jieGuo.daXiao).toBe(2 * MI)
   })
 })
