@@ -9,6 +9,8 @@ const api = vi.hoisted(() => ({
   huoQuDangAnLieBiao: vi.fn(),
   yiDongDangAnDaoFenLei: vi.fn(),
   paiXuFenLeiNeiZhanJi: vi.fn(),
+  sheZhiMoRenZhanJiFenLei: vi.fn(),
+  baoCunZhanJiFenLeiPaiXu: vi.fn(),
 }))
 
 vi.mock('@/api/聊天', () => api)
@@ -26,6 +28,7 @@ function fenLei(cha: Partial<ZhanJiFenLei> & Pick<ZhanJiFenLei, 'id' | 'name'>):
     is_default: false,
     record_count: 0,
     version: 0,
+    sort_order: 0,
     ...cha,
   }
 }
@@ -261,19 +264,58 @@ describe('战绩分类 store', () => {
     expect(api.yiDongDangAnDaoFenLei).not.toHaveBeenCalled()
   })
 
-  it('默认分类在 store 层拒绝改名和删除', async () => {
+  it('默认分类在 store 层允许改名、拒绝删除', async () => {
     const cangKu = await chuangJianCangKu()
+    api.gengMingZhanJiFenLei.mockResolvedValueOnce(
+      fenLei({ id: moRenId, name: '新名称', is_default: true, record_count: 4, version: 1 }),
+    )
 
-    await expect(cangKu.gengMing(moRenId, '新名称')).resolves.toMatchObject({
-      ok: false,
-      kind: 'default-protected',
-    })
+    const jieGuo = await cangKu.gengMing(moRenId, '新名称')
+
+    expect(jieGuo).toMatchObject({ ok: true, kind: 'success' })
+    expect(api.gengMingZhanJiFenLei).toHaveBeenCalledWith(moRenId, '新名称', 0)
+    expect(cangKu.fenLeiLieBiao.find((item) => item.id === moRenId)).toMatchObject({ name: '新名称' })
+
     await expect(cangKu.shanChu(moRenId)).resolves.toMatchObject({
       ok: false,
       kind: 'default-protected',
     })
-    expect(api.gengMingZhanJiFenLei).not.toHaveBeenCalled()
     expect(api.shanChuZhanJiFenLei).not.toHaveBeenCalled()
+  })
+
+  it('设置默认分类后更新默认标记与 moRenFenLeiId，旧默认版本自增', async () => {
+    const cangKu = await chuangJianCangKu()
+    api.sheZhiMoRenZhanJiFenLei.mockResolvedValueOnce(
+      fenLei({ id: ziDingId, name: '收藏夹', is_default: true, record_count: 0, version: 1 }),
+    )
+
+    const jieGuo = await cangKu.sheZhiMoRen(ziDingId)
+
+    expect(jieGuo).toMatchObject({ ok: true, kind: 'success' })
+    expect(api.sheZhiMoRenZhanJiFenLei).toHaveBeenCalledWith(ziDingId, 0)
+    expect(cangKu.moRenFenLeiId).toBe(ziDingId)
+    expect(cangKu.fenLeiLieBiao.find((item) => item.id === ziDingId)?.is_default).toBe(true)
+    expect(cangKu.fenLeiLieBiao.find((item) => item.id === moRenId)).toMatchObject({
+      is_default: false,
+      version: 1,
+    })
+  })
+
+  it('分类拖动排序先本地乐观换位，服务端返回后以服务端顺序覆盖', async () => {
+    const cangKu = await chuangJianCangKu()
+    api.baoCunZhanJiFenLeiPaiXu.mockResolvedValueOnce({
+      moRenFenLeiId: moRenId,
+      fenLeiLieBiao: [
+        fenLei({ id: ziDingId, name: '收藏夹', record_count: 0, version: 1, sort_order: 0 }),
+        fenLei({ id: moRenId, name: '默认分类', is_default: true, record_count: 4, version: 1, sort_order: 1 }),
+      ],
+    })
+
+    const jieGuo = await cangKu.baoCunFenLeiPaiXu([ziDingId, moRenId])
+
+    expect(jieGuo).toMatchObject({ ok: true, kind: 'success' })
+    expect(api.baoCunZhanJiFenLeiPaiXu).toHaveBeenCalledWith([ziDingId, moRenId])
+    expect(cangKu.fenLeiLieBiao.map((item) => item.id)).toEqual([ziDingId, moRenId])
   })
 
   it('删除自定义分类后切到默认分类并明确返回回落记录数', async () => {

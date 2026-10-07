@@ -169,24 +169,35 @@ describe('FP-07 独立滚动口与响应式降级', () => {
     )
   })
 
-  it('FP-J2：overlay 滑块挂在外壳而非滚动坐标系内，几何/颜色走 --renzheng-gundong-huakuai-* 令牌且两档成对', async () => {
+  it('FP-J2：overlay 装饰挂在外壳内、轨道被箭头夹出正中、滑块走 --renzheng-gundong-huakuai-* 令牌且两档成对、需要时常显', async () => {
     const wrapper = await 挂载('dengLu')
     const 外壳 = wrapper.find('.gundong-waike')
+    const 装饰 = wrapper.find('.gundong-zhuangshi')
+    const 轨道 = wrapper.find('.gundong-guidao')
     const 滑块 = wrapper.find('.gundong-huakuai')
+    const 上箭头 = wrapper.find('.gundong-jiantou-shang')
+    const 下箭头 = wrapper.find('.gundong-jiantou-xia')
     expect(外壳.exists()).toBe(true)
+    expect(装饰.exists()).toBe(true)
+    expect(轨道.exists()).toBe(true)
     expect(滑块.exists()).toBe(true)
-    expect(滑块.element.parentElement).toBe(外壳.element)
+    expect(上箭头.exists()).toBe(true)
+    expect(下箭头.exists()).toBe(true)
+    expect(装饰.element.parentElement).toBe(外壳.element)
+    expect(轨道.element.parentElement).toBe(装饰.element)
+    expect(滑块.element.parentElement).toBe(轨道.element)
     expect((滑块.element as HTMLElement).getAttribute('aria-hidden')).toBe('true')
+    expect(样式声明('.gundong-zhuangshi', 'position')).toBe('absolute')
+    expect(样式声明('.gundong-zhuangshi', 'width')).toBe('var(--renzheng-gundong-huakuai-kuan)')
+    expect(样式声明('.gundong-zhuangshi', 'right')).toMatch(/calc\(/)
+    expect(样式声明('.gundong-zhuangshi', 'right')).toMatch(/--renzheng-gundong-huakuai-you-ju/)
+    expect(样式声明('.gundong-zhuangshi', 'pointer-events')).toBe('none')
     expect(样式声明('.gundong-huakuai', 'position')).toBe('absolute')
     expect(样式声明('.gundong-huakuai', 'pointer-events')).toBe('none')
-    expect(样式声明('.gundong-huakuai', 'width')).toBe('var(--renzheng-gundong-huakuai-kuan)')
-    expect(样式声明('.gundong-huakuai', 'right')).toMatch(/calc\(/)
-    expect(样式声明('.gundong-huakuai', 'right')).toMatch(/--renzheng-gundong-huakuai-you-ju/)
     expect(样式声明('.gundong-huakuai', 'background')).toMatch(/linear-gradient\(/)
-    expect(样式声明('.gundong-huakuai', 'opacity')).toBe('0')
-    expect(视图样式).toMatch(/\.gundong-huakuai\.xian-shi\s*\{[^}]*opacity:\s*1/)
-    expect(视图样式).toMatch(/\.gundong-waike:hover \.gundong-huakuai/)
-    expect(视图样式).toMatch(/\.gundong-waike:focus-within \.gundong-huakuai/)
+    expect(视图样式).not.toMatch(/\.gundong-huakuai\s*\{[^}]*opacity/)
+    expect(视图样式).not.toMatch(/\.gundong-huakuai\.xian-shi/)
+    expect(视图样式).not.toMatch(/\.gundong-waike:(hover|focus-within)\s+\.gundong-huakuai/)
     for (const 档 of ['light', 'dark'] as const) {
       const 表 = 按档解析全部(档)
       expect(表.get('--renzheng-gundong-huakuai-kuan'), `${档} 档缺滑块宽真源`).toBe('3px')
@@ -197,37 +208,31 @@ describe('FP-07 独立滚动口与响应式降级', () => {
     wrapper.unmount()
   })
 
-  it('FP-J2：滚动同步——滚动更新滑块高度与位置并显形，静置 800ms 淡出，内容不溢出时滑块隐藏', async () => {
-    vi.useFakeTimers()
-    try {
-      const wrapper = await 挂载('dengLu')
-      const 滚动口元 = wrapper.find('.biaodan-gundong').element as HTMLElement
-      const 滑块元 = wrapper.find('.gundong-huakuai').element as HTMLElement
-      const 客户端高 = vi.spyOn(滚动口元, 'clientHeight', 'get').mockReturnValue(300)
-      const 滚动高 = vi.spyOn(滚动口元, 'scrollHeight', 'get').mockReturnValue(900)
-      const 滚动位 = vi.spyOn(滚动口元, 'scrollTop', 'get').mockReturnValue(150)
-      await 滚动口元.dispatchEvent(new Event('scroll'))
-      expect(滑块元.style.display, '内容溢出时滑块必须可显示').toBe('')
-      expect(滑块元.style.height, '滑块高 = 视口高×(视口高/内容高) = 300×(300/900)').toBe('100px')
-      expect(滑块元.style.transform, '顶进 150/600 ⇒ 滑块位移 (150/600)×(300-100)').toBe(
-        'translateY(50px)',
-      )
-      expect(滑块元.classList.contains('xian-shi')).toBe(true)
-      vi.advanceTimersByTime(799)
-      expect(滑块元.classList.contains('xian-shi'), '静置未满 800ms 不得提前淡出').toBe(true)
-      vi.advanceTimersByTime(1)
-      expect(滑块元.classList.contains('xian-shi'), '静置 800ms 后必须淡出').toBe(false)
-      滚动高.mockReturnValue(300)
-      滚动位.mockReturnValue(0)
-      await 滚动口元.dispatchEvent(new Event('scroll'))
-      expect(滑块元.style.display, '内容不溢出时滑块必须隐藏（不出现空滑块）').toBe('none')
-      客户端高.mockRestore()
-      滚动高.mockRestore()
-      滚动位.mockRestore()
-      wrapper.unmount()
-    } finally {
-      vi.useRealTimers()
-    }
+  it('FP-J2：滚动同步——滚动更新滑块高度与位置且常显，内容不溢出时整组装饰隐藏', async () => {
+    const wrapper = await 挂载('dengLu')
+    const 滚动口元 = wrapper.find('.biaodan-gundong').element as HTMLElement
+    const 滑块元 = wrapper.find('.gundong-huakuai').element as HTMLElement
+    const 装饰元 = wrapper.find('.gundong-zhuangshi').element as HTMLElement
+    const 客户端高 = vi.spyOn(滚动口元, 'clientHeight', 'get').mockReturnValue(300)
+    const 滚动高 = vi.spyOn(滚动口元, 'scrollHeight', 'get').mockReturnValue(900)
+    const 滚动位 = vi.spyOn(滚动口元, 'scrollTop', 'get').mockReturnValue(150)
+    await 滚动口元.dispatchEvent(new Event('scroll'))
+    expect(滑块元.style.display, '内容溢出时滑块必须可显示').toBe('')
+    expect(装饰元.style.display, '内容溢出时装饰容器必须可显示').toBe('')
+    // 轨道可用高 = 300 - 2×14 = 272；滑块高 = round(272×272/900) = 82；位移 = round(0.25×(272-82)) = 48
+    expect(滑块元.style.height, '滑块高 = 可用高²/内容高 = round(272²/900)').toBe('82px')
+    expect(滑块元.style.transform, '顶进 150/600 ⇒ 滑块位移 round(0.25×190)').toBe(
+      'translateY(48px)',
+    )
+    滚动高.mockReturnValue(300)
+    滚动位.mockReturnValue(0)
+    await 滚动口元.dispatchEvent(new Event('scroll'))
+    expect(滑块元.style.display, '内容不溢出时滑块必须隐藏（不出现空滑块）').toBe('none')
+    expect(装饰元.style.display, '内容不溢出时整组装饰必须隐藏').toBe('none')
+    客户端高.mockRestore()
+    滚动高.mockRestore()
+    滚动位.mockRestore()
+    wrapper.unmount()
   })
 
   it('移动断点同时约束认证根层与卡片，不让长表单把外层滚动口撑开', () => {

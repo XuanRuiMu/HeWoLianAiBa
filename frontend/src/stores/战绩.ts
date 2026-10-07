@@ -7,6 +7,8 @@ import {
   huoQuZhanJiFenLeiLieBiao,
   paiXuFenLeiNeiZhanJi,
   shanChuZhanJiFenLei,
+  sheZhiMoRenZhanJiFenLei,
+  baoCunZhanJiFenLeiPaiXu,
   yiDongDangAnDaoFenLei,
 } from '@/api/聊天'
 import { huoQuFanYi } from '@/config/translations'
@@ -34,7 +36,7 @@ function shiChengGong(jieGuo: Omit<ZhanJiCunKuanJieGuo, 'ok' | 'kind' | 'message
   return {
     ok: true,
     kind: 'success',
-    message: huoQuFanYi('tongYong', 'caoZuoChengGong'),
+    message: '',
     ...jieGuo,
   }
 }
@@ -198,11 +200,6 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
     if (caoZuoZhong.value) return shiBaoHuJieGuo('busy', huoQuFanYi('tongYong', 'caoZuoPinFan'))
     const fenLei = fenLeiLieBiao.value.find((item) => item.id === categoryId)
     if (!fenLei) return shiBaoHuJieGuo('invalid', huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
-    if (fenLei.is_default) {
-      const message = huoQuFanYi('tongYong', 'canShuBuHeFa')
-      cuoWuXinXi.value = message
-      return shiBaoHuJieGuo('default-protected', message)
-    }
     const jingZhengMingCheng = mingCheng.trim()
     if (!jingZhengMingCheng) return shiBaoHuJieGuo('invalid', huoQuFanYi('tongYong', 'canShuBuHeFa'))
     caoZuoZhong.value = true
@@ -256,6 +253,71 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
     } catch (cuoWu) {
       const zhengChangHua = jiLuCuoWu(cuoWu)
       // FP-JC 用户裁决：结果消息走游戏化口径（yingXiang 技术文案不再上屏，错误出口只剩 RequestError）
+      const message = zhengChangHua.lianAiWenAn
+      if (shiChongTu(cuoWu)) {
+        await jiaZai()
+        sheZhiQianTaiCuoWu(zhengChangHua, true)
+        return shiBaoHuJieGuo('conflict', message)
+      }
+      return shiBaoHuJieGuo('failed', message)
+    } finally {
+      caoZuoZhong.value = false
+    }
+  }
+
+  async function sheZhiMoRen(categoryId: string): Promise<ZhanJiCunKuanJieGuo> {
+    if (caoZuoZhong.value) return shiBaoHuJieGuo('busy', huoQuFanYi('tongYong', 'caoZuoPinFan'))
+    const fenLei = fenLeiLieBiao.value.find((item) => item.id === categoryId)
+    if (!fenLei) return shiBaoHuJieGuo('invalid', huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
+    if (fenLei.is_default) return shiChengGong()
+    caoZuoZhong.value = true
+    qingCuoWu()
+    try {
+      const jieGuo = await sheZhiMoRenZhanJiFenLei(categoryId, fenLei.version)
+      fenLeiLieBiao.value = fenLeiLieBiao.value.map((item) => {
+        if (item.id === categoryId) return jieGuo
+        if (item.is_default) return { ...item, is_default: false, version: item.version + 1 }
+        return item
+      })
+      moRenFenLeiId.value = categoryId
+      return shiChengGong()
+    } catch (cuoWu) {
+      const zhengChangHua = jiLuCuoWu(cuoWu)
+      const message = zhengChangHua.lianAiWenAn
+      if (shiChongTu(cuoWu)) {
+        await jiaZai()
+        sheZhiQianTaiCuoWu(zhengChangHua, true)
+        return shiBaoHuJieGuo('conflict', message)
+      }
+      return shiBaoHuJieGuo('failed', message)
+    } finally {
+      caoZuoZhong.value = false
+    }
+  }
+
+  async function baoCunFenLeiPaiXu(fenLeiIds: string[]): Promise<ZhanJiCunKuanJieGuo> {
+    if (caoZuoZhong.value) return shiBaoHuJieGuo('busy', huoQuFanYi('tongYong', 'caoZuoPinFan'))
+    if (
+      !Array.isArray(fenLeiIds) ||
+      fenLeiIds.length !== fenLeiLieBiao.value.length ||
+      !paiXuZiDuanDengYu(fenLeiIds) ||
+      !fenLeiIds.every((id) => fenLeiLieBiao.value.some((item) => item.id === id))
+    ) {
+      return shiBaoHuJieGuo('invalid', huoQuFanYi('tongYong', 'canShuBuHeFa'))
+    }
+    caoZuoZhong.value = true
+    qingCuoWu()
+    const beiFen = fenLeiLieBiao.value
+    const xiangPaiXu = new Map(fenLeiIds.map((id, yin) => [id, yin]))
+    fenLeiLieBiao.value = [...beiFen].sort((a, b) => (xiangPaiXu.get(a.id) ?? 0) - (xiangPaiXu.get(b.id) ?? 0))
+    try {
+      const jieGuo = await baoCunZhanJiFenLeiPaiXu(fenLeiIds)
+      fenLeiLieBiao.value = jieGuo.fenLeiLieBiao
+      moRenFenLeiId.value = jieGuo.moRenFenLeiId
+      return shiChengGong()
+    } catch (cuoWu) {
+      fenLeiLieBiao.value = beiFen
+      const zhengChangHua = jiLuCuoWu(cuoWu)
       const message = zhengChangHua.lianAiWenAn
       if (shiChongTu(cuoWu)) {
         await jiaZai()
@@ -419,6 +481,8 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
     chuangJian,
     gengMing,
     shanChu,
+    sheZhiMoRen,
+    baoCunFenLeiPaiXu,
     yiDongDangAn,
     baoCunPaiXu,
     qingKong,

@@ -14,8 +14,8 @@ vi.mock('vue-draggable-plus', async () => {
       name: 'VueDraggable',
       props: { modelValue: { type: Array, default: () => [] }, disabled: Boolean },
       emits: ['update:modelValue', 'start', 'end'],
-      setup(_props, { slots }) {
-        return () => vue.h('div', { class: 'vue-draggable-stub' }, slots.default?.())
+      setup(_props, { slots, attrs }) {
+        return () => vue.h('div', { class: ['vue-draggable-stub', attrs.class] }, slots.default?.())
       },
     }),
   }
@@ -76,6 +76,7 @@ describe('FP-12 过往战绩服务端排序', () => {
           is_default: true,
           record_count: 4,
           version: 0,
+          sort_order: 0,
         },
       ],
     })
@@ -120,7 +121,9 @@ describe('FP-12 过往战绩服务端排序', () => {
     const records = Array.from({ length: 55 }, (_, index) => record(index))
     const wrapper = await mountView(records)
     await wrapper.findAll('.fen-ye-anniu')[1]!.trigger('click')
-    const draggable = wrapper.findComponent({ name: 'VueDraggable' })
+    const draggables = wrapper.findAllComponents({ name: 'VueDraggable' })
+    const draggable = draggables
+      .find((item) => (item.attributes('class') ?? '').includes('zhanji-liebiao-neirong'))!
     const pageBefore = wrapper.findAll('.zhanji-kapian')
     const pageIds = pageBefore.map((item) => item.attributes('data-id')!)
     const pageAfter = [pageIds[0], pageIds[2], pageIds[1], pageIds[3], pageIds[4]]

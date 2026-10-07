@@ -1,0 +1,15 @@
+{
+  "url": "http://127.0.0.1:8937/positioner.html",
+  "width": 1920,
+  "height": 868,
+  "headless": false,
+  "maxMs": 560000,
+  "args": ["--no-sandbox", "--ignore-gpu-blocklist", "--enable-gpu-rasterization"],
+  "steps": [
+    { "type": "wait", "ms": 95000 },
+    { "type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/m17-solver.js", "label": "def" },
+    { "type": "eval", "js": "window.__M17.diag()", "label": "diag" },
+    { "type": "eval", "js": "window.__M17.setCam()", "label": "cam" },
+    { "type": "eval", "js": "window.__M17.solve('t008', [{tag:'a3.2-nx-.85-ny.30-cov.5', a:3.2, nx:-0.85, ny:0.30, cov:0.5},{tag:'a3.8-nx-.80-ny.35-cov.5', a:3.8, nx:-0.80, ny:0.35, cov:0.5},{tag:'a4.5-nx-.70-ny.30-cov.45', a:4.5, nx:-0.70, ny:0.30, cov:0.45},{tag:'a3.2-nx-.65-ny.20-cov.45', a:3.2, nx:-0.65, ny:0.20, cov:0.45},{tag:'a2.6-nx-.90-ny.35-cov.55', a:2.6, nx:-0.90, ny:0.35, cov:0.55},{tag:'a3.8-nx-.55-ny.45-cov.5', a:3.8, nx:-0.55, ny:0.45, cov:0.5}])", "label": "solve1" }
+  ]
+}

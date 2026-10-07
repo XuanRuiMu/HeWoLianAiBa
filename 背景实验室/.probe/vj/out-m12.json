@@ -1,0 +1,116 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m12-1-t05-70.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m12-2-t12-72.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m12-3-t20-70.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m12-4-t12-72-r300.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "r1": {
+  "ready": true,
+  "frames": 713,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r2": {
+  "ready": true,
+  "frames": 2670,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r3": {
+  "ready": true,
+  "frames": 4259,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r4": {
+  "ready": true,
+  "frames": 5598,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r5": {
+  "ready": true,
+  "frames": 7484,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r6": {
+  "ready": true,
+  "frames": 8635,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "def": {},
+ "settle": {
+  "seenCounts": [
+   3
+  ],
+  "afterClear": 0
+ },
+ "t1": {
+  "fy": {
+   "gy": 0.014,
+   "stoneY": 0.084,
+   "fireY": 0.289
+  },
+  "tree": {
+   "gyT": 0.046,
+   "rotY": 280,
+   "s": 0.6
+  },
+  "count": 3,
+  "fps": null
+ },
+ "t2": {
+  "fy": {
+   "gy": 0.014,
+   "stoneY": 0.084,
+   "fireY": 0.289
+  },
+  "tree": {
+   "gyT": 0.143,
+   "rotY": 280,
+   "s": 0.65
+  },
+  "count": 3,
+  "fps": null
+ },
+ "t3": {
+  "fy": {
+   "gy": 0.014,
+   "stoneY": 0.084,
+   "fireY": 0.289
+  },
+  "tree": {
+   "gyT": 0.094,
+   "rotY": 280,
+   "s": 0.7
+  },
+  "count": 3,
+  "fps": null
+ },
+ "t4": {
+  "fy": {
+   "gy": 0.014,
+   "stoneY": 0.084,
+   "fireY": 0.289
+  },
+  "tree": {
+   "gyT": 0.143,
+   "rotY": 300,
+   "s": 0.65
+  },
+  "count": 3,
+  "fps": null
+ }
+}

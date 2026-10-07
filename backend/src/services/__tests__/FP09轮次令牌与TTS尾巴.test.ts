@@ -4,7 +4,6 @@ import { AI回复调度器 } from '../AI回复调度器'
 import { baoCunJiaoSeXiaoXi } from '../AI输入准备'
 import { baoCunJiaoSeMeiTiXiaoXi } from '../消息'
 import { 尝试合成语音 } from '../TTS服务'
-import { 计算TTS概率 } from '../TTS概率计算'
 import { huoQuFanYi } from '../../config/translations'
 import { XIAO_XI_PEI_ZHI } from '../../config/消息配置'
 
@@ -19,9 +18,7 @@ const 假 = vi.hoisted(() => {
       xiao_xi_lie_biao: ['第一条回复'],
       shi_fou_hui_fu: true,
       shi_fou_che_hui: false,
-      jiang_ji_mo_shi: false,
-    } as unknown,
-  }
+      jiang_ji_mo_shi: false } as unknown }
 })
 
 vi.mock('../AI输入准备', () => ({
@@ -35,12 +32,10 @@ vi.mock('../AI输入准备', () => ({
     id: 'jiao-se-1',
     ming_zi: '测试角色',
     wei_xin_ming: '小甜心',
-    voice_id: '',
-  })),
+    voice_id: '' })),
   huoQuZuiJinDuiHuaLiShi: vi.fn(async () => [
     { fa_song_zhe_lei_xing: 'yonghu', nei_rong: '插话内容' },
-  ]),
-}))
+  ]) }))
 
 vi.mock('../消息', () => ({
   cheHuiJiaoSeXiaoXi: vi.fn(async () => ({ cheng_gong: true })),
@@ -53,9 +48,7 @@ vi.mock('../消息', () => ({
     nei_rong: 参数.nei_rong,
     lei_xing: 'yuYin',
     shi_jian_chuo: 1700000000000,
-    yi_du: true,
-  })),
-}))
+    yi_du: true })) }))
 
 vi.mock('../AI引擎', () => ({ yunXingAIYinQing: vi.fn(async () => 假.AI结果) }))
 
@@ -66,10 +59,8 @@ vi.mock('../好感度', () => ({
     qu_wei_du: 1,
     guan_huai_du: 1,
     zong_fen: 4,
-    guan_xi_jie_duan: 'reQing',
-  })),
-  gengXinHaoGanDu: vi.fn(async () => undefined),
-}))
+    guan_xi_jie_duan: 'reQing' })),
+  gengXinHaoGanDu: vi.fn(async () => undefined) }))
 
 vi.mock('../好感度评判', () => ({
   pingPanHaoGanDuPiLiangNei: vi.fn(async () => ({
@@ -78,26 +69,21 @@ vi.mock('../好感度评判', () => ({
       qin_mi_du_bian_hua: 0,
       qu_wei_du_bian_hua: 0,
       guan_huai_du_bian_hua: 0,
-      li_you: 'ce-shi',
-    },
+      li_you: 'ce-shi' },
     xiShu: 1,
     muBiaoQuXian: 'reQing',
-    lianXuWeiDaBiao: false,
-  })),
-}))
+    lianXuWeiDaBiao: false })) }))
 
 vi.mock('../认证', () => ({ anIdChaYongHu: vi.fn(async () => null) }))
 vi.mock('../胜利失败条件', () => ({
   jianCeYongHuXiaoXiBingChuLi: vi.fn(async () => false),
   chuLiAIHuiFuHouJieShuJianCha: vi.fn(async () => false),
-  chuLiYouXiJieShu: vi.fn(async () => undefined),
-}))
+  chuLiYouXiJieShu: vi.fn(async () => undefined) }))
 vi.mock('../夺舍', () => ({ jiaoSeShiFouBeiDuoShe: vi.fn(async () => false) }))
 vi.mock('../../utils/debug日志', () => ({
   jiLuSocketShiJian: vi.fn(),
   jiLuXiaoXiCaoZuo: vi.fn(),
-  debug日志: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-}))
+  debug日志: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } }))
 vi.mock('../../config/AI参数策略', () => ({ gouJianJiaoSeShangXiaWen: vi.fn(() => ({})) }))
 vi.mock('../TTS服务', () => ({
   尝试合成语音: vi.fn(
@@ -105,8 +91,7 @@ vi.mock('../TTS服务', () => ({
       new Promise((解决) => {
         假.合成解决 = 解决 as (值: unknown) => void
       }),
-  ),
-}))
+  ) }))
 vi.mock('../TTS文本预处理', () => ({ 转换TTS文本: vi.fn((文本: string) => 文本) }))
 vi.mock('../TTS概率计算', () => ({ 计算TTS概率: vi.fn(() => ({ 是否触发: true })) }))
 vi.mock('../主动多模态', () => ({ changShiZhuDongShengTu: vi.fn(async () => undefined) }))
@@ -115,13 +100,11 @@ vi.mock('../对话摘要', () => ({
   gouJianZhaiYaoZhuRuWenBen: vi.fn(() => ''),
   huanCunTongBuZhaiYao: vi.fn(),
   duQuTongBuZhaiYao: vi.fn(() => ''),
-  shengChengBingLuoKuZhaiYao: vi.fn(async () => undefined),
-}))
+  shengChengBingLuoKuZhaiYao: vi.fn(async () => undefined) }))
 vi.mock('../AI视觉辅助', () => ({ meiTiZhanShiWenBen: vi.fn(() => '') }))
 vi.mock('../语音理解', () => ({
   gouJianYuYinKeDuWenBen: vi.fn(() => ''),
-  tiQuYinPinShiJian: vi.fn(() => null),
-}))
+  tiQuYinPinShiJian: vi.fn(() => null) }))
 vi.mock('../视频理解', () => ({ huoQuHuoJieXiShiPinMiaoShu: vi.fn(async () => ({})) }))
 vi.mock('../视频多模态', () => ({ gouJianShiPinKeDuWenBen: vi.fn(() => '') }))
 
@@ -133,9 +116,7 @@ function chuangJian假Io(): Server {
     to: () => ({
       emit: (事件: string, 数据: unknown) => {
         假.推送.push({ 事件, 数据 })
-      },
-    }),
-  } as unknown as Server
+      } }) } as unknown as Server
 }
 
 function 角色回复记录(): Array<{ 轮次?: number; 驱动消息ID?: string | null; 消息列表: unknown[] }> {
@@ -161,8 +142,7 @@ function 落库回显(内容: string, 类型 = 'wenben') {
     nei_rong: 内容,
     lei_xing: 类型,
     shi_jian_chuo: 1700000000000,
-    yi_du: true,
-  }
+    yi_du: true }
 }
 
 let 调度器: AI回复调度器
@@ -176,8 +156,7 @@ beforeEach(() => {
     xiao_xi_lie_biao: ['第一条回复'],
     shi_fou_hui_fu: true,
     shi_fou_che_hui: false,
-    jiang_ji_mo_shi: false,
-  }
+    jiang_ji_mo_shi: false }
   vi.useFakeTimers()
   调度器 = new AI回复调度器(角色ID, 用户ID, 'E', chuangJian假Io(), 1)
 })

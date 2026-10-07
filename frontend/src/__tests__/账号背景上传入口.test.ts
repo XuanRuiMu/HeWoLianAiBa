@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+﻿import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
@@ -120,6 +120,7 @@ describe('FP-A 背景自定义上传入口', () => {
     expect(vi.mocked(sheJiao.shangChuanLiaoTianBeiJing)).toHaveBeenCalledTimes(1)
     expect(vi.mocked(sheJiao.baoCunLiaoTianBeiJing)).toHaveBeenCalledWith(
       'https://cdn.example.com/beijing/zi-ding-yi.jpg',
+      undefined,
     )
     const 仓库 = 使用用户设置仓库()
     expect(仓库.liaoTianBeiJing).toBe('https://cdn.example.com/beijing/zi-ding-yi.jpg')
@@ -165,7 +166,7 @@ describe('FP-A 背景自定义上传入口', () => {
     expect(wrapper.text()).toContain(huoQuFanYi('sheZhi', 'ziDingYiBeiJingYuLan'))
     await wrapper.find('.zi-ding-yi-shan-chu').trigger('click')
     await flushPromises()
-    expect(vi.mocked(sheJiao.baoCunLiaoTianBeiJing)).toHaveBeenCalledWith('moRen')
+    expect(vi.mocked(sheJiao.baoCunLiaoTianBeiJing)).toHaveBeenCalledWith('moRen', undefined)
     const 仓库 = 使用用户设置仓库()
     expect(仓库.liaoTianBeiJing).toBe('moRen')
     wrapper.unmount()

@@ -152,6 +152,16 @@ export function use语音转文字(yiLai: YuYinZhuanWenZiYiLai) {
     return null
   }
 
+  function jiLuZhuanXie(xiaoXi: 消息, wenBen: string): string | null {
+    const qingLi = wenBen.trim().slice(0, 500)
+    if (!qingLi) return null
+    const jian = xiaoXiJian(xiaoXi)
+    zhuanWenZiJiLu.value.set(jian, qingLi)
+    zhuanWenZiShiBaiJiHe.value.delete(jian)
+    yiZhanKaiJiHe.value.add(jian)
+    return qingLi
+  }
+
   async function zhuanWenZi(xiaoXi: 消息): Promise<string | null> {
     const jian = xiaoXiJian(xiaoXi)
     const yiCun = zhuanWenZiJiLu.value.get(jian)
@@ -219,5 +229,6 @@ export function use语音转文字(yiLai: YuYinZhuanWenZiYiLai) {
     shiZhuanWenZiShiBai,
     zhuanWenZi,
     qieHuanZhuanWenZiXianShi,
+    jiLuZhuanXie,
   }
 }

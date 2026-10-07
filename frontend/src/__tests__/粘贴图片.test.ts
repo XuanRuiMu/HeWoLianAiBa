@@ -407,14 +407,17 @@ describe('FP-06a 同类点穷尽', () => {
   // FP-10c 契约演进：载体从"页面里的 textarea"换成共用的 contenteditable 组件，于是
   // clipboardData / class="shuru-kuang" / @paste 三处命中点都搬了家。旧断言钉的是"命中在哪两个文件"，
   // 钉不出"实现是否只有一份"。下面三条各自升级为**正向唯一 + 反向越界即红**两条断言，是收紧：
-  //  ① clipboardData 允许出现的文件集合精确到两枚，且组件那一枚只准读 text/plain（图片项一律交回
-  //     use粘贴图片，绝不在组件里长出第二条取文件通路）；
+  //  ① clipboardData 允许出现的文件集合精确到三枚，其中聊天组件那一枚只准读 text/plain
+  //     （图片项一律交回 use粘贴图片，绝不在组件里长出第二条取文件通路），认证侧的出生日期
+  //     选择器是需求3登记的合法文本粘贴入口，只准读 'text'、绝不触碰 items/files；
   //  ② "输入框同类点恒为两处"变为"输入框实现恒为一处 + 两页必须各自接上它"（少接一页就是假功能）；
-  //  ③ 原生 paste 监听器全库唯一（在组件上），页面侧改为监听组件再抛出的 zhan-tie，
+  //  ③ 原生 paste 监听器钉到「聊天组件 + 出生日期选择器（需求3文本粘贴）」两枚，
+  //     页面侧改为监听组件再抛出的 zhan-tie，
   //     少一处绑定 = 那一页粘贴失效；多一处原生监听 = 第二套通路。
   it('剪贴板读取全库只有一份实现，未另起第二套粘贴通路', () => {
     expect(hanShiJian(/clipboardData/)).toEqual([
       'src/components/聊天/图文输入区.vue',
+      'src/components/认证/出生日期选择器.vue',
       'src/composables/use粘贴图片.ts',
     ])
     const 组件源 = quDiaoZhuShi(
@@ -425,6 +428,14 @@ describe('FP-06a 同类点穷尽', () => {
       "clipboardData?.getData('text/plain') ?? ''",
     ])
     expect(组件源).not.toMatch(/clipboardData[^\n]*\.(items|files)/)
+    const 出生源 = quDiaoZhuShi(
+      readFileSync(resolve(yuanGenLu, 'components/认证/出生日期选择器.vue'), 'utf-8'),
+    )
+    // 出生日期选择器是合法文本粘贴入口：只准读 'text' 数字串，绝不长出图片项第二通路
+    expect(出生源.match(/clipboardData[^\n]*/g)).toEqual([
+      "clipboardData?.getData('text') ?? ''",
+    ])
+    expect(出生源).not.toMatch(/clipboardData[^\n]*\.(items|files)/)
   })
 
   it('聊天输入框实现恒为一处且两页都接上它（出现第二处裸输入框即失败）', () => {
@@ -435,8 +446,15 @@ describe('FP-06a 同类点穷尽', () => {
     ])
   })
 
-  it('粘贴入口恒绑定在两处聊天页（少绑一处即假功能，多出一处即第二套通路）', () => {
-    expect(hanShiJian(/@paste=/)).toEqual(['src/components/聊天/图文输入区.vue'])
+  it('图片粘贴入口恒绑定在两处聊天页，出生日期选择器登记为文本粘贴入口（少绑即假功能，图片通路多出即第二套通路）', () => {
+    expect(hanShiJian(/@paste=/)).toEqual([
+      'src/components/聊天/图文输入区.vue',
+      'src/components/认证/出生日期选择器.vue',
+    ])
+    // 出生日期选择器的粘贴绑定必须只认文本通路（chuLiTieRu），绝不绑图片通路 chuLiZhanTie
+    const 出生页源 = readFileSync(resolve(yuanGenLu, 'components/认证/出生日期选择器.vue'), 'utf-8')
+    expect(出生页源).toMatch(/@paste="chuLiTieRu\(\$event\)"/)
+    expect(出生页源).not.toMatch(/@zhan-tie/)
     expect(hanShiJian(/@zhan-tie="chuLiZhanTie"/)).toEqual([
       'src/views/好友聊天.vue',
       'src/views/聊天页面.vue',

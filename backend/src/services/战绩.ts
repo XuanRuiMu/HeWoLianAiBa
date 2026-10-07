@@ -52,6 +52,7 @@ export interface DangAnLieBiaoXiang {
   zui_hou_xiao_xi_shi_jian: string | null
   you_xi_jie_shu_shi_jian: string | null
   mbti_lei_xing?: string
+  sui_ji_xing_ge?: boolean
   mo_shi?: 'putong' | 'tiaozhan'
   category_id: string
   sort_order: number
@@ -70,6 +71,7 @@ export interface ZhanJiFenLei {
   is_default: boolean
   record_count: number
   version: number
+  sort_order: number
 }
 
 export interface ZhanJiFenLeiShanChuJieGuo {
@@ -179,6 +181,7 @@ function zhuanHuanFenLei(xing: Record<string, unknown>): ZhanJiFenLei {
     is_default: isDefault,
     record_count: Number(xing.记录数 || 0),
     version: Number(xing.版本 || 0),
+    sort_order: Number(xing.排序 ?? 0),
   }
 }
 
@@ -190,7 +193,7 @@ export async function huoQuZhanJiFenLeiLieBiao(yong_hu_id: string): Promise<{
     queBaoMoRenFenLei(jieKou, yong_hu_id),
   )
   const jieGuo = await 数据库.query(
-    `SELECT c."ID", c."名称", c."是否默认", c."版本",
+    `SELECT c."ID", c."名称", c."是否默认", c."版本", c."排序",
             COUNT(d."ID") FILTER (
               WHERE NOT (d."模式" = 'tiaozhan' AND COALESCE(d."结果类型", '') = '')
             )::int AS "记录数"
@@ -198,7 +201,7 @@ export async function huoQuZhanJiFenLeiLieBiao(yong_hu_id: string): Promise<{
        LEFT JOIN "游戏档案" d ON d."分类ID" = c."ID"
       WHERE c."用户ID" = $1
       GROUP BY c."ID"
-      ORDER BY c."是否默认" DESC, c."创建时间", c."ID"`,
+      ORDER BY c."排序", c."ID"`,
     [yong_hu_id],
   )
   return {
@@ -228,8 +231,9 @@ export async function chuangJianZhanJiFenLei(
         )
       }
       const jieGuo = await jieKou.query(
-        `INSERT INTO "战绩分类" ("用户ID", "名称") VALUES ($1, $2)
-         RETURNING "ID", "名称", "是否默认", "版本", 0::int AS "记录数"`,
+        `INSERT INTO "战绩分类" ("用户ID", "名称", "排序")
+         VALUES ($1, $2, (SELECT COALESCE(MAX("排序"), -1) + 1 FROM "战绩分类" WHERE "用户ID" = $1))
+         RETURNING "ID", "名称", "是否默认", "版本", "排序", 0::int AS "记录数"`,
         [yong_hu_id, jingZhengHouDeMingCheng],
       )
       return zhuanHuanFenLei(jieGuo.rows[0])
@@ -295,7 +299,7 @@ export async function gengMingZhanJiFenLei(
         `UPDATE "战绩分类"
             SET "名称" = $3, "版本" = "版本" + 1
           WHERE "ID" = $1 AND "用户ID" = $2
-          RETURNING "ID", "名称", "是否默认", "版本",
+          RETURNING "ID", "名称", "是否默认", "版本", "排序",
             (SELECT COUNT(*) FILTER (
                WHERE NOT (d."模式" = 'tiaozhan' AND COALESCE(d."结果类型", '') = '')
              )::int
@@ -337,7 +341,7 @@ export async function shanChuZhanJiFenLei(
         'fenLeiBuCunZai',
       )
     }
-    if (Boolean(fenLei.rows[0].是否默认)) {
+    if (fenLei.rows[0].是否默认) {
       throw new ZhanJiFenLeiCuoWu(
         CUO_WU_DAI_MA.ZHAN_JI_MO_REN_FEN_LEI_BU_NENG_SHAN_CHU,
         409,
@@ -390,6 +394,127 @@ export async function shanChuZhanJiFenLei(
       deleted_id: fen_lei_id,
       fallback_category_id: moRenFenLeiId,
       moved_record_count: Number(qianYi.rowCount || 0),
+    }
+  })
+}
+
+export async function sheZhiMoRenZhanJiFenLei(
+  yong_hu_id: string,
+  fen_lei_id: string,
+  yu_ben_ban_ben: unknown,
+): Promise<ZhanJiFenLei> {
+  if (!Number.isSafeInteger(yu_ben_ban_ben) || Number(yu_ben_ban_ben) < 0) {
+    throw new Error(CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA)
+  }
+  return zaiShiYongLiaoZhongYunXing(yong_hu_id, async (jieKou) => {
+    const fenLei = await jieKou.query(
+      `SELECT "ID", "版本" FROM "战绩分类"
+        WHERE "ID" = $1 AND "用户ID" = $2 FOR UPDATE`,
+      [fen_lei_id, yong_hu_id],
+    )
+    if (fenLei.rows.length === 0) {
+      throw new ZhanJiFenLeiCuoWu(
+        CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BU_CUN_ZAI,
+        404,
+        'fenLeiBuCunZai',
+      )
+    }
+    if (Number(fenLei.rows[0].版本) !== Number(yu_ben_ban_ben)) {
+      throw new ZhanJiFenLeiCuoWu(
+        CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BIAN_GENG,
+        409,
+        'fenLeiShuJuYiBianHua',
+      )
+    }
+    await jieKou.query(
+      `UPDATE "战绩分类"
+          SET "名称" = $2, "版本" = "版本" + 1
+        WHERE "用户ID" = $1 AND "是否默认" = TRUE AND "名称" = ''`,
+      [yong_hu_id, huoQuFanYi('zhanJi', 'moRenFenLei')],
+    )
+    await jieKou.query(
+      `UPDATE "战绩分类" SET "是否默认" = FALSE, "版本" = "版本" + 1
+        WHERE "用户ID" = $1 AND "是否默认" = TRUE`,
+      [yong_hu_id],
+    )
+    const jieGuo = await jieKou.query(
+      `UPDATE "战绩分类"
+          SET "是否默认" = TRUE, "版本" = "版本" + 1
+        WHERE "ID" = $1 AND "用户ID" = $2
+        RETURNING "ID", "名称", "是否默认", "版本", "排序",
+          (SELECT COUNT(*) FILTER (
+             WHERE NOT (d."模式" = 'tiaozhan' AND COALESCE(d."结果类型", '') = '')
+           )::int
+           FROM "游戏档案" d WHERE d."分类ID" = "战绩分类"."ID") AS "记录数"`,
+      [fen_lei_id, yong_hu_id],
+    )
+    return zhuanHuanFenLei(jieGuo.rows[0])
+  })
+}
+
+export async function baoCunFenLeiPaiXu(
+  yong_hu_id: string,
+  fen_lei_ids: unknown,
+): Promise<{ moRenFenLeiId: string; fenLeiLieBiao: ZhanJiFenLei[] }> {
+  if (
+    !Array.isArray(fen_lei_ids) ||
+    fen_lei_ids.length === 0 ||
+    !fen_lei_ids.every((id) => typeof id === 'string' && id.length > 0)
+  ) {
+    throw new ZhanJiFenLeiCuoWu(
+      CUO_WU_DAI_MA.ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA,
+      400,
+      'paiXuCanShuBuHeFa',
+    )
+  }
+  const ids = fen_lei_ids as string[]
+  if (new Set(ids).size !== ids.length) {
+    throw new ZhanJiFenLeiCuoWu(
+      CUO_WU_DAI_MA.ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA,
+      400,
+      'paiXuCanShuBuHeFa',
+    )
+  }
+  return zaiShiYongLiaoZhongYunXing(yong_hu_id, async (jieKou) => {
+    const xianYou = await jieKou.query(
+      `SELECT "ID" FROM "战绩分类" WHERE "用户ID" = $1 FOR UPDATE`,
+      [yong_hu_id],
+    )
+    const xianYouIds = new Set(xianYou.rows.map((xing) => String(xing.ID)))
+    if (xianYouIds.size !== ids.length || !ids.every((id) => xianYouIds.has(id))) {
+      throw new ZhanJiFenLeiCuoWu(
+        CUO_WU_DAI_MA.ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA,
+        400,
+        'paiXuCanShuBuHeFa',
+      )
+    }
+    await jieKou.query('SET CONSTRAINTS "战绩分类_用户排序唯一" DEFERRED')
+    for (let i = 0; i < ids.length; i += 1) {
+      await jieKou.query(
+        `UPDATE "战绩分类" SET "排序" = $3, "版本" = "版本" + 1
+          WHERE "ID" = $1 AND "用户ID" = $2`,
+        [ids[i], yong_hu_id, i],
+      )
+    }
+    const moRen = await jieKou.query(
+      `SELECT "ID" FROM "战绩分类" WHERE "用户ID" = $1 AND "是否默认" = TRUE LIMIT 1`,
+      [yong_hu_id],
+    )
+    const lieBiao = await jieKou.query(
+      `SELECT c."ID", c."名称", c."是否默认", c."版本", c."排序",
+              COUNT(d."ID") FILTER (
+                WHERE NOT (d."模式" = 'tiaozhan' AND COALESCE(d."结果类型", '') = '')
+              )::int AS "记录数"
+         FROM "战绩分类" c
+         LEFT JOIN "游戏档案" d ON d."分类ID" = c."ID"
+        WHERE c."用户ID" = $1
+        GROUP BY c."ID"
+        ORDER BY c."排序", c."ID"`,
+      [yong_hu_id],
+    )
+    return {
+      moRenFenLeiId: moRen.rows.length > 0 ? String(moRen.rows[0].ID) : '',
+      fenLeiLieBiao: lieBiao.rows.map((xing) => zhuanHuanFenLei(xing)),
     }
   })
 }
@@ -610,6 +735,7 @@ export async function huoQuDangAnLieBiao(
     `SELECT d."ID", d."用户ID", d."角色ID", d."角色名字", r."微信昵称", d."是否渣型",
             d."结果类型", d."是否封存", d."好感度总分", d."关系阶段",
             d."聊天天数", d."消息总数", d."创建时间", r."MBTI", r."性别", r."结局文案",
+            r."随机性格",
             d."最后消息时间", d."模式", d."分类ID", d."排序"
       FROM "游戏档案" d
       LEFT JOIN "角色" r ON r."ID" = d."角色ID"
@@ -618,7 +744,7 @@ export async function huoQuDangAnLieBiao(
       -- 挑战模式进行中的对局不进入过往战绩（结束后进入胜利/失败分组）
         AND NOT (d."模式" = 'tiaozhan' AND COALESCE(d."结果类型", '') = '')
         AND ($2::uuid IS NULL OR d."分类ID" = $2)
-      ORDER BY c."是否默认" DESC, c."创建时间", c."ID", d."排序", d."ID"`,
+      ORDER BY c."排序", c."ID", d."排序", d."ID"`,
     [yong_hu_id, fen_lei_id ?? null],
   )
 
@@ -646,7 +772,13 @@ export async function huoQuDangAnLieBiao(
       chuang_jian_shi_jian: chuangJianShiJian,
       zui_hou_xiao_xi_shi_jian: row.最后消息时间 ? String(row.最后消息时间) : null,
       you_xi_jie_shu_shi_jian: youXiJieShu ? chuangJianShiJian : null,
-      mbti_lei_xing: row.MBTI ? String(row.MBTI) : undefined,
+      mbti_lei_xing:
+        Boolean(row.随机性格) && !youXiJieShu
+          ? undefined
+          : row.MBTI
+            ? String(row.MBTI)
+            : undefined,
+      sui_ji_xing_ge: Boolean(row.随机性格),
       mo_shi: row.模式 === 'tiaozhan' ? 'tiaozhan' : 'putong',
       category_id: String(row.分类ID || ''),
       sort_order: Number(row.排序 || 0),
@@ -663,6 +795,7 @@ export async function huoQuDangAnXiangQing(
             d."结果类型", d."是否封存", d."好感度总分", d."关系阶段",
             d."聊天天数", d."消息总数", d."创建时间",
             r."MBTI", r."性别", r."结局文案",
+            r."随机性格",
             d."复盘内容", d."复盘数据",
             d."最后消息时间", d."分类ID", d."排序"
       FROM "游戏档案" d
@@ -740,7 +873,13 @@ export async function huoQuDangAnXiangQing(
     chuang_jian_shi_jian: chuangJianShiJian,
     zui_hou_xiao_xi_shi_jian: row.最后消息时间 ? String(row.最后消息时间) : null,
     you_xi_jie_shu_shi_jian: youXiJieShu ? chuangJianShiJian : null,
-    mbti_lei_xing: row.MBTI ? String(row.MBTI) : undefined,
+    mbti_lei_xing:
+      Boolean(row.随机性格) && !youXiJieShu
+        ? undefined
+        : row.MBTI
+          ? String(row.MBTI)
+          : undefined,
+    sui_ji_xing_ge: Boolean(row.随机性格),
     category_id: String(row.分类ID || ''),
     sort_order: Number(row.排序 || 0),
     jun_shi_ji_lu: junShiJiLu,

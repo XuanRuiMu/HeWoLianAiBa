@@ -370,6 +370,7 @@ export interface ZhanJiFenLei {
   is_default: boolean
   record_count: number
   version: number
+  sort_order: number
 }
 
 export interface ZhanJiFenLeiLieBiao {

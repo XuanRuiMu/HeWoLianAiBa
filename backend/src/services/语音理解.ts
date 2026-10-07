@@ -63,7 +63,7 @@ export function tiQuYinPinShiJian(zhuanXie: string | null | undefined): string |
   return mingDan.join('、')
 }
 
-async function yuShiKouDiaoYong(canShu: { sha256: string; mime: string }, chaoShiHaoMiao: number): Promise<string | null> {
+async function yuShiKouDiaoYong(_canShu: { sha256: string; mime: string }, _chaoShiHaoMiao: number): Promise<string | null> {
   const peiZhi = huoQuDuoMoTaiPeiZhi()
   const miYao = huoQuGuiJiLiuDongMiYao()
   if (!peiZhi.yuYinLiJieQiYong || miYao.trim() === '' || peiZhi.guiJiLiuDongYuYinMoXing.trim() === '') return null

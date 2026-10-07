@@ -254,6 +254,26 @@ describe('FP-09 气泡下样式对标微信截图', () => {
     expect(yuanMa).toContain('zhuanXieQingQiu')
     expect(yuanMa).not.toContain('sheZhiCuoWu(')
   })
+
+  it('语音发送链路：发送后后台转写并把结果写回消息与本地缓存，不阻塞发送', () => {
+    const yuanMa = readFileSync(resolve(__dirname, '../views/聊天页面.vue'), 'utf8')
+    expect(yuanMa).toContain("faSongMeiTiZhiFa('yuYin'")
+    expect(yuanMa).toContain('void zhuanXieYuYin(xiaoXi.mei_ti_id)')
+    expect(yuanMa).toContain('xiaoXi.nei_rong = wenBen.trim().slice(0, 500)')
+    expect(yuanMa).toContain('jiLuZhuanXie(xiaoXi, wenBen)')
+  })
+
+  it('jiLuZhuanXie 直接收口转写结果：记缓存/展开/清失败态，空文本返回 null', () => {
+    const { jiLuZhuanXie, huoQuZhuanWenZi, shiZhuanWenZiZhanKai, shiZhuanWenZiShiBai } =
+      use语音转文字({ huoQuYuYinDiZhi: () => undefined })
+    const xiaoXi = zaoXiaoXi()
+    expect(jiLuZhuanXie(xiaoXi, '   ')).toBeNull()
+    const jieGuo = jiLuZhuanXie(xiaoXi, '  今天晚上一起吃饭吗  ')
+    expect(jieGuo).toBe('今天晚上一起吃饭吗')
+    expect(huoQuZhuanWenZi(xiaoXi)).toBe('今天晚上一起吃饭吗')
+    expect(shiZhuanWenZiZhanKai(xiaoXi)).toBe(true)
+    expect(shiZhuanWenZiShiBai(xiaoXi)).toBe(false)
+  })
 })
 
 describe('FP-09 聊天页面语音转文字可用', () => {

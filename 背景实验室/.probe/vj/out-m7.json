@@ -1,0 +1,97 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "CONSOLE-ERR: Failed to load resource: net::ERR_CONNECTION_REFUSED",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m7-1-t14-75.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m7-2-t11-68.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m7-3-t14-r320.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m7-4-火石特写.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "r1": {
+  "ready": true,
+  "frames": 2242,
+  "placeReady": false,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r2": {
+  "ready": true,
+  "frames": 5058,
+  "placeReady": false,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r3": {
+  "ready": true,
+  "frames": 8158,
+  "placeReady": false,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r4": {
+  "ready": true,
+  "frames": 11065,
+  "placeReady": false,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r5": {
+  "ready": true,
+  "frames": 12964,
+  "placeReady": false,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r6": {
+  "ready": true,
+  "frames": 14583,
+  "placeReady": false,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "def": {},
+ "v1": {
+  "fire": {
+   "err": "no-hit"
+  },
+  "tree": {
+   "err": "no-gy-tree"
+  },
+  "yaw": 8
+ },
+ "v2": {
+  "fire": {
+   "err": "no-hit"
+  },
+  "tree": {
+   "err": "no-gy-tree"
+  },
+  "yaw": 8
+ },
+ "v3": {
+  "fire": {
+   "err": "no-hit"
+  },
+  "tree": {
+   "err": "no-gy-tree"
+  },
+  "yaw": 8
+ },
+ "closeupCam": {
+  "y": 0.75,
+  "d": 2.4,
+  "p": -12,
+  "a": 8,
+  "px": 3.38,
+  "py": 0.75,
+  "pz": -0.35,
+  "tx": 3.0533,
+  "ty": 0.251,
+  "tz": -2.6747,
+  "locked": false,
+  "frozen": true
+ },
+ "restore": "restored-yaw8"
+}

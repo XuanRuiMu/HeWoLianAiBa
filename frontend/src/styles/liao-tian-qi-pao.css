@@ -15,27 +15,40 @@
 .chehui-caidan {
   position: fixed;
   background: var(--chehui-caidan-beijing);
-  border-radius: 8px;
-  padding: 4px 0;
-  min-width: 90px;
+  border: 1px solid var(--chehui-caidan-biankuang);
+  border-radius: 12px;
+  padding: 6px;
+  min-width: 128px;
   box-shadow: var(--caidan-yinying);
   overflow: hidden;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .chehui-xiangmu {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
-  padding: 8px 16px;
-  text-align: center;
-  font-size: 14px;
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.2px;
   color: var(--chehui-caidan-wenben);
   background: transparent;
   border: none;
+  border-radius: 8px;
   cursor: pointer;
+  transition: background 0.15s ease;
 }
 
 .chehui-xiangmu:hover {
   background: var(--chehui-caidan-hover);
+}
+
+.chehui-xiangmu:active {
+  background: var(--chehui-caidan-active);
 }
 
 .shuru-fu-zhu {

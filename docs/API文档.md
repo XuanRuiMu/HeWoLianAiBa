@@ -1,4 +1,4 @@
-# 和我恋爱吧 — API 契约文档
+﻿# 和我恋爱吧 — API 契约文档
 
 > 本文件由 FP-08a 首次建立（此前仓内无 `docs/API文档.md`，PROGRESS『待处理功能点』FP-08a ⑤
 > 所指的文件不存在，故按「文档即契约」新建并只落本功能点动到的接口面）。
@@ -477,17 +477,17 @@ CAS 元数据；语音转写的先例是存 `消息.内容` 而非媒体表派�
 
 |状态码|`cuo_wu_ma`|`ti_shi`|
 |---|---|---|
-|400|`ZHAN_JI_FEN_LEI_MING_CHENG_WU_XIAO`|分类名称不能为空|
-|400|`ZHAN_JI_FEN_LEI_MING_CHENG_CHANG`|分类名称不能超过20个字|
+|400|`ZHAN_JI_FEN_LEI_MING_CHENG_WU_XIAO`|分组名称不能为空|
+|400|`ZHAN_JI_FEN_LEI_MING_CHENG_CHANG`|分组名称不能超过20个字|
 |400|`ZHAN_JI_PAI_XU_ID_CHONG_FU`|排序ID不能重复|
-|400|`ZHAN_JI_BU_NENG_YIDONG_DAO_DANG_QIAN_FEN_LEI`|不能移动到当前分类|
-|404|`ZHAN_JI_FEN_LEI_BU_CUN_ZAI`|战绩分类不存在|
+|400|`ZHAN_JI_BU_NENG_YIDONG_DAO_DANG_QIAN_FEN_LEI`|不能移动到当前分组|
+|404|`ZHAN_JI_FEN_LEI_BU_CUN_ZAI`|战绩分组不存在|
 |404|`ZHAN_JI_DANG_AN_BU_CUN_ZAI`|战绩记录不存在|
-|409|`ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU`|分类名称已存在|
-|409|`ZHAN_JI_MO_REN_FEN_LEI_BU_NENG_SHAN_CHU`|默认分类不能删除|
-|409|`ZHAN_JI_DANG_AN_BU_SHU_YU_FEN_LEI`|战绩记录不属于该分类|
-|409|`ZHAN_JI_PAI_XU_JI_LU_BU_WU_ZHEN`|排序必须包含该分类全部可见战绩|
-|409|`ZHAN_JI_FEN_LEI_BIAN_GENG`|分类已发生变化，请刷新后重试|
+|409|`ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU`|分组名称已存在|
+|409|`ZHAN_JI_MO_REN_FEN_LEI_BU_NENG_SHAN_CHU`|默认分组不能删除|
+|409|`ZHAN_JI_DANG_AN_BU_SHU_YU_FEN_LEI`|战绩记录不属于该分组|
+|409|`ZHAN_JI_PAI_XU_JI_LU_BU_WU_ZHEN`|排序必须包含该分组全部可见战绩|
+|409|`ZHAN_JI_FEN_LEI_BIAN_GENG`|分组已发生变化，请刷新后重试|
 
 数据库唯一约束、外键、检查约束、序列化失败与死锁只映射到既有`shiBaiXiangYing`出口；未知数据库错误仍返回通用`500`，不会把内部错误详情下发玩家。
 

@@ -184,7 +184,7 @@ describe('FP-C 战绩分类三态', () => {
     const { cangKu, wrapper } = await mountShiTu(
       async () => ({
         moRenFenLeiId: moRenId,
-        fenLeiLieBiao: [{ id: moRenId, name: '默认分类', is_default: true, record_count: 0, version: 0 }],
+        fenLeiLieBiao: [{ id: moRenId, name: '默认分类', is_default: true, record_count: 0, version: 0, sort_order: 0 }],
       }),
       async () => [],
     )

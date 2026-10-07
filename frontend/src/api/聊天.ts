@@ -309,6 +309,25 @@ export async function gengMingZhanJiFenLei(
   return 响应.data.shu_ju
 }
 
+export async function sheZhiMoRenZhanJiFenLei(
+  fenLeiId: string,
+  expectedVersion: number,
+): Promise<ZhanJiFenLei> {
+  const 响应 = await http.put<{ cheng_gong: boolean; shu_ju: ZhanJiFenLei }>(
+    `/战绩/分类/${fenLeiId}/默认`,
+    { expectedVersion },
+  )
+  return 响应.data.shu_ju
+}
+
+export async function baoCunZhanJiFenLeiPaiXu(categoryIds: string[]): Promise<ZhanJiFenLeiLieBiao> {
+  const 响应 = await http.put<{ cheng_gong: boolean; shu_ju: ZhanJiFenLeiLieBiao }>(
+    '/战绩/分类/排序',
+    { categoryIds },
+  )
+  return 响应.data.shu_ju
+}
+
 export async function shanChuZhanJiFenLei(
   fenLeiId: string,
   expectedVersion: number,

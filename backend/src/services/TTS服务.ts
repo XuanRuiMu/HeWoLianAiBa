@@ -1,4 +1,3 @@
-import { huoQuFanYi } from '../config/translations'
 import { debug日志 } from '../utils/debug日志'
 import { peiZhi } from '../config'
 

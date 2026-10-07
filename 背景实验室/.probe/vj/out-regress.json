@@ -1,0 +1,203 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v6-回归-默认机位.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v6-回归-树根特写.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v6-回归-树冠平视.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v6-回归-营火特写.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v6-回归-鸟瞰.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v6-回归-收尾.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "r1": {
+  "ready": true,
+  "frames": 1677,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r2": {
+  "ready": true,
+  "frames": 4911,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r3": {
+  "ready": true,
+  "frames": 8134,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r4": {
+  "ready": true,
+  "frames": 11197,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "regress": {
+  "camOk": true,
+  "frozen": true,
+  "ground": {
+   "tree": -0.00914,
+   "camp": 0.06221,
+   "rock": 0.13302,
+   "pebble": 4.54777
+  },
+  "pebbleGroundFixed": true,
+  "tree": {
+   "id": 1,
+   "kind": "tree",
+   "variant": "big",
+   "x": 3,
+   "y": -0.00914,
+   "z": -6,
+   "scale": 1,
+   "leaves": 4541
+  },
+  "camp": {
+   "id": 2,
+   "kind": "campfire",
+   "variant": "default",
+   "x": 0,
+   "y": 0.06221,
+   "z": -8,
+   "scale": 1,
+   "leaves": 0
+  },
+  "rock": {
+   "id": 3,
+   "kind": "rock",
+   "variant": "big-top",
+   "x": -3,
+   "y": 0.13302,
+   "z": -6,
+   "scale": 1,
+   "leaves": 0
+  },
+  "pebble": {
+   "id": 4,
+   "kind": "rock",
+   "variant": "pebble",
+   "x": -4.6,
+   "y": 4.54777,
+   "z": -4.2,
+   "scale": 8,
+   "leaves": 0
+  },
+  "boxTree": {
+   "min": [
+    -2.318,
+    -0.009,
+    -15.307
+   ],
+   "max": [
+    8.329,
+    8.365,
+    4.181
+   ],
+   "size": [
+    10.647,
+    8.375,
+    19.488
+   ],
+   "meshes": 21
+  },
+  "roundtrip": {
+   "exported": 4,
+   "reimported": 4,
+   "bad": 0
+  },
+  "roundtripOk": true,
+  "treeToggle": {
+   "before": {
+    "total": 261,
+    "visible": 0
+   },
+   "whenShown": {
+    "total": 261,
+    "visible": 261
+   },
+   "whenHidden": {
+    "total": 261,
+    "visible": 0
+   },
+   "deadTreesNowRemoved": true
+  },
+  "finalCount": 4,
+  "frames": 11198
+ },
+ "camGo": {
+  "y": 0.4,
+  "d": 3,
+  "p": -6,
+  "a": 28,
+  "px": 4.5,
+  "py": 0.4,
+  "pz": -3.4,
+  "tx": 3.0993,
+  "ty": 0.0864,
+  "tz": -6.0343,
+  "locked": false,
+  "frozen": false
+ },
+ "camCanopy": {
+  "y": 5,
+  "d": 14,
+  "p": 2,
+  "a": 37.6,
+  "px": 12,
+  "py": 5,
+  "pz": 8,
+  "tx": 3.4632,
+  "ty": 5.4886,
+  "tz": -3.0853,
+  "locked": false,
+  "frozen": false
+ },
+ "campCam": {
+  "y": 0.55,
+  "d": 3,
+  "p": -7,
+  "a": 0,
+  "px": 0,
+  "py": 0.55,
+  "pz": -5.2,
+  "tx": 0,
+  "ty": 0.1844,
+  "tz": -8.1776,
+  "locked": false,
+  "frozen": false
+ },
+ "camBird": {
+  "y": 18,
+  "d": 22,
+  "p": -56,
+  "a": 0,
+  "px": 0,
+  "py": 18,
+  "pz": 6,
+  "tx": 0,
+  "ty": -0.2388,
+  "tz": -6.3022,
+  "locked": false,
+  "frozen": false
+ },
+ "camRestore": {
+  "y": 1.4263,
+  "d": 5.6014,
+  "p": -22.55,
+  "a": -31.5,
+  "px": 3.4939,
+  "py": 1.4263,
+  "pz": 0.3179,
+  "tx": 6.1969,
+  "ty": -0.7218,
+  "tz": -4.0929,
+  "locked": false,
+  "frozen": true
+ }
+}

@@ -237,6 +237,12 @@ export interface WriterJieGuo {
   xiao_xi_lie_biao: string[]
   yuan_wen?: string
   si_kao?: string
+  /**
+   * 本轮**实际注入**的开场候选（机制 D）。
+   * ⚠️ 必须回传：联调要据此统计 M7 遵守率与 M8 逐字复制。
+   *    若由调用方另行采样，测的是另一次抽样，与模型是否服从无关（第二轮审查 P5）。
+   */
+  kai_chang_hou_xuan?: string[]
 }
 
 export interface AIYinQingShuRu {
@@ -246,6 +252,17 @@ export interface AIYinQingShuRu {
   hao_gan_du: HaoGanDuXinXi
   dui_hua_li_shi: DuiHuaLiShiXiang[]
   yong_hu_xin_xiao_xi: string
+  /**
+   * 追加消息场景：**没有**新的用户消息，本轮是角色自己有别的事想说（第十五轮）。
+   *
+   * ⚠️ 不能把「角色想说的事」塞进 `yong_hu_xin_xiao_xi` ——
+   *   那个字段的语义是「对方刚发来的消息」，Writer 的 prompt 也照此措辞。
+   *   实测（追加消息实验）ISFJ/INFJ 各出现过「判定为有、展开为空」，
+   *   根因就是身份错配：模型读到「对方说：忽然想起你上次随口说的那句」会困惑。
+   *
+   * 有值时，Writer 收到的第6 层改成「你此刻想说的事」，不伪装成对方的消息。
+   */
+  zui_jia_shuo_de_shi?: string
   shi_fou_di_yi_lun: boolean
   shi_jian_chang_jing?: string
   tu_pian_shou_quan: boolean
@@ -267,6 +284,15 @@ export interface AIYinQingShuChu {
   cuo_wu_ma?: 'XIAN_LIU_429' | 'YU_E_BU_ZU_402'
   yong_hu_id?: string
   si_kao?: { director?: string; writer?: string }
+  /** 本轮实际注入的开场候选（机制 D），透传给联调统计 M7/M8 */
+  kai_chang_hou_xuan?: string[]
+  /**
+   * Writer 的**原始输出全文**（未切分）。
+   * ⚠️ 必须存在：联调的 M7 遵守率靠它判断「首条是否从候选中选」。
+   *    曾因本字段缺失导致 `chu.yuan_wen` 为 undefined → M7 恒为 0、分母恒为 0，
+   *    而这种错误被 tsconfig 排除 `__tests__` + `as never as` 双重掩盖（第三轮审查 Sp-1）。
+   */
+  yuan_wen?: string
 }
 
 export interface QingGanFenXiJieGuo {

@@ -3,13 +3,9 @@
     class="fanyi-jieguo-kuang"
     :class="`fanyi-jieguo-kuang--${zhuangTai}`"
     :data-zhuang-tai="zhuangTai"
-    :aria-labelledby="biaoTiId"
     :aria-busy="zhuangTai === 'loading' ? 'true' : undefined"
   >
     <div class="fanyi-jieguo-tou">
-      <h4 :id="biaoTiId" class="fanyi-jieguo-biaoti">
-        {{ huoQuFanYi('liaoTian', 'fanYiJieGuo') }}
-      </h4>
       <div class="fanyi-yuyan-kuang">
         <label class="fanyi-yuyan-xiang">
           <span>{{ huoQuFanYi('liaoTian', 'fanYiYuanYu') }}</span>
@@ -45,7 +41,6 @@
       class="fanyi-jieguo-neirong"
       role="note"
       tabindex="0"
-      :aria-label="huoQuFanYi('liaoTian', 'fanYiJieGuo')"
     >
       {{ jieGuoWenBen }}
     </div>
@@ -130,7 +125,6 @@ const YUAN_YU_XUAN_XIANG = [
 const MU_BIAO_YU_XUAN_XIANG = YUAN_YU_XUAN_XIANG.filter((xiang) => xiang.zhi !== 'auto')
 
 const shuangTi = getCurrentInstance()?.uid ?? 0
-const biaoTiId = `fanyi-jieguo-biaoti-${shuangTi}`
 const fankuiId = `fanyi-fuzhi-tishi-${shuangTi}`
 const FU_ZHI_TI_SHI_HAO_MIAO = 2000
 const fuZhiTiShi = ref('')
@@ -228,15 +222,6 @@ onBeforeUnmount(() => {
   min-width: 0;
 }
 
-.fanyi-jieguo-biaoti {
-  flex: 0 0 auto;
-  margin: 0;
-  color: var(--wenben-zhuse);
-  font-size: var(--ziti-xiao);
-  font-weight: 700;
-  line-height: 1.5;
-}
-
 .fanyi-yuyan-kuang {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -259,12 +244,31 @@ onBeforeUnmount(() => {
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  padding: var(--jiange-xiao);
-  border: var(--shuru-kuang-biankuang) solid var(--biankuang-yanse);
-  border-radius: var(--shuru-kuang-yuanjiao);
-  background: var(--beijing-ciuse);
+  padding: var(--jiange-6) calc(var(--jiange-12) * 2 + var(--jiange-2)) var(--jiange-6) var(--jiange-10);
+  border: 1px solid var(--biankuang-yanse);
+  border-radius: 8px;
+  background: var(--beijing-kaopian);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
   color: var(--wenben-zhuse);
   font: inherit;
+  font-size: 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition:
+    border-color var(--quxian-biao-zhun),
+    background-color var(--quxian-biao-zhun);
+}
+
+.fanyi-yuyan-xiala:hover:not(:disabled) {
+  border-color: var(--wenben-tishi);
+}
+
+.fanyi-yuyan-xiala:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .fanyi-yuyan-xiala:focus-visible,

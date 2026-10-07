@@ -126,7 +126,8 @@ describe('FP-10 翻译结果框', () => {
     const zhengWen = wrapper.find('.fanyi-jieguo-neirong')
     ;(zhengWen.element as HTMLElement).focus()
     expect(document.activeElement).toBe(zhengWen.element)
-    expect(wrapper.find('.fanyi-jieguo-kuang').attributes('aria-labelledby')).toBeTruthy()
+    expect(wrapper.find('.fanyi-jieguo-kuang').attributes('aria-labelledby')).toBeUndefined()
+    expect(wrapper.find('.fanyi-jieguo-biaoti').exists()).toBe(false)
     await wrapper.find('.fanyi-yuyan-xiala').setValue('en')
     expect(wrapper.emitted('gengXinYuanYu')?.[0]).toEqual(['en'])
   })
@@ -166,6 +167,7 @@ describe('FP-10 翻译结果框', () => {
     const kong = 造组件({ zhuangTai: 'empty', jieGuo: '' })
     expect(kong.find('.fanyi-jieguo-zhuangtai').attributes('role')).toBe('status')
     expect(kong.text()).toContain(huoQuFanYi('liaoTian', 'fanYiKong'))
+    expect(kong.text()).not.toContain('译文')
 
     const cuoWu = 造组件({ zhuangTai: 'error', jieGuo: '', muBiaoYu: 'zh' })
     expect(cuoWu.find('.fanyi-jieguo-zhuangtai').attributes('role')).toBe('alert')

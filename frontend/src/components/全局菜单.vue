@@ -596,7 +596,7 @@ watch(
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--xiala-biankuang);
-  border-radius: 12px;
+  border-radius: 14px;
   box-shadow: var(--xiala-yinying);
   padding: var(--jiange-6);
   z-index: 200;
@@ -675,13 +675,15 @@ watch(
 .xiala-xiangmu {
   display: block;
   width: 100%;
-  padding: var(--jiange-10) calc(var(--jiange-12) + var(--jiange-2));
+  padding: var(--jiange-9) var(--jiange-12);
   text-align: left;
   font-size: 13px;
   font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.2px;
   color: var(--xiala-wenben);
-  border-radius: 8px;
-  transition: all 0.15s ease;
+  border-radius: 9px;
+  transition: background 0.15s ease, color 0.15s ease;
   cursor: pointer;
   background: transparent;
   border: none;

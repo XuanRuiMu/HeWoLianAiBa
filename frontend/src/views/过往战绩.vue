@@ -10,6 +10,8 @@
         @chuang-jian="chuangJianFenLei"
         @geng-ming="gengMingFenLei"
         @shan-chu="shanChuFenLei"
+        @she-zhi-mo-ren="sheZhiMoRenFenLei"
+        @pai-xu="paiXuFenLeiPaiXu"
       />
       <div v-if="zhanKu.qianTaiCuoWu && dangAnLieBiao.length > 0" class="zhanji-tishi">
         <RequestError
@@ -52,6 +54,7 @@
         <div class="kong-zhu-biao-ti">{{ huoQuFanYi('zhanJi', 'zanWuZhanJi') }}</div>
       </div>
       <template v-else>
+        <div class="fen-lei-da-kuan">
         <div
           class="piliang-gongju-lan"
           :class="{ 'piliang-gongju-lan--kong': xuanZhongIds.size === 0 }"
@@ -92,6 +95,24 @@
               :class="{ 'xuan-ze-shu-liang--kong': xuanZhongIds.size === 0 }"
             >
               {{ huoQuFanYi('zhanJi', 'yiXuanZe').replace('{条}', String(xuanZhongIds.size)) }}
+            </span>
+            <span class="fenlei-shu-liang">{{ zhanKu.dangAnLieBiao.length }}</span>
+            <span class="fen-ye-zu">
+              <button
+                class="fen-ye-anniu"
+                :disabled="fenLeiYeMa <= 1"
+                @click="qieHuanFenLeiYe(-1)"
+              >
+                ‹
+              </button>
+              <span class="fen-ye-wen-ben">{{ fenLeiYeMa }}/{{ zongYeShu }}</span>
+              <button
+                class="fen-ye-anniu"
+                :disabled="fenLeiYeMa >= zongYeShu"
+                @click="qieHuanFenLeiYe(1)"
+              >
+                ›
+              </button>
             </span>
           </div>
           <div class="piliang-anniu-zu">
@@ -140,32 +161,10 @@
             }}
           </button>
         </div>
-        <div class="zhanji-fenlei-zu">
-          <h2 class="zhanji-fenlei-biaoti">
-            <span class="fenlei-ming-cheng">{{ zhanKu.dangQianFenLei?.name }}</span>
-            <span class="fenlei-shu-liang">{{ zhanKu.dangAnLieBiao.length }}</span>
-            <span class="fenlei-fen-ye">
-              <button class="fen-ye-anniu" :disabled="fenLeiYeMa <= 1" @click="qieHuanFenLeiYe(-1)">
-                ‹
-              </button>
-              <span class="fen-ye-wen-ben">{{ fenLeiYeMa }}/{{ zongYeShu }}</span>
-              <button class="fen-ye-anniu" :disabled="fenLeiYeMa >= zongYeShu" @click="qieHuanFenLeiYe(1)">
-                ›
-              </button>
-            </span>
-            <button class="fenlei-quan-xuan-anniu" @click="qieHuanFenLeiQuanXuan">
-              {{
-                huoQuFanYi(
-                  'zhanJi',
-                  fenLeiQuanXuanZhuangTai ? 'quXiaoQuanXuan' : 'quanXuanGaiFenLei',
-                )
-              }}
-            </button>
-          </h2>
           <VueDraggable
             :model-value="xianShiDangAnLieBiao"
             :disabled="!shiFouShouDongPaiXu || zhanKu.paiXuZhong || zhanKu.caoZuoZhong"
-            :animation="0"
+            :animation="320"
             :filter="'.gouxuan-anniu, .caozuo-anniu, .yi-dong-fenlei, .paiXu-cao-zuo'"
             :prevent-on-filter="false"
             ghost-class="sortable-ghost"
@@ -222,10 +221,13 @@
                   </div>
                   <div class="zhanji-xinxi">
                     <div class="jiaose-mingcheng">{{ dangAn.jiao_se_ming_zi }}</div>
-                    <div class="zhanji-biaoqian-zu">
-                      <span v-if="dangAn.mbti_lei_xing" class="mbti-biaoqian">
-                        {{ dangAn.mbti_lei_xing }}
-                      </span>
+                    <div v-if="xingGeWenBen(dangAn)" class="xinxi-hang">
+                      <span class="xinxi-biaoqian">{{
+                        huoQuFanYi('zhanJi', 'haiBaoXingGeBiaoQian')
+                      }}</span>
+                      <span class="xinxi-zhi">{{ xingGeWenBen(dangAn) }}</span>
+                    </div>
+                    <div class="xinxi-hang">
                       <span
                         class="zhuangtai-biaoqian"
                         :class="zhuangTaiYangShi(dangAn.jie_guo_lei_xing_yuan)"
@@ -233,8 +235,8 @@
                         {{ zhuangTaiWenBen(dangAn.jie_guo_lei_xing_yuan) }}
                       </span>
                     </div>
-                    <div class="zhanji-fu-jia-xin-xi">
-                      <span class="liaotian-tianshu">
+                    <div class="xinxi-hang">
+                      <span class="xinxi-zhi liaotian-tianshu">
                         {{
                           huoQuFanYi('zhanJi', 'liaoTianTianShu').replace(
                             '{天}',
@@ -242,9 +244,26 @@
                           )
                         }}
                       </span>
-                      <span v-if="xianShiShiJian(dangAn)" class="zui-hou-xiao-xi-shi-jian">
-                        {{ xianShiShiJian(dangAn) }}
-                      </span>
+                    </div>
+                    <div v-if="zuiHouXiaoXi(dangAn).length > 0" class="zuihou-xiao-xi">
+                      <div
+                        v-for="(tiao, suoYin) in zuiHouXiaoXi(dangAn)"
+                        :key="`${tiao.shi_jian}-${suoYin}`"
+                        class="zuihou-xiao-xi-tiao"
+                      >
+                        <span class="zuihou-shi-jian">{{
+                          geShiHuaRiQiShiJian(tiao.shi_jian)
+                        }}</span>
+                        <span v-if="tiao.yong_hu_xiao_xi" class="zuihou-nei-rong">
+                          {{ huoQuFanYi('zhanJi', 'ni') }}：{{ tiao.yong_hu_xiao_xi }}
+                        </span>
+                        <span v-if="tiao.ai_hui_fu" class="zuihou-nei-rong">
+                          {{ huoQuFanYi('zhanJi', 'ta') }}：{{ tiao.ai_hui_fu }}
+                        </span>
+                      </div>
+                    </div>
+                    <div v-else-if="xianShiShiJian(dangAn)" class="zuihou-xiao-xi-shi-jian">
+                      {{ xianShiShiJian(dangAn) }}
                     </div>
                   </div>
                 </div>
@@ -507,6 +526,16 @@ async function shanChuFenLei(fenLeiId: string): Promise<void> {
   xianShiCunKuanJieGuo(jieGuo, fuBuWenBen)
 }
 
+async function sheZhiMoRenFenLei(fenLeiId: string): Promise<void> {
+  const jieGuo = await zhanKu.sheZhiMoRen(fenLeiId)
+  xianShiCunKuanJieGuo(jieGuo)
+}
+
+async function paiXuFenLeiPaiXu(fenLeiIds: string[]): Promise<void> {
+  const jieGuo = await zhanKu.baoCunFenLeiPaiXu(fenLeiIds)
+  xianShiCunKuanJieGuo(jieGuo)
+}
+
 async function yiDongDangAn(recordId: string, shiJian: Event): Promise<void> {
   const targetCategoryId = (shiJian.target as HTMLSelectElement).value
   const jieGuo = await zhanKu.yiDongDangAn(recordId, targetCategoryId)
@@ -570,6 +599,29 @@ function xianShiShiJian(dangAn: 档案详情): string {
     return `${huoQuFanYi('zhanJi', 'zuiHouXiaoXiShiJian')}: ${geShiHuaRiQiShiJian(zuiHouXiaoXiShiJian)}`
   }
   return ''
+}
+
+function jieGuoShiFouJieShu(dangAn: 档案详情): boolean {
+  return !!dangAn.jie_guo_lei_xing_yuan && dangAn.jie_guo_lei_xing_yuan !== 'jinxing_zhong'
+}
+
+function xingGeWenBen(dangAn: 档案详情): string | null {
+  if (dangAn.sui_ji_xing_ge === true) {
+    if (jieGuoShiFouJieShu(dangAn)) {
+      const mbti = dangAn.mbti_lei_xing?.trim()
+      return mbti
+        ? `${huoQuFanYi('ziLiaoSheZhi', 'suiJi')}：${mbti}`
+        : huoQuFanYi('ziLiaoSheZhi', 'suiJi')
+    }
+    return huoQuFanYi('ziLiaoSheZhi', 'suiJi')
+  }
+  return dangAn.mbti_lei_xing?.trim() || null
+}
+
+function zuiHouXiaoXi(dangAn: 档案详情) {
+  const lieBiao = dangAn.fu_pan_shu_ju
+  if (!Array.isArray(lieBiao) || lieBiao.length === 0) return []
+  return lieBiao.slice(-2)
 }
 
 function zhuangTaiWenBen(jieGuoLeiXing: string | undefined): string {
@@ -642,19 +694,6 @@ function qingKongXuanZe() {
   xuanZhongIds.value.clear()
 }
 
-const fenLeiQuanXuanZhuangTai = computed(
-  () => dangAnLieBiao.value.length > 0 && dangAnLieBiao.value.every((item) => xuanZhongIds.value.has(item.id)),
-)
-
-function qieHuanFenLeiQuanXuan(): void {
-  const ids = dangAnLieBiao.value.map((item) => item.id)
-  if (fenLeiQuanXuanZhuangTai.value) {
-    for (const id of ids) xuanZhongIds.value.delete(id)
-    return
-  }
-  for (const id of ids) xuanZhongIds.value.add(id)
-}
-
 async function shanChuZhanJi(dangAn: 档案详情): Promise<void> {
   if (!dangAn.id || jiLuCaoZuoZhong.value) return
   if (!window.confirm(huoQuFanYi('zhanJi', 'queRenShanChu'))) return
@@ -663,7 +702,6 @@ async function shanChuZhanJi(dangAn: 档案详情): Promise<void> {
     await shanChuDangAn(dangAn.id)
     xuanZhongIds.value.delete(dangAn.id)
     await zhanKu.chongXinJiaZai()
-    tiShiXinXi.value = huoQuFanYi('tongYong', 'caoZuoChengGong')
   } catch {
     tiShiXinXi.value = huoQuFanYi('tongYong', 'caoZuoShiBai')
   } finally {
@@ -685,7 +723,6 @@ async function piLiangShanChu(): Promise<void> {
     if (jieGuo.cheng_gong) {
       await zhanKu.chongXinJiaZai()
       xuanZhongIds.value.clear()
-      tiShiXinXi.value = huoQuFanYi('tongYong', 'caoZuoChengGong')
     }
   } catch {
     tiShiXinXi.value = huoQuFanYi('tongYong', 'caoZuoShiBai')
@@ -921,11 +958,34 @@ interface TuoZhuaiJieShuShiJian {
   newDraggableIndex?: number
 }
 
+let tuoZhuaiXuanZhongBuDi: number | null = null
+
+function buTiFuZhiTuoZhuaiXuanZhong(): void {
+  const keShi = document.querySelector<HTMLSelectElement>('.sortable-drag .yi-dong-fenlei')
+  if (keShi && keShi.value !== zhanKu.dangQianFenLeiId) {
+    keShi.value = zhanKu.dangQianFenLeiId
+  }
+}
+
+function qiDongTuoZhuaiXuanZhongBuDi(): void {
+  if (tuoZhuaiXuanZhongBuDi !== null) return
+  const diBu = () => {
+    if (!tuoZhuaiZhong.value) {
+      tuoZhuaiXuanZhongBuDi = null
+      return
+    }
+    buTiFuZhiTuoZhuaiXuanZhong()
+    tuoZhuaiXuanZhongBuDi = requestAnimationFrame(diBu)
+  }
+  tuoZhuaiXuanZhongBuDi = requestAnimationFrame(diBu)
+}
+
 function onTuoZhuaiKaiShi(): void {
   if (!shiFouShouDongPaiXu.value || zhanKu.paiXuZhong || zhanKu.caoZuoZhong) return
   tuoZhuaiZhong.value = true
   tuoZhuaiQianIdShunXu.value = xianShiDangAnLieBiao.value.map((item) => item.id)
   yuLanShunXu.value = [...xianShiDangAnLieBiao.value]
+  qiDongTuoZhuaiXuanZhongBuDi()
 }
 
 function onTuoZhuaiGengXin(lieBiao: 档案详情[]): void {
@@ -997,6 +1057,7 @@ onMounted(() => {
 onUnmounted(() => {
   qingKongFenXiangFuZu()
   zhanKu.qingKong()
+  tuoZhuaiZhong.value = false
 })
 
 defineExpose({
@@ -1034,7 +1095,7 @@ defineExpose({
 .zhanji-liebiao {
   flex: 1;
   /* 上间距由容器自身 margin 承担，容器内 padding-top 必须保持 0：
-     滚动容器一旦带 padding-top，其内 position:sticky;top:0 的后代（.zhanji-tishi / .zhanji-fenlei-biaoti）
+     滚动容器一旦带 padding-top，其内 position:sticky;top:0 的后代（.zhanji-tishi）
      会整体下移同样距离，滚动时上方露出内容穿透带（BlindSpot 实测复现，见
      .agents/evidence/traces/FP-K1b批1-验证-20260929-2.md 修正1）。
      margin 在 flex 列容器内不塌陷，故与下侧（标签栏 padding-bottom + gap + 空态卡 margin-top）等效对称。 */
@@ -1311,35 +1372,6 @@ defineExpose({
   cursor: not-allowed;
 }
 
-.zhanji-fenlei-zu {
-  display: flex;
-  flex-direction: column;
-  gap: var(--jiange-12);
-}
-
-.zhanji-fenlei-biaoti {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--jiange-xiao);
-  font-size: 15px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  color: #f2f2ed;
-  padding: var(--jiange-10) var(--jiange-4) var(--jiange-xiao);
-  position: sticky;
-  top: 0;
-  background: rgba(19, 19, 24, 0.92);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 2px solid rgba(242, 242, 237, 0.75);
-  z-index: 10;
-}
-
-.fenlei-tubiao {
-  font-size: 18px;
-}
-
 .fenlei-shu-liang {
   font-size: 12px;
   font-weight: 800;
@@ -1348,48 +1380,106 @@ defineExpose({
   background: #ffd500;
   color: #14141a;
   border: 2px solid #14141a;
-  margin-left: auto;
 }
 
-.fenlei-quan-xuan-anniu {
-  font-size: 12px;
-  font-weight: 700;
-  padding: var(--jiange-4) var(--jiange-10);
-  border-radius: 8px;
-  background: transparent;
-  color: #f2f2ed;
-  border: 2px solid #f2f2ed;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-}
-
-.fenlei-quan-xuan-anniu:hover {
-  background: #f2f2ed;
-  color: #14141a;
-}
-
-.fenlei-kong-zhuangtai {
-  text-align: center;
-  padding: calc(var(--jiange-zhong) + var(--jiange-6)) var(--jiange-zhong);
-  color: rgba(242, 242, 237, 0.72);
-  font-size: 13px;
-  font-weight: 600;
-  background: rgba(22, 22, 30, 0.55);
-  border: 1.5px dashed rgba(242, 242, 237, 0.28);
-  border-radius: 14px;
+.fen-lei-da-kuan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jiange-12);
+  padding: var(--jiange-12);
+  background: rgba(27, 27, 36, 0.88);
+  border: 1.5px solid rgba(242, 242, 237, 0.4);
+  border-radius: 16px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
-.fenlei-kong-nei-ron {
-  display: inline-block;
-  padding: 0 var(--jiange-xiao);
+.fen-lei-da-kuan .piliang-gongju-lan,
+.fen-lei-da-kuan .paixu-gongju-lan {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: var(--jiange-4) 0;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
 }
 
-:root[data-theme='light'] .fenlei-kong-zhuangtai {
-  background: rgba(255, 255, 255, 0.82);
-  border: 2px dashed #14141a;
+:root[data-theme='light'] .fen-lei-da-kuan {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(20, 20, 26, 0.85);
+  box-shadow: 3px 3px 0 rgba(20, 20, 26, 0.1);
+}
+
+.fen-ye-zu {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--jiange-6);
+}
+
+.xinxi-hang {
+  display: flex;
+  align-items: center;
+  gap: var(--jiange-6);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.xinxi-biaoqian {
+  font-size: 11px;
+  font-weight: 700;
+  color: #b9b9c4;
+  flex-shrink: 0;
+}
+
+.xinxi-zhi {
+  font-size: 12px;
+  color: #d6d6de;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.zuihou-xiao-xi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jiange-2);
+  min-width: 0;
+}
+
+.zuihou-xiao-xi-tiao {
+  display: flex;
+  align-items: baseline;
+  gap: var(--jiange-6);
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: #b9b9c4;
+}
+
+.zuihou-shi-jian {
+  flex-shrink: 0;
+  color: #8b8b98;
+  font-variant-numeric: tabular-nums;
+}
+
+.zuihou-nei-rong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+:root[data-theme='light'] .xinxi-biaoqian,
+:root[data-theme='light'] .zuihou-xiao-xi-tiao {
+  color: #5a5a66;
+}
+
+:root[data-theme='light'] .xinxi-zhi {
   color: #3a3a46;
+}
+
+:root[data-theme='light'] .zuihou-shi-jian {
+  color: #8b8b98;
 }
 
 /* 卡片外层 = 定位槽：SortableJS 在拖拽中把它的 computed 矩阵当成指针增量的除数，
@@ -1546,25 +1636,6 @@ defineExpose({
   white-space: nowrap;
 }
 
-.zhanji-biaoqian-zu {
-  display: flex;
-  align-items: center;
-  gap: var(--jiange-6);
-}
-
-.mbti-biaoqian {
-  display: inline-flex;
-  align-items: center;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  padding: var(--jiange-2) var(--jiange-xiao);
-  border-radius: 999px;
-  background: rgba(20, 20, 26, 0.85);
-  color: #ffd500;
-  border: 1.5px solid rgba(255, 213, 0, 0.75);
-}
-
 .zhuangtai-biaoqian {
   display: inline-flex;
   align-items: center;
@@ -1607,13 +1678,6 @@ defineExpose({
 .zhuangtai-biaoqian.biaobai {
   background: #ff2d95;
   color: #14141a;
-}
-
-.zhanji-fu-jia-xin-xi {
-  display: flex;
-  align-items: center;
-  gap: var(--jiange-10);
-  flex-wrap: wrap;
 }
 
 .liaotian-tianshu {
@@ -1814,14 +1878,30 @@ defineExpose({
   width: 100%;
   min-width: 0;
   max-width: 180px;
-  min-height: 36px;
-  padding: var(--jiange-4) var(--jiange-xiao);
-  border: 2px solid var(--biankuang-yanse);
-  border-radius: 9px;
-  background: var(--beijing-zhuse);
+  min-height: 32px;
+  padding: var(--jiange-4) calc(var(--jiange-12) * 2 + var(--jiange-2)) var(--jiange-4) var(--jiange-xiao);
+  border: 1px solid var(--biankuang-yanse);
+  border-radius: 8px;
+  background: var(--beijing-kaopian);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
   color: var(--wenben-zhuse);
   font: inherit;
   font-size: 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color var(--quxian-biao-zhun), color var(--quxian-biao-zhun);
+}
+
+.yi-dong-fenlei:hover:not(:disabled) {
+  border-color: var(--wenben-tishi);
+}
+
+.yi-dong-fenlei:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .paiXu-cao-zuo {
@@ -1893,23 +1973,20 @@ defineExpose({
 }
 
 :root[data-theme='light'] .jiazai-zhuangtai,
-:root[data-theme='light'] .kong-zhuangtai,
-:root[data-theme='light'] .fenlei-kong-zhuangtai {
+:root[data-theme='light'] .kong-zhuangtai {
   color: #3a3a46;
 }
 
 :root[data-theme='light'] .quan-xuan-anniu,
 :root[data-theme='light'] .quxiao-quanxuan-anniu,
-:root[data-theme='light'] .paixu-fangxiang-anniu,
-:root[data-theme='light'] .fenlei-quan-xuan-anniu {
+:root[data-theme='light'] .paixu-fangxiang-anniu {
   color: #14141a;
   border-color: #14141a;
 }
 
 :root[data-theme='light'] .quan-xuan-anniu:hover,
 :root[data-theme='light'] .quxiao-quanxuan-anniu:hover:not(:disabled),
-:root[data-theme='light'] .paixu-fangxiang-anniu:hover:not(:disabled),
-:root[data-theme='light'] .fenlei-quan-xuan-anniu:hover {
+:root[data-theme='light'] .paixu-fangxiang-anniu:hover:not(:disabled) {
   background: #14141a;
   color: #ffffff;
 }
@@ -1935,12 +2012,6 @@ defineExpose({
 :root[data-theme='light'] .paixu-weidu-anniu--jihuo {
   background: #00c2ff;
   color: #14141a;
-}
-
-:root[data-theme='light'] .zhanji-fenlei-biaoti {
-  background: rgba(244, 244, 239, 0.92);
-  color: #14141a;
-  border-bottom-color: rgba(20, 20, 26, 0.85);
 }
 
 :root[data-theme='light'] .zhanji-kapian > .zhanji-kapian-nei {
@@ -2046,9 +2117,9 @@ defineExpose({
 
 :root[data-theme='light'] .yi-dong-fenlei,
 :root[data-theme='light'] .paiXu-anniu {
-  border-color: var(--beijing-zhuse);
-  background: var(--beijing-kaopian);
-  color: var(--beijing-zhuse);
+  border-color: var(--biankuang-yanse);
+  background-color: var(--beijing-kaopian);
+  color: var(--wenben-zhuse);
 }
 
 :root[data-theme='light'] .paiXu-anniu:hover:not(:disabled) {

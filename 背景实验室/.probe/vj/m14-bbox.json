@@ -1,0 +1,27 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "bbox": {
+  "viewportCount": 43,
+  "top": [
+   {
+    "name": "pl-x-tree-trunk-main",
+    "type": "Mesh",
+    "screenY": 113,
+    "screenX": 563,
+    "worldY": 1.51,
+    "worldX": 4.36,
+    "worldZ": -8.5,
+    "parent": "pl-treegrp-3",
+    "isInstancedMesh": false,
+    "isMesh": true,
+    "isPoints": false,
+    "geomType": "BufferGeometry",
+    "sz": "-0.5,-0.3"
+   }
+  ]
+ }
+}

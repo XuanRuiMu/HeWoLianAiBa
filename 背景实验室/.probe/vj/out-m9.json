@@ -1,0 +1,95 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m9-v4自动加载-默认机位.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "r1": {
+  "ready": true,
+  "frames": 2062,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r2": {
+  "ready": true,
+  "frames": 5327,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r3": {
+  "ready": true,
+  "frames": 8631,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r4": {
+  "ready": true,
+  "frames": 11932,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r5": {
+  "ready": true,
+  "frames": 15180,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r6": {
+  "ready": true,
+  "frames": 18159,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "v4check": {
+  "count": 3,
+  "items": [
+   {
+    "kind": "rock",
+    "variant": "big-top",
+    "x": 3.38,
+    "y": -0.06,
+    "z": -2.01,
+    "rotY": 60,
+    "scale": 0.18,
+    "leaves": 0
+   },
+   {
+    "kind": "campfire",
+    "variant": "default",
+    "x": 3.38,
+    "y": 0.16,
+    "z": -2.01,
+    "rotY": 0,
+    "scale": 1,
+    "leaves": 0
+   },
+   {
+    "kind": "tree",
+    "variant": "big",
+    "x": -1.1,
+    "y": 0.14,
+    "z": -6.8,
+    "rotY": 280,
+    "scale": 0.72,
+    "leaves": 4541
+   }
+  ],
+  "frozen": true,
+  "cam": {
+   "px": 3.4939,
+   "py": 1.4263,
+   "pz": 0.3179,
+   "p": -22.55,
+   "a": 8,
+   "d": 5.6014
+  },
+  "camOk": true
+ }
+}

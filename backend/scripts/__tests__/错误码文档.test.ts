@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'fs'
-import { resolve } from 'path'
 import { dengLiCuoWuXianRongLieBiao, huoQuCuoWuXianRong, type CuoWuDaiMa } from '../../src/config/错误码注册表'
 import { 错误码文档路径, duiQu旧码映射, 生成错误码文档 } from '../错误码文档'
 

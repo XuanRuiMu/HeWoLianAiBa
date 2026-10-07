@@ -119,6 +119,7 @@
      FP-10c 把待发序列并进图文输入区组件时按零硬编码口径改吃本令牌，但令牌当时零定义，
      失效值塌成 0 ⇒ 待发期方角、发出期圆角，同一张图两个样子。补实体值把这段漂移收掉 */
   --daifa-kuai-tu-yuanjiao: 6px;
+  --daifa-kuai-tu-jiange: 0.5ch;
   --tuwen-tu-zuidakuan: 180px;
   --tuwen-tu-zuida-gao: 200px;
   /* --daifa-kuai-jian-ju（FP-10b 上收的待发块序列 gap:8px）已随其唯一消费者 待发图文块序列.vue
@@ -167,9 +168,8 @@
   --gundong-tiao-huakuai-cursor: default;
   --gundong-tiao-guidao-cursor: default;
   --shuru-xian-changtai-kuan-du: 1px;
-  --shuru-xian-jujiao-kuan-du: 2px;
-  --shuru-juzhong-dong-xiao: 0.2s;
-  --shuru-sao-chu-shi-chang: 0.38s;
+  --shuru-juzhong-dong-xiao: 1s;
+  --shuru-sao-chu-shi-chang: 1s;
   --quxian-sao-chu: cubic-bezier(0.22, 0.9, 0.24, 1);
   /* 文本控件焦点环只改粗细与偏移（贴住控件，不与装饰线争位），颜色仍用 --jujiao-huan-yanse */
   --jujiao-huan-kuan-du-wenben: 1px;
@@ -255,14 +255,13 @@
      --renzheng-qiehuan-weiyi 用户裁决改出画档：110%（translateX 百分比相对滑动表单自身宽，
      旧表单须整体滑出可视区、新表单从另一侧整体入画，32px 小位移档已废）；
      --renzheng-qiehuan-shi-chang 0.5s（出画行程变长，与 0.45s 网格行高度过渡保持连贯）；
-     --renzheng-gundong-yuan-jiao 认证滚动口圆角与 --renzheng-gundong-guo-du 平滑显隐时长；
+     --renzheng-gundong-yuan-jiao 认证滚动口圆角；
      --renzheng-dingge-guang-yun 是快照层飞行 glow（金色，与卡面金线同色相）。
      FP-J2 自绘滚动滑块几何两枚：滑块宽 4px、右缘距 2px（精简金条，overlay 不占正文排版位，
      位置/高度由 登录内容.vue 脚本按滚动比例写入 transform/height）。 */
   --renzheng-qiehuan-weiyi: 110%;
   --renzheng-qiehuan-shi-chang: 0.5s;
   --renzheng-gundong-yuan-jiao: 8px;
-  --renzheng-gundong-guo-du: 0.3s;
   --renzheng-dingge-guang-yun: 0 0 32px rgba(201, 169, 106, 0.45);
   --renzheng-gundong-huakuai-kuan: 3px;
   --renzheng-gundong-huakuai-you-ju: 1px;
@@ -404,9 +403,11 @@
   --junshi-zhaiyao-beijing: #f0f5ff;
   --caidan-hover: #F5F5F5;
   --caidan-active: #E8E8E8;
-  --chehui-caidan-beijing: #2c2c2c;
-  --chehui-caidan-wenben: #ffffff;
-  --chehui-caidan-hover: rgba(255, 255, 255, 0.1);
+  --chehui-caidan-beijing: rgba(255, 255, 255, 0.92);
+  --chehui-caidan-wenben: #1c1c1e;
+  --chehui-caidan-hover: rgba(0, 0, 0, 0.05);
+  --chehui-caidan-active: rgba(0, 0, 0, 0.09);
+  --chehui-caidan-biankuang: rgba(0, 0, 0, 0.08);
   --biankuang-qianse: #D9D9D9;
   --biankuang-fenqu: #f0f0f0;
   --beijing-qianse: #fafafa;
@@ -460,7 +461,7 @@
   --daohanglan-zhongbeijing: rgba(0, 0, 0, 0.06);
   --xiala-beijing: rgba(255, 255, 255, 0.95);
   --xiala-biankuang: rgba(0, 0, 0, 0.08);
-  --xiala-yinying: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --xiala-yinying: 0 12px 40px rgba(0, 0, 0, 0.14);
   --xiala-wenben: rgba(0, 0, 0, 0.75);
   --xiala-hover-beijing: rgba(0, 0, 0, 0.05);
   --xiala-hover-wenben: rgba(0, 0, 0, 0.9);
@@ -542,15 +543,15 @@
   --jujiao-huan-pian-yi: 2px;
   --shuru-xian-changtai-se: var(--renzheng-shuru-xian-se);
   --shuru-xian-jujiao-se: var(--jujiao-huan-yanse);
-  /* FPA1 六段扫出渐变（深色档由左向右变浅）：同一共用浓度序反向，色相吃聚焦色 */
+  /* FPA1 六段扫出渐变（深色档由浅变深、与浅色同向）：同一共用浓度序，色相吃聚焦色 */
   --shuru-sao-jianbian: linear-gradient(
     to right,
-    color-mix(in srgb, var(--shuru-xian-jujiao-se) 98%, transparent),
-    color-mix(in srgb, var(--shuru-xian-jujiao-se) 80%, transparent),
-    color-mix(in srgb, var(--shuru-xian-jujiao-se) 62%, transparent),
-    color-mix(in srgb, var(--shuru-xian-jujiao-se) 44%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 10%, transparent),
     color-mix(in srgb, var(--shuru-xian-jujiao-se) 26%, transparent),
-    color-mix(in srgb, var(--shuru-xian-jujiao-se) 10%, transparent)
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 44%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 62%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 80%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 98%, transparent)
   );
   --shuru-xian-cuowu-se: var(--cuowu-yanse);
   --shuru-xian-jinyong-se: var(--wenben-tishi);
@@ -627,9 +628,11 @@
   --junshi-zhaiyao-beijing: #1a2030;
   --caidan-hover: #333333;
   --caidan-active: #444444;
-  --chehui-caidan-beijing: #3a3a3c;
-  --chehui-caidan-wenben: #ffffff;
-  --chehui-caidan-hover: rgba(255, 255, 255, 0.1);
+  --chehui-caidan-beijing: rgba(44, 44, 46, 0.92);
+  --chehui-caidan-wenben: #f2f2f7;
+  --chehui-caidan-hover: rgba(255, 255, 255, 0.08);
+  --chehui-caidan-active: rgba(255, 255, 255, 0.14);
+  --chehui-caidan-biankuang: rgba(255, 255, 255, 0.1);
   --biankuang-qianse: #38383A;
   --biankuang-fenqu: #333333;
   --beijing-qianse: #252525;
@@ -682,7 +685,7 @@
   --daohanglan-zhongbeijing: rgba(255, 255, 255, 0.12);
   --xiala-beijing: rgba(20, 24, 40, 0.92);
   --xiala-biankuang: rgba(255, 255, 255, 0.1);
-  --xiala-yinying: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --xiala-yinying: 0 12px 40px rgba(0, 0, 0, 0.45);
   --xiala-wenben: rgba(255, 255, 255, 0.8);
   --xiala-hover-beijing: rgba(255, 255, 255, 0.1);
   --xiala-hover-wenben: #ffffff;

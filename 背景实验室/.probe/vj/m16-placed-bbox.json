@@ -1,0 +1,415 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "place": {
+  "ok": true,
+  "count": 3
+ },
+ "probe": {
+  "count": 21,
+  "list": [
+   {
+    "name": "pl-x-tree-trunk-main",
+    "parent": "pl-treegrp-6",
+    "bboxSize": [
+     "0.69",
+     "0.32",
+     "1.14"
+    ],
+    "center": [
+     -0.21,
+     0.13,
+     -0.62
+    ],
+    "screenX": 5955,
+    "screenY": -1799,
+    "ndcX": 5.2,
+    "ndcY": 5.15,
+    "visible": true
+   },
+   {
+    "name": "pl-x-tree-trunk-main-big",
+    "parent": "pl-treegrp-6",
+    "bboxSize": [
+     "0.87",
+     "0.83",
+     "1.13"
+    ],
+    "center": [
+     0.19,
+     0.25,
+     0.31
+    ],
+    "screenX": 2825,
+    "screenY": -720,
+    "ndcX": 1.94,
+    "ndcY": 2.66,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   },
+   {
+    "name": "pl-leaves-6",
+    "parent": "pl-inner-6",
+    "bboxSize": [
+     "0.02",
+     "0.02",
+     "0.00"
+    ],
+    "center": [
+     0,
+     0,
+     0
+    ],
+    "screenX": 3620,
+    "screenY": -1184,
+    "ndcX": 2.77,
+    "ndcY": 3.73,
+    "visible": true
+   }
+  ]
+ }
+}

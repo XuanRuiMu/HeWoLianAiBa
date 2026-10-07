@@ -1,0 +1,3605 @@
+{
+  "count": 360,
+  "list": [
+    {
+      "name": "__reveal_mesh__",
+      "type": "Mesh",
+      "parent": "MainCamera",
+      "minx": 207.42392411132147,
+      "maxx": 1712.5760758886772,
+      "miny": -318.07607588867745,
+      "maxy": 1187.076075888678,
+      "vis": true
+    },
+    {
+      "name": "__rain_particles",
+      "type": "Mesh",
+      "parent": "MainScene",
+      "minx": 380.3976422526596,
+      "maxx": 389.51334277290493,
+      "miny": 633.6780433263353,
+      "maxy": 661.4634646321092,
+      "vis": false
+    },
+    {
+      "name": "AnimeSky",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": -43.901921410057554,
+      "maxx": 2609.0267275145043,
+      "miny": -1451.0458579574922,
+      "maxy": 834.2764022980833,
+      "vis": true
+    },
+    {
+      "name": "DistantTerrainGround_0_0",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": 1472.4534467599874,
+      "maxx": 3602.4162690228186,
+      "miny": -479.97823872081625,
+      "maxy": 107.05631296092764,
+      "vis": false
+    },
+    {
+      "name": "DistantTerrainGround_0_1",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": -6056.34045547573,
+      "maxx": 3616.1281747694848,
+      "miny": -495.45314793765397,
+      "maxy": 1669.8391546356293,
+      "vis": false
+    },
+    {
+      "name": "DistantTerrainGround_0_2",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": -5994.2177837473655,
+      "maxx": 387.1387328215668,
+      "miny": 237.38597507652068,
+      "maxy": 1668.9966282174987,
+      "vis": true
+    },
+    {
+      "name": "DistantTerrainGround_0_3",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": -284.4463625202416,
+      "maxx": 670.3210906168932,
+      "miny": 202.39722354603913,
+      "maxy": 468.859324954053,
+      "vis": true
+    },
+    {
+      "name": "DistantTerrainGround_1_0",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": 1038.0647712975695,
+      "maxx": 2177.0676230883214,
+      "miny": -424.03747477088694,
+      "maxy": 105.67886493373294,
+      "vis": false
+    },
+    {
+      "name": "DistantTerrainGround_1_1",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": -4248.348826607758,
+      "maxx": 2127.5706826273636,
+      "miny": -305.0308598400056,
+      "maxy": 2427.376138086255,
+      "vis": false
+    },
+    {
+      "name": "DistantTerrainGround_1_2",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": -4200.060873367171,
+      "maxx": 1026.5098996654792,
+      "miny": 278.4751878581423,
+      "maxy": 2428.987369321636,
+      "vis": true
+    },
+    {
+      "name": "DistantTerrainGround_1_3",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": 320.47836331706617,
+      "maxx": 1030.76913554604,
+      "miny": 208.7247794185691,
+      "maxy": 482.7538893783326,
+      "vis": true
+    },
+    {
+      "name": "DistantTerrainGround_2_0",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": 168.84853569536523,
+      "maxx": 1054.851387247184,
+      "miny": -335.5734829490395,
+      "maxy": 120.11660743813972,
+      "vis": false
+    },
+    {
+      "name": "DistantTerrainGround_2_1",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": -26198.035621117757,
+      "maxx": 11684.832801965025,
+      "miny": -4503.153994811706,
+      "maxy": 5268.626573500126,
+      "vis": false
+    },
+    {
+      "name": "DistantTerrainGround_2_2",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": -29593.328017217707,
+      "maxx": 12003.944809202212,
+      "miny": -5378.9602270486075,
+      "maxy": 5350.940628407735,
+      "vis": true
+    },
+    {
+      "name": "DistantTerrainGround_2_3",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": 1019.8974211355974,
+      "maxx": 1870.983682626065,
+      "miny": 211.51586753375355,
+      "maxy": 538.5222592886423,
+      "vis": true
+    },
+    {
+      "name": "DistantTerrainGround_3_0",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": -551.833219001336,
+      "maxx": 642.9744822473302,
+      "miny": -281.1154846251888,
+      "maxy": 115.01775390103506,
+      "vis": false
+    },
+    {
+      "name": "DistantTerrainGround_3_1",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": -111666.53245769022,
+      "maxx": 11106.559024021584,
+      "miny": -27299.367064740793,
+      "maxy": 5119.462460493602,
+      "vis": false
+    },
+    {
+      "name": "DistantTerrainGround_3_2",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": -254497.5742105605,
+      "maxx": 10176.027260256236,
+      "miny": -65093.186558756126,
+      "maxy": 4879.434379573029,
+      "vis": true
+    },
+    {
+      "name": "DistantTerrainGround_3_3",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": 1413.5562994402965,
+      "maxx": 2905.594747490353,
+      "miny": 208.80876480240414,
+      "maxy": 569.3649743442011,
+      "vis": true
+    },
+    {
+      "name": "DistantWater",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": 257.1176002502967,
+      "maxx": 1997.053171546588,
+      "miny": -3.1608089284710914,
+      "maxy": 303.5067133664648,
+      "vis": true
+    },
+    {
+      "name": "Birds",
+      "type": "Mesh",
+      "parent": "Experience",
+      "minx": -1633.6204774385433,
+      "maxx": 894.9418573754054,
+      "miny": 409.42244448173557,
+      "maxy": 1367.7889330013952,
+      "vis": true
+    },
+    {
+      "name": "Butterfly_0_mesh",
+      "type": "Mesh",
+      "parent": "Butterfly_0",
+      "minx": -3389.8419129534673,
+      "maxx": -3173.647560316875,
+      "miny": 1975.9622345068683,
+      "maxy": 2060.090943480659,
+      "vis": true
+    },
+    {
+      "name": "Butterfly_1_mesh",
+      "type": "Mesh",
+      "parent": "Butterfly_1",
+      "minx": 444.8582485998455,
+      "maxx": 450.1667266219725,
+      "miny": 406.6999563289765,
+      "maxy": 407.8894440132834,
+      "vis": true
+    },
+    {
+      "name": "Butterfly_2_mesh",
+      "type": "Mesh",
+      "parent": "Butterfly_2",
+      "minx": 237.3048643421161,
+      "maxx": 248.09146425463112,
+      "miny": 483.2354758591312,
+      "maxy": 485.9847663812906,
+      "vis": true
+    },
+    {
+      "name": "Butterfly_3_mesh",
+      "type": "Mesh",
+      "parent": "Butterfly_3",
+      "minx": 754.6337977386081,
+      "maxx": 758.5996548808482,
+      "miny": 324.69277821837454,
+      "maxy": 325.7615005082142,
+      "vis": true
+    },
+    {
+      "name": "Butterfly_4_mesh",
+      "type": "Mesh",
+      "parent": "Butterfly_4",
+      "minx": 926.9283701229393,
+      "maxx": 930.2398010166216,
+      "miny": 385.45060985447276,
+      "maxy": 386.6853933640035,
+      "vis": true
+    },
+    {
+      "name": "Butterfly_5_mesh",
+      "type": "Mesh",
+      "parent": "Butterfly_5",
+      "minx": -1433.7406147203985,
+      "maxx": -1383.1548276934848,
+      "miny": 1339.6953946633944,
+      "maxy": 1367.4897995477681,
+      "vis": true
+    },
+    {
+      "name": "Butterfly_6_mesh",
+      "type": "Mesh",
+      "parent": "Butterfly_6",
+      "minx": 923.5883904360281,
+      "maxx": 935.2960714760303,
+      "miny": 597.7085057953924,
+      "maxy": 603.2744967917431,
+      "vis": true
+    },
+    {
+      "name": "Butterfly_7_mesh",
+      "type": "Mesh",
+      "parent": "Butterfly_7",
+      "minx": -1863.6326271512678,
+      "maxx": -1614.7969677184403,
+      "miny": 3597.4491334404124,
+      "maxy": 3870.2262859634016,
+      "vis": true
+    },
+    {
+      "name": "Butterfly_8_mesh",
+      "type": "Mesh",
+      "parent": "Butterfly_8",
+      "minx": 471.0313820327405,
+      "maxx": 474.81559337739435,
+      "miny": 312.33286548769337,
+      "maxy": 313.0630250301329,
+      "vis": true
+    },
+    {
+      "name": "Butterfly_9_mesh",
+      "type": "Mesh",
+      "parent": "Butterfly_9",
+      "minx": 582.9169185885441,
+      "maxx": 586.2860058630254,
+      "miny": 322.5110511667658,
+      "maxy": 323.57923229405424,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_1_-1_-3",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_0_-1_0",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-1_0_-2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_1_-1_2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_1_-1_-1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_1_0_-2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_1_0_0",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_1_0_-3",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-2_0_-2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-1_0_-3",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_0_0_-4",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_0_-1_-1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_0_0_-2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_1_0_-1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-1_0_-1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_1_0_1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-1_-1_-4",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-1_-1_-1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_1_-1_-2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_2_0_1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_1_0_-4",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_0_-1_1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_2_-1_0",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_2_-1_1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_2_-1_2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-3_0_0",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_0_0_2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-3_-1_-2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_0_0_1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-1_0_2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_2_-1_-2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-1_0_-4",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_0_0_-3",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_2_0_-2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-2_0_-3",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_2_0_-1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_0_-1_-3",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-2_0_1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_1_0_2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_1_-1_1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-2_-1_-3",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_1_-1_-4",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-1_0_1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-2_-1_2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-1_0_0",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-1_-1_-2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-2_-1_1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_2_-1_-1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_0_0_-1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_2_-1_-3",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-1_-1_-3",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_0_-1_-5",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-3_-1_-1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_1_-1_0",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-1_-1_0",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-1_-1_-5",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-1_-1_2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-2_0_2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_0_-1_2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-3_-1_0",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_0_-1_-4",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_0_-1_-2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-2_-1_-4",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-2_0_0",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-1_-1_1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_2_0_0",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_0_0_0",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-2_-1_-2",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-2_-1_0",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-2_-1_-1",
+      "type": "Mesh",
+      "parent": "MainIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Flowers",
+      "type": "Points",
+      "parent": "MainIsland",
+      "minx": -6934.761392771405,
+      "maxx": 1028.8913446465594,
+      "miny": 358.60389174000784,
+      "maxy": 33993.890651586946,
+      "vis": true
+    },
+    {
+      "name": "Flowers",
+      "type": "Points",
+      "parent": "MainIsland",
+      "minx": -8552.230630469994,
+      "maxx": 1769.2371246590533,
+      "miny": -42483.63971311678,
+      "maxy": 9536.566235435324,
+      "vis": true
+    },
+    {
+      "name": "Butterfly_10_mesh",
+      "type": "Mesh",
+      "parent": "Butterfly_10",
+      "minx": -583.8128449839653,
+      "maxx": -561.3890790451329,
+      "miny": -80.56483406367136,
+      "maxy": -77.6407366486799,
+      "vis": true
+    },
+    {
+      "name": "Butterfly_11_mesh",
+      "type": "Mesh",
+      "parent": "Butterfly_11",
+      "minx": 5323.828955326926,
+      "maxx": 5529.65495283733,
+      "miny": 634.5634832687568,
+      "maxy": 656.4696139412828,
+      "vis": true
+    },
+    {
+      "name": "Butterfly_12_mesh",
+      "type": "Mesh",
+      "parent": "Butterfly_12",
+      "minx": -10395.811753666363,
+      "maxx": -9789.792281613074,
+      "miny": -1268.9525090712077,
+      "maxy": -1193.2763950861117,
+      "vis": true
+    },
+    {
+      "name": "Butterfly_13_mesh",
+      "type": "Mesh",
+      "parent": "Butterfly_13",
+      "minx": -946.3729646350494,
+      "maxx": -916.7967242931468,
+      "miny": -143.1283196863048,
+      "maxy": -138.7248317171355,
+      "vis": true
+    },
+    {
+      "name": "Butterfly_14_mesh",
+      "type": "Mesh",
+      "parent": "Butterfly_14",
+      "minx": -1888.8953309419453,
+      "maxx": -1847.5336425527873,
+      "miny": -151.39455645813527,
+      "maxy": -147.67121205183216,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-4_0_-1",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-3_0_2",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-2_0_-2",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-3_0_-2",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-2_0_0",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-2_0_-1",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-4_0_1",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-4_0_-3",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-4_0_2",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-2_0_1",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-4_0_-2",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-4_0_0",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-3_0_1",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-3_0_3",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-3_0_-1",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-5_0_-3",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-2_0_2",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-1_0_-1",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-4_0_3",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-3_0_-3",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-1_0_0",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-1_0_-2",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-5_0_-2",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.3439306781722,
+      "miny": 638.0773617362589,
+      "maxy": 648.0653468656758,
+      "vis": false
+    },
+    {
+      "name": "Grass_chunk_-2_0_-3",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": true
+    },
+    {
+      "name": "Grass_chunk_-3_0_0",
+      "type": "Mesh",
+      "parent": "TopIsland",
+      "minx": 378.7057468203065,
+      "maxx": 389.29404407634246,
+      "miny": 638.0773617362589,
+      "maxy": 648.0623111942849,
+      "vis": false
+    },
+    {
+      "name": "Flowers",
+      "type": "Points",
+      "parent": "TopIsland",
+      "minx": 51.925232489698416,
+      "maxx": 19387.434054803718,
+      "miny": -417.85714817503913,
+      "maxy": 521.1975405381487,
+      "vis": true
+    },
+    {
+      "name": "Flowers",
+      "type": "Points",
+      "parent": "TopIsland",
+      "minx": 29.691231889688225,
+      "maxx": 16155.922601263735,
+      "miny": -319.07195646700285,
+      "maxy": 495.95842357688116,
+      "vis": true
+    },
+    {
+      "name": "ForestMotes",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": -42639.46547032935,
+      "maxx": 7474.4377668898,
+      "miny": -2386.641555103262,
+      "maxy": 10704.31225473404,
+      "vis": true
+    },
+    {
+      "name": "main-waterfall",
+      "type": "Mesh",
+      "parent": "top",
+      "minx": -441.86934862583,
+      "maxx": 227.19728903925932,
+      "miny": 116.55030634626237,
+      "maxy": 782.8697720109134,
+      "vis": true
+    },
+    {
+      "name": "top-island",
+      "type": "Mesh",
+      "parent": "top",
+      "minx": -66590.19990032182,
+      "maxx": 12467.60420113432,
+      "miny": -5391.501075032996,
+      "maxy": 16401.88983531879,
+      "vis": true
+    },
+    {
+      "name": "basalt-top-old",
+      "type": "Mesh",
+      "parent": "top",
+      "minx": -74.9306371775048,
+      "maxx": 161962.31074906787,
+      "miny": -688.2455117726071,
+      "maxy": 2105.9351263272665,
+      "vis": true
+    },
+    {
+      "name": "tree-trunk-top",
+      "type": "Mesh",
+      "parent": "top",
+      "minx": -27362.167381064566,
+      "maxx": 17346.270613952784,
+      "miny": -4650.403262120653,
+      "maxy": 1710.2381014027985,
+      "vis": true
+    },
+    {
+      "name": "top-water",
+      "type": "Mesh",
+      "parent": "main001",
+      "minx": -5087.529696298868,
+      "maxx": 255.17801179749517,
+      "miny": 12.194619223671674,
+      "maxy": 146.63935938382636,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -479.5066351475177,
+      "maxx": -465.17707964821284,
+      "miny": 31.009045598613103,
+      "maxy": 40.148360670387234,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock001",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -1114.1905564848214,
+      "maxx": -1038.7871281144419,
+      "miny": -236.7326864133584,
+      "maxy": -200.14117942615138,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock002",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -918.5417917656807,
+      "maxx": -855.5721626413123,
+      "miny": -136.05173385178227,
+      "maxy": -105.97482181203601,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock003",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -1284.462527992803,
+      "maxx": -1213.3276975732379,
+      "miny": -217.56405893875458,
+      "maxy": -178.0132161233051,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock004",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -524.9731257503179,
+      "maxx": -492.3354055834442,
+      "miny": -95.9629473298785,
+      "maxy": -73.0946069801913,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock005",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -508.0839860545591,
+      "maxx": -482.1156347130973,
+      "miny": -39.38527207788502,
+      "maxy": -25.48997636582328,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock006",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -947.4113555868946,
+      "maxx": -898.572098567563,
+      "miny": -139.6365580997103,
+      "maxy": -116.57115141912189,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock007",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -1241.2970887759227,
+      "maxx": -1185.5673004692294,
+      "miny": -237.81786849380495,
+      "maxy": -214.78473317915115,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock008",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -1176.5693000272454,
+      "maxx": -1134.4394252085076,
+      "miny": -147.77433563996013,
+      "maxy": -128.01927669409358,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock009",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -645.5446222555132,
+      "maxx": -626.5780901279006,
+      "miny": -125.3659221082094,
+      "maxy": -114.83022614176136,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock010",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -678.8650812351714,
+      "maxx": -660.3745158348922,
+      "miny": -101.30964530680542,
+      "maxy": -89.9935650973384,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock011",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -1251.1131768321566,
+      "maxx": -1221.1704886347306,
+      "miny": -38.94242093826509,
+      "maxy": -27.68395389652038,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock012",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -798.5111045254417,
+      "maxx": -784.2595677593189,
+      "miny": 28.64866231833803,
+      "maxy": 36.988054630790266,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock013",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -902.2769075592298,
+      "maxx": -813.8695831815279,
+      "miny": -189.97439043301065,
+      "maxy": -135.71917257966726,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock014",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -951.0791299172091,
+      "maxx": -883.2383187927237,
+      "miny": -252.15906466350864,
+      "maxy": -208.70280107136625,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock015",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -764.6462056211687,
+      "maxx": -708.0437707515858,
+      "miny": -11.060121240603083,
+      "maxy": 12.911245907250173,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock016",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -1094.0746609923988,
+      "maxx": -1029.5778030883152,
+      "miny": -234.89402315897675,
+      "maxy": -192.0998389925707,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock017",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -487.8338364240909,
+      "maxx": -447.02444648289406,
+      "miny": -22.572459824611474,
+      "maxy": 0.17197883056088403,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock018",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -714.3562396233219,
+      "maxx": -681.4516770682361,
+      "miny": -112.92572405838519,
+      "maxy": -87.84311083932418,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock019",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -1058.0470353284397,
+      "maxx": -1017.6056481388463,
+      "miny": -204.04679259964277,
+      "maxy": -183.50849353727375,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock020",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -961.2236463669358,
+      "maxx": -927.3252495005464,
+      "miny": -136.8004659557244,
+      "maxy": -114.63908242657476,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock021",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -946.7091581718556,
+      "maxx": -916.5770625867306,
+      "miny": -251.83925982353432,
+      "maxy": -234.2437097611873,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock022",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -1211.0515261941205,
+      "maxx": -1180.37804312587,
+      "miny": -92.21934309929611,
+      "maxy": -77.80514362486798,
+      "vis": true
+    },
+    {
+      "name": "basalt-floating-rock023",
+      "type": "Mesh",
+      "parent": "floating-rocks",
+      "minx": -637.6853183822358,
+      "maxx": -619.3988789014167,
+      "miny": -99.19983450855806,
+      "maxy": -89.07307314192617,
+      "vis": true
+    },
+    {
+      "name": "social-media-linkedin",
+      "type": "Mesh",
+      "parent": "social-media-icons",
+      "minx": -11969.103742943356,
+      "maxx": 217.37524128702492,
+      "miny": -5266.938279038706,
+      "maxy": 996.1304288719472,
+      "vis": false
+    },
+    {
+      "name": "social-media-x",
+      "type": "Mesh",
+      "parent": "social-media-icons",
+      "minx": -28259.167858922363,
+      "maxx": 156.17396062959568,
+      "miny": -13479.176045523374,
+      "maxy": 905.3009062370547,
+      "vis": false
+    },
+    {
+      "name": "social-media-youtube",
+      "type": "Mesh",
+      "parent": "social-media-icons",
+      "minx": -4559.840459154911,
+      "maxx": 16635.226507219133,
+      "miny": -272.91450061069753,
+      "maxy": 6132.059012780138,
+      "vis": false
+    },
+    {
+      "name": "crystal-shard-top-005",
+      "type": "Mesh",
+      "parent": "top-crystals",
+      "minx": -23.24485859049659,
+      "maxx": -1.9675464994381997,
+      "miny": 156.90411231317816,
+      "maxy": 161.64910820610433,
+      "vis": true
+    },
+    {
+      "name": "east-waterfall",
+      "type": "Mesh",
+      "parent": "main",
+      "minx": -17762.678301493142,
+      "maxx": -768.5547189296259,
+      "miny": 3036.7324458625917,
+      "maxy": 15629.36670913071,
+      "vis": false
+    },
+    {
+      "name": "main-water",
+      "type": "Mesh",
+      "parent": "main",
+      "minx": -6158.994804170472,
+      "maxx": 989.3088617341424,
+      "miny": 373.78408819820527,
+      "maxy": 14925.579248996002,
+      "vis": true
+    },
+    {
+      "name": "main-foam",
+      "type": "Mesh",
+      "parent": "main",
+      "minx": -99.11691919065696,
+      "maxx": 252.85750757430372,
+      "miny": 575.1897847930494,
+      "maxy": 775.1956159712097,
+      "vis": true
+    },
+    {
+      "name": "west-waterfall",
+      "type": "Mesh",
+      "parent": "main",
+      "minx": 816.6413548626188,
+      "maxx": 879.5814799429362,
+      "miny": 372.57289544889693,
+      "maxy": 588.9241826895739,
+      "vis": true
+    },
+    {
+      "name": "south-waterfall",
+      "type": "Mesh",
+      "parent": "main",
+      "minx": 876.5431274006394,
+      "maxx": 978.2718898363962,
+      "miny": 751.0349300841843,
+      "maxy": 1311.781748935695,
+      "vis": true
+    },
+    {
+      "name": "main-island",
+      "type": "Mesh",
+      "parent": "main",
+      "minx": -20347.16666752327,
+      "maxx": 1127.7273393028051,
+      "miny": -4750.551637873192,
+      "maxy": 7735.374765000232,
+      "vis": true
+    },
+    {
+      "name": "tree-trunk-main",
+      "type": "Mesh",
+      "parent": "tree-main",
+      "minx": -27.739802911587645,
+      "maxx": 812.5725562368491,
+      "miny": 238.12355113068728,
+      "maxy": 636.2416274694501,
+      "vis": true
+    },
+    {
+      "name": "tree-trunk-main-big",
+      "type": "Mesh",
+      "parent": "tree-main",
+      "minx": -3496.4697605169104,
+      "maxx": 6089.308099890615,
+      "miny": -13720.17172179216,
+      "maxy": 3503.5909264808865,
+      "vis": true
+    },
+    {
+      "name": "basalt-main-old",
+      "type": "Mesh",
+      "parent": "main-island-basalt",
+      "minx": -1636047.3670795904,
+      "maxx": 1044.5715872115836,
+      "miny": -66647.84805545492,
+      "maxy": 319681.63243102713,
+      "vis": true
+    },
+    {
+      "name": "campfire-wood",
+      "type": "Mesh",
+      "parent": "campfire",
+      "minx": 711.3921514649271,
+      "maxx": 736.0356816793387,
+      "miny": 622.6550444053095,
+      "maxy": 648.0345330219645,
+      "vis": true
+    },
+    {
+      "name": "campfire-wood001",
+      "type": "Mesh",
+      "parent": "campfire",
+      "minx": 725.2746576946486,
+      "maxx": 737.1485689826901,
+      "miny": 625.4726583417021,
+      "maxy": 646.9424718801317,
+      "vis": true
+    },
+    {
+      "name": "campfire-wood002",
+      "type": "Mesh",
+      "parent": "campfire",
+      "minx": 719.1908775716788,
+      "maxx": 746.5108696244229,
+      "miny": 622.2488379194733,
+      "maxy": 637.1298246840325,
+      "vis": true
+    },
+    {
+      "name": "campfire-wood003",
+      "type": "Mesh",
+      "parent": "campfire",
+      "minx": 725.9276005859347,
+      "maxx": 746.1884696149593,
+      "miny": 623.757987294818,
+      "maxy": 649.3407492037124,
+      "vis": true
+    },
+    {
+      "name": "campfire-wood004",
+      "type": "Mesh",
+      "parent": "campfire",
+      "minx": 713.4352292123122,
+      "maxx": 745.8172293236858,
+      "miny": 634.1462735346956,
+      "maxy": 637.5109828482143,
+      "vis": true
+    },
+    {
+      "name": "campfire-wood005",
+      "type": "Mesh",
+      "parent": "campfire",
+      "minx": 720.2923100119493,
+      "maxx": 726.712262735186,
+      "miny": 624.187247410048,
+      "maxy": 653.440262099751,
+      "vis": true
+    },
+    {
+      "name": "campfire-wood006",
+      "type": "Mesh",
+      "parent": "campfire",
+      "minx": 722.8697783348904,
+      "maxx": 748.6601770479542,
+      "miny": 624.2608074201124,
+      "maxy": 631.2490154902414,
+      "vis": true
+    },
+    {
+      "name": "campfire-wood008",
+      "type": "Mesh",
+      "parent": "campfire",
+      "minx": 724.4282595956377,
+      "maxx": 741.0028687007368,
+      "miny": 624.2119010665259,
+      "maxy": 642.8454083667567,
+      "vis": true
+    },
+    {
+      "name": "campfire-wood009",
+      "type": "Mesh",
+      "parent": "campfire",
+      "minx": 710.1365005964693,
+      "maxx": 734.6337188108438,
+      "miny": 625.4009744977703,
+      "maxy": 650.4118006925053,
+      "vis": true
+    },
+    {
+      "name": "campfire-wood010",
+      "type": "Mesh",
+      "parent": "campfire",
+      "minx": 713.4688059019687,
+      "maxx": 729.4062562093568,
+      "miny": 630.7179892441563,
+      "maxy": 636.5126309932494,
+      "vis": true
+    },
+    {
+      "name": "campfire-wood011",
+      "type": "Mesh",
+      "parent": "campfire",
+      "minx": 726.2468067159516,
+      "maxx": 738.1615728613541,
+      "miny": 628.024333665377,
+      "maxy": 648.6078797244742,
+      "vis": true
+    },
+    {
+      "name": "crystal-shard-main-001",
+      "type": "Mesh",
+      "parent": "crystals",
+      "minx": -492.30702839654157,
+      "maxx": 84.7529447785184,
+      "miny": 4865.568049959677,
+      "maxy": 7619.978437289238,
+      "vis": true
+    },
+    {
+      "name": "crystal-shard-main-002",
+      "type": "Mesh",
+      "parent": "crystals",
+      "minx": -153.66088503790536,
+      "maxx": -92.17264816304606,
+      "miny": 778.5395661776563,
+      "maxy": 815.1419729121255,
+      "vis": true
+    },
+    {
+      "name": "crystal-shard-main-003",
+      "type": "Mesh",
+      "parent": "crystals",
+      "minx": 883.305388492635,
+      "maxx": 896.1953428284515,
+      "miny": 511.55707009792457,
+      "maxy": 521.100840212088,
+      "vis": true
+    },
+    {
+      "name": "crystal-shard-main-004",
+      "type": "Mesh",
+      "parent": "crystals",
+      "minx": 356.9133811342181,
+      "maxx": 374.87669622463113,
+      "miny": 440.7471542219518,
+      "maxy": 450.6936612250439,
+      "vis": true
+    },
+    {
+      "name": "simplified-scene-occluder",
+      "type": "Mesh",
+      "parent": "simplified_scene",
+      "minx": -8993.515162349628,
+      "maxx": 54555.77153911257,
+      "miny": 130.13788478427196,
+      "maxy": 11213.873646738715,
+      "vis": false
+    },
+    {
+      "name": "Waterfall_drops",
+      "type": "Points",
+      "parent": "islands",
+      "minx": -23.134458379316953,
+      "maxx": 236.27008576888312,
+      "miny": 603.5627030791929,
+      "maxy": 747.5563510278442,
+      "vis": true
+    },
+    {
+      "name": "foliage-occlusion",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 236.56954083788375,
+      "maxx": 58497.82653456906,
+      "miny": -19656.340125709798,
+      "maxy": 1100.8084412870685,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-2_1_-2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-4_1_-3",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-5_1_-3",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-4_2_-2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-3_1_2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-3_1_3",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-4_1_3",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-5_2_1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-4_2_2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-2_2_2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-2_2_1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-3_2_2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-2_3_1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-4_3_2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-2_2_-1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-2_2_-2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-3_2_-2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-3_3_-2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-1_0_-2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-1_0_-1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-1_1_-1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-2_0_-3",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-2_1_-3",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-1_0_-4",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-1_0_-3",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-1_0_-5",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-1_1_-5",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-2_0_-4",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_0_2_3",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_0_1_2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-1_1_2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-1_2_1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-1_1_1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_1_2_2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_0_1_0",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-1_1_0",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_1_1_2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_-1_2_0",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_1_1_-1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_0_1_-1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_1_1_0",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_1_2_1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_1_2_0",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_2_1_1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_1_1_1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_2_2_1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_0_1_1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_1_-1_2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_2_-1_2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_0_0_2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-2_0_2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-1_0_2",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_2_0_-1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_1_0_-3",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_1_0_-5",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_1_0_-4",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_0_0_-3",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Foliage_chunk_1_0_3",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-2_0_1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-2_0_0",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": false
+    },
+    {
+      "name": "Foliage_chunk_-2_0_-1",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 373.1870401173242,
+      "maxx": 396.7130494009709,
+      "miny": 638.7635195441972,
+      "maxy": 656.5255100138507,
+      "vis": true
+    },
+    {
+      "name": "Campfire_fire",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": 657.5205705318654,
+      "maxx": 780.2068224302766,
+      "miny": 493.2746202984384,
+      "maxy": 641.2759400177555,
+      "vis": true
+    },
+    {
+      "name": "Campfire_sparks",
+      "type": "Points",
+      "parent": "islands",
+      "minx": 710.006435243839,
+      "maxx": 743.1350306299519,
+      "miny": 609.5125489748106,
+      "maxy": 624.2168219614349,
+      "vis": true
+    },
+    {
+      "name": "Swarm_raycasterMesh",
+      "type": "Mesh",
+      "parent": "islands",
+      "minx": -1137.5322678277116,
+      "maxx": -492.5128187270943,
+      "miny": -158.30261145705796,
+      "maxy": 78.07071563007716,
+      "vis": true
+    },
+    {
+      "name": "Swarm_particles",
+      "type": "Points",
+      "parent": "islands",
+      "minx": -912.372930804583,
+      "maxx": -647.6636855353486,
+      "miny": -73.66953770542989,
+      "maxy": 22.88841262924886,
+      "vis": true
+    },
+    {
+      "name": "DistantFoliage_chunk_-1_-1_1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-3_-1_4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_1_-1_2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_3_-1_2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-1_-1_0",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_2_-1_-1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-1_-1_-2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": true
+    },
+    {
+      "name": "DistantFoliage_chunk_-4_-1_-3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-4_-1_0",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-2_-1_-4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_2_-1_-3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_1_-1_0",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-2_-1_0",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-1_-1_-3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": true
+    },
+    {
+      "name": "DistantFoliage_chunk_4_-1_0",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_0_-1_-4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_2_-1_-4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_1_-1_4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-1_-1_2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-2_-1_-2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": true
+    },
+    {
+      "name": "DistantFoliage_chunk_3_-1_-1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_1_-1_1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-1_-1_-4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_0_-1_-5",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_3_-1_3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-5_-1_-2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-3_-1_2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-3_-1_-4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-2_-1_2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_0_-1_-3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": true
+    },
+    {
+      "name": "DistantFoliage_chunk_0_-1_-2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": true
+    },
+    {
+      "name": "DistantFoliage_chunk_3_-1_0",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_1_-1_-2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": true
+    },
+    {
+      "name": "DistantFoliage_chunk_2_-1_0",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_1_-1_-3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": true
+    },
+    {
+      "name": "DistantFoliage_chunk_0_-1_2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_4_-1_-1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_3_-1_-3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-2_-1_3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-3_-1_-3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-1_-1_-1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": true
+    },
+    {
+      "name": "DistantFoliage_chunk_0_-1_3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_0_-1_4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_4_-1_-3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_4_-1_1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-3_-1_3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-3_-1_-5",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-2_-1_-5",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-5_-1_2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_1_-1_-1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-4_-1_-4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-2_-1_-3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": true
+    },
+    {
+      "name": "DistantFoliage_chunk_4_-1_-2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-4_-1_2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-1_-1_3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_0_-1_-1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": true
+    },
+    {
+      "name": "DistantFoliage_chunk_-2_-1_4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-3_-1_-1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": true
+    },
+    {
+      "name": "DistantFoliage_chunk_0_-1_0",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-3_-1_1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-3_-1_-2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": true
+    },
+    {
+      "name": "DistantFoliage_chunk_-5_-1_1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_0_-1_1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-2_-1_-1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": true
+    },
+    {
+      "name": "DistantFoliage_chunk_-4_-1_3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_3_-1_1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_2_-1_3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_1_-1_3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_2_-1_2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-4_-1_-1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-4_-1_1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_3_-1_-2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-3_-1_0",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-5_-1_0",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_2_-1_-2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": true
+    },
+    {
+      "name": "DistantFoliage_chunk_1_-1_-4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-1_-1_4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_3_-1_-4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-2_-1_1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-4_-1_-2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_2_-1_4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-1_-1_-5",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-5_-1_-1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_4_-1_2",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_2_-1_-5",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_1_-1_-5",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-5_-1_-3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_2_-1_1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-6_-1_-1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_0_-1_-6",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-5_-1_3",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-1_-1_5",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-5_-1_-4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_5_-1_0",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_4_-1_-4",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_3_-1_-5",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_-1_-1_-6",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "DistantFoliage_chunk_5_-1_-1",
+      "type": "Points",
+      "parent": "Experience",
+      "minx": 384.989452719576,
+      "maxx": 384.989452719576,
+      "miny": 647.6742675436819,
+      "maxy": 647.6742675436819,
+      "vis": false
+    },
+    {
+      "name": "SunLensflare",
+      "type": "Lensflare",
+      "parent": "SunAnchor",
+      "minx": 4377.045321571515,
+      "maxx": 5477.085860829299,
+      "miny": 3429.0016849100743,
+      "maxy": 3727.3691273830896,
+      "vis": true
+    }
+  ]
+}

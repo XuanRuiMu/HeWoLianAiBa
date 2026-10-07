@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, it, vi } from 'vitest'
 import express from 'express'
 import type { Express } from 'express'
 import request from 'supertest'

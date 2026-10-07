@@ -5,8 +5,7 @@ import { huoQuFanYi } from '../config/translations'
 import { dengLuXianLiu, dengLuIPLianLiu, faSongMaXianLiu, zhuCeXianLiu, duanXinRiPeiEZhuJi, jianChaShouJiXianLiu } from '../middleware/限流'
 import {
   手机号验证中间件,
-  用户名验证中间件,
-} from '../middleware/输入验证'
+  用户名验证中间件 } from '../middleware/输入验证'
 import { chengGongXiangYing, shiBaiXiangYing } from '../utils/xiangying'
 import {
   anShouJiHaoChaYongHu,
@@ -17,9 +16,7 @@ import {
   gengGaiYongHuMing,
   setMoRenXingBie,
   yanZhengShouJiHaoGeShi,
-  shuaXinLingPai,
-  zhuXiaoLingPai,
-} from '../services/认证'
+  shuaXinLingPai } from '../services/认证'
 import { faSongYanZhengMa } from '../services/短信'
 import { zhuXiaoYongHu } from '../services/账号注销'
 import { huoQuZhenShiIP } from '../utils/真实IP'
@@ -149,8 +146,7 @@ luYou.post('/注册', zhuCeXianLiu, 手机号验证中间件, 用户名验证中
     mi_ma: miMa,
     tong_yi_xie_yi: tongYiXieYi,
     chu_sheng_ri_qi: chuShengRiQi,
-    ip: huoQuIp(qingQiu),
-  })
+    ip: huoQuIp(qingQiu) })
 
   if (!jieGuo.cheng_gong) {
     const { jiLuZhuCeShiBai } = await import('../services/行为验证')
@@ -174,8 +170,7 @@ luYou.post('/登录', dengLuXianLiu, dengLuIPLianLiu, 手机号验证中间件, 
   const jieGuo = await dengLu({
     shou_ji_hao: shouJiHao,
     mi_ma: miMa,
-    ip: huoQuIp(qingQiu),
-  })
+    ip: huoQuIp(qingQiu) })
 
   if (!jieGuo.cheng_gong) {
     return shiBaiXiangYing(
@@ -260,8 +255,7 @@ luYou.post('/更改密码', async (qingQiu: RenZhengQingQiu, xiangYing: Response
     xin_mi_ma: xinMiMa,
     que_ren_xin_mi_ma: queRenXinMiMa,
     yan_zheng_ma: yanZhengMa,
-    ip: huoQuIp(qingQiu),
-  })
+    ip: huoQuIp(qingQiu) })
 
   if (!jieGuo.cheng_gong) {
     return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'xiuGaiShiBai'), CUO_WU_DAI_MA.AUTH_PASSWORD_CHANGE_FAILED)
@@ -284,8 +278,7 @@ luYou.post('/更改用户名', 用户名验证中间件, async (qingQiu: RenZhen
   const jieGuo = await gengGaiYongHuMing({
     yong_hu_id: yongHu.yongHuId,
     yong_hu_ming: yongHuMing,
-    ip: huoQuIp(qingQiu),
-  })
+    ip: huoQuIp(qingQiu) })
 
   if (!jieGuo.cheng_gong) {
     return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'xiuGaiShiBai'), CUO_WU_DAI_MA.AUTH_USERNAME_CHANGE_FAILED)
@@ -308,8 +301,7 @@ luYou.post('/设置默认性别', async (qingQiu: RenZhengQingQiu, xiangYing: Re
   }
   const jieGuo = await setMoRenXingBie({
     yong_hu_id: yongHu.yongHuId,
-    mo_ren_xing_bie: moRenXingBie,
-  })
+    mo_ren_xing_bie: moRenXingBie })
   if (!jieGuo.cheng_gong) {
     return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'xiuGaiShiBai'), CUO_WU_DAI_MA.AUTH_DEFAULT_GENDER_INVALID)
   }

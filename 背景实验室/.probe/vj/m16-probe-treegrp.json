@@ -1,0 +1,27 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "probe-treegrp": {
+  "count": 1,
+  "list": [
+   {
+    "name": "pl-treegrp-3",
+    "type": "Object3D",
+    "kids": 5,
+    "worldY": -3.57,
+    "worldX": 4.94,
+    "worldZ": -5.07,
+    "screenY": 715,
+    "screenX": 787,
+    "ndcX": -0.18,
+    "ndcY": -0.65,
+    "visible": true,
+    "scaleX": 1,
+    "scaleY": 1
+   }
+  ]
+ }
+}

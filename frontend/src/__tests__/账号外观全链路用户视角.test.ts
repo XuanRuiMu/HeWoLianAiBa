@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+﻿import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia, type Pinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
@@ -310,7 +310,7 @@ describe('FP-C 用户视角全链路验证', () => {
     )
     await zhangHao.find('.zi-ding-yi-shan-chu').trigger('click')
     await flushPromises()
-    expect(vi.mocked(sheJiao.baoCunLiaoTianBeiJing)).toHaveBeenCalledWith('moRen')
+    expect(vi.mocked(sheJiao.baoCunLiaoTianBeiJing)).toHaveBeenCalledWith('moRen', undefined)
     expect(使用用户设置仓库().liaoTianBeiJing).toBe('moRen')
     const liaoTian = await mountLiaoTian()
     const yangShi = liaoTian.find('.xiaoxi-quyu').attributes('style') || ''

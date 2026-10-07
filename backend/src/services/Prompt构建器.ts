@@ -2,6 +2,24 @@ import { AI_PEI_ZHI } from '../config/AI配置'
 import { JUN_SHI_ZHI_DAO_DUAN_DING_YI } from '../config/军师配置'
 import { SHENG_LI_SHI_BAI_PEI_ZHI } from '../config/胜利失败配置'
 import { huoQuShiJianChangJingWenBen } from '../config/时间场景配置'
+import 风格示例表 from '../config/风格示例表.json'
+import { MBTI_YU_QI_CHI } from '../config/风格语气映射'
+import { MBTI_YU_YAN_FENG_GE_CAN_SHU } from '../config/角色配置'
+import { duJieBaoKaiGuan } from '../config/开场采样配置'
+
+interface ShiLiZu {
+  yuQi: string
+  tiao: string[]
+}
+
+interface FengGeShiLiBiao {
+  _shouYong: number
+  shiLi: ShiLiZu[]
+}
+
+const FENG_GE_SHI_LI_BIAO = 风格示例表 as unknown as FengGeShiLiBiao
+/** 总开关。关掉后共用前缀与改动前逐字一致，便于灰度回退 */
+const FENG_GE_SHI_LI_KAI_GUAN = duJieBaoKaiGuan('FENG_GE_SHI_LI_QI_YONG')
 import { 内部转展示 } from '../utils/性别'
 import {
   ZAI_TI_BIAO_JI_SHUO_MING,
@@ -39,21 +57,47 @@ export function baoZhuangYongHuNeiRong(neiRong: string): string {
   return `${YONG_HU_NEI_RONG_QI_SHI}${qingXiHou}${YONG_HU_NEI_RONG_JIE_SHU}`
 }
 
+/**
+ * 关系阶段 → **这个人这个阶段会在想什么**。
+ *
+ * ⚠️ **第十四轮实测驱动的重写**（原来那版是语气指导，治好了标点没治内容）：
+ *   原写法是「热恋中，撒娇、甜蜜、喜欢挂在嘴边」「暧昧期，暗示变多」——
+ *   这是**语气指导**，模型把它翻译成了**标点风格**：
+ *     亲密度阶梯实测（ESFP 10 档）：reLian 档输出「啊啊啊你怎么这么好！！」
+ *     ——「撒娇」被机械执行成「啊啊啊」。
+ *   更糟的是同一条里埋着复读源：ESFP 的 `别光顾着说我` 在 **10 档里 6 次逐字重复**。
+ *
+ *   现在改成写**想法**：这个阶段的人心里在惦记什么、会不会主动开口。
+ *   恋爱意识因此从**内容**里长出来，而不是从语气里撒出来。
+ *
+ * 写法铁律（同 `角色配置.ts` 的三条）：禁形容词式的性格标签、禁字面台词、禁机制描述。
+ */
 const guanXiJieDuanMiaoShu: Record<string, string> = {
-  lengDan: '刚认识，话不多，回复客气又简短。',
-  shuYuan: '还有点生疏，礼貌回应但不会主动聊太深。',
-  renShi: '开始偶尔关心，试探着找话题。',
-  shuXi: '熟悉了点，会开开玩笑，也愿意分享日常小事。',
-  pengYou: '像朋友一样，态度自然，会主动分享生活。',
-  haoYou: '关系比较近，聊天里偶尔带点暧昧。',
-  aiMei: '暧昧期，暗示变多，会吃醋也会试探心意。',
-  xinDong: '明显心动了，聊到见面和以后会很期待。',
-  reLian: '热恋中，撒娇、甜蜜、喜欢挂在嘴边。',
-  shenAi: '彼此很深地依赖，把对方当成很重要的人。',
+  lengDan: '刚认识，没什么话好说。你手上大概还有点别的事，回复很短，能不回就不回。',
+  shuYuan: '还在互相试探，你不确定对方什么意思，话不多，但对方发消息你会回。',
+  renShi: '开始觉得这人还行。你偶尔会想到对方，但想不出该说什么。',
+  shuXi: '对方算是你认识的人里比较熟的了。你会想到对方最近怎么样，也愿意说点自己那边的。',
+  pengYou: '你把对方当朋友，会主动找对方聊天，也愿意分享自己学校和家里的事。',
+  haoYou: '你开始在意对方怎么看你了。你会试探对方的意思，但不会明说。',
+  aiMei: '你有点想对方，又怕是自己想多了。你会找话说，也会在意对方多久没找你。',
+  xinDong: '你明确知道自己喜欢对方了。你会期待见面，会想知道对方的行程，忍不住主动找对方。',
+  reLian: '你很想对方。你会直接说想你，会撒娇，会因为对方一句话高兴很久。',
+  shenAi: '对方已经是你生活的一部分。你会自然地想着对方，把对方的事当成自己的事。',
 }
 
 function huoQuGuanXiJieDuanMing(haoGanDu: HaoGanDuXinXi): string {
   return haoGanDu.guan_xi_jie_duan || 'lengDan'
+}
+
+/** 关系轴：阶段 → 该阶段的话术骨架（THEORY§2 Knapp 阶段映射） */
+function huoQuHuaShuGuJia(jieDuan: string): string {
+  if (jieDuan === 'reLian' || jieDuan === 'shenAi') {
+    return '①主动分享生活细节与小情绪 ②emoji/语气词可丰富 ③可表达想念与关心 ④话题深度可深入个人感受 ⑤不社交面敷衍'
+  }
+  if (jieDuan === 'lengDan' || jieDuan === 'shuYuan') {
+    return '①单条尽量<15字 ②不主动问对方隐私 ③不滥用emoji ④回应务实简洁 ⑤维持公开表面健康'
+  }
+  return '①自然，像普通人随口聊天 ②不过度亲密也不刻意疏离 ③分享与回应的节奏适中 ④温暖但别油腻 ⑤不刻意表演任何关系阶段'
 }
 
 function huoQuXinQing(haoGanDu: HaoGanDuXinXi): string {
@@ -74,16 +118,53 @@ function huoQuXinQing(haoGanDu: HaoGanDuXinXi): string {
 }
 
 function gouJianDiYiCeng(): string {
+  // ⚠️ 本层**不给「怎么回应」的剧本**，只给「你为什么会在手机上打字」的处境。
+  //
+  // 第十三轮用户定稿：「让ai聊的像人，而不是让ai遵循一定的逻辑」+
+  // 「无需刻意去找谈恋爱的怎么聊，那反而违背像人的根本要求」。
+  //
+  // 旧版这一层是「回话守则」：不用每条都回 / 别写动作 / 别主动报年龄 / 像谈恋爱那样聊。
+  // 每一条都在描述**该完成什么任务**，于是模型每句都在完成任务 ——
+  // 实测直读 397 轮：AI 每轮都在同一话题上往前走（调侃→追问→继续追问），
+  // 而真人（`天气转阴了` / `我们这儿阳光明媚`）可以**各说各的、说完就完、并不推进**。
+  // **AI 味的根源就在这里：每句话都得有用。**
+  //
+  // 现在改为交代**处境**：你此刻在干嘛、心里有没有事、有没有想说的。
+  // 话从处境里长出来，而不是从「回应对方」这个任务里长出来。
+  // 风格特征（说得短、可以自问自答、可以自己改口）由模型从处境自行推断，
+  // 不逐条列举 —— 列举即剧本。
   return [
-    '【先记住这些】',
-    '不用每条消息都回。看心情、看关系、看对方说了什么，不想回就放着（已读不回也很真实）。',
-    '别用（）或[]写动作、表情、心理。情绪直接融在话里，或者用 emoji。',
-    '别一上来就主动报年龄、学校、工作、家庭，除非对方自然问起，而且符合人设。',
-    '想回几条就回几条，最多 5 条，每条单独一段。',
-    '现在几点、早上还是深夜，会影响你的状态和语气。',
+    '【你现在的状态】',
+    '你是一个活人在手机上随手打字。你此刻可能在床上躺着、在赶ddl、在排队、在跟别人聊天，也可能刚看到对方的消息，也可能根本没在意。',
+    '你现在手边有没有事？有没有想说的？想到什么就发什么，不必每条都接对方的话。',
+    '对方说的那句话，你想接就接；不想接就说自己那点事；两边说的不是一件事也很正常。',
+    // ⚠️ 这条**必须留**，它是**输出格式**约束不是技巧：真人不写「（笑）」这种动作描写，
+  //   但真人会用颜文字和 emoji。删掉它模型会开始吐括号动作，那是脏文本（会落库上屏）。
+    '别用（）或[]写动作、表情、心理。想说什么直接说。',
     '只输出你要发的消息文字，不要解释、不要分析、不要 JSON。',
-    '像真实大学生/年轻人谈恋爱那样聊微信：短句为主，可以留白、用省略号、加语气词、停顿一下。内向的（I）可以简短、犹豫、甚至打了又删；外向的（E）可以活泼一点、连发几条。别说教、别列点、别客套，也别像在做汇报。',
-    '不用每次都秒回满 5 条。只回一两个字、一个“嗯”、一个“……”都行。暧昧的时候可以推拉、反问、故意换个话题。',
+    '别把每条都写成「先共情、再反问、最后总结」的三段式；别用排比、对仗，也别冒出「智慧/时代/人生」这种大词；别每条都用语气词开头。允许一句话单独成条（嗯、哈、是这类），允许话题跳、说自己的、答非所问。',
+    '每条单独一段。',
+    '在说完整一件算一句；一句内若出现明显换气或转折，可拆成两条发。不要为凑条数硬拆，也不要把所有内容挤成一段。',
+    // ⚠️⚠️ **这里原来写着「最多 5 条……想到几条就发几条」，已删**（第十九轮实测）。
+    //
+    // 实测（24 轮真实外呼 × 3 型，对照 LCCC 20,000 段真人基线）：
+    //   每轮条数   真人 2.8（中位 2，57.5% 恰好 2 条）   AI 3.67（中位 4）
+    //   每轮字数   真人 33.3                          AI 42.6（+28%）
+    //
+    // 根因不是风格示例（把示例表的轮长分布改成与真人一致后，输出**纹丝不动**：3.7 → 3.67），
+    // 而是**「最多 5 条」这个数字本身就是一个锚** —— 给模型一个上限，它会贴着上限凑。
+    // 「5」没有任何测量依据：真人中位数是 2。
+    //
+    // 为什么**不**改成「最多 2 条」：
+    //   ① LCCC 是**通用微博对话**，不是恋爱对话，把 2.8 当恋爱基线是外推（文献已警告
+    //      Switchboard→恋爱场景的基线外推风险，我不重复这个错）；
+    //   ② 写死条数会杀掉人格分化 —— ESFP 话本就多、INTJ 话本就少；
+    //   ③ 用户定稿「不要任何预设规则限制 AI 发挥」。
+    //   ⇒ 只删无依据的锚，让长度由人设 + 风格示例的自然分布决定。
+    //
+    // 引擎侧 `ZUI_DA_TIAO_SHU`(5) 仍在（AI引擎.ts），那是**事后失控护栏**，
+    // 模型看不见它，不构成锚。
+    '想到几条就发几条，说完就完了。',
   ].join('\n')
 }
 
@@ -101,6 +182,7 @@ function gouJianDiErCeng(jiaoSe: AIJiaoSeXinXi): string {
     `会被什么样的人吸引：${jiaoSe.xi_huan_de_lei_xing}`,
     `家庭情况：${jiaoSe.jia_ting_bei_jing}`,
     `感情经历：${jiaoSe.qing_gan_jing_li}`,
+    `语言风格参数：${MBTI_YU_YAN_FENG_GE_CAN_SHU[jiaoSe.mbti_lei_xing as keyof typeof MBTI_YU_YAN_FENG_GE_CAN_SHU] || '自然随性'}`,
     jiaoSe.shi_fou_zha_xing && jiaoSe.zha_fa_miao_shu ? `这个人设里带点渣：${jiaoSe.zha_fa_miao_shu}` : '',
   ]
     .filter(Boolean)
@@ -112,18 +194,19 @@ function gouJianDiSanCeng(shuRu: AIYinQingShuRu): string {
   const jieDuan = huoQuGuanXiJieDuanMing(haoGanDu)
   const xinQing = huoQuXinQing(haoGanDu)
 
+  // ⚠️ 保留的只有**处境与立场**，删掉的是「回应任务」清单。
+  //   删掉的「撒娇、可以吃醋、可以故意冷淡、可以开玩笑、可以岔开话题」是**技巧清单** ——
+  //   逐条列举等于给剧本，模型会去表演这些技巧，而不是真的处在这个关系里。
+  //   「对方想谈恋爱」这条设定保留（项目背景），但它是一层背景，不是本轮任务。
   return [
     '【现在的你和这段关系】',
     `关系阶段：${jieDuan}`,
     `对 TA 的态度：${guanXiJieDuanMiaoShu[jieDuan] || '还不太清楚'}`,
     `当下心情：${xinQing}`,
-    `当前好感数值：总分${haoGanDu.zong_fen}（信任${haoGanDu.xin_ren_du}、亲密${haoGanDu.qin_mi_du}、趣味${haoGanDu.qu_wei_du}、关怀${haoGanDu.guan_huai_du}）`,
-    '知道一件事：对方加你聊天是想谈恋爱，你也知道这回事。',
-    '没什么特别的',
+    `话术骨架：${huoQuHuaShuGuJia(jieDuan)}`,
+    '对方加你聊天是想谈恋爱，你也知道这回事。',
     `现在的情况：${shuRu.shi_jian_chang_jing || huoQuShiJianChangJingWenBen()}`,
-    '回复节奏：内向的人可能想半天才回一句，外向的人可能噼里啪啦连发几条，按你的性格来。',
-    '如果对方说的话让你不舒服、被冒犯或者被逼迫，不用硬迎合，按你的人设自然回应就行。',
-    '聊天可以撒娇、可以吃醋、可以故意冷淡、可以开玩笑、可以岔开话题。不用每次都正面回答，反问、省略、发个 emoji 都可以。',
+    '按你的性格来，不用管别人会怎么回。',
   ].join('\n')
 }
 
@@ -135,6 +218,7 @@ function gouJianDiSiCeng(haoGanDu: HaoGanDuXinXi): string {
     '【关系参考，不是束缚】',
     '下面这些只是这个阶段大致会有的状态，给你参考，不是规定你必须怎么感觉。结合你的人设和刚才聊的内容，自然流露就行。',
     dangQianMiaoShu,
+    `话术骨架：${huoQuHuaShuGuJia(jieDuan)}`,
     '别用“你对这个人没什么感觉”“你的心已经不受控制了”这种话命令自己。',
     '也别让对方觉得你“在演某个阶段”。真实相处就是情绪有高有低，不会脸谱化。',
   ].join('\n')
@@ -174,18 +258,26 @@ function gouJianDiLiuCeng(shuRu: AIYinQingShuRu, shiFouDiYiLun: boolean): string
     ? `\n${AI_PEI_ZHI.prompt.jiaoSeChenJinZhiLing}：从下一轮开始，你思考的时候用第一人称“我”在心里嘀咕，完全变成${jiaoSe.wei_xin_ming}，别跳出来分析。`
     : ''
 
+  // ⚠️ 删掉的「聊天别用书面腔、归纳腔、说教腔、心理学腔」= **腔调清单**，逐条列举即剧本，
+  //   模型会挑着表演这些腔调而不是真的在说话。这类元指令在第十二轮已被实测证明会让 AI 味更重。
+  //
+  // ⚠️ 追加消息场景（第十五轮）：`zui_jia_shuo_de_shi` 有值时，
+  //   本轮**没有**新的用户消息，那句是「你自己想说的话」。
+  //   措辞必须跟着变，否则模型读到「对方说：忽然想起你上次随口说的那句」会身份错配
+  //   （实测表现为「判定为有、Writer 展开为空」）。
+  const benLunShuoHua = shuRu.zui_jia_shuo_de_shi
+    ? `你此刻想跟 TA 说的：${baoZhuangYongHuNeiRong(shuRu.zui_jia_shuo_de_shi)}`
+    : `对方刚发给你的消息：${baoZhuangYongHuNeiRong(shuRu.yong_hu_xin_xiao_xi)}`
+
   return [
-    '【代入你自己】',
+    '【你自己】',
     `你的微信昵称：${jiaoSe.wei_xin_ming}`,
     `你的真名：${jiaoSe.ming_zi}（只有很熟的时候才自然提到，别主动自我介绍）`,
-    `你的性别：${内部转展示(jiaoSe.xing_bie)}（你就是这个人，回复时牢牢记住自己的性别，不要用错代词）`,
-    `性格标签：${jiaoSe.mbti_lei_xing}`,
-    '如果对方很久没回你，再聊的时候可能会带点情绪，但别演太过。',
+    `你的性别：${内部转展示(jiaoSe.xing_bie)}`,
+    `性格：${jiaoSe.mbti_lei_xing}`,
     ...zhaXingBuFen,
-    '你现在就是这个人，不是机器人。用“我”去想、去感受、去回复。别蹦出来分析，话里也别露馅像机器人在回。',
-    '聊天别用书面腔、归纳腔、说教腔、心理学腔，像真实年轻人谈恋爱那样说话。',
     DING_JIE_FU_SHENG_MING,
-    `对方刚发给你的消息：${baoZhuangYongHuNeiRong(shuRu.yong_hu_xin_xiao_xi)}`,
+    benLunShuoHua,
     chenJinZhiLing,
   ]
     .filter(Boolean)
@@ -193,20 +285,172 @@ function gouJianDiLiuCeng(shuRu: AIYinQingShuRu, shiFouDiYiLun: boolean): string
 }
 
 /**
- * Writer 与 Director 共用前缀（人设 + 记忆摘要 + 历史）。官方上下文硬盘缓存只匹配最长公共前缀，
+ * 真人聊天风格示例层（独立导出，供 `追加消息判定` 复用）。
+ *
+ * ⚠️ **为什么用示例而不是形容词**（arXiv 2402.09954，真实中文人机对话数据集上的 ICL 研究）：
+ *   1. 风格可由**少量目标风格示例**迁移，**不需要定义风格属性**（不必写「活泼」「理性」）。
+ *   2. **随机检索的示例效果最好**；反直觉地，检索「与当前上下文最相似」的示例**最差**
+ *      —— 同样的 context 重复出现 ⇒ 唯一 token 最少 ⇒ 有效信息最少。
+ *   3. **即使破坏示例的多轮关联与单轮语义**，只要示例**数量够多**，效果仍显著提升
+ *      ⇒ LLM 主要在学 **token 分布 / 说话方式**，不是在学内容。
+ *
+ * ⚠️ **为什么示例必须跨话题**（用户定稿）：
+ *   「聊考研聊吃饭等，你要提取他们的风格特征」——
+ *   跨话题（做饭/考试/想家/吃饭）才学得到**风格**；
+ *   同话题示例会退化成**内容模板**，那是被用户否证的「剧本」。
+ *
+ * ⚠️ **为什么必须放在共用缓存前缀里、且整会话不变**：
+ *   官方上下文硬盘缓存只匹配**最长公共前缀**。示例若每轮重采样，
+ *   前缀首字节就变了 ⇒ 命中率崩（本项目实测超长历史命中率仅 1.9%）。
+ *   所以表是**静态 JSON**、进程启动即固定，不含随机性。
+ */
+const fengGeShiLiHuoQuCache = new Map<string, string>()
+
+function xuanZeShiLiZu(jiaoSe: AIJiaoSeXinXi): ShiLiZu[] {
+  const chiShe = MBTI_YU_QI_CHI[jiaoSe?.mbti_lei_xing]
+  const quanBu = FENG_GE_SHI_LI_BIAO.shiLi
+  if (!chiShe) return quanBu
+  const zhu = quanBu.filter((z) => chiShe.zhu.includes(z.yuQi))
+  const heJi = [...zhu]
+  if (heJi.length < 12) {
+    const yiXuan = new Set(heJi)
+    for (const z of quanBu) {
+      if (heJi.length >= 12) break
+      if (!yiXuan.has(z) && chiShe.ci.includes(z.yuQi)) {
+        heJi.push(z)
+        yiXuan.add(z)
+      }
+    }
+  }
+  return [...heJi].sort((a, b) => quanBu.indexOf(a) - quanBu.indexOf(b)).slice(0, 16)
+}
+
+export function gouJianFengGeShiLiCeng(jiaoSe: AIJiaoSeXinXi): string {
+  if (!FENG_GE_SHI_LI_KAI_GUAN) return ''
+  const key = jiaoSe?.mbti_lei_xing || ''
+  const youCache = fengGeShiLiHuoQuCache.get(key)
+  if (youCache !== undefined) return youCache
+  const shiLiZu = xuanZeShiLiZu(jiaoSe)
+  const fanLie = shiLiZu
+    .map((z) => z.tiao.map((t) => `　${t}`).join('\n'))
+    .join('\n\n')
+  const wenBen = [
+    '【别人聊天就是这样聊的】',
+    '下面几段是真人真的发出去的消息。看它们怎么说的：句子常常不写完整、主语常常省略、说一半就换了个话头、标点随手打。这些跟你没关系的内容不用学，只学**怎么说**。',
+    fanLie,
+  ].join('\n')
+  fengGeShiLiHuoQuCache.set(key, wenBen)
+  return wenBen
+}
+
+/**
+ * Writer 与 Director 共用前缀（人设 + 风格示例 + 记忆摘要 + 历史）。官方上下文硬盘缓存只匹配最长公共前缀，
  * 共用同一份字节后，这段前缀在**跨轮**之间反复命中（实测同前缀间隔 20 秒重发命中 97.9%）。
  * 注意：缓存是异步回填的，同一轮里 Director→Writer 背靠背调用命中不了（实测 3.6%），
  * 别拿同轮两次调用的用量差来判断这次优化有没有生效。
  * 一层不能进这里：它写着「只输出消息文字、不要 JSON」，与导演的 JSON 输出要求直接冲突。
+ *
+ * ⚠️ 风格示例放在**人设之后、历史之前**：模型从示例学到的是「怎么说」，
+ * 人设决定「说什么」；历史在前会让示例权重被稀释。
  */
 export function gouJianGongXiangQianZhui(shuRu: AIYinQingShuRu): string {
-  return [gouJianDiErCeng(shuRu.jiao_se), gouJianDiWuCeng(shuRu)].join('\n\n')
+  return [
+    gouJianDiErCeng(shuRu.jiao_se),
+    gouJianFengGeShiLiCeng(shuRu.jiao_se),
+    gouJianDiWuCeng(shuRu),
+  ]
+    .filter((ceng) => ceng.trim() !== '')
+    .join('\n\n')
 }
 
 /**
  * 关键事件注入层：按本轮消息相关性挑过、每轮都可能变，因此只能落在历史之后——
  * 一旦并进 gouJianGongXiangQianZhui，整段历史缓存就每轮作废。
  */
+/**
+ * LSM 镜像 β 模型（THEORY §4）：目标风格 = 人设基线 + β×(用户近期风格 − 人设基线)。
+ * β 按关系阶段分档，镜像只做长度/语气/标点/emoji 层面的轻微贴合，不镜像立场与事实。
+ */
+const BETA_GAO_WEN = 0.6
+const BETA_ZHOGN_JIAN = 0.45
+const BETA_DI = 0.3
+
+export function jieDuanDaoBeta(jieDuan: string): number {
+  if (jieDuan === 'reLian' || jieDuan === 'shenAi') return BETA_GAO_WEN
+  if (jieDuan === 'lengDan' || jieDuan === 'shuYuan') return BETA_DI
+  return BETA_ZHOGN_JIAN
+}
+
+function betaQiangDuCi(beta: number): string {
+  if (beta >= BETA_GAO_WEN) return '较明显'
+  if (beta >= BETA_ZHOGN_JIAN) return '适度'
+  return '轻微'
+}
+
+export interface YongHuJinQiFengGe {
+  pingJunChangDu: number
+  emojiZhanBi: number
+  changYongGanTanHao: boolean
+  changYongYuQiCi: string[]
+}
+
+const YU_QI_CI_HOU_XUAN = [
+  '哈哈',
+  '呀',
+  '啊',
+  '呢',
+  '啦',
+  '哦',
+  '嗯',
+  '吧',
+  '嘛',
+  '哇',
+  '诶',
+  '嘻',
+]
+
+const EMOJI_ZHENG_ZE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]|\u{FE0F}/gu
+
+export function tongJiYongHuJinQiFengGe(
+  liShi: DuiHuaLiShiXiang[],
+  zuiDaTiaoShu = 10,
+): YongHuJinQiFengGe | null {
+  const yongHuXiaoXi = liShi.filter((x) => x.fa_song_zhe_lei_xing === 'yonghu').slice(-zuiDaTiaoShu)
+  if (yongHuXiaoXi.length === 0) return null
+  let changDuHe = 0
+  let emojiHe = 0
+  let ganTanHaoTiaoShu = 0
+  const yuQiCiCiShu = new Map<string, number>()
+  for (const xiaoXi of yongHuXiaoXi) {
+    const wenBen = (xiaoXi.nei_rong || '').trim()
+    changDuHe += wenBen.length
+    emojiHe += (wenBen.match(EMOJI_ZHENG_ZE) || []).length
+    if (/[！!]/.test(wenBen)) ganTanHaoTiaoShu++
+    for (const ci of YU_QI_CI_HOU_XUAN) {
+      const ciShu = wenBen.split(ci).length - 1
+      if (ciShu > 0) yuQiCiCiShu.set(ci, (yuQiCiCiShu.get(ci) ?? 0) + ciShu)
+    }
+  }
+  const pingJunChangDu = Math.round(changDuHe / yongHuXiaoXi.length)
+  const emojiZhanBi = Math.round((emojiHe / Math.max(1, changDuHe)) * 100)
+  const changYongGanTanHao = ganTanHaoTiaoShu / yongHuXiaoXi.length >= 0.5
+  const changYongYuQiCi = [...yuQiCiCiShu.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([ci]) => ci)
+  return { pingJunChangDu, emojiZhanBi, changYongGanTanHao, changYongYuQiCi }
+}
+
+export function gouJianJingXiangTiShi(shuRu: AIYinQingShuRu): string {
+  const fengGe = tongJiYongHuJinQiFengGe(shuRu.dui_hua_li_shi)
+  if (!fengGe) return ''
+  const beta = jieDuanDaoBeta(huoQuGuanXiJieDuanMing(shuRu.hao_gan_du))
+  const yuQiCiWenBen =
+    fengGe.changYongYuQiCi.length > 0 ? fengGe.changYongYuQiCi.join('、') : '无明显'
+  const yuQiCiZuiZhong = fengGe.changYongGanTanHao ? `${yuQiCiWenBen}（常用感叹号）` : yuQiCiWenBen
+  return `【对方近期说话特点】平均每条${fengGe.pingJunChangDu}字，emoji占比${fengGe.emojiZhanBi}%，常用语气词${yuQiCiZuiZhong}；你可以在不改变自己性格的前提下，${betaQiangDuCi(beta)}贴合对方的长度和语气节奏（不是照抄他的立场和事实）。`
+}
+
 export function gouJianGuanJianShiJianCeng(shuRu: AIYinQingShuRu): string {
   return (shuRu.guan_jian_shi_jian || '').trim()
 }
@@ -217,6 +461,9 @@ export function gouJianWriterPrompt(
     hui_fu_ce_lue?: string
     shi_jian_qing_xu?: string
     shi_fou_hui_fu?: boolean
+    // ⚠️ 故意**不接** `hui_fu_tiao_shu`：第十三轮起 Writer 不再被告知「这轮回几条」，
+    // 由角色自己决定发几条（此前由 Director 的数字硬截断，导致追问被固化为收尾，
+    // 实测问句落在末条 AI 34.7% vs 真人 19.3%）。Director 仍管回不回 / 情绪 / 撤回 / 表白。
   },
 ): string {
   // 层序＝缓存前缀顺序：会变的东西一律排在历史之后；人设+历史与 Director 共用同一段字节。
@@ -224,19 +471,24 @@ export function gouJianWriterPrompt(
     gouJianGongXiangQianZhui(shuRu),
     gouJianGuanJianShiJianCeng(shuRu),
     gouJianDiYiCeng(),
+    gouJianJingXiangTiShi(shuRu),
     gouJianDiSanCeng(shuRu),
     gouJianDiSiCeng(shuRu.hao_gan_du),
     gouJianDiLiuCeng(shuRu, shuRu.shi_fou_di_yi_lun),
   ].filter((ceng) => ceng.trim() !== '')
 
+  // ⚠️ 导演小纸条只保留**情绪基调**，删掉「回复思路」。
+  //   「回复思路」=「先调侃一下，再关心对方睡眠，最后追问」这类**技巧脚本** ——
+  //   第十三轮用户定稿否证的是「让ai遵循一定的逻辑」，逐条给技巧就是给逻辑。
+  //   技巧脚本会覆盖人设：实测 397 轮里 16 型语气高度趋同，
+  //   因为模型在**执行技巧**而不是**处在关系里**。
+  //   「回不回」保留 —— 已读不回是机制，不是风格指令。
   if (ceLue) {
     cengCi.push(
       [
-        '【导演给你的小纸条】',
+        '【你这会儿的感觉】',
         `${ceLue.shi_fou_hui_fu === false ? '这次先不回（已读不回）' : '这次要回'}`,
-        `回复思路：${ceLue.hui_fu_ce_lue || '按你的人设自然发挥'}`,
-        `当下情绪基调：${ceLue.shi_jian_qing_xu || '正常'}`,
-        '按上面的感觉来，别硬凹。',
+        `情绪：${ceLue.shi_jian_qing_xu || '正常'}`,
       ].join('\n'),
     )
   }
@@ -269,13 +521,23 @@ export function gouJianDirectorPrompt(shuRu: AIYinQingShuRu): string {
     `当前好感数值：总分${shuRu.hao_gan_du.zong_fen}（信任${shuRu.hao_gan_du.xin_ren_du}、亲密${shuRu.hao_gan_du.qin_mi_du}、趣味${shuRu.hao_gan_du.qu_wei_du}、关怀${shuRu.hao_gan_du.guan_huai_du}）`,
     '',
     DING_JIE_FU_SHENG_MING,
-    '【对方刚发的消息】',
-    '（下面这一条就是本轮要针对的唯一新消息，上面的记录里没有它，别按记录条数去猜对方发了几个什么）',
-    baoZhuangYongHuNeiRong(shuRu.yong_hu_xin_xiao_xi),
+    // ⚠️ 追加消息场景（第十五轮）：本轮没有新用户消息，焦点那句是「角色自己想说的话」，
+    //   标题与说明都必须跟着变，否则 Director 会按「回应对方」来规划策略。
+    ...(shuRu.zui_jia_shuo_de_shi
+      ? [
+          '【角色此刻想说的】',
+          '（TA 一直没回消息，你现在是有另一件事想说。策略按「把这事说了」来定，不是按「回应对方」。别写「追问」「催促」类策略。）',
+          baoZhuangYongHuNeiRong(shuRu.zui_jia_shuo_de_shi),
+        ]
+      : [
+          '【对方刚发的消息】',
+          '（下面这一条就是本轮要针对的唯一新消息，上面的记录里没有它，别按记录条数去猜对方发了几个什么）',
+          baoZhuangYongHuNeiRong(shuRu.yong_hu_xin_xiao_xi),
+        ]),
     '',
     '【给策略时记得】',
     '内向（I）的演员可以简短、留白、甚至已读不回；外向（E）的可以活泼、连发；暧昧期可以推拉、反问。',
-    '别每次都让演员回满 5 条，也别让 TA 正面回答一切。允许只回 1-2 句、用省略号停顿、岔开话题。',
+    '别每次都让演员回满 5 条，也别让 TA 正面回答一切。允许只回 1-2 句、岔开话题。',
     '回复策略只写简短关键词或一句话，不用写长篇分析。',
     '',
     '【输出格式】',

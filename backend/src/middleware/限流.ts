@@ -11,6 +11,7 @@ import { CUO_WU_DAI_MA } from '../config/错误码注册表'
 // M3：限流计数统一存 Redis，多实例共享且重启不丢失
 function chuangJianRedisStore(): RedisStore {
   return new RedisStore({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- node-redis 的 RedisClient 未公开 call() 类型
     sendCommand: (...canShu: string[]) => (redis as any).call(...canShu),
   } as never)
 }

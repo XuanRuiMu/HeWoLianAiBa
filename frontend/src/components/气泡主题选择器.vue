@@ -85,12 +85,22 @@ function xuanZe(buWei: 'ziJi' | 'ai', yuShe: QiPaoYuShe): void {
 }
 .qipao-xuanXiang {
   padding: var(--jiange-xiao) calc(var(--jiange-12) + var(--jiange-2));
-  border-radius: 16px;
-  border: 2px solid transparent;
+  border-radius: 12px;
+  border: 1.5px solid transparent;
   font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease;
 }
+
+.qipao-xuanXiang:hover {
+  transform: translateY(-1px);
+}
+
 .qipao-xuanXiang-xuanZhong {
   border-color: currentcolor;
+  font-weight: 600;
 }
 </style>

@@ -198,10 +198,16 @@ export const 使用用户仓库 = defineStore('用户', () => {
     }
     const daiCi = kaiShiXinDai()
     恢复控制器 = new AbortController()
-    认证状态.value = '恢复中'
-    shenFenYiJiuXu.value = false
-    恢复错误.value = null
-    const task = jiaZaiYongHu(daiCi, token)
+    // FP-19：会移除挂载中页面的「恢复中」过渡会在第二次触发时把当前聊天页整页卸载重挂（管理员浮窗
+    // 随宿主组件销毁、草稿回灌、消息列表全量重载）。已认证态下的背景重核对按「安静刷新」走：
+    // 不写「恢复中」、不翻 shenFenYiJiuXu、失败保留现有认证态（baoLiuChengGong），三态门禁不动页。
+    const anJing = 认证状态.value === '已认证'
+    if (!anJing) {
+      认证状态.value = '恢复中'
+      shenFenYiJiuXu.value = false
+      恢复错误.value = null
+    }
+    const task = jiaZaiYongHu(daiCi, token, anJing)
     const taskDeng = task.then(() => undefined)
     恢复任务 = taskDeng
     void taskDeng.finally(() => {
@@ -278,7 +284,7 @@ export const 使用用户仓库 = defineStore('用户', () => {
     zhuangTai.value.cuo_wu_xin_xi = null
     认证错误.value = null
     try {
-      const jieGuo = await zhuCe(
+      await zhuCe(
         shouJiHao,
         yanZhengMa,
         yongHuMing,
@@ -288,22 +294,8 @@ export const 使用用户仓库 = defineStore('用户', () => {
         { signal: 恢复控制器.signal },
       )
       if (!isDaiCiYouXiao(daiCi)) return false
-      令牌.value = jieGuo.令牌
-      baoCunLingPai(jieGuo.令牌, false)
-      baoCunShuaXinLingPai(jieGuo.刷新令牌, jieGuo.刷新令牌ID, false)
-      dangQianYongHu.value = jieGuo.用户
-      sheZhiShenFenShiTu(jieGuo.用户)
-      shenFenYiJiuXu.value = false
-      认证状态.value = '恢复中'
-      const authenticated = await jiaZaiYongHu(daiCi, jieGuo.令牌, true)
-      if (!authenticated) {
-        if (shiFouMingMing(认证状态.value)) throw new Error(huoQuFanYi('renZheng', 'zhuCeShiBai'))
-        if (!isDaiCiYouXiao(daiCi)) return false
-        throw new Error(huoQuFanYi('renZheng', 'zhuCeShiBai'))
-      }
-      认证状态.value = '已认证'
-      shenFenYiJiuXu.value = true
-      if (!isDaiCiYouXiao(daiCi)) return false
+      // FP-07：注册成功不自动登录——响应里的令牌一律丢弃，不落盘不进状态；若链路中已存在登录态则当场清除
+      if (令牌.value || duQuLingPai()) 清空用户状态()
       track('zhuCeChengGong')
       return true
     } catch (cuoWu: unknown) {

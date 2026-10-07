@@ -1,0 +1,22 @@
+{
+  "url": "http://127.0.0.1:8937/positioner.html",
+  "width": 1920,
+  "height": 868,
+  "headless": false,
+  "maxMs": 420000,
+  "args": ["--no-sandbox", "--ignore-gpu-blocklist", "--enable-gpu-rasterization"],
+  "steps": [
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r1"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r2"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r3"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r4"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r5"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r6"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r7"},
+    {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/arrange4.js", "label": "arrange4"},
+    {"type": "wait", "ms": 2500},
+    {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/camRestore.js", "label": "camRestore"},
+    {"type": "wait", "ms": 800},
+    {"type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v11-摆位-第四轮.png"}
+  ]
+}

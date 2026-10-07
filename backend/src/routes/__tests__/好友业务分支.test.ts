@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, it, vi } from 'vitest'
 import express from 'express'
 import type { Express } from 'express'
 import request from 'supertest'
@@ -86,7 +86,7 @@ function 请(方法: 'get' | 'post' | 'put' | 'delete', 路径: string, 登录: 
 
 beforeEach(() => {
   vi.clearAllMocks()
-  假.db.query.mockImplementation(async (sql: string, params: unknown[] = []) => {
+  假.db.query.mockImplementation(async (sql: string, _params: unknown[] = []) => {
     const text = String(sql)
     if (text.includes('SELECT u."ID"')) return { rows: 假.搜索结果, rowCount: 假.搜索结果.length }
     if (text.includes('SELECT 1 FROM "好友申请" WHERE "状态" = \'accepted\'')) return { rows: 假.已好友 ? [{ '?column?': 1 }] : [], rowCount: 假.已好友 ? 1 : 0 }

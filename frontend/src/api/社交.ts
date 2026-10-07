@@ -64,6 +64,8 @@ export interface YongHuSheZhi {
   qian_ming_ke_jian_xing: string
   qian_ming_bai_ming_dan: string[]
   liao_tian_bei_jing: string
+  liao_tian_bei_jing_qian?: string
+  liao_tian_bei_jing_shen?: string
   qi_pao_zi_ji?: string
   qi_pao_ai?: string
   gong_kai_zhang_hao: boolean
@@ -185,8 +187,8 @@ export async function huoQuYongHuSheZhi(): Promise<YongHuSheZhi> {
   return xiangYing.data.shu_ju
 }
 
-export async function baoCunLiaoTianBeiJing(beiJing: string): Promise<void> {
-  await http.put('/用户设置/聊天背景', { beiJing })
+export async function baoCunLiaoTianBeiJing(beiJing: string, moShi?: 'qian' | 'shen'): Promise<void> {
+  await http.put('/用户设置/聊天背景', { beiJing, moShi })
 }
 
 export async function shangChuanLiaoTianBeiJing(wenJian: Blob): Promise<string> {

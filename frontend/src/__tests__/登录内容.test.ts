@@ -714,7 +714,7 @@ describe('登录内容组件', () => {
     expect(样式块(登录内容样式, '.biaodan-gundong')).toMatch(/overflow-x:\s*hidden/)
   })
 
-  it('FP-04a→FP-J2：认证滚动口双路隐藏原生条，自绘金色滑块挂外壳、静置淡出', () => {
+  it('FP-04a→FP-J2：认证滚动口双路隐藏原生条，自绘装饰（轨道+渐变滑块+上下箭头）挂外壳、需要时常显、不溢出时隐藏', () => {
     const 滚动口 = 样式块(登录内容样式, '.biaodan-gundong')
     expect(滚动口, 'FP-J2 主路隐藏原生条（scrollbar-width:none）丢失').toMatch(/scrollbar-width:\s*none/)
     expect(滚动口, 'FP-J2 回归：scrollbar-gutter 又长回来恒占槽位挤压正文').not.toMatch(/scrollbar-gutter/)
@@ -726,22 +726,31 @@ describe('登录内容组件', () => {
     expect(外壳).toMatch(/position:\s*relative/)
     expect(外壳).toMatch(/flex:\s*1/)
     expect(外壳).toMatch(/min-height:\s*0/)
+    const 装饰 = 样式块(登录内容样式, '.gundong-zhuangshi')
+    expect(装饰).toMatch(/position:\s*absolute/)
+    expect(装饰).toMatch(/right:\s*calc\(/)
+    expect(装饰).toMatch(/--renzheng-gundong-huakuai-you-ju/)
+    expect(装饰).toMatch(/width:\s*var\(--renzheng-gundong-huakuai-kuan\)/)
+    expect(装饰).toMatch(/pointer-events:\s*none/)
+    const 轨道 = 样式块(登录内容样式, '.gundong-guidao')
+    expect(轨道).toMatch(/position:\s*absolute/)
+    expect(轨道).toMatch(/top:\s*14px/)
+    expect(轨道).toMatch(/bottom:\s*14px/)
     const 滑块 = 样式块(登录内容样式, '.gundong-huakuai')
-    expect(滑块, '滑块掉回滚动坐标系（应绝对定位于外壳右缘）').toMatch(/position:\s*absolute/)
-    expect(滑块).toMatch(/right:\s*calc\(/)
-    expect(滑块).toMatch(/--renzheng-gundong-huakuai-you-ju/)
-    expect(滑块).toMatch(/width:\s*var\(--renzheng-gundong-huakuai-kuan\)/)
+    expect(滑块, '滑块掉回滚动坐标系（应绝对定位于轨道内）').toMatch(/position:\s*absolute/)
+    expect(滑块).toMatch(/width:\s*100%/)
     expect(滑块, '滑块应为渐变细条（非纯色）').toMatch(/background:\s*linear-gradient\(/)
-    expect(滑块, '滑块空闲态不透明，静置无法淡出').toMatch(/opacity:\s*0/)
     expect(滑块).toMatch(/pointer-events:\s*none/)
-    expect(样式块(登录内容样式, '.gundong-huakuai.xian-shi')).toMatch(/opacity:\s*1/)
-    expect(登录内容样式).toMatch(
-      /\.gundong-waike:hover\s+\.gundong-huakuai,\s*\.gundong-waike:focus-within\s+\.gundong-huakuai\s*\{[^}]*opacity:\s*1/,
-    )
-    expect(登录内容源码, '静置 800ms 摘 xian-shi 的淡出计时丢失').toMatch(
-      /HUA_KUAI_JING_ZHI_DAN_CHU_HAO_MIAO = 800/,
-    )
-    expect(登录内容源码).toMatch(/classList\.remove\('xian-shi'\)/)
+    expect(登录内容样式).not.toMatch(/\.gundong-huakuai\.xian-shi/)
+    expect(登录内容样式).not.toMatch(/\.gundong-waike:hover\s+\.gundong-huakuai/)
+    expect(登录内容源码, '静置淡出计时已删除').not.toMatch(/HUA_KUAI_JING_ZHI_DAN_CHU_HAO_MIAO/)
+    expect(登录内容源码).not.toMatch(/classList\.remove\('xian-shi'\)/)
+    const 上箭头 = 样式块(登录内容样式, '.gundong-jiantou-shang')
+    expect(上箭头).toMatch(/top:\s*0/)
+    expect(上箭头).toMatch(/rotate\(45deg\)/)
+    const 下箭头 = 样式块(登录内容样式, '.gundong-jiantou-xia')
+    expect(下箭头).toMatch(/bottom:\s*0/)
+    expect(下箭头).toMatch(/rotate\(-135deg\)/)
     // 裁决⑨-①：断言口径从「顺序」收口为「包含」——旧正则 `外壳开标签[\s\S]*滑块` 只证源码先后，
     // 滑块写在外壳闭标签之后仍能通过；这里按 div 深度配平抠出外壳本体，滑块必须落在壳内才成立。
     const 模板源 = 登录内容源码.slice(0, 登录内容源码.indexOf('<script'))
@@ -802,12 +811,12 @@ describe('登录内容组件', () => {
 
   it('FP-17b：浮标上浮越出字段盒时不被滚动口上沿裁切，且输入高度与字段坐标不变', () => {
     const 滚动口 = 样式块(登录内容样式, '.biaodan-gundong')
-    expect(滚动口).toMatch(/padding-top:\s*var\(--biaoqian-qin-ru\)/)
-    expect(滚动口).toMatch(/margin-top:\s*calc\(var\(--biaoqian-qin-ru\)\s*\*\s*-1\)/)
-    const 上补 = 求几何算式('var(--biaoqian-qin-ru)')
-    const 上移 = 求几何算式('calc(var(--biaoqian-qin-ru) * -1)')
-    expect(上补).toBe(5)
-    expect(上移).toBe(-5)
+    expect(滚动口).toMatch(/padding-top:\s*calc\(var\(--biaoqian-qin-ru\)\s*\+\s*var\(--jiange-2\)\)/)
+    expect(滚动口).toMatch(/margin-top:\s*calc\(var\(--biaoqian-qin-ru\)\s*\*\s*-1\s*\+\s*var\(--jiange-2\)\s*\*\s*-1\)/)
+    const 上补 = 求几何算式('calc(var(--biaoqian-qin-ru) + var(--jiange-2))')
+    const 上移 = 求几何算式('calc(var(--biaoqian-qin-ru) * -1 + var(--jiange-2) * -1)')
+    expect(上补).toBe(7)
+    expect(上移).toBe(-7)
     expect(上补 + 上移, '滚动口补偿不闭合会让整张表单跳动').toBe(0)
     expect(滚动口).toMatch(/overflow-y:\s*auto/)
 
@@ -901,5 +910,11 @@ describe('登录内容组件', () => {
     expect(认证布局样式).not.toMatch(/rgba\(255,\s*255,\s*255,\s*0\.3\)/)
     expect(认证布局样式).not.toMatch(/::-webkit-scrollbar\s*\{\s*width:\s*4px/)
     expect(认证布局源码).toMatch(/\.yemian-buju\.quanping-moshi\s*\{[\s\S]*?overflow-y:\s*auto/)
+  })
+
+  it('FP-14 出生日期：宿主 .fenlie-shuru 在组件根上的整体底线被剥掉，大横线不再出现', () => {
+    expect(登录内容样式).toMatch(
+      /\.shuru-zu\s*>\s*\.chushengriqi\s*\{[^}]*border-bottom-width:\s*0/,
+    )
   })
 })

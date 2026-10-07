@@ -49,12 +49,24 @@ const 慢热上下文: CanShuShangXiaWen = {
 
 describe('FP-14 采样参数只在该生效的模式下下发（官方：思考模式 temperature 不生效、非思考模式 top_p 恒为 1.0）', () => {
   it('思考场景不下发温度，且 top_p 不低于官方下限 0.95', () => {
-    for (const 键 of ['writer', 'director', 'jiYiZhaiYao', 'junShiQiuZhu', 'kaiChangBai', 'fuPanShengCheng'] as const) {
+    for (const 键 of ['director', 'jiYiZhaiYao', 'junShiQiuZhu', 'kaiChangBai', 'fuPanShengCheng'] as const) {
       const 参数 = jiSuanAIChanShu(键, 慢热上下文)
       expect(参数.wenDu, 键).toBeUndefined()
       expect(参数.top_p, 键).toBeGreaterThanOrEqual(0.95)
       expect(参数.siKaoMoShi, 键).toBe('enabled')
     }
+  })
+
+  it('writer 已转非思考模式：只配 wenDu≈1.0，无 top_p/reasoningEffort 残留', () => {
+    expect(AI_PEI_ZHI.moXing.writer.siKaoMoShi).toBe('disabled')
+    expect(AI_PEI_ZHI.moXing.writer.top_p).toBeUndefined()
+    expect(AI_PEI_ZHI.moXing.writer.reasoningEffort).toBeUndefined()
+    const buZhuang = jiSuanAIChanShu('writer')
+    expect(buZhuang.top_p).toBeUndefined()
+    expect(buZhuang.reasoningEffort).toBeUndefined()
+    expect(buZhuang.wenDu).toBeCloseTo(1.0, 2)
+    // 人设/关系/场景修正仍在 1.0 基座上生效（E +0.1 等），且不超调
+    expect(jiSuanAIChanShu('writer', 慢热上下文).wenDu).toBeGreaterThan(0.5)
   })
 
   it('非思考场景下发温度但不下发 top_p，人设/关系/场景修正仍生效', () => {

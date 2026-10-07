@@ -337,6 +337,13 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       const zhanWeiSuoYin = lieBiao.findIndex((m) => m.ke_hu_duan_id === xiaoXi.ke_hu_duan_id)
       if (zhanWeiSuoYin !== -1) {
         if (lieBiao[zhanWeiSuoYin].id === xiaoXi.id) return false
+        // FP-17：同一把幂等键可能有两颗重试气泡（失败气泡 + 待发整条重发）先后收到同一条服务端行；
+        // 占位就地替换也必须先按服务端 id 查重，否则同一条消息会在列表里渲染两遍。
+        const yiCunZaiSuoYin = lieBiao.findIndex((m) => m.id === xiaoXi.id)
+        if (yiCunZaiSuoYin !== -1 && yiCunZaiSuoYin !== zhanWeiSuoYin) {
+          lieBiao.splice(zhanWeiSuoYin, 1)
+          return true
+        }
         lieBiao.splice(zhanWeiSuoYin, 1, xiaoXi)
         return true
       }
@@ -1023,6 +1030,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   async function faSongTuWenXiaoXi(
     daiFaKuai: DaiFaKuai[],
     yinYongXiaoXiId?: string | null,
+    miDengJian?: string | null,
   ): Promise<消息 | null> {
     if (!dangQianHuiHuaId.value || daiFaKuai.length === 0) return null
     qingChuCuoWu()
@@ -1113,6 +1121,9 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       ben_di_yu_lan_url: shouTuKuai?.mei_ti_url ?? null,
       ...(beiYongId ? { bei_yong_xiao_xi_id: beiYongId } : {}),
     }
+    // FP-17：页面把「当前待发构成」的稳定键钉进来 ⇒ 失败后整条重发复用同一把键，
+    // 服务端唯一约束把「响应超时但其实已落库」的重放压成一条；构成变化由页面侧换新键。
+    if (miDengJian) linShiXiaoXi.mi_deng_jian = miDengJian
     const benCiMiDengJian = queDingMiDengJian(linShiXiaoXi)
     jiaRuXiaoXi(linShiXiaoXi)
 

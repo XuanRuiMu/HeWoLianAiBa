@@ -78,16 +78,34 @@ describe('用户 store', () => {
     expect(yongHuCangKu.令牌).toBe('test-jwt-token')
   })
 
-  it('注册成功：写入 sessionStorage 令牌并设置用户状态', async () => {
+  it('注册成功：不签收令牌、不落盘登录态、不进入已认证态', async () => {
     vi.mocked(zhuCe).mockResolvedValue({ ...moNiDengLuXiangYing, 新用户: true })
-    vi.mocked(huoQuYongHuXinXi).mockResolvedValue(moNiYongHu)
 
     const yongHuCangKu = 使用用户仓库()
-    await yongHuCangKu.zhiXingZhuCe('13800138000', '123456', '测试用户', 'password123', true)
+    const jieGuo = await yongHuCangKu.zhiXingZhuCe('13800138000', '123456', '测试用户', 'password123', true, '2000-01-01')
 
+    expect(jieGuo).toBe(true)
     expect(localStorage.getItem(令牌键)).toBeNull()
+    expect(sessionStorage.getItem(令牌键)).toBeNull()
+    expect(yongHuCangKu.令牌).toBeNull()
+    expect(yongHuCangKu.dangQianYongHu).toBeNull()
+    expect(yongHuCangKu.认证状态).not.toBe('已认证')
+    expect(huoQuYongHuXinXi).not.toHaveBeenCalled()
+  })
+
+  it('注册成功：链路中已存在登录态时当场清除', async () => {
+    vi.mocked(zhuCe).mockResolvedValue({ ...moNiDengLuXiangYing, 新用户: true })
+
+    const yongHuCangKu = 使用用户仓库()
+    yongHuCangKu.sheZhiLingPai('test-jwt-token')
     expect(sessionStorage.getItem(令牌键)).toBe('test-jwt-token')
-    expect(yongHuCangKu.dangQianYongHu?.yong_hu_ming).toBe('测试用户')
+
+    await yongHuCangKu.zhiXingZhuCe('13800138000', '123456', '测试用户', 'password123', true, '2000-01-01')
+
+    expect(sessionStorage.getItem(令牌键)).toBeNull()
+    expect(yongHuCangKu.令牌).toBeNull()
+    expect(yongHuCangKu.dangQianYongHu).toBeNull()
+    expect(yongHuCangKu.认证状态).toBe('匿名')
   })
 
   it('登录失败：显示翻译文件错误消息', async () => {

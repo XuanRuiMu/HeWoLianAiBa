@@ -6,6 +6,7 @@
         'zhujiemian-moshi': shiZhuJieMian,
         'quanping-moshi': shiQuanPing,
         'denglu-moshi': shiDengLu,
+        'zhanghaoanquan-moshi': route.name === 'zhangHaoAnQuan',
       }"
     >
       <div v-if="keYiChongShiHuiFu">
@@ -18,7 +19,7 @@
         <Transition :name="qieHuanDongHua || 'yemian-nei-guodu'" mode="out-in">
           <component
             :is="Component"
-            v-if="Component && keXuJinLuYou"
+            v-if="Component && keXuJinLuYou && !dengLuTuiChangZhong"
             :key="dangQianLuYou.path"
             @deng-lu-cheng-gong="chuLiDengLuChengGong"
             @geng-xin-moshi="gengXinMoShi"
@@ -65,6 +66,8 @@ const huiFuQianTaiCuoWu = computed(
 const keXuJinLuYou = computed(
   () => !xuYaoDengLu.value || shiDengLu.value || user.认证状态 === '已认证',
 )
+const dengLuTuiChangZhong = ref(false)
+provide('dengLuTuiChangZhong', dengLuTuiChangZhong)
 const shiQuanPing = computed(() => {
   const quanPingLuYou = ['liaoTian', 'tianJiaWeiXin', 'guoWangZhanJi']
   return quanPingLuYou.includes(route.name as string)
@@ -82,12 +85,20 @@ let qieHuanJiShi: ReturnType<typeof setTimeout> | null = null
 
 function chuLiDengLuChengGong() {
   qieHuanDongHua.value = 'huadong-qiehuan'
-  if (qieHuanJiShi !== null) clearTimeout(qieHuanJiShi)
+  if (qieHuanJiShi !== null) {
+    clearTimeout(qieHuanJiShi)
+    qieHuanJiShi = null
+  }
+}
+
+watch(dengLuTuiChangZhong, (zhong) => {
+  if (zhong) return
+  if (qieHuanDongHua.value !== 'huadong-qiehuan') return
   qieHuanJiShi = setTimeout(() => {
     qieHuanJiShi = null
     qieHuanDongHua.value = ''
   }, 1200)
-}
+})
 
 watch(
   [() => user.认证状态, () => route.name],
@@ -187,6 +198,21 @@ onBeforeUnmount(() => {
 
 .yemian-buju.zhujiemian-moshi {
   padding: 0;
+}
+
+/* 账号与安全页内 .biao-qian-lan 为 position:sticky;top:0：滚动容器带 padding-top 时，
+   sticky 按容器内容盒顶对齐，吸附后顶部会露出一段可穿透内容的空隙（已用浏览器实测确认）。
+   故本页滚动容器顶部 padding 归零，初始上间距改由页面根节点自身承担。 */
+.yemian-buju.zhanghaoanquan-moshi,
+.yemian-buju.zhanghaoanquan-moshi:not(.zhujiemian-moshi):not(.quanping-moshi) {
+  padding-top: 0;
+}
+
+@media (max-width: 767px) {
+  .yemian-buju.zhanghaoanquan-moshi,
+  .yemian-buju.zhanghaoanquan-moshi:not(.zhujiemian-moshi):not(.quanping-moshi) {
+    padding-top: 0;
+  }
 }
 
 .yemian-buju.quanping-moshi {

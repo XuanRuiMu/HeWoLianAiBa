@@ -122,6 +122,19 @@ jobs:
       - name: Enable Redis authentication
         run: docker exec "${{ job.services.redis.id }}" redis-cli CONFIG SET requirepass "$REDIS_PASSWORD"
 
+# ⚠️ 顺序至关重要：typecheck 必须在 Lint **之前**。
+      #    GitHub Actions 在第一个非零 `run:` 步骤就终止 job——若 Lint 先红，
+      #    下面的 typecheck 永远不会执行，护栏形同虚设（第五轮审查 P0-1 实测）。
+      #    护栏必须无条件可达，lint 债务另行处理。
+      - name: Typecheck (主配置)
+        run: npm run typecheck
+
+      - name: Typecheck (度量链)
+        run: npm run typecheck:度量
+
+      # ⚠️ 主配置 tsc 排除了 `src/**/__tests__`（既有 Express mock 类型债），
+      #    度量与验收链的测试必须另有类型保护——返回体缺字段（如 `AIYinQingSuChu.yuan_wen`）
+      #    这类 P0 只能被 tsc 抓到，且曾连续三轮骗过 `tsc + vitest` 全绿。
       - name: Lint
         run: npm run lint
 

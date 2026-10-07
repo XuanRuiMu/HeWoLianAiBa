@@ -1,0 +1,31 @@
+{
+  "url": "http://127.0.0.1:8937/positioner.html",
+  "width": 1920,
+  "height": 868,
+  "headless": false,
+  "maxMs": 590000,
+  "args": ["--no-sandbox", "--ignore-gpu-blocklist", "--enable-gpu-rasterization"],
+  "steps": [
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r1"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r2"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r3"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r4"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r5"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r6"},
+    {"type": "wait", "ms": 10000},
+    {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/m11-def.js", "label": "def"},
+    {"type": "eval", "js": "window.__M11.waitAutoLoadThenClear()", "label": "settle"},
+    {"type": "eval", "js": "window.__M11.variant({ tree: { x: -0.5, z: -7.0, rotY: 280, s: 0.6 } })", "label": "t1"},
+    {"type": "wait", "ms": 6000},
+    {"type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m12-1-t05-70.png"},
+    {"type": "eval", "js": "window.__M11.variant({ tree: { x: -1.2, z: -7.2, rotY: 280, s: 0.65 } })", "label": "t2"},
+    {"type": "wait", "ms": 6000},
+    {"type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m12-2-t12-72.png"},
+    {"type": "eval", "js": "window.__M11.variant({ tree: { x: -2.0, z: -7.0, rotY: 280, s: 0.7 } })", "label": "t3"},
+    {"type": "wait", "ms": 6000},
+    {"type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m12-3-t20-70.png"},
+    {"type": "eval", "js": "window.__M11.variant({ tree: { x: -1.2, z: -7.2, rotY: 300, s: 0.65 } })", "label": "t4"},
+    {"type": "wait", "ms": 6000},
+    {"type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m12-4-t12-72-r300.png"}
+  ]
+}

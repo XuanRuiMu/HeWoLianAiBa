@@ -1,0 +1,124 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "islandsDeep": {
+  "totalInIslands": 114,
+  "upper": [
+   {
+    "name": "Butterfly_1_mesh",
+    "type": "Mesh",
+    "depth": 2,
+    "screenY": 5,
+    "screenX": -874,
+    "worldY": 1.82,
+    "worldX": -0.53,
+    "worldZ": -5.78,
+    "visible": true,
+    "isMesh": true,
+    "isPoints": false,
+    "parent": "Butterfly_1"
+   },
+   {
+    "name": "Butterfly_8_mesh",
+    "type": "Mesh",
+    "depth": 2,
+    "screenY": 69,
+    "screenX": 1669,
+    "worldY": 1.53,
+    "worldX": 5.76,
+    "worldZ": -0.42,
+    "visible": true,
+    "isMesh": true,
+    "isPoints": false,
+    "parent": "Butterfly_8"
+   },
+   {
+    "name": "Butterfly_9_mesh",
+    "type": "Mesh",
+    "depth": 2,
+    "screenY": 97,
+    "screenX": -4603,
+    "worldY": 1.47,
+    "worldX": -5.12,
+    "worldZ": -6.89,
+    "visible": true,
+    "isMesh": true,
+    "isPoints": false,
+    "parent": "Butterfly_9"
+   },
+   {
+    "name": "Butterfly_4_mesh",
+    "type": "Mesh",
+    "depth": 2,
+    "screenY": 105,
+    "screenX": -900,
+    "worldY": 1.5,
+    "worldX": -1.73,
+    "worldZ": -7.23,
+    "visible": true,
+    "isMesh": true,
+    "isPoints": false,
+    "parent": "Butterfly_4"
+   },
+   {
+    "name": "Butterfly_6_mesh",
+    "type": "Mesh",
+    "depth": 2,
+    "screenY": 160,
+    "screenX": 431,
+    "worldY": 1.66,
+    "worldX": 3.71,
+    "worldZ": 6.73,
+    "visible": true,
+    "isMesh": true,
+    "isPoints": false,
+    "parent": "Butterfly_6"
+   },
+   {
+    "name": "Butterfly_3_mesh",
+    "type": "Mesh",
+    "depth": 2,
+    "screenY": 171,
+    "screenX": -956,
+    "worldY": 1.24,
+    "worldX": -1.58,
+    "worldZ": -6.67,
+    "visible": true,
+    "isMesh": true,
+    "isPoints": false,
+    "parent": "Butterfly_3"
+   },
+   {
+    "name": "Butterfly_2_mesh",
+    "type": "Mesh",
+    "depth": 2,
+    "screenY": 207,
+    "screenX": 325,
+    "worldY": 0.68,
+    "worldX": 2.23,
+    "worldZ": -9.17,
+    "visible": true,
+    "isMesh": true,
+    "isPoints": false,
+    "parent": "Butterfly_2"
+   },
+   {
+    "name": "Butterfly_0_mesh",
+    "type": "Mesh",
+    "depth": 2,
+    "screenY": 210,
+    "screenX": -3862,
+    "worldY": 1.31,
+    "worldX": -1.74,
+    "worldZ": -4.18,
+    "visible": true,
+    "isMesh": true,
+    "isPoints": false,
+    "parent": "Butterfly_0"
+   }
+  ]
+ }
+}

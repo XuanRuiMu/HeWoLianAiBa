@@ -386,8 +386,12 @@
            - 鼠标视差：iframe 设了 pointer-events:none 且压在应用内容之下，收不到鼠标事件；
              故由 App.vue 转发归一化光标到本页，本页用 rAF 轻推 CameraGroup 旋转，形成"跟随鼠标微晃"。 */
         (function () {
-            var DAY = ['#d9a441', '#9c6b1e', '#b08746', '#8a6a38'];        // 白天金草 L,D,dL,dD
-            var NIGHT = ['#b07be0', '#7a3fa0', '#5e2d8a', '#2e1450'];      // 夜晚紫草（深色模式=全紫草+紫地）
+            var DAY = ['#5a8a3c', '#3c6626', '#7a6a42', '#5c4d33'];          // 白天草绿
+            // 第15轮（用户选定 35~65 度、要求画面清晰有辨识度）：
+            // 夜晚草色由"荧光紫"改为"月夜草绿"。原 NIGHT 全紫（#b07be0…）是
+            // 上一任为了压住草地紫色斑纹而注入的，导致草看起来像紫色塑料块。
+            // 改绿后草读作真草，紫色只保留在远处地形的自然色里。
+            var NIGHT = ['#3e6b2c', '#264a1c', '#4a4436', '#332f26'];        // 夜晚月夜草绿
             var themeOverride = null;
 
             function parentTheme() {
@@ -654,13 +658,99 @@
             // WU_POS：落点世界坐标（相机左前方开阔草坪，射线实测地面 y≈-0.06，+0.28 贴地不悬空）。
             // 第 7 轮用户裁决：拉远视角、人调小、身体曲线贴合草地，真躺上去看不出来。
             // 机位拉远抬高（俯角更大），2D 趴姿在俯视下投影完整，倾角放平贴坡。
-            var WU_SCALE = 0.95;
-            var WU_TILT = 0.62;
-            // 落点：发光草丘顶面（画面中左）。y=0.48：略高于草面，草压边缘不埋全身
-            var WU_POS = [1.95, 0.48, 3.75];
-            // 取景机位：比 scout-08 略远略高，人物仍可辨、场景完整
-            var SCOUT_POS = [3.8, 3.0, 9.0];
-            var SCOUT_LOOK = [1.6, 0.15, 3.4];
+            // 第 8 轮用户裁决：原图长宽比 443:312=1.42 是定稿，禁止任何拉伸压缩；
+            // 人已经变形 = 倾角把平面压扁。原图本身是趴姿画法，故平面必须正对镜头
+            // （倾角=相机俯角，≈1.15 弧度），画内姿态自然读作"趴着"。
+            // 第 11 轮：视角拉近、人相对环境改小（仍锁 1.42 比例）
+            var WU_SCALE = 0.72;
+            var WU_TILT = 1.15;
+            // 第 13 轮（用户裁决：只解决"人物飘起来"）：此前人物是一张近乎竖立的卡片
+            // （tilt=1.15 弧度≈66°）且悬在地面上方约 1 米，任何角度都像"贴纸飘在空中"。
+            // 改为真正平铺：法线对齐地面法线、中心贴地，再用俯角机位读取。
+            // WU_FLAT=true 时 WU_TILT 失效；WU_YAW 调面内头脚朝向；WU_SINK 为贴地下沉量。
+            var WU_FLAT = true;
+            // 第 13 轮（用户裁决）：每个视角都不许改原图比例 → 平面始终正对相机（优先于平铺）。
+            // 第14轮（用户裁决）：改为"贴地趴姿优先"——人物必须趴在地面上，不能悬空。
+            // 取舍：WU_FACE 负责零变形（用户最高红线，禁压缩），WU_FLAT 负责贴地读法。
+            // 二者在坡地上会互相拉扯：正对相机的平面近乎竖直，必然离地。
+            // 折中：仍走 WU_FACE 保证比例，但把落点下压到"底边压在地面"，
+            //       并缩小贴地抬高量，让人物读作趴在草上而非浮在草上。
+            var WU_FACE = true;
+            var WU_YAW = 0.0;
+            var WU_SINK = 0.03;
+            // 落点：第 14 轮真机实测 + 机位搜索选定。
+            // 走过三个落点，最终选 (2, ·, -1.5)：
+            //  ① 旧点 (3.49, ·, 3.76)：岛缘裸岩，草虽在附近但脚下一片空地。
+            //  ② 试 (-0.4, ·, 0.8)：地面 y=-0.901 的凹地，人物 Z 向投影退化成一条线，
+            //     画面上看不到，比例也漂到 1.4322 超红线——已否决。
+            //  ④ 现点 (-1.5, ·, -1)：按"人物包围盒头端不插坡"判据重选。
+            //     第14轮真机特写发现 ③ 处只有上半身露出——平面近乎竖直（上方向朝 -Z），
+            //     而 -Z 侧是上坡草坡，头部被草与地形吃掉。
+            //     现点实测：头端净空 0.42m、脚端 0.66m、脚下 1.6m 高差 0.489m，
+            //     头/脚两端都完整可见，不插坡。
+            // y 不硬编码，由 groundYAt() 射线实测填入（见 placeFacing）。
+            var WU_POS = [-1.5, 0, -1];
+            // 第 12 轮：空天约 1/4，人居中完整；黑石已清
+            // 第 13 轮：用户硬约束——不得改变原图长宽比/朝向（否则"吴昊阳就不是吴昊阳"）。
+            // 推导：① 平铺图只在"相机垂直于图片平面"时零变形（俯角越大越不变形）；
+            // ② 机位必须在 +Z 侧，图的上方向才映射到画面上（换到 +X 侧整张图会在画面里转 90°）。
+            // 实测：俯角 ≥60° 时岛面贴图（大尺度紫色斑纹）会占满画面、人物被淹没；
+            // 故取俯角约 52°、距人约 5.3m——纵向压缩约 21%，是"变形"与"画面可读"之间目前的折中。
+            // ⚠️ 该折中未获用户认可，见证据文档第八/九节的方案讨论。
+            // 机位与落点同源：俯角扫描时由 __labSetPitch 按 WU_POS 重算，
+            // 这里的初值只在扫描前生效一次，保持与落点一致以免首帧构图错位。
+            var SCOUT_POS = [-1.5, 4.20, 4.27];
+            var SCOUT_LOOK = [-1.5, 0, -1];
+            // 距人固定距离：俯角扫描时只改角度、不改距离，人物画面尺寸恒定，
+            // 唯一变量就是俯角（否则远近和角度两个变量混在一起，图没法比）。
+            var WU_DIST = 5.2733;
+            // 第14轮（用户裁决）：扫俯角 5°~85°，每 5° 一张，人物长宽比锁死不动。
+            // 球坐标固定 +Z 方位（换到 +X 侧整张图会在画面里转 90°，违反硬约束）。
+            // 第14轮追加：机位"注视点"可前移（LOOK_AHEAD）——把镜头视线压向人物身后的
+            // 近处草地，让远处黑斑落在画面上缘之外。人物在画面中的尺寸与位置因此不变
+            // （视角轴仍然过人物中心），只是背景取景窗口前移。
+            var LOOK_AHEAD = 0;
+            window.__labSetPitch = function (du, qianMianMi) {
+                var th = du * Math.PI / 180;
+                var g = (window.__labFaceY != null) ? window.__labFaceY : WU_POS[1];
+                SCOUT_POS[0] = WU_POS[0];
+                SCOUT_POS[1] = g + WU_DIST * Math.sin(th);
+                SCOUT_POS[2] = WU_POS[2] + WU_DIST * Math.cos(th);
+                var ahead = (qianMianMi != null) ? qianMianMi : LOOK_AHEAD;
+                SCOUT_LOOK[0] = WU_POS[0];
+                SCOUT_LOOK[1] = g;
+                // 视线沿"相机→人物"方向再往前推 ahead 米（背离相机 = 朝人物身后）
+                var dx = WU_POS[0] - SCOUT_POS[0], dz = WU_POS[2] - SCOUT_POS[2];
+                var hl = Math.sqrt(dx * dx + dz * dz) || 1;
+                SCOUT_LOOK[2] = WU_POS[2] + (dz / hl) * ahead;
+                SCOUT_LOOK[0] = WU_POS[0] + (dx / hl) * ahead;
+                return { du: du, ahead: ahead, pos: SCOUT_POS.slice(), look: SCOUT_LOOK.slice() };
+            };
+            // 人物投影长宽比自检：把包围盒 8 角投影到像素空间量比值，
+            // 必须是 443:312=1.4199（±2%）。这是"没变形"的硬证据，每张图都要报。
+            window.__labAspect = function () {
+                try {
+                    var m = window.__labWuMesh; if (!m) return null;
+                    var cam = window.__experience.engine.camera.instance;
+                    cam.updateMatrixWorld(true); cam.updateProjectionMatrix();
+                    m.updateMatrixWorld(true);
+                    var g = m.geometry;
+                    if (!g.boundingBox) g.computeBoundingBox();
+                    var bb = g.boundingBox;
+                    var V3 = m.position.constructor;
+                    var xs = [], ys = [];
+                    for (var i = 0; i < 8; i++) {
+                        var v = new V3(i & 1 ? bb.max.x : bb.min.x, i & 2 ? bb.max.y : bb.min.y, i & 4 ? bb.max.z : bb.min.z);
+                        v.applyMatrix4(m.matrixWorld).project(cam);
+                        // NDC→像素，抵消画布各向异性，量到的才是真实画布长宽比
+                        xs.push((v.x * 0.5 + 0.5) * window.innerWidth);
+                        ys.push((-v.y * 0.5 + 0.5) * window.innerHeight);
+                    }
+                    var w = Math.max.apply(null, xs) - Math.min.apply(null, xs);
+                    var h = Math.max.apply(null, ys) - Math.min.apply(null, ys);
+                    return { pxW: Math.round(w), pxH: Math.round(h), ratio: +(w / h).toFixed(4), target: 1.4199 };
+                } catch (eA) { return { err: String(eA).slice(0, 200) }; }
+            };
             function lockScoutCamera() {
                 try {
                     var e = window.__experience;
@@ -678,6 +768,29 @@
                     cam.updateMatrixWorld(true);
                 } catch (eCam) {}
             }
+            // 第 13 轮根因修复：引擎每帧在渲染前用自带相机控制器覆盖相机朝向，
+            // 导致 lockScoutCamera 只有"位置"生效、"朝向"被覆盖——此前所有取景
+            // 参数（SCOUT_POS/LOOK）都建立在"朝向可控"的错误前提上，实际构图是偶发的。
+            // 修法：包裹真实渲染器，在真正绘制前一刻强制写入机位，使取景完全可控。
+            function enforceCameraOnRender() {
+                var e = window.__experience;
+                var R = e && e.engine && e.engine.renderer && e.engine.renderer.instance;
+                if (!R || R.__labCamPatched) return;
+                var orig = R.render.bind(R);
+                R.render = function () {
+                    try {
+                        var cam = arguments[1];
+                        if (cam && cam.isCamera && !window.__labCamFree) {
+                            cam.position.set(SCOUT_POS[0], SCOUT_POS[1], SCOUT_POS[2]);
+                            cam.up.set(0, 1, 0);
+                            cam.lookAt(SCOUT_LOOK[0], SCOUT_LOOK[1], SCOUT_LOOK[2]);
+                            cam.updateMatrixWorld(true);
+                        }
+                    } catch (z) {}
+                    return orig.apply(null, arguments);
+                };
+                R.__labCamPatched = true;
+            }
             // 让人影正面朝向相机，同时绕"相机水平方向"后仰 WU_TILT
             // （0 = 平铺被相机压扁，PI/2 = 竖直立牌，两者都不合格，取中间值）。
             function faceCamera(mesh, tilt) {
@@ -688,6 +801,82 @@
                 var nx = dx / hl * Math.sin(tilt), nz = dz / hl * Math.sin(tilt), ny = Math.cos(tilt);
                 mesh.up.set(0, 1, 0);
                 mesh.lookAt(p.x + nx, p.y + ny, p.z + nz);
+            }
+            // 向下打射线取地面高度（只打地形层；草不参与射线）
+            function groundYAt(x, z) {
+                try {
+                    var e = window.__experience;
+                    var sc = e.engine.scene;
+                    var rcw = e.engine.raycaster;
+                    var rc = rcw.raycaster || rcw;
+                    var V3 = e.engine.camera.instance.position.constructor;
+                    var targets = [];
+                    ['islands', 'MainIsland', 'TopIsland'].forEach(function (nm) {
+                        var o = sc.getObjectByName(nm); if (o) targets.push(o);
+                    });
+                    rc.set(new V3(x, 12, z), new V3(0, -1, 0));
+                    var its = rc.intersectObjects(targets, true);
+                    return its.length ? its[0].point.y : null;
+                } catch (z2) { return null; }
+            }
+            // 用邻域高度差估地面法线（地形是高度场，四点差分足够准）
+            function groundNormalAt(x, z, V3) {
+                var d = 0.3;
+                var yl = groundYAt(x - d, z), yr = groundYAt(x + d, z);
+                var yu = groundYAt(x, z - d), yd = groundYAt(x, z + d);
+                if (yl === null || yr === null || yu === null || yd === null) return null;
+                var n = new V3(-(yr - yl) / (2 * d), 1, -(yd - yu) / (2 * d));
+                return n.normalize();
+            }
+            // 把人物真正平铺到地表：中心贴地 + 法线对齐地面法线 + 面内朝向 WU_YAW
+            function placeFlat(mesh) {
+                var V3 = mesh.position.constructor;
+                var P = window.__labWuPos || WU_POS;
+                var x = P[0], z = P[2];
+                var y = groundYAt(x, z);
+                if (y === null) return false;
+                mesh.position.set(x, y + WU_SINK, z);
+                var n = groundNormalAt(x, z, V3) || new V3(0, 1, 0);
+                var q = new (mesh.quaternion.constructor)().setFromUnitVectors(new V3(0, 0, 1), n);
+                mesh.quaternion.copy(q);
+                mesh.rotateZ(WU_YAW);
+                mesh.updateMatrixWorld(true);
+                return true;
+            }
+            // 第 13 轮（用户裁决）：每个视角都不许改变原图比例 → 图片平面始终"正对相机"。
+            // 严格保持 443:312 原始比例，不做任何压缩补偿；底边压在地面，不悬空。
+            //
+            // 第14轮（用户裁决）："趴在地面上"优先于"离地高度"。
+            // 旧逻辑把整幅图沿平面上方向抬 scale.y（≈0.51m），人物悬在草上方半米。
+            // 现在只抬 WU_LIFT（默认 0.06m，草叶高 0.0715m——刚好让身体下缘埋进草尖、
+            // 读作"趴在草里"），底边仍压在地面实测高度上。
+            // ⚠️ 比例不受影响：抬升只改位置不改缩放，443:312 由 lookAt 正对相机保证。
+            // 第15轮（用户选定 35~65 度）：人物必须完整清晰、无遮挡。
+            // 真机 45 度实测：WU_LIFT 0.13 时脚与小腿被草遮住，只剩上半身。
+            // 抬到 0.22m：人物整体浮出草面，底边仍压在草尖上，读作"躺在草里"而非悬空。
+            var WU_LIFT = 0.22;
+            // 清草范围：按人物在屏幕上的投影包围盒半径给，而不是固定 0.9m。
+            // 正方形足迹 1.44m x 1.01m → 外接圆半径约 0.88m，留 0.15m 余量取 1.05m。
+            // 上一版 0.9m 偏小，脚端落在草里。
+            var WU_BODY_CLEAR_R = 1.05;
+            function placeFacing(mesh) {
+                var cam = window.__experience.engine.camera.instance;
+                var V3 = mesh.position.constructor;
+                var P = window.__labWuPos || WU_POS;
+                var x = P[0], z = P[2];
+                if (window.__labFaceY === undefined) {
+                    var y0 = groundYAt(x, z);
+                    if (y0 === null) return false;
+                    window.__labFaceY = y0;
+                }
+                mesh.position.set(x, window.__labFaceY, z);
+                mesh.up.set(0, 1, 0);
+                mesh.lookAt(cam.position.x, cam.position.y, cam.position.z);
+                mesh.updateMatrixWorld(true);
+                var upLocal = new V3(0, 1, 0).applyQuaternion(mesh.quaternion);
+                mesh.position.addScaledVector(upLocal, WU_LIFT);
+                mesh.updateMatrixWorld(true);
+                return true;
             }
             // 压草屏蔽：把人影几何顶点投影到屏幕求包围盒，光标落在盒内即"压在人影上"，
             // 不向引擎派发 pointermove，该处草不弯；人影之外照常弯。
@@ -724,7 +913,7 @@
             var GRASS_N = 96;            // 轮廓采样分辨率
             var GRASS_SEG = 56;          // 网格分段（越大越平滑；每格一次射线，过大会拖慢开场）
             var GRASS_EXTEND = 1.85;     // 人体平面局部外扩（盖住人+草包即可，严禁大范围）
-            var GRASS_GROW = 1.14;       // 轮廓放大（草叶盖住人物边缘，消贴纸边）
+            var GRASS_GROW = 1.06;       // 第11轮：收一点，前草别糊住手臂
             var GRASS_BLUR = 10;         // 轮廓模糊次数（坡脚更柔）
             var GRASS_SINK = 0.06;       // 身体陷入草里的深度（米）
             var GRASS_SWELL = 0.14;      // 身体外侧草隆起高度（草贴人身的鼓包）
@@ -1022,19 +1211,18 @@
                         moved.push(trunkName + '->' + (root.name || root.type));
                         return true;
                     }
-                    // 第 7 轮：拉远机位后的装饰布局——左树右火中人，水在左下。
-                    // islands 组 scale=9，本地坐标 ×9 = 世界位移。
-                    moveTree('tree-trunk-top', -0.22, 0.02, 0.16, -0.30, 1.0);
-                    moveTree('tree-trunk-main', -0.05, 0.01, 0.10, -0.15, 1.0);
-                    // 大树干挪到左侧当画框，不挡人物（人物在世界约 2.15,4.0）
-                    moveTree('tree-trunk-main-big', -0.42, 0.01, -0.20, 0.25, 1.15);
-                    ['tree-008', 'tree-009', 'tree-010', 'tree-011'].forEach(function (n, i) {
-                        var o = find(n); if (!o) return;
-                        o.rotation.y = -0.35 + i * 0.22;
-                        var s = 1.15 + (i % 2) * 0.25;
-                        o.scale.set(s, s, s);
-                        o.updateMatrixWorld(true);
-                        moved.push(n);
+                    // 第14轮（用户裁决）：删掉全部树。旧逻辑是把三棵树"挪位当画框"，
+                    // 结果树冠+树干在 17 档扫描里始终糊住人物、抢走画面注意力。
+                    // 现在整组隐藏，连树冠（foliage）一起——树冠是树干的兄弟节点，
+                    // 只藏树干会留下一团悬空绿块。
+                    ['tree-trunk-top', 'tree-trunk-main', 'tree-trunk-main-big',
+                     'tree-008', 'tree-009', 'tree-010', 'tree-011'].forEach(function (n) {
+                        var trunk = find(n);
+                        if (!trunk) return;
+                        var root = trunk.parent || trunk;
+                        root.visible = false;               // 父容器整组
+                        trunk.visible = false;              // 树干自身
+                        moved.push('hideTree:' + n);
                     });
                 } catch (eAll) { window.__labRelayoutError = String(eAll).slice(0, 200); }
                 var bushes = ['bush-foliage026', 'bush-foliage027', 'bush-foliage030', 'bush-foliage033',
@@ -1058,11 +1246,28 @@
                         var cam = e.engine.camera.instance;
                         var V3c = wuPos.constructor;
                         var wp = new V3c();
-                        // 1) 世界距离清理（树干 1.8m / 灌木石块 3.2m）
+                        // Foliage_chunk 等对象的 object.position 常在原点，几何顶点才在世界位，
+                        // 必须用几何包围盒中心算距离（第 9 轮真机结论）。
+                        function worldCenter(mesh) {
+                            try {
+                                if (!mesh.geometry) return null;
+                                if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+                                var bb = mesh.geometry.boundingBox;
+                                if (!bb) return null;
+                                wp.set(0, 0, 0).add(bb.min).add(bb.max).multiplyScalar(0.5);
+                                mesh.updateMatrixWorld(true);
+                                return wp.applyMatrix4(mesh.matrixWorld);
+                            } catch (eWC) { return null; }
+                        }
+                        // 1) 世界距离清理（树干 1.8m / 灌木石块 4.8m）
                         sc.traverse(function (o) {
                             if (!o.isMesh || !o.visible) return;
                             var name = o.name || '';
                             if (name.indexOf('__lab_') === 0) return;
+                            // 第 13 轮修复：主岛名字含 "island"，会被下面的杂物名单误匹配，
+                            // 一旦其投影中心落到人物附近就会被整块隐藏（画面只剩天空与水）。
+                            // 主岛是场景本体，绝不参与清理。
+                            if (name === 'main-island' || name === 'MainIsland') return;
                             if (name.indexOf('Grass_chunk') === 0) return;
                             if (name === 'AnimeSky' || name === '__reveal_mesh__') return;
                             var isClutter = name.indexOf('bush') >= 0 || name.indexOf('rock') >= 0 ||
@@ -1071,22 +1276,47 @@
                                             name.indexOf('clutter') >= 0 ||
                                             name.indexOf('tree-trunk') >= 0 || name.indexOf('trunk') >= 0 ||
                                             name.indexOf('stone') >= 0 || name.indexOf('pebble') >= 0 ||
+                                            name.indexOf('island') >= 0 || name.indexOf('clump') >= 0 ||
+                                            name.indexOf('tuft') >= 0 || name.indexOf('sprout') >= 0 ||
+                                            name.indexOf('mushroom') >= 0 || name.indexOf('plant') >= 0 ||
+                                            name.indexOf('occlusion') >= 0 || name.indexOf('occluder') >= 0 ||
                                             name.indexOf('Foliage_chunk') === 0 ||
                                             name.indexOf('Grass_chunk') === 0;
                             if (!isClutter) return;
-                            o.getWorldPosition(wp);
-                            var dx = wp.x - wuPos.x, dy = wp.y - wuPos.y, dz = wp.z - wuPos.z;
+                            var c = worldCenter(o);
+                            if (!c) return;
+                            var dx = c.x - wuPos.x, dy = c.y - wuPos.y, dz = c.z - wuPos.z;
                             var dist2 = dx * dx + dy * dy + dz * dz;
-                            // 树干 1.8m / 灌木石块 3.2m / 草块 0.9m（只清正压人身上的，
-                            // 留周边草叶压住身体边缘，才像躺进草里）
+                            // 第 11 轮：手臂处草要稀（能看见），脚部草要留（挡住一点）
+                            // 第 13 轮：平铺模式下大幅收窄清草半径——此前 1.35m 把人身周
+                            // 清成一块"没有草的空地"，人看起来是"贴"在裸地上而不是躺在草丛里。
+                            // 第14轮：草一律不清。此前 (WU_FLAT && !WU_FACE) 判定在 WU_FACE 模式下
+                            // 恒假，半径退化成 1.35m，把人物身周的草整片清空——与第13轮误删主岛
+                            // 同类错误（自己的清理误伤场景本体）。草叶压住身体边缘正是"躺在草里"的关键。
                             var limit = (name.indexOf('trunk') >= 0) ? 1.8 :
-                                        ((name.indexOf('Foliage_chunk') === 0 || name.indexOf('Grass_chunk') === 0) ? 0.9 : 3.2);
+                                        (name.indexOf('Grass_chunk') === 0) ? (window.__labGrassR != null ? window.__labGrassR : 0.0) :
+                                        (name.indexOf('rock') >= 0 || name.indexOf('stone') >= 0 ||
+                                         name.indexOf('basalt') >= 0 || name.indexOf('pebble') >= 0 ||
+                                         name.indexOf('crystal') >= 0) ? 8.5 :
+                                        (name.indexOf('Foliage_chunk') === 0) ? 5.0 : 6.5;
                             if (dist2 < limit * limit) {
+                                // 脚端（人物平面局部 -X = 画中脚）半径内不藏草，让脚被挡一点
+                                if (name.indexOf('Grass_chunk') === 0) {
+                                    try {
+                                        var feetW = (window.__labFeetTip || wuPos);
+                                        var fdx = c.x - feetW.x, fdy = c.y - feetW.y, fdz = c.z - feetW.z;
+                                        if (fdx * fdx + fdy * fdy + fdz * fdz < 0.75 * 0.75) {
+                                            return; // 留草挡脚
+                                        }
+                                    } catch (eFt) {}
+                                }
                                 o.visible = false;
                                 moved.push('hide:' + name);
                             }
                         });
                         // 2) 屏幕距离清理：人物投影附近 260px 内的杂物一律撤走（挡人元凶）
+                        // 第 13 轮：这一步依赖"挂载瞬间的机位"，换机位后结果完全不同（极脆弱）。
+                        // 已把"机位"固定为定稿机位，使结果可复现。
                         try {
                             var p = window.__labWuMesh.position.clone();
                             p.project(cam);
@@ -1097,13 +1327,27 @@
                                 var name = o.name || '';
                                 if (name === '__lab_wu_carpet__' || name === '__lab_wu_ground__' || name === '__lab_aurora__') return;
                                 if (name === 'AnimeSky' || name === '__reveal_mesh__') return;
-                                if (name.indexOf('tree-trunk') >= 0 || name.indexOf('top-island') >= 0) return;
+                                if (name === 'main-island' || name === 'MainIsland') return;
+                                // 只保左侧树干取景；top-island 白团第 9 轮起不再豁免
+                                if (name.indexOf('tree-trunk') >= 0) return;
                                 if (name.indexOf('waterfall') >= 0) return;
                                 if (name.indexOf('Butterfly') >= 0) return;
-                                o.getWorldPosition(wp);
-                                var pp = wp.clone(); pp.project(cam);
+                                if (name.indexOf('campfire') >= 0 || name.indexOf('Campfire') >= 0) return;
+// 第 13 轮：平铺模式下不再按屏幕距离清草——让草叶能压住身体边缘
+                            // 第14轮：WU_FACE 模式下该豁免同样必须生效，否则屏幕椭圆会吃掉身周草
+                            if (name.indexOf('Grass_chunk') === 0) return;
+                                var c2 = worldCenter(o);
+                                if (!c2) return;
+                                var pp = c2.clone(); pp.project(cam);
                                 var dxs = pp.x - wuSX, dys = pp.y - wuSY;
-                                if (dxs * dxs + dys * dys < 0.16) {  // ≈260px @1280
+                                if (dxs * dxs + dys * dys < 0.22) {
+                                    // 草例外：脚端留给挡脚
+                                    if (name.indexOf('Grass_chunk') === 0 && window.__labFeetTip) {
+                                        try {
+                                            var fdx2 = c2.x - window.__labFeetTip.x, fdy2 = c2.y - window.__labFeetTip.y, fdz2 = c2.z - window.__labFeetTip.z;
+                                            if (fdx2 * fdx2 + fdy2 * fdy2 + fdz2 * fdz2 < 0.75 * 0.75) return;
+                                        } catch (eF2) {}
+                                    }
                                     o.visible = false;
                                     moved.push('hideScr:' + name);
                                 }
@@ -1117,43 +1361,227 @@
                                 if (name === 'AnimeSky' || name === '__reveal_mesh__') return;
                                 if (name.indexOf('Grass_chunk') === 0) return;
                                 if (name.indexOf('__lab_') === 0) return;
+                                if (name === 'main-island' || name === 'MainIsland') return;
                                 if (name.indexOf('tree-trunk') >= 0 || name.indexOf('top-island') >= 0) return;
                                 if (name.indexOf('waterfall') >= 0 || name.indexOf('Butterfly') >= 0) return;
-                                o.getWorldPosition(wp);
-                                var pp = wp.clone(); pp.project(cam);
+                                var c3 = worldCenter(o);
+                                if (!c3) return;
+                                var pp = c3.clone(); pp.project(cam);
                                 var sx = pp.x, sy = pp.y;
                                 // 右下远山 + 画面下方边缘灌木（褐团）都扣掉
+                                // 第12轮：画面底边黑石（用户点名黑斑）一并扣掉
                                 if ((sx > 0.28 && sy < -0.12 && pp.z > 0.5) ||
-                                    (sy < -0.55 && pp.z > 0.6)) {
+                                    (sy < -0.55 && pp.z > 0.6) ||
+                                    (sy > 0.82 && (name.indexOf('rock') >= 0 || name.indexOf('stone') >= 0 ||
+                                     name.indexOf('basalt') >= 0 || name.indexOf('pebble') >= 0))) {
                                     o.visible = false;
                                     moved.push('hideFar:' + name);
                                 }
                             });
                         } catch (eFar) {}
+            // 第14轮（用户裁决，画面里只允许有"吴昊阳 + 草地"两个东西）：
+            // 白名单模式——不在白名单内的一律隐藏（连父容器一起，子树跟着消失）。
+            // 白名单：地形本体、草、水/瀑布/水花、蝴蝶、人物自己的对象、天空。
+            // 第14轮（用户裁决，画面里只允许"吴昊阳 + 草地"）：
+            // 白名单模式。
+            // ⚠️ 关键教训（第14轮踩了两次）：
+            //  ① 绝不能靠"父级名字不在白名单"去隐藏父级。场景根分组（world/Scene/…）
+            //     承载全部内容且不在名单里，隐藏它会让地形、草、甚至人物一起消失
+            //     （实测 visibleCount 归零）。父链只用于"读"，不用于"写"。
+            //  ② 地形节点真实名字是 main-island / MainIsland / islands 三层并存，
+            //     漏掉任一层都会把草地连坐删除。
+            // 第15轮：精确黑名单（不是白名单——白名单会误伤地形与草，实测全崩）。
+            // 只删这批实测确认的装饰物，其余一律不动：
+            var LAB_HIDE = [
+                // 远景地形与远景植被
+                'DistantTerrainGround', 'DistantFoliage_chunk', 'DistantWater',
+                // 植被块（深蓝岩石群 / 褐色草团 / 青色树冠都出自 Foliage_chunk）
+                'Foliage_chunk',
+                // 树
+                'tree-trunk-top', 'tree-trunk-main', 'tree-trunk-main-big',
+                'tree-008', 'tree-009', 'tree-010', 'tree-011',
+                'tree-foliage', 'bush-foliage',
+                // 岩石 / 晶体 / 浮石
+                'basalt', 'crystal-shard', 'campfire-wood', 'campfire-wood0',
+                'Swarm_', '__rain_', 'social-media-', 'simplified-scene-occluder',
+                'foliage-occlusion', 'Butterfly_', 'top-island', 'TopIsland',
+                // 水与瀑布
+                'main-water', 'top-water', 'main-waterfall',
+                'east-waterfall', 'west-waterfall', 'south-waterfall',
+                'Waterfall_drops', 'main-foam', 'SunLensflare', 'SunAnchor',
+                'Campfire_fire', 'Campfire_sparks', 'Birds', 'Motes'
+            ];
+            // 第15轮：主岛草色统一。
+            // 射线诊断确认蓝岩/灰石/褐团全部命中 main-island 自身（hidden=0，无遮挡物），
+            // 说明它们是 main-island 片元着色器的输出，而非独立物件。
+            // slopeBlend=1.0（改 patched.js）已排除 cliffLitColor（岩层），
+            // 但 grassLitColor 侧仍分色：getGrassColor() 用 uShadowColor 混出暗部、
+            // colorVariation 混出蓝色调。把三个颜色都设成同一个值即可消除。
+            var FLAT_GRASS = '#2f5a1c';
+            window.__labKeepOnly = function () {
+                try {
+                    var sc = window.__experience.engine.scene;
+                    sc.traverse(function (o) {
+                        if (!(o.isMesh || o.isPoints || o.isSprite || o.isInstancedMesh)) return;
+                        var n = o.name || '';
+                        if (!n) return;
+                        for (var i = 0; i < LAB_HIDE.length; i++) {
+                            if (n.indexOf(LAB_HIDE[i]) >= 0) { o.visible = false; return; }
+                        }
+                    });
+                    // 主岛草色统一：把 getGrassColor() 的明暗两色设成同值，
+                    // 消掉草面上的深浅斑（这一项实测有效，右坡由褐转绿）。
+                    sc.traverse(function (m) {
+                        if (!m.material || !m.material.uniforms) return;
+                        var u = m.material.uniforms;
+                        if (u.uGrassDarkColor && u.uShadowColor) {
+                            u.uGrassLightColor.value.set(FLAT_GRASS);
+                            u.uGrassDarkColor.value.set(FLAT_GRASS);
+                            u.uShadowColor.value.set(FLAT_GRASS);
+                        }
+                        if (u.uLightGreen && u.uDarkGreen) {
+                            u.uLightGreen.value.set(FLAT_GRASS);
+                            u.uDarkGreen.value.set(FLAT_GRASS);
+                        }
+                    });
+                } catch (eK) { window.__labKeepError = String(eK).slice(0, 200); }
+            };
+            // 第15轮（用户授权改 patched.js）：地面纯草色改由 patched.js 承担——
+            //   float slopeBlend=1.0;   ← 绕开 uZonesTexture 的 g 通道，全岛走 grassLitColor
+            // 运行时覆盖（onBeforeCompile 改 finalColor）已移除：它会误伤草与水面材质，
+            // 且在引擎重建材质后部分实例漏改（实测斑块残留）。此处保留空壳仅为兼容旧调用。
+            window.__labForceFlatGround = function () {};
+            // 第14轮（用户裁决）：全场删除石头/岩石类物件。
+                        // 不做"按距离删"——用户要的是画面里一颗石头都不剩。
+                        // 白名单式排除：只保留地形、草、水、瀑布、蝴蝶、人物、天空。
+                        try {
+                            sc.traverse(function (o) {
+                                if (!o.isMesh || !o.visible) return;
+                                var name = o.name || '';
+                                if (name.indexOf('__lab_') === 0) return;
+                                if (name === 'main-island' || name === 'MainIsland') return;
+                                if (name === 'AnimeSky' || name === '__reveal_mesh__') return;
+                                if (name.indexOf('Grass_chunk') === 0) return;
+                                if (name.indexOf('Pampa') === 0) return;
+                                if (name.indexOf('waterfall') >= 0 || name === 'Water') return;
+                                if (name.indexOf('Butterfly') >= 0) return;
+                                if (/rock|stone|basalt|pebble|boulder|crystal|gem|mineral|ore|clump|shrub|mushroom|sprout|plant|flower/i.test(name)) {
+                                    o.visible = false;
+                                    moved.push('hideRock:' + name);
+                                }
+                            });
+                        } catch (eRock) {}
+                        // 营地保底：清理后柴堆可见；光斑保持隐藏
+                        try {
+                            ['Campfire_fire', 'Campfire_sparks', 'SunLensflare', 'SunAnchor'].forEach(function (n) {
+                                var o = find(n); if (o) o.visible = false;
+                            });
+                            var c2g = find('campfire');
+                            if (c2g) c2g.visible = true;
+                            // 第 13 轮：foliage-occlusion 是一块横跨全岛的大遮挡体，
+                            // 机位拉远后它会糊住大半画面（昼夜都如此），一律隐藏。
+                            var oc = find('foliage-occlusion');
+                            if (oc) oc.visible = false;
+                            // 第14轮：树已在 relayout() 里整组隐藏（连树冠），此处不再重复。
+                        } catch (eKeep) {}
+                        // 脚端只留草、撤掉褐色灌木/石块（脚被草挡，不是被灌木挡）
+                        try {
+                            var ft = window.__labFeetTip;
+                            if (ft && cam) {
+                                var ftS = ft.clone(); ftS.project(cam);
+                                var fsx = ftS.x * 0.5 + 0.5, fsy = -ftS.y * 0.5 + 0.5;
+                                sc.traverse(function (o) {
+                                    if (!o.isMesh || !o.visible) return;
+                                    var n = o.name || '';
+                                    if (n.indexOf('Grass_chunk') === 0 || n.indexOf('__lab_') === 0) return;
+                                    if (n === 'AnimeSky' || n === '__reveal_mesh__') return;
+                                    if (n.indexOf('tree-trunk') >= 0) return;
+                                    var cc = worldCenter(o);
+                                    if (!cc) return;
+                                    // 世界 1.6m 或屏幕 0.12（约 150px）内非草物一律撤
+                                    var ddx = cc.x - ft.x, ddy = cc.y - ft.y, ddz = cc.z - ft.z;
+                                    var wNear = (ddx * ddx + ddy * ddy + ddz * ddz < 1.6 * 1.6);
+                                    var sp = cc.clone(); sp.project(cam);
+                                    var sdx = sp.x * 0.5 + 0.5 - fsx, sdy = -sp.y * 0.5 + 0.5 - fsy;
+                                    var sNear = (sdx * sdx + sdy * sdy < 0.04);
+                                    if (wNear || sNear) {
+                                        o.visible = false;
+                                        moved.push('feetClear:' + n);
+                                    }
+                                });
+                            }
+                        } catch (eFtc) {}
                     } catch (eClear) {}
                 };
                 var camp = find('campfire');
                 if (camp) {
                     try {
-                        // 第 7 轮：营火放到人物右侧草坡（本地 ×9 ≈ 世界 +2.7,-1.3），
-                        // 与左侧树、左下水形成三角构图，不压人物。
-                        camp.position.set(0.30, 0.01, -0.14);
+                        // 第 10 轮：营地现实逻辑——柴堆+火焰同一处，放人物右侧草坡（距人约 2.5m）。
+                        // 实测映射：wood.world ≈ (3.1,0.2,-0.3) + camp.local*(9,0,8.5)
+                        // 目标柴世界 (4.0,0.2,2.8)：仍在草丘上，不在水里、不飘出悬崖。
+                        camp.position.set(0.10, 0.01, 0.37);
+                        try { camp.scale.set(1, 1, 1); } catch (eS) {}
                         camp.updateMatrixWorld(true);
+                        // 柴堆保底可见
+                        try {
+                            var scW = window.__experience.scene || window.__experience.engine.scene;
+                            scW.traverse(function (o) {
+                                if (o.isMesh && o.name && o.name.indexOf('campfire-wood') === 0) {
+                                    o.visible = true;
+                                }
+                            });
+                        } catch (eWW) {}
                         moved.push('campfire');
+                        // 火焰对齐柴堆（islands 下 ×9 映射），强制可见
+                        var fire = find('Campfire_fire');
+                        if (fire) {
+                            // 实测 Campfire_fire 是朝相大光斑，缩放无效会变「大黄豆」毁画面。
+                            // 现实逻辑：宁可只留柴堆，也不要假光斑。夜晚靠草花微光补氛围。
+                            fire.visible = false;
+                            moved.push('hide fire-glow');
+                        }
                     } catch (e) {}
                 }
-                var rocks = ['basalt-floating-rock004', 'basalt-floating-rock008', 'basalt-floating-rock012',
-                             'basalt-floating-rock016', 'basalt-floating-rock020'];
-                rocks.forEach(function (n, i) {
-                    var o = find(n); if (!o) return;
-                    try {
-                        // 浮石小幅抬高：本地 +0.09~0.2（世界约+0.8~1.8），不出画。
-                        o.position.y += 0.09 + i * 0.03;
-                        o.position.z -= 0.16 + i * 0.04;
-                        o.updateMatrixWorld(true);
-                        moved.push(n);
-                    } catch (e) {}
-                });
+                // 第 10 轮：现实逻辑——天上飘石不真实。
+                // 实测 floating-rocks 的几何自带高空偏移，改坐标仍悬空，整组隐藏最干净。
+                try {
+                    var fr = find('floating-rocks');
+                    if (fr) { fr.visible = false; moved.push('hide floating-rocks'); }
+                    // 鸟群 Swarm 光斑不像真鸟，撤走
+                    var bd = find('Birds');
+                    if (bd) { bd.visible = false; moved.push('hide Birds'); }
+                    // 落日镜头光斑 = 大黄豆，撤走（保留 SunLight 真实光照）
+                    ['SunLensflare', 'SunAnchor', 'Campfire_fire', 'Campfire_sparks'].forEach(function (n) {
+                        var o = find(n);
+                        if (o) { o.visible = false; moved.push('hide:' + n); }
+                    });
+                } catch (eR) {}
+                // 晶体是奇幻件，离人近的撤走，保住「现实草地」读感
+                try {
+                    var scC = window.__experience.scene || window.__experience.engine.scene;
+                    var camC = window.__experience.engine.camera.instance;
+                    var wuC = window.__labWuMesh && window.__labWuMesh.position;
+                    if (wuC) {
+                        scC.traverse(function (o) {
+                            if (!o.isMesh || !o.visible) return;
+                            var n = o.name || '';
+                            if (n.indexOf('crystal') < 0) return;
+                            try {
+                                if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+                                var bb = o.geometry.boundingBox;
+                                if (!bb) return;
+                                var c = bb.min.clone().add(bb.max).multiplyScalar(0.5);
+                                o.updateMatrixWorld(true);
+                                c.applyMatrix4(o.matrixWorld);
+                                var dx = c.x - wuC.x, dz = c.z - wuC.z;
+                                if (dx * dx + dz * dz < 36) {
+                                    o.visible = false;
+                                    moved.push('hideCrystal:' + n);
+                                }
+                            } catch (eX) {}
+                        });
+                    }
+                } catch (eCry) {}
                 window.__labMoved = moved;
                 // 取景定稿（scout-08）：右下模糊远山扣掉，露出夜空/黑底。
                 // DistantTerrainGround_* 是大片糊紫色块；隐藏后后方只剩 AnimeSky 星空。
@@ -1190,6 +1618,8 @@
                 a.lookAt(p.x, p.y + AURORA_Y * 0.4, p.z);
             }
             function mountAurora(env) {
+                // 极光用户已裁决暂缓，本轮起直接不挂载，防画面出现大光斑
+                return;
                 if (window.__labAurora) return;
                 try {
                     var THREE = env.THREE, sc = env.scene;
@@ -1302,6 +1732,15 @@
                     // 人物原图是 sRGB PNG，必须写死 'srgb'；renderer.outputColorSpace 已是 'srgb'。
                     try { tex.colorSpace = 'srgb'; } catch (eCS) {}
                     try { tex.flipY = true; } catch (eFY) {}
+                    // 第 9 轮：人发虚。上一版误关 mipmap——人物在屏幕上小于 443px 贴图时
+                    // 双线性欠采样反而糊。正确做法：开 mipmap + 三线性 + 各向异性。
+                    try {
+                        tex.generateMipmaps = true;
+                        tex.minFilter = 1008;  // LinearMipmapLinearFilter（缩小远处仍清晰）
+                        tex.magFilter = 1006;  // LinearFilter（放大平滑）
+                        tex.anisotropy = 16;
+                    } catch (eF) {}
+                    tex.needsUpdate = true;
                     var mat = new pd.THREE.ShaderMaterial({
                         // 深度测试打开：让前景草叶自然压住身体边缘，人才像"躺进草里"。
                         // 人物周边 1.4m 内的草块已清开，不会整身被埋。
@@ -1328,17 +1767,20 @@
                             'varying vec2 vUv; varying float vGround;',
                             'uniform sampler2D uMap; uniform vec3 uTint; uniform float uTintAmt; uniform float uExposure;',
                             'void main(){',
-                            ' vec4 t = texture2D(uMap, vUv);',
-                            ' float a = smoothstep(0.03, 0.32, t.a);',
+                            // 轻度锐化：中心权重抬高、邻域减淡，抵消透视缩小的糊感
+                            // 第 13 轮：锐化量从 0.5 降到 0.25——过锐的贴图与柔和水彩地形并置会显得"贴上去"
+                            ' vec2 px = vec2(1.0/443.0, 1.0/312.0);',
+                            ' vec4 c0 = texture2D(uMap, vUv);',
+                            ' vec4 c1 = texture2D(uMap, vUv + vec2(px.x, 0.0));',
+                            ' vec4 c2 = texture2D(uMap, vUv - vec2(px.x, 0.0));',
+                            ' vec4 c3 = texture2D(uMap, vUv + vec2(0.0, px.y));',
+                            ' vec4 c4 = texture2D(uMap, vUv - vec2(0.0, px.y));',
+                            ' vec4 t = c0 * 1.25 - (c1 + c2 + c3 + c4) * 0.0625;',
+                            ' float a = smoothstep(0.02, 0.42, t.a);',
                             ' if (a <= 0.004) discard;',
-                            // 第 6 轮用户裁决：人太白认不出。原图是清晰动漫赛璐璐，
-                            // 必须保色：不再整片染色/抬黑/压暗，只做极轻的环境融合。
-                            ' vec3 c = t.rgb;',
-                            // 极轻染色（8%），只让人物"吃到"一点环境色，不改本色
+                            ' vec3 c = clamp(t.rgb, 0.0, 1.0);',
                             ' c = mix(c, c * (uTint * 1.6 + 0.25), uTintAmt * 0.35);',
-                            // 曝光几乎不动（0.95~1.0），禁止压灰
                             ' c = c * uExposure;',
-                            // 接地处只压暗 12%，保留球衣/肤色原色
                             ' c = c * (1.0 - 0.12 * vGround);',
                             ' gl_FragColor = vec4(c, a);',
                             '}',
@@ -1373,19 +1815,28 @@
                     // - 姿态：绕相机方向倾斜，既保持趴姿又让正面对着相机可辨认。
                     mesh.scale.set(WU_SCALE, WU_SCALE / 1.4199, 1);
                     mesh.position.set(WU_POS[0], WU_POS[1], WU_POS[2]);
-                    faceCamera(mesh, WU_TILT);
+                    if (WU_FACE) { placeFacing(mesh); }
+                    else if (WU_FLAT) { placeFlat(mesh); }
+                    else { faceCamera(mesh, WU_TILT); }
                     // 真机结论4：depthTest=false + renderOrder=10 强制最前，不被草片/地形吞没。
                     mesh.renderOrder = 10;
                     mesh.frustumCulled = false;
                     pd.sc.add(mesh);
+                    // 第14轮：按用户裁决删除接触阴影——吴昊阳趴在地面上，不可能有离地的阴影，
+                    // 且低俯角下贴地阴影平面被压成一条长条，比不画更假。
                     window.__labWuMesh = mesh;
                     window.__labWuPending = null;
                     // 压草：只在人影投影范围内屏蔽草的指针交互（pressAt 按投影包围盒判定）。
                     window.__labWu3D = { ready: true, pressAt: pressAt };
                     // 人物就位后，按其轮廓重绘身下地面（解决悬空）
-                    try { mountGroundPatch({ THREE: pd.THREE, scene: sc }); } catch (eG) { window.__labGroundError = String(eG).slice(0, 200); }
+                    // 第 13 轮：平铺模式下不再生成"地面补片"——它会在人身下形成一块
+                    // 与周围地形颜色不同的圆盘，反而让人看起来站在悬浮的碟子上。
+                    if (!WU_FLAT && !WU_FACE) { try { mountGroundPatch({ THREE: pd.THREE, scene: sc }); } catch (eG) { window.__labGroundError = String(eG).slice(0, 200); } }
                     // 人物就位后再清身上杂物（relayout 时人物尚未生成）
                     try { if (window.__labClearClutterNearWu) window.__labClearClutterNearWu(); } catch (eC) {}
+                    // 第14轮（用户裁决）：画面只允许"吴昊阳 + 草地"。
+                    // 放在人物挂载之后执行——此时场景节点已全部就位，白名单才能一次清干净。
+                    try { if (window.__labKeepOnly) window.__labKeepOnly(); } catch (eK) {}
                 } catch (e2) { if (pd.tries > 600) window.__labWuError = String(e2).slice(0, 200); }
             }
             function loop() {
@@ -1396,8 +1847,8 @@
                         try {
                             var q = new URLSearchParams(location.search).get('theme');
                             var theme = (q === 'dark' || q === 'light') ? q : 'light';
-                            var DAY = ['#d9a441', '#9c6b1e', '#b08746', '#8a6a38'];
-                            var NIGHT = ['#b07be0', '#7a3fa0', '#5e2d8a', '#2e1450'];
+                            var DAY = ['#5a8a3c', '#3c6626', '#7a6a42', '#5c4d33'];
+                            var NIGHT = ['#3e6b2c', '#264a1c', '#4a4436', '#332f26'];
                             recolorGround(theme === 'dark' ? NIGHT : DAY, theme === 'dark');
                             // relayout/mount 延迟到 intro 相机落定后（4 秒），避免被开场动画覆盖。
                             setTimeout(function () {
@@ -1409,6 +1860,19 @@
                             }, 4000);
                         } catch (e) { window.__labBError = String(e).slice(0, 200); }
                     }
+                    if (window.__labAurora) { try { window.__labAurora.visible = false; } catch (eAv) {} }
+                    // 火焰光斑/落日镜头光斑每帧压掉：SunLensflare 是「大黄豆」元凶。
+                    // 注意：这些对象可能出现得比首帧晚，不能缓存一次就完事。
+                    try {
+                        var scF = window.__experience.scene || window.__experience.engine.scene;
+                        scF.traverse(function (o) {
+                            var n = o.name || '';
+                            if (n === 'Campfire_fire' || n === 'Campfire_sparks' ||
+                                n === 'SunLensflare' || n === 'SunAnchor') {
+                                o.visible = false;
+                            }
+                        });
+                    } catch (eFF) {}
                     if (window.__labAurora && window.__labAurora.material && window.__labAurora.material.uniforms) {
                         try {
                             var dark = (document.body.getAttribute('data-lab-theme') === 'dark');
@@ -1416,13 +1880,20 @@
                             u.uTime.value += 0.016;
                             var target = dark ? 1.0 : 0.0;
                             u.uAlpha.value += (target - u.uAlpha.value) * 0.05;
-                            // 关键修复（本轮真机定位）：相机上挂着一个全屏 reveal 遮罩 __reveal_mesh__，
-                            // 它的 material.depthWrite 为 true，会先在深度缓冲里写入近处深度，
-                            // 导致天空里任何 depthTest=true 的东西（极光）被整片挡掉（此前极光"看不见"的真因）。
-                            // 它本就是全屏透明覆盖层，不该写深度；置 false 后极光可正常参与深度测试，
-                            // 从而被树干/山体自然遮挡，而不是硬贴在画面最前。
+                                    // 关键修复（第13轮定位）：相机上挂着全屏 reveal 遮罩 __reveal_mesh__，
+                            // depthWrite=true 会先写入近处深度，挡住极光等 depthTest 物体。
+                            //
+                            // 第14轮（用户要求只留"草地+人"）：reveal 遮罩直接永久隐藏。
+                            // 它是 renderOrder=999 的全屏层，只要 visible 仍为 true，
+                            // 画面中央就会被一块半透明白斑盖住——上一版把人物拍成一个
+                            // 白色方块，真凶就是它，不是人物本身有问题。
                             var rm = window.__experience.revealMesh;
-                            if (rm && rm.material && rm.material.depthWrite) rm.material.depthWrite = false;
+                            if (rm) {
+                                rm.visible = false;
+                                if (rm.material) { rm.material.visible = false; rm.material.depthWrite = false; }
+                            }
+                            var rm2 = window.__experience.engine.scene.getObjectByName('__reveal_mesh__');
+                            if (rm2) { rm2.visible = false; if (rm2.material) rm2.material.visible = false; }
                             // 极光跟随相机：每帧重算天空位置并正面朝向相机（视差下自然跟随）。
                             updateAurora();
                         } catch (e2) {}
@@ -1430,8 +1901,70 @@
                     try { pumpWu(); } catch (e3) {}
                     // 取景定稿：每帧锁 scout-08 机位（压过开场动画与鼠标视差）
                     try { lockScoutCamera(); } catch (eCam2) {}
+                    // 第 13 轮：包裹渲染器，确保朝向不被引擎相机控制器覆盖（只生效一次）
+                    try { enforceCameraOnRender(); } catch (eCam3) {}
                     // 人影姿态跟随相机：开场与鼠标视差会让相机微动，每帧重算朝向保证正面可辨。
-                    if (window.__labWuMesh) { try { faceCamera(window.__labWuMesh, WU_TILT); } catch (e4) {} }
+                    if (window.__labWuMesh) {
+                        try {
+                            if (WU_FACE) {
+                                // 正对相机：每帧重算（视角变化时比例始终不变形）
+                                placeFacing(window.__labWuMesh);
+                            } else if (WU_FLAT) {
+                                // 平铺：地表静止，贴地一次即可（探测未命中则重试）
+                                if (!window.__labFlatDone && placeFlat(window.__labWuMesh)) window.__labFlatDone = true;
+                            } else {
+                                faceCamera(window.__labWuMesh, WU_TILT);
+                            }
+                            // 脚端世界坐标（画中脚在平面局部 -X），供草遮挡用
+                            var wuM = window.__labWuMesh;
+                            wuM.updateMatrixWorld(true);
+                            var Vf = wuM.position.constructor;
+                            var feetLocal = new Vf(-0.82, -0.12, 0);
+                            feetLocal.applyMatrix4(wuM.matrixWorld);
+                            window.__labFeetTip = feetLocal;
+                        } catch (e4) {}
+                    }
+                    // 第14轮：人物正身范围内清草（每帧跟随机位）。
+                    // 真实照片里"人躺在草上"的物理感来自身体把身周草压住/遮挡，
+                    // 而引擎草是等密实例，不清就会把 1.44m 长的人埋掉。
+                    // 只清草块（Grass_chunk），不动地形、不动其它任何东西。
+                    try {
+                        var _wu = window.__labWuMesh;
+                        if (_wu && _wu.visible) {
+                            var _sc2 = window.__experience.engine.scene;
+                            var _c = _wu.position;
+                            var _r2 = WU_BODY_CLEAR_R * WU_BODY_CLEAR_R;
+                            _sc2.traverse(function (_o) {
+                                if (!(_o.isMesh || _o.isInstancedMesh)) return;
+                                var _n = _o.name || '';
+                                if (_n.indexOf('Grass_chunk') !== 0 && _n.indexOf('Pampa') !== 0) return;
+                                // 用草块自身几何中心不可靠（多个 chunk 共享原点），
+                                // 改用"该块是否有实例落在人物附近"判定：抽样前 400 个实例。
+                                // 整块隐藏会产生"孤立绿斑"（第15轮实拍缺陷）：
+                                // 人形轮廓外的草块被整块删掉，裸地上只剩零星草，形成
+                                // 一块与周围不连续的绿岛。改为：草块保留，只把落在人物
+                                // 正身范围内的实例矩阵压扁（草尖高度 → 0），视觉上等于
+                                // 身体把草压住——这正是真实照片里的物理感。
+                                var _im = _o.instanceMatrix;
+                                if (!_im) { _o.visible = false; return; }
+                                var _a = _im.array;
+                                // 人物正身范围内的草：Y 方向缩放压到 0.12（草被身体压平），
+                                // 不删除整块 —— 删整块会留下"孤立绿斑"（第15轮实拍缺陷）。
+                                // instanceMatrix 是 4x4 列主序，Y 基向量在 [1],[5],[9]，
+                                // 缩放分量 m11 位于索引 5。
+                                for (var _i = 0; _i < _o.count; _i++) {
+                                    var _b = _i * 16;
+                                    var _dx = _a[_b + 12] - _c.x, _dz = _a[_b + 14] - _c.z;
+                                    if (_dx * _dx + _dz * _dz < _r2) {
+                                        _a[_b + 5] *= 0.12;
+                                        _a[_b + 1] *= 0.12;
+                                        _a[_b + 9] *= 0.12;
+                                    }
+                                }
+                                _im.needsUpdate = true;
+                            });
+                        }
+                    } catch (eG2) {}
                     // 地面补片颜色跟随主题（夜晚紫 / 白天金）
                     if (window.__labWuGround) { try { updateGroundTheme(); } catch (e5) {} }
                     // 人物环境染色跟随主题：只做极轻融合，禁止洗白（第 6 轮）
@@ -1440,9 +1973,29 @@
                             var isDark = (document.body.getAttribute('data-lab-theme') === 'dark');
                             var uu = window.__labWuMesh.material.uniforms;
                             // 夜晚只留 6% 紫光，白天 4% 暖光；曝光保持 0.95+，不压灰
-                            if (isDark) { uu.uTint.value.set(0.35, 0.30, 0.55); uu.uTintAmt.value = 0.06; uu.uExposure.value = 0.95; }
-                            else { uu.uTint.value.set(1.0, 0.85, 0.55); uu.uTintAmt.value = 0.04; uu.uExposure.value = 1.0; }
+                            // 第 13 轮：提高环境融合、压低曝光——此前人物比夜色场景亮一个档、
+                            // 对比度也更高，是"贴上去"违和感的主因之一。
+                            if (isDark) { uu.uTint.value.set(0.42, 0.34, 0.62); uu.uTintAmt.value = 0.24; uu.uExposure.value = 0.86; }
+                            else { uu.uTint.value.set(1.0, 0.86, 0.58); uu.uTintAmt.value = 0.14; uu.uExposure.value = 0.92; }
                         } catch (e6) {}
+                    }
+                    // 第15轮：每帧末尾重刷地面色。引擎的 tweak 回调（rockLevel/grassColor…）
+                    // 会在别处把 uRockColor/uDirtColor 写回原值，必须逐帧压住，
+                    // 否则黑斑会在下一帧回来（这是"改完当帧有效、下一帧又黑"的真因）。
+                    if (window.__labForceGroundColor) {
+                        try { window.__labForceGroundColor(); } catch (eG) {}
+                    }
+                    // 第15轮：主岛强制纯草色（每帧重挂，覆盖引擎的材质重建）
+                    if (window.__labForceFlatGround) {
+                        try { window.__labForceFlatGround(); } catch (eFG) {}
+                    }
+                    // 第15轮：白名单也必须每帧跑——引擎会重建材质并把树/石头 visible 复位，
+                    // 实测只在启动时调一次，几十秒后装饰物全部复活。
+                    if (window.__labKeepOnly && window.__labKeepTick) {
+                        window.__labKeepTick = (window.__labKeepTick || 0) + 1;
+                        if (window.__labKeepTick % 30 === 0) {   // 约每 0.5 秒一次，避免每帧全场景遍历
+                            try { window.__labKeepOnly(); } catch (eKK) {}
+                        }
                     }
                 }
                 requestAnimationFrame(loop);
@@ -1455,4 +2008,5 @@
         })();
     </script>
 </body>
+</html>
 </html>

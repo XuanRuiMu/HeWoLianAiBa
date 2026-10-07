@@ -42,6 +42,7 @@ function 角色(): ShengChengJiaoSeJieGuo {
     yu_she_lei_xing: 'INTJ',
     mbti_lei_xing: 'INTJ',
     ie_lei_xing: 'I',
+    sui_ji_xing_ge: false,
     re_shen_lei_xing: '慢热',
     hui_fu_yan_chi_hao_miao: 1000,
     wei_xin_ming: '昵称',

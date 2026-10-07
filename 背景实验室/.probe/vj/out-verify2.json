@@ -1,0 +1,400 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v3-全景-默认机位.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v3-营火特写.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v3-石尔特写.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v3-树特写.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v3-全景-收尾.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "r1": {
+  "ready": true,
+  "frames": 745,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r2": {
+  "ready": true,
+  "frames": 3269,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r3": {
+  "ready": true,
+  "frames": 5254,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r4": {
+  "ready": true,
+  "frames": 6890,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r5": {
+  "ready": true,
+  "frames": 8484,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r6": {
+  "ready": true,
+  "frames": 9842,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r7": {
+  "ready": true,
+  "frames": 11361,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r8": {
+  "ready": true,
+  "frames": 12657,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r9": {
+  "ready": true,
+  "frames": 14156,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r10": {
+  "ready": true,
+  "frames": 16963,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "verify": {
+  "protoDiag": {
+   "islands": true,
+   "camp": true,
+   "campMeshCount": 11,
+   "chunksInstanced": 61,
+   "chunksNameOnly": 61,
+   "treeMain": true,
+   "tree008": true,
+   "basaltTopOld": true,
+   "basaltMainOld": true,
+   "placeStateReady": true
+  },
+  "protoOk": true,
+  "cam": {
+   "y": 1.4263,
+   "d": 5.6014,
+   "p": -22.55,
+   "a": -31.5,
+   "px": 3.4939,
+   "py": 1.4263,
+   "pz": 0.3179,
+   "tx": 6.1969,
+   "ty": -0.7218,
+   "tz": -4.0929,
+   "locked": false,
+   "frozen": true
+  },
+  "camOk": true,
+  "frozen": true,
+  "camReport": {
+   "wrapped": true,
+   "frames": 16964,
+   "gen": 1,
+   "appliedGen": 1,
+   "ok": true,
+   "reason": "渲染前机位由 __camState 强制写入，渲染后未被引擎覆盖",
+   "dPos": 0,
+   "dQuat": 0,
+   "dApplied": 0,
+   "dGroup": 0,
+   "pos": [
+    3.4939,
+    1.4263,
+    0.3179
+   ],
+   "quat": [
+    -0.188178,
+    -0.266202,
+    -0.053072,
+    0.94388
+   ],
+   "expect": {
+    "pos": [
+     3.4939,
+     1.4263,
+     0.3179
+    ],
+    "quat": [
+     -0.188178,
+     -0.266202,
+     -0.053072,
+     0.94388
+    ]
+   }
+  },
+  "ground": {
+   "tree": -0.00914,
+   "camp": 0.06221,
+   "rock": 0.13302,
+   "pebble": -353
+  },
+  "tree": {
+   "id": 1,
+   "kind": "tree",
+   "variant": "big",
+   "x": 3,
+   "y": -0.00914,
+   "z": -6,
+   "scale": 1,
+   "leaves": 4541
+  },
+  "camp": {
+   "id": 2,
+   "kind": "campfire",
+   "variant": "default",
+   "x": 0,
+   "y": 0.06221,
+   "z": -8,
+   "scale": 1,
+   "leaves": 0
+  },
+  "rock": {
+   "id": 3,
+   "kind": "rock",
+   "variant": "big-top",
+   "x": -3,
+   "y": 0.13302,
+   "z": -6,
+   "scale": 1,
+   "leaves": 0
+  },
+  "pebble": {
+   "id": 4,
+   "kind": "rock",
+   "variant": "pebble",
+   "x": -4.4,
+   "y": -353,
+   "z": -7.2,
+   "scale": 8,
+   "leaves": 0
+  },
+  "boxTree": {
+   "min": [
+    -2.318,
+    -0.099,
+    -15.307
+   ],
+   "max": [
+    8.318,
+    7.503,
+    3.307
+   ],
+   "size": [
+    10.636,
+    7.602,
+    18.614
+   ],
+   "meshes": 21
+  },
+  "boxCamp": {
+   "min": [
+    -0.477,
+    -0.013,
+    -8.194
+   ],
+   "max": [
+    0.468,
+    1.44,
+    -7.804
+   ],
+   "size": [
+    0.945,
+    1.453,
+    0.39
+   ],
+   "meshes": 12
+  },
+  "boxRock": {
+   "min": [
+    -6.668,
+    0.133,
+    -11.94
+   ],
+   "max": [
+    0.668,
+    1.634,
+    -0.06
+   ],
+   "size": [
+    7.336,
+    1.501,
+    11.881
+   ],
+   "meshes": 1
+  },
+  "boxPebble": {
+   "min": [
+    -4.556,
+    -353,
+    -7.376
+   ],
+   "max": [
+    -4.244,
+    -352.536,
+    -7.024
+   ],
+   "size": [
+    0.312,
+    0.464,
+    0.352
+   ],
+   "meshes": 1
+  },
+  "fireFound": true,
+  "fireSameMat": true,
+  "fireSnap1": {
+   "uTime": 199.9098,
+   "uNoiseTexture": "[object Object]"
+  },
+  "fireVis": {
+   "visible": true,
+   "inScene": true
+  },
+  "wPos": {
+   "fire": [
+    -0.004,
+    0.023,
+    -7.999
+   ],
+   "sparks": [
+    -0.004,
+    0.068,
+    -7.999
+   ],
+   "light": [
+    -0.044,
+    0.263,
+    -8.122
+   ],
+   "woodClone": [
+    -3.144,
+    -0.087,
+    -7.722
+   ],
+   "campAnchor": [
+    3.14,
+    0.155,
+    -0.278
+   ]
+  },
+  "audio": {
+   "type": "Audio",
+   "playing": false,
+   "parentVisible": true
+  },
+  "phase": "day",
+  "frames": 16964
+ },
+ "campCam": {
+  "y": 0.55,
+  "d": 3,
+  "p": -7,
+  "a": 0,
+  "px": 0,
+  "py": 0.55,
+  "pz": -5.2,
+  "tx": 0,
+  "ty": 0.1844,
+  "tz": -8.1776,
+  "locked": false,
+  "frozen": false
+ },
+ "fire2": {
+  "fireSnap2": {
+   "uTime": 204.7304,
+   "uNoiseTexture": "[object Object]"
+  },
+  "origSnap2": {
+   "uTime": 204.7304,
+   "uNoiseTexture": "[object Object]"
+  },
+  "fireVisible": true
+ },
+ "rockCam": {
+  "y": 0.8,
+  "d": 3,
+  "p": -12,
+  "a": 0,
+  "px": -3,
+  "py": 0.8,
+  "pz": -3.2,
+  "tx": -3,
+  "ty": 0.1763,
+  "tz": -6.1344,
+  "locked": false,
+  "frozen": false
+ },
+ "treeCam": {
+  "y": 1.6,
+  "d": 3,
+  "p": -14,
+  "a": 0,
+  "px": 3,
+  "py": 1.6,
+  "pz": -2.2,
+  "tx": 3,
+  "ty": 0.8742,
+  "tz": -5.1109,
+  "locked": false,
+  "frozen": false
+ },
+ "frozenPlace": {
+  "frozenBefore": false,
+  "frozenPlaceOk": {
+   "id": 5,
+   "kind": "campfire",
+   "variant": "default",
+   "x": -1.5,
+   "y": 0.07447,
+   "z": -4.5,
+   "scale": 1,
+   "leaves": 0
+  },
+  "ghost": {
+   "has": true,
+   "pos": [
+    3.001,
+    0.069,
+    -7.117
+   ]
+  },
+  "mode": true,
+  "finalCam": {
+   "y": 1.6,
+   "d": 3,
+   "p": -14,
+   "a": 0,
+   "px": 3,
+   "py": 1.6,
+   "pz": -2.2,
+   "tx": 3,
+   "ty": 0.8742,
+   "tz": -5.1109,
+   "locked": false,
+   "frozen": true
+  }
+ }
+}

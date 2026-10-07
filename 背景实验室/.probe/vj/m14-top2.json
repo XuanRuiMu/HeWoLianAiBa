@@ -1,0 +1,46 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "topFrame2": {
+  "count": 2,
+  "top": [
+   {
+    "name": "Butterfly_2_mesh",
+    "type": "Mesh",
+    "screenY": 59,
+    "screenX": 460,
+    "worldY": 1.32,
+    "worldX": 3.47,
+    "worldZ": 2.03,
+    "parent": "Butterfly_2",
+    "isInstancedMesh": false,
+    "isMesh": true,
+    "isPoints": false,
+    "visible": true,
+    "geomType": "PlaneGeometry"
+   },
+   {
+    "name": "Butterfly_5_mesh",
+    "type": "Mesh",
+    "screenY": 190,
+    "screenX": 235,
+    "worldY": 1,
+    "worldX": 2.11,
+    "worldZ": -6.74,
+    "parent": "Butterfly_5",
+    "isInstancedMesh": false,
+    "isMesh": true,
+    "isPoints": false,
+    "visible": true,
+    "geomType": "PlaneGeometry"
+   }
+  ],
+  "nameCounts": {
+   "Butterfly_2_mesh": 1,
+   "Butterfly_5_mesh": 1
+  }
+ }
+}

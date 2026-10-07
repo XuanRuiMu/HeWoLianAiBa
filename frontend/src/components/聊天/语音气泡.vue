@@ -42,7 +42,7 @@
         @click.stop
         @input.stop="onSeek"
       />
-      <span class="yuyin-jindu-wenben">{{ jinDuWenBen }} / {{ zongWenBen }}</span>
+      <span class="yuyin-jindu-wenben">{{ zongWenBen }}</span>
     </div>
   </div>
 </template>
@@ -84,9 +84,6 @@ const kuanYangShi = computed(() => yuYinKuanYangShi(props.xiaoXi))
 const shiChangWenBen = computed(() => geShiHuaYuYinShiChang(props.xiaoXi))
 const zongWenBen = computed(
   () => `${Math.max(0, Math.floor(props.zongMiao))}″`,
-)
-const jinDuWenBen = computed(
-  () => `${Math.max(0, Math.floor(props.jinDuMiao))}″`,
 )
 
 const jinDuBiLi = computed(() => {
@@ -175,6 +172,12 @@ function onSeek(shiJian: Event): void {
   height: 100%;
 }
 
+.laba-tubiao path {
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
 .yuyin-qipao--benren .laba-tubiao {
   transform: rotate(180deg);
 }
@@ -217,6 +220,7 @@ function onSeek(shiJian: Event): void {
 .yuyin-shichang {
   min-width: 0;
   font-size: var(--ziti-zhong);
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
 }
@@ -289,6 +293,7 @@ function onSeek(shiJian: Event): void {
 .yuyin-jindu-wenben {
   flex: 0 0 auto;
   font-size: var(--ziti-xiao);
+  font-weight: 600;
   white-space: nowrap;
 }
 

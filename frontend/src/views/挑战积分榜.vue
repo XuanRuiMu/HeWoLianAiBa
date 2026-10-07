@@ -2,10 +2,6 @@
   <div class="paihang-yemian" :data-xingbie="xingBieDang">
     <div class="paihang-biaoti-qu">
       <h1 class="paihang-biaoti">{{ huoQuFanYi('tiaoZhan', 'biaoTi') }}</h1>
-      <p class="xingbie-huiji" role="status">
-        <span class="huiji-dian" aria-hidden="true" />
-        <span class="huiji-wen">{{ xingBieHuiJiWen }}</span>
-      </p>
     </div>
 
     <div class="zubie-qiehuan">
@@ -79,11 +75,6 @@ const 用户仓库 = 使用用户仓库()
 
 const xingBieDang = computed<'nan' | 'nv'>(() =>
   解析主色档(undefined, 用户仓库.dangQianYongHu?.mo_ren_xing_bie) === 'nv' ? 'nv' : 'nan',
-)
-const xingBieHuiJiWen = computed(() =>
-  xingBieDang.value === 'nv'
-    ? huoQuFanYi('ziLiaoSheZhi', 'xingBieNv')
-    : huoQuFanYi('ziLiaoSheZhi', 'xingBieNan'),
 )
 
 const zuBieLieBiao: ZuBie[] = ['nan_nv', 'nv_nan', 'nan_nan', 'nv_nv']
@@ -177,33 +168,6 @@ onMounted(jiaZaiPaiHang)
   color: var(--wenben-zhuse);
   letter-spacing: var(--jiange-xiao);
   line-height: 1.25;
-}
-
-.xingbie-huiji {
-  margin: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--jiange-xiao);
-  padding: var(--jiange-6) calc(var(--jiange-12) + var(--jiange-2));
-  border-radius: var(--yuanjiao-zhong);
-  border: 1px solid var(--tiaozhan-zhu-1);
-  background: color-mix(in srgb, var(--tiaozhan-zhu-1) 12%, transparent);
-  font-size: var(--ziti-xiao);
-  font-weight: 700;
-  letter-spacing: 2px;
-  color: var(--wenben-zhuse);
-}
-
-.huiji-dian {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--tiaozhan-zhu-1);
-  box-shadow: 0 0 8px var(--tiaozhan-zhu-1);
-}
-
-.huiji-wen {
-  line-height: 1;
 }
 
 .zubie-qiehuan {

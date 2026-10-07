@@ -92,7 +92,7 @@ describe('FP-K4b 验收点 A：微信喇叭三段弧 + 时长 + 宽度缩放', (
     expect(轴.attributes('type')).toBe('range')
     expect(轴.attributes('max')).toBe('12')
     expect(轴.attributes('aria-label')).toBe(huoQuFanYi('duoMeiTi', 'tiaoZhuanYuYinJinDu'))
-    expect(泡.find('.yuyin-jindu-wenben').text()).toBe('6″ / 12″')
+    expect(泡.find('.yuyin-jindu-wenben').text()).toBe('12″')
   })
 
   it('clip-path 揭开参数与腾讯源一致：0.7056 / 0.3953 / 0，steps(1,end) 2s', () => {
@@ -178,7 +178,7 @@ describe('FP-K4b 验收点 A：微信喇叭三段弧 + 时长 + 宽度缩放', (
     // 反证：退化不等于退场
     expect(挂气泡().find('.yuyin-shichang').text()).toBe('12″')
     const 播 = 挂气泡({ boFangZhong: true, jinDuMiao: 4, zongMiao: 12 })
-    expect(播.find('.yuyin-jindu-wenben').text()).toContain('4″')
+    expect(播.find('.yuyin-jindu-wenben').text()).toBe('12″')
     expect(播.find('.yuyin-jindu-tiao').exists()).toBe(true)
     expect(播.find('.yuyin-jindu-xian').exists()).toBe(true)
   })

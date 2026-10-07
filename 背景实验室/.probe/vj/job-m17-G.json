@@ -1,0 +1,15 @@
+{
+  "url": "http://127.0.0.1:8937/positioner.html",
+  "width": 1920,
+  "height": 868,
+  "headless": false,
+  "maxMs": 400000,
+  "args": ["--no-sandbox", "--ignore-gpu-blocklist", "--enable-gpu-rasterization"],
+  "steps": [
+    { "type": "wait", "ms": 105000 },
+    { "type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/m17-solver.js", "label": "def" },
+    { "type": "eval", "js": "(function(){var w=window.document.getElementById('frame').contentWindow; var s=w.__placeState(); return {ready:s.ready,count:s.count,bad:s.bad||null,items:s.items.map(function(o){return {kind:o.kind,x:o.x,y:o.y,z:o.z,rotY:o.rotY,scale:o.scale};})};})()", "label": "autoload" },
+    { "type": "eval", "js": "(function(){var c=window.__M17.cloud(); var h=window.__M17.heat(c.pts); return {leaves:c.pts.length, heat:h.rows};})()", "label": "heat" },
+    { "type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m17-G-autoload-v7b.png" }
+  ]
+}

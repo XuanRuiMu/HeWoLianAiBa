@@ -1,0 +1,29 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "probe1": {
+  "has": true,
+  "ready": true,
+  "count": 3
+ },
+ "probe2": {
+  "ready": true,
+  "count": 3
+ },
+ "probe3": {
+  "ready": true,
+  "count": 3
+ },
+ "probe4": {
+  "ready": true,
+  "count": 3
+ },
+ "probe5": {
+  "ready": true,
+  "count": 3,
+  "items": 3
+ }
+}

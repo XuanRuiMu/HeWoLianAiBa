@@ -112,7 +112,7 @@ describe('FP-20 内容寻址存储：同一张图二次上传不产生第二份�
   it('不同内容各自落位，临时目录不残留（校验失败也不留半成品）', async () => {
     const { MeiTiCunChuCuoWu } = await import('../../services/媒体存储')
     const diErZhang = zaoPNG('fp20-bu-tong-tu')
-    const jieGuo = await shangChuan(diErZhang, 'biaoqingshu', 'yong-hu-jia')
+    const _jieGuo = await shangChuan(diErZhang, 'biaoqingshu', 'yong-hu-jia')
     expect(wuLiWenJianShu()).toBe(2)
     await expect(shangChuan(diErZhang, 'huai-lei-bie', 'yong-hu-jia')).rejects.toBeInstanceOf(
       MeiTiCunChuCuoWu,

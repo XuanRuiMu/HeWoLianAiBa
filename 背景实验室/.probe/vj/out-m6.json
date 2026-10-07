@@ -1,0 +1,145 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m6-0-pebble重测.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m6-1-tree-14-65.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m6-2-tree-19-65.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m6-3-tree-24-65.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m6-4-tree-19-60-r240.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "r1": {
+  "ready": true,
+  "frames": 801,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r2": {
+  "ready": true,
+  "frames": 2885,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r3": {
+  "ready": true,
+  "frames": 4306,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r4": {
+  "ready": true,
+  "frames": 5500,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r5": {
+  "ready": true,
+  "frames": 7290,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r6": {
+  "ready": true,
+  "frames": 8727,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "def": {},
+ "pebbleProbe": [
+  {
+   "s": 0.8,
+   "p": [
+    3.54,
+    -2.51
+   ]
+  },
+  {
+   "s": 1.2,
+   "p": [
+    4.49,
+    -1.62
+   ]
+  },
+  {
+   "s": 1.6,
+   "p": [
+    5.48,
+    -1.04
+   ]
+  },
+  {
+   "ref": "fire"
+  }
+ ],
+ "v1": {
+  "fire": {
+   "p": [
+    3.38,
+    -2.01
+   ],
+   "gy": -0.136,
+   "ok1": true,
+   "ok2": true
+  },
+  "tree": {
+   "ok": true,
+   "leaves": 4541
+  },
+  "yaw": 8
+ },
+ "v2": {
+  "fire": {
+   "p": [
+    3.38,
+    -2.01
+   ],
+   "gy": -0.136,
+   "ok1": true,
+   "ok2": true
+  },
+  "tree": {
+   "ok": true,
+   "leaves": 4541
+  },
+  "yaw": 8
+ },
+ "v3": {
+  "fire": {
+   "p": [
+    3.38,
+    -2.01
+   ],
+   "gy": -0.136,
+   "ok1": true,
+   "ok2": true
+  },
+  "tree": {
+   "ok": true,
+   "leaves": 4541
+  },
+  "yaw": 8
+ },
+ "v4": {
+  "fire": {
+   "p": [
+    3.38,
+    -2.01
+   ],
+   "gy": -0.136,
+   "ok1": true,
+   "ok2": true
+  },
+  "tree": {
+   "ok": true,
+   "leaves": 4541
+  },
+  "yaw": 8
+ }
+}

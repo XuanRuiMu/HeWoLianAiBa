@@ -515,32 +515,72 @@
         :class="{ 'sou-zhong-gao-liang': 搜索中 && 命中搜索(beiJingSouSuoWenBen) }"
       >
         <h2 class="kapian-biao-ti">{{ huoQuFanYi('sheZhi', 'liaoTianBeiJing') }}</h2>
-        <div
-          class="beijing-wangge fen-duan-ge"
-          role="listbox"
-          :aria-label="huoQuFanYi('sheZhi', 'liaoTianBeiJing')"
-        >
+        <div class="beijing-wangge fen-duan-ge" role="listbox" :aria-label="huoQuFanYi('sheZhi', 'liaoTianBeiJing')">
           <button
-            v-for="xuanXiang in beiJingXuanXiang"
-            :key="xuanXiang.zhi"
             role="option"
-            :aria-selected="设置仓库.liaoTianBeiJing === xuanXiang.zhi"
-            class="beijing-xiangmu"
-            :class="[`beijing-${xuanXiang.zhi}`, { beiXuanZhong: 设置仓库.liaoTianBeiJing === xuanXiang.zhi }]"
-            @click="xuanZeBeiJing(xuanXiang.zhi)"
+            :aria-selected="设置仓库.liaoTianBeiJing === 'moRen'"
+            class="beijing-xiangmu beijing-moRen"
+            :class="{ beiXuanZhong: 设置仓库.liaoTianBeiJing === 'moRen' }"
+            @click="xuanZeBeiJing('moRen')"
           >
-            {{ xuanXiang.wenZi }}
+            {{ huoQuFanYi('sheZhi', 'beiJingMoRen') }}
           </button>
         </div>
-        <div class="yu-lan-nian" :class="`beijing-${设置仓库.liaoTianBeiJing}`">
+        <div class="beijing-fen-zu">
+          <div class="beijing-fen-zu-tou">
+            <span class="beijing-fen-zu-ti">{{ huoQuFanYi('sheZhi', 'qianSeMoShiBeiJing') }}</span>
+            <button class="anniu-fu-zhu xiao-anniu" @click="tongBuBeiJing('qian')">
+              {{ huoQuFanYi('sheZhi', 'tongBuDaoShenSeMoShi') }}
+            </button>
+          </div>
+          <div class="beijing-wangge fen-duan-ge" role="listbox" :aria-label="huoQuFanYi('sheZhi', 'qianSeMoShiBeiJing')">
+            <button
+              v-for="xuanXiang in qianSeBeiJingXuanXiang"
+              :key="xuanXiang.zhi"
+              role="option"
+              :aria-selected="设置仓库.liaoTianBeiJingQian === xuanXiang.zhi"
+              class="beijing-xiangmu"
+              :class="[`beijing-${xuanXiang.zhi}`, { beiXuanZhong: 设置仓库.liaoTianBeiJingQian === xuanXiang.zhi }]"
+              @click="xuanZeBeiJing(xuanXiang.zhi, 'qian')"
+            >
+              {{ xuanXiang.wenZi }}
+            </button>
+          </div>
+        </div>
+        <div class="beijing-fen-zu">
+          <div class="beijing-fen-zu-tou">
+            <span class="beijing-fen-zu-ti">{{ huoQuFanYi('sheZhi', 'shenSeMoShiBeiJing') }}</span>
+            <button class="anniu-fu-zhu xiao-anniu" @click="tongBuBeiJing('shen')">
+              {{ huoQuFanYi('sheZhi', 'tongBuDaoQianSeMoShi') }}
+            </button>
+          </div>
+          <div class="beijing-wangge fen-duan-ge" role="listbox" :aria-label="huoQuFanYi('sheZhi', 'shenSeMoShiBeiJing')">
+            <button
+              v-for="xuanXiang in shenSeBeiJingXuanXiang"
+              :key="xuanXiang.zhi"
+              role="option"
+              :aria-selected="设置仓库.liaoTianBeiJingShen === xuanXiang.zhi"
+              class="beijing-xiangmu"
+              :class="[`beijing-${xuanXiang.zhi}`, { beiXuanZhong: 设置仓库.liaoTianBeiJingShen === xuanXiang.zhi }]"
+              @click="xuanZeBeiJing(xuanXiang.zhi, 'shen')"
+            >
+              {{ xuanXiang.wenZi }}
+            </button>
+          </div>
+        </div>
+        <div class="yu-lan-xiao-xi-qu" :class="yuLanBeiJingLeiMing" :style="[设置仓库.beiJingNeiLianYangShi, 设置仓库.ziJiQiPaoCSSBianLiang]">
           <p class="yu-lan-biao-ti">{{ huoQuFanYi('sheZhi', 'liaoTianYuLan') }}</p>
           <div class="yu-lan-tou-hang">
             <span class="yu-lan-tou"><TouXiang :tou-xiang="dangQianTouXiang" :mo-ren-zi="touXiangShouZi" /></span>
             <span class="yu-lan-ming">{{ dangQianMingCheng }}</span>
           </div>
           <p class="yu-lan-qian-ming">{{ 设置仓库.qianMing || huoQuFanYi('haoYou', 'zanWuQianMing') }}</p>
-          <div class="yu-lan-qi-pao-lai">{{ huoQuFanYi('sheZhi', 'yuLanQiPaoLai') }}</div>
-          <div class="yu-lan-qi-pao-qu">{{ huoQuFanYi('sheZhi', 'yuLanQiPaoQu') }}</div>
+          <div class="xiaoxi-hang jiaose-xiaoxi">
+            <div class="qipao-neirong">{{ huoQuFanYi('sheZhi', 'yuLanQiPaoLai') }}</div>
+          </div>
+          <div class="xiaoxi-hang yonghu-xiaoxi">
+            <div class="qipao-neirong">{{ huoQuFanYi('sheZhi', 'yuLanQiPaoQu') }}</div>
+          </div>
           <p class="yu-lan-dang-qian">{{ huoQuFanYi('sheZhi', 'dangQianBeiJing') }}：{{ 当前背景名 }}</p>
         </div>
         <div class="zi-ding-yi-bei-jing-qu">
@@ -791,13 +831,15 @@ const 脱敏手机号 = computed(() => {
   return '—'
 })
 
-const beiJingXuanXiang: Array<{ zhi: LiaoTianBeiJing; wenZi: string }> = [
-  { zhi: 'moRen', wenZi: huoQuFanYi('sheZhi', 'beiJingMoRen') },
+const qianSeBeiJingXuanXiang: Array<{ zhi: LiaoTianBeiJing; wenZi: string }> = [
+  { zhi: 'fenSeMengJing', wenZi: huoQuFanYi('sheZhi', 'beiJingFenSe') },
+  { zhi: 'miSeTianYuan', wenZi: huoQuFanYi('sheZhi', 'beiJingTianYuan') },
+]
+
+const shenSeBeiJingXuanXiang: Array<{ zhi: LiaoTianBeiJing; wenZi: string }> = [
   { zhi: 'miWuSenLin', wenZi: huoQuFanYi('sheZhi', 'beiJingSenLin') },
   { zhi: 'haiYangZhiLan', wenZi: huoQuFanYi('sheZhi', 'beiJingHaiYang') },
-  { zhi: 'fenSeMengJing', wenZi: huoQuFanYi('sheZhi', 'beiJingFenSe') },
   { zhi: 'yeKongXingHe', wenZi: huoQuFanYi('sheZhi', 'beiJingYeKong') },
-  { zhi: 'miSeTianYuan', wenZi: huoQuFanYi('sheZhi', 'beiJingTianYuan') },
 ]
 
 async function fuZhiUID() {
@@ -811,9 +853,20 @@ async function fuZhiUID() {
   }
 }
 
-async function xuanZeBeiJing(zhi: LiaoTianBeiJing) {
+async function xuanZeBeiJing(zhi: LiaoTianBeiJing, moShi?: 'qian' | 'shen') {
   qingFenQuanCuoWu('beiJing')
-  await 设置仓库.qieHuanBeiJing(zhi)
+  await 设置仓库.qieHuanBeiJing(zhi, moShi)
+}
+
+const yuLanBeiJingLeiMing = computed(() => (设置仓库.shiYuShe ? `beijing-${设置仓库.liaoTianBeiJing}` : 'beijing-ziDingYi'))
+
+async function tongBuBeiJing(yuan: 'qian' | 'shen') {
+  qingFenQuanCuoWu('beiJing')
+  try {
+    await 设置仓库.tongBuBeiJing(yuan)
+  } catch (cuoWu: unknown) {
+    jieShouFenQuanCuoWu('beiJing', cuoWu, () => tongBuBeiJing(yuan))
+  }
 }
 
 const beiJingInputRef = ref<HTMLInputElement | null>(null)
@@ -1208,7 +1261,10 @@ const 完成数 = computed(
 const 完成百分比 = computed(() => Math.round((完成数.value / 完成总数) * 100))
 const 好友数 = computed(() => haoYouKeXuan.value.length)
 const 当前背景名 = computed(
-  () => beiJingXuanXiang.find((项) => 项.zhi === 设置仓库.liaoTianBeiJing)?.wenZi || '',
+  () =>
+    [...qianSeBeiJingXuanXiang, ...shenSeBeiJingXuanXiang, { zhi: 'moRen', wenZi: huoQuFanYi('sheZhi', 'beiJingMoRen') }].find(
+      (项) => 项.zhi === 设置仓库.liaoTianBeiJing,
+    )?.wenZi || '',
 )
 const 搜索中 = computed(() => 搜索关键词.value.trim().length > 0)
 
@@ -1449,7 +1505,9 @@ async function zhiXingZhuXiao() {
   width: 100%;
   max-width: 960px;
   margin: 0 auto;
-  padding: 0 var(--jiange-zhong) calc(var(--jiange-da) * 2 + var(--jiange-zhong));
+  /* 顶部初始间距从滚动容器（.yemian-buju）平移到页面根节点自身：
+     滚动容器 padding-top 必须为 0，sticky 的 .biao-qian-lan 才会贴住真正顶部 */
+  padding: 5vh var(--jiange-zhong) calc(var(--jiange-da) * 2 + var(--jiange-zhong));
   display: flex;
   flex-direction: column;
   gap: var(--jiange-zhong);
@@ -1909,13 +1967,24 @@ async function zhiXingZhuXiao() {
 }
 
 .ke-jian-xing-xiala {
-  padding: var(--jiange-10) var(--jiange-12);
-  border-radius: 12px;
-  border: 1.5px solid var(--bianKuang);
+  padding: var(--jiange-10) calc(var(--jiange-12) * 2 + var(--jiange-4)) var(--jiange-10) var(--jiange-12);
+  border-radius: 10px;
+  border: 1px solid var(--bianKuang);
   background: var(--kaPian);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
   color: var(--moSe);
   font-size: 13px;
   font-family: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.ke-jian-xing-xiala:hover {
+  border-color: var(--moSe);
 }
 
 .bai-ming-dan-qu {
@@ -2008,6 +2077,23 @@ async function zhiXingZhuXiao() {
   gap: var(--jiange-10);
 }
 
+.beijing-fen-zu {
+  margin-top: var(--jiange-10);
+}
+
+.beijing-fen-zu-tou {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--jiange-6);
+}
+
+.beijing-fen-zu-ti {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--moSe);
+}
+
 .beijing-xiangmu {
   border-radius: 16px;
   border: 2px solid var(--bianKuang);
@@ -2056,7 +2142,7 @@ async function zhiXingZhuXiao() {
   color: var(--moSe);
 }
 
-.yu-lan-nian {
+.yu-lan-xiao-xi-qu {
   margin-top: var(--jiange-4);
   border-radius: 14px;
   padding: var(--jiange-zhong);
@@ -2064,6 +2150,87 @@ async function zhiXingZhuXiao() {
   display: flex;
   flex-direction: column;
   gap: var(--jiange-xiao);
+  background: var(--liaotian-beijing);
+  background-size: 18px 18px;
+}
+
+.yu-lan-xiao-xi-qu.beijing-moRen {
+  background: var(--liaotian-beijing);
+  background-size: 18px 18px;
+}
+
+.yu-lan-xiao-xi-qu.beijing-miWuSenLin {
+  background: linear-gradient(135deg, #1a2f1a, #2d4a2d);
+}
+
+.yu-lan-xiao-xi-qu.beijing-haiYangZhiLan {
+  background: linear-gradient(135deg, #1a3a5c, #2d6a9f);
+}
+
+.yu-lan-xiao-xi-qu.beijing-fenSeMengJing {
+  background: linear-gradient(135deg, #f7d6e0, #f2a7c3);
+}
+
+.yu-lan-xiao-xi-qu.beijing-yeKongXingHe {
+  background: linear-gradient(135deg, #0a0a23, #1a1a4d);
+}
+
+.yu-lan-xiao-xi-qu.beijing-miSeTianYuan {
+  background: linear-gradient(135deg, #f5f0e1, #e8dcc3);
+}
+
+.yu-lan-xiao-xi-qu .xiaoxi-hang {
+  display: flex;
+  margin-bottom: var(--jiange-xiao);
+}
+
+.yu-lan-xiao-xi-qu .yonghu-xiaoxi {
+  justify-content: flex-end;
+}
+
+.yu-lan-xiao-xi-qu .qipao-neirong {
+  padding: var(--jiange-9) var(--jiange-13);
+  border-radius: 6px;
+  font-size: 16px;
+  line-height: 1.45;
+  word-break: break-word;
+  position: relative;
+  display: inline-block;
+  max-width: 85%;
+}
+
+.yu-lan-xiao-xi-qu .yonghu-xiaoxi .qipao-neirong {
+  background: var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing));
+  color: var(--qipao-ziJi-wenBen, var(--xiaoxi-yonghu-wenben));
+}
+
+.yu-lan-xiao-xi-qu .yonghu-xiaoxi .qipao-neirong::after {
+  content: '';
+  position: absolute;
+  right: -5px;
+  top: 13px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing));
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+.yu-lan-xiao-xi-qu .jiaose-xiaoxi .qipao-neirong {
+  background: var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing));
+  color: var(--qipao-duiFang-wenBen, var(--xiaoxi-jiaose-wenben));
+}
+
+.yu-lan-xiao-xi-qu .jiaose-xiaoxi .qipao-neirong::after {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 13px;
+  width: 0;
+  height: 0;
+  border-right: 6px solid var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing));
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
 }
 
 .yu-lan-biao-ti {
@@ -2104,27 +2271,6 @@ async function zhiXingZhuXiao() {
   font-size: 12px;
   color: var(--huiSe);
   margin: 0;
-}
-
-.yu-lan-qi-pao-lai,
-.yu-lan-qi-pao-qu {
-  max-width: 85%;
-  padding: var(--jiange-10) calc(var(--jiange-xiao) + var(--jiange-6));
-  border-radius: 14px;
-  font-size: 13px;
-  line-height: 1.6;
-  border: 1px solid var(--bianKuang);
-  background-color: var(--kaPian);
-  color: var(--moSe);
-}
-
-.yu-lan-qi-pao-lai {
-  align-self: flex-start;
-}
-
-.yu-lan-qi-pao-qu {
-  align-self: flex-end;
-  background-color: var(--danLv);
 }
 
 .yu-lan-dang-qian {
@@ -2325,7 +2471,7 @@ async function zhiXingZhuXiao() {
 
 @media (min-width: 768px) {
   .zhang-hao-an-quan {
-    padding: 0 var(--jiange-da) calc(var(--jiange-da) * 3);
+    padding: 5vh var(--jiange-da) calc(var(--jiange-da) * 3);
   }
 
   .shuang-lie {
@@ -2350,6 +2496,12 @@ async function zhiXingZhuXiao() {
 
   .ming-pian-nei {
     gap: calc(var(--jiange-da) + var(--jiange-4));
+  }
+}
+
+@media (max-width: 767px) {
+  .zhang-hao-an-quan {
+    padding-top: var(--jiange-da);
   }
 }
 

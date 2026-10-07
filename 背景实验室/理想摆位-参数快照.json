@@ -1,0 +1,27 @@
+{
+  "note": "背景摆位器参数 · 2026-10-07 用户裁决完全重置（推翻 v3~v7）：①DEFAULTS.placements=[]（4 个手动放置物全部取消）②S.treesVisible=true / props.campfire=true / props.rocks=true（恢复引擎原生可见性）③DEFAULTS.camPos=null + frozen=false（不覆盖相机位 + 不冻结；initPose() 吃进引擎初始位，enforceCamera 每帧保持，user 可自由旋转做选景）④吴昊阳屏幕图层 24.5%/71%/24%/不透明度 1 保留不变（用户硬约束）⑤相机四元组 (camY=1.34/camD=5.3/camP=0/camA=0) 是占位，引擎就绪后由 initPose→__onCam→syncSlidersFromCam 写回真实值 · 渲染路径：trees/campfire/rocks 走引擎原生（不再用手动摆放） · 比例锁定 443:312=1.4199 仍由 wu-2d.png 决定 · 2026-10-07 新增删除物：tree-main 主树（树干+树冠叶）+ bushes001 岛前两块深色斑块（用户圈定删除三处）已删；生效配置在 positioner.html inpage S.remove（叶片包围盒实测值，禁止扩大），本 JSON 只做记录",
+  "savedAt": "2026-10-07T00:45:00.000Z",
+  "camera": {
+    "pointerLocked": false,
+    "frozen": false,
+    "height": 1.34,
+    "distance": 5.3,
+    "pitchDeg": 0,
+    "azimuthDeg": 0,
+    "position": [5.75, 1.34, 5.27],
+    "position_source": "probe-scene.json 引擎原始默认（2026-10-05 实测）；camPos=null 让 positioner 不强制覆盖，由 initPose() 自动吃进"
+  },
+  "wuhaoyang": {
+    "visible": true,
+    "src": "/wu-2d.png",
+    "screen": { "xPct": 24.5, "yPct": 71 },
+    "widthPct": 24,
+    "opacity": 1,
+    "aspect": 1.419871795
+  },
+  "treesVisible": true,
+  "props": { "campfire": true, "rocks": true },
+  "placeKind": "campfire",
+  "placements": [],
+  "leaves_note": "leaves 为输出记录（addFoliage 按原型确定性重生成），__placeImport 导入时不读取该字段，无需手动维护；placements=[] 时不调用 __placeImport"
+}

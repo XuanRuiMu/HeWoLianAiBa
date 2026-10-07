@@ -812,6 +812,14 @@ luYou.post(
       if (!wenBen) {
         return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('liaoTian', 'yuYinZhuanWenZiShiBai'))
       }
+      try {
+        await 数据库.query(
+          `UPDATE "消息" SET "内容" = $2 WHERE "媒体ID" = $1 AND "类型" = 'yuYin' AND "已撤回" = false AND COALESCE(BTRIM("内容"), '') = ''`,
+          [meiTiId.trim(), wenBen],
+        )
+      } catch (huiXie) {
+        debug日志.warn('消息接口', '语音转写回写消息内容失败', { xiang_qing: { cuo_wu: String(huiXie) } })
+      }
       return chengGongXiangYing(xiangYing, { zhuanXieWenBen: wenBen })
     } catch (cuoWu) {
       debug日志.error('消息接口', '语音转写失败', { xiang_qing: { cuo_wu: String(cuoWu) } })

@@ -882,6 +882,7 @@ import {
 } from '@/config/消息配置'
 import { BIAO_QING_TIAN_JIA_PEI_ZHI } from '@/config/表情配置'
 import { yaSuoTuPiang } from '@/utils/图片压缩'
+import { queDingMiDengJian } from '@/utils/发件箱'
 import {
   xuanRanBiaoQingBao,
   BIAO_QING_BAO_LIE_BIAO,
@@ -948,6 +949,11 @@ const caoGaoJian = computed(() => {
 const { huiFuCaoGao, qingChuCaoGao } = useCaoGao(caoGaoJian, shuRuNeiRong)
 const caoGaoYiHuiFu = ref(false)
 const faSongZhong = ref(false)
+// FP-17 待发图文投递去重：块序列在发送成功后才会清空 ⇒ 网络慢时同一次待发会被发送按钮/回车
+// 反复触发，每次触发都新建乐观气泡与一把新幂等键（服务端压不住两条不同的键）⇒ 重复消息。
+// 该标志在进入发送的第一时间同步置位（先于授权等待/压缩等待），投递结算后才复位；
+// 同一次待发在途期间的重复触发一律吞掉，与文本链路的「发出即清空输入」同一去重口径。
+const daiFaTouDiZhong = ref(false)
 const junShiZhanKai = ref(false)
 const youXiShiJianZhanKai = ref(false)
 const youXiShiJianLeiXing = ref<'shengli' | 'shibai'>('shengli')
@@ -1008,6 +1014,7 @@ const {
   shiZhuanWenZiZhanKai,
   shiZhuanWenZiShiBai,
   qieHuanZhuanWenZiXianShi,
+  jiLuZhuanXie,
 } = use语音转文字({
   huoQuYuYinDiZhi: huoQuXiaoXiMeiTiURL,
   zhuanXieQingQiu: async (xiaoXi) => zhuanXieYuYin(xiaoXi.mei_ti_id || ''),
@@ -1140,19 +1147,36 @@ function huoQuYinYongZhaiYao(muBiao: CaiDanXiaoXi): string {
  * 旧形态既不带引用也不清引用态 ⇒ 引用条在直发一条语音后残留悬挂，
  * 用户接着敲的文字还会继承上一条的引用（新 bug），三方案里选「补引用参数 + 成功必清」。
  */
+const zaiTuZhiFaMeiTiId = new Set<string>()
+const zaiTuZhiFaWenJian = new Set<Blob>()
+
 async function faSongMeiTiZhiFa(
   leiXing: DuoMeiTiLeiXing,
   wenJian: File | Blob | null,
   fuJia?: MeiTiFuJia,
 ): Promise<消息 | null> {
-  const jieGuo = await 聊天仓库.faSongMeiTiXiaoXi(
-    leiXing,
-    wenJian,
-    fuJia ?? {},
-    yinYongXiaoXi.value?.id ?? null,
-  )
-  if (jieGuo) quXiaoYinYong()
-  return jieGuo
+  // FP-17：直发媒体的「同一载荷在途」去重（表情双击、同一文件重复 change）。按载荷身份区分：
+  // 同一表情/同一文件在途期间的第二次触发一律吞掉，连发两个不同表情仍可各自直发，不误伤。
+  const yiYouMeiTiId = fuJia?.yiYouMeiTi?.meiTiId ?? ''
+  const zaiTu = yiYouMeiTiId
+    ? zaiTuZhiFaMeiTiId.has(yiYouMeiTiId)
+    : !!wenJian && zaiTuZhiFaWenJian.has(wenJian)
+  if (zaiTu) return null
+  if (yiYouMeiTiId) zaiTuZhiFaMeiTiId.add(yiYouMeiTiId)
+  else if (wenJian) zaiTuZhiFaWenJian.add(wenJian)
+  try {
+    const jieGuo = await 聊天仓库.faSongMeiTiXiaoXi(
+      leiXing,
+      wenJian,
+      fuJia ?? {},
+      yinYongXiaoXi.value?.id ?? null,
+    )
+    if (jieGuo) quXiaoYinYong()
+    return jieGuo
+  } finally {
+    if (yiYouMeiTiId) zaiTuZhiFaMeiTiId.delete(yiYouMeiTiId)
+    else if (wenJian) zaiTuZhiFaWenJian.delete(wenJian)
+  }
 }
 
 function chuLiYouJianCaiDan(xiaoXi: 消息, shiJian: MouseEvent) {
@@ -1238,82 +1262,6 @@ const {
 
 // FP-05 YH-036/YH-037：用户手动生图/生视频与通话相关状态已删除（图片与视频由AI对象在合适时主动发起）
 
-async function benDiZhuanXieYuYinBlob(blob: Blob): Promise<string> {
-  try {
-    const chuangKou = window as unknown as Record<string, unknown>
-    const GouZao = (chuangKou['SpeechRecognition'] ?? chuangKou['webkitSpeechRecognition']) as (new () => {
-      lang: string
-      interimResults: boolean
-      maxAlternatives: number
-      onresult: ((e: { results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null
-      onerror: (() => void) | null
-      onend: (() => void) | null
-      start(): void
-      stop(): void
-    }) | undefined
-    if (!GouZao || typeof Audio === 'undefined') return ''
-    const diZhi = URL.createObjectURL(blob)
-    try {
-      return await new Promise<string>((jieJue) => {
-        const shiBieQi = new GouZao()
-        shiBieQi.lang = 'zh-CN'
-        shiBieQi.interimResults = false
-        shiBieQi.maxAlternatives = 1
-        const duanLuo: string[] = []
-        let yiJieSuan = false
-        const jieSuan = (zhi: string) => {
-          if (yiJieSuan) return
-          yiJieSuan = true
-          jieJue(zhi)
-        }
-        const chaoShi = setTimeout(() => jieSuan(duanLuo.join('').trim().slice(0, 500)), 6000)
-        const yinPin = new Audio(diZhi)
-        shiBieQi.onresult = (e) => {
-          for (let i = 0; i < e.results.length; i++) {
-            const jieGuo = e.results[i]
-            if (jieGuo && jieGuo.isFinal && jieGuo[0] && jieGuo[0].transcript) duanLuo.push(jieGuo[0].transcript)
-          }
-        }
-        shiBieQi.onerror = () => {
-          clearTimeout(chaoShi)
-          jieSuan('')
-        }
-        shiBieQi.onend = () => {
-          clearTimeout(chaoShi)
-          jieSuan(duanLuo.join('').trim().slice(0, 500))
-        }
-        yinPin.onended = () => {
-          try {
-            shiBieQi.stop()
-          } catch {
-            clearTimeout(chaoShi)
-            jieSuan(duanLuo.join('').trim().slice(0, 500))
-          }
-        }
-        yinPin.onerror = () => {
-          clearTimeout(chaoShi)
-          jieSuan('')
-        }
-        try {
-          shiBieQi.start()
-        } catch {
-          clearTimeout(chaoShi)
-          jieSuan('')
-          return
-        }
-        Promise.resolve(yinPin.play()).catch(() => {
-          clearTimeout(chaoShi)
-          jieSuan('')
-        })
-      })
-    } finally {
-      URL.revokeObjectURL(diZhi)
-    }
-  } catch {
-    return ''
-  }
-}
-
 const {
   luYinMoShi,
   luYinZhong,
@@ -1330,8 +1278,14 @@ const {
 } = use录音({
   sheZhiCuoWu: (xinXi) => 聊天仓库.sheZhiCuoWu(xinXi),
   faSongYuYin: async (blob, fuJia) => {
-    const zhuanXie = await benDiZhuanXieYuYinBlob(blob)
-    await faSongMeiTiZhiFa('yuYin', blob, { ...fuJia, zhuanXieWenBen: zhuanXie })
+    const xiaoXi = await faSongMeiTiZhiFa('yuYin', blob, fuJia)
+    if (xiaoXi?.mei_ti_id) {
+      void zhuanXieYuYin(xiaoXi.mei_ti_id).then((wenBen) => {
+        if (!wenBen) return
+        xiaoXi.nei_rong = wenBen.trim().slice(0, 500)
+        jiLuZhuanXie(xiaoXi, wenBen)
+      })
+    }
   },
   gunDongDaoDiBu: () => gunDongDaoDiBu(),
 })
@@ -1383,6 +1337,32 @@ const {
     if (diZhi) URL.revokeObjectURL(diZhi)
   },
 })
+
+/**
+ * FP-17 幂等键钉在「当前待发构成」上：同一次待发的重试（含失败后整条重发）复用同一把键，
+ * 服务端 `UNIQUE(用户ID,角色ID,幂等键)` 才能把「响应超时但其实已落库」的重放压成一条；
+ * 构成一旦变化（增删块、改正文、换媒体、改引用）立即换新键，不把一条新消息误判成旧消息的重放。
+ * 复位走构成签名（块 id/正文/媒体 + 文字投影 + 引用），不逐个改写口挂复位点：漏挂一口即静默丢消息。
+ */
+const daiFaTouDiZaiTi: { mi_deng_jian?: string | null } = { mi_deng_jian: null }
+const daiFaQianMing = computed(() =>
+  [
+    // 取「真正会被提交的块」而不是原始块数组：空文字段/自动补位段不参与提交，
+    // 它们的产生与合并不得改变签名，否则同一份载荷会被误判成新构成而换键
+    shouJiDaiFaKuai()
+      .map((kuai) => `${kuai.id}\u0001${kuai.nei_rong}\u0001${kuai.mei_ti_id ?? ''}`)
+      .join('\u0002'),
+    shuRuNeiRong.value,
+    yinYongXiaoXi.value?.id ?? '',
+  ].join('\u0003'),
+)
+watch(
+  daiFaQianMing,
+  () => {
+    daiFaTouDiZaiTi.mi_deng_jian = null
+  },
+  { flush: 'sync' },
+)
 
 /**
  * 输入区展开档：布尔量与「内容回到单行档 ⇒ 回落」这条复位判定都住在 composables/use输入区展开档
@@ -1728,6 +1708,11 @@ const liaoTianSuoDing = computed(() => {
 })
 
 const keYiFaSong = computed(() => {
+  // FP-17：待发图文投递在途时发送按钮与回车一律不受理（用户可见的「发送中」反馈）。
+  // 必须按「在途」一刀切而不是只看「现在还有没有图片块」：投递期内用户若把图片块删光，
+  // 只看图片块会放开纯文本分支，让同一条正文既随原图文发出、又被当新消息再发一次。
+  // 文本链路（从未物化待发块）不置此标志，既有「连续快发按点击顺序派发」语义不受影响。
+  if (daiFaTouDiZhong.value) return false
   const neiRong = shuRuNeiRong.value.trim()
   if (neiRong.length > XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu) return false
   // FP-10b：待发区里有图片 ⇒ 没有文字也能发（QQ 口径：纯图片消息是合法形态）
@@ -1848,36 +1833,46 @@ const 管理员调试指令 = 'greedisgood'
  * 发送失败时待发区保持原样，用户可以直接再点一次发送（气泡上的重试走同一把幂等键）。
  */
 async function faSongDaiFaTuWen(): Promise<void> {
+  // FP-17：同步闸门必须在第一个 await 之前 —— 授权等待（弹窗未答可无限期挂起）与压缩等待
+  // 都是「块还在、键还没钉」的窗口，期间重复触发会各发一条。这里先于一切异步把闸门放下。
+  if (daiFaTouDiZhong.value) return
   if (daiFaKuaiChaoXian()) {
     聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'kuaiChaoXian'))
     return
   }
-  const yunXu = await queRenTuPianShouQuan()
-  if (!yunXu) {
-    聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'shouQuanWeiKaiQiTiShi'))
-    return
-  }
-  // 压缩在后台跑，块里可能还压着原图：先等在途压缩全部落回块，再取待发序列
-  faSongZhong.value = true
-  await dengDaiDaiFaYaSuoWanCheng()
-  const daiFa = shouJiDaiFaKuai()
-  if (daiFa.length === 0) {
-    faSongZhong.value = false
-    return
-  }
+  daiFaTouDiZhong.value = true
   try {
+    const yunXu = await queRenTuPianShouQuan()
+    if (!yunXu) {
+      聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'shouQuanWeiKaiQiTiShi'))
+      return
+    }
+    // 压缩在后台跑，块里可能还压着原图：先等在途压缩全部落回块，再取待发序列
+    await dengDaiDaiFaYaSuoWanCheng()
+    const daiFa = shouJiDaiFaKuai()
+    if (daiFa.length === 0) return
+    // 投递的键与构成快照都在真正派发这一刻取（授权/压缩等待期内用户可能又改过）
+    const faChuQianMing = daiFaQianMing.value
+    const faChuMiDengJian = queDingMiDengJian(daiFaTouDiZaiTi)
     // FP-08b：引用态（真源只在此处的 `yinYongXiaoXi`）必须在发送这一刻进 store，
     // 否则会像改前那样停在 UI 死胡同里（需求 #5 的"严重 bug"本体）。
-    const jieGuo = await 聊天仓库.faSongTuWenXiaoXi(daiFa, yinYongXiaoXi.value?.id ?? null)
+    const jieGuo = await 聊天仓库.faSongTuWenXiaoXi(
+      daiFa,
+      yinYongXiaoXi.value?.id ?? null,
+      faChuMiDengJian,
+    )
     if (jieGuo) {
-      qingKongDaiFaKuai()
-      qingChuCaoGao()
-      shouQiZhanKaiDang()
-      quXiaoYinYong()
+      // 投递期内用户又编辑过：这次发出的只是旧构成，当前待发是新的编辑，绝不连新内容一起清掉
+      if (daiFaQianMing.value === faChuQianMing) {
+        qingKongDaiFaKuai()
+        qingChuCaoGao()
+        shouQiZhanKaiDang()
+        quXiaoYinYong()
+      }
       if (yiDingZaiDiBu.value) gunDongDaoDiBu()
     }
   } finally {
-    faSongZhong.value = false
+    daiFaTouDiZhong.value = false
   }
 }
 
@@ -1889,7 +1884,8 @@ async function faSong() {
     await 用户仓库.queBaoShenFenJiuXu()
     if (!用户仓库.keGuanLiZhiDu) {
       // 就绪门只保证身份「解析过一次」，不保证新鲜：本会话内刚被提升的账号在此重取一次能力位
-      await 用户仓库.jiaZaiYongHu()
+      // FP-19：走静默重核对，避免无参 jiaZaiYongHu 把认证态翻成「恢复中」导致当前聊天页被整页重挂
+      await 用户仓库.queBaoShenFenJiuXu(true)
     }
     if (用户仓库.keGuanLiZhiDu) {
       guanLiJianKongZhanKai.value = true

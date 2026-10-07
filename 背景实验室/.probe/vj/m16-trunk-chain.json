@@ -1,0 +1,179 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "probe-trunk-chain": {
+  "chain": [
+   {
+    "name": "tree-trunk-main",
+    "type": "Mesh",
+    "pos": [
+     0.16838383674621582,
+     0.019603967666625977,
+     0.4118055999279022
+    ],
+    "scale": [
+     -0.5308733582496643,
+     -0.5308732986450195,
+     -0.5308733582496643
+    ],
+    "rot": [
+     -3.141592653589793,
+     0.20674368398091,
+     0
+    ],
+    "worldPos": [
+     1.5154545307159424,
+     0.1764357089996338,
+     3.70625039935112
+    ]
+   },
+   {
+    "name": "tree-main",
+    "type": "Object3D",
+    "pos": [
+     0,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ],
+    "rot": [
+     0,
+     0,
+     0
+    ],
+    "worldPos": [
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "name": "trees",
+    "type": "Object3D",
+    "pos": [
+     0,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ],
+    "rot": [
+     0,
+     0,
+     0
+    ],
+    "worldPos": [
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "name": "main",
+    "type": "Object3D",
+    "pos": [
+     0,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ],
+    "rot": [
+     0,
+     0,
+     0
+    ],
+    "worldPos": [
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "name": "islands",
+    "type": "Object3D",
+    "pos": [
+     0,
+     0,
+     0
+    ],
+    "scale": [
+     9,
+     9,
+     9
+    ],
+    "rot": [
+     0,
+     0,
+     0
+    ],
+    "worldPos": [
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "name": "Experience",
+    "type": "Group",
+    "pos": [
+     0,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ],
+    "rot": [
+     0,
+     0,
+     0
+    ],
+    "worldPos": [
+     0,
+     0,
+     0
+    ]
+   },
+   {
+    "name": "MainScene",
+    "type": "Scene",
+    "pos": [
+     0,
+     0,
+     0
+    ],
+    "scale": [
+     1,
+     1,
+     1
+    ],
+    "rot": [
+     0,
+     0,
+     0
+    ],
+    "worldPos": [
+     0,
+     0,
+     0
+    ]
+   }
+  ]
+ }
+}

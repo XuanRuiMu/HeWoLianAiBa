@@ -1,0 +1,35 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m16-U1-neg1.5-neg4.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m16-U2-neg2.5-neg5.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m16-U3-neg3-neg6.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m16-U4-neg1-neg2.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "U1": {
+  "test": "U1",
+  "ok": true,
+  "bad": 0,
+  "count": 3
+ },
+ "U2": {
+  "test": "U2",
+  "ok": true,
+  "bad": 0,
+  "count": 3
+ },
+ "U3": {
+  "test": "U3",
+  "ok": true,
+  "bad": 0,
+  "count": 3
+ },
+ "U4": {
+  "test": "U4",
+  "ok": true,
+  "bad": 0,
+  "count": 3
+ }
+}

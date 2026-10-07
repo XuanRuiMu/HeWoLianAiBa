@@ -333,6 +333,90 @@ describe('FP-14 ①：三段仍是零填充 YYYY-MM-DD，两入口同一条外�
   })
 })
 
+describe('FP-14 ⑩：录入跳段与粘贴数字串解析', () => {
+  it('年段写满 4 位自动跳到月段，月段写满 2 位自动跳到日段', async () => {
+    const wrapper = 挂载控件()
+    const nianEl = 段元素(wrapper, 'nian')
+    nianEl.focus()
+    await wrapper.find(段选择器.nian).setValue('2004')
+    await flushPromises()
+    expect(document.activeElement).toBe(段元素(wrapper, 'yue'))
+    await wrapper.find(段选择器.yue).setValue('02')
+    await flushPromises()
+    expect(document.activeElement).toBe(段元素(wrapper, 'ri'))
+  })
+
+  it('粘贴 8 位数字串即自动填充并外发零填充 YYYY-MM-DD', async () => {
+    const wrapper = 挂载控件()
+    const el = 段元素(wrapper, 'nian')
+    el.dispatchEvent(
+      Object.assign(new Event('paste', { bubbles: true, cancelable: true }), {
+        clipboardData: { getData: () => '20050816' },
+      }),
+    )
+    await flushPromises()
+    expect(段显示(wrapper, 'nian')).toBe('2005')
+    expect(段显示(wrapper, 'yue')).toBe('08')
+    expect(段显示(wrapper, 'ri')).toBe('16')
+    expect(最近外发(wrapper)).toBe('2005-08-16')
+  })
+
+  it('粘贴带分隔符串（2005-08-16）清洗后同样自动填充', async () => {
+    const wrapper = 挂载控件()
+    段元素(wrapper, 'nian').dispatchEvent(
+      Object.assign(new Event('paste', { bubbles: true, cancelable: true }), {
+        clipboardData: { getData: () => '2005-08-16' },
+      }),
+    )
+    await flushPromises()
+    expect(最近外发(wrapper)).toBe('2005-08-16')
+  })
+
+  it('粘贴 20051316879 按 YYYY/MM/DD 取前 8 位解析为 2005-13-16：不合法则段值原样回显、aria-invalid 报真、不外发日期', async () => {
+    const wrapper = 挂载控件()
+    段元素(wrapper, 'nian').dispatchEvent(
+      Object.assign(new Event('paste', { bubbles: true, cancelable: true }), {
+        clipboardData: { getData: () => '20051316879' },
+      }),
+    )
+    await flushPromises()
+    expect(段显示(wrapper, 'nian')).toBe('2005')
+    expect(段显示(wrapper, 'yue')).toBe('13')
+    expect(段显示(wrapper, 'ri')).toBe('16')
+    expect(最近外发(wrapper)).toBe('')
+    expect(段元素(wrapper, 'nian').getAttribute('aria-invalid')).toBe('true')
+    expect(段元素(wrapper, 'yue').getAttribute('aria-invalid')).toBe('true')
+    expect(段元素(wrapper, 'ri').getAttribute('aria-invalid')).toBe('true')
+  })
+
+  it('粘贴 20040230：2 月 30 日不存在，段值原样回显且 aria-invalid 报真', async () => {
+    const wrapper = 挂载控件()
+    段元素(wrapper, 'nian').dispatchEvent(
+      Object.assign(new Event('paste', { bubbles: true, cancelable: true }), {
+        clipboardData: { getData: () => '20040230' },
+      }),
+    )
+    await flushPromises()
+    expect(段显示(wrapper, 'nian')).toBe('2004')
+    expect(段显示(wrapper, 'yue')).toBe('02')
+    expect(段显示(wrapper, 'ri')).toBe('30')
+    expect(最近外发(wrapper)).toBe('')
+    expect(段元素(wrapper, 'ri').getAttribute('aria-invalid')).toBe('true')
+  })
+
+  it('粘贴少于 8 位的串不拦截：不自动填充', async () => {
+    const wrapper = 挂载控件()
+    段元素(wrapper, 'nian').dispatchEvent(
+      Object.assign(new Event('paste', { bubbles: true, cancelable: true }), {
+        clipboardData: { getData: () => '2005081' },
+      }),
+    )
+    await flushPromises()
+    expect(段显示(wrapper, 'nian')).toBe('')
+    expect(段显示(wrapper, 'yue')).toBe('')
+  })
+})
+
 describe('FP-14 ②：非法日期与越界只夹紧，不产出非法值；报错文案取既有键', () => {
   it('平年 2 月 30 日夹到 2 月 28 日，闰年 2 月 30 日夹到 2 月 29 日', async () => {
     const pingNian = 挂载控件()

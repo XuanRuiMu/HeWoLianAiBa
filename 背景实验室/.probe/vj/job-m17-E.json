@@ -1,0 +1,32 @@
+{
+  "url": "http://127.0.0.1:8937/positioner.html",
+  "width": 1920,
+  "height": 868,
+  "headless": false,
+  "maxMs": 580000,
+  "args": ["--no-sandbox", "--ignore-gpu-blocklist", "--enable-gpu-rasterization"],
+  "steps": [
+    { "type": "wait", "ms": 95000 },
+    { "type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/m17-solver.js", "label": "def" },
+    { "type": "eval", "js": "window.__M17.setCam()", "label": "cam" },
+    { "type": "eval", "js": "(function(){var w=window.document.getElementById('frame').contentWindow; return w.__placeImport([{kind:'rock',variant:'big-main',x:4.1444,y:0.084,z:-2.1778,rotY:0,scale:0.15},{kind:'campfire',variant:'default',x:4.1444,y:0.289,z:-2.1778,rotY:0,scale:1},{kind:'tree',variant:'t008',x:1.0,y:0.47,z:-5.14,rotY:0,scale:1.88}]);})()", "label": "v1" },
+    { "type": "wait", "ms": 6000 },
+    { "type": "nudge" },
+    { "type": "wait", "ms": 2000 },
+    { "type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m17-E1-v188.png" },
+    { "type": "eval", "js": "(function(){var w=window.document.getElementById('frame').contentWindow; return w.__placeImport([{kind:'rock',variant:'big-main',x:4.1444,y:0.084,z:-2.1778,rotY:0,scale:0.15},{kind:'campfire',variant:'default',x:4.1444,y:0.289,z:-2.1778,rotY:0,scale:1},{kind:'tree',variant:'t008',x:1.0,y:0.95,z:-5.14,rotY:0,scale:1.88}]);})()", "label": "v2up" },
+    { "type": "wait", "ms": 6000 },
+    { "type": "nudge" },
+    { "type": "wait", "ms": 2000 },
+    { "type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m17-E2-up.png" },
+    { "type": "eval", "js": "(function(){var w=window.document.getElementById('frame').contentWindow; return w.__placeImport([{kind:'rock',variant:'big-main',x:4.1444,y:0.084,z:-2.1778,rotY:0,scale:0.15},{kind:'campfire',variant:'default',x:4.1444,y:0.289,z:-2.1778,rotY:0,scale:1},{kind:'tree',variant:'t008',x:1.15,y:0.62,z:-5.6,rotY:60,scale:1.7}]);})()", "label": "v3small" },
+    { "type": "wait", "ms": 6000 },
+    { "type": "nudge" },
+    { "type": "wait", "ms": 2000 },
+    { "type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m17-E3-s17.png" },
+    { "type": "wait", "ms": 150000 },
+    { "type": "nudge" },
+    { "type": "wait", "ms": 3000 },
+    { "type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m17-E4-phase2.png" }
+  ]
+}

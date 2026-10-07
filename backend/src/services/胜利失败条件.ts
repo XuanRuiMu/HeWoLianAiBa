@@ -7,14 +7,12 @@ import { baoCunJiaoSeXiaoXi } from './AI输入准备'
 import { SHENG_LI_SHI_BAI_PEI_ZHI, QUE_XIN_DU_YUE_SHU } from '../config/胜利失败配置'
 import {
   gouJianDanTiaoTuXiangKuai,
-  shiTuXiangLeiBie,
-} from './AI视觉辅助'
+  shiTuXiangLeiBie } from './AI视觉辅助'
 import {
   fenGeZuiXinYongHuXiaoXi,
   gouJianYinYongChaXun,
   zhanShiLiShiWenBen,
-  zhanShiXiaoXiZhengWen,
-} from './对话渲染'
+  zhanShiXiaoXiZhengWen } from './对话渲染'
 import { debug日志, jiLuYouXiJieJu, jiLuSocketShiJian } from '../utils/debug日志'
 import { 是否通关结局, 渲染结局文案, 随机结局趣味文案 } from '../utils/结局'
 import { 归一角色性别, type 角色性别 } from '../utils/性别'
@@ -26,11 +24,8 @@ import type {
   DuiHuaLiShiXiang,
   HuShanJianCeJieGuo,
   ShenJingBingJianCeJieGuo,
-  ShiPoJianCeJieGuo,
-  YongHuXiaoXiJianCeJieGuo,
-  YouXiJieGuoLeiXing,
-  YouXiJieShuJieGuo,
-} from '../types'
+  ShiPoJianCeJieGuo, YouXiJieGuoLeiXing,
+  YouXiJieShuJieGuo } from '../types'
 import type { CanShuShangXiaWen } from '../config/AI参数策略'
 import { gouJianJiaoSeShangXiaWen } from '../config/AI参数策略'
 import { baoZhuangYongHuNeiRong } from './Prompt构建器'
@@ -74,8 +69,7 @@ function anQuanQueXinDu(zhi: unknown): number {
 const BIAO_BAI_LEI_XING_YING_SHE: Record<string, BiaoBaiJianCeJieGuo['biao_bai_lei_xing']> = {
   直接表白: 'zhi_jie_biao_bai',
   暗示表白: 'an_shi_biao_bai',
-  要求确立关系: 'yao_qiu_que_li_guan_xi',
-}
+  要求确立关系: 'yao_qiu_que_li_guan_xi' }
 
 /** 结算主事务的最大尝试次数（含首次）：四表任一失败即整条回滚并重试，超过即向调用方抛错 */
 const ZHAN_JIE_ZHONG_SHI_CI_SHU = 3
@@ -95,8 +89,7 @@ export async function jianCeSiLianHeYi(
     shi_fou_shen_jing_bing: false,
     fa_san_si_wei_ren_she: false,
     que_xin_du: 0,
-    li_you: '',
-  }
+    li_you: '' }
 
   // FP-08 去重：焦点那条只出现在下面「用户消息」里，最近聊天不再重复它；
   // 最新一条用户消息为未撤回图片/表情包 → 统一附 input_image 块；
@@ -115,8 +108,7 @@ export async function jianCeSiLianHeYi(
     角色名: '角色',
     用户名: '用户',
     最多条数: SHENG_LI_SHI_BAI_PEI_ZHI.jianCeLiShiTiaoShu,
-    时间在前: true,
-  })
+    时间在前: true })
 
   const renSheDuanLuo = jiaoSe
     ? [
@@ -135,8 +127,7 @@ export async function jianCeSiLianHeYi(
     {
       jiaoSe: 'system',
       neiRong:
-        '你是恋爱模拟游戏的判定引擎。对用户最新消息一次性完成四类判定：是否表白、是否互删、是否识破对方是渣男/渣女、该角色是否觉得消息莫名其妙（神经病）。只输出 JSON。',
-    },
+        '你是恋爱模拟游戏的判定引擎。对用户最新消息一次性完成四类判定：是否表白、是否互删、是否识破对方是渣男/渣女、该角色是否觉得消息莫名其妙（神经病）。只输出 JSON。' },
     {
       jiaoSe: 'user',
       neiRong: pinJieYongHuNeiRong(
@@ -176,8 +167,7 @@ export async function jianCeSiLianHeYi(
           '只输出 JSON。',
         ].join('\n'),
         tuXiangKuai,
-      ),
-    },
+      ) },
   ])
 
   const shuJu = jieXiJSONXiangYing(xiangYing.neiRong)
@@ -192,18 +182,15 @@ export async function jianCeSiLianHeYi(
       shi_fou_biao_bai: Boolean(shuJu['是否表白'] ?? false),
       biao_bai_lei_xing: youXiaoLeiXing,
       que_xin_du: anQuanQueXinDu(shuJu['表白确信度'] ?? shuJu['que_xin_du'] ?? 0),
-      li_you: String(shuJu['理由'] ?? ''),
-    },
+      li_you: String(shuJu['理由'] ?? '') },
     hu_shan: {
       shi_fou_hu_shan: Boolean(shuJu['是否互删'] ?? false),
       que_xin_du: anQuanQueXinDu(shuJu['互删确信度'] ?? shuJu['que_xin_du'] ?? 0),
-      li_you: String(shuJu['理由'] ?? ''),
-    },
+      li_you: String(shuJu['理由'] ?? '') },
     shi_po: {
       shi_fou_shi_po: Boolean(shuJu['是否识破'] ?? false),
       que_xin_du: anQuanQueXinDu(shuJu['识破确信度'] ?? shuJu['que_xin_du'] ?? 0),
-      li_you: String(shuJu['理由'] ?? ''),
-    },
+      li_you: String(shuJu['理由'] ?? '') },
     shen_jing_bing: jiaoSe
       ? {
           shi_fou_shen_jing_bing: Boolean(shuJu['是否神经病'] ?? false),
@@ -211,10 +198,8 @@ export async function jianCeSiLianHeYi(
           que_xin_du: anQuanQueXinDu(
             shuJu['神经病确信度'] ?? shuJu['确信度'] ?? shuJu['que_xin_du'] ?? 0,
           ),
-          li_you: String(shuJu['理由'] ?? ''),
-        }
-      : kongShenJingBing,
-  }
+          li_you: String(shuJu['理由'] ?? '') }
+      : kongShenJingBing }
 }
 
 /** 兼容旧签名的综合检测入口：内部已收敛为单次结构化 LLM 调用 */
@@ -239,8 +224,7 @@ async function huoQuJiaoSeJiBenXinXi(
   if (jieGuo.rows.length === 0) return null
   return {
     yong_hu_id: jieGuo.rows[0].用户ID ? String(jieGuo.rows[0].用户ID) : null,
-    shi_fou_zha_xing: Boolean(jieGuo.rows[0].是否渣型),
-  }
+    shi_fou_zha_xing: Boolean(jieGuo.rows[0].是否渣型) }
 }
 
 async function yanZhengJiaoSeSuoYouQuan(
@@ -354,14 +338,12 @@ function tuiSongYouXiShiJian(
       ke_ji_xu_liao_tian: jie_guo.ke_ji_xu_liao_tian,
       // 弹窗正文用趣味句快照，标题/分组用服务端判定的通关/失败 —— 前端不得再自写白名单
       jie_guo_wen_an: jie_guo.jie_guo_wen_an,
-      shi_fou_tong_guan: jie_guo.shi_fou_tong_guan,
-    })
+      shi_fou_tong_guan: jie_guo.shi_fou_tong_guan })
     jiLuSocketShiJian('游戏事件', yong_hu_id, {
       jiao_se_id,
       jie_guo_lei_xing: jie_guo.jie_guo_lei_xing,
       ke_ji_xu_liao_tian: jie_guo.ke_ji_xu_liao_tian,
-      shi_fou_tong_guan: jie_guo.shi_fou_tong_guan,
-    })
+      shi_fou_tong_guan: jie_guo.shi_fou_tong_guan })
   }
 }
 
@@ -395,8 +377,7 @@ async function huoQuJiaoSeXingBie(jiao_se_id: string): Promise<角色性别> {
     return 归一角色性别(jieGuo.rows[0]?.性别)
   } catch (cuo_wu) {
     debug日志.warn('胜负判定', '读取角色性别失败，结局文案按未知性别渲染', {
-      xiang_qing: { cuo_wu: String(cuo_wu) },
-    })
+      xiang_qing: { cuo_wu: String(cuo_wu) } })
     return '未知'
   }
 }
@@ -491,8 +472,7 @@ export async function chuLiYouXiJieShu(
     zhuang_tai_wen_ben: 渲染结局文案(jie_guo_lei_xing, xingBie),
     jie_guo_wen_an: jieGuoWenAn,
     shi_fou_tong_guan: 是否通关结局(jie_guo_lei_xing),
-    ke_ji_xu_liao_tian: keJiXuLiaoTian,
-  }
+    ke_ji_xu_liao_tian: keJiXuLiaoTian }
 
   if (jieJuXieRuChengGong) {
     tuiSongYouXiShiJian(yong_hu_id, jiao_se_id, jieGuo)
@@ -515,22 +495,19 @@ export async function chuLiYongHuBiaoBai(
   if (jiaoSe.shi_fou_zha_xing) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_bei_qi_pian', {
       lei_xing: '用户向渣型表白',
-      hao_gan_du: hao_gan_du_zong_fen,
-    })
+      hao_gan_du: hao_gan_du_zong_fen })
   }
 
   if (hao_gan_du_zong_fen >= SHENG_LI_SHI_BAI_PEI_ZHI.biaoBaiHaoGanDuYuZhi) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'sheng_li_ai_qing', {
       lei_xing: '用户主动表白成功',
-      hao_gan_du: hao_gan_du_zong_fen,
-    })
+      hao_gan_du: hao_gan_du_zong_fen })
   }
 
   await kouChuZaoQiBiaoBaiXinRenDu(yong_hu_id, jiao_se_id)
   return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_guo_zao_biao_bai', {
     lei_xing: '过早表白',
-    hao_gan_du: hao_gan_du_zong_fen,
-  })
+    hao_gan_du: hao_gan_du_zong_fen })
 }
 
 async function kouChuZaoQiBiaoBaiXinRenDu(
@@ -544,8 +521,7 @@ async function kouChuZaoQiBiaoBaiXinRenDu(
       xin_ren_du_bian_hua: -50,
       qin_mi_du_bian_hua: 0,
       qu_wei_du_bian_hua: 0,
-      guan_huai_du_bian_hua: 0,
-    })
+      guan_huai_du_bian_hua: 0 })
   }
 }
 
@@ -569,13 +545,11 @@ export async function chuLiHuShan(
 
   if (jiaoSe.shi_fou_zha_xing) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'sheng_li_hu_shan_sheng_li', {
-      lei_xing: '用户与渣型互删',
-    })
+      lei_xing: '用户与渣型互删' })
   }
 
   return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_hu_shan_shi_bai', {
-    lei_xing: '用户与正常角色互删',
-  })
+    lei_xing: '用户与正常角色互删' })
 }
 
 export async function chuLiShiPo(
@@ -587,13 +561,11 @@ export async function chuLiShiPo(
 
   if (jiaoSe.shi_fou_zha_xing) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'sheng_li_shi_po', {
-      lei_xing: '用户识破渣型',
-    })
+      lei_xing: '用户识破渣型' })
   }
 
   return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_cuo_wu_shi_po', {
-    lei_xing: '用户错误识破正常角色',
-  })
+    lei_xing: '用户错误识破正常角色' })
 }
 
 async function shengChengJingGaoFanYing(jiao_se?: AIJiaoSeXinXi): Promise<string> {
@@ -622,8 +594,7 @@ async function shengChengJingGaoFanYing(jiao_se?: AIJiaoSeXinXi): Promise<string
         '  "反应消息": "string"',
         '}',
         '只输出 JSON。',
-      ].join('\n'),
-    },
+      ].join('\n') },
   ])
   const shuJu = jieXiJSONXiangYing(xiangYing.neiRong)
   return String(shuJu['反应消息'] ?? '').trim()
@@ -640,8 +611,7 @@ export async function chuLiShenJingBing(
 
   if (jiaoSe.shi_fou_zha_xing) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'sheng_li_shen_jing_bing', {
-      lei_xing: '渣型角色诱导用户被视为神经病',
-    })
+      lei_xing: '渣型角色诱导用户被视为神经病' })
   }
 
   if (fa_san_si_wei_ren_she) return null
@@ -658,8 +628,7 @@ export async function chuLiShenJingBing(
 
   if (!shouCiChuFa) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_shen_jing_bing', {
-      lei_xing: '正常角色判定用户为神经病',
-    })
+      lei_xing: '正常角色判定用户为神经病' })
   }
 
   debug日志.warn(
@@ -673,8 +642,7 @@ export async function chuLiShenJingBing(
     const baoCunJieGuo = await baoCunJiaoSeXiaoXi({
       yong_hu_id,
       jiao_se_id,
-      nei_rong: fanYingNeiRong,
-    })
+      nei_rong: fanYingNeiRong })
     const io = huoQuIo()
     if (io) {
       io.to(yong_hu_id).emit('角色回复', { 角色ID: jiao_se_id, 消息列表: [baoCunJieGuo] })
@@ -698,8 +666,7 @@ export async function chuLiAIHuiFuHouJieShuJianCha(
   if (haoGanDu.zong_fen <= 0) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_hao_gan_du_gui_ling', {
       lei_xing: '好感度归零',
-      hao_gan_du: haoGanDu.zong_fen,
-    })
+      hao_gan_du: haoGanDu.zong_fen })
   }
 
   return null
@@ -712,13 +679,11 @@ export async function chuLiAIJieShouBiaoBai(
 ): Promise<YouXiJieShuJieGuo | null> {
   if (jiao_se.shi_fou_zha_xing) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_bei_zha_xing_qi_pian', {
-      lei_xing: '用户接受渣型表白',
-    })
+      lei_xing: '用户接受渣型表白' })
   }
 
   return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'sheng_li_ai_qing', {
-    lei_xing: 'AI主动表白成功',
-  })
+    lei_xing: 'AI主动表白成功' })
 }
 
 export async function chuLiYongHuJuJueAIHuoJieShou(
@@ -736,8 +701,7 @@ export async function chuLiYongHuJuJueAIHuoJieShou(
     角色名: '角色',
     用户名: '用户',
     最多条数: SHENG_LI_SHI_BAI_PEI_ZHI.biaoBaiPanDuanLiShiTiaoShu,
-    时间在前: true,
-  })
+    时间在前: true })
   const xiangYing = await genJuPeiZhiTiaoYong('jieShouBiaoBaiJianCe', [
     { jiaoSe: 'system', neiRong: '判断用户回复是接受表白还是拒绝，只输出 JSON。' },
     {
@@ -759,8 +723,7 @@ export async function chuLiYongHuJuJueAIHuoJieShou(
         '  "理由": "string"',
         '}',
         '只输出 JSON。',
-      ].join('\n'),
-    },
+      ].join('\n') },
   ], shangXiaWenShiJi)
 
   const shuJu = jieXiJSONXiangYing(xiangYing.neiRong)
@@ -780,8 +743,7 @@ export async function chuLiYongHuJuJueAIHuoJieShou(
     }
 
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_ju_jue_biao_bai', {
-      lei_xing: '用户拒绝正常角色表白',
-    })
+      lei_xing: '用户拒绝正常角色表白' })
   }
 
   return null

@@ -1,0 +1,18 @@
+{
+  "url": "http://127.0.0.1:8937/positioner.html",
+  "width": 1920,
+  "height": 868,
+  "headless": false,
+  "maxMs": 560000,
+  "args": ["--no-sandbox", "--ignore-gpu-blocklist", "--enable-gpu-rasterization"],
+  "steps": [
+    { "type": "wait", "ms": 95000 },
+    { "type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/m17-solver.js", "label": "def" },
+    { "type": "eval", "js": "window.__M17.diag()", "label": "diag" },
+    { "type": "eval", "js": "window.__M17.setCam()", "label": "cam" },
+    { "type": "eval", "js": "window.__M17.measure({variant:'t008', x:0, z:-5, rotY:0, s:1.0, wait:4500})", "label": "M1" },
+    { "type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m17-A-t008-s10.png" },
+    { "type": "eval", "js": "window.__M17.measure({variant:'t008', x:-1.5, z:-5, rotY:0, s:1.5, wait:4500})", "label": "M2" },
+    { "type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m17-A-t008-s15.png" }
+  ]
+}

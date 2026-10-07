@@ -17,6 +17,8 @@ import {
   yiDongDangAnDaoFenLei,
   paiXuFenLeiNeiZhanJi,
   huoQuZhanJiFenLeiLieBiao,
+  sheZhiMoRenZhanJiFenLei,
+  baoCunFenLeiPaiXu,
   ZhanJiFenLeiCuoWu,
   type DangAnLieBiaoXiang,
   type DangAnXiangQing,
@@ -88,6 +90,7 @@ interface QianDuanDangAnLieBiaoXiang {
   zui_hou_xiao_xi_shi_jian: string | null
   you_xi_jie_shu_shi_jian: string | null
   mbti_lei_xing?: string
+  sui_ji_xing_ge?: boolean
   category_id: string
   sort_order: number
 }
@@ -109,6 +112,7 @@ function guoLvMinGanZiDuanLieBiao(
     zui_hou_xiao_xi_shi_jian: dang_an.zui_hou_xiao_xi_shi_jian,
     you_xi_jie_shu_shi_jian: dang_an.you_xi_jie_shu_shi_jian,
     mbti_lei_xing: dang_an.mbti_lei_xing,
+    sui_ji_xing_ge: dang_an.sui_ji_xing_ge,
     category_id: dang_an.category_id,
     sort_order: dang_an.sort_order,
   }))
@@ -180,6 +184,7 @@ function guoLvMinGanZiDuanXiangQing(
     zui_hou_xiao_xi_shi_jian: dang_an.zui_hou_xiao_xi_shi_jian,
     you_xi_jie_shu_shi_jian: dang_an.you_xi_jie_shu_shi_jian,
     mbti_lei_xing: dang_an.mbti_lei_xing,
+    sui_ji_xing_ge: dang_an.sui_ji_xing_ge,
     category_id: dang_an.category_id,
     sort_order: dang_an.sort_order,
     fu_pan_shu_ju: guoLvFuPanShiJianXian(dang_an.fu_pan_shu_ju),
@@ -202,6 +207,52 @@ luYou.get(
       return chengGongXiangYing(xiangYing, lieBiao)
     } catch (cuoWu) {
       return chuLiZhanJiCuoWu(xiangYing, '查询战绩分类失败', cuoWu)
+    }
+  },
+)
+
+luYou.put(
+  '/分类/排序',
+  changGuiXianLiu,
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+    }
+    const categoryIds = qingQiu.body?.categoryIds
+    if (
+      !Array.isArray(categoryIds) ||
+      !categoryIds.every((id) => typeof id === 'string' && yanZhengUUID(id))
+    ) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+    }
+    try {
+      const jieGuo = await baoCunFenLeiPaiXu(yongHu.yongHuId, categoryIds)
+      return chengGongXiangYing(xiangYing, jieGuo)
+    } catch (cuoWu) {
+      return chuLiZhanJiCuoWu(xiangYing, '保存战绩分类排序失败', cuoWu)
+    }
+  },
+)
+
+luYou.put(
+  '/分类/:fenLeiId/默认',
+  changGuiXianLiu,
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+    }
+    const fenLeiId = String(qingQiu.params.fenLeiId || '')
+    const expectedVersion = qingQiu.body?.expectedVersion
+    if (!yanZhengUUID(fenLeiId) || !Number.isSafeInteger(expectedVersion) || Number(expectedVersion) < 0) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+    }
+    try {
+      const fenLei = await sheZhiMoRenZhanJiFenLei(yongHu.yongHuId, fenLeiId, expectedVersion)
+      return chengGongXiangYing(xiangYing, fenLei)
+    } catch (cuoWu) {
+      return chuLiZhanJiCuoWu(xiangYing, '设置默认战绩分类失败', cuoWu)
     }
   },
 )

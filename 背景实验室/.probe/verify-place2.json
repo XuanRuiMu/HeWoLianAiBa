@@ -1,0 +1,332 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/verify-place-02.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "verify": {
+  "ms": 10408,
+  "cands": 30,
+  "samples": [
+   {
+    "x": 5,
+    "z": -5,
+    "g": -1.24
+   },
+   {
+    "x": 3,
+    "z": -2,
+    "g": -0.17
+   },
+   {
+    "x": 1,
+    "z": -1,
+    "g": -0.15
+   },
+   {
+    "x": 2,
+    "z": -6,
+    "g": -0.05
+   },
+   {
+    "x": 4,
+    "z": -2,
+    "g": -0.03
+   }
+  ],
+  "picks": {
+   "tree": {
+    "x": 3,
+    "z": -2,
+    "g": -0.17
+   },
+   "camp": {
+    "x": 1,
+    "z": -3,
+    "g": 0.01
+   },
+   "rock": {
+    "x": 4,
+    "z": -5,
+    "g": 0.09
+   }
+  },
+  "placed": [
+   {
+    "kind": "tree",
+    "variant": "big",
+    "p": {
+     "x": 3,
+     "z": -2,
+     "g": -0.17
+    },
+    "r": {
+     "id": 1,
+     "leaves": 3408
+    }
+   },
+   {
+    "kind": "tree",
+    "variant": "t008",
+    "p": {
+     "x": 3,
+     "z": -2,
+     "g": -0.17
+    },
+    "r": {
+     "id": 2,
+     "leaves": 500
+    }
+   },
+   {
+    "kind": "campfire",
+    "variant": "default",
+    "p": {
+     "x": 1,
+     "z": -3,
+     "g": 0.01
+    },
+    "r": {
+     "id": 3,
+     "leaves": 0
+    }
+   },
+   {
+    "kind": "rock",
+    "variant": "big-top",
+    "p": {
+     "x": 4,
+     "z": -5,
+     "g": 0.09
+    },
+    "r": {
+     "id": 4,
+     "leaves": 0
+    }
+   },
+   {
+    "kind": "rock",
+    "variant": "pebble",
+    "p": {
+     "x": 4,
+     "z": -5,
+     "g": 0.09
+    },
+    "r": {
+     "id": 5,
+     "leaves": 0
+    }
+   }
+  ],
+  "boxes": {
+   "tree-big": {
+    "min": [
+     -2.318,
+     -0.26,
+     -11.307
+    ],
+    "max": [
+     8.318,
+     7.342,
+     7.307
+    ],
+    "size": [
+     10.636,
+     7.602,
+     18.614
+    ],
+    "meshes": 21
+   },
+   "tree-t008": {
+    "min": [
+     2.91,
+     -0.26,
+     -2
+    ],
+    "max": [
+     3.09,
+     -0.08,
+     -2
+    ],
+    "size": [
+     0.18,
+     0.18,
+     0
+    ],
+    "meshes": 4
+   },
+   "campfire-default": {
+    "min": [
+     0.523,
+     -0.065,
+     -3.194
+    ],
+    "max": [
+     1.468,
+     1.388,
+     -2.804
+    ],
+    "size": [
+     0.945,
+     1.453,
+     0.39
+    ],
+    "meshes": 12
+   },
+   "rock-big-top": {
+    "min": [
+     2.533,
+     0.09,
+     -7.376
+    ],
+    "max": [
+     5.467,
+     0.691,
+     -2.624
+    ],
+    "size": [
+     2.934,
+     0.601,
+     4.752
+    ],
+    "meshes": 1
+   },
+   "rock-pebble": {
+    "min": [
+     3.994,
+     0.09,
+     -5.008
+    ],
+    "max": [
+     4.006,
+     0.113,
+     -4.992
+    ],
+    "size": [
+     0.013,
+     0.023,
+     0.016
+    ],
+    "meshes": 1
+   }
+  },
+  "state": {
+   "mode": false,
+   "kind": "tree",
+   "count": 5,
+   "variant": "big",
+   "nextScale": 1,
+   "variantList": [
+    {
+     "id": "big",
+     "label": "🌲 大树(tree-main)",
+     "note": "带树干，约 2000 个叶 billboard",
+     "defaultScale": 1
+    },
+    {
+     "id": "t008",
+     "label": "🌳 小树(tree-008)",
+     "note": "无树干，~220 叶 billboard",
+     "defaultScale": 1
+    },
+    {
+     "id": "t001",
+     "label": "🌳 小树(tree-001)",
+     "note": "无树干，~175 叶 billboard",
+     "defaultScale": 1
+    }
+   ],
+   "sel": 5,
+   "ready": true,
+   "ghost": {
+    "has": false,
+    "pos": null
+   },
+   "items": [
+    {
+     "id": 1,
+     "kind": "tree",
+     "label": "树",
+     "variant": "big",
+     "variantLabel": "🌲 大树(tree-main)",
+     "x": 3,
+     "y": -0.17,
+     "z": -2,
+     "rotY": 0,
+     "scale": 1,
+     "leaves": 3408,
+     "kids": 1
+    },
+    {
+     "id": 2,
+     "kind": "tree",
+     "label": "树",
+     "variant": "t008",
+     "variantLabel": "🌳 小树(tree-008)",
+     "x": 3,
+     "y": -0.17,
+     "z": -2,
+     "rotY": 0,
+     "scale": 1,
+     "leaves": 500,
+     "kids": 1
+    },
+    {
+     "id": 3,
+     "kind": "campfire",
+     "label": "营火",
+     "variant": "default",
+     "variantLabel": "🔥 营火",
+     "x": 1,
+     "y": 0.01,
+     "z": -3,
+     "rotY": 0,
+     "scale": 1,
+     "leaves": 0,
+     "kids": 2
+    },
+    {
+     "id": 4,
+     "kind": "rock",
+     "label": "石头",
+     "variant": "big-top",
+     "variantLabel": "🪨 巨石(basalt-top-old)",
+     "x": 4,
+     "y": 0.09,
+     "z": -5,
+     "rotY": 0,
+     "scale": 0.4,
+     "leaves": 0,
+     "kids": 1
+    },
+    {
+     "id": 5,
+     "kind": "rock",
+     "label": "石头",
+     "variant": "pebble",
+     "variantLabel": "· 碎石(basalt-floating-rock)",
+     "x": 4,
+     "y": 0.09,
+     "z": -5,
+     "rotY": 0,
+     "scale": 0.4,
+     "leaves": 0,
+     "kids": 1
+    }
+   ],
+   "selected": {
+    "id": 5,
+    "kind": "rock",
+    "variant": "pebble",
+    "variantLabel": "· 碎石(basalt-floating-rock)",
+    "x": 4,
+    "y": 0.09,
+    "z": -5,
+    "rotY": 0,
+    "scale": 0.4,
+    "ground": 0.08916
+   }
+  }
+ }
+}

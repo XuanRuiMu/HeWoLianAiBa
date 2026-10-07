@@ -473,6 +473,18 @@ const 状态环违规账本: { 键: string; 归属: string; 理由: string }[] =
   // 两性统一写死成粉的性别选中环改为 .ziliao-kapian .xingBie-kaPian.beiXuanZhong[data-dang='nan|nv']
   // 吃 --xingbie-{nan,nv}-xuan-{huan,guangyun}（浅档那条同特异度覆写随令牌成对而删除）。
   // FP-22g 已清账：见上方结论注释（3 条 → --xuanzhong-huan-yanse / --xuanzhong-guangyun-yanse）。
+  // FP-02 登录页默认静置异常框：自动填充原生浅盒的内嵌 1000px 遮罩，职责是盖 UA 自动填充色块，
+  // 并非焦点/选中语义环，经口径判定它属状态选择器×环形阴影，逐条登记，不得删除。
+  {
+    键: "登录内容.vue|.fenlie-shuru:-webkit-autofill, .fenlie-shuru:-webkit-autofill:hover, .fenlie-shuru:-webkit-autofill:focus, .fenlie-shuru:-webkit-autofill:active|0 0 0 1000px var(--renzheng-mian-se) inset",
+    归属: 'FP-02',
+    理由: '自动填充原生浅色块的卡面遮罩，非描边环语义，不参与焦点环配色',
+  },
+  {
+    键: "登录内容.vue|:root[data-theme='light'] .fenlie-shuru:-webkit-autofill, :root[data-theme='light'] .fenlie-shuru:-webkit-autofill:hover, :root[data-theme='light'] .fenlie-shuru:-webkit-autofill:focus, :root[data-theme='light'] .fenlie-shuru:-webkit-autofill:active|0 0 0 1000px var(--renzheng-mian-se) inset",
+    归属: 'FP-02',
+    理由: '同上，浅档卡面遮罩',
+  },
 ]
 
 describe('FP-24a ④ 扩面：outline 声明点在全部视图被冻结成账本', () => {
@@ -525,8 +537,8 @@ describe('FP-24a ④ 扩面：box-shadow 描边环纳入同一口径', () => {
 
   it('全部视图的描边环层总数被冻结（新增任何一层环都要在这里记账，环形状本身不许漂）', () => {
     const 环 = 全部描边环层()
-    expect(环.length).toBe(9) // 9 层环：3 过往战绩 + 4 登录内容鎏金双线 + 2 性别卡选中
-    expect(环.filter((项) => 项.状态环).length).toBe(5)
+    expect(环.length).toBe(11) // 11 层环：3 过往战绩 + 4 登录内容鎏金双线 + 2 性别卡选中 + 2 自动填充遮罩
+    expect(环.filter((项) => 项.状态环).length).toBe(7)
     // 静态卡框必须由"状态"这一半排除，而不是由账本兜住
     expect(
       环.filter((项) => !项.状态环).map((项) => `${项.文件}|${项.选择器}`),

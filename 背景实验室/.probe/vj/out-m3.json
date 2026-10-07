@@ -1,0 +1,159 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m3-1-yaw8-s14-t40.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m3-2-yaw8-s14-t280.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m3-3-yaw8-s17-t40.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m3-4-yaw12-s15-t40.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m3-5-yaw8-s15-t70.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "r1": {
+  "ready": true,
+  "frames": 1824,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r2": {
+  "ready": true,
+  "frames": 5081,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r3": {
+  "ready": true,
+  "frames": 8383,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r4": {
+  "ready": true,
+  "frames": 11686,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r5": {
+  "ready": true,
+  "frames": 14974,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r6": {
+  "ready": true,
+  "frames": 17896,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "m3-1": {
+  "yaw": 8,
+  "fire": [
+   5.01,
+   -1.5
+  ],
+  "fireDist": 2.74,
+  "gyF": 0.035,
+  "gyT": 0.215,
+  "anchor": [
+   0.1,
+   -0.25
+  ],
+  "stoneS": 0.14,
+  "tree": {
+   "x": -2.2,
+   "z": -6,
+   "rotY": 40,
+   "s": 0.6
+  }
+ },
+ "m3-2": {
+  "yaw": 8,
+  "fire": [
+   3.51,
+   -2.28
+  ],
+  "fireDist": 3.02,
+  "gyF": -0.105,
+  "gyT": 0.215,
+  "anchor": [
+   0.1,
+   -0.25
+  ],
+  "stoneS": 0.14,
+  "tree": {
+   "x": -2.2,
+   "z": -6,
+   "rotY": 280,
+   "s": 0.6
+  }
+ },
+ "m3-3": {
+  "yaw": 8,
+  "fire": [
+   3.51,
+   -2.28
+  ],
+  "fireDist": 3.02,
+  "gyF": -0.105,
+  "gyT": 0.215,
+  "anchor": [
+   0.1,
+   -0.25
+  ],
+  "stoneS": 0.17,
+  "tree": {
+   "x": -2.2,
+   "z": -6,
+   "rotY": 40,
+   "s": 0.6
+  }
+ },
+ "m3-4": {
+  "yaw": 12,
+  "fire": [
+   3.51,
+   -2.28
+  ],
+  "fireDist": 3.02,
+  "gyF": -0.105,
+  "gyT": 0.215,
+  "anchor": [
+   0.1,
+   -0.25
+  ],
+  "stoneS": 0.15,
+  "tree": {
+   "x": -2.2,
+   "z": -6,
+   "rotY": 40,
+   "s": 0.6
+  }
+ },
+ "m3-5": {
+  "yaw": 8,
+  "fire": [
+   3.21,
+   -2.04
+  ],
+  "fireDist": 2.86,
+  "gyF": -0.17,
+  "gyT": 0.215,
+  "anchor": [
+   0.06,
+   -0.35
+  ],
+  "stoneS": 0.15,
+  "tree": {
+   "x": -2.2,
+   "z": -6,
+   "rotY": 40,
+   "s": 0.7
+  }
+ }
+}

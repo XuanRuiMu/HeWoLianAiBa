@@ -1,0 +1,373 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m16-V-neg1.5.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "place": {
+  "ok": true,
+  "count": 3,
+  "items": [
+   {
+    "kind": "rock",
+    "variant": "🪨 巨石(basalt-main-old)",
+    "x": 4.1444,
+    "z": -2.1778,
+    "scale": 0.15,
+    "leaves": 0
+   },
+   {
+    "kind": "campfire",
+    "variant": "🔥 营火",
+    "x": 4.1444,
+    "z": -2.1778,
+    "scale": 1,
+    "leaves": 0
+   },
+   {
+    "kind": "tree",
+    "variant": "🌲 大树(tree-main)",
+    "x": -1.5,
+    "z": -4,
+    "scale": 0.55,
+    "leaves": 3408
+   }
+  ]
+ },
+ "probe-placed": {
+  "count": 46,
+  "list": [
+   {
+    "name": "pl-x-tree-foliage-main-001065",
+    "type": "Object3D",
+    "screenY": -4567,
+    "screenX": -13160,
+    "worldY": 2.85,
+    "worldX": -0.01,
+    "worldZ": -2.83,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001068",
+    "type": "Object3D",
+    "screenY": -3383,
+    "screenX": -10577,
+    "worldY": 2.66,
+    "worldX": 0.17,
+    "worldZ": -2.69,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001063",
+    "type": "Object3D",
+    "screenY": -2783,
+    "screenX": -8131,
+    "worldY": 2.89,
+    "worldX": -0.18,
+    "worldZ": -3.16,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001062",
+    "type": "Object3D",
+    "screenY": -1707,
+    "screenX": -6014,
+    "worldY": 2.77,
+    "worldX": -0.6,
+    "worldZ": -3.6,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001075",
+    "type": "Object3D",
+    "screenY": -1159,
+    "screenX": -5372,
+    "worldY": 2.49,
+    "worldX": -0.75,
+    "worldZ": -3.66,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001064",
+    "type": "Object3D",
+    "screenY": -854,
+    "screenX": -3262,
+    "worldY": 2.63,
+    "worldX": -0.47,
+    "worldZ": -3.96,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001076",
+    "type": "Object3D",
+    "screenY": -778,
+    "screenX": -3109,
+    "worldY": 2.52,
+    "worldX": -0.26,
+    "worldZ": -3.77,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-trunk-main",
+    "type": "Mesh",
+    "screenY": -392,
+    "screenX": 5541,
+    "worldY": 0.96,
+    "worldX": -0.83,
+    "worldZ": -1.18,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-trunk-main-big",
+    "type": "Mesh",
+    "screenY": -392,
+    "screenX": 5541,
+    "worldY": 0.96,
+    "worldX": -0.83,
+    "worldZ": -1.18,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001059",
+    "type": "Object3D",
+    "screenY": -369,
+    "screenX": -2257,
+    "worldY": 2.23,
+    "worldX": -0.42,
+    "worldZ": -4.16,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001",
+    "type": "Object3D",
+    "screenY": 575,
+    "screenX": 1707,
+    "worldY": 3.34,
+    "worldX": -0.96,
+    "worldZ": 1.03,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001004",
+    "type": "Object3D",
+    "screenY": 625,
+    "screenX": 2574,
+    "worldY": 2.94,
+    "worldX": -2.07,
+    "worldZ": -0.71,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001077",
+    "type": "Object3D",
+    "screenY": 626,
+    "screenX": 2297,
+    "worldY": 3.17,
+    "worldX": -2.01,
+    "worldZ": -0.32,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001003",
+    "type": "Object3D",
+    "screenY": 643,
+    "screenX": 2163,
+    "worldY": 2.94,
+    "worldX": -0.75,
+    "worldZ": -0.01,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001006",
+    "type": "Object3D",
+    "screenY": 665,
+    "screenX": 2512,
+    "worldY": 3,
+    "worldX": -1.66,
+    "worldZ": -0.61,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001002",
+    "type": "Object3D",
+    "screenY": 666,
+    "screenX": 1966,
+    "worldY": 3.31,
+    "worldX": -0.9,
+    "worldZ": 0.28,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001078",
+    "type": "Object3D",
+    "screenY": 696,
+    "screenX": 1836,
+    "worldY": 3.86,
+    "worldX": -1.36,
+    "worldZ": 0.54,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001007",
+    "type": "Object3D",
+    "screenY": 730,
+    "screenX": 2790,
+    "worldY": 3.3,
+    "worldX": -2.71,
+    "worldZ": -1.22,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001086",
+    "type": "Object3D",
+    "screenY": 824,
+    "screenX": 4057,
+    "worldY": 2.51,
+    "worldX": -1.4,
+    "worldZ": -1.61,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001079",
+    "type": "Object3D",
+    "screenY": 857,
+    "screenX": 2587,
+    "worldY": 2.67,
+    "worldX": 0.46,
+    "worldZ": -0.41,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001054",
+    "type": "Object3D",
+    "screenY": 867,
+    "screenX": 1847,
+    "worldY": 3.48,
+    "worldX": 0.42,
+    "worldZ": 0.28,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001058",
+    "type": "Object3D",
+    "screenY": 898,
+    "screenX": 2479,
+    "worldY": 2.93,
+    "worldX": 0.22,
+    "worldZ": -0.42,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001052",
+    "type": "Object3D",
+    "screenY": 922,
+    "screenX": 1958,
+    "worldY": 3.81,
+    "worldX": -0.11,
+    "worldZ": 0.03,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001084",
+    "type": "Object3D",
+    "screenY": 941,
+    "screenX": 4231,
+    "worldY": 2.66,
+    "worldX": -1.47,
+    "worldZ": -1.77,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001005",
+    "type": "Object3D",
+    "screenY": 1000,
+    "screenX": 3004,
+    "worldY": 3.81,
+    "worldX": -2.37,
+    "worldZ": -1.63,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-treegrp-6",
+    "type": "Object3D",
+    "screenY": 1022,
+    "screenX": -8314,
+    "worldY": 0.87,
+    "worldX": -1.67,
+    "worldZ": -3.22,
+    "visible": true,
+    "kids": 45
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001087",
+    "type": "Object3D",
+    "screenY": 1155,
+    "screenX": 3741,
+    "worldY": 3.02,
+    "worldX": -0.83,
+    "worldZ": -1.51,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001083",
+    "type": "Object3D",
+    "screenY": 1156,
+    "screenX": 4793,
+    "worldY": 2.77,
+    "worldX": -1.4,
+    "worldZ": -2,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001082",
+    "type": "Object3D",
+    "screenY": 1276,
+    "screenX": 4286,
+    "worldY": 2.69,
+    "worldX": -0.09,
+    "worldZ": -1.36,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   },
+   {
+    "name": "pl-x-tree-foliage-main-001085",
+    "type": "Object3D",
+    "screenY": 1302,
+    "screenX": 4833,
+    "worldY": 2.6,
+    "worldX": -0.26,
+    "worldZ": -1.53,
+    "visible": true,
+    "parent": "pl-treegrp-6"
+   }
+  ]
+ }
+}

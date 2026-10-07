@@ -178,9 +178,8 @@ describe('FP-05 全局文本输入契约', () => {
     }
     for (const [名, 值] of [
       ['--shuru-xian-changtai-kuan-du', '1px'],
-      ['--shuru-xian-jujiao-kuan-du', '2px'],
-      ['--shuru-juzhong-dong-xiao', '0.2s'],
-      ['--shuru-sao-chu-shi-chang', '0.38s'],
+      ['--shuru-juzhong-dong-xiao', '1s'],
+      ['--shuru-sao-chu-shi-chang', '1s'],
     ] as const) {
       expect(声明位置(名, 主题块), `${名} 主题作用域错误`).toEqual({
         共用: true,
@@ -214,9 +213,11 @@ describe('FP-05 全局文本输入契约', () => {
         return 值.includes('border-color') && 值.includes('background-size')
       }),
     ).toBe(true)
-    expect(基础.some((规则) => 规则.声明.get('background-size') === '0% var(--shuru-xian-jujiao-kuan-du)')).toBe(true)
-    expect(聚焦.some((规则) => 规则.声明.get('background-size') === '100% var(--shuru-xian-jujiao-kuan-du)')).toBe(true)
-    expect(可见聚焦.some((规则) => 规则.声明.get('background-size') === '100% var(--shuru-xian-jujiao-kuan-du)')).toBe(true)
+    expect(基础.some((规则) => 规则.声明.get('background-size') === '0% var(--shuru-xian-changtai-kuan-du)')).toBe(true)
+    expect(聚焦.some((规则) => 规则.声明.get('background-size') === '100% var(--shuru-xian-changtai-kuan-du)')).toBe(true)
+    expect(可见聚焦.some((规则) => 规则.声明.get('background-size') === '100% var(--shuru-xian-changtai-kuan-du)')).toBe(true)
+    expect(聚焦.every((规则) => 规则.声明.get('border-bottom-width') === undefined)).toBe(true)
+    expect(可见聚焦.every((规则) => 规则.声明.get('border-bottom-width') === undefined)).toBe(true)
     expect(基础.some((规则) => 规则.声明.get('transition-duration')?.includes('var(--shuru-juzhong-dong-xiao)'))).toBe(true)
     expect(基础.some((规则) => 规则.声明.get('transition-duration')?.includes('var(--shuru-sao-chu-shi-chang)'))).toBe(true)
     expect(基础.some((规则) => 规则.声明.get('transition-timing-function')?.includes('var(--quxian-tan-chu)'))).toBe(true)

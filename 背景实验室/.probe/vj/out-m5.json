@@ -1,0 +1,160 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m5-0-treeOnly.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m5-1-fireNative.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m5-2-bigt17.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m5-3-bigm12.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m5-4-yaw4-bigt17.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "r1": {
+  "ready": true,
+  "frames": 798,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r2": {
+  "ready": true,
+  "frames": 3458,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r3": {
+  "ready": true,
+  "frames": 5619,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r4": {
+  "ready": true,
+  "frames": 7613,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r5": {
+  "ready": true,
+  "frames": 8909,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r6": {
+  "ready": true,
+  "frames": 9907,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "def": {},
+ "treeFirst": {
+  "ok": true,
+  "leaves": 4541,
+  "err": null
+ },
+ "s1": {
+  "placed": null,
+  "all": [
+   {
+    "a": [
+     0.32,
+     -0.28
+    ],
+    "p": [
+     4.23,
+     -2.04
+    ],
+    "hitY": 0.043,
+    "gy": 0.043,
+    "delta": 0,
+    "dist": 2.48
+   },
+   {
+    "a": [
+     0.35,
+     -0.33
+    ],
+    "p": [
+     4.3,
+     -1.93
+    ],
+    "hitY": 0.034,
+    "gy": 0.034,
+    "delta": 0,
+    "dist": 2.39
+   },
+   {
+    "a": [
+     0.28,
+     -0.24
+    ],
+    "p": [
+     4.14,
+     -2.2
+    ],
+    "hitY": 0.011,
+    "gy": 0.011,
+    "delta": 0,
+    "dist": 2.6
+   },
+   {
+    "a": [
+     0.3,
+     -0.38
+    ],
+    "p": [
+     4.13,
+     -1.83
+    ],
+    "hitY": 0.004,
+    "gy": 0.004,
+    "delta": 0,
+    "dist": 2.24
+   }
+  ]
+ },
+ "s2": {
+  "plinth": "big-top@0.17",
+  "stoneY": -0.086,
+  "fireY": 0.119,
+  "p": [
+   3.38,
+   -2.01
+  ],
+  "ok1": true,
+  "ok2": true,
+  "e1": null,
+  "e2": null
+ },
+ "s3": {
+  "plinth": "big-main@0.12",
+  "stoneY": -0.116,
+  "fireY": 0.158,
+  "p": [
+   3.38,
+   -2.01
+  ],
+  "ok1": true,
+  "ok2": true,
+  "e1": null,
+  "e2": null
+ },
+ "s4": {
+  "plinth": "big-top@0.17",
+  "stoneY": -0.086,
+  "fireY": 0.119,
+  "p": [
+   3.38,
+   -2.01
+  ],
+  "ok1": true,
+  "ok2": true,
+  "e1": null,
+  "e2": null
+ }
+}

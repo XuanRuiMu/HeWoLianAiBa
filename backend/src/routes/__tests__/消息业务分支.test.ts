@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, it, expect, vi } from 'vitest'
 import express from 'express'
 import type { Express } from 'express'
 import request from 'supertest'
@@ -104,7 +104,6 @@ import 路由 from '../消息'
 const 用户ID = '11111111-1111-4111-8111-111111111111'
 const 角色ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const 媒体ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
-const 好友ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 
 const 消息对象 = {
   id: '消息-1',
@@ -317,6 +316,10 @@ describe('媒体签名与辅助接口', () => {
     假.mianFeiZhuanXie.mockResolvedValueOnce(null)
     await 请('post', '/api/聊天/语音/转写', 用户ID, { meiTiId: 媒体ID }).expect(500)
     await 请('post', '/api/聊天/语音/转写', 用户ID, { mei_ti_id: 媒体ID }).expect(200)
+    expect(假.dbQuery).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE "消息" SET "内容"'),
+      [媒体ID, '转写文本'],
+    )
     假.mianFeiZhuanXie.mockRejectedValueOnce(new Error('db'))
     await 请('post', '/api/聊天/语音/转写', 用户ID, { meiTiId: 媒体ID }).expect(500)
     await 请('get', '/api/聊天/多模态配置', null).expect(401)

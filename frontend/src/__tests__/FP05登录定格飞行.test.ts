@@ -20,7 +20,7 @@ import { 层叠胜出, 规则清单, 读取全局基线, type 规则 } from './C
  *    与 .biaodan-neirong-qu 的 fill:'forwards' 永不注销 ⇒ 泄漏）；
  *  ③ 飞行终点中心与 .yonghu-xuanxiang 矩形中心偏差 ≤2px；
  *  ④ prefers-reduced-motion：不建层、不建动画、不做位移、直接切换、零遗留；
- *  ⑤ 注册成功路径与登录路径同构（注册确实有飞行语义：改前改后都走同一个入口函数）。
+ *  ⑤ 注册成功跳转 /login 并回填凭据（不建定格层、不飞行；临时凭据回填即清）。
  *
  * jsdom 环境缺口（本文件先用探针确认过，不是猜的）：`Element.prototype.animate` 与
  * `document.getAnimations` 在 jsdom 里都不存在，`getBoundingClientRect` 恒为全 0，
@@ -539,24 +539,18 @@ describe('FP-05 ④：prefers-reduced-motion 不做位移、直接切换、零�
   })
 })
 
-describe('FP-05 ⑤：注册成功路径同构', () => {
-  it('注册成功走同一条定格飞行链：建层→收束→飞行→清理，活卡片同样零内联样式', async () => {
+describe('FP-05 ⑤：注册成功跳转登录页并回填凭据', () => {
+  it('注册成功：写临时凭据→push /login→切到登录模式→清临时凭据→回填手机号与密码，且不建定格层', async () => {
     const 场景 = await 建场景('zhuCe')
-    const 入场前 = 计算样式快照(场景.卡)
     expect(使用认证表单仓库().moShi, '前置：注册态没挂上').toBe('zhuCe')
     await 提交表单(场景, 'zhuCe')
-    const 层 = 定格层()
-    expect(层, '注册成功后未建定格层 ⇒ 注册路径无飞行语义（本单判定不成立）').not.toBeNull()
-    expect(活着的动画().length, '注册路径的收束段动画条数与登录路径不同构').toBeGreaterThanOrEqual(4)
-    expect(场景.卡.getAttribute('style')).toBeNull()
-    expect(计算样式快照(场景.卡)).toEqual(入场前)
-    await 跑到结束()
-    expect(定格层()).toBeNull()
-    expect(document.getAnimations()).toEqual([])
-    for (const 影 of 动画册) expect(影.已注销, '注册路径有动画未被注销').toBe(true)
-    expect(场景.卡.getAttribute('style')).toBeNull()
-    expect(计算样式快照(场景.卡)).toEqual(入场前)
-    expect(场景.推送).toHaveBeenCalledWith('/')
+    await flushPromises()
+    expect(场景.推送).toHaveBeenCalledWith('/login')
+    expect(使用认证表单仓库().moShi).toBe('dengLu')
+    expect(定格层(), '注册路径不再建定格层').toBeNull()
+    expect(localStorage.getItem('zhuCeDengLuLinShi'), '临时凭据未在回填后清除').toBeNull()
+    expect((场景.wrapper.find('#denglu-shoujihao').element as HTMLInputElement).value).toBe('13800000000')
+    expect((场景.wrapper.find('#denglu-mima').element as HTMLInputElement).value).toBe('miMa123456')
     场景.wrapper.unmount()
   })
 })

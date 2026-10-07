@@ -3,7 +3,6 @@ import { randomUUID } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { Pool } from 'pg'
-import { peiZhi } from '../../config'
 import { CUO_WU_DAI_MA } from '../../config/错误码注册表'
 
 vi.mock('../开场白生成', () => ({ shengChengKaiChangBai: vi.fn(async () => ({ xiao_xi_lie_biao: [] as string[] })) }))
@@ -11,8 +10,7 @@ vi.mock('../开场白概率', () => ({ jiSuanKaiChangBaiGaiLv: vi.fn(async () =>
 vi.mock('../../utils/debug日志', () => ({
   debug日志: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
   jiLuXiaoXiCaoZuo: vi.fn(),
-  jiLuSocketShiJian: vi.fn(),
-}))
+  jiLuSocketShiJian: vi.fn() }))
 vi.mock('../../utils/邮件告警', () => ({ faSongGaoJing: vi.fn(async () => undefined) }))
 
 import { 数据库 } from '../../数据库'

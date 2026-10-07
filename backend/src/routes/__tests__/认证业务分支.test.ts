@@ -71,7 +71,6 @@ vi.mock('../../middleware/输入验证', () => {
 import 路由 from '../认证'
 
 const 用户ID = '11111111-1111-4111-8111-111111111111'
-const 角色ID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 
 function 建应用(登录: string | null): Express {
   const 应用 = express()

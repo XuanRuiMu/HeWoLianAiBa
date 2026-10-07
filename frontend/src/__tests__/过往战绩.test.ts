@@ -27,8 +27,8 @@ vi.mock('vue-draggable-plus', async () => {
       name: 'VueDraggable',
       props: { modelValue: { type: Array, default: () => [] }, disabled: Boolean },
       emits: ['update:modelValue', 'start', 'end'],
-      setup(_props, { slots }) {
-        return () => vue.h('div', { class: 'vue-draggable-stub' }, slots.default?.())
+      setup(_props, { slots, attrs }) {
+        return () => vue.h('div', { class: ['vue-draggable-stub', attrs.class] }, slots.default?.())
       },
     }),
   }
@@ -42,7 +42,7 @@ const xinFenLeiId = '00000000-0000-4000-8000-000000000003'
 const yuanMa = readFileSync(resolve(__dirname, '../views/过往战绩.vue'), 'utf8')
 
 function fenLei(cha: Partial<ZhanJiFenLei> & Pick<ZhanJiFenLei, 'id' | 'name'>): ZhanJiFenLei {
-  return { is_default: false, record_count: 0, version: 0, ...cha }
+  return { is_default: false, record_count: 0, version: 0, sort_order: 0, ...cha }
 }
 
 function zaoDangAn(
@@ -219,7 +219,7 @@ describe('FP-12 过往战绩分类视图', () => {
       fenLei({ id: ziDingId, name: '重要回忆', record_count: 1, version: 1 }),
     )
     const { wrapper } = await mountView()
-    await wrapper.find('.gengMing-fenlei-anniu').trigger('click')
+    await wrapper.find(`.fenlei-biao-qian[data-id="${ziDingId}"] .gengMing-fenlei-anniu`).trigger('click')
     await wrapper.get('.fenlei-ming-cheng-input').setValue('重要回忆')
     await wrapper.find('.fenlei-bian-ji').trigger('submit')
     await flushPromises()
@@ -228,7 +228,7 @@ describe('FP-12 过往战绩分类视图', () => {
     expect(wrapper.text()).toContain('重要回忆')
   })
 
-  it('默认分类没有改名删除入口，自定义分类删除确认后回落默认并提示数量', async () => {
+  it('默认分类可改名但无删除入口，自定义分类删除确认后回落默认并提示数量', async () => {
     vi.mocked(shanChuZhanJiFenLei).mockResolvedValueOnce({
       deleted_id: ziDingId,
       fallback_category_id: moRenId,
@@ -240,7 +240,7 @@ describe('FP-12 过往战绩分类视图', () => {
       fenLeiLieBiao: [fenLei({ id: moRenId, name: '默认分类', is_default: true, record_count: 5, version: 1 })],
     })
     const moRen = wrapper.find(`.fenlei-biao-qian[data-id="${moRenId}"]`)
-    expect(moRen.find('.gengMing-fenlei-anniu').exists()).toBe(false)
+    expect(moRen.find('.gengMing-fenlei-anniu').exists()).toBe(true)
     expect(moRen.find('.shanChu-fenlei-anniu').exists()).toBe(false)
 
     vi.mocked(huoQuDangAnLieBiao).mockResolvedValueOnce([...moRenJiLu(), ...ziDingJiLu(), ...ziDingJiLu()])
@@ -296,7 +296,9 @@ describe('FP-12 过往战绩分类视图', () => {
     const { wrapper } = await mountView()
     const fenYe = wrapper.findAll('.fen-ye-anniu')
     await fenYe[1]!.trigger('click')
-    const pageBefore = wrapper.findComponent({ name: 'VueDraggable' })
+    const pageBefore = wrapper
+      .findAllComponents({ name: 'VueDraggable' })
+      .find((item) => item.attributes('class')?.includes('zhanji-liebiao-neirong'))!
     const pageIds = wrapper.findAll('.zhanji-kapian').map((item) => item.attributes('data-id'))
     const proposedPage = [pageIds[0], pageIds[2], pageIds[1], pageIds[3], pageIds[4]]
     const full = [...records.slice(0, 50).map((item) => item.id), ...proposedPage]
@@ -390,7 +392,7 @@ describe('FP-12 过往战绩分类视图', () => {
     })
     const { wrapper } = await mountView()
     expect(wrapper.findAll('.zhanji-kapian')).toHaveLength(50)
-    await wrapper.find('.fenlei-quan-xuan-anniu').trigger('click')
+    await wrapper.find('.quan-xuan-anniu').trigger('click')
     expect(wrapper.find('.xuan-ze-shu-liang').text()).toContain('50')
     await wrapper.find('.piliang-shanchu-anniu').trigger('click')
     await flushPromises()

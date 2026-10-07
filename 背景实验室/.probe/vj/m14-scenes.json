@@ -1,0 +1,60 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "scenes": {
+  "ks": [
+   "persistent",
+   "state",
+   "listeners",
+   "camera",
+   "canvas",
+   "renderer",
+   "scene",
+   "sizes",
+   "time",
+   "tweaks",
+   "raycaster",
+   "audio",
+   "eventBus",
+   "monitor",
+   "pointer",
+   "gpuTier",
+   "config",
+   "culler",
+   "materials",
+   "effects",
+   "components",
+   "storage",
+   "perfs",
+   "loggerPool",
+   "log",
+   "_experienceReady",
+   "componentTiming",
+   "effectTiming",
+   "shaderTiming",
+   "samplingTiming",
+   "bakingTiming",
+   "engineStartTime",
+   "postProcessing",
+   "xrRenderingActive"
+  ],
+  "scenes": [
+   {
+    "key": "scene",
+    "type": "Scene",
+    "kids": 11
+   }
+  ],
+  "sceneKeys": [
+   {
+    "key": "scene",
+    "type": "Scene",
+    "kids": 11
+   }
+  ],
+  "experienceKeys": []
+ }
+}

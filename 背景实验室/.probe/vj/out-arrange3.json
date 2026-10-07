@@ -1,0 +1,191 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v10-摆位-第三轮.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "r1": {
+  "ready": true,
+  "frames": 574,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r2": {
+  "ready": true,
+  "frames": 2288,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r3": {
+  "ready": true,
+  "frames": 3853,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "arrange3": {
+  "camReset": false,
+  "campHit": {
+   "x": 4.144430818841837,
+   "y": 0.013598002173215662,
+   "z": -2.1778021616537573,
+   "name": "main-island"
+  },
+  "camp": {
+   "id": 1,
+   "kind": "campfire",
+   "variant": "default",
+   "x": 4.144430818841837,
+   "y": 0.013598002173215662,
+   "z": -2.1778021616537573,
+   "scale": 1,
+   "leaves": 0
+  },
+  "stones": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "trees": [
+   {
+    "tag": "A-小",
+    "x": 0.5,
+    "z": -7.5,
+    "gy": -0.05237,
+    "scale": 0.55,
+    "ok": true,
+    "id": 8
+   },
+   {
+    "tag": "B-中大",
+    "x": 1.5,
+    "z": -7.8,
+    "gy": 0.22788,
+    "scale": 0.7,
+    "ok": true,
+    "id": 9
+   },
+   {
+    "tag": "C-左小",
+    "x": -0.3,
+    "z": -7.2,
+    "gy": 0.03444,
+    "scale": 0.5,
+    "ok": true,
+    "id": 10
+   }
+  ],
+  "items": [
+   {
+    "id": 1,
+    "kind": "campfire",
+    "variant": "default",
+    "x": 4.14,
+    "y": 0.01,
+    "z": -2.18,
+    "scale": 1
+   },
+   {
+    "id": 2,
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 4.69,
+    "y": 0.08,
+    "z": -2.18,
+    "scale": 10
+   },
+   {
+    "id": 3,
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 4.42,
+    "y": 0.04,
+    "z": -1.7,
+    "scale": 10
+   },
+   {
+    "id": 4,
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 3.87,
+    "y": -0.02,
+    "z": -1.7,
+    "scale": 10
+   },
+   {
+    "id": 5,
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 3.59,
+    "y": -0.1,
+    "z": -2.18,
+    "scale": 10
+   },
+   {
+    "id": 6,
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 3.87,
+    "y": 0.05,
+    "z": -2.65,
+    "scale": 10
+   },
+   {
+    "id": 7,
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 4.42,
+    "y": 0.16,
+    "z": -2.65,
+    "scale": 10
+   },
+   {
+    "id": 8,
+    "kind": "tree",
+    "variant": "big",
+    "x": 0.5,
+    "y": -0.05,
+    "z": -7.5,
+    "scale": 0.55
+   },
+   {
+    "id": 9,
+    "kind": "tree",
+    "variant": "big",
+    "x": 1.5,
+    "y": 0.23,
+    "z": -7.8,
+    "scale": 0.7
+   },
+   {
+    "id": 10,
+    "kind": "tree",
+    "variant": "big",
+    "x": -0.3,
+    "y": 0.03,
+    "z": -7.2,
+    "scale": 0.5
+   }
+  ]
+ },
+ "camRestore": {
+  "y": 1.4263,
+  "d": 5.6014,
+  "p": -22.55,
+  "a": -31.5,
+  "px": 3.4939,
+  "py": 1.4263,
+  "pz": 0.3179,
+  "tx": 6.1969,
+  "ty": -0.7218,
+  "tz": -4.0929,
+  "locked": false,
+  "frozen": true
+ }
+}

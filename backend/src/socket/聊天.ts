@@ -288,7 +288,6 @@ export function 初始化聊天Socket(io: Server): void {
         // 客户端无申报入口；每次加入聊天（含重连/多标签/换端）都重新同步
         await 按身份同步管理房间(socket, 用户ID)
 
-        const jian = shengChengJiaoSeTiaoDuQiJian(用户ID, 角色ID字符串)
         const jiuJiLu = socketTiaoDuQiMap.get(socket.id)
         if (jiuJiLu && jiuJiLu.角色ID !== 角色ID字符串) {
           const jiuJian = shengChengJiaoSeTiaoDuQiJian(用户ID, jiuJiLu.角色ID)

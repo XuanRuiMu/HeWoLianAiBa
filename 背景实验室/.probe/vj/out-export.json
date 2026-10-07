@@ -1,0 +1,356 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v13-摆位-最终.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "r1": {
+  "ready": true,
+  "frames": 2089,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r2": {
+  "ready": true,
+  "frames": 5349,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r3": {
+  "ready": true,
+  "frames": 8651,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r4": {
+  "ready": true,
+  "frames": 11954,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r5": {
+  "ready": true,
+  "frames": 15256,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "arrange5": {
+  "campHit": {
+   "x": 4.144430818841837,
+   "y": 0.013598002173215662,
+   "z": -2.1778021616537573,
+   "name": "main-island"
+  },
+  "camp": {
+   "id": 1,
+   "kind": "campfire",
+   "variant": "default",
+   "x": 4.144430818841837,
+   "y": 0.013598002173215662,
+   "z": -2.1778021616537573,
+   "scale": 1,
+   "leaves": 0
+  },
+  "stones": [
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok",
+   "ok"
+  ],
+  "trees": [
+   {
+    "tag": "A",
+    "x": 0.5,
+    "z": -7.5,
+    "gy": -0.05237,
+    "scale": 0.4,
+    "ok": true,
+    "id": 10
+   },
+   {
+    "tag": "B",
+    "x": 2.2,
+    "z": -7.2,
+    "gy": 0.06387,
+    "scale": 0.55,
+    "ok": true,
+    "id": 11
+   }
+  ],
+  "items": [
+   {
+    "id": 1,
+    "kind": "campfire",
+    "variant": "default",
+    "x": 4.14,
+    "y": 0.01,
+    "z": -2.18,
+    "scale": 1
+   },
+   {
+    "id": 2,
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 4.62,
+    "y": 0.09,
+    "z": -1.98,
+    "scale": 1.8
+   },
+   {
+    "id": 3,
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 4.34,
+    "y": 0.08,
+    "z": -1.7,
+    "scale": 1.8
+   },
+   {
+    "id": 4,
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 3.94,
+    "y": 0.03,
+    "z": -1.7,
+    "scale": 1.8
+   },
+   {
+    "id": 5,
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 3.66,
+    "y": -0.06,
+    "z": -1.98,
+    "scale": 1.8
+   },
+   {
+    "id": 6,
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 3.67,
+    "y": -0.05,
+    "z": -2.38,
+    "scale": 1.8
+   },
+   {
+    "id": 7,
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 3.95,
+    "y": 0.12,
+    "z": -2.66,
+    "scale": 1.8
+   },
+   {
+    "id": 8,
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 4.35,
+    "y": 0.2,
+    "z": -2.66,
+    "scale": 1.8
+   },
+   {
+    "id": 9,
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 4.63,
+    "y": 0.14,
+    "z": -2.37,
+    "scale": 1.8
+   },
+   {
+    "id": 10,
+    "kind": "tree",
+    "variant": "big",
+    "x": 0.5,
+    "y": -0.05,
+    "z": -7.5,
+    "scale": 0.4
+   },
+   {
+    "id": 11,
+    "kind": "tree",
+    "variant": "big",
+    "x": 2.2,
+    "y": 0.06,
+    "z": -7.2,
+    "scale": 0.55
+   }
+  ],
+  "fps": "n/a"
+ },
+ "camRestore": {
+  "y": 1.4263,
+  "d": 5.6014,
+  "p": -22.55,
+  "a": -31.5,
+  "px": 3.4939,
+  "py": 1.4263,
+  "pz": 0.3179,
+  "tx": 6.1969,
+  "ty": -0.7218,
+  "tz": -4.0929,
+  "locked": false,
+  "frozen": true
+ },
+ "snapshot": {
+  "camera": {
+   "pointerLocked": false,
+   "frozen": true,
+   "height": 1.4263,
+   "distance": 5.6014,
+   "pitchDeg": -22.55,
+   "azimuthDeg": -31.5,
+   "position": [
+    3.4939,
+    1.4263,
+    0.3179
+   ],
+   "target": [
+    6.1969,
+    -0.7218,
+    -4.0929
+   ]
+  },
+  "wuhaoyang": {
+   "visible": true,
+   "src": "/wu-2d.png",
+   "screen": {
+    "xPct": 24.5,
+    "yPct": 71
+   },
+   "widthPct": 24,
+   "opacity": 1,
+   "aspect": 1.419871795
+  },
+  "treesVisible": false,
+  "props": {
+   "campfire": false,
+   "rocks": false
+  },
+  "placeKind": "campfire",
+  "placements": [
+   {
+    "kind": "campfire",
+    "variant": "default",
+    "x": 4.1444,
+    "y": 0.0136,
+    "z": -2.1778,
+    "rotY": 0,
+    "scale": 1,
+    "leaves": 0
+   },
+   {
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 4.6234,
+    "y": 0.0942,
+    "z": -1.9753,
+    "rotY": 0,
+    "scale": 1.8,
+    "leaves": 0
+   },
+   {
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 4.3399,
+    "y": 0.0776,
+    "z": -1.6959,
+    "rotY": 0,
+    "scale": 1.8,
+    "leaves": 0
+   },
+   {
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 3.9419,
+    "y": 0.0344,
+    "z": -1.6989,
+    "rotY": 0,
+    "scale": 1.8,
+    "leaves": 0
+   },
+   {
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 3.6626,
+    "y": -0.0649,
+    "z": -1.9823,
+    "rotY": 0,
+    "scale": 1.8,
+    "leaves": 0
+   },
+   {
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 3.6655,
+    "y": -0.0452,
+    "z": -2.3803,
+    "rotY": 0,
+    "scale": 1.8,
+    "leaves": 0
+   },
+   {
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 3.9489,
+    "y": 0.1182,
+    "z": -2.6597,
+    "rotY": 0,
+    "scale": 1.8,
+    "leaves": 0
+   },
+   {
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 4.3469,
+    "y": 0.1955,
+    "z": -2.6568,
+    "rotY": 0,
+    "scale": 1.8,
+    "leaves": 0
+   },
+   {
+    "kind": "rock",
+    "variant": "pebble",
+    "x": 4.6263,
+    "y": 0.1381,
+    "z": -2.3733,
+    "rotY": 0,
+    "scale": 1.8,
+    "leaves": 0
+   },
+   {
+    "kind": "tree",
+    "variant": "big",
+    "x": 0.5,
+    "y": -0.0524,
+    "z": -7.5,
+    "rotY": 0,
+    "scale": 0.4,
+    "leaves": 4541
+   },
+   {
+    "kind": "tree",
+    "variant": "big",
+    "x": 2.2,
+    "y": 0.0639,
+    "z": -7.2,
+    "rotY": 0,
+    "scale": 0.55,
+    "leaves": 4541
+   }
+  ]
+ }
+}

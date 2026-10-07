@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+﻿import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import {
   使用用户设置仓库,
@@ -112,6 +112,6 @@ describe('聊天背景单源解析', () => {
     await 仓库.jiaZai()
     await 仓库.qingChuZiDingYiBeiJing()
     expect(仓库.liaoTianBeiJing).toBe('moRen')
-    expect(vi.mocked(sheJiao.baoCunLiaoTianBeiJing)).toHaveBeenCalledWith('moRen')
+    expect(vi.mocked(sheJiao.baoCunLiaoTianBeiJing)).toHaveBeenCalledWith('moRen', undefined)
   })
 })

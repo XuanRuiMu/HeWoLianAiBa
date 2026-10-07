@@ -1,8 +1,3 @@
-function duQuZhengShu(ming: string, moRen: number, zuiXiao: number, zuiDa: number): number {
-  const yuan = parseInt(process.env[ming] || '', 10)
-  if (!Number.isFinite(yuan)) return moRen
-  return Math.max(zuiXiao, Math.min(zuiDa, yuan))
-}
 
 function duQuFuDian(ming: string, moRen: number, zuiXiao: number, zuiDa: number): number {
   const yuan = Number(process.env[ming])
@@ -35,6 +30,44 @@ const MO_REN_CI_BIAO = [
   '根据设定',
   '元话语',
 ]
+
+const MO_REN_GUO_LV_CI_BIAO = [
+  '作为 AI',
+  '作为AI',
+  '作为人工智能',
+  '我很乐意帮助',
+  '我很乐意为您',
+  '我理解你的感受',
+  '我理解您的感受',
+  '很抱歉为您带来',
+  '非常抱歉给您带来',
+  '请问有什么可以帮',
+  '有什么可以帮助您',
+  '希望这能帮到您',
+  '作为一个AI',
+]
+
+export const AI_WEI_GUO_LV_PEI_ZHI = {
+  ciBiao: duQuCiBiao('QU_AI_WEI_GUO_LV_CI_BIAO', MO_REN_GUO_LV_CI_BIAO),
+} as const
+
+export interface AiWeiGuoLvJieGuo {
+  baoLiu: string[]
+  beiFengSha: string[]
+}
+
+export function guoLvAiWeiXiaoXi(xiaoXiLieBiao: readonly string[], ciBiao: readonly string[] = AI_WEI_GUO_LV_PEI_ZHI.ciBiao): AiWeiGuoLvJieGuo {
+  const baoLiu: string[] = []
+  const beiFengSha: string[] = []
+  for (const tiao of xiaoXiLieBiao) {
+    if (typeof tiao === 'string' && ciBiao.some((ci) => ci && tiao.includes(ci))) {
+      beiFengSha.push(tiao)
+    } else {
+      baoLiu.push(tiao)
+    }
+  }
+  return { baoLiu, beiFengSha }
+}
 
 export const QU_AI_WEI_PEI_ZHI = {
   ciBiao: duQuCiBiao('QU_AI_WEI_CI_BIAO', MO_REN_CI_BIAO),

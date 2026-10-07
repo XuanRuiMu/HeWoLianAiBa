@@ -1,0 +1,23 @@
+{
+  "url": "http://127.0.0.1:8937/positioner.html",
+  "width": 1920,
+  "height": 868,
+  "headless": false,
+  "maxMs": 560000,
+  "args": ["--no-sandbox", "--ignore-gpu-blocklist", "--enable-gpu-rasterization"],
+  "steps": [
+    { "type": "wait", "ms": 95000 },
+    { "type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/m17-solver.js", "label": "def" },
+    { "type": "eval", "js": "window.__M17.setCam()", "label": "cam" },
+    { "type": "eval", "js": "(function(){var w=window.document.getElementById('frame').contentWindow; var gy=w.__groundY(1.33,-6.11); return w.__placeImport([{kind:'rock',variant:'big-main',x:4.1444,y:0.084,z:-2.1778,rotY:0,scale:0.15},{kind:'campfire',variant:'default',x:4.1444,y:0.289,z:-2.1778,rotY:0,scale:1},{kind:'tree',variant:'t008',x:1.33,y:1.08,z:-6.11,rotY:0,scale:2.48}]);})()", "label": "place1" },
+    { "type": "wait", "ms": 6000 },
+    { "type": "nudge" },
+    { "type": "wait", "ms": 3000 },
+    { "type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m17-D-cand1.png" },
+    { "type": "eval", "js": "(function(){var w=window.document.getElementById('frame').contentWindow; return w.__placeImport([{kind:'rock',variant:'big-main',x:4.1444,y:0.084,z:-2.1778,rotY:0,scale:0.15},{kind:'campfire',variant:'default',x:4.1444,y:0.289,z:-2.1778,rotY:0,scale:1},{kind:'tree',variant:'t008',x:1.0,y:0.47,z:-5.14,rotY:0,scale:1.88}]);})()", "label": "place2" },
+    { "type": "wait", "ms": 6000 },
+    { "type": "nudge" },
+    { "type": "wait", "ms": 3000 },
+    { "type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m17-D-cand2.png" }
+  ]
+}

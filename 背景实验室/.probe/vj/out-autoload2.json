@@ -1,0 +1,74 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v14-自动加载.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "r1": {
+  "ready": true,
+  "frames": 1897,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r2": {
+  "ready": true,
+  "frames": 5202,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r3": {
+  "ready": true,
+  "frames": 8375,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r4": {
+  "ready": true,
+  "frames": 11485,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r5": {
+  "ready": true,
+  "frames": 14368,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "autoLoad": {
+  "count": 3,
+  "items": [
+   {
+    "kind": "rock",
+    "variant": "big-top",
+    "x": 4.14,
+    "y": 0.01,
+    "z": -2.18,
+    "scale": 0.2
+   },
+   {
+    "kind": "campfire",
+    "variant": "default",
+    "x": 4.14,
+    "y": 0.22,
+    "z": -2.18,
+    "scale": 1
+   },
+   {
+    "kind": "tree",
+    "variant": "t008",
+    "x": 2.7,
+    "y": 0.07,
+    "z": -7.6,
+    "scale": 1
+   }
+  ],
+  "frozen": true,
+  "camOk": true
+ }
+}

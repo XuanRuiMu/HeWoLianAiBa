@@ -4,7 +4,6 @@ import {
   CUO_WU_DAI_MA,
   JiaoSeShengChengCuoWu,
 } from '../config/错误码注册表'
-import { AI_PEI_ZHI } from '../config/AI配置'
 import { huoQuNiChengKu } from '../utils/昵称解析'
 import { 内部转展示, 落库性别或拒绝, 读回性别, 性别内部形态列表, type 性别内部形态 } from '../utils/性别'
 import {
@@ -236,6 +235,7 @@ export interface ShengChengJiaoSeJieGuo {
   yu_she_lei_xing: MBTILeiXing
   mbti_lei_xing: MBTILeiXing
   ie_lei_xing: 'I' | 'E'
+  sui_ji_xing_ge: boolean
   re_shen_lei_xing: '慢热' | '快热'
   hui_fu_yan_chi_hao_miao: number
   wei_xin_ming: string
@@ -551,6 +551,7 @@ export function shengChengJiaoSe(canShu: ShengChengJiaoSeCanShu): ShengChengJiao
     yu_she_lei_xing: mbti,
     mbti_lei_xing: mbti,
     ie_lei_xing: ieLeiXing,
+    sui_ji_xing_ge: canShu.sui_ji_xing_ge ?? false,
     re_shen_lei_xing: reShenLeiXing,
     hui_fu_yan_chi_hao_miao: huiFuYanChiHaoMiao,
     wei_xin_ming: weiXinMing,
@@ -638,8 +639,8 @@ export async function baoCunJiaoSe(
       "言语风格", "头像", "标签", "喜欢的类型", "家庭背景", "情感经历",
       "是否渣型", "渣法描述", "话术", "暴露方式", "识破线索", "预设类型",
       "IE类型", "热身类型", "回复延迟毫秒", "开场白", "MBTI", "微信昵称", "真实姓名", "世界信息", "对局模式", "音色ID",
-      "封存", "可继续聊天", "结局状态"
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
+      "封存", "可继续聊天", "结局状态", "随机性格"
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34)
     RETURNING "ID"`,
     [
       yongHuId,
@@ -675,6 +676,7 @@ export async function baoCunJiaoSe(
       false,
       true,
       '',
+      jiaoSe.sui_ji_xing_ge === true,
     ],
   )
 
@@ -837,6 +839,7 @@ export async function anIdChaJiaoSeXiangQing(
     yu_she_lei_xing: String(row.预设类型 || row.MBTI || 'INTJ') as MBTILeiXing,
     mbti_lei_xing: String(row.MBTI || row.预设类型 || 'INTJ') as MBTILeiXing,
     ie_lei_xing: String(row.IE类型 || 'I') as 'I' | 'E',
+    sui_ji_xing_ge: Boolean(row.随机性格),
     re_shen_lei_xing: String(row.热身类型 || '慢热') as '慢热' | '快热',
     hui_fu_yan_chi_hao_miao: Number(row.回复延迟毫秒) || huiFuYanChiJiZhunHaoMiao,
     wei_xin_ming: String(row.微信昵称 || row.名字 || ''),

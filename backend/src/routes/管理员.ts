@@ -1,6 +1,5 @@
 ﻿import { Router } from 'express'
 import type { Request, Response } from 'express'
-import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import { guanLiZhiDuMenKong, guanLiFengJinMenKong, guanLiFengJinShenHeMenKong, guanLiGaoWeiMenKong } from '../middleware/管理员'
 import { guanLiCaoZuoXianLiu } from '../middleware/限流'
@@ -32,7 +31,7 @@ import { yanZhengUUID } from '../utils/验证'
 import { zhongDuanJiaoSeTiaoDuQi } from '../socket/聊天'
 import { 执行落库后副作用 } from '../utils/落库后副作用'
 import type { RenZhengQingQiu } from '../middleware/认证'
-import { huoQuZengLiangQuXian, jiSuanMuBiaoQuXian } from '../services/好感度缓存'
+import { huoQuZengLiangQuXian,  } from '../services/好感度缓存'
 import { huoQuWanZhengHaoGanDu } from '../services/好感度'
 
 const luYou = Router()

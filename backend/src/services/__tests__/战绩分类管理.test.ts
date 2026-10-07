@@ -94,8 +94,8 @@ describe('战绩分类：列表与默认分类兜底', () => {
     const 结果 = await huoQuZhanJiFenLeiLieBiao(用户)
     expect(结果.moRenFenLeiId).toBe('默认分类ID')
     expect(结果.fenLeiLieBiao).toEqual([
-      { id: '默认分类ID', name: '默认分类', is_default: true, record_count: 2, version: 0 },
-      { id: '甲', name: '胜利', is_default: false, record_count: 1, version: 3 },
+      { id: '默认分类ID', name: '默认分组', is_default: true, record_count: 2, version: 0, sort_order: 0 },
+      { id: '甲', name: '胜利', is_default: false, record_count: 1, version: 3, sort_order: 0 },
     ])
     expect(假.已发.some((句) => 句.includes('INSERT INTO "战绩分类" ("用户ID", "名称", "是否默认")'))).toBe(true)
   })
@@ -117,7 +117,7 @@ describe('战绩分类：新建的名称归一与重名', () => {
     })
     备默认分类前置()
     备('lower(btrim("名称"))', { rows: [] })
-    备('INSERT INTO "战绩分类" ("用户ID", "名称") VALUES', 选中('新分类', { 名称: '刚好上限', 是否默认: false, 版本: 0, 记录数: 0 }))
+    备('INSERT INTO "战绩分类" ("用户ID", "名称", "排序") VALUES', 选中('新分类', { 名称: '刚好上限', 是否默认: false, 版本: 0, 记录数: 0 }))
     await expect(chuangJianZhanJiFenLei(用户, `  ${'字'.repeat(上限)}  `)).resolves.toMatchObject({
       id: '新分类',
       name: '刚好上限',
@@ -134,7 +134,7 @@ describe('战绩分类：新建的名称归一与重名', () => {
     备默认分类前置()
     备('lower(btrim("名称"))', { rows: [] })
     假.抛错.set(
-      归一('INSERT INTO "战绩分类" ("用户ID", "名称") VALUES ($1, $2) RETURNING "ID", "名称", "是否默认", "版本", 0::int AS "记录数"'),
+      归一('INSERT INTO "战绩分类" ("用户ID", "名称", "排序") VALUES ($1, $2, (SELECT COALESCE(MAX("排序"), -1) + 1 FROM "战绩分类" WHERE "用户ID" = $1)) RETURNING "ID", "名称", "是否默认", "版本", "排序", 0::int AS "记录数"'),
       Object.assign(new Error('duplicate'), { code: '23505' }),
     )
     await expect(chuangJianZhanJiFenLei(用户, '胜利')).rejects.toMatchObject({
@@ -180,6 +180,7 @@ describe('战绩分类：改名的版本 CAS 与归属', () => {
       is_default: false,
       record_count: 4,
       version: 3,
+      sort_order: 0,
     })
   })
 })

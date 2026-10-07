@@ -13,7 +13,7 @@ import { 计算迁移校验和 } from '../迁移器'
  *       删除「同模式只能一个活跃角色」的设定；挑战模式的「同一用户仅一局挑战进行中」不变。
  *
  * A 组（无库依赖）：040 只做索引 DDL 的形状自证 —— 两条排他唯一索引都要被删掉、
- *       幸存索引必须非唯一且谓词与 004 逐字同源、幂等结构齐全、号位是当前最大顶层号。
+ *       幸存索引必须非唯一且谓词与 004 逐字同源、幂等结构齐全、号位不与顶层号冲突。
  * B 组（真库）分两处落点，互不串味：
  *   ① public 模式：真跑 040 本身，证明角色表上两个唯一索引确实都不存在、
  *      幸存的非唯一索引在位且谓词与 004 同源、挑战侧的 uk_挑战对局_用户_进行中 未被触碰
@@ -81,13 +81,15 @@ const 建的索引 = [...正文.matchAll(/CREATE\s+(UNIQUE\s+)?INDEX\s+IF\s+NOT\
 // ============================ A 组：无库依赖 ============================
 
 describe('迁移 040 的形状自证（无库依赖）', () => {
-  it('040 是当前最大的顶层迁移号且号位不重复；038 仍在 pending 不算已执行', () => {
+  it('号位不重复；038 仍在 pending 不算已执行；当前最大顶层迁移号是 042', () => {
     const 顶层 = readdirSync(迁移目录)
       .filter((名) => 名.endsWith('.sql'))
       .map((名) => 名.split('_')[0])
     expect(new Set(顶层).size).toBe(顶层.length)
     expect(顶层).toContain('040')
-    expect(Math.max(...顶层.map(Number))).toBe(40)
+    expect(顶层).toContain('041')
+    expect(顶层).toContain('042')
+    expect(Math.max(...顶层.map(Number))).toBe(42)
     expect(顶层).not.toContain('038')
     expect(readdirSync(待审目录).some((名) => 名.startsWith('038_'))).toBe(true)
   })

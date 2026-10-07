@@ -255,7 +255,7 @@ describe('FP-10 提交侧结构清洗：只丢脏块，不丢整条', () => {
   })
 
   it('图片块数超上限：只丢多出来的图片块，文字块不受影响', () => {
-    const 图 = Array.from({ length: XIAO_XI_PEI_ZHI.neiRongKuaiZuiDaTuPianShu + 2 }, (_, i) => 图片(randomUUID()))
+    const 图 = Array.from({ length: XIAO_XI_PEI_ZHI.neiRongKuaiZuiDaTuPianShu + 2 }, (_x, _i) => 图片(randomUUID()))
     const 结果 = qingLiTiJiaoKuai([文字('看图'), ...图])
     expect(结果.kuai?.filter((k) => k.lei_xing === 'tupian')).toHaveLength(
       XIAO_XI_PEI_ZHI.neiRongKuaiZuiDaTuPianShu,

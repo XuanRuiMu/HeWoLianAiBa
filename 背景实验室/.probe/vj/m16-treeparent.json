@@ -1,0 +1,105 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "probe-parent": {
+  "trees": {
+   "lbl": "trees",
+   "name": "trees",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "worldPos": [
+    0,
+    0,
+    0
+   ],
+   "parent": "main",
+   "parentScale": [
+    1,
+    1,
+    1
+   ]
+  },
+  "islands": {
+   "lbl": "islands",
+   "name": "islands",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    9,
+    9,
+    9
+   ],
+   "worldPos": [
+    0,
+    0,
+    0
+   ],
+   "parent": "Experience",
+   "parentScale": [
+    1,
+    1,
+    1
+   ]
+  },
+  "tree": {
+   "lbl": "tree-main",
+   "name": "tree-main",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "worldPos": [
+    0,
+    0,
+    0
+   ],
+   "parent": "trees",
+   "parentScale": [
+    1,
+    1,
+    1
+   ]
+  },
+  "mainScene": {
+   "lbl": "scene",
+   "name": "MainScene",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "worldPos": [
+    0,
+    0,
+    0
+   ],
+   "parent": null,
+   "parentScale": null
+  }
+ }
+}

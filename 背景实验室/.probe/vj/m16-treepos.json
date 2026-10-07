@@ -1,0 +1,96 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "place": {
+  "ok": true,
+  "count": 3
+ },
+ "probe-pos": {
+  "outer": {
+   "name": "place-tree-6",
+   "type": "Object3D",
+   "pos": [
+    -1.5,
+    0.037,
+    -4
+   ],
+   "rot": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.55,
+    0.55,
+    0.55
+   ],
+   "parent": "MainScene",
+   "parentScale": [
+    1,
+    1,
+    1
+   ],
+   "kids": 1
+  },
+  "inner": {
+   "name": "pl-inner-6",
+   "type": "Object3D",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "rot": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    9,
+    9,
+    9
+   ],
+   "parent": "place-tree-6",
+   "parentScale": [
+    0.55,
+    0.55,
+    0.55
+   ],
+   "kids": 20
+  },
+  "treegrp": {
+   "name": "pl-treegrp-6",
+   "type": "Object3D",
+   "pos": [
+    0,
+    0,
+    0
+   ],
+   "rot": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    1,
+    1,
+    1
+   ],
+   "parent": "pl-inner-6",
+   "parentScale": [
+    9,
+    9,
+    9
+   ],
+   "kids": 45
+  },
+  "treegrp_world": [
+   -1.6679807933368376,
+   0.8663897154385628,
+   -3.2157126265935796
+  ]
+ }
+}

@@ -54,3 +54,133 @@ describe('use录音 无麦克风能力时的降级', () => {
     expect(luYinShangHuaQuXiao.value).toBe(false)
   })
 })
+
+describe('use录音 结算去重（FP-17）', () => {
+  class JiaMeiTiLuYinQi extends EventTarget {
+    static isTypeSupported(): boolean {
+      return true
+    }
+    state = 'inactive'
+    mimeType = 'audio/webm'
+    ondataavailable: ((shiJian: { data: Blob }) => void) | null = null
+    onerror: (() => void) | null = null
+    start(): void {
+      this.state = 'recording'
+    }
+    stop(): void {
+      if (this.state === 'inactive') return
+      this.state = 'inactive'
+      this.ondataavailable?.({ data: new Blob(['yin-pin'], { type: 'audio/webm' }) })
+      setTimeout(() => this.dispatchEvent(new Event('stop')), 0)
+    }
+  }
+
+  function zhuangLuYinHuanJing(): () => void {
+    vi.stubGlobal('MediaRecorder', JiaMeiTiLuYinQi)
+    const yuanSheBei = Object.getOwnPropertyDescriptor(navigator, 'mediaDevices')
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia: vi.fn().mockResolvedValue({ getTracks: () => [{ stop: vi.fn() }] }) },
+    })
+    return () => {
+      if (yuanSheBei) Object.defineProperty(navigator, 'mediaDevices', yuanSheBei)
+      else delete (navigator as { mediaDevices?: unknown }).mediaDevices
+      vi.unstubAllGlobals()
+    }
+  }
+
+  it('pointerup 与 touchend 先后触发同一次结算只发一条语音', async () => {
+    vi.useFakeTimers()
+    const huanYuan = zhuangLuYinHuanJing()
+    try {
+      const yiLai = zaoYiLai()
+      const { kaiShiLuYin, songKaiLuYin } = use录音(yiLai)
+      await kaiShiLuYin()
+      vi.advanceTimersByTime(1500)
+      songKaiLuYin()
+      songKaiLuYin()
+      await vi.runAllTimersAsync()
+      expect(yiLai.faSongYuYin).toHaveBeenCalledTimes(1)
+      expect(yiLai.gunDongDaoDiBu).toHaveBeenCalledTimes(1)
+    } finally {
+      huanYuan()
+      vi.useRealTimers()
+    }
+  })
+
+  it('结算完成后新一段录音可正常结算发送', async () => {
+    vi.useFakeTimers()
+    const huanYuan = zhuangLuYinHuanJing()
+    try {
+      const yiLai = zaoYiLai()
+      const { kaiShiLuYin, songKaiLuYin } = use录音(yiLai)
+      await kaiShiLuYin()
+      vi.advanceTimersByTime(1500)
+      songKaiLuYin()
+      await vi.runAllTimersAsync()
+      await kaiShiLuYin()
+      vi.advanceTimersByTime(1500)
+      songKaiLuYin()
+      await vi.runAllTimersAsync()
+      expect(yiLai.faSongYuYin).toHaveBeenCalledTimes(2)
+    } finally {
+      huanYuan()
+      vi.useRealTimers()
+    }
+  })
+
+  it('stop() 抛错时按已停止收敛：清理资源、不发送、可立即重新录音', async () => {
+    vi.useFakeTimers()
+    const huanYuan = zhuangLuYinHuanJing()
+    try {
+      class JiaLuYinQiStopBaoCuo extends JiaMeiTiLuYinQi {
+        stop(): void {
+          throw new Error('InvalidStateError')
+        }
+      }
+      vi.stubGlobal('MediaRecorder', JiaLuYinQiStopBaoCuo)
+      const yiLai = zaoYiLai()
+      const { luYinZhong, kaiShiLuYin, wanChengLuYin } = use录音(yiLai)
+      await kaiShiLuYin()
+      vi.advanceTimersByTime(1500)
+      await wanChengLuYin(true)
+      expect(yiLai.faSongYuYin).not.toHaveBeenCalled()
+      expect(luYinZhong.value).toBe(false)
+      await kaiShiLuYin()
+      expect(luYinZhong.value).toBe(true)
+    } finally {
+      huanYuan()
+      vi.useRealTimers()
+    }
+  })
+
+  it('stop 事件缺失时兜底超时收敛，不把录音能力永久锁死', async () => {
+    vi.useFakeTimers()
+    const huanYuan = zhuangLuYinHuanJing()
+    try {
+      class JiaLuYinQiBuPaiFa extends JiaMeiTiLuYinQi {
+        stop(): void {
+          if (this.state === 'inactive') return
+          this.state = 'inactive'
+          // 模拟真机缺陷：数据已齐但不派发 stop 事件
+          this.ondataavailable?.({ data: new Blob(['yin-pin'], { type: 'audio/webm' }) })
+        }
+      }
+      vi.stubGlobal('MediaRecorder', JiaLuYinQiBuPaiFa)
+      const yiLai = zaoYiLai()
+      const { luYinZhong, kaiShiLuYin, wanChengLuYin } = use录音(yiLai)
+      await kaiShiLuYin()
+      vi.advanceTimersByTime(1500)
+      const jieSuan = wanChengLuYin(true)
+      await vi.advanceTimersByTimeAsync(2000)
+      await jieSuan
+      expect(yiLai.faSongYuYin).toHaveBeenCalledTimes(1)
+      expect(luYinZhong.value).toBe(false)
+      await kaiShiLuYin()
+      expect(luYinZhong.value).toBe(true)
+    } finally {
+      huanYuan()
+      vi.useRealTimers()
+    }
+  })
+})

@@ -182,6 +182,7 @@ describe('FP-10b ② 同区几何量纲', () => {
       '--daifa-kuai-tu-kuan',
       '--daifa-kuai-tu-gao',
       '--daifa-kuai-tu-yuanjiao',
+      '--daifa-kuai-tu-jiange',
       '--tuwen-tu-zuidakuan',
       '--tuwen-tu-zuida-gao',
     ]
@@ -200,7 +201,7 @@ describe('FP-10b ② 同区几何量纲', () => {
     expect(消费者文件('--shuru-zhan-kai-gao-du'), '--shuru-zhan-kai-gao-du 的消费者必须唯一').toEqual([
       组件路径,
     ])
-    for (const 名 of ['--daifa-kuai-tu-kuan', '--daifa-kuai-tu-gao', '--daifa-kuai-tu-yuanjiao']) {
+    for (const 名 of ['--daifa-kuai-tu-kuan', '--daifa-kuai-tu-gao', '--daifa-kuai-tu-yuanjiao', '--daifa-kuai-tu-jiange']) {
       expect(消费者文件(名), `${名} 出现第二处消费者`).toEqual([组件路径])
     }
   })

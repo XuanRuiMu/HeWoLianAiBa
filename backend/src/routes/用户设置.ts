@@ -7,7 +7,7 @@ import { debug日志 } from '../utils/debug日志'
 import { liaoTianXianLiu } from '../middleware/限流'
 import type { RenZhengQingQiu } from '../middleware/认证'
 import { 数据库 } from '../数据库'
-import { liuShiBaoCunMeiTi, MeiTiCunChuCuoWu, shengChengQianMingURL, zhongXinQianMingMeiTiURL, cheXiaoYongHuMeiTiQianMing } from '../services/媒体存储'
+import { liuShiBaoCunMeiTi, MeiTiCunChuCuoWu, shengChengQianMingURL, zhongXinQianMingMeiTiURL,  } from '../services/媒体存储'
 import { panDingMeiTiShenHeChuCan } from '../services/媒体审核出参'
 import { chaXunZhangHaoFengJin, jiLuZhangHaoWeiGui } from '../services/账号封禁'
 import { 获取IP } from '../services/IP封禁'
@@ -84,6 +84,15 @@ luYou.get('/', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Resp
     const cunChuBeiJing = String(sheZhi['聊天背景'] || 'moRen')
     const beiJingSha = tiQuMeiTiSha(cunChuBeiJing)
     const zhanShiBeiJing = beiJingSha ? zhongXinQianMingMeiTiURL(cunChuBeiJing, yongHu.yongHuId) || 'moRen' : cunChuBeiJing
+    const cunChuQian = String(sheZhi['聊天背景浅色'] || '')
+    const cunChuShen = String(sheZhi['聊天背景深色'] || '')
+    const jieSuoBeiJing = (cunChu: string): string => {
+      const luoKu = cunChu || cunChuBeiJing
+      const sha = tiQuMeiTiSha(luoKu)
+      return sha ? zhongXinQianMingMeiTiURL(luoKu, yongHu.yongHuId) || 'moRen' : luoKu
+    }
+    const zhanShiQian = jieSuoBeiJing(cunChuQian)
+    const zhanShiShen = jieSuoBeiJing(cunChuShen)
     return chengGongXiangYing(xiangYing, {
       uid: yongHu.yongHuId,
       shou_ji_hao: String(hang?.['手机号'] || ''),
@@ -92,6 +101,8 @@ luYou.get('/', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Resp
       qian_ming_ke_jian_xing: typeof hang?.['签名可见性'] === 'string' ? String(hang['签名可见性']) : 'gong_kai',
       qian_ming_bai_ming_dan: Array.isArray(baiMingDanRaw) ? baiMingDanRaw.map((x) => String(x)) : [],
       liao_tian_bei_jing: zhanShiBeiJing,
+      liao_tian_bei_jing_qian: zhanShiQian,
+      liao_tian_bei_jing_shen: zhanShiShen,
       qi_pao_zi_ji: duQuQiPao(sheZhi, '气泡自己', QI_PAO_ZI_JI_MO_REN),
       qi_pao_ai: duQuQiPao(sheZhi, '气泡AI', QI_PAO_AI_MO_REN),
       gong_kai_zhang_hao: sheZhi['公开账号'] !== false,
@@ -110,6 +121,8 @@ luYou.put('/聊天背景', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xia
   if (!yongHu) return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
   const body = qingQiu.body as Record<string, unknown>
   const beiJing = typeof body['beiJing'] === 'string' ? body['beiJing'] : typeof body['bei_jing'] === 'string' ? String(body['bei_jing']) : ''
+  const moShiYuanShi = typeof body['moShi'] === 'string' ? body['moShi'] : typeof body['mo_shi'] === 'string' ? String(body['mo_shi']) : ''
+  const moShi = moShiYuanShi === 'qian' || moShiYuanShi === 'shen' ? moShiYuanShi : ''
   if (!shiHeFaLiaoTianBeiJing(beiJing)) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
   }
@@ -126,7 +139,13 @@ luYou.put('/聊天背景', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xia
       }
       luoKuZhi = shengChengMeiTiYinYong(beiJingSha)
     }
-    await 数据库.query(`UPDATE "用户设置" SET "聊天背景" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [luoKuZhi, yongHu.yongHuId])
+    if (moShi === 'qian') {
+      await 数据库.query(`UPDATE "用户设置" SET "聊天背景浅色" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [luoKuZhi, yongHu.yongHuId])
+    } else if (moShi === 'shen') {
+      await 数据库.query(`UPDATE "用户设置" SET "聊天背景深色" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [luoKuZhi, yongHu.yongHuId])
+    } else {
+      await 数据库.query(`UPDATE "用户设置" SET "聊天背景" = $1, "聊天背景浅色" = $1, "聊天背景深色" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [luoKuZhi, yongHu.yongHuId])
+    }
     return chengGongXiangYing(xiangYing, { cheng_gong: true })
   } catch (cuoWu) {
     debug日志.error('用户设置接口', '保存聊天背景失败', { xiang_qing: { cuo_wu: String(cuoWu) } })

@@ -536,7 +536,7 @@ describe('FP-D ④ 挑战与积分榜按默认性别蓝粉驱动', () => {
     expect(挑战样式()).toMatch(/\.anniu-kaiShi\s*\{[^}]*var\(--tiaozhan-zhu-1\)/)
   })
 
-  it('无默认性别 → 蓝（nan）：两页根 data-xingbie 为 nan 且徽记为男', async () => {
+  it('无默认性别 → 蓝（nan）：两页根 data-xingbie 为 nan，主页徽记为男、榜页无徽记', async () => {
     const 错误 = vi.spyOn(console, 'error').mockImplementation(() => {})
     try {
       const 主页 = await guaTiaoZhan()
@@ -546,7 +546,7 @@ describe('FP-D ④ 挑战与积分榜按默认性别蓝粉驱动', () => {
       主页.unmount()
       const 榜 = await guaJiFenBang()
       expect(榜.find('.paihang-yemian').attributes('data-xingbie')).toBe('nan')
-      expect(榜.find('.xingbie-huiji').text()).toContain(huoQuFanYi('ziLiaoSheZhi', 'xingBieNan'))
+      expect(榜.find('.xingbie-huiji').exists()).toBe(false)
       expect(错误).not.toHaveBeenCalled()
       榜.unmount()
     } finally {
@@ -554,16 +554,21 @@ describe('FP-D ④ 挑战与积分榜按默认性别蓝粉驱动', () => {
     }
   })
 
-  it('默认性别女 → 粉（nv）：两页根 data-xingbie 为 nv 且徽记为女', async () => {
+  it('默认性别女 → 粉（nv）：两页根 data-xingbie 为 nv，主页徽记为女、榜页无徽记', async () => {
     const 主页 = await guaTiaoZhan('female')
     expect(主页.find('.tiaozhan-yemian').attributes('data-xingbie')).toBe('nv')
     expect(主页.find('.xingbie-huiji').text()).toContain(huoQuFanYi('ziLiaoSheZhi', 'xingBieNv'))
     主页.unmount()
+    const 榜 = await guaJiFenBang('female')
+    expect(榜.find('.paihang-yemian').attributes('data-xingbie')).toBe('nv')
+    expect(榜.find('.xingbie-huiji').exists()).toBe(false)
+    榜.unmount()
   })
 
   it('默认性别男 → 蓝（nan）', async () => {
     const 榜 = await guaJiFenBang('male')
     expect(榜.find('.paihang-yemian').attributes('data-xingbie')).toBe('nan')
+    expect(榜.find('.xingbie-huiji').exists()).toBe(false)
     榜.unmount()
   })
 })

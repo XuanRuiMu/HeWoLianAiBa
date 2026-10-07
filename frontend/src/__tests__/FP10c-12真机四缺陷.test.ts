@@ -176,6 +176,15 @@ describe('FP-10c-12 ① 待发块样式住在命令式节点拿得到的样式�
     expect(含串的文件(/dai-fa-kuai/), 'dai-fa-kuai 出现第二处宿主 = 非 scoped 外溢面失控').toEqual([组件路径])
   })
 
+  it('空态光标要贴左内边距：占位 ::before 必须脱离正文流（绝对定位），否则哨兵光标按占位尾部落位', () => {
+    const 源 = 读源(组件路径)
+    expect(源).toMatch(/\.shuru-kuang\s*\{[^}]*position:\s*relative/)
+    expect(源).toMatch(/\.shuru-kuang\.wei-kong::before\s*\{[^}]*position:\s*absolute/)
+    expect(源).toMatch(/\.shuru-kuang\.wei-kong::before\s*\{[^}]*left:\s*var\(--shuru-kuang-zuo-you-neidian\)/)
+    expect(源).toMatch(/\.dai-fa-kuai--tu\s*\{[^}]*margin:\s*0\s+var\(--daifa-kuai-tu-jiange\)/)
+    expect(读源('styles/variables.css')).toMatch(/--daifa-kuai-tu-jiange:\s*0\.5ch/)
+  })
+
   it('反证一：把待发块规则搬回 scoped 段（真机缺陷①的原点）⇒ 判定当场翻红', () => {
     const 判定 = (源文本: string): boolean => {
       const { descriptor: d } = parse(源文本, { filename: '变异.vue' })

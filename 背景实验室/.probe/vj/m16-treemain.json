@@ -1,0 +1,416 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "treemain": {
+  "treeBounds": 45,
+  "bb": {
+   "childrenCount": 45,
+   "kids": [
+    {
+     "name": "tree-trunk-main",
+     "type": "Mesh",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001002",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001003",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001004",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001005",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001007",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001006",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001052",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001054",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001053",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001056",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001055",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001058",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001057",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001061",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001060",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001059",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001062",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001064",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001063",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001068",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001065",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001067",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001066",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001069",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001070",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001071",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001072",
+     "type": "Object3D",
+     "kids": 0
+    },
+    {
+     "name": "tree-foliage-main-001073",
+     "type": "Object3D",
+     "kids": 0
+    }
+   ]
+  },
+  "ndcXRange": [
+   -180.343,
+   72.657
+  ],
+  "ndcYRange": [
+   -182.611,
+   383.788
+  ],
+  "count": 46,
+  "sample": [
+   {
+    "name": "tree-foliage-main-001064",
+    "type": "Object3D",
+    "screenY": -166130,
+    "screenX": -172169,
+    "worldY": 3.2,
+    "worldX": 2.18,
+    "worldZ": -1.36,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-foliage-main-001059",
+    "type": "Object3D",
+    "screenY": -1288,
+    "screenX": -1671,
+    "worldY": 2.47,
+    "worldX": 2.26,
+    "worldZ": -1.71,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-main",
+    "type": "Object3D",
+    "screenY": -1184,
+    "screenX": 3620,
+    "worldY": 0,
+    "worldX": 0,
+    "worldZ": 0,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-trunk-main",
+    "type": "Mesh",
+    "screenY": -202,
+    "screenX": 940,
+    "worldY": 0.18,
+    "worldX": 1.52,
+    "worldZ": 3.71,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": 1
+   },
+   {
+    "name": "tree-trunk-main-big",
+    "type": "Mesh",
+    "screenY": -202,
+    "screenX": 940,
+    "worldY": 0.18,
+    "worldX": 1.52,
+    "worldZ": 3.71,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": 1
+   },
+   {
+    "name": "tree-foliage-main-001004",
+    "type": "Object3D",
+    "screenY": 427,
+    "screenX": 1125,
+    "worldY": 3.78,
+    "worldX": -0.72,
+    "worldZ": 4.56,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-foliage-main-001",
+    "type": "Object3D",
+    "screenY": 432,
+    "screenX": 775,
+    "worldY": 4.51,
+    "worldX": 1.29,
+    "worldZ": 7.72,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-foliage-main-001086",
+    "type": "Object3D",
+    "screenY": 432,
+    "screenX": 1180,
+    "worldY": 2.99,
+    "worldX": 0.49,
+    "worldZ": 2.92,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-foliage-main-001003",
+    "type": "Object3D",
+    "screenY": 435,
+    "screenX": 798,
+    "worldY": 3.78,
+    "worldX": 1.67,
+    "worldZ": 5.82,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-foliage-main-001077",
+    "type": "Object3D",
+    "screenY": 447,
+    "screenX": 1060,
+    "worldY": 4.2,
+    "worldX": -0.62,
+    "worldZ": 5.27,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-foliage-main-001006",
+    "type": "Object3D",
+    "screenY": 450,
+    "screenX": 1041,
+    "worldY": 3.88,
+    "worldX": 0.01,
+    "worldZ": 4.74,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-foliage-main-001079",
+    "type": "Object3D",
+    "screenY": 471,
+    "screenX": 468,
+    "worldY": 3.27,
+    "worldX": 3.86,
+    "worldZ": 5.11,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-foliage-main-001002",
+    "type": "Object3D",
+    "screenY": 476,
+    "screenX": 812,
+    "worldY": 4.44,
+    "worldX": 1.39,
+    "worldZ": 6.36,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-foliage-main-001084",
+    "type": "Object3D",
+    "screenY": 491,
+    "screenX": 1233,
+    "worldY": 3.26,
+    "worldX": 0.36,
+    "worldZ": 2.63,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-foliage-main-001007",
+    "type": "Object3D",
+    "screenY": 505,
+    "screenX": 1299,
+    "worldY": 4.42,
+    "worldX": -1.9,
+    "worldZ": 3.63,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-foliage-main-001058",
+    "type": "Object3D",
+    "screenY": 526,
+    "screenX": 568,
+    "worldY": 3.74,
+    "worldX": 3.43,
+    "worldZ": 5.08,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-foliage-main-001078",
+    "type": "Object3D",
+    "screenY": 527,
+    "screenX": 876,
+    "worldY": 5.45,
+    "worldX": 0.56,
+    "worldZ": 6.83,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-foliage-main-001085",
+    "type": "Object3D",
+    "screenY": 549,
+    "screenX": 812,
+    "worldY": 3.15,
+    "worldX": 2.56,
+    "worldZ": 3.07,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-foliage-main-001083",
+    "type": "Object3D",
+    "screenY": 565,
+    "screenX": 1278,
+    "worldY": 3.46,
+    "worldX": 0.48,
+    "worldZ": 2.22,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   },
+   {
+    "name": "tree-foliage-main-001082",
+    "type": "Object3D",
+    "screenY": 570,
+    "screenX": 726,
+    "worldY": 3.31,
+    "worldX": 2.87,
+    "worldZ": 3.37,
+    "visible": false,
+    "isInstancedMesh": false,
+    "count": null
+   }
+  ]
+ }
+}

@@ -95,11 +95,7 @@ export async function kaiShiTiaoZhan(
     throw cuoWu
   }
 
-  try {
-    await baoCunJiaoSe(yong_hu_id, jiaoSe, 'tiaozhan')
-  } catch (cuoWu) {
-    throw cuoWu
-  }
+await baoCunJiaoSe(yong_hu_id, jiaoSe, 'tiaozhan')
 
   try {
     await 数据库.query(

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHmac, randomUUID } from 'crypto'
-import { mkdtemp, rm, writeFile } from 'fs/promises'
+import { mkdtemp, rm } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { Readable } from 'stream'
@@ -8,8 +8,7 @@ import { Readable } from 'stream'
 const 假 = vi.hoisted(() => ({
   db: { query: vi.fn() },
   redis: { set: vi.fn(), get: vi.fn() },
-  audit: { shenHeTuPianAnQuan: vi.fn() },
-}))
+  audit: { shenHeTuPianAnQuan: vi.fn() } }))
 
 vi.mock('../../数据库', () => ({ 数据库: 假.db }))
 vi.mock('../../redis', () => ({ redis: 假.redis }))
@@ -17,7 +16,7 @@ vi.mock('../DeepSeek视觉审核', () => ({ shenHeTuPianAnQuan: 假.audit.shenHe
 
 import { peiZhi } from '../../config'
 import { MEI_TI_PEI_ZHI, WEN_JIAN_FEN_LEI_DA_XIAO_SHANG_XIAN, huoQuWenJianDaXiaoShangXianZiJie } from '../../config/媒体配置'
-import { cheXiaoYongHuMeiTiQianMing, chongZhiMeiTiQianMingMiYao, huoQuBenDiLuJing, huoQuMeiTiQianMingMiYao, liuShiBaoCunMeiTi, shengChengMeiTiYinYong, shengChengQianMingURL, tiQuMeiTiSha, yanZhengMeiTiKeDu, yanZhengQianMing, zhiXingBingDuSaoMiao, zhongXinQianMingMeiTiURL } from '../媒体存储'
+import { chongZhiMeiTiQianMingMiYao, huoQuBenDiLuJing, huoQuMeiTiQianMingMiYao, liuShiBaoCunMeiTi, shengChengMeiTiYinYong, shengChengQianMingURL, tiQuMeiTiSha, yanZhengMeiTiKeDu, yanZhengQianMing, zhiXingBingDuSaoMiao, zhongXinQianMingMeiTiURL } from '../媒体存储'
 
 const 媒体根 = { ...MEI_TI_PEI_ZHI }
 let 临时目录 = ''

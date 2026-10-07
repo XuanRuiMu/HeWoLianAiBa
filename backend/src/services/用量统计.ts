@@ -92,7 +92,7 @@ export async function huoQuJinRiHuiZong(riQi: string = jinRiBiaoJi()): Promise<Y
     if (fenGe < 0) continue
     const chengYuan = jianMing.slice(0, fenGe)
     const ziDuan = jianMing.slice(fenGe + 1)
-    const { moXingLeiXing, moXing } = jieXiChengYuan(chengYuan)
+    const { moXingLeiXing,  } = jieXiChengYuan(chengYuan)
     if (!moXingLeiXing) continue
     const xianYou = huiZong.get(chengYuan) ?? { moXingLeiXing, ciShu: 0, shuRuToken: 0, shuChuToken: 0, zongToken: 0, mingZhongToken: 0 }
     const shuZhi = Number(zhi) || 0

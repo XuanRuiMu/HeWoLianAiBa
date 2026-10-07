@@ -1,0 +1,397 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "butterflies": {
+  "count": 35,
+  "list": [
+   {
+    "name": "AnimeSky",
+    "type": "Mesh",
+    "screenY": -1184,
+    "screenX": 3620,
+    "worldY": 0,
+    "worldX": 0,
+    "worldZ": 0,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Birds",
+    "type": "Mesh",
+    "screenY": -1184,
+    "screenX": 3620,
+    "worldY": 0,
+    "worldX": 0,
+    "worldZ": 0,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Butterfly_5",
+    "type": "Group",
+    "screenY": -386,
+    "screenX": 3280,
+    "worldY": 0.93,
+    "worldX": 0.83,
+    "worldZ": -0.06,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_5_mesh",
+    "type": "Mesh",
+    "screenY": -386,
+    "screenX": 3280,
+    "worldY": 0.93,
+    "worldX": 0.83,
+    "worldZ": -0.06,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Butterfly_1",
+    "type": "Group",
+    "screenY": -161,
+    "screenX": 1414,
+    "worldY": 0.56,
+    "worldX": 0.6,
+    "worldZ": 2.14,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_1_mesh",
+    "type": "Mesh",
+    "screenY": -161,
+    "screenX": 1414,
+    "worldY": 0.56,
+    "worldX": 0.6,
+    "worldZ": 2.14,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Butterfly_7",
+    "type": "Group",
+    "screenY": 11,
+    "screenX": 1695,
+    "worldY": 0.78,
+    "worldX": -3.36,
+    "worldZ": 2.53,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_7_mesh",
+    "type": "Mesh",
+    "screenY": 11,
+    "screenX": 1695,
+    "worldY": 0.78,
+    "worldX": -3.36,
+    "worldZ": 2.53,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Butterfly_0",
+    "type": "Group",
+    "screenY": 107,
+    "screenX": 863,
+    "worldY": 1.32,
+    "worldX": 0.71,
+    "worldZ": 6.35,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_0_mesh",
+    "type": "Mesh",
+    "screenY": 107,
+    "screenX": 863,
+    "worldY": 1.32,
+    "worldX": 0.71,
+    "worldZ": 6.35,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Butterfly_8",
+    "type": "Group",
+    "screenY": 147,
+    "screenX": 385,
+    "worldY": 1.22,
+    "worldX": 2.87,
+    "worldZ": -8.52,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_8_mesh",
+    "type": "Mesh",
+    "screenY": 147,
+    "screenX": 385,
+    "worldY": 1.22,
+    "worldX": 2.87,
+    "worldZ": -8.52,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Butterfly_6",
+    "type": "Group",
+    "screenY": 162,
+    "screenX": 310,
+    "worldY": 1.25,
+    "worldX": 2.82,
+    "worldZ": -4.68,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_6_mesh",
+    "type": "Mesh",
+    "screenY": 162,
+    "screenX": 310,
+    "worldY": 1.25,
+    "worldX": 2.82,
+    "worldZ": -4.68,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Butterfly_9",
+    "type": "Group",
+    "screenY": 185,
+    "screenX": 18,
+    "worldY": 1.17,
+    "worldX": 1.79,
+    "worldZ": -4.76,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_9_mesh",
+    "type": "Mesh",
+    "screenY": 185,
+    "screenX": 18,
+    "worldY": 1.17,
+    "worldX": 1.79,
+    "worldZ": -4.76,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Butterfly_2",
+    "type": "Group",
+    "screenY": 202,
+    "screenX": 1196,
+    "worldY": 2.04,
+    "worldX": -1.52,
+    "worldZ": 4.79,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_2_mesh",
+    "type": "Mesh",
+    "screenY": 202,
+    "screenX": 1196,
+    "worldY": 2.04,
+    "worldX": -1.52,
+    "worldZ": 4.79,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Butterfly_4",
+    "type": "Group",
+    "screenY": 316,
+    "screenX": 99,
+    "worldY": 0.57,
+    "worldX": 1.84,
+    "worldZ": -4.82,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_4_mesh",
+    "type": "Mesh",
+    "screenY": 316,
+    "screenX": 99,
+    "worldY": 0.57,
+    "worldX": 1.84,
+    "worldZ": -4.82,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Butterfly_11",
+    "type": "Group",
+    "screenY": 548,
+    "screenX": 1665,
+    "worldY": 5.52,
+    "worldX": -6.28,
+    "worldZ": 2.25,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_11_mesh",
+    "type": "Mesh",
+    "screenY": 548,
+    "screenX": 1665,
+    "worldY": 5.52,
+    "worldX": -6.28,
+    "worldZ": 2.25,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Butterfly_12",
+    "type": "Group",
+    "screenY": 550,
+    "screenX": 1265,
+    "worldY": 5.63,
+    "worldX": -2.89,
+    "worldZ": 4.52,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_12_mesh",
+    "type": "Mesh",
+    "screenY": 550,
+    "screenX": 1265,
+    "worldY": 5.63,
+    "worldX": -2.89,
+    "worldZ": 4.52,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Butterfly_3",
+    "type": "Group",
+    "screenY": 578,
+    "screenX": -1081,
+    "worldY": 0.67,
+    "worldX": 0.97,
+    "worldZ": -2.58,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_3_mesh",
+    "type": "Mesh",
+    "screenY": 578,
+    "screenX": -1081,
+    "worldY": 0.67,
+    "worldX": 0.97,
+    "worldZ": -2.58,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "SwarmLight",
+    "type": "PointLight",
+    "screenY": 617,
+    "screenX": 1851,
+    "worldY": 5.25,
+    "worldX": -5.59,
+    "worldZ": 0.87,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Swarm_raycasterMesh",
+    "type": "Mesh",
+    "screenY": 617,
+    "screenX": 1851,
+    "worldY": 5.25,
+    "worldX": -5.59,
+    "worldZ": 0.87,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Swarm_particles",
+    "type": "Points",
+    "screenY": 617,
+    "screenX": 1851,
+    "worldY": 5.25,
+    "worldX": -5.59,
+    "worldZ": 0.87,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_13",
+    "type": "Group",
+    "screenY": 759,
+    "screenX": 1746,
+    "worldY": 4.84,
+    "worldX": -2.12,
+    "worldZ": 0.75,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_13_mesh",
+    "type": "Mesh",
+    "screenY": 759,
+    "screenX": 1746,
+    "worldY": 4.84,
+    "worldX": -2.12,
+    "worldZ": 0.75,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Butterfly_10",
+    "type": "Group",
+    "screenY": 1032,
+    "screenX": 3117,
+    "worldY": 5.9,
+    "worldX": -7.59,
+    "worldZ": -3.57,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_10_mesh",
+    "type": "Mesh",
+    "screenY": 1032,
+    "screenX": 3117,
+    "worldY": 5.9,
+    "worldX": -7.59,
+    "worldZ": -3.57,
+    "visible": true,
+    "isMesh": true
+   },
+   {
+    "name": "Butterfly_14",
+    "type": "Group",
+    "screenY": 1131,
+    "screenX": 3315,
+    "worldY": 5.26,
+    "worldX": -5.68,
+    "worldZ": -3.25,
+    "visible": true,
+    "isMesh": false
+   },
+   {
+    "name": "Butterfly_14_mesh",
+    "type": "Mesh",
+    "screenY": 1131,
+    "screenX": 3315,
+    "worldY": 5.26,
+    "worldX": -5.68,
+    "worldZ": -3.25,
+    "visible": true,
+    "isMesh": true
+   }
+  ]
+ }
+}

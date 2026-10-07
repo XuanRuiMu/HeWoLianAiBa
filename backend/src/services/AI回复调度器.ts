@@ -1,4 +1,4 @@
-﻿import type { Server } from 'socket.io'
+import type { Server } from 'socket.io'
 import { yunXingAIYinQing } from './AI引擎'
 import { pingPanHaoGanDuPiLiangNei } from './好感度评判'
 import { gengXinHaoGanDu, huoQuWanZhengHaoGanDu } from './好感度'
@@ -36,6 +36,14 @@ import { 尝试合成语音 } from './TTS服务'
 import { 转换TTS文本 } from './TTS文本预处理'
 import { 计算TTS概率 } from './TTS概率计算'
 import { TTS_PEI_ZHI } from '../config/TTS触发配置'
+import { panDuanZuiJia } from './追加消息判定'
+import { tuiDuanZuoXi, panDuanZuoXi, zuoXiKaiQi } from '../config/角色作息'
+import { shengChengBurstJianGeHaoMiao, burstLianFaZuiChangBiJieShu } from '../config/角色配置'
+import { duShiChaXiaShi } from '../config/时区'
+import { duJieBaoKaiGuan } from '../config/开场采样配置'
+import { huoQuShiJianChangJingWenBen } from '../config/时间场景配置'
+
+const deng = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
 
 /**
  * FP-09「角色回复」推送契约。
@@ -89,12 +97,26 @@ export class AI回复调度器 {
   // M2 重置式防抖：新用户消息到达时递增，使仍在途的旧检测流程结果被丢弃
   private 当前检测ID = 0
   private 自上一条角色消息以来的用户消息计数 = 0
+  private 连发剩余条数 = 0
   // A-2 预警只在每轮AI回复周期内触发一次（预警本身不重置此标志，普通AI回复才重置）
   private 本轮已发送预警 = false
   // FP-09：触发本轮的那条用户消息（焦点消息与 驱动消息ID 的唯一来源）
   private 本轮驱动消息ID: string | null = null
   // FP-09：已送达角色消息文本登记，作废轮次重跑时不再产出同文本第二条
   private 已送达登记 = new Map<string, number>()
+
+  // ═══ 追加消息（第十五轮新增）═══
+  // 现实推演结论：真人「对方不回之后又发一条」几乎从不是催，而是**正好有别的事想说**。
+  // 详见 services/追加消息判定.ts 头注。故本计时器只负责「到点提醒角色自查」，
+  // 催不催、说什么全部交给角色自己判。
+  private 追加计时器: NodeJS.Timeout | null = null
+  /** 角色最后一条消息的落库时刻，用于算「隔了多久」与「用户有没有在此之后发过消息」 */
+  private 上条角色消息时刻 = 0
+  /** 自角色最后一条消息以来，用户是否发过新消息 */
+  private 上条角色消息后用户来过 = false
+  // 第十七轮：本轮是否处于「角色睡着、醒来才回」状态（用于提示层措辞）
+  private 本轮睡着中 = false
+  private 本轮醒来小时 = 0
 
   private static readonly 去重登记上限 = 8
   private static readonly 去重窗口毫秒 = 60 * 1000
@@ -121,6 +143,8 @@ export class AI回复调度器 {
     this.本轮驱动消息ID = 驱动消息ID ?? null
 
     this.自上一条角色消息以来的用户消息计数 += 1
+    // 追加消息门控：用户一来就作废任何「想说的别的事」—— 已经接上话，插话就成抢话
+    this.上条角色消息后用户来过 = true
 
     // A-2 连发12条预警：达到预警阈值且本轮未发送过预警时，由Writer生成角色口吻预警消息并清零计数
     // FP-09：预警同样是「角色的一条新回复」，必须先作废在跑轮次再走轻量通道，
@@ -205,6 +229,12 @@ export class AI回复调度器 {
     if (this.计时器) {
       clearTimeout(this.计时器)
       this.计时器 = null
+    }
+    // ⚠️ 追加消息计时器必须**跟着一起清**：用户发了新消息就说明已经接上话，
+    //   这时角色再把「想说的别的事」插进来就是抢话。语义完全吻合，故复用同一出口。
+    if (this.追加计时器) {
+      clearTimeout(this.追加计时器)
+      this.追加计时器 = null
     }
     // FP-09：作废轮次必须让「一切行动」立即停摆。旧实现只 abort，而 abort 之后仍有
     // 无保护尾巴（收尾好感度 / TTS 语音落库+推送）在跑，被取消的轮次还能再推一条同文本消息。
@@ -345,13 +375,76 @@ export class AI回复调度器 {
     }
   }
 
-  private 启动AI计时器(): void {
-    this.计时器 = setTimeout(() => {
-      this.计时器 = null
-      void this.触发AI处理()
-    }, this.回复延迟毫秒)
-    this.发布AI状态('deng_dai_zhong')
+  /**
+ * 启动回复计时器 —— **唯一的回复延迟出口**。
+ *
+ * ⚠️ 第十七轮改造（用户定稿「完全模拟现实」）：
+ *   改造前这里是**固定** `回复延迟毫秒`（默认 10 秒），它模拟的是「打字时间」，
+ *   于是**凌晨 4 点用户发消息、AI 10 秒后就回** —— 那不是人，那是随时在线的机器。
+ *
+ *   现在按**角色作息**决定（`config/角色作息.ts`）：
+ *   · 醒着 → 原来的打字延迟（10 秒 ~ 几分钟），不变
+ *   · 睡着 → **定时到起床时间才回**，且提示层会告诉模型「你刚醒 / 你睡前才看到」，
+ *     让内容对得上「隔了几小时才回」这件事
+ *
+ *   ⚠️ 这**不是**「已读不回」：睡着时消息根本没被看到，醒来才看到。
+ *     两者用户观感完全不同 —— 前者是「TA 不想理我」，后者是「TA 睡了」。
+ *
+ *   ⚠️ 作息不从 MBTI 推断（「内向=睡得早」是没有依据的刻板印象，夜猫子里外向的比比皆是）。
+ *     只看人设文本里是否明写作息，否则走默认早睡早起。
+ */
+private 启动AI计时器(): void {
+  const yanChi = this.计算本轮回复延迟()
+  // 上限保护：服务器重启/时钟跳变等极端情况下不能让计时器挂几天
+  const anQuShangXian = 14 * 3600_000
+  const shiJian = Math.max(0, Math.min(anQuShangXian, yanChi))
+  this.本轮睡着中 = yanChi > this.回复延迟毫秒 * 2 && yanChi > 60_000
+
+  this.计时器 = setTimeout(() => {
+    this.计时器 = null
+    void this.触发AI处理()
+  }, shiJian)
+  this.发布AI状态('deng_dai_zhong')
+}
+
+/** 睡着的角色直到起床前不回复（供追加消息判定复用同一个作息判断） */
+private 睡着(): boolean {
+  const renShe = this.当前角色
+  if (!renShe) return false
+  const wenBen = `${renShe.bei_jing_gu_shi || ''}${renShe.xing_wei_te_dian || ''}${(renShe.shi_jie_xin_xi?.zhi_ye as string) || ''}`
+  const leiXing = tuiDuanZuoXi(wenBen)
+  return panDuanZuoXi(this.当地现在小时(), leiXing).shiFuZhe
+}
+
+/**
+ * 角色所在地的当前小时。
+ *
+ * ⚠️ 现实现：国内城市（`chengShiKu` 16 个全是境内）⇒ 用服务器本地时间。
+ *   ⚠️ **这是一处已知简化，不是完成态**：角色目前无法被生成在境外，
+ *   所以没有时区可换。一旦 `chengShiKu` 加入境外城市，这里必须改。
+ *   现在显式读人设里的城市名，查不到境外城市就按国内处理，并把判断收敛在这一处。
+ */
+private 当地现在小时(): number {
+  const chengShi = (this.当前角色?.shi_jie_xin_xi?.cheng_shi as string) || ''
+  const shiCha = duShiChaXiaShi(chengShi)
+  if (shiCha !== null) {
+    const benDi = new Date()
+    return ((benDi.getHours() + benDi.getMinutes() / 60 + shiCha) % 24 + 24) % 24
   }
+  return new Date().getHours()
+}
+
+/** 本轮该等多久才回（毫秒） */
+private 计算本轮回复延迟(): number {
+  if (!zuoXiKaiQi()) return this.回复延迟毫秒
+  const renShe = this.当前角色
+  if (!renShe) return this.回复延迟毫秒
+  const wenBen = `${renShe.bei_jing_gu_shi || ''}${renShe.xing_wei_te_dian || ''}${(renShe.shi_jie_xin_xi?.zhi_ye as string) || ''}`
+  const panDuan = panDuanZuoXi(this.当地现在小时(), tuiDuanZuoXi(wenBen))
+  if (!panDuan.shiFuZhe) return this.回复延迟毫秒
+  this.本轮醒来小时 = panDuan.qiXingXiaoShi
+  return panDuan.dengDaiMiaoShu
+}
 
   private 是否等待表白回复(): boolean {
     qingChuGuoQiDengDaiZhuangTai()
@@ -365,8 +458,28 @@ export class AI回复调度器 {
     return zhuangTai.deng_dai_zhong
   }
 
-  private 设置等待表白回复状态(): void {
-    dengDaiBiaoBaiHuiFuMap.set(shengChengDengDaiBiaoBaiJian(this.用户ID, this.角色ID), {
+  /**
+   * 时间场景提示 = 现有时段描述 + **「刚醒」说明**。
+   *
+   * ⚠️ 为什么必须有后者（第十七轮）：
+   *   角色睡着时消息没被看到，醒来才回。这段时间隔了几小时，
+   *   而 `时间场景配置`只会说「现在是08点」—— 模型不知道上一条是凌晨 4 点发的，
+   *   于是会写出**时间线不连贯**的回复（「刚说到…你继续说」这种）。
+   *   实测对照：不给这个信息时，模型会假设消息是几分钟前到的。
+   *
+   * ⚠️ 措辞只交代**事实处境**（我睡了、你那会儿发的、现在我醒了），
+   *   不写「该怎么提」「该怎么解释」—— 后者是技巧清单，模型会去表演。
+   */
+  private 构造时间场景提示(): string {
+    const jiBen = huoQuShiJianChangJingWenBen()
+    if (!this.本轮睡着中) return jiBen
+    const qiXing = Math.floor(this.本轮醒来小时)
+    const xianZai = Math.floor(this.当地现在小时())
+    const geXiaoShi = ((xianZai - qiXing + 24) % 24) || 24
+    return `${jiBen}\n（你之前睡着了，TA 那会儿发的消息你刚醒才看到，中间过了约 ${geXiaoShi} 小时。）`
+  }
+
+  private 设置等待表白回复状态(): void {    dengDaiBiaoBaiHuiFuMap.set(shengChengDengDaiBiaoBaiJian(this.用户ID, this.角色ID), {
       deng_dai_zhong: true,
       chuang_jian_shi_jian: Date.now(),
     })
@@ -438,12 +551,27 @@ export class AI回复调度器 {
         })
       }
 
-      if (!ai结果.shi_fou_hui_fu || ai结果.xiao_xi_lie_biao.length === 0) {
+// ⚠️ **空回复必须分两种**（第十二轮实测 P0-②）：
+    //   · Director 说「已读不回」→ 正常产品行为，静默不回复
+    //   · Director 说「要回」但 Writer 交白卷 → **故障**，用户视角是「发了消息石沉大海」
+    //   实测 400 轮里 3 轮是后者（`AI引擎` 已用 `WriterFuShiKongBai` 标记 `cuo_wu_xin_xi`），
+    //   但此前的实现把两者一律 `推送角色回复([])` + `发布AI状态('kong_xian')` ——
+    //   既不给用户任何提示，也让联调无法区分「角色不想理」与「模型故障」。
+    if (!ai结果.shi_fou_hui_fu || ai结果.xiao_xi_lie_biao.length === 0) {
+      // 故障态（Writer 交白卷）：必须提示用户，不能伪装成「已读不回」
+      if (ai结果.cuo_wu_xin_xi && ai结果.cuo_wu_xin_xi !== '') {
+        this.发送系统错误提示(ai结果.cuo_wu_xin_xi)
+        debug日志.error('AI回复调度器', 'Director要求回复但模型输出为空，按故障提示用户', {
+          xiang_qing: { jiao_se_id: this.角色ID, lun: 轮次, cuo_wu: ai结果.cuo_wu_xin_xi },
+        })
+      } else {
+        // 正常态：角色主动选择已读不回
         this.推送角色回复([], 轮次)
-        jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 0 })
-        if (处理ID === this.当前处理ID) this.发布AI状态('kong_xian')
-        return
       }
+      jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 0 })
+      if (处理ID === this.当前处理ID) this.发布AI状态('kong_xian')
+      return
+    }
 
       if (ai结果.ce_lue?.shi_fou_zhu_dong_biao_bai) {
         const 表白消息 = ai结果.xiao_xi_lie_biao[0]
@@ -459,6 +587,7 @@ export class AI回复调度器 {
       const 消息列表 = ai结果.xiao_xi_lie_biao.slice(0, 5)
       await this.发送消息列表(消息列表, 信号, 轮次, ai结果)
       if (信号.aborted || 处理ID !== this.当前处理ID) return
+      this.安排追加消息()
       // FP-05 YH-036：AI 按亲密画像场景自主在聊天页内偶发图音视频（文本主链路完成后同轮追加，不阻塞已发送文本）
       try {
         const { changShiZhuDongShengTu } = await import('./主动多模态')
@@ -478,6 +607,154 @@ export class AI回复调度器 {
         this.处理中 = false
         this.取消控制器 = null
       }
+    }
+  }
+
+  // ═══════════════ 追加消息（第十五轮新增）═══════════════
+  //
+  // ⚠️ 为什么不是「用户没回就催」：
+  //   `追加消息推演.mts` 跑完 20,000 段真人语料，**找不到「对方长时间不回」的样本**
+  //   （LCCC 每段都是一来一往的即时对话）；形态 A 命中的 47 段逐段直读后发现
+  //   绝大多数**不是催**（`严不严重`→`算严重`、`晚上好，吃好了么`→`吃好了` 都是对方在回话）。
+  //   ⇒ 现实中「催回复」罕见。真人第二次主动的真实情形是：**正好有别的事想说**。
+  //
+  // ⚠️ 为什么不写死时长：
+  //   时长只决定「多久之后角色自查一次心里有没有事」，
+  //   **不决定发什么、也不决定发不发** —— 后两者由角色自己判（见 追加消息判定.ts）。
+  //   单一全局时长、不按性格/亲密度分档：那属于「规则」，会把 16 型重新压平。
+  private 安排追加消息(): void {
+    if (!this.当前角色) return
+    if (!duJieBaoKaiGuan('ZUI_JIA_QI_YONG')) return
+    if (process.env.VITEST === 'true') return
+    // 表白之后不再追加 —— 表白是关系结论，插话会把它稀释
+    if (this.是否等待表白回复()) return
+
+    // ⚠️ **睡着时不追加**（第十七轮补漏）：
+    //   我实现了作息延迟，但**漏了这个入口** —— 角色凌晨睡着，用户发消息后
+    //   延迟到早上回复；而排上的追加计时器仍会在**凌晨**触发，
+    //   等于「凌晨不该理人」在一个入口上完全失效。
+    //   真实情况：人睡着时不会主动发消息，而且醒来那会儿先看到的是待回的消息。
+    //   ⇒ 睡着一律不排，等「本轮回复」真正发出后（那时已到起床时间）再排。
+    if (this.睡着()) return
+
+    this.上条角色消息时刻 = Date.now()
+    this.上条角色消息后用户来过 = false
+    const haoMiao = this.计算追加间隔()
+    if (haoMiao <= 0) return
+
+    this.追加计时器 = setTimeout(() => {
+      this.追加计时器 = null
+      void this.执行追加消息()
+    }, haoMiao * 60 * 1000)
+  }
+
+  /**
+   * 追加间隔：**由角色性格决定**。
+   *
+   * ⚠️ 这是本设计里**唯一**按性格分档的地方，且有实证依据，不是我的偏好：
+   *   · 依恋类型研究：焦虑型**高频主动**、回避型**极低**、恐惧回避型**忽冷忽热**
+   *     ⇒ 主动频率必须随性格变化，一刀切等于把 16 型压平
+   *   · 微信公开课 2025：38% 的人因「对方回复慢」产生焦虑 ⇒ 慢热型间隔长于
+   *     用户耐受阈值会引发焦虑，所以上限不能太长
+   *
+   * ⚠️ 分档**只决定「多久自查一次」**，绝不决定发不发、说什么 —— 后两者全交给角色。
+   *   这样分档是「给角色时间」，不是「规定角色行为」。
+   */
+  private 计算追加间隔(): number {
+    const moRen = Number(process.env.ZUI_JIA_DENG_DAI_HAO_MIAO || '')
+    if (Number.isFinite(moRen) && moRen > 0) return moRen
+    const renShe = this.当前角色 as { ie_lei_xing?: string; re_shen_lei_xing?: string }
+    const E = renShe.ie_lei_xing === 'E'
+    const kuaiRe = renShe.re_shen_lei_xing === '快热'
+    if (E && kuaiRe) return 20        // 外向 + 快热：话憋不住
+    if (E) return 35
+    if (kuaiRe) return 50
+    return 90// 内向 + 慢热：本来就不会主动
+  }
+
+  private async 执行追加消息(): Promise<void> {
+    // 用户在这期间发过消息 ⇒ 已经接上话，角色插话就成抢话。静默丢弃。
+    if (this.上条角色消息后用户来过) return
+    const chuShi = this.上条角色消息时刻
+    if (!chuShi) return
+
+    // ⚠️ **到点那一刻才是真正的检查点**（第十七轮补漏）：
+    //   只在「排计时器时」查作息是不够的 —— 角色 23:00 回的消息，
+    //   排 90 分钟后触发点是 00:30，那时人才睡着。
+    //   现实里人睡着不会主动发消息，而醒来那会儿先看到的是待回的消息。
+    //   ⚠️ 这一条比「排的时候查」更关键，两处都要。
+    if (this.睡着()) return
+
+    try {
+      const [角色, 好感度, 历史消息] = await Promise.all([
+        huoQuAIJiaoSeXinXi(this.角色ID),
+        huoQuWanZhengHaoGanDu(this.用户ID, this.角色ID),
+        huoQuZuiJinDuiHuaLiShi(this.用户ID, this.角色ID),
+      ])
+      if (!角色) return
+      // await 期间可能又有用户消息进来 —— 抢话检查必须放在 IO 之后
+      if (this.上条角色消息后用户来过) return
+
+      const panDuan = await panDuanZuiJia({
+        jiao_se: 角色,
+        hao_gan_du: 好感度,
+        dui_hua_li_shi: 历史消息,
+        liangJiaGeHaoMiao: Date.now() - chuShi,
+      })
+      // 判定为「没有」是最常见且正常的结果，静默即正确行为，不落任何日志噪音
+      if (!panDuan.youShiMeDongXi || !panDuan.shuoDeShi) {
+        if (panDuan.cuoWu) {
+          debug日志.warn('AI追加消息', '判定失败，降级为不追加', { xiang_qing: { cuo_wu: panDuan.cuoWu } })
+        }
+        return
+      }
+
+      // 用户不在场时前端要能看到「正在输入」，否则这条会像凭空出现
+      const 控制器 = new AbortController()
+      this.取消控制器 = 控制器
+      this.io.to(this.用户ID).emit('对方正在输入', this.角色ID)
+      await deng(this.计算间隔())
+
+      const 结果 = await yunXingAIYinQing(
+        {
+          yong_hu_id: this.用户ID,
+          jiao_se_id: this.角色ID,
+          jiao_se: 角色,
+          hao_gan_du: 好感度 || {
+            xin_ren_du: 0, qin_mi_du: 0, qu_wei_du: 0, guan_huai_du: 0,
+            zong_fen: 0, guan_xi_jie_duan: 'lengDan',
+          },
+          dui_hua_li_shi: 历史消息,
+          // ⚠️ 追加消息**没有新的用户消息**。这里传角色自己刚想说的那件事，
+          //    让 Writer 知道「要接的是这个」而不是「要回应对方」——
+          //    这是「问存在性、不问内容」在送模侧的对应：判定出内容后 Writer 才展开。
+          yong_hu_xin_xiao_xi: panDuan.shuoDeShi,
+          zui_jia_shuo_de_shi: panDuan.shuoDeShi,
+          shi_fou_di_yi_lun: false,
+          tu_pian_shou_quan: this.用户信息缓存?.tu_pian_shou_quan ?? false,
+          shi_jian_chang_jing: this.构造时间场景提示(),
+        },
+        控制器.signal,
+      )
+
+      if (this.上条角色消息后用户来过) return
+      if (结果.xiao_xi_lie_biao.length === 0) return
+
+      // 推送契约必须带轮次与驱动 ID，否则前端会把这条当孤儿
+      const 轮次: LunCiShangXiaWen = { 处理ID: this.当前处理ID, 驱动消息ID: null }
+      await this.发送消息列表(结果.xiao_xi_lie_biao.slice(0, 5), 控制器.signal, 轮次, 结果)
+      jiLuSocketShiJian('角色回复', this.用户ID, {
+        jiao_se_id: this.角色ID,
+        xiao_xi_shu: 结果.xiao_xi_lie_biao.length,
+        lei_xing: 'zui_jia',
+      })
+    } catch (cuoWu) {
+      // 追加是可选增强，任何失败都必须静默 —— 用户不该看到任何错误提示
+      debug日志.warn('AI追加消息', '失败已静默', { xiang_qing: { cuo_wu: String(cuoWu) } })
+    } finally {
+      this.取消控制器 = null
+      this.处理中 = false
+      this.发布AI状态('kong_xian')
     }
   }
 
@@ -632,6 +909,7 @@ export class AI回复调度器 {
       轮次.驱动消息ID,
     )
     const yiFaSongLieBiao: string[] = []
+    this.连发剩余条数 = 0
 
     for (let i = 0; i < 消息列表.length; i++) {
       if (信号.aborted || 处理ID !== this.当前处理ID) return
@@ -825,9 +1103,16 @@ export class AI回复调度器 {
   }
 
   private async 等待间隔(信号: AbortSignal): Promise<void> {
-    const 间隔 = this.计算间隔()
+    let jianGe: number
+    if (this.连发剩余条数 > 0) {
+      jianGe = shengChengBurstJianGeHaoMiao(this.IE类型, true)
+      this.连发剩余条数 -= 1
+    } else {
+      jianGe = shengChengBurstJianGeHaoMiao(this.IE类型, false)
+      this.连发剩余条数 = 1 + Math.floor(Math.random() * burstLianFaZuiChangBiJieShu)
+    }
     const 开始时间 = Date.now()
-    while (Date.now() - 开始时间 < 间隔) {
+    while (Date.now() - 开始时间 < jianGe) {
       if (信号.aborted) return
       await new Promise((resolve) => setTimeout(resolve, 50))
     }

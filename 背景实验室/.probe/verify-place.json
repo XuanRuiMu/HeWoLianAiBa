@@ -1,0 +1,599 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/verify-place-01.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "verify": {
+  "ready": true,
+  "ms": 9556,
+  "placed": [
+   {
+    "kind": "tree",
+    "variant": "big",
+    "x": 5.5,
+    "z": -3.5,
+    "g": 0.14342,
+    "r": {
+     "ok": true,
+     "item": {
+      "id": 1,
+      "kind": "tree",
+      "variant": "big",
+      "x": 5.5,
+      "y": 0.14342,
+      "z": -3.5,
+      "scale": 1,
+      "leaves": 3408
+     },
+     "state": {
+      "mode": false,
+      "kind": "tree",
+      "count": 1,
+      "variant": "big",
+      "nextScale": 1,
+      "variantList": [
+       {
+        "id": "big",
+        "label": "🌲 大树(tree-main)",
+        "note": "带树干，约 2000 个叶 billboard",
+        "defaultScale": 1
+       },
+       {
+        "id": "t008",
+        "label": "🌳 小树(tree-008)",
+        "note": "无树干，~220 叶 billboard",
+        "defaultScale": 1
+       },
+       {
+        "id": "t001",
+        "label": "🌳 小树(tree-001)",
+        "note": "无树干，~175 叶 billboard",
+        "defaultScale": 1
+       }
+      ],
+      "sel": 1,
+      "ready": true,
+      "ghost": {
+       "has": false,
+       "pos": null
+      },
+      "items": [
+       {
+        "id": 1,
+        "kind": "tree",
+        "label": "树",
+        "variant": "big",
+        "variantLabel": "🌲 大树(tree-main)",
+        "x": 5.5,
+        "y": 0.1434,
+        "z": -3.5,
+        "rotY": 0,
+        "scale": 1,
+        "leaves": 3408,
+        "kids": 1
+       }
+      ],
+      "selected": {
+       "id": 1,
+       "kind": "tree",
+       "variant": "big",
+       "variantLabel": "🌲 大树(tree-main)",
+       "x": 5.5,
+       "y": 0.14342,
+       "z": -3.5,
+       "rotY": 0,
+       "scale": 1,
+       "ground": 0.14342
+      }
+     }
+    }
+   },
+   {
+    "kind": "tree",
+    "variant": "t008",
+    "x": 4.2,
+    "z": -2.2,
+    "g": 0.03046,
+    "r": {
+     "ok": true,
+     "item": {
+      "id": 2,
+      "kind": "tree",
+      "variant": "t008",
+      "x": 4.2,
+      "y": 0.03046,
+      "z": -2.2,
+      "scale": 1,
+      "leaves": 500
+     },
+     "state": {
+      "mode": false,
+      "kind": "tree",
+      "count": 2,
+      "variant": "big",
+      "nextScale": 1,
+      "variantList": [
+       {
+        "id": "big",
+        "label": "🌲 大树(tree-main)",
+        "note": "带树干，约 2000 个叶 billboard",
+        "defaultScale": 1
+       },
+       {
+        "id": "t008",
+        "label": "🌳 小树(tree-008)",
+        "note": "无树干，~220 叶 billboard",
+        "defaultScale": 1
+       },
+       {
+        "id": "t001",
+        "label": "🌳 小树(tree-001)",
+        "note": "无树干，~175 叶 billboard",
+        "defaultScale": 1
+       }
+      ],
+      "sel": 2,
+      "ready": true,
+      "ghost": {
+       "has": false,
+       "pos": null
+      },
+      "items": [
+       {
+        "id": 1,
+        "kind": "tree",
+        "label": "树",
+        "variant": "big",
+        "variantLabel": "🌲 大树(tree-main)",
+        "x": 5.5,
+        "y": 0.1434,
+        "z": -3.5,
+        "rotY": 0,
+        "scale": 1,
+        "leaves": 3408,
+        "kids": 1
+       },
+       {
+        "id": 2,
+        "kind": "tree",
+        "label": "树",
+        "variant": "t008",
+        "variantLabel": "🌳 小树(tree-008)",
+        "x": 4.2,
+        "y": 0.0305,
+        "z": -2.2,
+        "rotY": 0,
+        "scale": 1,
+        "leaves": 500,
+        "kids": 1
+       }
+      ],
+      "selected": {
+       "id": 2,
+       "kind": "tree",
+       "variant": "t008",
+       "variantLabel": "🌳 小树(tree-008)",
+       "x": 4.2,
+       "y": 0.03046,
+       "z": -2.2,
+       "rotY": 0,
+       "scale": 1,
+       "ground": 0.03046
+      }
+     }
+    }
+   },
+   {
+    "kind": "campfire",
+    "variant": "default",
+    "x": 6.4,
+    "z": -4.4,
+    "g": -353,
+    "r": {
+     "ok": true,
+     "item": {
+      "id": 3,
+      "kind": "campfire",
+      "variant": "default",
+      "x": 6.4,
+      "y": -353,
+      "z": -4.4,
+      "scale": 1,
+      "leaves": 0
+     },
+     "state": {
+      "mode": false,
+      "kind": "tree",
+      "count": 3,
+      "variant": "big",
+      "nextScale": 1,
+      "variantList": [
+       {
+        "id": "big",
+        "label": "🌲 大树(tree-main)",
+        "note": "带树干，约 2000 个叶 billboard",
+        "defaultScale": 1
+       },
+       {
+        "id": "t008",
+        "label": "🌳 小树(tree-008)",
+        "note": "无树干，~220 叶 billboard",
+        "defaultScale": 1
+       },
+       {
+        "id": "t001",
+        "label": "🌳 小树(tree-001)",
+        "note": "无树干，~175 叶 billboard",
+        "defaultScale": 1
+       }
+      ],
+      "sel": 3,
+      "ready": true,
+      "ghost": {
+       "has": false,
+       "pos": null
+      },
+      "items": [
+       {
+        "id": 1,
+        "kind": "tree",
+        "label": "树",
+        "variant": "big",
+        "variantLabel": "🌲 大树(tree-main)",
+        "x": 5.5,
+        "y": 0.1434,
+        "z": -3.5,
+        "rotY": 0,
+        "scale": 1,
+        "leaves": 3408,
+        "kids": 1
+       },
+       {
+        "id": 2,
+        "kind": "tree",
+        "label": "树",
+        "variant": "t008",
+        "variantLabel": "🌳 小树(tree-008)",
+        "x": 4.2,
+        "y": 0.0305,
+        "z": -2.2,
+        "rotY": 0,
+        "scale": 1,
+        "leaves": 500,
+        "kids": 1
+       },
+       {
+        "id": 3,
+        "kind": "campfire",
+        "label": "营火",
+        "variant": "default",
+        "variantLabel": "🔥 营火",
+        "x": 6.4,
+        "y": -353,
+        "z": -4.4,
+        "rotY": 0,
+        "scale": 1,
+        "leaves": 0,
+        "kids": 2
+       }
+      ],
+      "selected": {
+       "id": 3,
+       "kind": "campfire",
+       "variant": "default",
+       "variantLabel": "🔥 营火",
+       "x": 6.4,
+       "y": -353,
+       "z": -4.4,
+       "rotY": 0,
+       "scale": 1,
+       "ground": -353
+      }
+     }
+    }
+   },
+   {
+    "kind": "rock",
+    "variant": "big-top",
+    "x": 3.6,
+    "z": -1.6,
+    "g": -0.03729,
+    "r": {
+     "ok": true,
+     "item": {
+      "id": 4,
+      "kind": "rock",
+      "variant": "big-top",
+      "x": 3.6,
+      "y": -0.03729,
+      "z": -1.6,
+      "scale": 0.4,
+      "leaves": 0
+     },
+     "state": {
+      "mode": false,
+      "kind": "tree",
+      "count": 4,
+      "variant": "big",
+      "nextScale": 1,
+      "variantList": [
+       {
+        "id": "big",
+        "label": "🌲 大树(tree-main)",
+        "note": "带树干，约 2000 个叶 billboard",
+        "defaultScale": 1
+       },
+       {
+        "id": "t008",
+        "label": "🌳 小树(tree-008)",
+        "note": "无树干，~220 叶 billboard",
+        "defaultScale": 1
+       },
+       {
+        "id": "t001",
+        "label": "🌳 小树(tree-001)",
+        "note": "无树干，~175 叶 billboard",
+        "defaultScale": 1
+       }
+      ],
+      "sel": 4,
+      "ready": true,
+      "ghost": {
+       "has": false,
+       "pos": null
+      },
+      "items": [
+       {
+        "id": 1,
+        "kind": "tree",
+        "label": "树",
+        "variant": "big",
+        "variantLabel": "🌲 大树(tree-main)",
+        "x": 5.5,
+        "y": 0.1434,
+        "z": -3.5,
+        "rotY": 0,
+        "scale": 1,
+        "leaves": 3408,
+        "kids": 1
+       },
+       {
+        "id": 2,
+        "kind": "tree",
+        "label": "树",
+        "variant": "t008",
+        "variantLabel": "🌳 小树(tree-008)",
+        "x": 4.2,
+        "y": 0.0305,
+        "z": -2.2,
+        "rotY": 0,
+        "scale": 1,
+        "leaves": 500,
+        "kids": 1
+       },
+       {
+        "id": 3,
+        "kind": "campfire",
+        "label": "营火",
+        "variant": "default",
+        "variantLabel": "🔥 营火",
+        "x": 6.4,
+        "y": -353,
+        "z": -4.4,
+        "rotY": 0,
+        "scale": 1,
+        "leaves": 0,
+        "kids": 2
+       },
+       {
+        "id": 4,
+        "kind": "rock",
+        "label": "石头",
+        "variant": "big-top",
+        "variantLabel": "🪨 巨石(basalt-top-old)",
+        "x": 3.6,
+        "y": -0.0373,
+        "z": -1.6,
+        "rotY": 0,
+        "scale": 0.4,
+        "leaves": 0,
+        "kids": 1
+       }
+      ],
+      "selected": {
+       "id": 4,
+       "kind": "rock",
+       "variant": "big-top",
+       "variantLabel": "🪨 巨石(basalt-top-old)",
+       "x": 3.6,
+       "y": -0.03729,
+       "z": -1.6,
+       "rotY": 0,
+       "scale": 0.4,
+       "ground": -0.03729
+      }
+     }
+    }
+   }
+  ],
+  "boxes": {
+   "tree-big": {
+    "min": [
+     0.182,
+     0.053,
+     -12.807
+    ],
+    "max": [
+     10.818,
+     7.656,
+     5.807
+    ],
+    "size": [
+     10.636,
+     7.602,
+     18.614
+    ],
+    "meshes": 21
+   },
+   "tree-t008": {
+    "min": [
+     4.11,
+     -0.06,
+     -2.2
+    ],
+    "max": [
+     4.29,
+     0.12,
+     -2.2
+    ],
+    "size": [
+     0.18,
+     0.18,
+     0
+    ],
+    "meshes": 4
+   },
+   "campfire-default": {
+    "min": [
+     5.923,
+     -353.075,
+     -4.594
+    ],
+    "max": [
+     6.868,
+     -351.622,
+     -4.204
+    ],
+    "size": [
+     0.945,
+     1.453,
+     0.39
+    ],
+    "meshes": 12
+   },
+   "rock-big-top": {
+    "min": [
+     2.133,
+     -0.037,
+     -3.976
+    ],
+    "max": [
+     5.067,
+     0.563,
+     0.776
+    ],
+    "size": [
+     2.934,
+     0.601,
+     4.752
+    ],
+    "meshes": 1
+   }
+  },
+  "state": {
+   "mode": false,
+   "kind": "tree",
+   "count": 4,
+   "variant": "big",
+   "nextScale": 1,
+   "variantList": [
+    {
+     "id": "big",
+     "label": "🌲 大树(tree-main)",
+     "note": "带树干，约 2000 个叶 billboard",
+     "defaultScale": 1
+    },
+    {
+     "id": "t008",
+     "label": "🌳 小树(tree-008)",
+     "note": "无树干，~220 叶 billboard",
+     "defaultScale": 1
+    },
+    {
+     "id": "t001",
+     "label": "🌳 小树(tree-001)",
+     "note": "无树干，~175 叶 billboard",
+     "defaultScale": 1
+    }
+   ],
+   "sel": 4,
+   "ready": true,
+   "ghost": {
+    "has": false,
+    "pos": null
+   },
+   "items": [
+    {
+     "id": 1,
+     "kind": "tree",
+     "label": "树",
+     "variant": "big",
+     "variantLabel": "🌲 大树(tree-main)",
+     "x": 5.5,
+     "y": 0.1434,
+     "z": -3.5,
+     "rotY": 0,
+     "scale": 1,
+     "leaves": 3408,
+     "kids": 1
+    },
+    {
+     "id": 2,
+     "kind": "tree",
+     "label": "树",
+     "variant": "t008",
+     "variantLabel": "🌳 小树(tree-008)",
+     "x": 4.2,
+     "y": 0.0305,
+     "z": -2.2,
+     "rotY": 0,
+     "scale": 1,
+     "leaves": 500,
+     "kids": 1
+    },
+    {
+     "id": 3,
+     "kind": "campfire",
+     "label": "营火",
+     "variant": "default",
+     "variantLabel": "🔥 营火",
+     "x": 6.4,
+     "y": -353,
+     "z": -4.4,
+     "rotY": 0,
+     "scale": 1,
+     "leaves": 0,
+     "kids": 2
+    },
+    {
+     "id": 4,
+     "kind": "rock",
+     "label": "石头",
+     "variant": "big-top",
+     "variantLabel": "🪨 巨石(basalt-top-old)",
+     "x": 3.6,
+     "y": -0.0373,
+     "z": -1.6,
+     "rotY": 0,
+     "scale": 0.4,
+     "leaves": 0,
+     "kids": 1
+    }
+   ],
+   "selected": {
+    "id": 4,
+    "kind": "rock",
+    "variant": "big-top",
+    "variantLabel": "🪨 巨石(basalt-top-old)",
+    "x": 3.6,
+    "y": -0.03729,
+    "z": -1.6,
+    "rotY": 0,
+    "scale": 0.4,
+    "ground": -0.03729
+   }
+  }
+ }
+}

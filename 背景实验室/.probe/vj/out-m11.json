@@ -1,0 +1,127 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m11-0-无树基准.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m11-1-t62-r280-s50.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m11-2-t62-r280-s62.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m11-3-t62-r240-s55.png",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m11-4-t62-r320-s55.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "r1": {
+  "ready": true,
+  "frames": 777,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r2": {
+  "ready": true,
+  "frames": 3625,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r3": {
+  "ready": true,
+  "frames": 5747,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r4": {
+  "ready": true,
+  "frames": 7620,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r5": {
+  "ready": true,
+  "frames": 9295,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r6": {
+  "ready": true,
+  "frames": 10808,
+  "placeReady": true,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "def": {},
+ "settle": {
+  "seenCounts": [
+   3
+  ],
+  "afterClear": 0
+ },
+ "baseline": {
+  "fy": {
+   "gy": 0.014,
+   "stoneY": 0.084,
+   "fireY": 0.289
+  },
+  "tree": null,
+  "count": 2,
+  "fps": null
+ },
+ "v1": {
+  "fy": {
+   "gy": 0.014,
+   "stoneY": 0.084,
+   "fireY": 0.289
+  },
+  "tree": {
+   "gyT": 0.25,
+   "rotY": 280,
+   "s": 0.5
+  },
+  "count": 3,
+  "fps": null
+ },
+ "v2": {
+  "fy": {
+   "gy": 0.014,
+   "stoneY": 0.084,
+   "fireY": 0.289
+  },
+  "tree": {
+   "gyT": 0.25,
+   "rotY": 280,
+   "s": 0.62
+  },
+  "count": 3,
+  "fps": null
+ },
+ "v3": {
+  "fy": {
+   "gy": 0.014,
+   "stoneY": 0.084,
+   "fireY": 0.289
+  },
+  "tree": {
+   "gyT": 0.25,
+   "rotY": 240,
+   "s": 0.55
+  },
+  "count": 3,
+  "fps": null
+ },
+ "v4": {
+  "fy": {
+   "gy": 0.014,
+   "stoneY": 0.084,
+   "fireY": 0.289
+  },
+  "tree": {
+   "gyT": 0.25,
+   "rotY": 320,
+   "s": 0.55
+  },
+  "count": 3,
+  "fps": null
+ }
+}

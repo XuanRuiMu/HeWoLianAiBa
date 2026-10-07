@@ -1,0 +1,89 @@
+{
+  "results": [
+    {
+      "label": "c1-树干",
+      "hits": [
+        {
+          "name": "main-island",
+          "type": "Mesh",
+          "dist": 15.14,
+          "point": {
+            "x": 0.77,
+            "y": -0.21,
+            "z": -8.34
+          },
+          "parent": "main"
+        }
+      ]
+    },
+    {
+      "label": "c1-叶冠",
+      "hits": []
+    },
+    {
+      "label": "c2-小石",
+      "hits": [
+        {
+          "name": "main-island",
+          "type": "Mesh",
+          "dist": 9.11,
+          "point": {
+            "x": 4.16,
+            "y": 0.18,
+            "z": -2.76
+          },
+          "parent": "main"
+        },
+        {
+          "name": "crystal-shard-main-003",
+          "type": "Mesh",
+          "dist": 11.79,
+          "point": {
+            "x": 3.69,
+            "y": -1,
+            "z": -5.13
+          },
+          "parent": "crystals"
+        },
+        {
+          "name": "main-island",
+          "type": "Mesh",
+          "dist": 12.05,
+          "point": {
+            "x": 3.65,
+            "y": -1.11,
+            "z": -5.35
+          },
+          "parent": "main"
+        }
+      ]
+    },
+    {
+      "label": "c3-长石",
+      "hits": [
+        {
+          "name": "main-island",
+          "type": "Mesh",
+          "dist": 7.88,
+          "point": {
+            "x": 5.64,
+            "y": 0.04,
+            "z": -1.44
+          },
+          "parent": "main"
+        },
+        {
+          "name": "main-island",
+          "type": "Mesh",
+          "dist": 9.86,
+          "point": {
+            "x": 5.61,
+            "y": -0.99,
+            "z": -3.12
+          },
+          "parent": "main"
+        }
+      ]
+    }
+  ]
+}

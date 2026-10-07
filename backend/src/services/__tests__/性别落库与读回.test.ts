@@ -113,4 +113,17 @@ describe('角色性别落库卡口', () => {
       expect(['nan', 'nv']).toContain(取落库性别(形态))
     }
   })
+
+  it('随机性格标记随角色落库到 随机性格 列', async () => {
+    语句记录.length = 0
+    const jiaoSe = shengChengJiaoSe({ yong_hu_id: 'u1', xing_bie: 'nv', sui_ji_xing_ge: true })
+    expect(jiaoSe.sui_ji_xing_ge).toBe(true)
+    await baoCunJiaoSe('u1', jiaoSe)
+    const 插入 = 语句记录.find((项) => 项.文本.includes('INSERT INTO "角色"'))
+    expect(插入).toBeDefined()
+    expect(插入!.文本).toContain('"随机性格"')
+    const 列数 = (插入!.文本.match(/\$\d+/g) || []).length
+    expect(插入!.参数).toHaveLength(列数)
+    expect(插入!.参数[列数 - 1]).toBe(true)
+  })
 })

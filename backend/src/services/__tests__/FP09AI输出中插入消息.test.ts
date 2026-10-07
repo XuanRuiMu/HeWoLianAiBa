@@ -10,9 +10,7 @@ import { AI回复调度器 } from '../AI回复调度器'
 import {
   chuangJianYongHuXiaoXi,
   huoQuXiaoXiLieBiao,
-  type XiaoXiXinXi,
-} from '../消息'
-import { yunXingAIYinQing } from '../AI引擎'
+  type XiaoXiXinXi } from '../消息'
 
 /**
  * FP-09 缺陷8「AI 分条输出中插入用户消息」竞态取证（真库 + 真实消息服务 + 假 AI 引擎）。
@@ -42,15 +40,11 @@ vi.mock('../../数据库', () => ({
     query: async (文本: string, 参数: unknown[] = []) => 跑(文本, 参数),
     connect: async () => ({
       query: async (文本: string, 参数: unknown[] = []) => 跑(文本, 参数),
-      release: () => undefined,
-    }),
-  },
-}))
+      release: () => undefined }) } }))
 
 const 假 = vi.hoisted(() => ({
   AI入参: [] as Array<{ yong_hu_xin_xiao_xi: string; 焦点候选: string }>,
-  AI返回: (_焦点: string) => ['第一条回复：桩', '第二条回复：桩', '第三条回复：桩'],
-}))
+  AI返回: (_焦点: string) => ['第一条回复：桩', '第二条回复：桩', '第三条回复：桩'] }))
 
 vi.mock('../AI引擎', () => ({
   yunXingAIYinQing: vi.fn(async (输入: { yong_hu_xin_xiao_xi: string }) => {
@@ -59,10 +53,8 @@ vi.mock('../AI引擎', () => ({
       xiao_xi_lie_biao: 假.AI返回(输入.yong_hu_xin_xiao_xi),
       shi_fou_hui_fu: true,
       shi_fou_che_hui: false,
-      jiang_ji_mo_shi: false,
-    }
-  }),
-}))
+      jiang_ji_mo_shi: false }
+  }) }))
 
 vi.mock('../好感度', () => ({
   huoQuWanZhengHaoGanDu: vi.fn(async () => ({
@@ -71,10 +63,8 @@ vi.mock('../好感度', () => ({
     qu_wei_du: 1,
     guan_huai_du: 1,
     zong_fen: 4,
-    guan_xi_jie_duan: 'reQing',
-  })),
-  gengXinHaoGanDu: vi.fn(async () => undefined),
-}))
+    guan_xi_jie_duan: 'reQing' })),
+  gengXinHaoGanDu: vi.fn(async () => undefined) }))
 vi.mock('../好感度评判', () => ({
   pingPanHaoGanDuPiLiangNei: vi.fn(async () => ({
     jieGuo: {
@@ -82,25 +72,20 @@ vi.mock('../好感度评判', () => ({
       qin_mi_du_bian_hua: 0,
       qu_wei_du_bian_hua: 0,
       guan_huai_du_bian_hua: 0,
-      li_you: 'ce-shi',
-    },
+      li_you: 'ce-shi' },
     xiShu: 1,
     muBiaoQuXian: 'reQing',
-    lianXuWeiDaBiao: false,
-  })),
-}))
+    lianXuWeiDaBiao: false })) }))
 vi.mock('../认证', () => ({ anIdChaYongHu: vi.fn(async () => null) }))
 vi.mock('../胜利失败条件', () => ({
   jianCeYongHuXiaoXiBingChuLi: vi.fn(async () => false),
   chuLiAIHuiFuHouJieShuJianCha: vi.fn(async () => false),
-  chuLiYouXiJieShu: vi.fn(async () => undefined),
-}))
+  chuLiYouXiJieShu: vi.fn(async () => undefined) }))
 vi.mock('../夺舍', () => ({ jiaoSeShiFouBeiDuoShe: vi.fn(async () => false) }))
 vi.mock('../../utils/debug日志', () => ({
   jiLuSocketShiJian: vi.fn(),
   jiLuXiaoXiCaoZuo: vi.fn(),
-  debug日志: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-}))
+  debug日志: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } }))
 vi.mock('../../config/AI参数策略', () => ({ gouJianJiaoSeShangXiaWen: vi.fn(() => ({})) }))
 vi.mock('../TTS服务', () => ({ 尝试合成语音: vi.fn(async () => null) }))
 vi.mock('../TTS文本预处理', () => ({ 转换TTS文本: vi.fn((文本: string) => 文本) }))
@@ -111,13 +96,11 @@ vi.mock('../对话摘要', () => ({
   gouJianZhaiYaoZhuRuWenBen: vi.fn(() => ''),
   huanCunTongBuZhaiYao: vi.fn(),
   duQuTongBuZhaiYao: vi.fn(() => ''),
-  shengChengBingLuoKuZhaiYao: vi.fn(async () => undefined),
-}))
+  shengChengBingLuoKuZhaiYao: vi.fn(async () => undefined) }))
 vi.mock('../AI视觉辅助', () => ({ meiTiZhanShiWenBen: vi.fn(() => ''), gouJianDanTiaoTuXiangKuai: vi.fn(async () => []), shiTuXiangLeiBie: vi.fn(() => false) }))
 vi.mock('../语音理解', () => ({
   gouJianYuYinKeDuWenBen: vi.fn(() => ''),
-  tiQuYinPinShiJian: vi.fn(() => null),
-}))
+  tiQuYinPinShiJian: vi.fn(() => null) }))
 vi.mock('../视频理解', () => ({ huoQuHuoJieXiShiPinMiaoShu: vi.fn(async () => ({ huaMianMiaoShu: '', zhuanXieWenBen: '' })) }))
 vi.mock('../视频多模态', () => ({ gouJianShiPinKeDuWenBen: vi.fn(() => '') }))
 vi.mock('../../utils/邮件告警', () => ({ faSongGaoJing: vi.fn(async () => undefined) }))
@@ -223,9 +206,7 @@ function 建假Io(推送: 推送记录[]): Server {
     to: () => ({
       emit: (事件: string, 数据: unknown) => {
         推送.push({ 事件, 数据: 数据 as Record<string, unknown> })
-      },
-    }),
-  } as unknown as Server
+      } }) } as unknown as Server
 }
 
 function 角色回复推送(推送: 推送记录[]): Array<{ 轮次?: number; 消息列表: XiaoXiXinXi[]; 驱动消息ID?: string }> {
@@ -264,8 +245,7 @@ describe.skipIf(!有真库)('FP-09 真库竞态：AI 分条输出中插入用户
       yong_hu_id: 用户ID,
       jiao_se_id: 角色ID,
       nei_rong: '原定第一句',
-      ke_hu_duan_xu_hao: 1,
-    })
+      ke_hu_duan_xu_hao: 1 })
     expect(第一条.cheng_gong, JSON.stringify(第一条)).toBe(true)
     const 第一条ID = 第一条.xiao_xi?.id ?? ''
 
@@ -287,8 +267,7 @@ describe.skipIf(!有真库)('FP-09 真库竞态：AI 分条输出中插入用户
       yong_hu_id: 用户ID,
       jiao_se_id: 角色ID,
       nei_rong: '我插入的一句',
-      ke_hu_duan_xu_hao: 2,
-    })
+      ke_hu_duan_xu_hao: 2 })
 
     // ① 吞消息断言：返回体必须是刚插入的这条用户消息，且真的能在库里按 yonghu 查回
     expect(插入.cheng_gong, JSON.stringify(插入)).toBe(true)
@@ -349,8 +328,7 @@ describe.skipIf(!有真库)('FP-09 真库竞态：AI 分条输出中插入用户
     const 用户消息 = await chuangJianYongHuXiaoXi({
       yong_hu_id: 用户ID,
       jiao_se_id: 角色ID,
-      nei_rong: '触发内容甲',
-    })
+      nei_rong: '触发内容甲' })
     void 调度器.处理用户消息(用户消息.xiao_xi?.id ?? '')
     expect(await 等待(() => 角色回复推送(推送).length >= 1, 20000)).toBe(true)
     const 轮次甲 = 角色回复推送(推送)[0]!.轮次
@@ -358,8 +336,7 @@ describe.skipIf(!有真库)('FP-09 真库竞态：AI 分条输出中插入用户
     const 用户消息乙 = await chuangJianYongHuXiaoXi({
       yong_hu_id: 用户ID,
       jiao_se_id: 角色ID,
-      nei_rong: '触发内容乙',
-    })
+      nei_rong: '触发内容乙' })
     void 调度器.处理用户消息(用户消息乙.xiao_xi?.id ?? '')
     expect(
       await 等待(() => 角色回复推送(推送).some((记) => 记.轮次 !== 轮次甲), 20000),
@@ -378,8 +355,7 @@ describe.skipIf(!有真库)('FP-09 真库：幂等键与序号语义', () => {
       yong_hu_id: 用户ID,
       jiao_se_id: 角色ID,
       nei_rong: '幂等重放内容',
-      mi_deng_jian: 键,
-    } as never)
+      mi_deng_jian: 键 } as never)
     expect(首次.cheng_gong).toBe(true)
     // 让同会话存在一条角色消息，回查不得命中它
     await 跑(
@@ -392,8 +368,7 @@ describe.skipIf(!有真库)('FP-09 真库：幂等键与序号语义', () => {
       yong_hu_id: 用户ID,
       jiao_se_id: 角色ID,
       nei_rong: '幂等重放内容',
-      mi_deng_jian: 键,
-    } as never)
+      mi_deng_jian: 键 } as never)
     expect(重放.cheng_gong).toBe(true)
     expect(重放.xiao_xi?.id).toBe(首次.xiao_xi?.id)
     expect(重放.xiao_xi?.fa_song_zhe_lei_xing).toBe('yonghu')
@@ -410,8 +385,7 @@ describe.skipIf(!有真库)('FP-09 真库：幂等键与序号语义', () => {
       jiao_se_id: 角色ID,
       nei_rong: '脏幂等键内容',
       mi_deng_jian: 'not-a-uuid',
-      ke_hu_duan_xu_hao: 1,
-    } as never)
+      ke_hu_duan_xu_hao: 1 } as never)
     expect(结果.cheng_gong).toBe(true)
     expect(结果.xiao_xi?.fa_song_zhe_lei_xing).toBe('yonghu')
     expect(await 查内容('yonghu')).toContain('脏幂等键内容')
@@ -423,8 +397,7 @@ describe.skipIf(!有真库)('FP-09 真库：幂等键与序号语义', () => {
       const 结果 = await chuangJianYongHuXiaoXi({
         yong_hu_id: 用户ID,
         jiao_se_id: 角色ID,
-        nei_rong: 文本,
-      })
+        nei_rong: 文本 })
       expect(结果.cheng_gong).toBe(true)
       const 序号 = 结果.xiao_xi?.ke_hu_duan_xu_hao
       expect(typeof 序号).toBe('number')
@@ -454,8 +427,7 @@ describe.skipIf(!有真库)('FP-09 真库：幂等键与序号语义', () => {
       mei_ye_tiao_shu: 50,
       you_biao_xu_hao: 游标行.ke_hu_duan_xu_hao ?? null,
       you_biao_shi_jian_chuo: 游标行.shi_jian_chuo,
-      you_biao_id: 游标行.id,
-    })
+      you_biao_id: 游标行.id })
     expect(一页.lie_biao.map((项) => 项.id)).toEqual([最旧.id])
     expect(一页.hai_you_geng_duo).toBe(false)
     expect(全量.lie_biao.map((项) => 项.ke_hu_duan_xu_hao).filter((值) => 值 == null)).toEqual([])

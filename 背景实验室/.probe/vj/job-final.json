@@ -1,0 +1,20 @@
+{
+  "url": "http://127.0.0.1:8937/positioner.html",
+  "width": 1280,
+  "height": 720,
+  "headless": false,
+  "maxMs": 260000,
+  "args": ["--no-sandbox", "--ignore-gpu-blocklist", "--enable-gpu-rasterization"],
+  "steps": [
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r1"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r2"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r3"},
+    {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/regress.js", "label": "regress"},
+    {"type": "wait", "ms": 2000},
+    {"type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v7-最终-默认机位.png"},
+    {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/camCanopy.js", "label": "camCanopy"},
+    {"type": "wait", "ms": 1500},
+    {"type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v7-最终-树冠平视.png"},
+    {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/camRestore.js", "label": "camRestore"}
+  ]
+}

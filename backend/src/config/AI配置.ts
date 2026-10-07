@@ -26,7 +26,8 @@ export const AI_PEI_ZHI = {
     // 思考模式用 reasoning.effort 控制（取值 none/minimal/low/medium/high/xhigh/max，max = 最高强度）。
     // 采样参数按官方生效条件门控（见 guides/thinking_mode）：思考模式 temperature 不生效、top_p 下限 0.95；
     // 非思考模式 top_p 恒为 1.0。因此思考场景只配 top_p:0.95，非思考场景只配 wenDu，不留下永远不生效的死字段。
-    // FP-05 YH-041 裁决：writer 保持 max（沉浸优先），其余启用思考场景一律 medium（先计量后 AB，灰度见 MO_XING_HUI_DU_CE_LUE）。
+    // FP-05 YH-041 裁决（已废止）：writer 曾保持 max 思考（沉浸优先）。2026-10-07 起
+    // writer 关闭思考模式、仅配 wenDu（非思考场景 top_p 恒 1.0，故不配 top_p），以提 burstiness、降 AI 味。
     // 注意：max_output_tokens 在 Responses API 中同时计入「可见输出 + 思维链 token」，
     // 思考模式下必须调大，否则思维链会把预算吃光导致可见输出被截断（response.incomplete）。
     director: {
@@ -40,10 +41,9 @@ export const AI_PEI_ZHI = {
 
     writer: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
-      top_p: 0.95,
-      zuiDaTokens: 64000,
-      siKaoMoShi: 'enabled',
-      reasoningEffort: 'max',
+      wenDu: 1.0,
+      zuiDaTokens: 4000,
+      siKaoMoShi: 'disabled',
     } as MoXingCanShu,
 
     qingGanFenXi: {
@@ -300,10 +300,6 @@ export function xuanZeHuiDuFenZu(
 }
 
 export const MO_XING_HUI_DU_CE_LUE: Record<string, MoXingHuiDuCeLue> = {
-  writer: duQuHuiDu('writer', [
-    { mingCheng: 'chenJinMax', biLi: 90, reasoningEffort: 'max' },
-    { mingCheng: 'shouLianMedium', biLi: 10, reasoningEffort: 'medium' },
-  ]),
   director: duQuHuiDu('director', [
     { mingCheng: 'gaoJingQueMax', biLi: 90, reasoningEffort: 'max' },
     { mingCheng: 'shouLianMedium', biLi: 10, reasoningEffort: 'medium' },

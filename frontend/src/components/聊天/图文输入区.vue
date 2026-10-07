@@ -624,6 +624,7 @@ defineExpose({
   border-radius: var(--shuru-kuang-yuanjiao);
   box-sizing: border-box;
   display: block;
+  position: relative;
   /* 图文同一条流：块随文字换行排版；长词与 URL 在窄屏（375/320）断行而非顶出横向溢出 */
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -652,6 +653,10 @@ defineExpose({
 .shuru-kuang.wei-kong::before {
   content: attr(data-zhan-wei);
   color: var(--shuru-zhanwei-se);
+  position: absolute;
+  left: var(--shuru-kuang-zuo-you-neidian);
+  top: var(--shuru-kuang-shang-xia-neidian);
+  pointer-events: none;
 }
 </style>
 
@@ -674,6 +679,7 @@ defineExpose({
   max-width: 100%;
   vertical-align: bottom;
   cursor: grab;
+  margin: 0 var(--daifa-kuai-tu-jiange);
 }
 
 .dai-fa-kuai-tu {

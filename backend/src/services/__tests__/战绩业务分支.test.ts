@@ -42,4 +42,26 @@ describe('战绩业务分支', () => {
     假.db.query.mockResolvedValueOnce({ rows: [{ ID: 'a' }, { ID: 'b' }] })
     await expect(piLiangShanChuDangAn('用户', ['a', 'b'])).resolves.toEqual(['a', 'b'])
   })
+
+  it('随机性格未结束不发 MBTI，结束才发且带 sui_ji_xing_ge；非随机照常发 MBTI', async () => {
+    假.db.query.mockResolvedValueOnce({ rows: [{ ...行, MBTI: 'ESFP', 随机性格: true, 结果类型: '' }] })
+    const weiJieShu = await huoQuDangAnLieBiao('用户')
+    expect(weiJieShu[0].sui_ji_xing_ge).toBe(true)
+    expect(weiJieShu[0].mbti_lei_xing).toBeUndefined()
+
+    假.db.query.mockResolvedValueOnce({ rows: [{ ...行, MBTI: 'ESFP', 随机性格: true, 结果类型: 'shi_bai_bei_qi_pian' }] })
+    const yiJieShu = await huoQuDangAnLieBiao('用户')
+    expect(yiJieShu[0].sui_ji_xing_ge).toBe(true)
+    expect(yiJieShu[0].mbti_lei_xing).toBe('ESFP')
+
+    假.db.query.mockResolvedValueOnce({ rows: [{ ...行, MBTI: 'ESFP', 随机性格: false, 结果类型: '' }] })
+    const feiSuiJi = await huoQuDangAnLieBiao('用户')
+    expect(feiSuiJi[0].sui_ji_xing_ge).toBe(false)
+    expect(feiSuiJi[0].mbti_lei_xing).toBe('ESFP')
+
+    假.db.query.mockResolvedValueOnce({ rows: [{ ...行, MBTI: 'ESFP', 随机性格: true, 结果类型: '' }] })
+    const xiangQing = await huoQuDangAnXiangQing('用户', '档案')
+    expect(xiangQing?.sui_ji_xing_ge).toBe(true)
+    expect(xiangQing?.mbti_lei_xing).toBeUndefined()
+  })
 })

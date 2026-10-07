@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+﻿import { randomUUID } from 'node:crypto'
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import express from 'express'
@@ -163,7 +163,7 @@ describe.skipIf(!有真库)('FP-11 战绩分类 HTTP 真库契约', () => {
     expect(首次.status).toBe(200)
     expect(首次.body.shu_ju).toEqual({
       moRenFenLeiId: 再次.body.shu_ju.moRenFenLeiId,
-      fenLeiLieBiao: [{ id: 再次.body.shu_ju.moRenFenLeiId, name: '默认分类', is_default: true, record_count: 0, version: 0 }],
+      fenLeiLieBiao: [{ id: 再次.body.shu_ju.moRenFenLeiId, name: '默认分组', is_default: true, record_count: 0, version: 0, sort_order: 0 }],
     })
   })
 
@@ -181,10 +181,11 @@ describe.skipIf(!有真库)('FP-11 战绩分类 HTTP 真库契约', () => {
     expect(列表.body.shu_ju.fenLeiLieBiao).toEqual([
       {
         id: 列表.body.shu_ju.moRenFenLeiId,
-        name: '默认分类',
+        name: '默认分组',
         is_default: true,
         record_count: 2,
         version: 0,
+        sort_order: 0,
       },
     ])
     const 创建 = await request(应用)
@@ -195,7 +196,7 @@ describe.skipIf(!有真库)('FP-11 战绩分类 HTTP 真库契约', () => {
     expect(创建.body.shu_ju).toMatchObject({ name: '收藏夹', is_default: false, record_count: 0, version: 0 })
     expect(创建.body.shu_ju.id).toMatch(/^[0-9a-f-]{36}$/i)
     const 再取 = await request(应用).get('/api/战绩/分类').set('x-fp11-user', 用户.id)
-    expect(再取.body.shu_ju.fenLeiLieBiao.map((项: { name: string }) => 项.name)).toEqual(['默认分类', '收藏夹'])
+    expect(再取.body.shu_ju.fenLeiLieBiao.map((项: { name: string }) => 项.name)).toEqual(['默认分组', '收藏夹'])
   })
 
   it('拒绝 null、空白、超长与重名分类，并返回最终中文文案', async () => {
@@ -206,7 +207,7 @@ describe.skipIf(!有真库)('FP-11 战绩分类 HTTP 真库契约', () => {
         .set('x-fp11-user', 用户.id)
         .send({ mingCheng })
       expect(响应.status).toBe(400)
-      expect(响应.body).toMatchObject({ ti_shi: '分类名称不能为空' })
+      expect(响应.body).toMatchObject({ ti_shi: '分组名称不能为空' })
     }
     const 非法改名 = await request(应用)
       .put(`/api/战绩/分类/${randomUUID()}`)
@@ -223,7 +224,7 @@ describe.skipIf(!有真库)('FP-11 战绩分类 HTTP 真库契约', () => {
       .set('x-fp11-user', 用户.id)
       .send({ mingCheng: '字'.repeat(ZHAN_JI_PEI_ZHI.fenLeiMingChengZuiDaChangDu + 1) })
     expect(超长.status).toBe(400)
-    expect(超长.body.ti_shi).toBe(`分类名称不能超过${ZHAN_JI_PEI_ZHI.fenLeiMingChengZuiDaChangDu}个字`)
+    expect(超长.body.ti_shi).toBe(`分组名称不能超过${ZHAN_JI_PEI_ZHI.fenLeiMingChengZuiDaChangDu}个字`)
     const 已创建 = await request(应用).post('/api/战绩/分类').set('x-fp11-user', 用户.id).send({ mingCheng: 'Archive' })
     for (const mingCheng of [null, '  ', '字'.repeat(ZHAN_JI_PEI_ZHI.fenLeiMingChengZuiDaChangDu + 1)]) {
       const 改名 = await request(应用)
@@ -342,7 +343,7 @@ describe.skipIf(!有真库)('FP-11 战绩分类 HTTP 真库契约', () => {
       .query({ expectedVersion: 默认分类.version })
       .set('x-fp11-user', 用户.id)
     expect(删默认.status).toBe(409)
-    expect(删默认.body.ti_shi).toBe('默认分类不能删除')
+    expect(删默认.body.ti_shi).toBe('默认分组不能删除')
     const 越权 = await request(应用)
       .delete(`/api/战绩/分类/${自定义ID}`)
       .query({ expectedVersion: 0 })
@@ -422,7 +423,7 @@ describe.skipIf(!有真库)('FP-11 战绩分类 HTTP 真库契约', () => {
       .set('x-fp11-user', 用户.id)
       .send({ targetCategoryId: 默认分类, expectedVersion: 0 })
     expect(同分类.status).toBe(400)
-    expect(同分类.body.ti_shi).toBe('不能移动到当前分类')
+    expect(同分类.body.ti_shi).toBe('不能移动到当前分组')
     const 移动 = await request(应用)
       .put(路径)
       .set('x-fp11-user', 用户.id)
@@ -503,13 +504,13 @@ describe.skipIf(!有真库)('FP-11 战绩分类 HTTP 真库契约', () => {
       .set('x-fp11-user', 用户.id)
       .send({ recordIds: [用户.archiveIds[0]], expectedVersion: 0 })
     expect(缺失.status).toBe(409)
-    expect(缺失.body.ti_shi).toBe('排序必须包含该分类全部可见战绩')
+    expect(缺失.body.ti_shi).toBe('排序必须包含该分组全部可见战绩')
     const 越权ID = await request(应用)
       .put(路径)
       .set('x-fp11-user', 用户.id)
       .send({ recordIds: [用户.archiveIds[0], 他人.archiveIds[0]], expectedVersion: 0 })
     expect(越权ID.status).toBe(409)
-    expect(越权ID.body.ti_shi).toBe('排序必须包含该分类全部可见战绩')
+    expect(越权ID.body.ti_shi).toBe('排序必须包含该分组全部可见战绩')
     const 排序 = await request(应用)
       .put(路径)
       .set('x-fp11-user', 用户.id)
@@ -652,7 +653,7 @@ describe.skipIf(!有真库)('FP-11 战绩分类 HTTP 真库契约', () => {
       .set('x-fp11-user', 用户.id)
       .send({ targetCategoryId: 默认分类, expectedVersion: 0 })
     expect(源外.status).toBe(409)
-    expect(源外.body.ti_shi).toBe('战绩记录不属于该分类')
+    expect(源外.body.ti_shi).toBe('战绩记录不属于该分组')
     const 他人记录 = await request(应用)
       .put(`/api/战绩/分类/${默认分类}/记录/${他人.archiveIds[0]}`)
       .set('x-fp11-user', 用户.id)

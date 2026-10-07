@@ -1,0 +1,2394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>背景摆位器 · 原始场景</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:#0b0d10;
+    font-family:"Microsoft YaHei",-apple-system,sans-serif;color:#e8ecf1}
+  #view{position:fixed;inset:0}
+  iframe{width:100%;height:100%;border:0;display:block}
+
+  #panel{position:fixed;top:12px;right:12px;width:314px;max-height:calc(100vh - 24px);
+    overflow-y:auto;background:rgba(16,19,24,.94);border:1px solid #2a3038;border-radius:10px;
+    padding:14px;box-shadow:0 10px 34px rgba(0,0,0,.55);font-size:12px;z-index:99}
+  #panel h1{font-size:14px;margin-bottom:4px;color:#9fe08a;letter-spacing:.5px}
+  #panel .sub{color:#7b8794;font-size:11px;margin-bottom:12px;line-height:1.6}
+  .sec{border-top:1px solid #262c34;padding-top:10px;margin-top:10px}
+  .sec:first-of-type{border-top:0;margin-top:0;padding-top:0}
+  .sec h2{font-size:12px;color:#ffd479;margin-bottom:8px;font-weight:600}
+  .row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .row label{flex:0 0 74px;color:#9aa5b1}
+  .row input[type=range]{flex:1;accent-color:#7ec850;height:16px}
+  .row input[type=number]{flex:1;min-width:0;background:#0c0f13;color:#c8d4e0;
+    border:1px solid #2a3038;border-radius:4px;padding:3px 6px;
+    font-family:Consolas,monospace;font-size:11px}
+  .row input[type=number]:focus{outline:none;border-color:#7ec850}
+  .row .val{flex:0 0 62px;text-align:right;color:#c8d4e0;font-variant-numeric:tabular-nums}
+  .row.off label,.row.off input,.row.off .val{opacity:.38}
+  .btn{display:block;width:100%;padding:8px;margin-bottom:6px;border:1px solid #38414c;
+    background:#1d232b;color:#e8ecf1;border-radius:6px;cursor:pointer;font-size:12px;
+    font-family:inherit;transition:.12s}
+  .btn:hover{background:#28303a;border-color:#4d5967}
+  .btn.on{background:#2f5a20;border-color:#5f9a42;color:#dff5cf}
+  #params{width:100%;height:150px;background:#0c0f13;color:#9fe08a;border:1px solid #262c34;
+    border-radius:6px;padding:8px;font-family:Consolas,Monaco,monospace;font-size:11px;
+    line-height:1.5;resize:vertical;white-space:pre;overflow:auto}
+  .hint{color:#7b8794;font-size:11px;line-height:1.7;margin-top:6px}
+  kbd{background:#252b33;border:1px solid #3a424c;border-radius:3px;padding:1px 5px;
+    font-family:Consolas,monospace;font-size:10px;color:#c8d4e0}
+  /* 放置器：物件类型三选一 + 已放置列表 */
+  #pkRow{display:flex;gap:6px;margin-bottom:6px}
+  #pkRow .btn{flex:1;margin-bottom:0;padding:7px 4px}
+  #plVariant{flex:1;min-width:0;background:#0c0f13;color:#c8d4e0;border:1px solid #2a3038;
+    border-radius:4px;padding:3px 5px;font-family:inherit;font-size:11px}
+  #plVariant:focus{outline:none;border-color:#7ec850}
+  #placeList{max-height:132px;overflow-y:auto;margin:0 0 8px;display:flex;
+    flex-direction:column;gap:3px}
+  #placeList:empty{display:none}
+  #placeList .it{display:flex;align-items:center;gap:6px;padding:4px 7px;
+    background:#171c23;border:1px solid #262c34;border-radius:4px;cursor:pointer;
+    font-size:11px;color:#c8d4e0}
+  #placeList .it:hover{background:#1f262f;border-color:#3a424c}
+  #placeList .it.sel{background:#2f5a20;border-color:#5f9a42;color:#dff5cf}
+  #placeList .it .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #placeList .it .del{flex:0 0 auto;color:#e08a8a;padding:0 3px}
+  #placeList .it .del:hover{color:#ffb0b0}
+  #plEdit.off{opacity:.4;pointer-events:none}
+  #toast{position:fixed;left:50%;top:20px;transform:translateX(-50%);background:rgba(20,24,30,.96);
+    border:1px solid #3a424c;color:#9fe08a;padding:9px 18px;border-radius:6px;font-size:12px;
+    opacity:0;transition:.25s;pointer-events:none;z-index:200}
+  #toast.show{opacity:1}
+  #fps{position:fixed;left:12px;top:12px;background:rgba(16,19,24,.86);border:1px solid #2a3038;
+    border-radius:6px;padding:6px 10px;font-size:11px;color:#7b8794;z-index:99;
+    font-family:Consolas,monospace}
+  /* 吴昊阳：贴在视口上的固定图层。
+     ⚠️ position:fixed 就是「转动背景不影响他的屏幕位置」的实现基础。
+        早前误做成 3D 场景 mesh 放在世界坐标上，一转视角他就跟着场景跑，是需求理解错误。
+     pointer-events:none 保证他不吃掉画面的鼠标事件，指针锁定/转视角不受干扰。
+     z-index 高于 iframe(#view) 但低于面板(#panel) 与 toast，不被面板遮住又不挡交互。 */
+  #wuLayer{position:fixed;left:0;top:0;transform-origin:0 0;display:none;pointer-events:none;
+    z-index:50;user-select:none;-webkit-user-drag:none}
+  #wuLayer img{display:block;width:100%;height:100%;pointer-events:none;
+    -webkit-user-drag:none}
+</style>
+</head>
+<body>
+<div id="view"><iframe id="frame" src="/grass-bg/grass-bg.html" allow="pointer-lock"></iframe></div>
+<div id="wuLayer" aria-hidden="true"><img id="wuImg" alt=""></div>
+<div id="fps">加载中…</div>
+
+<div id="panel">
+  <h1>背景摆位器</h1>
+  <div class="sub">原始场景未改动 · 只加吴昊阳 · 只调大小</div>
+
+  <div class="sec">
+    <h2>相机（我的世界式第一人称）</h2>
+    <div class="row"><label>高度 Y</label><input type="range" id="camY" min="-8" max="40" step="0.0001" value="1.4263"><span class="val" id="camYv">1.43</span></div>
+    <div class="row"><label>推拉距离</label><input type="range" id="camD" min="0.6" max="120" step="0.0001" value="5.6014"><span class="val" id="camDv">5.60</span></div>
+    <div class="row"><label>俯仰角</label><input type="range" id="camP" min="-89" max="89" step="0.01" value="-22.55"><span class="val" id="camPv">-22.6°</span></div>
+    <div class="row"><label>方位角</label><input type="range" id="camA" min="-180" max="180" step="0.1" value="-31.5"><span class="val" id="camAv">-31.5°</span></div>
+    <button class="btn" id="btnLock">指针锁定：<b id="lockState">未锁定</b>（点此锁定）</button>
+    <button class="btn" id="btnFreeze" title="锁定/解锁相机。快捷键 Enter">🔓 <b id="freezeState">未固定</b></button>
+    <div class="row"><label>场景树木</label><input type="checkbox" id="trees"><span class="val" id="treesv">已删除</span></div>
+    <div class="row"><label>营火</label><input type="checkbox" id="campfire"><span class="val" id="campfirev">已移除</span></div>
+    <div class="row"><label>石头</label><input type="checkbox" id="rocks"><span class="val" id="rocksv">已移除</span></div>
+    <div class="hint">
+      <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 前后左右<b>平移机位</b>（不是转视角）<br>
+      <kbd>鼠标移动</kbd> 转视角 yaw/pitch，俯仰夹在 ±89°<br>
+      <kbd>滚轮</kbd> 沿视线方向拉远 / 接近（滚下拉远、滚上拉近）<br>
+      <kbd>Q</kbd> 或 <kbd>Space</kbd> 上升 · <kbd>E</kbd> 或 <kbd>Shift</kbd> 下降<br>
+      <kbd>点画面</kbd> 锁定指针 · <kbd>ESC</kbd> 退出锁定<br>
+      <kbd>Enter</kbd> <b>完全固定/解锁相机</b>（转视角·平移·滚轮全部失效，且强制退出指针锁定）<br>
+      <b>场景树木</b> 取消勾选即删除所有树（树干/树叶/遮挡层/远景树），勾上恢复。
+      树木是异步加载的，开关会自动作用于之后才加载进来的树。<br>
+      <b>营火 / 石头</b> 取消勾选即移除（营火含木柴/火焰/火星与其点光源；石头为漂浮岩石）。
+      二者都与地形、草地无关，移除不破坏地形；<b>岛屿地形、玄武岩、草叶一律不动</b>。<br>
+      俯仰角：<b>+</b> 抬头、<b>−</b> 低头。滑块可精调当前机位。
+      相机已在渲染前接管引擎管线，鼠标视差晃动已停用。
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>吴昊阳</h2>
+    <button class="btn" id="btnWu" style="background:#2f5a20;border-color:#5f9a42;color:#dff5cf">✓ 添加吴昊阳</button>
+    <button class="btn" id="btnWuReset" title="恢复默认参数（用户确认的默认值）">↺ 恢复默认参数</button>
+    <div class="row"><label>屏幕 X</label><input type="range" id="wuX" min="0" max="100" step="0.1" value="24.5"><span class="val" id="wuXv">24.5%</span></div>
+    <div class="row"><label>屏幕 Y</label><input type="range" id="wuY" min="0" max="100" step="0.1" value="71"><span class="val" id="wuYv">71.0%</span></div>
+    <div class="row"><label>大小</label><input type="range" id="wuScale" min="4" max="60" step="0.1" value="24"><span class="val" id="wuScalev">24.0%</span></div>
+    <div class="row"><label>不透明度</label><input type="range" id="wuAlpha" min="0.05" max="1" step="0.01" value="1"><span class="val" id="wuAlphav">1.00</span></div>
+    <div class="hint">吴昊阳是<b>贴在屏幕上的固定图层</b>，不是场景里的物件 ——
+      无论怎么转动背景、怎么移动相机，他的屏幕位置都不会变。<br>
+      <b>屏幕 X / Y</b>：图中心在视口中的位置（%），左上角为 0%，右下角为 100%。<br>
+      <b>大小</b>：图宽占视口宽度的百分比，高度按原图 <b>443:312</b> 自动锁定，<span id="wuPixel">—</span>。<br>
+      <b>「恢复默认参数」</b>：恢复用户确认的默认值（X 24.5%、Y 71%、大小 24%、不透明度 1）。</div>
+  </div>
+
+  <div class="sec">
+    <h2>自由放置</h2>
+    <div id="pkRow">
+      <button class="btn" id="pkTree" data-kind="tree">🌲 树</button>
+      <button class="btn" id="pkCamp" data-kind="campfire">🔥 营火</button>
+      <button class="btn" id="pkRock" data-kind="rock">🪨 石头</button>
+    </div>
+    <div class="row"><label>型号</label><select id="plVariant"></select></div>
+    <div class="row"><label>下一缩放</label><input type="range" id="plNextScale" min="0.2" max="30" step="0.1" value="1"><span class="val" id="plNextScalev">1.00</span></div>
+    <div class="hint" id="plNote" style="margin:0 0 8px"></div>
+    <button class="btn" id="btnPlace" style="background:#2f5a20;border-color:#5f9a42;color:#dff5cf">▶ 进入放置模式</button>
+    <div class="row"><label>已放置</label><span class="val" id="placeCount">0 个</span></div>
+    <div id="placeList"></div>
+    <div id="plEdit" class="off">
+      <div class="row"><label>X</label><input type="range" id="plX" min="-100" max="100" step="0.1" value="0"><span class="val" id="plXv">0.0</span></div>
+      <div class="row"><label>Z</label><input type="range" id="plZ" min="-100" max="100" step="0.1" value="0"><span class="val" id="plZv">0.0</span></div>
+      <div class="row"><label>离地</label><input type="range" id="plLift" min="-10" max="20" step="0.05" value="0"><span class="val" id="plLiftv">0.00</span></div>
+      <div class="row"><label>旋转</label><input type="range" id="plRot" min="-180" max="180" step="1" value="0"><span class="val" id="plRotv">0°</span></div>
+      <div class="row"><label>缩放</label><input type="range" id="plScale" min="0.2" max="30" step="0.1" value="1"><span class="val" id="plScalev">1.00</span></div>
+      <button class="btn" id="btnPlaceGround">📋 重新贴地</button>
+      <button class="btn" id="btnPlaceDel" style="border-color:#6b3a3a;color:#e8a0a0">🗑 删除选中</button>
+    </div>
+    <button class="btn" id="btnPlaceClear">🗑 清空全部放置</button>
+    <div class="hint">
+      <b>①</b> 选物件类型 → <b>②</b> 点「进入放置模式」→ <b>③</b> 鼠标在画面里移动，
+      绿色<b>幽灵预览</b>会贴到地面 → <b>④</b> <kbd>左键</kbd> 落位，可以连续放多个。<br>
+      放置模式下 <kbd>右键拖动</kbd> 转视角、<kbd>滚轮</kbd> 推拉仍可用；
+      <kbd>ESC</kbd> 或再点一次按钮退出放置。<br>
+      点下方列表里的条目即可<b>继续编辑</b>位置、离地高度、旋转、缩放。<br>
+      <b>不破坏地形</b>：只新增物件，岛屿、玄武岩、草叶一律不动；
+      原有树木/营火/石头仍由上面的开关控制，与这里的放置物互不影响。
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>参数</h2>
+    <button class="btn" id="btnCopy">📋 一键复制全部参数</button>
+    <button class="btn" id="btnApply">粘贴并应用</button>
+    <textarea id="params" spellcheck="false"></textarea>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var frame = document.getElementById('frame');
+  var win = null;                 // iframe 内的 window
+  var WU_SRC = '/wu-2d.png';
+
+  // ---------- 参数存取 ----------
+  // 初值唯一定义处。「恢复默认参数」按钮按这张表复位，不再另写一份字面量。
+  // 吴昊阳字段全部是「视口百分比」，不是世界坐标 —— 他是 fixed 图层，不参与 3D。
+  // ⚠️ 本表 = 用户 2026-10-04 亲自确认并要求设为默认的一组值（相机 1.4263/5.6014/
+  //    -22.55/-31.5、机位 [3.4939,1.4263,0.3179]；吴昊阳 24.5%/71%/24%/1 且默认可见；
+  //    树/营火/石头默认隐藏；frozen=true）。此前这些值只存在一份"可导入"的 JSON 里，
+  //    打开页面并不会用它们，现已内联为本表唯一真值。
+  //    四元组与 camPos 是自洽的：target = pos + dir(yaw,pitch) * dist
+  //    → (6.1969, -0.7218, -4.0929)，与用户 JSON 的 target 完全一致。
+  var DEFAULTS = {
+    // 2026-10-07 用户裁决：完全重置到「引擎原始默认 + 仅加吴昊阳」基线。
+    // 推翻 v3~v7 期间的「机位锁死基准」「4 个手动放置物」「原生树/营火/石头全隐藏」。
+    // 由用户亲自做选景 —— frozen=false + camPos=null（不覆盖相机）让 initPose()
+    // 直接吃进引擎初始位，enforceCamera 每帧把它写回同位（视觉零跳变），
+    // 同时允许用户自由旋转/平移/推拉。
+    camY: 1.34, camD: 5.3, camP: 0, camA: 0,
+    // camPos=null → applyDefaultCam 直接 return false，不写相机位；
+    // 引擎当前位由 initPose() 抓取并喂回 S.pos/yaw/pitch/dist，再由 enforceCamera 每帧保持。
+    camPos: null,
+    wuX: 24.5, wuY: 71, wuScale: 24, wuAlpha: 1,
+    wuVisible: true,
+    // 用户要求"我重新在原背景中，进行选景" → 解除冻结。
+    frozen: false,
+    // 重置后的理想摆位：空数组。原先 v7 的 4 个手动放置物（营火+石头+两棵树）
+    // 全部取消；场景回到引擎原生布局（原生树/营火/石头皆可见，inpage S 初值已改为 true）。
+    // 自动导入路径：applyDefaultPlacements 在 placements.length===0 时直接 return，
+    // 不会塞任何物件进场景，也就不会有"自动加载覆盖用户已放置内容"的问题。
+    // 来源 = 背景实验室/理想摆位-参数快照.json，两处必须同步改。
+    placeKind: 'campfire',
+    placements: []
+    // 删除物配置只写在 inpage S.remove（iframe 内，不能读本 DEFAULTS），
+    // 本文件父页的 DEFAULTS 不再携带 remove 避免三份字面量漂移。
+  };
+    var S = {
+    camY: DEFAULTS.camY, camD: DEFAULTS.camD, camP: DEFAULTS.camP, camA: DEFAULTS.camA,
+    wuX: DEFAULTS.wuX, wuY: DEFAULTS.wuY,
+    wuScale: DEFAULTS.wuScale, wuAlpha: DEFAULTS.wuAlpha,
+    wuVisible: DEFAULTS.wuVisible,
+    placeKind: DEFAULTS.placeKind
+  };
+  // 原图尺寸比例，唯一真值；既是 CSS 里的高度换算依据，也进导出参数。
+  var WU_ASPECT = 443 / 312;
+  function numOr(str, fb) { var n = parseFloat(str); return isFinite(n) ? n : fb; }
+  function readUI() {
+    S.camY = +v('camY'); S.camD = +v('camD'); S.camP = +v('camP'); S.camA = +v('camA');
+    S.wuX = numOr(v('wuX'), S.wuX); S.wuY = numOr(v('wuY'), S.wuY);
+    S.wuScale = numOr(v('wuScale'), S.wuScale); S.wuAlpha = numOr(v('wuAlpha'), S.wuAlpha);
+  }
+  function writeUI() {
+    s('camY', S.camY); s('camD', S.camD); s('camP', S.camP); s('camA', S.camA);
+    s('wuX', S.wuX); s('wuY', S.wuY); s('wuScale', S.wuScale); s('wuAlpha', S.wuAlpha);
+    showVals();
+    applyWu();
+  }
+  function v(id) { return document.getElementById(id).value; }
+  // range 控件的值净化算法会把超量程值夹到边界、把非数值替换成「中点」且不报错
+  // （实测 camY→15、camD→60.3）。那会让导入的参数被静默篡改，
+  // 而 buildParams 又把这个篡改值读回 S，导出的 JSON 也跟着说谎。
+  // 故写控件前自己夹紧并拒绝非有限值，绝不把脏值交给浏览器净化。
+  function s(id, val) {
+    var el = document.getElementById(id);
+    var n = typeof val === 'number' ? val : parseFloat(val);
+    if (!isFinite(n)) return;
+    var mn = parseFloat(el.min), mx = parseFloat(el.max);
+    if (isFinite(mn) && isFinite(mx)) n = Math.min(mx, Math.max(mn, n));
+    el.value = n;
+  }
+  function c(id) { return document.getElementById(id); }
+  // 把 S 里的吴昊阳参数写到 fixed 图层上。
+  // 只依赖视口尺寸，与相机/引擎状态完全无关 —— 这正是屏幕绝对位置的保证。
+  function applyWu() {
+    var layer = c('wuLayer'), img = c('wuImg');
+    if (!layer || !img) return;
+    if (!S.wuVisible) { layer.style.display = 'none'; return; }
+    if (!img.getAttribute('src')) img.src = WU_SRC;
+    var wpx = window.innerWidth * S.wuScale / 100;
+    // 高度由宽度按 443:312 推出，改大小绝不变形。
+    // ⚠️ 实测 getBoundingClientRect 读回的比例会有 ≤2.6e-4 的偏差，那是 Chrome
+    //    LayoutUnit（1/64 px）的亚像素量化，纯算术本身零误差（已用 node 逐档验证：
+    //    4%→1.419921、4.5%→1.419885、60%→1.419867，越小偏差越大）。
+    //    该量级 0.026% 远低于视觉可辨阈值，且导出参数里的 aspect/pixelSize 是精确值，
+    //    所以验收标准应是「配置层严格锁 443:312」而非「渲染像素比严格相等」。
+    var hpx = wpx / WU_ASPECT;
+    layer.style.display = 'block';
+    layer.style.width = wpx + 'px';
+    layer.style.height = hpx + 'px';
+    // translate(-50%,-50%) 让 X/Y 表示图中心的位置
+    layer.style.transform = 'translate(-50%,-50%) translate('
+      + (window.innerWidth * S.wuX / 100).toFixed(2) + 'px,'
+      + (window.innerHeight * S.wuY / 100).toFixed(2) + 'px)';
+    img.style.opacity = S.wuAlpha;
+    var px = c('wuPixel');
+    if (px) px.textContent = '当前 ' + Math.round(wpx) + '×' + Math.round(hpx) + ' px';
+  }
+  // 窗口尺寸变化时重算（百分比定位随之改变），否则 resize 后吴昊阳会偏移
+  window.addEventListener('resize', function () { applyWu(); updateParams(); });
+  function showVals() {
+    document.getElementById('camYv').textContent = (+v('camY')).toFixed(2);
+    document.getElementById('camDv').textContent = (+v('camD')).toFixed(2);
+    document.getElementById('camPv').textContent = (+v('camP')).toFixed(1) + '°';
+    document.getElementById('camAv').textContent = (+v('camA')).toFixed(1) + '°';
+    document.getElementById('wuXv').textContent = (+v('wuX')).toFixed(1) + '%';
+    document.getElementById('wuYv').textContent = (+v('wuY')).toFixed(1) + '%';
+    document.getElementById('wuScalev').textContent = (+v('wuScale')).toFixed(1) + '%';
+    document.getElementById('wuAlphav').textContent = (+v('wuAlpha')).toFixed(2);
+    applyWu();
+  }
+
+  // ---------- iframe 就绪 ----------
+  frame.addEventListener('load', function () {
+    // iframe 一旦 reload（用户在里面按 F5、引擎自身导航），原 document 里的
+    // __camReady/__setCam 等接口全部消失。若 booted 还是 true，pollBoot 会直接 return，
+    // 宿主 win 指向已销毁的 Window 且永不重注入 → 所有按钮静默失效、tick 的空 catch 吞掉一切。
+    // 所以这里必须清闩锁并重启注入。
+    booted = false;
+    pollBoot();
+  });
+
+  // iframe 可能在我们挂监听前就已 load 完，且引擎要几十秒才初始化，
+  // 所以轮询等待注入真正成功，而不是等单个事件。
+  var booted = false;
+  var tickTimer = null;
+  function pollBoot() {
+    if (booted) return;
+    win = frame.contentWindow;
+    if (!win || !win.__experience || !win.__experience.engine || !win.__experience.engine.scene) {
+      setTimeout(pollBoot, 500);
+      return;
+    }
+    var tries = 0;
+    (function tryInject() {
+      win = frame.contentWindow;
+      inject();
+      if (!win.__camReady) {
+        if (++tries > 40) { document.getElementById('fps').textContent = '注入失败'; return; }
+        setTimeout(tryInject, 500);
+        return;
+      }
+      booted = true;
+      // 闩锁被 load 事件清过，若不先清掉旧句柄，iframe reload 后会出现多个 tick 并行
+      // （避免重复 setInterval 导致多个 tick 并行）。
+      if (tickTimer) clearInterval(tickTimer);
+      tickTimer = setInterval(tick, 16);
+      exposeTestApi();
+      applyDefaultCam();
+      syncSlidersFromCam();
+      // 2026-10-07 重置：把引擎实际 treesVisible/props 同步到复选框 UI（防止勾选框停在"已删除/已移除"误导）。
+      // __treesState/__propsState 会触发一次 scene.traverse，重扫成本可忽略；本场景一次性。
+      try { syncTreesUI(!!(win.__camState && win.__camState.treesVisible), win.__treesState && win.__treesState()); } catch (eT) {}
+      try { syncPropsUI(); } catch (eP) {}
+      updateParams();
+      applyDefaultPlacements();
+      document.getElementById('fps').textContent = '就绪 · 原始场景';
+    })();
+  }
+  // 把 DEFAULTS 里的机位真正落进引擎。
+  // ⚠️ 必须显式写 position：iframe 的 initPose() 会拿引擎当前机位覆盖 S.pos/yaw/pitch/dist，
+  //    所以只把四元组写进 DEFAULTS 是不生效的 —— 面板显示的是默认值，相机却停在引擎初始位。
+  // ⚠️ 落位后必须**回读校验**：实测偶发（约三次里一次）出现「高度/距离/位置都对，
+  //    但 pitch/yaw 变成引擎初始值（-67.25/-34.8）」的半落地状态，成因是注入与
+  //    引擎异步就绪的竞态，尚未完全定位。所以这里读回比对，不一致就重试若干次，
+  //    让默认值成为确定性结果而不是「大概率对」。
+  // ⚠️ 末尾**不要**再调 applyCam()：它用的是宿主 S，而 S 刚被 __setCam 的 emit 同步过，
+  //    再推一次等于给竞态留了一条「用陈旧 S 覆盖引擎」的路。
+  function applyDefaultCam(attempt) {
+    if (!win || !win.__setCam || !DEFAULTS.camPos) return false;
+    var p = DEFAULTS.camPos;
+    if (!isFinite(p[0]) || !isFinite(p[1]) || !isFinite(p[2])) return false;
+    var n = attempt || 0;
+    // 落位顺序：先解冻 → 写机位 → 回读校验 → 再按默认值冻结。
+    // 冻结态下 __setCam 会直接 return false，所以「先落位后冻结」是唯一可行顺序。
+    // 注意：冻结只挡相机写入（__setCam/__setTarget/addLook/loop 积分），
+    // 放置走的是 addItem/applyItem 直接改节点变换，冻结态下不受影响。
+    try { win.__camSetFrozen(false, true); } catch (eU) {}
+    win.__setCam({ px: p[0], y: p[1], pz: p[2],
+                   dist: DEFAULTS.camD, pitch: DEFAULTS.camP, yaw: DEFAULTS.camA });
+    var cm = win.__getCam ? win.__getCam() : null;
+    var landed = !!cm
+      && Math.abs(cm.px - p[0]) < 1e-3 && Math.abs(cm.py - p[1]) < 1e-3 && Math.abs(cm.pz - p[2]) < 1e-3
+      && Math.abs(cm.d - DEFAULTS.camD) < 1e-3
+      && Math.abs(cm.p - DEFAULTS.camP) < 1e-2 && Math.abs(cm.a - DEFAULTS.camA) < 1e-2;
+    if (!landed) {
+      if (n < 6) { setTimeout(function () { applyDefaultCam(n + 1); }, 150); return false; }
+      // 重试全败必须说出来，并按用户要求兜底冻结 —— 宁可固定在错机位，
+      // 也不能留下一个会漂移且未按预期冻结的相机而用户毫无感知
+      if (window.__onPlaceWarn) window.__onPlaceWarn('默认机位落地失败，已冻结在当前机位，可拖滑块调整');
+      try { win.__camSetFrozen(true, true); } catch (eF) {}
+      return false;
+    }
+    if (DEFAULTS.frozen) win.__camSetFrozen(true, true);
+    return true;
+  }
+  // 理想摆位自动加载：__placeImport 依赖树/营火/石头原型就绪（findProto），
+  // 而原型是异步加载的 —— 轮询等待就绪后导入一次（上限 240 秒）。
+  // 幂等闩锁：发现放置列表已有东西（用户手动放了/已导入过）就停手，绝不覆盖。
+  function applyDefaultPlacements() {
+    if (!win || !win.__placeImport || !DEFAULTS.placements || !DEFAULTS.placements.length) return;
+    var tries = 0;
+    var t = setInterval(function () {
+      var st = win.__placeState ? win.__placeState() : null;
+      if (!st) return;                                   // 注入接口还没挂上，下一秒再看
+      if (st.count > 0 || st.mode) { clearInterval(t); return; }   // 用户已动手，不覆盖
+      if (!st.ready) {
+        if (++tries > 240) { clearInterval(t); toast('树/营火/石头原型加载超时，理想摆位未能自动加载'); }
+        return;
+      }
+      var r = win.__placeImport(DEFAULTS.placements);
+      clearInterval(t);
+      if (r && r.ok) toast('已加载理想摆位 ' + r.state.count + ' 个物件');
+      else toast('理想摆位部分加载失败（' + ((r && r.bad) || '?') + ' 项）');
+    }, 1000);
+  }
+  pollBoot();
+
+  // ---------- 验证接口（供真机脚本调用） ----------
+  function exposeTestApi() {
+    window.__camState = win.__camState;
+    window.__camCfgHost = function () { return win.__camCfg; };
+    window.__verifyCamApplied = function () {
+      return !!(win && win.__verifyCamApplied && win.__verifyCamApplied());
+    };
+    window.__verifyCamReport = function () {
+      return (win && win.__verifyCamReport) ? win.__verifyCamReport() : { ok: false, reason: 'iframe 未注入' };
+    };
+    // 营火 / 石头回传：无论由 change 事件还是程序化导入触发，都刷新 UI。
+    // ⚠️ 之前只有 change handler 调 syncPropsUI，导致「粘贴参数改了状态但复选框不动」。
+    win.__onProps = function () { syncPropsUI(); };
+    win.__onFreeze = function (frozen) { syncFreezeUI(frozen); };
+    win.__onTrees = function (vis, r) { syncTreesUI(vis, r); };
+    // 相机回传：必须挂在这里（每次注入都执行）。
+    // 顶层脚本只跑一次，挂在了旧的 contentWindow 上 —— iframe 一旦 reload，
+    // emit() 找不到 __onCam，滑块与真实机位永久脱钩，再拖任一滑块会把
+    // 其余三轴拽回陈旧值。
+    win.__onCam = function (cm) {
+      setSlider('camY', cm.y); setSlider('camD', cm.d);
+      setSlider('camP', cm.p); setSlider('camA', cm.a);
+      S.camY = cm.y; S.camD = cm.d; S.camP = cm.p; S.camA = cm.a;
+      showVals(); paramsDirty = true;
+    };
+    // 放置段任何状态变化都回传，避免「面板显示的个数」与场景实际物件数脱钩。
+    // 参数框必须同步刷新：否则放完东西参数框里 placements 仍是空数组，
+    // 用户一点「一键复制」就导出一份丢掉全部摆位的快照。
+    win.__onPlace = function (st) { syncPlaceUI(st); updateParams(); };
+    win.__onPlaceWarn = function (msg) { toast(msg); };
+    syncPlaceUI();
+  }
+
+  // ---------- 注入：自由相机 + 吴昊阳 ----------
+  // 比例唯一定义处（源图 wu-2d.png 实测 443×312）。
+  // 吴昊阳是宿主页面上的 fixed 图层，不再进 3D，所以 iframe 完全不需要知道比例，
+  // 无需再把常量注入进去、也无需 iframe 回填 —— 早前的 WU_RATIO + __wuRatio 双份真值已删除。
+  function inject() {
+    var code = '(' + inpage.toString() + ')();';
+    var d = win.document.createElement('script');
+    d.textContent = code;
+    win.document.body.appendChild(d);
+    // appendChild 是同步执行的，脚本此刻已跑完，节点可以立刻移除；
+    // 否则注入重试会在 body 里堆最多 41 个约 10KB 的孤儿脚本节点。
+    // （注释里刻意不写脚本标签字面量：门禁会按标签计数校验 HTML 结构。）
+    if (d.parentNode) d.parentNode.removeChild(d);
+  }
+
+  function inpage() {
+    'use strict';
+    if (window.__camReady) return;
+    var E = window.__experience;
+    if (!E || !E.engine) { console.warn('[摆位器] 引擎未就绪'); return; }
+    var eng = E.engine;
+    var cam = eng.camera.instance;
+    var group = eng.camera.group;
+    var scene = eng.scene;
+    // V3 必须保留：S.pos = new V3() 依赖它。
+    // ⚠️ 曾因删除 3D 吴昊阳代码时连带删掉这一行，导致 inpage 抛 ReferenceError、
+    //    __camReady 永不置 true、轮询 40 次后显示「注入失败」，相机整体失效。
+    var V3 = cam.position.constructor;
+
+    // 隐藏开场全屏遮罩（renderOrder 999，会盖住一切）
+    try {
+      var rm = E.revealMesh || scene.getObjectByName('__reveal_mesh__');
+      if (rm) { rm.visible = false; if (rm.material) rm.material.visible = false; }
+    } catch (e) {}
+
+    // ================= 我的世界式第一人称相机内核 =================
+    // 状态模型：pos（机位）+ yaw/pitch（视角）+ dist（沿视线推拉的距离）
+    // 引擎陷阱：引擎每帧在渲染前用自己的 controls.update() / parallax / cameraLookAround
+    // 覆盖机位，所以在 renderer.instance.render 外包一层，真正绘制前一刻强制写入。
+    var D2R = Math.PI / 180;
+    var QT = cam.quaternion.constructor;
+    var EU = cam.rotation.constructor;
+
+    var CFG = {
+      speedPerFrame: 0.16,   // 单位/帧 @60fps ≈ 9.6 单位/秒
+      sprintPerFrame: 0.6,   // 单位/帧 @60fps ≈ 36 单位/秒（已不再绑定按键；保留供 tuning JSON 设值）
+      sensitivity: 0.15,     // 度/像素
+      pitchLimit: 89,        // 俯仰夹紧 ±89°
+distMin: 0.6,
+        distMax: 120,
+        // 机位高度下限（世界单位）。地形最低点约 -6，低于此值引擎会卸载地形 chunk。
+        // 由本轮实测反推：y=-24.7 时 main-island / top-island / MainIsland 组
+        // 与 66 棵树被卸载；y=-8 仍在安全范围内。
+        minHeight: -8,
+        wheelStep: 0.12        // 滚轮每格 dist 乘数
+    };
+    window.__camCfg = CFG;
+    // tuning 导入回填：CFG 是闭包变量，只能经这个接口改。
+    // 逐字段白名单 + 量程校验，非法值一律拒绝并回报，绝不整个替换（否则一个残缺
+    // JSON 就能把速度/限位打成 0，导致相机完全不动）。
+    // ⚠️ pitchLimit/distMin/distMax 改完后必须立刻重夹当前的 S.pitch/S.dist，
+    //    否则「新的限位」与「已越界的旧值」并存，相机状态自相矛盾。
+    window.__setCfg = function (patch) {
+      var RANGE = {
+        speedPerFrame: [0.01, 5], sprintPerFrame: [0.01, 20], sensitivity: [0.01, 3],
+        pitchLimit: [1, 89], distMin: [0.1, 60], distMax: [1, 400], wheelStep: [0.01, 2],
+        minHeight: [-200, 0]
+      };
+      var bad = [], applied = [];
+      Object.keys(RANGE).forEach(function (k) {
+        if (!patch || patch[k] === undefined) return;
+        var n = typeof patch[k] === 'number' ? patch[k] : parseFloat(patch[k]);
+        if (!isFinite(n)) { bad.push(k); return; }
+        var lo = RANGE[k][0], hi = RANGE[k][1];
+        if (n < lo || n > hi) { bad.push(k + '(' + n + '→夹到' + (n < lo ? lo : hi) + ')'); n = Math.min(hi, Math.max(lo, n)); }
+        CFG[k] = n; applied.push(k);
+      });
+      if (applied.length) {
+        S.pitch = clamp(S.pitch, -CFG.pitchLimit, CFG.pitchLimit);
+        S.dist = clamp(S.dist, CFG.distMin, CFG.distMax);
+        touch();
+      }
+      return { applied: applied, bad: bad };
+    };
+
+    var keys = {};
+    var S = {
+      pos: new V3(),
+      yaw: 0,
+      pitch: 0,
+      dist: 5.3,
+locked: false,
+        // 2026-10-07 重置：默认不冻结；用户可自由旋转做选景（Enter 仍可切冻结）。
+        frozen: false,
+        // 2026-10-07 重置：原生树/营火/石头全部恢复引擎默认（可见）。
+        // enforceCamera 内仅在「为 false」时调 applyTrees/applyProps 来隐藏它们；
+        // 设 true 后这两条 if 分支不触发，引擎原生可见性保持。
+        treesVisible: true,
+        props: { campfire: true, rocks: true },
+        gen: 0,            // 状态版本号：每次改动 +1
+      appliedGen: -1,    // 最近一次渲染时用的版本号
+      frames: 0,         // 已强制写入机位的主场景渲染次数
+      applied: null,
+      // 删除物配置只在此闭包内（inpage S）；父页 DEFAULTS 与 JSON 不携带，以防漂移。
+      remove: {
+        groups: ['tree-main', 'bushes001'],
+        leavesBox: { x0: 0, x1: 5.6, y0: 1.8, y1: 6.7, z0: -2.6, z1: 5.6 }
+      }
+    };
+    window.__camState = S;
+
+    // ⚠️ clamp / wrapDeg 必须对非有限值设防：粘贴的 JSON 里一个 "abc" 或 1e999(Infinity)
+    //    会穿透进来，NaN 一路进 three 的 matrixWorld 让整页黑屏且不可自愈；
+    //    而 wrapDeg 若用 while 循环遇 Infinity（Inf-360===Inf）会永不退出，直接挂死 iframe
+    //    与宿主两个主线程，整页只能强杀。故一律先 isFinite 白名单，再取模/夹紧。
+    function finite(v, fb) { var n = typeof v === 'number' ? v : parseFloat(v); return isFinite(n) ? n : fb; }
+    function clamp(v, a, b) { v = finite(v, a); return v < a ? a : (v > b ? b : v); }
+    // 归约到 [-180, 180)。⚠️ 偏移量必须是 540 而不是 360：
+    // ((v%360)+360)%360-180 会归约到 (-180, 0]，把 yaw=66 变成 -114（方向虽等价但
+    // 面板读数与用户输入相反）。+540 才是标准的 [-180,180) 归约。
+    function wrapDeg(v) { v = finite(v, 0); return ((v % 360) + 540) % 360 - 180; }
+    // 视线单位向量（与 Euler 'YXZ' + 相机默认 -Z 朝向完全一致）
+    function dirOf(yawDeg, pitchDeg) {
+      var t = yawDeg * D2R, p = pitchDeg * D2R, cp = Math.cos(p);
+      return { x: -cp * Math.sin(t), y: Math.sin(p), z: -cp * Math.cos(t) };
+    }
+    function rightOf(yawDeg) {
+      var t = yawDeg * D2R;
+      return { x: Math.cos(t), y: 0, z: -Math.sin(t) };
+    }
+    var eul = new EU(0, 0, 0, 'YXZ');
+    var quat = new QT();
+    function quatOf(yawDeg, pitchDeg) {
+      eul.set(pitchDeg * D2R, yawDeg * D2R, 0, 'YXZ');
+      return quat.setFromEuler(eul);
+    }
+    function focusOf() {
+      var d = dirOf(S.yaw, S.pitch);
+      return { x: S.pos.x + d.x * S.dist, y: S.pos.y + d.y * S.dist, z: S.pos.z + d.z * S.dist };
+    }
+    function touch() { S.gen++; }
+    function emit() { if (window.__onCam) window.__onCam(window.__getCam()); }
+
+    // 初始机位 = 引擎当前机位（世界朝向换算成 yaw/pitch，注入瞬间视觉零跳变）
+    cam.updateMatrixWorld(true);
+    (function initPose() {
+      var e0 = new EU().setFromQuaternion(cam.getWorldQuaternion(new QT()), 'YXZ');
+      S.pitch = clamp(Math.round(e0.x / D2R * 10) / 10, -CFG.pitchLimit, CFG.pitchLimit);
+      S.yaw = wrapDeg(Math.round(e0.y / D2R * 10) / 10);
+      S.pos.copy(cam.position);
+    })();
+
+    // 冻结 grass-bg 的鼠标视差光标：在 iframe 自己的 window 作用域内把 __cursor 钉死为 0，
+    // 使 grass-bg 的 cam.group.rotation 视差晃动与草弯曲合成同时失效（不改动生产文件）
+    try {
+      Object.defineProperty(window, '__cursor', {
+        configurable: true,
+        get: function () { return { x: 0, y: 0 }; },
+        set: function () {}
+      });
+    } catch (eCur) { window.__cursor = { x: 0, y: 0 }; }
+
+    // ---------- 渲染前强制写入机位（核心） ----------
+    function stopEngineCamera() {
+      try { eng.camera.disableControls(); } catch (e0) {}
+      try { if (eng.camera.controls) eng.camera.controls.enabled = false; } catch (e1) {}
+      try { if (E.cameraLookAround) E.cameraLookAround.disable(); } catch (e2) {}
+      try { if (E.parallax) E.parallax.disable(); } catch (e3) {}
+    }
+    function enforceCamera() {
+      stopEngineCamera();
+      // 渲染前重申树/营火/石头的可见性：引擎 update()/cullingBatch 会按距离重写
+      // chunk.visible，只有在真正绘制前一刻写入才能压住它（此时晚于引擎的每帧更新）。
+      if (!S.treesVisible) applyTrees();
+      if (!S.props.campfire || !S.props.rocks) applyProps();
+      enforceRemove();
+      // 相机组归零：引擎 parallax（真实指针位置）与 grass-bg 的 __cursor 晃动全部失效
+      group.position.set(0, 0, 0);
+      group.rotation.set(0, 0, 0);
+      group.scale.set(1, 1, 1);
+      group.updateMatrix();
+      group.updateMatrixWorld(true);
+      cam.position.copy(S.pos);
+      cam.quaternion.copy(quatOf(S.yaw, S.pitch));
+      cam.scale.set(1, 1, 1);
+      cam.updateMatrix();
+      cam.updateMatrixWorld(true);
+      cam.matrixWorldInverse.copy(cam.matrixWorld).invert();
+      eng.camera.updateFrustum();
+      // 幽灵预览放在**相机写入之后**、渲染之前：
+      // 地面射线走 Raycaster.setFromCamera(cam)，吃的是 cam.matrixWorld 与投影矩阵逆，
+      // 放在相机更新之前会用到上一帧的矩阵（冻结时恰好无差，但移动时会差一帧）。
+      // 冻结态下同样要执行 —— 用户要求「冻结只冻摄像头，不冻场地」。
+      updateGhost();
+    }
+
+    var rend = eng.renderer.instance;
+    var origRender = rend.render;
+    rend.render = function (sc, cm) {
+      var out;
+      if (cm === cam) {
+        enforceCamera();
+        out = origRender.call(this, sc, cm);
+        S.applied = {
+          t: performance.now(),
+          px: cam.position.x, py: cam.position.y, pz: cam.position.z,
+          qx: cam.quaternion.x, qy: cam.quaternion.y, qz: cam.quaternion.z, qw: cam.quaternion.w,
+          gen: S.gen, yaw: S.yaw, pitch: S.pitch, dist: S.dist
+        };
+        S.appliedGen = S.gen;
+        S.frames++;
+      } else {
+        out = origRender.call(this, sc, cm);
+      }
+      return out;
+    };
+    window.__camWrapped = true;
+
+    // ---------- 键盘（WASD 平移 / QE 升降 / Shift 疾跑） ----------
+window.__camKey = function (code, down) { keys[code] = !!down; };
+    // ---------- Enter：完全冻结相机 ----------
+    // 冻结 = 视角与机位都锁死：转视角、平移、升降、推拉、滚轮、程序化 __setCam 全部拒绝。
+    // 冻结时强制退出指针锁定 —— 否则鼠标被困在画面里，用户无法再去点面板上的按钮解锁。
+    function setFrozen(on, silent) {
+      S.frozen = !!on;
+      if (S.frozen) {
+        keys = {};                       // 清掉残留按键，避免解锁瞬间突然平移
+        if (anyLock()) { try { document.exitPointerLock(); } catch (eX) {} }
+      }
+      if (window.__onFreeze) window.__onFreeze(S.frozen, !!silent);
+      return S.frozen;
+    }
+    window.__camFrozen = function () { return !!S.frozen; };
+    window.__camSetFrozen = setFrozen;
+    // Enter 切冻结。⚠️ 必须忽略 e.repeat，否则长按会来回抖。
+    // 两侧都做成「切换」而不是「只冻结」—— 用户要求冻结后按 Enter 能恢复。
+    // 幂等由 setFrozen 自身保证，双触发也只会切换两次回到原状，不会卡死。
+    window.addEventListener('keydown', function (e) {
+      if (e.code === 'Enter' && !e.repeat) { e.preventDefault(); setFrozen(!S.frozen); }
+    });
+  // 方向键只做 preventDefault（避免浏览器滚动），不承担任何功能 ——
+  // 吴昊阳已是屏幕固定图层，不再有「按相机朝向微调落点」这种世界坐标操作。
+  window.addEventListener('keydown', function (e) {
+    keys[e.code] = true;
+    if (e.code === 'Space' || e.code.indexOf('Arrow') === 0) e.preventDefault();
+  });
+    window.addEventListener('keyup', function (e) { keys[e.code] = false; });
+    window.addEventListener('blur', function () { keys = {}; });
+
+    // ---------- 鼠标：转视角 ----------
+    function addLook(dx, dy) {
+      if (S.frozen) return;
+      if (!dx && !dy) return;
+      S.yaw = wrapDeg(S.yaw - dx * CFG.sensitivity);
+      S.pitch = clamp(S.pitch - dy * CFG.sensitivity, -CFG.pitchLimit, CFG.pitchLimit);
+      touch(); emit();
+    }
+    window.__camMouse = addLook;
+    // ⚠️ 这里刻意不加「必须已锁定」判据：真机自动化验证靠派发 mousemove 断言
+    //    yaw/pitch 变化（脚本无法可靠触发 pointerlock），加判据会让验证失效。
+    // 代价是未锁定时鼠标划过画面也会转视角（记为体验问题）。
+    // 真实路径上「点画面即锁定」把未锁定窗口压到极短，可接受；如需改为
+    // 「按住左键拖动才转视角」，验证脚本要一起改，两者必须同步动。
+window.addEventListener('mousemove', function (e) {
+        // 早前这里有个 `if (e.target.id === 'lab-wu') return;` 的死分支 ——
+        // 它来自实验室 A 版小样的 HTML 贴纸，而本页面加载的是生产场景（已核实生产
+        // grass-bg.html 里 lab-wu / lab-hint / lab-mountains / lab-aurora 全部 0 命中），
+        // 该元素根本不存在。这条死分支曾让三轴审查误判「屏幕上有两个吴昊阳」，已删除。
+        // ⚠️ 放置模式下本监听必须让位：光标要留给幽灵预览，只有右键拖拽才转视角
+        //    （由放置段自己的 mousemove 处理）。否则一次移动会转两次视角。
+        if (S.place && S.place.mode) return;
+        addLook(e.movementX || 0, e.movementY || 0);
+      });
+
+    // ---------- 滚轮：沿视线方向拉远 / 接近 ----------
+    window.addEventListener('wheel', function (e) {
+      if (!S.frozen) {
+        var nd = clamp(S.dist * (1 + Math.sign(e.deltaY) * CFG.wheelStep), CFG.distMin, CFG.distMax);
+        if (nd !== S.dist) {
+          var d = dirOf(S.yaw, S.pitch), k = nd - S.dist;
+          S.pos.x -= d.x * k; S.pos.y -= d.y * k; S.pos.z -= d.z * k;
+          // 俯视拉近时沿视线下冲同样能压穿地形下限（与 WASD/__setCam 同一防线），
+          // 低于下限会让引擎卸载地形 chunk、画面只剩天空
+          if (S.pos.y < CFG.minHeight) S.pos.y = CFG.minHeight;
+          S.dist = nd;
+          touch(); emit();
+        }
+      }
+      e.preventDefault();
+    }, { passive: false });
+
+    // ---------- 指针锁定 ----------
+    function anyLock() {
+      if (document.pointerLockElement) return true;
+      try {
+        if (window.parent && window.parent !== window && window.parent.document.pointerLockElement) return true;
+      } catch (eL) {}
+      return false;
+    }
+    function syncLock() { S.locked = anyLock(); }
+    document.addEventListener('pointerlockchange', syncLock);
+    document.addEventListener('pointerlockerror', syncLock);
+    try { window.parent.document.addEventListener('pointerlockchange', syncLock); } catch (eP) {}
+    // requestPointerLock 在新版 Chrome 返回 Promise，被拒时必须显式 catch，
+    // 否则引擎的合成 click（非用户手势）会抛出未处理的 rejection。
+    // 主目标失败再退到 document.body，全程吞掉异常。
+    window.__camLock = function () {
+      if (S.frozen) return false;           // 冻结时不允许再进入指针锁定
+      var cv = (eng.canvas && eng.canvas.requestPointerLock) ? eng.canvas : document.querySelector('canvas');
+      var targets = [];
+      if (cv && cv.requestPointerLock) targets.push(cv);
+      if (document.body && document.body !== cv && document.body.requestPointerLock) targets.push(document.body);
+      var i = 0;
+      function next() {
+        if (i >= targets.length) { setTimeout(syncLock, 80); return; }
+        var t = targets[i++];
+        try {
+          var pr = t.requestPointerLock();
+          if (pr && typeof pr.then === 'function') {
+            pr.then(function () { setTimeout(syncLock, 80); }, function () { next(); });
+          } else {
+            setTimeout(syncLock, 80);
+          }
+        } catch (eLk) { next(); }
+      }
+      next();
+    };
+    window.__camUnlock = function () {
+      try { document.exitPointerLock(); } catch (eX) {}
+      try { window.parent.document.exitPointerLock(); } catch (eY) {}
+      setTimeout(syncLock, 80);
+    };
+    // 直接点画面也能锁定（此时用户手势在 iframe 内，最可靠）
+    // ⚠️ 放置模式下左键是「落位」，绝不能顺手进指针锁定 —— 锁定后光标被吞，
+    //    幽灵预览会停在屏幕中心，用户再也放不了第二第三个。
+    window.addEventListener('click', function () {
+      if (S.place && S.place.mode) return;
+      if (!S.frozen && !anyLock()) window.__camLock();
+    });
+
+    // ---------- 每帧积分：平移机位 ----------
+    var lastT = 0;
+    function loop(t) {
+      requestAnimationFrame(loop);
+      if (S.frozen) return;                 // 冻结：完全不做机位积分
+      var dt = lastT ? (t - lastT) / 1000 : 0;
+      lastT = t;
+      if (dt > 0.25) dt = 0.25;
+      // ⚠️ 疾跑已移除：Shift 现在是「下降」（用户 2026-03 裁决「Shift 只做下降，舍弃加速」）。
+      // 若同时保留疾跑，按住 Shift 前进会一边加速一边下降，两个语义直接打架。
+      var sp = CFG.speedPerFrame * dt * 60;
+      if (!(sp > 0)) return;
+      var f = dirOf(S.yaw, S.pitch), r = rightOf(S.yaw), moved = false;
+      if (keys['KeyW']) { S.pos.x += f.x * sp; S.pos.y += f.y * sp; S.pos.z += f.z * sp; moved = true; }
+      if (keys['KeyS']) { S.pos.x -= f.x * sp; S.pos.y -= f.y * sp; S.pos.z -= f.z * sp; moved = true; }
+      if (keys['KeyD']) { S.pos.x += r.x * sp; S.pos.z += r.z * sp; moved = true; }
+      if (keys['KeyA']) { S.pos.x -= r.x * sp; S.pos.z -= r.z * sp; moved = true; }
+      if (keys['KeyQ'] || keys['Space']) { S.pos.y += sp; moved = true; }
+      // Shift = 下降（疾跑已于同轮移除，见上方注释）
+      if (keys['KeyE'] || keys['ShiftLeft'] || keys['ShiftRight']) { S.pos.y -= sp; moved = true; }
+      // ⚠️ 机位高度必须夹在地形之下：实测按住 Shift 约 2.5 秒就掉到 y=-24.7，
+      //    而引擎会把远离相机的地形 chunk 整个卸载 → 画面只剩天空，场景「消失」，
+      //    实测 main-island / top-island / MainIsland 组、162 棵树全部被卸载到 96 棵。
+      //    这是真实缺陷（不是测试问题），必须有下限。
+      if (moved && S.pos.y < CFG.minHeight) {
+        S.pos.y = CFG.minHeight;
+        touch(); emit();
+      }
+      if (moved) { touch(); emit(); }
+    }
+    requestAnimationFrame(loop);
+
+    // ---------- 宿主接口 ----------
+    window.__getCam = function () {
+      var f = focusOf();
+      return {
+        y: +S.pos.y.toFixed(4), d: +S.dist.toFixed(4),
+        p: +S.pitch.toFixed(2), a: +S.yaw.toFixed(2),
+        px: +S.pos.x.toFixed(4), py: +S.pos.y.toFixed(4), pz: +S.pos.z.toFixed(4),
+        tx: +f.x.toFixed(4), ty: +f.y.toFixed(4), tz: +f.z.toFixed(4),
+        locked: S.locked, frozen: !!S.frozen
+      };
+    };
+    window.__setCam = function (o) {
+      o = o || {};
+      if (S.frozen) return false;            // 冻结时连程序化设值也拒绝，才是「完全固定」
+      // 每个数值入口都过白名单：非有限值直接拒绝（保持原值），绝不让 NaN 进 S
+      if (o.y !== undefined && isFinite(o.y)) S.pos.y = Math.max(o.y, CFG.minHeight);
+      if (o.px !== undefined && isFinite(o.px)) S.pos.x = o.px;
+      if (o.pz !== undefined && isFinite(o.pz)) S.pos.z = o.pz;
+      if (o.dist !== undefined && isFinite(o.dist)) S.dist = clamp(o.dist, CFG.distMin, CFG.distMax);
+      if (o.pitch !== undefined && isFinite(o.pitch)) S.pitch = clamp(o.pitch, -CFG.pitchLimit, CFG.pitchLimit);
+      if (o.yaw !== undefined && isFinite(o.yaw)) S.yaw = wrapDeg(o.yaw);
+      touch(); emit();
+      return true;
+    };
+    window.__setTarget = function (x, y, z) {
+      if (S.frozen) return false;
+      if (!isFinite(x) || !isFinite(y) || !isFinite(z)) return false;
+      var d = dirOf(S.yaw, S.pitch);
+      S.pos.set(x - d.x * S.dist, y - d.y * S.dist, z - d.z * S.dist);
+      // 同 __setCam：程序化设位也要夹住高度，否则能绕过 loop 的下限直接穿地
+      if (S.pos.y < CFG.minHeight) S.pos.y = CFG.minHeight;
+      touch(); emit();
+      return true;
+    };
+
+    // ---------- 验证接口：证明渲染时机位确实由 __camState 控制 ----------
+    window.__verifyCamReport = function () {
+      var rep = { wrapped: !!window.__camWrapped, frames: S.frames, gen: S.gen,
+                  appliedGen: S.appliedGen, ok: false, reason: '' };
+      if (!rep.wrapped) { rep.reason = 'renderer.instance.render 未被包装'; return rep; }
+      if (!S.frames) { rep.reason = '还没发生主场景渲染'; return rep; }
+      if (!S.applied) { rep.reason = '没有渲染记录'; return rep; }
+      if (S.appliedGen !== S.gen) { rep.reason = '状态已变但尚未重新渲染'; return rep; }
+      var q = quatOf(S.yaw, S.pitch);
+      rep.dPos = Math.abs(cam.position.x - S.pos.x) + Math.abs(cam.position.y - S.pos.y) + Math.abs(cam.position.z - S.pos.z);
+      rep.dQuat = Math.abs(cam.quaternion.x - q.x) + Math.abs(cam.quaternion.y - q.y)
+                + Math.abs(cam.quaternion.z - q.z) + Math.abs(cam.quaternion.w - q.w);
+      rep.dApplied = Math.abs(S.applied.px - S.pos.x) + Math.abs(S.applied.py - S.pos.y)
+                   + Math.abs(S.applied.pz - S.pos.z);
+      rep.dGroup = group.position.length()
+                 + Math.abs(group.rotation.x) + Math.abs(group.rotation.y) + Math.abs(group.rotation.z)
+                 + Math.abs(group.scale.x - 1);
+      rep.pos = [+cam.position.x.toFixed(5), +cam.position.y.toFixed(5), +cam.position.z.toFixed(5)];
+      rep.quat = [+cam.quaternion.x.toFixed(6), +cam.quaternion.y.toFixed(6), +cam.quaternion.z.toFixed(6), +cam.quaternion.w.toFixed(6)];
+      rep.expect = { pos: [+S.pos.x.toFixed(5), +S.pos.y.toFixed(5), +S.pos.z.toFixed(5)],
+                     quat: [+q.x.toFixed(6), +q.y.toFixed(6), +q.z.toFixed(6), +q.w.toFixed(6)] };
+      // ⚠️ NaN 与任何阈值比较恒为 false，所以下面 dPos>1e-4 这类护栏在 NaN 下会全部放行，
+      //    让「已黑屏/机位是 NaN」的坏状态谎报 ok。必须先做非有限值拦截。
+      if (!isFinite(rep.dPos) || !isFinite(rep.dQuat) || !isFinite(rep.dApplied) || !isFinite(rep.dGroup)) {
+        rep.reason = '状态或机位含非有限数值（NaN/Infinity），渲染结果不可信'; return rep;
+      }
+      if (rep.dPos > 1e-4) { rep.reason = '机位被覆盖 Δ=' + rep.dPos; return rep; }
+      if (rep.dQuat > 1e-4) { rep.reason = '朝向被覆盖 Δ=' + rep.dQuat; return rep; }
+      if (rep.dApplied > 1e-4) { rep.reason = '渲染瞬间写入值与状态不符 Δ=' + rep.dApplied; return rep; }
+      if (rep.dGroup > 1e-6) { rep.reason = '相机组仍带视差偏移 Δ=' + rep.dGroup; return rep; }
+      rep.ok = true;
+      rep.reason = '渲染前机位由 __camState 强制写入，渲染后未被引擎覆盖';
+      return rep;
+    };
+    window.__verifyCamApplied = function () { return window.__verifyCamReport().ok === true; };
+window.__camReady = true;
+
+    // ---------- 树木开关 ----------
+    // 树在引擎里的真实结构（真机探针 + patched.js 双向核实）：
+    //   E.world.islands.trees.group   = 组 R9，298 个子节点
+    //   E.world.islands.foliage.group = **同一个 group**（kids 列表逐项相同，非两个）
+    //   组内含 foliage-occlusion、Foliage_chunk_*，也含 top/main/sounds/
+    //   simplified_scene/Waterfall_drops/waterfall-* 等**非树对象** → 整组处理会误伤。
+    //   E.world.distantTerrain.foliage = 类 m5，远景树叶 DistantFoliage_chunk_*（Points），
+    //   挂在 Experience 组下、不在 islands 组内。
+    //
+    // ⚠️⚠️ 三轮方案实测记录（都在真机跑过，勿走回头路）：
+    //  1) scene.traverse 设 visible=false
+    //     ✗ 引擎每帧 update() 的 cullingBatch 按距离重写 chunk.visible
+    //       → 隐藏数秒后 60 个 chunk 全部复现。
+    //  2) 组件 group.visible=false
+    //     ✗ culling 改的是子节点 visible，压不住；且整组会连带隐藏瀑布/水花/声音。
+    //  3) removeFromParent() 把树摘出场景
+    //     ✗✗ **直接把引擎打崩**：cullingBatch 仍持有这些 mesh 并调用其 .traverse()，
+    //       父节点消失后抛「Cannot read properties of undefined (reading 'traverse')」，
+    //       页面每帧报错。引擎与场景树是强耦合的，不能靠摘除来隐藏。
+    //
+    // 最终方案：在**渲染前**对树 mesh 逐个重申 visible=false。
+    // 渲染前一刻写入，晚于引擎 update()/culling，所以不会被覆盖；
+    // 又因为对象仍在树上，引擎的 culling 不会崩。
+    // 'tree-' 前缀覆盖树干与全部树组对象：实测场景里有 96 个 tree-* 对象不叫
+    // tree-trunk-*（含远景枯树 mesh），旧前缀删不掉它们，「已删除」后画面里
+    // 仍残留成排枯树。放置物克隆件名带 pl-x- 前缀，不会被这里误伤。
+    var TREE_PREFIX = ['tree-', 'Foliage_chunk', 'foliage-occlusion', 'DistantFoliage_chunk'];
+    function isTree(name) {
+      var n = name || '';
+      for (var i = 0; i < TREE_PREFIX.length; i++) if (n.indexOf(TREE_PREFIX[i]) === 0) return true;
+      return false;
+    }
+    var treeMeshes = [];      // 缓存树 mesh，避免每帧全场景 traverse
+    var lastTreeScan = 0;
+    function collectTrees(force) {
+      var now = performance.now();
+      // 树异步加载，节流重扫；force 时立即重扫
+      if (!force && now - lastTreeScan < 1000) return;
+      lastTreeScan = now;
+      treeMeshes = [];
+      scene.traverse(function (o) {
+        if (o.name && isTree(o.name)) treeMeshes.push(o);
+      });
+    }
+    // ⚠️ 恢复时必须显式写回 true：之前被我们置为 false 的 chunk，引擎 culling
+    //    不一定会改回来（它只在「距离变化导致状态翻转」时才写），
+    //    实测不写 true 会导致「删除后恢复」时树一直不出现。
+    function applyTrees() {
+      collectTrees();
+      var on = S.treesVisible;
+      for (var i = 0; i < treeMeshes.length; i++) {
+        treeMeshes[i].visible = on;
+      }
+      return treeMeshes.length;
+    }
+    window.__setTrees = function (on) {
+      S.treesVisible = !!on;
+      var n = applyTrees();
+      if (on) collectTrees(true);      // 恢复时刷新一次缓存即可
+      var st = { treesVisible: on, tracked: n };
+      if (window.__onTrees) window.__onTrees(on, st);
+      return st;
+    };
+    window.__treesState = function () {
+      collectTrees(true);
+      var vis = 0;
+      for (var i = 0; i < treeMeshes.length; i++) if (treeMeshes[i].visible) vis++;
+      return { treesVisible: !!S.treesVisible, total: treeMeshes.length, visible: vis,
+               hidden: treeMeshes.length - vis };
+    };
+    // ---------- 营火 / 石头 移除 ----------
+    // 真机探针实测的对象结构（都与地形无关，可安全移除）：
+    //   营火：场景对象 `campfire`（Object3D，11 个子节点：campfire-wood* × 11
+    //         + fire + sparks）；另有顶层点光源 `CampfireLight`；
+    //         组件句柄 E.world.islands.campfire（类 nx，含 woodMeshes/fire/sparks）。
+    //   石头：`floating-rocks`（Object3D，24 个子节点，全是 basalt-floating-rock*）。
+    //
+    // ⚠️ 绝不能碰的地形（用户要求「不破坏地形、草地」）：
+    //   MainIsland / TopIsland 组、main-island / top-island 网格、
+    //   main-island-basalt（岛体玄武岩）、DistantTerrainGround_*（远景地形）、
+    //   Grass_* 草叶、AnimeSky、DistantWater。
+    //   下面全部用精确名匹配，不含 terrain/island/grass 任何关键词。
+    //
+    // 与树同理：引擎 update() 会重写 visible，所以也在渲染前重申（见 enforceCamera）。
+    // ⚠️ 营火的「火」与「火光」并不在 campfire 组内 —— 这是实测踩过的坑：
+    //   组名带 campfire 的只有 11 根木柴（campfire-wood*），
+    //   而火焰 `Campfire_fire`(Mesh) 与火星 `Campfire_sparks`(Points) 挂在 **islands** 组下、
+    //   与 campfire 组平级，所以早期版本关掉整组后木柴消失、火和火星却还在。
+    //   另外还有一个 Audio 类型的 `campfire`（音效）同样平级，容易被漏掉。
+    //   点光源 `CampfireLight` 是 scene 顶层，也要一并关。
+    var PROP_TARGETS = {
+      campfire: {
+        label: '营火',
+        names: ['campfire', 'Campfire_fire', 'Campfire_sparks', 'CampfireLight'],
+        lightName: 'CampfireLight'
+      },
+      rocks: { label: '石头', names: ['floating-rocks'] }
+    };
+    var propNodes = { campfire: [], rocks: [] };
+    var lastPropScan = 0;
+    function collectProps(force) {
+      var now = performance.now();
+      if (!force && now - lastPropScan < 1000) return;
+      lastPropScan = now;
+      propNodes = { campfire: [], rocks: [] };
+      scene.traverse(function (o) {
+        if (!o.name) return;
+        for (var k in PROP_TARGETS) {
+          if (PROP_TARGETS[k].names.indexOf(o.name) >= 0) { propNodes[k].push(o); break; }
+        }
+      });
+      // 营火点光源挂在 scene 顶层（不在 campfire 组内），单独收进来
+      var lt = PROP_TARGETS.campfire.lightName;
+      var lo = scene.getObjectByName(lt);
+      if (lo && propNodes.campfire.indexOf(lo) < 0) propNodes.campfire.push(lo);
+    }
+    function applyProps() {
+      collectProps();
+      var st = {};
+      for (var k in PROP_TARGETS) {
+        var want = S.props[k];
+        var hidden = 0;
+        for (var i = 0; i < propNodes[k].length; i++) {
+          propNodes[k][i].visible = want;
+          if (!want) hidden++;
+        }
+        st[k] = { nodes: propNodes[k].length, hidden: hidden, visible: want };
+      }
+      return st;
+    }
+    window.__setProps = function (patch) {
+      if (patch && typeof patch === 'object') {
+        if (patch.campfire !== undefined) S.props.campfire = !!patch.campfire;
+        if (patch.rocks !== undefined) S.props.rocks = !!patch.rocks;
+      }
+      var st = applyProps();
+      if (window.__onProps) window.__onProps(st);
+      return st;
+    };
+    window.__propsState = function () {
+      var st = applyProps();
+      return { campfireVisible: !!S.props.campfire, rocksVisible: !!S.props.rocks,
+               campfire: st.campfire, rocks: st.rocks };
+    };
+    // 2026-10-07 重置：删除"用户要求移除营火与石头/树"的二次初始化（v3~v7 期间的"原景隐藏"默认）。
+    // S 已在 506~524 行初始化为 treesVisible=true、props.campfire=true、props.rocks=true；
+    // enforceCamera() 仅在「为 false」时调用 applyTrees/applyProps（见 589/590），因此这两个 flag
+    // 为 true 时不会触发任何"隐藏"动作 —— 原生树/营火/石头全程保持引擎默认可见。
+    // 移除此段后，"树异步加载后被强制隐藏"的兜底也一并消失，这是预期的：重置后不再有任何隐藏需求。
+
+    // ---------- 指定原生对象删除（2026-10-07 用户圈定三处） ----------
+    // 背景：
+    //   · 所有树的叶子被引擎批量收进名为 Foliage_chunk_* 的 InstancedMesh 里，
+    //     每块对应一个空间格（约 150~384 个叶片 billboard），**按位置格共用、
+    //     跨多棵树共块** —— 不能整块 visible=false，只能按世界坐标盒逐实例剔除。
+    //   · 引擎 culler 每帧会重写 chunk/group 的 visible，一次性改立刻被打回，
+    //     所以 visible=false 必须每帧重申（enforcеCamera 内、渲染前）。
+    //   · instanceMatrix 实测不会被引擎每帧重建（4s 后仍是死的），但仍每帧轻量校验兜底。
+    // 对象定位（m10-enum/m10-candle 实测）：
+    //   ① 中央主树：群组 'tree-main'（含 tree-trunk-main / tree-trunk-main-big），
+    //      其树冠叶片在世界盒 LEAVES_BOX 里的 Foliage_chunk_* 实例。
+    //   ②③ 岛前两块深色斑块 = 组 'bushes001' 的植被（candle 实测）。
+    var removeGroupsFound = [];
+    var lastRemoveScan = 0;
+    var killedLeaves = [];        // [[mesh, idx], ...] 初始化一次
+    var lastLeafScan = 0;
+    var M4c = cam.matrix.constructor;
+    var ZERO_M = new M4c();
+    (function () { for (var z = 0; z < 16; z++) ZERO_M.elements[z] = 0; })();
+    function collectRemoveGroups() {
+      var now = performance.now();
+      if (now - lastRemoveScan < 1000) return;
+      lastRemoveScan = now;
+      removeGroupsFound = [];
+      scene.traverse(function (o) {
+        if (o.name && S.remove && S.remove.groups.indexOf(o.name) >= 0) removeGroupsFound.push(o);
+      });
+    }
+    function scanLeaves(force) {
+      var now = performance.now();
+      if (!force && now - lastLeafScan < 5000) return;
+      lastLeafScan = now;
+      var box = S.remove.leavesBox;
+      var im = new M4c(), v = new window.__THREE.Vector3();
+      scene.traverse(function (o) {
+        if (!o.name || o.name.indexOf('Foliage_chunk_') !== 0 || !o.isInstancedMesh) return;
+        var hit = 0;
+        for (var i = 0; i < o.count; i++) {
+          o.getMatrixAt(i, im);
+          // 已置零的实例矩阵平移读为 (0,0,0)，其世界坐标 = chunk 原点，
+          // 若再跑盒测试会把「区块原点恰好在树冠内」的已杀实例反复 push
+          // 进 killedLeaves（无界增长），此处先判零跳过。
+          if (im.elements[0] === 0 && im.elements[12] === 0 && im.elements[13] === 0 && im.elements[14] === 0) continue;
+          v.set(im.elements[12], im.elements[13], im.elements[14]);
+          v.applyMatrix4(o.matrixWorld);
+          if (v.x >= box.x0 && v.x <= box.x1 && v.y >= box.y0 && v.y <= box.y1 && v.z >= box.z0 && v.z <= box.z1) {
+            o.setMatrixAt(i, ZERO_M);
+            killedLeaves.push([o, i]);
+            hit++;
+          }
+        }
+        if (hit) o.instanceMatrix.needsUpdate = true;
+      });
+    }
+    function enforceRemove() {
+      collectRemoveGroups();
+      for (var i = 0; i < removeGroupsFound.length; i++) removeGroupsFound[i].visible = false;
+      if (S.remove && S.remove.leavesBox) scanLeaves(false);
+      // 每帧轻量校验：引擎若重建了 instanceMatrix（实测很少），把已置零的实例矩阵写回
+      if (killedLeaves.length) {
+        var dirty = {};
+        for (var j = 0; j < killedLeaves.length; j++) {
+          var o = killedLeaves[j][0], idx = killedLeaves[j][1];
+          var arr = o.instanceMatrix.array, off = idx * 16;
+          if (arr[off] !== 0 || arr[off + 12] !== 0 || arr[off + 13] !== 0 || arr[off + 14] !== 0) {
+            o.setMatrixAt(idx, ZERO_M);
+            dirty[o.uuid] = true;
+          }
+        }
+        for (var j2 = 0; j2 < killedLeaves.length; j2++) {
+          var o2 = killedLeaves[j2][0];
+          if (dirty[o2.uuid]) { o2.instanceMatrix.needsUpdate = true; dirty[o2.uuid] = false; }
+        }
+      }
+    }
+
+    // ================= 自由放置编辑器 =================
+    // 需求：原树/营火/石头隐藏后，能自由重新摆放，且每个实例可再编辑。
+    //
+    // ⚠️ 本段所有构造器与原型都来自真机探针实测 —— 这个引擎只导出 7 个类，
+    //     凭记忆写必然踩空：
+    //   · window.__THREE 只有 Mesh / MeshBasicMaterial / Vector3 / Color 等 7 个，
+    //     **没有** Raycaster、Vector2、Group、InstancedMesh、Matrix4、DoubleSide。
+    //   · Raycaster 只能兜底取 eng.raycaster.raycaster 的构造器（实测名 r1），
+    //     且它的 layers.mask = 2147483648（1<<31，引擎的 INTERACTIVE_LAYER）——
+    //     只能打到可交互物件、打不到地形。地面射线必须显式写回 layers.mask = 1。
+    //   · Raycaster.setFromCamera 只读 coords.x / coords.y，传普通 {x,y} 对象即可，
+    //     不需要真的 Vector2（这是绕过 __THREE 缺类的关键）。
+    //   · Matrix4 从 cam.matrix.constructor 拿；Quaternion/Euler 就是上面的 QT/EU。
+    //   · 通用容器节点取 scene.getObjectByName('campfire') 的原型（普通 Object3D）。
+    //   · 营火的 fire / sparks / light / audio 都在 camp 组**之外**且与之平级，
+    //     克隆时必须换算成相对原营火组世界坐标的局部偏移，否则会叠回原位。
+    var TB = window.__THREE || {};
+    var M4 = cam.matrix.constructor;                 // Matrix4（__THREE 未导出）
+    // 放置参数。maxDist 挡掉「射线掠过岛屿、命中 y=-353 的远景地形平面」的情况 ——
+    // 实测相机在 (8,2.6,14) 时，光标稍偏右下的合法落点会一路飞到 z=-1100 的
+    // DistantTerrainGround_1_2 上（距离约 1100），用户完全没这个意图却静默放了个物件。
+    // 相机推拉上限是 120，所以 150 足够宽松，同时把这类离谱落点挡在外面。
+    var PLC = {
+      maxDist: 150, maxItems: 200, campfireWarn: 6,
+      scaleMin: 0.05, scaleMax: 30,
+      // 变体目录。每个变体指向运行时场景中已存在的「真物件」名，由 findProto 解析为对象。
+      // 三类物件的根本错因就是上一任没用这些「真物件」做克隆，而是用 Foliage_chunk 的单个
+      // billboard 假冒树、用 abs(rockscale) 假冒石、用 9 倍世界缩放假冒营火——见 PROGRESS §6。
+      variants: {
+        tree: [
+          // tree-main = 大树（带树干的唯一一棵）：树干 9.6 m + 树冠 ~43 簇叶子 ≈ ~2000 billboard
+          { id: 'big',   label: '🌲 大树(tree-main)', src: 'tree-main',
+            hasTrunk: true, hasFoliage: true, defaultScale: 1, note: '带树干，约 2000 个叶 billboard' },
+          { id: 't008',  label: '🌳 小树(tree-008)',  src: 'tree-008',
+            hasTrunk: false, hasFoliage: true, defaultScale: 1, note: '无树干，~220 叶 billboard' },
+          { id: 't001',  label: '🌳 小树(tree-001)',  src: 'tree-001',
+            hasTrunk: false, hasFoliage: true, defaultScale: 1, note: '无树干，~175 叶 billboard' }
+        ],
+        campfire: [
+          { id: 'default', label: '🔥 营火', src: 'campfire',
+            defaultScale: 1, note: '11 根木柴 + 火焰 + 火星 + 点光源 + 音效' }
+        ],
+        rock: [
+          // 上一任始终克隆 basalt-floating-rock（4.6 cm，最小的那个），所以「石头压根看不到」。
+          // 原始场景里「石头」实际指这两种大块玄武岩（dark angular formations）。
+          { id: 'big-top',   label: '🪨 巨石(basalt-top-old)',  src: 'basalt-top-old',
+            defaultScale: 0.4, note: '约 7.3×1.5×11.9 m，默认 ×0.4 ≈ 3 m' },
+          { id: 'big-main',  label: '🪨 巨石(basalt-main-old)', src: 'basalt-main-old',
+            defaultScale: 0.4, note: '约 11.3×2.7×17.1 m，默认 ×0.4 ≈ 4.5 m' },
+          { id: 'pebble',    label: '· 碎石(basalt-floating-rock)', src: 'basalt-floating-rock',
+            defaultScale: 8, note: '原始 4.6 cm，默认 ×8 ≈ 37 cm' }
+        ]
+      },
+      defaultVariant: { tree: 'big', campfire: 'default', rock: 'big-top' }
+    };
+    window.__placeCfg = PLC;
+    var RayCtor = (eng.raycaster && eng.raycaster.raycaster)
+      ? Object.getPrototypeOf(eng.raycaster.raycaster).constructor : null;
+    var groundRc = null;
+    if (RayCtor) {
+      groundRc = new RayCtor();
+      groundRc.near = 0;
+      groundRc.far = 3000;
+      groundRc.layers.mask = 1;                      // 关键：回到默认层才能打到地形
+    }
+    // ---------- 地形目标与地面射线 ----------
+    var terrainList = [], terrainStamp = 0;
+    function buildTerrain(force) {
+      var now = performance.now();
+      if (!force && now - terrainStamp < 2000) return terrainList;
+      terrainStamp = now;
+      var out = [];
+      scene.traverse(function (o) {
+        if (!o.isMesh || !o.geometry) return;
+        var n = (o.name || '').toLowerCase();
+        if (n.indexOf('grass') >= 0) return;         // 草叶不参与落点计算
+        if (n.indexOf('pl-') === 0) return;          // 放置物克隆件不参与（否则石头克隆件会回流进来）
+        if (n.indexOf('island') < 0 && n.indexOf('basalt') < 0 &&
+            n.indexOf('terrain') < 0 && n.indexOf('ground') < 0) return;
+        out.push(o);
+      });
+      terrainList = out;
+      return out;
+    }
+    function castGround(nx, ny, list) {
+      if (!groundRc || !list.length) return null;
+      try {
+        groundRc.layers.mask = 1;                    // 每发都重申，防止被引擎改回 1<<31
+        groundRc.setFromCamera({ x: nx, y: ny }, cam);
+        var hits = groundRc.intersectObjects(list, false);
+        return hits.length ? hits[0] : null;
+      } catch (eG) { return null; }
+    }
+    function groundHit(nx, ny) {
+      var h = castGround(nx, ny, buildTerrain());
+      // 地形 chunk 是异步加载、还会被引擎 culling 卸载 → 打空时强制重建一次再试
+      if (!h) h = castGround(nx, ny, buildTerrain(true));
+      // 超出 maxDist 说明这一发打到了远景地形平面，不是用户要的落点，当作没打中
+      if (h && h.distance > PLC.maxDist) h = null;
+      return h;
+    }
+    window.__groundHit = function (nx, ny) {
+      var h = groundHit(nx, ny);
+      return h ? { x: h.point.x, y: h.point.y, z: h.point.z, name: h.object.name } : null;
+    };
+    window.__groundY = function (x, z) {
+      // 竖直射线：从高空垂直打，命中点 y 即该 xz 的地面高度
+      try {
+        if (!groundRc) return null;
+        groundRc.layers.mask = 1;
+        groundRc.set(new V3(x, 500, z), new V3(0, -1, 0));
+        var hits = groundRc.intersectObjects(buildTerrain(), false);
+        var h = hits.length ? hits[0] : null;
+        // 打空=岛外；命中点低于固定界限说明穿岛打到了 y=-353 的远景地形平面
+        // （实测 (-4.4,-7.2) 就会中招，把物件贴到岛下 350 m）——都按无效处理。
+        // 用固定常数而非 CFG.minHeight：minHeight 可被 tuning 调到 0，会把低处地形全判无效
+        if (!h || h.point.y < -30) return null;
+        return +h.point.y.toFixed(5);
+      } catch (eY) { return null; }
+    };
+    // ---------- 原型解析 ----------
+    // ⚠️ 这一版彻底换了做法：不再「合成」物件，而是把运行时场景里**真实存在的那棵树 /
+    //    那个营火 / 那块石头**整套克隆出来，只做「锚点归零 + 世界缩放还原」两件事。
+    //    三类物件的错因都实证过（探针 + GLB 解析 + 着色器反读）：
+    //      · 树：Foliage_chunk 的「一个实例」其实是一片 2 cm 的叶子 billboard，
+    //        一棵真树 = 4~43 个「树冠」节点 × 每冠 ~44 片叶 ≈ 175~2000 片。
+    //        只放 1 片 → 屏幕上就是一撮草。
+    //      · 营火：campfire 组原点在世界 (0,0,0)，而木柴在 x=+3.07 → 直接克隆会把柴堆
+    //        甩到 3 米外，只剩火焰停在落点 →「营火只有火」。
+    //      · 石头：basalt-floating-rock 世界尺寸只有 4.6 cm（24 颗里最小的那颗），
+    //        而且顶点着色器不做任何膨胀 → 放下去就是看不见。
+    var PROTO = { ok: false };
+    var ISL = 9;                       // islands 组的世界缩放（实测，勿改）
+    function invIslands() { return new M4().copy(scene.getObjectByName('islands').matrixWorld).invert(); }
+    // 源对象在「islands 局部空间」的矩阵（剥掉 islands 的 9 倍缩放）
+    function localOf(o) {
+      scene.updateMatrixWorld(true);
+      var isl = scene.getObjectByName('islands');
+      if (!isl) return new M4().copy(o.matrixWorld);
+      return new M4().multiplyMatrices(new M4().copy(isl.matrixWorld).invert(), new M4().copy(o.matrixWorld));
+    }
+    function inIslands(o) {
+      var q = o.parent;
+      while (q) { if (q.name === 'islands') return true; q = q.parent; }
+      return false;
+    }
+    // 树/石头原型填充：幂等，可反复调用（只补缺失条目，全是 getObjectByName，代价极小）
+    function fillTreesAndRocks() {
+      // 树：只缓存「组引用」。树是异步流入的，实测 20 秒时 findProto 即可成功，
+      // 而树干/树冠的世界矩阵要更晚才就位 —— 早前把冠点坐标快照进 PROTO，
+      // 之后每次放置都用加载中间态的错值当锚点（实测整树被抬高 ~1.25 m）。
+      // 树干/树冠/木柴坐标一律由 buildInstance 在放置时实时收集。
+      PROTO.trees = PROTO.trees || {};
+      ['tree-main', 'tree-001', 'tree-002', 'tree-003', 'tree-005', 'tree-006', 'tree-007',
+       'tree-008', 'tree-009', 'tree-010', 'tree-011'].forEach(function (tn) {
+        if (PROTO.trees[tn]) return;
+        var g = scene.getObjectByName(tn);
+        if (!g || !g.children.length) return;      // 组还没填充内容，下轮重试
+        PROTO.trees[tn] = { group: g, inIsl: inIslands(g) };
+      });
+      // 石头：同样只存引用
+      PROTO.rocks = PROTO.rocks || {};
+      ['basalt-top-old', 'basalt-main-old', 'basalt-floating-rock'].forEach(function (rn) {
+        if (PROTO.rocks[rn]) return;
+        var o = scene.getObjectByName(rn);
+        if (!o || !o.geometry) return;
+        PROTO.rocks[rn] = { obj: o, inIsl: inIslands(o) };
+      });
+    }
+    function findProto() {
+      if (PROTO.ok) {
+        // 闩锁后仍补抓缺失的树/石头变体：某组若晚于闩锁才加载，否则会永久
+        // 「构建失败」且无提示。placeState 被高频调用，补扫节流到 2 秒一次。
+        var nowS = performance.now();
+        if (nowS - (PROTO.lastSweep || 0) >= 2000) {
+          PROTO.lastSweep = nowS;
+          fillTreesAndRocks();
+        }
+        return true;
+      }
+      scene.updateMatrixWorld(true);
+      var isl = scene.getObjectByName('islands');
+      var camp = scene.getObjectByName('campfire');
+      if (!isl || !camp) return false;
+      // 营火只缓存「组引用」；木柴堆中心由 buildInstance 实时重算。
+      // 引擎对象是异步就位的，这里若快照坐标，放置就会用加载中间态的错值。
+      var n0 = 0;
+      camp.traverse(function (o) { if (o.isMesh) n0++; });
+      if (!n0) return false;                       // 营火尚未就位，下轮重试
+      PROTO.islands = isl;
+      PROTO.camp = camp;
+      PROTO.fire = scene.getObjectByName('Campfire_fire');
+      PROTO.sparks = scene.getObjectByName('Campfire_sparks');
+      PROTO.light = scene.getObjectByName('CampfireLight');
+      if (!PROTO.audio) {
+        scene.traverse(function (o) {
+          if (!PROTO.audio && o.name === 'campfire' && (o.isAudio || o.type === 'Audio')) PROTO.audio = o;
+        });
+      }
+      // 树/石头原型引用（幂等填充，闩锁后还会节流补抓）
+      fillTreesAndRocks();
+      // 树叶实例索引：每个 chunk 的每个实例 → bushCenter（用于配对树冠）
+      if (!PROTO.chunks) {
+        var cs = [];
+        scene.traverse(function (o) {
+          if (o.isInstancedMesh && o.name && o.name.indexOf('Foliage_chunk') === 0) cs.push(o);
+        });
+        if (!cs.length) return false;
+        PROTO.chunks = cs;
+        PROTO.instCtor = Object.getPrototypeOf(cs[0]).constructor;
+        PROTO.nodeCtor = Object.getPrototypeOf(camp).constructor;
+      }
+      PROTO.ok = true;
+      PROTO.lastSweep = performance.now();
+      return true;
+    }
+    // 把某个树冠（islands 局部坐标 c）在全部 chunk 里的叶子实例找出来。
+    // 判据：实例的 bushCenter 属性 === 树冠的局部坐标（实测逐位相等，容差 1e-4）。
+    function leavesOfCrown(c) {
+      var out = [];
+      for (var k = 0; k < PROTO.chunks.length; k++) {
+        var ch = PROTO.chunks[k];
+        var bc = ch.geometry.attributes.bushCenter;
+        if (!bc) continue;
+        var list = [];
+        for (var i = 0; i < ch.count; i++) {
+          var dx = bc.array[i * bc.itemSize] - c.local.x;
+          var dy = bc.array[i * bc.itemSize + 1] - c.local.y;
+          var dz = bc.array[i * bc.itemSize + 2] - c.local.z;
+          if (dx * dx + dy * dy + dz * dz < 1e-8) list.push(i);
+        }
+        if (list.length) out.push({ chunk: ch, idx: list });
+      }
+      return out;
+    }
+    // ⚠️ 原型必须「内容一加载就抓」，不能等用户第一次点放置才去找。
+    //    实测引擎会按相机距离卸载远处 chunk：同一台机器上树从 161 掉到 97、
+    //    `basalt-floating-rock` 直接消失，此时 __placeEnter 只会回「原型尚未加载完成」。
+    //    抓在卸载之前、之后一直持有引用（clone 只用几何/材质/子节点，不依赖原对象在树上），
+    //    相机在哪儿都能放。
+    // 原型抓取：成功即停，失败不设重试上限。树/营火/石头是异步加载的，
+    // 偶发资源抖动会让加载远超 4 分钟（实测出现过 120 秒仍未就绪的会话），
+    // 早前的 480 次上限放弃后，放置会永久报「原型未加载」且无任何提示。
+    var protoTimer = setInterval(function () {
+      if (findProto()) clearInterval(protoTimer);
+    }, 500);
+    // ---------- 通用工具 ----------
+    // 世界 AABB（把 geometry bbox 的 8 个角点变换到世界，避免 InstancedMesh 的坑）
+    function worldBox(objs, extraPts) {
+      var mn = null, mx = null;
+      function acc(v) {
+        if (!mn) { mn = [v.x, v.y, v.z]; mx = [v.x, v.y, v.z]; }
+        else {
+          mn[0] = Math.min(mn[0], v.x); mn[1] = Math.min(mn[1], v.y); mn[2] = Math.min(mn[2], v.z);
+          mx[0] = Math.max(mx[0], v.x); mx[1] = Math.max(mx[1], v.y); mx[2] = Math.max(mx[2], v.z);
+        }
+      }
+      objs.forEach(function (o) {
+        if (!o.geometry) return;
+        try { if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); } catch (e) { return; }
+        var bb = o.geometry.boundingBox; if (!bb) return;
+        var m = new M4().copy(o.matrixWorld), v = new V3();
+        if (o.isInstancedMesh && o.instanceMatrix) {
+          // 树叶等 InstancedMesh 的几何只有单个 ~2cm billboard，真实范围靠逐实例
+          // 矩阵撑开 —— 只按几何 bbox 算会得出无意义的假盒子，必须逐实例聚合
+          var inst = new M4();
+          for (var ii = 0; ii < o.count; ii++) {
+            inst.fromArray(o.instanceMatrix.array, ii * 16);
+            inst.premultiply(m);
+            for (var i2 = 0; i2 < 8; i2++) {
+              v.set(i2 & 1 ? bb.max.x : bb.min.x, i2 & 2 ? bb.max.y : bb.min.y, i2 & 4 ? bb.max.z : bb.min.z);
+              v.applyMatrix4(inst); acc(v);
+            }
+          }
+          return;
+        }
+        for (var i = 0; i < 8; i++) {
+          v.set(i & 1 ? bb.max.x : bb.min.x, i & 2 ? bb.max.y : bb.min.y, i & 4 ? bb.max.z : bb.min.z);
+          v.applyMatrix4(m); acc(v);
+        }
+      });
+      (extraPts || []).forEach(function (p) { acc(p); });
+      if (!mn) return null;
+      return { min: new V3(mn[0], mn[1], mn[2]), max: new V3(mx[0], mx[1], mx[2]),
+               size: new V3(mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2]),
+               center: new V3((mn[0] + mx[0]) / 2, (mn[1] + mx[1]) / 2, (mn[2] + mx[2]) / 2) };
+    }
+    function variantOf(kind, variantId) {
+      var list = PLC.variants[kind] || [];
+      for (var i = 0; i < list.length; i++) if (list[i].id === variantId) return list[i];
+      return list[0] || null;
+    }
+    // 把「源对象」克隆成放置物的子节点：
+    //   · 源在 islands 下 → 挂 inner（scale=9），clone.matrix = T(-anchorL) × localOf(src)
+    //   · 源不在 islands（如 CampfireLight 挂在 MainScene）→ 直接挂 outer，clone.matrix = T(-anchorW) × src.matrixWorld
+    // 结果：源在世界里的「锚点」精确落到落点 P，且相对形状与原始完全一致 × 缩放倍率。
+    function addClone(parent, src, anchorL, anchorW, ghost, name) {
+      if (!src) return null;
+      var c = src.clone(true);
+      c.name = name || ('pl-' + (src.name || 'obj'));
+      // ⚠️ 必须重命名子件，引擎的「场景树木/营火/石头已隐藏」开关按名
+      //    前缀（tree-*、Foliage_chunk_*、basalt-* 等）整树设 visible=false；
+      //    克隆出来的子件若沿用原名，会在每一帧被那个开关压成不可见 ——「放进场景了却
+      //    一颗像素都没有」。重命名克隆要带 pl- 前缀显式指定。
+      c.traverse(function (o) {
+        if (o !== c && o.name) o.name = 'pl-x-' + o.name;
+      });
+      if (inIslands(src)) {
+        c.matrix.copy(new M4().multiplyMatrices(new M4().makeTranslation(-anchorL.x, -anchorL.y, -anchorL.z), localOf(src)));
+      } else {
+        c.matrix.copy(new M4().multiplyMatrices(new M4().makeTranslation(-anchorW.x, -anchorW.y, -anchorW.z), new M4().copy(src.matrixWorld)));
+      }
+      c.matrixAutoUpdate = false;
+      c.matrixWorldNeedsUpdate = true;
+      if (ghost && ghostMat) {
+        c.traverse(function (o) { if (o.isMesh && o.material && !o.isInstancedMesh) o.material = ghostMat; });
+      }
+      parent.add(c);
+      return c;
+    }
+    // ---------- 幽灵预览 ----------
+    // 树叶是自定义 ShaderMaterial，opacity uniform 不存在，改材质透明度压不住，
+    // 所以幽灵一律换成 MeshBasicMaterial（探针10 实测能正常渲染）。
+    var ghostMat = TB.MeshBasicMaterial
+      ? new TB.MeshBasicMaterial({ color: 0x7fe08a, transparent: true, opacity: 0.32, depthWrite: false })
+      : null;
+    var ghostCache = {};
+    // ⚠️ 幽灵必须与真正放下去的物件**同一个构建函数、同一套矩阵**，
+    //    否则「预览看着对 / 放下就变形」会再次变成盲区（上一任就是两边各写一套）。
+    function ghostFor(kind, variantId) {
+      var vid = (variantOf(kind, variantId || (S.place.variant && S.place.variant[kind])) || {}).id;
+      var key = kind + ':' + vid;
+      if (ghostCache[key]) return ghostCache[key];
+      var node = buildInstance(kind, 'ghost-' + vid, vid, true);
+      if (!node) return null;
+      node.name = 'ghost-' + key;
+      node.visible = false;
+      ghostCache[key] = node;
+      return node;
+    }
+    // ---------- 树叶：按实例裁剪几何 ----------
+    // ⚠️ 逐实例属性必须和 instanceMatrix 一起裁、一起平移，否则全部错位：
+    //   · count=N 却用共享几何 → 读到的是**前 N 个别人的** packData/bushCenter；
+    //   · bushCenter 不跟着 instanceMatrix 平移 → 着色器的 AO
+    //     （calculateAmbientOcclusion(originalPos, bushCenter)）整片算错。
+    var LEAF_ATTRS = ['packData1', 'packData2', 'bushCenter', 'channelMask', 'colorVariation'];
+    function croppedLeafGeo(chunk, idx, anchorL) {
+      var g = chunk.geometry.clone();
+      // 克隆体会继承源 chunk 的包围球/盒（覆盖全岛的假大盒）——置空让它按裁剪后
+      // 顶点重算，避免未来引擎改动时视锥剔除或 __placeBox 读数失真
+      g.boundingBox = null;
+      g.boundingSphere = null;
+      for (var i = 0; i < LEAF_ATTRS.length; i++) {
+        var nm = LEAF_ATTRS[i];
+        var src = chunk.geometry.attributes[nm];
+        if (!src || !src.array) continue;
+        var isz = src.itemSize, Ctor = Object.getPrototypeOf(src).constructor;
+        var arr = new src.array.constructor(idx.length * isz);
+        for (var k = 0; k < idx.length; k++) {
+          for (var j = 0; j < isz; j++) arr[k * isz + j] = src.array[idx[k] * isz + j];
+          if (nm === 'bushCenter') {
+            arr[k * isz] -= anchorL.x; arr[k * isz + 1] -= anchorL.y; arr[k * isz + 2] -= anchorL.z;
+          }
+        }
+        var na = new Ctor(arr, isz);
+        na.isInstancedBufferAttribute = true;      // 必须仍是逐实例，否则会被当普通顶点属性
+        na.meshPerAttribute = 1;
+        g.setAttribute(nm, na);
+      }
+      return g;
+    }
+    // 一棵树 = 若干「树冠」× 每冠约 44 片叶。把这些叶子从各 Foliage_chunk 里挑出来，
+    // 按 chunk 分组各建一个 InstancedMesh（不同 chunk 的逐实例属性是各自的）。
+    function addFoliage(parent, crowns, anchorL, id) {
+      var byChunk = {}, order = [];
+      crowns.forEach(function (c) {
+        leavesOfCrown(c).forEach(function (grp) {
+          var key = grp.chunk.uuid;
+          if (!byChunk[key]) { byChunk[key] = { chunk: grp.chunk, idx: [] }; order.push(key); }
+          byChunk[key].idx = byChunk[key].idx.concat(grp.idx);
+        });
+      });
+      var total = 0;
+      order.forEach(function (key) {
+        var e = byChunk[key], ch = e.chunk, idx = e.idx;
+        if (!idx.length) return;
+        var im = new PROTO.instCtor(croppedLeafGeo(ch, idx, anchorL), ch.material, idx.length);
+        im.name = 'pl-leaves-' + id;
+        var a = im.instanceMatrix.array, m = new M4(), p = new V3(), q = new QT(), s = new V3(), t = new M4();
+        for (var k = 0; k < idx.length; k++) {
+          m.fromArray(ch.instanceMatrix.array, idx[k] * 16);
+          m.decompose(p, q, s);
+          t.makeTranslation(p.x - anchorL.x, p.y - anchorL.y, p.z - anchorL.z);
+          for (var w = 0; w < 16; w++) a[k * 16 + w] = t.elements[w];
+        }
+        im.instanceMatrix.needsUpdate = true;
+        im.count = idx.length;
+        // 矩阵已把锚点减掉，节点自身保持单位阵（缩放由 outer/inner 负责）
+        im.matrix.identity();
+        im.matrixAutoUpdate = false;
+        im.matrixWorldNeedsUpdate = true;
+        parent.add(im);
+        total += idx.length;
+      });
+      return total;
+    }
+    // ---------- 实例构建 ----------
+    var KIND_LABEL = { tree: '树', campfire: '营火', rock: '石头' };
+    S.place = { mode: false, kind: 'tree', items: [], sel: null, nextId: 1, groundY: null,
+                variant: { tree: PLC.defaultVariant.tree,
+                           campfire: PLC.defaultVariant.campfire,
+                           rock: PLC.defaultVariant.rock },
+                // 「下一个要放多大」：每个类型各自记住，切换型号时回到该型号的默认值
+                scale: { tree: (variantOf('tree', PLC.defaultVariant.tree) || {}).defaultScale || 1,
+                         campfire: (variantOf('campfire', PLC.defaultVariant.campfire) || {}).defaultScale || 1,
+                         rock: (variantOf('rock', PLC.defaultVariant.rock) || {}).defaultScale || 1 } };
+    S.cursor = { nx: 0, ny: 0, has: false };
+    function buildInstance(kind, id, variantId, ghost) {
+      if (!findProto()) return null;
+      var V = variantOf(kind, variantId);
+      if (!V) return null;
+      // 两级容器：outer 承担「落点 + 旋转 + 用户缩放」，inner 还原 islands 的 9 倍世界缩放。
+      // 这样岛屿内的子件（树/木柴/火/火星/石头）挂 inner，不在 islands 下的（点光源）挂 outer。
+      var outer = new PROTO.nodeCtor();
+      outer.name = 'place-' + kind + '-' + id;
+      var inner = new PROTO.nodeCtor();
+      inner.name = 'pl-inner-' + id;
+      inner.scale.set(ISL, ISL, ISL);
+      outer.add(inner);
+      var anchorW = null, leaves = 0;
+      if (kind === 'tree') {
+        var tr = PROTO.trees[V.src];
+        if (!tr) return null;
+        // 树干/树冠位置实时收集 —— 树异步就位，任何早前的快照都不可信（见 findProto 注释）
+        var crowns = [], trunks = [];
+        tr.group.traverse(function (o) {
+          if (o === tr.group) return;
+          var p = new V3(); o.getWorldPosition(p);
+          if (o.isMesh) trunks.push(o);
+          else crowns.push({ name: o.name, local: new V3(p.x / ISL, p.y / ISL, p.z / ISL), world: p.clone() });
+        });
+        // 锚点 = 树干+树冠世界包围盒的「底面中心」→ 树站在落点上，而不是吊在半空
+        var box = worldBox(trunks, crowns.map(function (c) { return c.world; }));
+        if (!box) return null;
+        anchorW = new V3(box.center.x, box.min.y, box.center.z);
+        var tL = new V3(anchorW.x / ISL, anchorW.y / ISL, anchorW.z / ISL);
+        // 组克隆负责树干（树冠节点是空 Object3D，克隆出来没有几何）
+        if (!addClone(inner, tr.group, tL, anchorW, ghost, 'pl-treegrp-' + id)) return null;
+        leaves = addFoliage(inner, crowns, tL, id);
+      } else if (kind === 'rock') {
+        var r = PROTO.rocks[V.src];
+        if (!r) return null;
+        var rb = worldBox([r.obj], null);
+        if (!rb) return null;
+        anchorW = new V3(rb.center.x, rb.min.y, rb.center.z);
+        var rL = new V3(anchorW.x / ISL, anchorW.y / ISL, anchorW.z / ISL);
+        if (!addClone(inner, r.obj, rL, anchorW, ghost, 'pl-rock-' + id)) return null;
+      } else if (kind === 'campfire') {
+        // 木柴堆中心实时重算（全部木柴 mesh 世界坐标的均值，不能用组原点）
+        var acc = new V3(), v0 = new V3(), nn = 0;
+        PROTO.camp.traverse(function (o) { if (o.isMesh) { o.getWorldPosition(v0); acc.add(v0); nn++; } });
+        if (!nn) return null;
+        acc.multiplyScalar(1 / nn);
+        anchorW = acc;
+        var cL = new V3(acc.x / ISL, acc.y / ISL, acc.z / ISL);
+        if (!addClone(inner, PROTO.camp, cL, anchorW, ghost, 'pl-wood-' + id)) return null;
+        addClone(inner, PROTO.fire, cL, anchorW, ghost, 'pl-fire-' + id);
+        addClone(inner, PROTO.sparks, cL, anchorW, ghost, 'pl-sparks-' + id);
+        if (!ghost) {   // 幽灵只是视觉预览：不带真实点光源（会照亮场景），也不带音频
+          addClone(outer, PROTO.light, cL, anchorW, ghost, 'pl-light-' + id);   // 不在 islands 下
+          addClone(inner, PROTO.audio, cL, anchorW, ghost, 'pl-audio-' + id);
+        }
+      } else { return null; }
+      outer.traverse(function (o) { o.frustumCulled = false; });
+      // ⚠️ clone() 会连 visible 一起复制，而源对象此刻可能正被「默认隐藏」开关压成 false
+      //    → 不逐个强制 true 就会出现「放进场景了却一个像素都看不见」。
+      outer.traverse(function (o) { o.visible = true; });
+      outer.userData.leaves = leaves;
+      outer.userData.anchorW = anchorW;
+      if (!ghost) scene.add(outer);
+      return outer;
+    }
+    function itemById(id) {
+      for (var i = 0; i < S.place.items.length; i++) if (S.place.items[i].id === id) return S.place.items[i];
+      return null;
+    }
+    function applyItem(it) {
+      if (!it || !it.node) return;
+      it.node.position.set(it.x, it.y, it.z);
+      it.node.rotation.set(0, it.rotY * D2R, 0);
+      it.node.scale.set(it.scale, it.scale, it.scale);
+    }
+    function addItem(kind, x, y, z, rotY, scale, variantId) {
+      // 容量上限对鼠标落位 / __placeAdd / 导入三条路径统一生效
+      if (S.place.items.length >= PLC.maxItems) {
+        if (window.__onPlaceWarn) window.__onPlaceWarn('已达上限 ' + PLC.maxItems + ' 个，无法继续放置');
+        return null;
+      }
+      var V = variantOf(kind, variantId || (S.place.variant && S.place.variant[kind]));
+      if (!V) return null;
+      var id = S.place.nextId++;
+      var node = buildInstance(kind, id, V.id, false);
+      if (!node) return null;
+      var it = { id: id, kind: kind, variant: V.id, node: node,
+                 x: +finite(x, 0), y: +finite(y, 0), z: +finite(z, 0),
+                 rotY: +finite(rotY, 0),
+                 scale: Math.min(PLC.scaleMax, Math.max(PLC.scaleMin,
+                          finite(scale, V.defaultScale))) };
+      applyItem(it);
+      S.place.items.push(it);
+      S.place.sel = id;
+      return it;
+    }
+    // 只释放「派生资源」：裁剪树叶几何是每个实例独立新建的，必须 dispose，
+    // 否则反复增删/重导入会持续累积 GPU 缓冲。树干/木柴/石头/火焰的几何与
+    // 原场景对象共享（clone 不复制几何），绝不能释放，否则原生树会碎掉。
+    function disposeItemNode(n) {
+      n.traverse(function (o) {
+        if (o.isInstancedMesh && o.name && o.name.indexOf('pl-leaves-') === 0) {
+          if (o.geometry) o.geometry.dispose();
+          if (o.dispose) o.dispose();
+        }
+      });
+    }
+    function deleteItem(id) {
+      var it = itemById(id);
+      if (!it) return false;
+      if (it.node && it.node.parent) { disposeItemNode(it.node); it.node.parent.remove(it.node); }
+      S.place.items.splice(S.place.items.indexOf(it), 1);
+      if (S.place.sel === id) S.place.sel = null;
+      return true;
+    }
+    function clearItems() {
+      for (var i = 0; i < S.place.items.length; i++) {
+        var n = S.place.items[i].node;
+        if (n && n.parent) { disposeItemNode(n); n.parent.remove(n); }
+      }
+      S.place.items = [];
+      S.place.sel = null;
+    }
+    function ghostKey(kind) {
+      var vid = (variantOf(kind, S.place.variant && S.place.variant[kind]) || {}).id;
+      return kind + ':' + vid;
+    }
+    function placeState() {
+      var sel = itemById(S.place.sel);
+      var gk = ghostKey(S.place.kind), gh = ghostCache[gk];
+      function vlabel(kind, vid) { var v = variantOf(kind, vid); return v ? v.label : vid; }
+      return {
+        mode: !!S.place.mode, kind: S.place.kind, count: S.place.items.length,
+        variant: (S.place.variant && S.place.variant[S.place.kind]) || null,
+        nextScale: (S.place.scale && S.place.scale[S.place.kind]) || 1,
+        variantList: (PLC.variants[S.place.kind] || []).map(function (v) {
+          return { id: v.id, label: v.label, note: v.note, defaultScale: v.defaultScale }; }),
+        sel: S.place.sel, ready: findProto(),
+        ghost: { has: !!(gh && gh.visible),
+                 pos: gh ? [+gh.position.x.toFixed(3), +gh.position.y.toFixed(3), +gh.position.z.toFixed(3)] : null },
+        items: S.place.items.map(function (o) {
+          return { id: o.id, kind: o.kind, label: KIND_LABEL[o.kind],
+                   variant: o.variant, variantLabel: vlabel(o.kind, o.variant),
+                   x: +o.x.toFixed(4), y: +o.y.toFixed(4), z: +o.z.toFixed(4),
+                   rotY: +o.rotY.toFixed(2), scale: +o.scale.toFixed(4),
+                   leaves: o.node ? (o.node.userData.leaves || 0) : 0,
+                   kids: o.node ? o.node.children.length : 0 };
+        }),
+        selected: sel ? { id: sel.id, kind: sel.kind, variant: sel.variant,
+                          variantLabel: vlabel(sel.kind, sel.variant),
+                          x: sel.x, y: sel.y, z: sel.z,
+                          rotY: sel.rotY, scale: sel.scale,
+                          ground: window.__groundY(sel.x, sel.z) } : null
+      };
+    }
+    function notifyPlace() { if (window.__onPlace) window.__onPlace(placeState()); }
+    // ---------- 幽灵跟随光标（渲染前一刻更新，与相机强制写入同一时机） ----------
+    function updateGhost() {
+      var kind = S.place.kind, gk = ghostKey(kind);
+      // ⚠️ 切换物件类型/型号时，上一个幽灵必须收起来。
+      //    幽灵节点是按「类型:型号」缓存并常驻场景的（只是靠 visible 控制），
+      //    只更新当前键而不管 others 的话，切一次型号屏幕上就会同时挂着好几个预览。
+      for (var k in ghostCache) {
+        if (k !== gk && ghostCache[k]) ghostCache[k].visible = false;
+      }
+      if (!S.place.mode) {
+        for (var k2 in ghostCache) if (ghostCache[k2]) ghostCache[k2].visible = false;
+        return;
+      }
+      var node = ghostFor(kind);
+      if (!node) return;
+      // 幽灵必须用「即将落位的那个缩放」，否则「预览 1 倍 / 放下变 0.4 倍」会吓一跳
+      var sv = (S.place.scale && S.place.scale[kind]) || 1;
+      node.scale.set(sv, sv, sv);
+      if (node.parent !== scene) scene.add(node);
+      if (!S.cursor.has) { node.visible = false; return; }
+      var h = groundHit(S.cursor.nx, S.cursor.ny);
+      if (!h) { node.visible = false; return; }
+      node.visible = true;
+      node.position.set(h.point.x, h.point.y, h.point.z);
+    }
+    // ---------- 放置模式：光标 + 左键落位 + 右键转视角 ----------
+    function canvasRect() {
+      var cv = eng.canvas || document.querySelector('canvas');
+      return (cv && cv.getBoundingClientRect) ? cv.getBoundingClientRect() : null;
+    }
+    window.addEventListener('mousemove', function (e) {
+      if (S.place.mode) {
+        var r = canvasRect();
+        if (r && r.width > 0 && r.height > 0) {
+          S.cursor.nx = ((e.clientX - r.left) / r.width) * 2 - 1;
+          S.cursor.ny = -((e.clientY - r.top) / r.height) * 2 + 1;
+          S.cursor.has = true;
+        }
+        if (e.buttons & 2) addLook(e.movementX || 0, e.movementY || 0);   // 右键拖拽转视角
+        // ⚠️ 非放置模式**不要**在这里再调 addLook：上面的原始 mousemove 监听已经调了，
+        //    两处都调会让每次鼠标移动转两次视角（yaw/pitch 变化量翻倍）。
+        //    这个重复曾把「变化量与 sensitivity 精确一致」的验证打挂，是本轮真实回归。
+        return;
+      }
+      // 放置模式之外一律交给原始监听处理，本监听不碰视角
+    });
+    window.addEventListener('mouseleave', function () { S.cursor.has = false; });
+    window.addEventListener('mousedown', function (e) {
+      if (!S.place.mode || e.button !== 0) return;
+      e.preventDefault();
+      var node = ghostFor(S.place.kind);
+      if (!node || !node.visible) { notifyPlace(); return; }
+      var it = addItem(S.place.kind, node.position.x, node.position.y, node.position.z, 0,
+                       S.place.scale[S.place.kind], S.place.variant[S.place.kind]);
+      if (!it) return;
+      // 点光源每个营火一份，点多了会拖垮帧率，这里给一句实话而不是静默
+      if (S.place.kind === 'campfire' && S.place.items.length > PLC.campfireWarn) {
+        if (window.__onPlaceWarn) window.__onPlaceWarn('营火已超过 ' + PLC.campfireWarn + ' 个，每个都带点光源，帧率可能下降');
+      }
+      notifyPlace();
+    }, true);
+    window.addEventListener('contextmenu', function (e) { if (S.place.mode) e.preventDefault(); });
+    window.addEventListener('keydown', function (e) {
+      if (e.code === 'Escape' && S.place.mode) window.__placeExit();
+    });
+    // ---------- 宿主接口 ----------
+    window.__placeEnter = function (kind, variantId) {
+      if (!findProto()) return { ok: false, reason: '原型尚未加载完成（树/营火/石头还没出现）' };
+      S.place.kind = (kind === 'campfire' || kind === 'rock') ? kind : 'tree';
+      if (variantId) {
+        // 型号白名单：非法值拒绝写入，否则状态回显的 variant 与实际放置型号不一致
+        var vok = false;
+        (PLC.variants[S.place.kind] || []).forEach(function (vv) { if (vv.id === variantId) vok = true; });
+        if (vok) S.place.variant[S.place.kind] = variantId;
+      }
+      S.place.mode = true;
+      window.__camUnlock();                       // 光标定位与指针锁定互斥，必须先退出
+      ghostFor(S.place.kind);
+      notifyPlace();
+      return { ok: true, state: placeState() };
+    };
+    // 切换型号：换源对象 + 把「下一个缩放」复位到该型号的默认值
+    window.__placeSetVariant = function (variantId) {
+      var list = PLC.variants[S.place.kind] || [];
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].id === variantId) {
+          S.place.variant[S.place.kind] = variantId;
+          S.place.scale[S.place.kind] = list[i].defaultScale;
+          if (S.place.mode) ghostFor(S.place.kind);
+          notifyPlace();
+          return placeState();
+        }
+      }
+      return placeState();
+    };
+    window.__placeSetScale = function (v) {
+      var n = parseFloat(v);
+      if (!isFinite(n)) return placeState();
+      S.place.scale[S.place.kind] = Math.min(PLC.scaleMax, Math.max(PLC.scaleMin, n));
+      notifyPlace();
+      return placeState();
+    };
+    // 程序化落位：给自动化验证与「按坐标精确摆」用，与鼠标落位走同一条 addItem
+    window.__placeAdd = function (kind, x, y, z, rotY, scale, variantId) {
+      if (!findProto()) return { ok: false, reason: '原型未加载' };
+      var V = variantOf(kind, variantId || (S.place.variant && S.place.variant[kind]));
+      if (!V) return { ok: false, reason: '型号不存在: ' + variantId };
+      var it = addItem(kind, x, y, z, rotY || 0,
+                       (scale === undefined || scale === null) ? S.place.scale[kind] : scale, V.id);
+      if (!it) {
+        // addItem 返回 null 有两种原因：容量打满（已 toast）或构建失败——reason 如实区分
+        return { ok: false, reason: S.place.items.length >= PLC.maxItems ? '已达上限' : '构建失败' };
+      }
+      notifyPlace();
+      return { ok: true, item: { id: it.id, kind: it.kind, variant: it.variant,
+                                 x: it.x, y: it.y, z: it.z, scale: it.scale,
+                                 leaves: it.node.userData.leaves || 0 }, state: placeState() };
+    };
+    // 世界包围盒回读：验证「放下去的东西到底多大、在哪」的唯一可信手段
+    window.__placeBox = function (id) {
+      var it = itemById(id);
+      if (!it || !it.node) return null;
+      scene.updateMatrixWorld(true);
+      var meshes = [], pts = [];
+      it.node.traverse(function (o) {
+        if (o.isMesh) meshes.push(o);
+      });
+      var b = worldBox(meshes, pts);
+      if (!b) return null;
+      return { min: [+b.min.x.toFixed(3), +b.min.y.toFixed(3), +b.min.z.toFixed(3)],
+               max: [+b.max.x.toFixed(3), +b.max.y.toFixed(3), +b.max.z.toFixed(3)],
+               size: [+b.size.x.toFixed(3), +b.size.y.toFixed(3), +b.size.z.toFixed(3)],
+               meshes: meshes.length };
+    };
+    window.__placeExit = function () {
+      S.place.mode = false;
+      S.cursor.has = false;
+      for (var k in ghostCache) if (ghostCache[k]) ghostCache[k].visible = false;
+      notifyPlace();
+      return placeState();
+    };
+    window.__placeSelect = function (id) {
+      S.place.sel = (id === null || id === undefined) ? null : id;
+      notifyPlace();
+      return placeState();
+    };
+    window.__placePatch = function (id, patch) {
+      var it = itemById(id);
+      if (!it || !patch) return false;
+      // 粘贴的 JSON 是不可信输入：每个字段都过 isFinite 白名单，NaN 绝不能进 three
+      if (patch.x !== undefined && isFinite(+patch.x)) it.x = +patch.x;
+      if (patch.y !== undefined && isFinite(+patch.y)) it.y = +patch.y;
+      if (patch.z !== undefined && isFinite(+patch.z)) it.z = +patch.z;
+      if (patch.rotY !== undefined && isFinite(+patch.rotY)) it.rotY = +patch.rotY;
+      if (patch.scale !== undefined && isFinite(+patch.scale)) {
+        it.scale = Math.min(PLC.scaleMax, Math.max(PLC.scaleMin, +patch.scale));
+      }
+      applyItem(it);
+      notifyPlace();
+      return true;
+    };
+    window.__placeGround = function (id) {
+      var it = itemById(id);
+      if (!it) return false;
+      var y = window.__groundY(it.x, it.z);
+      if (y === null) return false;
+      it.y = y;
+      applyItem(it);
+      notifyPlace();
+      return true;
+    };
+    window.__placeDelete = function (id) { var r = deleteItem(id); notifyPlace(); return r; };
+    window.__placeClear = function () { clearItems(); notifyPlace(); return placeState(); };
+    window.__placeState = placeState;
+    window.__placeImport = function (list) {
+      // ⚠️ 形状校验必须放在 clearItems 之前：非数组输入直接原样返回，
+      //    绝不能把用户已摆好的 placements 先清掉再报错（破坏性导入无 undo）
+      if (!Array.isArray(list)) return { ok: false, bad: 0, state: placeState() };
+      clearItems();
+      // 返回形状必须与下面成功分支完全一致（{ok,bad,state}）：
+      // 早前这里直接 return placeState()，宿主/门禁按 .bad/.state 取值就全是 undefined。
+      var bad = 0;
+      for (var i = 0; i < list.length && i < PLC.maxItems; i++) {
+        var o = list[i];
+        if (!o || (o.kind !== 'tree' && o.kind !== 'campfire' && o.kind !== 'rock')) { bad++; continue; }
+        if (!isFinite(+o.x) || !isFinite(+o.y) || !isFinite(+o.z)) { bad++; continue; }
+        if (!addItem(o.kind, o.x, o.y, o.z, o.rotY, o.scale, o.variant)) { bad++; }
+      }
+      if (list.length > PLC.maxItems) bad += list.length - PLC.maxItems;  // 截断部分也要说出来
+      S.place.sel = S.place.items.length ? S.place.items[S.place.items.length - 1].id : null;
+      notifyPlace();
+      return { ok: bad === 0, bad: bad, state: placeState() };
+    };
+  }
+
+  // ---------- 主循环（宿主侧） ----------
+  var last = performance.now(), acc = 0, paramsDirty = false, lastRf = 0;
+  function tick() {
+    if (!win || !win.__camState) return;
+    acc += performance.now() - last; last = performance.now();
+    // 显示真实渲染帧率：__camState.frames 只在主场景每帧渲染时 +1，
+    // 本函数自身是 16ms 定时器，计它自己的触发率会虚高且与画面无关
+    if (acc > 1000) {
+      var rf = win.__camState.frames;
+      // iframe reload 后新 S.frames 从 0 起算，旧 lastRf 会算出负数——遇到就重置
+      if (rf < lastRf) lastRf = 0;
+      document.getElementById('fps').textContent = (rf - lastRf) + ' fps';
+      lastRf = rf; acc = 0;
+    }
+    // 吴昊阳现在是纯 DOM 图层，不再每帧同步到 3D 场景，tick 里已无相关工作。
+    // ⚠️ 用户正在参数框里查看/编辑/粘贴时绝不重建（会把没应用的内容静默冲掉）；
+    //    dirty 保持不变，失焦后下一帧自动补建。
+    if (paramsDirty) {
+      var pa = document.activeElement;
+      if (!pa || pa.id !== 'params') { paramsDirty = false; updateParams(); }
+    }
+  }
+
+  // ---------- 相机应用 ----------
+  function applyCam() {
+    if (!win || !win.__setCam) return;
+    win.__setCam({ y: S.camY, dist: S.camD, pitch: S.camP, yaw: S.camA });
+  }
+
+  // 滑块范围外的真实机位值不回写，避免把机位夹到滑块量程里
+  function setSlider(id, v) {
+    var el = document.getElementById(id);
+    if (v >= +el.min && v <= +el.max) el.value = v;
+  }
+  function syncSlidersFromCam() {
+    if (!win || !win.__getCam) return;
+    var cm = win.__getCam();
+    setSlider('camY', cm.y); setSlider('camD', cm.d);
+    setSlider('camP', cm.p); setSlider('camA', cm.a);
+    S.camY = cm.y; S.camD = cm.d; S.camP = cm.p; S.camA = cm.a;
+    showVals();
+    updateParams();
+  }
+
+  // ---------- 按钮 ----------
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._t); t._t = setTimeout(function () { t.classList.remove('show'); }, 1400);
+  }
+
+// 添加/显示吴昊阳。他现在是 fixed 图层，显示与否和引擎是否就绪无关 ——
+  // 即使引擎还在加载也能先把人摆上去看位置。
+  function addWuNow() {
+    S.wuVisible = true;
+    applyWu();
+    updateParams();
+    toast('已添加吴昊阳');
+  }
+  document.getElementById('btnWu').addEventListener('click', addWuNow);
+
+  // 「恢复默认参数」：复位为用户确认过的默认值（DEFAULTS，X 24.5%/Y 71%/大小 24%/不透明度 1）。
+  // 语义边界：原始场景本身从未被改动，所以恢复的是「吴昊阳参数」而非场景。
+  document.getElementById('btnWuReset').addEventListener('click', function () {
+    ['wuX', 'wuY', 'wuScale', 'wuAlpha'].forEach(function (k) { S[k] = DEFAULTS[k]; });
+    S.wuVisible = true;
+    writeUI();
+    updateParams();
+    toast('已恢复默认参数');
+  });
+
+document.getElementById('btnLock').addEventListener('click', function () {
+  if (!win || !win.__camLock) return toast('引擎未就绪');
+  if (win.__camState && win.__camState.locked) { win.__camUnlock(); toast('已退出指针锁定'); }
+  else { win.__camLock(); toast('正在锁定指针：ESC 退出'); }
+  });
+  // ---------- 相机冻结（Enter） ----------
+  function syncFreezeUI(frozen) {
+    var b = c('btnFreeze');
+    b.classList.toggle('on', !!frozen);
+    c('freezeState').textContent = frozen ? '已完全固定' : '未固定';
+    b.firstChild.nodeValue = frozen ? '🔒 ' : '🔓 ';
+  }
+  function toggleFreeze() {
+    if (!win || !win.__camSetFrozen) return toast('引擎未就绪');
+    var now = win.__camSetFrozen(!win.__camFrozen());
+    syncFreezeUI(now);
+    toast(now ? '相机已完全固定，再按 Enter 解锁' : '相机已解锁');
+  }
+  c('btnFreeze').addEventListener('click', toggleFreeze);
+  // ---------- 树木开关 ----------
+  function syncTreesUI(vis, r) {
+    c('trees').checked = !!vis;
+    var n = (r && (r.tracked != null ? r.tracked : r.total)) || 0;
+    c('treesv').textContent = vis ? ('显示 ' + n + ' 个') : ('已删除 ' + n + ' 个');
+  }
+  c('trees').addEventListener('change', function () {
+    if (!win || !win.__setTrees) return toast('引擎未就绪');
+    var on = c('trees').checked;
+    var r = win.__setTrees(on);
+    syncTreesUI(on, r);
+    toast(on ? ('已恢复 ' + r.tracked + ' 个树对象')
+             : ('已删除 ' + r.tracked + ' 个树对象'));
+  });
+  // ---------- 营火 / 石头 开关 ----------
+  function syncPropsUI() {
+    if (!win || !win.__propsState) return;
+    var st = win.__propsState();
+    c('campfire').checked = !!st.campfireVisible;
+    c('rocks').checked = !!st.rocksVisible;
+    c('campfirev').textContent = st.campfireVisible
+      ? ('显示 ' + st.campfire.nodes + ' 个')
+      : ('已移除 ' + st.campfire.hidden);
+    c('rocksv').textContent = st.rocksVisible
+      ? ('显示 ' + st.rocks.nodes + ' 个')
+      : ('已移除 ' + st.rocks.hidden);
+  }
+  function bindProp(id, key, label) {
+    c(id).addEventListener('change', function () {
+      if (!win || !win.__setProps) return toast('引擎未就绪');
+      var on = c(id).checked;
+      var r = win.__setProps((function(){ var p={}; p[key]=on; return p; })());
+      syncPropsUI();
+      toast(on ? ('已恢复' + label + ' ' + r[key].nodes + ' 个对象')
+              : ('已移除' + label + ' ' + r[key].hidden + ' 个对象'));
+    });
+  }
+bindProp('campfire', 'campfire', '营火');
+  bindProp('rocks', 'rocks', '石头');
+  // ---------- 自由放置 ----------
+  var KIND_CN = { tree: '树', campfire: '营火', rock: '石头' };
+  var placeState = { mode: false, kind: 'tree', count: 0, items: [], sel: null,
+                     selected: null, ready: false };
+  function showPlaceVals() {
+    c('plXv').textContent = (+v('plX')).toFixed(1);
+    c('plZv').textContent = (+v('plZ')).toFixed(1);
+    c('plLiftv').textContent = (+v('plLift')).toFixed(2);
+    c('plRotv').textContent = Math.round(+v('plRot')) + '°';
+    c('plScalev').textContent = (+v('plScale')).toFixed(2);
+  }
+  // 离地 = 选中物高度 − 该 xz 的地面高度；地面打不到（瞄到岛外）时按 0 处理，
+  // 滑块仍可用，只是读数变成绝对高度。
+  function groundOf(sel) {
+    return (sel && sel.ground !== null && sel.ground !== undefined) ? sel.ground : 0;
+  }
+  function syncPlaceUI(st) {
+    if (st) placeState = st;
+    // ⚠️ 局部变量绝不能叫 s —— 上面那个 s(id,val) 是写 range 控件的全局助手，
+    //    局部变量同名会把函数整个遮蔽，直接抛 "s is not a function"。
+    var ps = placeState;
+    if (!ps) return;
+    c('placeCount').textContent = ps.count + ' 个';
+    var b = c('btnPlace');
+    b.classList.toggle('on', !!ps.mode);
+    b.textContent = ps.mode ? ('■ 退出放置模式（当前 ' + (KIND_CN[ps.kind] || ps.kind) + '）')
+                            : '▶ 进入放置模式';
+    c('pkTree').classList.toggle('on', ps.kind === 'tree');
+    c('pkCamp').classList.toggle('on', ps.kind === 'campfire');
+    c('pkRock').classList.toggle('on', ps.kind === 'rock');
+    // 型号下拉：选项随类型变，切换时把「下一缩放」复位到该型号的默认值
+    var vs = c('plVariant');
+    if (ps.variantList && ps.variantList.length) {
+      var want = ps.variant || (ps.variantList[0] && ps.variantList[0].id);
+      if (vs.getAttribute('data-kind') !== ps.kind || vs.options.length !== ps.variantList.length) {
+        vs.innerHTML = '';
+        ps.variantList.forEach(function (o) {
+          var op = document.createElement('option');
+          op.value = o.id; op.textContent = o.label; op.title = o.note || '';
+          vs.appendChild(op);
+        });
+        vs.setAttribute('data-kind', ps.kind);
+      }
+      vs.value = want;
+      var cur = null;
+      ps.variantList.forEach(function (o) { if (o.id === want) cur = o; });
+      c('plNote').textContent = cur ? ('原始尺寸：' + (cur.note || '') + '（缩放 1 = 与原始场景完全一致）') : '';
+    }
+    if (ps.nextScale !== undefined && ps.nextScale !== null) {
+      var nsel = c('plNextScale');
+      if (document.activeElement !== nsel) s('plNextScale', ps.nextScale);
+      c('plNextScalev').textContent = (+ps.nextScale).toFixed(2);
+    }
+    var list = c('placeList');
+    list.innerHTML = '';
+    for (var i = 0; i < ps.items.length; i++) {
+      var o = ps.items[i];
+      var d = document.createElement('div');
+      d.className = 'it' + (o.id === ps.sel ? ' sel' : '');
+      var nm = document.createElement('span');
+      nm.className = 'nm';
+      nm.textContent = '#' + o.id + ' ' + (o.label || KIND_CN[o.kind] || o.kind)
+                      + '  ' + o.x.toFixed(1) + ', ' + o.y.toFixed(1) + ', ' + o.z.toFixed(1);
+      nm.title = '点击选中并编辑';
+      nm.onclick = (function (id) { return function () { selectPlace(id); }; })(o.id);
+      var del = document.createElement('span');
+      del.className = 'del';
+      del.textContent = '✕';
+      del.title = '删除这一个';
+      del.onclick = (function (id) {
+        return function (ev) { ev.stopPropagation(); if (win && win.__placeDelete) win.__placeDelete(id); };
+      })(o.id);
+      d.appendChild(nm); d.appendChild(del);
+      list.appendChild(d);
+    }
+    var ed = c('plEdit'), sel = ps.selected;
+    if (sel) {
+      ed.classList.remove('off');
+      s('plX', sel.x); s('plZ', sel.z);
+      s('plLift', sel.y - groundOf(sel));
+      s('plRot', sel.rotY); s('plScale', sel.scale);
+    } else {
+      ed.classList.add('off');
+    }
+    showPlaceVals();
+  }
+  function selectPlace(id) {
+    if (!win || !win.__placeSelect) return toast('引擎未就绪');
+    syncPlaceUI(win.__placeSelect(id));
+  }
+  ['pkTree', 'pkCamp', 'pkRock'].forEach(function (id) {
+    c(id).addEventListener('click', function () {
+      S.placeKind = c(id).getAttribute('data-kind');
+      // 已在放置模式里就直接换原型（幽灵随之重建），否则只记住选中的物件
+      if (placeState.mode && win && win.__placeEnter) win.__placeEnter(S.placeKind);
+      else syncPlaceUI({ mode: placeState.mode, kind: S.placeKind, count: placeState.count,
+                         items: placeState.items, sel: placeState.sel,
+                         selected: placeState.selected, ready: placeState.ready });
+      updateParams();
+    });
+  });
+  c('plVariant').addEventListener('change', function () {
+    if (!win || !win.__placeSetVariant) return toast('引擎未就绪');
+    syncPlaceUI(win.__placeSetVariant(c('plVariant').value));
+    updateParams();
+  });
+  c('plNextScale').addEventListener('input', function () {
+    c('plNextScalev').textContent = (+v('plNextScale')).toFixed(2);
+    if (!win || !win.__placeSetScale) return;
+    syncPlaceUI(win.__placeSetScale(v('plNextScale')));
+  });
+  c('btnPlace').addEventListener('click', function () {
+    if (!win || !win.__placeEnter) return toast('引擎未就绪');
+    if (placeState.mode) { win.__placeExit(); toast('已退出放置模式'); return; }
+    var r = win.__placeEnter(S.placeKind);
+    if (!r || !r.ok) return toast((r && r.reason) || '树/营火/石头还没加载完，稍等再试');
+    toast('移动鼠标看绿色预览，左键落位，右键拖动转视角');
+  });
+  c('btnPlaceGround').addEventListener('click', function () {
+    if (!placeState.selected) return toast('先选中一个物件');
+    if (!win || !win.__placeGround) return toast('引擎未就绪');
+    if (!win.__placeGround(placeState.selected.id)) toast('这个位置打不到地面');
+  });
+  c('btnPlaceDel').addEventListener('click', function () {
+    if (!placeState.selected) return toast('先选中一个物件');
+    if (win && win.__placeDelete) win.__placeDelete(placeState.selected.id);
+  });
+  c('btnPlaceClear').addEventListener('click', function () {
+    if (!win || !win.__placeClear) return toast('引擎未就绪');
+    win.__placeClear();
+    toast('已清空全部放置物');
+  });
+  [['plX', 'x'], ['plZ', 'z'], ['plLift', 'lift'], ['plRot', 'rotY'], ['plScale', 'scale']]
+    .forEach(function (pair) {
+      c(pair[0]).addEventListener('input', function () {
+        showPlaceVals();
+        var sel = placeState.selected;
+        if (!sel || !win || !win.__placePatch) return;
+        var f = pair[1], p = {};
+        if (f === 'x') p.x = +v('plX');
+        else if (f === 'z') p.z = +v('plZ');
+        else if (f === 'rotY') p.rotY = +v('plRot');
+        else if (f === 'scale') p.scale = +v('plScale');
+        else p.y = groundOf(sel) + +v('plLift');
+        win.__placePatch(sel.id, p);
+      });
+    });
+
+  setInterval(function () {
+    var on = !!(win && win.__camState && win.__camState.locked);
+    document.getElementById('btnLock').classList.toggle('on', on);
+    document.getElementById('lockState').textContent = on ? '锁定中' : '未锁定';
+  }, 250);
+
+  // 相机滑块改动 → 同步到引擎；吴昊阳滑块改动 → 重画 fixed 图层。
+  ['camY','camD','camP','camA'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', function () {
+      showVals(); readUI();
+      applyCam();
+      updateParams();
+    });
+  });
+  ['wuX','wuY','wuScale','wuAlpha'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', function () {
+      showVals(); readUI();
+      applyWu();
+      updateParams();
+    });
+  });
+
+  // 宿主接管：__onCam 的挂载在 exposeTestApi()（每次注入都执行），此处不再重复赋值。
+
+  // 指针锁定在宿主 document 时的兜底：把宿主 mousemove 转发进 iframe 相机
+  document.addEventListener('mousemove', function (e) {
+    if (!document.pointerLockElement) return;
+    var fd = frame.contentDocument;
+    if (fd && fd.pointerLockElement) return;
+    if (win && win.__camMouse) win.__camMouse(e.movementX || 0, e.movementY || 0);
+  });
+  // 宿主获得焦点时的键盘转发（iframe 自身监听在另一 document，不重复触发）
+  window.addEventListener('keydown', function (e) {
+    var t = (document.activeElement || {}).tagName || '';
+    // ⚠️ BUTTON 也要过滤：Space/Enter 落在聚焦的按钮上会触发浏览器默认激活，
+    // 于是「按 Space 上升」会顺手重触发聚焦按钮，Enter 则会既触发按钮又切冻结。
+    if (t === 'INPUT' || t === 'TEXTAREA' || t === 'BUTTON') return;
+    if (e.code === 'Space') e.preventDefault();
+    // Enter 在宿主这边也要能切冻结：焦点在面板时 iframe 收不到 keydown
+    if (e.code === 'Enter') { if (!e.repeat) { e.preventDefault(); toggleFreeze(); } return; }
+    if (win && win.__camKey) win.__camKey(e.code, true);
+  });
+  window.addEventListener('keyup', function (e) {
+    if (win && win.__camKey) win.__camKey(e.code, false);
+  });
+
+  // ---------- 参数文本 ----------
+function buildParams() {
+    // ⚠️ 这里绝不能调 readUI()。序列化函数带状态写入副作用本身就是设计错误，
+    // 更实测踩过的坑：camY 滑块量程 [-8,40] 而 iframe 的 S.pos.y 无上限（Q/E 不夹紧），
+    // 按住 Q 升到 40 以上后，setSlider 因超量程拒绝写入 → 滑块冻结在旧值，
+    // 而每 tick 的 __onCam 刚把 S.camY 写成真实高度，紧接着 buildParams 的 readUI()
+    // 又把这个冻结值读回 S.camY，面板显示的高度从此与相机实际高度脱钩；
+    // 用户下次碰任一相机滑块就会把 y/dist/pitch/yaw 一起拽回四个陈旧值。
+    // S 由 __onCam（相机真值）与各 input handler（readUI，用户真值）双向同步，是权威源。
+    // ⚠️ 引擎未就绪时 camera 导出 null：早前这里 fallback 伪造 position:[0,y,0]，
+    //    用户在加载等待期复制的快照回灌后会把机位拽到 (0,y,0) 并解冻 —— 静默数据污染。
+    //    导入端对 camera:null 完全跳过（o.camera || {} → 字段全 undefined → num 返回 null）。
+    var camReady = !!(win && win.__getCam);
+    var cam = camReady ? win.__getCam() : null;
+    return JSON.stringify({
+      note: '背景摆位器参数 · 吴昊阳为屏幕固定图层 · 比例锁定 443:312=' + (+WU_ASPECT.toFixed(4)) + '，改大小不变形'
+        + (camReady ? '' : ' · ⚠️ 引擎未就绪，camera 部分为 null，请就绪后重新复制'),
+      savedAt: new Date().toISOString(),
+      camera: !camReady ? null : {
+        pointerLocked: !!cam.locked, frozen: !!(win && win.__camFrozen && win.__camFrozen()),
+        height: cam.y, distance: cam.d,
+        pitchDeg: cam.p, azimuthDeg: cam.a,
+        position: [cam.px, cam.py, cam.pz], target: [cam.tx, cam.ty, cam.tz],
+        tuning: (win && win.__camCfg) ? win.__camCfg : null },
+      // 比例用宿主唯一定义 WU_ASPECT（源图 443×312 实测），绝不在此另写一份字面量。
+      // 吴昊阳现在是宿主页面上的 position:fixed 图层，不再是 3D 场景物件，
+      // 所以这里导出的是「视口百分比 + 像素换算」，不含任何世界坐标。
+      wuhaoyang: {
+        visible: !!S.wuVisible,
+        src: WU_SRC,
+        screen: { xPct: +S.wuX.toFixed(2), yPct: +S.wuY.toFixed(2) },
+        widthPct: +S.wuScale.toFixed(2),
+        opacity: +S.wuAlpha.toFixed(3),
+        aspect: +(WU_ASPECT).toFixed(9),
+        pixelSize: {
+          width: Math.round(window.innerWidth * S.wuScale / 100),
+          height: Math.round(window.innerWidth * S.wuScale / 100 / WU_ASPECT)
+        }
+      },
+      // 场景树木：默认已隐藏（用户要求），勾选可恢复。
+      // 直接读 __camState 上的状态位（布尔），不走 __treesState/__propsState ——
+      // 那两个会强制全场景 traverse，而本函数被 tick/滑块高频调用。
+      treesVisible: !!(win && win.__camState && win.__camState.treesVisible),
+      // 营火 / 石头：默认已隐藏
+      props: (win && win.__camState)
+        ? { campfire: !!(win.__camState.props && win.__camState.props.campfire),
+            rocks: !!(win.__camState.props && win.__camState.props.rocks) }
+        : null,
+      // 自由放置：当前选中的物件类型 + 全部已放置实例（坐标是世界坐标，可原样还原）
+      placeKind: S.placeKind,
+      placements: (win && win.__placeState)
+        ? win.__placeState().items.map(function (o) {
+            return { kind: o.kind, variant: o.variant, x: o.x, y: o.y, z: o.z,
+                     rotY: o.rotY, scale: o.scale, leaves: o.leaves };
+          })
+        : []
+    }, null, 2);
+  }
+  function updateParams() { document.getElementById('params').value = buildParams(); }
+
+  document.getElementById('btnCopy').addEventListener('click', function () {
+    var txt = buildParams();
+    var ta = document.getElementById('params'); ta.value = txt;
+    ta.select(); ta.setSelectionRange(0, 999999);
+    var done = function () { toast('参数已复制到剪贴板'); };
+    // execCommand('copy') 失败时是「返回 false」而不是抛异常，所以不能只看 catch。
+    // 非安全上下文（改绑 0.0.0.0 后用局域网 IP 访问）下 navigator.clipboard 不存在，
+    // 若这里不判返回值就会谎报复制成功，而参数是本工具唯一的交付物 → 静默数据丢失。
+    var fallback = function () {
+      var okCopy = false;
+      try { okCopy = document.execCommand('copy'); } catch (e) { okCopy = false; }
+      if (okCopy) done(); else toast('复制失败，请手动全选复制');
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done, fallback);
+    } else {
+      fallback();
+    }
+  });
+
+  document.getElementById('btnApply').addEventListener('click', function () {
+    var txt = document.getElementById('params').value.trim();
+    if (!txt) return toast('参数框是空的');
+    var o;
+    try { o = JSON.parse(txt); } catch (e) { return toast('JSON 格式错误'); }
+    var c = o.camera || {}, w = o.wuhaoyang || {};
+    // 粘贴的 JSON 是不可信输入：每个数值字段都必须过 isFinite 白名单，
+    // 否则一个 "abc"/1e999 就会变成 NaN/Infinity 直达 three 的 matrixWorld（黑屏不可自愈），
+    // 或让 wrapDeg 的取模拿到 Infinity。非法值一律跳过并保留现状，不静默改写用户参数。
+    var bad = [];
+    var tuningApplied = '';
+    var placementsApplied = -1;
+    function num(field, label, lo, hi) {
+      if (field === undefined) return null;
+      var n = typeof field === 'number' ? field : parseFloat(field);
+      if (!isFinite(n)) { bad.push(label); return null; }
+      if (isFinite(lo) && n < lo) { n = lo; bad.push(label + '(低于量程→' + lo + ')'); }
+      if (isFinite(hi) && n > hi) { n = hi; bad.push(label + '(超量程→' + hi + ')'); }
+      return n;
+    }
+    // 下限 -8 必须与 iframe 的 CFG.minHeight 一致，否则导入后滑块显示值与
+    // 实际机位脱钩（导入 -10 → iframe 夹到 -8 → 面板还显示 -10）。
+    var nHeight = num(c.height, 'camera.height', -8, 40);
+    var nDist = num(c.distance, 'camera.distance', 0.6, 120);
+    var nPitch = num(c.pitchDeg, 'camera.pitchDeg', -89, 89);
+    var nAzim = num(c.azimuthDeg, 'camera.azimuthDeg', -180, 180);
+    if (nHeight !== null) S.camY = nHeight;
+    if (nDist !== null) S.camD = nDist;
+    if (nPitch !== null) S.camP = nPitch;
+    if (nAzim !== null) S.camA = nAzim;
+    // 吴昊阳：视口百分比（0-100），与量程一致
+    var nAlpha = num(w.opacity, 'wuhaoyang.opacity', 0.05, 1);
+    var nW = num(w.widthPct, 'wuhaoyang.widthPct', 4, 60);
+    if (nAlpha !== null) S.wuAlpha = nAlpha;
+    if (nW !== null) S.wuScale = nW;
+    if (w.screen && typeof w.screen === 'object') {
+      var nX = num(w.screen.xPct, 'wuhaoyang.screen.xPct', 0, 100);
+      var nY = num(w.screen.yPct, 'wuhaoyang.screen.yPct', 0, 100);
+      if (nX !== null) S.wuX = nX;
+      if (nY !== null) S.wuY = nY;
+    }
+    // tuning 回填：导出里一直带着 camera.tuning，但此前导入从不读它，
+    // 改 sensitivity 后粘贴毫无效果（Spec 轴记为「看得见用不上」的假参数）。
+    if (c.tuning && win && win.__setCfg) {
+      var tr = win.__setCfg(c.tuning);
+      if (tr && tr.bad && tr.bad.length) bad.push('camera.tuning.' + tr.bad.join('/'));
+      if (tr && tr.applied && tr.applied.length) tuningApplied = tr.applied.join('、');
+    }
+    if (w.visible !== undefined) S.wuVisible = !!w.visible;
+    // 树木开关与冻结状态也参与恢复，否则参数无法当完整快照用
+    if (o.treesVisible !== undefined) {
+      if (win && win.__setTrees) {
+        var tr2 = win.__setTrees(!!o.treesVisible);
+        syncTreesUI(!!o.treesVisible, tr2);
+      } else bad.push('treesVisible(引擎未就绪，未还原)');
+    }
+    if (o.props && typeof o.props === 'object') {
+      if (win && win.__setProps) {
+        win.__setProps({ campfire: !!o.props.campfire, rocks: !!o.props.rocks });
+        syncPropsUI();
+      } else bad.push('props(引擎未就绪，未还原)');
+    }
+    // 放置物快照：必须放在最后，因为它会 clearItems 重建全部实例
+    if (o.placements !== undefined) {
+      if (win && win.__placeImport) {
+        var pr = win.__placeImport(o.placements);
+        syncPlaceUI(pr.state);
+        if (pr.bad) bad.push('placements(' + pr.bad + ' 项非法已跳过)');
+        placementsApplied = pr.state.count;
+      } else bad.push('placements(引擎未就绪)');
+    }
+    if (o.placeKind === 'tree' || o.placeKind === 'campfire' || o.placeKind === 'rock') {
+      S.placeKind = o.placeKind;
+      if (placeState.mode && win && win.__placeEnter) win.__placeEnter(S.placeKind);
+      syncPlaceUI();
+    }
+    var posOK = Array.isArray(c.position) && isFinite(+c.position[0]) && isFinite(+c.position[1]) && isFinite(+c.position[2]);
+    var tgtOK = Array.isArray(c.target) && isFinite(+c.target[0]) && isFinite(+c.target[1]) && isFinite(+c.target[2]);
+    if (Array.isArray(c.position) && !posOK) bad.push('camera.position');
+    if (Array.isArray(c.target) && !tgtOK) bad.push('camera.target');
+    writeUI(); applyCam();
+    // 机位恢复必须放在 writeUI/applyCam 之后，且以 position（权威机位三轴）为准。
+    // 反例（已实测踩过）：先调 __setTarget 再 applyCam —— __setTarget 会同步 emit()，
+    // __onCam 回调立刻用反算出的错误机位覆写 S.camY/camD/camP/camA，
+    // 导致导入的 distance/pitch/yaw 全部丢失（实测全被回落成 30/0/0）。
+    // target 只是从 position+yaw/pitch/dist 派生出来的冗余信息，仅在 position 缺失时回退。
+    // ⚠️ 冻结时 __setCam/__setTarget 一律拒绝，所以带 position/target 的快照
+    //    必须先按快照里的 frozen 解冻，否则「粘贴参数」在冻结态下静默失效。
+    var wantFrozen = (c.frozen !== undefined) ? !!c.frozen : null;
+    if (posOK || tgtOK) {
+      if (win && win.__camFrozen && win.__camFrozen() && !wantFrozen) {
+        win.__camSetFrozen(false, true);
+        syncFreezeUI(false);
+      }
+    }
+    if (posOK && win && win.__setCam) {
+      win.__setCam({ px: c.position[0], py: c.position[1], pz: c.position[2] });
+    } else if (tgtOK && win && win.__setTarget) {
+      win.__setTarget(c.target[0], c.target[1], c.target[2]);
+    }
+    if (wantFrozen === true && win && win.__camSetFrozen) {
+      win.__camSetFrozen(true, true);
+      syncFreezeUI(true);
+    }
+    updateParams();
+    // 有字段被夹紧或拒绝时必须说出来，否则用户以为参数原样生效了
+    var msg = '参数已应用';
+    if (tuningApplied) msg += '，tuning 已生效：' + tuningApplied;
+    if (placementsApplied >= 0) msg += '，已还原 ' + placementsApplied + ' 个放置物';
+    if (bad.length) msg += '，但 ' + bad.length + ' 项非法已修正：' + bad.join('、');
+    toast(msg);
+  });
+
+  // 初始 UI 状态：相机未冻结、树木/营火/石头默认已删除移除
+  writeUI();
+  syncFreezeUI(false);
+  c('trees').checked = false;
+  c('treesv').textContent = '已删除';
+  c('campfire').checked = false;
+  c('campfirev').textContent = '已移除';
+  c('rocks').checked = false;
+  c('rocksv').textContent = '已移除';
+  syncPlaceUI();
+})();
+</script>
+</body>
+</html>

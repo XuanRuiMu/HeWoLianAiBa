@@ -103,8 +103,7 @@ describe('FPA1 ①：全站非聊天输入框只吃 global 单真源', () => {
     expect(基.some((项) => 项.声明.get('border-bottom-width') === 'var(--shuru-xian-changtai-kuan-du)')).toBe(true)
     const 表 = 令牌表('light')
     expect(表.get('--shuru-xian-changtai-kuan-du')).toBe('1px')
-    expect(表.get('--shuru-xian-jujiao-kuan-du')).toBe('2px')
-    expect(表.get('--shuru-sao-chu-shi-chang')).toBe('0.38s')
+    expect(表.get('--shuru-sao-chu-shi-chang')).toBe('1s')
   })
 
   it('聚焦六段扫出：background-image 吃 --shuru-sao-jianbian 且六段', () => {
@@ -120,7 +119,7 @@ describe('FPA1 ①：全站非聊天输入框只吃 global 单真源', () => {
     }
   })
 
-  it('浅色由左向右变深、深色由左向右变浅', () => {
+  it('浅色与深色都由左向右变深', () => {
     const 浅 = 令牌表('light').get('--shuru-sao-jianbian') as string
     const 深 = 令牌表('dark').get('--shuru-sao-jianbian') as string
     const 取浓度序 = (渐变: string): number[] => {
@@ -134,16 +133,16 @@ describe('FPA1 ①：全站非聊天输入框只吃 global 单真源', () => {
     expect(浅序.length, '浅色档取不到六段浓度序').toBeGreaterThanOrEqual(6)
     expect(深序.length, '深色档取不到六段浓度序').toBeGreaterThanOrEqual(6)
     const 浅递增 = 浅序.every((值, 序) => 序 === 0 || 值 >= 浅序[序 - 1])
-    const 深递减 = 深序.every((值, 序) => 序 === 0 || 值 <= 深序[序 - 1])
+    const 深递增 = 深序.every((值, 序) => 序 === 0 || 值 >= 深序[序 - 1])
     expect(浅递增, `浅色档不是由左向右变深：${浅序.join(',')}`).toBe(true)
-    expect(深递减, `深色档不是由左向右变浅：${深序.join(',')}`).toBe(true)
+    expect(深递增, `深色档不是由左向右变深：${深序.join(',')}`).toBe(true)
   })
 
-  it('扫出过渡约 0.38s 专用曲线且左起', () => {
+  it('扫出过渡约 1s 专用曲线且左起', () => {
     const 基 = 全局规则.filter((项) => 项.声明.has('transition-duration'))
     expect(基.some((项) => (项.声明.get('transition-duration') as string).includes('var(--shuru-sao-chu-shi-chang)'))).toBe(true)
     expect(基.some((项) => (项.声明.get('transition-timing-function') as string).includes('var(--quxian-sao-chu)'))).toBe(true)
-    expect(基.some((项) => 项.声明.get('background-size') === '0% var(--shuru-xian-jujiao-kuan-du)')).toBe(true)
+    expect(基.some((项) => 项.声明.get('background-size') === '0% var(--shuru-xian-changtai-kuan-du)')).toBe(true)
     expect(全局净.includes('background-position') && 全局净.includes('left bottom')).toBe(true)
     expect(全局净.includes('background-repeat') && 全局净.includes('no-repeat')).toBe(true)
     const 表 = 令牌表('light')

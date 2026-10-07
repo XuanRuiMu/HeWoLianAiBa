@@ -21,7 +21,6 @@ import { anIdChaXiaoXi, haoYouKuaiTouYing, huiHuaXiaoXiSuoJian, huoQuJiaoSeSuoYo
 
 const ID = '550e8400-e29b-41d4-a716-446655440000'
 const 图 = { lei_xing: 'tupian' as const, mei_ti_id: ID }
-const 文 = { lei_xing: 'wenzi' as const, nei_rong: '文字' }
 
 beforeEach(() => {
   vi.clearAllMocks()

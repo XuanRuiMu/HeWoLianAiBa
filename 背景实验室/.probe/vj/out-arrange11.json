@@ -1,0 +1,56 @@
+{
+ "ok": true,
+ "logs": [
+  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
+  "CONSOLE-ERR: Failed to load resource: net::ERR_CONNECTION_REFUSED",
+  "CONSOLE-ERR: Failed to load resource: net::ERR_CONNECTION_REFUSED",
+  "CONSOLE-ERR: Failed to load resource: net::ERR_CONNECTION_REFUSED",
+  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/v21-定稿.png"
+ ],
+ "url": "http://127.0.0.1:8937/positioner.html",
+ "r1": {
+  "ready": true,
+  "frames": 2095,
+  "placeReady": false,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r2": {
+  "ready": true,
+  "frames": 4648,
+  "placeReady": false,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r3": {
+  "ready": true,
+  "frames": 7057,
+  "placeReady": false,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "r4": {
+  "ready": true,
+  "frames": 9636,
+  "placeReady": false,
+  "hasPlaceState": true,
+  "hasPlaceApi": true
+ },
+ "arrange11": {
+  "err": "camp-no-hit-after-100s"
+ },
+ "camRestore": {
+  "y": 1.4263,
+  "d": 5.6014,
+  "p": -22.55,
+  "a": -31.5,
+  "px": 3.4939,
+  "py": 1.4263,
+  "pz": 0.3179,
+  "tx": 6.1969,
+  "ty": -0.7218,
+  "tz": -4.0929,
+  "locked": false,
+  "frozen": true
+ }
+}

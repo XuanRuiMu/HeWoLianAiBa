@@ -295,6 +295,7 @@ async function mountZuJian(dangAn: DangAnXiangQing[] = [chuangJianDangAn()]) {
         is_default: true,
         record_count: dangAn.length,
         version: 0,
+        sort_order: 0,
       },
     ],
   })

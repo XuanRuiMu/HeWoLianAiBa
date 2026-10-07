@@ -1,0 +1,33 @@
+{
+  "url": "http://127.0.0.1:8937/positioner.html",
+  "width": 1920,
+  "height": 868,
+  "headless": false,
+  "maxMs": 480000,
+  "args": ["--no-sandbox", "--ignore-gpu-blocklist", "--enable-gpu-rasterization"],
+  "steps": [
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r1"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r2"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r3"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r4"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r5"},
+    {"type": "wait", "ms": 20000}, {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/ready.js", "label": "r6"},
+    {"type": "wait", "ms": 10000},
+    {"type": "eval", "file": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/vj/m3-def.js", "label": "def"},
+    {"type": "eval", "js": "window.__M3({ yaw: 8, stoneS: 0.14, tree: { x: -2.2, z: -6.0, rotY: 40, s: 0.6 } })", "label": "m3-1"},
+    {"type": "wait", "ms": 8000},
+    {"type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m3-1-yaw8-s14-t40.png"},
+    {"type": "eval", "js": "window.__M3({ yaw: 8, stoneS: 0.14, tree: { x: -2.2, z: -6.0, rotY: 280, s: 0.6 } })", "label": "m3-2"},
+    {"type": "wait", "ms": 8000},
+    {"type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m3-2-yaw8-s14-t280.png"},
+    {"type": "eval", "js": "window.__M3({ yaw: 8, stoneS: 0.17, tree: { x: -2.2, z: -6.0, rotY: 40, s: 0.6 } })", "label": "m3-3"},
+    {"type": "wait", "ms": 8000},
+    {"type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m3-3-yaw8-s17-t40.png"},
+    {"type": "eval", "js": "window.__M3({ yaw: 12, stoneS: 0.15, tree: { x: -2.2, z: -6.0, rotY: 40, s: 0.6 } })", "label": "m3-4"},
+    {"type": "wait", "ms": 8000},
+    {"type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m3-4-yaw12-s15-t40.png"},
+    {"type": "eval", "js": "window.__M3({ yaw: 8, stoneS: 0.15, anchors: [[0.06, -0.35], [0.1, -0.25], [0.12, -0.2]], tree: { x: -2.2, z: -6.0, rotY: 40, s: 0.7 } })", "label": "m3-5"},
+    {"type": "wait", "ms": 8000},
+    {"type": "shot", "path": "D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m3-5-yaw8-s15-t70.png"}
+  ]
+}

@@ -1,25 +1,40 @@
 <template>
   <section class="fenlei-guan-li-lan" :aria-busy="caoZuoZhong ? 'true' : 'false'">
     <div class="fenlei-biao-qian-lan">
-      <div
-        v-for="fenLei in fenLeiLieBiao"
-        :key="fenLei.id"
-        class="fenlei-biao-qian"
-        :class="{ 'fenlei-biao-qian--jihuo': fenLei.id === dangQianFenLeiId }"
-        :data-id="fenLei.id"
-        @click="qieHuan(fenLei.id)"
+      <VueDraggable
+        :model-value="fenLeiBiaoFuBen"
+        :disabled="caoZuoZhong"
+        :animation="200"
+        direction="horizontal"
+        :filter="'.fenlei-tu-biao-anniu'"
+        :prevent-on-filter="false"
+        ghost-class="fenlei-sortable-ghost"
+        chosen-class="fenlei-sortable-chosen"
+        drag-class="fenlei-sortable-drag"
+        fallback-class="fenlei-sortable-drag"
+        :force-fallback="true"
+        :fallback-on-body="true"
+        class="fenlei-tuoyuan-zu"
+        @update:model-value="onPaiXuGengXin"
       >
-        <button
-          type="button"
-          class="fenlei-biao-qian-an-niu"
-          :aria-pressed="fenLei.id === dangQianFenLeiId ? 'true' : 'false'"
-          :disabled="caoZuoZhong"
-          @click.stop="qieHuan(fenLei.id)"
+        <div
+          v-for="fenLei in fenLeiBiaoFuBen"
+          :key="fenLei.id"
+          class="fenlei-biao-qian"
+          :class="{ 'fenlei-biao-qian--jihuo': fenLei.id === dangQianFenLeiId }"
+          :data-id="fenLei.id"
+          @click="qieHuan(fenLei.id)"
         >
-          <span class="fenlei-ming-cheng">{{ fenLei.name }}</span>
-          <span class="fenlei-ji-shu">{{ fenLei.record_count }}</span>
-        </button>
-        <template v-if="!fenLei.is_default">
+          <button
+            type="button"
+            class="fenlei-biao-qian-an-niu"
+            :aria-pressed="fenLei.id === dangQianFenLeiId ? 'true' : 'false'"
+            :disabled="caoZuoZhong"
+            @click.stop="qieHuan(fenLei.id)"
+          >
+            <span class="fenlei-ming-cheng">{{ fenLei.name }}</span>
+            <span class="fenlei-ji-shu">{{ fenLei.record_count }}</span>
+          </button>
           <button
             type="button"
             class="fenlei-tu-biao-anniu gengMing-fenlei-anniu"
@@ -30,6 +45,7 @@
             ✎
           </button>
           <button
+            v-if="!fenLei.is_default"
             type="button"
             class="fenlei-tu-biao-anniu shanChu-fenlei-anniu"
             :aria-label="`${huoQuFanYi('zhanJi', 'shanChu')}: ${fenLei.name}`"
@@ -38,8 +54,18 @@
           >
             ×
           </button>
-        </template>
-      </div>
+          <button
+            v-if="!fenLei.is_default"
+            type="button"
+            class="fenlei-tu-biao-anniu she-zhi-mo-ren-anniu"
+            :aria-label="huoQuFanYi('zhanJi', 'sheZhiMoRenFenLei') + ': ' + fenLei.name"
+            :disabled="caoZuoZhong"
+            @click.stop="sheZhiMoRen(fenLei)"
+          >
+            ★
+          </button>
+        </div>
+      </VueDraggable>
       <button
         type="button"
         class="chuangJian-fenlei-anniu"
@@ -84,6 +110,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
+import { VueDraggable } from 'vue-draggable-plus'
 import { huoQuFanYi } from '@/config/translations'
 import type { ZhanJiFenLei } from '@/types'
 
@@ -98,6 +125,8 @@ const emit = defineEmits<{
   chuangJian: [mingCheng: string]
   gengMing: [fenLeiId: string, mingCheng: string]
   shanChu: [fenLeiId: string]
+  sheZhiMoRen: [fenLeiId: string]
+  paiXu: [fenLeiIds: string[]]
 }>()
 
 const bianJiMoShi = ref<'chuangJian' | 'gengMing' | null>(null)
@@ -107,6 +136,7 @@ const mingChengShuRuKuang = ref<HTMLInputElement | null>(null)
 const dangQianFenLei = computed(() =>
   props.fenLeiLieBiao.find((item) => item.id === props.dangQianFenLeiId),
 )
+const fenLeiBiaoFuBen = computed(() => [...props.fenLeiLieBiao])
 
 function qieHuan(fenLeiId: string): void {
   if (props.caoZuoZhong) return
@@ -148,6 +178,19 @@ function queRenShanChu(fenLei: ZhanJiFenLei): void {
   const queRenWenBen = `${huoQuFanYi('zhanJi', 'shanChu')}: ${fenLei.name}`
   if (window.confirm(queRenWenBen)) emit('shanChu', fenLei.id)
 }
+
+function sheZhiMoRen(fenLei: ZhanJiFenLei): void {
+  if (props.caoZuoZhong) return
+  emit('sheZhiMoRen', fenLei.id)
+}
+
+function onPaiXuGengXin(xinLieBiao: ZhanJiFenLei[]): void {
+  if (props.caoZuoZhong) return
+  const ids = xinLieBiao.map((item) => item.id)
+  const paiXuZiDuan = ids.length === new Set(ids).size && ids.length === props.fenLeiLieBiao.length
+  if (!paiXuZiDuan) return
+  emit('paiXu', ids)
+}
 </script>
 
 <style scoped>
@@ -183,6 +226,22 @@ function queRenShanChu(fenLei: ZhanJiFenLei): void {
   border-radius: 12px;
   background: var(--beijing-kaopian);
   color: var(--wenben-zhuse);
+}
+
+.fenlei-tuoyuan-zu {
+  display: flex;
+  align-items: stretch;
+  gap: var(--jiange-xiao);
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.fenlei-sortable-ghost {
+  opacity: 0.4;
+}
+
+.fenlei-sortable-drag {
+  opacity: 0.95;
 }
 
 .fenlei-biao-qian {
@@ -272,11 +331,22 @@ function queRenShanChu(fenLei: ZhanJiFenLei): void {
 }
 
 .fenlei-ming-cheng-input {
+  --fenlei-beijing: var(--beijing-zhuse);
+  --fenlei-biankuang: var(--biankuang-yanse);
   width: 100%;
   min-width: 0;
   padding: var(--jiange-xiao) var(--jiange-10);
-  background: var(--beijing-zhuse);
+  border-color: transparent;
+  background:
+    linear-gradient(var(--fenlei-beijing), var(--fenlei-beijing)) 0 0 / 100% 100% no-repeat padding-box,
+    linear-gradient(90deg, var(--jujiao-huan-yanse), var(--jujiao-huan-yanse)) 0 0 / 0% 100% no-repeat border-box,
+    linear-gradient(var(--fenlei-biankuang), var(--fenlei-biankuang)) 0 0 / 100% 100% no-repeat border-box;
   color: var(--wenben-zhuse);
+  transition: background-size var(--shuru-sao-chu-shi-chang) var(--quxian-sao-chu);
+}
+
+.fenlei-ming-cheng-input:focus {
+  background-size: 100% 100%, 100% 100%, 100% 100%;
 }
 
 .fenlei-bao-cun,
@@ -314,8 +384,8 @@ input:disabled {
 }
 
 :root[data-theme='light'] .fenlei-ming-cheng-input {
-  border-color: var(--beijing-zhuse);
-  background: var(--beijing-kaopian);
+  --fenlei-beijing: var(--beijing-kaopian);
+  --fenlei-biankuang: var(--beijing-zhuse);
   color: var(--beijing-zhuse);
 }
 
