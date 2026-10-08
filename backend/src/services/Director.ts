@@ -81,7 +81,7 @@ export async function shengChengDirectorCeLue(
         : gouJianDirectorPrompt(shuRu)
 
     const xiangYing = await genJuPeiZhiTiaoYong('director', [
-      { jiaoSe: 'system', neiRong: '你负责给角色写回复小纸条，只输出 JSON。让回复像真实大学生/青年恋人聊微信，允许留白、犹豫、推拉和暧昧试探。' },
+      { jiaoSe: 'system', neiRong: '你负责判断角色这次是否回复、当下情绪、是否撤回和是否主动表白，只输出 JSON。情感分析字段写对方这条消息的语气和情绪。' },
       { jiaoSe: 'user', neiRong: yongHuNeiRong },
     ], shangXiaWen, waiBuXinHao)
 

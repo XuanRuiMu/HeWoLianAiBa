@@ -374,11 +374,14 @@ export function 归一前台错误(zhi: unknown): QianTaiCuoWu {
     const axiosDaiMa = typeof zhi === 'object' && zhi !== null ? (zhi as { code?: unknown }).code : undefined
     const chaoShi =
       axiosDaiMa === 'ECONNABORTED' || axiosDaiMa === 'ETIMEDOUT' || axiosDaiMa === 'ERR_CANCELED'
+    const benJiLiXian = axiosTong && typeof navigator !== 'undefined' && navigator.onLine === false
     const daiMa = !axiosTong
       ? QIAN_TAI_DAI_MA.WEI_ZHI
-      : chaoShi
-        ? QIAN_TAI_DAI_MA.CHAO_SHI
-        : QIAN_TAI_DAI_MA.WANG_LUO
+      : benJiLiXian
+        ? QIAN_TAI_DAI_MA.LI_XIAN
+        : chaoShi
+          ? QIAN_TAI_DAI_MA.CHAO_SHI
+          : QIAN_TAI_DAI_MA.WANG_LUO
     return chuangJianQianTaiCuoWu(
       {
         code: daiMa,
@@ -387,7 +390,7 @@ export function 归一前台错误(zhi: unknown): QianTaiCuoWu {
         qingQiuFangFa,
         houTaiBaoFeng: baoFeng,
         jiuDaiMa,
-        yuanLeiXing: !axiosTong ? 'weiZhi' : chaoShi ? 'chaoShi' : 'wangLuo',
+        yuanLeiXing: !axiosTong ? 'weiZhi' : chaoShi && !benJiLiXian ? 'chaoShi' : 'wangLuo',
       },
       zhi,
     )

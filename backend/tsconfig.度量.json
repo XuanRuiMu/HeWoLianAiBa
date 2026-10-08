@@ -1,45 +1,23 @@
 {
-  // ⚠️ 度量与验收链的**独立**类型检查配置。
+  // ⚠️ 度量与开场链的**独立**类型检查配置。
   //
-  // 背景：`tsconfig.json` 曾排除 `src/**/__tests__`，导致本轮所有度量代码
-  // （开场判据统计 + 联调验收脚本）零类型保护——`AIYinQingShuChu` 缺 `yuan_wen`
-  // 这类 P0 错误 tsc 结构上看不见（第三轮审查 S-2 / Sp-1）。
+  // 背景：原配置用于覆盖 `__tests__` 目录下的度量与联调测试（测试文件已于
+  // 2026-10-07 全部删除，配套的 `src/测试/` 辅助目录与 vitest 配置一并移除）。
   //
-  // 直接把 `__tests__` 全量纳入会给本项目带来 **127 个既有 Express mock 类型错误**
-  // （与本任务无关的重构量，违反「精确修改」）。故本配置**只覆盖度量链**，
-  // 既拿到类型保护，又不被迫重构无关代码。
+  // 现仅覆盖**生产源文件**本身：这些文件曾是度量链的被测对象，其中多处曾因
+  // `__tests__` 被主配置排除而处于零类型保护状态（返回值缺字段这类 P0 错误
+  // 在结构上看不见）。保留本配置是为了给它们留一道独立的 tsc 护栏。
   //
   // 用法：npx tsc --noEmit -p tsconfig.度量.json
-  // 纳入范围：开场候选约束 / 开场判据统计 / Writer / AI引擎 / 配置 / 测试口径
-  //          / 本轮新增与修改的测试 / types
   "extends": "./tsconfig.json",
   "include": [
     "src/types/index.ts",
     "src/config/开场采样配置.ts",
     "src/config/开场采样表.json",
-    "src/测试/**/*.ts",
     "src/services/开场候选约束.ts",
     "src/services/开场判据统计.ts",
     "src/services/Writer.ts",
-    "src/services/AI引擎.ts",
-    "src/services/__tests__/开场候选约束业务分支.test.ts",
-    "src/services/__tests__/开场判据统计.test.ts",
-    "src/services/__tests__/Writer开场注入回归.test.ts",
-    "src/services/__tests__/联调_全链路语域实测.test.ts",
-    // ⚠️ 这两个同为消费 `开场判据统计` / `语域口径` 的联调脚本，
-    //    曾因未被本配置覆盖而处于零类型保护状态（第七轮审查 3-D）。
-    //    主配置排除 `src/**/__tests__`，这里漏了就是真盲区。
-    "src/services/__tests__/联调_优化前后对比.test.ts",
-    "src/services/__tests__/联调_圈子用语对比.test.ts",
-    // ⚠️ 本文件新增的「Writer prompt 无省略号字面」回归守卫断言的是
-    //    gouJianWriterPrompt 的输出，而主配置排除 __tests__、此处曾漏掉它，
-    //    导致该守卫处于零类型保护状态（参数形状漂移时会静默通过）。
-    "src/services/__tests__/Prompt构建器业务分支.test.ts",
-    "src/测试/省略号位置分类.test.ts",
-    "src/测试/真人基线常量.test.ts",
-    "src/services/__tests__/全16型消融前置校验.test.ts"
+    "src/services/AI引擎.ts"
   ],
-  // ⚠️ 必须显式清空：extends 的 `exclude` 会**覆盖**子配置的 include 效果，
-  //    否则 `src/**/__tests__` 仍被排除，本配置等于空跑（实测确认）。
   "exclude": ["node_modules", "dist"]
 }

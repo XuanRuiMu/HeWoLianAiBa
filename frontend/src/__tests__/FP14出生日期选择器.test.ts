@@ -417,57 +417,58 @@ describe('FP-14 ⑩：录入跳段与粘贴数字串解析', () => {
   })
 })
 
-describe('FP-14 ②：非法日期与越界只夹紧，不产出非法值；报错文案取既有键', () => {
-  it('平年 2 月 30 日夹到 2 月 28 日，闰年 2 月 30 日夹到 2 月 29 日', async () => {
+describe('FP-14 ②：非法日期与越界真实保留，未合法则不产出非法值；报错文案取既有键', () => {
+  it('平年 2 月 30 日保留弹红：不产出非法日期、外发空串', async () => {
     const pingNian = 挂载控件()
     await 录整日(pingNian, ['2001', '02', '30'])
-    expect(段显示(pingNian, 'ri')).toBe('28')
-    expect(最近外发(pingNian)).toBe('2001-02-28')
+    expect(段显示(pingNian, 'ri')).toBe('30')
+    expect(最近外发(pingNian)).toBe('')
 
     const runNian = 挂载控件()
     await 录整日(runNian, ['2000', '02', '30'])
-    expect(段显示(runNian, 'ri')).toBe('29')
-    expect(最近外发(runNian)).toBe('2000-02-29')
+    expect(段显示(runNian, 'ri')).toBe('30')
+    expect(最近外发(runNian)).toBe('')
   })
 
-  it('月份 19 越界夹到 12，月 0 夹到 1（1..12 之外不产出值）', async () => {
+  it('月份 19 与月 0 都保留红标，不产出值', async () => {
     const wrapper = 挂载控件()
     await 录段(wrapper, 'nian', '1995')
     await 录段(wrapper, 'yue', '19')
-    expect(段显示(wrapper, 'yue')).toBe('12')
+    expect(段显示(wrapper, 'yue')).toBe('19')
     await 录段(wrapper, 'yue', '0')
-    expect(段显示(wrapper, 'yue')).toBe('01')
+    expect(段显示(wrapper, 'yue')).toBe('00')
+    expect(最近外发(wrapper)).toBe('')
   })
 
-  it('max=今天：三段都往过了敲，落点恰好是今天，永不产出明天的日期', async () => {
+  it('max=今天：越过最大日期时不产出该日期，合法当天外发今天', async () => {
     const wrapper = 挂载控件()
     await 录段(wrapper, 'nian', '3000')
-    expect(段显示(wrapper, 'nian'), '年段上界必须是今年（旧 max 属性的等价面）').toBe(String(今年))
-    await 录段(wrapper, 'yue', '12')
-    expect(段显示(wrapper, 'yue'), '今年之内月段上界必须是本月').toBe(零填充(本月, 2))
-    await 录段(wrapper, 'ri', '31')
-    expect(段显示(wrapper, 'ri'), '同年同月日段上界必须是今天').toBe(零填充(今天.getDate(), 2))
+    expect(段显示(wrapper, 'nian'), '年段上界必须是今年（旧 max 属性的等价面）').toBe('3000')
+    expect(最近外发(wrapper)).toBe('')
+    await 录整日(wrapper, [String(今年), 零填充(本月, 2), 零填充(今天.getDate(), 2)])
     expect(最近外发(wrapper)).toBe(今天串)
   })
 
-  it('min=1900-01-01：更早一律落回 1900-01-01', async () => {
+  it('min=1900-01-01：更早日期标红且不产出，合法当天不受影响', async () => {
     const wrapper = 挂载控件()
     await 录段(wrapper, 'nian', '1899')
-    expect(段显示(wrapper, 'nian')).toBe('1900')
-    await 录段(wrapper, 'yue', '1')
-    await 录段(wrapper, 'ri', '1')
+    expect(段显示(wrapper, 'nian')).toBe('1899')
+    expect(最近外发(wrapper)).toBe('')
+    await 录整日(wrapper, ['1900', '01', '01'])
     expect(最近外发(wrapper)).toBe('1900-01-01')
   })
 
-  it('先敲日再改月导致日越界时，日段随当月天数收回（不残留 31 日）', async () => {
+  it('先敲日再改月导致日越界时，保留原值并不产出；改回合法同月即外发', async () => {
     const wrapper = 挂载控件()
     await 录段(wrapper, 'nian', '2001')
     await 录段(wrapper, 'yue', '01')
     await 录段(wrapper, 'ri', '31')
     expect(最近外发(wrapper)).toBe('2001-01-31')
     await 录段(wrapper, 'yue', '02')
-    expect(段显示(wrapper, 'ri')).toBe('28')
-    expect(最近外发(wrapper)).toBe('2001-02-28')
+    expect(段显示(wrapper, 'ri')).toBe('31')
+    expect(最近外发(wrapper)).toBe('')
+    await 录段(wrapper, 'yue', '03')
+    expect(最近外发(wrapper)).toBe('2001-03-31')
   })
 
   it('出生日期留空时提交注册走恋爱码错误出口且不发请求', async () => {

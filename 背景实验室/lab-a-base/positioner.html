@@ -85,10 +85,10 @@
 
   <div class="sec">
     <h2>相机（我的世界式第一人称）</h2>
-    <div class="row"><label>高度 Y</label><input type="range" id="camY" min="-8" max="40" step="0.0001" value="1.4263"><span class="val" id="camYv">1.43</span></div>
-    <div class="row"><label>推拉距离</label><input type="range" id="camD" min="0.6" max="120" step="0.0001" value="5.6014"><span class="val" id="camDv">5.60</span></div>
-    <div class="row"><label>俯仰角</label><input type="range" id="camP" min="-89" max="89" step="0.01" value="-22.55"><span class="val" id="camPv">-22.6°</span></div>
-    <div class="row"><label>方位角</label><input type="range" id="camA" min="-180" max="180" step="0.1" value="-31.5"><span class="val" id="camAv">-31.5°</span></div>
+    <div class="row"><label>高度 Y</label><input type="range" id="camY" min="-8" max="40" step="0.0001" value="1.157"><span class="val" id="camYv">1.16</span></div>
+    <div class="row"><label>推拉距离</label><input type="range" id="camD" min="0.6" max="120" step="0.0001" value="4.664"><span class="val" id="camDv">4.66</span></div>
+    <div class="row"><label>俯仰角</label><input type="range" id="camP" min="-89" max="89" step="0.01" value="-23"><span class="val" id="camPv">-23.0°</span></div>
+    <div class="row"><label>方位角</label><input type="range" id="camA" min="-180" max="180" step="0.1" value="-6.6"><span class="val" id="camAv">-6.6°</span></div>
     <button class="btn" id="btnLock">指针锁定：<b id="lockState">未锁定</b>（点此锁定）</button>
     <button class="btn" id="btnFreeze" title="锁定/解锁相机。快捷键 Enter">🔓 <b id="freezeState">未固定</b></button>
     <div class="row"><label>场景树木</label><input type="checkbox" id="trees"><span class="val" id="treesv">已删除</span></div>
@@ -187,19 +187,12 @@
   //    四元组与 camPos 是自洽的：target = pos + dir(yaw,pitch) * dist
   //    → (6.1969, -0.7218, -4.0929)，与用户 JSON 的 target 完全一致。
   var DEFAULTS = {
-    // 2026-10-07 用户裁决：完全重置到「引擎原始默认 + 仅加吴昊阳」基线。
-    // 推翻 v3~v7 期间的「机位锁死基准」「4 个手动放置物」「原生树/营火/石头全隐藏」。
-    // 由用户亲自做选景 —— frozen=false + camPos=null（不覆盖相机）让 initPose()
-    // 直接吃进引擎初始位，enforceCamera 每帧把它写回同位（视觉零跳变），
-    // 同时允许用户自由旋转/平移/推拉。
-    camY: 1.34, camD: 5.3, camP: 0, camA: 0,
-    // camPos=null → applyDefaultCam 直接 return false，不写相机位；
-    // 引擎当前位由 initPose() 抓取并喂回 S.pos/yaw/pitch/dist，再由 enforceCamera 每帧保持。
-    camPos: null,
+    // 2026-10-07（下午）用户选景定稿并要求固定：机位 + frozen=true。
+    camY: 1.157, camD: 4.664, camP: -23, camA: -6.6,
+    camPos: [4.2706, 1.157, 5.1022],
     wuX: 24.5, wuY: 71, wuScale: 24, wuAlpha: 1,
     wuVisible: true,
-    // 用户要求"我重新在原背景中，进行选景" → 解除冻结。
-    frozen: false,
+    frozen: true,
     // 重置后的理想摆位：空数组。原先 v7 的 4 个手动放置物（营火+石头+两棵树）
     // 全部取消；场景回到引擎原生布局（原生树/营火/石头皆可见，inpage S 初值已改为 true）。
     // 自动导入路径：applyDefaultPlacements 在 placements.length===0 时直接 return，
@@ -250,28 +243,21 @@
   function applyWu() {
     var layer = c('wuLayer'), img = c('wuImg');
     if (!layer || !img) return;
-    if (!S.wuVisible) { layer.style.display = 'none'; return; }
+    if (!S.wuVisible) { lastWuShown = null; layer.style.display = 'none'; return; }
     if (!img.getAttribute('src')) img.src = WU_SRC;
     var wpx = window.innerWidth * S.wuScale / 100;
-    // 高度由宽度按 443:312 推出，改大小绝不变形。
-    // ⚠️ 实测 getBoundingClientRect 读回的比例会有 ≤2.6e-4 的偏差，那是 Chrome
-    //    LayoutUnit（1/64 px）的亚像素量化，纯算术本身零误差（已用 node 逐档验证：
-    //    4%→1.419921、4.5%→1.419885、60%→1.419867，越小偏差越大）。
-    //    该量级 0.026% 远低于视觉可辨阈值，且导出参数里的 aspect/pixelSize 是精确值，
-    //    所以验收标准应是「配置层严格锁 443:312」而非「渲染像素比严格相等」。
     var hpx = wpx / WU_ASPECT;
-    layer.style.display = 'block';
     layer.style.width = wpx + 'px';
     layer.style.height = hpx + 'px';
-    // translate(-50%,-50%) 让 X/Y 表示图中心的位置
     layer.style.transform = 'translate(-50%,-50%) translate('
       + (window.innerWidth * S.wuX / 100).toFixed(2) + 'px,'
       + (window.innerHeight * S.wuY / 100).toFixed(2) + 'px)';
-    img.style.opacity = S.wuAlpha;
+    // 透明度不在这里写死：由 tick 里的 syncWuReveal() 按背景揭示进度逐帧给，
+    // 否则这里一写死就会和背景的显影过程脱节（他会在背景还没显影完就整张出现）。
+    syncWuReveal();
     var px = c('wuPixel');
     if (px) px.textContent = '当前 ' + Math.round(wpx) + '×' + Math.round(hpx) + ' px';
-  }
-  // 窗口尺寸变化时重算（百分比定位随之改变），否则 resize 后吴昊阳会偏移
+  }  // 窗口尺寸变化时重算（百分比定位随之改变），否则 resize 后吴昊阳会偏移
   window.addEventListener('resize', function () { applyWu(); updateParams(); });
   function showVals() {
     document.getElementById('camYv').textContent = (+v('camY')).toFixed(2);
@@ -329,6 +315,7 @@
       try { syncPropsUI(); } catch (eP) {}
       updateParams();
       applyDefaultPlacements();
+      applyWu();
       document.getElementById('fps').textContent = '就绪 · 原始场景';
     })();
   }
@@ -523,14 +510,24 @@ locked: false,
         // 设 true 后这两条 if 分支不触发，引擎原生可见性保持。
         treesVisible: true,
         props: { campfire: true, rocks: true },
+        sway: true,
         gen: 0,            // 状态版本号：每次改动 +1
       appliedGen: -1,    // 最近一次渲染时用的版本号
       frames: 0,         // 已强制写入机位的主场景渲染次数
       applied: null,
       // 删除物配置只在此闭包内（inpage S）；父页 DEFAULTS 与 JSON 不携带，以防漂移。
       remove: {
-        groups: ['tree-main', 'bushes001'],
-        leavesBox: { x0: 0, x1: 5.6, y0: 1.8, y1: 6.7, z0: -2.6, z1: 5.6 }
+        hide: ['tree-trunk-main-big'],
+        foliageOwner: 'tree-main',
+        foliageOcclusion: 'foliage-occlusion',
+        occlusionTol: 0.1,
+        basalt: {
+          mesh: 'basalt-main-old',
+          seeds: [[3.745, 0.055, 5.361], [2.877, 0.035, 4.092]],
+          seedTol: 0.3,
+          maxVerts: 5000,
+          densBoost: 5.0
+        }
       }
     };
     window.__camState = S;
@@ -565,7 +562,9 @@ locked: false,
       return { x: S.pos.x + d.x * S.dist, y: S.pos.y + d.y * S.dist, z: S.pos.z + d.z * S.dist };
     }
     function touch() { S.gen++; }
-    function emit() { if (window.__onCam) window.__onCam(window.__getCam()); }
+    function emit() {
+      if (window.__onCam) window.__onCam(window.__getCam());
+    }
 
     // 初始机位 = 引擎当前机位（世界朝向换算成 yaw/pitch，注入瞬间视觉零跳变）
     cam.updateMatrixWorld(true);
@@ -591,7 +590,12 @@ locked: false,
       try { eng.camera.disableControls(); } catch (e0) {}
       try { if (eng.camera.controls) eng.camera.controls.enabled = false; } catch (e1) {}
       try { if (E.cameraLookAround) E.cameraLookAround.disable(); } catch (e2) {}
-      try { if (E.parallax) E.parallax.disable(); } catch (e3) {}
+      try {
+        if (E.parallax) {
+          if (S.sway) { if (!E.parallax.enabled) E.parallax.enable(); }
+          else E.parallax.disable();
+        }
+      } catch (e3) {}
     }
     function enforceCamera() {
       stopEngineCamera();
@@ -601,7 +605,7 @@ locked: false,
       if (!S.props.campfire || !S.props.rocks) applyProps();
       enforceRemove();
       // 相机组归零：引擎 parallax（真实指针位置）与 grass-bg 的 __cursor 晃动全部失效
-      group.position.set(0, 0, 0);
+      if (!S.sway) group.position.set(0, 0, 0);
       group.rotation.set(0, 0, 0);
       group.scale.set(1, 1, 1);
       group.updateMatrix();
@@ -845,7 +849,7 @@ window.addEventListener('mousemove', function (e) {
                 + Math.abs(cam.quaternion.z - q.z) + Math.abs(cam.quaternion.w - q.w);
       rep.dApplied = Math.abs(S.applied.px - S.pos.x) + Math.abs(S.applied.py - S.pos.y)
                    + Math.abs(S.applied.pz - S.pos.z);
-      rep.dGroup = group.position.length()
+      rep.dGroup = (S.sway ? 0 : group.position.length())
                  + Math.abs(group.rotation.x) + Math.abs(group.rotation.y) + Math.abs(group.rotation.z)
                  + Math.abs(group.scale.x - 1);
       rep.pos = [+cam.position.x.toFixed(5), +cam.position.y.toFixed(5), +cam.position.z.toFixed(5)];
@@ -1019,80 +1023,384 @@ window.__camReady = true;
     // 移除此段后，"树异步加载后被强制隐藏"的兜底也一并消失，这是预期的：重置后不再有任何隐藏需求。
 
     // ---------- 指定原生对象删除（2026-10-07 用户圈定三处） ----------
-    // 背景：
-    //   · 所有树的叶子被引擎批量收进名为 Foliage_chunk_* 的 InstancedMesh 里，
-    //     每块对应一个空间格（约 150~384 个叶片 billboard），**按位置格共用、
-    //     跨多棵树共块** —— 不能整块 visible=false，只能按世界坐标盒逐实例剔除。
-    //   · 引擎 culler 每帧会重写 chunk/group 的 visible，一次性改立刻被打回，
-    //     所以 visible=false 必须每帧重申（enforcеCamera 内、渲染前）。
-    //   · instanceMatrix 实测不会被引擎每帧重建（4s 后仍是死的），但仍每帧轻量校验兜底。
-    // 对象定位（m10-enum/m10-candle 实测）：
-    //   ① 中央主树：群组 'tree-main'（含 tree-trunk-main / tree-trunk-main-big），
-    //      其树冠叶片在世界盒 LEAVES_BOX 里的 Foliage_chunk_* 实例。
-    //   ②③ 岛前两块深色斑块 = 组 'bushes001' 的植被（candle 实测）。
-    var removeGroupsFound = [];
-    var lastRemoveScan = 0;
-    var killedLeaves = [];        // [[mesh, idx], ...] 初始化一次
-    var lastLeafScan = 0;
     var M4c = cam.matrix.constructor;
+    var V3c = window.__THREE.Vector3;
     var ZERO_M = new M4c();
     (function () { for (var z = 0; z < 16; z++) ZERO_M.elements[z] = 0; })();
-    function collectRemoveGroups() {
+    var hideFound = [];
+    var lastHideScan = 0;
+    var killedLeaves = [];
+    var leafOrig = new Map();
+    var leafDone = new Set();
+    var lastLeafScan = 0;
+    var geomDone = {};
+    var origIndex = new Map();
+    function underPlaced(o) {
+      for (var p = o; p; p = p.parent) if (p.name && p.name.indexOf('pl-') === 0) return true;
+      return false;
+    }
+    function chainMatrix(o, stop) {
+      var m = new M4c();
+      for (var p = o; p && p !== stop; p = p.parent) {
+        if (p.matrixAutoUpdate) p.updateMatrix();
+        m.premultiply(p.matrix);
+      }
+      return m;
+    }
+    function crownsIn(frameObj) {
+      var owner = scene.getObjectByName(S.remove.foliageOwner);
+      if (!owner || underPlaced(owner)) return [];
+      var inv = chainMatrix(frameObj, null).invert(), out = [];
+      owner.traverse(function (o) {
+        if (o === owner || o.isMesh || o.isPoints || !/foliage/i.test(o.name || '')) return;
+        out.push(new V3c().setFromMatrixPosition(chainMatrix(o, null)).applyMatrix4(inv));
+      });
+      return out;
+    }
+    function collectHide() {
       var now = performance.now();
-      if (now - lastRemoveScan < 1000) return;
-      lastRemoveScan = now;
-      removeGroupsFound = [];
+      if (now - lastHideScan < 1000) return;
+      lastHideScan = now;
+      hideFound = [];
+      var names = S.remove.hide || [];
       scene.traverse(function (o) {
-        if (o.name && S.remove && S.remove.groups.indexOf(o.name) >= 0) removeGroupsFound.push(o);
+        if (o.name && names.indexOf(o.name) >= 0 && !underPlaced(o)) hideFound.push(o);
       });
     }
-    function scanLeaves(force) {
+    function scanLeaves() {
       var now = performance.now();
-      if (!force && now - lastLeafScan < 5000) return;
+      if (now - lastLeafScan < 5000) return;
       lastLeafScan = now;
-      var box = S.remove.leavesBox;
-      var im = new M4c(), v = new window.__THREE.Vector3();
+      if (!S.remove.foliageOwner) return;
       scene.traverse(function (o) {
-        if (!o.name || o.name.indexOf('Foliage_chunk_') !== 0 || !o.isInstancedMesh) return;
-        var hit = 0;
+        if (!o.isInstancedMesh || !o.name || o.name.indexOf('Foliage_chunk_') !== 0) return;
+        if (leafDone.has(o.uuid)) return;
+        var bc = o.geometry.attributes.bushCenter;
+        if (!bc) return;
+        var crowns = crownsIn(o);
+        if (!crowns.length) return;
+        var arr = o.instanceMatrix.array, hit = 0, orig = leafOrig.get(o.uuid);
         for (var i = 0; i < o.count; i++) {
-          o.getMatrixAt(i, im);
-          // 已置零的实例矩阵平移读为 (0,0,0)，其世界坐标 = chunk 原点，
-          // 若再跑盒测试会把「区块原点恰好在树冠内」的已杀实例反复 push
-          // 进 killedLeaves（无界增长），此处先判零跳过。
-          if (im.elements[0] === 0 && im.elements[12] === 0 && im.elements[13] === 0 && im.elements[14] === 0) continue;
-          v.set(im.elements[12], im.elements[13], im.elements[14]);
-          v.applyMatrix4(o.matrixWorld);
-          if (v.x >= box.x0 && v.x <= box.x1 && v.y >= box.y0 && v.y <= box.y1 && v.z >= box.z0 && v.z <= box.z1) {
-            o.setMatrixAt(i, ZERO_M);
-            killedLeaves.push([o, i]);
-            hit++;
+          var bx = bc.array[i * bc.itemSize], by = bc.array[i * bc.itemSize + 1], bz = bc.array[i * bc.itemSize + 2];
+          for (var k = 0; k < crowns.length; k++) {
+            var dx = bx - crowns[k].x, dy = by - crowns[k].y, dz = bz - crowns[k].z;
+            if (dx * dx + dy * dy + dz * dz < 1e-8) {
+              if (!orig) { orig = {}; leafOrig.set(o.uuid, orig); }
+              if (!orig[i]) orig[i] = Array.prototype.slice.call(arr, i * 16, i * 16 + 16);
+              o.setMatrixAt(i, ZERO_M);
+              killedLeaves.push([o, i]);
+              hit++;
+              break;
+            }
           }
         }
+        leafDone.add(o.uuid);
         if (hit) o.instanceMatrix.needsUpdate = true;
       });
     }
+    function leafMatrixArray(chunk, i) {
+      var orig = leafOrig.get(chunk.uuid);
+      if (orig && orig[i]) return { arr: orig[i], off: 0 };
+      return { arr: chunk.instanceMatrix.array, off: i * 16 };
+    }
+    function meshComponents(mesh) {
+      var g = mesh.geometry, pos = g.attributes.position, idx = g.index.array, n = pos.count;
+      var keyMap = new Map(), rep = new Int32Array(n), par = new Int32Array(n);
+      for (var i = 0; i < n; i++) {
+        var k = Math.round(pos.getX(i) * 1000) + ',' + Math.round(pos.getY(i) * 1000) + ',' + Math.round(pos.getZ(i) * 1000);
+        if (!keyMap.has(k)) keyMap.set(k, i);
+        rep[i] = keyMap.get(k);
+        par[i] = i;
+      }
+      function find(x) { while (par[x] !== x) { par[x] = par[par[x]]; x = par[x]; } return x; }
+      for (var t = 0; t < idx.length; t += 3) {
+        var a = find(rep[idx[t]]), b = find(rep[idx[t + 1]]);
+        if (a !== b) par[a] = b;
+        var c = find(rep[idx[t + 2]]); b = find(b);
+        if (c !== b) par[c] = b;
+      }
+      var root = new Int32Array(n), comps = new Map();
+      for (var j = 0; j < n; j++) {
+        var r = find(rep[j]);
+        root[j] = r;
+        var cs = comps.get(r);
+        if (!cs) { cs = { n: 0, c: new V3c() }; comps.set(r, cs); }
+        cs.n++;
+        cs.c.x += pos.getX(j); cs.c.y += pos.getY(j); cs.c.z += pos.getZ(j);
+      }
+      comps.forEach(function (cs) { cs.c.divideScalar(cs.n); });
+      return { root: root, comps: comps };
+    }
+    function collapseComponents(mesh, pick) {
+      var info = meshComponents(mesh), kill = new Set();
+      info.comps.forEach(function (cs, r) { if (pick(cs)) kill.add(r); });
+      if (!kill.size) return 0;
+      var g = mesh.geometry, idx = g.index.array;
+      if (!origIndex.has(g)) origIndex.set(g, idx.slice());
+      for (var t = 0; t < idx.length; t += 3) {
+        if (kill.has(info.root[idx[t]])) { idx[t + 1] = idx[t]; idx[t + 2] = idx[t]; }
+      }
+      g.index.needsUpdate = true;
+      return kill.size;
+    }
+    var lastGeomTry = 0;
+    function removeGeometry() {
+      var R = S.remove;
+      if (geomDone.occlusion && geomDone.basalt) return;
+      var now = performance.now();
+      if (now - lastGeomTry < 5000) return;
+      lastGeomTry = now;
+      if (!geomDone.occlusion && R.foliageOcclusion) {
+        var occ = scene.getObjectByName(R.foliageOcclusion);
+        if (occ && occ.geometry && occ.geometry.index && !underPlaced(occ)) {
+          var crowns = crownsIn(occ), tol2 = R.occlusionTol * R.occlusionTol;
+          if (crowns.length) {
+            geomDone.occlusion = collapseComponents(occ, function (cs) {
+              for (var k = 0; k < crowns.length; k++) if (crowns[k].distanceToSquared(cs.c) <= tol2) return true;
+              return false;
+            });
+          }
+        }
+      }
+      if (!geomDone.basalt && R.basalt) {
+        var b = scene.getObjectByName(R.basalt.mesh);
+        if (b && b.geometry && b.geometry.index && !underPlaced(b)) {
+          var inv = chainMatrix(b, null).invert();
+          var seeds = R.basalt.seeds.map(function (s) { return new V3c(s[0], s[1], s[2]).applyMatrix4(inv); });
+          var sc = new V3c().setFromMatrixScale(chainMatrix(b, null));
+          var tol = R.basalt.seedTol / Math.max(sc.x, sc.y, sc.z, 1e-6);
+          geomDone.basalt = collapseComponents(b, function (cs) {
+            if (cs.n > R.basalt.maxVerts) return false;
+            for (var k = 0; k < seeds.length; k++) if (seeds[k].distanceToSquared(cs.c) <= tol * tol) return true;
+            return false;
+          });
+        }
+      }
+    }
+    function restoreCloneGeometry(src, clone) {
+      if (!S.remove) return;
+      var targets = [S.remove.foliageOcclusion, S.remove.basalt && S.remove.basalt.mesh];
+      var a = [], b = [];
+      src.traverse(function (o) { a.push(o); });
+      clone.traverse(function (o) { b.push(o); });
+      for (var i = 0; i < a.length && i < b.length; i++) {
+        var g = a[i].geometry;
+        if (!g || !g.index || targets.indexOf(a[i].name) < 0) continue;
+        var ng = g.clone(), keep = origIndex.get(g);
+        if (keep) { ng.index.array.set(keep); ng.index.needsUpdate = true; }
+        b[i].geometry = ng;
+      }
+    }
     function enforceRemove() {
-      collectRemoveGroups();
-      for (var i = 0; i < removeGroupsFound.length; i++) removeGroupsFound[i].visible = false;
-      if (S.remove && S.remove.leavesBox) scanLeaves(false);
-      // 每帧轻量校验：引擎若重建了 instanceMatrix（实测很少），把已置零的实例矩阵写回
+      if (!S.remove) return;
+      collectHide();
+      for (var i = 0; i < hideFound.length; i++) hideFound[i].visible = false;
+      scanLeaves();
+      removeGeometry();
       if (killedLeaves.length) {
-        var dirty = {};
+        var dirty = [];
         for (var j = 0; j < killedLeaves.length; j++) {
           var o = killedLeaves[j][0], idx = killedLeaves[j][1];
           var arr = o.instanceMatrix.array, off = idx * 16;
           if (arr[off] !== 0 || arr[off + 12] !== 0 || arr[off + 13] !== 0 || arr[off + 14] !== 0) {
             o.setMatrixAt(idx, ZERO_M);
-            dirty[o.uuid] = true;
+            if (dirty.indexOf(o) < 0) dirty.push(o);
           }
         }
-        for (var j2 = 0; j2 < killedLeaves.length; j2++) {
-          var o2 = killedLeaves[j2][0];
-          if (dirty[o2.uuid]) { o2.instanceMatrix.needsUpdate = true; dirty[o2.uuid] = false; }
-        }
+        for (var j2 = 0; j2 < dirty.length; j2++) dirty[j2].instanceMatrix.needsUpdate = true;
       }
     }
+// ---------- 草的世界格子工具 ----------
+    // 草的实例矩阵里的平移就是世界坐标（草块父节点 matrixWorld 为单位阵，实测）。
+    // 统一用 0.08m 的格子去描述"关心的一片地面"，补草就基于它。
+    var CELL = 0.08;
+    function cellKey(x, z) { return Math.floor(x / CELL) + ',' + Math.floor(z / CELL); }
+    var wuRay = null;
+    function wuRaycastGroundY(x, z) {
+      if (!wuRay) { wuRay = new eng.raycaster.raycaster.constructor(); wuRay.layers.mask = 0xffffffff; }
+      var mi = scene.getObjectByName('main-island');
+      if (!mi) return null;
+      wuRay.set(new V3c(x, 40, z), new V3c(0, -1, 0));
+      var h = wuRay.intersectObject(mi, false)[0];
+      return h ? h.point.y : null;
+    }
+    function eachGrassInstance(fn) {
+      var grass = E.world.islands.mainIsland.grass;
+      if (!grass || !grass.chunks) return 0;
+      var im = new M4c(), n = 0;
+      grass.chunks.entries().forEach(function (e) {
+        var o = e[1], a = o.instanceMatrix.array;
+        for (var i = 0; i < o.count; i++) {
+          if (a[i * 16] === 0 && a[i * 16 + 12] === 0 && a[i * 16 + 14] === 0) continue;
+          im.fromArray(a, i * 16);
+          if (fn(im.elements[12], im.elements[13], im.elements[14], o, i)) n++;
+        }
+      });
+      return n;
+    }
+    // ---------- 删石处补草 ----------
+    // 被删掉的是玄武岩合并网格里的两块，它们压住的那片地原本不长草，
+    // 塌缩后只剩土。做法：把塌缩三角形在 XZ 上按网格实心填充出 footprint，
+    // 再量一圈紧邻 footprint 的真实草密度，按同样密度补进去。
+    var rockFilled = false;
+    function triXZFootprint(mesh) {
+      var g = mesh.geometry, pos = g.attributes.position;
+      // ⚠️ 塌缩把一个三角形的三个索引全改成同一个顶点，从塌缩后的索引里读到的三角形
+      //    已退化成点（面积 0），永远算不出 footprint。所以：用「塌缩后的索引」找出
+      //    哪些三角形被删了，再去「塌缩前备份的索引」里取它们原来的三个顶点。
+      var cur = g.index.array;
+      var orig = origIndex.get(g) || cur;
+      var cells = new Set();
+      var A = new V3c(), B = new V3c(), Cc = new V3c();
+      for (var t = 0; t < cur.length; t += 3) {
+        if (cur[t] !== cur[t + 1] || cur[t] !== cur[t + 2]) continue;
+        A.set(pos.getX(orig[t]), 0, pos.getZ(orig[t])).applyMatrix4(mesh.matrixWorld);
+        B.set(pos.getX(orig[t + 1]), 0, pos.getZ(orig[t + 1])).applyMatrix4(mesh.matrixWorld);
+        Cc.set(pos.getX(orig[t + 2]), 0, pos.getZ(orig[t + 2])).applyMatrix4(mesh.matrixWorld);
+        var x0 = Math.floor(Math.min(A.x, B.x, Cc.x) / CELL), x1 = Math.floor(Math.max(A.x, B.x, Cc.x) / CELL);
+        var z0 = Math.floor(Math.min(A.z, B.z, Cc.z) / CELL), z1 = Math.floor(Math.max(A.z, B.z, Cc.z) / CELL);
+        var den = (B.z - Cc.z) * (A.x - Cc.x) + (Cc.x - B.x) * (A.z - Cc.z);
+        if (Math.abs(den) < 1e-12) continue;
+        for (var cx = x0; cx <= x1; cx++) for (var cz = z0; cz <= z1; cz++) {
+          var px = (cx + 0.5) * CELL, pz = (cz + 0.5) * CELL;
+          var l0 = ((B.z - Cc.z) * (px - Cc.x) + (Cc.x - B.x) * (pz - Cc.z)) / den;
+          var l1 = ((Cc.z - A.z) * (px - Cc.x) + (A.x - Cc.x) * (pz - Cc.z)) / den;
+          if (l0 < -0.001 || l1 < -0.001 || l0 + l1 > 1.001) continue;
+          cells.add(cx + ',' + cz);
+        }
+      }
+      return cells;
+    }
+    // 量「紧邻秃地外一圈」的真实草密度（株/平方公里…准确说 株/m²）。
+    // ⚠️ 不能用「环形格子数」当分母：那一圈里大量格子落在岛外或悬崖上，
+    //    会把密度严重低估（实测低估到 6.7 株/m²，补出来稀稀拉拉）。
+    //    正确做法：以 footprint 外接圆为采样盘，扣掉盘内属于 footprint 的部分，
+    //    再用「环形面积」做分母。
+    function densityNear(cells) {
+      var cx = 0, cz = 0, n = 0;
+      cells.forEach(function (k) { var p = k.split(','); cx += +p[0]; cz += +p[1]; n++; });
+      if (!n) return 0;
+      cx = (cx / n + 0.5) * CELL; cz = (cz / n + 0.5) * CELL;
+      // ⚠️ 秃地周围整整一圈原生草都是 0（这块在引擎的分区图里本就不长草），
+      //    所以不能以它为中心去量。改成：先找到离它最近的那一株原生草，量它周围 0.5m 盘的密度。
+      var best = null, bestD = Infinity;
+      eachGrassInstance(function (x, y, z) {
+        var d = Math.hypot(x - cx, z - cz);
+        if (d < bestD) { bestD = d; best = [x, z]; }
+      });
+      if (!best) return 0;
+      var R = 0.5, inside = 0, total = 0;
+      eachGrassInstance(function (x, y, z) {
+        if (Math.hypot(x - best[0], z - best[1]) <= R) { total++; if (cells.has(cellKey(x, z))) inside++; }
+      });
+      var area = Math.PI * R * R;
+      if (area <= 0 || total - inside <= 0) return 0;
+      return (total - inside) / area;
+    }
+    // 把 footprint 对应到 zonesTexture 上：引擎靠这张图决定哪儿长草。
+    // 做法：遍历 main-island 的三角形，凡是世界 XZ 落在 footprint 里，
+    // 就用重心坐标把它的 uv 三角形光栅化进贴图。
+    // ⚠️ UV 一律由三角形世界坐标 ↔ 顶点 uv 反算，不假设 uv 与世界坐标的朝向关系。
+    function paintZones(cells) {
+      var grass = E.world.islands.mainIsland.grass;
+      var mi = scene.getObjectByName('main-island');
+      if (!mi || !mi.geometry || !mi.geometry.attributes.uv) return null;
+      mi.updateMatrixWorld(true);
+      var mg = mi.geometry, mp = mg.attributes.position, uv = mg.attributes.uv;
+      var mi2 = mg.index ? mg.index.array : null;
+      var nTri = mi2 ? mi2.length / 3 : mp.count / 3;
+      var zt = grass.zonesTexture, img = zt.image, tw = img.width, th = img.height;
+      var c2 = img.getContext('2d');
+      if (!c2) return null;
+      var data = c2.getImageData(0, 0, tw, th), px = data.data;
+      var W = [new V3c(), new V3c(), new V3c()];
+      var painted = 0, tris = 0;
+      for (var f = 0; f < nTri; f++) {
+        var ia = mi2 ? [mi2[f * 3], mi2[f * 3 + 1], mi2[f * 3 + 2]] : [f * 3, f * 3 + 1, f * 3 + 2];
+        for (var k = 0; k < 3; k++) W[k].set(mp.getX(ia[k]), mp.getY(ia[k]), mp.getZ(ia[k])).applyMatrix4(mi.matrixWorld);
+        var any = false;
+        for (var cx = Math.floor(Math.min(W[0].x, W[1].x, W[2].x) / CELL);
+             cx <= Math.floor(Math.max(W[0].x, W[1].x, W[2].x) / CELL) && !any; cx++) {
+          for (var cz = Math.floor(Math.min(W[0].z, W[1].z, W[2].z) / CELL);
+               cz <= Math.floor(Math.max(W[0].z, W[1].z, W[2].z) / CELL); cz++) {
+            if (cells.has(cx + ',' + cz)) { any = true; break; }
+          }
+        }
+        if (!any) continue;
+        tris++;
+        var U0 = uv.getX(ia[0]) * tw, V0 = uv.getY(ia[0]) * th;
+        var U1 = uv.getX(ia[1]) * tw, V1 = uv.getY(ia[1]) * th;
+        var U2 = uv.getX(ia[2]) * tw, V2 = uv.getY(ia[2]) * th;
+        var x0 = Math.max(0, Math.floor(Math.min(U0, U1, U2))), x1 = Math.min(tw - 1, Math.ceil(Math.max(U0, U1, U2)));
+        var y0 = Math.max(0, Math.floor(Math.min(V0, V1, V2))), y1 = Math.min(th - 1, Math.ceil(Math.max(V0, V1, V2)));
+        var den = (V1 - V2) * (U0 - U2) + (U2 - U1) * (V0 - V2);
+        if (Math.abs(den) < 1e-12) continue;
+        for (var y = y0; y <= y1; y++) for (var x = x0; x <= x1; x++) {
+          var qx = x + 0.5, qy = y + 0.5;
+          var l0 = ((V1 - V2) * (qx - U2) + (U2 - U1) * (qy - V2)) / den;
+          var l1 = ((V2 - V0) * (qx - U2) + (U0 - U2) * (qy - V2)) / den;
+          var l2 = 1 - l0 - l1;
+          if (l0 < -0.01 || l1 < -0.01 || l2 < -0.01) continue;
+          var wx = W[0].x * l0 + W[1].x * l1 + W[2].x * l2;
+          var wy = W[0].y * l0 + W[1].y * l1 + W[2].y * l2;
+          var wz = W[0].z * l0 + W[1].z * l1 + W[2].z * l2;
+          if (wy < -0.35) continue;
+          if (!cells.has(cellKey(wx, wz))) continue;
+          var o = (y * tw + x) * 4;
+          if (px[o + 1] > 200 && px[o + 3] > 200) continue;
+          px[o] = 0; px[o + 1] = 255; px[o + 2] = 0; px[o + 3] = 255;
+          painted++;
+        }
+      }
+      if (painted) c2.putImageData(data, 0, 0);
+      return { painted: painted, tris: tris };
+    }
+    // 让引擎自己在秃地上重新长草。
+    // ⚠️ 之前走「手工克隆草实例补上去」，无论怎么调密度和尺寸，和周围始终不像；
+    //    根因是草的外观不只取决于实例矩阵，着色器还会按草所在位置二次放大
+    //    （grassScale *= getElevation(草的XZ) * 7.0 + 0.6），手工摆放难以完全复现。
+    //    所以改走引擎自己的流程：涂 zonesTexture → grass.rebuild()。
+    //    实测 rebuild() 在草块已加载完成后单独调用是干净的（70 块不变、无报错）。
+    function fillGrass() {
+      if (rockFilled || !S.remove || !S.remove.basalt || !geomDone.basalt) return;
+      var grass = E.world.islands.mainIsland.grass;
+      if (!grass || !grass.chunks || grass.chunks.entries().length < 20) return;
+      var b = scene.getObjectByName(S.remove.basalt.mesh);
+      if (!b || !b.geometry || !b.geometry.index) return;
+      scene.updateMatrixWorld(true);
+      b.updateMatrixWorld(true);
+      var cells = triXZFootprint(b);
+      if (!cells.size) { rockFilled = true; return; }
+      var res = paintZones(cells);
+      window.__grassFillDiag = { cells: cells.size, painted: res && res.painted, tris: res && res.tris };
+      if (!res || res.painted <= 0) { rockFilled = true; return; }
+      grass.zonesTexture.needsUpdate = true;
+      try {
+        grass.rebuild();
+      } catch (e) {
+        window.__grassFillErr = String(e && e.stack || e);
+        return;
+      }
+      rockFilled = true;
+    }var grassTimer = setInterval(function () {
+      // 删石补草要反复尝试：注入时机早于草块加载完成，草块不足 20 个时直接放弃，
+      // 之后没有任何东西会再触发它，所以必须在这里持续重试。
+      try {
+        fillGrass();
+      } catch (e2) {
+        if (!window.__grassFillErr) window.__grassFillErr = String(e2 && e2.stack || e2);
+      }
+      if (rockFilled) clearInterval(grassTimer);
+    }, 2000);
+    window.__removeState = function () {
+      return {
+        hidden: hideFound.map(function (o) { return o.name + ':' + o.visible; }),
+        leafChunksScanned: leafDone.size,
+        killedLeaves: killedLeaves.length,
+        occlusionComps: geomDone.occlusion || 0,
+        basaltComps: geomDone.basalt || 0
+      };
+    };
 
     // ================= 自由放置编辑器 =================
     // 需求：原树/营火/石头隐藏后，能自由重新摆放，且每个实例可再编辑。
@@ -1393,6 +1701,7 @@ window.__camReady = true;
     function addClone(parent, src, anchorL, anchorW, ghost, name) {
       if (!src) return null;
       var c = src.clone(true);
+      restoreCloneGeometry(src, c);
       c.name = name || ('pl-' + (src.name || 'obj'));
       // ⚠️ 必须重命名子件，引擎的「场景树木/营火/石头已隐藏」开关按名
       //    前缀（tree-*、Foliage_chunk_*、basalt-* 等）整树设 visible=false；
@@ -1484,7 +1793,8 @@ window.__camReady = true;
         im.name = 'pl-leaves-' + id;
         var a = im.instanceMatrix.array, m = new M4(), p = new V3(), q = new QT(), s = new V3(), t = new M4();
         for (var k = 0; k < idx.length; k++) {
-          m.fromArray(ch.instanceMatrix.array, idx[k] * 16);
+          var lm = leafMatrixArray(ch, idx[k]);
+          m.fromArray(lm.arr, lm.off);
           m.decompose(p, q, s);
           t.makeTranslation(p.x - anchorL.x, p.y - anchorL.y, p.z - anchorL.z);
           for (var w = 0; w < 16; w++) a[k * 16 + w] = t.elements[w];
@@ -1876,7 +2186,10 @@ window.__camReady = true;
       document.getElementById('fps').textContent = (rf - lastRf) + ' fps';
       lastRf = rf; acc = 0;
     }
-    // 吴昊阳现在是纯 DOM 图层，不再每帧同步到 3D 场景，tick 里已无相关工作。
+    // 吴昊阳的显影跟背景的开场揭示进度绑定：背景还是紫色线框时他保持全透明，
+    // 随 uRevealProgress 0→1 一起显影，落定后透明度回到用户设定值。
+    // 这样他不再"先于背景出现"，而是真的跟着背景一起加载出来。
+    syncWuReveal();
     // ⚠️ 用户正在参数框里查看/编辑/粘贴时绝不重建（会把没应用的内容静默冲掉）；
     //    dirty 保持不变，失焦后下一帧自动补建。
     if (paramsDirty) {
@@ -1886,6 +2199,32 @@ window.__camReady = true;
   }
 
   // ---------- 相机应用 ----------
+  // 吴昊阳的透明度跟随背景的开场揭示进度（引擎的 revealMesh.getProgress()，0→1）。
+  // 读不到该接口时退化为"背景已渲染出主场景帧"才算就绪，宁可晚显示也不脱节。
+  var lastWuShown = null, lastWuOp = null;
+  function syncWuReveal() {
+    var layer = c('wuLayer'), img = c('wuImg');
+    if (!layer || !img) return;
+    var p = -1;
+    try {
+      var exp = win && win.__experience;
+      if (exp && exp.revealMesh && exp.revealMesh.getProgress) {
+        var v = +exp.revealMesh.getProgress();
+        if (isFinite(v)) p = v < 0 ? 0 : (v > 1 ? 1 : v);
+      } else if (win && win.__camState && win.__camState.frames > 0) {
+        p = 1;
+      }
+    } catch (e) { p = -1; }
+    if (p < 0) return;                       // 背景还没就绪，先保持隐藏
+    // ⚠️ 显示状态只由本函数决定：applyWu() 里绝不能再写 display，
+    //    否则「进度没变 → 提前返回」会让图层卡在错误的显示状态上。
+    var show = S.wuVisible && p > 0.002 ? 'block' : 'none';
+    var op = S.wuVisible ? S.wuAlpha * p : 0;
+    if (show !== lastWuShown) { layer.style.display = show; lastWuShown = show; }
+    var ops = String(op);
+    if (ops !== lastWuOp) { img.style.opacity = op; lastWuOp = ops; }
+  }
+
   function applyCam() {
     if (!win || !win.__setCam) return;
     win.__setCam({ y: S.camY, dist: S.camD, pitch: S.camP, yaw: S.camA });
@@ -2170,6 +2509,16 @@ bindProp('campfire', 'campfire', '营火');
     if (fd && fd.pointerLockElement) return;
     if (win && win.__camMouse) win.__camMouse(e.movementX || 0, e.movementY || 0);
   });
+  document.addEventListener('pointermove', function (e) {
+    try {
+      var ptr = win && win.__experience && win.__experience.engine && win.__experience.engine.pointer;
+      if (!ptr || !ptr.normalizedPosition) return;
+      var r = frame.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      ptr.normalizedPosition.x = ((e.clientX - r.left) / r.width - 0.5) * 2;
+      ptr.normalizedPosition.y = -((e.clientY - r.top) / r.height - 0.5) * 2;
+    } catch (eSway) {}
+  }, { passive: true });
   // 宿主获得焦点时的键盘转发（iframe 自身监听在另一 document，不重复触发）
   window.addEventListener('keydown', function (e) {
     var t = (document.activeElement || {}).tagName || '';

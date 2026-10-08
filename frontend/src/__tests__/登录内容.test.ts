@@ -624,7 +624,7 @@ describe('登录内容组件', () => {
     wrapper.unmount()
   })
 
-  it('FP-01：认证输入不绘制蓝色焦点环，非认证全局焦点规则保持不变', () => {
+  it('FP-01：认证输入不绘制焦点环（outline 只能画整圈、会在上下多出线），非认证全局焦点规则保持不变', () => {
     expect(登录内容样式).toMatch(
       /\.denglu-neirong :deep\(\.fenlie-shuru\):focus-visible,\s*\.denglu-neirong :deep\(\.duan-shuru\):focus-visible\s*\{[^}]*outline:\s*none/,
     )
@@ -729,8 +729,8 @@ describe('登录内容组件', () => {
     const 装饰 = 样式块(登录内容样式, '.gundong-zhuangshi')
     expect(装饰).toMatch(/position:\s*absolute/)
     expect(装饰).toMatch(/right:\s*calc\(/)
-    expect(装饰).toMatch(/--renzheng-gundong-huakuai-you-ju/)
-    expect(装饰).toMatch(/width:\s*var\(--renzheng-gundong-huakuai-kuan\)/)
+    expect(装饰).toMatch(/--renzheng-ka-pian-you-nei-ju/)
+    expect(装饰).toMatch(/width:\s*var\(--renzheng-gundong-shou-kuan\)/)
     expect(装饰).toMatch(/pointer-events:\s*none/)
     const 轨道 = 样式块(登录内容样式, '.gundong-guidao')
     expect(轨道).toMatch(/position:\s*absolute/)
@@ -740,7 +740,7 @@ describe('登录内容组件', () => {
     expect(滑块, '滑块掉回滚动坐标系（应绝对定位于轨道内）').toMatch(/position:\s*absolute/)
     expect(滑块).toMatch(/width:\s*100%/)
     expect(滑块, '滑块应为渐变细条（非纯色）').toMatch(/background:\s*linear-gradient\(/)
-    expect(滑块).toMatch(/pointer-events:\s*none/)
+    expect(滑块, '滑块须可被鼠标与手指抓取').toMatch(/pointer-events:\s*auto/)
     expect(登录内容样式).not.toMatch(/\.gundong-huakuai\.xian-shi/)
     expect(登录内容样式).not.toMatch(/\.gundong-waike:hover\s+\.gundong-huakuai/)
     expect(登录内容源码, '静置淡出计时已删除').not.toMatch(/HUA_KUAI_JING_ZHI_DAN_CHU_HAO_MIAO/)

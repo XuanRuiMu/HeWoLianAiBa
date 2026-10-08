@@ -41,7 +41,8 @@ export const AI_PEI_ZHI = {
 
     writer: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
-      wenDu: 1.0,
+      // WRITER_WENDU 默认 1.0；官方通用对话建议 1.3。温度越高句型越碎、越接近真人；过高会发散。
+      wenDu: Math.min(2, Math.max(0, parseFloat(process.env.WRITER_WENDU || '1.0') || 1.0)),
       zuiDaTokens: 4000,
       siKaoMoShi: 'disabled',
     } as MoXingCanShu,

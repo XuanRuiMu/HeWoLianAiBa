@@ -4,7 +4,6 @@ import { SHENG_LI_SHI_BAI_PEI_ZHI } from '../config/胜利失败配置'
 import { huoQuShiJianChangJingWenBen } from '../config/时间场景配置'
 import 风格示例表 from '../config/风格示例表.json'
 import { MBTI_YU_QI_CHI } from '../config/风格语气映射'
-import { MBTI_YU_YAN_FENG_GE_CAN_SHU } from '../config/角色配置'
 import { duJieBaoKaiGuan } from '../config/开场采样配置'
 
 interface ShiLiZu {
@@ -18,7 +17,6 @@ interface FengGeShiLiBiao {
 }
 
 const FENG_GE_SHI_LI_BIAO = 风格示例表 as unknown as FengGeShiLiBiao
-/** 总开关。关掉后共用前缀与改动前逐字一致，便于灰度回退 */
 const FENG_GE_SHI_LI_KAI_GUAN = duJieBaoKaiGuan('FENG_GE_SHI_LI_QI_YONG')
 import { 内部转展示 } from '../utils/性别'
 import {
@@ -89,17 +87,6 @@ function huoQuGuanXiJieDuanMing(haoGanDu: HaoGanDuXinXi): string {
   return haoGanDu.guan_xi_jie_duan || 'lengDan'
 }
 
-/** 关系轴：阶段 → 该阶段的话术骨架（THEORY§2 Knapp 阶段映射） */
-function huoQuHuaShuGuJia(jieDuan: string): string {
-  if (jieDuan === 'reLian' || jieDuan === 'shenAi') {
-    return '①主动分享生活细节与小情绪 ②emoji/语气词可丰富 ③可表达想念与关心 ④话题深度可深入个人感受 ⑤不社交面敷衍'
-  }
-  if (jieDuan === 'lengDan' || jieDuan === 'shuYuan') {
-    return '①单条尽量<15字 ②不主动问对方隐私 ③不滥用emoji ④回应务实简洁 ⑤维持公开表面健康'
-  }
-  return '①自然，像普通人随口聊天 ②不过度亲密也不刻意疏离 ③分享与回应的节奏适中 ④温暖但别油腻 ⑤不刻意表演任何关系阶段'
-}
-
 function huoQuXinQing(haoGanDu: HaoGanDuXinXi): string {
   const jieDuan = huoQuGuanXiJieDuanMing(haoGanDu)
   const xinQingMap: Record<string, string> = {
@@ -142,6 +129,11 @@ function gouJianDiYiCeng(): string {
   //   但真人会用颜文字和 emoji。删掉它模型会开始吐括号动作，那是脏文本（会落库上屏）。
     '别用（）或[]写动作、表情、心理。想说什么直接说。',
     '只输出你要发的消息文字，不要解释、不要分析、不要 JSON。',
+    '共情和安慰只在对方带着明显情绪时才用一句；普通日常接话、聊自己的事、答非所问就行，不用每条都安慰对方，也不用每句都追问。',
+    // ⚠️ 中文以话题链组织篇章，零主语省略是结构性常态（屈承熹《汉语篇章语法》；江文《中文口語與書寫語的比較研究》），
+    //   语气词堆叠只在「显得友好不冷漠」的特定意图下才出现（微信"文字讨好症"官方回应 2024-10），
+    //   故此处只放开主语省略与半句，不强推语气词。
+    '中文里省主语是常态，说半句也很自然；不用把每句话都写成完整的主谓宾。',
     '别把每条都写成「先共情、再反问、最后总结」的三段式；别用排比、对仗，也别冒出「智慧/时代/人生」这种大词；别每条都用语气词开头。允许一句话单独成条（嗯、哈、是这类），允许话题跳、说自己的、答非所问。',
     '每条单独一段。',
     '在说完整一件算一句；一句内若出现明显换气或转折，可拆成两条发。不要为凑条数硬拆，也不要把所有内容挤成一段。',
@@ -182,7 +174,6 @@ function gouJianDiErCeng(jiaoSe: AIJiaoSeXinXi): string {
     `会被什么样的人吸引：${jiaoSe.xi_huan_de_lei_xing}`,
     `家庭情况：${jiaoSe.jia_ting_bei_jing}`,
     `感情经历：${jiaoSe.qing_gan_jing_li}`,
-    `语言风格参数：${MBTI_YU_YAN_FENG_GE_CAN_SHU[jiaoSe.mbti_lei_xing as keyof typeof MBTI_YU_YAN_FENG_GE_CAN_SHU] || '自然随性'}`,
     jiaoSe.shi_fou_zha_xing && jiaoSe.zha_fa_miao_shu ? `这个人设里带点渣：${jiaoSe.zha_fa_miao_shu}` : '',
   ]
     .filter(Boolean)
@@ -203,7 +194,6 @@ function gouJianDiSanCeng(shuRu: AIYinQingShuRu): string {
     `关系阶段：${jieDuan}`,
     `对 TA 的态度：${guanXiJieDuanMiaoShu[jieDuan] || '还不太清楚'}`,
     `当下心情：${xinQing}`,
-    `话术骨架：${huoQuHuaShuGuJia(jieDuan)}`,
     '对方加你聊天是想谈恋爱，你也知道这回事。',
     `现在的情况：${shuRu.shi_jian_chang_jing || huoQuShiJianChangJingWenBen()}`,
     '按你的性格来，不用管别人会怎么回。',
@@ -218,7 +208,6 @@ function gouJianDiSiCeng(haoGanDu: HaoGanDuXinXi): string {
     '【关系参考，不是束缚】',
     '下面这些只是这个阶段大致会有的状态，给你参考，不是规定你必须怎么感觉。结合你的人设和刚才聊的内容，自然流露就行。',
     dangQianMiaoShu,
-    `话术骨架：${huoQuHuaShuGuJia(jieDuan)}`,
     '别用“你对这个人没什么感觉”“你的心已经不受控制了”这种话命令自己。',
     '也别让对方觉得你“在演某个阶段”。真实相处就是情绪有高有低，不会脸谱化。',
   ].join('\n')
@@ -277,6 +266,7 @@ function gouJianDiLiuCeng(shuRu: AIYinQingShuRu, shiFouDiYiLun: boolean): string
     `性格：${jiaoSe.mbti_lei_xing}`,
     ...zhaXingBuFen,
     DING_JIE_FU_SHENG_MING,
+    `你就是${jiaoSe.wei_xin_ming}，跟对方处在${huoQuGuanXiJieDuanMing(shuRu.hao_gan_du)}阶段，按这个人的性格来。`,
     benLunShuoHua,
     chenJinZhiLing,
   ]
@@ -507,7 +497,7 @@ export function gouJianDirectorPrompt(shuRu: AIYinQingShuRu): string {
     '这张纸条必须是 JSON，不要多说别的。',
     '',
     '【你要的效果】',
-    '让回复像真实大学生/年轻人谈恋爱发微信：可以有沉默、犹豫、留白、撒娇、故意冷淡、反问、推拉、暧昧试探。别像机器人在“完成任务”。',
+    '根据这个人和目前的关系看这次聊天；日常消息可以只是日常消息，不必有隐含的恋爱意图。',
     '',
     '【对方的目的】',
     '对方加 TA 聊天是想谈恋爱。',
@@ -536,8 +526,8 @@ export function gouJianDirectorPrompt(shuRu: AIYinQingShuRu): string {
         ]),
     '',
     '【给策略时记得】',
-    '内向（I）的演员可以简短、留白、甚至已读不回；外向（E）的可以活泼、连发；暧昧期可以推拉、反问。',
-    '别每次都让演员回满 5 条，也别让 TA 正面回答一切。允许只回 1-2 句、岔开话题。',
+    '只依据当前消息和此前实际聊过的内容判断，不替对方补没说过的目的。',
+    '把对方的话按字面意思理解：日常分享、汇报、吐槽就是日常，只有对方明确表达在意时才解读为关系信号。',
     '回复策略只写简短关键词或一句话，不用写长篇分析。',
     '',
     '【输出格式】',

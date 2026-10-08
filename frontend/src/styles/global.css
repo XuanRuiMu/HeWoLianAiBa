@@ -127,14 +127,16 @@ select {
 ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input) {
   border-bottom-width: var(--shuru-xian-changtai-kuan-du) !important;
   border-bottom-style: solid !important;
-  border-bottom-color: var(--shuru-xian-changtai-se) !important;
-  background-image: var(--shuru-sao-jianbian) !important;
-  background-repeat: no-repeat !important;
-  background-position: left bottom !important;
-  background-size: 0% var(--shuru-xian-changtai-kuan-du) !important;
-  transition-property: border-color, background-size !important;
-  transition-duration: var(--shuru-juzhong-dong-xiao), var(--shuru-sao-chu-shi-chang) !important;
-  transition-timing-function: var(--quxian-tan-chu), var(--quxian-sao-chu) !important;
+  border-bottom-color: transparent !important;
+  background-image:
+    var(--shuru-sao-jianbian),
+    linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se)) !important;
+  background-repeat: no-repeat, no-repeat !important;
+  background-position: left bottom, left bottom !important;
+  background-size: 0% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du) !important;
+  transition-property: background-size !important;
+  transition-duration: var(--shuru-sao-chu-shi-chang), var(--shuru-sao-chu-shi-chang) !important;
+  transition-timing-function: var(--quxian-sao-chu), var(--quxian-sao-chu) !important;
 }
 
 :where(
@@ -153,7 +155,11 @@ select {
   textarea,
   [contenteditable]:not([contenteditable='false'])
 ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):disabled {
-  border-bottom-color: var(--shuru-xian-jinyong-se) !important;
+  background-image:
+    linear-gradient(var(--shuru-xian-jinyong-se), var(--shuru-xian-jinyong-se)),
+    linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se)) !important;
+  background-position: left bottom, left bottom !important;
+  background-size: 100% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du) !important;
   cursor: not-allowed !important;
 }
 
@@ -173,7 +179,11 @@ select {
   textarea,
   [contenteditable]:not([contenteditable='false'])
 ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):read-only {
-  border-bottom-color: var(--shuru-xian-zhi-du-se) !important;
+  background-image:
+    linear-gradient(var(--shuru-xian-zhi-du-se), var(--shuru-xian-zhi-du-se)),
+    linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se)) !important;
+  background-position: left bottom, left bottom !important;
+  background-size: 100% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du) !important;
 }
 
 :where(
@@ -192,7 +202,11 @@ select {
   textarea,
   [contenteditable]:not([contenteditable='false'])
 ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):is([aria-invalid='true'], [data-error='true'], .is-error) {
-  border-bottom-color: var(--shuru-xian-cuowu-se) !important;
+  background-image:
+    linear-gradient(var(--shuru-xian-cuowu-se), var(--shuru-xian-cuowu-se)),
+    linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se)) !important;
+  background-position: left bottom, left bottom !important;
+  background-size: 100% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du) !important;
 }
 
 :where(
@@ -211,8 +225,7 @@ select {
   textarea,
   [contenteditable]:not([contenteditable='false'])
 ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):focus {
-  border-bottom-color: var(--shuru-xian-jujiao-se) !important;
-  background-size: 100% var(--shuru-xian-changtai-kuan-du) !important;
+  background-size: 100% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du) !important;
 }
 
 :where(
@@ -230,33 +243,21 @@ select {
   ),
   textarea,
   [contenteditable]:not([contenteditable='false'])
-):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):focus-visible {
-  border-bottom-color: var(--shuru-xian-jujiao-se) !important;
-  background-size: 100% var(--shuru-xian-changtai-kuan-du) !important;
-}
-
-:where(
-  input:not(
-    [type='checkbox'],
-    [type='radio'],
-    [type='button'],
-    [type='submit'],
-    [type='reset'],
-    [type='file'],
-    [type='image'],
-    [type='range'],
-    [type='color'],
-    [type='hidden']
-  ),
-  textarea,
-  [contenteditable]:not([contenteditable='false'])
-):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):-webkit-autofill {
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.fenlie-shuru):-webkit-autofill {
   background-color: var(--shuru-beijing-zidong-tianchong) !important;
   color: var(--shuru-wenben-zidong-tianchong) !important;
   -webkit-text-fill-color: var(--shuru-wenben-zidong-tianchong) !important;
+  /* 这里刻意不用 inset 大扩散遮罩：它画在 background-image 之上，会把底线整条盖掉，
+     而单条 inset 阴影在几何上无法「盖满元素又留出底部 1px」，故遮罩与底线不可共存。
+     UA 自动填充只改 background-color，底线走 background-image，天然不被其覆盖。 */
+  transition: background-color 5000s ease-in-out 0s !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html,
+  body {
+    animation: none;
+  }
   :where(
     input:not(
       [type='checkbox'],

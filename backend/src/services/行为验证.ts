@@ -11,9 +11,6 @@ function huoQuPingZhengJian(pingZheng: string): string {
 }
 
 export async function jiLuZhuCeShiBai(shouJiHao: string, ip: string): Promise<void> {
-  // vitest 下跳过失败计数，避免跨测试文件共享Redis计数误伤既有注册用例；
-  // 行为验证核心逻辑由 FP02安全纵深.test 单独覆盖
-  if (process.env.VITEST === 'true' && process.env.FP02_YAN_ZHENG_JI_LU !== 'true') return
   const youXiaoMiao = 24 * 60 * 60
   try {
     const shouJiJian = huoQuShiBaiJian('shouji', shouJiHao)

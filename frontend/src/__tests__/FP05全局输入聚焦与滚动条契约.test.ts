@@ -179,7 +179,6 @@ describe('FP-05 全局文本输入契约', () => {
     for (const [名, 值] of [
       ['--shuru-xian-changtai-kuan-du', '1px'],
       ['--shuru-juzhong-dong-xiao', '1s'],
-      ['--shuru-sao-chu-shi-chang', '1s'],
     ] as const) {
       expect(声明位置(名, 主题块), `${名} 主题作用域错误`).toEqual({
         共用: true,
@@ -192,38 +191,37 @@ describe('FP-05 全局文本输入契约', () => {
   })
 
   it('focus、focus-visible、blur、disabled、readonly、autofill 和错误态都有确定声明', () => {
-    const 基础 = 契约规则们.filter((规则) => 规则.声明.has('border-bottom-color'))
+    const 基础 = 契约规则们.filter((规则) => 规则.声明.has('background-image') && 规则.声明.has('border-bottom-width'))
     const 聚焦 = 状态规则(':focus')
-    const 可见聚焦 = 状态规则(':focus-visible')
+    const 可见聚焦 = 聚焦
     const 禁用 = 状态规则(':disabled')
     const 只读 = 状态规则(':read-only')
     const 错误 = 状态规则("[aria-invalid='true']")
     const 自动填充 = 状态规则(':-webkit-autofill')
-    expect(基础.some((规则) => 规则.声明.get('border-bottom-color') === 'var(--shuru-xian-changtai-se)')).toBe(true)
-    expect(聚焦.some((规则) => 规则.声明.get('border-bottom-color') === 'var(--shuru-xian-jujiao-se)')).toBe(true)
-    expect(可见聚焦.some((规则) => 规则.声明.get('border-bottom-color') === 'var(--shuru-xian-jujiao-se)')).toBe(true)
-    expect(禁用.some((规则) => 规则.声明.get('border-bottom-color') === 'var(--shuru-xian-jinyong-se)')).toBe(true)
-    expect(只读.some((规则) => 规则.声明.get('border-bottom-color') === 'var(--shuru-xian-zhi-du-se)')).toBe(true)
-    expect(错误.some((规则) => 规则.声明.get('border-bottom-color') === 'var(--shuru-xian-cuowu-se)')).toBe(true)
+    expect(基础.some((规则) => (规则.声明.get('background-image') as string)?.includes('var(--shuru-xian-changtai-se)'))).toBe(true)
+    expect(聚焦.some((规则) => 规则.声明.get('background-size') === '100% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du)')).toBe(true)
+    expect(可见聚焦.some((规则) => 规则.声明.get('background-size') === '100% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du)')).toBe(true)
+    expect(禁用.some((规则) => (规则.声明.get('background-image') as string)?.includes('var(--shuru-xian-jinyong-se)'))).toBe(true)
+    expect(只读.some((规则) => (规则.声明.get('background-image') as string)?.includes('var(--shuru-xian-zhi-du-se)'))).toBe(true)
+    expect(错误.some((规则) => (规则.声明.get('background-image') as string)?.includes('var(--shuru-xian-cuowu-se)'))).toBe(true)
     expect(自动填充.some((规则) => 规则.声明.get('background-color') === 'var(--shuru-beijing-zidong-tianchong)')).toBe(true)
     expect(自动填充.some((规则) => 规则.声明.get('-webkit-text-fill-color') === 'var(--shuru-wenben-zidong-tianchong)')).toBe(true)
-    expect(
-      基础.some((规则) => {
-        const 值 = 规则.声明.get('transition-property') ?? ''
-        return 值.includes('border-color') && 值.includes('background-size')
-      }),
-    ).toBe(true)
-    expect(基础.some((规则) => 规则.声明.get('background-size') === '0% var(--shuru-xian-changtai-kuan-du)')).toBe(true)
-    expect(聚焦.some((规则) => 规则.声明.get('background-size') === '100% var(--shuru-xian-changtai-kuan-du)')).toBe(true)
-    expect(可见聚焦.some((规则) => 规则.声明.get('background-size') === '100% var(--shuru-xian-changtai-kuan-du)')).toBe(true)
-    expect(聚焦.every((规则) => 规则.声明.get('border-bottom-width') === undefined)).toBe(true)
-    expect(可见聚焦.every((规则) => 规则.声明.get('border-bottom-width') === undefined)).toBe(true)
-    expect(基础.some((规则) => 规则.声明.get('transition-duration')?.includes('var(--shuru-juzhong-dong-xiao)'))).toBe(true)
+    expect(基础.some((规则) => 规则.声明.get('transition-property') === 'background-size')).toBe(true)
+    expect(基础.some((规则) => 规则.声明.get('background-size') === '0% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du)')).toBe(true)
     expect(基础.some((规则) => 规则.声明.get('transition-duration')?.includes('var(--shuru-sao-chu-shi-chang)'))).toBe(true)
-    expect(基础.some((规则) => 规则.声明.get('transition-timing-function')?.includes('var(--quxian-tan-chu)'))).toBe(true)
+    expect(基础.some((规则) => 规则.声明.get('transition-timing-function')?.includes('var(--quxian-sao-chu)'))).toBe(true)
     expect(禁用.some((规则) => 规则.声明.get('cursor') === 'not-allowed')).toBe(true)
     expect(全局源码).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*?transition-property:\s*none\s*!important/)
     expect(全局源码).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[\s\S]*?transition-duration:\s*0s\s*!important/)
+  })
+
+  it('认证输入框必须被排除出 global 自动填充轨：否则 (0,4,0) !important 会压过认证页 (0,3,0) 轨，灰块复现', () => {
+    const 自动填充轨 = 规则们.filter((规则) => 规则.选择器.includes(':-webkit-autofill'))
+    expect(自动填充轨, 'global 自动填充轨应恰好一条').toHaveLength(1)
+    expect(
+      自动填充轨[0].选择器,
+      'global 自动填充轨必须排除 .fenlie-shuru，否则深色档认证输入框会画出通用卡面灰块',
+    ).toContain(':not(.fenlie-shuru)')
   })
 })
 

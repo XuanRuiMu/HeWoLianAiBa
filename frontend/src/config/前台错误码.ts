@@ -64,6 +64,7 @@ export const QIAN_TAI_DAI_MA = {
   ZHAN_JI_SHU_JU_BIAN_HUA: 'ZHAN_JI_SHU_JU_BIAN_HUA',
   ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA: 'ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA',
   ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA: 'ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA',
+  LI_XIAN: 'FRONTEND_OFFLINE',
 } as const
 
 export type LianAiMa =
@@ -80,6 +81,7 @@ export type LianAiMa =
   | 'LianAi_051' | 'LianAi_052' | 'LianAi_053' | 'LianAi_054' | 'LianAi_055'
   | 'LianAi_056' | 'LianAi_057' | 'LianAi_058' | 'LianAi_059' | 'LianAi_060'
   | 'LianAi_061' | 'LianAi_062' | 'LianAi_063' | 'LianAi_064' | 'LianAi_065'
+  | 'LianAi_066'
 
 export const LIAN_AI_DAI_MA: Readonly<Record<QianTaiDaiMa, LianAiMa>> = {
   FRONTEND_NETWORK_ERROR: 'LianAi_001',
@@ -147,6 +149,7 @@ export const LIAN_AI_DAI_MA: Readonly<Record<QianTaiDaiMa, LianAiMa>> = {
   ZHAN_JI_SHU_JU_BIAN_HUA: 'LianAi_063',
   ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA: 'LianAi_064',
   ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA: 'LianAi_065',
+  FRONTEND_OFFLINE: 'LianAi_066',
 }
 
 export function huoQuLianAiMa(daiMa: QianTaiDaiMa): LianAiMa {
@@ -255,6 +258,7 @@ const WEN_BEN_ZU: Readonly<Record<QianTaiDaiMa, QianTaiWenBenLeiXing>> = {
   ZHAN_JI_SHU_JU_BIAN_HUA: 'zhanJi',
   ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA: 'zhanJi',
   ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA: 'zhanJi',
+  FRONTEND_OFFLINE: 'wangLuo',
 }
 
 const JIU_DAI_MA_BIAN_SHE: Readonly<Record<string, QianTaiDaiMa>> = {
@@ -267,6 +271,7 @@ const JIU_DAI_MA_BIAN_SHE: Readonly<Record<string, QianTaiDaiMa>> = {
 
 const KE_CHONG_SHI_DAI_MA = new Set<QianTaiDaiMa>([
   QIAN_TAI_DAI_MA.WANG_LUO,
+  QIAN_TAI_DAI_MA.LI_XIAN,
   QIAN_TAI_DAI_MA.CHAO_SHI,
   QIAN_TAI_DAI_MA.XIE_YI,
   QIAN_TAI_DAI_MA.RATE_LIMITED,

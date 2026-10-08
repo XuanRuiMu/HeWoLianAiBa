@@ -1,5 +1,5 @@
 import { 数据库 } from '../数据库'
-import { huoQuFanYi } from '../config/translations'
+import { huoQuFanYi, huoQuFanYiMiaoShu } from '../config/translations'
 import {
   CUO_WU_DAI_MA,
   JiaoSeShengChengCuoWu,
@@ -25,7 +25,8 @@ import {
   weiXinXiGuanKu,
   zuoXiGuiLvKu,
   waiMaoYuanXing,
-  zhiYeZhuanYe,
+  zhiYeXueKeKu,
+  zhiYeZhiYeKu,
   aiHao,
   jiaXiang,
   xiHuanDeLeiXing,
@@ -155,7 +156,7 @@ export function congTongYongTiShiCiTiQuRenShe(tiShiCi: string): CongTiShiCiTiQuJ
     }
   }
 
-  const zhiYeHouXuan = anChangDuPaiXuQuChong(Object.values(zhiYeZhuanYe).flat())
+  const zhiYeHouXuan = anChangDuPaiXuQuChong([...zhiYeXueKeKu, ...zhiYeZhiYeKu])
   for (const zhiYe of zhiYeHouXuan) {
     if (wenBen.includes(zhiYe)) {
       jieGuo.zhi_ye = zhiYe
@@ -349,11 +350,16 @@ function anQuanZhongXuanZeWaiMao(mbti: MBTILeiXing): string {
   return suiJiXuanZe(suoYou)
 }
 
-function anQuanZhongXuanZeZhiYe(mbti: MBTILeiXing): string {
-  if (Math.random() < 0.7) {
-    return suiJiXuanZe(zhiYeZhuanYe[mbti])
+function anQuanZhongXuanZeZhiYe(shenFen: ShenFenLeiXing): string {
+  if (shiXueShengShenFen(shenFen)) {
+    return suiJiXuanZe(zhiYeXueKeKu)
   }
-  return suiJiXuanZe(Object.values(zhiYeZhuanYe).flat())
+  return suiJiXuanZe(zhiYeZhiYeKu)
+}
+
+function xuanZeZhiYe(shenFen: ShenFenLeiXing, zhiYeTiQu: string): string {
+  if (zhiYeTiQu) return zhiYeTiQu
+  return anQuanZhongXuanZeZhiYe(shenFen)
 }
 
 function anQuanZhongXuanZeAiHao(mbti: MBTILeiXing): string[] {
@@ -399,7 +405,7 @@ function huoQuIeLeiXing(mbti: MBTILeiXing): 'I' | 'E' {
   return mbti.charAt(0) as 'I' | 'E'
 }
 
-function shengChengShiJieXinXi(shenFen: ShenFenLeiXing, _mbti: MBTILeiXing): Record<string, unknown> {
+function shengChengShiJieXinXi(shenFen: ShenFenLeiXing, _mbti: MBTILeiXing, nianJi: string | null): Record<string, unknown> {
   const xueSheng = shiXueShengShenFen(shenFen)
   return {
     cheng_shi: suiJiXuanZe(chengShiKu),
@@ -409,7 +415,7 @@ function shengChengShiJieXinXi(shenFen: ShenFenLeiXing, _mbti: MBTILeiXing): Rec
     she_jiao_quan: suiJiXuanZe(sheJiaoQuanKu),
     wei_xin_xi_guan: suiJiXuanZe(weiXinXiGuanKu),
     zuo_xi_gui_lv: suiJiXuanZe(zuoXiGuiLvKu),
-    nian_ji: xueSheng ? suiJiXuanZe(nianJiPeiZhi[shenFen]) : null,
+    nian_ji: xueSheng ? nianJi : null,
   }
 }
 
@@ -482,11 +488,15 @@ export function shengChengJiaoSe(canShu: ShengChengJiaoSeCanShu): ShengChengJiao
     nianLing = suiJiShu(shenFenJieGuo.nianLingFanWei[0], shenFenJieGuo.nianLingFanWei[1])
   }
 
-  const zhiYe = heBing.zhi_ye ? qingXiRenSheWenBen(heBing.zhi_ye) : anQuanZhongXuanZeZhiYe(mbti)
+  const zhiYeTiQu = heBing.zhi_ye ? qingXiRenSheWenBen(heBing.zhi_ye) : ''
+  const zhiYe = xuanZeZhiYe(shenFenJieGuo.leiXing, zhiYeTiQu)
+  const nianJi = shiXueShengShenFen(shenFenJieGuo.leiXing)
+    ? suiJiXuanZe(nianJiPeiZhi[shenFenJieGuo.leiXing])
+    : null
   const aiHaoLieBiao = anQuanZhongXuanZeAiHao(mbti)
   const jiaXiangDi = heBing.jia_xiang ? qingXiRenSheWenBen(heBing.jia_xiang) : anQuanZhongXuanZeJiaXiang(mbti)
   const chengShi = heBing.cheng_shi ? qingXiRenSheWenBen(heBing.cheng_shi) : suiJiXuanZe(chengShiKu)
-  const shiJieXinXi = { ...shengChengShiJieXinXi(shenFenJieGuo.leiXing, mbti), cheng_shi: chengShi }
+  const shiJieXinXi = { ...shengChengShiJieXinXi(shenFenJieGuo.leiXing, mbti, nianJi), cheng_shi: chengShi }
   const xiHuanLeiXing = xiHuanDeLeiXing[mbti]
   const jiaTing = suiJiXuanZe(jiaTingBeiJing[mbti])
   const qingGan = suiJiXuanZe(qingGanJingLi[mbti])
@@ -509,15 +519,15 @@ export function shengChengJiaoSe(canShu: ShengChengJiaoSeCanShu): ShengChengJiao
   const haoGanDuZongFen = shengChengHaoGanDuZongFen(mbti, shiFouZhaXing, canShu.yong_hu_id)
 
   const xueSheng = shiXueShengShenFen(shenFenJieGuo.leiXing)
-  const shenFenMiaoShu = xueSheng
-    ? `目前是一名${shenFenJieGuo.leiXing}${suiJiXuanZe(nianJiPeiZhi[shenFenJieGuo.leiXing])}的学生，学习${zhiYe}。`
+  const shenFenMiaoShu = xueSheng && nianJi
+    ? huoQuFanYiMiaoShu('jiaoSe', 'jiaoSeMiaoShuXueSheng', { nianJi, shenFen: shenFenJieGuo.leiXing, zhiYe })
     : shenFenJieGuo.leiXing === '自由职业'
-      ? `目前是一名自由职业者，从事${zhiYe}。`
-      : `目前是一名${zhiYe}。`
+      ? huoQuFanYiMiaoShu('jiaoSe', 'jiaoSeMiaoShuZiYou', { zhiYe })
+      : huoQuFanYiMiaoShu('jiaoSe', 'jiaoSeMiaoShuGongZuo', { zhiYe })
   const buChongMiaoShu = heBing.tong_yong_ti_shi_ci
     ? `${huoQuFanYi('jiaoSe', 'buChongMiaoShuQianZhui')}${qingXiRenSheWenBen(heBing.tong_yong_ti_shi_ci)}`
     : ''
-  const beiJingGuShi = `${mingZi}来自${jiaXiangDi}，现居${chengShi}。${shenFenMiaoShu}${qingGan}${buChongMiaoShu}`
+  const beiJingGuShi = `${mingZi}来自${jiaXiangDi}，现居${chengShi}。${shenFenMiaoShu}${buChongMiaoShu}`
 
   const baDaMoKuai = {
     ji_ben_xin_xi: `姓名：${mingZi}，性别：${内部转展示(xingBie)}，年龄：${nianLing}岁，身份：${shenFenJieGuo.leiXing}，职业/专业：${zhiYe}，城市：${chengShi}`,

@@ -31,8 +31,12 @@ export async function shengChengWriterHuiFu(
         ? [{ type: 'input_text', text: chenJinZhiLing }, ...yongHuNeiRong]
         : yongHuNeiRong
 
+  const jiaoSeMing = (shuRu.jiao_se.wei_xin_ming || '').trim()
+  const jiaoSeSystem = jiaoSeMing
+    ? `完全代入下面这个角色（${jiaoSeMing}），只输出你要发的消息。像平时微信里真实的两个人在聊天，自然口语化，允许短句、留白和真实停顿。`
+    : '完全代入下面这个角色，只输出你要发的消息。像平时微信里真实的两个人在聊天，自然口语化，允许短句、留白和真实停顿。'
   const xiaoXi = [
-    { jiaoSe: 'system' as const, neiRong: '完全代入下面这个角色，只输出你要发的消息。像真实大学生/青年恋人聊微信，自然口语化，允许短句、留白和真实停顿。' },
+    { jiaoSe: 'system' as const, neiRong: jiaoSeSystem },
     { jiaoSe: 'user' as const, neiRong: yongHuNeiRongFuJia },
   ]
 

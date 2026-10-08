@@ -1,11 +1,11 @@
 <template>
-  <div class="chushengriqi" role="group" :aria-label="zuHeMing" @click="chuLiDianJi">
+  <div ref="genYuanSu" class="chushengriqi" role="group" :aria-label="zuHeMing" @click="chuLiDianJi">
     <template v-for="(duan, xu) in DUAN_QING_DAN" :key="duan.ming">
       <input
         :id="duanId(duan)"
         :ref="(yuan: unknown) => dengJiDuanYinYong(duan.ming, yuan)"
         class="duan-shuru"
-        :class="'duan-shuru--' + duan.ming"
+        :class="['duan-shuru--' + duan.ming, { 'duan-shuru--cuo-wu': duanBaoChu(duan.ming) }]"
         type="text"
         role="spinbutton"
         inputmode="numeric"
@@ -22,7 +22,7 @@
         :aria-valuetext="ariaZhiWenBen(duan.ming)"
         @focus="chuLiJuJiao($event)"
         @input="chuLiShuRu(duan.ming, $event)"
-        @blur="chuLiShiJiao(duan.ming)"
+        @blur="chuLiShiJiao(duan.ming, $event)"
         @keydown="chuLiAnJian(duan.ming, $event)"
         @paste="chuLiTieRu($event)"
       />
@@ -62,6 +62,7 @@
           aria-modal="true"
           :aria-label="fanYiXuanZe"
           @keydown="chuLiTanchuangAnJian"
+          @wheel="chuLiTanchuangGunLun"
         >
           <div class="rili-tou-bu">
             <button
@@ -222,13 +223,19 @@ const XING_QI_MING = [
   'xingQiLiuMing',
   'xingQiRiMing',
 ] as const
-/** 日格上的四个方向键 = 键盘光标的日偏移：左右 ±1 天，上下 ±1 周 */
+/** 日格上的方向键与 WASD = 键盘光标的日偏移：左右 ±1 天，上下 ±1 周 */
 const JIAO_DIAN_YI_ZOU: Partial<Record<string, number>> = {
   ArrowLeft: -1,
   ArrowRight: 1,
   ArrowUp: -ZHOU_ZHANG_SHU,
   ArrowDown: ZHOU_ZHANG_SHU,
+  a: -1,
+  d: 1,
+  w: -ZHOU_ZHANG_SHU,
+  s: ZHOU_ZHANG_SHU,
 }
+/** 浮层内滚轮累计滚动量达到该值换一个月（普通滚轮一格约 100，触控板按累计量连续触发） */
+const GUN_LUN_HUAN_YUE_YU_ZHI = 50
 
 interface RiQiSan {
   nian: number
@@ -324,7 +331,9 @@ const chuShi = jieXiRiQi(props.modelValue)
 const yiQueRen = ref<DuanZhuangTai>(chuShi ? qieDaoSan(chuShi) : kongYinYong())
 const zhengZaiShuRu = ref<ShuRuZhuangTai>({ nian: '', yue: '', ri: '' })
 const yiChuLi = ref(false)
-const weiHeFaTieRu = ref(false)
+const liKaiGuo = ref(false)
+const genYuanSu = ref<HTMLElement | null>(null)
+let shangCiWaiFa = chuShi ? props.modelValue : ''
 const jinRi = ref<RiQiSan>(jinRiSan())
 const riLiZhanKai = ref(false)
 
@@ -373,7 +382,44 @@ const keShiFa = computed(() => {
   return true
 })
 
-const shiFouBaoChu = computed(() => (!yiChuLi.value || keShiFa.value ? 'false' : 'true'))
+const quanDuanYiTian = computed(() => {
+  const { nian, yue, ri } = yiQueRen.value
+  return nian !== null && yue !== null && ri !== null
+})
+
+const youDuanChaoJie = computed(() => {
+  const { nian, yue, ri } = yiQueRen.value
+  if (nian !== null && (nian < fanWeiXia.value.nian || nian > fanWeiDa.value.nian)) return true
+  if (yue !== null && (yue < 1 || yue > YUE_SHANG_XIAN)) return true
+  return ri !== null && (ri < 1 || ri > RI_SHANG_XIAN)
+})
+
+const shiFouBaoChu = computed(() => {
+  if (!yiChuLi.value || keShiFa.value) return 'false'
+  if (youDuanChaoJie.value || quanDuanYiTian.value) return 'true'
+  return liKaiGuo.value ? 'true' : 'false'
+})
+
+function duanBaoChu(ming: DuanMing): boolean {
+  if (!yiChuLi.value) return false
+  const { nian, yue } = yiQueRen.value
+  const zhi = yiQueRen.value[ming]
+  if (zhi === null) return liKaiGuo.value && zhengZaiShuRu.value[ming] === ''
+  const xia = fanWeiXia.value
+  const da = fanWeiDa.value
+  if (ming === 'nian') return zhi < xia.nian || zhi > da.nian
+  if (ming === 'yue') {
+    if (zhi < 1 || zhi > YUE_SHANG_XIAN) return true
+    if (nian === da.nian && zhi > da.yue) return true
+    return nian === xia.nian && zhi < xia.yue
+  }
+  if (zhi < 1) return true
+  const yueHeFa = yue !== null && yue >= 1 && yue <= YUE_SHANG_XIAN
+  const benYueTian = nian !== null && yueHeFa ? yueTianShu(nian, yue) : RI_SHANG_XIAN
+  if (zhi > benYueTian) return true
+  if (nian === da.nian && yue === da.yue && zhi > da.ri) return true
+  return nian === xia.nian && yue === xia.yue && zhi < xia.ri
+}
 
 function duanId(duan: DuanDingYi): string {
   return `${props.idQianZhui}${duan.idHouZhui}`
@@ -432,22 +478,15 @@ function xuanZhongDuan(ming: DuanMing): void {
 }
 
 function waiFa(): void {
-  const zhi = zuHeZhi.value
-  if (zhi !== props.modelValue) emit('update:modelValue', zhi)
-}
-
-function jiaoZheng(): void {
-  const { nian, yue, ri } = yiQueRen.value
-  if (nian === null || yue === null || ri === null) return
-  const jiaZhen = jiaZhenRuFanWei({ nian, yue, ri })
-  if (riQiJian(jiaZhen) !== riQiJian({ nian, yue, ri })) yiQueRen.value = qieDaoSan(jiaZhen)
+  const zhi = keShiFa.value ? zuHeZhi.value : ''
+  if (zhi === shangCiWaiFa) return
+  shangCiWaiFa = zhi
+  emit('update:modelValue', zhi)
 }
 
 function tiJiaoDuan(ming: DuanMing, shu: number): void {
-  const { xia, shang } = duanQuJian(ming)
-  yiQueRen.value[ming] = Math.min(Math.max(shu, xia), shang)
+  yiQueRen.value[ming] = shu
   zhengZaiShuRu.value[ming] = ''
-  jiaoZheng()
   waiFa()
 }
 
@@ -481,13 +520,13 @@ function chuLiDianJi(shiJian: MouseEvent): void {
 }
 
 function chuLiJuJiao(shiJian: FocusEvent): void {
+  liKaiGuo.value = false
   const yinYong = shiJian.target as HTMLInputElement
   if (yinYong.value !== '') yinYong.select()
 }
 
 function chuLiShuRu(ming: DuanMing, shiJian: Event): void {
   yiChuLi.value = true
-  weiHeFaTieRu.value = false
   const yuanShi = (shiJian.target as HTMLInputElement).value
   const shuZi = yuanShi.replace(/\D/g, '').slice(-duanChaoBiao[ming].weiShu)
   zhengZaiShuRu.value[ming] = shuZi
@@ -503,34 +542,30 @@ function chuLiShuRu(ming: DuanMing, shiJian: Event): void {
   }
 }
 
-function chuLiTieRu(shiJian: ClipboardEvent): void {
-  const wenBen = shiJian.clipboardData?.getData('text') ?? ''
+function jieXiTieRuWenBen(wenBen: string): RiQiSan | null {
+  const daiFenGe = /^\s*(\d{4})\D+(\d{1,2})\D+(\d{1,2})\s*$/.exec(wenBen)
+  if (daiFenGe) return { nian: Number(daiFenGe[1]), yue: Number(daiFenGe[2]), ri: Number(daiFenGe[3]) }
   const shuZi = wenBen.replace(/\D/g, '')
-  if (shuZi.length < 8) return
-  shiJian.preventDefault()
-  yiChuLi.value = true
-  const nian = Number(shuZi.slice(0, 4))
-  const yue = Number(shuZi.slice(4, 6))
-  const ri = Number(shuZi.slice(6, 8))
-  const zai = new Date(nian, yue - 1, ri)
-  if (zai.getFullYear() === nian && zai.getMonth() === yue - 1 && zai.getDate() === ri) {
-    weiHeFaTieRu.value = false
-    yiQueRen.value = { nian, yue, ri }
-    zhengZaiShuRu.value = { nian: '', yue: '', ri: '' }
-    jiaoZheng()
-    waiFa()
-  } else {
-    weiHeFaTieRu.value = true
-    yiQueRen.value = kongYinYong()
-    zhengZaiShuRu.value = { nian: shuZi.slice(0, 4), yue: shuZi.slice(4, 6), ri: shuZi.slice(6, 8) }
-    waiFa()
-  }
+  if (shuZi.length < 8) return null
+  return { nian: Number(shuZi.slice(0, 4)), yue: Number(shuZi.slice(4, 6)), ri: Number(shuZi.slice(6, 8)) }
 }
 
-function chuLiShiJiao(ming: DuanMing): void {
+function chuLiTieRu(shiJian: ClipboardEvent): void {
+  const wenBen = shiJian.clipboardData?.getData('text') ?? ''
+  const riQi = jieXiTieRuWenBen(wenBen)
+  if (!riQi) return
+  shiJian.preventDefault()
+  yiChuLi.value = true
+  yiQueRen.value = qieDaoSan(riQi)
+  zhengZaiShuRu.value = { nian: '', yue: '', ri: '' }
+  waiFa()
+}
+
+function chuLiShiJiao(ming: DuanMing, shiJian: FocusEvent): void {
   const shuZi = zhengZaiShuRu.value[ming]
-  if (shuZi === '') return
-  tiJiaoDuan(ming, Number(shuZi))
+  if (shuZi !== '') tiJiaoDuan(ming, Number(shuZi))
+  const xiaYiJiaoDian = shiJian.relatedTarget as Node | null
+  if (!xiaYiJiaoDian || !genYuanSu.value?.contains(xiaYiJiaoDian)) liKaiGuo.value = true
 }
 
 function chuLiAnJian(ming: DuanMing, shiJian: KeyboardEvent): void {
@@ -723,9 +758,7 @@ function xuanZhongRiQi(ge: RiGe): void {
   if (!ge.keXuan) return
   yiQueRen.value = qieDaoSan(ge)
   zhengZaiShuRu.value = { nian: '', yue: '', ri: '' }
-  weiHeFaTieRu.value = false
   yiChuLi.value = true
-  jiaoZheng()
   waiFa()
   guanBi()
 }
@@ -749,6 +782,19 @@ function xianZhuanJiaoDian(shiJian: KeyboardEvent): void {
   keXuan[xin].focus()
 }
 
+let gunLunLeiJi = 0
+
+function chuLiTanchuangGunLun(shiJian: WheelEvent): void {
+  const yuan = tanchuangYuan.value
+  if (!yuan || yuan.scrollHeight > yuan.clientHeight) return
+  shiJian.preventDefault()
+  gunLunLeiJi += shiJian.deltaY
+  if (Math.abs(gunLunLeiJi) < GUN_LUN_HUAN_YUE_YU_ZHI) return
+  const pian = gunLunLeiJi > 0 ? 1 : -1
+  gunLunLeiJi = 0
+  yiDongYue(pian)
+}
+
 function chuLiTanchuangAnJian(shiJian: KeyboardEvent): void {
   const yuan = tanchuangYuan.value
   if (!yuan) return
@@ -763,7 +809,9 @@ function chuLiTanchuangAnJian(shiJian: KeyboardEvent): void {
   }
   // 换日/换月/首末日的按键只在日格上生效：焦点停在年月导航钮或底部钮时，同一个方向键不该把焦点拽进网格
   if (!(shiJian.target as HTMLElement).classList.contains('rili-ri')) return
-  const tianShu = JIAO_DIAN_YI_ZOU[shiJian.key]
+  const anJianMing = shiJian.key.length === 1 ? shiJian.key.toLowerCase() : shiJian.key
+  const tianShu =
+    shiJian.ctrlKey || shiJian.metaKey || shiJian.altKey ? undefined : JIAO_DIAN_YI_ZOU[anJianMing]
   if (tianShu !== undefined) {
     shiJian.preventDefault()
     yiDongJiaoDianGe(tianShu)
@@ -785,12 +833,11 @@ function chuLiTanchuangAnJian(shiJian: KeyboardEvent): void {
 watch(
   () => props.modelValue,
   (zhi) => {
+    if (zhi === shangCiWaiFa) return
     const riQi = jieXiRiQi(zhi)
-    if (riQi && zuHeZhi.value === zhi) return
     yiQueRen.value = riQi ? qieDaoSan(riQi) : kongYinYong()
-    if (!weiHeFaTieRu.value || zhi !== '') {
-      zhengZaiShuRu.value = { nian: '', yue: '', ri: '' }
-    }
+    zhengZaiShuRu.value = { nian: '', yue: '', ri: '' }
+    shangCiWaiFa = zhi
   },
 )
 
@@ -834,6 +881,15 @@ watch(zuHeZhi, (zhi) => {
   cursor: text;
   appearance: none;
   -webkit-appearance: none;
+}
+
+.chushengriqi .duan-shuru.duan-shuru {
+  border-bottom-width: 0 !important;
+}
+
+.chushengriqi .duan-shuru.duan-shuru.duan-shuru--cuo-wu {
+  border-bottom-width: var(--shuru-xian-changtai-kuan-du) !important;
+  border-bottom-color: var(--shuru-xian-cuowu-se) !important;
 }
 
 .duan-shuru--nian {

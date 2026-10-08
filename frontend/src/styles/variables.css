@@ -264,7 +264,8 @@
   --renzheng-gundong-yuan-jiao: 8px;
   --renzheng-dingge-guang-yun: 0 0 32px rgba(201, 169, 106, 0.45);
   --renzheng-gundong-huakuai-kuan: 3px;
-  --renzheng-gundong-huakuai-you-ju: 1px;
+  --renzheng-gundong-shou-kuan: 24px;
+  --renzheng-ka-pian-you-nei-ju: calc(var(--jiange-da) + var(--jiange-4));
 }
 
 :root[data-theme="light"] {

@@ -391,7 +391,11 @@
 
               <div class="xieyi-gouxuan">
                 <label class="xieyi-fuxuan">
-                  <input v-model="tongYiXieYi" type="checkbox" />
+                  <input
+                    v-model="tongYiXieYi"
+                    type="checkbox"
+                    :class="xieYiGouXuanSeLei"
+                  />
                 </label>
                 <span class="xieyi-wenben"
                   >{{ huoQuFanYi('renZheng', 'yiYueDu')
@@ -422,12 +426,24 @@
           </div>
           </div>
           </div>
-          <div ref="gundongZhuangShi" class="gundong-zhuangshi" aria-hidden="true">
-            <div class="gundong-jiantou gundong-jiantou-shang" />
-            <div class="gundong-guidao">
-              <div ref="gundongHuaKuai" class="gundong-huakuai" aria-hidden="true" />
+          <div
+            ref="gundongZhuangShi"
+            class="gundong-zhuangshi"
+            aria-hidden="true"
+            @wheel.prevent="chuLiZhuangShiGunLun"
+          >
+            <div class="gundong-jiantou gundong-jiantou-shang" @pointerdown.prevent="anJianTouGunDong(-1)" />
+            <div ref="gundongGuiDao" class="gundong-guidao" @pointerdown.prevent="anGuiDaoTiaoZhuan">
+              <div
+                ref="gundongHuaKuai"
+                class="gundong-huakuai" aria-hidden="true"
+                @pointerdown.prevent.stop="kaiShiTuoDongHuaKuai"
+                @pointermove="tuoDongHuaKuai"
+                @pointerup="jieShuTuoDongHuaKuai"
+                @pointercancel="jieShuTuoDongHuaKuai"
+              />
             </div>
-            <div class="gundong-jiantou gundong-jiantou-xia" />
+            <div class="gundong-jiantou gundong-jiantou-xia" @pointerdown.prevent="anJianTouGunDong(1)" />
           </div>
         </div>
       </div>
@@ -537,8 +553,14 @@ function daKaiXieYi(leiXing: 'yongHuXieYi' | 'yinSiZhengCe') {
   xieYiXianShi.value = true
 }
 
+const xieYiGouXuanCiShu = ref(tongYiXieYi.value ? 1 : 0)
+const xieYiGouXuanSeLei = computed(() =>
+  xieYiGouXuanCiShu.value % 2 === 0 ? 'xieyi-fuxuan-fen' : 'xieyi-fuxuan-lan',
+)
+
 watch(tongYiXieYi, (val) => {
   bd.tongYiXieYi = val
+  if (val) xieYiGouXuanCiShu.value += 1
 })
 
 const shouJiHaoJuJiao = ref(false)
@@ -725,10 +747,15 @@ const biaodanRongqi = ref<HTMLElement | null>(null)
 
 const gundongRongQi = ref<HTMLElement | null>(null)
 const gundongHuaKuai = ref<HTMLElement | null>(null)
+const gundongGuiDao = ref<HTMLElement | null>(null)
 const gundongZhuangShi = ref<HTMLElement | null>(null)
 let gundongGuangChaQi: ResizeObserver | null = null
 const HUA_KUAI_ZUI_XIAO_GAO = 24
 const GU_DAO_LIU_BAI = 14
+const JIAN_TOU_BU_CHANG_BI_LI = 0.25
+let huaKuaiGaoDu = 0
+let huaKuaiGuiDaoGao = 0
+let tuoDongQiDian: { zuoBiaoY: number; gunDongDingBu: number } | null = null
 
 function gengXinHuaKuai(): void {
   const gunDongQuYuanSu = gundongRongQi.value
@@ -739,6 +766,8 @@ function gengXinHuaKuai(): void {
   if (yiChuGao <= 0) {
     huaKuaiYuanSu.style.display = 'none'
     zhuangShiYuanSu.style.display = 'none'
+    huaKuaiGaoDu = 0
+    huaKuaiGuiDaoGao = 0
     return
   }
   huaKuaiYuanSu.style.display = ''
@@ -751,8 +780,57 @@ function gengXinHuaKuai(): void {
   )
   const guiDaoGao = Math.max(0, shiYongGao - huaKuaiGao)
   const dingBu = Math.round((gunDongQuYuanSu.scrollTop / yiChuGao) * guiDaoGao)
+  huaKuaiGaoDu = huaKuaiGao
+  huaKuaiGuiDaoGao = guiDaoGao
   huaKuaiYuanSu.style.height = `${huaKuaiGao}px`
   huaKuaiYuanSu.style.transform = `translateY(${dingBu}px)`
+}
+
+function gunDongYiChuGao(): number {
+  const gunDongQuYuanSu = gundongRongQi.value
+  return gunDongQuYuanSu ? gunDongQuYuanSu.scrollHeight - gunDongQuYuanSu.clientHeight : 0
+}
+
+function kaiShiTuoDongHuaKuai(shijian: PointerEvent): void {
+  const gunDongQuYuanSu = gundongRongQi.value
+  const huaKuaiYuanSu = gundongHuaKuai.value
+  if (!gunDongQuYuanSu || !huaKuaiYuanSu) return
+  huaKuaiYuanSu.setPointerCapture?.(shijian.pointerId)
+  tuoDongQiDian = { zuoBiaoY: shijian.clientY, gunDongDingBu: gunDongQuYuanSu.scrollTop }
+}
+
+function tuoDongHuaKuai(shijian: PointerEvent): void {
+  const gunDongQuYuanSu = gundongRongQi.value
+  if (!tuoDongQiDian || !gunDongQuYuanSu || huaKuaiGuiDaoGao <= 0) return
+  const pianYi = shijian.clientY - tuoDongQiDian.zuoBiaoY
+  gunDongQuYuanSu.scrollTop = tuoDongQiDian.gunDongDingBu + (pianYi / huaKuaiGuiDaoGao) * gunDongYiChuGao()
+}
+
+function jieShuTuoDongHuaKuai(shijian: PointerEvent): void {
+  tuoDongQiDian = null
+  const huaKuaiYuanSu = gundongHuaKuai.value
+  if (huaKuaiYuanSu?.hasPointerCapture?.(shijian.pointerId)) huaKuaiYuanSu.releasePointerCapture(shijian.pointerId)
+}
+
+function anGuiDaoTiaoZhuan(shijian: PointerEvent): void {
+  const gunDongQuYuanSu = gundongRongQi.value
+  const guiDaoYuanSu = gundongGuiDao.value
+  if (!gunDongQuYuanSu || !guiDaoYuanSu || huaKuaiGuiDaoGao <= 0) return
+  const guiDaoJuXing = guiDaoYuanSu.getBoundingClientRect()
+  const huaKuaiZhongXin = shijian.clientY - guiDaoJuXing.top - huaKuaiGaoDu / 2
+  const bili = Math.min(1, Math.max(0, huaKuaiZhongXin / huaKuaiGuiDaoGao))
+  gunDongQuYuanSu.scrollTop = bili * gunDongYiChuGao()
+}
+
+function anJianTouGunDong(fangXiang: 1 | -1): void {
+  const gunDongQuYuanSu = gundongRongQi.value
+  if (!gunDongQuYuanSu) return
+  gunDongQuYuanSu.scrollTop += fangXiang * gunDongQuYuanSu.clientHeight * JIAN_TOU_BU_CHANG_BI_LI
+}
+
+function chuLiZhuangShiGunLun(shijian: WheelEvent): void {
+  const gunDongQuYuanSu = gundongRongQi.value
+  if (gunDongQuYuanSu) gunDongQuYuanSu.scrollTop += shijian.deltaY
 }
 
 function chuLiGundongGunDong(): void {
@@ -1363,7 +1441,8 @@ async function zhiXingZhuCe() {
     0 20px 50px rgba(2, 4, 14, 0.55),
     inset 0 0 0 4px var(--renzheng-mian-se),
     inset 0 0 0 5px rgba(201, 169, 106, 0.28);
-  padding: calc(var(--jiange-da) + var(--jiange-6)) calc(var(--jiange-da) + var(--jiange-4)) var(--jiange-da);
+  padding: calc(var(--jiange-da) + var(--jiange-6)) var(--renzheng-ka-pian-you-nei-ju) var(--jiange-da)
+    var(--renzheng-ka-pian-you-nei-ju);
   position: relative;
   /* 视口内上界：相对 .denglu-neirong 的确定高（网格区域）封顶，超出量交给内层认证滚动口。
      卡片自身仍是 overflow:hidden —— 它要裁掉 .juanzhou-gan 的 110% 宽与圆角，不是多余裁切层 */
@@ -1495,12 +1574,20 @@ async function zhiXingZhuCe() {
   flex-direction: column;
 }
 
+/* 滚动口用「负 margin 上移 + 等量 padding-top」给浮标签让位，卡片内几何因此不变。
+   但它上移的这段空间是从上方借的：上方没有内容时借的是卡片内边距（视觉正确），
+   上方有报错框时借的就成了报错框，首个字段连同浮标签会压到报错框下沿上（FP-02 报障）。
+   故按同一对令牌给报错框补回等量下边距，净重叠归零，两种情形间距一致。 */
+.biaodan-neirong-qu > .qian-tai-cuo-wu {
+  margin-bottom: calc(var(--biaoqian-qin-ru) + var(--jiange-2));
+}
+
 .gundong-zhuangshi {
   position: absolute;
   top: 0;
   bottom: 0;
-  right: calc(var(--renzheng-gundong-huakuai-you-ju) - var(--jiange-zhong) - var(--jiange-6));
-  width: var(--renzheng-gundong-huakuai-kuan);
+  right: calc(var(--renzheng-ka-pian-you-nei-ju) / -2 - var(--renzheng-gundong-shou-kuan) / 2);
+  width: var(--renzheng-gundong-shou-kuan);
   pointer-events: none;
 }
 
@@ -1508,10 +1595,24 @@ async function zhiXingZhuCe() {
   position: absolute;
   top: 14px;
   bottom: 14px;
-  left: 0;
-  width: 100%;
+  left: 50%;
+  width: var(--renzheng-gundong-huakuai-kuan);
+  margin-left: calc(var(--renzheng-gundong-huakuai-kuan) / -2);
   border-radius: var(--renzheng-gundong-yuan-jiao);
   background: color-mix(in srgb, var(--renzheng-gundong-huakuai-se) 18%, transparent);
+  pointer-events: auto;
+  touch-action: none;
+  cursor: default;
+}
+
+.gundong-guidao::before,
+.gundong-huakuai::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc((var(--renzheng-gundong-shou-kuan) - var(--renzheng-gundong-huakuai-kuan)) / -2);
+  right: calc((var(--renzheng-gundong-shou-kuan) - var(--renzheng-gundong-huakuai-kuan)) / -2);
 }
 
 .gundong-jiantou {
@@ -1521,6 +1622,15 @@ async function zhiXingZhuCe() {
   height: 8px;
   border-left: 2px solid var(--renzheng-gundong-huakuai-se);
   border-top: 2px solid var(--renzheng-gundong-huakuai-se);
+  pointer-events: auto;
+  touch-action: none;
+  cursor: default;
+}
+
+.gundong-jiantou::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--jiange-zhong) * -1);
 }
 
 .gundong-jiantou-shang {
@@ -1538,6 +1648,8 @@ async function zhiXingZhuCe() {
   top: 0;
   left: 0;
   width: 100%;
+  touch-action: none;
+  cursor: default;
   border-radius: var(--renzheng-gundong-yuan-jiao);
   background: linear-gradient(
     180deg,
@@ -1545,7 +1657,7 @@ async function zhiXingZhuCe() {
     color-mix(in srgb, var(--renzheng-gundong-huakuai-se) 60%, #e8743b) 50%,
     var(--renzheng-gundong-huakuai-se) 100%
   );
-  pointer-events: none;
+  pointer-events: auto;
   will-change: transform;
 }
 
@@ -1569,7 +1681,9 @@ async function zhiXingZhuCe() {
   grid-template-rows: 1fr;
 }
 
-.biaodan-moshi-pane.shi-fu-yong.qiehuan-wanding {
+.biaodan-moshi-pane.shi-fu-yong.qiehuan-wanding,
+.biaodan-moshi-pane.shi-fu-yong.qiehuan-wanding > .denglu-biaodan,
+.biaodan-moshi-pane.shi-fu-yong.qiehuan-wanding > .zhuce-biaodan {
   overflow: visible;
 }
 
@@ -1728,9 +1842,10 @@ async function zhiXingZhuCe() {
   appearance: none;
   box-shadow: none;
   -webkit-text-fill-color: #efe9dc;
-  transition: background-color 5000s ease-in-out 0s;
 }
 
+/* 认证输入一律不画焦点环：outline 只能画整圈，会在上下边多出两条线，与「只有一条底线」的设计冲突。
+   焦点状态由底线自身（聚焦扫亮）承担。 */
 .denglu-neirong :deep(.fenlie-shuru):focus-visible,
 .denglu-neirong :deep(.duan-shuru):focus-visible {
   outline: none;
@@ -1759,15 +1874,28 @@ async function zhiXingZhuCe() {
 .fenlie-shuru:-webkit-autofill:active {
   -webkit-text-fill-color: #efe9dc !important;
   caret-color: #d5b878 !important;
+  /* 自动填充态的 UA 底色用「声明卡面色 + 5000s 过渡」压掉：UA 改的是 background-color，
+     过渡把这次变化拉长到近乎不可见，底色因此停在卡面色。
+     不用 inset 大扩散遮罩：它画在 border box 之上，会把底线整条盖掉，而底线是唯一的焦点指示。 */
+  background-color: var(--renzheng-mian-se) !important;
   transition: background-color 5000s ease-in-out 0s !important;
   animation-name: ziDongTianChongKaiShi;
   animation-duration: 0.01s;
   animation-iteration-count: 1;
-  /* Chrome 自动填充的原生浅色块只能用内嵌阴影盖掉（background-color 与
-     5000s 过渡技巧在部分版本被 UA 压过，实测 Chromium 128+ 直接失效）。
-     阴影色取卡面令牌，与卡面同色板，深浅两档均无缝 */
-  -webkit-box-shadow: 0 0 0 1000px var(--renzheng-mian-se) inset;
-  box-shadow: 0 0 0 1000px var(--renzheng-mian-se) inset;
+  /* UA 的 :-webkit-autofill 带 `background-image: none !important`，实测强制自动填充态下
+     background-image 计算值就是 none，global 那条底线图层会被整个清空。UA 不碰 border，
+     故该状态下底线改由 border-bottom-color 承载，几何与色令牌仍与 global 同源。 */
+  border-bottom-color: var(--shuru-xian-changtai-se) !important;
+}
+
+:root[data-theme='light'] .fenlie-shuru:-webkit-autofill:focus,
+:root[data-theme='light'] .fenlie-shuru:-webkit-autofill:focus-visible {
+  border-bottom-color: var(--shuru-xian-jujiao-se) !important;
+}
+
+.fenlie-shuru:-webkit-autofill:focus,
+.fenlie-shuru:-webkit-autofill:focus-visible {
+  border-bottom-color: var(--shuru-xian-jujiao-se) !important;
 }
 
 .fudong-biaoqian {
@@ -2055,18 +2183,14 @@ async function zhiXingZhuCe() {
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: var(--xingbie-nan-xuan-biankuang);
-  animation: xieyi-fuxuan-huxi 2.4s ease-in-out infinite;
 }
 
-@keyframes xieyi-fuxuan-huxi {
-  0%,
-  100% {
-    accent-color: var(--xingbie-nan-xuan-biankuang);
-  }
-  50% {
-    accent-color: var(--xingbie-nv-xuan-biankuang);
-  }
+.xieyi-fuxuan input[type='checkbox'].xieyi-fuxuan-lan {
+  accent-color: var(--xingbie-nan-xuan-biankuang);
+}
+
+.xieyi-fuxuan input[type='checkbox'].xieyi-fuxuan-fen {
+  accent-color: var(--xingbie-nv-xuan-biankuang);
 }
 
 .xieyi-wenben {
@@ -2141,9 +2265,14 @@ async function zhiXingZhuCe() {
 :root[data-theme='light'] .fenlie-shuru:-webkit-autofill:active {
   -webkit-text-fill-color: #2e2a20 !important;
   caret-color: #8a6a2f !important;
-  /* 浅档沿用同一张卡面令牌：--renzheng-mian-se 随主题切换到亮面，无需重复声明 */
-  -webkit-box-shadow: 0 0 0 1000px var(--renzheng-mian-se) inset;
-  box-shadow: 0 0 0 1000px var(--renzheng-mian-se) inset;
+  /* 浅档沿用同一张卡面令牌：--renzheng-mian-se 随主题切换到亮面，无需重复声明。
+     色令牌全部随主题切换，底线条与聚焦条同样只声明一次。 */
+  background-color: var(--renzheng-mian-se) !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+  animation-name: ziDongTianChongKaiShi;
+  animation-duration: 0.01s;
+  animation-iteration-count: 1;
+  border-bottom-color: var(--shuru-xian-changtai-se) !important;
 }
 
 :root[data-theme='light'] .fudong-biaoqian {

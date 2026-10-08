@@ -45,20 +45,13 @@ function tongYongXianLiu(
     max,
     standardHeaders: true,
     legacyHeaders: false,
-    // M3：生产环境限流计数存 Redis（多实例共享、重启不丢）；
-    // vitest 下内存store按进程隔离：同一进程内顺序跑多文件仍共享计数，
-    // F-02 单测减负：角色生成纯本地计算不计入常规限流，禁大文件单测互相误限
-    skip: process.env.VITEST === 'true'
-      ? (req) => {
-          const luJing = `${(req as Request).baseUrl || ''}${(req as Request).path || ''}` || '/'
-          return luJing.startsWith('/api/生成角色')
-        }
-      : undefined,
+// M3：生产环境限流计数存 Redis（多实例共享、重启不丢）。
     // passOnStoreError：Redis 抖动/启动竞态下 store 初始化失败时，express-rate-limit 默认把
-    // 那条被缓存的 rejection 在之后的每个请求上重抛 → 全站（含落库前的聊天发送）恒 500。
+    // 那条被缓存的 rejection 之后的每个请求上重抛 → 全站（含落库前的聊天发送）恒 500。
     // 限流是保护层，不得成为故障源：store 出错时放行，错误由库的 logger 打到控制台、
     // Redis 侧的故障另有 utils/redis 的 error 监听与熔断计数记录。
-    ...(process.env.VITEST === 'true' ? {} : { store: chuangJianRedisStore(), passOnStoreError: true }),
+    store: chuangJianRedisStore(),
+    passOnStoreError: true,
     // 默认键：真实来源 IP 派生；各限流器可传入自己的键函数
     keyGenerator: keyGenerator
       ? (req) => keyGenerator(req as Request)
@@ -164,27 +157,20 @@ export const jianChaShouJiXianLiu = tongYongXianLiu(
 )
 
 // YH-011 注册独立严限流（IP 维度）+发码配额联动在路由层按手机号二次核验
-// vitest 下默认上限5会导致既有注册用例被误限；测试环境放宽到1000，生产/联调走配置
 export const zhuCeXianLiu = tongYongXianLiu(
   peiZhi.xianLiu.zhuCe.chuangKou,
-  process.env.VITEST === 'true' ? 1000 : peiZhi.xianLiu.zhuCe.zuiDa,
+  peiZhi.xianLiu.zhuCe.zuiDa,
   'zhuCePinFan',
   (req) => huoQuQingQiuIP(req),
   'renZheng',
 )
 
 // A7 短信日配额中间件：每手机号/每IP 每日发送上限。
-// vitest 下跳过（与限流 Redis store 同策略），避免跨测试文件共享 Redis 计数误伤；
-// 配额核心逻辑由 services/短信.ts duanXinRiPeiEYunXu 单独覆盖测试。
 export async function duanXinRiPeiEZhuJi(
   qingQiu: Request,
   xiangYing: Response,
   xiaYiBu: NextFunction,
 ): Promise<void> {
-  if (process.env.VITEST === 'true') {
-    xiaYiBu()
-    return
-  }
   try {
     const { duanXinRiPeiEYunXu } = await import('../services/短信')
     const shouJiHao = (qingQiu.body as { shou_ji_hao?: string; shouJiHao?: string })

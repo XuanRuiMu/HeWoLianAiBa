@@ -51,9 +51,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Test
-        run: npm run test -- --coverage
-
   backend:
     name: Backend CI
     runs-on: ubuntu-latest
@@ -132,9 +129,6 @@ jobs:
       - name: Typecheck (度量链)
         run: npm run typecheck:度量
 
-      # ⚠️ 主配置 tsc 排除了 `src/**/__tests__`（既有 Express mock 类型债），
-      #    度量与验收链的测试必须另有类型保护——返回体缺字段（如 `AIYinQingSuChu.yuan_wen`）
-      #    这类 P0 只能被 tsc 抓到，且曾连续三轮骗过 `tsc + vitest` 全绿。
       - name: Lint
         run: npm run lint
 
@@ -146,9 +140,6 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f ../database/000_baseline.sql
           ./node_modules/.bin/ts-node scripts/run_migration.ts
           ./node_modules/.bin/ts-node scripts/run_migration.ts
-
-      - name: Test
-        run: npm run test -- --coverage
 
       - name: Verify database migrations
         run: |

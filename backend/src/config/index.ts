@@ -58,7 +58,7 @@ export function huoQuQiDongHuanJingCuoWu(huanJing: string | undefined): string |
 }
 
 const qiDongHuanJingCuoWu = huoQuQiDongHuanJingCuoWu(process.env.NODE_ENV)
-if (qiDongHuanJingCuoWu && !process.env.VITEST) {
+if (qiDongHuanJingCuoWu) {
   throw new Error(qiDongHuanJingCuoWu)
 }
 
@@ -89,9 +89,9 @@ if (shiFouShengChan) {
   console.warn('[配置警告] 开发/测试环境未设置 DEEPSEEK_API_KEY，AI 功能将不可用')
 }
 
-// 低危顺手项：JWT 密钥强制最小长度 32 字节，弱密钥拒绝启动（vitest 测试密钥除外）
+// 低危顺手项：JWT 密钥强制最小长度 32 字节，弱密钥拒绝启动
 const jwtMiYaoZhi = huoQuJiMi('JWT_SECRET')
-if (jwtMiYaoZhi.length > 0 && jwtMiYaoZhi.length < 32 && process.env.VITEST !== 'true') {
+if (jwtMiYaoZhi.length > 0 && jwtMiYaoZhi.length < 32) {
   throw new Error(`启动失败：JWT_SECRET 长度不足（当前 ${jwtMiYaoZhi.length} 字节），至少需要 32 字节以抵抗暴力破解`)
 }
 

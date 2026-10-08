@@ -263,7 +263,7 @@ describe('FP-01：认证输入不绘制焦点环，浮标签与光标承担焦�
     )
   })
 
-  it('真实注册 DOM：分段 input 无可见 outline，非认证文本 input 仍保留全局焦点环', async () => {
+  it('真实注册 DOM：认证文本 input 无可见 outline，非认证文本 input 仍保留全局焦点环', async () => {
     const { wrapper, 清理: 清理原样 } = await 挂载登录('dark', 'zhuCe')
     const 根 = wrapper.find('.denglu-neirong').element
     const 清理编译 = 注入编译认证样式(根, 'dark')

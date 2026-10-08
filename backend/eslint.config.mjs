@@ -9,7 +9,7 @@ const tsDuan = tseslint.config(...tseslint.configs.recommended)
 
 export default [
   {
-    ignores: ['dist', 'node_modules', '*.d.ts', 'tests', 'src/__tests__', 'scripts/run_migration.js', 'scripts/语域分析'],
+    ignores: ['dist', 'node_modules', '*.d.ts', 'scripts/run_migration.js'],
   },
   js.configs.recommended,
   ...tsDuan,

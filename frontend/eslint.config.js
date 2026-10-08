@@ -62,10 +62,4 @@ export default tseslint.config(
       'vue/component-definition-name-casing': 'off',
     },
   },
-  {
-    files: ['src/__tests__/**'],
-    rules: {
-      'no-console': 'off',
-    },
-  },
 )

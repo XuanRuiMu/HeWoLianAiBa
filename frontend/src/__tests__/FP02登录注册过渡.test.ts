@@ -458,11 +458,16 @@ describe('FP-02 层叠判定的形态账本（判定盲区必须显式登记，F
         // 新增形态必须显式入账而不是被静默放行。
         '#ban-ben-ti-shi {position,top}',
         '.anniu-zhuyao::before {position,top,transition}',
+        // 报错框按同一对令牌补回滚动口负 margin 上移量，抵消「浮标签压到报错框」的净重叠
+        '.biaodan-neirong-qu > .qian-tai-cuo-wu {margin-bottom}',
         '.biaodan-rongqi::before {position,top,pointer-events}',
         '.biaodan-zu label {margin-bottom}',
         '.biaoqian-anniu.huoyue::after {position,transform}',
         // FP-J2：滚动口外壳上的 overlay 滑块 hover/focus 显形已随常显改造移除，故本两行不再登记。
         '.boli-kapian::after {position,top,pointer-events}',
+        '.gundong-guidao::before {position,top}',
+        '.gundong-huakuai::before {position,top}',
+        '.gundong-jiantou::before {position}',
         '.ji-zhu-wen-ben.yi-gou-xuan::after {position,top,transform}',
         '.ji-zhu-wen-ben::before {position,top,transform,transition}',
         '.mima-zu .fenlie-shuru {flex}',
@@ -470,12 +475,15 @@ describe('FP-02 层叠判定的形态账本（判定盲区必须显式登记，F
         '.shuru-zu:focus-within .fudong-biaoqian {top}',
         '.shuru-zu:has(.fenlie-shuru:-webkit-autofill) .fudong-biaoqian {top}',
         ":root[data-theme='light'] .biaoqian-qiehuan {border-bottom-color}",
+        // 浅档自动填充轨：UA 抑制过渡 + 底线兜底（UA 的 background-image:none 会清空底线图层）
+        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill {transition,border-bottom-color}",
+        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill:active {transition,border-bottom-color}",
+        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill:focus {transition,border-bottom-color}",
+        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill:focus {border-bottom-color}",
+        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill:focus-visible {border-bottom-color}",
+        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill:hover {transition,border-bottom-color}",
         ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input) {border-bottom-color}",
-        ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):disabled {border-bottom-color}",
-        ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):focus {border-bottom-color}",
-        ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):focus-visible {border-bottom-color}",
-        ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):is([aria-invalid='true'], [data-error='true'], .is-error) {border-bottom-color}",
-        ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):read-only {border-bottom-color}",
+        ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.fenlie-shuru):-webkit-autofill {transition}",
       ].sort(),
     )
   })
@@ -506,7 +514,9 @@ describe('FP-02 ④：FP-03c / FP-04a / FP-04b 既有契约逐点复测', () => 
     expect(深.get('--shuru-xian-changtai-se')).toBe('var(--renzheng-shuru-xian-se)')
     expect(
       规则清单(剔帧(读取全局基线())).some(
-        (项) => 项.声明.get('border-bottom-color') === 'var(--shuru-xian-changtai-se)',
+        (项) =>
+          (项.声明.get('background-image') as string | undefined)?.includes('var(--shuru-xian-changtai-se)') &&
+          项.声明.get('background-size')?.toString().includes('var(--shuru-xian-changtai-kuan-du)'),
       ),
     ).toBe(true)
   })

@@ -99,7 +99,7 @@ afterEach(() => {
 describe('FPA1 ①：全站非聊天输入框只吃 global 单真源', () => {
   it('静置 1px 令牌色由 global 给出', () => {
     const 基 = 全局规则.filter((项) => 项.声明.has('border-bottom-color'))
-    expect(基.some((项) => 项.声明.get('border-bottom-color') === 'var(--shuru-xian-changtai-se)')).toBe(true)
+    expect(基.some((项) => 项.声明.get('border-bottom-color') === 'transparent')).toBe(true)
     expect(基.some((项) => 项.声明.get('border-bottom-width') === 'var(--shuru-xian-changtai-kuan-du)')).toBe(true)
     const 表 = 令牌表('light')
     expect(表.get('--shuru-xian-changtai-kuan-du')).toBe('1px')
@@ -142,7 +142,7 @@ describe('FPA1 ①：全站非聊天输入框只吃 global 单真源', () => {
     const 基 = 全局规则.filter((项) => 项.声明.has('transition-duration'))
     expect(基.some((项) => (项.声明.get('transition-duration') as string).includes('var(--shuru-sao-chu-shi-chang)'))).toBe(true)
     expect(基.some((项) => (项.声明.get('transition-timing-function') as string).includes('var(--quxian-sao-chu)'))).toBe(true)
-    expect(基.some((项) => 项.声明.get('background-size') === '0% var(--shuru-xian-changtai-kuan-du)')).toBe(true)
+    expect(基.some((项) => 项.声明.get('background-size') === '0% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du)')).toBe(true)
     expect(全局净.includes('background-position') && 全局净.includes('left bottom')).toBe(true)
     expect(全局净.includes('background-repeat') && 全局净.includes('no-repeat')).toBe(true)
     const 表 = 令牌表('light')
@@ -153,19 +153,53 @@ describe('FPA1 ①：全站非聊天输入框只吃 global 单真源', () => {
     const 模板 = 视图全源.slice(0, 视图全源.indexOf('<script'))
     const 输入框类 = [...模板.matchAll(/class="fenlie-shuru"/g)].length
     expect(输入框类, '登录注册输入框数漂移').toBeGreaterThanOrEqual(6)
+    // 自动填充态的 border 底线是唯一登记的例外：UA 的 :-webkit-autofill 带
+    // `background-image: none !important`，实测强制自动填充态下 background-image 计算值即为 none，
+    // global 那条底线图层会被整个清空；UA 不碰 border，故该状态下底线改由 border-bottom-color
+    // 承载。色值仍取 global 同一族令牌，深浅两档成对，非逐字段另立真源。
+    const 自动填充底线 = (项: { 选择器: string }) => 项.选择器.includes(':-webkit-autofill')
+    const 合规底线 = (项: { 声明: Map<string, string> }) =>
+      (项.声明.get('border-bottom-color') === 'var(--shuru-xian-changtai-se)' ||
+        项.声明.get('border-bottom-color') === 'var(--shuru-xian-jujiao-se)') &&
+      (项.声明.get('border-bottom-width') === undefined ||
+        项.声明.get('border-bottom-width') === 'var(--shuru-xian-changtai-kuan-du)')
     const 异轨边线 = 视图规则.filter(
       (项) =>
         项.选择器.includes('fenlie-shuru') &&
         (项.声明.get('border-bottom-color') !== undefined ||
           项.声明.get('border-bottom-width') !== undefined) &&
-        !(
-          项.声明.get('border-bottom-color') === 'var(--shuru-xian-changtai-se)' &&
-          (项.声明.get('border-bottom-width') === undefined ||
-            项.声明.get('border-bottom-width') === 'var(--shuru-xian-changtai-kuan-du)')
-        ),
+        !合规底线(项) &&
+        !自动填充底线(项),
     )
     expect(异轨边线, `局部仍有异轨发丝线：${异轨边线.map((项) => 项.选择器).join(' / ')}`).toEqual([])
     expect(视图样式.includes('background-image: none'), '局部仍在灭 global 扫出层').toBe(false)
+  })
+
+  it('自动填充底线只作 UA 清除 background-image 后的兜底，且深浅两档成对', () => {
+    const 自动填充底线规则 = 视图规则.filter(
+      (项) => 项.选择器.includes(':-webkit-autofill') && 项.声明.has('border-bottom-color'),
+    )
+    expect(自动填充底线规则.length, '自动填充底线规则不应为空').toBeGreaterThan(0)
+    for (const 项 of 自动填充底线规则) {
+      expect(项.声明.get('border-bottom-color'), `${项.选择器} 未用令牌`).toMatch(
+        /^var\(--shuru-xian-(changtai|jujiao)-se\)$/,
+      )
+    }
+    // 聚焦态必须落在聚焦色令牌上，否则聚焦时底线与静置无差别
+    const 聚焦色规则 = 自动填充底线规则.filter(
+      (项) => 项.声明.get('border-bottom-color') === 'var(--shuru-xian-jujiao-se)',
+    )
+    expect(聚焦色规则.length, '深浅两档都必须有聚焦色底线').toBe(2)
+    for (const 档 of ['light', 'dark'] as const) {
+      const 本档 = 自动填充底线规则.filter((项) =>
+        档 === 'light' ? 项.选择器.includes("data-theme='light'") : !项.选择器.includes('data-theme'),
+      )
+      expect(本档.length, `${档} 档缺少自动填充底线兜底`).toBeGreaterThan(0)
+      expect(
+        本档.some((项) => 项.声明.get('border-bottom-color') === 'var(--shuru-xian-jujiao-se)'),
+        `${档} 档聚焦态未换聚焦色令牌`,
+      ).toBe(true)
+    }
   })
 
   it('新令牌深浅成对且有真实消费者', () => {

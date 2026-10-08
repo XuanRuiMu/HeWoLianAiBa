@@ -337,16 +337,39 @@ function onPaiXuGengXin(xinLieBiao: ZhanJiFenLei[]): void {
   min-width: 0;
   padding: var(--jiange-xiao) var(--jiange-10);
   border-color: transparent;
-  background:
-    linear-gradient(var(--fenlei-beijing), var(--fenlei-beijing)) 0 0 / 100% 100% no-repeat padding-box,
-    linear-gradient(90deg, var(--jujiao-huan-yanse), var(--jujiao-huan-yanse)) 0 0 / 0% 100% no-repeat border-box,
-    linear-gradient(var(--fenlei-biankuang), var(--fenlei-biankuang)) 0 0 / 100% 100% no-repeat border-box;
+  background-color: var(--fenlei-beijing);
+  background-image:
+    linear-gradient(var(--jujiao-huan-yanse), var(--jujiao-huan-yanse)),
+    linear-gradient(var(--jujiao-huan-yanse), var(--jujiao-huan-yanse)),
+    linear-gradient(var(--jujiao-huan-yanse), var(--jujiao-huan-yanse)),
+    linear-gradient(var(--jujiao-huan-yanse), var(--jujiao-huan-yanse)),
+    linear-gradient(var(--fenlei-biankuang), var(--fenlei-biankuang)),
+    linear-gradient(var(--fenlei-biankuang), var(--fenlei-biankuang)),
+    linear-gradient(var(--fenlei-biankuang), var(--fenlei-biankuang)),
+    linear-gradient(var(--fenlei-biankuang), var(--fenlei-biankuang));
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  /* 描边画在 border-box 上才与 2px 边框同位；漏了这行八层会回落 padding-box、整体内缩 2px */
+  background-origin: border-box;
+  background-position:
+    left bottom, left bottom, left top, right top,
+    left bottom, left bottom, left top, right top;
+  background-size:
+    0% 2px, 2px 0%, 0% 2px, 2px 0%,
+    100% 2px, 2px 100%, 100% 2px, 2px 100%;
   color: var(--wenben-zhuse);
-  transition: background-size var(--shuru-sao-chu-shi-chang) var(--quxian-sao-chu);
+  transition: background-size calc(var(--shuru-juzhong-dong-xiao) / 4) var(--quxian-tan-chu);
+  transition-delay:
+    0s,
+    calc(var(--shuru-juzhong-dong-xiao) / 4),
+    calc(var(--shuru-juzhong-dong-xiao) / 2),
+    calc(var(--shuru-juzhong-dong-xiao) * 3 / 4),
+    0s, 0s, 0s, 0s;
 }
 
 .fenlei-ming-cheng-input:focus {
-  background-size: 100% 100%, 100% 100%, 100% 100%;
+  background-size:
+    100% 2px, 2px 100%, 100% 2px, 2px 100%,
+    100% 2px, 2px 100%, 100% 2px, 2px 100%;
 }
 
 .fenlei-bao-cun,
@@ -404,6 +427,8 @@ input:disabled {
   .fenlei-guan-li-lan *::before,
   .fenlei-guan-li-lan *::after {
     scroll-behavior: auto !important;
+    /* 四边错峰靠 transition-delay 编排，只归零 duration 会让四边变成 0/250/500/750ms 四次瞬时跳变 */
+    transition-delay: 0s !important;
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
