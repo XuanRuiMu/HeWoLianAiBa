@@ -10,7 +10,7 @@
   >
     <p class="qian-tai-cuo-wu-wen-an">{{ cuoWu.lianAiWenAn }}</p>
 
-    <div class="qian-tai-cuo-wu-lian-ai-hang">
+    <div v-if="cuoWu.xianShiDaiMa" class="qian-tai-cuo-wu-lian-ai-hang">
       <code class="qian-tai-cuo-wu-lian-ai-ma">{{ cuoWu.lianAiMa }}</code>
       <button type="button" class="qian-tai-cuo-wu-fu-zhi" @click="fuZhiLianAiMa">
         {{ huoQuFanYi('tongYong', 'lianAiMaFuZhi') }}

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+﻿import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
@@ -21,6 +21,12 @@ vi.mock('@/api/认证', () => ({
   jianChaShouJiHao: vi.fn(),
   zhuCe: vi.fn(),
   zhuXiaoZhangHao: vi.fn(),
+  // 忘记密码重置入口：本文件只关心登录/注册的竞态契约，
+  // 但组件在 setup 期就会 import 它，漏了会直接整文件加载失败
+  chongZhiMiMa: vi.fn(),
+  // 验证码用途常量不是可选导出：组件里 faSongYongTu 会在发码前读它，
+  // mock 工厂漏掉它会在发码那一刻抛 undefined 读属性，导致验证码流程整条断掉
+  YAN_ZHENG_MA_YONG_TU: { zhuCe: 'zhuCe', chongZhiMiMa: 'chongZhiMiMa' },
 }))
 
 vi.mock('@/api/请求', () => ({
@@ -83,6 +89,7 @@ async function 挂载登录(
     routes: [
       { path: '/', name: 'zhuJieMian', component: { template: '<div>主页</div>' } },
       { path: '/login', name: 'dengLu', component: 登录内容 },
+      { path: '/forgot-password', name: 'wangJiMiMa', component: { template: '<div>找回密码</div>' } },
     ],
   })
   const pinia = createPinia()
@@ -391,16 +398,20 @@ describe('FP-08 认证控件契约与异步竞态', () => {
     await wrapper.find('#denglu-shoujihao').setValue('13800138000')
     await wrapper.find('#denglu-mima').setValue('password123')
     const form = wrapper.find('form[data-form-mode="dengLu"]')
-    const submit = form.find('button[type="submit"]')
+    const submit = form.find('.anniu-zhuyao')
     await form.trigger('submit')
     await form.trigger('submit')
 
     expect(dengLu).toHaveBeenCalledTimes(1)
-    expect((submit.element as HTMLButtonElement).disabled).toBe(true)
+    // 登录中按钮要让位成「取消」：必须可点（disabled 就点不到了），且改 type=button 防止误触发二次提交
+    expect((submit.element as HTMLButtonElement).disabled, '登录中按钮被禁用，用户无法点「取消」').toBe(false)
+    expect(submit.attributes('type'), '登录中仍是 submit，会误触发二次提交').toBe('button')
+    expect(submit.text()).toContain(huoQuFanYi('renZheng', 'dengLuQuXiao'))
     expect(submit.attributes('aria-busy')).toBe('true')
     login.jieShou(登录响应('token', yongHu('u1')))
     await flushPromises()
     expect(submit.attributes('aria-busy')).toBe('false')
+    expect(submit.attributes('type'), '登录结束应恢复 submit 以便再次提交').toBe('submit')
     wrapper.unmount()
 
     const code = 延后<void>()
@@ -450,12 +461,12 @@ describe('FP-08 认证控件契约与异步竞态', () => {
     await wrapper.find('#denglu-shoujihao').setValue('13800138000')
     await wrapper.find('#denglu-mima').setValue('password123')
     const form = wrapper.find('form[data-form-mode="dengLu"]')
-    const submit = form.find('button[type="submit"]')
+    const submit = form.find('.anniu-zhuyao')
+    expect(submit.attributes('type'), '静置时须是 submit，Enter/触屏才能走同一表单契约').toBe('submit')
     await submit.trigger('pointerdown')
     await submit.trigger('click')
     await form.trigger('keydown', { key: 'Enter' })
     expect(form.attributes('data-form-mode')).toBe('dengLu')
-    expect(submit.attributes('type')).toBe('submit')
     wrapper.unmount()
   })
 
@@ -470,7 +481,7 @@ describe('FP-08 认证控件契约与异步竞态', () => {
     const form = wrapper.find('form[data-form-mode="dengLu"]')
     await form.trigger('submit')
     expect(dengLu).toHaveBeenCalledTimes(1)
-    expect((form.find('button[type="submit"]').element as HTMLButtonElement).disabled).toBe(true)
+    expect((form.find('.anniu-zhuyao').element as HTMLButtonElement).disabled).toBe(false)
     wrapper.unmount()
     login.jieShou(登录响应('late-token', yongHu('late-user')))
     await flushPromises()

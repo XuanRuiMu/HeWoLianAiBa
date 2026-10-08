@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+﻿import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
@@ -148,6 +148,7 @@ async function 挂载(moShi: 'dengLu' | 'zhuCe'): Promise<{ wrapper: VueWrapper;
     routes: [
       { path: '/', name: 'zhuJieMian', component: { template: '<div>主页</div>' } },
       { path: '/login', name: 'dengLu', component: 登录内容 },
+      { path: '/forgot-password', name: 'wangJiMiMa', component: { template: '<div>找回密码</div>' } },
     ],
   })
   const pinia = createPinia()

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+﻿import { describe, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
@@ -34,6 +34,7 @@ describe('探针3', () => {
       routes: [
         { path: '/', name: 'zhuJieMian', component: { template: '<div>主页</div>' } },
         { path: '/login', name: 'dengLu', component: 登录内容 },
+        { path: '/forgot-password', name: 'wangJiMiMa', component: { template: '<div>找回密码</div>' } },
       ],
     })
     setActivePinia(createPinia())

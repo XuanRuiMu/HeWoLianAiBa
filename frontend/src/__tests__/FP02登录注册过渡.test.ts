@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+﻿import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
@@ -164,6 +164,7 @@ async function 挂载(moShi: 'dengLu' | 'zhuCe', 启用真实过渡 = false): Pr
     routes: [
       { path: '/', name: 'zhuJieMian', component: { template: '<div>主页</div>' } },
       { path: '/login', name: 'dengLu', component: 登录内容 },
+      { path: '/forgot-password', name: 'wangJiMiMa', component: { template: '<div>找回密码</div>' } },
     ],
   })
   const pinia = createPinia()
@@ -468,21 +469,26 @@ describe('FP-02 层叠判定的形态账本（判定盲区必须显式登记，F
         '.gundong-guidao::before {position,top}',
         '.gundong-huakuai::before {position,top}',
         '.gundong-jiantou::before {position}',
+        // 滑块闲置 80% / 用起来 100%：靠「指针进入滑道整列」提不透明，故为后代组合器形态
+        '.gundong-zhuangshi:hover .gundong-huakuai {opacity}',
         '.ji-zhu-wen-ben.yi-gou-xuan::after {position,top,transform}',
         '.ji-zhu-wen-ben::before {position,top,transform,transition}',
+        // 勾选区两行的后代组合器：勾选项不许被压扁折成竖排、忘记密码不许被甩回行首
+        '.ji-zhu-hang-1 .ji-zhu-xuan-ze {flex}',
+        '.ji-zhu-hang-2 .ji-zhu-xuan-ze {flex}',
+        '.ji-zhu-hang-2 .wangji-mima-lianjie {flex}',
         '.mima-zu .fenlie-shuru {flex}',
         '.shuru-zu.shangFu .fudong-biaoqian {top}',
         '.shuru-zu:focus-within .fudong-biaoqian {top}',
         '.shuru-zu:has(.fenlie-shuru:-webkit-autofill) .fudong-biaoqian {top}',
         ":root[data-theme='light'] .biaoqian-qiehuan {border-bottom-color}",
-        // 浅档自动填充轨：UA 抑制过渡 + 底线兜底（UA 的 background-image:none 会清空底线图层）
-        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill {transition,border-bottom-color}",
-        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill:active {transition,border-bottom-color}",
-        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill:focus {transition,border-bottom-color}",
-        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill:focus {border-bottom-color}",
-        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill:focus-visible {border-bottom-color}",
-        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill:hover {transition,border-bottom-color}",
-        ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input) {border-bottom-color}",
+        // 浅档自动填充轨：只剩 UA 底色抑制过渡（底线已改由包裹层 .shuru-zu 绘制，输入框不再兜底）
+        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill {transition}",
+        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill:active {transition}",
+        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill:focus {transition}",
+        ":root[data-theme='light'] .fenlie-shuru:-webkit-autofill:hover {transition}",
+        // global 底线契约已把 .fenlie-shuru 排除（底线移交包裹层，避免与包裹层线重复绘制）
+        ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.fenlie-shuru) {border-bottom-color}",
         ":where( input:not( [type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color'], [type='hidden'] ), textarea, [contenteditable]:not([contenteditable='false']) ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.fenlie-shuru):-webkit-autofill {transition}",
       ].sort(),
     )
@@ -534,5 +540,63 @@ describe('FP-02 ④：FP-03c / FP-04a / FP-04b 既有契约逐点复测', () => 
     expect(容器.getAttribute('style'), '.biaodan-rongqi 被写入内联样式').toBeNull()
     expect(滚动.getAttribute('style'), '.biaodan-gundong 被写入内联样式').toBeNull()
     wrapper.unmount()
+  })
+})
+
+describe('FP-J3：自绘滚动条滑块的明暗与闲置透明度契约', () => {
+  const 滑块块 = () => {
+    const m = /\.gundong-huakuai\s*\{([^}]*)\}/.exec(样式全)
+    expect(m, '.gundong-huakuai 规则不见了').not.toBeNull()
+    return m as RegExpExecArray
+  }
+
+  it('渐变方向：中点吃满原色最深，两端向透明淡出最浅', () => {
+    const 声明 = 滑块块()[1]
+    const 渐变 = /background:\s*linear-gradient\(([\s\S]*?)\n\s*\);/.exec(声明)
+    expect(渐变, '.gundong-huakuai 的 linear-gradient 没了').not.toBeNull()
+    const 停靠 = (渐变 as RegExpExecArray)[1]
+
+    // 三停靠点顺序必须是 0% / 50% / 100%
+    expect(停靠).toMatch(/(0%[\s\S]*?50%[\s\S]*?100%)/)
+
+    // color-mix 内含 var() 嵌套括号，必须允许一层内嵌，否则匹配不到
+    const 透明色 = /color-mix\((?:[^()]|\([^()]*\))*transparent\)/g
+    const 淡出 = 停靠.match(透明色) ?? []
+    expect(淡出.length, '两端未向透明淡出，上下就不够浅').toBe(2)
+    expect(
+      淡出[0],
+      '上端必须比中点更透明（更浅）',
+    ).toContain('transparent')
+    expect(
+      淡出[1],
+      '下端必须比中点更透明（更浅）',
+    ).toContain('transparent')
+
+    // 中点直吃原色，不掺任何东西把它提亮
+    const 中点 = /,\s*var\(--renzheng-gundong-huakuai-se\)\s*50%/.test(停靠)
+    expect(中点, '中点必须直吃原色（最深），不得再混入颜色把它提亮').toBe(true)
+  })
+
+  it('旧的「两端原色 + 中点混亮橙」写法已彻底废止，不得复活', () => {
+    expect(样式全, '旧写法把亮橙 #e8743b 混在中点，明暗与契约相反').not.toContain('#e8743b')
+  })
+
+  it('闲置透明度 50%，且带 opacity 过渡', () => {
+    const 声明 = 滑块块()[1]
+    expect(声明, '滑块闲置态没设 50% 透明度（80% 实测根本看不出来）').toMatch(/opacity:\s*0\.5\s*;/)
+    expect(声明, '透明度变化无过渡，会硬跳').toMatch(/transition:[^;]*opacity/)
+  })
+
+  it('「用起来了」三种入口共用同一条 opacity:1（分组选择器）', () => {
+    const 组 = /([^{}]*\.gundong-huakuai[^{}]*)\{\s*opacity:\s*1\s*;?\s*\}/.exec(样式全)
+    expect(组, '找不到把滑块升到全不透明的规则').not.toBeNull()
+    const 选择器 = (组 as RegExpExecArray)[1]
+    expect(选择器, '缺「指针进入滑道整列」入口').toMatch(/\.gundong-zhuangshi:hover\s+\.gundong-huakuai/)
+    expect(选择器, '缺「悬停滑块」入口').toMatch(/\.gundong-huakuai:hover/)
+    expect(选择器, '缺「按住拖拽」入口').toMatch(/\.gundong-huakuai:active/)
+  })
+
+  it('减动效档已把 .gundong-huakuai 的过渡归零，不与新加的 opacity 过渡打架', () => {
+    expect(样式全).toMatch(/\.gundong-huakuai,[\s\S]{0,400}?transition:\s*none\s*!important/)
   })
 })

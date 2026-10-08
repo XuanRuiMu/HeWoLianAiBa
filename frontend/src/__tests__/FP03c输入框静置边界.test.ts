@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+﻿import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { compileStyle } from '@vue/compiler-sfc'
 import { describe, expect, it, afterEach, vi } from 'vitest'
@@ -153,6 +153,7 @@ async function 挂载登录(
     routes: [
       { path: '/', name: 'zhuJieMian', component: { template: '<div>主页</div>' } },
       { path: '/login', name: 'dengLu', component: 登录内容 },
+      { path: '/forgot-password', name: 'wangJiMiMa', component: { template: '<div>找回密码</div>' } },
     ],
   })
   const pinia = createPinia()

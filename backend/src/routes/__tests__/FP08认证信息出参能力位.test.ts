@@ -110,6 +110,7 @@ vi.mock('../../middleware/限流', () => {
     zhuCeXianLiu: 放行,
     jianChaShouJiXianLiu: 放行,
     duanXinRiPeiEZhuJi: 放行,
+    chongZhiMiMaXianLiu: 放行,
     shengChengXianLiuJian: () => 'k',
   }
 })

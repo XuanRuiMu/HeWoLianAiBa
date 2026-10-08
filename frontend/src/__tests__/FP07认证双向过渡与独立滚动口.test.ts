@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+﻿import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
@@ -38,6 +38,7 @@ async function 挂载(moShi: 'dengLu' | 'zhuCe', 真实过渡 = false): Promise<
     routes: [
       { path: '/', name: 'zhuJieMian', component: { template: '<div>主页</div>' } },
       { path: '/login', name: 'dengLu', component: 登录内容 },
+      { path: '/forgot-password', name: 'wangJiMiMa', component: { template: '<div>找回密码</div>' } },
     ],
   })
   const pinia = createPinia()
@@ -198,8 +199,11 @@ describe('FP-07 独立滚动口与响应式降级', () => {
     expect(样式声明('.gundong-huakuai', 'pointer-events')).toBe('auto')
     expect(样式声明('.gundong-huakuai', 'touch-action')).toBe('none')
     expect(样式声明('.gundong-huakuai', 'background')).toMatch(/linear-gradient\(/)
-    expect(视图样式).not.toMatch(/\.gundong-huakuai\s*\{[^}]*opacity/)
+    // FP-J3 起：闲置降为 50% 不透明（降权不隐藏），「常显」原意由「绝不出现 opacity:0 / 显显类」继续把守
+    expect(样式声明('.gundong-huakuai', 'opacity')).toBe('0.5')
+    expect(视图样式).not.toMatch(/\.gundong-huakuai\s*\{[^}]*opacity:\s*0\s*[;\s}]/)
     expect(视图样式).not.toMatch(/\.gundong-huakuai\.xian-shi/)
+    // 允许的只有「滑道整列/滑块/拖拽」三处把闲置 0.8 提回 1，不许把显隐绑到外壳 hover 上
     expect(视图样式).not.toMatch(/\.gundong-waike:(hover|focus-within)\s+\.gundong-huakuai/)
     for (const 档 of ['light', 'dark'] as const) {
       const 表 = 按档解析全部(档)

@@ -41,7 +41,7 @@ function suoYouJiShuMa(): QianTaiDaiMa[] {
 describe('FP-C 恋爱码一对一映射', () => {
   it('每个技术码都有唯一LianAi_xxx映射，LianAi_001起连续编号，无遗漏无重复', () => {
     const jiShuMa = suoYouJiShuMa()
-    expect(jiShuMa.length).toBe(66)
+    expect(jiShuMa.length).toBe(67)
     const lianAiMa = jiShuMa.map((daiMa) => huoQuLianAiMa(daiMa))
     expect(new Set(lianAiMa).size).toBe(jiShuMa.length)
     const paiXu = [...lianAiMa].sort()

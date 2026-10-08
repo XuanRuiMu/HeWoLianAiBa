@@ -4,7 +4,7 @@ import { redis } from '../redis'
 import { peiZhi } from '../config'
 import { huoQuFanYi } from '../config/translations'
 import { shengChengLingPai, xieRuCheXiaoShiJianCuo, cunChuRefreshToken, randomUUID, xiaoHaoRefreshToken, jianCeRefreshTokenChongFu, cheXiaoYongHuSuoYouRefreshToken, shanChuRefreshToken } from '../utils/jwt'
-import { yanZhengMaShiFouZhengQue, shanChuYanZhengMa } from './短信'
+import { yanZhengMaShiFouZhengQue, shanChuYanZhengMa, YAN_ZHENG_MA_YONG_TU } from './短信'
 import { zhongXinQianMingMeiTiURL } from './媒体存储'
 import { jiLuShenJiRiZhi } from './审计日志'
 import { yinBiShouJiHao } from '../utils/掩码'
@@ -406,6 +406,68 @@ export async function dengLu(
   }
 }
 
+export interface ChongZhiMiMaCanShu {
+  shou_ji_hao: string
+  yan_zheng_ma: string
+  xin_mi_ma: string
+  que_ren_xin_mi_ma: string
+  ip: string
+}
+
+/** 统一失败提示：不区分「号码没注册」「验证码错」。注意：密码不合规不在此列，
+ *  它只反映用户刚敲进去的内容、不泄露账号是否存在，可以如实回（见下方校验顺序）。 */
+
+/** 「忘记密码」重置：凭手机号 + 重置用途验证码改密，全程不需要登录态，也不需要旧密码。
+ *  成功即把该用户全部会话踢下线（access 靠吊销时间戳，refresh 靠整体吊销）。 */
+export async function chongZhiMiMa(
+  canShu: ChongZhiMiMaCanShu,
+): Promise<{ cheng_gong: boolean; ti_shi?: string; tongYiHuiFu?: boolean }> {
+  const tongYiTiShi = huoQuFanYi('renZheng', 'chongZhiMiMaTongYiTiShi')
+
+  // 密码不合规属于「用户自己能改的输入问题」，不涉账号是否存在，可如实回。
+  // 但校验顺序必须在查库之前：先挑出密码自身的问题，再去碰账号，避免用错误码探测注册情况。
+  if (!canShu.xin_mi_ma || canShu.xin_mi_ma.length === 0) {
+    return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'miMaKong') }
+  }
+  if (canShu.xin_mi_ma !== canShu.que_ren_xin_mi_ma) {
+    return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'miMaBuYiZhi') }
+  }
+  const fuZaDu = yanZhengMiMaFuZaDu(canShu.xin_mi_ma)
+  if (!fuZaDu.he_fa) {
+    return { cheng_gong: false, ti_shi: fuZaDu.ti_shi }
+  }
+
+  const yongHu = await anShouJiHaoChaYongHu(canShu.shou_ji_hao)
+  // 号码未注册：验证码依然走一次校验（保持耗时一致，避免时序侧信道），
+  // 但对外只给统一失败提示，不承认这个号码存不存在。
+  const maZhengQue = await yanZhengMaShiFouZhengQue(
+    canShu.shou_ji_hao,
+    canShu.yan_zheng_ma,
+    YAN_ZHENG_MA_YONG_TU.chongZhiMiMa,
+  )
+  if (!yongHu || !maZhengQue) {
+    return { cheng_gong: false, ti_shi: tongYiTiShi }
+  }
+
+  const xinMiMaHaXi = await bcrypt.hash(canShu.xin_mi_ma, 12)
+  await 数据库.query(
+    `UPDATE "用户" SET "密码哈希" = $1, "更新时间" = NOW() WHERE "手机号" = $2`,
+    [xinMiMaHaXi, canShu.shou_ji_hao],
+  )
+  // 密码被别人改过 = 怀疑已泄露，必须把对方踢下线，否则「重置密码」白做
+  await cheXiaoYongHuSuoYouRefreshToken(yongHu.id)
+  await xieRuCheXiaoShiJianCuo(yongHu.id)
+  await shanChuYanZhengMa(canShu.shou_ji_hao, YAN_ZHENG_MA_YONG_TU.chongZhiMiMa)
+  await jiLuShenJiRiZhi({
+    yong_hu_id: yongHu.id,
+    ip: canShu.ip,
+    shi_jian_lei_xing: huoQuFanYi('shenJi', 'chongZhiMiMa'),
+    xiang_qing: { shou_ji_hao: yinBiShouJiHao(canShu.shou_ji_hao) },
+  })
+
+  return { cheng_gong: true, ti_shi: huoQuFanYi('renZheng', 'chongZhiMiMaChengGong') }
+}
+
 export async function gengGaiMiMa(
   canShu: GengGaiMiMaCanShu,
 ): Promise<{ cheng_gong: boolean; ti_shi?: string }> {
@@ -454,6 +516,10 @@ export async function gengGaiMiMa(
     `UPDATE "用户" SET "密码哈希" = $1, "更新时间" = NOW() WHERE "ID" = $2`,
     [xinMiMaHaXi, canShu.yong_hu_id],
   )
+  // 与注销同口径：改密后 refresh token 也必须整体作废。
+  // 旧实现只写用户级吊销时间戳（只对存量 access token 生效），而刷新令牌不查该时间戳，
+  // 攻击者持有的 refresh token 仍能换出新 access token —— 改过密码却没真正挤下对方。
+  await cheXiaoYongHuSuoYouRefreshToken(canShu.yong_hu_id)
   await xieRuCheXiaoShiJianCuo(canShu.yong_hu_id)
   await shanChuYanZhengMa(shiJiShouJiHao)
   await jiLuShenJiRiZhi({

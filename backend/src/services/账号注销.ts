@@ -4,6 +4,7 @@ import { huoQuFanYi } from '../config/translations'
 import { huoQuBenDiLuJing, cheXiaoYongHuMeiTiQianMing } from './媒体存储'
 import fs from 'fs'
 import { yanZhengLingPai, xieRuCheXiaoShiJianCuo } from '../utils/jwt'
+import { shanChuYanZhengMa } from './短信'
 import { jiLuShenJiRiZhi } from './审计日志'
 
 export async function zhuXiaoYongHu(
@@ -128,7 +129,9 @@ export async function zhuXiaoYongHu(
     await cheXiaoYongHuMeiTiQianMing(yong_hu_id)
 
     await redis.del(`deng_lu_shi_bai:${shouJiHao}`)
-    await redis.del(`yan_zheng_ma:${shouJiHao}`)
+    // 验证码键已按用途分段（yan_zheng_ma:{用途}:{号码}），注销要把全部用途都清掉，
+    // 否则残留的重置密码码还能用。走 shanChuYanZhengMa 保持与写入侧同一条键口径。
+    await shanChuYanZhengMa(shouJiHao)
     await redis.del(`fa_song_jian_ge:${shouJiHao}`)
 
     // 注销审计留痕改为事务外直连写入：审计日志.用户ID外键ON DELETE SET NULL，

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+﻿import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it, afterEach, vi } from 'vitest'
 import { mount, flushPromises, type VueWrapper } from '@vue/test-utils'
@@ -76,6 +76,7 @@ async function 挂载(档: 主题档, 模式: 'dengLu' | 'zhuCe' = 'dengLu'): Pr
     routes: [
       { path: '/', name: 'zhuJieMian', component: { template: '<div>主页</div>' } },
       { path: '/login', name: 'dengLu', component: 登录内容 },
+      { path: '/forgot-password', name: 'wangJiMiMa', component: { template: '<div>找回密码</div>' } },
     ],
   })
   const pinia = createPinia()
@@ -149,56 +150,76 @@ describe('FPA1 ①：全站非聊天输入框只吃 global 单真源', () => {
     expect(表.get('--quxian-sao-chu')).toBe('cubic-bezier(0.22, 0.9, 0.24, 1)')
   })
 
-  it('登录注册所有输入框表现一致：同一类名同一真源，无逐字段覆盖', () => {
+  it('认证字段底线移交包裹层 .shuru-zu 绘制，输入框只留透明边框当窗口', () => {
     const 模板 = 视图全源.slice(0, 视图全源.indexOf('<script'))
     const 输入框类 = [...模板.matchAll(/class="fenlie-shuru"/g)].length
     expect(输入框类, '登录注册输入框数漂移').toBeGreaterThanOrEqual(6)
-    // 自动填充态的 border 底线是唯一登记的例外：UA 的 :-webkit-autofill 带
-    // `background-image: none !important`，实测强制自动填充态下 background-image 计算值即为 none，
-    // global 那条底线图层会被整个清空；UA 不碰 border，故该状态下底线改由 border-bottom-color
-    // 承载。色值仍取 global 同一族令牌，深浅两档成对，非逐字段另立真源。
-    const 自动填充底线 = (项: { 选择器: string }) => 项.选择器.includes(':-webkit-autofill')
-    const 合规底线 = (项: { 声明: Map<string, string> }) =>
-      (项.声明.get('border-bottom-color') === 'var(--shuru-xian-changtai-se)' ||
-        项.声明.get('border-bottom-color') === 'var(--shuru-xian-jujiao-se)') &&
-      (项.声明.get('border-bottom-width') === undefined ||
-        项.声明.get('border-bottom-width') === 'var(--shuru-xian-changtai-kuan-du)')
-    const 异轨边线 = 视图规则.filter(
-      (项) =>
-        项.选择器.includes('fenlie-shuru') &&
-        (项.声明.get('border-bottom-color') !== undefined ||
-          项.声明.get('border-bottom-width') !== undefined) &&
-        !合规底线(项) &&
-        !自动填充底线(项),
+
+    // 1) 输入框自身：不得再画底线（背景图层由包裹层接管），只保留透明边框 + padding-box 裁剪
+    const 基础 = 视图规则.find((项) => 项.选择器.trim() === '.fenlie-shuru')
+    expect(基础, '未找到 .fenlie-shuru 基础规则').toBeDefined()
+    expect(基础!.声明.get('border-bottom-color'), '输入框底边必须透明，底线由包裹层画').toBe('transparent')
+    expect(基础!.声明.get('border-bottom-width'), '透明边框宽度须等于底线宽度，二者同位才能透出').toBe(
+      'var(--shuru-xian-changtai-kuan-du)',
     )
-    expect(异轨边线, `局部仍有异轨发丝线：${异轨边线.map((项) => 项.选择器).join(' / ')}`).toEqual([])
-    expect(视图样式.includes('background-image: none'), '局部仍在灭 global 扫出层').toBe(false)
+    expect(基础!.声明.get('background-clip'), '背景须裁到 padding-box，否则会盖住包裹层底线').toBe(
+      'padding-box',
+    )
+    expect(
+      基础!.声明.get('background-image'),
+      '输入框不得自带底线图层，否则会与包裹层线并存成两条',
+    ).toBeUndefined()
+
+    // 2) 包裹层：底线真源在此，几何与令牌全部沿用 global 同族
+    const 包裹层 = 视图规则.find((项) => 项.选择器.trim() === '.shuru-zu')
+    expect(包裹层, '未找到 .shuru-zu 包裹层规则').toBeDefined()
+    expect(包裹层!.声明.get('background-image'), '包裹层未画底线').toContain('var(--shuru-sao-jianbian)')
+    expect(包裹层!.声明.get('background-size'), '静置必须是 0% 扫出层 + 100% 静止层').toBe(
+      '0% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du)',
+    )
+    expect(包裹层!.声明.get('transition-property')).toBe('background-size')
+    expect(包裹层!.声明.get('transition-duration')).toContain('var(--shuru-sao-chu-shi-chang)')
+    expect(包裹层!.声明.get('transition-timing-function')).toContain('var(--quxian-sao-chu)')
+
+    // 3) 聚焦态：包裹层把扫出层拉到满宽（用 :focus-within，包裹层是 div）
+    const 聚焦 = 视图规则.find((项) => 项.选择器.trim() === '.shuru-zu:focus-within')
+    expect(聚焦, '未找到 .shuru-zu:focus-within 聚焦态').toBeDefined()
+    expect(聚焦!.声明.get('background-size')).toBe(
+      '100% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du)',
+    )
+
+    // 4) 两处必须互斥：global 底线契约已排除 .fenlie-shuru，否则输入框与包裹层会各画一条
+    expect(全局源).toMatch(/:not\(\.fenlie-shuru\)\s*\{\s*border-bottom-width/)
+    // 扫出层现在住在包裹层上，唯一允许出现的 `background-image: none` 是出生日期的整条排除
+    const 灭线处 = 视图规则.filter((项) => 项.声明.get('background-image') === 'none')
+    expect(
+      灭线处.map((项) => 项.选择器.trim()),
+      '除出生日期包裹层外，不得有局部把扫出层灭掉',
+    ).toEqual(['.shuru-zu:has(> .chushengriqi)'])
   })
 
-  it('自动填充底线只作 UA 清除 background-image 后的兜底，且深浅两档成对', () => {
-    const 自动填充底线规则 = 视图规则.filter(
-      (项) => 项.选择器.includes(':-webkit-autofill') && 项.声明.has('border-bottom-color'),
+  it('自动填充态不再由输入框兜底画底线（底线已移交包裹层）', () => {
+    const 是输入框自动填充轨 = (选择器: string) =>
+      选择器.split(',').some((项) => 项.trim().startsWith('.fenlie-shuru:-webkit-autofill'))
+    const 自动填充底线 = 视图规则.filter(
+      (项) => 是输入框自动填充轨(项.选择器) && 项.声明.has('border-bottom-color'),
     )
-    expect(自动填充底线规则.length, '自动填充底线规则不应为空').toBeGreaterThan(0)
-    for (const 项 of 自动填充底线规则) {
-      expect(项.声明.get('border-bottom-color'), `${项.选择器} 未用令牌`).toMatch(
-        /^var\(--shuru-xian-(changtai|jujiao)-se\)$/,
-      )
-    }
-    // 聚焦态必须落在聚焦色令牌上，否则聚焦时底线与静置无差别
-    const 聚焦色规则 = 自动填充底线规则.filter(
-      (项) => 项.声明.get('border-bottom-color') === 'var(--shuru-xian-jujiao-se)',
+    expect(
+      自动填充底线.map((项) => 项.选择器),
+      '输入框不应再用 border 兜底线：底线已移交包裹层 .shuru-zu',
+    ).toEqual([])
+    // 自动填充轨只负责压 UA 底色
+    const 自动填充轨 = 视图规则.filter(
+      (项) => 是输入框自动填充轨(项.选择器) && 项.声明.has('background-color'),
     )
-    expect(聚焦色规则.length, '深浅两档都必须有聚焦色底线').toBe(2)
-    for (const 档 of ['light', 'dark'] as const) {
-      const 本档 = 自动填充底线规则.filter((项) =>
-        档 === 'light' ? 项.选择器.includes("data-theme='light'") : !项.选择器.includes('data-theme'),
+    expect(自动填充轨.length, '自动填充轨不应为空').toBeGreaterThan(0)
+    for (const 项 of 自动填充轨) {
+      expect(项.声明.get('background-color'), `${项.选择器} 未用卡面色令牌压 UA 底色`).toBe(
+        'var(--renzheng-mian-se)',
       )
-      expect(本档.length, `${档} 档缺少自动填充底线兜底`).toBeGreaterThan(0)
-      expect(
-        本档.some((项) => 项.声明.get('border-bottom-color') === 'var(--shuru-xian-jujiao-se)'),
-        `${档} 档聚焦态未换聚焦色令牌`,
-      ).toBe(true)
+      expect(项.声明.get('transition'), `${项.选择器} 缺 UA 底色抑制过渡`).toContain(
+        'background-color 5000s',
+      )
     }
   })
 

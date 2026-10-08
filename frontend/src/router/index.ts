@@ -23,6 +23,12 @@ const luYou: RouteRecordRaw[] = [
         meta: { xuYaoDengLu: false },
       },
       {
+        path: 'forgot-password',
+        name: 'wangJiMiMa',
+        component: () => import('@/views/找回密码.vue'),
+        meta: { xuYaoDengLu: false },
+      },
+      {
         path: 'profile-setup',
         name: 'ziLiaoSheZhi',
         component: () => import('@/views/资料设置向导.vue'),

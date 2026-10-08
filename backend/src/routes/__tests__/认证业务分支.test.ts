@@ -9,6 +9,7 @@ const 假 = vi.hoisted(() => ({
   faSong: vi.fn(),
   zhuCe: vi.fn(),
   dengLu: vi.fn(),
+  chongZhiMiMa: vi.fn(),
   gengGaiMiMa: vi.fn(),
   gengGaiYongHuMing: vi.fn(),
   setMoRenXingBie: vi.fn(),
@@ -28,6 +29,7 @@ vi.mock('../../services/认证', () => ({
   yanZhengShouJiHaoGeShi: (v: string) => /^1[3-9]\d{9}$/.test(v),
   zhuCe: 假.zhuCe,
   dengLu: 假.dengLu,
+  chongZhiMiMa: 假.chongZhiMiMa,
   gengGaiMiMa: 假.gengGaiMiMa,
   gengGaiYongHuMing: 假.gengGaiYongHuMing,
   setMoRenXingBie: 假.setMoRenXingBie,
@@ -38,6 +40,9 @@ vi.mock('../../services/认证', () => ({
 vi.mock('../../services/短信', () => ({
   faSongYanZhengMa: 假.faSong,
   duanXinRiPeiEYuLan: 假.duanXinRiPeiEYuLan,
+  // 路由会调它把请求侧用途收敛到白名单；测试里透传真实归一逻辑，只认这两个用途
+  zhunHuaYanZhengMaYongTu: (zhi: unknown) =>
+    zhi === 'chongZhiMiMa' ? 'chongZhiMiMa' : 'zhuCe',
 }))
 
 vi.mock('../../services/行为验证', () => ({
@@ -60,6 +65,7 @@ vi.mock('../../middleware/限流', () => {
     zhuCeXianLiu: 放行,
     jianChaShouJiXianLiu: 放行,
     duanXinRiPeiEZhuJi: 放行,
+    chongZhiMiMaXianLiu: 放行,
   }
 })
 
@@ -196,5 +202,47 @@ describe('认证路由输入、错误码和成功出口', () => {
     假.zhuXiaoYongHu.mockRejectedValueOnce(new Error('db down'))
     await 调用('delete', '/api/认证/注销', 用户ID).expect(500)
     await 调用('delete', '/api/认证/注销', 用户ID).expect(200)
+  })
+
+  it('重置密码：免登录可达，缺参 400、业务失败 400、成功 200，且对外不区分账号是否存在', async () => {
+    // 未登录也要能调通——这正是「忘记密码」的入口
+    await 调用('post', '/api/认证/重置密码', null, {}).expect(400)
+    假.chongZhiMiMa.mockResolvedValueOnce({ cheng_gong: false, ti_shi: '统一提示' })
+    await 调用('post', '/api/认证/重置密码', null, {
+      shouJiHao: '13800138000',
+      yanZhengMa: '123456',
+      miMa: 'XinMiMa123',
+      queRenXinMiMa: 'XinMiMa123',
+    }).expect(400)
+    假.chongZhiMiMa.mockResolvedValueOnce({ cheng_gong: true, ti_shi: '密码已重置，请用新密码登录' })
+    await 调用('post', '/api/认证/重置密码', null, {
+      shouJiHao: '13800138000',
+      yanZhengMa: '123456',
+      miMa: 'XinMiMa123',
+      queRenXinMiMa: 'XinMiMa123',
+    }).expect(200)
+  })
+
+  it('重置密码：camelCase 与 snake_case 两种入参写法都要认', async () => {
+    假.chongZhiMiMa.mockResolvedValue({ cheng_gong: true, ti_shi: 'ok' })
+    await 调用('post', '/api/认证/重置密码', null, {
+      shou_ji_hao: '13800138000',
+      yan_zheng_ma: '123456',
+      mi_ma: 'XinMiMa123',
+      que_ren_xin_mi_ma: 'XinMiMa123',
+    }).expect(200)
+    expect(假.chongZhiMiMa).toHaveBeenCalledWith(
+      expect.objectContaining({ shou_ji_hao: '13800138000', que_ren_xin_mi_ma: 'XinMiMa123' }),
+    )
+  })
+
+  it('发送码按用途归一：伪造用途不得凭空造出新键', async () => {
+    假.faSong.mockResolvedValue({ cheng_gong: true })
+    await 调用('post', '/api/认证/发送码', null, { shouJiHao: '13800138000', yongTu: 'chongZhiMiMa' }).expect(200)
+    expect(假.faSong).toHaveBeenCalledWith('13800138000', 'chongZhiMiMa')
+    await 调用('post', '/api/认证/发送码', null, { shouJiHao: '13800138000', yongTu: '伪造用途' }).expect(200)
+    expect(假.faSong).toHaveBeenLastCalledWith('13800138000', 'zhuCe')
+    await 调用('post', '/api/认证/发送码', null, { shouJiHao: '13800138000' }).expect(200)
+    expect(假.faSong).toHaveBeenLastCalledWith('13800138000', 'zhuCe')
   })
 })

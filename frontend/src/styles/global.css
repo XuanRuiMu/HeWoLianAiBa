@@ -124,7 +124,7 @@ select {
   ),
   textarea,
   [contenteditable]:not([contenteditable='false'])
-):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input) {
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.fenlie-shuru) {
   border-bottom-width: var(--shuru-xian-changtai-kuan-du) !important;
   border-bottom-style: solid !important;
   border-bottom-color: transparent !important;

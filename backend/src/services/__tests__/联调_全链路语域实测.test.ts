@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest'
 import { yunXingAIYinQing } from '../AI引擎'
 import { peiZhi } from '../../config'
 import { AI_PEI_ZHI, MO_XING_HUI_DU_CE_LUE } from '../../config/AI配置'
-import { tongJi, duiBiBiao } from '../../测试/语域口径'
+import { tongJi, duiBiBiao, BO_LANG_HAO_ZHEN_REN_JI_XIAN, JIAN_XIE_ZHEN_REN_JI_XIAN } from '../../测试/语域口径'
 import { ZHEN_REN_JI_XIAN } from '../../测试/真人基线常量'
 import { tongJiLun, huiZongPanDuan } from '../开场判据统计'
 import { KAI_CHANG_PEI_ZHI, duJieBaoKaiGuan, KAI_CHANG_KAI_GUAN_MING } from '../../config/开场采样配置'
@@ -280,6 +280,8 @@ emojiMiDu: Number(hePingJun((r) => r.zhiBiao.emojiMiDu).toFixed(4)),
       { ming: 'jvHaoBiLi', danWei: '占比', qiJia: huiZong.jvHaoBiLi, ren: ZHEN_REN_JI_XIAN.jvHaoBiLi },
       { ming: 'yuQiCiMiDu', danWei: '个/条', qiJia: huiZong.yuQiCiMiDu, ren: ZHEN_REN_JI_XIAN.yuQiCiMiDu },
       { ming: 'emojiMiDu', danWei: '个/条', qiJia: huiZong.emojiMiDu, ren: ZHEN_REN_JI_XIAN.emojiMiDu },
+      { ming: 'boLangHaoBiLi', danWei: '占比', qiJia: huiZong.boLangHaoBiLi, ren: BO_LANG_HAO_ZHEN_REN_JI_XIAN },
+      { ming: 'jianXieBiLi', danWei: '占比', qiJia: huiZong.jianXieBiLi, ren: JIAN_XIE_ZHEN_REN_JI_XIAN },
       { ming: 'sheHaoMoWei', danWei: '占比', qiJia: huiZong.sheHaoMoWei, ren: ZHEN_REN_JI_XIAN.sheHaoMoWei },
       { ming: 'sheHaoJuZhong', danWei: '占比', qiJia: huiZong.sheHaoJuZhong, ren: ZHEN_REN_JI_XIAN.sheHaoJuZhong },
       { ming: 'tiaoShu', danWei: '条/轮', qiJia: huiZong.pingJunTiaoShu, ren: ZHEN_REN_JI_XIAN.pingJunTiaoShu },

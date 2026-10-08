@@ -1,8 +1,0 @@
-{
- "ok": true,
- "logs": [
-  "CONSOLE-ERR: Failed to load resource: the server responded with a status of 404 (File not found)",
-  "SHOT: D:/xuanr/Desktop/燃烧之陨我的世界服务端/和我恋爱吧/背景实验室/.probe/m15-1-v6-default.png"
- ],
- "url": "http://127.0.0.1:8937/positioner.html"
-}

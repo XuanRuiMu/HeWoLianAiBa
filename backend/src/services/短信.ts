@@ -9,12 +9,28 @@ import { huoQuFanYi } from '../config/translations'
 // A7 顺手项：每码最多错 5 次即作废，防止 6 位数字码在有效期内被猜解
 const ZUI_DA_CUO_WU_CHANG_SHI = 5
 
-function huoQuCuoWuJiShuJian(shouJiHao: string): string {
-  return `yan_zheng_ma_cuowu:${shouJiHao}`
+/** 验证码用途。码与用途必须成对存取，否则「为注册申请的码」能被拿去重置密码。
+ *  未知用途一律收敛到 zhuCe，宁可少放行也不跨用途放行。 */
+export const YAN_ZHENG_MA_YONG_TU = {
+  zhuCe: 'zhuCe',
+  chongZhiMiMa: 'chongZhiMiMa',
+} as const
+
+export type YanZhengMaYongTu = (typeof YAN_ZHENG_MA_YONG_TU)[keyof typeof YAN_ZHENG_MA_YONG_TU]
+
+/** 请求侧传来的用途白名单校验：只认这两个，其余（含伪造串）一律按 zhuCe 处理 */
+export function zhunHuaYanZhengMaYongTu(zhi: unknown): YanZhengMaYongTu {
+  return zhi === YAN_ZHENG_MA_YONG_TU.chongZhiMiMa
+    ? YAN_ZHENG_MA_YONG_TU.chongZhiMiMa
+    : YAN_ZHENG_MA_YONG_TU.zhuCe
 }
 
-function huoQuYanZhengMaJian(shouJiHao: string): string {
-  return `yan_zheng_ma:${shouJiHao}`
+function huoQuCuoWuJiShuJian(shouJiHao: string, yongTu: YanZhengMaYongTu): string {
+  return `yan_zheng_ma_cuowu:${yongTu}:${shouJiHao}`
+}
+
+function huoQuYanZhengMaJian(shouJiHao: string, yongTu: YanZhengMaYongTu): string {
+  return `yan_zheng_ma:${yongTu}:${shouJiHao}`
 }
 
 function huoQuFaSongJianGeJian(shouJiHao: string): string {
@@ -32,6 +48,7 @@ export type DuanXinFaSongJieGuo =
 /** YH-025 测试兼容：旧调用方仅读cheng_gong/ti_shi，新路由读cuo_wu_ma映射状态码 */
 export async function faSongYanZhengMa(
   shouJiHao: string,
+  yongTu: YanZhengMaYongTu = YAN_ZHENG_MA_YONG_TU.zhuCe,
 ): Promise<DuanXinFaSongJieGuo> {
   const jianGeJian = huoQuFaSongJianGeJian(shouJiHao)
   const yiFaSong = await redis.get(jianGeJian)
@@ -73,7 +90,7 @@ export async function faSongYanZhengMa(
   }
 
   await redis.setex(
-    huoQuYanZhengMaJian(shouJiHao),
+    huoQuYanZhengMaJian(shouJiHao, yongTu),
     peiZhi.yanZhengMa.youXiaoQi,
     yanZhengMa,
   )
@@ -82,18 +99,20 @@ export async function faSongYanZhengMa(
   return { cheng_gong: true }
 }
 
+/** 用途错配与码错一律返回 false，不区分——对调用方而言「码不可用」就是唯一结论 */
 export async function yanZhengMaShiFouZhengQue(
   shouJiHao: string,
   yanZhengMa: string,
+  yongTu: YanZhengMaYongTu = YAN_ZHENG_MA_YONG_TU.zhuCe,
 ): Promise<boolean> {
-  const cuoWuJian = huoQuCuoWuJiShuJian(shouJiHao)
+  const cuoWuJian = huoQuCuoWuJiShuJian(shouJiHao, yongTu)
   const cuoWuCiShu = Number(await redis.get(cuoWuJian)) || 0
   if (cuoWuCiShu >= ZUI_DA_CUO_WU_CHANG_SHI) {
     // 错误次数达上限：验证码作废，需重新发送
     return false
   }
 
-  const cunChuMa = await redis.get(huoQuYanZhengMaJian(shouJiHao))
+  const cunChuMa = await redis.get(huoQuYanZhengMaJian(shouJiHao, yongTu))
   if (cunChuMa) {
     const piPei =
       cunChuMa.length === yanZhengMa.length &&
@@ -106,16 +125,18 @@ export async function yanZhengMaShiFouZhengQue(
     await redis.expire(cuoWuJian, peiZhi.yanZhengMa.youXiaoQi)
     if (xinCuoWuCiShu >= ZUI_DA_CUO_WU_CHANG_SHI) {
       // 达到上限直接作废该码
-      await shanChuYanZhengMa(shouJiHao)
+      await shanChuYanZhengMa(shouJiHao, yongTu)
     }
     return false
   }
 
   // A1 后门防护：固定码回退仅在 VITEST 显式测试环境生效，
-  // 本地开发终端也必须走真实下发码入 Redis 后比对
+  // 本地开发终端也必须走真实下发码入 Redis 后比对。
+  // 用途必须同时匹配，否则 VITEST 下的固定码会变成跨用途万能后门。
   if (
     peiZhi.kaiFaMoShi &&
     process.env.VITEST === 'true' &&
+    yongTu === YAN_ZHENG_MA_YONG_TU.zhuCe &&
     yanZhengMa === peiZhi.yanZhengMa.kaiFaMoShiGuDing
   ) {
     return true
@@ -123,9 +144,16 @@ export async function yanZhengMaShiFouZhengQue(
   return false
 }
 
-export async function shanChuYanZhengMa(shouJiHao: string): Promise<void> {
-  await redis.del(huoQuYanZhengMaJian(shouJiHao))
-  await redis.del(huoQuCuoWuJiShuJian(shouJiHao))
+/** 清码。yongTu 省略时清全部用途（注册成功等场景可能不关心是哪个用途的码） */
+export async function shanChuYanZhengMa(
+  shouJiHao: string,
+  yongTu?: YanZhengMaYongTu,
+): Promise<void> {
+  const yongTuLie = yongTu ? [yongTu] : Object.values(YAN_ZHENG_MA_YONG_TU)
+  for (const yong of yongTuLie) {
+    await redis.del(huoQuYanZhengMaJian(shouJiHao, yong))
+    await redis.del(huoQuCuoWuJiShuJian(shouJiHao, yong))
+  }
 }
 
 // A7 短信费用攻击防护：每手机号/每IP 每日发送上限（Redis 日期键计数，阈值走配置）。

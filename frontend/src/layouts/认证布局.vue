@@ -6,6 +6,7 @@
         'zhujiemian-moshi': shiZhuJieMian,
         'quanping-moshi': shiQuanPing,
         'denglu-moshi': shiDengLu,
+        'wangji-mima-moshi': shiWangJiMiMa,
         'zhanghaoanquan-moshi': route.name === 'zhangHaoAnQuan',
       }"
     >
@@ -53,6 +54,7 @@ const qieHuanDongHua = ref('')
 
 const shiZhuJieMian = computed(() => route.name === 'zhuJieMian')
 const shiDengLu = computed(() => route.name === 'dengLu')
+const shiWangJiMiMa = computed(() => route.name === 'wangJiMiMa')
 const xuYaoDengLu = computed(() => route.meta.xuYaoDengLu === true)
 const zhengZaiHuiFu = computed(
   () =>
@@ -165,6 +167,10 @@ onBeforeUnmount(() => {
 }
 
 .yemian-buju.denglu-moshi {
+  overflow-y: hidden;
+}
+
+.yemian-buju.wangji-mima-moshi {
   overflow-y: hidden;
 }
 
@@ -283,7 +289,8 @@ onBeforeUnmount(() => {
     padding-right: var(--jiange-zhong);
   }
 
-  .yemian-buju.denglu-moshi :deep(.biaodan-rongqi) {
+  .yemian-buju.denglu-moshi :deep(.biaodan-rongqi),
+  .yemian-buju.wangji-mima-moshi :deep(.wangjimima-neirong) {
     padding-left: var(--jiange-zhong);
     padding-right: var(--jiange-zhong);
   }

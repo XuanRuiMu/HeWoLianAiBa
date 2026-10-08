@@ -155,6 +155,12 @@ async function 建场景(): Promise<{ wrapper: VueWrapper; router: Router }> {
             component: 登录内容,
             meta: { xuYaoDengLu: false },
           },
+          {
+            path: 'forgot-password',
+            name: 'wangJiMiMa',
+            component: { template: '<div>找回密码</div>' },
+            meta: { xuYaoDengLu: false },
+          },
         ],
       },
     ],

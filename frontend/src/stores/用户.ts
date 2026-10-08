@@ -222,6 +222,11 @@ export const 使用用户仓库 = defineStore('用户', () => {
   function 取消待处理认证(): void {
     const youDaiChu = zhuangTai.value.deng_lu_zhong || 恢复任务 !== null
     kaiShiXinDai()
+    // 必须真正 abort：只递增代次的话在途请求不会被中断，前端仍要干等到服务端返回，
+    // 用户按「取消」后按钮却先复位，迟到的响应又会把结果糊回来。
+    // 注意：abort 只中断前端等待，已经发到服务端的请求无法撤回（该次登录尝试服务端照常记账）。
+    恢复控制器?.abort()
+    恢复控制器 = null
     恢复任务 = null
     if (youDaiChu) zhuangTai.value.deng_lu_zhong = false
   }

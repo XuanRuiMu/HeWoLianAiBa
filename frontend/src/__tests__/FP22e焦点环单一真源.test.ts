@@ -482,7 +482,8 @@ const 状态环违规账本: { 键: string; 归属: string; 理由: string }[] =
 describe('FP-24a ④ 扩面：outline 声明点在全部视图被冻结成账本', () => {
   const 收口视图计数: Record<string, number> = {
     '过往战绩.vue': 5, // 3 outline + 2 outline-offset（FP-22e 收口）
-    '登录内容.vue': 3, // 2 + 1（FP-03 交付 + FP-01 认证输入撤环）
+    '登录内容.vue': 5,
+    '找回密码.vue': 2,
     '账号与安全.vue': 25, // 12 + 12 + 1 条减动效长写法（FP-22e 收口）
   }
 

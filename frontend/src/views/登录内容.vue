@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="denglu-neirong">
     <div
       ref="biaodanRongqi"
@@ -161,6 +161,8 @@
               </div>
 
               <div class="ji-zhu-xuan-xiang">
+                <!-- 第一行：记住账号 / 记住密码 -->
+                <div class="ji-zhu-hang-1">
                 <label class="ji-zhu-xuan-ze">
                   <input
                     :checked="jiZhuZhangHao"
@@ -183,6 +185,9 @@
                     huoQuFanYi('renZheng', 'jiZhuMiMa')
                   }}</span>
                 </label>
+                </div>
+                <!-- 第二行：自动登录 / 忘记密码？ -->
+                <div class="ji-zhu-hang-2">
                 <label class="ji-zhu-xuan-ze" :class="{ weiJiHuo: !jiZhuMiMa }">
                   <input
                     :checked="ziDongDengLu"
@@ -195,17 +200,28 @@
                     huoQuFanYi('renZheng', 'ziDongDengLu')
                   }}</span>
                 </label>
+                <!-- 「忘记密码？」与「自动登录」同行同级。由本行 justify-content 把
+                     两端撑开：自动登录靠左，忘记密码？靠右，两者不挤在一起。 -->
+                <RouterLink
+                  type="button"
+                  class="wangji-mima-lianjie"
+                  :to="{ name: 'wangJiMiMa', query: { shouJiHao: dengLuShouJiHao } }"
+                >
+                  {{ huoQuFanYi('renZheng', 'wangJiMiMa') }}
+                </RouterLink>
+                </div>
               </div>
 
               <button
-                type="submit"
+                :type="dengLuZhong ? 'button' : 'submit'"
                 class="anniu-zhuyao"
                 :aria-busy="dengLuZhong ? 'true' : 'false'"
-                :disabled="dengLuZhong || !keYiDengLu"
+                :disabled="!dengLuZhong && !keYiDengLu"
+                @click="dengLuZhong ? quXiaoDengLu() : undefined"
               >
                 {{
                   dengLuZhong
-                    ? huoQuFanYi('renZheng', 'dengLuZhong')
+                    ? huoQuFanYi('renZheng', 'dengLuQuXiao')
                     : huoQuFanYi('renZheng', 'dengLu')
                 }}
               </button>
@@ -465,7 +481,7 @@ import type { Ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { 使用用户仓库 } from '@/stores/用户'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
-import { faSongMa, jianChaShouJiHao } from '@/api/认证'
+import { faSongMa, jianChaShouJiHao, YAN_ZHENG_MA_YONG_TU } from '@/api/认证'
 import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
 import { chuangJianQianTaiCuoWu, 归一前台错误 } from '@/utils/前台错误'
 import { huoQuFanYi } from '@/config/translations'
@@ -721,6 +737,79 @@ function qiDongHuiTianLunXun(): void {
 const dengLuMiMaShuRuKuang = ref<HTMLInputElement | null>(null)
 const zhuCeMiMaShuRuKuang = ref<HTMLInputElement | null>(null)
 
+/* ============ UX-04 报错聚焦：把光标送回真正出问题的那个框 ============
+   只认「错误确实指向某个字段」的情况。网络/限流/上游故障这类报错没有可改的字段，
+   乱聚焦只会把用户从正在输入的地方拽走，比不聚焦更糟，故一律返回 null 不动。 */
+type CuoWuZiDuan =
+  | 'dengLuShouJiHao'
+  | 'dengLuMiMa'
+  | 'zhuCeShouJiHao'
+  | 'zhuCeYanZhengMa'
+  | 'zhuCeYongHuMing'
+  | 'zhuCeMiMa'
+  | 'zhuCeChuShengRiQi'
+
+const ZI_DUAN_YUAN_SU_ID: Record<CuoWuZiDuan, string> = {
+  dengLuShouJiHao: 'denglu-shoujihao',
+  dengLuMiMa: 'denglu-mima',
+  zhuCeShouJiHao: 'zhuce-shoujihao',
+  zhuCeYanZhengMa: 'zhuce-yanzhengma',
+  zhuCeYongHuMing: 'zhuce-yonghuming',
+  zhuCeMiMa: 'zhuce-mima',
+  // 三段日期控件的年段（id = :id-qian-zhui + 空后缀，见出生日期选择器 duanId()）
+  zhuCeChuShengRiQi: 'zhuce-chushengriqi',
+}
+
+function zhaoDongZiDuan(ziDuan: CuoWuZiDuan): void {
+  // nextTick：报错框是本次报错才插进 DOM 的，不等它渲染就 focus，
+  // 浏览器会按插入前的布局算可见区域，焦点框可能被顶出视口。
+  // 用 isConnected 而非 offsetParent 判可见：offsetParent 在无布局引擎的环境恒为 null，
+  // 会把聚焦静默吞掉。另一个天然边界是两个表单各自 v-if，任一时刻只有一份在 DOM 里，
+  // getElementById 命中即说明就是当前可见那一份，不会聚焦到隐藏表单。
+  nextTick(() => {
+    const yuanSu = document.getElementById(ZI_DUAN_YUAN_SU_ID[ziDuan])
+    if (yuanSu instanceof HTMLInputElement && yuanSu.isConnected) yuanSu.focus()
+  })
+}
+
+/* 服务端错误码 → 字段。判定依据只能是错误码本身的语义，不看文案：
+   文案会随翻译改，拿文案做分支等于埋雷。
+   落不到具体字段的一律 null（不动焦点）。 */
+function daiMaPanDuanZiDuan(
+  daiMa: string | undefined,
+  dangQianMoShi: MoShiLeiXing,
+): CuoWuZiDuan | null {
+  if (!daiMa) return null
+  switch (daiMa) {
+    // 重置密码已独立成页，本页不会再收到该码；留着不判是为了不误伤未知码的默认值
+    case QIAN_TAI_DAI_MA.AUTH_PASSWORD_RESET_FAILED:
+      return null
+    // 号码已被占用 / 号码格式非法：都指向手机号
+    case QIAN_TAI_DAI_MA.AUTH_ACCOUNT_ALREADY_EXISTS:
+      return dangQianMoShi === 'zhuCe' ? 'zhuCeShouJiHao' : 'dengLuShouJiHao'
+    // 凭据不对：密码框（登录失败后光标本来就常在密码框，这里是保证它一定在）
+    case QIAN_TAI_DAI_MA.AUTH_INVALID_CREDENTIALS:
+      return dangQianMoShi === 'zhuCe' ? 'zhuCeMiMa' : 'dengLuMiMa'
+    // 用户名相关：注册页的用户名框
+    case QIAN_TAI_DAI_MA.AUTH_USERNAME_CHANGE_FAILED:
+    case QIAN_TAI_DAI_MA.RESOURCE_CONFLICT:
+      return dangQianMoShi === 'zhuCe' ? 'zhuCeYongHuMing' : null
+    // 参数非法：认证页最常见的就是手机号格式，优先送回手机号框
+    case QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID:
+      return dangQianMoShi === 'zhuCe' ? 'zhuCeShouJiHao' : 'dengLuShouJiHao'
+    default:
+      return null
+  }
+}
+
+function juShouFuWuCuoWu(cuoWu: unknown): void {
+  // 走归一化拿规范错误码，而不是直接读 cuoWu.code：
+  // 原始抛出的对象可能是后端包裹体、Axios 错误或裸 Error，code 的位置不统一。
+  // 归一化是本文件既有口径（发送码路径已在用），不新增第二套读法。
+  const ziDuan = daiMaPanDuanZiDuan(归一前台错误(cuoWu).code, moShi.value)
+  if (ziDuan) zhaoDongZiDuan(ziDuan)
+}
+
 function qieHuanMiMaXianShi(xuHao: 1 | 2) {
   if (xuHao === 1) {
     xianShiMiMa1.value = !xianShiMiMa1.value
@@ -917,7 +1006,17 @@ function qieHuanMoShi(xinMoShi: MoShiLeiXing) {
     dengLuZhong.value = false
     zhuCeZhong.value = false
     faSongZhong.value = false
-    qingLiQianTai()
+  }
+  // 清报错必须无条件做：原先它被塞在「有请求在飞」分支里，于是登录失败后（请求早已结束）
+  // 再切到注册，上一个表单的报错框会跟着留到新标签页上，看起来像新表单出的错。
+  qingLiQianTai()
+  // UX-03：手机号在两个表单间共用一份意图。登录页填到一半想去注册，或注册填到一半
+  // 想换号登录，号码不该被清空——11 位号码重打一遍是纯粹的重复劳动。
+  // 只在源侧非空时覆盖目标侧：源侧为空（用户主动清空）就不去动目标侧已填的号码。
+  if (xinMoShi === 'zhuCe') {
+    if (dengLuShouJiHao.value.trim() !== '') zhuCeShouJiHao.value = dengLuShouJiHao.value
+  } else if (zhuCeShouJiHao.value.trim() !== '') {
+    dengLuShouJiHao.value = zhuCeShouJiHao.value
   }
   qieHuanFangXiang.value = xinMoShi === 'zhuCe' ? 'you' : 'zuo'
   const dangQianJiaoDian = document.activeElement as HTMLElement | null
@@ -1060,7 +1159,9 @@ const ZHU_CE_ZUI_XIAO_NIAN_LING = 18
 
 const chuShengRiQiZhouSui = computed(() => jiSuanZhouSui(zhuCeChuShengRiQi.value))
 
-const keYiFaSong = computed(() => zhuCeShouJiHeFa.value && daoJiShi.value === 0 && !faSongZhong.value)
+const keYiFaSong = computed(
+  () => zhuCeShouJiHeFa.value && daoJiShi.value === 0 && !faSongZhong.value,
+)
 const keYiZhuCe = computed(
   () =>
     zhuCeShouJiHeFa.value &&
@@ -1094,18 +1195,18 @@ async function zhiXingFaSongMa() {
       }
     }
     if (!jieMianCaoZuoYouXiao(daiCi)) return
-    await faSongMa(shouJiHao, { signal: 认证操作控制器?.signal })
+    await faSongMa(shouJiHao, YAN_ZHENG_MA_YONG_TU.zhuCe, { signal: 认证操作控制器?.signal })
     if (!jieMianCaoZuoYouXiao(daiCi)) return
     bd.yanZhengMaFaSongShiJian = Date.now()
     kaiShiDaoJiShi()
   } catch (cuoWu) {
     if (!jieMianCaoZuoYouXiao(daiCi)) return
     jieShouQianTai(cuoWu, zhiXingFaSongMa)
+    juShouFuWuCuoWu(cuoWu)
   } finally {
     if (jieMianCaoZuoYouXiao(daiCi)) faSongZhong.value = false
   }
 }
-
 function kaiShiDaoJiShi(qiShiZhi = 60) {
   daoJiShi.value = qiShiZhi
   if (daoJiShiDingShiQi) clearInterval(daoJiShiDingShiQi)
@@ -1301,6 +1402,17 @@ async function qiDongDinggeFeixing(mubiaoLuJing: string) {
   }
 }
 
+function quXiaoDengLu(): void {
+  if (!dengLuZhong.value) return
+  // 与 qieHuanMoShi 同一套收口：先作废本层代次（让 await 之后的分支全部早退，不会误走
+  // 「登录成功」副作用），再让 store 真正 abort 在途请求，最后自己复位按钮态。
+  // 顺序不能换：代次作废在前，finally 才不会与这里的复位打架。
+  zhiFouJieMianCaoZuo()
+  用户仓库.取消待处理认证()
+  dengLuZhong.value = false
+  qingLiQianTai()
+}
+
 async function zhiXingDengLu() {
   if (!keYiDengLu.value || dengLuZhong.value) return
   const daiCi = kaiShiJieMianCaoZuo()
@@ -1325,6 +1437,7 @@ async function zhiXingDengLu() {
   } catch (cuoWu) {
     if (!jieMianCaoZuoYouXiao(daiCi)) return
     jieShouQianTai(cuoWu, zhiXingDengLu)
+    juShouFuWuCuoWu(cuoWu)
   } finally {
     if (jieMianCaoZuoYouXiao(daiCi)) {
       dengLuZhong.value = false
@@ -1333,7 +1446,7 @@ async function zhiXingDengLu() {
   }
 }
 
-function sheZhiBenDiYanZhengCuoWu(yingXiang: string) {
+function sheZhiBenDiYanZhengCuoWu(yingXiang: string, ziDuan?: CuoWuZiDuan) {
   jieShouQianTai(
     chuangJianQianTaiCuoWu({
       code: QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID,
@@ -1341,25 +1454,27 @@ function sheZhiBenDiYanZhengCuoWu(yingXiang: string) {
       yingXiang,
     }),
   )
+  // UX-04：本地表单校验已经知道是哪个框出的问题，直接把焦点送回去
+  if (ziDuan) zhaoDongZiDuan(ziDuan)
 }
 
 async function zhiXingZhuCe() {
   if (zhuCeZhong.value) return
   if (!keYiZhuCe.value) {
     if (!zhuCeShouJiHeFa.value) {
-      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'))
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), 'zhuCeShouJiHao')
     } else if (!zhuCeYanZhengMaHeFa.value) {
-      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'yanZhengMaGeShiCuoWu'))
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'yanZhengMaGeShiCuoWu'), 'zhuCeYanZhengMa')
     } else if (YONG_HU_MING_TE_SHU_ZI_FU.test(zhuCeYongHuMing.value.trim())) {
-      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'yongHuMingTeShuZiFu'))
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'yongHuMingTeShuZiFu'), 'zhuCeYongHuMing')
     } else if (!zhuCeYongHuMingHeFa.value) {
-      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'yongHuMingChangDuCuoWu'))
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'yongHuMingChangDuCuoWu'), 'zhuCeYongHuMing')
     } else if (zhuCeMiMa.value.length === 0) {
-      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'miMaKong'))
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'miMaKong'), 'zhuCeMiMa')
     } else if (chuShengRiQiZhouSui.value === null) {
-      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'chuShengRiQiGeShiCuoWu'))
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'chuShengRiQiGeShiCuoWu'), 'zhuCeChuShengRiQi')
     } else if ((chuShengRiQiZhouSui.value ?? -1) < ZHU_CE_ZUI_XIAO_NIAN_LING) {
-      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'weiChengNianRenJinZhi'))
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'weiChengNianRenJinZhi'), 'zhuCeChuShengRiQi')
     }
     return
   }
@@ -1401,6 +1516,7 @@ async function zhiXingZhuCe() {
   } catch (cuoWu) {
     if (!jieMianCaoZuoYouXiao(daiCi)) return
     jieShouQianTai(cuoWu, zhiXingZhuCe)
+    juShouFuWuCuoWu(cuoWu)
   } finally {
     if (jieMianCaoZuoYouXiao(daiCi)) {
       zhuCeZhong.value = false
@@ -1653,12 +1769,21 @@ async function zhiXingZhuCe() {
   border-radius: var(--renzheng-gundong-yuan-jiao);
   background: linear-gradient(
     180deg,
-    var(--renzheng-gundong-huakuai-se) 0%,
-    color-mix(in srgb, var(--renzheng-gundong-huakuai-se) 60%, #e8743b) 50%,
-    var(--renzheng-gundong-huakuai-se) 100%
+    color-mix(in srgb, var(--renzheng-gundong-huakuai-se) 24%, transparent) 0%,
+    var(--renzheng-gundong-huakuai-se) 50%,
+    color-mix(in srgb, var(--renzheng-gundong-huakuai-se) 24%, transparent) 100%
   );
+  opacity: 0.5;
+  transition: opacity 240ms ease;
   pointer-events: auto;
   will-change: transform;
+}
+
+/* 「用起来了」的判定：指针进入滑道整列、悬停滑块、或按住拖拽 */
+.gundong-zhuangshi:hover .gundong-huakuai,
+.gundong-huakuai:hover,
+.gundong-huakuai:active {
+  opacity: 1;
 }
 
 .biaodan-xingwei {
@@ -1808,9 +1933,25 @@ async function zhiXingZhuCe() {
   line-height: 1;
 }
 
+/* 认证字段的底线画在包裹层，不画在输入框自身。原因是浏览器强制的：
+   UA 的 :-webkit-autofill 带 `background-image: none !important`（实测强制自动填充态下
+   background-image 计算值即为 none），画在输入框上的底线图层会被整个清空，密码框因此没有底线。
+   包裹层不是自动填充目标，浏览器碰不到它；几何、渐变与 1s 曲线全部沿用 global 同一族令牌，
+   故与其它字段的底线是同一套视觉，不另立标准。
+   与 global 契约的关系：.fenlie-shuru 已从 global 底线契约排除（见 global.css 的 :not 名单），
+   两者互斥，绝不会同时画成两条线。 */
 .shuru-zu {
   position: relative;
   overflow: visible;
+  background-image:
+    var(--shuru-sao-jianbian),
+    linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se)) !important;
+  background-repeat: no-repeat, no-repeat !important;
+  background-position: left bottom, left bottom !important;
+  background-size: 0% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du) !important;
+  transition-property: background-size !important;
+  transition-duration: var(--shuru-sao-chu-shi-chang), var(--shuru-sao-chu-shi-chang) !important;
+  transition-timing-function: var(--quxian-sao-chu), var(--quxian-sao-chu) !important;
   /* FP-04b 字段纵向间距：局部量纲令牌，值只由共用 :root 的节奏令牌派生（24+8=32），
      禁裸 px、禁镜像字面量。上浮标签向上侵入本间距 5px、上一项的发丝线+下内边距占 11px，
      故「上一项底线→本标签顶」净空 = 本值 − 16（旧 24 时净空只剩 8，标签贴着上一项字脚） */
@@ -1826,14 +1967,18 @@ async function zhiXingZhuCe() {
   padding-bottom: var(--jiange-10);
   padding-left: 0;
   background-color: transparent;
+  /* 底线改由包裹层 .shuru-zu 绘制，这里必须把自己的背景裁到 padding-box：
+     底部那条 1px 透明边框不被打底，包裹层的底线才能从这条缝里透出来。
+     两者等宽同位（都用 --shuru-xian-changtai-kuan-du），故严丝合缝、不会错位。 */
+  background-clip: padding-box;
+  -webkit-background-clip: padding-box;
   border-radius: 0;
-  /* FPA1 单真源回落：global !important 是唯一生效轨；此处三条 longhand 只保无 global 宿主 */
   border-top-width: 0;
   border-right-width: 0;
   border-left-width: 0;
   border-bottom-width: var(--shuru-xian-changtai-kuan-du);
   border-bottom-style: solid;
-  border-bottom-color: var(--shuru-xian-changtai-se);
+  border-bottom-color: transparent;
   color: #efe9dc;
   font-size: 15px;
   letter-spacing: 0.06em;
@@ -1842,6 +1987,12 @@ async function zhiXingZhuCe() {
   appearance: none;
   box-shadow: none;
   -webkit-text-fill-color: #efe9dc;
+}
+
+/* 聚焦时把包裹层的底线层从 0% 拉到 100%，即「从左到右一段段变深」，1s 后停住。
+   用 :focus-within 而非 :focus：包裹层是 div，聚焦落在内部 input 上，:focus 不匹配。 */
+.shuru-zu:focus-within {
+  background-size: 100% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du) !important;
 }
 
 /* 认证输入一律不画焦点环：outline 只能画整圈，会在上下边多出两条线，与「只有一条底线」的设计冲突。
@@ -1855,8 +2006,13 @@ async function zhiXingZhuCe() {
   color: transparent;
 }
 
-.shuru-zu > .chushengriqi {
-  border-bottom-width: 0;
+/* 出生日期三段是分段控件，用户明确要求它不画整条底线（FP-14）。
+   底线既已移到包裹层，这里就必须把该包裹层整条排除，否则分段框下方会凭空多出一条线。
+   同时删掉原先的 `.shuru-zu > .chushengriqi { border-bottom-width: 0 }`：底线移到包裹层后，
+   border-bottom-width 不可继承、.chushengriqi 本身无边框，那条规则已是死代码。 */
+.shuru-zu:has(> .chushengriqi) {
+  background-image: none !important;
+  background-size: auto !important;
 }
 
 @keyframes ziDongTianChongKaiShi {
@@ -1876,26 +2032,14 @@ async function zhiXingZhuCe() {
   caret-color: #d5b878 !important;
   /* 自动填充态的 UA 底色用「声明卡面色 + 5000s 过渡」压掉：UA 改的是 background-color，
      过渡把这次变化拉长到近乎不可见，底色因此停在卡面色。
-     不用 inset 大扩散遮罩：它画在 border box 之上，会把底线整条盖掉，而底线是唯一的焦点指示。 */
+     不用 inset 大扩散遮罩：它画在 border box 之上，会把底线整条盖掉，而底线是唯一的焦点指示。
+     background-clip 已在基础规则收成 padding-box，故这条不透明底色只盖到 padding box，
+     底部那条 1px 透明边框仍不被打底，包裹层的底线照样透得出来。 */
   background-color: var(--renzheng-mian-se) !important;
   transition: background-color 5000s ease-in-out 0s !important;
   animation-name: ziDongTianChongKaiShi;
   animation-duration: 0.01s;
   animation-iteration-count: 1;
-  /* UA 的 :-webkit-autofill 带 `background-image: none !important`，实测强制自动填充态下
-     background-image 计算值就是 none，global 那条底线图层会被整个清空。UA 不碰 border，
-     故该状态下底线改由 border-bottom-color 承载，几何与色令牌仍与 global 同源。 */
-  border-bottom-color: var(--shuru-xian-changtai-se) !important;
-}
-
-:root[data-theme='light'] .fenlie-shuru:-webkit-autofill:focus,
-:root[data-theme='light'] .fenlie-shuru:-webkit-autofill:focus-visible {
-  border-bottom-color: var(--shuru-xian-jujiao-se) !important;
-}
-
-.fenlie-shuru:-webkit-autofill:focus,
-.fenlie-shuru:-webkit-autofill:focus-visible {
-  border-bottom-color: var(--shuru-xian-jujiao-se) !important;
 }
 
 .fudong-biaoqian {
@@ -1971,14 +2115,69 @@ async function zhiXingZhuCe() {
   display: none;
 }
 
+.wangji-mima-lianjie {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  color: #d5b878;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.ji-zhu-hang-2 .wangji-mima-lianjie {
+  align-self: center;
+  flex: none;
+  white-space: nowrap;
+}
+
+:root[data-theme='light'] .wangji-mima-lianjie {
+  color: #8a6a2f;
+}
+
+:root[data-theme='light'] .wangji-mima-lianjie:hover {
+  color: #a3813e;
+}
+
+.wangji-mima-lianjie:hover {
+  opacity: 0.75;
+}
+
+.wangji-mima-lianjie:focus-visible {
+  outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
+  outline-offset: var(--jujiao-huan-pian-yi);
+}
+
+.wangji-mima-lianjie:active {
+  opacity: 0.55;
+}
+
 .ji-zhu-xuan-xiang {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--jiange-xiao) var(--jiange-12);
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--jiange-12);
   margin: calc(var(--jiange-4) * -1) 0 calc(var(--jiange-zhong) + var(--jiange-4));
   padding: 0 var(--jiange-2);
+}
+
+.ji-zhu-hang-1,
+.ji-zhu-hang-2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  flex-wrap: nowrap;
+}
+
+/* 行内每个勾选项都不许折行：一旦允许「记住账号」在窄盒里折成竖排，整行就散了 */
+.ji-zhu-hang-1 .ji-zhu-xuan-ze,
+.ji-zhu-hang-2 .ji-zhu-xuan-ze {
+  flex: none;
+  white-space: nowrap;
 }
 
 .ji-zhu-xuan-ze {
@@ -2140,7 +2339,15 @@ async function zhiXingZhuCe() {
 }
 
 .anniu-zhuyao:active:not(:disabled) {
-  transform: translateY(0);
+  /* 按下反馈必须「快」：基座是 transition: all 0.35s，若沿用它，
+     按下去 350ms 后才真的沉下去，手感像卡了一下而不是按到了。
+     只压按下这一段的时长，回弹沿用 0.35s 不动。 */
+  transition:
+    transform 80ms ease-out,
+    box-shadow 80ms ease-out,
+    filter 80ms ease-out;
+  filter: brightness(0.94);
+  transform: translateY(1px);
   box-shadow:
     0 3px 10px rgba(201, 169, 106, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
@@ -2266,13 +2473,13 @@ async function zhiXingZhuCe() {
   -webkit-text-fill-color: #2e2a20 !important;
   caret-color: #8a6a2f !important;
   /* 浅档沿用同一张卡面令牌：--renzheng-mian-se 随主题切换到亮面，无需重复声明。
-     色令牌全部随主题切换，底线条与聚焦条同样只声明一次。 */
+     background-clip 在基础规则已收成 padding-box，故不透明底色只盖到 padding box，
+     底部 1px 透明边框仍透出包裹层底线。 */
   background-color: var(--renzheng-mian-se) !important;
   transition: background-color 5000s ease-in-out 0s !important;
   animation-name: ziDongTianChongKaiShi;
   animation-duration: 0.01s;
   animation-iteration-count: 1;
-  border-bottom-color: var(--shuru-xian-changtai-se) !important;
 }
 
 :root[data-theme='light'] .fudong-biaoqian {

@@ -110,7 +110,9 @@ export async function zhiXingBingDuSaoMiao(linShiLuJing: string): Promise<void> 
   try {
     const wenJianLiu = fs.createReadStream(linShiLuJing)
     const biaoDan = new FormData()
-    biaoDan.append('file', new Blob([await streamToBuffer(wenJianLiu)]))
+    // Buffer 的底层 ArrayBuffer 可能是 SharedArrayBuffer，TS 不认它是 BlobPart。
+    // 用 Uint8Array 包一层做「拷贝视图」，类型与运行期都合法，且不共享底层内存。
+    biaoDan.append('file', new Blob([new Uint8Array(await streamToBuffer(wenJianLiu))]))
     const xiangYing = await fetch(`${saoMiao.fuWuUrl.replace(/\/$/, '')}/scan`, {
       method: 'POST',
       body: biaoDan,

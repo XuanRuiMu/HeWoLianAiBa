@@ -7,6 +7,7 @@ import './styles/variables.css'
 import './styles/global.css'
 import './styles/liao-tian-qi-pao.css'
 import './styles/zhang-hao-an-quan-rong-cao-di.css'
+import './styles/认证卡片.css'
 import {
   anZhuangQuanJuCuoWuJianTingQi,
   chuFaCuoWuShangBao,

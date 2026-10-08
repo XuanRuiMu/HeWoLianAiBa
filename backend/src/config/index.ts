@@ -158,6 +158,10 @@ xianLiu: {
         chuangKou: parseInt(huoQuHuanJingBianLiang('ZHU_CE_XIAN_LIU_CHUANG_KOU_HAO_MIAO', '60000'), 10),
         zuiDa: parseInt(huoQuHuanJingBianLiang('ZHU_CE_XIAN_LIU_MEI_FEN_ZUI_DA', '5'), 10),
       },
+      chongZhiMiMa: {
+        chuangKou: parseInt(huoQuHuanJingBianLiang('CHONG_ZHI_MI_MA_XIAN_LIU_CHUANG_KOU_HAO_MIAO', '600000'), 10),
+        zuiDa: parseInt(huoQuHuanJingBianLiang('CHONG_ZHI_MI_MA_XIAN_LIU_MEI_FEN_ZUI_DA', '5'), 10),
+      },
       changGui: { chuangKou: 60 * 1000, zuiDa: 100 },
     liaoTian: { chuangKou: 60 * 1000, zuiDa: 30 },
     aiQingQiu: { chuangKou: 60 * 1000, zuiDa: 15 },

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+﻿import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
@@ -31,19 +31,31 @@ function 样式块(源码: string, 选择器: string): string {
   return (匹配 as RegExpMatchArray)[1]
 }
 
-vi.mock('@/api/认证', () => ({
-  faSongMa: vi.fn(),
-  jianChaShouJiHao: vi.fn(),
-  dengLu: vi.fn(),
-  zhuCe: vi.fn(),
-  huoQuYongHuXinXi: vi.fn(),
-}))
-
 vi.mock('@/api/请求', () => ({
   huoQuCuoWuXiangYing: vi.fn((cuoWu) => (cuoWu as { response?: unknown }).response),
 }))
 
-import { faSongMa, jianChaShouJiHao, dengLu, huoQuYongHuXinXi } from '@/api/认证'
+// 认证接口 mock 工厂必须 hoisted：组件与测试断言共享同一批实例，
+// 否则断言的是本文件私藏的假货，组件调的是模块里另一份，测试就白写了。
+const 认证Mock = vi.hoisted(() => ({
+  chongZhiMiMa: vi.fn(),
+  faSongMa: vi.fn(),
+  jianChaShouJiHao: vi.fn(),
+}))
+
+vi.mock('@/api/认证', () => ({
+  faSongMa: 认证Mock.faSongMa,
+  jianChaShouJiHao: 认证Mock.jianChaShouJiHao,
+  dengLu: vi.fn(),
+  zhuCe: vi.fn(),
+  huoQuYongHuXinXi: vi.fn(),
+  // 忘记密码：组件 setup 期即 import，缺了整个测试文件直接加载失败
+  chongZhiMiMa: 认证Mock.chongZhiMiMa,
+  // 验证码用途常量：发码前必读，缺了会在发码那一步抛 undefined 读属性
+  YAN_ZHENG_MA_YONG_TU: { zhuCe: 'zhuCe', chongZhiMiMa: 'chongZhiMiMa' },
+}))
+
+import { faSongMa, jianChaShouJiHao, dengLu, zhuCe, huoQuYongHuXinXi } from '@/api/认证'
 
 describe('登录内容组件', () => {
   function chuangJianLuYou() {
@@ -52,6 +64,7 @@ describe('登录内容组件', () => {
       routes: [
         { path: '/', name: 'zhuJieMian', component: { template: '<div>主页</div>' } },
         { path: '/login', name: 'dengLu', component: 登录内容 },
+        { path: '/forgot-password', name: 'wangJiMiMa', component: { template: '<div>找回密码</div>' } },
       ],
     })
   }
@@ -912,9 +925,401 @@ describe('登录内容组件', () => {
     expect(认证布局源码).toMatch(/\.yemian-buju\.quanping-moshi\s*\{[\s\S]*?overflow-y:\s*auto/)
   })
 
-  it('FP-14 出生日期：宿主 .fenlie-shuru 在组件根上的整体底线被剥掉，大横线不再出现', () => {
+  it('FP-14 出生日期：底线已移到包裹层，故按整条排除该包裹层，三段框下方不再有大横线', () => {
+    // 底线真源现在是 .shuru-zu 的背景层，出生日期的包裹层必须整条排除（不是再压 border）
     expect(登录内容样式).toMatch(
-      /\.shuru-zu\s*>\s*\.chushengriqi\s*\{[^}]*border-bottom-width:\s*0/,
+      /\.shuru-zu:has\(\s*>\s*\.chushengriqi\s*\)\s*\{[^}]*background-image:\s*none\s*!important/,
     )
+    // 旧写法随底线移交一并失效：border-bottom-width 不可继承，.chushengriqi 本身无边框，是死代码
+    expect(登录内容样式).not.toMatch(/\.shuru-zu\s*>\s*\.chushengriqi\s*\{[^}]*border-bottom-width/)
+  })
+})
+
+describe('登录取消（登录中变「取消」）', () => {
+  function chuangJianLuYou() {
+    return createRouter({
+      history: createWebHistory(),
+      routes: [
+        { path: '/', name: 'zhuJieMian', component: { template: '<div>主页</div>' } },
+        { path: '/login', name: 'dengLu', component: 登录内容 },
+        { path: '/forgot-password', name: 'wangJiMiMa', component: { template: '<div>找回密码</div>' } },
+      ],
+    })
+  }
+
+  async function mountDengLu() {
+    const luYou = chuangJianLuYou()
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const biaoDan = 使用认证表单仓库()
+    biaoDan.moShi = 'dengLu'
+    const wrapper = mount(登录内容, { global: { plugins: [pinia, luYou] }, attachTo: document.body })
+    await luYou.isReady()
+    await flushPromises()
+    await wrapper.find('#denglu-shoujihao').setValue('19900009181')
+    await wrapper.find('#denglu-mima').setValue('whatever-password')
+    await flushPromises()
+    return { wrapper, biaoDan }
+  }
+
+  beforeEach(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+    vi.resetAllMocks()
+  })
+
+  it('登录中：按钮文案变「取消」、type 变 button、不再 disabled（否则用户点不到）', async () => {
+    // 让登录请求悬住不返回，模拟「卡住」
+    let jieShou = false
+    vi.mocked(dengLu).mockImplementation(
+      () => new Promise((jie) => { jieShou = true; void jieShou }) as never,
+    )
+    const { wrapper } = await mountDengLu()
+    const anniu = () => wrapper.find('.denglu-biaodan button.anniu-zhuyao')
+
+    expect(anniu().text()).toContain(huoQuFanYi('renZheng', 'dengLu'))
+    await anniu().trigger('submit')
+    await flushPromises()
+
+    expect(anniu().text(), '登录中未变「取消」').toContain(huoQuFanYi('renZheng', 'dengLuQuXiao'))
+    expect(anniu().attributes('type'), '登录中仍是 submit，会误触发二次提交').toBe('button')
+    expect(anniu().attributes('disabled'), '登录中按钮被禁用，用户无法点取消').toBeUndefined()
+    expect(anniu().attributes('aria-busy')).toBe('true')
+    wrapper.unmount()
+  })
+
+  it('点「取消」：按钮立刻恢复为「登录」且可再次提交（不再卡死灰着）', async () => {
+    vi.mocked(dengLu).mockImplementation(() => new Promise(() => {}) as never)
+    const { wrapper } = await mountDengLu()
+    const anniu = () => wrapper.find('.denglu-biaodan button.anniu-zhuyao')
+
+    await anniu().trigger('submit')
+    await flushPromises()
+    expect(anniu().text()).toContain(huoQuFanYi('renZheng', 'dengLuQuXiao'))
+
+    await anniu().trigger('click')
+    await flushPromises()
+
+    expect(anniu().text(), '取消后按钮仍卡在「取消」').toContain(huoQuFanYi('renZheng', 'dengLu'))
+    expect(anniu().text()).not.toContain(huoQuFanYi('renZheng', 'dengLuQuXiao'))
+    expect(anniu().attributes('type')).toBe('submit')
+    expect(anniu().attributes('aria-busy')).toBe('false')
+    wrapper.unmount()
+  })
+
+  it('取消不得触发登录成功副作用（不得写记住密码、不得跳转）', async () => {
+    vi.mocked(dengLu).mockImplementation(() => new Promise(() => {}) as never)
+    const { wrapper, biaoDan } = await mountDengLu()
+    const anniu = () => wrapper.find('.denglu-biaodan button.anniu-zhuyao')
+    const dengLuQian = { dengLuMiMa: biaoDan.dengLuMiMa, jiZhuMiMa: biaoDan.jiZhuMiMa }
+
+    await anniu().trigger('submit')
+    await flushPromises()
+    await anniu().trigger('click')
+    await flushPromises()
+
+    // 取消只回滚「正在登录」这一个态，不得像成功那样把密码写进记住密码存储
+    expect(biaoDan.dengLuMiMa, '取消不应把密码写进表单仓库').toBe(dengLuQian.dengLuMiMa)
+    expect(biaoDan.jiZhuMiMa, '取消不应设置「记住密码」').toBe(dengLuQian.jiZhuMiMa)
+    wrapper.unmount()
+  })
+})
+
+describe('密码错误：人话文案 + 免报错码 + 切换即清', () => {
+  function chuangJianLuYou() {
+    return createRouter({
+      history: createWebHistory(),
+      routes: [
+        { path: '/', name: 'zhuJieMian', component: { template: '<div>主页</div>' } },
+        { path: '/login', name: 'dengLu', component: 登录内容 },
+        { path: '/forgot-password', name: 'wangJiMiMa', component: { template: '<div>找回密码</div>' } },
+      ],
+    })
+  }
+
+  async function mountDengLu() {
+    const luYou = chuangJianLuYou()
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const biaoDan = 使用认证表单仓库()
+    biaoDan.moShi = 'dengLu'
+    const wrapper = mount(登录内容, { global: { plugins: [pinia, luYou] }, attachTo: document.body })
+    await luYou.isReady()
+    await flushPromises()
+    await wrapper.find('#denglu-shoujihao').setValue('19900009181')
+    await wrapper.find('#denglu-mima').setValue('wrong-password')
+    await flushPromises()
+    return { wrapper, biaoDan }
+  }
+
+  function 造密码错误() {
+    return new Error('账号或密码错误')
+  }
+
+  beforeEach(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+    vi.resetAllMocks()
+  })
+
+  it('密码错误文案改为「密码错误。你的号是租来的吧。」', () => {
+    expect(huoQuFanYi('lianAi', 'LianAi_028')).toBe('密码错误。你的号是租来的吧。')
+  })
+
+  it('密码错误属免码报错：不展示恋爱码行与复制按钮', async () => {
+    const { 归一前台错误 } = await import('@/utils/前台错误')
+    const cuoWu = 归一前台错误(造密码错误())
+    const 组件源 = readFileSync(resolve(__dirname, '../components/请求错误.vue'), 'utf8')
+    // 判据落在组件上：代码行必须被 v-if="cuoWu.xianShiDaiMa" 挡住
+    expect(组件源).toMatch(/v-if="cuoWu\.xianShiDaiMa" class="qian-tai-cuo-wu-lian-ai-hang"/)
+    expect(typeof cuoWu.xianShiDaiMa).toBe('boolean')
+  })
+
+  it('免码只给「用户输入不对」这一类，网络/依赖类故障仍须带码', async () => {
+    const { xianShiLianAiMa } = await import('@/config/前台错误码')
+    const { QIAN_TAI_DAI_MA } = await import('@/config/前台错误码')
+    expect(xianShiLianAiMa(QIAN_TAI_DAI_MA.AUTH_INVALID_CREDENTIALS)).toBe(false)
+    for (const daiMa of [
+      QIAN_TAI_DAI_MA.FRONTEND_OFFLINE,
+      QIAN_TAI_DAI_MA.UPSTREAM_NETWORK_ERROR,
+      QIAN_TAI_DAI_MA.DEPENDENCY_POSTGRES_UNAVAILABLE,
+      QIAN_TAI_DAI_MA.RATE_LIMITED,
+      QIAN_TAI_DAI_MA.PERMISSION_DENIED,
+    ] as const) {
+      expect(xianShiLianAiMa(daiMa), `${daiMa} 不该被免码`).toBe(true)
+    }
+  })
+
+  it('登录失败后切到注册：报错框必须消失（不带到新标签页）', async () => {
+    vi.mocked(dengLu).mockRejectedValue(造密码错误())
+    const { wrapper } = await mountDengLu()
+    await wrapper.find('.denglu-biaodan button.anniu-zhuyao').trigger('submit')
+    await flushPromises()
+    expect(wrapper.find('.qian-tai-cuo-wu').exists(), '登录失败后应出现报错框').toBe(true)
+
+    // 切到注册（此刻没有请求在飞，正是原先漏清报错的那条路径）
+    await wrapper.findAll('.biaoqian-anniu')[1].trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.qian-tai-cuo-wu').exists(), '切换到注册后报错框应消失').toBe(false)
+
+    // 再切回登录，同样不该复活上一个表单的报错
+    await wrapper.findAll('.biaoqian-anniu')[0].trigger('click')
+    await flushPromises()
+    expect(wrapper.find('.qian-tai-cuo-wu').exists(), '切回登录后报错框不应复活').toBe(false)
+    wrapper.unmount()
+  })
+})
+
+describe('UX-03：登录↔注册切换保留手机号', () => {
+  function chuangJianLuYou() {
+    return createRouter({
+      history: createWebHistory(),
+      routes: [
+        { path: '/', name: 'zhuJieMian', component: { template: '<div>主页</div>' } },
+        { path: '/login', name: 'dengLu', component: 登录内容 },
+        { path: '/forgot-password', name: 'wangJiMiMa', component: { template: '<div>找回密码</div>' } },
+      ],
+    })
+  }
+
+  async function mountMoShi(初始: 'dengLu' | 'zhuCe') {
+    const luYou = chuangJianLuYou()
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const biaoDan = 使用认证表单仓库()
+    biaoDan.moShi = 初始
+    const wrapper = mount(登录内容, { global: { plugins: [pinia, luYou] }, attachTo: document.body })
+    await luYou.isReady()
+    await flushPromises()
+    return { wrapper, biaoDan }
+  }
+
+  beforeEach(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+    vi.resetAllMocks()
+  })
+
+  it('登录页填的号码切到注册后仍在，不用重打 11 位', async () => {
+    const { wrapper } = await mountMoShi('dengLu')
+    await wrapper.find('#denglu-shoujihao').setValue('16622370059')
+    await flushPromises()
+
+    await wrapper.findAll('.biaoqian-anniu')[1].trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('#zhuce-shoujihao').element.value).toBe('16622370059')
+    wrapper.unmount()
+  })
+
+  it('注册页填的号码切回登录后仍在', async () => {
+    const { wrapper } = await mountMoShi('zhuCe')
+    await wrapper.find('#zhuce-shoujihao').setValue('16622370059')
+    await flushPromises()
+
+    await wrapper.findAll('.biaoqian-anniu')[0].trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('#denglu-shoujihao').element.value).toBe('16622370059')
+    wrapper.unmount()
+  })
+
+  it('源侧为空时不得抹掉目标侧已填的号码', async () => {
+    const { wrapper } = await mountMoShi('dengLu')
+    await wrapper.find('#denglu-shoujihao').setValue('16622370059')
+    await flushPromises()
+    await wrapper.findAll('.biaoqian-anniu')[1].trigger('click')
+    await flushPromises()
+
+    // 在注册页把号码改掉，再切回登录：登录页应拿到注册页当前的号码
+    await wrapper.find('#zhuce-shoujihao').setValue('13900001234')
+    await flushPromises()
+    await wrapper.findAll('.biaoqian-anniu')[0].trigger('click')
+    await flushPromises()
+    expect(wrapper.find('#denglu-shoujihao').element.value).toBe('13900001234')
+    wrapper.unmount()
+  })
+
+  it('切走时密码与验证码绝不跟着串（只串手机号）', async () => {
+    const { wrapper } = await mountMoShi('dengLu')
+    await wrapper.find('#denglu-shoujihao').setValue('16622370059')
+    await wrapper.find('#denglu-mima').setValue('secret-123')
+    await flushPromises()
+
+    await wrapper.findAll('.biaoqian-anniu')[1].trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('#zhuce-shoujihao').element.value).toBe('16622370059')
+    expect(wrapper.find('#zhuce-mima').element.value).toBe('')
+    expect(wrapper.find('#zhuce-yanzhengma').element.value).toBe('')
+    wrapper.unmount()
+  })
+})
+
+describe('UX-04：报错按错误码聚焦到出问题的框', () => {
+  function chuangJianLuYou() {
+    return createRouter({
+      history: createWebHistory(),
+      routes: [
+        { path: '/', name: 'zhuJieMian', component: { template: '<div>主页</div>' } },
+        { path: '/login', name: 'dengLu', component: 登录内容 },
+        { path: '/forgot-password', name: 'wangJiMiMa', component: { template: '<div>找回密码</div>' } },
+      ],
+    })
+  }
+
+  async function mountMoShi(初始: 'dengLu' | 'zhuCe') {
+    const luYou = chuangJianLuYou()
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const biaoDan = 使用认证表单仓库()
+    biaoDan.moShi = 初始
+    const wrapper = mount(登录内容, { global: { plugins: [pinia, luYou] }, attachTo: document.body })
+    await luYou.isReady()
+    await flushPromises()
+    return { wrapper, biaoDan }
+  }
+
+  // 真实服务端错误的归一口径读的是 cuo_wu_ma（见 前台错误.ts 的 duQuJiuDaiMa
+  // 与 请求.test.ts 的真实包裹体），不是 Error.code；只挂 code 会被归一成
+  // FRONTEND_UNKNOWN_ERROR，测的就不是真链路了。
+  function 造带码错误(码: string) {
+    return Object.assign(new Error('服务端报错'), { cuo_wu_ma: 码, code: 码 })
+  }
+
+  beforeEach(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+    vi.resetAllMocks()
+  })
+
+  it('密码错误（免码报错）后焦点落在密码框', async () => {
+    vi.mocked(dengLu).mockRejectedValue(造带码错误('AUTH_INVALID_CREDENTIALS'))
+    const { wrapper } = await mountMoShi('dengLu')
+    await wrapper.find('#denglu-shoujihao').setValue('16622370059')
+    await wrapper.find('#denglu-mima').setValue('wrong')
+    await wrapper.find('.ji-zhu-fu-xuan').trigger('change')
+    await flushPromises()
+
+    await wrapper.find('.denglu-biaodan button.anniu-zhuyao').trigger('submit')
+    await flushPromises()
+    await flushPromises()
+
+    expect(document.activeElement?.id).toBe('denglu-mima')
+    wrapper.unmount()
+  })
+
+  it('注册「号码已被占用」后焦点落在手机号框', async () => {
+    vi.mocked(zhuCe).mockRejectedValue(造带码错误('AUTH_ACCOUNT_ALREADY_EXISTS'))
+    const { wrapper } = await mountMoShi('zhuCe')
+    await wrapper.find('#zhuce-shoujihao').setValue('16622370059')
+    await wrapper.find('#zhuce-yanzhengma').setValue('123456')
+    await wrapper.find('#zhuce-yonghuming').setValue('tester7059')
+    await wrapper.find('#zhuce-mima').setValue('Aa123456!')
+    // 三段日期 + 协议都是 keYiZhuCe 的前置，不填根本走不到 API，测的就不是聚焦逻辑
+    await wrapper.find('#zhuce-chushengriqi').setValue('1995')
+    await wrapper.find('#zhuce-chushengriqi-yue').setValue('06')
+    await wrapper.find('#zhuce-chushengriqi-ri').setValue('15')
+    await wrapper.find('.xieyi-gouxuan input[type="checkbox"]').setValue(true)
+    await flushPromises()
+
+    await wrapper.find('.zhuce-biaodan button.anniu-zhuyao').trigger('submit')
+    await flushPromises()
+    await flushPromises()
+
+    expect(document.activeElement?.id).toBe('zhuce-shoujihao')
+    wrapper.unmount()
+  })
+
+  it('网络类报错不乱抢焦点（无可改字段就别动）', async () => {
+    vi.mocked(dengLu).mockRejectedValue(造带码错误('FRONTEND_NETWORK_ERROR'))
+    const { wrapper } = await mountMoShi('dengLu')
+    await wrapper.find('#denglu-shoujihao').setValue('16622370059')
+    await wrapper.find('#denglu-mima').setValue('whatever')
+    await wrapper.find('.ji-zhu-fu-xuan').trigger('change')
+    await flushPromises()
+    // 先把焦点放到一个无关处，用于证明「没被动过」
+    ;(document.getElementById('zhuce-yanzhengma') as HTMLElement | null)?.focus()
+    await flushPromises()
+
+    await wrapper.find('.denglu-biaodan button.anniu-zhuyao').trigger('submit')
+    await flushPromises()
+    await flushPromises()
+
+    expect(document.activeElement?.id, '断网报错不该把焦点拽到某个输入框').not.toBe('denglu-mima')
+    expect(document.activeElement?.id, '断网报错不该把焦点拽到某个输入框').not.toBe('denglu-shoujihao')
+    wrapper.unmount()
+  })
+
+  it('错误码→字段的映射是纯函数，落不到字段的一律 null', () => {
+    const 表 = 登录内容源码
+    expect(表).toContain('function daiMaPanDuanZiDuan')
+    expect(表).toMatch(/AUTH_INVALID_CREDENTIALS:[\s\S]{0,80}dengLuMiMa/)
+    expect(表).toMatch(/AUTH_ACCOUNT_ALREADY_EXISTS:[\s\S]{0,120}zhuCeShouJiHao/)
+    // 不得用报错文案做分支（文案随翻译改，拿文案判断等于埋雷）
+    expect(表).toMatch(/switch \(daiMa\)/)
+  })
+})
+
+describe('UX-05：主按钮按压反馈', () => {
+  it('按下反馈必须快于基座 0.35s，否则手感像卡顿', () => {
+    const 块 = 样式块(登录内容样式, '.anniu-zhuyao:active:not(:disabled)')
+    expect(块).toMatch(/transform:\s*translateY\(1px\)/)
+    expect(块, '按下时应有轻微压暗，强化「按到了」的实感').toMatch(/filter:\s*brightness\(0\.9\d\)/)
+    const 时长 = 块.match(/transition:\s*([\s\S]*?);/)
+    expect(时长, '按下态必须自带更短的过渡').not.toBeNull()
+    const 时长声明 = 时长 ? 时长[1] : ''
+    expect(时长声明).toMatch(/transform 80ms/)
+  })
+
+it('登录与注册两处主按钮同用一个类，按压反馈不会只落一边', () => {
+  const 个数 = (登录内容源码.match(/class="anniu-zhuyao"/g) ?? []).length
+  expect(个数, '登录与注册两个主按钮都应带 .anniu-zhuyao').toBe(2)
+})
+
+  it('禁用态不参与按压反馈，且减动效档已把它归零', () => {
+    expect(登录内容样式).toMatch(/\.anniu-zhuyao:active:not\(:disabled\)/)
+    const 减动效 = /@media \(prefers-reduced-motion: reduce\)[\s\S]*$/.exec(登录内容样式)?.[0] ?? ''
+    expect(减动效, '减动效档未覆盖 .anniu-zhuyao').toMatch(/\.anniu-zhuyao,[\s\S]{0,400}?transition:\s*none\s*!important/)
   })
 })

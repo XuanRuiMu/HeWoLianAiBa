@@ -7,6 +7,7 @@ import {
   huoQuLianAiMa,
   huoQuWenBenLeiXing,
   moRenKeChongShi,
+  xianShiLianAiMa,
   type LianAiMa,
   type QianTaiDaiMa,
   type QianTaiWenBenLeiXing,
@@ -39,6 +40,8 @@ export interface QianTaiCuoWuXinXi {
   jiuDaiMa: string | null
   zhongShiCiShu: number
   xianShi: boolean
+  /** 该报错是否向用户展示恋爱码（免码报错为 false，见 前台错误码.ts 的 MIAN_MA_DAI_MA） */
+  xianShiDaiMa: boolean
 }
 
 export class QianTaiCuoWu extends Error implements QianTaiCuoWuXinXi {
@@ -58,6 +61,7 @@ export class QianTaiCuoWu extends Error implements QianTaiCuoWuXinXi {
   readonly jiuDaiMa: string | null
   zhongShiCiShu: number
   readonly xianShi: boolean
+  readonly xianShiDaiMa: boolean
   cuo_wu_ma: QianTaiDaiMa
 
   constructor(xinXi: QianTaiCuoWuXinXi, yuanShiCuoWu?: unknown) {
@@ -79,6 +83,7 @@ export class QianTaiCuoWu extends Error implements QianTaiCuoWuXinXi {
     this.jiuDaiMa = xinXi.jiuDaiMa
     this.zhongShiCiShu = xinXi.zhongShiCiShu
     this.xianShi = xinXi.xianShi
+    this.xianShiDaiMa = xinXi.xianShiDaiMa
     this.cuo_wu_ma = xinXi.code
     if (yuanShiCuoWu !== undefined) this.cause = yuanShiCuoWu
   }
@@ -266,6 +271,7 @@ export function chuangJianQianTaiCuoWu(
       jiuDaiMa: canShu.jiuDaiMa ?? null,
       zhongShiCiShu: Math.max(1, canShu.zhongShiCiShu || 1),
       xianShi: code !== QIAN_TAI_DAI_MA.QU_XIAO,
+      xianShiDaiMa: xianShiLianAiMa(code),
     },
     yuanShiCuoWu,
   )

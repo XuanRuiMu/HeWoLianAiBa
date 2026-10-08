@@ -1,0 +1,352 @@
+/**
+ * 认证卡片视觉真源：登录 / 注册 / 找回密码三页共用。
+ *
+ * 为什么独立成文件：原先这些声明写在 登录内容.vue 的 <style scoped> 里，
+ * scoped 会给选择器打上本页 hash，别的组件即使写同名类也选不中——结果就是
+ * 找回密码页拿到了「裸 HTML」外观：没有底线、没有浮标签、主按钮退回浏览器默认绿。
+ * 卡片长什么样是三页共同的设计契约，不该由某��页的 scoped 私有持有。
+ *
+ * 本文件为全局样式（非 scoped），三个页面都不再自带卡片样式。
+ */
+
+.biaodan-rongqi {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  padding: calc(var(--jiange-zhong) + var(--jiange-4)) var(--jiange-da);
+  background: var(--renzheng-mian-se);
+  border: 1px solid rgba(163, 129, 62, 0.55);
+  border-radius: var(--jiange-xiao);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+:root[data-theme='light'] .biaodan-rongqi {
+  border-color: rgba(163, 129, 62, 0.4);
+  box-shadow:
+    0 18px 48px rgba(120, 96, 48, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.biaodan-rongqi::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 80% at 50% 0%,
+    rgba(201, 169, 106, 0.16) 0%,
+    transparent 60%
+  );
+}
+
+.juanzhou-gan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(201, 169, 106, 0.6) 20%,
+    rgba(201, 169, 106, 0.6) 80%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.juanzhou-gan-shang {
+  top: 0;
+}
+
+.juanzhou-gan-xia {
+  bottom: 0;
+}
+
+.biaodan-neirong-qu {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--jiange-xiao);
+}
+
+.biaodan-tou {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--jiange-6);
+  margin-bottom: var(--jiange-2);
+}
+
+.app-tubiao {
+  font-size: 34px;
+  line-height: 1;
+  animation: tubiao-fudong 3.6s ease-in-out infinite;
+}
+
+@keyframes tubiao-fudong {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-5px) scale(1.05);
+  }
+}
+
+.biaodan-biaoti {
+  margin: 0;
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', SimSun, serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-indent: 0.16em;
+  color: #f5ead2;
+}
+
+:root[data-theme='light'] .biaodan-biaoti {
+  color: #4a3f28;
+}
+
+.biaodan-fu-biaoti {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #d5b878;
+  opacity: 0.85;
+}
+
+:root[data-theme='light'] .biaodan-fu-biaoti {
+  color: #8a6a2f;
+}
+
+/* 字段：底线由包裹层绘制（见 FP-A1），输入框自身不画线 */
+.shuru-zu {
+  position: relative;
+  padding-top: var(--biaoqian-qin-ru);
+}
+
+.shuru-zu > .fenlie-shuru,
+.shuru-zu > .mima-zu > .fenlie-shuru,
+.shuru-zu > .yanzhengma-zu > .yanzhengma-shuru-qu > .fenlie-shuru {
+  width: 100%;
+}
+
+.shuru-zu .fenlie-shuru {
+  background-color: transparent;
+  background-image: linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se));
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  background-size: 100% 1px;
+  border: none;
+  border-radius: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: 16px;
+  padding: var(--jiange-6) 0;
+  outline: none;
+  transition: background-size 1s var(--quxian-sao-chu), color 0.2s ease;
+}
+
+.shuru-zu {
+  background-image: var(--shuru-sao-jianbian), linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se));
+  background-repeat: no-repeat;
+  background-position: left bottom, left bottom;
+  background-size: 0% 1px, 100% 1px;
+  transition: background-size 1s var(--quxian-sao-chu);
+}
+
+.shuru-zu:focus-within {
+  background-size: 100% 1px, 100% 1px;
+}
+
+.shuru-zu:has(> .chushengriqi) {
+  background-image: none;
+  background-size: auto;
+}
+
+.fudong-biaoqian {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 13px;
+  color: var(--shuru-xian-changtai-se);
+  pointer-events: none;
+  transform-origin: left top;
+  transition: transform 0.28s var(--quxian-biao-zhun), color 0.2s ease;
+}
+
+.shuru-zu.shangFu .fudong-biaoqian,
+.shuru-zu:focus-within .fudong-biaoqian {
+  transform: translateY(calc(-1 * var(--biaoqian-shangFu)));
+  color: #d5b878;
+}
+
+:root[data-theme='light'] .shuru-zu.shangFu .fudong-biaoqian,
+:root[data-theme='light'] .shuru-zu:focus-within .fudong-biaoqian {
+  color: #8a6a2f;
+}
+
+.mima-zu,
+.yanzhengma-zu {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--jiange-xiao);
+}
+
+.yanzhengma-shuru-qu {
+  flex: 1;
+  min-width: 0;
+}
+
+.mima-qiehuan {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--shuru-xian-changtai-se);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.mima-tubiao {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.fasong-anniu {
+  flex: none;
+  padding: var(--jiange-6) var(--jiange-xiao);
+  background: none;
+  border: 1px solid rgba(201, 169, 106, 0.5);
+  border-radius: var(--jiange-4);
+  color: #d5b878;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.fasong-anniu:not(:disabled):hover {
+  border-color: rgba(201, 169, 106, 0.9);
+  color: #e3c98e;
+}
+
+.fasong-anniu:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+:root[data-theme='light'] .fasong-anniu {
+  border-color: rgba(138, 106, 47, 0.5);
+  color: #8a6a2f;
+}
+
+:root[data-theme='light'] .fasong-anniu:not(:disabled):hover {
+  border-color: rgba(138, 106, 47, 0.9);
+  color: #6b5223;
+}
+
+.anniu-zhuyao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--jiange-xiao) + var(--jiange-6)) calc(var(--jiange-da) + var(--jiange-4));
+  background: linear-gradient(135deg, #e3c98e, #c9a96a 60%, #b3924f);
+  color: #17130a;
+  border: 1px solid #8a6a2f;
+  border-radius: 4px;
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', SimSun, serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.4em;
+  text-indent: 0.4em;
+  transition: all 0.35s var(--quxian-biao-zhun);
+  width: 100%;
+  box-shadow:
+    0 6px 18px rgba(201, 169, 106, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  margin-top: var(--jiange-xiao);
+  position: relative;
+  overflow: hidden;
+}
+
+.anniu-zhuyao::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.anniu-zhuyao:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.anniu-zhuyao:hover:not(:disabled) {
+  filter: brightness(1.06);
+  box-shadow:
+    0 8px 24px rgba(201, 169, 106, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.anniu-zhuyao:active:not(:disabled) {
+  transition:
+    transform 80ms ease-out,
+    box-shadow 80ms ease-out,
+    filter 80ms ease-out;
+  filter: brightness(0.94);
+  transform: translateY(1px);
+  box-shadow:
+    0 3px 10px rgba(201, 169, 106, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.anniu-zhuyao:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.qian-tai-cuo-wu {
+  padding: var(--jiange-10) calc(var(--jiange-xiao) + var(--jiange-6));
+  background: rgba(217, 138, 128, 0.1);
+  border-left: 2px solid rgba(217, 138, 128, 0.7);
+  border-radius: var(--jiange-4);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-tubiao {
+    animation: none;
+  }
+
+  .shuru-zu,
+  .shuru-zu .fenlie-shuru,
+  .fudong-biaoqian {
+    transition: none;
+  }
+
+  .anniu-zhuyao,
+  .anniu-zhuyao::before,
+  .fasong-anniu,
+  .mima-qiehuan {
+    transition: none;
+  }
+}

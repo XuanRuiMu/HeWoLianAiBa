@@ -2,7 +2,7 @@
 import { Router } from 'express'
 import type { Request, Response } from 'express'
 import { huoQuFanYi } from '../config/translations'
-import { dengLuXianLiu, dengLuIPLianLiu, faSongMaXianLiu, zhuCeXianLiu, duanXinRiPeiEZhuJi, jianChaShouJiXianLiu } from '../middleware/限流'
+import { dengLuXianLiu, dengLuIPLianLiu, faSongMaXianLiu, zhuCeXianLiu, duanXinRiPeiEZhuJi, jianChaShouJiXianLiu, chongZhiMiMaXianLiu } from '../middleware/限流'
 import {
   手机号验证中间件,
   用户名验证中间件 } from '../middleware/输入验证'
@@ -12,12 +12,13 @@ import {
   anIdChaYongHu,
   zhuCe,
   dengLu,
+  chongZhiMiMa,
   gengGaiMiMa,
   gengGaiYongHuMing,
   setMoRenXingBie,
   yanZhengShouJiHaoGeShi,
   shuaXinLingPai } from '../services/认证'
-import { faSongYanZhengMa } from '../services/短信'
+import { faSongYanZhengMa, zhunHuaYanZhengMaYongTu } from '../services/短信'
 import { zhuXiaoYongHu } from '../services/账号注销'
 import { huoQuZhenShiIP } from '../utils/真实IP'
 import type { RenZhengQingQiu } from '../middleware/认证'
@@ -64,11 +65,26 @@ function huoQuYongHuMing(body: Record<string, unknown>): string | undefined {
   )
 }
 
-function huoQuMiMa(body: Record<string, unknown>): string | undefined {
+/** camelCase 与 snake_case 双读：前后端各写一种，两边都不能只认自己那套。
+ *  queRenQianZhu='queRen' 时取 queRenXinMiMa / que_ren_xin_mi_ma。 */
+function huoQuMiMa(
+  body: Record<string, unknown>,
+  queRenQianZhu?: string,
+): string | undefined {
+  const buFen = queRenQianZhu ? `${queRenQianZhu}XinMiMa` : 'MiMa'
+  const xianShou =
+    (typeof body[buFen] === 'string' ? (body[buFen] as string) : undefined) ??
+    (typeof body[huoQuSnake(buFen)] === 'string' ? (body[huoQuSnake(buFen)] as string) : undefined)
+  if (xianShou !== undefined) return xianShou
   return (
     (typeof body.miMa === 'string' ? body.miMa : undefined) ||
     (typeof body.mi_ma === 'string' ? body.mi_ma : undefined)
   )
+}
+
+/** camelCase → snake_case（MiMa → mi_ma，queRenXinMiMa → que_ren_xin_mi_ma） */
+function huoQuSnake(camel: string): string {
+  return camel.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase()
 }
 
 function huoQuTongYiXieYi(body: Record<string, unknown>): boolean | undefined {
@@ -100,7 +116,8 @@ luYou.post('/发送码', faSongMaXianLiu, duanXinRiPeiEZhuJi, 手机号验证中
   if (!shouJiHao || !yanZhengShouJiHaoGeShi(shouJiHao)) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
   }
-  const jieGuo = await faSongYanZhengMa(shouJiHao)
+  const yongTu = zhunHuaYanZhengMaYongTu((qingQiu.body as Record<string, unknown>).yongTu)
+  const jieGuo = await faSongYanZhengMa(shouJiHao, yongTu)
   if (!jieGuo.cheng_gong) {
     // YH-025 结构化错误码映射：service返错误码路由只映射，禁文案子串定状态码
     return shiBaiXiangYing(xiangYing, 503, jieGuo.ti_shi || huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai'), jieXiFaSongDaiMa(jieGuo.cuo_wu_ma))
@@ -225,6 +242,34 @@ luYou.post('/吊销刷新令牌', async (qingQiu: RenZhengQingQiu, xiangYing: Re
     await cheXiaoYongHuSuoYouRefreshToken(yongHu.yongHuId)
   }
   return chengGongXiangYing(xiangYing, null, huoQuFanYi('tongYong', 'caoZuoChengGong'))
+})
+
+// 「忘记密码」重置：免登录入口（公开白名单），安全靠「重置用途验证码 + 账号维度限流」，
+// 对外一律不区分「号码未注册」与「验证码错」，避免变成账号探测接口。
+luYou.post('/重置密码', chongZhiMiMaXianLiu, duanXinRiPeiEZhuJi, 手机号验证中间件, async (qingQiu: Request, xiangYing: Response) => {
+  const body = qingQiu.body as Record<string, unknown>
+  const shouJiHao = huoQuShouJiHao(body)
+  const yanZhengMa = huoQuYanZhengMa(body)
+  const xinMiMa = huoQuMiMa(body)
+  const queRenXinMiMa = huoQuMiMa(body, 'queRen')
+
+  if (!shouJiHao || !yanZhengMa || !xinMiMa || !queRenXinMiMa) {
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.REQUEST_MISSING_PARAMETER)
+  }
+
+  const jieGuo = await chongZhiMiMa({
+    shou_ji_hao: shouJiHao,
+    yan_zheng_ma: yanZhengMa,
+    xin_mi_ma: xinMiMa,
+    que_ren_xin_mi_ma: queRenXinMiMa,
+    ip: huoQuZhenShiIP(qingQiu),
+  })
+
+  if (!jieGuo.cheng_gong) {
+    return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'chongZhiMiMaTongYiTiShi'), CUO_WU_DAI_MA.AUTH_PASSWORD_RESET_FAILED)
+  }
+
+  return chengGongXiangYing(xiangYing, null, jieGuo.ti_shi)
 })
 
 luYou.post('/更改密码', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {

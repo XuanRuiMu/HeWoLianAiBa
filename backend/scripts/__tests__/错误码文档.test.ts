@@ -149,9 +149,9 @@ describe('错误码大全与注册表同源', () => {
     expect(dengLiCuoWuXianRongLieBiao.length).toBe(查码行(已提交文档).length - duiQu旧码映射().length)
   })
 
-  it('全部 57 个注册码都在文档里，旧码只出现在兼容映射表', () => {
+  it('全部 58 个注册码都在文档里，旧码只出现在兼容映射表', () => {
     const 注册码 = dengLiCuoWuXianRongLieBiao as readonly CuoWuDaiMa[]
-    expect(注册码.length).toBe(57)
+    expect(注册码.length).toBe(58)
     const 旧码 = new Set(duiQu旧码映射().map((项) => 项.旧码))
     for (const 码 of 注册码) {
       expect(旧码.has(码), `${码} 不得同时是旧码`).toBe(false)

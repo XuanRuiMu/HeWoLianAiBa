@@ -7,6 +7,7 @@ import {
   QIAN_TAI_DAI_MA,
   WEN_BEN_LEI_XING_QUAN_LU,
   huoQuLianAiMa,
+  xianShiLianAiMa,
   type QianTaiDaiMa,
   type QianTaiWenBenLeiXing,
 } from '@/config/前台错误码'
@@ -133,8 +134,14 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
         expect(wrapper.get('.qian-tai-cuo-wu-wen-an').text()).toBe(
           huoQuFanYi('lianAi', lianAiMa as never),
         )
-        expect(wrapper.get('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe(lianAiMa)
-        expect(wrapper.find('.qian-tai-cuo-wu-fu-zhi').exists()).toBe(true)
+        if (xianShiLianAiMa(daiMa)) {
+          expect(wrapper.get('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe(lianAiMa)
+          expect(wrapper.find('.qian-tai-cuo-wu-fu-zhi').exists()).toBe(true)
+        } else {
+          // 免码报错（用户输入类）：只摆人话，不上恋爱码也不给复制按钮
+          expect(wrapper.find('.qian-tai-cuo-wu-lian-ai-ma').exists(), `${daiMa} 免码却仍渲染恋爱码`).toBe(false)
+          expect(wrapper.find('.qian-tai-cuo-wu-fu-zhi').exists(), `${daiMa} 免码却仍渲染复制按钮`).toBe(false)
+        }
         const 主区 = wrapper.get('.qian-tai-cuo-wu').text()
         expect(主区, `${daiMa} 的主区泄露了技术码`).not.toContain(daiMa)
         expect(主区, `${daiMa} 的主区泄露了错误码形态`).not.toMatch(/[A-Z][A-Z0-9]{3,}(_[A-Z0-9]+)+/)

@@ -97,6 +97,10 @@ const 已知消费者: { 令牌: string; 理由: string; 位置: string[] }[] = 
 
 /** 幻影登记：被 var( 引用但全库无 `--x:` 定义（运行时注入或测试文案伪影） */
 const 幻影登记: { 令牌: string; 理由: string }[] = [
+  {
+    令牌: '--biaoqian-shangFu',
+    理由: '认证卡片.css 浮标签上浮位移，仅靠 translateY 表达，variables.css 确无定义（非本单清理对象，保留原样）',
+  },
   { 令牌: '--dingge-gao', 理由: '登录内容.vue 快照层 setProperty 按实测矩形运行时注入的四枚几何之一' },
   { 令牌: '--dingge-kuan', 理由: '同 --dingge-gao，运行时注入' },
   { 令牌: '--dingge-shang', 理由: '同 --dingge-gao，运行时注入' },

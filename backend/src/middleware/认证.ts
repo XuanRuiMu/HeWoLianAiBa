@@ -19,6 +19,8 @@ export const gongKaiLuJingBaiMingDan: GongKaiLuJing[] = [
   { fang_fa: 'POST', lu_jing: '/api/认证/发送码' },
   { fang_fa: 'POST', lu_jing: '/api/认证/注册' },
   { fang_fa: 'POST', lu_jing: '/api/认证/登录' },
+  // 「忘记密码」本身就是「没登录态」的入口，必须公开；其安全性由重置用途验证码 + 限流承担
+  { fang_fa: 'POST', lu_jing: '/api/认证/重置密码' },
   { fang_fa: 'GET', lu_jing: '/api/健康' },
   // 媒体下载走签名 URL 自鉴权（img/audio 标签无法携带 Authorization 头）
   { fang_fa: 'GET', lu_jing: '/api/媒体/' },

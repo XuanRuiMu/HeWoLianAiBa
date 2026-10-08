@@ -157,6 +157,18 @@ export const jianChaShouJiXianLiu = tongYongXianLiu(
 )
 
 // YH-011 注册独立严限流（IP 维度）+发码配额联动在路由层按手机号二次核验
+/** 「忘记密码」重置限流：比登录更严（5 次/10 分钟，账号+IP 双维）。
+ *  这一条线一旦可被反复尝试，验证码就退化成可暴力枚举的 6 位数字。 */
+export const chongZhiMiMaXianLiu = tongYongXianLiu(
+  10 * 60 * 1000,
+  peiZhi.xianLiu.chongZhiMiMa.zuiDa,
+  'chongZhiMiMaPinFan',
+  (req) => {
+    const zhangHao = huoQuShouJiHao(req)
+    return zhangHao ? `zhanghao:${zhangHao}` : huoQuQingQiuIP(req)
+  },
+)
+
 export const zhuCeXianLiu = tongYongXianLiu(
   peiZhi.xianLiu.zhuCe.chuangKou,
   peiZhi.xianLiu.zhuCe.zuiDa,

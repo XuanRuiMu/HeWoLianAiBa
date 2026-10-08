@@ -58,6 +58,7 @@ vi.mock('../../utils/jwt', () => ({
 vi.mock('../短信', () => ({
   yanZhengMaShiFouZhengQue: 假.yanZhengMa,
   shanChuYanZhengMa: 假.shanChuYanZhengMa,
+  YAN_ZHENG_MA_YONG_TU: { zhuCe: 'zhuCe', chongZhiMiMa: 'chongZhiMiMa' },
 }))
 
 vi.mock('../审计日志', () => ({ jiLuShenJiRiZhi: 假.audit }))
@@ -87,6 +88,7 @@ import {
   yingSheYongHu,
   zhuCe,
   zhuXiaoLingPai,
+  chongZhiMiMa,
 } from '../认证'
 
 const 用户ID = '11111111-1111-4111-8111-111111111111'
@@ -374,5 +376,104 @@ describe('资料修改、刷新令牌与注销', () => {
     await zhuXiaoLingPai(用户ID)
     expect(假.cheXiaoYongHuSuoYouRefreshToken).toHaveBeenCalledWith(用户ID)
     expect(假.xieRuCheXiaoShiJianCuo).toHaveBeenCalledWith(用户ID)
+  })
+
+  it('改密码后必须同时作废 refresh token 与 access token（只写时间戳会让 refresh 仍可换新令牌）', async () => {
+    假.用户存在 = true
+    假.yanZhengMa.mockResolvedValue(true)
+    假.bcryptCompare.mockResolvedValue(true)
+    假.bcryptHash.mockResolvedValue('hashed:new')
+
+    const 结果 = await gengGaiMiMa({
+      yong_hu_id: 用户ID,
+      jiu_mi_ma: 'Old12345',
+      xin_mi_ma: 'New12345',
+      que_ren_xin_mi_ma: 'New12345',
+      yan_zheng_ma: '123456',
+      ip: '1.1.1.1',
+    })
+    expect(结果.cheng_gong).toBe(true)
+    expect(假.cheXiaoYongHuSuoYouRefreshToken, '改密后 refresh token 未作废，攻击者仍可换新令牌').toHaveBeenCalledWith(用户ID)
+    expect(假.xieRuCheXiaoShiJianCuo).toHaveBeenCalledWith(用户ID)
+  })
+
+  describe('忘记密码：凭重置用途验证码重置', () => {
+    const 合格 = {
+      shou_ji_hao: '13800138000',
+      yan_zheng_ma: '123456',
+      xin_mi_ma: 'XinMiMa123',
+      que_ren_xin_mi_ma: 'XinMiMa123',
+      ip: '1.1.1.1',
+    }
+
+    beforeEach(() => {
+      // 不覆盖 dbQuery 实现：账号是否存在由外层的 假.手机号存在 控制，
+      // 这里再 mock 一次会把「按号码查用户」也一起打掉，导致永远走未注册分支。
+      vi.clearAllMocks()
+      假.yanZhengMa.mockResolvedValue(true)
+      假.bcryptHash.mockResolvedValue('hashed:new')
+      假.手机号存在 = true
+    })
+
+    it('成功时写新哈希、踢掉全部会话、清重置用途的码并留审计', async () => {
+      const 结果 = await chongZhiMiMa(合格)
+      expect(结果.cheng_gong).toBe(true)
+      expect(假.dbQuery).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE "用户" SET "密码哈希"'),
+        ['hashed:new', '13800138000'],
+      )
+      expect(假.cheXiaoYongHuSuoYouRefreshToken).toHaveBeenCalled()
+      expect(假.xieRuCheXiaoShiJianCuo).toHaveBeenCalled()
+      expect(假.shanChuYanZhengMa).toHaveBeenCalledWith('13800138000', 'chongZhiMiMa')
+      expect(假.audit).toHaveBeenCalled()
+    })
+
+    it('验证码一律按重置用途校验，绝不回落成注册用途', async () => {
+      await chongZhiMiMa(合格)
+      expect(假.yanZhengMa).toHaveBeenCalledWith('13800138000', '123456', 'chongZhiMiMa')
+    })
+
+    it('号码未注册与验证码错误对外是同一条提示，不泄露账号是否存在', async () => {
+      假.手机号存在 = false
+      假.yanZhengMa.mockResolvedValue(false)
+      const 未注册 = await chongZhiMiMa(合格)
+      expect(未注册.cheng_gong).toBe(false)
+
+      假.手机号存在 = true
+      const 码错 = await chongZhiMiMa(合格)
+      expect(码错.cheng_gong).toBe(false)
+      expect(码错.ti_shi).toBe(未注册.ti_shi)
+      // 「该手机号还没有注册过」是并列的两种可能之一，措辞上刻意用「或」把两者混在一起，
+      // 对外无法判定到底是哪一种，所以这里只锁「不得断言账号不存在」这类更硬的语义。
+      expect(码错.ti_shi).not.toMatch(/该手机号未注册|此号码未注册|账号不存在/)
+    })
+
+    it('号码未注册时也照样走验证码校验，避免用耗时差探测账号是否存在', async () => {
+      假.手机号存在 = false
+      await chongZhiMiMa(合格)
+      expect(假.yanZhengMa).toHaveBeenCalled()
+    })
+
+    it('密码不合规如实回（只反映本次输入，不泄露账号情况），且不碰数据库', async () => {
+      const 太短 = await chongZhiMiMa({ ...合格, xin_mi_ma: 'a1', que_ren_xin_mi_ma: 'a1' })
+      expect(太短.cheng_gong).toBe(false)
+      const 不一致 = await chongZhiMiMa({ ...合格, que_ren_xinMiMa: 'Other12345', que_ren_xin_mi_ma: 'Other12345' } as never)
+      expect(不一致.cheng_gong).toBe(false)
+      expect(假.dbQuery).not.toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE "用户"'),
+        expect.anything(),
+      )
+    })
+
+    it('失败路径绝不触发会话作废与写库', async () => {
+      假.yanZhengMa.mockResolvedValue(false)
+      await chongZhiMiMa(合格)
+      expect(假.cheXiaoYongHuSuoYouRefreshToken).not.toHaveBeenCalled()
+      expect(假.xieRuCheXiaoShiJianCuo).not.toHaveBeenCalled()
+      expect(假.dbQuery).not.toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE "用户"'),
+        expect.anything(),
+      )
+    })
   })
 })

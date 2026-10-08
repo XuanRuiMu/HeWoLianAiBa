@@ -17,7 +17,7 @@ vi.mock('../../utils/邮件告警', () => 假.mail)
 vi.mock('../../utils/debug日志', () => ({ debug日志: 假.debug }))
 
 import { peiZhi } from '../../config'
-import { faSongYanZhengMa, shanChuYanZhengMa, shengChengSuiJiYanZhengMa, duanXinRiPeiEYuLan, duanXinRiPeiEYunXu, yanZhengMaShiFouZhengQue } from '../短信'
+import { faSongYanZhengMa, shanChuYanZhengMa, shengChengSuiJiYanZhengMa, duanXinRiPeiEYuLan, duanXinRiPeiEYunXu, yanZhengMaShiFouZhengQue, zhunHuaYanZhengMaYongTu, YAN_ZHENG_MA_YONG_TU } from '../短信'
 
 const 原值 = {
   kaiFaMoShi: peiZhi.kaiFaMoShi,
@@ -53,7 +53,7 @@ describe('短信业务分支', () => {
     假.redis.get.mockResolvedValueOnce('1')
     await expect(faSongYanZhengMa('13800138000')).resolves.toMatchObject({ cheng_gong: false, cuo_wu_ma: 'XIAN_LIU' })
     await expect(faSongYanZhengMa('13800138000')).resolves.toEqual({ cheng_gong: true })
-    expect(假.redis.setex).toHaveBeenCalledWith('yan_zheng_ma:13800138000', 300, '123456')
+    expect(假.redis.setex).toHaveBeenCalledWith('yan_zheng_ma:zhuCe:13800138000', 300, '123456')
     peiZhi.kaiFaMoShi = false
     Object.assign(peiZhi.duanXin, { fangWenMiYaoId: '', fangWenMiYaoMiMa: '', qianMing: '', moBanDaiMa: '' })
     await expect(faSongYanZhengMa('13800138000')).resolves.toMatchObject({ cheng_gong: false, cuo_wu_ma: 'NEI_BU_CUO_WU' })
@@ -72,15 +72,56 @@ describe('短信业务分支', () => {
     await expect(yanZhengMaShiFouZhengQue('13800138000', '123456')).resolves.toBe(true)
     假.redis.get.mockImplementation(async (key: string) => key.includes('cuowu') ? '0' : '123456')
     await expect(yanZhengMaShiFouZhengQue('13800138000', '123456')).resolves.toBe(true)
-    expect(假.redis.del).toHaveBeenCalledWith('yan_zheng_ma_cuowu:13800138000')
+    expect(假.redis.del).toHaveBeenCalledWith('yan_zheng_ma_cuowu:zhuCe:13800138000')
     假.redis.get.mockImplementation(async (key: string) => key.includes('cuowu') ? '0' : '123456')
     await expect(yanZhengMaShiFouZhengQue('13800138000', '654321')).resolves.toBe(false)
-    expect(假.redis.incr).toHaveBeenCalledWith('yan_zheng_ma_cuowu:13800138000')
+    expect(假.redis.incr).toHaveBeenCalledWith('yan_zheng_ma_cuowu:zhuCe:13800138000')
     假.redis.incr.mockResolvedValue(5)
     await expect(yanZhengMaShiFouZhengQue('13800138000', '654321')).resolves.toBe(false)
-    expect(假.redis.del).toHaveBeenCalledWith('yan_zheng_ma:13800138000')
+    expect(假.redis.del).toHaveBeenCalledWith('yan_zheng_ma:zhuCe:13800138000')
+    // 不传用途时清全部用途：注销场景只清一半的话，留下的重置码还能继续用
     await shanChuYanZhengMa('13800138000')
-    expect(假.redis.del).toHaveBeenCalledWith('yan_zheng_ma:13800138000')
+    expect(假.redis.del).toHaveBeenCalledWith('yan_zheng_ma:zhuCe:13800138000')
+    expect(假.redis.del).toHaveBeenCalledWith('yan_zheng_ma:chongZhiMiMa:13800138000')
+  })
+
+  it('验证码按用途隔离：注册码不能用于重置密码，反之亦然', async () => {
+    假.redis.get.mockImplementation(async (key: string) => {
+      if (key.includes('cuowu')) return '0'
+      return key.includes('yan_zheng_ma:zhuCe:') ? '123456' : null
+    })
+    await expect(yanZhengMaShiFouZhengQue('13800138000', '123456')).resolves.toBe(true)
+    await expect(
+      yanZhengMaShiFouZhengQue('13800138000', '123456', YAN_ZHENG_MA_YONG_TU.chongZhiMiMa),
+    ).resolves.toBe(false)
+
+    假.redis.get.mockImplementation(async (key: string) => {
+      if (key.includes('cuowu')) return '0'
+      return key.includes('yan_zheng_ma:chongZhiMiMa:') ? '654321' : null
+    })
+    await expect(
+      yanZhengMaShiFouZhengQue('13800138000', '654321', YAN_ZHENG_MA_YONG_TU.chongZhiMiMa),
+    ).resolves.toBe(true)
+    await expect(yanZhengMaShiFouZhengQue('13800138000', '654321')).resolves.toBe(false)
+  })
+
+  it('发码按用途分键存放，且开发模式固定码不跨用途放行', async () => {
+    await faSongYanZhengMa('13800138000', YAN_ZHENG_MA_YONG_TU.chongZhiMiMa)
+    expect(假.redis.setex).toHaveBeenCalledWith('yan_zheng_ma:chongZhiMiMa:13800138000', 300, '123456')
+
+    假.redis.get.mockImplementation(async (key: string) => (key.includes('cuowu') ? '0' : null))
+    await expect(yanZhengMaShiFouZhengQue('13800138000', '123456')).resolves.toBe(true)
+    await expect(
+      yanZhengMaShiFouZhengQue('13800138000', '123456', YAN_ZHENG_MA_YONG_TU.chongZhiMiMa),
+    ).resolves.toBe(false)
+  })
+
+  it('用途白名单归一：伪造用途一律按注册处理，不得凭空造出新用途', () => {
+    expect(zhunHuaYanZhengMaYongTu('chongZhiMiMa')).toBe('chongZhiMiMa')
+    expect(zhunHuaYanZhengMaYongTu('zhuCe')).toBe('zhuCe')
+    expect(zhunHuaYanZhengMaYongTu(undefined)).toBe('zhuCe')
+    expect(zhunHuaYanZhengMaYongTu(' 伪造 ')).toBe('zhuCe')
+    expect(zhunHuaYanZhengMaYongTu(123)).toBe('zhuCe')
   })
 
   it('日配额覆盖手机号/IP上限、只读预检和 Redis 故障降级', async () => {

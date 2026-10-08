@@ -28,8 +28,33 @@ export interface 资料请求 {
   yunXuZhaNanZhaNv: boolean
 }
 
-export async function faSongMa(shouJiHao: string, peiZhi?: { signal?: AbortSignal }): Promise<void> {
-  await http.post('/认证/发送码', { shouJiHao }, peiZhi)
+/** 验证码用途。与后端 YAN_ZHENG_MA_YONG_TU 一一对应：
+ *  注册码不能拿去重置密码，反之亦然。缺省按注册处理（与后端归一逻辑一致）。 */
+export const YAN_ZHENG_MA_YONG_TU = {
+  zhuCe: 'zhuCe',
+  chongZhiMiMa: 'chongZhiMiMa',
+} as const
+
+export type YanZhengMaYongTu = (typeof YAN_ZHENG_MA_YONG_TU)[keyof typeof YAN_ZHENG_MA_YONG_TU]
+
+export async function faSongMa(
+  shouJiHao: string,
+  yongTu: YanZhengMaYongTu = YAN_ZHENG_MA_YONG_TU.zhuCe,
+  peiZhi?: { signal?: AbortSignal },
+): Promise<void> {
+  await http.post('/认证/发送码', { shouJiHao, yongTu }, peiZhi)
+}
+
+/** 「忘记密码」：凭手机号 + 重置用途验证码改密。免登录入口，
+ *  成功即代表该账号所有已登录设备被踢下线。 */
+export async function chongZhiMiMa(
+  shouJiHao: string,
+  yanZhengMa: string,
+  miMa: string,
+  queRenMiMa: string,
+  peiZhi?: { signal?: AbortSignal },
+): Promise<void> {
+  await http.post('/认证/重置密码', { shouJiHao, yanZhengMa, miMa, queRenXinMiMa: queRenMiMa }, peiZhi)
 }
 
 export async function jianChaShouJiHao(
