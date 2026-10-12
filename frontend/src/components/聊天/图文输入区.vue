@@ -3,7 +3,7 @@
     <div
       ref="bianJiQiRef"
       class="shuru-kuang"
-      :class="{ 'zhan-kai': zhanKai, 'wei-kong': buYouNeiRong }"
+      :class="{ 'zhan-kai': zhanKai, 'wei-kong': buYouNeiRong && !zuHeiZhong, 'zu-he-zhong': zuHeiZhong }"
       contenteditable="true"
       data-chat-input="true"
       spellcheck="false"
@@ -638,6 +638,14 @@ defineExpose({
   color: transparent;
   -webkit-text-fill-color: transparent;
   caret-color: var(--wenben-zhuse);
+}
+/* 拼音组合期恢复实色并摘占位：空态透明色会把组合期拼音候选画透明 */
+.shuru-kuang.zu-he-zhong {
+  color: var(--wenben-zhuse);
+  -webkit-text-fill-color: var(--wenben-zhuse);
+}
+.shuru-kuang.zu-he-zhong::before {
+  content: none;
 }
 .shuru-kuang::selection,
 .shuru-kuang *::selection {

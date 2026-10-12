@@ -244,13 +244,13 @@ onBeforeUnmount(() => {
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  padding: var(--jiange-6) calc(var(--jiange-12) * 2 + var(--jiange-2)) var(--jiange-6) var(--jiange-10);
-  border: 1px solid var(--biankuang-yanse);
-  border-radius: 8px;
-  background: var(--beijing-kaopian);
+  padding: var(--jiange-6) calc(var(--jiange-12) * 2 + var(--jiange-4)) var(--jiange-6) var(--jiange-12);
+  border: 1.5px solid var(--biankuang-yanse);
+  border-radius: 10px;
+  background: var(--beijing-ciuse);
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23999' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
   background-repeat: no-repeat;
-  background-position: right 9px center;
+  background-position: right 12px center;
   color: var(--wenben-zhuse);
   font: inherit;
   font-size: 12px;
@@ -259,16 +259,19 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition:
     border-color var(--quxian-biao-zhun),
-    background-color var(--quxian-biao-zhun);
+    background-color var(--quxian-biao-zhun),
+    box-shadow var(--quxian-biao-zhun);
 }
 
 .fanyi-yuyan-xiala:hover:not(:disabled) {
-  border-color: var(--wenben-tishi);
+  border-color: var(--zhuse);
+  box-shadow: 0 2px 10px rgba(7, 193, 96, 0.22);
 }
 
 .fanyi-yuyan-xiala:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .fanyi-yuyan-xiala:focus-visible,

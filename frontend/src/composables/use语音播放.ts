@@ -4,6 +4,7 @@ import type { 消息 } from '@/types'
 
 interface Use语音播放依赖 {
   huoQuDiZhi: (xiaoXi: 消息) => string | undefined
+  huoQuYinLiang?: () => number | null
 }
 
 /**
@@ -120,6 +121,15 @@ export function use语音播放(yiLai: Use语音播放依赖) {
     }
     tingZhiYinPinBoFang()
     const yinPin = new Audio(diZhi)
+    try {
+      const yinLiang = yiLai.huoQuYinLiang?.()
+      if (typeof yinLiang === 'number' && Number.isFinite(yinLiang)) {
+        if (yinLiang <= 0) yinPin.muted = true
+        else yinPin.volume = Math.max(0, Math.min(1, yinLiang))
+      }
+    } catch {
+      /* 忽略 */
+    }
     yinPin.addEventListener('loadedmetadata', () => {
       try {
         if (Number.isFinite(yinPin.duration) && yinPin.duration > 0) {

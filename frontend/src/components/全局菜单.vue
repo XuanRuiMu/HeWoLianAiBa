@@ -125,6 +125,12 @@
           <span class="qita-wenzi">{{ huoQuFanYi('caidan', 'gengDuo') }}</span>
           <Transition name="xiala">
             <div v-if="qitaCaiDanZhanKai" class="xiala-caidan qita-xiala" @click.stop>
+              <button class="xiala-xiangmu" @click="jinRuShengYin">
+                {{ huoQuFanYi('sheZhi', 'shengYinBiaoTi') }}
+              </button>
+              <button class="xiala-xiangmu" @click="jinRuQiPao">
+                {{ huoQuFanYi('sheZhi', 'qiPaoBiaoTi') }}
+              </button>
               <button class="xiala-xiangmu" @click="daKaiXieYi('yongHuXieYi')">
                 {{ huoQuFanYi('caidan', 'yongHuXieYi') }}
               </button>
@@ -225,6 +231,8 @@ const fanYiBiaoTiDuiZhao: Record<
   | 'junShiJiLuXiangQing'
   | 'haoYouLieBiao'
   | 'haoYouLiaoTian'
+  | 'shengYin'
+  | 'qiPaoSheZhi'
   | 'zhangHaoAnQuan'
   | 'yongHuXieYi'
   | 'yinSiZhengCe'
@@ -238,6 +246,8 @@ const fanYiBiaoTiDuiZhao: Record<
   junShiJiLuXiangQing: 'junShiJiLuXiangQing',
   haoYouLieBiao: 'haoYouLieBiao',
   haoYouLiaoTian: 'haoYouLiaoTian',
+  shengYin: 'shengYin',
+  qiPaoSheZhi: 'qiPaoSheZhi',
   zhangHaoAnQuan: 'zhangHaoAnQuan',
 }
 
@@ -353,6 +363,18 @@ function jinRuHaoYou() {
   qitaCaiDanZhanKai.value = false
   yongHuCaiDanZhanKai.value = false
   router.push('/hao-you')
+}
+
+function jinRuShengYin() {
+  qitaCaiDanZhanKai.value = false
+  yongHuCaiDanZhanKai.value = false
+  router.push('/sheng-yin')
+}
+
+function jinRuQiPao() {
+  qitaCaiDanZhanKai.value = false
+  yongHuCaiDanZhanKai.value = false
+  router.push('/qi-pao-she-zhi')
 }
 
 function zhiXingTuiChu() {

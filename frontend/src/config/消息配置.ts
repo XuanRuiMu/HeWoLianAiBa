@@ -33,6 +33,40 @@ export const DUO_MEI_TI_PEI_ZHI = {
   wenJianMingZuiDaXianShiZiFu: 24,
 } as const
 
+export const SHENG_YIN_DANG_XUAN_XIANG = [
+  'genSuiXiTong',
+  'jingYin',
+  'xiao',
+  'zhong',
+  'da',
+  'zuiDa',
+] as const
+
+export type ShengYinDang = (typeof SHENG_YIN_DANG_XUAN_XIANG)[number]
+
+export const SHENG_YIN_MO_REN: ShengYinDang = 'genSuiXiTong'
+
+export const SHENG_YIN_YIN_LIANG: Record<ShengYinDang, number | null> = {
+  genSuiXiTong: null,
+  jingYin: 0,
+  xiao: 0.25,
+  zhong: 0.5,
+  da: 0.75,
+  zuiDa: 1,
+}
+
+export function duQuShengYinDangYinLiang(dang: unknown): number | null {
+  return SHENG_YIN_YIN_LIANG[guiYiHuaShengYin(dang)] ?? null
+}
+
+export function shiHeFaShengYin(zhi: unknown): zhi is ShengYinDang {
+  return typeof zhi === 'string' && (SHENG_YIN_DANG_XUAN_XIANG as readonly string[]).includes(zhi)
+}
+
+export function guiYiHuaShengYin(zhi: unknown): ShengYinDang {
+  return shiHeFaShengYin(zhi) ? zhi : SHENG_YIN_MO_REN
+}
+
 /* 录音浮层的电平计条数：改前实测 12 条，本单只解除它与语音气泡那条已作废常量
    （原 use语音播放.ts::YU_YIN_BO_XING_TIAO_SHU）的错误共享，不改录音侧观感；
    语音气泡本身不再有任何「条数」常量（未播放态是 3 格喇叭，见 §1-C）。

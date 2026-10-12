@@ -100,6 +100,12 @@ const luYou: RouteRecordRaw[] = [
         component: () => import('@/views/气泡设置.vue'),
         meta: { xuYaoDengLu: true },
       },
+      {
+        path: 'sheng-yin',
+        name: 'shengYin',
+        component: () => import('@/views/声音设置.vue'),
+        meta: { xuYaoDengLu: true },
+      },
     ],
   },
   {

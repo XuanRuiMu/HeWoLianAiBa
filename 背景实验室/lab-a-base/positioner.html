@@ -637,6 +637,10 @@ locked: false,
       group.scale.set(1, 1, 1);
       group.updateMatrix();
       group.updateMatrixWorld(true);
+      // 吴昊阳视差补偿：他被沿视线抬升后离相机更近，同样的相机平移他在屏幕上位移更大
+      // （实测 1.396 倍于脚下草 → 露馅）。高度场各点抬升量不同 ⇒ 必须逐顶点补偿
+      // （刚体平移实测残留 5px 滑动）。
+      if (wuMesh) wuApplyParallax(group.position);
       cam.position.copy(S.pos);
       cam.quaternion.copy(quatOf(S.yaw, S.pitch));
       cam.scale.set(1, 1, 1);
@@ -1250,9 +1254,21 @@ window.__camReady = true;
     // 0.027m 约合 7.8px，轮廓能实心还原，DILATE=1 也才真的是「稍大一点」（2.7cm）。
     var WU_CELL = 0.027;
     var DILATE = 1;              // footprint 外扩格数（WU_CELL 单位，1 格 = 2.7cm）
-    // 草叶高度换算出的屏幕覆盖高度（像素）：轮廓下缘往下这一条带子里留草，
-    // 草叶就会压住他轮廓的下半部分。草高实测 0.14m，此距离上约合 30~40px。
-    var BLADE_REACH = 34;
+    // 清空模式（用户 2026-10-12：「吴昊阳底下的土地，能不能改成和草地一样的黄色」）：
+    //  'erase'  = 涂 zonesTexture（g=0 ⇒ 不长草）。**副作用**：地形按 g 选色，g=0 会渲染成
+    //             泥土/崖壁色 ⇒ 他底下一圈明显发棕，与草地的黄不搭（旧行为，留作回溯）。
+    //  'hide'   = **不动分区图**，只把他圈内的草/花**实例矩阵清零** ⇒ 地形仍是草地色。
+    //             ⚠️ 用户 12:33 否决：这等于把荒地「填」掉了，他要的是**荒地仍是荒地、只是范围小**。
+    //             故改回 'erase'；此模式仅保留开关，不再默认启用。
+    //  'keepall'= 完全不清草，前后遮挡交给深度测试。
+    var WU_GRASS_MODE = 'erase';
+    // ---------- 他周围一圈「清空区」（用户 2026-10-12 要求）----------
+    // 「请你将吴昊阳周围的草删掉……这样子就能避免草和吴昊阳接触，从而导致看出来破绽」
+    // 单位：米。以他身体占的格子为起点向四周外扩这么多，圈内的草一律清掉。
+    // 0.30 时圈太大、看着很突兀（用户反馈「删的太多了」）⇒ 收到 0.10：
+    // 草叶离地 0.09~0.17m，被拨弯后水平最多再伸约 0.1m，0.10 足以让草碰不到他。
+    // 0 = 旧行为（只擦身下；轮廓外缘留草、下缘还留一条草带，让草从他身侧长出来）。
+    var WU_CLEAR_MARGIN = 0.10;
     function wuCellKey(x, z) { return Math.floor(x / WU_CELL) + ',' + Math.floor(z / WU_CELL); }
     function cellKey(x, z) { return Math.floor(x / CELL) + ',' + Math.floor(z / CELL); }
     var wuRay = null;
@@ -1445,13 +1461,75 @@ window.__camReady = true;
           g2.drawImage(im, 0, 0);
           wuAlpha = g2.getImageData(0, 0, cv.width, cv.height).data;
           wuAlphaW = cv.width; wuAlphaH = cv.height;
-          cb(true);
+          cb(true);          cb(true);
         } catch (e) { cb(false); }
       };
       im.onerror = function () { cb(false); };
       im.src = '/wu-2d.png';
     }
     var wuAlphaW = 0, wuAlphaH = 0;
+    // ---------- 地形位移采样（让他的深度对齐「看得见的地面」）----------
+    // 引擎的地形在**顶点着色器**里被整体抬高：
+    //   elevatedPos = vWorldPos + vec3(0, elevation, 0)
+    //   elevation = getElevation(vWorldPos.xz, uDisplacementMap) = texture(map, xz*0.3).r * 0.15
+    // 而射线打在**未位移**的网格上 ⇒ 只用地形命中点的深度，他会落在可见地面之后、被地面盖住
+    // （实测：偏置 0.06 时他几乎全被身下那块地盖掉，0.20 才露出来 —— 正是漏了这 0~0.15m 位移）。
+    // 所以把这份位移补回来：uv = xz*0.3、wrap = Repeat、r/255*0.15，与着色器逐字对齐。
+    var wuDisp = null;
+    function wuBuildDisp() {
+      if (wuDisp) return true;
+      var tex = null;
+      scene.traverse(function (o) {
+        if (tex) return;
+        var m = o.material;
+        if (!m || !m.uniforms) return;
+        var u = m.uniforms.uDisplacementMap;
+        if (u && u.value) tex = u.value;
+      });
+      var im = tex && tex.image;
+      if (!im || !im.width) return false;
+      try {
+        var cv = document.createElement('canvas');
+        cv.width = im.width; cv.height = im.height;
+        var c2 = cv.getContext('2d');
+        c2.drawImage(im, 0, 0);
+        wuDisp = { W: im.width, H: im.height, d: c2.getImageData(0, 0, im.width, im.height).data };
+      } catch (eD) { window.__wuDispErr = String(eD && eD.message || eD); return false; }
+      return true;
+    }
+    // 与着色器同口径取 elevation（m）。贴图未就绪时返回 0（宁可偏低，也不会把他抬到空中）。
+    function wuElev(x, z) {
+      if (!wuDisp) return 0;
+      var u = x * 0.3, v = z * 0.3;
+      u = u - Math.floor(u); v = v - Math.floor(v);
+      var ix = Math.min(wuDisp.W - 1, Math.max(0, Math.floor(u * wuDisp.W)));
+      var iz = Math.min(wuDisp.H - 1, Math.max(0, Math.floor(v * wuDisp.H)));
+      return wuDisp.d[(iz * wuDisp.W + ix) * 4] / 255 * 0.15;
+    }
+
+    // ---------- 他的深度：贴在地形上的一层（深度与画面解耦）----------
+    // 用户需求（2026-10-11）：
+    //   ① 草被拨到他身上要**停住**（像现实），不要被推得弹开；
+    //   ② 草不能永远在他图层之下 —— 该在他前面的草必须画在他身上。
+    //
+    // 做法：顶点仍严格落在**原视线上**（投影逐像素不变 ⇒ 颜色/位置/比例一丁点不改），
+    // 只改「沿视线走多远」：每个顶点的视深度 = **它所在像素处的地面视深度** − WU_GROUND_OFFSET。
+    // ⇒ 他是**贴在地形上的一层**（地形的一部分），而不是一张悬在相机前面的卡片。
+    //
+    // 为什么这样能同时满足两条（判据可推，不是调参）：
+    //   草叶顶点 V 投到像素 p 时 V 必在射线 p 上，于是
+    //     d(草) = d_g(p) − h_g/sinP（h_g = 草叶离地高度；实测上界 0.171m、常态约 0.09m）
+    //     d(他) = d_g(p) − WU_GROUND_OFFSET
+    //   ⇒ **h_g > WU_GROUND_OFFSET·sinP 的草画在他身上；更矮的草被他挡住**，与水平位置无关。
+    //   于是「部分草在他身前、部分在他身后」是天然结果。
+    //   （旧版把深度设成「比最近地面还近的常数平面」⇒ 他压住一切草 ⇒ 草永远在他图层之下。）
+    //
+    // WU_GROUND_OFFSET 是唯一旋钮：**调大 ⇒ 更多草被他挡住（他更「压住」草）；调小 ⇒ 更多草画在他身上**。
+    // 不能为 0：他的网格比地面粗，必须留余量避免与地面 z-fight。
+    var WU_GROUND_OFFSET = 0.04;
+    // 材质侧：让他成为**真正的深度实体** —— 写深度 + alpha 裁剪。
+    // 不写深度时，排在他之后绘制的透明物件（粒子/蝴蝶/远处植被）会无视他直接覆盖上来。
+    var WU_ALPHA_TEST = 0.02;
     // 把世界点投到屏幕。调用方已把组位移归零，footprint 与鼠标位置无关。
     function wuProject(x, y, z, vw, vh) {
       var v = new V3(x, y, z);
@@ -1499,8 +1577,9 @@ window.__camReady = true;
         if (h00 == null || h10 == null || h01 == null || h11 == null) return null;
         return (h00 * (1 - tx) + h10 * tx) * (1 - tz) + (h01 * (1 - tx) + h11 * tx) * tz;
       }
-      // 3) 逐格把地面点投回屏幕，落在图内且该像素不透明 → 他压住这格
-      //    先只收「命中身体」的格子，深度区间也只由这些格子统计。
+      // 3) 逐格把地面点投回屏幕：落在他的轮廓内（alpha 不透明）⇒ 这格属于他身体。
+      //    用**原始 alpha**，不再内缩 —— 旧版故意内缩 4px 并在下缘留一条草带，
+      //    让草从他身侧/脚踝长出来；用户要求把这些草删掉。
       var hits = [];
       var cx0 = Math.floor(minX / WU_CELL), cx1 = Math.floor(maxX / WU_CELL);
       var cz0 = Math.floor(minZ / WU_CELL), cz1 = Math.floor(maxZ / WU_CELL);
@@ -1514,57 +1593,75 @@ window.__camReady = true;
         var iu = Math.floor((s2.x - wuRect.l) / wuRect.w * wuAlphaW);
         var iv = Math.floor((s2.y - wuRect.t) / wuRect.h * wuAlphaH);
         if (iu < 0 || iu >= wuAlphaW || iv < 0 || iv >= wuAlphaH) continue;
-        if (wuAlpha[(iv * wuAlphaW + iu) * 4 + 3] > 32) {
-          hits.push({ k: cx + ',' + cz, d: cam.position.distanceTo(new V3c(x, y, z)), sx: s2.x, sy: s2.y });
-        }
+        if (wuAlpha[(iv * wuAlphaW + iu) * 4 + 3] > 32) hits.push(cx + ',' + cz);
       }
       if (!hits.length) return null;
-      // 4) 留草规则：屏幕空间的「轮廓下缘带」
-      //    草叶竖直、根部不横向偏移，叶尖朝屏幕上方延伸 —— 所以要盖住他轮廓上的
-      //    某一点，草根必须投影在**该点下方**（更近处）。这一点早前搞反了：
-      //    我按深度保留「身前/身后」两条带，结果身前草只够到更靠上的身体，
-      //    对**最远的脚（袜子）完全无效**，脚周被清成光土、看起来像悬空。
-      //    正确做法：对每一列先求出轮廓的最下沿 bottomY(sx)，凡投影落在
-      //    [bottomY, bottomY + BLADE_REACH] 内的格子一律**留草**（不清），
-      //    这些草叶就会自然压住他轮廓下半部分 —— 脚、臂、侧身同时受益。
-      var colBot = {};
-      for (var q = 0; q < hits.length; q++) {
-        var bx = hits[q].sx;
-        if (colBot[bx] === undefined || hits[q].sy > colBot[bx]) colBot[bx] = hits[q].sy;
-      }
-      // 轮廓在屏幕上并非处处都有格子命中（细网格+稀疏列），按列做一次向右扩展，
-      // 让相邻列也能借到邻居的下沿，否则列与列之间会露出无草的缝。
-      function bottomAt(sx) {
-        var d = BLADE_REACH;
-        for (var off = 0; off <= 12; off++) {
-          for (var sgn = -1; sgn <= 1; sgn += 2) {
-            var v = colBot[sx + sgn * off];
-            if (v !== undefined) return v;
-          }
-          if (off === 0) break;
-        }
-        return undefined;
-      }
-      var cells = new Set();
-      for (var q2 = 0; q2 < hits.length; q2++) {
-        var bot = bottomAt(hits[q2].sx);
-        if (bot !== undefined && hits[q2].sy > bot && hits[q2].sy <= bot + d) continue;   // 留草，不清
-        cells.add(hits[q2].k);
-      }
-      // ⚠️ 外扩必须用切比雪夫邻域、且格数很少：细网格下轮廓已经实心，
-      // DILATE=1（2.7cm）刚好是「比轮廓稍大一点」。格数一多就会把细部糊成圆块。
+      // 4) 「他身体占的格子」向四周外扩 WU_CLEAR_MARGIN 米（欧氏圆，不是方角）——
+      //    这一圈里的草一律清掉 ⇒ 没有任何草能贴到他身上。
+      var rad = Math.max(DILATE, Math.round(WU_CLEAR_MARGIN / WU_CELL));
       var grown = new Set();
-      cells.forEach(function (k) {
-        var pr = k.split(','), gx = +pr[0], gz = +pr[1];
-        for (var dx = -DILATE; dx <= DILATE; dx++) for (var dz = -DILATE; dz <= DILATE; dz++) {
-          grown.add((gx + dx) + ',' + (gz + dz));
+      for (var q = 0; q < hits.length; q++) {
+        var pr = hits[q].split(','), hx = +pr[0], hz = +pr[1];
+        for (var dx = -rad; dx <= rad; dx++) {
+          var rem = rad * rad - dx * dx;
+          if (rem < 0) continue;
+          var dzMax = Math.floor(Math.sqrt(rem));
+          for (var dz = -dzMax; dz <= dzMax; dz++) grown.add((hx + dx) + ',' + (hz + dz));
         }
-      });
+      }
       return grown;
     }
-    // 同 paintZones 的三角形光栅化，但写 0 而不是 255：绿=0 不长草，r/b=0 不要花。
+    // 同 paintZones 的三角形光栅化    // 同 paintZones 的三角形光栅化，但写 0 而不是 255：绿=0 不长草，r/b=0 不要花。
     // keyOf 决定用哪套网格判定：吴昊阳身下传 wuCellKey（细网格，轮廓才准），
     // 不传则用粗网格 cellKey（删石补草那条老路径不受影响）。
+    // ---------- 按世界格子把草/花「实例」矩阵清零（不清分区图 ⇒ 地面保持草地色）----------
+    // 草块 chunk 是 InstancedMesh，实例矩阵里的平移就是**世界坐标**（实测：草块父节点 matrixWorld
+    // 为单位阵）。把整条 16 个 float 清 0 后该实例退化成一个零体积点，等同消失。
+    // 花（flowers1/flowers2）同理，只是容器形态不同，这里做防御式遍历。
+    var wuHiddenCells = null;
+    function wuHideInstances(cells) {
+      if (!cells || !cells.size) return 0;
+      var isl = E.world.islands.mainIsland;
+      if (!isl) return 0;
+      var ZERO = new (cam.matrix.constructor)();
+      for (var z0 = 0; z0 < 16; z0++) ZERO.elements[z0] = 0;
+      var hidden = 0;
+
+      function sweep(o) {
+        if (!o || !o.instanceMatrix || !o.count) return;
+        var a = o.instanceMatrix.array, changed = false;
+        for (var i = 0; i < o.count; i++) {
+          var x = a[i * 16 + 12], z = a[i * 16 + 14];
+          // 已清零的实例：matrix 全 0 ⇒ 平移也是 0，跳过（否则会反复标脏、每帧重传）
+          if (a[i * 16] === 0 && x === 0 && z === 0) continue;
+          if (!cells.has(wuCellKey(x, z))) continue;
+          for (var k = 0; k < 16; k++) a[i * 16 + k] = 0;
+          changed = true; hidden++;
+        }
+        if (changed) o.instanceMatrix.needsUpdate = true;
+      }
+
+      try {
+        var grass = isl.grass;
+        if (grass && grass.chunks) {
+          var it = grass.chunks.entries();
+          for (var ci = 0; ci < it.length; ci++) sweep(it[ci][1]);
+        }
+      } catch (eG) { window.__wuHideErr = 'grass: ' + String(eG && eG.message || eG); }
+
+      try {
+        ['flowers1', 'flowers2'].forEach(function (fk) {
+          var f = isl[fk];
+          if (!f) return;
+          if (f.isInstancedMesh) { sweep(f); return; }
+          if (f.mesh && f.mesh.isInstancedMesh) { sweep(f.mesh); return; }
+          if (f.children) f.children.forEach(function (c) { if (c.isInstancedMesh) sweep(c); });
+        });
+      } catch (eF) { window.__wuHideErr = (window.__wuHideErr || '') + ' flowers: ' + String(eF && eF.message || eF); }
+
+      return hidden;
+    }
+
     function eraseZones(cells, keyOf) {
       var kf = keyOf || cellKey;
       var kc = kf === cellKey ? CELL : WU_CELL;
@@ -1645,11 +1742,24 @@ window.__camReady = true;
       }
       gp.set(sx, sy, sz); group.updateMatrixWorld(true); cam.updateMatrixWorld(true);
       if (!cells || !cells.size) { bareDone = true; window.__bareDiag = { cells: 0, painted: 0, tris: 0 }; return; }
-      try { res = eraseZones(cells, wuCellKey); } catch (e2) {
+      try {
+        if (WU_GRASS_MODE === 'keepall') {
+          res = { painted: 0, tris: 0 };   // 完全不清草：让深度测试自己分层
+        } else if (WU_GRASS_MODE === 'hide') {
+          // 不清分区图 ⇒ 地形保持草地色；只把圈内的草/花实例清掉
+          wuHiddenCells = cells;
+          res = { painted: wuHideInstances(cells), tris: 0 };
+        } else {
+          res = eraseZones(cells, wuCellKey);
+        }
+      } catch (e2) {
         window.__bareErr = String(e2 && e2.stack || e2); bareDone = true; return;
       }
-      window.__bareDiag = { cells: cells.size, painted: res && res.painted, tris: res && res.tris };
-      if (!res || !res.painted) { bareDone = true; return; }
+      window.__bareDiag = { cells: cells.size, painted: res && res.painted, tris: res && res.tris, clearMargin: WU_CLEAR_MARGIN, clearRadiusCells: Math.max(DILATE, Math.round(WU_CLEAR_MARGIN / WU_CELL)), mode: WU_GRASS_MODE, hideErr: window.__wuHideErr || null };
+      // 'hide' 模式：一次也没清到说明草实例还没建好（或这轮格子没命中）⇒ **继续重试**，
+      // 不能像 erase 那样「painted=0 就永久放弃」，否则草加载晚了就再也不会被清掉。
+      if (!res || (!res.painted && WU_GRASS_MODE !== 'hide')) { bareDone = true; return; }
+      if (WU_GRASS_MODE === 'hide') { bareDone = true; return; }   // 分区图没动，无需 rebuild
       grass.zonesTexture.needsUpdate = true;
       try {
         grass.rebuild();
@@ -1681,6 +1791,11 @@ window.__camReady = true;
         if (!window.__bareErr) window.__bareErr = String(e4 && e4.stack || e4);
         bareDone = true;
       }
+      // 'hide' 模式：万一引擎 rebuild 把圈内的草又生成出来，这里持续补清
+      // （已清零的实例会被跳过，无变化时不会重传实例矩阵，开销可忽略）。
+      try {
+        if (WU_GRASS_MODE === 'hide' && wuHiddenCells) wuHideInstances(wuHiddenCells);
+      } catch (e5) { window.__wuHideErr = String(e5 && e5.message || e5); }
       if (rockFilled && bareDone) clearInterval(grassTimer);
     }, 2000);
     // ---------- 吴昊阳：贴地的细分网格 + 预扭曲贴图（身前草遮他 / 身后草被他遮） ----------
@@ -1697,7 +1812,39 @@ window.__camReady = true;
     // 于是外观与原来的屏幕贴图完全一致，而几何上他真的躺在地上，
     // 深度缓冲就能正确判定：比他近的草遮住他，比他远的草被他遮住。
     var WU_SEG = 28;                    // 网格细分：每格约 10px，透视误差可忽略
+    // 顶点沿视线回退 WU_LIFT 放置：仍在原视线上 ⇒ 投影与原屏幕矩形逐像素重合（外观零变化），
+    // 而深度整体抬高 WU_LIFT ⇒ 深度缓冲按「草叶可达高度 0.171m」这一上界判定前后。
+    // 抬升量的取值依据见上方「抬升量」段（统一、略大于草叶上界、且不可取大）。
+    // 视差补偿系数（布局时实测算出）：顶点沿视线回退后离相机更近，同样的相机平移
+    // 他在屏幕上位移更大（实测 1.396 倍于脚下草 → 露馅）。让他按 (1 - 抬升后深度/原深度)
+    // 的比例**跟随相机平移**，屏幕上与脚下草的位移即逐像素一致 —— 与早期 DOM 图层
+    // 方案同口径（中心对齐的刚体补偿，四角残差当年用户已验收）。
+    var WU_PARALLAX_K = 0;
     var wuMesh = null;
+    // 引擎后处理链是 pmndrs ToneMappingEffect(ACES_FILMIC)：
+    //   color *= exposure/0.6 → ACESInputMat → RRTAndODTFit → ACESOutputMat → saturate → 输出编码 sRGB
+    // 原图是 sRGB 字节，直接当贴图会被 ACES 提亮（实测 +70~+80，颜色被改）。
+    // 这里在着色器里对采样结果施加**逆 ACES**，使最终落回画布的颜色与原图逐字节一致
+    // （逆函数输出可超过 1.0，故必须走着色器而不是 8 位贴图预补偿，否则高光会被削顶）。
+    var WU_ACES_SRC = [
+      'vec3 wuAcesInv(vec3 y){',
+      '  vec3 t = mat3(',
+      '     0.6430382486, 0.0592686904, 0.0059619013,',
+      '     0.3111867518, 0.9314364869, 0.0639290157,',
+      '     0.0457754574, 0.0092949157, 0.9301183842) * y;',
+      '  vec3 qa = vec3(1.0) - 0.983729 * t;',
+      '  vec3 qb = 0.0245786 - 0.4329510 * t;',
+      '  vec3 qc = -0.000090537 - 0.238081 * t;',
+      '  vec3 qd = max(qb * qb - 4.0 * qa * qc, 0.0);',
+      '  vec3 xq = (-qb + sqrt(qd)) / (2.0 * qa);',
+      '  vec3 xl = -qc / qb;',
+      '  vec3 x = mix(xl, xq, step(1.0e-6, abs(qa)));',
+      '  return 0.6 * (mat3(',
+      '     1.7647409720, -0.1470278520, -0.0363368301,',
+      '    -0.6757776782, 1.1602515117, -0.1624364369,',
+      '    -0.0889632938, -0.0132236597, 1.1987732670) * x);',
+      '}'
+    ].join('\n');
     function buildWuGroundMesh(cb) {
       var T = window.__THREE;
       if (!T || !T.Mesh || !T.PlaneGeometry || !T.CanvasTexture || !T.MeshBasicMaterial) {
@@ -1710,11 +1857,32 @@ window.__camReady = true;
           cv.width = im.naturalWidth; cv.height = im.naturalHeight;
           cv.getContext('2d').drawImage(im, 0, 0);
           var tex = new T.CanvasTexture(cv);
+          tex.colorSpace = 'srgb';       // 硬件 sRGB 解码：贴图像素按线性参与后续链路
           tex.needsUpdate = true;
           var mat = new T.MeshBasicMaterial({
-            map: tex, transparent: true, depthTest: true, depthWrite: false,
+            map: tex, transparent: true, depthTest: true, depthWrite: true,
+            alphaTest: WU_ALPHA_TEST,
             side: 2, toneMapped: false, fog: false
           });
+          mat.onBeforeCompile = function (sh) {
+            var fs = sh.fragmentShader
+              .replace('void main() {', WU_ACES_SRC + '\nvoid main() {')
+              .replace('#include <map_fragment>',
+                '#ifdef USE_MAP\n' +
+                '\tvec4 sampledDiffuseColor = texture2D( map, vMapUv );\n' +
+                '\t#ifdef DECODE_VIDEO_TEXTURE\n' +
+                '\t\tsampledDiffuseColor = sRGBTransferEOTF( sampledDiffuseColor );\n' +
+                '\t#endif\n' +
+                '\tsampledDiffuseColor.rgb = wuAcesInv( sampledDiffuseColor.rgb );\n' +
+                '\tdiffuseColor *= sampledDiffuseColor;\n' +
+                '#endif');
+            // replace 失配会静默返回原串（不抛异常），而着色器是懒编译、失败不进 try/catch，
+            // __wuMeshState 仍会回报 ready:true —— 必须留痕，否则颜色问题会静默复发。
+            if (fs.indexOf('wuAcesInv') < 0 || fs.indexOf('#include <map_fragment>') >= 0) {
+              window.__wuMeshErr = '逆 ACES 着色器注入失败：目标分块未命中（引擎 three 版本可能变更）';
+            }
+            sh.fragmentShader = fs;
+          };
           // PlaneGeometry(1,1,N,N) 自带细分与索引，只需把顶点摆到地面
           wuMesh = new T.Mesh(new T.PlaneGeometry(1, 1, WU_SEG, WU_SEG), mat);
           wuMesh.frustumCulled = false;
@@ -1733,15 +1901,27 @@ window.__camReady = true;
     // 于是这片网格就是「那个屏幕矩形」在地面上的精确预像 —— 不需要任何拟合/缩放迭代
     // （试过拟合：地面两轴都带 X/Z 分量，互相耦合，独立缩放会震荡；统一缩放则有一维对不上）。
     // UV 用 PlaneGeometry 的默认值即可：顶点 ix→u、iy→1-v，正好对应屏幕的左右与上下。
+    //
+    // 顶点放在「沿视线回退 back = 抬升量/sinP」处：仍在同一条视线上，投影与原屏幕点逐像素重合，
+    // 但高出地面「抬升量」—— 抬升量决定草叶(9cm)与他谁在前：抬升量 < 0.09m 处草压住他，
+    // > 0.09m 处他压住草。所以抬升量 = 该处身体离地高度时，前后遮挡关系就是物理正确的。
+    //
+    // 射线采样（贵，每点一次 raycaster）与抬升量写入（便宜）分离：
+    // 相机冻结时射线不变，调抬升场只需重跑 wuApplyLift，不必重新打射线。
+    var wuRayData = null, wuRayN = -1;
     function layoutWuGroundMesh(rect, imgW, imgH) {
       if (!wuMesh) return false;
       var vw = eng.canvas.clientWidth || eng.sizes.width;
       var vh = eng.canvas.clientHeight || eng.sizes.height;
       var N = WU_SEG;
-      var g = wuMesh.geometry;
-      var pos = g.attributes.position.array;
       var miss = 0, total = (N + 1) * (N + 1);
+      // 视线起点必须取相机的**世界**位置：groundRc.setFromCamera 用的是 matrixWorld
+      // （含 CameraGroup 视差位移），若用 cam.position（组内局部值），
+      // 回退方向会与真实视线差一个视差偏置，顶点投影随之偏出屏幕矩形。
+      var camW = cam.getWorldPosition(new V3());
       cam.updateMatrixWorld(true);
+      if (!wuRayData || wuRayN !== N) { wuRayData = new Float32Array(total * 8); wuRayN = N; }
+      var rd = wuRayData;
       for (var b = 0; b <= N; b++) {
         var sy = rect.t + rect.h * (b / N);
         var ny = -(sy / vh) * 2 + 1;
@@ -1749,23 +1929,149 @@ window.__camReady = true;
           var sx = rect.l + rect.w * (a / N);
           var h = groundHit((sx / vw) * 2 - 1, ny);
           var q = b * (N + 1) + a;
-          if (!h) { miss++; pos[q * 3] = 0; pos[q * 3 + 1] = -999; pos[q * 3 + 2] = 0; continue; }
-          pos[q * 3] = h.point.x;
-          pos[q * 3 + 1] = h.point.y + 0.012;      // 抬 1.2cm，避免与地面 z-fight
-          pos[q * 3 + 2] = h.point.z;
+          if (!h) { miss++; rd[q * 8 + 3] = 0; rd[q * 8 + 7] = -1; continue; }
+          // 视线单位方向（相机→命中点）与俯角正弦
+          var dx = h.point.x - camW.x, dy = h.point.y - camW.y, dz = h.point.z - camW.z;
+          var len = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
+          rd[q * 8] = h.point.x; rd[q * 8 + 1] = h.point.y; rd[q * 8 + 2] = h.point.z;
+          rd[q * 8 + 3] = dx / len; rd[q * 8 + 4] = dy / len; rd[q * 8 + 5] = dz / len;
+          rd[q * 8 + 6] = h.distance; rd[q * 8 + 7] = -dy / len;   // sinP（>0）
         }
       }
+      // 打空比例过高说明地形还没就绪：仍照旧写一遍顶点（缺失点标 −999 即不可见），
+      // 保持与旧实现一致的「失败态」—— 绝不留着上一次的旧位置冒充有效布局。
+      wuApplyLift();
       if (miss > total * 0.02) return false;       // 地形尚未就绪，交给宿主重试
-      g.attributes.position.needsUpdate = true;
-      g.computeBoundingSphere();
-      g.computeBoundingBox();
       // 挂进世界（与草同一空间）：视差让他和草一起动，深度缓冲判定前后
       var isl = E.world.islands.mainIsland;
       (isl.group || scene).add(wuMesh);
       return true;
     }
+    // 由射线数据写入顶点位置：每个顶点的视深度 = 该像素处地面视深度 − WU_GROUND_OFFSET。
+    // 顶点严格落在原视线上 ⇒ 投影逐像素不变（外观零变化），只改「沿视线走多远」。
+    // 同时记下「基准位置」与**逐顶点视差补偿系数**（贴地后系数极小，但口径保持一致）。
+    var wuBase = null, wuComp = null, wuCompGp = [NaN, NaN, NaN], wuDepthRange = null;
+    function wuApplyLift() {
+      // 射线采样与当前细分密度必须同代：换过密度后必须先重打射线（__wuLayoutMesh），
+      // 否则顶点数与 wuRayData 不匹配，写进去的就是错位数据。
+      if (!wuMesh || !wuRayData || wuRayN !== WU_SEG) return false;
+      var N = wuRayN, g = wuMesh.geometry;
+      var pos = g.attributes.position.array;
+      var mvi = cam.matrixWorldInverse;
+      var viewZ = function (x, y, z) { return -(mvi.elements[2] * x + mvi.elements[6] * y + mvi.elements[10] * z + mvi.elements[14]); };
+      var rd = wuRayData;
+      var total = (N + 1) * (N + 1);
+      if (!wuBase || wuBase.length !== total * 3) wuBase = new Float32Array(total * 3);
+      if (!wuComp || wuComp.length !== total) wuComp = new Float32Array(total);
+      // 相机世界位置与前向（f̂）：顶点沿各自视线放置。
+      var camW = cam.getWorldPosition(new V3());
+      cam.updateMatrixWorld(true);
+      var e = cam.matrixWorld.elements;
+      var fx = -e[8], fy = -e[9], fz = -e[10];
+      var fl = Math.sqrt(fx * fx + fy * fy + fz * fz) || 1;
+      fx /= fl; fy /= fl; fz /= fl;
+      wuBuildDisp();   // 位移贴图就绪后才能对齐可见地面（失败留痕，不静默）
+      var kSum = 0, kNum = 0, zMin = Infinity, zMax = -Infinity;
+      for (var b = 0; b <= N; b++) {
+        for (var a = 0; a <= N; a++) {
+          var q = b * (N + 1) + a;
+          if (rd[q * 8 + 7] < 0) { pos[q * 3] = 0; pos[q * 3 + 1] = -999; pos[q * 3 + 2] = 0; wuComp[q] = 0; continue; }
+          var ux = rd[q * 8 + 3], uy = rd[q * 8 + 4], uz = rd[q * 8 + 5];
+          var dist = rd[q * 8 + 6], sinP = rd[q * 8 + 7];
+          var gx = rd[q * 8], gz = rd[q * 8 + 2];
+          var cosT = ux * fx + uy * fy + uz * fz;
+          if (cosT < 0.2) cosT = 0.2;
+          var zGrd = dist * cosT;                       // **未位移**地面的视深度
+          // 可见地面 = 未位移地面 + elevation（地形顶点着色器抬高的那 0~0.15m）
+          var zVis = zGrd - wuElev(gx, gz) / Math.max(0.02, sinP);
+          var zTarget = zVis - WU_GROUND_OFFSET;        // 贴着**看得见的地面**、但略靠相机一点（避开 z-fight）
+          var t = zTarget / cosT;
+          pos[q * 3] = camW.x + ux * t;
+          pos[q * 3 + 1] = camW.y + uy * t;
+          pos[q * 3 + 2] = camW.z + uz * t;
+          wuBase[q * 3] = pos[q * 3]; wuBase[q * 3 + 1] = pos[q * 3 + 1]; wuBase[q * 3 + 2] = pos[q * 3 + 2];
+          var zLift = viewZ(pos[q * 3], pos[q * 3 + 1], pos[q * 3 + 2]);
+          var c = (zGrd > 1e-6 && zLift < zGrd) ? 1 - zLift / zGrd : 0;
+          wuComp[q] = c;
+          if (c > 0) { kSum += c; kNum++; }
+          if (zTarget < zMin) zMin = zTarget;
+          if (zTarget > zMax) zMax = zTarget;
+        }
+      }
+      WU_PARALLAX_K = kNum ? kSum / kNum : 0;
+      wuDepthRange = isFinite(zMin) ? { min: +zMin.toFixed(3), max: +zMax.toFixed(3) } : null;
+      wuCompGp[0] = wuCompGp[1] = wuCompGp[2] = NaN;   // 强制下一次重算
+      wuApplyParallax(null, true);
+      g.attributes.position.needsUpdate = true;
+      g.computeBoundingSphere();
+      g.computeBoundingBox();
+      window.__wuLiftErr = null;   // 本轮成功：清掉上一次的失败留痕
+      return true;
+    }
+    // 逐顶点视差补偿：pos_i = 基准_i + comp_i × 相机组位移。gp 不变则直接返回（不动几何）。
+    function wuApplyParallax(gp, force) {
+      // 同 wuApplyLift：射线采样必须与当前细分密度同代，否则写进去的就是错位数据。
+      if (!wuMesh || !wuBase || !wuComp || wuRayN !== WU_SEG) return false;
+      var gx = gp ? gp.x : 0, gy = gp ? gp.y : 0, gz = gp ? gp.z : 0;
+      if (!force && gx === wuCompGp[0] && gy === wuCompGp[1] && gz === wuCompGp[2]) return false;
+      wuCompGp[0] = gx; wuCompGp[1] = gy; wuCompGp[2] = gz;
+      var n = wuComp.length, pos = wuMesh.geometry.attributes.position.array;
+      for (var q = 0; q < n; q++) {
+        if (wuBase[q * 3 + 1] < -500) { pos[q * 3] = 0; pos[q * 3 + 1] = -999; pos[q * 3 + 2] = 0; continue; }
+        var c = wuComp[q];
+        pos[q * 3] = wuBase[q * 3] + c * gx;
+        pos[q * 3 + 1] = wuBase[q * 3 + 1] + c * gy;
+        pos[q * 3 + 2] = wuBase[q * 3 + 2] + c * gz;
+      }
+      wuMesh.geometry.attributes.position.needsUpdate = true;
+      wuMesh.position.set(0, 0, 0);   // 补偿已烘进顶点，不能再叠加刚体平移
+      return true;
+    }
+    // 相机签名 + 停稳后重排
+    function wuCamSig() {
+      var p = cam.position, q = cam.quaternion;
+      return p.x.toFixed(4) + ',' + p.y.toFixed(4) + ',' + p.z.toFixed(4) + ',' +
+             q.x.toFixed(4) + ',' + q.y.toFixed(4) + ',' + q.z.toFixed(4) + ',' + q.w.toFixed(4);
+    }
+    var wuCamSigLast = null, wuCamMovedAt = 0;
+    var wuCamWatch = setInterval(function () {
+      try {
+        var sig = wuCamSig();
+        if (sig !== wuCamSigLast) { wuCamSigLast = sig; wuCamMovedAt = Date.now(); return; }
+        if (wuCamMovedAt && Date.now() - wuCamMovedAt > WU_CAM_DEBOUNCE) {
+          wuCamMovedAt = 0;
+          // ⚠️ 曾试过「粗采样 + 解析放置」的快速路径（11×11 采样，约 0.9s）：独立终验实测其顶点
+          //    投影包围盒偏离目标矩形约 1~4px，违反「屏幕位置/比例一丁点不许改」，故已删除。
+          //    这里用**精细路径**（逐点打射线，实测逐像素精确），代价是每次重排约 6 秒。
+          //    （用户已明确相机恒定不动，本分支实际不会触发，仅作保险。）
+          if (!layoutWuGroundMesh(wuRect)) wuCamMovedAt = Date.now() - WU_CAM_DEBOUNCE + 300;  // 地形未就绪则 300ms 后重试
+        }
+      } catch (eC) { window.__wuCamErr = String(eC && eC.message || eC); }
+    }, 200);
+
     window.__wuBuildMesh = buildWuGroundMesh;
     window.__wuLayoutMesh = layoutWuGroundMesh;
+    // 只重算抬升量（复用上一次的射线采样，秒回）。调参/取证用。
+    window.__wuRelift = function () { return wuApplyLift(); };
+    // 取证/调参接口：改「他贴地的那一点点偏置」并立即重算顶点。
+    // 调大 ⇒ 更多草被他挡住（他更「压住」草）；调小 ⇒ 更多草画在他身上。
+    window.__wuSetLift = function (off) {
+      if (isFinite(off)) WU_GROUND_OFFSET = off;
+      wuApplyLift();
+      return { groundOffset: WU_GROUND_OFFSET, depthRange: wuDepthRange };
+    };
+    window.__wuLiftState = function () {
+      return {
+        mode: 'groundDecal',
+        groundOffset: WU_GROUND_OFFSET,
+        depthRange: wuDepthRange,
+        dispReady: !!wuDisp, dispErr: window.__wuDispErr || null,
+        parallaxK: +WU_PARALLAX_K.toFixed(4),
+        alphaTest: WU_ALPHA_TEST,
+        seg: WU_SEG,
+        err: window.__wuLiftErr || null
+      };
+    };
     window.__wuSetReveal = function (op) {
       if (!wuMesh) return false;
       wuMesh.material.opacity = op;
@@ -1775,12 +2081,17 @@ window.__camReady = true;
     window.__wuMeshState = function () {
       if (!wuMesh) return { ready: false, err: window.__wuMeshErr || null };
       var g = wuMesh.geometry;
+      // boxY 现场扫顶点：逐帧视差补偿直接改顶点、不重算 boundingBox，
+      // 用缓存的 boundingBox 会读到上一轮的旧值（诊断口不能说谎）。
+      var p = g.attributes.position.array, lo = Infinity, hi = -Infinity;
+      for (var i = 1; i < p.length; i += 3) { if (p[i] < lo) lo = p[i]; if (p[i] > hi) hi = p[i]; }
       return {
         ready: true, parent: wuMesh.parent && (wuMesh.parent.name || wuMesh.parent.type),
         opacity: wuMesh.material.opacity, visible: wuMesh.visible,
         depthTest: wuMesh.material.depthTest, depthWrite: wuMesh.material.depthWrite,
         verts: g.attributes.position.count, seg: WU_SEG,
-        boxY: g.boundingBox ? [+g.boundingBox.min.y.toFixed(3), +g.boundingBox.max.y.toFixed(3)] : null
+        parallaxK: +WU_PARALLAX_K.toFixed(4),
+        boxY: isFinite(lo) ? [+lo.toFixed(3), +hi.toFixed(3)] : null
       };
     };
     window.__removeState = function () {

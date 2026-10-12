@@ -20,6 +20,7 @@ interface YuYinZhuanWenZiYiLai {
   sheZhiCuoWu?: (xinXi: string) => void
   shiBieQiGongChang?: () => YuYinShiBieQi | null
   zhuanXieQingQiu?: (xiaoXi: 消息) => Promise<string | null>
+  huoQuYinLiang?: () => number | null
 }
 
 function xiaoXiJian(xiaoXi: 消息): string {
@@ -46,13 +47,21 @@ function moRenShiBieQiGongChang(): YuYinShiBieQi | null {
   return shiBieQi
 }
 
-function shiBieBoFang(diZhi: string, shiBieQi: YuYinShiBieQi): Promise<string> {
+function shiBieBoFang(diZhi: string, shiBieQi: YuYinShiBieQi, yinLiang?: number | null): Promise<string> {
   return new Promise((jieJue, juJue) => {
     if (typeof Audio === 'undefined') {
       juJue(new Error('audio'))
       return
     }
     const yinPin = new Audio(diZhi)
+    try {
+      if (typeof yinLiang === 'number' && Number.isFinite(yinLiang)) {
+        if (yinLiang <= 0) yinPin.muted = true
+        else yinPin.volume = Math.max(0, Math.min(1, yinLiang))
+      }
+    } catch {
+      /* 忽略 */
+    }
     const duanLuo: string[] = []
     let yiJieShu = false
     let yiQiDong = false
@@ -199,7 +208,7 @@ export function use语音转文字(yiLai: YuYinZhuanWenZiYiLai) {
     }
     zhuanXieZhongJiHe.value.add(jian)
     try {
-      const wenBen = await shiBieBoFang(diZhi, shiBieQi)
+      const wenBen = await shiBieBoFang(diZhi, shiBieQi, yiLai.huoQuYinLiang?.() ?? null)
       if (!wenBen) {
         return jiLuShiBai(jian)
       }

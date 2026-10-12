@@ -424,7 +424,7 @@ describe('FP-06a 同类点穷尽', () => {
       readFileSync(resolve(yuanGenLu, 'components/聊天/图文输入区.vue'), 'utf-8'),
     )
     // 组件这一侧只准碰纯文本：读 items / files / getData 之外的任何剪贴板面就是第二条通路
-    expect(组件源.match(/clipboardData[^\n]*/g)).toEqual([
+    expect(组件源.match(/clipboardData[^\n]*/g)?.map((行) => 行.trim())).toEqual([
       "clipboardData?.getData('text/plain') ?? ''",
     ])
     expect(组件源).not.toMatch(/clipboardData[^\n]*\.(items|files)/)
@@ -432,7 +432,7 @@ describe('FP-06a 同类点穷尽', () => {
       readFileSync(resolve(yuanGenLu, 'components/认证/出生日期选择器.vue'), 'utf-8'),
     )
     // 出生日期选择器是合法文本粘贴入口：只准读 'text' 数字串，绝不长出图片项第二通路
-    expect(出生源.match(/clipboardData[^\n]*/g)).toEqual([
+    expect(出生源.match(/clipboardData[^\n]*/g)?.map((行) => 行.trim())).toEqual([
       "clipboardData?.getData('text') ?? ''",
     ])
     expect(出生源).not.toMatch(/clipboardData[^\n]*\.(items|files)/)

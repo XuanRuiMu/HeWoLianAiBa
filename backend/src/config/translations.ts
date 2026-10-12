@@ -241,6 +241,10 @@ export const fanYi = {
   },
   zhanJi: {
     weiZhiWeiXin: '未知微信',
+    yuYinZhaiYao: '[语音]',
+    tuPianZhaiYao: '[图片]',
+    biaoQingBaoZhaiYao: '[表情包]',
+    wenJianZhaiYao: '[文件]',
     moRenFenLei: '默认分组',
     fenLeiMingChengBuNengWeiKong: '分组名称不能为空',
     fenLeiMingChengTaiChang: '分组名称不能超过20个字',

@@ -186,8 +186,8 @@ describe('FP-22e 声明文法：本地 outline 环只剩令牌一种写法', () 
     expect(环声明清单('账号').filter((条) => 条.属性 === 'outline')).toHaveLength(12)
     expect(环声明清单('账号').filter((条) => 条.属性 === 'outline-offset')).toHaveLength(12)
     expect(环声明清单('账号').filter((条) => 条.属性 === 'outline-width')).toHaveLength(1)
-    expect(环声明清单('战绩').filter((条) => 条.属性 === 'outline')).toHaveLength(3)
-    expect(环声明清单('战绩').filter((条) => 条.属性 === 'outline-offset')).toHaveLength(2)
+    expect(环声明清单('战绩').filter((条) => 条.属性 === 'outline')).toHaveLength(4)
+    expect(环声明清单('战绩').filter((条) => 条.属性 === 'outline-offset')).toHaveLength(3)
   })
 
   it('--yeLv / --taoTu 作为非环属性（border/background/文字色）未被误删', () => {
@@ -205,14 +205,15 @@ describe('FP-22e 逐点档别：文本控件吃窄环、非文本与高亮环吃
     { 文件: '账号', 选择器: '.she-zhi-shuru:focus', 环: '文本' },
     { 文件: '账号', 选择器: '.qianming-shuru:focus', 环: '文本' },
     { 文件: '账号', 选择器: ".kai-guan-hang input[type='checkbox']:focus-visible", 环: '标准' },
-    { 文件: '账号', 选择器: '.beijing-xiangmu.beiXuanZhong', 环: '标准' },
     { 文件: '账号', 选择器: '.anniu-fu-zhu:focus-visible', 环: '标准' },
     { 文件: '账号', 选择器: '.sou-suo-shuru:focus-visible', 环: '文本' },
     { 文件: '账号', 选择器: ".kai-guan-rongqi input[type='checkbox']:focus-visible", 环: '标准' },
+    { 文件: '账号', 选择器: '.zi-ding-yi-ming-cheng-shuru:focus-visible', 环: '文本' },
     { 文件: '账号', 选择器: '.zhang-hao-an-quan .qianming-shuru:focus-visible', 环: '文本' },
     { 文件: '账号', 选择器: '.zhang-hao-an-quan .mao-dian:target', 环: '标准' },
     { 文件: '战绩', 选择器: '.gouxuan-anniu:focus-visible', 环: '标准' },
     { 文件: '战绩', 选择器: '.caozuo-anniu.fenxiang:focus-visible', 环: '标准' },
+    { 文件: '战绩', 选择器: '.yi-dong-fenlei:focus-visible', 环: '标准' },
     { 文件: '战绩', 选择器: '.zhanji-kapian.sortable-ghost', 环: '虚线' },
   ]
 
@@ -481,10 +482,10 @@ const 状态环违规账本: { 键: string; 归属: string; 理由: string }[] =
 
 describe('FP-24a ④ 扩面：outline 声明点在全部视图被冻结成账本', () => {
   const 收口视图计数: Record<string, number> = {
-    '过往战绩.vue': 5, // 3 outline + 2 outline-offset（FP-22e 收口）
+    '过往战绩.vue': 7, // 4 outline + 3 outline-offset（FP-04 移动分类下拉焦点环新增一对）
     '登录内容.vue': 5,
     '找回密码.vue': 2,
-    '账号与安全.vue': 25, // 12 + 12 + 1 条减动效长写法（FP-22e 收口）
+    '账号与安全.vue': 25, // 12 + 12 + 1 条减动效长写法（FP-05 背景选中单环化删一对双边框）
   }
 
   it('扫描面确实是全部视图（>2），且只有账本内三个视图带 outline 声明、条数逐视图冻结', () => {

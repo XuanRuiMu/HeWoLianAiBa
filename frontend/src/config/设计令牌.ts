@@ -7,3 +7,8 @@ export const quXian = {
 } as const
 
 export type QuXianLeiXing = keyof typeof quXian
+
+export const ZHAN_JI_LUO_WEI = {
+  shiChangHaoMiao: 320,
+  tuoZhuaiHaoMiao: 320,
+} as const

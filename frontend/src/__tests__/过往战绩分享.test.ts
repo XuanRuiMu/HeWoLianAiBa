@@ -244,6 +244,7 @@ function chuangJianDangAn(cha: Partial<DangAnXiangQing> = {}): DangAnXiangQing {
     xiao_xi_zong_shu: 20,
     fu_pan_shu_ju: null,
     fu_pan_nei_rong: null,
+    zui_hou_liang_tiao: [],
     chuang_jian_shi_jian: '2026-07-07T10:00:00.000Z',
     zui_hou_xiao_xi_shi_jian: '2026-07-07T10:30:00.000Z',
     you_xi_jie_shu_shi_jian: JIE_SHU_SHI_JIAN,

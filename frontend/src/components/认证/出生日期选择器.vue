@@ -174,7 +174,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { huoQuFanYi } from '@/config/translations'
 
 /**
@@ -336,6 +336,22 @@ const genYuanSu = ref<HTMLElement | null>(null)
 let shangCiWaiFa = chuShi ? props.modelValue : ''
 const jinRi = ref<RiQiSan>(jinRiSan())
 const riLiZhanKai = ref(false)
+
+function shuaXinJinRiKuaiZhao(): void {
+  jinRi.value = jinRiSan()
+}
+
+onMounted(() => {
+  shuaXinJinRiKuaiZhao()
+  wuYeDingShiQi = setInterval(shuaXinJinRiKuaiZhao, WU_YE_SHUA_XIN_JIAN_GE)
+})
+
+onBeforeUnmount(() => {
+  if (wuYeDingShiQi !== null) {
+    clearInterval(wuYeDingShiQi)
+    wuYeDingShiQi = null
+  }
+})
 
 const duanChaoBiao: Record<DuanMing, DuanDingYi> = {
   nian: DUAN_QING_DAN[0],
@@ -729,14 +745,21 @@ function daoBenYueBian(jie: 'kaishi' | 'jieshu'): void {
   yiDongJiaoDianGe(tianShu)
 }
 
+const WU_YE_SHUA_XIN_JIAN_GE = 60000
+let wuYeDingShiQi: ReturnType<typeof setInterval> | null = null
+
 function huiDaoJinRi(): void {
-  const jin = jiaZhenRuFanWei(jinRi.value)
+  const kuaiZhao = jinRiSan()
+  jinRi.value = kuaiZhao
+  if (!shiFouKeXuan(kuaiZhao)) return
+  const jin = jiaZhenRuFanWei(kuaiZhao)
   jiaoDianZhi.value = jin
   sheZhiChaKan(yueBianLiu(jin))
   zhaoJiaoDianGe()
 }
 
 function daKaiRiLi(): void {
+  jinRi.value = jinRiSan()
   const chuShiRi = jiaZhenRuFanWei(xianDangXuanZhong.value ?? jinRi.value)
   jiaoDianZhi.value = chuShiRi
   sheZhiChaKan(yueBianLiu(chuShiRi))

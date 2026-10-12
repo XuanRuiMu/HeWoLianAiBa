@@ -62,6 +62,7 @@ function zaoDangAn(
     xiao_xi_zong_shu: 1,
     fu_pan_shu_ju: null,
     fu_pan_nei_rong: null,
+    zui_hou_liang_tiao: [],
     chuang_jian_shi_jian: '2026-07-01T00:00:00.000Z',
     zui_hou_xiao_xi_shi_jian: null,
     you_xi_jie_shu_shi_jian: null,

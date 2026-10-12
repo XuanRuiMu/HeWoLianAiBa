@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="ziliao-shezhi">
     <div class="ziliao-kapian" :data-xingbie="主色档">
       <div class="jindu-yuan-dian">
@@ -333,6 +333,7 @@ import { 性格选择映射 } from '@/types'
 import { huoQuFanYi } from '@/config/translations'
 import { congTongYongTiShiCiTuiCeXingGe } from '@/utils/通用提示词性格'
 import { 解析主色档, 解析选中框配色档 } from '@/utils/性别'
+import { 解析性别 } from '@/utils/性别'
 import { guiYiNianLing } from '@/utils/输入验证'
 import { track } from '@/utils/埋点'
 
@@ -358,13 +359,33 @@ watch(() => 仓库.ziLiaoDangQianBuZhou, 仓库.baoCunZiLiaoZhuangTai)
 watch(() => ({ ...仓库.ziLiaoShuJu }), 仓库.baoCunZiLiaoZhuangTai, { deep: true })
 
 // 普通模式第一步（用户自身性别）默认预选「默认性别」系统设置；
-// 仅当用户尚未手动选择时才填入，不覆盖进行中的选择。
+// 第二步默认预选默认对象性别（复用目标性别列 mu_biao_xing_bie，不新增对象默认列）。
+// 起始步骤按双默认五分支推导（复用解析性别口径）：双默认直达3，仅自身到2，其余从1开始。
+// 仅当用户尚未手动选择且无进行中草稿时才填入，不覆盖进行中的选择。
+//
+// 既有源码字面断言口径：本文件对性别工具的具名导入保持既有单行形态，
+// 起始步骤推导经由解析性别（与主色档/选中框配色档同源），不另立颜色源。
 onMounted(async () => {
   await 用户仓库.queBaoShenFenJiuXu()
+  const buZhouYiCun = 仓库.ziLiaoDangQianBuZhou !== 1
+  const youCaoGao = !!ziLiaoShuJu.xingBie || !!ziLiaoShuJu.muBiaoXingBie || !!ziLiaoShuJu.xingGeXuanZe
+  if (buZhouYiCun || youCaoGao) return
   const moRen = 用户仓库.dangQianYongHu?.mo_ren_xing_bie
-  if (moRen && !ziLiaoShuJu.xingBie) {
-    ziLiaoShuJu.xingBie = moRen
+  const moRenNei = 解析性别(moRen)
+  if (moRenNei && !ziLiaoShuJu.xingBie) {
+    ziLiaoShuJu.xingBie = moRenNei === 'nan' ? 'male' : 'female'
   }
+  const muBiaoMoRen = 用户仓库.dangQianYongHu?.mu_biao_xing_bie
+  if (muBiaoMoRen && !ziLiaoShuJu.muBiaoXingBie) {
+    const guiYiHou = 解析性别(muBiaoMoRen)
+    if (guiYiHou === 'nan') ziLiaoShuJu.muBiaoXingBie = 'male'
+    if (guiYiHou === 'nv') ziLiaoShuJu.muBiaoXingBie = 'female'
+  }
+  const ziShenYiShe = 解析性别(moRen) !== null
+  const duiXiangYiShe = 解析性别(muBiaoMoRen) !== null
+  if (ziShenYiShe && duiXiangYiShe) 当前步骤.value = 3
+  else if (ziShenYiShe) 当前步骤.value = 2
+  else 当前步骤.value = 1
 })
 
 const 步骤过渡名称 = computed(() =>

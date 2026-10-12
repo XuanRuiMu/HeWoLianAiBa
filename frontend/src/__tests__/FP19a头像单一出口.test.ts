@@ -417,7 +417,7 @@ describe('FP-31 H1 兜底字形只在出口，调用点只传数据', () => {
 describe('FP-19b 第二波收口面：一律经 <TouXiang>，绑定纯数据、零字形、零头像样式行', () => {
   const 出口标签数: Record<string, number> = {
     'views/添加微信.vue': 1,
-    'views/账号与安全.vue': 3,
+    'views/账号与安全.vue': 4,
     'components/用户资料卡.vue': 1,
     'components/军师指导.vue': 1,
     'views/军师记录详情.vue': 1,

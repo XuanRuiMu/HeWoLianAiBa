@@ -21,6 +21,8 @@ export type LiaoTianBeiJing = string
 export const BEI_JING_URL_ZUI_DA_CHANG_DU = 2000
 
 const MEI_TI_QIAN_MING_LU_JING = /^\/api\/媒体\/[0-9a-f]{64}(\?e=\d{1,12}&s=[0-9a-f]+)?$/
+const MEI_TI_XIN_QIAN_MING_LU_JING =
+  /^\/api\/媒体\/[0-9a-f]{64}\?e=\d{1,12}&u=[0-9a-f-]{36}&t=\d{1,15}&s=[0-9a-f]+$/i
 
 export function shiYuSheBeiJing(zhi: unknown): boolean {
   return typeof zhi === 'string' && (LIAO_TIAN_BEI_JING_XUAN_XIANG as readonly string[]).includes(zhi)
@@ -30,7 +32,9 @@ export function shiZiDingYiBeiJingURL(zhi: unknown): boolean {
   if (typeof zhi !== 'string') return false
   const qingLi = zhi.trim()
   if (!qingLi || qingLi.length > BEI_JING_URL_ZUI_DA_CHANG_DU) return false
-  if (qingLi.startsWith('/')) return MEI_TI_QIAN_MING_LU_JING.test(qingLi)
+  if (qingLi.startsWith('/')) {
+    return MEI_TI_QIAN_MING_LU_JING.test(qingLi) || MEI_TI_XIN_QIAN_MING_LU_JING.test(qingLi)
+  }
   let jieXi: URL
   try {
     jieXi = new URL(qingLi)
@@ -60,6 +64,7 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
   const qianMingBaiMingDan = ref<string[]>([])
   const liaoTianBeiJingQian = ref<string>('moRen')
   const liaoTianBeiJingShen = ref<string>('moRen')
+  const ziDingYiBeiJingBieMing = ref('')
   const qiPaoZiJi = ref<QiPaoYuShe>(QI_PAO_ZI_JI_MO_REN)
   const qiPaoAI = ref<QiPaoYuShe>(QI_PAO_AI_MO_REN)
   const gongKaiZhangHao = ref(true)
@@ -90,9 +95,9 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
   }
 
   async function jiaZai(): Promise<void> {
-    if (yiJiaZai.value) return
-    // 同一时刻多组件并发调用时复用同一请求，不发重复查询
+    if (yiJiaZai.value && !caoZuoCuoWu.value) return
     if (jiaZaiZhong) return jiaZaiZhong
+    qingCuoWu()
     jiaZaiZhong = zhiXingJiaZai().finally(() => {
       jiaZaiZhong = null
     })
@@ -100,6 +105,7 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
   }
 
   async function zhiXingJiaZai(): Promise<void> {
+    let quXiao = false
     try {
       const sheZhi = await huoQuYongHuSheZhi()
       uid.value = sheZhi.uid
@@ -123,13 +129,23 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
       gongKaiYouXiang.value = sheZhi.gong_kai_you_xiang
       bangDingYouXiang.value = sheZhi.bang_ding_you_xiang
     } catch (cuoWu: unknown) {
+      const zhengChangHua = 归一前台错误(cuoWu)
+      if (!zhengChangHua.xianShi) {
+        quXiao = true
+        return
+      }
       jiLuCuoWu(cuoWu, jiaZai)
     } finally {
-      yiJiaZai.value = true
+      if (quXiao) yiJiaZai.value = false
+      else if (!caoZuoCuoWu.value) yiJiaZai.value = true
     }
   }
 
   async function qieHuanBeiJing(beiJing: string, moShi?: 'qian' | 'shen'): Promise<void> {
+    const 旧前 = liaoTianBeiJingQian.value
+    const 旧深 = liaoTianBeiJingShen.value
+    const 旧别名 = ziDingYiBeiJingBieMing.value
+    const 换自定义 = shiZiDingYiBeiJingURL(beiJing)
     if (moShi === 'qian') liaoTianBeiJingQian.value = beiJing
     else if (moShi === 'shen') liaoTianBeiJingShen.value = beiJing
     else {
@@ -137,8 +153,13 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
       liaoTianBeiJingShen.value = beiJing
     }
     try {
+      if (换自定义) ziDingYiBeiJingBieMing.value = 旧别名
+      else ziDingYiBeiJingBieMing.value = ''
       await baoCunLiaoTianBeiJing(beiJing, moShi)
     } catch (cuoWu: unknown) {
+      liaoTianBeiJingQian.value = 旧前
+      liaoTianBeiJingShen.value = 旧深
+      ziDingYiBeiJingBieMing.value = 旧别名
       jiLuCuoWu(cuoWu, () => baoCunLiaoTianBeiJing(beiJing, moShi))
     }
   }
@@ -149,13 +170,15 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     await qieHuanBeiJing(laiYuan, muDi)
   }
 
-  async function baoCunZiDingYiBeiJing(beiJingURL: string): Promise<void> {
+  async function baoCunZiDingYiBeiJing(beiJingURL: string, bieMing?: string): Promise<void> {
     if (!shiZiDingYiBeiJingURL(beiJingURL)) throw new Error(huoQuFanYi('tongYong', 'canShuBuHeFa'))
     await qieHuanBeiJing(beiJingURL.trim())
+    ziDingYiBeiJingBieMing.value = (bieMing ?? '').trim()
   }
 
   async function qingChuZiDingYiBeiJing(): Promise<void> {
     await qieHuanBeiJing('moRen')
+    ziDingYiBeiJingBieMing.value = ''
   }
 
   async function qieHuanQiPao(buWei: 'ziJi' | 'ai', yuShe: QiPaoYuShe): Promise<void> {
@@ -194,5 +217,5 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     }
   }
 
-  return { uid, shouJiHao, touXiang, qianMing, qianMingKeJianXing, qianMingBaiMingDan, liaoTianBeiJing, liaoTianBeiJingQian, liaoTianBeiJingShen, qiPaoZiJi, qiPaoAI, ziJiQiPaoCSSBianLiang, shiYuShe, shiZiDingYi, beiJingNeiLianYangShi, gongKaiZhangHao, gongKaiShouJiHao, gongKaiYouXiang, bangDingYouXiang, yiJiaZai, caoZuoCuoWu, qingCuoWu, chongShi, jiaZai, qieHuanBeiJing, baoCunZiDingYiBeiJing, qingChuZiDingYiBeiJing, qieHuanQiPao, baoCunYinSi, qingKongPaiWei, tongBuBeiJing }
+  return { uid, shouJiHao, touXiang, qianMing, qianMingKeJianXing, qianMingBaiMingDan, liaoTianBeiJing, liaoTianBeiJingQian, liaoTianBeiJingShen, ziDingYiBeiJingBieMing, qiPaoZiJi, qiPaoAI, ziJiQiPaoCSSBianLiang, shiYuShe, shiZiDingYi, beiJingNeiLianYangShi, gongKaiZhangHao, gongKaiShouJiHao, gongKaiYouXiang, bangDingYouXiang, yiJiaZai, caoZuoCuoWu, qingCuoWu, chongShi, jiaZai, qieHuanBeiJing, baoCunZiDingYiBeiJing, qingChuZiDingYiBeiJing, qieHuanQiPao, baoCunYinSi, qingKongPaiWei, tongBuBeiJing }
 })

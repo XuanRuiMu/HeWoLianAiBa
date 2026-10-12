@@ -878,6 +878,8 @@ import {
   MEI_TI_XIAO_XI_LEI_XING,
   YIN_YONG_DING_WEI_PEI_ZHI,
   huoQuMeiTiYinYongZhanWei,
+  guiYiHuaShengYin,
+  duQuShengYinDangYinLiang,
   LU_YIN_PEI_ZHI,
 } from '@/config/消息配置'
 import { BIAO_QING_TIAN_JIA_PEI_ZHI } from '@/config/表情配置'
@@ -940,6 +942,14 @@ const 表情仓库 = 使用表情仓库()
 const liaoTianBeiJingLeiMing = computed(() => (设置仓库.shiYuShe ? `beijing-${设置仓库.liaoTianBeiJing}` : 'beijing-ziDingYi'))
 const liaoTianBeiJingYangShi = computed(() => 设置仓库.beiJingNeiLianYangShi)
 const qiPaoYangShi = computed(() => 设置仓库.ziJiQiPaoCSSBianLiang)
+
+function duQuShengYinYinLiang(): number | null {
+  try {
+    return duQuShengYinDangYinLiang(localStorage.getItem('lian-ai-ba-sheng-yin'))
+  } catch {
+    return null
+  }
+}
 
 const shuRuNeiRong = ref('')
 const caoGaoJian = computed(() => {
@@ -1018,6 +1028,7 @@ const {
 } = use语音转文字({
   huoQuYuYinDiZhi: huoQuXiaoXiMeiTiURL,
   zhuanXieQingQiu: async (xiaoXi) => zhuanXieYuYin(xiaoXi.mei_ti_id || ''),
+  huoQuYinLiang: duQuShengYinYinLiang,
 })
 
 const {
@@ -1299,6 +1310,7 @@ const {
   tiaoZhuanYuYinJinDu,
 } = use语音播放({
   huoQuDiZhi: huoQuXiaoXiMeiTiURL,
+  huoQuYinLiang: duQuShengYinYinLiang,
 })
 
 const { chuLiZhanTie, chuLiTuoLuo } = use粘贴图片({
@@ -2125,23 +2137,23 @@ onBeforeUnmount(() => {
 }
 
 .xiaoxi-quyu.beijing-miWuSenLin {
-  background: linear-gradient(135deg, #1a2f1a, #2d4a2d);
+  background: var(--liaotian-beijing-miWuSenLin);
 }
 
 .xiaoxi-quyu.beijing-haiYangZhiLan {
-  background: linear-gradient(135deg, #1a3a5c, #2d6a9f);
+  background: var(--liaotian-beijing-haiYangZhiLan);
 }
 
 .xiaoxi-quyu.beijing-fenSeMengJing {
-  background: linear-gradient(135deg, #f7d6e0, #f2a7c3);
+  background: var(--liaotian-beijing-fenSeMengJing);
 }
 
 .xiaoxi-quyu.beijing-yeKongXingHe {
-  background: linear-gradient(135deg, #0a0a23, #1a1a4d);
+  background: var(--liaotian-beijing-yeKongXingHe);
 }
 
 .xiaoxi-quyu.beijing-miSeTianYuan {
-  background: linear-gradient(135deg, #f5f0e1, #e8dcc3);
+  background: var(--liaotian-beijing-miSeTianYuan);
 }
 
 .xiaoxi-liebiao {
@@ -2237,6 +2249,7 @@ onBeforeUnmount(() => {
   padding: var(--jiange-9) var(--jiange-13);
   border-radius: 6px;
   font-size: 16px;
+  font-weight: var(--qipao-xuan-zhong-zi-zhong);
   line-height: 1.45;
   word-break: break-word;
   position: relative;

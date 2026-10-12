@@ -106,4 +106,5 @@ export const CAO_GAO_JIAN = {
   haoYouLiaoTian: (haoYouId: string) => `haoYou:${haoYouId}`,
   shenSu: 'shenSu',
   qianMing: 'qianMing',
+  ziDingYiBeiJingMingCheng: 'ziDingYiBeiJingMingCheng',
 } as const

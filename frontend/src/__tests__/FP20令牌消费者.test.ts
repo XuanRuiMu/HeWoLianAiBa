@@ -70,18 +70,14 @@ const 零消费白名单: { 令牌: string; 理由: string }[] = [
   // --quxiao-anniu-wenben）已由 FP-G 经主代理裁决删除定义并同步 FP14出生日期选择器.test.ts 层级序，销账。
 ]
 
-/** 已知非 var( 消费者：var( 扫描为零，但经字符串令牌名 + getPropertyValue 真实消费 */
+/** 已知非 var( 消费者：var( 扫描为零，但经字符串令牌名 + getPropertyValue 真实消费；
+ * 若后续新增直接 var( 消费，该令牌即毕业，须从本表删除（零消费计算不再含它，留条即陈化红） */
 const 已知消费者: { 令牌: string; 理由: string; 位置: string[] }[] = [
   {
     令牌: '--jing-gao-se',
     理由:
       '消息配置.ts 的 liangGuangLingPai 登记令牌名字符串；引用气泡块.vue 经 getPropertyValue(该配置) 间接取运行时值（本文件无令牌字面量）',
     位置: ['src/config/消息配置.ts'],
-  },
-  {
-    令牌: '--yanse-zhanji-qian',
-    理由: '战报海报.ts 的 quLingPai(令牌名) → getComputedStyle(documentElement).getPropertyValue 取值绘制海报',
-    位置: ['src/utils/战报海报.ts'],
   },
   {
     令牌: '--biao-qian-chenggong-wenben',

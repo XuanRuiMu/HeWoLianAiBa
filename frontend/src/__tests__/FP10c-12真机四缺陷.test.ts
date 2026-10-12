@@ -186,15 +186,21 @@ describe('FP-10c-12 ① 待发块样式住在命令式节点拿得到的样式�
   })
 
   it('反证一：把待发块规则搬回 scoped 段（真机缺陷①的原点）⇒ 判定当场翻红', () => {
+    const 带块选择器 = (段内容: string): boolean =>
+      段内容
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .split('\n')
+        .some((行) => /^\s*\.dai-fa-kuai(\s*\{|--)/.test(行))
     const 判定 = (源文本: string): boolean => {
       const { descriptor: d } = parse(源文本, { filename: '变异.vue' })
-      const 带块规则 = d.styles.filter((段) => /\.dai-fa-kuai/.test(段.content))
+      const 带块规则 = d.styles.filter((段) => 带块选择器(段.content))
       return 带块规则.length > 0 && 带块规则.every((段) => !段.scoped)
     }
     expect(判定(读源(组件路径)), '现组件就该判定通过 ⇒ 判定本身是空的').toBe(true)
-    const 变异源 = 读源(组件路径)
-      .replace('<style>\n/* 待发块样式【非 scoped · FP-10c-12 根因修】', '<style scoped>\n/* 待发块样式【被搬回 scoped】')
-      .replace('/* 待发块样式【非 scoped · FP-10c-12 根因修】', '/* 待发块样式【被搬回 scoped】')
+    const 变异源 = 读源(组件路径).replace(
+      /^<style>$/m,
+      '<style scoped>',
+    )
     const { descriptor: 原 } = parse(读源(组件路径), { filename: '原.vue' })
     const 原非scoped段数 = 原.styles.filter((段) => !段.scoped).length
     expect(原非scoped段数, '变异构造失败：没抓到那个非 scoped 段').toBe(1)

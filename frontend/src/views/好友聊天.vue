@@ -331,6 +331,7 @@ import {
   TU_PIAN_XIAO_XI_LEI_XING,
   XIAO_XI_PEI_ZHI,
   YIN_YONG_DING_WEI_PEI_ZHI,
+  duQuShengYinDangYinLiang,
   huoQuMeiTiYinYongZhanWei,
 } from '@/config/消息配置'
 import { CAO_GAO_JIAN, useCaoGao } from '@/composables/use草稿'
@@ -946,6 +947,13 @@ function chongXinFanYi(xiaoXi: HaoYouXiaoXi): void {
 
 // FP-11：好友页语音播放与转写（转写菜单项 yuYinZhuanWenZi 在 yuYinCaiDanXiang 里恒在，
 // 不接 qieHuanZhuanWenZiXianShi 则菜单点下去无效）。地址源用 mei_ti_url；转写 API 与 AI 页同源。
+function duQuShengYinYinLiang(): number | null {
+  try {
+    return duQuShengYinDangYinLiang(localStorage.getItem('lian-ai-ba-sheng-yin'))
+  } catch {
+    return null
+  }
+}
 const {
   huoQuZhuanWenZi,
   shiYuYinZhuanXieZhong,
@@ -956,6 +964,7 @@ const {
   huoQuYuYinDiZhi: (xiaoXi) => (xiaoXi as unknown as HaoYouXiaoXi).mei_ti_url || undefined,
   zhuanXieQingQiu: async (xiaoXi) =>
     zhuanXieYuYin((xiaoXi as unknown as HaoYouXiaoXi).mei_ti_id || ''),
+  huoQuYinLiang: duQuShengYinYinLiang,
 })
 const {
   shiYuYinBoFangZhong,
@@ -966,6 +975,7 @@ const {
   tiaoZhuanYuYinJinDu,
 } = use语音播放({
   huoQuDiZhi: (xiaoXi) => (xiaoXi as unknown as HaoYouXiaoXi).mei_ti_url || undefined,
+  huoQuYinLiang: duQuShengYinYinLiang,
 })
 
 /**
@@ -1149,7 +1159,7 @@ onBeforeUnmount(() => {
 }
 .haoyou-dingbu-ming {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: var(--qipao-xuan-zhong-zi-zhong);
   color: var(--wenben-zhuse);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1163,11 +1173,11 @@ onBeforeUnmount(() => {
   flex-direction: column;
   background: var(--liaotian-beijing);
 }
-.beijing-miWuSenLin { background: linear-gradient(135deg, #1a2f1a, #2d4a2d); }
-.beijing-haiYangZhiLan { background: linear-gradient(135deg, #1a3a5c, #2d6a9f); }
-.beijing-fenSeMengJing { background: linear-gradient(135deg, #f7d6e0, #f2a7c3); }
-.beijing-yeKongXingHe { background: linear-gradient(135deg, #0a0a23, #1a1a4d); }
-.beijing-miSeTianYuan { background: linear-gradient(135deg, #f5f0e1, #e8dcc3); }
+.beijing-miWuSenLin { background: var(--liaotian-beijing-miWuSenLin); }
+.beijing-haiYangZhiLan { background: var(--liaotian-beijing-haiYangZhiLan); }
+.beijing-fenSeMengJing { background: var(--liaotian-beijing-fenSeMengJing); }
+.beijing-yeKongXingHe { background: var(--liaotian-beijing-yeKongXingHe); }
+.beijing-miSeTianYuan { background: var(--liaotian-beijing-miSeTianYuan); }
 .xiaoxi-xiangmu {
   display: flex;
   align-items: flex-start;
@@ -1196,6 +1206,7 @@ onBeforeUnmount(() => {
   padding: var(--jiange-9) var(--jiange-13);
   border-radius: 6px;
   font-size: 16px;
+  font-weight: var(--qipao-xuan-zhong-zi-zhong);
   line-height: 1.45;
   word-break: break-word;
   position: relative;

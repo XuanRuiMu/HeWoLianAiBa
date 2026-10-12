@@ -167,6 +167,15 @@
   --gundong-tiao-cursor: default;
   --gundong-tiao-huakuai-cursor: default;
   --gundong-tiao-guidao-cursor: default;
+  /* 聊天背景预设渐变（需求13）：三处预览与两聊天页共用的唯一真源。
+     海洋之蓝为浅蓝到深蓝纵向渐变；其余四档沿用改前实测值原样收编。 */
+  --liaotian-beijing-miWuSenLin: linear-gradient(135deg, #1a2f1a, #2d4a2d);
+  --liaotian-beijing-haiYangZhiLan: linear-gradient(to bottom, #7fb8f0, #2f6db3);
+  --liaotian-beijing-fenSeMengJing: linear-gradient(135deg, #f7d6e0, #f2a7c3);
+  --liaotian-beijing-yeKongXingHe: linear-gradient(135deg, #0a0a23, #1a1a4d);
+  --liaotian-beijing-miSeTianYuan: linear-gradient(135deg, #f5f0e1, #e8dcc3);
+  /* 气泡选中字重（需求17）：选择器/气泡/预览三处同源，消除选中加粗抖动。 */
+  --qipao-xuan-zhong-zi-zhong: 400;
   --shuru-xian-changtai-kuan-du: 1px;
   --shuru-juzhong-dong-xiao: 1s;
   --shuru-sao-chu-shi-chang: 1s;

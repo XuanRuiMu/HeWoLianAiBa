@@ -24,12 +24,14 @@ import {
   type DangAnXiangQing,
   type FuPanPiZhu,
   type FuPanShiJianXianTiaoMu,
+  type ZhanJiZuiHouXiaoXi,
 } from '../services/战绩'
 import { shengChengFuPan } from '../services/复盘'
 import { huoQuJunShiJiLuLieBiao, type JunShiJiLuXiang } from '../services/军师缓存'
 import { 执行落库后副作用 } from '../utils/落库后副作用'
 import { yanZhengUUID } from '../utils/验证'
 import { CUO_WU_DAI_MA, shiCuoWuDaiMa } from '../config/错误码注册表'
+import { ZHAN_JI_PEI_ZHI } from '../config/战绩配置'
 
 const luYou = Router()
 
@@ -93,6 +95,27 @@ interface QianDuanDangAnLieBiaoXiang {
   sui_ji_xing_ge?: boolean
   category_id: string
   sort_order: number
+  zui_hou_liang_tiao: ZhanJiZuiHouXiaoXi[]
+}
+
+function guoLvZuiHouLiangTiao(
+  lie_biao: ZhanJiZuiHouXiaoXi[] | null | undefined,
+): ZhanJiZuiHouXiaoXi[] {
+  if (!Array.isArray(lie_biao)) return []
+  return lie_biao
+    .filter(
+      (tiao) =>
+        tiao !== null &&
+        typeof tiao === 'object' &&
+        typeof (tiao as { shi_jian?: unknown }).shi_jian === 'string' &&
+        typeof (tiao as { zhai_yao?: unknown }).zhai_yao === 'string',
+    )
+    .slice(-2)
+    .map((tiao) => ({
+      shi_jian: tiao.shi_jian,
+      fa_song_zhe: tiao.fa_song_zhe === 'yonghu' ? 'yonghu' : 'jiaose',
+      zhai_yao: Array.from(tiao.zhai_yao).slice(0, ZHAN_JI_PEI_ZHI.zhaiYaoZuiDaMaDian).join(''),
+    }))
 }
 
 function guoLvMinGanZiDuanLieBiao(
@@ -115,6 +138,7 @@ function guoLvMinGanZiDuanLieBiao(
     sui_ji_xing_ge: dang_an.sui_ji_xing_ge,
     category_id: dang_an.category_id,
     sort_order: dang_an.sort_order,
+    zui_hou_liang_tiao: guoLvZuiHouLiangTiao(dang_an.zui_hou_liang_tiao),
   }))
 }
 
@@ -187,6 +211,7 @@ function guoLvMinGanZiDuanXiangQing(
     sui_ji_xing_ge: dang_an.sui_ji_xing_ge,
     category_id: dang_an.category_id,
     sort_order: dang_an.sort_order,
+    zui_hou_liang_tiao: guoLvZuiHouLiangTiao(dang_an.zui_hou_liang_tiao),
     fu_pan_shu_ju: guoLvFuPanShiJianXian(dang_an.fu_pan_shu_ju),
     fu_pan_nei_rong: dang_an.fu_pan_nei_rong,
     fu_pan_pi_zhu: guoLvFuPanPiZhu(dang_an.fu_pan_pi_zhu),

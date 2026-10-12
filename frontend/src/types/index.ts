@@ -399,6 +399,12 @@ export interface ZhanJiFenLeiPaiXuJieGuo {
   version: number
 }
 
+export interface ZhanJiZuiHouXiaoXi {
+  shi_jian: string
+  fa_song_zhe: 'yonghu' | 'jiaose'
+  zhai_yao: string
+}
+
 export interface DangAnXiangQing {
   id: string
   jiao_se_id: string
@@ -419,6 +425,7 @@ export interface DangAnXiangQing {
   jun_shi_ji_lu: JunShiJiLu[]
   category_id: string
   sort_order: number
+  zui_hou_liang_tiao?: ZhanJiZuiHouXiaoXi[] | null
 }
 
 export interface FuPanTiaoMu {

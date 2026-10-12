@@ -35,6 +35,12 @@ export interface FuPanPiZhu {
   qing_gan?: string
 }
 
+export interface ZhanJiZuiHouXiaoXi {
+  shi_jian: string
+  fa_song_zhe: 'yonghu' | 'jiaose'
+  zhai_yao: string
+}
+
 export interface DangAnLieBiaoXiang {
   id: string
   yong_hu_id: string
@@ -56,6 +62,7 @@ export interface DangAnLieBiaoXiang {
   mo_shi?: 'putong' | 'tiaozhan'
   category_id: string
   sort_order: number
+  zui_hou_liang_tiao: ZhanJiZuiHouXiaoXi[]
 }
 
 export interface DangAnXiangQing extends DangAnLieBiaoXiang {
@@ -714,6 +721,26 @@ export async function paiXuFenLeiNeiZhanJi(
   })
 }
 
+function zhaiYaoZuiHouXiaoXi(hang: Record<string, unknown>): string {
+  if (hang.已撤回) {
+    return hang.发送者 === 'yonghu'
+      ? huoQuFanYi('liaoTian', 'ninCheHuiLeYiTiaoXiaoXi')
+      : huoQuFanYi('liaoTian', 'duiFangCheHuiLeYiTiaoXiaoXi')
+  }
+  const wenBen = typeof hang.内容 === 'string' ? hang.内容.trim() : ''
+  if (wenBen) return Array.from(wenBen).slice(0, ZHAN_JI_PEI_ZHI.zhaiYaoZuiDaMaDian).join('')
+  const lei = typeof hang.类型 === 'string' ? hang.类型 : ''
+  if (lei === 'yuYin') return huoQuFanYi('zhanJi', 'yuYinZhaiYao')
+  if (lei === 'tuPian') return huoQuFanYi('zhanJi', 'tuPianZhaiYao')
+  if (lei === 'biaoQingBao') return huoQuFanYi('zhanJi', 'biaoQingBaoZhaiYao')
+  if (lei === 'wenJian') return huoQuFanYi('zhanJi', 'wenJianZhaiYao')
+  return ''
+}
+
+function guiYiZuiHouFaSongZhe(faSongZhe: unknown): 'yonghu' | 'jiaose' {
+  return faSongZhe === 'yonghu' ? 'yonghu' : 'jiaose'
+}
+
 export async function huoQuDangAnLieBiao(
   yong_hu_id: string,
   fen_lei_id?: string,
@@ -747,6 +774,38 @@ export async function huoQuDangAnLieBiao(
       ORDER BY c."排序", c."ID", d."排序", d."ID"`,
     [yong_hu_id, fen_lei_id ?? null],
   )
+  const jiaoSeIds = [...new Set(jieGuo.rows.map((row) => String(row.角色ID)))].filter(
+    (id) => id,
+  )
+  const zuiHouAnJiaoSe = new Map<string, ZhanJiZuiHouXiaoXi[]>()
+  if (jiaoSeIds.length > 0) {
+    const xiaoXi = await 数据库.query(
+      `SELECT "角色ID", "发送者", "内容", "类型", "已撤回", "创建时间", "ID"
+         FROM (
+           SELECT "角色ID", "发送者", "内容", "类型", "已撤回", "创建时间", "ID",
+                  ROW_NUMBER() OVER (PARTITION BY "角色ID" ORDER BY "创建时间" DESC, "ID" DESC) AS hang_hao
+             FROM "消息"
+            WHERE "用户ID" = $1 AND "角色ID" = ANY($2::uuid[]) AND "发送者" IN ('yonghu', 'jiaose')
+         ) fen_zu
+        WHERE hang_hao <= $3
+        ORDER BY "角色ID", "创建时间" DESC, "ID" DESC`,
+      [yong_hu_id, jiaoSeIds, ZHAN_JI_PEI_ZHI.zuiHouXiaoXiMeiJiaoSeTiaoShu],
+    )
+    for (const hang of xiaoXi.rows as Record<string, unknown>[]) {
+      const jiaoSeId = String(hang.角色ID)
+      const lieBiao = zuiHouAnJiaoSe.get(jiaoSeId)
+      if (lieBiao && lieBiao.length >= ZHAN_JI_PEI_ZHI.zuiHouXiaoXiMeiJiaoSeTiaoShu) continue
+      const zhaiYao = zhaiYaoZuiHouXiaoXi(hang)
+      if (!zhaiYao) continue
+      const tiao: ZhanJiZuiHouXiaoXi = {
+        shi_jian: String(hang.创建时间),
+        fa_song_zhe: guiYiZuiHouFaSongZhe(hang.发送者),
+        zhai_yao: zhaiYao,
+      }
+      if (lieBiao) lieBiao.unshift(tiao)
+      else zuiHouAnJiaoSe.set(jiaoSeId, [tiao])
+    }
+  }
 
   return jieGuo.rows.map((row) => {
     const jieGuoLeiXingYuan = 解析结局类型(row.结果类型, Boolean(row.是否封存))
@@ -782,6 +841,7 @@ export async function huoQuDangAnLieBiao(
       mo_shi: row.模式 === 'tiaozhan' ? 'tiaozhan' : 'putong',
       category_id: String(row.分类ID || ''),
       sort_order: Number(row.排序 || 0),
+      zui_hou_liang_tiao: zuiHouAnJiaoSe.get(String(row.角色ID)) ?? [],
     }
   })
 }
@@ -882,6 +942,7 @@ export async function huoQuDangAnXiangQing(
     sui_ji_xing_ge: Boolean(row.随机性格),
     category_id: String(row.分类ID || ''),
     sort_order: Number(row.排序 || 0),
+    zui_hou_liang_tiao: [],
     jun_shi_ji_lu: junShiJiLu,
   }
 }

@@ -496,7 +496,17 @@ export function shengChengJiaoSe(canShu: ShengChengJiaoSeCanShu): ShengChengJiao
   const aiHaoLieBiao = anQuanZhongXuanZeAiHao(mbti)
   const jiaXiangDi = heBing.jia_xiang ? qingXiRenSheWenBen(heBing.jia_xiang) : anQuanZhongXuanZeJiaXiang(mbti)
   const chengShi = heBing.cheng_shi ? qingXiRenSheWenBen(heBing.cheng_shi) : suiJiXuanZe(chengShiKu)
-  const shiJieXinXi = { ...shengChengShiJieXinXi(shenFenJieGuo.leiXing, mbti, nianJi), cheng_shi: chengShi }
+  // ⚠️ 第二十九轮恢复：`zhiYe` 一直有算（第 492 行 `xuanZeZhiYe`），
+  //   但**没有写进世界信息**——本轮实测发现 `shi_jie_xin_xi.zhi_ye` 全是 undefined。
+  //   后果：学生角色没有专业，被问「你什么专业」只能编；
+  //   更隐蔽的是模型会自己补课程内容（实测「我今天上实验课搞电路，焊了一下午手都抖了」，
+  //   人设里根本没有专业）。
+  //   业务安全要求「关键数值服务端算」同理：专业/职业必须来自服务端人设。
+  const shiJieXinXi = {
+    ...shengChengShiJieXinXi(shenFenJieGuo.leiXing, mbti, nianJi),
+    cheng_shi: chengShi,
+    zhi_ye: zhiYe,
+  }
   const xiHuanLeiXing = xiHuanDeLeiXing[mbti]
   const jiaTing = suiJiXuanZe(jiaTingBeiJing[mbti])
   const qingGan = suiJiXuanZe(qingGanJingLi[mbti])

@@ -1,0 +1,4 @@
+[配置] 数据库连接目标：postgresql://lovewithme:***@localhost:5432/lovewithme
+[配置警告] 仓库根目录 .env 与 backend/.env 的 DATABASE_URL 指向不同数据库！根目录=postgresql://lovewithme:***@postgres:5432/lovewithme；backend=postgresql://lovewithme:***@localhost:5432/lovewithme。后端只读 backend/.env；若你本意是容器库，请改 backend/.env，或统一两份配置。
+用法: scripts/语料探针实测.ts <场景|all> [每场景条数]
+可用场景: 事务对接, 叮嘱关心, 吃瓜分享, 寒暄报备, 应声接话, 情感暧昧, 情绪倾诉, 成果分享, 日常分享, 求助提问, 玩笑互怼, 被问自己, 观点讨论, 邀约聚会

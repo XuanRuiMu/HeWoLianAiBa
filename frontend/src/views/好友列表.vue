@@ -61,19 +61,32 @@
       v-if="!haoYouLieBiao.length && !qianTaiCuoWu"
       :biao-ti="huoQuFanYi('haoYou', 'zanWuHaoYou')"
     />
-    <div v-for="haoYou in haoYouLieBiao" :key="haoYou.id" class="haoyou-xiangmu">
-      <button class="ziliao-anniu" :aria-label="huoQuFanYi('haoYou', 'ziLiaoKa')" @click="daKaiZiLiaoKa(haoYou.id)">
-        <TouXiang :tou-xiang="haoYou.tou_xiang" :mo-ren-zi="(haoYou.ni_cheng || haoYou.yong_hu_ming || '?').slice(0, 1)" />
+    <template v-for="fenQu in haoYouFenQu" :key="fenQu.shouZiMu">
+      <h3 class="fen-qu-biao-ti" :data-fen-qu="fenQu.shouZiMu">{{ fenQu.shouZiMu }}</h3>
+      <div v-for="haoYou in fenQu.lieBiao" :key="haoYou.id" class="haoyou-xiangmu">
+        <button class="ziliao-anniu" :aria-label="huoQuFanYi('haoYou', 'ziLiaoKa')" @click="daKaiZiLiaoKa(haoYou.id)">
+          <TouXiang :tou-xiang="haoYou.tou_xiang" :mo-ren-zi="(haoYou.ni_cheng || haoYou.yong_hu_ming || '?').slice(0, 1)" />
+        </button>
+        <div class="yonghu-wen-zi">
+          <span class="yonghu-ming">{{ haoYou.ni_cheng || haoYou.yong_hu_ming }}</span>
+          <span v-if="haoYou.qian_ming" class="yonghu-qianming">{{ haoYou.qian_ming }}</span>
+        </div>
+        <div class="haoyou-anniu-zu">
+          <button class="liaotian-anniu" @click="jinRuLiaoTian(haoYou.id)">{{ huoQuFanYi('haoYou', 'jinRuLiaoTian') }}</button>
+          <button class="shanchu-anniu" @click="shanChu(haoYou.id)">{{ huoQuFanYi('haoYou', 'shanChuHaoYou') }}</button>
+        </div>
+      </div>
+    </template>
+    <nav v-if="suoYinLieBiao.length" class="suo-yin-lan" :aria-label="huoQuFanYi('haoYou', 'haoYouLieBiao')">
+      <button
+        v-for="shouZiMu in suoYinLieBiao"
+        :key="'suo-yin-' + shouZiMu"
+        class="suo-yin-xiang"
+        @click="gunDongDaoFenQu(shouZiMu)"
+      >
+        {{ shouZiMu }}
       </button>
-      <div class="yonghu-wen-zi">
-        <span class="yonghu-ming">{{ haoYou.ni_cheng || haoYou.yong_hu_ming }}</span>
-        <span v-if="haoYou.qian_ming" class="yonghu-qianming">{{ haoYou.qian_ming }}</span>
-      </div>
-      <div class="haoyou-anniu-zu">
-        <button class="liaotian-anniu" @click="jinRuLiaoTian(haoYou.id)">{{ huoQuFanYi('haoYou', 'jinRuLiaoTian') }}</button>
-        <button class="shanchu-anniu" @click="shanChu(haoYou.id)">{{ huoQuFanYi('haoYou', 'shanChuHaoYou') }}</button>
-      </div>
-    </div>
+    </nav>
     <p class="junshi-tishi">{{ huoQuFanYi('haoYou', 'junShiRuKou') }}</p>
     <Teleport to="body">
       <YongHuZiLiaoKa
@@ -88,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { huoQuFanYi } from '@/config/translations'
 import {
@@ -234,6 +247,67 @@ function jinRuLiaoTian(haoYouId: string) {
   router.push(`/hao-you/${haoYouId}`)
 }
 
+function huoQuHaoYouXianShiMing(haoYou: HaoYouXiang): string {
+  return haoYou.ni_cheng || haoYou.yong_hu_ming || ''
+}
+
+const HAN_YU_PIN_YIN_ANCHORS = [
+  '啊', '芭', '擦', '搭', '鹅', '发', '噶', '哈', '击', '喀', '垃', '妈', '拿', '哦', '啪', '期',
+  '然', '撒', '塌', '挖', '昔', '压', '匝',
+] as const
+const HAN_YU_PIN_YIN_SHOU_ZI_MU = [
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
+  'R', 'S', 'T', 'W', 'X', 'Y', 'Z',
+] as const
+const PIN_YIN_COLLATOR = new Intl.Collator('zh')
+
+function hanYuPinYinShouZiMu(danZi: string): string | null {
+  for (let i = HAN_YU_PIN_YIN_ANCHORS.length - 1; i >= 0; i -= 1) {
+    if (PIN_YIN_COLLATOR.compare(danZi, HAN_YU_PIN_YIN_ANCHORS[i] as string) >= 0) {
+      return HAN_YU_PIN_YIN_SHOU_ZI_MU[i] as string
+    }
+  }
+  return null
+}
+
+function huoQuHaoYouShouZiMu(haoYou: HaoYouXiang): string {
+  const ming = huoQuHaoYouXianShiMing(haoYou).trim()
+  if (!ming) return '#'
+  const shouZi = Array.from(ming)[0] as string
+  if (/[a-zA-Z]/.test(shouZi)) return shouZi.toUpperCase()
+  if (/[0-9]/.test(shouZi)) return '#'
+  const pinYin = hanYuPinYinShouZiMu(shouZi)
+  return pinYin ?? '#'
+}
+
+const haoYouFenQu = computed(() => {
+  const fenZu = new Map<string, HaoYouXiang[]>()
+  for (const haoYou of haoYouLieBiao.value) {
+    const shouZiMu = huoQuHaoYouShouZiMu(haoYou)
+    const yiCun = fenZu.get(shouZiMu)
+    if (yiCun) yiCun.push(haoYou)
+    else fenZu.set(shouZiMu, [haoYou])
+  }
+  const paiXu = [...fenZu.entries()].sort((a, b) => {
+    if (a[0] === '#') return 1
+    if (b[0] === '#') return -1
+    return a[0].localeCompare(b[0])
+  })
+  return paiXu.map(([shouZiMu, lieBiao]) => ({
+    shouZiMu,
+    lieBiao: [...lieBiao].sort((a, b) =>
+      huoQuHaoYouXianShiMing(a).localeCompare(huoQuHaoYouXianShiMing(b), 'zh'),
+    ),
+  }))
+})
+
+const suoYinLieBiao = computed(() => haoYouFenQu.value.map((fenQu) => fenQu.shouZiMu))
+
+function gunDongDaoFenQu(shouZiMu: string): void {
+  const muBiao = document.querySelector(`[data-fen-qu="${shouZiMu}"]`)
+  if (muBiao) muBiao.scrollIntoView({ block: 'start' })
+}
+
 onMounted(shuaXinLieBiao)
 </script>
 
@@ -269,7 +343,7 @@ onMounted(shuaXinLieBiao)
   background: var(--zhuse);
   color: #fff;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--qipao-xuan-zhong-zi-zhong);
 }
 .sousuo-anniu:disabled,
 .tianjia-anniu:disabled {
@@ -277,9 +351,34 @@ onMounted(shuaXinLieBiao)
 }
 .quyu-biaoti {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: var(--qipao-xuan-zhong-zi-zhong);
   color: var(--wenben-zhuse);
   margin: var(--jiange-xiao) 0 0;
+}
+.fen-qu-biao-ti {
+  font-size: 13px;
+  font-weight: var(--qipao-xuan-zhong-zi-zhong);
+  color: var(--wenben-ciuse);
+  margin: var(--jiange-xiao) 0 0;
+}
+.suo-yin-lan {
+  position: sticky;
+  bottom: var(--jiange-xiao);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--jiange-4);
+  padding: var(--jiange-xiao) 0;
+  background: transparent;
+}
+.suo-yin-xiang {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 var(--jiange-4);
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid var(--biankuang-yanse);
+  color: var(--wenben-ciuse);
+  font-size: 12px;
 }
 .junshi-tishi {
   font-size: 12px;
@@ -303,7 +402,7 @@ onMounted(shuaXinLieBiao)
 .yonghu-ming {
   flex: 1;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: var(--qipao-xuan-zhong-zi-zhong);
   color: var(--wenben-zhuse);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -334,7 +433,7 @@ onMounted(shuaXinLieBiao)
   overflow: hidden;
   cursor: pointer;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: var(--qipao-xuan-zhong-zi-zhong);
   color: #fff;
   background: linear-gradient(135deg, #07c160, #0a8a44);
 }

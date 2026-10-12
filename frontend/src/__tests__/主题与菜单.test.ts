@@ -779,7 +779,7 @@ describe('FP-18 主题与UI', () => {
       expect(wrapper.find('.yonghu-xiala').exists()).toBe(false)
     })
 
-    it('更多菜单(☰)仅含用户协议/隐私政策两项，不含过往战绩', async () => {
+    it('更多菜单(☰)含用户协议/隐私政策/声音/气泡，不含过往战绩', async () => {
       const { wrapper } = await mountCaiDan({ luJing: '/', dengLu: true })
       await wrapper.find('.qita-xuanxiang').trigger('click')
       await flushPromises()
@@ -787,7 +787,9 @@ describe('FP-18 主题与UI', () => {
       expect(xiala.text()).toContain(huoQuFanYi('caidan', 'yongHuXieYi'))
       expect(xiala.text()).toContain(huoQuFanYi('caidan', 'yinSiZhengCe'))
       expect(xiala.text()).not.toContain(huoQuFanYi('caidan', 'guoWangZhanJi'))
-      expect(xiala.findAll('.xiala-xiangmu').length).toBe(2)
+      expect(xiala.text()).toContain(huoQuFanYi('sheZhi', 'shengYinBiaoTi'))
+      expect(xiala.text()).toContain(huoQuFanYi('sheZhi', 'qiPaoBiaoTi'))
+      expect(xiala.findAll('.xiala-xiangmu').length).toBe(4)
     })
 
     it('FP-02 源码无飞出列与弹窗残留：无认证接口调用/无弹窗样式', async () => {

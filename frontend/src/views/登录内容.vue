@@ -2360,6 +2360,30 @@ async function zhiXingZhuCe() {
   box-shadow: none;
 }
 
+.anniu-zhuyao[aria-busy='true'] {
+  filter: brightness(0.82);
+}
+
+.anniu-zhuyao[aria-busy='true']:active:not(:disabled) {
+  filter: brightness(0.82);
+  transform: none;
+  box-shadow:
+    0 6px 18px rgba(201, 169, 106, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.anniu-zhuyao[aria-busy='true']:hover:not(:disabled),
+.anniu-zhuyao[aria-busy='true']:hover:not(:disabled)::before {
+  filter: brightness(0.82);
+  box-shadow:
+    0 6px 18px rgba(201, 169, 106, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.anniu-zhuyao[aria-busy='true']:hover:not(:disabled)::before {
+  left: -100%;
+}
+
 .cuowu-tishi {
   padding: var(--jiange-10) calc(var(--jiange-xiao) + var(--jiange-6));
   background: rgba(217, 138, 128, 0.1);

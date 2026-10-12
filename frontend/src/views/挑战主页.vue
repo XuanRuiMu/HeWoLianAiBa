@@ -109,10 +109,11 @@
           {{ xuanZeBuZhou === 1 ? '1 / 2' : '2 / 2' }}
         </p>
         <component :is="挑战渣型提示" :zha-xing-gai-lv="zhaXingGaiLv" />
-        <div class="xingbie-wangge">
+        <div class="xingbie-wangge" :data-duixiang="duiXiangBianKuangDang">
           <button
             type="button"
-            class="xingbie-kaPian nan"
+            class="xingbie-kaPian nan duiXiang-xingBie-kaPian"
+            :class="{ beiXuanZhong: xuanZeBuZhou === 2 && duiXiangXingBie === '男' }"
             @click="xuanZeBuZhou === 1 ? xuanZeZiJi('男') : xuanZeDuiXiang('男')"
           >
             <span class="xingbie-fuhao" aria-hidden="true">♂</span>
@@ -120,7 +121,8 @@
           </button>
           <button
             type="button"
-            class="xingbie-kaPian nv"
+            class="xingbie-kaPian nv duiXiang-xingBie-kaPian"
+            :class="{ beiXuanZhong: xuanZeBuZhou === 2 && duiXiangXingBie === '女' }"
             @click="xuanZeBuZhou === 1 ? xuanZeZiJi('女') : xuanZeDuiXiang('女')"
           >
             <span class="xingbie-fuhao" aria-hidden="true">♀</span>
@@ -159,7 +161,7 @@ import {
   type ZuBieGaiKuang,
 } from '@/api/挑战'
 import { huoQuFanYi } from '@/config/translations'
-import { 解析主色档, 用户形态, type 性别选择形态 } from '@/utils/性别'
+import { 解析主色档, 解析选中框配色档, 用户形态, type 性别选择形态 } from '@/utils/性别'
 import { 使用用户仓库 } from '@/stores/用户'
 import 挑战渣型提示 from '@/components/挑战渣型提示.vue'
 import TouXiang from '@/components/头像.vue'
@@ -172,6 +174,11 @@ const 用户仓库 = 使用用户仓库()
 const xingBieDang = computed<'nan' | 'nv'>(() =>
   解析主色档(undefined, 用户仓库.dangQianYongHu?.mo_ren_xing_bie) === 'nv' ? 'nv' : 'nan',
 )
+/** 弹层内对象性别色边框：复用选中框配色档，对象未选时跟默认性别反色 */
+const duiXiangBianKuangDang = computed(() => {
+  const 档 = 解析选中框配色档(duiXiangXingBie.value, 用户仓库.dangQianYongHu?.mo_ren_xing_bie)
+  return 档 === 'nv' ? 'nv' : 'nan'
+})
 const xingBieHuiJiWen = computed(() =>
   xingBieDang.value === 'nv'
     ? huoQuFanYi('ziLiaoSheZhi', 'xingBieNv')
@@ -708,6 +715,19 @@ function quXiaoFangQi() {
 
 .xingbie-kaPian.nv .xingbie-fuhao {
   color: var(--xingbie-nv-1);
+}
+
+/* FP-03 需求18：弹层内对象性别补色边框，复用选中框三件套令牌；容器主色不漂移 */
+.xingbie-wangge[data-duixiang='nan'] .duiXiang-xingBie-kaPian.beiXuanZhong {
+  border-color: var(--xingbie-nan-xuan-biankuang);
+  background-color: var(--xingbie-nan-xuan-beijing);
+  color: var(--xingbie-nan-xuan-wenben);
+}
+
+.xingbie-wangge[data-duixiang='nv'] .duiXiang-xingBie-kaPian.beiXuanZhong {
+  border-color: var(--xingbie-nv-xuan-biankuang);
+  background-color: var(--xingbie-nv-xuan-beijing);
+  color: var(--xingbie-nv-xuan-wenben);
 }
 
 .xingbie-kaPian:hover {

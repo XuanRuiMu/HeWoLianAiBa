@@ -10,6 +10,7 @@
         :key="zuBie"
         class="zubie-anNiu"
         :class="{ huoyue: dangQianZuBie === zuBie }"
+        :data-zubie="zuBie"
         @click="qieHuanZuBie(zuBie)"
       >
         {{ zuBieMingCheng(zuBie) }}
@@ -197,6 +198,20 @@ onMounted(jiaZaiPaiHang)
   background: linear-gradient(135deg, var(--tiaozhan-zhu-1), var(--tiaozhan-zhu-2));
   border-color: var(--tiaozhan-zhu-1);
   box-shadow: 0 6px 18px color-mix(in srgb, var(--tiaozhan-zhu-1) 35%, transparent);
+}
+
+/* FP-03 需求18：四组合 tab 按组别着色；容器主色仍跟默认性别不漂移 */
+.zubie-anNiu[data-zubie='nan_nv'].huoyue,
+.zubie-anNiu[data-zubie='nv_nan'].huoyue {
+  border-color: var(--xingbie-nan-xuan-biankuang);
+}
+
+.zubie-anNiu[data-zubie='nan_nan'].huoyue {
+  border-color: var(--xingbie-nan-xuan-biankuang);
+}
+
+.zubie-anNiu[data-zubie='nv_nv'].huoyue {
+  border-color: var(--xingbie-nv-xuan-biankuang);
 }
 
 .zhuangtai-tishi {

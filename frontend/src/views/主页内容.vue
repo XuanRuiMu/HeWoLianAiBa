@@ -237,6 +237,7 @@ watch(
   text-align: center;
   padding: calc(var(--jiange-da) + var(--jiange-4)) calc(var(--jiange-da) + var(--jiange-12)) var(--jiange-zhong);
   animation: biaoti-ruchang 0.8s var(--quxian-tan-chu) both;
+  animation-delay: 0s;
 }
 
 .biaoti-neirong {
@@ -305,6 +306,8 @@ watch(
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  animation: zuoce-ruchang 0.7s var(--quxian-tan-chu) both;
+  animation-delay: 0.4s;
 }
 
 .qinggan-neirong-ceng {
@@ -402,6 +405,7 @@ watch(
   justify-self: start;
   margin-right: calc(var(--jiange-da) * 2);
   animation: moshi-kapian-jinru var(--moshi-kapian-dong-xiao) var(--quxian-tan-chu) both;
+  animation-delay: 0.8s;
 }
 
 .tiaozhan-moshi-kapian {
@@ -409,6 +413,7 @@ watch(
   justify-self: end;
   margin-left: calc(var(--jiange-da) * 2);
   animation: moshi-kapian-jinru var(--moshi-kapian-dong-xiao) var(--quxian-tan-chu) both;
+  animation-delay: 1.2s;
 }
 
 @keyframes moshi-kapian-jinru {
@@ -584,6 +589,7 @@ watch(
   font-size: 11.5px;
   color: rgba(255, 255, 255, 0.2);
   animation: diwei-ruchang 0.6s var(--quxian-tan-chu) 0.65s both;
+  animation-delay: 1.6s;
 }
 
 :root[data-theme='light'] .zhuye-diwei-shuoming {
@@ -876,8 +882,10 @@ watch(
   .putong-moshi-kapian,
   .tiaozhan-moshi-kapian,
   .gonggong-biaoti-qu,
+  .zuo-ce-qinggan-qu,
   .zhuye-diwei-shuoming {
     animation: none;
+    animation-delay: 0s;
     opacity: 1;
     transform: none;
   }

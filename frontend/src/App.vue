@@ -7,9 +7,7 @@
         <router-view v-slot="{ Component }">
           <Transition name="yemian-guodu" mode="out-in">
             <KeepAlive :include="['liaoTian']">
-              <CuoWuBianJie :key="`nei-${String(route.name)}`">
-                <component :is="Component" v-if="Component" :key="route.path" />
-              </CuoWuBianJie>
+              <component :is="Component" v-if="Component" :key="route.path" />
             </KeepAlive>
           </Transition>
         </router-view>

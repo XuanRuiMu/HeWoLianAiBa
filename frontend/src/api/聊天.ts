@@ -349,7 +349,13 @@ export async function huoQuDangAnLieBiao(categoryId?: string): Promise<DangAnXia
         cheng_gong: boolean
         shu_ju: { dangAnLieBiao: DangAnXiangQing[] }
       }>('/战绩/列表')
-  return 响应.data.shu_ju?.dangAnLieBiao || []
+  const lieBiao = 响应.data.shu_ju?.dangAnLieBiao || []
+  return lieBiao.map((dangAn) => ({
+    ...dangAn,
+    zui_hou_liang_tiao: Array.isArray(dangAn.zui_hou_liang_tiao)
+      ? dangAn.zui_hou_liang_tiao.slice(-2)
+      : [],
+  }))
 }
 
 export async function yiDongDangAnDaoFenLei(
