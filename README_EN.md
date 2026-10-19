@@ -49,12 +49,12 @@
 
 | Layer | Technology |
 | --- | --- |
-| **Frontend** (`frontend/`) | Vue 3 + Vite + TypeScript + Pinia + Vue Router + Socket.IO Client + Three.js + PWA |
-| **Backend** (`backend/`) | Node.js + Express 5 + TypeScript + PostgreSQL + Redis + Socket.IO + OpenTelemetry + pino logging |
+| **QianDuan** (`QianDuan/`) | Vue 3 + Vite + TypeScript + Pinia + Vue Router + Socket.IO Client + Three.js + PWA |
+| **HouDuan** (`HouDuan/`) | Node.js + Express 5 + TypeScript + PostgreSQL + Redis + Socket.IO + OpenTelemetry + pino logging |
 | **AI** | DeepSeek & other LLMs (`AI引擎.ts`) + Prompt builder + sentiment analysis + conversation summaries + key-event extraction |
 | **Multimodal** | TTS / ASR / image generation / video understanding (Alibaba Cloud & other vendors) |
-| **Deploy** | Docker Compose + nginx + Let's Encrypt (`deploy/`) |
-| **Engineering** | husky + commitlint + gitleaks (secret scanning) + CI + Vitest |
+| **BuShu** | Docker Compose + nginx + Let's Encrypt (`BuShu/`) |
+| **Engineering** | husky + gitleaks (secret scanning) + CI + Vitest |
 
 ---
 
@@ -64,22 +64,22 @@
 
 ```bash
 # 1. Install deps
-npm install                      # root (husky/commitlint)
-npm --prefix frontend install
-npm --prefix backend install
+npm install                      # root (husky)
+npm --prefix QianDuan install
+npm --prefix HouDuan install
 
-# 2. Configure env (see .env.example files)
+# 2. Configure env (root .env is for docker compose; QianDuan/HouDuan have their own .env.example)
 cp .env.example .env
-cp frontend/.env.example frontend/.env
-cp backend/.env.example backend/.env
+cp QianDuan/.env.example QianDuan/.env
+cp HouDuan/.env.example HouDuan/.env
 
-# 3. Init the database
-psql -f database/000_baseline.sql        # base tables
-psql -f database/001_haoyou_yu_shezhi.sql # friends/settings
+# 3. Init the ShuJuKu
+psql -f ShuJuKu/000_baseline.sql        # base tables
+psql -f ShuJuKu/001_haoyou_yu_shezhi.sql # friends/settings
 
 # 4. Start
-npm --prefix backend run dev     # backend (port 3000)
-npm --prefix frontend run dev    # frontend (Vite dev server)
+npm --prefix HouDuan run dev     # HouDuan (port 3000)
+npm --prefix QianDuan run dev    # QianDuan (Vite dev server)
 ```
 
 > Windows: just run `start.ps1` at the repo root.
@@ -87,16 +87,16 @@ npm --prefix frontend run dev    # frontend (Vite dev server)
 ### Docker
 
 ```bash
-docker compose up -d             # backend + frontend + postgres + redis + nginx
+docker compose up -d             # HouDuan + QianDuan + postgres + redis + nginx
 ```
 
-> See [deploy/备份与恢复.md](deploy/备份与恢复.md) and [deploy/nginx.conf](deploy/nginx.conf).
+> See [BuShu/备份与恢复.md](BuShu/备份与恢复.md) and [BuShu/nginx.conf](BuShu/nginx.conf).
 
 ---
 
-## Database design
+## ShuJuKu design
 
-The schema reflects the full product domain (`database/`):
+The schema reflects the full product domain (`ShuJuKu/`):
 
 ```text
 用户 · 角色 · 消息 · 好感度 · 记忆 · 对话摘要 · 用户人设 · 游戏档案 · 游戏结局
@@ -112,14 +112,14 @@ The schema reflects the full product domain (`database/`):
 
 ```text
 HeWoLianAiBa/
-├── frontend/                 # Vue 3 frontend
+├── QianDuan/                 # Vue 3 QianDuan
 │   └── src/
 │       ├── views/            # chat · auth · friend-chat · friend-list · challenges · leaderboard ·
 │       │                     # advisor records · past records · notifications · account/security · WeChat · bubble settings …
 │       ├── components/       # call UI · advisor guide · profile card · avatar crop · challenge hints …
 │       ├── layouts/          # auth layout (login/register)
 │       └── … (stores / router / api / config)
-├── backend/                  # Express 5 backend
+├── HouDuan/                  # Express 5 HouDuan
 │   └── src/
 │       ├── routes/           # auth · message · character · character-detail · friends · favor ·
 │       │                     # advisor · challenges · records · media · notifications · settings …
@@ -128,8 +128,8 @@ HeWoLianAiBa/
 │       ├── socket/           # realtime: chat · calls · auth · notifications · takeover · log push
 │       ├── middleware/       # auth · admin · rate limit · security · input validation · IP ban · log tracing
 │       └── config/           # AI · favor · character · advisor · challenges · multimodal · TTS · calls · bubble themes …
-├── database/                 # SQL schemas (baseline + increments)
-├── deploy/                   # docker / nginx / letsencrypt / backups
+├── ShuJuKu/                 # SQL schemas (baseline + increments)
+├── BuShu/                   # nginx / letsencrypt / backups
 ├── docs/                     # project docs
 ├── .github/workflows/ci.yml  # CI
 └── docker-compose.yml
@@ -140,8 +140,8 @@ HeWoLianAiBa/
 ## Tests
 
 ```bash
-npm --prefix frontend test          # Vitest unit + component tests
-npm --prefix backend test           # backend unit / integration
+npm --prefix QianDuan test          # Vitest unit + component tests
+npm --prefix HouDuan test           # HouDuan unit / integration
 ```
 
 ---

@@ -1,10 +1,17 @@
-# 镜像入口脚本必须以 LF 签出：Windows core.autocrlf 会把它改成 CRLF，
-# 使 `exec ./entrypoint.sh` 在 Linux 容器内报 no such file or directory。
-backend/entrypoint.sh text eol=lf
+# 行尾锁定：Windows 的 core.autocrlf 默认会把文本文件检出成 CRLF，
+# 而容器与 Linux 服务器只认 LF。两类故障都由这一条兜住：
+#
+#   1. 镜像入口脚本 houDuan/entrypoint.sh（Dockerfile 的 ENTRYPOINT）
+#      被改成 CRLF 后，Linux 容器内 exec ./entrypoint.sh 直接报
+#      no such file or directory —— 镜像构建成功、容器起不来。
+#   2. 迁移 SQL 的校验和漂移：schema_migrations.checksum 登记的就是迁移文件的字节，
+#      平台检出的行尾差异会让同一份内容算出两种哈希（houDuan/scripts/__tests__/迁移台账校验和.test.ts
+#      是该风险的护栏）。显式锁 eol=lf，使 Windows/Linux/CI/镜像内检出为同一串字节。
+#
+# 模式不含斜杠，与 .gitignore 同义：对任意层级目录生效。
 
-# FP-15 迁移文件字节口径：schema_migrations.checksum 登记的就是迁移文件字节，
-# 平台检出的行尾差异会让同一份内容算出两种哈希（L-01 台账漂移根因，
-# 且 docker build 的构建上下文用的就是工作树字节）。显式锁 eol=lf，
-# 使 Windows/Linux/CI/镜像内检出为同一串字节。
-backend/database/*.sql text eol=lf
-backend/database/migrations/*.sql text eol=lf
+*.sh text eol=lf
+houDuan/qianYi/*.sql text eol=lf
+houDuan/qianYi/migrations/*.sql text eol=lf
+# pending 目录里的迁移单层通配覆盖不到，pending 态一旦转正就会引入校验和漂移
+houDuan/qianYi/migrations/pending/*.sql text eol=lf

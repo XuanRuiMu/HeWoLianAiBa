@@ -49,12 +49,12 @@
 
 | 层 | 技术 |
 | --- | --- |
-| **前端**（`frontend/`）| Vue 3 + Vite + TypeScript + Pinia + Vue Router + Socket.IO Client + Three.js + PWA |
-| **后端**（`backend/`）| Node.js + Express 5 + TypeScript + PostgreSQL + Redis + Socket.IO + OpenTelemetry + pino 日志 |
+| **前端**（`QianDuan/`）| Vue 3 + Vite + TypeScript + Pinia + Vue Router + Socket.IO Client + Three.js + PWA |
+| **后端**（`HouDuan/`）| Node.js + Express 5 + TypeScript + PostgreSQL + Redis + Socket.IO + OpenTelemetry + pino 日志 |
 | **AI** | DeepSeek 等 LLM 接入（`AI引擎.ts`）+ Prompt 构建器 + 情感分析 + 对话摘要 + 关键事件提取 |
 | **多模态** | TTS / ASR / 图像生成 / 视频理解（阿里云等供应商接入）|
-| **部署** | Docker Compose + nginx + Let's Encrypt（`deploy/`）|
-| **工程规范** | husky + commitlint + gitleaks（密钥扫描）+ CI + Vitest |
+| **部署** | Docker Compose + nginx + Let's Encrypt（`BuShu/`）|
+| **工程规范** | husky + gitleaks（密钥扫描）+ CI + Vitest |
 
 ---
 
@@ -64,22 +64,22 @@
 
 ```bash
 # 1. 安装依赖
-npm install                      # 根目录（husky/commitlint）
-npm --prefix frontend install
-npm --prefix backend install
+npm install                      # 根目录（husky）
+npm --prefix QianDuan install
+npm --prefix HouDuan install
 
-# 2. 配置环境变量（参照 .env.example）
-cp .env.example .env             # 根配置
-cp frontend/.env.example frontend/.env
-cp backend/.env.example backend/.env
+# 2. 配置环境变量（根 .env 供 docker compose 使用；前后端另有各自的 .env.example）
+cp .env.example .env
+cp QianDuan/.env.example QianDuan/.env
+cp HouDuan/.env.example HouDuan/.env
 
 # 3. 初始化数据库
-psql -f database/000_baseline.sql        # 基础表
-psql -f database/001_haoyou_yu_shezhi.sql # 好友/设置
+psql -f ShuJuKu/000_baseline.sql        # 基础表
+psql -f ShuJuKu/001_haoyou_yu_shezhi.sql # 好友/设置
 
 # 4. 启动
-npm --prefix backend run dev     # 后端（默认 3000）
-npm --prefix frontend run dev    # 前端（Vite dev server）
+npm --prefix HouDuan run dev     # 后端（默认 3000）
+npm --prefix QianDuan run dev    # 前端（Vite dev server）
 ```
 
 > Windows 用户也可直接在根目录运行 `start.ps1` 一键启动。
@@ -87,16 +87,16 @@ npm --prefix frontend run dev    # 前端（Vite dev server）
 ### Docker 部署
 
 ```bash
-docker compose up -d             # backend + frontend + postgres + redis + nginx
+docker compose up -d             # HouDuan + QianDuan + postgres + redis + nginx
 ```
 
-> 完整部署与备份见 [deploy/备份与恢复.md](deploy/备份与恢复.md)、[deploy/nginx.conf](deploy/nginx.conf)。
+> 完整部署与备份见 [BuShu/备份与恢复.md](BuShu/备份与恢复.md)、[BuShu/nginx.conf](BuShu/nginx.conf)。
 
 ---
 
 ## 数据库设计
 
-表结构体现完整的产品域建模（`database/`）：
+表结构体现完整的产品域建模（`ShuJuKu/`）：
 
 ```text
 用户 · 角色 · 消息 · 好感度 · 记忆 · 对话摘要 · 用户人设 · 游戏档案 · 游戏结局
@@ -112,14 +112,14 @@ docker compose up -d             # backend + frontend + postgres + redis + nginx
 
 ```text
 HeWoLianAiBa/
-├── frontend/                  # Vue 3 前端
+├── QianDuan/                  # Vue 3 前端
 │   └── src/
 │       ├── views/             # 聊天页面·登录·好友聊天·好友列表·挑战主页·挑战积分榜·
 │       │                      # 军师记录详情·过往战绩·通知·账号与安全·添加微信·气泡设置…
 │       ├── components/        # 通话界面·军师指导·用户资料卡·头像裁剪·挑战渣型提示…
 │       ├── layouts/           # 认证布局（登录/注册）
 │       └── …（stores / router / api / config）
-├── backend/                   # Express 5 后端
+├── HouDuan/                   # Express 5 后端
 │   └── src/
 │       ├── routes/            # 认证·消息·角色·角色详情·好友·好感度·军师·挑战·战绩·
 │       │                      # 媒体·通知·用户设置·资料·管理员·功能开关·健康检查…
@@ -128,8 +128,8 @@ HeWoLianAiBa/
 │       ├── socket/            # 实时通信：聊天·通话·认证·通知·夺舍·日志推送
 │       ├── middleware/        # 认证·管理员·限流·安全·输入验证·IP封禁·日志追踪
 │       └── config/            # AI·好感度·角色·军师·挑战·多模态·TTS·通话·气泡主题…
-├── database/                  # SQL 建表（基线 + 增量）
-├── deploy/                    # docker/nginx/letsencrypt/备份
+├── ShuJuKu/                  # SQL 建表（基线 + 增量）
+├── BuShu/                    # nginx/letsencrypt/备份
 ├── docs/                      # 项目文档
 ├── .github/workflows/ci.yml   # CI
 └── docker-compose.yml
@@ -140,8 +140,8 @@ HeWoLianAiBa/
 ## 测试
 
 ```bash
-npm --prefix frontend test          # Vitest 单测 + 组件测试
-npm --prefix backend test           # 后端单元 / 集成测试
+npm --prefix QianDuan test          # Vitest 单测 + 组件测试
+npm --prefix HouDuan test           # 后端单元 / 集成测试
 ```
 
 ---

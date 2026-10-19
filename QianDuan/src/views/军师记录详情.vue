@@ -1,0 +1,380 @@
+<template>
+  <div class="junshi-jilu-yemian" style="overflow-y: auto">
+    <div v-if="qianTaiCuoWu">
+      <RequestError
+        :cuo-wu="qianTaiCuoWu"
+        :zhong-zai="qianTaiZhuangTai === 'loading'"
+        @chong-shi="chongShi"
+      />
+    </div>
+    <div v-else-if="qianTaiZhuangTai === 'loading'" class="jiaZai-zhuangtai" role="status">
+      {{ huoQuFanYi('junShi', 'jiaZaiZhong') }}
+    </div>
+    <div v-else-if="!jiLuShuJu" class="kong-zhuangtai" role="status">
+      {{ huoQuFanYi('junShi', 'weiZhaoDaoJiLu') }}
+    </div>
+    <template v-else>
+      <div class="jilu-xiangqing-kapian">
+        <div class="jilu-tou">
+          <button class="fanhui-anniu" @click="fanhui">
+            ← {{ huoQuFanYi('caidan', 'fanHui') }}
+          </button>
+          <h2 class="jilu-biaoti">{{ huoQuFanYi('yeMianBiaoTi', 'junShiJiLuXiangQing') }}</h2>
+          <div class="jilu-jiaose-xinxi">
+            <span class="jilu-shijian">{{ jiLuShuJu.shi_jian }}</span>
+            <span class="jilu-jiaose-ming">{{ jiLuShuJu.jiao_se_ming_zi }}</span>
+          </div>
+          <div class="jilu-junshi-xinxi">
+            <div class="jilu-junshi-wei">
+              <TouXiang
+                :tou-xiang="touXiangShiBai ? null : shengChengTouXiangURL(jiLuShuJu.jun_shi_tou_xiang)"
+                :mo-ren-zi="(jiLuShuJu.jun_shi_ming_chen || huoQuFanYi('junShi', 'junShiMingCheng')).slice(0, 1)"
+                @error="touXiangShiBai = true"
+              />
+            </div>
+            <span class="jilu-junshi-ming">{{ jiLuShuJu.jun_shi_ming_chen }}</span>
+          </div>
+        </div>
+
+        <div
+          v-if="jiLuShuJu.liao_tian_ji_lu && jiLuShuJu.liao_tian_ji_lu.length > 0"
+          class="liaotian-jilu"
+        >
+          <h3 class="quyu-biaoti">{{ huoQuFanYi('junShi', 'liaoTianJiLu') }}</h3>
+          <div class="xiaoxi-liebiao">
+            <div
+              v-for="(xiaoXi, suoYin) in jiLuShuJu.liao_tian_ji_lu"
+              :key="suoYin"
+              class="xiaoxi-xiangmu"
+              :class="{ 'chehui-xiaoxi': xiaoXi.yi_che_hui }"
+            >
+              <span class="xiaoxi-jiaose">{{ xiaoXi.jiao_se }}</span>
+              <div class="xiaoxi-neirong-qu">
+                <span class="xiaoxi-neirong">{{ xiaoXi.nei_rong }}</span>
+                <!-- FP-26：撤回原文不再下发也不再展示（撤回语义＝不再可见），只保留撤回时间与撤回态类名 -->
+                <div v-if="xiaoXi.yi_che_hui && xiaoXi.che_hui_shi_jian" class="chehui-shijian">
+                  {{ huoQuFanYi('junShi', 'cheHuiYu') }}{{ xiaoXi.che_hui_shi_jian }}
+                </div>
+              </div>
+              <span v-if="xiaoXi.shi_jian" class="xiaoxi-shijian">{{ xiaoXi.shi_jian }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="jianyi-quyu">
+          <h3 class="quyu-biaoti">{{ huoQuFanYi('junShi', 'zhiDaoJianYi') }}</h3>
+          <component
+            :is="军师指导分段"
+            :fen-duan="jiLuShuJu.jian_yi_fen_duan ?? null"
+            :zheng-duan="jiLuShuJu.jian_yi"
+          />
+          <component :is="提示带" />
+        </div>
+      </div>
+    </template>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { huoQuJunShiJiLu } from '@/api/聊天'
+import { huoQuFanYi } from '@/config/翻译表'
+import { shengChengTouXiangURL } from '@/utils/头像'
+import TouXiang from '@/components/头像.vue'
+import 军师指导分段 from '@/components/军师指导分段.vue'
+import 提示带 from '@/components/提示带.vue'
+import RequestError from '@/components/请求错误.vue'
+import { use前台错误 } from '@/composables/use前台错误'
+import type { JunShiJiLu } from '@/types/类型定义'
+
+const route = useRoute()
+const router = useRouter()
+const jiLuShuJu = ref<JunShiJiLu | null>(null)
+const touXiangShiBai = ref(false)
+const { cuoWu: qianTaiCuoWu, zhuangTai: qianTaiZhuangTai, yunXing, chongShi } = use前台错误()
+
+async function jiaZaiShuJu() {
+  await yunXing(
+    async () => {
+      const jiaoSeId = route.params.jiaoSeId as string
+      const jiLuId = route.params.jiLuId as string
+      const lieBiao = await huoQuJunShiJiLu(jiaoSeId)
+      jiLuShuJu.value = lieBiao.find((j) => j.shi_jian === jiLuId) || null
+    },
+    { chongShi: jiaZaiShuJu },
+  )
+}
+
+function fanhui() {
+  router.back()
+}
+
+watch(
+  () => [route.params.jiaoSeId, route.params.jiLuId],
+  () => {
+    void jiaZaiShuJu()
+  },
+  { immediate: true },
+)
+</script>
+
+<style scoped>
+.junshi-jilu-yemian {
+  width: 100%;
+  height: calc(100vh - 52px);
+  min-height: calc(100vh - 52px);
+  padding: var(--jiange-da) var(--jiange-zhong);
+  display: flex;
+  flex-direction: column;
+  gap: var(--jiange-zhong);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gundong-tiao-beijing) transparent;
+  background: var(--liaotian-beijing);
+  background-size: 18px 18px;
+}
+
+/* FP-20 保留特例：记录详情页需要 6px 窄条+透明轨道+beijing/hover 旧令牌滑块（global 为 8px+huakuai 令牌族+半透明灰轨道），宽度/令牌/悬停三项被 军师记录详情.test 钉死，整块保留 */
+.junshi-jilu-yemian::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.junshi-jilu-yemian::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.junshi-jilu-yemian::-webkit-scrollbar-thumb {
+  background: var(--gundong-tiao-beijing);
+  border-radius: 3px;
+}
+
+.junshi-jilu-yemian::-webkit-scrollbar-thumb:hover {
+  background: var(--gundong-tiao-hover);
+}
+
+.jiaZai-zhuangtai,
+.kong-zhuangtai {
+  text-align: center;
+  padding: calc(var(--jiange-da) * 2) var(--jiange-zhong);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
+:root[data-theme='light'] .jiaZai-zhuangtai,
+:root[data-theme='light'] .kong-zhuangtai {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.jilu-xiangqing-kapian {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+  background: rgba(20, 24, 40, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: var(--jiange-da);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--jiange-zhong) + var(--jiange-4));
+}
+
+:root[data-theme='light'] .jilu-xiangqing-kapian {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.jilu-tou {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jiange-xiao);
+}
+
+.fanhui-anniu {
+  align-self: flex-start;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  padding: var(--jiange-6) var(--jiange-12);
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+:root[data-theme='light'] .fanhui-anniu {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.fanhui-anniu:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.jilu-biaoti {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+:root[data-theme='light'] .jilu-biaoti {
+  color: #191919;
+}
+
+.jilu-jiaose-xinxi {
+  display: flex;
+  align-items: center;
+  gap: var(--jiange-xiao);
+}
+
+.jilu-shijian {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+:root[data-theme='light'] .jilu-shijian {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+.jilu-jiaose-ming {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+:root[data-theme='light'] .jilu-jiaose-ming {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.jilu-junshi-xinxi {
+  display: flex;
+  align-items: center;
+  gap: var(--jiange-10);
+  margin-top: var(--jiange-4);
+}
+
+.jilu-junshi-wei {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #8b6914, #d4a843);
+}
+
+.jilu-junshi-ming {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+:root[data-theme='light'] .jilu-junshi-ming {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.quyu-biaoti {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 var(--jiange-xiao);
+  display: flex;
+  align-items: center;
+  gap: var(--jiange-6);
+}
+
+:root[data-theme='light'] .quyu-biaoti {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.jianyi-quyu {
+  padding: var(--jiange-zhong);
+  background: rgba(167, 139, 250, 0.08);
+  border-radius: 12px;
+  border: 1px solid rgba(167, 139, 250, 0.15);
+}
+
+.liaotian-jilu {
+  padding: var(--jiange-zhong);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+:root[data-theme='light'] .liaotian-jilu {
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.xiaoxi-liebiao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jiange-xiao);
+}
+
+.xiaoxi-xiangmu {
+  display: flex;
+  align-items: baseline;
+  gap: var(--jiange-xiao);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.xiaoxi-xiangmu.chehui-xiaoxi {
+  opacity: 0.6;
+}
+
+.xiaoxi-jiaose {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  flex-shrink: 0;
+  min-width: 24px;
+}
+
+:root[data-theme='light'] .xiaoxi-jiaose {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.xiaoxi-neirong-qu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--jiange-2);
+}
+
+.xiaoxi-neirong {
+  color: rgba(255, 255, 255, 0.6);
+  word-break: break-word;
+}
+
+:root[data-theme='light'] .xiaoxi-neirong {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.chehui-shijian {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+:root[data-theme='light'] .chehui-shijian {
+  color: rgba(0, 0, 0, 0.25);
+}
+
+.xiaoxi-shijian {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+
+:root[data-theme='light'] .xiaoxi-shijian {
+  color: rgba(0, 0, 0, 0.25);
+}
+</style>

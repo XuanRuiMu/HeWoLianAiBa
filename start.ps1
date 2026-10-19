@@ -21,8 +21,8 @@ function 启动开发窗口 {
   }
 }
 
-Write-Host "[1/2] Starting backend (port 3000)..." -ForegroundColor Yellow
-启动开发窗口 -目录 "$root\backend" -标题 'backend-3000'
+Write-Host "[1/2] Starting HouDuan (port 3000)..." -ForegroundColor Yellow
+启动开发窗口 -目录 "$root\HouDuan" -标题 'HouDuan-3000'
 
 # YH-147 健康等待：后端readyz通后再起前端，禁吞错
 $backendJianKang = $false
@@ -35,14 +35,14 @@ for ($i = 0; $i -lt 30; $i++) {
 }
 if (-not $backendJianKang) { throw '启动失败：后端30轮健康等待未通过，请检查后端日志' }
 
-Write-Host "[2/2] Starting frontend (port 5173)..." -ForegroundColor Yellow
-启动开发窗口 -目录 "$root\frontend" -标题 'frontend-5173'
+Write-Host "[2/2] Starting QianDuan (port 5173)..." -ForegroundColor Yellow
+启动开发窗口 -目录 "$root\QianDuan" -标题 'QianDuan-5173'
 Start-Sleep -Seconds 2
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
-Write-Host "  Frontend: http://localhost:5173" -ForegroundColor Green
-Write-Host "  Backend:  http://localhost:3000" -ForegroundColor Green
+Write-Host "  QianDuan: http://localhost:5173" -ForegroundColor Green
+Write-Host "  HouDuan:  http://localhost:3000" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "Close Backend/Frontend cmd windows to stop." -ForegroundColor DarkGray
+Write-Host "Close HouDuan/QianDuan cmd windows to stop." -ForegroundColor DarkGray

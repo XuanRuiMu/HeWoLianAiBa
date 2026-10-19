@@ -1,0 +1,569 @@
+@import './设计令牌.css';
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: var(--ziti-jiazu);
+  font-size: var(--ziti-zhong);
+  color: var(--wenben-zhuse);
+  background: linear-gradient(
+    135deg,
+    var(--beijing-jianbian-1),
+    var(--beijing-jianbian-2),
+    var(--beijing-jianbian-3),
+    var(--beijing-jianbian-4)
+  );
+  background-size: 300% 300%;
+  animation: jianbian-liudong 12s ease infinite;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  height: 100%;
+  width: 100%;
+}
+
+a {
+  color: var(--zhuse);
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: transparent;
+}
+
+input,
+textarea,
+select {
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: transparent;
+}
+
+#ban-ben-ti-shi {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--ceng-banben);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #1a1a1a;
+  background: #ffd666;
+}
+
+#ban-ben-ti-shi[hidden] {
+  display: none;
+}
+
+#ban-ben-shua-xin {
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #fff;
+  background: #1a1a1a;
+}
+
+/* 焦点环单一规则源：:where(:focus-visible) 特异度 0，文本控件档 (0,1,0) 结构上必然压过它，
+   不再靠"同特异度 + 源码顺序"这种一改就翻车的压制关系。
+   文本控件只收窄环（1px / 零偏移，贴住控件不与装饰线争位）；聊天输入区（data-chat-input）走全局去高亮，
+   聚焦只剩底色区分，不画任何环 */
+:where(:focus-visible) {
+  outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
+  outline-offset: var(--jujiao-huan-pian-yi);
+}
+
+/* checkbox/radio/按钮类等非文本 input 不在此列，吃上面的标准环 */
+:where(
+  input:not([type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color']),
+  textarea,
+  select,
+  .xinmuzhong-shurukuang,
+  .xiugai-shuru,
+  .fenlie-shuru
+):focus-visible {
+  outline: var(--jujiao-huan-kuan-du-wenben) solid var(--jujiao-huan-yanse);
+  outline-offset: var(--jujiao-huan-pian-yi-wenben);
+}
+
+:where(
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='button'],
+    [type='submit'],
+    [type='reset'],
+    [type='file'],
+    [type='image'],
+    [type='range'],
+    [type='color'],
+    [type='hidden']
+  ),
+  textarea,
+  [contenteditable]:not([contenteditable='false'])
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru) {
+  border-bottom-width: var(--shuru-xian-changtai-kuan-du) !important;
+  border-bottom-style: solid !important;
+  border-bottom-color: transparent !important;
+  background-image:
+    var(--shuru-sao-jianbian),
+    linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se)) !important;
+  background-repeat: no-repeat, no-repeat !important;
+  background-position: left bottom, left bottom !important;
+  background-size: 0% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du) !important;
+  transition-property: background-size !important;
+  transition-duration: var(--shuru-sao-chu-shi-chang), var(--shuru-sao-chu-shi-chang) !important;
+  transition-timing-function: var(--quxian-sao-chu), var(--quxian-sao-chu) !important;
+}
+
+:where(
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='button'],
+    [type='submit'],
+    [type='reset'],
+    [type='file'],
+    [type='image'],
+    [type='range'],
+    [type='color'],
+    [type='hidden']
+  ),
+  textarea,
+  [contenteditable]:not([contenteditable='false'])
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):disabled {
+  background-image:
+    linear-gradient(var(--shuru-xian-jinyong-se), var(--shuru-xian-jinyong-se)),
+    linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se)) !important;
+  background-position: left bottom, left bottom !important;
+  background-size: 100% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du) !important;
+  cursor: not-allowed !important;
+}
+
+:where(
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='button'],
+    [type='submit'],
+    [type='reset'],
+    [type='file'],
+    [type='image'],
+    [type='range'],
+    [type='color'],
+    [type='hidden']
+  ),
+  textarea,
+  [contenteditable]:not([contenteditable='false'])
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):read-only {
+  background-image:
+    linear-gradient(var(--shuru-xian-zhi-du-se), var(--shuru-xian-zhi-du-se)),
+    linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se)) !important;
+  background-position: left bottom, left bottom !important;
+  background-size: 100% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du) !important;
+}
+
+:where(
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='button'],
+    [type='submit'],
+    [type='reset'],
+    [type='file'],
+    [type='image'],
+    [type='range'],
+    [type='color'],
+    [type='hidden']
+  ),
+  textarea,
+  [contenteditable]:not([contenteditable='false'])
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):is([aria-invalid='true'], [data-error='true'], .is-error) {
+  background-image:
+    linear-gradient(var(--shuru-xian-cuowu-se), var(--shuru-xian-cuowu-se)),
+    linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se)) !important;
+  background-position: left bottom, left bottom !important;
+  background-size: 100% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du) !important;
+}
+
+:where(
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='button'],
+    [type='submit'],
+    [type='reset'],
+    [type='file'],
+    [type='image'],
+    [type='range'],
+    [type='color'],
+    [type='hidden']
+  ),
+  textarea,
+  [contenteditable]:not([contenteditable='false'])
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):focus {
+  background-size: 100% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du) !important;
+}
+
+:where(
+  input:not(
+    [type='checkbox'],
+    [type='radio'],
+    [type='button'],
+    [type='submit'],
+    [type='reset'],
+    [type='file'],
+    [type='image'],
+    [type='range'],
+    [type='color'],
+    [type='hidden']
+  ),
+  textarea,
+  [contenteditable]:not([contenteditable='false'])
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):-webkit-autofill {
+  background-color: var(--shuru-beijing-zidong-tianchong) !important;
+  color: var(--shuru-wenben-zidong-tianchong) !important;
+  -webkit-text-fill-color: var(--shuru-wenben-zidong-tianchong) !important;
+  /* 这里刻意不用 inset 大扩散遮罩：它画在 background-image 之上，会把底线整条盖掉，
+     而单条 inset 阴影在几何上无法「盖满元素又留出底部 1px」，故遮罩与底线不可共存。
+     UA 自动填充只改 background-color，底线走 background-image，天然不被其覆盖。 */
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body {
+    animation: none;
+  }
+  :where(
+    input:not(
+      [type='checkbox'],
+      [type='radio'],
+      [type='button'],
+      [type='submit'],
+      [type='reset'],
+      [type='file'],
+      [type='image'],
+      [type='range'],
+      [type='color'],
+      [type='hidden']
+    ),
+    textarea,
+    [contenteditable]:not([contenteditable='false'])
+  ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru) {
+    transition-property: none !important;
+    transition-duration: 0s !important;
+  }
+}
+
+/* 滚动条单一真源：组件内保留的私有 ::-webkit-scrollbar 特例均在各自文件内以「FP-20 保留特例」注释逐项写明理由（宽度差异/测试钉死/透明轨道），此处不重复登记 */
+::-webkit-scrollbar {
+  width: var(--gundong-tiao-kuan-du);
+  height: var(--gundong-tiao-kuan-du);
+  cursor: var(--gundong-tiao-cursor);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--gundong-tiao-guidao);
+  cursor: var(--gundong-tiao-guidao-cursor);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--gundong-tiao-huakuai);
+  border-radius: var(--gundong-tiao-kuan-du);
+  cursor: var(--gundong-tiao-huakuai-cursor);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gundong-tiao-huakuai-hover);
+  cursor: var(--gundong-tiao-huakuai-cursor);
+}
+
+::-webkit-scrollbar-track:hover {
+  background: var(--gundong-tiao-guidao-hover);
+  cursor: var(--gundong-tiao-guidao-cursor);
+}
+
+:where(*:focus, *:focus-visible, *:focus-within)::-webkit-scrollbar-track {
+  background: var(--gundong-tiao-guidao-jujiao);
+  cursor: var(--gundong-tiao-guidao-cursor);
+}
+
+:where(*:focus, *:focus-visible, *:focus-within)::-webkit-scrollbar-thumb {
+  background: var(--gundong-tiao-huakuai-jujiao);
+  cursor: var(--gundong-tiao-huakuai-cursor);
+}
+
+/* 交汇角落（横竖滚动条同时存在时的方块）：全库无一处给它设值，此处补齐才使 global 是完备单一真源 */
+::-webkit-scrollbar-corner {
+  background: transparent;
+  cursor: var(--gundong-tiao-cursor);
+}
+
+/* 不支持 ::-webkit-scrollbar 的浏览器（Firefox）走标准属性基线，避免与 Chromium 自绘路径互斥 */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--gundong-tiao-huakuai) var(--gundong-tiao-guidao);
+  }
+
+  :where(*:focus, *:focus-visible, *:focus-within) {
+    scrollbar-color: var(--gundong-tiao-huakuai-jujiao) var(--gundong-tiao-guidao-jujiao);
+  }
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+.anniu-zhuyao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  min-height: 44px;
+  background: var(--zhuse);
+  color: var(--beijing-kaopian);
+  border-radius: var(--yuanjiao-zhong);
+  font-size: var(--ziti-zhong);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.anniu-zhuyao:hover {
+  background: var(--zhuse-shen);
+  transform: translateY(-1px);
+}
+
+.anniu-zhuyao:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.anniu-zhuyao[aria-busy='true'] {
+  filter: brightness(var(--qu-xiao-jia-shen));
+}
+
+.shuru-kuang {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--beijing-kaopian);
+  border: 1px solid var(--biankuang-yanse);
+  border-radius: var(--yuanjiao-zhong);
+  color: var(--wenben-zhuse);
+}
+
+.shuru-kuang:focus {
+  border-color: var(--biankuang-yanse);
+  outline: none;
+}
+
+.shuru-kuang:focus-visible {
+  outline: none;
+}
+
+.shuru-kuang:focus-within {
+  border-color: var(--biankuang-yanse);
+}
+
+[data-chat-input='true']:focus {
+  outline: none;
+}
+
+[data-chat-input='true']:focus-visible {
+  outline: none;
+}
+
+[data-chat-input='true']:focus-within {
+  outline: none;
+}
+
+.shuru-kuang::placeholder {
+  color: var(--wenben-tishi);
+}
+
+.yemian-rongqi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.yemian-rongqi.quanping-rongqi {
+  padding: 0;
+}
+
+.biaodan-rongqi {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--jiange-da);
+  background: var(--beijing-kaopian);
+  border-radius: var(--yuanjiao-da);
+  box-shadow: 0 2px 12px var(--yinying-yanse);
+}
+
+.biaodan-biaoti {
+  font-size: 28px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: var(--jiange-da);
+  color: var(--wenben-zhuse);
+}
+
+.biaodan-zu {
+  margin-bottom: var(--jiange-zhong);
+}
+
+.biaodan-zu label {
+  display: block;
+  margin-bottom: var(--jiange-xiao);
+  font-size: var(--ziti-zhong);
+  color: var(--wenben-ciuse);
+}
+
+.cuowu-tishi {
+  padding: 8px 12px;
+  background: rgba(250, 81, 81, 0.1);
+  border: 1px solid rgba(250, 81, 81, 0.2);
+  border-radius: var(--yuanjiao-xiao);
+  color: var(--cuowu-yanse);
+  font-size: var(--ziti-xiao);
+  margin-top: var(--jiange-xiao);
+}
+
+.lianjie-wenben {
+  display: block;
+  text-align: center;
+  margin-top: var(--jiange-zhong);
+  color: var(--wenben-ciuse);
+  font-size: var(--ziti-zhong);
+}
+
+.lianjie-wenben a {
+  color: var(--zhuse);
+  font-weight: 600;
+}
+
+.boli-kapian {
+  background: var(--boli-beijing);
+  backdrop-filter: var(--boli-mohu);
+  -webkit-backdrop-filter: var(--boli-mohu);
+  border: 1px solid var(--boli-biankuang);
+  border-radius: 24px;
+  box-shadow: var(--boli-yinying);
+  position: relative;
+  isolation: isolate;
+}
+
+.boli-kapian::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+.boli-kapian-zheshe::after {
+  animation: zheshe-guang 0.6s ease forwards;
+}
+
+@keyframes zheshe-guang {
+  from {
+    left: -100%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@keyframes jianbian-liudong {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes maichong-faguang {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0px var(--nuanhui-lan));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px var(--nuanhui-lan));
+  }
+}
+
+@keyframes lizi-kuosan {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--lizi-x), var(--lizi-y)) scale(0);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boli-kapian-zheshe::after {
+    animation: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .dian-ji-qu-44 {
+    position: relative;
+  }
+
+  .dian-ji-qu-44::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+}

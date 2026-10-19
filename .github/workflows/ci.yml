@@ -1,5 +1,9 @@
 name: CI
 
+# 凭据规范：数据库口令 / JWT 密钥等一律经 ${{ secrets.XXX }} 注入，绝不硬编码入库。
+# 未配置 secrets 时仅回退「一次性 CI 容器专用固定测试值」（随作业销毁，非任何真实环境凭据），
+# 兜底值与备案说明见 .gitleaks.toml allowlist。
+
 on:
   push:
     branches: [main, master]
@@ -22,12 +26,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  frontend:
-    name: Frontend CI
+  QianDuan:
+    name: QianDuan CI
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend
+        working-directory: QianDuan
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -37,7 +41,7 @@ jobs:
         with:
           node-version: '26.10.0'
           cache: 'npm'
-          cache-dependency-path: 'frontend/package-lock.json'
+          cache-dependency-path: 'QianDuan/package-lock.json'
 
       - name: Install dependencies
         run: npm ci
@@ -48,22 +52,29 @@ jobs:
       - name: Lint
         run: npm run lint
 
+# 排在 Build 之前：前端用例无需产物，而 vite build 是本 job 最慢的一步，
+# 先让测试把逻辑回归挡在外面，构建只对已过测试的代码执行。
+      - name: Test
+        run: npm run test
+
       - name: Build
         run: npm run build
 
-  backend:
-    name: Backend CI
+  HouDuan:
+    name: HouDuan CI
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend
+        working-directory: HouDuan
     env:
-      DATABASE_URL: postgresql://lovewithme:lovewithme_dev@localhost:5432/lovewithme_test
-      TEST_DATABASE_URL: postgresql://lovewithme:lovewithme_dev@localhost:5432/lovewithme_test
+      # 凭据经 secrets 注入；未配置时回退一次性 CI 容器专用测试值（非任何真实环境凭据，备案见 .gitleaks.toml）
+      DATABASE_URL: postgresql://lianaiba:${{ secrets.CI_TEST_POSTGRES_PASSWORD || 'lianaiba_dev' }}@localhost:5432/lianaiba_test
+      TEST_DATABASE_URL: postgresql://lianaiba:${{ secrets.CI_TEST_POSTGRES_PASSWORD || 'lianaiba_dev' }}@localhost:5432/lianaiba_test
       REDIS_PASSWORD: ci-redis-${{ github.run_id }}-${{ github.run_attempt }}
       REDIS_URL: redis://:ci-redis-${{ github.run_id }}-${{ github.run_attempt }}@localhost:6379
       NODE_ENV: test
-      JWT_SECRET: ci-test-jwt-secret-ci-test-jwt-secret-32
+      # 同上：secrets 注入优先，兜底为一次性 CI 容器专用测试值（非生产凭据）
+      JWT_SECRET: ${{ secrets.CI_TEST_JWT_SECRET || 'ci-test-jwt-secret-ci-test-jwt-secret-32' }}
       # FP-14 模型名自检用例需要「已配置密钥」这一前置条件才能走到比对分支
       # （DeepSeek客户端.ts 的 ziJianMoXingMingKeYong：`if (!miYao || !jiChu) return true`）。
       # CI 不入库 .env，故显式给一个占位值；该用例已 mock fetch，不会真的发出请求。
@@ -72,13 +83,14 @@ jobs:
       postgres:
         image: postgres:18.6-alpine3.24@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
         env:
-          POSTGRES_DB: lovewithme_test
-          POSTGRES_USER: lovewithme
-          POSTGRES_PASSWORD: lovewithme_dev
+          POSTGRES_DB: lianaiba_test
+          POSTGRES_USER: lianaiba
+          # 同上：secrets 注入优先，兜底为一次性 CI 容器专用测试值（非生产凭据）
+          POSTGRES_PASSWORD: ${{ secrets.CI_TEST_POSTGRES_PASSWORD || 'lianaiba_dev' }}
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U lovewithme"
+          --health-cmd "pg_isready -U lianaiba"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -108,7 +120,7 @@ jobs:
         with:
           node-version: '26.10.0'
           cache: 'npm'
-          cache-dependency-path: 'backend/package-lock.json'
+          cache-dependency-path: 'HouDuan/package-lock.json'
 
       - name: Install dependencies
         run: npm ci
@@ -135,16 +147,16 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Prepare isolated database
+      - name: Prepare isolated ShuJuKu
         run: |
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f ../database/000_baseline.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f ../ShuJuKu/000_baseline.sql
           ./node_modules/.bin/ts-node scripts/run_migration.ts
           ./node_modules/.bin/ts-node scripts/run_migration.ts
 
-      - name: Verify database migrations
+      - name: Verify ShuJuKu migrations
         run: |
           # 1. Apply baseline schema (simulates docker-entrypoint-initdb.d)
-          psql "$DATABASE_URL" -f ../database/000_baseline.sql
+          psql "$DATABASE_URL" -f ../ShuJuKu/000_baseline.sql
           # 2. Run incremental migrations
           ./node_modules/.bin/ts-node scripts/run_migration.ts
           # 3. Verify schema_migrations table has all expected versions
@@ -152,31 +164,41 @@ jobs:
           # 4. Verify idempotency: run again, should skip all
           ./node_modules/.bin/ts-node scripts/run_migration.ts
 
+# 单元/集成测试必须排在建库之后：多数用例连真库（vitest 默认 include 覆盖 scripts/__tests__、
+#   src/**/__tests__），schema 不在则整片红，报错淹没在连接失败里，看不出真实回归。
+# 同时这里也是 ci工作流自检.test.ts:55 断言「HouDuan job 必须真跑测试」的锚点——
+# 该步骤一旦从本文件删除，本地 npm test 会立即转红。
+      - name: Test
+        run: npm run test
+
   simulate-clearance:
     name: Simulate Clearance Rounds (A-3)
     runs-on: ubuntu-latest
-    needs: backend
+    needs: HouDuan
     defaults:
       run:
-        working-directory: backend
+        working-directory: HouDuan
     env:
-      DATABASE_URL: postgresql://lovewithme:lovewithme_dev@localhost:5432/lovewithme_test
-      TEST_DATABASE_URL: postgresql://lovewithme:lovewithme_dev@localhost:5432/lovewithme_test
+      # 凭据经 secrets 注入；未配置时回退一次性 CI 容器专用测试值（非任何真实环境凭据，备案见 .gitleaks.toml）
+      DATABASE_URL: postgresql://lianaiba:${{ secrets.CI_TEST_POSTGRES_PASSWORD || 'lianaiba_dev' }}@localhost:5432/lianaiba_test
+      TEST_DATABASE_URL: postgresql://lianaiba:${{ secrets.CI_TEST_POSTGRES_PASSWORD || 'lianaiba_dev' }}@localhost:5432/lianaiba_test
       REDIS_PASSWORD: ci-redis-${{ github.run_id }}-${{ github.run_attempt }}
       REDIS_URL: redis://:ci-redis-${{ github.run_id }}-${{ github.run_attempt }}@localhost:6379
       NODE_ENV: test
-      JWT_SECRET: ci-test-jwt-secret-ci-test-jwt-secret-32
+      # 同上：secrets 注入优先，兜底为一次性 CI 容器专用测试值（非生产凭据）
+      JWT_SECRET: ${{ secrets.CI_TEST_JWT_SECRET || 'ci-test-jwt-secret-ci-test-jwt-secret-32' }}
     services:
       postgres:
         image: postgres:18.6-alpine3.24@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
         env:
-          POSTGRES_DB: lovewithme_test
-          POSTGRES_USER: lovewithme
-          POSTGRES_PASSWORD: lovewithme_dev
+          POSTGRES_DB: lianaiba_test
+          POSTGRES_USER: lianaiba
+          # 同上：secrets 注入优先，兜底为一次性 CI 容器专用测试值（非生产凭据）
+          POSTGRES_PASSWORD: ${{ secrets.CI_TEST_POSTGRES_PASSWORD || 'lianaiba_dev' }}
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U lovewithme"
+          --health-cmd "pg_isready -U lianaiba"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -198,7 +220,7 @@ jobs:
         with:
           node-version: '26.10.0'
           cache: 'npm'
-          cache-dependency-path: 'backend/package-lock.json'
+          cache-dependency-path: 'HouDuan/package-lock.json'
 
       - name: Install dependencies
         run: npm ci
@@ -209,9 +231,9 @@ jobs:
       - name: Enable Redis authentication
         run: docker exec "${{ job.services.redis.id }}" redis-cli CONFIG SET requirepass "$REDIS_PASSWORD"
 
-      - name: Initialize database schema
+      - name: Initialize ShuJuKu schema
         run: |
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f ../database/000_baseline.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f ../ShuJuKu/000_baseline.sql
           ./node_modules/.bin/ts-node scripts/run_migration.ts
           ./node_modules/.bin/ts-node scripts/run_migration.ts
 

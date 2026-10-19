@@ -1,19 +1,41 @@
-backend/
-database/
+# 作用域说明：本文件只对「构建上下文根目录 = 仓库根」的那一条构建生效，
+# 即 docker-compose.yml 里 qianDuan 服务的 build.context: .。
+# houDuan 服务的 context 是 ./houDuan，由 houDuan/.dockerignore 独立管辖。
+
+# 后端源码不参与前端构建
+houDuan/
+# 建库 SQL 不参与前端构建
+shuJuKu/
+
 .git
 .env
+.env.local
+.env.*.local
 *.log
 .DS_Store
 Thumbs.db
-frontend/node_modules
-frontend/dist
-frontend/scripts
-frontend/coverage
-frontend/public/grass-bg/rongHeCeShi
-frontend/public/grass-bg/wuhaoyangCeShi
-# YH-144 构建上下文收窄：大目录禁进构建，又慢又脏
-备用资源（重要，勿删）/
+
+qianDuan/node_modules
+qianDuan/dist
+qianDuan/coverage
+qianDuan/scripts
+qianDuan/测试截图
+
+# 背景调参的临时快照目录（背景实验室 positioner.html 调参时产出）。
+# 当前磁盘与 git 索引均无此目录，规则属预防性：一旦被重建，每个可达数 MB，
+# 而产物早已固化进 qianDuan/public/grass-bg，不必进构建上下文。
+qianDuan/public/grass-bg/rongHeCeShi
+qianDuan/public/grass-bg/wuhaoyangCeShi
+
+# 与前端产物无关的大体量目录：任一漏排都会被打包进构建上下文传给 Docker 守护进程
+备用资源（重要，勿删）/      # .blend/.glb 设计源文件，145MB
 图片/
+语料实验室/                  # 第三方语料原文，71MB
+背景实验室/                  # 3D 背景独立研究工作区，27MB；产物固化在 qianDuan/public/grass-bg
+测试截图/                    # 调试截图，75MB
+.agents/                     # AI 代理过程证据，纯 markdown
+
+# 语言运行时缓存
 .venv/
 __pycache__/
 *.pyc
