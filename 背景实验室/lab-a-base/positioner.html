@@ -128,6 +128,30 @@
   </div>
 
   <div class="sec">
+    <h2>夜景</h2>
+    <div class="row"><label>昼夜</label><button class="btn" id="btnTheme" style="margin:0;flex:0 0 auto;padding:4px 10px">🌙 夜晚</button><span class="val" id="themeV">白天</span></div>
+    <div class="row"><label>极光</label><button class="btn" id="btnAurora" style="margin:0;flex:0 0 auto;padding:4px 10px">🌌 开</button><span class="val" id="auroraV">开</span></div>
+    <div class="row"><label>极光强度</label><input type="range" id="auroraI" min="0" max="2" step="0.01" value="1"><span class="val" id="auroraIv">1.00</span></div>
+    <button class="btn" id="btnDistDel" style="border-color:#6b3a3a;color:#e8a0a0">🗑 删除远景（释放内存）</button>
+    <div class="row"><label>远景山</label><button class="btn" id="btnDist" style="margin:0;flex:0 0 auto;padding:4px 10px">🚫 已隐藏</button><span class="val" id="distV">已隐藏</span></div>
+    <div class="hint">
+      <b>极光</b>：只在夜晚出现，白天自动淡出。用引擎自带的极光着色器（体积光线步进 + 噪声纹理），
+      挂在天空球内侧，被岛屿按深度正确遮挡。<br>
+      <b>极光强度</b>：0 = 关闭，2 = 加倍。<br>
+      <b>远景山</b>：隐藏远景山脉、远景树林与远海面，让主岛变成浮空岛。点「显示」可以对照。
+    </div>
+  </div>
+
+    <div class="sec">
+    <h2>贴合效果</h2>
+    <div class="row"><label>清空半径</label><input type="range" id="fmBase" min="0.02" max="0.4" step="0.01" value="0.14"><span class="val" id="fmBaseV">0.14 m</span></div>
+    <div class="row"><label>朝相机</label><input type="range" id="fmCam" min="0.26" max="1.2" step="0.01" value="0.26"><span class="val" id="fmCamV">0.26 m</span></div>
+    <div class="row"><label>体表间距</label><input type="range" id="fmClear" min="0" max="0.1" step="0.005" value="0.035"><span class="val" id="fmClearV">0.035 m</span></div>
+    <div class="row"><label>状态</label><span class="val" id="fmState">—</span></div>
+    <div class="hint"><b>清空半径</b>：他身体四周被压平的草地半径。<br><b>朝相机</b>：往相机这一侧额外扫掠的距离，挡住会被投影到他身上的草叶叶尖。<br><b>体表间距</b>：草叶离他表面最近允许的距离，调大就更不碰他。</div>
+  </div>
+
+<div class="sec">
     <h2>自由放置</h2>
     <div id="pkRow">
       <button class="btn" id="pkTree" data-kind="tree">🌲 树</button>
@@ -685,6 +709,8 @@ locked: false,
         // 身体碰撞看门狗：grass.rebuild() / flowers destroy+init() 都会重建材质，
         // 注入会随之丢失 ⇒ 按 500ms 节流补注入（常态只做一次 indexOf，开销可忽略）
         wuBodyWatch(performance.now());
+        wuBareWatch();
+        try { wuSkyTick(); } catch (eSky) { window.__wuSkyErr = String(eSky && eSky.message || eSky); }
         // 吴昊阳现在与草同在世界里（贴地网格），视差让他和草一起动，
         // 不再需要在这里逐帧把位移抄给宿主 —— 那套机制已随之删除。
         out = origRender.call(this, sc, cm);
@@ -1277,6 +1303,39 @@ window.__camReady = true;
     // 0.027m 约合 7.8px，轮廓能实心还原，DILATE=1 也才真的是「稍大一点」（2.7cm）。
     var WU_CELL = 0.027;
     var DILATE = 1;              // footprint 外扩格数（WU_CELL 单位，1 格 = 2.7cm）
+    var WU_BLADE_H = 0.108;
+    var wuCamMargin = WU_CLEAR_MARGIN_CAM;
+    function wuMarginFor() {
+      try {
+        var d = cam.getWorldDirection(new V3());
+        var dn = Math.abs(d.y);
+        var tn = dn / Math.max(0.08, Math.sqrt(Math.max(0.0, 1.0 - dn * dn)));
+        return Math.min(1.6, Math.max(WU_CLEAR_MARGIN_CAM, WU_BLADE_H / Math.max(0.08, tn)));
+      } catch (eMf) {
+        window.__wuCamMarginErr = String(eMf && eMf.message || eMf);
+        return WU_CLEAR_MARGIN_CAM;
+      }
+    }
+    var wuBuiltMargin = 0, wuBareKey = '', wuBarePending = 0;
+    function wuRectKeyNow() {
+      if (!wuRect) return 'x';
+      return [Math.round(wuRect.l), Math.round(wuRect.t), Math.round(wuRect.w), Math.round(wuRect.h)].join(',');
+    }
+    function wuBareWatch() {
+      if (!bareDone) return;
+      var k = wuRectKeyNow();
+      var m = wuMarginFor();
+      var need = (k !== wuBareKey) || (wuBuiltMargin > 0 && Math.abs(m - wuBuiltMargin) / wuBuiltMargin > 0.15);
+      if (!need) { wuBarePending = 0; return; }
+      var now = performance.now();
+      if (!wuBarePending) { wuBarePending = now; return; }
+      if (now - wuBarePending < 900) return;
+      wuBarePending = 0;
+      wuBareKey = k;
+      bareDone = false;
+      try { makeBare(); } catch (eMW) { window.__bareErr = String(eMW && eMW.stack || eMW); }
+      window.__bareRebuilds = (window.__bareRebuilds || 0) + 1;
+    }
     // 清空模式（用户 2026-10-12：「吴昊阳底下的土地，能不能改成和草地一样的黄色」；
     //           2026-10-12 23:51 原话：「吴昊阳的底下，改为秃地面，秃地面改为黄色」）：
     //  'erase'  = 涂 zonesTexture（g=0 ⇒ 引擎自己就把这儿的草删掉，rebuild 也不会再长）。
@@ -1303,7 +1362,7 @@ window.__camReady = true;
     // 实例最大缩放 1.5，70 个 chunk 取上界），不是旧注释写的 0.171m ⇒ 0.05m（5.4cm）
     // 已超过叶片被拨弯后的水平伸长量，其余三侧（非相机侧）叶尖是「往画面上方」移、
     // 根本不会横向压到他身上，留 5cm 只是防拨弯接触。
-    var WU_CLEAR_MARGIN = 0.05;
+    var WU_CLEAR_MARGIN = 0.14;
     // ---------- 朝相机方向额外清空（用户 2026-10-12 22:35 新要求）----------
     // 「将该背景中，吴昊阳身下和周围的草，删掉，防止草的吹动/鼠标交互效果，
     //   落到吴昊阳身上，穿模，导致穿帮」
@@ -1374,7 +1433,7 @@ window.__camReady = true;
     var WU_BODY_COLLIDE = true;      // 总开关：false = 完全回到「删草 + 涂分区图」的旧行为
     var WU_BODY_CELL = 0.004;        // 碰撞场网格 4mm（footprint 的 27mm 太粗，边界会成锯齿）
     var WU_BODY_PAD = 0.55;          // 场覆盖范围 = 碰撞体包围盒外扩这么多米
-    var WU_BODY_CLEAR = 0.006;       // 允许的最近距离（米）：顶点不得进入体表 6mm 内
+    var WU_BODY_CLEAR = 0.035;       // 允许的最近距离（米）：顶点不得进入体表 6mm 内
     var WU_BODY_RANGE = 0.16;        // 有符号距离编码量程（±0.16m ⇒ 8bit 分辨率 1.25mm）
     var WU_BODY_CRUSH = 0.012;       // 压住过渡：基座深入禁区 1.2cm 以上 ⇒ 完全不可见（边界保持干净）
     var WU_BODY_UNIFORMS = [
@@ -1475,7 +1534,7 @@ window.__camReady = true;
       return h ? h.point.y : null;
     }
     function eachGrassInstance(fn) {
-      var grass = E.world.islands.mainIsland.grass;
+      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
       if (!grass || !grass.chunks) return 0;
       var im = new M4c(), n = 0;
       grass.chunks.entries().forEach(function (e) {
@@ -1552,7 +1611,7 @@ window.__camReady = true;
     // 就用重心坐标把它的 uv 三角形光栅化进贴图。
     // ⚠️ UV 一律由三角形世界坐标 ↔ 顶点 uv 反算，不假设 uv 与世界坐标的朝向关系。
     function paintZones(cells) {
-      var grass = E.world.islands.mainIsland.grass;
+      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
       var mi = scene.getObjectByName('main-island');
       if (!mi || !mi.geometry || !mi.geometry.attributes.uv) return null;
       mi.updateMatrixWorld(true);
@@ -1622,7 +1681,7 @@ window.__camReady = true;
     var redboxFilled = false;
     function fillRedbox() {
       if (redboxFilled) return;
-      var grass = E.world.islands.mainIsland.grass;
+      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
       if (!grass || !grass.zonesTexture) return;
       var mi = scene.getObjectByName('main-island');
       if (!mi || !mi.geometry || !mi.geometry.attributes.uv) return;
@@ -1717,7 +1776,7 @@ window.__camReady = true;
     //    实测 rebuild() 在草块已加载完成后单独调用是干净的（70 块不变、无报错）。
     function fillGrass() {
       if (rockFilled || !S.remove || !S.remove.basalt || !geomDone.basalt) return;
-      var grass = E.world.islands.mainIsland.grass;
+      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
       if (!grass || !grass.chunks || grass.chunks.entries().length < 20) return;
       var b = scene.getObjectByName(S.remove.basalt.mesh);
       if (!b || !b.geometry || !b.geometry.index) return;
@@ -1899,7 +1958,10 @@ window.__camReady = true;
       //    再**朝相机方向**多扫掠 WU_CLEAR_MARGIN_CAM 米：草叶叶尖会因俯角投影上移
       //    约 2.356×叶高，只有相机这一侧的草才可能把叶尖投到他身上（见上方推导）。
       var rad = Math.max(DILATE, Math.round(WU_CLEAR_MARGIN / WU_CELL));
-      var camRad = Math.max(0, Math.round(WU_CLEAR_MARGIN_CAM / WU_CELL));
+      wuCamMargin = wuMarginFor();
+      var camRad = Math.max(0, Math.round(wuCamMargin / WU_CELL));
+      wuBuiltMargin = wuCamMargin;
+      wuBareKey = wuRectKeyNow();
       var grown = new Set();
       // 相机在水平面上的「指向相机」单位向量（从身体质心指向相机）
       var camW = cam.getWorldPosition(new V3());
@@ -2344,7 +2406,7 @@ window.__camReady = true;
     function eraseZones(cells, keyOf) {
       var kf = keyOf || cellKey;
       var kc = kf === cellKey ? CELL : WU_CELL;
-      var grass = E.world.islands.mainIsland.grass;
+      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
       var mi = scene.getObjectByName('main-island');
       if (!mi || !mi.geometry || !mi.geometry.attributes.uv) return null;
       mi.updateMatrixWorld(true);
@@ -2475,7 +2537,7 @@ window.__camReady = true;
     // onPixel(px, md, snap, o, wx, wz, d) 返回 true = 这一像素被改动（用于决定要不要回传纹理）
     // pad = 世界包围盒外扩（米）
     function wuRasterBare(cells, dist, pad, onPixel) {
-      var grass = E.world.islands.mainIsland.grass;
+      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
       var mi = scene.getObjectByName('main-island');
       if (!mi || !mi.geometry || !mi.geometry.attributes.uv) return null;
       var zt = grass.zonesTexture, img = zt.image, tw = img.width, th = img.height;
@@ -2659,7 +2721,7 @@ window.__camReady = true;
     };
     function makeBare() {
       if (bareDone || !wuRect) return;
-      var grass = E.world.islands.mainIsland.grass;
+      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
       if (!grass || !grass.chunks || grass.chunks.entries().length < 20) return;
       var mi = scene.getObjectByName('main-island');
       if (!mi) return;
@@ -2767,7 +2829,7 @@ window.__camReady = true;
         cells: cells.size, footBox: fb.map(function (v) { return +v.toFixed(3); }),
         painted: res && res.painted, tris: res && res.tris,
         swept: res && res.swept, maskPx: res && res.paint && res.paint.maskPx,
-        clearMargin: WU_CLEAR_MARGIN, clearMarginCam: WU_CLEAR_MARGIN_CAM,
+        clearMargin: WU_CLEAR_MARGIN, clearMarginCam: WU_CLEAR_MARGIN_CAM, camMargin: +wuCamMargin.toFixed(3), bladeH: WU_BLADE_H,
         clearRadiusCells: Math.max(DILATE, Math.round(WU_CLEAR_MARGIN / WU_CELL)),
         mode: WU_GRASS_MODE, yellow: WU_BARE_YELLOW,
         protectCells: wuProtectCells ? wuProtectCells.size : 0,
@@ -3190,6 +3252,229 @@ window.__camReady = true;
       } catch (eC) { window.__wuCamErr = String(eC && eC.message || eC); }
     }, 200);
 
+    var wuSkyOn = true, wuSkyI = 1, wuSkyMesh = null, wuSkyU = null, wuSkyNight = 0, wuSkyErr = null, wuSkyTickN = 0, wuSkyDistOn = false, wuSkySig = null;
+    var WU_AUR_GLSL = "varying vec3 vWuDir;\nuniform sampler2D uWuNoise;\nuniform float uWuT;\nuniform float uWuAur;\nuniform float uWuInt;\nuniform float uWuAlt;\nfloat wuSampleAuroraNoise(vec2 p){\nvec2 noiseUV=p/20.0+0.5;\nvec4 noise=texture2D(uWuNoise,noiseUV);\nfloat shortStep=1.667;\nfloat longStep=5.0;\nfloat totalCycle=shortStep*3.0+longStep;\nfloat t=mod(uWuT,totalCycle);\nfloat n0,n1,blend;\nif(t<shortStep){n0=noise.r;n1=noise.g;blend=t/shortStep;}\nelse if(t<shortStep*2.0){n0=noise.g;n1=noise.b;blend=(t-shortStep)/shortStep;}\nelse if(t<shortStep*3.0){n0=noise.b;n1=noise.a;blend=(t-shortStep*2.0)/shortStep;}\nelse{n0=noise.a;n1=noise.r;blend=(t-shortStep*3.0)/longStep;}\nreturn mix(n0,n1,blend);}\nfloat wuHash21(in vec2 n){return fract(sin(dot(n,vec2(12.9898,4.1414)))*43758.5453);}\nvec4 wuAurora(vec3 ro,vec3 rd){\nvec4 col=vec4(0.0);\nvec4 avgCol=vec4(0.0);\nfloat stepSize=50.0/32.0;\nfor(float i=0.0;i<32.0;i++){\nfloat baseIdx=i*stepSize;\nfloat jitter=wuHash21(gl_FragCoord.xy+vec2(i*13.37,0.0))*stepSize;\nfloat idx=baseIdx+mod(jitter,stepSize);\nfloat of=0.006*wuHash21(gl_FragCoord.xy)*smoothstep(0.0,15.0,idx);\nfloat pt=((uWuAlt+pow(idx,1.4)*0.002)-ro.y)/(rd.y*2.0+0.4);\npt-=of;\nvec3 bpos=ro+pt*rd;\nvec2 p=bpos.zx;\nfloat rzt=wuSampleAuroraNoise(p);\nvec4 col2=vec4(0.0,0.0,0.0,rzt);\ncol2.rgb=(sin(1.0-vec3(2.15,-0.5,1.2)+idx*0.043)*0.5+0.5)*rzt;\navgCol=mix(avgCol,col2,0.5);\ncol+=avgCol*exp2(-idx*0.065-2.5)*smoothstep(0.0,5.0,idx)*stepSize;\n}\ncol*=clamp(rd.y*15.0+0.4,0.0,1.0);\nreturn col*1.8;}\nvec3 wuAuroraColor(vec3 rd){\nfloat horizonFade=smoothstep(0.0,0.15,rd.y);\nif(horizonFade<=0.0){return vec3(0.0);}\nvec4 aur=wuAurora(vec3(0.0),rd);\nreturn aur.rgb*uWuInt*aur.a*uWuAur*horizonFade;}\n";
+function wuTri(x) {
+  var f = x - Math.floor(x);
+  return Math.min(0.49, Math.max(0.01, Math.abs(f - 0.5)));
+}
+function wuRot2(x, y, a) {
+  var c = Math.cos(a), s = Math.sin(a);
+  return [c * x - s * y, s * x + c * y];
+}
+function wuTriNoiseRaw(px, py, time) {
+  var z = 1.8, z2 = 2.5, rz = 0.0;
+  var r0 = wuRot2(px, py, px * 0.06);
+  var p = [r0[0], r0[1]];
+  var bp = [p[0], p[1]];
+  for (var i = 0; i < 5; i++) {
+    var ta = wuTri(bp[0] * 1.85), tb = wuTri(bp[1] * 1.85);
+    var dg = [(ta + tb) * 0.75, wuTri(bp[1] * 1.85 + ta) * 0.75];
+    dg = wuRot2(dg[0], dg[1], time * 0.2);
+    p[0] -= dg[0] / z2;
+    p[1] -= dg[1] / z2;
+    bp[0] *= 1.3; bp[1] *= 1.3;
+    z2 *= 0.45; z *= 0.42;
+    var k = 1.21 + (rz - 1.0) * 0.02;
+    p[0] *= k; p[1] *= k;
+    rz += wuTri(p[0] + wuTri(p[1])) * z;
+    var m = [0.95534 * p[0] - 0.29552 * p[1], 0.29552 * p[0] + 0.95534 * p[1]];
+    var r1 = wuRot2(m[0], m[1], -1.0);
+    p[0] = r1[0]; p[1] = r1[1];
+  }
+  return rz;
+}
+function wuTriNoise(px, py, time) {
+  var rz = wuTriNoiseRaw(px, py, time);
+  return Math.min(0.55, Math.max(0.0, 1.0 / Math.pow(Math.max(1e-6, rz) * 29.0, 1.3)));
+}
+function wuBakeAuroraNoise(size) {
+  var cv = document.createElement('canvas');
+  cv.width = size; cv.height = size;
+  var cx = cv.getContext('2d');
+  var img = cx.createImageData(size, size);
+  var d = img.data, x, y, i4;
+  for (y = 0; y < size; y++) {
+    for (x = 0; x < size; x++) {
+      var u = (x + 0.5) / size, v = (y + 0.5) / size;
+      var px = (u - 0.5) * 20.0, py = (v - 0.5) * 20.0;
+      i4 = (y * size + x) * 4;
+      d[i4] = Math.round(wuTriNoise(px, py, 0.0) / 0.55 * 255);
+      d[i4 + 1] = Math.round(wuTriNoise(px, py, 2.5) / 0.55 * 255);
+      d[i4 + 2] = Math.round(wuTriNoise(px, py, 5.0) / 0.55 * 255);
+      d[i4 + 3] = Math.round(wuTriNoise(px, py, 7.5) / 0.55 * 255);
+    }
+  }
+  cx.putImageData(img, 0, 0);
+  return cv;
+}
+    function wuSkyLightSig() {
+      try {
+        var mi = scene.getObjectByName('main-island');
+        var u = mi && mi.material && mi.material.uniforms;
+        var g = u && u.uGrassLightColor && u.uGrassLightColor.value;
+        var li = (u && u.lightIntensity && u.lightIntensity.value) || 1;
+        if (g) return [g.r * li, g.g * li, g.b * li];
+      } catch (eL) { window.__wuSkyErr = String(eL && eL.message || eL); }
+      return null;
+    }
+    function wuSkyBuild() {
+      if (wuSkyMesh) return true;
+      var TH = window.__THREE;
+      if (!TH || !TH.Mesh || !TH.MeshBasicMaterial || !TH.CanvasTexture) return false;
+      var skySrc = scene.getObjectByName('AnimeSky');
+      if (!skySrc || !skySrc.geometry) return false;
+      try {
+        var nz = new TH.CanvasTexture(wuBakeAuroraNoise(256));
+        nz.colorSpace = '';
+        nz.needsUpdate = true;
+        window.__wuSkyNoise = nz;
+        wuSkyU = { uAmt: { value: 0 }, uT: { value: 0 }, uInt: { value: 1 }, uAlt: { value: 0.8 }, uNoise: { value: nz } };
+        var mat = new TH.MeshBasicMaterial({ color: 0xffffff, side: 1, transparent: true, depthWrite: false, depthTest: true, blending: 2, fog: false });
+        mat.onBeforeCompile = function (sh) {
+          sh.uniforms.uWuNoise = wuSkyU.uNoise;
+          sh.uniforms.uWuT = wuSkyU.uT;
+          sh.uniforms.uWuAur = wuSkyU.uAmt;
+          sh.uniforms.uWuInt = wuSkyU.uInt;
+          sh.uniforms.uWuAlt = wuSkyU.uAlt;
+          sh.vertexShader = 'varying vec3 vWuDir;\n' + sh.vertexShader;
+          sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vWuDir = normalize( ( modelMatrix * vec4( transformed, 1.0 ) ).xyz - cameraPosition );');
+          sh.fragmentShader = WU_AUR_GLSL + sh.fragmentShader;
+          sh.fragmentShader = sh.fragmentShader.replace('#include <opaque_fragment>', 'gl_FragColor = vec4( wuAuroraColor( normalize( vWuDir ) ), 1.0 );');
+        };
+        wuSkyMesh = new TH.Mesh(skySrc.geometry, mat);
+        wuSkyMesh.name = 'wu-sky-aurora';
+        wuSkyMesh.frustumCulled = false;
+        wuSkyMesh.renderOrder = 5;
+        wuSkyMesh.visible = false;
+        wuSkyMesh.position.copy(skySrc.position);
+        wuSkyMesh.quaternion.copy(skySrc.quaternion);
+        wuSkyMesh.scale.copy(skySrc.scale).multiplyScalar(0.985);
+        scene.add(wuSkyMesh);
+        window.__wuSkyMesh = wuSkyMesh;
+        return true;
+      } catch (eA) {
+        wuSkyErr = String(eA && eA.message || eA);
+        window.__wuSkyErr = wuSkyErr;
+        return false;
+      }
+    }
+    function wuSkyPurge() {
+      var killed = { meshes: 0, geoms: 0, mats: 0, texs: 0, roots: 0 };
+      var targets = [];
+      scene.traverse(function (o) {
+        if (o && o.name && o.name.indexOf('Distant') === 0) targets.push(o);
+      });
+      if (!targets.length) return killed;
+      var inside = [];
+      for (var i = 0; i < targets.length; i++) {
+        var t = targets[i];
+        if (inside.indexOf(t) >= 0) continue;
+        t.traverse(function (o) { inside.push(o); });
+      }
+      var keepMat = [];
+      scene.traverse(function (o) {
+        if (inside.indexOf(o) >= 0) return;
+        if (!o.material) return;
+        var mm = o.material;
+        if (Array.isArray(mm)) { for (var j = 0; j < mm.length; j++) keepMat.push(mm[j]); }
+        else keepMat.push(mm);
+      });
+      var killedMat = [];
+      function killTex(tex) {
+        if (!tex || tex.__wuPurged) return;
+        tex.__wuPurged = true;
+        try { tex.dispose(); killed.texs++; } catch (eT) {}
+      }
+      function killMat(m) {
+        if (!m || m.__wuPurged || keepMat.indexOf(m) >= 0 || killedMat.indexOf(m) >= 0) return;
+        killedMat.push(m);
+        m.__wuPurged = true;
+        for (var k in m) {
+          if (!Object.prototype.hasOwnProperty.call(m, k)) continue;
+          var v = m[k];
+          if (v && v.isTexture) killTex(v);
+          else if (v && Array.isArray(v)) {
+            for (var q = 0; q < v.length; q++) { if (v[q] && v[q].isTexture) killTex(v[q]); }
+          }
+        }
+        try { m.dispose(); killed.mats++; } catch (eM) {}
+      }
+      for (var n = 0; n < inside.length; n++) {
+        var o2 = inside[n];
+        if (o2.isMesh || o2.isInstancedMesh || o2.isPoints || o2.isLine) {
+          killed.meshes++;
+          if (o2.geometry && !o2.geometry.__wuPurged) {
+            o2.geometry.__wuPurged = true;
+            try { o2.geometry.dispose(); killed.geoms++; } catch (eG) {}
+          }
+          var m2 = o2.material;
+          if (Array.isArray(m2)) { for (var z = 0; z < m2.length; z++) killMat(m2[z]); }
+          else killMat(m2);
+        }
+      }
+      for (var r = 0; r < targets.length; r++) {
+        var rt = targets[r];
+        if (rt.parent) { rt.parent.remove(rt); killed.roots++; }
+      }
+      wuSkyDistOn = false;
+      return killed;
+    }
+    function wuSkyDistant(show) {
+      var n = 0;
+      try {
+        scene.traverse(function (o) {
+          var nm = o && o.name;
+          if (!nm || nm.indexOf('Distant') !== 0) return;
+          o.visible = !!show;
+          n++;
+        });
+      } catch (eD2) { window.__wuSkyErr = String(eD2 && eD2.message || eD2); }
+      return n;
+    }
+    function wuSkyTick() {
+      if (!wuSkyBuild()) return;
+      wuSkyTickN++;
+      var sig = wuSkyLightSig();
+      if (sig) wuSkySig = sig;
+      var night = wuSkyNight;
+      if (wuSkySig) {
+        var dn = (wuSkySig[2] - wuSkySig[0]) / (wuSkySig[2] + wuSkySig[0] + 1e-3);
+        night = Math.min(1, Math.max(0, (dn + 0.20) / 0.45));
+      }
+      if (!wuSkyOn) night = 0;
+      wuSkyNight += (night - wuSkyNight) * 0.05;
+      wuSkyU.uAmt.value = wuSkyNight;
+      wuSkyU.uInt.value = wuSkyI;
+      if (wuSkyNight > 0.004) wuSkyU.uT.value = wuSkyU.uT.value + 0.016;
+      wuSkyMesh.visible = wuSkyNight > 0.004;
+      if ((wuSkyTickN % 30) === 1) wuSkyDistant(wuSkyDistOn);
+      if (!window.__wuSkyAutoPurged && wuSkyTickN > 60 && !wuSkyDistOn) {
+        window.__wuSkyAutoPurged = true;
+        try { window.__wuSkyPurged = wuSkyPurge(); } catch (eAP) { window.__wuSkyErr = String(eAP && eAP.message || eAP); }
+      }
+    }
+    window.__wuSkyPurge = function () { var k = wuSkyPurge(); window.__wuSkyPurged = k; return k; };
+    window.__wuSky = function (p) {
+      p = p || {};
+      if (p.on !== undefined) wuSkyOn = !!p.on;
+      if (p.intensity !== undefined && isFinite(+p.intensity)) wuSkyI = Math.min(3, Math.max(0, +p.intensity));
+      if (p.distMt !== undefined) { wuSkyDistOn = !!p.distMt; wuSkyDistant(wuSkyDistOn); }
+      if (p.build) wuSkyBuild();
+      return window.__wuSkyState();
+    };
+    window.__wuSkyState = function () {
+      var hidden = 0, total = 0;
+      try {
+        scene.traverse(function (o) { if (o && o.name && o.name.indexOf('Distant') === 0) { total++; if (!o.visible) hidden++; } });
+      } catch (eS2) {}
+      return {
+        on: wuSkyOn, intensity: wuSkyI, distMt: wuSkyDistOn, mesh: !!wuSkyMesh,
+        night: +wuSkyNight.toFixed(3), amt: wuSkyU ? +wuSkyU.uAmt.value.toFixed(3) : null,
+        sig: wuSkySig ? [+wuSkySig[0].toFixed(4), +wuSkySig[1].toFixed(4), +wuSkySig[2].toFixed(4)] : null,
+        distantTotal: total, distantHidden: hidden, err: wuSkyErr
+      };
+    };
     window.__wuBuildMesh = buildWuGroundMesh;
     window.__wuLayoutMesh = layoutWuGroundMesh;
     // 只重算抬升量（复用上一次的射线采样，秒回）。调参/取证用。
@@ -4436,6 +4721,70 @@ function buildParams() {
     }, null, 2);
   }
   function updateParams() { document.getElementById('params').value = buildParams(); }
+
+  var nightOn = false;
+  function applyTheme(dark) {
+    nightOn = !!dark;
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    document.getElementById("themeV").textContent = dark ? "夜晚" : "白天";
+    document.getElementById("btnTheme").textContent = dark ? "🌙 夜晚" : "☀ 白天";
+  }
+  document.getElementById("btnTheme").addEventListener("click", function () {
+    applyTheme(!nightOn);
+    toast(nightOn ? "已切到夜晚" : "已切到白天");
+  });
+  if (!document.documentElement.getAttribute("data-theme")) applyTheme(false); else applyTheme(document.documentElement.getAttribute("data-theme") === "dark");
+  var auroraOn = true, distShow = false;
+  function pushSky() {
+    var o = { on: auroraOn, intensity: +document.getElementById('auroraI').value, distMt: distShow };
+    try { if (win && win.__wuSky) win.__wuSky(o); } catch (eS) {}
+    return o;
+  }
+  function showSky() {
+    document.getElementById('auroraIv').textContent = (+document.getElementById('auroraI').value).toFixed(2);
+    document.getElementById('auroraV').textContent = auroraOn ? '开' : '关';
+    document.getElementById('btnAurora').textContent = auroraOn ? '🌌 开' : '🌑 关';
+    document.getElementById('distV').textContent = distShow ? '已显示' : '已隐藏';
+    document.getElementById('btnDist').textContent = distShow ? '⛰ 已显示' : '🚫 已隐藏';
+  }
+  document.getElementById('btnAurora').addEventListener('click', function () {
+    auroraOn = !auroraOn;
+    showSky(); pushSky();
+    toast(auroraOn ? '极光已开启（夜晚显示）' : '极光已关闭');
+  });
+  document.getElementById('btnDist').addEventListener('click', function () {
+    distShow = !distShow;
+    showSky(); pushSky();
+    toast(distShow ? '远景山已显示' : '远景山已隐藏，主岛浮空');
+  });
+  document.getElementById("btnDistDel").addEventListener("click", function () {
+    var r = null;
+    try { if (win && win.__wuSkyPurge) r = win.__wuSkyPurge(); } catch (eP) { r = null; }
+    if (!r) return toast("引擎未就绪，删除失败");
+    window.__wuSkyPurged = r;
+    toast("已删除远景：" + r.meshes + " 网格 / " + r.geoms + " 几何 / " + r.mats + " 材质 / " + r.texs + " 贴图");
+    document.getElementById("btnDistDel").textContent = "🗑 已删除";
+    document.getElementById("btnDistDel").disabled = true;
+  });
+  document.getElementById('auroraI').addEventListener('input', function () { showSky(); pushSky(); });
+  showSky();
+  window.__pushSkyNow = pushSky;
+  setTimeout(function () { try { pushSky(); } catch (eS2) {} }, 2000);
+  setInterval(function () { try { pushSky(); } catch (eS3) {} }, 4000);
+  var fmTimer = null;
+  function pushFm() {
+    var base = +document.getElementById("fmBase").value, camM = +document.getElementById("fmCam").value, cl = +document.getElementById("fmClear").value;
+    document.getElementById("fmBaseV").textContent = base.toFixed(2) + " m";
+    document.getElementById("fmCamV").textContent = camM.toFixed(2) + " m";
+    document.getElementById("fmClearV").textContent = cl.toFixed(3) + " m";
+    try { if (win && win.__wuSetClearMargin) win.__wuSetClearMargin(base, camM); } catch (e) {}
+    try { if (win && win.__wuSetBodyClear) win.__wuSetBodyClear(cl); } catch (e) {}
+    try { var d = win && win.__bareDiag; document.getElementById("fmState").textContent = d ? ("草格 " + d.cells + " / 遮罩 " + d.maskPx + " px") : "—"; } catch (e) {}
+  }
+  function pushFmSoon() { if (fmTimer) clearTimeout(fmTimer); fmTimer = setTimeout(function () { fmTimer = null; pushFm(); }, 300); }
+  ["fmBase", "fmCam", "fmClear"].forEach(function (id) { document.getElementById(id).addEventListener("input", pushFmSoon); });
+  setTimeout(pushFm, 1500);
+  setInterval(function () { try { var d = win && win.__bareDiag; if (d) document.getElementById("fmState").textContent = "草格 " + d.cells + " / 遮罩 " + d.maskPx + " px"; } catch (e) {} }, 3000);
 
   document.getElementById('btnCopy').addEventListener('click', function () {
     var txt = buildParams();
