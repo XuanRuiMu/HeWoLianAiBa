@@ -7,6 +7,19 @@ function huoQuHuanJingBianLiang(ming: string, moRen: string): string {
 
 const ZI_JIE = 1024
 
+/** 视觉审核模式：ai=调用外部模型审核；本地=仅用本地校验（MIME/魔数/尺寸/查毒），供零成本环境使用 */
+export const SHEN_HE_MO_SHI_AI = 'ai' as const
+
+export const SHEN_HE_MO_SHI_BEN_DI = '本地' as const
+
+export type ShenHeMoShi = typeof SHEN_HE_MO_SHI_AI | typeof SHEN_HE_MO_SHI_BEN_DI
+
+export function quShenHeMoShi(): ShenHeMoShi {
+  const yuanZhi = huoQuHuanJingBianLiang('MEI_TI_SHEN_HE_MO_SHI', '').trim().toLowerCase()
+  if (yuanZhi === 'local' || yuanZhi === SHEN_HE_MO_SHI_BEN_DI) return SHEN_HE_MO_SHI_BEN_DI
+  return SHEN_HE_MO_SHI_AI
+}
+
 /** shenHeLeiBie 段里的服务侧哨兵键：审核自身不可用，不是用户的违规类别 */
 export const SHEN_HE_FU_WU_BU_KE_YONG_JIAN = '审核服务不可用' as const
 

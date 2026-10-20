@@ -1,136 +1,150 @@
 <template>
   <div ref="zhuyeQuyu" class="zhuye-quyu">
-    <div class="gonggong-biaoti-qu" :class="{ 'ru-chang-ke-jian': 入场可视(1) }">
-      <div class="biaoti-neirong">
-        <span class="biaoti-wenzi">{{ huoQuFanYi('zhuYe', 'huanYingHuiLai') }}</span>
-        <span class="biaoti-fenge" />
-        <span class="biaoti-zhushi">{{ huoQuFanYi('zhuYe', 'kaiQiZhuanShu') }}</span>
-      </div>
+    <header class="huanying-qu" :class="{ 'ru-chang-ke-jian': 入场可视(1) }">
+      <p class="pinpai-hang">
+        <img class="pinpai-logo" :src="品牌图标" alt="" width="24" height="24" />
+        <span class="pinpai-ming">{{ huoQuFanYi('zhuYe', 'pinPaiMing') }}</span>
+      </p>
+      <h1 class="huanying-biaoti">{{ huoQuFanYi('zhuYe', 'huanYingHuiLai') }}</h1>
+      <p class="huanying-fubiaoti">{{ huoQuFanYi('zhuYe', 'kaiQiZhuanShu') }}</p>
+    </header>
+
+    <div class="wanjia-ka" :class="{ 'ru-chang-ke-jian': 入场可视(2) }">
+      <span class="wanjia-touxiang-wei">
+        <TouXiang :tou-xiang="玩家头像" :mo-ren-zi="玩家名首字" shen-fen="yonghu" />
+      </span>
+      <span class="wanjia-wen">
+        <span class="wanjia-ming">{{ 玩家昵称 }}</span>
+        <span class="wanjia-bianhao">{{ 玩家编号 }}</span>
+      </span>
+      <span class="wanjia-zhuangtai" :class="{ 'wanjia-zhuangtai-qiang': 资料待完善 }">
+        {{ 资料状态文案 }}
+      </span>
+      <span class="wanjia-qianming">{{ 玩家签名 }}</span>
     </div>
 
-    <div class="zhuye-neirong-qu">
-      <div class="zuo-ce-qinggan-qu" :class="{ 'ru-chang-ke-jian': 入场可视(2) }">
-        <div class="qinggan-neirong-ceng">
-          <div class="pinpai-qu">
-            <img src="/favicon.svg" class="pinpai-logo" alt="" />
-            <span class="pinpai-mingcheng">{{ huoQuFanYi('zhuYe', 'pinPaiMing') }}</span>
-          </div>
-          <p class="zuoce-slogan">{{ huoQuFanYi('zhuYe', 'slogan') }}</p>
-        </div>
-      </div>
-
-      <div class="you-ce-xuanze-qu">
-        <div class="moshi-kapian-zu">
-          <MoShiKa
-            class="moshi-kapian putong-moshi-kapian"
-            :class="{ 'ru-chang-ke-jian': 入场可视(3) }"
-            :inert="!入场可视(3)"
-            :aria-hidden="入场可视(3) ? undefined : 'true'"
-            @xuan-ze="jinRuPuTongMoShi"
-          >
-            <div class="kapian-dingbu">
-              <div class="kapian-tubiao-qu">
-                <svg
-                  class="kapian-tubiao"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-                  />
-                </svg>
-              </div>
-              <div class="kapian-xinxi">
-                <h3 class="kapian-biaoti">{{ huoQuFanYi('zhuYe', 'putongMoShi') }}</h3>
-                <p class="kapian-fubiaoti">{{ huoQuFanYi('zhuYe', 'putongFuBiaoTi') }}</p>
-              </div>
-            </div>
-            <div class="kapian-yulan-qu">
-              <div class="yulan-xiangmu yulan-xiangmu-1">
-                <span class="yulan-dian" />
-                <span class="yulan-wenzi">{{ huoQuFanYi('zhuYe', 'ziDingYiJiaoSe') }}</span>
-              </div>
-              <div class="yulan-xiangmu yulan-xiangmu-2">
-                <span class="yulan-dian" />
-                <span class="yulan-wenzi">{{ huoQuFanYi('zhuYe', 'shiHeXinShou') }}</span>
-              </div>
-            </div>
-            <div class="kapian-dibu">
-              <span class="kaishi-wenben">{{ huoQuFanYi('zhuYe', 'kaiShiTiYan') }}</span>
-              <span class="kaishi-jiantou">→</span>
-            </div>
-          </MoShiKa>
-
-          <MoShiKa
-            class="moshi-kapian tiaozhan-moshi-kapian"
-            :class="{ 'ru-chang-ke-jian': 入场可视(4) }"
-            :inert="!入场可视(4)"
-            :aria-hidden="入场可视(4) ? undefined : 'true'"
-            @xuan-ze="jinRuTiaoZhanMoShi"
-          >
-            <div class="kapian-dingbu">
-              <div class="kapian-tubiao-qu">
-                <svg
-                  class="kapian-tubiao"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                </svg>
-              </div>
-              <div class="kapian-xinxi">
-                <h3 class="kapian-biaoti">{{ huoQuFanYi('zhuYe', 'tiaoZhanMoShi') }}</h3>
-                <p class="kapian-fubiaoti">{{ huoQuFanYi('zhuYe', 'tiaoZhanFuBiaoTi') }}</p>
-              </div>
-            </div>
-            <div class="kapian-yulan-qu">
-              <div class="yulan-xiangmu yulan-xiangmu-1">
-                <span class="yulan-dian" />
-                <span class="yulan-wenzi">{{ huoQuFanYi('zhuYe', 'xiTongSuiJi') }}</span>
-              </div>
-              <div class="yulan-xiangmu yulan-xiangmu-2">
-                <span class="yulan-dian" />
-                <span class="yulan-wenzi">{{ huoQuFanYi('zhuYe', 'fenShuJiRuPaiMing') }}</span>
-              </div>
-              <div class="yulan-xiangmu yulan-xiangmu-3">
-                <span class="yulan-dian" />
-                <span class="yulan-wenzi">{{ huoQuFanYi('zhuYe', 'shiHeQingChangGaoShou') }}</span>
-              </div>
-            </div>
-            <div class="kapian-dibu">
-              <span class="kaishi-wenben">{{ huoQuFanYi('zhuYe', 'jieShouTiaoZhan') }}</span>
-              <span class="kaishi-jiantou">→</span>
-            </div>
-          </MoShiKa>
-        </div>
-
-        <div class="zhuye-diwei-shuoming" :class="{ 'ru-chang-ke-jian': 入场可视(5) }">
+    <div class="rukou-qu" role="group" :aria-label="huoQuFanYi('zhuYe', 'xuanZeMoShi')">
+      <MoShiKa
+        class="moshi-kapian putong-moshi-kapian"
+        :class="{ 'ru-chang-ke-jian': 入场可视(3) }"
+        :inert="!入场可视(3)"
+        :aria-hidden="入场可视(3) ? undefined : 'true'"
+        @xuan-ze="jinRuPuTongMoShi"
+      >
+        <span class="ka-tou">
+          <span class="ka-tubiao-wei">
+            <svg
+              class="ka-tubiao"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path
+                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+              />
+            </svg>
+          </span>
+          <span class="ka-wen">
+            <span class="ka-ming">{{ huoQuFanYi('zhuYe', 'putongMoShi') }}</span>
+            <span class="ka-fu">{{ huoQuFanYi('zhuYe', 'putongFuBiaoTi') }}</span>
+          </span>
+        </span>
+        <span class="ka-yao">
+          <span class="yao-hang">
+            <span class="yao-dian" aria-hidden="true" />
+            <span class="yao-wen">{{ huoQuFanYi('zhuYe', 'ziDingYiJiaoSe') }}</span>
+          </span>
+          <span class="yao-hang">
+            <span class="yao-dian" aria-hidden="true" />
+            <span class="yao-wen">{{ huoQuFanYi('zhuYe', 'shiHeXinShou') }}</span>
+          </span>
+        </span>
+        <span class="ka-di">
+          <span class="ka-cta">{{ huoQuFanYi('zhuYe', 'kaiShiTiYan') }}</span>
           <svg
-            class="diwei-tubiao"
+            class="ka-jian"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             stroke-width="2"
+            aria-hidden="true"
           >
-            <path
-              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"
-            />
+            <path d="M5 12h14M13 6l6 6-6 6" />
           </svg>
-          <span>{{ huoQuFanYi('zhuYe', 'diWeiShuoMing') }}</span>
-        </div>
-      </div>
+        </span>
+      </MoShiKa>
+
+      <MoShiKa
+        class="moshi-kapian tiaozhan-moshi-kapian"
+        :class="{ 'ru-chang-ke-jian': 入场可视(4) }"
+        :inert="!入场可视(4)"
+        :aria-hidden="入场可视(4) ? undefined : 'true'"
+        @xuan-ze="jinRuTiaoZhanMoShi"
+      >
+        <span class="ka-tou">
+          <span class="ka-tubiao-wei">
+            <svg
+              class="ka-tubiao"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+          </span>
+          <span class="ka-wen">
+            <span class="ka-ming">{{ huoQuFanYi('zhuYe', 'tiaoZhanMoShi') }}</span>
+            <span class="ka-fu">{{ huoQuFanYi('zhuYe', 'tiaoZhanFuBiaoTi') }}</span>
+          </span>
+        </span>
+        <span class="ka-yao">
+          <span class="yao-hang">
+            <span class="yao-dian" aria-hidden="true" />
+            <span class="yao-wen">{{ huoQuFanYi('zhuYe', 'xiTongSuiJi') }}</span>
+          </span>
+          <span class="yao-hang">
+            <span class="yao-dian" aria-hidden="true" />
+            <span class="yao-wen">{{ huoQuFanYi('zhuYe', 'fenShuJiRuPaiMing') }}</span>
+          </span>
+          <span class="yao-hang">
+            <span class="yao-dian" aria-hidden="true" />
+            <span class="yao-wen">{{ huoQuFanYi('zhuYe', 'shiHeQingChangGaoShou') }}</span>
+          </span>
+        </span>
+        <span class="ka-di">
+          <span class="ka-cta">{{ huoQuFanYi('zhuYe', 'jieShouTiaoZhan') }}</span>
+          <svg
+            class="ka-jian"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </span>
+      </MoShiKa>
     </div>
+
+    <p class="zhuangtai-tiao" :class="{ 'ru-chang-ke-jian': 入场可视(5) }">
+      <svg class="zhuangtai-tubiao" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z" />
+      </svg>
+      <span class="zhuangtai-wen">{{ huoQuFanYi('zhuYe', 'diWeiShuoMing') }}</span>
+    </p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import MoShiKa from '@/components/模式卡.vue'
+import TouXiang from '@/components/头像.vue'
 import { 使用用户仓库 } from '@/stores/用户'
 import { huoQuFanYi } from '@/config/翻译表'
 import { quXian } from '@/config/设计令牌'
@@ -140,7 +154,43 @@ const 用户仓库 = 使用用户仓库()
 
 const zhuyeQuyu = ref<HTMLElement | null>(null)
 
+const 品牌图标 = '/favicon.svg'
+
 const 入场可视 = (xuHao: number): boolean => 用户仓库.主页入场序号 >= xuHao
+
+const 玩家 = computed(() => 用户仓库.dangQianYongHu)
+
+const 玩家真名 = computed(() => {
+  const 用户 = 玩家.value
+  return (用户?.ni_cheng?.trim() || 用户?.yong_hu_ming?.trim()) ?? ''
+})
+
+const 玩家昵称 = computed(() => 玩家真名.value || huoQuFanYi('zhuYe', 'wanJiaZhanWeiMing'))
+
+const 玩家名首字 = computed(() => 玩家真名.value.slice(0, 1))
+
+const 玩家头像 = computed(() => 玩家.value?.tou_xiang ?? null)
+
+const 玩家编号 = computed(() => {
+  const 编号 = 玩家.value?.id?.slice(0, 8).toUpperCase() ?? ''
+  if (!编号) return huoQuFanYi('zhuYe', 'bianHaoZanWei')
+  return `${huoQuFanYi('zhuYe', 'bianHao')} ${编号}`
+})
+
+const 玩家签名 = computed(() => 玩家.value?.qian_ming?.trim() || huoQuFanYi('zhuYe', 'zanWuQianMing'))
+
+const 资料待完善 = computed(() => {
+  const 用户 = 玩家.value
+  if (!用户) return false
+  return !(用户.tou_xiang && 用户.qian_ming?.trim())
+})
+
+const 资料状态文案 = computed(() => {
+  if (!玩家.value) return huoQuFanYi('zhuYe', 'ziLiaoTongBuZhong')
+  return 资料待完善.value
+    ? huoQuFanYi('zhuYe', 'ziLiaoDaiWanShan')
+    : huoQuFanYi('zhuYe', 'ziLiaoYiWanShan')
+})
 
 function jinRuPuTongMoShi() {
   router.push('/profile-setup?moshi=putong')
@@ -169,15 +219,15 @@ async function zhiXingTuiChuDongHua() {
     return
   }
 
-  const biaotiQu = rongQi.querySelector('.gonggong-biaoti-qu') as HTMLElement | null
-  const zuoCe = rongQi.querySelector('.zuo-ce-qinggan-qu') as HTMLElement | null
-  const youCe = rongQi.querySelector('.you-ce-xuanze-qu') as HTMLElement | null
+  const shangCe = rongQi.querySelector('.huanying-qu') as HTMLElement | null
+  const zhongCe = rongQi.querySelector('.wanjia-ka') as HTMLElement | null
+  const xiaCe = rongQi.querySelector('.rukou-qu') as HTMLElement | null
 
   const dongHuaZu: Animation[] = []
 
-  if (biaotiQu) {
+  if (shangCe) {
     dongHuaZu.push(
-      biaotiQu.animate(
+      shangCe.animate(
         [
           { opacity: 1, transform: 'translateY(0)' },
           { opacity: 0, transform: 'translateY(-30px)' },
@@ -187,9 +237,9 @@ async function zhiXingTuiChuDongHua() {
     )
   }
 
-  if (zuoCe) {
+  if (zhongCe) {
     dongHuaZu.push(
-      zuoCe.animate(
+      zhongCe.animate(
         [
           { opacity: 1, transform: 'translateX(0)' },
           { opacity: 0, transform: 'translateX(-60px)' },
@@ -199,9 +249,9 @@ async function zhiXingTuiChuDongHua() {
     )
   }
 
-  if (youCe) {
+  if (xiaCe) {
     dongHuaZu.push(
-      youCe.animate(
+      xiaCe.animate(
         [
           { opacity: 1, transform: 'translateX(0)' },
           { opacity: 0, transform: 'translateX(60px)' },
@@ -232,607 +282,367 @@ watch(
 
 <style scoped>
 .zhuye-quyu {
+  --zj-mian: var(--beijing-kaopian);
+  --zj-mian-er: var(--beijing-ciuse);
+  --zj-xian: var(--kapian-mian-biankuang);
+  --zj-xian-ruo: color-mix(in srgb, var(--zj-xian) 55%, transparent);
+  --zj-zhu: var(--qiangdiao-fen);
+  --zj-zhu-wen: color-mix(in srgb, var(--zj-zhu) 78%, var(--wenben-zhuse));
+  --zj-zhu-mian: color-mix(in srgb, var(--zj-zhu) 6%, var(--zj-mian));
+  --zj-zhu-mian-er: color-mix(in srgb, var(--zj-zhu) 12%, var(--zj-mian));
+  --zj-wen-san: color-mix(in srgb, var(--wenben-ciuse) 78%, var(--wenben-zhuse));
+  --zj-zihao-tou: calc(var(--ziti-da) * 4 / 3);
+  --zj-zihao-ming: var(--ziti-da);
+  --zj-zihao-wen: var(--ziti-zhong);
+  --zj-zihao-fu: var(--ziti-xiao);
+  --zj-kuan: calc(var(--jiange-da) * 40);
+  --zj-dian: var(--jiange-4);
+  --zj-touxiang: calc(var(--jiange-da) * 2);
+  --zj-tubiao-kuang: calc(var(--jiange-da) * 2);
+  --zj-tubiao: var(--jiange-da);
   width: 100%;
-  min-height: calc(100vh - 52px);
-  display: flex;
-  flex-direction: column;
+  max-width: var(--zj-kuan);
+  min-height: 100%;
   position: relative;
   z-index: 1;
-  background: transparent;
-}
-
-.gonggong-biaoti-qu,
-.zhuye-neirong-qu {
-  position: relative;
-  z-index: 1;
-}
-
-.gonggong-biaoti-qu {
-  text-align: center;
-  padding: calc(var(--jiange-da) + var(--jiange-4)) calc(var(--jiange-da) + var(--jiange-12)) var(--jiange-zhong);
-}
-
-.biaoti-neirong {
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: var(--jiange-6);
-  padding: var(--jiange-10) calc(var(--jiange-da) + var(--jiange-4));
-  max-width: 100%;
-  border: 1px solid var(--kapian-mian-biankuang);
-  border-radius: var(--yuanjiao-da);
-  background-color: var(--moshi-kapian-zheyan);
-  background-image: none;
-  backdrop-filter: var(--boli-mohu);
-  box-shadow: var(--boli-yinying);
-}
-
-.biaoti-wenzi {
-  font-size: 32px;
-  font-weight: 800;
-  color: var(--wenben-zhuse);
-  letter-spacing: 8px;
-  line-height: 1.2;
-}
-
-.biaoti-fenge {
-  width: 40px;
-  height: 2px;
-  border-radius: 1px;
-  background: linear-gradient(90deg, transparent, var(--nuanhui-lan), transparent);
-  opacity: 0.5;
-}
-
-.biaoti-zhushi {
-  font-size: 13px;
-  color: var(--wenben-zhuse);
-  letter-spacing: 2px;
-  font-weight: 400;
-  text-transform: uppercase;
-}
-
-.zhuye-neirong-qu {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-  min-height: 0;
-  padding-bottom: var(--jiange-da);
-}
-
-.zuo-ce-qinggan-qu {
-  position: relative;
-  width: 48%;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  overflow: hidden;
+  gap: calc(var(--jiange-da) + var(--jiange-xiao));
+  padding: calc(var(--jiange-da) + var(--jiange-xiao)) var(--jiange-zhong) var(--jiange-da);
+  color: var(--kapian-mian-biaoti);
 }
 
-.qinggan-neirong-ceng {
-  position: relative;
-  z-index: 2;
+.huanying-qu {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--jiange-da);
-  padding: var(--jiange-da) calc(var(--jiange-da) + var(--jiange-4));
-  width: 100%;
-  max-width: 420px;
-  border: 1px solid var(--kapian-mian-biankuang);
-  border-radius: var(--yuanjiao-da);
-  background-color: var(--moshi-kapian-zheyan);
-  background-image: none;
-  backdrop-filter: var(--boli-mohu);
-  box-shadow: var(--boli-yinying);
+  align-items: flex-start;
+  gap: var(--jiange-6);
+  min-width: 0;
 }
 
-.pinpai-qu {
+.pinpai-hang {
   display: flex;
   align-items: center;
-  gap: var(--jiange-12);
-  align-self: flex-start;
+  gap: var(--jiange-xiao);
+  min-width: 0;
 }
 
 .pinpai-logo {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  box-shadow: 0 6px 24px rgba(255, 107, 157, 0.3);
-  transition:
-    transform 0.35s ease,
-    box-shadow 0.35s ease;
-  animation: logo-fudong 4s ease-in-out infinite;
+  width: var(--jiange-da);
+  height: var(--jiange-da);
+  flex: none;
+  border-radius: var(--yuanjiao-xiao);
 }
 
-.pinpai-logo:hover {
-  transform: scale(1.08) rotate(-3deg);
-  box-shadow: 0 8px 28px rgba(255, 107, 157, 0.45);
+.pinpai-ming {
+  font-size: var(--zj-zihao-wen);
+  font-weight: 600;
+  line-height: calc(var(--jiange-zhong) + var(--jiange-2));
+  color: var(--kapian-mian-zhengwen);
+  letter-spacing: 0.02em;
 }
 
-@keyframes logo-fudong {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
+.huanying-biaoti {
+  font-size: var(--zj-zihao-tou);
+  font-weight: 600;
+  line-height: calc(var(--jiange-da) + var(--jiange-xiao));
+  letter-spacing: 0.02em;
+  color: var(--kapian-mian-biaoti);
 }
 
-.pinpai-mingcheng {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--wenben-zhuse);
-  letter-spacing: 1.5px;
+.huanying-fubiaoti {
+  font-size: var(--zj-zihao-wen);
+  font-weight: 400;
+  line-height: calc(var(--jiange-da) - var(--jiange-2));
+  color: var(--kapian-mian-zhengwen);
 }
 
-.zuoce-slogan {
-  text-align: center;
-  font-size: 13px;
-  color: var(--wenben-zhuse);
-  margin: 0;
-  letter-spacing: 1px;
-  line-height: 1.6;
-}
-
-.you-ce-xuanze-qu {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: var(--jiange-zhong) calc(var(--jiange-da) + var(--jiange-xiao)) calc(var(--jiange-da) + var(--jiange-xiao));
-  gap: calc(var(--jiange-zhong) + var(--jiange-6));
-  min-width: 0;
-  overflow-y: visible;
-}
-
-.moshi-kapian-zu {
+.wanjia-ka {
   display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto auto;
-  gap: calc(var(--jiange-zhong) + var(--jiange-4));
-  width: 100%;
-  max-width: 400px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--jiange-12);
+  padding: var(--jiange-zhong);
+  border: 1px solid var(--zj-xian);
+  border-radius: var(--yuanjiao-da);
+  background: var(--zj-mian);
 }
 
-.putong-moshi-kapian {
-  --moshi-kapian-zhu: var(--nuanhui-lan);
-  justify-self: start;
-  margin-right: calc(var(--jiange-da) * 2);
-}
-
-.tiaozhan-moshi-kapian {
-  --moshi-kapian-zhu: var(--yanse-biaobai);
-  justify-self: end;
-  margin-left: calc(var(--jiange-da) * 2);
-}
-
-.moshi-kapian {
-  width: 100%;
-  max-width: 360px;
-  position: relative;
-  padding: 0;
-  border: 1px solid var(--kapian-mian-biankuang);
-  border-radius: 22px;
-  cursor: pointer;
+.wanjia-touxiang-wei {
+  display: block;
+  width: var(--zj-touxiang);
+  height: var(--zj-touxiang);
+  flex: none;
   overflow: hidden;
-  text-align: left;
-  background-color: var(--moshi-kapian-zheyan);
-  transition: transform var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun);
+  border-radius: 50%;
+  background: var(--zj-mian-er);
+  color: var(--zj-wen-san);
+  font-size: var(--zj-zihao-ming);
+  font-weight: 600;
+  line-height: var(--jiange-da);
 }
 
-.moshi-kapian:hover:not(:disabled) {
-  transform: translateY(-4px);
-  border-color: var(--moshi-kapian-zhu);
-  box-shadow: var(--moshi-kapian-hover-yinying);
-}
-
-.moshi-kapian:active:not(:disabled) {
-  transform: translateY(-1px) scale(0.99);
-}
-
-.moshi-kapian:disabled {
-  cursor: not-allowed;
-  transform: none;
-}
-
-.kapian-dingbu {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--jiange-xiao) + var(--jiange-6));
-  padding: calc(var(--jiange-zhong) + var(--jiange-4)) calc(var(--jiange-zhong) + var(--jiange-6)) calc(var(--jiange-xiao) + var(--jiange-6));
-}
-
-.kapian-tubiao-qu {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 14px;
-  color: var(--moshi-kapian-zhu);
-  background: color-mix(in srgb, var(--moshi-kapian-zhu) 18%, transparent);
-  transition: transform var(--moshi-kapian-dong-xiao) ease;
-}
-
-.moshi-kapian:hover:not(:disabled) .kapian-tubiao-qu {
-  transform: scale(1.08) rotate(-3deg);
-}
-
-.kapian-tubiao {
-  width: 24px;
-  height: 24px;
-  color: currentColor;
-}
-
-.kapian-xinxi {
-  flex: 1;
+.wanjia-wen {
   display: flex;
   flex-direction: column;
   gap: var(--jiange-2);
   min-width: 0;
 }
 
-.kapian-biaoti {
-  font-size: 16px;
-  font-weight: 700;
+.wanjia-ming {
+  font-size: var(--zj-zihao-ming);
+  font-weight: 600;
+  line-height: var(--jiange-da);
   color: var(--kapian-mian-biaoti);
-  margin: 0;
-  letter-spacing: 0.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.kapian-fubiaoti {
-  font-size: 11.5px;
+.wanjia-bianhao {
+  font-size: var(--zj-zihao-fu);
+  font-weight: 400;
+  line-height: calc(var(--jiange-zhong) + var(--jiange-2));
+  color: var(--zj-wen-san);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wanjia-zhuangtai {
+  flex: none;
+  padding: var(--jiange-4) var(--jiange-10);
+  border-radius: var(--yuanjiao-xiao);
+  background: var(--zj-mian-er);
   color: var(--kapian-mian-zhengwen);
-  margin: 0;
+  font-size: var(--zj-zihao-fu);
+  font-weight: 600;
+  line-height: calc(var(--jiange-zhong) + var(--jiange-2));
+  white-space: nowrap;
 }
 
-.kapian-yulan-qu {
-  padding: 0 calc(var(--jiange-zhong) + var(--jiange-6)) var(--jiange-12);
+.wanjia-zhuangtai-qiang {
+  background: var(--zj-zhu-mian-er);
+  color: var(--zj-zhu-wen);
+}
+
+.wanjia-qianming {
+  grid-column: 1 / -1;
+  padding-top: var(--jiange-12);
+  border-top: 1px solid var(--zj-xian-ruo);
+  font-size: var(--zj-zihao-wen);
+  font-weight: 400;
+  line-height: calc(var(--jiange-da) - var(--jiange-2));
+  color: var(--kapian-mian-zhengwen);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rukou-qu {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--jiange-zhong);
+  min-width: 0;
+}
+
+.moshi-kapian {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+  border: 1px solid var(--zj-xian);
+  border-radius: var(--yuanjiao-da);
+  background: var(--zj-mian);
+  transition:
+    border-color var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun),
+    box-shadow var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun),
+    transform var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun);
+}
+
+.moshi-kapian:hover:not(:disabled) {
+  transform: translateY(calc(var(--jiange-2) * -1));
+  box-shadow: var(--moshi-kapian-hover-yinying);
+}
+
+.moshi-kapian:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.moshi-kapian:disabled {
+  cursor: not-allowed;
+}
+
+.putong-moshi-kapian {
+  border-color: var(--zj-zhu);
+  background: var(--zj-zhu-mian);
+}
+
+.tiaozhan-moshi-kapian:hover:not(:disabled) {
+  border-color: var(--zj-wen-san);
+}
+
+.ka-tou {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--jiange-12);
+  padding: var(--jiange-zhong);
+  min-width: 0;
+}
+
+.ka-tubiao-wei {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--zj-tubiao-kuang);
+  height: var(--zj-tubiao-kuang);
+  border-radius: var(--yuanjiao-zhong);
+  background: var(--zj-mian-er);
+  color: var(--zj-wen-san);
+}
+
+.putong-moshi-kapian .ka-tubiao-wei {
+  background: var(--zj-zhu-mian-er);
+  color: var(--zj-zhu);
+}
+
+.ka-tubiao {
+  width: var(--zj-tubiao);
+  height: var(--zj-tubiao);
+}
+
+.ka-wen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jiange-4);
+  min-width: 0;
+}
+
+.ka-ming {
+  font-size: var(--zj-zihao-ming);
+  font-weight: 600;
+  line-height: var(--jiange-da);
+  color: var(--kapian-mian-biaoti);
+}
+
+.ka-fu {
+  font-size: var(--zj-zihao-wen);
+  font-weight: 400;
+  line-height: calc(var(--jiange-da) - var(--jiange-2));
+  color: var(--kapian-mian-zhengwen);
+}
+
+.ka-yao {
   display: flex;
   flex-direction: column;
   gap: var(--jiange-xiao);
+  padding: 0 var(--jiange-zhong) var(--jiange-12);
+  min-width: 0;
 }
 
-.yulan-xiangmu {
+.yao-hang {
   display: flex;
   align-items: center;
   gap: var(--jiange-10);
-  color: var(--kapian-mian-zhengwen);
-  transition: transform var(--moshi-kapian-dong-xiao) ease;
+  min-width: 0;
 }
 
-.yulan-dian {
-  width: 5px;
-  height: 5px;
+.yao-dian {
+  flex: none;
+  width: var(--zj-dian);
+  height: var(--zj-dian);
   border-radius: 50%;
-  flex-shrink: 0;
+  background: var(--zj-wen-san);
 }
 
-.yulan-dian {
-  background: var(--moshi-kapian-zhu);
-  box-shadow: 0 0 5px currentColor;
+.putong-moshi-kapian .yao-dian {
+  background: var(--zj-zhu);
 }
 
-.yulan-wenzi {
-  font-size: 12px;
+.yao-wen {
+  font-size: var(--zj-zihao-wen);
   font-weight: 400;
+  line-height: calc(var(--jiange-da) - var(--jiange-2));
+  color: var(--zj-wen-san);
+  min-width: 0;
 }
 
-.yulan-xiangmu-1,
-.yulan-xiangmu-2,
-.yulan-xiangmu-3 {
-  transform-origin: left center;
-}
-
-.moshi-kapian:hover:not(:disabled) .yulan-xiangmu-1 {
-  transform: translateX(4px);
-}
-.moshi-kapian:hover:not(:disabled) .yulan-xiangmu-2 {
-  transform: translateX(5px);
-}
-.moshi-kapian:hover:not(:disabled) .yulan-xiangmu-3 {
-  transform: translateX(4px);
-}
-
-.kapian-dibu {
+.ka-di {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--jiange-12) calc(var(--jiange-zhong) + var(--jiange-6)) var(--jiange-zhong);
-  border-top: 1px solid var(--kapian-mian-biankuang);
-  margin: 0 calc(var(--jiange-zhong) + var(--jiange-6));
+  gap: var(--jiange-xiao);
+  margin-top: auto;
+  padding: var(--jiange-12) var(--jiange-zhong);
+  border-top: 1px solid var(--zj-xian-ruo);
 }
 
-.kaishi-wenben {
-  font-size: 12.5px;
+.putong-moshi-kapian .ka-di {
+  background: var(--zj-zhu-mian-er);
+  border-top-color: transparent;
+}
+
+.ka-cta {
+  font-size: var(--zj-zihao-wen);
   font-weight: 600;
+  line-height: calc(var(--jiange-da) - var(--jiange-2));
   color: var(--kapian-mian-zhengwen);
 }
 
-.kaishi-jiantou {
-  font-size: 20px;
-  color: color-mix(in srgb, var(--moshi-kapian-zhu) 72%, transparent);
-  transition: transform var(--moshi-kapian-dong-xiao) ease;
+.putong-moshi-kapian .ka-cta {
+  color: var(--zj-zhu-wen);
 }
 
-.moshi-kapian:hover:not(:disabled) .kaishi-jiantou {
-  transform: translateX(4px);
+.ka-jian {
+  flex: none;
+  width: var(--zj-zihao-ming);
+  height: var(--zj-zihao-ming);
+  color: var(--zj-wen-san);
+  transition: transform var(--moshi-kapian-dong-xiao) var(--quxian-tan-chu);
 }
 
-.zhuye-diwei-shuoming {
+.putong-moshi-kapian .ka-jian {
+  color: var(--zj-zhu-wen);
+}
+
+.moshi-kapian:hover:not(:disabled) .ka-jian {
+  transform: translateX(var(--jiange-4));
+}
+
+.zhuangtai-tiao {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: var(--jiange-xiao);
-  font-size: 11.5px;
-  color: rgba(255, 255, 255, 0.2);
+  padding: var(--jiange-12) var(--jiange-zhong);
+  border: 1px solid var(--zj-xian);
+  border-radius: var(--yuanjiao-zhong);
+  background: var(--zj-mian);
+  min-width: 0;
 }
 
-:root[data-theme='light'] .zhuye-diwei-shuoming {
-  color: rgba(0, 0, 0, 0.45);
+.zhuangtai-tubiao {
+  flex: none;
+  width: var(--jiange-zhong);
+  height: var(--jiange-zhong);
+  color: var(--zj-zhu);
 }
 
-.diwei-tubiao {
-  width: 13px;
-  height: 13px;
-  color: currentColor;
-  animation: xingxing-shanshuo 2s ease-in-out infinite;
+.zhuangtai-wen {
+  font-size: var(--zj-zihao-fu);
+  font-weight: 400;
+  line-height: calc(var(--jiange-zhong) + var(--jiange-2));
+  color: var(--zj-wen-san);
+  min-width: 0;
 }
 
-@keyframes xingxing-shanshuo {
-  0%,
-  100% {
-    opacity: 0.4;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.15);
-  }
-}
-
-@media (max-width: 1023px) {
-  .zhuye-neirong-qu {
-    flex-direction: column;
-  }
-
-  .zuo-ce-qinggan-qu {
-    width: 100%;
-    padding: var(--jiange-zhong) calc(var(--jiange-zhong) + var(--jiange-4)) var(--jiange-xiao);
-  }
-
-  .qinggan-neirong-ceng {
-    gap: calc(var(--jiange-zhong) + var(--jiange-2));
-    padding: calc(var(--jiange-zhong) + var(--jiange-2));
-  }
-
-  .pinpai-qu {
-    align-self: center;
-  }
-
-  .you-ce-xuanze-qu {
-    padding: var(--jiange-zhong) calc(var(--jiange-zhong) + var(--jiange-4)) calc(var(--jiange-da) + var(--jiange-12));
-    gap: calc(var(--jiange-zhong) + var(--jiange-2));
-  }
-
-  .putong-moshi-kapian {
-    justify-self: stretch;
-    margin-right: 0;
-    max-width: none;
-  }
-
-  .tiaozhan-moshi-kapian {
-    justify-self: stretch;
-    margin-left: 0;
-    max-width: none;
-  }
-}
-
-@media (max-width: 767px) {
-  .gonggong-biaoti-qu {
-    padding: calc(var(--jiange-zhong) + var(--jiange-4)) var(--jiange-zhong) var(--jiange-12);
-  }
-
-  .biaoti-wenzi {
-    font-size: 26px;
-    letter-spacing: 6px;
-  }
-
-  .zuo-ce-qinggan-qu {
-    padding: var(--jiange-12) var(--jiange-zhong) var(--jiange-4);
-  }
-
-  .qinggan-neirong-ceng {
-    gap: calc(var(--jiange-xiao) + var(--jiange-6));
-    padding: calc(var(--jiange-xiao) + var(--jiange-6));
-  }
-
-  .pinpai-logo {
-    width: 36px;
-    height: 36px;
-  }
-
-  .pinpai-mingcheng {
-    font-size: 16px;
-  }
-
-  .zuoce-slogan {
-    font-size: 12px;
-  }
-
-  .you-ce-xuanze-qu {
-    padding: calc(var(--jiange-xiao) + var(--jiange-6)) var(--jiange-zhong) calc(var(--jiange-da) + var(--jiange-4));
-    gap: calc(var(--jiange-xiao) + var(--jiange-6));
-  }
-
-  .kapian-dingbu {
-    padding: var(--jiange-zhong) var(--jiange-zhong) var(--jiange-12);
-    gap: var(--jiange-12);
-  }
-
-  .kapian-tubiao-qu {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-  }
-
-  .kapian-tubiao {
-    font-size: 21px;
-  }
-
-  .kapian-biaoti {
-    font-size: 15px;
-  }
-
-  .kapian-yulan-qu {
-    padding: 0 var(--jiange-zhong) var(--jiange-10);
-  }
-
-  .kapian-dibu {
-    padding: var(--jiange-10) var(--jiange-zhong) var(--jiange-12);
-    margin: 0 var(--jiange-zhong);
-  }
-
-  .yulan-wenzi {
-    font-size: 11px;
-  }
-}
-
-@media (max-width: 640px) {
-  .gonggong-biaoti-qu {
-    padding: var(--jiange-12) var(--jiange-zhong) var(--jiange-xiao);
-  }
-
-  .biaoti-wenzi {
-    font-size: 22px;
-    letter-spacing: 4px;
-  }
-
-  .biaoti-zhushi {
-    font-size: 11px;
-  }
-
-  .zuo-ce-qinggan-qu {
-    padding: var(--jiange-4) var(--jiange-zhong) 0;
-  }
-
-  .qinggan-neirong-ceng {
-    gap: var(--jiange-xiao);
-    padding: var(--jiange-xiao);
-    border: none;
-    background-color: transparent;
-    background-image: none;
-    backdrop-filter: none;
-    box-shadow: none;
-  }
-
-  .pinpai-qu {
-    display: none;
-  }
-
-  .zuoce-slogan {
-    display: none;
-  }
-
-  .you-ce-xuanze-qu {
-    padding: var(--jiange-xiao) var(--jiange-zhong) var(--jiange-zhong);
-    gap: var(--jiange-xiao);
-  }
-
-  .moshi-kapian-zu {
-    gap: var(--jiange-10);
-  }
-
-  .moshi-kapian {
-    border-radius: 16px;
-  }
-
-  .kapian-dingbu {
-    padding: var(--jiange-10) var(--jiange-12) var(--jiange-xiao);
-    gap: var(--jiange-10);
-  }
-
-  .kapian-tubiao-qu {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-  }
-
-  .kapian-tubiao {
-    font-size: 18px;
-  }
-
-  .kapian-biaoti {
-    font-size: 14px;
-  }
-
-  .kapian-fubiaoti {
-    font-size: 10.5px;
-  }
-
-  .kapian-yulan-qu {
-    padding: 0 var(--jiange-12) var(--jiange-6);
-    gap: var(--jiange-6);
-  }
-
-  .yulan-wenzi {
-    font-size: 10px;
-  }
-
-  .kapian-dibu {
-    padding: var(--jiange-6) var(--jiange-12) var(--jiange-xiao);
-    margin: 0 var(--jiange-12);
-  }
-
-  .kaishi-wenben {
-    font-size: 11px;
-  }
-
-  .kaishi-jiantou {
-    font-size: 16px;
-  }
-
-  .zhuye-diwei-shuoming {
-    display: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pinpai-logo,
-  .diwei-tubiao {
-    animation: none;
-  }
-
-  .moshi-kapian,
-  .kapian-tubiao-qu,
-  .yulan-xiangmu,
-  .kaishi-jiantou {
-    transition: none !important;
-  }
-
-  .moshi-kapian:hover {
-    transform: none;
-  }
-
-  .moshi-kapian:hover:not(:disabled) .kapian-tubiao-qu {
-    transform: none;
-  }
-
-  .moshi-kapian:hover:not(:disabled) .yulan-xiangmu-1,
-  .moshi-kapian:hover:not(:disabled) .yulan-xiangmu-2,
-  .moshi-kapian:hover:not(:disabled) .yulan-xiangmu-3 {
-    transform: none;
-  }
-}
-
-.gonggong-biaoti-qu:not(.ru-chang-ke-jian) .biaoti-neirong,
-.zuo-ce-qinggan-qu:not(.ru-chang-ke-jian) .qinggan-neirong-ceng,
+.huanying-qu:not(.ru-chang-ke-jian),
+.wanjia-ka:not(.ru-chang-ke-jian),
 .moshi-kapian:not(.ru-chang-ke-jian),
-.zhuye-diwei-shuoming:not(.ru-chang-ke-jian) {
+.zhuangtai-tiao:not(.ru-chang-ke-jian) {
   opacity: 0;
 }
 
@@ -840,10 +650,10 @@ watch(
   pointer-events: none;
 }
 
-.gonggong-biaoti-qu.ru-chang-ke-jian .biaoti-neirong,
-.zuo-ce-qinggan-qu.ru-chang-ke-jian .qinggan-neirong-ceng,
+.huanying-qu.ru-chang-ke-jian,
+.wanjia-ka.ru-chang-ke-jian,
 .moshi-kapian.ru-chang-ke-jian,
-.zhuye-diwei-shuoming.ru-chang-ke-jian {
+.zhuangtai-tiao.ru-chang-ke-jian {
   animation: zhuye-ru-chang var(--deng-lu-shi-xu) var(--quxian-biao-zhun) var(--zhuye-wen-zi-yan-shi) backwards;
 }
 
@@ -858,11 +668,56 @@ watch(
   }
 }
 
+@media (max-width: 767px) {
+  .zhuye-quyu {
+    gap: var(--jiange-da);
+    padding: var(--jiange-zhong) var(--jiange-zhong) var(--jiange-da);
+  }
+
+  .rukou-qu {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wanjia-ka {
+    padding: var(--jiange-12);
+    gap: var(--jiange-xiao);
+  }
+
+  .ka-tou {
+    padding: var(--jiange-12) var(--jiange-12) var(--jiange-xiao);
+  }
+
+  .ka-yao {
+    padding: 0 var(--jiange-12) var(--jiange-12);
+  }
+
+  .ka-di {
+    padding: var(--jiange-12);
+  }
+
+  .zhuangtai-tiao {
+    padding: var(--jiange-10) var(--jiange-12);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .gonggong-biaoti-qu.ru-chang-ke-jian .biaoti-neirong,
-  .zuo-ce-qinggan-qu.ru-chang-ke-jian .qinggan-neirong-ceng,
+  .moshi-kapian,
+  .ka-jian {
+    transition: none;
+  }
+
+  .moshi-kapian:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .moshi-kapian:hover:not(:disabled) .ka-jian {
+    transform: none;
+  }
+
+  .huanying-qu.ru-chang-ke-jian,
+  .wanjia-ka.ru-chang-ke-jian,
   .moshi-kapian.ru-chang-ke-jian,
-  .zhuye-diwei-shuoming.ru-chang-ke-jian {
+  .zhuangtai-tiao.ru-chang-ke-jian {
     animation: none;
   }
 }

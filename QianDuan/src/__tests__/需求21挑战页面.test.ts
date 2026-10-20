@@ -255,12 +255,35 @@ describe('挑战积分榜', () => {
     包.unmount()
   })
 
-  it('空榜进入空态而不是空表格', async () => {
+  it('空榜进入空态而不是空表格，且表头一并收起', async () => {
     vi.mocked(huoQuPaiHangBang).mockResolvedValue([])
     const 包 = await 挂榜单()
     expect(包.find('.bangdan-kong').exists()).toBe(true)
     expect(包.findAll('.bangdan-hang')).toHaveLength(0)
+    expect(包.find('.bangdan-tou').exists()).toBe(false)
     expect(包.find('.bangdan-kong').text()).toContain(huoQuFanYi('tiaoZhan', 'zanWuPaiHang'))
+    expect(包.find('.bangdan-kong').text()).toContain(huoQuFanYi('tiaoZhan', 'bangDanKongFu'))
+    expect(包.find('.kong-anniu').exists()).toBe(true)
+    await 包.find('.kong-anniu').trigger('click')
+    expect(路由推).toHaveBeenCalledWith('/tiao-zhan')
+    包.unmount()
+  })
+})
+
+describe('挑战页空态', () => {
+  it('四个组别全无成绩时给出空态提示，而不是只摆四行未参赛', async () => {
+    vi.mocked(huoQuWoDeGaiKuang).mockResolvedValue([])
+    const 包 = await 挂主页()
+    expect(包.find('.zubie-kong-ti').exists()).toBe(true)
+    expect(包.find('.zubie-kong-ti').text()).toBe(huoQuFanYi('tiaoZhan', 'zubieKongTiShi'))
+    expect(包.findAll('.zubie-hang')).toHaveLength(4)
+    expect(包.find('.anniu-kaiShi').exists()).toBe(true)
+    包.unmount()
+  })
+
+  it('有成绩时不出现空态提示', async () => {
+    const 包 = await 挂主页()
+    expect(包.find('.zubie-kong-ti').exists()).toBe(false)
     包.unmount()
   })
 })

@@ -1,8 +1,10 @@
 import { createHash } from 'crypto'
 import {
   SHEN_HE_FU_WU_BU_KE_YONG_JIAN,
+  SHEN_HE_MO_SHI_BEN_DI,
   SHEN_HE_WEI_GUI_LEI_BIE,
   SHEN_HE_XI_TONG_CUO_WU_JIAN,
+  quShenHeMoShi,
 } from '../config/媒体配置'
 import { debug日志 } from '../utils/debug日志'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
@@ -134,6 +136,8 @@ async function xieRuJieLunHuanCun(sha256: string, jieLun: AnQuanShenHeJieGuo): P
 }
 
 export async function shenHeTuPianAnQuan(wenJianLuJing: string): Promise<AnQuanShenHeJieGuo> {
+  if (quShenHeMoShi() === SHEN_HE_MO_SHI_BEN_DI) return { wei_gui: false, lei_xing: '', li_you: '' }
+
   let tuPianHuanChong: Buffer
   try {
     tuPianHuanChong = await fs.promises.readFile(wenJianLuJing)

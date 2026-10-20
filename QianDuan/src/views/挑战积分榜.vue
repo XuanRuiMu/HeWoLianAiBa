@@ -2,14 +2,11 @@
   <div class="paihang-yemian">
     <header class="yemian-tou">
       <div class="tou-zhu">
-        <button class="fanhui-lianjie" type="button" @click="fanHui">
+        <button class="fanhui-lianjie dian-ji-qu-44" type="button" @click="fanHui">
           <span class="fanhui-jiantou" aria-hidden="true">←</span>
           <span>{{ huoQuFanYi('tiaoZhan', 'fanHui') }}</span>
         </button>
-        <h1 class="yemian-biaoti">
-          <span class="biaoti-biao" aria-hidden="true" />
-          <span>{{ huoQuFanYi('tiaoZhan', 'biaoTi') }}</span>
-        </h1>
+        <h1 class="yemian-biaoti">{{ huoQuFanYi('tiaoZhan', 'biaoTi') }}</h1>
         <p class="yemian-fubiaoti">{{ huoQuFanYi('tiaoZhan', 'bangDanShuoMing') }}</p>
       </div>
       <dl class="tou-tongji" :aria-busy="jiaZaiZhong ? 'true' : 'false'">
@@ -60,8 +57,8 @@
       </button>
     </div>
 
-    <section class="bangdan-qu" :aria-busy="jiaZaiZhong ? 'true' : 'false'">
-      <div class="bangdan-tou" aria-hidden="true">
+    <section class="qu bangdan-qu" :aria-busy="jiaZaiZhong ? 'true' : 'false'">
+      <div v-if="!bangDanKong" class="bangdan-tou" aria-hidden="true">
         <span>{{ huoQuFanYi('tiaoZhan', 'paiMingBiaoQian') }}</span>
         <span>{{ huoQuFanYi('tiaoZhan', 'wanJiaBiaoQian') }}</span>
         <span>{{ huoQuFanYi('tiaoZhan', 'duanWeiBiaoQian') }}</span>
@@ -87,7 +84,24 @@
         </div>
       </div>
 
-      <div v-else-if="paiHangLieBiao.length === 0 && !qianTaiCuoWu" class="bangdan-kong">
+      <div v-else-if="bangDanKong" class="bangdan-kong">
+        <span class="kong-tubiao" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M8 4h8v3.5a4 4 0 0 1-8 0z" />
+            <path d="M8 5H5.5A2.5 2.5 0 0 0 8 9.5" />
+            <path d="M16 5h2.5A2.5 2.5 0 0 1 16 9.5" />
+            <path d="M12 11.5V15" />
+            <path d="M9.5 20h5" />
+            <path d="M10 15h4l1 5h-6z" />
+          </svg>
+        </span>
         <p class="kong-biaoti">{{ huoQuFanYi('tiaoZhan', 'zanWuPaiHang') }}</p>
         <p class="kong-fu">{{ huoQuFanYi('tiaoZhan', 'bangDanKongFu') }}</p>
         <button class="kong-anniu" type="button" @click="fanHui">
@@ -149,6 +163,10 @@ const jiaZaiZhong = computed(
 )
 
 const shangBangRenShu = computed(() => paiHangLieBiao.value.length)
+
+const bangDanKong = computed(
+  () => !jiaZaiZhong.value && !qianTaiCuoWu.value && paiHangLieBiao.value.length === 0,
+)
 
 const zuiGaoFen = computed<number | null>(() => {
   if (paiHangLieBiao.value.length === 0) return null
@@ -212,27 +230,37 @@ function fanHui() {
 onMounted(jiaZaiPaiHang)
 </script>
 
+
 <style scoped>
 .paihang-yemian {
   --tz-jin: var(--junshi-zhuse);
-  --tz-jin-ruo: color-mix(in srgb, var(--tz-jin) 12%, transparent);
-  --tz-jin-xian: color-mix(in srgb, var(--tz-jin) 38%, var(--biankuang-yanse));
+  --tz-jin-an: color-mix(in srgb, var(--junshi-zhuse) 86%, var(--wenben-zhuse));
   --tz-mian: var(--beijing-kaopian);
+  --tz-di: var(--beijing-ciuse);
   --tz-xian: var(--biankuang-yanse);
-  --tz-xian-ruo: color-mix(in srgb, var(--biankuang-yanse) 62%, transparent);
-  --tz-xian-kuan: 1px;
-  --tz-xian-hou: 2px;
-  --tz-wen-er: color-mix(in srgb, var(--wenben-ciuse) 55%, var(--wenben-zhuse));
-  --tz-wen-san: color-mix(in srgb, var(--wenben-ciuse) 78%, var(--wenben-zhuse));
+  --tz-xian-ruo: color-mix(in srgb, var(--biankuang-yanse) 60%, transparent);
+  --tz-wen: var(--wenben-zhuse);
+  --tz-wen-ci: color-mix(in srgb, var(--wenben-zhuse) 72%, var(--wenben-ciuse));
+  --tz-fan-zi: var(--beijing-kaopian);
+  --tz-gu: color-mix(in srgb, var(--wenben-ciuse) 32%, var(--beijing-kaopian));
+  --tz-zi-xiao: 12px;
+  --tz-zi-zheng: 16px;
+  --tz-zi-zhong: 20px;
+  --tz-zi-da: 32px;
   --tz-kuan: calc(var(--jiange-da) * 42);
+  --tz-re-ku: 44px;
+  --tz-dong: var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun);
   width: 100%;
   max-width: var(--tz-kuan);
   margin: 0 auto;
-  padding: var(--jiange-zhong) var(--jiange-zhong) calc(var(--jiange-da) * 2);
+  padding: var(--jiange-da);
   display: flex;
   flex-direction: column;
   gap: var(--jiange-da);
-  color: var(--wenben-zhuse);
+  border-radius: var(--yuanjiao-zhong);
+  background: var(--tz-di);
+  color: var(--tz-wen);
+  font-size: var(--tz-zi-zheng);
 }
 
 .yemian-tou {
@@ -242,70 +270,58 @@ onMounted(jiaZaiPaiHang)
   gap: var(--jiange-zhong);
   flex-wrap: wrap;
   padding-bottom: var(--jiange-zhong);
-  border-bottom: var(--tz-xian-kuan) solid var(--tz-xian-ruo);
+  border-bottom: 1px solid var(--tz-xian-ruo);
 }
 
 .tou-zhu {
   display: flex;
   flex-direction: column;
-  gap: var(--jiange-6);
+  gap: var(--jiange-4);
   min-width: 0;
 }
 
 .fanhui-lianjie {
+  position: relative;
   display: inline-flex;
   align-items: center;
   align-self: flex-start;
-  gap: var(--jiange-6);
+  gap: var(--jiange-4);
+  min-height: var(--tz-re-ku);
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--tz-wen-er);
-  font-size: var(--ziti-xiao);
-  transition: color var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun);
+  color: var(--tz-wen-ci);
+  font-size: var(--tz-zi-zheng);
+  line-height: 1.4;
+  transition: color var(--tz-dong);
 }
 
-.fanhui-lianjie:hover {
+.fanhui-lianjie:hover:not(:disabled) {
   color: var(--tz-jin);
 }
 
 .fanhui-jiantou {
-  transition: transform var(--moshi-kapian-dong-xiao) var(--quxian-tan-chu);
-}
-
-.fanhui-lianjie:hover .fanhui-jiantou {
-  transform: translateX(calc(var(--jiange-2) * -1));
+  font-size: var(--tz-zi-zheng);
+  line-height: 1;
 }
 
 .yemian-biaoti {
-  display: flex;
-  align-items: center;
-  gap: var(--jiange-12);
   margin: 0;
-  font-size: calc(var(--ziti-da) * 1.9);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: 0.01em;
-}
-
-.biaoti-biao {
-  display: block;
-  width: var(--jiange-4);
-  height: calc(var(--ziti-da) * 1.5);
-  border-radius: var(--jiange-2);
-  background: var(--tz-jin);
+  font-size: var(--tz-zi-da);
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .yemian-fubiaoti {
   margin: 0;
-  font-size: var(--ziti-zhong);
-  line-height: 1.6;
-  color: var(--tz-wen-er);
+  font-size: var(--tz-zi-zheng);
+  line-height: 1.5;
+  color: var(--tz-wen-ci);
 }
 
 .tou-tongji {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: var(--jiange-da);
   margin: 0;
 }
@@ -313,36 +329,36 @@ onMounted(jiaZaiPaiHang)
 .tongji-xiang {
   display: flex;
   flex-direction: column;
-  gap: var(--jiange-2);
+  gap: var(--jiange-4);
   text-align: right;
 }
 
 .tongji-xiang dt {
-  font-size: var(--ziti-xiao);
-  color: var(--tz-wen-san);
+  font-size: var(--tz-zi-xiao);
+  line-height: 1.4;
+  color: var(--tz-wen-ci);
 }
 
 .tongji-xiang dd {
   margin: 0;
-  font-size: calc(var(--ziti-da) * 1.12);
+  font-size: var(--tz-zi-zhong);
   font-weight: 600;
+  line-height: 1.3;
   font-variant-numeric: tabular-nums;
-  color: var(--wenben-zhuse);
 }
 
 .tongji-fenmu {
-  font-size: var(--ziti-zhong);
+  font-size: var(--tz-zi-zheng);
   font-weight: 400;
-  color: var(--tz-wen-san);
+  color: var(--tz-wen-ci);
 }
-
 
 .zhanwei-tiao {
   display: inline-block;
   width: calc(var(--jiange-da) * 2);
-  height: calc(var(--ziti-zhong) * 1.1);
+  height: var(--tz-zi-zhong);
   border-radius: var(--yuanjiao-xiao);
-  background: var(--tz-xian-ruo);
+  background: var(--tz-gu);
 }
 
 .zhanwei-tiao--chang {
@@ -350,38 +366,49 @@ onMounted(jiaZaiPaiHang)
 }
 
 .zubie-qiehuan {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--jiange-xiao);
+  display: flex;
+  align-items: stretch;
+  gap: var(--jiange-zhong);
+  border-bottom: 1px solid var(--tz-xian-ruo);
 }
 
 .zubie-anNiu {
-  display: flex;
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--jiange-6);
-  padding: var(--jiange-10) var(--jiange-xiao);
-  border: var(--tz-xian-kuan) solid var(--tz-xian);
-  border-radius: var(--yuanjiao-xiao);
-  background: var(--tz-mian);
-  color: var(--tz-wen-er);
-  font-size: var(--ziti-zhong);
-  font-weight: 600;
-  transition:
-    background-color var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun),
-    border-color var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun),
-    color var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun);
+  gap: var(--jiange-xiao);
+  min-height: var(--tz-re-ku);
+  padding: var(--jiange-xiao) 0;
+  border: 0;
+  background: transparent;
+  color: var(--tz-wen-ci);
+  font-size: var(--tz-zi-zheng);
+  font-weight: 400;
+  line-height: 1.4;
+  transition: color var(--tz-dong);
 }
 
-.zubie-anNiu:hover {
-  border-color: var(--tz-jin-xian);
-  color: var(--wenben-zhuse);
+.zubie-anNiu::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: transparent;
+}
+
+.zubie-anNiu:hover:not(:disabled) {
+  color: var(--tz-wen);
 }
 
 .zubie-anNiu[aria-pressed='true'] {
-  border-color: var(--tz-jin-xian);
-  background: var(--tz-jin-ruo);
-  color: var(--tz-jin);
+  color: var(--tz-wen);
+  font-weight: 600;
+}
+
+.zubie-anNiu[aria-pressed='true']::after {
+  background: var(--tz-jin);
 }
 
 .zubie-dian {
@@ -402,14 +429,18 @@ onMounted(jiaZaiPaiHang)
   background: var(--xingbie-nv-1);
 }
 
-.bangdan-qu {
+.qu {
   display: flex;
   flex-direction: column;
+  gap: var(--jiange-zhong);
   min-width: 0;
-  padding: var(--jiange-xiao) var(--jiange-zhong) var(--jiange-4);
-  border: var(--tz-xian-kuan) solid var(--tz-xian);
-  border-radius: var(--yuanjiao-da);
+  padding: var(--jiange-da);
+  border-radius: var(--yuanjiao-zhong);
   background: var(--tz-mian);
+}
+
+.bangdan-qu {
+  gap: 0;
 }
 
 .bangdan-tou,
@@ -417,19 +448,21 @@ onMounted(jiaZaiPaiHang)
 .bangdan-zhanwei {
   display: grid;
   grid-template-columns:
-    calc(var(--jiange-da) + var(--jiange-12)) minmax(0, 1.6fr) minmax(0, 0.9fr)
-    minmax(0, 1fr) minmax(0, 0.6fr);
+    calc(var(--jiange-da) * 1.5) minmax(0, 1.6fr) minmax(0, 0.9fr)
+    minmax(0, 1fr) minmax(0, 0.7fr);
   align-items: center;
-  gap: var(--jiange-xiao);
+  gap: var(--jiange-12);
 }
 
 .bangdan-tou {
-  padding: var(--jiange-12) var(--jiange-xiao) var(--jiange-10);
-  border-bottom: var(--tz-xian-kuan) solid var(--tz-xian-ruo);
-  font-size: var(--ziti-xiao);
-  color: var(--tz-wen-san);
+  padding: var(--jiange-xiao) 0;
+  border-bottom: 1px solid var(--tz-xian);
+  font-size: var(--tz-zi-xiao);
+  line-height: 1.4;
+  color: var(--tz-wen-ci);
 }
 
+.bangdan-tou span:first-child,
 .bangdan-tou span:last-child {
   text-align: right;
 }
@@ -443,16 +476,12 @@ onMounted(jiaZaiPaiHang)
 }
 
 .bangdan-hang {
-  padding: var(--jiange-12) var(--jiange-xiao);
-  border-bottom: var(--tz-xian-kuan) solid var(--tz-xian-ruo);
+  padding: var(--jiange-12) 0;
+  border-bottom: 1px solid var(--tz-xian-ruo);
 }
 
 .bangdan-hang:last-child {
   border-bottom: 0;
-}
-
-.bangdan-hang--qian {
-  box-shadow: inset var(--tz-xian-hou) 0 0 var(--tz-jin);
 }
 
 .bangdan-hang--qian .paiming-shu {
@@ -460,17 +489,18 @@ onMounted(jiaZaiPaiHang)
 }
 
 .paiming-shu {
-  font-size: var(--ziti-da);
-  font-weight: 700;
+  justify-self: end;
+  font-size: var(--tz-zi-zhong);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--tz-wen-san);
+  color: var(--tz-wen-ci);
 }
 
 .wanjia-ming {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--ziti-zhong);
+  font-size: var(--tz-zi-zheng);
   font-weight: 600;
 }
 
@@ -479,37 +509,37 @@ onMounted(jiaZaiPaiHang)
 }
 
 .duanwei-ming {
-  grid-column: 3;
-  font-size: var(--ziti-xiao);
-  font-weight: 600;
-  color: var(--tz-jin);
-}
-
-.zhanji-wen {
-  grid-column: 4;
-  font-size: var(--ziti-xiao);
-  color: var(--tz-wen-er);
+  font-size: var(--tz-zi-xiao);
+  line-height: 1.4;
+  color: var(--tz-wen-ci);
   white-space: nowrap;
 }
 
+.zhanji-wen {
+  font-size: var(--tz-zi-xiao);
+  line-height: 1.4;
+  color: var(--tz-wen-ci);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 .jifen-zhi {
-  grid-column: 5;
   justify-self: end;
-  font-size: var(--ziti-da);
-  font-weight: 700;
+  font-size: var(--tz-zi-zhong);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .jifen-danwei {
-  font-size: var(--ziti-xiao);
+  font-size: var(--tz-zi-xiao);
   font-weight: 400;
-  color: var(--tz-wen-san);
+  color: var(--tz-wen-ci);
 }
 
 .bangdan-zhanwei {
-  padding: var(--jiange-12) var(--jiange-xiao);
-  border-bottom: var(--tz-xian-kuan) solid var(--tz-xian-ruo);
+  padding: var(--jiange-12) 0;
+  border-bottom: 1px solid var(--tz-xian-ruo);
 }
 
 .bangdan-zhanwei:last-child {
@@ -518,13 +548,14 @@ onMounted(jiaZaiPaiHang)
 
 .zhanwei-kuai {
   display: block;
-  height: calc(var(--ziti-zhong) * 0.95);
+  height: var(--tz-zi-zheng);
   border-radius: var(--yuanjiao-xiao);
-  background: var(--tz-xian-ruo);
+  background: var(--tz-gu);
 }
 
 .zhanwei-kuai--pai {
   width: 60%;
+  justify-self: end;
 }
 
 .zhanwei-kuai--ming {
@@ -549,40 +580,59 @@ onMounted(jiaZaiPaiHang)
   flex-direction: column;
   align-items: flex-start;
   gap: var(--jiange-xiao);
-  padding: calc(var(--jiange-da) * 2) var(--jiange-xiao);
+  padding: calc(var(--jiange-da) * 2) 0 var(--jiange-da);
+}
+
+.kong-tubiao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--jiange-da) * 2);
+  height: calc(var(--jiange-da) * 2);
+  margin-bottom: var(--jiange-4);
+  border-radius: 50%;
+  background: var(--tz-di);
+  color: var(--tz-jin);
+}
+
+.kong-tubiao svg {
+  width: var(--jiange-da);
+  height: var(--jiange-da);
 }
 
 .kong-biaoti {
   margin: 0;
-  font-size: var(--ziti-da);
+  font-size: var(--tz-zi-zhong);
   font-weight: 600;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .kong-fu {
   margin: 0;
-  font-size: var(--ziti-xiao);
-  line-height: 1.7;
-  color: var(--tz-wen-er);
+  max-width: 44ch;
+  font-size: var(--tz-zi-zheng);
+  line-height: 1.6;
+  color: var(--tz-wen-ci);
 }
 
 .kong-anniu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tz-re-ku);
   margin-top: var(--jiange-4);
-  padding: var(--jiange-xiao) var(--jiange-zhong);
-  border: var(--tz-xian-kuan) solid var(--tz-jin-xian);
+  padding: 0 var(--jiange-da);
+  border: 1px solid transparent;
   border-radius: var(--yuanjiao-xiao);
-  background: var(--tz-jin-ruo);
-  color: var(--tz-jin);
-  font-size: var(--ziti-zhong);
+  background: var(--tz-jin);
+  color: var(--tz-fan-zi);
+  font-size: var(--tz-zi-zheng);
   font-weight: 600;
-  transition:
-    background-color var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun),
-    border-color var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun);
+  transition: background-color var(--tz-dong);
 }
 
-.kong-anniu:hover {
-  border-color: var(--tz-jin);
-  background: color-mix(in srgb, var(--tz-jin) 20%, transparent);
+.kong-anniu:hover:not(:disabled) {
+  background: var(--tz-jin-an);
 }
 
 .ping-mu-wai {
@@ -596,17 +646,16 @@ onMounted(jiaZaiPaiHang)
 
 @media (max-width: 767px) {
   .paihang-yemian {
+    padding: var(--jiange-zhong);
     gap: var(--jiange-zhong);
-    padding-bottom: calc(var(--jiange-da) * 2);
   }
 
-  .yemian-biaoti {
-    font-size: calc(var(--ziti-da) * 1.5);
+  .qu {
+    padding: var(--jiange-zhong);
   }
 
   .yemian-tou {
     align-items: flex-start;
-    padding-bottom: var(--jiange-12);
   }
 }
 
@@ -614,7 +663,6 @@ onMounted(jiaZaiPaiHang)
   .tou-tongji {
     width: 100%;
     justify-content: flex-start;
-    gap: var(--jiange-da);
   }
 
   .tongji-xiang {
@@ -623,33 +671,27 @@ onMounted(jiaZaiPaiHang)
   }
 
   .zubie-qiehuan {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .bangdan-qu {
-    padding: var(--jiange-4) var(--jiange-12);
+    gap: var(--jiange-12);
   }
 
   .bangdan-tou {
     display: none;
   }
 
-  .bangdan-hang {
-    grid-template-columns: calc(var(--jiange-da) + var(--jiange-6)) minmax(0, 1fr) auto;
+  .bangdan-hang,
+  .bangdan-zhanwei {
+    grid-template-columns: calc(var(--jiange-da) * 2) minmax(0, 1fr) auto;
     grid-template-areas:
       'pai ming fen'
       '. xinxi xinxi';
-    row-gap: var(--jiange-6);
+    gap: var(--jiange-xiao);
+    row-gap: var(--jiange-4);
     padding: var(--jiange-12) 0;
-  }
-
-  .bangdan-hang--qian {
-    box-shadow: inset var(--tz-xian-hou) 0 0 var(--tz-jin);
-    padding-left: var(--jiange-xiao);
   }
 
   .paiming-shu {
     grid-area: pai;
+    justify-self: start;
   }
 
   .wanjia-ming {
@@ -668,18 +710,21 @@ onMounted(jiaZaiPaiHang)
     grid-area: fen;
   }
 
-  .bangdan-zhanwei {
-    grid-template-columns: calc(var(--jiange-da) + var(--jiange-6)) minmax(0, 1fr) auto;
-    padding: var(--jiange-12) 0;
+  .bangdan-zhanwei .zhanwei-kuai--pai {
+    grid-area: pai;
+  }
+
+  .bangdan-zhanwei .zhanwei-kuai--ming {
+    grid-area: ming;
+  }
+
+  .bangdan-zhanwei .zhanwei-kuai--fen {
+    grid-area: fen;
   }
 
   .bangdan-zhanwei .zhanwei-kuai--duan,
   .bangdan-zhanwei .zhanwei-kuai--ji {
     display: none;
-  }
-
-  .zhanwei-kuai--fen {
-    grid-column: 3;
   }
 
   .bangdan-kong {
@@ -689,14 +734,9 @@ onMounted(jiaZaiPaiHang)
 
 @media (prefers-reduced-motion: reduce) {
   .fanhui-lianjie,
-  .fanhui-jiantou,
   .zubie-anNiu,
   .kong-anniu {
     transition: none;
-  }
-
-  .fanhui-lianjie:hover .fanhui-jiantou {
-    transform: none;
   }
 }
 </style>
