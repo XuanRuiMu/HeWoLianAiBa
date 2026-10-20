@@ -37,27 +37,23 @@
           </p>
 
           <div class="zhaohui-zi-duan">
-            <div class="shuru-zu" :class="{ shangFu: shouJiHaoShangFu }">
-              <input
-                id="zhaohui-shoujihao"
-                ref="shouJiHaoKuang"
-                v-model="shouJiHao"
-                type="tel"
-                class="fenlie-shuru"
-                maxlength="11"
-                inputmode="numeric"
-                autocomplete="tel"
-                placeholder=" "
-                required
-                :readonly="dangQianBuZhou === 2"
-                :aria-invalid="dangQianBuZhou === 1 && shouJiHaoTiShi !== '' ? 'true' : undefined"
-                @input="qingLiTiShi"
-                @blur="shouJiHaoShiJiao"
-              />
-              <label for="zhaohui-shoujihao" class="fudong-biaoqian">{{
-                huoQuFanYi('ui', 'shouJiHao')
-              }}</label>
-            </div>
+            <HengTiaoShuRuKuang
+              ref="shouJiHaoKuang"
+              标识="zhaohui-shoujihao"
+              :模型值="shouJiHao"
+              类型="tel"
+              :最大长度="11"
+              输入模式="numeric"
+              自动完成="tel"
+              :只读="dangQianBuZhou === 2"
+              :上浮="shouJiHaoShangFu"
+              :无效="dangQianBuZhou === 1 && shouJiHaoTiShi !== ''"
+              必填
+              :标签="huoQuFanYi('ui', 'shouJiHao')"
+              @geng-xin="shouJiHao = $event"
+              @shu-ru="qingLiTiShi"
+              @shi-jiao="shouJiHaoShiJiao"
+            />
             <p v-if="dangQianBuZhou === 1 && shouJiHaoCuoWuWenBen !== ''" class="zhaohui-zi-duan-ti-shi" role="alert">
               {{ shouJiHaoCuoWuWenBen }}
             </p>
@@ -76,61 +72,53 @@
 
           <template v-else>
             <div class="zhaohui-zi-duan">
-              <div class="shuru-zu" :class="{ shangFu: yanZhengMaShangFu }">
-                <div class="yanzhengma-zu">
-                  <div class="yanzhengma-shuru-qu">
-                    <input
-                      id="zhaohui-yanzhengma"
-                      ref="yanZhengMaKuang"
-                      v-model="yanZhengMa"
-                      type="tel"
-                      class="fenlie-shuru"
-                      maxlength="6"
-                      inputmode="numeric"
-                      autocomplete="one-time-code"
-                      placeholder=" "
-                      required
-                      @input="qingLiTiShi"
-                    />
-                    <label for="zhaohui-yanzhengma" class="fudong-biaoqian">{{
-                      huoQuFanYi('ui', 'yanZhengMa')
-                    }}</label>
-                  </div>
-                  <button
-                    type="button"
-                    class="fasong-anniu"
-                    :aria-busy="faSongZhong ? 'true' : 'false'"
-                    :disabled="!keYiChongFa"
-                    @click="zhiXingFaSong"
-                  >
-                    {{ chongFaWenBen }}
-                  </button>
-                </div>
-              </div>
+              <HengTiaoShuRuKuang
+                ref="yanZhengMaKuang"
+                标识="zhaohui-yanzhengma"
+                :模型值="yanZhengMa"
+                类型="tel"
+                :最大长度="6"
+                输入模式="numeric"
+                自动完成="one-time-code"
+                :上浮="yanZhengMaShangFu"
+                必填
+                包裹类="yanzhengma-zu"
+                内层类="yanzhengma-shuru-qu"
+                :标签="huoQuFanYi('ui', 'yanZhengMa')"
+                @geng-xin="yanZhengMa = $event"
+                @shu-ru="qingLiTiShi"
+              >
+                <button
+                  type="button"
+                  class="fasong-anniu"
+                  :aria-busy="faSongZhong ? 'true' : 'false'"
+                  :disabled="!keYiChongFa"
+                  @click="zhiXingFaSong"
+                >
+                  {{ chongFaWenBen }}
+                </button>
+              </HengTiaoShuRuKuang>
               <p v-if="yanZhengMaCuoWuWenBen !== ''" class="zhaohui-zi-duan-ti-shi" role="alert">
                 {{ yanZhengMaCuoWuWenBen }}
               </p>
             </div>
 
             <div class="zhaohui-zi-duan">
-              <div class="shuru-zu" :class="{ shangFu: xinMiMaShangFu }">
-                <div class="mima-zu">
-                  <input
-                    id="zhaohui-xinmima"
-                    ref="xinMiMaKuang"
-                    v-model="xinMiMa"
-                    :type="xianShiXinMiMa ? 'text' : 'password'"
-                    class="fenlie-shuru"
-                    autocomplete="new-password"
-                    placeholder=" "
-                    required
-                    @input="qingLiTiShi"
-                    @blur="xinMiMaShiJiao = true"
-                  />
-                  <label for="zhaohui-xinmima" class="fudong-biaoqian">{{
-                    huoQuFanYi('renZheng', 'xinMiMa')
-                  }}</label>
-                  <button
+              <HengTiaoShuRuKuang
+                ref="xinMiMaKuang"
+                标识="zhaohui-xinmima"
+                :模型值="xinMiMa"
+                :类型="xianShiXinMiMa ? 'text' : 'password'"
+                自动完成="new-password"
+                :上浮="xinMiMaShangFu"
+                必填
+                包裹类="mima-zu"
+                :标签="huoQuFanYi('renZheng', 'xinMiMa')"
+                @geng-xin="xinMiMa = $event"
+                @shu-ru="qingLiTiShi"
+                @shi-jiao="xinMiMaShiJiao = true"
+              >
+                <button
                     type="button"
                     class="mima-qiehuan"
                     :aria-label="xianShiXinMiMa ? huoQuFanYi('ui', 'yinCangMiMa') : huoQuFanYi('ui', 'xianShiMiMa')"
@@ -167,27 +155,23 @@
                       <circle cx="12" cy="12" r="3" />
                     </svg>
                   </button>
-                </div>
+              </HengTiaoShuRuKuang>
               </div>
-            </div>
 
             <div class="zhaohui-zi-duan">
-              <div class="shuru-zu" :class="{ shangFu: queRenMiMaShangFu }">
-                <div class="mima-zu">
-                  <input
-                    id="zhaohui-querenmima"
-                    v-model="queRenXinMiMa"
-                    :type="xianShiQueRenMiMa ? 'text' : 'password'"
-                    class="fenlie-shuru"
-                    autocomplete="new-password"
-                    placeholder=" "
-                    required
-                    @input="qingLiTiShi"
-                  />
-                  <label for="zhaohui-querenmima" class="fudong-biaoqian">{{
-                    huoQuFanYi('renZheng', 'queRenXinMiMa')
-                  }}</label>
-                  <button
+              <HengTiaoShuRuKuang
+                标识="zhaohui-querenmima"
+                :模型值="queRenXinMiMa"
+                :类型="xianShiQueRenMiMa ? 'text' : 'password'"
+                自动完成="new-password"
+                :上浮="queRenMiMaShangFu"
+                必填
+                包裹类="mima-zu"
+                :标签="huoQuFanYi('renZheng', 'queRenXinMiMa')"
+                @geng-xin="queRenXinMiMa = $event"
+                @shu-ru="qingLiTiShi"
+              >
+<button
                     type="button"
                     class="mima-qiehuan"
                     :aria-label="
@@ -226,8 +210,7 @@
                       <circle cx="12" cy="12" r="3" />
                     </svg>
                   </button>
-                </div>
-              </div>
+              </HengTiaoShuRuKuang>
               <p v-if="miMaCuoWuWenBen !== ''" class="zhaohui-zi-duan-ti-shi" role="alert">
                 {{ miMaCuoWuWenBen }}
               </p>
@@ -262,6 +245,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { chongZhiMiMa, faSongMa, YAN_ZHENG_MA_YONG_TU } from '@/api/认证'
+import HengTiaoShuRuKuang from '@/components/表单/横条输入框.vue'
 import { huoQuFanYi } from '@/config/翻译表'
 import { use前台错误 } from '@/composables/use前台错误'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
@@ -289,9 +273,10 @@ const tiaoZhuanMiao = ref(0)
 const chongZhiWanCheng = ref(false)
 const shouJiHaoJiaoCuo = ref(false)
 const xinMiMaShiJiao = ref(false)
-const shouJiHaoKuang = ref<HTMLInputElement | null>(null)
-const yanZhengMaKuang = ref<HTMLInputElement | null>(null)
-const xinMiMaKuang = ref<HTMLInputElement | null>(null)
+type ShuRuKuangShiLi = { jiaoDian: () => void }
+const shouJiHaoKuang = ref<ShuRuKuangShiLi | null>(null)
+const yanZhengMaKuang = ref<ShuRuKuangShiLi | null>(null)
+const xinMiMaKuang = ref<ShuRuKuangShiLi | null>(null)
 
 let daiCi = 0
 let yiTiaoZhuan = false
@@ -429,7 +414,7 @@ function shouJiHaoShiJiao(): void {
 }
 
 function juJiao(kong: typeof shouJiHaoKuang): void {
-  void nextTick(() => kong.value?.focus())
+  void nextTick(() => kong.value?.jiaoDian())
 }
 
 function fanHuiShangYiBu(): void {

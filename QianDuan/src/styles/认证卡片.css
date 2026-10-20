@@ -317,6 +317,14 @@
   color: #6b5223;
 }
 
+.zhaohui-zi-duan-ti-shi {
+  margin-top: var(--jiange-xiao);
+  padding-left: var(--jiange-4);
+  color: var(--cuowu-yanse);
+  font-size: var(--ziti-xiao);
+  line-height: 1.5;
+}
+
 .anniu-zhuyao {
   display: inline-flex;
   align-items: center;
