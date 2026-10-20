@@ -681,11 +681,6 @@ onUnmounted(() => {
 
 .cuowu-tishi {
   width: 100%;
-  padding: var(--jiange-10) calc(var(--jiange-12) + var(--jiange-2));
-  background: rgba(255, 152, 0, 0.1);
-  border-radius: 8px;
-  font-size: 13px;
-  color: #e65100;
   text-align: center;
 }
 

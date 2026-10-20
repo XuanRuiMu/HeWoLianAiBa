@@ -1777,18 +1777,23 @@ async function zhiXingZhuCe() {
     var(--renzheng-gundong-huakuai-se) 50%,
     color-mix(in srgb, var(--renzheng-gundong-huakuai-se) 34%, transparent) 100%
   );
-  opacity: 0.86;
-  box-shadow: 0 0 6px color-mix(in srgb, var(--renzheng-gundong-huakuai-se) 45%, transparent);
-  transition: opacity 240ms ease;
+  opacity: 1;
+  filter: brightness(0.76) saturate(0.8);
+  box-shadow: none;
+  transition:
+    filter 200ms ease,
+    box-shadow 200ms ease;
   pointer-events: auto;
   will-change: transform;
 }
 
 /* 「用起来了」的判定：指针进入滑道整列、悬停滑块、或按住拖拽 */
 .gundong-zhuangshi:hover .gundong-huakuai,
+.gundong-zhuangshi:focus-within .gundong-huakuai,
 .gundong-huakuai:hover,
 .gundong-huakuai:active {
-  opacity: 1;
+  filter: brightness(1.2) saturate(1.18);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--renzheng-gundong-huakuai-se) 72%, transparent);
 }
 
 .biaodan-xingwei {
@@ -2125,16 +2130,6 @@ async function zhiXingZhuCe() {
   box-shadow: none;
 }
 
-.cuowu-tishi {
-  padding: var(--jiange-10) calc(var(--jiange-xiao) + var(--jiange-6));
-  background: rgba(217, 138, 128, 0.1);
-  border: 1px solid rgba(217, 138, 128, 0.35);
-  border-radius: 4px;
-  color: #d98a80;
-  font-size: var(--ziti-xiao);
-  margin-bottom: var(--jiange-zhong);
-}
-
 .xieyi-gouxuan {
   margin-top: var(--jiange-zhong);
   margin-bottom: var(--jiange-zhong);
@@ -2293,11 +2288,6 @@ async function zhiXingZhuCe() {
   border-color: #8a6a2f;
 }
 
-:root[data-theme='light'] .cuowu-tishi {
-  background: rgba(176, 58, 46, 0.07);
-  border-color: rgba(176, 58, 46, 0.32);
-  color: #b03a2e;
-}
 
 :root[data-theme='light'] .xieyi-wenben {
   color: rgba(46, 42, 32, 0.62);

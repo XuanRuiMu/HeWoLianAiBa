@@ -139,7 +139,8 @@ async function fuZhiLianAiMa(): Promise<void> {
   padding: var(--jiange-zhong);
   border: var(--shuru-kuang-biankuang) solid var(--cuowu-touming-biankuang);
   border-radius: var(--yuanjiao-zhong);
-  background: var(--cuowu-touming-beijing);
+  background: color-mix(in srgb, var(--beijing-kaopian) 76%, transparent);
+  box-shadow: inset 3px 0 0 var(--cuowu-yanse);
   color: var(--wenben-zhuse);
 }
 

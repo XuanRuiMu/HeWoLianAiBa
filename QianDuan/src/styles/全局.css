@@ -454,10 +454,11 @@ img {
 }
 
 .cuowu-tishi {
-  padding: 8px 12px;
-  background: rgba(250, 81, 81, 0.1);
-  border: 1px solid rgba(250, 81, 81, 0.2);
+  padding: calc(var(--jiange-xiao) + var(--jiange-4)) var(--jiange-zhong);
+  background: color-mix(in srgb, var(--beijing-kaopian) 76%, transparent);
+  border: var(--shuru-kuang-biankuang) solid var(--cuowu-touming-biankuang);
   border-radius: var(--yuanjiao-xiao);
+  box-shadow: inset 3px 0 0 var(--cuowu-yanse);
   color: var(--cuowu-yanse);
   font-size: var(--ziti-xiao);
   margin-top: var(--jiange-xiao);
