@@ -657,6 +657,7 @@ locked: false,
       // （刚体平移实测残留 5px 滑动）。
       if (wuMesh) wuApplyParallax(group.position);
       try { wuSkyTick(); } catch (eSky) { window.__wuSkyErr = String(eSky && eSky.message || eSky); }
+      try { wuBodyWatch(performance.now()); } catch (eBW) { window.__wuBodyErr = String(eBW && eBW.message || eBW); }
       cam.position.copy(S.pos);
       cam.quaternion.copy(quatOf(S.yaw, S.pitch));
       cam.scale.set(1, 1, 1);
@@ -1270,6 +1271,308 @@ window.__camReady = true;
     // 0.027m 约合 7.8px，轮廓能实心还原，DILATE=1 也才真的是「稍大一点」（2.7cm）。
     var WU_CELL = 0.027;
     var DILATE = 1;              // footprint 外扩格数（WU_CELL 单位，1 格 = 2.7cm）
+    var WU_BODY_COLLIDE = true;      // 总开关：false = 完全回到「删草 + 涂分区图」的旧行为
+    var WU_BODY_CELL = 0.004;        // 碰撞场网格 4mm（footprint 的 27mm 太粗，边界会成锯齿）
+    var WU_BODY_PAD = 0.55;          // 场覆盖范围 = 碰撞体包围盒外扩这么多米
+    var WU_BODY_CLEAR = 0.006;       // 允许的最近距离（米）：顶点不得进入体表 6mm 内
+    var WU_BODY_RANGE = 0.16;        // 有符号距离编码量程（±0.16m ⇒ 8bit 分辨率 1.25mm）
+    var WU_BODY_CRUSH = 0.012;       // 压住过渡：基座深入禁区 1.2cm 以上 ⇒ 完全不可见（边界保持干净）
+    var WU_BODY_UNIFORMS = [
+      'uniform sampler2D uWuBody;',
+      'uniform vec2 uWuBodyOrigin;',
+      'uniform vec2 uWuBodyInv;',
+      'uniform float uWuBodyRange;',
+      'uniform float uWuBodyClear;',
+      'uniform float uWuBodyCrush;'
+    ].join('\n');
+    // 世界 XZ → 场 UV。⚠️ v 必须翻转：场数据按「世界 z 从小到大」填进画布**行**，
+    // 而 three 的 CanvasTexture 默认 flipY=true（图片顶部 ⇒ 纹理 v=1）⇒ 世界 z 小的一侧
+    // 落在 v=1。少了这个 1.0- ，采样位置在 z 方向就是**镜像**的，压平/约束会作用到错的地方。
+    var WU_BODY_UV_FN = [
+      'vec2 wuBodyUv(vec2 wxz){',
+      'vec2 t=(wxz-uWuBodyOrigin)*uWuBodyInv;',
+      'return vec2(t.x,1.0-t.y);',
+      '}'
+    ].join('\n');
+    // 草：锚在最终世界坐标那一行之后
+    var WU_BODY_VS_GRASS = 'vec3 myWorldPosition=scaledPosition+grassOrigin;';
+    var WU_BODY_GRASS_GLSL = [
+      '{',
+      // ① 重算「不弯曲」位置：把 finalGrassInclination 合成链里的**拨动**那一步撤掉，
+      //    只保留「地形对齐 + 风」—— 这就是这株草没被拨动时会待的位置。
+      'vec3 wuRestInc=inclineVectorTowardSlerp(terrainAdjustedNormal,normalize(localWindDirection),windStrength);',
+      'mat3 wuRestAlign=createAlignmentMatrix(grassNormal,normalize(wuRestInc));',
+      'vec3 wuRestPos=instanceRotation*(wuRestAlign*randomlyRotatedPosition)*grassScale+grassOrigin;',
+      // ② 采样实体场（R 通道 = 有符号距离，体内为负）
+      'float wuSdF=(texture(uWuBody,wuBodyUv(myWorldPosition.xz)).r-0.5)*2.0*uWuBodyRange;',
+      'float wuSdR=(texture(uWuBody,wuBodyUv(wuRestPos.xz)).r-0.5)*2.0*uWuBodyRange;',
+      'float wuSdO=(texture(uWuBody,wuBodyUv(grassOrigin.xz)).r-0.5)*2.0*uWuBodyRange;',
+      // ③ 弯曲约束：沿「不弯 → 全弯」这条路径找刚好接触他表面的那个点。SDF 沿路径近似线性，
+      //    一步插值即可 —— 草弯到接触就**停住**，形状保持自然（不是被硬推到边界、压扁折角）。
+      'float wuCrush=clamp(-wuSdO/uWuBodyCrush,0.0,1.0);',
+      'float wuT=1.0;',
+      'if(wuCrush<=0.0&&wuSdF<uWuBodyClear){',
+      'wuT=clamp((wuSdR-uWuBodyClear)/max(wuSdR-wuSdF,1e-4),0.0,1.0);',
+      '}',
+      'myWorldPosition=mix(wuRestPos,myWorldPosition,wuT);',
+      // ④ 基座落在禁区里 ⇒ 被他压住：**整体收缩到根部**（不是只压平 y）。
+      //    ⚠️ 踩过的坑：只压平 y 的话，草叶变成「贴地的扁平草叶」，从 23° 俯角看仍然可见，
+      //    会把地面的黄秃地整片盖住 ⇒ 用户看到的就是「秃地没了」。收缩到根部后三角形退化成
+      //    零面积、被光栅化丢弃，禁区内不再有可见草叶，黄遮罩才露得出来。
+      //    注意：草实例本身**没有被删**（矩阵还在、分区图绿通道原样），只是被压住看不见。
+      'myWorldPosition=mix(myWorldPosition,grassOrigin,wuCrush);',
+      '}'
+    ].join('\n');
+    // 花：锚在最终位置那一行之后；压平的花还要把点精灵尺寸缩到 0，否则还是一朵花立在那儿
+    var WU_BODY_VS_FLOWER = 'newPosition=flowerOrigin+(flowerInclination*elevation);';
+    var WU_BODY_VS_FLOWER_PS = 'gl_PointSize*=(1.0/-mvPosition.z);';
+    var WU_BODY_FLOWER_GLSL = [
+      // 花的位置 = 花根 + 倾斜方向 × 高度。撤掉拨动那一步 ⇒ 不弯曲位置 = 花根 + 法线 × 高度。
+      'vec3 wuFlowerRest=flowerOrigin+(flowerNormal*elevation);',
+      'float wuFSdF=(texture(uWuBody,wuBodyUv(newPosition.xz)).r-0.5)*2.0*uWuBodyRange;',
+      'float wuFSdR=(texture(uWuBody,wuBodyUv(wuFlowerRest.xz)).r-0.5)*2.0*uWuBodyRange;',
+      'float wuFSdO=(texture(uWuBody,wuBodyUv(flowerOrigin.xz)).r-0.5)*2.0*uWuBodyRange;',
+      'float wuCrush=clamp(-wuFSdO/uWuBodyCrush,0.0,1.0);',
+      'float wuFT=1.0;',
+      'if(wuCrush<=0.0&&wuFSdF<uWuBodyClear){',
+      'wuFT=clamp((wuFSdR-uWuBodyClear)/max(wuFSdR-wuFSdF,1e-4),0.0,1.0);',
+      '}',
+      'newPosition=mix(wuFlowerRest,newPosition,wuFT);',
+      // 同草：基座在禁区里 ⇒ 收缩到花根（点精灵尺寸也归零），黄秃地才露得出来
+      'newPosition=mix(newPosition,flowerOrigin,wuCrush);'
+    ].join('\n');
+    var WU_BODY_FLOWER_PS_GLSL = 'gl_PointSize*=(1.0-wuCrush);';
+    var wuBodyField = null;          // { tex, originX, originZ, invX, invZ, w, h, ... }
+    var wuBodySD = null;             // { arr, W, H, ox, oz, cell }：有符号距离场，供验收断言
+    var wuProtectCells = null;     // 粗格(0.08m)：秃区+过渡带，任何「补草」都不许写这里
+    var wuBareMask = null;         // { cv, ctx, tex } 与分区图同分辨率、同 UV 空间
+    // 分区图在「第一次涂秃之前」的像素快照（Uint8ClampedArray 副本）。
+    // 存在的唯一理由：分区图 g=0 是**永久**的（rebuild 也不复活），所以把清空半径调小
+    // 并不会让草长回来 —— 旧注释里那句「只增不减有效」就是这么来的。有了它，
+    // 「缩小秃区」就能把释放掉的像素原样写回去，草才真能往内长、靠近吴昊阳。
+    // 只在**第一次**涂之前取（之后取会把已经涂秃的样子当基线，越缩越缩不回去）。
+    var wuZonesSnap = null;
+    function wuBuildBodyField(hits, hAt, vw, vh) {
+      // 归一化：调用方传的是 Set（禁区 grown），早期版本传的是数组（身体脚印 hits）。
+      var zoneKeys = [];
+      if (hits && typeof hits.forEach === 'function') hits.forEach(function (k) { zoneKeys.push(k); });
+      else if (hits) for (var iK = 0; iK < hits.length; iK++) zoneKeys.push(hits[iK]);
+      if (!zoneKeys.length) return false;
+      if (!wuAlpha || !wuRect) return false;
+      var bx0 = Infinity, bz0 = Infinity, bx1 = -Infinity, bz1 = -Infinity;
+      for (var q = 0; q < zoneKeys.length; q++) {
+        var pr = zoneKeys[q].split(','), x = (+pr[0] + 0.5) * WU_CELL, z = (+pr[1] + 0.5) * WU_CELL;
+        if (x < bx0) bx0 = x; if (x > bx1) bx1 = x;
+        if (z < bz0) bz0 = z; if (z > bz1) bz1 = z;
+      }
+      bx0 -= WU_BODY_PAD; bx1 += WU_BODY_PAD; bz0 -= WU_BODY_PAD; bz1 += WU_BODY_PAD;
+      var W = Math.max(8, Math.round((bx1 - bx0) / WU_BODY_CELL));
+      var Hh = Math.max(8, Math.round((bz1 - bz0) / WU_BODY_CELL));
+      if (W * Hh > 4000000) { window.__wuBodyErr = '身体场过大：' + W + 'x' + Hh; return false; }
+      var mask = new Uint8Array(W * Hh);
+      // 掩膜 = **禁区格子集**（不是 alpha 投影！）。
+      // ⚠️ 这里踩过一个关键坑：早先版本用「细格地面点投回屏幕测 alpha>32」建掩膜，那建出来的
+      //    永远是**他的身体轮廓**，跟传进来的 hits/grown 无关 —— 于是碰撞体始终只有他的脚印，
+      //    站在禁区边上的草被拨动时基座仍在脚印外 ⇒ 钳制不响应、叶尖照样盖到他画面上。
+      //    禁区格是 27mm 粒度，掩膜也按 27mm 判定 ⇒ 与旧「删除」方案的判定粒度完全一致
+      //    （删除也是按叶片基座所在的 27mm 格是否在禁区内决定的）。
+      //    副产品：不再需要逐格打射线 + 投影，构建快很多。
+      var zoneSet = new Set(zoneKeys);
+      for (var cz = 0; cz < Hh; cz++) {
+        var zz = bz0 + (cz + 0.5) * WU_BODY_CELL;
+        var kz = Math.floor(zz / WU_CELL);
+        for (var cx = 0; cx < W; cx++) {
+          var xx = bx0 + (cx + 0.5) * WU_BODY_CELL;
+          if (zoneSet.has(Math.floor(xx / WU_CELL) + ',' + kz)) mask[cz * W + cx] = 1;
+        }
+      }
+      // 查莫弗距离变换（两趟），分别求「到身体格」与「到空格」的距离 ⇒ 有符号距离
+      function wuChamfer(seed) {
+        var D = new Float32Array(W * Hh), INF = 1e9, i;
+        for (i = 0; i < W * Hh; i++) D[i] = (mask[i] === seed) ? 0 : INF;
+        for (var z1 = 0; z1 < Hh; z1++) for (var x1 = 0; x1 < W; x1++) {
+          var a = z1 * W + x1, d = D[a];
+          if (x1 > 0) d = Math.min(d, D[a - 1] + 1);
+          if (z1 > 0) d = Math.min(d, D[a - W] + 1);
+          if (x1 > 0 && z1 > 0) d = Math.min(d, D[a - W - 1] + 1.4142);
+          if (x1 < W - 1 && z1 > 0) d = Math.min(d, D[a - W + 1] + 1.4142);
+          D[a] = d;
+        }
+        for (var z2 = Hh - 1; z2 >= 0; z2--) for (var x2 = W - 1; x2 >= 0; x2--) {
+          var b = z2 * W + x2, e = D[b];
+          if (x2 < W - 1) e = Math.min(e, D[b + 1] + 1);
+          if (z2 < Hh - 1) e = Math.min(e, D[b + W] + 1);
+          if (x2 < W - 1 && z2 < Hh - 1) e = Math.min(e, D[b + W + 1] + 1.4142);
+          if (x2 > 0 && z2 < Hh - 1) e = Math.min(e, D[b + W - 1] + 1.4142);
+          D[b] = e;
+        }
+        return D;
+      }
+      var dToBody = wuChamfer(1), dToEmpty = wuChamfer(0);
+      var sd = new Float32Array(W * Hh);
+      for (var i6 = 0; i6 < W * Hh; i6++) {
+        sd[i6] = mask[i6] ? -dToEmpty[i6] * WU_BODY_CELL : dToBody[i6] * WU_BODY_CELL;
+      }
+      var T = window.__THREE;
+      if (!T || !T.CanvasTexture) { window.__wuBodyErr = '缺 __THREE.CanvasTexture'; return false; }
+      var cv2 = document.createElement('canvas');
+      cv2.width = W; cv2.height = Hh;
+      var ctx2 = cv2.getContext('2d');
+      var img2 = ctx2.createImageData(W, Hh), px2 = img2.data;
+      var enc = 1 / (2 * WU_BODY_RANGE), insidePx = 0;
+      for (var z3 = 0; z3 < Hh; z3++) for (var x3 = 0; x3 < W; x3++) {
+        var i7 = z3 * W + x3;
+        var xm = x3 > 0 ? sd[i7 - 1] : sd[i7], xp = x3 < W - 1 ? sd[i7 + 1] : sd[i7];
+        var zm = z3 > 0 ? sd[i7 - W] : sd[i7], zp = z3 < Hh - 1 ? sd[i7 + W] : sd[i7];
+        var gx = xp - xm, gz = zp - zm;
+        var gl2 = Math.sqrt(gx * gx + gz * gz);
+        var dirX = 0.0, dirZ = 0.0;
+        if (gl2 > 1e-9) { dirX = gx / gl2; dirZ = gz / gl2; }
+        if (sd[i7] < 0) insidePx++;
+        var o4 = i7 * 4;
+        // R = 有符号距离（编码到 [0,255]，量程 ±WU_BODY_RANGE）—— 顶点着色器用它求「停住」的位置
+        var sde = sd[i7] * enc + 0.5;
+        if (sde < 0) sde = 0; else if (sde > 1) sde = 1;
+        px2[o4] = Math.round(sde * 255);
+        // G,B = 外推方向（单位向量，编码 *0.5+0.5）—— 备用（兜底推出去那条路径要用）
+        px2[o4 + 1] = Math.round((dirX * 0.5 + 0.5) * 255);
+        // ⚠️ alpha 恒置 255、方向放 G/B：2D 画布按**预乘 alpha** 存储，A=0 的像素 RGB 会被清零。
+        //    实测踩过这个坑：所有「体外」纹素的向量本应编码 128，却因为 A=0 变成 0，
+        //    上传 GPU 后解码成 -1 ⇒ 整片草被推偏。
+        px2[o4 + 2] = Math.round((dirZ * 0.5 + 0.5) * 255);
+        px2[o4 + 3] = 255;
+      }
+      ctx2.putImageData(img2, 0, 0);
+      var tex = new T.CanvasTexture(cv2);
+      tex.generateMipmaps = false;
+      tex.minFilter = 1006; tex.magFilter = 1006;   // LinearFilter：推挤场要平滑
+      tex.wrapS = 1001; tex.wrapT = 1001;           // ClampToEdge：场外一律取边缘（那里推挤=0）
+      tex.needsUpdate = true;
+      var prev = wuBodyField;
+      wuBodyField = {
+        tex: tex, cv: cv2, originX: bx0, originZ: bz0,
+        invX: 1 / (bx1 - bx0), invZ: 1 / (bz1 - bz0),
+        w: W, h: Hh, cell: WU_BODY_CELL,
+        bodyCells: zoneKeys.length, insideTexels: insidePx,
+        sizeX: +(bx1 - bx0).toFixed(3), sizeZ: +(bz1 - bz0).toFixed(3)
+      };
+      window.__wuBodyField = {
+        w: W, h: Hh, cell: WU_BODY_CELL, bodyCells: zoneKeys.length, insideTexels: insidePx,
+        origin: [+bx0.toFixed(3), +bz0.toFixed(3)], size: [+(bx1 - bx0).toFixed(3), +(bz1 - bz0).toFixed(3)],
+        clear: WU_BODY_CLEAR, range: WU_BODY_RANGE, collide: WU_BODY_COLLIDE
+      };
+      // 有符号距离的采样口（双线性）。验收要用它做断言：把场里编码的推挤向量解出来，
+      // 断言「sd + 推挤量 ≈ CLEAR」——即推挤真的把顶点推到体外，而不是瞎推。
+      wuBodySD = { arr: sd, W: W, H: Hh, ox: bx0, oz: bz0, cell: WU_BODY_CELL };
+      // 诊断口：他身体在屏幕上的矩形（像素，iframe 画布坐标系）。排查「采样对齐」用。
+      window.__wuRectGet = function () {
+        return wuRect ? { l: wuRect.l, t: wuRect.t, w: wuRect.w, h: wuRect.h, cw: cv2 ? cv2.width : null } : null;
+      };
+      window.__wuBodySDAt = function (x, z) {
+        if (!wuBodySD) return null;
+        var fx = (x - wuBodySD.ox) / wuBodySD.cell - 0.5, fz = (z - wuBodySD.oz) / wuBodySD.cell - 0.5;
+        var ix = Math.floor(fx), iz = Math.floor(fz), tx = fx - ix, tz = fz - iz;
+        var g = function (a, b) {
+          if (a < 0 || b < 0 || a >= wuBodySD.W || b >= wuBodySD.H) return null;
+          return wuBodySD.arr[b * wuBodySD.W + a];
+        };
+        var h00 = g(ix, iz), h10 = g(ix + 1, iz), h01 = g(ix, iz + 1), h11 = g(ix + 1, iz + 1);
+        if (h00 === null || h10 === null || h01 === null || h11 === null) return null;
+        return (h00 * (1 - tx) + h10 * tx) * (1 - tz) + (h01 * (1 - tx) + h11 * tx) * tz;
+      };
+      wuInjectBodyCollide();
+      if (prev && prev.tex && prev.tex !== tex) { try { prev.tex.dispose(); } catch (eD) {} }
+      window.__wuBodyErr = null;
+      return true;
+    }
+    // ⚠️ 引擎每次 grass.rebuild() / flowers destroy+init() 都会**重建材质**（实测 uuid 变化），
+    //    所以本函数必须可重复调用：已注入过的材质直接刷新 uniform 值，新材质才做源码注入。
+    function wuPatchBodyShader(mat, anchor, glsl, anchor2, glsl2, tag) {
+      if (!mat || typeof mat.vertexShader !== 'string') return false;
+      if (mat.vertexShader.indexOf('uWuBody') >= 0) return true;   // 已注入
+      var vs = mat.vertexShader;
+      var mm = vs.indexOf('void main()');
+      if (mm < 0) { window.__wuBodyErr = tag + '：着色器里找不到 void main()'; return false; }
+      vs = vs.slice(0, mm) + WU_BODY_UNIFORMS + '\n' + WU_BODY_UV_FN + '\n' + vs.slice(mm);
+      var at = vs.indexOf(anchor);
+      if (at < 0) { window.__wuBodyErr = tag + '：锚点未命中「' + anchor + '」'; return false; }
+      var cut = at + anchor.length;
+      vs = vs.slice(0, cut) + '\n' + glsl + '\n' + vs.slice(cut);
+      if (anchor2) {
+        var at2 = vs.indexOf(anchor2);
+        if (at2 < 0) { window.__wuBodyErr = tag + '：第二锚点未命中「' + anchor2 + '」'; return false; }
+        var cut2 = at2 + anchor2.length;
+        vs = vs.slice(0, cut2) + '\n' + glsl2 + '\n' + vs.slice(cut2);
+      }
+      mat.vertexShader = vs;
+      mat.needsUpdate = true;
+      return true;
+    }
+    // 绑定 uniform 值。⚠️ 与「源码注入」必须**分开、各自独立可重复**：
+    //   实测踩过 —— 注入时 mat.uniforms 可能还不存在（引擎材质在 clone 之后才补 uniforms），
+    //   若把绑定塞在「源码已注入就 return」的分支后面，就会变成「源码里有 uWuBody、
+    //   uniforms 里没有」⇒ 着色器引用未声明标识符、编译失败、整片草消失。
+    //   所以：每次看门狗都调本函数补绑，返回值表示这次是否新建了条目（需要重编译一次）。
+    function wuBindBodyUniforms(mat) {
+      if (!mat) return false;
+      // ⚠️ 不能用 new (window.__THREE.Vector2)()：实测 window.__THREE 是**精选子集**
+      //    （只有 CanvasTexture / Mesh / PlaneGeometry / MeshBasicMaterial 等），没有 Vector2。
+      //    踩过这个坑：绑定函数第一行就 return false ⇒ 源码注入了、uniforms 没绑 ⇒
+      //    着色器引用未声明标识符、编译失败。three 上传 vec2 时直接读 v.x/v.y，
+      //    所以纯对象 {x,y} 完全等价，且不依赖任何构造器。
+      if (!mat.uniforms) mat.uniforms = {};       // 引擎还没建就自己建
+      if (!mat.uniforms.uWuBody) {
+        mat.uniforms.uWuBody = { value: wuBodyField.tex };
+        mat.uniforms.uWuBodyOrigin = { value: { x: wuBodyField.originX, y: wuBodyField.originZ } };
+        mat.uniforms.uWuBodyInv = { value: { x: wuBodyField.invX, y: wuBodyField.invZ } };
+        mat.uniforms.uWuBodyRange = { value: WU_BODY_RANGE };
+        mat.uniforms.uWuBodyClear = { value: WU_BODY_CLEAR };
+        mat.uniforms.uWuBodyCrush = { value: WU_BODY_CRUSH };
+        return true;
+      }
+      mat.uniforms.uWuBody.value = window.__wuBodyForceTex || wuBodyField.tex;
+      mat.uniforms.uWuBodyOrigin.value.x = wuBodyField.originX;
+      mat.uniforms.uWuBodyOrigin.value.y = wuBodyField.originZ;
+      mat.uniforms.uWuBodyInv.value.x = wuBodyField.invX;
+      mat.uniforms.uWuBodyInv.value.y = wuBodyField.invZ;
+      mat.uniforms.uWuBodyRange.value = WU_BODY_RANGE;
+      if (mat.uniforms.uWuBodyClear) mat.uniforms.uWuBodyClear.value = WU_BODY_CLEAR;
+      if (mat.uniforms.uWuBodyCrush) mat.uniforms.uWuBodyCrush.value = WU_BODY_CRUSH;
+      return false;
+    }
+    function wuInjectBodyCollide() {
+      if (!WU_BODY_COLLIDE || !wuBodyField) return { grass: false, flowers: false };
+      var out = { grass: false, flowers: false, rebound: false };
+      try {
+        var isl = E.world && E.world.islands && E.world.islands.mainIsland;
+        var gm = isl && isl.grass && isl.grass.material;
+        if (gm) {
+          if (wuBindBodyUniforms(gm)) gm.needsUpdate = true;   // 补绑后要重编译一次才认到新 uniform
+          out.grass = wuPatchBodyShader(gm, WU_BODY_VS_GRASS, WU_BODY_GRASS_GLSL, null, null, '草');
+        }
+      } catch (eG) { window.__wuBodyErr = '草注入异常：' + String(eG && eG.stack || eG); }
+      try {
+        var isl2 = E.world && E.world.islands && E.world.islands.mainIsland;
+        ['flowers1', 'flowers2'].forEach(function (k) {
+          var f = isl2 && isl2[k];
+          if (!f || !f.material) return;
+          if (wuBindBodyUniforms(f.material)) f.material.needsUpdate = true;
+          if (wuPatchBodyShader(f.material, WU_BODY_VS_FLOWER, WU_BODY_FLOWER_GLSL, WU_BODY_VS_FLOWER_PS, WU_BODY_FLOWER_PS_GLSL, '花')) {
+            out.flowers = true;
+          }
+        });
+      } catch (eF) { window.__wuBodyErr = '花注入异常：' + String(eF && eF.stack || eF); }
+      window.__wuBodyInject = out;
+      return out;
+    }
+    // 看门狗：rebuild / destroy+init 会换掉材质，按节流补注入（常态只做一次 indexOf）
+    var wuBodyWatchLast = 0;
+    function wuBodyWatch(now) {
+      if (!WU_BODY_COLLIDE || !wuBodyField) return;
+      if (now - wuBodyWatchLast < 500) return;
+      wuBodyWatchLast = now;
+      try { wuInjectBodyCollide(); } catch (eW) {}
+    }
     // 清空模式（用户 2026-10-12：「吴昊阳底下的土地，能不能改成和草地一样的黄色」）：
     //  'erase'  = 涂 zonesTexture（g=0 ⇒ 不长草）。**副作用**：地形按 g 选色，g=0 会渲染成
     //             泥土/崖壁色 ⇒ 他底下一圈明显发棕，与草地的黄不搭（旧行为，留作回溯）。
@@ -1277,7 +1580,7 @@ window.__camReady = true;
     //             ⚠️ 用户 12:33 否决：这等于把荒地「填」掉了，他要的是**荒地仍是荒地、只是范围小**。
     //             故改回 'erase'；此模式仅保留开关，不再默认启用。
     //  'keepall'= 完全不清草，前后遮挡交给深度测试。
-    var WU_GRASS_MODE = 'hide';
+    var WU_GRASS_MODE = 'collide';
     // ---------- 他周围一圈「清空区」（用户 2026-10-12 要求）----------
     // 「请你将吴昊阳周围的草删掉……这样子就能避免草和吴昊阳接触，从而导致看出来破绽」
     // 单位：米。以他身体占的格子为起点向四周外扩这么多，圈内的草一律清掉。
@@ -1297,7 +1600,7 @@ window.__camReady = true;
       return h ? h.point.y : null;
     }
     function eachGrassInstance(fn) {
-      var grass = E.world.islands.mainIsland.grass;
+      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
       if (!grass || !grass.chunks) return 0;
       var im = new M4c(), n = 0;
       grass.chunks.entries().forEach(function (e) {
@@ -1374,7 +1677,7 @@ window.__camReady = true;
     // 就用重心坐标把它的 uv 三角形光栅化进贴图。
     // ⚠️ UV 一律由三角形世界坐标 ↔ 顶点 uv 反算，不假设 uv 与世界坐标的朝向关系。
     function paintZones(cells) {
-      var grass = E.world.islands.mainIsland.grass;
+      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
       var mi = scene.getObjectByName('main-island');
       if (!mi || !mi.geometry || !mi.geometry.attributes.uv) return null;
       mi.updateMatrixWorld(true);
@@ -1435,7 +1738,7 @@ window.__camReady = true;
     //    实测 rebuild() 在草块已加载完成后单独调用是干净的（70 块不变、无报错）。
     function fillGrass() {
       if (rockFilled || !S.remove || !S.remove.basalt || !geomDone.basalt) return;
-      var grass = E.world.islands.mainIsland.grass;
+      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
       if (!grass || !grass.chunks || grass.chunks.entries().length < 20) return;
       var b = scene.getObjectByName(S.remove.basalt.mesh);
       if (!b || !b.geometry || !b.geometry.index) return;
@@ -1542,7 +1845,7 @@ window.__camReady = true;
     //
     // WU_GROUND_OFFSET 是唯一旋钮：**调大 ⇒ 更多草被他挡住（他更「压住」草）；调小 ⇒ 更多草画在他身上**。
     // 不能为 0：他的网格比地面粗，必须留余量避免与地面 z-fight。
-    var WU_GROUND_OFFSET = 0.010;
+    var WU_GROUND_OFFSET = 0.04;
     // 材质侧：让他成为**真正的深度实体** —— 写深度 + alpha 裁剪。
     // 不写深度时，排在他之后绘制的透明物件（粒子/蝴蝶/远处植被）会无视他直接覆盖上来。
     var WU_ALPHA_TEST = 0.02;
@@ -1625,7 +1928,11 @@ window.__camReady = true;
           for (var dz = -dzMax; dz <= dzMax; dz++) grown.add((hx + dx) + ',' + (hz + dz));
         }
       }
-      for (var g2 = 0; g2 < hits.length; g2++) grown.delete(hits[g2]);
+      if (WU_BODY_COLLIDE) {
+        try { wuBuildBodyField(grown, hAt, vw, vh); } catch (eBF) {
+          window.__wuBodyErr = String(eBF && eBF.stack || eBF);
+        }
+      }
       return grown;
     }
     // 同 paintZones 的三角形光栅化    // 同 paintZones 的三角形光栅化，但写 0 而不是 255：绿=0 不长草，r/b=0 不要花。
@@ -1682,7 +1989,7 @@ window.__camReady = true;
     function eraseZones(cells, keyOf) {
       var kf = keyOf || cellKey;
       var kc = kf === cellKey ? CELL : WU_CELL;
-      var grass = E.world.islands.mainIsland.grass;
+      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
       var mi = scene.getObjectByName('main-island');
       if (!mi || !mi.geometry || !mi.geometry.attributes.uv) return null;
       mi.updateMatrixWorld(true);
@@ -1737,7 +2044,7 @@ window.__camReady = true;
     }
     function makeBare() {
       if (bareDone || !wuRect) return;
-      var grass = E.world.islands.mainIsland.grass;
+      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
       if (!grass || !grass.chunks || grass.chunks.entries().length < 20) return;
       var mi = scene.getObjectByName('main-island');
       if (!mi) return;
@@ -1760,7 +2067,10 @@ window.__camReady = true;
       gp.set(sx, sy, sz); group.updateMatrixWorld(true); cam.updateMatrixWorld(true);
       if (!cells || !cells.size) { bareDone = true; window.__bareDiag = { cells: 0, painted: 0, tris: 0 }; return; }
       try {
-        if (WU_GRASS_MODE === 'keepall') {
+        if (WU_GRASS_MODE === 'collide') {
+          wuHiddenCells = null;
+          res = { painted: 0, tris: 0 };
+        } else if (WU_GRASS_MODE === 'keepall') {
           res = { painted: 0, tris: 0 };   // 完全不清草：让深度测试自己分层
         } else if (WU_GRASS_MODE === 'hide') {
           // 不清分区图 ⇒ 地形保持草地色；只把圈内的草/花实例清掉
@@ -1775,8 +2085,8 @@ window.__camReady = true;
       window.__bareDiag = { cells: cells.size, painted: res && res.painted, tris: res && res.tris, clearMargin: WU_CLEAR_MARGIN, clearRadiusCells: Math.max(DILATE, Math.round(WU_CLEAR_MARGIN / WU_CELL)), mode: WU_GRASS_MODE, hideErr: window.__wuHideErr || null };
       // 'hide' 模式：一次也没清到说明草实例还没建好（或这轮格子没命中）⇒ **继续重试**，
       // 不能像 erase 那样「painted=0 就永久放弃」，否则草加载晚了就再也不会被清掉。
-      if (!res || (!res.painted && WU_GRASS_MODE !== 'hide')) { bareDone = true; return; }
-      if (WU_GRASS_MODE === 'hide') { bareDone = true; return; }   // 分区图没动，无需 rebuild
+      if (!res || (!res.painted && WU_GRASS_MODE !== 'hide' && WU_GRASS_MODE !== 'collide')) { bareDone = true; return; }
+      if (WU_GRASS_MODE === 'hide' || WU_GRASS_MODE === 'collide') { bareDone = true; return; }
       grass.zonesTexture.needsUpdate = true;
       try {
         grass.rebuild();
@@ -1806,7 +2116,8 @@ window.__camReady = true;
         makeBare();
       } catch (e4) {
         if (!window.__bareErr) window.__bareErr = String(e4 && e4.stack || e4);
-        bareDone = true;
+        window.__bareTry = (window.__bareTry || 0) + 1;
+        if (window.__bareTry > 40) bareDone = true;
       }
       // 'hide' 模式：万一引擎 rebuild 把圈内的草又生成出来，这里持续补清
       // （已清零的实例会被跳过，无变化时不会重传实例矩阵，开销可忽略）。
