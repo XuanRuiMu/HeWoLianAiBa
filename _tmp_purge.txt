@@ -1,0 +1,54 @@
+    function wuSkyPurge() {
+      var killed = { meshes: 0, geoms: 0, mats: 0, texs: 0, roots: 0 };
+      var seen = [], roots = [];
+      try {
+        var dt = world && world.distantTerrain;
+        if (dt && dt.obj3d) roots.push(dt.obj3d);
+        else if (dt && dt.group) roots.push(dt.group);
+        else if (dt && dt.isObject3D) roots.push(dt);
+        scene.traverse(function (o) {
+          if (!o || !o.name) return;
+          if (o.name.indexOf('Distant') === 0 && roots.indexOf(o) < 0) roots.push(o);
+        });
+      } catch (eP1) { return killed; }
+      function killTex(t) {
+        if (!t || t.__wuPurged) return;
+        t.__wuPurged = true;
+        try { t.dispose(); killed.texs++; } catch (eT) {}
+      }
+      function killMat(m) {
+        if (!m || m.__wuPurged) return;
+        m.__wuPurged = true;
+        for (var k in m) {
+          if (!Object.prototype.hasOwnProperty.call(m, k)) continue;
+          var v = m[k];
+          if (v && v.isTexture) killTex(v);
+          else if (v && Array.isArray(v)) {
+            for (var q = 0; q < v.length; q++) { if (v[q] && v[q].isTexture) killTex(v[q]); }
+          }
+        }
+        try { m.dispose(); killed.mats++; } catch (eM) {}
+      }
+      for (var i = 0; i < roots.length; i++) {
+        var rt = roots[i];
+        if (!rt || seen.indexOf(rt) >= 0) continue;
+        seen.push(rt);
+        rt.traverse(function (o) {
+          if (!o || seen.indexOf(o) >= 0) return;
+          seen.push(o);
+          if (o.isMesh || o.isInstancedMesh || o.isPoints || o.isLine) {
+            killed.meshes++;
+            if (o.geometry && !o.geometry.__wuPurged) {
+              o.geometry.__wuPurged = true;
+              try { o.geometry.dispose(); killed.geoms++; } catch (eG) {}
+            }
+            var mm = o.material;
+            if (Array.isArray(mm)) { for (var j = 0; j < mm.length; j++) killMat(mm[j]); }
+            else killMat(mm);
+          }
+        });
+        if (rt.parent) { rt.parent.remove(rt); killed.roots++; }
+      }
+      wuSkyDistOn = false;
+      return killed;
+    }

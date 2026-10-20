@@ -1,0 +1,9 @@
+  document.getElementById("btnDistDel").addEventListener("click", function () {
+    var r = null;
+    try { if (win && win.__wuSkyPurge) r = win.__wuSkyPurge(); } catch (eP) { r = null; }
+    if (!r) return toast("引擎未就绪，删除失败");
+    window.__wuSkyPurged = r;
+    toast("已删除远景：" + r.meshes + " 网格 / " + r.geoms + " 几何 / " + r.mats + " 材质 / " + r.texs + " 贴图");
+    document.getElementById("btnDistDel").textContent = "🗑 已删除";
+    document.getElementById("btnDistDel").disabled = true;
+  });

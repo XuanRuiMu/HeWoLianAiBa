@@ -7,17 +7,16 @@ const houDuanMuLu = path.resolve(__dirname, '..', '..')
 const houDuanWenJian = path.join(houDuanMuLu, '.env')
 const genMuWenJian = path.resolve(houDuanMuLu, '..', '.env')
 
-function duQuJianZhi(wenJianLuJing: string, ming: string): string | null {
-  if (!fs.existsSync(wenJianLuJing)) return null
+function duQuQuanBuJian(wenJianLuJing: string): Record<string, string> {
+  const jieGuo: Record<string, string> = {}
+  if (!fs.existsSync(wenJianLuJing)) return jieGuo
   for (const hang of fs.readFileSync(wenJianLuJing, 'utf8').split(/\r?\n/)) {
     const trimmed = hang.trim()
     if (!trimmed || trimmed.startsWith('#')) continue
     const deng = trimmed.indexOf('=')
-    if (deng > 0 && trimmed.slice(0, deng).trim() === ming) {
-      return trimmed.slice(deng + 1).trim().replace(/^["']|["']$/g, '')
-    }
+    if (deng > 0) jieGuo[trimmed.slice(0, deng).trim()] = trimmed.slice(deng + 1).trim()
   }
-  return null
+  return jieGuo
 }
 
 describe('FP-ENV 环境配置加载确定性（根除「连错库」隐患）', () => {
@@ -42,20 +41,22 @@ describe('FP-ENV 环境配置加载确定性（根除「连错库」隐患）', 
     expect(yuanWenJian).toMatch(/dotenv\.config\(\{\s*path:\s*houDuanWenJian/)
   })
 
-  it('两份 .env 的 DATABASE_URL 若指向不同库，必须能被检出（本次真实踩过）', () => {
-    const HouDuan = duQuJianZhi(houDuanWenJian, 'DATABASE_URL')
-    const genMu = duQuJianZhi(genMuWenJian, 'DATABASE_URL')
-    // 记录事实：两份都存在且不同 ⇒ 启动时必须打警告；相同或缺一份 ⇒ 不该误报
-    const buTong = HouDuan !== null && genMu !== null && HouDuan !== genMu
-    if (buTong) {
-      const yuanWenJian = fs.readFileSync(path.join(houDuanMuLu, 'src', 'config', 'env.ts'), 'utf8')
-      expect(yuanWenJian, '两份配置指向不同库时必须有警告分支').toContain('指向不同数据库')
-    } else {
-      expect(buTong).toBe(false)
-    }
-    // 无论当前是否冲突，警告逻辑本身必须在
+  it('分层加载：根 .env 打底、HouDuan/.env 覆盖，并点名覆盖项', () => {
     const yuanWenJian = fs.readFileSync(path.join(houDuanMuLu, 'src', 'config', 'env.ts'), 'utf8')
-    expect(yuanWenJian).toContain('指向不同数据库')
-    expect(yuanWenJian).toContain('数据库连接目标')
+    const genMuWei = yuanWenJian.indexOf('dotenv.config({ path: genMuWenJian')
+    const houDuanWei = yuanWenJian.indexOf('dotenv.config({ path: houDuanWenJian')
+    expect(genMuWei, '根 .env 必须作为基线先加载').toBeGreaterThan(-1)
+    expect(houDuanWei, 'HouDuan/.env 必须后加载').toBeGreaterThan(genMuWei)
+    expect(yuanWenJian, '本地层必须显式覆盖基线层').toMatch(/dotenv\.config\(\{\s*path:\s*houDuanWenJian,\s*override:\s*true/)
+    expect(yuanWenJian, '必须点名被覆盖的键').toContain('本地覆盖层')
+    expect(yuanWenJian, '不得再把正常的主机差异报成警告').not.toContain('指向不同数据库')
+    expect(yuanWenJian, '仍须报出实际连接目标').toContain('数据库连接目标')
+  })
+
+  it('两层配置不重复持有同一键（同值键只留一处，杜绝静默漂移）', () => {
+    const genMu = duQuQuanBuJian(genMuWenJian)
+    const houDuan = duQuQuanBuJian(houDuanWenJian)
+    const chongFu = Object.keys(houDuan).filter((ming) => ming in genMu && genMu[ming] === houDuan[ming])
+    expect(chongFu, '同值键必须只保留在根 .env，否则两份配置迟早漂移').toEqual([])
   })
 })

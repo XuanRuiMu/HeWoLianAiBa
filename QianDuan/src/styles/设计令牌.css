@@ -617,13 +617,13 @@
   --xingbie-zhongxing-2: #5b6f8a;
   --xingbie-zhongxing-wenben: #ffffff;
   /* 性别选中框三件套：浅色档的深字浅框在深底上读不出来，改为用户定稿四色实底 + 实框 + 深字。
-     边框 深男 #0023F5 / 深女 #FF80C0；底色 深男 #3282F6 / 深女 #FF80FF（与浅色档同值，不再用 22% 染色近似）；
+     边框 深男 #5B9BFF / 深女 #FF8ECC；底色 深男 #3282F6 / 深女 #FF80FF（与浅色档同值，不再用 22% 染色近似）；
      实底下浅字不达标（#CFE4FB 压 #3282F6 仅 2.85:1、#FFD9F2 压 #FF80FF 仅 1.68:1），
      故文字改同色相深调：深男 #000B4D 压 #3282F6 4.90:1、深女 #6B0F6F 压 #FF80FF 5.09:1（WCAG 相对亮度，正文 ≥4.5） */
-  --xingbie-nan-xuan-biankuang: #0023F5;
+  --xingbie-nan-xuan-biankuang: #5B9BFF;
   --xingbie-nan-xuan-beijing: #3282F6;
   --xingbie-nan-xuan-wenben: #000B4D;
-  --xingbie-nv-xuan-biankuang: #FF80C0;
+  --xingbie-nv-xuan-biankuang: #FF8ECC;
   --xingbie-nv-xuan-beijing: #FF80FF;
   --xingbie-nv-xuan-wenben: #6B0F6F;
   --xingbie-zhongxing-xuan-biankuang: #a8b4c8;
@@ -631,10 +631,10 @@
   --xingbie-zhongxing-xuan-wenben: #dfe6f2;
   /* FP-15b 选中环两层（深色档，与浅色档成对，理由见浅色档同名令牌注释）；
      alpha 沿用改前实测（环 .14 / 晕 .22） */
-  --xingbie-nan-xuan-huan: rgba(74, 106, 245, 0.14);
-  --xingbie-nan-xuan-guangyun: rgba(74, 106, 245, 0.22);
-  --xingbie-nv-xuan-huan: rgba(232, 121, 249, 0.14);
-  --xingbie-nv-xuan-guangyun: rgba(232, 121, 249, 0.22);
+  --xingbie-nan-xuan-huan: rgba(91, 155, 255, 0.14);
+  --xingbie-nan-xuan-guangyun: rgba(91, 155, 255, 0.22);
+  --xingbie-nv-xuan-huan: rgba(255, 142, 204, 0.14);
+  --xingbie-nv-xuan-guangyun: rgba(255, 142, 204, 0.22);
   /* 向导内非性别语义的柔粉强调档（深色侧），与浅色档成对 */
   --qiangdiao-fen: #d98ca6;
   --kapian-mian-biankuang: rgba(226, 232, 240, 0.45);

@@ -1,0 +1,29 @@
+  var auroraOn = true, distShow = false;
+  function pushSky() {
+    var o = { on: auroraOn, intensity: +document.getElementById('auroraI').value, distMt: distShow };
+    try { if (win && win.__wuSky) win.__wuSky(o); } catch (eS) {}
+    return o;
+  }
+  function showSky() {
+    document.getElementById('auroraIv').textContent = (+document.getElementById('auroraI').value).toFixed(2);
+    document.getElementById('auroraV').textContent = auroraOn ? '开' : '关';
+    document.getElementById('btnAurora').textContent = auroraOn ? '🌌 开' : '🌑 关';
+    document.getElementById('distV').textContent = distShow ? '已显示' : '已隐藏';
+    document.getElementById('btnDist').textContent = distShow ? '⛰ 已显示' : '🚫 已隐藏';
+  }
+  document.getElementById('btnAurora').addEventListener('click', function () {
+    auroraOn = !auroraOn;
+    showSky(); pushSky();
+    toast(auroraOn ? '极光已开启（夜晚显示）' : '极光已关闭');
+  });
+  document.getElementById('btnDist').addEventListener('click', function () {
+    distShow = !distShow;
+    showSky(); pushSky();
+    toast(distShow ? '远景山已显示' : '远景山已隐藏，主岛浮空');
+  });
+  document.getElementById('auroraI').addEventListener('input', function () { showSky(); pushSky(); });
+  showSky();
+  window.__pushSkyNow = pushSky;
+  setTimeout(function () { try { pushSky(); } catch (eS2) {} }, 2000);
+  setInterval(function () { try { pushSky(); } catch (eS3) {} }, 4000);
+

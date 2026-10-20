@@ -26,33 +26,38 @@ export function lianJieZhiBaoMi(chi: string): string {
   }
 }
 
-/** 从 .env 文本里取某个键的原始值（只读探测用，不写入 process.env） */
-function duQuJianZhi(wenJianLuJing: string, ming: string): string | null {
+function duQuQuanBuJian(wenJianLuJing: string): Record<string, string> {
+  const jieGuo: Record<string, string> = {}
   try {
-    if (!fs.existsSync(wenJianLuJing)) return null
+    if (!fs.existsSync(wenJianLuJing)) return jieGuo
     for (const hang of fs.readFileSync(wenJianLuJing, 'utf8').split(/\r?\n/)) {
       const trimmed = hang.trim()
       if (!trimmed || trimmed.startsWith('#')) continue
       const deng = trimmed.indexOf('=')
       if (deng < 0) continue
-      if (trimmed.slice(0, deng).trim() !== ming) continue
-      const zhi = trimmed.slice(deng + 1).trim().replace(/^["']|["']$/g, '')
-      return zhi === '' ? null : zhi
+      jieGuo[trimmed.slice(0, deng).trim()] = trimmed.slice(deng + 1).trim()
     }
-    return null
   } catch {
-    return null
+    return jieGuo
   }
+  return jieGuo
+}
+
+/** 列出两层配置同名但取值不同的键名（只报键名，不落取值） */
+function lieChuFuGaiXiang(genMuLuJing: string, houDuanLuJing: string): string[] {
+  const genMu = duQuQuanBuJian(genMuLuJing)
+  const houDuan = duQuQuanBuJian(houDuanLuJing)
+  return Object.keys(houDuan).filter((ming) => ming in genMu && genMu[ming] !== houDuan[ming])
 }
 
 /**
  * 启动即报「我到底连的哪个库」。
  *
- * 背景（真实踩过的坑）：仓库根目录与 HouDuan/ 各有一份 .env，两份都定义了 DATABASE_URL，
- * 但指向不同的库（根目录指容器 postgres 主机，HouDuan 指 localhost 原生库）。
- * 而 dotenv.config() 不带 path 时按「当前工作目录」找 .env —— 从仓库根启动后端就会
- * 悄悄换成另一个库，账号、密码、数据全对不上，且没有任何提示。
- * 这里把加载路径钉死在 HouDuan/.env（不随工作目录漂移），并在两份指向不同时大声报出来。
+ * 配置分两层，根 .env 是基线、HouDuan/.env 是本地覆盖层（override: true），
+ * 同名键只有一处权威取值，容器部署与本地开发不再各写一套。
+ * 路径全部按「模块所在位置」反推，绝不使用 cwd，否则换个目录启动就会连到另一个库。
+ * 覆盖了哪些键会被逐条点名，既保留「我到底连的哪个库」的可观测性，又不再把
+ * 根目录指容器主机、本地指 localhost 这种正常差异报成警告。
  */
 export function jiaZaiHuanJing(): void {
   if (yiJinJiaZai) return
@@ -65,27 +70,25 @@ export function jiaZaiHuanJing(): void {
   const houDuanWenJian = path.join(houDuanMuLu, '.env')
   const genMuWenJian = path.resolve(houDuanMuLu, '..', '.env')
 
+  if (fs.existsSync(genMuWenJian)) dotenv.config({ path: genMuWenJian, quiet: true })
+
   if (!fs.existsSync(houDuanWenJian)) {
     // eslint-disable-next-line no-console -- 配置加载期告警:本模块被日志引擎反向依赖,引入logger有循环初始化风险
     console.warn(`[配置警告] 未找到后端配置文件 ${houDuanWenJian}，将只依赖进程环境变量`)
   } else {
-    dotenv.config({ path: houDuanWenJian, quiet: true })
+    dotenv.config({ path: houDuanWenJian, override: true, quiet: true })
   }
 
   const houDuanLianJie = process.env.DATABASE_URL?.trim() || null
-  const genMuLianJie = duQuJianZhi(genMuWenJian, 'DATABASE_URL')
 
   if (houDuanLianJie) {
     // eslint-disable-next-line no-console -- 配置加载期告警:本模块被日志引擎反向依赖,引入logger有循环初始化风险
     console.log(`[配置] 数据库连接目标：${lianJieZhiBaoMi(houDuanLianJie)}`)
   }
-  if (houDuanLianJie && genMuLianJie && genMuLianJie !== houDuanLianJie) {
+  const fuGaiXiang = lieChuFuGaiXiang(genMuWenJian, houDuanWenJian)
+  if (fuGaiXiang.length > 0) {
     // eslint-disable-next-line no-console -- 配置加载期告警:本模块被日志引擎反向依赖,引入logger有循环初始化风险
-    console.warn(
-      '[配置警告] 仓库根目录 .env 与 HouDuan/.env 的 DATABASE_URL 指向不同数据库！' +
-        `根目录=${lianJieZhiBaoMi(genMuLianJie)}；HouDuan=${lianJieZhiBaoMi(houDuanLianJie)}。` +
-        '后端只读 HouDuan/.env；若你本意是容器库，请改 HouDuan/.env，或统一两份配置。',
-    )
+    console.log('[配置] 本地覆盖层 HouDuan/.env 覆盖根 .env 的 ' + fuGaiXiang.length + ' 项：' + fuGaiXiang.join('、'))
   }
 }
 
