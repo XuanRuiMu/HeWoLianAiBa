@@ -144,9 +144,9 @@
 
     <div class="sec">
     <h2>贴合效果</h2>
-    <div class="row"><label>清空半径</label><input type="range" id="fmBase" min="0.02" max="0.4" step="0.01" value="0.14"><span class="val" id="fmBaseV">0.14 m</span></div>
-    <div class="row"><label>朝相机</label><input type="range" id="fmCam" min="0.26" max="1.2" step="0.01" value="0.26"><span class="val" id="fmCamV">0.26 m</span></div>
-    <div class="row"><label>体表间距</label><input type="range" id="fmClear" min="0" max="0.1" step="0.005" value="0.035"><span class="val" id="fmClearV">0.035 m</span></div>
+    <div class="row"><label>清空半径</label><input type="range" id="fmBase" min="0.01" max="0.4" step="0.005" value="0.07"><span class="val" id="fmBaseV">0.14 m</span></div>
+    <div class="row"><label>朝相机</label><input type="range" id="fmCam" min="0.06" max="1.0" step="0.01" value="0.13"><span class="val" id="fmCamV">0.26 m</span></div>
+    <div class="row"><label>体表间距</label><input type="range" id="fmClear" min="0" max="0.06" step="0.0025" value="0.0175"><span class="val" id="fmClearV">0.035 m</span></div>
     <div class="row"><label>状态</label><span class="val" id="fmState">—</span></div>
     <div class="hint"><b>清空半径</b>：他身体四周被压平的草地半径。<br><b>朝相机</b>：往相机这一侧额外扫掠的距离，挡住会被投影到他身上的草叶叶尖。<br><b>体表间距</b>：草叶离他表面最近允许的距离，调大就更不碰他。</div>
   </div>
@@ -1310,7 +1310,7 @@ window.__camReady = true;
         var d = cam.getWorldDirection(new V3());
         var dn = Math.abs(d.y);
         var tn = dn / Math.max(0.08, Math.sqrt(Math.max(0.0, 1.0 - dn * dn)));
-        return Math.min(1.6, Math.max(WU_CLEAR_MARGIN_CAM, WU_BLADE_H / Math.max(0.08, tn)));
+        return Math.min(1.0, Math.max(WU_CLEAR_MARGIN_CAM, WU_BLADE_H * 0.5 / Math.max(0.08, tn)));
       } catch (eMf) {
         window.__wuCamMarginErr = String(eMf && eMf.message || eMf);
         return WU_CLEAR_MARGIN_CAM;
@@ -1362,7 +1362,7 @@ window.__camReady = true;
     // 实例最大缩放 1.5，70 个 chunk 取上界），不是旧注释写的 0.171m ⇒ 0.05m（5.4cm）
     // 已超过叶片被拨弯后的水平伸长量，其余三侧（非相机侧）叶尖是「往画面上方」移、
     // 根本不会横向压到他身上，留 5cm 只是防拨弯接触。
-    var WU_CLEAR_MARGIN = 0.14;
+    var WU_CLEAR_MARGIN = 0.07;
     // ---------- 朝相机方向额外清空（用户 2026-10-12 22:35 新要求）----------
     // 「将该背景中，吴昊阳身下和周围的草，删掉，防止草的吹动/鼠标交互效果，
     //   落到吴昊阳身上，穿模，导致穿帮」
@@ -1379,7 +1379,7 @@ window.__camReady = true;
     // 2026-10-13 用户要求「草往内缩小一圈靠近吴昊阳」⇒ 0.40 → 0.26（略高于实测阈值
     // 0.2527，留 0.7cm 余量）。这是**零穿模代价**的收紧：阈值以下再小才会重现
     // 「叶尖扫过他球衣」的穿帮（旧实测证据：两帧差分，他球衣上有草叶在两帧间移动，占比 6.1%）。
-    var WU_CLEAR_MARGIN_CAM = 0.26;
+    var WU_CLEAR_MARGIN_CAM = 0.13;
     // ---------- 秃地「黄遮罩」（用户 2026-10-12 23:51：秃地面要改成黄色）----------
     // 引擎事实（逐字读 bundle 核对，不是猜）：
     //   ① 哪儿长草：grass.rebuild() → destroy+init → terrainSampler.sample(count,
@@ -1433,7 +1433,7 @@ window.__camReady = true;
     var WU_BODY_COLLIDE = true;      // 总开关：false = 完全回到「删草 + 涂分区图」的旧行为
     var WU_BODY_CELL = 0.004;        // 碰撞场网格 4mm（footprint 的 27mm 太粗，边界会成锯齿）
     var WU_BODY_PAD = 0.55;          // 场覆盖范围 = 碰撞体包围盒外扩这么多米
-    var WU_BODY_CLEAR = 0.035;       // 允许的最近距离（米）：顶点不得进入体表 6mm 内
+    var WU_BODY_CLEAR = 0.0175;       // 允许的最近距离（米）：顶点不得进入体表 6mm 内
     var WU_BODY_RANGE = 0.16;        // 有符号距离编码量程（±0.16m ⇒ 8bit 分辨率 1.25mm）
     var WU_BODY_CRUSH = 0.012;       // 压住过渡：基座深入禁区 1.2cm 以上 ⇒ 完全不可见（边界保持干净）
     var WU_BODY_UNIFORMS = [
