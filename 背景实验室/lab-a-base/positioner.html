@@ -2174,24 +2174,34 @@ function wuBakeAuroraNoise(size) {
     }
     function wuSkyPurge() {
       var killed = { meshes: 0, geoms: 0, mats: 0, texs: 0, roots: 0 };
-      var seen = [], roots = [];
-      try {
-        var dt = world && world.distantTerrain;
-        if (dt && dt.obj3d) roots.push(dt.obj3d);
-        else if (dt && dt.group) roots.push(dt.group);
-        else if (dt && dt.isObject3D) roots.push(dt);
-        scene.traverse(function (o) {
-          if (!o || !o.name) return;
-          if (o.name.indexOf('Distant') === 0 && roots.indexOf(o) < 0) roots.push(o);
-        });
-      } catch (eP1) { return killed; }
-      function killTex(t) {
-        if (!t || t.__wuPurged) return;
-        t.__wuPurged = true;
-        try { t.dispose(); killed.texs++; } catch (eT) {}
+      var targets = [];
+      scene.traverse(function (o) {
+        if (o && o.name && o.name.indexOf('Distant') === 0) targets.push(o);
+      });
+      if (!targets.length) return killed;
+      var inside = [];
+      for (var i = 0; i < targets.length; i++) {
+        var t = targets[i];
+        if (inside.indexOf(t) >= 0) continue;
+        t.traverse(function (o) { inside.push(o); });
+      }
+      var keepMat = [];
+      scene.traverse(function (o) {
+        if (inside.indexOf(o) >= 0) return;
+        if (!o.material) return;
+        var mm = o.material;
+        if (Array.isArray(mm)) { for (var j = 0; j < mm.length; j++) keepMat.push(mm[j]); }
+        else keepMat.push(mm);
+      });
+      var killedMat = [];
+      function killTex(tex) {
+        if (!tex || tex.__wuPurged) return;
+        tex.__wuPurged = true;
+        try { tex.dispose(); killed.texs++; } catch (eT) {}
       }
       function killMat(m) {
-        if (!m || m.__wuPurged) return;
+        if (!m || m.__wuPurged || keepMat.indexOf(m) >= 0 || killedMat.indexOf(m) >= 0) return;
+        killedMat.push(m);
         m.__wuPurged = true;
         for (var k in m) {
           if (!Object.prototype.hasOwnProperty.call(m, k)) continue;
@@ -2203,24 +2213,21 @@ function wuBakeAuroraNoise(size) {
         }
         try { m.dispose(); killed.mats++; } catch (eM) {}
       }
-      for (var i = 0; i < roots.length; i++) {
-        var rt = roots[i];
-        if (!rt || seen.indexOf(rt) >= 0) continue;
-        seen.push(rt);
-        rt.traverse(function (o) {
-          if (!o || seen.indexOf(o) >= 0) return;
-          seen.push(o);
-          if (o.isMesh || o.isInstancedMesh || o.isPoints || o.isLine) {
-            killed.meshes++;
-            if (o.geometry && !o.geometry.__wuPurged) {
-              o.geometry.__wuPurged = true;
-              try { o.geometry.dispose(); killed.geoms++; } catch (eG) {}
-            }
-            var mm = o.material;
-            if (Array.isArray(mm)) { for (var j = 0; j < mm.length; j++) killMat(mm[j]); }
-            else killMat(mm);
+      for (var n = 0; n < inside.length; n++) {
+        var o2 = inside[n];
+        if (o2.isMesh || o2.isInstancedMesh || o2.isPoints || o2.isLine) {
+          killed.meshes++;
+          if (o2.geometry && !o2.geometry.__wuPurged) {
+            o2.geometry.__wuPurged = true;
+            try { o2.geometry.dispose(); killed.geoms++; } catch (eG) {}
           }
-        });
+          var m2 = o2.material;
+          if (Array.isArray(m2)) { for (var z = 0; z < m2.length; z++) killMat(m2[z]); }
+          else killMat(m2);
+        }
+      }
+      for (var r = 0; r < targets.length; r++) {
+        var rt = targets[r];
         if (rt.parent) { rt.parent.remove(rt); killed.roots++; }
       }
       wuSkyDistOn = false;
