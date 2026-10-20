@@ -1276,7 +1276,7 @@ window.__camReady = true;
     // footprint 变成一串稀疏点，再做切比雪夫外扩就会互相融成**圆块**（实测长成椭圆）。
     // 0.027m 约合 7.8px，轮廓能实心还原，DILATE=1 也才真的是「稍大一点」（2.7cm）。
     var WU_CELL = 0.027;
-    var DILATE = 0;              // footprint 外扩格数（WU_CELL 单位，1 格 = 2.7cm）
+    var DILATE = 1;              // footprint 外扩格数（WU_CELL 单位，1 格 = 2.7cm）
     // 清空模式（用户 2026-10-12：「吴昊阳底下的土地，能不能改成和草地一样的黄色」；
     //           2026-10-12 23:51 原话：「吴昊阳的底下，改为秃地面，秃地面改为黄色」）：
     //  'erase'  = 涂 zonesTexture（g=0 ⇒ 引擎自己就把这儿的草删掉，rebuild 也不会再长）。
@@ -1303,22 +1303,7 @@ window.__camReady = true;
     // 实例最大缩放 1.5，70 个 chunk 取上界），不是旧注释写的 0.171m ⇒ 0.05m（5.4cm）
     // 已超过叶片被拨弯后的水平伸长量，其余三侧（非相机侧）叶尖是「往画面上方」移、
     // 根本不会横向压到他身上，留 5cm 只是防拨弯接触。
-    var WU_CLEAR_MARGIN = 0;
-    // ---------- 清空区改用「逐格精确判据」后的两个新旋钮（2026-10-15）----------
-    // WU_BLADE_H：草叶最大世界高度。实测遍历全部 chunk：几何 maxY 0.071517 × 实例缩放
-    //   上界 1.5 = **0.10727m**（p99 也到 0.1069，缩放分布集中在 1.25~1.5）。
-    // WU_SIL_PX：他的轮廓在屏幕上向外膨胀多少像素。要盖住草叶自身的横向宽度（约 5~8px）
-    //   以及他材质 alphaTest=0.02 与掩膜阈值之间的差。
-    var WU_BLADE_H = 0.108;
-    // WU_SIL_PX / WU_SIL_PY：轮廓在屏幕上的膨胀半径，**横向与纵向分开**（各向异性）。
-    //   为什么必须分开（2026-10-15 实测推出）：草叶几何根部聚在一起、叶尖向外张开，
-    //   实测几何最大横向 0.0418 × 缩放上界 1.5 = 0.063m。叶尖相对基座的屏幕可达范围是
-    //   一个「横宽纵窄」的椭圆：横向最多 0.063×411px/m ≈ **26px**；纵向只有
-    //   0.063×150px/m ≈ **10px**（叶尖比基座高的那 38px 位移由叶尖判据本身负责）。
-    //   用各向同性膨胀会二选一：横向不够 ⇒ 叶尖压到他手臂（用户标红的位置）；
-    //   纵向过多 ⇒ 手臂正下方铺出一大片无草黄地（用户标蓝的位置）。
-    var WU_SIL_PX = 26;
-    var WU_SIL_PY = 10;
+    var WU_CLEAR_MARGIN = 0.05;
     // ---------- 朝相机方向额外清空（用户 2026-10-12 22:35 新要求）----------
     // 「将该背景中，吴昊阳身下和周围的草，删掉，防止草的吹动/鼠标交互效果，
     //   落到吴昊阳身上，穿模，导致穿帮」
@@ -1335,7 +1320,7 @@ window.__camReady = true;
     // 2026-10-13 用户要求「草往内缩小一圈靠近吴昊阳」⇒ 0.40 → 0.26（略高于实测阈值
     // 0.2527，留 0.7cm 余量）。这是**零穿模代价**的收紧：阈值以下再小才会重现
     // 「叶尖扫过他球衣」的穿帮（旧实测证据：两帧差分，他球衣上有草叶在两帧间移动，占比 6.1%）。
-    var WU_CLEAR_MARGIN_CAM = 0;
+    var WU_CLEAR_MARGIN_CAM = 0.26;
     // ---------- 秃地「黄遮罩」（用户 2026-10-12 23:51：秃地面要改成黄色）----------
     // 引擎事实（逐字读 bundle 核对，不是猜）：
     //   ① 哪儿长草：grass.rebuild() → destroy+init → terrainSampler.sample(count,
@@ -1453,11 +1438,8 @@ window.__camReady = true;
       'wuFT=clamp((wuFSdR-uWuBodyClear)/max(wuFSdR-wuFSdF,1e-4),0.0,1.0);',
       '}',
       'newPosition=mix(wuFlowerRest,newPosition,wuFT);',
-      // 基座在禁区里 ⇒ 被他压住。⚠️ 光靠 `gl_PointSize *= 0` **没用**：OpenGL ES 会把点尺寸
-      //    钳到 [1, max] ⇒ 花变成 1~3 像素的「小点」仍然可见（实测：哨兵场下花瓣形状清清楚楚）。
-      //    所以改成**把点移到视锥外**（下方 50m），彻底不参与渲染。
-      'newPosition=mix(newPosition,flowerOrigin,wuCrush);',
-      'newPosition.y-=wuCrush*50.0;'
+      // 同草：基座在禁区里 ⇒ 收缩到花根（点精灵尺寸也归零），黄秃地才露得出来
+      'newPosition=mix(newPosition,flowerOrigin,wuCrush);'
     ].join('\n');
     var WU_BODY_FLOWER_PS_GLSL = 'gl_PointSize*=(1.0-wuCrush);';
     var wuBodyField = null;          // { tex, originX, originZ, invX, invZ, w, h, ... }
@@ -1861,54 +1843,6 @@ window.__camReady = true;
       var hits = wuRay.intersectObject(mi, false);
       return hits.length ? hits[0].point : null;
     }
-    // ---------- 轮廓膨胀掩膜（屏幕空间，清空区判据的唯一依据）----------
-    // 判据（2026-10-15 重做）：一株草的危险条件是「基座或叶尖投影落在他的轮廓上」。
-    // 叶尖 = 基座正上方 WU_BLADE_H 处的点，直接投影 ⇒ 透视、斜边、朝向全部自动正确。
-    // 旧版用「单一全局方向做扫掠」，同一个根因造成两种症状：斜边（他手臂那种约 45°
-    // 走向的边）覆盖不足 ⇒ 叶尖压到手臂上；正对相机的边过度覆盖 ⇒ 手臂正下方铺出
-    // 一大片无草黄地。改成逐格判据后两侧同时被修正。
-    var wuSilCache = null;
-    function wuBuildSilMask() {
-      if (!wuRect || !wuAlpha || !wuAlphaW) return null;
-      var rw = Math.max(8, Math.round(wuRect.w)), rh = Math.max(8, Math.round(wuRect.h));
-      var key = rw + 'x' + rh + '@' + wuAlphaW + 'x' + wuAlphaH + ':' + WU_SIL_PX + ',' + WU_SIL_PY;
-      if (wuSilCache && wuSilCache.key === key) return wuSilCache;
-      var pad = Math.max(WU_SIL_PX, WU_SIL_PY) + 2;
-      var W = rw + pad * 2, H = rh + pad * 2;
-      var raw = new Uint8Array(W * H);
-      var A_MIN = 8;
-      for (var y = 0; y < rh; y++) for (var x = 0; x < rw; x++) {
-        var iu = Math.floor(x / rw * wuAlphaW), iv = Math.floor(y / rh * wuAlphaH);
-        if (iu < 0 || iu >= wuAlphaW || iv < 0 || iv >= wuAlphaH) continue;
-        if (wuAlpha[(iv * wuAlphaW + iu) * 4 + 3] >= A_MIN) raw[(y + pad) * W + (x + pad)] = 1;
-      }
-      // 一维滑动窗口膨胀（前缀和）：横向、纵向各做一次 ⇒ 等价于矩形核，O(N)。
-      function dil1(src, horiz, R) {
-        if (R <= 0) return src;
-        var dst = new Uint8Array(W * H);
-        var N = horiz ? W : H, M = horiz ? H : W;
-        var pre = new Int32Array(N + 1);
-        for (var m = 0; m < M; m++) {
-          pre[0] = 0;
-          for (var i = 0; i < N; i++) pre[i + 1] = pre[i] + (horiz ? src[m * W + i] : src[i * W + m]);
-          for (var j = 0; j < N; j++) {
-            var a = j - R < 0 ? 0 : j - R, b = j + R + 1 > N ? N : j + R + 1;
-            var v = (pre[b] - pre[a]) > 0 ? 1 : 0;
-            if (horiz) dst[m * W + j] = v; else dst[j * W + m] = v;
-          }
-        }
-        return dst;
-      }
-      var dil = dil1(dil1(raw, true, WU_SIL_PX), false, WU_SIL_PY);
-      wuSilCache = { key: key, W: W, H: H, ox: wuRect.l - pad, oy: wuRect.t - pad, raw: raw, dil: dil };
-      return wuSilCache;
-    }
-    function wuSilPick(sil, s, useDil) {
-      if (!sil || !s) return false;
-      var px = Math.floor(s.x - sil.ox), py = Math.floor(s.y - sil.oy);
-      if (px < 0 || py < 0 || px >= sil.W || py >= sil.H) return false;
-      return (useDil ? sil.dil : sil.raw)[py * sil.W + px] === 1;
-    }
     function wuBareFootprint(mi) {
       if (!wuRect || !wuAlpha) return null;
       var vw = eng.canvas.clientWidth || eng.sizes.width;
@@ -1923,9 +1857,7 @@ window.__camReady = true;
         if (p.z < minZ) minZ = p.z; if (p.z > maxZ) maxZ = p.z;
       }
       if (got < 8) return null;
-      // 叶尖判据会让清空区朝相机一侧伸出约 WU_BLADE_H/tan(23°) ≈ 0.25m，
-      // 候选格包围盒必须把这部分包进来，否则清空区边界会被裁掉。
-      var pad = WU_BLADE_H * 2.5 + WU_CELL * 2;
+      var pad = WU_CELL * 2;
       minX -= pad; maxX += pad; minZ -= pad; maxZ += pad;
       // 2) 地面高度：先在粗格(0.08m)上竖直打射线建高度场，细格再双线性插值。
       //    直接对每个细格调 __groundY 会在屏幕上卡住 25 秒（实测 2250 次竖直射线）。
@@ -1946,38 +1878,37 @@ window.__camReady = true;
       // 3) 逐格把地面点投回屏幕：落在他的轮廓内（alpha 不透明）⇒ 这格属于他身体。
       //    用**原始 alpha**，不再内缩 —— 旧版故意内缩 4px 并在下缘留一条草带，
       //    让草从他身侧/脚踝长出来；用户要求把这些草删掉。
-      // 3) 逐格两个判据（同一套投影，不再有「方向」这个近似量）：
-      //    ① 基座投影落在他的轮廓里 ⇒ 这格是他身体压住的地（hits，供统计用）
-      //    ② 基座**或叶尖**投影落在「轮廓 ⊕ WU_SIL_PX 像素」里 ⇒ 这格进清空区（zone）
-      var sil = wuBuildSilMask();
-      var hits = [], zone = [];
+      var hits = [];
       var cx0 = Math.floor(minX / WU_CELL), cx1 = Math.floor(maxX / WU_CELL);
       var cz0 = Math.floor(minZ / WU_CELL), cz1 = Math.floor(maxZ / WU_CELL);
       for (var cx = cx0; cx <= cx1; cx++) for (var cz = cz0; cz <= cz1; cz++) {
         var x = (cx + 0.5) * WU_CELL, z = (cz + 0.5) * WU_CELL;
         var y = hAt(x, z);
         if (y === null || y === undefined) continue;
-        var sBase = wuProject(x, y, z, vw, vh);
-        var sTip = wuProject(x, y + WU_BLADE_H, z, vw, vh);
-        var hb = wuSilPick(sil, sBase, false);
-        var ht = wuSilPick(sil, sBase, true) || wuSilPick(sil, sTip, true);
-        if (hb) hits.push(cx + ',' + cz);
-        if (ht) zone.push(cx + ',' + cz);
+        var s2 = wuProject(x, y, z, vw, vh);
+        if (s2.x < wuRect.l || s2.x > wuRect.l + wuRect.w) continue;
+        if (s2.y < wuRect.t || s2.y > wuRect.t + wuRect.h) continue;
+        var iu = Math.floor((s2.x - wuRect.l) / wuRect.w * wuAlphaW);
+        var iv = Math.floor((s2.y - wuRect.t) / wuRect.h * wuAlphaH);
+        if (iu < 0 || iu >= wuAlphaW || iv < 0 || iv >= wuAlphaH) continue;
+        if (wuAlpha[(iv * wuAlphaW + iu) * 4 + 3] > 32) hits.push(cx + ',' + cz);
       }
-      if (!zone.length) return null;
-      // 4) 清空区 = 逐格判据结果（zone）+ 两个可选的额外余量（默认 0，仅供在线微调）。
+      if (!hits.length) return null;
+      // 4) 「他身体占的格子」向四周外扩 WU_CLEAR_MARGIN 米（欧氏圆，不是方角）——
+      //    这一圈里的草一律清掉 ⇒ 没有任何草能贴到他身上。
+      //    再**朝相机方向**多扫掠 WU_CLEAR_MARGIN_CAM 米：草叶叶尖会因俯角投影上移
+      //    约 2.356×叶高，只有相机这一侧的草才可能把叶尖投到他身上（见上方推导）。
       var rad = Math.max(DILATE, Math.round(WU_CLEAR_MARGIN / WU_CELL));
       var camRad = Math.max(0, Math.round(WU_CLEAR_MARGIN_CAM / WU_CELL));
       var grown = new Set();
-      // 相机在水平面上的「指向相机」单位向量（从身体质心指向相机）—— 仅额外余量用
+      // 相机在水平面上的「指向相机」单位向量（从身体质心指向相机）
       var camW = cam.getWorldPosition(new V3());
       var bcx = 0, bcz = 0;
       for (var q0 = 0; q0 < hits.length; q0++) {
         var p0 = hits[q0].split(',');
         bcx += (+p0[0] + 0.5) * WU_CELL; bcz += (+p0[1] + 0.5) * WU_CELL;
       }
-      if (hits.length) { bcx /= hits.length; bcz /= hits.length; }
-      else { bcx = camW.x; bcz = camW.z; }
+      bcx /= hits.length; bcz /= hits.length;
       var ddx = camW.x - bcx, ddz = camW.z - bcz;
       var dl = Math.sqrt(ddx * ddx + ddz * ddz) || 1;
       var ux = ddx / dl, uz = ddz / dl;
@@ -1990,10 +1921,10 @@ window.__camReady = true;
           for (var dz = -dzMax; dz <= dzMax; dz++) grown.add((bx + dx) + ',' + (bz + dz));
         }
       }
-      for (var q = 0; q < zone.length; q++) {
-        var pr = zone[q].split(','), hx = +pr[0], hz = +pr[1];
+      for (var q = 0; q < hits.length; q++) {
+        var pr = hits[q].split(','), hx = +pr[0], hz = +pr[1];
         stamp(hx, hz);
-        // 额外的朝相机方向扫掠（默认 0；调大只会在相机侧再加一圈）
+        // 朝相机方向扫掠：每前进 1 格盖一次基准圆
         for (var k = 1; k <= camRad; k++) {
           stamp(hx + Math.round(ux * k), hz + Math.round(uz * k));
         }
@@ -2837,7 +2768,6 @@ window.__camReady = true;
         painted: res && res.painted, tris: res && res.tris,
         swept: res && res.swept, maskPx: res && res.paint && res.paint.maskPx,
         clearMargin: WU_CLEAR_MARGIN, clearMarginCam: WU_CLEAR_MARGIN_CAM,
-        bladeH: WU_BLADE_H, silPx: WU_SIL_PX, silPy: WU_SIL_PY,
         clearRadiusCells: Math.max(DILATE, Math.round(WU_CLEAR_MARGIN / WU_CELL)),
         mode: WU_GRASS_MODE, yellow: WU_BARE_YELLOW,
         protectCells: wuProtectCells ? wuProtectCells.size : 0,
@@ -2968,71 +2898,6 @@ window.__camReady = true;
       try { makeBare(); } catch (e) { window.__bareErr = String(e && e.stack || e); }
       if (wuHiddenCells) { try { wuHideInstances(wuHiddenCells); } catch (e2) { window.__wuHideErr = String(e2 && e2.message || e2); } }
       return { base: WU_CLEAR_MARGIN, cam: WU_CLEAR_MARGIN_CAM, cells: wuHiddenCells ? wuHiddenCells.size : 0 };
-    };
-    // 调参口：改草叶最大高度（米）⇒ 决定清空区朝相机侧伸出多少
-    window.__wuSetBladeH = function (h) {
-      var n = typeof h === 'number' ? h : parseFloat(h);
-      if (!isFinite(n) || n <= 0 || n > 0.5) return false;
-      WU_BLADE_H = n; bareDone = false; wuHiddenCells = null;
-      try { makeBare(); } catch (e) { window.__bareErr = String(e && e.stack || e); }
-      return true;
-    };
-    // 调参口：改轮廓在屏幕上的膨胀半径（横向 px、纵向 px）⇒ 决定清空区贴他多紧
-    window.__wuSetSilPx = function (p, q) {
-      var n = typeof p === 'number' ? p : parseFloat(p);
-      if (!isFinite(n) || n < 0 || n > 80) return false;
-      var m = (q === undefined) ? n : (typeof q === 'number' ? q : parseFloat(q));
-      if (!isFinite(m) || m < 0 || m > 80) return false;
-      WU_SIL_PX = Math.round(n); WU_SIL_PY = Math.round(m);
-      wuSilCache = null; bareDone = false; wuHiddenCells = null;
-      try { makeBare(); } catch (e) { window.__bareErr = String(e && e.stack || e); }
-      return true;
-    };
-    // 诊断口：导出未膨胀的轮廓掩膜原始数据（供外部做不同膨胀半径的离线对比）
-    window.__wuSilRawDump = function () {
-      var s = wuSilCache; if (!s) return null;
-      return { W: s.W, H: s.H, ox: s.ox, oy: s.oy, raw: Array.from(s.raw) };
-    };
-    // 诊断口：把屏幕坐标打回地面（排查「用户标注的那块地到底在哪」）
-    window.__wuRay = function (sx, sy) {
-      var mi = scene.getObjectByName('main-island');
-      if (!mi) return null;
-      var vw = eng.canvas.clientWidth || eng.sizes.width, vh = eng.canvas.clientHeight || eng.sizes.height;
-      var p = wuRayTo(sx, sy, vw, vh, mi);
-      return p ? { x: +p.x.toFixed(3), y: +p.y.toFixed(3), z: +p.z.toFixed(3) } : null;
-    };
-    // 诊断口：直接用 footprint 内部那套投影（避免外部另取相机导致换算歧义）
-    window.__wuProj = function (x, y, z) {
-      var vw = eng.canvas.clientWidth || eng.sizes.width, vh = eng.canvas.clientHeight || eng.sizes.height;
-      return wuProject(x, y, z, vw, vh);
-    };
-    // 诊断口：给屏幕坐标，返回是否落在轮廓掩膜（raw=未膨胀 / dil=已膨胀）里
-    window.__wuSilScreenTest = function (sx, sy) {
-      var sil = wuSilCache; if (!sil) return null;
-      return { raw: wuSilPick(sil, { x: sx, y: sy }, false), dil: wuSilPick(sil, { x: sx, y: sy }, true) };
-    };
-    // 诊断口：显式给 y（供外部用自建高度场批量取样，避免逐点打射线）
-    window.__wuSilTest = function (x, y, z) {
-      var sil = wuSilCache; if (!sil) return null;
-      var vw = eng.canvas.clientWidth || eng.sizes.width, vh = eng.canvas.clientHeight || eng.sizes.height;
-      return {
-        baseRaw: wuSilPick(sil, wuProject(x, y, z, vw, vh), false),
-        baseDil: wuSilPick(sil, wuProject(x, y, z, vw, vh), true),
-        tipDil: wuSilPick(sil, wuProject(x, y + WU_BLADE_H, z, vw, vh), true)
-      };
-    };
-    // 诊断口：给一个世界 XZ，返回「基座/叶尖是否落在他轮廓里」与「是否在清空区里」
-    window.__wuSilHit = function (x, z) {
-      var sil = wuSilCache; if (!sil) return null;
-      var y = (typeof window.__groundY === 'function') ? window.__groundY(x, z) : 0;
-      if (y === null || y === undefined) return null;
-      var vw = eng.canvas.clientWidth || eng.sizes.width, vh = eng.canvas.clientHeight || eng.sizes.height;
-      return {
-        baseRaw: wuSilPick(sil, wuProject(x, y, z, vw, vh), false),
-        baseDil: wuSilPick(sil, wuProject(x, y, z, vw, vh), true),
-        tipDil: wuSilPick(sil, wuProject(x, y + WU_BLADE_H, z, vw, vh), true),
-        inZone: (typeof window.__wuBodySDAt === 'function') ? (window.__wuBodySDAt(x, z) < 0) : null
-      };
     };
     var grassTimer = setInterval(function () {
       // 红框补草要先于删石补草跑：删石补草最后会 grass.rebuild()，
