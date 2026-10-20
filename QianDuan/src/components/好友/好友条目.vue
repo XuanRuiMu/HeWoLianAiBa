@@ -53,10 +53,10 @@
     <div v-if="beiZhuBianJi" class="bei-zhu-hang">
       <ChangFangShuRuKuang
         ref="beiZhuShuRu"
-        :mo-xing-zhi="beiZhuCaoGao"
-        :zui-da-chang-du="30"
-        :biao-qian="huoQuFanYi('haoYou', 'beiZhu')"
-        :zhan-wei-wen-zi="huoQuFanYi('haoYou', 'beiZhuZhanWei')"
+        :模型值="beiZhuCaoGao"
+        :最大长度="30"
+        :标签="huoQuFanYi('haoYou', 'beiZhu')"
+        :占位文字="huoQuFanYi('haoYou', 'beiZhuZhanWei')"
         @geng-xin="beiZhuCaoGao = $event"
         @keydown.enter="baoCunBeiZhu"
         @keydown.esc="quXiaoBeiZhu"
@@ -100,7 +100,7 @@ const emit = defineEmits<{
 const caoZuoZhanKai = ref(false)
 const beiZhuBianJi = ref(false)
 const beiZhuCaoGao = ref('')
-const beiZhuShuRu = ref<{ jiaoDian: () => void } | null>(null)
+const beiZhuShuRu = ref<{ 聚焦: () => void } | null>(null)
 
 const moRenZi = computed(() => (props.mingCheng || '?').slice(0, 1))
 
@@ -112,7 +112,7 @@ async function kaiShiBeiZhu(): Promise<void> {
   beiZhuBianJi.value = true
   beiZhuCaoGao.value = props.beiZhu
   await nextTick()
-  beiZhuShuRu.value?.jiaoDian()
+  beiZhuShuRu.value?.聚焦()
 }
 
 function baoCunBeiZhu(): void {

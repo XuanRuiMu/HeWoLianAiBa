@@ -5,10 +5,10 @@
         huoQuFanYi('sheZhi', 'souSuoBiaoTi')
       }}</label>
       <ChangFangShuRuKuang
-        biao-shi="she-zhi-sou-suo"
-        :mo-xing-zhi="搜索关键词"
-        lei-xing="search"
-        :zhan-wei-wen-zi="huoQuFanYi('sheZhi', 'souSuoZhanWei')"
+        标识="she-zhi-sou-suo"
+        :模型值="搜索关键词"
+        类型="search"
+        :占位文字="huoQuFanYi('sheZhi', 'souSuoZhanWei')"
         @geng-xin="搜索关键词 = $event"
       />
       <button v-if="搜索中" class="anniu-fu-zhu sou-suo-qing-kong" @click="搜索关键词 = ''">
@@ -143,12 +143,12 @@
       >
         <h2 class="kapian-biao-ti">{{ huoQuFanYi('sheZhi', 'qianMingBiaoTi') }}</h2>
         <ChangFangShuRuKuang
-          :mo-xing-zhi="qianMingCaoGao"
-          :duo-hang="true"
-          :hang-shu="3"
-          :zhan-wei-wen-zi="huoQuFanYi('sheZhi', 'qianMingZhanWei')"
-          :zui-da-chang-du="QIAN_MING_ZUI_DA_ZI_FU"
-          :cuo-wu-ti-shi-wen-zi="fenQuanCuoWu.qianMing?.lianAiWenAn || ''"
+          :模型值="qianMingCaoGao"
+          :多行="true"
+          :行数="3"
+          :占位文字="huoQuFanYi('sheZhi', 'qianMingZhanWei')"
+          :最大长度="QIAN_MING_ZUI_DA_ZI_FU"
+          :错误提示文字="fenQuanCuoWu.qianMing?.lianAiWenAn || ''"
           @geng-xin="qianMingCaoGao = $event"
         />
         <p class="zi-fu-ji-shu">{{ qianMingZiShu }}/{{ QIAN_MING_ZUI_DA_ZI_FU }}</p>
@@ -189,10 +189,10 @@
         <h2 class="kapian-biao-ti">{{ huoQuFanYi('caidan', 'xiuGaiYongHuMing') }}</h2>
         <p class="kapian-miao-shu">{{ huoQuFanYi('sheZhi', 'yongHuMingMiaoShu') }}</p>
           <ChangFangShuRuKuang
-            :mo-xing-zhi="yongHuMingCaoGao"
-            :zhan-wei-wen-zi="huoQuFanYi('ui', 'xinYongHuMing')"
-            :zui-da-chang-du="30"
-            :cuo-wu-ti-shi-wen-zi="fenQuanCuoWu.yongHuMing?.lianAiWenAn || ''"
+            :模型值="yongHuMingCaoGao"
+            :占位文字="huoQuFanYi('ui', 'xinYongHuMing')"
+            :最大长度="30"
+            :错误提示文字="fenQuanCuoWu.yongHuMing?.lianAiWenAn || ''"
             @geng-xin="yongHuMingCaoGao = $event"
           />
           <button
@@ -327,30 +327,30 @@
           <h2 class="kapian-biao-ti">{{ huoQuFanYi('caidan', 'xiuGaiMiMa') }}</h2>
           <p class="kapian-miao-shu">{{ huoQuFanYi('sheZhi', 'miMaMiaoShu') }}</p>
           <ChangFangShuRuKuang
-            :mo-xing-zhi="jiuMiMa"
-            lei-xing="password"
-            :zhan-wei-wen-zi="huoQuFanYi('ui', 'jiuMiMa')"
+            :模型值="jiuMiMa"
+            类型="password"
+            :占位文字="huoQuFanYi('ui', 'jiuMiMa')"
             @geng-xin="jiuMiMa = $event"
           />
           <ChangFangShuRuKuang
-            :mo-xing-zhi="xinMiMa"
-            lei-xing="password"
-            :zhan-wei-wen-zi="huoQuFanYi('ui', 'xinMiMa')"
+            :模型值="xinMiMa"
+            类型="password"
+            :占位文字="huoQuFanYi('ui', 'xinMiMa')"
             @geng-xin="xinMiMa = $event"
           />
           <ChangFangShuRuKuang
-            :mo-xing-zhi="queRenXinMiMa"
-            lei-xing="password"
-            :zhan-wei-wen-zi="huoQuFanYi('ui', 'queRenXinMiMa')"
-            :cuo-wu-ti-shi-wen-zi="fenQuanCuoWu.miMa?.lianAiWenAn || ''"
+            :模型值="queRenXinMiMa"
+            类型="password"
+            :占位文字="huoQuFanYi('ui', 'queRenXinMiMa')"
+            :错误提示文字="fenQuanCuoWu.miMa?.lianAiWenAn || ''"
             @geng-xin="queRenXinMiMa = $event"
           />
           <div class="yanzhengma-hang">
             <ChangFangShuRuKuang
-              :mo-xing-zhi="miMaYanZhengMa"
-              lei-xing="tel"
-              :zui-da-chang-du="6"
-              :zhan-wei-wen-zi="huoQuFanYi('ui', 'yanZhengMa')"
+              :模型值="miMaYanZhengMa"
+              类型="tel"
+              :最大长度="6"
+              :占位文字="huoQuFanYi('ui', 'yanZhengMa')"
               @geng-xin="miMaYanZhengMa = $event"
             />
             <button
@@ -406,12 +406,12 @@
           <p class="kapian-miao-shu">{{ shenSuWenAn }}</p>
           <template v-if="keTiJiaoShenSu">
             <ChangFangShuRuKuang
-              :mo-xing-zhi="shenSuLiYou"
-              :duo-hang="true"
-              :hang-shu="2"
-              :zhan-wei-wen-zi="huoQuFanYi('sheZhi', 'shenSuZhanWei')"
-              :zui-da-chang-du="500"
-              :cuo-wu-ti-shi-wen-zi="fenQuanCuoWu.shenSu?.lianAiWenAn || ''"
+              :模型值="shenSuLiYou"
+              :多行="true"
+              :行数="2"
+              :占位文字="huoQuFanYi('sheZhi', 'shenSuZhanWei')"
+              :最大长度="500"
+              :错误提示文字="fenQuanCuoWu.shenSu?.lianAiWenAn || ''"
               @geng-xin="shenSuLiYou = $event"
             />
             <button class="anniu-fu-zhu xiao-anniu" :disabled="shenSuTiJiaoZhong" @click="tiJiaoShenSu">
@@ -606,10 +606,10 @@
               {{ huoQuFanYi('sheZhi', 'beiJingMingCheng') }}
             </label>
             <ChangFangShuRuKuang
-              biao-shi="zi-ding-yi-bei-jing-ming-cheng"
-              :mo-xing-zhi="beiJingMingCheng"
-              :zui-da-chang-du="20"
-              :zhan-wei-wen-zi="huoQuFanYi('sheZhi', 'beiJingMingChengZhanWei')"
+              标识="zi-ding-yi-bei-jing-ming-cheng"
+              :模型值="beiJingMingCheng"
+              :最大长度="20"
+              :占位文字="huoQuFanYi('sheZhi', 'beiJingMingChengZhanWei')"
               @geng-xin="beiJingMingCheng = $event"
             />
           </div>

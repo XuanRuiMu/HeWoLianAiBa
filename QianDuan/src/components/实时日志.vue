@@ -48,10 +48,10 @@
       </button>
 
       <ChangFangShuRuKuang
-        :mo-xing-zhi="日志仓库.guanJianZi"
-        lei-xing="search"
-        :biao-qian="huoQuFanYi('shiShiRiZhi', 'souSuoZhanWei')"
-        :zhan-wei-wen-zi="huoQuFanYi('shiShiRiZhi', 'souSuoZhanWei')"
+        :模型值="日志仓库.guanJianZi"
+        类型="search"
+        :标签="huoQuFanYi('shiShiRiZhi', 'souSuoZhanWei')"
+        :占位文字="huoQuFanYi('shiShiRiZhi', 'souSuoZhanWei')"
         @geng-xin="日志仓库.guanJianZi = $event"
       />
 

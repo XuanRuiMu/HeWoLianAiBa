@@ -85,10 +85,10 @@
     <form v-if="bianJiMoShi" class="fenlei-bian-ji" @submit.prevent="tiJiaoBianJi">
       <ChangFangShuRuKuang
         ref="mingChengShuRuKuang"
-        :mo-xing-zhi="bianJiMingCheng"
-        :zui-da-chang-du="20"
-        :biao-qian="dangQianFenLei ? `${huoQuFanYi('zhanJi', 'gengMingFenLeiMingCheng')}: ${dangQianFenLei.name}` : huoQuFanYi('zhanJi', 'chuangJianFenLeiMingCheng')"
-        :jin-yong="caoZuoZhong"
+        :模型值="bianJiMingCheng"
+        :最大长度="20"
+        :标签="dangQianFenLei ? `${huoQuFanYi('zhanJi', 'gengMingFenLeiMingCheng')}: ${dangQianFenLei.name}` : huoQuFanYi('zhanJi', 'chuangJianFenLeiMingCheng')"
+        :禁用="caoZuoZhong"
         @geng-xin="bianJiMingCheng = $event"
         @keydown.esc="guanBiBianJi"
       />
@@ -138,7 +138,7 @@ const emit = defineEmits<{
 const bianJiMoShi = ref<'chuangJian' | 'gengMing' | null>(null)
 const bianJiFenLeiId = ref('')
 const bianJiMingCheng = ref('')
-const mingChengShuRuKuang = ref<{ jiaoDian: () => void } | null>(null)
+const mingChengShuRuKuang = ref<{ 聚焦: () => void } | null>(null)
 const dangQianFenLei = computed(() =>
   props.fenLeiLieBiao.find((item) => item.id === props.dangQianFenLeiId),
 )
@@ -154,7 +154,7 @@ async function kaiShiChuangJian(): Promise<void> {
   bianJiFenLeiId.value = ''
   bianJiMingCheng.value = ''
   await nextTick()
-  mingChengShuRuKuang.value?.jiaoDian()
+  mingChengShuRuKuang.value?.聚焦()
 }
 
 async function kaiShiGengMing(fenLei: ZhanJiFenLei): Promise<void> {
@@ -162,7 +162,7 @@ async function kaiShiGengMing(fenLei: ZhanJiFenLei): Promise<void> {
   bianJiFenLeiId.value = fenLei.id
   bianJiMingCheng.value = fenLei.name
   await nextTick()
-  mingChengShuRuKuang.value?.jiaoDian()
+  mingChengShuRuKuang.value?.聚焦()
 }
 
 function guanBiBianJi(): void {

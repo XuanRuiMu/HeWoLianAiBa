@@ -54,11 +54,11 @@
           {{ huoQuFanYi('sheZhi', 'qiPaoMingCheng') }}
         </label>
         <ChangFangShuRuKuang
-          biao-shi="zi-ding-yi-qi-pao-ming-cheng"
-          :mo-xing-zhi="qiPaoMingCheng"
-          :zui-da-chang-du="12"
-          :biao-qian="huoQuFanYi('sheZhi', 'qiPaoMingCheng')"
-          :zhan-wei-wen-zi="huoQuFanYi('sheZhi', 'qiPaoMingChengZhanWei')"
+          标识="zi-ding-yi-qi-pao-ming-cheng"
+          :模型值="qiPaoMingCheng"
+          :最大长度="12"
+          :标签="huoQuFanYi('sheZhi', 'qiPaoMingCheng')"
+          :占位文字="huoQuFanYi('sheZhi', 'qiPaoMingChengZhanWei')"
           @geng-xin="qiPaoMingCheng = $event"
         />
       </div>

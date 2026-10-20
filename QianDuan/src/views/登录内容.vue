@@ -78,48 +78,41 @@
             :tabindex="moShi !== 'dengLu' ? '-1' : undefined"
             @submit.prevent="zhiXingDengLu"
           >
-              <div class="shuru-zu" :class="{ shangFu: dengLuShouJiShangFu }">
-                <input
-                  id="denglu-shoujihao"
-                  v-model="dengLuShouJiHao"
-                  type="tel"
-                  class="fenlie-shuru"
-                  maxlength="11"
-                  autocomplete="username"
-                  placeholder=" "
-                  required
-                  @focus="shouJiHaoJuJiao = true"
-                  @blur="shouJiHaoJuJiao = false"
-                  @input="tongBuShiJiZhi($event, 'dengLuShouJiHao')"
-                  @change="tongBuShiJiZhi($event, 'dengLuShouJiHao')"
-                  @animationstart="chuLiZiDongTianChong($event, 'dengLuShouJiHao')"
-                />
-                <label for="denglu-shoujihao" class="fudong-biaoqian">{{
-                  huoQuFanYi('ui', 'shouJiHao')
-                }}</label>
-              </div>
+              <HengTiaoShuRuKuang
+                标识="denglu-shoujihao"
+                :模型值="dengLuShouJiHao"
+                :类型="'tel'"
+                :最大长度="11"
+                自动完成="username"
+                :上浮="dengLuShouJiShangFu"
+                必填
+                :标签="huoQuFanYi('ui', 'shouJiHao')"
+                @geng-xin="dengLuShouJiHao = $event"
+                @jiao-dian="shouJiHaoJuJiao = true"
+                @shi-jiao="shouJiHaoJuJiao = false"
+                @shu-ru="tongBuShiJiZhi($event, 'dengLuShouJiHao')"
+                @bian-geng="tongBuShiJiZhi($event, 'dengLuShouJiHao')"
+                @zi-dong-tian-chong="chuLiZiDongTianChong($event, 'dengLuShouJiHao')"
+              />
 
-              <div class="shuru-zu" :class="{ shangFu: dengLuMiMaShangFu }">
-                <div class="mima-zu">
-                  <input
-                    id="denglu-mima"
-                    ref="dengLuMiMaShuRuKuang"
-                    v-model="dengLuMiMa"
-                    :type="xianShiMiMa1 ? 'text' : 'password'"
-                    class="fenlie-shuru"
-                    autocomplete="current-password"
-                    placeholder=" "
-                    required
-                    @focus="miMaJuJiao = true"
-                    @blur="miMaJuJiao = false"
-                    @input="tongBuShiJiZhi($event, 'dengLuMiMa')"
-                    @change="tongBuShiJiZhi($event, 'dengLuMiMa')"
-                    @animationstart="chuLiZiDongTianChong($event, 'dengLuMiMa')"
-                  />
-                  <label for="denglu-mima" class="fudong-biaoqian">{{
-                    huoQuFanYi('ui', 'miMa')
-                  }}</label>
-                  <button
+              <HengTiaoShuRuKuang
+                ref="dengLuMiMaShuRuKuang"
+                标识="denglu-mima"
+                :模型值="dengLuMiMa"
+                :类型="xianShiMiMa1 ? 'text' : 'password'"
+                自动完成="current-password"
+                :上浮="dengLuMiMaShangFu"
+                必填
+                包裹类="mima-zu"
+                :标签="huoQuFanYi('ui', 'miMa')"
+                @geng-xin="dengLuMiMa = $event"
+                @jiao-dian="miMaJuJiao = true"
+                @shi-jiao="miMaJuJiao = false"
+                @shu-ru="tongBuShiJiZhi($event, 'dengLuMiMa')"
+                @bian-geng="tongBuShiJiZhi($event, 'dengLuMiMa')"
+                @zi-dong-tian-chong="chuLiZiDongTianChong($event, 'dengLuMiMa')"
+              >
+<button
                     type="button"
                     aria-busy="false"
                     class="mima-qiehuan"
@@ -157,8 +150,7 @@
                       <circle cx="12" cy="12" r="3" />
                     </svg>
                   </button>
-                </div>
-              </div>
+              </HengTiaoShuRuKuang>
 
               <div class="ji-zhu-xuan-xiang">
                 <!-- 第一行：记住账号 / 记住密码 -->
@@ -253,104 +245,87 @@
             :tabindex="moShi !== 'zhuCe' ? '-1' : undefined"
             @submit.prevent="zhiXingZhuCe"
           >
-              <div class="shuru-zu" :class="{ shangFu: zhuCeShouJiShangFu }">
-                <input
-                  id="zhuce-shoujihao"
-                  v-model="zhuCeShouJiHao"
-                  type="tel"
-                  class="fenlie-shuru"
-                  maxlength="11"
-                  autocomplete="tel"
-                  placeholder=" "
-                  required
-                  @focus="zhuCeShouJiJuJiao = true"
-                  @blur="zhuCeShouJiJuJiao = false"
-                  @input="tongBuShiJiZhi($event, 'zhuCeShouJiHao')"
-                  @change="tongBuShiJiZhi($event, 'zhuCeShouJiHao')"
-                  @animationstart="chuLiZiDongTianChong($event, 'zhuCeShouJiHao')"
-                />
-                <label for="zhuce-shoujihao" class="fudong-biaoqian">{{
-                  huoQuFanYi('ui', 'shouJiHao')
-                }}</label>
-              </div>
+              <HengTiaoShuRuKuang
+                标识="zhuce-shoujihao"
+                :模型值="zhuCeShouJiHao"
+                :类型="'tel'"
+                :最大长度="11"
+                自动完成="tel"
+                :上浮="zhuCeShouJiShangFu"
+                必填
+                :标签="huoQuFanYi('ui', 'shouJiHao')"
+                @geng-xin="zhuCeShouJiHao = $event"
+                @jiao-dian="zhuCeShouJiJuJiao = true"
+                @shi-jiao="zhuCeShouJiJuJiao = false"
+                @shu-ru="tongBuShiJiZhi($event, 'zhuCeShouJiHao')"
+                @bian-geng="tongBuShiJiZhi($event, 'zhuCeShouJiHao')"
+                @zi-dong-tian-chong="chuLiZiDongTianChong($event, 'zhuCeShouJiHao')"
+              />
 
-              <div class="shuru-zu" :class="{ shangFu: zhuCeYanZhengMaShangFu }">
-                <div class="yanzhengma-zu">
-                  <div class="yanzhengma-shuru-qu">
-                    <input
-                      id="zhuce-yanzhengma"
-                      v-model="zhuCeYanZhengMa"
-                      type="tel"
-                      class="fenlie-shuru"
-                      maxlength="6"
-                      inputmode="numeric"
-                      autocomplete="one-time-code"
-                      placeholder=" "
-                      required
-                      @focus="yanZhengMaJuJiao = true"
-                      @blur="yanZhengMaJuJiao = false"
-                      @input="tongBuShiJiZhi($event, 'zhuCeYanZhengMa')"
-                      @change="tongBuShiJiZhi($event, 'zhuCeYanZhengMa')"
-                      @animationstart="chuLiZiDongTianChong($event, 'zhuCeYanZhengMa')"
-                    />
-                    <label for="zhuce-yanzhengma" class="fudong-biaoqian">{{
-                      huoQuFanYi('ui', 'yanZhengMa')
-                    }}</label>
-                  </div>
-                  <button
-                    type="button"
-                    :aria-busy="faSongZhong ? 'true' : 'false'"
-                    class="fasong-anniu"
-                    :disabled="!keYiFaSong || faSongZhong"
-                    @click="zhiXingFaSongMa"
-                  >
-                    {{ faSongWenBen }}
-                  </button>
-                </div>
-              </div>
+              <HengTiaoShuRuKuang
+                标识="zhuce-yanzhengma"
+                :模型值="zhuCeYanZhengMa"
+                :类型="'tel'"
+                :最大长度="6"
+                自动完成="one-time-code"
+                :上浮="zhuCeYanZhengMaShangFu"
+                必填
+                包裹类="yanzhengma-zu"
+                内层类="yanzhengma-shuru-qu"
+                :标签="huoQuFanYi('ui', 'yanZhengMa')"
+                @geng-xin="zhuCeYanZhengMa = $event"
+                @jiao-dian="yanZhengMaJuJiao = true"
+                @shi-jiao="yanZhengMaJuJiao = false"
+                @shu-ru="tongBuShiJiZhi($event, 'zhuCeYanZhengMa')"
+                @bian-geng="tongBuShiJiZhi($event, 'zhuCeYanZhengMa')"
+                @zi-dong-tian-chong="chuLiZiDongTianChong($event, 'zhuCeYanZhengMa')"
+              >
+                <button
+                  type="button"
+                  :aria-busy="faSongZhong ? 'true' : 'false'"
+                  class="fasong-anniu"
+                  :disabled="!keYiFaSong || faSongZhong"
+                  @click="zhiXingFaSongMa"
+                >
+                  {{ faSongWenBen }}
+                </button>
+              </HengTiaoShuRuKuang>
 
-              <div class="shuru-zu" :class="{ shangFu: zhuCeYongHuMingShangFu }">
-                <input
-                  id="zhuce-yonghuming"
-                  v-model="zhuCeYongHuMing"
-                  type="text"
-                  class="fenlie-shuru"
-                  maxlength="30"
-                  autocomplete="username"
-                  placeholder=" "
-                  required
-                  @focus="yongHuMingJuJiao = true"
-                  @blur="yongHuMingJuJiao = false"
-                  @input="tongBuShiJiZhi($event, 'zhuCeYongHuMing')"
-                  @change="tongBuShiJiZhi($event, 'zhuCeYongHuMing')"
-                  @animationstart="chuLiZiDongTianChong($event, 'zhuCeYongHuMing')"
-                />
-                <label for="zhuce-yonghuming" class="fudong-biaoqian">{{
-                  huoQuFanYi('ui', 'yongHuMing')
-                }}</label>
-              </div>
+              <HengTiaoShuRuKuang
+                标识="zhuce-yonghuming"
+                :模型值="zhuCeYongHuMing"
+                :类型="'text'"
+                :最大长度="30"
+                自动完成="username"
+                :上浮="zhuCeYongHuMingShangFu"
+                必填
+                :标签="huoQuFanYi('ui', 'yongHuMing')"
+                @geng-xin="zhuCeYongHuMing = $event"
+                @jiao-dian="yongHuMingJuJiao = true"
+                @shi-jiao="yongHuMingJuJiao = false"
+                @shu-ru="tongBuShiJiZhi($event, 'zhuCeYongHuMing')"
+                @bian-geng="tongBuShiJiZhi($event, 'zhuCeYongHuMing')"
+                @zi-dong-tian-chong="chuLiZiDongTianChong($event, 'zhuCeYongHuMing')"
+              />
 
-              <div class="shuru-zu" :class="{ shangFu: zhuCeMiMaShangFu }">
-                <div class="mima-zu">
-                  <input
-                    id="zhuce-mima"
-                    ref="zhuCeMiMaShuRuKuang"
-                    v-model="zhuCeMiMa"
-                    :type="xianShiMiMa2 ? 'text' : 'password'"
-                    class="fenlie-shuru"
-                    autocomplete="new-password"
-                    placeholder=" "
-                    required
-                    @focus="zhuCeMiMaJuJiao = true"
-                    @blur="zhuCeMiMaJuJiao = false"
-                    @input="tongBuShiJiZhi($event, 'zhuCeMiMa')"
-                    @change="tongBuShiJiZhi($event, 'zhuCeMiMa')"
-                    @animationstart="chuLiZiDongTianChong($event, 'zhuCeMiMa')"
-                  />
-                  <label for="zhuce-mima" class="fudong-biaoqian">{{
-                    huoQuFanYi('ui', 'miMa')
-                  }}</label>
-                  <button
+              <HengTiaoShuRuKuang
+                ref="zhuCeMiMaShuRuKuang"
+                标识="zhuce-mima"
+                :模型值="zhuCeMiMa"
+                :类型="xianShiMiMa2 ? 'text' : 'password'"
+                自动完成="new-password"
+                :上浮="zhuCeMiMaShangFu"
+                必填
+                包裹类="mima-zu"
+                :标签="huoQuFanYi('ui', 'miMa')"
+                @geng-xin="zhuCeMiMa = $event"
+                @jiao-dian="zhuCeMiMaJuJiao = true"
+                @shi-jiao="zhuCeMiMaJuJiao = false"
+                @shu-ru="tongBuShiJiZhi($event, 'zhuCeMiMa')"
+                @bian-geng="tongBuShiJiZhi($event, 'zhuCeMiMa')"
+                @zi-dong-tian-chong="chuLiZiDongTianChong($event, 'zhuCeMiMa')"
+              >
+<button
                     type="button"
                     aria-busy="false"
                     class="mima-qiehuan"
@@ -388,8 +363,7 @@
                       <circle cx="12" cy="12" r="3" />
                     </svg>
                   </button>
-                </div>
-              </div>
+              </HengTiaoShuRuKuang>
 
               <!-- C5 未成年人保护：注册强制采集出生日期（FP-14：自绘分段控件，显示口径 YYYY-MM-DD） -->
               <div class="shuru-zu shangFu">
@@ -484,6 +458,7 @@ import { 使用认证表单仓库 } from '@/stores/认证表单'
 import { faSongMa, jianChaShouJiHao, YAN_ZHENG_MA_YONG_TU } from '@/api/认证'
 import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
 import { chuangJianQianTaiCuoWu, 归一前台错误 } from '@/utils/前台错误'
+import HengTiaoShuRuKuang from '@/components/表单/横条输入框.vue'
 import { huoQuFanYi } from '@/config/翻译表'
 import { quXian } from '@/config/设计令牌'
 import 协议模态框 from '@/components/协议模态框.vue'
@@ -734,8 +709,8 @@ function qiDongHuiTianLunXun(): void {
   }, HUI_TIAN_LUN_XUN_JIAN_GE)
 }
 
-const dengLuMiMaShuRuKuang = ref<HTMLInputElement | null>(null)
-const zhuCeMiMaShuRuKuang = ref<HTMLInputElement | null>(null)
+const dengLuMiMaShuRuKuang = ref<{ 聚焦: () => void } | null>(null)
+const zhuCeMiMaShuRuKuang = ref<{ 聚焦: () => void } | null>(null)
 
 /* ============ UX-04 报错聚焦：把光标送回真正出问题的那个框 ============
    只认「错误确实指向某个字段」的情况。网络/限流/上游故障这类报错没有可改的字段，
@@ -815,13 +790,13 @@ function qieHuanMiMaXianShi(xuHao: 1 | 2) {
     xianShiMiMa1.value = !xianShiMiMa1.value
     nextTick(() => {
       tongBuSuoYouHuiTian()
-      dengLuMiMaShuRuKuang.value?.focus()
+      dengLuMiMaShuRuKuang.value?.聚焦()
     })
   } else {
     xianShiMiMa2.value = !xianShiMiMa2.value
     nextTick(() => {
       tongBuSuoYouHuiTian()
-      zhuCeMiMaShuRuKuang.value?.focus()
+      zhuCeMiMaShuRuKuang.value?.聚焦()
     })
   }
 }

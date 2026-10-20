@@ -273,7 +273,7 @@ const tiaoZhuanMiao = ref(0)
 const chongZhiWanCheng = ref(false)
 const shouJiHaoJiaoCuo = ref(false)
 const xinMiMaShiJiao = ref(false)
-type ShuRuKuangShiLi = { jiaoDian: () => void }
+type ShuRuKuangShiLi = { 聚焦: () => void }
 const shouJiHaoKuang = ref<ShuRuKuangShiLi | null>(null)
 const yanZhengMaKuang = ref<ShuRuKuangShiLi | null>(null)
 const xinMiMaKuang = ref<ShuRuKuangShiLi | null>(null)
@@ -414,7 +414,7 @@ function shouJiHaoShiJiao(): void {
 }
 
 function juJiao(kong: typeof shouJiHaoKuang): void {
-  void nextTick(() => kong.value?.jiaoDian())
+  void nextTick(() => kong.value?.聚焦())
 }
 
 function fanHuiShangYiBu(): void {

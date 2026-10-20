@@ -4,7 +4,7 @@
       <div v-if="内层类" :class="内层类">
         <input
           :id="标识"
-          ref="gongJu"
+          ref="输入元素"
           :value="模型值"
           :type="类型"
           class="fenlie-shuru"
@@ -16,18 +16,18 @@
           :aria-invalid="无效 ? 'true' : undefined"
           :required="必填"
           placeholder=" "
-          @input="faShuRu"
-          @change="faBianGeng"
-          @focus="faJiaoDian"
-          @blur="faShiJiao"
-          @animationstart="faZiDongTianChong"
+          @input="处理输入"
+          @change="处理变更"
+          @focus="处理聚焦"
+          @blur="处理失焦"
+          @animationstart="处理自动填充"
         />
         <label :for="标识" class="fudong-biaoqian">{{ 标签 }}</label>
       </div>
       <template v-else>
         <input
           :id="标识"
-          ref="gongJu"
+          ref="输入元素"
           :value="模型值"
           :type="类型"
           class="fenlie-shuru"
@@ -39,11 +39,11 @@
           :aria-invalid="无效 ? 'true' : undefined"
           :required="必填"
           placeholder=" "
-          @input="faShuRu"
-          @change="faBianGeng"
-          @focus="faJiaoDian"
-          @blur="faShiJiao"
-          @animationstart="faZiDongTianChong"
+          @input="处理输入"
+          @change="处理变更"
+          @focus="处理聚焦"
+          @blur="处理失焦"
+          @animationstart="处理自动填充"
         />
         <label :for="标识" class="fudong-biaoqian">{{ 标签 }}</label>
       </template>
@@ -52,7 +52,7 @@
     <template v-else>
       <input
         :id="标识"
-        ref="gongJu"
+        ref="输入元素"
         :value="模型值"
         :type="类型"
         class="fenlie-shuru"
@@ -64,11 +64,11 @@
         :aria-invalid="无效 ? 'true' : undefined"
         :required="必填"
         placeholder=" "
-        @input="faShuRu"
-        @change="faBianGeng"
-        @focus="faJiaoDian"
-        @blur="faShiJiao"
-        @animationstart="faZiDongTianChong"
+        @input="处理输入"
+        @change="处理变更"
+        @focus="处理聚焦"
+        @blur="处理失焦"
+        @animationstart="处理自动填充"
       />
       <label :for="标识" class="fudong-biaoqian">{{ 标签 }}</label>
       <slot />
@@ -111,7 +111,7 @@ withDefaults(
   },
 )
 
-const faChu = defineEmits<{
+const 发出 = defineEmits<{
   (时间: 'geng-xin', 值: string): void
   (时间: 'jiao-dian'): void
   (时间: 'shi-jiao'): void
@@ -120,34 +120,34 @@ const faChu = defineEmits<{
   (时间: 'zi-dong-tian-chong', 事件: Event): void
 }>()
 
-const gongJu = ref<HTMLInputElement | null>(null)
+const 输入元素 = ref<HTMLInputElement | null>(null)
 
-function faShuRu(事件: Event): void {
-  faChu('geng-xin', (事件.target as HTMLInputElement).value)
-  faChu('shu-ru', 事件)
+function 处理输入(事件: Event): void {
+  发出('geng-xin', (事件.target as HTMLInputElement).value)
+  发出('shu-ru', 事件)
 }
 
-function faBianGeng(事件: Event): void {
-  faChu('bian-geng', 事件)
+function 处理变更(事件: Event): void {
+  发出('bian-geng', 事件)
 }
 
-function faJiaoDian(): void {
-  faChu('jiao-dian')
+function 处理聚焦(): void {
+  发出('jiao-dian')
 }
 
-function faShiJiao(): void {
-  faChu('shi-jiao')
+function 处理失焦(): void {
+  发出('shi-jiao')
 }
 
-function faZiDongTianChong(事件: Event): void {
-  faChu('zi-dong-tian-chong', 事件)
+function 处理自动填充(事件: Event): void {
+  发出('zi-dong-tian-chong', 事件)
 }
 
-function jiaoDian(): void {
-  gongJu.value?.focus()
+function 聚焦(): void {
+  输入元素.value?.focus()
 }
 
-defineExpose({ jiaoDian })
+defineExpose({ 聚焦 })
 </script>
 
 <style scoped>

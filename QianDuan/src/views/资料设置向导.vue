@@ -251,10 +251,10 @@
                     huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongWeiXinMing')
                   }}</span>
                   <ChangFangShuRuKuang
-                    :mo-xing-zhi="ziLiaoShuJu.xinMuZhongDeTa.weiXinMing"
-                    :zui-da-chang-du="30"
-                    :biao-qian="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongWeiXinMing')"
-                    :zhan-wei-wen-zi="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongWeiXinMingZhanwei')"
+                    :模型值="ziLiaoShuJu.xinMuZhongDeTa.weiXinMing"
+                    :最大长度="30"
+                    :标签="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongWeiXinMing')"
+                    :占位文字="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongWeiXinMingZhanwei')"
                     @geng-xin="ziLiaoShuJu.xinMuZhongDeTa.weiXinMing = $event"
                   />
                 </label>
@@ -263,10 +263,10 @@
                     huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongZhenShiMing')
                   }}</span>
                   <ChangFangShuRuKuang
-                    :mo-xing-zhi="ziLiaoShuJu.xinMuZhongDeTa.zhenShiMing"
-                    :zui-da-chang-du="20"
-                    :biao-qian="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongZhenShiMing')"
-                    :zhan-wei-wen-zi="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongZhenShiMingZhanwei')"
+                    :模型值="ziLiaoShuJu.xinMuZhongDeTa.zhenShiMing"
+                    :最大长度="20"
+                    :标签="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongZhenShiMing')"
+                    :占位文字="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongZhenShiMingZhanwei')"
                     @geng-xin="ziLiaoShuJu.xinMuZhongDeTa.zhenShiMing = $event"
                   />
                 </label>
@@ -275,11 +275,11 @@
                     huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongNianLing')
                   }}</span>
                   <ChangFangShuRuKuang
-                    :mo-xing-zhi="ziLiaoShuJu.xinMuZhongDeTa.nianLing"
-                    lei-xing="number"
+                    :模型值="ziLiaoShuJu.xinMuZhongDeTa.nianLing"
+                    类型="number"
                     :step="1"
-                    :biao-qian="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongNianLing')"
-                    :zhan-wei-wen-zi="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongNianLingZhanwei')"
+                    :标签="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongNianLing')"
+                    :占位文字="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongNianLingZhanwei')"
                     @geng-xin="ziLiaoShuJu.xinMuZhongDeTa.nianLing = $event"
                     @blur="guiYiNianLingShuRu"
                   />
@@ -289,12 +289,12 @@
                     huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongTongYongTiShiCi')
                   }}</span>
                   <ChangFangShuRuKuang
-                    :mo-xing-zhi="ziLiaoShuJu.xinMuZhongDeTa.tongYongTiShiCi"
-                    :duo-hang="true"
-                    :hang-shu="3"
-                    :zui-da-chang-du="500"
-                    :biao-qian="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongTongYongTiShiCi')"
-                    :zhan-wei-wen-zi="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongTongYongTiShiCiZhanwei')"
+                    :模型值="ziLiaoShuJu.xinMuZhongDeTa.tongYongTiShiCi"
+                    :多行="true"
+                    :行数="3"
+                    :最大长度="500"
+                    :标签="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongTongYongTiShiCi')"
+                    :占位文字="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongTongYongTiShiCiZhanwei')"
                     @geng-xin="ziLiaoShuJu.xinMuZhongDeTa.tongYongTiShiCi = $event"
                   />
                 </label>

@@ -1,42 +1,42 @@
 <template>
   <input
-    v-if="!duoHang"
-    :id="biaoShi || undefined"
-    ref="shuRuYuanSu"
+    v-if="!多行"
+    :id="标识 || undefined"
+    ref="输入元素"
     class="chang-fang-kuang-shuru she-zhi-shuru"
-    :type="leiXing"
-    :value="moXingZhi"
-    :maxlength="zuiDaChangDu || undefined"
-    :placeholder="zhanWeiWenZi || undefined"
-    :disabled="jinYong"
-    :readonly="zhiDu"
-    :aria-label="biaoQian || undefined"
-    :aria-invalid="cuoWuTiShiWenZi ? 'true' : undefined"
-    :data-jiao-dian-guo="yiJiaoDianGuo ? '' : undefined"
+    :type="类型"
+    :value="模型值"
+    :maxlength="最大长度 || undefined"
+    :placeholder="占位文字 || undefined"
+    :disabled="禁用"
+    :readonly="只读"
+    :aria-label="标签 || undefined"
+    :aria-invalid="错误提示文字 ? 'true' : undefined"
+    :data-jiao-dian-guo="已聚焦过 ? '' : undefined"
     v-bind="$attrs"
-    @input="chuLiShuRu"
-    @focus="chuLiJiaoDian"
+    @input="处理输入"
+    @focus="处理焦点"
   />
   <textarea
     v-else
-    :id="biaoShi || undefined"
-    ref="shuRuYuanSu"
+    :id="标识 || undefined"
+    ref="输入元素"
     class="chang-fang-kuang-shuru chang-fang-kuang-shuru--duo-hang she-zhi-shuru"
-    :rows="hangShu"
-    :value="moXingZhi"
-    :maxlength="zuiDaChangDu || undefined"
-    :placeholder="zhanWeiWenZi || undefined"
-    :disabled="jinYong"
-    :readonly="zhiDu"
-    :aria-label="biaoQian || undefined"
-    :aria-invalid="cuoWuTiShiWenZi ? 'true' : undefined"
-    :data-jiao-dian-guo="yiJiaoDianGuo ? '' : undefined"
+    :rows="行数"
+    :value="模型值"
+    :maxlength="最大长度 || undefined"
+    :placeholder="占位文字 || undefined"
+    :disabled="禁用"
+    :readonly="只读"
+    :aria-label="标签 || undefined"
+    :aria-invalid="错误提示文字 ? 'true' : undefined"
+    :data-jiao-dian-guo="已聚焦过 ? '' : undefined"
     v-bind="$attrs"
-    @input="chuLiShuRu"
-    @focus="chuLiJiaoDian"
+    @input="处理输入"
+    @focus="处理焦点"
   />
-  <p v-if="cuoWuTiShiWenZi" class="chang-fang-kuang-cuo-wu" role="alert">
-    {{ cuoWuTiShiWenZi }}
+  <p v-if="错误提示文字" class="chang-fang-kuang-cuo-wu" role="alert">
+    {{ 错误提示文字 }}
   </p>
 </template>
 
@@ -47,52 +47,52 @@ defineOptions({ inheritAttrs: false })
 
 withDefaults(
   defineProps<{
-    biaoQian?: string
-    moXingZhi?: string
-    leiXing?: string
-    zuiDaChangDu?: number
-    cuoWuTiShiWenZi?: string
-    jinYong?: boolean
-    zhiDu?: boolean
-    zhanWeiWenZi?: string
-    biaoShi?: string
-    duoHang?: boolean
-    hangShu?: number
+    标签?: string
+    模型值?: string
+    类型?: string
+    最大长度?: number
+    错误提示文字?: string
+    禁用?: boolean
+    只读?: boolean
+    占位文字?: string
+    标识?: string
+    多行?: boolean
+    行数?: number
   }>(),
   {
-    biaoQian: '',
-    moXingZhi: '',
-    leiXing: 'text',
-    zuiDaChangDu: 0,
-    cuoWuTiShiWenZi: '',
-    jinYong: false,
-    zhiDu: false,
-    zhanWeiWenZi: '',
-    biaoShi: '',
-    duoHang: false,
-    hangShu: 3,
+    标签: '',
+    模型值: '',
+    类型: 'text',
+    最大长度: 0,
+    错误提示文字: '',
+    禁用: false,
+    只读: false,
+    占位文字: '',
+    标识: '',
+    多行: false,
+    行数: 3,
   },
 )
 
-const emit = defineEmits<{ gengXin: [zhi: string] }>()
+const emit = defineEmits<{ 'geng-xin': [值: string] }>()
 
-const shuRuYuanSu = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
-const yiJiaoDianGuo = ref(false)
+const 输入元素 = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
+const 已聚焦过 = ref(false)
 
-function chuLiShuRu(shiJian: Event): void {
-  const muBiao = shiJian.target as HTMLInputElement | HTMLTextAreaElement | null
-  emit('gengXin', muBiao ? muBiao.value : '')
+function 处理输入(事件: Event): void {
+  const 目标 = 事件.target as HTMLInputElement | HTMLTextAreaElement | null
+  emit('geng-xin', 目标 ? 目标.value : '')
 }
 
-function chuLiJiaoDian(): void {
-  yiJiaoDianGuo.value = true
+function 处理焦点(): void {
+  已聚焦过.value = true
 }
 
-function jiaoDian(): void {
-  shuRuYuanSu.value?.focus()
+function 聚焦(): void {
+  输入元素.value?.focus()
 }
 
-defineExpose({ jiaoDian, shuRuYuanSu })
+defineExpose({ 聚焦, 输入元素 })
 </script>
 
 <style scoped>
