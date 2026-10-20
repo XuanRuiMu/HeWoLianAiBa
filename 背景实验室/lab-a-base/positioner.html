@@ -1277,14 +1277,14 @@ window.__camReady = true;
     //             ⚠️ 用户 12:33 否决：这等于把荒地「填」掉了，他要的是**荒地仍是荒地、只是范围小**。
     //             故改回 'erase'；此模式仅保留开关，不再默认启用。
     //  'keepall'= 完全不清草，前后遮挡交给深度测试。
-    var WU_GRASS_MODE = 'erase';
+    var WU_GRASS_MODE = 'hide';
     // ---------- 他周围一圈「清空区」（用户 2026-10-12 要求）----------
     // 「请你将吴昊阳周围的草删掉……这样子就能避免草和吴昊阳接触，从而导致看出来破绽」
     // 单位：米。以他身体占的格子为起点向四周外扩这么多，圈内的草一律清掉。
     // 0.30 时圈太大、看着很突兀（用户反馈「删的太多了」）⇒ 收到 0.10：
     // 草叶离地 0.09~0.17m，被拨弯后水平最多再伸约 0.1m，0.10 足以让草碰不到他。
     // 0 = 旧行为（只擦身下；轮廓外缘留草、下缘还留一条草带，让草从他身侧长出来）。
-    var WU_CLEAR_MARGIN = 0.10;
+    var WU_CLEAR_MARGIN = 0.055;
     function wuCellKey(x, z) { return Math.floor(x / WU_CELL) + ',' + Math.floor(z / WU_CELL); }
     function cellKey(x, z) { return Math.floor(x / CELL) + ',' + Math.floor(z / CELL); }
     var wuRay = null;
@@ -1542,7 +1542,7 @@ window.__camReady = true;
     //
     // WU_GROUND_OFFSET 是唯一旋钮：**调大 ⇒ 更多草被他挡住（他更「压住」草）；调小 ⇒ 更多草画在他身上**。
     // 不能为 0：他的网格比地面粗，必须留余量避免与地面 z-fight。
-    var WU_GROUND_OFFSET = 0.04;
+    var WU_GROUND_OFFSET = 0.010;
     // 材质侧：让他成为**真正的深度实体** —— 写深度 + alpha 裁剪。
     // 不写深度时，排在他之后绘制的透明物件（粒子/蝴蝶/远处植被）会无视他直接覆盖上来。
     var WU_ALPHA_TEST = 0.02;
@@ -1625,6 +1625,7 @@ window.__camReady = true;
           for (var dz = -dzMax; dz <= dzMax; dz++) grown.add((hx + dx) + ',' + (hz + dz));
         }
       }
+      for (var g2 = 0; g2 < hits.length; g2++) grown.delete(hits[g2]);
       return grown;
     }
     // 同 paintZones 的三角形光栅化    // 同 paintZones 的三角形光栅化，但写 0 而不是 255：绿=0 不长草，r/b=0 不要花。
