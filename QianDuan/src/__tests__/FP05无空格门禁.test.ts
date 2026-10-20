@@ -90,7 +90,8 @@ describe('FP-05 无空格门禁', () => {
 
   it('模板插值组合零空格', () => {
     const tiaoZhanZhuYe = readFileSync(resolve(dangQianMuLu, '../views/挑战主页.vue'), 'utf8')
-    expect(tiaoZhanZhuYe).toContain("{{ gaiKuang.ji_fen }}{{ huoQuFanYi('tiaoZhan', 'fenDanWei') }}")
+    expect(tiaoZhanZhuYe).toContain('{{ hang.ji_fen }}<span class="jifen-danwei">')
+    expect(tiaoZhanZhuYe).toContain('{{ xiang.ji_fen }}<span class="jifen-danwei">')
     const junShiXiangQing = readFileSync(resolve(dangQianMuLu, '../views/军师记录详情.vue'), 'utf8')
     expect(junShiXiangQing).toContain("{{ huoQuFanYi('junShi', 'cheHuiYu') }}{{ xiaoXi.che_hui_shi_jian }}")
     const shiShiRiZhi = readFileSync(resolve(dangQianMuLu, '../components/实时日志.vue'), 'utf8')

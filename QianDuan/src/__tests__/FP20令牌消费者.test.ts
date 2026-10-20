@@ -126,7 +126,11 @@ const 幻影登记: { 令牌: string; 理由: string }[] = [
   { 令牌: '--qipao-duiFang-wenBen', 理由: '同 --qipao-duiFang-beiJing，运行时注入' },
   { 令牌: '--qipao-ziJi-beiJing', 理由: '同 --qipao-duiFang-beiJing，运行时注入' },
   { 令牌: '--qipao-ziJi-wenBen', 理由: '同 --qipao-duiFang-beiJing，运行时注入' },
-  {
+   {
+    令牌: '--wai-guan-meng-ceng',
+    理由: '账号与安全.vue 外观上传遮罩层按用户自定义透明度 style 运行时注入，CSS 只消费',
+  },
+ {
     令牌: '--x',
     理由: '主题令牌成对审计.test.ts 断言文案 var(--x, 同值) 的示例伪影，非真实引用',
   },

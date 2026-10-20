@@ -42,18 +42,62 @@
         @click.stop
         @input.stop="chuLiTuoDong"
       />
-      <span class="yuyin-jindu-wenben">{{ zongWenBen }}</span>
+      <button
+        type="button"
+        class="yuyin-kongzhi"
+        :aria-label="
+          boFangZhong ? huoQuFanYi('duoMeiTi', 'zanTingYuYin') : huoQuFanYi('duoMeiTi', 'jiXuYuYin')
+        "
+        :title="
+          boFangZhong ? huoQuFanYi('duoMeiTi', 'zanTingYuYin') : huoQuFanYi('duoMeiTi', 'jiXuYuYin')
+        "
+        @click.stop="qieHuanZanTing"
+      >
+        <svg
+          v-if="boFangZhong"
+          class="yuyin-kongzhi-tubiao"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <rect x="6" y="4" width="4" height="16" rx="1" />
+          <rect x="14" y="4" width="4" height="16" rx="1" />
+        </svg>
+        <svg v-else class="yuyin-kongzhi-tubiao" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M7 4.4a1 1 0 0 1 1.53-.85l11.2 7.6a1 1 0 0 1 0 1.7l-11.2 7.6A1 1 0 0 1 7 19.6z" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="yuyin-kongzhi"
+        :aria-label="huoQuFanYi('duoMeiTi', 'tingZhiYuYin')"
+        :title="huoQuFanYi('duoMeiTi', 'tingZhiYuYin')"
+        @click.stop="tingZhiBoFang"
+      >
+        <svg
+          class="yuyin-kongzhi-tubiao"
+          viewBox="0 0 24 24"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <rect x="5" y="5" width="14" height="14" rx="2" />
+        </svg>
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/翻译表'
 import {
+  ceLiangYuYinShiChang,
   geShiHuaYuYinShiChang,
+  jiXuDangQianYuYin,
+  tingZhiDangQianYuYin,
   yuYinKuanYangShi,
+  zanTingDangQianYuYin,
   type YuYinShiChangZaiTi,
 } from '@/composables/use语音播放'
 
@@ -83,9 +127,21 @@ const emit = defineEmits<{
 
 const kuanYangShi = computed(() => yuYinKuanYangShi(props.xiaoXi))
 const shiChangWenBen = computed(() => geShiHuaYuYinShiChang(props.xiaoXi))
-const zongWenBen = computed(
-  () => `${Math.max(0, Math.floor(props.zongMiao))}″`,
+
+onMounted(() => ceLiangYuYinShiChang(props.xiaoXi))
+watch(
+  () => [props.xiaoXi.mei_ti_url, props.xiaoXi.ben_di_yu_lan_url],
+  () => ceLiangYuYinShiChang(props.xiaoXi),
 )
+
+function qieHuanZanTing(): void {
+  if (props.boFangZhong) zanTingDangQianYuYin()
+  else jiXuDangQianYuYin()
+}
+
+function tingZhiBoFang(): void {
+  tingZhiDangQianYuYin()
+}
 
 const jinDuBiLi = computed(() => {
   if (props.zongMiao <= 0) return 0
@@ -247,8 +303,9 @@ function chuLiTuoDong(shiJian: Event): void {
 }
 
 .yuyin-jindu-tiao {
-  flex: 1 1 auto;
-  min-width: 0;
+  flex: 1 1 0;
+  width: 0;
+  min-width: var(--yuyin-jindu-zui-xiao-kuan);
   height: var(--yuyin-re-ku);
   margin: 0;
   appearance: none;
@@ -291,11 +348,34 @@ function chuLiTuoDong(shiJian: Event): void {
   outline-offset: var(--jujiao-huan-pian-yi);
 }
 
-.yuyin-jindu-wenben {
+.yuyin-kongzhi {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: 0 0 auto;
-  font-size: var(--ziti-xiao);
-  font-weight: 600;
-  white-space: nowrap;
+  box-sizing: border-box;
+  width: calc(var(--yuyin-re-ku) + var(--jiange-2));
+  height: calc(var(--yuyin-re-ku) + var(--jiange-2));
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.yuyin-kongzhi:hover {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.yuyin-kongzhi:focus-visible {
+  outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
+  outline-offset: var(--jujiao-huan-pian-yi);
+}
+
+.yuyin-kongzhi-tubiao {
+  width: var(--yuyin-laba-kuan);
+  height: var(--yuyin-laba-kuan);
 }
 
 @media (prefers-reduced-motion: reduce) {

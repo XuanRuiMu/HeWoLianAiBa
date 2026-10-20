@@ -54,8 +54,8 @@
   --quxian-huan-ying: cubic-bezier(0.22, 1, 0.36, 1);
   --moshi-kapian-dong-xiao: 240ms;
   --zhuye-wen-zi-yan-shi: 200ms;
-  --shuru-bian-yi-se: #3282f6;
-  --shuru-bian-yi-shi-chang: 160ms;
+  --shuru-gao-liang-shi-chang: 420ms;
+  --gou-xuan-chi-cun: 18px;
 
   /* 圆角三档/安全区/品牌双色：量纲、env() 环境函数与品牌色相均与主题档无关，深浅两档恒等，
      同 --jiange-* 只能住共用 :root 块。此前单侧住在浅色档，深色档圆角塌陷为 0、
@@ -362,6 +362,12 @@
   --shuru-xian-zhi-du-se: var(--wenben-ciuse);
   --shuru-beijing-zidong-tianchong: var(--beijing-kaopian);
   --shuru-wenben-zidong-tianchong: var(--wenben-zhuse);
+  --shuru-gao-liang-dan-nan: rgba(50, 130, 246, 0.34);
+  --shuru-gao-liang-liang-nan: #8fc4ff;
+  --shuru-gao-liang-guang-nan: rgba(50, 130, 246, 0.2);
+  --shuru-gao-liang-dan-nv: rgba(234, 63, 247, 0.34);
+  --shuru-gao-liang-liang-nv: #ffb3f5;
+  --shuru-gao-liang-guang-nv: rgba(234, 63, 247, 0.2);
   /* 页面底板/卡片表面：半透明，搭配 --boli-mohu 使用（alpha 对齐通知页面浅色 0.7 先例） */
   --yemian-di-beijing: rgba(245, 245, 245, 0.7);
   --xingbie-nan-1: #3282F6;
@@ -383,9 +389,15 @@
   --xingbie-nan-xuan-biankuang: #0023F5;
   --xingbie-nan-xuan-beijing: #3282F6;
   --xingbie-nan-xuan-wenben: #000B4D;
-  --xingbie-nv-xuan-biankuang: #FF80C0;
+  --xingbie-nv-xuan-biankuang: #D21C9B;
   --xingbie-nv-xuan-beijing: #FF80FF;
   --xingbie-nv-xuan-wenben: #6B0F6F;
+  --xingbie-nan-tan-beijing: #dcebff;
+  --xingbie-nan-tan-wenben: #0b2a6f;
+  --xingbie-nan-shen-biankuang: var(--xingbie-nan-xuan-biankuang);
+  --xingbie-nv-tan-beijing: #ffe3f7;
+  --xingbie-nv-tan-wenben: #6b0f6f;
+  --xingbie-nv-shen-biankuang: var(--xingbie-nv-xuan-biankuang);
   --xingbie-zhongxing-xuan-biankuang: #636366;
   --xingbie-zhongxing-xuan-beijing: rgba(99, 99, 102, 0.2);
   --xingbie-zhongxing-xuan-wenben: #3a3a3c;
@@ -600,6 +612,12 @@
   --shuru-xian-zhi-du-se: var(--wenben-ciuse);
   --shuru-beijing-zidong-tianchong: var(--beijing-kaopian);
   --shuru-wenben-zidong-tianchong: var(--wenben-zhuse);
+  --shuru-gao-liang-dan-nan: rgba(91, 155, 255, 0.42);
+  --shuru-gao-liang-liang-nan: #bfe0ff;
+  --shuru-gao-liang-guang-nan: rgba(91, 155, 255, 0.34);
+  --shuru-gao-liang-dan-nv: rgba(255, 142, 204, 0.42);
+  --shuru-gao-liang-liang-nv: #ffd1f2;
+  --shuru-gao-liang-guang-nv: rgba(255, 142, 204, 0.34);
   /* 页面底板/卡片表面：半透明，搭配 --boli-mohu 使用（alpha 对齐挑战概况卡深色 0.5~0.6 先例） */
   --yemian-di-beijing: rgba(41, 41, 41, 0.6);
   /* 性别主按钮配色三态：深色档取值与浅色档分离——同一灰蓝/浅粉压在深卡面上会糊成一片，
@@ -620,12 +638,18 @@
      边框 深男 #5B9BFF / 深女 #FF8ECC；底色 深男 #3282F6 / 深女 #FF80FF（与浅色档同值，不再用 22% 染色近似）；
      实底下浅字不达标（#CFE4FB 压 #3282F6 仅 2.85:1、#FFD9F2 压 #FF80FF 仅 1.68:1），
      故文字改同色相深调：深男 #000B4D 压 #3282F6 4.90:1、深女 #6B0F6F 压 #FF80FF 5.09:1（WCAG 相对亮度，正文 ≥4.5） */
-  --xingbie-nan-xuan-biankuang: #5B9BFF;
+  --xingbie-nan-xuan-biankuang: #1E4FE0;
   --xingbie-nan-xuan-beijing: #3282F6;
   --xingbie-nan-xuan-wenben: #000B4D;
-  --xingbie-nv-xuan-biankuang: #FF8ECC;
+  --xingbie-nv-xuan-biankuang: #E23BC8;
   --xingbie-nv-xuan-beijing: #FF80FF;
   --xingbie-nv-xuan-wenben: #6B0F6F;
+  --xingbie-nan-tan-beijing: rgba(50, 130, 246, 0.22);
+  --xingbie-nan-tan-wenben: #dcebff;
+  --xingbie-nan-shen-biankuang: var(--xingbie-nan-xuan-biankuang);
+  --xingbie-nv-tan-beijing: rgba(234, 63, 247, 0.22);
+  --xingbie-nv-tan-wenben: #ffd9f2;
+  --xingbie-nv-shen-biankuang: var(--xingbie-nv-xuan-biankuang);
   --xingbie-zhongxing-xuan-biankuang: #a8b4c8;
   --xingbie-zhongxing-xuan-beijing: rgba(168, 180, 200, 0.22);
   --xingbie-zhongxing-xuan-wenben: #dfe6f2;

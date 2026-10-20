@@ -30,54 +30,57 @@ export const DUO_MEI_TI_PEI_ZHI = {
   yuYinJinDuBuZhouMiao: 0.1,
   // 气泡底部进度线高（FP-K4b 额外功能），与 --yuyin-jindu-xian-gao 同值
   yuYinJinDuXianGaoPx: 2,
+  yuYinShiChangCeLiangChaoShiHaoMiao: 8000,
   wenJianMingZuiDaXianShiZiFu: 24,
 } as const
 
-export const SHENG_YIN_DANG_XUAN_XIANG = [
-  'genSuiXiTong',
-  'jingYin',
-  'xiao',
-  'zhong',
-  'da',
-  'zuiDa',
-] as const
+export const SHENG_YIN_BAI_FEN_BI = {
+  zuiXiao: 0,
+  zuiDa: 100,
+  moRen: 50,
+} as const
 
-export type ShengYinDang = (typeof SHENG_YIN_DANG_XUAN_XIANG)[number]
-
-export const SHENG_YIN_MO_REN: ShengYinDang = 'genSuiXiTong'
-
-export const SHENG_YIN_YIN_LIANG: Record<ShengYinDang, number | null> = {
-  genSuiXiTong: null,
-  jingYin: 0,
-  xiao: 0.25,
-  zhong: 0.5,
-  da: 0.75,
-  zuiDa: 1,
-}
-
-// FP-ZJ5 五通道声音：总/音乐/用户语音/对象语音/视频。真实音频消费仍只有两聊天页
-// HTMLAudioElement（语音链路），音乐/视频/对象语音暂无独立消费节点，但用户已裁定建五通道；
-// 全局合成保持后向兼容：任意通道静音即静音，跟随系统不参与压制，显式档取更小值（总开关为上限）。
 export const SHENG_YIN_TONG_DAO_XUAN_XIANG = ['zong', 'yinYue', 'yongHuYuYin', 'duiXiangYuYin', 'shiPin'] as const
 
 export type ShengYinTongDao = (typeof SHENG_YIN_TONG_DAO_XUAN_XIANG)[number]
 
-export const SHENG_YIN_TONG_DAO_MO_REN: Record<ShengYinTongDao, ShengYinDang> = {
-  zong: 'genSuiXiTong',
-  yinYue: 'genSuiXiTong',
-  yongHuYuYin: 'genSuiXiTong',
-  duiXiangYuYin: 'genSuiXiTong',
-  shiPin: 'genSuiXiTong',
+export type ShengYinPeiZhi = Record<ShengYinTongDao, number | null>
+
+export const SHENG_YIN_TONG_DAO_MO_REN: ShengYinPeiZhi = {
+  zong: null,
+  yinYue: null,
+  yongHuYuYin: null,
+  duiXiangYuYin: null,
+  shiPin: null,
 }
 
+const SHENG_YIN_CUN_CHU_JIAN = 'lian-ai-ba-sheng-yin-tong-dao'
+
 export const SHENG_YIN_TONG_DAO_JIU_JIAN = 'lian-ai-ba-sheng-yin'
+
+const JIU_DANG_BAI_FEN_BI: Record<string, number | null> = {
+  genSuiXiTong: null,
+  jingYin: 0,
+  xiao: 25,
+  zhong: 50,
+  da: 75,
+  zuiDa: 100,
+}
 
 export function shiHeFaShengYinTongDao(zhi: unknown): zhi is ShengYinTongDao {
   return typeof zhi === 'string' && (SHENG_YIN_TONG_DAO_XUAN_XIANG as readonly string[]).includes(zhi)
 }
 
-export function guiYiHuaShengYinTongDaoDang(zhi: unknown): ShengYinDang {
-  return shiHeFaShengYin(zhi) ? zhi : SHENG_YIN_MO_REN
+export function guiYiHuaShengYin(zhi: unknown): number | null {
+  if (typeof zhi === 'number') {
+    if (!Number.isFinite(zhi)) return null
+    return Math.min(SHENG_YIN_BAI_FEN_BI.zuiDa, Math.max(SHENG_YIN_BAI_FEN_BI.zuiXiao, Math.round(zhi)))
+  }
+  if (typeof zhi === 'string') {
+    const baiFenBi = JIU_DANG_BAI_FEN_BI[zhi]
+    return baiFenBi === undefined ? null : baiFenBi
+  }
+  return null
 }
 
 function anQuanDuQuShengYin(jian: string): string | null {
@@ -88,24 +91,24 @@ function anQuanDuQuShengYin(jian: string): string | null {
   }
 }
 
-export function duQuShengYinTongDao(): Record<ShengYinTongDao, ShengYinDang> {
-  const moRen = { ...SHENG_YIN_TONG_DAO_MO_REN }
-  const xinPeiZhi = anQuanDuQuShengYin('lian-ai-ba-sheng-yin-tong-dao')
+export function duQuShengYinTongDao(): ShengYinPeiZhi {
+  const moRen: ShengYinPeiZhi = { ...SHENG_YIN_TONG_DAO_MO_REN }
+  const xinPeiZhi = anQuanDuQuShengYin(SHENG_YIN_CUN_CHU_JIAN)
   const jiuDang = anQuanDuQuShengYin(SHENG_YIN_TONG_DAO_JIU_JIAN)
   if (typeof xinPeiZhi === 'string' && xinPeiZhi) {
     try {
       const jieXi = JSON.parse(xinPeiZhi) as Record<string, unknown>
       for (const tongDao of SHENG_YIN_TONG_DAO_XUAN_XIANG) {
-        if (tongDao in jieXi) moRen[tongDao] = guiYiHuaShengYinTongDaoDang(jieXi[tongDao])
+        if (tongDao in jieXi) moRen[tongDao] = guiYiHuaShengYin(jieXi[tongDao])
       }
       if (!('yongHuYuYin' in jieXi) && !('duiXiangYuYin' in jieXi) && 'yuYin' in jieXi) {
-        const qianRong = guiYiHuaShengYinTongDaoDang(jieXi['yuYin'])
+        const qianRong = guiYiHuaShengYin(jieXi['yuYin'])
         moRen.yongHuYuYin = qianRong
         moRen.duiXiangYuYin = qianRong
       }
       return moRen
     } catch {
-      /* 损坏回退默认 */
+      return moRen
     }
   }
   if (typeof jiuDang === 'string' && jiuDang) {
@@ -117,46 +120,41 @@ export function duQuShengYinTongDao(): Record<ShengYinTongDao, ShengYinDang> {
   return moRen
 }
 
-export function baoCunShengYinTongDao(peiZhi: Record<ShengYinTongDao, ShengYinDang>): void {
-  localStorage.setItem('lian-ai-ba-sheng-yin-tong-dao', JSON.stringify(peiZhi))
+export function baoCunShengYinTongDao(peiZhi: ShengYinPeiZhi): void {
+  localStorage.setItem(SHENG_YIN_CUN_CHU_JIAN, JSON.stringify(peiZhi))
 }
 
 export function qingChuJiuShengYinJian(): void {
   try {
     localStorage.removeItem(SHENG_YIN_TONG_DAO_JIU_JIAN)
   } catch {
-    /* 忽略 */
+    return
   }
 }
 
-// 五通道合成：任一通道静音即静音；跟随系统=浏览器默认音量不参与压制；显式档取更小值（总开关为上限）。
-// 兼容旧双通道形态：Partial 缺键按跟随系统处理，不抛错。
-export function heChengShengYinYinLiang(peiZhi: Partial<Record<ShengYinTongDao, ShengYinDang>> & Record<'zong', ShengYinDang>): number | null {
-  const ge: Array<number | null> = [SHENG_YIN_YIN_LIANG[guiYiHuaShengYin(peiZhi.zong)] ?? null]
-  for (const tongDao of SHENG_YIN_TONG_DAO_XUAN_XIANG) {
-    if (tongDao === 'zong') continue
-    const dang = tongDao in peiZhi ? guiYiHuaShengYin((peiZhi as Record<string, unknown>)[tongDao]) : SHENG_YIN_MO_REN
-    ge.push(SHENG_YIN_YIN_LIANG[dang] ?? null)
+function danDaoBaiFenBi(peiZhi: Partial<ShengYinPeiZhi>, tongDao: ShengYinTongDao): number | null {
+  return tongDao in peiZhi ? guiYiHuaShengYin((peiZhi as Record<string, unknown>)[tongDao]) : null
+}
+
+export function heChengShengYinYinLiang(peiZhi: Partial<ShengYinPeiZhi> & Record<'zong', number | null>): number | null {
+  const ge = SHENG_YIN_TONG_DAO_XUAN_XIANG.map((tongDao) => danDaoBaiFenBi(peiZhi, tongDao))
+  for (const baiFenBi of ge) {
+    if (baiFenBi === 0) return 0
   }
-  for (const yinLiang of ge) {
-    if (yinLiang === 0) return 0
-  }
-  const xianShi = ge.filter((yinLiang): yinLiang is number => yinLiang !== null)
+  const xianShi = ge.filter((baiFenBi): baiFenBi is number => baiFenBi !== null)
   if (!xianShi.length) return null
-  return Math.min(...xianShi)
+  return Math.min(...xianShi) / SHENG_YIN_BAI_FEN_BI.zuiDa
 }
 
-// 单通道合成：总开关与指定通道的双显式档取更小值，用于各通道试听；缺键回退跟随系统。
 export function heChengDanTongDaoYinLiang(
-  peiZhi: Partial<Record<ShengYinTongDao, ShengYinDang>> & Record<'zong', ShengYinDang>,
+  peiZhi: Partial<ShengYinPeiZhi> & Record<'zong', number | null>,
   tongDao: ShengYinTongDao,
 ): number | null {
-  const zong = SHENG_YIN_YIN_LIANG[guiYiHuaShengYin(peiZhi.zong)] ?? null
-  const dang = SHENG_YIN_YIN_LIANG[guiYiHuaShengYin(tongDao in peiZhi ? (peiZhi as Record<string, unknown>)[tongDao] : SHENG_YIN_MO_REN)] ?? null
-  if (zong === 0 || dang === 0) return 0
-  if (zong === null) return dang
-  if (dang === null) return zong
-  return Math.min(zong, dang)
+  const zong = danDaoBaiFenBi(peiZhi, 'zong')
+  const danDao = danDaoBaiFenBi(peiZhi, tongDao)
+  if (zong === 0 || danDao === 0) return 0
+  const shangXian = zong === null ? danDao : danDao === null ? zong : Math.min(zong, danDao)
+  return shangXian === null ? null : shangXian / SHENG_YIN_BAI_FEN_BI.zuiDa
 }
 
 export function duQuHeChengYinLiang(): number | null {
@@ -165,18 +163,6 @@ export function duQuHeChengYinLiang(): number | null {
   } catch {
     return null
   }
-}
-
-export function duQuShengYinDangYinLiang(dang: unknown): number | null {
-  return SHENG_YIN_YIN_LIANG[guiYiHuaShengYin(dang)] ?? null
-}
-
-export function shiHeFaShengYin(zhi: unknown): zhi is ShengYinDang {
-  return typeof zhi === 'string' && (SHENG_YIN_DANG_XUAN_XIANG as readonly string[]).includes(zhi)
-}
-
-export function guiYiHuaShengYin(zhi: unknown): ShengYinDang {
-  return shiHeFaShengYin(zhi) ? zhi : SHENG_YIN_MO_REN
 }
 
 /* 录音浮层的电平计条数：改前实测 12 条，本单只解除它与语音气泡那条已作废常量

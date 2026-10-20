@@ -1,5 +1,6 @@
 <template>
-  <div v-if="zhaXingGaiLv > 0" class="zha-xing-ti-shi">
+  <p v-if="zhaXingGaiLv > 0" class="zha-xing-ti-shi" role="note">
+    <span class="ti-shi-biao" aria-hidden="true" />
     <span class="ti-shi-nei-rong">
       {{
         huoQuFanYi('tiaoZhan', 'zhaXingGaiLvTiShi').replace(
@@ -8,45 +9,43 @@
         )
       }}
     </span>
-  </div>
+  </p>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { huoQuFanYi } from '@/config/翻译表'
 
-interface Props {
+defineProps<{
   zhaXingGaiLv: number
-}
-
-const props = defineProps<Props>()
-
-const zhaXingGaiLv = computed(() => props.zhaXingGaiLv)
+}>()
 </script>
 
 <style scoped>
 .zha-xing-ti-shi {
-  margin-top: var(--jiange-12);
-  padding: var(--jiange-10) var(--jiange-12);
-  background: rgba(255, 107, 107, 0.12);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  border-radius: 10px;
+  --zha-xian-kuan: 2px;
+  --zha-wen: color-mix(in srgb, var(--wenben-ciuse) 55%, var(--wenben-zhuse));
+  display: flex;
+  align-items: flex-start;
+  gap: var(--jiange-xiao);
+  margin: 0;
+  padding: var(--jiange-xiao) var(--jiange-12);
+  border-left: var(--zha-xian-kuan) solid var(--yanse-weixian);
+  border-radius: 0 var(--yuanjiao-xiao) var(--yuanjiao-xiao) 0;
+  background: color-mix(in srgb, var(--yanse-weixian) 8%, transparent);
 }
 
-:root[data-theme='light'] .zha-xing-ti-shi {
-  background: rgba(255, 107, 107, 0.08);
-  border-color: rgba(255, 107, 107, 0.25);
+.ti-shi-biao {
+  flex: none;
+  width: var(--jiange-6);
+  height: var(--jiange-6);
+  margin-top: calc(var(--ziti-xiao) * 0.55);
+  border-radius: 50%;
+  background: var(--yanse-weixian);
 }
 
 .ti-shi-nei-rong {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: #ff6b6b;
-  line-height: 1.4;
-}
-
-:root[data-theme='light'] .ti-shi-nei-rong {
-  color: #cc3333;
+  font-size: var(--ziti-xiao);
+  line-height: 1.7;
+  color: var(--zha-wen);
 }
 </style>

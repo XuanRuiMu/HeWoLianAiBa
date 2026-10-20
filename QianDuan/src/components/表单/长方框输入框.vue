@@ -1,40 +1,38 @@
 <template>
-  <input
-    v-if="!多行"
-    :id="标识 || undefined"
-    ref="输入元素"
-    class="chang-fang-kuang-shuru she-zhi-shuru"
-    :type="类型"
-    :value="模型值"
-    :maxlength="最大长度 || undefined"
-    :placeholder="占位文字 || undefined"
-    :disabled="禁用"
-    :readonly="只读"
-    :aria-label="标签 || undefined"
-    :aria-invalid="错误提示文字 ? 'true' : undefined"
-    :data-jiao-dian-guo="已聚焦过 ? '' : undefined"
-    v-bind="$attrs"
-    @input="处理输入"
-    @focus="处理焦点"
-  />
-  <textarea
-    v-else
-    :id="标识 || undefined"
-    ref="输入元素"
-    class="chang-fang-kuang-shuru chang-fang-kuang-shuru--duo-hang she-zhi-shuru"
-    :rows="行数"
-    :value="模型值"
-    :maxlength="最大长度 || undefined"
-    :placeholder="占位文字 || undefined"
-    :disabled="禁用"
-    :readonly="只读"
-    :aria-label="标签 || undefined"
-    :aria-invalid="错误提示文字 ? 'true' : undefined"
-    :data-jiao-dian-guo="已聚焦过 ? '' : undefined"
-    v-bind="$attrs"
-    @input="处理输入"
-    @focus="处理焦点"
-  />
+  <span class="chang-fang-kuang-ke">
+    <input
+      v-if="!多行"
+      :id="标识 || undefined"
+      ref="输入元素"
+      class="chang-fang-kuang-shuru she-zhi-shuru"
+      :type="类型"
+      :value="模型值"
+      :maxlength="最大长度 || undefined"
+      :placeholder="占位文字 || undefined"
+      :disabled="禁用"
+      :readonly="只读"
+      :aria-label="标签 || undefined"
+      :aria-invalid="错误提示文字 ? 'true' : undefined"
+      v-bind="$attrs"
+      @input="处理输入"
+    />
+    <textarea
+      v-else
+      :id="标识 || undefined"
+      ref="输入元素"
+      class="chang-fang-kuang-shuru chang-fang-kuang-shuru--duo-hang she-zhi-shuru"
+      :rows="行数"
+      :value="模型值"
+      :maxlength="最大长度 || undefined"
+      :placeholder="占位文字 || undefined"
+      :disabled="禁用"
+      :readonly="只读"
+      :aria-label="标签 || undefined"
+      :aria-invalid="错误提示文字 ? 'true' : undefined"
+      v-bind="$attrs"
+      @input="处理输入"
+    />
+  </span>
   <p v-if="错误提示文字" class="chang-fang-kuang-cuo-wu" role="alert">
     {{ 错误提示文字 }}
   </p>
@@ -77,15 +75,10 @@ withDefaults(
 const emit = defineEmits<{ 'geng-xin': [值: string] }>()
 
 const 输入元素 = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
-const 已聚焦过 = ref(false)
 
 function 处理输入(事件: Event): void {
   const 目标 = 事件.target as HTMLInputElement | HTMLTextAreaElement | null
   emit('geng-xin', 目标 ? 目标.value : '')
-}
-
-function 处理焦点(): void {
-  已聚焦过.value = true
 }
 
 function 聚焦(): void {
@@ -96,56 +89,94 @@ defineExpose({ 聚焦, 输入元素 })
 </script>
 
 <style scoped>
-.chang-fang-kuang-shuru {
-  --chang-fang-kuang-hui-se: var(--bianKuang, var(--biankuang-yanse));
-  --chang-fang-kuang-lan-se: var(--shuru-bian-yi-se);
+.chang-fang-kuang-ke {
   --chang-fang-kuang-hou-du: var(--juxing-shuru-biankuang);
   --chang-fang-kuang-yuan-jiao: var(--juxing-shuru-yuanjiao);
-  --chang-fang-kuang-zong-shi-chang: calc(var(--shuru-bian-yi-shi-chang) * 3.25);
-  --chang-fang-kuang-hui-fu-shi-chang: calc(var(--shuru-bian-yi-shi-chang) * 2.4375);
+  --chang-fang-kuang-hui-se: var(--bianKuang, var(--biankuang-yanse));
   --chang-fang-kuang-bei-jing: var(--kaPian, var(--beijing-kaopian));
   --chang-fang-kuang-wen-se: var(--moSe, var(--wenben-zhuse));
   --chang-fang-kuang-zhan-wei-se: var(--huiSe, var(--wenben-ciuse));
+  --chang-fang-kuang-gao-liang-dan: var(--shuru-gao-liang-dan-nan);
+  --chang-fang-kuang-gao-liang-liang: var(--shuru-gao-liang-liang-nan);
+  --chang-fang-kuang-gao-liang-guang: var(--shuru-gao-liang-guang-nan);
 
+  position: relative;
   display: block;
-  box-sizing: border-box;
   flex: 1 1 0%;
   width: 100%;
   min-width: 0;
+  border-radius: var(--chang-fang-kuang-yuan-jiao);
+  overflow: hidden;
+  transition: box-shadow var(--shuru-gao-liang-shi-chang) var(--quxian-biao-zhun);
+}
+
+:root[data-xing-bie='nv'] .chang-fang-kuang-ke {
+  --chang-fang-kuang-gao-liang-dan: var(--shuru-gao-liang-dan-nv);
+  --chang-fang-kuang-gao-liang-liang: var(--shuru-gao-liang-liang-nv);
+  --chang-fang-kuang-gao-liang-guang: var(--shuru-gao-liang-guang-nv);
+}
+
+.chang-fang-kuang-ke::before,
+.chang-fang-kuang-ke::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  transition-property: width, height;
+  transition-duration: var(--shuru-gao-liang-shi-chang);
+  transition-timing-function: var(--quxian-biao-zhun);
+}
+
+.chang-fang-kuang-ke::before {
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: var(--chang-fang-kuang-hou-du);
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--chang-fang-kuang-gao-liang-dan) 45%,
+    var(--chang-fang-kuang-gao-liang-liang)
+  );
+}
+
+.chang-fang-kuang-ke::after {
+  right: 0;
+  bottom: 0;
+  width: var(--chang-fang-kuang-hou-du);
+  height: 0;
+  background-image: linear-gradient(
+    0deg,
+    transparent,
+    var(--chang-fang-kuang-gao-liang-dan) 45%,
+    var(--chang-fang-kuang-gao-liang-liang)
+  );
+}
+
+.chang-fang-kuang-ke:focus-within {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--chang-fang-kuang-gao-liang-liang) 22%, transparent),
+    0 6px 18px var(--chang-fang-kuang-gao-liang-guang);
+}
+
+.chang-fang-kuang-ke:focus-within::before {
+  width: 100%;
+}
+
+.chang-fang-kuang-ke:focus-within::after {
+  height: 100%;
+}
+
+.chang-fang-kuang-shuru {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
   padding: var(--jiange-12) calc(var(--jiange-xiao) + var(--jiange-6));
-  border: var(--chang-fang-kuang-hou-du) solid transparent;
+  border: var(--chang-fang-kuang-hou-du) solid var(--chang-fang-kuang-hui-se);
   border-radius: var(--chang-fang-kuang-yuan-jiao);
   background-color: var(--chang-fang-kuang-bei-jing);
-  background-image:
-    linear-gradient(var(--chang-fang-kuang-lan-se), var(--chang-fang-kuang-lan-se)),
-    linear-gradient(var(--chang-fang-kuang-lan-se), var(--chang-fang-kuang-lan-se)),
-    linear-gradient(var(--chang-fang-kuang-lan-se), var(--chang-fang-kuang-lan-se)),
-    linear-gradient(var(--chang-fang-kuang-lan-se), var(--chang-fang-kuang-lan-se)),
-    linear-gradient(var(--chang-fang-kuang-hui-se), var(--chang-fang-kuang-hui-se)),
-    linear-gradient(var(--chang-fang-kuang-hui-se), var(--chang-fang-kuang-hui-se)),
-    linear-gradient(var(--chang-fang-kuang-hui-se), var(--chang-fang-kuang-hui-se)),
-    linear-gradient(var(--chang-fang-kuang-hui-se), var(--chang-fang-kuang-hui-se));
-  background-repeat: no-repeat;
-  background-origin: border-box;
-  background-clip: border-box;
-  background-position:
-    left bottom,
-    left bottom,
-    left top,
-    right top,
-    left bottom,
-    left bottom,
-    left top,
-    right top;
-  background-size:
-    0% var(--chang-fang-kuang-hou-du),
-    var(--chang-fang-kuang-hou-du) 0%,
-    0% var(--chang-fang-kuang-hou-du),
-    var(--chang-fang-kuang-hou-du) 0%,
-    100% var(--chang-fang-kuang-hou-du),
-    var(--chang-fang-kuang-hou-du) 100%,
-    100% var(--chang-fang-kuang-hou-du),
-    var(--chang-fang-kuang-hou-du) 100%;
   color: var(--chang-fang-kuang-wen-se);
   font-family: inherit;
   font-size: var(--ziti-zhong);
@@ -154,20 +185,6 @@ defineExpose({ 聚焦, 输入元素 })
 
 .chang-fang-kuang-shuru:focus {
   outline: none;
-  background-size:
-    100% var(--chang-fang-kuang-hou-du),
-    var(--chang-fang-kuang-hou-du) 100%,
-    100% var(--chang-fang-kuang-hou-du),
-    var(--chang-fang-kuang-hou-du) 100%,
-    100% var(--chang-fang-kuang-hou-du),
-    var(--chang-fang-kuang-hou-du) 100%,
-    100% var(--chang-fang-kuang-hou-du),
-    var(--chang-fang-kuang-hou-du) 100%;
-  animation: chang-fang-kuang-miao-bian var(--chang-fang-kuang-zong-shi-chang) linear both;
-}
-
-.chang-fang-kuang-shuru[data-jiao-dian-guo]:not(:focus) {
-  animation: chang-fang-kuang-shou-hui var(--chang-fang-kuang-hui-fu-shi-chang) linear both;
 }
 
 .chang-fang-kuang-shuru--duo-hang {
@@ -192,159 +209,11 @@ defineExpose({ 聚焦, 输入元素 })
   color: var(--cuowu-wenben);
 }
 
-@keyframes chang-fang-kuang-miao-bian {
-  0% {
-    background-size:
-      0% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 0%,
-      0% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 0%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%;
-  }
-
-  7.69% {
-    background-size:
-      25% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 0%,
-      0% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 0%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%;
-  }
-
-  30.77% {
-    background-size:
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 75%,
-      0% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 0%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%;
-  }
-
-  38.46% {
-    background-size:
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      0% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 0%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%;
-  }
-
-  69.23% {
-    background-size:
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 0%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%;
-  }
-
-  100% {
-    background-size:
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%;
-  }
-}
-
-@keyframes chang-fang-kuang-shou-hui {
-  0% {
-    background-size:
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%;
-  }
-
-  30.77% {
-    background-size:
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 0%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%;
-  }
-
-  61.54% {
-    background-size:
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      0% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 0%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%;
-  }
-
-  69.23% {
-    background-size:
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 75%,
-      0% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 0%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%;
-  }
-
-  92.31% {
-    background-size:
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 25%,
-      0% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 0%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%;
-  }
-
-  100% {
-    background-size:
-      0% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 0%,
-      0% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 0%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%,
-      100% var(--chang-fang-kuang-hou-du),
-      var(--chang-fang-kuang-hou-du) 100%;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .chang-fang-kuang-shuru,
-  .chang-fang-kuang-shuru:focus,
-  .chang-fang-kuang-shuru[data-jiao-dian-guo]:not(:focus) {
-    animation: none !important;
+  .chang-fang-kuang-ke,
+  .chang-fang-kuang-ke::before,
+  .chang-fang-kuang-ke::after {
+    transition-duration: 0s;
   }
 }
 </style>

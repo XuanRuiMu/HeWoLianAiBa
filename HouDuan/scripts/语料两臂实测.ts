@@ -23,7 +23,11 @@ import { join } from 'path'
 import { shengChengJiaoSe } from '../src/services/角色生成'
 import { gouJianWriterPrompt } from '../src/services/Prompt构建器'
 import { gouJianJiaoSeShangXiaWen } from '../src/config/AI参数策略'
+import { shiXueShengShenFen } from '../src/config/角色配置'
 import { 生成写手回复 } from './直连适配器'
+import {
+  chouYuTai, gouJianYuTaiKuai, panChuFaLei, quZaiMangWeiShuo, shengChengZaiMang,
+} from '../../语料实验室/工作区/语态控制器'
 import type { MBTILeiXing } from '../src/config/角色配置'
 import type { DuiHuaLiShiXiang } from '../src/types'
 
@@ -116,6 +120,10 @@ async function 跑一条(臂: string, p: 探针, 下标: number) {
   } as never
 
   const 策略 = { shi_fou_hui_fu: true, shi_jian_qing_xu: '正常' }
+  const 语态 = chouYuTai(p.触发输入)
+  const 全部待办 = shengChengZaiMang(shiXueShengShenFen(jiaoSe.shen_fen))
+  const 已说过 = (历史 as DuiHuaLiShiXiang[]).filter((t) => t.fa_song_zhe_lei_xing === 'jiaose').map((t) => t.nei_rong)
+  const 在忙 = quZaiMangWeiShuo(全部待办, 已说过)
   let 终prompt: string
   if (臂.startsWith('变体')) {
     const 快照根 = (process.env.ZS_KUAIZHAO || 'prompt快照').trim()
@@ -125,6 +133,8 @@ async function 跑一条(臂: string, p: 探针, 下标: number) {
   } else {
     const 原prompt = gouJianWriterPrompt(shuRu, 策略)
     终prompt = 臂 === '对照' ? 原prompt : 插示例(原prompt)
+    if (臂 === '语态') 终prompt = 原prompt + '\n\n' + gouJianYuTaiKuai(语态, 在忙)
+    if (臂 === '语态关') 终prompt = 原prompt + '\n\n' + gouJianYuTaiKuai(语态, 在忙).split('【这一轮你就这样回】')[0]
     if (臂 === '瘦身') 终prompt = 瘦身(终prompt)
     if (臂 === '检索') {
       const 块 = 检索块(p.探针号)
@@ -152,9 +162,10 @@ async function 跑一条(臂: string, p: 探针, 下标: number) {
     作息: 文本('zuo_xi_gui_lv'), 爱好: (jiaoSe.xi_hao || []).join('、'),
     家庭人数: 世界.jia_ting_ren_shu,
     家庭: jiaoSe.jia_ting_bei_jing, 感情: jiaoSe.qing_gan_jing_li, 背景: jiaoSe.bei_jing_gu_shi,
+    近期在忙: 在忙.join('、'),
   }
   return {
-    臂, 探针号: p.探针号, 触发类: p.探针类, 人设型: 型, 阶段, 前文条数: p.前文.length, 人设,
+    臂, 探针号: p.探针号, 触发类: p.探针类, 触发归组: panChuFaLei(p.触发输入), 语态, 人设型: 型, 阶段, 前文条数: p.前文.length, 人设,
     触发: p.触发输入, 真人回复: p.真人回复, AI输出: 输出, AI合并: 输出.join(' / '),
     prompt长度: 终prompt.length, 毫秒: Date.now() - t0, 报错,
   }

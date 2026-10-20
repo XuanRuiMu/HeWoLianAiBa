@@ -54,9 +54,26 @@ function zhuanBlob(huaBu: HTMLCanvasElement, leiXing: string, zhiLiang?: number)
   })
 }
 
-export async function yaSuoTuPiang(file: File | Blob): Promise<Blob> {
+export class TuPianChiCunCuoWu extends Error {
+  constructor() {
+    super('tupian-chicun-chaochu-shangxian')
+    this.name = 'TuPianChiCunCuoWu'
+  }
+}
+
+export async function yaSuoTuPiang(file: File | Blob, zuiDaChiCun?: number): Promise<Blob> {
   const mime = (file.type || '').toLowerCase()
-  if (mime.includes('gif')) return file
+  if (mime.includes('gif')) {
+    if (zuiDaChiCun === undefined) return file
+    const dongTai = await jiaZaiBitmap(file).catch(() => null)
+    if (!dongTai) throw new Error(huoQuFanYi('duoMeiTi', 'yaSuoShiBai'))
+    try {
+      if (dongTai.width > zuiDaChiCun || dongTai.height > zuiDaChiCun) throw new TuPianChiCunCuoWu()
+    } finally {
+      dongTai.shiFang()
+    }
+    return file
+  }
 
   let weiTu: WeiTuYuan
   try {
@@ -67,6 +84,9 @@ export async function yaSuoTuPiang(file: File | Blob): Promise<Blob> {
   }
 
   try {
+    if (zuiDaChiCun !== undefined && (weiTu.width > zuiDaChiCun || weiTu.height > zuiDaChiCun)) {
+      throw new TuPianChiCunCuoWu()
+    }
     const changBian = Math.max(weiTu.width, weiTu.height)
     const suoFangBiLi =
       changBian > YA_SUO_CHANG_BIAN_SHANG_XIAN ? YA_SUO_CHANG_BIAN_SHANG_XIAN / changBian : 1

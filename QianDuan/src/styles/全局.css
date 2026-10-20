@@ -454,12 +454,17 @@ img {
 }
 
 .cuowu-tishi {
-  padding: calc(var(--jiange-xiao) + var(--jiange-4)) var(--jiange-zhong);
-  background: color-mix(in srgb, var(--beijing-kaopian) 76%, transparent);
-  border: var(--shuru-kuang-biankuang) solid var(--cuowu-touming-biankuang);
-  border-radius: var(--yuanjiao-xiao);
-  box-shadow: inset 3px 0 0 var(--cuowu-yanse);
-  color: var(--cuowu-yanse);
+  --cuo-wu-biaoti: color-mix(in srgb, var(--cuowu-yanse) 72%, var(--wenben-zhuse));
+  --cuo-wu-zhengwen: color-mix(in srgb, var(--wenben-ciuse) 70%, var(--wenben-zhuse));
+  --cuo-wu-mian: color-mix(in srgb, var(--cuowu-yanse) 9%, var(--beijing-kaopian));
+  --cuo-wu-bian: color-mix(in srgb, var(--cuowu-yanse) 38%, transparent);
+  --cuo-wu-dian: color-mix(in srgb, var(--cuowu-yanse) 12%, var(--beijing-kaopian));
+  padding: var(--jiange-12);
+  background: var(--cuo-wu-mian);
+  border: 1px solid var(--cuo-wu-bian);
+  border-radius: var(--yuanjiao-zhong);
+  box-shadow: none;
+  color: var(--cuo-wu-zhengwen);
   font-size: var(--ziti-xiao);
   margin-top: var(--jiange-xiao);
 }

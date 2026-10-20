@@ -18,8 +18,8 @@
         </button>
       </div>
 
-      <div class="sou-suo-hang">
-        <span class="sou-suo-tu-biao" aria-hidden="true">
+      <div class="hao-you-sou-suo">
+        <span class="hao-you-sou-suo-tu" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <circle cx="11" cy="11" r="7" />
             <path d="M20 20l-3.6-3.6" />
@@ -28,7 +28,7 @@
         <input
           ref="souSuoShuRu"
           v-model="guanJianZi"
-          class="sou-suo-kuang"
+          class="hao-you-sou-suo-shu-ru"
           type="search"
           maxlength="50"
           data-testid="hao-you-sou-suo"
@@ -38,12 +38,14 @@
         />
         <button
           v-if="guanJianZi"
-          class="sou-suo-qing-kong"
+          class="hao-you-sou-suo-qing"
           type="button"
           :aria-label="huoQuFanYi('haoYou', 'qingKongSouSuo')"
           @click="qingKongGuanJianZi"
         >
-          <span aria-hidden="true">×</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <path d="M7 7l10 10M17 7L7 17" />
+          </svg>
         </button>
       </div>
     </header>
@@ -632,7 +634,6 @@ defineExpose({ dangQianMianBan, guanJianZi, benDiJieGuo, haoYouLieBiao })
   --hao-you-ye-ruo-wen-ben: #b4b4bb;
   --hao-you-ka-mian: rgba(32, 32, 37, 0.92);
   --hao-you-ka-bian: rgba(255, 255, 255, 0.12);
-  --hao-you-sou-suo-mian: rgba(255, 255, 255, 0.08);
   --hao-you-ding-bu-mian: rgba(18, 18, 20, 0.94);
   --hao-you-jin: #f0c86a;
   --hao-you-jin-mian: rgba(240, 200, 106, 0.14);
@@ -665,7 +666,6 @@ defineExpose({ dangQianMianBan, guanJianZi, benDiJieGuo, haoYouLieBiao })
   --hao-you-ye-ruo-wen-ben: #55595f;
   --hao-you-ka-mian: rgba(255, 255, 255, 0.94);
   --hao-you-ka-bian: rgba(20, 22, 26, 0.1);
-  --hao-you-sou-suo-mian: rgba(20, 22, 26, 0.05);
   --hao-you-ding-bu-mian: rgba(255, 255, 255, 0.96);
   --hao-you-jin: #6f4a06;
   --hao-you-jin-mian: rgba(154, 107, 18, 0.12);
@@ -753,74 +753,104 @@ defineExpose({ dangQianMianBan, guanJianZi, benDiJieGuo, haoYouLieBiao })
   cursor: not-allowed;
 }
 
-.sou-suo-hang {
+.hao-you-sou-suo {
+  --hao-you-sou-suo-yuan-jiao: 999px;
+  --hao-you-sou-suo-gao: 44px;
+  --hao-you-sou-suo-tu-kou: 18px;
+  --hao-you-sou-suo-qing-kou: 44px;
+  --hao-you-sou-suo-qing-tu: 16px;
+  --hao-you-sou-suo-di: rgba(255, 255, 255, 0.08);
+  --hao-you-sou-suo-bian: rgba(255, 255, 255, 0.12);
+  --hao-you-sou-suo-tu-se: var(--hao-you-ye-ruo-wen-ben);
   display: flex;
   align-items: center;
   gap: var(--jiange-xiao);
+  min-height: var(--hao-you-sou-suo-gao);
   padding: 0 var(--jiange-4) 0 var(--jiange-12);
-  border-radius: 999px;
-  background: var(--hao-you-sou-suo-mian);
-  border: 1px solid var(--hao-you-ka-bian);
+  border-radius: var(--hao-you-sou-suo-yuan-jiao);
+  background: var(--hao-you-sou-suo-di);
+  border: 1px solid var(--hao-you-sou-suo-bian);
   transition: border-color 0.2s var(--quxian-biao-zhun);
 }
 
-.sou-suo-hang:focus-within {
+:root[data-theme='light'] .hao-you-sou-suo {
+  --hao-you-sou-suo-di: rgba(20, 22, 26, 0.05);
+  --hao-you-sou-suo-bian: rgba(20, 22, 26, 0.1);
+}
+
+.hao-you-sou-suo:focus-within {
   border-color: var(--hao-you-jin);
 }
 
-.sou-suo-tu-biao {
+.hao-you-sou-suo-tu {
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
-  color: var(--hao-you-ye-ruo-wen-ben);
+  width: var(--hao-you-sou-suo-tu-kou);
+  height: var(--hao-you-sou-suo-tu-kou);
+  color: var(--hao-you-sou-suo-tu-se);
 }
 
-.sou-suo-tu-biao svg {
-  width: 18px;
-  height: 18px;
+.hao-you-sou-suo-tu svg {
+  width: 100%;
+  height: 100%;
 }
 
-.sou-suo-kuang {
+.hao-you-ye .hao-you-sou-suo .hao-you-sou-suo-shu-ru {
   flex: 1;
   min-width: 0;
-  min-height: 44px;
+  min-height: var(--hao-you-sou-suo-gao);
   padding: 0;
-  background: transparent;
+  background-color: transparent;
   color: var(--hao-you-ye-wen-ben);
-  font-size: 14px;
+  font-size: var(--ziti-zhong);
+  appearance: none;
 }
 
-.sou-suo-kuang::placeholder {
-  color: var(--hao-you-ye-ruo-wen-ben);
+#app .hao-you-sou-suo .hao-you-sou-suo-shu-ru,
+#app .hao-you-sou-suo .hao-you-sou-suo-shu-ru:focus,
+#app .hao-you-sou-suo .hao-you-sou-suo-shu-ru:read-only {
+  border: 0 !important;
+  border-bottom: 0 !important;
+  background-image: none !important;
+  background-size: auto !important;
+  transition: none !important;
 }
 
-.sou-suo-kuang:focus {
+.hao-you-ye .hao-you-sou-suo .hao-you-sou-suo-shu-ru::placeholder {
+  color: var(--hao-you-sou-suo-tu-se);
+}
+
+.hao-you-ye .hao-you-sou-suo .hao-you-sou-suo-shu-ru:focus,
+.hao-you-ye .hao-you-sou-suo .hao-you-sou-suo-shu-ru:focus-visible {
   outline: none;
 }
 
-.sou-suo-kuang::-webkit-search-cancel-button {
+.hao-you-ye .hao-you-sou-suo .hao-you-sou-suo-shu-ru::-webkit-search-cancel-button {
   display: none;
 }
 
-.sou-suo-qing-kong {
+.hao-you-sou-suo-qing {
   flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: var(--hao-you-sou-suo-qing-kou);
+  height: var(--hao-you-sou-suo-qing-kou);
   padding: 0;
-  border-radius: 50%;
-  color: var(--hao-you-ye-ci-wen-ben);
-  font-size: 18px;
-  line-height: 1;
+  border-radius: var(--hao-you-sou-suo-yuan-jiao);
+  color: var(--hao-you-sou-suo-tu-se);
   cursor: pointer;
+  transition: color 0.2s var(--quxian-biao-zhun);
 }
 
-.sou-suo-qing-kong:hover {
+.hao-you-sou-suo-qing svg {
+  width: var(--hao-you-sou-suo-qing-tu);
+  height: var(--hao-you-sou-suo-qing-tu);
+}
+
+.hao-you-sou-suo-qing:hover {
   color: var(--hao-you-jin);
 }
 

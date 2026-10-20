@@ -113,35 +113,12 @@ export function 解析性别配色档(原始值: unknown): 性别配色档 {
 }
 
 /**
- * 性别框体边框档（用户定稿）：对象性别可识别 → 该档；对象未选 → 默认性别的反色；
- * 连默认性别也没有 → 'nv'（粉边框）。与主色档的 'nan' 兜底成对（"没有默认性别 → 粉色框 + 蓝色按钮"）。
+ * 性别框体唯一配色档（用户定稿）：自身性别可识别 → 该档；自身未选 → 默认性别；
+ * 两者皆无 → 'nan'。填充色与边框色都只从这一档派生（边框 = 同档填充色的深色版），
+ * 不再存在"填充按自身、边框按对象"的第二套解析。
  */
-export function 解析性别框体边框档(对象性别: unknown, 默认性别: unknown): 性别二档 {
-  const 对象 = 解析性别(对象性别)
-  if (对象 !== null) return 对象
-  const 默认 = 解析性别(默认性别)
-  if (默认 === 'nan') return 'nv'
-  if (默认 === 'nv') return 'nan'
-  return 'nv'
-}
-
-/**
- * 性别框体填充档（用户定稿）：自身性别可识别 → 该档；自身未选 → 默认性别；
- * 未设默认性别但对象性别可识别 → 对象性别的反色；三者皆无 → 'nan'（蓝填充）。
- */
-export function 解析性别框体填充档(
-  自身性别: unknown,
-  默认性别: unknown,
-  对象性别: unknown,
-): 性别二档 {
-  const 自身 = 解析性别(自身性别)
-  if (自身 !== null) return 自身
-  const 默认 = 解析性别(默认性别)
-  if (默认 !== null) return 默认
-  const 对象 = 解析性别(对象性别)
-  if (对象 === 'nan') return 'nv'
-  if (对象 === 'nv') return 'nan'
-  return 'nan'
+export function 解析性别框体色档(自身性别: unknown, 默认性别: unknown): 性别二档 {
+  return 解析性别(自身性别) ?? 解析性别(默认性别) ?? 'nan'
 }
 
 /**

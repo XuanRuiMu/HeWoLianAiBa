@@ -438,13 +438,6 @@
   left: -100%;
 }
 
-.qian-tai-cuo-wu {
-  padding: var(--jiange-10) calc(var(--jiange-xiao) + var(--jiange-6));
-  border-radius: var(--jiange-4);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .app-tubiao {
     animation: none;

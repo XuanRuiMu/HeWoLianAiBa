@@ -1,10 +1,11 @@
-﻿import { debug日志 } from '../utils/debug日志'
+import { debug日志 } from '../utils/debug日志'
 import { Router } from 'express'
 import type { Response } from 'express'
 import { huoQuFanYi } from '../config/translations'
 import { chengGongXiangYing, shiBaiXiangYing } from '../utils/xiangying'
 import { anIdChaJiaoSeXiangQing } from '../services/角色生成'
 import { huoQuJiaoSeSuoYouZhe } from '../services/消息'
+import { zhongXinQianMingMeiTiURL } from '../services/媒体存储'
 import { yanZhengUUID } from '../utils/验证'
 import type { RenZhengQingQiu } from '../middleware/认证'
 
@@ -39,7 +40,10 @@ luYou.get(
       }
 
       return chengGongXiangYing(xiangYing, {
-        jiao_se: jiaoSe,
+        jiao_se: {
+          ...jiaoSe,
+          tou_xiang: zhongXinQianMingMeiTiURL(jiaoSe.tou_xiang, yongHu.yongHuId) ?? '',
+        },
         dang_an_zhuang_tai: {
           jie_guo_lei_xing: suoYouZhe.jie_ju_zhuang_tai,
           shi_fou_feng_cun: suoYouZhe.shi_fou_feng_cun,

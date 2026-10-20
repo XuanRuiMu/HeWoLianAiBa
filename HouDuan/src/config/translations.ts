@@ -441,6 +441,13 @@ export const fanYi = {
     youXiangGeShiCuoWu: '邮箱格式不正确',
     bangDingXuFuFei: '暂未开放',
     paiWeiYiQingKong: '排位赛数据已清空',
+    waiGuanMingChengBuHeFa: '名称不符合要求，请检查字数和内容后重新提交',
+    waiGuanTuPianBuHeFa: '图片地址不符合要求，请重新上传图片',
+    waiGuanYanSeBuHeFa: '文字颜色格式不符合要求，请重新选择',
+    waiGuanWenZiYanSeDuiBiDuBuZu: '这个文字颜色和背景的对比度不够，看字会累，换一个颜色再试',
+    waiGuanTiaoMuTaiDuo: '自定义数量已经到上限了，先删掉一些再添加',
+    duiXiangJiaoSeMeiYou: '还没有可以更换头像的对象，先创建对象再来换',
+    duiXiangTouXiangShangChuanShiBai: '对象头像上传失败，请重新上传',
   },
   ziLiao: {
     qianMingTaiChang: '签名不能超过500个字符',

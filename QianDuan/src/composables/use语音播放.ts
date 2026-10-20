@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
 import type { 消息 } from '@/types/类型定义'
 
@@ -7,39 +7,57 @@ interface Use语音播放依赖 {
   huoQuYinLiang?: () => number | null
 }
 
-/**
- * 时长几何的唯一载体要求：只有毫秒时长这一个字段。
- * 聊天页的 消息 与好友页的 HaoYouXiaoXi 都满足它 ⇒ 语音气泡的宽度/时长口径两页同源，
- * 好友页哪天补上时长字段就直接复用同一份组件，不必再抄第二套算式。
- */
 export interface YuYinShiChangZaiTi {
   mei_ti_shi_chang_hao_miao?: number | null
+  mei_ti_url?: string | null
+  ben_di_yu_lan_url?: string | null
 }
+
+interface YuYinBoFangKongZhi {
+  zanTing: () => void
+  jiXu: () => void
+  tingZhi: () => void
+  boFangZhong: () => boolean
+}
+
+const WEI_QIONG_DING_WEI_MIAO = 1e101
+
+const ceDeShiChangHaoMiao = reactive(new Map<string, number>())
+const ceLiangShiBaiDiZhi = new Set<string>()
+const ceLiangRenWu = new Map<string, Promise<number | null>>()
+
+let dangQianKongZhi: YuYinBoFangKongZhi | null = null
+let jianPanJianTingZhong = false
 
 function xiaoXiJian(xiaoXi: 消息): string {
   return xiaoXi.ke_hu_duan_id || xiaoXi.id
 }
 
-/** 语音时长的唯一取秒口径：毫秒→整秒，夹在配置的上下秒之间（气泡宽度与总时长都吃它） */
+function yuYinDiZhi(xiaoXi: YuYinShiChangZaiTi): string {
+  return xiaoXi.mei_ti_url || xiaoXi.ben_di_yu_lan_url || ''
+}
+
+function yuanShiHaoMiao(xiaoXi: YuYinShiChangZaiTi): number {
+  const yiCeDe = ceDeShiChangHaoMiao.get(yuYinDiZhi(xiaoXi))
+  if (typeof yiCeDe === 'number' && yiCeDe > 0) return yiCeDe
+  const yuanShi = Number(xiaoXi.mei_ti_shi_chang_hao_miao)
+  return Number.isFinite(yuanShi) && yuanShi > 0 ? yuanShi : 0
+}
+
 export function yuYinShiChangMiao(xiaoXi: YuYinShiChangZaiTi): number {
   return Math.min(
     DUO_MEI_TI_PEI_ZHI.yuYinZuiDaMiao,
     Math.max(
       DUO_MEI_TI_PEI_ZHI.yuYinZuiDuanMiao,
-      Math.round((xiaoXi.mei_ti_shi_chang_hao_miao ?? 0) / 1000),
+      Math.round(yuanShiHaoMiao(xiaoXi) / 1000),
     ),
   )
 }
 
-/** 时长文本（未播放态与进度行共用）：秒数 + 半角逐引号，与取证 §1-A 的 `12"` 同口径 */
 export function geShiHuaYuYinShiChang(xiaoXi: YuYinShiChangZaiTi): string {
   return `${yuYinShiChangMiao(xiaoXi)}″`
 }
 
-/**
- * 「时长越长气泡越宽」的唯一算式（取证 §1-A：`data.second * 10 + 20`，§1-A 上限 max-width 300px）：
- * 结果夹进配置上下限，一秒不塌成一条线、六十秒不撑破会话栏。
- */
 export function yuYinKuanDuPx(xiaoXi: YuYinShiChangZaiTi): number {
   const tu =
     yuYinShiChangMiao(xiaoXi) * DUO_MEI_TI_PEI_ZHI.yuYinMeiMiaoKuanPx +
@@ -50,9 +68,190 @@ export function yuYinKuanDuPx(xiaoXi: YuYinShiChangZaiTi): number {
   )
 }
 
-/** 气泡宽度的唯一出口：页面与组件都不许再自己拼 px */
 export function yuYinKuanYangShi(xiaoXi: YuYinShiChangZaiTi): { width: string } {
   return { width: `${yuYinKuanDuPx(xiaoXi)}px` }
+}
+
+function duQuYinPinHaoMiao(yinPin: HTMLAudioElement): number {
+  let shiChangMiao: number
+  try {
+    shiChangMiao = Number(yinPin.duration)
+  } catch {
+    return 0
+  }
+  return Number.isFinite(shiChangMiao) && shiChangMiao > 0 ? Math.round(shiChangMiao * 1000) : 0
+}
+
+function cuShiWuQiongShiChang(yinPin: HTMLAudioElement): void {
+  let shiChangMiao: number
+  try {
+    shiChangMiao = Number(yinPin.duration)
+  } catch {
+    return
+  }
+  if (shiChangMiao !== Infinity || !(Number(yinPin.currentTime) <= 0)) return
+  try {
+    yinPin.currentTime = WEI_QIONG_DING_WEI_MIAO
+  } catch {
+    return
+  }
+}
+
+function shiFangYinPin(yinPin: HTMLAudioElement): void {
+  try {
+    yinPin.pause()
+    yinPin.removeAttribute('src')
+    yinPin.load()
+  } catch {
+    return
+  }
+}
+
+function ceLiangYinPinShiChang(diZhi: string): Promise<number | null> {
+  return new Promise((jieJue) => {
+    if (typeof Audio === 'undefined') {
+      jieJue(null)
+      return
+    }
+    const yinPin = new Audio()
+    let yiJieShu = false
+    let chaoShiDingShi: ReturnType<typeof setTimeout> | null = null
+    const qingChuDingShi = (): void => {
+      if (chaoShiDingShi === null) return
+      clearTimeout(chaoShiDingShi)
+      chaoShiDingShi = null
+    }
+    const jieShu = (haoMiao: number | null): void => {
+      if (yiJieShu) return
+      yiJieShu = true
+      qingChuDingShi()
+      yinPin.removeEventListener('loadedmetadata', changShiDu)
+      yinPin.removeEventListener('durationchange', changShiDu)
+      yinPin.removeEventListener('timeupdate', changShiDu)
+      yinPin.removeEventListener('error', jieShuShiBai)
+      shiFangYinPin(yinPin)
+      jieJue(haoMiao !== null && haoMiao > 0 ? haoMiao : null)
+    }
+    const jieShuShiBai = (): void => jieShu(null)
+    const changShiDu = (): void => {
+      const haoMiao = duQuYinPinHaoMiao(yinPin)
+      if (haoMiao > 0) {
+        jieShu(haoMiao)
+        return
+      }
+      cuShiWuQiongShiChang(yinPin)
+    }
+    yinPin.preload = 'metadata'
+    yinPin.addEventListener('loadedmetadata', changShiDu)
+    yinPin.addEventListener('durationchange', changShiDu)
+    yinPin.addEventListener('timeupdate', changShiDu)
+    yinPin.addEventListener('error', jieShuShiBai)
+    chaoShiDingShi = setTimeout(
+      jieShuShiBai,
+      DUO_MEI_TI_PEI_ZHI.yuYinShiChangCeLiangChaoShiHaoMiao,
+    )
+    yinPin.src = diZhi
+  })
+}
+
+export function ceLiangYuYinShiChang(xiaoXi: YuYinShiChangZaiTi): void {
+  const diZhi = yuYinDiZhi(xiaoXi)
+  if (diZhi === '') return
+  if (ceDeShiChangHaoMiao.has(diZhi) || ceLiangShiBaiDiZhi.has(diZhi) || ceLiangRenWu.has(diZhi)) return
+  const yuanShi = Number(xiaoXi.mei_ti_shi_chang_hao_miao)
+  if (Number.isFinite(yuanShi) && yuanShi > 0) return
+  const renWu = ceLiangYinPinShiChang(diZhi).then((haoMiao) => {
+    ceLiangRenWu.delete(diZhi)
+    if (haoMiao !== null) ceDeShiChangHaoMiao.set(diZhi, haoMiao)
+    else ceLiangShiBaiDiZhi.add(diZhi)
+    return haoMiao
+  })
+  ceLiangRenWu.set(diZhi, renWu)
+}
+
+function jiLuYiCeShiChang(diZhi: string, haoMiao: number): void {
+  if (diZhi === '' || !(haoMiao > 0)) return
+  if (ceDeShiChangHaoMiao.get(diZhi) === haoMiao) return
+  ceDeShiChangHaoMiao.set(diZhi, haoMiao)
+}
+
+function shiKeBianJiYuanSu(muBiao: EventTarget | null): boolean {
+  const yuanSu = muBiao instanceof Element ? muBiao : null
+  if (!yuanSu) return false
+  if (
+    yuanSu.closest(
+      'input, textarea, select, [contenteditable=""], [contenteditable="true"], [contenteditable="plaintext-only"]',
+    )
+  ) {
+    return true
+  }
+  return yuanSu instanceof HTMLElement && yuanSu.isContentEditable
+}
+
+function shiHuDongYuanSu(muBiao: EventTarget | null): boolean {
+  return (
+    muBiao instanceof Element &&
+    !!muBiao.closest('button, a, [role="button"], [role="slider"], [role="switch"]')
+  )
+}
+
+function chuLiKongGeJian(shiJian: KeyboardEvent): void {
+  if (shiJian.code !== 'Space' && shiJian.key !== ' ') return
+  if (shiJian.repeat || shiJian.isComposing) return
+  if (shiJian.altKey || shiJian.ctrlKey || shiJian.metaKey) return
+  if (shiKeBianJiYuanSu(shiJian.target) || shiHuDongYuanSu(shiJian.target)) return
+  if (!qieHuanDangQianYuYin()) return
+  shiJian.preventDefault()
+}
+
+function anZhuangJianPanJianTing(): void {
+  if (jianPanJianTingZhong || typeof window === 'undefined') return
+  window.addEventListener('keydown', chuLiKongGeJian)
+  jianPanJianTingZhong = true
+}
+
+function xieZaiJianPanJianTing(): void {
+  if (!jianPanJianTingZhong || typeof window === 'undefined') return
+  window.removeEventListener('keydown', chuLiKongGeJian)
+  jianPanJianTingZhong = false
+}
+
+function dengJiDangQianKongZhi(kongZhi: YuYinBoFangKongZhi): void {
+  dangQianKongZhi = kongZhi
+  anZhuangJianPanJianTing()
+}
+
+function zhuXiaoDangQianKongZhi(kongZhi: YuYinBoFangKongZhi): void {
+  if (dangQianKongZhi !== kongZhi) return
+  dangQianKongZhi = null
+  xieZaiJianPanJianTing()
+}
+
+export function shiDangQianYuYinBoFangZhong(): boolean {
+  return dangQianKongZhi !== null && dangQianKongZhi.boFangZhong()
+}
+
+export function zanTingDangQianYuYin(): boolean {
+  if (!dangQianKongZhi || !dangQianKongZhi.boFangZhong()) return false
+  dangQianKongZhi.zanTing()
+  return true
+}
+
+export function jiXuDangQianYuYin(): boolean {
+  if (!dangQianKongZhi || dangQianKongZhi.boFangZhong()) return false
+  dangQianKongZhi.jiXu()
+  return true
+}
+
+export function qieHuanDangQianYuYin(): boolean {
+  if (!dangQianKongZhi) return false
+  return dangQianKongZhi.boFangZhong() ? zanTingDangQianYuYin() : jiXuDangQianYuYin()
+}
+
+export function tingZhiDangQianYuYin(): boolean {
+  if (!dangQianKongZhi) return false
+  dangQianKongZhi.tingZhi()
+  return true
 }
 
 const YU_YIN_SHUANG_JI_JIAN_GE_HAO_MIAO = 260
@@ -63,6 +262,8 @@ export function use语音播放(yiLai: Use语音播放依赖) {
   const boFangJinDuMiao = ref(0)
   const boFangZongMiao = ref(0)
   let dangQianYinPin: HTMLAudioElement | null = null
+  let dangQianXiaoXi: 消息 | null = null
+  let benShiLiKongZhi: YuYinBoFangKongZhi | null = null
   let jinDuDingShiQi: ReturnType<typeof setInterval> | null = null
   let dianJiDingShiQi: ReturnType<typeof setTimeout> | null = null
   let daiDianJiXiaoXi: 消息 | null = null
@@ -83,6 +284,20 @@ export function use语音播放(yiLai: Use语音播放依赖) {
   function huoQuBoFangZongMiao(xiaoXi: 消息): number {
     if (shiYuYinXuanZhong(xiaoXi) && boFangZongMiao.value > 0) return boFangZongMiao.value
     return yuYinShiChangMiao(xiaoXi)
+  }
+
+  function huoQuBenShiLiKongZhi(): YuYinBoFangKongZhi {
+    if (!benShiLiKongZhi) {
+      benShiLiKongZhi = {
+        zanTing: () => zanTingYinPinBoFang(),
+        jiXu: () => {
+          if (dangQianXiaoXi) kaiShiBoFang(dangQianXiaoXi)
+        },
+        tingZhi: () => tingZhiYinPinBoFang(),
+        boFangZhong: () => boFangZhuangTai.value === 'boFang',
+      }
+    }
+    return benShiLiKongZhi
   }
 
   function qingLiJinDuDingShiQi() {
@@ -109,6 +324,8 @@ export function use语音播放(yiLai: Use语音播放依赖) {
       yinPin.pause()
       yinPin.src = ''
     }
+    if (benShiLiKongZhi) zhuXiaoDangQianKongZhi(benShiLiKongZhi)
+    dangQianXiaoXi = null
     boFangZhongXiaoXiKey.value = null
     boFangZhuangTai.value = 'wu'
     boFangJinDuMiao.value = 0
@@ -119,14 +336,10 @@ export function use语音播放(yiLai: Use语音播放依赖) {
     qingLiJinDuDingShiQi()
     const gengXin = () => {
       if (dangQianYinPin !== yinPin) return
-      try {
-        const dangQian = Number(yinPin.currentTime)
-        const zong = Number(yinPin.duration)
-        if (Number.isFinite(dangQian) && dangQian >= 0) boFangJinDuMiao.value = dangQian
-        if (Number.isFinite(zong) && zong > 0) boFangZongMiao.value = zong
-      } catch {
-        /* 忽略进度读取异常 */
-      }
+      const dangQian = Number(yinPin.currentTime)
+      const zong = Number(yinPin.duration)
+      if (Number.isFinite(dangQian) && dangQian >= 0) boFangJinDuMiao.value = dangQian
+      if (Number.isFinite(zong) && zong > 0) boFangZongMiao.value = zong
     }
     gengXin()
     jinDuDingShiQi = setInterval(gengXin, 200)
@@ -146,34 +359,31 @@ export function use语音播放(yiLai: Use语音播放依赖) {
         else yinPin.volume = Math.max(0, Math.min(1, yinLiang))
       }
     } catch {
-      /* 忽略 */
+      boFangZongMiao.value = 0
     }
-    yinPin.addEventListener('loadedmetadata', () => {
+    const cunShiChang = () => {
       if (dangQianYinPin !== yinPin) return
-      try {
-        if (Number.isFinite(yinPin.duration) && yinPin.duration > 0) {
-          boFangZongMiao.value = yinPin.duration
-        }
-      } catch {
-        /* 忽略 */
-      }
-    })
+      const haoMiao = duQuYinPinHaoMiao(yinPin)
+      if (haoMiao <= 0) return
+      jiLuYiCeShiChang(diZhi, haoMiao)
+      boFangZongMiao.value = haoMiao / 1000
+    }
+    yinPin.addEventListener('loadedmetadata', cunShiChang)
+    yinPin.addEventListener('durationchange', cunShiChang)
     yinPin.addEventListener('ended', () => {
       if (dangQianYinPin === yinPin) tingZhiYinPinBoFang()
     })
     yinPin.addEventListener('timeupdate', () => {
       if (dangQianYinPin !== yinPin) return
-      try {
-        if (Number.isFinite(yinPin.currentTime)) boFangJinDuMiao.value = yinPin.currentTime
-      } catch {
-        /* 忽略 */
-      }
+      if (Number.isFinite(yinPin.currentTime)) boFangJinDuMiao.value = yinPin.currentTime
     })
     dangQianYinPin = yinPin
+    dangQianXiaoXi = xiaoXi
     boFangZhongXiaoXiKey.value = jian
     boFangZhuangTai.value = 'zanTing'
     boFangJinDuMiao.value = 0
-    boFangZongMiao.value = yuYinShiChangMiao(xiaoXi)
+    boFangZongMiao.value = yuanShiHaoMiao(xiaoXi) > 0 ? yuanShiHaoMiao(xiaoXi) / 1000 : yuYinShiChangMiao(xiaoXi)
+    dengJiDangQianKongZhi(huoQuBenShiLiKongZhi())
     kaiShiJinDuGenZong(yinPin)
     return yinPin
   }
@@ -188,7 +398,7 @@ export function use语音播放(yiLai: Use语音播放依赖) {
         boFangJinDuMiao.value = 0
       }
     } catch {
-      /* 忽略 */
+      boFangJinDuMiao.value = 0
     }
     boFangZhuangTai.value = 'boFang'
     Promise.resolve(yinPin.play()).catch(() => {
@@ -201,7 +411,7 @@ export function use语音播放(yiLai: Use语音播放依赖) {
       try {
         dangQianYinPin.pause()
       } catch {
-        /* 忽略 */
+        boFangZhuangTai.value = 'zanTing'
       }
     }
     if (boFangZhuangTai.value === 'boFang') boFangZhuangTai.value = 'zanTing'
@@ -226,7 +436,7 @@ export function use语音播放(yiLai: Use语音播放依赖) {
       yinPin.pause()
       yinPin.currentTime = 0
     } catch {
-      /* 忽略 */
+      boFangJinDuMiao.value = 0
     }
     boFangZhuangTai.value = 'zanTing'
     boFangJinDuMiao.value = 0
@@ -260,7 +470,7 @@ export function use语音播放(yiLai: Use语音播放依赖) {
       dangQianYinPin.currentTime = muBiao
       boFangJinDuMiao.value = muBiao
     } catch {
-      /* 忽略拖动异常 */
+      boFangJinDuMiao.value = 0
     }
   }
 

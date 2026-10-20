@@ -53,9 +53,18 @@ import { chuFaCuoWuShangBao } from '@/utils/错误上报'
 import { gouJianCaoDiDiZhi } from '@/utils/CaoDiBeiJing'
 import { caoDiPeiZhi } from '@/config/站点配置'
 import { huoQuFanYi } from '@/config/翻译表'
+import { 解析性别 } from '@/utils/性别'
 
 const route = useRoute()
 const 用户仓库 = 使用用户仓库()
+
+watch(
+  () => 用户仓库.dangQianYongHu?.mo_ren_xing_bie,
+  (值) => {
+    document.documentElement.dataset.xingBie = 解析性别(值) === 'nv' ? 'nv' : 'nan'
+  },
+  { immediate: true },
+)
 const liaoTianLeiLuYou = new Set(['liaoTian', 'haoYouLiaoTian'])
 const shiYongCaoDiBeiJing = computed(() => route.name !== undefined && !liaoTianLeiLuYou.has(route.name as string))
 

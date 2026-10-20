@@ -1,6 +1,6 @@
 <template>
   <div ref="zhuyeQuyu" class="zhuye-quyu">
-    <div v-if="入场可视(1)" class="gonggong-biaoti-qu" data-ru-chang="1">
+    <div class="gonggong-biaoti-qu" :class="{ 'ru-chang-ke-jian': 入场可视(1) }">
       <div class="biaoti-neirong">
         <span class="biaoti-wenzi">{{ huoQuFanYi('zhuYe', 'huanYingHuiLai') }}</span>
         <span class="biaoti-fenge" />
@@ -9,7 +9,7 @@
     </div>
 
     <div class="zhuye-neirong-qu">
-      <div v-if="入场可视(2)" class="zuo-ce-qinggan-qu" data-ru-chang="2">
+      <div class="zuo-ce-qinggan-qu" :class="{ 'ru-chang-ke-jian': 入场可视(2) }">
         <div class="qinggan-neirong-ceng">
           <div class="pinpai-qu">
             <img src="/favicon.svg" class="pinpai-logo" alt="" />
@@ -21,7 +21,13 @@
 
       <div class="you-ce-xuanze-qu">
         <div class="moshi-kapian-zu">
-          <MoShiKa v-if="入场可视(3)" class="moshi-kapian putong-moshi-kapian" data-ru-chang="3" @xuan-ze="jinRuPuTongMoShi">
+          <MoShiKa
+            class="moshi-kapian putong-moshi-kapian"
+            :class="{ 'ru-chang-ke-jian': 入场可视(3) }"
+            :inert="!入场可视(3)"
+            :aria-hidden="入场可视(3) ? undefined : 'true'"
+            @xuan-ze="jinRuPuTongMoShi"
+          >
             <div class="kapian-dingbu">
               <div class="kapian-tubiao-qu">
                 <svg
@@ -57,7 +63,13 @@
             </div>
           </MoShiKa>
 
-          <MoShiKa v-if="入场可视(4)" class="moshi-kapian tiaozhan-moshi-kapian" data-ru-chang="4" @xuan-ze="jinRuTiaoZhanMoShi">
+          <MoShiKa
+            class="moshi-kapian tiaozhan-moshi-kapian"
+            :class="{ 'ru-chang-ke-jian': 入场可视(4) }"
+            :inert="!入场可视(4)"
+            :aria-hidden="入场可视(4) ? undefined : 'true'"
+            @xuan-ze="jinRuTiaoZhanMoShi"
+          >
             <div class="kapian-dingbu">
               <div class="kapian-tubiao-qu">
                 <svg
@@ -96,7 +108,7 @@
           </MoShiKa>
         </div>
 
-        <div v-if="入场可视(5)" class="zhuye-diwei-shuoming" data-ru-chang="5">
+        <div class="zhuye-diwei-shuoming" :class="{ 'ru-chang-ke-jian': 入场可视(5) }">
           <svg
             class="diwei-tubiao"
             viewBox="0 0 24 24"
@@ -238,9 +250,6 @@ watch(
 .gonggong-biaoti-qu {
   text-align: center;
   padding: calc(var(--jiange-da) + var(--jiange-4)) calc(var(--jiange-da) + var(--jiange-12)) var(--jiange-zhong);
-  animation: biaoti-ruchang 0.8s var(--quxian-tan-chu) both;
-  animation-delay: 0s;
-  animation-duration: var(--deng-lu-shi-xu);
 }
 
 .biaoti-neirong {
@@ -283,17 +292,6 @@ watch(
   text-transform: uppercase;
 }
 
-@keyframes biaoti-ruchang {
-  from {
-    opacity: 0;
-    transform: translateY(-15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .zhuye-neirong-qu {
   flex: 1;
   display: flex;
@@ -309,9 +307,6 @@ watch(
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  animation: zuoce-ruchang 0.7s var(--quxian-tan-chu) both;
-  animation-delay: 0s;
-  animation-duration: var(--deng-lu-shi-xu);
 }
 
 .qinggan-neirong-ceng {
@@ -337,8 +332,6 @@ watch(
   align-items: center;
   gap: var(--jiange-12);
   align-self: flex-start;
-  animation: zuoce-ruchang 0.7s var(--quxian-tan-chu) both;
-  animation-duration: var(--deng-lu-shi-xu);
 }
 
 .pinpai-logo {
@@ -381,8 +374,6 @@ watch(
   margin: 0;
   letter-spacing: 1px;
   line-height: 1.6;
-  animation: slogan-ruchang 0.6s var(--quxian-tan-chu) 0s both;
-  animation-duration: var(--deng-lu-shi-xu);
 }
 
 .you-ce-xuanze-qu {
@@ -410,29 +401,12 @@ watch(
   --moshi-kapian-zhu: var(--nuanhui-lan);
   justify-self: start;
   margin-right: calc(var(--jiange-da) * 2);
-  animation: moshi-kapian-jinru var(--moshi-kapian-dong-xiao) var(--quxian-tan-chu) both;
-  animation-delay: 0s;
-  animation-duration: var(--deng-lu-shi-xu);
 }
 
 .tiaozhan-moshi-kapian {
   --moshi-kapian-zhu: var(--yanse-biaobai);
   justify-self: end;
   margin-left: calc(var(--jiange-da) * 2);
-  animation: moshi-kapian-jinru var(--moshi-kapian-dong-xiao) var(--quxian-tan-chu) both;
-  animation-delay: 0s;
-  animation-duration: var(--deng-lu-shi-xu);
-}
-
-@keyframes moshi-kapian-jinru {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .moshi-kapian {
@@ -596,9 +570,6 @@ watch(
   gap: var(--jiange-xiao);
   font-size: 11.5px;
   color: rgba(255, 255, 255, 0.2);
-  animation: diwei-ruchang 0.6s var(--quxian-tan-chu) 0s both;
-  animation-delay: 0s;
-  animation-duration: var(--deng-lu-shi-xu);
 }
 
 :root[data-theme='light'] .zhuye-diwei-shuoming {
@@ -621,35 +592,6 @@ watch(
   50% {
     opacity: 1;
     transform: scale(1.15);
-  }
-}
-
-@keyframes zuoce-ruchang {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slogan-ruchang {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes diwei-ruchang {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
   }
 }
 
@@ -885,28 +827,27 @@ watch(
   .moshi-kapian:hover:not(:disabled) .yulan-xiangmu-3 {
     transform: none;
   }
-
-  .pinpai-qu,
-  .zuoce-slogan,
-  .putong-moshi-kapian,
-  .tiaozhan-moshi-kapian,
-  .gonggong-biaoti-qu,
-  .zuo-ce-qinggan-qu,
-  .zhuye-diwei-shuoming {
-    animation: none;
-    animation-delay: 0s;
-    opacity: 1;
-    transform: none;
-  }
 }
 
-
-[data-ru-chang] > *,
-[data-ru-chang] :where(span, p, h1, h2, h3, .biaoti-neirong, .qinggan-neirong-ceng, .kapian-dingbu, .kapian-yulan-qu, .kapian-dibu) {
-  animation: zhuye-wenzi-fu-yan var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun) var(--zhuye-wen-zi-yan-shi) both;
+.gonggong-biaoti-qu:not(.ru-chang-ke-jian) .biaoti-neirong,
+.zuo-ce-qinggan-qu:not(.ru-chang-ke-jian) .qinggan-neirong-ceng,
+.moshi-kapian:not(.ru-chang-ke-jian),
+.zhuye-diwei-shuoming:not(.ru-chang-ke-jian) {
+  opacity: 0;
 }
 
-@keyframes zhuye-wenzi-fu-yan {
+.moshi-kapian:not(.ru-chang-ke-jian) {
+  pointer-events: none;
+}
+
+.gonggong-biaoti-qu.ru-chang-ke-jian .biaoti-neirong,
+.zuo-ce-qinggan-qu.ru-chang-ke-jian .qinggan-neirong-ceng,
+.moshi-kapian.ru-chang-ke-jian,
+.zhuye-diwei-shuoming.ru-chang-ke-jian {
+  animation: zhuye-ru-chang var(--deng-lu-shi-xu) var(--quxian-biao-zhun) var(--zhuye-wen-zi-yan-shi) backwards;
+}
+
+@keyframes zhuye-ru-chang {
   from {
     opacity: 0;
     transform: translateY(6px);
@@ -918,12 +859,10 @@ watch(
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .biaoti-neirong,
-  .qinggan-neirong-ceng,
-  .kapian-dingbu,
-  .kapian-yulan-qu,
-  .kapian-dibu,
-  .zhuye-diwei-shuoming > span {
+  .gonggong-biaoti-qu.ru-chang-ke-jian .biaoti-neirong,
+  .zuo-ce-qinggan-qu.ru-chang-ke-jian .qinggan-neirong-ceng,
+  .moshi-kapian.ru-chang-ke-jian,
+  .zhuye-diwei-shuoming.ru-chang-ke-jian {
     animation: none;
   }
 }

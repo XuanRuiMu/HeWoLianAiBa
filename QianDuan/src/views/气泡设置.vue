@@ -7,24 +7,24 @@
       @chong-shi="sheZhi.chongShi()"
     />
     <QiPaoXuanZeQi />
-    <LiaoTianYuLan :biao-ti="QI_PAO_WEN_AN.biaoTi" :dang-qian-ming="dangQianMing" />
+    <LiaoTianYuLan
+      :biao-ti="huoQuFanYi('sheZhi', 'liaoTianYuLan')"
+      :dang-qian-ming="sheZhi.dangQianQiPaoBiaoShu"
+      :dang-qian-ti="huoQuFanYi('qiPao', 'dangQian')"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import QiPaoXuanZeQi from '@/components/气泡主题选择器.vue'
 import LiaoTianYuLan from '@/components/聊天/聊天预览.vue'
 import RequestError from '@/components/请求错误.vue'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
-import { QI_PAO_WEN_AN, huoQuQiPaoMingCheng } from '@/config/气泡主题文案'
+import { QI_PAO_WEN_AN } from '@/config/气泡主题文案'
+import { huoQuFanYi } from '@/config/翻译表'
 
 const sheZhi = 使用用户设置仓库()
-
-const dangQianMing = computed(() => {
-  if (sheZhi.ziDingYiQiPao) return sheZhi.ziDingYiQiPao.mingCheng
-  return `${huoQuQiPaoMingCheng(sheZhi.qiPaoZiJi)}/${huoQuQiPaoMingCheng(sheZhi.qiPaoAI)}`
-})
 
 onMounted(() => {
   void sheZhi.jiaZai()

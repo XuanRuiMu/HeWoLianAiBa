@@ -420,3 +420,18 @@ export function 归一前台错误(zhi: unknown): QianTaiCuoWu {
     zhi,
   )
 }
+
+export function tiQuCuoWuWenBen(cuoWu: unknown, moRenWenAn: string): string {
+  if (shiQianTaiCuoWu(cuoWu)) {
+    const houTaiWenAn = cuoWu.houTaiBaoFeng?.message?.trim()
+    if (houTaiWenAn && /^[\u4e00-\u9fa5]/.test(houTaiWenAn)) return houTaiWenAn
+    const benDiWenAn = cuoWu.lianAiWenAn?.trim()
+    if (benDiWenAn && /^[\u4e00-\u9fa5]/.test(benDiWenAn)) return benDiWenAn
+    return moRenWenAn
+  }
+  if (cuoWu instanceof Error) {
+    const wenAn = cuoWu.message.trim()
+    if (/^[\u4e00-\u9fa5]/.test(wenAn)) return wenAn
+  }
+  return moRenWenAn
+}

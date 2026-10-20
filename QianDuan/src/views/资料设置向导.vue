@@ -1,6 +1,6 @@
 <template>
   <div class="ziliao-shezhi">
-    <div class="ziliao-kapian" :data-xingbie="主色档">
+    <div class="ziliao-kapian" :data-xingbie="主色档" :data-dui-xiang-xingbie="对象色档">
       <div class="jindu-yuan-dian">
         <button
           v-for="buZhou in 步骤列表"
@@ -106,7 +106,7 @@
                 class="xingBie-kaPian duiXiang-xingBie-kaPian"
                 data-dang="nan"
                 :class="{ beiXuanZhong: ziLiaoShuJu.muBiaoXingBie === 'male' }"
-                :style="ziLiaoShuJu.muBiaoXingBie === 'male' ? 性别框体样式 : undefined"
+                :style="ziLiaoShuJu.muBiaoXingBie === 'male' ? 对象性别框体样式 : undefined"
                 @click="ziLiaoShuJu.muBiaoXingBie = 'male'"
               >
                 <div class="xingBie-tubiao duiXiang-nan-tubiao">
@@ -143,7 +143,7 @@
                 class="xingBie-kaPian duiXiang-xingBie-kaPian"
                 data-dang="nv"
                 :class="{ beiXuanZhong: ziLiaoShuJu.muBiaoXingBie === 'female' }"
-                :style="ziLiaoShuJu.muBiaoXingBie === 'female' ? 性别框体样式 : undefined"
+                :style="ziLiaoShuJu.muBiaoXingBie === 'female' ? 对象性别框体样式 : undefined"
                 @click="ziLiaoShuJu.muBiaoXingBie = 'female'"
               >
                 <div class="xingBie-tubiao duiXiang-nv-tubiao">
@@ -214,14 +214,12 @@
               {{ huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongYiXuanJianGuTiShi') }}
             </p>
 
-            <label class="zhaNv-gouxuan">
-              <input
-                v-model="ziLiaoShuJu.yunXuZhaNanZhaNv"
-                type="checkbox"
-                class="zhaXing-gouxuan"
-              />
-              <span>{{ 渣型文案 }}</span>
-            </label>
+            <XingBieGouXuan
+              v-model:模型值="ziLiaoShuJu.yunXuZhaNanZhaNv"
+              class="zhaNv-gouxuan"
+              :档="对象勾选档"
+              :文案="渣型文案"
+            />
             <p v-show="ziLiaoShuJu.yunXuZhaNanZhaNv" class="zhaNv-tishi zhaNv-tishi-huaxian">
               {{ 渣型提示文案 }}
             </p>
@@ -338,9 +336,9 @@ import type { MBTI类型, 性格选择 } from '@/types/类型定义'
 import { 性格选择映射 } from '@/types/类型定义'
 import { huoQuFanYi } from '@/config/翻译表'
 import ChangFangShuRuKuang from '@/components/表单/长方框输入框.vue'
+import XingBieGouXuan from '@/components/表单/性别勾选框.vue'
 import { congTongYongTiShiCiTuiCeXingGe } from '@/utils/通用提示词性格'
-import { 解析主色档 } from '@/utils/性别'
-import { 解析性别 } from '@/utils/性别'
+import { 解析主色档, 解析性别, 解析性别配色档 } from '@/utils/性别'
 import { 使用性别框体配色 } from '@/composables/use性别框体配色'
 import { guiYiNianLing } from '@/utils/输入验证'
 import { track } from '@/utils/埋点'
@@ -400,10 +398,15 @@ const 步骤过渡名称 = computed(() =>
 const 默认性别 = computed(() => 用户仓库.dangQianYongHu?.mo_ren_xing_bie ?? null)
 const 默认对象性别 = computed(() => 用户仓库.dangQianYongHu?.mu_biao_xing_bie ?? null)
 const 主色档 = computed(() => 解析主色档(ziLiaoShuJu.xingBie, 默认性别.value))
+const 对象色档 = computed(() => 解析性别配色档(ziLiaoShuJu.muBiaoXingBie ?? 默认对象性别.value))
+const 对象勾选档 = computed<'nan' | 'nv'>(() => (对象色档.value === 'nan' ? 'nan' : 'nv'))
 const { 样式: 性别框体样式 } = 使用性别框体配色({
   自身性别: () => ziLiaoShuJu.xingBie,
-  对象性别: () => ziLiaoShuJu.muBiaoXingBie ?? 默认对象性别.value,
   默认性别: () => 默认性别.value,
+})
+const { 样式: 对象性别框体样式 } = 使用性别框体配色({
+  自身性别: () => ziLiaoShuJu.muBiaoXingBie,
+  默认性别: () => 默认对象性别.value,
 })
 
 function qianJinBuZhou() {
@@ -565,12 +568,26 @@ async function kaiShiLiaoTian() {
   --xingbie-se-1: var(--xingbie-nan-1);
   --xingbie-se-2: var(--xingbie-nan-2);
   --xingbie-se-wenben: var(--xingbie-nan-wenben);
+  --xuanzhong-xingbie-bian: var(--xingbie-nan-xuan-biankuang);
 }
 
 .ziliao-kapian[data-xingbie='nv'] {
   --xingbie-se-1: var(--xingbie-nv-1);
   --xingbie-se-2: var(--xingbie-nv-2);
   --xingbie-se-wenben: var(--xingbie-nv-wenben);
+  --xuanzhong-xingbie-bian: var(--xingbie-nv-xuan-biankuang);
+}
+
+.ziliao-kapian[data-dui-xiang-xingbie='nan'] {
+  --mbti-xuan-ze-bian: var(--xingbie-nan-xuan-biankuang);
+}
+
+.ziliao-kapian[data-dui-xiang-xingbie='nv'] {
+  --mbti-xuan-ze-bian: var(--xingbie-nv-xuan-biankuang);
+}
+
+.ziliao-kapian[data-dui-xiang-xingbie='zhongxing'] {
+  --mbti-xuan-ze-bian: var(--xingbie-zhongxing-xuan-biankuang);
 }
 
 .jindu-yuan-dian {
@@ -625,7 +642,7 @@ async function kaiShiLiaoTian() {
 
 .buZuo3-gundong {
   overflow-y: auto;
-  padding-right: var(--jiange-4);
+  padding-inline: var(--jiange-4);
   overscroll-behavior: contain;
 }
 
@@ -769,16 +786,12 @@ async function kaiShiLiaoTian() {
 }
 
 @media (hover: hover) {
-  .mbti-kaPian:hover {
-    border-color: color-mix(in srgb, var(--qiangdiao-fen) 40%, transparent);
+  .mbti-kaPian:hover:not(.beiXuanZhong) {
+    border-color: color-mix(in srgb, var(--mbti-xuan-ze-bian) 50%, transparent);
     transform: translateY(-1px);
   }
 }
 
-/* MBTI 卡不承担性别语义，静置/悬停边与选中边仍吃 --qiangdiao-fen（深浅两档成对）。
-   选中态的**辉光与标题阴影**自 FP-29 起一律吃 --xuanzhong-*（整串令牌，组件不再补数字）：
-   改前这里是"深色档看不见"的真身——近黑 text-shadow 压在深卡面上与底色同明度，
-   而浅色档另写一份 .mbti-zhongWen{text-shadow:none}，两档各缺一半 ⇒ 选中态只剩边框可读 */
 .mbti-kaPian.beiXuanZhong {
   border: 1.5px solid var(--xuanzhong-xingbie-bian);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--xuanzhong-xingbie-bian) 18%, transparent);
@@ -855,27 +868,7 @@ async function kaiShiLiaoTian() {
 }
 
 .zhaNv-gouxuan {
-  display: flex;
-  align-items: center;
-  gap: var(--jiange-xiao);
-  padding: var(--jiange-10) 0;
-  cursor: pointer;
-  width: 100%;
-  justify-content: center;
-}
-
-.zhaNv-gouxuan input[type='checkbox'] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--xingbie-zhongxing-xuan-biankuang);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.zhaNv-gouxuan span {
-  font-size: 14px;
   color: rgba(255, 255, 255, 0.8);
-  font-weight: 500;
 }
 
 .zhaNv-tishi {
@@ -1126,17 +1119,13 @@ async function kaiShiLiaoTian() {
 }
 
 @media (hover: hover) {
-  :root[data-theme='light'] .mbti-kaPian:hover {
-    border-color: color-mix(in srgb, var(--qiangdiao-fen) 45%, transparent);
+  :root[data-theme='light'] .mbti-kaPian:hover:not(.beiXuanZhong) {
+    border-color: color-mix(in srgb, var(--mbti-xuan-ze-bian) 50%, transparent);
   }
 }
 
-/* 浅色档此处必须留一条同特异度的覆写：静置边是 :root[data-theme] + 类 = (0,3,0)，
-   不带前缀的深色档选中规则压不住它（改前同样是两条，只是值写死成字面量）。
-   改前这里还重复写了一份 box-shadow、下面一条又写了 text-shadow:none ——
-   两档成对令牌（--xuanzhong-*）落地后组件不再需要第二份，"浅色无阴影/深黑阴影看不见"即此残留 */
 :root[data-theme='light'] .mbti-kaPian.beiXuanZhong {
-  border-color: color-mix(in srgb, var(--qiangdiao-fen) 75%, transparent);
+  border-color: var(--xuanzhong-xingbie-bian);
 }
 
 :root[data-theme='light'] .mbti-kaPian.beiXuanZhong .mbti-zhongWen {
@@ -1159,7 +1148,7 @@ async function kaiShiLiaoTian() {
   color: var(--wenben-tishi);
 }
 
-:root[data-theme='light'] .zhaNv-gouxuan span {
+:root[data-theme='light'] .zhaNv-gouxuan {
   color: rgba(55, 42, 63, 0.75);
 }
 

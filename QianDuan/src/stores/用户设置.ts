@@ -1,6 +1,15 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { huoQuYongHuSheZhi, baoCunLiaoTianBeiJing, baoCunQiPao, baoCunYinSiSheZhi, qingKongPaiWeiShuJu } from '@/api/社交'
+import {
+  huoQuYongHuSheZhi,
+  baoCunLiaoTianBeiJing,
+  baoCunQiPao,
+  baoCunYinSiSheZhi,
+  qingKongPaiWeiShuJu,
+  shangChuanWaiGuanTuPian,
+  baoCunWaiGuan,
+  shangChuanDuiXiangTouXiang as shangChuanDuiXiangTouXiangApi,
+} from '@/api/社交'
 import { shiHeFaKeJianXing, type KeJianXing } from '@/api/资料'
 import { 使用主题仓库, 浅色值 } from '@/stores/主题'
 import {
@@ -13,96 +22,36 @@ import {
 } from '@/config/气泡主题'
 import { huoQuFanYi } from '@/config/翻译表'
 import { 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
+import { TuPianChiCunCuoWu, yaSuoTuPiang } from '@/utils/图片压缩'
+import {
+  BEI_JING_FEN_ZU,
+  WAI_GUAN_BEI_JING_MING_CHENG_ZUI_DA_ZI_FU,
+  WAI_GUAN_DUI_BI_DU_ZUI_XIAO,
+  WAI_GUAN_MEI_LEI_ZUI_DA_TIAO_SHU,
+  WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
+  WAI_GUAN_QI_PAO_MING_CHENG_ZUI_DA_ZI_FU,
+  WAI_GUAN_TU_PIAN_MIME,
+  WAI_GUAN_TU_PIAN_ZUI_DA_BIAN,
+  WAI_GUAN_TU_PIAN_ZUI_DA_ZI_JIE,
+  WAI_GUAN_YAN_SE_GE_SHI,
+  guiYiWaiGuanChuCan,
+  huoQuBeiJingYuSheMing,
+  huoQuQiPaoBeiJingZhi,
+  kongWaiGuanShuJu,
+  shiKeYongQiPaoWenZiYanSe,
+  shiKeYongWenZiYanSe,
+  tiQuWaiGuanSha,
+  xiaYiGeZiDingYiMing,
+  type WaiGuanTiaoMu,
+  type WaiGuanShuJu,
+  type WaiGuanYanSeZu,
+} from '@/config/外观自定义'
 
 export const LIAO_TIAN_BEI_JING_XUAN_XIANG = ['moRen', 'miWuSenLin', 'haiYangZhiLan', 'fenSeMengJing', 'yeKongXingHe', 'miSeTianYuan', 'chenWuQing', 'muZiXingYe'] as const
 
 export type LiaoTianBeiJing = string
 
 export const BEI_JING_URL_ZUI_DA_CHANG_DU = 2000
-
-export const ZI_DING_YI_BEI_JING_JIAN = 'lian-ai-ba-zi-ding-yi-bei-jing-cao'
-export const ZI_DING_YI_BEI_JING_CAO_SHU = 3
-
-export interface ZiDingYiBeiJingCao {
-  tuDiZhi: string
-  bieMing: string
-}
-
-export function shiZiDingYiBeiJingCao(zhi: unknown): zhi is ZiDingYiBeiJingCao {
-  if (!zhi || typeof zhi !== 'object') return false
-  const houXuan = zhi as Record<string, unknown>
-  if (typeof houXuan.tuDiZhi !== 'string' || !shiZiDingYiBeiJingURL(houXuan.tuDiZhi)) return false
-  return typeof houXuan.bieMing === 'string'
-}
-
-export function duQuZiDingYiBeiJingCao(): Array<ZiDingYiBeiJingCao | null> {
-  const moRen: Array<ZiDingYiBeiJingCao | null> = [null, null, null]
-  try {
-    const yuanShi = localStorage.getItem(ZI_DING_YI_BEI_JING_JIAN)
-    if (!yuanShi) return moRen
-    const jieXi = JSON.parse(yuanShi) as unknown
-    if (!Array.isArray(jieXi)) return moRen
-    for (let i = 0; i < ZI_DING_YI_BEI_JING_CAO_SHU; i++) {
-      const houXuan = jieXi[i] as unknown
-      moRen[i] = shiZiDingYiBeiJingCao(houXuan) ? (houXuan as ZiDingYiBeiJingCao) : null
-    }
-    return moRen
-  } catch {
-    return moRen
-  }
-}
-
-export function xieRuZiDingYiBeiJingCao(cao: Array<ZiDingYiBeiJingCao | null>): void {
-  localStorage.setItem(ZI_DING_YI_BEI_JING_JIAN, JSON.stringify(cao.slice(0, ZI_DING_YI_BEI_JING_CAO_SHU)))
-}
-
-export const ZI_DING_YI_QI_PAO_JIAN = 'lian-ai-ba-zi-ding-yi-qi-pao'
-
-export const QI_PAO_MING_CHENG_ZUI_DA_ZI_FU = 12
-
-export interface ZiDingYiQiPao {
-  mingCheng: string
-  tuDiZhi: string
-}
-
-export function shiZiDingYiQiPao(zhi: unknown): zhi is ZiDingYiQiPao {
-  if (!zhi || typeof zhi !== 'object') return false
-  const houXuan = zhi as Record<string, unknown>
-  if (typeof houXuan.mingCheng !== 'string' || !houXuan.mingCheng.trim()) return false
-  if (Array.from(houXuan.mingCheng.trim()).length > QI_PAO_MING_CHENG_ZUI_DA_ZI_FU) return false
-  return shiZiDingYiBeiJingURL(houXuan.tuDiZhi)
-}
-
-export function duQuZiDingYiQiPao(): ZiDingYiQiPao | null {
-  try {
-    const yuanShi = localStorage.getItem(ZI_DING_YI_QI_PAO_JIAN)
-    if (!yuanShi) return null
-    const jieXi = JSON.parse(yuanShi) as unknown
-    return shiZiDingYiQiPao(jieXi) ? (jieXi as ZiDingYiQiPao) : null
-  } catch {
-    return null
-  }
-}
-
-export function xieRuZiDingYiQiPao(qiPao: ZiDingYiQiPao | null): void {
-  if (!qiPao) {
-    try {
-      localStorage.removeItem(ZI_DING_YI_QI_PAO_JIAN)
-    } catch {
-      /* 忽略 */
-    }
-    return
-  }
-  localStorage.setItem(ZI_DING_YI_QI_PAO_JIAN, JSON.stringify(qiPao))
-}
-
-export function qingChuZiDingYiQiPao(): void {
-  try {
-    localStorage.removeItem(ZI_DING_YI_QI_PAO_JIAN)
-  } catch {
-    /* 忽略 */
-  }
-}
 
 const MEI_TI_QIAN_MING_LU_JING = /^\/api\/媒体\/[0-9a-f]{64}(\?e=\d{1,12}&s=[0-9a-f]+)?$/
 const MEI_TI_XIN_QIAN_MING_LU_JING =
@@ -139,6 +88,76 @@ export function huoQuBeiJingNeiLianYangShi(beiJing: string): Record<string, stri
   }
 }
 
+export function huoQuYuanSuNeiLianYangShi(tuDiZhi: string): Record<string, string> {
+  if (!shiZiDingYiBeiJingURL(tuDiZhi)) return {}
+  const anQuanURL = tuDiZhi.trim().replace(/["\\\n\r]/g, '')
+  return {
+    backgroundImage: `url("${anQuanURL}")`,
+    backgroundSize: '100% 100%',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+  }
+}
+
+export interface BeiJingXiangMu {
+  leiXing: 'yuShe' | 'ziDingYi'
+  jian: string
+  mingCheng: string
+  wenZiYanSe: string
+  tuDiZhi: string
+  sha: string | null
+}
+
+function yanZhengWaiGuanMing(mingCheng: string, zuiDaZiFu: number): string {
+  const qingLi = mingCheng.trim()
+  if (!qingLi) throw new Error(huoQuFanYi('sheZhi', 'waiGuanMingChengWeiKong'))
+  if (Array.from(qingLi).length > zuiDaZiFu) {
+    throw new Error(huoQuFanYi('sheZhi', 'waiGuanMingChengTaiChang').replace('{n}', String(zuiDaZiFu)))
+  }
+  return qingLi
+}
+
+function yanZhengWaiGuanYanSe(yanSe: string, leiBie: 'beiJing' | 'qiPao'): string {
+  const qingLi = yanSe.trim().toUpperCase()
+  if (!qingLi) return ''
+  if (!WAI_GUAN_YAN_SE_GE_SHI.test(qingLi)) throw new Error(huoQuFanYi('tongYong', 'canShuBuHeFa'))
+  const keYong = leiBie === 'qiPao' ? shiKeYongQiPaoWenZiYanSe(qingLi) : shiKeYongWenZiYanSe(qingLi)
+  if (!keYong) throw new Error(huoQuFanYi('sheZhi', 'waiGuanWenZiYanSeDuiBiDuBuZu'))
+  return qingLi
+}
+
+function chuangJianBiaoShi(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID()
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (ziFu) => {
+    const suiJi = Math.floor(Math.random() * 16)
+    const zhi = ziFu === 'x' ? suiJi : (suiJi & 0x3) | 0x8
+    return zhi.toString(16)
+  })
+}
+
+function shiTuPianWenJian(wenJian: File): boolean {
+  const mime = (wenJian.type || '').toLowerCase()
+  return (WAI_GUAN_TU_PIAN_MIME as readonly string[]).includes(mime)
+}
+
+async function jianYanBingYaSuo(wenJian: File): Promise<Blob> {
+  if (!shiTuPianWenJian(wenJian)) throw new Error(huoQuFanYi('sheZhi', 'waiGuanTuPianFeiFa'))
+  if (wenJian.size > WAI_GUAN_TU_PIAN_ZUI_DA_ZI_JIE) {
+    throw new Error(huoQuFanYi('sheZhi', 'waiGuanTuPianTaiDa'))
+  }
+  try {
+    return await yaSuoTuPiang(wenJian, WAI_GUAN_TU_PIAN_ZUI_DA_BIAN)
+  } catch (cuoWu: unknown) {
+    if (cuoWu instanceof TuPianChiCunCuoWu) {
+      throw new Error(
+        huoQuFanYi('sheZhi', 'waiGuanTuPianChiCunTaiDa').replace('{n}', String(WAI_GUAN_TU_PIAN_ZUI_DA_BIAN)),
+        { cause: cuoWu },
+      )
+    }
+    throw new Error(huoQuFanYi('sheZhi', 'waiGuanTuPianFeiFa'), { cause: cuoWu })
+  }
+}
+
 export const 使用用户设置仓库 = defineStore('用户设置', () => {
   const yongHuBianHao = ref('')
   const shouJiHao = ref('')
@@ -148,9 +167,9 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
   const qianMingBaiMingDan = ref<string[]>([])
   const liaoTianBeiJingQian = ref<string>('moRen')
   const liaoTianBeiJingShen = ref<string>('moRen')
-  const ziDingYiBeiJingBieMing = ref('')
-  const ziDingYiBeiJingCao = ref<Array<ZiDingYiBeiJingCao | null>>(duQuZiDingYiBeiJingCao())
-  const ziDingYiQiPao = ref<ZiDingYiQiPao | null>(null)
+  const waiGuan = ref<WaiGuanShuJu>(kongWaiGuanShuJu())
+  const duiXiangTouXiang = ref<string | null>(null)
+  const duiXiangJiaoSeId = ref<string | null>(null)
   const qiPaoZiJi = ref<QiPaoYuShe>(QI_PAO_ZI_JI_MO_REN)
   const qiPaoAI = ref<QiPaoYuShe>(QI_PAO_AI_MO_REN)
   const gongKaiZhangHao = ref(true)
@@ -210,7 +229,9 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
       else if (typeof sheZhi.liao_tian_bei_jing === 'string' && (shiYuSheBeiJing(sheZhi.liao_tian_bei_jing) || shiZiDingYiBeiJingURL(sheZhi.liao_tian_bei_jing))) liaoTianBeiJingShen.value = sheZhi.liao_tian_bei_jing
       qiPaoZiJi.value = guiYiHuaQiPao(sheZhi.qi_pao_zi_ji, QI_PAO_ZI_JI_MO_REN)
       qiPaoAI.value = guiYiHuaQiPao(sheZhi.qi_pao_ai, QI_PAO_AI_MO_REN)
-      ziDingYiQiPao.value = duQuZiDingYiQiPao()
+      waiGuan.value = guiYiWaiGuanChuCan(sheZhi.wai_guan)
+      duiXiangTouXiang.value = sheZhi.dui_xiang_tou_xiang || null
+      duiXiangJiaoSeId.value = sheZhi.dui_xiang_jiao_se_id || null
       gongKaiZhangHao.value = sheZhi.gong_kai_zhang_hao
       gongKaiShouJiHao.value = sheZhi.gong_kai_shou_ji_hao
       gongKaiYouXiang.value = sheZhi.gong_kai_you_xiang
@@ -231,8 +252,6 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
   async function qieHuanBeiJing(beiJing: string, moShi?: 'qian' | 'shen'): Promise<void> {
     const 旧前 = liaoTianBeiJingQian.value
     const 旧深 = liaoTianBeiJingShen.value
-    const 旧别名 = ziDingYiBeiJingBieMing.value
-    const 换自定义 = shiZiDingYiBeiJingURL(beiJing)
     if (moShi === 'qian') liaoTianBeiJingQian.value = beiJing
     else if (moShi === 'shen') liaoTianBeiJingShen.value = beiJing
     else {
@@ -240,13 +259,10 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
       liaoTianBeiJingShen.value = beiJing
     }
     try {
-      if (换自定义) ziDingYiBeiJingBieMing.value = 旧别名
-      else ziDingYiBeiJingBieMing.value = ''
       await baoCunLiaoTianBeiJing(beiJing, moShi)
     } catch (cuoWu: unknown) {
       liaoTianBeiJingQian.value = 旧前
       liaoTianBeiJingShen.value = 旧深
-      ziDingYiBeiJingBieMing.value = 旧别名
       jiLuCuoWu(cuoWu, () => baoCunLiaoTianBeiJing(beiJing, moShi))
     }
   }
@@ -257,93 +273,207 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     await qieHuanBeiJing(laiYuan, muDi)
   }
 
-  async function baoCunZiDingYiBeiJing(beiJingURL: string, bieMing?: string): Promise<void> {
-    if (!shiZiDingYiBeiJingURL(beiJingURL)) throw new Error(huoQuFanYi('tongYong', 'canShuBuHeFa'))
-    await qieHuanBeiJing(beiJingURL.trim())
-    ziDingYiBeiJingBieMing.value = (bieMing ?? '').trim()
-    tongBuDangQianZiDingYiDaoCao()
-  }
-
-  function tongBuDangQianZiDingYiDaoCao(): void {
-    const dangQian = liaoTianBeiJing.value
-    if (!shiZiDingYiBeiJingURL(dangQian)) return
-    const cao = [...ziDingYiBeiJingCao.value]
-    while (cao.length < ZI_DING_YI_BEI_JING_CAO_SHU) cao.push(null)
-    const yiCun = cao.findIndex((xiang) => xiang && xiang.tuDiZhi === dangQian.trim())
-    if (yiCun >= 0) {
-      const jiu = cao[yiCun] as ZiDingYiBeiJingCao
-      cao[yiCun] = { tuDiZhi: jiu.tuDiZhi, bieMing: ziDingYiBeiJingBieMing.value }
-    } else {
-      const kong = cao.findIndex((xiang) => !xiang)
-      const xin: ZiDingYiBeiJingCao = { tuDiZhi: dangQian.trim(), bieMing: ziDingYiBeiJingBieMing.value }
-      if (kong >= 0) cao[kong] = xin
-      else cao[cao.length - 1] = xin
-    }
-    ziDingYiBeiJingCao.value = cao.slice(0, ZI_DING_YI_BEI_JING_CAO_SHU)
-    try {
-      xieRuZiDingYiBeiJingCao(ziDingYiBeiJingCao.value)
-    } catch (cuoWu: unknown) {
-      jiLuCuoWu(cuoWu, chongShi)
-    }
-  }
-
-  async function jiHuoZiDingYiBeiJingCao(xuHao: number): Promise<void> {
-    const cao = ziDingYiBeiJingCao.value[xuHao]
-    if (!cao || !shiZiDingYiBeiJingURL(cao.tuDiZhi)) throw new Error(huoQuFanYi('tongYong', 'canShuBuHeFa'))
-    await qieHuanBeiJing(cao.tuDiZhi)
-    ziDingYiBeiJingBieMing.value = cao.bieMing
-  }
-
-  function qingChuZiDingYiBeiJingCao(xuHao: number): void {
-    const cao = [...ziDingYiBeiJingCao.value]
-    while (cao.length < ZI_DING_YI_BEI_JING_CAO_SHU) cao.push(null)
-    cao[xuHao] = null
-    ziDingYiBeiJingCao.value = cao.slice(0, ZI_DING_YI_BEI_JING_CAO_SHU)
-    try {
-      xieRuZiDingYiBeiJingCao(ziDingYiBeiJingCao.value)
-    } catch (cuoWu: unknown) {
-      jiLuCuoWu(cuoWu, chongShi)
-    }
-  }
-
   async function qingChuZiDingYiBeiJing(): Promise<void> {
     await qieHuanBeiJing('moRen')
-    ziDingYiBeiJingBieMing.value = ''
   }
 
-  async function baoCunZiDingYiQiPao(mingCheng: string, tuDiZhi: string): Promise<void> {
-    const qingLiMing = mingCheng.trim()
-    if (!qingLiMing) throw new Error(huoQuFanYi('sheZhi', 'qiPaoMingChengZhanWei'))
-    if (Array.from(qingLiMing).length > QI_PAO_MING_CHENG_ZUI_DA_ZI_FU) {
-      throw new Error(huoQuFanYi('sheZhi', 'qiPaoMingChengTaiChang'))
-    }
-    const qingLiDiZhi = tuDiZhi.trim()
-    if (!shiZiDingYiBeiJingURL(qingLiDiZhi)) throw new Error(huoQuFanYi('tongYong', 'canShuBuHeFa'))
-    ziDingYiQiPao.value = { mingCheng: qingLiMing, tuDiZhi: qingLiDiZhi }
+  async function zhiXingWaiGuanXiuGai(xiuGai: (caoAn: WaiGuanShuJu) => void): Promise<void> {
+    const kuaiZhao = JSON.parse(JSON.stringify(waiGuan.value)) as WaiGuanShuJu
+    xiuGai(waiGuan.value)
     try {
-      xieRuZiDingYiQiPao(ziDingYiQiPao.value)
+      const chuCan = await baoCunWaiGuan(waiGuan.value)
+      waiGuan.value = guiYiWaiGuanChuCan(chuCan)
     } catch (cuoWu: unknown) {
-      ziDingYiQiPao.value = null
-      jiLuCuoWu(cuoWu, chongShi)
+      waiGuan.value = kuaiZhao
+      jiLuCuoWu(cuoWu)
+      throw cuoWu
     }
   }
 
-  function qingChuZiDingYiQiPaoZhuangTai(): void {
-    ziDingYiQiPao.value = null
-    qingChuZiDingYiQiPao()
+  function quTiaoMuLieBiao(leiBie: 'beiJing' | 'qiPao'): WaiGuanTiaoMu[] {
+    return leiBie === 'beiJing' ? waiGuan.value.beiJing : waiGuan.value.qiPao
   }
 
-  const ziDingYiQiPaoNeiLianYangShi = computed<Record<string, string>>(() => {
-    const dangQian = ziDingYiQiPao.value
-    if (!dangQian || !shiZiDingYiBeiJingURL(dangQian.tuDiZhi)) return {}
-    const anQuanURL = dangQian.tuDiZhi.trim().replace(/["\\\n\r]/g, '')
-    return {
-      backgroundImage: `url("${anQuanURL}")`,
-      backgroundSize: '100% 100%',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
+  async function shangChuanWaiGuan(leiBie: 'beiJing' | 'qiPao', wenJian: File): Promise<WaiGuanTiaoMu> {
+    const lieBiao = quTiaoMuLieBiao(leiBie)
+    if (lieBiao.length >= WAI_GUAN_MEI_LEI_ZUI_DA_TIAO_SHU) {
+      throw new Error(huoQuFanYi('sheZhi', 'waiGuanTiaoMuTaiDuo'))
     }
+    const yaSuoHou = await jianYanBingYaSuo(wenJian)
+    const tuDiZhi = await shangChuanWaiGuanTuPian(yaSuoHou)
+    const tiaoMu: WaiGuanTiaoMu = {
+      id: chuangJianBiaoShi(),
+      mingCheng: xiaYiGeZiDingYiMing(leiBie, lieBiao.map((xiang) => xiang.mingCheng)),
+      tuDiZhi,
+      wenZiYanSe: WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
+    }
+    await zhiXingWaiGuanXiuGai((caoAn) => {
+      if (leiBie === 'beiJing') caoAn.beiJing.push(tiaoMu)
+      else caoAn.qiPao.push(tiaoMu)
+    })
+    return tiaoMu
+  }
+
+  async function gengXinWaiGuanTiaoMu(
+    leiBie: 'beiJing' | 'qiPao',
+    id: string,
+    buFen: { mingCheng: string; wenZiYanSe: string },
+  ): Promise<void> {
+    const zuiDa = leiBie === 'beiJing' ? WAI_GUAN_BEI_JING_MING_CHENG_ZUI_DA_ZI_FU : WAI_GUAN_QI_PAO_MING_CHENG_ZUI_DA_ZI_FU
+    const mingCheng = yanZhengWaiGuanMing(buFen.mingCheng, zuiDa)
+    const wenZiYanSe = yanZhengWaiGuanYanSe(buFen.wenZiYanSe, leiBie)
+    await zhiXingWaiGuanXiuGai((caoAn) => {
+      const lieBiao = leiBie === 'beiJing' ? caoAn.beiJing : caoAn.qiPao
+      const zhaoDao = lieBiao.find((xiang) => xiang.id === id)
+      if (zhaoDao) {
+        zhaoDao.mingCheng = mingCheng
+        zhaoDao.wenZiYanSe = wenZiYanSe
+      }
+    })
+  }
+
+  async function huanYuanWaiGuan(leiBie: 'beiJing' | 'qiPao', id: string): Promise<void> {
+    const lieBiao = quTiaoMuLieBiao(leiBie).filter((xiang) => xiang.id !== id)
+    const moRenMing = xiaYiGeZiDingYiMing(leiBie, lieBiao.map((xiang) => xiang.mingCheng))
+    await zhiXingWaiGuanXiuGai((caoAn) => {
+      const muBiao = leiBie === 'beiJing' ? caoAn.beiJing : caoAn.qiPao
+      const zhaoDao = muBiao.find((xiang) => xiang.id === id)
+      if (zhaoDao) {
+        zhaoDao.mingCheng = moRenMing
+        zhaoDao.wenZiYanSe = WAI_GUAN_MO_REN_WEN_ZI_YAN_SE
+      }
+    })
+  }
+
+  async function shanChuWaiGuan(leiBie: 'beiJing' | 'qiPao', id: string): Promise<void> {
+    const tiaoMu = quTiaoMuLieBiao(leiBie).find((xiang) => xiang.id === id)
+    if (!tiaoMu) return
+    const sha = tiQuWaiGuanSha(tiaoMu.tuDiZhi)
+    await zhiXingWaiGuanXiuGai((caoAn) => {
+      if (leiBie === 'beiJing') caoAn.beiJing = caoAn.beiJing.filter((xiang) => xiang.id !== id)
+      else {
+        caoAn.qiPao = caoAn.qiPao.filter((xiang) => xiang.id !== id)
+        if (caoAn.dangQianQiPao.ziJi === id) caoAn.dangQianQiPao.ziJi = ''
+        if (caoAn.dangQianQiPao.ai === id) caoAn.dangQianQiPao.ai = ''
+      }
+    })
+    if (leiBie !== 'beiJing' || !sha) return
+    const qianShiCi = tiQuWaiGuanSha(liaoTianBeiJingQian.value) === sha
+    const shenShiCi = tiQuWaiGuanSha(liaoTianBeiJingShen.value) === sha
+    if (qianShiCi) await qieHuanBeiJing('moRen', 'qian')
+    if (shenShiCi) await qieHuanBeiJing('moRen', 'shen')
+  }
+
+  function quBeiJingYuSheMing(jian: string): string {
+    const fuGai = waiGuan.value.beiJingFuGai[jian]
+    if (fuGai && fuGai.mingCheng) return fuGai.mingCheng
+    return huoQuBeiJingYuSheMing(jian as (typeof LIAO_TIAN_BEI_JING_XUAN_XIANG)[number])
+  }
+
+  function quBeiJingYuSheYanSe(jian: string): string {
+    return waiGuan.value.beiJingFuGai[jian]?.wenZiYanSe || ''
+  }
+
+  async function gengXinBeiJingYuShe(
+    jian: string,
+    buFen: { mingCheng: string; wenZiYanSe: string },
+  ): Promise<void> {
+    const xiaYiBu = {
+      mingCheng: yanZhengWaiGuanMing(buFen.mingCheng, WAI_GUAN_BEI_JING_MING_CHENG_ZUI_DA_ZI_FU),
+      wenZiYanSe: yanZhengWaiGuanYanSe(buFen.wenZiYanSe, 'beiJing'),
+    }
+    await zhiXingWaiGuanXiuGai((caoAn) => {
+      caoAn.beiJingFuGai[jian] = xiaYiBu
+    })
+  }
+
+  async function huanYuanBeiJingYuShe(jian: string): Promise<void> {
+    await zhiXingWaiGuanXiuGai((caoAn) => {
+      delete caoAn.beiJingFuGai[jian]
+    })
+  }
+
+  function beiJingXiangMuLieBiao(moShi: 'qian' | 'shen'): BeiJingXiangMu[] {
+    const lieBiao: BeiJingXiangMu[] = [
+      {
+        leiXing: 'yuShe',
+        jian: 'moRen',
+        mingCheng: quBeiJingYuSheMing('moRen'),
+        wenZiYanSe: quBeiJingYuSheYanSe('moRen'),
+        tuDiZhi: 'moRen',
+        sha: null,
+      },
+    ]
+    for (const jian of BEI_JING_FEN_ZU[moShi]) {
+      lieBiao.push({
+        leiXing: 'yuShe',
+        jian,
+        mingCheng: quBeiJingYuSheMing(jian),
+        wenZiYanSe: quBeiJingYuSheYanSe(jian),
+        tuDiZhi: jian,
+        sha: null,
+      })
+    }
+    for (const tiaoMu of waiGuan.value.beiJing) {
+      lieBiao.push({
+        leiXing: 'ziDingYi',
+        jian: tiaoMu.id,
+        mingCheng: tiaoMu.mingCheng,
+        wenZiYanSe: tiaoMu.wenZiYanSe,
+        tuDiZhi: tiaoMu.tuDiZhi,
+        sha: tiQuWaiGuanSha(tiaoMu.tuDiZhi),
+      })
+    }
+    return lieBiao
+  }
+
+  function shiDangQianBeiJing(moShi: 'qian' | 'shen', xiangMu: BeiJingXiangMu): boolean {
+    const dangQian = moShi === 'qian' ? liaoTianBeiJingQian.value : liaoTianBeiJingShen.value
+    if (xiangMu.leiXing === 'yuShe') return dangQian === xiangMu.jian
+    const dangQianSha = tiQuWaiGuanSha(dangQian)
+    return !!dangQianSha && dangQianSha === xiangMu.sha
+  }
+
+  const dangQianZiJiQiPaoTu = computed<WaiGuanTiaoMu | null>(
+    () => waiGuan.value.qiPao.find((xiang) => xiang.id === waiGuan.value.dangQianQiPao.ziJi) || null,
+  )
+  const dangQianAiQiPaoTu = computed<WaiGuanTiaoMu | null>(
+    () => waiGuan.value.qiPao.find((xiang) => xiang.id === waiGuan.value.dangQianQiPao.ai) || null,
+  )
+
+  const dangQianQiPaoBiaoShu = computed(() => {
+    const ziJi = dangQianZiJiQiPaoTu.value?.mingCheng || huoQuFanYi('qiPao', qiPaoZiJi.value)
+    const ai = dangQianAiQiPaoTu.value?.mingCheng || huoQuFanYi('qiPao', qiPaoAI.value)
+    return `${ziJi}/${ai}`
   })
+
+  const dangQianBeiJingBiaoShu = computed(() => {
+    const moShi = 使用主题仓库().dangQianZhuti === 浅色值 ? 'qian' : 'shen'
+    const dangQian = liaoTianBeiJing.value
+    if (shiYuSheBeiJing(dangQian)) return quBeiJingYuSheMing(dangQian)
+    const sha = tiQuWaiGuanSha(dangQian)
+    const zhaoDao = waiGuan.value.beiJing.find((xiang) => tiQuWaiGuanSha(xiang.tuDiZhi) === sha)
+    return zhaoDao ? zhaoDao.mingCheng : huoQuFanYi('sheZhi', 'beiJingMoRen')
+  })
+
+  async function xuanZeZiDingYiQiPao(buWei: 'ziJi' | 'ai', id: string): Promise<void> {
+    if (!waiGuan.value.qiPao.some((xiang) => xiang.id === id)) throw new Error(huoQuFanYi('tongYong', 'canShuBuHeFa'))
+    await zhiXingWaiGuanXiuGai((caoAn) => {
+      caoAn.dangQianQiPao[buWei] = id
+    })
+  }
+
+  async function qingChuZiDingYiQiPao(buWei: 'ziJi' | 'ai'): Promise<void> {
+    if (!waiGuan.value.dangQianQiPao[buWei]) return
+    await zhiXingWaiGuanXiuGai((caoAn) => {
+      caoAn.dangQianQiPao[buWei] = ''
+    })
+  }
+
+  async function xuanZeYuSheQiPao(buWei: 'ziJi' | 'ai', yuShe: QiPaoYuShe): Promise<void> {
+    await qingChuZiDingYiQiPao(buWei)
+    await qieHuanQiPao(buWei, yuShe)
+  }
 
   async function qieHuanQiPao(buWei: 'ziJi' | 'ai', yuShe: QiPaoYuShe): Promise<void> {
     if (!shiHeFaQiPao(yuShe)) throw new Error(huoQuFanYi('tongYong', 'canShuBuHeFa'))
@@ -360,7 +490,28 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
   const shiYuShe = computed(() => shiYuSheBeiJing(liaoTianBeiJing.value))
   const shiZiDingYi = computed(() => shiZiDingYiBeiJingURL(liaoTianBeiJing.value))
   const beiJingNeiLianYangShi = computed(() => huoQuBeiJingNeiLianYangShi(liaoTianBeiJing.value))
-  const ziJiQiPaoCSSBianLiang = computed(() => huoQuQiPaoCSSBianLiang(qiPaoZiJi.value, qiPaoAI.value))
+
+  const ziJiQiPaoCSSBianLiang = computed(() => {
+    const bianLiang = huoQuQiPaoCSSBianLiang(qiPaoZiJi.value, qiPaoAI.value)
+    const ziJiTu = dangQianZiJiQiPaoTu.value
+    const aiTu = dangQianAiQiPaoTu.value
+    if (ziJiTu && shiZiDingYiBeiJingURL(ziJiTu.tuDiZhi)) {
+      bianLiang['--qipao-ziJi-beiJing'] = huoQuQiPaoBeiJingZhi(ziJiTu.tuDiZhi, ziJiTu.wenZiYanSe)
+      bianLiang['--qipao-ziJi-wenBen'] = ziJiTu.wenZiYanSe || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE
+    }
+    if (aiTu && shiZiDingYiBeiJingURL(aiTu.tuDiZhi)) {
+      bianLiang['--qipao-duiFang-beiJing'] = huoQuQiPaoBeiJingZhi(aiTu.tuDiZhi, aiTu.wenZiYanSe)
+      bianLiang['--qipao-duiFang-wenBen'] = aiTu.wenZiYanSe || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE
+    }
+    return bianLiang
+  })
+
+  async function shangChuanDuiXiangTouXiang(wenJian: File): Promise<void> {
+    const yaSuoHou = await jianYanBingYaSuo(wenJian)
+    const jieGuo = await shangChuanDuiXiangTouXiangApi(yaSuoHou)
+    duiXiangTouXiang.value = jieGuo.dui_xiang_tou_xiang
+    duiXiangJiaoSeId.value = jieGuo.dui_xiang_jiao_se_id
+  }
 
   async function baoCunYinSi(canShu: { gongKaiZhangHao?: boolean; gongKaiShouJiHao?: boolean; gongKaiYouXiang?: boolean }): Promise<void> {
     if (canShu.gongKaiZhangHao !== undefined) gongKaiZhangHao.value = canShu.gongKaiZhangHao
@@ -381,5 +532,57 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     }
   }
 
-  return { yongHuBianHao, shouJiHao, touXiang, qianMing, qianMingKeJianXing, qianMingBaiMingDan, liaoTianBeiJing, liaoTianBeiJingQian, liaoTianBeiJingShen, ziDingYiBeiJingBieMing, ziDingYiBeiJingCao, ziDingYiQiPao, ziDingYiQiPaoNeiLianYangShi, qiPaoZiJi, qiPaoAI, ziJiQiPaoCSSBianLiang, shiYuShe, shiZiDingYi, beiJingNeiLianYangShi, gongKaiZhangHao, gongKaiShouJiHao, gongKaiYouXiang, bangDingYouXiang, yiJiaZai, caoZuoCuoWu, qingCuoWu, chongShi, jiaZai, qieHuanBeiJing, baoCunZiDingYiBeiJing, qingChuZiDingYiBeiJing, jiHuoZiDingYiBeiJingCao, qingChuZiDingYiBeiJingCao, baoCunZiDingYiQiPao, qingChuZiDingYiQiPaoZhuangTai, qieHuanQiPao, baoCunYinSi, qingKongPaiWei, tongBuBeiJing }
+  return {
+    yongHuBianHao,
+    shouJiHao,
+    touXiang,
+    qianMing,
+    qianMingKeJianXing,
+    qianMingBaiMingDan,
+    liaoTianBeiJing,
+    liaoTianBeiJingQian,
+    liaoTianBeiJingShen,
+    waiGuan,
+    duiXiangTouXiang,
+    duiXiangJiaoSeId,
+    qiPaoZiJi,
+    qiPaoAI,
+    ziJiQiPaoCSSBianLiang,
+    dangQianZiJiQiPaoTu,
+    dangQianAiQiPaoTu,
+    dangQianQiPaoBiaoShu,
+    dangQianBeiJingBiaoShu,
+    shiYuShe,
+    shiZiDingYi,
+    beiJingNeiLianYangShi,
+    gongKaiZhangHao,
+    gongKaiShouJiHao,
+    gongKaiYouXiang,
+    bangDingYouXiang,
+    yiJiaZai,
+    caoZuoCuoWu,
+    qingCuoWu,
+    chongShi,
+    jiaZai,
+    qieHuanBeiJing,
+    qingChuZiDingYiBeiJing,
+    tongBuBeiJing,
+    qieHuanQiPao,
+    xuanZeYuSheQiPao,
+    xuanZeZiDingYiQiPao,
+    qingChuZiDingYiQiPao,
+    beiJingXiangMuLieBiao,
+    shiDangQianBeiJing,
+    quBeiJingYuSheMing,
+    quBeiJingYuSheYanSe,
+    gengXinBeiJingYuShe,
+    huanYuanBeiJingYuShe,
+    shangChuanWaiGuan,
+    gengXinWaiGuanTiaoMu,
+    huanYuanWaiGuan,
+    shanChuWaiGuan,
+    shangChuanDuiXiangTouXiang,
+    baoCunYinSi,
+    qingKongPaiWei,
+  }
 })

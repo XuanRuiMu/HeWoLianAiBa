@@ -16,25 +16,41 @@
         class="sheng-yin-tong-dao"
         :data-testid="`sheng-yin-tong-dao-${tongDao.zhi}`"
       >
-        <DangWeiHuaGan
+        <HuaGan
           :biao-ti="tongDao.biaoTi"
-          :ce-shi-jian="tongDao.zhi"
-          :xuan-xiang="xuanXiangLieBiao"
-          :dang-wei="tongDaoPeiZhi[tongDao.zhi]"
-          @geng-xin="(zhi) => chuLiDangWei(tongDao.zhi, zhi)"
+          :zhi="yinLiangZhi(tongDao.zhi)"
+          :du-shu="duShuWenZi(tongDao.zhi)"
+          :ce-shi-jian="`sheng-yin-hua-gan-${tongDao.zhi}`"
+          :jin-yong="shiGenSuiXiTong(tongDao.zhi)"
+          @geng-xin="(zhi) => sheZhiYinLiang(tongDao.zhi, zhi)"
         />
-        <button
-          v-if="keShiTing(tongDao.zhi)"
-          class="sheng-yin-shi-ting"
-          type="button"
-          data-testid="sheng-yin-shi-ting"
-          @click="shiTing(tongDao.zhi)"
-        >
-          {{ huoQuFanYi('sheZhi', 'shengYinYuLan') }}
-        </button>
+
+        <div class="sheng-yin-kong-zhi-hang">
+          <label class="sheng-yin-gen-sui">
+            <input
+              class="sheng-yin-kai-guan"
+              type="checkbox"
+              role="switch"
+              :checked="shiGenSuiXiTong(tongDao.zhi)"
+              :aria-label="huoQuFanYi('sheZhi', 'genSuiXiTongShengYin')"
+              :data-testid="`sheng-yin-gen-sui-${tongDao.zhi}`"
+              @change="(shiJian) => qieHuanGenSui(tongDao.zhi, shiJian)"
+            />
+            <span class="sheng-yin-gen-sui-wen">{{ huoQuFanYi('sheZhi', 'genSuiXiTongShengYin') }}</span>
+          </label>
+
+          <button
+            class="sheng-yin-shi-ting"
+            type="button"
+            :data-testid="`sheng-yin-shi-ting-${tongDao.zhi}`"
+            @click="shiTing(tongDao.zhi)"
+          >
+            {{ huoQuFanYi('sheZhi', 'shengYinYuLan') }}
+          </button>
+        </div>
       </section>
 
-      <p class="sheng-yin-jiao-zhu">{{ huoQuFanYi('sheZhi', 'shengYinDangWeiDangQian') }}</p>
+      <p class="sheng-yin-jiao-zhu">{{ huoQuFanYi('sheZhi', 'yinLiangTiaoZhengTiShi') }}</p>
     </div>
 
     <audio ref="shiTingYuanSu" preload="none" />
@@ -45,30 +61,20 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { huoQuFanYi, type FanYiZiJian } from '@/config/翻译表'
 import {
-  SHENG_YIN_DANG_XUAN_XIANG,
+  SHENG_YIN_BAI_FEN_BI,
   SHENG_YIN_TONG_DAO_MO_REN,
   SHENG_YIN_TONG_DAO_XUAN_XIANG,
-  SHENG_YIN_YIN_LIANG,
   baoCunShengYinTongDao,
   duQuShengYinTongDao,
   guiYiHuaShengYin,
   heChengDanTongDaoYinLiang,
   qingChuJiuShengYinJian,
-  type ShengYinDang,
+  type ShengYinPeiZhi,
   type ShengYinTongDao,
 } from '@/config/消息配置'
 import RequestError from '@/components/请求错误.vue'
-import DangWeiHuaGan from '@/components/声音/档位滑杆.vue'
+import HuaGan from '@/components/表单/滑杆.vue'
 import { 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
-
-const SHENG_YIN_JIAN: Record<ShengYinDang, FanYiZiJian<'sheZhi'>> = {
-  genSuiXiTong: 'shengYinMoRen',
-  jingYin: 'shengYinJingYin',
-  xiao: 'shengYinXiao',
-  zhong: 'shengYinZhong',
-  da: 'shengYinDa',
-  zuiDa: 'shengYinZuiDa',
-}
 
 const SHENG_YIN_TONG_DAO_JIAN: Record<ShengYinTongDao, FanYiZiJian<'sheZhi'>> = {
   zong: 'shengYinTongDaoZong',
@@ -78,9 +84,7 @@ const SHENG_YIN_TONG_DAO_JIAN: Record<ShengYinTongDao, FanYiZiJian<'sheZhi'>> = 
   shiPin: 'shengYinTongDaoShiPin',
 }
 
-const SHENG_YIN_YIN_LIANG_DAN_YUAN = SHENG_YIN_YIN_LIANG
-
-const tongDaoPeiZhi = reactive<Record<ShengYinTongDao, ShengYinDang>>({ ...SHENG_YIN_TONG_DAO_MO_REN })
+const tongDaoPeiZhi = reactive<ShengYinPeiZhi>({ ...SHENG_YIN_TONG_DAO_MO_REN })
 const caoZuoCuoWu = ref<QianTaiCuoWu | null>(null)
 const shiTingYuanSu = ref<HTMLAudioElement | null>(null)
 
@@ -91,15 +95,18 @@ const tongDaoLieBiao = computed(() =>
   })),
 )
 
-const xuanXiangLieBiao = computed(() =>
-  SHENG_YIN_DANG_XUAN_XIANG.map((zhi) => ({
-    zhi: zhi as string,
-    wenZi: huoQuFanYi('sheZhi', SHENG_YIN_JIAN[zhi]),
-  })),
-)
+function shiGenSuiXiTong(tongDao: ShengYinTongDao): boolean {
+  return tongDaoPeiZhi[tongDao] === null
+}
 
-function duQuTongDao(zhi: ShengYinTongDao): ShengYinDang {
-  return guiYiHuaShengYin(tongDaoPeiZhi[zhi])
+function yinLiangZhi(tongDao: ShengYinTongDao): number {
+  return tongDaoPeiZhi[tongDao] ?? SHENG_YIN_BAI_FEN_BI.moRen
+}
+
+function duShuWenZi(tongDao: ShengYinTongDao): string {
+  const baiFenBi = tongDaoPeiZhi[tongDao]
+  if (baiFenBi === null) return huoQuFanYi('sheZhi', 'yinLiangXiTongKongZhi')
+  return `${baiFenBi}%`
 }
 
 onMounted(() => {
@@ -115,21 +122,11 @@ onMounted(() => {
   }
 })
 
-function keShiTing(_tongDao: ShengYinTongDao): boolean {
-  return true
-}
-
 function qingCuoWu(): void {
   caoZuoCuoWu.value = null
 }
 
-function chuLiDangWei(tongDao: ShengYinTongDao, zhi: string): void {
-  xuanZe(tongDao, guiYiHuaShengYin(zhi))
-}
-
-function xuanZe(tongDao: ShengYinTongDao, dang: ShengYinDang): void {
-  tongDaoPeiZhi[tongDao] = dang
-  qingCuoWu()
+function baoCunBingYingYong(): void {
   try {
     baoCunShengYinTongDao({ ...tongDaoPeiZhi })
     qingChuJiuShengYinJian()
@@ -138,6 +135,22 @@ function xuanZe(tongDao: ShengYinTongDao, dang: ShengYinDang): void {
     return
   }
   yingYongYinLiang()
+}
+
+function sheZhiYinLiang(tongDao: ShengYinTongDao, zhi: number): void {
+  const baiFenBi = guiYiHuaShengYin(zhi)
+  if (baiFenBi === null || baiFenBi === tongDaoPeiZhi[tongDao]) return
+  tongDaoPeiZhi[tongDao] = baiFenBi
+  qingCuoWu()
+  baoCunBingYingYong()
+}
+
+function qieHuanGenSui(tongDao: ShengYinTongDao, shiJian: Event): void {
+  const yuanSu = shiJian.target as HTMLInputElement | null
+  if (!yuanSu) return
+  tongDaoPeiZhi[tongDao] = yuanSu.checked ? null : yinLiangZhi(tongDao)
+  qingCuoWu()
+  baoCunBingYingYong()
 }
 
 function yingYongYinLiang(): void {
@@ -155,14 +168,12 @@ function yingYongYinLiang(): void {
 
 function shiTing(tongDao: ShengYinTongDao): void {
   qingCuoWu()
-  const yuanSu = shiTingYuanSu.value
-  if (!yuanSu) return
   yingYongYinLiang()
   try {
     const shangXiaWen = new AudioContext()
     const zhenDang = shangXiaWen.createOscillator()
     const zengYi = shangXiaWen.createGain()
-    const yinLiang = heChengDanTongDaoYinLiang({ ...tongDaoPeiZhi }, tongDao) ?? SHENG_YIN_YIN_LIANG_DAN_YUAN[duQuTongDao(tongDao)] ?? 1
+    const yinLiang = heChengDanTongDaoYinLiang({ ...tongDaoPeiZhi }, tongDao) ?? 1
     zengYi.gain.value = Math.max(0.0001, yinLiang * 0.2)
     zhenDang.frequency.value = 880
     zhenDang.connect(zengYi)
@@ -188,7 +199,7 @@ onBeforeUnmount(() => {
   }
 })
 
-defineExpose({ tongDaoPeiZhi, xuanZe, xuanXiangLieBiao })
+defineExpose({ tongDaoPeiZhi, sheZhiYinLiang, qieHuanGenSui, yinLiangZhi, duShuWenZi })
 </script>
 
 <style scoped>
@@ -198,6 +209,14 @@ defineExpose({ tongDaoPeiZhi, xuanZe, xuanXiangLieBiao })
   --sheng-yin-ka-mian: rgba(24, 24, 28, 0.9);
   --sheng-yin-ka-bian: rgba(255, 255, 255, 0.12);
   --sheng-yin-jin: #f0c86a;
+  --sheng-yin-huan-yuan: 999px;
+  --sheng-yin-ji-zhu-kou: 44px;
+  --sheng-yin-kai-guan-kuan: 44px;
+  --sheng-yin-kai-guan-gao: 24px;
+  --sheng-yin-kai-guan-qiu: 18px;
+  --sheng-yin-kai-guan-ji: 1px;
+  --sheng-yin-kai-guan-di: rgba(255, 255, 255, 0.16);
+  --sheng-yin-kai-guan-kai-di: #d9a441;
   position: relative;
   isolation: isolate;
   flex: none;
@@ -217,6 +236,8 @@ defineExpose({ tongDaoPeiZhi, xuanZe, xuanXiangLieBiao })
   --sheng-yin-ka-mian: rgba(255, 255, 255, 0.94);
   --sheng-yin-ka-bian: rgba(20, 22, 26, 0.12);
   --sheng-yin-jin: #6f4a06;
+  --sheng-yin-kai-guan-di: rgba(20, 22, 26, 0.18);
+  --sheng-yin-kai-guan-kai-di: #c08a1c;
 }
 
 .sheng-yin-zhe-zhao {
@@ -239,7 +260,7 @@ defineExpose({ tongDaoPeiZhi, xuanZe, xuanXiangLieBiao })
   z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--jiange-12);
+  gap: var(--jiange-15);
 }
 
 .sheng-yin-tou {
@@ -272,11 +293,80 @@ defineExpose({ tongDaoPeiZhi, xuanZe, xuanXiangLieBiao })
   gap: var(--jiange-xiao);
 }
 
+.sheng-yin-kong-zhi-hang {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--jiange-xiao);
+  flex-wrap: wrap;
+}
+
+.sheng-yin-gen-sui {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--jiange-xiao);
+  min-height: var(--sheng-yin-ji-zhu-kou);
+  padding: 0 var(--jiange-xiao);
+  border-radius: var(--sheng-yin-huan-yuan);
+  cursor: pointer;
+}
+
+.sheng-yin-kai-guan {
+  flex: none;
+  position: relative;
+  width: var(--sheng-yin-kai-guan-kuan);
+  height: var(--sheng-yin-kai-guan-gao);
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: var(--sheng-yin-huan-yuan);
+  background: var(--sheng-yin-kai-guan-di);
+  border: 1px solid var(--sheng-yin-ka-bian);
+  cursor: pointer;
+  transition: background-color 0.2s var(--quxian-biao-zhun), border-color 0.2s var(--quxian-biao-zhun);
+}
+
+.sheng-yin-kai-guan::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: var(--sheng-yin-kai-guan-ji);
+  width: var(--sheng-yin-kai-guan-qiu);
+  height: var(--sheng-yin-kai-guan-qiu);
+  border-radius: 50%;
+  background: var(--sheng-yin-wen-ben);
+  transform: translate(0, -50%);
+  transition: transform 0.2s var(--quxian-tan-chu);
+}
+
+.sheng-yin-kai-guan:checked {
+  background: var(--sheng-yin-kai-guan-kai-di);
+  border-color: var(--sheng-yin-kai-guan-kai-di);
+}
+
+.sheng-yin-kai-guan:checked::after {
+  transform: translate(
+    calc(var(--sheng-yin-kai-guan-kuan) - var(--sheng-yin-kai-guan-qiu) - var(--sheng-yin-kai-guan-ji) * 4),
+    -50%
+  );
+}
+
+.sheng-yin-kai-guan:focus-visible {
+  outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
+  outline-offset: var(--jujiao-huan-pian-yi);
+}
+
+.sheng-yin-gen-sui-wen {
+  font-size: 13px;
+  color: var(--sheng-yin-ci-wen-ben);
+}
+
 .sheng-yin-shi-ting {
-  align-self: flex-start;
-  min-height: 44px;
+  flex: none;
+  min-height: var(--sheng-yin-ji-zhu-kou);
   padding: var(--jiange-xiao) var(--jiange-da);
-  border-radius: 999px;
+  border-radius: var(--sheng-yin-huan-yuan);
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--sheng-yin-ka-bian);
   color: var(--sheng-yin-wen-ben);

@@ -1,14 +1,30 @@
 <template>
   <section
     v-if="cuoWu?.xianShi"
-    class="qian-tai-cuo-wu"
+    class="qian-tai-cuo-wu cuowu-tishi"
     :class="{ 'qian-tai-cuo-wu--mi-xi': miXi }"
     role="alert"
     aria-live="assertive"
     aria-atomic="true"
     :aria-busy="zhongZai ? 'true' : 'false'"
   >
-    <p class="qian-tai-cuo-wu-wen-an">{{ cuoWu.lianAiWenAn }}</p>
+    <div class="qian-tai-cuo-wu-tou">
+      <svg
+        class="qian-tai-cuo-wu-tubiao"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9" />
+        <line x1="12" y1="7.5" x2="12" y2="13" />
+        <line x1="12" y1="16.5" x2="12.01" y2="16.5" />
+      </svg>
+      <p class="qian-tai-cuo-wu-wen-an">{{ cuoWu.lianAiWenAn }}</p>
+    </div>
 
     <div v-if="cuoWu.xianShiDaiMa" class="qian-tai-cuo-wu-lian-ai-hang">
       <code class="qian-tai-cuo-wu-lian-ai-ma">{{ cuoWu.lianAiMa }}</code>
@@ -136,26 +152,36 @@ async function fuZhiLianAiMa(): Promise<void> {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  padding: var(--jiange-zhong);
-  border: var(--shuru-kuang-biankuang) solid var(--cuowu-touming-biankuang);
-  border-radius: var(--yuanjiao-zhong);
-  background: color-mix(in srgb, var(--beijing-kaopian) 76%, transparent);
-  box-shadow: inset 3px 0 0 var(--cuowu-yanse);
-  color: var(--wenben-zhuse);
 }
 
 .qian-tai-cuo-wu--mi-xi {
   margin-top: var(--jiange-xiao);
-  padding: var(--jiange-xiao) var(--jiange-zhong);
+  padding: var(--jiange-xiao) var(--jiange-12);
+}
+
+.qian-tai-cuo-wu-tou {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--jiange-xiao);
+  min-width: 0;
+}
+
+.qian-tai-cuo-wu-tubiao {
+  flex: none;
+  width: var(--jiange-zhong);
+  height: var(--jiange-zhong);
+  margin-top: var(--jiange-2);
+  color: var(--cuo-wu-biaoti);
 }
 
 .qian-tai-cuo-wu-wen-an {
+  flex: 1;
   min-width: 0;
   margin: 0;
-  color: var(--wenben-zhuse);
+  color: var(--cuo-wu-biaoti);
   font-size: var(--ziti-zhong);
   font-weight: 600;
-  line-height: 1.6;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 }
 
@@ -170,10 +196,11 @@ async function fuZhiLianAiMa(): Promise<void> {
 .qian-tai-cuo-wu-lian-ai-ma {
   min-width: 0;
   max-width: 100%;
-  padding: var(--jiange-xiao);
+  padding: var(--jiange-2) var(--jiange-6);
+  border: 1px solid var(--cuo-wu-bian);
   border-radius: var(--yuanjiao-xiao);
-  background: var(--beijing-ciuse);
-  color: var(--cuowu-yanse);
+  background: var(--cuo-wu-dian);
+  color: var(--cuo-wu-zhengwen);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   overflow-wrap: anywhere;
   user-select: text;
@@ -185,36 +212,36 @@ async function fuZhiLianAiMa(): Promise<void> {
   flex-wrap: wrap;
   gap: var(--jiange-xiao);
   justify-content: flex-end;
-  margin-top: var(--jiange-zhong);
+  margin-top: var(--jiange-12);
 }
 
 .qian-tai-cuo-wu-deng-dai {
-  color: var(--wenben-tishi);
+  color: var(--cuo-wu-zhengwen);
   font-size: var(--ziti-xiao);
 }
 
 .qian-tai-cuo-wu-chong-shi,
 .qian-tai-cuo-wu-fu-zhi {
   position: relative;
-  min-height: 36px;
-  padding: var(--jiange-xiao) var(--jiange-zhong);
-  border: var(--shuru-kuang-biankuang) solid var(--cuowu-touming-biankuang);
+  min-height: calc(var(--jiange-da) + var(--jiange-12));
+  padding: var(--jiange-6) var(--jiange-12);
+  border: 1px solid var(--cuo-wu-bian);
   border-radius: var(--yuanjiao-xiao);
   background: var(--beijing-kaopian);
-  color: var(--wenben-zhuse);
+  color: var(--cuo-wu-biaoti);
   font: inherit;
   font-size: var(--ziti-xiao);
   font-weight: 600;
   cursor: pointer;
   transition:
-    background var(--quxian-biao-zhun),
-    border-color var(--quxian-biao-zhun);
+    background var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun),
+    border-color var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun);
 }
 
 .qian-tai-cuo-wu-chong-shi:hover:not(:disabled),
 .qian-tai-cuo-wu-fu-zhi:hover:not(:disabled) {
-  border-color: var(--cuowu-yanse);
-  background: var(--yinying-yanse);
+  border-color: color-mix(in srgb, var(--cuowu-yanse) 58%, transparent);
+  background: var(--cuo-wu-dian);
 }
 
 .qian-tai-cuo-wu-chong-shi:focus-visible,
@@ -242,16 +269,12 @@ async function fuZhiLianAiMa(): Promise<void> {
 .qian-tai-cuo-wu-fu-zhi-zhuang-tai {
   display: block;
   margin-top: var(--jiange-xiao);
-  color: var(--wenben-ciuse);
-}
-
-:root[data-theme='light'] .qian-tai-cuo-wu {
-  background: var(--beijing-kaopian);
+  color: var(--cuo-wu-zhengwen);
 }
 
 @media (max-width: 640px) {
   .qian-tai-cuo-wu {
-    padding: var(--jiange-zhong) var(--jiange-xiao);
+    padding: var(--jiange-12) var(--jiange-xiao);
   }
 
   .qian-tai-cuo-wu-cao-zuo {

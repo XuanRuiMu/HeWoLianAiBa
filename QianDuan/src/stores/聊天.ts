@@ -757,11 +757,14 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     }
     jiLuYiQueRenYongHuId(fuWuQiXiaoXi.id)
     const dengJingXiaoXi = jiaGong ? jiaGong(fuWuQiXiaoXi) : fuWuQiXiaoXi
+    const buQiShiChangHaoMiao =
+      dengJingXiaoXi.mei_ti_shi_chang_hao_miao ?? 乐观消息.mei_ti_shi_chang_hao_miao ?? null
     // FP-04：乐观 ID → 服务端 ID 的替换走统一入口，重复回推/重连补拉都不会多出一条
     jiaRuXiaoXi({
       ...dengJingXiaoXi,
       mi_deng_jian: 乐观消息.mi_deng_jian ?? dengJingXiaoXi.mi_deng_jian ?? null,
       ke_hu_duan_id: 乐观消息.ke_hu_duan_id,
+      ...(buQiShiChangHaoMiao !== null ? { mei_ti_shi_chang_hao_miao: buQiShiChangHaoMiao } : {}),
     })
     return true
   }

@@ -1,5 +1,5 @@
 import { computed, toValue, type CSSProperties, type MaybeRefOrGetter } from 'vue'
-import { 解析性别框体边框档, 解析性别框体填充档, type 性别二档 } from '@/utils/性别'
+import { 解析性别框体色档, type 性别二档 } from '@/utils/性别'
 
 const 填充色: Record<性别二档, string> = {
   nan: 'var(--xingbie-nan-xuan-beijing)',
@@ -16,6 +16,21 @@ const 文字色: Record<性别二档, string> = {
   nv: 'var(--xingbie-nv-xuan-wenben)',
 }
 
+const 淡填充色: Record<性别二档, string> = {
+  nan: 'var(--xingbie-nan-tan-beijing)',
+  nv: 'var(--xingbie-nv-tan-beijing)',
+}
+
+const 深边框色: Record<性别二档, string> = {
+  nan: 'var(--xingbie-nan-shen-biankuang)',
+  nv: 'var(--xingbie-nv-shen-biankuang)',
+}
+
+const 淡填充文字色: Record<性别二档, string> = {
+  nan: 'var(--xingbie-nan-tan-wenben)',
+  nv: 'var(--xingbie-nv-tan-wenben)',
+}
+
 const 环色: Record<性别二档, string> = {
   nan: 'var(--xingbie-nan-xuan-huan)',
   nv: 'var(--xingbie-nv-xuan-huan)',
@@ -28,22 +43,34 @@ const 光晕色: Record<性别二档, string> = {
 
 export interface 性别框体配色输入 {
   自身性别: MaybeRefOrGetter<unknown>
-  对象性别: MaybeRefOrGetter<unknown>
   默认性别: MaybeRefOrGetter<unknown>
+  对象性别?: MaybeRefOrGetter<unknown>
+}
+
+function 解析输入色档(输入: 性别框体配色输入) {
+  return computed<性别二档>(() =>
+    解析性别框体色档(toValue(输入.自身性别), toValue(输入.默认性别)),
+  )
 }
 
 export function 使用性别框体配色(输入: 性别框体配色输入) {
-  const 填充档 = computed<性别二档>(() =>
-    解析性别框体填充档(toValue(输入.自身性别), toValue(输入.默认性别), toValue(输入.对象性别)),
-  )
-  const 边框档 = computed<性别二档>(() =>
-    解析性别框体边框档(toValue(输入.对象性别), toValue(输入.默认性别)),
-  )
+  const 色档 = 解析输入色档(输入)
   const 样式 = computed<CSSProperties>(() => ({
-    backgroundColor: 填充色[填充档.value],
-    borderColor: 边框色[边框档.value],
-    color: 文字色[填充档.value],
-    boxShadow: `0 0 0 3px ${环色[边框档.value]}, 0 10px 26px ${光晕色[边框档.value]}`,
+    backgroundColor: 填充色[色档.value],
+    borderColor: 边框色[色档.value],
+    color: 文字色[色档.value],
+    boxShadow: `0 0 0 3px ${环色[色档.value]}, 0 10px 26px ${光晕色[色档.value]}`,
   }))
-  return { 填充档, 边框档, 样式 }
+  return { 色档, 样式 }
+}
+
+export function 使用默认性别卡配色(输入: 性别框体配色输入) {
+  const 色档 = 解析输入色档(输入)
+  const 样式 = computed<CSSProperties>(() => ({
+    backgroundColor: 淡填充色[色档.value],
+    borderColor: 深边框色[色档.value],
+    color: 淡填充文字色[色档.value],
+    boxShadow: `0 0 0 3px ${环色[色档.value]}, 0 10px 26px ${光晕色[色档.value]}`,
+  }))
+  return { 色档, 样式 }
 }

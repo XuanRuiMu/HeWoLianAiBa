@@ -5,8 +5,6 @@ import { huoQuShiJianChangJingWenBen } from '../config/时间场景配置'
 import { MBTI_YU_QI_CHI } from '../config/风格语气映射'
 import { duJieBaoKaiGuan } from '../config/开场采样配置'
 import { shiXueShengShenFen } from '../config/角色配置'
-import { chouYuTai, quYuTaiZhiLing } from './语态控制器'
-import type { YuTai } from './语态控制器'
 
 interface ShiLiZu {
   yuQi: string
@@ -741,14 +739,11 @@ export function gouJianWriterPrompt(
     hui_fu_ce_lue?: string
     shi_jian_qing_xu?: string
     shi_fou_hui_fu?: boolean
-    yu_tai?: YuTai
     // ⚠️ 故意**不接** `hui_fu_tiao_shu`：第十三轮起 Writer 不再被告知「这轮回几条」，
     // 由角色自己决定发几条（此前由 Director 的数字硬截断，导致追问被固化为收尾，
     // 实测问句落在末条 AI 34.7% vs 真人 19.3%）。Director 仍管回不回 / 情绪 / 撤回 / 表白。
   },
 ): string {
-  const yuTaiDingZhi = process.env.ZS_YU_TAI as YuTai | undefined
-  const yuTai: YuTai = ceLue?.yu_tai || yuTaiDingZhi || chouYuTai(shuRu.yong_hu_xin_xiao_xi)
   // 层序＝缓存前缀顺序：会变的东西一律排在历史之后；人设+历史与 Director 共用同一段字节。
   const cengCi = [
     gouJianGongXiangQianZhui(shuRu),
@@ -775,8 +770,6 @@ export function gouJianWriterPrompt(
       ].join('\n'),
     )
   }
-
-  cengCi.push(`【这一轮你就这样回】\n${quYuTaiZhiLing(yuTai)}`)
 
   return cengCi.join('\n\n')
 }

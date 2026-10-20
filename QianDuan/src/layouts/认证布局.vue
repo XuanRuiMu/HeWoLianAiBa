@@ -10,11 +10,8 @@
         'zhanghaoanquan-moshi': route.name === 'zhangHaoAnQuan',
       }"
     >
-      <div v-if="keYiChongShiHuiFu">
-        <RequestError class="renzheng-huifu-zhuangtai" :cuo-wu="huiFuQianTaiCuoWu" @chong-shi="chongShiHuiFu" />
-      </div>
-      <div v-else-if="zhengZaiHuiFu" class="renzheng-huifu-zhuangtai" role="status" aria-live="polite">
-        {{ huoQuFanYi('tongZhi', 'jiaZaiZhong') }}
+      <div v-if="keYiChongShiHuiFu" class="renzheng-huifu-cuo-wu">
+        <RequestError :cuo-wu="huiFuQianTaiCuoWu" @chong-shi="chongShiHuiFu" />
       </div>
       <router-view v-slot="{ Component, route: dangQianLuYou }">
         <Transition :name="qieHuanDongHua || 'yemian-nei-guodu'" mode="out-in">
@@ -36,7 +33,6 @@ import { computed, onBeforeUnmount, provide, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
 import { 使用用户仓库 } from '@/stores/用户'
-import { huoQuFanYi } from '@/config/翻译表'
 import RequestError from '@/components/请求错误.vue'
 import { chuangJianQianTaiCuoWu } from '@/utils/前台错误'
 
@@ -56,11 +52,6 @@ const shiZhuJieMian = computed(() => route.name === 'zhuJieMian')
 const shiDengLu = computed(() => route.name === 'dengLu')
 const shiWangJiMiMa = computed(() => route.name === 'wangJiMiMa')
 const xuYaoDengLu = computed(() => route.meta.xuYaoDengLu === true)
-const zhengZaiHuiFu = computed(
-  () =>
-    Boolean(user.令牌) &&
-    (user.认证状态 === '冷启动' || user.认证状态 === '恢复中' || user.认证状态 === '恢复失败可重试'),
-)
 const keYiChongShiHuiFu = computed(() => user.认证状态 === '恢复失败可重试')
 const huiFuQianTaiCuoWu = computed(
   () => user.恢复错误 || chuangJianQianTaiCuoWu({ retryable: true }),
@@ -174,22 +165,10 @@ onBeforeUnmount(() => {
   overflow-y: hidden;
 }
 
-.renzheng-huifu-zhuangtai {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--jiange-xiao);
-  padding: var(--jiange-xiao) var(--jiange-zhong);
-  color: var(--gundong-tiao-huakuai);
-  font-size: var(--ziti-xiao);
-}
-
-.renzheng-huifu-chongshi {
-  border: 1px solid currentColor;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  padding: var(--jiange-xiao) var(--jiange-xiao);
+.renzheng-huifu-cuo-wu {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--jiange-zhong) 0;
 }
 
 .yemian-buju > * {

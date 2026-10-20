@@ -137,6 +137,7 @@ defineExpose({
   max-width: 480px;
   margin: var(--jiange-da) auto;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 3px 0 0 var(--cuowu-yanse);
 }
 
 .cuowu-toubu {

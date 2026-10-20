@@ -5,6 +5,7 @@ import {
   type ShangChuanLeiBie,
 } from './聊天'
 import type { XiaoXiKuai, XiaoXiKuaiChuCan } from '@/types/类型定义'
+import type { WaiGuanChuCan, WaiGuanShuJu } from '@/config/外观自定义'
 
 export interface HaoYouSouSuoXiang {
   id: string
@@ -72,6 +73,9 @@ export interface YongHuSheZhi {
   gong_kai_shou_ji_hao: boolean
   gong_kai_you_xiang: boolean
   bang_ding_you_xiang: string
+  wai_guan?: WaiGuanChuCan | null
+  dui_xiang_jiao_se_id?: string | null
+  dui_xiang_tou_xiang?: string | null
 }
 
 export async function souSuoHaoYou(guanJianZi: string): Promise<HaoYouSouSuoXiang[]> {
@@ -207,6 +211,44 @@ export async function shangChuanLiaoTianBeiJing(wenJian: Blob): Promise<string> 
 
 export async function baoCunQiPao(canShu: { ziJi?: string; ai?: string }): Promise<void> {
   await http.put('/用户设置/气泡', canShu)
+}
+
+export async function shangChuanWaiGuanTuPian(wenJian: Blob): Promise<string> {
+  const biaoDan = new FormData()
+  biaoDan.append('file', wenJian, wenJian instanceof File && wenJian.name ? wenJian.name : 'wai-guan-tu-pian')
+  const xiangYing = await http.post<{ cheng_gong: boolean; shu_ju: { tu_di_zhi: string } }>(
+    '/用户设置/外观/上传',
+    biaoDan,
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 60000,
+    },
+  )
+  return xiangYing.data.shu_ju.tu_di_zhi
+}
+
+export async function baoCunWaiGuan(waiGuan: WaiGuanShuJu): Promise<WaiGuanChuCan> {
+  const xiangYing = await http.put<{ cheng_gong: boolean; shu_ju: WaiGuanChuCan }>(
+    '/用户设置/外观',
+    waiGuan,
+  )
+  return xiangYing.data.shu_ju
+}
+
+export async function shangChuanDuiXiangTouXiang(wenJian: Blob): Promise<{
+  dui_xiang_jiao_se_id: string
+  dui_xiang_tou_xiang: string | null
+}> {
+  const biaoDan = new FormData()
+  biaoDan.append('file', wenJian, wenJian instanceof File && wenJian.name ? wenJian.name : 'dui-xiang-tou-xiang')
+  const xiangYing = await http.post<{
+    cheng_gong: boolean
+    shu_ju: { dui_xiang_jiao_se_id: string; dui_xiang_tou_xiang: string | null }
+  }>('/用户设置/对象头像', biaoDan, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000,
+  })
+  return xiangYing.data.shu_ju
 }
 
 export async function baoCunYinSiSheZhi(canShu: { gongKaiZhangHao?: boolean; gongKaiShouJiHao?: boolean; gongKaiYouXiang?: boolean }): Promise<void> {
