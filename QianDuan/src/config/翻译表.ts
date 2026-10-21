@@ -257,6 +257,7 @@ export const fanYi = {
     xiuGaiMiMa: '修改密码',
     zhangHaoSheZhi: '账号设置',
     sheZhiMoRenXingBie: '设置默认性别',
+    sheZhiMoRenDuiXiangXingBie: '设置默认对象性别',
     moRenXingBieMiaoShu: '普通模式第一步将默认选中该性别',
     moRenDuiXiangXingBie: '默认对象性别',
     moRenDuiXiangMiaoShu: '普通模式第二步将默认选中该性别，可在此修改',

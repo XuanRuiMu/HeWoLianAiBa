@@ -231,10 +231,11 @@
             </div>
           </template>
 
-          <RouterLink class="zhaohui-fan-hui" :to="{ name: 'dengLu' }">
-            {{ huoQuFanYi('renZheng', 'fanHuiDengLu') }}
-          </RouterLink>
         </form>
+
+        <RouterLink v-if="!chongZhiWanCheng" class="zhaohui-fan-hui" :to="{ name: 'dengLu' }">
+          {{ huoQuFanYi('renZheng', 'fanHuiDengLu') }}
+        </RouterLink>
       </div>
       <div class="juanzhou-gan juanzhou-gan-xia" />
     </div>
@@ -805,12 +806,13 @@ onBeforeUnmount(() => {
 }
 
 .zhaohui-fan-hui {
+  position: relative;
   display: inline-flex;
+  align-self: center;
   align-items: center;
   justify-content: center;
-  min-height: var(--shuru-anniu-re-ku);
-  margin-top: var(--jiange-da);
-  padding: var(--jiange-xiao);
+  margin-top: var(--jiange-12);
+  padding: var(--jiange-6) var(--jiange-12);
   font-size: var(--ziti-zhong);
   font-weight: 400;
   color: var(--ka-ci-wen);
@@ -819,6 +821,17 @@ onBeforeUnmount(() => {
   text-underline-offset: 3px;
   cursor: pointer;
   transition: color 0.2s var(--quxian-biao-zhun);
+}
+
+.zhaohui-fan-hui::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  min-width: var(--shuru-anniu-re-ku);
+  height: var(--shuru-anniu-re-ku);
+  transform: translate(-50%, -50%);
 }
 
 .zhaohui-fan-hui:hover {

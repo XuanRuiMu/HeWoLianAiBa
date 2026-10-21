@@ -46,7 +46,8 @@ defineProps<{
 
 .tishi-dai-cuowu {
   min-width: 0;
-  color: var(--cuowu-yanse);
+  color: color-mix(in srgb, var(--cuowu-yanse) 62%, var(--wenben-zhuse));
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
 </style>

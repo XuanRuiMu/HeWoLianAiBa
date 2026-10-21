@@ -66,6 +66,34 @@ const 零消费白名单: { 令牌: string; 理由: string }[] = [
     理由:
       '共用 :root「尺度令牌与缓动曲线深浅两档恒等」基准族，量纲与主题档无关；零 var( 消费但由 FP-12 成对审计的共用块专属令牌与尺度真源取值钉住，非主题色对',
   },
+  {
+    令牌: '--juxing-shuru-biankuang',
+    理由:
+      '圆角输入框五态族统一给 1px 静息 / 1.5px 聚焦，旧 2px 矩形框厚暂无消费者，保留定义待主代理裁决删除',
+  },
+  {
+    令牌: '--shuru-gao-liang-shi-chang',
+    理由:
+      '旧 420ms 底线扫光时长，五态族改用 120/180/150/240ms 四枚新时长令牌，扫光只余聊天输入区，暂无消费者',
+  },
+  {
+    令牌: '--shuru-gao-liang-dan-nan',
+    理由:
+      '五态族聚焦色由 --xingbie-nan-shen-biankuang 与 --shuru-gao-liang-liang-nan 混合而成，丹档暂无 var( 消费，保留定义待裁决',
+  },
+  {
+    令牌: '--shuru-gao-liang-dan-nv',
+    理由: '同 --shuru-gao-liang-dan-nan，女档聚焦色改由深档边框与亮档高亮混合，丹档暂无 var( 消费',
+  },
+  {
+    令牌: '--shuru-gao-liang-guang-nan',
+    理由:
+      '五态族聚焦环改为聚焦描边色的 18% 同色环（明暗同浓），旧扫光发光档男档暂无 var( 消费，保留定义待裁决',
+  },
+  {
+    令牌: '--shuru-gao-liang-guang-nv',
+    理由: '同 --shuru-gao-liang-guang-nan，女档旧扫光发光色暂无 var( 消费，保留定义待裁决',
+  },
   // FP-H 删通话链后登记的 4 枚疑死令牌（--ceng-tonghua/--chuangkou-yinying/--quxiao-anniu-beijing/
   // --quxiao-anniu-wenben）已由 FP-G 经主代理裁决删除定义并同步 FP14出生日期选择器.test.ts 层级序，销账。
 ]

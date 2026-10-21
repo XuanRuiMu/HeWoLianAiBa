@@ -4,11 +4,11 @@
       v-if="!多行"
       :id="标识 || undefined"
       ref="输入元素"
-      class="chang-fang-kuang-shuru she-zhi-shuru"
+      class="chang-fang-kuang-shuru she-zhi-shuru yuan-jiao-shuru-kuang"
       :type="类型"
       :value="模型值"
       :maxlength="最大长度 || undefined"
-      :placeholder="占位文字 || undefined"
+      :placeholder="占位文字 || ' '"
       :disabled="禁用"
       :readonly="只读"
       :aria-label="标签 || undefined"
@@ -20,11 +20,11 @@
       v-else
       :id="标识 || undefined"
       ref="输入元素"
-      class="chang-fang-kuang-shuru chang-fang-kuang-shuru--duo-hang she-zhi-shuru"
+      class="chang-fang-kuang-shuru chang-fang-kuang-shuru--duo-hang she-zhi-shuru yuan-jiao-shuru-kuang"
       :rows="行数"
       :value="模型值"
       :maxlength="最大长度 || undefined"
-      :placeholder="占位文字 || undefined"
+      :placeholder="占位文字 || ' '"
       :disabled="禁用"
       :readonly="只读"
       :aria-label="标签 || undefined"
@@ -90,82 +90,13 @@ defineExpose({ 聚焦, 输入元素 })
 
 <style scoped>
 .chang-fang-kuang-ke {
-  --chang-fang-kuang-hou-du: var(--juxing-shuru-biankuang);
-  --chang-fang-kuang-yuan-jiao: var(--juxing-shuru-yuanjiao);
-  --chang-fang-kuang-hui-se: var(--bianKuang, var(--biankuang-yanse));
-  --chang-fang-kuang-bei-jing: var(--kaPian, var(--beijing-kaopian));
-  --chang-fang-kuang-wen-se: var(--moSe, var(--wenben-zhuse));
-  --chang-fang-kuang-zhan-wei-se: var(--huiSe, var(--wenben-ciuse));
-  --chang-fang-kuang-gao-liang-dan: var(--shuru-gao-liang-dan-nan);
-  --chang-fang-kuang-gao-liang-liang: var(--shuru-gao-liang-liang-nan);
-  --chang-fang-kuang-gao-liang-guang: var(--shuru-gao-liang-guang-nan);
-
   position: relative;
   display: block;
   flex: 1 1 0%;
   width: 100%;
   min-width: 0;
-  border-radius: var(--chang-fang-kuang-yuan-jiao);
-  overflow: hidden;
-  transition: box-shadow var(--shuru-gao-liang-shi-chang) var(--quxian-biao-zhun);
-}
-
-:root[data-xing-bie='nv'] .chang-fang-kuang-ke {
-  --chang-fang-kuang-gao-liang-dan: var(--shuru-gao-liang-dan-nv);
-  --chang-fang-kuang-gao-liang-liang: var(--shuru-gao-liang-liang-nv);
-  --chang-fang-kuang-gao-liang-guang: var(--shuru-gao-liang-guang-nv);
-}
-
-.chang-fang-kuang-ke::before,
-.chang-fang-kuang-ke::after {
-  content: '';
-  position: absolute;
-  z-index: 1;
-  pointer-events: none;
-  background-repeat: no-repeat;
-  transition-property: width, height;
-  transition-duration: var(--shuru-gao-liang-shi-chang);
-  transition-timing-function: var(--quxian-biao-zhun);
-}
-
-.chang-fang-kuang-ke::before {
-  left: 0;
-  bottom: 0;
-  width: 0;
-  height: var(--chang-fang-kuang-hou-du);
-  background-image: linear-gradient(
-    90deg,
-    transparent,
-    var(--chang-fang-kuang-gao-liang-dan) 45%,
-    var(--chang-fang-kuang-gao-liang-liang)
-  );
-}
-
-.chang-fang-kuang-ke::after {
-  right: 0;
-  bottom: 0;
-  width: var(--chang-fang-kuang-hou-du);
-  height: 0;
-  background-image: linear-gradient(
-    0deg,
-    transparent,
-    var(--chang-fang-kuang-gao-liang-dan) 45%,
-    var(--chang-fang-kuang-gao-liang-liang)
-  );
-}
-
-.chang-fang-kuang-ke:focus-within {
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--chang-fang-kuang-gao-liang-liang) 22%, transparent),
-    0 6px 18px var(--chang-fang-kuang-gao-liang-guang);
-}
-
-.chang-fang-kuang-ke:focus-within::before {
-  width: 100%;
-}
-
-.chang-fang-kuang-ke:focus-within::after {
-  height: 100%;
+  --chang-fang-kuang-wen-se: var(--moSe, var(--wenben-zhuse));
+  --chang-fang-kuang-zhan-wei-se: var(--huiSe, var(--wenben-ciuse));
 }
 
 .chang-fang-kuang-shuru {
@@ -173,10 +104,7 @@ defineExpose({ 聚焦, 输入元素 })
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  padding: var(--jiange-12) calc(var(--jiange-xiao) + var(--jiange-6));
-  border: var(--chang-fang-kuang-hou-du) solid var(--chang-fang-kuang-hui-se);
-  border-radius: var(--chang-fang-kuang-yuan-jiao);
-  background-color: var(--chang-fang-kuang-bei-jing);
+  padding: var(--jiange-12) var(--jiange-12);
   color: var(--chang-fang-kuang-wen-se);
   font-family: inherit;
   font-size: var(--ziti-zhong);
@@ -207,13 +135,5 @@ defineExpose({ 聚焦, 输入元素 })
   font-size: var(--ziti-xiao);
   line-height: 1.6;
   color: var(--cuowu-wenben);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .chang-fang-kuang-ke,
-  .chang-fang-kuang-ke::before,
-  .chang-fang-kuang-ke::after {
-    transition-duration: 0s;
-  }
 }
 </style>

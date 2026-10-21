@@ -89,9 +89,10 @@ describe('挑战页圆角与投影', () => {
     }
   })
 
-  it('投影只出现在性别弹层一处', () => {
+  it('投影只走令牌，唯一的字面投影留在性别弹层', () => {
     const 投影 = [...(挑战主页 + 挑战积分榜).matchAll(/box-shadow:\s*([^;{}]+);/g)].map((m) => m[1].trim())
-    expect(投影).toEqual(['0 24px 48px -24px rgba(0, 0, 0, 0.45)'])
+    const 字面投影 = 投影.filter((值) => !值.includes('var('))
+    expect(字面投影).toEqual(['0 24px 48px -24px rgba(0, 0, 0, 0.45)'])
   })
 })
 
@@ -169,5 +170,116 @@ describe('挑战页空态文案', () => {
     for (const 键 of 键组) {
       expect(原文, `缺少空态文案键 ${键}`).toContain(`'${键}'`)
     }
+  })
+})
+
+describe('挑战页共享滑动指示器', () => {
+  it.each([
+    ['挑战主页', 挑战主页, '.zu-zhishi', '.zu-anniu'],
+    ['挑战积分榜', 挑战积分榜, '.zubie-zhishi', '.zubie-anNiu'],
+  ])('%s 页签下方只有一条共用的滑动指示器', (_名称, 样式, 指示器, 页签) => {
+    const 位置 = 样式.indexOf(`${指示器} {`)
+    expect(位置, `缺少样式规则 ${指示器}`).toBeGreaterThan(-1)
+    const 块 = 样式.slice(位置, 样式.indexOf('}', 位置))
+    expect(块).toContain('transform: translateX(0)')
+    expect(块).toContain('transform var(--tz-zhi-shi-dong) var(--quxian-biao-zhun)')
+    expect(块).toContain('width var(--tz-zhi-shi-dong) var(--quxian-biao-zhun)')
+    expect(块).toContain('pointer-events: none')
+    expect(样式).toContain('--tz-zhi-shi-dong: 260ms')
+    expect(样式).not.toContain(`${页签}::after`)
+  })
+
+  it('两个页面都把指示器挂进分段容器，容器是定位基准', () => {
+    const 主页原文 = readFileSync(resolve(根, 'views', '挑战主页.vue'), 'utf8')
+    const 榜单原文 = readFileSync(resolve(根, 'views', '挑战积分榜.vue'), 'utf8')
+    expect(主页原文).toContain('class="zu-zhishi"')
+    expect(榜单原文).toContain('class="zubie-zhishi"')
+    expect(主页原文).toContain(":style=\"zuZhishiWeiZhi\"")
+    expect(榜单原文).toContain(":style=\"zuZhishiWeiZhi\"")
+    expect(挑战主页).toContain('position: relative')
+    expect(挑战积分榜).toContain('position: relative')
+  })
+})
+
+describe('挑战页内容切换不重建', () => {
+  it('挑战主页的加载/错误/空态/榜单四块常驻，只切 v-show', () => {
+    const 原文 = readFileSync(resolve(根, 'views', '挑战主页.vue'), 'utf8')
+    expect(原文).toContain('v-show="bangDanShouCiJiaZai"')
+    expect(原文).toContain('v-show="bangDanCuoWu"')
+    expect(原文).toContain('v-show="bangDanKong"')
+    expect(原文).toContain('v-show="bangDanYouHang"')
+    expect(原文).not.toContain('v-if="bangDanZaiZai"')
+    expect(原文).not.toContain('v-else-if="bangDanLieBiao.length === 0"')
+  })
+
+  it('挑战积分榜的加载/空态/榜单三块常驻，只切 v-show', () => {
+    const 原文 = readFileSync(resolve(根, 'views', '挑战积分榜.vue'), 'utf8')
+    expect(原文).toContain('v-show="shouCiJiaZai"')
+    expect(原文).toContain('v-show="bangDanKong"')
+    expect(原文).toContain('v-show="youHang"')
+    expect(原文).not.toContain('v-else-if="paiHangLieBiao.length > 0"')
+  })
+
+  it.each([
+    ['挑战主页', 挑战主页, '.zhaiyao-nei-rong'],
+    ['挑战积分榜', 挑战积分榜, '.bangdan-nei-rong'],
+  ])('%s 内容区用 180ms 淡入淡出加 4px 位移', (_名称, 样式, 容器) => {
+    const 位置 = 样式.indexOf(`${容器} {`)
+    expect(位置).toBeGreaterThan(-1)
+    const 块 = 样式.slice(位置, 样式.indexOf('}', 位置))
+    expect(块).toContain('display: grid')
+    expect(样式).toContain(`${容器} > * {`)
+    expect(样式).toContain('grid-area: 1 / 1')
+    expect(样式).toContain('--tz-dan-ru-dong: 180ms')
+    expect(样式).toMatch(/opacity var\(--tz-dan-ru-dong\) ease-out/)
+    expect(样式).toContain('transform: translateY(4px)')
+  })
+})
+
+describe('挑战页性别卡规则', () => {
+  it('选中态取淡填充与深边框令牌，不再用饱和填充', () => {
+    const 原文 = readFileSync(resolve(根, 'views', '挑战主页.vue'), 'utf8')
+    expect(原文).toContain('使用默认性别卡配色')
+    expect(原文).toContain("nan: 'var(--xingbie-nan-shen-biankuang)'")
+    expect(原文).toContain("nv: 'var(--xingbie-nv-shen-biankuang)'")
+    expect(原文).toContain(':data-dui="对象配色档"')
+    expect(原文).not.toContain('xuan-beijing')
+    expect(原文).not.toContain('使用性别框体配色')
+  })
+
+  it('选中环与悬停投影都走令牌，卡片过渡落在 200ms ease-out', () => {
+    expect(挑战主页).toContain(
+      ".xingbie-zu[data-dui='nan'] .xingbie-ka-pian[aria-checked='true'] {\n  box-shadow: 0 0 0 1px var(--xingbie-nan-shen-biankuang);",
+    )
+    expect(挑战主页).toContain(
+      ".xingbie-zu[data-dui='nv'] .xingbie-ka-pian[aria-checked='true'] {\n  box-shadow: 0 0 0 1px var(--xingbie-nv-shen-biankuang);",
+    )
+    expect(挑战主页).toContain('border-width: 2px')
+    expect(挑战主页).toContain('--tz-ka-dong: 200ms')
+    expect(挑战主页).toMatch(/box-shadow var\(--tz-ka-dong\) ease-out/)
+    expect(挑战主页).toMatch(/transform var\(--tz-ka-dong\) ease-out/)
+  })
+
+  it('性别弹层开启有动效，且不靠延迟移除来演离开', () => {
+    expect(挑战主页).toContain('animation: xingbie-zhe-zhao-ru var(--tz-dan-ru-dong) ease-out both')
+    expect(挑战主页).toContain('animation: xingbie-tan-chuang-ru 220ms var(--quxian-tan-chu) both')
+    expect(挑战主页).toContain('@keyframes xingbie-tan-chuang-ru')
+    const 原文 = readFileSync(resolve(根, 'views', '挑战主页.vue'), 'utf8')
+    expect(原文).toContain('v-if="xingBieXuanZeKeJian"')
+  })
+})
+
+describe('挑战页降级覆盖新增动效', () => {
+  it.each([
+    ['挑战主页', 挑战主页, ['.zu-zhishi', '.zhaiyao-nei-rong', '.xingbie-zhezhao', '.xingbie-tanchuang']],
+    ['挑战积分榜', 挑战积分榜, ['.zubie-zhishi', '.bangdan-nei-rong']],
+  ])('%s 的 reduced-motion 块包含新增动效类', (_名称, 样式, 类名组) => {
+    const 位置 = 样式.indexOf('@media (prefers-reduced-motion: reduce)')
+    expect(位置).toBeGreaterThan(-1)
+    const 块 = 样式.slice(位置)
+    for (const 类名 of 类名组) {
+      expect(块, `缺少 ${类名}`).toContain(类名)
+    }
+    expect(块).toContain('animation: none')
   })
 })

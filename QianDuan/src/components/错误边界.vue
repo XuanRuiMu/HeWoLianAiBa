@@ -2,18 +2,35 @@
   <div class="cuowu-bianjie">
     <slot v-if="!xianShiCuoWu" />
     <div v-else class="cuowu-tishi" role="alert" aria-live="assertive">
-      <div class="cuowu-toubu">
-        <span class="cuowu-tubiao" aria-hidden="true">⚠</span>
+      <span class="cuowu-tubiao-wei" aria-hidden="true">
+        <svg
+          class="cuowu-tubiao"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          focusable="false"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <line x1="12" y1="7.5" x2="12" y2="13" />
+          <line x1="12" y1="16.5" x2="12.01" y2="16.5" />
+        </svg>
+      </span>
+
+      <div class="cuowu-wen">
         <h2 class="cuowu-biaoti">
           {{ huoQuFanYi('tongYong', 'cuoWuBianJie') }}
         </h2>
+        <p class="cuowu-miaoshu">
+          {{ miaoShuWenAn || huoQuFanYi('tongYong', 'cuoWuBianJieTiShi') }}
+        </p>
+        <p v-if="caoGaoTiShi" class="cuowu-miaoshu" role="status">
+          {{ caoGaoTiShi }}
+        </p>
       </div>
-      <p class="cuowu-miaoshu">
-        {{ miaoShuWenAn || huoQuFanYi('tongYong', 'cuoWuBianJieTiShi') }}
-      </p>
-      <p v-if="caoGaoTiShi" class="cuowu-miaoshu" role="status">
-        {{ caoGaoTiShi }}
-      </p>
+
       <div class="cuowu-anniu-zu">
         <button class="shuaxin-anniu" type="button" @click="shuaXinYeMian">
           {{ huoQuFanYi('tongYong', 'cuoWuBianJieShuaXin') }}
@@ -40,8 +57,6 @@ interface CuoWuXinXi {
   shiJianChuo: number
 }
 
-// qiangZhiXianShi：由外部（路由失败页）直接借用本边界的失败态呈现，禁新造第二套错误 UI。
-// miaoShuWenAn：已翻译好的描述文案（调用方按错误类别选键），留空则用渲染异常的默认文案。
 const props = withDefaults(
   defineProps<{ qiangZhiXianShi?: boolean; miaoShuWenAn?: string }>(),
   { qiangZhiXianShi: false, miaoShuWenAn: '' },
@@ -122,131 +137,128 @@ defineExpose({
 }
 
 .cuowu-tishi {
+  --cuowu-tubiao-chicun: var(--jiange-da);
+  --cuowu-mian-zui-da-kuan: 480px;
+  --cuowu-mian-wen-kuan: 360px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: var(--jiange-zhong);
+  box-sizing: border-box;
+  max-width: var(--cuowu-mian-zui-da-kuan);
   min-height: 60vh;
-  padding: calc(var(--jiange-da) + var(--jiange-xiao)) var(--jiange-da);
-  text-align: center;
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(20, 24, 40, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 16px;
-  max-width: 480px;
   margin: var(--jiange-da) auto;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 3px 0 0 var(--cuowu-yanse);
+  padding: var(--jiange-da);
+  text-align: center;
+  color: var(--cuo-wu-zhengwen);
+  background: var(--cuo-wu-mian);
+  border: 1px solid var(--cuo-wu-bian);
+  border-left: 3px solid var(--cuo-wu-biaoti);
+  border-radius: var(--yuanjiao-da);
+  box-shadow: none;
 }
 
-.cuowu-toubu {
+.cuowu-tubiao-wei {
   display: flex;
   align-items: center;
-  gap: var(--jiange-12);
-  margin-bottom: var(--jiange-zhong);
+  justify-content: center;
+  width: var(--cuowu-tubiao-chicun);
+  height: var(--cuowu-tubiao-chicun);
+  color: var(--cuo-wu-biaoti);
 }
 
 .cuowu-tubiao {
-  font-size: 28px;
-  line-height: 1;
+  width: var(--cuowu-tubiao-chicun);
+  height: var(--cuowu-tubiao-chicun);
+}
+
+.cuowu-wen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jiange-xiao);
+  max-width: var(--cuowu-mian-wen-kuan);
 }
 
 .cuowu-biaoti {
-  font-size: 18px;
-  font-weight: 700;
   margin: 0;
-  color: #ffffff;
+  color: var(--cuo-wu-biaoti);
+  font-size: var(--ziti-da);
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .cuowu-miaoshu {
-  font-size: 14px;
+  margin: 0;
+  color: var(--cuo-wu-zhengwen);
+  font-size: var(--ziti-zhong);
   line-height: 1.6;
-  margin: 0 0 var(--jiange-da);
-  color: rgba(255, 255, 255, 0.7);
 }
 
 .cuowu-anniu-zu {
   display: flex;
-  gap: var(--jiange-12);
   flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
+  gap: var(--jiange-xiao);
 }
 
 .shuaxin-anniu,
 .chongzhi-anniu {
-  padding: var(--jiange-10) calc(var(--jiange-zhong) + var(--jiange-6));
-  border-radius: 10px;
-  font-size: 14px;
+  min-height: var(--shuru-anniu-re-ku);
+  padding: var(--jiange-xiao) var(--jiange-da);
+  border-radius: var(--yuanjiao-xiao);
+  font: inherit;
+  font-size: var(--ziti-zhong);
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
+  transition:
+    background var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun),
+    border-color var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun);
 }
 
 .shuaxin-anniu {
-  background: linear-gradient(135deg, var(--nuanhui-lan), var(--roufen-zi));
-  color: #ffffff;
-}
-
-.shuaxin-anniu:hover {
-  box-shadow: 0 4px 16px rgba(107, 140, 166, 0.3);
-  transform: translateY(-1px);
+  border: 1px solid var(--cuo-wu-bian);
+  background: var(--beijing-kaopian);
+  color: var(--cuo-wu-zhengwen);
 }
 
 .chongzhi-anniu {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--biankuang-yanse);
+  background: transparent;
+  color: var(--cuo-wu-zhengwen);
+  font-weight: 500;
 }
 
+.shuaxin-anniu:hover,
 .chongzhi-anniu:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--cuo-wu-dian);
+  border-color: var(--cuo-wu-bian);
 }
 
-:root[data-theme='light'] .cuowu-tishi {
-  color: rgba(0, 0, 0, 0.75);
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(0, 0, 0, 0.08);
-}
-
-:root[data-theme='light'] .cuowu-biaoti {
-  color: #1a1a2e;
-}
-
-:root[data-theme='light'] .cuowu-miaoshu {
-  color: rgba(0, 0, 0, 0.6);
-}
-
-:root[data-theme='light'] .chongzhi-anniu {
-  background: rgba(0, 0, 0, 0.04);
-  color: rgba(0, 0, 0, 0.7);
-  border-color: rgba(0, 0, 0, 0.1);
-}
-
-:root[data-theme='light'] .chongzhi-anniu:hover {
-  background: rgba(0, 0, 0, 0.08);
+.shuaxin-anniu:focus-visible,
+.chongzhi-anniu:focus-visible {
+  outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
+  outline-offset: var(--jujiao-huan-pian-yi);
 }
 
 @media (max-width: 767px) {
   .cuowu-tishi {
     min-height: 50vh;
-    padding: var(--jiange-da) var(--jiange-zhong);
+    padding: var(--jiange-zhong);
     margin: var(--jiange-zhong);
-  }
-
-  .cuowu-tubiao {
-    font-size: 24px;
-  }
-
-  .cuowu-biaoti {
-    font-size: 16px;
   }
 
   .shuaxin-anniu,
   .chongzhi-anniu {
-    padding: var(--jiange-9) calc(var(--jiange-zhong) + var(--jiange-2));
-    font-size: 13px;
+    padding: var(--jiange-xiao) var(--jiange-12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shuaxin-anniu,
+  .chongzhi-anniu {
+    transition: none;
   }
 }
 </style>

@@ -681,7 +681,6 @@ onUnmounted(() => {
 
 .cuowu-tishi {
   width: 100%;
-  text-align: center;
 }
 
 .yi-zhidao-tishi {

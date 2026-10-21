@@ -36,7 +36,18 @@
       </dl>
     </header>
 
-    <div class="zubie-qiehuan" role="group" :aria-label="huoQuFanYi('tiaoZhan', 'xuanZeZuBie')">
+    <div
+      ref="zuQieKuang"
+      class="zubie-qiehuan"
+      role="group"
+      :aria-label="huoQuFanYi('tiaoZhan', 'xuanZeZuBie')"
+    >
+      <span
+        class="zubie-zhishi"
+        aria-hidden="true"
+        :data-liang-zhun="zuZhishiLiangZhun ? 'true' : 'false'"
+        :style="zuZhishiWeiZhi"
+      />
       <button
         v-for="zuBie in zuBieLieBiao"
         :key="zuBie"
@@ -73,68 +84,76 @@
         @chong-shi="chongShi"
       />
 
-      <div v-if="jiaZaiZhong" class="bangdan-zai" role="status">
-        <span class="ping-mu-wai">{{ huoQuFanYi('tiaoZhan', 'jiaZaiZhong') }}</span>
-        <div v-for="序 in 5" :key="序" class="bangdan-zhanwei" aria-hidden="true">
-          <span class="zhanwei-kuai zhanwei-kuai--pai" />
-          <span class="zhanwei-kuai zhanwei-kuai--ming" />
-          <span class="zhanwei-kuai zhanwei-kuai--duan" />
-          <span class="zhanwei-kuai zhanwei-kuai--ji" />
-          <span class="zhanwei-kuai zhanwei-kuai--fen" />
-        </div>
-      </div>
+      <div class="bangdan-nei-rong" :data-qie-huan="qieHuanZhong ? 'true' : 'false'">
+        <Transition name="bangdan-dan-ru">
+          <div v-show="shouCiJiaZai" class="bangdan-zai bangdan-nei--die" role="status">
+            <span class="ping-mu-wai">{{ huoQuFanYi('tiaoZhan', 'jiaZaiZhong') }}</span>
+            <div v-for="序 in 5" :key="序" class="bangdan-zhanwei" aria-hidden="true">
+              <span class="zhanwei-kuai zhanwei-kuai--pai" />
+              <span class="zhanwei-kuai zhanwei-kuai--ming" />
+              <span class="zhanwei-kuai zhanwei-kuai--duan" />
+              <span class="zhanwei-kuai zhanwei-kuai--ji" />
+              <span class="zhanwei-kuai zhanwei-kuai--fen" />
+            </div>
+          </div>
+        </Transition>
 
-      <div v-else-if="bangDanKong" class="bangdan-kong">
-        <span class="kong-tubiao" aria-hidden="true">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.6"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M8 4h8v3.5a4 4 0 0 1-8 0z" />
-            <path d="M8 5H5.5A2.5 2.5 0 0 0 8 9.5" />
-            <path d="M16 5h2.5A2.5 2.5 0 0 1 16 9.5" />
-            <path d="M12 11.5V15" />
-            <path d="M9.5 20h5" />
-            <path d="M10 15h4l1 5h-6z" />
-          </svg>
-        </span>
-        <p class="kong-biaoti">{{ huoQuFanYi('tiaoZhan', 'zanWuPaiHang') }}</p>
-        <p class="kong-fu">{{ huoQuFanYi('tiaoZhan', 'bangDanKongFu') }}</p>
-        <button class="kong-anniu" type="button" @click="fanHui">
-          {{ huoQuFanYi('tiaoZhan', 'quTiaoZhan') }}
-        </button>
-      </div>
+        <Transition name="bangdan-dan-ru">
+          <div v-show="bangDanKong" class="bangdan-kong bangdan-nei--die">
+            <span class="kong-tubiao" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M8 4h8v3.5a4 4 0 0 1-8 0z" />
+                <path d="M8 5H5.5A2.5 2.5 0 0 0 8 9.5" />
+                <path d="M16 5h2.5A2.5 2.5 0 0 1 16 9.5" />
+                <path d="M12 11.5V15" />
+                <path d="M9.5 20h5" />
+                <path d="M10 15h4l1 5h-6z" />
+              </svg>
+            </span>
+            <p class="kong-biaoti">{{ huoQuFanYi('tiaoZhan', 'zanWuPaiHang') }}</p>
+            <p class="kong-fu">{{ huoQuFanYi('tiaoZhan', 'bangDanKongFu') }}</p>
+            <button class="kong-anniu" type="button" @click="fanHui">
+              {{ huoQuFanYi('tiaoZhan', 'quTiaoZhan') }}
+            </button>
+          </div>
+        </Transition>
 
-      <ol v-else-if="paiHangLieBiao.length > 0" class="bangdan-liebiao">
-        <li
-          v-for="(xiangMu, suoYin) in paiHangLieBiao"
-          :key="xiangMu.yong_hu_ming + suoYin"
-          class="bangdan-hang"
-          :class="{ 'bangdan-hang--qian': xiangMu.pai_ming <= 3 }"
-        >
-          <span class="paiming-shu">{{ xiangMu.pai_ming }}</span>
-          <span class="wanjia-ming">{{ xiangMu.yong_hu_ming }}</span>
-          <span class="bangdan-xinxi">
-            <span class="duanwei-ming">{{ xiangMu.duan_wei }}</span>
-            <span class="zhanji-wen">{{ zhanJiWenBen(xiangMu) }}</span>
-          </span>
-          <span class="jifen-zhi">
-            {{ xiangMu.ji_fen }}<span class="jifen-danwei">{{
-              huoQuFanYi('tiaoZhan', 'fenDanWei')
-            }}</span>
-          </span>
-        </li>
-      </ol>
+        <Transition name="bangdan-dan-ru">
+          <ol v-show="youHang" class="bangdan-liebiao bangdan-nei--die">
+            <li
+              v-for="(xiangMu, suoYin) in paiHangLieBiao"
+              :key="suoYin"
+              class="bangdan-hang"
+              :class="{ 'bangdan-hang--qian': xiangMu.pai_ming <= 3 }"
+            >
+              <span class="paiming-shu">{{ xiangMu.pai_ming }}</span>
+              <span class="wanjia-ming">{{ xiangMu.yong_hu_ming }}</span>
+              <span class="bangdan-xinxi">
+                <span class="duanwei-ming">{{ xiangMu.duan_wei }}</span>
+                <span class="zhanji-wen">{{ zhanJiWenBen(xiangMu) }}</span>
+              </span>
+              <span class="jifen-zhi">
+                {{ xiangMu.ji_fen }}<span class="jifen-danwei">{{
+                  huoQuFanYi('tiaoZhan', 'fenDanWei')
+                }}</span>
+              </span>
+            </li>
+          </ol>
+        </Transition>
+      </div>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type CSSProperties } from 'vue'
 import { useRouter } from 'vue-router'
 import { huoQuPaiHangBang, type PaiHangXiangMu, type ZuBie } from '@/api/挑战'
 import { huoQuFanYi } from '@/config/翻译表'
@@ -147,7 +166,13 @@ const zuBieLieBiao: ZuBie[] = ['nan_nv', 'nv_nan', 'nan_nan', 'nv_nv']
 const dangQianZuBie = ref<ZuBie>('nan_nv')
 const paiHangLieBiao = ref<PaiHangXiangMu[]>([])
 const yiJiaZai = ref(false)
+const qieHuanZhong = ref(false)
 let paiHangDaiCi = 0
+
+const zuQieKuang = ref<HTMLElement | null>(null)
+const zuZhishiLiangZhun = ref(false)
+const zuZhishiWeiZhi = ref<CSSProperties>({ width: '0px', transform: 'translateX(0px)' })
+let 尺寸观察: ResizeObserver | null = null
 
 const {
   cuoWu: qianTaiCuoWu,
@@ -164,8 +189,14 @@ const jiaZaiZhong = computed(
 
 const shangBangRenShu = computed(() => paiHangLieBiao.value.length)
 
+const shouCiJiaZai = computed(
+  () => !yiJiaZai.value && qianTaiZhuangTai.value !== 'error',
+)
+
+const youHang = computed(() => paiHangLieBiao.value.length > 0)
+
 const bangDanKong = computed(
-  () => !jiaZaiZhong.value && !qianTaiCuoWu.value && paiHangLieBiao.value.length === 0,
+  () => !shouCiJiaZai.value && !qianTaiCuoWu.value && paiHangLieBiao.value.length === 0,
 )
 
 const zuiGaoFen = computed<number | null>(() => {
@@ -206,7 +237,7 @@ function zhanJiWenBen(xiangMu: PaiHangXiangMu): string {
 async function jiaZaiPaiHang() {
   const benCiZuBie = dangQianZuBie.value
   const benCiDaiCi = ++paiHangDaiCi
-  yiJiaZai.value = false
+  qieHuanZhong.value = yiJiaZai.value
   const jieGuo = await yunXing(async () => huoQuPaiHangBang(benCiZuBie), {
     chongShi: jiaZaiPaiHang,
   })
@@ -214,12 +245,25 @@ async function jiaZaiPaiHang() {
     paiHangLieBiao.value = jieGuo
     yiJiaZai.value = true
   }
+  if (benCiDaiCi === paiHangDaiCi) qieHuanZhong.value = false
+}
+
+function 量ZuZhishi() {
+  const 容器 = zuQieKuang.value
+  if (!容器) return
+  const 按钮 = [...容器.querySelectorAll<HTMLElement>('.zubie-anNiu')].find(
+    (项) => 项.getAttribute('aria-pressed') === 'true',
+  )
+  if (!按钮) return
+  zuZhishiWeiZhi.value = {
+    width: `${按钮.offsetWidth}px`,
+    transform: `translateX(${按钮.offsetLeft}px)`,
+  }
 }
 
 function qieHuanZuBie(zuBie: ZuBie) {
   if (dangQianZuBie.value === zuBie) return
   dangQianZuBie.value = zuBie
-  paiHangLieBiao.value = []
   void jiaZaiPaiHang()
 }
 
@@ -227,7 +271,26 @@ function fanHui() {
   router.push('/tiao-zhan')
 }
 
-onMounted(jiaZaiPaiHang)
+watch(dangQianZuBie, () => {
+  void nextTick(量ZuZhishi)
+})
+
+onMounted(async () => {
+  量ZuZhishi()
+  requestAnimationFrame(() => {
+    zuZhishiLiangZhun.value = true
+  })
+  if (typeof ResizeObserver !== 'undefined' && zuQieKuang.value) {
+    尺寸观察 = new ResizeObserver(量ZuZhishi)
+    尺寸观察.observe(zuQieKuang.value)
+  }
+  await jiaZaiPaiHang()
+})
+
+onBeforeUnmount(() => {
+  尺寸观察?.disconnect()
+  尺寸观察 = null
+})
 </script>
 
 
@@ -250,6 +313,9 @@ onMounted(jiaZaiPaiHang)
   --tz-kuan: calc(var(--jiange-da) * 42);
   --tz-re-ku: 44px;
   --tz-dong: var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun);
+  --tz-zhi-shi-dong: 260ms;
+  --tz-dan-ru-dong: 180ms;
+  --tz-ka-dong: 200ms;
   width: 100%;
   max-width: var(--tz-kuan);
   margin: 0 auto;
@@ -366,10 +432,29 @@ onMounted(jiaZaiPaiHang)
 }
 
 .zubie-qiehuan {
+  position: relative;
   display: flex;
   align-items: stretch;
   gap: var(--jiange-zhong);
   border-bottom: 1px solid var(--tz-xian-ruo);
+}
+
+.zubie-zhishi {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  border-radius: var(--yuanjiao-xiao);
+  background: var(--tz-jin);
+  transform: translateX(0);
+  transition:
+    transform var(--tz-zhi-shi-dong) var(--quxian-biao-zhun),
+    width var(--tz-zhi-shi-dong) var(--quxian-biao-zhun);
+  pointer-events: none;
+}
+
+.zubie-zhishi[data-liang-zhun='false'] {
+  transition: none;
 }
 
 .zubie-anNiu {
@@ -385,30 +470,19 @@ onMounted(jiaZaiPaiHang)
   font-size: var(--tz-zi-zheng);
   font-weight: 400;
   line-height: 1.4;
-  transition: color var(--tz-dong);
-}
-
-.zubie-anNiu::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  bottom: -1px;
-  left: 0;
-  height: 2px;
-  background: transparent;
+  transition:
+    color var(--tz-ka-dong) ease-out,
+    transform var(--tz-ka-dong) ease-out;
 }
 
 .zubie-anNiu:hover:not(:disabled) {
   color: var(--tz-wen);
+  transform: translateY(-1px);
 }
 
 .zubie-anNiu[aria-pressed='true'] {
   color: var(--tz-wen);
   font-weight: 600;
-}
-
-.zubie-anNiu[aria-pressed='true']::after {
-  background: var(--tz-jin);
 }
 
 .zubie-dian {
@@ -441,6 +515,35 @@ onMounted(jiaZaiPaiHang)
 
 .bangdan-qu {
   gap: 0;
+}
+
+.bangdan-nei-rong {
+  display: grid;
+  transition:
+    opacity var(--tz-dan-ru-dong) ease-out,
+    transform var(--tz-dan-ru-dong) ease-out;
+}
+
+.bangdan-nei-rong > * {
+  grid-area: 1 / 1;
+}
+
+.bangdan-nei-rong[data-qie-huan='true'] {
+  opacity: 0.5;
+  transform: translateY(4px);
+}
+
+.bangdan-dan-ru-enter-active,
+.bangdan-dan-ru-leave-active {
+  transition:
+    opacity var(--tz-dan-ru-dong) ease-out,
+    transform var(--tz-dan-ru-dong) ease-out;
+}
+
+.bangdan-dan-ru-enter-from,
+.bangdan-dan-ru-leave-to {
+  opacity: 0;
+  transform: translateY(4px);
 }
 
 .bangdan-tou,
@@ -735,8 +838,12 @@ onMounted(jiaZaiPaiHang)
 @media (prefers-reduced-motion: reduce) {
   .fanhui-lianjie,
   .zubie-anNiu,
-  .kong-anniu {
+  .zubie-zhishi,
+  .kong-anniu,
+  .bangdan-nei-rong,
+  .bangdan-nei-rong > * {
     transition: none;
+    animation: none;
   }
 }
 </style>

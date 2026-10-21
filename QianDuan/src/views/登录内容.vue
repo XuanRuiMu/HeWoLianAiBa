@@ -1965,7 +1965,7 @@ async function zhiXingZhuCe() {
 .wangji-mima-lianjie {
   background: none;
   border: none;
-  padding: 0 var(--jiange-2);
+  padding: 0;
   display: inline-flex;
   align-items: center;
   min-height: var(--shuru-anniu-re-ku);
@@ -1978,6 +1978,12 @@ async function zhiXingZhuCe() {
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
   transition: color 0.2s var(--quxian-biao-zhun);
+}
+
+.ji-zhu-hang-2 .wangji-mima-lianjie {
+  align-self: center;
+  flex: none;
+  white-space: nowrap;
 }
 
 .wangji-mima-lianjie:hover {
@@ -1998,8 +2004,8 @@ async function zhiXingZhuCe() {
   flex-direction: column;
   align-items: stretch;
   gap: var(--jiange-xiao);
-  margin: 0 0 var(--jiange-da);
-  padding: 0;
+  margin: calc((var(--ziti-xiao) - var(--shuru-anniu-re-ku)) / 2 - var(--jiange-4)) 0 var(--jiange-4);
+  padding: 0 var(--jiange-2);
 }
 
 .ji-zhu-hang-1,
@@ -2010,6 +2016,16 @@ async function zhiXingZhuCe() {
   flex-wrap: nowrap;
 }
 
+.ji-zhu-hang-1::before,
+.ji-zhu-hang-1::after,
+.ji-zhu-hang-2::before,
+.ji-zhu-hang-2::after {
+  content: '';
+  flex: none;
+  width: 0;
+  height: 0;
+}
+
 .ji-zhu-hang-1 .ji-zhu-xuan-ze,
 .ji-zhu-hang-2 .ji-zhu-xuan-ze {
   flex: none;
@@ -2017,7 +2033,7 @@ async function zhiXingZhuCe() {
 }
 
 .ji-zhu-xuan-ze {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   min-height: var(--shuru-anniu-re-ku);
   color: var(--ka-san-wen);
@@ -2079,7 +2095,7 @@ async function zhiXingZhuCe() {
 .ji-zhu-wen-ben.yi-gou-xuan::after {
   content: '';
   position: absolute;
-  left: 50%;
+  left: calc(var(--gou-xuan-chi-cun) / 2);
   top: 50%;
   width: 4px;
   height: 8px;

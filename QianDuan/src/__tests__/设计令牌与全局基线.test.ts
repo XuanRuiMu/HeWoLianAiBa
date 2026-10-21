@@ -110,9 +110,8 @@ describe('FP-01 设计令牌成对与取值', () => {
     expect(quZhi('dark', 'yemian-di-beijing')).toBe('rgba(41, 41, 41, 0.6)')
     expect(quZhi('light', 'xingbie-nan-1')).toBe('#3282F6')
     expect(quZhi('light', 'xingbie-nan-2')).toBe('#0023F5')
-    // FP-ZJ3 用户裁定四色：浅女 -1 取亮粉 #EA3FF7（白字 3.20:1，大字 3:1 守门）；-2 取同系 #E84AEF（白字 3.15:1）
-    expect(quZhi('light', 'xingbie-nv-1')).toBe('#EA3FF7')
-    expect(quZhi('light', 'xingbie-nv-2')).toBe('#E84AEF')
+    expect(quZhi('light', 'xingbie-nv-1')).toBe('#FF7FBF')
+    expect(quZhi('light', 'xingbie-nv-2')).toBe('#F45FA8')
     expect(quZhi('light', 'xingbie-zhongxing-1')).toBe('#8e8e93')
     expect(quZhi('light', 'xingbie-zhongxing-2')).toBe('#636366')
     for (const zhuTi of ['light', 'dark'] as const) {
