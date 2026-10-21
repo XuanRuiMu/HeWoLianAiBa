@@ -15,9 +15,13 @@
             role="radio"
             :aria-checked="shiXuanZhongYuShe(zu.jian, yuShe)"
             :style="xuanXiangYangShi(yuShe)"
+            :title="shuangJiBianJiWenAn"
             @click="xuanZeYuShe(zu.jian, yuShe)"
+            @dblclick.stop="daKaiYuSheBianJi(yuShe)"
           >
-            <span class="qi-pao-xuan-xiang-wen">{{ huoQuQiPaoMingCheng(yuShe) }}</span>
+            <span class="qi-pao-xuan-xiang-wen" @dblclick.stop="daKaiYuSheBianJi(yuShe)">{{
+              sheZhi.quQiPaoYuSheMing(yuShe)
+            }}</span>
             <span v-if="shiXuanZhongYuShe(zu.jian, yuShe)" class="qi-pao-gou" aria-hidden="true">✓</span>
           </button>
         </div>
@@ -74,6 +78,21 @@
           </button>
         </div>
       </section>
+    </div>
+
+    <div v-if="预设编辑中" class="qi-pao-bian-ji-wei">
+      <WaiGuanJiuDiBianJi
+        :biao-ti="bianJiBiaoTi"
+        :ming-cheng="预设编辑中.mingCheng"
+        :wen-zi-yan-se="预设编辑中.wenZiYanSe"
+        :zui-da-zi-fu="WAI_GUAN_QI_PAO_MING_CHENG_ZUI_DA_ZI_FU"
+        lei-bie="qiPao"
+        :cuo-wu-wen-an="预设编辑错误"
+        :cao-zuo-zhong="预设保存中"
+        @tijiao="baoChunYuSheBianJi"
+        @huan-yuan="huanYuanYuSheBianJi"
+        @qu-xiao="guanBiYuSheBianJi"
+      />
     </div>
 
     <div v-if="bianJiZhong" class="qi-pao-bian-ji-wei">
@@ -196,7 +215,7 @@ const shanChuMiaoShu = computed(() =>
 
 function xuanXiangYangShi(yuShe: QiPaoYuShe): Record<string, string> {
   const dingYi = huoQuQiPaoDingYi(yuShe)
-  return { background: dingYi.beiJing, color: dingYi.wenBen }
+  return { background: dingYi.beiJing, color: sheZhi.quQiPaoYuSheYanSe(yuShe) || dingYi.wenBen }
 }
 
 function ziDingYiYangShi(tiaoMu: WaiGuanTiaoMu): Record<string, string> {
@@ -237,6 +256,58 @@ async function xuanZeZiDingYi(buWei: 'ziJi' | 'ai', id: string): Promise<void> {
   } catch (cuoWu: unknown) {
     tiShiShiBai.value = true
     tiShiWenAn.value = quCuoWuWenBen(cuoWu)
+  }
+}
+
+const 预设编辑中 = ref<{ yuShe: QiPaoYuShe; mingCheng: string; wenZiYanSe: string } | null>(null)
+const 预设编辑错误 = ref('')
+const 预设保存中 = ref(false)
+
+function daKaiYuSheBianJi(yuShe: QiPaoYuShe): void {
+  if (预设保存中.value) return
+  预设编辑中.value = {
+    yuShe,
+    mingCheng: sheZhi.quQiPaoYuSheMing(yuShe),
+    wenZiYanSe: sheZhi.quQiPaoYuSheYanSe(yuShe) || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
+  }
+  预设编辑错误.value = ''
+  qingChuTiShi()
+}
+
+function guanBiYuSheBianJi(): void {
+  预设编辑中.value = null
+  预设编辑错误.value = ''
+}
+
+async function baoChunYuSheBianJi(zhi: { mingCheng: string; wenZiYanSe: string }): Promise<void> {
+  if (!预设编辑中.value) return
+  预设保存中.value = true
+  预设编辑错误.value = ''
+  try {
+    await sheZhi.gengXinQiPaoYuShe(预设编辑中.value.yuShe, zhi)
+    guanBiYuSheBianJi()
+    tiShiShiBai.value = false
+    tiShiWenAn.value = 保存成功文案
+  } catch (cuoWu: unknown) {
+    预设编辑错误.value = quCuoWuWenBen(cuoWu)
+  } finally {
+    预设保存中.value = false
+  }
+}
+
+async function huanYuanYuSheBianJi(): Promise<void> {
+  if (!预设编辑中.value) return
+  预设保存中.value = true
+  预设编辑错误.value = ''
+  try {
+    await sheZhi.huanYuanWaiGuanXiang('qiPao', { jian: 预设编辑中.value.yuShe, leiXing: 'yuShe' })
+    guanBiYuSheBianJi()
+    tiShiShiBai.value = false
+    tiShiWenAn.value = 还原成功文案
+  } catch (cuoWu: unknown) {
+    预设编辑错误.value = quCuoWuWenBen(cuoWu)
+  } finally {
+    预设保存中.value = false
   }
 }
 

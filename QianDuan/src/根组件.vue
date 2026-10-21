@@ -204,15 +204,26 @@ function chuLiGuangBiaoYiDong(e: PointerEvent) {
   zhuRuCaoDiGuangBiao()
 }
 
+function chuLiChuMoYiDong(e: TouchEvent) {
+  const dian = e.touches && e.touches[0]
+  if (!dian) return
+  shangCiGuangBiao.x = dian.clientX
+  shangCiGuangBiao.y = dian.clientY
+  zhuRuCaoDiGuangBiao()
+}
+
 const luoPanZhiZhen = { x: 0, y: 0 }
 const LUO_PAN_MAN_LIANG = 10
 let luoPanJiZhun: { beta: number; gamma: number } | null = null
 let luoPanYiTing = false
 let luoPanYiQingQiu = false
+let luoPanYiZhuCe = false
 
 function shiFouChuMo(): boolean {
   if (typeof window === 'undefined') return false
-  return window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window
+  if ('ontouchstart' in window) return true
+  if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
 }
 
 function shouXian(zhi: number): number {
@@ -221,6 +232,7 @@ function shouXian(zhi: number): number {
 }
 
 function chuLiLuoPan(e: DeviceOrientationEvent) {
+  if (!shiFouChuMo()) return
   const beta = e.beta
   const gamma = e.gamma
   if (beta === null || gamma === null) return
@@ -231,19 +243,25 @@ function chuLiLuoPan(e: DeviceOrientationEvent) {
   zhuRuCaoDiGuangBiao()
 }
 
-async function qiDongLuoPan() {
-  if (luoPanYiQingQiu || !shiFouChuMo()) return
-  luoPanYiQingQiu = true
-  const lei = window.DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> } | undefined
-  if (lei && typeof lei.requestPermission === 'function') {
-    try {
-      if ((await lei.requestPermission()) !== 'granted') return
-    } catch {
-      return
-    }
-  }
+function zhuCeLuoPan() {
+  if (luoPanYiZhuCe) return
+  luoPanYiZhuCe = true
   window.addEventListener('deviceorientation', chuLiLuoPan, { passive: true })
-  luoPanJiZhun = null
+}
+async function qiDongLuoPan() {
+  zhuCeLuoPan()
+  if (luoPanYiQingQiu) return
+  const lei = window.DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> } | undefined
+  if (!lei || typeof lei.requestPermission !== 'function') return
+  luoPanYiQingQiu = true
+  try {
+    const jg = await lei.requestPermission()
+    if (jg === 'granted') { luoPanYiZhuCe = true; luoPanJiZhun = null }
+  } catch {
+    return
+  } finally {
+    luoPanYiQingQiu = false
+  }
 }
 
 function chuLiYeMianKeJian() {
@@ -513,9 +531,10 @@ onMounted(() => {
   }
   // 父帧把鼠标坐标注入 iframe 内部，复刻原网页 document/canvas pointermove 输入链路
   window.addEventListener('pointermove', chuLiGuangBiaoYiDong, { passive: true })
+  window.addEventListener('touchmove', chuLiChuMoYiDong, { passive: true })
   window.addEventListener('pointerdown', qiDongLuoPan, { passive: true })
   document.addEventListener('visibilitychange', chuLiYeMianKeJian)
-  if (shiFouChuMo()) void qiDongLuoPan()
+  void qiDongLuoPan()
   window.addEventListener('message', chuLiBeiJingXiaoXi)
   // 应用挂载完成后，先等父帧三维库预热有结论、再等主线程空闲，才加载草地背景（独立、静默、不阻塞交互）
   void qiDongBeiJingJiaZai()
@@ -527,6 +546,7 @@ onBeforeUnmount(() => {
     window.visualViewport.removeEventListener('scroll', gengXinShiJiaoKouGaoDu)
   }
   window.removeEventListener('pointermove', chuLiGuangBiaoYiDong)
+  window.removeEventListener('touchmove', chuLiChuMoYiDong)
   window.removeEventListener('pointerdown', qiDongLuoPan)
   window.removeEventListener('deviceorientation', chuLiLuoPan)
   document.removeEventListener('visibilitychange', chuLiYeMianKeJian)

@@ -21,6 +21,7 @@ import {
   type QiPaoYuShe,
 } from '@/config/气泡主题'
 import { huoQuFanYi } from '@/config/翻译表'
+import { huoQuQiPaoMingCheng } from '@/config/气泡主题文案'
 import { 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
 import { baoCunShuJu, duQuShuJu } from '@/utils/本地存储'
 import { TuPianChiCunCuoWu, yaSuoTuPiang } from '@/utils/图片压缩'
@@ -308,6 +309,10 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
       for (const fuGai of Object.values(waiGuan.value.beiJingFuGai)) {
         if (fuGai?.mingCheng) mingCheng.push(fuGai.mingCheng)
       }
+    } else {
+      for (const fuGai of Object.values(waiGuan.value.qiPaoFuGai)) {
+        if (fuGai?.mingCheng) mingCheng.push(fuGai.mingCheng)
+      }
     }
     return mingCheng
   }
@@ -404,6 +409,35 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     })
   }
 
+  function quQiPaoYuSheMing(jian: string): string {
+    const fuGai = waiGuan.value.qiPaoFuGai[jian]
+    if (fuGai && fuGai.mingCheng) return fuGai.mingCheng
+    return huoQuQiPaoMingCheng(jian as QiPaoYuShe)
+  }
+
+  function quQiPaoYuSheYanSe(jian: string): string {
+    return waiGuan.value.qiPaoFuGai[jian]?.wenZiYanSe || ''
+  }
+
+  async function gengXinQiPaoYuShe(
+    jian: string,
+    buFen: { mingCheng: string; wenZiYanSe: string },
+  ): Promise<void> {
+    const xiaYiBu = {
+      mingCheng: yanZhengWaiGuanMing(buFen.mingCheng, WAI_GUAN_QI_PAO_MING_CHENG_ZUI_DA_ZI_FU),
+      wenZiYanSe: yanZhengWaiGuanYanSe(buFen.wenZiYanSe, 'qiPao'),
+    }
+    await zhiXingWaiGuanXiuGai((caoAn) => {
+      caoAn.qiPaoFuGai[jian] = xiaYiBu
+    })
+  }
+
+  async function huanYuanQiPaoYuShe(jian: string): Promise<void> {
+    await zhiXingWaiGuanXiuGai((caoAn) => {
+      delete caoAn.qiPaoFuGai[jian]
+    })
+  }
+
   async function huanYuanBeiJingYuShe(jian: string): Promise<void> {
     await zhiXingWaiGuanXiuGai((caoAn) => {
       delete caoAn.beiJingFuGai[jian]
@@ -416,6 +450,10 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
   ): Promise<void> {
     if (leiBie === 'beiJing' && xiangMu.leiXing === 'yuShe') {
       await huanYuanBeiJingYuShe(xiangMu.jian)
+      return
+    }
+    if (leiBie === 'qiPao' && xiangMu.leiXing === 'yuShe') {
+      await huanYuanQiPaoYuShe(xiangMu.jian)
       return
     }
     await huanYuanWaiGuan(leiBie, xiangMu.jian)
@@ -611,6 +649,10 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     gengXinBeiJingYuShe,
     huanYuanBeiJingYuShe,
     huanYuanWaiGuanXiang,
+    quQiPaoYuSheMing,
+    quQiPaoYuSheYanSe,
+    gengXinQiPaoYuShe,
+    huanYuanQiPaoYuShe,
     shangChuanWaiGuan,
     gengXinWaiGuanTiaoMu,
     huanYuanWaiGuan,

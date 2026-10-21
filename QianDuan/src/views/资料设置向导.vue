@@ -749,7 +749,7 @@ async function kaiShiLiaoTian() {
 .xingBie-mingCheng {
   font-size: 17px;
   font-weight: 700;
-  color: inherit;
+  color: var(--kapian-shuoming-wenben);
   letter-spacing: 0.2em;
   text-indent: 0.2em;
 }
@@ -848,7 +848,7 @@ async function kaiShiLiaoTian() {
 
 .mbti-miaoShu {
   font-size: 9px;
-  color: inherit;
+  color: var(--kapian-shuoming-wenben);
   line-height: 1.3;
   overflow: hidden;
   display: -webkit-box;

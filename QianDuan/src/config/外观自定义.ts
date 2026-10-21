@@ -86,6 +86,7 @@ export interface WaiGuanShuJu {
   beiJing: WaiGuanTiaoMu[]
   qiPao: WaiGuanTiaoMu[]
   beiJingFuGai: Record<string, WaiGuanFuGai>
+  qiPaoFuGai: Record<string, WaiGuanFuGai>
   dangQianQiPao: WaiGuanDangQianQiPao
 }
 
@@ -100,11 +101,12 @@ export interface WaiGuanChuCan {
   bei_jing: WaiGuanChuCanTiaoMu[]
   qi_pao: WaiGuanChuCanTiaoMu[]
   bei_jing_fu_gai: Record<string, WaiGuanFuGai>
+  qi_pao_fu_gai: Record<string, WaiGuanFuGai>
   dang_qian_qi_pao: WaiGuanDangQianQiPao
 }
 
 export function kongWaiGuanShuJu(): WaiGuanShuJu {
-  return { beiJing: [], qiPao: [], beiJingFuGai: {}, dangQianQiPao: { ziJi: '', ai: '' } }
+  return { beiJing: [], qiPao: [], beiJingFuGai: {}, qiPaoFuGai: {}, dangQianQiPao: { ziJi: '', ai: '' } }
 }
 
 export function tiQuWaiGuanSha(zhi: string | null | undefined): string | null {
@@ -227,17 +229,21 @@ export function guiYiWaiGuanChuCan(can: WaiGuanChuCan | null | undefined): WaiGu
   }
   chu.beiJing = duQuLieBiao(can.bei_jing)
   chu.qiPao = duQuLieBiao(can.qi_pao)
-  const fuGai: unknown = can.bei_jing_fu_gai
-  if (fuGai && typeof fuGai === 'object' && !Array.isArray(fuGai)) {
-    for (const [jian, zhi] of Object.entries(fuGai as Record<string, unknown>)) {
+  const 归一覆盖 = (yuan: unknown): Record<string, WaiGuanFuGai> => {
+    const 出: Record<string, WaiGuanFuGai> = {}
+    if (!yuan || typeof yuan !== 'object' || Array.isArray(yuan)) return 出
+    for (const [jian, zhi] of Object.entries(yuan as Record<string, unknown>)) {
       if (!zhi || typeof zhi !== 'object') continue
       const hang = zhi as Record<string, unknown>
-      chu.beiJingFuGai[jian] = {
+      出[jian] = {
         mingCheng: typeof hang.mingCheng === 'string' ? hang.mingCheng : typeof hang.ming_cheng === 'string' ? hang.ming_cheng : '',
         wenZiYanSe: typeof hang.wenZiYanSe === 'string' ? hang.wenZiYanSe : typeof hang.wen_zi_yan_se === 'string' ? hang.wen_zi_yan_se : '',
       }
     }
+    return 出
   }
+  chu.beiJingFuGai = 归一覆盖(can.bei_jing_fu_gai)
+  chu.qiPaoFuGai = 归一覆盖(can.qi_pao_fu_gai)
   const dangQian = can.dang_qian_qi_pao
   if (dangQian && typeof dangQian === 'object') {
     const ids = new Set(chu.qiPao.map((tiaoMu) => tiaoMu.id))

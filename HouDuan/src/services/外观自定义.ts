@@ -18,6 +18,17 @@ export const WAI_GUAN_BEI_JING_YU_SHE = [
 
 export type WaiGuanBeiJingYuShe = (typeof WAI_GUAN_BEI_JING_YU_SHE)[number]
 
+export const QI_PAO_YU_SHE_XUAN_XIANG = [
+  'weiXinLv',
+  'tianKongLan',
+  'yingFen',
+  'anYe',
+  'ningMengHuang',
+  'yunBai',
+  'douShaLv',
+  'wuQingLan',
+] as const
+
 export const WAI_GUAN_BEI_JING_MING_CHENG_ZUI_DA_ZI_FU = 20
 export const WAI_GUAN_QI_PAO_MING_CHENG_ZUI_DA_ZI_FU = 12
 export const WAI_GUAN_MEI_LEI_ZUI_DA_TIAO_SHU = 24
@@ -63,6 +74,7 @@ export interface WaiGuanShuJu {
   beiJing: WaiGuanTiaoMu[]
   qiPao: WaiGuanTiaoMu[]
   beiJingFuGai: Record<string, WaiGuanFuGai>
+  qiPaoFuGai: Record<string, WaiGuanFuGai>
   dangQianQiPao: WaiGuanDangQianQiPao
 }
 
@@ -135,7 +147,7 @@ export function shiKeYongWenZiYanSe(zhi: string): boolean {
 }
 
 export function kongWaiGuanShuJu(): WaiGuanShuJu {
-  return { beiJing: [], qiPao: [], beiJingFuGai: {}, dangQianQiPao: { ziJi: '', ai: '' } }
+  return { beiJing: [], qiPao: [], beiJingFuGai: {}, qiPaoFuGai: {}, dangQianQiPao: { ziJi: '', ai: '' } }
 }
 
 function quWenBen(zhi: unknown): string {
@@ -220,7 +232,7 @@ function guiYiTiaoMuLieBiao(
   return chu
 }
 
-function guiYiFuGai(yuan: unknown, yanGe: boolean): Record<string, WaiGuanFuGai> {
+function guiYiFuGai(yuan: unknown, yanGe: boolean, leiBie: 'beiJing' | 'qiPao'): Record<string, WaiGuanFuGai> {
   if (yuan === undefined || yuan === null) return {}
   if (typeof yuan !== 'object' || Array.isArray(yuan)) {
     if (yanGe) throw new WaiGuanCuoWu(huoQuFanYi('tongYong', 'canShuBuHeFa'))
@@ -228,7 +240,8 @@ function guiYiFuGai(yuan: unknown, yanGe: boolean): Record<string, WaiGuanFuGai>
   }
   const chu: Record<string, WaiGuanFuGai> = {}
   for (const [jian, zhi] of Object.entries(yuan as Record<string, unknown>)) {
-    if (!(WAI_GUAN_BEI_JING_YU_SHE as readonly string[]).includes(jian)) {
+    const heFaJian = leiBie === 'beiJing' ? WAI_GUAN_BEI_JING_YU_SHE : QI_PAO_YU_SHE_XUAN_XIANG
+    if (!(heFaJian as readonly string[]).includes(jian)) {
       if (yanGe) throw new WaiGuanCuoWu(huoQuFanYi('tongYong', 'canShuBuHeFa'))
       continue
     }
@@ -237,13 +250,17 @@ function guiYiFuGai(yuan: unknown, yanGe: boolean): Record<string, WaiGuanFuGai>
       continue
     }
     const xiang = zhi as Record<string, unknown>
-    const mingCheng = guiYiMingCheng(xiang.mingCheng, WAI_GUAN_BEI_JING_MING_CHENG_ZUI_DA_ZI_FU)
+    const mingCheng = guiYiMingCheng(
+      xiang.mingCheng,
+      leiBie === 'beiJing' ? WAI_GUAN_BEI_JING_MING_CHENG_ZUI_DA_ZI_FU : WAI_GUAN_QI_PAO_MING_CHENG_ZUI_DA_ZI_FU,
+    )
     const yanSeYuanShi = quWenBen(xiang.wenZiYanSe)
     const wenZiYanSe = guiYiYanSe(yanSeYuanShi)
     if (yanGe && yanSeYuanShi && !wenZiYanSe) {
       throw new WaiGuanCuoWu(huoQuFanYi('sheZhi', 'waiGuanYanSeBuHeFa'))
     }
-    if (yanGe && wenZiYanSe && !shiKeYongWenZiYanSe(wenZiYanSe)) {
+    const seKeYong = leiBie === 'beiJing' ? shiKeYongWenZiYanSe(wenZiYanSe) : Boolean(wenZiYanSe)
+    if (yanGe && wenZiYanSe && !seKeYong) {
       throw new WaiGuanCuoWu(huoQuFanYi('sheZhi', 'waiGuanWenZiYanSeDuiBiDuBuZu'))
     }
     if (yanGe && quWenBen(xiang.mingCheng) && !mingCheng) {
@@ -296,7 +313,8 @@ function guiYiShuJu(yuan: unknown, yanGe: boolean): WaiGuanShuJu {
   return {
     beiJing,
     qiPao,
-    beiJingFuGai: guiYiFuGai(xiang.beiJingFuGai, yanGe),
+    beiJingFuGai: guiYiFuGai(xiang.beiJingFuGai, yanGe, 'beiJing'),
+    qiPaoFuGai: guiYiFuGai(xiang.qiPaoFuGai, yanGe, 'qiPao'),
     dangQianQiPao: guiYiDangQianQiPao(xiang.dangQianQiPao, qiPao, yanGe),
   }
 }
@@ -329,6 +347,7 @@ export interface WaiGuanChuCan {
   bei_jing: WaiGuanChuCanTiaoMu[]
   qi_pao: WaiGuanChuCanTiaoMu[]
   bei_jing_fu_gai: Record<string, WaiGuanFuGai>
+  qi_pao_fu_gai: Record<string, WaiGuanFuGai>
   dang_qian_qi_pao: WaiGuanDangQianQiPao
 }
 
@@ -349,6 +368,7 @@ export function shengChengChuCan(数据: WaiGuanShuJu, yongHuId: string): WaiGua
     bei_jing: chuCanTiaoMu(数据.beiJing, yongHuId),
     qi_pao: chuCanTiaoMu(数据.qiPao, yongHuId),
     bei_jing_fu_gai: 数据.beiJingFuGai,
+    qi_pao_fu_gai: 数据.qiPaoFuGai,
     dang_qian_qi_pao: 数据.dangQianQiPao,
   }
 }

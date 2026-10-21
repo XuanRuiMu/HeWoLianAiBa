@@ -36,6 +36,7 @@ vi.mock('@/api/社交', async (yuanShi) => {
         bei_jing: zhuan((shuJu.beiJing || []) as Array<Record<string, unknown>>),
         qi_pao: zhuan((shuJu.qiPao || []) as Array<Record<string, unknown>>),
         bei_jing_fu_gai: shuJu.beiJingFuGai || {},
+        qi_pao_fu_gai: shuJu.qiPaoFuGai || {},
         dang_qian_qi_pao: shuJu.dangQianQiPao || { ziJi: '', ai: '' },
       } as WaiGuanChuCan
     }),
@@ -59,6 +60,7 @@ function zhuangTaiKuang(tiaoMu: Array<Record<string, unknown>>): WaiGuanChuCan {
     })),
     qi_pao: [],
     bei_jing_fu_gai: {},
+    qi_pao_fu_gai: {},
     dang_qian_qi_pao: { ziJi: '', ai: '' },
   }
 }
@@ -91,6 +93,7 @@ describe('外观自定义命名与蒙层', () => {
       bei_jing: [{ id: '1', ming_cheng: '自定义背景1', tu_di_zhi: MEI_TI_URL, wen_zi_yan_se: '#FFFFFF' }],
       qi_pao: [],
       bei_jing_fu_gai: {},
+    qi_pao_fu_gai: {},
       dang_qian_qi_pao: { ziJi: 'bu-cun-zai', ai: '' },
     })
     expect(chu.beiJing).toHaveLength(1)

@@ -51,10 +51,10 @@ describe('卡内说明文字令牌', () => {
     expect(解析通道(String(浅色表.get(令牌名))).every((通道) => 通道 <= 40)).toBe(true)
   })
 
-  it('MBTI 卡容器声明令牌，第三段说明文字只继承', () => {
+  it('MBTI 卡容器与说明文字各自声明令牌，不靠继承拿色', () => {
     expect(规则体(向导, '.mbti-kaPian')).toContain(`color: var(${令牌名})`)
     const 说明 = 规则体(向导, '.mbti-miaoShu')
-    expect(说明).toContain('color: inherit')
+    expect(说明).toContain('color: var(--kapian-shuoming-wenben)')
     expect(说明).not.toContain('--wenben-tishi')
   })
 
@@ -66,7 +66,7 @@ describe('卡内说明文字令牌', () => {
 
   it('第一步性别卡与第二步对象卡的小字同走该令牌', () => {
     expect(规则体(向导, '.xingBie-kaPian')).toContain(`color: var(${令牌名})`)
-    expect(规则体(向导, '.xingBie-mingCheng')).toContain('color: inherit')
+    expect(规则体(向导, '.xingBie-mingCheng')).toContain('color: var(--kapian-shuoming-wenben)')
     expect(向导).not.toContain(":root[data-theme='light'] .xingBie-mingCheng")
   })
 

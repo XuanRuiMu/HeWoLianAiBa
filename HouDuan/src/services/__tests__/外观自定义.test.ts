@@ -190,6 +190,7 @@ describe('外观自定义存储解码', () => {
       beiJing: [],
       qiPao: [],
       beiJingFuGai: {},
+      qiPaoFuGai: {},
       dangQianQiPao: { ziJi: '', ai: '' },
     })
     expect(guiYiCunChuShuJu('不是对象').beiJing).toEqual([])
@@ -213,7 +214,7 @@ describe('外观自定义出参与媒体校验', () => {
 
   it('出参字段为下划线命名且空外观为零条目', () => {
     const kong = shengChengChuCan(guiYiCunChuShuJu({}), BIAO_SHI)
-    expect(Object.keys(kong).sort()).toEqual(['bei_jing', 'bei_jing_fu_gai', 'dang_qian_qi_pao', 'qi_pao'])
+    expect(Object.keys(kong).sort()).toEqual(['bei_jing', 'bei_jing_fu_gai', 'dang_qian_qi_pao', 'qi_pao', 'qi_pao_fu_gai'])
     expect(kong.bei_jing).toEqual([])
     expect(kong.qi_pao).toEqual([])
   })
