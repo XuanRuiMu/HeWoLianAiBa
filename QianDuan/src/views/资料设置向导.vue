@@ -21,7 +21,6 @@
                 class="xingBie-kaPian ziJi-xingBie-kaPian"
                 data-dang="nan"
                 :class="{ beiXuanZhong: ziLiaoShuJu.xingBie === 'male' }"
-                :style="ziLiaoShuJu.xingBie === 'male' ? 性别框体样式 : undefined"
                 @click="ziLiaoShuJu.xingBie = 'male'"
               >
                 <div class="xingBie-tubiao ziJi-nan-tubiao">
@@ -62,7 +61,6 @@
                 class="xingBie-kaPian ziJi-xingBie-kaPian"
                 data-dang="nv"
                 :class="{ beiXuanZhong: ziLiaoShuJu.xingBie === 'female' }"
-                :style="ziLiaoShuJu.xingBie === 'female' ? 性别框体样式 : undefined"
                 @click="ziLiaoShuJu.xingBie = 'female'"
               >
                 <div class="xingBie-tubiao ziJi-nv-tubiao">
@@ -106,7 +104,6 @@
                 class="xingBie-kaPian duiXiang-xingBie-kaPian"
                 data-dang="nan"
                 :class="{ beiXuanZhong: ziLiaoShuJu.muBiaoXingBie === 'male' }"
-                :style="ziLiaoShuJu.muBiaoXingBie === 'male' ? 对象性别框体样式 : undefined"
                 @click="ziLiaoShuJu.muBiaoXingBie = 'male'"
               >
                 <div class="xingBie-tubiao duiXiang-nan-tubiao">
@@ -143,7 +140,6 @@
                 class="xingBie-kaPian duiXiang-xingBie-kaPian"
                 data-dang="nv"
                 :class="{ beiXuanZhong: ziLiaoShuJu.muBiaoXingBie === 'female' }"
-                :style="ziLiaoShuJu.muBiaoXingBie === 'female' ? 对象性别框体样式 : undefined"
                 @click="ziLiaoShuJu.muBiaoXingBie = 'female'"
               >
                 <div class="xingBie-tubiao duiXiang-nv-tubiao">
@@ -339,7 +335,6 @@ import ChangFangShuRuKuang from '@/components/表单/长方框输入框.vue'
 import XingBieGouXuan from '@/components/表单/性别勾选框.vue'
 import { congTongYongTiShiCiTuiCeXingGe } from '@/utils/通用提示词性格'
 import { 解析主色档, 解析性别, 解析性别配色档 } from '@/utils/性别'
-import { 使用性别框体配色 } from '@/composables/use性别框体配色'
 import { guiYiNianLing } from '@/utils/输入验证'
 import { track } from '@/utils/埋点'
 
@@ -400,14 +395,6 @@ const 默认对象性别 = computed(() => 用户仓库.dangQianYongHu?.mu_biao_x
 const 主色档 = computed(() => 解析主色档(ziLiaoShuJu.xingBie, 默认性别.value))
 const 对象色档 = computed(() => 解析性别配色档(ziLiaoShuJu.muBiaoXingBie ?? 默认对象性别.value))
 const 对象勾选档 = computed<'nan' | 'nv'>(() => (对象色档.value === 'nan' ? 'nan' : 'nv'))
-const { 样式: 性别框体样式 } = 使用性别框体配色({
-  自身性别: () => ziLiaoShuJu.xingBie,
-  默认性别: () => 默认性别.value,
-})
-const { 样式: 对象性别框体样式 } = 使用性别框体配色({
-  自身性别: () => ziLiaoShuJu.muBiaoXingBie,
-  默认性别: () => 默认对象性别.value,
-})
 
 function qianJinBuZhou() {
   if (当前步骤.value >= 3 || !可以下一步.value) return
@@ -558,36 +545,43 @@ async function kaiShiLiaoTian() {
 }
 
 .ziliao-kapian {
+  --xuan-zi-ji-bei: var(--xingbie-nan-tan-beijing);
+  --xuan-zi-ji-wen: var(--xingbie-nan-tan-wenben);
+  --xuan-dui-xiang-bian: var(--xingbie-nv-shen-biankuang);
+}
+
+.ziliao-kapian[data-xingbie='nv'] {
+  --xuan-zi-ji-bei: var(--xingbie-nv-tan-beijing);
+  --xuan-zi-ji-wen: var(--xingbie-nv-tan-wenben);
+}
+
+.ziliao-kapian[data-dui-xiang-xingbie='nan'] {
+  --xuan-dui-xiang-bian: var(--xingbie-nan-shen-biankuang);
+}
+
+.ziliao-kapian {
+  --xingge-gao-guang-ji: rgba(255, 255, 255, 0.06);
+  --xingge-gao-guang-zhong: rgba(255, 255, 255, 0.14);
+  --xingge-gao-guang-bian-ji: rgba(255, 255, 255, 0.18);
+  --xingge-gao-guang-bian-zhong: rgba(255, 255, 255, 0.4);
+}
+
+.ziliao-kapian {
   --xingbie-se-1: var(--xingbie-zhongxing-1);
   --xingbie-se-2: var(--xingbie-zhongxing-2);
   --xingbie-se-wenben: var(--xingbie-zhongxing-wenben);
-  --xuanzhong-xingbie-bian: var(--xingbie-zhongxing-xuan-biankuang);
 }
 
 .ziliao-kapian[data-xingbie='nan'] {
   --xingbie-se-1: var(--xingbie-nan-1);
   --xingbie-se-2: var(--xingbie-nan-2);
   --xingbie-se-wenben: var(--xingbie-nan-wenben);
-  --xuanzhong-xingbie-bian: var(--xingbie-nan-xuan-biankuang);
 }
 
 .ziliao-kapian[data-xingbie='nv'] {
   --xingbie-se-1: var(--xingbie-nv-1);
   --xingbie-se-2: var(--xingbie-nv-2);
   --xingbie-se-wenben: var(--xingbie-nv-wenben);
-  --xuanzhong-xingbie-bian: var(--xingbie-nv-xuan-biankuang);
-}
-
-.ziliao-kapian[data-dui-xiang-xingbie='nan'] {
-  --mbti-xuan-ze-bian: var(--xingbie-nan-xuan-biankuang);
-}
-
-.ziliao-kapian[data-dui-xiang-xingbie='nv'] {
-  --mbti-xuan-ze-bian: var(--xingbie-nv-xuan-biankuang);
-}
-
-.ziliao-kapian[data-dui-xiang-xingbie='zhongxing'] {
-  --mbti-xuan-ze-bian: var(--xingbie-zhongxing-xuan-biankuang);
 }
 
 .jindu-yuan-dian {
@@ -712,7 +706,15 @@ async function kaiShiLiaoTian() {
 }
 
 .ziliao-kapian .xingBie-kaPian.beiXuanZhong[data-dang] {
-  border-width: 1.5px;
+  background-color: var(--xuan-zi-ji-bei);
+  border: 2px solid var(--xuan-dui-xiang-bian);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--xuan-dui-xiang-bian) 22%, transparent);
+}
+
+.xingBie-kaPian.beiXuanZhong .xingBie-mingCheng,
+.xingBie-kaPian.beiXuanZhong .xingBie-svg {
+  color: var(--xuan-zi-ji-wen);
+  text-shadow: none;
 }
 
 .xingBie-tubiao {
@@ -787,14 +789,16 @@ async function kaiShiLiaoTian() {
 
 @media (hover: hover) {
   .mbti-kaPian:hover:not(.beiXuanZhong) {
-    border-color: color-mix(in srgb, var(--mbti-xuan-ze-bian) 50%, transparent);
+    background-image: linear-gradient(0deg, var(--xingge-gao-guang-ji), var(--xingge-gao-guang-ji));
+    border-color: var(--xingge-gao-guang-bian-ji);
     transform: translateY(-1px);
   }
 }
 
 .mbti-kaPian.beiXuanZhong {
-  border: 1.5px solid var(--xuanzhong-xingbie-bian);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--xuanzhong-xingbie-bian) 18%, transparent);
+  background-image: linear-gradient(0deg, var(--xingge-gao-guang-zhong), var(--xingge-gao-guang-zhong));
+  border: 1.5px solid var(--xingge-gao-guang-bian-zhong);
+  box-shadow: none;
 }
 
 .mbti-kaPian.beiXuanZhong .mbti-daiMa {
@@ -813,29 +817,22 @@ async function kaiShiLiaoTian() {
 }
 
 .suiJi-kaPian {
-  --suiJi-bian: var(--xingbie-zhongxing-xuan-biankuang);
-  --suiJi-bei: var(--xingbie-zhongxing-xuan-beijing);
-  --suiJi-wen: var(--xingbie-zhongxing-xuan-wenben);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--suiJi-bei) 55%, transparent),
-    color-mix(in srgb, var(--suiJi-bei) 30%, transparent)
-  );
-  border-color: color-mix(in srgb, var(--suiJi-bian) 60%, transparent);
+  --suiJi-wen: var(--wenben-zhuse);
+  border-color: var(--xingge-gao-guang-bian-ji);
   border-style: dashed;
 }
 
 @media (hover: hover) {
-  .suiJi-kaPian:hover {
-    border-color: color-mix(in srgb, var(--suiJi-bian) 75%, transparent);
-    box-shadow: 0 0 14px color-mix(in srgb, var(--suiJi-bian) 25%, transparent);
+  .suiJi-kaPian:hover:not(.beiXuanZhong) {
+    background-image: linear-gradient(0deg, var(--xingge-gao-guang-ji), var(--xingge-gao-guang-ji));
+    border-color: var(--xingge-gao-guang-bian-ji);
   }
 }
 
 .suiJi-kaPian.beiXuanZhong {
-  border-color: var(--suiJi-bian);
+  background-image: linear-gradient(0deg, var(--xingge-gao-guang-zhong), var(--xingge-gao-guang-zhong));
+  border-color: var(--xingge-gao-guang-bian-zhong);
   border-style: solid;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--suiJi-bian) 18%, transparent);
 }
 
 .suiJi-kaPian.beiXuanZhong .mbti-zhongWen {
@@ -1120,12 +1117,15 @@ async function kaiShiLiaoTian() {
 
 @media (hover: hover) {
   :root[data-theme='light'] .mbti-kaPian:hover:not(.beiXuanZhong) {
-    border-color: color-mix(in srgb, var(--mbti-xuan-ze-bian) 50%, transparent);
+    border-color: var(--xingge-gao-guang-bian-ji);
   }
 }
 
-:root[data-theme='light'] .mbti-kaPian.beiXuanZhong {
-  border-color: var(--xuanzhong-xingbie-bian);
+:root[data-theme='light'] .ziliao-kapian {
+  --xingge-gao-guang-ji: rgba(255, 255, 255, 0.55);
+  --xingge-gao-guang-zhong: rgba(255, 255, 255, 0.92);
+  --xingge-gao-guang-bian-ji: rgba(120, 90, 140, 0.2);
+  --xingge-gao-guang-bian-zhong: rgba(90, 60, 110, 0.42);
 }
 
 :root[data-theme='light'] .mbti-kaPian.beiXuanZhong .mbti-zhongWen {

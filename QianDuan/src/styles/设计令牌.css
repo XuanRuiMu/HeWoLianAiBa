@@ -398,9 +398,6 @@
   --xingbie-nv-tan-beijing: #ffe3f7;
   --xingbie-nv-tan-wenben: #6b0f6f;
   --xingbie-nv-shen-biankuang: var(--xingbie-nv-xuan-biankuang);
-  --xingbie-zhongxing-xuan-biankuang: #636366;
-  --xingbie-zhongxing-xuan-beijing: rgba(99, 99, 102, 0.2);
-  --xingbie-zhongxing-xuan-wenben: #3a3a3c;
   /* FP-15b 选中环两层（需求 #16：男女各一档，旧值把两性统一写死成粉）。
      环=零偏移零模糊非零扩散的描边层，晕=投影层；色相与本档 --xingbie-*-xuan-biankuang 同源，
      alpha 沿用改前实测（环 .15 / 晕 .22），形状 3px/10px 26px 仍由消费方写死（FP-22e 冻的是环形状） */
@@ -650,9 +647,6 @@
   --xingbie-nv-tan-beijing: rgba(234, 63, 247, 0.22);
   --xingbie-nv-tan-wenben: #ffd9f2;
   --xingbie-nv-shen-biankuang: var(--xingbie-nv-xuan-biankuang);
-  --xingbie-zhongxing-xuan-biankuang: #a8b4c8;
-  --xingbie-zhongxing-xuan-beijing: rgba(168, 180, 200, 0.22);
-  --xingbie-zhongxing-xuan-wenben: #dfe6f2;
   /* FP-15b 选中环两层（深色档，与浅色档成对，理由见浅色档同名令牌注释）；
      alpha 沿用改前实测（环 .14 / 晕 .22） */
   --xingbie-nan-xuan-huan: rgba(91, 155, 255, 0.14);

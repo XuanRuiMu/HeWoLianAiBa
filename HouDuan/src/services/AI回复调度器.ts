@@ -360,6 +360,7 @@ export class AI回复调度器 {
 
       if (jieShuJieGuo) {
         this.清除等待表白回复状态()
+        if (jieShuJieGuo.ke_ji_xu_liao_tian) this.启动AI计时器()
         return
       }
 

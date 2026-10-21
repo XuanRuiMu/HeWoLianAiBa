@@ -129,18 +129,38 @@ describe('圆角输入框两条高亮线与实现收敛', () => {
   })
 })
 
-describe('第三步悬停取对象性别半透明、选中取自身性别', () => {
+describe('性别卡：淡填充取自身性别、深边框取对象性别', () => {
   const 向导 = 读('views/资料设置向导.vue')
 
-  it('悬停边框取对象性别档并混入 50% 透明', () => {
-    expect(向导).toContain("--mbti-xuan-ze-bian: var(--xingbie-nan-xuan-biankuang)")
-    expect(向导).toContain("--mbti-xuan-ze-bian: var(--xingbie-nv-xuan-biankuang)")
-    expect(向导).toContain('color-mix(in srgb, var(--mbti-xuan-ze-bian) 50%, transparent)')
+  it('填充与文字取自身性别淡档，未选中时按默认男性', () => {
+    expect(向导).toContain('--xuan-zi-ji-bei: var(--xingbie-nan-tan-beijing)')
+    expect(向导).toContain("--xuan-zi-ji-bei: var(--xingbie-nv-tan-beijing)")
+    expect(向导).toContain('--xuan-zi-ji-wen: var(--xingbie-nan-tan-wenben)')
+    expect(向导).toContain('--xuan-zi-ji-wen: var(--xingbie-nv-tan-wenben)')
   })
 
-  it('选中边框随自身性别档，滚动区左右同值内边距不裁高亮环', () => {
-    expect(向导).toContain('--xuanzhong-xingbie-bian: var(--xingbie-nan-xuan-biankuang)')
-    expect(向导).toContain('--xuanzhong-xingbie-bian: var(--xingbie-nv-xuan-biankuang)')
+  it('边框取对象性别深档，未选中时按默认女性', () => {
+    expect(向导).toContain('--xuan-dui-xiang-bian: var(--xingbie-nv-shen-biankuang)')
+    expect(向导).toContain('--xuan-dui-xiang-bian: var(--xingbie-nan-shen-biankuang)')
+    expect(向导).toContain('border: 2px solid var(--xuan-dui-xiang-bian)')
+  })
+
+  it('选中态不再走脚本内联色，三步共享同一段样式', () => {
+    expect(向导).not.toContain('性别框体样式')
+    expect(向导).not.toContain('use性别框体配色')
+    expect(向导).toContain('.ziliao-kapian .xingBie-kaPian.beiXuanZhong[data-dang]')
+  })
+
+  it('第三步性格卡与性别无关，悬停与选中共用白色高光且选中更实', () => {
+    expect(向导).toContain('--xingge-gao-guang-ji: rgba(255, 255, 255, 0.06)')
+    expect(向导).toContain('--xingge-gao-guang-zhong: rgba(255, 255, 255, 0.14)')
+    expect(向导).toContain('.mbti-kaPian:hover:not(.beiXuanZhong)')
+    expect(向导).toContain('.suiJi-kaPian.beiXuanZhong')
+    expect(向导).not.toContain('mbti-xuan-ze-bian')
+    expect(向导).not.toContain('xuanzhong-xingbie-bian')
+  })
+
+  it('滚动区左右同值内边距不裁高亮环', () => {
     expect(向导).toContain('padding-inline: var(--jiange-4)')
     expect(向导).not.toContain('padding-right: var(--jiange-4)')
   })

@@ -122,7 +122,7 @@ describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
       expect(违规).toEqual([])
     })
 
-    it('判据④待裁决：角色文风里的装可爱语气与叙事拖尾省略号清单（当前 4 键 / 3 条文案 + 44 条叙事）', () => {
+    it('判据④待裁决：角色文风里的装可爱语气与叙事拖尾省略号清单（当前 4 键 / 3 条文案 + 40 条叙事）', () => {
       const 角色文风 = /(^|\.)(AI|jieGuoTongGuanChi|jieGuoShiBaiChi|fuPan|junShi)\.|liaoTian\.(aiYuSuanYiYongJin|lianFaYuJing|zhuDongFenXiangTuPian)$/
       const 装可爱 = 全值()
         .filter(({ 路径 }) => 角色文风.test(路径))
@@ -133,7 +133,7 @@ describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
         .filter(({ 文本 }) => /\.\.\./.test(文本))
         .map(({ 路径 }) => 路径)
       // 已知清单：AI 对象语气 4 键 3 条文案（额度用尽 liaoTian+AI 同串、连发预警、主动分享图片）
-      // + 结局叙事池 44 条拖尾省略号。若有人新增同类文案，本用例会红并要求同步裁决记录。
+      // + 结局叙事池 40 条拖尾省略号（原 44 条，恋爱胜利池 4 条旁白改写成角色原话后减少）。若有人新增同类文案，本用例会红并要求同步裁决记录。
       expect(装可爱.sort()).toEqual(
         [
           'fanYi.AI.aiYuSuanYiYongJin',
@@ -142,7 +142,7 @@ describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
           'fanYi.liaoTian.zhuDongFenXiangTuPian',
         ].sort(),
       )
-      expect(拖尾省略号.length).toBe(44)
+      expect(拖尾省略号.length).toBe(40)
     })
 
     it('判据⑤：人称统一为「你」，不得混用「您」', () => {
