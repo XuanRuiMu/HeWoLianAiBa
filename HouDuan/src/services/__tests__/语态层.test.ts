@@ -8,30 +8,11 @@ function 造输入(追加: Record<string, unknown> = {}): AIYinQingShuRu {
     yong_hu_id: 'u-1',
     jiao_se_id: 'j-1',
     jiao_se: {
-      wei_xin_ming: '林知夏',
-      mbti_lei_xing: 'INTP',
-      shen_fen: '大学生',
-      shi_fou_zha_xing: false,
-      xing_bie: 'nv',
-      nian_ling: 22,
-      cheng_shi: '杭州',
-      zhi_ye: '学生',
-      xing_ge_biao_qian: [],
-      ai_hao: [],
-      shuo_hua_feng_ge: '简短',
-      bao_lu_fang_shi: '',
-      hua_shu: [],
-      bei_jing_gu_shi: '',
-      tou_xiang_url: '',
+      wei_xin_ming: '林知夏', mbti_lei_xing: 'INTP', shen_fen: '大学生', shi_fou_zha_xing: false,
+      xing_bie: 'nv', nian_ling: 22, cheng_shi: '杭州', zhi_ye: '学生', xing_ge_biao_qian: [],
+      ai_hao: [], shuo_hua_feng_ge: '简短', bao_lu_fang_shi: '', hua_shu: [], bei_jing_gu_shi: '', tou_xiang_url: '',
     },
-    hao_gan_du: {
-      xin_ren_du: 150,
-      qin_mi_du: 110,
-      qu_wei_du: 90,
-      guan_huai_du: 80,
-      zong_fen: 430,
-      guan_xi_jie_duan: '熟悉',
-    },
+    hao_gan_du: { xin_ren_du: 150, qin_mi_du: 110, qu_wei_du: 90, guan_huai_du: 80, zong_fen: 430, guan_xi_jie_duan: '熟悉' },
     dui_hua_li_shi: [],
     yong_hu_xin_xiao_xi: '今天加班到八点 饿得不行',
     shi_fou_di_yi_lun: false,
@@ -64,9 +45,9 @@ describe('语态层', () => {
   })
 
   it('同一角色的在忙跨轮稳定', () => {
+    const 取忙 = (块: string) => 块.split('【你最近在忙】')[1].split('【这一轮你就这样回】')[0]
     const 甲 = gouJianYuTaiCeng(造输入(), () => 0.1)
     const 乙 = gouJianYuTaiCeng(造输入({ yong_hu_xin_xiao_xi: '周末一般你都在干嘛' }), () => 0.9)
-    const 取忙 = (块: string) => 块.split('【你最近在忙】')[1].split('【这一轮你就这样回】')[0]
     expect(取忙(甲)).toBe(取忙(乙))
   })
 
@@ -74,9 +55,7 @@ describe('语态层', () => {
     const 首轮 = gouJianYuTaiCeng(造输入(), () => 0.5)
     const 待办 = 首轮.split('【你最近在忙】')[1].split('\n')[1].split('；')
     const 二轮 = gouJianYuTaiCeng(
-      造输入({
-        dui_hua_li_shi: [{ fa_song_zhe_lei_xing: 'jiaose', nei_rong: 待办[0], fa_song_zhe_ming: '她' }],
-      }),
+      造输入({ dui_hua_li_shi: [{ fa_song_zhe_lei_xing: 'jiaose', nei_rong: 待办[0], fa_song_zhe_ming: '她' }] }),
       () => 0.5,
     )
     expect(二轮).not.toContain(待办[0])
@@ -85,8 +64,7 @@ describe('语态层', () => {
 
 describe('Writer 提示词接入', () => {
   it('要回时带上语态层', () => {
-    const 提示 = gouJianWriterPrompt(造输入(), { shi_fou_hui_fu: true, shi_jian_qing_xu: '正常' })
-    expect(提示).toContain('【这一轮你就这样回】')
+    expect(gouJianWriterPrompt(造输入(), { shi_fou_hui_fu: true, shi_jian_qing_xu: '正常' })).toContain('【这一轮你就这样回】')
   })
 
   it('已读不回时不带语态层', () => {
@@ -102,5 +80,23 @@ describe('Writer 提示词接入', () => {
     expect(人设位).toBeGreaterThan(-1)
     expect(语态位).toBeGreaterThan(人设位)
     expect(提示.endsWith('对方已经知道的信息不用重复。')).toBe(true)
+  })
+})
+
+describe('语态层性能上限', () => {
+  it('历史很长时依然很快', () => {
+    const 长历史 = Array.from({ length: 400 }, (_, i) => ({
+      fa_song_zhe_lei_xing: 'jiaose', nei_rong: '第' + i + '条消息内容'.repeat(30), fa_song_zhe_ming: '她',
+    }))
+    const 起 = Date.now()
+    gouJianYuTaiCeng(造输入({ dui_hua_li_shi: 长历史 }), () => 0.5)
+    expect(Date.now() - 起).toBeLessThan(500)
+  })
+
+  it('超长单条消息被截断而不是拖垮', () => {
+    const 超长 = [{ fa_song_zhe_lei_xing: 'jiaose', nei_rong: '社团招新'.repeat(5000), fa_song_zhe_ming: '她' }]
+    const 起 = Date.now()
+    gouJianYuTaiCeng(造输入({ dui_hua_li_shi: 超长 }), () => 0.5)
+    expect(Date.now() - 起).toBeLessThan(500)
   })
 })

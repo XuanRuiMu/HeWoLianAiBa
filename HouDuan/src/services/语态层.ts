@@ -15,7 +15,8 @@ export function gouJianYuTaiCeng(shuRu: AIYinQingShuRu, 随机: () => number = M
   const 全部待办 = shengChengZaiMang(是学生, zaoSuiJi('zai-mang:' + shuRu.jiao_se_id))
   const 已说 = (shuRu.dui_hua_li_shi || [])
     .filter((记) => 记.fa_song_zhe_lei_xing === 'jiaose')
-    .map((记) => 记.nei_rong)
+    .slice(-60)
+    .map((记) => (记.nei_rong || '').slice(0, 120))
   const 在忙 = quZaiMangWeiShuo(全部待办, 已说)
 
   const 块 = [

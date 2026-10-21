@@ -632,7 +632,7 @@ export function gouJianFengGeShiLiCeng(jiaoSe: AIJiaoSeXinXi): string {
  * ⚠️ 风格示例放在**人设之后、历史之前**：模型从示例学到的是「怎么说」，
  * 人设决定「说什么」；历史在前会让示例权重被稀释。
  */
-export function gouJianGongXiangQianZhui(shuRu: AIYinQingShuRu): string {
+export function GouJianGongXiangQianZhui(shuRu: AIYinQingShuRu): string {
   return [
     gouJianDiErCeng(shuRu.jiao_se),
     gouJianFengGeShiLiCeng(shuRu.jiao_se),
@@ -644,7 +644,7 @@ export function gouJianGongXiangQianZhui(shuRu: AIYinQingShuRu): string {
 
 /**
  * 关键事件注入层：按本轮消息相关性挑过、每轮都可能变，因此只能落在历史之后——
- * 一旦并进 gouJianGongXiangQianZhui，整段历史缓存就每轮作废。
+ * 一旦并进 GouJianGongXiangQianZhui，整段历史缓存就每轮作废。
  */
 /**
  * LSM 镜像 β 模型（THEORY §4）：目标风格 = 人设基线 + β×(用户近期风格 − 人设基线)。
@@ -747,7 +747,7 @@ export function gouJianWriterPrompt(
 ): string {
   // 层序＝缓存前缀顺序：会变的东西一律排在历史之后；人设+历史与 Director 共用同一段字节。
   const cengCi = [
-    gouJianGongXiangQianZhui(shuRu),
+    GouJianGongXiangQianZhui(shuRu),
     gouJianGuanJianShiJianCeng(shuRu),
     gouJianDiYiCeng(),
     gouJianJingXiangTiShi(shuRu),
@@ -784,7 +784,7 @@ export function gouJianDirectorPrompt(shuRu: AIYinQingShuRu): string {
   // 与 Writer 共用同一段「人设 + 历史」字节（缓存只匹配最长公共前缀），导演自己的指令一律后置。
   // FP-08 去重：历史只在共用前缀的第五层里出现一次，焦点那条只在下方的「对方刚发的消息」出现一次。
   return [
-    gouJianGongXiangQianZhui(shuRu),
+    GouJianGongXiangQianZhui(shuRu),
     gouJianGuanJianShiJianCeng(shuRu),
     '',
     '【现在轮到你】你是这场恋爱聊天的导演。上面那个就是你的演员，根据 TA 的人设和刚才聊的内容，给 TA 写一张小纸条，告诉 TA 怎么回。',

@@ -35,10 +35,10 @@ export async function shengChengWriterHuiFu(
   const jiaoSeSystem = jiaoSeMing
     ? `完全代入下面这个角色（${jiaoSeMing}），只输出你要发的消息。像平时微信里真实的两个人在聊天，自然口语化，允许短句、留白和真实停顿。`
     : '完全代入下面这个角色，只输出你要发的消息。像平时微信里真实的两个人在聊天，自然口语化，允许短句、留白和真实停顿。'
-  const xiaoXi = [
-    { jiaoSe: 'system' as const, neiRong: jiaoSeSystem },
-    { jiaoSe: 'user' as const, neiRong: yongHuNeiRongFuJia },
-  ]
+  const 带角色指令 = (内容: string | DuiHuaKuai[]): string | DuiHuaKuai[] =>
+    typeof 内容 === 'string' ? `${内容}\n\n${jiaoSeSystem}` : [...内容, { type: 'input_text', text: jiaoSeSystem }]
+
+  const xiaoXi = [{ jiaoSe: 'user' as const, neiRong: 带角色指令(yongHuNeiRongFuJia) }]
 
   // 开场多样化约束（机制 D）。
   // ⚠️ 必须复用 yongHuNeiRongFuJia（含首轮沉浸指令），不能退回 yongHuNeiRong，否则 YH-050 指令被丢弃。
@@ -46,7 +46,7 @@ export async function shengChengWriterHuiFu(
   //    直接当字符串拼接会把它 String() 化成 "[object Object]"，摧毁整个 tiShiCi（第二轮审查 P0）。
   const kaiChang = daiShuKaiChangYuanYu()
   const xiaoXiDaiYu = kaiChang.wenBen
-    ? [{ ...xiaoXi[0] }, { jiaoSe: 'user' as const, neiRong: fuJiaKaiChangYuanYu(yongHuNeiRongFuJia, kaiChang.wenBen) }]
+    ? [{ jiaoSe: 'user' as const, neiRong: 带角色指令(fuJiaKaiChangYuanYu(yongHuNeiRongFuJia, kaiChang.wenBen)) }]
     : xiaoXi
 
   const xiangYing = await genJuPeiZhiTiaoYong('writer', xiaoXiDaiYu, shangXiaWen, waiBuXinHao)

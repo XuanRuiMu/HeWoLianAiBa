@@ -1,5 +1,6 @@
 <template>
   <span class="chang-fang-kuang-ke">
+    <component :is="圆角描边" :激活="聚焦中" />
     <input
       v-if="!多行"
       :id="标识 || undefined"
@@ -15,6 +16,8 @@
       :aria-invalid="错误提示文字 ? 'true' : undefined"
       v-bind="$attrs"
       @input="处理输入"
+      @focus="聚焦中 = true"
+      @blur="聚焦中 = false"
     />
     <textarea
       v-else
@@ -31,6 +34,8 @@
       :aria-invalid="错误提示文字 ? 'true' : undefined"
       v-bind="$attrs"
       @input="处理输入"
+      @focus="聚焦中 = true"
+      @blur="聚焦中 = false"
     />
   </span>
   <p v-if="错误提示文字" class="chang-fang-kuang-cuo-wu" role="alert">
@@ -40,6 +45,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import 圆角描边 from './圆角描边.vue'
 
 defineOptions({ inheritAttrs: false })
 
@@ -75,6 +81,7 @@ withDefaults(
 const emit = defineEmits<{ 'geng-xin': [值: string] }>()
 
 const 输入元素 = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
+const 聚焦中 = ref(false)
 
 function 处理输入(事件: Event): void {
   const 目标 = 事件.target as HTMLInputElement | HTMLTextAreaElement | null
@@ -99,6 +106,9 @@ defineExpose({ 聚焦, 输入元素 })
   --chang-fang-kuang-gao-liang-dan: var(--shuru-gao-liang-dan-nan);
   --chang-fang-kuang-gao-liang-liang: var(--shuru-gao-liang-liang-nan);
   --chang-fang-kuang-gao-liang-guang: var(--shuru-gao-liang-guang-nan);
+  --miao-bian-se: var(--chang-fang-kuang-gao-liang-liang);
+  --miao-bian-kuan: var(--chang-fang-kuang-hou-du);
+  --miao-bian-shi-chang: var(--shuru-gao-liang-shi-chang);
 
   position: relative;
   display: block;
@@ -107,65 +117,13 @@ defineExpose({ 聚焦, 输入元素 })
   min-width: 0;
   border-radius: var(--chang-fang-kuang-yuan-jiao);
   overflow: hidden;
-  transition: box-shadow var(--shuru-gao-liang-shi-chang) var(--quxian-biao-zhun);
 }
 
 :root[data-xing-bie='nv'] .chang-fang-kuang-ke {
   --chang-fang-kuang-gao-liang-dan: var(--shuru-gao-liang-dan-nv);
   --chang-fang-kuang-gao-liang-liang: var(--shuru-gao-liang-liang-nv);
   --chang-fang-kuang-gao-liang-guang: var(--shuru-gao-liang-guang-nv);
-}
-
-.chang-fang-kuang-ke::before,
-.chang-fang-kuang-ke::after {
-  content: '';
-  position: absolute;
-  z-index: 1;
-  pointer-events: none;
-  background-repeat: no-repeat;
-  transition-property: width, height;
-  transition-duration: var(--shuru-gao-liang-shi-chang);
-  transition-timing-function: var(--quxian-biao-zhun);
-}
-
-.chang-fang-kuang-ke::before {
-  left: 0;
-  bottom: 0;
-  width: 0;
-  height: var(--chang-fang-kuang-hou-du);
-  background-image: linear-gradient(
-    90deg,
-    transparent,
-    var(--chang-fang-kuang-gao-liang-dan) 45%,
-    var(--chang-fang-kuang-gao-liang-liang)
-  );
-}
-
-.chang-fang-kuang-ke::after {
-  right: 0;
-  bottom: 0;
-  width: var(--chang-fang-kuang-hou-du);
-  height: 0;
-  background-image: linear-gradient(
-    0deg,
-    transparent,
-    var(--chang-fang-kuang-gao-liang-dan) 45%,
-    var(--chang-fang-kuang-gao-liang-liang)
-  );
-}
-
-.chang-fang-kuang-ke:focus-within {
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--chang-fang-kuang-gao-liang-liang) 22%, transparent),
-    0 6px 18px var(--chang-fang-kuang-gao-liang-guang);
-}
-
-.chang-fang-kuang-ke:focus-within::before {
-  width: 100%;
-}
-
-.chang-fang-kuang-ke:focus-within::after {
-  height: 100%;
+  --miao-bian-se: var(--chang-fang-kuang-gao-liang-liang);
 }
 
 .chang-fang-kuang-shuru {
@@ -210,9 +168,7 @@ defineExpose({ 聚焦, 输入元素 })
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chang-fang-kuang-ke,
-  .chang-fang-kuang-ke::before,
-  .chang-fang-kuang-ke::after {
+  .chang-fang-kuang-ke {
     transition-duration: 0s;
   }
 }

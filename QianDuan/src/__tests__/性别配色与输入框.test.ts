@@ -103,28 +103,55 @@ describe('性别深浅令牌成对且边框确为填充的深色版', () => {
   })
 })
 
-describe('圆角输入框两条高亮线与实现收敛', () => {
+describe('圆角长方形输入框：左下起笔、两路等长、右上汇合', () => {
   const 输入框 = 读('components/表单/长方框输入框.vue')
+  const 描边 = 读('components/表单/圆角描边.vue')
+  const 横条 = 读('components/表单/横条输入框.vue')
 
-  it('真实 border + 圆角，聚焦只留底边与右边两条渐变线', () => {
+  it('默认仍是圆角长方形，不额外加高光与外部光圈', () => {
     expect(输入框).toContain('border: var(--chang-fang-kuang-hou-du) solid var(--chang-fang-kuang-hui-se)')
     expect(输入框).toContain('border-radius: var(--chang-fang-kuang-yuan-jiao)')
-    expect(输入框).toContain(':focus-within::before')
-    expect(输入框).toContain(':focus-within::after')
-    expect(输入框.match(/linear-gradient\(/g)?.length, '只应剩底边与右边两条渐变').toBe(2)
-    expect(输入框).not.toContain('@keyframes')
-    expect(输入框).not.toContain('data-jiao-dian-guo')
+    expect(输入框).not.toContain('box-shadow')
+    expect(输入框).not.toContain('linear-gradient(')
+    expect(输入框).not.toContain('focus-within::before')
+    expect(输入框).not.toContain('focus-within::after')
   })
 
-  it('两条线共用同一时长令牌（同时出发、同时到位）', () => {
-    expect(输入框).toContain('transition-duration: var(--shuru-gao-liang-shi-chang)')
-    expect(输入框).not.toContain('shuru-bian-yi')
+  it('描边只覆盖原有边框：线宽取边框令牌、起点在左下圆弧中点、终点在右上圆弧中点', () => {
+    expect(输入框).toContain('<component :is="圆角描边" :激活="聚焦中" />')
+    expect(输入框).toContain('--miao-bian-kuan: var(--chang-fang-kuang-hou-du)')
+    expect(描边).toContain('stroke-width: var(--miao-bian-kuan, 2px)')
+    expect(描边).toContain('stroke-dasharray: 1 1')
+    expect(描边).toContain('stroke-dashoffset: 1')
+    expect(描边.match(/pathLength="1"/g)?.length, '两条路径都要归一').toBe(2)
+    expect(描边).toContain('左 + 径 - 径 * Math.SQRT1_2')
+    expect(描边).toContain('下 - 径 + 径 * Math.SQRT1_2')
+    expect(描边).toContain('右 - 径 + 径 * Math.SQRT1_2')
+    expect(描边).toContain('上 + 径 - 径 * Math.SQRT1_2')
   })
 
-  it('女档由根节点属性切换，未设置或男档走蓝色', () => {
+  it('两路同一时长同一曲线，画入 420ms、退回 200ms，减动效归零', () => {
+    expect(描边).toContain("读时长('--miao-bian-shi-chang', 兜底画入)")
+    expect(描边).toContain('const 兜底画入 = 420')
+    expect(描边).toContain('const 退回时长 = 200')
+    expect(描边).toContain("const 曲线 = 'cubic-bezier(0.4, 0, 0.2, 1)'")
+    expect(描边).toContain('路.animate(')
+    expect(描边.split('路.animate(').length - 1, '只应有一处统一的描边调用').toBe(1)
+    expect(描边).toContain("fill: 'forwards'")
+    expect(描边).toContain('duration: 减动效() ? 0 : 时长')
+    expect(描边).toContain('(prefers-reduced-motion: reduce)')
+  })
+
+  it('失焦沿原路退回，与横条输入框同一套染色语言', () => {
+    expect(描边).toContain('描边(0, 1, 退回时长)')
+    expect(描边).toContain("读时长('--miao-bian-shi-chang'")
+    expect(横条).not.toContain('圆角描边')
+    expect(横条).not.toContain('miao-bian')
+  })
+
+  it('描边色取性别高亮令牌，女档切换', () => {
+    expect(输入框).toContain('--miao-bian-se: var(--chang-fang-kuang-gao-liang-liang)')
     expect(输入框).toContain(":root[data-xing-bie='nv'] .chang-fang-kuang-ke")
-    expect(输入框).toContain('var(--shuru-gao-liang-dan-nan)')
-    expect(输入框).toContain('var(--shuru-gao-liang-dan-nv)')
     expect(读('根组件.vue')).toContain('document.documentElement.dataset.xingBie')
   })
 })

@@ -1,4 +1,4 @@
-﻿import { debug日志 } from '../utils/debug日志'
+import { debug日志 } from '../utils/debug日志'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianDirectorPrompt } from './Prompt构建器'
 import { paiRuZhongShiDuiLie } from './重试队列'
@@ -86,16 +86,16 @@ export async function shengChengDirectorCeLue(
     //   客户端层已做 3 次退避重试，但仍可能出现 4 连空（实测 17%~67% 空响应率）。
     //   空响应 ⇒ 解析必然失败 ⇒ 走单代理降级（策略全 unknown），而 Director 是链路核心，
     //   30%+ 的降级率不可接受 ⇒ 服务层再兜底 1 次整轮重试（10s 退避）。
-    let xiangYing = await genJuPeiZhiTiaoYong('director', [
-      { jiaoSe: 'system', neiRong: '你负责判断角色这次是否回复、当下情绪、是否撤回和是否主动表白，只输出 JSON。情感分析字段写对方这条消息的语气和情绪。' },
-      { jiaoSe: 'user', neiRong: yongHuNeiRong },
-    ], shangXiaWen, waiBuXinHao)
+    const daoYanZhiLing =
+      '你负责判断角色这次是否回复、当下情绪、是否撤回和是否主动表白，只输出 JSON。情感分析字段写对方这条消息的语气和情绪。'
+    const 带导演指令 = (内容: string | DuiHuaKuai[]): string | DuiHuaKuai[] =>
+      typeof 内容 === 'string' ? `${内容}\n\n${daoYanZhiLing}` : [...内容, { type: 'input_text', text: daoYanZhiLing }]
+    const xiaoXi = [{ jiaoSe: 'user' as const, neiRong: 带导演指令(yongHuNeiRong) }]
+
+    let xiangYing = await genJuPeiZhiTiaoYong('director', xiaoXi, shangXiaWen, waiBuXinHao)
     if (xiangYing.neiRong.trim() === '') {
       await new Promise((r) => setTimeout(r, 10000))
-      xiangYing = await genJuPeiZhiTiaoYong('director', [
-        { jiaoSe: 'system', neiRong: '你负责判断角色这次是否回复、当下情绪、是否撤回和是否主动表白，只输出 JSON。情感分析字段写对方这条消息的语气和情绪。' },
-        { jiaoSe: 'user', neiRong: yongHuNeiRong },
-      ], shangXiaWen, waiBuXinHao)
+      xiangYing = await genJuPeiZhiTiaoYong('director', xiaoXi, shangXiaWen, waiBuXinHao)
     }
 
     const { ceLue, jieXiChengGong } = jieXiDirectorXiangYing(xiangYing.neiRong)

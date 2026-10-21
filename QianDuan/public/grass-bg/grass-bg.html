@@ -797,6 +797,12 @@ locked: false,
       updateGhost();
     }
 
+    window.__wuFrame = function () {
+      try { enforceCamera(); } catch (e0) {}
+      try { wuBodyWatch(performance.now()); } catch (e1) {}
+      try { wuBareWatch(); } catch (e2) {}
+      try { wuSkyTick(); } catch (e3) { window.__wuSkyErr = String(e3 && e3.message || e3); }
+    };
     var rend = eng.renderer.instance;
     var origRender = rend.render;
     // 预分配：同帧探针每帧原地改写它，不产生垃圾
@@ -3725,18 +3731,31 @@ function wuBakeAuroraNoise(size) {
     }
     // ---------- 地形目标与地面射线 ----------
     var terrainList = [], terrainStamp = 0;
+        var diXingKuang = null;
+    function diXingKeJian(o) {
+      if (!o || !o.visible) return false;
+      if (o.isInstancedMesh && !o.count) return false;
+      if (diXingKuang && o.geometry) {
+        try { if (!diXingKuang.intersectsObject(o)) return false; } catch (eK) {}
+      }
+      return true;
+    }
     function buildTerrain(force) {
       var now = performance.now();
       if (!force && now - terrainStamp < 2000) return terrainList;
       terrainStamp = now;
+      try {
+        diXingKuang = new T.Frustum().setFromProjectionMatrix(new T.Matrix4().multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse));
+      } catch (eF) { diXingKuang = null; }
       var out = [];
       scene.traverse(function (o) {
         if (!o.isMesh || !o.geometry) return;
         var n = (o.name || '').toLowerCase();
-        if (n.indexOf('grass') >= 0) return;         // 草叶不参与落点计算
-        if (n.indexOf('pl-') === 0) return;          // 放置物克隆件不参与（否则石头克隆件会回流进来）
+        if (n.indexOf('grass') >= 0) return;
+        if (n.indexOf('pl-') === 0) return;
         if (n.indexOf('island') < 0 && n.indexOf('basalt') < 0 &&
             n.indexOf('terrain') < 0 && n.indexOf('ground') < 0) return;
+        if (!o.visible) return;
         out.push(o);
       });
       terrainList = out;
@@ -4431,7 +4450,7 @@ function wuBakeAuroraNoise(size) {
   var WU_ASPECT = 443 / 312;
   var CAM = { pos: [4.2706, 1.157, 5.1022], d: 4.664, p: -23, a: -6.6 };
   var WU = { x: 24.5, y: 71, s: 24 };
-  var yiJianHao = false, yiPuHao = false, puTries = 0;
+  var yiJianHao = false, yiPuHao = false, yiBuHao = false, puTries = 0;
 
   function wuRect() {
     var w = window.innerWidth * WU.s / 100;
@@ -4476,8 +4495,8 @@ function wuBakeAuroraNoise(size) {
       }
       return;
     }
-    if (window.__wuLayoutMesh) {
-      try { window.__wuLayoutMesh(r); } catch (e7) {}
+    if (!yiBuHao && window.__wuLayoutMesh) {
+      try { if (window.__wuLayoutMesh(r)) yiBuHao = true; } catch (e7) {}
     }
   }
 
@@ -4495,8 +4514,15 @@ function wuBakeAuroraNoise(size) {
     if (!window.__camReady) { setTimeout(qiDong, 300); return; }
     if (!yiJianHao) luoJiWei(0);
     puWu();
+    if (!window.__wuBeiJingLoop) {
+      window.__wuBeiJingLoop = true;
+      (function chou() {
+        try { if (window.__wuFrame) window.__wuFrame(); } catch (eL) { window.__wuFrameErr = String(eL && eL.message || eL); }
+        requestAnimationFrame(chou);
+      })();
+    }
     setInterval(function () {
-      if (!yiPuHao || puTries < 30) { puTries++; puWu(); }
+      if (!yiPuHao || (!yiBuHao && puTries < 30)) { puTries++; puWu(); }
     }, 1000);
   }
   qiDong();
