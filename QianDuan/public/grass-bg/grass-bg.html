@@ -4453,17 +4453,22 @@ function wuBakeAuroraNoise(size) {
   }
   var WU_ASPECT = 443 / 312;
   var CAM = { pos: [4.2706, 1.157, 5.1022], d: 4.664, p: -23, a: -6.6 };
-  var WU = { x: 24.5, y: 71, s: 24 };
+  var WU = { x: 24.5, y: 71, s: 24, bili: 16 / 9 };
   var yiJianHao = false, yiPuHao = false, yiBuHao = false, puTries = 0;
 
   function wuRect() {
-    var w = window.innerWidth * WU.s / 100;
+    var kuan = window.innerWidth;
+    var gao = Math.max(1, window.innerHeight);
+    var biLi = kuan / gao;
+    var w = kuan * (WU.s / 100) * (WU.bili / biLi);
     var h = w / WU_ASPECT;
-    var cx = window.innerWidth * WU.x / 100;
-    var cy = window.innerHeight * WU.y / 100;
+    var cx = kuan * WU.x / 100;
+    if (cx - w / 2 < 0 || cx + w / 2 > kuan) cx = kuan / 2;
+    var cy = gao * WU.y / 100;
     return { l: cx - w / 2, t: cy - h / 2, w: w, h: h };
   }
 
+  window.__wuRectCalc = wuRect;
   function luoJiWei(n) {
     if (!window.__setCam) return false;
     n = n || 0;

@@ -1,6 +1,7 @@
 import { reactive, ref } from 'vue'
 import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
 import type { 消息 } from '@/types/类型定义'
+import { guanLianYuYinYinPin, jieChuYuYinYinPin } from '@/composables/use语音音量'
 
 interface Use语音播放依赖 {
   huoQuDiZhi: (xiaoXi: 消息) => string | undefined
@@ -321,6 +322,7 @@ export function use语音播放(yiLai: Use语音播放依赖) {
     if (dangQianYinPin) {
       const yinPin = dangQianYinPin
       dangQianYinPin = null
+      jieChuYuYinYinPin(yinPin)
       yinPin.pause()
       yinPin.src = ''
     }
@@ -352,6 +354,7 @@ export function use语音播放(yiLai: Use语音播放依赖) {
     if (!diZhi) return null
     tingZhiYinPinBoFang()
     const yinPin = new Audio(diZhi)
+    guanLianYuYinYinPin(yinPin)
     try {
       const yinLiang = yiLai.huoQuYinLiang?.()
       if (typeof yinLiang === 'number' && Number.isFinite(yinLiang)) {

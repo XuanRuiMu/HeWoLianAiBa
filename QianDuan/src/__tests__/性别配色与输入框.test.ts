@@ -172,6 +172,33 @@ describe('性别卡：淡填充取自身性别、深边框取对象性别', () =
     expect(向导).toContain('border: 2px solid var(--xuan-dui-xiang-bian)')
   })
 
+  it('选中环与选中文字同源自性别档，只留一套覆写且底色边框不在选中时换宽', () => {
+    expect(向导).toContain('--xuan-dui-xiang-huan: var(--xingbie-nv-xuan-huan)')
+    expect(向导).toContain('--xuan-dui-xiang-huan: var(--xingbie-nan-xuan-huan)')
+    expect(向导).toContain('box-shadow: 0 0 0 3px var(--xuan-dui-xiang-huan)')
+    expect(向导).toContain('color: var(--xuan-zi-ji-wen);')
+    expect(向导).toContain('border: 2px solid rgba(255, 255, 255, 0.13)')
+    expect(向导).not.toContain('.ziJi-xingBie-kaPian.beiXuanZhong .xingBie-mingCheng')
+    expect(向导).not.toContain('color-mix(in srgb, var(--xuan-dui-xiang-bian) 22%')
+  })
+
+  it('账号页与向导页共用同一套性别卡令牌与选中环写法', () => {
+    const 账号页 = 读('views/账号与安全.vue')
+    const 共用片段 = [
+      '--xuan-zi-ji-bei: var(--xingbie-nan-tan-beijing)',
+      'background-color: var(--xuan-zi-ji-bei)',
+      'border: 2px solid var(--xuan-dui-xiang-bian)',
+      'color: var(--xuan-zi-ji-wen)',
+      'box-shadow: 0 0 0 3px var(--xuan-dui-xiang-huan)',
+      '--xuan-dui-xiang-huan: var(--xingbie-nan-xuan-huan)',
+      '--xuan-dui-xiang-huan: var(--xingbie-nv-xuan-huan)',
+    ]
+    for (const 片段 of 共用片段) {
+      expect(向导, `向导页缺少 ${片段}`).toContain(片段)
+      expect(账号页, `账号页缺少 ${片段}`).toContain(片段)
+    }
+  })
+
   it('选中态不再走脚本内联色，三步共享同一段样式', () => {
     expect(向导).not.toContain('性别框体样式')
     expect(向导).not.toContain('use性别框体配色')
@@ -205,36 +232,80 @@ describe('性别卡：淡填充取自身性别、深边框取对象性别', () =
   })
 })
 
-describe('账号与安全：默认性别与默认对象性别左右双区', () => {
+describe('账号与安全：默认性别与默认对象性别左右两卡', () => {
   const 账号页 = 读('views/账号与安全.vue')
+  const 左卡起点 = 账号页.indexOf('id="mo-ren-xing-bie"')
+  const 右卡起点 = 账号页.indexOf('id="mo-ren-dui-xiang-xing-bie"')
+  const 左卡 = 账号页.slice(左卡起点, 右卡起点)
 
-  it('左右两区等宽排布，标题各占一区，窄屏改为上下堆叠', () => {
-    expect(账号页).toContain('.shuangMoRenHang {')
-    expect(账号页).toContain('gap: var(--jiange-da)')
-    expect(账号页).toContain('@media (max-width: 640px)')
-    expect(账号页).toContain(
-      "<h3 class=\"kapian-biao-ti\">{{ huoQuFanYi('caidan', 'sheZhiMoRenXingBie') }}</h3>",
-    )
-    expect(账号页).toContain(
-      "<h3 class=\"kapian-biao-ti\">{{ huoQuFanYi('caidan', 'sheZhiMoRenDuiXiangXingBie') }}</h3>",
-    )
+  it('两半各成一张同规格卡片，左半不再内嵌默认对象性别', () => {
+    expect(左卡起点, '左卡锚点缺失').toBeGreaterThan(-1)
+    expect(右卡起点, '右卡锚点缺失').toBeGreaterThan(左卡起点)
+    expect(账号页.match(/class="zhi-wu-ka-pian mao-dian xingbie-she-zhi-ka"/g)?.length).toBe(2)
+    expect(左卡).toContain("huoQuFanYi('caidan', 'sheZhiMoRenXingBie')")
+    expect(左卡).toContain("huoQuFanYi('caidan', 'moRenXingBieMiaoShu')")
+    expect(左卡).toContain('xingbie-baocun')
+    expect(左卡).not.toContain("huoQuFanYi('caidan', 'sheZhiMoRenDuiXiangXingBie')")
+    expect(左卡).not.toContain("huoQuFanYi('caidan', 'moRenDuiXiangMiaoShu')")
+    expect(左卡).not.toContain('moRenDuiXiangXuanZhong')
+    expect(账号页).not.toContain('shuangMoRenHang')
+    expect(账号页).not.toContain('class="moRenXingBie"')
+    expect(账号页).not.toContain('class="moRenDuiXiangXingBie"')
   })
 
-  it('男卡恒为淡蓝填充加深蓝边框，女卡恒为淡粉填充加深粉边框', () => {
-    expect(账号页).toContain('background-color: var(--xingbie-nan-tan-beijing)')
-    expect(账号页).toContain('border-color: var(--xingbie-nan-shen-biankuang)')
-    expect(账号页).toContain('color: var(--xingbie-nan-tan-wenben)')
-    expect(账号页).toContain('background-color: var(--xingbie-nv-tan-beijing)')
-    expect(账号页).toContain('border-color: var(--xingbie-nv-shen-biankuang)')
-    expect(账号页).toContain('color: var(--xingbie-nv-tan-wenben)')
+  it('标题升到与同组卡片一致的 h2，两张卡各自独立承载描述与确定', () => {
+    expect(账号页).toContain(
+      "<h2 class=\"kapian-biao-ti\">{{ huoQuFanYi('caidan', 'sheZhiMoRenXingBie') }}</h2>",
+    )
+    expect(账号页).toContain(
+      "<h2 class=\"kapian-biao-ti\">{{ huoQuFanYi('caidan', 'sheZhiMoRenDuiXiangXingBie') }}</h2>",
+    )
+    expect(左卡).not.toContain('<h3 class="kapian-biao-ti">')
   })
 
-  it('选中只加同色 3px 环与 600 字重，禁用饱和填充与旧文字阴影', () => {
-    expect(账号页).toContain('box-shadow: 0 0 0 3px var(--xingbie-nan-xuan-huan)')
-    expect(账号页).toContain('box-shadow: 0 0 0 3px var(--xingbie-nv-xuan-huan)')
-    expect(账号页).toContain('font-weight: 600')
+  it('未选中为中性卡面与中性边框，男女卡不再各挂一套色', () => {
+    expect(账号页).toContain('border: 2px solid var(--bianKuang)')
+    expect(账号页).toContain('background-color: var(--kaPian)')
+    expect(账号页).not.toContain('.xingbie-kapian.xingbie-nan')
+    expect(账号页).not.toContain('.xingbie-kapian.xingbie-nv')
+    expect(账号页).not.toContain('class="xingbie-kapian xingbie-nan"')
+    expect(账号页).not.toContain('class="xingbie-kapian xingbie-nv"')
+  })
+
+  it('选中=自身性别淡填充与淡文字 + 对象性别深边框与同源环', () => {
+    expect(账号页).toContain('--xuan-zi-ji-bei: var(--xingbie-nan-tan-beijing)')
+    expect(账号页).toContain("--xuan-zi-ji-bei: var(--xingbie-nv-tan-beijing)")
+    expect(账号页).toContain('--xuan-zi-ji-wen: var(--xingbie-nan-tan-wenben)')
+    expect(账号页).toContain('--xuan-zi-ji-wen: var(--xingbie-nv-tan-wenben)')
+    expect(账号页).toContain('--xuan-dui-xiang-bian: var(--xingbie-nv-shen-biankuang)')
+    expect(账号页).toContain('--xuan-dui-xiang-bian: var(--xingbie-nan-shen-biankuang)')
+    expect(账号页).toContain('background-color: var(--xuan-zi-ji-bei)')
+    expect(账号页).toContain('border: 2px solid var(--xuan-dui-xiang-bian)')
+    expect(账号页).toContain('color: var(--xuan-zi-ji-wen)')
+    expect(账号页).toContain('box-shadow: 0 0 0 3px var(--xuan-dui-xiang-huan)')
     expect(账号页).not.toContain('var(--xingbie-nan-xuan-beijing)')
     expect(账号页).not.toContain('var(--xingbie-nv-xuan-beijing)')
     expect(账号页).not.toContain('text-shadow: var(--xuanzhong-wenben-yinying)')
+  })
+
+  it('两卡配色档同源：自身取选中态回落账号默认，对象取选中态回落默认对象', () => {
+    expect(账号页).toContain(
+      "import { 用户形态, 解析主色档, 解析性别配色档 } from '@/utils/性别'",
+    )
+    expect(账号页).toContain(
+      'const 主色档 = computed(() => 解析主色档(moRenXingBieXuanZhong.value, 默认性别.value))',
+    )
+    expect(账号页).toContain(
+      'const 对象色档 = computed(() => 解析性别配色档(moRenDuiXiangXuanZhong.value ?? 默认对象性别.value))',
+    )
+    expect(账号页.match(/:data-xingbie="主色档"/g)?.length).toBe(2)
+    expect(账号页.match(/:data-dui-xiang-xingbie="对象色档"/g)?.length).toBe(2)
+  })
+
+  it('两卡同高时确定按钮贴底对齐，窄屏沿用页面单列堆叠', () => {
+    expect(账号页).toContain('.xingbie-baocun {')
+    expect(账号页).toContain('margin-top: auto')
+    expect(账号页).toContain('@media (min-width: 768px)')
+    expect(账号页).toContain('@media (max-width: 767px)')
   })
 })

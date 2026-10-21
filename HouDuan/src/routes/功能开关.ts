@@ -29,6 +29,10 @@ export function jieXiTeZhengKaiGuan(yuanWen: string | undefined): TeZhengKaiGuan
 
 const kaiGuan = jieXiTeZhengKaiGuan(process.env.FEATURE_FLAGS)
 
+export function huoQuTeZhengKaiGuan(): TeZhengKaiGuanBiao {
+  return { ...kaiGuan }
+}
+
 const luYou = Router()
 
 luYou.get('/', (_qingQiu: Request, xiangYing: Response) => {

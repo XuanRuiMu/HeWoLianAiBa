@@ -27,6 +27,8 @@ export interface KaiChangBaiShengChengCanShu {
 }
 
 export interface KaiChangBaiShengChengJieGuo {
+  zhu_dong_dang_wei: string
+  zhu_dong_kai_kou_gai_lv: number
   xiao_xi_lie_biao: string[]
 }
 
@@ -46,8 +48,16 @@ function gouJianKaiChangBaiTiShi(canShu: KaiChangBaiShengChengCanShu): string {
   const xingBieMiaoShu = `${内部转展示(canShu.xing_bie)}生`
   return [
     '想象一下：这个角色刚在微信上加了对方（一个刚认识的同学/朋友介绍的人），对方还没说话。',
-    'TA 已经决定要主动发起开场白（发不发已由概率门控决定）。请让 TA 主动发送 1~5 条开场白，说什么由你根据 TA 的完整人物画像深度思考后决定。',
-    '千万不要套用任何“外向就一定多说、内向就一定少说”的刻板规则——条数由你综合画像判断，但必须在 1~5 条之间。',
+    '你现在要替 TA 做三件事，顺序是：先判断 TA 会不会主动开口，再决定说几条，最后写说什么。',
+    '第一步，判断 TA 属于哪种主动倾向。四个档位选一个，只能填档位名本身，不要自创：',
+    '「主动型」：热情外向、话多、自来熟，加了好友多半会自己先发消息找话题。',
+    '「中间型」：不算主动也不算被动，想起什么说什么，没话题就先等着。',
+    '「被动型」：慢热、内向、怕打扰别人、觉得先说显得太热情，多半等对方开口。',
+    '「极被动型」：极度被动、社恐、或者有过主动联系别人却被无视的经历，基本上不会自己先发消息。',
+    '判断依据（按权重从高到低）：说话风格里的主动性、性格里的主动程度、热身类型的快热慢热、MBTI 的 E/I、情感经历里有没有被人放过鸽子、家庭背景里的性格成因。',
+    '注意：不要因为"主动一点更好"就往高档位选。性格被动的人就是不主动，这是真实的人，不是缺陷。',
+    '第二步，决定条数：假设 TA 真的开口了，会发几条。话多热情的发 3~5 条，话少内向的发 1~2 条。',
+    '第三步，写内容：写 TA 主动发出去的那几条消息。',
     '角色真实画像：',
     `MBTI：${canShu.mbti_lei_xing}（首字母 ${canShu.ie_lei_xing} 仅供参考，不要据此机械决定），热身类型：${canShu.re_shen_lei_xing}，性别：${xingBieMiaoShu}。`,
     `性格：${canShu.xing_ge}`,
@@ -60,8 +70,7 @@ function gouJianKaiChangBaiTiShi(canShu: KaiChangBaiShengChengCanShu): string {
     `标签：${canShu.biao_qian.join('、')}`,
     canShu.shi_fou_zha_xing ? '这人设带点渣，往往会更主动地撩。' : '',
     '',
-    '数量要求：必须发送 1~5 条（含 1 和 5），不要发 0 条。',
-    '角色越热情/开朗/快热/渣型，越可以发到 3~5 条；越害羞/慢热/高冷，发 1~2 条即可。',
+    '数量要求：消息 1~5 条（含 1 和 5），不要发 0 条。条数由 TA 的性格决定：越热情/开朗/快热/渣型，越可以发到 3~5 条；越害羞/慢热/高冷，发 1~2 条即可。',
     '请按真实中国大学生微信聊天的风格生成。',
     '',
 '内容要求：',
@@ -72,7 +81,7 @@ function gouJianKaiChangBaiTiShi(canShu: KaiChangBaiShengChengCanShu): string {
     '5. 内容必须是 TA 主动发起的，不能假设对方已经说话。',
     '',
     '按这个 JSON 格式输出，别加别的：',
-    '{"xiao_xi_lie_biao": ["消息1", "消息2"]}',
+    '{"主动程度": "中间型", "xiao_xi_lie_biao": ["消息1", "消息2"]}',
   ].filter(Boolean).join('\n')
 }
 
@@ -109,7 +118,10 @@ function anQuanGuoLvXiaoXi(neiRong: string, mingZi?: string): string | null {
   return qingLi
 }
 
-function jieXiJSONNeiRong(neiRong: unknown, mingZi?: string): string[] {
+function jieXiJSONNeiRong(
+  neiRong: unknown,
+  mingZi?: string,
+): { dang_wei: string; gai_lv: number; xiao_xi_lie_biao: string[] } {
   if (typeof neiRong !== 'string') {
     throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID)
   }
@@ -134,7 +146,25 @@ function jieXiJSONNeiRong(neiRong: unknown, mingZi?: string): string[] {
   if (xiaoXiLieBiao.length === 0) {
     throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID)
   }
-  return xiaoXiLieBiao
+  const dangWei = jieXiZhuDongDangWei((jieGuo as { 主动程度?: unknown })['主动程度'])
+  return { dang_wei: dangWei, gai_lv: dangWeiZhuanGaiLv(dangWei), xiao_xi_lie_biao: xiaoXiLieBiao }
+}
+
+export function jieXiZhuDongDangWei(zhi: unknown): string {
+  const biao = AI_PEI_ZHI.prompt.kaiChangBaiZhuDongDangWei
+  const wenBen = typeof zhi === 'string' ? zhi.trim() : ''
+  if (wenBen && Object.prototype.hasOwnProperty.call(biao, wenBen)) return wenBen
+  for (const dangWei of Object.keys(biao)) {
+    if (wenBen.includes(dangWei)) return dangWei
+  }
+  return AI_PEI_ZHI.prompt.kaiChangBaiMoRenZhuDongDangWei
+}
+
+export function dangWeiZhuanGaiLv(dangWei: string): number {
+  const biao = AI_PEI_ZHI.prompt.kaiChangBaiZhuDongDangWei
+  const zhi = biao[dangWei]
+  if (typeof zhi !== 'number' || !Number.isFinite(zhi)) return AI_PEI_ZHI.prompt.kaiChangBaiFaSongGaiLv
+  return Math.min(0.95, Math.max(0.02, zhi))
 }
 
 function jiangJiKaiChangBai(canShu: KaiChangBaiShengChengCanShu): KaiChangBaiShengChengJieGuo {
@@ -159,7 +189,11 @@ function jiangJiKaiChangBai(canShu: KaiChangBaiShengChengCanShu): KaiChangBaiShe
   const guoLvHou = jieGuo
     .map((x) => anQuanGuoLvXiaoXi(x, canShu.ming_zi))
     .filter((x): x is string => x !== null)
-  return { xiao_xi_lie_biao: guoLvHou.slice(0, 5) }
+  return {
+    zhu_dong_dang_wei: AI_PEI_ZHI.prompt.kaiChangBaiMoRenZhuDongDangWei,
+    zhu_dong_kai_kou_gai_lv: AI_PEI_ZHI.prompt.kaiChangBaiFaSongGaiLv,
+    xiao_xi_lie_biao: guoLvHou.slice(0, 5),
+  }
 }
 
 export async function shengChengKaiChangBai(
@@ -174,7 +208,14 @@ export async function shengChengKaiChangBai(
     const guoLvHou = mockJieGuo.xiao_xi_lie_biao
       .map((x) => anQuanGuoLvXiaoXi(x, canShu.ming_zi))
       .filter((x: string | null): x is string => x !== null)
-    return { xiao_xi_lie_biao: guoLvHou.slice(0, 5) }
+    return {
+      zhu_dong_dang_wei: mockJieGuo.zhu_dong_dang_wei || AI_PEI_ZHI.prompt.kaiChangBaiMoRenZhuDongDangWei,
+      zhu_dong_kai_kou_gai_lv:
+        typeof mockJieGuo.zhu_dong_kai_kou_gai_lv === 'number'
+          ? Math.min(0.95, Math.max(0.03, mockJieGuo.zhu_dong_kai_kou_gai_lv))
+          : AI_PEI_ZHI.prompt.kaiChangBaiFaSongGaiLv,
+      xiao_xi_lie_biao: guoLvHou.slice(0, 5),
+    }
   }
 
   const apiMiYao = peiZhi.deepSeek.apiMiYao || AI_PEI_ZHI.deepSeek.apiMiYao
@@ -196,14 +237,15 @@ export async function shengChengKaiChangBai(
   let xiangYing: Awaited<ReturnType<typeof genJuPeiZhiTiaoYong>>
   try {
     xiangYing = await genJuPeiZhiTiaoYong('kaiChangBai' as keyof typeof AI_PEI_ZHI.moXing, [
-      { jiaoSe: 'system', neiRong: '你正在帮一个刚加上微信的中国大学生想主动发出的开场消息，是否主动发、发几条、说什么由你根据 TA 的完整画像深度思考决定。' },
+      { jiaoSe: 'system', neiRong: '你现在就是这个人。刚加了一个刚认识的人，对方还没说话。你先判断自己会不会主动开口、开口发几条、发什么，全部由你自己的性格决定，不要做任何"应该主动一点"的道德判断，性格被动的人就是不主动。' },
       { jiaoSe: 'user', neiRong: gouJianKaiChangBaiTiShi(canShu) },
     ], shangXiaWenShiJi)
   } catch {
     return jiangJiKaiChangBai(canShu)
   }
   try {
-    return { xiao_xi_lie_biao: jieXiJSONNeiRong(xiangYing.neiRong, canShu.ming_zi) }
+    const { dang_wei, gai_lv, xiao_xi_lie_biao } = jieXiJSONNeiRong(xiangYing.neiRong, canShu.ming_zi)
+    return { zhu_dong_dang_wei: dang_wei, zhu_dong_kai_kou_gai_lv: gai_lv, xiao_xi_lie_biao }
   } catch {
     return jiangJiKaiChangBai(canShu)
   }

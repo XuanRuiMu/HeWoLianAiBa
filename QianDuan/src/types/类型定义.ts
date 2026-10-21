@@ -316,6 +316,7 @@ export interface JunShiZhiDaoFenDuan {
   dangQianJuMian: string
   xiaYiBuZenMeHui: string
   weiShenMeZheMeLiao: string
+  kanDaoDeJiXiang: string
   guLi: string
 }
 

@@ -2,16 +2,24 @@
   <div v-if="youFenDuan && fenDuan" class="junshi-fenduan">
     <section class="junshi-duan junshi-duan-zhidian" data-duan="xiaYiBuZenMeHui">
       <h4 class="duan-biaoti">{{ huoQuFanYi('junShi', 'xiaYiBuZenMeHui') }}</h4>
-      <p class="duan-neirong zhidian-neirong">{{ fenDuan.xiaYiBuZenMeHui }}</p>
-      <div class="duan-caozuo">
-        <button
-          v-if="fenDuan.xiaYiBuZenMeHui"
-          class="fuzhi-anniu"
-          type="button"
-          @click="fuZhiZheJuHua"
+      <div class="houxuan-liebiao">
+        <div
+          v-for="(hang, hangSuoYin) in houXuanHang"
+          :key="'houxuan-' + hangSuoYin"
+          class="houxuan-hang"
         >
-          {{ huoQuFanYi('junShi', 'fuZhiZheJuHua') }}
-        </button>
+          <span class="houxuan-biaoqian">{{ huoQuFanYi('junShi', hang.fanYiJian) }}</span>
+          <p class="duan-neirong zhidian-neirong">{{ hang.neiRong }}</p>
+          <button
+            class="fuzhi-anniu"
+            type="button"
+            @click="fuZhiZheJuHua(hang.neiRong)"
+          >
+            {{ huoQuFanYi('junShi', 'fuZhiZheJuHua') }}
+          </button>
+        </div>
+      </div>
+      <div class="duan-caozuo">
         <span v-if="fuZhiTiShi" class="fuzhi-tishi" role="status">{{ fuZhiTiShi }}</span>
       </div>
     </section>
@@ -46,8 +54,22 @@ type JunShiCiYaoJian = FanYiZiJian<'junShi'>
 const CI_YAO_DUAN: Array<{ ziDuan: keyof JunShiZhiDaoFenDuan; fanYiJian: JunShiCiYaoJian }> = [
   { ziDuan: 'dangQianJuMian', fanYiJian: 'dangQianJuMian' },
   { ziDuan: 'weiShenMeZheMeLiao', fanYiJian: 'weiShenMeZheMeLiao' },
+  { ziDuan: 'kanDaoDeJiXiang', fanYiJian: 'kanDaoDeJiXiang' },
   { ziDuan: 'guLi', fanYiJian: 'guLi' },
 ]
+
+const HOU_XUAN_BIAO_QIAN: JunShiCiYaoJian[] = ['houXuanWenTuo', 'houXuanTuiJin', 'houXuanShouZhuo']
+
+const houXuanHang = computed(() => {
+  const zhi = (props.fenDuan?.xiaYiBuZenMeHui || '').trim()
+  if (!zhi) return []
+  return zhi
+    .split('\n')
+    .map((hang) => hang.trim())
+    .filter((hang) => hang.length > 0)
+    .slice(0, HOU_XUAN_BIAO_QIAN.length)
+    .map((neiRong, suoYin) => ({ neiRong, fanYiJian: HOU_XUAN_BIAO_QIAN[suoYin] }))
+})
 
 const ciYaoDuan = computed(() =>
   CI_YAO_DUAN.map((duan) => ({
@@ -101,10 +123,10 @@ async function keFuZhi(wenBen: string): Promise<boolean> {
   }
 }
 
-async function fuZhiZheJuHua() {
-  const huaShu = (props.fenDuan?.xiaYiBuZenMeHui || '').trim()
-  if (!huaShu) return
-  const chengGong = await keFuZhi(huaShu)
+async function fuZhiZheJuHua(huaShu: string) {
+  const zhi = (huaShu || '').trim()
+  if (!zhi) return
+  const chengGong = await keFuZhi(zhi)
   xianShiTiShi(
     chengGong ? huoQuFanYi('junShi', 'yiFuZhi') : huoQuFanYi('junShi', 'fuZhiShiBai'),
   )
@@ -193,4 +215,33 @@ onUnmounted(() => {
   white-space: pre-wrap;
   word-break: break-word;
 }
+.houxuan-liebiao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jiange-10);
+}
+
+.houxuan-hang {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--jiange-xiao);
+}
+
+.houxuan-biaoqian {
+  flex: 0 0 auto;
+  padding: var(--jiange-2) var(--jiange-6);
+  border-radius: 6px;
+  background: var(--junshi-zhuse-touming);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--wenben-tishi);
+  white-space: nowrap;
+}
+
+.houxuan-hang .zhidian-neirong {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
 </style>

@@ -31,6 +31,7 @@ export async function shengChengJunShiZhiDao(
           duiHuaWenBen,
           canShu.jiao_se_ming,
           canShu.hao_gan_du,
+          canShu.ren_she_wen_ben,
         ),
       },
     ], shangXiaWenShiJi)
@@ -73,8 +74,17 @@ function qingLiJSONKuai(neiRong: string): Record<string, unknown> | null {
 
 function qieDuanWenBen(wenBen: string, zuiDaZiShu: number): string {
   const qu = wenBen.trim()
-  if (qu.length <= zuiDaZiShu) return qu
-  return `${qu.slice(0, Math.max(0, zuiDaZiShu - 1))}…`
+  const zi = Array.from(qu)
+  if (zi.length <= zuiDaZiShu) return qu
+  return `${zi.slice(0, Math.max(0, zuiDaZiShu - 1)).join('')}…`
+}
+
+const SHU_ZHI_XIE_LU_RE =
+  /(信任度|亲密度|趣味度|关怀度|信任|亲密|趣味|关怀|总好感|好感度|总分|分值|阶段值|阶段名)[^\d。！？\n]{0,8}\d+(?:\.\d+)?\s*(?:分|点)?/g
+
+function xiaoChuShuZhiXieLu(wenBen: string): string {
+  if (!wenBen) return ''
+  return wenBen.replace(SHU_ZHI_XIE_LU_RE, '').replace(/[ \t]{2,}/g, ' ').trim()
 }
 
 export function jieXiJunShiFenDuan(neiRong: string): JunShiZhiDaoFenDuan | null {
@@ -84,17 +94,19 @@ export function jieXiJunShiFenDuan(neiRong: string): JunShiZhiDaoFenDuan | null 
     dangQianJuMian: '',
     xiaYiBuZenMeHui: '',
     weiShenMeZheMeLiao: '',
+    kanDaoDeJiXiang: '',
     guLi: '',
   }
   for (const duan of JUN_SHI_ZHI_DAO_DUAN_DING_YI) {
     const yuanShi = duiXiang[duan.moXingJian]
     const wenBen = typeof yuanShi === 'string' ? yuanShi : ''
-    fenDuan[duan.ziDuan] = qieDuanWenBen(wenBen, duan.zuiDaZiShu)
+    fenDuan[duan.ziDuan] = qieDuanWenBen(xiaoChuShuZhiXieLu(wenBen), duan.zuiDaZiShu)
   }
   if (
     !fenDuan.dangQianJuMian &&
     !fenDuan.xiaYiBuZenMeHui &&
     !fenDuan.weiShenMeZheMeLiao &&
+    !fenDuan.kanDaoDeJiXiang &&
     !fenDuan.guLi
   ) {
     return null

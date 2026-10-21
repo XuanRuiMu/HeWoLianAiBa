@@ -55,6 +55,7 @@
   --moshi-kapian-dong-xiao: 240ms;
   --zhuye-wen-zi-yan-shi: 200ms;
   --shuru-gao-liang-shi-chang: 420ms;
+  --kaiguan-dong-hua-shi-chang: 200ms;
   --gou-xuan-chi-cun: 18px;
 
   /* 圆角三档/安全区/品牌双色：量纲、env() 环境函数与品牌色相均与主题档无关，深浅两档恒等，
@@ -108,6 +109,7 @@
   --juxing-shuru-yuanjiao: 10px;
   --juxing-shuru-biankuang: 2px;
   --shuru-anniu-re-ku: 44px;
+  --wai-guan-re-ku: 44px;
   --shuru-danxing-gao-du: 35px;
   --shuru-tubiao-chicun: var(--shuru-danxing-gao-du);
   /* FP-10c：输入区展开档的上限。改造前这个数是 use输入框.ts 在 JS 里算的 min(内容高, 50vh)，
@@ -232,26 +234,24 @@
      直到动画全部注销即整层移除，那 1.3s 内不该有任何东西压住它 */
   --juanzhou-tong-gao-du: 28px;
   --ceng-jingge: 4200;
-  /* 语音条（FP-11，需求 #10 语音条部分）几何真源：量纲与主题档无关，同 --yinyong-* 只能住本共用
-     :root 块。逐值出处 = .agents/evidence/references/FP-13-语音条-20260921.md：喇叭 16×20 与
-     喇叭到时长 7px 间距见 §1-A，气泡 12px 内边距见 §1-B 的 message-body-content，波形条
-     2px 宽 + 2px 间距 + 30px 轨道见 §3，进度滑块 8px 与 1px 轨见 §3 的 SeekBar，42px 命中区见 §5。
-     唯一消费者 = components/聊天/语音气泡.vue（两页共用的那一份实现），页面内不得再出现第二套语音字面量。
-     --yuyin-pao-neidian 与 --yuyin-bo-xing-* 两枚与 config/消息配置.ts::DUO_MEI_TI_PEI_ZHI 的
-     yuYinPaoNeidianPx、yuYinCaoYangTiaoKuanPx、yuYinCaoYangJianJuPx 同值（JS 要按轨道净宽算采样条数），
-     --yuyin-jindu-zui-xiao-kuan 与 yuYinZuiDuanKuanPx 同值；同值性由
-     __tests__/FP11语音气泡.test.ts 解析本文件把守（成对性口径同 FP-23，不留零消费者令牌） */
-  --yuyin-pao-neidian: 12px;
-  --yuyin-pao-yuanjiao: 6px;
-  --yuyin-pao-zui-xiao-gao: 38px;
-  --yuyin-laba-kuan: 16px;
+  --qipao-yuanjiao: 6px;
+  --qipao-zihao: 16px;
+  --qipao-zihao-zhai: 15px;
+  --qipao-hangao: 1.45;
+  --qipao-weiba-kuan: 6px;
+  --qipao-weiba-ban: 5px;
+  --qipao-weiba-shang: 13px;
+  --qipao-weiba-pian: 5px;
+  --yuyin-laba-kuan: 18px;
   --yuyin-laba-gao: 20px;
-  --yuyin-laba-jian-ju: 7px;
+  --yuyin-laba-jian-ju: 8px;
   --yuyin-jindu-gao: 1px;
   --yuyin-jindu-xian-gao: 2px;
   --yuyin-huakuai-chicun: 8px;
-  --yuyin-re-ku: 42px;
   --yuyin-jindu-zui-xiao-kuan: 60px;
+  --yuyin-kongzhi-chicun: 32px;
+  --yuyin-kongzhi-re-ku: 44px;
+  --yuyin-kongzhi-tubiao: 16px;
   /* 时间条（FP-11 验收点 B）：聊天页与好友页共用 components/聊天/时间条.vue，量纲同上只能住本共用
      :root 块。四枚数值逐字沿用改前 聊天页面.vue 的 .shijian-biaoqian 实测值（上下内边距 2px、
      左右 6px、圆角 4px、下间距 12px）；上间距与字号直接复用到期的 --jiange-zhong 与 --ziti-xiao，
@@ -659,7 +659,7 @@
   --kapian-mian-biankuang: rgba(226, 232, 240, 0.45);
   --kapian-mian-zhengwen: #dfe4ec;
   --kapian-mian-biaoti: #ffffff;
-  --kapian-shuoming-wenben: #F5F5F7;
+  --kapian-shuoming-wenben: #FFFFFF;
   --moshi-kapian-zheyan: rgba(26, 30, 40, 0.75);
   --moshi-kapian-hover-yinying: 0 14px 40px rgba(0, 0, 0, 0.28);
   /* 认证卡（星夜档）卡面色 + 其上输入框的静置发丝线（FP-03c），与浅色档成对，见上 */

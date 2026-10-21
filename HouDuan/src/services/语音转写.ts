@@ -83,3 +83,35 @@ export async function mianFeiZhuanXieYuYin(canShu: { meiTiId: string }): Promise
     clearTimeout(dingShi)
   }
 }
+
+export async function buQiYuYinZhuanXie<
+  T extends { lei_xing: string; nei_rong: string; mei_ti_id?: string | null },
+>(xiaoXi: T): Promise<T> {
+  if (xiaoXi.lei_xing !== 'yuYin') return xiaoXi
+  if ((xiaoXi.nei_rong || '').trim().length > 0) return xiaoXi
+  const meiTiId = (xiaoXi.mei_ti_id || '').trim()
+  if (!meiTiId) return xiaoXi
+  let wenBen: string | null = null
+  try {
+    wenBen = await mianFeiZhuanXieYuYin({ meiTiId })
+  } catch (cuoWu) {
+    debug日志.warn('消息接口', '语音消息触发AI前同步转写失败', {
+      xiang_qing: { cuo_wu: String(cuoWu) },
+    })
+    return xiaoXi
+  }
+  const zhengLi = (wenBen || '').trim()
+  if (!zhengLi) return xiaoXi
+  try {
+    await 数据库.query(
+      `UPDATE "消息" SET "内容" = $2 WHERE "媒体ID" = $1 AND "类型" = 'yuYin' AND "已撤回" = false AND COALESCE(BTRIM("内容"), '') = ''`,
+      [meiTiId, zhengLi],
+    )
+  } catch (cuoWu) {
+    debug日志.warn('消息接口', '语音转写回写失败（已带转写文本继续驱动AI）', {
+      xiang_qing: { cuo_wu: String(cuoWu) },
+    })
+  }
+  return { ...xiaoXi, nei_rong: zhengLi }
+}
+

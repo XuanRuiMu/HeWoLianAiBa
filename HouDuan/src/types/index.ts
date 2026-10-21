@@ -426,6 +426,7 @@ export interface JunShiQiuZhuCanShu {
   jiao_se_ming: string
   dui_hua_li_shi: DuiHuaLiShiXiang[]
   hao_gan_du: HaoGanDuXinXi
+  ren_she_wen_ben?: string
   fu_pan_tiao_mu?: string[]
   jun_shi_pei_zhi: {
     id: string
@@ -438,6 +439,7 @@ export interface JunShiZhiDaoFenDuan {
   dangQianJuMian: string
   xiaYiBuZenMeHui: string
   weiShenMeZheMeLiao: string
+  kanDaoDeJiXiang: string
   guLi: string
 }
 

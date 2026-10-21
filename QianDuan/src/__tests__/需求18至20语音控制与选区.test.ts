@@ -181,16 +181,17 @@ describe('需求19：语音时长只有一处口径，且与真实播放一致',
 })
 
 describe('需求18：暂停/停止按钮与空格键', () => {
-  it('气泡内两个新增控件都是内联 SVG、读屏文案走翻译表，且热区按语音热区令牌 +2px ≥ 44px', () => {
+  it('气泡内两个新增控件都是内联 SVG、读屏文案走翻译表，视觉 32px 且 ::before 外扩到 44px 热区', () => {
     const wenBen = huoQuFanYi('duoMeiTi', 'zanTingYuYin')
     expect(wenBen).toBe('暂停语音')
     expect(huoQuFanYi('duoMeiTi', 'jiXuYuYin')).toBe('继续播放语音')
     expect(huoQuFanYi('duoMeiTi', 'tingZhiYuYin')).toBe('停止语音并回到开头')
     expect((QI_PAO_YUAN.match(/class="yuyin-kongzhi"/g) ?? []).length).toBe(2)
+    expect(QI_PAO_YUAN).toContain('width: var(--yuyin-kongzhi-chicun)')
+    expect(QI_PAO_YUAN).toContain('height: var(--yuyin-kongzhi-chicun)')
     expect(QI_PAO_YUAN).toContain(
-      'width: calc(var(--yuyin-re-ku) + var(--jiange-2))',
+      'inset: calc((var(--yuyin-kongzhi-chicun) - var(--yuyin-kongzhi-re-ku)) / 2)',
     )
-    expect(QI_PAO_YUAN).toContain('height: calc(var(--yuyin-re-ku) + var(--jiange-2))')
     expect(QI_PAO_YUAN).not.toMatch(/[⏸⏹▶⏯⏪]/u)
   })
 
@@ -212,6 +213,7 @@ describe('需求18：暂停/停止按钮与空格键', () => {
     expect(anniu[1].find('svg').exists()).toBe(true)
     expect(wrapper.find('.yuyin-shichang').text()).toBe('10″')
     expect(wrapper.find('.yuyin-jindu-wenben').exists()).toBe(false)
+    wrapper.unmount()
   })
 
   it('暂停 → 继续 → 停止：停止立即中断并把进度归零，控制权从全局注册表摘除', () => {

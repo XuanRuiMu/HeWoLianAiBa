@@ -8,6 +8,7 @@
       class="chang-fang-kuang-shuru she-zhi-shuru"
       :type="类型"
       :value="模型值"
+      :autocomplete="自动填充"
       :maxlength="最大长度 || undefined"
       :placeholder="占位文字 || undefined"
       :disabled="禁用"
@@ -26,6 +27,7 @@
       class="chang-fang-kuang-shuru chang-fang-kuang-shuru--duo-hang she-zhi-shuru"
       :rows="行数"
       :value="模型值"
+      :autocomplete="自动填充"
       :maxlength="最大长度 || undefined"
       :placeholder="占位文字 || undefined"
       :disabled="禁用"
@@ -44,12 +46,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import 圆角描边 from './圆角描边.vue'
 
 defineOptions({ inheritAttrs: false })
 
-withDefaults(
+const 属性 = withDefaults(
   defineProps<{
     标签?: string
     模型值?: string
@@ -62,6 +64,7 @@ withDefaults(
     标识?: string
     多行?: boolean
     行数?: number
+    自动完成?: string
   }>(),
   {
     标签: '',
@@ -75,8 +78,11 @@ withDefaults(
     标识: '',
     多行: false,
     行数: 3,
+    自动完成: undefined,
   },
 )
+
+const 自动填充 = computed(() => 属性.自动完成 ?? (属性.类型 === 'password' ? 'new-password' : 'off'))
 
 const emit = defineEmits<{ 'geng-xin': [值: string] }>()
 

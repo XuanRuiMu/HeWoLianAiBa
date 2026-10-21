@@ -22,6 +22,7 @@ import {
 } from '@/config/气泡主题'
 import { huoQuFanYi } from '@/config/翻译表'
 import { 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
+import { baoCunShuJu, duQuShuJu } from '@/utils/本地存储'
 import { TuPianChiCunCuoWu, yaSuoTuPiang } from '@/utils/图片压缩'
 import {
   BEI_JING_FEN_ZU,
@@ -52,6 +53,10 @@ export const LIAO_TIAN_BEI_JING_XUAN_XIANG = ['moRen', 'miWuSenLin', 'haiYangZhi
 export type LiaoTianBeiJing = string
 
 export const BEI_JING_URL_ZUI_DA_CHANG_DU = 2000
+
+export const ZHU_YE_BEI_JING_YU_SHUI_JIAN = 'zhuYeBeiJingYuShui'
+
+export const ZHU_YE_BEI_JING_YU_SHUI_MO_REN = true
 
 const MEI_TI_QIAN_MING_LU_JING = /^\/api\/媒体\/[0-9a-f]{64}(\?e=\d{1,12}&s=[0-9a-f]+)?$/
 const MEI_TI_XIN_QIAN_MING_LU_JING =
@@ -175,6 +180,7 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
   const gongKaiZhangHao = ref(true)
   const gongKaiShouJiHao = ref(false)
   const gongKaiYouXiang = ref(false)
+  const zhuYeBeiJingYuShui = ref(duQuShuJu<boolean>(ZHU_YE_BEI_JING_YU_SHUI_JIAN, ZHU_YE_BEI_JING_YU_SHUI_MO_REN) !== false)
   const bangDingYouXiang = ref('')
   const yiJiaZai = ref(false)
   const caoZuoCuoWu = ref<QianTaiCuoWu | null>(null)
@@ -294,6 +300,18 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     return leiBie === 'beiJing' ? waiGuan.value.beiJing : waiGuan.value.qiPao
   }
 
+  function quYiYouWaiGuanMing(leiBie: 'beiJing' | 'qiPao', paiChuId = ''): string[] {
+    const mingCheng = quTiaoMuLieBiao(leiBie)
+      .filter((xiang) => xiang.id !== paiChuId)
+      .map((xiang) => xiang.mingCheng)
+    if (leiBie === 'beiJing') {
+      for (const fuGai of Object.values(waiGuan.value.beiJingFuGai)) {
+        if (fuGai?.mingCheng) mingCheng.push(fuGai.mingCheng)
+      }
+    }
+    return mingCheng
+  }
+
   async function shangChuanWaiGuan(leiBie: 'beiJing' | 'qiPao', wenJian: File): Promise<WaiGuanTiaoMu> {
     const lieBiao = quTiaoMuLieBiao(leiBie)
     if (lieBiao.length >= WAI_GUAN_MEI_LEI_ZUI_DA_TIAO_SHU) {
@@ -303,7 +321,7 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     const tuDiZhi = await shangChuanWaiGuanTuPian(yaSuoHou)
     const tiaoMu: WaiGuanTiaoMu = {
       id: chuangJianBiaoShi(),
-      mingCheng: xiaYiGeZiDingYiMing(leiBie, lieBiao.map((xiang) => xiang.mingCheng)),
+      mingCheng: xiaYiGeZiDingYiMing(leiBie, quYiYouWaiGuanMing(leiBie)),
       tuDiZhi,
       wenZiYanSe: WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
     }
@@ -333,8 +351,7 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
   }
 
   async function huanYuanWaiGuan(leiBie: 'beiJing' | 'qiPao', id: string): Promise<void> {
-    const lieBiao = quTiaoMuLieBiao(leiBie).filter((xiang) => xiang.id !== id)
-    const moRenMing = xiaYiGeZiDingYiMing(leiBie, lieBiao.map((xiang) => xiang.mingCheng))
+    const moRenMing = xiaYiGeZiDingYiMing(leiBie, quYiYouWaiGuanMing(leiBie, id))
     await zhiXingWaiGuanXiuGai((caoAn) => {
       const muBiao = leiBie === 'beiJing' ? caoAn.beiJing : caoAn.qiPao
       const zhaoDao = muBiao.find((xiang) => xiang.id === id)
@@ -391,6 +408,17 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     await zhiXingWaiGuanXiuGai((caoAn) => {
       delete caoAn.beiJingFuGai[jian]
     })
+  }
+
+  async function huanYuanWaiGuanXiang(
+    leiBie: 'beiJing' | 'qiPao',
+    xiangMu: { jian: string; leiXing: 'yuShe' | 'ziDingYi' },
+  ): Promise<void> {
+    if (leiBie === 'beiJing' && xiangMu.leiXing === 'yuShe') {
+      await huanYuanBeiJingYuShe(xiangMu.jian)
+      return
+    }
+    await huanYuanWaiGuan(leiBie, xiangMu.jian)
   }
 
   function beiJingXiangMuLieBiao(moShi: 'qian' | 'shen'): BeiJingXiangMu[] {
@@ -532,6 +560,11 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     }
   }
 
+  function qieHuanZhuYeBeiJingYuShui(开: boolean): void {
+    zhuYeBeiJingYuShui.value = 开 !== false
+    baoCunShuJu(ZHU_YE_BEI_JING_YU_SHUI_JIAN, zhuYeBeiJingYuShui.value)
+  }
+
   return {
     yongHuBianHao,
     shouJiHao,
@@ -577,6 +610,7 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     quBeiJingYuSheYanSe,
     gengXinBeiJingYuShe,
     huanYuanBeiJingYuShe,
+    huanYuanWaiGuanXiang,
     shangChuanWaiGuan,
     gengXinWaiGuanTiaoMu,
     huanYuanWaiGuan,
@@ -584,5 +618,7 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     shangChuanDuiXiangTouXiang,
     baoCunYinSi,
     qingKongPaiWei,
+    zhuYeBeiJingYuShui,
+    qieHuanZhuYeBeiJingYuShui,
   }
 })

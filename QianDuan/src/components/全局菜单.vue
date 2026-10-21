@@ -222,6 +222,20 @@
           >
             <div class="qita-caidan-fenzu" aria-hidden="true">{{ huoQuFanYi('caidan', 'pianHaoFenZu') }}</div>
             <div role="group" :aria-label="huoQuFanYi('caidan', 'pianHaoFenZu')">
+              <button
+                type="button"
+                role="menuitemcheckbox"
+                class="qita-caidan-xiangmu qita-caidan-xiangmu--kaiguan"
+                :aria-checked="设置仓库.zhuYeBeiJingYuShui"
+                data-testid="qita-caidan-zhu-ye-yu-shui"
+                @click="qieHuanZhuYeYuShui"
+              >
+                <span class="qita-caidan-tubiao" aria-hidden="true">☂</span>
+                <span class="qita-caidan-wenzi">{{ huoQuFanYi('caidan', 'zhuYeBeiJingYuShui') }}</span>
+                <span class="qita-caidan-kaiguan" aria-hidden="true">
+                  <span class="qita-caidan-kaiguan-qiu" />
+                </span>
+              </button>
               <button type="button" role="menuitem" class="qita-caidan-xiangmu" @click="jinRuShengYin">
                 <span class="qita-caidan-tubiao" aria-hidden="true">♪</span>
                 <span class="qita-caidan-wenzi">{{ huoQuFanYi('sheZhi', 'shengYinBiaoTi') }}</span>
@@ -588,7 +602,7 @@ const zhutiAnNiuTuBiao = computed(() => {
 
 function 焦点XiangMu(rongQi: HTMLElement | null, muBiao: number | 'shou' | 'wei'): void {
   if (!rongQi) return
-  const xiangMu = Array.from(rongQi.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+  const xiangMu = Array.from(rongQi.querySelectorAll<HTMLElement>('[role="menuitem"], [role="menuitemcheckbox"]'))
   if (!xiangMu.length) return
   const suoYin =
     muBiao === 'shou'
@@ -601,7 +615,7 @@ function 焦点XiangMu(rongQi: HTMLElement | null, muBiao: number | 'shou' | 'we
 
 function 当前XiangMuSuoYin(rongQi: HTMLElement | null): number {
   if (!rongQi) return -1
-  const xiangMu = Array.from(rongQi.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+  const xiangMu = Array.from(rongQi.querySelectorAll<HTMLElement>('[role="menuitem"], [role="menuitemcheckbox"]'))
   return xiangMu.indexOf(document.activeElement as HTMLElement)
 }
 
@@ -816,6 +830,10 @@ function jinRuHaoYou(): void {
   qitaCaiDanZhanKai.value = false
   yongHuCaiDanZhanKai.value = false
   router.push('/hao-you')
+}
+
+function qieHuanZhuYeYuShui(): void {
+  设置仓库.qieHuanZhuYeBeiJingYuShui(!设置仓库.zhuYeBeiJingYuShui)
 }
 
 function jinRuShengYin(): void {
@@ -1531,6 +1549,52 @@ onBeforeUnmount(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.qita-caidan-xiangmu--kaiguan {
+  min-height: 44px;
+}
+
+.qita-caidan-kaiguan {
+  --qita-kaiguan-kuan: 44px;
+  --qita-kaiguan-gao: 24px;
+  --qita-kaiguan-qiu: 18px;
+  --qita-kaiguan-ji: 2px;
+  position: relative;
+  flex: none;
+  width: var(--qita-kaiguan-kuan);
+  height: var(--qita-kaiguan-gao);
+  margin-left: auto;
+  border: 1px solid var(--xiala-biankuang);
+  border-radius: var(--yuanjiao-zhong);
+  background: var(--daohanglan-zhongbeijing);
+  transition:
+    background-color var(--kaiguan-dong-hua-shi-chang) var(--quxian-biao-zhun),
+    border-color var(--kaiguan-dong-hua-shi-chang) var(--quxian-biao-zhun);
+}
+
+.qita-caidan-kaiguan-qiu {
+  position: absolute;
+  top: 50%;
+  left: var(--qita-kaiguan-ji);
+  width: var(--qita-kaiguan-qiu);
+  height: var(--qita-kaiguan-qiu);
+  border-radius: 50%;
+  background: var(--wenben-zhuse);
+  transform: translate(0, -50%);
+  transition: transform var(--kaiguan-dong-hua-shi-chang) var(--quxian-tan-chu);
+}
+
+.qita-caidan-xiangmu--kaiguan[aria-checked='true'] .qita-caidan-kaiguan {
+  border-color: var(--zhuse);
+  background: var(--zhuse);
+}
+
+.qita-caidan-xiangmu--kaiguan[aria-checked='true'] .qita-caidan-kaiguan-qiu {
+  transform: translate(
+    calc(var(--qita-kaiguan-kuan) - var(--qita-kaiguan-qiu) - var(--qita-kaiguan-ji) * 2),
+    -50%
+  );
 }
 
 .yonghu-caidan-guodu-enter-active {

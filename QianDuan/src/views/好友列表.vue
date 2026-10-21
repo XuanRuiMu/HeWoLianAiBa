@@ -30,6 +30,7 @@
           v-model="guanJianZi"
           class="hao-you-sou-suo-shu-ru"
           type="search"
+          autocomplete="off"
           maxlength="50"
           data-testid="hao-you-sou-suo"
           :placeholder="huoQuFanYi('haoYou', 'zhaoRenZhanWei')"

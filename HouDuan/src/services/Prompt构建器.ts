@@ -986,13 +986,13 @@ export function junShiShuChuYaoQiuBuFen(): string[] {
   const json示例句 = `{ ${JUN_SHI_ZHI_DAO_DUAN_DING_YI.map((duan) => `"${duan.moXingJian}":"..."`).join(', ')} }`
   return [
     '【输出要求】',
-    '只输出一个 JSON 对象，键就是下面四个，一个都不能少、别加多余文字：',
+    '只输出一个 JSON 对象，键就是下面这几个，一个都不能少、别加多余文字：',
     json示例句,
     ...JUN_SHI_ZHI_DAO_DUAN_DING_YI.map(
       (duan, xiaBiao) =>
         `${xiaBiao + 1}. ${duan.moXingJian}（不超过 ${duan.zuiDaZiShu} 字）：${duan.yaoQiu}`,
     ),
-    '四个键的取值都是纯文本口语，不带 HTML、Markdown、引号包裹、括号动作。',
+    '每个键的取值都是纯文本口语，不带 HTML、Markdown、引号包裹、括号动作。「下一步怎么回」那一栏的三条话术之间用换行符分隔，一共三行。',
   ]
 }
 
@@ -1000,11 +1000,13 @@ export function gouJianJunShiQiuZhuPrompt(
   duiHuaWenBen: string,
   jiaoSeMing: string,
   haoGanDu: HaoGanDuXinXi,
+  renSheDuan?: string,
 ): string {
   return [
-    `你是玄锐暮，一个嘴贱但靠谱的恋爱军师。现在朋友问你跟 ${jiaoSeMing} 聊成这样下一步该说啥，你看完聊天记录给出能直接照着发的答案。`,
+    `你是恋爱军师。朋友问你跟 ${jiaoSeMing} 聊成这样下一步该说啥，你看完聊天记录给出能直接照着发的答案。`,
     `聊天对象：${jiaoSeMing}`,
-    `后台数据（绝对不能跟朋友说）：信任${haoGanDu.xin_ren_du}、亲密${haoGanDu.qin_mi_du}、趣味${haoGanDu.qu_wei_du}、关怀${haoGanDu.guan_huai_du}，总分${haoGanDu.zong_fen}，阶段${haoGanDu.guan_xi_jie_duan}。`,
+    renSheDuan || '',
+    `后台数据（绝对不能跟朋友说）：信任${haoGanDu.xin_ren_du}、亲密${haoGanDu.qin_mi_du}、趣味${haoGanDu.qu_wei_du}、关怀${haoGanDu.guan_huai_du}，总分${haoGanDu.zong_fen}，阶段${haoGanDu.guan_xi_jie_duan}`,
     '',
     '聊天记录：',
     duiHuaWenBen,
@@ -1016,7 +1018,7 @@ export function gouJianJunShiQiuZhuPrompt(
     '2. 用 emoji 表达情绪，别用括号写动作。',
     '3. 别跟朋友报具体分数，也别提信任度/亲密度这种后台词。',
     '4. 别用 HTML、Markdown、方言。',
-    '5. 「下一步怎么回」那段是朋友要原样复制发出去的，写成人话，别写建议口吻。',
+    '5. 「下一步怎么回」那三条是朋友要原样复制发出去的，写成人话，别写建议口吻，别写序号和标签。',
   ]
     .filter(Boolean)
     .join('\n')

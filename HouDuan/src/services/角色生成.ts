@@ -678,6 +678,28 @@ export function shengChengJiaoSe(canShu: ShengChengJiaoSeCanShu): ShengChengJiao
   return jieGuo
 }
 
+async function jiLuKaiChangBaiJueCe(
+  jiao_se_id: string,
+  dang_wei: string,
+  gai_lv: number,
+  yao_kai_kou: boolean,
+  tiao_shu: number,
+): Promise<void> {
+  try {
+    await 数据库.query(`UPDATE "角色" SET "开场白" = $1 WHERE "ID" = $2`, [
+      JSON.stringify({
+        主动程度: dang_wei,
+        出不出声: yao_kai_kou,
+        概率: Number(gai_lv.toFixed(2)),
+        条数: yao_kai_kou ? tiao_shu : 0,
+      }),
+      jiao_se_id,
+    ])
+  } catch {
+    return
+  }
+}
+
 export async function baoCunJiaoSe(
   yongHuId: string,
   jiaoSe: ShengChengJiaoSeJieGuo,
@@ -902,13 +924,23 @@ export async function baoCunJiaoSe(
       biao_qian: jiaoSe.biao_qian,
     }
     const kaiChangBai = await shengChengKaiChangBai(kcbCanShu)
-    for (const neiRong of kaiChangBai.xiao_xi_lie_biao.slice(0, 5)) {
-      if (neiRong.trim()) {
-        await baoCunJiaoSeXiaoXi({
-          yong_hu_id: yongHuId,
-          jiao_se_id: jiaoSeId,
-          nei_rong: neiRong.trim(),
-        })
+    const yaoKaiKou = Math.random() < kaiChangBai.zhu_dong_kai_kou_gai_lv
+    await jiLuKaiChangBaiJueCe(
+      jiaoSeId,
+      kaiChangBai.zhu_dong_dang_wei,
+      kaiChangBai.zhu_dong_kai_kou_gai_lv,
+      yaoKaiKou,
+      kaiChangBai.xiao_xi_lie_biao.length,
+    )
+    if (yaoKaiKou) {
+      for (const neiRong of kaiChangBai.xiao_xi_lie_biao.slice(0, 5)) {
+        if (neiRong.trim()) {
+          await baoCunJiaoSeXiaoXi({
+            yong_hu_id: yongHuId,
+            jiao_se_id: jiaoSeId,
+            nei_rong: neiRong.trim(),
+          })
+        }
       }
     }
   } catch {

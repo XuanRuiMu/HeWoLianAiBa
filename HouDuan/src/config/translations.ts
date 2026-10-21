@@ -1,5 +1,6 @@
 export const fanYi = {
   tongYong: {
+    gongNengYiGuanBi: '这个功能暂时关闭了',
     caoZuoChengGong: '操作成功',
     caoZuoShiBai: '操作失败',
     caoZuoPinFan: '操作过于频繁，请等一会儿再操作一次',

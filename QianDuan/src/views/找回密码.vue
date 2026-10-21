@@ -116,7 +116,7 @@
                 :标签="huoQuFanYi('renZheng', 'xinMiMa')"
                 @geng-xin="xinMiMa = $event"
                 @shu-ru="qingLiTiShi"
-                @shi-jiao="xinMiMaShiJiao = true"
+                @shi-jiao="biaoJiXinMiMaShiJiao"
               >
                 <button
                     type="button"
@@ -233,7 +233,13 @@
 
         </form>
 
-        <RouterLink v-if="!chongZhiWanCheng" class="zhaohui-fan-hui" :to="{ name: 'dengLu' }">
+        <RouterLink
+          v-if="!chongZhiWanCheng"
+          class="zhaohui-fan-hui"
+          :to="{ name: 'dengLu' }"
+          @pointerdown="zhengZaiFanHui = true"
+          @blur="zhengZaiFanHui = false"
+        >
           {{ huoQuFanYi('renZheng', 'fanHuiDengLu') }}
         </RouterLink>
       </div>
@@ -274,6 +280,7 @@ const tiaoZhuanMiao = ref(0)
 const chongZhiWanCheng = ref(false)
 const shouJiHaoJiaoCuo = ref(false)
 const xinMiMaShiJiao = ref(false)
+const zhengZaiFanHui = ref(false)
 type ShuRuKuangShiLi = { 聚焦: () => void }
 const shouJiHaoKuang = ref<ShuRuKuangShiLi | null>(null)
 const yanZhengMaKuang = ref<ShuRuKuangShiLi | null>(null)
@@ -411,7 +418,13 @@ function qingLiTiShi(): void {
 }
 
 function shouJiHaoShiJiao(): void {
+  if (zhengZaiFanHui.value) return
   shouJiHaoJiaoCuo.value = true
+}
+
+function biaoJiXinMiMaShiJiao(): void {
+  if (zhengZaiFanHui.value) return
+  xinMiMaShiJiao.value = true
 }
 
 function juJiao(kong: typeof shouJiHaoKuang): void {

@@ -49,8 +49,18 @@ describe('找回密码返回登录：按钮到链接文字的间距', () => {
     expect(取值(取块(样式, '.biaodan-neirong-qu {'), 'gap')).toBe('0')
     expect(取值(取块(样式, '.zhaohui-biao-dan {'), 'gap')).toBe('var(--jiange-da)')
   })
+
+  it('按下返回链接时先标记，输入框失焦不再把链接顶走', () => {
+    const 链接起 = 源码.indexOf('class="zhaohui-fan-hui"')
+    expect(链接起).toBeGreaterThan(-1)
+    const 链接块 = 源码.slice(链接起, 源码.indexOf('</RouterLink>', 链接起))
+    expect(链接块).toContain('@pointerdown="zhengZaiFanHui = true"')
+    expect(链接块).toContain('@blur="zhengZaiFanHui = false"')
+    expect((源码.match(/if \(zhengZaiFanHui\.value\) return/g) ?? []).length).toBeGreaterThanOrEqual(2)
+    expect(源码).toContain('@shi-jiao="biaoJiXinMiMaShiJiao"')
+  })
 })
 
 function 热区是否仍纵向居中(块: string): boolean {
-  return 取值(块, 'top') !== '50%' && !/translate\(-50%,\s*-50%\)/.test(块)
+  return 取值(块, 'top') === '50%' || /translate\(-50%,\s*-50%\)/.test(块)
 }

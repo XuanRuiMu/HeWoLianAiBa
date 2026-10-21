@@ -54,9 +54,11 @@ import { gouJianCaoDiDiZhi } from '@/utils/CaoDiBeiJing'
 import { caoDiPeiZhi } from '@/config/站点配置'
 import { huoQuFanYi } from '@/config/翻译表'
 import { 解析性别 } from '@/utils/性别'
+import { 使用用户设置仓库 } from '@/stores/用户设置'
 
 const route = useRoute()
 const 用户仓库 = 使用用户仓库()
+const 设置仓库 = 使用用户设置仓库()
 
 watch(
   () => 用户仓库.dangQianYongHu?.mo_ren_xing_bie,
@@ -94,6 +96,8 @@ const beiJingShiBaiYuanYin = ref('')
 
 function beiJingYiJiaZai() {
   beiJingJiuXu.value = true
+  yuShuiChongShiCiShu = 0
+  chongShiBeiJingYuShui()
 }
 
 function chuLiBeiJingXiaoXi(shiJian: MessageEvent) {
@@ -200,6 +204,52 @@ function chuLiGuangBiaoYiDong(e: PointerEvent) {
   zhuRuCaoDiGuangBiao()
 }
 
+const luoPanZhiZhen = { x: 0, y: 0 }
+const LUO_PAN_MAN_LIANG = 10
+let luoPanJiZhun: { beta: number; gamma: number } | null = null
+let luoPanYiTing = false
+let luoPanYiQingQiu = false
+
+function shiFouChuMo(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window
+}
+
+function shouXian(zhi: number): number {
+  const fu = LUO_PAN_MAN_LIANG
+  return zhi > fu ? fu : zhi < -fu ? -fu : zhi
+}
+
+function chuLiLuoPan(e: DeviceOrientationEvent) {
+  const beta = e.beta
+  const gamma = e.gamma
+  if (beta === null || gamma === null) return
+  if (!luoPanJiZhun) luoPanJiZhun = { beta, gamma }
+  luoPanZhiZhen.x = shouXian(gamma - luoPanJiZhun.gamma) / LUO_PAN_MAN_LIANG
+  luoPanZhiZhen.y = -shouXian(beta - luoPanJiZhun.beta) / LUO_PAN_MAN_LIANG
+  luoPanYiTing = true
+  zhuRuCaoDiGuangBiao()
+}
+
+async function qiDongLuoPan() {
+  if (luoPanYiQingQiu || !shiFouChuMo()) return
+  luoPanYiQingQiu = true
+  const lei = window.DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> } | undefined
+  if (lei && typeof lei.requestPermission === 'function') {
+    try {
+      if ((await lei.requestPermission()) !== 'granted') return
+    } catch {
+      return
+    }
+  }
+  window.addEventListener('deviceorientation', chuLiLuoPan, { passive: true })
+  luoPanJiZhun = null
+}
+
+function chuLiYeMianKeJian() {
+  if (!document.hidden) luoPanJiZhun = null
+}
+
 // 把当前鼠标坐标注入 iframe 内部，复刻原网页的 document/canvas pointermove 输入
 interface CaoDiYinQing {
   pointer?: { normalizedPosition?: { x: number; y: number } }
@@ -207,8 +257,35 @@ interface CaoDiYinQing {
   canvas?: HTMLCanvasElement
 }
 
+interface CaoDiYuShui {
+  setIntensity?: (zhi: number) => void
+}
+
+interface CaoDiTianQi {
+  tweaksValue?: {
+    dayRainWeight?: number
+    nightRainWeight?: number
+    rainParticles?: boolean
+  }
+  activeEffects?: Set<string>
+  transition?: {
+    entering?: { id?: string } | null
+    exiting?: { id?: string } | null
+  } | null
+  getCurrentWeather?: () => string
+  isTransitioning?: () => boolean
+  cancelActiveTransitions?: () => void
+  transitionTo?: (zhuangTai: string) => void
+}
+
+interface CaoDiBeiJingTiYan {
+  engine?: CaoDiYinQing
+  rain?: CaoDiYuShui
+  postProcessing?: { getWeatherController?: () => CaoDiTianQi | null }
+}
+
 type CaoDiBeiJingChuangKou = Window & {
-  __experience?: { engine?: CaoDiYinQing }
+  __experience?: CaoDiBeiJingTiYan
   PointerEvent: typeof PointerEvent
 }
 
@@ -227,8 +304,13 @@ function zhuRuCaoDiGuangBiao() {
     if (zhiZhen && zhiZhen.normalizedPosition) {
       const w = engine.sizes?.width || cwChuangKou.innerWidth || window.innerWidth
       const h = engine.sizes?.height || cwChuangKou.innerHeight || window.innerHeight
-      zhiZhen.normalizedPosition.x = (shangCiGuangBiao.x / w - 0.5) * 2
-      zhiZhen.normalizedPosition.y = -(shangCiGuangBiao.y / h - 0.5) * 2
+      if (luoPanYiTing) {
+        zhiZhen.normalizedPosition.x = luoPanZhiZhen.x
+        zhiZhen.normalizedPosition.y = luoPanZhiZhen.y
+      } else {
+        zhiZhen.normalizedPosition.x = (shangCiGuangBiao.x / w - 0.5) * 2
+        zhiZhen.normalizedPosition.y = -(shangCiGuangBiao.y / h - 0.5) * 2
+      }
     }
   } catch {
     // 注入失败仅影响背景视差，与正常功能无关（背景完全独立）
@@ -253,6 +335,98 @@ function zhuRuCaoDiGuangBiao() {
     // 同上：背景交互注入失败不影响任何页面功能
   }
 }
+
+const yuShuiYuanShiQuanZhong: { baiTian: number | null; yeWan: number | null } = {
+  baiTian: null,
+  yeWan: null,
+}
+let yuShuiYiGuanBi = false
+let yuShuiDingShiQi: ReturnType<typeof setTimeout> | null = null
+let yuShuiChongShiCiShu = 0
+
+function quCaoDiTiYan(): CaoDiBeiJingTiYan | null {
+  const cw = grassIframe.value && grassIframe.value.contentWindow
+  if (!cw) return null
+  try {
+    return (cw as CaoDiBeiJingChuangKou).__experience ?? null
+  } catch {
+    return null
+  }
+}
+
+function tingZhiYuShuiChongShi(): void {
+  if (yuShuiDingShiQi === null) return
+  clearTimeout(yuShuiDingShiQi)
+  yuShuiDingShiQi = null
+}
+
+function tongBuCaoDiYuShui(): boolean {
+  const 开 = 设置仓库.zhuYeBeiJingYuShui
+  if (开 && !yuShuiYiGuanBi) return true
+  const tiYan = quCaoDiTiYan()
+  if (!tiYan) return false
+  const tianQi = tiYan.postProcessing?.getWeatherController?.() ?? null
+  const quanZhong = tianQi?.tweaksValue
+  if (!quanZhong) return false
+  const yuShui = tiYan.rain ?? null
+  if (quanZhong) {
+    if (yuShuiYuanShiQuanZhong.baiTian === null && typeof quanZhong.dayRainWeight === 'number') {
+      yuShuiYuanShiQuanZhong.baiTian = quanZhong.dayRainWeight
+    }
+    if (yuShuiYuanShiQuanZhong.yeWan === null && typeof quanZhong.nightRainWeight === 'number') {
+      yuShuiYuanShiQuanZhong.yeWan = quanZhong.nightRainWeight
+    }
+    if (开) {
+      if (yuShuiYuanShiQuanZhong.baiTian !== null) quanZhong.dayRainWeight = yuShuiYuanShiQuanZhong.baiTian
+      if (yuShuiYuanShiQuanZhong.yeWan !== null) quanZhong.nightRainWeight = yuShuiYuanShiQuanZhong.yeWan
+      quanZhong.rainParticles = true
+    } else {
+      quanZhong.dayRainWeight = 0
+      quanZhong.nightRainWeight = 0
+      quanZhong.rainParticles = false
+    }
+  }
+  if (开) {
+    const zhengZaiXiaYu = tianQi?.activeEffects?.has('rain') && !tianQi?.isTransitioning?.()
+    if (zhengZaiXiaYu) yuShui?.setIntensity?.(1)
+  } else {
+    const guoDu = tianQi?.transition
+    const zhengZaiGuoDuYuShui = guoDu?.entering?.id === 'rain' || guoDu?.exiting?.id === 'rain'
+    if (zhengZaiGuoDuYuShui) tianQi?.cancelActiveTransitions?.()
+    if (zhengZaiGuoDuYuShui || tianQi?.activeEffects?.has('rain')) tianQi?.transitionTo?.('clear')
+    yuShui?.setIntensity?.(0)
+  }
+  yuShuiYiGuanBi = !开
+  return true
+}
+
+function chongShiBeiJingYuShui(): void {
+  tingZhiYuShuiChongShi()
+  if (tongBuCaoDiYuShui()) return
+  if (yuShuiChongShiCiShu >= 240) return
+  yuShuiChongShiCiShu += 1
+  yuShuiDingShiQi = setTimeout(() => {
+    yuShuiDingShiQi = null
+    chongShiBeiJingYuShui()
+  }, 500)
+}
+
+watch(
+  () => 设置仓库.zhuYeBeiJingYuShui,
+  () => {
+    yuShuiChongShiCiShu = 0
+    chongShiBeiJingYuShui()
+  },
+)
+
+watch(
+  () => route.name,
+  () => {
+    if (beiJingGuaQi.value || !beiJingJiuXu.value) return
+    yuShuiChongShiCiShu = 0
+    chongShiBeiJingYuShui()
+  },
+)
 
 function chuLiCuoWuBuHuo(xinXi: {
   cuoWu: unknown
@@ -339,6 +513,9 @@ onMounted(() => {
   }
   // 父帧把鼠标坐标注入 iframe 内部，复刻原网页 document/canvas pointermove 输入链路
   window.addEventListener('pointermove', chuLiGuangBiaoYiDong, { passive: true })
+  window.addEventListener('pointerdown', qiDongLuoPan, { passive: true })
+  document.addEventListener('visibilitychange', chuLiYeMianKeJian)
+  if (shiFouChuMo()) void qiDongLuoPan()
   window.addEventListener('message', chuLiBeiJingXiaoXi)
   // 应用挂载完成后，先等父帧三维库预热有结论、再等主线程空闲，才加载草地背景（独立、静默、不阻塞交互）
   void qiDongBeiJingJiaZai()
@@ -350,7 +527,11 @@ onBeforeUnmount(() => {
     window.visualViewport.removeEventListener('scroll', gengXinShiJiaoKouGaoDu)
   }
   window.removeEventListener('pointermove', chuLiGuangBiaoYiDong)
+  window.removeEventListener('pointerdown', qiDongLuoPan)
+  window.removeEventListener('deviceorientation', chuLiLuoPan)
+  document.removeEventListener('visibilitychange', chuLiYeMianKeJian)
   window.removeEventListener('message', chuLiBeiJingXiaoXi)
+  tingZhiYuShuiChongShi()
 })
 </script>
 

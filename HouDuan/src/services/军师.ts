@@ -8,6 +8,7 @@ import { shiTuWenHunPaiKuai, type XiaoXiKuai } from './消息内容块'
 import { buQiWenJianTiQuWenBen } from './文档文本提取'
 import { shengChengJunShiZhiDao } from './军师求助'
 import { huoQuAIJiaoSeXinXi } from './AI输入准备'
+import type { AIJiaoSeXinXi } from '../types'
 import {
   jiSuanLiaoTianHaXi,
   jianChaJunShiChongFu,
@@ -85,6 +86,21 @@ interface QianDuanJunShiJiLuXiang {
 
 export interface QianDuanJunShiJiLuXiangYing {
   jiLuLieBiao: QianDuanJunShiJiLuXiang[]
+}
+
+function gouJianJunShiRenSheDuan(jiaoSe: AIJiaoSeXinXi): string {
+  const hang: string[] = []
+  const tian = (biaoQian: string, zhi?: string | null): void => {
+    const wenBen = typeof zhi === 'string' ? zhi.trim() : ''
+    if (wenBen) hang.push(`${biaoQian}：${wenBen}`)
+  }
+  tian('TA的性格', jiaoSe.xing_ge)
+  tian('TA的说话风格', jiaoSe.yan_yu_feng_ge)
+  tian('TA说自己喜欢的类型', jiaoSe.xi_huan_de_lei_xing)
+  tian('TA的热身类型', jiaoSe.re_shen_lei_xing)
+  tian('TA的情感经历', jiaoSe.qing_gan_jing_li)
+  if (!hang.length) return ''
+  return ['', '你从朋友那里知道这个人大概是这样（这些是朋友自己也看得到的资料，随便用）：', ...hang].join('\n')
 }
 
 export async function huoQuJunShiLieBiao(): Promise<JunShiLieBiaoXiangYing> {
@@ -212,6 +228,7 @@ export async function qingQiuJunShiZhiDao(
         jiao_se_ming: jiaoSeXinXi.wei_xin_ming,
         dui_hua_li_shi: duiHuaLiShi,
         hao_gan_du: haoGanDu,
+        ren_she_wen_ben: gouJianJunShiRenSheDuan(jiaoSeXinXi),
         fu_pan_tiao_mu: [],
         jun_shi_pei_zhi: {
           id: junShiPeiZhi.id,

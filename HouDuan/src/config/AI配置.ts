@@ -216,6 +216,13 @@ export const AI_PEI_ZHI = {
     // 开场白发送概率的兜底默认值（仅当无 AI key 或 AI 概率计算失败时退回，或测试环境）。
     // 主流程已由"AI 根据人物画像动态算出 10%~90% 概率"取代（见 services/开场白概率.ts）。
     kaiChangBaiFaSongGaiLv: 0.5,
+    kaiChangBaiZhuDongDangWei: {
+      主动型: 0.85,
+      中间型: 0.35,
+      被动型: 0.05,
+      极被动型: 0.02,
+    } as Record<string, number>,
+    kaiChangBaiMoRenZhuDongDangWei: '中间型',
   },
 
   // FP-05 YH-047 好感双真相：本块仅为文档化镜像，唯一真相源为 config/好感度配置.ts 的 HAO_GAN_DU_PEI_ZHI；

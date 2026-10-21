@@ -10,7 +10,7 @@
           class="fenlie-shuru"
           :maxlength="最大长度"
           :inputmode="输入模式"
-          :autocomplete="自动完成"
+          :autocomplete="自动填充"
           :readonly="只读"
           :disabled="禁用"
           :aria-invalid="无效 ? 'true' : undefined"
@@ -33,7 +33,7 @@
           class="fenlie-shuru"
           :maxlength="最大长度"
           :inputmode="输入模式"
-          :autocomplete="自动完成"
+          :autocomplete="自动填充"
           :readonly="只读"
           :disabled="禁用"
           :aria-invalid="无效 ? 'true' : undefined"
@@ -58,7 +58,7 @@
         class="fenlie-shuru"
         :maxlength="最大长度"
         :inputmode="输入模式"
-        :autocomplete="自动完成"
+        :autocomplete="自动填充"
         :readonly="只读"
         :disabled="禁用"
         :aria-invalid="无效 ? 'true' : undefined"
@@ -77,9 +77,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
-withDefaults(
+const 属性 = withDefaults(
   defineProps<{
     模型值: string
     标识: string
@@ -110,6 +110,8 @@ withDefaults(
     内层类: undefined,
   },
 )
+
+const 自动填充 = computed(() => 属性.自动完成 ?? (属性.类型 === 'password' ? 'new-password' : 'off'))
 
 const 发出 = defineEmits<{
   (时间: 'geng-xin', 值: string): void

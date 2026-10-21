@@ -1,9 +1,10 @@
 import { Router } from 'express'
-import type { Response } from 'express'
+import type { NextFunction, Response } from 'express'
 import Busboy from 'busboy'
 import { huoQuFanYi } from '../config/translations'
 import { chengGongXiangYing, shiBaiXiangYing } from '../utils/xiangying'
 import { debug日志 } from '../utils/debug日志'
+import { huoQuTeZhengKaiGuan } from './功能开关'
 import { liaoTianXianLiu, aiQingQiuXianLiu } from '../middleware/限流'
 import type { RenZhengQingQiu } from '../middleware/认证'
 import {
@@ -44,7 +45,7 @@ import { jiLuSiKao } from '../services/思考记录'
 import { 数据库 } from '../数据库'
 import { miJiKouLingPiPei, sheZhiMiJiHaoGanDu } from '../services/好感度'
 import { fanYiWenBen } from '../services/翻译'
-import { mianFeiZhuanXieYuYin } from '../services/语音转写'
+import { buQiYuYinZhuanXie, mianFeiZhuanXieYuYin } from '../services/语音转写'
 import { huoQuDuoMoTaiQianDuanShiTu, chongZaiDuoMoTaiHuanJing } from '../config/多模态配置'
 import { gouJianYuYinKeDuWenBen } from '../services/语音理解'
 import { gouJianShiPinKeDuWenBen } from '../services/视频多模态'
@@ -520,7 +521,10 @@ luYou.post(
       if (luoKuXiaoXi) {
         执行落库后副作用(
           '落库后触发AI调度器',
-          () => luoKuChuFaJiaoSeTiaoDuQi(yongHu.yongHuId, jiaoSeId, luoKuXiaoXi),
+          async () => {
+            const zhunBeiHao = await buQiYuYinZhuanXie(luoKuXiaoXi)
+            await luoKuChuFaJiaoSeTiaoDuQi(yongHu.yongHuId, jiaoSeId, zhunBeiHao)
+          },
           { yong_hu_id: yongHu.yongHuId, jiao_se_id: jiaoSeId },
         )
       }
@@ -637,6 +641,12 @@ luYou.get(
 luYou.post(
   '/军师',
   aiQingQiuXianLiu,
+  (qingQiu: RenZhengQingQiu, xiangYing: Response, xiaYiBu: NextFunction) => {
+    if (huoQuTeZhengKaiGuan().junShi === false) {
+      return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('tongYong', 'gongNengYiGuanBi'))
+    }
+    xiaYiBu()
+  },
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {

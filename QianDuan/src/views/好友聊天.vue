@@ -96,7 +96,7 @@
           />
         </div>
         <div v-else class="qipao-waike">
-          <div class="qipao-neirong">
+          <QiPaoRongQi :shi-ben-ren="xiaoXi.fa_song_zhe_id === woDeId">
             <template v-if="!xiaoXi.yi_che_hui && shiXuYaoKuaiXuanRan(xiaoXi as unknown as 消息)">
               <span
                 v-for="(kuai, kuaiSuoYin) in huoQuXianShiKuai(xiaoXi as unknown as 消息)"
@@ -118,7 +118,7 @@
               </span>
             </template>
             <template v-else>{{ xiaoXi.yi_che_hui ? cheHuiWenBen : xiaoXi.nei_rong }}</template>
-          </div>
+          </QiPaoRongQi>
           <YinYongQiPaoKuai
             v-if="xiaoXi.bei_yong_xiao_xi_id"
             :bei-yong-xiao-xi-id="xiaoXi.bei_yong_xiao_xi_id"
@@ -349,6 +349,7 @@ import TuWenShuRuQu from '@/components/聊天/图文输入区.vue'
 import YinYongTiao from '@/components/聊天/引用条.vue'
 import YinYongQiPaoKuai from '@/components/聊天/引用气泡块.vue'
 import FanYiJieGuo from '@/components/聊天/翻译结果框.vue'
+import QiPaoRongQi from '@/components/聊天/气泡容器.vue'
 import YuYinQiPao from '@/components/聊天/语音气泡.vue'
 import WenJianQiPao from '@/components/聊天/文件气泡.vue'
 import ShiJianTiao from '@/components/聊天/时间条.vue'
@@ -1211,18 +1212,6 @@ onBeforeUnmount(() => {
 .yonghu-xiaoxi .xiaoxi-wei { margin-left: var(--jiange-10); }
 .jiaose-xiaoxi .xiaoxi-wei { margin-right: var(--jiange-10); }
 .qipao-waike { max-width: min(calc(100vw - 126px), 520px); }
-.qipao-neirong {
-  padding: var(--jiange-9) var(--jiange-13);
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: var(--qipao-xuan-zhong-zi-zhong);
-  line-height: 1.45;
-  word-break: break-word;
-  position: relative;
-  display: inline-block;
-}
-.yonghu-xiaoxi .qipao-neirong { background: var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing)); color: var(--qipao-ziJi-wenBen, var(--xiaoxi-yonghu-wenben)); }
-.jiaose-xiaoxi .qipao-neirong { background: var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing)); color: var(--qipao-duiFang-wenBen, var(--xiaoxi-jiaose-wenben)); }
 .chehui-xiao-anniu {
   font-size: 12px;
   color: var(--wenben-tishi);

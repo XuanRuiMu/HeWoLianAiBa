@@ -54,6 +54,11 @@
           />
         </div>
       </div>
+      <KongTai
+        v-if="!聊天仓库.shouPingJiaZaiZhong && !聊天仓库.jiaZaiShiBai && xiaoXiZongShu === 0"
+        :biao-ti="huoQuFanYi('liaoTian', 'haiMeiKaiKou').replace('{mingZi}', jiaoSeMingZi)"
+        :ti-shi="huoQuFanYi('liaoTian', 'haiMeiKaiKouTiShi')"
+      />
       <TransitionGroup name="xiaoxi-guodu" tag="div" class="xiaoxi-liebiao">
         <template v-for="(zu, suoYin) in xiaoXiFenZu" :key="'zu-' + suoYin">
           <ShiJianTiao :shi-jian="zu.shiJian" :shi-jian-chuo="zu.shiJianChuo" />
@@ -193,7 +198,7 @@
                   />
                 </div>
                 <div v-else class="qipao-waike">
-                  <div class="qipao-neirong">
+                  <QiPaoRongQi :shi-ben-ren="xiaoXi.fa_song_zhe_lei_xing === 'yonghu'">
                     <!-- FP-10b（缺陷9）：服务端回读的块数组按原序渲染，刷新后与发送时同序；
                          FP-10a 反转判据后「含图片块」即走这里（纯图/纯贴纸单块行也不例外），
                          纯文本行与反构不出图片块的脏行仍走 v-else / 上面的媒体分支兜底 -->
@@ -219,7 +224,7 @@
                       </span>
                     </template>
                     <template v-else>{{ xiaoXi.nei_rong }}</template>
-                  </div>
+                  </QiPaoRongQi>
                   <!-- FP-09（需求 #5 表现层）气泡内引用块：摘要按 bei_yong_xiao_xi_id 在会话列表里现取，
                        点它滚动定位原消息并高亮；已撤回/取不到一律走既有撤回占位文案，不空白也不抛错 -->
                   <YinYongQiPaoKuai
@@ -874,6 +879,7 @@ import { 使用用户设置仓库 } from '@/stores/用户设置'
 import { 使用表情仓库 } from '@/stores/表情'
 
 import { huoQuFanYi } from '@/config/翻译表'
+import KongTai from '@/components/空态.vue'
 import {
   XIAO_XI_PEI_ZHI,
   WEN_JIAN_SHURU_JIE_SHOU_KUO_ZHAN,
@@ -899,6 +905,7 @@ import TuWenShuRuQu from '@/components/聊天/图文输入区.vue'
 import YinYongTiao from '@/components/聊天/引用条.vue'
 import YinYongQiPaoKuai from '@/components/聊天/引用气泡块.vue'
 import FanYiJieGuo from '@/components/聊天/翻译结果框.vue'
+import QiPaoRongQi from '@/components/聊天/气泡容器.vue'
 import YuYinQiPao from '@/components/聊天/语音气泡.vue'
 import WenJianQiPao from '@/components/聊天/文件气泡.vue'
 import ShiJianTiao from '@/components/聊天/时间条.vue'
@@ -1809,6 +1816,13 @@ function chuLiShuRuKuangJuJiao() {
   if (yiDingZaiDiBu.value) huaDongShuRuLanKeJian()
 }
 
+const xiaoXiZongShu = computed(() => (Array.isArray(聊天仓库.xiaoXiLieBiao) ? 聊天仓库.xiaoXiLieBiao.length : 0))
+
+const jiaoSeMingZi = computed(() => {
+  const mingZi = 聊天仓库.jiaoSeXinXi?.wei_xin_ming
+  return typeof mingZi === 'string' && mingZi.trim() ? mingZi.trim() : huoQuFanYi('liaoTian', 'duiFang')
+})
+
 watch(
   () => (Array.isArray(聊天仓库.xiaoXiLieBiao) ? 聊天仓库.xiaoXiLieBiao.length : 0),
   () => {
@@ -2258,54 +2272,6 @@ onBeforeUnmount(() => {
 .qipao-waike {
   position: relative;
   max-width: min(calc(100vw - 126px), 520px);
-}
-
-.qipao-neirong {
-  padding: var(--jiange-9) var(--jiange-13);
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: var(--qipao-xuan-zhong-zi-zhong);
-  line-height: 1.45;
-  word-break: break-word;
-  position: relative;
-  display: inline-block;
-}
-
-.yonghu-xiaoxi .qipao-neirong {
-  background: var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing));
-  color: var(--qipao-ziJi-wenBen, var(--xiaoxi-yonghu-wenben));
-  border-radius: 6px;
-}
-
-.yonghu-xiaoxi .qipao-neirong::after {
-  content: '';
-  position: absolute;
-  right: -5px;
-  top: 13px;
-  width: 0;
-  height: 0;
-  border-left: 6px solid var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing));
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-}
-
-.jiaose-xiaoxi .qipao-neirong {
-  background: var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing));
-  color: var(--qipao-duiFang-wenBen, var(--xiaoxi-jiaose-wenben));
-  border: none;
-  border-radius: 6px;
-}
-
-.jiaose-xiaoxi .qipao-neirong::after {
-  content: '';
-  position: absolute;
-  left: -5px;
-  top: 13px;
-  width: 0;
-  height: 0;
-  border-right: 6px solid var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing));
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
 }
 
 .fasong-zhuangtai {
@@ -3685,10 +3651,6 @@ span.yuyin-zhuanwenzi {
 @media (max-width: 480px) {
   .qipao-waike {
     max-width: min(calc(100vw - 120px), 420px);
-  }
-
-  .qipao-neirong {
-    font-size: 15px;
   }
 
   .xiaoxi-quyu {

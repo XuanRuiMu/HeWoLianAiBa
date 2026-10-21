@@ -46,7 +46,7 @@ describe('卡内说明文字令牌', () => {
   it('明暗成对声明，深色档白系、浅色档黑系', () => {
     expect(声明位置(令牌名, 块们)).toEqual({ 共用: false, 浅色: true, 深色: true })
     expect(浅色表.get(令牌名)).toBe('#191919')
-    expect(深色表.get(令牌名)).toBe('#F5F5F7')
+    expect(深色表.get(令牌名)).toBe('#FFFFFF')
     expect(解析通道(String(深色表.get(令牌名))).every((通道) => 通道 >= 240)).toBe(true)
     expect(解析通道(String(浅色表.get(令牌名))).every((通道) => 通道 <= 40)).toBe(true)
   })
@@ -68,11 +68,30 @@ describe('卡内说明文字令牌', () => {
     expect(规则体(向导, '.xingBie-kaPian')).toContain(`color: var(${令牌名})`)
     expect(规则体(向导, '.xingBie-mingCheng')).toContain('color: inherit')
     expect(向导).not.toContain(":root[data-theme='light'] .xingBie-mingCheng")
-    expect(向导).not.toContain('color: #f2f0fa')
   })
 
   it('第三步随机卡与 MBTI 卡共用同一容器类', () => {
     expect(向导).toContain('class="mbti-kaPian suiJi-kaPian"')
-    expect(规则体(向导, '.mbti-kaPian')).toContain('color: inherit')
+    expect(规则体(向导, '.mbti-kaPian')).toContain(`color: var(${令牌名})`)
+  })
+  it.each([
+    ['1440 暗色 MBTI 静置', '暗色', 'rgb(86, 77, 117)'],
+    ['1440 暗色 MBTI 选中', '暗色', 'rgb(116, 106, 141)'],
+    ['1440 暗色 随机卡选中', '暗色', 'rgb(82, 81, 117)'],
+    ['1440 暗色 性别卡静置', '暗色', 'rgb(93, 82, 122)'],
+    ['1440 浅色 MBTI 静置', '浅色', 'rgb(242, 236, 249)'],
+    ['1440 浅色 MBTI 选中', '浅色', 'rgb(245, 239, 251)'],
+    ['1440 浅色 随机卡选中', '浅色', 'rgb(233, 230, 243)'],
+    ['1440 浅色 性别卡静置', '浅色', 'rgb(242, 237, 249)'],
+    ['390 暗色 MBTI 静置', '暗色', 'rgb(24, 26, 43)'],
+    ['390 暗色 MBTI 选中', '暗色', 'rgb(57, 58, 72)'],
+    ['390 暗色 性别卡静置', '暗色', 'rgb(24, 26, 43)'],
+    ['390 浅色 MBTI 静置', '浅色', 'rgb(226, 223, 230)'],
+    ['390 浅色 MBTI 选中', '浅色', 'rgb(226, 223, 230)'],
+    ['390 浅色 性别卡静置', '浅色', 'rgb(226, 223, 230)'],
+  ])('%s 的说明文字与实测卡面对比度不小于 4.5:1', (组合, 主题, 卡面) => {
+    const 前景 = 主题 === '暗色' ? 深色表.get(令牌名) : 浅色表.get(令牌名)
+    expect(前景, `${组合} 未解析到说明文字令牌`).toBeDefined()
+    expect(对比度(String(前景), 卡面)).toBeGreaterThanOrEqual(4.5)
   })
 })
