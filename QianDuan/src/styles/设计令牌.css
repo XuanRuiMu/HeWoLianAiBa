@@ -303,14 +303,6 @@
   --zhao-hui-shang-yi-bu-gao: 44px;
   --zhao-hui-dao-ji-shi-miao: 60;
   --zhao-hui-tiao-zhuan-miao: 8;
-  --quxian-xuan-ting: cubic-bezier(0, 0, 0.58, 1);
-  --shuru-xuan-ting-shi-chang: 120ms;
-  --shuru-jujiao-shi-chang: 180ms;
-  --shuru-shi-jiao-shi-chang: 150ms;
-  --shuru-cuowu-dou-dong-shi-chang: 240ms;
-  --shuru-jujiao-huan-kuan-du: 3px;
-  --shuru-jujiao-bian-kuan-du: 1.5px;
-  --shuru-cuowu-dou-dong-fu-du: 2px;
 }
 
 :root[data-theme="light"] {
@@ -557,15 +549,6 @@
   --liuli-jishu-di: #b34a68;
   --liuli-jishu-wenben: #ffffff;
   --liuli-lengxian: linear-gradient(90deg, transparent, rgba(255, 255, 255, 1), transparent);
-  --shuru-jing-tai-beijing: rgba(46, 42, 32, 0.025);
-  --shuru-yi-tian-beijing: rgba(46, 42, 32, 0.05);
-  --shuru-xuan-ting-bian-se: color-mix(in srgb, var(--shuru-xian-changtai-se) 84%, var(--wenben-ciuse));
-  --shuru-yi-tian-bian-se: color-mix(in srgb, var(--shuru-xian-changtai-se) 70%, var(--wenben-ciuse));
-  --shuru-jujiao-bian-se-nan: color-mix(in srgb, var(--xingbie-nan-shen-biankuang) 82%, var(--shuru-gao-liang-liang-nan));
-  --shuru-jujiao-bian-se-nv: color-mix(in srgb, var(--xingbie-nv-shen-biankuang) 82%, var(--shuru-gao-liang-liang-nv));
-  --shuru-jujiao-huan-se-nan: color-mix(in srgb, var(--shuru-jujiao-bian-se-nan) 18%, transparent);
-  --shuru-jujiao-huan-se-nv: color-mix(in srgb, var(--shuru-jujiao-bian-se-nv) 18%, transparent);
-  --shuru-cuowu-huan-se: color-mix(in srgb, var(--shuru-xian-cuowu-se) 18%, transparent);
 }
 
 :root,
@@ -808,13 +791,4 @@
   --liuli-jishu-di: #b35f7e;
   --liuli-jishu-wenben: #ffffff;
   --liuli-lengxian: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-  --shuru-jing-tai-beijing: rgba(255, 255, 255, 0.04);
-  --shuru-yi-tian-beijing: rgba(255, 255, 255, 0.07);
-  --shuru-xuan-ting-bian-se: color-mix(in srgb, var(--shuru-xian-changtai-se) 76%, var(--wenben-ciuse));
-  --shuru-yi-tian-bian-se: color-mix(in srgb, var(--shuru-xian-changtai-se) 58%, var(--wenben-ciuse));
-  --shuru-jujiao-bian-se-nan: color-mix(in srgb, var(--xingbie-nan-shen-biankuang) 82%, var(--shuru-gao-liang-liang-nan));
-  --shuru-jujiao-bian-se-nv: color-mix(in srgb, var(--xingbie-nv-shen-biankuang) 82%, var(--shuru-gao-liang-liang-nv));
-  --shuru-jujiao-huan-se-nan: color-mix(in srgb, var(--shuru-jujiao-bian-se-nan) 18%, transparent);
-  --shuru-jujiao-huan-se-nv: color-mix(in srgb, var(--shuru-jujiao-bian-se-nv) 18%, transparent);
-  --shuru-cuowu-huan-se: color-mix(in srgb, var(--shuru-xian-cuowu-se) 18%, transparent);
 }

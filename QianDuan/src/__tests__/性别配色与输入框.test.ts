@@ -103,95 +103,29 @@ describe('性别深浅令牌成对且边框确为填充的深色版', () => {
   })
 })
 
-describe('圆角输入框五态单源与新规格', () => {
+describe('圆角输入框两条高亮线与实现收敛', () => {
   const 输入框 = 读('components/表单/长方框输入框.vue')
-  const 横条 = 读('components/表单/横条输入框.vue')
-  const 全局 = 读('styles/全局.css')
 
-  it('共享组件只挂类名：无扫光伪元素、无渐变、无关键帧', () => {
-    expect(输入框).toContain('yuan-jiao-shuru-kuang')
-    expect(输入框).not.toContain('linear-gradient(')
+  it('真实 border + 圆角，聚焦只留底边与右边两条渐变线', () => {
+    expect(输入框).toContain('border: var(--chang-fang-kuang-hou-du) solid var(--chang-fang-kuang-hui-se)')
+    expect(输入框).toContain('border-radius: var(--chang-fang-kuang-yuan-jiao)')
+    expect(输入框).toContain(':focus-within::before')
+    expect(输入框).toContain(':focus-within::after')
+    expect(输入框.match(/linear-gradient\(/g)?.length, '只应剩底边与右边两条渐变').toBe(2)
     expect(输入框).not.toContain('@keyframes')
-    expect(输入框).not.toContain(':focus-within::before')
-    expect(输入框).not.toContain(':focus-within::after')
     expect(输入框).not.toContain('data-jiao-dian-guo')
   })
 
-  it('登录/找回的横条输入框同挂一个类名，页面不各写一份', () => {
-    expect(横条).toContain('yuan-jiao-shuru-kuang')
-    expect(横条).toContain('yuan-jiao-shuru-zu')
+  it('两条线共用同一时长令牌（同时出发、同时到位）', () => {
+    expect(输入框).toContain('transition-duration: var(--shuru-gao-liang-shi-chang)')
+    expect(输入框).not.toContain('shuru-bian-yi')
   })
 
-  it('静息：1px 状态线 + 12 档圆角 + 极淡填充，且只过渡三属性', () => {
-    expect(全局).toContain('border-width: var(--shuru-xian-changtai-kuan-du)')
-    expect(全局).toContain('border-color: var(--shuru-xian-changtai-se)')
-    expect(全局).toContain('border-radius: var(--yuanjiao-zhong)')
-    expect(全局).toContain('background-color: var(--shuru-jing-tai-beijing)')
-    expect(全局).toContain('transition-property: border-color, box-shadow, background-color')
-    const 族 = 全局.slice(全局.indexOf('.yuan-jiao-shuru-kuang,'), 全局.indexOf('@keyframes shuru-cuowu-dou-dong'))
-    expect(族).not.toContain('transition-property: background-size')
-    expect(族).not.toContain('--shuru-sao-jianbian')
-    expect(族).not.toContain('linear-gradient(')
-  })
-
-  it('悬停仅限 hover 设备，120ms 且不动几何', () => {
-    expect(全局).toContain('@media (hover: hover)')
-    expect(全局).toContain(':hover:not(:focus)')
-    expect(全局).toContain('transition-duration: var(--shuru-xuan-ting-shi-chang)')
-    expect(全局).not.toContain('transform: scale')
-  })
-
-  it('聚焦：1.5px 强调色 + 3px 18% 环，180ms 标准曲线', () => {
-    expect(全局).toContain('border-width: var(--shuru-jujiao-bian-kuan-du)')
-    expect(全局).toContain('border-color: var(--shuru-dang-qian-jujiao-bian)')
-    expect(全局).toContain('box-shadow: 0 0 0 var(--shuru-jujiao-huan-kuan-du) var(--shuru-dang-qian-jujiao-huan)')
-    expect(全局).toContain('transition-duration: var(--shuru-jujiao-shi-chang)')
-    expect(全局).toContain(":root[data-xing-bie='nv'] .yuan-jiao-shuru-kuang")
+  it('女档由根节点属性切换，未设置或男档走蓝色', () => {
+    expect(输入框).toContain(":root[data-xing-bie='nv'] .chang-fang-kuang-ke")
+    expect(输入框).toContain('var(--shuru-gao-liang-dan-nan)')
+    expect(输入框).toContain('var(--shuru-gao-liang-dan-nv)')
     expect(读('根组件.vue')).toContain('document.documentElement.dataset.xingBie')
-  })
-
-  it('已填与错误：已填加深一档、错误换令牌且只抖一次 240ms', () => {
-    expect(全局).toContain(':not(:placeholder-shown)')
-    expect(全局).toContain('border-color: var(--shuru-yi-tian-bian-se)')
-    expect(全局).toContain(":is([aria-invalid='true'], [data-error='true'], .is-error)")
-    expect(全局).toContain('border-color: var(--shuru-xian-cuowu-se)')
-    expect(全局).toContain('@keyframes shuru-cuowu-dou-dong')
-    expect(全局).toContain('animation: shuru-cuowu-dou-dong var(--shuru-cuowu-dou-dong-shi-chang)')
-  })
-
-  it('减动效：五态与抖动全部关闭', () => {
-    const 降级 = 全局.slice(全局.indexOf('@media (prefers-reduced-motion: reduce)'))
-    expect(降级).toContain('.yuan-jiao-shuru-kuang')
-    expect(降级).toContain('animation: none !important')
-  })
-
-  it('令牌成对：时长/环宽/性别档在明暗两档都有定义', () => {
-    for (const 名 of [
-      '--shuru-xuan-ting-shi-chang',
-      '--shuru-jujiao-shi-chang',
-      '--shuru-shi-jiao-shi-chang',
-      '--shuru-cuowu-dou-dong-shi-chang',
-      '--shuru-jujiao-huan-kuan-du',
-      '--shuru-jujiao-bian-kuan-du',
-      '--shuru-jing-tai-beijing',
-      '--shuru-yi-tian-beijing',
-      '--shuru-xuan-ting-bian-se',
-      '--shuru-yi-tian-bian-se',
-      '--shuru-jujiao-bian-se-nan',
-      '--shuru-jujiao-bian-se-nv',
-      '--shuru-jujiao-huan-se-nan',
-      '--shuru-jujiao-huan-se-nv',
-      '--shuru-cuowu-huan-se',
-    ]) {
-      expect(浅色.get(名), `浅色档缺少 ${名}`).toBeTruthy()
-      expect(深色.get(名), `深色档缺少 ${名}`).toBeTruthy()
-    }
-    expect(浅色.get('--shuru-jujiao-huan-kuan-du')).toBe('3px')
-    expect(浅色.get('--shuru-jujiao-bian-kuan-du')).toBe('1.5px')
-    expect(浅色.get('--shuru-jujiao-shi-chang')).toBe('180ms')
-    expect(浅色.get('--shuru-xuan-ting-shi-chang')).toBe('120ms')
-    expect(浅色.get('--shuru-shi-jiao-shi-chang')).toBe('150ms')
-    expect(浅色.get('--shuru-cuowu-dou-dong-shi-chang')).toBe('240ms')
   })
 })
 

@@ -5,6 +5,7 @@ import { huoQuShiJianChangJingWenBen } from '../config/时间场景配置'
 import { MBTI_YU_QI_CHI } from '../config/风格语气映射'
 import { duJieBaoKaiGuan } from '../config/开场采样配置'
 import { shiXueShengShenFen } from '../config/角色配置'
+import { gouJianYuTaiCeng } from './语态层'
 
 interface ShiLiZu {
   yuQi: string
@@ -769,6 +770,11 @@ export function gouJianWriterPrompt(
         `情绪：${ceLue.shi_jian_qing_xu || '正常'}`,
       ].join('\n'),
     )
+  }
+
+  if (ceLue?.shi_fou_hui_fu !== false) {
+    const yuTaiCeng = gouJianYuTaiCeng(shuRu)
+    if (yuTaiCeng) cengCi.push(yuTaiCeng)
   }
 
   return cengCi.join('\n\n')

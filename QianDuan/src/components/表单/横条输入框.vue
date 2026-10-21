@@ -1,5 +1,5 @@
 <template>
-  <div class="shuru-zu yuan-jiao-shuru-zu" :class="{ shangFu: 上浮 }">
+  <div class="shuru-zu" :class="{ shangFu: 上浮 }">
     <div v-if="包裹类" :class="包裹类">
       <div v-if="内层类" :class="内层类">
         <input
@@ -7,7 +7,7 @@
           ref="输入元素"
           :value="模型值"
           :type="类型"
-          class="fenlie-shuru yuan-jiao-shuru-kuang"
+          class="fenlie-shuru"
           :maxlength="最大长度"
           :inputmode="输入模式"
           :autocomplete="自动完成"
@@ -30,7 +30,7 @@
           ref="输入元素"
           :value="模型值"
           :type="类型"
-          class="fenlie-shuru yuan-jiao-shuru-kuang"
+          class="fenlie-shuru"
           :maxlength="最大长度"
           :inputmode="输入模式"
           :autocomplete="自动完成"
@@ -55,7 +55,7 @@
         ref="输入元素"
         :value="模型值"
         :type="类型"
-        class="fenlie-shuru yuan-jiao-shuru-kuang"
+        class="fenlie-shuru"
         :maxlength="最大长度"
         :inputmode="输入模式"
         :autocomplete="自动完成"

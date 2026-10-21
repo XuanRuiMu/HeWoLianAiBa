@@ -6,8 +6,8 @@ import { shiXueShengShenFen } from '../src/config/角色配置'
 import type { MBTILeiXing } from '../src/config/角色配置'
 import type { DuiHuaLiShiXiang } from '../src/types'
 import { 清洗回复 } from './直连适配器'
-import { GouJianYuTaiKuai, ShengChengZaiMang, QuZaiMangWeiShuo } from '../../语料实验室/工作区/语态控制器'
-import { PanYongHu, DingMoShi, JueDingFanYing, GouJianDuiHuaKuai, ChouYuTaiAnLeiXing, QingXiShuChu } from '../../语料实验室/工作区/对话系统'
+import { quZaiMangWeiShuo, shengChengZaiMang, zaoSuiJi } from '../src/services/语态控制器'
+import { panYongHu, dingMoShi, jueDingFanYing, chouYuTaiAnLeiXing, qingXiShuChu } from '../../语料实验室/工作区/对话系统'
 
 const 出 = join(__dirname, '..', '..', '语料实验室', '全流程')
 mkdirSync(出, { recursive: true })
@@ -157,7 +157,7 @@ async function 主(种子: number) {
   let 分 = 低 + Math.floor(随() * (高 - 低 + 1))
   const 起始值 = 分
   const jiaoSe = shengChengJiaoSe({ yong_hu_id: 'quanliucheng-' + 种子, mbti_lei_xing: 型, xing_bie: 性别 } as never)
-  const 全部待办 = ShengChengZaiMang(shiXueShengShenFen(jiaoSe.shen_fen))
+  const 全部待办 = shengChengZaiMang(shiXueShengShenFen(jiaoSe.shen_fen), zaoSuiJi('zai-mang:' + 种子))
   const 是E = 型.charAt(0) === 'E'
   const 慢热 = (jiaoSe as unknown as { re_shen_lei_xing?: string }).re_shen_lei_xing === '慢热'
   const 角色名 = (jiaoSe as unknown as { ming_zi?: string }).ming_zi || '林萱'
@@ -173,18 +173,19 @@ async function 主(种子: number) {
 
   while (轮 < 上限) {
     轮++
-    const 模式 = DingMoShi(分, 已恋爱)
+    const 模式 = dingMoShi(分, 已恋爱)
     const 要表白 = !已恋爱 && 分 >= 800
     const 状态 = 玩家状态[Math.floor(随() * 玩家状态.length)]
     let 对方 = await 求玩家消息(历史, 状态, 角色名, 模式, 要表白)
     if (!对方) 对方 = '在吗'
 
-    const 判定 = PanYongHu(对方)
+    const 判定 = panYongHu(对方)
     连续异常 = 判定.类型 === '正常' || 判定.类型 === '推进' ? 0 : 连续异常 + 1
-    const 反应 = JueDingFanYing(判定, 连续异常, 是E)
-    const 语态 = ChouYuTaiAnLeiXing(判定, 对方, false, '热情')
+    const 反应 = jueDingFanYing(判定, 连续异常, 是E)
+    const 语态 = chouYuTaiAnLeiXing(判定, 对方, false, '热情')
     const 已说 = 历史.filter((值) => 值.fa_song_zhe_lei_xing === 'jiaose').map((值) => 值.nei_rong)
-    const 在忙 = QuZaiMangWeiShuo(全部待办, 已说)
+    const 在忙 = quZaiMangWeiShuo(全部待办, 已说)
+    void 在忙
     历史.push({ fa_song_zhe_lei_xing: 'yonghu', fa_song_zhe_ming: '对方', nei_rong: 对方, shi_jian: '21:' + String(10 + 轮) } as never)
 
     let 回复 = ''
@@ -200,18 +201,14 @@ async function 主(种子: number) {
         dui_hua_li_shi: 历史.slice(0, -1), yong_hu_xin_xiao_xi: 对方,
         shi_fou_di_yi_lun: 历史.length <= 1, tu_pian_shou_quan: false, shi_jian_chang_jing: 'riChang',
       } as never
-      const 块 = GouJianDuiHuaKuai(判定, 反应, 模式, {
-        好感度: 分, 已恋爱, 是渣型: false, 是E型: 是E, 连续次数: 连续异常,
-      })
       const 提示 = gouJianWriterPrompt(shuRu, { shi_fou_hui_fu: true, shi_jian_qing_xu: '正常' })
-        + '\n\n' + GouJianYuTaiKuai(语态, 在忙) + '\n\n' + 块
       try {
         const 名 = (shuRu.jiao_se.wei_xin_ming || '').trim()
         const 系统 = 名
           ? '完全代入下面这个角色（' + 名 + '），只输出你要发的消息。像平时微信里真实的两个人在聊天，自然口语化，允许短句、留白和真实停顿。'
           : '完全代入下面这个角色，只输出你要发的消息。像平时微信里真实的两个人在聊天，自然口语化，允许短句、留白和真实停顿。'
         const ceLueKuai = '【你这会儿的感觉】\n这次要回\n情绪：正常'
-        const 净 = QingXiShuChu(清洗回复(await 外呼(系统, 提示 + '\n\n' + ceLueKuai)))
+        const 净 = qingXiShuChu(清洗回复(await 外呼(系统, 提示 + '\n\n' + ceLueKuai)))
         回复 = 净.length > 0 ? 净.join(' / ') : '【不出话】'
       } catch (e) { 错 = String(e).slice(0, 200) }
     }

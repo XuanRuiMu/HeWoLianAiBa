@@ -124,7 +124,7 @@ select {
   ),
   textarea,
   [contenteditable]:not([contenteditable='false'])
-):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):not(.yuan-jiao-shuru-kuang) {
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru) {
   border-bottom-width: var(--shuru-xian-changtai-kuan-du) !important;
   border-bottom-style: solid !important;
   border-bottom-color: transparent !important;
@@ -154,7 +154,7 @@ select {
   ),
   textarea,
   [contenteditable]:not([contenteditable='false'])
-):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):not(.yuan-jiao-shuru-kuang):disabled {
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):disabled {
   background-image:
     linear-gradient(var(--shuru-xian-jinyong-se), var(--shuru-xian-jinyong-se)),
     linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se)) !important;
@@ -178,7 +178,7 @@ select {
   ),
   textarea,
   [contenteditable]:not([contenteditable='false'])
-):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):not(.yuan-jiao-shuru-kuang):read-only {
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):read-only {
   background-image:
     linear-gradient(var(--shuru-xian-zhi-du-se), var(--shuru-xian-zhi-du-se)),
     linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se)) !important;
@@ -201,7 +201,7 @@ select {
   ),
   textarea,
   [contenteditable]:not([contenteditable='false'])
-):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):not(.yuan-jiao-shuru-kuang):is([aria-invalid='true'], [data-error='true'], .is-error) {
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):is([aria-invalid='true'], [data-error='true'], .is-error) {
   background-image:
     linear-gradient(var(--shuru-xian-cuowu-se), var(--shuru-xian-cuowu-se)),
     linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se)) !important;
@@ -224,7 +224,7 @@ select {
   ),
   textarea,
   [contenteditable]:not([contenteditable='false'])
-):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):not(.yuan-jiao-shuru-kuang):focus {
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):focus {
   background-size: 100% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du) !important;
 }
 
@@ -243,7 +243,7 @@ select {
   ),
   textarea,
   [contenteditable]:not([contenteditable='false'])
-):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):not(.yuan-jiao-shuru-kuang):-webkit-autofill {
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):-webkit-autofill {
   background-color: var(--shuru-beijing-zidong-tianchong) !important;
   color: var(--shuru-wenben-zidong-tianchong) !important;
   -webkit-text-fill-color: var(--shuru-wenben-zidong-tianchong) !important;
@@ -251,103 +251,6 @@ select {
      而单条 inset 阴影在几何上无法「盖满元素又留出底部 1px」，故遮罩与底线不可共存。
      UA 自动填充只改 background-color，底线走 background-image，天然不被其覆盖。 */
   transition: background-color 5000s ease-in-out 0s !important;
-}
-
-.yuan-jiao-shuru-kuang,
-.shuru-zu.yuan-jiao-shuru-zu .yuan-jiao-shuru-kuang {
-  --shuru-dang-qian-jujiao-bian: var(--shuru-jujiao-bian-se-nan);
-  --shuru-dang-qian-jujiao-huan: var(--shuru-jujiao-huan-se-nan);
-  border-width: var(--shuru-xian-changtai-kuan-du);
-  border-style: solid;
-  border-color: var(--shuru-xian-changtai-se);
-  border-radius: var(--yuanjiao-zhong);
-  background-color: var(--shuru-jing-tai-beijing);
-  outline: none;
-  transition-property: border-color, box-shadow, background-color;
-  transition-duration: var(--shuru-shi-jiao-shi-chang);
-  transition-timing-function: var(--quxian-biao-zhun);
-}
-
-:root[data-xing-bie='nv'] .yuan-jiao-shuru-kuang,
-:root[data-xing-bie='nv'] .shuru-zu.yuan-jiao-shuru-zu .yuan-jiao-shuru-kuang {
-  --shuru-dang-qian-jujiao-bian: var(--shuru-jujiao-bian-se-nv);
-  --shuru-dang-qian-jujiao-huan: var(--shuru-jujiao-huan-se-nv);
-}
-
-@media (hover: hover) {
-  .yuan-jiao-shuru-kuang:hover:not(:focus),
-  .shuru-zu.yuan-jiao-shuru-zu .yuan-jiao-shuru-kuang:hover:not(:focus) {
-    border-color: var(--shuru-xuan-ting-bian-se);
-    transition-duration: var(--shuru-xuan-ting-shi-chang);
-    transition-timing-function: var(--quxian-xuan-ting);
-  }
-}
-
-.yuan-jiao-shuru-kuang:not(:placeholder-shown),
-.shuru-zu.yuan-jiao-shuru-zu .yuan-jiao-shuru-kuang:not(:placeholder-shown) {
-  border-color: var(--shuru-yi-tian-bian-se);
-  background-color: var(--shuru-yi-tian-beijing);
-}
-
-.yuan-jiao-shuru-kuang:focus,
-.shuru-zu.yuan-jiao-shuru-zu .yuan-jiao-shuru-kuang:focus {
-  border-width: var(--shuru-jujiao-bian-kuan-du);
-  border-color: var(--shuru-dang-qian-jujiao-bian);
-  box-shadow: 0 0 0 var(--shuru-jujiao-huan-kuan-du) var(--shuru-dang-qian-jujiao-huan);
-  background-color: var(--shuru-yi-tian-beijing);
-  outline: none;
-  transition-duration: var(--shuru-jujiao-shi-chang);
-  transition-timing-function: var(--quxian-biao-zhun);
-}
-
-.yuan-jiao-shuru-kuang:is([aria-invalid='true'], [data-error='true'], .is-error),
-.shuru-zu.yuan-jiao-shuru-zu .yuan-jiao-shuru-kuang:is([aria-invalid='true'], [data-error='true'], .is-error) {
-  border-color: var(--shuru-xian-cuowu-se);
-  box-shadow: 0 0 0 var(--shuru-jujiao-huan-kuan-du) var(--shuru-cuowu-huan-se);
-  animation: shuru-cuowu-dou-dong var(--shuru-cuowu-dou-dong-shi-chang) var(--quxian-biao-zhun) 1;
-}
-
-.shuru-zu.yuan-jiao-shuru-zu {
-  background-image: none;
-  background-size: auto;
-  transition-property: none;
-}
-
-.shuru-zu.yuan-jiao-shuru-zu .yuan-jiao-shuru-kuang,
-.shuru-zu.yuan-jiao-shuru-zu > .yanzhengma-zu > .yanzhengma-shuru-qu > .yuan-jiao-shuru-kuang {
-  padding-left: var(--jiange-12);
-  padding-right: var(--jiange-12);
-}
-
-.shuru-zu.yuan-jiao-shuru-zu .mima-zu > .yuan-jiao-shuru-kuang {
-  padding-right: calc(var(--jiange-da) + var(--jiange-zhong));
-}
-
-.shuru-zu.yuan-jiao-shuru-zu .fudong-biaoqian {
-  left: var(--jiange-12);
-}
-
-.shuru-zu.yuan-jiao-shuru-zu .mima-qiehuan {
-  right: var(--jiange-6);
-}
-
-@keyframes shuru-cuowu-dou-dong {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  20% {
-    transform: translateX(calc(var(--shuru-cuowu-dou-dong-fu-du) * -1));
-  }
-  40% {
-    transform: translateX(var(--shuru-cuowu-dou-dong-fu-du));
-  }
-  60% {
-    transform: translateX(calc(var(--shuru-cuowu-dou-dong-fu-du) * -1));
-  }
-  80% {
-    transform: translateX(var(--shuru-cuowu-dou-dong-fu-du));
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -373,12 +276,6 @@ select {
   ):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru) {
     transition-property: none !important;
     transition-duration: 0s !important;
-  }
-
-  .yuan-jiao-shuru-kuang,
-  .shuru-zu.yuan-jiao-shuru-zu .yuan-jiao-shuru-kuang {
-    transition: none !important;
-    animation: none !important;
   }
 }
 
@@ -562,16 +459,13 @@ img {
   --cuo-wu-mian: color-mix(in srgb, var(--cuowu-yanse) 9%, var(--beijing-kaopian));
   --cuo-wu-bian: color-mix(in srgb, var(--cuowu-yanse) 38%, transparent);
   --cuo-wu-dian: color-mix(in srgb, var(--cuowu-yanse) 12%, var(--beijing-kaopian));
-  padding: var(--jiange-zhong);
+  padding: var(--jiange-12);
   background: var(--cuo-wu-mian);
   border: 1px solid var(--cuo-wu-bian);
-  border-left: 3px solid var(--cuo-wu-biaoti);
   border-radius: var(--yuanjiao-zhong);
   box-shadow: none;
   color: var(--cuo-wu-zhengwen);
   font-size: var(--ziti-xiao);
-  line-height: 1.5;
-  text-align: left;
   margin-top: var(--jiange-xiao);
 }
 
