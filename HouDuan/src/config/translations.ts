@@ -425,7 +425,7 @@ export const fanYi = {
     jiaoSeBuCunZai: '聊天对象不存在',
     wuQuanXian: '无权访问该聊天',
     wuLiaoTianJiLu: '暂无聊天记录，无法请求军师指导',
-    junShiChongFu: '军师重复',
+    junShiChongFu: '这段聊天已经问过了，先跟TA再说两句再来',
     shengChengShiBai: '军师这会儿卡壳了，稍后再试',
     zanShiMeiXiangHao: '军师暂时没想好怎么说，稍后再试吧。',
     zhiDaoZhong: '军师正在指导中，请稍候',
