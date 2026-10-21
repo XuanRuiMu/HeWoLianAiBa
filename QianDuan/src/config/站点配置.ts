@@ -2,6 +2,8 @@
 // 发版时与 package.json 的 version 一并更新。
 export const yingYongBanBen = '1.3.0'
 
+export const shengChengJiaoSeChaoShiHaoMiao = 120000
+
 export interface CaoDiPeiZhi {
   fenXiQiYong: boolean
   pingBiYuMing: readonly string[]

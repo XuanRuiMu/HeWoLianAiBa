@@ -1,5 +1,6 @@
 import http from './请求'
 import { 请求性别或拒绝 } from '@/utils/性别'
+import { shengChengJiaoSeChaoShiHaoMiao } from '@/config/站点配置'
 import type {
   Xiaoxi,
   HuiHua,
@@ -443,7 +444,7 @@ export async function queRenJiaoSe(
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: ShengChengJiaoSeJieGuo }>(
     '/生成角色/确认',
     { xuanZhongJiaoSe },
-    { timeout: 60000 },
+    { timeout: shengChengJiaoSeChaoShiHaoMiao },
   )
   return 响应.data.shu_ju
 }
