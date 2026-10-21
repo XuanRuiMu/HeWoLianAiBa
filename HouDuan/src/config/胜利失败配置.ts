@@ -17,6 +17,22 @@ export const QUE_XIN_DU_YUE_SHU = {
   },
 }
 
+export const BEI_CHA_QU_PEI_ZHI = {
+  get queXinDuYueShu(): number {
+    return duQuQueXinDu('BEI_CHA_QU_QUE_XIN_DU_YUE_SHU', 0.65)
+  },
+  zhiJingTiShiMiao: 86400,
+  redisJianQianZhui: 'bei_sha_qu_jing_gao:',
+  zhiJingKouFenFenPei: {
+    xin_ren_du_bian_hua: -14,
+    qin_mi_du_bian_hua: -12,
+    qu_wei_du_bian_hua: -8,
+    guan_huai_du_bian_hua: -6,
+  },
+  zhiRuZhuRuYuanYin: '提示词注入',
+  yuanYinHeXin: ['像渣男渣女', '提示词注入', '不像真人说话', '不符合我的条件', '情商太低'],
+}
+
 export const SHENG_LI_SHI_BAI_PEI_ZHI = {
   get shenJingBingQueXinDuYueShu(): number {
     return QUE_XIN_DU_YUE_SHU.shenJingBing

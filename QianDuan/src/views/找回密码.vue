@@ -811,8 +811,8 @@ onBeforeUnmount(() => {
   align-self: center;
   align-items: center;
   justify-content: center;
-  margin-top: var(--jiange-12);
-  padding: var(--jiange-6) var(--jiange-12);
+  margin-top: var(--jiange-xiao);
+  padding: 0 var(--jiange-12);
   font-size: var(--ziti-zhong);
   font-weight: 400;
   color: var(--ka-ci-wen);
@@ -826,12 +826,12 @@ onBeforeUnmount(() => {
 .zhaohui-fan-hui::before {
   content: '';
   position: absolute;
-  top: 50%;
+  top: 0;
   left: 50%;
   width: 100%;
   min-width: var(--shuru-anniu-re-ku);
   height: var(--shuru-anniu-re-ku);
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
 }
 
 .zhaohui-fan-hui:hover {

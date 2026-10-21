@@ -411,6 +411,7 @@
   --kapian-mian-biankuang: rgba(23, 32, 55, 0.5);
   --kapian-mian-zhengwen: #2b3038;
   --kapian-mian-biaoti: #14181f;
+  --kapian-shuoming-wenben: #191919;
   --moshi-kapian-zheyan: rgba(255, 255, 255, 0.75);
   --moshi-kapian-hover-yinying: 0 10px 28px rgba(20, 24, 33, 0.12);
   /* 认证卡（鎏金年代 · 象牙白档）卡面色 + 其上输入框的静置发丝线（FP-03c）：
@@ -658,6 +659,7 @@
   --kapian-mian-biankuang: rgba(226, 232, 240, 0.45);
   --kapian-mian-zhengwen: #dfe4ec;
   --kapian-mian-biaoti: #ffffff;
+  --kapian-shuoming-wenben: #F5F5F7;
   --moshi-kapian-zheyan: rgba(26, 30, 40, 0.75);
   --moshi-kapian-hover-yinying: 0 14px 40px rgba(0, 0, 0, 0.28);
   /* 认证卡（星夜档）卡面色 + 其上输入框的静置发丝线（FP-03c），与浅色档成对，见上 */

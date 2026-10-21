@@ -178,6 +178,12 @@ export function huoQuMockTiaoYong(): ((canShu: TiaoYongCanShu) => Promise<TiaoYo
 
 let shiLi: OpenAI | null = null
 
+export function GouJianQingQiuShuRu<T extends { jiaoSe: string; neiRong: unknown }>(
+  xiaoXi: readonly T[],
+): Array<{ role: string; content: unknown }> {
+  return xiaoXi.map((x) => ({ role: x.jiaoSe, content: x.neiRong }))
+}
+
 export function huoQuDeepSeekKeHuDuan(): OpenAI {
   if (shiLi) return shiLi
   const apiMiYao = peiZhi.deepSeek.apiMiYao || AI_PEI_ZHI.deepSeek.apiMiYao
@@ -337,7 +343,7 @@ export async function tiaoYongDeepSeek(
   // 客户端侧 token 预算保护（Responses API 无服务端截断，超窗口直接 400）
   const shiJiXiaoXi = yuSuanBaoHu(canShu.xiaoXi)
 
-  const shuRuXiang = shiJiXiaoXi.map((x) => ({ role: x.jiaoSe, neiRong: x.neiRong }))
+  const shuRuXiang = GouJianQingQiuShuRu(shiJiXiaoXi)
 
   const body: Record<string, unknown> = {
     model: moXing,

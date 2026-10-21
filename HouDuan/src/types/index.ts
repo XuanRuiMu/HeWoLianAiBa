@@ -341,6 +341,7 @@ export type YouXiJieGuoLeiXing =
   | 'shi_bai_shen_jing_bing'
   | 'shi_bai_fang_qi_tiao_zhan'
   | 'shi_bai_mian_da_rao'
+  | 'shi_bai_bei_cha_qu'
 
 export interface YouXiJieShuJieGuo {
   jie_guo_lei_xing: YouXiJieGuoLeiXing
@@ -382,11 +383,19 @@ export interface ShenJingBingJianCeJieGuo {
   li_you?: string
 }
 
+export interface BeiChaQuJianCeJieGuo {
+  shi_fou_cha_qu: boolean
+  yuan_yin: string
+  que_xin_du: number
+  li_you?: string
+}
+
 export interface YongHuXiaoXiJianCeJieGuo {
   biao_bai: BiaoBaiJianCeJieGuo
   hu_shan: HuShanJianCeJieGuo
   shi_po: ShiPoJianCeJieGuo
   shen_jing_bing: ShenJingBingJianCeJieGuo
+  bei_sha_qu: BeiChaQuJianCeJieGuo
 }
 
 export interface DirectorCeLue {

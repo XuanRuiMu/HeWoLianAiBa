@@ -2007,6 +2007,7 @@ window.__camReady = true;
       return hits.length ? hits[0].point : null;
     }
     function wuBareFootprint(mi) {
+      window.__m('足迹计算开始');
       if (!wuRect || !wuAlpha) return null;
       var vw = eng.canvas.clientWidth || eng.sizes.width;
       var vh = eng.canvas.clientHeight || eng.sizes.height;
@@ -2101,6 +2102,7 @@ window.__camReady = true;
       //    ⇒ 钳制不响应；而它的叶尖按 23° 俯角会上移 2.36×叶高 ≈ 25cm ⇒ 直接盖到他画面上，
       //    表现就是「草根本没把他当障碍物」。屏障必须是禁区 —— 禁区本身就是按那个 25cm
       //    阈值定出来的，草只要进不了禁区，叶尖就够不到他的画面。
+      window.__m('禁区就绪');
       if (WU_BODY_COLLIDE) {
         try { wuBuildBodyField(grown, hAt, vw, vh); } catch (eBF) {
           window.__wuBodyErr = '禁区碰撞场构建失败：' + String(eBF && eBF.stack || eBF);
@@ -2218,6 +2220,7 @@ window.__camReady = true;
         bodyCells: zoneKeys.length, insideTexels: insidePx,
         sizeX: +(bx1 - bx0).toFixed(3), sizeZ: +(bz1 - bz0).toFixed(3)
       };
+      window.__m('碰撞场完成');
       window.__wuBodyField = {
         w: W, h: Hh, cell: WU_BODY_CELL, bodyCells: zoneKeys.length, insideTexels: insidePx,
         origin: [+bx0.toFixed(3), +bz0.toFixed(3)], size: [+(bx1 - bx0).toFixed(3), +(bz1 - bz0).toFixed(3)],
@@ -2825,6 +2828,7 @@ window.__camReady = true;
     };
     function makeBare() {
       if (bareDone || !wuRect) return;
+      window.__m('足印开始');
       var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
       if (!grass || !grass.chunks || grass.chunks.entries().length < 20) return;
       var mi = scene.getObjectByName('main-island');
@@ -2843,8 +2847,10 @@ window.__camReady = true;
       // 异常必须留痕：曾因 wuRay 为 null 抛错被这里吞掉，footprint 静默变空，
       // 表现只是「没效果」，查不出原因。
       try { cells = wuBareFootprint(mi); } catch (e) {
+        window.__m('足迹失败');
         window.__bareErr = String(e && e.stack || e); bareDone = true; return;
       }
+      window.__m('足迹完成');
       gp.set(sx, sy, sz); group.updateMatrixWorld(true); cam.updateMatrixWorld(true);
       if (!cells || !cells.size) { bareDone = true; window.__bareDiag = { cells: 0, painted: 0, tris: 0 }; return; }
       // 秃区+过渡带登记为「禁补草区」：删石补草 / 红框补草都必须绕开它，
@@ -2853,6 +2859,7 @@ window.__camReady = true;
       var newDist = null;
       try {
         newDist = wuBareDistance(cells);
+        window.__m('距离场完成');
         newDist.forEach(function (v, k) {
           var p = k.split(',');
           wuProtectCells.add(cellKey((+p[0] + 0.5) * WU_CELL, (+p[1] + 0.5) * WU_CELL));
@@ -2929,6 +2936,7 @@ window.__camReady = true;
         if (x < fb[0]) fb[0] = x; if (z < fb[1]) fb[1] = z;
         if (x > fb[2]) fb[2] = x; if (z > fb[3]) fb[3] = z;
       });
+      window.__m('秃区完成');
       window.__bareDiag = {
         cells: cells.size, footBox: fb.map(function (v) { return +v.toFixed(3); }),
         painted: res && res.painted, tris: res && res.tris,
@@ -3731,22 +3739,10 @@ function wuBakeAuroraNoise(size) {
     }
     // ---------- 地形目标与地面射线 ----------
     var terrainList = [], terrainStamp = 0;
-        var diXingKuang = null;
-    function diXingKeJian(o) {
-      if (!o || !o.visible) return false;
-      if (o.isInstancedMesh && !o.count) return false;
-      if (diXingKuang && o.geometry) {
-        try { if (!diXingKuang.intersectsObject(o)) return false; } catch (eK) {}
-      }
-      return true;
-    }
-    function buildTerrain(force) {
+        function buildTerrain(force) {
       var now = performance.now();
       if (!force && now - terrainStamp < 2000) return terrainList;
       terrainStamp = now;
-      try {
-        diXingKuang = new T.Frustum().setFromProjectionMatrix(new T.Matrix4().multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse));
-      } catch (eF) { diXingKuang = null; }
       var out = [];
       scene.traverse(function (o) {
         if (!o.isMesh || !o.geometry) return;
@@ -3755,7 +3751,6 @@ function wuBakeAuroraNoise(size) {
         if (n.indexOf('pl-') === 0) return;
         if (n.indexOf('island') < 0 && n.indexOf('basalt') < 0 &&
             n.indexOf('terrain') < 0 && n.indexOf('ground') < 0) return;
-        if (!o.visible) return;
         out.push(o);
       });
       terrainList = out;
@@ -3772,7 +3767,6 @@ function wuBakeAuroraNoise(size) {
     }
     function groundHit(nx, ny) {
       var h = castGround(nx, ny, buildTerrain());
-      // 地形 chunk 是异步加载、还会被引擎 culling 卸载 → 打空时强制重建一次再试
       if (!h) h = castGround(nx, ny, buildTerrain(true));
       // 超出 maxDist 说明这一发打到了远景地形平面，不是用户要的落点，当作没打中
       if (h && h.distance > PLC.maxDist) h = null;
@@ -4447,6 +4441,16 @@ function wuBakeAuroraNoise(size) {
     };
   }
 
+  if (!window.__m) {
+    window.__m = function (n) { (window.__tm || (window.__tm = [])).push([n, Math.round(performance.now())]); };
+    window.__m('页面脚本开始');
+    try {
+      new PerformanceObserver(function (list) {
+        var a = window.__lt || (window.__lt = []);
+        list.getEntries().forEach(function (e) { a.push([Math.round(e.startTime), Math.round(e.duration)]); });
+      }).observe({ entryTypes: ['longtask'] });
+    } catch (eLT) {}
+  }
   var WU_ASPECT = 443 / 312;
   var CAM = { pos: [4.2706, 1.157, 5.1022], d: 4.664, p: -23, a: -6.6 };
   var WU = { x: 24.5, y: 71, s: 24 };
@@ -4491,12 +4495,14 @@ function wuBakeAuroraNoise(size) {
     try { if (window.__wuSetLayerRect) window.__wuSetLayerRect(r.l, r.t, r.w, r.h); } catch (e5) {}
     if (!yiPuHao) {
       if (window.__wuBuildMesh) {
-        try { window.__wuBuildMesh(function (ok) { if (ok) { yiPuHao = true; puWu(); } }); } catch (e6) {}
+        window.__m('建面片');
+        try { window.__wuBuildMesh(function (ok) { if (ok) { window.__m('面片完成'); yiPuHao = true; puWu(); } }); } catch (e6) {}
       }
       return;
     }
     if (!yiBuHao && window.__wuLayoutMesh) {
-      try { if (window.__wuLayoutMesh(r)) yiBuHao = true; } catch (e7) {}
+      window.__m('铺设开始');
+      try { if (window.__wuLayoutMesh(r)) { yiBuHao = true; window.__m('铺设完成'); } } catch (e7) {}
     }
   }
 
@@ -4507,10 +4513,13 @@ function wuBakeAuroraNoise(size) {
       setTimeout(qiDong, 300);
       return;
     }
+    if (!window.__mEng) { window.__mEng = 1; window.__m('引擎就绪'); }
+    window.__m('注入开始');
     try { inpage(); } catch (e8) {
       window.__beiJingCuoWu = String(e8 && e8.message || e8);
       if (!window.__camReady) { setTimeout(qiDong, 500); return; }
     }
+    if (!window.__mCam) { window.__mCam = 1; window.__m('注入结束'); }
     if (!window.__camReady) { setTimeout(qiDong, 300); return; }
     if (!yiJianHao) luoJiWei(0);
     puWu();
