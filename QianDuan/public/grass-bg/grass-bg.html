@@ -4530,9 +4530,17 @@ function wuBakeAuroraNoise(size) {
         requestAnimationFrame(chou);
       })();
     }
-    setInterval(function () {
-      if (!yiPuHao || (!yiBuHao && puTries < 30)) { puTries++; puWu(); }
-    }, 1000);
+    if (!window.__wuPaiQi) {
+      window.__wuPaiQi = true;
+      var houTui = function (n) {
+        var yanShi = Math.min(8000, 1000 * (n + 1));
+        setTimeout(function () {
+          if (!yiPuHao || (!yiBuHao && puTries < 30)) { puTries++; puWu(); }
+          if (!yiPuHao || (!yiBuHao && puTries < 30)) houTui(n + 1);
+        }, yanShi);
+      };
+      houTui(0);
+    }
   }
   qiDong();
 })();

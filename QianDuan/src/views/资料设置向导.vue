@@ -548,6 +548,7 @@ async function kaiShiLiaoTian() {
   --xuan-zi-ji-bei: var(--xingbie-nan-tan-beijing);
   --xuan-zi-ji-wen: var(--xingbie-nan-tan-wenben);
   --xuan-dui-xiang-bian: var(--xingbie-nv-shen-biankuang);
+  --xuan-dui-xiang-huan: var(--xingbie-nv-xuan-huan);
 }
 
 .ziliao-kapian[data-xingbie='nv'] {
@@ -557,6 +558,7 @@ async function kaiShiLiaoTian() {
 
 .ziliao-kapian[data-dui-xiang-xingbie='nan'] {
   --xuan-dui-xiang-bian: var(--xingbie-nan-shen-biankuang);
+  --xuan-dui-xiang-huan: var(--xingbie-nan-xuan-huan);
 }
 
 .ziliao-kapian {
@@ -687,7 +689,7 @@ async function kaiShiLiaoTian() {
   gap: var(--jiange-10);
   padding: var(--jiange-da) var(--jiange-zhong) calc(var(--jiange-zhong) + var(--jiange-6));
   background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.13);
+  border: 2px solid rgba(255, 255, 255, 0.13);
   border-radius: 16px;
   color: var(--kapian-shuoming-wenben);
   cursor: pointer;
@@ -709,7 +711,7 @@ async function kaiShiLiaoTian() {
 .ziliao-kapian .xingBie-kaPian.beiXuanZhong[data-dang] {
   background-color: var(--xuan-zi-ji-bei);
   border: 2px solid var(--xuan-dui-xiang-bian);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--xuan-dui-xiang-bian) 22%, transparent);
+  box-shadow: 0 0 0 3px var(--xuan-dui-xiang-huan);
 }
 
 .xingBie-kaPian.beiXuanZhong .xingBie-mingCheng,
@@ -742,14 +744,6 @@ async function kaiShiLiaoTian() {
 .ziJi-nv-tubiao .xingBie-svg,
 .duiXiang-nv-tubiao .xingBie-svg {
   color: color-mix(in srgb, var(--xingbie-nv-1) 92%, transparent);
-}
-
-.ziJi-xingBie-kaPian.beiXuanZhong .xingBie-svg,
-.duiXiang-xingBie-kaPian.beiXuanZhong .xingBie-svg,
-.ziJi-xingBie-kaPian.beiXuanZhong .xingBie-mingCheng,
-.duiXiang-xingBie-kaPian.beiXuanZhong .xingBie-mingCheng {
-  color: inherit;
-  text-shadow: var(--xuanzhong-wenben-yinying);
 }
 
 .xingBie-mingCheng {

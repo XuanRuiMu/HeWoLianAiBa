@@ -384,9 +384,10 @@ onBeforeUnmount(() => {
   width: 100%;
   min-height: var(--shuru-anniu-re-ku);
   padding: var(--jiange-12) var(--jiange-da);
-  background: linear-gradient(135deg, var(--nuanhui-lan), var(--roufen-zi));
+  background: var(--tanchuang-biaoti);
+  border: 1px solid var(--tanchuang-biaoti);
   border-radius: var(--yuanjiao-zhong);
-  color: var(--fasong-anniu-wenben);
+  color: var(--beijing-zhuse);
   font-size: var(--ziti-zhong);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -394,11 +395,11 @@ onBeforeUnmount(() => {
 }
 
 .xieyi-zhidao:hover {
-  filter: brightness(1.06);
+  filter: brightness(0.92);
 }
 
 .xieyi-zhidao:active {
-  filter: brightness(0.96);
+  filter: brightness(0.84);
 }
 
 .xieyi-zhidao:focus-visible {

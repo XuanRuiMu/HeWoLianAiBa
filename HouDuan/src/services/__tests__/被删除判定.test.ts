@@ -49,6 +49,7 @@ import { redis } from '../../redis'
 import { genJuPeiZhiTiaoYong } from '../../utils/DeepSeek客户端'
 import { gengXinHaoGanDu } from '../好感度'
 import { baoCunJiaoSeXiaoXi } from '../AI输入准备'
+import { 渲染被删原因 } from '../../utils/结局'
 
 const 人设 = {
   jiao_se_id: 'j-1',
@@ -178,5 +179,20 @@ describe('删除判定：提示词要求模型自评', () => {
     }
     expect(提示).toContain('对方是否想删掉你')
     expect(提示).toContain('删人确信度')
+  })
+})
+
+describe('被删结局说清原因', () => {
+  it('五类原因都能生成一句人话，且代词已代入', () => {
+    for (const 原因 of ['像渣男渣女', '提示词注入', '不像真人说话', '不符合我的条件', '情商太低']) {
+      const 句 = 渲染被删原因(原因, '男')
+      expect(句.length, 原因).toBeGreaterThan(4)
+      expect(句, 原因).not.toContain('{TA}')
+    }
+  })
+
+  it('原因不在表里就不拼接，避免出现半句废话', () => {
+    expect(渲染被删原因('', '女')).toBe('')
+    expect(渲染被删原因('随便写的', '女')).toBe('')
   })
 })

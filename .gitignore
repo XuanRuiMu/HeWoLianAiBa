@@ -49,5 +49,7 @@ qianDuan/.vitest/
 .vitest-cache/
 
 # ─────────────────────────── 系统垃圾 ───────────────────────────
+# 临时脚本工具把路径变量写成 undefined 时会凭空造出这个目录，曾经把 .cjs 探针提交进库
+undefined/
 .DS_Store
 Thumbs.db

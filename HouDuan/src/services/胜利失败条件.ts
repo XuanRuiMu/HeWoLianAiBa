@@ -14,7 +14,7 @@ import {
   zhanShiLiShiWenBen,
   zhanShiXiaoXiZhengWen } from './对话渲染'
 import { debug日志, jiLuYouXiJieJu, jiLuSocketShiJian } from '../utils/debug日志'
-import { 是否通关结局, 渲染结局文案, 随机结局趣味文案 } from '../utils/结局'
+import { 是否通关结局, 渲染被删原因, 渲染结局文案, 随机结局趣味文案 } from '../utils/结局'
 import { 归一角色性别, type 角色性别 } from '../utils/性别'
 import { yanZhengUUID } from '../utils/验证'
 import { jieSuanTiaoZhanDuiJu } from './挑战积分'
@@ -461,7 +461,10 @@ export async function chuLiYouXiJieShu(
   const keJiXuLiaoTian = jie_guo_lei_xing === 'sheng_li_ai_qing'
   const xingBie = await huoQuJiaoSeXingBie(jiao_se_id)
   // FP-07：趣味文案只在**结算这一刻**随机一次，抽中结果即成快照；此后所有读取侧只看快照。
-  const jieGuoWenAn = 随机结局趣味文案(jie_guo_lei_xing, xingBie)
+  const jieGuoWenAn =
+    (jie_guo_lei_xing === 'shi_bai_bei_cha_qu'
+      ? 渲染被删原因(String(zhai_yao?.['yuan_yin'] ?? ''), xingBie)
+      : '') + 随机结局趣味文案(jie_guo_lei_xing, xingBie)
 
   jiLuYouXiJieJu(yong_hu_id, jiao_se_id, jie_guo_lei_xing)
 

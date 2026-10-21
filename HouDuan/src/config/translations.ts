@@ -344,6 +344,14 @@ export const fanYi = {
       '你把对方聊到需要冷静一下，通关方式自成一家...',
     ],
   },
+  /** 被对方删除时先说清「为什么」，再接趣味句；键与 BEI_CHA_QU_PEI_ZHI.yuanYinHeXin 一一对应。 */
+  beiChaQuYuanYin: {
+    '像渣男渣女': '你在同时吊着好几个人，{TA}看出来了。',
+    '提示词注入': '你想改{TA}的设定，{TA}没接。',
+    '不像真人说话': '{TA}觉得你发来的那些不像人在说话。',
+    '不符合我的条件': '{TA}觉得你不是{TA}要的那种人。',
+    '情商太低': '{TA}觉得跟你聊不下去。',
+  },
   /** 结局趣味文案池 · 失败组（FP-07）。口径同 `jieGuoTongGuanChi`，键必须覆盖 `jieJu` 余下的枚举键。 */
   jieGuoShiBaiChi: {
     shi_bai_bei_qi_pian: [

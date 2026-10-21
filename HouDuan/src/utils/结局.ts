@@ -150,6 +150,13 @@ export function 渲染结局池文案(句子: string, 性别: 角色性别): str
   return 句子.replace(/\{TA\}/g, 代词)
 }
 
+/** 被删结局的「原因」前缀句；原因不在表内时返回空串，不拼接。 */
+export function 渲染被删原因(原因: string, 性别: 角色性别): string {
+  const 表 = fanYi.beiChaQuYuanYin as Record<string, string>
+  const 模板 = 表[原因]
+  return 模板 ? 渲染结局池文案(模板, 性别) : ''
+}
+
 /** 某个结局的候选句池（已按性别代入）。进行中返回空池，调用方据此回落标签文案。 */
 export function 结局趣味文案池(解析结果: 结局解析结果, 性别: 角色性别): readonly string[] {
   const 池 = 是否通关结局(解析结果) ? 通关池表[解析结果] : 失败池表[解析结果]
