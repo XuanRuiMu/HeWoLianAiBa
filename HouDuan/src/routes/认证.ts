@@ -20,6 +20,7 @@ import {
   yanZhengShouJiHaoGeShi,
   shuaXinLingPai } from '../services/认证'
 import { faSongYanZhengMa, zhunHuaYanZhengMaYongTu } from '../services/短信'
+import { 映射登录失败 } from '../services/登录失败'
 import { zhuXiaoYongHu } from '../services/账号注销'
 import { huoQuZhenShiIP } from '../utils/真实IP'
 import type { RenZhengQingQiu } from '../middleware/认证'
@@ -191,11 +192,12 @@ luYou.post('/登录', dengLuXianLiu, dengLuIPLianLiu, 手机号验证中间件, 
     ip: huoQuIp(qingQiu) })
 
   if (!jieGuo.cheng_gong) {
+    const yingShe = 映射登录失败(jieGuo.cuo_wu_ma)
     return shiBaiXiangYing(
       xiangYing,
-      401,
-      jieGuo.ti_shi || huoQuFanYi('renZheng', 'dengLuShiBai'),
-      CUO_WU_DAI_MA.AUTH_INVALID_CREDENTIALS,
+      yingShe.状态码,
+      jieGuo.ti_shi,
+      yingShe.错误码,
     )
   }
 

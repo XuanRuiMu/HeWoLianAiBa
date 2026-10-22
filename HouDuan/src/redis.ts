@@ -45,11 +45,10 @@ export const redis = new Redis({
   maxRetriesPerRequest: null,
   // YH-063 Redis熔断：命令超时+熔断，断线无限排队等于全站雪崩
   // 根因：无超时无熔断，断线全站hang；收敛为命令超时3s+失败计数熔断+认证链明确语义
+  // 重连必须持续：旧实现第3次失败即返回null，Redis一次短暂重启就会让客户端永久失联，
+  // 只能重启后端才能恢复。改为指数退避封顶5秒持续重连；排队风险由3秒命令超时与熔断承担。
   commandTimeout: 3000,
-  retryStrategy: (ciShu) => {
-    if (ciShu > 3) return null
-    return Math.min(ciShu * 500, 2000)
-  },
+  retryStrategy: (ciShu) => Math.min(ciShu * 500, 5000),
   enableReadyCheck: true,
 })
 

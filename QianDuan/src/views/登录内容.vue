@@ -184,10 +184,10 @@
                 </div>
                 <!-- 第二行：自动登录 / 忘记密码？ -->
                 <div class="ji-zhu-hang-2">
-                <label class="ji-zhu-xuan-ze" :class="{ weiJiHuo: !jiZhuMiMa }">
+                <label class="ji-zhu-xuan-ze" :class="{ weiJiHuo: !可自动登录 }">
                   <input
                     :checked="ziDongDengLu"
-                    :disabled="!jiZhuMiMa"
+                    :disabled="!可自动登录"
                     type="checkbox"
                     class="ji-zhu-fu-xuan"
                     @change="ziDongDengLu = ($event.target as HTMLInputElement).checked"
@@ -503,6 +503,7 @@ const dengLuMiMa = ref(bd.dengLuMiMa)
 const jiZhuZhangHao = ref(bd.jiZhuZhangHao)
 const jiZhuMiMa = ref(bd.jiZhuMiMa)
 const ziDongDengLu = ref(bd.ziDongDengLu)
+const 可自动登录 = computed(() => jiZhuZhangHao.value && jiZhuMiMa.value)
 const zhuCeShouJiHao = ref(bd.zhuCeShouJiHao)
 const zhuCeYanZhengMa = ref(bd.zhuCeYanZhengMa)
 const zhuCeYongHuMing = ref(bd.zhuCeYongHuMing)
@@ -930,6 +931,9 @@ watch(ziDongDengLu, (val) => {
     jiZhuMiMa.value = true
     jiZhuZhangHao.value = true
   }
+})
+watch(可自动登录, (keYong) => {
+  if (!keYong) ziDongDengLu.value = false
 })
 watch(zhuCeShouJiHao, (val) => (bd.zhuCeShouJiHao = val))
 watch(zhuCeYanZhengMa, (val) => (bd.zhuCeYanZhengMa = val))
@@ -2052,11 +2056,6 @@ async function zhiXingZhuCe() {
   opacity: 1;
 }
 
-.ji-zhu-xuan-ze.weiJiHuo .ji-zhu-wen-ben::before {
-  border-color: var(--ka-san-wen);
-  border-style: dashed;
-}
-
 .ji-zhu-fu-xuan {
   position: absolute;
   opacity: 0;
@@ -2163,7 +2162,8 @@ async function zhiXingZhuCe() {
   margin-top: var(--jiange-da);
   margin-bottom: var(--jiange-da);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   gap: var(--jiange-xiao);
 }
 
@@ -2204,6 +2204,7 @@ async function zhiXingZhuCe() {
   font-size: var(--ziti-xiao);
   color: var(--ka-san-wen);
   line-height: 1.5;
+  text-align: center;
 }
 
 .xieyi-lianjie {

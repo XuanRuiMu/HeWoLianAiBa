@@ -24,6 +24,7 @@
       @load="beiJingYiJiaZai"
       @error="chuLiBeiJingJiaZaiShiBai"
     ></iframe>
+    <div v-if="显示主页雨水" class="zhu-ye-yu-shui" aria-hidden="true" />
     <div v-if="beiJingShiBai" class="cao-di-shibai-ti-shi" role="alert">
       <span class="cao-di-shibai-wen-an">{{ huoQuFanYi('caoDi', 'jiaZaiShiBaiTiShi') }}</span>
       <button class="cao-di-shibai-anniu" @click="chongShiBeiJing">
@@ -55,10 +56,13 @@ import { caoDiPeiZhi } from '@/config/站点配置'
 import { huoQuFanYi } from '@/config/翻译表'
 import { 解析性别 } from '@/utils/性别'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
+import { use禁止自动填充 } from '@/composables/use禁止自动填充'
 
 const route = useRoute()
 const 用户仓库 = 使用用户仓库()
 const 设置仓库 = 使用用户设置仓库()
+
+use禁止自动填充()
 
 watch(
   () => 用户仓库.dangQianYongHu?.mo_ren_xing_bie,
@@ -96,8 +100,6 @@ const beiJingShiBaiYuanYin = ref('')
 
 function beiJingYiJiaZai() {
   beiJingJiuXu.value = true
-  yuShuiChongShiCiShu = 0
-  chongShiBeiJingYuShui()
 }
 
 function chuLiBeiJingXiaoXi(shiJian: MessageEvent) {
@@ -275,31 +277,8 @@ interface CaoDiYinQing {
   canvas?: HTMLCanvasElement
 }
 
-interface CaoDiYuShui {
-  setIntensity?: (zhi: number) => void
-}
-
-interface CaoDiTianQi {
-  tweaksValue?: {
-    dayRainWeight?: number
-    nightRainWeight?: number
-    rainParticles?: boolean
-  }
-  activeEffects?: Set<string>
-  transition?: {
-    entering?: { id?: string } | null
-    exiting?: { id?: string } | null
-  } | null
-  getCurrentWeather?: () => string
-  isTransitioning?: () => boolean
-  cancelActiveTransitions?: () => void
-  transitionTo?: (zhuangTai: string) => void
-}
-
 interface CaoDiBeiJingTiYan {
   engine?: CaoDiYinQing
-  rain?: CaoDiYuShui
-  postProcessing?: { getWeatherController?: () => CaoDiTianQi | null }
 }
 
 type CaoDiBeiJingChuangKou = Window & {
@@ -354,97 +333,7 @@ function zhuRuCaoDiGuangBiao() {
   }
 }
 
-const yuShuiYuanShiQuanZhong: { baiTian: number | null; yeWan: number | null } = {
-  baiTian: null,
-  yeWan: null,
-}
-let yuShuiYiGuanBi = false
-let yuShuiDingShiQi: ReturnType<typeof setTimeout> | null = null
-let yuShuiChongShiCiShu = 0
-
-function quCaoDiTiYan(): CaoDiBeiJingTiYan | null {
-  const cw = grassIframe.value && grassIframe.value.contentWindow
-  if (!cw) return null
-  try {
-    return (cw as CaoDiBeiJingChuangKou).__experience ?? null
-  } catch {
-    return null
-  }
-}
-
-function tingZhiYuShuiChongShi(): void {
-  if (yuShuiDingShiQi === null) return
-  clearTimeout(yuShuiDingShiQi)
-  yuShuiDingShiQi = null
-}
-
-function tongBuCaoDiYuShui(): boolean {
-  const 开 = 设置仓库.zhuYeBeiJingYuShui
-  if (开 && !yuShuiYiGuanBi) return true
-  const tiYan = quCaoDiTiYan()
-  if (!tiYan) return false
-  const tianQi = tiYan.postProcessing?.getWeatherController?.() ?? null
-  const quanZhong = tianQi?.tweaksValue
-  if (!quanZhong) return false
-  const yuShui = tiYan.rain ?? null
-  if (quanZhong) {
-    if (yuShuiYuanShiQuanZhong.baiTian === null && typeof quanZhong.dayRainWeight === 'number') {
-      yuShuiYuanShiQuanZhong.baiTian = quanZhong.dayRainWeight
-    }
-    if (yuShuiYuanShiQuanZhong.yeWan === null && typeof quanZhong.nightRainWeight === 'number') {
-      yuShuiYuanShiQuanZhong.yeWan = quanZhong.nightRainWeight
-    }
-    if (开) {
-      if (yuShuiYuanShiQuanZhong.baiTian !== null) quanZhong.dayRainWeight = yuShuiYuanShiQuanZhong.baiTian
-      if (yuShuiYuanShiQuanZhong.yeWan !== null) quanZhong.nightRainWeight = yuShuiYuanShiQuanZhong.yeWan
-      quanZhong.rainParticles = true
-    } else {
-      quanZhong.dayRainWeight = 0
-      quanZhong.nightRainWeight = 0
-      quanZhong.rainParticles = false
-    }
-  }
-  if (开) {
-    const zhengZaiXiaYu = tianQi?.activeEffects?.has('rain') && !tianQi?.isTransitioning?.()
-    if (zhengZaiXiaYu) yuShui?.setIntensity?.(1)
-  } else {
-    const guoDu = tianQi?.transition
-    const zhengZaiGuoDuYuShui = guoDu?.entering?.id === 'rain' || guoDu?.exiting?.id === 'rain'
-    if (zhengZaiGuoDuYuShui) tianQi?.cancelActiveTransitions?.()
-    if (zhengZaiGuoDuYuShui || tianQi?.activeEffects?.has('rain')) tianQi?.transitionTo?.('clear')
-    yuShui?.setIntensity?.(0)
-  }
-  yuShuiYiGuanBi = !开
-  return true
-}
-
-function chongShiBeiJingYuShui(): void {
-  tingZhiYuShuiChongShi()
-  if (tongBuCaoDiYuShui()) return
-  if (yuShuiChongShiCiShu >= 240) return
-  yuShuiChongShiCiShu += 1
-  yuShuiDingShiQi = setTimeout(() => {
-    yuShuiDingShiQi = null
-    chongShiBeiJingYuShui()
-  }, 500)
-}
-
-watch(
-  () => 设置仓库.zhuYeBeiJingYuShui,
-  () => {
-    yuShuiChongShiCiShu = 0
-    chongShiBeiJingYuShui()
-  },
-)
-
-watch(
-  () => route.name,
-  () => {
-    if (beiJingGuaQi.value || !beiJingJiuXu.value) return
-    yuShuiChongShiCiShu = 0
-    chongShiBeiJingYuShui()
-  },
-)
+const 显示主页雨水 = computed(() => 设置仓库.zhuYeBeiJingYuShui && shiYongCaoDiBeiJing.value)
 
 function chuLiCuoWuBuHuo(xinXi: {
   cuoWu: unknown
@@ -551,7 +440,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('deviceorientation', chuLiLuoPan)
   document.removeEventListener('visibilitychange', chuLiYeMianKeJian)
   window.removeEventListener('message', chuLiBeiJingXiaoXi)
-  tingZhiYuShuiChongShi()
 })
 </script>
 
@@ -613,6 +501,64 @@ onBeforeUnmount(() => {
 
 .grass-bg-iframe.is-active {
   opacity: 1;
+}
+
+.zhu-ye-yu-shui {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(8, 18, 38, 0.2),
+    rgba(8, 18, 38, 0.06) 32%,
+    transparent 68%
+  );
+}
+
+.zhu-ye-yu-shui::before,
+.zhu-ye-yu-shui::after {
+  content: '';
+  position: absolute;
+  inset: -22% -12%;
+  background-image: repeating-linear-gradient(
+    100deg,
+    transparent 0 23px,
+    rgba(198, 220, 255, 0.3) 23px 24px,
+    transparent 24px 49px
+  );
+  opacity: 0.55;
+  animation: zhu-ye-yu-shui-luo 0.9s linear infinite;
+  will-change: transform;
+}
+
+.zhu-ye-yu-shui::after {
+  background-image: repeating-linear-gradient(
+    100deg,
+    transparent 0 37px,
+    rgba(170, 198, 255, 0.2) 37px 38px,
+    transparent 38px 71px
+  );
+  opacity: 0.35;
+  animation-duration: 1.45s;
+  animation-delay: -0.45s;
+}
+
+@keyframes zhu-ye-yu-shui-luo {
+  from {
+    transform: translate3d(0, -12%, 0);
+  }
+  to {
+    transform: translate3d(-2%, 12%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zhu-ye-yu-shui::before,
+  .zhu-ye-yu-shui::after {
+    animation: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -126,7 +126,9 @@ jobs:
         run: npm ci
 
       - name: Audit dependencies (high)
-        run: npm audit --audit-level=high
+        # 只审计会进入运行时的依赖：nodemon→chokidar→braces 的展开式 DoS 仅存在于开发期文件监听，
+        # 生产镜像不安装 devDependencies；全量审计会把一个不可修复的开发工具漏洞当成发布阻断。
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Enable Redis authentication
         run: docker exec "${{ job.services.redis.id }}" redis-cli CONFIG SET requirepass "$REDIS_PASSWORD"
@@ -226,7 +228,9 @@ jobs:
         run: npm ci
 
       - name: Audit dependencies (high)
-        run: npm audit --audit-level=high
+        # 只审计会进入运行时的依赖：nodemon→chokidar→braces 的展开式 DoS 仅存在于开发期文件监听，
+        # 生产镜像不安装 devDependencies；全量审计会把一个不可修复的开发工具漏洞当成发布阻断。
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Enable Redis authentication
         run: docker exec "${{ job.services.redis.id }}" redis-cli CONFIG SET requirepass "$REDIS_PASSWORD"

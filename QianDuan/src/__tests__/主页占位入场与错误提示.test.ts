@@ -26,14 +26,14 @@ const 取花括号块 = (源: string, 起始: string) => {
   return ''
 }
 describe('主页占位入场', () => {
-  it('五个位置始终占位在场，仅由揭示类控制显隐', () => {
+  it('四个位置始终占位在场，仅由揭示类控制显隐', () => {
     const 源 = 读源('views', '主页内容.vue')
     expect(源).not.toContain('v-if="入场可视(')
-    for (const 序 of [1, 2, 3, 4, 5]) {
+    for (const 序 of [1, 2, 3, 4]) {
       expect(源, '第' + 序 + '位缺揭示类').toContain("'ru-chang-ke-jian': 入场可视(" + 序 + ')')
     }
+    expect(源).toContain(':inert="!入场可视(2)"')
     expect(源).toContain(':inert="!入场可视(3)"')
-    expect(源).toContain(':inert="!入场可视(4)"')
     expect(源).toContain('.moshi-kapian:not(.ru-chang-ke-jian)')
   })
 
@@ -48,6 +48,16 @@ describe('主页占位入场', () => {
     expect(花括号).toContain('transform')
     expect(源).toContain('var(--deng-lu-shi-xu) var(--quxian-biao-zhun) var(--zhuye-wen-zi-yan-shi) backwards')
   })
+
+  it('模式卡默认可点击，且父子事件名一致', () => {
+    const 主页 = 读源('views', '主页内容.vue')
+    const 模式卡 = 读源('components', '模式卡.vue')
+    expect(模式卡).toContain('禁用: false')
+    expect(模式卡).toContain("emit('选择')")
+    expect(主页).toContain('@选择="jinRuPuTongMoShi"')
+    expect(主页).toContain('@选择="jinRuTiaoZhanMoShi"')
+    expect(主页).not.toContain('@xuan-ze=')
+  })
 })
 
 describe('错误提示设计语言', () => {
@@ -57,6 +67,19 @@ describe('错误提示设计语言', () => {
     expect(包.find('.qian-tai-cuo-wu-tubiao').exists()).toBe(true)
     expect(包.find('.qian-tai-cuo-wu-biaoti').exists()).toBe(false)
     expect(包.find('.qian-tai-cuo-wu-wen-an').text()).toBe(huoQuFanYi('lianAi', 'LianAi_028'))
+  })
+
+  it('数据库/缓存不可用只显示依赖故障文案，绝不冒充密码错误', () => {
+    for (const [daiMa, lianAiMa] of [
+      [QIAN_TAI_DAI_MA.DEPENDENCY_POSTGRES_UNAVAILABLE, 'LianAi_043'],
+      [QIAN_TAI_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE, 'LianAi_044'],
+    ] as const) {
+      const 包 = mount(请求错误, { props: { cuoWu: chuangJianQianTaiCuoWu({ code: daiMa }) } })
+      const 文案 = 包.find('.qian-tai-cuo-wu-wen-an').text()
+      expect(文案).toBe(huoQuFanYi('lianAi', lianAiMa))
+      expect(文案).not.toContain('密码错误')
+      expect(文案).not.toBe(huoQuFanYi('lianAi', 'LianAi_028'))
+    }
   })
 
   it('错误面不再自建深色玻璃与左侧粗色条，只复用全局提示面', () => {

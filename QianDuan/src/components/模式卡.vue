@@ -3,20 +3,20 @@
     v-bind="$attrs"
     class="moshi-kapian"
     type="button"
-    :disabled="!jinyong || jiaZaiZhong"
-    :aria-busy="jiaZaiZhong ? 'true' : undefined"
-    :data-beijing-zhuangtai="beiJingZhuangtai"
-    @click="xuanZe"
+    :disabled="禁用 || 加载中"
+    :aria-busy="加载中 ? 'true' : undefined"
+    :data-beijing-zhuangtai="背景状态"
+    @click="选择"
   >
     <img
-      v-if="zhengShiBeiJingTu"
+      v-if="正式背景图"
       class="moshi-kapian-beijing-tu"
-      :src="zhengShiBeiJingTu"
+      :src="正式背景图"
       alt=""
       aria-hidden="true"
       :draggable="false"
-      @load="beiJingJiaZaiWanCheng"
-      @error="beiJingJiaZaiShiBai"
+      @load="背景加载完成"
+      @error="背景加载失败"
     />
     <slot />
   </button>
@@ -29,41 +29,41 @@ defineOptions({ inheritAttrs: false })
 
 const 属性 = withDefaults(
   defineProps<{
-    beiJingTu?: string
-    jiaZaiZhong?: boolean
-    jinyong?: boolean
+    背景图?: string
+    加载中?: boolean
+    禁用?: boolean
   }>(),
   {
-    beiJingTu: '',
-    jiaZaiZhong: false,
-    jinyong: true,
+    背景图: '',
+    加载中: false,
+    禁用: false,
   },
 )
 
 const emit = defineEmits<{
-  xuanZe: []
+  选择: []
 }>()
 
-type BeiJingZhuangtai = 'empty' | 'loading' | 'loaded' | 'failed'
+type 背景状态类型 = 'empty' | 'loading' | 'loaded' | 'failed'
 
-const zhengShiBeiJingTu = computed(() => 属性.beiJingTu?.trim() ?? '')
-const beiJingZhuangtai = ref<BeiJingZhuangtai>(zhengShiBeiJingTu.value ? 'loading' : 'empty')
+const 正式背景图 = computed(() => 属性.背景图?.trim() ?? '')
+const 背景状态 = ref<背景状态类型>(正式背景图.value ? 'loading' : 'empty')
 
-watch(zhengShiBeiJingTu, () => {
-  beiJingZhuangtai.value = zhengShiBeiJingTu.value ? 'loading' : 'empty'
+watch(正式背景图, () => {
+  背景状态.value = 正式背景图.value ? 'loading' : 'empty'
 })
 
-function beiJingJiaZaiWanCheng() {
-  if (zhengShiBeiJingTu.value) beiJingZhuangtai.value = 'loaded'
+function 背景加载完成() {
+  if (正式背景图.value) 背景状态.value = 'loaded'
 }
 
-function beiJingJiaZaiShiBai() {
-  beiJingZhuangtai.value = 'failed'
+function 背景加载失败() {
+  背景状态.value = 'failed'
 }
 
-function xuanZe() {
-  if (!属性.jinyong || 属性.jiaZaiZhong) return
-  emit('xuanZe')
+function 选择() {
+  if (属性.禁用 || 属性.加载中) return
+  emit('选择')
 }
 </script>
 

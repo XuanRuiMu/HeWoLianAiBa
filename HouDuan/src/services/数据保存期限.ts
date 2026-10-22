@@ -1,6 +1,7 @@
 import { 数据库 } from '../数据库'
 import { peiZhi } from '../config'
 import { 日志引擎 } from '../utils/日志引擎'
+import { shanChuMeiTiWenJian } from './媒体存储'
 
 // YH-071 保存期限无执行器：每类数据加定时删加审计，明确匿名化边界并同步措辞
 // 根因：承诺30天7天但代码里没人删；收敛为每日定时执行器+审计留痕
@@ -52,13 +53,44 @@ export async function qingLiGuoQiTongZhi(): Promise<number> {
   return zongShanChu
 }
 
-export async function zhiXingShuJuBaoCunQiXianQingLi(): Promise<{ liaoTian: number; tongZhi: number }> {
+export async function qingLiGuoQiYuYinWenJian(): Promise<number> {
+  let zongShanChu = 0
+  for (;;) {
+    const jieGuo = await 数据库.query<{ SHA256: string }>(
+      `DELETE FROM "媒体文件"
+       WHERE "ID" IN (
+         SELECT "ID" FROM "媒体文件"
+         WHERE "类别" = 'yuyin'
+           AND "创建时间" < NOW() - ($1 || ' days')::interval
+         LIMIT $2
+       )
+       RETURNING "SHA256"`,
+      [String(SHU_JU_BAO_CUN_QI_XIAN.yuYinWenJianTian), PI_LIANG_DA_XIAO],
+    )
+    const benPi = jieGuo.rowCount ?? 0
+    zongShanChu += benPi
+    const shaJiHe = new Set(jieGuo.rows.map((hang) => hang.SHA256))
+    for (const sha of shaJiHe) {
+      const yinYong = await 数据库.query('SELECT 1 FROM "媒体文件" WHERE "SHA256" = $1 LIMIT 1', [sha])
+      if ((yinYong.rowCount ?? 0) === 0) await shanChuMeiTiWenJian(sha)
+    }
+    if (benPi < PI_LIANG_DA_XIAO) break
+  }
+  return zongShanChu
+}
+
+export async function zhiXingShuJuBaoCunQiXianQingLi(): Promise<{ liaoTian: number; tongZhi: number; yuYin: number }> {
   const liaoTian = await qingLiGuoQiLiaoTianJiLu()
   const tongZhi = await qingLiGuoQiTongZhi()
-  if (liaoTian + tongZhi > 0) {
-    日志引擎.info('shuJuBaoCun', '保存期限清理完成', { liao_tian: liaoTian, tong_zhi: tongZhi })
+  const yuYin = await qingLiGuoQiYuYinWenJian()
+  if (liaoTian + tongZhi + yuYin > 0) {
+    日志引擎.info('shuJuBaoCun', '保存期限清理完成', {
+      liao_tian: liaoTian,
+      tong_zhi: tongZhi,
+      yu_yin: yuYin,
+    })
   }
-  return { liaoTian, tongZhi }
+  return { liaoTian, tongZhi, yuYin }
 }
 
 let dingShiQi: ReturnType<typeof setInterval> | null = null

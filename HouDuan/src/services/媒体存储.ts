@@ -477,3 +477,10 @@ export function huoQuBenDiLuJing(sha256: string): string | null {
   const di = sha256.toLowerCase()
   return path.join(MEI_TI_PEI_ZHI.cunChuGenMuLu, di.slice(0, 2), di)
 }
+
+/** 仅当调用方已确认媒体表无任何行引用该哈希时调用；哈希非法或文件已缺失都安全忽略 */
+export async function shanChuMeiTiWenJian(sha256: string): Promise<void> {
+  const luJing = huoQuBenDiLuJing(sha256)
+  if (!luJing) return
+  await qingChuWenJian(luJing)
+}

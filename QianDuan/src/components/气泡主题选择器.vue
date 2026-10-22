@@ -4,8 +4,7 @@
       <section v-for="zu in fenZu" :key="zu.jian" class="qi-pao-ce">
         <h3 class="qi-pao-ce-ti">{{ zu.biaoTi }}</h3>
 
-        <h4 class="qi-pao-fen-zu-ti">{{ yuSheFenZuTi }}</h4>
-        <div class="qi-pao-qun" role="radiogroup" :aria-label="zu.biaoTi + ' ' + yuSheFenZuTi">
+        <div class="qi-pao-qun" role="radiogroup" :aria-label="zu.biaoTi">
           <button
             v-for="yuShe in QI_PAO_YU_SHE_XUAN_XIANG"
             :key="'yu-she-' + yuShe"
@@ -24,11 +23,7 @@
             }}</span>
             <span v-if="shiXuanZhongYuShe(zu.jian, yuShe)" class="qi-pao-gou" aria-hidden="true">✓</span>
           </button>
-        </div>
 
-        <h4 class="qi-pao-fen-zu-ti">{{ ziDingYiFenZuTi }}</h4>
-        <p v-if="sheZhi.waiGuan.qiPao.length === 0" class="qi-pao-kong-tai">{{ kongTaiWenAn }}</p>
-        <div class="qi-pao-qun" role="radiogroup" :aria-label="zu.biaoTi + ' ' + ziDingYiFenZuTi">
           <div v-for="tiaoMu in sheZhi.waiGuan.qiPao" :key="tiaoMu.id" class="qi-pao-zi-ding-yi-wei">
             <button
               type="button"
@@ -171,9 +166,6 @@ const shangChuanWenAn = huoQuFanYi('sheZhi', 'ziDingYiShangChuan')
 const shangChuanZhongWenAn = huoQuFanYi('sheZhi', 'shangChuanZhongWenAn')
 const bianJiBiaoTi = huoQuFanYi('sheZhi', 'waiGuanBianJiBiaoTi')
 const bianJiMingChengWenAn = huoQuFanYi('sheZhi', 'waiGuanBianJiMingCheng')
-const yuSheFenZuTi = huoQuFanYi('sheZhi', 'qiPaoYuSheFenZu')
-const ziDingYiFenZuTi = huoQuFanYi('sheZhi', 'qiPaoZiDingYiFenZu')
-const kongTaiWenAn = huoQuFanYi('sheZhi', 'qiPaoKongTai')
 const quXiaoWenAn = huoQuFanYi('sheZhi', 'waiGuanQuXiao')
 const shanChuZhongWenAn = huoQuFanYi('sheZhi', 'shanChuZhongWenAn')
 const 保存成功文案 = huoQuFanYi('sheZhi', 'waiGuanShangChuanChengGong')
@@ -455,13 +447,6 @@ async function queRenShanChu(): Promise<void> {
   color: var(--wenben-zhuse);
 }
 
-.qi-pao-fen-zu-ti {
-  margin: var(--jiange-4) 0 0;
-  font-size: var(--ziti-xiao);
-  font-weight: 600;
-  color: var(--wenben-ciuse);
-}
-
 .qi-pao-qun {
   display: flex;
   flex-wrap: wrap;
@@ -540,7 +525,7 @@ async function queRenShanChu(): Promise<void> {
   background: var(--beijing-kaopian);
   color: var(--wenben-ciuse);
   font-family: inherit;
-  font-size: var(--ziti-zhong);
+  font-size: var(--ziti-xiao);
   line-height: 1;
   cursor: pointer;
 }
@@ -600,16 +585,6 @@ async function queRenShanChu(): Promise<void> {
 .qi-pao-shang-chuan-jia {
   font-size: var(--ziti-zhong);
   line-height: 1;
-}
-
-.qi-pao-kong-tai {
-  margin: 0;
-  padding: var(--jiange-xiao) var(--jiange-10);
-  border: 1.5px dashed var(--biankuang-yanse);
-  border-radius: var(--yuanjiao-xiao);
-  color: var(--wenben-ciuse);
-  font-size: var(--ziti-xiao);
-  line-height: 1.6;
 }
 
 .qi-pao-bian-ji-wei {

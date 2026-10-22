@@ -6,6 +6,7 @@ import { MBTI_YU_QI_CHI } from '../config/风格语气映射'
 import { duJieBaoKaiGuan } from '../config/开场采样配置'
 import { shiXueShengShenFen } from '../config/角色配置'
 import { gouJianYuTaiCeng } from './语态层'
+import { 构建通用知识层 } from './通用知识检索'
 
 interface ShiLiZu {
   yuQi: string
@@ -753,6 +754,7 @@ export function gouJianWriterPrompt(
     gouJianJingXiangTiShi(shuRu),
     gouJianDiSanCeng(shuRu),
     gouJianDiSiCeng(shuRu.hao_gan_du),
+    构建通用知识层(shuRu.yong_hu_xin_xiao_xi),
     gouJianDiLiuCeng(shuRu, shuRu.shi_fou_di_yi_lun),
   ].filter((ceng) => ceng.trim() !== '')
 

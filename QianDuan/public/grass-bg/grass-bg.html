@@ -2002,6 +2002,8 @@ window.__camReady = true;
       // wuRay 是惰性创建的（wuRaycastGroundY 里），这里也必须自己保证有，
       // 否则 null.setFromCamera 会抛异常，被外层 catch 吞掉、footprint 静默变空。
       if (!wuRay) { wuRay = new eng.raycaster.raycaster.constructor(); wuRay.layers.mask = 0xffffffff; }
+      var kuai = wuSheXianDiMian((sx / vw) * 2 - 1, -(sy / vh) * 2 + 1);
+      if (kuai) return kuai.point;
       wuRay.setFromCamera({ x: (sx / vw) * 2 - 1, y: -(sy / vh) * 2 + 1 }, cam);
       var hits = wuRay.intersectObject(mi, false);
       return hits.length ? hits[0].point : null;
@@ -2029,7 +2031,8 @@ window.__camReady = true;
       var lz0 = Math.floor(minZ / CELL), lz1 = Math.floor(maxZ / CELL);
       var H = {};
       for (var ax = lx0; ax <= lx1; ax++) for (var az = lz0; az <= lz1; az++) {
-        H[ax + ',' + az] = window.__groundY((ax + 0.5) * CELL, (az + 0.5) * CELL);
+        var gy0 = wuGaoDuKuai((ax + 0.5) * CELL, (az + 0.5) * CELL);
+        H[ax + ',' + az] = gy0 === null ? window.__groundY((ax + 0.5) * CELL, (az + 0.5) * CELL) : gy0;
       }
       function hAt(x, z) {
         var fx = x / CELL - 0.5, fz = z / CELL - 0.5;
@@ -3765,10 +3768,50 @@ function wuBakeAuroraNoise(size) {
         return hits.length ? hits[0] : null;
       } catch (eG) { return null; }
     }
+    function wuGaoDuKuai(x, z) {
+      var d = window.__diXing;
+      if (!d) return null;
+      var cx = (x - d.x0) / d.bu, cz = (z - d.z0) / d.bu;
+      if (cx < 0 || cz < 0 || cx >= d.n - 1 || cz >= d.n - 1) return null;
+      var ix = Math.floor(cx), iz = Math.floor(cz), tx = cx - ix, tz = cz - iz;
+      var s = d.shuJu, w = d.n;
+      var a = s[iz * w + ix], b = s[iz * w + ix + 1], c = s[(iz + 1) * w + ix], e = s[(iz + 1) * w + ix + 1];
+      if (a === -32768 || b === -32768 || c === -32768 || e === -32768) return null;
+      return ((a * (1 - tx) + b * tx) * (1 - tz) + (c * (1 - tx) + e * tx) * tz) / 1000;
+    }
+    function wuSheXianDiMian(nx, ny) {
+      if (!groundRc || !window.__diXing) return null;
+      groundRc.layers.mask = 1;
+      groundRc.setFromCamera({ x: nx, y: ny }, cam);
+      var ray = groundRc.ray, o = ray.origin, dv = ray.direction;
+      var t = 0.25, chuBu = 0.05;
+      for (var bu = 0; bu < 140; bu++) {
+        var x = o.x + dv.x * t, y = o.y + dv.y * t, z = o.z + dv.z * t;
+        var h = wuGaoDuKuai(x, z);
+        if (h === null) return null;
+        if (y - h <= 0) {
+          var lo = Math.max(0, t - chuBu), hi = t;
+          for (var k = 0; k < 18; k++) {
+            var m = (lo + hi) / 2;
+            var hm = wuGaoDuKuai(o.x + dv.x * m, o.z + dv.z * m);
+            if (hm === null) return null;
+            if (o.y + dv.y * m - hm <= 0) hi = m; else lo = m;
+          }
+          var th = (lo + hi) / 2;
+          return { distance: th, point: new V3(o.x + dv.x * th, o.y + dv.y * th, o.z + dv.z * th) };
+        }
+        if (t > 6 && y < -0.6) return null;
+        chuBu = Math.min(0.5, chuBu * 1.42);
+        t += chuBu;
+      }
+      return null;
+    }
     function groundHit(nx, ny) {
-      var h = castGround(nx, ny, buildTerrain());
-      if (!h) h = castGround(nx, ny, buildTerrain(true));
-      // 超出 maxDist 说明这一发打到了远景地形平面，不是用户要的落点，当作没打中
+      var h = wuSheXianDiMian(nx, ny);
+      if (!h) {
+        h = castGround(nx, ny, buildTerrain());
+        if (!h) h = castGround(nx, ny, buildTerrain(true));
+      }
       if (h && h.distance > PLC.maxDist) h = null;
       return h;
     }
@@ -4451,6 +4494,16 @@ function wuBakeAuroraNoise(size) {
       }).observe({ entryTypes: ['longtask'] });
     } catch (eLT) {}
   }
+  (function naDiXing() {
+    try {
+      fetch('./di-xing-gao-du.json').then(function (r) { return r.json(); }).then(function (o) {
+        var bin = atob(o.data), buf = new ArrayBuffer(bin.length), u8 = new Uint8Array(buf);
+        for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+        window.__diXing = { x0: o.x0, z0: o.z0, n: o.n, bu: (o.x1 - o.x0) / o.n, shuJu: new Int16Array(buf) };
+        window.__m('地形高度图就绪');
+      }).catch(function () {});
+    } catch (e0) {}
+  })();
   var WU_ASPECT = 443 / 312;
   var CAM = { pos: [4.2706, 1.157, 5.1022], d: 4.664, p: -23, a: -6.6 };
   var WU = { x: 24.5, y: 71, s: 24, bili: 16 / 9 };

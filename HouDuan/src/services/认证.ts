@@ -10,6 +10,8 @@ import { jiLuShenJiRiZhi } from './审计日志'
 import { yinBiShouJiHao } from '../utils/掩码'
 import { 内部转展示, 内部转用户形态, 解析性别 } from '../utils/性别'
 import { 取管理角色, 取角色能力, type GuanLiJiaoSe, type GuanLiNengLi } from '../utils/角色能力'
+import { 包装依赖调用 } from '../utils/依赖错误'
+import type { 登录失败原因 } from './登录失败'
 import type { YongHuXinXi, DengLuXiangYing } from '../types'
 
 export interface ZhuCeCanShu {
@@ -180,27 +182,29 @@ async function jiLuDengLuShiBai(
   ip: string,
 ): Promise<number> {
   const jian = huoQuDengLuShiBaiJian(shouJiHao)
-  const dangQian = await redis.incr(jian)
+  const dangQian = await 包装依赖调用('redis', () => redis.incr(jian))
   if (dangQian === 1) {
-    await redis.pexpire(jian, peiZhi.xianLiu.dengLu.chuangKou)
+    await 包装依赖调用('redis', () => redis.pexpire(jian, peiZhi.xianLiu.dengLu.chuangKou))
   }
-  await jiLuShenJiRiZhi({
-    ip,
-    shi_jian_lei_xing: huoQuFanYi('shenJi', 'dengLuShiBai'),
-    xiang_qing: { shou_ji_hao: shouJiHao, ci_shu: dangQian },
-    lei_xing: '安全',
-  })
+  await 包装依赖调用('postgres', () =>
+    jiLuShenJiRiZhi({
+      ip,
+      shi_jian_lei_xing: huoQuFanYi('shenJi', 'dengLuShiBai'),
+      xiang_qing: { shou_ji_hao: shouJiHao, ci_shu: dangQian },
+      lei_xing: '安全',
+    }),
+  )
   return dangQian
 }
 
 async function qingChuDengLuShiBai(shouJiHao: string): Promise<void> {
-  await redis.del(huoQuDengLuShiBaiJian(shouJiHao))
+  await 包装依赖调用('redis', () => redis.del(huoQuDengLuShiBaiJian(shouJiHao)))
 }
 
 async function dengLuShiBaiShiFouChaoGuo(
   shouJiHao: string,
 ): Promise<boolean> {
-  const ciShu = await redis.get(huoQuDengLuShiBaiJian(shouJiHao))
+  const ciShu = await 包装依赖调用('redis', () => redis.get(huoQuDengLuShiBaiJian(shouJiHao)))
   if (!ciShu) return false
   return parseInt(ciShu, 10) >= peiZhi.xianLiu.dengLu.zuiDa
 }
@@ -338,33 +342,39 @@ export async function zhuCe(
 
 export async function dengLu(
   canShu: DengLuCanShu,
-): Promise<{ cheng_gong: boolean; shu_ju?: DengLuXiangYing; ti_shi?: string; zhuang_tai_ma?: number }> {
+): Promise<
+  | { cheng_gong: true; shu_ju: DengLuXiangYing }
+  | { cheng_gong: false; cuo_wu_ma: 登录失败原因; ti_shi: string }
+> {
   if (!yanZhengShouJiHaoGeShi(canShu.shou_ji_hao)) {
-    return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), zhuang_tai_ma: 400 }
+    return { cheng_gong: false, cuo_wu_ma: '参数错误', ti_shi: huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu') }
   }
 
   if (await dengLuShiBaiShiFouChaoGuo(canShu.shou_ji_hao)) {
-    return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'dengLuShiBaiPinFan'), zhuang_tai_ma: 429 }
+    return { cheng_gong: false, cuo_wu_ma: '尝试过频', ti_shi: huoQuFanYi('renZheng', 'dengLuShiBaiPinFan') }
   }
 
-  const yongHu = await anShouJiHaoChaYongHu(canShu.shou_ji_hao)
+  const yongHu = await 包装依赖调用('postgres', () => anShouJiHaoChaYongHu(canShu.shou_ji_hao))
   if (!yongHu) {
     await jiLuDengLuShiBai(canShu.shou_ji_hao, canShu.ip)
     // P2-2 防账号枚举：与「密码错误」分支返回同一文案与状态码，并做同量级哈希计算对齐响应时序
     await bcrypt.hash(canShu.mi_ma, 12)
-    return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'zhangHaoHuoMiMaCuoWu'), zhuang_tai_ma: 401 }
+    return { cheng_gong: false, cuo_wu_ma: '凭据错误', ti_shi: huoQuFanYi('renZheng', 'zhangHaoHuoMiMaCuoWu') }
   }
 
-  const miMaHaXiJieGuo = await 数据库.query(
-    `SELECT "密码哈希" FROM "用户" WHERE "手机号" = $1 LIMIT 1`,
-    [canShu.shou_ji_hao],
+  const miMaHaXiJieGuo = await 包装依赖调用('postgres', () =>
+    数据库.query(`SELECT "密码哈希" FROM "用户" WHERE "手机号" = $1 LIMIT 1`, [
+      canShu.shou_ji_hao,
+    ]),
   )
   const miMaHaXi = miMaHaXiJieGuo.rows[0]?.密码哈希 ? String(miMaHaXiJieGuo.rows[0].密码哈希) : ''
   const miMaZhengQue = await bcrypt.compare(canShu.mi_ma, miMaHaXi)
   if (!miMaZhengQue) {
     const ciShu = await jiLuDengLuShiBai(canShu.shou_ji_hao, canShu.ip)
-    const zhuangTaiMa = ciShu >= peiZhi.xianLiu.dengLu.zuiDa ? 429 : 401
-    return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'zhangHaoHuoMiMaCuoWu'), zhuang_tai_ma: zhuangTaiMa }
+    if (ciShu >= peiZhi.xianLiu.dengLu.zuiDa) {
+      return { cheng_gong: false, cuo_wu_ma: '尝试过频', ti_shi: huoQuFanYi('renZheng', 'dengLuShiBaiPinFan') }
+    }
+    return { cheng_gong: false, cuo_wu_ma: '凭据错误', ti_shi: huoQuFanYi('renZheng', 'zhangHaoHuoMiMaCuoWu') }
   }
 
   // C5 bcrypt cost 10→12：登录成功后检测旧哈希 cost，若 < 12 则重哈希并更新数据库
@@ -372,26 +382,30 @@ export async function dengLu(
   const dangQianCost = costPiPei ? parseInt(costPiPei[1], 10) : 12
   if (dangQianCost < 12) {
     const xinMiMaHaXi = await bcrypt.hash(canShu.mi_ma, 12)
-    await 数据库.query(
-      `UPDATE "用户" SET "密码哈希" = $1, "更新时间" = NOW() WHERE "手机号" = $2`,
-      [xinMiMaHaXi, canShu.shou_ji_hao],
+    await 包装依赖调用('postgres', () =>
+      数据库.query(`UPDATE "用户" SET "密码哈希" = $1, "更新时间" = NOW() WHERE "手机号" = $2`, [
+        xinMiMaHaXi,
+        canShu.shou_ji_hao,
+      ]),
     )
   }
 
-  await qingChuDengLuShiBai(canShu.shou_ji_hao)
-  await jiLuShenJiRiZhi({
-    yong_hu_id: yongHu.id,
-    ip: canShu.ip,
-    shi_jian_lei_xing: huoQuFanYi('shenJi', 'dengLuChengGong'),
-    xiang_qing: { shou_ji_hao: canShu.shou_ji_hao },
-  })
+  await 包装依赖调用('redis', () => qingChuDengLuShiBai(canShu.shou_ji_hao))
+  await 包装依赖调用('postgres', () =>
+    jiLuShenJiRiZhi({
+      yong_hu_id: yongHu.id,
+      ip: canShu.ip,
+      shi_jian_lei_xing: huoQuFanYi('shenJi', 'dengLuChengGong'),
+      xiang_qing: { shou_ji_hao: canShu.shou_ji_hao },
+    }),
+  )
 
   const lingPai = shengChengLingPai({
     yongHuId: yongHu.id,
     tokenType: 'access',
   })
   const refreshTokenId = randomUUID()
-  await cunChuRefreshToken(yongHu.id, refreshTokenId)
+  await 包装依赖调用('redis', () => cunChuRefreshToken(yongHu.id, refreshTokenId))
   const fuHeShuaXinLingPai = `${yongHu.id}:${refreshTokenId}`
 
   return {

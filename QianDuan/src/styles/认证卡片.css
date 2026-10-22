@@ -194,6 +194,9 @@
   }
 }
 
+/* 浏览器自动填充态：UA 的 :-internal-autofill-selected 自带 background-color !important，
+   页面再写同属性也压不住，会露出一整条灰底。认证字段的底线画在父层 .shuru-zu，
+   而内阴影只铺满输入框 padding box，不会盖住父层那 1px，故这里用内阴影遮回卡面底色。 */
 .fenlie-shuru:-webkit-autofill,
 .fenlie-shuru:-webkit-autofill:hover,
 .fenlie-shuru:-webkit-autofill:focus,
@@ -201,6 +204,8 @@
   -webkit-text-fill-color: #efe9dc !important;
   caret-color: #d5b878 !important;
   background-color: var(--renzheng-mian-se) !important;
+  -webkit-box-shadow: inset 0 0 0 1000px var(--renzheng-mian-se) !important;
+  box-shadow: inset 0 0 0 1000px var(--renzheng-mian-se) !important;
   transition: background-color 5000s ease-in-out 0s !important;
   animation-name: ziDongTianChongKaiShi;
   animation-duration: 0.01s;

@@ -23,9 +23,8 @@
         </button>
       </div>
 
-      <h4 class="bei-jing-fen-zu-ti">{{ yuSheFenZuTi }}</h4>
-      <div class="bei-jing-wang-ge" role="group" :aria-label="模式.标题 + ' ' + yuSheFenZuTi">
-        <template v-for="项 in 预设项(模式.键)" :key="键(模式.键, 项)">
+      <div class="bei-jing-wang-ge" role="group" :aria-label="模式.标题">
+        <template v-for="项 in 合并项(模式.键)" :key="键(模式.键, 项)">
           <div v-if="编辑键 === 键(模式.键, 项)" class="bei-jing-bian-ji-wei">
             <WaiGuanJiuDiBianJi
               :biao-ti="bianJiBiaoTi"
@@ -40,50 +39,15 @@
               @qu-xiao="结束编辑"
             />
           </div>
-          <div v-else class="bei-jing-ka" :class="['bei-jing-ka--' + 项.jian, { 'bei-jing-ka--xuan': 是否当前(模式.键, 项) }]" :style="背景项样式(项)">
-            <button
-              type="button"
-              class="bei-jing-ka-xuan"
-              :aria-pressed="是否当前(模式.键, 项)"
-              :aria-label="项.mingCheng"
-              @click="选择背景(模式.键, 项)"
-            >
-              <span class="bei-jing-ka-ming" :title="项.mingCheng" @dblclick.stop="开始编辑(模式.键, 项)">
-                {{ 项.mingCheng }}
-              </span>
-              <span v-if="是否当前(模式.键, 项)" class="bei-jing-ka-dang-qian">{{ dangQianWenAn }}</span>
-            </button>
-            <button
-              type="button"
-              class="bei-jing-ka-kong-zhi"
-              :aria-label="bianJiMingChengWenAn + '：' + 项.mingCheng"
-              @click.stop="开始编辑(模式.键, 项)"
-            >
-              ✎
-            </button>
-          </div>
-        </template>
-      </div>
-
-      <h4 class="bei-jing-fen-zu-ti">{{ ziDingYiFenZuTi }}</h4>
-      <p v-if="自定义背景.length === 0" class="bei-jing-kong-tai">{{ kongTaiWenAn }}</p>
-      <div class="bei-jing-wang-ge" role="group" :aria-label="模式.标题 + ' ' + ziDingYiFenZuTi">
-        <template v-for="项 in 自定义背景" :key="键(模式.键, 项)">
-          <div v-if="编辑键 === 键(模式.键, 项)" class="bei-jing-bian-ji-wei">
-            <WaiGuanJiuDiBianJi
-              :biao-ti="bianJiBiaoTi"
-              :ming-cheng="编辑项?.mingCheng || ''"
-              :wen-zi-yan-se="编辑初始颜色"
-              :zui-da-zi-fu="mingChengZuiDaZiFu"
-              lei-bie="beiJing"
-              :cuo-wu-wen-an="编辑错误"
-              :cao-zuo-zhong="编辑保存中"
-              @tijiao="保存编辑"
-              @huan-yuan="还原编辑"
-              @qu-xiao="结束编辑"
-            />
-          </div>
-          <div v-else class="bei-jing-ka bei-jing-ka--tu" :class="{ 'bei-jing-ka--xuan': 是否当前(模式.键, 项) }" :style="背景项样式(项)">
+          <div
+            v-else
+            class="bei-jing-ka"
+            :class="[
+              'bei-jing-ka--' + 项.jian,
+              { 'bei-jing-ka--tu': 项.leiXing === 'ziDingYi', 'bei-jing-ka--xuan': 是否当前(模式.键, 项) },
+            ]"
+            :style="背景项样式(项)"
+          >
             <button
               type="button"
               class="bei-jing-ka-xuan"
@@ -105,6 +69,7 @@
               ✎
             </button>
             <button
+              v-if="项.leiXing === 'ziDingYi'"
               type="button"
               class="bei-jing-ka-kong-zhi bei-jing-ka-kong-zhi--shan-chu"
               :aria-label="shanChuBeiJingWenAn + '：' + 项.mingCheng"
@@ -140,11 +105,6 @@
       @change="处理文件选择"
     />
 
-    <LiaoTianYuLan
-      :biao-ti="yuLanBiaoTi"
-      :dang-qian-ming="设置仓库.dangQianBeiJingBiaoShu"
-    />
-
     <ShangChuanShuoMing
       :xian-shi="显示上传说明"
       lei-bie="beiJing"
@@ -174,25 +134,20 @@ import {
   WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
   WAI_GUAN_TU_PIAN_MIME,
   huoQuBeiJingMengCengZhi,
-  tiQuWaiGuanSha,
   type WaiGuanTiaoMu,
 } from '@/config/外观自定义'
 import { 使用用户设置仓库, type BeiJingXiangMu } from '@/stores/用户设置'
 import { tiQuCuoWuWenBen } from '@/utils/前台错误'
 import WaiGuanJiuDiBianJi from '@/components/外观就地编辑器.vue'
-import LiaoTianYuLan from '@/components/聊天/聊天预览.vue'
 import ShangChuanShuoMing from '@/components/上传说明层.vue'
 import QueRenDuiHuaKuang from '@/components/确认对话框.vue'
 
 const 设置仓库 = 使用用户设置仓库()
 
 const biaoTiBiaoShi = 'bei-jing-she-zhi-biao-ti'
-const biaoTi = huoQuFanYi('sheZhi', 'waiGuanSheZhiBiaoTi')
+const biaoTi = huoQuFanYi('sheZhi', 'liaoTianBeiJing')
 const shuoMingWenAn = huoQuFanYi('sheZhi', 'beiJingSheZhiShuoMing')
 const bianJiTiShi = huoQuFanYi('sheZhi', 'beiJingBianJiTiShi')
-const yuSheFenZuTi = huoQuFanYi('sheZhi', 'beiJingYuSheFenZu')
-const ziDingYiFenZuTi = huoQuFanYi('sheZhi', 'beiJingZiDingYiFenZu')
-const kongTaiWenAn = huoQuFanYi('sheZhi', 'beiJingKongTai')
 const bianJiBiaoTi = huoQuFanYi('sheZhi', 'waiGuanBianJiBiaoTi')
 const bianJiMingChengWenAn = huoQuFanYi('sheZhi', 'waiGuanBianJiMingCheng')
 const shanChuBeiJingWenAn = huoQuFanYi('sheZhi', 'waiGuanShanChuBeiJing')
@@ -208,7 +163,6 @@ const 还原成功文案 = huoQuFanYi('sheZhi', 'waiGuanYiHuiFuMoRen')
 const 删除成功文案 = huoQuFanYi('sheZhi', 'beiJingYiShanChu')
 const 同步成功文案 = huoQuFanYi('sheZhi', 'beiJingYiTongBu')
 const 失败文案 = huoQuFanYi('sheZhi', 'waiGuanBaoCunShiBai')
-const yuLanBiaoTi = huoQuFanYi('sheZhi', 'liaoTianYuLan')
 const tuPianMime = WAI_GUAN_TU_PIAN_MIME.join(',')
 const mingChengZuiDaZiFu = WAI_GUAN_BEI_JING_MING_CHENG_ZUI_DA_ZI_FU
 const yiYongWenAn = computed(() =>
@@ -230,16 +184,6 @@ const 模式列表 = [
   },
 ]
 
-const 自定义背景 = computed<BeiJingXiangMu[]>(() =>
-  设置仓库.waiGuan.beiJing.map((xiang) => ({
-    leiXing: 'ziDingYi',
-    jian: xiang.id,
-    mingCheng: xiang.mingCheng,
-    wenZiYanSe: xiang.wenZiYanSe,
-    tuDiZhi: xiang.tuDiZhi,
-    sha: tiQuWaiGuanSha(xiang.tuDiZhi),
-  })),
-)
 const 编辑模式 = ref<'qian' | 'shen' | null>(null)
 const 编辑项 = ref<BeiJingXiangMu | null>(null)
 const 编辑错误 = ref('')
@@ -272,8 +216,8 @@ function 键(模式: 'qian' | 'shen', 项: BeiJingXiangMu): string {
   return 模式 + ':' + (项.leiXing === 'yuShe' ? 'yu-she' : 'zi-ding-yi') + ':' + 项.jian
 }
 
-function 预设项(模式: 'qian' | 'shen'): BeiJingXiangMu[] {
-  return 设置仓库.beiJingXiangMuLieBiao(模式).filter((xiang) => xiang.leiXing === 'yuShe')
+function 合并项(模式: 'qian' | 'shen'): BeiJingXiangMu[] {
+  return 设置仓库.beiJingXiangMuLieBiao(模式)
 }
 
 function 是否当前(模式: 'qian' | 'shen', 项: BeiJingXiangMu): boolean {
@@ -537,13 +481,6 @@ async function 确认删除(): Promise<void> {
   opacity: 0.6;
 }
 
-.bei-jing-fen-zu-ti {
-  margin: 0;
-  font-size: var(--ziti-xiao);
-  font-weight: 600;
-  color: var(--wenben-ciuse);
-}
-
 .bei-jing-wang-ge {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
@@ -676,7 +613,7 @@ async function 确认删除(): Promise<void> {
   color: var(--fasong-anniu-wenben);
   box-shadow: 0 0 0 1px var(--fasong-anniu-wenben) inset;
   font-family: inherit;
-  font-size: var(--ziti-zhong);
+  font-size: var(--ziti-xiao);
   line-height: 1;
   cursor: pointer;
 }
@@ -740,17 +677,6 @@ async function 确认删除(): Promise<void> {
 
 .bei-jing-ka-shang-chuan-wen {
   line-height: 1.4;
-}
-
-.bei-jing-kong-tai {
-  margin: 0;
-  padding: var(--jiange-10) var(--jiange-12);
-  border: 1.5px dashed var(--biankuang-yanse);
-  border-radius: var(--yuanjiao-xiao);
-  background: var(--beijing-ciuse);
-  color: var(--wenben-ciuse);
-  font-size: var(--ziti-xiao);
-  line-height: 1.6;
 }
 
 .bei-jing-ti-shi {
