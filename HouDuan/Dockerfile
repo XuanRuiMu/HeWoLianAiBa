@@ -1,5 +1,5 @@
-# YH-136 镜像浮动收敛：node基座固定26.10.0-alpine3.24精确版本，业务镜像digest由构建时锁定
-FROM node:26.10.0-alpine3.24@sha256:0b36e8c136b94cd4fcf02188228e76c31ad5872eef3fec8cbd2eee500cfd9e80 AS build
+# node基座跟随官方最新构建：26.x LTS 浮动 tag，不 pin digest
+FROM node:26-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci
@@ -12,8 +12,8 @@ COPY scripts ./scripts
 COPY src ./src
 RUN npm run build
 
-# YH-136 镜像浮动收敛：node基座固定26.10.0-alpine3.24精确版本，业务镜像digest由构建时锁定
-FROM node:26.10.0-alpine3.24@sha256:0b36e8c136b94cd4fcf02188228e76c31ad5872eef3fec8cbd2eee500cfd9e80 AS production
+# node基座跟随官方最新构建：26.x LTS 浮动 tag，不 pin digest
+FROM node:26-alpine AS production
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache verify

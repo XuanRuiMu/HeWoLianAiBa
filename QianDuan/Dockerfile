@@ -1,12 +1,12 @@
 # YH-136/YH-138 前端构建上下文收窄+单源nginx：烤入与覆盖漂移收敛为构建产物+挂载单源
-FROM node:20-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 COPY QianDuan/package*.json ./
 RUN npm ci
 COPY QianDuan/ .
 RUN npx vite build
 
-FROM nginx:1.27-alpine AS brotli-build
+FROM nginx:1.30-alpine AS brotli-build
 RUN apk add --no-cache \
     git \
     build-base \
@@ -28,7 +28,7 @@ RUN NGINX_VERSION=$(nginx -v 2>&1 | cut -d'/' -f2 | tr -d ' \r\n') && \
     cp objs/ngx_http_brotli_filter_module.so /etc/nginx/modules/ && \
     cp objs/ngx_http_brotli_static_module.so /etc/nginx/modules/
 
-FROM nginx:1.27-alpine
+FROM nginx:1.30-alpine
 COPY --from=brotli-build /etc/nginx/modules/ngx_http_brotli_filter_module.so /etc/nginx/modules/
 COPY --from=brotli-build /etc/nginx/modules/ngx_http_brotli_static_module.so /etc/nginx/modules/
 COPY --from=build /app/dist /usr/share/nginx/html
