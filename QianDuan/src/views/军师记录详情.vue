@@ -51,7 +51,7 @@
               <span class="xiaoxi-jiaose">{{ xiaoXi.jiao_se }}</span>
               <div class="xiaoxi-neirong-qu">
                 <span class="xiaoxi-neirong">{{ xiaoXi.nei_rong }}</span>
-                <!-- FP-26：撤回原文不再下发也不再展示（撤回语义＝不再可见），只保留撤回时间与撤回态类名 -->
+                
                 <div v-if="xiaoXi.yi_che_hui && xiaoXi.che_hui_shi_jian" class="chehui-shijian">
                   {{ huoQuFanYi('junShi', 'cheHuiYu') }}{{ xiaoXi.che_hui_shi_jian }}
                 </div>
@@ -136,7 +136,7 @@ watch(
   background-size: 18px 18px;
 }
 
-/* FP-20 保留特例：记录详情页需要 6px 窄条+透明轨道+beijing/hover 旧令牌滑块（global 为 8px+huakuai 令牌族+半透明灰轨道），宽度/令牌/悬停三项被 军师记录详情.test 钉死，整块保留 */
+
 .junshi-jilu-yemian::-webkit-scrollbar {
   width: 6px;
   height: 6px;

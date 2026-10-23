@@ -24,8 +24,6 @@ let diuQiShu = 0
 let chuangKouQiShiShiJian = 0
 let chuangKouYiTuiSong = 0
 
-// FP-18 运行时日志流承载服务端内部实现细节（模块名/异常文本/标识符），
-// 与业务运营数据不同级，一律按高危能力位 gao_we 授权（判定口径与前端视图门同源）
 async function panDuanKeGaoWei(yongHuId: string): Promise<boolean> {
   try {
     return await anYongHuIdJuBeiNengLi(yongHuId, 'gao_we')
@@ -98,7 +96,6 @@ export function chuShiHuaRiZhiTuiSongSocket(io: Server): void {
     const yongHu = socket.yong_hu
     if (!yongHu) return
 
-    // 安全红线：非管理员的订阅/取消订阅一律忽略，无法加入日志房间，也不会触发日志管道启动
     socket.on(SHI_JIAN_DING_YUE_RI_ZHI, async (huiDiao?: (jieGuo: unknown) => void) => {
       if (!(await panDuanKeGaoWei(yongHu.yongHuId))) return
       socket.join(riZhiTuiSongPeiZhi.fangJianMing)

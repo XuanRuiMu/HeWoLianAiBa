@@ -359,10 +359,6 @@ const 步骤方向 = ref<'qian' | 'hou'>('qian')
 watch(() => 仓库.ziLiaoDangQianBuZhou, 仓库.baoCunZiLiaoZhuangTai)
 watch(() => ({ ...仓库.ziLiaoShuJu }), 仓库.baoCunZiLiaoZhuangTai, { deep: true })
 
-// 普通模式第一步（用户自身性别）默认预选「默认性别」系统设置；
-// 第二步默认预选默认对象性别（复用目标性别列 mu_biao_xing_bie，不新增对象默认列）。
-// 起始步骤按双默认五分支推导（复用解析性别口径）：双默认直达3，仅自身到2，其余从1开始。
-// 仅当用户尚未手动选择且无进行中草稿时才填入，不覆盖进行中的选择。
 onMounted(async () => {
   await 用户仓库.queBaoShenFenJiuXu()
   const buZhouYiCun = 仓库.ziLiaoDangQianBuZhou !== 1
@@ -516,7 +512,7 @@ async function kaiShiLiaoTian() {
   padding: 0 calc(var(--jiange-zhong) + var(--jiange-4));
 }
 
-/* 星夜琉璃 · Starlit Glass：精工玻璃 + 顶部棱线高光 + 玫瑰金点缀 */
+
 .ziliao-kapian {
   background: rgba(15, 17, 38, 0.62);
   backdrop-filter: blur(22px) saturate(150%);
@@ -532,7 +528,7 @@ async function kaiShiLiaoTian() {
   overflow: hidden;
 }
 
-/* 顶部棱线高光（宝石切面感） */
+
 .ziliao-kapian::before {
   content: '';
   position: absolute;
@@ -625,7 +621,7 @@ async function kaiShiLiaoTian() {
   overscroll-behavior: contain;
 }
 
-/* FP-20 保留特例：步骤三滚动区需要 4px 极窄条+透明轨道+半透明白滑块（global 为 8px+半透明灰轨道+不透明灰滑块），且浅色档另有手写滑块覆盖，删任一处都改变既有视觉，整块保留 */
+
 .buZuo3-gundong::-webkit-scrollbar {
   width: 4px;
 }
@@ -989,7 +985,7 @@ async function kaiShiLiaoTian() {
   }
 }
 
-/* 主按钮：底色跟随玩家性别档（蓝/粉/中性），色值全部来自 --xingbie-* 令牌 */
+
 .anniu-zhuYao {
   display: flex;
   align-items: center;
@@ -1056,7 +1052,7 @@ async function kaiShiLiaoTian() {
   max-width: 280px;
 }
 
-/* ============ 浅色主题：星夜琉璃浅色档（云白玻璃 + 玫瑰金） ============ */
+
 :root[data-theme='light'] .ziliao-kapian {
   background: rgba(255, 255, 255, 0.78);
   border-color: rgba(255, 255, 255, 0.95);
@@ -1067,8 +1063,7 @@ async function kaiShiLiaoTian() {
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 1), transparent);
 }
 
-/* 浅色档只为「非当前」圆点铺灰底：当前档的底色归 .jindu-dian.dangQian 的性别令牌独占，
-   否则 :root[data-theme] 前缀的特异度会盖过 (0,2,0) 的性别档，浅色下圆点就不跟性别走了 */
+
 :root[data-theme='light'] .jindu-dian:not(.dangQian) {
   background: rgba(55, 42, 63, 0.16);
 }
@@ -1077,7 +1072,7 @@ async function kaiShiLiaoTian() {
   background: rgba(55, 42, 63, 0.5);
 }
 
-/* 当前档圆点走 --xingbie-se-2；令牌本身已按深浅成对，浅色档不再覆写色值 */
+
 :root[data-theme='light'] .buZuo-biaoti {
   color: #372a3f;
 }
@@ -1086,10 +1081,7 @@ async function kaiShiLiaoTian() {
   color: rgba(55, 42, 63, 0.6);
 }
 
-/* 浅色档只留静置面/边；性别选中框的边框/底色/文字色与环两层由 --xingbie-*-xuan-* 成对令牌
-   在两档各自取值，组件不再写第二份。
-   改前此处有 6 条 :root[data-theme] 覆写，把男女统一钉成粉（浅档四处字面量 + 深档两处），
-   正是 R1「主题机制倒置 + 组件零令牌」的实例 */
+
 :root[data-theme='light'] .xingBie-kaPian {
   background: rgba(244, 238, 248, 0.6);
   border-color: rgba(120, 90, 140, 0.14);
@@ -1155,7 +1147,7 @@ async function kaiShiLiaoTian() {
   }
 }
 
-/* FP-20 保留特例：浅色档步骤区滑块手写覆盖，删则吃 global 档位色改变既有视觉 */
+
 :root[data-theme='light'] .buZuo3-gundong::-webkit-scrollbar-thumb {
   background: rgba(120, 90, 140, 0.35);
 }

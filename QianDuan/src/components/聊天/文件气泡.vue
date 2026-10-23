@@ -122,27 +122,11 @@ import { computed } from 'vue'
 import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/翻译表'
 
-/**
- * 文件气泡（FP-12b / FP-K4b 需求 #18/#20）：AI 聊天页与好友页共用的唯一文件卡片实现。
- * 对齐腾讯 chat-uikit-vue message-file.vue 与 QQ/微信文件卡片风格：
- * ① 整卡可点下载（根元素即 <a href download>，不再只有右侧箭头可点）；
- * ② min-width 保证卡片在窄消息列中不塌缩；
- * ③ 文件类型图标细分 word/excel/ppt/pdf/txt（+归档/音视频/兜底）。
- * 必改三处（对齐语音条移植口径）：摘除腾讯引擎消息模型耦合（本组件零外部 IM 依赖）；
- * 配色吃 --qipao-* 主题变量（本人/对方两档）；禁止硬编码色值/像素（几何吃 --wenjian-* 令牌）。
- * 结构（图标 / 文件名 / 大小 / 下载箭头）、扩展名→图标映射与文件名截断都只住在本组件；
- * 页面只解析「显示名、大小文本、下载地址」三样数据后传入，不得再内联第二份 .wenjian-* 卡片。
- */
 const props = defineProps<{
-  /** 原始文件名（未截断）；缺名时由调用方传各自页面的占位文案 */
   mingCheng: string
-  /** 已格式化的大小文本（空串 ⇒ 不渲染大小行） */
   daXiao?: string | null
-  /** 下载地址（签名 URL）；空 ⇒ href 缺省 */
   xiaZaiDiZhi?: string | null
-  /** download 属性用的原始文件名；空 ⇒ 不带 download */
   xiaZaiMing?: string | null
-  /** 是否本人发出（气泡主题：--qipao-ziJi-* / --qipao-duiFang-*） */
   shiBenRen: boolean
 }>()
 
@@ -178,7 +162,7 @@ const xianShiMing = computed(() => {
 </script>
 
 <style scoped>
-/* 整卡可点：根元素即下载链（对齐 message-file.vue 的 @click="download" 整卡热区） */
+
 .wenjian-qipao {
   display: flex;
   align-items: center;
@@ -218,7 +202,7 @@ const xianShiMing = computed(() => {
   height: 100%;
 }
 
-/* 文件类型身份色（深浅恒等，非主题色） */
+
 .wenjian-tubiao--word {
   color: var(--wenjian-se-word);
 }
@@ -266,7 +250,7 @@ const xianShiMing = computed(() => {
   opacity: 0.7;
 }
 
-/* 下载箭头为装饰性视觉提示，热区由整卡承担 */
+
 .wenjian-xiazai {
   display: flex;
   align-items: center;

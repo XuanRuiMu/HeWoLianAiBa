@@ -1,22 +1,4 @@
-/**
- * 职业自称同义词 → 规范词映射。
- *
- * 背景（2026-10-14 实测缺口）：`zhiYeZhiYeKu` 收的是**岗位方向词**（教育/咨询/销售…），
- * `zhiYeXueKeKu` 收的是**学科词**（计算机科学/护理…），而用户在「心目中的TA」里
- * 描述自己时用的是**职业名词**（"我是教师"/"在做程序员"/"当律师"）。原提取逻辑只做
- * `wenBen.includes(规范词)`，于是最高频的几种自称全部抽空，`shi_jie_xin_xi.zhi_ye`
- * 落 undefined，Prompt 里「专业/职业」整行消失，模型只能现场编。
- *
- * 设计约束：
- * 1. 值必须是 `zhiYeXueKeKu` / `zhiYeZhiYeKu` 里已存在的规范词，保证 学生→学科词、
- *    上班族→方向词 的下游分流不变（`anQuanZhongXuanZeZhiYe` 与 Prompt 的
- *    `专业${zhiYe}`/`职业${zhiYe}` 都依赖这个token空间）。
- * 2. 键按长度降序匹配，避免「教师」被「教」抢先、『程序员』被『程序』抢先。
- * 3. 直接命中规范词的原路径保持不变，本表只补原路径抽空时的兜底。
- * 4. 一言以蔽之：用户怎么说都行，库里只认一套token。
- */
 
-/** 职业名词自称 → 学科规范词（学生场景） */
 export const XUE_KE_TONG_YI_CI: Readonly<Record<string, string>> = {
   '计算机': '计算机科学',
   '软件工程': '计算机科学',
@@ -40,7 +22,6 @@ export const XUE_KE_TONG_YI_CI: Readonly<Record<string, string>> = {
   '医学生': '护理',
 }
 
-/** 职业名词自称 → 岗位方向规范词（上班族场景） */
 export const ZHI_YE_TONG_YI_CI: Readonly<Record<string, string>> = {
   '教师': '教育',
   '老师': '教育',

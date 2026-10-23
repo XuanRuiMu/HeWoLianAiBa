@@ -26,7 +26,6 @@ export const QI_PAO_YU_SHE_BIAO: Record<QiPaoYuShe, QiPaoYuSheDingYi> = {
   anYe: { beiJing: '#3A3A3C', wenBen: '#F5F5F7' },
   ningMengHuang: { beiJing: '#F5DE6B', wenBen: '#4A3B00' },
   yunBai: { beiJing: '#FFFFFF', wenBen: '#000000' },
-  // FP-06 开源取色组合：豆沙绿取自微信聊天绿系深档，雾凊蓝取自天空蓝系灰档（详见 docs/开源素材许可来源.md §四）
   douShaLv: { beiJing: '#7BA889', wenBen: '#0E2A1B' },
   wuQingLan: { beiJing: '#A9C7D8', wenBen: '#10222E' },
 }

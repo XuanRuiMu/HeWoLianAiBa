@@ -9,11 +9,6 @@ import {
 } from '@/api/表情'
 import { huoQuFanYi } from '@/config/翻译表'
 
-/**
- * FP-06b 我的表情：面板数据源。按账号拉取，换设备/换端登录同一账号看到同一套表情。
- * 只缓存「当前账号」的列表：登录态一切换（dangQianYongHuId 变了）就必须重拉，
- * 否则会出现甲的表情出现在乙的面板上。
- */
 export const 使用表情仓库 = defineStore('表情', () => {
   const woDeBiaoQing = ref<BiaoQingXiang[]>([])
   const dangQianYongHuId = ref<string | null>(null)
@@ -24,7 +19,6 @@ export const 使用表情仓库 = defineStore('表情', () => {
   async function jiaZai(yongHuId: string, qiangZhi = false): Promise<void> {
     if (!yongHuId) return
     if (dangQianYongHuId.value !== yongHuId) {
-      // 换账号：先清空上一账号的列表，避免甲的表情在乙的拉取请求返回前出现在面板里
       woDeBiaoQing.value = []
       dangQianYongHuId.value = null
     }
@@ -42,11 +36,6 @@ export const 使用表情仓库 = defineStore('表情', () => {
     }
   }
 
-  /**
-   * 添加一张图进「我的表情」。返回 null 表示失败（提示已写入 cuoWuXinXi）。
-   * yiCunZai 取服务端 yi_cun_zai（同 SHA256 命中原条目）——FP-20「添加到表情」据此给
-   * 「已在我的表情里」而非报错红字；列表侧仍按 id 幂等，绝不产生重复条目。
-   */
   async function tianJia(
     wenJian: File | Blob,
     wenJianMing?: string,
@@ -93,7 +82,6 @@ export const 使用表情仓库 = defineStore('表情', () => {
       woDeBiaoQing.value = jieGuo.lie_biao
     } catch (cuoWu: unknown) {
       const wenBen = quCuoWuWenBen(cuoWu, huoQuFanYi('duoMeiTi', 'biaoQingPaiXuShiBai'))
-      // 重拉会把 cuoWuXinXi 归零，故提示必须在重拉之后写，否则「已恢复原顺序」永远不显示
       await chongXinJiaZai()
       cuoWuXinXi.value = wenBen
     }
@@ -126,11 +114,6 @@ export const 使用表情仓库 = defineStore('表情', () => {
   }
 })
 
-/**
- * 后端 ti_shi 已在响应层过滤（SQL/路径/驱动词会被替换为兜底文案），这里再挡一层：
- * 只有含中文且不含拉丁字母的文本才允许直接上屏，其余一律回落到调用点给定的安全默认文案。
- * 目的是不让「服务端改了文案」或「异常路径塞进 ti_shi」把英文/内部原文带到玩家眼前。
- */
 function duQuKeXianShiWenBen(wenBen: unknown): string | null {
   if (typeof wenBen !== 'string') return null
   const jieGuo = wenBen.trim()

@@ -1,4 +1,3 @@
-/** 头像裁剪：用户口径——任意图片均可选取，最终统一输出 1024×1024。 */
 
 export const TOU_XIANG_SHU_CHU_CHI_CUN = 1024
 export const TOU_XIANG_ZUI_DA_YUAN_TU = 4096
@@ -9,14 +8,12 @@ export interface YuanQu {
   bianChang: number
 }
 
-/** 基础缩放：让原图短边恰好覆盖正方形选区（cover） */
 export function jiSuanJiChuSuoFang(yuanKuan: number, yuanGao: number, quYuBianChang: number): number {
   const youXiaoKuan = Math.max(1, yuanKuan)
   const youXiaoGao = Math.max(1, yuanGao)
   return Math.max(quYuBianChang / youXiaoKuan, quYuBianChang / youXiaoGao)
 }
 
-/** 约束偏移：图片渲染后必须完全覆盖选区，返回钳制后的左上角偏移（相对选区） */
 export function yueShuPianYi(
   pianYiX: number,
   pianYiY: number,
@@ -32,7 +29,6 @@ export function yueShuPianYi(
   }
 }
 
-/** 由显示态反推源图正方形裁剪区（像素取整并钳制在图内） */
 export function jiSuanYuanQu(canShu: {
   yuanKuan: number
   yuanGao: number
@@ -50,7 +46,6 @@ export function jiSuanYuanQu(canShu: {
   return { x: Math.round(x), y: Math.round(y), bianChang: Math.round(heFaBianChang) }
 }
 
-/** 输出格式：PNG 源保持 PNG（保透明），其余统一 JPEG（体积小、上传快） */
 export function jueDingShuChuGeShi(yuanMIME: string): { mime: string; houZhui: string } {
   if (yuanMIME === 'image/png') return { mime: 'image/png', houZhui: 'png' }
   return { mime: 'image/jpeg', houZhui: 'jpg' }

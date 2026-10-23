@@ -32,15 +32,9 @@ export interface MeiTiFuJia {
   shiChangHaoMiao?: number
   wenJianMing?: string
   zhuanXieWenBen?: string
-  /** FP-06b：发送已在服务端的媒体（我的表情），跳过上传，复用同一条乐观更新链路 */
   yiYouMeiTi?: { meiTiId: string; meiTiUrl: string | null }
 }
 
-/**
- * FP-09b「角色回复」投递契约（与后端 AIHuiFuXiaoXiShiJian 同源）：
- * `轮次` = 服务端调度器实例内单调递增的处理 ID，`驱动消息ID` = 触发本轮的那条用户消息 ID。
- * 两者都是可选字段：秘密指令 / 主动多模态 / 夺舍等旁路推送不带它们，前端必须照旧接受，不得因缺字段丢消息。
- */
 export interface JiaoSeHuiFuShiJian {
   角色ID: string
   消息列表: 消息[]
@@ -53,10 +47,8 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   const xiaoXiLieBiao = ref<消息[]>([])
   const aiZhuangTai = ref<'kong_xian' | 'deng_dai_zhong' | 'zheng_zai_shu_ru'>('kong_xian')
   let zuiHouXuHao = 0
-  // 「正在输入」显示态延迟消失的时长（毫秒），仅在此一处定义，禁止散落硬编码
   const ZHENG_ZAI_SHU_RU_XIAO_SHI_YAN_CHI_HAO_MIAO = 1000
 
-  // 显示层状态：组件消费的是这个，而非真实状态 aiZhuangTai，从而支持延迟消失
   const xianShiZhengZaiShuRu = ref(false)
   let yanChiDingShiQi: ReturnType<typeof setTimeout> | null = null
   let huLueJianTing = false
@@ -68,7 +60,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     }
   }
 
-  // 强制立即隐藏「正在输入」显示态（断线/切会话/清空等重置场景），不走延迟
   function qiangZhiYinChangXianShi() {
     qingLiYanChiDingShiQi()
     huLueJianTing = true
@@ -77,7 +68,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     xianShiZhengZaiShuRu.value = false
   }
 
-  // 监听真实状态：从「正在输入」变「非正在输入」时延迟消失；变「正在输入」时立即显示并取消挂起的隐藏定时器
   watch(
     aiZhuangTai,
     (xinZhuangTai, jiuZhuangTai) => {
@@ -141,7 +131,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   const zongShu = ref(0)
   const jiaZaiGengDuoZhong = ref(false)
   const haiYouGengDuo = ref(false)
-  // 首屏加载态：加载中驱动骨架屏，失败驱动错误插画+重试（与「真的没消息」空态严格分离）
   const shouPingJiaZaiZhong = ref(false)
   const jiaZaiShiBai = ref(false)
   const shouPingQianTaiCuoWu = ref<QianTaiCuoWu | null>(null)
@@ -161,7 +150,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     持久化监控()
   }
 
-  // 管理员监控持久化：按会话存本地，关闭重开/刷新后仍可直接看到历史构建信息
   const 监控存储键前缀 = 'guanli-jiankong:'
   function 监控存储键(huiHuaId: string | null): string | null {
     if (!huiHuaId) return null
@@ -234,18 +222,11 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
 
   const zuiDaXiaoXiChangDu = 500
   let linShiXiaoXiXuHao = 0
-  // 发送失败的消息（按 ke_hu_duan_id 记录）：气泡保留原位并显示红色感叹号，点击可重发
   const faSongShiBaiJiHe = ref(new Set<string>())
-  // 串行发送队列：上一条发送请求完成（或失败）后才派发下一条，
-  // 使网络派发顺序恒等于用户点击顺序，从根本上消除并发乱序。
   let faSongDuiLie: Promise<void> = Promise.resolve()
 
-  // FP-09b 轮次闸门：序号权威已上收服务端后，「角色回复」的每一帧都带 `轮次`（调度器处理 ID）。
-  // 用户插话 ⇒ 服务端 重置() 抬号作废旧轮次，前端同步丢弃轮次更小的残余条目，
-  // 否则观感就是「AI 连发两条一样的消息」。
   let yiJieShouLunCi = 0
   let yiJieShouLunCiDongQiaoId: string | null = null
-  // 服务端已确认落库的本方用户消息 ID（按确认先后）：用于识别「调度器实例重建 ⇒ 轮次重新计数」
   const yiQueRenYongHuXiaoXiId: string[] = []
   const 已确认ID上限 = 50
 
@@ -261,7 +242,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     if (yiQueRenYongHuXiaoXiId.length > 已确认ID上限) yiQueRenYongHuXiaoXiId.shift()
   }
 
-  // 只认「服务端已确认过的本方消息」：驱动消息比自己当前轮次的驱动更新 ⇒ 这是新一代轮次
   function 驱动消息更靠后(驱动消息ID: unknown): boolean {
     if (typeof 驱动消息ID !== 'string' || !驱动消息ID) return false
     const xinSuoYin = yiQueRenYongHuXiaoXiId.indexOf(驱动消息ID)
@@ -277,11 +257,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     if (typeof 驱动消息ID === 'string' && 驱动消息ID) yiJieShouLunCiDongQiaoId = 驱动消息ID
   }
 
-  /**
-   * 判定并登记这一帧「角色回复」的轮次。返回 true = 作废轮次的残余，整帧丢弃。
-   * 缺 `轮次`（旧推送/秘密指令等旁路）或轮次是脏值（非整数、0、负数、NaN）一律按当前轮次接受
-   * —— 闸门只丢旧帧，绝不因脏数据吞掉消息。
-   */
   function 判定并登记轮次(shuJu: JiaoSeHuiFuShiJian): boolean {
     const 轮次 =
       typeof shuJu.轮次 === 'number' && Number.isInteger(shuJu.轮次) && shuJu.轮次 > 0
@@ -299,11 +274,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     return true
   }
 
-  /**
-   * FP-10b 拼写债收口：把历史/异常数据里 'tupian' 一类的误写收回权威消息类型。
-   * 只在真的不同才改写，保持对象身份不变（调用方会按引用比对列表项）。
-   * 非字符串（缺字段的畸形行）不动：模板的默认分支本就是文本气泡，改写它等于伪造服务端数据。
-   */
   function guiYiDanTiaoLeiXing(xiaoXi: 消息): void {
     const guiYiLeiXing = guiYiXiaoXiLeiXing(xiaoXi.lei_xing)
     if (guiYiLeiXing !== xiaoXi.lei_xing && typeof xiaoXi.lei_xing === 'string') {
@@ -311,23 +281,11 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     }
   }
 
-  /**
-   * FP-22a：整表进入 xiaoXiLieBiao 的归一出口。首屏快照（jiaZaiXiaoXi）与上拉加载
-   * （jiaZaiGengDuoXiaoXi）两处都是「拿到服务端列表后整体赋值」，早先直接透传裸 lei_xing，
-   * 于是同一条 'tupian' 历史行经单条推送是图片气泡、经列表加载就变成空气泡。
-   * 现在这两条路径与 jiaRuXiaoXi 共用 guiYiDanTiaoLeiXing 那一份实现：逐条原地改写，
-   * 原样返回同一个数组（不改身份、不重排），因此赋值语义与改前完全一致。
-   */
   function guiYiXiaoXiLieBiao<T extends 消息>(lieBiao: T[]): T[] {
     for (const xiaoXi of lieBiao) guiYiDanTiaoLeiXing(xiaoXi)
     return lieBiao
   }
 
-  // FP-04 单条消息入口：xieYiLianJie 推送、乐观气泡、服务端回读行都经此处进入 xiaoXiLieBiao，
-  // 按 消息.id 幂等去重，并把「临时乐观 ID → 服务端 ID」做成原子替换
-  // （同 ke_hu_duan_id 占位就地替换，位置不变）。整表赋值的两条路径不走这里，
-  // 但归一口径经上面的 guiYiXiaoXiLieBiao 与本函数共用同一份实现。
-  // 旧实现是纯 push 且无 ID 去重，与历史加载路径的去重口径不一致，重复推送即渲染两条。
   function jiaRuXiaoXi(xiaoXi: 消息): boolean {
     if (!xiaoXi || typeof xiaoXi.id !== 'string' || !xiaoXi.id) return false
     guiYiDanTiaoLeiXing(xiaoXi)
@@ -337,8 +295,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       const zhanWeiSuoYin = lieBiao.findIndex((m) => m.ke_hu_duan_id === xiaoXi.ke_hu_duan_id)
       if (zhanWeiSuoYin !== -1) {
         if (lieBiao[zhanWeiSuoYin].id === xiaoXi.id) return false
-        // FP-17：同一把幂等键可能有两颗重试气泡（失败气泡 + 待发整条重发）先后收到同一条服务端行；
-        // 占位就地替换也必须先按服务端 id 查重，否则同一条消息会在列表里渲染两遍。
         const yiCunZaiSuoYin = lieBiao.findIndex((m) => m.id === xiaoXi.id)
         if (yiCunZaiSuoYin !== -1 && yiCunZaiSuoYin !== zhanWeiSuoYin) {
           lieBiao.splice(zhanWeiSuoYin, 1)
@@ -353,7 +309,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     return true
   }
 
-  // 本地合成消息（系统提示/催促/已读不回）的唯一 ID：仅按时间戳会在同毫秒内相互覆盖
   function shengChengBenDiId(qianZhui: string): string {
     linShiXiaoXiXuHao += 1
     return `${qianZhui}-${Date.now()}-${linShiXiaoXiXuHao}`
@@ -388,17 +343,9 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     cuoWuXinXi.value = xiaoXi
   }
 
-  // FP-04 xieYiLianJie 监听器单所有权：一个 store 生命周期内只建一个 xieYiLianJie 实例、只注册一遍监听。
-  // 旧实现以 connected 为早退条件且仅在 connected 时才 disconnect，于是 KeepAlive 下
-  // onMounted + onActivated 连续两次调用会在首条连接仍在握手中时再建一条连接，
-  // 两条连接同时收 io.to(用户ID) 广播 → 一条「角色回复」渲染两次（AI 像连发两条一样的消息）。
   const socketHuiHuaId = ref<string | null>(null)
   let socketYiFangQi = false
 
-  // FP-19 数据面收口（前端订阅门）：管理员_* 是运营侧监控事件，服务端只把这类帧投递进
-  // 「查库鉴权通过的管理房间」，前端同样只在服务端下发的 cha_kan（只读运营数据）能力下
-  // 注册这些监听器——普通用户既收不到也不订阅。幂等：同一 xieYiLianJie 生命周期只注册一遍。
-  // FP-18 口径：视图门按能力位派生（keGuanLiZhiDu），与管理端/游戏端服务端门禁同源。
   let jianKongYiDingYue = false
 
   function queBaoJianKongDingYue(mubiaoSocket?: Socket): void {
@@ -458,15 +405,11 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       reconnectionDelayMax: 8000,
     })
 
-    // YH-097 Socket令牌刷新：建连前刷新，auth用回调，重连退避禁拿旧票
     xieYiLianJie.on('connect', () => {
-      // 重连后服务端调度器可能已是另一个实例，其轮次会重新计数；闸门基点随之归零，
-      // 只丢「闸门记忆」不丢消息（宁可少拦一次，也不能把新实例的合法回复永久判成旧轮次）
       qingKongLunCiZhuangTai()
       if (socketHuiHuaId.value) xieYiLianJie.emit('加入聊天', socketHuiHuaId.value)
     })
 
-    // xieYiLianJie.io 放弃重连后该实例永久失效，此时必须彻底解绑再重建，否则连接再也不回来
     const jianKongQi = xieYiLianJie.io as unknown as { on?: (shiJian: string, chuli: () => void) => void }
     jianKongQi?.on?.('reconnect_failed', () => {
       socketYiFangQi = true
@@ -583,8 +526,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     return xieYiLianJie
   }
 
-  // socketLianJie 是 ref，Vue 的 UnwrapRef 会把 Socket 类实例映射成结构类型，
-  // 因此这里按结构接，不要求 nominal 的 Socket 类
   type KeJieBangSocket = { disconnect: () => void; removeAllListeners?: () => void }
 
   function jieBangSocket(xieYiLianJie: KeJieBangSocket) {
@@ -601,7 +542,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     const xieYiLianJie = socketLianJie.value
     if (socketHuiHuaId.value === huiHuaId) return
     socketHuiHuaId.value = huiHuaId
-    // 换会话后服务端可能新建调度器实例，其 xu_hao 从 1 重新计数，须同步重置避免状态被误丢
     zuiHouXuHao = 0
     if (xieYiLianJie.connected) xieYiLianJie.emit('加入聊天', huiHuaId)
     lianJieZhong.value = true
@@ -696,7 +636,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     if (!dangQianHuiHuaId.value || jiaZaiGengDuoZhong.value || !haiYouGengDuo.value) return false
     jiaZaiGengDuoZhong.value = true
     try {
-      // M6 keyset 游标：以当前已加载的最旧一条消息为定位（xiaoXiLieBiao 按时间升序，首位最旧）
       const zuiJiu = xiaoXiLieBiao.value[0]
       const youBiao =
         zuiJiu && typeof zuiJiu.shi_jian_chuo === 'number' && zuiJiu.id
@@ -722,7 +661,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       补全旧内心消息()
       yeMa.value += 1
       zongShu.value = jieGuo.zong_shu
-      // M6：优先使用后端「还有更多」标记；无游标回退时退化为计数比较
       haiYouGengDuo.value = youBiao
         ? Boolean(jieGuo.hai_you_geng_duo) && xinLieBiao.length > 0
         : xiaoXiLieBiao.value.length < jieGuo.zong_shu
@@ -736,11 +674,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     }
   }
 
-  /**
-   * FP-09b：乐观气泡与落库行的对齐只认「消息自身身份」——服务端行的 幂等键 必须等于本条气泡的键
-   * （旧后端不回显该字段时退化为「同是用户消息才对齐」）。返回体不是这条气泡时绝不覆盖气泡，
-   * 这正是「我插入的消息被吞掉」在前端的表现。
-   */
   function duiQiLeDaXiangXiaoXi(乐观消息: 消息, fuWuQiXiaoXi: 消息, jiaGong?: (x: 消息) => 消息): boolean {
     const shiBenTiao =
       fuWuQiXiaoXi.fa_song_zhe_lei_xing === 'yonghu' &&
@@ -759,7 +692,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     const dengJingXiaoXi = jiaGong ? jiaGong(fuWuQiXiaoXi) : fuWuQiXiaoXi
     const buQiShiChangHaoMiao =
       dengJingXiaoXi.mei_ti_shi_chang_hao_miao ?? 乐观消息.mei_ti_shi_chang_hao_miao ?? null
-    // FP-04：乐观 ID → 服务端 ID 的替换走统一入口，重复回推/重连补拉都不会多出一条
     jiaRuXiaoXi({
       ...dengJingXiaoXi,
       mi_deng_jian: 乐观消息.mi_deng_jian ?? dengJingXiaoXi.mi_deng_jian ?? null,
@@ -769,20 +701,13 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     return true
   }
 
-  // 派发一条已入列的用户消息：串行队列 ⇒ 派发顺序恒等于点击顺序；
-  // 幂等键随消息本体上报，重发复用同一把 ⇒ 服务端唯一约束把重放压成一条。
   async function faSongYiTiaoYongHuXiaoXi(乐观消息: 消息): Promise<消息 | null> {
     const miDengJian = queDingMiDengJian(乐观消息)
     const dangQianHuiHua = 乐观消息.hui_hua_id
-    // FP-10b：图文混排的气泡重发必须带着**同一份块数组**（顺序就是用户排的），
-    // 纯文字气泡保持改造前的三参调用，请求体一字不变。
     const tiJiaoKuai: XiaoXiKuai[] | undefined = Array.isArray(乐观消息.nei_rong_kuai)
       ? keTiJiaoKuai(乐观消息.nei_rong_kuai)
       : undefined
     const daiKuai = tiJiaoKuai && tiJiaoKuai.length > 0 ? tiJiaoKuai : undefined
-    // FP-08b（缺陷5）：引用槽就钉在**这条气泡**上（服务端同名出参字段 `bei_yong_xiao_xi_id`），
-    // 于是首发与失败重发（`chongShiFaSongXiaoXi` 复用同一颗气泡 + 同一把幂等键）带的永远是
-    // 同一个引用——引用是这条消息的身份之一，不是"当前输入框碰巧选中的那条"。
     const yinYong = 乐观消息.bei_yong_xiao_xi_id
       ? { beiYongXiaoXiId: 乐观消息.bei_yong_xiao_xi_id }
       : undefined
@@ -804,7 +729,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
             yinYong,
           }),
     )
-    // 无论成败都推进队列，不阻断后续发送
     faSongDuiLie = paiDuiRenWu.then(
       () => undefined,
       () => undefined,
@@ -813,7 +737,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     try {
       const { xiaoXi, weiJiGanYu, yuanZhuReXian, ganYuTiShi, chaoShiTiXingMiao } = await paiDuiRenWu
       duiQiLeDaXiangXiaoXi(乐观消息, xiaoXi)
-      // FP-04：AI 触发已搬到服务端落库路径，此处不再发无 payload 的 xieYiLianJie 触发信号
       if (xiaoXiLieBiao.value.filter((m) => m.fa_song_zhe_lei_xing === 'yonghu').length === 1) {
         track('shouTiaoXiaoXi')
       }
@@ -827,7 +750,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       return xiaoXi
     } catch (cuoWu: unknown) {
       console.error('发送消息失败', cuoWu)
-      // 微信式失败态：气泡保留原位并标记失败（红色感叹号），不再直接删除
       faSongShiBaiJiHe.value.add(乐观消息.ke_hu_duan_id as string)
       const suoYin = xiaoXiLieBiao.value.findIndex(
         (m) => m.ke_hu_duan_id === 乐观消息.ke_hu_duan_id,
@@ -841,17 +763,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     }
   }
 
-  /**
-   * 引用入参的前端守卫（`backend/src/services/消息.ts` 那条「被引用消息 ID 必须是 UUID」的客户端那一半）：
-   * 被引用者若**还是本地乐观气泡**，它的 id 是本 store 自己造的临时串，服务端从不认得 ⇒ 请求必 400
-   * （`yinYongXiaoXiFeiFa`），而那条气泡还躺在列表里，用户只会看到一句「引用的消息不合法」。
-   * 所以这里按「无引用」处理，消息本体照发（与后端 `qingLiMiDengJian` 对脏幂等键的降级口径一致：
-   * 脏引用不该顺手把用户刚打的字一起丢掉）。
-   *
-   * 根因不在这里，而在引用槽：唯一的拒绝口是 `composables/use长按菜单.ts::sheZhiYinYongMuBiao`
-   * （临时气泡既没有「引用」菜单项、也进不了槽）。本函数只挡「调用方绕过菜单直接传 id」这一条旁路，
-   * 不参与服务端的最终裁定——合法但已被删/越权的引用仍由服务端 4xx。
-   */
   function qingLiYinYongId(zhi: string | null | undefined): string | null {
     if (!zhi) return null
     const beiYongXing = xiaoXiLieBiao.value.find((m) => m.id === zhi)
@@ -862,12 +773,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     return zhi
   }
 
-  /**
-   * 文本发送唯一入口。`yinYongXiaoXiId` 是**发送那一刻**右键引用态指向的消息 ID
-   * （真源只在 `composables/use长按菜单.ts::yinYongXiaoXi` 一处，由调用方读出来传进来，
-   * store 不另存第二份）。它被钉在乐观气泡的 `bei_yong_xiao_xi_id` 上，
-   * 由 `faSongYiTiaoYongHuXiaoXi` 经 `api/聊天.ts::faSongXiaoXi` 的 `yinYong` 进 HTTP body。
-   */
   async function faSongXiaoXi(
     neiRong: string,
     yinYongXiaoXiId?: string | null,
@@ -909,23 +814,12 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     const yuanQiPao = xiaoXiLieBiao.value[suoYin]
     faSongShiBaiJiHe.value.delete(keHuDuanId)
     qingChuCuoWu()
-    // FP-09b：重发原位复用同一条气泡与同一把幂等键（不删掉重建 ⇒ 不新造键）。
-    // 上一次请求其实已落库时，服务端按幂等键返回原行，列表里仍只有这一条。
     const chongFaXiaoXi: 消息 = { ...yuanQiPao, fa_song_zhong: true }
     xiaoXiLieBiao.value.splice(suoYin, 1, chongFaXiaoXi)
     const jieGuo = await faSongYiTiaoYongHuXiaoXi(chongFaXiaoXi)
     return jieGuo !== null
   }
 
-  /**
-   * 媒体直发唯一入口（语音 / 文件 / 表情包 / 已有媒体的表情）。
-   * `yinYongXiaoXiId` 与 `faSongXiaoXi` 的第二参同一语义：**发送那一刻**右键引用态指向的消息 ID，
-   * 由调用方从 `use长按菜单.ts::yinYongXiaoXi` 读出来传进来（store 不存第二份）。
-   * FP-08d（需求 #5）：媒体消息同样带 `beiYongXiaoXiId` —— 右键能引用的一切消息，发出去的那条
-   * 就必须带上被引用者；旧形态「既不带上也不清除」会让引用条在直发后残留悬挂、
-   * 并被下一条文字消息继承（作废 FP-08b 的「媒体直发不该带引用」判定，理由见
-   * `.agents/evidence/traces/FP-08d-20260922.md`）。
-   */
   async function faSongMeiTiXiaoXi(
     leiXing: DuoMeiTiLeiXing,
     wenJian: File | Blob | null,
@@ -962,7 +856,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       mei_ti_yuan_shi_wen_jian_ming: yuanWenJianMing || null,
       ...(beiYongId ? { bei_yong_xiao_xi_id: beiYongId } : {}),
     }
-    // FP-09b：媒体消息同样带稳定幂等键，上传成功但投递重试时不再落两条
     const benCiMiDengJian = queDingMiDengJian(linShiXiaoXi)
     jiaRuXiaoXi(linShiXiaoXi)
 
@@ -981,9 +874,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
         leiXing === 'yuYin' && typeof fuJia.zhuanXieWenBen === 'string'
           ? fuJia.zhuanXieWenBen.trim().slice(0, 500)
           : ''
-      // FP-08d（需求 #5）：媒体直发**带**引用，且带的是「发送那一刻」引用条指向的那条，
-      // 与文本 / 图文混排同一口径（引用是这条消息的身份之一）。无引用态时 body 逐键不变，
-      // 服务端 `services/消息.ts::yanZhengBeiYinYong` 对 6 种非法引用形态一律 4xx，不因类型是媒体而旁路。
       const { xiaoXi } = await faSongXiaoXiApi({
         huiHuaId,
         neiRong: suiWenBen,
@@ -996,7 +886,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       if (xiaoXi.mei_ti_url) {
         cheXiaoYuLanURL(benDiYuLan)
       }
-      // FP-04：乐观 ID → 服务端 ID 的替换走统一入口（原子替换，不重复入列）
       duiQiLeDaXiangXiaoXi(linShiXiaoXi, xiaoXi, (fuWuQiXiaoXi) => ({
         ...fuWuQiXiaoXi,
         mei_ti_url: fuWuQiURL,
@@ -1004,7 +893,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
         ben_di_da_xiao_zi_jie:
           fuWuQiXiaoXi.ben_di_da_xiao_zi_jie ?? linShiXiaoXi.ben_di_da_xiao_zi_jie ?? null,
       }))
-      // FP-04：AI 触发已搬到服务端落库路径
       return xiaoXi
     } catch (cuoWu: unknown) {
        
@@ -1020,16 +908,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     }
   }
 
-  /**
-   * FP-10b（缺陷9）图文混排发送：一条消息携带**有序块数组**，图片按用户排的顺序逐张上传，
-   * 再把 内容/类型/媒体ID 三个兼容投影按服务端同口径派生后交给 `faSongXiaoXiApi`。
-   *
-   * 三条硬口径：
-   *  ①顺序即用户排的顺序 —— 上传串行（并发会打乱媒体台账与失败定位），块数组不做任何排序；
-   *  ②FP-09b 幂等键在**这条消息**上钉死一次，重发（含单张上传失败后整条重试）不换键；
-   *  ③单张上传失败 ⇒ 只丢那一张并明确提示，其余块照发；全丢光 ⇒ 走既有「发送失败」提示，
-   *    绝不让服务器收到一条空消息，也绝不因脏块抛异常（服务端同样只降级不 500）。
-   */
   async function faSongTuWenXiaoXi(
     daiFaKuai: DaiFaKuai[],
     yinYongXiaoXiId?: string | null,
@@ -1124,8 +1002,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       ben_di_yu_lan_url: shouTuKuai?.mei_ti_url ?? null,
       ...(beiYongId ? { bei_yong_xiao_xi_id: beiYongId } : {}),
     }
-    // FP-17：页面把「当前待发构成」的稳定键钉进来 ⇒ 失败后整条重发复用同一把键，
-    // 服务端唯一约束把「响应超时但其实已落库」的重放压成一条；构成变化由页面侧换新键。
     if (miDengJian) linShiXiaoXi.mi_deng_jian = miDengJian
     const benCiMiDengJian = queDingMiDengJian(linShiXiaoXi)
     jiaRuXiaoXi(linShiXiaoXi)
@@ -1144,7 +1020,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       })
       duiQiLeDaXiangXiaoXi(linShiXiaoXi, xiaoXi, (fuWuQiXiaoXi) => ({
         ...fuWuQiXiaoXi,
-        // 服务端没回块数组（旧服务端）时保留本地块，至少顺序与缩略图不丢
         nei_rong_kuai: Array.isArray(fuWuQiXiaoXi.nei_rong_kuai)
           ? fuWuQiXiaoXi.nei_rong_kuai
           : chuCanKuai,
@@ -1152,7 +1027,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       return xiaoXi
     } catch (cuoWu: unknown) {
       console.error('发送图文混排消息失败', cuoWu)
-      // 微信式失败态：气泡留在原位标失败，重发复用同一把幂等键与同一份块数组
       faSongShiBaiJiHe.value.add(linShiId)
       const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.ke_hu_duan_id === linShiId)
       if (suoYin !== -1) {

@@ -18,10 +18,8 @@ export interface BiaoQingLieBiao {
   zong_shu: number
 }
 
-/** FP-20：无原始文件名时的缺省名与上传口径同源（唯一提供者） */
 export const MO_REN_WEN_JIAN_MING = 'biaoqing.png'
 
-/** 后端 yi_cun_zai 是「同 SHA256 已在我的表情里」的唯一判定，前端不再自行按哈希猜第二遍 */
 export interface TianJiaBiaoQingJieGuo {
   xiang: BiaoQingXiang
   yiCunZai: boolean

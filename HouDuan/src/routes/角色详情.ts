@@ -9,7 +9,6 @@ import { zhongXinQianMingMeiTiURL } from '../services/媒体存储'
 import { yanZhengUUID } from '../utils/验证'
 import type { RenZhengQingQiu } from '../middleware/认证'
 
-// 角色详情路由
 const luYou = Router()
 
 luYou.get(

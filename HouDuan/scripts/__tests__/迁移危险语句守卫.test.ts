@@ -2,30 +2,11 @@ import { describe, it, expect } from 'vitest'
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-/**
- * 迁移目录安全守卫（P0 事故回归门）。
- *
- * 背景：自动迁移器（scripts/迁移器.ts 与镜像内 scripts/run_migration.js）会把
- * QianYi/migrations 下**所有未登记的 .sql** 按文件名顺序执行一遍，entrypoint.sh 在容器
- * 启动时无条件调用它。历史事故：034_自测提权_全部账号最高权限.sql 曾放在该目录，内容是
- * UPDATE "用户" SET "管理员"/"运营"/"审核员" = TRUE（全库提权）。它一旦在库中未登记时
- * 被 entrypoint 自动执行，全站授权体系即刻失效——管理中心的角色判定只读这三个旗标
- * （见 恋爱吧管理中心/管理后端/src/中间件/管理员.ts 的角色查库语句）。该文件已移出到
- * QianYi/手动脚本（禁止自动迁移）/，本用例把这条边界钉死。
- *
- * 判据只覆盖「自动执行后不可逆地改变授权或清空数据」的语句形态，不做通用 SQL 解析：
- *   - 权限旗标写入：任何把 用户 表的管理员/运营/审核员 三旗标置真或置假的语句；
- *   - TRUNCATE：全表清空，迁移链里没有合法用途；
- *   - DELETE FROM 不带 WHERE：整表删行，同样没有合法用途。
- * 刻意不拦 DROP TABLE / DROP TRIGGER / DROP INDEX：现有的 006/009 等已应用迁移有正当的
- * 死表与触发器清理，把这类语句一律拦下只会制造误报，反而让守卫被绕开或放宽。
- */
 
 const 迁移目录 = resolve(__dirname, '..', '..', 'QianYi', 'migrations')
 const 手动目录 = resolve(__dirname, '..', '..', 'QianYi', '手动脚本（禁止自动迁移）')
 const 提权脚本文件名 = '034_自测提权_全部账号最高权限.sql'
 
-/** 自动迁移目录内禁止出现的语句形态 */
 const JIN_ZHI_YU_JU: ReadonlyArray<{ 名: string; 模式: RegExp }> = [
   {
     名: '用户权限旗标写入',
@@ -35,7 +16,6 @@ const JIN_ZHI_YU_JU: ReadonlyArray<{ 名: string; 模式: RegExp }> = [
   { 名: 'DELETE FROM 无 WHERE 限定', 模式: /\bDELETE\s+FROM\s+[\s\S]*?(?:;|$)/i },
 ]
 
-/** 去掉 -- 行注释与 /* *\/ 块注释，避免注释里的示例语句造成误报 */
 function 去注释(sql: string): string {
   return sql
     .replace(/\/\*[\s\S]*?\*\//g, ' ')
@@ -47,7 +27,6 @@ function 去注释(sql: string): string {
     .join('\n')
 }
 
-/** 按分号切出独立语句，并剥掉其中引号内的字符串字面量 */
 function 取语句(sql: string): string[] {
   return 去注释(sql)
     .split(';')

@@ -174,17 +174,12 @@ export async function gengXinHaoGanDu(
       bianHua.qu_wei_du_bian_hua * quanZhong.quWeiDu +
       bianHua.guan_huai_du_bian_hua * quanZhong.guanHuaiDu
 
-    // 先读取旧总分，用于计算衰减后增量
     const jiuHaoGanDu = await huoQuWanZhengHaoGanDu(yong_hu_id, jiao_se_id)
     if (!jiuHaoGanDu) {
       return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'ziYuanBuCunZai'), zhuang_tai_ma: 404 }
     }
     const jiuZongFen = jiuHaoGanDu.zong_fen
 
-    // R2 单语句原子更新：加权、衰减、截断全部在 SQL 内基于当前行值完成，
-    // 并发更新不再发生"读-改-写"丢失覆盖
-    // YH-035+YH-068：评判失败标 unknown 时调用方直接跳过落库；本语句内落分与互动计数同语句原子，
-    // 正常零分（如用户发空洞消息）仍计数，unknown 失败由调度器前置拦截不进库
     const gengXinJieGuo = await 数据库.query(
       `UPDATE "好感度" SET
          "总分" = GREATEST($1, LEAST($2, ROUND(
@@ -213,7 +208,6 @@ export async function gengXinHaoGanDu(
     const xinSiWei = fenJieSiWei(xinZongFen)
     const xinJieDuanMing = huoQuJieDuanMing(xinZongFen)
 
-    // 四维与关系阶段是总分的派生展示数据，基于原子更新后的返回值回写
     await 数据库.query(
       `UPDATE "好感度" SET
         "信任度" = $1,
@@ -235,7 +229,6 @@ export async function gengXinHaoGanDu(
 
     jiLuHaoGanDuBianHua(yong_hu_id, jiao_se_id, { ...bianHua }, xinZongFen)
 
-    // 记录增量到 Redis + PG 统计表（用于隐形保底曲线判定）
     const xiShuYingYong = xiShu ?? 1
     const muBiao = muBiaoQuXian ?? 0
     const lianXu = lianXuWeiDaBiao ?? 0
@@ -269,17 +262,14 @@ export async function sheZhiMiJiHaoGanDu(
     return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'ziYuanBuCunZai'), zhuang_tai_ma: 404 }
   }
 
-  // 查询角色是否为渣型，决定秘籍通关对应的胜利分支；同时校验对局模式
   const jiaoSeJieGuo = await 数据库.query(
     `SELECT "是否渣型", "对局模式" FROM "角色" WHERE "ID" = $1 LIMIT 1`,
     [jiao_se_id],
   )
   const shiFouZhaXing = Boolean(jiaoSeJieGuo.rows[0]?.是否渣型)
 
-  // 排位赛同样允许秘籍（用户口径优先）：挑战与普通对局一致生效
   void String(jiaoSeJieGuo.rows[0]?.对局模式 || 'putong')
 
-  // 快照秘籍使用前的真实好感度总分，并标记本局为秘籍通关
   const miJiQianZongFen = jiuHaoGanDu.zong_fen
   await 数据库.query(
     `INSERT INTO "游戏档案" ("用户ID", "角色ID", "是否秘籍通关", "秘籍前好感度")

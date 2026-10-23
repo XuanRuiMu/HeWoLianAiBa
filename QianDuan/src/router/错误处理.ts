@@ -50,8 +50,6 @@ export const jiaZaiShiBaiLuYou: RouteRecordRaw = {
   component: jiaZaiShiBaiYeMian,
 }
 
-// 静态失败页（不拉任何懒载分块）+ 上报。绝不调用 location.reload：刷新只由用户在错误边界
-// 里点「刷新页面」触发，自动刷新在弱网/发版窗口下会变成刷新风暴。
 export async function qieDaoJiaZaiShiBaiYe(luYouShiLi: Router, cuoWu: unknown): Promise<void> {
   const leiXing = fenLeiLuYouCuoWu(cuoWu)
   if (zuiJinChuLiCuoWu !== cuoWu) {

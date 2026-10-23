@@ -111,9 +111,7 @@
                 >
                   {{ huoQuFanYi('liaoTian', 'cheHui') }}
                 </button>
-                <!-- FP-10a 反转后这两支（图片 / 表情包媒体气泡）只接住"反构不出图片块"的脏行：
-                     旧服务端行缺 nei_rong_kuai 且 mei_ti_id 为空/非法时判据为 false，仍由这里按
-                     消息级地址兜底画，不至于空气泡。正常行一律改走下面的块渲染，勿当死分支删除 -->
+                
                 <div
                   v-if="xiaoXi.lei_xing === 'tuPian' && !shiXuYaoKuaiXuanRan(xiaoXi)"
                   class="qipao-waike tupian-waike"
@@ -199,9 +197,7 @@
                 </div>
                 <div v-else class="qipao-waike">
                   <QiPaoRongQi :shi-ben-ren="xiaoXi.fa_song_zhe_lei_xing === 'yonghu'">
-                    <!-- FP-10b（缺陷9）：服务端回读的块数组按原序渲染，刷新后与发送时同序；
-                         FP-10a 反转判据后「含图片块」即走这里（纯图/纯贴纸单块行也不例外），
-                         纯文本行与反构不出图片块的脏行仍走 v-else / 上面的媒体分支兜底 -->
+                    
                     <template v-if="shiXuYaoKuaiXuanRan(xiaoXi)">
                       <span
                         v-for="(kuai, kuaiSuoYin) in huoQuXianShiKuai(xiaoXi)"
@@ -225,8 +221,7 @@
                     </template>
                     <template v-else>{{ xiaoXi.nei_rong }}</template>
                   </QiPaoRongQi>
-                  <!-- FP-09（需求 #5 表现层）气泡内引用块：摘要按 bei_yong_xiao_xi_id 在会话列表里现取，
-                       点它滚动定位原消息并高亮；已撤回/取不到一律走既有撤回占位文案，不空白也不抛错 -->
+                  
                   <YinYongQiPaoKuai
                     v-if="xiaoXi.bei_yong_xiao_xi_id"
                     :bei-yong-xiao-xi-id="xiaoXi.bei_yong_xiao_xi_id"
@@ -375,8 +370,7 @@
         {{ huoQuFanYi('liaoTian', 'youXiYiJieShu') }}
       </div>
       <div v-else class="shuru-rongqi">
-        <!-- FP-09（需求 #5 表现层）发送前引用条：落在编辑器上方的同一 flex 槽位（输入区几何一字未动），
-             摘要两行溢出省略，关闭钮是原生 button ⇒ 键盘可达可激活；形态与数值全部由组件唯一实现承载 -->
+        
         <YinYongTiao
           v-if="yinYongXiaoXi"
           :zhai-yao="huoQuYinYongZhaiYao(yinYongXiaoXi)"
@@ -409,12 +403,7 @@
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
         </button>
-        <!-- FP-10c（需求 #6 终态）图文真内联：文字段与图片/贴纸块在同一条 contenteditable 文字流里，
-             块插在光标处、随文字排版、整块一次退格删除、块可拖拽改序与单块删除。
-             本区唯一的输入区实现就是 components/聊天/图文输入区.vue（好友页共用同一份），
-             页面只持有「展开档」这一个布尔量与真源出口，不再有 JS 量高、不再有第二份块状态。
-             引用条（FP-09）仍是输入区上方的整行槽位，与本盒互不顶开；
-             FP-05 的等高构造、FP-23 的图标等高与 FP-04a 的滚动口机制一字未动。 -->
+        
         <TuWenShuRuQu
           ref="shuruQuRef"
           :kuai-lie-biao="daiFaKuai"
@@ -487,7 +476,7 @@
       <div v-if="caoGaoYiHuiFu" class="shuru-fu-zhu" role="status">
         <span class="fasong-cuowu">{{ huoQuFanYi('tongYong', 'caoGaoYiHuiFu') }}</span>
       </div>
-      <!-- FP-20：「添加到表情」的成功/已在库反馈走状态条（role=status），与红色错误行分道，不把幂等命中报成错误 -->
+      
       <div v-if="biaoQingCaoZuoTiShi" class="shuru-fu-zhu" role="status">
         <span class="biaoqing-tishi">{{ biaoQingCaoZuoTiShi }}</span>
       </div>
@@ -641,7 +630,7 @@
             </svg>
             <span>{{ huoQuFanYi('duoMeiTi', 'wenJian') }}</span>
           </button>
-          <!-- FP-05 YH-036/YH-037：用户手动生图/生视频按钮已删除（图片与视频由AI对象在合适时主动发起）；通话入口已砍，仅保留TTS语音推送 -->
+          
         </div>
       </Transition>
 
@@ -766,7 +755,7 @@
       </Transition>
     </Teleport>
 
-    <!-- FP-20：图片气泡（含 AI 发来的图）长按/右键菜单，唯一新增项是「添加到表情」，可撤回时并列撤回 -->
+    
     <Teleport to="body">
       <Transition name="zhezhao-xianshi">
         <div
@@ -850,9 +839,9 @@
       </div>
     </Teleport>
 
-    <!-- FP-05 YH-037：通话实时链路界面已砍（预留 provider 插槽填 KEY 即用）；TTS 合成经 socket 推 mediaId 语音消息照常 -->
+    
 
-    <!-- C4 首次多媒体授权弹窗：图片/表情包外发视觉理解前单独征得同意 -->
+    
     <DuoMeiTiShouQuanDanChuang
       :xian-shi="shouQuanDanChuangXianShi"
       @que-ren="shouQuanQueRen"
@@ -971,10 +960,6 @@ const caoGaoJian = computed(() => {
 const { huiFuCaoGao, qingChuCaoGao } = useCaoGao(caoGaoJian, shuRuNeiRong)
 const caoGaoYiHuiFu = ref(false)
 const faSongZhong = ref(false)
-// FP-17 待发图文投递去重：块序列在发送成功后才会清空 ⇒ 网络慢时同一次待发会被发送按钮/回车
-// 反复触发，每次触发都新建乐观气泡与一把新幂等键（服务端压不住两条不同的键）⇒ 重复消息。
-// 该标志在进入发送的第一时间同步置位（先于授权等待/压缩等待），投递结算后才复位；
-// 同一次待发在途期间的重复触发一律吞掉，与文本链路的「发出即清空输入」同一去重口径。
 const daiFaTouDiZhong = ref(false)
 const junShiZhanKai = ref(false)
 const youXiShiJianZhanKai = ref(false)
@@ -982,9 +967,6 @@ const youXiShiJianLeiXing = ref<'shengli' | 'shibai'>('shengli')
 const youXiShiJianNeiRong = ref('')
 const xiaoxiQuYuRef = ref<HTMLElement | null>(null)
 const shuruQuRef = ref<InstanceType<typeof TuWenShuRuQu> | null>(null)
-// FP-10c：展开档只剩一个布尔量（纯 CSS 的 .zhan-kai 类），JS 量高链已随 use输入框.ts 一起删除；
-// 因此展开按钮不再按「内容是否超一行」禁用。FP-10c⑤ 缺陷1：这个布尔量的**置位与复位判定**
-// 全部住在 composables/use输入区展开档.ts（全库唯一真源），本页只取出口、不再自己写值。
 const guanLiJianKongZhanKai = ref(false)
 const dangQianShiJian = ref(Date.now())
 let cheHuiFanZhuanDingShiQi: ReturnType<typeof setTimeout> | null = null
@@ -1098,8 +1080,6 @@ const {
   sheZhiCuoWu: (xinXi) => 聊天仓库.sheZhiCuoWu(xinXi),
 })
 
-// FP-20：图片气泡「添加到表情」。取图段只做「签名 URL → File」，提交仍走页面唯一写入口
-// （判定 → C4 授权 → 表情仓库.tianJia → /api/表情/我的），鉴权头一律由 api/请求.ts 单源承载。
 const { tianJiaTuPianDaoBiaoQing } = use添加到表情({
   huoQuMeiTiURL: (xiaoXi) => huoQuXiaoXiMeiTiURL(xiaoXi),
   huoQuWenJianMing: (xiaoXi) => xiaoXi.mei_ti_yuan_shi_wen_jian_ming || undefined,
@@ -1130,10 +1110,6 @@ function chongXinFanYi(xiaoXi: 消息) {
   void qiangZhiFanYi(xiaoXi)
 }
 
-/**
- * FP-09（需求 #5 表现层）引用两件套的接线点。定位锚的 DOM id 前缀与被定位的组件同源
- * （`YIN_YONG_DING_WEI_PEI_ZHI.domQianZhui`），滚动容器就是消息列表那个 `<main>`。
- */
 function yinYongXiangId(xiaoXi: 消息): string {
   return `${YIN_YONG_DING_WEI_PEI_ZHI.domQianZhui}${xiaoXi.id}`
 }
@@ -1142,7 +1118,6 @@ function huoQuXiaoXiGunDongRongQi(): HTMLElement | null {
   return xiaoxiQuYuRef.value
 }
 
-/** 被引用那条的发送者展示名：只取真实角色名/昵称，取不到就不渲染前缀（取证 §3：author 存在才渲染） */
 function yinYongFaSongZheMing(muBiao: CaiDanXiaoXi): string {
   if (muBiao.fa_song_zhe_lei_xing === 'yonghu') {
     return 用户仓库.dangQianYongHu?.ni_cheng || 用户仓库.dangQianYongHu?.yong_hu_ming || ''
@@ -1150,26 +1125,11 @@ function yinYongFaSongZheMing(muBiao: CaiDanXiaoXi): string {
   return 聊天仓库.jiaoSeXinXi?.ming_zi || ''
 }
 
-/**
- * FP-08d（需求 #5）发送前引用条的摘要口径：被引用那条是**媒体消息**时先取它自己的占位
- * （`config/消息配置.ts::huoQuMeiTiYinYongZhanWei` 单源映射，语音仍归截断出口），
- * 其余一律交给唯一截断出口 `use长按菜单.ts::huoQuYinYongZhaiYao`（改名接进本作用域）。
- * `引用气泡块.vue` 内是同一行组合式；两条呈现路径（引用条 / 气泡内引用块）解析值必须相同，
- * 由 `__tests__/FP08d媒体引用与直发.test.ts` 断言把守，防的就是两处各写一份占位。
- */
 function huoQuYinYongZhaiYao(muBiao: CaiDanXiaoXi): string {
   return huoQuMeiTiYinYongZhanWei(muBiao.lei_xing) ?? zhengWenZhaiYaoChuKou(muBiao)
 }
 
-// FP-08d（需求 #5）：图片菜单的「引用」与文本 / 语音菜单同一个状态机、同一个引用态真源
-// （`use长按菜单.ts`），本页面已接引用条与被引用槽 ⇒ 用 zhiChiTuPianYinYong 开这一项。
 
-/**
- * FP-08d（需求 #5）媒体直发的页面侧唯一出口：把「发送那一刻」的引用态交进 store，
- * 成功后清引用条 —— 与文本 / 图文混排的「成功必清、失败不清」同一口径。
- * 旧形态既不带引用也不清引用态 ⇒ 引用条在直发一条语音后残留悬挂，
- * 用户接着敲的文字还会继承上一条的引用（新 bug），三方案里选「补引用参数 + 成功必清」。
- */
 const zaiTuZhiFaMeiTiId = new Set<string>()
 const zaiTuZhiFaWenJian = new Set<Blob>()
 
@@ -1178,8 +1138,6 @@ async function faSongMeiTiZhiFa(
   wenJian: File | Blob | null,
   fuJia?: MeiTiFuJia,
 ): Promise<消息 | null> {
-  // FP-17：直发媒体的「同一载荷在途」去重（表情双击、同一文件重复 change）。按载荷身份区分：
-  // 同一表情/同一文件在途期间的第二次触发一律吞掉，连发两个不同表情仍可各自直发，不误伤。
   const yiYouMeiTiId = fuJia?.yiYouMeiTi?.meiTiId ?? ''
   const zaiTu = yiYouMeiTiId
     ? zaiTuZhiFaMeiTiId.has(yiYouMeiTiId)
@@ -1211,7 +1169,6 @@ function chuLiYouJianCaiDan(xiaoXi: 消息, shiJian: MouseEvent) {
     daKaiWenBenCaiDan(xiaoXi, shiJian)
     return
   }
-  // FP-20：图片气泡走自己的菜单（含撤回项时与文本菜单同一判定），不得落到通用撤回菜单
   if (xiaoXi.lei_xing === 'tuPian') {
     daKaiTuPianCaiDan(xiaoXi, shiJian)
     return
@@ -1242,8 +1199,6 @@ function chuLiChuMoJieShu() {
   chuMoJieShuTuPian()
 }
 
-// 用户是否停留在消息区底部：向上浏览时取消跟随，回到底部附近才恢复。
-// 表情面板的开合补偿（use表情面板）也以它为唯一依据，故必须先于该 composable 声明。
 const yiDingZaiDiBu = ref(true)
 const DING_BUYu_Zhi_PX = 40
 
@@ -1271,8 +1226,6 @@ const biaoQingGuanLiMoShi = ref(false)
 const tuPianJiaZaiJiHe = ref(new Set<string>())
 const tuPianYuLanURL = ref<string | null>(null)
 
-// C4 首次多媒体授权：未开启 tuPianShouQuan 时，发送图片/表情包前弹窗征得同意。
-// 实现收在 use图片授权门（待确认队列的唯一真源，L-23），本页只提供开关读写与弹窗可见态。
 const {
   xianShi: shouQuanDanChuangXianShi,
   queRenTuPianShouQuan,
@@ -1283,7 +1236,6 @@ const {
   sheZhiYiShouQuan: (yunXu) => 用户仓库.sheZhiTuPianShouQuan(yunXu),
 })
 
-// FP-05 YH-036/YH-037：用户手动生图/生视频与通话相关状态已删除（图片与视频由AI对象在合适时主动发起）
 
 const {
   luYinMoShi,
@@ -1328,18 +1280,11 @@ const {
 })
 
 const { chuLiZhanTie, chuLiTuoLuo } = use粘贴图片({
-  // FP-10b（缺陷9）：粘贴不再直发，图片按出现顺序进本条消息的待发块序列，文字回到输入区
   fanJiaTuPian: (wenJian) => jiaruDaiFaTuPian(wenJian),
   fanJiaWenZi: (wenBen) => chaRuShuRuQuWenBen(wenBen),
   sheZhiCuoWu: (xinXi) => 聊天仓库.sheZhiCuoWu(xinXi),
 })
 
-/**
- * FP-10c 图文真内联编辑区：文字段与图片/贴纸块在同一条 contenteditable 流里，块插在光标处。
- * 块序列与光标的真源都在 use待发图文 这一份里，图文输入区.vue 只是呈现层（DOM ⇄ data-kuai-id 对齐）；
- * 没插过图片时块列表恒为空 ⇒ 纯文字链路逐字照旧。
- * 这里整体解构：模板要吃的都是顶层 ref（Vue 只自动解构顶层，嵌套在对象里的 ref 不解包）。
- */
 const {
   kuaiLieBiao: daiFaKuai,
   guangBiao: daiFaGuangBiao,
@@ -1364,17 +1309,9 @@ const {
   },
 })
 
-/**
- * FP-17 幂等键钉在「当前待发构成」上：同一次待发的重试（含失败后整条重发）复用同一把键，
- * 服务端 `UNIQUE(用户ID,角色ID,幂等键)` 才能把「响应超时但其实已落库」的重放压成一条；
- * 构成一旦变化（增删块、改正文、换媒体、改引用）立即换新键，不把一条新消息误判成旧消息的重放。
- * 复位走构成签名（块 id/正文/媒体 + 文字投影 + 引用），不逐个改写口挂复位点：漏挂一口即静默丢消息。
- */
 const daiFaTouDiZaiTi: { mi_deng_jian?: string | null } = { mi_deng_jian: null }
 const daiFaQianMing = computed(() =>
   [
-    // 取「真正会被提交的块」而不是原始块数组：空文字段/自动补位段不参与提交，
-    // 它们的产生与合并不得改变签名，否则同一份载荷会被误判成新构成而换键
     shouJiDaiFaKuai()
       .map((kuai) => `${kuai.id}\u0001${kuai.nei_rong}\u0001${kuai.mei_ti_id ?? ''}`)
       .join('\u0002'),
@@ -1390,21 +1327,11 @@ watch(
   { flush: 'sync' },
 )
 
-/**
- * 输入区展开档：布尔量与「内容回到单行档 ⇒ 回落」这条复位判定都住在 composables/use输入区展开档
- * 这一份里（FP-10c⑤ 缺陷1 的根因就是那条复位触发源随 JS 量高链一起被删没了）。
- * 本页只取出口：按钮翻转走 qieHuanZhanKaiDang，发送/清面板走 shouQiZhanKaiDang。
- * FP-10c-⑥：待发图文块出现由真源自动置位（64px 块会被 35px 折叠裁掉），删块自动回落。
- */
 const { shuRuKuangZhanKai, qieHuanZhanKaiDang, shouQiZhanKaiDang } = use输入区展开档({
   shuRuNeiRong,
   youTuPianKuai: daiFaYouTuPian,
 })
 
-/**
- * 展开/折叠：只向真源要一次翻转，高度由图文输入区的纯 CSS min-/max-height 决定
- * （FP-10c 删掉 use输入框.ts 的 JS 量高链后，这里不再有测量、视口监听与「内容超一行才可点」的门控）。
- */
 function qieHuanShuRuKuangZhanKai(): void {
   qieHuanZhanKaiDang()
   void nextTick(() => {
@@ -1412,16 +1339,11 @@ function qieHuanShuRuKuangZhanKai(): void {
   })
 }
 
-/** 编辑器 DOM → 真源：这是唯一的写回口（合并相邻文字段、退化回纯文本态都住在 composable 里） */
 function chuLiShuRuQuBianJi(duan: BianJiQiDuan[], xianShiXuanRanIds: string[]): void {
   daiFaTongBuCongBianJiQi(duan, xianShiXuanRanIds)
   chuLiShuRuBianHua()
 }
 
-/**
- * 纯文本插入（粘贴文本 / Shift+Enter 换行）：沿用既有超限口径 —— 只塞得下多少塞多少，
- * 一个字符都塞不下才提示，绝不像改造前那样把整段文字丢弃。
- */
 function chaRuShuRuQuWenBen(wenBen: string, guangBiao?: DaiFaGuangBiao | null): void {
   const shengYu = XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu - shuRuNeiRong.value.length
   if (shengYu <= 0) {
@@ -1456,7 +1378,6 @@ function xiaoXiKey(xiaoXi: 消息): string {
   return xiaoXi.ke_hu_duan_id || xiaoXi.id
 }
 
-// 系统消息判定：本地事件与通话记录均为 发送者='xitong'（lei_xing 可为 xitong 或 wenben）
 function shiXiTongXiaoXi(xiaoXi: 消息): boolean {
   return xiaoXi.lei_xing === 'xitong' || xiaoXi.fa_song_zhe_lei_xing === 'xitong'
 }
@@ -1465,8 +1386,6 @@ function huoQuXiaoXiMeiTiURL(xiaoXi: 消息): string | undefined {
   return (xiaoXi.mei_ti_url || xiaoXi.ben_di_yu_lan_url || undefined) as string | undefined
 }
 
-// V8：签名 URL 过期（3600s）导致历史图片 403 时，@error 触发后端重签并原地替换 src；
-// 每条消息最多重试一次，避免失效媒体造成循环请求
 const meiTiChongQianJiLu = new Set<string>()
 async function shuaXinMeiTiURL(xiaoXi: 消息, shiJian?: Event): Promise<void> {
   const jian = xiaoXiKey(xiaoXi)
@@ -1481,7 +1400,6 @@ async function shuaXinMeiTiURL(xiaoXi: 消息, shiJian?: Event): Promise<void> {
   }
 }
 
-/** 「添加到表情」取图撞到过期签名时按同一 V8 入口重签一次（不建第二套签名口径） */
 async function chongQianXiaoXiMeiTiURL(xiaoXi: 消息): Promise<string | null> {
   if (!xiaoXi.mei_ti_id) return null
   const huiHuaId = 聊天仓库.jiaoSeXinXi?.id || (route.params.huiHuaId as string) || ''
@@ -1500,9 +1418,7 @@ function biaoJiTuPianYiJiaZai(xiaoXi: 消息) {
 }
 
 function daKaiTuPianYuLan(xiaoXi: 消息, kuaiDiZhi?: string | null) {
-  // 触屏长按已弹出图片菜单后，浏览器还会补发一次 click：此时只当收起菜单，不得再叠一层预览
   if (tuPianCaiDanZhanKai.value) return
-  // FP-10b：图文混排气泡按块预览那一张；不传块地址就仍是改造前的消息级单图口径
   const diZhi = kuaiDiZhi || huoQuXiaoXiMeiTiURL(xiaoXi)
   if (!diZhi) return
   tuPianYuLanURL.value = diZhi
@@ -1524,7 +1440,6 @@ function huoQuFaSongZhuangTaiTiShi(xiaoXi: 消息): string {
   return huoQuFanYi('liaoTian', 'faSongZhong')
 }
 
-// 首屏骨架屏配置：模拟对话左右交替的灰色气泡（微信加载视觉）
 const GU_JIA_QI_PAO_PEI_ZHI = [
   { kuanDu: '150px', shiYouCe: true },
   { kuanDu: '200px', shiYouCe: false },
@@ -1556,7 +1471,6 @@ function guanBiGengDuoMianBan() {
   gengDuoMianBanZhanKai.value = false
 }
 
-// FP-05 YH-037：通话实时链路入口已砍（预留 provider 插槽），不再发起语音/视频通话
 
 function daKaiXiangCe() {
   guanBiGengDuoMianBan()
@@ -1568,11 +1482,6 @@ function daKaiWenJianXuanZe() {
   wenJianInputRef.value?.click()
 }
 
-/**
- * FP-10b（缺陷9）：相册与粘贴的图片统一**进本条消息的待发块序列**，不再直接发出去。
- * 压缩在后台做，完成后换回块里的文件；压缩失败保留原图并提示 —— 图片不该因为压缩挂了
- * 就从用户眼前消失（C4 图片授权门也随之后移到「发送」那一刻：粘贴只是留在本地）。
- */
 function jiaruDaiFaTuPian(wenJian: File | Blob): void {
   if (!聊天仓库.dangQianHuiHuaId) return
   const jieGuo = chaRuDaiFaTuPian(wenJian, 'tupian')
@@ -1606,14 +1515,6 @@ async function chuLiWenJianXuanZe(event: Event) {
   gunDongDaoDiBu()
 }
 
-/**
- * FP-10a（需求 #6）：表情面板选中的内置贴纸**进本条消息的待发块序列**，不再直发 —— 与图片走
- * 同一条插入链路（同一插入序语义、同一上限预检、同样可拖拽改序），于是待发缩略图能按贴纸档
- * （`contain` + 方形）画。贴纸类别取值只经 `utils/消息内容块.ts` 的唯一出口
- * `BIAO_QING_BAO_MEI_TI_LEI_BIE`，页内不留那个存量码的字面量（FP24a 的守门连注释一起扫）。
- * canvas 渲染只发生在本地，故 C4 图片授权门与粘贴/相册的口径一致：后移到「发送」那一刻
- * （`faSongDaiFaTuWen` 内的 `queRenTuPianShouQuan`），不进待发就不该索要授权。
- */
 async function jiaRuDaiFaTieZhi(tieZhi: BiaoQingBaoDingYi) {
   if (!聊天仓库.dangQianHuiHuaId) return
   emojiMianBanZhanKai.value = false
@@ -1629,8 +1530,6 @@ async function jiaRuDaiFaTieZhi(tieZhi: BiaoQingBaoDingYi) {
   }
 }
 
-// FP-06b 我的表情：添加/发送/删除/排序。「本地文件 → 我的表情」的判定→授权→上传序列收在
-// use表情提交（全库唯一一处），本页只交出自己的错误横幅出口与授权门，不新建第二套上传。
 const biaoQingZhongLaYiFa = ref(false)
 const {
   tiShi: biaoQingCaoZuoTiShi,
@@ -1683,14 +1582,12 @@ function qieHuanBiaoQingGuanLi() {
   biaoQingGuanLiMoShi.value = !biaoQingGuanLiMoShi.value
 }
 
-/** 签名 URL 失效时整表重拉一次（每次打开面板只重试一次，避免 403 循环刷接口） */
 function qingQiuBiaoQingZhongLa() {
   if (biaoQingZhongLaYiFa.value) return
   biaoQingZhongLaYiFa.value = true
   void 表情仓库.chongXinJiaZai()
 }
 
-// 打开面板时按账号拉取（用户铁律：所有端一致 —— 列表与排序都在服务端，随账号走）
 watch(emojiMianBanZhanKai, (zhanKai) => {
   if (!zhanKai) {
     biaoQingGuanLiMoShi.value = false
@@ -1715,7 +1612,6 @@ function huoQuWenJianDaXiaoWenBen(xiaoXi: 消息): string {
   return `${Math.max(1, Math.round(ziJie / 1024))}KB`
 }
 
-// 表情面板展开时，点击页面任意「非表情面板、非表情按钮」区域即收起；更多面板同理
 function chuLiWenDangDianJi(event: MouseEvent) {
   const target = event.target as HTMLElement | null
   if (!target) return
@@ -1734,14 +1630,9 @@ const liaoTianSuoDing = computed(() => {
 })
 
 const keYiFaSong = computed(() => {
-  // FP-17：待发图文投递在途时发送按钮与回车一律不受理（用户可见的「发送中」反馈）。
-  // 必须按「在途」一刀切而不是只看「现在还有没有图片块」：投递期内用户若把图片块删光，
-  // 只看图片块会放开纯文本分支，让同一条正文既随原图文发出、又被当新消息再发一次。
-  // 文本链路（从未物化待发块）不置此标志，既有「连续快发按点击顺序派发」语义不受影响。
   if (daiFaTouDiZhong.value) return false
   const neiRong = shuRuNeiRong.value.trim()
   if (neiRong.length > XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu) return false
-  // FP-10b：待发区里有图片 ⇒ 没有文字也能发（QQ 口径：纯图片消息是合法形态）
   return neiRong.length > 0 || daiFaYouTuPian.value
 })
 
@@ -1757,8 +1648,6 @@ const {
   xiaoxiQuYuRef,
 })
 
-// 用户是否停留在消息区底部：向上浏览时取消跟随，回到底部附近才恢复
-// （状态与阈值声明在表情面板 composable 之前，见上方 yiDingZaiDiBu）
 function gengXinDingBuZhuangTai() {
   const el = xiaoxiQuYuRef.value
   if (!el) return
@@ -1789,15 +1678,11 @@ function chuLiShiJiaoKouBianHua() {
   const shiJiaoKouGaoDu = window.visualViewport.height
   const buJuGaoDu = window.innerHeight
   const jianPanPianYi = Math.max(0, buJuGaoDu - shiJiaoKouGaoDu)
-  // 仅当用户原本就在底部附近时才把最新消息顶入视口；用户正在阅读历史时，
-  // 软键盘弹出或切后台回前台带来的视口高度变化都不得强制拽回底部（保留查看位置）
   if (jianPanPianYi > 80 && yiDingZaiDiBu.value) {
     huaDongShuRuLanKeJian()
   }
 }
 
-// 切后台再回前台：仅按真实滚动位置刷新「是否钉在底部」标志，绝不主动回底，保留用户查看位置
-// 录音中切后台/离开页面：立即丢弃录音并释放麦克风（避免后台持续占用与误发送）
 function chuLiYeMianKeJianXing() {
   if (document.visibilityState === 'visible') {
     gengXinDingBuZhuangTai()
@@ -1812,7 +1697,6 @@ function chuLiYeMianKeJianXing() {
 
 function chuLiShuRuKuangJuJiao() {
   emojiMianBanZhanKai.value = false
-  // 仅在用户原本就在底部附近时跟随到底；切后台回前台后输入框恢复焦点（触发 focus）若强行回底会丢失历史查看位置
   if (yiDingZaiDiBu.value) huaDongShuRuLanKeJian()
 }
 
@@ -1826,7 +1710,6 @@ const jiaoSeMingZi = computed(() => {
 watch(
   () => (Array.isArray(聊天仓库.xiaoXiLieBiao) ? 聊天仓库.xiaoXiLieBiao.length : 0),
   () => {
-    // 仅当用户停留在底部时才跟随滚动；向上浏览历史时保持当前位置
     if (yiDingZaiDiBu.value) gunDongDaoDiBu()
     anPaiCheHuiFanZhuan()
   },
@@ -1836,11 +1719,6 @@ watch(
   () => 聊天仓库.youXiShiJian,
   (shiJian) => {
     if (!shiJian) return
-    // FP-07（缺陷4）：通关/失败分组与趣味文案都改吃服务端结算下发的那两份真源
-    // （分组 = translations.jieGuoTongGuanChi 的键集合，判定口 utils/结局.是否通关结局）。
-    // 前端原来硬编码的白名单漏了 sheng_li_shen_jing_bing，神经病胜利会被渲染成失败弹窗。
-    // 这里的结构性读取是临时接缝：聊天仓库.youXiShiJian 的窄类型归 FP-09 所有，
-    // 待其在 stores/聊天.ts 里声明这两个字段后可去掉断言。
     const jieSuanShiJian = shiJian as {
       xiao_xi: string
       jie_guo_wen_an?: string
@@ -1860,14 +1738,7 @@ function chuLiShuRuBianHua() {
 
 const 管理员调试指令 = 'greedisgood'
 
-/**
- * FP-10b：把待发块序列按**用户排的顺序**发出去（一次一条消息，图文同条）。
- * C4 图片授权门从「粘贴时」后移到「发送时」——粘贴只是把图留在本地，不发就不该要授权。
- * 发送失败时待发区保持原样，用户可以直接再点一次发送（气泡上的重试走同一把幂等键）。
- */
 async function faSongDaiFaTuWen(): Promise<void> {
-  // FP-17：同步闸门必须在第一个 await 之前 —— 授权等待（弹窗未答可无限期挂起）与压缩等待
-  // 都是「块还在、键还没钉」的窗口，期间重复触发会各发一条。这里先于一切异步把闸门放下。
   if (daiFaTouDiZhong.value) return
   if (daiFaKuaiChaoXian()) {
     聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'kuaiChaoXian'))
@@ -1880,22 +1751,17 @@ async function faSongDaiFaTuWen(): Promise<void> {
       聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'shouQuanWeiKaiQiTiShi'))
       return
     }
-    // 压缩在后台跑，块里可能还压着原图：先等在途压缩全部落回块，再取待发序列
     await dengDaiDaiFaYaSuoWanCheng()
     const daiFa = shouJiDaiFaKuai()
     if (daiFa.length === 0) return
-    // 投递的键与构成快照都在真正派发这一刻取（授权/压缩等待期内用户可能又改过）
     const faChuQianMing = daiFaQianMing.value
     const faChuMiDengJian = queDingMiDengJian(daiFaTouDiZaiTi)
-    // FP-08b：引用态（真源只在此处的 `yinYongXiaoXi`）必须在发送这一刻进 store，
-    // 否则会像改前那样停在 UI 死胡同里（需求 #5 的"严重 bug"本体）。
     const jieGuo = await 聊天仓库.faSongTuWenXiaoXi(
       daiFa,
       yinYongXiaoXi.value?.id ?? null,
       faChuMiDengJian,
     )
     if (jieGuo) {
-      // 投递期内用户又编辑过：这次发出的只是旧构成，当前待发是新的编辑，绝不连新内容一起清掉
       if (daiFaQianMing.value === faChuQianMing) {
         qingKongDaiFaKuai()
         qingChuCaoGao()
@@ -1912,17 +1778,12 @@ async function faSongDaiFaTuWen(): Promise<void> {
 async function faSong() {
   const neiRong = shuRuNeiRong.value.trim()
   if (neiRong === 管理员调试指令) {
-    // 面板载有角色人设/轮次/好感度变化/AI 思维链等运营侧数据，必须确认服务端下发的
-    // cha_kan（只读运营数据）能力后才开启；无该能力不把指令发给 AI，并给出明确「无权限」提示
     await 用户仓库.queBaoShenFenJiuXu()
     if (!用户仓库.keGuanLiZhiDu) {
-      // 就绪门只保证身份「解析过一次」，不保证新鲜：本会话内刚被提升的账号在此重取一次能力位
-      // FP-19：走静默重核对，避免无参 jiaZaiYongHu 把认证态翻成「恢复中」导致当前聊天页被整页重挂
       await 用户仓库.queBaoShenFenJiuXu(true)
     }
     if (用户仓库.keGuanLiZhiDu) {
       guanLiJianKongZhanKai.value = true
-      // FP-19：身份此时才就绪，补挂 管理员_* 监听（幂等；建连时已是管理员则早已挂上）
       聊天仓库.queBaoJianKongDingYue()
     } else {
       聊天仓库.sheZhiCuoWu(huoQuFanYi('liaoTian', 'guanLiMianBanWuQuanXian'))
@@ -1935,7 +1796,6 @@ async function faSong() {
     聊天仓库.sheZhiCuoWu(huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'))
     return
   }
-  // FP-05 YH-036：用户手动 /生图 /视频 指令已删除，改为普通文本发送（图片与视频由AI对象在合适时主动发起）
   if (daiFaYouTuPian.value) {
     await faSongDaiFaTuWen()
     return
@@ -1945,8 +1805,6 @@ async function faSong() {
   shouQiZhanKaiDang()
   faSongZhong.value = true
   try {
-    // FP-08b（需求 #5）：把右键引用态随这条文本一起交给 store ⇒ 进 HTTP body。
-    // 引用态的唯一真源仍是 `use长按菜单.ts::yinYongXiaoXi`，这里只在发送瞬间读一次。
     const jieGuo = await 聊天仓库.faSongXiaoXi(neiRong, yinYongXiaoXi.value?.id ?? null)
     if (jieGuo) {
       quXiaoYinYong()
@@ -1965,8 +1823,6 @@ async function jiaZaiGengDuo() {
   const zhiQianZongShu = Array.isArray(聊天仓库.xiaoXiLieBiao) ? 聊天仓库.xiaoXiLieBiao.length : 0
   const jieGuo = await 聊天仓库.jiaZaiGengDuoXiaoXi()
   if (jieGuo && xiaoxiQuYuRef.value) {
-    // M5：头部插入使绝对索引整体右移，显式窗口需同步平移以保持当前渲染内容不变；
-    // 自动尾部窗口（null）天然按「最新N条」取值，无需调整。更早消息由用户上滑时渐进揭示。
     const xinZengTiaoShu =
       (Array.isArray(聊天仓库.xiaoXiLieBiao) ? 聊天仓库.xiaoXiLieBiao.length : zhiQianZongShu) -
       zhiQianZongShu
@@ -1981,14 +1837,12 @@ async function jiaZaiGengDuo() {
 }
 
 function chuLiGunDong() {
-  // 先更新钉底状态，再判断是否触发加载更多（向上滚时不应被强制拽回底部）
   gengXinDingBuZhuangTai()
   if (!xiaoxiQuYuRef.value) return
   if (xiaoxiQuYuRef.value.scrollTop <= 20) {
     if (聊天仓库.haiYouGengDuo && !聊天仓库.jiaZaiGengDuoZhong) {
       jiaZaiGengDuo()
     }
-    // M5：无论是否还有服务端分页，窗口外已加载消息都随上滑渐进揭示
     if (xuNiYinCangQianDiaoShu.value > 0) {
       kuaiSuKuoZhanXiangShang()
     }
@@ -2001,7 +1855,6 @@ function fanhuiShouYe() {
   router.push('/')
 }
 
-// FP-05 YH-036：用户手动生图/生视频点击入口已删除（图片与视频由AI对象在合适时主动发起）
 
 function chakanZhanJi() {
   youXiShiJianZhanKai.value = false
@@ -2040,7 +1893,6 @@ async function chuShiHuaLiaoTian() {
     fuPanDangAnId.value = queryDangAnId
     聊天仓库.meiYeTiaoShu = 999
     await 聊天仓库.jiaZaiXiaoXi(huiHuaId)
-    // M5：会话数据载入完成后重置虚拟渲染窗口
     chongZhiXuNiChuangKou()
     gunDongDaoDiBu()
     void jiaZaiFuPanShuJu(queryDangAnId)
@@ -2049,7 +1901,6 @@ async function chuShiHuaLiaoTian() {
   fuPanMoShi.value = false
   聊天仓库.meiYeTiaoShu = 50
   await 聊天仓库.jiaZaiXiaoXi(huiHuaId)
-  // M5：会话数据载入完成后重置虚拟渲染窗口
   chongZhiXuNiChuangKou()
   聊天仓库.lianJieSocket(huiHuaId)
   gunDongDaoDiBu()
@@ -2065,11 +1916,6 @@ onMounted(async () => {
   }
   document.addEventListener('click', chuLiWenDangDianJi, true)
   document.addEventListener('visibilitychange', chuLiYeMianKeJianXing)
-  // FP-10c：输入区高度改由 CSS 承担（min-/max-height 吃令牌），挂载后不再测量、也不再挂 resize 重算
-  // 进入聊天页即把表情面板离屏克隆并以 opacity:0 真实绘制，强制浏览器一次性
-  // rasterize 全部 emoji 系统字形并缓存；这样首次点开表情面板（v-show display:none→block）不再卡顿。
-  // 该预加载不触发任何滚动；面板开合对聊天区的滚动补偿由 use表情面板 自行挂载
-  // （观测模板 ref 拿到的面板实例，无需在此显式初始化）。
   yuZaiEmojiZiXing()
   await chuShiHuaLiaoTian()
   yiTongGuoMountedChuShiHua = true
@@ -2120,16 +1966,13 @@ onBeforeUnmount(() => {
 }
 
 .xiaoxi-quyu {
-  /* 聊天区滚动条：独立可见色，避免标准属性覆盖 WebKit 自定义样式 */
+  
   --liaotian-gundong-tiao: rgba(110, 110, 110, 0.85);
   --liaotian-gundong-tiao-hover: rgba(80, 80, 80, 0.95);
   --liaotian-gundong-tiao-track: rgba(140, 140, 140, 0.16);
   overflow-y: auto;
   min-height: 0;
-  /* 纵向节奏由消息自身 margin 唯一掌管（单一起源原则）：
-     此处内边距必须归零。若再声明非零 padding-bottom，就会与最后一条
-     消息的 margin-bottom(16px) 叠加出 36px 的失真底部空隙，
-     使底部边界空隙永远无法与消息间空隙(16px)保持一致。 */
+  
   padding: var(--jiange-12) var(--jiange-zhong);
   padding-bottom: 0;
   display: flex;
@@ -2137,13 +1980,13 @@ onBeforeUnmount(() => {
   background: var(--liaotian-beijing);
   background-size: 18px 18px;
   -webkit-overflow-scrolling: touch;
-  /* 注意：此处不声明 scrollbar-width / scrollbar-color，否则会覆盖下方 ::-webkit-scrollbar 自定义样式 */
+  
   scroll-padding-bottom: calc(var(--jiange-zhong) + var(--jiange-4));
-  /* 常驻滚动条槽位：否则滚动条出现/消失会改变内容宽度，导致气泡与时间标签横向抖动 */
+  
   scrollbar-gutter: stable;
 }
 
-/* FP-20 保留特例：消息区滑块/轨道/悬停钉在 --liaotian-gundong-tiao* 局部量名族（聊天界面.test 钉死）；宽高 8px 与 global --gundong-tiao-kuan-du 同值纯重复已删，宽度吃单一真源 */
+
 .xiaoxi-quyu::-webkit-scrollbar-track {
   background: var(--liaotian-gundong-tiao-track);
 }
@@ -2188,11 +2031,7 @@ onBeforeUnmount(() => {
 .xiaoxi-liebiao {
   display: flex;
   flex-direction: column;
-  /* 贴底只能靠自动外边距吸收父级剩余空间。
-     原写法 flex:1（basis:0）+ min-height:100% 会把本列表钉死为「恰好一屏高」，
-     消息多于一屏时内容被 justify-content:flex-end 挤出列表顶部；而滚动容器的可滚动区域
-     在 block-start 边被裁到 padding 边，溢出到上方的历史消息因此永远滚不到 —— 这才是滚动条异常的根因。
-     复盘模式下同一机制还会在消息与总结之间留出整屏空白。 */
+  
   margin-top: auto;
 }
 
@@ -2278,13 +2117,13 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   flex-shrink: 0;
-  /* 微信式：感叹号/转圈紧贴气泡左侧，间距仅 4px */
+  
   padding: 0 var(--jiange-4);
 }
 
 .fasong-zhuangtai-zhuanquan {
   display: inline-block;
-  /* 与感叹号同径：约一行气泡高度（1.25em ≈ 20px @ 16px 字号） */
+  
   width: 1.25em;
   height: 1.25em;
   border: 0.15em solid var(--wenben-tishi);
@@ -2308,7 +2147,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  /* 微信式：与转圈同径、与一行气泡同高 */
+  
   width: 1.25em;
   height: 1.25em;
   padding: 0;
@@ -2433,9 +2272,7 @@ onBeforeUnmount(() => {
 }
 
 .shuru-rongqi {
-  /* 缺陷5 同源几何：输入框外壳与发送按钮吃同一套度量（字号/行高/上下内边距/边框宽），
-     两盒高度由同一来源构造，禁止在任一侧再补一个高度字面值。
-     FP-22c：这组度量住在 styles/设计令牌.css 的共用 :root 块，本容器一律不再局部声明 */
+  
   display: flex;
   align-items: flex-end;
   flex-wrap: wrap;
@@ -2450,10 +2287,7 @@ onBeforeUnmount(() => {
   opacity: 0.8;
 }
 
-/* FP-23（需求 #9）：语音/表情/加号三枚主图标盒与输入框折叠态单行等高。两轴同吃
-   --shuru-tubiao-chicun（它的定义就是 var(--shuru-danxing-gao-du)），不再留 44/35 两套高度。
-   触控热区不让位：与 .fasong-anniu 同用 --shuru-anniu-re-ku 的 ::before 外扩；差别在发送按钮靠
-   min-width 已达热区宽、只需纵向补，图标盒两轴都只有单行高，故横纵两轴一并扩 */
+
 .yuyin-anniu,
 .biaoqing-anniu,
 .gengduo-plus-anniu {
@@ -2471,7 +2305,7 @@ onBeforeUnmount(() => {
   padding: 0;
 }
 
-/* 字形宽高引用同一枚令牌 ⇒ 方形 viewBox 下不可能出现非等比缩放（原 28×28 等比收到 22×22） */
+
 .yuyin-anniu svg,
 .biaoqing-anniu svg,
 .gengduo-plus-anniu svg {
@@ -2497,18 +2331,14 @@ onBeforeUnmount(() => {
   color: var(--zhuse);
 }
 
-/* FP-10c：输入区本体（外壳 .shuru-kuang-waike 与编辑器 .shuru-kuang）的模板与 CSS 已随
-   components/聊天/图文输入区.vue 一起唯一化，本页不再持有第二份度量；折叠/展开两档高度都在组件里
-   吃 --shuru-danxing-gao-du / --shuru-zhan-kai-gao-du，滚动条仍只有 styles/全局.css 一处真源。 */
+
 
 .fasong-anniu {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* 与输入框外壳同一套量：同上下内边距 + 同行高基准 + 同宽透明边框。
-     浏览器对 <1px 边框的取整两边一致，所以两盒必然等高，8px 差值不再堆到按钮上方。
-     视觉高度让位给输入框，44×44 触控热区改由 ::before 向外扩，不再靠撑大盒子换可达性 */
+  
   padding: var(--shuru-kuang-shang-xia-neidian) calc(var(--jiange-12) + var(--jiange-2));
   border: var(--shuru-kuang-biankuang) solid transparent;
   min-width: var(--shuru-anniu-re-ku);
@@ -2566,10 +2396,7 @@ onBeforeUnmount(() => {
   color: var(--cuowu-yanse);
 }
 
-/* FP-23：展开/折叠按钮同样收进 --shuru-tubiao-chicun。它此前写死 44px，经 .shuru-dibu-hang
-   传到 .shuru-rongqi 那条 align-items: flex-end 的行上，把整行顶到 44 高 —— 输入框侧辛苦构造的
-   单行等高被这一个按钮破坏。字形保留 14×14（两轴同值 ⇒ 等比）：chevron 是二级指示符，
-   刻意小于主 glyph，全站仅此一处，不构成第二真源。热区仍由 ::before 扩到热区令牌 */
+
 .zhan-kai-anniu {
   position: relative;
   width: var(--shuru-tubiao-chicun);
@@ -2606,8 +2433,7 @@ onBeforeUnmount(() => {
   transform: rotate(180deg);
 }
 
-/* FP-10c：:disabled 态随那条门控一起删除——展开按钮不再按「内容是否超一行」禁用，
-   它只切换 CSS 的 .zhan-kai 类，任何时刻都可用（折叠/展开是纯 CSS 两档，没有 JS 量高可判） */
+
 
 .emoji-mianban {
   display: grid;
@@ -2619,18 +2445,15 @@ onBeforeUnmount(() => {
   max-height: 200px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* 常驻滚动条槽位：静止态内容溢出会显示滚动条，而展开/折叠态(max-height:0)无滚动条；
-     若不预留，三态内容宽度不一致，滚动条出现瞬间 emoji 网格会横向偏移（动画跳变）。
-     与聊天区一致，预留槽位使 打开/静态/折叠 三态宽度恒等，消除居中偏差 */
+  
   scrollbar-gutter: stable;
-  /* 不声明标准 scrollbar-width / scrollbar-color，否则会覆盖下方 ::-webkit-scrollbar 自定义样式 */
-  /* FP-06：面板私有滚动条色字面量（原 rgba(110,110,110,.85)，只适配浅色档）改为代理 FP-01 的
-     --gundong-tiao-* 真源，深色档才拿得到深色档自己的可见滑块色；局部量名保留是因为既有单测钉的是它 */
+  
+  
   --emoji-mianban-gundong-tiao: var(--gundong-tiao-huakuai);
   --emoji-mianban-gundong-tiao-hover: var(--gundong-tiao-huakuai-hover);
 }
 
-/* FP-20 保留特例：表情面板需要 6px 窄条+透明轨道（global 为 8px+半透明灰轨道），--emoji-mianban-gundong-tiao* 局部量名被 我的表情/聊天界面 测试钉死（值已代理 --gundong-tiao-*），整块保留 */
+
 .emoji-mianban::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -2665,8 +2488,7 @@ onBeforeUnmount(() => {
   padding: 0;
 }
 
-/* FP-06：原 --emoji-xiangmu-hover 深色档是 rgba(0,0,0,.06)（黑压黑，悬停恒不可见），
-   改吃 --caidan-active：浅色档比面板更深、深色档比面板更亮，两档都真的看得见反馈 */
+
 @media (hover: hover) {
   .emoji-xiangmu:hover {
     background: var(--caidan-active);
@@ -2795,14 +2617,11 @@ onBeforeUnmount(() => {
   opacity: 0;
   max-height: 0;
   padding: 0 var(--jiange-xiao);
-  /* 与静止态 .emoji-mianban 的 overflow-y:auto 保持一致，确保 scrollbar-gutter:stable 预留的滚动条槽位在
-     打开/静态/折叠三态恒等，消除滚动条出现/消失导致的 emoji 网格横向偏移（尾帧=首帧=静止态） */
+  
   overflow-y: auto;
 }
 
-/* 进入→静止、静止→收起的交接态不再重复声明 max-height，
-   隐式等于唯一静止态 .emoji-mianban{max-height:200px; padding:8px}，
-   彻底消除相位错位跳变 */
+
 
 .fupan-pizhu-xiangmu {
   display: flex;
@@ -3010,7 +2829,7 @@ onBeforeUnmount(() => {
   opacity: 0.85;
 }
 
-/* ─── 多媒体消息：图片气泡 ─── */
+
 .tupian-waike {
   --duomeiti-tupian-zuidakuan: 180px;
   --duomeiti-tupian-morenkuan: 160px;
@@ -3031,7 +2850,7 @@ onBeforeUnmount(() => {
   display: block;
   max-width: var(--duomeiti-tupian-zuidakuan);
   border-radius: var(--yuanjiao-xiao);
-  /* FP-20：iOS 长按默认弹系统「存储图像/查询」菜单，会把应用内长按菜单顶掉 */
+  
   -webkit-touch-callout: none;
 }
 
@@ -3059,7 +2878,7 @@ onBeforeUnmount(() => {
   }
 }
 
-/* ─── 多媒体消息：表情包气泡（透明背景大图） ─── */
+
 .biaoqingbao-waike {
   background: transparent !important;
 }
@@ -3071,19 +2890,14 @@ onBeforeUnmount(() => {
   display: block;
 }
 
-/* ─── 多媒体消息：语音条 ───
-   气泡本体（3 格喇叭 / 波形采样 / 进度轨道 / 全部几何）只有 components/聊天/语音气泡.vue 一份，
-   本页只留外层容器与语音转写行。改前的 .yuyin-qipao / .boxing-* / .yuyin-jindu-* 内联实现
-   与本页 12 条波形常量已随 FP-11 全删，不得在此复活第二份。 */
+
 .yuyin-waike {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
 
-/* 录音浮层的电平计（FP-11 起改名自 .boxing-*：它与语音条只是长得像，共名才会被再读成
-   同一条「波形条数」需求；条宽改前住在 .yuyin-waike 上，而浮层 Teleport 在 body 下取不到 ⇒
-   一直是失效值，现在住在电平计自己的盒上） */
+
 .luyin-dianping-zu {
   --luyin-dianping-tiaokuan: 3px;
   display: flex;
@@ -3148,7 +2962,7 @@ span.yuyin-zhuanwenzi {
   color: var(--wenben-tishi);
 }
 
-/* 气泡内的图文块：图片独占一行、文字保持原有气泡文本形态（FP-22b：尺寸上收为全局令牌） */
+
 .tuwen-kuai--tu {
   display: block;
 }
@@ -3161,9 +2975,7 @@ span.yuyin-zhuanwenzi {
   object-fit: cover;
 }
 
-/* 块渲染里的贴纸（FP-24a）：表情包类别不许按照片画 —— cover + 180×200 会裁掉贴纸边缘的透明区，
-   故与媒体分支的 .biaoqingbao-tu 同吃 --duomeiti-biaoqingbao-chicun + contain。
-   与基础类同为 (0,1,0)，只能靠源码序压制 ⇒ 本块必须排在 .tuwen-kuai-tu 之后（FP24a 用例钉住这一点） */
+
 .tuwen-kuai-tu--biaoqingbao {
   width: var(--duomeiti-biaoqingbao-chicun);
   height: var(--duomeiti-biaoqingbao-chicun);
@@ -3172,7 +2984,7 @@ span.yuyin-zhuanwenzi {
   object-fit: contain;
 }
 
-/* ─── 多媒体消息：文件卡片气泡 ─── */
+
 .wenjian-waike {
   max-width: min(calc(100vw - 126px), 320px);
 }
@@ -3186,9 +2998,9 @@ span.yuyin-zhuanwenzi {
   margin-bottom: var(--jiange-6);
 }
 
-/* FP-05 YH-036/YH-037：用户手动生图/生视频按钮已删除，残留样式一并清理 */
 
-/* ─── 图片全屏预览 ─── */
+
+
 .tupian-yulan-zhezhao {
   position: fixed;
   inset: 0;
@@ -3222,7 +3034,7 @@ span.yuyin-zhuanwenzi {
   cursor: pointer;
 }
 
-/* ─── 表情面板双 Tab ─── */
+
 .mianban-tab-hang {
   grid-column: 1 / -1;
   display: flex;
@@ -3255,8 +3067,7 @@ span.yuyin-zhuanwenzi {
 .biaoqingbao-wangge {
   grid-column: 1 / -1;
   display: grid;
-  /* FP-06：容器（.biaoqingbao-quyu）此前零规则、宽度由子元素 min-content 顶出来，
-     固定 4 列在桌面档只有 218px 宽。改 auto-fill 后格子随面板宽度自适应密度，两档视口都铺满 */
+  
   grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
   gap: var(--jiange-6);
 }
@@ -3273,8 +3084,7 @@ span.yuyin-zhuanwenzi {
   gap: var(--jiange-2);
   min-width: 0;
   padding: var(--jiange-6) var(--jiange-2);
-  /* FP-06：表情格要有"格子"的样子——卡面 + 发丝边框；--yuanjiao-xiao 是 light-only 令牌
-     （深色档按 F23 同族塌陷为 0），故此处用字面圆角，保证两档一致 */
+  
   border: 1px solid var(--biankuang-yanse);
   border-radius: 6px;
   background: var(--beijing-kaopian);
@@ -3305,8 +3115,7 @@ span.yuyin-zhuanwenzi {
 
 .biaoqingbao-wenzi {
   font-size: 11px;
-  /* FP-06：格子自己有卡面（--beijing-kaopian）后，浅色档次级灰压浅卡只有 3.3:1、深色档 4.27:1，
-     均不到 AA；贴纸名是可点击控件的一部分，改用主文字令牌（两档 ≥12:1） */
+  
   color: var(--wenben-zhuse);
   max-width: 100%;
   overflow: hidden;
@@ -3314,10 +3123,8 @@ span.yuyin-zhuanwenzi {
   white-space: nowrap;
 }
 
-/* ─── FP-06 表情面板分区 / 管理态角标 / 添加槽位（缺陷10 深色档根治 + 重新设计UI） ─── */
-/* 下列类名改前在全库零 CSS 规则：既无 color 也无边界，只靠 FP-01 给 button reset 补
-   color: inherit 勉强"看得见"，谈不上可点击外观。一律吃 variables.css 既有深浅成对令牌，
-   不新造任何色值；也不写 :root[data-theme=...] 覆写（F24 特异性坑按 FP-03 口径从构造上绕开）。 */
+
+
 .biaoqingbao-quyu {
   grid-column: 1 / -1;
   display: flex;
@@ -3384,7 +3191,7 @@ span.yuyin-zhuanwenzi {
   min-width: 0;
 }
 
-/* 我的表情图：改前连尺寸规则都没有，用户传多大就撑多大（面板被顶开）；此处钉成等高格 */
+
 .biaoqingbao-tupian {
   display: block;
   width: 100%;
@@ -3428,8 +3235,7 @@ span.yuyin-zhuanwenzi {
   background: var(--caidan-active);
 }
 
-/* 禁用件不吃 opacity（那会把对比度一起压没）：改为"褪去卡面 + 细边框"，字形仍留在可读档，
-   按 WCAG 1.4.3 inactive 例外允许降到 3:1，取证数值两档均 ≥3.3:1 */
+
 .ge-caoZuo:disabled {
   background: var(--beijing-ciuse);
   border-color: var(--biankuang-qianse);
@@ -3475,8 +3281,7 @@ span.yuyin-zhuanwenzi {
   }
 }
 
-/* 触屏没有 :hover：添加槽的按下反馈必须单独给，否则手机上点它毫无回应
-   （通用的 .biaoqingbao-xiangmu:active 会被下面这条更晚声明的 .tian-jia 静态规则盖掉） */
+
 .biaoqingbao-xiangmu.tian-jia:active:not(:disabled) {
   background: var(--caidan-active);
 }
@@ -3493,7 +3298,7 @@ span.yuyin-zhuanwenzi {
   color: var(--wenben-ciuse);
 }
 
-/* ─── "+" 更多面板（2×2 网格） ─── */
+
 .gengduo-mianban {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -3529,12 +3334,12 @@ span.yuyin-zhuanwenzi {
   height: 26px;
 }
 
-/* ─── 隐藏文件选择输入 ─── */
+
 .yincang-wenjian-shuru {
   display: none;
 }
 
-/* ─── 录音覆盖层 ─── */
+
 .luyin-zhezhao {
   position: fixed;
   inset: 0;
@@ -3596,9 +3401,7 @@ span.yuyin-zhuanwenzi {
   color: var(--fasong-anniu-wenben);
 }
 
-/* FP-03 气泡主题单源：转写统一跟随 --qipao-*；文件气泡的同源色自 FP-12b 起住在
-   components/聊天/文件气泡.vue 内（按 shiBenRen 取同一串令牌），本页不再插手（FP-11）
-   置于样式末尾，以同权后胜覆盖上方各派生规则，文本气泡基规则已在原位直引变量 */
+
 .yonghu-xiaoxi .yuyin-zhuanwenzi {
   background: var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing));
   color: var(--qipao-ziJi-wenBen, var(--xiaoxi-yonghu-wenben));

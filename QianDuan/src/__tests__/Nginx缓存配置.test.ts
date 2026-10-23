@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest'
 
-// 由于 nginx 配置测试需要运行 nginx，我们在单元测试中验证配置语法和逻辑
-// 实际的响应头测试应在集成测试环境中进行
 
 describe('nginx 配置缓存规则验证', () => {
   describe('缓存规则逻辑验证', () => {
@@ -49,13 +47,11 @@ describe('nginx 配置缓存规则验证', () => {
     it('hash 文件名正则匹配应该正确', () => {
       const hashPattern = /\.[a-f0-9]{8,}\.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?|webp|avif)$/
 
-      // 匹配带 hash 的文件名 (8+ 位十六进制字符)
       expect('app.a1b2c3d4.js').toMatch(hashPattern)
       expect('style.abcdef12.css').toMatch(hashPattern)
       expect('image.1234abcd.png').toMatch(hashPattern)
       expect('font.abcdef01.woff2').toMatch(hashPattern)
 
-      // 不匹配非 hash 文件名
       expect('app.js').not.toMatch(hashPattern)
       expect('style.css').not.toMatch(hashPattern)
       expect('image.png').not.toMatch(hashPattern)
@@ -64,7 +60,6 @@ describe('nginx 配置缓存规则验证', () => {
 
   describe('nginx 配置语法验证', () => {
     it('nginx.conf 应该包含 brotli 指令', () => {
-      // 这里验证配置文件中包含必要的 brotli 配置
       const nginxConfig = `
         brotli on;
         brotli_vary on;

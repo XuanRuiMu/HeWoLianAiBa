@@ -16,6 +16,7 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "ignoreDeprecations": "6.0",
+    "types": ["vite/client"],
     "paths": {
       "@/*": ["./src/*"],
       "*": ["./*"]

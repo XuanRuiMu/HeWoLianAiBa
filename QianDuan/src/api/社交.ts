@@ -42,18 +42,14 @@ export interface HaoYouXiaoXi {
   nei_rong: string
   lei_xing: string
   mei_ti_id: string | null
-  /** FP-21：后端按「读者用户编号 + 内容哈希」现签的短效地址，绑定读者故换不了人 */
   mei_ti_url: string | null
-  /** 媒体类别（媒体文件存量码：tupian / biaoqingshu / yuyin / wenjian） */
   mei_ti_lei_bie: string | null
   mei_ti_yuan_shi_wen_jian_ming: string | null
   mei_ti_da_xiao_zi_jie: number | null
   yi_du: boolean
   yi_che_hui: boolean
   shi_jian_chuo: number
-  /** FP-21：服务端投影的内容块数组（恒在，未落块时为等价反构结果）；无时长字段（后端出参无此列） */
   nei_rong_kuai?: XiaoXiKuaiChuCan[] | null
-  /** FP-21：被引用消息主键；未引用为 null 而非缺键 */
   bei_yong_xiao_xi_id?: string | null
 }
 
@@ -130,11 +126,6 @@ export async function huoQuHaoYouXiaoXi(
   return xiangYing.data.shu_ju.lie_biao || []
 }
 
-/**
- * FP-21 好友媒体上传。归属参数是**好友的 用户编号**（+ 登录态自己的编号），全程不出现会话编号：
- * 好友会话不是 AI 会话，把 huiHuaId 传给 AI 那条 /聊天/会话/:huiHuaId/媒体 等于用错身份模型。
- * 存储与校验仍在后端唯一入口（liuShiBaoCunMeiTi），此处只负责 multipart 形态与超时。
- */
 export type HaoYouShangChuanLeiBie = Extract<ShangChuanLeiBie, 'tupian' | 'wenjian'>
 
 export async function shangChuanHaoYouMeiTi(

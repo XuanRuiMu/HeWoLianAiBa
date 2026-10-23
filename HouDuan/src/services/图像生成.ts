@@ -58,7 +58,6 @@ export async function jianChaShengTuPeiE(yongHuId: string): Promise<{ yunXu: boo
   }
 }
 
-/** YH-062 失败回补：下载/生成失败不扣配额 */
 export async function huiTuiShengTuPeiE(yongHuId: string): Promise<void> {
   const jian = `sheng_cheng_ji_fei:${yongHuId}:${huoQuRiQi()}:tuxiang`
   try {
@@ -109,7 +108,6 @@ export async function shengChengTuXiang(canShu: { tiShiCi: string; yongHuId: str
     return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shengTuShiBai') }
   }
   clearTimeout(dingShi)
-  // YH-015+YH-062 流式落盘+失败不扣配额：SSRF收敛下载，失败回补配额
   const { yanZhengYuanChengURL, liuShiXiaZaiYuanChengWenJian } = await import('../utils/远端拉取')
   const urlHeFa = await yanZhengYuanChengURL(tuURL)
   if (!urlHeFa.he_fa) {

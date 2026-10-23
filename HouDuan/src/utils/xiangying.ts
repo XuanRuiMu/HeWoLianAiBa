@@ -41,9 +41,6 @@ function anQuanZiDuanCuoWu(wenBen: unknown): Record<string, string> | undefined 
   for (const [jian, zhi] of Object.entries(wenBen)) {
     if (!KE_AN_QUAN_FIELD_BAI_MING_DAN.has(jian)) continue
     if (typeof zhi !== 'string') continue
-    // 复用 utils/控制字符 真源剥控制字符；本处的 trim().slice(0, 200) 语义原样保留
-    // （错误字段文本仍按 UTF-16 200 上限，对外行为不变；\t \n 按统一口径保留，
-    //  JSON 编码后无显示风险）
     const anQuanZhi = 剥离控制字符(zhi).trim().slice(0, 200)
     if (anQuanZhi) jieGuo[jian] = anQuanZhi
   }

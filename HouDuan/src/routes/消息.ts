@@ -156,7 +156,6 @@ luYou.get(
     const yeMa = huoQuShuZi(qingQiu.query.ye_ma, 1)
     const meiYeTiaoShu = huoQuShuZi(qingQiu.query.mei_ye_tiao_shu, 50)
 
-    // M6 keyset 游标（可选）：上滑加载更早消息时由前端携带上一页末条消息的定位信息
     let youBiaoXuHao: number | null = null
     if (qingQiu.query.you_biao_xu_hao !== undefined && /^\d+$/.test(String(qingQiu.query.you_biao_xu_hao))) {
       youBiaoXuHao = Number(qingQiu.query.you_biao_xu_hao)
@@ -203,7 +202,6 @@ luYou.post(
     if (!yongHu) {
       return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
     }
-    // 任务3：账号封禁中禁止上传任何媒体
     const shangChuanFengJin = await chaXunZhangHaoFengJin(yongHu.yongHuId)
     if (shangChuanFengJin.beiFengJin) {
       return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'zhangHaoYiBeiFengJin'))
@@ -229,7 +227,6 @@ luYou.post(
       let yiXiangYing = false
       let chuLiGuoWenJian = false
 
-      // defParamCharset: 'utf8' —— 中文文件名按 RFC 5987 UTF-8 解码，避免 Latin-1 乱码
       const busboy = Busboy({ headers: qingQiu.headers, defParamCharset: 'utf8' })
 
       busboy.on('file', (_fieldMing, wenJianLiu, xinXi) => {
@@ -260,8 +257,6 @@ luYou.post(
           .catch(async (cuoWu) => {
             yiXiangYing = true
             if (cuoWu instanceof MeiTiCunChuCuoWu) {
-              // 任务3：真实违规图片记账号违规一次（文件已在存储层销毁，等同撤回）；
-              // 状态码/文案/是否记违规全部取自 services/媒体审核出参 这一个出口
               const chuCan = panDingMeiTiShenHeChuCan(String(cuoWu.fanYiJian))
               if (chuCan.xuYaoJiWeiGui) {
                 await jiLuZhangHaoWeiGui({
@@ -278,7 +273,6 @@ luYou.post(
             shiBaiXiangYing(xiangYing, 500, huoQuFanYi('liaoTian', 'meiTiShangChuanShiBai'))
           })
           .finally(() => {
-            // 服务在校验失败时可能未消费文件流；排空以避免 busboy 因背压挂起
             if (!wenJianLiu.readableEnded) {
               wenJianLiu.resume()
             }
@@ -315,7 +309,6 @@ luYou.post(
     if (!yongHu) {
       return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
     }
-    // 任务3：账号封禁中禁止发送任何内容（申诉入口不受影响，见资料路由）
     const zhangHaoFengJin = await chaXunZhangHaoFengJin(yongHu.yongHuId)
     if (zhangHaoFengJin.beiFengJin) {
       return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'zhangHaoYiBeiFengJin'))
@@ -329,15 +322,11 @@ luYou.post(
     if (!shiHeFaXiaoXiLeiXing(leiXing)) {
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'xiaoXiLeiXingFeiFa'))
     }
-    // FP-10（缺陷9）图文混排：块是唯一真源。带了块就不再要求单媒体字段，
-    // 送审/秘密指令等一切「按正文判定」的分支都改用块里拼出的审核文本，
-    // 落库侧（消息服务）会再清洗一次并派生 内容/类型/媒体ID —— 路由不做第二套裁定。
     const tiJiaoKuaiZhi = qingQiuTi['nei_rong_kuai'] ?? qingQiuTi['neiRongKuai'] ?? qingQiuTi['内容块']
     const daiKuai = qingLiTiJiaoKuai(tiJiaoKuaiZhi, '消息接口').kuai
     const shenHeWenBen = daiKuai ? kuaiShenHeWenBen(daiKuai) : neiRong
     const shiMeiTi = leiXing !== 'wenben' && daiKuai === null
 
-    // 媒体消息：meiTiId 必填且格式合法（存在性与归属校验在消息服务内完成）
     let meiTiId: string | null = null
     if (shiMeiTi) {
       const yuanMeiTiId = typeof qingQiuTi['meiTiId'] === 'string'
@@ -351,10 +340,6 @@ luYou.post(
       meiTiId = yuanMeiTiId
     }
 
-    // FP-08a（缺陷5）引用槽：形状（是不是 UUID）在路由判，与 媒体ID 同口径直接 400；
-    // 存在性/同会话/同用户/未撤回/非自引用在消息服务判（只有它拿得到会话归属与事务边界）。
-    // 绝不容忍脏值降级为「无引用」继续落库 —— 幂等键脏了只影响去重，引用脏了是把别人的消息
-    // 当作本会话内容渲染出来的越权面，两种脏值的后果不同级，不可套用同一条「不丢消息」的宽容口径。
     const yuanShiBeiYongZhi = qingQiuTi['beiYongXiaoXiId'] ?? qingQiuTi['bei_yong_xiao_xi_id'] ?? qingQiuTi['被引用消息ID']
     let beiYongXiaoXiId: string | null = null
     if (yuanShiBeiYongZhi !== undefined && yuanShiBeiYongZhi !== null && yuanShiBeiYongZhi !== '') {
@@ -364,14 +349,10 @@ luYou.post(
       beiYongXiaoXiId = yuanShiBeiYongZhi
     }
 
-    // 带了合法块 ⇒ 正文要求由「块里有没有用户文字」变成「有没有块」：纯图片块消息（一张图 + 零文字）
-    // 是图文混排的合法形态，老口径在这里就会把它 400 掉。块全被判脏丢光时仍由消息服务给出明确 400。
     if (!jiaoSeId || (!shiMeiTi && daiKuai === null && !shenHeWenBen.trim())) {
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
     }
 
-    // 兼容读取：旧客户端仍会上报自增「客户端序号」。序号自 FP-09 起由服务端事务内权威分配，
-    // 该值只被容忍（格式非法仍按 400 拒收，不 500）而不再参与取号与幂等判据。
     const yuanShiXuHao = (qingQiu.body as Record<string, unknown>)['客户端序号']
     let keHuDuanXuHao: number | null = null
     if (yuanShiXuHao !== undefined && yuanShiXuHao !== null) {
@@ -384,15 +365,10 @@ luYou.post(
       }
     }
 
-    // FP-09 幂等判据：客户端为每条待发消息生成的稳定 UUID。非 UUID 不在路由层拒 400，
-    // 由服务层降级为「无幂等键」——脏字段不该让用户消息发不出去。
     const yuanShiMiDengJian = qingQiuTi['幂等键'] ?? qingQiuTi['miDengJian'] ?? qingQiuTi['mi_deng_jian']
     const miDengJian = typeof yuanShiMiDengJian === 'string' ? yuanShiMiDengJian : null
 
     try {
-      // 安全审核：只要消息里带用户文字就必须审（图文混排的文字与纯文本走同一道闸）；
-      // 纯图片消息没有文字可审，其像素由上传时的视觉审核负责。
-      // 拦截在落库前（非法数据直接销毁，等同撤回）；审核服务自身不可用不计为用户违规。
       if (shenHeWenBen.trim()) {
         const weiJi = jianCeWeiJiXinHao(shenHeWenBen)
         if (weiJi) {
@@ -410,7 +386,6 @@ luYou.post(
           if (!jieGuo.cheng_gong) {
             return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('liaoTian', 'faSongShiBai'))
           }
-          // 消息已落库：之后的审计与 AI 触发都是副作用，失败只落日志，不得把已成功请求改写成 500
           执行落库后副作用('危机干预审计落账', () => jiLuShenJiRiZhi({
             yong_hu_id: yongHu.yongHuId,
             ip: 获取IP(qingQiu),
@@ -473,8 +448,6 @@ luYou.post(
         return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('liaoTian', 'faSongShiBai'))
       }
 
-      // 用户发送新消息后，清除军师「已指导」状态，
-      // 使提示消失并允许重新请求指导
       执行落库后副作用(
         '清除军师已指导状态',
         () => shanChuJunShiZhiDaoZhuangTai(yongHu.yongHuId, jiaoSeId),
@@ -510,7 +483,6 @@ luYou.post(
           })
         }, { yong_hu_id: yongHu.yongHuId, jiao_se_id: jiaoSeId })
 
-        // FP-04：秘密指令只回确认消息、不驱动 AI —— 与旧「前端仅在非秘密时才发触发信号」语义一致
         return chengGongXiangYing(xiangYing, {
           ...(await shouKouXiaoXiYunYingZiDuan(jieGuo.xiao_xi, yongHu.yongHuId)),
           shi_mi_ji: true,
@@ -727,7 +699,6 @@ luYou.get(
   },
 )
 
-// V8：签名 URL 过期后前端 @error 触发重签（校验会话归属与媒体归属）
 luYou.get(
   '/会话/:huiHuaId/媒体签名/:meiTiId',
   liaoTianXianLiu,
@@ -744,7 +715,6 @@ luYou.get(
     }
 
     try {
-      // 会话必须属于当前用户，且该媒体必须出现在当前会话的消息中
       const guiShuJieGuo = await 数据库.query(
         `SELECT 1 FROM "角色" WHERE "ID" = $1 AND "用户ID" = $2 LIMIT 1`,
         [jiaoSeId, yongHu.yongHuId],

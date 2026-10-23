@@ -1,9 +1,5 @@
 name: CI
 
-# 凭据规范：数据库口令 / JWT 密钥等一律经 ${{ secrets.XXX }} 注入，绝不硬编码入库。
-# 未配置 secrets 时仅回退「一次性 CI 容器专用固定测试值」（随作业销毁，非任何真实环境凭据），
-# 兜底值与备案说明见 .gitleaks.toml allowlist。
-
 on:
   push:
     branches: [main, master]
@@ -16,13 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          # 全量历史扫描：历史提交中泄露过的密钥同样会被检出
+
           fetch-depth: 0
 
       - name: Run gitleaks
-        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -34,10 +30,10 @@ jobs:
         working-directory: QianDuan
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: '26.10.0'
           cache: 'npm'
@@ -52,8 +48,6 @@ jobs:
       - name: Lint
         run: npm run lint
 
-# 排在 Build 之前：前端用例无需产物，而 vite build 是本 job 最慢的一步，
-# 先让测试把逻辑回归挡在外面，构建只对已过测试的代码执行。
       - name: Test
         run: npm run test
 
@@ -67,17 +61,15 @@ jobs:
       run:
         working-directory: HouDuan
     env:
-      # 凭据经 secrets 注入；未配置时回退一次性 CI 容器专用测试值（非任何真实环境凭据，备案见 .gitleaks.toml）
+
       DATABASE_URL: postgresql://lianaiba:${{ secrets.CI_TEST_POSTGRES_PASSWORD || 'lianaiba_dev' }}@localhost:5432/lianaiba_test
       TEST_DATABASE_URL: postgresql://lianaiba:${{ secrets.CI_TEST_POSTGRES_PASSWORD || 'lianaiba_dev' }}@localhost:5432/lianaiba_test
       REDIS_PASSWORD: ci-redis-${{ github.run_id }}-${{ github.run_attempt }}
       REDIS_URL: redis://:ci-redis-${{ github.run_id }}-${{ github.run_attempt }}@localhost:6379
       NODE_ENV: test
-      # 同上：secrets 注入优先，兜底为一次性 CI 容器专用测试值（非生产凭据）
+
       JWT_SECRET: ${{ secrets.CI_TEST_JWT_SECRET || 'ci-test-jwt-secret-ci-test-jwt-secret-32' }}
-      # FP-14 模型名自检用例需要「已配置密钥」这一前置条件才能走到比对分支
-      # （DeepSeek客户端.ts 的 ziJianMoXingMingKeYong：`if (!miYao || !jiChu) return true`）。
-      # CI 不入库 .env，故显式给一个占位值；该用例已 mock fetch，不会真的发出请求。
+
       DEEPSEEK_API_KEY: ci-placeholder-key-model-name-self-check
     services:
       postgres:
@@ -85,7 +77,7 @@ jobs:
         env:
           POSTGRES_DB: lianaiba_test
           POSTGRES_USER: lianaiba
-          # 同上：secrets 注入优先，兜底为一次性 CI 容器专用测试值（非生产凭据）
+
           POSTGRES_PASSWORD: ${{ secrets.CI_TEST_POSTGRES_PASSWORD || 'lianaiba_dev' }}
         ports:
           - 5432:5432
@@ -105,10 +97,10 @@ jobs:
           --health-retries 5
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Checkout sibling repo 恋爱吧管理中心（跨仓同源守卫读对端真源）
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: XuanRuiMu/LianAiBaGuanLiZhongXin
           ref: main
@@ -116,7 +108,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: '26.10.0'
           cache: 'npm'
@@ -126,17 +118,12 @@ jobs:
         run: npm ci
 
       - name: Audit dependencies (high)
-        # 只审计会进入运行时的依赖：nodemon→chokidar→braces 的展开式 DoS 仅存在于开发期文件监听，
-        # 生产镜像不安装 devDependencies；全量审计会把一个不可修复的开发工具漏洞当成发布阻断。
+
         run: npm audit --omit=dev --audit-level=high
 
       - name: Enable Redis authentication
         run: docker exec "${{ job.services.redis.id }}" redis-cli CONFIG SET requirepass "$REDIS_PASSWORD"
 
-# ⚠️ 顺序至关重要：typecheck 必须在 Lint **之前**。
-      #    GitHub Actions 在第一个非零 `run:` 步骤就终止 job——若 Lint 先红，
-      #    下面的 typecheck 永远不会执行，护栏形同虚设（第五轮审查 P0-1 实测）。
-      #    护栏必须无条件可达，lint 债务另行处理。
       - name: Typecheck (主配置)
         run: npm run typecheck
 
@@ -157,19 +144,15 @@ jobs:
 
       - name: Verify ShuJuKu migrations
         run: |
-          # 1. Apply baseline schema (simulates docker-entrypoint-initdb.d)
+
           psql "$DATABASE_URL" -f ../ShuJuKu/000_baseline.sql
-          # 2. Run incremental migrations
-          ./node_modules/.bin/ts-node scripts/run_migration.ts
-          # 3. Verify schema_migrations table has all expected versions
-          psql "$DATABASE_URL" -c "SELECT version, checksum FROM schema_migrations ORDER BY version;"
-          # 4. Verify idempotency: run again, should skip all
+
           ./node_modules/.bin/ts-node scripts/run_migration.ts
 
-# 单元/集成测试必须排在建库之后：多数用例连真库（vitest 默认 include 覆盖 scripts/__tests__、
-#   src/**/__tests__），schema 不在则整片红，报错淹没在连接失败里，看不出真实回归。
-# 同时这里也是 ci工作流自检.test.ts:55 断言「HouDuan job 必须真跑测试」的锚点——
-# 该步骤一旦从本文件删除，本地 npm test 会立即转红。
+          psql "$DATABASE_URL" -c "SELECT version, checksum FROM schema_migrations ORDER BY version;"
+
+          ./node_modules/.bin/ts-node scripts/run_migration.ts
+
       - name: Test
         run: npm run test
 
@@ -181,13 +164,13 @@ jobs:
       run:
         working-directory: HouDuan
     env:
-      # 凭据经 secrets 注入；未配置时回退一次性 CI 容器专用测试值（非任何真实环境凭据，备案见 .gitleaks.toml）
+
       DATABASE_URL: postgresql://lianaiba:${{ secrets.CI_TEST_POSTGRES_PASSWORD || 'lianaiba_dev' }}@localhost:5432/lianaiba_test
       TEST_DATABASE_URL: postgresql://lianaiba:${{ secrets.CI_TEST_POSTGRES_PASSWORD || 'lianaiba_dev' }}@localhost:5432/lianaiba_test
       REDIS_PASSWORD: ci-redis-${{ github.run_id }}-${{ github.run_attempt }}
       REDIS_URL: redis://:ci-redis-${{ github.run_id }}-${{ github.run_attempt }}@localhost:6379
       NODE_ENV: test
-      # 同上：secrets 注入优先，兜底为一次性 CI 容器专用测试值（非生产凭据）
+
       JWT_SECRET: ${{ secrets.CI_TEST_JWT_SECRET || 'ci-test-jwt-secret-ci-test-jwt-secret-32' }}
     services:
       postgres:
@@ -195,7 +178,7 @@ jobs:
         env:
           POSTGRES_DB: lianaiba_test
           POSTGRES_USER: lianaiba
-          # 同上：secrets 注入优先，兜底为一次性 CI 容器专用测试值（非生产凭据）
+
           POSTGRES_PASSWORD: ${{ secrets.CI_TEST_POSTGRES_PASSWORD || 'lianaiba_dev' }}
         ports:
           - 5432:5432
@@ -215,10 +198,10 @@ jobs:
           --health-retries 5
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: '26.10.0'
           cache: 'npm'
@@ -228,8 +211,7 @@ jobs:
         run: npm ci
 
       - name: Audit dependencies (high)
-        # 只审计会进入运行时的依赖：nodemon→chokidar→braces 的展开式 DoS 仅存在于开发期文件监听，
-        # 生产镜像不安装 devDependencies；全量审计会把一个不可修复的开发工具漏洞当成发布阻断。
+
         run: npm audit --omit=dev --audit-level=high
 
       - name: Enable Redis authentication

@@ -29,8 +29,6 @@ export const QIAN_TAI_DAI_MA = {
   AUTH_INVALID_CREDENTIALS: 'AUTH_INVALID_CREDENTIALS',
   AUTH_REFRESH_TOKEN_INVALID: 'AUTH_REFRESH_TOKEN_INVALID',
   AUTH_PASSWORD_CHANGE_FAILED: 'AUTH_PASSWORD_CHANGE_FAILED',
-  // 重置密码是登录面独立的一条线，挨在改密码后面；该码走免码展示，
-  // 但仍保留独立编号以维持「一码一号」的全局一对一契约
   AUTH_PASSWORD_RESET_FAILED: 'AUTH_PASSWORD_RESET_FAILED',
   AUTH_USERNAME_CHANGE_FAILED: 'AUTH_USERNAME_CHANGE_FAILED',
   AUTH_DEFAULT_GENDER_INVALID: 'AUTH_DEFAULT_GENDER_INVALID',
@@ -117,8 +115,6 @@ export const LIAN_AI_DAI_MA: Readonly<Record<QianTaiDaiMa, LianAiMa>> = {
   AUTH_INVALID_CREDENTIALS: 'LianAi_028',
   AUTH_REFRESH_TOKEN_INVALID: 'LianAi_029',
   AUTH_PASSWORD_CHANGE_FAILED: 'LianAi_030',
-  // 排在末尾取 067：契约要求 LianAi 编号自 001 起连续且唯一，
-  // 插在 028 旁边会让 029 及之后全体错位。免码只影响是否展示，不影响占号。
   AUTH_PASSWORD_RESET_FAILED: 'LianAi_067',
   AUTH_USERNAME_CHANGE_FAILED: 'LianAi_031',
   AUTH_DEFAULT_GENDER_INVALID: 'LianAi_032',
@@ -162,20 +158,11 @@ export function huoQuLianAiMa(daiMa: QianTaiDaiMa): LianAiMa {
   return LIAN_AI_DAI_MA[daiMa]
 }
 
-/**
- * 免码报错：属于「用户自己输入不对」的正常报错，不是故障，不该逼用户背一个恋爱码去求助。
- * 这些码不展示恋爱码行与复制按钮，报错框里只摆一句人话。
- * 判据是「用户改一下自己的输入就能解决」，而不是「服务端出问题了」——
- * 后者（网络、依赖、权限、限流…）仍必须带码，否则用户没法自助定位与反馈。
- */
 const MIAN_MA_DAI_MA: ReadonlySet<QianTaiDaiMa> = new Set<QianTaiDaiMa>([
   QIAN_TAI_DAI_MA.AUTH_INVALID_CREDENTIALS,
-  // 重置密码失败也只有一句「验证码不对或该号没注册」，带恋爱码等于让用户
-  // 把恋爱码发出来问「我号到底在不在」，反而成了账号枚举的旁路
   QIAN_TAI_DAI_MA.AUTH_PASSWORD_RESET_FAILED,
 ])
 
-/** 该报错是否需要向用户展示恋爱码 */
 export function xianShiLianAiMa(daiMa: QianTaiDaiMa): boolean {
   return !MIAN_MA_DAI_MA.has(daiMa)
 }
@@ -198,7 +185,6 @@ export type QianTaiWenBenLeiXing =
   | 'tongYong'
   | 'quXiao'
 
-/** 文本类别的穷举清单（判据守卫用：新增类别必须同时补齐影响/下一步文案，否则守卫会红） */
 export const WEN_BEN_LEI_XING_QUAN_LU: readonly QianTaiWenBenLeiXing[] = [
   'qingQiu',
   'wangLuo',

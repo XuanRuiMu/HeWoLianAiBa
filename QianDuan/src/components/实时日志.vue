@@ -245,7 +245,6 @@ async function fuZhi() {
 function chuLiKuaiJieJian(shiJian: KeyboardEvent) {
   if (!shiJian.ctrlKey || !shiJian.shiftKey) return
   if (shiJian.key !== 'L' && shiJian.key !== 'l') return
-  // FP-18 运行时日志流按高危能力位授权，口径与服务端 socket/日志推送.ts 的门禁同源
   if (!用户仓库.keGaoWei) return
   shiJian.preventDefault()
   日志仓库.qieHuanKeJian()
@@ -266,8 +265,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .rizhi-fuchuang {
-  /* 几何（left/top/width/height）与停靠边距由 use可拖动浮窗 以 px 下发，
-     宿主不得再用 left/right/top/bottom 钉盒，也不得再写视口单位尺寸与魔法数字 */
+  
   --rizhi-z-index: var(--ceng-tiaoshi-riji);
 
   position: fixed;

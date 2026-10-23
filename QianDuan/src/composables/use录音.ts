@@ -3,8 +3,6 @@ import { DUO_MEI_TI_PEI_ZHI, LU_YIN_PEI_ZHI } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/翻译表'
 
 const LU_YIN_SHANG_HUA_QU_XIAO_JU_LI = 80
-// FP-17：等待 MediaRecorder 停止事件的兜底上限。某些机型 stop 事件可能丢失或 stop() 抛错，
-// 没有兜底就会把「录音中」和「结算中」两把锁永久留在置位态，整页再也录不了音。
 const LU_YIN_TING_ZHI_DENG_DAI_HAO_MIAO = 2000
 const LU_YIN_CAI_YANG_JIAN_GE_HAO_MIAO = 60
 const LU_YIN_QIANG_DU_FANG_DA = 4
@@ -40,10 +38,6 @@ export function use录音(yiLai: Use录音依赖) {
   let luYinKaiShiHaoMiao = 0
   let luYinQiDianY: number | null = null
   let luYinQiBuChuLiZhong = false
-  // FP-17 结算去重：真机上 pointerup 与 touchend 会先后触发 songKaiLuYin（错误回调/切后台也走结算），
-  // 两条结算链会各取同一段录音 erJinZhiDuiXiang 各发一次 ⇒ 重复语音条。同一次录音只允许结算一次；
-  // 结算链离开等待段（无论停止事件到没到、stop() 抛不抛错）即资源与闸门一起复位，
-  // 放在 finally 里保证异常也不把页面锁死。
   let benCiJieSuanZhong = false
 
   function qieHuanLuYinMoShi() {
@@ -165,10 +159,6 @@ export function use录音(yiLai: Use录音依赖) {
     luYinQiDianY = null
   }
 
-  /**
-   * FP-17：等待录制器停止的兜底口。stop 事件可能丢失、stop() 可能抛状态竞态错误，
-   * 两者都必须收敛成「已停止」而不是把结算链挂在 await 上。
-   */
   function dengDaiLuYinTingZhi(luYinQi: MediaRecorder): Promise<void> {
     return new Promise<void>((jieJue) => {
       const dingShi = setTimeout(jieJue, LU_YIN_TING_ZHI_DENG_DAI_HAO_MIAO)
@@ -205,7 +195,6 @@ export function use录音(yiLai: Use录音依赖) {
     try {
       await dengDaiLuYinTingZhi(luYinQi)
     } finally {
-      // 无论停止事件是否到达、stop() 是否抛错，都必须释放录制资源与结算闸门；否则页面永久锁死
       qingLiLuYinZiYuan()
       benCiJieSuanZhong = false
     }
@@ -223,7 +212,6 @@ export function use录音(yiLai: Use录音依赖) {
     luYinMoShi.value = false
     if (kuaiLieBiao.length === 0) return
     const erJinZhiDuiXiang = new Blob(kuaiLieBiao, { type: mime })
-    // V6 顺手项：按真实 mimeType 映射扩展名（iOS Safari 产出 audio/mp4，不再误标 .webm）
     const kuoZhanMing = mime.includes('mp4')
       ? 'm4a'
       : mime.includes('ogg')

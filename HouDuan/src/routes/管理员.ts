@@ -37,7 +37,6 @@ import { huoQuWanZhengHaoGanDu } from '../services/好感度'
 
 const luYou = Router()
 
-// P2-2：审计场景一律使用可信链路推导的真实来源 IP，不解析客户端可控 XFF
 function huoQuIp(qingQiu: Request): string {
   return huoQuZhenShiIP(qingQiu)
 }
@@ -54,8 +53,6 @@ function huoQuZiFuChuan(
 }
 
 luYou.use(guanLiCaoZuoXianLiu)
-// FP-18 游戏端管理面：路由级只读门（cha_kan，任一管理身份），写操作逐条按角色能力矩阵挂对应能力位
-// （与 恋爱吧管理中心 的同源矩阵同口径，见 utils/角色能力 与 utils/__tests__/角色能力同源.test.ts）
 luYou.use(guanLiZhiDuMenKong)
 
 luYou.get('/用户', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
@@ -157,7 +154,6 @@ luYou.post('/夺舍/:jiaoSeId', guanLiGaoWeiMenKong, async (qingQiu: RenZhengQin
     const jieGuo = await sheZhiDuoSheZhuangTai(jiaoSeId, yongHu.yongHuId)
     const muBiaoYongHuId = await huoQuJiaoSeYongHuId(jiaoSeId)
     if (muBiaoYongHuId) {
-      // 夺舍状态已写库：中断调度器是副作用，失败只落日志，不得让已生效的写操作回错为 500
       执行落库后副作用(
         '夺舍后中断AI调度器',
         () => zhongDuanJiaoSeTiaoDuQi(muBiaoYongHuId, jiaoSeId),
@@ -301,8 +297,6 @@ luYou.get('/系统状态', async (qingQiu: RenZhengQingQiu, xiangYing: Response)
   }
 })
 
-// M3 管理端用量看板：聚合每用户当日 AI 调用量与预算余量（数据源为 Redis ai_yu_suan:* 计数）
-// FP-04 YH-040：叠加 LLM 网关 usage 真实口径（按模型类型聚合 token），字符估算不再作为成本口径
 luYou.get('/用量看板', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu!
   try {
@@ -312,7 +306,6 @@ luYou.get('/用量看板', async (qingQiu: RenZhengQingQiu, xiangYing: Response)
     const { huoQuJinRiHuiZong } = await import('../services/用量统计')
     const { duQuZhongShiDuiLieChangDu } = await import('../services/重试队列').catch(() => ({ duQuZhongShiDuiLieChangDu: async () => 0 }))
 
-    // SCAN 收集当日全部计数键（生产多库共享 Redis，避免 KEYS 阻塞）
     const jiShuJian: string[] = []
     let saoMiaoGuangBiao = '0'
     do {
@@ -401,7 +394,6 @@ luYou.get('/用量看板', async (qingQiu: RenZhengQingQiu, xiangYing: Response)
   }
 })
 
-// 好感度隐形保底增益曲线查看
 luYou.get('/增益曲线/:yongHuId/:jiaoSeId', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu!
   const yongHuId = String(qingQiu.params.yongHuId || '')
@@ -526,7 +518,6 @@ luYou.delete('/用户/:yongHuId', guanLiGaoWeiMenKong, async (qingQiu: RenZhengQ
   }
 })
 
-/** 任务3：封禁与申诉列表（200条封顶，按更新时间倒序） */
 luYou.get('/账号封禁', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   try {
     const lieBiao = await lieChuFengJinShenSu()
@@ -537,7 +528,6 @@ luYou.get('/账号封禁', async (qingQiu: RenZhengQingQiu, xiangYing: Response)
   }
 })
 
-/** 任务3：管理员解封（保留违规次数，再犯升级） */
 luYou.post('/账号封禁/解封', guanLiFengJinMenKong, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu!
   const qingQiuTi = qingQiu.body as Record<string, unknown>
@@ -554,7 +544,6 @@ luYou.post('/账号封禁/解封', guanLiFengJinMenKong, async (qingQiu: RenZhen
   }
 })
 
-/** 任务3：审核申诉（通过则解封并清零次数，驳回则继续限制）；FP-17 同口径归 feng_jin_shen_he（审核员+超管） */
 luYou.post('/申诉/审核', guanLiFengJinShenHeMenKong, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu!
   const qingQiuTi = qingQiu.body as Record<string, unknown>

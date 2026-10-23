@@ -2,9 +2,6 @@ import { huoQuFanYi } from '@/config/翻译表'
 import { huoQuQiPaoDingYi, type QiPaoYuShe } from '@/config/气泡主题'
 import { EMOJI_ZITI_DUI } from './表情包库'
 
-// 战报海报：竖版 3:4（社交平台通用比例），纯 huaBu 手绘，不引入截图类依赖。
-// 配色一律取 variables.css 的设计令牌（明暗两套由 data-theme 级联自动切换），
-// 几何尺寸是本文件唯一事实源的具名常量；气泡配色取 config/气泡主题.ts 的既有主题。
 export const ZHAN_BAO_KUAN = 1080
 export const ZHAN_BAO_GAO = 1440
 
@@ -220,7 +217,6 @@ function huaJieGuo(
   yiLai: ZhanBaoShuRu,
 ): number {
   const qiPao = huoQuQiPaoDingYi(yiLai.qiPaoAI)
-  // 先设正文字号再断行：measureText 依赖当前字体，用上一次遗留字号量会误判换行点
   huaBuShangXiaWen.font = `${ZHI_HAO.miaoShuZhengWen}px ${pin.ziTiJiaZu}`
   const hangList = duanHang(huaBuShangXiaWen, yiLai.jieGuoWenBen, NEI_KUAN - 96, JIE_GUO_ZUI_DA_HANG_SHU)
   const zhengWenGao = ZHI_HAO.miaoShuZhengWen * HANG_JU

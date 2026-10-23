@@ -186,12 +186,10 @@ const emit = defineEmits<{
 
 const router = useRouter()
 
-// 跨导航唯一事实源：军师指导状态提升到独立 store，组件本地不再持有易失副本
 const 军师仓库 = 使用军师仓库()
 
 const junShiLieBiaoXuanXiang = ref<JunShiXinXi[]>([])
 const jiLuLieBiao = ref<JunShiJiLu[]>([])
-// 透传 store 的持久状态，保持模板与派生逻辑无需改动来源
 const dangQianZhuangTai = computed(() => 军师仓库.zhuangTai)
 const youLiaoTianJiLu = computed(() => 军师仓库.youLiaoTianJiLu)
 const qingQiuZhongJunShiId = ref<string | null>(null)
@@ -209,9 +207,6 @@ function junShiMoRenWenZi(junShi: JunShiXinXi): string {
   return junShiMoRenTouXiang(huoQuJunShiMingCheng(junShi))
 }
 
-// 单一派生状态：当前聊天内容是否已被指导过（非指导中时）。
-// 提示显隐与「开始指导」按钮可用性均由它统一控制，避免点击后再检查再弹提示的重复路径。
-// 判定依据为 store 的持久状态，离开再回来恒与后端真值一致。
 const yiZhiDaoXiangTongNeiRong = computed(
   () => !军师仓库.keZaiCiZhiDao && 军师仓库.zhuangTai?.zhuang_tai !== 'zhi_dao_zhong',
 )
@@ -234,8 +229,6 @@ function qiDongLunXun() {
   }, LUN_XUN_JIAN_GE_HAO_MIAO)
 }
 
-// 由 store 的持久状态派生卡片状态，颜色（黄/灰）与后端真值始终一致。
-// 若 store 持有的会话与当前组件会话不一致（切换竞态窗口），保守视为未指导，待 seed 完成。
 function huoQuJunShiZhuangTai(junShiId: string): JunShiZhuangTaiLeiXing {
   if (!军师仓库.shiDangQianHuiHua(props.jiaoSeId)) return 'wei_zhi_dao'
   const zt = 军师仓库.zhuangTai
@@ -260,7 +253,6 @@ function huoQuZhiDaoJieGuo(junShiId: string): string | null {
   return jiLu?.jian_yi || null
 }
 
-// 旧记录（Redis 里只有 jian_yi 整段文本）没有该字段，返回 null 由分段组件兜底成整段展示
 function huoQuZhiDaoFenDuan(junShiId: string): JunShiZhiDaoFenDuan | null {
   const zt = 军师仓库.zhuangTai
   if (zt?.zhuang_tai === 'yi_wan_cheng' && zt.jun_shi_id === junShiId && zt.jie_guo) {
@@ -278,7 +270,6 @@ async function chaXunBingGengXinZhuangTai(): Promise<void> {
       keZaiCiZhiDao: keZaiCi,
       youLiaoTianJiLu: ylt,
     } = await huoQuJunShiZhiDaoZhuangTai(props.jiaoSeId)
-    // 写入 store（而非本地易失 ref），组件卸载不再丢失
     军师仓库.gengXinZhuangTai(zhuangTai, keZaiCi, ylt)
     if (zhuangTai?.zhuang_tai === 'yi_wan_cheng') {
       tingZhiLunXun()
@@ -311,7 +302,6 @@ function huoQuJunShiMingCheng(junShi: JunShiXinXi): string {
 }
 
 async function zhiXingQingQiu(junShi: JunShiXinXi) {
-  // 单一派生状态控制：当前聊天内容已指导过时禁止再次请求，避免点击后再检查再弹提示
   if (yiZhiDaoXiangTongNeiRong.value) return
   await qingQiuZhiDao(junShi)
 }
@@ -330,16 +320,12 @@ async function qingQiuZhiDao(junShi: JunShiXinXi) {
   if (!props.jiaoSeId) return
   qingQiuZhongJunShiId.value = junShi.id
   cuoWuTiShiMap.value = { ...cuoWuTiShiMap.value, [junShi.id]: null }
-  // 点击即乐观置为「指导中」黄色卡片（与后端真值一致），并启动轮询自校正，
-  // 使「刚点击」与「离开再进入仍在指导中」渲染同一套黄色样式，不再出现灰底
   军师仓库.sheZhiZhiDaoZhong(props.jiaoSeId, junShi.id)
   qiDongLunXun()
   try {
     const jieGuo = await qingQiuJunShiZhiDao(props.jiaoSeId, junShi.id)
     track('junShiShiYong', { jun_shi_id: junShi.id })
-    // 写入 store：完成态持久化，离开再回来显示灰度与结果一致
     军师仓库.sheZhiYiWanCheng(props.jiaoSeId, junShi.id, jieGuo)
-    // 仅刷新 keZaiCiZhiDao（不覆盖已完成态），使「已指导过」提示显示
     const { keZaiCiZhiDao: kzc } = await huoQuJunShiZhiDaoZhuangTai(props.jiaoSeId)
     军师仓库.gengXinKeZaiCiZhiDao(kzc)
     await shuaXinJiLuLieBiao()
@@ -349,7 +335,6 @@ async function qingQiuZhiDao(junShi: JunShiXinXi) {
   } catch (e: unknown) {
     const zhengChangHua = 归一前台错误(e)
     if (zhengChangHua.code === QIAN_TAI_DAI_MA.JUN_SHI_ZAI_ZHI_DAO_ZHONG) {
-      // 已在指导中：点击时已乐观置为「指导中」黄色卡片并启动轮询自校正，无需重复处理
       return
     }
     qingQiuZhongJunShiId.value = null
@@ -387,7 +372,6 @@ function guanBiZhiDaoJiLu() {
   xianShiZhiDaoJiLu.value = false
 }
 
-// 列表预览取「下一步怎么回」（用户唯一要照做的事），旧记录无分段时退回整段文本
 function huoQuJianYiYuLan(jiLu: JunShiJiLu): string {
   const jianYi = jiLu.jian_yi_fen_duan?.xiaYiBuZenMeHui?.trim() || jiLu.jian_yi || ''
   if (!jianYi) return ''
@@ -413,7 +397,6 @@ onMounted(() => {
   void chuShiHua()
 })
 
-// 切换会话后重新查询历史指导状态，使提示与按钮可用性随新会话正确流转
 watch(
   () => props.jiaoSeId,
   () => {
@@ -427,7 +410,6 @@ async function chuShiHua(): Promise<void> {
   qingQiuZhongJunShiId.value = null
   zhanKaiJunShiId.value = null
   cuoWuTiShiMap.value = {}
-  // P0 输入验证：非法角色 ID 直接中止，避免污染跨导航状态
   if (!props.jiaoSeId || !shiYouXiaoJiaoSeId(props.jiaoSeId)) {
     jiaZaiZhong.value = false
     return
@@ -446,7 +428,6 @@ async function chuShiHua(): Promise<void> {
     ])
     junShiLieBiaoXuanXiang.value = lieBiao
     jiLuLieBiao.value = jiLu
-    // 用后端持久真值 seed store（跨导航唯一事实源），不再写本地易失 ref
     军师仓库.jiaoSeId = props.jiaoSeId
     军师仓库.gengXinZhuangTai(
       zhuangTaiJieGuo.zhuangTai,
@@ -465,7 +446,6 @@ async function chuShiHua(): Promise<void> {
 }
 
 onUnmounted(() => {
-  // 仅停止轮询；store 状态跨导航持久保留，离开再回来黄底恒与后端真值一致
   tingZhiLunXun()
 })
 </script>
@@ -552,7 +532,7 @@ onUnmounted(() => {
   scrollbar-color: var(--gundong-tiao-beijing) transparent;
 }
 
-/* FP-20 保留特例：军师指导内容区需要 6px 窄条+透明轨道+--gundong-tiao-beijing 滑块（global 为 8px+半透明灰轨道+huakuai 令牌），且宽度/滑块令牌/悬停选择器被 军师指导.test 钉死，整块保留 */
+
 .junshi-neirong::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -761,7 +741,7 @@ onUnmounted(() => {
   scrollbar-color: var(--gundong-tiao-beijing) transparent;
 }
 
-/* FP-20 保留特例：指导记录区需要 6px 窄条与透明轨道露出面板底（global 为 8px+半透明灰轨道，视觉不同）；thumb 与 global --gundong-tiao-huakuai 同值纯重复已删，无测试钉它 */
+
 .zhidao-jilu-neirong::-webkit-scrollbar {
   width: 6px;
 }

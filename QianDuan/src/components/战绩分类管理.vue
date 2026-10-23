@@ -240,8 +240,7 @@ function onPaiXuGengXin(xinLieBiao: ZhanJiFenLei[]): void {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  /* overflow-x:auto 会把激活标签的 3px 偏移阴影与 2px 边框裁掉，故留一档底部内边距让阴影出画；
-     该值计入"默认分类"框下间距预算（滚动容器上内边距 = 此值 + 列表 gap + 空态卡上 margin） */
+  
   padding-bottom: var(--jiange-4);
   overflow-x: auto;
   overscroll-behavior-inline: contain;

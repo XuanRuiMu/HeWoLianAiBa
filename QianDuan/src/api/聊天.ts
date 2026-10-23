@@ -63,7 +63,6 @@ export async function huoQuXiaoXi(
     ye_ma: yeMa,
     mei_ye_tiao_shu: meiYeTiaoShu,
   }
-  // M6 keyset 游标：上滑加载更早消息时携带上一页末条定位，后端免 OFFSET 深分页
   if (youBiao) {
     canShu.ye_ma = 1
     if (youBiao.xu_hao != null) canShu.you_biao_xu_hao = youBiao.xu_hao
@@ -101,8 +100,6 @@ const MO_REN_SHANG_CHUAN_WEN_JIAN_MING: Record<ShangChuanLeiBie, string> = {
   wenjian: 'wenjian',
 }
 
-// V6 顺手项：Blob 无文件名时按真实 mimeType 映射扩展名（iOS Safari 产出 audio/mp4）
-// FP-21 起导出：好友媒体上传（api/社交.ts）与 AI 链路共用同一份推导，禁止第二份默认文件名表
 export function anMimeTuiDaoWenJianMing(leiBie: ShangChuanLeiBie, mime: string): string {
   const moRen = MO_REN_SHANG_CHUAN_WEN_JIAN_MING[leiBie]
   if (leiBie !== 'yuyin') return moRen
@@ -137,38 +134,13 @@ export async function shangChuanMeiTi(
   return 响应.data.shu_ju
 }
 
-/**
- * FP-08b（缺陷5）入参形态收口：`faSongXiaoXi` 由「6 位置参 + 末位引用对象」→ **单一入参对象**。
- *
- * 为什么非收不可（PROGRESS 盲区 B11#2，不是风格问题而是错值面问题）：
- * 旧签名里 `miDengJian?: string | null`、`leiXing?: string`、`meiTiId?: string | null`
- * 三个相邻实参两两同型（都是 `string` 可空的近邻），调用点少写/写反一位**编译器不报错**，
- * 结果是「把媒体 ID 当幂等键发出去」这类静默错值——它一路走到服务端落库才表现为脏数据。
- * 收口成对象后每个实参都自带字段名，错位当场编译失败；新增槽位也不再靠位置。
- */
 export interface FaSongXiaoXiCanShu {
   huiHuaId: string
   neiRong: string
-  /**
-   * FP-09b 投递契约：客户端为这条消息生成的稳定 UUID（幂等键）。
-   * 序号自 FP-09 起由服务端事务内权威分配，前端不再上报自增序号；重发同一条必须复用同一把键，
-   * 服务端 `UNIQUE(用户ID,角色ID,幂等键)` 才能把网络抖动/重试的重放压成一条。
-   * 键同时经 `Idempotency-Key` 头交给请求层，使这条 POST 落入「带幂等键才重试」的通道。
-   */
   miDengJian?: string | null
   leiXing?: string
   meiTiId?: string | null
-  /**
-   * FP-10b（缺陷9）图文混排：有序内容块。带上它 ⇒ 块是唯一真源，服务端据此派生
-   * `neiRong/leiXing/meiTiId` 三个兼容投影（客户端同时报的那三个值会被忽略）。
-   * 不带时请求体与改造前逐字相同（纯文本/单媒体老链路零改动）。
-   */
   neiRongKuai?: XiaoXiKuai[]
-  /**
-   * FP-08a（缺陷5）引用槽：`{ beiYongXiaoXiId }` 是**这条消息引用了哪条消息**，服务端按
-   * 存在性/同会话/同用户/未撤回/非自引用五道裁定后落库，非法值 4xx（不许静默丢引用）。
-   * 不传/传 null/传空串时请求体与改造前逐字相同（老调用点零改动，`发件箱.test.ts` 的等值断言即为证据）。
-   */
   yinYong?: { beiYongXiaoXiId?: string | null }
 }
 
@@ -424,8 +396,6 @@ export async function shengChengJiaoSe(
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: ShengChengJiaoSeJieGuo }>(
     '/生成角色/MBTI生成',
     {
-      // FP-13：出参性别一律过唯一解析入口归一为内部规范形态，识别不出即拒，
-      // 不再用「非 male 即 nv」的三元把无法识别的写法静默算成女性
       性别: 请求性别或拒绝(目标性别),
       mbti类型: 性格选择,
       渣男渣女变体: 允许渣型,
@@ -511,7 +481,6 @@ export interface 复盘时间线条目 {
   ai_xin_li_huo_dong: string
 }
 
-// V8：签名 URL 过期后重签（后端校验会话与媒体归属）
 export interface DuoMoTaiPeiZhi {
   yuYinLiJieQiYong: boolean
   shiPinLiJieQiYong: boolean

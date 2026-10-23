@@ -39,10 +39,9 @@
         <div class="xiaoxi-wei">
           <TouXiang :tou-xiang="xianShiTouXiang(xiaoXi)" :mo-ren-zi="touXiangMoRenZi(xiaoXi)" />
         </div>
-        <!-- FP-11：语音支必须先于媒体支（MEI_TI_XIAO_XI_LEI_XING 含 yuyin，否则会掉进文件泡）。
-             HaoYouXiaoXi 无时长字段（后端出参无此列）⇒ 气泡按最短 1s 宽兜底，属已知限制。 -->
+        
         <div v-if="xiaoXi.lei_xing === 'yuYin'" class="qipao-waike yuyin-waike">
-          <!-- HaoYouXiaoXi 无时长列 ⇒ 按 YuYinShiChangZaiTi（可选毫秒字段）兜底 1s 宽，cast 是类型桥非数据造假 -->
+          
           <YuYinQiPao
             :xiao-xi="(xiaoXi as unknown as { mei_ti_shi_chang_hao_miao?: number | null })"
             :bo-fang-zhong="shiYuYinBoFangZhong(xiaoXi as unknown as 消息)"
@@ -76,7 +75,7 @@
             {{ huoQuFanYi('liaoTian', 'yuYinZhuanWenZiShiBai') }}
           </span>
         </div>
-        <!-- FP-10a 反转同构：媒体支只接住「反构不出图片块」的脏行；含图片块走下方块渲染 -->
+        
         <div v-else-if="shiMeiTiXiaoXi(xiaoXi) && !shiXuYaoKuaiXuanRan(xiaoXi as unknown as 消息)" class="qipao-waike" :class="meiTiWaiKeLeiMing(xiaoXi)">
           <img
             v-if="shiTuPianXiaoXi(xiaoXi)"
@@ -153,12 +152,7 @@
     </main>
     <footer class="shuru-quyu">
       <div class="shuru-rongqi">
-        <!-- 图文真内联输入区（FP-10c）：与 AI 聊天页共用同一份 components/聊天/图文输入区.vue，
-             文字段与图片/贴纸块在同一条 contenteditable 流里，块插在光标处。
-             改造前本页的待发序列是 `.shuru-rongqi` 的整宽行子元素（AI 页自 FP-10b 第二刀起在
-             .shuru-kuang-waike 盒内、编辑器之前），两页共用的只是序列组件那一份实现、版面不同；
-             本单一落地，两页连版面一起同构（序列槽位随真内联一起消失）；引用落库（FP-09/08a）与
-             内容块落库（迁移 036 + routes/好友.ts）已同树落地，不再挂 FP-21 -->
+        
         <button
           class="meiti-rukou"
           type="button"
@@ -217,7 +211,7 @@
       </div>
       <p v-if="faSongTiShi" class="fasong-tishi" role="status">{{ faSongTiShi }}</p>
       <p v-if="caoGaoYiHuiFu" class="fasong-tishi" role="status">{{ huoQuFanYi('tongYong', 'caoGaoYiHuiFu') }}</p>
-      <!-- FP-20 契约：与聊天页同一条「添加到表情」反馈口径（成功/已在库两句可区分），不复用红色错误行 -->
+      
       <div v-if="biaoQingTiShi" class="shuru-fu-zhu" role="status">
         <span class="biaoqing-tishi">{{ biaoQingTiShi }}</span>
       </div>
@@ -230,7 +224,7 @@
         @change="chuLiWenJianXuanZe"
       />
     </footer>
-    <!-- FP-09/FP-21：发送前引用条已内联在 .shuru-rongqi 首子元素；此处为三个菜单浮层 -->
+    
     <Teleport to="body">
       <Transition name="zhezhao-xianshi">
         <div v-if="yuYinCaiDanZhanKai" class="chehui-zhezhao" @click="guanBiYuYinCaiDan">
@@ -263,7 +257,7 @@
         </div>
       </Transition>
     </Teleport>
-    <!-- FP-20/FP-21：图片气泡右键/长按菜单，与聊天页同一份 use长按菜单 状态机与 .chehui-* 样式 -->
+    
     <Teleport to="body">
       <Transition name="zhezhao-xianshi">
         <div
@@ -362,8 +356,6 @@ const 设置仓库 = 使用用户设置仓库()
 const haoYouId = String(route.params.haoYouId || '')
 const woDeId = 用户仓库.dangQianYongHu?.id || ''
 const xiaoXiLieBiao = ref<HaoYouXiaoXi[]>([])
-/* 时间条（FP-11 验收点 B）：与聊天页共用 utils/消息时间分组.ts 的唯一分档实现与
-   components/聊天/时间条.vue 的唯一呈现，本页不再自己拼时间文本 */
 const xiaoXiFenZu = computed(() => fenZuXiaoXiAnShiJian(xiaoXiLieBiao.value))
 const shuRuNeiRong = ref('')
 const { huiFuCaoGao, qingChuCaoGao } = useCaoGao(CAO_GAO_JIAN.haoYouLiaoTian(haoYouId), shuRuNeiRong)
@@ -438,18 +430,15 @@ async function shuaXin(youBiao?: { xu_hao: number | null; shi_jian: number; id: 
 }
 
 function fanHui() {
-  // 单次返回直达上一页：历史栈见底（如直链进入）时替换到好友列表，避免点击无反应
   if (typeof window !== 'undefined' && window.history.length > 1) router.back()
   else router.replace('/hao-you')
 }
 
 function fanHuiLieBiao() {
-  // 空态返回用替换而非推入：避免“返回又回来”导致多点一次
   router.replace('/hao-you')
 }
 
 async function faSongYiDuanWenBen(wenBen: string, miDengJian: string): Promise<boolean> {
-  // YH-087 发送乐观更新：先本地落一条再调接口，失败回滚禁全量刷新
   const leGuanId = `le-guan-${miDengJian}`
   const yinYongId = yinYongXiaoXi.value?.id ?? null
   const leGuanXiaoXi = {
@@ -478,7 +467,6 @@ async function faSongYiDuanWenBen(wenBen: string, miDengJian: string): Promise<b
     await shuaXin()
     return true
   } catch (cuoWu: unknown) {
-    // 发送失败（含账号封禁403）就地提示，不抛到全局；引用态保留（失败不清）
     xiaoXiLieBiao.value = xiaoXiLieBiao.value.filter((x) => x.id !== leGuanId)
     faSongTiShi.value = duQuTiShi(cuoWu)
     return false
@@ -491,7 +479,6 @@ function xinShengWenBenJian(): string {
 
 async function faSong() {
   const wenBen = shuRuNeiRong.value.trim()
-  // FP-10b（缺陷9）：待发区里有图片 ⇒ 走图文混排发送（粘贴不再直发，顺序由用户排）
   if (daiFaYouTuPian.value) {
     await faSongDaiFaTuWen()
     return
@@ -509,17 +496,6 @@ async function faSong() {
   faSongZhong.value = false
 }
 
-/**
- * FP-21 单次提交：好友侧图文混排把用户排的块序列**合成一条消息**发出（不再逐条拆发）。
- * 文字块与图片块串行上传后一起进 body 的 `neiRongKuai`；兼容投影正文由 `kuaiDaoZhengWen` 派生。
- * 幂等键（FP-09b）**只在 AI 链路真正生效**：`消息` 表有 "幂等键" 列 + 唯一约束（迁移 032），
- * 服务层按它 ON CONFLICT 去重；好友链路两头都没有落点——`routes/好友.ts` 的 INSERT
- * 只有七列（发送者/接收者/内容/类型/媒体ID/内容块/被引用消息ID），后端也没有任何 Idempotency 头的读点。
- * ⇒ 这里带键只起两个作用：本地乐观气泡的 id（le-guan-*）与请求头 Idempotency-Key（无人读）。
- * 所以「同一次编辑重发不多出一条」在好友页**不成立**；单次提交后整批一起清，上传中途失败
- * 则整单保留待发（不回滚已上传的媒体——服务端地址可复用），不把半批块拆成多条。
- * 该事实与后端 INSERT 列清单的双向一致性由 __tests__/FP21b好友侧幂等键事实一致.test.ts 把守。
- */
 async function faSongDaiFaTuWen(): Promise<void> {
   if (daiFaKuaiChaoXian()) {
     faSongTiShi.value = huoQuFanYi('duoMeiTi', 'kuaiChaoXian')
@@ -527,7 +503,6 @@ async function faSongDaiFaTuWen(): Promise<void> {
   }
   if (faSongZhong.value) return
   faSongZhong.value = true
-  // 压缩在后台跑，块里可能还压着原图：先等在途压缩落回块，再取待发序列（与聊天页同口径）
   await dengDaiDaiFaYaSuoWanCheng()
   const kuai = shouJiDaiFaKuai()
   if (kuai.length === 0) {
@@ -623,18 +598,10 @@ async function faSongDaiFaTuWen(): Promise<void> {
   }
 }
 
-// FP-JC 用户裁决：就地发送失败行与全站错误同口径，只出游戏化文案（yingXiang 技术口径不再上屏）
 function duQuTiShi(cuoWu: unknown): string {
   return 归一前台错误(cuoWu).lianAiWenAn
 }
 
-// ---------------------------------------------------------------------------
-// FP-21 好友媒体（图片 / 文件）。上传走 /api/好友/媒体（归属＝好友关系 + 双方用户编号），
-// 气泡地址来自列表接口的签名 URL；粘贴复用 FP-06a 的唯一实现 use粘贴图片，零第二套剪贴板读取。
-// 压缩与粘贴预检同样复用聊天页那一份（yaSuoTuPiang / ZHAN_TIE_TU_PIAN_PEI_ZHI），
-// 媒体类型码只引用 config/消息配置 的唯一清单；服务端白名单才是最终边界，
-// 失败即就地显示后端文案（不整页崩、不静默丢图）。
-// ---------------------------------------------------------------------------
 const MEI_TI_LEI_XING = new Set<string>(MEI_TI_XIAO_XI_LEI_XING)
 const TU_PIAN_LEI_XING = new Set<string>(TU_PIAN_XIAO_XI_LEI_XING)
 const xiangCeInputRef = ref<HTMLInputElement | null>(null)
@@ -643,8 +610,6 @@ const yuLanURLJi = new Set<string>()
 const meiTiChongLaiYiFa = new Set<string>()
 let meiTiShiXiaoZaiTu: Promise<void> | null = null
 
-// C4 授权门的唯一实现是 use图片授权门（待确认队列即 L-23 的正解，聊天页那份单变量已删）；
-// 本页只交出开关读写，未决等待者的离页结算由 composable 自己挂 onBeforeUnmount 兜住。
 const {
   xianShi: shouQuanDanChuangXianShi,
   queRenTuPianShouQuan,
@@ -667,7 +632,6 @@ function meiTiWaiKeLeiMing(xiaoXi: HaoYouXiaoXi): string {
   return shiTuPianXiaoXi(xiaoXi) ? 'tupian-waike' : 'wenjian-waike'
 }
 
-/** 与聊天页 huoQuWenJianDaXiaoWenBen 同口径的字节显示（不足 1MB 走 KB） */
 function huoQuWenJianDaXiao(xiaoXi: HaoYouXiaoXi): string {
   const ziJie = xiaoXi.mei_ti_da_xiao_zi_jie
   if (typeof ziJie !== 'number' || ziJie <= 0) return ''
@@ -682,7 +646,6 @@ function chuangJianYuLanURL(neiRong: Blob): string | null {
   return diZhi
 }
 
-/** 单个地址的回收：FP-10b 一次发送会连带送出多个块，逐块回收才不误伤其它待发块的缩略图 */
 function huiShouYuLanDiZhi(diZhi: string | null): void {
   if (!diZhi) return
   if (typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') {
@@ -691,7 +654,6 @@ function huiShouYuLanDiZhi(diZhi: string | null): void {
   yuLanURLJi.delete(diZhi)
 }
 
-/** 列表全量刷新后本地预览地址即失效（服务端签名地址接管），统一回收防泄漏 */
 function huiShouYuLanURL(): void {
   for (const diZhi of yuLanURLJi) {
     if (typeof URL !== 'undefined' && typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(diZhi)
@@ -699,12 +661,6 @@ function huiShouYuLanURL(): void {
   yuLanURLJi.clear()
 }
 
-/**
- * 签名 URL 过期（默认 1 小时）⇒ 重拉一次列表拿新鲜地址。
- * 一屏可能同时有几十张过期图各自触发 @error：整个页面只允许**一条在途**的补救重拉，
- * 其余失效图挂在这同一轮结果上（旧实现按消息条数各发一次整表重拉，50 张图=50 次列表请求，
- * 属自我放大）。每条消息在一次页面生命周期内只登记一次，故坏图不会变成轮询。
- */
 function chuLiMeiTiShiXiao(xiaoXi: HaoYouXiaoXi): void {
   if (meiTiChongLaiYiFa.has(xiaoXi.id)) return
   meiTiChongLaiYiFa.add(xiaoXi.id)
@@ -719,13 +675,7 @@ async function faSongHaoYouMeiTiXiaoXi(
   leiBie: HaoYouShangChuanLeiBie,
   wenJian: File | Blob,
   wenJianMing: string,
-  /** FP-10b：待发块自带的稳定幂等键（重发不换键）；不传则按老口径现造一把 */
   miDengJian?: string,
-  /**
-   * FP-10b：乐观气泡复用它处已登记的预览地址（待发块的那张缩略图），
-   * 一张图只允许一个 blob 地址——再 createObjectURL 一次就是第二条泄漏源头。
-   * 不传（文件入口）时才就地新建一个。
-   */
   yiYouYuLanURL?: string | null,
 ): Promise<boolean> {
   faSongTiShi.value = ''
@@ -737,8 +687,6 @@ async function faSongHaoYouMeiTiXiaoXi(
   const benCiJian = miDengJian || xinShengWenBenJian()
   const leGuanId = `le-guan-mei-ti-${benCiJian}`
   const benDiYuLan = yiYouYuLanURL ?? chuangJianYuLanURL(wenJian)
-  // 复用待发块的预览地址时本函数不认领它的回收：那条地址归编辑区所有，整批发完后由
-  // qingKong 统一回收。在这里抢着回收会让同批还没发完的图在编辑区当场裂成碎图标。
   const YuLanGuiBenHuiShou = yiYouYuLanURL == null
   const leGuanXiaoXi: HaoYouXiaoXi = {
     id: leGuanId,
@@ -766,8 +714,6 @@ async function faSongHaoYouMeiTiXiaoXi(
     })
     quXiaoYinYong()
     await shuaXin()
-    // 只回收这一条气泡自己的预览地址：服务端签名地址已接管。批量图文时其它待发块的
-    // 缩略图还在编辑区里等着发，整台账回收（旧口径）会把它们一起抹掉。
     huiShouYuLanDiZhi(benDiYuLan)
     return true
   } catch (cuoWu: unknown) {
@@ -777,12 +723,6 @@ async function faSongHaoYouMeiTiXiaoXi(
   }
 }
 
-/**
- * 粘贴/相册/拖入的图片**不再直发**，先进本条消息的待发块序列（一次可贴多张，块可拖序/单块删除）。
- * 与 AI 聊天页共用同一个 `use待发图文` 真源与同一份图文输入区组件（FP-10c）：本页不再有
- * 「huoQuGuangBiao 恒返回 null ⇒ 图片只能追加到末尾」那条限制，图片就插在用户真正的光标处。
- * 压缩在后台做，完成后换回块里的文件。
- */
 function jiaruDaiFaTuPian(wenJian: File | Blob): void {
   const jieGuo = chaRuDaiFaTuPian(wenJian, 'tupian')
   if (jieGuo.yuanYin === 'chao_xian') faSongTiShi.value = huoQuFanYi('duoMeiTi', 'kuaiChaoXian')
@@ -796,7 +736,6 @@ function jiaruDaiFaTuPian(wenJian: File | Blob): void {
   dengJiDaiFaYaSuo(zaiTu)
 }
 
-/** 图文同存的一次粘贴：文字先落光标处，图片随后插在文字之后 ⇒ 顺序就是用户看到的顺序 */
 function chaRuShuRuQuWenBen(wenBen: string, guangBiao?: DaiFaGuangBiao | null): void {
   const shangXian = XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu
   const shengYu = shangXian - shuRuNeiRong.value.length
@@ -826,13 +765,11 @@ const {
   huiShouYuLan: huiShouYuLanDiZhi,
 })
 
-// FP-10c-⑥：本页无手动展开按钮，只吃真源自动置位（有图进展开档、无图回单行档回落）
 const { shuRuKuangZhanKai, shouQiZhanKaiDang } = use输入区展开档({
   shuRuNeiRong,
   youTuPianKuai: daiFaYouTuPian,
 })
 
-/** 编辑器 DOM → 真源：这是唯一的写回口（合并相邻文字段、退化回纯文本态都住在 composable 里） */
 function chuLiShuRuQuBianJi(duan: BianJiQiDuan[], xianShiXuanRanIds: string[]): void {
   daiFaTongBuCongBianJiQi(duan, xianShiXuanRanIds)
 }
@@ -849,23 +786,16 @@ const { chuLiZhanTie, chuLiTuoLuo } = use粘贴图片({
   },
 })
 
-/** 表情链路的错误一律就地显示在本页提示行，不串到 AI 聊天页的横幅上 */
 function jiuDiTiShi(xinXi: string): void {
   faSongTiShi.value = xinXi
 }
 
-/**
- * 签名过期时不开第二套签名口径：好友页的新鲜地址只由列表接口现签，
- * 故整表重拉一次（与 @error 的合并重拉同一个 `shuaXin` 入口）后按 id 取新地址。
- */
 async function chongQianLieBiaoMeiTiURL(xiaoXi: HaoYouXiaoXi): Promise<string | null> {
   await shuaXin()
   const xinXiang = xiaoXiLieBiao.value.find((yiXiang) => yiXiang.id === xiaoXi.id)
   return xinXiang?.mei_ti_url || null
 }
 
-// FP-20 契约：图片气泡的「添加到表情」与聊天页共用同一份取图段（use添加到表情）、同一个
-// 提交口（use表情提交）与同一份状态条（use表情提示条），本页零取图/上传实现。
 const { tiShi: biaoQingTiShi, xianShi: xianShiBiaoQingTiShi, yinXia: yinXiaBiaoQingTiShi } =
   use表情提示条()
 const { tiJiaoBiaoQingWenJian } = use表情提交({
@@ -880,8 +810,6 @@ const { tianJiaTuPianDaoBiaoQing } = use添加到表情<HaoYouXiaoXi>({
   sheZhiCuoWu: jiuDiTiShi,
   sheZhiTiShi: (xinXi) => xianShiBiaoQingTiShi(xinXi),
 })
-// 撤回窗口判定所需的时钟：好友消息没有 fa_song_zhe_lei_xing ⇒ keXianShiCheHui 恒 false，
-// 菜单里恒无撤回项（撤回仍是本页既有的行内按钮），故此处只作占位读数，不随秒刷新。
 const dangQianShiJian = ref(Date.now())
 const {
   chuMoJieShu,
@@ -952,8 +880,6 @@ function chongXinFanYi(xiaoXi: HaoYouXiaoXi): void {
   void qiangZhiFanYi(xiaoXi)
 }
 
-// FP-11：好友页语音播放与转写（转写菜单项 yuYinZhuanWenZi 在 yuYinCaiDanXiang 里恒在，
-// 不接 qieHuanZhuanWenZiXianShi 则菜单点下去无效）。地址源用 mei_ti_url；转写 API 与 AI 页同源。
 function duQuShengYinYinLiang(): number | null {
   try {
     return duQuHeChengYinLiang()
@@ -986,10 +912,6 @@ const {
   huoQuYinLiang: duQuShengYinYinLiang,
 })
 
-/**
- * FP-09：引用两件套接线点。定位锚前缀与组件同源（YIN_YONG_DING_WEI_PEI_ZHI.domQianZhui），
- * 滚动容器就是消息列表那个 `<main>`。
- */
 function yinYongXiangId(xiaoXi: HaoYouXiaoXi): string {
   return `${YIN_YONG_DING_WEI_PEI_ZHI.domQianZhui}${xiaoXi.id}`
 }
@@ -998,7 +920,6 @@ function huoQuXiaoXiGunDongRongQi(): HTMLElement | null {
   return xiaoxiQuYuRef.value
 }
 
-/** 被引用那条的发送者展示名：好友消息无 fa_song_zhe_lei_xing，按发送者 id 对上本会话双方取名 */
 function yinYongFaSongZheMing(muBiao: CaiDanXiaoXi): string {
   if (muBiao.id === woDeId) {
     return 用户仓库.dangQianYongHu?.ni_cheng || 用户仓库.dangQianYongHu?.yong_hu_ming || ''
@@ -1010,17 +931,10 @@ function yinYongFaSongZheMing(muBiao: CaiDanXiaoXi): string {
   return haoYouMing.value || ''
 }
 
-/** 发送前引用条摘要：媒体占位走 config/消息配置 单源映射，其余走 use长按菜单 唯一截断出口 */
 function huoQuYinYongZhaiYao(muBiao: CaiDanXiaoXi): string {
   return huoQuMeiTiYinYongZhanWei(muBiao.lei_xing) ?? zhengWenZhaiYaoChuKou(muBiao)
 }
 
-/**
- * FP-21：右键/长按统一分流（与 AI 页同构）。
- * 禁写图片类型比较字面量（FP-20 全库仅两文件允许该写法）：图片判定走本地
- * shiTuPianXiaoXi（TU_PIAN_LEI_XING 集合）。乐观气泡 id 是 le-guan-* 非 UUID ⇒ 一律拒开
- * 菜单（引用会 400）。
- */
 function chuLiYouJianCaiDan(xiaoXi: HaoYouXiaoXi, shiJian: MouseEvent) {
   if (xiaoXi.id.startsWith('le-guan-')) return
   if (xiaoXi.lei_xing === 'yuYin') {
@@ -1109,7 +1023,6 @@ onMounted(async () => {
     /* 对方气泡偏好不可用时回退到自身AI气泡 */
   }
   await shuaXin()
-  // YH-087 轮询增量：socket缺席时30s轮询兜底，禁固定50全量
   lunXunDingShi.value = window.setInterval(() => {
     if (document.visibilityState !== 'visible') return
     const zuiXin = xiaoXiLieBiao.value[xiaoXiLieBiao.value.length - 1]
@@ -1123,8 +1036,6 @@ onBeforeUnmount(() => {
     lunXunDingShi.value = null
   }
   tingZhiYinPinBoFang()
-  // 离页即回收本地预览地址：blob: 地址只在本页消费。未决授权 Promise 由 use图片授权门
-  // 自己的 onBeforeUnmount 结算，不在页面里重复一份（重复即第二处真源）。
   huiShouYuLanURL()
   yinXiaBiaoQingTiShi()
 })
@@ -1137,7 +1048,7 @@ onBeforeUnmount(() => {
   height: 100%;
   background: var(--beijing-zhuse);
 }
-/* 好友聊天顶栏：显式返回按钮，单次点击直达上一页 */
+
 .haoyou-dingbu {
   display: flex;
   align-items: center;
@@ -1216,7 +1127,7 @@ onBeforeUnmount(() => {
   font-size: 12px;
   color: var(--wenben-tishi);
   padding: var(--jiange-4) var(--jiange-xiao);
-  /* YH-101 触屏目标：最小24px推荐44px，12px点不到收敛为最小可点 */
+  
   min-width: 24px;
   min-height: 24px;
 }
@@ -1227,19 +1138,13 @@ onBeforeUnmount(() => {
   padding-bottom: calc(var(--jiange-xiao) + var(--anquan-quyu-xia));
 }
 .shuru-rongqi {
-  /* 缺陷5 同源几何：与聊天页同一套输入区度量令牌，两页高度必须由同一来源构造。
-     FP-22c：令牌住在 styles/设计令牌.css 的共用 :root 块，本页不再局部抄一份。
-     FP-10c：图文真内联后本页与 AI 页共用 components/聊天/图文输入区.vue，输入区外壳与编辑器的
-     模板/CSS 都在那一份里（含 --shuru-kuang-* 的取值与折叠/展开两档高度），本页只排行不排盒；
-     flex-wrap 保留给「窄屏下发送按钮与媒体入口换行」，不再服务于待发序列的整行槽位 */
+  
   display: flex;
   align-items: flex-end;
   flex-wrap: wrap;
   gap: var(--jiange-xiao);
 }
-/* FP-21 媒体入口：与聊天页同用「相册/文件」语义，但好友页无「更多」面板，故恒常驻两个图标按钮。
-   FP-23 起可见盒与聊天页三主图标同吃 --shuru-tubiao-chicun（= 输入框折叠态单行高），
-   YH-101 的 44px 触屏命中区改由 ::before 外扩承担，不再靠撑盒子兑换。色值只取明暗两套均有定义的令牌。 */
+
 .meiti-rukou {
   position: relative;
   flex: none;
@@ -1264,10 +1169,10 @@ onBeforeUnmount(() => {
   height: var(--shuru-anniu-re-ku);
   transform: translate(-50%, -50%);
 }
-/* 字形与聊天页同枚令牌，宽高同值 ⇒ 方形 viewBox 下恒等比；原 20px 是好友页独有的第二套度量 */
+
 .meiti-rukou svg { width: var(--shuru-tubiao-glyph-chicun); height: var(--shuru-tubiao-glyph-chicun); }
 .yincang-wenjian-shuru { display: none; }
-/* 图片与表情包不带文字气泡底色（与聊天页同一口径：表情包无气泡） */
+
 .tupian-waike { max-width: min(calc(100vw - 126px), 260px); }
 .tupian-qipao {
   display: block;
@@ -1277,18 +1182,13 @@ onBeforeUnmount(() => {
   object-fit: cover;
   background: var(--beijing-kaopian);
 }
-/* FP-10c：输入区外壳 .shuru-kuang-waike 与编辑器 .shuru-kuang 的 CSS 随 components/聊天/图文输入区.vue
-   一起唯一化（改造前两页各抄一份且已漂移）。本页此前没有展开档（无 .zhan-kai-anniu），
-   折叠态高度与 AI 页同吃 --shuru-danxing-gao-du；滚动条仍只有 styles/全局.css 一处真源。
-   FP-10c-⑥：本页接真源 use输入区展开档 —— 待发图文块出现自动进展开档（64px > 35px 不裁图）、
-   删块自动回落；无手动展开按钮（保持「无第二份 .zhan-kai 类绑定」契约）。
-   FP-12b：文件卡片 .wenjian-* 样式随 components/聊天/文件气泡.vue 一起唯一化，本页不再内联一份。 */
+
 .fasong-anniu {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* 与输入框外壳同一套量：同上下内边距 + 同行高基准 + 同宽透明边框 ⇒ 两盒等高 */
+  
   padding: var(--shuru-kuang-shang-xia-neidian) calc(var(--jiange-12) + var(--jiange-2));
   border: var(--shuru-kuang-biankuang) solid transparent;
   min-width: var(--shuru-anniu-re-ku);
@@ -1315,8 +1215,7 @@ onBeforeUnmount(() => {
   font-size: 12px;
   color: var(--cuowu-yanse, #ff6b6b);
 }
-/* 气泡内的图文块（FP-10b/FP-24a，与 AI 页同源度量）：图片独占一行、文字保持气泡文本形态。
-   --biaoqingbao 必须排 .tuwen-kuai-tu 之后（FP24a 源码序用例钉住）。 */
+
 .tuwen-kuai--tu { display: block; }
 .tuwen-kuai-tu {
   display: block;
@@ -1365,8 +1264,7 @@ onBeforeUnmount(() => {
   font-size: 12px;
   color: var(--wenben-tishi);
 }
-/* 图片菜单的淡入淡出与聊天页同一条时间曲线。刻意留在本页 scoped 块里：全局化会让同名
-   过渡溢到结算弹窗（它也叫 zhezhao-xianshi，但走自己的 keyframes）。 */
+
 .zhezhao-xianshi-enter-active { transition: opacity 0.25s ease; }
 .zhezhao-xianshi-leave-active { transition: opacity 0.15s ease; }
 .zhezhao-xianshi-enter-from,

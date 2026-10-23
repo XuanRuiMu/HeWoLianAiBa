@@ -35,7 +35,6 @@ import { ZHAN_JI_PEI_ZHI } from '../config/战绩配置'
 
 const luYou = Router()
 
-// 批量删除单次条数上限：与管理端批量口径收敛，防一次拉爆 ANY(::uuid[]) 参数与入库压力
 const ZHAN_JI_PI_LIANG_SHAN_CHU_ZUI_DA = 50
 
 function chuLiZhanJiCuoWu(xiangYing: Response, caoZuo: string, cuoWu: unknown): void {
@@ -524,7 +523,6 @@ luYou.post(
     if (bianHaoLieBiao.length > ZHAN_JI_PI_LIANG_SHAN_CHU_ZUI_DA) {
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
     }
-    // 每条档案ID必须为合法 UUID：脏值进 ANY($2::uuid[]) 会直接抛库错，须在此白名单拦下
     const youXiaoIds = bianHaoLieBiao.filter((id): id is string => yanZhengUUID(id))
     if (youXiaoIds.length !== bianHaoLieBiao.length) {
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)

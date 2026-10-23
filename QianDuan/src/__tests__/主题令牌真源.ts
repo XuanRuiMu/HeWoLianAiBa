@@ -1,8 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-// variables.css 三段式（:root 共用 / :root[data-theme=light] / :root,:root[data-theme=dark]）的令牌真源解析。
-// 单侧主题块声明的令牌在另一档按 CSS 规则塌陷（F23 根因），故"两档是否均有定义"必须可机器审计。
 
 export type 主题档 = 'light' | 'dark'
 
@@ -29,7 +27,6 @@ export function 读取令牌源码(): string {
   return readFileSync(resolve(__dirname, '../styles/设计令牌.css'), 'utf8')
 }
 
-/** 只切顶层块（variables.css 不含嵌套 at-rule）；出现未登记选择器直接抛错，防止有人另开第四块绕审计 */
 export function 声明块清单(源 = 读取令牌源码()): 声明块[] {
   const 净源 = 源.replace(/\/\*[\s\S]*?\*\//g, '')
   const 块们: 声明块[] = []
@@ -51,7 +48,6 @@ export function 声明块清单(源 = 读取令牌源码()): 声明块[] {
   return 块们
 }
 
-/** 某档下该档真正生效的取值：特异度优先，同特异度按源码顺序后者胜 */
 export function 按档解析全部(档: 主题档, 块们 = 声明块清单()): Map<string, string> {
   const 胜出 = new Map<string, { 值: string; 特异度: number; 序号: number }>()
   for (const 块 of 块们) {
@@ -72,7 +68,6 @@ export function 所有声明令牌(块们 = 声明块清单()): string[] {
   return [...new Set(块们.flatMap((块) => [...块.声明.keys()]))]
 }
 
-/** 令牌声明在哪几个块里：用于"只能住在共用块"这类归档约束 */
 export function 声明位置(令牌: string, 块们 = 声明块清单()) {
   return {
     共用: 块们.some((块) => 块.选择器 === ':root' && 块.声明.has(令牌)),
@@ -81,7 +76,6 @@ export function 声明位置(令牌: string, 块们 = 声明块清单()) {
   }
 }
 
-/** 只在单侧主题块声明、另一档解析不出值的令牌 = 会塌陷的令牌 */
 export function 塌陷令牌清单(块们 = 声明块清单()): string[] {
   const 浅色 = 按档解析全部('light', 块们)
   const 深色 = 按档解析全部('dark', 块们)
@@ -97,12 +91,6 @@ function 代入变量(源: string, 表: Map<string, string>, 深度 = 0): string
   return 代入变量(源.replace(匹配[0], 值), 表, 深度 + 1)
 }
 
-/**
- * 几何（量纲类）令牌代入 var() 并求 calc() 后真正生效的数值，px 与无纲量都按数字返回。
- * 受支持算式：`乘积项 + 乘积项`，乘积项为 `因子 * 因子`，因子只能是数字——超出即抛错，绝不静默给近似值。
- * FP-22c 用它把「.vue 里引用了哪个令牌」升级为「引用后算出来的值等于全局真源」，
- * 这是把度量从页面局部上收到共用 :root 块后唯一可机器证明同源的方式（jsdom 不做 var() 计算）。
- */
 export function 解析几何数值(令牌: string, 块们 = 声明块清单()): number {
   const 表 = 按档解析全部('light', 块们)
   const 原始 = 表.get(令牌)
@@ -110,12 +98,6 @@ export function 解析几何数值(令牌: string, 块们 = 声明块清单()): 
   return 求几何算式(原始, 块们)
 }
 
-/**
- * 对**任意一条算式**（不必是 variables.css 里的令牌）做同一套 var() 代入 + calc() 求值。
- * `解析几何数值` 的算式grammar 唯一真源就是这里；组件内以 `calc(var(--真源) + var(--真源))`
- * 派生的局部量纲令牌（如 FP-04b 的 `--ziduan-jian-ju`）也由此求值，从而"引用了哪个令牌"
- * 与"引用之后算出多少像素"两层都能机器判定，不必在测试里另写一份求值器（那会是第二真源）。
- */
 export function 求几何算式(原始: string, 块们 = 声明块清单()): number {
   const 表 = 按档解析全部('light', 块们)
   let 式 = 代入变量(原始, 表).trim()

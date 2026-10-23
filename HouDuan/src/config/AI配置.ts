@@ -2,9 +2,7 @@ import './env'
 
 export interface MoXingCanShu {
   moXing: string
-  /** 仅非思考模式生效：官方规则思考模式下 temperature 不生效，故思考场景不配本字段（见 jiSuanAIChanShu 门控）。 */
   wenDu?: number
-  /** 仅思考模式生效且下限 0.95：官方规则非思考模式 top_p 恒为 1.0，故非思考场景不配本字段。 */
   top_p?: number
   zuiDaTokens?: number
   siKaoMoShi?: 'enabled' | 'disabled'
@@ -22,14 +20,6 @@ export const AI_PEI_ZHI = {
   },
 
   moXing: {
-    // 说明：按官方 Responses API（https://api-docs.deepseek.com/zh-cn/api/create-response），
-    // 思考模式用 reasoning.effort 控制（取值 none/minimal/low/medium/high/xhigh/max，max = 最高强度）。
-    // 采样参数按官方生效条件门控（见 guides/thinking_mode）：思考模式 temperature 不生效、top_p 下限 0.95；
-    // 非思考模式 top_p 恒为 1.0。因此思考场景只配 top_p:0.95，非思考场景只配 wenDu，不留下永远不生效的死字段。
-    // FP-05 YH-041 裁决（已废止）：writer 曾保持 max 思考（沉浸优先）。2026-10-07 起
-    // writer 关闭思考模式、仅配 wenDu（非思考场景 top_p 恒 1.0，故不配 top_p），以提 burstiness、降 AI 味。
-    // 注意：max_output_tokens 在 Responses API 中同时计入「可见输出 + 思维链 token」，
-    // 思考模式下必须调大，否则思维链会把预算吃光导致可见输出被截断（response.incomplete）。
     director: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       top_p: 0.95,
@@ -41,7 +31,6 @@ export const AI_PEI_ZHI = {
 
     writer: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
-      // WRITER_WENDU 默认 1.0；官方通用对话建议 1.3。温度越高句型越碎、越接近真人；过高会发散。
       wenDu: Math.min(2, Math.max(0, parseFloat(process.env.WRITER_WENDU || '1.0') || 1.0)),
       zuiDaTokens: 4000,
       siKaoMoShi: 'disabled',
@@ -144,7 +133,6 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    // M2 调用收敛：表白/互删/识破/神经病四连检合并为一次结构化输出
     siLianJian: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
@@ -164,16 +152,12 @@ export const AI_PEI_ZHI = {
     kaiChangBai: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       top_p: 0.95,
-      // YH-054 开场白降档：保持思考开但预算32k→16k先计量（契约守卫要求思考场景≥32k此处为例外，单测已同步）
-      // 根因：首轮双max贵但别一刀切；先计量后AB，灰度回32k走HUI_DU_KAICHANGBAI_QI_YONG
       zuiDaTokens: 16000,
       siKaoMoShi: 'enabled',
       reasoningEffort: 'medium',
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    // 开场白发送概率决策模型（轻量）：仅输出一个 10~90 的概率数字，
-    // 用于"画像驱动的 10%~90% 动态门控"，与内容生成模型解耦以极致压缩开销。
     kaiChangBaiGaiLv: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0,
@@ -194,27 +178,12 @@ export const AI_PEI_ZHI = {
   },
 
   prompt: {
-    // 历史消息条数：调到尽可能大（普通对话 200 条、军师 100 条）。
-    // 撑爆上下文窗口的真正护栏是本键与「单条消息落库 500 字符」两道硬上限：
-    // (200+步长)×500 字符 ≈ 7.5 万 token，对 1M 窗口（deepseek-flash / V4.1-Flash）留足余量。
-    // 客户端预算保护 shangXiaWenTokenYuSuan 只能整条丢弃非 system 消息，而 Writer/Director 的历史
-    // 是渲染进单条 user 的一整段文本，触顶时它裁不动，只能告警——不要把它当成防 400 的依赖。
     liShiXiaoXiShuLiang: 200,
     junShiLiShiXiaoXiShuLiang: 100,
-    // 历史窗口淘汰步长：条数超过 liShiXiaoXiShuLiang 后不逐条丢，攒满本步长才整体前移一次，
-    // 使多轮之间的历史段前缀字节完全一致，从而命中官方上下文硬盘缓存（缓存按最长公共前缀匹配）。
     liShiCaiDuanBuZhang: 40,
-    // 上下文 token 预算（估算口径：字符数×0.6，图像每张按官方上限 1024）。超预算时整条丢弃最旧的非 system 消息，
-    // 裁不动时告警（见 utils/DeepSeek客户端.ts::yuSuanBaoHu）。
     shangXiaWenTokenYuSuan: 60000,
-    // FP-08 单次 AI 调用最多注入的图片内容块数。作用域已从「全部历史图片」收窄为
-    // 「本轮尚未被模型看过的用户图片」（见 services/对话渲染.ts::zhuRuBenLunTuXiangKuai）：
-    // 历史图片每轮全量重投会让同一张表情包在模型眼里出现 N 次，直接导致「对方又发了狗头」臆造。
-    // 本键现仅作内存/token 兜底（连发一大串图时不一次读入全部 base64），不再是跨轮累积上限。
     benLunTuXiangZuiDuoZhuRuShu: 8,
     jiaoSeChenJinZhiLing: '【从现在起，你就是TA】',
-    // 开场白发送概率的兜底默认值（仅当无 AI key 或 AI 概率计算失败时退回，或测试环境）。
-    // 主流程已由"AI 根据人物画像动态算出 10%~90% 概率"取代（见 services/开场白概率.ts）。
     kaiChangBaiFaSongGaiLv: 0.5,
     kaiChangBaiZhuDongDangWei: {
       主动型: 0.85,
@@ -225,9 +194,6 @@ export const AI_PEI_ZHI = {
     kaiChangBaiMoRenZhuDongDangWei: '中间型',
   },
 
-  // FP-05 YH-047 好感双真相：本块仅为文档化镜像，唯一真相源为 config/好感度配置.ts 的 HAO_GAN_DU_PEI_ZHI；
-  // 打分与落库一律经 services/好感度.ts 消费 HAO_GAN_DU_PEI_ZHI.quanZhong/fanWei/shuaiJian，此处数值须与其保持一致，
-  // 不一致时以 HAO_GAN_DU_PEI_ZHI 为准（FP05_好感双真相单测断言双源一致）。
   haoGanDu: {
     xinRenQuanZhong: 0.35,
     qinMiQuanZhong: 0.25,
@@ -239,7 +205,6 @@ export const AI_PEI_ZHI = {
     zongFenXiaXian: 0,
   },
 
-  // FP-04 YH-032 分类重试退避熔断与 YH-038 上下文预算统一口径（环境变量可配，热重载经 AI_PEI_ZHI 只读快照需重启生效）
   zhongShi: {
     keZhongShiZuiDaCiShu: 2,
     tuiBiJiChuHaoMiao: 2000,
@@ -248,9 +213,6 @@ export const AI_PEI_ZHI = {
     rongDuanLengQueHaoMiao: 60 * 1000,
   },
 
-  // 空响应内循环重试（2026-10-14 语料实验室实测：网关高负载间歇返回空 content，
-  // Director json 模式实测 17%~67%）。退避按「基数 × 次数」线性增长并封顶，
-  // 不占用外层 429 重试预算。三个口径集中在此，禁止在 DeepSeek客户端 另写数字。
   kongXiangYing: {
     zuiDaCiShu: 3,
     tuiBiJiChuHaoMiao: 5000,
@@ -262,8 +224,6 @@ export const AI_PEI_ZHI = {
   },
 
   zhaiYao: {
-    // 事实卡 8 个字段行、每行上限 25 字（含字段名与冒号约 234 字），留出余量；上限由
-    // Prompt构建器::gouJianJiYiZhaiYaoPrompt 与 对话摘要::qieDuanZhaiYao 共用，两处不得各写一个数
     zuiDaZiFu: 300,
     chuFaXiaoXiShu: 40,
     yuanLiaoXiaoXiShu: 60,

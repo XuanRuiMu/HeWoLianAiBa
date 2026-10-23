@@ -13,11 +13,8 @@ import {
 } from '@/config/前台错误码'
 import { chuangJianQianTaiCuoWu, 归一前台错误 } from '@/utils/前台错误'
 
-/** 判据①：内部实现/第三方原文/协议英文 */
 const XU_LIU_WU = /base64|DeepSeek|axios|DOMException|EncodingError|ECONNRESET|ECONNREFUSED|getaddrinfo|127\.0\.0\.1|localhost|\/srv\/|\/app\/|SELECT\s|INSERT\s|UPDATE\s|DELETE\s|stack:|SQLSTATE|postgres|mysql|password|api[_-]?key|bearer\s|jwt|SEC-0\d/i
-/** 判据②：占位符与脏值 */
 const ZHAN_WEI = /\{\{|\}\}|undefined|null|NaN|\[object /
-/** 判据④：敷衍与装可爱 */
 const FU_YAN = /出错了|未知错误|请稍后重试|稍后再试|开小差/
 const ZHUANG_KAI_A = /啦|呀|哦|呢~|吧~|~|！{2,}/
 
@@ -61,8 +58,6 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
     })
 
     it('判据④：无敷衍语与装可爱语气（游戏角色台词属产品文风，另案裁决）', () => {
-      // 角色文风豁免：AI/军师对象的说话语气（连发预警、军师卡壳等）。由「待用户裁决」用例显式登记清单，
-      // 不静默放过：新增同类文案会在这里被点名。
       const 角色文风 =
         /liaoTian\.lianFaYuJing$|^fanYi\.(junShi|tiaoZhan|zhuYe|ziLiaoSheZhi)\.|^fanYi\.zhanJi\.zhaXingJingGao$/
       const 违规 = quFanYiZhi()
@@ -96,7 +91,6 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
     })
 
     it('判据⑤⑤：同一语义跨项目措辞一致（认证失效口径与管理中心对齐）', () => {
-      // 管理中心 文案/通用.ts 用「登录状态已失效，请重新登录」，主项目不得另立说法
       expect(huoQuFanYi('tongYong', 'dengLuGuoQi')).toBe('登录已过期，请重新登录')
       expect(huoQuFanYi('tongYong', 'jianQuanWenTiXiaYiBu')).toBe('请重新登录后再试。')
     })
@@ -126,7 +120,6 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
       for (const daiMa of Object.values(QIAN_TAI_DAI_MA)) {
         const wrapper = 装面板(daiMa)
         if (wrapper.find('.qian-tai-cuo-wu').exists() === false) {
-          // 已取消的请求不得惊动用户（xianShi=false ⇒ 整块不渲染），这是判据③的正确形态
           expect(daiMa, `${daiMa} 不该渲染却渲染了`).toBe(QIAN_TAI_DAI_MA.QU_XIAO)
           continue
         }
@@ -138,7 +131,6 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
           expect(wrapper.get('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe(lianAiMa)
           expect(wrapper.find('.qian-tai-cuo-wu-fu-zhi').exists()).toBe(true)
         } else {
-          // 免码报错（用户输入类）：只摆人话，不上恋爱码也不给复制按钮
           expect(wrapper.find('.qian-tai-cuo-wu-lian-ai-ma').exists(), `${daiMa} 免码却仍渲染恋爱码`).toBe(false)
           expect(wrapper.find('.qian-tai-cuo-wu-fu-zhi').exists(), `${daiMa} 免码却仍渲染复制按钮`).toBe(false)
         }
@@ -213,7 +205,6 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
       expect(wrapper.get('[role="alert"]').exists()).toBe(true)
       expect(wrapper.get('[aria-live="assertive"]').exists()).toBe(true)
       expect(wrapper.text()).not.toContain(huoQuFanYi('tongYong', 'banBenYiGengXin'))
-      // FP-JC 用户裁决：删"这次没完成"标题头后，沉浸文案成为面板主行
       expect(wrapper.find('.qian-tai-cuo-wu-biaoti').exists()).toBe(false)
       expect(wrapper.get('.qian-tai-cuo-wu-wen-an').text()).toBe(
         huoQuFanYi('lianAi', huoQuLianAiMa(QIAN_TAI_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE) as never),
@@ -225,7 +216,6 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
       const wrapper = mount(请求错误, {
         props: { cuoWu: chuangJianQianTaiCuoWu({ code: QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID, yingXiang: 巨长 }) },
       })
-      // 新契约主区只渲染沉浸文案与恋爱码，上游传入的超长影响文案不得回显
       expect(wrapper.get('.qian-tai-cuo-wu-lian-ai-ma').text().length).toBeLessThan(80)
       expect(wrapper.text()).not.toContain(巨长.slice(0, 20))
     })

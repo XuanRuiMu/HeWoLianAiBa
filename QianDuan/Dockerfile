@@ -1,4 +1,3 @@
-# YH-136/YH-138 前端构建上下文收窄+单源nginx：烤入与覆盖漂移收敛为构建产物+挂载单源
 FROM node:26-alpine AS build
 WORKDIR /app
 COPY QianDuan/package*.json ./
@@ -7,16 +6,17 @@ COPY QianDuan/ .
 RUN npx vite build
 
 FROM nginx:1.30-alpine AS brotli-build
-RUN apk add --no-cache \
-    git \
-    build-base \
-    pcre-dev \
-    zlib-dev \
-    openssl-dev \
-    linux-headers \
-    wget
-RUN git clone --recursive https://github.com/google/ngx_brotli /ngx_brotli
-RUN cd /ngx_brotli && git submodule update --init
+RUN apk add --no-cache build-base pcre-dev zlib-dev openssl-dev linux-headers wget
+COPY QianDuan/brotli-src /ngx_brotli
+RUN set -eux; \
+    cd /ngx_brotli/deps/brotli/c; \
+    mkdir -p ../out; \
+    cd common && gcc -O2 -fPIC -I../include -c *.c; \
+    cd ../enc && gcc -O2 -fPIC -I../include -c *.c; \
+    cd ..; \
+    ar rcs ../out/libbrotlicommon.a common/*.o; \
+    ar rcs ../out/libbrotlienc.a enc/*.o; \
+    rm -f common/*.o enc/*.o
 RUN NGINX_VERSION=$(nginx -v 2>&1 | cut -d'/' -f2 | tr -d ' \r\n') && \
     test -n "${NGINX_VERSION}" && \
     wget -q "http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" && \
@@ -33,13 +33,14 @@ COPY --from=brotli-build /etc/nginx/modules/ngx_http_brotli_filter_module.so /et
 COPY --from=brotli-build /etc/nginx/modules/ngx_http_brotli_static_module.so /etc/nginx/modules/
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY BuShu/nginx.conf /etc/nginx/conf.d/default.conf
-RUN echo 'load_module modules/ngx_http_brotli_filter_module.so;' > /etc/nginx/conf.d/brotli.conf && \
-    echo 'load_module modules/ngx_http_brotli_static_module.so;' >> /etc/nginx/conf.d/brotli.conf && \
-    echo 'brotli on;' >> /etc/nginx/conf.d/brotli.conf && \
-    echo 'brotli_vary on;' >> /etc/nginx/conf.d/brotli.conf && \
-    echo 'brotli_comp_level 6;' >> /etc/nginx/conf.d/brotli.conf && \
-    echo 'brotli_types text/plain text/css text/xml application/json application/javascript application/xml+rss application/atom+xml image/svg+xml;' >> /etc/nginx/conf.d/brotli.conf && \
-    nginx -t
+RUN { echo 'load_module modules/ngx_http_brotli_filter_module.so;'; \
+      echo 'load_module modules/ngx_http_brotli_static_module.so;'; \
+      sed -e 's|^pid .*|pid /tmp/nginx.pid;|' -e '/^user /d' /etc/nginx/nginx.conf; } > /tmp/nginx.conf && \
+    mv /tmp/nginx.conf /etc/nginx/nginx.conf && \
+    mkdir -p /var/cache/nginx/client_temp /var/cache/nginx/proxy_temp /var/cache/nginx/fastcgi_temp /var/cache/nginx/uwsgi_temp /var/cache/nginx/scgi_temp && \
+    chown -R nginx:nginx /var/cache/nginx && \
+    nginx -t && \
+    rm -f /tmp/nginx.pid
 USER nginx
 EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget -q -O /dev/null http://127.0.0.1/ || exit 1

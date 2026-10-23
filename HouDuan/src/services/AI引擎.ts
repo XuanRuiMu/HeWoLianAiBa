@@ -22,14 +22,12 @@ export * from './安全审核'
 export * from './军师求助'
 export * from './关键事件提取'
 
-/** Writer 单轮最多发几条 —— 与 Director 无关，只作失控护栏（防模型一次吐十几条） */
 const ZUI_DA_TIAO_SHU = 5
 
 function xiuZhengTiaoShu(tiaoShu: number): number {
   return Math.max(0, Math.min(ZUI_DA_TIAO_SHU, tiaoShu))
 }
 
-// R3 输出侧本地违禁词兜底：词表来自 peiZhi.shuChuWeiJinCiLieBiao，命中即拦截本轮全部回复
 function hanWeiJinCi(wenBen: string): boolean {
   return peiZhi.shuChuWeiJinCiLieBiao.some((ci) => ci.length > 0 && wenBen.includes(ci))
 }
@@ -38,10 +36,8 @@ function qieGeXiaoXi(xiaoXiLieBiao: string[], tiaoShu: number): string[] {
   return xiaoXiLieBiao.slice(0, xiuZhengTiaoShu(tiaoShu))
 }
 
-// P1-5 预算余量预警阈值：当日余量≤50时向用户推送一次提醒
 const YU_SUAN_YU_JING_YU_LIANG = 50
 
-// P1-5 预算触顶/预警的用户感知：经 Socket 向用户房间推送系统提示（结构与调度器 发送系统错误提示 一致）
 function tuiSongXiTongTiShi(yongHuId: string, jiaoSeId: string, wenBen: string): void {
   const io = huoQuIo()
   if (!io) return
@@ -60,9 +56,6 @@ function tuiSongXiTongTiShi(yongHuId: string, jiaoSeId: string, wenBen: string):
   })
 }
 
-// 本地内存兜底计数器（Redis 故障时使用）
-// YH-066 预算Map无界收敛：定容LRU+定时清理，禁每次全表扫描
-// 根因：无界增长+每次全扫，Redis一挂更慢；收敛为500上限LRU+过期即删
 const yuSuanNeiCunJiShu = new Map<string, { count: number; riQi: string; resetTime: number }>()
 const YU_SUAN_NEI_CUN_ZUI_DA = 500
 
@@ -73,7 +66,6 @@ function qingLiGuoQiNeiCun(): void {
       yuSuanNeiCunJiShu.delete(jianMing)
     }
   }
-  // 定容LRU：超限删最旧（Map插入序即LRU近似）
   while (yuSuanNeiCunJiShu.size > YU_SUAN_NEI_CUN_ZUI_DA) {
     const shouJian = yuSuanNeiCunJiShu.keys().next().value
     if (shouJian === undefined) break
@@ -81,8 +73,6 @@ function qingLiGuoQiNeiCun(): void {
   }
 }
 
-// M3 成本护栏：每用户每日 AI 请求预算（Redis 计数），超限当日不再触发 LLM 调用。
-// Redis 故障时本地内存兜底计数，避免预算检查拖垮主链路（C-7）。
 async function jianChaMeiRiYuSuan(yongHuId: string): Promise<{ yunXu: boolean; chuFaYuJing: boolean }> {
     const riQi = new Date().toISOString().slice(0, 10)
 
@@ -103,7 +93,6 @@ async function jianChaMeiRiYuSuan(yongHuId: string): Promise<{ yunXu: boolean; c
       xiang_qing: { cuo_wu: String(cuoWu), yong_hu_id: yongHuId },
     })
 
-    // 本地内存兜底
     qingLiGuoQiNeiCun()
     const jianMing = `${yongHuId}:${riQi}`
     const jiLu = yuSuanNeiCunJiShu.get(jianMing)
@@ -128,7 +117,6 @@ export async function yunXingAIYinQing(
   shuRu: AIYinQingShuRu,
   waiBuXinHao?: AbortSignal,
 ): Promise<AIYinQingShuChu> {
-  // YH-049 取消透传：入口已取消直接返回空，不再烧预算与token
   if (waiBuXinHao?.aborted) {
     return {
       xiao_xi_lie_biao: [],
@@ -138,7 +126,6 @@ export async function yunXingAIYinQing(
     }
   }
 
-  // YH-053 预警走轻量通道：连发预警与预算触顶提示不计日预算，禁污染计数
   const shiYuJingTongDao = shuRu.yong_hu_xin_xiao_xi.startsWith('[系统提示：用户连发多条消息')
   const yuSuanJieGuo = shiYuJingTongDao
     ? { yunXu: true, chuFaYuJing: false }
@@ -157,7 +144,6 @@ export async function yunXingAIYinQing(
     }
   }
 
-  // 检查点1：Director前 - 输入校验
   if (!shuRu.yong_hu_xin_xiao_xi?.trim()) {
     return {
       xiao_xi_lie_biao: [],
@@ -167,16 +153,11 @@ export async function yunXingAIYinQing(
     }
   }
 
-  // M2 调用收敛：用户输入的安全审核已在 REST 路由层统一执行
-  // （routes/消息.ts，含违规记录与 IP 封禁联动），引擎层不再重复调用 LLM 审核。
-  // 输出侧防护由 Writer 输出后的本地违禁词兜底承担（见下方 guoLvShuChuWeiJin）。
 
   let ceLue: DirectorCeLue | undefined
   let jiang_ji_mo_shi = false
   let cuoWuXinXi: string | undefined
 
-  // 人设/关系上下文：驱动 Director 与 Writer 的调用参数（温度/top_p）随 AI对象人设与关系阶段动态变化，
-  // 而非沿用固定基座值。这是“按 AI对象具体人设确定参数”的根因落点。
   const shangXiaWen: CanShuShangXiaWen = {
     jiaoSe: gouJianJiaoSeShangXiaWen(shuRu.jiao_se),
     haoGanDu: shuRu.hao_gan_du
@@ -187,8 +168,6 @@ export async function yunXingAIYinQing(
       : undefined,
   }
 
-  // Director调用：429 透 user_id（限流期已读不回可归因到人，不误判为 AI 已死）；
-  // 402 走人工路径提示（不再吞为通用失败）；其余失败降级为单代理模式
   const directorJieGuo = await shengChengDirectorCeLue(shuRu, shangXiaWen, waiBuXinHao)
   const directorSiKao = directorJieGuo.si_kao || undefined
   if (directorJieGuo.cheng_gong) {
@@ -213,14 +192,11 @@ export async function yunXingAIYinQing(
       cuo_wu_ma: 'YU_E_BU_ZU_402',
     }
   } else {
-    // Director失败降级为单代理模式
     jiang_ji_mo_shi = true
     cuoWuXinXi = huoQuFanYi('AI', 'DirectorDiaoYongShiBai')
-    // eslint-disable-next-line no-console -- AI引擎.test 断言此输出含「Director调用失败」(行为契约)
-    console.error('Director调用失败，降级为单代理模式', directorJieGuo.cuo_wu)
+    debug日志.error('AI引擎', 'Director调用失败，降级为单代理模式', { xiang_qing: { cuo_wu: String(directorJieGuo.cuo_wu) } })
   }
 
-  // 检查点2：Writer前
   if (ceLue && !ceLue.shi_fou_hui_fu) {
     return {
       xiao_xi_lie_biao: [],
@@ -233,8 +209,6 @@ jiang_ji_mo_shi,
     }
 
   try {
-    // Writer调用（Director失败时降级为单代理，ceLue为undefined）
-    // YH-049 取消透传到底层：在途取消直接停，不再发起Writer外呼
     if (waiBuXinHao?.aborted) {
       return {
         xiao_xi_lie_biao: [],
@@ -246,26 +220,7 @@ jiang_ji_mo_shi: false,
       }
     const writerJieGuo = await shengChengWriterHuiFu(shuRu, ceLue, shangXiaWen, waiBuXinHao)
 
-    // 检查点2：Writer后 - R3 输出侧本地违禁词兜底（零额外 LLM 调用）
-    //
-    // ⚠️ **不再按 Director 的「回复条数」截断**（第十三轮，用户裁决方案 B）。
-    //   原实现 `slice(0, ceLue.hui_fu_tiao_shu)` 有两个实测问题：
-    //   1. **收尾感**：Writer 是一次性生成整段再被切开，所以最后一条必然是「收尾/追问」。
-    //      实测问句落在最后一条的比例 AI **34.7%** vs 真人 **19.3%**（硬问号口径）、
-    //      **29.9%** vs **20.7%**（宽口径），AI 高出约 10–15 个百分点。
-    //      真人是一条一条发的，发完第一条才想第二条，追问可能出现在任何位置、也可能没有。
-    //      截断把这个特征**固化**了下来。
-    //   2. **截断丢内容**：Director 说 2 条而 Writer 写了 4 条时，后两条是模型认真写的内容，
-    //      被无声丢弃 —— 这既浪费又让「本轮说什么」实际由 Director 的数字决定。
-    //   现在改为：Writer 自己决定发几条，只保留 `ZUI_DA_TIAO_SHU` 作失控护栏。
-    //   Director 仍负责「回不回 / 什么情绪 / 要不要撤回 / 要不要表白」——
-    //   那是**游戏逻辑**（已读不回、撤回、表白胜负），必须保留。
     let xiaoXiLieBiao = qieGeXiaoXi(writerJieGuo.xiao_xi_lie_biao, ZUI_DA_TIAO_SHU)
-    // ⚠️ 失控护栏命中时的**可观测性**（第十九轮，审查建议）：
-    //   截断是静默的 —— 用户看到的是「被腰斩的对话」，日志里也查不到。
-    //   第十九轮实测：删掉 prompt 里的「最多 5 条」数字锚后，触护栏的轮次
-    //   从 2/24（8%）降到 **0/24** ⇒ 那个数字锚本身才是护栏的触发源。
-    //   但护栏仍必须留（模型失控时兜底），所以要留痕，否则真出事时无法归因。
     if (writerJieGuo.xiao_xi_lie_biao.length > ZUI_DA_TIAO_SHU) {
       debug日志.warn('AI引擎', 'Writer 输出条数超失控护栏，已截断', {
         xiang_qing: {
@@ -295,7 +250,6 @@ cuo_wu_xin_xi: huoQuFanYi('AI', 'ShenHeWeiGui'),
         }
     }
 
-    // FP-08 过AI味输出过滤：落库/推送前对每条消息做规则过滤，命中客服腔固定搭配即删除
     const aiWeiGuoLv = guoLvAiWeiXiaoXi(xiaoXiLieBiao)
     if (aiWeiGuoLv.beiFengSha.length > 0) {
       xiaoXiLieBiao = aiWeiGuoLv.baoLiu
@@ -307,7 +261,6 @@ cuo_wu_xin_xi: huoQuFanYi('AI', 'ShenHeWeiGui'),
       })
     }
 
-    // FP-05 YH-043 去 AI 味：先规则全量（零成本正则二遍），采样命中再进模型抽检队列（禁全量重检烧钱）
     const aiWeiWenBen = xiaoXiLieBiao.join('\n')
     const aiWeiJianCha = jianChaAiWei(aiWeiWenBen)
     if (!aiWeiJianCha.tongGuo && panDuanShiFouCaiYang()) {
@@ -320,13 +273,6 @@ cuo_wu_xin_xi: huoQuFanYi('AI', 'ShenHeWeiGui'),
       }
     }
 
-    // ⚠️ **Director 说「要回」但 Writer 交白卷** —— 两者必须可区分（第十二轮实测 P0-②）
-    //   实测 400 轮里 3 轮如此（INTP/L7、INFJ/L18、ESFJ/L8）：`ceLue.shi_fou_hui_fu === true`
-    //   且策略写满，但 `xiao_xi_lie_biao` 为空。
-    //   原实现把「模型交白卷」与「角色已读不回」压成同一个信号：
-    //   既不重试、不降级、也无 `cuo_wu_xin_xi`，用户视角就是**恋人已读不回**，
-    //   同时这 3 轮还会让联调的 M7 分母被悄悄缩小（第三轮审查 Sp-1 记录过同类分母问题）。
-    //   故此处显式标记为失败，让调用方能提示/重试，而不是静默当成「没话说」。
     const zhenDeYaHui = ceLue?.shi_fou_hui_fu !== false
     if (zhenDeYaHui && xiaoXiLieBiao.length === 0 && !cuoWuXinXi) {
       debug日志.error('AI引擎', 'Director要求回复但Writer输出为空，按失败处理（区别于「已读不回」）', {
@@ -339,7 +285,6 @@ cuo_wu_xin_xi: huoQuFanYi('AI', 'ShenHeWeiGui'),
       cuoWuXinXi = huoQuFanYi('AI', 'WriterFuShiKongBai')
     }
 
-    // 检查点3：保存前
     return {
       xiao_xi_lie_biao: xiaoXiLieBiao,
       shi_fou_hui_fu: xiaoXiLieBiao.length > 0,
@@ -350,13 +295,7 @@ cuo_wu_xin_xi: huoQuFanYi('AI', 'ShenHeWeiGui'),
         directorSiKao || writerJieGuo.si_kao
           ? { director: directorSiKao, writer: writerJieGuo.si_kao || undefined }
           : undefined,
-      // Director 策略快照：`ce_lue.hui_fu_ce_lue` 会被拼进 Writer prompt
-      //（Prompt构建器「导演给你的小纸条」）。Director 上游 prompt 许可「留白」，
-      // 全链路无约束禁止它在策略里写「用省略号停顿」—— 被测符号能经此通道回流。
-      // 不落盘则任何跨臂比较的「单变量」声明都不可回溯、不可排除、不可校正。
       ce_lue: ceLue,
-      // 透传本轮实际注入的开场候选 + Writer 原始全文，供联调统计 M7/M8。
-      // ⚠️ 缺任一字段都会让 M7 遵守率恒为 0（第三轮审查 Sp-1 实测的 P0）。
       kai_chang_hou_xuan: writerJieGuo.kai_chang_hou_xuan,
       yuan_wen: writerJieGuo.yuan_wen,
     }

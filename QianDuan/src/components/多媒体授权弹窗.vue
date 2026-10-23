@@ -25,8 +25,6 @@
 </template>
 
 <script setup lang="ts">
-// C4 首次多媒体授权弹窗：图片/表情包外发视觉理解前单独征得同意；
-// 同意结果写入 tuPianShouQuan（可在「账号与安全」页随时撤回）
 import { huoQuFanYi } from '@/config/翻译表'
 
 defineProps<{

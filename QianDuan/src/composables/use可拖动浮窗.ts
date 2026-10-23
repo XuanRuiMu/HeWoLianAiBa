@@ -10,7 +10,6 @@ export type 缩放方向 =
   | 'youShang'
   | 'youXia'
 
-// 8 向手柄的唯一清单：宿主按此渲染手柄，测试按此逐向把守，CSS 规则不得再多向也不得少向
 export const 缩放方向清单: readonly 缩放方向[] = [
   'zuo',
   'you',
@@ -24,7 +23,6 @@ export const 缩放方向清单: readonly 缩放方向[] = [
 
 export type 停靠边 = 'zuo' | 'you' | 'shang' | 'xia'
 
-// 8 向手柄各自「被拖动的边」；对侧边即锚
 const 拖动左边缘: readonly 缩放方向[] = ['zuo', 'zuoShang', 'zuoXia']
 const 拖动右边缘: readonly 缩放方向[] = ['you', 'youShang', 'youXia']
 const 拖动上边缘: readonly 缩放方向[] = ['shang', 'zuoShang', 'youShang']
@@ -110,13 +108,10 @@ export function use可拖动浮窗(原始选项: 可拖动浮窗选项) {
     }
   }
 
-  // 尺寸/视口一变就重新钳制，否则最小化或缩放后旧位移会越界把浮窗整条推出屏外
   watch([当前宽, 有效高, () => 视口.value.宽, () => 视口.value.高], () => {
     位移.value = 钳制位移(位移.value.x, 位移.value.y, 当前宽.value, 有效高.value)
   })
 
-  // 几何单一真源：锚定边 + 位移 + 视口 → 绝对 left/top。宿主只消费下发值，不得再用 right/bottom 钉盒，
-  // 否则盒子被钉在右下角，宽度增只能向左扩、高度增只能向上扩 —— 缩放方向必然反向。
   const 锚定边 = computed<{ 横: 停靠边; 纵: 停靠边 }>(() => ({ 横: 横向停靠, 纵: 纵向停靠 }))
 
   function 停靠基准(宽: number, 高: number) {
@@ -143,7 +138,6 @@ export function use可拖动浮窗(原始选项: 可拖动浮窗选项) {
 
   const 浮窗样式 = computed<Record<string, string>>(() => {
     const 样式: Record<string, string> = {
-      // 标题栏高与停靠边距由本 composable 单向下发，组件 CSS 只消费变量，避免两处各写一份数字
       '--fu-chuang-biaoti-lan-gao': `${标题栏高}px`,
       '--fu-chuang-ting-kao-bian-jv': `${边距}px`,
       left: `${几何.value.左}px`,
@@ -155,11 +149,8 @@ export function use可拖动浮窗(原始选项: 可拖动浮窗选项) {
     return 样式
   })
 
-  // 最小化只裁外层：内容区恒按展开高布局，滚动位置不被 clientHeight 变化夹走
   const 内容区样式 = computed(() => ({ height: `${当前高.value - 标题栏高}px` }))
 
-  // 旧版（无 版本 字段）存的是「相对被钉死锚角的偏移」，新版存绝对 left/top；
-  // 两套坐标系不可混读，故按写入时的锚定模型各读各的，读回后一律钳回可视区，不把用户浮窗甩出屏外
   const 偏好版本 = 2
 
   function 读偏好() {
@@ -181,7 +172,6 @@ export function use可拖动浮窗(原始选项: 可拖动浮窗选项) {
         return
       }
       const 基准 = 停靠基准(当前宽.value, 有效高.value)
-      // 旧版纵向恒为下缘钉死（宿主 CSS 用 bottom），迁移时不套用新的 纵向停靠
       写左上角(
         基准.x + x,
         视口.value.高 - 边距 - 有效高.value + y,
@@ -213,8 +203,6 @@ export function use可拖动浮窗(原始选项: 可拖动浮窗选项) {
 
   读偏好()
 
-  // 几何通道（left/top/width/height）由本 composable 独占：手势结束时清掉根节点上仍占着的几何过渡，
-  // 否则 document.getAnimations() 只增不减（fill:forwards 同形泄漏），下一次手势读到旧值
   function 清理几何手势动画() {
     const 取动画 = 元素.value?.getAnimations
     if (typeof 取动画 !== 'function') return
@@ -270,7 +258,6 @@ export function use可拖动浮窗(原始选项: 可拖动浮窗选项) {
   }
 
   function 开始拖动(e: PointerEvent) {
-    // 标题栏内任何按钮都不触发拖动（最小化/排序/关闭点击直达）
     if ((e.target as HTMLElement).closest('button')) return
     if (!元素.value) return
     已按下 = true
@@ -292,10 +279,6 @@ export function use可拖动浮窗(原始选项: 可拖动浮窗选项) {
   let 缩放起始下 = 0
   let 缩放指针方向: 缩放方向 = 'youXia'
 
-  // 手柄方向 → 被拖动的边；对侧边即锚。left/top 真源下「向右拖右手柄 ⇒ left 不变、width 增」与
-  // 「向左拖左手柄 ⇒ left 增、width 减」是同一套规则的两侧，不再依赖宿主的钉盒方式。
-  // 被拖动的边只允许走到视口边界（与 当前宽/当前高 的 视口-2*边距 上限取交集），
-  // 于是缩放期间对侧边与左上角恒不发生位移 —— 旧的「越界后整体滑回」会把向右的拖拽折成向左的扩张，即需求 #7 的表现
   function 处理缩放(e: PointerEvent) {
     if (!正在缩放) return
     const 偏移X = e.clientX - 缩放起始X

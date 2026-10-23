@@ -210,7 +210,6 @@ try {
   if (原文) {
     const 偏好 = JSON.parse(原文) as { 排序?: 'jiang' | 'sheng'; 宽?: unknown; 高?: unknown; 最小化?: unknown }
     if (偏好.排序 === 'sheng' || 偏好.排序 === 'jiang') 排序方式.value = 偏好.排序
-    // 旧版把 宽/高/最小化 混存在本键里，尺寸与最小化已归 use可拖动浮窗 的独立键，这里一次性抹掉残留
     if ('宽' in 偏好 || '高' in 偏好 || '最小化' in 偏好) {
       localStorage.setItem(偏好存储键, JSON.stringify({ 排序: 排序方式.value }))
     }
@@ -358,12 +357,10 @@ function 格式化时间(时间: number): string {
 
 <style scoped>
 .guanli-jiankong-fuchuang {
-  /* 宽高、位移与停靠边距一律由 use可拖动浮窗 以 px 下发；此处只留层级与主题令牌，禁止写死色值与尺寸 */
+  
   --jiankong-z-index: var(--ceng-tiaoshi-mianban);
 
-  /* 星夜琉璃 · Starlit Glass：色值全部走 --liuli-* 令牌（variables.css 明暗两套均有定义）。
-     浮窗为可拖动元素，架构约束禁用背景模糊滤镜（拖动时全屏重绘卡顿），
-     玻璃感由较高不透明度底色 + 棱线高光 + 玫瑰金强调共同表达。 */
+  
   --jiankong-beijing: var(--liuli-fuchuang-beijing);
   --jiankong-biankuang: var(--liuli-fuchuang-biankuang);
   --jiankong-yinying: var(--liuli-fuchuang-yinying);
@@ -382,8 +379,7 @@ function 格式化时间(时间: number): string {
   --jiankong-anniu-hover: var(--liuli-anniu-hover);
   --jiankong-lengxian: var(--liuli-lengxian);
 
-  /* 锚定边与 left/top/width/height 一律由 use可拖动浮窗 以 px 下发。
-     宿主一旦改用 right/bottom 钉盒，盒子右下角被钉死 ⇒ 宽度增只向左扩、高度增只向上扩 ⇒ 缩放方向必然反向 */
+  
   position: fixed;
   z-index: var(--jiankong-z-index);
   display: flex;
@@ -399,7 +395,7 @@ function 格式化时间(时间: number): string {
   will-change: left, top;
 }
 
-/* 顶部棱线高光（宝石切面感），随卡片宽度伸缩 */
+
 .guanli-jiankong-fuchuang::before {
   content: '';
   position: absolute;
@@ -475,7 +471,7 @@ function 格式化时间(时间: number): string {
   min-height: 0;
 }
 
-/* 最小化只裁外层：内容区保持展开高布局，滚动位置不被 clientHeight 变化夹走 */
+
 .zui-xiao-hua .jiankong-wangge {
   visibility: hidden;
 }
@@ -489,7 +485,7 @@ function 格式化时间(时间: number): string {
   touch-action: none;
 }
 
-/* 侧缘手柄自标题栏下沿起算，不压标题栏按钮命中区；尺寸通道只有这一个，CSS resize 已移除 */
+
 .jiankong-shouBing-you {
   top: var(--fu-chuang-biaoti-lan-gao);
   right: 0;
@@ -514,8 +510,7 @@ function 格式化时间(时间: number): string {
   cursor: ns-resize;
 }
 
-/* 上缘手柄只占标题栏顶部 10px（按钮在 --fu-chuang-biaoti-lan-gao 内垂直居中，其顶沿在本条带之下），
-   因此改上缘不抢标题栏拖动与按钮点击 */
+
 .jiankong-shouBing-shang {
   top: 0;
   left: 0;
@@ -679,7 +674,7 @@ function 格式化时间(时间: number): string {
   word-break: break-word;
 }
 
-/* 按回复轮次聚合卡片：一轮回复的思考/构建/回复/评分/隐藏收拢在一处 */
+
 .lunci-liebiao {
   display: flex;
   flex-direction: column;

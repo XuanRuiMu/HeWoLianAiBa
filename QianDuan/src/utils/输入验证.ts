@@ -33,7 +33,6 @@ export function yanZhengYongHuMing(zhi: unknown): YanZhengJieGuo {
   return { heFa: true }
 }
 
-/** 任意写法 → 内部规范形态。唯一实现是 utils/性别，本函数只是既有调用点的别名 */
 export function guiYiXingBie(zhi: unknown): 性别内部形态 | null {
   return 解析性别(zhi)
 }

@@ -13,20 +13,6 @@ const 读源 = (...路径段: string[]) => readFileSync(resolve(本目录, '..',
 
 vi.mock('@/api/聊天')
 
-/**
- * FP-22 运营侧数据 HTTP 收口的「前端零可见变化」守卫。
- *
- * 后端把 `yuan_shi_nei_rong`（撤回前原文，含 AI 自撤回的「隐藏的内心修正」）与存量
- * `neiXinHuoDong` 内心行改成「只随 cha_kan 运营读取能力下发」之后：
- * - 普通聊天界面对这两样本就零依赖（撤回只渲染占位文案、内心行被 v-if 挡掉），
- *   所以收口后 UI 必须毫无变化 —— 本文件把「无依赖」钉成事实：一旦有人给普通用户界面
- *   加上这两个字段的展示，这里立刻红灯，必须回 PROGRESS 重新裁决而不是静默改 UI；
- * - 管理侧（有 cha_kan）仍拿得到内心行，管理员监控的深度思考补全链不受影响。
- *
- * 唯一曾有可见依赖的面是 军师记录详情.vue（它确实渲染撤回原文）⇒ FP-26 按用户裁决②
- * 「撤回即原文不再可见」把该展示段（`.chehui-yuanshi`）连同类型键一起删除：
- * 后端军师记录快照不再产该键、读侧按白名单重建，前端渲染层对撤回原文**零消费点**（下面的账本）。
- */
 
 const 撤回占位文案 = huoQuFanYi('liaoTian', 'duiFangCheHuiLeYiTiaoXiaoXi')
 const AI隐藏原文 = 'AI 隐藏起来的内心修正原文'
@@ -105,10 +91,8 @@ describe('FP-22 前端消费面清单（谁可以依赖运营字段、谁不可�
     const 类型源 = 读源('types/类型定义.ts')
     const 军师记录段 = /interface JunShiJiLuLiaoTianXiaoXi \{([\s\S]*?)\n\}/.exec(类型源)?.[1]
 
-    // 消息面：可选键 —— 缺键（普通用户）是合法响应，而不是渲染异常
     expect(类型源).toContain('yuan_shi_nei_rong?:')
     expect(类型源).not.toMatch(/^\s*yuan_shi_nei_rong:\s*string\s*$/m)
-    // FP-26：军师记录是普通用户可读面 ⇒ 类型层就不携带撤回原文（旧：`yuan_shi_nei_rong?: string | null`）
     expect(军师记录段).toBeDefined()
     expect(军师记录段).not.toMatch(/^\s*yuan_shi_nei_rong\??:/m)
   })
@@ -116,13 +100,9 @@ describe('FP-22 前端消费面清单（谁可以依赖运营字段、谁不可�
   it('FP-26 反转：军师记录详情面已删除撤回原文展示（旧断言钉的是「该依赖存在」）', () => {
     const 军师详情源 = 读源('views/军师记录详情.vue')
 
-    // 旧→新：expect(军师详情源).toContain('xiaoXi.yuan_shi_nei_rong') → 零引用
     expect(军师详情源).not.toContain('yuan_shi_nei_rong')
     expect(军师详情源).not.toContain('chehui-yuanshi')
-    // 撤回态仍可见：撤回时间块保留（可辨识性不退）
     expect(军师详情源).toContain('chehui-shijian')
-    // 行为级证据在 军师记录详情.test.ts 的「FP-26 军师记录详情不显示撤回原文」组（渲染结果断言）
-    // 翻译键 junShi.cheHuiYuanWen 原地保留、消费者归零（删键属另一裁决面，本单不动 config/翻译表.ts）
     expect(读源('config/翻译表.ts')).toMatch(/cheHuiYuanWen/)
   })
 
@@ -136,7 +116,6 @@ describe('FP-22 前端消费面清单（谁可以依赖运营字段、谁不可�
       'components/军师指导.vue',
     ].filter((路径) => 读源(路径).includes('yuan_shi_nei_rong'))
 
-    // 旧：['views/军师记录详情.vue'] —— FP-26 收口后应无任何渲染面读取该键
     expect(命中文件).toEqual([])
   })
 

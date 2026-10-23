@@ -20,7 +20,6 @@ export function shiTuXiangLeiBie(leiBie: string | null | undefined): boolean {
   return typeof leiBie === 'string' && TU_XIANG_LEI_BIE.has(leiBie)
 }
 
-/** 非文本消息的统一文本化描述：[图片]/[表情包]/[语音(N秒)]/[视频]/[文件:名]，撤回语义与 Writer 链路一致 */
 export function meiTiZhanShiWenBen(
   leiBie: string | null | undefined,
   xuanXiang?: {
@@ -63,17 +62,10 @@ export function meiTiZhanShiWenBen(
   }
 }
 
-/**
- * 单条用户媒体消息 → 内容块。仅 tupian/biaoqingshu 且未撤回且磁盘可读时产生
- * input_image 块对；已撤回或读取失败（文件丢失）返回空数组，由 Prompt 第五层的
- * 文本化描述（[用户撤回了一张图片]/[图片]）承担语义，绝不抛错中断对话、不产生重复块。
- */
 export async function gouJianDanTiaoTuXiangKuai(xiang: DuiHuaLiShiXiang): Promise<DuiHuaKuai[]> {
   const leiBie = xiang.meiTiLeiBie
   if (!shiTuXiangLeiBie(leiBie)) return []
   if (xiang.yi_che_hui) return []
-  // FP-08 图块标题显式声明「与上面那条载体标记是同一条消息」：
-  // 否则文本占位符 + 图块各算一次，模型仍会把 1 张图数成 2 个表情包
   const biaoQian =
     leiBie === 'biaoqingshu'
       ? '上面那条表情包标记的本体（同一条消息，不是对方另外又发的）'

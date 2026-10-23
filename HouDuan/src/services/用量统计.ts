@@ -8,7 +8,6 @@ export interface ShiYongLiangJiLu {
   shuRuToken: number
   shuChuToken: number
   zongToken: number
-  /** 官方上下文硬盘缓存命中的输入 token 数 */
   mingZhongToken?: number
   yongHuId?: string
 }

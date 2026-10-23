@@ -49,8 +49,6 @@ chuShiHuaOTel()
 
 const yingYong = express()
 
-// P2-2：可信代理链路由 utils/真实IP.shiDuanKeXinDaiLi 统一管理（KE_XIN_DAI_LI_WANG_DUAN 可配）；
-// Express 层一律不信代理头，req.ip 恒等于 TCP 对端地址，防止旁路代码误读客户端可控 XFF
 yingYong.set('trust proxy', false)
 yingYong.use(日志追踪中间件())
 
@@ -58,8 +56,6 @@ yingYong.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      // M8：移除 script unsafe-inline（Vite 构建产物为外链 module script）；
-      // wasm-unsafe-eval 为 Draco 解码 WASM 所必需
       scriptSrc: ["'self'", "'wasm-unsafe-eval'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", 'data:', 'blob:'],
@@ -87,10 +83,6 @@ yingYong.use(cors({
       huiDiao(null, true)
       return
     }
-    // 本地开发/测试场景：放行 localhost 与 127.0.0.1 的任意端口。
-    // 否则每新开一个测试端口（如 :8090、:8080）都会因白名单缺失而 500，
-    // 而 curl 不带 Origin 头反而能过，造成「浏览器登录失败、命令行却正常」的诡异现象。
-    // 低危顺手项：该放行仅在非生产环境生效，生产模式一律走 ALLOWED_ORIGINS 白名单。
     try {
       const biaoJi = new URL(qiuYuan)
       if (
@@ -110,7 +102,6 @@ yingYong.use(cors({
 }))
 
 yingYong.use((qingQiu, xiangYing, xiaYiBu) => {
-  // YH-029 畸形编码转400加计数：decode失败不再抛500，畸形计数触发封禁阶梯
   try {
     qingQiu.url = decodeURI(qingQiu.url)
   } catch {
@@ -130,8 +121,6 @@ yingYong.use((qingQiu, xiangYing, xiaYiBu) => {
 
 yingYong.use(express.json({ limit: '1mb' }))
 
-// YH-127 上传对齐：nginx 60m分级，应用上限对齐禁413
-// 根因：nginx 1MB对应用50MB，上传必413；收敛为应用侧文种分级上限
 yingYong.use('/api/聊天/会话', express.json({ limit: '60mb' }))
 
 yingYong.use((qingQiu, _xiangYing, xiaYiBu) => {
@@ -160,11 +149,8 @@ yingYong.use(jianKangJianChaLuYou)
 
 yingYong.use(IP封禁中间件)
 yingYong.use(changGuiXianLiu)
-// A8：前端日志上报走独立路由（内部已做字段截断），独立严限流防匿名刷量
 yingYong.use('/api/logs', riZhiJieShouXianLiu, riZhiJieShouLuYou)
-// P1-8：feature-flags 公开只读端点（灰度发布开关），无需鉴权，短缓存
 yingYong.use('/api/config/feature-flags', gongNengKaiGuanLuYou)
-// B-7：挑战配置公开端点（渣型概率），无需鉴权
 yingYong.use('/api/挑战/配置', (async (_qingQiu, xiangYing) => {
   const { TIAO_ZHAN_PEI_ZHI } = await import('./config/挑战配置')
   const { chengGongXiangYing, shiBaiXiangYing } = await import('./utils/xiangying')
@@ -200,7 +186,6 @@ yingYong.use('/api/表情', biaoQingLuYou)
 yingYong.use('/api/资料', ziLiaoLuYou)
 
 yingYong.use((_qingQiu, xiangYing) => {
-  // YH-026 404单独计数触发封禁阶梯：未知路径探测计入违规，轮换路径扫描触发IP封禁
   try {
     const ip = _qingQiu ? huoQuZhenShiIP(_qingQiu as never) : ''
     if (ip) {
@@ -247,13 +232,10 @@ export async function 优雅停机(ziYuan: 停机资源): Promise<void> {
   if (yiZhiXingTingJiZiYuan.has(ziYuan)) return
   yiZhiXingTingJiZiYuan.add(ziYuan)
 
-  // YH-073 崩溃exit语义：异常停机exit 1，OTel flush，崩溃计数告警
-  // 根因：崩了还报正常，尾部链路全丢；收敛为正常停机0异常1+flush+告警
   const { guanBiOTel } = await import('./utils/OTel').catch(() => ({ guanBiOTel: async () => {} }))
 
   const buLuoQiangTui = (buZhou: string, dongZuo: () => Promise<unknown>) =>
     dongZuo().catch((cuoWu) => {
-      // eslint-disable-next-line no-console -- 优雅停机.test 将日志引擎mock为空实现,logger调用会在停机容错路径抛错
       console.error(`停机步骤失败:${buZhou}`, cuoWu)
     })
 
@@ -307,7 +289,6 @@ async function 启动前强校验(): Promise<void> {
   const { 数据库 } = await import('./数据库')
   const { redis } = await import('./redis')
 
-  // YH-023 rediss启动校验告警：加密连接串必须走TLS，传输层异常启动期即告警
   try {
     const lianJie = String(peiZhi.redisLianJie || '')
     const yaoQiuTLS = /^rediss:\/\//i.test(lianJie.trim())
@@ -324,7 +305,6 @@ async function 启动前强校验(): Promise<void> {
     process.exit(1)
   }
 
-  // 1. Redis 连通性（重试 5 次，每次超时 3s；容器编排下依赖服务可能晚就绪）
   let redisLianTong = false
   let redisZuiHouCuoWu: unknown = null
   for (let ci = 0; ci < 5 && !redisLianTong; ci++) {
@@ -351,7 +331,6 @@ async function 启动前强校验(): Promise<void> {
   }
   debug日志.info('启动校验', 'Redis 连接正常')
 
-  // 2. PostgreSQL 连通性（重试 5 次，每次超时 3s）
   let pgLianTong = false
   let pgZuiHouCuoWu: unknown = null
   for (let ci = 0; ci < 5 && !pgLianTong; ci++) {
@@ -372,13 +351,8 @@ async function 启动前强校验(): Promise<void> {
   }
   debug日志.info('启动校验', 'PostgreSQL 连接正常')
 
-  // 4. Redis 握手就绪：ioredis 的 commandTimeout 从命令入队那刻起算，
-  //    模块编译期事件循环被阻塞时脚本预加载会整批超时，store 初始化报
-  //    "Command timed out"（限流是保护层，不该刷 error 日志）。等 ready 再监听，pipeline 才不空转。
   await dengDaiRedisJiuXu()
 
-  // 3. 审核词库可加载性：词库缺失会让每一条文本消息在落库前抛 ENOENT → 全站聊天 500，
-  //    而 /api/健康 照常 200（表现为「容器 healthy 但玩法全废」）。宁可在启动期中止，也不带病上线。
   try {
     const { jiaZaiZuiXinCiKu, huoQuCiKuMuLu } = await import('./services/审核词库')
     const ciKu = await jiaZaiZuiXinCiKu(true)
@@ -399,11 +373,8 @@ if (require.main === module) {
       debug日志.info('服务器生命周期', `服务器运行在端口 ${peiZhi.duanKou}`)
     })
 
-    // C6：审计日志定期归档删除（保留期配置化，磁盘占用有上限）
     qiDongShenJiRiZhiGuiDangDingShiQi()
-    // 模型名在册自检：临时/下线模型名会让每次 AI 调用直接 400，启动时就告警而不是等用户卡住
     void ziJianMoXingMingKeYong()
-    // YH-071 保存期限执行器：聊天30天通知90天每日清理
     qiDongShuJuBaoCunQingLiDingShiQi()
 
     const tingJi = async (): Promise<void> => {

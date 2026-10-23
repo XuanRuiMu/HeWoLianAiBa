@@ -1,5 +1,3 @@
-// YH-065 Redis键公约：{env}:{svc}:{biz}:{id} 双写迁移
-// 根因：中英混杂无隔离，管理侧一踩就错；收敛为统一公约，新键走公约旧键双写兼容
 const HUAN_JING_QIAN_ZHUI = (process.env.NODE_ENV || 'dev').trim() || 'dev'
 const FU_WU_MING = 'lian-ai-ba'
 
@@ -8,7 +6,6 @@ export function jianMingJian(yeWu: string, ...buFen: Array<string | number>): st
   return `${HUAN_JING_QIAN_ZHUI}:${FU_WU_MING}:${yeWu}:${qingXi.join(':')}`
 }
 
-// 旧键→公约键映射（双写迁移期）：读时双读，写时双写
 const JIU_XIN_JIAN_YING_SHE: Record<string, (buFen: string[]) => { jiuJian: string; xinJian: string }> = {
   aiYuSuan: (buFen) => ({ jiuJian: `ai_yu_suan:${buFen.join(':')}`, xinJian: jianMingJian('ai-yu-suan', ...buFen) }),
   yanZhengMa: (buFen) => ({ jiuJian: `yan_zheng_ma:${buFen.join(':')}`, xinJian: jianMingJian('yan-zheng-ma', ...buFen) }),

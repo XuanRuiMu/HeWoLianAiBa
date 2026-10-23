@@ -65,7 +65,6 @@ describe('FP-14 采样参数只在该生效的模式下下发（官方：思考�
     expect(buZhuang.top_p).toBeUndefined()
     expect(buZhuang.reasoningEffort).toBeUndefined()
     expect(buZhuang.wenDu).toBeCloseTo(1.0, 2)
-    // 人设/关系/场景修正仍在 1.0 基座上生效（E +0.1 等），且不超调
     expect(jiSuanAIChanShu('writer', 慢热上下文).wenDu).toBeGreaterThan(0.5)
   })
 
@@ -73,7 +72,6 @@ describe('FP-14 采样参数只在该生效的模式下下发（官方：思考�
     const 参数 = jiSuanAIChanShu('qingGanFenXi', 慢热上下文)
     expect(参数.top_p).toBeUndefined()
     expect(参数.siKaoMoShi).toBe('disabled')
-    // 基座 0.2 + E 0.1 + 快热 0.05 + 渣 0.05 + 热恋 0.05 + 吵架 -0.15 = 0.3
     expect(参数.wenDu).toBeCloseTo(0.3, 2)
     expect(jiSuanAIChanShu('qingGanFenXi').wenDu).toBeCloseTo(0.2, 2)
   })
@@ -96,7 +94,6 @@ describe('FP-14 预算护栏按官方 token 口径估算并在裁不动时告警
       { jiaoSe: 'user', neiRong: 中文100字 },
       { jiaoSe: 'user', neiRong: 中文100字 },
     ]
-    // 估算量 = system 1 + 60 + 60 = 121；121 不裁，120 裁掉最旧一条
     expect(yuSuanBaoHu(消息, 121).length).toBe(3)
     const 裁后 = yuSuanBaoHu(消息, 120)
     expect(裁后.length).toBe(2)
@@ -170,8 +167,6 @@ describe('FP-14 模型名在册自检', () => {
       }
     }
     走(根)
-    // .env 会覆盖 config 里的默认模型名：内测临时通道不在官方 /v1/models 在册列表内，也拿不到正式模型的
-    // 上下文硬盘缓存待遇（实测同前缀两次调用命中 0%），漏一处等于整套共用前缀优化白做
     for (const 文件 of ['../.env', '../.env.example', '../../docker-compose.yml']) {
       const 路径 = path.resolve(根, 文件)
       if (!fs.existsSync(路径)) continue
@@ -209,7 +204,6 @@ describe('FP-14 缓存命中量落库', () => {
     expect(插入).toBeDefined()
     expect(插入!.文本).toContain('缓存命中Token')
     expect(插入!.参数[6]).toBe(900)
-    // 第二条命中量超过输入量，按输入量封顶
     expect(写入的SQL.filter((项) => 项.文本.includes('INSERT INTO "LLM用量"'))[1].参数[6]).toBe(1000)
   })
 

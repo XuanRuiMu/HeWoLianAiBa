@@ -16,14 +16,12 @@ export interface LingPaiZaiHe {
   refreshTokenId?: string
 }
 
-/** Refresh token Redis jianMing 前缀 */
 const REFRESH_TOKEN_PREFIX = 'refresh_token:'
 const REFRESH_TOKEN_USER_PREFIX = 'refresh_token_user:'
 const REFRESH_TOKEN_XIAO_HAO_PREFIX = 'xiao_hao_refresh_token:'
 const REFRESH_TOKEN_TTL = peiZhi.shuaXinLingPaiYouXiaoMiao
 const XIAO_HAO_BIAO_JI_TTL = 24 * 60 * 60
 
-/** 存储 refresh token 到 Redis（仅存用户标识，不存手机号等敏感信息） */
 export async function cunChuRefreshToken(
   yongHuId: string,
   tokenId: string,
@@ -46,9 +44,7 @@ function duQuRefreshTokenYongHuId(cunChuZhi: string): string | null {
 
 void duQuRefreshTokenYongHuId
 
-/** 单飞行锁串行化：同凭证并发刷新排队，避免双兑现绕开 Lua（内存锁仅防同进程并发） */
 
-/** 验证并消费 refresh token（Lua原子验活删活立碑：并发双刷仅一胜，另一路见墓碑走复用链） */
 const XIAO_HAO_LUA = `
 local huo = redis.call('GET', KEYS[1])
 if not huo then return 0 end
@@ -79,8 +75,6 @@ export async function xiaoHaoRefreshToken(
   return { chengGong: false, cuoWu: 'refresh token不存在或已过期' }
 }
 
-/** 检测 refresh token 是否被复用（仅消费墓碑命中才算复用，有确凿重放证据；
- * 未知键一律按普通无效处理，不触发全家吊销，避免网络重试/多标签并发误伤全部会话） */
 export async function jianCeRefreshTokenChongFu(
   tokenId: string,
   yongHuId: string,
@@ -92,7 +86,6 @@ export async function jianCeRefreshTokenChongFu(
   return (await redis.exists(huoJian)) === 0
 }
 
-/** 吊销用户所有 refresh token（全家吊销） */
 export async function cheXiaoYongHuSuoYouRefreshToken(yongHuId: string): Promise<void> {
   const yongHuJian = `${REFRESH_TOKEN_USER_PREFIX}${yongHuId}`
   const tokenIds = await redis.smembers(yongHuJian)
@@ -103,7 +96,6 @@ export async function cheXiaoYongHuSuoYouRefreshToken(yongHuId: string): Promise
   await redis.del(yongHuJian)
 }
 
-/** 删除单个 refresh token */
 export async function shanChuRefreshToken(tokenId: string, yongHuId: string): Promise<void> {
   const jianMing = `${REFRESH_TOKEN_PREFIX}${yongHuId}:${tokenId}`
   await redis.del(jianMing)
@@ -149,7 +141,6 @@ export async function lingPaiShiFouYiCheXiao(
 }
 
 export function shengChengLingPai(zaiHe: LingPaiZaiHe): string {
-  // YH-031 JWT算法白名单HS256显式声明，禁none/RS256混淆
   return jwt.sign(
     { ...zaiHe, qianFaHaoMiao: Date.now() },
     peiZhi.jwtMiYao as jwt.Secret,

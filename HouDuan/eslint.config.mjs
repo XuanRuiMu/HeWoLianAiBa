@@ -1,8 +1,4 @@
 import js from '@eslint/js'
-// ⚠️ 禁用静默降级。原写法 `.catch(() => null)` 曾让 typescript-eslint 缺失时
-//    TS 规则整段被跳过，lint 依然返回 0 —— 一个长期存在的「假绿灯」，
-//    使 `npx eslint .` 通过完全不代表编码规范合规。
-//    现在让它缺失即崩，退出码非 0。
 const tseslint = await import('typescript-eslint')
 
 const tsDuan = tseslint.config(...tseslint.configs.recommended)
@@ -29,28 +25,32 @@ export default [
       'no-console': 'error',
       'preserve-caught-error': 'off',
 
-      // ⚠️ 本项目**自有约定**：有意不使用的参数/变量一律加下划线前缀
-      //    （`_客户端`、`_焦点`、`_zhuangTaiMa`、`_mbti`、`_ku` …）。
-      //    规则必须认这个约定，否则 19 处「未使用」全是误报。
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
       ],
-      // ⚠️ 关闭原因：`require()` 在本项目是**有意的懒加载**手段
-      //    （`复制静态资源.js`、`AI回复调度器.ts:588`、`图像生成.ts:119` 等），
-      //    且 `scripts/*.js` 本身就是 CJS。改成静态 import 会改变加载时机。
       '@typescript-eslint/no-require-imports': 'off',
-      // ⚠️ 关闭原因：这 3 处（`表情.ts:19`、`文档文本提取.ts:204`、`xiangying.ts:43`）
-      //    处理的**就是控制字符**（\u0000-\u001F），禁掉正则里的控制字符会让规则失效。
       'no-control-regex': 'off',
     },
   },
-  // scripts/ 下的诊断/实测/探针工具：console 是其**唯一**输出手段（要把结果打给人看），
-  // 且只在开发期由人手动执行、绝不随服务启动。对这些文件放开 no-console，
-  // 避免为了消 error 把输出通道删掉让工具失效。范围严格限定为 scripts/，
-  // src/ 一律不豁免——服务端日志必须走 utils/debug日志。
   {
     files: ['scripts/**/*.ts', 'scripts/**/*.js'],
+    languageOptions: {
+      globals: {
+        require: 'readonly',
+        module: 'writable',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        process: 'readonly',
+        Buffer: 'readonly',
+      },
+    },
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
+    files: ['src/config/**', 'src/server.ts', 'src/redis.ts'],
     rules: {
       'no-console': 'off',
     },

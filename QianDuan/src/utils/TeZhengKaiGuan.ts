@@ -6,10 +6,6 @@ const MO_REN_KAI_GUAN: Record<string, boolean> = { junShi: true }
 
 const kaiGuan = ref<Record<string, boolean>>({ ...MO_REN_KAI_GUAN })
 
-/**
- * 开关读取失败时登记的统一错误模型（FP-16）。
- * 军师入口等界面据此呈现「未确认」并可重试，不把降级默认值当作读取成功。
- */
 export const teZhengKaiGuanCuoWu = ref<QianTaiCuoWu | null>(null)
 
 export function huoQuTeZhengKaiGuan(): Record<string, boolean> {
@@ -40,8 +36,6 @@ export function chongZhiTeZhengKaiGuan(): void {
 }
 
 export async function laQuTeZhengKaiGuan(): Promise<void> {
-  // 根因收敛：后端未启动时vite代理穿透502刷控制台error；收敛为登记统一错误模型，
-  // 由军师入口等界面显式提示「开关未确认」并提供重试，绝不把默认值当成读取成功。
   try {
     const yuanShiFetch = (
       globalThis as { fetch?: (url: string, init?: RequestInit) => Promise<Response> }
@@ -53,7 +47,6 @@ export async function laQuTeZhengKaiGuan(): Promise<void> {
     try {
       xiangYing = await yuanShiFetch('/api/config/feature-flags', { cache: 'no-store', signal: kongZhi.signal })
     } catch {
-      // fetch 传输层失败（含 5s 超时中断）即网络侧问题，登记为可重试的网络错误
       teZhengKaiGuanCuoWu.value = chuangJianQianTaiCuoWu({
         code: QIAN_TAI_DAI_MA.WANG_LUO,
         retryable: true,

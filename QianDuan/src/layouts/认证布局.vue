@@ -118,9 +118,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .yemian-rongqi {
   width: 100%;
-  /* 高度锁定为可用区（App 主体已按视口/软键盘算出确定高度并 overflow:hidden）：
-     原先写 min-height: calc(100vh - 52px) 会让本容器被内容撑高、溢出被上层裁掉，
-     滚动条永远不出现。min-height:0 同时压掉 global.css 的 .yemian-rongqi{min-height:100vh} */
+  
   height: 100%;
   min-height: 0;
   position: relative;
@@ -147,8 +145,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* 内容超高时顶部可达：flex 居中会裁掉顶部溢出，改用子元素 margin auto 居中，
-     内容不足时居中、超出时顶部可滚动到达 */
+  
   justify-content: flex-start;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -185,9 +182,7 @@ onBeforeUnmount(() => {
   padding: 0;
 }
 
-/* 账号与安全页内 .biao-qian-lan 为 position:sticky;top:0：滚动容器带 padding-top 时，
-   sticky 按容器内容盒顶对齐，吸附后顶部会露出一段可穿透内容的空隙（已用浏览器实测确认）。
-   故本页滚动容器顶部 padding 归零，初始上间距改由页面根节点自身承担。 */
+
 .yemian-buju.zhanghaoanquan-moshi,
 .yemian-buju.zhanghaoanquan-moshi:not(.zhujiemian-moshi):not(.quanping-moshi) {
   padding-top: 0;

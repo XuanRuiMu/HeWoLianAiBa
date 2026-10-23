@@ -1,17 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NextFunction, Request, Response } from 'express'
 
-/**
- * `middleware/安全.ts` 的行为测试：出参防伪清洗 + SQL 注入检出阶梯。
- *
- * 钉的是三条对外契约：
- *  ① 出参只做控制字符清洗，绝不替渲染层做 HTML 转义——玩家文本必须原样送达
- *    （历史上这里对同一出参转义两次，把 `<喜欢你>` 变成 `&amp;lt;喜欢你&amp;gt;`，
- *      前端按 {{ 文本 }} 渲染会原样显示实体，属需求级缺陷；本用例即为该缺陷的回归门）；
- *  ② 聊天路径只认「强破坏性特征单条」或「弱特征 ≥2 共现」，正常文学表达不误伤；
- *  ③ 非聊天路径按普通片段判定；命中后按 IP 违规阶梯返回 403，已封禁 IP 给封禁文案，
- *     中间件自身异常一律 500 内部文案，绝不把内部错误或凭据外泄。
- */
 
 const 假 = vi.hoisted(() => ({ 记录违规: vi.fn(), 获取IP: vi.fn(() => '1.2.3.4') }))
 vi.mock('../../services/IP封禁', () => ({ 记录违规: 假.记录违规, 获取IP: 假.获取IP }))

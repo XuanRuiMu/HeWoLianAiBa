@@ -16,11 +16,6 @@ export const SI_KAO_SHI_JIAN_BAI_MING_DAN: readonly SiKaoShiJian[] = [
 
 export const SI_KAO_NEI_RONG_ZUI_DA_ZI_FU = 1500
 
-/**
- * 内部诊断文案集中地：`jiLuSiKao` 的返回值只会被 `执行落库后副作用` 吞掉（见
- * routes/消息.ts 撤回后的写入），永不触达玩家，因此不进玩家翻译文件，但也禁止
- * 三处各自散落中文字面量——统一收在这里，改动只此一处。
- */
 const SI_KAO_TI_SHI = {
   weiZhiShiJian: '未知思考事件',
   neiRongWeiKong: '思考内容为空',

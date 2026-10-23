@@ -6,10 +6,6 @@ import { 剥离控制字符, 清洗玩家文本 } from '../控制字符'
 import { qingLiTiJiaoKuai } from '../../services/消息内容块'
 import { qingXiRenSheWenBen } from '../../services/角色生成'
 
-/**
- * 输出安全：utils/控制字符 真源模块全量边界。
- * 口径：保留 \t 与 \n（聊天换行/制表是合理排版），\r 与其余 C0/DEL/非字符全剥。
- */
 
 const 控制字符样本: Array<[string, string]> = [
   ['NUL', String.fromCharCode(0x00)],
@@ -106,7 +102,6 @@ describe('端到端：qingXiRenSheWenBen 输出不含控制字符', () => {
   it('人设文本剥掉控制字符，换行保留', () => {
     const jieGuo = qingXiRenSheWenBen(`姓名\u0000甲\u001b乙\r丙\n保留行`)
     expect(jieGuo).toBe('姓名甲乙丙\n保留行')
-    // 幂等断言：再过一遍真源清洗应无变化，即输出不含任何控制字符
     expect(剥离控制字符(jieGuo)).toBe(jieGuo)
   })
 

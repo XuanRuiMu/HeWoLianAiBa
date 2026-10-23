@@ -16,11 +16,7 @@ defineProps<{
 </script>
 
 <style scoped>
-/* FP-07（需求 #8）AI 声明与错误提示的同一条带：声明在左、提示在右、整条居中。
-   本体是 .aitishi-tiao 的唯一后继，尺寸取值逐字沿用改前实测值（10px / 3px 12px / 11px / 1.4），
-   量纲自 FP-31 起住 styles/设计令牌.css 共用 :root 的 --tishi-dai-* 四枚（本组件是唯一消费者），
-   组件内不再留裸 px；颜色一律吃既有令牌。
-   pointer-events 与 user-select 必须是可选中的：这两条声明就是需求 #8 的根因本体。 */
+
 .tishi-dai {
   display: flex;
   flex-wrap: wrap;

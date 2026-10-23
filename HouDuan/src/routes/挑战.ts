@@ -17,7 +17,6 @@ import { 解析性别, type 性别内部形态 } from '../utils/性别'
 
 const luYou = Router()
 
-/** 开始一局挑战（仅选自身性别与对象性别，其余全部系统随机隐藏） */
 luYou.post('/开始', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
@@ -25,7 +24,6 @@ luYou.post('/开始', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
   }
 
   const qingQiuTi = qingQiu.body as Record<string, unknown>
-  // FP-13：性别入参一律走唯一解析入口，六种写法全收；不再自带一份窄白名单
   const woDeXingBie: 性别内部形态 | null = 解析性别(qingQiuTi.woDeXingBie)
   const duiXiangXingBie: 性别内部形态 | null = 解析性别(qingQiuTi.duiXiangXingBie)
   if (!woDeXingBie || !duiXiangXingBie) {
@@ -40,8 +38,6 @@ luYou.post('/开始', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
     if (zhuangTaiMa === 500) {
       debug日志.error('挑战接口', '开始挑战失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
     }
-    // 所见即所得：只有显式标记了 zhuang_tai_ma 的才是我方业务错误（其 message 来自翻译表）；
-    // 未标记的一律是内部/第三方异常，其原文绝不上屏，统一走注册表的通用文案。
     return shiBaiXiangYing(
       xiangYing,
       zhuangTaiMa,
@@ -51,7 +47,6 @@ luYou.post('/开始', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
   }
 })
 
-/** 当前进行中的挑战对局 */
 luYou.get('/当前', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
@@ -66,7 +61,6 @@ luYou.get('/当前', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing
   }
 })
 
-/** 放弃本局挑战：按失败-放弃结算扣分并封存档案 */
 luYou.post('/放弃', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
@@ -77,7 +71,6 @@ luYou.post('/放弃', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
     if (!duiJu) {
       return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tiaoZhan', 'wuJinXingZhongDuiJu'))
     }
-    // 校验角色归属
     const jieGuo = await chuLiYouXiJieShu(
       yongHu.yongHuId,
       duiJu.jiao_se_id,
@@ -91,7 +84,6 @@ luYou.post('/放弃', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
   }
 })
 
-/** 公开积分榜：按组别查询（男女/女男/男男/女女） */
 luYou.get('/排行榜', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
@@ -115,7 +107,6 @@ luYou.get('/排行榜', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangY
   }
 })
 
-/** 我的四组别挑战概况（段位/积分/排名） */
 luYou.get('/我的概况', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {

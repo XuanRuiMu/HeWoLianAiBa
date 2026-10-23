@@ -36,7 +36,6 @@ export interface ZuBieGaiKuang {
   pai_ming: number | null
 }
 
-/** 开始一局挑战：服务端随机生成全部隐藏参数并直接保存角色 */
 export async function kaiShiTiaoZhan(
   woDeXingBie: 性别选择形态,
   duiXiangXingBie: 性别选择形态,

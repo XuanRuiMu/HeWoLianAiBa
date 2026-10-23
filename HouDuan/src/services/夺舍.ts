@@ -14,7 +14,6 @@ function huoQuXinTiaoJian(jiao_se_id: string): string {
   return `${DUO_SHE_QIAN_ZHUI}xin_tiao:${jiao_se_id}`
 }
 
-/** YH-012 夺舍租约300s：SET带租约，抢占需先审计记抢占事件 */
 export async function sheZhiDuoSheZhuangTai(
   jiao_se_id: string,
   guan_li_yuan_id: string,
@@ -37,7 +36,6 @@ export async function sheZhiDuoSheZhuangTai(
   return { cheng_gong: true, qiang_zhan: qiangZhan }
 }
 
-/** YH-012 心跳续租：持有者周期调用延长租约，非持有者拒绝 */
 export async function duoSheXinTiao(jiao_se_id: string, guan_li_yuan_id: string): Promise<boolean> {
   const dangQian = await redis.get(shengChengDuoSheJian(jiao_se_id))
   if (dangQian !== guan_li_yuan_id) return false
@@ -71,7 +69,6 @@ export async function shanChuDuoSheZhuangTai(jiao_se_id: string): Promise<void> 
   await redis.del(huoQuXinTiaoJian(jiao_se_id))
 }
 
-/** YH-012 断线释放审计：按管理员释放其全部租约并记审计结束时间 */
 export async function shiFangGuanLiYuanQuanBuDuoShe(guan_li_yuan_id: string): Promise<string[]> {
   let jianLieBiao: string[] = []
   try {

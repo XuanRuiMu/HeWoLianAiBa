@@ -5,14 +5,6 @@ import { huoQuFanYi, huoQuFanYiMiaoShu } from '../config/translations'
 import { chuangJianTongZhi } from './通知'
 import { jiLuShenJiRiZhi } from './审计日志'
 
-/**
- * 账号维度四级封禁（YH-027收敛，用户口径）：
- * 第1次违规 → 封禁1分钟；第2次 → 封禁1天；第3次 → 封禁7天；第4次及以上 → 封禁30天封顶。
- * 非法数据拦截在落库前（等同撤回销毁）；已落库消息走 cheHuiWeiGuiXiaoXi 撤回。
- * 与 IP 封禁并行：账号记人、IP 防换号。AI 识别只做初筛（安全审核服务），
- * 误判纠正靠申诉（通过后违规次数清零）与管理员解封（保留次数、再犯升级）。
- * YH-111 封禁语义统一以迁移015为准：四级yong_feng即30天封顶，禁无期限永封。
- */
 export type FengJinJiBie = 'zheng_chang' | 'feng_jin_1_fen' | 'feng_jin_1_tian' | 'yong_feng'
 
 export type ShenSuZhuangTai = 'wu' | 'shen_su_zhong' | 'yi_jie_chu' | 'bo_hui'
@@ -27,10 +19,8 @@ export interface ZhangHaoFengJinZhuangTai {
 }
 
 const ZHANG_HAO_WEI_GUI_QIAN_ZHUI = '账号违规:'
-// YH-027 最长30天封顶：禁无期限永封
 const ZUI_CHANG_FENG_JIN_HAO_MIAO = 30 * 24 * 60 * 60 * 1000
 const WEI_GUI_JI_SHU_YOU_XIAO_HAO_MIAO = 30 * 24 * 60 * 60 * 1000
-// 时长陈述的单位（自然常量，只用于把真实毫秒数换算成玩家读得懂的「N天/N分钟」）
 const FEN_ZHONG_HAO_MIAO = 60 * 1000
 const TIAN_HAO_MIAO = 24 * 60 * 60 * 1000
 
@@ -51,7 +41,6 @@ function shiHeFaShenSu(zhi: unknown): zhi is ShenSuZhuangTai {
   return zhi === 'wu' || zhi === 'shen_su_zhong' || zhi === 'yi_jie_chu' || zhi === 'bo_hui'
 }
 
-/** 用户口径四级时长：1分钟→1天→7天→30天封顶 */
 export function jiSuanZhangHaoFengJinShiChang(ciShu: number): number | undefined {
   if (ciShu === 1) return 60 * 1000
   if (ciShu === 2) return 24 * 60 * 60 * 1000
@@ -60,11 +49,6 @@ export function jiSuanZhangHaoFengJinShiChang(ciShu: number): number | undefined
   return undefined
 }
 
-/**
- * 通知里的时长陈述与真实处罚同源：数值一律由 jiSuanZhangHaoFengJinShiChang 的毫秒数换算。
- * 级别枚举 yong_feng 一档同时盖着 7 天（第3次）与 30 天（第4次起），
- * 拿它生成时长陈述等于对玩家说谎，故 jiBie 只用于未封禁（zheng_chang）等无时长场景。
- */
 function fengJinShiChangChenShu(ciShu: number, jiBie: FengJinJiBie): string {
   const haoMiao = jiSuanZhangHaoFengJinShiChang(ciShu)
   if (jiBie === 'zheng_chang' || haoMiao === undefined) return huoQuFanYi('fengJinJiBie', jiBie)
@@ -77,7 +61,6 @@ function fengJinShiChangChenShu(ciShu: number, jiBie: FengJinJiBie): string {
   })
 }
 
-/** 封禁通知正文：占位符文案全部来自 translations，业务侧不做中文字符串拼接 */
 export function fengJinTongZhiZhengWen(
   ciShu: number,
   jiBie: FengJinJiBie,
@@ -115,7 +98,6 @@ export async function chaXunZhangHaoFengJin(yongHuId: string): Promise<ZhangHaoF
   const shenSu: ShenSuZhuangTai = shiHeFaShenSu(shenSuRaw) ? shenSuRaw : 'wu'
   const yuanYin = hang?.['最后原因'] ? String(hang['最后原因']) : ''
 
-  // YH-027 复核语义：yong_feng统一为30天封顶，解封时间过期视为未封禁
   const jieFengShiJian = hang?.['解封时间'] ? new Date(String(hang['解封时间'])) : null
   if (jieFengShiJian && jieFengShiJian.getTime() > Date.now()) {
     return { beiFengJin: true, jiBie, weiGuiCiShu: ciShu, jieFengShiJian, yuanYin, shenSuZhuangTai: shenSu }
@@ -136,8 +118,6 @@ export async function jiLuZhangHaoWeiGui(canShu: {
   leiXing: string
 }): Promise<WeiGuiJiLuJieGuo> {
   const { yongHuId, ip, yuanYin, leiXing } = canShu
-  // YH-061 封禁分级以DB次数行锁定级，Redis只做缓存禁作真相源
-  // 根因：Redis计数30天过期洗白一级，与DB账本对不上；收敛为DB行锁读-算-写
   const keHuDuan = await 数据库.connect()
   let ciShu = 1
   let jiBie: FengJinJiBie = 'feng_jin_1_fen'
@@ -167,13 +147,11 @@ export async function jiLuZhangHaoWeiGui(canShu: {
   } finally {
     keHuDuan.release()
   }
-  // Redis仅回写缓存对齐DB真相，失败不阻断
   try {
     await redis.set(`${ZHANG_HAO_WEI_GUI_QIAN_ZHUI}${yongHuId}`, String(ciShu), 'PX', WEI_GUI_JI_SHU_YOU_XIAO_HAO_MIAO)
   } catch {
     /* 缓存回写失败不阻断封禁 */
   }
-  // YH-014 封禁联动吊销：记违规即吊销其媒体签名存量URL
   try {
     const { cheXiaoYongHuMeiTiQianMing } = await import('./媒体存储')
     await cheXiaoYongHuMeiTiQianMing(yongHuId)
@@ -203,7 +181,6 @@ export async function jiLuZhangHaoWeiGui(canShu: {
   return { ciShu, jiBie, jieFengShiJian }
 }
 
-/** 撤回已落库的非法数据（AI 聊天消息 / 好友消息），返回是否实际撤回 */
 export async function cheHuiWeiGuiXiaoXi(
   biaoLeiXing: 'liaoTian' | 'haoYou',
   xiaoXiId: string,
@@ -283,7 +260,6 @@ export async function jieChuZhangHaoFengJin(
     `UPDATE "账号封禁" SET "级别" = 'zheng_chang', "解封时间" = NULL, "申诉状态" = 'yi_jie_chu', "更新时间" = NOW() WHERE "用户ID" = $1`,
     [muBiaoId],
   )
-  // YH-014 封禁联动吊销：解封/封禁状态变更即吊销其媒体签名，防旧URL继续通行
   const { cheXiaoYongHuMeiTiQianMing } = await import('./媒体存储')
   await cheXiaoYongHuMeiTiQianMing(muBiaoId).catch(() => undefined)
   await chuangJianTongZhi({

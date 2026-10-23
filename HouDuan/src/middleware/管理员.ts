@@ -19,11 +19,6 @@ const jiaoSeHuanCun = new Map<string, { zhi: GuanLiJiaoSe | null; daoQiHaoMiao: 
 const SHI_XIAO_PIN_DAO = 'guan_li_shi_xiao'
 let yiDingYueShiXiao = false
 
-/**
- * 失效载荷解析：`guan_li_shi_xiao` 频道与 恋爱吧管理中心 共用，两侧键名不同
- * （本仓 yongHuId / 管理中心 用户编号），两者都必须按目标账号精确失效，
- * 否则对端授予/回收角色后本仓要等 30s TTL 才生效。解析不出目标即全量清空。
- */
 export function 解析失效载荷(xiaoXi: string): string | null {
   try {
     const jieXi = JSON.parse(xiaoXi) as { yongHuId?: unknown; 用户编号?: unknown }
@@ -87,7 +82,6 @@ function xieRuHuanCun(yongHuId: string, zhi: GuanLiJiaoSe | null, daoQiHaoMiao: 
   jiaoSeHuanCun.set(yongHuId, { zhi, daoQiHaoMiao })
 }
 
-/** FP-18 游戏端角色唯一判定入口：一律查库推导，不读令牌载荷、不读客户端申报 */
 export async function anYongHuIdQuJiaoSe(yongHuId: string): Promise<GuanLiJiaoSe | null> {
   const xianZaiHaoMiao = Date.now()
   const huanCun = jiaoSeHuanCun.get(yongHuId)
@@ -133,20 +127,14 @@ async function menKong(
   }
 }
 
-/** FP-18 能力门禁唯一实现：授权一律按查库角色在角色能力矩阵中的能力位，缺位 403 WU_GUAN_LI_QUAN_XIAN */
 export function 创建能力门禁(所需能力: GuanLiNengLi) {
   return async (qingQiu: RenZhengQingQiu, xiangYing: Response, xiaYiBu: NextFunction): Promise<void> => {
     await menKong(qingQiu, xiangYing, xiaYiBu, 所需能力)
   }
 }
 
-/** 只读运营数据门禁：任一管理身份（超管/运营/审核员）可用 */
 export const guanLiZhiDuMenKong = 创建能力门禁('cha_kan')
-/** 封禁写门禁：运营与超管 */
 export const guanLiFengJinMenKong = 创建能力门禁('feng_jin')
-/** 封禁申诉审核门禁：审核员与超管 */
 export const guanLiFengJinShenHeMenKong = 创建能力门禁('feng_jin_shen_he')
-/** 统计写门禁：运营与超管 */
 export const guanLiTongJiMenKong = 创建能力门禁('tong_ji_xie')
-/** 高危写与运行时面门禁：仅超管 */
 export const guanLiGaoWeiMenKong = 创建能力门禁('gao_we')

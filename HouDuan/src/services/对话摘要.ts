@@ -10,11 +10,9 @@ export interface DuiHuaZhaiYaoJiLu {
   zhaiYaoNeiRong: string
   gaiKuoXiaoXiShu: number
   gengXinShiJian: string | null
-  /** 已概括素材的最后一条消息创建时间；增量取材锚点，空＝从头开始 */
   suCaiMaoDian?: string | null
 }
 
-// YH-033/YH-038 统一口径：摘要字数上限与触发阈值走 AI_PEI_ZHI 唯一出处，禁硬编码
 function huoQuZhaiYaoPeiZhi(): { zuiDaZiFu: number; chuFaXiaoXiShu: number; yuanLiaoXiaoXiShu: number; suoTtlMiao: number } {
   const zhaiYao = AI_PEI_ZHI.zhaiYao
   return {
@@ -26,10 +24,6 @@ function huoQuZhaiYaoPeiZhi(): { zuiDaZiFu: number; chuFaXiaoXiShu: number; yuan
 }
 const ZHAI_YAO_REDIS_JIAN_QIAN_ZHUI = 'dui_hua_zhai_yao_sheng_cheng_zhong:'
 
-/**
- * 记忆是「一行一个字段」的事实卡，超上限时按整行丢：从中间腰斩会留下「承诺：下周末带你去」
- * 这种被模型当既成事实复读的残行，比少记一个字段严重得多。
- */
 export function qieDuanZhaiYao(neiRong: string): string {
   const qingLi = (neiRong || '').trim()
   const zuiDaZiFu = huoQuZhaiYaoPeiZhi().zuiDaZiFu
@@ -67,7 +61,6 @@ export async function duQuDuiHuaZhaiYao(yongHuId: string, jiaoSeId: string): Pro
 
 export function gouJianZhaiYaoZhuRuWenBen(zhaiYao: DuiHuaZhaiYaoJiLu | null): string {
   if (!zhaiYao || !zhaiYao.zhaiYaoNeiRong) return ''
-  // FP-08：摘要正文是 LLM 自由文本，不带约束前缀就会被当本轮事实复读（「你又发狗头」类臆造的第三源）
   return `【此前的记忆摘要】\n${JI_YI_ZHU_RU_YUE_SHU}\n${zhaiYao.zhaiYaoNeiRong}`
 }
 
@@ -105,11 +98,6 @@ async function huoQuXiaoXiZongShu(yongHuId: string, jiaoSeId: string, maoDian?: 
   return Number(jieGuo.rows[0]?.zong_shu || 0)
 }
 
-/**
- * 增量取材：只取「素材锚点之后」的 yuanLiaoXiaoXiShu 条。
- * 旧实现是 ORDER BY 创建时间 ASC LIMIT 60 且无游标 ⇒ 无论聊多久，素材永远停在开场 60 条，
- * 摘要不前进还每 40 条白花一次调用。锚点为空（首次）时等价于从最早开始。
- */
 async function huoQuZhaiYaoYuanLiao(
   yongHuId: string,
   jiaoSeId: string,
@@ -144,8 +132,6 @@ export async function shengChengBingLuoKuZhaiYao(yongHuId: string, jiaoSeId: str
     const zongShu = await huoQuXiaoXiZongShu(yongHuId, jiaoSeId)
     if (zongShu < peiZhi.chuFaXiaoXiShu) return true
     const xianYou = await duQuDuiHuaZhaiYao(yongHuId, jiaoSeId)
-    // 触发口径改为「锚点之后还有多少条没被概括」：总条数会因 30 天清理而倒退，
-    // 用旧的 zongShu - 概括消息数 判断会让摘要在清理后彻底不再刷新。
     const maoDian = xianYou?.suCaiMaoDian ?? null
     const daiGaiShu = await huoQuXiaoXiZongShu(yongHuId, jiaoSeId, maoDian)
     if (daiGaiShu < peiZhi.chuFaXiaoXiShu) return true

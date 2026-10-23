@@ -20,7 +20,6 @@ export interface 违规记录结果 {
 
 const 违规前缀 = '违规:'
 const 封禁前缀 = '封禁:'
-// YH-027 永封改最长30天：IP封禁封顶30天，到期自动解封，禁无期限永封
 const ZUI_CHANG_FENG_JIN_HAO_MIAO = 30 * 24 * 60 * 60 * 1000
 const NAT_YU_JING_YU_ZHI = 50
 
@@ -32,8 +31,6 @@ function 标准化IP(ip: string): string {
 }
 
 export function 获取IP(请求: Request): string {
-  // A2：一律取可信链路推导的真实来源 IP（socket 对端 + 可信代理 X-Real-IP），
-  // 客户端可控的 X-Forwarded-For 不参与解析，防止伪造绕过限流/封禁或嫁祸他人
   return 标准化IP(huoQuZhenShiIP(请求))
 }
 
@@ -53,7 +50,6 @@ export async function IP是否被封禁(ip: string): Promise<封禁结果> {
   }
 
   const 解析 = JSON.parse(数据) as { 解封时间?: string | null; 原因?: string }
-  // YH-027 复核语义：解封时间已过视为未封禁，防过期残留误杀
   if (解析.解封时间) {
     const jieFeng = new Date(解析.解封时间).getTime()
     if (!Number.isNaN(jieFeng) && jieFeng <= Date.now()) {
@@ -90,7 +86,6 @@ export async function 记录违规(
     const 解封时间 = new Date(Date.now() + 封禁时长)
     await 设置封禁(ip, 封禁时长, 原因)
     await 持久化封禁记录(ip, 原因, 严重程度, 解封时间)
-    // YH-027 NAT预警：同段高频封禁提示校园网/NAT共享出口风险
     if (当前次数 >= NAT_YU_JING_YU_ZHI) {
       debug日志.warn('IP封禁', 'NAT共享出口预警：同IP高频违规疑似NAT', { xiang_qing: { ci_shu: 当前次数 } })
       try {
@@ -108,7 +103,6 @@ export async function 记录违规(
   return 结果
 }
 
-/** YH-027 封禁阶梯：1小时→24小时→7天→30天封顶，需复核+申诉入口纠偏 */
 function 计算封禁时长(次数: number): number | undefined {
   if (次数 === 2) return 60 * 60 * 1000
   if (次数 === 3) return 24 * 60 * 60 * 1000
@@ -148,7 +142,6 @@ export async function 清除违规和封禁(ip: string): Promise<void> {
   await redis.del(获取封禁键(ip))
 }
 
-/** YH-027 IP申诉入口：封禁中提交申诉理由，未封禁或空理由拒绝 */
 export async function tiJiaoIPShengSu(ip: string, liYou: string): Promise<{ cheng_gong: boolean; ti_shi?: string }> {
   const qingLi = liYou.trim().slice(0, 500)
   if (!qingLi) return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'queShaoCanShu') }

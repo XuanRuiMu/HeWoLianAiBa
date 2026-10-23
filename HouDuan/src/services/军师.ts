@@ -70,11 +70,6 @@ interface QianDuanJunShiJiLuXiang {
   jun_shi_ming_chen: string
   jun_shi_tou_xiang: string
   dui_hua_zhai_yao: string
-  /**
-   * FP-26：军师记录是**普通用户可读**的下发面（`GET /api/聊天/军师记录/:jiaoSeId`），
-   * 因此这一段不再携带撤回原文——写侧 `zhuanHuanLiaoTianJiLu` 已不产出该键，
-   * 读侧 `huoQuJunShiJiLu` 另按白名单重建，兜住 FP-26 之前已落进 Redis 快照的历史记录。
-   */
   liao_tian_ji_lu: {
     jiao_se: string
     nei_rong: string
@@ -131,8 +126,6 @@ export async function huoQuJunShiJiLu(
     jun_shi_ming_chen: ji_lu.jun_shi_ming_chen,
     jun_shi_tou_xiang: ji_lu.jun_shi_tou_xiang,
     dui_hua_zhai_yao: ji_lu.dui_hua_zhai_yao,
-    // FP-26 白名单重建（不是「删掉某个键」）：Redis 里的历史快照可能仍带撤回原文，
-    // 缺键/空数组都不抛，只按用户面允许的键位下发
     liao_tian_ji_lu: (ji_lu.liao_tian_ji_lu ?? []).map((xiaoXi) => ({
       jiao_se: xiaoXi.jiao_se,
       nei_rong: xiaoXi.nei_rong,
@@ -197,7 +190,6 @@ export async function qingQiuJunShiZhiDao(
     }
   }
 
-  // FP-12：先按同一个补全口挂上阈值内文档正文，再交给唯一渲染入口（军师不再有第二份取文本逻辑）
   const duiHuaLiShi = await buQiWenJianTiQuWenBen(
     zhuanHuanXiaoXiDaoDuiHuaLiShi(youXiaoXiaoXi, jiaoSeXinXi.wei_xin_ming),
   )
@@ -237,7 +229,6 @@ export async function qingQiuJunShiZhiDao(
         },
       },
       {
-        // 军师指导按所聊角色完整人设 + 当前好感度/关系阶段动态取参数
         jiaoSe: gouJianJiaoSeShangXiaWen(jiaoSeXinXi),
         haoGanDu: haoGanDu
           ? { zong_fen: haoGanDu.zong_fen, guan_xi_jie_duan: haoGanDu.guan_xi_jie_duan }
@@ -324,16 +315,11 @@ export async function huoQuJunShiZhiDaoZhuangTaiXinXi(
 }> {
   const zhuangTai = await huoQuJunShiZhiDaoZhuangTai(yong_hu_id, jiao_se_id)
 
-  // 指导中：不可再次指导（提示暂不显示，等完成后才显示）
   if (zhuangTai?.zhuang_tai === 'zhi_dao_zhong') {
-    // 处于指导中说明已有聊天记录
     return { zhuang_tai: zhuangTai, ke_zai_ci_zhi_dao: false, you_liao_tian_ji_lu: true }
   }
 
-  // 已完成指导：恒定返回「不可再指导」（提示恒定显示），
-  // 直到用户发送新消息后状态被发送消息路由清除
   if (zhuangTai?.zhuang_tai === 'yi_wan_cheng') {
-    // 已能完成指导说明已有聊天记录
     return { zhuang_tai: zhuangTai, ke_zai_ci_zhi_dao: false, you_liao_tian_ji_lu: true }
   }
 
@@ -352,7 +338,6 @@ export async function huoQuJunShiZhiDaoZhuangTaiXinXi(
   return {
     zhuang_tai: zhuangTai,
     ke_zai_ci_zhi_dao: !shiChongFu,
-    // 是否有聊天记录：用于「暂无聊天记录，无法请求军师指导」提示恒定显示
     you_liao_tian_ji_lu: dangQianLieBiao.length > 0,
   }
 }
@@ -393,11 +378,8 @@ function zhuanHuanXiaoXiDaoDuiHuaLiShi(
     mei_ti_lei_bie?: string | null
     mei_ti_shi_chang_hao_miao?: number | null
     mei_ti_yuan_shi_wen_jian_ming?: string | null
-    /** FP-12：媒体行身份（XiaoXiXinXi 自带），文档正文按它批量取，不在本文件里另查一份 */
     mei_ti_id?: string | null
-    /** FP-10：出参块数组（XiaoXiXinXi 自带）；带图文混排块时正文已是按序投影，禁止再被占位符覆盖 */
     nei_rong_kuai?: XiaoXiKuai[]
-    /** FP-08c：引用槽身份（XiaoXiXinXi 自带），原文由 对话渲染 按 ID 在整列表里现取 */
     bei_yong_xiao_xi_id?: string | null
   }[],
   jiaoSeWeiXinMing: string,
@@ -412,7 +394,6 @@ function zhuanHuanXiaoXiDaoDuiHuaLiShi(
     nei_rong: xiaoXi.nei_rong,
     shi_jian: geShiHuaShiJian(xiaoXi.shi_jian_chuo),
     yi_che_hui: xiaoXi.yi_che_hui,
-    // FP-26：不映射 yuan_shi_nei_rong —— 军师提示词侧的撤回行只出撤回占位
     meiTiLeiBie: xiaoXi.mei_ti_lei_bie || undefined,
     tuWenHunPai: shiTuWenHunPaiKuai(xiaoXi.nei_rong_kuai),
     meiTiShiChangHaoMiao: xiaoXi.mei_ti_shi_chang_hao_miao ?? null,

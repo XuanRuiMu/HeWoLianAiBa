@@ -35,8 +35,6 @@ describe('FP-ENV 环境配置加载确定性（根除「连错库」隐患）', 
 
   it('配置加载路径钉在 backend/.env，不随工作目录漂移', () => {
     const yuanWenJian = fs.readFileSync(path.join(houDuanMuLu, 'src', 'config', 'env.ts'), 'utf8')
-    // 曾经的写法是 dotenv.config({ quiet: true })，不带 path ⇒ 按 cwd 找 .env，
-    // 从仓库根启动后端就会换成根目录那份、指向另一个库。必须显式给 path。
     expect(yuanWenJian).not.toMatch(/dotenv\.config\(\{\s*quiet:\s*true\s*\}\)/)
     expect(yuanWenJian).toMatch(/dotenv\.config\(\{\s*path:\s*houDuanWenJian/)
   })

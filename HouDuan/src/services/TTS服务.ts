@@ -16,7 +16,6 @@ const TTS服务地址 = peiZhi.ttsServiceUrl || 'http://localhost:8001'
 
 function huoQuNeiBuLingPai(): string {
   const lingPai = (peiZhi.internalToken || '').trim()
-  // YH-022 空令牌禁止发出：生产启动已强校验，此处为纵深兜底
   if (!lingPai || lingPai.length < 16) {
     throw new Error('TTS内部令牌未配置或长度不足，拒绝发起内部调用')
   }

@@ -19,7 +19,6 @@ export function gouJianYuYinFaSongNeiRong(zhuanXieWenBen: unknown): string {
   return zhuanXieWenBen.trim().slice(0, 500)
 }
 
-// FP-05 YH-036：用户手动 /生图 /视频 指令已删除（图片与视频由AI对象在合适时主动发起），以下函数仅保留兼容导出恒返否定
 export function jieXiShengTuMingLing(_neiRong: unknown): string | null {
   return null
 }

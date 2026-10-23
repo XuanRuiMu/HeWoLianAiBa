@@ -80,9 +80,6 @@ function yingSheXiaoXi(row: Record<string, unknown>): Record<string, unknown> {
     shi_jian: row.创建时间 ? String(row.创建时间) : new Date().toISOString(),
     yi_du: Boolean(row.已读),
     yi_che_hui: Boolean(row.已撤回),
-    // FP-26 边界：撤回原文在出参面上只留这一处（管理面）。它的授权**不靠前端不显示**，
-    // 而由 `routes/管理员.ts` 整条路由挂的 `guanLiZhiDuMenKong`（只读运营门禁，查库判角色）承担；
-    // 普通用户读自己的会话走 services/消息出参收口 的 cha_kan 能力判定，与本函数无关。
     yuan_shi_nei_rong: row.原始内容 ? String(row.原始内容) : null,
   }
 }
@@ -215,8 +212,6 @@ export async function chuangJianCeShiYongHu(
   shou_ji_hao: string,
   yong_hu_ming: string,
 ): Promise<ChuangJianCeShiYongHuJieGuo> {
-  // 防御性二次校验：路由层已校验，作为 service 直调入口仍以手机号正则 + 用户名白名单/长度兜底，
-  // 非法输入直接拒绝、绝不进库（与 middleware/输入验证 同一口径）
   if (typeof shou_ji_hao !== 'string' || !peiZhi.shouJiHao.zhengZe.test(shou_ji_hao)) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), zhuang_tai_ma: 400 }
   }
@@ -231,7 +226,6 @@ export async function chuangJianCeShiYongHu(
     return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'shouJiHaoYiZhuCe'), zhuang_tai_ma: 409 }
   }
 
-  // P2-2：随机强密码，仅在本次创建响应中一次性返回明文，之后任何接口不可再查询
   const chuShiMiMa = crypto.randomBytes(18).toString('base64url')
   const miMaHaXi = await bcrypt.hash(chuShiMiMa, 12)
   const chaRuJieGuo = await 数据库.query(
@@ -342,9 +336,6 @@ export async function sheZhiGuanLiYuanZhuangTai(
   }
 
   const dangQianHang = chaXun.rows[0] as Record<string, unknown>
-  // FP-18 回传写后角色（三旗标推导），不再回传 guan_li_yuan 二值：
-  // 同时持有 运营/审核员 的账号被回收超管后仍是管理身份，二值旗标会把「降级」读成「已无权限」。
-  // 幂等比较用 取管理角色 同一口径（=== true），不做 Boolean 兜底
   const xieHouJiaoSe = 取管理角色({ ...dangQianHang, 管理员: mu_biao_zhuang_tai })
   if ((dangQianHang.管理员 === true) === mu_biao_zhuang_tai) {
     qingChuJiaoSeHuanCun(mu_biao_yong_hu_id)

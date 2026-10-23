@@ -27,8 +27,6 @@ export async function tiQuGuanJianShiJian(
   }
 }
 
-// YH-051 关键事件进上下文：抽取结果落“关键事件”表并经记忆检索注入上下文
-// 根因：有抽取不用白白忘记大事；落表走幂等去重，禁重复落库污染记忆
 export async function tiQuBingLuoKuGuanJianShiJian(
   yongHuId: string,
   jiaoSeId: string,
@@ -64,9 +62,6 @@ export async function tiQuBingLuoKuGuanJianShiJian(
   return shiJianLieBiao
 }
 
-// YH-051 记忆检索注入：读关键事件拼成上下文段，供 Prompt 注入
-// 多取候选再按「与本轮消息的字面重叠」排序：纯时间序会把无关旧事件塞进上下文、却挤掉正相关的那条。
-// 打分是本地字符串比较，不引入 embedding 依赖；排序仅在名额内做取舍，取中后仍按时间升序输出。
 export async function duQuGuanJianShiJianZhuRu(
   yongHuId: string,
   jiaoSeId: string,
@@ -87,7 +82,6 @@ export async function duQuGuanJianShiJianZhuRu(
     }))
     mingZhongPaiXu(quanBu, benLunXiaoXi)
     const hangLieBiao = quanBu.slice(0, zuiDaTiaoShu).map((hang) => hang.wenBen)
-    // FP-08：与摘要同为 LLM 自由文本，注入前统一挂事实性约束，防止旧记忆被当本轮事实复读
     return `【关键事件】\n${JI_YI_ZHU_RU_YUE_SHU}\n${hangLieBiao.join('\n')}`
   } catch (cuoWu) {
     debug日志.error('关键事件提取', '关键事件检索注入失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
@@ -95,7 +89,6 @@ export async function duQuGuanJianShiJianZhuRu(
   }
 }
 
-/** 相关性优先、同分则近期优先；都无重叠时等价于原来的时间倒序，保证不改变既有行为基线 */
 export function mingZhongPaiXu(
   hang: Array<{ wenBen: string; chuangJian: number }>,
   benLunXiaoXi: string,
@@ -105,7 +98,6 @@ export function mingZhongPaiXu(
   hang.sort((a, b) => fen(b.wenBen) - fen(a.wenBen) || b.chuangJian - a.chuangJian)
 }
 
-/** 本轮消息里的候选词：中文取 2 字组，英文/数字按词，上限防大输入放大 */
 function jiXiBenLunCi(wenBen: string): string[] {
   const qingLi = (wenBen || '').replace(/\[[^\]]*\]/g, '').trim().slice(0, 300)
   if (!qingLi) return []

@@ -3,8 +3,6 @@ import { yingYongBanBen } from '@/config/站点配置'
 const SHANG_BAO_URL = '/api/logs'
 
 function faSongMaiDian(wenBen: string): void {
-  // 根因收敛：sendBeacon对502无状态回执，失败静默但浏览器记资源error；
-  // 收敛为fetch直发（非2xx判错catch静默，不记资源error；后端故障时遥测丢弃可接受，埋点本就允许丢）
   try {
     const yuanShiFetch = (
       globalThis as { fetch?: (url: string, init?: RequestInit) => Promise<Response> }

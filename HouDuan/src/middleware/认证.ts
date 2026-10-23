@@ -19,10 +19,8 @@ export const gongKaiLuJingBaiMingDan: GongKaiLuJing[] = [
   { fang_fa: 'POST', lu_jing: '/api/认证/发送码' },
   { fang_fa: 'POST', lu_jing: '/api/认证/注册' },
   { fang_fa: 'POST', lu_jing: '/api/认证/登录' },
-  // 「忘记密码」本身就是「没登录态」的入口，必须公开；其安全性由重置用途验证码 + 限流承担
   { fang_fa: 'POST', lu_jing: '/api/认证/重置密码' },
   { fang_fa: 'GET', lu_jing: '/api/健康' },
-  // 媒体下载走签名 URL 自鉴权（img/audio 标签无法携带 Authorization 头）
   { fang_fa: 'GET', lu_jing: '/api/媒体/' },
 ]
 
@@ -30,7 +28,6 @@ function luJingPiPei(qingQiuLuJing: string, muBiaoLuJing: string): boolean {
   if (muBiaoLuJing.includes('?')) {
     return qingQiuLuJing.startsWith(muBiaoLuJing.split('?')[0])
   }
-  // 以 / 结尾的白名单条目按前缀匹配
   if (muBiaoLuJing.endsWith('/')) {
     return qingQiuLuJing.startsWith(muBiaoLuJing)
   }
@@ -44,7 +41,6 @@ export async function renZhengZhongJianJian(
 ): Promise<void> {
   const fangFa = qingQiu.method
   let luJing = qingQiu.path
-  // YH-029 畸形编码转400：path解码失败不再抛500
   try {
     luJing = decodeURIComponent(qingQiu.path)
   } catch {
@@ -73,12 +69,9 @@ export async function renZhengZhongJianJian(
   const lingPai = authorization.slice(7)
   try {
     const zaiHe = yanZhengLingPai(lingPai)
-    // YH-063 认证链明确失败语义：Redis熔断/超时直接降级为可信校验，禁全站hang
-    // 根因：吊销检查无限等待等于全站雪崩；收敛为熔断开路时跳过吊销检查放行并告警
     try {
       const { redisRongDuanShiFouKaiLu } = await import('../redis')
       if (!redisRongDuanShiFouKaiLu()) {
-        // V5/C3：JWT 黑名单吊销检查——注销/改密后的旧令牌立即失效
         if (zaiHe.jti) {
           const { daiRongDuanZhiXing } = await import('../redis')
           const yiDiaoXiao = await daiRongDuanZhiXing(`jwt_blacklist:${zaiHe.jti}`, () => redis.get(`jwt_blacklist:${zaiHe.jti}`))
@@ -96,7 +89,6 @@ export async function renZhengZhongJianJian(
         debug日志.warn('认证中间件', 'Redis熔断开路，吊销检查降级放行', { xiang_qing: { yong_hu_id: zaiHe.yongHuId } })
       }
     } catch {
-      // 吊销检查失败降级放行：签名已验过，禁因缓存故障全站401
       const { debug日志 } = await import('../utils/debug日志')
       debug日志.warn('认证中间件', '吊销检查失败降级放行', { xiang_qing: { yong_hu_id: zaiHe.yongHuId } })
     }

@@ -183,7 +183,6 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
       return shiChengGong()
     } catch (cuoWu) {
       const zhengChangHua = jiLuCuoWu(cuoWu)
-      // FP-JC 用户裁决：结果消息走游戏化口径（yingXiang 技术文案不再上屏，错误出口只剩 RequestError）
       const tiShiWenBen = zhengChangHua.lianAiWenAn
       if (shiChongTu(cuoWu)) {
         await jiaZai()
@@ -210,7 +209,6 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
       return shiChengGong()
     } catch (cuoWu) {
       const zhengChangHua = jiLuCuoWu(cuoWu)
-      // FP-JC 用户裁决：结果消息走游戏化口径（yingXiang 技术文案不再上屏，错误出口只剩 RequestError）
       const tiShiWenBen = zhengChangHua.lianAiWenAn
       if (shiChongTu(cuoWu)) {
         await jiaZai()
@@ -252,7 +250,6 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
       })
     } catch (cuoWu) {
       const zhengChangHua = jiLuCuoWu(cuoWu)
-      // FP-JC 用户裁决：结果消息走游戏化口径（yingXiang 技术文案不再上屏，错误出口只剩 RequestError）
       const tiShiWenBen = zhengChangHua.lianAiWenAn
       if (shiChongTu(cuoWu)) {
         await jiaZai()
@@ -367,7 +364,6 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
       return shiChengGong()
     } catch (cuoWu) {
       const zhengChangHua = jiLuCuoWu(cuoWu)
-      // FP-JC 用户裁决：结果消息走游戏化口径（yingXiang 技术文案不再上屏，错误出口只剩 RequestError）
       const tiShiWenBen = zhengChangHua.lianAiWenAn
       if (shiChongTu(cuoWu)) {
         await jiaZai()
@@ -426,7 +422,6 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
       return shiChengGong()
     } catch (cuoWu) {
       const zhengChangHua = jiLuCuoWu(cuoWu)
-      // FP-JC 用户裁决：结果消息走游戏化口径（yingXiang 技术文案不再上屏，错误出口只剩 RequestError）
       const tiShiWenBen = zhengChangHua.lianAiWenAn
       if (shiChongTu(cuoWu)) {
         await jiaZai()

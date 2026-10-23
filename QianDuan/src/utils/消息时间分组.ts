@@ -2,31 +2,22 @@ import { XIAO_XI_PEI_ZHI } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/翻译表'
 import type { 消息 } from '@/types/类型定义'
 
-/** 分组只用到时间戳这一个字段：聊天页的 消息 与好友页的 HaoYouXiaoXi 都满足 ⇒ 两页共用一份分档实现 */
 export interface ShiJianZaiTi {
   shi_jian_chuo: number
 }
 
 export interface XiaoXiFenZuXiang<X extends ShiJianZaiTi = 消息> {
-  /** 分档后的可读时间文本（时间条唯一的可见值） */
   shiJian: string
-  /** 该组首条消息的时间戳，时间条按它出 <time datetime> 的机器可读值 */
   shiJianChuo: number
   xiaoXiLieBiao: X[]
 }
 
-/* 会话时间轴按东八区呈现（改前实测口径，FP-11 原样保留，不做本地化裁决） */
 function zhuanBeiJing(shiJianChuo: number): Date {
   const riQi = new Date(shiJianChuo)
   const utc = riQi.getTime() + riQi.getTimezoneOffset() * 60000
   return new Date(utc + 8 * 3600000)
 }
 
-/**
- * 时间条分档：同日→`时:分`、跨日→`昨天 时:分` / `星期X 时:分`、跨月→`MM-DD 时:分`、
- * 跨年→`YYYY-MM-DD 时:分`。两页共用的唯一口径（FP-11 验收点 B），
- * 由 __tests__/FP11语音气泡.test.ts 逐档断言，改动任一档都要同步那条用例。
- */
 export function geShiHuaXiaoXiShiJian(beiJing: Date, xianZai: Date): string {
   const shi = String(beiJing.getHours()).padStart(2, '0')
   const fen = String(beiJing.getMinutes()).padStart(2, '0')
@@ -74,10 +65,6 @@ function tongYiRi(a: Date, b: Date): boolean {
   )
 }
 
-/**
- * 按「与上一条相隔超过合并阈值」切组并给每组一个可读时间标签
- * （阈值 = XIAO_XI_PEI_ZHI.heBingShiJianYuZhi，契约见 __tests__/消息发送与显示.test.ts）。
- */
 export function fenZuXiaoXiAnShiJian<X extends ShiJianZaiTi>(
   lieBiao: X[],
 ): XiaoXiFenZuXiang<X>[] {

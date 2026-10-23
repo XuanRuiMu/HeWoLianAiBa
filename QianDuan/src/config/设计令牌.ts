@@ -1,4 +1,3 @@
-// 设计令牌 - 缓动曲线
 export const quXian = {
   biaoZhun: 'cubic-bezier(0.4, 0, 0.2, 1)',
   tanChu: 'cubic-bezier(0.16, 1, 0.3, 1)',

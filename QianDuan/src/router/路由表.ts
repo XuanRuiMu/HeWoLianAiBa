@@ -4,7 +4,6 @@ import { duQuLingPai } from '@/utils/令牌存储'
 import { jiaZaiShiBaiLuYou, zhuCeLuYouCuoWuChuLi } from './错误处理'
 
 const luYou: RouteRecordRaw[] = [
-  // 路由/分块加载失败时的落地页：静态组件，不经懒载，保证失败态自身不再依赖网络
   jiaZaiShiBaiLuYou,
   {
     path: '/',
@@ -117,7 +116,6 @@ const luYou: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(),
   routes: luYou,
-  // YH-102 滚动管理：前进置顶后退恢复，禁返回列表位置丢
   scrollBehavior(to, from, savedPosition) {
     if (savedPosition) {
       return savedPosition

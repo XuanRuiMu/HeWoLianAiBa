@@ -43,7 +43,6 @@ function shiZiDingYiBeiJingURL(zhi: unknown): boolean {
   const qingLi = zhi.trim()
   if (!qingLi || qingLi.length > BEI_JING_URL_ZUI_DA_CHANG_DU) return false
   if (qingLi.startsWith('/')) {
-    // YH-014 旧形态sunset：仅接受无参引用与绑定用户新签名，旧无绑定签名拒绝
     if (MEI_TI_QIAN_MING_LU_JING.test(qingLi)) return true
     const xinQianMing = /^\/api\/媒体\/[0-9a-f]{64}\?e=\d{1,12}&u=[0-9a-f-]{36}&t=\d{1,15}&s=[0-9a-f]+$/i.test(qingLi)
     return xinQianMing
@@ -143,7 +142,6 @@ async function jieShouTuPianShangChuan(
         })
         .catch(async (cuoWu) => {
           if (cuoWu instanceof MeiTiCunChuCuoWu) {
-            // 状态码/文案/是否记违规全部取自 services/媒体审核出参 这一个出口
             const chuCan = panDingMeiTiShenHeChuCan(String(cuoWu.fanYiJian))
             if (chuCan.xuYaoJiWeiGui) {
               await jiLuZhangHaoWeiGui({
@@ -188,7 +186,6 @@ luYou.get('/', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Resp
     )
     const hang = yongHuHang.rows[0] as Record<string, unknown> | undefined
     const baiMingDanRaw = hang?.['签名白名单']
-    // YH-014 读取重签：背景持久化仅存无参引用，读取时按需签发绑定用户短效URL
     const { tiQuMeiTiSha } = await import('../services/媒体存储')
     const cunChuBeiJing = String(sheZhi['聊天背景'] || 'moRen')
     const beiJingSha = tiQuMeiTiSha(cunChuBeiJing)
@@ -250,7 +247,6 @@ luYou.put('/聊天背景', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xia
   }
   try {
     await queBaoSheZhiHang(yongHu.yongHuId)
-    // YH-014 旧形态sunset：拒绝无绑定用户旧签名直存，持久化仅存无参引用
     const { tiQuMeiTiSha: tiQuSha, shengChengMeiTiYinYong } = await import('../services/媒体存储')
     let luoKuZhi = beiJing
     const beiJingSha = tiQuSha(beiJing)

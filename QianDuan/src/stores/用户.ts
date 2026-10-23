@@ -34,13 +34,9 @@ export const 使用用户仓库 = defineStore('用户', () => {
   let 认证代次 = 0
   let 恢复控制器: AbortController | null = null
   let 恢复任务: Promise<void> | null = null
-  // FP-18 身份视图门：角色与能力位一律来自服务端下发（授权判定在服务端，此处只是视图门）。
-  // 能力未知（未下发/旧缓存/非白名单值）一律按「无能力」处理，视图门 fail-closed。
   const dangQianJiaoSe = ref<GuanLiJiaoSe | null>(null)
   const nengLieBiao = ref<GuanLiNengLi[]>([])
-  /** 只读运营数据视图门（管理员监控面板、好感度明细）：任一管理身份可得 */
   const keGuanLiZhiDu = computed(() => nengLieBiao.value.includes('cha_kan'))
-  /** 高危视图门（服务端运行时日志流）：仅 gao_we 身份可得 */
   const keGaoWei = computed(() => nengLieBiao.value.includes('gao_we'))
   const mingChengKeJian = ref(true)
   const tuiChuQingQiu = ref(false)
@@ -71,7 +67,6 @@ export const 使用用户仓库 = defineStore('用户', () => {
     dangQianJiaoSe.value = shenFen ? 归一管理角色(shenFen.jiao_se) : null
     nengLieBiao.value = shenFen ? 归一管理能力列表(shenFen.neng_li) : []
   }
-  // C4：多媒体外发授权（图片/表情包/语音是否可送入视觉理解链路），默认关闭
   const tuPianShouQuan = ref<boolean>(duQuShuJu<boolean>(TU_PIAN_SHOU_QUAN_JIAN) === true)
   const zhuangTai = ref<登录状态>({
     deng_lu_zhong: false,
@@ -85,7 +80,6 @@ export const 使用用户仓库 = defineStore('用户', () => {
     baoCunShuJu(TU_PIAN_SHOU_QUAN_JIAN, zhi)
   }
 
-  // C3 账号注销：调后端注销接口并清理本地登录态
   async function zhiXingZhuXiao(): Promise<void> {
     const daiCi = kaiShiXinDai()
     恢复任务 = null
@@ -221,9 +215,6 @@ export const 使用用户仓库 = defineStore('用户', () => {
     }
     const daiCi = kaiShiXinDai()
     恢复控制器 = new AbortController()
-    // FP-19：会移除挂载中页面的「恢复中」过渡会在第二次触发时把当前聊天页整页卸载重挂（管理员浮窗
-    // 随宿主组件销毁、草稿回灌、消息列表全量重载）。已认证态下的背景重核对按「安静刷新」走：
-    // 不写「恢复中」、不翻 shenFenYiJiuXu、失败保留现有认证态（baoLiuChengGong），三态门禁不动页。
     const anJing = 认证状态.value === '已认证'
     if (!anJing) {
       认证状态.value = '恢复中'
@@ -245,9 +236,6 @@ export const 使用用户仓库 = defineStore('用户', () => {
   function 取消待处理认证(): void {
     const youDaiChu = zhuangTai.value.deng_lu_zhong || 恢复任务 !== null
     kaiShiXinDai()
-    // 必须真正 abort：只递增代次的话在途请求不会被中断，前端仍要干等到服务端返回，
-    // 用户按「取消」后按钮却先复位，迟到的响应又会把结果糊回来。
-    // 注意：abort 只中断前端等待，已经发到服务端的请求无法撤回（该次登录尝试服务端照常记账）。
     恢复控制器?.abort()
     恢复控制器 = null
     恢复任务 = null
@@ -322,7 +310,6 @@ export const 使用用户仓库 = defineStore('用户', () => {
         { signal: 恢复控制器.signal },
       )
       if (!isDaiCiYouXiao(daiCi)) return false
-      // FP-07：注册成功不自动登录——响应里的令牌一律丢弃，不落盘不进状态；若链路中已存在登录态则当场清除
       if (令牌.value || duQuLingPai()) 清空用户状态()
       track('zhuCeChengGong')
       return true
@@ -410,7 +397,6 @@ export const 使用用户仓库 = defineStore('用户', () => {
     sheZhiShenFenShiTu(shenFen)
   }
 
-  /** 资料同步：头像/签名保存成功后刷新本地用户与缓存，保持各端一致 */
   function tongBuZiLiao(canShu: { tou_xiang?: string | null; qian_ming?: string | null }): void {
     if (!dangQianYongHu.value) return
     if (canShu.tou_xiang !== undefined) dangQianYongHu.value.tou_xiang = canShu.tou_xiang
@@ -419,7 +405,6 @@ export const 使用用户仓库 = defineStore('用户', () => {
 
   shuiHeBenDiShenFen()
 
-  // YH-088 多标签同步：监听登出/主题/资料广播，他页退出本页同退
   if (typeof window !== 'undefined') {
     window.addEventListener('storage', (shiJian) => {
       if (shiJian.key === 'lian-ai-ba-deng-chu') {

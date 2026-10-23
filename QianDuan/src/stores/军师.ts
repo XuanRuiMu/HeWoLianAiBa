@@ -4,7 +4,6 @@ import { huoQuJunShiZhiDaoZhuangTai } from '@/api/聊天'
 import { 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
 import type { JunShiZhiDaoZhuangTaiXinXi } from '@/types/类型定义'
 
-// 角色 ID（UUID v4）格式白名单，防止非法会话污染跨导航持久状态（P0 输入验证）
 const JIAO_SE_ID_ZHENG_ZE =
   /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
 
@@ -13,21 +12,16 @@ export function shiYouXiaoJiaoSeId(id: string): boolean {
 }
 
 export const 使用军师仓库 = defineStore('军师', () => {
-  // 跨导航唯一事实源：当前会话的军师「指导中」状态。
-  // 组件卸载（路由切换 / 面板 v-if 关闭）不再清空，离开再回来颜色恒与后端真值一致。
   const jiaoSeId = ref<string | null>(null)
   const zhuangTai = ref<JunShiZhiDaoZhuangTaiXinXi | null>(null)
   const keZaiCiZhiDao = ref(true)
   const youLiaoTianJiLu = ref(true)
   const zhuangTaiCuoWu = ref<QianTaiCuoWu | null>(null)
 
-  // 仅当 store 持有的会话与当前组件会话一致时，派生函数才采用本 store 状态，
-  // 避免会话切换竞态窗口下误用旧会话状态。
   function shiDangQianHuiHua(会话ID: string): boolean {
     return jiaoSeId.value === 会话ID
   }
 
-  // 由后端持久真值 seed（而非组件本地易失 ref 猜测）。
   async function chuShiHuaZhuangTai(会话ID: string): Promise<void> {
     if (!shiYouXiaoJiaoSeId(会话ID)) return
     jiaoSeId.value = 会话ID
@@ -37,14 +31,12 @@ export const 使用军师仓库 = defineStore('军师', () => {
         keZaiCiZhiDao: kz,
         youLiaoTianJiLu: ylt,
       } = await huoQuJunShiZhiDaoZhuangTai(会话ID)
-      // 仅在会话未被切换的前提下写入，避免异步竞态覆盖
       if (jiaoSeId.value !== 会话ID) return
       zhuangTai.value = zt
       keZaiCiZhiDao.value = kz
       if (ylt !== undefined) youLiaoTianJiLu.value = ylt
       zhuangTaiCuoWu.value = null
     } catch (cuoWu: unknown) {
-      // 拉取失败保留既有状态，不打断交互，但仍登记稳定错误码供界面展示
       const zhengChangHua = 归一前台错误(cuoWu)
       if (zhengChangHua.xianShi && jiaoSeId.value === 会话ID) zhuangTaiCuoWu.value = zhengChangHua
     }
@@ -91,7 +83,6 @@ export const 使用军师仓库 = defineStore('军师', () => {
     }
   }
 
-  // 跨导航持久：组件卸载不清空。仅在明确切换会话或主动清理时才重置。
   function qingLi(会话ID?: string): void {
     if (会话ID && jiaoSeId.value && jiaoSeId.value !== 会话ID) return
     jiaoSeId.value = null

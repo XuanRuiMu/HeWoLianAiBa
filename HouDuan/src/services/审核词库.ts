@@ -26,7 +26,6 @@ const HUAN_CUN_GENG_XIN_JIAN_GE = 60 * 1000
 
 const CI_KU_MU_LU = path.resolve(__dirname, '../config/审核词库')
 
-/** 词库目录（诊断用：启动校验与日志需要指出「在哪个目录找不到词库」） */
 export function huoQuCiKuMuLu(): string {
   return CI_KU_MU_LU
 }

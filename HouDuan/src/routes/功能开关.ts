@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import type { Request, Response } from 'express'
 import { chengGongXiangYing } from '../utils/xiangying'
+import { debug日志 } from '../utils/debug日志'
 
 type TeZhengKaiGuanBiao = Record<string, boolean>
 
@@ -21,8 +22,7 @@ export function jieXiTeZhengKaiGuan(yuanWen: string | undefined): TeZhengKaiGuan
     }
     return jieGuo
   } catch (cuoWu) {
-    // eslint-disable-next-line no-console -- 功能开关.test 断言 console.warn 被调用(行为契约)
-    console.warn('[配置警告] FEATURE_FLAGS环境变量非法，已回退默认全开:', cuoWu)
+    debug日志.warn('功能开关', 'FEATURE_FLAGS环境变量非法，已回退默认全开', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return { ...MO_REN_KAI_GUAN }
   }
 }

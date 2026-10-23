@@ -133,9 +133,6 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     environmentOptions: {
-      // 测试 hermetic：jsdom 默认 URL 恰为 http://localhost:3000（与本地后端开发端口冲突），
-      // 后端启动时会把单测里漏 mock 的真实 HTTP 变成真实 401，触发登录跳转懒加载并与 teardown 竞态。
-      // 指向永不监听的保留端口，让漏网请求快速失败，不依赖外部服务状态。
       jsdom: { url: 'http://localhost:9/' },
     },
     globals: true,

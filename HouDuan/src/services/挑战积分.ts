@@ -20,7 +20,6 @@ import {
 export interface TiaoZhanDuiJuXinXi {
   id: string
   jiao_se_id: string
-  /** 展示形态：库内规范形态经唯一解析入口转换后回显，识别不出为 未知 */
   wan_jia_xing_bie: 性别展示形态
   dui_xiang_xing_bie: 性别展示形态
   wei_xin_ming: string
@@ -56,21 +55,13 @@ function zuBieHeFa(zhi: unknown): zhi is ZuBie {
   )
 }
 
-/**
- * 开始一局挑战：随机全部隐藏参数（MBTI 随机、渣型按配置概率随机），
- * 服务端直接保存角色（含开场白），并登记进行中对局。
- * 同一用户同时仅允许一局进行中（部分唯一索引 uk_挑战对局_用户_进行中 兜底）。
- */
 export async function kaiShiTiaoZhan(
   yong_hu_id: string,
   wan_jia_xing_bie: 性别内部形态,
   dui_xiang_xing_bie: 性别内部形态,
 ): Promise<ShengChengJiaoSeJieGuo> {
-  // FP-13：玩家/对象性别一律经唯一入口归一为内部规范形态后再落库，
-  // 使 挑战对局 与 角色 共用同一形态；不可识别者以 400 拒绝而非炸 CHECK
   const wanJia = 落库性别或拒绝(wan_jia_xing_bie, '挑战积分', yong_hu_id)
   const duiXiang = 落库性别或拒绝(dui_xiang_xing_bie, '挑战积分', yong_hu_id)
-  // 挑战模式：MBTI 全随机、渣型按配置概率隐藏随机，其余系统随机
   const jiaoSe = shengChengJiaoSe({
     yong_hu_id,
     xing_bie: duiXiang,
@@ -80,9 +71,6 @@ export async function kaiShiTiaoZhan(
     sui_ji_xing_ge: false,
   })
 
-  // YH-060 挑战并发原子占位：先查后插并发靠500兜底收敛为原子占位+409常态化
-  // 根因：占位非原子；收敛：SELECT查进行中+INSERT占位冲突23505即409，禁500兜底
-  // 占位键用落库后角色ID回填：mock/真库一致先落角色再占位，占位冲突409补偿归档角色
   const jinXingZhong = await 数据库.query(
     `SELECT "ID" FROM "挑战对局" WHERE "用户ID" = $1 AND "状态" = '进行中' LIMIT 1`,
     [yong_hu_id],
@@ -104,7 +92,6 @@ await baoCunJiaoSe(yong_hu_id, jiaoSe, 'tiaozhan')
       [yong_hu_id, jiaoSe.id, wanJia, duiXiang],
     )
   } catch (cuoWu) {
-    // 占位冲突即补偿归档刚落库角色，禁残留孤儿角色
     await 数据库.query(`UPDATE "角色" SET "封存" = TRUE WHERE "ID" = $1`, [jiaoSe.id]).catch(() => undefined)
     const pgCuoWu = cuoWu as { code?: string }
     if (pgCuoWu.code === '23505') {
@@ -117,12 +104,9 @@ await baoCunJiaoSe(yong_hu_id, jiaoSe, 'tiaozhan')
     throw cuoWu
   }
 
-  // 所见即所得：挑战模式「是否渣型」是全随机的隐藏判定，
-  // 开局响应只回玩家可见投影，绝不把识破线索一并交代
   return touYingWanJiaKeJianJiaoSe(jiaoSe)
 }
 
-/** 用户当前进行中的挑战对局（无则 null） */
 export async function huoQuDangQianDuiJu(
   yong_hu_id: string,
 ): Promise<TiaoZhanDuiJuXinXi | null> {
@@ -149,11 +133,6 @@ export async function huoQuDangQianDuiJu(
   }
 }
 
-/**
- * 游戏结束后的挑战结算钩子：
- * 仅当该角色属于挑战模式且存在进行中对局时生效（幂等）。
- * 胜利加分、失败扣分、主动放弃按弃权扣分；含连胜加成与定级保护。
- */
 export async function jieSuanTiaoZhanDuiJu(
   yong_hu_id: string,
   jiao_se_id: string,
@@ -192,7 +171,6 @@ export async function jieSuanTiaoZhanDuiJu(
       let jiaCheng = 0
       if (lianShengXinXi.rows.length > 0) {
         const dangQianLianSheng = Number(lianShengXinXi.rows[0].连胜 || 0)
-        // 本局胜利后连胜数 = 原连胜 + 1；达到触发阈值起每场额外加成
         const xinLianSheng = dangQianLianSheng + 1
         if (xinLianSheng >= TIAO_ZHAN_PEI_ZHI.chuFaLianSheng) {
           jiaCheng =
@@ -211,7 +189,6 @@ export async function jieSuanTiaoZhanDuiJu(
       )
       await yingYongJiFenBianDong(yong_hu_id, zuBie, bianDong, 'sheng_li')
     } else {
-      // 定级保护：前 N 圀失败不扣分
       const changCiXinXi = await 数据库.query(
         `SELECT "胜场", "负场", "弃权场" FROM "挑战积分" WHERE "用户ID" = $1 AND "组别" = $2 LIMIT 1`,
         [yong_hu_id, zuBie],
@@ -242,7 +219,6 @@ export async function jieSuanTiaoZhanDuiJu(
 
 type JieGuoLeiXingJiFen = 'sheng_li' | 'shi_bai' | 'qi_quan'
 
-/** 应用积分变动：无记录则创建初始行再变更；同步胜/负/弃计数、连胜与历史最高分 */
 async function yingYongJiFenBianDong(
   yong_hu_id: string,
   zuBie: ZuBie,
@@ -282,7 +258,6 @@ async function yingYongJiFenBianDong(
   )
 }
 
-/** 公开排行榜：按组别返回前 N 名（积分降序，同分按更新时间升序） */
 export async function huoQuPaiHangBang(zuBie: string): Promise<PaiHangXiangMu[]> {
   if (!zuBieHeFa(zuBie)) {
     const cuoWu = new Error(huoQuFanYi('tiaoZhan', 'zuBieBuHeFa')) as Error & {
@@ -315,7 +290,6 @@ export async function huoQuPaiHangBang(zuBie: string): Promise<PaiHangXiangMu[]>
   }))
 }
 
-/** 挑战主页：四组别各自的个人概况（未打过为 null 分） */
 export async function huoQuWoDeGaiKuang(yong_hu_id: string): Promise<ZuBieGaiKuang[]> {
   const jieGuo = await 数据库.query(
     `SELECT "组别", "积分", "胜场", "负场", "弃权场", "连胜", "历史最高分"

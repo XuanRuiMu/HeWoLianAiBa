@@ -9,7 +9,6 @@ import {
   type 探针,
 } from './CSS级联真源'
 
-// FP-01 设计令牌与全局基线收口：焦点环分流 / 滚动条三件套 / button 色继承 / 表面与性别令牌成对
 
 const bianLiangCss = readFileSync(resolve(__dirname, '../styles/设计令牌.css'), 'utf8')
 const quanJuCss = readFileSync(resolve(__dirname, '../styles/全局.css'), 'utf8')
@@ -48,7 +47,6 @@ const xinZengLingPai = [
   'xingbie-zhongxing-1',
   'xingbie-zhongxing-2',
   'xingbie-zhongxing-wenben',
-  // FP-01 令牌基座追加：卡面组 / 选中态阴影与辉光 / 性别选中框三件套（共用块里的几何与光标令牌不在此列）
   'moshi-kapian-zheyan',
   'kapian-mian-biankuang',
   'kapian-mian-zhengwen',
@@ -137,7 +135,6 @@ describe('FP-01 全局基线规则', () => {
       /:where\(:focus-visible\)\s*\{\s*outline:\s*var\(--jujiao-huan-kuan-du\)\s+solid\s+var\(--jujiao-huan-yanse\)/,
     )
     expect(quanJuCss).toMatch(/outline-offset:\s*var\(--jujiao-huan-pian-yi\)/)
-    // 不再存在裸 :focus-visible 规则：任何"靠源码顺序压制"的第二真源都视为回归
     expect(quanJuCss).not.toMatch(/^\s*:focus-visible\s*\{/m)
   })
 
@@ -152,13 +149,11 @@ describe('FP-01 全局基线规则', () => {
     }
     const 窄环 = 层叠焦点环(规则们, 文本控件)
     const 标准环 = 层叠焦点环(规则们, 非文本控件)
-    // 「靠特异度差」这句标题现在真的有断言兜着了：旧断言比的是两处 search() 字符下标
     expect(标准环.特异度).toEqual([0, 0, 0])
     expect(窄环.特异度).toEqual([0, 1, 0])
     expect(比较特异度(窄环.特异度, 标准环.特异度)).toBeGreaterThan(0)
     expect(窄环.宽度令牌).toBe('--jujiao-huan-kuan-du-wenben')
     expect(标准环.宽度令牌).toBe('--jujiao-huan-kuan-du')
-    // 等价改写反证：两条规则整体换位（窄环本来在标准环之后，换完在前），层叠结果必须不动
     const 换位 = 互换文档序(规则们, 窄环.规则.选择器, 标准环.规则.选择器)
     expect(窄环.规则.序号 > 标准环.规则.序号).toBe(true)
     expect(层叠焦点环(换位, 文本控件).宽度令牌).toBe('--jujiao-huan-kuan-du-wenben')

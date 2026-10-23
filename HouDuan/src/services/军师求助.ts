@@ -16,7 +16,6 @@ export async function shengChengJunShiZhiDao(
 ): Promise<JunShiQiuZhuJieGuo> {
   try {
     const duiHuaWenBen = geShiHuaJunShiLiShi(canShu.dui_hua_li_shi, canShu.jiao_se_ming)
-    // 未显式传入上下文时，用调用方已持有的好感度构造关系上下文（向后兼容：无则退回基座）
     const shangXiaWenShiJi = shangXiaWen ?? {
       haoGanDu: {
         zong_fen: canShu.hao_gan_du?.zong_fen,

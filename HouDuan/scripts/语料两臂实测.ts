@@ -1,22 +1,3 @@
-/**
- * 语料实验室：三臂对照实测（2026-10-19 重做）。
- *
- * 臂（同一批探针、同一人设、同一阶段，唯一差异是 prompt 组装）：
- *   对照 —— 生产 prompt 原样（风格示例层在生产是关闭的）
- *   示例 —— 生产 prompt + 在「人设之后、历史之前」插入真私聊聊天示例块
- *   瘦身 —— 示例块 + 去掉第一层【你现在的状态】/第三层/第四层/镜像提示，只留人设+历史+示例+本轮消息
- *
- * 外呼统一走 scripts/直连适配器.ts，prompt 与参数取生产同一份代码。
- * 只跑写手：导演只决定回不回与情绪，与本次考察的接话形态无关；去掉它两臂差异才唯一归因到 prompt。
- * 轮转调度：按 探针 × 臂 轮转，任一时点三臂样本数均衡，便于中途按需停止。
- *
- * 用法：
- *   node -r ts-node/register/transpile-only scripts/语料两臂实测.ts <起始> <条数> [臂,臂,臂]
- * 环境：
- *   ZS_ZENG_QIAN  示例块文件路径
- *   ZS_PROBES     探针集名（默认 探针集_v2）
- *   ZS_OUT        记录目录（默认 实测）
- */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
@@ -42,7 +23,6 @@ const 检索库: Record<string, Array<{ 甲: string; 乙: string }>> =
   existsSync(检索文件) ? JSON.parse(readFileSync(检索文件, 'utf8')) : {}
 const 检索条数 = Number(process.env.ZS_JIAN_SUO_TIAO || '50')
 
-/** 检索臂：按字 bigram 相似度取最相近的真实对话当 many-shot 示例。 */
 function 检索块(探针号: string): string {
   const 例 = (检索库[探针号] || []).slice(0, 检索条数)
   if (!例.length) return ''
@@ -70,7 +50,6 @@ function 反射阶段(分: number): string {
   return 最
 }
 
-/** 在「人设之后、历史之前」插入示例块——与生产风格示例层的位置一致。 */
 function 插示例(prompt: string): string {
   if (!示例块) return prompt
   const 标 = '【刚才聊了什么】'
@@ -80,7 +59,6 @@ function 插示例(prompt: string): string {
 }
 
 const 要删的头 = ['【你现在的状态】', '【现在的你和这段关系】', '【关系参考，不是束缚】', '【对方近期说话特点】']
-/** 瘦身臂：把「规则墙」整层拿掉，只留人设/历史/示例/本轮消息。 */
 function 瘦身(prompt: string): string {
   return prompt
     .split('\n\n')

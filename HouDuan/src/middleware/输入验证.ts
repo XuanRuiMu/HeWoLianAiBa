@@ -12,7 +12,6 @@ export function 验证手机号(值: unknown): 值 is string {
 
 export function 验证用户名(值: unknown): 值 is string {
   if (typeof 值 !== 'string') return false
-  // YH-021 白名单优先：仅中文/字母/数字/下划线/中划线，黑名单正则同步保留作纵深
   if (!peiZhi.yongHuMing.baiMingDan.test(值.trim())) return false
   return !peiZhi.yongHuMing.teShuZiFu.test(值.trim())
 }
@@ -83,7 +82,6 @@ export function 聊天内容验证中间件(
   响应: Response,
   下一步: NextFunction,
 ): void {
-  // 非文本消息（媒体消息）无文本内容要求，由后续媒体校验处理
   const 消息体 = 请求.body as Record<string, unknown>
   const 消息类型 = typeof 消息体['leiXing'] === 'string'
     ? 消息体['leiXing']
@@ -94,9 +92,6 @@ export function 聊天内容验证中间件(
     下一步()
     return
   }
-  // FP-10（缺陷9）图文混排：正文由有序内容块派生，「单段文本 ≤ 上限」的老口径不适用
-  // （块里还有系统标的 [图片] 占位符，不该占用户的字数预算）。长度只在块维度判一次，
-  // 清洗算式唯一来自 services/消息内容块，最终裁定仍在消息服务，绝不在这里另写一套。
   const tiJiaoKuai =
     消息体['nei_rong_kuai'] ?? 消息体['neiRongKuai'] ?? 消息体['内容块']
   const kuaiQingLi = qingLiTiJiaoKuai(tiJiaoKuai, '聊天内容验证')

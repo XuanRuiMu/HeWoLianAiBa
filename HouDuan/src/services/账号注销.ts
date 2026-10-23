@@ -21,8 +21,6 @@ export async function zhuXiaoYongHu(
   const shouJiHao = String(yongHuXinXi.手机号)
   const zhuXiaoBiaoJi = `注销_${yong_hu_id.slice(0, 8)}`
 
-  // YH-069 事务只做行变更：文件IO禁入事务，先查出待删文件清单，事务只删行
-  // 根因：慢IO占连接，失败还不可逆；收敛为事务外标记+事务内删行+事务外GC
   const meiTiJieGuo = await 数据库.query(
     `SELECT "SHA256" FROM "媒体文件" WHERE "上传者ID" = $1`,
     [yong_hu_id],
@@ -48,10 +46,6 @@ export async function zhuXiaoYongHu(
     await keHuDuan.query('BEGIN')
     await keHuDuan.query(`DELETE FROM "媒体文件" WHERE "上传者ID" = $1`, [yong_hu_id])
 
-    // 显式删除关联数据（因为是软删用户，ON DELETE CASCADE 不会触发）
-    // YH-070 补全关联表：记忆/对话摘要/协议留痕/审计日志残留+LLM用量/思考记录/好友链/设置/媒体悬空
-    // 存在性守卫：缺表迁移库（014/015/018等）直接DELETE会炸整事务（SQLSTATE 42P01），
-    // 用信息模式判存再删；有CASCADE外键的表删行无残留但显式删可保断言语义，不存在则跳过
     const 关联删行: Array<{ 表名: string; 语句: string }> = [
       { 表名: '媒体文件', 语句: `DELETE FROM "媒体文件" WHERE "上传者ID" = $1` },
       { 表名: '角色', 语句: `DELETE FROM "角色" WHERE "用户ID" = $1` },
@@ -89,9 +83,6 @@ export async function zhuXiaoYongHu(
       await keHuDuan.query(语句, [yong_hu_id])
     }
 
-    // FP-28b：本 UPDATE 不再含 "性别"——注销置 NULL 是该死列在本仓的最后一个写点（FP-09/FP-10
-    // 真库夹具已改吃 默认性别），留着它 FP-28c 删列后注销直接 500。脱敏面不受影响：下面仍逐列清空
-    // 全部身份与画像列（含 目标性别/默认性别）；存量库 用户.性别 的历史值随 FP-28c 删列一并消失。
     await keHuDuan.query(
       `UPDATE "用户" SET
          "手机号" = $2,
@@ -113,8 +104,6 @@ export async function zhuXiaoYongHu(
       [yong_hu_id, zhuXiaoBiaoJi, zhuXiaoBiaoJi],
     )
 
-    // YH-070 吊销全部refresh加踢线：注销事务内吊销全部refresh，事务外踢在线socket
-    // 根因：只吊销当前jti+时间戳，存量refresh与在线socket没清干净
     const { cheXiaoYongHuSuoYouRefreshToken } = await import('../utils/jwt')
     await cheXiaoYongHuSuoYouRefreshToken(yong_hu_id).catch(() => undefined)
     const zaiHe = yanZhengLingPai(ling_pai)
@@ -124,18 +113,13 @@ export async function zhuXiaoYongHu(
         await redis.set(`jwt_blacklist:${zaiHe.jti}`, '1', 'EX', guoQiMiao)
       }
     }
-    // 用户级吊销时间戳：注销后该用户全部存量令牌立即失效（与 jti 黑名单双保险）
     await xieRuCheXiaoShiJianCuo(yong_hu_id)
     await cheXiaoYongHuMeiTiQianMing(yong_hu_id)
 
     await redis.del(`deng_lu_shi_bai:${shouJiHao}`)
-    // 验证码键已按用途分段（yan_zheng_ma:{用途}:{号码}），注销要把全部用途都清掉，
-    // 否则残留的重置密码码还能用。走 shanChuYanZhengMa 保持与写入侧同一条键口径。
     await shanChuYanZhengMa(shouJiHao)
     await redis.del(`fa_song_jian_ge:${shouJiHao}`)
 
-    // 注销审计留痕改为事务外直连写入：审计日志.用户ID外键ON DELETE SET NULL，
-    // 事务内删行+留痕同事务必锁等待；事务外写入用户已匿名化，外键置空不断言用户存在
     await keHuDuan.query('COMMIT')
   } catch (cuoWu) {
     await keHuDuan.query('ROLLBACK').catch(() => undefined)
@@ -152,7 +136,6 @@ export async function zhuXiaoYongHu(
     lei_xing: '安全',
   }).catch(() => undefined)
 
-  // YH-069 事务外GC物理文件：事务已提交再删文件，失败仅记日志不回滚行变更
   for (const benDiLuJing of daiShanWenJian) {
     try {
       await fs.promises.unlink(benDiLuJing)
@@ -161,7 +144,6 @@ export async function zhuXiaoYongHu(
     }
   }
 
-  // YH-070 事务外踢线：断开该用户全部在线socket，防注销后残留会话
   try {
     const { huoQuIo } = await import('../socket/io')
     const io = huoQuIo()

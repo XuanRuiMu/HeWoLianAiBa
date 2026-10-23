@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-# YH-147 启动脚本相对路径+显式报错+健康等待：禁硬编码绝对路径换机器即挂
+
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 if ([string]::IsNullOrWhiteSpace($root)) {
   throw '启动失败：无法解析项目根目录，请用绝对路径调用start.ps1'
@@ -10,7 +10,6 @@ Write-Host "  He Wo Lian Ai Ba - Dev Start" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# YH-148 终端宿主优先 Windows Terminal，无 wt.exe 时回落传统控制台：禁硬编码绝对路径换机器即挂
 function 启动开发窗口 {
   param([string]$目录, [string]$标题)
   $内部命令 = "cd /d `"$目录`" && title $标题 && npm run dev"
@@ -24,7 +23,6 @@ function 启动开发窗口 {
 Write-Host "[1/2] Starting HouDuan (port 3000)..." -ForegroundColor Yellow
 启动开发窗口 -目录 "$root\HouDuan" -标题 'HouDuan-3000'
 
-# YH-147 健康等待：后端readyz通后再起前端，禁吞错
 $backendJianKang = $false
 for ($i = 0; $i -lt 30; $i++) {
   Start-Sleep -Seconds 2

@@ -3,7 +3,6 @@ import { yinBiMinGanZiDuan } from '../utils/掩码'
 import type { ShenJiRiZhi } from '../types'
 
 export async function jiLuShenJiRiZhi(riZhi: ShenJiRiZhi): Promise<void> {
-  // C8：写入前对详情中的手机号等敏感字段做掩码，日志不落完整明文手机号
   const anQuanXiangQing = riZhi.xiang_qing
     ? yinBiMinGanZiDuan(riZhi.xiang_qing as Record<string, unknown>)
     : null

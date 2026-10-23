@@ -42,7 +42,6 @@ function jieXiZhuCeDaiMa(cuoWuMa: unknown): CuoWuDaiMa {
 }
 
 function huoQuIp(qingQiu: Request): string {
-  // A2：审计/封禁场景一律使用可信链路推导的真实来源 IP，不解析客户端可控 XFF
   return huoQuZhenShiIP(qingQiu)
 }
 
@@ -67,8 +66,6 @@ function huoQuYongHuMing(qingQiuTi: Record<string, unknown>): string | undefined
   )
 }
 
-/** camelCase 与 snake_case 双读：前后端各写一种，两边都不能只认自己那套。
- *  queRenQianZhu='queRen' 时取 queRenXinMiMa / que_ren_xin_mi_ma。 */
 function huoQuMiMa(
   qingQiuTi: Record<string, unknown>,
   queRenQianZhu?: string,
@@ -84,7 +81,6 @@ function huoQuMiMa(
   )
 }
 
-/** camelCase → snake_case（MiMa → mi_ma，queRenXinMiMa → que_ren_xin_mi_ma） */
 function huoQuSnake(camel: string): string {
   return camel.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase()
 }
@@ -95,7 +91,6 @@ function huoQuTongYiXieYi(qingQiuTi: Record<string, unknown>): boolean | undefin
   return undefined
 }
 
-// C5 未成年人保护：注册必须携带出生日期（YYYY-MM-DD）
 function huoQuChuShengRiQi(qingQiuTi: Record<string, unknown>): string | undefined {
   const zhi =
     (typeof qingQiuTi.chuShengRiQi === 'string' ? qingQiuTi.chuShengRiQi : undefined) ||
@@ -108,7 +103,6 @@ luYou.get('/检查手机', jianChaShouJiXianLiu, async (qingQiu: Request, xiangY
   if (!shouJiHao || !yanZhengShouJiHaoGeShi(shouJiHao)) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
   }
-  // YH-028 注册状态模糊响应：存在与不存在返回同一成功形态，不再明文枚举
   await anShouJiHaoChaYongHu(shouJiHao)
   return chengGongXiangYing(xiangYing, { yi_zhu_ce: true })
 })
@@ -121,7 +115,6 @@ luYou.post('/发送码', faSongMaXianLiu, duanXinRiPeiEZhuJi, 手机号验证中
   const yongTu = zhunHuaYanZhengMaYongTu((qingQiu.body as Record<string, unknown>).yongTu)
   const jieGuo = await faSongYanZhengMa(shouJiHao, yongTu)
   if (!jieGuo.cheng_gong) {
-    // YH-025 结构化错误码映射：service返错误码路由只映射，禁文案子串定状态码
     return shiBaiXiangYing(xiangYing, 503, jieGuo.ti_shi || huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai'), jieXiFaSongDaiMa(jieGuo.cuo_wu_ma))
   }
   return chengGongXiangYing(xiangYing, null)
@@ -140,15 +133,12 @@ luYou.post('/注册', zhuCeXianLiu, 手机号验证中间件, 用户名验证中
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.REQUEST_MISSING_PARAMETER)
   }
 
-  // YH-011 发码配额联动：注册前按手机号复核日配额（换路径换键也绕不过手机号配额）
   const { duanXinRiPeiEYuLan } = await import('../services/短信')
   const peiEYuLan = await duanXinRiPeiEYuLan(shouJiHao, huoQuIp(qingQiu))
   if (!peiEYuLan.yun_xu) {
     return shiBaiXiangYing(xiangYing, 429, peiEYuLan.ti_shi || huoQuFanYi('renZheng', 'duanXinRiPeiEYongJin'), CUO_WU_DAI_MA.AUTH_SMS_RATE_LIMITED)
   }
 
-  // YH-011 行为验证码：同一手机号/IP累计失败达阈值后必须携带通过凭证
-  // vitest 下默认关闭联动计数（防跨文件共享Redis误伤），FP02单测显式开FP02_YAN_ZHENG_JI_LU覆盖
   const { xingWeiYanZhengXuYao, xingWeiYanZhengXiaoHao } = await import('../services/行为验证')
   if (process.env.FP02_YAN_ZHENG_JI_LU === 'true' && await xingWeiYanZhengXuYao(shouJiHao, huoQuIp(qingQiu))) {
     const pingZheng = typeof qingQiuTi.xingWeiPingZheng === 'string' ? String(qingQiuTi.xingWeiPingZheng) : typeof qingQiuTi.xing_wei_ping_zheng === 'string' ? String(qingQiuTi.xing_wei_ping_zheng) : ''
@@ -170,7 +160,6 @@ luYou.post('/注册', zhuCeXianLiu, 手机号验证中间件, 用户名验证中
   if (!jieGuo.cheng_gong) {
     const { jiLuZhuCeShiBai } = await import('../services/行为验证')
     await jiLuZhuCeShiBai(shouJiHao, huoQuIp(qingQiu)).catch(() => undefined)
-    // YH-025 结构化错误码映射：service返错误码路由只映射，禁文案子串定状态码
     return shiBaiXiangYing(xiangYing, 503, jieGuo.ti_shi || huoQuFanYi('renZheng', 'zhuCeShiBai'), jieXiZhuCeDaiMa(jieGuo.cuo_wu_ma))
   }
 
@@ -204,7 +193,6 @@ luYou.post('/登录', dengLuXianLiu, dengLuIPLianLiu, 手机号验证中间件, 
   return chengGongXiangYing(xiangYing, jieGuo.shu_ju, huoQuFanYi('tongYong', 'caoZuoChengGong'))
 })
 
-// C4：刷新 access token（使用 refresh token）
 luYou.post('/刷新', async (qingQiu: Request, xiangYing: Response) => {
   const qingQiuTi = qingQiu.body as Record<string, unknown>
   const refreshToken =
@@ -225,7 +213,6 @@ luYou.post('/刷新', async (qingQiu: Request, xiangYing: Response) => {
   return chengGongXiangYing(xiangYing, jieGuo.shu_ju, huoQuFanYi('tongYong', 'caoZuoChengGong'))
 })
 
-// C4：吊销 refresh token（登出时调用）
 luYou.post('/吊销刷新令牌', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
@@ -240,15 +227,12 @@ luYou.post('/吊销刷新令牌', async (qingQiu: RenZhengQingQiu, xiangYing: Re
     const { shanChuRefreshToken } = await import('../utils/jwt')
     await shanChuRefreshToken(refreshTokenId, yongHu.yongHuId)
   } else {
-    // 吊销该用户所有 refresh token
     const { cheXiaoYongHuSuoYouRefreshToken } = await import('../utils/jwt')
     await cheXiaoYongHuSuoYouRefreshToken(yongHu.yongHuId)
   }
   return chengGongXiangYing(xiangYing, null, huoQuFanYi('tongYong', 'caoZuoChengGong'))
 })
 
-// 「忘记密码」重置：免登录入口（公开白名单），安全靠「重置用途验证码 + 账号维度限流」，
-// 对外一律不区分「号码未注册」与「验证码错」，避免变成账号探测接口。
 luYou.post('/重置密码', chongZhiMiMaXianLiu, duanXinRiPeiEZhuJi, 手机号验证中间件, async (qingQiu: Request, xiangYing: Response) => {
   const qingQiuTi = qingQiu.body as Record<string, unknown>
   const shouJiHao = huoQuShouJiHao(qingQiuTi)
@@ -356,8 +340,6 @@ luYou.post('/设置默认性别', async (qingQiu: RenZhengQingQiu, xiangYing: Re
   return chengGongXiangYing(xiangYing, { yong_hu: jieGuo.yong_hu }, jieGuo.ti_shi)
 })
 
-/* FP-ZJ3 默认对象性别写口：复用目标性别列，不新增对象默认列。
-   仅作普通模式第二步的系统默认预选项；挑战/角色判定一律以开赛与建角入参为准 */
 luYou.post('/设置默认对象性别', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
@@ -391,7 +373,6 @@ luYou.get('/信息', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   return chengGongXiangYing(xiangYing, shuJu)
 })
 
-// C3 账号注销：匿名化用户 + 级联清理关联数据 + 清理磁盘媒体 + 吊销当前 JWT
 luYou.delete('/注销', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {

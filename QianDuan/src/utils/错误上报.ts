@@ -23,8 +23,6 @@ interface ShangBaoTi {
 let dangQianShangBaoHanShu: CuoWuShangBaoHanShu | null = null
 let yiAnZhuang = false
 
-// YH-085 错误上报收敛：指纹去重+采样+批量队列+统一版本，禁直发被限流腰斩
-// 根因：直发还被后端限流腰斩查不出线上问题；收敛为指纹去重采样批量
 const SHANG_BAO_ZHI_WEN = new Map<string, number>()
 const ZHI_WEN_LENG_QUE_HAO_MIAO = 60000
 const CAI_YANG_LV = 1
@@ -119,8 +117,6 @@ function faSongRiZhi(shuJuTi: ShangBaoTi): void {
     return
   }
 
-  // 根因收敛：sendBeacon对502无状态回执，失败静默但浏览器记资源error刷控制台；
-  // 收敛为fetch直发（非2xx判错catch静默，不记资源error）
   try {
     const yuanShiFetch = (
       globalThis as { fetch?: (url: string, init?: RequestInit) => Promise<Response> }
@@ -168,11 +164,8 @@ export function moRenShangBaoHanShu(canShu: CuoWuShangBaoCanShu): void {
 
   const ti: ShangBaoTi = {
     lei_xing: shangBaoLeiXing,
-    // YH-085 统一版本：上报带应用版本，禁版本分裂查不出线上问题
     xiang_qing: { ...xiangQing, ban_ben: yingYongBanBen },
   }
-  // 同步直发语义：默认上报函数立即发送，批量队列仅供高频调用方显式使用
-  // YH-085 指纹去重仍生效，禁同错刷屏；采样仅作用于批量入口，默认上报不采样
   const wen = zhiWen(canShu.cuoWu, canShu.leiBie)
   const shangCi = SHANG_BAO_ZHI_WEN.get(wen)
   if (shangCi && Date.now() - shangCi < ZHI_WEN_LENG_QUE_HAO_MIAO) {
@@ -182,7 +175,6 @@ export function moRenShangBaoHanShu(canShu: CuoWuShangBaoCanShu): void {
   faSongRiZhi(ti)
 }
 
-// YH-085 高频批量上报：显式批量入口，指纹去重+采样+批量，禁直发被限流腰斩
 export function moRenPiLiangShangBao(canShu: CuoWuShangBaoCanShu): void {
   const wen = zhiWen(canShu.cuoWu, canShu.leiBie)
   const shangCi = SHANG_BAO_ZHI_WEN.get(wen)

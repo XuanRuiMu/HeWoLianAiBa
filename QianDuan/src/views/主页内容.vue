@@ -210,9 +210,7 @@ watch(
 </script>
 
 <style scoped>
-/* 主页以 1366×768 为设计基准：--zhuye-chi 等于基准下的 1px，
-   由视口宽/高两轴取小值自动换算，任何非竖屏尺寸都保持笔记本的构图比例。
-   字号的 max() 下限只在极小视口兜底可读性，不改变大屏等比缩放。 */
+
 .zhuye-quyu {
   --zhuye-chi: clamp(0.46px, min(0.0732601vw, 0.1302083vh), 2.4px);
   --zhuye-zihao-biaoti: max(18px, calc(32 * var(--zhuye-chi)));
@@ -291,7 +289,7 @@ watch(
   padding-bottom: calc(24 * var(--zhuye-chi));
 }
 
-/* 左侧不再承载任何卡片：留白让背景里的角色单独露出，同时保持笔记本版的两栏构图 */
+
 .zuo-ce-kong-qu {
   width: 48%;
   flex-shrink: 0;
@@ -518,14 +516,14 @@ watch(
   }
 }
 
-/* 竖屏平板：宽度不足以按 1366 比例缩到可读字号，几何比例保留但给一档下限 */
+
 @media (min-width: 768px) and (orientation: portrait) {
   .zhuye-quyu {
     --zhuye-chi: clamp(0.8px, min(0.0732601vw, 0.1302083vh), 2.4px);
   }
 }
 
-/* 横屏手机等矮视口：两张卡并排，避免纵向堆叠把「开始体验」挤出屏幕 */
+
 @media (max-height: 560px) and (min-width: 768px) {
   .gonggong-biaoti-qu {
     padding: calc(10 * var(--zhuye-chi)) calc(24 * var(--zhuye-chi))
@@ -590,7 +588,7 @@ watch(
   }
 }
 
-/* 竖屏手机：维持标题在上、两个模式纵向排列 */
+
 @media (max-width: 767px) {
   .zhuye-quyu {
     --zhuye-chi: 1px;

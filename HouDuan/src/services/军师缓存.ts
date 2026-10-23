@@ -112,8 +112,6 @@ export async function baoCunJunShiHaXi(
   ha_xi: string,
 ): Promise<void> {
   try {
-    // YH-067 军师哈希无界收敛：LTRIM定容，禁越用越慢
-    // 根因：LPUSH无界增长；收敛为保留最近200条
     const jianMing = `${JUN_SHI_HA_XI_KEY}:${yong_hu_id}:${jiao_se_id}`
     await redis.lpush(jianMing, ha_xi)
     await redis.ltrim(jianMing, 0, 199)

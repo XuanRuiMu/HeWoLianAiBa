@@ -24,8 +24,6 @@ export function 加固文本输入(元素: HTMLInputElement | HTMLTextAreaElemen
   元素.setAttribute('spellcheck', 'false')
   元素.setAttribute('data-lpignore', 'true')
   if (元素.readOnly || 元素 === document.activeElement) return
-  // 只读态让 Chromium 在页面载入时跳过启发式填充；用户第一次触碰即恢复可输入，
-  // 因此不会影响正常输入、Tab 焦点或移动端键盘。
   元素.readOnly = true
   const 解锁 = () => {
     元素.readOnly = false

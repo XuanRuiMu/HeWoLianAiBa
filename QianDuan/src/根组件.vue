@@ -74,12 +74,8 @@ watch(
 const liaoTianLeiLuYou = new Set(['liaoTian', 'haoYouLiaoTian'])
 const shiYongCaoDiBeiJing = computed(() => route.name !== undefined && !liaoTianLeiLuYou.has(route.name as string))
 
-// 背景页地址带版本防陈旧缓存：同版本命中浏览器缓存秒开，新版本自动失效重取
 const beiJingDiZhi = gouJianCaoDiDiZhi()
 
-// 聊天类路由隐藏草地 iframe（屏外 2px 微窗：文档常驻不销毁，rAF 链不断，
-// 正尺寸绘制无 GL 报错），离开时恢复尺寸直接显示：门控就绪态保持，不重置、不重载，秒开。
-// immediate 兜住「刷新直达聊天页」的首载场景
 const beiJingGuaQi = ref(false)
 watch(
   () => route.name,
@@ -89,11 +85,8 @@ watch(
   { immediate: true },
 )
 
-// 背景独立加载：首帧渲染与可交互性优先，等主线程空闲再创建背景 iframe，
-// 避免 3D bundle 解析/WebGL 初始化与页面交互抢占主线程（此前"背景没加载好啥也点不了"）
 const yingJiaZaiBeiJing = ref(false)
 const beiJingChongShiCiShu = ref(0)
-// 背景状态：iframe 加载完成后显示，失败时保留应用功能并提示。
 const beiJingJiuXu = ref(false)
 const beiJingShiBai = ref(false)
 const beiJingShiBaiYuanYin = ref('')
@@ -181,22 +174,6 @@ function dengDaiZhuXianChengKongXian(): Promise<void> {
   })
 }
 
-// 草地背景鼠标交互（忠实移植 jordan-breton.com 原机制）：
-// 背景 iframe 设了 pointer-events:none 且压在内容之下，收不到真实鼠标事件；
-// 而原网页的「视差晃动」与「草弯曲」都靠 iframe 内部 document/canvas 收到真实 pointermove 驱动。
-// 因此由父页（主帧）把鼠标坐标“注入”回 iframe 内部，完全复刻原网页的输入链路：
-//
-//   ① 视差晃动：原网页 engine.pointer（类 tL）监听 document 的 pointermove，
-//      写入 normalizedPosition；parallax（类 rU）每帧读取它并偏移 camera.group.position
-//      （注意：是“偏移位置”，不是旋转）。我们直接写 engine.pointer.normalizedPosition
-//      （与原监听产出的数据完全一致），由 bundle 自带的 parallax.update()（在其自身 rAF 中）
-//      完成相机偏移——绝不手动旋转/平移相机，那是对原机制的误读。
-//
-//   ② 草弯曲：raycaster/bender（类 HR）订阅 eventBus 的 "canvas" 通道，该通道的真实 DOM
-//      监听挂在 engine.canvas 上。我们向 engine.canvas 派发合成 pointermove，事件经 eventBus
-//      送达 raycaster，再触发草地 bender（类 Aw）弯曲——不手动改任何 uniform。
-//
-// 整套流程完全事件驱动（与原网页一致），不依赖父帧 rAF，由 iframe 自身的 rAF 做平滑 lerp。
 const grassIframe = ref<HTMLIFrameElement | null>(null)
 const shangCiGuangBiao = { x: 0, y: 0 }
 
@@ -270,7 +247,6 @@ function chuLiYeMianKeJian() {
   if (!document.hidden) luoPanJiZhun = null
 }
 
-// 把当前鼠标坐标注入 iframe 内部，复刻原网页的 document/canvas pointermove 输入
 interface CaoDiYinQing {
   pointer?: { normalizedPosition?: { x: number; y: number } }
   sizes?: { width: number; height: number }
@@ -295,7 +271,6 @@ function zhuRuCaoDiGuangBiao() {
   if (!tiYanDuiXiang || !tiYanDuiXiang.engine) return
   const engine = tiYanDuiXiang.engine
 
-  // ① 视差：直接喂 normalizedPosition（与原 tL 的 document 监听产出完全一致）
   try {
     const zhiZhen = engine.pointer
     if (zhiZhen && zhiZhen.normalizedPosition) {
@@ -313,7 +288,6 @@ function zhuRuCaoDiGuangBiao() {
     // 注入失败仅影响背景视差，与正常功能无关（背景完全独立）
   }
 
-  // ② 草弯曲：向 engine.canvas 派发合成 pointermove（routes to eventBus "canvas" → raycaster → 草 bender）
   try {
     const canvas = engine.canvas
     if (canvas && typeof canvas.dispatchEvent === 'function') {
@@ -380,7 +354,6 @@ function jianCeAnQuanQuYu() {
   const zhiChi = (shang && shang !== '0px') || (xia && xia !== '0px')
   if (zhiChi) return
 
-  // 桌面端不进行键盘遮挡兜底推算，避免将浏览器工具栏/任务栏高度误判为底部安全区
   const shiYiDongDuan =
     navigator.maxTouchPoints > 0 &&
     typeof window.screen === 'object' &&
@@ -418,14 +391,12 @@ onMounted(() => {
     window.visualViewport.addEventListener('resize', gengXinShiJiaoKouGaoDu)
     window.visualViewport.addEventListener('scroll', gengXinShiJiaoKouGaoDu)
   }
-  // 父帧把鼠标坐标注入 iframe 内部，复刻原网页 document/canvas pointermove 输入链路
   window.addEventListener('pointermove', chuLiGuangBiaoYiDong, { passive: true })
   window.addEventListener('touchmove', chuLiChuMoYiDong, { passive: true })
   window.addEventListener('pointerdown', qiDongLuoPan, { passive: true })
   document.addEventListener('visibilitychange', chuLiYeMianKeJian)
   void qiDongLuoPan()
   window.addEventListener('message', chuLiBeiJingXiaoXi)
-  // 应用挂载完成后，先等父帧三维库预热有结论、再等主线程空闲，才加载草地背景（独立、静默、不阻塞交互）
   void qiDongBeiJingJiaZai()
 })
 
@@ -486,7 +457,7 @@ onBeforeUnmount(() => {
   transform: translateY(-8px);
 }
 
-/* 草地 3D 背景：全局固定层，位于内容之下，不拦截鼠标。 */
+
 .grass-bg-iframe {
   position: fixed;
   inset: 0;
@@ -567,7 +538,7 @@ onBeforeUnmount(() => {
   }
 }
 
-/* 聊天类路由挂起态：屏外 2px 微窗隐藏（visibility 隐藏但文档保持可见态，rAF 链不断） */
+
 .grass-bg-iframe.gua-qi {
   left: -10px;
   top: -10px;

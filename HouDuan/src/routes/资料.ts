@@ -36,16 +36,11 @@ import { QI_PAO_AI_MO_REN, QI_PAO_YU_SHE_XUAN_XIANG, QI_PAO_ZI_JI_MO_REN } from 
 
 const luYou = Router()
 
-/** FP-03 气泡单源：预设白名单与云端默认值收敛至 config/气泡主题 */
 const QI_PAO_YU_SHE = new Set<string>(QI_PAO_YU_SHE_XUAN_XIANG as readonly string[])
 
-/** 签名长度上限（用户口径：500字以内，按 Unicode 码点计数，emoji 计1字） */
 const QIAN_MING_ZUI_DA_ZI_FU = 500
-/** 白名单人数上限（防滥用） */
 const BAI_MING_DAN_ZUI_DA_REN_SHU = 200
-/** 头像文件上限2MB（前端已裁剪为1024×1024，此处为服务端硬上限） */
 const TOU_XIANG_ZUI_DA_ZI_JIE = 2 * 1024 * 1024
-/** 头像允许的 MIME（前端 canvas 统一输出以下格式，各种源图均可选取） */
 const TOU_XIANG_MIME_BAI_MING_DAN = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
 function quZiFuChuan(qingQiuTi: Record<string, unknown>, ...jians: string[]): string {
@@ -55,7 +50,6 @@ function quZiFuChuan(qingQiuTi: Record<string, unknown>, ...jians: string[]): st
   return ''
 }
 
-/** 校验白名单：数组、长度、UUID 格式、用户存在性 */
 async function yanZhengBaiMingDan(zhi: unknown): Promise<{ he_fa: boolean; lie_biao: string[] }> {
   if (!Array.isArray(zhi)) return { he_fa: false, lie_biao: [] }
   const quChong = [...new Set(zhi.filter((x) => typeof x === 'string'))] as string[]
@@ -73,13 +67,11 @@ async function yanZhengBaiMingDan(zhi: unknown): Promise<{ he_fa: boolean; lie_b
 luYou.put('/签名', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
-  // 任务3：封禁中禁止修改签名（防绕过），申诉走下方专属入口
   const qianMingFengJin = await chaXunZhangHaoFengJin(yongHu.yongHuId)
   if (qianMingFengJin.beiFengJin) {
     return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'zhangHaoYiBeiFengJin'))
   }
   const qingQiuTi = qingQiu.body as Record<string, unknown>
-  // 输出安全：入库前剥控制字符（保留 \t \n），\r 与其余 C0/DEL/非字符全剥
   const qianMing = 清洗玩家文本(quZiFuChuan(qingQiuTi, 'qianMing', 'qian_ming'))
   if (Array.from(qianMing).length > QIAN_MING_ZUI_DA_ZI_FU) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('ziLiao', 'qianMingTaiChang'))
@@ -154,7 +146,6 @@ luYou.put('/签名白名单', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, 
 luYou.post('/头像', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
-  // 任务3：封禁中禁止更换头像
   const touXiangFengJin = await chaXunZhangHaoFengJin(yongHu.yongHuId)
   if (touXiangFengJin.beiFengJin) {
     return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'zhangHaoYiBeiFengJin'))
@@ -190,7 +181,6 @@ luYou.post('/头像', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
             huiYing(() => shiBaiXiangYing(xiangYing, 400, huoQuFanYi('ziLiao', 'touXiangTaiDa')))
             return
           }
-          // YH-014 头像同背景绑定用户短效：持久化仅存无参引用，读取重签（认证映射已重签）
           const touXiangYinYong = shengChengMeiTiYinYong(jieGuo.sha256)
           const touXiangURL = zhongXinQianMingMeiTiURL(touXiangYinYong, yongHu.yongHuId) || touXiangYinYong
           数据库.query(`UPDATE "用户" SET "头像" = $1, "更新时间" = NOW() WHERE "ID" = $2`, [touXiangYinYong, yongHu.yongHuId])
@@ -204,9 +194,6 @@ luYou.post('/头像', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
         })
         .catch(async (cuoWu) => {
           if (cuoWu instanceof MeiTiCunChuCuoWu) {
-            // 任务3：真实违规图片记账号违规一次（文件已在存储层销毁，等同撤回）
-            // 是否属违规取自 services/媒体审核出参 的同一个类别真源；
-            // 头像站点自有口径：任何存储错误一律 403 + ziLiao 段文案（改前后逐字不变）
             const { xuYaoJiWeiGui } = panDingMeiTiShenHeChuCan(String(cuoWu.fanYiJian))
             if (xuYaoJiWeiGui) {
               await jiLuZhangHaoWeiGui({
@@ -242,7 +229,6 @@ luYou.post('/头像', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
   })
 })
 
-/** 微信式个人名片：手机号永不返回；签名按可见性“类”过滤 */
 async function duQuDuiFangQiPao(muBiaoId: string, lie: string, moRen: string): Promise<string> {
   try {
     const jieGuo = await 数据库.query(`SELECT * FROM "用户设置" WHERE "用户ID" = $1 LIMIT 1`, [muBiaoId])
@@ -297,7 +283,6 @@ luYou.get('/名片/:userId', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, x
   }
 })
 
-/** 任务3：账号封禁状态查询（封禁中也可查，用于展示解封时间与申诉入口） */
 luYou.get('/封禁状态', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
@@ -316,7 +301,6 @@ luYou.get('/封禁状态', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xia
   }
 })
 
-/** 任务3：被封禁用户提交申诉（未封禁或空理由拒绝） */
 luYou.post('/申诉', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))

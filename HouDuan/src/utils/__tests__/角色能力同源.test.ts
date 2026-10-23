@@ -3,15 +3,6 @@ import { existsSync, readFileSync, readdirSync } from 'fs'
 import { resolve } from 'path'
 import { 管理角色清单, 管理能力清单, 角色能力矩阵, type GuanLiNengLi } from '../角色能力'
 
-/**
- * FP-18 跨仓同源守卫：游戏端（和我恋爱吧）与管理端（恋爱吧管理中心）是两套构建产物，
- * 无法共享源码，角色能力矩阵只能各仓一份。本用例直读对端源文件断言两份真源逐字一致，
- * 手法与口径照抄 管理后端/tests/单元/RBAC矩阵.test.ts 的「前端消费点与角色能力矩阵同源」。
- * 改任一仓的角色或能力清单，必须两仓同改，否则此处红灯。
- */
-/* 对端仓定位：本地工作区里两个项目是同级文件夹（位于本仓库根的父目录下）；
-   GitHub Actions 的 checkout 只能落在工作区内（即本仓库根下）。
-   两种布局都认，找不到仍抛错——同源守卫绝不允许因路径布局不同而静默跳过。 */
 const 仓库根 = resolve(__dirname, '../../../..')
 const 对端仓根 = [resolve(仓库根, '..', '恋爱吧管理中心'), resolve(仓库根, '恋爱吧管理中心')].find(
   (候选) => existsSync(候选),

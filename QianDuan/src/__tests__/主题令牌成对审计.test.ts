@@ -9,14 +9,12 @@ import {
   所有声明令牌,
 } from './主题令牌真源'
 
-// FP-12：设计令牌成对性全站审计 —— 防 F23（真源只住在单侧主题块 → 另一档塌陷）复发的结构性护栏。
 
 const 源码根 = resolve(__dirname, '..')
 const 块们 = 声明块清单()
 const 浅色解析 = 按档解析全部('light', 块们)
 const 深色解析 = 按档解析全部('dark', 块们)
 
-/** FP-12 授权可改文件：豁免令牌必须在这五处零消费者，否则"上收即改变授权内视觉"就不成立，须回到上收路径 */
 const 授权文件 = [
   'styles/设计令牌.css',
   'styles/全局.css',
@@ -25,7 +23,6 @@ const 授权文件 = [
   'layouts/认证布局.vue',
 ]
 
-/** 豁免类别：两类各带一条可被证伪的机器约束，见下方用例 */
 type 豁免类别 = '越权阻塞' | '零消费者疑死令牌'
 
 interface 豁免项 {
@@ -34,17 +31,10 @@ interface 豁免项 {
   理由: string
 }
 
-/**
- * 已知塌陷令牌账本：曾登记 FP-12 扫出的 7 枚 light-only"越权阻塞"令牌（--yuanjiao-da/zhong/xiao、
- * --anquan-quyu-shang/xia、--nuanhui-lan、--roufen-zi）。FP-G 经主代理裁决把 7 枚全部上收共用 :root
- * （尺度/安全区令牌与主题档无关，品牌色取浅色档同值），深色档圆角 0→16/12/8px、品牌色不再 IACVT
- * 透明（用户原始需求 7 根因收口），账本随之清零。账本只允许缩短；新增任何单侧声明令牌都会红。
- */
 const 塌陷豁免: 豁免项[] = []
 
 const 豁免令牌名 = 塌陷豁免.map((项) => 项.令牌).sort()
 
-/** 尺度/缓动令牌族：与主题无关，唯一合法住所是共用 :root 块 */
 const 共用块专属令牌 = [
   '--jiange-da',
   '--jiange-zhong',
@@ -58,7 +48,6 @@ const 共用块专属令牌 = [
   '--quxian-huan-ying',
 ]
 
-/** 上收前 light 档实测值，钉住"上收不得改数值" */
 const 尺度真源取值: Record<string, string> = {
   '--jiange-da': '24px',
   '--jiange-zhong': '16px',
@@ -72,15 +61,10 @@ const 尺度真源取值: Record<string, string> = {
   '--quxian-huan-ying': 'cubic-bezier(0.22, 1, 0.36, 1)',
 }
 
-/** FP-02 那类"绕真源同值兜底"补丁账本（越权文件；FP-G 已删净 App.vue 与 空态.vue 的两处兜底，账本归零；新增即红） */
 const 同值兜底待清理: string[] = []
 
-/** FP-12 授权文件里仍在引用单侧令牌的位置（FP-G 上收后授权文件引用全部双档有源，账本归零；新增即红） */
 const 授权内塌陷引用账本: string[] = []
 
-/** variables.css 之外局部重声明全局令牌 = 第二真源。账本只允许缩短、不得陈化：
- *  FP-04 的那处 `过往战绩.vue|--quxian-huan-ying`（自陈"待令牌上收为全局后可删"）已由
- *  FP-04b 于 FP-12 上收完成后删除，现归零；再出现任何一条即红。 */
 const 第二真源待删账本: string[] = []
 
 function 遍历源文件(dir: string, 累加: string[] = []): string[] {
@@ -111,7 +95,6 @@ function 消费者文件(令牌: string): string[] {
     .sort()
 }
 
-/** variables.css 之外把全局令牌又声明一遍的位置（第二真源） */
 function 第二真源位置(): string[] {
   const 令牌表 = new Set(所有声明令牌(块们))
   const 命中: string[] = []

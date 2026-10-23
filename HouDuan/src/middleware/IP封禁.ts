@@ -3,6 +3,7 @@ import { 获取IP, IP是否被封禁, 记录违规 } from '../services/IP封禁'
 import { qingQiuHanYouSQLZhuRu } from './安全'
 import { huoQuFanYi } from '../config/translations'
 import { shiBaiXiangYing } from '../utils/xiangying'
+import { debug日志 } from '../utils/debug日志'
 
 export async function IP封禁中间件(
   请求: Request,
@@ -22,9 +23,7 @@ export async function IP封禁中间件(
     }
     下一步()
   } catch (错误) {
-    // YH-020 告警降级：Redis故障降级放行必须发运维告警，不再静默放行
-    // eslint-disable-next-line no-console -- 安全与合规.test 断言此输出含「已降级」(行为契约)
-    console.error('[告警] IP封禁检查失败，已降级放行', 错误)
+    debug日志.error('IP封禁', '检查失败，已降级放行', { xiang_qing: { cuo_wu: String(错误) } })
     try {
       const { faSongGaoJing } = await import('../utils/邮件告警')
       await faSongGaoJing('ip_feng_jin_jiang_ji', 'IP封禁检查降级放行', `IP封禁Redis检查失败已降级放行：${String(错误).slice(0, 300)}`)

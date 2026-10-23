@@ -1,13 +1,4 @@
-/**
- * 认证卡片视觉真源：登录 / 注册 / 找回密码三页共用。
- *
- * 为什么独立成文件：原先这些声明写在 登录内容.vue 的 <style scoped> 里，
- * scoped 会给选择器打上本页 hash，别的组件即使写同名类也选不中——结果就是
- * 找回密码页拿到了「裸 HTML」外观：没有底线、没有浮标签、主按钮退回浏览器默认绿。
- * 卡片长什么样是三页共同的设计契约，不该由某��页的 scoped 私有持有。
- *
- * 本文件为全局样式（非 scoped），三个页面都不再自带卡片样式。
- */
+
 
 .biaodan-rongqi {
   position: relative;
@@ -194,9 +185,7 @@
   }
 }
 
-/* 浏览器自动填充态：UA 的 :-internal-autofill-selected 自带 background-color !important，
-   页面再写同属性也压不住，会露出一整条灰底。认证字段的底线画在父层 .shuru-zu，
-   而内阴影只铺满输入框 padding box，不会盖住父层那 1px，故这里用内阴影遮回卡面底色。 */
+
 .fenlie-shuru:-webkit-autofill,
 .fenlie-shuru:-webkit-autofill:hover,
 .fenlie-shuru:-webkit-autofill:focus,

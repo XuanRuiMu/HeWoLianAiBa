@@ -15,11 +15,8 @@ import { debug日志, jiLuSocketShiJian, jiLuXiaoXiCaoZuo } from '../utils/debug
 import { yanZhengUUID, maDianChangDu } from '../utils/验证'
 import { huoQuFanYi } from '../config/translations'
 
-// 夺舍回复正文长度上限：按 Unicode 码点计数（emoji 计 1），与消息内容口径同一量纲，
-// 防超长文本绕过校验直落库 / 广播
 const DUO_SHE_HUI_FU_NEI_RONG_ZUI_DA_MA_DIAN = 2000
 
-// FP-18 夺舍/归还等会话接管操作与 HTTP 侧 /api/管理/夺舍 同源，一律按 gao_we 授权
 async function panDuanKeGaoWei(yongHuId: string): Promise<boolean> {
   try {
     return await anYongHuIdJuBeiNengLi(yongHuId, 'gao_we')
@@ -119,8 +116,6 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
         if (huiDiao) huiDiao({ cheng_gong: false, ti_shi: huoQuFanYi('duoShe', 'wuQuanCaoZuo') })
         return
       }
-      // 入参三重校验：类型 + UUID 白名单 + 长度。jiao_se_id / yong_hu_id 必须为合法 UUID，
-      // nei_rong 必须为字符串且码点长度不超上限；任何一项不满足即拒绝，杜绝裸转型后的脏值落库。
       const canShu = (typeof shuJu === 'object' && shuJu !== null ? shuJu : {}) as {
         jiao_se_id?: unknown
         nei_rong?: unknown
@@ -139,9 +134,6 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
         return
       }
 
-      // 归属校验：yong_hu_id 由客户端自报是高危面（可借此把消息落到他人会话、广播到他人房间）。
-      // socket 会话只推导出操作者（管理员）身份（见 panDuanKeGaoWei(yongHu.yongHuId)），目标用户
-      // 一律以 jiao_se_id 反查服务端归属；自报值与真实归属不一致即越权，拒绝落库、拒绝广播。
       const suoYouZheId = await huoQuJiaoSeYongHuId(jiaoSeId)
       if (!suoYouZheId || suoYouZheId !== muBiaoYongHuId) {
         if (huiDiao) huiDiao({ cheng_gong: false, ti_shi: huoQuFanYi('duoShe', 'wuQuanCaoZuoGaiJiaoSe') })
@@ -161,7 +153,6 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
 
     socket.on('disconnect', () => {
       jiLuSocketShiJian('Socket断开', yongHu.yongHuId, { socket_id: socket.id, shi_jian: 'duo_she' })
-      // YH-012 断线自动释放加审计：不断线不清会永久静默，断线即释放该管理员全部租约
       void shiFangGuanLiYuanQuanBuDuoShe(yongHu.yongHuId).then((shiFang) => {
         if (shiFang.length > 0) {
           jiLuSocketShiJian('夺舍断线释放', yongHu.yongHuId, { socket_id: socket.id, jiao_se_lie_biao: shiFang })

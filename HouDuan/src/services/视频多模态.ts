@@ -88,7 +88,6 @@ export async function jianChaShiPinPeiE(yongHuId: string): Promise<{ yunXu: bool
   }
 }
 
-/** YH-062 失败回补：下载/生成失败不扣配额 */
 export async function huiTuiShiPinPeiE(yongHuId: string): Promise<void> {
   const jian = `sheng_cheng_ji_fei:${yongHuId}:${new Date().toISOString().slice(0, 10)}:shipin`
   try {
@@ -173,7 +172,6 @@ export async function shengChengShiPin(canShu: { tiShiCi: string; yongHuId: stri
         await huiTuiShiPinPeiE(canShu.yongHuId)
         return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shiPinShengChengShiBai') }
       }
-      // YH-015+YH-062 流式落盘+失败不扣配额
       const { yanZhengYuanChengURL, liuShiXiaZaiYuanChengWenJian } = await import('../utils/远端拉取')
       const urlHeFa = await yanZhengYuanChengURL(shiPinURL)
       if (!urlHeFa.he_fa) {

@@ -16,8 +16,6 @@ function huoQuChuCunZhi(): 主题模式 {
   return cunChuZhi === 浅色值 ? 浅色值 : 暗色值
 }
 
-// YH-088 多标签同步：主题变更广播，他标签页同主题
-// YH-080 内联脚本键对齐：内联读lian-ai-ba-zhu-ti，此处双写兼容
 function guangBoZhuTi(moShi: 主题模式) {
   try {
     localStorage.setItem('lian-ai-ba-zhu-ti', moShi === 浅色值 ? 'light' : 'an-se')
@@ -38,7 +36,6 @@ export const 使用主题仓库 = defineStore('主题', () => {
 
   function chuShiHua() {
     qieHuanZhuti(dangQianZhuti.value)
-    // YH-088 监听他页主题/登出广播
     if (typeof window !== 'undefined') {
       window.addEventListener('storage', (shiJian) => {
         if (shiJian.key === 'lian-ai-ba-zhu-ti' && shiJian.newValue) {

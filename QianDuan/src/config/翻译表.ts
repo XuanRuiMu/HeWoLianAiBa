@@ -453,7 +453,6 @@ export const fanYi = {
     shangChuanZhong: '上传中……',
     faSongShiBai: '发送失败，请重试',
     yaSuoShiBai: '图片处理失败，请重试',
-    // FP-10b（缺陷9）图文混排：粘贴/相册的图片先进待发区，发送时才上传
     buFenTuPianShangChuanShiBai: '部分图片上传失败，其余内容已照常发送',
     kuaiShanChu: '把这一块移出这条消息',
     kuaiChaoXian: '图文内容超出上限，请减少图片或文字',
@@ -465,7 +464,6 @@ export const fanYi = {
     zanTingYuYin: '暂停语音',
     jiXuYuYin: '继续播放语音',
     tingZhiYuYin: '停止语音并回到开头',
-    // FP-11：播放中的进度轨道是可拖动/可键盘的 slider，读屏口径与「播放语音」区分开
     tiaoZhuanYuYinJinDu: '跳转语音进度',
     shengTu: 'AI生图',
     shengChengShiPin: 'AI视频',

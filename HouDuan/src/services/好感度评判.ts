@@ -158,11 +158,6 @@ export async function pingPanHaoGanDuBianHua(
   return jieGuo
 }
 
-/**
- * M2 调用收敛：一轮内 AI 的多条回复合并为一次好感度评判调用。
- * 以「用户消息 vs 本轮全部角色回复」整体评估四维变化，语义等价于逐条评判后求和的近似，
- * 但每轮只消耗一次 LLM 调用。
- */
 async function pingPanHaoGanDuPiLiangNei(
   yongHuXiaoXi: string,
   jiaoSeHuiFuLieBiao: string[],

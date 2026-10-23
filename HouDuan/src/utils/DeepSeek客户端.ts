@@ -5,9 +5,6 @@ import { huoQuFanYi } from '../config/translations'
 import { jiSuanAIChanShu, type CanShuShangXiaWen } from '../config/AI参数策略'
 import { jiLuAIJiLu, debug日志 } from './debug日志'
 
-/** Responses API 内容块：文本或内联图像（仅 user 消息允许图像块，官方限制）。
- *  注意：Responses API 中 image_url 为字符串（data URL / http URL），
- *  与 Chat Completions 的 {url} 对象形状不同（官方 vision 文档口径）。 */
 export type DuiHuaKuai =
   | { type: 'input_text'; text: string }
   | { type: 'input_image'; image_url: string; detail?: 'low' | 'high' | 'auto' }
@@ -44,7 +41,6 @@ export interface FenLeiCuoWu extends Error {
 }
 
 const KE_ZHONG_SHI_ZUI_DA_CI_SHU = AI_PEI_ZHI.zhongShi.keZhongShiZuiDaCiShu
-/** 空响应独立重试预算：网关高负载时间歇返回空 neiRong（实测 17%~67%），与 429 分开计数 */
 const KONG_XIANG_YING_ZUI_DA_CI_SHU = AI_PEI_ZHI.kongXiangYing.zuiDaCiShu
 const RONG_DUAN_LIAN_XU_SHI_BAI_YU_ZHI = AI_PEI_ZHI.zhongShi.rongDuanLianXuShiBaiYuZhi
 const RONG_DUAN_LENG_QUE_HAO_MIAO = AI_PEI_ZHI.zhongShi.rongDuanLengQueHaoMiao
@@ -152,7 +148,6 @@ function tiQuShiYongLiang(
   if (!Number.isFinite(shuRu) && !Number.isFinite(shuChu) && !Number.isFinite(zong)) return undefined
   const shuRuZheng = Number.isFinite(shuRu) ? Math.max(0, Math.floor(shuRu)) : 0
   const shuChuZheng = Number.isFinite(shuChu) ? Math.max(0, Math.floor(shuChu)) : 0
-  // 上下文硬盘缓存命中量（Responses: input_tokens_details.cached_tokens；Chat Completions: prompt_cache_hit_tokens）
   const mingZhong = Number(yongLiang.input_tokens_details?.cached_tokens ?? yongLiang.prompt_cache_hit_tokens ?? 0)
   return {
     shuRuToken: shuRuZheng,
@@ -201,12 +196,6 @@ export function chongZhiDeepSeekKeHuDuan(): void {
   shiLi = null
 }
 
-/**
- * 启动期自检：配置的模型名是否仍在官方 GET /v1/models 列表内。
- * 根因：DeepSeek 的内测临时名（形如 `*-expires-on-MMDD`）随时可能从路由里摘掉，一旦摘掉，
- * 每次 AI 调用都会直接 400（"The supported API model names are ..."），表现为全站 AI 挂掉。
- * 只告警不阻塞启动：列表拉不到（网络/限速/代理）不等于模型名失效，故失败一律放行。
- */
 export async function ziJianMoXingMingKeYong(): Promise<boolean> {
   const jiChu = (peiZhi.deepSeek.jiChuUrl || AI_PEI_ZHI.deepSeek.jiChuUrl).replace(/\/$/, '')
   const miYao = (peiZhi.deepSeek.apiMiYao || AI_PEI_ZHI.deepSeek.apiMiYao).trim()
@@ -237,12 +226,6 @@ export async function ziJianMoXingMingKeYong(): Promise<boolean> {
   }
 }
 
-/**
- * 保守 token 估算：官方口径 1 个中文字符 ≈ 0.6 token、1 个英文字符 ≈ 0.3 token
- * （https://api-docs.deepseek.com/zh-cn/quick_start/token_usage）。
- * 统一按「字符数 × 0.6」计：中文与官方口径一致，英文侧高估一倍，整体落在防低估的安全侧。
- * 内容块数组：input_text 按字符数 × 0.6，input_image 每张按官方单图上限 1024 计。
- */
 const MEI_ZI_TOKEN_SHU_LV = 0.6
 const TU_PIAN_GU_DING_TOKEN = 1024
 
@@ -254,15 +237,6 @@ function guJiToken(neiRong: string | DuiHuaKuai[]): number {
   }, 0)
 }
 
-/**
- * Responses API 不支持服务端截断：输入超过上下文窗口会直接返回 400 错误。
- * 这里在客户端侧做预算保护：超过预算时，从最旧的非 system 消息往前剔除，
- * 保住系统指令与最新上下文。
- *
- * 局限（必须在读代码时知道）：只能整条丢弃非 system 消息。Writer/Director 把整段历史渲染进
- * 单条 user 消息，因此本函数对聊天主链路裁不动，触顶时只能告警。真正防 400 的是
- * 「历史条数上限 × 单条消息 500 字符落库上限」对 1M 窗口的余量（见 AI配置.prompt 注释）。
- */
 export function yuSuanBaoHu(xiaoXi: DuiHuaXiaoXi[], yuSuan?: number): DuiHuaXiaoXi[] {
   const yuSuanZhi = yuSuan ?? AI_PEI_ZHI.prompt.shangXiaWenTokenYuSuan
   if (!yuSuanZhi || yuSuanZhi <= 0) return xiaoXi
@@ -282,7 +256,6 @@ export function yuSuanBaoHu(xiaoXi: DuiHuaXiaoXi[], yuSuan?: number): DuiHuaXiao
   return [...xiTong, ...qiTa]
 }
 
-/** 从 Responses API 响应中提取可见文本与思维链文本。 */
 function tiQuXiangYing(xiangYing: unknown): { neiRong: string; siKaoNeiRong: string } {
   const xiangYingZhi = xiangYing as { output?: Array<Record<string, unknown>>; status?: string }
   let neiRong = ''
@@ -340,7 +313,6 @@ export async function tiaoYongDeepSeek(
     })
   }
 
-  // 客户端侧 token 预算保护（Responses API 无服务端截断，超窗口直接 400）
   const shiJiXiaoXi = yuSuanBaoHu(canShu.xiaoXi)
 
   const shuRuXiang = GouJianQingQiuShuRu(shiJiXiaoXi)
@@ -352,17 +324,10 @@ export async function tiaoYongDeepSeek(
   if (xiangYingGeShi.type === 'json_object') {
     body.text = { format: { type: 'json_object' } }
   }
-  // YH-049 OpenAI SDK透传外部signal：在途fetch可被取消，不再照烧token
   const qingQiuXuanXiang: Record<string, unknown> = {}
   if (waiBuXinHao) {
     qingQiuXuanXiang.signal = waiBuXinHao
   }
-  // 官方规范（Responses API）：思考模式用 reasoning.effort 控制，不再使用 thinking/reasoning_effort。
-  // effort 取值 none/minimal/low/medium/high/xhigh/max；max = 最高思考强度。
-  // ⚠️ 官方口径「思考模式默认打开、effort 默认 high」⇒ **关闭思考必须显式传 effort='none'**。
-  //   历史实现 disabled 时整个字段不下发，在「模型默认开思考」的部署（如 sensenova 网关的
-  //   deepseek-flash）上思维链会吃光 max_output_tokens，可见输出为空（实测 neiRong=""、
-  //   finish_reason=length、reasoning_tokens=300/300）。故 disabled 也显式下发 none。
   if (canShu.siKaoMoShi === 'enabled') {
     body.reasoning = { effort: canShu.reasoningEffort || 'max' }
   } else if (canShu.siKaoMoShi === 'disabled') {
@@ -374,23 +339,9 @@ export async function tiaoYongDeepSeek(
 
   let zuiHouCuoWu: unknown = null
   let kongXiangYingCiShu = 0
-  // ⚠️ 熔断与空响应重试的**自主恢复窗口**（2026-10-18 语料实验室实测）：
-  //   网关限流最紧时，外层「最多 2 次 429 重试 + 失败 ×5 触发 60s 熔断」的组合会
-  //   把一次正常外呼直接烧成失败（实测：外层退避上限 8s，撑不过 429 的恢复窗口；
-  //   连续 5 次失败立刻冷却 60s，于是后面每 60s 只能真正试 3 次）。
-  //   熔断与退避节流本身是保护措施、验收要保留，但**实测脚本必须能自主恢复**，
-  //   否则普查数据会被工程故障污染（上一轮 22% 导演降级就是这么来的）。
-  //   ⇒ 只在 AI_CHANG_CE_ZI_ZHU_HUI_FU 打开时生效：熔断期与 429 重试耗尽后，
-  //     都在本函数内继续等待重试，等待期间轮询 rongDuanShiFouKaiQi() 自动放行。
-  //     生产不设该环境变量，运行路径与行为完全不变。
-  // ⚠️ 该开关只在**离线长测脚本**里打开：脚本自己承担网关恢复窗口（429 重试总预算），
-  //   避免「外层退避 8s 封顶 + 连败 5 次熔断 60s」把正常外呼判死。
-  //   判据取显式环境变量而非 NODE_ENV/VITEST：NODE_ENV=test 在 vitest 单测里也会出现，
-  //   而单测必须跑**生产行为**（熔断生效），不能把测试环境整体改语义。
   const 长测自主恢复 = (process.env['AI_CHANG_CE_ZI_ZHU_HUI_FU'] || '').trim().toLowerCase() === 'true'
   const 自主恢复上限毫秒 = Math.max(60_000, Number(process.env['AI_CHANG_CE_HUI_FU_SHANG_XIAN_HAO_MIAO'] || '900000') || 900000)
   const 自主恢复起点 = Date.now()
-  // YH-049 取消透传到底层：外部signal已中止直接短路，不再发起新的LLM外呼烧token
   if (waiBuXinHao?.aborted) {
     throw new Error('[DeepSeek客户端] 调用已取消，不再发起外呼')
   }
@@ -412,7 +363,6 @@ export async function tiaoYongDeepSeek(
       throw rongDuanCuoWu
     }
     try {
-      // YH-049 分级超时：轻量判定类短超时，沉浸生成类长超时；外部取消优先于超时
       const benCiChaoShi = moXingLeiXing === 'writer' ? 120 * 1000 : 60 * 1000
       const chaoShiKongZhi = new AbortController()
       const chaoShiDingShi = setTimeout(() => chaoShiKongZhi.abort(), benCiChaoShi)
@@ -428,10 +378,6 @@ export async function tiaoYongDeepSeek(
         clearTimeout(chaoShiDingShi)
       }
 
-      // ⚠️ 空响应重试（2026-10-14 语料实验室实测）：网关在高负载时间歇返回空 neiRong
-      //    （Director json 模式实测 17%~67%，R2 抓到的失败原文长度全为 0）。
-      //    空输出对本项目所有调用类型都是失败（Director→解析失败降级单代理、
-      //    Writer→空回复），且重试即可恢复 ⇒ 内循环重试，**不占用**外层的 429 重试预算。
       let zhongXinXiangYing = xiangYing
       while (tiQuXiangYing(zhongXinXiangYing).neiRong.trim() === '' && kongXiangYingCiShu < KONG_XIANG_YING_ZUI_DA_CI_SHU) {
         kongXiangYingCiShu += 1
@@ -478,7 +424,6 @@ export async function tiaoYongDeepSeek(
       jiLuAIJiLu(moXingLeiXing, moXing, haoShi, true)
       jiLuChengGongRongDuan()
 
-      // A12：AI 调用成功，重置连续失败告警计数
       const { jiLuAIChengGong } = await import('./邮件告警')
       jiLuAIChengGong()
 
@@ -501,7 +446,6 @@ export async function tiaoYongDeepSeek(
         shiYongLiang,
       }
     } catch (cuoWu) {
-      // YH-049 取消即停：外部取消不再分类重试，直接向上传播，禁在途照烧
       if (waiBuXinHao?.aborted) {
         throw cuoWu
       }
@@ -523,7 +467,6 @@ export async function tiaoYongDeepSeek(
         }
         break
       }
-      // YH-049 退避等待可取消：等待期被取消直接停，不再发起下一轮外呼
       const tuiBiHaoMiao = jiSuanTuiBiHaoMiao(changCi)
       if (waiBuXinHao) {
         await Promise.race([
@@ -539,7 +482,6 @@ export async function tiaoYongDeepSeek(
   const cuoWuXinXi = zuiHouCuoWu instanceof Error ? zuiHouCuoWu.message : String(zuiHouCuoWu)
   jiLuAIJiLu(moXingLeiXing, moXing, haoShi, false, cuoWuXinXi)
   jiLuShiBaiRongDuan()
-  // A12：连续 AI 失败达到阈值时触发邮件/日志告警（异步不阻塞错误传播）
   void import('./邮件告警').then(({ jiLuAIShiBai }) => jiLuAIShiBai(cuoWuXinXi)).catch(() => {})
   throw fenLeiDiaoYongCuoWu(zuiHouCuoWu)
 }

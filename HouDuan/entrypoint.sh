@@ -1,10 +1,5 @@
 #!/bin/sh
-# YH-123 entrypoint先迁移再启动加锁：新部署缺表全500根因为迁移不在镜像
-# 收敛为镜像内迁移+advisory锁串行，多副本up不打架
-# FP-15：迁移失败一律中止启动（旧版 `|| echo 跳过` 把校验和不匹配/连接失败
-# 吞成"跳过（开发模式）"，坏基线静默上线）。本脚本是镜像 ENTRYPOINT，
-# 先于 CMD(node dist/server.js) 同步执行：迁移不通就不 exec，容器退出并由
-# restart: unless-stopped 反复重启，compose healthcheck 恒不为 healthy。
+
 set -e
 
 if [ ! -f scripts/run_migration.js ]; then

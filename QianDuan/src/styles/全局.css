@@ -87,16 +87,13 @@ select {
   background: #1a1a1a;
 }
 
-/* 焦点环单一规则源：:where(:focus-visible) 特异度 0，文本控件档 (0,1,0) 结构上必然压过它，
-   不再靠"同特异度 + 源码顺序"这种一改就翻车的压制关系。
-   文本控件只收窄环（1px / 零偏移，贴住控件不与装饰线争位）；聊天输入区（data-chat-input）走全局去高亮，
-   聚焦只剩底色区分，不画任何环 */
+
 :where(:focus-visible) {
   outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
   outline-offset: var(--jujiao-huan-pian-yi);
 }
 
-/* checkbox/radio/按钮类等非文本 input 不在此列，吃上面的标准环 */
+
 :where(
   input:not([type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color']),
   textarea,
@@ -247,9 +244,7 @@ select {
   background-color: var(--shuru-beijing-zidong-tianchong) !important;
   color: var(--shuru-wenben-zidong-tianchong) !important;
   -webkit-text-fill-color: var(--shuru-wenben-zidong-tianchong) !important;
-  /* 这里刻意不用 inset 大扩散遮罩：它画在 background-image 之上，会把底线整条盖掉，
-     而单条 inset 阴影在几何上无法「盖满元素又留出底部 1px」，故遮罩与底线不可共存。
-     UA 自动填充只改 background-color，底线走 background-image，天然不被其覆盖。 */
+  
   transition: background-color 5000s ease-in-out 0s !important;
 }
 
@@ -279,7 +274,7 @@ select {
   }
 }
 
-/* 滚动条单一真源：组件内保留的私有 ::-webkit-scrollbar 特例均在各自文件内以「FP-20 保留特例」注释逐项写明理由（宽度差异/测试钉死/透明轨道），此处不重复登记 */
+
 ::-webkit-scrollbar {
   width: var(--gundong-tiao-kuan-du);
   height: var(--gundong-tiao-kuan-du);
@@ -317,13 +312,13 @@ select {
   cursor: var(--gundong-tiao-huakuai-cursor);
 }
 
-/* 交汇角落（横竖滚动条同时存在时的方块）：全库无一处给它设值，此处补齐才使 global 是完备单一真源 */
+
 ::-webkit-scrollbar-corner {
   background: transparent;
   cursor: var(--gundong-tiao-cursor);
 }
 
-/* 不支持 ::-webkit-scrollbar 的浏览器（Firefox）走标准属性基线，避免与 Chromium 自绘路径互斥 */
+
 @supports not selector(::-webkit-scrollbar) {
   * {
     scrollbar-width: thin;

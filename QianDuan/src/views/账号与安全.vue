@@ -1014,7 +1014,6 @@ const moRenXingBieBaoCunZhong = ref(false)
 const moRenXingBieTiShi = ref('')
 const moRenXingBieShiBai = ref(false)
 
-/* FP-ZJ3 默认对象性别可编辑：复用目标性别列 mu_biao_xing_bie，不新增对象默认列 */
 const moRenDuiXiangXuanZhong = ref<XingBie | null>(null)
 const moRenDuiXiangBaoCunZhong = ref(false)
 const moRenDuiXiangTiShi = ref('')
@@ -1414,8 +1413,7 @@ async function zhiXingZhuXiao() {
   width: 100%;
   max-width: 960px;
   margin: 0 auto;
-  /* 顶部初始间距从滚动容器（.yemian-buju）平移到页面根节点自身：
-     滚动容器 padding-top 必须为 0，sticky 的 .biao-qian-lan 才会贴住真正顶部 */
+  
   padding: 5vh var(--jiange-zhong) calc(var(--jiange-da) * 2 + var(--jiange-zhong));
   display: flex;
   flex-direction: column;
@@ -1427,10 +1425,7 @@ async function zhiXingZhuXiao() {
   font-family: var(--zhengWenZi);
 }
 
-/* FP-JC R2：深色块必须用普通选择器（编译后 .zhang-hao-an-quan 带上 scoped 属性）。
-   曾用 :global 包裹深色档判断再接本页根的写法 —— Vue scoped 编译器会丢弃
-   :global() 之后的后代段，深色变量落到文档根上、被下方页面根的浅色变量就地覆盖，
-   导致深色档整页用浅色文字令牌（浏览器实测截图 FP-I2-账号设置-深-21修复后.png 证实的根因） */
+
 :root[data-theme='dark'] .zhang-hao-an-quan,
 :root:not([data-theme]) .zhang-hao-an-quan {
   --miZhi: #1e1b16;
@@ -1443,7 +1438,7 @@ async function zhiXingZhuXiao() {
   --moSe: #f3ede0;
   --huiSe: #a79e8e;
   --danLv: #2e3a2e;
-  /* FP-JC：#e0705f 在草地亮场上界（卡面白合成）仅 4.2:1，提亮到 #ef8577 后 ≥4.5:1 */
+  
   --weiXian: #ef8577;
 }
 
@@ -1777,7 +1772,7 @@ async function zhiXingZhuXiao() {
   min-width: 0;
 }
 
-/* FP-03 需求5：用户名独占一行，下行左默认性别右默认对象性别 */
+
 .yongHuMingDuZhan {
   grid-column: 1 / -1;
 }
@@ -2208,7 +2203,7 @@ async function zhiXingZhuXiao() {
 
 
 
-/* ===== FP-03 M04动效层（隔离块：仅动画/过渡/焦点反馈，不改HTML结构与布局类） ===== */
+
 @keyframes fp03-ru-chang {
   from {
     opacity: 0;
@@ -2310,7 +2305,7 @@ async function zhiXingZhuXiao() {
     border-color 0.2s ease;
 }
 
-/* ===== FP-03 三端无横溢硬化（静态CSS：375/768/1280以scrollWidth-clientWidth<=1断言验证） ===== */
+
 .zhang-hao-an-quan .biao-qian-lan {
   max-width: 100%;
   min-width: 0;

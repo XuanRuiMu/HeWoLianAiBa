@@ -2,19 +2,6 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { 按档解析全部, 声明块清单, 解析几何数值 } from './主题令牌真源'
 
-/**
- * 全局基线 CSS 的**层叠判定真源**（FP-24b）。
- *
- * 它存在的理由是把守门断言从「源码字符串文本层」搬到「层叠结果层」：旧写法拿
- * `源.search(正则)` 的**字符下标**当"谁压住谁"的证据，于是双向失灵——
- *  ① 行为等价的合法改写会假红（把窄环整条规则挪到标准环之前，运行时结果一字不变，下标断言却翻脸）；
- *  ② 真实回归反而不红（把窄环选择器里的 `.shuru-kuang` 漏掉，规则仍在原位，下标断言照样通过）。
- * 本文件按 CSS 层叠的真实算法判定：先看命中 → 比特异度 → 同特异度才比文档序，
- * 因而与书写位置、空白、换行、块内声明先后全部无关。
- *
- * 语法覆盖面**只到 global.css 焦点环所需的最小子集**；遇到不认识的简单片段一律抛错而不是猜
- * （宁可红灯逼人来登记，绝不静默放行——与 `主题令牌真源.ts::声明块清单` 的未登记选择器同口径）。
- */
 
 export type 特异度 = [number, number, number]
 
@@ -31,7 +18,6 @@ export interface 探针 {
   类?: string[]
   属性?: Record<string, string>
   焦点可见?: boolean
-  /** 由外到内的祖先链。选择器含后代/子代组合器时必给，缺省即抛错而不是当作不命中 */
   祖先链?: 探针[]
   悬停?: boolean
   激活?: boolean
@@ -74,7 +60,6 @@ function 建规则(头: string, 体: string, 序号: number): 规则 {
   return { 序号, 选择器: 头.replace(/\s+/g, ' ').trim(), 文本: `${头}{${体}}`, 声明, 重要 }
 }
 
-/** 按文档序切出全部规则；`@media` / `@supports` 容器透明展开——它们不加特异度，层叠序就是文档序 */
 export function 规则清单(源: string): 规则[] {
   const 结果: 规则[] = []
   const 序 = { 值: 0 }
@@ -100,7 +85,6 @@ export function 规则清单(源: string): 规则[] {
   return 结果
 }
 
-/** 顶层逗号切选择器组（括号内的逗号不算：`:where(a, b)` 是一个整体） */
 export function 拆分选择器组(选择器: string): string[] {
   const 结果: string[] = []
   let 缓冲 = ''
@@ -125,7 +109,6 @@ function 函数参数(串: string): string {
   return 串.slice(开 + 1, -1)
 }
 
-/** 复合选择器切成简单片段：`input:not([a='b'])` ⇒ ['input', ":not([a='b'])"] */
 function 切简单片段(复合: string): string[] {
   const 结果: string[] = []
   let 缓冲 = ''
@@ -163,12 +146,6 @@ const 零: 特异度 = [0, 0, 0]
 
 type 组合器 = ' ' | '>' | '+' | '~'
 
-/**
- * 把复合选择器按**组合器**切成若干个复合段（FP-15b 扩面：组件里的性别/主题规则大量是
- * `:root[data-theme='light'] .x` 这类后代选择器，只支持单层复合就无法判定"谁压住谁"）。
- * 括号与方括号内部不切分，故 `:where(.a, .b)`、`[data-x='y z']` 不会被劈开；
- * 组合器数量与段数不匹配（如前导/尾随组合器）直接抛错。
- */
 export function 拆段(复合: string): { 段: string[]; 组合器: 组合器[] } {
   const 段: string[] = []
   const 组合器: 组合器[] = []
@@ -217,7 +194,6 @@ function 伪类名(串: string): string {
   return (串.replace(/^:+/, '').split('(')[0] || '').toLowerCase()
 }
 
-/** 单个伪类的特异度：`:where()` 记 0，`:is()/:not()` 取参数最大值，其余具名伪类记 (0,1,0) */
 function 伪类特异度(串: string): 特异度 {
   const 名字 = 伪类名(串)
   if (名字 === 'where') return 零
@@ -241,7 +217,6 @@ function 片段特异度(片段: string): 特异度 {
   throw new Error(`未识别的简单片段：${片段}`)
 }
 
-/** 特异度对组合器两侧的所有段求和（后代/子代组合器本身不贡献特异度） */
 export function 特异度(复合: string): 特异度 {
   return 累加(...拆段(复合).段.flatMap(切简单片段).map(片段特异度))
 }
@@ -260,8 +235,6 @@ function 匹配片段(片段: string, 探针: 探针): boolean {
   if (片段.startsWith('.')) return (探针.类 ?? []).includes(片段.slice(1))
   if (片段.startsWith('#')) throw new Error(`本判定不支持 id 选择器：${片段}`)
   if (片段.startsWith('[')) return 匹配属性(片段, 探针)
-  // 伪元素规则只能命中 `::before` 之类的虚拟盒，不可能命中元素本身 ⇒ 一律判不命中，
-  // 否则"元素上生效的声明"这一判定会被同名的伪元素规则反复打断（FP-15b 主按钮 background 即此例）
   if (片段.startsWith('::')) return false
   if (片段.startsWith(':')) {
     const 名字 = 伪类名(片段)
@@ -281,7 +254,6 @@ function 匹配片段(片段: string, 探针: 探针): boolean {
   throw new Error(`未识别的简单片段：${片段}`)
 }
 
-/** 状态伪类 → 探针字段。缺省（undefined）一律按"未处于该状态"处理 */
 const 状态伪类: Record<string, '悬停' | '激活' | '禁用' | '选中' | '焦点在内'> = {
   hover: '悬停',
   active: '激活',
@@ -314,7 +286,6 @@ export function 匹配复合(复合: string, 探针: 探针): boolean {
   return true
 }
 
-/** 该规则命中探针时用到的特异度（多分支选择器取命中分支里的最大值）；不命中返回 null */
 export function 命中特异度(规则: 规则, 探针: 探针): 特异度 | null {
   let 最佳: 特异度 | null = null
   for (const 串 of 拆分选择器组(规则.选择器)) {
@@ -325,10 +296,6 @@ export function 命中特异度(规则: 规则, 探针: 探针): 特异度 | nul
   return 最佳
 }
 
-/**
- * 层叠胜出者：`!important` 优先 → 比特异度 → **只有同特异度才比文档序**。
- * 最后这一层正是旧下标断言缺的那一层：旧断言把"文档序"当成了唯一的压制关系。
- */
 export function 层叠胜出(规则们: 规则[], 探针: 探针, 属性: string): 层叠结果 | null {
   let 胜出: 层叠结果 | null = null
   for (const 规则 of 规则们) {
@@ -349,7 +316,6 @@ export function 层叠胜出(规则们: 规则[], 探针: 探针, 属性: string
   return 胜出
 }
 
-/** 把两条规则的**文档序**互换（等价改写：整条规则挪位置，运行时结果一字不变），其余规则原位不动 */
 export function 互换文档序(规则们: 规则[], 甲选择器: string, 乙选择器: string): 规则[] {
   const 甲 = 规则们.find((项) => 项.选择器 === 甲选择器)
   const 乙 = 规则们.find((项) => 项.选择器 === 乙选择器)
@@ -359,7 +325,6 @@ export function 互换文档序(规则们: 规则[], 甲选择器: string, 乙�
   )
 }
 
-/** `var(--x)` ⇒ `--x`；任何非令牌的字面量都抛错（零硬编码要在解析层成立，不交给正则碰运气） */
 export function 令牌名(值: string, 属性: string): string {
   const 匹配 = /^var\(\s*(--[A-Za-z0-9-]+)\s*\)$/.exec(值.trim())
   if (!匹配) throw new Error(`${属性} 的层叠胜出值不是单一 var() 令牌：${值}`)
@@ -388,11 +353,6 @@ export interface 轮廓形状 {
   颜色令牌: string
 }
 
-/**
- * 把 `outline` 简写拆成「宽 / 样式 / 色」三件套。两个 var() 部件谁是谁**由其在 variables.css
- * 真源里解析出来的形态决定**（能解析出 `#hex`/`rgb()` 的是颜色，其余是宽度），不靠令牌名猜。
- * 与空白、换行、部件书写顺序无关；部件数不对或值是字面量则抛错。
- */
 export function 拆解轮廓(
   值: string,
   表: Map<string, string> = 按档解析全部('light', 声明块清单()),
@@ -442,10 +402,6 @@ export interface 焦点环结果 {
   特异度: 特异度
 }
 
-/**
- * 探针元素上**真正生效**的焦点环（层叠结果 + var() 解析后的像素值）。
- * 这是 FP-24b 把「谁压住谁」从源码下标搬到层叠层的唯一出口：两条守门测试都调它，不各写一份。
- */
 export function 层叠焦点环(规则们: 规则[], 探针: 探针): 焦点环结果 {
   const 胜出 = 层叠胜出(规则们, 探针, 'outline')
   if (!胜出) throw new Error(`探针 ${JSON.stringify(探针)} 上没有任何规则画出 outline`)

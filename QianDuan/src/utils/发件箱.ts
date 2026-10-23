@@ -1,5 +1,3 @@
-// YH-098 离线发件箱：断网写操作进outbox，恢复后重发+冲突提示，禁静默分叉
-// 根因：断网写的东西静默分叉；收敛为localStorage持久化outbox+恢复重发
 import { baoCunShuJu, duQuShuJu } from './本地存储'
 
 export interface DaiFaXiang {
@@ -9,14 +7,12 @@ export interface DaiFaXiang {
   shi_jian_chuo: number
 }
 
-/** FP-09b 幂等键载体：任何要发出去/排队重发的东西都实现它，键一旦钉上就不再更换 */
 export interface MiDengJianZaiTi {
   mi_deng_jian?: string | null
 }
 
 const UUID_GE_SHI = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-/** 稳定 UUID（服务端幂等键的格式要求：八四四四十二位十六进制），仅经 queDingMiDengJian 对外 */
 function shengChengWenDingUUID(): string {
   const suiJiZiJie = new Uint8Array(16)
   const dianNa = globalThis.crypto
@@ -31,10 +27,6 @@ function shengChengWenDingUUID(): string {
   return `${shiLiu.slice(0, 8)}-${shiLiu.slice(8, 12)}-${shiLiu.slice(12, 16)}-${shiLiu.slice(16, 20)}-${shiLiu.slice(20)}`
 }
 
-/**
- * FP-09b：把幂等键钉在这条消息/这个队列载荷上并返回它。
- * 已有合法键时原样返回 ⇒ 重试、断网重发、队列重放拿到的恒是同一条键；只有首次才造。
- */
 export function queDingMiDengJian<T extends MiDengJianZaiTi>(zaiTi: T): string {
   const xianYou = zaiTi.mi_deng_jian
   if (typeof xianYou === 'string' && UUID_GE_SHI.test(xianYou)) return xianYou
@@ -85,10 +77,6 @@ export function duQuDaiFaSongShu(): number {
   return duQuLieBiao().length
 }
 
-/**
- * FP-09b：取待发项的幂等键。载荷已带合法键就原样返回；缺失时补造一次并写回队列，
- * 于是「重发同一条」在队列的每一轮取到的恒是同一把键 —— 队列只存活一把键，不每次重发新造。
- */
 export function tiaoMuMiDengJian(jian: string): string | null {
   const lieBiao = duQuLieBiao()
   const xiang = lieBiao.find((x) => x.jian === jian)

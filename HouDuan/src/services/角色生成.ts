@@ -53,7 +53,6 @@ import { XUE_KE_TONG_YI_CI, ZHI_YE_TONG_YI_CI } from '../config/职业同义词'
 import { baoCunJiaoSeXiaoXi } from './AI输入准备'
 import { shengChengKaiChangBai } from './开场白生成'
 
-// R3 提示注入防护：人设文本长度上限与指令特征清洗
 const REN_SHE_WEN_BEN_ZUI_DA_CHANG_DU = 500
 
 const ZHI_LING_TE_ZHENG_MO_SHI: RegExp[] = [
@@ -68,12 +67,6 @@ const ZHI_LING_TE_ZHENG_MO_SHI: RegExp[] = [
   /<<<[A-Z_]+>>>/g,
 ]
 
-/**
- * 人设文本清洗：先按 utils/控制字符 统一口径剥控制字符（保留 \t \n），
- * 再走提示注入特征清洗与长度上限。
- * 该函数被「心目中的TA」提交解析（routes/角色.ts）与 /确认 白名单重建链路复用，
- * 剥控制字符对两条链路都是加固：正常中文/emoji 输入不受影响，控制字符不再入库。
- */
 export function qingXiRenSheWenBen(wenBen: string): string {
   if (typeof wenBen !== 'string') return ''
   let jieGuo = 剥离控制字符(wenBen)
@@ -97,12 +90,6 @@ const REN_SHE_BAI_MING_DAN_ZI_DUAN: ReadonlySet<string> = new Set([
   'hui_fu_yan_chi_hao_miao',
 ])
 
-/**
- * 客户端一律不得自带的五个字段（业务安全：所见即所得 + 不信任客户端回传）：
- * - `hao_gan_du_zong_fen`：初始好感度是经济数值，必须由服务端按「用户ID + MBTI」种子重算
- * - `zha_fa_miao_shu` / `hua_shu` / `bao_lu_fang_shi` / `shi_po_xian_suo`：
- *   渣型判定数据是服务端内部配置，客户端自定义等于自定「识破线索」，必须由 `zhaXingBianTi` 推导
- */
 export const KE_HU_DUAN_JIN_ZI_DUAN: readonly string[] = [
   'hao_gan_du_zong_fen',
   'zha_fa_miao_shu',
@@ -110,7 +97,6 @@ export const KE_HU_DUAN_JIN_ZI_DUAN: readonly string[] = [
   'bao_lu_fang_shi',
   'shi_po_xian_suo',
 ]
-/** 玩家可见但服务端必须保密的渣型隐藏字段（所见即所得） */
 export const ZHA_XING_YIN_CANG_ZI_DUAN: readonly (keyof ShengChengJiaoSeJieGuo)[] = [
   'shi_fou_zha_xing',
   'zha_fa_miao_shu',
@@ -141,11 +127,6 @@ export function qingXiRenSheDuiXiang<T extends Record<string, unknown>>(jiaoSe: 
   return jieGuo as T
 }
 
-/**
- * 按「MBTI + 是否渣型」重铸渣型隐藏字段。
- * 客户端回传的渣法/话术/暴露方式/识破线索一律丢弃，只认 `zhaXingBianTi` 这一份服务端真源，
- * 杜绝玩家自定「识破线索」后按线索反推渣型。
- */
 export function chongZhuZhaXingZiDuan(
   jiaoSe: ShengChengJiaoSeJieGuo,
 ): ShengChengJiaoSeJieGuo {
@@ -166,11 +147,6 @@ export function chongZhuZhaXingZiDuan(
   return jiaoSe
 }
 
-/**
- * 玩家可见投影：剥掉渣型隐藏字段与初始好感度。
- * `/MBTI生成`、`/确认`、`/挑战/开始`、`/角色/详情` 四个出参口必须全部过这一层，
- * 否则玩家开局即拿到全套「识破线索」，挑战玩法直接被击穿（所见即所得）。
- */
 export function touYingWanJiaKeJianJiaoSe<T extends object>(jiaoSe: T): T {
   const jieGuo: Record<string, unknown> = { ...(jiaoSe as Record<string, unknown>) }
   for (const jian of ZHA_XING_YIN_CANG_ZI_DUAN) delete jieGuo[jian]
@@ -227,9 +203,6 @@ export function congTongYongTiShiCiTiQuRenShe(tiShiCi: string): CongTiShiCiTiQuJ
     }
   }
 
-  // 职业提取两条路：① 用户原话直接命中规范词（原有路径，优先）
-  //               ② 命中职业名词自称时，经 职业同义词.ts 归一到规范词（2026-10-14 补）
-  // 两条路都按长度降序，避免短词抢先；① 未命中才走 ②，保证原行为零变化。
   const zhiYeHouXuan = anChangDuPaiXuQuChong([...zhiYeXueKeKu, ...zhiYeZhiYeKu])
   for (const zhiYe of zhiYeHouXuan) {
     if (wenBen.includes(zhiYe)) {
@@ -537,8 +510,6 @@ export function shengChengHaoGanDuZongFen(
 }
 
 function huoQuGuanXiJieDuan(haoGanDu: number): string {
-  // 零硬编码：关系阶段阈值只认 config/好感度配置.ts 的 jieDuan 一份真源，
-  // 此处原先另写 100/200/.../900 阶梯，改配置时这里不会跟着变
   const jieDuan = huoQuJieDuanXinXi(haoGanDu)
   return Object.keys(HAO_GAN_DU_PEI_ZHI.jieDuan).find(
     (jian) => HAO_GAN_DU_PEI_ZHI.jieDuan[jian as keyof typeof HAO_GAN_DU_PEI_ZHI.jieDuan] === jieDuan,
@@ -580,12 +551,6 @@ export function shengChengJiaoSe(canShu: ShengChengJiaoSeCanShu): ShengChengJiao
   const aiHaoLieBiao = anQuanZhongXuanZeAiHao(mbti)
   const jiaXiangDi = heBing.jia_xiang ? qingXiRenSheWenBen(heBing.jia_xiang) : anQuanZhongXuanZeJiaXiang(mbti)
   const chengShi = heBing.cheng_shi ? qingXiRenSheWenBen(heBing.cheng_shi) : suiJiXuanZe(chengShiKu)
-  // ⚠️ 第二十九轮恢复：`zhiYe` 一直有算（第 492 行 `xuanZeZhiYe`），
-  //   但**没有写进世界信息**——本轮实测发现 `shi_jie_xin_xi.zhi_ye` 全是 undefined。
-  //   后果：学生角色没有专业，被问「你什么专业」只能编；
-  //   更隐蔽的是模型会自己补课程内容（实测「我今天上实验课搞电路，焊了一下午手都抖了」，
-  //   人设里根本没有专业）。
-  //   业务安全要求「关键数值服务端算」同理：专业/职业必须来自服务端人设。
   const shiJieXinXi = {
     ...shengChengShiJieXinXi(shenFenJieGuo.leiXing, mbti, nianJi, chengShi),
     cheng_shi: chengShi,
@@ -705,9 +670,6 @@ export async function baoCunJiaoSe(
   jiaoSe: ShengChengJiaoSeJieGuo,
   duiJuMoShi: 'putong' | 'tiaozhan' = 'putong',
 ): Promise<ShengChengJiaoSeJieGuo> {
-  // 业务安全：初始好感度是经济数值，只认服务端种子重算结果。
-  // `/确认` 走的 qingXiRenSheDuiXiang 已把 hao_gan_du_zong_fen 列入客户端禁带字段，
-  // 此处再按「用户ID + MBTI」单播种重算一次，任何路径都无法把开局总分拍成满分。
   chongZhuZhaXingZiDuan(jiaoSe)
   if (mbtiLieBiao.includes(jiaoSe.mbti_lei_xing)) {
     jiaoSe.hao_gan_du_zong_fen = shengChengHaoGanDuZongFen(
@@ -717,26 +679,16 @@ export async function baoCunJiaoSe(
     )
   }
 
-  // FP-13 落库卡口：xing_bie 可能来自客户端回传（/确认 经 qingXiRenSheDuiXiang 白名单原样透传），
-  // 必须先过唯一解析入口归一为内部规范形态再进事务；不可识别者以 400 拒绝，
-  // 绝不允许把第三种写法送进迁移 024 的 CHECK 而炸成 500。
   let xingBieLuoKu: 性别内部形态
   try {
     xingBieLuoKu = 落库性别或拒绝(jiaoSe.xing_bie, '角色生成', yongHuId)
   } catch (cuoWu) {
     throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_INPUT_INVALID, cuoWu)
   }
-  // YH-057 角色生成关键链单事务：落角色+落好感+落档案+记最近生成角色同事务，外部IO禁入
-  // 根因：多写散着走失败即残留孤儿角色；开场白生成为外部LLM IO放事务外，失败走补偿归档
-  // 兼容mock池：vi.mock后connect非函数时走原直连路径
-  // 兼容优雅停机mock池：connect为mock函数但返回undefined时走直连路径，禁undefined.query崩溃
   const lianJieHanShu = (数据库 as unknown as { connect?: unknown }).connect
   let shiWuKeHuDuan: { query: (wen: string, can?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>>; rowCount?: number | null }>; release: () => void } | undefined
   if (typeof lianJieHanShu === 'function') {
     try {
-      // 必须带接收者调用：pg 的 Pool.prototype.connect 内部读 this.ending / this._idle / this.options，
-      // 摘出来裸调必抛 TypeError，被下面的 catch 吞掉后连接恒为 undefined ⇒ 整条链退化成逐句自动提交，
-      // 「关键链单事务」形同虚设、失败即残留孤儿角色与好感度行。call(数据库) 把 this 绑回池本身。
       const keHuDuan = await (lianJieHanShu as () => Promise<{ query: (wen: string, can?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>>; rowCount?: number | null }>; release: () => void }>).call(数据库)
       if (keHuDuan && typeof keHuDuan.query === 'function' && typeof keHuDuan.release === 'function') {
         shiWuKeHuDuan = keHuDuan
@@ -757,9 +709,6 @@ export async function baoCunJiaoSe(
     if (shiWuKeHuDuan) {
       await zhiXing.query('BEGIN')
     }
-    // 挑战模式保留原有口径：生成挑战角色前把该用户同模式（tiaozhan）的旧角色归档，
-    // 与 uk_挑战对局_用户_进行中 一起保证「同一用户仅一局挑战进行中」在角色侧也不堆旧局。
-    // 普通模式（迁移 040）绝不归档：多角色并存、各会话可并行聊天。
     if (duiJuMoShi === 'tiaozhan') {
       await zhiXing.query(
         `UPDATE "角色" SET "封存" = TRUE WHERE "用户ID" = $1 AND "封存" = FALSE AND "删除时间" IS NULL AND "对局模式" = $2`,
@@ -767,10 +716,6 @@ export async function baoCunJiaoSe(
       )
     }
 
-    // 新角色的三个状态列显式写入，不吃列默认值：
-    // 结局状态=''（未结算）、封存=false（未封存）、可继续聊天=true（可继续聊天），
-    // 避免留下「未封存却不可继续聊天」的脏状态。角色表上两个「同模式唯一活跃」的部分
-    // 唯一索引已由迁移 040 删除，故并发与连续创建都不再有排他冲突。
     const chaRuJiaoSe = await zhiXing.query(
     `INSERT INTO "角色" (
       "用户ID", "名字", "性别", "年龄", "外貌", "性格", "背景故事", "爱好",
@@ -829,8 +774,6 @@ export async function baoCunJiaoSe(
     [
       yongHuId,
       jiaoSeId,
-      // 零硬编码：四维占比只认 config/好感度配置.ts 的 quanZhong 一份真源，
-      // 此处原先另写 0.35/0.25/0.2/0.2，调平衡时配置改了不生效
       fenJieSiWei(jiaoSe.hao_gan_du_zong_fen).xin_ren_du,
       fenJieSiWei(jiaoSe.hao_gan_du_zong_fen).qin_mi_du,
       fenJieSiWei(jiaoSe.hao_gan_du_zong_fen).qu_wei_du,
@@ -869,9 +812,6 @@ export async function baoCunJiaoSe(
     ],
   )
 
-  // 用户.活跃角色ID 自迁移 040 起只承载「最近生成的角色ID」这层语义：
-  // 认证出参（huo_yue_ren_she_id）继续读它，但角色表已无排他唯一索引，
-  // 它不再是「唯一活跃角色」的入口，聊天/会话一律按角色ID 自行定位。
   await zhiXing.query(
     `UPDATE "用户" SET "活跃角色ID" = $1, "目标性别" = $2, "性格选择" = $3, "渣男渣女变体" = $4 WHERE "ID" = $5`,
     [
@@ -895,17 +835,6 @@ export async function baoCunJiaoSe(
   }
   shiWuKeHuDuan?.release()
 
-  // AI 开场白生成必须在返回前完成（同步 await）。
-  // 修复"开始聊天后看不到消息只有复盘能看到"的严重 bug：
-  // 原先用 void async 后台生成，用户进聊天页时消息可能尚未写入数据库，
-  // 且后台保存不触发 socket 推送，导致聊天页拉取消息为空。
-  // 现在同步等待生成+保存完成，/生成角色/确认 返回时消息已在数据库，
-  // 添加微信过渡页 1.5s 后跳转聊天页，聊天页拉取消息时直接显示。
-  // 前端 queRenJiaoSe 已配置 60s timeout，DeepSeek 客户端 timeout=120s，
-  // shengChengKaiChangBai 内部 try/catch 失败会降级到 jiangJi 不会抛出。
-  //
-  // 开场白必发：每个新会话都必须有 AI 开场消息（用户裁决：会话创建后没有 AI 主动发的第一条消息 = 缺陷）。
-  // 内容生成失败时降级到 jiangJiKaiChangBai 启发式文案，不让开场白失败阻断角色创建。
   try {
     const kcbCanShu: Parameters<typeof shengChengKaiChangBai>[0] = {
       mbti_lei_xing: jiaoSe.mbti_lei_xing,
@@ -964,7 +893,6 @@ export async function anIdChaJiaoSeXiangQing(
       : JSON.parse(String(shuJuHang.世界信息))
     : {}
 
-  // 所见即所得：渣型与识破线索属服务端隐藏判定数据，详情接口只回玩家该看的
   return touYingWanJiaKeJianJiaoSe({
     id: String(shuJuHang.ID),
     ming_zi: String(shuJuHang.名字),

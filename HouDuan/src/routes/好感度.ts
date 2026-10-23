@@ -74,12 +74,6 @@ luYou.get(
   },
 )
 
-/**
- * 业务安全：好感度增量的唯一产生路径是服务端 AI 评判（services/好感度评判.ts
- * → services/AI回复调度器.ts）。原 `POST /:jiaoSeId/更新` 把四维增量交给客户端直传，
- * 仅做 ±3 钳制即加权落库，等于给全体登录用户开了一条绕过评判刷满好感的通道，
- * 已整条移除。gengXinHaoGanDu 改为仅供服务端内部调用。
- */
 
 luYou.post(
   '/:jiaoSeId/秘籍',

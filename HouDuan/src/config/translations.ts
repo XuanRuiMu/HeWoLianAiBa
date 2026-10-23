@@ -285,11 +285,6 @@ export const fanYi = {
     shi_bai_mian_da_rao: 'TA将你设为了免打扰',
     shi_bai_bei_cha_qu: 'TA把你删了',
   },
-  /**
-   * 第三人称代词的性别口径。**唯一**的"他/她"来源：任何玩家可见文案都不得硬写"他"或"她"，
-   * 一律用 `{TA}` 占位后由 `utils/结局.渲染结局池文案` 走 `xingBieBianTi` 变体机制代入。
-   * 未知性别走 `jieJu` 同款回落：命中不到 `.男/.女` 变体时取本类目中性值 'TA'。
-   */
   daiCi: {
     ta: 'TA',
   },
@@ -311,16 +306,6 @@ export const fanYi = {
     'daiCi.ta.男': '他',
     'daiCi.ta.女': '她',
   },
-  /**
-   * 结局趣味文案池 · 通关组（FP-07）。键 = `jieJu` 的通关枚举键，值 = ≥3 条候选句。
-   * 与 `jieJu` 严格分离的两个理由（不得合并，合并即污染枚举真源）：
-   *   ① `jieJu` 的键集合被 `migrations/030` 的 CHECK 与 `scripts/__tests__/迁移030结局归一.test.ts`
-   *      钉成「约束 === jieJu 键 === 结局枚举列表」三处全等，多一个键那条用例必红；
-   *   ② `jieJu` 是**标签**（短、进过库、被旧数据反向识别过），本类目是**结算趣味句**，语义不同。
-   * 本组键集合同时是「哪些结局算通关」的**唯一真源**：`utils/结局.是否通关结局` 由它派生，
-   * 前端不得再自写通关白名单（缺陷4 附带病灶：白名单漏 `sheng_li_shen_jing_bing`）。
-   * 文案里的第三人称一律 `{TA}`，由 `xingBieBianTi['daiCi.ta.男|女']` 代入他/她。
-   */
   jieGuoTongGuanChi: {
     sheng_li_ai_qing: [
       '「……你怎么现在才说。」',
@@ -345,7 +330,6 @@ export const fanYi = {
       '你把对方聊到需要冷静一下，通关方式自成一家...',
     ],
   },
-  /** 被对方删除时先说清「为什么」，再接趣味句；键与 BEI_CHA_QU_PEI_ZHI.yuanYinHeXin 一一对应。 */
   beiChaQuYuanYin: {
     '像渣男渣女': '你在同时吊着好几个人，{TA}看出来了。',
     '提示词注入': '你想改{TA}的设定，{TA}没接。',
@@ -353,7 +337,6 @@ export const fanYi = {
     '不符合我的条件': '{TA}觉得你不是{TA}要的那种人。',
     '情商太低': '{TA}觉得跟你聊不下去。',
   },
-  /** 结局趣味文案池 · 失败组（FP-07）。口径同 `jieGuoTongGuanChi`，键必须覆盖 `jieJu` 余下的枚举键。 */
   jieGuoShiBaiChi: {
     shi_bai_bei_qi_pian: [
       '你的真心付诸东流...',
@@ -491,7 +474,6 @@ export function huoQuFanYi<T extends FanYiFenLei>(
   return fanYi[fenLei][jian] as string
 }
 
-/** 带占位符（{ming}）文案的唯一渲染入口，占位符写法同 liaoTian.tuPianWeiGui */
 export function huoQuFanYiMiaoShu<T extends FanYiFenLei>(
   fenLei: T,
   jian: FanYiJian<T>,

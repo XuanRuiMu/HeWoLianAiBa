@@ -30,7 +30,6 @@ export const HUAN_CHONG_ZUI_DA_TIAO_SHU = 1000
 export const QUAN_BU_JI_BIE: RiZhiJiBie[] = ['debug', 'info', 'warn', 'error']
 
 export const 使用实时日志仓库 = defineStore('实时日志', () => {
-  // 环形缓冲：定长数组 + 写入游标，避免 shift 带来的 O(n) 搬移
   const huanChongQu: (RiZhiTiaoMu | undefined)[] = new Array(HUAN_CHONG_ZUI_DA_TIAO_SHU)
   let xieRuYouBiao = 0
   let yiXieRuZongShu = 0
@@ -47,7 +46,6 @@ export const 使用实时日志仓库 = defineStore('实时日志', () => {
     error: true,
   })
 
-  // shallowRef 存快照：条目本身只读，无需深层响应式代理，避免大列表的响应式开销
   const kuaiZhao = shallowRef<RiZhiTiaoMu[]>([])
   const socketLianJie = ref<Socket | null>(null)
 
@@ -76,7 +74,6 @@ export const 使用实时日志仓库 = defineStore('实时日志', () => {
     if (typeof zaiHe?.diu_qi_shu === 'number' && zaiHe.diu_qi_shu > 0) {
       diuQiZongShu.value += zaiHe.diu_qi_shu
     }
-    // 暂停时仍写入环形缓冲，只是冻结视图快照，恢复后可回看这段时间的日志
     if (!zanTing.value) {
       kuaiZhao.value = shengChengKuaiZhao()
     }
@@ -84,7 +81,6 @@ export const 使用实时日志仓库 = defineStore('实时日志', () => {
 
   function lianJie() {
     const 用户仓库 = 使用用户仓库()
-    // FP-18 能力未知（未就绪/旧缓存）时 nengLieBiao 为空 → 不建连，fail-closed
     if (!用户仓库.keGaoWei) return
     if (socketLianJie.value) return
 

@@ -4,7 +4,6 @@ function duQuQueXinDu(ming: string, moRen: number): number {
   return Math.max(0, Math.min(1, yuan))
 }
 
-// YH-056 阈值进配置热重载：0.7禁硬编码，环境变量可配；三处判定统一读此出处
 export const QUE_XIN_DU_YUE_SHU = {
   get shenJingBing(): number {
     return duQuQueXinDu('SHEN_JING_BING_QUE_XIN_DU_YUE_SHU', 0.7)
@@ -41,9 +40,7 @@ export const SHENG_LI_SHI_BAI_PEI_ZHI = {
     return QUE_XIN_DU_YUE_SHU.biaoBaiHuiFu
   },
   biaoBaiPanDuanLiShiTiaoShu: 10,
-  // FP-08 四联判定（表白/互删/识破/神经病）带的历史条数，与上面的条数口径分开，禁在调用点硬编码
   jianCeLiShiTiaoShu: 10,
-  // YH-039：表白数值阈值统一出处（用户表白 800 / AI 主动表白 800 同源，禁各处硬编码 800）
   biaoBaiHaoGanDuYuZhi: 800,
   shenJingBingJingGao: {
     haoGanDuKouFenZong: 30,

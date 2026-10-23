@@ -6,15 +6,6 @@ import { createRequire } from 'node:module'
 import { Pool } from 'pg'
 import { 计算迁移校验和, 比对台账校验和, 迁移器, 台账比对条目 } from '../迁移器'
 
-/**
- * FP-15 迁移台账校验和口径 + re-baseline 能力测试。
- *
- * A 组无库依赖：校验和口径必须与平台检出无关，且 run_migration.js（镜像内实现）
- *   与 迁移器.ts（ts-node/CI 实现）两份实现必须逐条同解。
- * B 组内存假库：re-baseline 的 dry-run/写入边界（只 UPDATE 已登记版本，绝不 INSERT）、
- *   幂等、篡改防护、行尾漂移分类、CRLF 检出防护。
- * C 组真连库（连不上整组跳过，不伪造通过）：001..024 台账与磁盘逐条零漂移。
- */
 
 const js侧 = createRequire(__filename)('../run_migration.js') as {
   计算校验和(sql: string): string
@@ -43,7 +34,6 @@ interface 假库句柄 {
   connect(): Promise<{ query(文本: string, 参数?: unknown[]): Promise<unknown>; release(): void }>
 }
 
-/** 内存假库：台账写入先进"未提交草稿"，COMMIT 才落账、ROLLBACK 丢弃——足以验事务边界 */
 function 造假库(初始台账: Array<[string, string]> = [], 抛错于?: (文本: string) => boolean): 假库句柄 {
   const 语句: Array<{ 文本: string; 参数?: unknown[] }> = []
   const 台账 = new Map(初始台账)
@@ -110,7 +100,6 @@ describe('FP-15 A 组：校验和口径与两份实现同源（无库依赖）',
     const 清单 = 内容表.map(([文件名, 内容], i) => ({
       版本: 文件名.split('_')[0],
       文件名,
-      // 偶数项保持 LF、奇数项转成 CRLF：两份实现必须对同一批字节给出同一判定
       内容: i % 2 === 0 ? 内容 : 内容.replace(/\n/g, '\r\n'),
     }))
     const 台账 = new Map<string, string>([
@@ -133,8 +122,6 @@ describe('FP-15 A 组：校验和口径与两份实现同源（无库依赖）',
 })
 
 describe('FP-15 B 组：re-baseline 能力（内存假库）', () => {
-  // 样本必须含行内换行：只有行内换行的 CRLF/LF 差异才会被 trim() 保留下来并被算进哈希，
-  // 真实迁移文件（多行）正是这种形态。
   const 甲内容 = `CREATE TABLE "甲" (\n  "ID" INT\n);\n`
   const 乙内容 = `CREATE TABLE "乙" (\n  "ID" INT\n);\n`
   const 甲哈希 = 计算迁移校验和(甲内容)
@@ -260,8 +247,6 @@ describe.skipIf(!有真库)('FP-15 C 组：真实台账零漂移（真库）', (
   it('已登记版本的 checksum 与磁盘文件逐条一致（不允许 仅行尾/内容变更 漂移）', async () => {
     const 条目 = await new 迁移器(真实迁移目录, 真库池 as unknown as ConstructorParameters<typeof 迁移器>[1]).比对台账()
     expect(条目.length).toBeGreaterThanOrEqual(23)
-    // 只判"漂移"：未登记（新加的 023 还没跑）是合法中间态，由 执行() 负责登记，
-    // 不在本断言的失败范围内，否则会给并行工人报假警。
     const 漂移 = 条目.filter((项) => 项.差异 === '仅行尾' || 项.差异 === '内容变更')
     expect(漂移.map((项) => [项.版本, 项.差异])).toEqual([])
   })

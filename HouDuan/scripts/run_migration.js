@@ -1,18 +1,12 @@
-/* eslint-disable no-console -- CLI脚本console为唯一输出通道 */
-// 镜像内唯一迁移入口：生产镜像只 COPY 本文件（见 backend/Dockerfile），故保持零依赖。
-// 台账校验和口径与 scripts/迁移器.ts 的 计算迁移校验和 必须逐字符一致，
-// 由 scripts/__tests__/迁移台账校验和.test.ts 的 parity 用例把守。
 const { resolve } = require('path');
 const { Pool } = require('pg');
 const { readFileSync, readdirSync } = require('fs');
 const { createHash } = require('crypto');
 
 function 计算校验和(sql) {
-  // 行尾归一为 LF 后 trim：同一内容在 Windows/Linux/镜像检出下算出同一个值
   return createHash('sha256').update(sql.replace(/\r\n?/g, '\n').trim()).digest('hex');
 }
 
-// 另一种行尾形态下按字节直算（旧口径），仅用于区分「仅行尾」与「内容变更」
 function 字节校验和(sql) {
   return createHash('sha256').update(sql.trim()).digest('hex');
 }
@@ -72,8 +66,6 @@ function 打印台账差异(条目) {
   }
 }
 
-// 一次性 re-baseline：只 UPDATE 已登记版本的 checksum，绝不 INSERT（否则就成了跳过迁移的后门）；
-// 写入包在单事务 + advisory 锁里，要么全改要么全不改。与 迁移器.ts::重新登记校验和 同语义。
 async function 重新登记校验和(数据库, 迁移目录, 应用) {
   await 确保版本表存在(数据库);
   const 条目 = 比对台账(读取迁移文件(迁移目录), await 取台账(数据库));
@@ -162,8 +154,6 @@ async function main() {
     console.error('迁移失败:', 错误 instanceof Error ? 错误.message : String(错误));
     process.exitCode = 1;
   } finally {
-    // 用 exitCode + 自然退出替代 process.exit()：后者在管道（docker logs / entrypoint）下
-    // 会截断尚未 flush 的 diff 输出。
     try { await 数据库.end(); } catch (_) { /* 忽略：不得覆盖原始失败原因 */ }
   }
 }

@@ -31,8 +31,6 @@ export interface 资料请求 {
   yunXuZhaNanZhaNv: boolean
 }
 
-/** 验证码用途。与后端 YAN_ZHENG_MA_YONG_TU 一一对应：
- *  注册码不能拿去重置密码，反之亦然。缺省按注册处理（与后端归一逻辑一致）。 */
 export const YAN_ZHENG_MA_YONG_TU = {
   zhuCe: 'zhuCe',
   chongZhiMiMa: 'chongZhiMiMa',
@@ -48,8 +46,6 @@ export async function faSongMa(
   await http.post('/认证/发送码', { shouJiHao, yongTu }, peiZhi)
 }
 
-/** 「忘记密码」：凭手机号 + 重置用途验证码改密。免登录入口，
- *  成功即代表该账号所有已登录设备被踢下线。 */
 export async function chongZhiMiMa(
   qingQiu: 重置密码请求,
   peiZhi?: { signal?: AbortSignal },
@@ -133,8 +129,6 @@ export async function gengGaiMoRenXingBie(moRenXingBie: XingBie): Promise<Yonghu
   return 响应.data.shu_ju.yong_hu
 }
 
-/* FP-ZJ3 默认对象性别写口：复用目标性别列，不新增对象默认列。
-   入参走用户资料形态（male/female），与默认性别同源 */
 export async function gengGaiMoRenDuiXiangXingBie(moRenDuiXiangXingBie: XingBie): Promise<Yonghu> {
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: { yong_hu: Yonghu } }>(
     '/认证/设置默认对象性别',
@@ -148,7 +142,6 @@ export async function huoQuYongHuXinXi(peiZhi?: { signal?: AbortSignal }): Promi
   return 响应.data.shu_ju
 }
 
-// C3 账号注销：匿名化用户并清理关联数据，旧令牌吊销
 export async function zhuXiaoZhangHao(peiZhi?: { signal?: AbortSignal }): Promise<void> {
   await http.delete<{ cheng_gong: boolean; ti_shi?: string }>('/认证/注销', peiZhi)
 }

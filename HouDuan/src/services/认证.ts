@@ -48,13 +48,6 @@ export interface GengGaiYongHuMingCanShu {
 
 export function yingSheYongHu(row: Record<string, unknown>): YongHuXinXi {
   const yongHuId = String(row.ID)
-  // FP-18 身份回传唯一口径：角色与能力一律由服务端按用户表三旗标推导，
-  // 不再回传 guan_li_yuan 二值旗标（授权判定本就在服务端，回传值仅视图门）
-  // FP-28b 出参契约演进：`xing_bie` 键随 用户.性别 死列移除。该列在本仓已无任何写入者
-  // （唯一写点 账号注销 的置 NULL 与两个真库测试夹具的 'nv'/'nan' 均在 FP-28b 摘除），
-  // 存量行里剩下的只可能是无人维护的历史值（024 只洗过 角色/挑战对局，未动本列）——
-  // 用户侧性别展示的唯一口径是 mo_ren_xing_bie（用户.默认性别）。
-  // 反证在 routes/__tests__/FP08认证信息出参能力位.test.ts（HTTP 面逐键钉死不得再出现 xing_bie）。
   const jiaoSe: GuanLiJiaoSe | null = 取管理角色(row)
   const nengLi: GuanLiNengLi[] = [...取角色能力(jiaoSe)]
   return {
@@ -84,10 +77,6 @@ export function yanZhengShouJiHaoGeShi(shouJiHao: string): boolean {
   return peiZhi.shouJiHao.zhengZe.test(shouJiHao)
 }
 
-/**
- * C5 未成年人保护：按公历日期精确计算周岁年龄。
- * 生日当天即视为满周岁；格式非法（非 YYYY-MM-DD / 不存在的日期）返回 null。
- */
 export function jiSuanZhouSuiNianLing(
   chuShengRiQi: string,
   dangQian: Date = new Date(),
@@ -118,7 +107,6 @@ export function yanZhengYongHuMingGeShi(yongHuMing: string): {
   ti_shi: string
 } {
   const qingLi = yongHuMing.trim()
-  // YH-021 用户名改白名单：仅中文/字母/数字/下划线/中划线
   if (!peiZhi.yongHuMing.baiMingDan.test(qingLi)) {
     return {
       he_fa: false,
@@ -135,7 +123,6 @@ export function yanZhengMiMaFuZaDu(miMa: string): {
   if (!miMa || miMa.length < peiZhi.miMa.zuiXiaoChangDu) {
     return { he_fa: false, ti_shi: huoQuFanYi('renZheng', 'miMaFuZaDuBuZu') }
   }
-  // YH-031 密码熵检查：弱口令黑名单+字符集熵，禁纯数字/纯字母/常见弱口令
   const RuoKouLingHeiMingDan = new Set(['12345678', 'password', 'qwertyui', '11111111', '00000000', 'admin123', '123123123', 'abc12345'])
   if (RuoKouLingHeiMingDan.has(miMa.toLowerCase())) {
     return { he_fa: false, ti_shi: huoQuFanYi('renZheng', 'miMaFuZaDuBuZu') }
@@ -236,8 +223,6 @@ export async function zhuCe(
     return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'weiTongYiXieYi') }
   }
 
-  // C5 未成年人保护：出生日期必填且必须年满最低年龄（体验内测默认18周岁），硬拦截
-  // 不满 14 周岁另需监护人明示同意，本阶段直接拦截
   const zhouSui = jiSuanZhouSuiNianLing(canShu.chu_sheng_ri_qi)
   if (zhouSui === null) {
     return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'chuShengRiQiGeShiCuoWu') }
@@ -246,8 +231,6 @@ export async function zhuCe(
     return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'weiChengNianRenJinZhi') }
   }
 
-  // 方案A体验内测：注册用户总数达上限后拒绝新注册
-  // YH-058 名额原子计数：COUNT达上限后插入仍可能超发，靠409兜底映射为限流
   const zongShuJieGuo = await 数据库.query(`SELECT COUNT(*) AS "总数" FROM "用户"`)
   if (Number(zongShuJieGuo.rows[0]?.总数 || 0) >= peiZhi.tiYanBan.zuiDaYongHuShu) {
     return { cheng_gong: false, cuo_wu_ma: 'XIAN_LIU', ti_shi: huoQuFanYi('renZheng', 'tiYanBanManYuan') }
@@ -276,8 +259,6 @@ export async function zhuCe(
   }
 
   const miMaHaXi = await bcrypt.hash(canShu.mi_ma, 12)
-  // YH-058 注册并发收敛：靠唯一约束+409映射，名额原子计数防超发
-  // 根因：先查后插并发同号直接500，名额COUNT后插可超发
   let chaRuJieGuo
   try {
     chaRuJieGuo = await 数据库.query(
@@ -315,8 +296,6 @@ export async function zhuCe(
   await cunChuRefreshToken(yongHu.id, refreshTokenId)
   const fuHeShuaXinLingPai = `${yongHu.id}:${refreshTokenId}`
 
-  // C8 协议留痕：记录用户同意协议的版本、时间与 IP
-  // YH-058 路由补try：留痕失败不污染主注册，外层路由已包try映射500
   try {
     await 数据库.query(
       `INSERT INTO "协议留痕" ("用户ID", "协议版本", "同意时间戳", "客户端IP")
@@ -357,7 +336,6 @@ export async function dengLu(
   const yongHu = await 包装依赖调用('postgres', () => anShouJiHaoChaYongHu(canShu.shou_ji_hao))
   if (!yongHu) {
     await jiLuDengLuShiBai(canShu.shou_ji_hao, canShu.ip)
-    // P2-2 防账号枚举：与「密码错误」分支返回同一文案与状态码，并做同量级哈希计算对齐响应时序
     await bcrypt.hash(canShu.mi_ma, 12)
     return { cheng_gong: false, cuo_wu_ma: '凭据错误', ti_shi: huoQuFanYi('renZheng', 'zhangHaoHuoMiMaCuoWu') }
   }
@@ -377,7 +355,6 @@ export async function dengLu(
     return { cheng_gong: false, cuo_wu_ma: '凭据错误', ti_shi: huoQuFanYi('renZheng', 'zhangHaoHuoMiMaCuoWu') }
   }
 
-  // C5 bcrypt cost 10→12：登录成功后检测旧哈希 cost，若 < 12 则重哈希并更新数据库
   const costPiPei = /^\$2[aby]\$(\d{2})\$/.exec(miMaHaXi)
   const dangQianCost = costPiPei ? parseInt(costPiPei[1], 10) : 12
   if (dangQianCost < 12) {
@@ -428,18 +405,12 @@ export interface ChongZhiMiMaCanShu {
   ip: string
 }
 
-/** 统一失败提示：不区分「号码没注册」「验证码错」。注意：密码不合规不在此列，
- *  它只反映用户刚敲进去的内容、不泄露账号是否存在，可以如实回（见下方校验顺序）。 */
 
-/** 「忘记密码」重置：凭手机号 + 重置用途验证码改密，全程不需要登录态，也不需要旧密码。
- *  成功即把该用户全部会话踢下线（access 靠吊销时间戳，refresh 靠整体吊销）。 */
 export async function chongZhiMiMa(
   canShu: ChongZhiMiMaCanShu,
 ): Promise<{ cheng_gong: boolean; ti_shi?: string; tongYiHuiFu?: boolean }> {
   const tongYiTiShi = huoQuFanYi('renZheng', 'chongZhiMiMaTongYiTiShi')
 
-  // 密码不合规属于「用户自己能改的输入问题」，不涉账号是否存在，可如实回。
-  // 但校验顺序必须在查库之前：先挑出密码自身的问题，再去碰账号，避免用错误码探测注册情况。
   if (!canShu.xin_mi_ma || canShu.xin_mi_ma.length === 0) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'miMaKong') }
   }
@@ -452,8 +423,6 @@ export async function chongZhiMiMa(
   }
 
   const yongHu = await anShouJiHaoChaYongHu(canShu.shou_ji_hao)
-  // 号码未注册：验证码依然走一次校验（保持耗时一致，避免时序侧信道），
-  // 但对外只给统一失败提示，不承认这个号码存不存在。
   const maZhengQue = await yanZhengMaShiFouZhengQue(
     canShu.shou_ji_hao,
     canShu.yan_zheng_ma,
@@ -468,7 +437,6 @@ export async function chongZhiMiMa(
     `UPDATE "用户" SET "密码哈希" = $1, "更新时间" = NOW() WHERE "手机号" = $2`,
     [xinMiMaHaXi, canShu.shou_ji_hao],
   )
-  // 密码被别人改过 = 怀疑已泄露，必须把对方踢下线，否则「重置密码」白做
   await cheXiaoYongHuSuoYouRefreshToken(yongHu.id)
   await xieRuCheXiaoShiJianCuo(yongHu.id)
   await shanChuYanZhengMa(canShu.shou_ji_hao, YAN_ZHENG_MA_YONG_TU.chongZhiMiMa)
@@ -530,9 +498,6 @@ export async function gengGaiMiMa(
     `UPDATE "用户" SET "密码哈希" = $1, "更新时间" = NOW() WHERE "ID" = $2`,
     [xinMiMaHaXi, canShu.yong_hu_id],
   )
-  // 与注销同口径：改密后 refresh token 也必须整体作废。
-  // 旧实现只写用户级吊销时间戳（只对存量 access token 生效），而刷新令牌不查该时间戳，
-  // 攻击者持有的 refresh token 仍能换出新 access token —— 改过密码却没真正挤下对方。
   await cheXiaoYongHuSuoYouRefreshToken(canShu.yong_hu_id)
   await xieRuCheXiaoShiJianCuo(canShu.yong_hu_id)
   await shanChuYanZhengMa(shiJiShouJiHao)
@@ -583,13 +548,6 @@ export async function gengGaiYongHuMing(
   return { cheng_gong: true, ti_shi: huoQuFanYi('renZheng', 'xiuGaiYongHuMingChengGong'), yong_hu: yongHu }
 }
 
-/**
- * 设置用户「默认性别」。
- * 该值仅作为普通模式资料向导第一步（用户自身性别）的系统默认预选项，
- * 不覆盖用户已手动选择的结果，也不参与任何角色/对象性别判定。
- * 入参归一化：男/nan/male → 'male'，女/nv/female → 'female'，
- * 六种写法的识别表唯一来源是 utils/性别（FP-13），本模块不再自带一份。
- */
 export async function setMoRenXingBie(
   canShu: { yong_hu_id: string; mo_ren_xing_bie: string },
 ): Promise<{ cheng_gong: boolean; ti_shi?: string; yong_hu?: YongHuXinXi }> {
@@ -616,13 +574,6 @@ export async function setMoRenXingBie(
   return { cheng_gong: true, ti_shi: huoQuFanYi('tongYong', 'caoZuoChengGong'), yong_hu: yongHu }
 }
 
-/**
- * FP-ZJ3 设置用户「默认对象性别」（复用目标性别列 mu_biao_xing_bie，不新增对象默认列）。
- * 该值仅作为普通模式资料向导第二步（对象性别）的系统默认预选项，
- * 不覆盖用户已手动选择的结果，不参与挑战开赛与角色生成判定。
- * 入参归一化：经唯一解析入口 → 内部规范形态 → 展示形态落库（与角色生成同源）；
- * 六种写法全收，不可识别者在应用层回 400，禁把第三种写法送进库。
- */
 export async function setMoRenDuiXiangXingBie(
   canShu: { yong_hu_id: string; mo_ren_dui_xiang_xing_bie: string },
 ): Promise<{ cheng_gong: boolean; ti_shi?: string; yong_hu?: YongHuXinXi }> {
@@ -647,25 +598,14 @@ export async function setMoRenDuiXiangXingBie(
   return { cheng_gong: true, ti_shi: huoQuFanYi('tongYong', 'caoZuoChengGong'), yong_hu: yongHu }
 }
 
-/**
- * C4：使用 refresh token 刷新 access token
- * - 验证 refresh token 有效性
- * - 复用检测：同一 refresh token 二次使用 → 全家吊销
- * - 成功则生成新 access + 新 refresh，旧 refresh 标记已用
- */
 export async function shuaXinLingPai(
   refreshToken: string,
 ): Promise<{ cheng_gong: boolean; shu_ju?: { 令牌: string; 刷新令牌: string; 刷新令牌ID: string }; ti_shi?: string }> {
-  // refresh token 格式：tokenId（我们用的是 tokenId 作为 refresh token 标识）
-  // 这里约定：客户端传入的是 refreshTokenId（即 tokenId）
   const tokenId = refreshToken
   if (!tokenId) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'queShaoCanShu') }
   }
 
-  // 从所有用户中查找该 tokenId（为效率，约定 tokenId 包含用户 ID 前缀，或遍历）
-  // 这里简化：要求客户端传 userId + tokenId，或从 token 中解析
-  // 约定：tokenId 格式为 "userId:uuid"
   const parts = tokenId.split(':')
   if (parts.length !== 2) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'lingPaiWuXiao') }
@@ -673,29 +613,24 @@ export async function shuaXinLingPai(
   const yongHuId = parts[0]
   const tokenIdOnly = parts[1]
 
-  // YH-010 单飞行锁串行化：同凭证并发排队，Lua外再加一层串行防双兑现
   const feiXingJian = `shuaxin_feixing:${yongHuId}:${tokenIdOnly}`
   const qiangZhan = await redis.set(feiXingJian, '1', 'EX', 15, 'NX')
   if (!qiangZhan) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'dengLuShiBaiPinFan') }
   }
   try {
-    // 复用检测：仅消费墓碑命中的确凿重放才全家吊销；未知键按普通无效返回
     const chongFu = await jianCeRefreshTokenChongFu(tokenIdOnly, yongHuId)
     if (chongFu) {
-      // 复用检测触发：全家吊销
       await cheXiaoYongHuSuoYouRefreshToken(yongHuId)
       await xieRuCheXiaoShiJianCuo(yongHuId)
       return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'lingPaiChongFuBeiDao') }
     }
 
-    // 验证并消费 refresh token
     const xiaoHao = await xiaoHaoRefreshToken(tokenIdOnly, yongHuId)
     if (!xiaoHao.chengGong) {
       return { cheng_gong: false, ti_shi: xiaoHao.cuoWu || huoQuFanYi('renZheng', 'lingPaiWuXiao') }
     }
 
-    // 生成新 access + refresh
     const yongHu = await anIdChaYongHu(yongHuId)
     if (!yongHu) {
       return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'ziYuanBuCunZai') }
@@ -722,11 +657,6 @@ export async function shuaXinLingPai(
   }
 }
 
-/**
- * 吊销 refresh token（登出时调用）
- * - 传 tokenId 吊销单个
- * - 不传则吊销该用户所有
- */
 export async function zhuXiaoLingPai(
   yongHuId: string,
   refreshTokenId?: string,

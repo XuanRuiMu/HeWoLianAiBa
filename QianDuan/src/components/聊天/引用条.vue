@@ -47,10 +47,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', chuLiAnJian))
 </script>
 
 <style scoped>
-/* FP-09（需求 #5 表现层）发送前引用条。数值真源 = .agents/evidence/references/FP-13-引用条-20260921.md
-   §1.1（条本体 padding/border-radius/font-size/line-height、单行省略的 min-width:0 + flex:0 1 auto、
-   关闭钮图标 11×11 + padding 5）与 §4（引用条在编辑器上方、标题与取消钮分列两端）。
-   本仓取值一律经 styles/设计令牌.css 的共用 :root 令牌，颜色一律吃既有令牌。 */
+
 .yinyong-tiao {
   box-sizing: border-box;
   flex-basis: 100%;
@@ -72,7 +69,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', chuLiAnJian))
   font-weight: 600;
 }
 
-/* 摘要最多两行溢出省略（用户裁决：引用条与气泡内引用块一律彩两行） */
+
 .yinyong-tiao-zhaiyao {
   flex: 0 1 auto;
   min-width: 0;
@@ -113,8 +110,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', chuLiAnJian))
   outline-offset: var(--jujiao-huan-pian-yi);
 }
 
-/* 可见盒维持 11×11 图标 + 5px 内边距（取证 §1.1 命中约 21×21 偏小，§4 明令本项目放大命中区不改外观）：
-   与输入区图标同法用 ::before 以 --shuru-anniu-re-ku 外扩，不撑大可见盒 */
+
 .yinyong-tiao-guanbi::before {
   content: '';
   position: absolute;
@@ -125,7 +121,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', chuLiAnJian))
   transform: translate(-50%, -50%);
 }
 
-/* 字形两轴同吃一枚令牌 ⇒ 方形 viewBox 下不可能非等比缩放 */
+
 .yinyong-tiao-guanbi-tu {
   width: var(--yinyong-guanbi-chicun);
   height: var(--yinyong-guanbi-chicun);

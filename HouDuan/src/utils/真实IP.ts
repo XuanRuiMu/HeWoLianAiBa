@@ -67,14 +67,11 @@ export function jieXiKeXinWangDuan(lie_biao: string[]): KeXinWangDuanGuiZe[] {
   return gui_ze_lie_biao
 }
 
-// P2-2：回环对端即本机自身进程，信任其不引入伪造面；KE_XIN_DAI_LI_WANG_DUAN 为增量反代网段白名单
 const huiHuanChangZhuGuiZe: KeXinWangDuanGuiZe[] = [
   { lei_xing: 'ipv4', wang_duan_zhi: ipv4ZhuanShuZi('127.0.0.1'), you_yi_wei_shu: 0 },
   { lei_xing: 'jing_que', di_zhi: '::1' },
 ]
 
-// P2-2：可信代理判定收紧为「部署实际反代网段」白名单（KE_XIN_DAI_LI_WANG_DUAN 可配，
-// 默认仅 127.0.0.1/::1），内网源不再一律可信，杜绝内网攻击者伪造 X-Real-IP 漂移限流/封禁计数
 export function shiDuanKeXinDaiLi(di_zhi: string): boolean {
   const gui_yi = guiYiHuaIP(di_zhi)
   for (const gui_ze of [...huiHuanChangZhuGuiZe, ...jieXiKeXinWangDuan(peiZhi.keXinDaiLiWangDuan)]) {

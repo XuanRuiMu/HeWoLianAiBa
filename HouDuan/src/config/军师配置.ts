@@ -10,7 +10,6 @@ export interface JunShiPeiZhiXiang {
   xiTongTiShi: string
 }
 
-// FP-11：军师指导分区协议的唯一事实源（提示词构造、模型输出解析、字数钳制三处同源）
 export interface JunShiZhiDaoDuanDingYi {
   ziDuan: keyof JunShiZhiDaoFenDuan
   moXingJian: string

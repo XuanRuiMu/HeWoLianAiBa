@@ -1,26 +1,4 @@
 #!/usr/bin/env ts-node
-/**
- * 游戏结局.结果状态 存量归一（迁移 030 的前置步骤，FP-13 同族收尾）。
- *
- * 为什么清洗在脚本里做而不在 030 的 SQL 里做：
- *   「中文文案 → 枚举键」的映射只有 TS 侧一份 —— 当前中性文案、性别变体文案、文案改版前的
- *   `胜利-/失败-` 历史值三层识别表全部由 `src/config/translations.ts` 派生，聚在
- *   `src/utils/结局.ts`。迁移 SQL 重抄一份 CASE 就是第二个真源，正是本任务要消灭的病。
- *   因此本脚本 import `解析落库枚举`（同一张表的无兜底识别口），SQL 只留 CHECK 的取值集合，
- *   两侧同源由 `scripts/__tests__/迁移030结局归一.test.ts` 钉住。
- *
- * 为什么走 `解析落库枚举` 而不是 `解析结局类型`：
- *   后者对认不出的值必定给出一个结局（未封存→进行中、已封存→好感度归零）。那是读取侧的保命
- *   兜底，用在清洗上等于把一条脏值静默改写成「好感度归零」，属伪造历史结局。
- *   本脚本对认不出的值一律不改写、只上报，并以非零退出码让 030 加不上 CHECK。
- *
- * 幂等：谓词只命中非枚举键的行，第二次跑改写 0 行。
- * 原子：扫描 + 改写包在同一事务、与迁移器同一把 advisory 锁内 —— 要么全改要么全不改，
- *       且不会与并发的迁移执行互相插队。
- *
- * 一次性执行（宿主侧，容器主机名解析不到时按既有真库用例口径换回复环地址）：
- *   cd backend && npx ts-node scripts/归一游戏结局结果状态.ts
- */
 
 import { Pool } from 'pg'
 import { peiZhi } from '../src/config'
@@ -45,10 +23,6 @@ interface 最小客户端 {
 
 const 枚举集合: ReadonlySet<string> = new Set<string>(结局枚举列表)
 
-/**
- * 就地改写 游戏结局.结果状态：所有非枚举键的值 → 对应枚举键。
- * 只上报计数，不做任何兜底改写；调用方负责在事务外读回终态。
- */
 export async function 归一游戏结局结果状态(客户端: 最小客户端): Promise<归一计数> {
   await 客户端.query('BEGIN')
   await 客户端.query('SELECT pg_advisory_xact_lock(987654321)')
@@ -96,7 +70,6 @@ export async function 归一游戏结局结果状态(客户端: 最小客户端)
   }
 }
 
-/** 与 scripts/__tests__ 三份真库用例同口径：把 compose 内的主机名换回宿主回环地址，不新抄任何凭据 */
 function 取可连通连接串(): string {
   const 运行值 = String(peiZhi.shuJuKuLianJie ?? '')
   return 运行值.includes('@postgres:') ? 运行值.replace('@postgres:', '@127.0.0.1:') : 运行值

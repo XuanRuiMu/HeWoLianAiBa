@@ -2,15 +2,11 @@ import { 数据库 } from '../数据库'
 import { peiZhi } from '../config'
 import { 日志引擎 } from '../utils/日志引擎'
 
-// C6 审计日志容量治理：定期归档删除策略。
-// 保留期默认 185 天（≥6 个月，满足任一条目可追溯≥6个月的验收线），
-// 到期条目按批次删除，磁盘占用存在可预测上限。
 const PI_LIANG_DA_XIAO = 5000
 
 export async function qingLiGuoQiShenJiRiZhi(): Promise<number> {
   const baoLiuTian = peiZhi.shenJiRiZhiBaoLiuTian
   let zongShanChu = 0
-  // 分批删除，避免单条大 DELETE 长事务锁表
   for (;;) {
     const jieGuo = await 数据库.query(
       `DELETE FROM "审计日志"
@@ -34,7 +30,6 @@ export async function qingLiGuoQiShenJiRiZhi(): Promise<number> {
 let dingShiQi: ReturnType<typeof setInterval> | null = null
 let qiDingYanShi: ReturnType<typeof setTimeout> | null = null
 
-/** 启动每日定时归档（启动后延迟首跑一次；计时器 unref 不阻塞进程退出） */
 export function qiDongShenJiRiZhiGuiDangDingShiQi(): void {
   if (dingShiQi) return
   const jianGeHaoMiao = 24 * 60 * 60 * 1000

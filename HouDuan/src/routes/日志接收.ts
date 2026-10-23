@@ -22,10 +22,8 @@ const SHANG_BAO_LEI_XING_JI_HE: ReadonlySet<ShangBaoLeiXing> = new Set([
 ])
 
 const ZUI_DA_XIANG_QING_ZI_DIAN_SHU = 50
-// A8：字段值截断上限，防止伪造超长内容刷爆磁盘/污染日志
 const ZUI_DA_ZHI_CHANG_DU = 500
 
-// P1-8：埋点事件名长度上限
 const ZUI_DA_SHI_JIAN_MING_CHANG_DU = 100
 
 function jieDuanZhi(zhi: unknown, shenDu: number): unknown {

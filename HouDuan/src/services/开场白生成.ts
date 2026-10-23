@@ -85,35 +85,19 @@ function gouJianKaiChangBaiTiShi(canShu: KaiChangBaiShengChengCanShu): string {
   ].filter(Boolean).join('\n')
 }
 
-// ⚠️ 旧的个人信息禁词表已**整体删除**（第十五轮实测）。
-//   它把「宿舍 / 学校 / 大学 / 专业 / 年级 / 楼号 / 岁 / 我是 / 我叫 / 老家」等全列禁词，
-//   且逐条 return null **整条丢弃**。后果是把真人最自然的开场白内容整类消灭：
-//   第十五轮 15 轮实测里 AI 说得最多的就是自己的日常
-//     （`我这边刚放下画笔` / `在宿舍画稿，手都冻僵了` / `昨晚还弄到两点多来着` / `我上学期也这样`）。
-//   一个刚加好友的人不会自我介绍姓名学校，但**会说自己昨晚几点睡、今天在干什么**。
-//   禁掉这些 => 开场白只剩「嗨」「在吗」这类空洞招呼 => 违背根本目的（100% 模拟真人）。
-//
-// 现在只保留**联络信息外泄**一类硬约束 —— 有现实与隐私依据，不是风格偏好。
-// 手机号正则（11位中国手机号）
 const SHOU_JI_HAO_RE = /1[3-9]\d{9}/
-// 微信号正则（字母开头，6-20位字母数字下划线减号）
 const WEI_XIN_HAO_RE = /^[a-zA-Z][a-zA-Z0-9_-]{5,19}$/
 
 function anQuanGuoLvXiaoXi(neiRong: string, mingZi?: string): string | null {
   const qingLi = neiRong.trim()
   if (!qingLi) return null
-  // 手机号
   if (SHOU_JI_HAO_RE.test(qingLi)) return null
-  // 微信号（独立 token 形式）
   const tokens = qingLi.split(/[\s,，。.!！?？:：;；]+/).filter(Boolean)
   for (const token of tokens) {
     if (WEI_XIN_HAO_RE.test(token)) return null
   }
-  // QQ 号（出现 qq/扣 字样时的纯数字串）
   if (/qq|扣/i.test(qingLi) && /(?:^|\s)[1-9]\d{4,11}(?:\s|$)/.test(qingLi)) return null
-  // 门牌 / 住址
   if (/\d+\s*(?:栋|单元|室|号楼|楼|门)/.test(qingLi)) return null
-  // 包含角色真实姓名（数据库里的真名，说出来会破坏角色一致性）
   if (mingZi && mingZi.length > 0 && qingLi.includes(mingZi)) return null
   return qingLi
 }
@@ -168,10 +152,6 @@ export function dangWeiZhuanGaiLv(dangWei: string): number {
 }
 
 function jiangJiKaiChangBai(canShu: KaiChangBaiShengChengCanShu): KaiChangBaiShengChengJieGuo {
-  // 无 AI key / AI 失败时的兜底：基于完整画像做简单启发式，生成 1~3 条。
-  // 注意：是否"发送开场白"已由 角色生成 的统一概率门控决定（kaiChangBaiFaSongGaiLv），
-  // 本函数被调用即表示已决定发送，因此这里不再做"是否主动"的概率判定，
-  // 也不按 E/I 等维度机械决定条数——只负责把"要发"这件事落地成 1~3 条自然消息。
   const houXuan: string[] = [
     '嗨', '哈喽', '在忙吗', '刚加好友，有点紧张', '今天课多吗',
     '看到朋友圈有点意思', '今天天气好好', '你的头像有点意思',
@@ -201,9 +181,6 @@ export async function shengChengKaiChangBai(
   shangXiaWen?: CanShuShangXiaWen,
 ): Promise<KaiChangBaiShengChengJieGuo> {
   if (kaiChangBaiMock) {
-    // mock 结果也需经过安全过滤（与真实 AI 输出一致），再按 5 条上限截断。
-    // 防止 mock 绕过姓名/手机号/微信号/个人信息禁词过滤。
-    // 是否发送、发几条完全由 mock 决定（含空数组表示不发），不再套用 E/I 硬编码。
     const mockJieGuo = kaiChangBaiMock(canShu)
     const guoLvHou = mockJieGuo.xiao_xi_lie_biao
       .map((x) => anQuanGuoLvXiaoXi(x, canShu.ming_zi))
@@ -223,7 +200,6 @@ export async function shengChengKaiChangBai(
     return jiangJiKaiChangBai(canShu)
   }
 
-  // 未显式传入上下文时，用 canShu 已有的人设字段构造 jiaoSe 上下文（向后兼容：无则退回基座）
   const shangXiaWenShiJi = shangXiaWen ?? {
     jiaoSe: {
       ie_lei_xing: canShu.ie_lei_xing,

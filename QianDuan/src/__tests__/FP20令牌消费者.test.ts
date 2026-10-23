@@ -3,9 +3,6 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { 声明块清单, 所有声明令牌 } from './主题令牌真源'
 
-// FP-20 切片 B：variables.css 零消费者令牌与幻影令牌的双向回归护栏。
-// 口径（按任务示例而非括号反向文字）：幻影 = 剥注释后被 var( 引用、但全库（含 .vue 局部与运行时注入）
-// 均无 `--x:` 定义的令牌；零消费者 = variables.css 有定义、但全库无 var( 引用的令牌。
 
 const 源码根 = resolve(__dirname, '..')
 const 前端根 = resolve(源码根, '..')
@@ -59,7 +56,6 @@ for (const 文件 of 扫描文件) {
 const 零消费计算 = [...定义集].filter((名) => !引用集.has(名)).sort()
 const 幻影计算 = [...引用集].filter((名) => !全库定义集.has(名)).sort()
 
-/** 零消费白名单：无 var( 消费且无非 var( 消费路径，按共用块两档基准保留 */
 const 零消费白名单: { 令牌: string; 理由: string }[] = [
   {
     令牌: '--quxian-ruan',
@@ -70,8 +66,6 @@ const 零消费白名单: { 令牌: string; 理由: string }[] = [
   // --quxiao-anniu-wenben）已由 FP-G 经主代理裁决删除定义并同步 FP14出生日期选择器.test.ts 层级序，销账。
 ]
 
-/** 已知非 var( 消费者：var( 扫描为零，但经字符串令牌名 + getPropertyValue 真实消费；
- * 若后续新增直接 var( 消费，该令牌即毕业，须从本表删除（零消费计算不再含它，留条即陈化红） */
 const 已知消费者: { 令牌: string; 理由: string; 位置: string[] }[] = [
   {
     令牌: '--jing-gao-se',
@@ -103,7 +97,6 @@ const 已知消费者: { 令牌: string; 理由: string; 位置: string[] }[] = 
   },
 ]
 
-/** 幻影登记：被 var( 引用但全库无 `--x:` 定义（运行时注入或测试文案伪影） */
 const 幻影登记: { 令牌: string; 理由: string }[] = [
   { 令牌: '--dingge-gao', 理由: '登录内容.vue 快照层 setProperty 按实测矩形运行时注入的四枚几何之一' },
   { 令牌: '--dingge-kuan', 理由: '同 --dingge-gao，运行时注入' },

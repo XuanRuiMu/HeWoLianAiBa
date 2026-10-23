@@ -40,7 +40,6 @@ function qianYiZiLiaoShuJu(yuanShuJu: unknown): ZiLiaoShuJuNeiRong | null {
 export interface 心目中的TA表单 {
   weiXinMing: string
   zhenShiMing: string
-  /** 年龄输入框为 number 类型时 v-model 可能产出数字，统一按字符串处理，0-100整数可选 */
   nianLing: string
   tongYongTiShiCi: string
 }
@@ -64,7 +63,6 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
   const zhuCeYanZhengMa = ref('')
   const zhuCeYongHuMing = ref('')
   const zhuCeMiMa = ref('')
-  // C5 未成年人保护：注册强制采集出生日期
   const zhuCeChuShengRiQi = ref('')
   const tongYiXieYi = ref(false)
   const yanZhengMaFaSongShiJian = ref<number | null>(null)
@@ -83,7 +81,6 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
     xinMuZhongDeTa: xinJianXinMuZhongDeTa(),
   })
 
-  // 「心目中的TA」是否填写了任意一项（用于向导展示与透传判断）
   function huoQuXinMuZhongDeTaYouXiao(): 心目中的TA表单 | null {
     const biaoDan = ziLiaoShuJu.xinMuZhongDeTa
     const nianLingWenBen = guiYiNianLing(biaoDan.nianLing)
@@ -106,7 +103,6 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
     const buZhou = duQuShuJu<number>(ZI_LIAO_DANG_QIAN_BU_ZHOU_JIAN, null)
     if (buZhou !== null) ziLiaoDangQianBuZhou.value = buZhou
 
-    // 与保存侧对称：优先裸读业务信封（测试与外部写入走裸localStorage），回退统一存储层解包
     let yuanShi: unknown = null
     try {
       const luoDu = localStorage.getItem(`hewolianba_${ZI_LIAO_SHU_JU_JIAN}`)
@@ -123,7 +119,6 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
 
   function baoCunZiLiaoZhuangTai() {
     baoCunShuJu(ZI_LIAO_DANG_QIAN_BU_ZHOU_JIAN, ziLiaoDangQianBuZhou.value)
-    // YH-091 版本信封经统一存储层二次包装：裸读回双层信封，需解一层再验业务版本
     const xinFeng: ZiLiaoShuJuXinFeng = {
       banBen: ZI_LIAO_SHU_JU_BAN_BEN,
       shuJu: ziLiaoShuJu,
@@ -162,7 +157,6 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
     jiZhuZhangHao.value = baoCunZhangHao !== null
     jiZhuMiMa.value = duQuShuJu<boolean>(记住密码键, false) === true
     if (!jiZhuZhangHao.value) jiZhuMiMa.value = false
-    // 自动登录是记住密码的子选项：仅记住密码勾选时有效
     ziDongDengLu.value = duQuShuJu<boolean>(自动登录键, false) === true
     if (!jiZhuMiMa.value) ziDongDengLu.value = false
     if (baoCunZhangHao !== null) {

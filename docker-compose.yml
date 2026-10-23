@@ -2,27 +2,23 @@ name: lianaiba
 
 services:
   postgres:
-    # 镜像跟随官方最新构建：浮动 tag（18.x 最新构建版），不 pin digest
+
     image: postgres:18-alpine
     container_name: lianaiba-postgres
     restart: unless-stopped
-    # YH-134 资源上限：单容器异常禁拖垮宿主
+
     mem_limit: 2g
     cpus: 2.0
-    # A6：数据库不暴露公网；仅本机调试需要时绑定 127.0.0.1
+
     ports:
       - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-lianaiba}
       POSTGRES_USER: ${POSTGRES_USER:-lianaiba}
-      # A6：密码必须从 .env 显式注入，去掉危险默认值（缺失时 compose 变量替换报错）
+
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请在 .env 中设置 POSTGRES_PASSWORD}
     volumes:
-      # PG 18+ 强约束：必须单挂载点 /var/lib/postgresql（镜像内部再落
-      # major-version 专属子目录），否则 initdb 见到 /var/lib/postgresql/data
-      # 就报 "in 18+, these Docker images are configured to store ShuJuKu data
-      # in a format which is compatible with pg_ctlcluster" 而拒绝启动、容器反复重启。
-      # 旧写法 postgres_data:/var/lib/postgresql/data 在 18 上直接不可用。
+
       - postgres_data:/var/lib/postgresql
       - ./ShuJuKu:/docker-entrypoint-initdb.d:ro
     networks:
@@ -34,17 +30,16 @@ services:
       retries: 5
 
   redis:
-    # 镜像跟随官方最新构建：浮动 tag（8.10.x 最新构建版），不 pin digest
+
     image: redis:8.10-alpine
     container_name: lianaiba-redis
     restart: unless-stopped
     mem_limit: 1g
     cpus: 1.0
-    # A6：Redis 不暴露公网；仅本机调试需要时绑定 127.0.0.1
+
     ports:
       - "127.0.0.1:6379:6379"
-    # P1-4：Redis 强制访问控制，密码必须从 .env 显式注入（缺失时 compose 变量替换报错）
-    # YH-134 Redis maxmemory：禁单容器拖垮宿主
+
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?请在 .env 中设置 REDIS_PASSWORD} --maxmemory 512mb --maxmemory-policy allkeys-lru
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?请在 .env 中设置 REDIS_PASSWORD}
@@ -62,34 +57,29 @@ services:
     build:
       context: ./HouDuan
       dockerfile: Dockerfile
-    # 必须显式指定小写镜像名：Compose 默认镜像名 = <项目名>-<服务名>，
-    # 项目名 lianaiba + 服务名 HouDuan 会拼成 lianaiba-HouDuan（含大写），
-    # 而 Docker 的仓库名强制小写，直接报 invalid reference format。
+
     image: lianaiba-houduan:latest
     container_name: lianaiba-houduan
     restart: unless-stopped
     mem_limit: 2g
     cpus: 2.0
-    # YH-126 compose探活：readiness查依赖，DB抖不拖全站
+
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3000/readyz').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))\""]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 60s
-    # P2-2#4：HouDuan 端口仅绑定本机回环，绕过 nginx 的直连面收敛
+
     ports:
       - "127.0.0.1:3001:3000"
     environment:
       NODE_ENV: production
       PORT: 3000
-      # 注意：此处的密码必须与数据库实际密码逐字节一致。
-      # 若密码含 URL 保留字符，compose 会原样拼入 DATABASE_URL，
-      # pg 的 WHATWG-URL 解析会把加号视为空格导致鉴权失败。此时用 .env 中的
-      # DATABASE_URL（百分号编码后的密码）覆盖本行。
+
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
-      # P1-4：生产启动校验依赖该变量（config 启动检查）
+
       REDIS_PASSWORD: ${REDIS_PASSWORD:?请在 .env 中设置 REDIS_PASSWORD}
       INTERNAL_TOKEN: ${INTERNAL_TOKEN:?请在 .env 中设置 INTERNAL_TOKEN}
       GAO_JING_SHENG_MING_JIANG_JI: ${GAO_JING_SHENG_MING_JIANG_JI:-false}
@@ -103,14 +93,14 @@ services:
       ALIYUN_SMS_SIGN_NAME: ${ALIYUN_SMS_SIGN_NAME:-}
       ALIYUN_SMS_TEMPLATE_CODE: ${ALIYUN_SMS_TEMPLATE_CODE:-}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?请在 .env 中设置 ALLOWED_ORIGINS}
-      # P2-2：可信代理网段（与 nginx X-Real-IP 对齐；容器网段默认 172.16.0.0/12）
+
       KE_XIN_DAI_LI_WANG_DUAN: ${KE_XIN_DAI_LI_WANG_DUAN:-172.16.0.0/12}
-      # A6：管理员手机号必须显式配置，去除默认值 13800138001
+
       ADMIN_PHONES: ${ADMIN_PHONES:?请在 .env 中设置 ADMIN_PHONES}
       LOG_COLD_RETENTION_DAYS: ${LOG_COLD_RETENTION_DAYS:-183}
-      # C6：审计日志保留天数（定期归档删除，≥6个月）
+
       SHEN_JI_RI_ZHI_BAO_LIU_TIAN: ${SHEN_JI_RI_ZHI_BAO_LIU_TIAN:-185}
-      # A12：OTLP 导出端点（配置后开启链路采集）与 SMTP 告警通道
+
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
       SMTP_ZHU_JI: ${SMTP_ZHU_JI:-}
       SMTP_DUAN_KOU: ${SMTP_DUAN_KOU:-465}
@@ -119,22 +109,22 @@ services:
       GAO_JING_FA_JIAN_REN: ${GAO_JING_FA_JIAN_REN:-}
       GAO_JING_SHOU_JIAN_REN: ${GAO_JING_SHOU_JIAN_REN:-}
       AI_LIAN_XU_SHI_BAI_GAO_JING_YU_ZHI: ${AI_LIAN_XU_SHI_BAI_GAO_JING_YU_ZHI:-5}
-      # A9：媒体下载签名的独立密钥（未设置时从 JWT 密钥 HKDF 派生独立子钥）
+
       MEI_TI_QIAN_MING_MI_YAO: ${MEI_TI_QIAN_MING_MI_YAO:-}
-      # A7：短信验证码每日发送上限（每手机号 / 每IP）
+
       DUAN_XIN_MEI_SHOU_JI_HAO_MEI_RI: ${DUAN_XIN_MEI_SHOU_JI_HAO_MEI_RI:-10}
       DUAN_XIN_MEI_IP_MEI_RI: ${DUAN_XIN_MEI_IP_MEI_RI:-30}
-      # A8：前端日志上报限流（每分钟每IP）
+
       RI_ZHI_JIE_SHOU_XIAN_LIU_MEI_FEN_ZUI_DA: ${RI_ZHI_JIE_SHOU_XIAN_LIU_MEI_FEN_ZUI_DA:-10}
-      # R7：数据库连接池显式参数
+
       SHU_JU_KU_LIAN_CHI_ZUI_DA: ${SHU_JU_KU_LIAN_CHI_ZUI_DA:-20}
       SHU_JU_KU_LIAN_JIE_CHAO_SHI_HAO_MIAO: ${SHU_JU_KU_LIAN_JIE_CHAO_SHI_HAO_MIAO:-10000}
       SHU_JU_KU_YU_JU_CHAO_SHI_HAO_MIAO: ${SHU_JU_KU_YU_JU_CHAO_SHI_HAO_MIAO:-30000}
     volumes:
       - ./微信昵称:/微信昵称:ro
-      # A5：用户上传媒体持久化到 named volume，容器重建不丢失
+
       - media_uploads:/app/uploads/media
-      # A12：容器内日志持久化
+
       - houDuan_logs:/app/logs
     depends_on:
       postgres:
@@ -148,6 +138,8 @@ services:
     build:
       context: .
       dockerfile: QianDuan/Dockerfile
+
+    image: lianaiba-qianduan:latest
     container_name: lianaiba-qianduan
     restart: unless-stopped
     ports:
@@ -163,13 +155,13 @@ services:
       - lianaiba-network
 
   certbot:
-    # 镜像跟随官方最新构建：latest tag，不 pin digest
+
     image: certbot/certbot:latest
     container_name: lianaiba-certbot
     volumes:
       - certbot-www:/var/www/certbot
       - certbot-conf:/etc/letsencrypt
-    # YH-129 证书续期reload：续期hook执行reload并验证，禁续了还用旧证
+
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --deploy-hook \"docker exec lianaiba-qianduan nginx -s reload && nginx -t\"; sleep 12h & wait $${!}; done;'"
 
 networks:

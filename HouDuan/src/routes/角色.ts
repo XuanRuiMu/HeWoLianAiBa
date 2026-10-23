@@ -58,7 +58,6 @@ function yanZhengMbti(zhi: string): zhi is MBTILeiXing {
   return mbtiLieBiao.includes(zhi as MBTILeiXing)
 }
 
-/** 「心目中的TA」文本字段清洗与长度上限（三框+通用提示词，旧职业城市家乡身份字段已删） */
 const XIN_MU_ZHONG_DE_TA_WEN_BEN_XIAN_ZHI: Record<string, number> = {
   wei_xin_ming: 30,
   zhen_shi_ming: 20,
@@ -130,7 +129,6 @@ luYou.post('/MBTI生成', 性别验证中间件, (qingQiu: RenZhengQingQiu, xian
   const shiFouZhaXing = jieXiBuErZhi(qingQiuTi, '渣男渣女变体', 'shi_fou_zha_xing')
   const suiJiXingGe = jieXiBuErZhi(qingQiuTi, '随机性格', 'sui_ji_xing_ge')
 
-  // FP-13：入参性别经唯一解析入口归一为内部规范形态，六种写法全收
   const zhengLiXingBie = 解析性别(xingBie)
   if (!zhengLiXingBie) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.ROLE_GENERATION_INPUT_INVALID)
@@ -153,8 +151,6 @@ luYou.post('/MBTI生成', 性别验证中间件, (qingQiu: RenZhengQingQiu, xian
       sui_ji_xing_ge: suiJiXingGe,
       xin_mu_zhong_de_ta: xinMuZhongDeTaJieXi.shu_ju,
     })
-    // 所见即所得：渣型/渣法/话术/暴露方式/识破线索是服务端隐藏判定数据，
-    // 生成响应一律投影后再下发，杜绝玩家开局即拿到全套识破线索
     return chengGongXiangYing(xiangYing, touYingWanJiaKeJianJiaoSe(jiaoSe))
   } catch (cuoWu) {
     chuLiJiaoSeCuoWu(xiangYing, cuoWu, CUO_WU_DAI_MA.ROLE_GENERATION_INITIALIZATION_FAILED)
@@ -176,17 +172,12 @@ luYou.post('/确认', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   }
 
   try {
-    // R3 提示注入防护：客户端提交的角色对象在入库前按白名单重建并清洗文本字段。
-    // 业务安全：白名单已剔除 hao_gan_du_zong_fen 与四个渣型隐藏字段，
-    // 落库前再按「MBTI + 是否渣型」重铸渣型数据、按种子重算初始好感度，
-    // 客户端自带的识破线索/初始分数一律无效。
     const xiZhengHouJiaoSe = chongZhuZhaXingZiDuan(
       qingXiRenSheDuiXiang(
         xuanZhongJiaoSe as unknown as Record<string, unknown>,
       ) as unknown as ShengChengJiaoSeJieGuo,
     )
     const baoCunHou = await baoCunJiaoSe(yongHu.yongHuId, xiZhengHouJiaoSe)
-    // 所见即所得：落库后的角色同样只回玩家可见投影
     return chengGongXiangYing(xiangYing, touYingWanJiaKeJianJiaoSe(baoCunHou))
   } catch (cuoWu) {
     chuLiJiaoSeCuoWu(xiangYing, cuoWu, CUO_WU_DAI_MA.ROLE_GENERATION_PERSISTENCE_FAILED)

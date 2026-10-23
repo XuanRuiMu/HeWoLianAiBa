@@ -13,14 +13,10 @@ import { fanYi, huoQuFanYi } from '../../config/translations'
 const dangQianMuLu = dirname(fileURLToPath(import.meta.url))
 const houDuanFanYiLuJing = resolve(dangQianMuLu, '../../config/translations.ts')
 
-/** 判据①：内部实现/第三方原文/协议英文不得上屏（备案号与算法备案号是待填占位，组件已下线故不在此列） */
 const XU_LIU_WU = /base64|DeepSeek|axios|DOMException|EncodingError|ECONNRESET|ECONNREFUSED|getaddrinfo|127\.0\.0\.1|localhost|localhost:|\/srv\/|\/app\/|SELECT\s|INSERT\s|UPDATE\s|DELETE\s|stack:|SQLSTATE|postgres|mysql|redis|password|api[_-]?key|bearer\s|jwt/i
-/** 判据②：占位符与脏值不得上屏 */
 const ZHAN_WEI = /\{\{|\}\}|undefined|null|NaN|\{tongYong\}|\{qiDong\}|\{jiaoSe\}|\{zhanJi\}|\{renZheng\}|\{anQuan\}|\{guanLiYuan\}|\{shenJi\}|\{shenHeLeiBie\}|\{AI\}|\{haoGanDu\}|\{junShi\}|\{haoYou\}|\{sheZhi\}|\{ziLiao\}|\{liaoTian\}|\{tiaoZhan\}|\{tongHua\}|\{fuPan\}|\{jieJu\}/
-/** 判据④：敷衍与装可爱 */
 const FU_YAN = /出错了|未知错误|请稍后重试|稍后再试|请稍后再试|开小差|不知道发生了什么|请稍候看看/
 const ZHUANG_KAI_A = /啦|呀|哦|呢~|吧~|~|！{2,}|么~|哈{2,}/
-/** 判据③：文案必须自带影响与下一步 */
 const XIAO_HUAN = /请/
 
 describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
@@ -56,9 +52,6 @@ describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
     })
 
     it('判据③：retryable=true 的码文案给出「可再做一次」的动作；retryable=false 的码不承诺「重试」按钮以外无解', () => {
-      // qiDong 界面的 6 个码只在容器启动阶段由运维看日志（进程已中止，HTTP 503 到不了玩家），
-      // 它们的「下一步」是运维动作，不纳入玩家侧重试一致性判据。
-      // 「重新提交/重新操作/再操作」是让用户改完再来一次（人工修正），与「重试」同一请求不同，不算违规。
       const 运维专用 = /^DOCKER_STARTUP_/
       const 违规: string[] = []
       for (const daiMa of dengLiCuoWuXianRongLieBiao) {
@@ -112,8 +105,6 @@ describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
     })
 
     it('判据④：无敷衍语与装可爱语气（AI 角色台词与结局叙事池属角色文风，另案裁决）', () => {
-      // 角色文风豁免（AI 对象的说话语气 + 结局叙事池的拖尾省略号），由「待用户裁决」用例显式登记，
-      // 不静默放过：新增同类文案会在这里被点名。
       const 角色文风 = /(^|\.)(AI|jieGuoTongGuanChi|jieGuoShiBaiChi|fuPan|junShi)\.|liaoTian\.(aiYuSuanYiYongJin|lianFaYuJing|zhuDongFenXiangTuPian)$/
       const 违规 = 全值()
         .filter(({ 路径 }) => !角色文风.test(路径))
@@ -132,10 +123,6 @@ describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
         .filter(({ 路径 }) => 角色文风.test(路径))
         .filter(({ 文本 }) => /\.\.\./.test(文本))
         .map(({ 路径 }) => 路径)
-      // 已知清单：AI 对象语气 4 键 3 条文案（额度用尽 liaoTian+AI 同串、连发预警、主动分享图片）
-      // + 结局叙事池 43 条拖尾省略号（原 44 条，恋爱胜利池 4 条旁白改写成角色原话后减少；
-      //   2026-10-21 新增「被对方删除」失败结局 3 条：jieGuoShiBaiChi.shi_bai_bei_cha_qu[0..2]）。
-      // 若有人新增同类文案，本用例会红并要求同步裁决记录。
       expect(装可爱.sort()).toEqual(
         [
           'fanYi.AI.aiYuSuanYiYongJin',

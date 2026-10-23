@@ -177,17 +177,6 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { huoQuFanYi } from '@/config/翻译表'
 
-/**
- * FP-14（需求 #13）：自绘出生日期选择器，替换原生 `input[type=date]`。
- * 原生控件的分段占位（"yyyy/mm/日"）由 UA 决定、页面代码不可改写，故整控件自绘：
- * 显示口径固定为 GB/T 7408-2005 扩展表示法 `YYYY-MM-DD`（零填充），对外契约仍是同一个字符串。
- * 校验真源（真实日期 / min / max / 周岁）不在本组件内复制，越界只夹紧不产出非法值，
- * 剩下的必填与未满 18 拦截仍由 views/登录内容.vue 的 jiSuanZhouSui 判定与既有翻译键报错。
- *
- * FP-A2：形态升级为「三段 + 日历浮层」双入口，两侧共用同一个 `yiQueRen` 与同一条外发通道，
- * 因此契约（`YYYY-MM-DD` 字符串、min/max 钳制、18 岁拦截归属）一个字都没动，新增的只是第二种录入姿势。
- * 浮层减动效归零：全组件零 transition / 零 animation / 零 @keyframes，开合与换月都是瞬时换面。
- */
 
 type DuanMing = 'nian' | 'yue' | 'ri'
 
@@ -207,10 +196,8 @@ const DUAN_QING_DAN: DuanDingYi[] = [
 const YUE_SHANG_XIAN = 12
 const RI_SHANG_XIAN = 31
 const FENGEFU = '-'
-/** 日历固定 6 行 × 7 列：首行补齐到周一后仍能容下 31 天 + 前后各留白的月份，不会因切月改变浮层高度 */
 const ZHOU_ZHANG_SHU = 7
 const RI_ZHOU_ZHANG = 6
-/** min/max 缺省时用这对兜底年（两位数年份会被 new Date 映射到 1900+，故不用 1/9999） */
 const NIAN_ZUI_XIAO = 1000
 const NIAN_ZUI_DA = 9999
 const XING_QI_JIAN = ['xingQiYi', 'xingQiEr', 'xingQiSan', 'xingQiSi', 'xingQiWu', 'xingQiLiu', 'xingQiRi'] as const
@@ -223,7 +210,6 @@ const XING_QI_MING = [
   'xingQiLiuMing',
   'xingQiRiMing',
 ] as const
-/** 日格上的方向键与 WASD = 键盘光标的日偏移：左右 ±1 天，上下 ±1 周 */
 const JIAO_DIAN_YI_ZOU: Partial<Record<string, number>> = {
   ArrowLeft: -1,
   ArrowRight: 1,
@@ -234,7 +220,6 @@ const JIAO_DIAN_YI_ZOU: Partial<Record<string, number>> = {
   w: -ZHOU_ZHANG_SHU,
   s: ZHOU_ZHANG_SHU,
 }
-/** 浮层内滚轮累计滚动量达到该值换一个月（普通滚轮一格约 100，触控板按累计量连续触发） */
 const GUN_LUN_HUAN_YUE_YU_ZHI = 50
 
 interface RiQiSan {
@@ -304,7 +289,6 @@ function yueTianShu(nian: number, yue: number): number {
   return new Date(nian, yue, 0).getDate()
 }
 
-/** 月份线性化：yyyy-mm ↔ 整数，供浮层按月导航与范围钳制共用一套比较口径 */
 function yueBianLiu(riQi: RiQiSan): number {
   return riQi.nian * 12 + (riQi.yue - 1)
 }
@@ -483,8 +467,6 @@ function dengJiDuanYinYong(ming: DuanMing, yuan: unknown): void {
 }
 
 function xuanZhongDuan(ming: DuanMing): void {
-  // 提交段值会重写 input.value 并把光标落到末尾，选择动作必须排在补丁之后，
-  // 否则下一次按键是"追加"而不是"替换"（原生分段控件在整段选中态下输入）
   void nextTick().then(() => {
     const yinYong = duanYinYong[ming]
     if (!yinYong) return
@@ -603,7 +585,6 @@ function chuLiAnJian(ming: DuanMing, shiJian: KeyboardEvent): void {
   luJing()
 }
 
-/* ── 日历浮层（FP-A2）：与三段共用 yiQueRen / waiFa()，故两侧永远同值 ── */
 
 const fanYiDaKai = computed(() => huoQuFanYi('ui', 'riQiDaKai'))
 const fanYiXuanZe = computed(() => huoQuFanYi('ui', 'riQiXuanZe'))
@@ -658,7 +639,6 @@ function riWenBen(riQi: RiQiSan): string {
 
 const zhouLie = computed<RiGe[][]>(() => {
   const yueYi = new Date(chaKanNian.value, chaKanYue.value - 1, 1)
-  // getDay() 以周日为 0，日历以周一为周首：加 6 再取模把周日挪到本周末尾
   const zhouShou = (yueYi.getDay() + 6) % ZHOU_ZHANG_SHU
   const shouGe = new Date(chaKanNian.value, chaKanYue.value - 1, 1 - zhouShou)
   const jin = jinRi.value
@@ -838,7 +818,6 @@ function chuLiTanchuangAnJian(shiJian: KeyboardEvent): void {
     xianZhuanJiaoDian(shiJian)
     return
   }
-  // 换日/换月/首末日的按键只在日格上生效：焦点停在年月导航钮或底部钮时，同一个方向键不该把焦点拽进网格
   if (!(shiJian.target as HTMLElement).classList.contains('rili-ri')) return
   const anJianMing = shiJian.key.length === 1 ? shiJian.key.toLowerCase() : shiJian.key
   const tianShu =
@@ -872,8 +851,6 @@ watch(
   },
 )
 
-// 双向同步：三段侧一旦定下完整日期，浮层的查看月与键盘光标就跟着走（浮层侧选中走同一条 yiQueRen，
-// 天然反向同步），因此两个入口不需要各自的"当前值"副本
 watch(zuHeZhi, (zhi) => {
   const riQi = jieXiRiQi(zhi)
   if (!riQi) return
@@ -883,12 +860,7 @@ watch(zuHeZhi, (zhi) => {
 </script>
 
 <style scoped>
-/* 外观一律吃既有令牌与继承值：本组件内不出现像素字面量，也不出现色值字面量。
-   字段几何（width/padding/发丝线/字号）由宿主视图的 .fenlie-shuru 承担——它挂在组件根元素上，
-   与其余字段共用同一套度量（FP-03c 静置边界、FP-04b 纵向间距的判据原点）。
-   日历浮层的几何与面色全部来自共用 :root 令牌（--rili-*）与两档共有的语义色令牌
-   （--beijing-kaopian / --biankuang-yanse / --wenben-* / --yinying-yanse / --zhuse），
-   组件内零 :root[data-theme=...] 分支 ⇒ 深浅两档结构逐字同构、只有颜色取值不同。 */
+
 .chushengriqi {
   display: flex;
   align-items: center;
@@ -951,7 +923,7 @@ watch(zuHeZhi, (zhi) => {
   height: var(--rili-anniu-chicun);
   padding: var(--jiange-xiao);
   color: inherit;
-  /* 与宿主 .fudong-biaoqian 的 0.62 弱化档同值：日历钮是字段的配角，不与已选值抢视线 */
+  
   opacity: 0.62;
 }
 
@@ -989,7 +961,7 @@ watch(zuHeZhi, (zhi) => {
   border: var(--shuru-xian-changtai-kuan-du) solid var(--biankuang-yanse);
   border-radius: var(--rili-tanchuang-yuan-jiao);
   color: var(--wenben-zhuse);
-  /* 浮层高度由遮罩 + 面色差 + 一圈发丝边框给足，不另立第四种阴影真源（故本组件零 box-shadow） */
+  
 }
 
 .rili-tou-bu {
@@ -1039,7 +1011,7 @@ watch(zuHeZhi, (zhi) => {
   gap: var(--rili-tanchuang-zhou-ju);
 }
 
-/* 行只承载 ARIA 的 row 语义，几何交回外层栅格：display:contents 让 7 列贯通，行盒不参与布局 */
+
 .rili-zhou-tou-hang,
 .rili-zhou-hang {
   display: contents;
@@ -1066,7 +1038,7 @@ watch(zuHeZhi, (zhi) => {
   border-radius: var(--rili-tanchuang-yuan-jiao);
 }
 
-/* 相邻月补位格只降一档灰度，不并排禁用外观：它们仍是可达的落点，aria-disabled 才是权威判据 */
+
 .rili-ri--fu-wei {
   color: var(--wenben-tishi);
 }
@@ -1075,15 +1047,14 @@ watch(zuHeZhi, (zhi) => {
   background-color: var(--yinying-yanse);
 }
 
-/* 选中态靠"填色 + 字重"两轴同时表达，不只靠颜色（色觉差异下仍可分辨） */
+
 .rili-ri--xuan-zhong {
   background-color: var(--beijing-ciuse);
   color: var(--wenben-zhuse);
   font-weight: 700;
 }
 
-/* 今日标识用圆点，与"填色"的选中态形状上就分得开。圆点绝对定位而不是排进流里：
-   排进流会让带点那一格的数字被顶上去，整张网格的数字就对不齐了。 */
+
 .rili-ri--jin-ri::after {
   content: '';
   position: absolute;

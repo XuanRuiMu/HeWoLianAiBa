@@ -45,7 +45,6 @@ luYou.get('/:sha256', async (qingQiu: Request, xiangYing: Response) => {
       return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('liaoTian', 'meiTiBuCunZai'))
     }
 
-    // 低危顺手项：wenjian 类下载强制附件形式，防止内联渲染 HTML/SVG 类内容
     if (String(chaXun.rows[0].类别 || '') === 'wenjian') {
       const anQuanWenJianMing = String(chaXun.rows[0].原始文件名 || 'download')
         .replace(/[\r\n"\\]/g, '_')
@@ -53,7 +52,6 @@ luYou.get('/:sha256', async (qingQiu: Request, xiangYing: Response) => {
       xiangYing.setHeader('X-Content-Type-Options', 'nosniff')
     }
 
-    // 关闭 send 自带的 ETag/Cache-Control/Last-Modified，改用内容哈希作为强校验器
     xiangYing.setHeader('ETag', `"${di}"`)
     xiangYing.setHeader('Cache-Control', 'private, max-age=31536000, immutable')
     xiangYing.type(String(chaXun.rows[0].MIME))

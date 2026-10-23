@@ -30,9 +30,7 @@ function jieXiRedisLianJie(lianJie: string): { shiFouTLS: boolean; zhuJi: string
 
 const redisPeiZhi = jieXiRedisLianJie(peiZhi.redisLianJie)
 
-// YH-023 rediss透传tls：加密连接串必须走TLS，禁明文降级；启动校验告警见server.ts启动前强校验
 if (redisPeiZhi.shiFouTLS) {
-  // eslint-disable-next-line no-console -- 配置加载期告警:本模块被日志引擎反向依赖,引入logger有循环初始化风险
   console.info('[Redis] 检测到rediss加密连接串，已启用TLS传输')
 }
 
@@ -43,10 +41,6 @@ export const redis = new Redis({
   db: redisPeiZhi.ShuJuKu,
   ...(redisPeiZhi.shiFouTLS ? { tls: {} } : {}),
   maxRetriesPerRequest: null,
-  // YH-063 Redis熔断：命令超时+熔断，断线无限排队等于全站雪崩
-  // 根因：无超时无熔断，断线全站hang；收敛为命令超时3s+失败计数熔断+认证链明确语义
-  // 重连必须持续：旧实现第3次失败即返回null，Redis一次短暂重启就会让客户端永久失联，
-  // 只能重启后端才能恢复。改为指数退避封顶5秒持续重连；排队风险由3秒命令超时与熔断承担。
   commandTimeout: 3000,
   retryStrategy: (ciShu) => Math.min(ciShu * 500, 5000),
   enableReadyCheck: true,
@@ -56,7 +50,6 @@ const YU_RE_READY_CHAO_SHI_HAO_MIAO = 15000
 
 let jiuXuChengNuo: Promise<void> | null = null
 
-/** 等待 Redis 握手就绪；并发调用共用同一个等待，只挂一个 ready 监听（防监听器泄漏告警）。 */
 export function dengDaiRedisJiuXu(): Promise<void> {
   if (redis.status === 'ready') return Promise.resolve()
   if (!jiuXuChengNuo) {
@@ -95,7 +88,6 @@ redis.on('ready', () => {
   rongDuanZhuangTai = 'biHe'
 })
 
-// YH-063 认证链明确失败语义：熔断开路时直接抛错降级，禁无限等待
 export function redisRongDuanShiFouKaiLu(): boolean {
   if (rongDuanZhuangTai === 'kaiLu' && Date.now() - rongDuanKaiLuShiJian > RONG_DUAN_HUI_FU_HAO_MIAO) {
     rongDuanZhuangTai = 'banKai'

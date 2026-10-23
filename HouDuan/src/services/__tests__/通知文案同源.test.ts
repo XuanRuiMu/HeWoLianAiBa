@@ -4,12 +4,6 @@ import { describe, expect, it } from 'vitest'
 import { fanYi, huoQuFanYiMiaoShu } from '../../config/translations'
 import { fengJinTongZhiZhengWen, jiSuanZhangHaoFengJinShiChang } from '../账号封禁'
 
-/**
- * L-44（[P0] 翻译文件优先）收口守卫：玩家可见通知文案的唯一真源是 config/translations.ts。
- * ① 源码扫描：chuangJianTongZhi 的 biao_ti/nei_rong 不得再出现中文字面量（两个文件 + 全后端）
- * ② 渲染等价：封禁通知 3 级别 × 有/无解封时间共 6 组合，整句与迁移前逐字相同
- * ③ 键存在性：新键都在 fanYi 里、非空串，且内容一字未改
- */
 
 const 源码根 = resolve(__dirname, '../..')
 const 业务文件: ReadonlyArray<readonly [string, string]> = [
@@ -21,7 +15,6 @@ function 读源(目录: string, 文件: string): string {
   return readFileSync(resolve(源码根, 目录, 文件), 'utf-8')
 }
 
-/** 按括号深度抽出每个 函数名( 调用的实参片段；字符串内的括号不参与配对 */
 function 抽调用体(源: string, 函数名: string): string[] {
   const 结果: string[] = []
   let 游标 = 0
@@ -59,7 +52,6 @@ function 遍历TS(目录: string, 收集: string[] = []): string[] {
   return 收集
 }
 
-/** 本环境 V8（Node 26）不支持 \p{Han} 简写，必须写全称 \p{Script=Han} */
 const 中文 = '\\p{Script=Han}'
 const 中文字面量 = new RegExp(`['"\`][^'"\`\\n]*${中文}[^'"\`\\n]*['"\`]`, 'u')
 const 翻译取值 = /^(?:huoQuFanYi\('tongZhi',\s*'\w+'\)|fengJinTongZhiZhengWen\(|neiRong\.slice\(0, 50\) \|\| huoQuFanYi\('tongZhi',\s*'\w+'\))/
@@ -91,7 +83,6 @@ describe('通知文案同源：源码扫描钉死 chuangJianTongZhi 不再携带
   for (const [目录, 文件] of 业务文件) {
     it(`${目录}/${文件} 的每个 chuangJianTongZhi 调用体都无中文字面量`, () => {
       const 调用体 = 抽调用体(读源(目录, 文件), 'chuangJianTongZhi')
-      // 先钉「扫到了真实调用」，否则改名即可让本用例假绿
       expect(调用体.length, `${目录}/${文件} 未扫到 chuangJianTongZhi 调用`).toBeGreaterThan(0)
       for (const 体 of 调用体) {
         expect(中文字面量.test(体), `硬编码文案：${体}`).toBe(false)
@@ -136,7 +127,6 @@ describe('通知文案同源：源码扫描钉死 chuangJianTongZhi 不再携带
 })
 
 describe('通知文案同源：封禁通知整句与迁移前逐字相同（渲染等价）', () => {
-  // 时间文本仍用迁移前同一个 toLocaleString('zh-CN') 表达式取，句子骨架逐字硬编码在期望值里
   const 解封时间 = new Date(2026, 0, 2, 8, 0, 0, 0)
   const 时间文本 = 解封时间.toLocaleString('zh-CN')
 
@@ -201,12 +191,10 @@ describe('封禁通知的时长陈述与 jiSuanZhangHaoFengJinShiChang 同源', 
   const 分 = 60 * 1000
   const 天 = 24 * 60 * 60 * 1000
 
-  /** 测试侧独立换算：真实毫秒 → 「封禁N天/N分钟」，与实现各算各的，漂移必红灯 */
   function 真实时长文案(haoMiao: number): string {
     return haoMiao % 天 === 0 ? `封禁${haoMiao / 天}天` : `封禁${haoMiao / 分}分钟`
   }
 
-  // 与 账号封禁.ts 的定级口径一致（第3次起即 yong_feng），本用例只测文案，不测定级
   const 各级别: Array<[number, 'feng_jin_1_fen' | 'feng_jin_1_tian' | 'yong_feng']> = [
     [1, 'feng_jin_1_fen'],
     [2, 'feng_jin_1_tian'],
@@ -227,7 +215,6 @@ describe('封禁通知的时长陈述与 jiSuanZhangHaoFengJinShiChang 同源', 
       )
       expect(正文).toContain(`账号${时长}`)
       expect(正文).not.toContain('{')
-      // 时长陈述只随 ciShu（真实毫秒）变，换掉级别枚举也必须同一句 —— 钉「不再拿 jiBie 生成时长」
       for (const 别的级别 of ['feng_jin_1_fen', 'feng_jin_1_tian', 'yong_feng'] as const) {
         if (别的级别 === jiBie) continue
         expect(fengJinTongZhiZhengWen(ciShu, 别的级别, null), `级别 ${别的级别} 仍在左右时长陈述`).toBe(

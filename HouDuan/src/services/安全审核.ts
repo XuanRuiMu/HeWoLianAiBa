@@ -83,8 +83,6 @@ export async function shenHeNeiRongAnQuan(xiaoXi: string): Promise<AnQuanShenHeJ
     try {
       const jiuCiKuSaoMiao = saoMiaoJiuCiKu(xiaoXi)
       if (jiuCiKuSaoMiao.weiGui) {
-        // eslint-disable-next-line no-console -- 安全与合规.test 断言此输出含「已降级」(行为契约)
-        console.error('[安全审核] AI审核服务不可用，已降级为本地词库扫描')
         return {
           wei_gui: true,
           lei_xing: '本地词库拦截',

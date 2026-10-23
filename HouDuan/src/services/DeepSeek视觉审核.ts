@@ -59,7 +59,6 @@ function jieXiShenHeJieGuo(neiRong: string): AnQuanShenHeJieGuo {
   const yanZhongChengDu = shuJu['严重程度'] ?? shuJu['yan_zhong_cheng_du']
   const liYou = String(shuJu['理由'] ?? shuJu['li_you'] ?? '')
 
-  // 只有确信度 > 0.8 且类型在六大类别中才算违规
   const shiHeFaLeiBie = SHEN_HE_WEI_GUI_LEI_BIE.includes(leiXing)
   const zhengQueWeiGui = weiGui && queXinDu > 0.8 && shiHeFaLeiBie
 
@@ -80,10 +79,6 @@ function xiuZhengYanZhongChengDu(
   return undefined
 }
 
-/**
- * 本文件用到的结论缓存语句。导出是为了让真库测试原样执行同一串 SQL ——
- * 与 routes/表情.ts 的 BIAO_QING_YU_JU 同一口径，不存在「测试跑通、代码里是另一串」。
- */
 export const SHEN_HE_JIE_LUN_YU_JU = {
   查结论: `SELECT "违规" AS wei_gui, "类别" AS lei_xing, "理由" AS li_you,
                   "严重程度" AS yan_zhong_cheng_du
@@ -92,11 +87,6 @@ export const SHEN_HE_JIE_LUN_YU_JU = {
            VALUES ($1, $2, $3, $4, $5) ON CONFLICT ("SHA256") DO NOTHING`,
 } as const
 
-/**
- * 按内容哈希取既有审核结论（029 / L-47）。
- * 查不到、表尚未建（容器未重建期间旧库无此表）、库不可达，一律返回 null 让调用方去真审 ——
- * 缓存是省外呼的手段，不是放行的理由，任何缓存侧故障都只能退化成「多审一次」。
- */
 async function chaXunJieLunHuanCun(sha256: string): Promise<AnQuanShenHeJieGuo | null> {
   let jieGuo: { rows: Array<Record<string, unknown>> }
   try {
@@ -118,7 +108,6 @@ async function chaXunJieLunHuanCun(sha256: string): Promise<AnQuanShenHeJieGuo |
   }
 }
 
-/** 只落模型真给出的判定；写失败顶多下次再审一次，不影响本次结论 */
 async function xieRuJieLunHuanCun(sha256: string, jieLun: AnQuanShenHeJieGuo): Promise<void> {
   try {
     await 数据库.query(SHEN_HE_JIE_LUN_YU_JU.写结论, [
@@ -146,7 +135,6 @@ export async function shenHeTuPianAnQuan(wenJianLuJing: string): Promise<AnQuanS
     return { wei_gui: true, lei_xing: SHEN_HE_XI_TONG_CUO_WU_JIAN, li_you: '图片读取失败' }
   }
 
-  // 哈希由被审字节本地算出（不信调用方传参，否则一句假哈希就能把任意结论挂到任意内容上）
   const neiRongHaXi = createHash('sha256').update(tuPianHuanChong).digest('hex')
   const mingZhong = await chaXunJieLunHuanCun(neiRongHaXi)
   if (mingZhong) return mingZhong
@@ -171,7 +159,6 @@ export async function shenHeTuPianAnQuan(wenJianLuJing: string): Promise<AnQuanS
     return jieLun
   } catch (cuoWu) {
     debug日志.error('图片审核', 'AI视觉审核调用失败，安全兜底拦截', { xiang_qing: { lu_jing: wenJianLuJing, cuo_wu: String(cuoWu) } })
-    // 兜底不是审核结论，绝不写缓存：一次服务故障不能把某张图永久钉成违规
     return {
       wei_gui: true,
       lei_xing: SHEN_HE_FU_WU_BU_KE_YONG_JIAN,

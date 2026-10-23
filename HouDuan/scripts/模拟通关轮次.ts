@@ -1,11 +1,4 @@
 #!/usr/bin/env ts-node
-/**
- * A-3 通关轮次E2E模拟脚本
- * 
- * 使用 mock 评分器驱动全链路：评判→更新好感度（含衰减+保底）→判定胜利(≥800且表白)
- * 500个模拟用户，初始分在[300,500]随机，记录每用户轮数
- * 断言 P50≤40轮、P90≤46轮
- */
 
 import { randomUUID } from 'crypto'
 import bcrypt from 'bcryptjs'
@@ -69,39 +62,33 @@ async function main(): Promise<void> {
   console.log(`P90阈值: ${P90_YUE_SHU}`)
   console.log('')
 
-  // 设置 mock 评分器
   sheZhiMockTiaoYong(async (canShu) => {
     mockTiaoYongCount++
     const xiaoXi = canShu.xiaoXi
     const yongHuXiaoXiObj = xiaoXi.find((x) => x.jiaoSe === 'user')
     const promptText = typeof yongHuXiaoXiObj?.neiRong === 'string' ? yongHuXiaoXiObj.neiRong : JSON.stringify(yongHuXiaoXiObj?.neiRong)
 
-    // 从 prompt 中提取真实的用户消息（在 "用户消息：" 后面，被 <<<USER_CONTENT_START>>> 和 <<<USER_CONTENT_END>>> 包裹）
     const userMsgMatch = promptText.match(/用户消息：<<<USER_CONTENT_START>>>([\s\S]*?)<<<USER_CONTENT_END>>>/)
     const neiRongStr = userMsgMatch ? userMsgMatch[1] : promptText
 
-    // 保守打分分支：根据关键词判断类型（使用下限+随机上浮，模拟真实评分波动）
     let xin_ren_du_bian_hua = 0
     let qin_mi_du_bian_hua = 0
     let qu_wei_du_bian_hua = 0
     let guan_huai_du_bian_hua = 0
 
     if (neiRongStr.includes('寒暄') || neiRongStr.includes('你好') || neiRongStr.includes('早安') || neiRongStr.includes('晚安')) {
-      // 寒暄 ±3 下限，取 1~4
       const base = 1 + Math.floor(Math.random() * 4)
       xin_ren_du_bian_hua = base
       qin_mi_du_bian_hua = base
       qu_wei_du_bian_hua = base
       guan_huai_du_bian_hua = base
     } else if (neiRongStr.includes('共鸣') || neiRongStr.includes('理解') || neiRongStr.includes('懂我')) {
-      // 共鸣 +50下限，取 50~60
       const base = 50 + Math.floor(Math.random() * 11)
       xin_ren_du_bian_hua = base
       qin_mi_du_bian_hua = base
       qu_wei_du_bian_hua = base
       guan_huai_du_bian_hua = base
     } else {
-      // 正常 +26下限，取 26~40
       const base = 26 + Math.floor(Math.random() * 15)
       xin_ren_du_bian_hua = base
       qin_mi_du_bian_hua = base
@@ -122,7 +109,6 @@ async function main(): Promise<void> {
     }
   })
 
-  // 创建模拟用户
   const moNiYongHuLieBiao: MoNiYongHu[] = []
   console.log('创建模拟用户...')
   for (let i = 0; i < MO_NI_YONG_HU_SHU; i++) {
@@ -162,7 +148,6 @@ async function main(): Promise<void> {
   }
   console.log('用户创建完成\n')
 
-  // 运行模拟
   console.log('开始模拟通关...')
   const shengLiLunShu: number[] = []
   let shengLiShu = 0
@@ -174,7 +159,6 @@ async function main(): Promise<void> {
     while (dangQianFen < SHENG_LI_FEN && lunShu < MAX_LUN_SHU) {
       lunShu++
 
-      // 模拟用户消息（轮询不同类型以触发不同打分分支）
       let yongHuXiaoXi = '正常聊天内容'
       if (lunShu % 10 === 0) {
         yongHuXiaoXi = '寒暄问候'
@@ -182,7 +166,6 @@ async function main(): Promise<void> {
         yongHuXiaoXi = '我们有共鸣，彼此理解'
       }
 
-      // 调用好感度评判（内部会走 mock）
       const pingPanJieGuo = await pingPanHaoGanDuBianHuaNei(
         yongHuXiaoXi,
         '角色回复内容',
@@ -193,7 +176,6 @@ async function main(): Promise<void> {
         yongHu.jiaoSeId,
       )
 
-      // 更新好感度（含衰减+保底系数）
       const gengXinJieGuo = await gengXinHaoGanDu(
         yongHu.yongHuId,
         yongHu.jiaoSeId,
@@ -209,7 +191,6 @@ async function main(): Promise<void> {
 
       dangQianFen = gengXinJieGuo.hao_gan_du.zong_fen
 
-      // 检查胜利条件：≥800 且表白
       if (dangQianFen >= SHENG_LI_FEN) {
         const biaoBaiJieGuo = await chuLiYongHuBiaoBai(yongHu.yongHuId, yongHu.jiaoSeId, dangQianFen)
         if (biaoBaiJieGuo && biaoBaiJieGuo.jie_guo_lei_xing === 'sheng_li_ai_qing') {
@@ -244,7 +225,6 @@ async function main(): Promise<void> {
   console.log(`P90轮数: ${p90} (阈值: ${P90_YUE_SHU}) ${p90 <= P90_YUE_SHU ? '✓' : '✗'}`)
   console.log(`Mock 调用次数: ${mockTiaoYongCount}`)
 
-  // 清理数据
   console.log('\n清理模拟数据...')
   const yongHuIds = moNiYongHuLieBiao.map((u) => u.yongHuId)
   await qingLiMoNiShuJu(yongHuIds)
@@ -252,7 +232,6 @@ async function main(): Promise<void> {
   await 数据库.end()
   await redis.quit()
 
-  // 验收判定
   const p50Pass = p50 <= P50_YUE_SHU
   const p90Pass = p90 <= P90_YUE_SHU
   const passRatePass = shengLiShu >= MO_NI_YONG_HU_SHU * 0.8

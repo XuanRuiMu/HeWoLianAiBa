@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { readFileSync, writeFileSync } from 'fs'
 import { resolve } from 'path'
 import {

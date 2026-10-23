@@ -48,7 +48,6 @@ async function main() {
     console.error('迁移失败:', 错误 instanceof Error ? 错误.message : String(错误))
     process.exitCode = 1
   } finally {
-    // 关掉连接池让进程自然退出：process.exit() 在管道下会截断未 flush 的 diff 输出
     await 数据库.end().catch(() => undefined)
   }
 }

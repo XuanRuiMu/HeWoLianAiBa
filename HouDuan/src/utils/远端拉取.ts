@@ -35,7 +35,6 @@ function shiNeiWangDiZhi(diZhi: string): boolean {
   return false
 }
 
-/** YH-015 服务端拉取SSRF收敛：https+域名白名单+拒内网+大小超时上限+流式落盘 */
 export async function yanZhengYuanChengURL(url: string): Promise<{ he_fa: boolean; ti_shi: string; jieXi?: URL }> {
   let jieXi: URL
   try {
@@ -67,7 +66,6 @@ export async function yanZhengYuanChengURL(url: string): Promise<{ he_fa: boolea
   return { he_fa: true, ti_shi: '', jieXi }
 }
 
-/** YH-015 流式落盘下载：边下边限大小，超限即删，失败不扣配额由调用方保证（先下载后占配额） */
 export async function liuShiXiaZaiYuanChengWenJian(
   url: string,
   muBiaoLuJing: string,

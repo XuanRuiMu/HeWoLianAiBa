@@ -7,10 +7,6 @@ interface Use表情提示条返回值 {
   yinXia: () => void
 }
 
-/**
- * 「我的表情」写入结果的状态条（role="status"）：成功与「已在库」是两种口径，
- * 不复用红色错误行；到点自动消失，离页与切面板由调用方显式收回，不留待触发定时器。
- */
 export function use表情提示条(): Use表情提示条返回值 {
   const tiShi = ref<string | null>(null)
   let tiShiDingShiQi: ReturnType<typeof setTimeout> | null = null

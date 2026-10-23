@@ -2,10 +2,6 @@ import { AI_PEI_ZHI, yingYongHuiDuCanShu } from './AI配置'
 import type { MoXingCanShu } from './AI配置'
 import type { AIJiaoSeXinXi } from '../types'
 
-/**
- * 从 AI对象人设就地构造参数上下文的 jiaoSe 部分。
- * 全项目唯一的“人设 → 参数上下文”换算点（避免 FA_SAN_GUAN_JIAN_CI 与发散思维判定重复散落）。
- */
 export function gouJianJiaoSeShangXiaWen(
   jiaoSe?: AIJiaoSeXinXi,
 ): CanShuShangXiaWen['jiaoSe'] {
@@ -22,10 +18,6 @@ export function gouJianJiaoSeShangXiaWen(
   }
 }
 
-/**
- * 动态参数上下文：由上游（FP-03 上下文贯通）传入 AI对象人设、关系阶段、当前场景。
- * 本文件仅消费该上下文，不做任何 AI 业务逻辑。
- */
 export interface CanShuShangXiaWen {
   jiaoSe?: {
     ie_lei_xing?: 'I' | 'E'
@@ -39,10 +31,8 @@ export interface CanShuShangXiaWen {
   changJing?: 'riChang' | 'chaoJia' | 'biaoBai' | 'langMan' | 'anWei' | 'shenJingBing' | string
 }
 
-/** 慢热型好感度评判加成系数（方案A：抵消前期冷淡惩罚） */
 export const MAN_RE_HAO_GAN_DU_JIA_CHENG = 1.15
 
-/** 判断是否为慢热型 */
 export function shiFouManRe(shangXiaWen?: CanShuShangXiaWen): boolean {
   return shangXiaWen?.jiaoSe?.re_shen_lei_xing === '慢热'
 }
@@ -54,7 +44,6 @@ const NUAN_XING = ['温柔', '浪漫', '热情', '活泼', '撒娇', '黏人', '
 const LI_XING = ['理性', '冷静', '严谨', '克制', '高冷', '毒舌', '冷漠']
 const FA_SAN_GUAN_JIAN_CI = ['发散', '无厘头', '脑洞', '恶搞', '沙雕']
 
-/** 官方口径：思考模式下 top_p 生效但小于该值会被抬升至此下限 */
 const TOP_P_SI_KAO_XIA_XIAN = 0.95
 
 function qianZhiWenDu(wenDu: number): number {
@@ -62,14 +51,6 @@ function qianZhiWenDu(wenDu: number): number {
   return Number(qianZhi.toFixed(2))
 }
 
-/**
- * 依据场景基座 + 人设修正 + 关系修正 + 场景修正，动态计算全部 AI 调用参数。
- * 不传 shangXiaWen 时仅用基座值（向后兼容，行为与旧固定值一致）。
- *
- * 官方生效条件（https://api-docs.deepseek.com/zh-cn/guides/thinking_mode）：思考模式下 temperature 不生效、
- * top_p 生效但下限 TOP_P_SI_KAO_XIA_XIAN；非思考模式下 top_p 恒为 1.0、传入被忽略。
- * 因此思考场景不再计算也不再下发温度（历史上一路算了都白算），非思考场景不再下发 top_p。
- */
 export function jiSuanAIChanShu(
   moXingLeiXing: keyof typeof AI_PEI_ZHI.moXing,
   shangXiaWen?: CanShuShangXiaWen,

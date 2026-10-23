@@ -479,8 +479,6 @@ const paiXuXuanXiangList = computed<PaiXuXuanXiang[]>(() => [
   { zhi: 'xingGe', biaoTi: huoQuFanYi('zhanJi', 'paiXuXingGe') },
 ])
 
-// FP-JC 用户裁决：错误只走 RequestError 唯一出口（游戏化文案+恋爱码），
-// 本横幅不再直显仓库的 yingXiang 口径，只保留非错误的操作提示
 const zhanJiXianShiTiShi = computed(() => tiShiXinXi.value)
 
 const zongYeShu = computed(() =>
@@ -857,8 +855,6 @@ function daKaiFuPan(dangAn: 档案详情) {
   })
 }
 
-// YH-158 结局分享：canvas 手绘战报海报，出口三级降级（系统分享 → 下载 → 复制文案），每条出口必有可见反馈。
-// 不画头像：档案字段本就无头像，跨域图会污染画布使导出抛错；改用卡片同款 emoji 标识（同一函数单源）。
 type FenXiangChuKou = 'fenxiang' | 'quxiao' | 'xiaZai' | 'fuZhi' | 'shibai'
 
 const TI_SHI_HAO_MIAO = 2600
@@ -918,7 +914,6 @@ function gouJianZhanBaoShuRu(dangAn: 档案详情): ZhanBaoShuRu {
 
 function keYiFenXiangWenJian(wenJian: File): boolean {
   if (typeof navigator.share !== 'function') return false
-  // canShare 缺失即视为不支持带文件分享（不支持时硬调 share 会直接报错，故不猜）
   if (typeof navigator.canShare !== 'function') return false
   try {
     return navigator.canShare({ files: [wenJian] })
@@ -931,7 +926,6 @@ function shengChengFenXiangWenJian(tuPian: Blob, wenJianMing: string): File | nu
   try {
     return new File([tuPian], wenJianMing, { type: 'image/png' })
   } catch {
-    // 环境造不出 File（旧内核）：只影响系统分享，下载与复制仍可用
     return null
   }
 }
@@ -1203,21 +1197,15 @@ defineExpose({
   flex-direction: column;
   height: 100%;
   width: 100%;
-  /* 底板：不随内容滚动的整页底。全屏路由下内容直接叠在动画背景上会糊成一片，
-     浅色 #F5F5F5 / 深色 #292929 各带一档透明度，令牌见 styles/设计令牌.css */
+  
   background: var(--yemian-di-beijing);
-  /* 移动端卡片左右两列的横向基准：左列（勾选+头像+信息）宽 74px，由 .zhanji-zuo 的 flex-basis
-     与 .zhanji-you 的 margin-left 共读（几何常量，非间距档，故不占 --jiange-* 名额） */
+  
   --zhanji-yi-dong-zuo-kuan: 74px;
 }
 
 .zhanji-liebiao {
   flex: 1;
-  /* 上间距由容器自身 margin 承担，容器内 padding-top 必须保持 0：
-     滚动容器一旦带 padding-top，其内 position:sticky;top:0 的后代（.zhanji-tishi）
-     会整体下移同样距离，滚动时上方露出内容穿透带（BlindSpot 实测复现，见
-     .agents/evidence/traces/FP-K1b批1-验证-20260929-2.md 修正1）。
-     margin 在 flex 列容器内不塌陷，故与下侧（标签栏 padding-bottom + gap + 空态卡 margin-top）等效对称。 */
+  
   margin-top: var(--jiange-zhong);
   padding: 0 var(--jiange-zhong) var(--jiange-zhong);
   display: flex;
@@ -1229,7 +1217,7 @@ defineExpose({
   scrollbar-color: var(--gundong-tiao-huakuai) transparent;
 }
 
-/* FP-20 保留特例：过往战绩列表需要透明轨道露出页面渐变底，global 轨道 --gundong-tiao-guidao 是半透明灰会显出灰带，故轨道不能用 global 默认；宽/滑块/悬停三规则与 global 同令牌纯重复已删，外观吃单一真源 */
+
 .zhanji-liebiao::-webkit-scrollbar-track {
   background: transparent;
 }
@@ -1241,7 +1229,7 @@ defineExpose({
 
 .jiazai-zhuangtai,
 .kong-zhuangtai {
-  /* 纵向 margin 归零：与滚动容器的 gap 单机制收口（flex 内 margin 不与 gap 合并，改前叠加致下侧 +8/+4） */
+  
   margin: 0 var(--jiange-4);
   padding: calc(var(--jiange-da) + var(--jiange-zhong)) var(--jiange-da);
   text-align: center;
@@ -1282,7 +1270,7 @@ defineExpose({
   color: #14141a;
 }
 
-/* 分享反馈：sticky 在滚动容器顶部，滚动时不被分类标题盖住（10 是本组件 sticky 标题的局部堆叠位） */
+
 .zhanji-tishi {
   position: sticky;
   top: 0;
@@ -1599,8 +1587,7 @@ defineExpose({
   color: #8b8b98;
 }
 
-/* 卡片外层 = 定位槽：SortableJS 在拖拽中把它的 computed 矩阵当成指针增量的除数，
-   所以外层自身绝不能带 rotate/scale，视觉一律下沉到 .zhanji-kapian-nei。 */
+
 .zhanji-kapian {
   display: block;
   cursor: grab;
@@ -1626,7 +1613,7 @@ defineExpose({
   box-shadow: 6px 6px 0 rgba(242, 242, 237, 0.25);
 }
 
-/* 拖拽中指针就压在落点空位上，别让 hover 抬升叠在预览上（鬼影起步位置会跟着抖 2px） */
+
 .zhanji-liebiao.tuo-zhuai-zhong .zhanji-kapian:hover > .zhanji-kapian-nei {
   transform: none;
 }
@@ -1846,7 +1833,7 @@ defineExpose({
   color: #14141a;
 }
 
-/* 分享：霓虹拱廊主社交动作 —— 亮黄实底 + 粗黑描边 + 硬阴影，尺寸/圆角与继续/复盘完全一致 */
+
 .caozuo-anniu.fenxiang {
   background: #ffd500;
   color: #14141a;
@@ -1881,8 +1868,7 @@ defineExpose({
 }
 
 .zhanji-kapian.sortable-ghost {
-  /* 实时预览：被拖卡片的「落点空位」——霓虹虚线轮廓，隐藏卡片内容，仅作落点提示。
-     用 outline 而非 border：外层此刻是纯定位槽，加 border 会把这一格撑高，兄弟卡片跟着跳一次。 */
+  
   background: rgba(255, 45, 149, 0.06) !important;
   outline: var(--jujiao-huan-kuan-du) dashed var(--jujiao-huan-yanse);
   border-radius: 16px;
@@ -1890,7 +1876,7 @@ defineExpose({
     0 0 0 4px var(--xuanzhong-guangyun-yanse),
     0 10px 26px rgba(255, 45, 149, 0.2) !important;
   pointer-events: none;
-  /* Req1：拖拽预览空位同样禁止选中文字 */
+  
   user-select: none;
   -webkit-user-select: none;
 }
@@ -1905,11 +1891,7 @@ defineExpose({
   -webkit-user-select: none;
 }
 
-/* 跟随光标的克隆体（force-fallback 的鬼影）。
-   库在 _onTouchMove 里把指针增量除以「鬼影自身 computed 矩阵的 a/d」，因此外层不得带 rotate/scale，
-   视觉与起手倾斜全部下沉到内层。这里绝不能声明 transform（连 none !important 也不行）：作者样式的
-   !important 优先级高于库写到 style 上的内联 matrix，会把鬼影钉死在插入点（实测跟随比值 0）。
-   transition 必须为 0，否则每次写 matrix 都被缓动，鬼影恒落后指针。 */
+
 .zhanji-kapian.sortable-drag {
   transition: none !important;
   background: transparent !important;
@@ -1917,7 +1899,7 @@ defineExpose({
   box-shadow: none !important;
   opacity: 1 !important;
   cursor: grabbing !important;
-  /* Req1：拖拽过程中禁止选中文字 */
+  
   user-select: none;
   -webkit-user-select: none;
 }
@@ -1929,10 +1911,7 @@ defineExpose({
   box-shadow:
     0 20px 50px rgba(0, 0, 0, 0.5),
     6px 6px 0 rgba(255, 213, 0, 0.35);
-  /* 起手「正→斜」：鬼影是 _appendGhost 新建并首次插入的元素，首绘没有前值，
-     transition 在结构上不可能运行，只有 @keyframes 能从恒等矩阵插值到倾斜态（keyframes 的
-     from 帧就是「正」态首绘，等价于「先正插、下一帧再斜」且不吃一帧抖动）。曲线仍取单一令牌源，
-     不在此写第二份时长/曲线。 */
+  
   animation: kapian-qishou-qingxie 220ms var(--quxian-huan-ying) both;
 }
 
@@ -1945,7 +1924,7 @@ defineExpose({
   }
 }
 
-/* 分页小按钮（分类标题行内） */
+
 .fen-ye-anniu {
   font-size: 14px;
   font-weight: 800;
@@ -2038,7 +2017,7 @@ defineExpose({
   border-color: var(--jujiao-huan-yanse);
 }
 
-/* ============ 浅色主题：霓虹拱廊浅色档（白卡黑框 + 同款荧光状态色块） ============ */
+
 :root[data-theme='light'] .zhanji-tishi {
   background: #14141a;
   color: #ffd500;
@@ -2289,7 +2268,7 @@ defineExpose({
   .zhanji-tishi-chong-shi {
     transition-duration: 0.01ms !important;
   }
-  /* 减少动效：不倾斜、不做起手动画；落位由 JS 在该档下跳过 FLIP 直接生效，位置仍然正确 */
+  
   .zhanji-kapian.sortable-drag > .zhanji-kapian-nei {
     animation: none !important;
     transform: none !important;

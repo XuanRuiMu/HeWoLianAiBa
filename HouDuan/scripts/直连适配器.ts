@@ -1,18 +1,3 @@
-/**
- * 通用 API 适配器：按契约要求，本项目**面向模型的所有调用必须经这一个出口**。
- *
- * 为什么需要它（2026-10-18 实测）：
- *   OpenAI SDK 的 Responses 传输层在本网关（token.sensenova.cn）上不兼容——
- *   SDK 会把 input 项序列化成 {role, content: [{type:'input_text',...}]} 的形态，
- *   而本网关只认 {role, content: "字符串"}，于是**每一次写手外呼都返回 400**
- *   （错误原文：message content must be a string or non-empty array, param=input.0.content）。
- *   同一请求体直连 HTTP 是正常的（429 = 限流而不是 400 = 格式错）。
- *   ⇒ 传输层换成本文件里的直连实现，prompt 的构造、配置、参数（模型/温度/上限/
- *     reasoning/json 模式）与后端的 AI参数策略 **共用同一份来源**，不另写一套。
- *
- * 也正因为要保留对真实项目配置的测量，本文件不复制任何参数逻辑：
- *   jiSuanAIChanShu / AI_PEI_ZHI 从 src 直接 import。
- */
 
 import { AI_PEI_ZHI } from '../src/config/AI配置'
 import { jiSuanAIChanShu } from '../src/config/AI参数策略'
@@ -40,7 +25,6 @@ function 是限流(状态: number, 文: string): boolean {
   return 状态 === 429 || /rpm|tpm|rate|limit/i.test(文)
 }
 
-/** 唯一外呼出口：429 无限退避重试（上限由 AI_CHANG_CE_HUI_FU_SHANG_XIAN_HAO_MIAO 控），其它状态码直接抛。 */
 export async function 直连外呼(
   档位: keyof typeof AI_PEI_ZHI.moXing,
   消息: Array<{ jiaoSe: string; neiRong: string }>,
@@ -111,7 +95,6 @@ export async function 直连外呼(
   }
 }
 
-/** 导演：prompt 与生产链路逐字一致（同一份 gouJianDirectorPrompt 经直连下发）。 */
 export async function 生成导演策略(
   shuRu: AIYinQingShuRu,
   prompt: string,
@@ -162,7 +145,6 @@ function 解析导演(文: string): { 成败: boolean; 策略: DirectorCeLue } {
   }
 }
 
-/** 写手：prompt 与生产链路同源（同一份 gouJianWriterPrompt），system 文案同 Writer.ts。 */
 export async function 生成写手回复(
   shuRu: AIYinQingShuRu,
   ceLue: DirectorCeLue | undefined,
@@ -184,7 +166,6 @@ export async function 生成写手回复(
   return 清洗回复(回.正文)
 }
 
-/** 切条与清洗：与生产 Writer.ts 的 qingLiXiaoXi 同口径（按行切、剥序号与时间戳、去空行）。 */
 export function 清洗回复(文: string): string[] {
   return 文
     .split('\n')

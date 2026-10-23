@@ -38,10 +38,6 @@ export class MeiTiCunChuCuoWu extends Error {
 const SHA256_GE_SHI = /^[0-9a-f]{64}$/
 const UUID_GE_SHI = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-// A9+YH-031：媒体签名算法白名单（仅sha256）+密钥熵检查+派生缓存退出清零——
-// 显式配置 MEI_TI_QIAN_MING_MI_YAO 时直接使用；未配置时从 JWT 密钥 HKDF 派生独立子钥，
-// 保证「持有媒体签名 URL」无法反推或复用为有效 JWT，反之亦然。
-// YH-031 算法白名单：签名/哈希一律sha256，禁md5/sha1
 const YUN_XU_QIAN_MING_SUAN_FA = new Set(['sha256'])
 let meiTiQianMingMiYaoHuanCun: string | null = null
 
@@ -73,9 +69,7 @@ export function huoQuMeiTiQianMingMiYao(): string {
   return meiTiQianMingMiYaoHuanCun
 }
 
-/** 测试专用：清空派生缓存（环境变量变更后需重新派生） */
 export function chongZhiMeiTiQianMingMiYao(): void {
-  // YH-031 派生缓存清零：覆写后置空，防内存残留
   if (meiTiQianMingMiYaoHuanCun) {
     meiTiQianMingMiYaoHuanCun = null
   }
@@ -101,7 +95,6 @@ async function qingChuWenJian(luJing: string): Promise<void> {
 }
 
 export async function zhiXingBingDuSaoMiao(linShiLuJing: string): Promise<void> {
-  // YH-020 生产默认开查毒：显式关闭仅在非生产生效
   const qiYong = peiZhi.bingDuSaoMiaoShengChanMoRen
   const saoMiao = { ...peiZhi.bingDuSaoMiao, qiYong }
   if (!saoMiao.qiYong || saoMiao.fuWuUrl.trim() === '') return
@@ -110,8 +103,6 @@ export async function zhiXingBingDuSaoMiao(linShiLuJing: string): Promise<void> 
   try {
     const wenJianLiu = fs.createReadStream(linShiLuJing)
     const biaoDan = new FormData()
-    // Buffer 的底层 ArrayBuffer 可能是 SharedArrayBuffer，TS 不认它是 BlobPart。
-    // 用 Uint8Array 包一层做「拷贝视图」，类型与运行期都合法，且不共享底层内存。
     biaoDan.append('file', new Blob([new Uint8Array(await streamToBuffer(wenJianLiu))]))
     const xiangYing = await fetch(`${saoMiao.fuWuUrl.replace(/\/$/, '')}/scan`, {
       method: 'POST',
@@ -137,10 +128,6 @@ async function streamToBuffer(liu: fs.ReadStream): Promise<Buffer> {
   return Buffer.concat(kuaiLieBiao)
 }
 
-/**
- * 流式保存媒体文件：边落盘边计算 SHA256 与字节数（禁止整包进内存），
- * 完成后原子改名到 CAS 路径 <根>/<sha256前2位>/<sha256>，同哈希去重复用。
- */
 export async function liuShiBaoCunMeiTi(
   keDuLiu: Readable,
   yuanShiWenJianMing: string,
@@ -156,7 +143,6 @@ export async function liuShiBaoCunMeiTi(
     throw new MeiTiCunChuCuoWu('meiTiMIMEBuZhiChi')
   }
 
-  // 需求20：wenjian 按文件类型细分大小阈值（文本2MB/文档10MB），其余类别仍走类别级上限
   const daXiaoShangXian =
     leiBie === 'wenjian'
       ? huoQuWenJianDaXiaoShangXianZiJie(yuanShiWenJianMing, qingLiMIME)
@@ -166,8 +152,6 @@ export async function liuShiBaoCunMeiTi(
   await queBaoMuLu(linShiMuLu)
   const linShiLuJing = path.join(linShiMuLu, `${crypto.randomUUID()}.tmp`)
 
-  // 低危顺手项：魔数嗅探——图片类 MIME 必须与文件头匹配，防止伪装成图片的可执行内容；
-  // PNG/JPEG 像素尺寸设上限，防解码炸弹
   const shiTuPiangLei = qingLiMIME.startsWith('image/')
   let touBuHuanChong: Buffer | null = null
 
@@ -177,8 +161,6 @@ export async function liuShiBaoCunMeiTi(
   const jiSuanLiu = new Transform({
     transform(kuai: Buffer, _bianMa: BufferEncoding, huiDiao: (cuoWu: Error | null, shuJu?: Buffer) => void) {
       if (yiChaoXian) {
-        // 超限后进入丢弃模式：不再落盘/哈希，但继续消费流，
-        // 保证 HTTP 分帧完整、客户端能收到 400 响应而非连接被重置
         huiDiao(null)
         return
       }
@@ -210,7 +192,6 @@ export async function liuShiBaoCunMeiTi(
     throw new MeiTiCunChuCuoWu('meiTiGuoDa')
   }
 
-  // 魔数嗅探：图片类 MIME 与文件头不符即拒绝（落库 MIME 以客户端声明为准，故必须强校验）
   if (shiTuPiangLei) {
     const touBu = touBuHuanChong || Buffer.alloc(0)
     let moShuPiPei = false
@@ -218,7 +199,6 @@ export async function liuShiBaoCunMeiTi(
       moShuPiPei =
         touBu.length >= 8 &&
         touBu[0] === 0x89 && touBu[1] === 0x50 && touBu[2] === 0x4e && touBu[3] === 0x47
-      // PNG IHDR：宽高位于第 16-23 字节，上限 10000×10000
       if (moShuPiPei && touBu.length >= 24) {
         const kuan = touBu.readUInt32BE(16)
         const gao = touBu.readUInt32BE(20)
@@ -252,14 +232,11 @@ export async function liuShiBaoCunMeiTi(
 
 const sha256 = haXi.digest('hex').toLowerCase()
 
-  // 图片类别（tupian、biaoqingshu）进行 DeepSeek 视觉安全审核
-  // 审核在文件移动到 CAS 之前进行，使用临时文件路径
   const shiTuPianLeiBie = leiBie === 'tupian' || leiBie === 'biaoqingshu'
   if (shiTuPianLeiBie) {
     const shenHeJieGuo = await shenHeTuPianAnQuan(linShiLuJing)
     if (shenHeJieGuo.wei_gui) {
       await qingChuWenJian(linShiLuJing)
-      // 违规类别键原样带上（不在此翻译），出参口径统一由 services/媒体审核出参 判给五个上传站点
       throw new MeiTiCunChuCuoWu(shenHeJieGuo.lei_xing as FanYiJian<'liaoTian'>)
     }
   }
@@ -277,13 +254,11 @@ const sha256 = haXi.digest('hex').toLowerCase()
   }
 
   if (muBiaoYiCunZai) {
-    // 同哈希文件已存在（去重），直接复用，丢弃临时文件
     await qingChuWenJian(linShiLuJing)
   } else {
     try {
       await fs.promises.rename(linShiLuJing, muBiaoLuJing)
     } catch {
-      // 并发竞态：另一路写入已抢先落位；若目标仍不存在则重试一次，否则清理临时文件
       let jingZhengDuiShouYiLuoWei = false
       try {
         await fs.promises.access(muBiaoLuJing)
@@ -304,8 +279,6 @@ const sha256 = haXi.digest('hex').toLowerCase()
     }
   }
 
-  // 同一 SHA256 允许多条记录（不同上传者各持有一条，指向同一 CAS 物理文件），
-  // 避免复用他人记录 ID 导致后续归属校验误判"无权使用该媒体文件"
   const chaRuJieGuo = await 数据库.query(
     `INSERT INTO "媒体文件" ("SHA256", "原始文件名", "MIME", "大小字节", "类别", "上传者ID")
      VALUES ($1, $2, $3, $4, $5, $6)
@@ -352,14 +325,12 @@ export function shengChengQianMingURL(
   return `/api/媒体/${sha256}?e=${guoQiMiao}&u=${yongHuId}&t=${qianFaHaoMiao}&s=${qianMing}`
 }
 
-/** 规范引用：持久化仅存无参地址，签名在读取时按需签发 */
 export function shengChengMeiTiYinYong(sha256: string): string {
   return `/api/媒体/${sha256.toLowerCase()}`
 }
 
 const MEI_TI_YIN_YONG_GE_SHI = /^\/api\/媒体\/([0-9a-f]{64})(\?.*)?$/i
 
-/** 从持久化值（无参引用/新旧签名URL）提取内容哈希，非媒体引用返回 null */
 export function tiQuMeiTiSha(cunChuZhi: unknown): string | null {
   if (typeof cunChuZhi !== 'string') return null
   const piPei = MEI_TI_YIN_YONG_GE_SHI.exec(cunChuZhi.trim())
@@ -367,7 +338,6 @@ export function tiQuMeiTiSha(cunChuZhi: unknown): string | null {
   return piPei[1].toLowerCase()
 }
 
-/** 读取时按需重签：持久化引用转为绑定用户的新鲜短效 URL，非媒体值原样返回 */
 export function zhongXinQianMingMeiTiURL(
   cunChuZhi: string | null | undefined,
   yongHuId: string,
@@ -379,32 +349,14 @@ export function zhongXinQianMingMeiTiURL(
   return shengChengQianMingURL(sha256, yongHuId, youXiaoMiao ?? MEI_TI_PEI_ZHI.zhanShiYouXiaoMiao)
 }
 
-/** 吊销键：该用户在此时刻之前签发的绑定读者 URL 一律作废 */
 function huoQuMeiTiCheXiaoJian(yongHuId: string): string {
   return `mei_ti_qian_ming_che_xiao:${yongHuId}`
 }
 
-/** 按用户吊销其全部已签发媒体 URL（注销/封禁后调用） */
 export async function cheXiaoYongHuMeiTiQianMing(yongHuId: string): Promise<void> {
   await redis.set(huoQuMeiTiCheXiaoJian(yongHuId), String(Date.now()), 'EX', 30 * 24 * 60 * 60)
 }
 
-/**
- * 「这条内容哈希对该读者是否可读」的唯一查库判定，两条规则：
- *  1) 本人上传的媒体 —— 既有规则，条件逐字未变；
- *  2) FP-21 好友媒体：读者是某条**未撤回**好友消息的收发双方之一、该消息引用这条媒体行，
- *     且消息双方在库里仍是 accepted 好友（解除好友 ⇒ 立即不可读，fail-closed）。
- *
- * 为什么必须有规则 2：签名 URL 绑的是**读者自己**的用户编号，而好友消息的接收方不是上传者，
- * 只认「上传者本人」的旧口径下对方永远取不到图（L-22 判"接上即假功能"的一半根因）。
- * 规则 2 不比规则 1 宽：仍要求 HMAC 覆盖该读者自己的 u+t（第三方造不出别人的签名）、
- * 仍要求签名未过期且晚于该用户的吊销时刻，可枚举性未变。
- *
- * 列形态依赖：hm."媒体ID" = mf."ID" 要求 好友消息.媒体ID 为 UUID（迁移 027 统一两条建库路径后的
- * 形态）。entrypoint 在 exec 应用之前同步跑完迁移且失败即中止启动（FP-15），故不存在
- * "新代码跑在 027 之前的库上"的窗口；本判定抛错时 yanZhengQianMing 一律返回 false（两条规则一起
- * 失效 ⇒ 403），不会退化成放行。
- */
 export const MEI_TI_KE_DU_YU_JU = `
 SELECT 1
   FROM "媒体文件" mf
@@ -430,7 +382,6 @@ export async function yanZhengMeiTiKeDu(meiTiSha: string, yongHuId: string): Pro
   return jieGuo.rows.length > 0
 }
 
-/** 校验签名：过期、签名不符、读者对该内容不可读、签发早于吊销、参数缺失或哈希格式非法均返回 false */
 export async function yanZhengQianMing(
   sha256: unknown,
   e: unknown,
@@ -471,14 +422,12 @@ export async function yanZhengQianMing(
   return crypto.timingSafeEqual(a, b)
 }
 
-/** 由哈希取本地 CAS 路径；哈希格式非法（防路径遍历）返回 null */
 export function huoQuBenDiLuJing(sha256: string): string | null {
   if (!SHA256_GE_SHI.test(sha256)) return null
   const di = sha256.toLowerCase()
   return path.join(MEI_TI_PEI_ZHI.cunChuGenMuLu, di.slice(0, 2), di)
 }
 
-/** 仅当调用方已确认媒体表无任何行引用该哈希时调用；哈希非法或文件已缺失都安全忽略 */
 export async function shanChuMeiTiWenJian(sha256: string): Promise<void> {
   const luJing = huoQuBenDiLuJing(sha256)
   if (!luJing) return

@@ -34,7 +34,6 @@ function qingLiDuanMing(yuanShiWenJianMing: unknown): string {
     .replace(KONG_ZHI_ZI_FU, '')
     .trim()
   if (!ming) return ''
-  // 按码点截断：String.slice 会把 emoji 代理对劈成半截，落库即 invalid Unicode surrogate
   return Array.from(ming)
     .slice(0, BIAO_QING_PEI_ZHI.duanMingZuiDaChangDu)
     .join('')
@@ -54,10 +53,6 @@ function zhuangHuaBiaoQingXing(hang: Record<string, unknown>, yongHuId: string):
   }
 }
 
-/**
- * 本路由用到的全部语句。导出是为了让真库测试（routes/__tests__/表情真库.test.ts）
- * 能原样执行同一串 SQL —— 测试里的语句与本文件永远同源，不存在「测试跑通、路由里是另一串」。
- */
 export const BIAO_QING_YU_JU = {
   查列表: `
   SELECT b."ID" AS id, b."媒体ID" AS mei_ti_id, m."SHA256" AS sha256, m."MIME" AS mime,
@@ -93,11 +88,9 @@ export const BIAO_QING_YU_JU = {
   开启事务: 'BEGIN',
   提交事务: 'COMMIT',
   回滚事务: 'ROLLBACK',
-  // 登记串行化卡口：同一用户的「查→计数→插→回收」整段读改写在库侧排队（L-46）
   取登记锁: `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
 } as const
 
-/** advisory 锁键：按用户串行化登记。加前缀避免与其它 advisory 用途（如迁移器写台账）撞键 */
 export function biaoQingDengJiSuoJian(yongHuId: string): string {
   return `biaoqing-dengji:${yongHuId}`
 }
@@ -112,19 +105,6 @@ type DengJiJieGuo =
   | { zhuang_tai: 'xin_zeng'; biao_qing: BiaoQingXing }
   | { zhuang_tai: 'yi_man' }
 
-/**
- * 同一 SHA256 只登记一次（L-46 根因修）：整段「按内容查→计数与下一序→插入→回收本次多建的媒体行」
- * 包在同一条连接的 pg_advisory_xact_lock 事务里。
- *
- * 为什么是锁而不是唯一索引：内容级唯一是**跨表**事实（"用户表情" JOIN "媒体文件"."SHA256"），
- * Postgres 的函数式唯一索引表达不了它，要落声明式卡口就得在 "用户表情" 冗余一列 SHA256 —— 那既推翻
- * FP-06b 已裁定并被 表情真库.test.ts「表上只有本迁移声明的列」钉住的口径，也让容器未重建期间仍在跑的
- * 旧镜像（走无锁路径）在并发时直接吃 23505 变成 500。锁在库侧串行化，READ COMMITTED 下后到者是在
- * 拿到锁之后才开语句快照 ⇒ 必然看见前者已提交的条目，转走命中分支并回收自己的媒体行，
- * 结果与串行执行逐字一致；顺带把 200 上限与 排序 取号的同类竞态一起封掉。
- * 锁键取「用户」而非「用户+哈希」：同一用户的登记全串行（都是几条毫秒级语句，且不含任何 AI 外呼），
- * 不同用户互不排队。
- */
 async function dengJiBiaoQing(
   yongHuId: string,
   meiTi: { mediaId: string; sha256: string; mime: string },
@@ -166,7 +146,6 @@ async function dengJiBiaoQing(
       ),
     }
   } catch (cuoWu) {
-    // 任何一步失败都必须回滚：连接带着 aborted 事务回池会毒化后续每一次复用（25P02）
     await lianJie.query(BIAO_QING_YU_JU.回滚事务).catch(() => undefined)
     throw cuoWu
   } finally {
@@ -174,10 +153,6 @@ async function dengJiBiaoQing(
   }
 }
 
-/**
- * 媒体存储层错误的对外映射：视觉审核违规 403、其余存储校验（MIME/大小/魔数/类别）400、未知 500。
- * 只回翻译文案，不外泄堆栈与内部实现；审核违规同步记账号违规一次。
- */
 async function huiYingMeiTiCuoWu(
   cuoWu: unknown,
   xiangYing: Response,
@@ -309,7 +284,6 @@ luYou.delete(
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
     }
     try {
-      // 归属写在 WHERE 里：他人表情对本用户不可见，影响 0 行即 404（不区分「不存在」与「非本人」）
       const jieGuo = await 数据库.query(BIAO_QING_YU_JU.删除, [biaoQingId, yongHu.yongHuId])
       if (jieGuo.rowCount === 0) {
         return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('liaoTian', 'biaoQingBuCunZai'))
@@ -348,7 +322,6 @@ luYou.put(
       const benRenJi = new Set(
         dangQian.rows.map((hang: Record<string, unknown>) => String(hang['id'])),
       )
-      // 必须是本人全部表情的一次完整排列：既不越权改他人行，也不会出现与既有 排序 撞号的半套状态
       if (
         benRenJi.size !== idLieBiao.length ||
         !idLieBiao.every((id) => benRenJi.has(id))

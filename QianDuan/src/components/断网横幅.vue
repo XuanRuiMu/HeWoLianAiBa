@@ -23,7 +23,6 @@ import { duQuDaiFaSongShu, jianTingDaiFaSong } from '@/utils/发件箱'
 const shiXianDuanWang = ref(false)
 const yiZhuYi = ref(false)
 const zaiXianZhuangTai = ref(true)
-// YH-098 离线发件箱：断网写操作进outbox，恢复后重发+冲突提示，禁静默分叉
 const daiFaSongShu = ref(0)
 let quXiaoJianTing: (() => void) | null = null
 

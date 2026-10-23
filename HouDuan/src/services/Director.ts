@@ -12,7 +12,6 @@ export interface DirectorJieGuo {
   ce_lue: DirectorCeLue
   cuo_wu?: string
   si_kao?: string
-  /** 原始响应全文：解析失败时唯一的归因依据（2026-10-14 语料实验室加，实测 4/12 解析失败无据可查） */
   yuan_wen?: string
 }
 
@@ -75,17 +74,12 @@ export async function shengChengDirectorCeLue(
   waiBuXinHao?: AbortSignal,
 ): Promise<DirectorJieGuo> {
   try {
-    // FP-08 图片注入改增量：只投本轮尚未被模型看过的用户图片（与 Writer 同源）
     const tuXiangKuai = await zhuRuBenLunTuXiangKuai(shuRu.dui_hua_li_shi)
     const yongHuNeiRong: string | DuiHuaKuai[] =
       tuXiangKuai.length > 0
         ? [{ type: 'input_text', text: gouJianDirectorPrompt(shuRu) }, ...tuXiangKuai]
         : gouJianDirectorPrompt(shuRu)
 
-    // ⚠️ 空响应整体重试（2026-10-14 语料实验室实测）：网关高负载时间歇返回空 content，
-    //   客户端层已做 3 次退避重试，但仍可能出现 4 连空（实测 17%~67% 空响应率）。
-    //   空响应 ⇒ 解析必然失败 ⇒ 走单代理降级（策略全 unknown），而 Director 是链路核心，
-    //   30%+ 的降级率不可接受 ⇒ 服务层再兜底 1 次整轮重试（10s 退避）。
     const daoYanZhiLing =
       '你负责判断角色这次是否回复、当下情绪、是否撤回和是否主动表白，只输出 JSON。情感分析字段写对方这条消息的语气和情绪。'
     const 带导演指令 = (内容: string | DuiHuaKuai[]): string | DuiHuaKuai[] =>

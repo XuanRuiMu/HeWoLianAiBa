@@ -57,8 +57,6 @@ interface KeZhongShiPeiZhi extends InternalAxiosRequestConfig {
   __zhunQueChongShi?: boolean
 }
 
-/** 401 静默刷新：access 过期时用 refresh 令牌换新后重放原请求，用户无感知；
-    并发 401 共用一次刷新；认证接口自身与已重放过的请求不参与，避免循环。 */
 let shuaXinJinXingZhong: Promise<boolean> | null = null
 
 function shiRenZhengQingQiu(url?: string): boolean {

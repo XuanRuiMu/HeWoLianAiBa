@@ -8,9 +8,7 @@ import {
   JiaoSeShengChengCuoWu,
 } from '../config/错误码注册表'
 
-// 兜底概率（无 AI key / 概率计算失败时退回），与 config 中 kaiChangBaiFaSongGaiLv 对齐。
 const DOU_BEI_GAI_LV = AI_PEI_ZHI.prompt.kaiChangBaiFaSongGaiLv
-// 概率钳制区间：10%~90%，避免极端值（全发/全不发）破坏整体分布。
 const ZUI_XIAO = 0.1
 const ZUI_DA = 0.9
 
@@ -37,23 +35,15 @@ function gouJianGaiLvTiShi(canShu: KaiChangBaiShengChengCanShu): string {
     .join('\n')
 }
 
-// 从模型文本输出中容错解析概率，并钳制到 [0.1, 0.9]。解析失败返回 null。
 function jieXiGaiLv(shuRu: string): number | null {
   const piPei = shuRu.match(/\d+(\.\d+)?/)
   if (!piPei) return null
   const zhi = Number(piPei[0])
   if (!Number.isFinite(zhi) || zhi <= 0 || zhi > 100) return null
-  // 归一为 0~1（兼容"73"与"0.73"两种写法），再钳制到 [0.1, 0.9]。
   const biLi = zhi > 1 ? zhi / 100 : zhi
   return Math.min(ZUI_DA, Math.max(ZUI_XIAO, biLi))
 }
 
-/**
- * 计算开场白发送概率（0.1~0.9）。
- * 主流程：AI 根据完整人物画像评估主动发开场白的可能性，输出 10~90 的概率数字。
- * 退化路径：无 AI key / 测试环境 / 解析失败 → 退回固定兜底概率（kaiChangBaiFaSongGaiLv）。
- * 与内容生成（shengChengKaiChangBai）解耦：本函数只决定"发不发的概率"，不决定内容。
- */
 export async function jiSuanKaiChangBaiGaiLv(
   canShu: KaiChangBaiShengChengCanShu,
 ): Promise<number> {

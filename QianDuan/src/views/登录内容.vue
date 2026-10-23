@@ -157,7 +157,7 @@
               </HengTiaoShuRuKuang>
 
               <div class="ji-zhu-xuan-xiang">
-                <!-- 第一行：记住账号 / 记住密码 -->
+                
                 <div class="ji-zhu-hang-1">
                 <label class="ji-zhu-xuan-ze">
                   <input
@@ -182,7 +182,7 @@
                   }}</span>
                 </label>
                 </div>
-                <!-- 第二行：自动登录 / 忘记密码？ -->
+                
                 <div class="ji-zhu-hang-2">
                 <label class="ji-zhu-xuan-ze" :class="{ weiJiHuo: !可自动登录 }">
                   <input
@@ -196,8 +196,7 @@
                     huoQuFanYi('renZheng', 'ziDongDengLu')
                   }}</span>
                 </label>
-                <!-- 「忘记密码？」与「自动登录」同行同级。由本行 justify-content 把
-                     两端撑开：自动登录靠左，忘记密码？靠右，两者不挤在一起。 -->
+                
                 <RouterLink
                   type="button"
                   class="wangji-mima-lianjie"
@@ -369,7 +368,7 @@
                   </button>
               </HengTiaoShuRuKuang>
 
-              <!-- C5 未成年人保护：注册强制采集出生日期（FP-14：自绘分段控件，显示口径 YYYY-MM-DD） -->
+              
               <div class="shuru-zu shangFu">
                 <ChuShengRiQiXuanZeQi
                   v-model="zhuCeChuShengRiQi"
@@ -717,9 +716,6 @@ function qiDongHuiTianLunXun(): void {
 const dengLuMiMaShuRuKuang = ref<{ 聚焦: () => void } | null>(null)
 const zhuCeMiMaShuRuKuang = ref<{ 聚焦: () => void } | null>(null)
 
-/* ============ UX-04 报错聚焦：把光标送回真正出问题的那个框 ============
-   只认「错误确实指向某个字段」的情况。网络/限流/上游故障这类报错没有可改的字段，
-   乱聚焦只会把用户从正在输入的地方拽走，比不聚焦更糟，故一律返回 null 不动。 */
 type CuoWuZiDuan =
   | 'dengLuShouJiHao'
   | 'dengLuMiMa'
@@ -736,45 +732,31 @@ const ZI_DUAN_YUAN_SU_ID: Record<CuoWuZiDuan, string> = {
   zhuCeYanZhengMa: 'zhuce-yanzhengma',
   zhuCeYongHuMing: 'zhuce-yonghuming',
   zhuCeMiMa: 'zhuce-mima',
-  // 三段日期控件的年段（id = :id-qian-zhui + 空后缀，见出生日期选择器 duanId()）
   zhuCeChuShengRiQi: 'zhuce-chushengriqi',
 }
 
 function zhaoDongZiDuan(ziDuan: CuoWuZiDuan): void {
-  // nextTick：报错框是本次报错才插进 DOM 的，不等它渲染就 focus，
-  // 浏览器会按插入前的布局算可见区域，焦点框可能被顶出视口。
-  // 用 isConnected 而非 offsetParent 判可见：offsetParent 在无布局引擎的环境恒为 null，
-  // 会把聚焦静默吞掉。另一个天然边界是两个表单各自 v-if，任一时刻只有一份在 DOM 里，
-  // getElementById 命中即说明就是当前可见那一份，不会聚焦到隐藏表单。
   nextTick(() => {
     const yuanSu = document.getElementById(ZI_DUAN_YUAN_SU_ID[ziDuan])
     if (yuanSu instanceof HTMLInputElement && yuanSu.isConnected) yuanSu.focus()
   })
 }
 
-/* 服务端错误码 → 字段。判定依据只能是错误码本身的语义，不看文案：
-   文案会随翻译改，拿文案做分支等于埋雷。
-   落不到具体字段的一律 null（不动焦点）。 */
 function daiMaPanDuanZiDuan(
   daiMa: string | undefined,
   dangQianMoShi: MoShiLeiXing,
 ): CuoWuZiDuan | null {
   if (!daiMa) return null
   switch (daiMa) {
-    // 重置密码已独立成页，本页不会再收到该码；留着不判是为了不误伤未知码的默认值
     case QIAN_TAI_DAI_MA.AUTH_PASSWORD_RESET_FAILED:
       return null
-    // 号码已被占用 / 号码格式非法：都指向手机号
     case QIAN_TAI_DAI_MA.AUTH_ACCOUNT_ALREADY_EXISTS:
       return dangQianMoShi === 'zhuCe' ? 'zhuCeShouJiHao' : 'dengLuShouJiHao'
-    // 凭据不对：密码框（登录失败后光标本来就常在密码框，这里是保证它一定在）
     case QIAN_TAI_DAI_MA.AUTH_INVALID_CREDENTIALS:
       return dangQianMoShi === 'zhuCe' ? 'zhuCeMiMa' : 'dengLuMiMa'
-    // 用户名相关：注册页的用户名框
     case QIAN_TAI_DAI_MA.AUTH_USERNAME_CHANGE_FAILED:
     case QIAN_TAI_DAI_MA.RESOURCE_CONFLICT:
       return dangQianMoShi === 'zhuCe' ? 'zhuCeYongHuMing' : null
-    // 参数非法：认证页最常见的就是手机号格式，优先送回手机号框
     case QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID:
       return dangQianMoShi === 'zhuCe' ? 'zhuCeShouJiHao' : 'dengLuShouJiHao'
     default:
@@ -783,9 +765,6 @@ function daiMaPanDuanZiDuan(
 }
 
 function juShouFuWuCuoWu(cuoWu: unknown): void {
-  // 走归一化拿规范错误码，而不是直接读 cuoWu.code：
-  // 原始抛出的对象可能是后端包裹体、Axios 错误或裸 Error，code 的位置不统一。
-  // 归一化是本文件既有口径（发送码路径已在用），不新增第二套读法。
   const ziDuan = daiMaPanDuanZiDuan(归一前台错误(cuoWu).code, moShi.value)
   if (ziDuan) zhaoDongZiDuan(ziDuan)
 }
@@ -808,11 +787,6 @@ function qieHuanMiMaXianShi(xuHao: 1 | 2) {
 
 const biaodanRongqi = ref<HTMLElement | null>(null)
 
-/* ============ FP-J2 自绘滚动装饰（认证滚动口唯一滚动指示） ============
-   原生滚动条已被 scrollbar-width: none 隐藏（本环境 Chromium 走 Fluent 绘制路径，
-   ::-webkit-scrollbar 定制失效、scrollbar-gutter: stable 恒占位挤压正文，均不可用）。
-   装饰挂在滚动口外壳（.gundong-waike）而非滚动坐标系内，脚本只写入小幅度 translateY；
-   需要时常显、不溢出时整组隐藏，不做静置淡出。 */
 
 const gundongRongQi = ref<HTMLElement | null>(null)
 const gundongHuaKuai = ref<HTMLElement | null>(null)
@@ -990,12 +964,7 @@ function qieHuanMoShi(xinMoShi: MoShiLeiXing) {
     zhuCeZhong.value = false
     faSongZhong.value = false
   }
-  // 清报错必须无条件做：原先它被塞在「有请求在飞」分支里，于是登录失败后（请求早已结束）
-  // 再切到注册，上一个表单的报错框会跟着留到新标签页上，看起来像新表单出的错。
   qingLiQianTai()
-  // UX-03：手机号在两个表单间共用一份意图。登录页填到一半想去注册，或注册填到一半
-  // 想换号登录，号码不该被清空——11 位号码重打一遍是纯粹的重复劳动。
-  // 只在源侧非空时覆盖目标侧：源侧为空（用户主动清空）就不去动目标侧已填的号码。
   if (xinMoShi === 'zhuCe') {
     if (dengLuShouJiHao.value.trim() !== '') zhuCeShouJiHao.value = dengLuShouJiHao.value
   } else if (zhuCeShouJiHao.value.trim() !== '') {
@@ -1011,9 +980,6 @@ function qieHuanMoShi(xinMoShi: MoShiLeiXing) {
   ) {
     dangQianJiaoDian.blur()
   }
-  // FP-02：离场表单在过渡窗口内仍是 DOM 节点（含三段日期控件的段级焦点），
-  // 先注销其中焦点，切换后 activeElement 不残留上一表单
-  // 滚动口先归零：离场层已切到独立行，滚动复位藏在淡切之下，不产生可见的滚动甩动
   const gundongQu = biaodanRongqi.value?.querySelector('.biaodan-gundong') as HTMLElement | null
   if (gundongQu) gundongQu.scrollTop = 0
   qieHuanWanDing.value = false
@@ -1106,7 +1072,6 @@ const zhuCeYongHuMingHeFa = computed(() => {
   )
 })
 
-// C5 未成年人保护：出生日期必填且年满18周岁，不满14另需监护人分支本阶段直接拦截
 function geShiHuaBenDiRiQi(d: Date): string {
   const nian = d.getFullYear()
   const yue = String(d.getMonth() + 1).padStart(2, '0')
@@ -1205,9 +1170,6 @@ function kaiShiDaoJiShi(qiShiZhi = 60) {
   }, 1000)
 }
 
-/* ============ FP-05（需求 #15）：登录/注册成功后的真定格飞行 ============
-   整段动画由一次性快照层（活卡片的克隆）承载：活 DOM 一个内联样式都不写，
-   快照层上的每条 fill:'forwards' 动画都进 定格动画们，收尾无条件全部注销。 */
 
 let 定格层: HTMLElement | null = null
 let 定格动画们: Animation[] = []
@@ -1224,14 +1186,11 @@ async function dengDaiDongHua(
   await Promise.race([wanDing, chaoShi])
 }
 
-/** 关键帧的数值端一律向 CSS 要：读回类上的解析结果再写进动画，脚本里不留像素/色值字面量 */
 function 计算帧(元素: HTMLElement, 属性清单: string[]): Record<string, string> {
   const 样式 = getComputedStyle(元素)
   const 帧: Record<string, string> = {}
   for (const 属性 of 属性清单) {
     const 值 = 样式.getPropertyValue(属性).trim()
-    // 真浏览器在此只会给出已解析值；样式表未注入的宿主（jsdom）会退回 var()/calc() 原文或空串，
-    // 那种值不能当关键帧用 —— 丢掉该属性即可，动画退化为隐式起值，不抛错也不影响导航
     if (值 && !值.includes('var(') && !值.includes('calc(')) 帧[属性] = 值
   }
   return 帧
@@ -1274,12 +1233,10 @@ function 建定格层(活卡: HTMLElement): HTMLElement {
   const 矩形 = 活卡.getBoundingClientRect()
   const 层 = 活卡.cloneNode(true) as HTMLElement
   层.classList.add('juan-zhou-dingge')
-  // 快照不是第二份可交互表单：摘净 id（否则与活表单撞 id）、整棵子树退出无障碍树并冻结交互
   层.removeAttribute('id')
   for (const 子 of 层.querySelectorAll('[id]')) 子.removeAttribute('id')
   层.setAttribute('aria-hidden', 'true')
   层.setAttribute('inert', '')
-  // cloneNode 不带 input 的当前值（value/checked 是 property 而非 attribute），逐位回填才定格得住真正那一帧
   const 源输入们 = 活卡.querySelectorAll('input')
   层.querySelectorAll('input').forEach((克隆输入, 序) => {
     const 源 = 源输入们[序] as HTMLInputElement | undefined
@@ -1307,7 +1264,6 @@ async function 定格飞向用户位(层: HTMLElement, 用户位: HTMLElement): 
     杆.classList.add('juan-zhou-dingge-gan')
     const 杆帧 = 计算帧(杆, ['height', 'opacity'])
     杆.classList.remove('juan-zhou-dingge-gan')
-    // 属性式关键帧（单端点）= 起点取元素当前计算值，端点取 CSS 解析值 ⇒ 首帧零跳变
     记动画(杆.animate(杆帧, { duration: 400, easing: quXian.biaoZhun, fill: 'forwards' }))
   }
   const 内容区 = 层.querySelector<HTMLElement>('.biaodan-neirong-qu')
@@ -1341,12 +1297,9 @@ async function qiDongDinggeFeixing(mubiaoLuJing: string) {
   dengLuTuiChangZhong.value = true
   try {
     const 活卡 = biaodanRongqi.value
-    // 落点存在性必须在导航前判定：App 壳常驻全局菜单（含 .yonghu-xuanxiang），
-    // 认证路由下它同样在位（仅左槽按钮隐藏），故生产登录页恒能飞，不走测试-only 退化。
     const 用户位 = document.querySelector<HTMLElement>('.yonghu-xuanxiang')
     const 减动效 = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (!活卡 || !用户位 || 减动效) {
-      // 缺宿主 / 缺落点 / 用户要求减动效：不做位移、直接切换，活 DOM 与动画集合都不留痕
       用户仓库.zhongZhiZhuYeRuChang()
       router.push(mubiaoLuJing)
       用户仓库.qiDongZhuYeRuChang()
@@ -1371,7 +1324,6 @@ async function qiDongDinggeFeixing(mubiaoLuJing: string) {
     const 快照 = 建定格层(活卡)
     定格层 = 快照
     定格飞行中 = true
-    // 快照先落地、页面随即切走：真定格浮在下一屏之上飞向左上角，而不是原地改写还在屏幕上的表单
     router.push(mubiaoLuJing)
     用户仓库.qiDongZhuYeRuChang()
     try {
@@ -1391,9 +1343,6 @@ async function qiDongDinggeFeixing(mubiaoLuJing: string) {
 
 function quXiaoDengLu(): void {
   if (!dengLuZhong.value) return
-  // 与 qieHuanMoShi 同一套收口：先作废本层代次（让 await 之后的分支全部早退，不会误走
-  // 「登录成功」副作用），再让 store 真正 abort 在途请求，最后自己复位按钮态。
-  // 顺序不能换：代次作废在前，finally 才不会与这里的复位打架。
   zhiFouJieMianCaoZuo()
   用户仓库.取消待处理认证()
   dengLuZhong.value = false
@@ -1441,7 +1390,6 @@ function sheZhiBenDiYanZhengCuoWu(yingXiang: string, ziDuan?: CuoWuZiDuan) {
       yingXiang,
     }),
   )
-  // UX-04：本地表单校验已经知道是哪个框出的问题，直接把焦点送回去
   if (ziDuan) zhaoDongZiDuan(ziDuan)
 }
 
@@ -1517,15 +1465,12 @@ async function zhiXingZhuCe() {
 .denglu-neirong {
   width: 100%;
   max-width: 420px;
-  /* 高度吃满认证布局的内容盒：.yemian-buju 由 flex:1 + min-height:0 拿到确定高（认证布局.vue:83/94），
-     本层由此成为「确定高」的居中参照，卡片高≤本层 ⇒ 任何分辨率下卡片都装得下视口 */
+  
   height: 100%;
   padding: 0 calc(var(--jiange-da) + var(--jiange-xiao));
-  /* 四边 auto 保留（FP-02 契约：不得写回 `margin: 0 auto` 与认证布局 .yemian-buju>* 的同权重外边距抢序）；
-     本层高度已确定为 100%，自动外边距吸收的自由空间恒为 0 ⇒ 居中实际由下面的网格承担 */
+  
   margin: auto;
-  /* minmax(0,1fr) 让这一行「等于本层高度、且可小于内容高」，卡片的 max-height:100% 才有确定参照；
-     auto 行只会被 align-content:stretch 撑大不会被压小，写成普通 grid 就封不住顶 */
+  
   display: grid;
   grid-template-rows: minmax(0, 1fr);
   place-items: center;
@@ -1657,19 +1602,12 @@ async function zhiXingZhuCe() {
 .biaodan-gundong {
   flex: 1;
   min-height: 0;
-  /* FP-17b：浮标上浮越出字段盒 --biaoqian-qin-ru，滚动口给等量 padding-top 再以等量负 margin 收回，
-     两者必须同吃一枚几何令牌（此前 5px 被误收成 --jiange-6=6px 打断耦合）。
-     加 --jiange-2 余量：滚动口上移 2px、padding 增 2px，卡片内几何不变，浮标签顶边与裁切边拉开 2px，
-     消除边缘等高在亚像素/舍入下对标签首行字的微裁切 */
+  
   padding-top: calc(var(--biaoqian-qin-ru) + var(--jiange-2));
   margin-top: calc(var(--biaoqian-qin-ru) * -1 + var(--jiange-2) * -1);
   overflow-y: auto;
   overflow-x: hidden;
-  /* FP-J2 根因修复：本环境 Chromium 走 Fluent 滚动条绘制路径，::-webkit-scrollbar 定制失效、
-     scrollbar-gutter: stable 恒占 15px 槽位挤压正文（"获取验证码"按钮被压）——历次修复失败的根源。
-     标准属性 scrollbar-width: none 双端隐藏原生条，槽位随原生条一并消失（正文元素零占位）；
-     下面 width:0 兜不识别 scrollbar-width 的旧 Chromium（webkit 伪元素路径），双保险。
-     保留的 scrollbar-color/webkit 透明档在两路径下都不再绘制，仅钉住旧契约文本不断。 */
+  
   scrollbar-width: none;
   scrollbar-color: transparent transparent;
   position: relative;
@@ -1679,9 +1617,7 @@ async function zhiXingZhuCe() {
   width: 0;
 }
 
-/* FP-J2 自绘 overlay 装饰：外壳承接滚动口的弹性位（flex:1 + min-height:0 吸收溢出）。
-   装饰容器绝对定位于外壳右缘 —— 不在滚动坐标系内，
-   脚本只写小幅度 translateY，不随内容长距离位移。需要时整组常显，不溢出时脚本摘 display。 */
+
 .gundong-waike {
   position: relative;
   flex: 1;
@@ -1690,10 +1626,7 @@ async function zhiXingZhuCe() {
   flex-direction: column;
 }
 
-/* 滚动口用「负 margin 上移 + 等量 padding-top」给浮标签让位，卡片内几何因此不变。
-   但它上移的这段空间是从上方借的：上方没有内容时借的是卡片内边距（视觉正确），
-   上方有报错框时借的就成了报错框，首个字段连同浮标签会压到报错框下沿上（FP-02 报障）。
-   故按同一对令牌给报错框补回等量下边距，净重叠归零，两种情形间距一致。 */
+
 .biaodan-neirong-qu > .qian-tai-cuo-wu {
   --cuo-wu-mian: var(--ka-cuo-mian);
   --cuo-wu-bian: var(--ka-cuo-bian);
@@ -1789,7 +1722,7 @@ async function zhiXingZhuCe() {
   will-change: transform;
 }
 
-/* 「用起来了」的判定：指针进入滑道整列、悬停滑块、或按住拖拽 */
+
 .gundong-zhuangshi:hover .gundong-huakuai,
 .gundong-zhuangshi:focus-within .gundong-huakuai,
 .gundong-huakuai:hover,
@@ -1954,13 +1887,7 @@ async function zhiXingZhuCe() {
   padding: 0;
 }
 
-/* 认证字段的底线画在包裹层，不画在输入框自身。原因是浏览器强制的：
-   UA 的 :-webkit-autofill 带 `background-image: none !important`（实测强制自动填充态下
-   background-image 计算值即为 none），画在输入框上的底线图层会被整个清空，密码框因此没有底线。
-   包裹层不是自动填充目标，浏览器碰不到它；几何、渐变与 1s 曲线全部沿用 global 同一族令牌，
-   故与其它字段的底线是同一套视觉，不另立标准。
-   与 global 契约的关系：.fenlie-shuru 已从 global 底线契约排除（见 global.css 的 :not 名单），
-   两者互斥，绝不会同时画成两条线。 */
+
 .shuru-zu {
   --ziduan-jian-ju: var(--jiange-da);
   margin-bottom: var(--ziduan-jian-ju);
@@ -2277,7 +2204,7 @@ async function zhiXingZhuCe() {
     transition: none !important;
   }
 
-  /* 登录↔注册切换在减动效下立即稳定，位移与高度过渡归零 */
+  
   .biaodan-qiehuan-you-enter-from,
   .biaodan-qiehuan-you-leave-to,
   .biaodan-qiehuan-zuo-enter-from,
@@ -2286,10 +2213,7 @@ async function zhiXingZhuCe() {
   }
 }
 
-/* ============ FP-05（需求 #15）登录/注册成功的一次性定格快照层 ============
-   快照层是 .biaodan-rongqi 的克隆，故卡片本体的所有规则（裁切、金线、::before 放射纹）自动跟随；
-   下面三条只补"它已脱离文档流、浮在全站之上"与"收束后的目标态"，几何端一律由令牌给出、
-   由脚本读回解析值当关键帧 ⇒ 脚本内零像素/色值字面量，改令牌即改动画。 */
+
 .juan-zhou-dingge {
   position: fixed;
   left: var(--dingge-zuo);
@@ -2308,7 +2232,7 @@ async function zhiXingZhuCe() {
   padding: 0;
 }
 
-/* 卷轴杆的目标态：杆高取筒高之半（与 .juanzhou-gan 同特异度、源码在后而生效） */
+
 .juan-zhou-dingge-gan {
   height: calc(var(--juanzhou-tong-gao-du) * 0.5);
   opacity: 1;

@@ -3,10 +3,6 @@ import { peiZhi } from '../config'
 import { 日志引擎 } from '../utils/日志引擎'
 import { shanChuMeiTiWenJian } from './媒体存储'
 
-// YH-071 保存期限无执行器：每类数据加定时删加审计，明确匿名化边界并同步措辞
-// 根因：承诺30天7天但代码里没人删；收敛为每日定时执行器+审计留痕
-// 期限口径与 frontend/src/assets/yinSiZhengCe.txt 五、数据保存期限 同源：
-// 聊天记录30天/语音文件7天/审计日志185天/通知90天/用量32天
 const PI_LIANG_DA_XIAO = 5000
 
 export const SHU_JU_BAO_CUN_QI_XIAN = {
@@ -96,11 +92,9 @@ export async function zhiXingShuJuBaoCunQiXianQingLi(): Promise<{ liaoTian: numb
 let dingShiQi: ReturnType<typeof setInterval> | null = null
 let qiDingYanShi: ReturnType<typeof setTimeout> | null = null
 
-/** 启动每日保存期限清理（审计日志归档定时器同源，计时器unref不阻塞退出） */
 export function qiDongShuJuBaoCunQingLiDingShiQi(): void {
   if (dingShiQi) return
   const jianGeHaoMiao = 24 * 60 * 60 * 1000
-  // 匿名化边界：账号注销走账号注销服务即时匿名化；本执行器只清过期派生数据
   void peiZhi.shenJiRiZhiBaoLiuTian
   qiDingYanShi = setTimeout(() => {
     void zhiXingShuJuBaoCunQiXianQingLi().catch((cuoWu) => {

@@ -83,14 +83,6 @@ function jieXiJSONXiangYing(neiRong: string): FuPanJSONJieGou {
   }
 }
 
-/**
- * 复盘聊天文本的唯一行格式化（FP-08c）：两处调用点（带序号的复盘 Prompt / 不带序号的关键事件抽取）
- * 只差行首的 `序号. `，正文一律走 services/对话渲染 那一份入口。
- * 原先这里的 `xiaoXiZhanShiWenBen` + `gouJianXiaoXiWenBen` 第二份渲染器已删：
- * 它把媒体占位符盖在图文混排正文上（半条消息）、语音/视频不给可读文本，
- * 撤回行的口径也一并收敛进那一份入口（不再在此拼第二遍）：FP-26 起该入口只出撤回占位，
- * 复盘/军师/主聊天三条语料都不再携带撤回原文。
- */
 function zhanShiFuPanXiaoXiWenBen(
   xiaoXiLieBiao: DuiHuaLiShiXiang[],
   带序号: boolean,
@@ -369,7 +361,6 @@ export async function shengChengFuPan(
   jiao_se_id: string,
   dang_an_id: string,
 ): Promise<FuPanShengChengJieGuo> {
-  // 读取本局是否秘籍通关及秘籍前好感度快照，供「仅复盘秘籍前真实表现」使用
   const dangAnJieGuo = await 数据库.query(
     `SELECT "是否秘籍通关", "秘籍前好感度" FROM "游戏档案" WHERE "用户ID" = $1 AND "角色ID" = $2 LIMIT 1`,
     [yong_hu_id, jiao_se_id],
@@ -385,8 +376,6 @@ export async function shengChengFuPan(
     ye_ma: 1,
     mei_ye_tiao_shu: FU_PAN_MAX_XIAO_XI })
 
-  // FP-08c：复盘的消息条目直接用 DuiHuaLiShiXiang（唯一渲染入口的入参形态），
-  // 复盘语料里的发送者标签仍逐字不变（jiaose⇒「对方」、yonghu⇒「你」），只是搬进 fa_song_zhe_ming
   let xiaoXiLieBiao: DuiHuaLiShiXiang[] = xiaoXiJieGuo.lie_biao
     .filter((xiaoXi) => xiaoXi.fa_song_zhe_lei_xing !== 'xitong')
     .reverse()
@@ -404,10 +393,8 @@ export async function shengChengFuPan(
       tuWenHunPai: shiTuWenHunPaiKuai(xiaoXi.nei_rong_kuai),
       beiYongXiaoXiId: xiaoXi.bei_yong_xiao_xi_id ?? null }))
 
-  // FP-12：复盘语料与军师/主聊天共用同一个文档正文补全口（渲染仍只有 对话渲染 那一份）
   xiaoXiLieBiao = await buQiWenJianTiQuWenBen(xiaoXiLieBiao)
 
-  // 秘籍通关：截断到秘籍使用前，仅保留秘籍前的真实对话
   let miJiTiShi: string | undefined
   if (shiFouMiJi) {
     const miJiMiLing = (HAO_GAN_DU_PEI_ZHI.miJi.miLing || '').trim().toLowerCase()
@@ -422,7 +409,6 @@ export async function shengChengFuPan(
       miJiTiShi =
         '本局使用了秘籍通关：聊天记录已截断到秘籍使用前，仅复盘秘籍使用前的真实对话（不评价秘籍本身）。'
     } else {
-      // 无法确定秘籍使用位置，保守处理：明确告知 AI 仅评秘籍前真实表现
       miJiTiShi =
         '本局使用了秘籍通关，但无法确定秘籍使用的具体位置。请保守处理：以上仅评秘籍使用前的真实表现，好感度轨迹以秘籍前的真实分数为准。'
     }
@@ -440,7 +426,6 @@ export async function shengChengFuPan(
     zhaXingTeZhi = huoQuZhaXingTeZhi(fuPanJiaoSeXinXi.mbtiLeiXing) ?? undefined
   }
 
-  // 秘籍通关时，好感度轨迹使用秘籍前真实分数快照，而非被拉满后的分数
   let haoGanDuGuiJi = await huoQuHaoGanDuGuiJi(yong_hu_id, jiao_se_id)
   if (shiFouMiJi && miJiQianHaoGanDu != null) {
     haoGanDuGuiJi = {
@@ -448,7 +433,6 @@ export async function shengChengFuPan(
       guanXiJieDuan: huoQuJieDuanMing(miJiQianHaoGanDu) }
   }
 
-  // 复盘链路（关键事件提取 + 复盘生成）按角色人设与最终好感度/关系阶段动态取参数
   const fuPanShangXiaWen: CanShuShangXiaWen = {
     jiaoSe: { shi_fou_zha_xing: fuPanJiaoSeXinXi.shiFouZhaXing },
     haoGanDu: haoGanDuGuiJi
@@ -460,7 +444,6 @@ export async function shengChengFuPan(
     const duiHuaWenBen = zhanShiFuPanXiaoXiWenBen(xiaoXiLieBiao, false)
     if (duiHuaWenBen) {
       try {
-        // YH-051 事件抽取进记忆检索注入：复盘链路抽取即落表，供上下文检索
         guanJianShiJian = await tiQuBingLuoKuGuanJianShiJian(
           yong_hu_id,
           jiao_se_id,
@@ -489,12 +472,10 @@ export async function shengChengFuPan(
 
   const jieGou = jieXiJSONXiangYing(xiangYing.neiRong)
 
-  // 渣型角色：在复盘内容前追加醒目的渣型警示块（前端负责样式区分）
   let zongJie = shengChengFuPanZongJie(jieGou) || xiangYing.neiRong.trim()
   if (fuPanJiaoSeXinXi.shiFouZhaXing) {
     zongJie = `${gouJianZhaDianTiShi(jieGou, fuPanJiaoSeXinXi.xingBie, zhaXingTeZhi)}\n\n${zongJie}`
   }
-  // 秘籍通关：在结尾强制追加声明（代码层保证，不依赖 AI 自觉；已含则不重复追加）
   if (shiFouMiJi) {
     const guanJianCi = huoQuFanYi('fuPan', 'miJiShengMingGuanJianCi')
     if (!zongJie.includes(guanJianCi)) {

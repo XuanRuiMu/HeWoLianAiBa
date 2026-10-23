@@ -29,21 +29,10 @@ interface 最小数据库 {
   connect(): Promise<最小客户端>
 }
 
-/**
- * 台账校验和唯一口径（FP-15）：行尾先归一为 LF、再 trim、再取 sha256。
- * 归一使同一份内容在 Windows(CRLF)/Linux(LF)/镜像检出下算出同一个值；
- * 内容级改动仍必然改变哈希，校验和的防护语义不因此削弱。
- * scripts/run_migration.js 内有一份等价实现（镜像只 COPY 那一个文件），
- * 两者由 scripts/__tests__/迁移台账校验和.test.ts 的 parity 用例把守。
- */
 export function 计算迁移校验和(sql: string): string {
   return createHash('sha256').update(sql.replace(/\r\n?/g, '\n').trim()).digest('hex')
 }
 
-/**
- * 旧口径（按检出字节直算，行尾参与哈希）的两个可能值。
- * 只用于把台账差异分类成「仅行尾」还是「内容变更」，不参与新口径哈希。
- */
 function 检出字节校验和(sql: string): string {
   return createHash('sha256').update(sql.trim()).digest('hex')
 }
@@ -117,13 +106,6 @@ export class 迁移器 {
     return 比对台账校验和(this.读取迁移文件清单(), await this.获取已执行版本())
   }
 
-  /**
-   * 一次性 re-baseline：把台账里已登记版本的 checksum 重算为"当前文件字节"的归一哈希。
-   * 四条硬边界：① 只 UPDATE 已在台账里的版本，绝不 INSERT —— 未登记的迁移仍必须由 执行()
-   * 真跑一遍才能进台账，否则就成了"绕过迁移"的后门；② 默认 dry-run 只出 diff，
-   * 必须显式 应用=true 才写库；③ 写入包在单事务 + advisory 锁里，要么全改要么全不改，
-   * 不留半套台账；④ 启动路径（entrypoint/CI）永不带这两个开关。
-   */
   async 重新登记校验和(应用: boolean): Promise<{ 条目: 台账比对条目[]; 已更新: number }> {
     const 条目 = await this.比对台账()
     if (!应用) return { 条目, 已更新: 0 }
@@ -180,7 +162,6 @@ export class 迁移器 {
       const 客户端 = await this.库.connect()
       try {
         await 客户端.query('BEGIN')
-        // YH-132 迁移并发加锁：多副本同时up建表打架收敛为advisory锁串行
         await 客户端.query(`SELECT pg_advisory_xact_lock(987654321)`)
         await 客户端.query(内容)
         await 客户端.query(

@@ -18,7 +18,6 @@ import { yanZhengUUID } from '../utils/验证'
 const luYou = Router()
 
 function huoQuIp(qingQiu: Request): string {
-  // 审计场景一律使用可信链路推导的真实来源 IP，不解析客户端可控 XFF
   return huoQuZhenShiIP(qingQiu)
 }
 

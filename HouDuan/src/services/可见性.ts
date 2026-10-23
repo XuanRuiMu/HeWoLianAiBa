@@ -1,16 +1,5 @@
 import { 数据库 } from '../数据库'
 
-/**
- * 可见性“类”体系（任务2方案C）。
- * 五值（与前端 utils/可见性.ts、翻译文件 sheZhi.keJianXing* 同源，改动须三处同步）：
- * - gong_kai：公开，任何登录用户可见
- * - jin_hao_you：仅好友可见（本人始终按本人规则）
- * - jin_bu_fen_ren：仅部分人可见（白名单内用户 + 本人）
- * - bu_ke_jian：不可见（任何人不可见，本人在普通资料面同样不可见，仅设置页可看原文）
- * - jin_zi_ji：只对自己开放（仅本人可见）
- * 首批落点为用户“签名”；后续空间/朋友圈/战绩等复用同一套逻辑：
- * 各表新增“<内容>可见性 + <内容>白名单”两列，本文件判定函数直接复用。
- */
 export const KE_JIAN_XING_LIE_BIAO = [
   'gong_kai',
   'jin_hao_you',
@@ -82,7 +71,6 @@ export async function duQuQianMingKeJianXinXi(yongHuId: string): Promise<QianMin
   }
 }
 
-/** 按可见性过滤签名：不可见返回 null。调用方须保证表结构已迁移（014）。 */
 export async function guoLvQianMing(
   yongYouZheId: string,
   chaKanZheId: string | null,

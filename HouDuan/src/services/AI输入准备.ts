@@ -129,12 +129,6 @@ export async function huoQuAIJiaoSeXinXi(
   }
 }
 
-/**
- * 取最近对话历史。多取一个淘汰步长，而不是正好取渲染上限：
- * 若只取 liShiXiaoXiShuLiang 条，会话超过该条数后每来一条新消息，取数窗口整体前移一条，
- * 历史段第一个字节每轮都变，zhanShiLiShiWenBen 的步长对齐就形同虚设，官方前缀缓存整段失效
- * （实测超长历史命中率仅 1.9%）。多取步长后窗口起点可稳定一个步长的轮次。
- */
 export async function huoQuZuiJinDuiHuaLiShi(
   yong_hu_id: string,
   jiao_se_id: string,
@@ -162,12 +156,10 @@ export async function huoQuZuiJinDuiHuaLiShi(
     const shi = String(shiJian.getHours()).padStart(2, '0')
     const fen = String(shiJian.getMinutes()).padStart(2, '0')
 
-    // 图片/表情包/视频携带 sha 供视觉注入与视频解析；语音/文件不带图只文本化
     const meiTiLeiBie = shuJuHang.媒体类别 ? String(shuJuHang.媒体类别) : undefined
     const shiTuXiang = meiTiLeiBie === 'tupian' || meiTiLeiBie === 'biaoqingshu'
     const yuanMIME = shuJuHang.媒体MIME ? String(shuJuHang.媒体MIME) : ''
     const shiShiPin = meiTiLeiBie === 'wenjian' && (yuanMIME.toLowerCase().startsWith('video/') || String(shuJuHang.媒体原始文件名 || '').toLowerCase().match(/\.(mp4|mov|webm|m4v)$/) !== null)
-    // FP-10：行内落了图文混排块 ⇒ 内容 已是按块顺序展开的投影，读取侧不得再用单占位符覆盖它
     const tuWenHunPai = shiTuWenHunPaiKuai(qingLiLuoKuKuai(shuJuHang.内容块, String(shuJuHang.ID)))
 
     return {
@@ -180,20 +172,17 @@ export async function huoQuZuiJinDuiHuaLiShi(
       nei_rong: String(shuJuHang.内容 || ''),
       shi_jian: `${shi}:${fen}`,
       yi_che_hui: Boolean(shuJuHang.已撤回),
-      // FP-26：模型装配口不再读取 `原始内容`（撤回原文不进语料），故此处不映射该列
       meiTiLeiBie,
       tuWenHunPai,
       meiTiSha256: (shiTuXiang || shiShiPin) && shuJuHang.媒体SHA256 ? String(shuJuHang.媒体SHA256).toLowerCase() : undefined,
       meiTiMIME: (shiTuXiang || shiShiPin) && shuJuHang.媒体MIME ? String(shuJuHang.媒体MIME) : undefined,
       meiTiShiChangHaoMiao: shuJuHang.媒体时长毫秒 != null ? Number(shuJuHang.媒体时长毫秒) : null,
       yuanShiWenJianMing: shuJuHang.媒体原始文件名 ? String(shuJuHang.媒体原始文件名) : undefined,
-      // FP-12：文档正文提取按媒体行 ID 批量取 MIME/哈希，故这里只带身份不带正文副本
       meiTiId: shuJuHang.媒体ID ? String(shuJuHang.媒体ID) : undefined,
       duiHuaZongTiaoShu: shuJuHang.对话总条数 != null ? Number(shuJuHang.对话总条数) : undefined,
       beiYongXiaoXiId: shuJuHang.被引用消息ID ? String(shuJuHang.被引用消息ID) : null,
     }
   })
-  // FP-12：阈值内的文档消息在送模前挂上提取正文（军师/军事分析/复盘/主聊天共用这一个补全口）
   return await buQiWenJianTiQuWenBen(liShi)
 }
 
@@ -203,10 +192,6 @@ export async function baoCunJiaoSeXiaoXi(
   const ZUI_DA_CHONG_SHI_CI_SHU = 10
   const CHU_SHI_CHONG_SHI_YAN_CHI_MS = 50
 
-  // R8 原子序号：pg_advisory_xact_lock 按会话串行取号+落库，禁 MAX+1 并发重复
-  // 根因：50 并发同读 MAX 得同号，冲突后读回同一行致 50 条变 2 条；收敛为事务内串行取号
-  // FP-09：锁键与序号分配口径的唯一真源在 services/消息.ts（用户消息走同一把锁），
-  //         角色消息的序号一律服务端权威分配，不再接受调用方指定序号。
   const huiHuaSuoJian = huiHuaXiaoXiSuoJian(canShu.yong_hu_id, canShu.jiao_se_id)
 
   let lastError: Error | null = null
@@ -221,8 +206,6 @@ export async function baoCunJiaoSeXiaoXi(
         [canShu.yong_hu_id, canShu.jiao_se_id],
       )
       const keHuDuanXuHao = Number(xuHaoJieGuo.rows[0]?.zui_da ?? 0) + 1
-      // FP-09：序号撞号不再用 ON CONFLICT DO NOTHING 静默「读回一行」——那正是把用户消息
-      // 当成重复而吞掉的机制本体。加锁后理论上不撞；真撞（通话链未加锁写入）就报错重试。
       const jieGuo = await keHuDuan.query(
         `INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "客户端序号")
          VALUES ($1, $2, $3, 'jiaose', 'wenben', true, $4)

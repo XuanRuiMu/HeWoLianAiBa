@@ -40,7 +40,6 @@ export interface QianTaiCuoWuXinXi {
   jiuDaiMa: string | null
   zhongShiCiShu: number
   xianShi: boolean
-  /** 该报错是否向用户展示恋爱码（免码报错为 false，见 前台错误码.ts 的 MIAN_MA_DAI_MA） */
   xianShiDaiMa: boolean
 }
 

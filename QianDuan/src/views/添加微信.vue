@@ -37,12 +37,9 @@ const weiXinMingCheng = computed(
 const moRenTouXiang = computed(() => (仓库.jiaoSeXinXi?.xing_bie === 'nv' ? '👩' : '👨'))
 
 function fanHui() {
-  // 返回资料设置；生成流程托管在 store，仍在后台继续跑，不会中断
   router.push({ name: 'ziLiaoSheZhi' })
 }
 
-// 完成时导航裁决：仅当用户仍停留在加载页（zaiJiaZaiYe 为真）才跳转聊天页；
-// 若已离开，则保持静默、不去打扰，会话自然进入「过往战绩」的“进行中”分组。
 watch(
   () => 仓库.zhuangTai,
   (zhuangTai) => {
@@ -53,7 +50,6 @@ watch(
 )
 
 onMounted(() => {
-  // 资料由资料设置向导通过 sessionStorage 透传（尚未生成角色，无 jiaoSeId）
   const linShi = sessionStorage.getItem('ziLiaoSheZhiLinShi')
   if (linShi) {
     sessionStorage.removeItem('ziLiaoSheZhiLinShi')
@@ -64,24 +60,19 @@ onMounted(() => {
       router.replace('/')
       return
     }
-    // 标记加载页活跃，发起（或接管）后台生成流程
     仓库.zhuCeJiaZaiYe()
     仓库.kaiShiLiuCheng(ziLiao)
   } else if (仓库.zhuangTai === 'jin_xing_zhong' || 仓库.zhuangTai === 'yi_wan_cheng') {
-    // 无透传资料但后台流程进行中/已完成：重入加载页，接管进度并重新标记活跃
     仓库.zhuCeJiaZaiYe()
-    // 若已完成且持有会话，立即跳转聊天页（照旧跳转聊天页面）
     if (仓库.zhuangTai === 'yi_wan_cheng' && 仓库.huiHuaId) {
       router.replace(`/chat/${仓库.huiHuaId}`)
     }
   } else {
-    // 无待处理资料且未在后台跑流程 → 回主页
     router.replace('/')
   }
 })
 
 onBeforeUnmount(() => {
-  // 离开加载页：仅注销活跃标记，绝不取消后台流程（离开≠取消）
   仓库.xiaoZhuJiaZaiYe()
 })
 </script>
