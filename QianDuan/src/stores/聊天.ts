@@ -868,6 +868,9 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
               huiHuaId,
               wenJian as File | Blob,
               DUO_MEI_TI_LEI_XING_SHANG_CHUAN_LEI_BIE[leiXing],
+              leiXing === 'yuYin' && typeof fuJia.shiChangHaoMiao === 'number'
+                ? { shiChangHaoMiao: fuJia.shiChangHaoMiao }
+                : undefined,
             )
           ).mediaId
       const suiWenBen =

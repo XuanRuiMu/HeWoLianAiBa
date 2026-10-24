@@ -20,7 +20,7 @@ import {
 import { kuaiShenHeWenBen, qingLiTiJiaoKuai } from '../services/消息内容块'
 import { liuShiBaoCunMeiTi, MeiTiCunChuCuoWu, shengChengQianMingURL } from '../services/媒体存储'
 import { panDingMeiTiShenHeChuCan } from '../services/媒体审核出参'
-import { SHEN_HE_FU_WU_BU_KE_YONG_JIAN, shiHeFaLeiBie, shiHeFaXiaoXiLeiXing } from '../config/媒体配置'
+import { SHEN_HE_FU_WU_BU_KE_YONG_JIAN, guiYiHuaShangChuanShiChang, shiHeFaLeiBie, shiHeFaXiaoXiLeiXing } from '../config/媒体配置'
 import { shenHeNeiRongAnQuan, jianCeWeiJiXinHao } from '../services/安全审核'
 import { peiZhi } from '../config'
 import { jiLuShenJiRiZhi } from '../services/审计日志'
@@ -217,6 +217,7 @@ luYou.post(
     if (!shiHeFaLeiBie(leiBie)) {
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'meiTiLeiXingFeiFa'))
     }
+    const shiChangHaoMiao = leiBie === 'yuyin' ? guiYiHuaShangChuanShiChang(qingQiu.query.shiChangHaoMiao) : null
 
     const contentType = String(qingQiu.headers['content-type'] || '')
     if (!contentType.toLowerCase().includes('multipart/form-data')) {
@@ -241,6 +242,7 @@ luYou.post(
           xinXi.mimeType || '',
           leiBie,
           yongHu.yongHuId,
+          shiChangHaoMiao,
         )
           .then((jieGuo) => {
             yiXiangYing = true

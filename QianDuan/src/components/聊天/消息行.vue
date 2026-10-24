@@ -4,11 +4,26 @@
       <TouXiang :tou-xiang="touXiang" :mo-ren-zi="moRenZi" :shen-fen="shenFen" />
       <slot name="tou-xiang-jiao" />
     </div>
-    <div v-if="!wuWaiKe" class="qipao-waike" :class="waiKeLeiMing">
-      <slot />
+    <div v-if="cheHuiWenBen" class="chehui-tishi">{{ cheHuiWenBen }}</div>
+    <template v-else>
+      <div v-if="!wuWaiKe" class="qipao-waike" :class="waiKeLeiMing">
+        <slot />
+      </div>
+      <slot v-else />
+    </template>
+    <div v-if="faSongZhong || faSongShiBai" class="fasong-zhuangtai" :aria-label="faSongTiShi">
+      <span v-if="faSongZhong" class="fasong-zhuangtai-zhuanquan" />
+      <button
+        v-else
+        type="button"
+        class="fasong-shibai-jiaobiao"
+        :title="faSongTiShi"
+        :aria-label="faSongTiShi"
+        @click.stop="emit('chongXinFaSong')"
+      >
+        !
+      </button>
     </div>
-    <slot v-else />
-    <slot name="wei-jiao" />
   </div>
 </template>
 
@@ -27,6 +42,10 @@ withDefaults(
     touXiang?: string | null
     moRenZi?: string
     shenFen?: 'jiaose' | 'yonghu' | 'duiju'
+    faSongZhong?: boolean
+    faSongShiBai?: boolean
+    faSongTiShi?: string | null
+    cheHuiWenBen?: string
   }>(),
   {
     shiBenRen: false,
@@ -37,8 +56,16 @@ withDefaults(
     touXiang: null,
     moRenZi: undefined,
     shenFen: undefined,
+    faSongZhong: false,
+    faSongShiBai: false,
+    faSongTiShi: null,
+    cheHuiWenBen: '',
   },
 )
+
+const emit = defineEmits<{
+  (e: 'chongXinFaSong'): void
+}>()
 </script>
 
 <style scoped>
@@ -58,6 +85,13 @@ withDefaults(
 .xiaoxi-xiangmu.jiaose-xiaoxi {
   flex-direction: row;
   align-self: flex-start;
+}
+
+.xiaoxi-xiangmu.xitong-xiaoxi,
+.xiaoxi-xiangmu.chehui-xiaoxi {
+  align-self: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .xiaoxi-wei {
@@ -95,8 +129,6 @@ withDefaults(
 }
 
 .qipao-waike.tupian-waike {
-  --duomeiti-tupian-zuidakuan: 180px;
-  --duomeiti-tupian-morenkuan: 160px;
   max-width: min(calc(100vw - 126px), 260px);
 }
 
@@ -110,7 +142,67 @@ withDefaults(
   align-items: flex-start;
 }
 
+.yonghu-xiaoxi .qipao-waike.yuyin-waike {
+  align-items: flex-end;
+}
+
 .qipao-waike.biaoqingbao-waike {
   background: transparent;
+}
+
+.chehui-tishi {
+  font-size: var(--ziti-xiao);
+  color: var(--wenben-tishi);
+  text-align: center;
+  padding: var(--jiange-4) 0;
+}
+
+.fasong-zhuangtai {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0 var(--jiange-4);
+}
+
+.fasong-shibai-jiaobiao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: var(--jiaobiao-chicun);
+  height: var(--jiaobiao-chicun);
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--cuowu-yanse);
+  color: var(--fasong-anniu-wenben);
+  font-family: inherit;
+  font-size: var(--jiaobiao-zihao);
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fasong-zhuangtai-zhuanquan {
+  display: inline-block;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: var(--jiaobiao-chicun);
+  height: var(--jiaobiao-chicun);
+  border: var(--jiaobiao-biankuang) solid var(--wenben-tishi);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: xiaoxiHangFasongXuanzhuan 1s linear infinite;
+  opacity: 0.9;
+}
+
+@keyframes xiaoxiHangFasongXuanzhuan {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>

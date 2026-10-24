@@ -41,22 +41,22 @@
           class="liaotian-jilu"
         >
           <h3 class="quyu-biaoti">{{ huoQuFanYi('junShi', 'liaoTianJiLu') }}</h3>
-          <div class="xiaoxi-liebiao">
+          <div class="jilu-liebiao">
             <div
               v-for="(xiaoXi, suoYin) in jiLuShuJu.liao_tian_ji_lu"
               :key="suoYin"
-              class="xiaoxi-xiangmu"
-              :class="{ 'chehui-xiaoxi': xiaoXi.yi_che_hui }"
+              class="jilu-hang"
+              :class="{ 'jilu-chehui': xiaoXi.yi_che_hui }"
             >
-              <span class="xiaoxi-jiaose">{{ xiaoXi.jiao_se }}</span>
-              <div class="xiaoxi-neirong-qu">
-                <span class="xiaoxi-neirong">{{ xiaoXi.nei_rong }}</span>
+              <span class="jilu-jiaose">{{ xiaoXi.jiao_se }}</span>
+              <div class="jilu-neirong-qu">
+                <span class="jilu-neirong">{{ xiaoXi.nei_rong }}</span>
                 
                 <div v-if="xiaoXi.yi_che_hui && xiaoXi.che_hui_shi_jian" class="chehui-shijian">
                   {{ huoQuFanYi('junShi', 'cheHuiYu') }}{{ xiaoXi.che_hui_shi_jian }}
                 </div>
               </div>
-              <span v-if="xiaoXi.shi_jian" class="xiaoxi-shijian">{{ xiaoXi.shi_jian }}</span>
+              <span v-if="xiaoXi.shi_jian" class="jilu-shijian">{{ xiaoXi.shi_jian }}</span>
             </div>
           </div>
         </div>
@@ -314,13 +314,13 @@ watch(
   border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
-.xiaoxi-liebiao {
+.jilu-liebiao {
   display: flex;
   flex-direction: column;
   gap: var(--jiange-xiao);
 }
 
-.xiaoxi-xiangmu {
+.jilu-hang {
   display: flex;
   align-items: baseline;
   gap: var(--jiange-xiao);
@@ -328,34 +328,34 @@ watch(
   line-height: 1.6;
 }
 
-.xiaoxi-xiangmu.chehui-xiaoxi {
+.jilu-hang.jilu-chehui {
   opacity: 0.6;
 }
 
-.xiaoxi-jiaose {
+.jilu-jiaose {
   font-weight: 600;
   color: rgba(255, 255, 255, 0.7);
   flex-shrink: 0;
   min-width: 24px;
 }
 
-:root[data-theme='light'] .xiaoxi-jiaose {
+:root[data-theme='light'] .jilu-jiaose {
   color: rgba(0, 0, 0, 0.6);
 }
 
-.xiaoxi-neirong-qu {
+.jilu-neirong-qu {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: var(--jiange-2);
 }
 
-.xiaoxi-neirong {
+.jilu-neirong {
   color: rgba(255, 255, 255, 0.6);
   word-break: break-word;
 }
 
-:root[data-theme='light'] .xiaoxi-neirong {
+:root[data-theme='light'] .jilu-neirong {
   color: rgba(0, 0, 0, 0.5);
 }
 
@@ -368,13 +368,13 @@ watch(
   color: rgba(0, 0, 0, 0.25);
 }
 
-.xiaoxi-shijian {
+.jilu-shijian {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.3);
   flex-shrink: 0;
 }
 
-:root[data-theme='light'] .xiaoxi-shijian {
+:root[data-theme='light'] .jilu-shijian {
   color: rgba(0, 0, 0, 0.25);
 }
 </style>

@@ -134,6 +134,7 @@ export async function liuShiBaoCunMeiTi(
   mime: string,
   leiBie: string,
   yongHuId: string,
+  shiChangHaoMiao?: number | null,
 ): Promise<MeiTiBaoCunJieGuo> {
   if (!shiHeFaLeiBie(leiBie)) {
     throw new MeiTiCunChuCuoWu('meiTiLeiXingFeiFa')
@@ -280,10 +281,10 @@ const sha256 = haXi.digest('hex').toLowerCase()
   }
 
   const chaRuJieGuo = await 数据库.query(
-    `INSERT INTO "媒体文件" ("SHA256", "原始文件名", "MIME", "大小字节", "类别", "上传者ID")
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO "媒体文件" ("SHA256", "原始文件名", "MIME", "大小字节", "类别", "上传者ID", "时长毫秒")
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING "ID"`,
-    [sha256, yuanShiWenJianMing, qingLiMIME, ziJieShu, leiBie, yongHuId],
+    [sha256, yuanShiWenJianMing, qingLiMIME, ziJieShu, leiBie, yongHuId, shiChangHaoMiao ?? null],
   )
 
   const meiTiId = String(chaRuJieGuo.rows[0].ID)

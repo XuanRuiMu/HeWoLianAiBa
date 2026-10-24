@@ -8,7 +8,7 @@ import { liaoTianXianLiu } from '../middleware/限流'
 import type { RenZhengQingQiu } from '../middleware/认证'
 import { 数据库 } from '../数据库'
 import { yanZhengUUID } from '../utils/验证'
-import { SHEN_HE_FU_WU_BU_KE_YONG_JIAN, YUN_XU_XIAO_XI_LEI_XING, shiHaoYouShangChuanLeiBie } from '../config/媒体配置'
+import { SHEN_HE_FU_WU_BU_KE_YONG_JIAN, YUN_XU_XIAO_XI_LEI_XING, guiYiHuaShangChuanShiChang, shiHaoYouShangChuanLeiBie } from '../config/媒体配置'
 import { liuShiBaoCunMeiTi, MeiTiCunChuCuoWu, shengChengQianMingURL } from '../services/媒体存储'
 import { panDingMeiTiShenHeChuCan } from '../services/媒体审核出参'
 import { panDuanKeJian, shiHeFaKeJianXing } from '../services/可见性'
@@ -300,7 +300,7 @@ export const HAO_YOU_YU_JU = {
   查消息列表: `
   SELECT m."ID", m."发送者ID", m."接收者ID", m."内容", m."类型", m."媒体ID",
          m."已读", m."撤回", m."创建时间", m."内容块", m."被引用消息ID",
-         f."SHA256", f."类别", f."原始文件名", f."大小字节"
+         f."SHA256", f."类别", f."原始文件名", f."大小字节", f."时长毫秒"
     FROM "好友消息" m
     LEFT JOIN "媒体文件" f ON f."ID" = m."媒体ID"
    WHERE ((m."发送者ID" = $1 AND m."接收者ID" = $2)
@@ -309,7 +309,7 @@ export const HAO_YOU_YU_JU = {
   查更早消息: `
   SELECT m."ID", m."发送者ID", m."接收者ID", m."内容", m."类型", m."媒体ID",
          m."已读", m."撤回", m."创建时间", m."内容块", m."被引用消息ID",
-         f."SHA256", f."类别", f."原始文件名", f."大小字节"
+         f."SHA256", f."类别", f."原始文件名", f."大小字节", f."时长毫秒"
     FROM "好友消息" m
     LEFT JOIN "媒体文件" f ON f."ID" = m."媒体ID"
    WHERE ((m."发送者ID" = $1 AND m."接收者ID" = $2)
@@ -322,7 +322,7 @@ export const HAO_YOU_YU_JU = {
   RETURNING "ID", "创建时间"`,
 } as const
 
-function yingSheHaoYouXiaoXi(
+export function yingSheHaoYouXiaoXi(
   row: Record<string, unknown>,
   duZheId: string,
   kuaiShangXiaWen: KuaiShangXiaWen,
@@ -344,6 +344,7 @@ function yingSheHaoYouXiaoXi(
     mei_ti_yuan_shi_wen_jian_ming:
       yiCheHui || !row['原始文件名'] ? null : String(row['原始文件名']),
     mei_ti_da_xiao_zi_jie: yiCheHui || row['大小字节'] == null ? null : Number(row['大小字节']),
+    mei_ti_shi_chang_hao_miao: yiCheHui || row['时长毫秒'] == null ? null : Number(row['时长毫秒']),
     yi_du: row['已读'] === true,
     yi_che_hui: yiCheHui,
     shi_jian_chuo: new Date(row['创建时间'] as string | Date).getTime(),
@@ -403,6 +404,7 @@ luYou.post('/媒体', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
   if (!shiHaoYouShangChuanLeiBie(leiBie)) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'meiTiLeiXingFeiFa'))
   }
+  const shiChangHaoMiao = leiBie === 'yuyin' ? guiYiHuaShangChuanShiChang(qingQiu.query.shiChangHaoMiao) : null
 
   const jieShouZheId = String(qingQiu.query.jieShouZheId ?? qingQiu.query.jie_shou_zhe_id ?? '')
   if (!yanZhengUUID(jieShouZheId)) {
@@ -441,7 +443,7 @@ luYou.post('/媒体', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
         return
       }
       chuLiGuoWenJian = true
-      liuShiBaoCunMeiTi(wenJianLiu, xinXi.filename || 'weimingming', xinXi.mimeType || '', leiBie, yongHu.yongHuId)
+      liuShiBaoCunMeiTi(wenJianLiu, xinXi.filename || 'weimingming', xinXi.mimeType || '', leiBie, yongHu.yongHuId, shiChangHaoMiao)
         .then((jieGuo) => {
           huiYing(() =>
             chengGongXiangYing(xiangYing, {

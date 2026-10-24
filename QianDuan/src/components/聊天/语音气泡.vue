@@ -104,6 +104,27 @@
         @input.stop="chuLiTuoDong"
       />
     </div>
+    <div v-if="zhuanXieZhong" class="yuyin-zhuanwenzi-zhuangtai">
+      {{ huoQuFanYi('liaoTian', 'yuYinZhuanWenZiZhong') }}
+    </div>
+    <button
+      v-else-if="zhuanWenZhanKai"
+      type="button"
+      class="yuyin-zhuanwenzi"
+      :class="{ 'yuyin-zhuanwenzi--benren': shiBenRen }"
+      :aria-label="huoQuFanYi('liaoTian', 'zheDie')"
+      :title="huoQuFanYi('liaoTian', 'zheDie')"
+      @click.stop="emit('qieHuanZhuanWenZi')"
+    >
+      {{ zhuanWenBen }}
+    </button>
+    <span
+      v-else-if="zhuanWenShiBai"
+      class="yuyin-zhuanwenzi yuyin-zhuanwenzi--shibai"
+      :class="{ 'yuyin-zhuanwenzi--benren': shiBenRen }"
+    >
+      {{ huoQuFanYi('liaoTian', 'yuYinZhuanWenZiShiBai') }}
+    </span>
   </div>
 </template>
 
@@ -127,18 +148,33 @@ import {
   type YuYinKeJianDuanShu,
 } from '@/composables/use语音音量'
 
-const props = defineProps<{
-  xiaoXi: YuYinShiChangZaiTi
-  boFangZhong: boolean
-  xuanZhong?: boolean
-  jinDuMiao: number
-  zongMiao: number
-  shiBenRen?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    xiaoXi: YuYinShiChangZaiTi
+    boFangZhong: boolean
+    xuanZhong?: boolean
+    jinDuMiao: number
+    zongMiao: number
+    shiBenRen?: boolean
+    zhuanXieZhong?: boolean
+    zhuanWenZhanKai?: boolean
+    zhuanWenShiBai?: boolean
+    zhuanWenBen?: string | null
+  }>(),
+  {
+    xuanZhong: false,
+    shiBenRen: false,
+    zhuanXieZhong: false,
+    zhuanWenZhanKai: false,
+    zhuanWenShiBai: false,
+    zhuanWenBen: null,
+  },
+)
 
 const emit = defineEmits<{
   (e: 'qieHuan'): void
   (e: 'tiaoZhuan', miao: number): void
+  (e: 'qieHuanZhuanWenZi'): void
 }>()
 
 const kuanYangShi = computed(() => yuYinKuanYangShi(props.xiaoXi))
@@ -425,5 +461,41 @@ onBeforeUnmount(() => {
   position: relative;
   width: var(--yuyin-kongzhi-tubiao);
   height: var(--yuyin-kongzhi-tubiao);
+}
+
+.yuyin-zhuanwenzi {
+  display: block;
+  box-sizing: border-box;
+  max-width: 100%;
+  margin-top: var(--jiange-6);
+  padding: var(--jiange-xiao) var(--jiange-12);
+  border: none;
+  border-radius: var(--qipao-yuanjiao);
+  background: var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing));
+  color: var(--qipao-duiFang-wenBen, var(--xiaoxi-jiaose-wenben));
+  font-size: var(--zhuanwenzi-zihao);
+  line-height: var(--zhuanwenzi-hangao);
+  text-align: left;
+  word-break: break-word;
+  cursor: pointer;
+}
+
+.yuyin-zhuanwenzi--benren {
+  background: var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing));
+  color: var(--qipao-ziJi-wenBen, var(--xiaoxi-yonghu-wenben));
+}
+
+.yuyin-zhuanwenzi--shibai {
+  background: transparent;
+  color: var(--cuowu-wenben);
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.yuyin-zhuanwenzi-zhuangtai {
+  margin-top: var(--jiange-6);
+  font-size: var(--ziti-xiao);
+  color: var(--wenben-tishi);
 }
 </style>

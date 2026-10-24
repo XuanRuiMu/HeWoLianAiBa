@@ -47,6 +47,7 @@ export interface HaoYouXiaoXi {
   mei_ti_lei_bie: string | null
   mei_ti_yuan_shi_wen_jian_ming: string | null
   mei_ti_da_xiao_zi_jie: number | null
+  mei_ti_shi_chang_hao_miao?: number | null
   yi_du: boolean
   yi_che_hui: boolean
   shi_jian_chuo: number
@@ -140,12 +141,13 @@ export async function huoQuHaoYouXiaoXi(
   }
 }
 
-export type HaoYouShangChuanLeiBie = Extract<ShangChuanLeiBie, 'tupian' | 'biaoqingshu' | 'wenjian'>
+export type HaoYouShangChuanLeiBie = Extract<ShangChuanLeiBie, 'tupian' | 'biaoqingshu' | 'yuyin' | 'wenjian'>
 
 export async function shangChuanHaoYouMeiTi(
   haoYouId: string,
   wenJian: File | Blob,
   leiBie: HaoYouShangChuanLeiBie,
+  zhuiJia?: { shiChangHaoMiao?: number | null },
 ): Promise<MeiTiShangChuanJieGuo> {
   const formData = new FormData()
   const wenJianMing =
@@ -157,7 +159,11 @@ export async function shangChuanHaoYouMeiTi(
     '/好友/媒体',
     formData,
     {
-      params: { jieShouZheId: haoYouId, leiBie },
+      params: {
+        jieShouZheId: haoYouId,
+        leiBie,
+        ...(zhuiJia?.shiChangHaoMiao != null ? { shiChangHaoMiao: zhuiJia.shiChangHaoMiao } : {}),
+      },
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 60000,
     },

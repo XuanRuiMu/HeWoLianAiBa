@@ -194,10 +194,21 @@ export const LEI_BIE_DAO_XIAO_XI_LEI_XING: Record<MeiTiLeiBie, string> = {
   wenjian: 'wenJian',
 }
 
-export const HAO_YOU_SHANG_CHUAN_LEI_BIE = ['tupian', 'biaoqingshu', 'wenjian'] as const satisfies readonly MeiTiLeiBie[]
+export const HAO_YOU_SHANG_CHUAN_LEI_BIE = LEI_BIE_LIE_BIAO
 
 export function shiHaoYouShangChuanLeiBie(zhi: unknown): zhi is MeiTiLeiBie {
   return (HAO_YOU_SHANG_CHUAN_LEI_BIE as readonly string[]).includes(String(zhi ?? ''))
+}
+
+export const YU_YIN_SHI_CHANG_SHANG_XIAN_HAO_MIAO = 60 * 1000
+
+export function guiYiHuaShangChuanShiChang(zhi: unknown): number | null {
+  if (typeof zhi !== 'number' && typeof zhi !== 'string') return null
+  const shu = typeof zhi === 'number' ? zhi : Number(zhi)
+  if (!Number.isFinite(shu) || shu <= 0) return null
+  const zhengShu = Math.round(shu)
+  if (zhengShu > YU_YIN_SHI_CHANG_SHANG_XIAN_HAO_MIAO) return null
+  return zhengShu
 }
 
 export const YUN_XU_XIAO_XI_LEI_XING = ['wenben', ...Object.values(LEI_BIE_DAO_XIAO_XI_LEI_XING)]

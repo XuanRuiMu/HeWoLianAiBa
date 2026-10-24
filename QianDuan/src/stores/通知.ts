@@ -5,6 +5,7 @@ import type { 通知 } from '@/types/类型定义'
 import { duQuLingPai } from '@/utils/令牌存储'
 import { biaoJiQuanBuTongZhiYiDu, biaoJiTongZhiYiDu, huoQuTongZhiLieBiao } from '@/api/通知'
 import { 归一前台错误 } from '@/utils/前台错误'
+import { chuFaCuoWuShangBao } from '@/utils/错误上报'
 
 export const 使用通知仓库 = defineStore('通知', () => {
   const tongZhiLieBiao = ref<通知[]>([])
@@ -23,6 +24,17 @@ export const 使用通知仓库 = defineStore('通知', () => {
     } finally {
       jiaZaiZhong.value = false
     }
+  }
+
+  function shuaXinTongZhiBiao() {
+    jiaZaiTongZhi().catch((cuoWu: unknown) => {
+      chuFaCuoWuShangBao({
+        leiBie: 'chengNuo',
+        cuoWu,
+        shiJianChuo: Date.now(),
+        fuJia: { lai_yuan: 'tong_zhi_biao_shua_xin' },
+      })
+    })
   }
 
   function lianJieSocket() {
@@ -78,6 +90,7 @@ export const 使用通知仓库 = defineStore('通知', () => {
     weiDuShu,
     jiaZaiZhong,
     jiaZaiTongZhi,
+    shuaXinTongZhiBiao,
     lianJieSocket,
     duanKaiSocket,
     biaoJiYiDu,

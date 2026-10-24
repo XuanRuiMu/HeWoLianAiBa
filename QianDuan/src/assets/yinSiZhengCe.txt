@@ -286,7 +286,7 @@ bcrypt算法自带盐值（salt），有效防止彩虹表攻击
 存储位置/键名：用途，是否必须
 sessionStorage「令牌」：登录令牌，维持当前标签页的登录状态，必须
 sessionStorage「刷新令牌」「刷新令牌ID」：刷新登录会话，必须
-localStorage（lian-ai-ba-zhu-ti、主题键）：存储主题偏好（深色/浅色模式），可选
+localStorage「主题」：存储主题偏好（深色/浅色模式），可选
 localStorage（hewolianba_ 前缀）：记住账号（仅保存手机号，不保存密码）、列表排序偏好、外观与气泡设置、主页背景雨水开关等，可选
 
 9.2我们不使用的追踪技术

@@ -995,7 +995,7 @@ watch(
   (lingPai) => {
     if (lingPai) {
       void 设置仓库.jiaZai()
-      通知仓库.jiaZaiTongZhi()
+      通知仓库.shuaXinTongZhiBiao()
       通知仓库.lianJieSocket()
     } else {
       关闭YongHuCaiDan(false)
@@ -1010,7 +1010,7 @@ watch(
 onMounted(() => {
   if (用户仓库.令牌 && !设置仓库.yiJiaZai) void 设置仓库.jiaZai()
   if (用户仓库.令牌) {
-    通知仓库.jiaZaiTongZhi()
+    通知仓库.shuaXinTongZhiBiao()
     通知仓库.lianJieSocket()
   }
 })

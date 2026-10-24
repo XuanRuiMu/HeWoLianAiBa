@@ -28,8 +28,15 @@ describe('气泡容器合并：全站只剩一份皮肤', () => {
     }
     expect(语音源).toContain("import QiPaoRongQi from '@/components/聊天/气泡容器.vue'")
     expect(语音源).toContain('<QiPaoRongQi')
-    expect(语音源).not.toContain('qipao-duiFang-beiJing')
+    const 语音气泡自身规则 = (语音源.match(/\.yuyin-qipao\s*\{[^}]*\}/g) ?? []).join('')
+    expect(语音气泡自身规则, '语音气泡自身不得再自带气泡皮肤').not.toMatch(
+      /background|color|border-radius|padding/,
+    )
     expect(语音源).not.toContain('.qipao-neirong')
+    expect((语音源.match(/--qipao-duiFang-beiJing/g) ?? []).length, '转写块气泡色只能一处').toBe(1)
+    expect((语音源.match(/--qipao-duiFang-wenBen/g) ?? []).length).toBe(1)
+    expect((语音源.match(/--qipao-ziJi-beiJing/g) ?? []).length).toBe(1)
+    expect((语音源.match(/--qipao-ziJi-wenBen/g) ?? []).length).toBe(1)
   })
 
   it('容器承接内边距/圆角/三角尾/字号，全部吃令牌', () => {

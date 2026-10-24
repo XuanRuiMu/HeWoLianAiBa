@@ -115,6 +115,7 @@ export async function shangChuanMeiTi(
   huiHuaId: string,
   wenJian: File | Blob,
   leiBie: ShangChuanLeiBie,
+  zhuiJia?: { shiChangHaoMiao?: number | null },
 ): Promise<MeiTiShangChuanJieGuo> {
   const formData = new FormData()
   const wenJianMing =
@@ -126,7 +127,10 @@ export async function shangChuanMeiTi(
     `/聊天/会话/${huiHuaId}/媒体`,
     formData,
     {
-      params: { leiBie },
+      params: {
+        leiBie,
+        ...(zhuiJia?.shiChangHaoMiao != null ? { shiChangHaoMiao: zhuiJia.shiChangHaoMiao } : {}),
+      },
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 60000,
     },

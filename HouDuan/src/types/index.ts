@@ -173,6 +173,7 @@ export interface HaoYouXiaoXiChuCan {
   mei_ti_lei_bie: string | null
   mei_ti_yuan_shi_wen_jian_ming: string | null
   mei_ti_da_xiao_zi_jie: number | null
+  mei_ti_shi_chang_hao_miao: number | null
   yi_du: boolean
   yi_che_hui: boolean
   shi_jian_chuo: number

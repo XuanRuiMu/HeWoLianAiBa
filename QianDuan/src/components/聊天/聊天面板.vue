@@ -2,7 +2,7 @@
   <component
     :is="yuanSu"
     class="liao-tian-mian-ban"
-    :class="[beiJingLeiMing, leiMing]"
+    :class="[{ 'gun-dong': shiGunDong }, beiJingLeiMing, leiMing]"
     :style="[beiJingYangShi, mianBanQiPaoYangShi]"
   >
     <slot />
@@ -20,11 +20,13 @@ const props = withDefaults(
     yuanSu?: 'div' | 'main'
     leiMing?: LeiMing
     qiPaoYangShi?: Record<string, string> | null
+    shiGunDong?: boolean
   }>(),
   {
     yuanSu: 'div',
     leiMing: undefined,
     qiPaoYangShi: null,
+    shiGunDong: false,
   },
 )
 
@@ -38,9 +40,11 @@ const mianBanQiPaoYangShi = computed(() => props.qiPaoYangShi ?? qiPaoYangShi.va
   flex-direction: column;
   padding: var(--jiange-12) var(--jiange-zhong);
   background: var(--liaotian-beijing);
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Helvetica Neue', Arial,
-    sans-serif;
+  font-family: var(--ziti-jiazu);
+}
+
+.liao-tian-mian-ban.gun-dong {
+  padding-bottom: 0;
 }
 
 .liao-tian-mian-ban.beijing-moRen {
