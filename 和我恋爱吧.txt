@@ -25,9 +25,9 @@ TA在等你先说话。想好第一句，自己先发过去吧。”
 <!-- 执行进度:START -->
 ## 执行进度（每轮覆盖，勿追加）
 
-更新：2026-10-24 12:05
-线上：https://metropolitan-ingredients-chain-tracks.trycloudflare.com （已上线三轮；第四轮待推）
-GitHub：本地已提交 2026.10.24_1（131 文件）；github.com:443 当前不可达，推送待网络恢复
+更新：2026-10-24 12:20
+线上：https://metropolitan-ingredients-chain-tracks.trycloudflare.com （第四轮已上线，产物 index-Da35yPac.js；控制台零 error）
+GitHub：已推送 main → 3a81cc1（2026.10.24_1 / _2 / _3 三个提交，131 + 39 + 2 文件）
 
 ### 用户插入的提示词（原文留档）
 1. 「立刻停止工作。确保现在游戏可以运行！按照服务器信息.txt 将本游戏推送到服务器上。我现在就要通过网址玩到该游戏！」→ 已完成三轮部署。
@@ -57,9 +57,9 @@ GitHub：本地已提交 2026.10.24_1（131 文件）；github.com:443 当前不
 - 门禁：前端 43 文件 / 571 例全绿（起点 526），vue-tsc + eslint 零问题，build 8.45MB（体积门禁 15MB）；后端 306 通过 + 2 跳过（需真实库的整组按库不可达跳过），tsc + eslint + build 全绿。
 
 ### 已知遗留（下一步）
-1. 第四轮上线：语音时长落库、聊天收编、主题单源、CSP 范本目前只在本地。
-2. 线上 nginx 主文档 CSP 未上（需用户确认；顺序=先换 dist 再改 conf 再 reload）。
-3. GitHub 推送被网络阻塞（github.com:443 不可达，本机无代理；服务器与百度/npm 均正常，只挡 github）。
+1. 线上主文档 CSP 还没上：范本 BuShu/nginx.conf 三条策略已就绪、dist 内联脚本已清零（顺序必须 先换 dist → 再改 /etc/nginx/conf.d/lianaiba.conf → nginx -t && reload），**动线上 conf 需用户点头**。
+2. 第四轮已上线（后端 src + dist 产物 index-Da35yPac.js）；GitHub 已推送 main → 3a81cc1。
+3. 好友语音链路缺真实运行栈浏览器实测（录音→上传→气泡秒数→失败重发）：本机无后端，且不得烧云短信（只剩约 98 条），线上需有登录态账号。
 4. 好友语音链路需真实运行栈浏览器实测（录音→上传→气泡秒数→失败重发）；本机无后端且不得触发云短信发码。
 5. 长按菜单 转发/收藏/删除：需后端新表与新接口，属新功能。
 6. 好友语音发后自动转写：需先确认转写接口对非会话媒体的权限口径（微信是长按手动转文字，现状即手动）。
@@ -67,4 +67,12 @@ GitHub：本地已提交 2026.10.24_1（131 文件）；github.com:443 当前不
 8. QianDuan eslint 非 type-aware，`no-floating-promises` 这类规则无法开启；本次用契约测试钉住同类悬空 Promise，长期建议另议。
 9. FP-12 依赖：TypeScript 固定 6.0.3（7.0.2 与 typescript-eslint <6.1 冲突），其余保持最新可用版。
 10. 管理中心 动效规范:164 与 动效守卫.test.ts:1214 的挂载点矛盾（该库有用户 131 项未提交 WIP，等其定稿）。
+11. 草地背景仍有 1 条 Chromium 性能提示（block-08.js:1156 getImageData 建议 willReadFrequently）：本项目 8 处读回都已带该属性，提示来自 vendored 引擎先在这张 zones 画布上建了**不带属性**的 2d 上下文；给 vendored 的 11 处 getContext 统统加属性会把所有 GPU 贴图改成 CPU 后端（性能倒退）。判定为三方渲染器提示、非本项目缺陷，暂不改。线上控制台零 error。
+12. 服务器 HouDuan 的 node_modules 只有生产依赖（无 tsc），构建前需 `npm install --no-save typescript@6.0.3`（不动 package.json/lock、不重装全部依赖）。
+
+### 第四轮部署记录（2026-10-24 12:10~12:20，可回滚 dist.bak.1792815109 等 7 份）
+- 后端：scp src → 补 typescript → `npm run build` → chown → `systemctl restart lianaiba`；日志 Redis/PG 正常、审核词库 v1、端口 3000、无 error。
+- 前端：scp dist → 备份旧 dist → 切换 → chown → `nginx -t && systemctl reload nginx`；**未改线上 nginx conf**。
+- 浏览器实测线上：首页/新哈希 JS/`/zhu-ti-yin-dao.js`/`/grass-bg/scripts/block-10.js` 全 200、`/api/健康` ok、主文档内联脚本数 0、localStorage「主题」=浅色 → `data-theme=light` 在 body 解析前生效、旧镜像键 lian-ai-ba-zhu-ti 已被清除、横向溢出 0、零 error。
+- 教训：切换时误删了一次上一轮 dist 备份（其余 7 份仍在，回滚路未断）；后续不删既有备份。
 <!-- 执行进度:END -->
