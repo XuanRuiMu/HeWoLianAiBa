@@ -42,6 +42,16 @@ describe('主题仓库只有「主题」一份编码', () => {
     expect(localStorage.getItem(主题键)).toBe('随机值')
   })
 
+  it('初始化清除旧版本镜像键，不留下未在隐私政策声明的数据', () => {
+    localStorage.setItem('lian-ai-ba-zhu-ti', 'an-se')
+    localStorage.setItem(主题键, 浅色值)
+    const 仓库 = 使用主题仓库()
+    仓库.chuShiHua()
+    expect(localStorage.getItem('lian-ai-ba-zhu-ti')).toBeNull()
+    expect(localStorage.getItem(主题键)).toBe(浅色值)
+    expect(document.documentElement.getAttribute('data-theme')).toBe('light')
+  })
+
   it('跨标签同步只认「主题」键，其它键与清空不改动当前主题', () => {
     localStorage.setItem(主题键, 浅色值)
     setActivePinia(createPinia())

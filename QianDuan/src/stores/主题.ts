@@ -23,6 +23,11 @@ function yingYongZhuTi(moShi: 主题模式) {
   document.documentElement.setAttribute('data-theme', huoQuDataTheme(moShi))
 }
 
+function qingLiLiShiJingXiang() {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem('lian-ai-ba-zhu-ti')
+}
+
 export const 使用主题仓库 = defineStore('主题', () => {
   const dangQianZhuti = ref<主题模式>(huoQuChuCunZhi())
 
@@ -33,6 +38,7 @@ export const 使用主题仓库 = defineStore('主题', () => {
   }
 
   function chuShiHua() {
+    qingLiLiShiJingXiang()
     yingYongZhuTi(dangQianZhuti.value)
     if (typeof window !== 'undefined') {
       window.addEventListener('storage', (shiJian) => {
