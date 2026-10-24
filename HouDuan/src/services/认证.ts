@@ -473,7 +473,11 @@ export async function gengGaiMiMa(
   }
   const shiJiShouJiHao = String(yongHuHang.rows[0].手机号)
 
-  const maZhengQue = await yanZhengMaShiFouZhengQue(shiJiShouJiHao, canShu.yan_zheng_ma)
+  const maZhengQue = await yanZhengMaShiFouZhengQue(
+    shiJiShouJiHao,
+    canShu.yan_zheng_ma,
+    YAN_ZHENG_MA_YONG_TU.chongZhiMiMa,
+  )
   if (!maZhengQue) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'yanZhengMaCuoWu') }
   }

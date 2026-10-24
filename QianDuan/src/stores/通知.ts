@@ -30,7 +30,7 @@ export const 使用通知仓库 = defineStore('通知', () => {
     if (!令牌 || socketLianJie.value?.connected) return
 
     const xieYiLianJie = io({
-      path: '/xieYiLianJie.io',
+      path: '/socket.io',
       auth: { token: 令牌 },
       transports: ['websocket', 'polling'],
     })

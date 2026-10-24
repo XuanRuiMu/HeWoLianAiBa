@@ -229,10 +229,16 @@ luYou.post('/头像', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
   })
 })
 
-async function duQuDuiFangQiPao(muBiaoId: string, lie: string, moRen: string): Promise<string> {
+async function duQuDuiFangQiPao(muBiaoId: string, lie: string, moRen: string): Promise<string | null> {
   try {
     const jieGuo = await 数据库.query(`SELECT * FROM "用户设置" WHERE "用户ID" = $1 LIMIT 1`, [muBiaoId])
-    const zhi = jieGuo.rows[0]?.[lie]
+    const hang = jieGuo.rows[0]
+    if (lie === '气泡自己') {
+      const zhi = hang?.['气泡自己']
+      return hang?.['气泡已显式设置'] === true && typeof zhi === 'string' && QI_PAO_YU_SHE.has(zhi) ? zhi : null
+    }
+    if (!hang) return moRen
+    const zhi = hang[lie]
     return typeof zhi === 'string' && QI_PAO_YU_SHE.has(zhi) ? zhi : moRen
   } catch {
     return moRen

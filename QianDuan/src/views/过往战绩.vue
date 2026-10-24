@@ -270,6 +270,7 @@
                 <div class="zhanji-you">
                   <TongYongXiaLa
                     mo-shi="zhanJi"
+                    class="yi-dong-fenlei"
                     :xuan-xiang="fenLeiXiaLaXuanXiang"
                     :mo-xing-zhi="zhanKu.dangQianFenLeiId"
                     :jin-yong="zhanKu.caoZuoZhong"
@@ -2243,7 +2244,8 @@ defineExpose({
   }
 
   .zhanji-you {
-    width: 100%;
+    flex: 1 1 calc(100% - var(--zhanji-yi-dong-zuo-kuan));
+    min-width: 0;
     margin-left: var(--zhanji-yi-dong-zuo-kuan);
     align-items: stretch;
     flex-direction: row;
@@ -2251,12 +2253,34 @@ defineExpose({
   }
 
   .yi-dong-fenlei {
-    flex: 1 1 150px;
+    flex: 1 1 auto;
+    min-width: 0;
     max-width: none;
   }
 
   .caozuo-anniu {
     flex: 1 1 auto;
+  }
+}
+
+@media (hover: none) and (pointer: coarse), (max-width: 1023px) {
+  .zhanji-liebiao {
+    overflow-y: scroll;
+    scrollbar-width: auto;
+    scrollbar-color: var(--gundong-tiao-huakuai) var(--gundong-tiao-guidao);
+  }
+
+  .zhanji-liebiao::-webkit-scrollbar {
+    width: var(--gundong-tiao-kuan-du);
+  }
+
+  .zhanji-liebiao::-webkit-scrollbar-thumb {
+    background: var(--gundong-tiao-huakuai);
+    border-radius: var(--gundong-tiao-kuan-du);
+  }
+
+  .zhanji-liebiao::-webkit-scrollbar-track {
+    background: var(--gundong-tiao-guidao);
   }
 }
 

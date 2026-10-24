@@ -73,8 +73,12 @@ export function 解析性别配色档(原始值: unknown): 性别配色档 {
   return 'zhongxing'
 }
 
-export function 解析性别框体色档(自身性别: unknown, 默认性别: unknown): 性别二档 {
-  return 解析性别(自身性别) ?? 解析性别(默认性别) ?? 'nan'
+export function 解析性别框体色档(
+  自身性别: unknown,
+  默认性别: unknown,
+  兜底色档: 性别二档 = 'nan',
+): 性别二档 {
+  return 解析性别(自身性别) ?? 解析性别(默认性别) ?? 兜底色档
 }
 
 export function 解析主色档(自身性别: unknown, 默认性别: unknown): 性别配色档 {

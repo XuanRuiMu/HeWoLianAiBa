@@ -5,11 +5,14 @@ const YU_YIN_YIN_LIANG_PEI_ZHI = {
   fangDaBeiShu: 2.4,
 } as const
 
-export const YU_YIN_DUAN_YANG_SHI_PEI_ZHI = [
-  { gaoZuiDi: 0.84, gaoZuiGao: 1, touZuiDi: 0.72, touZuiGao: 1 },
-  { gaoZuiDi: 0.6, gaoZuiGao: 1, touZuiDi: 0.42, touZuiGao: 1 },
-  { gaoZuiDi: 0.42, gaoZuiGao: 1, touZuiDi: 0.24, touZuiGao: 1 },
-] as const
+export type YuYinKeJianDuanShu = 1 | 2 | 3
+
+export const YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI = {
+  shengRuZhongYin: 0.34,
+  shengRuGaoYin: 0.66,
+  jiangHuiDiYin: 0.24,
+  jiangHuiZhongYin: 0.54,
+} as const
 
 let yinPinShangXiaWen: AudioContext | null = null
 let dangQianYinPin: HTMLAudioElement | null = null
@@ -132,10 +135,30 @@ export function duQuYuYinYinLiang(): number {
   return Math.min(1, Math.max(0, pingHuaZhi * YU_YIN_YIN_LIANG_PEI_ZHI.fangDaBeiShu))
 }
 
-export function jiSuanYuYinDuanYangShi(biLi: number): { gao: number; tou: number }[] {
-  const zhi = Math.min(1, Math.max(0, Number.isFinite(biLi) ? biLi : 0))
-  return YU_YIN_DUAN_YANG_SHI_PEI_ZHI.map((xiang) => ({
-    gao: xiang.gaoZuiDi + (xiang.gaoZuiGao - xiang.gaoZuiDi) * zhi,
-    tou: xiang.touZuiDi + (xiang.touZuiGao - xiang.touZuiDi) * zhi,
-  }))
+function guiYiKeJianDuanShu(zhi: number): YuYinKeJianDuanShu {
+  if (zhi === 1) return 1
+  if (zhi === 2) return 2
+  return 3
+}
+
+export function jiSuanYuYinKeJianDuanShu(
+  biLi: number,
+  shangCiDuanShu: number = 3,
+): YuYinKeJianDuanShu {
+  if (!Number.isFinite(biLi)) return 3
+  const zhi = Math.min(1, Math.max(0, biLi))
+  const shangCi = guiYiKeJianDuanShu(shangCiDuanShu)
+  if (shangCi === 1) {
+    if (zhi >= YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.shengRuGaoYin) return 3
+    if (zhi >= YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.shengRuZhongYin) return 2
+    return 1
+  }
+  if (shangCi === 2) {
+    if (zhi >= YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.shengRuGaoYin) return 3
+    if (zhi < YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.jiangHuiDiYin) return 1
+    return 2
+  }
+  if (zhi < YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.jiangHuiDiYin) return 1
+  if (zhi < YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.jiangHuiZhongYin) return 2
+  return 3
 }

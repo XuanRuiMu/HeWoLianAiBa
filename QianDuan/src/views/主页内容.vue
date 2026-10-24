@@ -135,7 +135,7 @@ const zhuyeQuyu = ref<HTMLElement | null>(null)
 const 入场可视 = (xuHao: number): boolean => 用户仓库.主页入场序号 >= xuHao
 
 function jinRuPuTongMoShi() {
-  router.push('/profile-setup?moshi=putong')
+  router.push('/profile-setup')
 }
 
 function jinRuTiaoZhanMoShi() {

@@ -12,7 +12,7 @@
       @click.stop="emit('qieHuan')"
     >
       <span class="yuyin-neirong" :class="{ 'yuyin-neirong--benren': shiBenRen }">
-        <span ref="labaYuanSu" class="laba-zu" aria-hidden="true">
+        <span class="laba-zu" :class="keJianDuanShuLei" aria-hidden="true">
           <svg class="laba-tubiao" viewBox="0 0 18 20" fill="none" stroke="currentColor">
             <circle
               class="laba-duan laba-duan--1"
@@ -41,55 +41,57 @@
       <span class="yuyin-jindu-xian" :style="jinDuXianYangShi" />
     </QiPaoRongQi>
     <div v-if="xuanZhong" class="yuyin-jindu-qu" :class="{ 'yuyin-jindu-qu--benren': shiBenRen }">
-      <button
-        type="button"
-        class="yuyin-kongzhi"
-        :aria-label="
-          boFangZhong ? huoQuFanYi('duoMeiTi', 'zanTingYuYin') : huoQuFanYi('duoMeiTi', 'jiXuYuYin')
-        "
-        :title="
-          boFangZhong ? huoQuFanYi('duoMeiTi', 'zanTingYuYin') : huoQuFanYi('duoMeiTi', 'jiXuYuYin')
-        "
-        @click.stop="qieHuanZanTing"
-      >
-        <svg
-          v-if="boFangZhong"
-          class="yuyin-kongzhi-tubiao"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          aria-hidden="true"
+      <span class="yuyin-kongzhi-zu">
+        <button
+          type="button"
+          class="yuyin-kongzhi"
+          :aria-label="
+            boFangZhong ? huoQuFanYi('duoMeiTi', 'zanTingYuYin') : huoQuFanYi('duoMeiTi', 'jiXuYuYin')
+          "
+          :title="
+            boFangZhong ? huoQuFanYi('duoMeiTi', 'zanTingYuYin') : huoQuFanYi('duoMeiTi', 'jiXuYuYin')
+          "
+          @click.stop="qieHuanZanTing"
         >
-          <rect x="6" y="4" width="4" height="16" rx="1" />
-          <rect x="14" y="4" width="4" height="16" rx="1" />
-        </svg>
-        <svg
-          v-else
-          class="yuyin-kongzhi-tubiao"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          aria-hidden="true"
+          <svg
+            v-if="boFangZhong"
+            class="yuyin-kongzhi-tubiao"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <rect x="6" y="4" width="4" height="16" rx="1" />
+            <rect x="14" y="4" width="4" height="16" rx="1" />
+          </svg>
+          <svg
+            v-else
+            class="yuyin-kongzhi-tubiao"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              d="M7 4.4a1 1 0 0 1 1.53-.85l11.2 7.6a1 1 0 0 1 0 1.7l-11.2 7.6A1 1 0 0 1 7 19.6z"
+            />
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="yuyin-kongzhi"
+          :aria-label="huoQuFanYi('duoMeiTi', 'tingZhiYuYin')"
+          :title="huoQuFanYi('duoMeiTi', 'tingZhiYuYin')"
+          @click.stop="tingZhiBoFang"
         >
-          <path
-            d="M7 4.4a1 1 0 0 1 1.53-.85l11.2 7.6a1 1 0 0 1 0 1.7l-11.2 7.6A1 1 0 0 1 7 19.6z"
-          />
-        </svg>
-      </button>
-      <button
-        type="button"
-        class="yuyin-kongzhi"
-        :aria-label="huoQuFanYi('duoMeiTi', 'tingZhiYuYin')"
-        :title="huoQuFanYi('duoMeiTi', 'tingZhiYuYin')"
-        @click.stop="tingZhiBoFang"
-      >
-        <svg
-          class="yuyin-kongzhi-tubiao"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <rect x="5" y="5" width="14" height="14" rx="2" />
-        </svg>
-      </button>
+          <svg
+            class="yuyin-kongzhi-tubiao"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <rect x="5" y="5" width="14" height="14" rx="2" />
+          </svg>
+        </button>
+      </span>
       <input
         class="yuyin-jindu-tiao"
         type="range"
@@ -119,7 +121,11 @@ import {
   zanTingDangQianYuYin,
   type YuYinShiChangZaiTi,
 } from '@/composables/use语音播放'
-import { duQuYuYinYinLiang, jiSuanYuYinDuanYangShi } from '@/composables/use语音音量'
+import {
+  duQuYuYinYinLiang,
+  jiSuanYuYinKeJianDuanShu,
+  type YuYinKeJianDuanShu,
+} from '@/composables/use语音音量'
 
 const props = defineProps<{
   xiaoXi: YuYinShiChangZaiTi
@@ -167,7 +173,9 @@ function chuLiTuoDong(shiJian: Event): void {
   emit('tiaoZhuan', shuRu.valueAsNumber)
 }
 
-const labaYuanSu = ref<HTMLElement | null>(null)
+const keJianDuanShu = ref<YuYinKeJianDuanShu>(3)
+const keJianDuanShuLei = computed(() => `laba-zu--${keJianDuanShu.value}-duan`)
+let shangCiKeJianDuanShu: YuYinKeJianDuanShu = 3
 let zhenJieDian = 0
 
 const jianDongMoShi =
@@ -175,17 +183,15 @@ const jianDongMoShi =
   typeof window.matchMedia === 'function' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-function xieRuDuanYangShi(biLi: number): void {
-  const suYuan = labaYuanSu.value
-  if (!suYuan) return
-  jiSuanYuYinDuanYangShi(biLi).forEach((duan, suoYin) => {
-    suYuan.style.setProperty(`--laba-duan-${suoYin + 1}-gao`, duan.gao.toFixed(3))
-    suYuan.style.setProperty(`--laba-duan-${suoYin + 1}-tou`, duan.tou.toFixed(3))
-  })
+function guiWeiQuanBuDuan(): void {
+  shangCiKeJianDuanShu = 3
+  if (keJianDuanShu.value !== 3) keJianDuanShu.value = 3
 }
 
-function guiWeiDuanYangShi(): void {
-  xieRuDuanYangShi(1)
+function gengXinKeJianDuanShu(): void {
+  const xinDuanShu = jiSuanYuYinKeJianDuanShu(duQuYuYinYinLiang(), shangCiKeJianDuanShu)
+  shangCiKeJianDuanShu = xinDuanShu
+  if (keJianDuanShu.value !== xinDuanShu) keJianDuanShu.value = xinDuanShu
 }
 
 function qingChuZhen(): void {
@@ -196,28 +202,28 @@ function qingChuZhen(): void {
 }
 
 function zhuiZongYinLiang(): void {
-  xieRuDuanYangShi(duQuYuYinYinLiang())
+  gengXinKeJianDuanShu()
   zhenJieDian = requestAnimationFrame(zhuiZongYinLiang)
 }
 
 function kaiShiZhuiZong(): void {
   qingChuZhen()
   if (jianDongMoShi || typeof requestAnimationFrame !== 'function') {
-    guiWeiDuanYangShi()
+    guiWeiQuanBuDuan()
     return
   }
-  xieRuDuanYangShi(duQuYuYinYinLiang())
+  gengXinKeJianDuanShu()
   zhenJieDian = requestAnimationFrame(zhuiZongYinLiang)
 }
 
 function guiWeiBingTingZhi(): void {
   qingChuZhen()
-  guiWeiDuanYangShi()
+  guiWeiQuanBuDuan()
 }
 
 onMounted(() => {
   if (props.boFangZhong) kaiShiZhuiZong()
-  else guiWeiDuanYangShi()
+  else guiWeiQuanBuDuan()
 })
 
 watch(
@@ -270,12 +276,6 @@ onBeforeUnmount(() => {
 }
 
 .laba-zu {
-  --laba-duan-1-gao: 1;
-  --laba-duan-1-tou: 1;
-  --laba-duan-2-gao: 1;
-  --laba-duan-2-tou: 1;
-  --laba-duan-3-gao: 1;
-  --laba-duan-3-tou: 1;
   display: inline-flex;
   flex: 0 0 auto;
   width: var(--yuyin-laba-kuan);
@@ -293,23 +293,13 @@ onBeforeUnmount(() => {
 }
 
 .laba-duan {
-  transform-box: fill-box;
-  transform-origin: center;
+  transition: opacity var(--yuyin-duan-yin-cang-shi-chang) var(--quxian-biao-zhun);
 }
 
-.laba-duan--1 {
-  transform: scale(var(--laba-duan-1-gao, 1));
-  opacity: var(--laba-duan-1-tou, 1);
-}
-
-.laba-duan--2 {
-  transform: scaleY(var(--laba-duan-2-gao, 1));
-  opacity: var(--laba-duan-2-tou, 1);
-}
-
-.laba-duan--3 {
-  transform: scaleY(var(--laba-duan-3-gao, 1));
-  opacity: var(--laba-duan-3-tou, 1);
+.laba-zu--1-duan .laba-duan--2,
+.laba-zu--1-duan .laba-duan--3,
+.laba-zu--2-duan .laba-duan--3 {
+  opacity: 0;
 }
 
 .yuyin-shichang {
@@ -333,7 +323,7 @@ onBeforeUnmount(() => {
 .yuyin-jindu-qu {
   display: flex;
   align-items: center;
-  gap: var(--jiange-12);
+  gap: var(--jiange-xiao);
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
@@ -391,6 +381,13 @@ onBeforeUnmount(() => {
   outline-offset: var(--jujiao-huan-pian-yi);
 }
 
+.yuyin-kongzhi-zu {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: var(--yuyin-kongzhi-jian-ju);
+}
+
 .yuyin-kongzhi {
   position: relative;
   display: inline-flex;
@@ -428,12 +425,5 @@ onBeforeUnmount(() => {
   position: relative;
   width: var(--yuyin-kongzhi-tubiao);
   height: var(--yuyin-kongzhi-tubiao);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .laba-duan {
-    transform: none;
-    opacity: 1;
-  }
 }
 </style>

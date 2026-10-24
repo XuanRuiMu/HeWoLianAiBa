@@ -59,5 +59,7 @@ const tiHuanWenBen = huoQuFanYi('haoYou', 'touXiang')
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  white-space: nowrap;
 }
 </style>

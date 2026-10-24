@@ -41,6 +41,20 @@ const 光晕色: Record<性别二档, string> = {
   nv: 'var(--xingbie-nv-xuan-guangyun)',
 }
 
+function 组装选中样式(
+  自身色档: 性别二档,
+  对象色档: 性别二档,
+  带光晕: boolean,
+): CSSProperties {
+  const 选中环 = `0 0 0 3px ${环色[自身色档]}`
+  return {
+    backgroundColor: 淡填充色[自身色档],
+    borderColor: 深边框色[对象色档],
+    color: 淡填充文字色[自身色档],
+    boxShadow: 带光晕 ? `${选中环}, 0 10px 26px ${光晕色[自身色档]}` : 选中环,
+  }
+}
+
 export interface 性别框体配色输入 {
   自身性别: MaybeRefOrGetter<unknown>
   默认性别: MaybeRefOrGetter<unknown>
@@ -66,11 +80,26 @@ export function 使用性别框体配色(输入: 性别框体配色输入) {
 
 export function 使用默认性别卡配色(输入: 性别框体配色输入) {
   const 色档 = 解析输入色档(输入)
-  const 样式 = computed<CSSProperties>(() => ({
-    backgroundColor: 淡填充色[色档.value],
-    borderColor: 深边框色[色档.value],
-    color: 淡填充文字色[色档.value],
-    boxShadow: `0 0 0 3px ${环色[色档.value]}, 0 10px 26px ${光晕色[色档.value]}`,
-  }))
+  const 样式 = computed<CSSProperties>(() => 组装选中样式(色档.value, 色档.value, true))
   return { 色档, 样式 }
+}
+
+export interface 通用性别框体配色输入 {
+  自身性别: MaybeRefOrGetter<unknown>
+  对象性别?: MaybeRefOrGetter<unknown>
+}
+
+const 通用框体对象兜底色档: 性别二档 = 'nv'
+
+export function 使用通用性别框体配色(输入: 通用性别框体配色输入) {
+  const 自身色档 = computed<性别二档>(() =>
+    解析性别框体色档(toValue(输入.自身性别), null),
+  )
+  const 对象色档 = computed<性别二档>(() =>
+    解析性别框体色档(toValue(输入.对象性别), null, 通用框体对象兜底色档),
+  )
+  const 样式 = computed<CSSProperties>(() =>
+    组装选中样式(自身色档.value, 对象色档.value, false),
+  )
+  return { 自身色档, 对象色档, 样式 }
 }

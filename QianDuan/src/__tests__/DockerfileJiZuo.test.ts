@@ -9,13 +9,13 @@ function duQuDockerfile(): string {
 describe('FP-08 YH-079 前端 Dockerfile 基座与探活', () => {
   it('brotli 构建阶段基于 nginx 镜像（自带 nginx 二进制）', () => {
     const wenBen = duQuDockerfile()
-    expect(wenBen).toMatch(/FROM\s+nginx:1\.27-alpine\s+AS\s+brotli-build/)
+    expect(wenBen).toMatch(/FROM\s+nginx:1\.30-alpine\s+AS\s+brotli-build/)
     expect(wenBen).not.toMatch(/FROM\s+alpine:3\.19\s+AS\s+brotli-build/)
   })
 
   it('运行阶段固定 nginx 版本', () => {
     const wenBen = duQuDockerfile()
-    expect(wenBen).toMatch(/FROM\s+nginx:1\.27-alpine/)
+    expect(wenBen).toMatch(/FROM\s+nginx:1\.30-alpine/)
     expect(wenBen).not.toMatch(/FROM\s+nginx:alpine\s*$/m)
   })
 

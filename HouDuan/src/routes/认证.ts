@@ -2,10 +2,11 @@
 import { Router } from 'express'
 import type { Request, Response } from 'express'
 import { huoQuFanYi } from '../config/translations'
-import { dengLuXianLiu, dengLuIPLianLiu, faSongMaXianLiu, zhuCeXianLiu, duanXinRiPeiEZhuJi, jianChaShouJiXianLiu, chongZhiMiMaXianLiu } from '../middleware/限流'
+import { dengLuXianLiu, dengLuIPLianLiu, faSongMaXianLiu, zhuCeXianLiu, duanXinRiPeiEZhuJi, jianChaShouJiXianLiu, chongZhiMiMaXianLiu, renJiTiaoZhanXianLiu } from '../middleware/限流'
 import {
   手机号验证中间件,
   用户名验证中间件 } from '../middleware/输入验证'
+import { renJiYanZhengZhongJianJian } from '../middleware/人机验证'
 import { chengGongXiangYing, shiBaiXiangYing } from '../utils/xiangying'
 import {
   anShouJiHaoChaYongHu,
@@ -20,6 +21,7 @@ import {
   yanZhengShouJiHaoGeShi,
   shuaXinLingPai } from '../services/认证'
 import { faSongYanZhengMa, zhunHuaYanZhengMaYongTu } from '../services/短信'
+import { qianFaRenJiTiaoZhan } from '../services/人机验证'
 import { 映射登录失败 } from '../services/登录失败'
 import { zhuXiaoYongHu } from '../services/账号注销'
 import { huoQuZhenShiIP } from '../utils/真实IP'
@@ -107,7 +109,18 @@ luYou.get('/检查手机', jianChaShouJiXianLiu, async (qingQiu: Request, xiangY
   return chengGongXiangYing(xiangYing, { yi_zhu_ce: true })
 })
 
-luYou.post('/发送码', faSongMaXianLiu, duanXinRiPeiEZhuJi, 手机号验证中间件, async (qingQiu: Request, xiangYing: Response) => {
+luYou.get('/人机挑战', renJiTiaoZhanXianLiu, async (qingQiu: Request, xiangYing: Response) => {
+  xiangYing.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+  xiangYing.setHeader('Pragma', 'no-cache')
+  const yongTu = zhunHuaYanZhengMaYongTu((qingQiu.query as Record<string, unknown>).yongTu)
+  const tiaoZhan = await qianFaRenJiTiaoZhan(huoQuIp(qingQiu), yongTu)
+  if (!tiaoZhan) {
+    return shiBaiXiangYing(xiangYing, 503, huoQuFanYi('renZheng', 'renJiYanZhengJiaZaiShiBai'), CUO_WU_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE)
+  }
+  return chengGongXiangYing(xiangYing, tiaoZhan)
+})
+
+luYou.post('/发送码', 手机号验证中间件, renJiYanZhengZhongJianJian, faSongMaXianLiu, duanXinRiPeiEZhuJi, async (qingQiu: Request, xiangYing: Response) => {
   const shouJiHao = huoQuShouJiHao(qingQiu.body as Record<string, unknown>)
   if (!shouJiHao || !yanZhengShouJiHaoGeShi(shouJiHao)) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)

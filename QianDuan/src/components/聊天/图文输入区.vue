@@ -611,7 +611,7 @@ defineExpose({
 .dai-fa-kuai-shanchu {
   position: absolute;
   top: 0;
-  left: 0;
+  right: 0;
   padding: 0 var(--jiange-xiao);
   border: none;
   background: var(--beijing-kaopian);

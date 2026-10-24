@@ -630,6 +630,14 @@
         @qu-xiao="guanBiCaiJian"
       />
     </Teleport>
+    <RenJiYanZheng
+      ref="renJiZuJian"
+      :xian-shi="renJiXianShi"
+      :yong-tu="YAN_ZHENG_MA_YONG_TU.chongZhiMiMa"
+      :deng-dai-zhong="miMaFaSongZhong"
+      @guan-bi="renJiXianShi = false"
+      @ti-jiao="tiJiaoRenJi"
+    />
   </div>
 </template>
 
@@ -649,7 +657,9 @@ import {
   type QianTaiCuoWu,
 } from '@/utils/前台错误'
 import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
-import { gengGaiYongHuMing, gengGaiMiMa, gengGaiMoRenXingBie, gengGaiMoRenDuiXiangXingBie, faSongMa } from '@/api/认证'
+import { gengGaiYongHuMing, gengGaiMiMa, gengGaiMoRenXingBie, gengGaiMoRenDuiXiangXingBie, faSongMa, YAN_ZHENG_MA_YONG_TU, type 人机验证答案 } from '@/api/认证'
+import RenJiYanZheng from '@/components/认证/人机测试.vue'
+import { shiRenJiYanZhengShiBai, type 人机测试实例 } from '@/utils/人机验证'
 import type { XingBie } from '@/types/类型定义'
 import {
   baoCunQianMing as baoCunQianMingApi,
@@ -1007,6 +1017,8 @@ const miMaTiShi = ref('')
 const miMaShiBai = ref(false)
 const miMaFaSongZhong = ref(false)
 const miMaDaoJiShi = ref(0)
+const renJiXianShi = ref(false)
+const renJiZuJian = ref<人机测试实例 | null>(null)
 let miMaDaoJiShiQi: ReturnType<typeof setInterval> | null = null
 
 const moRenXingBieXuanZhong = ref<XingBie | null>(null)
@@ -1055,14 +1067,20 @@ async function baoCunYongHuMing() {
   }
 }
 
-async function zhiXingFaSongMiMaMa() {
-  if (!keYiFaSongMiMaMa.value) return
+function zhiXingFaSongMiMaMa() {
+  if (!keYiFaSongMiMaMa.value || miMaFaSongZhong.value || renJiXianShi.value) return
+  renJiXianShi.value = true
+}
+
+async function tiJiaoRenJi(yanZheng: 人机验证答案) {
+  if (miMaFaSongZhong.value) return
   miMaFaSongZhong.value = true
   miMaShiBai.value = false
   miMaTiShi.value = ''
   qingFenQuanCuoWu('miMa')
   try {
-    await faSongMa(用户仓库.dangQianYongHu!.shou_ji_hao)
+    await faSongMa(用户仓库.dangQianYongHu!.shou_ji_hao, YAN_ZHENG_MA_YONG_TU.chongZhiMiMa, undefined, yanZheng)
+    renJiXianShi.value = false
     miMaDaoJiShi.value = 60
     if (miMaDaoJiShiQi) clearInterval(miMaDaoJiShiQi)
     miMaDaoJiShiQi = setInterval(() => {
@@ -1076,6 +1094,11 @@ async function zhiXingFaSongMiMaMa() {
       }
     }, 1000)
   } catch (cuoWu: unknown) {
+    if (shiRenJiYanZhengShiBai(cuoWu)) {
+      renJiZuJian.value?.biaoShiYanZhengShiBai()
+      return
+    }
+    renJiXianShi.value = false
     miMaShiBai.value = true
     jieShouFenQuanCuoWu('miMa', cuoWu, zhiXingFaSongMiMaMa)
   } finally {

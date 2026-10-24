@@ -62,3 +62,7 @@ Thumbs.db
 /微信正确的样子.png
 /本项目目前的样子.png
 docker-compose.override.yml
+/服务器信息.txt
+/手机版问题截图/
+/.agents/tmp/
+/.agents/evidence/截图/

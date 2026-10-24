@@ -66,7 +66,19 @@
               :aria-label="bianJiMingChengWenAn + '：' + 项.mingCheng"
               @click.stop="开始编辑(模式.键, 项)"
             >
-              ✎
+              <svg
+                class="bei-jing-ka-kong-zhi-tu-biao"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+              </svg>
             </button>
             <button
               v-if="项.leiXing === 'ziDingYi'"
@@ -76,7 +88,22 @@
               :disabled="删除中"
               @click.stop="请求删除(项)"
             >
-              ×
+              <svg
+                class="bei-jing-ka-kong-zhi-tu-biao"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M3 6h18" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                <path d="M10 11v6M14 11v6" />
+              </svg>
             </button>
           </div>
         </template>
@@ -494,6 +521,10 @@ async function 确认删除(): Promise<void> {
 }
 
 .bei-jing-ka {
+  --wai-guan-kong-zhi-chi-cun: 30px;
+  --wai-guan-kong-zhi-re-qu: 36px;
+  --wai-guan-kong-zhi-tu-biao: 14px;
+
   position: relative;
   min-height: calc(var(--wai-guan-re-ku) * 2);
   border: 1.5px solid var(--biankuang-yanse);
@@ -559,7 +590,7 @@ async function 确认删除(): Promise<void> {
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: calc(var(--wai-guan-re-ku) + var(--jiange-2)) var(--jiange-6) var(--jiange-12);
+  padding: calc(var(--wai-guan-kong-zhi-chi-cun) + var(--jiange-6)) var(--jiange-6) var(--jiange-12);
   border: none;
   background: transparent;
   color: inherit;
@@ -604,8 +635,8 @@ async function 确认删除(): Promise<void> {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: var(--wai-guan-re-ku);
-  height: var(--wai-guan-re-ku);
+  width: var(--wai-guan-kong-zhi-chi-cun);
+  height: var(--wai-guan-kong-zhi-chi-cun);
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -613,18 +644,37 @@ async function 确认删除(): Promise<void> {
   color: var(--fasong-anniu-wenben);
   box-shadow: 0 0 0 1px var(--fasong-anniu-wenben) inset;
   font-family: inherit;
-  font-size: var(--ziti-xiao);
   line-height: 1;
   cursor: pointer;
+}
+
+.bei-jing-ka-kong-zhi::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--wai-guan-kong-zhi-re-qu);
+  height: var(--wai-guan-kong-zhi-re-qu);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.bei-jing-ka-kong-zhi-tu-biao {
+  width: var(--wai-guan-kong-zhi-tu-biao);
+  height: var(--wai-guan-kong-zhi-tu-biao);
+  pointer-events: none;
 }
 
 .bei-jing-ka-kong-zhi--shan-chu {
   left: auto;
   right: var(--jiange-6);
-  font-size: var(--ziti-da);
 }
 
 .bei-jing-ka-kong-zhi:hover:not(:disabled) {
+  box-shadow: 0 0 0 2px var(--fasong-anniu-wenben) inset;
+}
+
+.bei-jing-ka-kong-zhi--shan-chu:hover:not(:disabled) {
   background: var(--cuowu-yanse);
 }
 

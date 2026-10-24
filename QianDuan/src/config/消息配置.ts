@@ -4,7 +4,11 @@ export const XIAO_XI_PEI_ZHI = {
   cheHuiShiXian: 2 * 60 * 1000,
   zuiDaXiaoXiChangDu: 500,
   ziFuTongJiXianShiYuZhi: 400,
-  heBingShiJianYuZhi: 60 * 1000,
+  heBingShiJianYuZhi: 5 * 60 * 1000,
+  diBuYuZhiXiangSu: 40,
+  dingBuYuZhiXiangSu: 60,
+  haoYouXiaoXiZuiDaTiaoShu: 50,
+  haoYouLunXunJianGeHaoMiao: 30 * 1000,
 }
 
 export const DUO_MEI_TI_PEI_ZHI = {
@@ -201,12 +205,16 @@ export const EMOJI_MIANBAN_PEI_ZHI = {
 } as const
 
 export const LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI = {
-  yuYinCaiDanXiang: ['yuYinZhuanWenZi', 'yinYong'],
+  yuYinCaiDanXiang: ['yuYinZhuanWenZi', 'yinYong', 'cheHui'],
   wenBenCaiDanXiang: ['fuZhi', 'fanYi', 'yinYong', 'cheHui'],
-  tuPianCaiDanXiang: ['tianJiaDaoBiaoQing', 'yinYong', 'cheHui'],
+  tuPianCaiDanXiang: ['tianJiaDaoBiaoQing', 'baoCunTuPian', 'yinYong', 'cheHui'],
   changAnChuFaHaoMiao: 500,
   yinYongZhaiYaoZuiDaZiFu: 30,
   yuYinZhuanXieChaoShiHaoMiao: 70000,
+  caiDanYuGuKuan: 148,
+  caiDanYuGuGao: 168,
+  caiDanBianJu: 8,
+  caiDanXiaFangPianYi: 20,
 } as const
 
 const YIN_YONG_MEI_TI_ZHAN_WEI_JIAN = {

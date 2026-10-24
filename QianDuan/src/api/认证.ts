@@ -38,12 +38,35 @@ export const YAN_ZHENG_MA_YONG_TU = {
 
 export type YanZhengMaYongTu = (typeof YAN_ZHENG_MA_YONG_TU)[keyof typeof YAN_ZHENG_MA_YONG_TU]
 
+export interface 人机验证答案 {
+  renJiPiaoJu: string
+  renJiDaAn: string
+}
+
+export interface 人机挑战 {
+  id: string
+  svg: string
+  guoQiMiao: number
+}
+
+export async function huoQuRenJiTiaoZhan(
+  yongTu: YanZhengMaYongTu = YAN_ZHENG_MA_YONG_TU.zhuCe,
+  peiZhi?: { signal?: AbortSignal },
+): Promise<人机挑战> {
+  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: 人机挑战 }>(
+    `/认证/人机挑战?yongTu=${encodeURIComponent(yongTu)}`,
+    peiZhi,
+  )
+  return 响应.data.shu_ju
+}
+
 export async function faSongMa(
   shouJiHao: string,
   yongTu: YanZhengMaYongTu = YAN_ZHENG_MA_YONG_TU.zhuCe,
   peiZhi?: { signal?: AbortSignal },
+  renJi?: 人机验证答案,
 ): Promise<void> {
-  await http.post('/认证/发送码', { shouJiHao, yongTu }, peiZhi)
+  await http.post('/认证/发送码', { shouJiHao, yongTu, ...(renJi ?? {}) }, peiZhi)
 }
 
 export async function chongZhiMiMa(

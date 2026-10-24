@@ -84,7 +84,7 @@ export function use好友概览(): Use好友概览返回值 {
 
   async function yuQuYiGe(haoYouId: string, dangQianLingPai: number): Promise<void> {
     try {
-      const lieBiao = await huoQuHaoYouXiaoXi(haoYouId, 1)
+      const { lieBiao } = await huoQuHaoYouXiaoXi(haoYouId, 1)
       if (dangQianLingPai !== lingPai) return
       const zuiHou = lieBiao.length ? lieBiao[lieBiao.length - 1] : null
       if (!zuiHou) return

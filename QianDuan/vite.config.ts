@@ -242,18 +242,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 800,
     sourcemap: false,
     rollupOptions: {
-      output: {
-        manualChunks(id: string) {
-          if (!id.includes('node_modules')) return undefined
-          if (/[\\/]node_modules[\\/](vue|@vue|vue-router|pinia)[\\/]/.test(id)) {
-            return 'vue-vendor'
-          }
-          if (/[\\/]node_modules[\\/]three[\\/]/.test(id)) {
-            return 'san-wei'
-          }
-          return 'vendor'
-        },
-      },
+      output: {},
     },
   },
   server: {

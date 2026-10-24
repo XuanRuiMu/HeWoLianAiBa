@@ -24,6 +24,7 @@ interface Use长按菜单依赖<T> {
   fuZhiWenBen?: (wenBen: string) => Promise<boolean>
   fanYiQingQiu?: (wenBen: string, yuanYu?: string, muBiaoYu?: string) => Promise<string>
   tianJiaDaoBiaoQing?: (xiaoXi: T) => Promise<void>
+  baoCunMeiTi?: (xiaoXi: T) => Promise<void>
   sheZhiCuoWu?: (xinXi: string) => void
   zhiChiTuPianYinYong?: boolean
 }
@@ -131,26 +132,46 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
   let wenBenChangAnDingShiQi: ReturnType<typeof setTimeout> | null = null
   let tuPianChangAnDingShiQi: ReturnType<typeof setTimeout> | null = null
 
-  function daKaiCaiDan(xiaoXi: T, shiJian: MouseEvent) {
+  function quXiaoDian(shiJian: MouseEvent | TouchEvent): { x: number; y: number } {
+    if ('touches' in shiJian) {
+      const dian = shiJian.touches[0] ?? shiJian.changedTouches?.[0]
+      return { x: dian ? dian.clientX : 0, y: dian ? dian.clientY : 0 }
+    }
+    const shuBiao = shiJian as MouseEvent
+    return { x: shuBiao.clientX, y: shuBiao.clientY }
+  }
+
+  function dingWeiCaiDian(x: number, y: number): { top: string; left: string } {
+    if (typeof window === 'undefined') return { top: `${y}px`, left: `${x}px` }
+    const kuan = window.innerWidth
+    const gao = window.innerHeight
+    const zuo = Math.max(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu, Math.min(x, kuan - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanYuGuKuan - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu))
+    let ding = y - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanYuGuGao
+    if (ding < LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu) ding = y + LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanXiaFangPianYi
+    ding = Math.max(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu, Math.min(ding, gao - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanYuGuGao - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu))
+    return { top: `${ding}px`, left: `${zuo}px` }
+  }
+
+  function daKaiCaiDan(xiaoXi: T, shiJian: MouseEvent | TouchEvent) {
     if (shiYuYinXiaoXi(xiaoXi)) return
     if (xiaoXi.fa_song_zhe_lei_xing !== 'yonghu' || xiaoXi.yi_che_hui) return
     if (Date.now() - xiaoXi.shi_jian_chuo > XIAO_XI_PEI_ZHI.cheHuiShiXian) return
+    const dian = quXiaoDian(shiJian)
     xuanZhongXiaoXi.value = xiaoXi
-    cheHuiCaiDanYangShi.value = {
-      top: `${shiJian.clientY}px`,
-      left: `${shiJian.clientX}px`,
-    }
+    cheHuiCaiDanYangShi.value = dingWeiCaiDian(dian.x, dian.y)
     cheHuiCaiDanZhanKai.value = true
   }
 
-  function chuMoKaiShi(xiaoXi: T) {
+  function chuMoKaiShi(xiaoXi: T, shiJian: TouchEvent) {
     if (shiYuYinXiaoXi(xiaoXi)) return
     if (xiaoXi.fa_song_zhe_lei_xing !== 'yonghu' || xiaoXi.yi_che_hui) return
     if (Date.now() - xiaoXi.shi_jian_chuo > XIAO_XI_PEI_ZHI.cheHuiShiXian) return
+    const dian = quXiaoDian(shiJian)
     changAnDingShiQi = setTimeout(() => {
       xuanZhongXiaoXi.value = xiaoXi
+      cheHuiCaiDanYangShi.value = dingWeiCaiDian(dian.x, dian.y)
       cheHuiCaiDanZhanKai.value = true
-    }, 500)
+    }, LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao)
   }
 
   function chuMoJieShu() {
@@ -160,20 +181,20 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
     }
   }
 
-  function daKaiYuYinCaiDan(xiaoXi: T, shiJian: MouseEvent) {
+  function daKaiYuYinCaiDan(xiaoXi: T, shiJian: MouseEvent | TouchEvent) {
     if (!shiYuYinXiaoXi(xiaoXi)) return
+    const dian = quXiaoDian(shiJian)
     xuanZhongYuYin.value = xiaoXi
-    yuYinCaiDanYangShi.value = {
-      top: `${shiJian.clientY}px`,
-      left: `${shiJian.clientX}px`,
-    }
+    yuYinCaiDanYangShi.value = dingWeiCaiDian(dian.x, dian.y)
     yuYinCaiDanZhanKai.value = true
   }
 
-  function chuMoKaiShiYuYin(xiaoXi: T) {
+  function chuMoKaiShiYuYin(xiaoXi: T, shiJian: TouchEvent) {
     if (!shiYuYinXiaoXi(xiaoXi)) return
+    const dian = quXiaoDian(shiJian)
     yuYinChangAnDingShiQi = setTimeout(() => {
       xuanZhongYuYin.value = xiaoXi
+      yuYinCaiDanYangShi.value = dingWeiCaiDian(dian.x, dian.y)
       yuYinCaiDanZhanKai.value = true
     }, LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao)
   }
@@ -193,8 +214,10 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
   function huoQuYuYinCaiDanXiang(xiaoXi?: T): YuYinCaiDanXiang[] {
     const muBiao = xiaoXi ?? xuanZhongYuYin.value
     const quanBu = [...LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.yuYinCaiDanXiang]
-    if (muBiao && !keYinYongXiaoXi(muBiao)) return quanBu.filter((xiang) => xiang !== 'yinYong')
-    return quanBu
+    if (!muBiao) return quanBu
+    const kejian = keYinYongXiaoXi(muBiao) ? quanBu : quanBu.filter((xiang) => xiang !== 'yinYong')
+    if (keXianShiCheHui(muBiao)) return kejian
+    return kejian.filter((xiang) => xiang !== 'cheHui')
   }
 
   function sheZhiYinYongMuBiao(muBiao: T): boolean {
@@ -211,23 +234,27 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
       sheZhiYinYongMuBiao(muBiao)
       return
     }
+    if (xiang === 'cheHui') {
+      await yiLai.cheHuiXiaoXi(muBiao.id)
+      return
+    }
     await yiLai.qieHuanYuYinZhuanWenZi?.(muBiao)
   }
 
-  function daKaiWenBenCaiDan(xiaoXi: T, shiJian: MouseEvent) {
+  function daKaiWenBenCaiDan(xiaoXi: T, shiJian: MouseEvent | TouchEvent) {
     if (!shiWenBenXiaoXi(xiaoXi)) return
+    const dian = quXiaoDian(shiJian)
     xuanZhongWenBen.value = xiaoXi
-    wenBenCaiDanYangShi.value = {
-      top: `${shiJian.clientY}px`,
-      left: `${shiJian.clientX}px`,
-    }
+    wenBenCaiDanYangShi.value = dingWeiCaiDian(dian.x, dian.y)
     wenBenCaiDanZhanKai.value = true
   }
 
-  function chuMoKaiShiWenBen(xiaoXi: T) {
+  function chuMoKaiShiWenBen(xiaoXi: T, shiJian: TouchEvent) {
     if (!shiWenBenXiaoXi(xiaoXi)) return
+    const dian = quXiaoDian(shiJian)
     wenBenChangAnDingShiQi = setTimeout(() => {
       xuanZhongWenBen.value = xiaoXi
+      wenBenCaiDanYangShi.value = dingWeiCaiDian(dian.x, dian.y)
       wenBenCaiDanZhanKai.value = true
     }, LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao)
   }
@@ -394,20 +421,20 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
     await qingQiuWenBenFanYi(muBiao)
   }
 
-  function daKaiTuPianCaiDan(xiaoXi: T, shiJian: MouseEvent) {
+  function daKaiTuPianCaiDan(xiaoXi: T, shiJian: MouseEvent | TouchEvent) {
     if (!shiTuPianXiaoXi(xiaoXi)) return
+    const dian = quXiaoDian(shiJian)
     xuanZhongTuPian.value = xiaoXi
-    tuPianCaiDanYangShi.value = {
-      top: `${shiJian.clientY}px`,
-      left: `${shiJian.clientX}px`,
-    }
+    tuPianCaiDanYangShi.value = dingWeiCaiDian(dian.x, dian.y)
     tuPianCaiDanZhanKai.value = true
   }
 
-  function chuMoKaiShiTuPian(xiaoXi: T) {
+  function chuMoKaiShiTuPian(xiaoXi: T, shiJian: TouchEvent) {
     if (!shiTuPianXiaoXi(xiaoXi)) return
+    const dian = quXiaoDian(shiJian)
     tuPianChangAnDingShiQi = setTimeout(() => {
       xuanZhongTuPian.value = xiaoXi
+      tuPianCaiDanYangShi.value = dingWeiCaiDian(dian.x, dian.y)
       tuPianCaiDanZhanKai.value = true
     }, LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao)
   }
@@ -450,6 +477,10 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
     }
     if (xiang === 'yinYong') {
       sheZhiYinYongMuBiao(muBiao)
+      return
+    }
+    if (xiang === 'baoCunTuPian') {
+      await yiLai.baoCunMeiTi?.(muBiao)
       return
     }
     await yiLai.tianJiaDaoBiaoQing?.(muBiao)

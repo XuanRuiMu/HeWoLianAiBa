@@ -38,6 +38,7 @@ export interface HaoYouXiang {
 export interface HaoYouXiaoXi {
   id: string
   fa_song_zhe_id: string
+  fa_song_zhe_lei_xing?: 'yonghu' | 'duifang'
   jie_shou_zhe_id: string
   nei_rong: string
   lei_xing: string
@@ -112,21 +113,34 @@ export async function shanChuHaoYou(haoYouId: string): Promise<void> {
   await http.delete(`/好友/${haoYouId}`)
 }
 
+export interface HaoYouXiaoXiYe {
+  lieBiao: HaoYouXiaoXi[]
+  haiYouGengDuo: boolean
+}
+
 export async function huoQuHaoYouXiaoXi(
   haoYouId: string,
   xianZhi = 20,
-  youBiao?: { xu_hao: number | null; shi_jian: number; id: string },
-): Promise<HaoYouXiaoXi[]> {
-  const xiangYing = await http.get<{ cheng_gong: boolean; shu_ju: { lie_biao: HaoYouXiaoXi[] } }>(`/好友/消息/${haoYouId}`, {
+  youBiao?: { shi_jian_chuo: number; id: string },
+): Promise<HaoYouXiaoXiYe> {
+  const xiangYing = await http.get<{
+    cheng_gong: boolean
+    shu_ju: { lie_biao: HaoYouXiaoXi[]; hai_you_geng_duo?: boolean }
+  }>(`/好友/消息/${haoYouId}`, {
     params: {
       limit: xianZhi,
-      ...(youBiao ? { you_biao_xu_hao: youBiao.xu_hao ?? '', you_biao_shi_jian_chuo: youBiao.shi_jian, you_biao_id: youBiao.id } : {}),
+      ...(youBiao
+        ? { you_biao_shi_jian_chuo: youBiao.shi_jian_chuo, you_biao_id: youBiao.id }
+        : {}),
     },
   })
-  return xiangYing.data.shu_ju.lie_biao || []
+  return {
+    lieBiao: xiangYing.data.shu_ju.lie_biao || [],
+    haiYouGengDuo: xiangYing.data.shu_ju.hai_you_geng_duo === true,
+  }
 }
 
-export type HaoYouShangChuanLeiBie = Extract<ShangChuanLeiBie, 'tupian' | 'wenjian'>
+export type HaoYouShangChuanLeiBie = Extract<ShangChuanLeiBie, 'tupian' | 'biaoqingshu' | 'wenjian'>
 
 export async function shangChuanHaoYouMeiTi(
   haoYouId: string,

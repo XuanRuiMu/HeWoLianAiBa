@@ -3,7 +3,10 @@ import { resolve } from 'node:path'
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import 语音气泡 from '@/components/聊天/语音气泡.vue'
-import { jiSuanYuYinDuanYangShi } from '@/composables/use语音音量'
+import {
+  YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI,
+  jiSuanYuYinKeJianDuanShu,
+} from '@/composables/use语音音量'
 
 const 根 = resolve(__dirname, '..')
 const du = (xiangDui: string): string => readFileSync(resolve(根, xiangDui), 'utf8')
@@ -44,37 +47,83 @@ describe('气泡容器合并：全站只剩一份皮肤', () => {
   })
 })
 
-describe('三段圆弧随实时音量呼吸', () => {
-  it('喇叭重画为点 + 两弧三段，clip-path 阶梯假动画已删', () => {
+describe('三段圆弧按音量只改显隐，形状与未播放完全一致', () => {
+  it('喇叭重画为点 + 两弧三段，clip-path 阶梯假动画与非等比缩放都已删', () => {
     expect((语音源.match(/class="laba-duan laba-duan--/g) ?? []).length).toBe(3)
     expect(语音源).not.toContain('@keyframes')
     expect(语音源).not.toContain('clip-path')
+    expect(语音源).not.toContain('jiSuanYuYinDuanYangShi')
+    expect(语音源).not.toContain('--laba-duan-')
+    expect(语音源).not.toContain('scale(')
+    expect(语音源).not.toContain('scaleY(')
     expect(语音源).toContain('stroke="currentColor"')
   })
 
-  it('三段各吃自己的高度/透明度变量，由 AnalyserNode 的 RMS 驱动', () => {
-    for (const suoYin of [1, 2, 3]) {
-      expect(语音源).toContain(`--laba-duan-${suoYin}-gao`)
-      expect(语音源).toContain(`--laba-duan-${suoYin}-tou`)
-    }
+  it('三段弧的样式只剩透明度过渡，不允许高度/透明度收缩', () => {
+    const duanGuiZe = 语音源.match(/\.laba-duan \{[^}]*\}/)?.[0] ?? ''
+    expect(duanGuiZe).toContain(
+      'transition: opacity var(--yuyin-duan-yin-cang-shi-chang) var(--quxian-biao-zhun)',
+    )
+    expect(duanGuiZe).not.toContain('transform')
+    expect(duanGuiZe).not.toContain('opacity:')
+    expect(令牌源).toContain('--yuyin-duan-yin-cang-shi-chang: 100ms;')
+  })
+
+  it('多余段直接隐藏：1 段藏后两段，2 段只藏第三段', () => {
+    expect(语音源).toContain('.laba-zu--1-duan .laba-duan--2,')
+    expect(语音源).toContain('.laba-zu--1-duan .laba-duan--3,')
+    expect(语音源).toContain('.laba-zu--2-duan .laba-duan--3')
+    expect(语音源).toContain('opacity: 0')
+    expect(语音源).not.toContain('.laba-zu--3-duan')
+  })
+
+  it('气泡只由 rAF 更新一个 class，段数不变不触发渲染', () => {
+    expect(语音源).toContain('jiSuanYuYinKeJianDuanShu')
     expect(语音源).toContain('duQuYuYinYinLiang()')
     expect(语音源).toContain('requestAnimationFrame')
+    expect(语音源).toContain(':class="keJianDuanShuLei"')
+    expect(语音源).toContain('laba-zu--${keJianDuanShu.value}-duan')
+    expect(语音源).toContain(
+      'if (keJianDuanShu.value !== xinDuanShu) keJianDuanShu.value = xinDuanShu',
+    )
     expect(语音源).toContain('(prefers-reduced-motion: reduce)')
   })
 
-  it('映射函数：0 收成小振幅、1 满格，外层弧比内层收得更多', () => {
-    const di = jiSuanYuYinDuanYangShi(0)
-    const man = jiSuanYuYinDuanYangShi(1)
-    expect(di).toHaveLength(3)
-    expect(man.every((duan) => duan.gao === 1 && duan.tou === 1)).toBe(true)
-    expect(di[0].gao).toBeLessThan(1)
-    expect(di[1].gao).toBeLessThan(di[0].gao)
-    expect(di[2].gao).toBeLessThan(di[1].gao)
-    expect(di[0].tou).toBeGreaterThan(di[2].tou)
-    expect(jiSuanYuYinDuanYangShi(Number.NaN)).toEqual(di)
+  it('音量低中高映射 1/2/3 段，非法值按无法分析处理显示三段', () => {
+    expect(jiSuanYuYinKeJianDuanShu(0)).toBe(1)
+    expect(jiSuanYuYinKeJianDuanShu(0.2, 1)).toBe(1)
+    expect(jiSuanYuYinKeJianDuanShu(0.4, 1)).toBe(2)
+    expect(jiSuanYuYinKeJianDuanShu(0.7, 2)).toBe(3)
+    expect(jiSuanYuYinKeJianDuanShu(0.7, 3)).toBe(3)
+    expect(jiSuanYuYinKeJianDuanShu(-1)).toBe(1)
+    expect(jiSuanYuYinKeJianDuanShu(2)).toBe(3)
+    expect(jiSuanYuYinKeJianDuanShu(Number.NaN)).toBe(3)
+    expect(jiSuanYuYinKeJianDuanShu(Number.POSITIVE_INFINITY)).toBe(3)
   })
 
-  it('未播放时归位：三段高度与透明度都回到 1', () => {
+  it('升降门限分离形成迟滞，边界音量不会来回闪段', () => {
+    const { shengRuZhongYin, shengRuGaoYin, jiangHuiDiYin, jiangHuiZhongYin } =
+      YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI
+    expect(shengRuZhongYin).toBeGreaterThan(jiangHuiDiYin)
+    expect(shengRuGaoYin).toBeGreaterThan(jiangHuiZhongYin)
+    expect(jiSuanYuYinKeJianDuanShu(shengRuZhongYin - 0.01, 1)).toBe(1)
+    expect(jiSuanYuYinKeJianDuanShu(shengRuZhongYin, 1)).toBe(2)
+    expect(jiSuanYuYinKeJianDuanShu(jiangHuiDiYin, 2)).toBe(2)
+    expect(jiSuanYuYinKeJianDuanShu(jiangHuiDiYin - 0.01, 2)).toBe(1)
+    expect(jiSuanYuYinKeJianDuanShu(shengRuGaoYin - 0.01, 2)).toBe(2)
+    expect(jiSuanYuYinKeJianDuanShu(shengRuGaoYin, 2)).toBe(3)
+    expect(jiSuanYuYinKeJianDuanShu(jiangHuiZhongYin, 3)).toBe(3)
+    expect(jiSuanYuYinKeJianDuanShu(jiangHuiZhongYin - 0.01, 3)).toBe(2)
+  })
+
+  it('同一音量落在迟滞带内时保持上一档', () => {
+    expect(jiSuanYuYinKeJianDuanShu(0.3, 1)).toBe(1)
+    expect(jiSuanYuYinKeJianDuanShu(0.3, 2)).toBe(2)
+    expect(jiSuanYuYinKeJianDuanShu(0.6, 2)).toBe(2)
+    expect(jiSuanYuYinKeJianDuanShu(0.6, 3)).toBe(3)
+  })
+
+  it('未播放/暂停/停止时恢复三段满显示', () => {
     const wrapper = mount(语音气泡, {
       props: {
         xiaoXi: { mei_ti_shi_chang_hao_miao: 10000 },
@@ -84,11 +133,10 @@ describe('三段圆弧随实时音量呼吸', () => {
         zongMiao: 10,
       },
     })
-    const suYuan = wrapper.find('.laba-zu').element as HTMLElement
-    expect(suYuan.style.getPropertyValue('--laba-duan-1-gao')).toBe('1.000')
-    expect(suYuan.style.getPropertyValue('--laba-duan-2-gao')).toBe('1.000')
-    expect(suYuan.style.getPropertyValue('--laba-duan-3-gao')).toBe('1.000')
-    expect(suYuan.style.getPropertyValue('--laba-duan-3-tou')).toBe('1.000')
+    const suYuan = wrapper.find('.laba-zu')
+    expect(suYuan.classes()).toContain('laba-zu--3-duan')
+    expect(wrapper.findAll('.laba-duan')).toHaveLength(3)
+    expect((suYuan.element as HTMLElement).style.getPropertyValue('--laba-duan-1-gao')).toBe('')
     wrapper.unmount()
   })
 })
@@ -202,21 +250,31 @@ describe('音量采集：真实 RMS，不造假动画', () => {
   })
 })
 
-describe('暂停/停止按 8px 栅格与 44px 热区重排', () => {
-  it('视觉 32px、热区 44px、间距 12px，行内衬与气泡内边距 13px 对齐', () => {
-    expect(令牌源).toContain('--yuyin-kongzhi-chicun: 32px;')
-    expect(令牌源).toContain('--yuyin-kongzhi-re-ku: 44px;')
-    expect(令牌源).toContain('--jiange-12: 12px;')
-    expect(令牌源).toContain('--jiange-13: 13px;')
+describe('暂停/停止收进紧凑按钮组', () => {
+  it('视觉 28px、图标 13px、组内 3px、组与进度条 8px，36px 热区由 ::before 外扩', () => {
+    expect(令牌源).toContain('--yuyin-kongzhi-chicun: 28px;')
+    expect(令牌源).toContain('--yuyin-kongzhi-re-ku: 36px;')
+    expect(令牌源).toContain('--yuyin-kongzhi-tubiao: 13px;')
+    expect(令牌源).toContain('--yuyin-kongzhi-jian-ju: 3px;')
+    expect(令牌源).toContain('--jiange-xiao: 8px;')
     expect(语音源).toContain('width: var(--yuyin-kongzhi-chicun)')
     expect(语音源).toContain('height: var(--yuyin-kongzhi-chicun)')
     expect(语音源).toContain(
       'inset: calc((var(--yuyin-kongzhi-chicun) - var(--yuyin-kongzhi-re-ku)) / 2)',
     )
-    expect(语音源).toContain('gap: var(--jiange-12)')
+    expect(语音源).toContain('width: var(--yuyin-kongzhi-tubiao)')
+    expect(语音源).toContain('height: var(--yuyin-kongzhi-tubiao)')
     expect(语音源).toContain('padding-inline: var(--jiange-13)')
     expect(语音源).toContain('margin-top: var(--jiange-xiao)')
     expect(令牌源).not.toContain('--yuyin-re-ku:')
+  })
+
+  it('两个按钮包进同一组内，组内间距 3px 且整组与进度条间距 8px', () => {
+    expect(语音源).toContain('class="yuyin-kongzhi-zu"')
+    expect(语音源).toContain('.yuyin-kongzhi-zu {')
+    expect(语音源).toContain('gap: var(--yuyin-kongzhi-jian-ju)')
+    expect(语音源).toContain('gap: var(--jiange-xiao)')
+    expect(语音源).not.toContain('gap: var(--jiange-12)')
   })
 
   it('时长不再被固定宽度裁切：气泡按内容撑开且标签不收缩', () => {

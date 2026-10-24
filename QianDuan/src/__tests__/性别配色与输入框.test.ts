@@ -156,7 +156,7 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
   })
 })
 
-describe('性别卡：每个按钮按自身性别取淡填充与深边框', () => {
+describe('性别卡：第一二步统一按自身色填充、对象色描边', () => {
   const 向导 = 读('views/资料设置向导.vue')
   const 取规则 = (源: string, 选择器: string): string => {
     const 始 = 源.indexOf(选择器)
@@ -165,8 +165,16 @@ describe('性别卡：每个按钮按自身性别取淡填充与深边框', () =
     const 闭 = 源.indexOf('}', 开)
     return 开 < 0 || 闭 < 0 ? '' : 源.slice(开, 闭 + 1)
   }
+  const 第一步 = 向导.slice(
+    向导.indexOf('v-if="当前步骤 === 1"'),
+    向导.indexOf('v-else-if="当前步骤 === 2"'),
+  )
+  const 第二步 = 向导.slice(
+    向导.indexOf('v-else-if="当前步骤 === 2"'),
+    向导.indexOf('v-else-if="当前步骤 === 3"'),
+  )
 
-  it('男性卡与女性卡各自绑定自身档位，不共用卡片级色档', () => {
+  it('男性卡与女性卡各两枚，分属自身与对象两步', () => {
     expect(向导.match(/data-xuan-xing-bie="nan"/g)?.length).toBe(2)
     expect(向导.match(/data-xuan-xing-bie="nv"/g)?.length).toBe(2)
     expect(向导).not.toContain('--xuan-zi-ji-bei')
@@ -174,27 +182,31 @@ describe('性别卡：每个按钮按自身性别取淡填充与深边框', () =
     expect(向导).not.toContain('data-dui-xiang-xingbie')
   })
 
-  it('选中的男性卡恒为淡蓝填充、深蓝边框、深蓝环', () => {
-    const 男块 = 取规则(向导, ".ziliao-kapian .xingBie-kaPian.beiXuanZhong[data-xuan-xing-bie='nan']")
-    expect(男块).toContain('background-color: var(--xingbie-nan-tan-beijing)')
-    expect(男块).toContain('border: 2px solid var(--xingbie-nan-shen-biankuang)')
-    expect(男块).toContain('box-shadow: 0 0 0 3px var(--xingbie-nan-xuan-huan)')
-    expect(男块).toContain('color: var(--xingbie-nan-tan-wenben)')
+  it('两步选中态共用同一个通用组合样式，不再各写一套', () => {
+    expect(向导).toContain('使用通用性别框体配色')
+    expect(第一步.match(/性别卡选中样式/g)).toHaveLength(2)
+    expect(第二步.match(/性别卡选中样式/g)).toHaveLength(2)
+    expect(向导.match(/性别卡选中样式/g)).toHaveLength(5)
   })
 
-  it('选中的女性卡恒为淡粉填充、深粉边框、深粉环', () => {
-    const 女块 = 取规则(向导, ".ziliao-kapian .xingBie-kaPian.beiXuanZhong[data-xuan-xing-bie='nv']")
-    expect(女块).toContain('background-color: var(--xingbie-nv-tan-beijing)')
-    expect(女块).toContain('border: 2px solid var(--xingbie-nv-shen-biankuang)')
-    expect(女块).toContain('box-shadow: 0 0 0 3px var(--xingbie-nv-xuan-huan)')
-    expect(女块).toContain('color: var(--xingbie-nv-tan-wenben)')
-  })
-
-  it('选中态不再走脚本内联色，选中规则挂在按钮自身档位上', () => {
+  it('向导不再保留个人资料专属的选中 CSS 与色值', () => {
+    expect(向导).not.toContain(
+      ".ziliao-kapian .xingBie-kaPian.beiXuanZhong[data-xuan-xing-bie",
+    )
+    expect(向导).not.toContain('--xingbie-nan-tan-beijing')
+    expect(向导).not.toContain('--xingbie-nv-tan-beijing')
+    expect(向导).not.toContain('--xingbie-nan-shen-biankuang')
+    expect(向导).not.toContain('--xingbie-nv-shen-biankuang')
     expect(向导).not.toContain('性别框体样式')
-    expect(向导).not.toContain('use性别框体配色')
-    expect(向导).toContain("[data-xuan-xing-bie='nan']")
-    expect(向导).toContain("[data-xuan-xing-bie='nv']")
+  })
+
+  it('选中卡的图标与名称继承自身性别文字色', () => {
+    expect(
+      取规则(向导, '.ziliao-kapian .xingBie-kaPian.beiXuanZhong .xingBie-mingCheng'),
+    ).toContain('color: inherit')
+    expect(
+      取规则(向导, '.ziliao-kapian .xingBie-kaPian.beiXuanZhong .xingBie-svg'),
+    ).toContain('color: inherit')
   })
 
   it('第三步性格卡与性别无关，悬停与选中共用白色高光且选中更实', () => {

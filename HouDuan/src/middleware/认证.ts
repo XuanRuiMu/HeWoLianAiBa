@@ -15,6 +15,7 @@ export interface GongKaiLuJing {
 }
 
 export const gongKaiLuJingBaiMingDan: GongKaiLuJing[] = [
+  { fang_fa: 'GET', lu_jing: '/api/认证/人机挑战' },
   { fang_fa: 'GET', lu_jing: '/api/认证/检查手机' },
   { fang_fa: 'POST', lu_jing: '/api/认证/发送码' },
   { fang_fa: 'POST', lu_jing: '/api/认证/注册' },

@@ -132,6 +132,7 @@ export const peiZhi = {
     fangWenMiYaoMiMa: huoQuJiMi('ALIYUN_ACCESS_KEY_SECRET'),
     qianMing: huoQuHuanJingBianLiang('ALIYUN_SMS_SIGN_NAME', ''),
     moBanDaiMa: huoQuHuanJingBianLiang('ALIYUN_SMS_TEMPLATE_CODE', ''),
+    gongYingShang: huoQuHuanJingBianLiang('ALIYUN_SMS_PROVIDER', 'dysms'),
   },
 
 xianLiu: {
@@ -157,6 +158,10 @@ xianLiu: {
       chuangKou: parseInt(huoQuHuanJingBianLiang('JIAN_CHA_SHOU_JI_XIAN_LIU_CHUANG_KOU_HAO_MIAO', '60000'), 10),
       zuiDa: parseInt(huoQuHuanJingBianLiang('JIAN_CHA_SHOU_JI_XIAN_LIU_MEI_FEN_ZUI_DA', '10'), 10),
     },
+    renJiTiaoZhan: {
+      chuangKou: parseInt(huoQuHuanJingBianLiang('REN_JI_TIAO_ZHAN_XIAN_LIU_CHUANG_KOU_HAO_MIAO', '60000'), 10),
+      zuiDa: parseInt(huoQuHuanJingBianLiang('REN_JI_TIAO_ZHAN_XIAN_LIU_MEI_FEN_ZUI_DA', '20'), 10),
+    },
   },
 
   xieYiBanBen: huoQuHuanJingBianLiang('PROTOCOL_VERSION', 'v1.0'),
@@ -177,6 +182,11 @@ xianLiu: {
   duanXinRiPeiE: {
     meiShouJiHaoMeiRi: parseInt(huoQuHuanJingBianLiang('DUAN_XIN_MEI_SHOU_JI_HAO_MEI_RI', '10'), 10),
     meiIPMeiRi: parseInt(huoQuHuanJingBianLiang('DUAN_XIN_MEI_IP_MEI_RI', '30'), 10),
+  },
+
+  renJiYanZheng: {
+    youXiaoMiao: parseInt(huoQuHuanJingBianLiang('REN_JI_YAN_ZHENG_YOU_XIAO_MIAO', '120'), 10),
+    zuiDaChangShi: parseInt(huoQuHuanJingBianLiang('REN_JI_YAN_ZHENG_ZUI_DA_CHANG_SHI', '5'), 10),
   },
 
   yongHuMing: {

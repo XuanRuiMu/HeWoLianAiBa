@@ -394,7 +394,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   function chuangJianSocket(): Socket {
     jianKongYiDingYue = false
     const xieYiLianJie = io({
-      path: '/xieYiLianJie.io',
+      path: '/socket.io',
       auth: (cb) => {
         cb({ token: duQuLingPai() })
       },

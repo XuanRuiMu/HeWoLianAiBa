@@ -2,27 +2,39 @@
   <nav class="quanju-caidan">
     <div class="caidan-neirong">
       <div class="caidan-zuo">
+        <div class="fanhui-cao-wei">
+          <button
+            class="fanhui-anniu dian-ji-qu-44"
+            :class="{ yincang: !xianShiFanHui }"
+            :aria-hidden="!xianShiFanHui"
+            :title="huoQuFanYi('caidan', 'fanHui')"
+            :aria-label="huoQuFanYi('caidan', 'fanHui')"
+            @click="fanHuiShangYiYe"
+          >
+            <span class="fanhui-jiantou" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 5l-7 7 7 7" />
+              </svg>
+            </span>
+          </button>
+          <button
+            class="zhuye-anniu dian-ji-qu-44"
+            :class="{ yincang: !xianShiZhuYe }"
+            :aria-hidden="!xianShiZhuYe"
+            :title="huoQuFanYi('caidan', 'zhuYe')"
+            :aria-label="huoQuFanYi('caidan', 'zhuYe')"
+            @click="fanHuiShouYe"
+          >
+            <span class="zhuye-tubiao" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 11.5 12 4l8 7.5" />
+                <path d="M6 10.5V20h12v-9.5" />
+              </svg>
+            </span>
+          </button>
+        </div>
         <button
-          class="fanhui-anniu dian-ji-qu-44"
-          :class="{ yincang: !xianShiFanHui }"
-          :aria-hidden="!xianShiFanHui"
-          @click="fanHuiShangYiYe"
-        >
-          <span class="fanhui-jiantou">←</span>
-          <span class="fanhui-wenzi">{{ huoQuFanYi('caidan', 'fanHui') }}</span>
-        </button>
-        <button
-          class="zhuye-anniu dian-ji-qu-44"
-          :class="{ yincang: !xianShiZhuYe }"
-          :aria-hidden="!xianShiZhuYe"
-          :title="huoQuFanYi('caidan', 'zhuYe')"
-          :aria-label="huoQuFanYi('caidan', 'zhuYe')"
-          @click="fanHuiShouYe"
-        >
-          <span class="zhuye-tubiao">⌂</span>
-          <span class="zhuye-wenzi">{{ huoQuFanYi('caidan', 'zhuYe') }}</span>
-        </button>
-        <button
+          v-if="!shiLiaoTianLei"
           ref="yongHuChuFaQi"
           type="button"
           class="yonghu-xuanxiang dian-ji-qu-44"
@@ -33,7 +45,7 @@
           @keydown="yongHuChuFaQiJianPan"
         >
           <span class="yonghu-xiao-wei">
-            <TouXiang :tou-xiang="touXiangDiZhi" :mo-ren-zi="huoQuFanYi('caidan', 'yongHu')" />
+            <TouXiang :tou-xiang="touXiangDiZhi" :mo-ren-zi="xianShiNiCheng.slice(0, 1)" />
           </span>
           <span class="yonghu-mingcheng">{{ xianShiNiCheng }}</span>
           <span
@@ -46,13 +58,12 @@
       </div>
 
       <div class="caidan-zhong">
-        <div v-if="shiLiaoTianYe && 聊天仓库.jiaoSeXinXi" class="liaotian-biaoti-zu">
-          <span class="jiaose-mingcheng-caidan">{{ xianShiJiaoSeMing }}</span>
-          <span v-if="聊天仓库.zhengZaiShuRu" class="duifang-shuru-tishi">
+        <div v-if="xianShiHuiHuaMing" class="liaotian-biaoti-zu">
+          <span class="jiaose-mingcheng-caidan">{{ xianShiHuiHuaMing }}</span>
+          <span v-if="xianShiDuiFangShuRu" class="duifang-shuru-tishi">
             {{ huoQuFanYi('liaoTian', 'duiFangZhengZaiShuRu') }}
           </span>
         </div>
-        <h1 v-else class="ye-mian-biao-ti">{{ dangQianYeMianBiaoTi }}</h1>
       </div>
 
       <div class="caidan-you">
@@ -79,23 +90,61 @@
           <span class="junshi-wenzi-duan">{{ huoQuFanYi('caidan', 'junShi') }}</span>
         </button>
         <button
+          v-if="!shiLiaoTianLei"
           class="zhuti-qiehuan-anniu dian-ji-qu-44"
           :title="zhutiAnNiuBiaoTi"
           :aria-label="zhutiAnNiuBiaoTi"
           @click="qieHuanZhuti"
         >
-          <span class="zhuti-tubiao">{{ zhutiAnNiuTuBiao }}</span>
+          <span class="zhuti-tubiao" aria-hidden="true">
+            <svg
+              v-if="主题仓库.dangQianZhuti === 浅色值"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z" />
+            </svg>
+            <svg
+              v-else
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M19.07 4.93l-1.41 1.41M6.34 17.66l-1.41 1.41" />
+            </svg>
+          </span>
         </button>
         <button
-          v-if="用户仓库.dangQianYongHu"
+          v-if="用户仓库.dangQianYongHu && !shiLiaoTianLei"
           class="tongzhi-anniu dian-ji-qu-44"
           :aria-label="huoQuFanYi('caidan', 'tongZhi')"
           @click="jinRuTongZhi"
         >
-          <span class="tongzhi-tubiao">{{ huoQuFanYi('caidan', 'tongZhiTuBiao') }}</span>
+          <span class="tongzhi-tubiao" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+              <path d="M10 21h4" />
+            </svg>
+          </span>
           <span v-if="通知仓库.weiDuShu > 0" class="tongzhi-badge">{{ xianShiTongZhiShu }}</span>
         </button>
         <span
+          v-if="!shiLiaoTianLei"
           class="banben-wenben"
           :aria-label="`${huoQuFanYi('caidan', 'banBenHao')} ${banBenHao}`"
           >{{ banBenHao }}</span
@@ -106,12 +155,17 @@
           class="qita-xuanxiang dian-ji-qu-44"
           :aria-expanded="qitaCaiDanZhanKai"
           :aria-controls="qitaCaiDanId"
+          :aria-label="huoQuFanYi('caidan', 'gengDuo')"
+          :title="huoQuFanYi('caidan', 'gengDuo')"
           aria-haspopup="menu"
           @click="qieHuanQitaCaiDan"
           @keydown="qitaChuFaQiJianPan"
         >
-          <span class="qita-tubiao">☰</span>
-          <span class="qita-wenzi">{{ huoQuFanYi('caidan', 'gengDuo') }}</span>
+          <span class="qita-tubiao" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+          </span>
         </button>
       </div>
     </div>
@@ -224,20 +278,35 @@
             <div role="group" :aria-label="huoQuFanYi('caidan', 'pianHaoFenZu')">
               <button
                 type="button"
-                role="menuitemcheckbox"
-                class="qita-caidan-xiangmu qita-caidan-xiangmu--kaiguan"
-                :aria-checked="设置仓库.zhuYeBeiJingYuShui"
+                role="menuitem"
+                class="qita-caidan-xiangmu qita-caidan-xiangmu--yu-shui"
+                :aria-pressed="设置仓库.zhuYeBeiJingYuShui"
+                :aria-label="huoQuFanYi('caidan', 'zhuYeBeiJingYuShui')"
                 data-testid="qita-caidan-zhu-ye-yu-shui"
                 @click="qieHuanZhuYeYuShui"
               >
-                <span class="qita-caidan-tubiao" aria-hidden="true">☂</span>
-                <span class="qita-caidan-wenzi">{{ huoQuFanYi('caidan', 'zhuYeBeiJingYuShui') }}</span>
-                <span class="qita-caidan-kaiguan" aria-hidden="true">
-                  <span class="qita-caidan-kaiguan-qiu" />
+                <span class="qita-caidan-tubiao" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M7 15a4 4 0 0 1 .6-7.96A5.5 5.5 0 0 1 18.3 9.5 3.5 3.5 0 0 1 18 16H7Z" />
+                    <path d="M8 19l-1 2M12 19l-1 2M16 19l-1 2" />
+                  </svg>
                 </span>
+                <span class="qita-caidan-wenzi">{{ 设置仓库.zhuYeBeiJingYuShui ? huoQuFanYi('caidan', 'tingYu') : huoQuFanYi('caidan', 'xiaYu') }}</span>
               </button>
               <button type="button" role="menuitem" class="qita-caidan-xiangmu" @click="jinRuShengYin">
-                <span class="qita-caidan-tubiao" aria-hidden="true">♪</span>
+                <span class="qita-caidan-tubiao" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 10v4h4l5 4V6L8 10H4Z" />
+                    <path d="M16 9a4 4 0 0 1 0 6" />
+                  </svg>
+                </span>
                 <span class="qita-caidan-wenzi">{{ huoQuFanYi('sheZhi', 'shengYinBiaoTi') }}</span>
               </button>
             </div>
@@ -245,14 +314,84 @@
             <div class="qita-caidan-fenzu" aria-hidden="true">{{ huoQuFanYi('caidan', 'guanYuFenZu') }}</div>
             <div role="group" :aria-label="huoQuFanYi('caidan', 'guanYuFenZu')">
               <button type="button" role="menuitem" class="qita-caidan-xiangmu" @click="daKaiXieYi('yongHuXieYi')">
-                <span class="qita-caidan-tubiao" aria-hidden="true">§</span>
+                <span class="qita-caidan-tubiao" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M7 3h7l4 4v14H7z" />
+                    <path d="M14 3v4h4M10 12h5M10 16h5" />
+                  </svg>
+                </span>
                 <span class="qita-caidan-wenzi">{{ huoQuFanYi('caidan', 'yongHuXieYi') }}</span>
               </button>
               <button type="button" role="menuitem" class="qita-caidan-xiangmu" @click="daKaiXieYi('yinSiZhengCe')">
-                <span class="qita-caidan-tubiao" aria-hidden="true">◈</span>
+                <span class="qita-caidan-tubiao" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z" />
+                    <path d="M9.5 12l1.8 1.8 3.4-3.6" />
+                  </svg>
+                </span>
                 <span class="qita-caidan-wenzi">{{ huoQuFanYi('caidan', 'yinSiZhengCe') }}</span>
               </button>
             </div>
+            <template v-if="shiLiaoTianLei && 用户仓库.dangQianYongHu">
+              <div class="qita-caidan-fenge" role="separator" />
+              <div class="qita-caidan-fenzu" aria-hidden="true">{{ huoQuFanYi('caidan', 'zhangHaoFenZu') }}</div>
+              <div role="group" :aria-label="huoQuFanYi('caidan', 'zhangHaoFenZu')">
+                <button type="button" role="menuitem" class="qita-caidan-xiangmu" @click="jinRuTongZhi">
+                  <span class="qita-caidan-tubiao" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                      <path d="M10 21h4" />
+                    </svg>
+                  </span>
+                  <span class="qita-caidan-wenzi">{{ huoQuFanYi('caidan', 'tongZhi') }}</span>
+                  <span v-if="通知仓库.weiDuShu > 0" class="qita-caidan-shu">{{ xianShiTongZhiShu }}</span>
+                </button>
+                <button type="button" role="menuitem" class="qita-caidan-xiangmu" @click="jinRuHaoYou">
+                  <span class="qita-caidan-tubiao" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="9" cy="7.5" r="3.5" />
+                      <path d="M3 20a6 6 0 0 1 12 0" />
+                      <path d="M16.5 5.2a3.2 3.2 0 0 1 0 6.2" />
+                      <path d="M17.5 14.4A5.6 5.6 0 0 1 21 19.6" />
+                    </svg>
+                  </span>
+                  <span class="qita-caidan-wenzi">{{ huoQuFanYi('caidan', 'haoYou') }}</span>
+                </button>
+                <button type="button" role="menuitem" class="qita-caidan-xiangmu" @click="jinRuZhanJi">
+                  <span class="qita-caidan-tubiao" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M5 5h14v14H5z" />
+                      <path d="M8.5 15.5v-4M12 15.5v-7M15.5 15.5v-2.5" />
+                    </svg>
+                  </span>
+                  <span class="qita-caidan-wenzi">{{ huoQuFanYi('caidan', 'guoWangZhanJi') }}</span>
+                </button>
+                <button type="button" role="menuitem" class="qita-caidan-xiangmu" @click="jinRuZhangHaoAnQuan">
+                  <span class="qita-caidan-tubiao" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 8h8M16 8h4M4 16h4M12 16h8" />
+                      <circle cx="14" cy="8" r="2" />
+                      <circle cx="10" cy="16" r="2" />
+                    </svg>
+                  </span>
+                  <span class="qita-caidan-wenzi">{{ huoQuFanYi('caidan', 'zhangHaoSheZhi') }}</span>
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  class="qita-caidan-xiangmu qita-caidan-xiangmu--weixian"
+                  @click="zhiXingTuiChu"
+                >
+                  <span class="qita-caidan-tubiao" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" />
+                      <path d="M10 8l-4 4 4 4M6 12h9" />
+                    </svg>
+                  </span>
+                  <span class="qita-caidan-wenzi">{{ huoQuFanYi('caidan', 'tuiChuDengLu') }}</span>
+                </button>
+              </div>
+            </template>
           </div>
           <div ref="qitaGunDongGuiDao" class="caidan-gundong-guidao" aria-hidden="true">
             <div
@@ -277,6 +416,7 @@ import { 使用用户仓库 } from '@/stores/用户'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
 import { 使用聊天仓库 } from '@/stores/聊天'
+import { 使用会话标题仓库 } from '@/stores/会话标题'
 import { 使用主题仓库, 浅色值 } from '@/stores/主题'
 import { 使用通知仓库 } from '@/stores/通知'
 import { huoQuFanYi } from '@/config/翻译表'
@@ -291,6 +431,7 @@ const 用户仓库 = 使用用户仓库()
 const 设置仓库 = 使用用户设置仓库()
 const 认证表单仓库 = 使用认证表单仓库()
 const 聊天仓库 = 使用聊天仓库()
+const 会话标题仓库 = 使用会话标题仓库()
 const 主题仓库 = 使用主题仓库()
 const 通知仓库 = 使用通知仓库()
 const router = useRouter()
@@ -531,10 +672,12 @@ const xianShiFanHui = computed(() => {
 
 const xianShiZhuYe = computed(() => {
   const yinCangLuYou = ['zhuJieMian', 'dengLu', 'zhuCe']
-  return !yinCangLuYou.includes(route.name as string)
+  return !yinCangLuYou.includes(route.name as string) && !shiLiaoTianLei.value
 })
 
 const shiLiaoTianYe = computed(() => route.name === 'liaoTian')
+const shiHaoYouLiaoTian = computed(() => route.name === 'haoYouLiaoTian')
+const shiLiaoTianLei = computed(() => shiLiaoTianYe.value || shiHaoYouLiaoTian.value)
 const junShiKaiQi = computed(() => huoQuJunShiKaiGuan())
 
 const xianShiJiaoSeMing = computed(() => {
@@ -545,44 +688,19 @@ const xianShiJiaoSeMing = computed(() => {
   )
 })
 
-const fanYiBiaoTiDuiZhao: Record<
-  string,
-  | 'zhuJieMian'
-  | 'dengLu'
-  | 'ziLiaoSheZhi'
-  | 'tianJiaWeiXin'
-  | 'tongZhi'
-  | 'guoWangZhanJi'
-  | 'junShiJiLuXiangQing'
-  | 'haoYouLieBiao'
-  | 'haoYouLiaoTian'
-  | 'shengYin'
-  | 'qiPaoSheZhi'
-  | 'zhangHaoAnQuan'
-  | 'yongHuXieYi'
-  | 'yinSiZhengCe'
-> = {
-  zhuJieMian: 'zhuJieMian',
-  dengLu: 'dengLu',
-  ziLiaoSheZhi: 'ziLiaoSheZhi',
-  tianJiaWeiXin: 'tianJiaWeiXin',
-  tongZhi: 'tongZhi',
-  guoWangZhanJi: 'guoWangZhanJi',
-  junShiJiLuXiangQing: 'junShiJiLuXiangQing',
-  haoYouLieBiao: 'haoYouLieBiao',
-  haoYouLiaoTian: 'haoYouLiaoTian',
-  shengYin: 'shengYin',
-  qiPaoSheZhi: 'qiPaoSheZhi',
-  zhangHaoAnQuan: 'zhangHaoAnQuan',
-}
-
-const dangQianYeMianBiaoTi = computed(() => {
-  const luYouMing = route.name as string
-  if (luYouMing && luYouMing in fanYiBiaoTiDuiZhao) {
-    return huoQuFanYi('yeMianBiaoTi', fanYiBiaoTiDuiZhao[luYouMing])
+const xianShiHuiHuaMing = computed(() => {
+  if (shiLiaoTianYe.value) {
+    return 聊天仓库.jiaoSeXinXi ? xianShiJiaoSeMing.value : ''
   }
-  return huoQuFanYi('caidan', 'fanHui')
+  if (shiHaoYouLiaoTian.value) {
+    return 会话标题仓库.biaoTi || huoQuFanYi('yeMianBiaoTi', 'haoYouLiaoTian')
+  }
+  return ''
 })
+
+const xianShiDuiFangShuRu = computed(
+  () => shiLiaoTianYe.value && !!聊天仓库.jiaoSeXinXi && 聊天仓库.zhengZaiShuRu,
+)
 
 const xianShiTongZhiShu = computed(() => {
   return 通知仓库.weiDuShu > 99 ? '99+' : String(通知仓库.weiDuShu)
@@ -594,15 +712,10 @@ const zhutiAnNiuBiaoTi = computed(() => {
     : huoQuFanYi('caidan', 'qieHuanQianSe')
 })
 
-const zhutiAnNiuTuBiao = computed(() => {
-  return 主题仓库.dangQianZhuti === 浅色值
-    ? huoQuFanYi('caidan', 'zhutiShenSeTuBiao')
-    : huoQuFanYi('caidan', 'zhutiQianSeTuBiao')
-})
 
 function 焦点XiangMu(rongQi: HTMLElement | null, muBiao: number | 'shou' | 'wei'): void {
   if (!rongQi) return
-  const xiangMu = Array.from(rongQi.querySelectorAll<HTMLElement>('[role="menuitem"], [role="menuitemcheckbox"]'))
+  const xiangMu = Array.from(rongQi.querySelectorAll<HTMLElement>('[role="menuitem"]'))
   if (!xiangMu.length) return
   const suoYin =
     muBiao === 'shou'
@@ -615,7 +728,7 @@ function 焦点XiangMu(rongQi: HTMLElement | null, muBiao: number | 'shou' | 'we
 
 function 当前XiangMuSuoYin(rongQi: HTMLElement | null): number {
   if (!rongQi) return -1
-  const xiangMu = Array.from(rongQi.querySelectorAll<HTMLElement>('[role="menuitem"], [role="menuitemcheckbox"]'))
+  const xiangMu = Array.from(rongQi.querySelectorAll<HTMLElement>('[role="menuitem"]'))
   return xiangMu.indexOf(document.activeElement as HTMLElement)
 }
 
@@ -870,6 +983,14 @@ watch(qitaCaiDanZhanKai, (zhanKai) => {
 })
 
 watch(
+  () => route.name,
+  () => {
+    关闭YongHuCaiDan(false)
+    关闭QitaCaiDan(false)
+  },
+)
+
+watch(
   () => 用户仓库.令牌,
   (lingPai) => {
     if (lingPai) {
@@ -902,6 +1023,11 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+:where(.quanju-caidan) {
+  --daohanglan-anniu-chi: 36px;
+  --daohanglan-cao-wei-kuan: calc(var(--daohanglan-anniu-chi) * 2 + var(--jiange-xiao));
+}
+
 .quanju-caidan {
   position: relative;
   width: 100%;
@@ -924,7 +1050,7 @@ onBeforeUnmount(() => {
   margin: 0 auto;
   height: 100%;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: var(--jiange-12);
   padding: 0 calc(var(--jiange-zhong) + var(--jiange-4));
@@ -948,85 +1074,61 @@ onBeforeUnmount(() => {
   gap: var(--jiange-xiao);
 }
 
-.fanhui-anniu {
-  font-size: 14px;
-  color: var(--daohanglan-wenben);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: var(--jiange-6) var(--jiange-12);
-  border-radius: 8px;
-  transition: background 0.2s ease;
-  white-space: nowrap;
-  font-weight: 500;
-  flex-shrink: 0;
-  display: inline-flex;
+.fanhui-cao-wei {
+  display: flex;
   align-items: center;
-  gap: var(--jiange-4);
+  flex: none;
+  width: var(--daohanglan-cao-wei-kuan);
+  gap: var(--jiange-xiao);
 }
 
-.fanhui-wenzi {
-  display: inline;
-}
-
-.fanhui-jiantou {
-  display: inline;
-}
-
-.fanhui-anniu.yincang {
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.fanhui-anniu:hover {
-  background: var(--daohanglan-zhongbeijing);
-}
-
+.fanhui-anniu,
 .zhuye-anniu {
-  font-size: 14px;
+  width: var(--daohanglan-anniu-chi);
+  height: var(--daohanglan-anniu-chi);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
   color: var(--daohanglan-wenben);
   background: transparent;
   border: none;
+  border-radius: var(--yuanjiao-xiao);
   cursor: pointer;
-  padding: var(--jiange-6) var(--jiange-12);
-  border-radius: 8px;
   transition: background 0.2s ease;
-  white-space: nowrap;
-  font-weight: 500;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--jiange-4);
 }
 
-.zhuye-anniu.yincang {
-  visibility: hidden;
-  pointer-events: none;
-}
-
+.fanhui-anniu:hover,
 .zhuye-anniu:hover {
   background: var(--daohanglan-zhongbeijing);
 }
 
+.fanhui-jiantou,
 .zhuye-tubiao {
-  display: inline;
-  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.zhuye-wenzi {
-  display: inline;
+.fanhui-jiantou svg,
+.zhuye-tubiao svg,
+.qita-tubiao svg {
+  width: var(--daohanglan-tubiao-chi);
+  height: var(--daohanglan-tubiao-chi);
+}
+
+.fanhui-anniu.yincang,
+.zhuye-anniu.yincang {
+  display: none;
 }
 
 .caidan-zhong {
   justify-content: center;
-  gap: var(--jiange-10);
-  min-width: 0;
 }
 
 .caidan-you {
   justify-content: flex-end;
   gap: var(--jiange-xiao);
-  min-width: 0;
 }
 
 .yonghu-xuanxiang,
@@ -1101,23 +1203,6 @@ onBeforeUnmount(() => {
   transform: rotate(180deg);
 }
 
-.ye-mian-biao-ti {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--daohanglan-qiangwenben);
-  margin: 0;
-  padding: 0;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  pointer-events: none;
-}
-
 .jiaose-mingcheng-caidan {
   font-size: 14px;
   font-weight: 600;
@@ -1146,8 +1231,8 @@ onBeforeUnmount(() => {
 }
 
 .zhuti-qiehuan-anniu {
-  width: 36px;
-  height: 36px;
+  width: var(--daohanglan-anniu-chi);
+  height: var(--daohanglan-anniu-chi);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1164,8 +1249,17 @@ onBeforeUnmount(() => {
   transform: scale(1.05);
 }
 
-.zhuti-tubiao {
-  font-size: 16px;
+.zhuti-tubiao,
+.tongzhi-tubiao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.zhuti-tubiao svg,
+.tongzhi-tubiao svg {
+  width: var(--daohanglan-tubiao-chi);
+  height: var(--daohanglan-tubiao-chi);
 }
 
 .junshi-anniu {
@@ -1192,8 +1286,8 @@ onBeforeUnmount(() => {
 
 .tongzhi-anniu {
   position: relative;
-  width: 36px;
-  height: 36px;
+  width: var(--daohanglan-anniu-chi);
+  height: var(--daohanglan-anniu-chi);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1207,10 +1301,6 @@ onBeforeUnmount(() => {
 
 .tongzhi-anniu:hover {
   background: var(--daohanglan-zhongbeijing);
-}
-
-.tongzhi-tubiao {
-  font-size: 16px;
 }
 
 .tongzhi-badge {
@@ -1241,20 +1331,17 @@ onBeforeUnmount(() => {
 }
 
 .qita-xuanxiang {
-  padding: var(--jiange-6) var(--jiange-10);
+  width: var(--daohanglan-anniu-chi);
+  height: var(--daohanglan-anniu-chi);
+  justify-content: center;
   border-radius: 10px;
-  gap: var(--jiange-4);
 }
 
 .qita-tubiao {
-  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--daohanglan-ciwenben);
-}
-
-.qita-wenzi {
-  font-size: 12px;
-  color: var(--daohanglan-ciwenben);
-  font-weight: 500;
 }
 
 .yonghu-caidan-fuceng {
@@ -1544,57 +1631,48 @@ onBeforeUnmount(() => {
   font-size: 12px;
 }
 
+.qita-caidan-tubiao svg {
+  width: var(--caidan-tubiao-chi);
+  height: var(--caidan-tubiao-chi);
+}
+
 .qita-caidan-wenzi {
+  flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.qita-caidan-xiangmu--kaiguan {
-  min-height: 44px;
-}
-
-.qita-caidan-kaiguan {
-  --qita-kaiguan-kuan: 44px;
-  --qita-kaiguan-gao: 24px;
-  --qita-kaiguan-qiu: 18px;
-  --qita-kaiguan-ji: 2px;
-  position: relative;
+.qita-caidan-shu {
   flex: none;
-  width: var(--qita-kaiguan-kuan);
-  height: var(--qita-kaiguan-gao);
-  margin-left: auto;
-  border: 1px solid var(--xiala-biankuang);
-  border-radius: var(--yuanjiao-zhong);
-  background: var(--daohanglan-zhongbeijing);
-  transition:
-    background-color var(--kaiguan-dong-hua-shi-chang) var(--quxian-biao-zhun),
-    border-color var(--kaiguan-dong-hua-shi-chang) var(--quxian-biao-zhun);
+  min-width: 20px;
+  padding: 0 var(--jiange-5);
+  border-radius: 999px;
+  background: var(--tongzhi-badge-beijing);
+  color: var(--tongzhi-badge-wenben);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
 }
 
-.qita-caidan-kaiguan-qiu {
-  position: absolute;
-  top: 50%;
-  left: var(--qita-kaiguan-ji);
-  width: var(--qita-kaiguan-qiu);
-  height: var(--qita-kaiguan-qiu);
-  border-radius: 50%;
-  background: var(--wenben-zhuse);
-  transform: translate(0, -50%);
-  transition: transform var(--kaiguan-dong-hua-shi-chang) var(--quxian-tan-chu);
+.qita-caidan-xiangmu--weixian {
+  color: var(--yanse-weixian);
 }
 
-.qita-caidan-xiangmu--kaiguan[aria-checked='true'] .qita-caidan-kaiguan {
-  border-color: var(--zhuse);
-  background: var(--zhuse);
+.qita-caidan-xiangmu--weixian .qita-caidan-tubiao {
+  color: inherit;
 }
 
-.qita-caidan-xiangmu--kaiguan[aria-checked='true'] .qita-caidan-kaiguan-qiu {
-  transform: translate(
-    calc(var(--qita-kaiguan-kuan) - var(--qita-kaiguan-qiu) - var(--qita-kaiguan-ji) * 2),
-    -50%
-  );
+.qita-caidan-xiangmu--weixian:hover,
+.qita-caidan-xiangmu--weixian:focus-visible {
+  background: var(--tuichu-hover-beijing);
+  color: var(--yanse-weixian-shen);
+}
+
+.qita-caidan-xiangmu--yu-shui {
+  min-height: 44px;
 }
 
 .yonghu-caidan-guodu-enter-active {
@@ -1654,31 +1732,10 @@ onBeforeUnmount(() => {
   .caidan-neirong {
     padding: 0 var(--jiange-10);
     gap: var(--jiange-6);
-    grid-template-columns: auto minmax(0, 1fr) auto;
-  }
-
-  .caidan-zuo {
-    gap: var(--jiange-da);
   }
 
   .caidan-you {
     gap: var(--jiange-12);
-  }
-
-  .fanhui-anniu {
-    padding: var(--jiange-6) var(--jiange-xiao);
-  }
-
-  .fanhui-wenzi {
-    display: none;
-  }
-
-  .zhuye-anniu {
-    padding: var(--jiange-6) var(--jiange-xiao);
-  }
-
-  .zhuye-wenzi {
-    display: none;
   }
 
   .yonghu-xuanxiang {
@@ -1694,14 +1751,6 @@ onBeforeUnmount(() => {
     max-width: 80px;
   }
 
-  .caidan-neirong:has(.liaotian-biaoti-zu) .zhuye-anniu {
-    display: none;
-  }
-
-  .ye-mian-biao-ti {
-    font-size: 15px;
-  }
-
   .junshi-anniu {
     padding: var(--jiange-6) var(--jiange-10);
   }
@@ -1712,14 +1761,6 @@ onBeforeUnmount(() => {
 
   .junshi-wenzi-duan {
     display: inline;
-  }
-
-  .qita-xuanxiang {
-    padding: var(--jiange-6) var(--jiange-xiao);
-  }
-
-  .qita-wenzi {
-    display: none;
   }
 
   .banben-wenben {
@@ -1734,10 +1775,6 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 374px) {
-  .yonghu-mingcheng {
-    max-width: 70px;
-  }
-
   .jiaose-mingcheng-caidan {
     max-width: 70px;
   }
@@ -1745,6 +1782,7 @@ onBeforeUnmount(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .fanhui-anniu,
+  .zhuye-anniu,
   .yonghu-xuanxiang,
   .qita-xuanxiang,
   .zhuti-qiehuan-anniu,

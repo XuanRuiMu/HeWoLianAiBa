@@ -245,17 +245,27 @@
       </div>
       <div class="juanzhou-gan juanzhou-gan-xia" />
     </div>
+    <RenJiYanZheng
+      ref="renJiZuJian"
+      :xian-shi="renJiXianShi"
+      :yong-tu="YAN_ZHENG_MA_YONG_TU.chongZhiMiMa"
+      :deng-dai-zhong="faSongZhong"
+      @guan-bi="renJiXianShi = false"
+      @ti-jiao="tiJiaoRenJi"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { chongZhiMiMa, faSongMa, YAN_ZHENG_MA_YONG_TU } from '@/api/认证'
+import { chongZhiMiMa, faSongMa, YAN_ZHENG_MA_YONG_TU, type 人机验证答案 } from '@/api/认证'
 import HengTiaoShuRuKuang from '@/components/表单/横条输入框.vue'
+import RenJiYanZheng from '@/components/认证/人机测试.vue'
 import { huoQuFanYi } from '@/config/翻译表'
 import { use前台错误 } from '@/composables/use前台错误'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
+import { shiRenJiYanZhengShiBai, type 人机测试实例 } from '@/utils/人机验证'
 
 const SHOU_JI_HAO_ZHENG_ZE = /^1[3-9]\d{9}$/
 const YAN_ZHENG_MA_ZHENG_ZE = /^\d{6}$/
@@ -274,6 +284,8 @@ const xianShiXinMiMa = ref(false)
 const xianShiQueRenMiMa = ref(false)
 const dangQianBuZhou = ref<1 | 2>(1)
 const faSongZhong = ref(false)
+const renJiXianShi = ref(false)
+const renJiZuJian = ref<人机测试实例 | null>(null)
 const chongZhiZhong = ref(false)
 const daoJiShi = ref(0)
 const tiaoZhuanMiao = ref(0)
@@ -447,27 +459,39 @@ function qianWangDengLu(): void {
   void router.push(dengLuLuYou.value)
 }
 
-async function zhiXingFaSong(): Promise<void> {
-  if (!keYiFaSong.value) return
+function zhiXingFaSong(): void {
+  if (!keYiFaSong.value || renJiXianShi.value) return
   shouJiHaoJiaoCuo.value = true
   if (dangQianBuZhou.value === 1 && !shouJiHaoHeFa.value) {
     juJiao(shouJiHaoKuang)
     return
   }
+  renJiXianShi.value = true
+}
+
+async function tiJiaoRenJi(yanZheng: 人机验证答案): Promise<void> {
+  if (faSongZhong.value) return
   const dai = ++daiCi
   const hao = shouJiHao.value.trim()
   faSongZhong.value = true
   qingLiTiShi()
   qingQiuCuoWuWeiZhi.value = dangQianBuZhou.value === 1 ? 'shouJiHao' : 'yanZhengMa'
   try {
-    await faSongMa(hao, YAN_ZHENG_MA_YONG_TU.chongZhiMiMa)
+    await faSongMa(hao, YAN_ZHENG_MA_YONG_TU.chongZhiMiMa, undefined, yanZheng)
     if (dai !== daiCi) return
+    renJiXianShi.value = false
     shouJiHao.value = hao
     dangQianBuZhou.value = 2
     kaiShiDaoJiShi()
     juJiao(yanZhengMaKuang)
   } catch (cuoWu) {
     if (dai !== daiCi) return
+    if (shiRenJiYanZhengShiBai(cuoWu)) {
+      qingQiuCuoWuWeiZhi.value = ''
+      renJiZuJian.value?.biaoShiYanZhengShiBai()
+      return
+    }
+    renJiXianShi.value = false
     jieShouQianTai(cuoWu, zhiXingFaSong)
   } finally {
     if (dai === daiCi) faSongZhong.value = false

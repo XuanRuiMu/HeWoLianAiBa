@@ -22,7 +22,7 @@ export interface MingPian {
   qian_ming: string | null
   shi_hao_you: boolean
   shi_zi_ji: boolean
-  qi_pao_zi_ji?: string
+  qi_pao_zi_ji?: string | null
   qi_pao_ai?: string
 }
 

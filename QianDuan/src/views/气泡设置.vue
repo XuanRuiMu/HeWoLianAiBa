@@ -1,5 +1,5 @@
 <template>
-  <div class="qipao-she-zhi-ye" :style="sheZhi.ziJiQiPaoCSSBianLiang">
+  <div class="qipao-she-zhi-ye">
     <h2 class="qipao-ye-biao-ti">{{ QI_PAO_WEN_AN.biaoTi }}</h2>
     <RequestError
       v-if="sheZhi.caoZuoCuoWu"

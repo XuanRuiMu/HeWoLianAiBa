@@ -168,6 +168,14 @@ export const jianChaShouJiXianLiu = tongYongXianLiu(
   'tongYong',
 )
 
+export const renJiTiaoZhanXianLiu = tongYongXianLiu(
+  peiZhi.xianLiu.renJiTiaoZhan.chuangKou,
+  peiZhi.xianLiu.renJiTiaoZhan.zuiDa,
+  'caoZuoPinFan',
+  (req) => huoQuQingQiuIP(req),
+  'tongYong',
+)
+
 export const chongZhiMiMaXianLiu = tongYongXianLiu(
   10 * 60 * 1000,
   peiZhi.xianLiu.chongZhiMiMa.zuiDa,

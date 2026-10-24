@@ -36,43 +36,46 @@ describe('主页背景雨水开关：默认开启、可关可开、状态唯一'
     expect(JSON.parse(localStorage.getItem(本地产(ZHU_YE_BEI_JING_YU_SHUI_JIAN)) as string)).toBe(true)
   })
 
-  it('菜单开关是可切换的菜单项，文案取自翻译表', () => {
+  it('菜单雨水项是单行点击切换，文案取自翻译表', () => {
     const 菜单 = 读('components/全局菜单.vue')
-    expect(huoQuFanYi('caidan', 'zhuYeBeiJingYuShui')).toBe('主页背景雨水')
-    expect(菜单).toContain('role="menuitemcheckbox"')
-    expect(菜单).toContain(':aria-checked="设置仓库.zhuYeBeiJingYuShui"')
+    expect(huoQuFanYi('caidan', 'zhuYeBeiJingYuShui')).toBe('主页背景下雨')
+    expect(huoQuFanYi('caidan', 'xiaYu')).toBe('下雨')
+    expect(huoQuFanYi('caidan', 'tingYu')).toBe('停雨')
+    expect(菜单).toContain('role="menuitem"')
+    expect(菜单).toContain(':aria-pressed="设置仓库.zhuYeBeiJingYuShui"')
     expect(菜单).toContain('@click="qieHuanZhuYeYuShui"')
-    expect(菜单).toContain("huoQuFanYi('caidan', 'zhuYeBeiJingYuShui')")
+    expect(菜单).toContain("huoQuFanYi('caidan', 'xiaYu')")
+    expect(菜单).toContain("huoQuFanYi('caidan', 'tingYu')")
     expect(菜单).toContain('设置仓库.qieHuanZhuYeBeiJingYuShui(!设置仓库.zhuYeBeiJingYuShui)')
+    expect(菜单).not.toContain('menuitemcheckbox')
+    expect(菜单).not.toContain('qita-caidan-kaiguan')
   })
 
-  it('开关热区不小于 44px，几何与配色全部走设计令牌', () => {
+  it('雨水菜单项保留 44px 热区，图标走内联 SVG 与设计令牌', () => {
     const 菜单 = 读('components/全局菜单.vue')
-    expect(菜单).toContain('.qita-caidan-xiangmu--kaiguan {\n  min-height: 44px;')
-    expect(菜单).toContain('--qita-kaiguan-kuan: 44px')
-    expect(菜单).toContain('background: var(--daohanglan-zhongbeijing)')
-    expect(菜单).toContain('background: var(--zhuse)')
-    expect(菜单).toContain('background: var(--wenben-zhuse)')
-    expect(菜单).toContain('border-radius: var(--yuanjiao-zhong)')
-    expect(菜单).toContain('var(--kaiguan-dong-hua-shi-chang)')
-    expect(读('styles/设计令牌.css')).toContain('--kaiguan-dong-hua-shi-chang: 200ms;')
+    expect(菜单).toContain('.qita-caidan-xiangmu--yu-shui {\n  min-height: 44px;')
+    expect(菜单).toContain('width: var(--daohanglan-tubiao-chi)')
+    expect(菜单).toContain('height: var(--caidan-tubiao-chi)')
+    expect(读('styles/设计令牌.css')).toContain('--daohanglan-tubiao-chi: 18px;')
+    expect(读('styles/设计令牌.css')).toContain('--caidan-tubiao-chi: 14px;')
+    expect(菜单).toContain('stroke="currentColor"')
+    expect(菜单).not.toContain('zhutiShenSeTuBiao')
+    expect(菜单).not.toContain('tongZhiTuBiao')
   })
 
-  it('键盘焦点把开关与普通菜单项放在同一序列里', () => {
+  it('键盘焦点把雨水项与普通菜单项放在同一序列里', () => {
     const 菜单 = 读('components/全局菜单.vue')
-    const 选择器 = 菜单.match(/querySelectorAll<HTMLElement>\('\[role="menuitem"\], \[role="menuitemcheckbox"\]'\)/g) ?? []
+    const 选择器 = 菜单.match(/querySelectorAll<HTMLElement>\('\[role="menuitem"\]'\)/g) ?? []
     expect(选择器).toHaveLength(2)
   })
 
   it('雨水是独立于三维天气系统的自绘覆盖层，随开关即时显隐', () => {
     const 根 = 读('根组件.vue')
     expect(根).toContain('设置仓库.zhuYeBeiJingYuShui')
-    expect(根).toContain('const 显示主页雨水 = computed(() => 设置仓库.zhuYeBeiJingYuShui && shiYongCaoDiBeiJing.value)')
-    expect(根).toContain('v-if="显示主页雨水"')
-    expect(根).toContain('class="zhu-ye-yu-shui"')
-    expect(根).toContain('.zhu-ye-yu-shui::before')
-    expect(根).toContain('@keyframes zhu-ye-yu-shui-luo')
-    expect(根).toContain('prefers-reduced-motion: reduce')
+    expect(根).toContain("type: 'grass-rain'")
+    expect(根).toContain('tongBuBeiJingYuShui')
+    expect(根).not.toContain('zhu-ye-yu-shui')
+    expect(根).not.toContain('zhu-ye-yu-shui-luo')
     expect(根).not.toContain('weatherController')
     expect(根).not.toContain('setIntensity')
     expect(根).not.toContain('背景实验室')

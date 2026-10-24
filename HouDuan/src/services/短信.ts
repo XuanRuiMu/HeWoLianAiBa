@@ -1,5 +1,6 @@
 ﻿import { debug日志 } from '../utils/debug日志'
 import Dysmsapi, { SendSmsRequest } from '@alicloud/dysmsapi20170525'
+import Dypnsapi, { SendSmsVerifyCodeRequest } from '@alicloud/dypnsapi20170525'
 import { $OpenApiUtil } from '@alicloud/openapi-core'
 import crypto from 'crypto'
 import { peiZhi } from '../config'
@@ -56,27 +57,50 @@ export async function faSongYanZhengMa(
     : shengChengSuiJiYanZhengMa()
 
   if (!peiZhi.kaiFaMoShi) {
-    const { fangWenMiYaoId, fangWenMiYaoMiMa, qianMing, moBanDaiMa } = peiZhi.duanXin
+    const { fangWenMiYaoId, fangWenMiYaoMiMa, qianMing, moBanDaiMa, gongYingShang } = peiZhi.duanXin
     if (!fangWenMiYaoId || !fangWenMiYaoMiMa || !qianMing || !moBanDaiMa) {
       return { cheng_gong: false, cuo_wu_ma: 'NEI_BU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai') }
     }
 
     try {
-      const keHuDuan = new Dysmsapi(
-        new $OpenApiUtil.Config({
-          accessKeyId: fangWenMiYaoId,
-          accessKeySecret: fangWenMiYaoMiMa,
-          endpoint: 'dysmsapi.aliyuncs.com',
-        }),
-      )
-      await keHuDuan.sendSms(
-        new SendSmsRequest({
-          phoneNumbers: shouJiHao,
-          signName: qianMing,
-          templateCode: moBanDaiMa,
-          templateParam: JSON.stringify({ code: yanZhengMa }),
-        }),
-      )
+      if (gongYingShang === 'pnvs') {
+        const keHuDuan = new Dypnsapi(
+          new $OpenApiUtil.Config({
+            accessKeyId: fangWenMiYaoId,
+            accessKeySecret: fangWenMiYaoMiMa,
+            endpoint: 'dypnsapi.aliyuncs.com',
+          }),
+        )
+        const youXiaoFenZhong = Math.max(1, Math.ceil(peiZhi.yanZhengMa.youXiaoQi / 60))
+        await keHuDuan.sendSmsVerifyCode(
+          new SendSmsVerifyCodeRequest({
+            phoneNumber: shouJiHao,
+            signName: qianMing,
+            templateCode: moBanDaiMa,
+            templateParam: JSON.stringify({ code: yanZhengMa, min: String(youXiaoFenZhong) }),
+            countryCode: '86',
+            validTime: youXiaoFenZhong,
+            codeLength: peiZhi.yanZhengMa.changDu,
+            returnVerifyCode: false,
+          }),
+        )
+      } else {
+        const keHuDuan = new Dysmsapi(
+          new $OpenApiUtil.Config({
+            accessKeyId: fangWenMiYaoId,
+            accessKeySecret: fangWenMiYaoMiMa,
+            endpoint: 'dysmsapi.aliyuncs.com',
+          }),
+        )
+        await keHuDuan.sendSms(
+          new SendSmsRequest({
+            phoneNumbers: shouJiHao,
+            signName: qianMing,
+            templateCode: moBanDaiMa,
+            templateParam: JSON.stringify({ code: yanZhengMa }),
+          }),
+        )
+      }
     } catch (cuoWu) {
       debug日志.error('短信服务', '阿里云短信发送失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return { cheng_gong: false, cuo_wu_ma: 'NEI_BU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai') }

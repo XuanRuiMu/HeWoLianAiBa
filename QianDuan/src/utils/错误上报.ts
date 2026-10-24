@@ -212,6 +212,12 @@ export function chuShiHuaCuoWuShangBao(): void {
   sheZhiCuoWuShangBaoHanShu(moRenShangBaoHanShu)
 }
 
+function shiQuXiaoYiChang(cuoWu: unknown): boolean {
+  if (!cuoWu || typeof cuoWu !== 'object') return false
+  const caiZhi = cuoWu as { name?: unknown; code?: unknown }
+  return caiZhi.name === 'AbortError' || caiZhi.code === 'ERR_CANCELED' || caiZhi.code === 'ABORT_ERR'
+}
+
 export function anZhuangQuanJuCuoWuJianTingQi(): void {
   if (typeof window === 'undefined') return
   if (yiAnZhuang) return
@@ -219,6 +225,10 @@ export function anZhuangQuanJuCuoWuJianTingQi(): void {
 
   window.addEventListener('unhandledrejection', (shiJian) => {
     const cuoWu = shiJian.reason
+    if (shiQuXiaoYiChang(cuoWu)) {
+      shiJian.preventDefault()
+      return
+    }
     if (import.meta.env.DEV) console.error('[全局错误处理] 未处理的 Promise rejection:', cuoWu)
     chuFaCuoWuShangBao({
       leiBie: 'chengNuo',

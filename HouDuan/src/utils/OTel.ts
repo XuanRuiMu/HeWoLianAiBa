@@ -2,7 +2,7 @@ import { context, trace, diag, DiagConsoleLogger, DiagLogLevel } from '@opentele
 import { NodeSDK } from '@opentelemetry/sdk-node'
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
-import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace-base'
+import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace'
 import { resourceFromAttributes } from '@opentelemetry/resources'
 import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
 import { peiZhi } from '../config'

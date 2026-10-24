@@ -1,12 +1,5 @@
 <template>
-  <div
-    ref="rongQi"
-    class="jiu-di-bian-ji"
-    @click.stop
-    @dblclick.stop
-    @keydown.stop
-    @focusout="chuLiShiJiao"
-  >
+  <div class="jiu-di-bian-ji" @click.stop @dblclick.stop @keydown.stop>
     <div class="jiu-di-bian-ji-tou">
       <label class="jiu-di-bian-ji-biao-ti" :for="shuRuBiaoShi">{{ biaoTi }}</label>
       <span class="jiu-di-bian-ji-ji-shu" :class="{ 'jiu-di-bian-ji-ji-shu--chao': ziShuChao }">
@@ -14,20 +7,19 @@
       </span>
     </div>
 
-    <input
-      :id="shuRuBiaoShi"
-      ref="shuRuKuang"
-      v-model="mingChengGaoGao"
-      class="jiu-di-bian-ji-shu-ru"
-      type="text"
-      autocomplete="off"
-      :maxlength="zuiDaZiFu"
-      :disabled="caoZuoZhong"
-      :aria-invalid="Boolean(cuoWuWenAn)"
-      :placeholder="mingChengZhanWei"
-      @keydown="chuLiAnJian"
-      @input="qingChuBenDiCuoWu"
-    />
+    <div class="jiu-di-bian-ji-ming-cheng-wei">
+      <ChangFangShuRuKuang
+        ref="shuRuKuang"
+        :标识="shuRuBiaoShi"
+        :模型值="mingChengGaoGao"
+        :最大长度="zuiDaZiFu"
+        :禁用="caoZuoZhong"
+        :占位文字="mingChengZhanWei"
+        :错误提示文字="cuoWuWenAn"
+        @geng-xin="gengXinMingCheng"
+        @keydown="chuLiAnJian"
+      />
+    </div>
 
     <div class="jiu-di-bian-ji-yan-se">
       <span class="jiu-di-bian-ji-yan-se-biao-ti">{{ yanSeBiaoTi }}</span>
@@ -65,8 +57,6 @@
       </label>
     </div>
 
-    <p v-if="cuoWuWenAn" class="jiu-di-bian-ji-cuo-wu" role="alert">{{ cuoWuWenAn }}</p>
-
     <div class="jiu-di-bian-ji-jiao">
       <button type="button" class="jiu-di-bian-ji-an-niu" :disabled="caoZuoZhong" @click="huanYuanMoRen">
         {{ huanYuanWenAn }}
@@ -96,6 +86,7 @@ import {
   shiKeYongQiPaoWenZiYanSe,
   shiKeYongWenZiYanSe,
 } from '@/config/外观自定义'
+import ChangFangShuRuKuang from '@/components/表单/长方框输入框.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -119,8 +110,7 @@ const faChu = defineEmits<{
   (shiJian: 'qu-xiao'): void
 }>()
 
-const rongQi = ref<HTMLElement | null>(null)
-const shuRuKuang = ref<HTMLInputElement | null>(null)
+const shuRuKuang = ref<InstanceType<typeof ChangFangShuRuKuang> | null>(null)
 const mingChengGaoGao = ref(props.mingCheng)
 const yanSeGaoGao = ref(props.wenZiYanSe.toUpperCase())
 const benDiCuoWu = ref('')
@@ -149,7 +139,8 @@ const ziDingYiYanSeXuanZhong = computed(
 )
 const cuoWuWenAn = computed(() => benDiCuoWu.value || props.cuoWuWenAn)
 
-function qingChuBenDiCuoWu(): void {
+function gengXinMingCheng(zhi: string): void {
+  mingChengGaoGao.value = zhi
   benDiCuoWu.value = ''
 }
 
@@ -174,12 +165,12 @@ function tiJiao(): void {
   const mingCheng = mingChengGaoGao.value.trim()
   if (!mingCheng) {
     benDiCuoWu.value = huoQuFanYi('sheZhi', 'waiGuanMingChengWeiKong')
-    shuRuKuang.value?.focus()
+    shuRuKuang.value?.聚焦()
     return
   }
   if (Array.from(mingCheng).length > props.zuiDaZiFu) {
     benDiCuoWu.value = huoQuFanYi('sheZhi', 'waiGuanMingChengTaiChang').replace('{n}', String(props.zuiDaZiFu))
-    shuRuKuang.value?.focus()
+    shuRuKuang.value?.聚焦()
     return
   }
   if (yanSeGaoGao.value) {
@@ -192,12 +183,6 @@ function tiJiao(): void {
   benDiCuoWu.value = ''
   yiTiJiao.value = true
   faChu('tijiao', { mingCheng, wenZiYanSe: yanSeGaoGao.value })
-}
-
-function chuLiShiJiao(shiJian: FocusEvent): void {
-  const xiaYiGe = shiJian.relatedTarget as Node | null
-  if (xiaYiGe && rongQi.value?.contains(xiaYiGe)) return
-  tiJiao()
 }
 
 function chuLiAnJian(shiJian: KeyboardEvent): void {
@@ -229,14 +214,14 @@ watch(
   (zhi) => {
     if (!zhi) return
     yiTiJiao.value = false
-    void nextTick(() => shuRuKuang.value?.focus())
+    void nextTick(() => shuRuKuang.value?.聚焦())
   },
 )
 
 onMounted(() => {
   void nextTick(() => {
-    shuRuKuang.value?.focus()
-    shuRuKuang.value?.select()
+    shuRuKuang.value?.聚焦()
+    shuRuKuang.value?.输入元素?.select()
   })
 })
 </script>
@@ -275,31 +260,8 @@ onMounted(() => {
   color: var(--cuowu-yanse);
 }
 
-.jiu-di-bian-ji-shu-ru {
-  width: 100%;
-  min-height: var(--wai-guan-re-ku);
-  padding: 0 var(--jiange-12);
-  border: 1.5px solid var(--biankuang-yanse);
-  border-radius: var(--yuanjiao-xiao);
-  background: var(--beijing-ciuse);
-  color: var(--wenben-zhuse);
-  font-family: inherit;
-  font-size: var(--ziti-zhong);
-  letter-spacing: 0.02em;
-}
-
-.jiu-di-bian-ji-shu-ru::placeholder {
-  color: var(--wenben-ciuse);
-}
-
-.jiu-di-bian-ji-shu-ru:focus {
-  border-color: var(--zhuse);
-  outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
-  outline-offset: var(--jujiao-huan-pian-yi);
-}
-
-.jiu-di-bian-ji-shu-ru[aria-invalid='true'] {
-  border-color: var(--cuowu-yanse);
+.jiu-di-bian-ji-ming-cheng-wei {
+  min-width: 0;
 }
 
 .jiu-di-bian-ji-yan-se {
@@ -386,13 +348,6 @@ onMounted(() => {
   height: 100%;
   opacity: 0;
   cursor: pointer;
-}
-
-.jiu-di-bian-ji-cuo-wu {
-  margin: 0;
-  font-size: var(--ziti-xiao);
-  line-height: 1.5;
-  color: var(--cuowu-yanse);
 }
 
 .jiu-di-bian-ji-jiao {

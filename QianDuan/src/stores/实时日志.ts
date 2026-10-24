@@ -88,7 +88,7 @@ export const 使用实时日志仓库 = defineStore('实时日志', () => {
     if (!令牌) return
 
     const xieYiLianJie = io({
-      path: '/xieYiLianJie.io',
+      path: '/socket.io',
       auth: { token: 令牌 },
       transports: ['websocket', 'polling'],
     })

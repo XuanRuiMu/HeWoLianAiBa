@@ -348,7 +348,7 @@ luYou.put('/气泡', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing
   try {
     await queBaoSheZhiHang(yongHu.yongHuId)
     if (ziJi !== undefined) {
-      await 数据库.query(`UPDATE "用户设置" SET "气泡自己" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [String(ziJi), yongHu.yongHuId])
+      await 数据库.query(`UPDATE "用户设置" SET "气泡自己" = $1, "气泡已显式设置" = true, "更新时间" = NOW() WHERE "用户ID" = $2`, [String(ziJi), yongHu.yongHuId])
     }
     if (ai !== undefined) {
       await 数据库.query(`UPDATE "用户设置" SET "气泡AI" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [String(ai), yongHu.yongHuId])

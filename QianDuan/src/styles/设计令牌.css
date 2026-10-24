@@ -1,5 +1,6 @@
 :root {
   --shi-jiao-kou-gao-du: 100dvh;
+  --bu-ju-gao-du: 100dvh;
 
   
   --ceng-caidan: 1300;
@@ -8,6 +9,7 @@
   --ceng-xieyi: 2000;
   --ceng-rili: 2050;
   --ceng-shouquan: 2100;
+  --ceng-yu-lan: 2500;
   --ceng-tiaoshi-riji: 3000;
   --ceng-tiaoshi-mianban: 3100;
   --ceng-duanwang: 4000;
@@ -42,8 +44,9 @@
   --moshi-kapian-dong-xiao: 240ms;
   --zhuye-wen-zi-yan-shi: 200ms;
   --shuru-gao-liang-shi-chang: 420ms;
-  --kaiguan-dong-hua-shi-chang: 200ms;
   --gou-xuan-chi-cun: 18px;
+  --daohanglan-tubiao-chi: 18px;
+  --caidan-tubiao-chi: 14px;
 
   
   --yuanjiao-da: 16px;
@@ -165,9 +168,11 @@
   --yuyin-jindu-xian-gao: 2px;
   --yuyin-huakuai-chicun: 8px;
   --yuyin-jindu-zui-xiao-kuan: 60px;
-  --yuyin-kongzhi-chicun: 32px;
-  --yuyin-kongzhi-re-ku: 44px;
-  --yuyin-kongzhi-tubiao: 16px;
+  --yuyin-kongzhi-chicun: 28px;
+  --yuyin-kongzhi-re-ku: 36px;
+  --yuyin-kongzhi-tubiao: 13px;
+  --yuyin-kongzhi-jian-ju: 3px;
+  --yuyin-duan-yin-cang-shi-chang: 100ms;
   
   --shijian-tiao-neidian-shang-xia: 2px;
   --shijian-tiao-neidian-zuo-you: 6px;
@@ -231,7 +236,6 @@
   --jing-gao-se: #ff9800;
   --xiaoxi-yonghu-wenben: #000000;
   --xiaoxi-jiaose-wenben: #000000;
-  --dingbu-lan-beijing: #EDEDED;
   --liaotian-beijing: #ededed;
   
   --gundong-tiao-beijing: rgba(110, 110, 110, 0.85);
@@ -456,7 +460,6 @@
   --jing-gao-se: #ffa726;
   --xiaoxi-yonghu-wenben: #000000;
   --xiaoxi-jiaose-wenben: #E0E0E0;
-  --dingbu-lan-beijing: #1C1C1E;
   --liaotian-beijing: #111111;
   
   --gundong-tiao-beijing: rgba(150, 150, 150, 0.9);

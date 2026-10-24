@@ -306,6 +306,16 @@ export const HAO_YOU_YU_JU = {
    WHERE ((m."发送者ID" = $1 AND m."接收者ID" = $2)
        OR (m."发送者ID" = $2 AND m."接收者ID" = $1))
    ORDER BY m."创建时间" DESC LIMIT $3`,
+  查更早消息: `
+  SELECT m."ID", m."发送者ID", m."接收者ID", m."内容", m."类型", m."媒体ID",
+         m."已读", m."撤回", m."创建时间", m."内容块", m."被引用消息ID",
+         f."SHA256", f."类别", f."原始文件名", f."大小字节"
+    FROM "好友消息" m
+    LEFT JOIN "媒体文件" f ON f."ID" = m."媒体ID"
+   WHERE ((m."发送者ID" = $1 AND m."接收者ID" = $2)
+       OR (m."发送者ID" = $2 AND m."接收者ID" = $1))
+     AND (m."创建时间", m."ID") < ($4::timestamptz, $5::uuid)
+   ORDER BY m."创建时间" DESC, m."ID" DESC LIMIT $3`,
   插入消息: `
   INSERT INTO "好友消息" ("发送者ID", "接收者ID", "内容", "类型", "媒体ID", "内容块", "被引用消息ID")
   VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
@@ -322,6 +332,7 @@ function yingSheHaoYouXiaoXi(
   return {
     id: String(row['ID']),
     fa_song_zhe_id: String(row['发送者ID']),
+    fa_song_zhe_lei_xing: String(row['发送者ID']) === duZheId ? 'yonghu' : 'duifang',
     jie_shou_zhe_id: String(row['接收者ID']),
     nei_rong: yiCheHui ? '' : String(row['内容'] || ''),
     lei_xing: String(row['类型']),
@@ -345,17 +356,33 @@ luYou.get('/消息/:haoYouId', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu,
   const haoYouId = String(qingQiu.params.haoYouId || '')
   if (!yanZhengUUID(haoYouId)) return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
   const xianZhi = Math.max(1, Math.min(50, parseInt(String(qingQiu.query.limit || '20'), 10) || 20))
+  const yuanWenYouBiao = String(qingQiu.query.you_biao_shi_jian_chuo ?? '')
+  const youBiaoShiJianChuo = /^\d{1,15}$/.test(yuanWenYouBiao) ? Number(yuanWenYouBiao) : null
+  const yuanWenYouBiaoId = String(qingQiu.query.you_biao_id ?? '')
+  const youBiaoId = yanZhengUUID(yuanWenYouBiaoId) ? yuanWenYouBiaoId : null
+  const shiYongYouBiao = youBiaoShiJianChuo !== null && youBiaoId !== null
   try {
     if (!(await shiHaoYou(yongHu.yongHuId, haoYouId))) {
       return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('haoYou', 'feiHaoYou'))
     }
-    const jieGuo = await 数据库.query(HAO_YOU_YU_JU.查消息列表, [yongHu.yongHuId, haoYouId, xianZhi])
+    const jieGuo = shiYongYouBiao
+      ? await 数据库.query(HAO_YOU_YU_JU.查更早消息, [
+          yongHu.yongHuId,
+          haoYouId,
+          xianZhi + 1,
+          new Date(youBiaoShiJianChuo as number),
+          youBiaoId,
+        ])
+      : await 数据库.query(HAO_YOU_YU_JU.查消息列表, [yongHu.yongHuId, haoYouId, xianZhi + 1])
     const hangLie = jieGuo.rows as Record<string, unknown>[]
-    const kuaiShangXiaWen = await gouKuaiShangXiaWen(hangLie, haoYouKuaiTouYing(yongHu.yongHuId))
+    const haiYouGengDuo = hangLie.length > xianZhi
+    const youXiaoHang = hangLie.slice(0, xianZhi)
+    const kuaiShangXiaWen = await gouKuaiShangXiaWen(youXiaoHang, haoYouKuaiTouYing(yongHu.yongHuId))
     return chengGongXiangYing(xiangYing, {
-      lie_biao: hangLie
+      lie_biao: youXiaoHang
         .map((r) => yingSheHaoYouXiaoXi(r, yongHu.yongHuId, kuaiShangXiaWen))
         .reverse(),
+      hai_you_geng_duo: haiYouGengDuo,
     })
   } catch (cuoWu) {
     debug日志.error('好友接口', '查询好友消息失败', { xiang_qing: { cuo_wu: String(cuoWu) } })

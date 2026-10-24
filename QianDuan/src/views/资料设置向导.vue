@@ -21,6 +21,8 @@
                 class="xingBie-kaPian ziJi-xingBie-kaPian"
                 data-xuan-xing-bie="nan"
                 :class="{ beiXuanZhong: ziLiaoShuJu.xingBie === 'male' }"
+                :style="ziLiaoShuJu.xingBie === 'male' ? 性别卡选中样式 : undefined"
+                :aria-pressed="ziLiaoShuJu.xingBie === 'male'"
                 @click="ziLiaoShuJu.xingBie = 'male'"
               >
                 <div class="xingBie-tubiao ziJi-nan-tubiao">
@@ -61,6 +63,8 @@
                 class="xingBie-kaPian ziJi-xingBie-kaPian"
                 data-xuan-xing-bie="nv"
                 :class="{ beiXuanZhong: ziLiaoShuJu.xingBie === 'female' }"
+                :style="ziLiaoShuJu.xingBie === 'female' ? 性别卡选中样式 : undefined"
+                :aria-pressed="ziLiaoShuJu.xingBie === 'female'"
                 @click="ziLiaoShuJu.xingBie = 'female'"
               >
                 <div class="xingBie-tubiao ziJi-nv-tubiao">
@@ -104,6 +108,8 @@
                 class="xingBie-kaPian duiXiang-xingBie-kaPian"
                 data-xuan-xing-bie="nan"
                 :class="{ beiXuanZhong: ziLiaoShuJu.muBiaoXingBie === 'male' }"
+                :style="ziLiaoShuJu.muBiaoXingBie === 'male' ? 性别卡选中样式 : undefined"
+                :aria-pressed="ziLiaoShuJu.muBiaoXingBie === 'male'"
                 @click="ziLiaoShuJu.muBiaoXingBie = 'male'"
               >
                 <div class="xingBie-tubiao duiXiang-nan-tubiao">
@@ -140,6 +146,8 @@
                 class="xingBie-kaPian duiXiang-xingBie-kaPian"
                 data-xuan-xing-bie="nv"
                 :class="{ beiXuanZhong: ziLiaoShuJu.muBiaoXingBie === 'female' }"
+                :style="ziLiaoShuJu.muBiaoXingBie === 'female' ? 性别卡选中样式 : undefined"
+                :aria-pressed="ziLiaoShuJu.muBiaoXingBie === 'female'"
                 @click="ziLiaoShuJu.muBiaoXingBie = 'female'"
               >
                 <div class="xingBie-tubiao duiXiang-nv-tubiao">
@@ -324,22 +332,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
-import { 使用用户仓库 } from '@/stores/用户'
 import type { MBTI类型, 性格选择 } from '@/types/类型定义'
 import { 性格选择映射 } from '@/types/类型定义'
 import { huoQuFanYi } from '@/config/翻译表'
 import ChangFangShuRuKuang from '@/components/表单/长方框输入框.vue'
 import XingBieGouXuan from '@/components/表单/性别勾选框.vue'
 import { congTongYongTiShiCiTuiCeXingGe } from '@/utils/通用提示词性格'
-import { 解析主色档, 解析性别, 解析性别配色档 } from '@/utils/性别'
+import { 使用通用性别框体配色 } from '@/composables/use性别框体配色'
 import { guiYiNianLing } from '@/utils/输入验证'
 import { track } from '@/utils/埋点'
 
 const 仓库 = 使用认证表单仓库()
-const 用户仓库 = 使用用户仓库()
 const router = useRouter()
 
 if (仓库.huoQuZiLiaoSheZhiYiWanCheng()) {
@@ -359,38 +365,31 @@ const 步骤方向 = ref<'qian' | 'hou'>('qian')
 watch(() => 仓库.ziLiaoDangQianBuZhou, 仓库.baoCunZiLiaoZhuangTai)
 watch(() => ({ ...仓库.ziLiaoShuJu }), 仓库.baoCunZiLiaoZhuangTai, { deep: true })
 
-onMounted(async () => {
-  await 用户仓库.queBaoShenFenJiuXu()
-  const buZhouYiCun = 仓库.ziLiaoDangQianBuZhou !== 1
-  const youCaoGao = !!ziLiaoShuJu.xingBie || !!ziLiaoShuJu.muBiaoXingBie || !!ziLiaoShuJu.xingGeXuanZe
-  if (buZhouYiCun || youCaoGao) return
-  const moRen = 用户仓库.dangQianYongHu?.mo_ren_xing_bie
-  const moRenNei = 解析性别(moRen)
-  if (moRenNei && !ziLiaoShuJu.xingBie) {
-    ziLiaoShuJu.xingBie = moRenNei === 'nan' ? 'male' : 'female'
-  }
-  const muBiaoMoRen = 用户仓库.dangQianYongHu?.mu_biao_xing_bie
-  if (muBiaoMoRen && !ziLiaoShuJu.muBiaoXingBie) {
-    const guiYiHou = 解析性别(muBiaoMoRen)
-    if (guiYiHou === 'nan') ziLiaoShuJu.muBiaoXingBie = 'male'
-    if (guiYiHou === 'nv') ziLiaoShuJu.muBiaoXingBie = 'female'
-  }
-  const ziShenYiShe = 解析性别(moRen) !== null
-  const duiXiangYiShe = 解析性别(muBiaoMoRen) !== null
-  if (ziShenYiShe && duiXiangYiShe) 当前步骤.value = 3
-  else if (ziShenYiShe) 当前步骤.value = 2
-  else 当前步骤.value = 1
+const {
+  自身色档: 主色档,
+  对象色档,
+  样式: 性别卡选中样式,
+} = 使用通用性别框体配色({
+  自身性别: () => ziLiaoShuJu.xingBie,
+  对象性别: () => ziLiaoShuJu.muBiaoXingBie,
 })
+
+function 计算最远可达步骤(): number {
+  if (!ziLiaoShuJu.xingBie) return 1
+  if (!ziLiaoShuJu.muBiaoXingBie) return 2
+  return 3
+}
+
+const 最远可达步骤 = 计算最远可达步骤()
+if (仓库.ziLiaoDangQianBuZhou > 最远可达步骤) {
+  仓库.ziLiaoDangQianBuZhou = 最远可达步骤
+}
 
 const 步骤过渡名称 = computed(() =>
   步骤方向.value === 'qian' ? 'buZhou-qianJin' : 'buZhou-houTui',
 )
 
-const 默认性别 = computed(() => 用户仓库.dangQianYongHu?.mo_ren_xing_bie ?? null)
-const 默认对象性别 = computed(() => 用户仓库.dangQianYongHu?.mu_biao_xing_bie ?? null)
-const 主色档 = computed(() => 解析主色档(ziLiaoShuJu.xingBie, 默认性别.value))
-const 对象色档 = computed(() => 解析性别配色档(ziLiaoShuJu.muBiaoXingBie ?? 默认对象性别.value))
-const 对象勾选档 = computed<'nan' | 'nv'>(() => (对象色档.value === 'nan' ? 'nan' : 'nv'))
+const 对象勾选档 = 对象色档
 
 function qianJinBuZhou() {
   if (当前步骤.value >= 3 || !可以下一步.value) return
@@ -474,14 +473,14 @@ function suiJiXuanZe() {
 }
 
 const 渣型文案 = computed(() =>
-  ziLiaoShuJu.muBiaoXingBie === 'male'
+  对象色档.value === 'nan'
     ? huoQuFanYi('ziLiaoSheZhi', 'zhaNanBianTi')
     : huoQuFanYi('ziLiaoSheZhi', 'zhaNvBianTi'),
 )
 
 const 渣型提示文案 = computed(() => {
   const daiTi =
-    ziLiaoShuJu.muBiaoXingBie === 'male'
+    对象色档.value === 'nan'
       ? huoQuFanYi('ziLiaoSheZhi', 'taDaiTiNan')
       : huoQuFanYi('ziLiaoSheZhi', 'taDaiTiNv')
   return huoQuFanYi('ziLiaoSheZhi', 'zhaXingTiShi').replace('{ta}', daiTi)
@@ -514,12 +513,12 @@ async function kaiShiLiaoTian() {
 
 
 .ziliao-kapian {
-  background: rgba(15, 17, 38, 0.62);
+  background: var(--ziliao-beijing);
   backdrop-filter: blur(22px) saturate(150%);
   -webkit-backdrop-filter: blur(22px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.13);
+  border: 1px solid var(--ziliao-biankuang);
   border-radius: 18px;
-  box-shadow: 0 24px 60px rgba(4, 6, 20, 0.55);
+  box-shadow: var(--ziliao-yinying);
   padding: calc(var(--jiange-da) + var(--jiange-xiao)) var(--jiange-da) var(--jiange-da);
   display: flex;
   flex-direction: column;
@@ -536,8 +535,20 @@ async function kaiShiLiaoTian() {
   left: 12%;
   right: 12%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  background: var(--ziliao-lengxian);
   pointer-events: none;
+}
+
+.ziliao-kapian {
+  --ziliao-beijing: var(--liuli-fuchuang-beijing);
+  --ziliao-biankuang: var(--liuli-fuchuang-biankuang);
+  --ziliao-yinying: var(--liuli-fuchuang-yinying);
+  --ziliao-lengxian: var(--liuli-lengxian);
+  --ziliao-kuai-beijing: var(--liuli-kuai-beijing);
+  --ziliao-kuai-biankuang: var(--liuli-kuai-biankuang);
+  --ziliao-miaoshu-wenben: rgba(242, 240, 250, 0.84);
+  --ziliao-tishi-wenben: rgba(242, 240, 250, 0.78);
+  --ziliao-huaxian-wenben: rgba(255, 215, 0, 0.8);
 }
 
 .ziliao-kapian {
@@ -646,7 +657,7 @@ async function kaiShiLiaoTian() {
 
 .buZuo-miaoShu {
   font-size: 13px;
-  color: rgba(242, 240, 250, 0.52);
+  color: var(--ziliao-miaoshu-wenben);
   text-align: center;
   margin-bottom: calc(var(--jiange-zhong) + var(--jiange-4));
 }
@@ -667,12 +678,12 @@ async function kaiShiLiaoTian() {
   align-items: center;
   gap: var(--jiange-10);
   padding: var(--jiange-da) var(--jiange-zhong) calc(var(--jiange-zhong) + var(--jiange-6));
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.13);
+  background-color: var(--ziliao-kuai-beijing);
+  border: 2px solid var(--ziliao-kuai-biankuang);
   border-radius: 16px;
   color: var(--kapian-shuoming-wenben);
   cursor: pointer;
-  transition-property: border-color, box-shadow, transform, color;
+  transition-property: border-color, box-shadow, transform, color, background-color;
   transition-duration: 0.3s;
   transition-timing-function: var(--quxian-biao-zhun);
   min-width: 0;
@@ -687,30 +698,9 @@ async function kaiShiLiaoTian() {
   }
 }
 
-.ziliao-kapian .xingBie-kaPian.beiXuanZhong[data-xuan-xing-bie='nan'] {
-  background-color: var(--xingbie-nan-tan-beijing);
-  border: 2px solid var(--xingbie-nan-shen-biankuang);
-  box-shadow: 0 0 0 3px var(--xingbie-nan-xuan-huan);
-  color: var(--xingbie-nan-tan-wenben);
-}
-
-.ziliao-kapian .xingBie-kaPian.beiXuanZhong[data-xuan-xing-bie='nv'] {
-  background-color: var(--xingbie-nv-tan-beijing);
-  border: 2px solid var(--xingbie-nv-shen-biankuang);
-  box-shadow: 0 0 0 3px var(--xingbie-nv-xuan-huan);
-  color: var(--xingbie-nv-tan-wenben);
-}
-
-.xingBie-kaPian.beiXuanZhong[data-xuan-xing-bie='nan'] .xingBie-mingCheng,
-.xingBie-kaPian.beiXuanZhong[data-xuan-xing-bie='nan'] .xingBie-svg {
-  color: var(--xingbie-nan-tan-wenben);
-  text-shadow: none;
-}
-
-.xingBie-kaPian.beiXuanZhong[data-xuan-xing-bie='nv'] .xingBie-mingCheng,
-.xingBie-kaPian.beiXuanZhong[data-xuan-xing-bie='nv'] .xingBie-svg {
-  color: var(--xingbie-nv-tan-wenben);
-  text-shadow: none;
+.ziliao-kapian .xingBie-kaPian.beiXuanZhong .xingBie-mingCheng,
+.ziliao-kapian .xingBie-kaPian.beiXuanZhong .xingBie-svg {
+  color: inherit;
 }
 
 .xingBie-tubiao {
@@ -762,8 +752,8 @@ async function kaiShiLiaoTian() {
   justify-content: center;
   gap: var(--jiange-2);
   padding: var(--jiange-10) var(--jiange-6) var(--jiange-xiao);
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: var(--ziliao-kuai-beijing);
+  border: 1px solid var(--ziliao-kuai-biankuang);
   border-radius: 12px;
   color: var(--kapian-shuoming-wenben);
   cursor: pointer;
@@ -835,7 +825,7 @@ async function kaiShiLiaoTian() {
 .mbti-zhongWen {
   font-size: 11px;
   font-weight: 600;
-  color: var(--wenben-ciuse);
+  color: var(--ziliao-tishi-wenben);
   line-height: 1.2;
 }
 
@@ -850,12 +840,12 @@ async function kaiShiLiaoTian() {
 }
 
 .zhaNv-gouxuan {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--ziliao-miaoshu-wenben);
 }
 
 .zhaNv-tishi {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--ziliao-tishi-wenben);
   text-align: center;
   margin-top: calc(var(--jiange-xiao) * -1);
   margin-bottom: var(--jiange-4);
@@ -865,14 +855,14 @@ async function kaiShiLiaoTian() {
 }
 
 .zhaNv-tishi-huaxian {
-  color: rgba(255, 215, 0, 0.8);
+  color: var(--ziliao-huaxian-wenben);
   text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
 }
 
 .suiji-xingge-tishi,
 .yixuan-jiangu-tishi {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--ziliao-tishi-wenben);
   text-align: center;
   margin: 0 0 var(--jiange-4);
   line-height: 1.5;
@@ -923,7 +913,7 @@ async function kaiShiLiaoTian() {
   margin: var(--jiange-6) 0 0;
   font-size: 11px;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--ziliao-tishi-wenben);
   text-align: left;
 }
 
@@ -944,15 +934,7 @@ async function kaiShiLiaoTian() {
 .xinmuzhong-biaoqian {
   font-size: 11px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-:root[data-theme='light'] .xinmuzhong-ta-tishi {
-  color: rgba(0, 0, 0, 0.5);
-}
-
-:root[data-theme='light'] .xinmuzhong-biaoqian {
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--ziliao-miaoshu-wenben);
 }
 
 .caoZuo-anNiu {
@@ -966,7 +948,7 @@ async function kaiShiLiaoTian() {
 .anniu-fuZhu {
   padding: var(--jiange-13) calc(var(--jiange-da) + var(--jiange-4));
   background: transparent;
-  color: rgba(242, 240, 250, 0.7);
+  color: var(--ziliao-miaoshu-wenben);
   border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 12px;
   font-size: 14px;
@@ -1053,17 +1035,6 @@ async function kaiShiLiaoTian() {
 }
 
 
-:root[data-theme='light'] .ziliao-kapian {
-  background: rgba(255, 255, 255, 0.78);
-  border-color: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 24px 60px rgba(70, 50, 110, 0.22);
-}
-
-:root[data-theme='light'] .ziliao-kapian::before {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 1), transparent);
-}
-
-
 :root[data-theme='light'] .jindu-dian:not(.dangQian) {
   background: rgba(55, 42, 63, 0.16);
 }
@@ -1077,21 +1048,6 @@ async function kaiShiLiaoTian() {
   color: #372a3f;
 }
 
-:root[data-theme='light'] .buZuo-miaoShu {
-  color: rgba(55, 42, 63, 0.6);
-}
-
-
-:root[data-theme='light'] .xingBie-kaPian {
-  background: rgba(244, 238, 248, 0.6);
-  border-color: rgba(120, 90, 140, 0.14);
-}
-
-:root[data-theme='light'] .mbti-kaPian {
-  background: rgba(244, 238, 248, 0.6);
-  border-color: rgba(120, 90, 140, 0.13);
-}
-
 @media (hover: hover) {
   :root[data-theme='light'] .mbti-kaPian:hover:not(.beiXuanZhong) {
     border-color: var(--xingge-gao-guang-bian-ji);
@@ -1103,6 +1059,9 @@ async function kaiShiLiaoTian() {
   --xingge-gao-guang-zhong: rgba(255, 255, 255, 0.92);
   --xingge-gao-guang-bian-ji: rgba(120, 90, 140, 0.2);
   --xingge-gao-guang-bian-zhong: rgba(90, 60, 110, 0.42);
+  --ziliao-miaoshu-wenben: rgba(55, 42, 63, 0.86);
+  --ziliao-tishi-wenben: rgba(55, 42, 63, 0.78);
+  --ziliao-huaxian-wenben: rgba(55, 42, 63, 0.78);
 }
 
 :root[data-theme='light'] .mbti-kaPian.beiXuanZhong .mbti-zhongWen {
@@ -1117,25 +1076,7 @@ async function kaiShiLiaoTian() {
   color: var(--wenben-zhuse);
 }
 
-:root[data-theme='light'] .mbti-zhongWen {
-  color: var(--wenben-ciuse);
-}
-
-:root[data-theme='light'] .zhaNv-gouxuan {
-  color: rgba(55, 42, 63, 0.75);
-}
-
-:root[data-theme='light'] .zhaNv-tishi {
-  color: rgba(55, 42, 63, 0.45);
-}
-
-:root[data-theme='light'] .suiji-xingge-tishi,
-:root[data-theme='light'] .yixuan-jiangu-tishi {
-  color: rgba(55, 42, 63, 0.55);
-}
-
 :root[data-theme='light'] .anniu-fuZhu {
-  color: rgba(55, 42, 63, 0.7);
   border-color: rgba(55, 42, 63, 0.2);
 }
 
@@ -1199,6 +1140,66 @@ async function kaiShiLiaoTian() {
 .buZhou-houTui-leave-to {
   opacity: 0;
   transform: translateX(100%);
+}
+
+@media (max-height: 560px) {
+  .ziliao-shezhi {
+    padding-block: var(--jiange-xiao);
+  }
+
+  .ziliao-kapian {
+    gap: var(--jiange-xiao);
+    padding: var(--jiange-12);
+    border-radius: 14px;
+  }
+
+  .jindu-yuan-dian {
+    padding: 0 0 var(--jiange-xiao);
+  }
+
+  .buzhou-guo-du-rong-qi {
+    min-height: 248px;
+  }
+
+  .buZuo-biaoti {
+    font-size: 20px;
+  }
+
+  .buZuo-miaoShu {
+    margin-bottom: var(--jiange-xiao);
+    font-size: 12px;
+  }
+
+  .xingBie-wangGe {
+    max-width: 300px;
+  }
+
+  .xingBie-kaPian {
+    gap: var(--jiange-6);
+    padding: var(--jiange-10) var(--jiange-xiao);
+  }
+
+  .xingBie-tubiao {
+    font-size: 30px;
+  }
+
+  .xingBie-svg {
+    width: 44px;
+    height: 44px;
+  }
+
+  .xingBie-mingCheng {
+    font-size: 15px;
+  }
+
+  .caoZuo-anNiu {
+    padding-top: var(--jiange-4);
+  }
+
+  .anniu-fuZhu,
+  .anniu-zhuYao {
+    padding: var(--jiange-10) var(--jiange-zhong);
+  }
 }
 
 @media (max-width: 480px) {

@@ -194,7 +194,7 @@ export const LEI_BIE_DAO_XIAO_XI_LEI_XING: Record<MeiTiLeiBie, string> = {
   wenjian: 'wenJian',
 }
 
-export const HAO_YOU_SHANG_CHUAN_LEI_BIE = ['tupian', 'wenjian'] as const satisfies readonly MeiTiLeiBie[]
+export const HAO_YOU_SHANG_CHUAN_LEI_BIE = ['tupian', 'biaoqingshu', 'wenjian'] as const satisfies readonly MeiTiLeiBie[]
 
 export function shiHaoYouShangChuanLeiBie(zhi: unknown): zhi is MeiTiLeiBie {
   return (HAO_YOU_SHANG_CHUAN_LEI_BIE as readonly string[]).includes(String(zhi ?? ''))

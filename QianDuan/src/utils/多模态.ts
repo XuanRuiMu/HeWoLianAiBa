@@ -30,3 +30,32 @@ export function shiShengTuMingLing(_neiRong: unknown): boolean {
 export function shiShengShiPinMingLing(_neiRong: unknown): boolean {
   return false
 }
+
+export interface MeiTiXiaZaiXinXi {
+  mei_ti_url?: string | null
+  mei_ti_yuan_shi_wen_jian_ming?: string | null
+}
+
+export function baoCunMeiTiXiaoXi(xiaoXi: MeiTiXiaZaiXinXi, moRenHouZhui = '.png'): boolean {
+  const diZhi = xiaoXi.mei_ti_url
+  if (!diZhi) return false
+  const ming = xiaoXi.mei_ti_yuan_shi_wen_jian_ming?.trim()
+  const wenJianMing = ming && /\.[A-Za-z0-9]{1,8}$/.test(ming) ? ming : `mei_ti${moRenHouZhui}`
+  return xiaZaiMeiTi(diZhi, wenJianMing)
+}
+
+export function xiaZaiMeiTi(diZhi: string, wenJianMing: string): boolean {  if (typeof document === 'undefined' || !document.body || !diZhi) return false
+  const mao = document.createElement('a')
+  mao.href = diZhi
+  mao.download = wenJianMing
+  mao.rel = 'noopener'
+  document.body.appendChild(mao)
+  try {
+    mao.click()
+    return true
+  } catch {
+    return false
+  } finally {
+    mao.remove()
+  }
+}

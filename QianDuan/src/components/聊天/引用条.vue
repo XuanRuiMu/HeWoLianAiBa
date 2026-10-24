@@ -1,6 +1,5 @@
 <template>
   <div class="yinyong-tiao" role="status">
-    <span class="yinyong-tiao-biaoti">{{ huoQuFanYi('liaoTian', 'yinYong') }}</span>
     <span class="yinyong-tiao-zhaiyao">
       <template v-if="faSongZheMing">{{ faSongZheMing }}: </template>{{ zhaiYao }}
     </span>
@@ -62,13 +61,6 @@ onBeforeUnmount(() => document.removeEventListener('keydown', chuLiAnJian))
   font-size: var(--yinyong-kuang-zihao);
   line-height: var(--yinyong-tiao-hangao);
 }
-
-.yinyong-tiao-biaoti {
-  flex-shrink: 0;
-  color: var(--zhuse);
-  font-weight: 600;
-}
-
 
 .yinyong-tiao-zhaiyao {
   flex: 0 1 auto;

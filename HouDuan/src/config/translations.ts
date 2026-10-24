@@ -48,6 +48,8 @@ export const fanYi = {
     xiuGaiYongHuMingShiBai: '用户名没有改成功，现在还是原来的用户名',
     faSongYanZhengMaPinFan: '验证码发送过于频繁，请等一会儿再发送一次',
     faSongYanZhengMaFuWuWuXianZhi: '验证码服务暂时不可用，本次没有发送成功，请重试当前操作',
+    renJiYanZhengWeiTongGuo: '人机测试没有通过，请重新验证',
+    renJiYanZhengJiaZaiShiBai: '人机测试加载失败，请重试当前操作',
     dengLuShiBaiPinFan: '登录失败次数过多，请60秒后再试',
     zhuCeShiBai: '注册失败',
     zhuCeFuWuWuXianZhi: '注册服务暂时不可用，本次没有注册成功，请重试当前操作',

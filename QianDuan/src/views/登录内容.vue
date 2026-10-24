@@ -63,6 +63,7 @@
                 'shi-fu-yong': moShi === 'dengLu',
                 'qiehuan-wanding': qieHuanWanDing && moShi === 'dengLu',
               }"
+              :inert="moShi !== 'dengLu'"
             >
               <Transition
                 :name="qieHuanDongHua"
@@ -229,6 +230,7 @@
                 'shi-fu-yong': moShi === 'zhuCe',
                 'qiehuan-wanding': qieHuanWanDing && moShi === 'zhuCe',
               }"
+              :inert="moShi !== 'zhuCe'"
             >
               <Transition
                 :name="qieHuanDongHua"
@@ -449,6 +451,14 @@
       :lei-xing="xieYiLeiXing"
       @guan-bi="xieYiXianShi = false"
     />
+    <RenJiYanZheng
+      ref="renJiZuJian"
+      :xian-shi="renJiXianShi"
+      :yong-tu="YAN_ZHENG_MA_YONG_TU.zhuCe"
+      :deng-dai-zhong="faSongZhong"
+      @guan-bi="renJiXianShi = false"
+      @ti-jiao="tiJiaoRenJi"
+    />
   </div>
 </template>
 
@@ -458,9 +468,10 @@ import type { Ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { 使用用户仓库 } from '@/stores/用户'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
-import { faSongMa, jianChaShouJiHao, YAN_ZHENG_MA_YONG_TU } from '@/api/认证'
+import { faSongMa, jianChaShouJiHao, YAN_ZHENG_MA_YONG_TU, type 人机验证答案 } from '@/api/认证'
 import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
 import { chuangJianQianTaiCuoWu, 归一前台错误 } from '@/utils/前台错误'
+import { shiRenJiYanZhengShiBai, type 人机测试实例 } from '@/utils/人机验证'
 import HengTiaoShuRuKuang from '@/components/表单/横条输入框.vue'
 import { huoQuFanYi } from '@/config/翻译表'
 import { quXian } from '@/config/设计令牌'
@@ -468,6 +479,7 @@ import 协议模态框 from '@/components/协议模态框.vue'
 import RequestError from '@/components/请求错误.vue'
 import { use前台错误 } from '@/composables/use前台错误'
 import ChuShengRiQiXuanZeQi from '@/components/认证/出生日期选择器.vue'
+import RenJiYanZheng from '@/components/认证/人机测试.vue'
 
 const emit = defineEmits<{
   (e: 'dengLuChengGong'): void
@@ -515,6 +527,8 @@ const {
   qingLi: qingLiQianTai,
 } = use前台错误()
 const faSongZhong = ref(false)
+const renJiXianShi = ref(false)
+const renJiZuJian = ref<人机测试实例 | null>(null)
 const dengLuZhong = ref(false)
 const zhuCeZhong = ref(false)
 const daoJiShi = ref(0)
@@ -1143,12 +1157,31 @@ async function zhiXingFaSongMa() {
       }
     }
     if (!jieMianCaoZuoYouXiao(daiCi)) return
-    await faSongMa(shouJiHao, YAN_ZHENG_MA_YONG_TU.zhuCe, { signal: 认证操作控制器?.signal })
+    renJiXianShi.value = true
+  } finally {
+    if (jieMianCaoZuoYouXiao(daiCi)) faSongZhong.value = false
+  }
+}
+
+async function tiJiaoRenJi(yanZheng: 人机验证答案) {
+  if (faSongZhong.value) return
+  const daiCi = kaiShiJieMianCaoZuo()
+  const shouJiHao = zhuCeShouJiHao.value
+  faSongZhong.value = true
+  qingLiQianTai()
+  try {
+    await faSongMa(shouJiHao, YAN_ZHENG_MA_YONG_TU.zhuCe, { signal: 认证操作控制器?.signal }, yanZheng)
     if (!jieMianCaoZuoYouXiao(daiCi)) return
+    renJiXianShi.value = false
     bd.yanZhengMaFaSongShiJian = Date.now()
     kaiShiDaoJiShi()
   } catch (cuoWu) {
     if (!jieMianCaoZuoYouXiao(daiCi)) return
+    if (shiRenJiYanZhengShiBai(cuoWu)) {
+      renJiZuJian.value?.biaoShiYanZhengShiBai()
+      return
+    }
+    renJiXianShi.value = false
     jieShouQianTai(cuoWu, zhiXingFaSongMa)
     juShouFuWuCuoWu(cuoWu)
   } finally {

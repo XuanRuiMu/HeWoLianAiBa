@@ -162,6 +162,7 @@ export interface DuiHuaLiShiXiang {
 export interface HaoYouXiaoXiChuCan {
   id: string
   fa_song_zhe_id: string
+  fa_song_zhe_lei_xing: 'yonghu' | 'duifang'
   jie_shou_zhe_id: string
   nei_rong: string
   lei_xing: string
