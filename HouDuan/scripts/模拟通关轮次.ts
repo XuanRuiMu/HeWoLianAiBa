@@ -104,7 +104,7 @@ async function main(): Promise<void> {
         关怀度变化: guan_huai_du_bian_hua,
         理由: 'mock评分',
       }),
-      xinXi: { role: 'assistant', content: '' },
+      xinXi: { role: 'assistant', neiRong: '' },
       yuanShuJu: {},
     }
   })
