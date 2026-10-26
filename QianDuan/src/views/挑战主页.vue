@@ -131,9 +131,6 @@
             >
               {{ huoQuFanYi('tiaoZhan', 'kaiShiTiaoZhan') }}
             </button>
-            <button class="anniu-paihang" type="button" @click="qianWangPaiHangBang">
-              {{ huoQuFanYi('tiaoZhan', 'paiHangBang') }}
-            </button>
           </div>
           <p v-if="dangQianDuiJu" class="rukou-tishi">
             {{ huoQuFanYi('tiaoZhan', 'yiYouDuiJuTishi') }}
@@ -148,7 +145,6 @@
         <section class="qu zhaiyao-qu" :aria-busy="bangDanZaiZai ? 'true' : 'false'">
           <div class="qu-tou">
             <h2 class="qu-biaoti">{{ huoQuFanYi('tiaoZhan', 'paiHangZhaiYao') }}</h2>
-            <span class="qu-fu">{{ huoQuFanYi('tiaoZhan', 'qianWuMing') }}</span>
           </div>
           <div
             ref="zuQieKuang"
@@ -189,7 +185,7 @@
             </Transition>
             <Transition name="zhaiyao-dan-ru">
               <div v-show="bangDanCuoWu" class="zhaiyao-nei zhaiyao-nei--die">
-                <p class="zhaiyao-kong">{{ bangDanCuoWu?.lianAiWenAn }}</p>
+                <TiaoZhanKongTai>{{ bangDanCuoWu?.lianAiWenAn }}</TiaoZhanKongTai>
                 <button
                   v-if="bangDanCuoWu?.retryable"
                   class="zhaiyao-chongshi"
@@ -202,7 +198,7 @@
             </Transition>
             <Transition name="zhaiyao-dan-ru">
               <div v-show="bangDanKong" class="zhaiyao-nei zhaiyao-nei--die">
-                <p class="zhaiyao-kong">{{ huoQuFanYi('tiaoZhan', 'zanWuPaiHang') }}</p>
+                <TiaoZhanKongTai>{{ huoQuFanYi('tiaoZhan', 'zanWuPaiHang') }}</TiaoZhanKongTai>
               </div>
             </Transition>
             <Transition name="zhaiyao-dan-ru">
@@ -264,70 +260,69 @@
           </button>
         </div>
         <ZhaXingTiShi :zha-xing-gai-lv="zhaXingGaiLv" />
-        <div class="xingbie-hang">
-          <div class="xingbie-zu" :data-dui="对象配色档">
-            <p class="xingbie-zu-biaoti">{{ huoQuFanYi('tiaoZhan', 'niDeXingBie') }}</p>
-            <div
-              class="xingbie-wangge"
-              role="radiogroup"
-              :aria-label="huoQuFanYi('tiaoZhan', 'niDeXingBie')"
-            >
+        <div class="jindu-yuan-dian">
+          <button
+            v-for="buZhou in tiaoZhanBuZhouLieBiao"
+            :key="buZhou"
+            class="jindu-dian"
+            :class="{ huoyue: buZhou <= xingBieBuZhou, dangQian: buZhou === xingBieBuZhou }"
+            type="button"
+            :aria-label="String(buZhou)"
+            @click="tiaoZhuanBuZhou(buZhou)"
+          />
+        </div>
+        <div class="buzhou-rong-qi">
+          <Transition :name="buZhouGuoDuMing">
+            <XingBieXuanZeBuZhou
+              v-if="xingBieBuZhou === 1"
+              key="tzb1"
+              v-model:模型值="woDeXingBieZhi"
+              变体="ziJi"
+              :标题="huoQuFanYi('ziLiaoSheZhi', 'buZhou1BiaoTi')"
+              :描述="huoQuFanYi('ziLiaoSheZhi', 'buZhou1MiaoShu')"
+              :自身性别="woDeXingBieZhi"
+              :对象性别="duiXiangXingBieZhi"
+            />
+            <XingBieXuanZeBuZhou
+              v-else-if="xingBieBuZhou === 2"
+              key="tzb2"
+              v-model:模型值="duiXiangXingBieZhi"
+              变体="duiXiang"
+              :标题="huoQuFanYi('ziLiaoSheZhi', 'buZhou2BiaoTi')"
+              :描述="huoQuFanYi('ziLiaoSheZhi', 'buZhou2MiaoShu')"
+              :自身性别="woDeXingBieZhi"
+              :对象性别="duiXiangXingBieZhi"
+            />
+            <div v-else key="tzb3" class="queren-bu">
               <button
-                v-for="ka in xingBieKaPianLieBiao"
-                :key="'zi-shen-' + ka.zhi"
+                class="anniu anniu--jin queren-kai-shi"
                 type="button"
-                class="xingbie-ka-pian"
-                role="radio"
-                :data-xingbie="ka.dang"
                 :disabled="kaiShiQingQiuZhong"
-                :aria-checked="woDeXingBie === ka.zhi ? 'true' : 'false'"
-                :style="woDeXingBie === ka.zhi ? 选中样式 : undefined"
-                @click="xuanZeZiJi(ka.zhi)"
+                @click="queRenKaiShiDuiJu"
               >
-                <span class="xingbie-fuhao" aria-hidden="true">{{ ka.fuhao }}</span>
-                <span class="xingbie-ming">{{ ka.ming }}</span>
+                {{ huoQuFanYi('tiaoZhan', 'queRenKaiShi') }}
               </button>
             </div>
-          </div>
-          <div class="xingbie-zu" :data-dui="对象配色档">
-            <p class="xingbie-zu-biaoti">{{ huoQuFanYi('tiaoZhan', 'duiXiangXingBie') }}</p>
-            <div
-              class="xingbie-wangge"
-              role="radiogroup"
-              :aria-label="huoQuFanYi('tiaoZhan', 'duiXiangXingBie')"
-            >
-              <button
-                v-for="ka in xingBieKaPianLieBiao"
-                :key="'dui-xiang-' + ka.zhi"
-                type="button"
-                class="xingbie-ka-pian"
-                role="radio"
-                :data-xingbie="ka.dang"
-                :disabled="!woDeXingBie || kaiShiQingQiuZhong"
-                :aria-checked="duiXiangXingBie === ka.zhi ? 'true' : 'false'"
-                :style="duiXiangXingBie === ka.zhi ? 选中样式 : undefined"
-                @click="xuanZeDuiXiang(ka.zhi)"
-              >
-                <span class="xingbie-fuhao" aria-hidden="true">{{ ka.fuhao }}</span>
-                <span class="xingbie-ming">{{ ka.ming }}</span>
-              </button>
-            </div>
-            <p v-if="!woDeXingBie" class="xingbie-tishi">
-              {{ huoQuFanYi('tiaoZhan', 'xianXuanZiJi') }}
-            </p>
-            <p v-else-if="kaiShiQingQiuZhong" class="xingbie-tishi" role="status">
-              {{ huoQuFanYi('tiaoZhan', 'zhengZaiJinRu') }}
-            </p>
-          </div>
+          </Transition>
         </div>
         <div class="tanchuang-caozuo">
           <button
+            v-if="xingBieBuZhou > 1"
             class="anniu anniu--mo"
             type="button"
             :disabled="kaiShiQingQiuZhong"
-            @click="guanBiXingBieXuanZe"
+            @click="xingBieShangYiBu"
           >
-            {{ huoQuFanYi('tongYong', 'quXiao') }}
+            {{ huoQuFanYi('ziLiaoSheZhi', 'shangYiBu') }}
+          </button>
+          <button
+            v-if="xingBieBuZhou < 3"
+            class="anniu anniu--jin"
+            type="button"
+            :disabled="!keYiXiaYiBu"
+            @click="xingBieXiaYiBu"
+          >
+            {{ huoQuFanYi('ziLiaoSheZhi', 'xiaYiBu') }}
           </button>
         </div>
       </div>
@@ -358,52 +353,21 @@ import {
   type PaiHangXiangMu,
 } from '@/api/挑战'
 import { huoQuFanYi } from '@/config/翻译表'
-import { 解析性别, 用户形态, type 性别二档, type 性别选择形态 } from '@/utils/性别'
-import { 使用默认性别卡配色, 使用通用性别框体配色 } from '@/composables/use性别框体配色'
-import { 使用用户仓库 } from '@/stores/用户'
+import { 选择形态, type 性别二档, type 性别用户形态 } from '@/utils/性别'
+import { 使用通用性别框体配色 } from '@/composables/use性别框体配色'
 import ZhaXingTiShi from '@/components/挑战渣型提示.vue'
+import XingBieXuanZeBuZhou from '@/components/资料设置/性别选择步骤.vue'
+import TiaoZhanKongTai from '@/components/挑战空态.vue'
 import TouXiang from '@/components/头像.vue'
 import RequestError from '@/components/请求错误.vue'
 import { use前台错误 } from '@/composables/use前台错误'
 import { 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
 
 const router = useRouter()
-const 用户仓库 = 使用用户仓库()
 
 const zuBieLieBiao: ZuBie[] = ['nan_nv', 'nv_nan', 'nan_nan', 'nv_nv']
 
-const 默认XingBie = computed(() => 用户仓库.dangQianYongHu?.mo_ren_xing_bie)
-const 默认DuiXiangXingBie = computed(() => 用户仓库.dangQianYongHu?.mu_biao_xing_bie)
-const 对象深边框色: Record<性别二档, string> = {
-  nan: 'var(--xingbie-nan-shen-biankuang)',
-  nv: 'var(--xingbie-nv-shen-biankuang)',
-}
-const { 色档: 自身色档, 样式: 默认卡样式 } = 使用默认性别卡配色({
-  自身性别: () => woDeXingBie.value,
-  默认性别: () => 默认XingBie.value,
-})
-const 对象配色档 = computed<性别二档>(
-  () => 解析性别(duiXiangXingBie.value) ?? 解析性别(默认DuiXiangXingBie.value) ?? 自身色档.value,
-)
-const 选中样式 = computed<CSSProperties>(() => ({
-  backgroundColor: 默认卡样式.value.backgroundColor,
-  borderColor: 对象深边框色[对象配色档.value],
-  color: 默认卡样式.value.color,
-}))
-const xingBieKaPianLieBiao = computed(() => [
-  {
-    zhi: '男' as 性别选择形态,
-    dang: 'nan',
-    fuhao: '♂',
-    ming: huoQuFanYi('ziLiaoSheZhi', 'xingBieNan'),
-  },
-  {
-    zhi: '女' as 性别选择形态,
-    dang: 'nv',
-    fuhao: '♀',
-    ming: huoQuFanYi('ziLiaoSheZhi', 'xingBieNv'),
-  },
-])
+const tiaoZhanBuZhouLieBiao = [1, 2, 3]
 
 const dangQianDuiJu = ref<TiaoZhanDuiJu | null>(null)
 const gaiKuangLieBiao = ref<ZuBieGaiKuang[]>([])
@@ -411,8 +375,10 @@ const cuoWuXinXi = ref('')
 const kaiShiCuoWu = ref<QianTaiCuoWu | null>(null)
 
 const xingBieXuanZeKeJian = ref(false)
-const woDeXingBie = ref<性别选择形态 | null>(null)
-const duiXiangXingBie = ref<性别选择形态 | null>(null)
+const xingBieBuZhou = ref(1)
+const buZhouGuoDuMing = ref('buzhou-qian-jin')
+const woDeXingBieZhi = ref<性别用户形态 | null>(null)
+const duiXiangXingBieZhi = ref<性别用户形态 | null>(null)
 const zhaXingGaiLv = ref(0.3)
 
 const zhengZaiFangQiQueRen = ref(false)
@@ -604,19 +570,42 @@ onMounted(async () => {
   await jiaZaiBangDan()
 })
 
-async function xuanZeDuiXiang(xingBie: 性别选择形态) {
-  if (!woDeXingBie.value || kaiShiQingQiuZhong.value) return
+const keYiXiaYiBu = computed(() => {
+  if (xingBieBuZhou.value === 1) return !!woDeXingBieZhi.value
+  if (xingBieBuZhou.value === 2) return !!duiXiangXingBieZhi.value
+  return false
+})
+
+function xingBieShangYiBu() {
+  if (xingBieBuZhou.value <= 1 || kaiShiQingQiuZhong.value) return
+  buZhouGuoDuMing.value = 'buzhou-hou-tui'
+  xingBieBuZhou.value -= 1
+}
+
+function xingBieXiaYiBu() {
+  if (xingBieBuZhou.value >= 3 || !keYiXiaYiBu.value) return
+  buZhouGuoDuMing.value = 'buzhou-qian-jin'
+  xingBieBuZhou.value += 1
+}
+
+function tiaoZhuanBuZhou(buZhou: number) {
+  if (buZhou >= xingBieBuZhou.value || kaiShiQingQiuZhong.value) return
+  buZhouGuoDuMing.value = 'buzhou-hou-tui'
+  xingBieBuZhou.value = buZhou
+}
+
+async function queRenKaiShiDuiJu() {
+  if (!woDeXingBieZhi.value || !duiXiangXingBieZhi.value || kaiShiQingQiuZhong.value) return
   kaiShiCuoWu.value = null
-  duiXiangXingBie.value = xingBie
   kaiShiQingQiuZhong.value = true
   try {
     sessionStorage.setItem(
       'ziLiaoSheZhiLinShi',
       JSON.stringify({
         moshi: 'tiaozhan',
-        xingBie: 用户形态(woDeXingBie.value),
-        woDeXingBie: woDeXingBie.value,
-        muBiaoXingBie: 用户形态(xingBie),
+        xingBie: woDeXingBieZhi.value,
+        woDeXingBie: 选择形态(woDeXingBieZhi.value),
+        muBiaoXingBie: duiXiangXingBieZhi.value,
       }),
     )
     await router.push('/tian-jia-wei-xin')
@@ -638,8 +627,10 @@ async function daKaiXingBieXuanZe() {
   }
   cuoWuXinXi.value = ''
   kaiShiCuoWu.value = null
-  woDeXingBie.value = null
-  duiXiangXingBie.value = null
+  woDeXingBieZhi.value = null
+  duiXiangXingBieZhi.value = null
+  buZhouGuoDuMing.value = 'buzhou-qian-jin'
+  xingBieBuZhou.value = 1
   xingBieXuanZeKeJian.value = true
   try {
     const peiZhi = await huoQuTiaoZhanPeiZhi()
@@ -654,11 +645,6 @@ async function daKaiXingBieXuanZe() {
 function guanBiXingBieXuanZe() {
   if (kaiShiQingQiuZhong.value) return
   xingBieXuanZeKeJian.value = false
-}
-
-function xuanZeZiJi(xingBie: 性别选择形态) {
-  kaiShiCuoWu.value = null
-  woDeXingBie.value = xingBie
 }
 
 function qianWangPaiHangBang() {
@@ -719,7 +705,7 @@ watch(xingBieXuanZeKeJian, async (keJian) => {
     document.body.style.overflow = 'hidden'
     yiSuoDingGunDong = true
     await nextTick()
-    xuanZeKuang.value?.querySelector<HTMLButtonElement>('.xingbie-ka-pian')?.focus()
+    xuanZeKuang.value?.querySelector<HTMLButtonElement>('.xingBie-kaPian')?.focus()
     return
   }
   if (yiSuoDingGunDong) {
@@ -1010,26 +996,6 @@ onBeforeUnmount(() => {
   background: var(--tz-jin-an);
 }
 
-.anniu-paihang {
-  flex: none;
-  min-height: var(--tz-re-ku);
-  padding: 0 var(--jiange-zhong);
-  border: 1px solid var(--tz-xian);
-  border-radius: var(--yuanjiao-xiao);
-  background: transparent;
-  color: var(--tz-wen);
-  font-size: var(--tz-zi-zheng);
-  font-weight: 600;
-  transition:
-    border-color var(--tz-dong),
-    color var(--tz-dong);
-}
-
-.anniu-paihang:hover:not(:disabled) {
-  border-color: var(--tz-jin);
-  color: var(--tz-jin);
-}
-
 .rukou-tishi {
   margin: 0;
   font-size: var(--tz-zi-zheng);
@@ -1313,13 +1279,6 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
-.zhaiyao-kong {
-  margin: 0;
-  font-size: var(--tz-zi-zheng);
-  font-weight: 600;
-  line-height: 1.5;
-}
-
 .zhaiyao-chongshi {
   align-self: flex-start;
   min-height: var(--tz-re-ku);
@@ -1474,107 +1433,81 @@ onBeforeUnmount(() => {
   color: var(--tz-wen-ci);
 }
 
-.xingbie-hang {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--jiange-zhong);
-}
-
-.xingbie-zu {
+.jindu-yuan-dian {
   display: flex;
-  flex-direction: column;
-  gap: var(--jiange-xiao);
-  min-width: 0;
+  justify-content: center;
+  align-items: center;
+  gap: var(--jiange-12);
+  padding: var(--jiange-xiao) 0;
 }
 
-.xingbie-zu-biaoti {
-  margin: 0;
-  font-size: var(--tz-zi-xiao);
-  font-weight: 600;
-  line-height: 1.4;
-  color: var(--tz-wen-ci);
+.jindu-dian {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--tz-wen-ci);
+  cursor: pointer;
+  transition:
+    background-color var(--tz-ka-dong) ease-out,
+    transform var(--tz-ka-dong) ease-out;
 }
 
-.xingbie-wangge {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--jiange-xiao);
+.jindu-dian.huoyue {
+  background: var(--tz-wen);
 }
 
-.xingbie-ka-pian {
+.jindu-dian.dangQian {
+  background: var(--tz-jin);
+  transform: scale(1.25);
+}
+
+.buzhou-rong-qi {
+  position: relative;
+  width: 100%;
+  min-height: 340px;
+  overflow: hidden;
+}
+
+.queren-bu {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--jiange-4);
-  min-height: calc(var(--tz-re-ku) + var(--jiange-12));
-  padding: var(--jiange-12) var(--jiange-xiao);
-  border: 1px solid var(--tz-xian);
-  border-radius: var(--yuanjiao-xiao);
-  background: transparent;
-  color: var(--tz-wen);
+  gap: var(--jiange-zhong);
+}
+
+.queren-kai-shi {
+  width: 100%;
+  max-width: calc(var(--jiange-da) * 9);
+  min-height: var(--tz-re-ku);
+}
+
+.buzhou-qian-jin-enter-active,
+.buzhou-qian-jin-leave-active,
+.buzhou-hou-tui-enter-active,
+.buzhou-hou-tui-leave-active {
   transition:
-    background-color var(--tz-ka-dong) ease-out,
-    border-color var(--tz-ka-dong) ease-out,
-    color var(--tz-ka-dong) ease-out,
-    box-shadow var(--tz-ka-dong) ease-out,
-    transform var(--tz-ka-dong) ease-out;
+    transform var(--tz-ka-dong) ease-out,
+    opacity var(--tz-ka-dong) ease-out;
 }
 
-@media (hover: hover) {
-  .xingbie-ka-pian:hover:not(:disabled) {
-    transform: translateY(-2px);
-  }
+.buzhou-qian-jin-enter-from,
+.buzhou-hou-tui-leave-to {
+  opacity: 0;
+  transform: translateX(28px);
 }
 
-.xingbie-ka-pian[aria-checked='true'] {
-  border-width: 2px;
-  transform: translateY(-1px);
-}
-
-.xingbie-zu[data-dui='nan'] .xingbie-ka-pian[aria-checked='true'] {
-  box-shadow: 0 0 0 1px var(--xingbie-nan-shen-biankuang);
-}
-
-.xingbie-zu[data-dui='nv'] .xingbie-ka-pian[aria-checked='true'] {
-  box-shadow: 0 0 0 1px var(--xingbie-nv-shen-biankuang);
-}
-
-.xingbie-fuhao {
-  font-size: var(--tz-zi-zhong);
-  line-height: 1;
-  color: var(--tz-wen-ci);
-}
-
-.xingbie-ka-pian[aria-checked='true'] .xingbie-fuhao {
-  color: currentColor;
-}
-
-.xingbie-ming {
-  font-size: var(--tz-zi-zheng);
-  font-weight: 600;
-}
-
-.xingbie-ka-pian[data-xingbie='nan']:hover:not(:disabled):not([aria-checked='true']) {
-  border-color: var(--xingbie-nan-1);
-  box-shadow: 0 6px 18px -12px var(--xingbie-nan-xuan-guangyun);
-}
-
-.xingbie-ka-pian[data-xingbie='nv']:hover:not(:disabled):not([aria-checked='true']) {
-  border-color: var(--xingbie-nv-1);
-  box-shadow: 0 6px 18px -12px var(--xingbie-nv-xuan-guangyun);
-}
-
-.xingbie-ka-pian:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.xingbie-tishi {
-  margin: 0;
-  font-size: var(--tz-zi-xiao);
-  line-height: 1.5;
-  color: var(--tz-wen-ci);
+.buzhou-qian-jin-leave-to,
+.buzhou-hou-tui-enter-from {
+  opacity: 0;
+  transform: translateX(-28px);
 }
 
 .tanchuang-caozuo {
@@ -1609,13 +1542,12 @@ onBeforeUnmount(() => {
     width: 100%;
   }
 
-  .xingbie-hang {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--jiange-12);
-  }
-
   .xingbie-tanchuang {
     padding: var(--jiange-zhong);
+  }
+
+  .buzhou-rong-qi {
+    min-height: 300px;
   }
 }
 
@@ -1648,11 +1580,14 @@ onBeforeUnmount(() => {
 @media (prefers-reduced-motion: reduce) {
   .anniu,
   .anniu-kaiShi,
-  .anniu-paihang,
   .zu-anniu,
   .zu-zhishi,
   .tanchuang-guanbi,
-  .xingbie-ka-pian,
+  .jindu-dian,
+  .buzhou-qian-jin-enter-active,
+  .buzhou-qian-jin-leave-active,
+  .buzhou-hou-tui-enter-active,
+  .buzhou-hou-tui-leave-active,
   .zhaiyao-quanbu,
   .zhaiyao-chongshi,
   .zhaiyao-nei-rong,

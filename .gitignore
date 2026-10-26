@@ -66,3 +66,6 @@ docker-compose.override.yml
 /手机版问题截图/
 /.agents/tmp/
 /.agents/evidence/截图/
+
+/.agents/
+/和我恋爱吧原始需求.txt

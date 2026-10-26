@@ -101,16 +101,7 @@ describe('挑战页可点击热区', () => {
     [
       '挑战主页',
       挑战主页,
-      [
-        '.anniu',
-        '.anniu-kaiShi',
-        '.anniu-paihang',
-        '.zu-anniu',
-        '.zhaiyao-quanbu',
-        '.zhaiyao-chongshi',
-        '.xingbie-ka-pian',
-        '.tanchuang-guanbi',
-      ],
+      ['.anniu', '.anniu-kaiShi', '.zu-anniu', '.zhaiyao-quanbu', '.zhaiyao-chongshi', '.tanchuang-guanbi'],
     ],
     ['挑战积分榜', 挑战积分榜, ['.zubie-anNiu', '.kong-anniu', '.fanhui-lianjie']],
   ])('%s 交互控件命中高度落到 44px 令牌', (_名称, 样式, 选择器组) => {
@@ -237,27 +228,25 @@ describe('挑战页内容切换不重建', () => {
 })
 
 describe('挑战页性别卡规则', () => {
-  it('选中态取淡填充与深边框令牌，不再用饱和填充', () => {
+  it('挑战开始向导与普通模式共用同一性别步骤组件', () => {
     const 原文 = readFileSync(resolve(根, 'views', '挑战主页.vue'), 'utf8')
-    expect(原文).toContain('使用默认性别卡配色')
-    expect(原文).toContain("nan: 'var(--xingbie-nan-shen-biankuang)'")
-    expect(原文).toContain("nv: 'var(--xingbie-nv-shen-biankuang)'")
-    expect(原文).toContain(':data-dui="对象配色档"')
+    expect(原文).toContain("from '@/components/资料设置/性别选择步骤.vue'")
+    expect(原文).not.toContain('xingbie-ka-pian')
+    expect(原文).not.toContain('使用默认性别卡配色')
     expect(原文).not.toContain('xuan-beijing')
-    expect(原文).not.toContain('使用性别框体配色')
+    const 向导 = readFileSync(resolve(根, 'views', '资料设置向导.vue'), 'utf8')
+    expect(向导).toContain("from '@/components/资料设置/性别选择步骤.vue'")
+    const 组件 = readFileSync(resolve(根, 'components', '资料设置', '性别选择步骤.vue'), 'utf8')
+    expect(组件).toContain('使用通用性别框体配色')
+    expect(组件.match(/data-xuan-xing-bie="nan"/g)?.length).toBe(2)
+    expect(组件.match(/data-xuan-xing-bie="nv"/g)?.length).toBe(2)
   })
 
-  it('选中环与悬停投影都走令牌，卡片过渡落在 200ms ease-out', () => {
-    expect(挑战主页).toContain(
-      ".xingbie-zu[data-dui='nan'] .xingbie-ka-pian[aria-checked='true'] {\n  box-shadow: 0 0 0 1px var(--xingbie-nan-shen-biankuang);",
-    )
-    expect(挑战主页).toContain(
-      ".xingbie-zu[data-dui='nv'] .xingbie-ka-pian[aria-checked='true'] {\n  box-shadow: 0 0 0 1px var(--xingbie-nv-shen-biankuang);",
-    )
-    expect(挑战主页).toContain('border-width: 2px')
+  it('选中环与过渡都走令牌，与普通模式同款 200ms ease-out', () => {
+    const 组件 = readFileSync(resolve(根, 'components', '资料设置', '性别选择步骤.vue'), 'utf8')
+    expect(组件).not.toContain('xuan-beijing')
+    expect(组件).toContain('transition-duration: 0.3s')
     expect(挑战主页).toContain('--tz-ka-dong: 200ms')
-    expect(挑战主页).toMatch(/box-shadow var\(--tz-ka-dong\) ease-out/)
-    expect(挑战主页).toMatch(/transform var\(--tz-ka-dong\) ease-out/)
   })
 
   it('性别弹层开启有动效，且不靠延迟移除来演离开', () => {

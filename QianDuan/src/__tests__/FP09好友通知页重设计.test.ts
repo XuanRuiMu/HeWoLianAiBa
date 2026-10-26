@@ -103,11 +103,19 @@ describe('FP09 好友页头部与副文案', () => {
     )
   })
 
-  it('头部直角深色背景板已删除：同色无缝、无边线、死令牌清零', () => {
+  it('头部直角深色背景板已删除：静止无缝、滚动才遮挡、无边线、死令牌清零', () => {
     expect(好友源码).toContain('background: var(--hao-you-ye-mian)')
     expect(好友源码).not.toContain('hao-you-ding-bu-mian')
     const 头部块 = /\.hao-you-ding-bu \{[\s\S]*?\n\}/.exec(好友源码)?.[0] ?? ''
     expect(头部块).not.toContain('border-bottom')
+    expect(头部块).not.toContain('background')
+    expect(头部块).not.toContain('backdrop-filter')
+    const 遮挡块 = /\.hao-you-ding-bu\.ding-bu-fu-gai \{[\s\S]*?\n\}/.exec(好友源码)?.[0] ?? ''
+    expect(遮挡块).toContain('background: var(--hao-you-ye-mian)')
+    expect(遮挡块).toContain('backdrop-filter: blur(12px)')
+    expect(好友源码).toContain('@scroll.passive="gengXinDingBuFuGai"')
+    expect(好友源码).toContain(":class=\"{ 'ding-bu-fu-gai': dingBuFuGai }\"")
+    expect(好友源码).toMatch(/dingBuFuGai\.value = \(shiJian\.target as HTMLElement\)\.scrollTop > 4/)
   })
 })
 

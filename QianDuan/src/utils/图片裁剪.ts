@@ -2,6 +2,13 @@ import type { CropperSelection } from 'cropperjs'
 
 export const TU_PIAN_SHU_CHU_ZUI_DA_BIAN = 1024
 
+export function jiSuanJuZhenSuoFang(juZhen: number[]): number {
+  const a = Number(juZhen[0]) || 0
+  const b = Number(juZhen[1]) || 0
+  const suoFang = Math.hypot(a, b)
+  return suoFang > 1e-4 ? suoFang : 0.01
+}
+
 export function jiSuanDaoChuChiCun(yuanKuan: number, yuanGao: number, zuiDaBian: number): { kuan: number; gao: number } {
   const kuan = Math.max(1, Math.round(yuanKuan))
   const gao = Math.max(1, Math.round(yuanGao))

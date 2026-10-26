@@ -123,8 +123,22 @@ function kaiShiBeiJingDengDai(): void {
   qingLiBeiJingDengDai()
   beiJingDengDaiDingShiQi = setTimeout(() => {
     beiJingDengDaiDingShiQi = null
-    if (!beiJingJiuXu.value) beiJingShiBai.value = true
+    if (!beiJingJiuXu.value) chongShiBeiJingJiaZai()
   }, caoDiPeiZhi.beiJingJiuXuChaoShiHaoMiao)
+}
+
+function chongShiBeiJingJiaZai(): void {
+  qingLiBeiJingDengDai()
+  beiJingJiuXu.value = false
+  if (beiJingChongShiCiShu.value >= caoDiPeiZhi.beiJingZuiDaChongShiCiShu) {
+    beiJingShiBai.value = true
+    return
+  }
+  beiJingChongShiCiShu.value += 1
+  yingJiaZaiBeiJing.value = false
+  setTimeout(() => {
+    yingJiaZaiBeiJing.value = true
+  }, 2000)
 }
 
 function tongBuBeiJingZanTing(): void {
@@ -177,7 +191,7 @@ function chuLiBeiJingXiaoXi(shiJian: MessageEvent) {
     tongBuBeiJingYuShui()
   } else if (shuJu.zhuangTai === 'shi-bai') {
     beiJingJiuXu.value = false
-    beiJingShiBai.value = true
+    chongShiBeiJingJiaZai()
     if (yiShangBaoBeiJingShiBai) return
     yiShangBaoBeiJingShiBai = true
     const yuanYin = typeof shuJu.yuanYin === 'string' ? shuJu.yuanYin : ''
@@ -191,16 +205,7 @@ function chuLiBeiJingXiaoXi(shiJian: MessageEvent) {
 }
 
 function chuLiBeiJingJiaZaiShiBai() {
-  beiJingJiuXu.value = false
-  if (beiJingChongShiCiShu.value < caoDiPeiZhi.beiJingZuiDaChongShiCiShu) {
-    beiJingChongShiCiShu.value += 1
-    yingJiaZaiBeiJing.value = false
-    setTimeout(() => {
-      yingJiaZaiBeiJing.value = true
-    }, 2000)
-    return
-  }
-  beiJingShiBai.value = true
+  chongShiBeiJingJiaZai()
 }
 
 async function qiDongBeiJingJiaZai() {

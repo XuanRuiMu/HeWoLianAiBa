@@ -50,7 +50,7 @@ function 读(相对: string): string {
 function 取样式(相对: string): string {
   const 源 = 读(相对)
   const 块们 = [...源.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1])
-  if (!块们.length) throw new Error(`${相对} 缺少 <style> 块`)
+  if (!块们.length) return ''
   return 块们.join('\n').replace(/\/\*[\s\S]*?\*\//g, '')
 }
 

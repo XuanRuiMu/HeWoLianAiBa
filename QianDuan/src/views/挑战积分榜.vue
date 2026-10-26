@@ -92,7 +92,7 @@
                 <path d="M10 15h4l1 5h-6z" />
               </svg>
             </span>
-            <p class="kong-biaoti">{{ huoQuFanYi('tiaoZhan', 'zanWuPaiHang') }}</p>
+            <TiaoZhanKongTai>{{ huoQuFanYi('tiaoZhan', 'zanWuPaiHang') }}</TiaoZhanKongTai>
             <button class="kong-anniu" type="button" @click="fanHui">
               {{ huoQuFanYi('tiaoZhan', 'quTiaoZhan') }}
             </button>
@@ -132,6 +132,7 @@ import { useRouter } from 'vue-router'
 import { huoQuPaiHangBang, type PaiHangXiangMu, type ZuBie } from '@/api/挑战'
 import { huoQuFanYi } from '@/config/翻译表'
 import RequestError from '@/components/请求错误.vue'
+import TiaoZhanKongTai from '@/components/挑战空态.vue'
 import { use前台错误 } from '@/composables/use前台错误'
 
 const router = useRouter()
@@ -619,13 +620,6 @@ onBeforeUnmount(() => {
 .kong-tubiao svg {
   width: var(--jiange-da);
   height: var(--jiange-da);
-}
-
-.kong-biaoti {
-  margin: 0;
-  font-size: var(--tz-zi-zhong);
-  font-weight: 600;
-  line-height: 1.4;
 }
 
 .kong-anniu {

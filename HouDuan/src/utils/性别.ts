@@ -75,6 +75,14 @@ export function 内部转用户形态(
   return null
 }
 
+export function 用户形态转内部(
+  值: 性别用户形态 | string | null | undefined,
+): 性别内部形态 | null {
+  if (值 === 'female') return 'nv'
+  if (值 === 'male') return 'nan'
+  return 解析性别(值)
+}
+
 export function 归一角色性别(原始值: unknown): 性别展示形态 {
   return 内部转展示(解析性别(原始值))
 }

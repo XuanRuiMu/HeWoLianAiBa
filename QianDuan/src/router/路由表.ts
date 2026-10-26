@@ -58,6 +58,12 @@ const luYou: RouteRecordRaw[] = [
         meta: { xuYaoDengLu: true },
       },
       {
+        path: 'zai-ru/:jiaoSeId',
+        name: 'zaiRuLiaoTian',
+        component: () => import('@/views/载入聊天.vue'),
+        meta: { xuYaoDengLu: true },
+      },
+      {
         path: 'zhang-hao-an-quan',
         name: 'zhangHaoAnQuan',
         component: () => import('@/views/账号与安全.vue'),

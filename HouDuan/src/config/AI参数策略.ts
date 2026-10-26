@@ -40,6 +40,11 @@ export function shiFouManRe(shangXiaWen?: CanShuShangXiaWen): boolean {
 const WEN_DU_XIA_XIAN = 0
 const WEN_DU_SHANG_XIAN = 2
 
+export const XIE_SHOU_WEN_DU_SHANG_XIAN = Math.min(
+  WEN_DU_SHANG_XIAN,
+  Math.max(0, parseFloat(process.env['WRITER_WENDU_SHANG_XIAN'] || '1.15') || 1.15),
+)
+
 const NUAN_XING = ['温柔', '浪漫', '热情', '活泼', '撒娇', '黏人', '黏']
 const LI_XING = ['理性', '冷静', '严谨', '克制', '高冷', '毒舌', '冷漠']
 const FA_SAN_GUAN_JIAN_CI = ['发散', '无厘头', '脑洞', '恶搞', '沙雕']
@@ -100,6 +105,7 @@ export function jiSuanAIChanShu(
   else if (changJing === 'anWei') wenDu += 0.05
 
   wenDu = qianZhiWenDu(wenDu)
+  if (moXingLeiXing === 'writer') wenDu = Math.min(wenDu, XIE_SHOU_WEN_DU_SHANG_XIAN)
 
   const jiChu: MoXingCanShu = {
     moXing: ji.moXing,

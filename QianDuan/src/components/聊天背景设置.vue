@@ -216,6 +216,7 @@
         :ti-shi="huoQuFanYi('sheZhi', 'tuPianCaiJianTiShi')"
         :kuan-gao-bi="0.75"
         :wen-jian-ming="'beijing'"
+        yu-lan-lei-xing="beiJing"
         @que-ren="queRenCaiJian"
         @qu-xiao="guanBiCaiJian"
       />

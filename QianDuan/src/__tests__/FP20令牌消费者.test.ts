@@ -119,6 +119,10 @@ const 幻影登记: { 令牌: string; 理由: string }[] = [
   { 令牌: '--qipao-duiFang-wenBen', 理由: '同 --qipao-duiFang-beiJing，运行时注入' },
   { 令牌: '--qipao-ziJi-beiJing', 理由: '同 --qipao-duiFang-beiJing，运行时注入' },
   { 令牌: '--qipao-ziJi-wenBen', 理由: '同 --qipao-duiFang-beiJing，运行时注入' },
+  {
+    令牌: '--caijian-yulan-fu-gai',
+    理由: '图片裁剪.vue 底部实时预览把裁剪结果 dataURL 以 style 运行时注入，CSS 只消费',
+  },
    {
     令牌: '--wai-guan-meng-ceng',
     理由: '账号与安全.vue 外观上传遮罩层按用户自定义透明度 style 运行时注入，CSS 只消费',

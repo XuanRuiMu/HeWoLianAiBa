@@ -42,6 +42,8 @@ import { shengChengBurstJianGeHaoMiao, burstLianFaZuiChangBiJieShu } from '../co
 import { duShiChaXiaShi } from '../config/时区'
 import { duJieBaoKaiGuan } from '../config/开场采样配置'
 import { huoQuShiJianChangJingWenBen } from '../config/时间场景配置'
+import { 用户形态转内部 } from '../utils/性别'
+import type { 性别内部形态 } from '../utils/性别'
 
 const deng = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
 
@@ -238,7 +240,7 @@ export class AI回复调度器 {
     }
   }
 
-  private 用户信息缓存?: { tu_pian_shou_quan: boolean }
+  private 用户信息缓存?: { tu_pian_shou_quan: boolean; yong_hu_xing_bie?: 性别内部形态 | null }
 
   private 发布AI状态(zhuang_tai: 'kong_xian' | 'deng_dai_zhong' | 'zheng_zai_shu_ru'): void {
     this.当前AI状态 = zhuang_tai
@@ -280,6 +282,10 @@ export class AI回复调度器 {
         if (jianCeID !== this.当前检测ID) return
         if (认证结果) {
           tuPianShouQuan = 认证结果.tu_pian_shou_quan === true
+          this.用户信息缓存 = {
+            tu_pian_shou_quan: tuPianShouQuan,
+            yong_hu_xing_bie: 用户形态转内部(认证结果.mo_ren_xing_bie),
+          }
         }
       } catch {
         tuPianShouQuan = false
@@ -656,11 +662,24 @@ private 计算本轮回复延迟(): number {
     推送('Writer', 思考.writer)
   }
 
+  private async 读取用户性别(): Promise<性别内部形态 | null> {
+    const 已缓存 = this.用户信息缓存?.yong_hu_xing_bie
+    if (已缓存 !== undefined) return 已缓存
+    if (process.env.VITEST === 'true') return null
+    try {
+      const 认证结果 = await anIdChaYongHu(this.用户ID).catch(() => null)
+      return 用户形态转内部(认证结果?.mo_ren_xing_bie ?? null)
+    } catch {
+      return null
+    }
+  }
+
   private async 运行AI(信号: AbortSignal, 轮次: LunCiShangXiaWen): Promise<AIYinQingShuChu> {
-    const [角色, 好感度, 历史消息] = await Promise.all([
+    const [角色, 好感度, 历史消息, 用户性别] = await Promise.all([
       huoQuAIJiaoSeXinXi(this.角色ID),
       huoQuWanZhengHaoGanDu(this.用户ID, this.角色ID),
       huoQuZuiJinDuiHuaLiShi(this.用户ID, this.角色ID),
+      this.读取用户性别(),
     ])
 
     if (!角色) {
@@ -704,6 +723,7 @@ private 计算本轮回复延迟(): number {
       },
       dui_hua_li_shi: 历史消息,
       yong_hu_xin_xiao_xi: 最新用户消息,
+      yong_hu_xing_bie: 用户性别 ?? undefined,
       shi_fou_di_yi_lun: 是第一轮,
       tu_pian_shou_quan: tuPianShouQuan,
       ji_yi_zhai_yao: yuQuZhaiYao || undefined,

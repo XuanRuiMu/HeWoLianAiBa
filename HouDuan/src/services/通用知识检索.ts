@@ -1,3 +1,4 @@
+import type { BiDaShiShi } from '../types'
 import {
   通用知识库,
   通用知识结束标记,
@@ -36,8 +37,9 @@ export function 含提示词注入特征(消息: string): boolean {
 
 export function 检索通用知识(消息: string, yunXu = true): 通用知识检索结果 {
   const 原文 = (消息 || '').trim()
-  if (!yunXu || !原文) return { 命中: false, 条目: [], 被注入攻击拦截: false }
+  if (!原文) return { 命中: false, 条目: [], 被注入攻击拦截: false }
   if (含提示词注入特征(原文)) return { 命中: false, 条目: [], 被注入攻击拦截: true }
+  if (!yunXu) return { 命中: false, 条目: [], 被注入攻击拦截: false }
   const 归一消息 = 归一(原文)
   const 条目 = 通用知识库.filter((项) =>
     项.主题词.some((词) => 归一消息.includes(归一(词))),
@@ -56,9 +58,21 @@ export function 构建通用知识内容(条目: 通用知识条目): string {
   })
 }
 
+export const 通用知识注入条目上限 = 3
+
+function 选取注入条目(检索: 通用知识检索结果): 通用知识条目[] {
+  const 相关标识 = new Set(检索.条目.map((项) => 项.标识))
+  const 其余 = 通用知识库
+    .filter((项) => !相关标识.has(项.标识))
+    .sort((甲, 乙) => (乙.优先级 ?? 0) - (甲.优先级 ?? 0))
+  return [...检索.条目, ...其余].slice(0, 通用知识注入条目上限)
+}
+
 function 拼装知识层(声明: string, 检索: 通用知识检索结果): string {
-  if (!检索.命中) return ''
-  return `${通用知识开始标记}\n${声明}\n【知识内容】\n${检索.条目.map((项) => `知识标识：${项.标识}\n${构建通用知识内容(项)}`).join('\n')}\n${通用知识结束标记}`
+  if (检索.被注入攻击拦截) return ''
+  const 条目 = 选取注入条目(检索)
+  if (条目.length === 0) return ''
+  return `${通用知识开始标记}\n${声明}\n【知识内容】\n${条目.map((项) => `知识标识：${项.标识}\n${构建通用知识内容(项)}`).join('\n')}\n${通用知识结束标记}`
 }
 
 export function 构建通用知识层(检索: 通用知识检索结果): string {
@@ -76,7 +90,7 @@ const 转换或引用请求特征 = /翻译|译成|英文|英语|日语|日文|�
 const 评价请求特征 = /你觉得|你认为|如何评价|怎么评价|评价一下|怎么看|看法|印象|好听|帅不帅|喜欢吗|靠谱吗|值不值得/
 const 未覆盖事实维度特征 = /哪里|哪儿|何时|什么时候|多久|为什么|为何|怎么办|如何|关系|关联|区别|不同|比较|联系方式|电话|微信|地址/
 const 引用边界特征 = /[“”‘’「」『』]/
-const 复合请求特征 = /[\n\r，,；;。！!]|顺便|然后|接着|同时|另外|还有|并且|以及|和|与|及/
+const 复合请求特征 = /[\n\r；;。！!]|顺便|然后|接着|同时|另外|还有|并且|以及|和|与|及/
 
 interface 确定回答候选 {
   问题: 通用知识问题
@@ -104,15 +118,13 @@ function 选择唯一候选(候选: 确定回答候选[]): 确定回答候选 | 
   return 候选[0] ?? null
 }
 
-export function 构建确定性知识回答(
-  消息: string,
-  检索: 通用知识检索结果 = 检索通用知识(消息),
-): string | null {
+function 挑选候选(
+  原文: string,
+  检索: 通用知识检索结果,
+): 确定回答候选 | null {
   if (!检索.命中 || 检索.被注入攻击拦截) return null
-  const 原文 = (消息 || '').trim()
   const 归一消息 = 归一(原文)
   if (
-    !原文 ||
     !直接问题特征.test(归一消息) ||
     拒绝回答特征.test(归一消息) ||
     关系反问特征.test(归一消息) ||
@@ -123,7 +135,46 @@ export function 构建确定性知识回答(
     复合请求特征.test(原文) ||
     /[?？].+[?？]?$/.test(原文)
   ) return null
-  const 候选 = 选择唯一候选(提取候选(原文, 检索))
+  return 选择唯一候选(提取候选(原文, 检索))
+}
+
+export function 提取必答事实(
+  消息: string,
+  检索: 通用知识检索结果 = 检索通用知识(消息),
+): BiDaShiShi | null {
+  const 原文 = (消息 || '').trim()
+  if (!原文) return null
+  const 候选 = 挑选候选(原文, 检索)
+  if (!候选) return null
+  const 事实表 = 提取事实值(候选.条目)
+  const biXuYaoSu = (候选.问题.涉及事实 ?? [])
+    .map((标识) => 候选.条目.事实.find((shiShi) => shiShi.标识 === 标识))
+    .filter((shiShi): shiShi is NonNullable<typeof shiShi> => Boolean(shiShi))
+    .map((shiShi) => {
+      const 原文写法 = String(shiShi.值).trim()
+      const 变体 = [原文写法, ...(shiShi.接受写法 ?? [])].filter((写法) => 写法.trim() !== '')
+      return [...new Set(变体)]
+    })
+    .filter((变体) => 变体.length > 0)
+  if (biXuYaoSu.length === 0) return null
+  const 标准答案 = huoQuFanYiMiaoShu('通用知识', 候选.问题.答案模板, {
+    ...事实表,
+    主题: 候选.条目.主题词[0] ?? 候选.主题,
+  })
+  return {
+    biao_shi: `${候选.条目.标识}·${候选.问题.标识}`,
+    wen_an: 标准答案,
+    bi_xu_yao_su: biXuYaoSu,
+  }
+}
+
+export function 构建确定性知识回答(
+  消息: string,
+  检索: 通用知识检索结果 = 检索通用知识(消息),
+): string | null {
+  const 原文 = (消息 || '').trim()
+  if (!原文) return null
+  const 候选 = 挑选候选(原文, 检索)
   if (!候选) return null
   return huoQuFanYiMiaoShu('通用知识', 候选.问题.答案模板, {
     ...提取事实值(候选.条目),

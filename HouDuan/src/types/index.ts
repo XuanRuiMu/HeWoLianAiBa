@@ -187,6 +187,8 @@ export interface DirectorCeLue {
   hui_fu_tiao_shu: number
   shi_jian_qing_xu: string
   shi_fou_che_hui: boolean
+  shi_fou_zhu_dong_biao_bai?: boolean
+  yao_jie_zhu_de_dian?: string
 }
 
 export interface WriterJieGuo {
@@ -209,6 +211,15 @@ export interface AIYinQingShuRu {
   tu_pian_shou_quan: boolean
   ji_yi_zhai_yao?: string
   guan_jian_shi_jian?: string
+  yong_hu_xing_bie?: 性别内部形态
+  bi_da_shi_shi?: BiDaShiShi
+}
+
+export interface BiDaShiShi {
+  biao_shi: string
+  wen_an: string
+  bi_xu_yao_su: string[][]
+  zhong_shi?: boolean
 }
 
 export interface AIYinQingShuChu {

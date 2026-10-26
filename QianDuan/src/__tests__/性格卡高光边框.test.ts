@@ -82,21 +82,58 @@ describe('性格卡高光边框：仅交互态出现局部水墨流动', () => {
     expect(体).toContain('pointer-events: none')
   })
 
-  it('hover、键盘聚焦、选中分别启动同一缓慢水墨动画，不复制高光逻辑', () => {
+  it('hover、键盘聚焦、选中分别启动同一呼吸与漂移动画，不复制高光逻辑', () => {
     for (const 选择器 of [
       '.mbti-kaPian:hover:not(.beiXuanZhong)::after',
       '.mbti-kaPian:focus-visible::after',
       '.mbti-kaPian.beiXuanZhong::after',
     ]) {
       expect(规则体(选择器)).toContain(
-        'animation: xingge-ji-guang 8s ease-in-out infinite alternate',
+        'xingge-huxi var(--xingge-huxi-zhouqi) ease-in-out infinite alternate',
+      )
+      expect(规则体(选择器)).toContain(
+        'xingge-liu-guang-piao var(--xingge-piao-zhouqi) ease-in-out infinite alternate',
       )
     }
-    expect(样式.match(/animation: xingge-ji-guang/g)).toHaveLength(3)
-    const 体 = 规则体('@keyframes xingge-ji-guang')
-    expect(体).toContain('background-position')
-    expect(体).toContain('opacity')
-    expect(体).not.toMatch(/transform|rotate|translate|width|height/)
+    expect(样式.match(/animation:\s+xingge-huxi /g)).toHaveLength(3)
+    const 呼吸体 = 规则体('@keyframes xingge-huxi')
+    expect(呼吸体).toContain('opacity')
+    expect(呼吸体).toContain('var(--xingge-huxi-an)')
+    expect(呼吸体).not.toMatch(/transform|rotate|translate|width|height|border-width/)
+    const 漂移体 = 规则体('@keyframes xingge-liu-guang-piao')
+    expect(漂移体).toContain('background-position')
+    expect(漂移体).not.toMatch(/transform|rotate|translate|width|height|border-width/)
+  })
+
+  it('呼吸周期落在肉眼可辨但不闪烁的区间，且由组件变量统一调参', () => {
+    const 令牌 = 规则体们('.ziliao-kapian').join('\n')
+    const 呼吸 = 令牌.match(/--xingge-huxi-zhouqi:\s*([\d.]+)s/)
+    expect(呼吸).not.toBeNull()
+    expect(Number(呼吸![1])).toBeGreaterThanOrEqual(2.2)
+    expect(Number(呼吸![1])).toBeLessThanOrEqual(3)
+    const 漂移 = 令牌.match(/--xingge-piao-zhouqi:\s*([\d.]+)s/)
+    expect(漂移).not.toBeNull()
+    expect(Number(漂移![1])).toBeGreaterThanOrEqual(6)
+    expect(令牌).toContain('--xingge-huxi-an: 0.4')
+    expect(令牌).toContain('--xingge-huxi-liang: 1')
+    expect(令牌).toContain('--xingge-huxi-an-xuan: 0.82')
+  })
+
+  it('hover 与聚焦不叠发光阴影，只有选中态额外呼吸外发光', () => {
+    for (const 选择器 of [
+      '.mbti-kaPian:hover:not(.beiXuanZhong)',
+      '.mbti-kaPian:focus-visible',
+    ]) {
+      expect(规则体(选择器)).not.toContain('box-shadow')
+      expect(规则体(选择器)).not.toContain('animation')
+    }
+    const 选中体 = 规则体('.mbti-kaPian.beiXuanZhong')
+    expect(选中体).toContain(
+      'animation: xingge-huxi-guang-yun var(--xingge-huxi-zhouqi) ease-in-out infinite alternate',
+    )
+    const 光晕体 = 规则体('@keyframes xingge-huxi-guang-yun')
+    expect(光晕体).toContain('box-shadow')
+    expect(光晕体).not.toMatch(/transform|width|height|inset/)
   })
 
   it('水墨层用四层局部渐变和边框遮罩，不产生全卡白色填充', () => {
@@ -124,14 +161,16 @@ describe('性格卡高光边框：仅交互态出现局部水墨流动', () => {
     ]) {
       const 体 = 规则体(选择器)
       expect(体).toContain('opacity: 0.55')
-      expect(体).toContain('animation: xingge-ji-guang')
+      expect(体).toContain('animation:')
+      expect(体).toContain('xingge-huxi var(--xingge-huxi-zhouqi)')
     }
   })
 
   it('选中态全亮呼吸', () => {
     const 体 = 规则体('.mbti-kaPian.beiXuanZhong::after')
     expect(体).toContain('opacity: 1')
-    expect(体).toContain('animation: xingge-ji-guang 8s ease-in-out infinite alternate')
+    expect(体).toContain('--xingge-huxi-an: var(--xingge-huxi-an-xuan)')
+    expect(体).toContain('xingge-huxi var(--xingge-huxi-zhouqi)')
   })
 
   it('转圈时代的角度属性已整体移除', () => {
@@ -154,6 +193,11 @@ describe('性格卡高光边框：仅交互态出现局部水墨流动', () => {
     )
     expect(卡环体).toContain('transition: none !important')
     expect(卡环体).toContain('animation: none !important')
+    const 选中块 = 减动效块.slice(
+      减动效块.indexOf('.mbti-kaPian.beiXuanZhong {'),
+      减动效块.indexOf('}', 减动效块.indexOf('.mbti-kaPian.beiXuanZhong {')),
+    )
+    expect(选中块).toContain('animation: none !important')
   })
 })
 

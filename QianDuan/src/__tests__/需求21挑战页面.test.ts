@@ -225,37 +225,52 @@ describe('挑战主页信息结构', () => {
   })
 })
 
-describe('性别选择弹层', () => {
-  it('先选自己才解锁对象，选中即带性别配色且不再带外发光', async () => {
+describe('挑战开始三步向导', () => {
+  it('第一步与普通模式同款，先选自身才解锁下一步', async () => {
     const 包 = await 挂主页()
     await 包.find('.anniu-kaiShi').trigger('click')
     await flushPromises()
-    const 组 = 包.findAll('.xingbie-zu')
-    expect(组).toHaveLength(2)
-    const 自己组 = 组[0]
-    const 对象组 = 组[1]
-    if (!自己组 || !对象组) throw new Error('缺少性别分组')
-    expect(对象组.findAll('.xingbie-ka-pian').every((片) => 片.attributes('disabled') !== undefined)).toBe(
-      true,
+    expect(包.find('.xingbie-tanchuang').exists()).toBe(true)
+    expect(包.findAll('.jindu-dian')).toHaveLength(3)
+    const 步骤卡 = 包.findAll('.xingBie-kaPian')
+    expect(步骤卡).toHaveLength(2)
+    expect(包.findAll('.xingBie-kaPian.beiXuanZhong')).toHaveLength(0)
+    expect(包.find('.buZuo-biaoti').text()).toBe(
+      huoQuFanYi('ziLiaoSheZhi', 'buZhou1BiaoTi'),
     )
-    expect(包.find('.xingbie-tishi').text()).toBe(huoQuFanYi('tiaoZhan', 'xianXuanZiJi'))
-    await 自己组.findAll('.xingbie-ka-pian')[0]?.trigger('click')
-    expect(对象组.findAll('.xingbie-ka-pian').some((片) => 片.attributes('disabled') !== undefined)).toBe(
-      false,
-    )
-    const 选中 = 包.find('.xingbie-ka-pian[aria-checked="true"]')
-    expect(选中.exists()).toBe(true)
-    expect(选中.attributes('style')).toContain('background-color')
-    expect(选中.attributes('style')).not.toContain('box-shadow')
+    const xiaYiBu = 包.findAll('.tanchuang-caozuo .anniu')
+    expect(xiaYiBu).toHaveLength(1)
+    expect(xiaYiBu[0]?.text()).toBe(huoQuFanYi('ziLiaoSheZhi', 'xiaYiBu'))
+    expect(xiaYiBu[0]?.attributes('disabled')).toBeDefined()
+    await 步骤卡[0]?.trigger('click')
+    expect(xiaYiBu[0]?.attributes('disabled')).toBeUndefined()
     包.unmount()
   })
 
-  it('选择对象后携带临时资料进入添加微信，Esc 可关闭弹层', async () => {
+  it('第二步选对象后进入第三步，只有确认开始，点击后携带临时资料进入添加微信', async () => {
     const 包 = await 挂主页()
     await 包.find('.anniu-kaiShi').trigger('click')
     await flushPromises()
-    await 包.findAll('.xingbie-zu')[0]?.findAll('.xingbie-ka-pian')[0]?.trigger('click')
-    await 包.findAll('.xingbie-zu')[1]?.findAll('.xingbie-ka-pian')[0]?.trigger('click')
+    await 包.findAll('.xingBie-kaPian')[0]?.trigger('click')
+    await 包.findAll('.tanchuang-caozuo .anniu')[0]?.trigger('click')
+    await flushPromises()
+    expect(包.findAll('.xingBie-kaPian')).toHaveLength(2)
+    const duiXiangXiaYiBu = 包.findAll('.tanchuang-caozuo .anniu')
+    expect(duiXiangXiaYiBu).toHaveLength(2)
+    expect(duiXiangXiaYiBu[0]?.text()).toBe(huoQuFanYi('ziLiaoSheZhi', 'shangYiBu'))
+    expect(duiXiangXiaYiBu[1]?.attributes('disabled')).toBeDefined()
+    await 包.findAll('.xingBie-kaPian')[0]?.trigger('click')
+    await duiXiangXiaYiBu[1]?.trigger('click')
+    await flushPromises()
+    const queRen = 包.find('.queren-kai-shi')
+    expect(queRen.exists()).toBe(true)
+    expect(queRen.text()).toBe(huoQuFanYi('tiaoZhan', 'queRenKaiShi'))
+    expect(包.text()).not.toContain(huoQuFanYi('ziLiaoSheZhi', 'buZhou3BiaoTi'))
+    expect(包.findAll('.mbti-kaPian')).toHaveLength(0)
+    const caoZuo = 包.findAll('.tanchuang-caozuo .anniu')
+    expect(caoZuo).toHaveLength(1)
+    expect(caoZuo[0]?.text()).toBe(huoQuFanYi('ziLiaoSheZhi', 'shangYiBu'))
+    await queRen.trigger('click')
     await flushPromises()
     expect(路由推).toHaveBeenCalledWith('/tian-jia-wei-xin')
     const 临时 = sessionStorage.getItem('ziLiaoSheZhiLinShi')
@@ -271,6 +286,23 @@ describe('性别选择弹层', () => {
     expect(包.find('.xingbie-tanchuang').exists()).toBe(true)
     await 包.find('.xingbie-zhezhao').trigger('keydown', { key: 'Escape' })
     expect(包.find('.xingbie-tanchuang').exists()).toBe(false)
+    包.unmount()
+  })
+
+  it('重开向导时回到第一步并清空已选性别', async () => {
+    const 包 = await 挂主页()
+    await 包.find('.anniu-kaiShi').trigger('click')
+    await flushPromises()
+    await 包.findAll('.xingBie-kaPian')[0]?.trigger('click')
+    await 包.findAll('.tanchuang-caozuo .anniu')[0]?.trigger('click')
+    await flushPromises()
+    await 包.find('.xingbie-zhezhao').trigger('keydown', { key: 'Escape' })
+    await 包.find('.anniu-kaiShi').trigger('click')
+    await flushPromises()
+    expect(包.findAll('.xingBie-kaPian.beiXuanZhong')).toHaveLength(0)
+    const dangQianDian = 包.findAll('.jindu-dian.dangQian')
+    expect(dangQianDian).toHaveLength(1)
+    expect(包.findAll('.jindu-dian')[0]?.classes()).toContain('dangQian')
     包.unmount()
   })
 })

@@ -223,7 +223,11 @@ describe('聊天预览复用真实聊天页的渲染实现', () => {
     )
     expect(行源).toContain("@click.stop=\"emit('chongXinFaSong')\"")
     expect(聊天页源).toContain(':fa-song-ti-shi="huoQuFaSongZhuangTaiTiShi(xiaoXi)"')
+    expect(聊天页源).toContain(':fa-song-zhong=')
+    expect(好友页源).toContain(':fa-song-zhong="shiFaSongZhong(xiaoXi)"')
     expect(好友页源).toContain(':fa-song-shi-bai="shiFaSongShiBai(xiaoXi)"')
+    expect(好友页源).toContain("return faSongZhuangTai.value.get(xiaoXi.id) === 'fa_song_zhong'")
+    expect(好友页源).toContain("return faSongZhuangTai.value.get(xiaoXi.id) === 'shi_bai'")
   })
 
   it('预览时间条走真实页同一个分组函数，不再自己拼时间', () => {

@@ -57,15 +57,38 @@ describe('FP-14 采样参数只在该生效的模式下下发（官方：思考�
     }
   })
 
-  it('writer 已转非思考模式：只配 wenDu≈1.0，无 top_p/reasoningEffort 残留', () => {
-    expect(AI_PEI_ZHI.moXing.writer.siKaoMoShi).toBe('disabled')
+  it('writer 默认走思考模式：带 reasoningEffort，不带温度与 top_p', () => {
+    expect(AI_PEI_ZHI.moXing.writer.siKaoMoShi).toBe('enabled')
     expect(AI_PEI_ZHI.moXing.writer.top_p).toBeUndefined()
-    expect(AI_PEI_ZHI.moXing.writer.reasoningEffort).toBeUndefined()
-    const buZhuang = jiSuanAIChanShu('writer')
-    expect(buZhuang.top_p).toBeUndefined()
-    expect(buZhuang.reasoningEffort).toBeUndefined()
-    expect(buZhuang.wenDu).toBeCloseTo(1.0, 2)
-    expect(jiSuanAIChanShu('writer', 慢热上下文).wenDu).toBeGreaterThan(0.5)
+    expect(AI_PEI_ZHI.moXing.writer.wenDu).toBeUndefined()
+    const 参数 = jiSuanAIChanShu('writer')
+    expect(参数.top_p, '思考模式按官方要求带 top_p 且不低于下限').toBeGreaterThanOrEqual(0.95)
+    expect(参数.wenDu).toBeUndefined()
+    expect(参数.reasoningEffort).toBeTruthy()
+  })
+
+  it('关掉 Writer 思考开关后回到非思考模式：只配温度，无 top_p/reasoningEffort 残留', async () => {
+    const 原开关 = process.env['WRITER_SI_KAO_QI_YONG']
+    const 原温度 = process.env['WRITER_WENDU']
+    process.env['WRITER_SI_KAO_QI_YONG'] = 'false'
+    process.env['WRITER_WENDU'] = '1.0'
+    vi.resetModules()
+    try {
+      const { AI_PEI_ZHI: 关后配置 } = await import('../../config/AI配置')
+      const { jiSuanAIChanShu: 关后计算 } = await import('../../config/AI参数策略')
+      expect(关后配置.moXing.writer.siKaoMoShi).toBe('disabled')
+      expect(关后配置.moXing.writer.top_p).toBeUndefined()
+      expect(关后配置.moXing.writer.reasoningEffort).toBeUndefined()
+      expect(关后计算('writer').wenDu).toBeCloseTo(1.0, 2)
+      expect(关后计算('writer', 慢热上下文).wenDu).toBeGreaterThan(0.5)
+      expect(关后计算('writer', 慢热上下文).wenDu).toBeLessThanOrEqual(1.15)
+    } finally {
+      if (原开关 === undefined) delete process.env['WRITER_SI_KAO_QI_YONG']
+      else process.env['WRITER_SI_KAO_QI_YONG'] = 原开关
+      if (原温度 === undefined) delete process.env['WRITER_WENDU']
+      else process.env['WRITER_WENDU'] = 原温度
+      vi.resetModules()
+    }
   })
 
   it('非思考场景下发温度但不下发 top_p，人设/关系/场景修正仍生效', () => {

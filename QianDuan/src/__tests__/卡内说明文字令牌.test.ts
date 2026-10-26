@@ -8,6 +8,10 @@ const 浅色表 = 按档解析全部('light', 块们)
 const 深色表 = 按档解析全部('dark', 块们)
 const 令牌名 = '--kapian-shuoming-wenben'
 const 向导 = readFileSync(resolve(__dirname, '../views/资料设置向导.vue'), 'utf8')
+const 性别步骤 = readFileSync(
+  resolve(__dirname, '../components/资料设置/性别选择步骤.vue'),
+  'utf8',
+)
 
 function 规则体(源: string, 选择器: string): string {
   const 转义 = 选择器.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -65,9 +69,10 @@ describe('卡内说明文字令牌', () => {
   })
 
   it('第一步性别卡与第二步对象卡的小字同走该令牌', () => {
-    expect(规则体(向导, '.xingBie-kaPian')).toContain(`color: var(${令牌名})`)
-    expect(规则体(向导, '.xingBie-mingCheng')).toContain('color: var(--kapian-shuoming-wenben)')
-    expect(向导).not.toContain(":root[data-theme='light'] .xingBie-mingCheng")
+    expect(规则体(性别步骤, '.xingBie-kaPian')).toContain(`color: var(${令牌名})`)
+    expect(规则体(性别步骤, '.xingBie-mingCheng')).toContain('color: var(--kapian-shuoming-wenben)')
+    expect(性别步骤).not.toContain(":root[data-theme='light'] .xingBie-mingCheng")
+    expect(向导).not.toContain('.xingBie-kaPian')
   })
 
   it('第三步随机卡与 MBTI 卡共用同一容器类', () => {
@@ -214,8 +219,10 @@ describe('向导卡面不透明度与正文最坏对比度', () => {
   })
 
   it('步骤描述与提示小字明暗两档都用同一组局部令牌，不再各写一套色', () => {
+    expect(规则体(性别步骤, '.buZuo-miaoShu')).toMatch(/color: var\(--ziliao-[a-z-]+\)/)
+    expect(性别步骤).toContain('--ziliao-miaoshu-wenben: rgba(242, 240, 250, 0.84)')
+    expect(性别步骤).toContain('--ziliao-miaoshu-wenben: rgba(55, 42, 63, 0.86)')
     for (const 名 of [
-      '.buZuo-miaoShu',
       '.mbti-zhongWen',
       '.zhaNv-gouxuan',
       '.zhaNv-tishi',

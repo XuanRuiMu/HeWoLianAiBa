@@ -129,7 +129,7 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
     expect(描边).toContain('上 + 径 - 径 * Math.SQRT1_2')
   })
 
-  it('两路同一时长同一曲线，画入 840ms、退回 400ms，减动效归零', () => {
+  it('两路同一时长同一曲线，画入 840ms、退回 200ms，减动效归零', () => {
     const 令牌 = 读('styles/设计令牌.css')
     expect(输入框).toContain('--miao-bian-shi-chang: var(--shuru-gao-liang-shi-chang)')
     expect(输入框).toContain(
@@ -138,15 +138,29 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
     expect(描边).toContain("读时长('--miao-bian-shi-chang', 兜底画入)")
     expect(描边).toContain("读时长('--miao-bian-tui-chu-shi-chang', 兜底退回)")
     expect(令牌).toContain('--shuru-gao-liang-shi-chang: 840ms')
-    expect(令牌).toContain('--shuru-gao-liang-tui-chu-shi-chang: 400ms')
+    expect(令牌).toContain('--shuru-gao-liang-tui-chu-shi-chang: 200ms')
     expect(描边).toContain('const 兜底画入 = 840')
-    expect(描边).toContain('const 兜底退回 = 400')
+    expect(描边).toContain('const 兜底退回 = 200')
     expect(描边).toContain("const 曲线 = 'cubic-bezier(0.4, 0, 0.2, 1)'")
     expect(描边).toContain('路.animate(')
     expect(描边.split('路.animate(').length - 1, '只应有一处统一的描边调用').toBe(1)
     expect(描边).toContain("fill: 'forwards'")
     expect(描边).toContain('duration: 减动效() ? 0 : 时长')
     expect(描边).toContain('(prefers-reduced-motion: reduce)')
+  })
+
+  it('回退为 200ms、画入仍 840ms，回退不慢于画入的四分之一', () => {
+    const 令牌 = 读('styles/设计令牌.css')
+    const 取毫秒 = (名: string): number => {
+      const 匹配 = new RegExp(名 + ':\\s*(\\d+(?:\\.\\d+)?)ms').exec(令牌)
+      expect(匹配, `令牌缺少 ${名}`).not.toBeNull()
+      return Number((匹配 as RegExpMatchArray)[1])
+    }
+    const 画入 = 取毫秒('--shuru-gao-liang-shi-chang')
+    const 回退 = 取毫秒('--shuru-gao-liang-tui-chu-shi-chang')
+    expect(画入).toBe(840)
+    expect(回退).toBe(200)
+    expect(回退).toBeLessThanOrEqual(画入 / 4 + 10)
   })
 
   it('失焦沿原路退回，与横条输入框同一套染色语言', () => {
@@ -156,7 +170,7 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
     expect(横条).not.toContain('miao-bian')
   })
 
-  it('真实聚焦与失焦分别产生 840ms 和 400ms 双路动画，减动效时归零', async () => {
+  it('真实聚焦与失焦分别产生 840ms 和 200ms 双路动画，减动效时归零', async () => {
     const 原动画 = SVGElement.prototype.animate
     const 原动画清单 = SVGElement.prototype.getAnimations
     const 原媒体 = globalThis.matchMedia
@@ -192,7 +206,7 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
       await nextTick()
       await 输入.trigger('blur')
       await nextTick()
-      expect(调用.map((项) => 项.选项.duration)).toEqual([840, 840, 400, 400])
+      expect(调用.map((项) => 项.选项.duration)).toEqual([840, 840, 200, 200])
       expect(调用[0].帧.map((帧) => 帧.strokeDashoffset)).toEqual([1, 0])
       expect(调用[2].帧.map((帧) => 帧.strokeDashoffset)).toEqual([0, 1])
       减动效 = true
@@ -222,6 +236,7 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
 
 describe('性别卡：第一二步统一按自身色填充、对象色描边', () => {
   const 向导 = 读('views/资料设置向导.vue')
+  const 组件 = 读('components/资料设置/性别选择步骤.vue')
   const 取规则 = (源: string, 选择器: string): string => {
     const 始 = 源.indexOf(选择器)
     if (始 < 0) return ''
@@ -238,22 +253,26 @@ describe('性别卡：第一二步统一按自身色填充、对象色描边', (
     向导.indexOf('v-else-if="当前步骤 === 3"'),
   )
 
-  it('男性卡与女性卡各两枚，分属自身与对象两步', () => {
-    expect(向导.match(/data-xuan-xing-bie="nan"/g)?.length).toBe(2)
-    expect(向导.match(/data-xuan-xing-bie="nv"/g)?.length).toBe(2)
+  it('两步都直接指向同一性别步骤组件，组件内男女卡各一枚', () => {
+    expect(第一步).toContain('<XingBieXuanZeBuZhou')
+    expect(第一步).toContain('变体="ziJi"')
+    expect(第二步).toContain('变体="duiXiang"')
+    expect(向导.match(/<XingBieXuanZeBuZhou/g)?.length).toBe(2)
+    expect(组件.match(/data-xuan-xing-bie="nan"/g)?.length).toBe(2)
+    expect(组件.match(/data-xuan-xing-bie="nv"/g)?.length).toBe(2)
+    expect(向导).not.toContain('data-xuan-xing-bie')
     expect(向导).not.toContain('--xuan-zi-ji-bei')
     expect(向导).not.toContain('--xuan-dui-xiang-bian')
     expect(向导).not.toContain('data-dui-xiang-xingbie')
   })
 
   it('两步选中态共用同一个通用组合样式，不再各写一套', () => {
-    expect(向导).toContain('使用通用性别框体配色')
-    expect(第一步.match(/性别卡选中样式/g)).toHaveLength(2)
-    expect(第二步.match(/性别卡选中样式/g)).toHaveLength(2)
-    expect(向导.match(/性别卡选中样式/g)).toHaveLength(5)
+    expect(组件).toContain('使用通用性别框体配色')
+    expect(组件.match(/性别卡选中样式/g)?.length).toBe(5)
+    expect(向导.match(/性别卡选中样式/g)).toBeNull()
   })
 
-  it('向导不再保留个人资料专属的选中 CSS 与色值', () => {
+  it('向导与组件都不保留个人资料专属的选中 CSS 与色值', () => {
     expect(向导).not.toContain(
       ".ziliao-kapian .xingBie-kaPian.beiXuanZhong[data-xuan-xing-bie",
     )
@@ -262,14 +281,17 @@ describe('性别卡：第一二步统一按自身色填充、对象色描边', (
     expect(向导).not.toContain('--xingbie-nan-shen-biankuang')
     expect(向导).not.toContain('--xingbie-nv-shen-biankuang')
     expect(向导).not.toContain('性别框体样式')
+    expect(组件).not.toContain('--xingbie-nan-tan-beijing')
+    expect(组件).not.toContain('--xingbie-nv-tan-beijing')
+    expect(组件).not.toContain('性别框体样式')
   })
 
   it('选中卡的图标与名称继承自身性别文字色', () => {
     expect(
-      取规则(向导, '.ziliao-kapian .xingBie-kaPian.beiXuanZhong .xingBie-mingCheng'),
+      取规则(组件, '.xingBie-kaPian.beiXuanZhong .xingBie-mingCheng'),
     ).toContain('color: inherit')
     expect(
-      取规则(向导, '.ziliao-kapian .xingBie-kaPian.beiXuanZhong .xingBie-svg'),
+      取规则(组件, '.xingBie-kaPian.beiXuanZhong .xingBie-svg'),
     ).toContain('color: inherit')
   })
 

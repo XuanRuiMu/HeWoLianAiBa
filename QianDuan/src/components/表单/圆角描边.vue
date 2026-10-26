@@ -27,7 +27,7 @@ const 描边宽 = ref(2)
 let 观察: ResizeObserver | null = null
 
 const 兜底画入 = 840
-const 兜底退回 = 400
+const 兜底退回 = 200
 const 曲线 = 'cubic-bezier(0.4, 0, 0.2, 1)'
 
 function 读时长(名: string, 兜底: number): number {

@@ -70,16 +70,27 @@ describe('对象生成共享通用知识', () => {
     '玄锐暮是哪位',
     '说说玄锐暮',
     '玄锐暮多大',
-  ])('高置信直接事实问题在任何模型调用前返回：%s', async (消息) => {
-    const 外呼 = vi.fn()
-    sheZhiMockTiaoYong(外呼)
+  ])('高置信直接事实问题把事实交给角色说，且必答事实层进了 Writer 提示词：%s', async (消息) => {
+    const 外呼: TiaoYongCanShu[] = []
+    sheZhiMockTiaoYong(async (参数) => {
+      外呼.push(参数)
+      return {
+        neiRong: 参数.xiangYingGeShi?.type === 'json_object'
+          ? '{"用户意图":"事实问答","情感分析":"平静","回复策略":"照实说","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
+          : '认识啊，玄锐暮，22岁，做AI的',
+        yuanShuJu: {},
+        xinXi: { role: 'assistant', neiRong: '' },
+      }
+    })
 
     const 结果 = await yunXingAIYinQing(造输入(消息))
 
     expect(结果.shi_fou_hui_fu).toBe(true)
-    expect(结果.xiao_xi_lie_biao).toHaveLength(1)
+    expect(结果.xiao_xi_lie_biao).toEqual(['认识啊，玄锐暮，22岁，做AI的'])
     expect(结果.cuo_wu_xin_xi).toBeUndefined()
-    expect(外呼).not.toHaveBeenCalled()
+    const 写手载荷 = 外呼[外呼.length - 1]
+    const 写手文本 = 提取文本(写手载荷.xiaoXi[0].neiRong)
+    expect(写手文本).toContain('【对方问的这件事你确实知道】')
   })
 
   it.each([429, 402])('模型状态%s不能覆盖已知的确定事实', async (状态码) => {
@@ -92,21 +103,21 @@ describe('对象生成共享通用知识', () => {
 
     const 结果 = await yunXingAIYinQing(造输入('玄锐暮多大？'))
 
+    expect(结果.shi_fou_hui_fu).toBe(true)
     expect(结果.xiao_xi_lie_biao).toEqual(['玄锐暮22岁。'])
     expect(结果.cuo_wu_xin_xi).toBeUndefined()
-    expect(结果.cuo_wu_ma).toBeUndefined()
-    expect(外呼).not.toHaveBeenCalled()
   })
 
-  it('每日模型预算耗尽不阻断无需模型的确定事实', async () => {
+  it('每日模型预算耗尽不阻断确定事实的回答', async () => {
     const 外呼 = vi.fn()
     sheZhiMockTiaoYong(外呼)
+    vi.mocked(redis.incr).mockResolvedValueOnce(Number.MAX_SAFE_INTEGER)
 
     const 结果 = await yunXingAIYinQing(造输入('玄锐暮做什么工作？'))
 
+    expect(结果.shi_fou_hui_fu).toBe(true)
     expect(结果.xiao_xi_lie_biao).toEqual(['玄锐暮是一名AI程序员。'])
     expect(结果.cuo_wu_xin_xi).toBeUndefined()
-    expect(redis.incr).not.toHaveBeenCalled()
     expect(外呼).not.toHaveBeenCalled()
   })
 
@@ -154,6 +165,72 @@ describe('对象生成共享通用知识', () => {
       expect(提取文本(参数.xiaoXi[0].neiRong)).not.toContain('【通用知识·只在对方主动问到时才使用】')
     }
   })
+
+  it('完全无关的日常消息也把知识层交给模型', async () => {
+    const 外呼: TiaoYongCanShu[] = []
+    sheZhiMockTiaoYong(async (参数) => {
+      外呼.push(参数)
+      return {
+        neiRong: 参数.xiangYingGeShi?.type === 'json_object'
+          ? '{"用户意图":"日常分享","情感分析":"疲惫","回复策略":"顺着累接一句","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
+          : '那今天早点躺',
+        yuanShuJu: {},
+        xinXi: { role: 'assistant', neiRong: '' },
+      }
+    })
+
+    const 结果 = await yunXingAIYinQing(造输入('今天好累'))
+
+    expect(结果.xiao_xi_lie_biao).toEqual(['那今天早点躺'])
+    expect(外呼).toHaveLength(2)
+    for (const 参数 of 外呼) {
+      const 文本 = 提取文本(参数.xiaoXi[0].neiRong)
+      expect(文本).toContain('<<<PUBLIC_KNOWLEDGE_START>>>')
+      expect(文本).toContain('玄锐暮')
+      expect(文本).toContain('22岁')
+      expect(文本).not.toContain('不接对方的内容')
+    }
+  })
+
+  it('截图里的问句不再落到「不认识」，且由角色自己的口气说出', async () => {
+    const 外呼: TiaoYongCanShu[] = []
+    sheZhiMockTiaoYong(async (参数) => {
+      外呼.push(参数)
+      return {
+        neiRong: 参数.xiangYingGeShi?.type === 'json_object'
+          ? '{"用户意图":"事实问答","情感分析":"轻松","回复策略":"照实说","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
+          : '认识啊，玄锐暮，22岁的AI程序员',
+        yuanShuJu: {},
+        xinXi: { role: 'assistant', neiRong: '' },
+      }
+    })
+
+    const 结果 = await yunXingAIYinQing(造输入('哈哈，你认识玄锐暮吗'))
+
+    expect(结果.shi_fou_hui_fu).toBe(true)
+    expect(结果.xiao_xi_lie_biao).toEqual(['认识啊，玄锐暮，22岁的AI程序员'])
+    expect(结果.cuo_wu_xin_xi).toBeUndefined()
+    expect(外呼.length).toBeGreaterThan(0)
+  })
+
+  it('角色说出事实时不再逐字复述模板句', async () => {
+    const 外呼: TiaoYongCanShu[] = []
+    sheZhiMockTiaoYong(async (参数) => {
+      外呼.push(参数)
+      return {
+        neiRong: 参数.xiangYingGeShi?.type === 'json_object'
+          ? '{"用户意图":"事实问答","情感分析":"平静","回复策略":"照实说","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
+          : '认识，他22，写代码的',
+        yuanShuJu: {},
+        xinXi: { role: 'assistant', neiRong: '' },
+      }
+    })
+
+    const 结果 = await yunXingAIYinQing(造输入('你认识玄锐暮吗'))
+
+    expect(结果.xiao_xi_lie_biao).toEqual(['认识，他22，写代码的'])
+  })
+
 
   it('Director和Writer的最终外呼载荷使用同一检索结果且公共事实优先', async () => {
     const 外呼: TiaoYongCanShu[] = []
@@ -257,7 +334,7 @@ describe('对象生成共享通用知识', () => {
     expect(最终文本).toContain('<<<USER_CONTENT_START>>>你认识玄锐暮吗<<<USER_CONTENT_END>>>')
   })
 
-  it('主动追加文本不触发知识注入或确定回答', async () => {
+  it('主动追加文本不触发确定回答，但仍带着知识层', async () => {
     const 外呼: TiaoYongCanShu[] = []
     sheZhiMockTiaoYong(async (参数) => {
       外呼.push(参数)
@@ -276,8 +353,11 @@ describe('对象生成共享通用知识', () => {
     const 结果 = await yunXingAIYinQing(输入)
 
     expect(结果.xiao_xi_lie_biao).toEqual(['刚刚突然想到一件事'])
+    expect(外呼).toHaveLength(2)
     for (const 参数 of 外呼) {
-      expect(提取文本(参数.xiaoXi[0].neiRong)).not.toContain('【通用知识·只在对方主动问到时才使用】')
+      const 文本 = 提取文本(参数.xiaoXi[0].neiRong)
+      expect(文本).toContain('<<<PUBLIC_KNOWLEDGE_START>>>')
+      expect(文本).toContain('不要在开场白、已读不回、主动追加消息里提到它')
     }
   })
 
@@ -333,9 +413,8 @@ describe('对象生成共享通用知识', () => {
 
     const 结果 = await yunXingAIYinQing(造输入('玄锐暮多大？'))
 
-    expect(结果.jiang_ji_mo_shi).toBe(false)
+    expect(结果.shi_fou_hui_fu).toBe(true)
     expect(结果.xiao_xi_lie_biao).toEqual(['玄锐暮22岁。'])
     expect(结果.cuo_wu_xin_xi).toBeUndefined()
-    expect(外呼).not.toHaveBeenCalled()
   })
 })

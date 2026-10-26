@@ -9,10 +9,12 @@
     >
       <div class="biaodan-neirong-qu">
         <div class="biaodan-tou">
-          <div class="app-tubiao">💕</div>
           <h1 class="biaodan-biaoti">
             {{ huoQuFanYi('renZheng', 'yingYongMing') }}
           </h1>
+          <p class="biaodan-fu-biao-ti">
+            {{ huoQuFanYi('renZheng', 'dengLuFuBiaoTi') }}
+          </p>
         </div>
 
         <div class="biaoqian-qiehuan" role="tablist">
@@ -1539,7 +1541,6 @@ async function zhiXingZhuCe() {
   --ka-mo: #17130a;
   --ka-duan-luo: calc(var(--jiange-da) + var(--jiange-xiao));
   --zihao-biaoti: 20px;
-  --zihao-tubiao: 22px;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -1575,6 +1576,7 @@ async function zhiXingZhuCe() {
 }
 
 .biaodan-neirong-qu {
+  --ka-heng-nei-ju: var(--renzheng-ka-pian-you-nei-ju);
   flex: 1;
   min-height: 0;
   display: flex;
@@ -1584,25 +1586,15 @@ async function zhiXingZhuCe() {
   z-index: 1;
 }
 
+@media (max-width: 767px) {
+  .biaodan-neirong-qu {
+    --ka-heng-nei-ju: var(--jiange-zhong);
+  }
+}
+
 .biaodan-tou {
   text-align: center;
   margin-bottom: var(--jiange-da);
-}
-
-.app-tubiao {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  margin-bottom: var(--jiange-6);
-  font-size: var(--zihao-tubiao);
-  line-height: 1;
-  border: 1px solid var(--ka-jin-xian);
-  border-radius: 50%;
-  background-color: var(--ka-jin-mian);
-  filter: none;
-  animation: none;
 }
 
 .biaodan-biaoti {
@@ -1615,6 +1607,16 @@ async function zhiXingZhuCe() {
   color: var(--ka-zhu-wen);
   margin: 0;
   text-shadow: none;
+}
+
+.biaodan-fu-biao-ti {
+  margin: var(--jiange-4) calc(var(--ka-heng-nei-ju) * -1) 0;
+  font-size: var(--ziti-xiao);
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  text-indent: 0.04em;
+  color: var(--ka-ci-wen);
 }
 
 .biaodan-gundong {
@@ -1945,7 +1947,7 @@ async function zhiXingZhuCe() {
 .ji-zhu-xuan-xiang {
   display: flex;
   flex-direction: column;
-  margin: calc((var(--ziti-xiao) - var(--shuru-anniu-re-ku)) / 2 - var(--jiange-4)) 0 var(--jiange-4);
+  margin: calc((var(--ziti-xiao) - var(--shuru-anniu-re-ku)) / 2 - var(--jiange-4)) calc(var(--ka-heng-nei-ju) * -1) var(--jiange-4);
 }
 
 .ji-zhu-hang-2 {
@@ -1963,11 +1965,13 @@ async function zhiXingZhuCe() {
 .ji-zhu-hang-1 > :first-child,
 .ji-zhu-hang-2 > :first-child {
   grid-column: 1 / 3;
+  grid-row: 1;
 }
 
 .ji-zhu-hang-1 > :last-child,
 .ji-zhu-hang-2 > :last-child {
   grid-column: 2 / 4;
+  grid-row: 1;
 }
 
 .ji-zhu-hang-1 .ji-zhu-xuan-ze,
@@ -2180,7 +2184,6 @@ async function zhiXingZhuCe() {
 
 @media (prefers-reduced-motion: reduce) {
   :deep(.fudong-biaoqian),
-  .app-tubiao,
   .biaodan-tou,
   .biaoqian-anniu,
   .biaoqian-anniu.huoyue::after,

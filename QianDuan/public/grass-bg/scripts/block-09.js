@@ -82,6 +82,10 @@
       clearInterval(jianCeDingShiQi);
       jianCeDingShiQi = null;
     }
-    if (!yiTongZhiJiuXu) biaoShiShiBai('chao-shi');
+    if (yiTongZhiJiuXu) return;
+    biaoShiShiBai('chao-shi');
+    jianCeDingShiQi = setInterval(function () {
+      if (!yiTongZhiJiuXu) jianChaJiuXu();
+    }, 1000);
   }, 15000);
 })();

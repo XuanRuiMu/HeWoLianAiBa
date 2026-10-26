@@ -845,7 +845,7 @@ async function piLiangShanChu(): Promise<void> {
 }
 
 function jiXuLiaoTian(dangAn: 档案详情) {
-  router.push(`/chat/${dangAn.jiao_se_id}`)
+  router.push(`/zai-ru/${dangAn.jiao_se_id}`)
 }
 
 function daKaiFuPan(dangAn: 档案详情) {

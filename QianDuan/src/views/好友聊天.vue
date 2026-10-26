@@ -46,6 +46,7 @@
         :wu-wai-ke="xiaoXi.yi_che_hui"
         :che-hui-wen-ben="xiaoXi.yi_che_hui ? cheHuiTiShi(xiaoXi) : ''"
         :wai-ke-lei-ming="qiPaoWaiKeLeiMing(xiaoXi)"
+        :fa-song-zhong="shiFaSongZhong(xiaoXi)"
         :fa-song-shi-bai="shiFaSongShiBai(xiaoXi)"
         :fa-song-ti-shi="huoQuFanYi('liaoTian', 'chongXinFaSong')"
         @chong-xin-fa-song="chongXinFaSong(xiaoXi.id)"
@@ -448,6 +449,10 @@ function qingChuFaSongZhuangTai(leGuanId: string): void {
 
 function shiFaSongShiBai(xiaoXi: HaoYouXiaoXi): boolean {
   return faSongZhuangTai.value.get(xiaoXi.id) === 'shi_bai'
+}
+
+function shiFaSongZhong(xiaoXi: HaoYouXiaoXi): boolean {
+  return faSongZhuangTai.value.get(xiaoXi.id) === 'fa_song_zhong'
 }
 
 async function chongXinFaSong(leGuanId: string): Promise<void> {

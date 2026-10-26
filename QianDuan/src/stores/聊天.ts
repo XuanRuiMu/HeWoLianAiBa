@@ -206,20 +206,14 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     const huiHuaId = dangQianHuiHuaId.value
     if (!huiHuaId) return []
     const jiLu = haoGanDuBianHuaJiLu.value[huiHuaId]
-    if (!jiLu) return []
     const weiDu = fanYi.zhanJi.haoGanDuWeiDu
-    const biao: Array<{ mingCheng: string; shuZhi: number }> = []
-    if (jiLu.xin_ren_du_bian_hua !== 0)
-      biao.push({ mingCheng: weiDu.xinRenBianHua, shuZhi: jiLu.xin_ren_du_bian_hua })
-    if (jiLu.qin_mi_du_bian_hua !== 0)
-      biao.push({ mingCheng: weiDu.qinMiBianHua, shuZhi: jiLu.qin_mi_du_bian_hua })
-    if (jiLu.qu_wei_du_bian_hua !== 0)
-      biao.push({ mingCheng: weiDu.quWeiBianHua, shuZhi: jiLu.qu_wei_du_bian_hua })
-    if (jiLu.guan_huai_du_bian_hua !== 0)
-      biao.push({ mingCheng: weiDu.guanHuaiBianHua, shuZhi: jiLu.guan_huai_du_bian_hua })
-    if (jiLu.zong_fen_bian_hua !== 0)
-      biao.push({ mingCheng: weiDu.zongFenBianHua, shuZhi: jiLu.zong_fen_bian_hua })
-    return biao
+    return [
+      { mingCheng: weiDu.xinRenBianHua, shuZhi: jiLu?.xin_ren_du_bian_hua ?? 0 },
+      { mingCheng: weiDu.qinMiBianHua, shuZhi: jiLu?.qin_mi_du_bian_hua ?? 0 },
+      { mingCheng: weiDu.quWeiBianHua, shuZhi: jiLu?.qu_wei_du_bian_hua ?? 0 },
+      { mingCheng: weiDu.guanHuaiBianHua, shuZhi: jiLu?.guan_huai_du_bian_hua ?? 0 },
+      { mingCheng: weiDu.zongFenBianHua, shuZhi: jiLu?.zong_fen_bian_hua ?? 0 },
+    ]
   })
 
   function sheZhiWeiJiGanYu(ganYu: { yuanZhuReXian: string; ganYuTiShi: string; chaoShiTiXingMiao: number }): void {
@@ -678,7 +672,23 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     lianJieZhong.value = false
   }
 
-  async function jiaZaiXiaoXi(huiHuaId: string) {
+  const yuZaiHuiHuaId = ref<string | null>(null)
+  let yuZaiShiJian = 0
+  const YU_ZAI_YOU_XIAO_HAO_MIAO = 30000
+
+  function biaoJiYuZai(huiHuaId: string) {
+    yuZaiHuiHuaId.value = huiHuaId
+    yuZaiShiJian = Date.now()
+  }
+
+  async function jiaZaiXiaoXi(
+    huiHuaId: string,
+    jieDuanTiShi?: (jieDuan: 'xiaoXi' | 'jiaoSe') => void,
+  ) {
+    if (yuZaiHuiHuaId.value === huiHuaId && Date.now() - yuZaiShiJian < YU_ZAI_YOU_XIAO_HAO_MIAO) {
+      yuZaiHuiHuaId.value = null
+      return
+    }
     const benCi = ++jiaZaiDaiCi
     if (dangQianHuiHuaId.value && dangQianHuiHuaId.value !== huiHuaId) 持久化监控()
     qingChuJiaoSeZengLiangJiLu(huiHuaId)
@@ -736,6 +746,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
         jiaZaiShiBai.value = true
         shouPingQianTaiCuoWu.value = 归一前台错误(cuoWu)
       }
+      jieDuanTiShi?.('xiaoXi')
       try {
         const { jiao_se, dang_an_zhuang_tai } = await huoQuJiaoSeXiangQing(huiHuaId)
         if (benCi !== jiaZaiDaiCi) return
@@ -751,6 +762,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
         jiaoSeXinXi.value = null
         jiaoSeQianTaiCuoWu.value = 归一前台错误(cuoWu)
       }
+      jieDuanTiShi?.('jiaoSe')
     } finally {
       if (benCi === jiaZaiDaiCi) shouPingJiaZaiZhong.value = false
     }
@@ -1287,6 +1299,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     queBaoJianKongDingYue,
     duanKaiSocket,
     jiaZaiXiaoXi,
+    biaoJiYuZai,
     jiaZaiGengDuoXiaoXi,
     faSongXiaoXi,
     chongShiFaSongXiaoXi,

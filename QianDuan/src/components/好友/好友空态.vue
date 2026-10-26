@@ -74,9 +74,10 @@ const emit = defineEmits<{
 
 .kong-tai-ti-shi {
   margin: 0;
-  max-width: 30ch;
+  max-width: 18.5em;
   font-size: 12.5px;
   line-height: 1.6;
+  word-break: keep-all;
   color: var(--kong-tai-ci-wen-ben);
 }
 

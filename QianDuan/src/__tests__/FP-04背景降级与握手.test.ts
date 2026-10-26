@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 const 源码根 = resolve(__dirname, '..')
 const 项目根 = resolve(源码根, '..')
@@ -85,5 +85,96 @@ describe('主页三维背景：就绪握手、暂停与降级', () => {
     expect(配置).toContain('beiJingJiuXuChaoShiHaoMiao: 18000')
     const 握手 = 读('public/grass-bg/scripts/block-09.js')
     expect(握手).toContain('}, 15000);')
+  })
+})
+
+describe('FP-02 首访紫色卡屏：握手失败后的自恢复', () => {
+  it('超时报失败后不停止轮询，引擎晚就绪时补发就绪通知', () => {
+    vi.useFakeTimers()
+    try {
+      const 握手源码 = 读('public/grass-bg/scripts/block-09.js')
+      const 收到: Array<{ source: string; zhuangTai: string; yuanYin?: string }> = []
+      const 假画布 = { addEventListener: vi.fn() }
+      const 假父页 = {
+        postMessage: vi.fn((xinXi: { source: string; zhuangTai: string }) => {
+          收到.push(xinXi)
+        }),
+      }
+      const 假窗口: Record<string, unknown> = {
+        parent: 假父页,
+        location: { origin: 'http://localhost:5173' },
+        WebGLRenderingContext: function LinShi() {},
+        addEventListener: vi.fn(),
+        __dcm: undefined,
+        __experience: undefined,
+      }
+      new Function('window', 握手源码)(假窗口)
+      vi.advanceTimersByTime(15100)
+      const shiBai = 收到.find((xinXi) => xinXi.zhuangTai === 'shi-bai')
+      expect(shiBai?.yuanYin).toBe('chao-shi')
+      假窗口.__dcm = {}
+      假窗口.__experience = {
+        engine: {
+          renderer: { instance: { render: vi.fn() } },
+          camera: {},
+          canvas: 假画布,
+        },
+      }
+      vi.advanceTimersByTime(2000)
+      expect(收到.some((xinXi) => xinXi.zhuangTai === 'jiu-xu')).toBe(true)
+      expect(收到[收到.length - 1]?.zhuangTai).toBe('jiu-xu')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('就绪晚到时渲染器包装只生效一次且暂停指令仍被尊重', () => {
+    vi.useFakeTimers()
+    try {
+      const 握手源码 = 读('public/grass-bg/scripts/block-09.js')
+      const 收到: Array<{ zhuangTai: string }> = []
+      const yuanShiXuanRan = vi.fn()
+      const xuanRanQi = { render: yuanShiXuanRan }
+      const 假画布 = { addEventListener: vi.fn() }
+      const 假窗口: Record<string, unknown> = {
+        parent: {
+          postMessage: vi.fn((xinXi: { zhuangTai: string }) => {
+            收到.push(xinXi)
+          }),
+        },
+        location: { origin: 'http://localhost:5173' },
+        WebGLRenderingContext: function LinShi() {},
+        addEventListener: vi.fn(),
+        __dcm: {},
+        __experience: { engine: { renderer: { instance: xuanRanQi }, camera: {}, canvas: 假画布 } },
+      }
+      new Function('window', 握手源码)(假窗口)
+      vi.advanceTimersByTime(300)
+      expect(收到.some((xinXi) => xinXi.zhuangTai === 'jiu-xu')).toBe(true)
+      xuanRanQi.render()
+      expect(yuanShiXuanRan).toHaveBeenCalledTimes(1)
+      假窗口.__caoDiZanTing = true
+      xuanRanQi.render()
+      expect(yuanShiXuanRan).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('父页在超时、失败、加载错误三条路径上统一走重载重试', () => {
+    const 根 = 读('src/根组件.vue')
+    expect(根).toContain('function chongShiBeiJingJiaZai(): void')
+    expect(根).toContain('if (!beiJingJiuXu.value) chongShiBeiJingJiaZai()')
+    expect(根).toMatch(/zhuangTai === 'shi-bai'[\s\S]{0,120}chongShiBeiJingJiaZai\(\)/)
+    expect(根).toMatch(/function chuLiBeiJingJiaZaiShiBai\(\) \{\s*chongShiBeiJingJiaZai\(\)\s*\}/)
+    expect(根).toContain('beiJingChongShiCiShu.value >= caoDiPeiZhi.beiJingZuiDaChongShiCiShu')
+    expect(根).toContain('yingJiaZaiBeiJing.value = false')
+    expect(根).not.toContain('if (!beiJingJiuXu.value) beiJingShiBai.value = true')
+  })
+
+  it('预缓存清单排除按需加载的 grass-bg 资源目录', () => {
+    const 配置 = 读('vite.config.ts')
+    expect(配置).toContain("globIgnores: ['grass-bg/**']")
+    expect(配置).toContain("globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,ttf,eot}']")
   })
 })

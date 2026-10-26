@@ -1,15 +1,27 @@
 import type { AIYinQingShuRu } from '../types'
 import { shiXueShengShenFen } from '../config/角色配置'
-import { chouYuTai, gouJianYuTaiKuai, quZaiMangWeiShuo, shengChengZaiMang, zaoSuiJi } from './语态控制器'
+import { chouYuTai, gouJianYuTaiKuai, quZaiMangWeiShuo, shengChengZaiMang, zaoSuiJi, type YuTai } from './语态控制器'
 
 const BIAO_BAI_CI = [
   '喜欢你', '爱你', '在一起', '做我女朋友', '做我男朋友', '我们交往',
   '跟我在一起', '我想你当我', '你愿不愿意跟', '我们要不要处',
 ]
 
-export function gouJianYuTaiCeng(shuRu: AIYinQingShuRu, 随机: () => number = Math.random): string {
+const DENG_ZHUN_HUA_TE_ZHENG =
+  /介意|介不介意|会不会介意|你介|嫌弃|嫌我|讨厌我|受得了|接受不了|愿不愿意|同不同意|同意吗|在意吗|在不在意|能接受|接受吗|喜欢我吗|你接受/
+
+export function 本轮在等一句准话(对方消息: string): boolean {
+  return DENG_ZHUN_HUA_TE_ZHENG.test(对方消息 || '')
+}
+
+export function gouJianYuTaiCeng(
+  shuRu: AIYinQingShuRu,
+  随机: () => number = Math.random,
+  指定语态?: YuTai,
+): string {
   const 对方 = (shuRu.yong_hu_xin_xiao_xi || '').trim()
   if (!对方 || shuRu.zui_jia_shuo_de_shi) return ''
+  if (shuRu.bi_da_shi_shi || 本轮在等一句准话(对方)) 指定语态 = '接内容'
 
   const 是学生 = shiXueShengShenFen(shuRu.jiao_se.shen_fen || '')
   const 全部待办 = shengChengZaiMang(是学生, zaoSuiJi('zai-mang:' + shuRu.jiao_se_id))
@@ -20,7 +32,7 @@ export function gouJianYuTaiCeng(shuRu: AIYinQingShuRu, 随机: () => number = M
   const 在忙 = quZaiMangWeiShuo(全部待办, 已说)
 
   const 块 = [
-    gouJianYuTaiKuai(chouYuTai(对方, 随机), 在忙),
+    gouJianYuTaiKuai(指定语态 ?? chouYuTai(对方, 随机), 在忙),
     '【别复读】\n你上一轮已经说过的话不要再原样说一遍，尤其是「你定地方发我」这类。对方已经知道的信息不用重复。',
   ]
 

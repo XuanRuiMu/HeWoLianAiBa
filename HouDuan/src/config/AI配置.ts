@@ -1,5 +1,13 @@
 import './env'
 
+export const XIE_SHOU_SI_KAO =
+  (process.env['WRITER_SI_KAO_QI_YONG'] || 'true').trim().toLowerCase() !== 'false'
+
+export const XIE_SHOU_WEN_DU = Math.min(
+  2,
+  Math.max(0, parseFloat(process.env.WRITER_WENDU || '0.9') || 0.9),
+)
+
 export interface MoXingCanShu {
   moXing: string
   wenDu?: number
@@ -31,9 +39,11 @@ export const AI_PEI_ZHI = {
 
     writer: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
-      wenDu: Math.min(2, Math.max(0, parseFloat(process.env.WRITER_WENDU || '1.0') || 1.0)),
       zuiDaTokens: 4000,
-      siKaoMoShi: 'disabled',
+      siKaoMoShi: XIE_SHOU_SI_KAO ? 'enabled' : 'disabled',
+      ...(XIE_SHOU_SI_KAO
+        ? { reasoningEffort: process.env['WRITER_SI_KAO_QIANG_DU'] || 'medium' }
+        : { wenDu: XIE_SHOU_WEN_DU }),
     } as MoXingCanShu,
 
     qingGanFenXi: {

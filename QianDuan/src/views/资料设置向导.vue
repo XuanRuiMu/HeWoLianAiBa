@@ -13,179 +13,27 @@
 
       <div class="buzhou-guo-du-rong-qi">
         <Transition :name="步骤过渡名称">
-          <div v-if="当前步骤 === 1" key="b1" class="buzuo-neirong">
-            <h2 class="buZuo-biaoti">{{ huoQuFanYi('ziLiaoSheZhi', 'buZhou1BiaoTi') }}</h2>
-            <p class="buZuo-miaoShu">{{ huoQuFanYi('ziLiaoSheZhi', 'buZhou1MiaoShu') }}</p>
-            <div class="xingBie-wangGe">
-              <button
-                class="xingBie-kaPian ziJi-xingBie-kaPian"
-                data-xuan-xing-bie="nan"
-                :class="{ beiXuanZhong: ziLiaoShuJu.xingBie === 'male' }"
-                :style="ziLiaoShuJu.xingBie === 'male' ? 性别卡选中样式 : undefined"
-                :aria-pressed="ziLiaoShuJu.xingBie === 'male'"
-                @click="ziLiaoShuJu.xingBie = 'male'"
-              >
-                <div class="xingBie-tubiao ziJi-nan-tubiao">
-                  <svg viewBox="0 0 64 64" class="xingBie-svg" aria-hidden="true">
-                    <circle
-                      cx="28"
-                      cy="36"
-                      r="14"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <path
-                      d="M38 26 L54 10"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <path
-                      d="M44 10 H54 V20"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </div>
-                <span class="xingBie-mingCheng">{{
-                  huoQuFanYi('ziLiaoSheZhi', 'xingBieNan')
-                }}</span>
-              </button>
-              <button
-                class="xingBie-kaPian ziJi-xingBie-kaPian"
-                data-xuan-xing-bie="nv"
-                :class="{ beiXuanZhong: ziLiaoShuJu.xingBie === 'female' }"
-                :style="ziLiaoShuJu.xingBie === 'female' ? 性别卡选中样式 : undefined"
-                :aria-pressed="ziLiaoShuJu.xingBie === 'female'"
-                @click="ziLiaoShuJu.xingBie = 'female'"
-              >
-                <div class="xingBie-tubiao ziJi-nv-tubiao">
-                  <svg viewBox="0 0 64 64" class="xingBie-svg" aria-hidden="true">
-                    <circle
-                      cx="32"
-                      cy="22"
-                      r="14"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                    <path
-                      d="M32 36 V56"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                    />
-                    <path
-                      d="M22 47 H42"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                    />
-                  </svg>
-                </div>
-                <span class="xingBie-mingCheng">{{ huoQuFanYi('ziLiaoSheZhi', 'xingBieNv') }}</span>
-              </button>
-            </div>
-          </div>
+          <XingBieXuanZeBuZhou
+            v-if="当前步骤 === 1"
+            key="b1"
+            v-model:模型值="ziLiaoShuJu.xingBie"
+            变体="ziJi"
+            :标题="huoQuFanYi('ziLiaoSheZhi', 'buZhou1BiaoTi')"
+            :描述="huoQuFanYi('ziLiaoSheZhi', 'buZhou1MiaoShu')"
+            :自身性别="ziLiaoShuJu.xingBie"
+            :对象性别="ziLiaoShuJu.muBiaoXingBie"
+          />
 
-          <div v-else-if="当前步骤 === 2" key="b2" class="buzuo-neirong">
-            <h2 class="buZuo-biaoti">{{ huoQuFanYi('ziLiaoSheZhi', 'buZhou2BiaoTi') }}</h2>
-            <p class="buZuo-miaoShu">{{ huoQuFanYi('ziLiaoSheZhi', 'buZhou2MiaoShu') }}</p>
-            <div class="xingBie-wangGe">
-              <button
-                class="xingBie-kaPian duiXiang-xingBie-kaPian"
-                data-xuan-xing-bie="nan"
-                :class="{ beiXuanZhong: ziLiaoShuJu.muBiaoXingBie === 'male' }"
-                :style="ziLiaoShuJu.muBiaoXingBie === 'male' ? 性别卡选中样式 : undefined"
-                :aria-pressed="ziLiaoShuJu.muBiaoXingBie === 'male'"
-                @click="ziLiaoShuJu.muBiaoXingBie = 'male'"
-              >
-                <div class="xingBie-tubiao duiXiang-nan-tubiao">
-                  <svg viewBox="0 0 64 64" class="xingBie-svg">
-                    <circle
-                      cx="32"
-                      cy="22"
-                      r="12"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                    />
-                    <path
-                      d="M18 58 C18 42 46 42 46 58"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                    />
-                    <circle cx="28" cy="20" r="1.5" fill="currentColor" />
-                    <circle cx="36" cy="20" r="1.5" fill="currentColor" />
-                    <path
-                      d="M28 26 Q32 29 36 26"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                    />
-                  </svg>
-                </div>
-                <span class="xingBie-mingCheng">{{
-                  huoQuFanYi('ziLiaoSheZhi', 'xingBieNan')
-                }}</span>
-              </button>
-              <button
-                class="xingBie-kaPian duiXiang-xingBie-kaPian"
-                data-xuan-xing-bie="nv"
-                :class="{ beiXuanZhong: ziLiaoShuJu.muBiaoXingBie === 'female' }"
-                :style="ziLiaoShuJu.muBiaoXingBie === 'female' ? 性别卡选中样式 : undefined"
-                :aria-pressed="ziLiaoShuJu.muBiaoXingBie === 'female'"
-                @click="ziLiaoShuJu.muBiaoXingBie = 'female'"
-              >
-                <div class="xingBie-tubiao duiXiang-nv-tubiao">
-                  <svg viewBox="0 0 64 64" class="xingBie-svg">
-                    <circle
-                      cx="32"
-                      cy="22"
-                      r="12"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                    />
-                    <path
-                      d="M18 58 C18 42 46 42 46 58"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                    />
-                    <path
-                      d="M24 16 Q28 8 32 12 Q36 8 40 16"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    />
-                    <circle cx="28" cy="20" r="1.5" fill="currentColor" />
-                    <circle cx="36" cy="20" r="1.5" fill="currentColor" />
-                    <path
-                      d="M29 25 Q32 28 35 25"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                    />
-                  </svg>
-                </div>
-                <span class="xingBie-mingCheng">{{ huoQuFanYi('ziLiaoSheZhi', 'xingBieNv') }}</span>
-              </button>
-            </div>
-          </div>
+          <XingBieXuanZeBuZhou
+            v-else-if="当前步骤 === 2"
+            key="b2"
+            v-model:模型值="ziLiaoShuJu.muBiaoXingBie"
+            变体="duiXiang"
+            :标题="huoQuFanYi('ziLiaoSheZhi', 'buZhou2BiaoTi')"
+            :描述="huoQuFanYi('ziLiaoSheZhi', 'buZhou2MiaoShu')"
+            :自身性别="ziLiaoShuJu.xingBie"
+            :对象性别="ziLiaoShuJu.muBiaoXingBie"
+          />
 
           <div v-else-if="当前步骤 === 3" key="b3" class="buzuo-neirong buZuo3-gundong">
             <h2 class="buZuo-biaoti">{{ huoQuFanYi('ziLiaoSheZhi', 'buZhou3BiaoTi') }}</h2>
@@ -339,6 +187,7 @@ import { 性格选择映射 } from '@/types/类型定义'
 import { huoQuFanYi } from '@/config/翻译表'
 import ChangFangShuRuKuang from '@/components/表单/长方框输入框.vue'
 import XingBieGouXuan from '@/components/表单/性别勾选框.vue'
+import XingBieXuanZeBuZhou from '@/components/资料设置/性别选择步骤.vue'
 import { congTongYongTiShiCiTuiCeXingGe } from '@/utils/通用提示词性格'
 import { 使用通用性别框体配色 } from '@/composables/use性别框体配色'
 import { guiYiNianLing } from '@/utils/输入验证'
@@ -367,7 +216,6 @@ watch(() => ({ ...仓库.ziLiaoShuJu }), 仓库.baoCunZiLiaoZhuangTai, { deep: t
 const {
   自身色档: 主色档,
   对象色档,
-  样式: 性别卡选中样式,
 } = 使用通用性别框体配色({
   自身性别: () => ziLiaoShuJu.xingBie,
   对象性别: () => ziLiaoShuJu.muBiaoXingBie,
@@ -555,6 +403,13 @@ async function kaiShiLiaoTian() {
   --xingge-gao-guang-bian-zhong: rgba(255, 255, 255, 0.4);
   --xingge-liu-guang-yan: rgba(255, 255, 255, 0.95);
   --xingge-liu-guang-di: rgba(255, 255, 255, 0.22);
+  --xingge-huxi-zhouqi: 2.6s;
+  --xingge-piao-zhouqi: 9s;
+  --xingge-huxi-an: 0.4;
+  --xingge-huxi-liang: 1;
+  --xingge-huxi-an-xuan: 0.82;
+  --xingge-huxi-guang-ruo: 0 0 6px var(--xingge-liu-guang-di);
+  --xingge-huxi-guang-qiang: 0 0 18px var(--xingge-gao-guang-bian-zhong);
 }
 
 .ziliao-kapian {
@@ -654,88 +509,6 @@ async function kaiShiLiaoTian() {
   letter-spacing: 0.04em;
 }
 
-.buZuo-miaoShu {
-  font-size: 13px;
-  color: var(--ziliao-miaoshu-wenben);
-  text-align: center;
-  margin-bottom: calc(var(--jiange-zhong) + var(--jiange-4));
-}
-
-.xingBie-wangGe {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: calc(var(--jiange-12) + var(--jiange-2));
-  justify-content: center;
-  width: 100%;
-  max-width: 320px;
-  margin: 0 auto;
-}
-
-.xingBie-kaPian {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--jiange-10);
-  padding: var(--jiange-da) var(--jiange-zhong) calc(var(--jiange-zhong) + var(--jiange-6));
-  background-color: var(--ziliao-kuai-beijing);
-  border: 2px solid var(--ziliao-kuai-biankuang);
-  border-radius: 16px;
-  color: var(--kapian-shuoming-wenben);
-  cursor: pointer;
-  transition-property: border-color, box-shadow, transform, color, background-color;
-  transition-duration: 0.3s;
-  transition-timing-function: var(--quxian-biao-zhun);
-  min-width: 0;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-@media (hover: hover) {
-  .xingBie-kaPian:hover:not(.beiXuanZhong) {
-    transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--qiangdiao-fen) 45%, transparent);
-  }
-}
-
-.ziliao-kapian .xingBie-kaPian.beiXuanZhong .xingBie-mingCheng,
-.ziliao-kapian .xingBie-kaPian.beiXuanZhong .xingBie-svg {
-  color: inherit;
-}
-
-.xingBie-tubiao {
-  font-size: 42px;
-  line-height: 1;
-  filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.15));
-}
-
-.xingBie-svg {
-  width: 64px;
-  height: 64px;
-}
-
-.ziJi-xingBie-kaPian .xingBie-svg,
-.duiXiang-xingBie-kaPian .xingBie-svg {
-  stroke-width: 2.2;
-}
-
-.ziJi-nan-tubiao .xingBie-svg,
-.duiXiang-nan-tubiao .xingBie-svg {
-  color: color-mix(in srgb, var(--xingbie-nan-1) 92%, transparent);
-}
-
-.ziJi-nv-tubiao .xingBie-svg,
-.duiXiang-nv-tubiao .xingBie-svg {
-  color: color-mix(in srgb, var(--xingbie-nv-1) 92%, transparent);
-}
-
-.xingBie-mingCheng {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--kapian-shuoming-wenben);
-  letter-spacing: 0.2em;
-  text-indent: 0.2em;
-}
-
 .mbti-wangGe {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -819,7 +592,9 @@ async function kaiShiLiaoTian() {
 
   .mbti-kaPian:hover:not(.beiXuanZhong)::after {
     opacity: 0.55;
-    animation: xingge-ji-guang 8s ease-in-out infinite alternate;
+    animation:
+      xingge-huxi var(--xingge-huxi-zhouqi) ease-in-out infinite alternate,
+      xingge-liu-guang-piao var(--xingge-piao-zhouqi) ease-in-out infinite alternate;
   }
 }
 
@@ -830,17 +605,23 @@ async function kaiShiLiaoTian() {
 
 .mbti-kaPian:focus-visible::after {
   opacity: 0.55;
-  animation: xingge-ji-guang 8s ease-in-out infinite alternate;
+  animation:
+    xingge-huxi var(--xingge-huxi-zhouqi) ease-in-out infinite alternate,
+    xingge-liu-guang-piao var(--xingge-piao-zhouqi) ease-in-out infinite alternate;
 }
 
 .mbti-kaPian.beiXuanZhong {
   border: 1px solid var(--xingge-gao-guang-bian-zhong);
   box-shadow: 0 0 10px var(--xingge-liu-guang-di);
+  animation: xingge-huxi-guang-yun var(--xingge-huxi-zhouqi) ease-in-out infinite alternate;
 }
 
 .mbti-kaPian.beiXuanZhong::after {
+  --xingge-huxi-an: var(--xingge-huxi-an-xuan);
   opacity: 1;
-  animation: xingge-ji-guang 8s ease-in-out infinite alternate;
+  animation:
+    xingge-huxi var(--xingge-huxi-zhouqi) ease-in-out infinite alternate,
+    xingge-liu-guang-piao var(--xingge-piao-zhouqi) ease-in-out infinite alternate;
 }
 
 .mbti-kaPian.suiJi-kaPian {
@@ -1186,33 +967,6 @@ async function kaiShiLiaoTian() {
     font-size: 20px;
   }
 
-  .buZuo-miaoShu {
-    margin-bottom: var(--jiange-xiao);
-    font-size: 12px;
-  }
-
-  .xingBie-wangGe {
-    max-width: 300px;
-  }
-
-  .xingBie-kaPian {
-    gap: var(--jiange-6);
-    padding: var(--jiange-10) var(--jiange-xiao);
-  }
-
-  .xingBie-tubiao {
-    font-size: 30px;
-  }
-
-  .xingBie-svg {
-    width: 44px;
-    height: 44px;
-  }
-
-  .xingBie-mingCheng {
-    font-size: 15px;
-  }
-
   .caoZuo-anNiu {
     padding-top: var(--jiange-4);
   }
@@ -1261,7 +1015,16 @@ async function kaiShiLiaoTian() {
   }
 }
 
-@keyframes xingge-ji-guang {
+@keyframes xingge-huxi {
+  from {
+    opacity: var(--xingge-huxi-an);
+  }
+  to {
+    opacity: var(--xingge-huxi-liang);
+  }
+}
+
+@keyframes xingge-liu-guang-piao {
   from {
     background-position:
       0% 0%,
@@ -1269,7 +1032,6 @@ async function kaiShiLiaoTian() {
       0% 100%,
       100% 100%;
     border-color: var(--xingge-liu-guang-di);
-    opacity: 0.45;
   }
   to {
     background-position:
@@ -1278,7 +1040,15 @@ async function kaiShiLiaoTian() {
       12% 82%,
       88% 88%;
     border-color: var(--xingge-liu-guang-yan);
-    opacity: 1;
+  }
+}
+
+@keyframes xingge-huxi-guang-yun {
+  from {
+    box-shadow: var(--xingge-huxi-guang-ruo);
+  }
+  to {
+    box-shadow: var(--xingge-huxi-guang-qiang);
   }
 }
 
@@ -1288,7 +1058,6 @@ async function kaiShiLiaoTian() {
   .buZhou-houTui-enter-active,
   .buZhou-houTui-leave-active,
   .mbti-kaPian,
-  .xingBie-kaPian,
   .anniu-zhuYao,
   .anniu-fuZhu,
   .jindu-dian {
@@ -1297,6 +1066,10 @@ async function kaiShiLiaoTian() {
 
   .mbti-kaPian::after {
     transition: none !important;
+    animation: none !important;
+  }
+
+  .mbti-kaPian.beiXuanZhong {
     animation: none !important;
   }
 }

@@ -1,6 +1,12 @@
 <template>
-  <div ref="yeGen" class="hao-you-ye" data-testid="hao-you-ye" :style="{ '--hao-you-ding-bu-gao': `${dingBuGao}px` }">
-    <header ref="dingBu" class="hao-you-ding-bu">
+  <div
+    ref="yeGen"
+    class="hao-you-ye"
+    data-testid="hao-you-ye"
+    :style="{ '--hao-you-ding-bu-gao': `${dingBuGao}px` }"
+    @scroll.passive="gengXinDingBuFuGai"
+  >
+    <header ref="dingBu" class="hao-you-ding-bu" :class="{ 'ding-bu-fu-gai': dingBuFuGai }">
       <div class="biao-ti-hang">
         <h1 class="ye-biao-ti">{{ huoQuFanYi('haoYou', 'yeMianBiaoTi') }}</h1>
         <p class="ji-shu">{{ zongShuWenZi }}</p>
@@ -361,6 +367,7 @@ const yeGen = ref<HTMLElement | null>(null)
 const dingBu = ref<HTMLElement | null>(null)
 const dingBuGao = ref(0)
 const souSuoShuRu = ref<HTMLInputElement | null>(null)
+const dingBuFuGai = ref(false)
 let dingBuGuanCha: ResizeObserver | null = null
 
 const { cuoWu: qianTaiCuoWu, zhuangTai: qianTaiZhuangTai, jieShou: jieShouQianTai, chongShi, qingLi } = use前台错误()
@@ -448,6 +455,10 @@ function zuiJinShiJian(haoYouId: string): string {
 
 function gengXinDingBuGao(): void {
   dingBuGao.value = dingBu.value ? dingBu.value.offsetHeight : 0
+}
+
+function gengXinDingBuFuGai(shiJian: Event): void {
+  dingBuFuGai.value = (shiJian.target as HTMLElement).scrollTop > 4
 }
 
 async function shuaXinLieBiao(): Promise<void> {
@@ -702,6 +713,9 @@ defineExpose({ dangQianMianBan, guanJianZi, benDiJieGuo, haoYouLieBiao })
   flex-direction: column;
   gap: var(--jiange-xiao);
   padding-bottom: var(--jiange-12);
+}
+
+.hao-you-ding-bu.ding-bu-fu-gai {
   background: var(--hao-you-ye-mian);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);

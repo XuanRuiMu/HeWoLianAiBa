@@ -37,9 +37,11 @@ import {
 import type {
   AIJiaoSeXinXi,
   AIYinQingShuRu,
+  BiDaShiShi,
   DuiHuaLiShiXiang,
   HaoGanDuXinXi,
 } from '../types'
+import type { 性别内部形态 } from '../utils/性别'
 
 export const YONG_HU_NEI_RONG_QI_SHI = 用户内容开始标记
 export const YONG_HU_NEI_RONG_JIE_SHU = 用户内容结束标记
@@ -310,9 +312,65 @@ export function gouJianFengGeShiLiCeng(jiaoSe: AIJiaoSeXinXi): string {
   return wenBen
 }
 
+export function 构建恋爱身份层(
+  yongHuXingBie?: 性别内部形态 | null,
+  jiaoSeXingBie?: 性别内部形态 | null,
+): string {
+  const 对方 = 内部转展示(yongHuXingBie ?? null)
+  const 自己 = 内部转展示(jiaoSeXingBie ?? null)
+  if (对方 === '未知' || 自己 === '未知') return ''
+  const 块 = [
+    '【你们俩这回事】',
+    `你${自己 === '男' ? '是个男生' : '是个女生'}，对方是${对方 === '男' ? '男生' : '女生'}。你们在处对象。`,
+  ]
+  if (对方 === 自己) {
+    块.push(
+      '你们同性这件事在你们之间不是话题，就是你们本来的样子，跟别的情侣没有任何不一样。',
+      '不许自己冒出“同性恋”“gay”“拉拉”这类词，也不许解释、表态、科普；不许把两个人的关系说成兄弟、哥们、闺蜜、室友这些别的关系。',
+      '对方自己提起来的时候，就当聊的是件普通事，正常接话。不许突然郑重其事，不许说教，不许替谁发声。',
+    )
+  }
+  return 块.join('\n')
+}
+
+export function 构建必答事实层(biDaShiShi?: BiDaShiShi): string {
+  if (!biDaShiShi || biDaShiShi.bi_xu_yao_su.length === 0) return ''
+  const 塊 = [
+    '【对方问的这件事你确实知道】',
+    biDaShiShi.wen_an,
+    '上面写的是事实，不是让你照抄的句子。用你现在这个人的口气把它说出来：短句、口语、少标点，跟平时说话一样。',
+    '不许说不知道、不认识、没听说过，也不许顺着编出别的说法。',
+    '不许提“资料里写着”“我查了一下”“我记得是这样”这类字眼，就是你自己知道。',
+    '不许把整段事实一口气倒完：挑对方问的那部分说，剩下的等对方问。',
+  ]
+  if (biDaShiShi.zhong_shi) {
+    const 必须点名 = biDaShiShi.bi_xu_yao_su
+      .map((写法集合) => 写法集合[0])
+      .filter(Boolean)
+      .join('、')
+    塊.push(
+      `上一回你把这件事整个漏掉了。这一回必须把「${必须点名}」说出来——用你自己的话，不许整段抄原句。`,
+      '照样是先接对方的话，再把这点带出来，别把它写成单独一条汇报。',
+    )
+  }
+  return 塊.join('\n')
+}
+
+export function 构建接住点层(yaoJieZhuDeDian?: string): string {
+  const 点 = (yaoJieZhuDeDian || '').trim()
+  if (!点) return ''
+  return [
+    '【这一句先说这个】',
+    点,
+    '对方这句话里最让你有反应的就是这个。先把这个东西本身说出来：把那个词、那件事再提一次，或者说出你当下直接的惊讶、不信、被逗到。说完这个再说别的。',
+    '不许替你们俩概括这件事（把双方情况总结成一句“这天真有意思”“确实挺巧的”那种），也不许评价对方这条消息写得怎么样。',
+  ].join('\n')
+}
+
 export function GouJianGongXiangQianZhui(shuRu: AIYinQingShuRu): string {
   return [
     gouJianDiErCeng(shuRu.jiao_se),
+    构建恋爱身份层(shuRu.yong_hu_xing_bie, shuRu.jiao_se.xing_bie),
     gouJianFengGeShiLiCeng(shuRu.jiao_se),
     gouJianDiWuCeng(shuRu),
   ]
@@ -410,6 +468,7 @@ export function gouJianWriterPrompt(
     hui_fu_ce_lue?: string
     shi_jian_qing_xu?: string
     shi_fou_hui_fu?: boolean
+    yao_jie_zhu_de_dian?: string
     // ⚠️ 故意**不接** `hui_fu_tiao_shu`：第十三轮起 Writer 不再被告知「这轮回几条」，
     // 由角色自己决定发几条（此前由 Director 的数字硬截断，导致追问被固化为收尾，
     // 实测问句落在末条 AI 34.7% vs 真人 19.3%）。Director 仍管回不回 / 情绪 / 撤回 / 表白。
@@ -420,11 +479,13 @@ export function gouJianWriterPrompt(
     GouJianGongXiangQianZhui(shuRu),
     gouJianGuanJianShiJianCeng(shuRu),
     gouJianDiYiCeng(),
+    构建必答事实层(shuRu.bi_da_shi_shi),
     gouJianJingXiangTiShi(shuRu),
     gouJianDiSanCeng(shuRu),
     gouJianDiSiCeng(shuRu.hao_gan_du),
     构建通用知识层(zhiShi),
     gouJianDiLiuCeng(shuRu, shuRu.shi_fou_di_yi_lun),
+    构建接住点层(ceLue?.yao_jie_zhu_de_dian),
   ].filter((ceng) => ceng.trim() !== '')
 
   if (ceLue) {
@@ -438,7 +499,13 @@ export function gouJianWriterPrompt(
   }
 
   if (ceLue?.shi_fou_hui_fu !== false) {
-    const yuTaiCeng = gouJianYuTaiCeng(shuRu)
+    const yuTaiCeng = gouJianYuTaiCeng(
+      shuRu,
+      Math.random,
+      zhiShi.命中 || Boolean(shuRu.bi_da_shi_shi) || Boolean(ceLue?.yao_jie_zhu_de_dian?.trim())
+        ? '接内容'
+        : undefined,
+    )
     if (yuTaiCeng) cengCi.push(yuTaiCeng)
   }
 
@@ -453,6 +520,7 @@ export function gouJianDirectorPrompt(
     GouJianGongXiangQianZhui(shuRu),
     gouJianGuanJianShiJianCeng(shuRu),
     构建通用知识层(zhiShi),
+    构建必答事实层(shuRu.bi_da_shi_shi),
     '',
     '【现在轮到你】你是这场恋爱聊天的导演。上面那个就是你的演员，根据 TA 的人设和刚才聊的内容，给 TA 写一张小纸条，告诉 TA 怎么回。',
     '这张纸条必须是 JSON，不要多说别的。',
@@ -500,6 +568,7 @@ export function gouJianDirectorPrompt(
     '{',
     '  "用户意图": "string",',
     '  "情感分析": "string",',
+    '  "这条里要接住的点": "string",',
     '  "回复策略": "string",',
     '  "是否回复": boolean,',
     '  "回复条数": number（0-5）,',
@@ -507,6 +576,11 @@ export function gouJianDirectorPrompt(
     '  "是否撤回": boolean,',
     '  "是否主动表白": boolean',
     '}',
+    '',
+    '【这条里要接住的点】',
+    '从对方这条消息里挑出一个 TA 会真的有反应的东西：和常识对不上的（比如地方冷不冷、时间早晚、说的跟实际反着来）、和你们刚聊过的撞在一起的、或者和 TA 自己的情况正好反过来的那种。',
+    '只把这个点本身原样写进去，不要写打算怎么回、不要加解释。',
+    '大部分日常消息没有这种点，那就给空字符串。不许为了填满硬找，不许把整条消息概括一遍当成这个点，也不许写“TA 很幽默”“TA 很温柔”这类评价。',
     '',
     '【主动表白】',
     `只有当好感度已经≥${SHENG_LI_SHI_BAI_PEI_ZHI.biaoBaiHaoGanDuYuZhi}，而且角色真的自然想表白时，才把"是否主动表白"设成 true。`,

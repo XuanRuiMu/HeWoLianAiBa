@@ -8,10 +8,11 @@ import { shengChengDirectorCeLue } from './Director'
 import { shengChengWriterHuiFu } from './Writer'
 import { jianChaAiWei, panDuanShiFouCaiYang, panDuanShiFouMoXingChouJian, guoLvAiWeiXiaoXi } from '../config/去AI味配置'
 import { gouJianJiaoSeShangXiaWen, type CanShuShangXiaWen } from '../config/AI参数策略'
-import { 构建确定性知识回答, 检索通用知识 } from './通用知识检索'
+import { 检索通用知识, 提取必答事实 } from './通用知识检索'
 import type {
-  AIYinQingShuRu,
   AIYinQingShuChu,
+  AIYinQingShuRu,
+  BiDaShiShi,
   DirectorCeLue,
 } from '../types'
 
@@ -24,6 +25,13 @@ export * from './军师求助'
 export * from './关键事件提取'
 
 const ZUI_DA_TIAO_SHU = 5
+
+function shuoDaoLeShiShi(xiaoXiLieBiao: readonly string[], biDaShiShi: BiDaShiShi): boolean {
+  const 合文 = xiaoXiLieBiao.join('\n')
+  return biDaShiShi.bi_xu_yao_su.some((写法集合) =>
+    写法集合.some((写法) => 合文.includes(写法)),
+  )
+}
 
 function xiuZhengTiaoShu(tiaoShu: number): number {
   return Math.max(0, Math.min(ZUI_DA_TIAO_SHU, tiaoShu))
@@ -137,15 +145,8 @@ export async function yunXingAIYinQing(
   }
 
   const zhiShi = 检索通用知识(shuRu.yong_hu_xin_xiao_xi, !shuRu.zui_jia_shuo_de_shi)
-  const queDingHuiDa = 构建确定性知识回答(shuRu.yong_hu_xin_xiao_xi, zhiShi)
-  if (queDingHuiDa) {
-    return {
-      xiao_xi_lie_biao: [queDingHuiDa],
-      shi_fou_hui_fu: true,
-      shi_fou_che_hui: false,
-      jiang_ji_mo_shi: false,
-    }
-  }
+  const biDaShiShi = 提取必答事实(shuRu.yong_hu_xin_xiao_xi, zhiShi) ?? undefined
+  const benLunShuRu: AIYinQingShuRu = biDaShiShi ? { ...shuRu, bi_da_shi_shi: biDaShiShi } : shuRu
 
   const shiYuJingTongDao = shuRu.yong_hu_xin_xiao_xi.startsWith('[系统提示：用户连发多条消息')
   const yuSuanJieGuo = shiYuJingTongDao
@@ -156,6 +157,14 @@ export async function yunXingAIYinQing(
   }
   if (!yuSuanJieGuo.yunXu) {
     tuiSongXiTongTiShi(shuRu.yong_hu_id, shuRu.jiao_se_id, huoQuFanYi('liaoTian', 'aiYuSuanYiYongJin'))
+    if (biDaShiShi) {
+      return {
+        xiao_xi_lie_biao: [biDaShiShi.wen_an],
+        shi_fou_hui_fu: true,
+        shi_fou_che_hui: false,
+        jiang_ji_mo_shi: false,
+      }
+    }
     return {
       xiao_xi_lie_biao: [],
       shi_fou_hui_fu: false,
@@ -179,11 +188,20 @@ export async function yunXingAIYinQing(
       : undefined,
   }
 
-  const directorJieGuo = await shengChengDirectorCeLue(shuRu, shangXiaWen, waiBuXinHao, zhiShi)
+  const directorJieGuo = await shengChengDirectorCeLue(benLunShuRu, shangXiaWen, waiBuXinHao, zhiShi)
   const directorSiKao = directorJieGuo.si_kao || undefined
   if (directorJieGuo.cheng_gong) {
     ceLue = directorJieGuo.ce_lue
   } else if (directorJieGuo.cuo_wu === 'XIAN_LIU_429') {
+    if (biDaShiShi) {
+      return {
+        xiao_xi_lie_biao: [biDaShiShi.wen_an],
+        shi_fou_hui_fu: true,
+        shi_fou_che_hui: false,
+        jiang_ji_mo_shi: false,
+        yong_hu_id: shuRu.yong_hu_id,
+      }
+    }
     return {
       xiao_xi_lie_biao: [],
       shi_fou_hui_fu: false,
@@ -194,6 +212,14 @@ export async function yunXingAIYinQing(
       yong_hu_id: shuRu.yong_hu_id,
     }
   } else if (directorJieGuo.cuo_wu === 'YU_E_BU_ZU_402') {
+    if (biDaShiShi) {
+      return {
+        xiao_xi_lie_biao: [biDaShiShi.wen_an],
+        shi_fou_hui_fu: true,
+        shi_fou_che_hui: false,
+        jiang_ji_mo_shi: false,
+      }
+    }
     return {
       xiao_xi_lie_biao: [],
       shi_fou_hui_fu: false,
@@ -208,7 +234,7 @@ export async function yunXingAIYinQing(
     debug日志.error('AI引擎', 'Director调用失败，降级为单代理模式', { xiang_qing: { cuo_wu: String(directorJieGuo.cuo_wu) } })
   }
 
-  if (ceLue && !ceLue.shi_fou_hui_fu) {
+  if (ceLue && !ceLue.shi_fou_hui_fu && !biDaShiShi) {
     return {
       xiao_xi_lie_biao: [],
       shi_fou_hui_fu: false,
@@ -229,7 +255,34 @@ jiang_ji_mo_shi: false,
           ce_lue: ceLue,
         }
       }
-    const writerJieGuo = await shengChengWriterHuiFu(shuRu, ceLue, shangXiaWen, waiBuXinHao, zhiShi)
+    let writerJieGuo = await shengChengWriterHuiFu(benLunShuRu, ceLue, shangXiaWen, waiBuXinHao, zhiShi)
+
+    if (biDaShiShi && !shuoDaoLeShiShi(writerJieGuo.xiao_xi_lie_biao, biDaShiShi)) {
+      debug日志.warn('AI引擎', 'Writer 漏掉了必答事实，带强调重生成一次', {
+        xiang_qing: { jiao_se_id: shuRu.jiao_se_id, shi_shi: biDaShiShi.biao_shi },
+      })
+      writerJieGuo = await shengChengWriterHuiFu(
+        { ...benLunShuRu, bi_da_shi_shi: { ...biDaShiShi, zhong_shi: true } },
+        ceLue,
+        shangXiaWen,
+        waiBuXinHao,
+        zhiShi,
+      )
+    }
+
+    if (biDaShiShi && !shuoDaoLeShiShi(writerJieGuo.xiao_xi_lie_biao, biDaShiShi)) {
+      debug日志.error('AI引擎', '必答事实两次都未说出，回退到事实原文以保证不撒谎', {
+        xiang_qing: { jiao_se_id: shuRu.jiao_se_id, shi_shi: biDaShiShi.biao_shi },
+      })
+      return {
+        xiao_xi_lie_biao: [biDaShiShi.wen_an],
+        shi_fou_hui_fu: true,
+        shi_fou_che_hui: false,
+        jiang_ji_mo_shi,
+        si_kao: directorSiKao ? { director: directorSiKao } : undefined,
+        ce_lue: ceLue,
+      }
+    }
 
     let xiaoXiLieBiao = qieGeXiaoXi(writerJieGuo.xiao_xi_lie_biao, ZUI_DA_TIAO_SHU)
     if (writerJieGuo.xiao_xi_lie_biao.length > ZUI_DA_TIAO_SHU) {
@@ -251,6 +304,15 @@ jiang_ji_mo_shi: false,
           tiao_shu: weiJinTiaoMu.length,
         },
       })
+      if (biDaShiShi) {
+        return {
+          xiao_xi_lie_biao: [biDaShiShi.wen_an],
+          shi_fou_hui_fu: true,
+          shi_fou_che_hui: false,
+          jiang_ji_mo_shi,
+          ce_lue: ceLue,
+        }
+      }
       return {
         xiao_xi_lie_biao: [],
         shi_fou_hui_fu: false,
@@ -285,6 +347,16 @@ cuo_wu_xin_xi: huoQuFanYi('AI', 'ShenHeWeiGui'),
     }
 
     const zhenDeYaHui = ceLue?.shi_fou_hui_fu !== false
+    if (zhenDeYaHui && xiaoXiLieBiao.length === 0 && biDaShiShi) {
+      return {
+        xiao_xi_lie_biao: [biDaShiShi.wen_an],
+        shi_fou_hui_fu: true,
+        shi_fou_che_hui: false,
+        jiang_ji_mo_shi,
+        si_kao: directorSiKao ? { director: directorSiKao } : undefined,
+        ce_lue: ceLue,
+      }
+    }
     if (zhenDeYaHui && xiaoXiLieBiao.length === 0 && !cuoWuXinXi) {
       debug日志.error('AI引擎', 'Director要求回复但Writer输出为空，按失败处理（区别于「已读不回」）', {
         xiang_qing: {
@@ -313,6 +385,16 @@ cuo_wu_xin_xi: huoQuFanYi('AI', 'ShenHeWeiGui'),
   } catch (cuoWu) {
     const writerCuoWu = cuoWu instanceof Error ? cuoWu.message : String(cuoWu)
     debug日志.error('AI引擎', 'Writer调用失败', { xiang_qing: { cuo_wu: writerCuoWu } })
+    if (biDaShiShi) {
+      return {
+        xiao_xi_lie_biao: [biDaShiShi.wen_an],
+        shi_fou_hui_fu: true,
+        shi_fou_che_hui: false,
+        jiang_ji_mo_shi: true,
+        si_kao: directorSiKao ? { director: directorSiKao } : undefined,
+        ce_lue: ceLue,
+      }
+    }
     return {
       xiao_xi_lie_biao: [],
       shi_fou_hui_fu: false,

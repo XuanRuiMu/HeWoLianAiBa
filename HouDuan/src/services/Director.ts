@@ -29,7 +29,7 @@ function moRenCeLue(): DirectorCeLue {
   }
 }
 
-function jieXiDirectorXiangYing(neiRong: string): { ceLue: DirectorCeLue; jieXiChengGong: boolean } {
+export function jieXiDirectorXiangYing(neiRong: string): { ceLue: DirectorCeLue; jieXiChengGong: boolean } {
   const qingLiNeiRong = neiRong.trim()
   let shuJu: Record<string, unknown> | null = null
 
@@ -58,6 +58,7 @@ function jieXiDirectorXiangYing(neiRong: string): { ceLue: DirectorCeLue; jieXiC
     ceLue: {
       yong_hu_yi_tu: String(shuJu['用户意图'] || shuJu['yong_hu_yi_tu'] || 'unknown'),
       qing_gan_fen_xi: String(shuJu['情感分析'] || shuJu['qing_gan_fen_xi'] || 'unknown'),
+      yao_jie_zhu_de_dian: String(shuJu['这条里要接住的点'] || shuJu['yao_jie_zhu_de_dian'] || '').trim(),
       hui_fu_ce_lue: String(shuJu['回复策略'] || shuJu['hui_fu_ce_lue'] || 'unknown'),
       shi_fou_hui_fu: Boolean(shuJu['是否回复'] ?? shuJu['shi_fou_hui_fu'] ?? true),
       hui_fu_tiao_shu: xiuZhengTiaoShu,

@@ -225,7 +225,7 @@ describe('FP03 Cropper.js 专业裁剪封装', () => {
     expect(huoQuFanYi('sheZhi', 'tuPianCaiJianTiShi')).toContain('旋转')
     expect(裁剪源码).toContain('$rotate')
     expect(裁剪源码).toContain('$scale')
-    expect(裁剪源码).toContain('$zoom')
+    expect(裁剪源码).not.toContain('$zoom(')
     expect(裁剪源码).toContain('$resetTransform')
   })
 

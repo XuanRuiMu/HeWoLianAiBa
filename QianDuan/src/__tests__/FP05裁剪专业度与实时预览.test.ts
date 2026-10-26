@@ -1,0 +1,209 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
+import { afterEach, describe, expect, it } from 'vitest'
+import { nextTick } from 'vue'
+import TuPianCaiJian from '@/components/图片裁剪.vue'
+import { huoQuFanYi } from '@/config/翻译表'
+import { jiSuanJuZhenSuoFang } from '@/utils/图片裁剪'
+
+const 源码根 = resolve(__dirname, '..')
+const 读 = (相对: string): string => readFileSync(resolve(源码根, 相对), 'utf8')
+const 裁剪源码 = 读('components/图片裁剪.vue')
+const 背景源码 = 读('components/聊天背景设置.vue')
+const 气泡源码 = 读('components/气泡主题选择器.vue')
+
+interface GuaZaiXuanXiang {
+  kuanGaoBi?: number
+  yuLanLeiXing?: 'beiJing' | 'qiPao'
+}
+
+function zaiRu(xuanXiang: GuaZaiXuanXiang = {}) {
+  const { kuanGaoBi = 1, yuLanLeiXing } = xuanXiang
+  const cang = createPinia()
+  setActivePinia(cang)
+  return mount(TuPianCaiJian, {
+    props: {
+      tuYuan: 'data:image/png;base64,x',
+      yuanMime: 'image/png',
+      biaoTi: '裁剪测试',
+      tiShi: '提示',
+      kuanGaoBi,
+      ...(yuLanLeiXing ? { yuLanLeiXing } : {}),
+    },
+    global: { plugins: [cang] },
+  })
+}
+
+function faSong(kuang: ReturnType<typeof mount>, xuanZeQi: string, leiXing: string, xiJie: Record<string, number>): boolean {
+  const yuanSu = kuang.find(xuanZeQi).element as HTMLElement
+  const shiJian = new CustomEvent(leiXing, { detail: xiJie, cancelable: true, bubbles: true })
+  yuanSu.dispatchEvent(shiJian)
+  return shiJian.defaultPrevented
+}
+
+describe('FP-05 缩放反向放大根因修复', () => {
+  it('矩阵缩放读数取主模长：旋转翻转后读数不塌缩', () => {
+    expect(jiSuanJuZhenSuoFang([1, 0, 0, 1, 0, 0])).toBe(1)
+    expect(jiSuanJuZhenSuoFang([0, 2, -2, 0, 10, 5])).toBe(2)
+    expect(jiSuanJuZhenSuoFang([-1.5, 0, 0, 1.5, 0, 0])).toBe(1.5)
+    expect(jiSuanJuZhenSuoFang([Math.SQRT1_2, Math.SQRT1_2, -Math.SQRT1_2, Math.SQRT1_2, 0, 0])).toBeCloseTo(1, 6)
+    expect(jiSuanJuZhenSuoFang([0, 0, 0, 0, 0, 0])).toBe(0.01)
+  })
+
+  it('滑条向缩小方向拖动按目标比例精确缩小，不再反向放大', async () => {
+    const kuang = zaiRu({ kuanGaoBi: 2 })
+    await nextTick()
+    const huaTiao = kuang.get('.suofang-huatiao')
+    await huaTiao.setValue('200')
+    await nextTick()
+    expect(kuang.get('.suofang-bai-fen').text()).toBe('200%')
+    await huaTiao.setValue('60')
+    await nextTick()
+    expect(kuang.get('.suofang-bai-fen').text()).toBe('60%')
+    await huaTiao.setValue('200')
+    await nextTick()
+    expect(kuang.get('.suofang-bai-fen').text()).toBe('200%')
+    kuang.unmount()
+  })
+
+  it('缩放上下限50%到400%：滑条越界被夹回边界', async () => {
+    const kuang = zaiRu({ kuanGaoBi: 1 })
+    await nextTick()
+    const huaTiao = kuang.get('.suofang-huatiao')
+    await huaTiao.setValue('15')
+    await nextTick()
+    expect(kuang.get('.suofang-bai-fen').text()).toBe('50%')
+    await huaTiao.setValue('999')
+    await nextTick()
+    expect(kuang.get('.suofang-bai-fen').text()).toBe('400%')
+    kuang.unmount()
+  })
+
+  it('滚轮与双指手势的transform事件越界被回绝，界内放行', async () => {
+    const kuang = zaiRu({ kuanGaoBi: 1 })
+    await nextTick()
+    expect(faSong(kuang, 'cropper-image', 'transform', { matrix: [99, 0, 0, 99, 0, 0], oldMatrix: [1, 0, 0, 1, 0, 0] })).toBe(true)
+    expect(faSong(kuang, 'cropper-image', 'transform', { matrix: [0.1, 0, 0, 0.1, 0, 0], oldMatrix: [1, 0, 0, 1, 0, 0] })).toBe(true)
+    expect(faSong(kuang, 'cropper-image', 'transform', { matrix: [2, 0, 0, 2, 0, 0], oldMatrix: [1, 0, 0, 1, 0, 0] })).toBe(false)
+    kuang.unmount()
+  })
+})
+
+describe('FP-05 选区最小尺寸约束', () => {
+  it('selection的change事件小于48px被回绝，界内放行', async () => {
+    const kuang = zaiRu({ kuanGaoBi: 2 })
+    await nextTick()
+    expect(faSong(kuang, 'cropper-selection', 'change', { x: 0, y: 0, width: 20, height: 20 })).toBe(true)
+    expect(faSong(kuang, 'cropper-selection', 'change', { x: 0, y: 0, width: 96, height: 47 })).toBe(true)
+    expect(faSong(kuang, 'cropper-selection', 'change', { x: 0, y: 0, width: 120, height: 60 })).toBe(false)
+    kuang.unmount()
+  })
+
+  it('选区小于最小边时确认被拦截并提示，不导出', async () => {
+    const kuang = zaiRu({ kuanGaoBi: 1 })
+    await nextTick()
+    await kuang.get('.anniu-que-ren').trigger('click')
+    await nextTick()
+    expect(kuang.emitted('que-ren')).toBeUndefined()
+    expect(kuang.get('.caijian-jiazai-cuowu').text()).toBe(huoQuFanYi('sheZhi', 'caiJianXuanQuTaiXiao'))
+    kuang.unmount()
+  })
+})
+
+describe('FP-05 比例锁定切换', () => {
+  it('默认锁定场景比例，五个chips，可切换1:1与自由', async () => {
+    const kuang = zaiRu({ kuanGaoBi: 2 })
+    await nextTick()
+    const xuanQu = kuang.get('cropper-selection').element as HTMLElement
+    expect(xuanQu.getAttribute('aspect-ratio')).toBe('2')
+    const kaLieBiao = kuang.findAll('.bili-ka')
+    expect(kaLieBiao).toHaveLength(5)
+    expect(kaLieBiao[0].text()).toBe(huoQuFanYi('sheZhi', 'caiJianBiLiZiYou'))
+    expect(kaLieBiao.filter((ka) => ka.classes().includes('bili-ka--xuan'))).toHaveLength(1)
+    expect(kaLieBiao.filter((ka) => ka.classes().includes('bili-ka--xuan'))[0].text()).toBe('2:1')
+    await kaLieBiao[1].trigger('click')
+    await nextTick()
+    expect(xuanQu.getAttribute('aspect-ratio')).toBe('1')
+    await kaLieBiao[0].trigger('click')
+    await nextTick()
+    expect(xuanQu.getAttribute('aspect-ratio')).toBeNull()
+    kuang.unmount()
+  })
+
+  it('背景场景默认锁定3:4', async () => {
+    const kuang = zaiRu({ kuanGaoBi: 0.75 })
+    await nextTick()
+    const kaLieBiao = kuang.findAll('.bili-ka')
+    expect(kaLieBiao.filter((ka) => ka.classes().includes('bili-ka--xuan'))[0].text()).toBe('3:4')
+    kuang.unmount()
+  })
+})
+
+describe('FP-05 裁剪底部实时聊天预览', () => {
+  it('背景裁剪渲染聊天同源预览面板，头像裁剪不渲染', async () => {
+    const beiJingKuang = zaiRu({ kuanGaoBi: 0.75, yuLanLeiXing: 'beiJing' })
+    await nextTick()
+    await nextTick()
+    expect(beiJingKuang.find('.caijian-yulan--beiJing').exists()).toBe(true)
+    expect(beiJingKuang.find('.liao-tian-mian-ban').exists()).toBe(true)
+    expect(beiJingKuang.find('.qipao-neirong').exists()).toBe(true)
+    expect(beiJingKuang.get('.caijian-yulan .yu-lan-biao-ti').text()).toBe(huoQuFanYi('sheZhi', 'caiJianYuLanBeiJing'))
+    beiJingKuang.unmount()
+
+    const touXiangKuang = zaiRu({ kuanGaoBi: 1 })
+    await nextTick()
+    await nextTick()
+    expect(touXiangKuang.find('.caijian-yulan').exists()).toBe(false)
+    touXiangKuang.unmount()
+  })
+
+  it('气泡裁剪渲染气泡效果预览且样式覆盖指向气泡容器', async () => {
+    const qiPaoKuang = zaiRu({ kuanGaoBi: 2, yuLanLeiXing: 'qiPao' })
+    await nextTick()
+    await nextTick()
+    expect(qiPaoKuang.find('.caijian-yulan--qiPao').exists()).toBe(true)
+    expect(qiPaoKuang.get('.caijian-yulan .yu-lan-biao-ti').text()).toBe(huoQuFanYi('sheZhi', 'caiJianYuLanQiPao'))
+    qiPaoKuang.unmount()
+  })
+
+  it('容器契约：背景传beiJing、气泡传qiPao，组件声明yuLanLeiXing', () => {
+    expect(背景源码).toContain('yu-lan-lei-xing="beiJing"')
+    expect(气泡源码).toContain('yu-lan-lei-xing="qiPao"')
+    expect(裁剪源码).toContain("yuLanLeiXing?: 'beiJing' | 'qiPao'")
+    expect(裁剪源码).toContain("import LiaoTianYuLan from '@/components/聊天/聊天预览.vue'")
+    expect(裁剪源码).toContain('<LiaoTianYuLan')
+  })
+})
+
+describe('FP-05 专业控件文案走翻译表', () => {
+  it('比例与预览键全部存在且为中文文案', () => {
+    expect(huoQuFanYi('sheZhi', 'caiJianBiLiZu')).toBe('裁剪比例')
+    expect(huoQuFanYi('sheZhi', 'caiJianBiLiZiYou')).toBe('自由')
+    expect(huoQuFanYi('sheZhi', 'caiJianBiLiYiBiYi')).toBe('1:1')
+    expect(huoQuFanYi('sheZhi', 'caiJianBiLiSanBiSi')).toBe('3:4')
+    expect(huoQuFanYi('sheZhi', 'caiJianBiLiErBiYi')).toBe('2:1')
+    expect(huoQuFanYi('sheZhi', 'caiJianBiLiShiLiuBiJiu')).toBe('16:9')
+    expect(huoQuFanYi('sheZhi', 'caiJianXuanQuTaiXiao')).toContain('裁剪区域太小')
+    expect(huoQuFanYi('sheZhi', 'caiJianYuLanBeiJing')).toBe('背景效果预览')
+    expect(huoQuFanYi('sheZhi', 'caiJianYuLanQiPao')).toBe('气泡效果预览')
+    expect(裁剪源码).toContain("huoQuFanYi('sheZhi', 'caiJianBiLiZu')")
+    expect(裁剪源码).not.toMatch(/>\s*(自由|1:1|3:4|2:1|16:9)\s*</)
+  })
+
+  it('专业工具链源码契约：边界拦截、限幅常量、最小选区、预览导出', () => {
+    expect(裁剪源码).toContain('@change="yanZhengXuanQu"')
+    expect(裁剪源码).toContain('shiJian.preventDefault()')
+    expect(裁剪源码).toContain('SUO_FANG_XIA_XIAN')
+    expect(裁剪源码).toContain('SUO_FANG_SHANG_XIAN')
+    expect(裁剪源码).toContain('XUAN_QU_ZUI_XIAO_BIAN')
+    expect(裁剪源码).toContain('$toCanvas')
+    expect(裁剪源码).toContain('$scale(')
+    expect(裁剪源码).toContain('jiSuanJuZhenSuoFang')
+  })
+})
+
+afterEach(() => {
+  document.body.innerHTML = ''
+})

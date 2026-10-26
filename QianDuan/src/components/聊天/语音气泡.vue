@@ -277,6 +277,9 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .yuyin-pao {
+  --yuyin-yuandian-hui: color-mix(in srgb, currentColor 35%, #9e9e9e);
+  --yuyin-yuandian-lan: color-mix(in srgb, #1a73e8 82%, currentColor);
+  --yuyin-yuandian-bian-hua-shi-chang: 200ms;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -330,6 +333,23 @@ onBeforeUnmount(() => {
 
 .laba-duan {
   transition: opacity var(--yuyin-duan-yin-cang-shi-chang) var(--quxian-biao-zhun);
+}
+
+.laba-duan--1 {
+  fill: var(--yuyin-yuandian-hui);
+  transition:
+    opacity var(--yuyin-duan-yin-cang-shi-chang) var(--quxian-biao-zhun),
+    fill var(--yuyin-yuandian-bian-hua-shi-chang) var(--quxian-biao-zhun);
+}
+
+.yuyin-qipao.bofangzhong .laba-duan--1 {
+  fill: var(--yuyin-yuandian-lan);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .laba-duan--1 {
+    transition: none;
+  }
 }
 
 .laba-zu--1-duan .laba-duan--2,

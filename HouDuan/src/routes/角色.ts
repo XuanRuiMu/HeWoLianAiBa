@@ -18,6 +18,7 @@ import { mbtiLieBiao } from '../config/角色配置'
 import type { RenZhengQingQiu } from '../middleware/认证'
 import { 性别验证中间件 } from '../middleware/输入验证'
 import { 解析性别 } from '../utils/性别'
+import { setMoRenXingBie } from '../services/认证'
 import {
   CUO_WU_DAI_MA,
   JiaoSeShengChengCuoWu,
@@ -135,6 +136,13 @@ luYou.post('/MBTI生成', 性别验证中间件, (qingQiu: RenZhengQingQiu, xian
   }
 
   const zhengLiMuBiaoXingBie = 解析性别(muBiaoXingBie) ?? undefined
+  const zhengLiYongHuXingBie = 解析性别(jieXiZiFuChuan(qingQiuTi, '用户性别', 'yong_hu_xing_bie')) ?? undefined
+  if (zhengLiYongHuXingBie) {
+    void setMoRenXingBie({
+      yong_hu_id: yongHu.yongHuId,
+      mo_ren_xing_bie: zhengLiYongHuXingBie,
+    }).catch(() => undefined)
+  }
 
   const xinMuZhongDeTaJieXi = jieXiXinMuZhongDeTa(qingQiuTi.xinMuZhongDeTa)
   if (!xinMuZhongDeTaJieXi.cheng_gong) {

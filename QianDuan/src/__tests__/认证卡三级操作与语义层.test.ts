@@ -171,7 +171,6 @@ describe('字号只走令牌，字重只有两档', () => {
 
   it('标题落在 20 档并登记为局部令牌', () => {
     expect(取值(深档, '--zihao-biaoti')).toBe('20px')
-    expect(取值(深档, '--zihao-tubiao')).toBe('22px')
     expect(取值(取块(登录块, '.biaodan-biaoti {'), 'font-size')).toBe('var(--zihao-biaoti)')
   })
 })
@@ -355,10 +354,9 @@ describe('字段浮标与输入值的浅档修复', () => {
 })
 
 describe('动效只做状态确认', () => {
-  it('品牌标不再无限浮动，动画与发光一律关掉', () => {
-    const 图标 = 取块(登录块, '.app-tubiao {')
-    expect(取值(图标, 'animation')).toBe('none')
-    expect(取值(图标, 'filter')).toBe('none')
+  it('顶部图标已整体移除，浮动动画与发光随之消失', () => {
+    expect(登录).not.toContain('app-tubiao')
+    expect(登录块).not.toContain('--zihao-tubiao')
     for (const 块 of [登录块, 找回块]) expect(块).not.toContain('tubiao-fudong')
   })
 

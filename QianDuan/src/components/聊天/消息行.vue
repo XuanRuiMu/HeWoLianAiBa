@@ -6,7 +6,11 @@
     </div>
     <div v-if="cheHuiWenBen" class="chehui-tishi">{{ cheHuiWenBen }}</div>
     <template v-else>
-      <div v-if="!wuWaiKe" class="qipao-waike" :class="waiKeLeiMing">
+      <div
+        v-if="!wuWaiKe"
+        class="qipao-waike"
+        :class="[waiKeLeiMing, { 'qipao-fasong-zhong': faSongZhong }]"
+      >
         <slot />
       </div>
       <slot v-else />
@@ -150,6 +154,11 @@ const emit = defineEmits<{
   background: transparent;
 }
 
+.qipao-waike.qipao-fasong-zhong {
+  filter: grayscale(1);
+  opacity: 0.68;
+}
+
 .chehui-tishi {
   font-size: var(--ziti-xiao);
   color: var(--wenben-tishi);
@@ -204,6 +213,13 @@ const emit = defineEmits<{
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fasong-zhuangtai-zhuanquan {
+    animation: none;
+    border-top-color: var(--wenben-tishi);
   }
 }
 </style>
