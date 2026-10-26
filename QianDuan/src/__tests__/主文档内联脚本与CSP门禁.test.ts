@@ -28,7 +28,7 @@ function 解析指令(策略: string): Map<string, string> {
 function 提取location块(文本: string, 块头: string): string {
   const 起位 = 文本.indexOf(块头)
   expect(起位, `nginx 范本缺少 ${块头}`).toBeGreaterThanOrEqual(0)
-  let 深度 = 0
+  let 深度 = 1
   let 末位 = 起位
   for (let 下标 = 起位 + 块头.length; 下标 < 文本.length; 下标 += 1) {
     const 字符 = 文本[下标]

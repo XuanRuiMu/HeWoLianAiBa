@@ -20,9 +20,9 @@ echo "域名: $DOMAIN"
 echo "邮箱: ${EMAIL:-未提供（将使用 --register-unsafely-without-email）}"
 echo "========================================"
 
-NGINX_CONF="$SCRIPT_DIR/nginx.conf"
+NGINX_CONF="$SCRIPT_DIR/nginx-docker.conf"
 if [ ! -f "$NGINX_CONF" ]; then
-    echo "错误: 找不到 nginx.conf ($NGINX_CONF)"
+    echo "错误: 找不到 nginx-docker.conf ($NGINX_CONF)"
     exit 1
 fi
 

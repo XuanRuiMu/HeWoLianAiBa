@@ -1,101 +1,32 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
+const 配置 = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../../BuShu/nginx.conf'), 'utf8')
 
-describe('nginx 配置缓存规则验证', () => {
-  describe('缓存规则逻辑验证', () => {
-    it('index.html 应该设置 no-cache', () => {
-      const indexHtmlCacheControl = 'no-store, no-cache, must-revalidate, max-age=0'
-      expect(indexHtmlCacheControl).toContain('no-cache')
-      expect(indexHtmlCacheControl).toContain('max-age=0')
-    })
-
-    it('带 hash 的静态资源应该设置 immutable 长缓存', () => {
-      const hashResourceCacheControl = 'public, max-age=31536000, immutable'
-      expect(hashResourceCacheControl).toContain('immutable')
-      expect(hashResourceCacheControl).toContain('max-age=31536000')
-    })
-
-    it('非 hash 静态资源应该设置短缓存', () => {
-      const nonHashCacheControl = 'public, max-age=3600'
-      expect(nonHashCacheControl).toContain('max-age=3600')
-    })
-
-    it('brotli 压缩配置应该启用', () => {
-      const brotliConfig = {
-        on: true,
-        vary: true,
-        comp_level: 6,
-        types: [
-          'text/plain',
-          'text/css',
-          'text/xml',
-          'application/json',
-          'application/javascript',
-          'application/xml+rss',
-          'application/atom+xml',
-          'image/svg+xml',
-        ],
-      }
-
-      expect(brotliConfig.on).toBe(true)
-      expect(brotliConfig.vary).toBe(true)
-      expect(brotliConfig.comp_level).toBe(6)
-      expect(brotliConfig.types).toContain('application/javascript')
-      expect(brotliConfig.types).toContain('text/css')
-    })
-
-    it('hash 文件名正则匹配应该正确', () => {
-      const hashPattern = /\.[a-f0-9]{8,}\.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?|webp|avif)$/
-
-      expect('app.a1b2c3d4.js').toMatch(hashPattern)
-      expect('style.abcdef12.css').toMatch(hashPattern)
-      expect('image.1234abcd.png').toMatch(hashPattern)
-      expect('font.abcdef01.woff2').toMatch(hashPattern)
-
-      expect('app.js').not.toMatch(hashPattern)
-      expect('style.css').not.toMatch(hashPattern)
-      expect('image.png').not.toMatch(hashPattern)
-    })
+describe('nginx 生产配置', () => {
+  it('静态根目录指向部署产物', () => {
+    expect(配置).toContain('root /opt/lianaiba/QianDuan/dist;')
   })
 
-  describe('nginx 配置语法验证', () => {
-    it('nginx.conf 应该包含 brotli 指令', () => {
-      const nginxConfig = `
-        brotli on;
-        brotli_vary on;
-        brotli_comp_level 6;
-        brotli_types text/plain text/css application/javascript;
-      `
+  it('API 与 WebSocket 反代到本机后端', () => {
+    expect(配置).toContain('proxy_pass http://127.0.0.1:3000;')
+    expect(配置).toContain('location /socket.io/')
+  })
 
-      expect(nginxConfig).toContain('brotli on;')
-      expect(nginxConfig).toContain('brotli_vary on;')
-      expect(nginxConfig).toContain('brotli_comp_level 6;')
-    })
+  it('入口不缓存，哈希资源长缓存', () => {
+    expect(配置).toContain('no-store, no-cache, must-revalidate, max-age=0')
+    expect(配置).toContain('public, max-age=31536000, immutable')
+  })
 
-    it('nginx.conf 应该包含 index.html 缓存规则', () => {
-      const indexHtmlConfig = `
-        location = /index.html {
-            add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
-        }
-      `
+  it('保留限流与上传体积设置', () => {
+    expect(配置).toContain('limit_req zone=api_zheng_chang burst=20 nodelay;')
+    expect(配置).toContain('client_max_body_size 60m;')
+  })
 
-      expect(indexHtmlConfig).toContain('no-store')
-      expect(indexHtmlConfig).toContain('no-cache')
-      expect(indexHtmlConfig).toContain('max-age=0')
-    })
-
-    it('nginx.conf 应该包含 hash 资源缓存规则', () => {
-      const hashResourceConfig = `
-        location ~* \\.(js|css|png|jpg)$ {
-            if ($uri ~* "\\.[a-f0-9]{8,}\\.(js|css|png|jpg)$") {
-                add_header Cache-Control "public, max-age=31536000, immutable";
-            }
-        }
-      `
-
-      expect(hashResourceConfig).toContain('immutable')
-      expect(hashResourceConfig).toContain('max-age=31536000')
-      expect(hashResourceConfig).toContain('[a-f0-9]{8,}')
-    })
+  it('拒绝访问点文件', () => {
+    expect(配置).toContain('location ~ /\\. {')
+    expect(配置).toContain('deny all;')
   })
 })

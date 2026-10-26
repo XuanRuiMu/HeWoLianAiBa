@@ -90,7 +90,7 @@ npm --prefix QianDuan run dev    # 前端（Vite dev server）
 docker compose up -d             # HouDuan + QianDuan + postgres + redis + nginx
 ```
 
-> 完整部署与备份见 [BuShu/备份与恢复.md](BuShu/备份与恢复.md)、[BuShu/nginx.conf](BuShu/nginx.conf)。
+> 完整部署与备份见 [BuShu/备份与恢复.md](BuShu/备份与恢复.md)、[BuShu/nginx.conf](BuShu/nginx.conf)（生产原生配置）与 [BuShu/nginx-docker.conf](BuShu/nginx-docker.conf)（Docker 旧配置）。
 
 ---
 
