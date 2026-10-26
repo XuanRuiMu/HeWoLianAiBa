@@ -4,7 +4,7 @@
       <VueDraggable
         :model-value="fenLeiBiaoFuBen"
         :disabled="caoZuoZhong"
-        :animation="200"
+        :animation="tuoZhuaiDongHua"
         direction="horizontal"
         :filter="'.fenlei-tu-biao-anniu'"
         :prevent-on-filter="false"
@@ -114,9 +114,12 @@
 </template>
 
 <script setup lang="ts">
+
+const tuoZhuaiDongHua = jianShaoDongXiaoGuo() ? 0 : 200
 import { computed, nextTick, ref } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { huoQuFanYi } from '@/config/翻译表'
+import { jianShaoDongXiaoGuo } from '@/utils/动效偏好'
 import ChangFangShuRuKuang from '@/components/表单/长方框输入框.vue'
 import type { ZhanJiFenLei } from '@/types/类型定义'
 

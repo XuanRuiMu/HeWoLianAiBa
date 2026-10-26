@@ -2,6 +2,7 @@ import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianWriterPrompt } from './Prompt构建器'
 import { zhuRuBenLunTuXiangKuai } from './对话渲染'
 import { daiShuKaiChangYuanYu, fuJiaKaiChangYuanYu, qingLiXiaoXi } from './开场候选约束'
+import { 检索通用知识, type 通用知识检索结果 } from './通用知识检索'
 import type { DuiHuaKuai } from '../utils/DeepSeek客户端'
 import type { AIYinQingShuRu, DirectorCeLue, WriterJieGuo } from '../types'
 import type { CanShuShangXiaWen } from '../config/AI参数策略'
@@ -11,8 +12,9 @@ export async function shengChengWriterHuiFu(
   ceLue?: DirectorCeLue,
   shangXiaWen?: CanShuShangXiaWen,
   waiBuXinHao?: AbortSignal,
+  zhiShi: 通用知识检索结果 = 检索通用知识(shuRu.yong_hu_xin_xiao_xi, !shuRu.zui_jia_shuo_de_shi),
 ): Promise<WriterJieGuo> {
-  const tiShiCi = gouJianWriterPrompt(shuRu, ceLue)
+  const tiShiCi = gouJianWriterPrompt(shuRu, ceLue, zhiShi)
 
   const tuXiangKuai = await zhuRuBenLunTuXiangKuai(shuRu.dui_hua_li_shi)
   const yongHuNeiRong: string | DuiHuaKuai[] =

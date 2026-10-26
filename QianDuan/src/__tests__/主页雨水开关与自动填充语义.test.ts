@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import 横条输入框 from '@/components/表单/横条输入框.vue'
@@ -36,17 +36,26 @@ describe('主页背景雨水开关：默认开启、可关可开、状态唯一'
     expect(JSON.parse(localStorage.getItem(本地产(ZHU_YE_BEI_JING_YU_SHUI_JIAN)) as string)).toBe(true)
   })
 
-  it('菜单雨水项是单行点击切换，文案取自翻译表', () => {
+  it('旧存储为损坏值时不报错，按默认开启处理，再次切换仍写入', () => {
+    localStorage.setItem(本地产(ZHU_YE_BEI_JING_YU_SHUI_JIAN), '不是合法JSON')
+    setActivePinia(createPinia())
+    const 仓库 = 使用用户设置仓库()
+    expect(仓库.zhuYeBeiJingYuShui).toBe(true)
+    仓库.qieHuanZhuYeBeiJingYuShui(false)
+    expect(仓库.zhuYeBeiJingYuShui).toBe(false)
+    expect(JSON.parse(localStorage.getItem(本地产(ZHU_YE_BEI_JING_YU_SHUI_JIAN)) as string)).toBe(false)
+  })
+
+  it('菜单雨水项是单行点击切换，文案精确为切换雨水状态', () => {
     const 菜单 = 读('components/全局菜单.vue')
-    expect(huoQuFanYi('caidan', 'zhuYeBeiJingYuShui')).toBe('主页背景下雨')
-    expect(huoQuFanYi('caidan', 'xiaYu')).toBe('下雨')
-    expect(huoQuFanYi('caidan', 'tingYu')).toBe('停雨')
+    expect(huoQuFanYi('caidan', 'qieHuanYuShuiZhuangTai')).toBe('切换雨水状态')
     expect(菜单).toContain('role="menuitem"')
     expect(菜单).toContain(':aria-pressed="设置仓库.zhuYeBeiJingYuShui"')
     expect(菜单).toContain('@click="qieHuanZhuYeYuShui"')
-    expect(菜单).toContain("huoQuFanYi('caidan', 'xiaYu')")
-    expect(菜单).toContain("huoQuFanYi('caidan', 'tingYu')")
+    expect(菜单).toContain("huoQuFanYi('caidan', 'qieHuanYuShuiZhuangTai')")
     expect(菜单).toContain('设置仓库.qieHuanZhuYeBeiJingYuShui(!设置仓库.zhuYeBeiJingYuShui)')
+    expect(菜单).not.toContain("'xiaYu'")
+    expect(菜单).not.toContain("'tingYu'")
     expect(菜单).not.toContain('menuitemcheckbox')
     expect(菜单).not.toContain('qita-caidan-kaiguan')
   })
@@ -80,6 +89,77 @@ describe('主页背景雨水开关：默认开启、可关可开、状态唯一'
     expect(根).not.toContain('setIntensity')
     expect(根).not.toContain('背景实验室')
     expect(读('components/全局菜单.vue')).not.toContain('__experience')
+  })
+})
+
+describe('切换雨水状态：开关驱动引擎天气状态机（与自然轮换同一条渐变路径）', () => {
+  interface 天气控制器 {
+    tweaksValue: { forceState: string }
+    cycleTimer: number
+  }
+
+  function 执行雨脚本(): void {
+    new Function(readFileSync(resolve(源码根, '../public/grass-bg/scripts/block-10.js'), 'utf8'))()
+  }
+
+  function 搭建雨系统() {
+    const 控制器: 天气控制器 = { tweaksValue: { forceState: 'none' }, cycleTimer: 12.5 }
+    ;(window as unknown as Record<string, unknown>).__experience = {
+      postProcessing: { weatherController: 控制器 },
+    }
+    return { 控制器 }
+  }
+
+  function 发送雨消息(kaiQi: boolean): void {
+    window.dispatchEvent(new MessageEvent('message', { data: { type: 'grass-rain', enabled: kaiQi } }))
+  }
+
+  it('开启走 forceState=rain、关闭走 forceState=clear，由引擎原生 transitionTo 渐变', () => {
+    const 系统 = 搭建雨系统()
+    执行雨脚本()
+    发送雨消息(true)
+    expect(系统.控制器.tweaksValue.forceState).toBe('rain')
+    发送雨消息(false)
+    expect(系统.控制器.tweaksValue.forceState).toBe('clear')
+  })
+
+  it('切换 forceState 的同时重置轮换计时，且不直捅强度接口', () => {
+    const 系统 = 搭建雨系统()
+    执行雨脚本()
+    发送雨消息(true)
+    expect(系统.控制器.cycleTimer).toBe(0)
+    const 脚本 = readFileSync(resolve(源码根, '../public/grass-bg/scripts/block-10.js'), 'utf8')
+    expect(脚本).not.toContain('setIntensity')
+    expect(脚本).not.toContain('waterDropsEffect')
+    expect(脚本).not.toContain('crossfadeFactor')
+  })
+
+  it('轮询把外部改动拉回开关状态（第二真源已根除）', () => {
+    vi.useFakeTimers()
+    try {
+      const 系统 = 搭建雨系统()
+      执行雨脚本()
+      发送雨消息(true)
+      系统.控制器.tweaksValue.forceState = 'none'
+      vi.advanceTimersByTime(1200)
+      expect(系统.控制器.tweaksValue.forceState).toBe('rain')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('引擎尚未就绪时消息不抛错，就绪后轮询补齐同步', () => {
+    vi.useFakeTimers()
+    try {
+      ;(window as unknown as Record<string, unknown>).__experience = undefined
+      执行雨脚本()
+      发送雨消息(true)
+      const 系统 = 搭建雨系统()
+      vi.advanceTimersByTime(1200)
+      expect(系统.控制器.tweaksValue.forceState).toBe('rain')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
 

@@ -96,6 +96,26 @@ const 榜单: PaiHangXiangMu[] = [
     qi_quan_chang: 2,
     zui_gao_lian_sheng: 6,
   },
+  {
+    pai_ming: 4,
+    yong_hu_ming: '宋叙白',
+    ji_fen: 2310,
+    duan_wei: '至尊星耀',
+    sheng_chang: 24,
+    fu_chang: 9,
+    qi_quan_chang: 1,
+    zui_gao_lian_sheng: 5,
+  },
+  {
+    pai_ming: 5,
+    yong_hu_ming: '姜杳杳',
+    ji_fen: 2140,
+    duan_wei: '至尊星耀',
+    sheng_chang: 21,
+    fu_chang: 10,
+    qi_quan_chang: 3,
+    zui_gao_lian_sheng: 4,
+  },
 ]
 
 const 当前对局 = {
@@ -135,21 +155,56 @@ beforeEach(() => {
 })
 
 describe('挑战主页信息结构', () => {
-  it('四个组别恒定成行，缺失组别落未参赛，统计只算已参赛', async () => {
+  it('我的排位积分以四组独立计分二级标题和固定顺序配色卡展示', async () => {
     const 包 = await 挂主页()
-    expect(包.findAll('.zubie-hang')).toHaveLength(4)
-    expect(包.findAll('.zubie-kong')).toHaveLength(1)
-    expect(包.find('.zubie-kong').text()).toBe(huoQuFanYi('tiaoZhan', 'weiCanJia'))
-    const 统计 = 包.findAll('.tongji-xiang dd').map((项) => 项.text())
-    expect(统计[0]).toContain('3')
-    expect(统计[0]).toContain('4')
-    expect(统计[1]).toBe('1420')
+    const 卡 = 包.findAll('.jifen-ka')
+    expect(卡).toHaveLength(4)
+    expect(卡.map((项) => 项.attributes('data-zu-bie'))).toEqual([
+      'nan_nv',
+      'nv_nan',
+      'nan_nan',
+      'nv_nv',
+    ])
+    expect(卡.map((项) => 项.find('.zubie-ming').text())).toEqual([
+      '男 × 女',
+      '女 × 男',
+      '男 × 男',
+      '女 × 女',
+    ])
+    expect(卡[0]?.attributes('style')).toContain(
+      'background-color: var(--xingbie-nan-tan-beijing)',
+    )
+    expect(卡[0]?.attributes('style')).toContain(
+      'border-color: var(--xingbie-nv-shen-biankuang)',
+    )
+    expect(卡[1]?.attributes('style')).toContain(
+      'background-color: var(--xingbie-nv-tan-beijing)',
+    )
+    expect(卡[1]?.attributes('style')).toContain(
+      'border-color: var(--xingbie-nan-shen-biankuang)',
+    )
+    expect(卡[2]?.attributes('style')).toContain(
+      'border-color: var(--xingbie-nan-shen-biankuang)',
+    )
+    expect(卡[3]?.attributes('style')).toContain(
+      'border-color: var(--xingbie-nv-shen-biankuang)',
+    )
+    expect(卡[2]?.find('.zubie-kong').text()).toBe(huoQuFanYi('tiaoZhan', 'weiCanSai'))
+    expect(包.find('.qu-biaoti').text()).toBe('四组独立计分')
+    expect(包.find('.qu-fu').text()).toBe('我的排位积分')
+    expect(包.find('.tou-tongji').exists()).toBe(false)
+    expect(包.find('.zubie-kong-ti').exists()).toBe(false)
+    expect(包.text()).not.toContain('##')
+    expect(包.text()).not.toContain('排位赛：')
+    expect(包.text()).not.toContain('性格、人设、是否渣型全部随机隐藏')
     包.unmount()
   })
 
-  it('排行摘要展示前三名与本组名次，并随首个已参赛组别加载', async () => {
+  it('排行摘要展示前五名与本组名次，并随首个已参赛组别加载', async () => {
     const 包 = await 挂主页()
-    expect(包.findAll('.zhaiyao-hang')).toHaveLength(3)
+    expect(包.findAll('.zhaiyao-hang')).toHaveLength(5)
+    expect(包.find('.zhaiyao-hang').text()).toContain('江晚吟')
+    expect(包.findAll('.zhaiyao-hang')[4]?.text()).toContain('姜杳杳')
     expect(包.find('.zhaiyao-wo').text()).toContain('3')
     expect(huoQuPaiHangBang).toHaveBeenCalledWith('nan_nv')
     包.unmount()
@@ -231,15 +286,16 @@ describe('挑战渣型提示', () => {
 })
 
 describe('挑战积分榜', () => {
-  it('按组别渲染真实列表，前三名带金色标记', async () => {
+  it('按组别渲染真实列表，前三名带金色标记且头部统计已移除', async () => {
     const 包 = await 挂榜单()
     const 行 = 包.findAll('.bangdan-hang')
-    expect(行).toHaveLength(3)
+    expect(行).toHaveLength(5)
     expect(行[0]?.text()).toContain('江晚吟')
     expect(行[0]?.text()).toContain('3120')
     expect(行[0]?.classes()).toContain('bangdan-hang--qian')
     expect(行[2]?.classes()).toContain('bangdan-hang--qian')
-    expect(包.findAll('.tou-tongji dd')[0]?.text()).toContain('3')
+    expect(行[3]?.classes()).not.toContain('bangdan-hang--qian')
+    expect(包.find('.tou-tongji').exists()).toBe(false)
     包.unmount()
   })
 
@@ -262,7 +318,7 @@ describe('挑战积分榜', () => {
     expect(包.findAll('.bangdan-hang')).toHaveLength(0)
     expect(包.find('.bangdan-tou').exists()).toBe(false)
     expect(包.find('.bangdan-kong').text()).toContain(huoQuFanYi('tiaoZhan', 'zanWuPaiHang'))
-    expect(包.find('.bangdan-kong').text()).toContain(huoQuFanYi('tiaoZhan', 'bangDanKongFu'))
+    expect(包.find('.bangdan-kong').text()).not.toContain('换个组别看看')
     expect(包.find('.kong-anniu').exists()).toBe(true)
     await 包.find('.kong-anniu').trigger('click')
     expect(路由推).toHaveBeenCalledWith('/tiao-zhan')
@@ -271,19 +327,21 @@ describe('挑战积分榜', () => {
 })
 
 describe('挑战页空态', () => {
-  it('四个组别全无成绩时给出空态提示，而不是只摆四行未参赛', async () => {
+  it('四个组别全无成绩时仍展示四张未参赛积分卡且无额外空态', async () => {
     vi.mocked(huoQuWoDeGaiKuang).mockResolvedValue([])
     const 包 = await 挂主页()
-    expect(包.find('.zubie-kong-ti').exists()).toBe(true)
-    expect(包.find('.zubie-kong-ti').text()).toBe(huoQuFanYi('tiaoZhan', 'zubieKongTiShi'))
-    expect(包.findAll('.zubie-hang')).toHaveLength(4)
+    expect(包.find('.zubie-kong-ti').exists()).toBe(false)
+    expect(包.findAll('.jifen-ka')).toHaveLength(4)
+    expect(包.findAll('.zubie-kong')).toHaveLength(4)
+    expect(包.findAll('.zubie-kong').every((项) => 项.text() === '未参赛')).toBe(true)
     expect(包.find('.anniu-kaiShi').exists()).toBe(true)
     包.unmount()
   })
 
-  it('有成绩时不出现空态提示', async () => {
+  it('有成绩时仅缺失组别显示未参赛且不出现额外空态', async () => {
     const 包 = await 挂主页()
     expect(包.find('.zubie-kong-ti').exists()).toBe(false)
+    expect(包.findAll('.zubie-kong')).toHaveLength(1)
     包.unmount()
   })
 })

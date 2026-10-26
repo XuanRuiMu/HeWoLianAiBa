@@ -78,7 +78,6 @@ distMin: 0.6,
       yaw: 0,
       pitch: 0,
       dist: 5.3,
-locked: false,
         // 2026-10-07 重置：默认不冻结；用户可自由旋转做选景（Enter 仍可切冻结）。
         frozen: false,
         // 2026-10-07 重置：原生树/营火/石头全部恢复引擎默认（可见）。
@@ -266,12 +265,10 @@ locked: false,
 window.__camKey = function (code, down) { keys[code] = !!down; };
     // ---------- Enter：完全冻结相机 ----------
     // 冻结 = 视角与机位都锁死：转视角、平移、升降、推拉、滚轮、程序化 __setCam 全部拒绝。
-    // 冻结时强制退出指针锁定 —— 否则鼠标被困在画面里，用户无法再去点面板上的按钮解锁。
     function setFrozen(on, silent) {
       S.frozen = !!on;
       if (S.frozen) {
         keys = {};                       // 清掉残留按键，避免解锁瞬间突然平移
-        if (anyLock()) { try { document.exitPointerLock(); } catch (eX) {} }
       }
       if (window.__onFreeze) window.__onFreeze(S.frozen, !!silent);
       return S.frozen;
@@ -302,11 +299,6 @@ window.__camKey = function (code, down) { keys[code] = !!down; };
       touch(); emit();
     }
     window.__camMouse = addLook;
-    // ⚠️ 这里刻意不加「必须已锁定」判据：真机自动化验证靠派发 mousemove 断言
-    //    yaw/pitch 变化（脚本无法可靠触发 pointerlock），加判据会让验证失效。
-    // 代价是未锁定时鼠标划过画面也会转视角（记为体验问题）。
-    // 真实路径上「点画面即锁定」把未锁定窗口压到极短，可接受；如需改为
-    // 「按住左键拖动才转视角」，验证脚本要一起改，两者必须同步动。
 window.addEventListener('mousemove', function (e) {
         // 早前这里有个 `if (e.target.id === 'lab-wu') return;` 的死分支 ——
         // 它来自实验室 A 版小样的 HTML 贴纸，而本页面加载的是生产场景（已核实生产
@@ -334,55 +326,6 @@ window.addEventListener('mousemove', function (e) {
       }
       e.preventDefault();
     }, { passive: false });
-
-    // ---------- 指针锁定 ----------
-    function anyLock() {
-      if (document.pointerLockElement) return true;
-      try {
-        if (window.parent && window.parent !== window && window.parent.document.pointerLockElement) return true;
-      } catch (eL) {}
-      return false;
-    }
-    function syncLock() { S.locked = anyLock(); }
-    document.addEventListener('pointerlockchange', syncLock);
-    document.addEventListener('pointerlockerror', syncLock);
-    try { window.parent.document.addEventListener('pointerlockchange', syncLock); } catch (eP) {}
-    // requestPointerLock 在新版 Chrome 返回 Promise，被拒时必须显式 catch，
-    // 否则引擎的合成 click（非用户手势）会抛出未处理的 rejection。
-    // 主目标失败再退到 document.body，全程吞掉异常。
-    window.__camLock = function () {
-      if (S.frozen) return false;           // 冻结时不允许再进入指针锁定
-      var cv = (eng.canvas && eng.canvas.requestPointerLock) ? eng.canvas : document.querySelector('canvas');
-      var targets = [];
-      if (cv && cv.requestPointerLock) targets.push(cv);
-      if (document.body && document.body !== cv && document.body.requestPointerLock) targets.push(document.body);
-      var i = 0;
-      function next() {
-        if (i >= targets.length) { setTimeout(syncLock, 80); return; }
-        var t = targets[i++];
-        try {
-          var pr = t.requestPointerLock();
-          if (pr && typeof pr.then === 'function') {
-            pr.then(function () { setTimeout(syncLock, 80); }, function () { next(); });
-          } else {
-            setTimeout(syncLock, 80);
-          }
-        } catch (eLk) { next(); }
-      }
-      next();
-    };
-    window.__camUnlock = function () {
-      try { document.exitPointerLock(); } catch (eX) {}
-      try { window.parent.document.exitPointerLock(); } catch (eY) {}
-      setTimeout(syncLock, 80);
-    };
-    // 直接点画面也能锁定（此时用户手势在 iframe 内，最可靠）
-    // ⚠️ 放置模式下左键是「落位」，绝不能顺手进指针锁定 —— 锁定后光标被吞，
-    //    幽灵预览会停在屏幕中心，用户再也放不了第二第三个。
-    window.addEventListener('click', function () {
-      if (S.place && S.place.mode) return;
-      if (!S.frozen && !anyLock()) window.__camLock();
-    });
 
     // ---------- 每帧积分：平移机位 ----------
     var lastT = 0;
@@ -424,7 +367,7 @@ window.addEventListener('mousemove', function (e) {
         p: +S.pitch.toFixed(2), a: +S.yaw.toFixed(2),
         px: +S.pos.x.toFixed(4), py: +S.pos.y.toFixed(4), pz: +S.pos.z.toFixed(4),
         tx: +f.x.toFixed(4), ty: +f.y.toFixed(4), tz: +f.z.toFixed(4),
-        locked: S.locked, frozen: !!S.frozen
+        frozen: !!S.frozen
       };
     };
     window.__setCam = function (o) {
@@ -849,23 +792,15 @@ window.__camReady = true;
         return WU_CLEAR_MARGIN_CAM;
       }
     }
-    var wuBuiltMargin = 0, wuBareKey = '', wuBarePending = 0;
-    function wuRectKeyNow() {
-      if (!wuRect) return 'x';
-      return [Math.round(wuRect.l), Math.round(wuRect.t), Math.round(wuRect.w), Math.round(wuRect.h)].join(',');
-    }
+    var wuBuiltMargin = 0, wuBarePending = 0;
     function wuBareWatch() {
       if (!bareDone) return;
-      var k = wuRectKeyNow();
       var m = wuMarginFor();
-      var need = (k !== wuBareKey) || (wuBuiltMargin > 0 && Math.abs(m - wuBuiltMargin) / wuBuiltMargin > 0.15);
-      if (!need) { wuBarePending = 0; return; }
+      if (!(wuBuiltMargin > 0 && Math.abs(m - wuBuiltMargin) / wuBuiltMargin > 0.15)) { wuBarePending = 0; return; }
       var now = performance.now();
       if (!wuBarePending) { wuBarePending = now; return; }
       if (now - wuBarePending < 900) return;
       wuBarePending = 0;
-      wuBareKey = k;
-      bareDone = false;
       try { makeBare(); } catch (eMW) { window.__bareErr = String(eMW && eMW.stack || eMW); }
       window.__bareRebuilds = (window.__bareRebuilds || 0) + 1;
     }
@@ -1420,38 +1355,21 @@ window.__camReady = true;
     // 材质侧：让他成为**真正的深度实体** —— 写深度 + alpha 裁剪。
     // 不写深度时，排在他之后绘制的透明物件（粒子/蝴蝶/远处植被）会无视他直接覆盖上来。
     var WU_ALPHA_TEST = 0.02;
-    // 把世界点投到屏幕。调用方已把组位移归零，footprint 与鼠标位置无关。
-    function wuProject(x, y, z, vw, vh) {
-      var v = new V3(x, y, z);
-      v.applyMatrix4(cam.matrixWorldInverse);
-      v.applyMatrix4(cam.projectionMatrix);
-      return { x: vw * (v.x * 0.5 + 0.5), y: vh * (-v.y * 0.5 + 0.5) };
-    }
-    function wuRayTo(sx, sy, vw, vh, mi) {
-      // wuRay 是惰性创建的（wuRaycastGroundY 里），这里也必须自己保证有，
-      // 否则 null.setFromCamera 会抛异常，被外层 catch 吞掉、footprint 静默变空。
-      if (!wuRay) { wuRay = new eng.raycaster.raycaster.constructor(); wuRay.layers.mask = 0xffffffff; }
-      var kuai = wuSheXianDiMian((sx / vw) * 2 - 1, -(sy / vh) * 2 + 1);
-      if (kuai) return kuai.point;
-      wuRay.setFromCamera({ x: (sx / vw) * 2 - 1, y: -(sy / vh) * 2 + 1 }, cam);
-      var hits = wuRay.intersectObject(mi, false);
-      return hits.length ? hits[0].point : null;
-    }
     function wuBareFootprint(mi) {
       window.__m('足迹计算开始');
-      if (!wuRect || !wuAlpha) return null;
-      var vw = eng.canvas.clientWidth || eng.sizes.width;
-      var vh = eng.canvas.clientHeight || eng.sizes.height;
-      // 1) 从他的屏幕矩形打一组射线，量出身下这块地的世界范围
+      if (!wuBase || !wuAlpha || wuRayN !== WU_SEG) return null;
+      var N = wuRayN;
+      // 1) 世界包围盒直接取自人物网格的基准顶点——footprint 与 mesh 几何同源，
+      //    mesh 不动秃斑永不动（此前按屏幕矩形打射线，视口变化时 mesh 与秃斑分家）
       var minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity, got = 0;
-      for (var i = 0; i <= 11; i++) for (var j = 0; j <= 7; j++) {
-        var p = wuRayTo(wuRect.l + wuRect.w * i / 11, wuRect.t + wuRect.h * j / 7, vw, vh, mi);
-        if (!p) continue;
+      for (var qB = 0; qB <= N * (N + 1) + N; qB++) {
+        if (wuBase[qB * 3 + 1] < -500) continue;
+        var bx = wuBase[qB * 3], bz = wuBase[qB * 3 + 2];
         got++;
-        if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
-        if (p.z < minZ) minZ = p.z; if (p.z > maxZ) maxZ = p.z;
+        if (bx < minX) minX = bx; if (bx > maxX) maxX = bx;
+        if (bz < minZ) minZ = bz; if (bz > maxZ) maxZ = bz;
       }
-      if (got < 8) return null;
+      if (got < (N + 1) * (N + 1) * 0.5) return null;
       var pad = WU_CELL * 2;
       minX -= pad; maxX += pad; minZ -= pad; maxZ += pad;
       // 2) 地面高度：先在粗格(0.08m)上竖直打射线建高度场，细格再双线性插值。
@@ -1463,32 +1381,51 @@ window.__camReady = true;
         var gy0 = wuGaoDuKuai((ax + 0.5) * CELL, (az + 0.5) * CELL);
         H[ax + ',' + az] = gy0 === null ? window.__groundY((ax + 0.5) * CELL, (az + 0.5) * CELL) : gy0;
       }
-      function hAt(x, z) {
-        var fx = x / CELL - 0.5, fz = z / CELL - 0.5;
-        var ix = Math.floor(fx), iz = Math.floor(fz), tx = fx - ix, tz = fz - iz;
-        var h00 = H[ix + ',' + iz], h10 = H[(ix + 1) + ',' + iz];
-        var h01 = H[ix + ',' + (iz + 1)], h11 = H[(ix + 1) + ',' + (iz + 1)];
-        if (h00 == null || h10 == null || h01 == null || h11 == null) return null;
-        return (h00 * (1 - tx) + h10 * tx) * (1 - tz) + (h01 * (1 - tx) + h11 * tx) * tz;
+      // 3) 身体判定同样以网格为源：每个世界格子在网格四边形内做重心插值得出贴图 UV，
+      //    alpha>32 ⇒ 属于他身体。透视扭曲由三角形重心坐标自然吸收，不经屏幕投影。
+      function wuZhongXin(ax, az, bx, bz, cx, cz, px, pz) {
+        var d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz);
+        if (Math.abs(d) < 1e-12) return null;
+        var l1 = ((bz - cz) * (px - cx) + (cx - bx) * (pz - cz)) / d;
+        var l2 = ((cz - az) * (px - cx) + (ax - cx) * (pz - cz)) / d;
+        var l3 = 1 - l1 - l2;
+        return (l1 >= -1e-6 && l2 >= -1e-6 && l3 >= -1e-6) ? [l1, l2, l3] : null;
       }
-      // 3) 逐格把地面点投回屏幕：落在他的轮廓内（alpha 不透明）⇒ 这格属于他身体。
-      //    用**原始 alpha**，不再内缩 —— 旧版故意内缩 4px 并在下缘留一条草带，
-      //    让草从他身侧/脚踝长出来；用户要求把这些草删掉。
-      var hits = [];
-      var cx0 = Math.floor(minX / WU_CELL), cx1 = Math.floor(maxX / WU_CELL);
-      var cz0 = Math.floor(minZ / WU_CELL), cz1 = Math.floor(maxZ / WU_CELL);
-      for (var cx = cx0; cx <= cx1; cx++) for (var cz = cz0; cz <= cz1; cz++) {
-        var x = (cx + 0.5) * WU_CELL, z = (cz + 0.5) * WU_CELL;
-        var y = hAt(x, z);
-        if (y === null || y === undefined) continue;
-        var s2 = wuProject(x, y, z, vw, vh);
-        if (s2.x < wuRect.l || s2.x > wuRect.l + wuRect.w) continue;
-        if (s2.y < wuRect.t || s2.y > wuRect.t + wuRect.h) continue;
-        var iu = Math.floor((s2.x - wuRect.l) / wuRect.w * wuAlphaW);
-        var iv = Math.floor((s2.y - wuRect.t) / wuRect.h * wuAlphaH);
-        if (iu < 0 || iu >= wuAlphaW || iv < 0 || iv >= wuAlphaH) continue;
-        if (wuAlpha[(iv * wuAlphaW + iu) * 4 + 3] > 32) hits.push(cx + ',' + cz);
+      var hitSet = new Set();
+      for (var gb = 0; gb < N; gb++) {
+        for (var ga = 0; ga < N; ga++) {
+          var i00 = gb * (N + 1) + ga, i10 = i00 + 1, i01 = i00 + N + 1, i11 = i01 + 1;
+          if (wuBase[i00 * 3 + 1] < -500 || wuBase[i10 * 3 + 1] < -500 ||
+              wuBase[i01 * 3 + 1] < -500 || wuBase[i11 * 3 + 1] < -500) continue;
+          var x00 = wuBase[i00 * 3], z00 = wuBase[i00 * 3 + 2];
+          var x10 = wuBase[i10 * 3], z10 = wuBase[i10 * 3 + 2];
+          var x01 = wuBase[i01 * 3], z01 = wuBase[i01 * 3 + 2];
+          var x11 = wuBase[i11 * 3], z11 = wuBase[i11 * 3 + 2];
+          var qMinX = Math.min(x00, x10, x01, x11), qMaxX = Math.max(x00, x10, x01, x11);
+          var qMinZ = Math.min(z00, z10, z01, z11), qMaxZ = Math.max(z00, z10, z01, z11);
+          var u00 = ga / N, v00 = gb / N, u11 = (ga + 1) / N, v11 = (gb + 1) / N;
+          for (var cxq = Math.floor(qMinX / WU_CELL); cxq <= Math.floor(qMaxX / WU_CELL); cxq++) {
+            for (var czq = Math.floor(qMinZ / WU_CELL); czq <= Math.floor(qMaxZ / WU_CELL); czq++) {
+              var pxg = (cxq + 0.5) * WU_CELL, pzg = (czq + 0.5) * WU_CELL;
+              var t1 = wuZhongXin(x00, z00, x10, z10, x11, z11, pxg, pzg);
+              var uvA, uvB;
+              if (t1) {
+                uvA = t1[0] * u00 + t1[1] * u11 + t1[2] * u11;
+                uvB = t1[0] * v00 + t1[1] * v00 + t1[2] * v11;
+              } else {
+                var t2 = wuZhongXin(x00, z00, x11, z11, x01, z01, pxg, pzg);
+                if (!t2) continue;
+                uvA = t2[0] * u00 + t2[1] * u11 + t2[2] * u00;
+                uvB = t2[0] * v00 + t2[1] * v11 + t2[2] * v11;
+              }
+              var iu = Math.floor(uvA * wuAlphaW), iv = Math.floor(uvB * wuAlphaH);
+              if (iu < 0 || iu >= wuAlphaW || iv < 0 || iv >= wuAlphaH) continue;
+              if (wuAlpha[(iv * wuAlphaW + iu) * 4 + 3] > 32) hitSet.add(cxq + ',' + czq);
+            }
+          }
+        }
       }
+      var hits = Array.from(hitSet);
       if (!hits.length) return null;
       // 4) 「他身体占的格子」向四周外扩 WU_CLEAR_MARGIN 米（欧氏圆，不是方角）——
       //    这一圈里的草一律清掉 ⇒ 没有任何草能贴到他身上。
@@ -1498,7 +1435,6 @@ window.__camReady = true;
       wuCamMargin = wuMarginFor();
       var camRad = Math.max(0, Math.round(wuCamMargin / WU_CELL));
       wuBuiltMargin = wuCamMargin;
-      wuBareKey = wuRectKeyNow();
       var grown = new Set();
       // 相机在水平面上的「指向相机」单位向量（从身体质心指向相机）
       var camW = cam.getWorldPosition(new V3());
@@ -1536,7 +1472,7 @@ window.__camReady = true;
       //    阈值定出来的，草只要进不了禁区，叶尖就够不到他的画面。
       window.__m('禁区就绪');
       if (WU_BODY_COLLIDE) {
-        try { wuBuildBodyField(grown, hAt, vw, vh); } catch (eBF) {
+        try { wuBuildBodyField(grown); } catch (eBF) {
           window.__wuBodyErr = '禁区碰撞场构建失败：' + String(eBF && eBF.stack || eBF);
         }
       }
@@ -1548,13 +1484,13 @@ window.__camReady = true;
     //   A   = 压平系数（基座在身体里 = 255）：被他的身体压住的草/花贴地，由他的贴图挡住
     // 判定网格 4mm。掩膜口径与 footprint 完全一致（地面点投回屏幕 → wu-2d.png 原始 alpha>32），
     // 高度复用 footprint 已建好的粗格高度场做双线性插值 —— 绝不逐格打射线（那是 25 秒级开销）。
-    function wuBuildBodyField(hits, hAt, vw, vh) {
+    function wuBuildBodyField(hits) {
       // 归一化：调用方传的是 Set（禁区 grown），早期版本传的是数组（身体脚印 hits）。
       var zoneKeys = [];
       if (hits && typeof hits.forEach === 'function') hits.forEach(function (k) { zoneKeys.push(k); });
       else if (hits) for (var iK = 0; iK < hits.length; iK++) zoneKeys.push(hits[iK]);
       if (!zoneKeys.length) return false;
-      if (!wuAlpha || !wuRect) return false;
+      if (!wuAlpha || !wuBase) return false;
       var bx0 = Infinity, bz0 = Infinity, bx1 = -Infinity, bz1 = -Infinity;
       for (var q = 0; q < zoneKeys.length; q++) {
         var pr = zoneKeys[q].split(','), x = (+pr[0] + 0.5) * WU_CELL, z = (+pr[1] + 0.5) * WU_CELL;
@@ -2259,7 +2195,7 @@ window.__camReady = true;
       return { mul: WU_BARE_MUL.slice(), grain: WU_BARE_GRAIN, applied: !!wuBareU.mul, err: window.__bareYellowErr || null };
     };
     function makeBare() {
-      if (bareDone || !wuRect) return;
+      if (bareDone || !wuBase) return;
       window.__m('足印开始');
       var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
       if (!grass || !grass.chunks || grass.chunks.entries().length < 20) return;
@@ -2270,11 +2206,6 @@ window.__camReady = true;
         loadWuAlpha(function (ok) { if (!ok) bareDone = true; });
         return;
       }
-      // footprint 是静态世界区域，必须与鼠标位置无关：量之前把视差位移临时归零，
-      // 量完立刻还原。定时器回调不会被渲染打断，不存在中间态被看到的问题。
-      var gp = group.position;
-      var sx = gp.x, sy = gp.y, sz = gp.z;
-      if (sx || sy || sz) { gp.set(0, 0, 0); group.updateMatrixWorld(true); cam.updateMatrixWorld(true); }
       var cells = null, res = null;
       // 异常必须留痕：曾因 wuRay 为 null 抛错被这里吞掉，footprint 静默变空，
       // 表现只是「没效果」，查不出原因。
@@ -2283,7 +2214,6 @@ window.__camReady = true;
         window.__bareErr = String(e && e.stack || e); bareDone = true; return;
       }
       window.__m('足迹完成');
-      gp.set(sx, sy, sz); group.updateMatrixWorld(true); cam.updateMatrixWorld(true);
       if (!cells || !cells.size) { bareDone = true; window.__bareDiag = { cells: 0, painted: 0, tris: 0 }; return; }
       // 秃区+过渡带登记为「禁补草区」：删石补草 / 红框补草都必须绕开它，
       // 否则它们后一轮把 g 写回 255，草就又从他身上长出来（旧 'hide' 模式正是这么复发的）。
@@ -2692,6 +2622,9 @@ window.__camReady = true;
       // 挂进世界（与草同一空间）：视差让他和草一起动，深度缓冲判定前后
       var isl = E.world.islands.mainIsland;
       (isl.group || scene).add(wuMesh);
+      // 网格换位 ⇒ footprint 必须随 mesh 同步重算（grassTimer 可能已停，须主动跑）
+      bareDone = false;
+      try { makeBare(); } catch (eB) { window.__bareErr = String(eB && eB.stack || eB); }
       return true;
     }
     // 由射线数据写入顶点位置：每个顶点的视深度 = 该像素处地面视深度 − WU_GROUND_OFFSET。
@@ -3794,7 +3727,6 @@ function wuBakeAuroraNoise(size) {
         if (vok) S.place.variant[S.place.kind] = variantId;
       }
       S.place.mode = true;
-      window.__camUnlock();                       // 光标定位与指针锁定互斥，必须先退出
       ghostFor(S.place.kind);
       notifyPlace();
       return { ok: true, state: placeState() };

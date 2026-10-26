@@ -1,7 +1,25 @@
 <template>
-  <nav class="quanju-caidan">
-    <div class="caidan-neirong">
+  <nav class="quanju-caidan" :data-shou-na-dang="shouNaDang">
+    <div ref="caiDanNeiRongYuan" class="caidan-neirong">
       <div class="caidan-zuo">
+        <button
+          ref="qitaChuFaQi"
+          type="button"
+          class="qita-xuanxiang dian-ji-qu-44"
+          :aria-expanded="qitaCaiDanZhanKai"
+          :aria-controls="qitaCaiDanId"
+          :aria-label="huoQuFanYi('caidan', 'gengDuo')"
+          :title="huoQuFanYi('caidan', 'gengDuo')"
+          aria-haspopup="menu"
+          @click="qieHuanQitaCaiDan"
+          @keydown="qitaChuFaQiJianPan"
+        >
+          <span class="qita-tubiao" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+          </span>
+        </button>
         <div class="fanhui-cao-wei">
           <button
             class="fanhui-anniu dian-ji-qu-44"
@@ -34,10 +52,12 @@
           </button>
         </div>
         <button
-          v-if="!shiLiaoTianLei"
           ref="yongHuChuFaQi"
           type="button"
           class="yonghu-xuanxiang dian-ji-qu-44"
+          :class="{ yincang: !xianShiGeRenXinXi }"
+          :aria-hidden="!xianShiGeRenXinXi"
+          :tabindex="xianShiGeRenXinXi ? 0 : -1"
           :aria-expanded="yongHuCaiDanZhanKai"
           :aria-controls="yongHuCaiDanId"
           :aria-haspopup="用户仓库.dangQianYongHu ? 'menu' : undefined"
@@ -61,7 +81,7 @@
         <div v-if="xianShiHuiHuaMing" class="liaotian-biaoti-zu">
           <span class="jiaose-mingcheng-caidan">{{ xianShiHuiHuaMing }}</span>
           <span v-if="xianShiDuiFangShuRu" class="duifang-shuru-tishi">
-            {{ huoQuFanYi('liaoTian', 'duiFangZhengZaiShuRu') }}
+            {{ duiFangShuRuWenAn }}
           </span>
         </div>
       </div>
@@ -80,7 +100,7 @@
           />
         </div>
         <button
-          v-if="shiLiaoTianYe && 聊天仓库.jiaoSeXinXi && junShiKaiQi"
+          v-if="xianShiJunShi"
           class="junshi-anniu"
           :title="huoQuFanYi('caidan', 'junShiZhiDao')"
           :aria-label="huoQuFanYi('caidan', 'junShiZhiDao')"
@@ -90,7 +110,7 @@
           <span class="junshi-wenzi-duan">{{ huoQuFanYi('caidan', 'junShi') }}</span>
         </button>
         <button
-          v-if="!shiLiaoTianLei"
+          v-if="xianShiZhuTi"
           class="zhuti-qiehuan-anniu dian-ji-qu-44"
           :title="zhutiAnNiuBiaoTi"
           :aria-label="zhutiAnNiuBiaoTi"
@@ -123,7 +143,7 @@
           </span>
         </button>
         <button
-          v-if="用户仓库.dangQianYongHu && !shiLiaoTianLei"
+          v-if="xianShiTongZhi"
           class="tongzhi-anniu dian-ji-qu-44"
           :aria-label="huoQuFanYi('caidan', 'tongZhi')"
           @click="jinRuTongZhi"
@@ -144,29 +164,11 @@
           <span v-if="通知仓库.weiDuShu > 0" class="tongzhi-badge">{{ xianShiTongZhiShu }}</span>
         </button>
         <span
-          v-if="!shiLiaoTianLei"
+          v-if="xianShiBanBen"
           class="banben-wenben"
           :aria-label="`${huoQuFanYi('caidan', 'banBenHao')} ${banBenHao}`"
           >{{ banBenHao }}</span
         >
-        <button
-          ref="qitaChuFaQi"
-          type="button"
-          class="qita-xuanxiang dian-ji-qu-44"
-          :aria-expanded="qitaCaiDanZhanKai"
-          :aria-controls="qitaCaiDanId"
-          :aria-label="huoQuFanYi('caidan', 'gengDuo')"
-          :title="huoQuFanYi('caidan', 'gengDuo')"
-          aria-haspopup="menu"
-          @click="qieHuanQitaCaiDan"
-          @keydown="qitaChuFaQiJianPan"
-        >
-          <span class="qita-tubiao" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 7h16M4 12h16M4 17h16" />
-            </svg>
-          </span>
-        </button>
       </div>
     </div>
 
@@ -281,7 +283,7 @@
                 role="menuitem"
                 class="qita-caidan-xiangmu qita-caidan-xiangmu--yu-shui"
                 :aria-pressed="设置仓库.zhuYeBeiJingYuShui"
-                :aria-label="huoQuFanYi('caidan', 'zhuYeBeiJingYuShui')"
+                :aria-label="huoQuFanYi('caidan', 'qieHuanYuShuiZhuangTai')"
                 data-testid="qita-caidan-zhu-ye-yu-shui"
                 @click="qieHuanZhuYeYuShui"
               >
@@ -298,7 +300,7 @@
                     <path d="M8 19l-1 2M12 19l-1 2M16 19l-1 2" />
                   </svg>
                 </span>
-                <span class="qita-caidan-wenzi">{{ 设置仓库.zhuYeBeiJingYuShui ? huoQuFanYi('caidan', 'tingYu') : huoQuFanYi('caidan', 'xiaYu') }}</span>
+                <span class="qita-caidan-wenzi">{{ huoQuFanYi('caidan', 'qieHuanYuShuiZhuangTai') }}</span>
               </button>
               <button type="button" role="menuitem" class="qita-caidan-xiangmu" @click="jinRuShengYin">
                 <span class="qita-caidan-tubiao" aria-hidden="true">
@@ -309,6 +311,104 @@
                 </span>
                 <span class="qita-caidan-wenzi">{{ huoQuFanYi('sheZhi', 'shengYinBiaoTi') }}</span>
               </button>
+            </div>
+            <button
+              v-if="zhuYeKeYong && !xianShiZhuYe"
+              type="button"
+              role="menuitem"
+              class="qita-caidan-xiangmu"
+              data-testid="qita-caidan-zhu-ye"
+              @click="fanHuiShouYe"
+            >
+              <span class="qita-caidan-tubiao" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 11.5 12 4l8 7.5" />
+                  <path d="M6 10.5V20h12v-9.5" />
+                </svg>
+              </span>
+              <span class="qita-caidan-wenzi">{{ huoQuFanYi('caidan', 'zhuYe') }}</span>
+            </button>
+            <button
+              v-if="!xianShiGeRenXinXi"
+              type="button"
+              role="menuitem"
+              class="qita-caidan-xiangmu"
+              data-testid="qita-caidan-ge-ren"
+              @click="jinRuGeRenXinXi"
+            >
+              <span class="qita-caidan-tubiao" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="8" r="3.5" />
+                  <path d="M5 20a7 7 0 0 1 14 0" />
+                </svg>
+              </span>
+              <span class="qita-caidan-wenzi">{{ geRenXinXiWenAn }}</span>
+            </button>
+            <button
+              v-if="junShiKeYong && !xianShiJunShi"
+              type="button"
+              role="menuitem"
+              class="qita-caidan-xiangmu"
+              data-testid="qita-caidan-jun-shi"
+              :aria-label="huoQuFanYi('caidan', 'junShiZhiDao')"
+              @click="tongZhiJunShiZhiDao"
+            >
+              <span class="qita-caidan-tubiao" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 2l2.4 5.4L20 9l-4 3.9.9 5.6L12 15.9 7.1 18.5 8 12.9 4 9l5.6-1.6z" />
+                </svg>
+              </span>
+              <span class="qita-caidan-wenzi">{{ huoQuFanYi('caidan', 'junShiZhiDao') }}</span>
+            </button>
+            <button
+              v-if="!xianShiZhuTi"
+              type="button"
+              role="menuitem"
+              class="qita-caidan-xiangmu"
+              data-testid="qita-caidan-zhu-ti"
+              :aria-label="zhutiAnNiuBiaoTi"
+              @click="qieHuanZhuti"
+            >
+              <span class="qita-caidan-tubiao" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z" />
+                </svg>
+              </span>
+              <span class="qita-caidan-wenzi">{{ zhutiAnNiuBiaoTi }}</span>
+            </button>
+            <button
+              v-if="用户仓库.dangQianYongHu && !xianShiTongZhi"
+              type="button"
+              role="menuitem"
+              class="qita-caidan-xiangmu"
+              data-testid="qita-caidan-tong-zhi"
+              @click="jinRuTongZhi"
+            >
+              <span class="qita-caidan-tubiao" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                  <path d="M10 21h4" />
+                </svg>
+              </span>
+              <span class="qita-caidan-wenzi">{{ huoQuFanYi('caidan', 'tongZhi') }}</span>
+              <span v-if="通知仓库.weiDuShu > 0" class="qita-caidan-shu">{{ xianShiTongZhiShu }}</span>
+            </button>
+            <div v-if="!xianShiBanBen" class="qita-caidan-banben" data-testid="qita-caidan-ban-ben">
+              {{ huoQuFanYi('caidan', 'banBenHao') }} {{ banBenHao }}
             </div>
             <div class="qita-caidan-fenge" role="separator" />
             <div class="qita-caidan-fenzu" aria-hidden="true">{{ huoQuFanYi('caidan', 'guanYuFenZu') }}</div>
@@ -336,16 +436,6 @@
               <div class="qita-caidan-fenge" role="separator" />
               <div class="qita-caidan-fenzu" aria-hidden="true">{{ huoQuFanYi('caidan', 'zhangHaoFenZu') }}</div>
               <div role="group" :aria-label="huoQuFanYi('caidan', 'zhangHaoFenZu')">
-                <button type="button" role="menuitem" class="qita-caidan-xiangmu" @click="jinRuTongZhi">
-                  <span class="qita-caidan-tubiao" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-                      <path d="M10 21h4" />
-                    </svg>
-                  </span>
-                  <span class="qita-caidan-wenzi">{{ huoQuFanYi('caidan', 'tongZhi') }}</span>
-                  <span v-if="通知仓库.weiDuShu > 0" class="qita-caidan-shu">{{ xianShiTongZhiShu }}</span>
-                </button>
                 <button type="button" role="menuitem" class="qita-caidan-xiangmu" @click="jinRuHaoYou">
                   <span class="qita-caidan-tubiao" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -366,7 +456,13 @@
                   </span>
                   <span class="qita-caidan-wenzi">{{ huoQuFanYi('caidan', 'guoWangZhanJi') }}</span>
                 </button>
-                <button type="button" role="menuitem" class="qita-caidan-xiangmu" @click="jinRuZhangHaoAnQuan">
+                <button
+                  v-if="xianShiGeRenXinXi"
+                  type="button"
+                  role="menuitem"
+                  class="qita-caidan-xiangmu"
+                  @click="jinRuZhangHaoAnQuan"
+                >
                   <span class="qita-caidan-tubiao" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M4 8h8M16 8h4M4 16h4M12 16h8" />
@@ -422,6 +518,7 @@ import { 使用通知仓库 } from '@/stores/通知'
 import { huoQuFanYi } from '@/config/翻译表'
 import { 使用浮层定位, 使用浮层关闭 } from '@/components/通用菜单.vue'
 import { huoQuJunShiKaiGuan, laQuTeZhengKaiGuan, teZhengKaiGuanCuoWu } from '@/utils/TeZhengKaiGuan'
+import { weiDuFengDing } from '@/utils/未读封顶'
 import { yingYongBanBen } from '@/config/站点配置'
 import TouXiang from '@/components/头像.vue'
 import RequestError from '@/components/请求错误.vue'
@@ -439,6 +536,8 @@ const route = useRoute()
 
 const yongHuCaiDanZhanKai = ref(false)
 const qitaCaiDanZhanKai = ref(false)
+let yongHuCaiDanCaoZuo = 0
+let qitaCaiDanCaoZuo = 0
 const xieYiXianShi = ref(false)
 const xieYiLeiXing = ref<'yongHuXieYi' | 'yinSiZhengCe'>('yongHuXieYi')
 
@@ -474,7 +573,7 @@ const {
   开始跟踪: 跟踪QitaWeiZhi,
   结束跟踪: 停止QitaWeiZhi,
 } = 使用浮层定位(qitaChuFaQi, qitaFuCeng, {
-  duiQi: 'you',
+  duiQi: 'zuo',
   jianGe: 8,
   zuiXiaoKuanDu: 208,
   zuiDaKuanDu: 260,
@@ -670,15 +769,31 @@ const xianShiFanHui = computed(() => {
   return !yinCangLuYou.includes(route.name as string)
 })
 
-const xianShiZhuYe = computed(() => {
+const zhuYeKeYong = computed(() => {
   const yinCangLuYou = ['zhuJieMian', 'dengLu', 'zhuCe']
-  return !yinCangLuYou.includes(route.name as string) && !shiLiaoTianLei.value
+  return !yinCangLuYou.includes(route.name as string)
 })
 
 const shiLiaoTianYe = computed(() => route.name === 'liaoTian')
 const shiHaoYouLiaoTian = computed(() => route.name === 'haoYouLiaoTian')
 const shiLiaoTianLei = computed(() => shiLiaoTianYe.value || shiHaoYouLiaoTian.value)
 const junShiKaiQi = computed(() => huoQuJunShiKaiGuan())
+const junShiKeYong = computed(
+  () => shiLiaoTianYe.value && !!聊天仓库.jiaoSeXinXi && junShiKaiQi.value,
+)
+const xianShiJunShi = computed(() => junShiKeYong.value && mingLingKeJian('junShi'))
+const xianShiZhuYe = computed(() => zhuYeKeYong.value && mingLingKeJian('zhuYe'))
+const xianShiGeRenXinXi = computed(() => mingLingKeJian('geRen'))
+const xianShiZhuTi = computed(() => mingLingKeJian('zhuTi'))
+const xianShiTongZhi = computed(
+  () => !!用户仓库.dangQianYongHu && mingLingKeJian('tongZhi'),
+)
+const xianShiBanBen = computed(() => mingLingKeJian('banBen'))
+const geRenXinXiWenAn = computed(() =>
+  用户仓库.dangQianYongHu
+    ? huoQuFanYi('caidan', 'zhangHaoSheZhi')
+    : huoQuFanYi('renZheng', 'dengLu'),
+)
 
 const xianShiJiaoSeMing = computed(() => {
   return (
@@ -698,13 +813,31 @@ const xianShiHuiHuaMing = computed(() => {
   return ''
 })
 
-const xianShiDuiFangShuRu = computed(
-  () => shiLiaoTianYe.value && !!聊天仓库.jiaoSeXinXi && 聊天仓库.zhengZaiShuRu,
+const shouCiJinRuWeiDu = ref(true)
+watch(shiLiaoTianYe, (shi) => {
+  if (shi) shouCiJinRuWeiDu.value = true
+})
+watch(
+  () => 聊天仓库.xiaoXiLieBiao.length,
+  (xin, jiu) => {
+    if (xin > jiu && !聊天仓库.shouTiaoShiAI) shouCiJinRuWeiDu.value = false
+    if (xin > jiu && 聊天仓库.shouTiaoShiAI && xin > 1) shouCiJinRuWeiDu.value = false
+  },
 )
 
-const xianShiTongZhiShu = computed(() => {
-  return 通知仓库.weiDuShu > 99 ? '99+' : String(通知仓库.weiDuShu)
-})
+const xianShiDuiFangShuRu = computed(
+  () =>
+    shiLiaoTianYe.value &&
+    !!聊天仓库.jiaoSeXinXi &&
+    (聊天仓库.shouTiaoShiAI ? shouCiJinRuWeiDu.value : 聊天仓库.zhengZaiShuRu),
+)
+const duiFangShuRuWenAn = computed(() =>
+  聊天仓库.shouTiaoShiAI && shouCiJinRuWeiDu.value
+    ? huoQuFanYi('tianJiaWeiXin', 'dengDaiTouRen')
+    : huoQuFanYi('liaoTian', 'duiFangZhengZaiShuRu'),
+)
+
+const xianShiTongZhiShu = computed(() => weiDuFengDing(通知仓库.weiDuShu))
 
 const zhutiAnNiuBiaoTi = computed(() => {
   return 主题仓库.dangQianZhuti === 浅色值
@@ -734,41 +867,51 @@ function 当前XiangMuSuoYin(rongQi: HTMLElement | null): number {
 
 async function 打开YongHuCaiDan(jianPanJinRu: boolean): Promise<void> {
   if (!用户仓库.dangQianYongHu || yongHuCaiDanZhanKai.value) return
+  const 本次操作 = ++yongHuCaiDanCaoZuo
   qitaCaiDanZhanKai.value = false
   yongHuCaiDanZhanKai.value = true
   await nextTick()
+  if (shouNaYiXieZai || 本次操作 !== yongHuCaiDanCaoZuo || !yongHuCaiDanZhanKai.value) return
   计算YongHuWeiZhi()
   跟踪YongHuWeiZhi()
   await nextTick()
+  if (shouNaYiXieZai || 本次操作 !== yongHuCaiDanCaoZuo || !yongHuCaiDanZhanKai.value) return
   yongHuGunDongTiao.开始观察()
   if (jianPanJinRu) 焦点XiangMu(yongHuFuCeng.value, 'shou')
   else yongHuFuCeng.value?.focus()
 }
 
 function 关闭YongHuCaiDan(fanHuiJiaoDian: boolean): void {
+  yongHuCaiDanCaoZuo += 1
   if (!yongHuCaiDanZhanKai.value) return
   yongHuCaiDanZhanKai.value = false
   停止YongHuWeiZhi()
+  yongHuGunDongTiao.停止观察()
   if (fanHuiJiaoDian) void nextTick(() => yongHuChuFaQi.value?.focus())
 }
 
 async function 打开QitaCaiDan(jianPanJinRu: boolean): Promise<void> {
   if (qitaCaiDanZhanKai.value) return
+  const 本次操作 = ++qitaCaiDanCaoZuo
   yongHuCaiDanZhanKai.value = false
   qitaCaiDanZhanKai.value = true
   await nextTick()
+  if (shouNaYiXieZai || 本次操作 !== qitaCaiDanCaoZuo || !qitaCaiDanZhanKai.value) return
   计算QitaWeiZhi()
   跟踪QitaWeiZhi()
   await nextTick()
+  if (shouNaYiXieZai || 本次操作 !== qitaCaiDanCaoZuo || !qitaCaiDanZhanKai.value) return
   qitaGunDongTiao.开始观察()
   if (jianPanJinRu) 焦点XiangMu(qitaFuCeng.value, 'shou')
   else qitaFuCeng.value?.focus()
 }
 
 function 关闭QitaCaiDan(fanHuiJiaoDian: boolean): void {
+  qitaCaiDanCaoZuo += 1
   if (!qitaCaiDanZhanKai.value) return
   qitaCaiDanZhanKai.value = false
   停止QitaWeiZhi()
+  qitaGunDongTiao.停止观察()
   if (fanHuiJiaoDian) void nextTick(() => qitaChuFaQi.value?.focus())
 }
 
@@ -905,6 +1048,7 @@ function fanHuiShouYe(): void {
 }
 
 function tongZhiJunShiZhiDao(): void {
+  关闭QitaCaiDan(false)
   window.dispatchEvent(new CustomEvent('junshi-zhankai'))
 }
 
@@ -928,6 +1072,11 @@ function jinRuZhanJi(): void {
 
 function jinRuZhangHaoAnQuan(): void {
   tiaoZhuanZhangHao()
+}
+
+function jinRuGeRenXinXi(): void {
+  if (用户仓库.dangQianYongHu) jinRuZhangHaoAnQuan()
+  else jinRuDengLu()
 }
 
 function tiaoZhuanZhangHao(maoDian?: string): void {
@@ -970,6 +1119,7 @@ function zhiXingTuiChu(): void {
 
 watch(yongHuCaiDanZhanKai, (zhanKai) => {
   if (!zhanKai) {
+    yongHuCaiDanCaoZuo += 1
     停止YongHuWeiZhi()
     yongHuGunDongTiao.停止观察()
   }
@@ -977,6 +1127,7 @@ watch(yongHuCaiDanZhanKai, (zhanKai) => {
 
 watch(qitaCaiDanZhanKai, (zhanKai) => {
   if (!zhanKai) {
+    qitaCaiDanCaoZuo += 1
     停止QitaWeiZhi()
     qitaGunDongTiao.停止观察()
   }
@@ -1007,15 +1158,143 @@ watch(
 使用浮层关闭(yongHuFuCeng, yongHuChuFaQi, () => yongHuCaiDanZhanKai.value, 关闭YongHuCaiDan)
 使用浮层关闭(qitaFuCeng, qitaChuFaQi, () => qitaCaiDanZhanKai.value, 关闭QitaCaiDan)
 
+const caiDanNeiRongYuan = ref<HTMLElement | null>(null)
+const mingLingShunXu = ['junShi', 'zhuYe', 'geRen', 'zhuTi', 'tongZhi', 'banBen'] as const
+const shouNaDang = ref(0)
+const jiHeRongCha = 1
+
+let shouNaGuanCha: ResizeObserver | null = null
+let shouNaZhen: number | null = null
+let shouNaCeLiangZhong = false
+let shouNaXuYaoChongCe = false
+let shouNaYiXieZai = false
+
+function mingLingKeJian(mingLing: (typeof mingLingShunXu)[number]): boolean {
+  return mingLingShunXu.indexOf(mingLing) < mingLingShunXu.length - shouNaDang.value
+}
+
+function jiHeKeRongNa(): boolean {
+  const yuan = caiDanNeiRongYuan.value
+  if (!yuan || yuan.clientWidth <= 0) return true
+  if (yuan.scrollWidth > yuan.clientWidth + jiHeRongCha) return false
+  const quYus = yuan.querySelectorAll<HTMLElement>('.caidan-zuo, .caidan-zhong, .caidan-you')
+  for (const quYu of quYus) {
+    if (quYu.clientWidth <= 0) continue
+    if (quYu.scrollWidth > quYu.clientWidth + jiHeRongCha) return false
+    const quYuRect = quYu.getBoundingClientRect()
+    if (quYuRect.width <= 0) continue
+    for (const ziYuanSu of Array.from(quYu.children)) {
+      if (!(ziYuanSu instanceof HTMLElement)) continue
+      const rect = ziYuanSu.getBoundingClientRect()
+      if (rect.width <= 0) continue
+      if (rect.left < quYuRect.left - jiHeRongCha || rect.right > quYuRect.right + jiHeRongCha) {
+        return false
+      }
+    }
+  }
+  return true
+}
+
+async function wenDingShouNa(): Promise<void> {
+  if (shouNaYiXieZai) return
+  if (shouNaCeLiangZhong) {
+    shouNaXuYaoChongCe = true
+    return
+  }
+  shouNaCeLiangZhong = true
+  try {
+    do {
+      shouNaXuYaoChongCe = false
+      await nextTick()
+      if (shouNaYiXieZai) return
+      while (!jiHeKeRongNa() && shouNaDang.value < mingLingShunXu.length) {
+        shouNaDang.value += 1
+        await nextTick()
+      }
+      while (jiHeKeRongNa() && shouNaDang.value > 0) {
+        const yuanDang = shouNaDang.value
+        shouNaDang.value -= 1
+        await nextTick()
+        if (jiHeKeRongNa()) continue
+        shouNaDang.value = yuanDang
+        await nextTick()
+        break
+      }
+    } while (shouNaXuYaoChongCe && !shouNaYiXieZai)
+  } finally {
+    shouNaCeLiangZhong = false
+    if (shouNaXuYaoChongCe && !shouNaYiXieZai) paiDingShiCeLiang()
+  }
+}
+
+function paiDingShiCeLiang(): void {
+  if (shouNaYiXieZai) return
+  if (shouNaCeLiangZhong) {
+    shouNaXuYaoChongCe = true
+    return
+  }
+  if (shouNaZhen !== null) return
+  shouNaZhen = requestAnimationFrame(() => {
+    shouNaZhen = null
+    void wenDingShouNa()
+  })
+}
+
+watch(
+  [
+    xianShiHuiHuaMing,
+    xianShiDuiFangShuRu,
+    duiFangShuRuWenAn,
+    xianShiNiCheng,
+    junShiKeYong,
+    zhuYeKeYong,
+    teZhengKaiGuanCuoWu,
+    () => !!用户仓库.dangQianYongHu,
+  ],
+  paiDingShiCeLiang,
+)
+
+watch(
+  xianShiGeRenXinXi,
+  (keJian) => {
+    if (keJian) return
+    const huoDongYuanSu = document.activeElement
+    const xuYaoZhuanYiJiaoDian =
+      huoDongYuanSu === yongHuChuFaQi.value ||
+      (!!huoDongYuanSu && !!yongHuFuCeng.value?.contains(huoDongYuanSu))
+    关闭YongHuCaiDan(false)
+    if (xuYaoZhuanYiJiaoDian) void nextTick(() => qitaChuFaQi.value?.focus())
+  },
+  { flush: 'sync' },
+)
+
 onMounted(() => {
   if (用户仓库.令牌 && !设置仓库.yiJiaZai) void 设置仓库.jiaZai()
   if (用户仓库.令牌) {
     通知仓库.shuaXinTongZhiBiao()
     通知仓库.lianJieSocket()
   }
+  if (typeof ResizeObserver !== 'undefined' && caiDanNeiRongYuan.value) {
+    shouNaGuanCha = new ResizeObserver(paiDingShiCeLiang)
+    shouNaGuanCha.observe(caiDanNeiRongYuan.value)
+  }
+  window.addEventListener('resize', paiDingShiCeLiang)
+  paiDingShiCeLiang()
 })
 
 onBeforeUnmount(() => {
+  shouNaYiXieZai = true
+  yongHuCaiDanCaoZuo += 1
+  qitaCaiDanCaoZuo += 1
+  if (shouNaGuanCha) {
+    shouNaGuanCha.disconnect()
+    shouNaGuanCha = null
+  }
+  if (shouNaZhen !== null) {
+    cancelAnimationFrame(shouNaZhen)
+    shouNaZhen = null
+  }
+  window.removeEventListener('resize', paiDingShiCeLiang)
   通知仓库.duanKaiSocket()
   yongHuGunDongTiao.停止观察()
   qitaGunDongTiao.停止观察()
@@ -1150,6 +1429,11 @@ onBeforeUnmount(() => {
   padding: var(--jiange-6) var(--jiange-12);
   border-radius: 10px;
   min-width: 0;
+}
+
+.yonghu-xuanxiang.yincang {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .yonghu-xuanxiang:hover,
@@ -1644,6 +1928,13 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
+.qita-caidan-banben {
+  padding: var(--jiange-6) var(--jiange-10);
+  color: var(--daohanglan-ciwenben);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .qita-caidan-shu {
   flex: none;
   min-width: 20px;
@@ -1761,10 +2052,6 @@ onBeforeUnmount(() => {
 
   .junshi-wenzi-duan {
     display: inline;
-  }
-
-  .banben-wenben {
-    display: none;
   }
 
   .yonghu-caidan-xiangmu,

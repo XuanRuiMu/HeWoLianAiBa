@@ -51,7 +51,6 @@ const xinZengLingPai = [
   'kapian-mian-biankuang',
   'kapian-mian-zhengwen',
   'kapian-mian-biaoti',
-  'xuanzhong-wenben-yinying',
   'xuanzhong-qiangdiao-yinying',
   'xingbie-nan-xuan-biankuang',
   'xingbie-nan-xuan-beijing',

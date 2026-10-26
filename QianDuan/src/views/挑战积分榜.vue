@@ -9,31 +9,6 @@
         <h1 class="yemian-biaoti">{{ huoQuFanYi('tiaoZhan', 'biaoTi') }}</h1>
         <p class="yemian-fubiaoti">{{ huoQuFanYi('tiaoZhan', 'bangDanShuoMing') }}</p>
       </div>
-      <dl class="tou-tongji" :aria-busy="jiaZaiZhong ? 'true' : 'false'">
-        <div class="tongji-xiang">
-          <dt>{{ huoQuFanYi('tiaoZhan', 'shangBangRenShuBiaoQian') }}</dt>
-          <dd>
-            <span v-if="jiaZaiZhong" class="zhanwei-tiao" aria-hidden="true" />
-            <span v-else-if="qianTaiCuoWu && shangBangRenShu === 0">{{
-              huoQuFanYi('tiaoZhan', 'zanWu')
-            }}</span>
-            <template v-else>
-              {{ shangBangRenShu }}<span class="tongji-fenmu">{{
-                huoQuFanYi('tiaoZhan', 'renDanWei')
-              }}</span>
-            </template>
-          </dd>
-        </div>
-        <div class="tongji-xiang">
-          <dt>{{ huoQuFanYi('tiaoZhan', 'zuiGaoJiFen') }}</dt>
-          <dd>
-            <span v-if="jiaZaiZhong" class="zhanwei-tiao zhanwei-tiao--chang" aria-hidden="true" />
-            <template v-else>{{
-              zuiGaoFen === null ? huoQuFanYi('tiaoZhan', 'zanWu') : zuiGaoFen
-            }}</template>
-          </dd>
-        </div>
-      </dl>
     </header>
 
     <div
@@ -118,7 +93,6 @@
               </svg>
             </span>
             <p class="kong-biaoti">{{ huoQuFanYi('tiaoZhan', 'zanWuPaiHang') }}</p>
-            <p class="kong-fu">{{ huoQuFanYi('tiaoZhan', 'bangDanKongFu') }}</p>
             <button class="kong-anniu" type="button" @click="fanHui">
               {{ huoQuFanYi('tiaoZhan', 'quTiaoZhan') }}
             </button>
@@ -187,8 +161,6 @@ const jiaZaiZhong = computed(
     (!yiJiaZai.value && qianTaiZhuangTai.value !== 'error'),
 )
 
-const shangBangRenShu = computed(() => paiHangLieBiao.value.length)
-
 const shouCiJiaZai = computed(
   () => !yiJiaZai.value && qianTaiZhuangTai.value !== 'error',
 )
@@ -198,14 +170,6 @@ const youHang = computed(() => paiHangLieBiao.value.length > 0)
 const bangDanKong = computed(
   () => !shouCiJiaZai.value && !qianTaiCuoWu.value && paiHangLieBiao.value.length === 0,
 )
-
-const zuiGaoFen = computed<number | null>(() => {
-  if (paiHangLieBiao.value.length === 0) return null
-  return paiHangLieBiao.value.reduce(
-    (zuiGao, xiangMu) => (xiangMu.ji_fen > zuiGao ? xiangMu.ji_fen : zuiGao),
-    0,
-  )
-})
 
 function zuBieMingCheng(zuBie: ZuBie): string {
   const yingShe: Record<ZuBie, string> = {
@@ -383,52 +347,6 @@ onBeforeUnmount(() => {
   font-size: var(--tz-zi-zheng);
   line-height: 1.5;
   color: var(--tz-wen-ci);
-}
-
-.tou-tongji {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--jiange-da);
-  margin: 0;
-}
-
-.tongji-xiang {
-  display: flex;
-  flex-direction: column;
-  gap: var(--jiange-4);
-  text-align: right;
-}
-
-.tongji-xiang dt {
-  font-size: var(--tz-zi-xiao);
-  line-height: 1.4;
-  color: var(--tz-wen-ci);
-}
-
-.tongji-xiang dd {
-  margin: 0;
-  font-size: var(--tz-zi-zhong);
-  font-weight: 600;
-  line-height: 1.3;
-  font-variant-numeric: tabular-nums;
-}
-
-.tongji-fenmu {
-  font-size: var(--tz-zi-zheng);
-  font-weight: 400;
-  color: var(--tz-wen-ci);
-}
-
-.zhanwei-tiao {
-  display: inline-block;
-  width: calc(var(--jiange-da) * 2);
-  height: var(--tz-zi-zhong);
-  border-radius: var(--yuanjiao-xiao);
-  background: var(--tz-gu);
-}
-
-.zhanwei-tiao--chang {
-  width: calc(var(--jiange-da) * 3);
 }
 
 .zubie-qiehuan {
@@ -710,14 +628,6 @@ onBeforeUnmount(() => {
   line-height: 1.4;
 }
 
-.kong-fu {
-  margin: 0;
-  max-width: 44ch;
-  font-size: var(--tz-zi-zheng);
-  line-height: 1.6;
-  color: var(--tz-wen-ci);
-}
-
 .kong-anniu {
   display: inline-flex;
   align-items: center;
@@ -763,16 +673,6 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 640px) {
-  .tou-tongji {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .tongji-xiang {
-    align-items: flex-start;
-    text-align: left;
-  }
-
   .zubie-qiehuan {
     gap: var(--jiange-12);
   }

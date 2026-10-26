@@ -283,10 +283,13 @@ describe('间距节奏：段落 32、字段 24、组内 8，且外大内小', ()
     }
   })
 
-  it('字段之间 24，字段内 2，勾选组内 8', () => {
+  it('字段之间 24，字段内 2，勾选组行距由减半公式提供', () => {
     expect(取值(取块(登录块, '.shuru-zu {'), 'margin-bottom')).toBe('var(--ziduan-jian-ju)')
     expect(取值(取块(登录块, '.shuru-zu {'), '--ziduan-jian-ju')).toBe('var(--jiange-da)')
-    expect(取值(取块(登录块, '.ji-zhu-xuan-xiang {'), 'gap')).toBe('var(--jiange-xiao)')
+    expect(取值(取块(登录块, '.ji-zhu-xuan-xiang {'), 'gap')).toBeNull()
+    expect(取值(取块(登录块, '.ji-zhu-hang-2 {'), 'margin-top')).toBe(
+      'calc((var(--jiange-2) - var(--shuru-anniu-re-ku) + var(--gou-xuan-chi-cun)) / 2)',
+    )
     expect(取值(取块(找回块, '.zhaohui-zi-duan {'), 'gap')).toBe('var(--jiange-2)')
     expect(取值(取块(找回块, '.zhaohui-biao-dan {'), 'gap')).toBe('var(--jiange-da)')
   })
@@ -297,11 +300,16 @@ describe('间距节奏：段落 32、字段 24、组内 8，且外大内小', ()
     }
   })
 
-  it('记住行改成两端对齐的两种取值，不再用 space-evenly 均摊', () => {
+  it('记住行按三段均分落位，首项中心1/3、次项中心2/3，不再两端摊开', () => {
     for (const 块 of [登录块]) {
       expect(块).not.toContain('space-evenly')
       const 行 = 取块(块, '.ji-zhu-hang-1,')
-      expect(取值(行, 'justify-content')).toBe('space-between')
+      expect(取值(行, 'display')).toBe('grid')
+      expect(取值(行, 'grid-template-columns')).toBe('repeat(3, minmax(0, 1fr))')
+      expect(取值(行, 'justify-items')).toBe('center')
+      expect(行).not.toContain('space-between')
+      expect(块).toContain('.ji-zhu-hang-1 > :first-child,')
+      expect(块).toContain('.ji-zhu-hang-1 > :last-child,')
     }
   })
 })

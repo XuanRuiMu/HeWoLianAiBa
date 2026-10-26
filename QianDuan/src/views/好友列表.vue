@@ -104,6 +104,7 @@
         </button>
       </nav>
 
+      <Transition name="hao-you-mian-ban" mode="out-in">
       <section v-if="zhengZaiSouSuo" class="mian-ban" data-testid="hao-you-sou-suo-mian-ban">
         <h2 class="fen-ku-biao-ti">{{ huoQuFanYi('haoYou', 'souSuoJieGuoBiaoJi') }}</h2>
 
@@ -300,6 +301,7 @@
 
         <p class="tong-ji">{{ jiShuWenZi }}</p>
       </section>
+      </Transition>
     </template>
 
     <Teleport to="body">
@@ -328,6 +330,8 @@ import {
 } from '@/api/社交'
 import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
 import { 归一前台错误 } from '@/utils/前台错误'
+import { weiDuFengDing } from '@/utils/未读封顶'
+import { jianShaoDongXiaoGuo } from '@/utils/动效偏好'
 import RequestError from '@/components/请求错误.vue'
 import { use前台错误 } from '@/composables/use前台错误'
 import { geShiHuaHaoYouShiJian, use好友概览, type 好友活跃态 } from '@/composables/use好友概览'
@@ -388,8 +392,8 @@ const tongZhiShuoMing = computed(() =>
     ? `${通知仓库.weiDuShu}${huoQuFanYi('haoYou', 'weiDuTiao')}`
     : huoQuFanYi('haoYou', 'zanWuWeiDuTongZhi'),
 )
-const hongDianShu = computed(() => (shouDaoLieBiao.value.length > 99 ? '99+' : String(shouDaoLieBiao.value.length)))
-const tongZhiHongDian = computed(() => (通知仓库.weiDuShu > 99 ? '99+' : String(通知仓库.weiDuShu)))
+const hongDianShu = computed(() => weiDuFengDing(shouDaoLieBiao.value.length))
+const tongZhiHongDian = computed(() => weiDuFengDing(通知仓库.weiDuShu))
 
 const benDiJieGuo = computed<HaoYouXiang[]>(() => {
   const wenBen = guanJianZiQing.value.toLowerCase()
@@ -462,7 +466,7 @@ async function shuaXinLieBiao(): Promise<void> {
 function qieHuanMianBan(mianBan: 'haoYou' | 'shenQing'): void {
   dangQianMianBan.value = mianBan
   caoZuoTiShi.value = ''
-  yeGen.value?.scrollTo({ top: 0, behavior: 'smooth' })
+  yeGen.value?.scrollTo({ top: 0, behavior: gunDongXingWei() })
 }
 
 function qingKongGuanJianZi(): void {
@@ -594,7 +598,11 @@ function tiaoDaoFenZu(shouZiMu: string): void {
   if (!gen) return
   const muBiao = gen.querySelector<HTMLElement>(`[data-fen-zu="${shouZiMu}"]`)
   if (!muBiao) return
-  gen.scrollTo({ top: Math.max(0, muBiao.offsetTop - dingBuGao.value - 4), behavior: 'smooth' })
+  gen.scrollTo({ top: Math.max(0, muBiao.offsetTop - dingBuGao.value - 4), behavior: gunDongXingWei() })
+}
+
+function gunDongXingWei() {
+  return jianShaoDongXiaoGuo() ? 'auto' : 'smooth'
 }
 
 watch(
@@ -635,9 +643,11 @@ defineExpose({ dangQianMianBan, guanJianZi, benDiJieGuo, haoYouLieBiao })
   --hao-you-ye-ruo-wen-ben: #b4b4bb;
   --hao-you-ka-mian: rgba(32, 32, 37, 0.92);
   --hao-you-ka-bian: rgba(255, 255, 255, 0.12);
-  --hao-you-ding-bu-mian: rgba(18, 18, 20, 0.94);
   --hao-you-jin: #f0c86a;
   --hao-you-jin-mian: rgba(240, 200, 106, 0.14);
+  --hao-you-zhu-beijing: #e8bb55;
+  --hao-you-zhu-jianbian: linear-gradient(135deg, #f7d27a, #d9a441);
+  --hao-you-zhu-wenben: #2a1d05;
   --hao-you-ding-bu-gao: 0px;
   position: relative;
   width: 100%;
@@ -667,7 +677,6 @@ defineExpose({ dangQianMianBan, guanJianZi, benDiJieGuo, haoYouLieBiao })
   --hao-you-ye-ruo-wen-ben: #55595f;
   --hao-you-ka-mian: rgba(255, 255, 255, 0.94);
   --hao-you-ka-bian: rgba(20, 22, 26, 0.1);
-  --hao-you-ding-bu-mian: rgba(255, 255, 255, 0.96);
   --hao-you-jin: #6f4a06;
   --hao-you-jin-mian: rgba(154, 107, 18, 0.12);
 }
@@ -693,10 +702,9 @@ defineExpose({ dangQianMianBan, guanJianZi, benDiJieGuo, haoYouLieBiao })
   flex-direction: column;
   gap: var(--jiange-xiao);
   padding-bottom: var(--jiange-12);
-  background: var(--hao-you-ding-bu-mian);
+  background: var(--hao-you-ye-mian);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--hao-you-ye-bian);
 }
 
 .biao-ti-hang {
@@ -944,7 +952,7 @@ defineExpose({ dangQianMianBan, guanJianZi, benDiJieGuo, haoYouLieBiao })
   min-width: 20px;
   padding: 0 var(--jiange-6);
   border-radius: 999px;
-  background-color: #c81e1e;
+  background-color: var(--tongzhi-badge-beijing);
   color: #ffffff;
   font-size: 11px;
   line-height: 18px;
@@ -1148,9 +1156,9 @@ defineExpose({ dangQianMianBan, guanJianZi, benDiJieGuo, haoYouLieBiao })
 .zhu-anniu,
 .quan-zhan-anniu {
   border: 1px solid transparent;
-  background-color: #e8bb55;
-  background-image: linear-gradient(135deg, #f7d27a, #d9a441);
-  color: #2a1d05;
+  background-color: var(--hao-you-zhu-beijing);
+  background-image: var(--hao-you-zhu-jianbian);
+  color: var(--hao-you-zhu-wenben);
 }
 
 .zhu-anniu:hover:not(:disabled),
@@ -1221,10 +1229,27 @@ defineExpose({ dangQianMianBan, guanJianZi, benDiJieGuo, haoYouLieBiao })
   }
 }
 
+.hao-you-mian-ban-enter-active,
+.hao-you-mian-ban-leave-active {
+  transition: opacity 0.22s var(--quxian-biao-zhun), transform 0.22s var(--quxian-tan-chu);
+}
+
+.hao-you-mian-ban-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.hao-you-mian-ban-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ru-kou-ka,
   .zi-mu-anniu,
-  .shua-xin-anniu {
+  .shua-xin-anniu,
+  .hao-you-mian-ban-enter-active,
+  .hao-you-mian-ban-leave-active {
     transition: none;
   }
 }

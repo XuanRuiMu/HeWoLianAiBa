@@ -3,12 +3,9 @@
     <div class="bei-jing-she-zhi-tou">
       <div class="bei-jing-she-zhi-wen">
         <h2 :id="biaoTiBiaoShi" class="kapian-biao-ti">{{ biaoTi }}</h2>
-        <p class="bei-jing-shuo-ming">{{ shuoMingWenAn }}</p>
       </div>
       <span class="bei-jing-ji-shu">{{ yiYongWenAn }}</span>
     </div>
-
-    <p class="bei-jing-bian-ji-ti-shi">{{ bianJiTiShi }}</p>
 
     <div v-for="模式 in 模式列表" :key="模式.键" class="bei-jing-mo-shi">
       <div class="bei-jing-mo-shi-tou">
@@ -24,39 +21,84 @@
       </div>
 
       <div class="bei-jing-wang-ge" role="group" :aria-label="模式.标题">
-        <template v-for="项 in 合并项(模式.键)" :key="键(模式.键, 项)">
-          <div v-if="编辑键 === 键(模式.键, 项)" class="bei-jing-bian-ji-wei">
-            <WaiGuanJiuDiBianJi
-              :biao-ti="bianJiBiaoTi"
-              :ming-cheng="编辑项?.mingCheng || ''"
-              :wen-zi-yan-se="编辑初始颜色"
-              :zui-da-zi-fu="mingChengZuiDaZiFu"
-              lei-bie="beiJing"
-              :cuo-wu-wen-an="编辑错误"
-              :cao-zuo-zhong="编辑保存中"
-              @tijiao="保存编辑"
-              @huan-yuan="还原编辑"
-              @qu-xiao="结束编辑"
-            />
-          </div>
+        <div
+          v-for="项 in 预设项(模式.键)"
+          :key="键(模式.键, 项)"
+          class="bei-jing-ka"
+          :class="[
+            'bei-jing-ka--' + 项.jian,
+            { 'bei-jing-ka--xuan': 是否当前(模式.键, 项) },
+          ]"
+          :style="背景项样式(模式.键, 项)"
+        >
+          <button
+            type="button"
+            class="bei-jing-ka-xuan"
+            :aria-pressed="是否当前(模式.键, 项)"
+            :aria-label="显示名(模式.键, 项)"
+            @click="选择背景(模式.键, 项)"
+          >
+            <span class="bei-jing-ka-ming" :title="显示名(模式.键, 项)" @dblclick.stop="开始编辑(模式.键, 项)">
+              {{ 显示名(模式.键, 项) }}
+            </span>
+            <span v-if="是否当前(模式.键, 项)" class="bei-jing-ka-dang-qian">{{ dangQianWenAn }}</span>
+          </button>
+          <button
+            type="button"
+            class="bei-jing-ka-kong-zhi"
+            :aria-label="bianJiMingChengWenAn + '：' + 项.mingCheng"
+            @click.stop="开始编辑(模式.键, 项)"
+          >
+            <svg
+              class="bei-jing-ka-kong-zhi-tu-biao"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+            </svg>
+          </button>
+        </div>
+        <VueDraggable
+          class="bei-jing-tuo-qu"
+          :model-value="设置仓库.waiGuan.beiJing"
+          :disabled="上传中 || 删除中 || 同步中 !== '' || 编辑保存中"
+          :direction="tuoZhuaiFangXiang"
+            :animation="TUO_ZHUAI_HAO_MIAO"
+          :delay="300"
+          :delay-on-touch-only="true"
+          :filter="'.bei-jing-ka-kong-zhi'"
+          :prevent-on-filter="false"
+          ghost-class="sortable-ghost"
+          chosen-class="sortable-chosen"
+          drag-class="sortable-drag"
+          fallback-class="sortable-drag"
+          :force-fallback="true"
+          :fallback-on-body="true"
+          @update:model-value="tuoZhuaiGengXinBeiJing"
+        >
           <div
-            v-else
-            class="bei-jing-ka"
-            :class="[
-              'bei-jing-ka--' + 项.jian,
-              { 'bei-jing-ka--tu': 项.leiXing === 'ziDingYi', 'bei-jing-ka--xuan': 是否当前(模式.键, 项) },
-            ]"
-            :style="背景项样式(项)"
+            v-for="项 in 自定义项(模式.键)"
+            :key="键(模式.键, 项)"
+            class="bei-jing-ka bei-jing-ka--tu"
+            :class="{ 'bei-jing-ka--xuan': 是否当前(模式.键, 项) }"
+            :style="背景项样式(模式.键, 项)"
+            :data-id="项.jian"
           >
             <button
               type="button"
               class="bei-jing-ka-xuan"
               :aria-pressed="是否当前(模式.键, 项)"
-              :aria-label="项.mingCheng"
+              :aria-label="显示名(模式.键, 项)"
               @click="选择背景(模式.键, 项)"
             >
-              <span class="bei-jing-ka-ming" :title="项.mingCheng" @dblclick.stop="开始编辑(模式.键, 项)">
-                {{ 项.mingCheng }}
+              <span class="bei-jing-ka-ming" :title="显示名(模式.键, 项)" @dblclick.stop="开始编辑(模式.键, 项)">
+                {{ 显示名(模式.键, 项) }}
               </span>
               <span v-if="是否当前(模式.键, 项)" class="bei-jing-ka-dang-qian">{{ dangQianWenAn }}</span>
             </button>
@@ -81,7 +123,6 @@
               </svg>
             </button>
             <button
-              v-if="项.leiXing === 'ziDingYi'"
               type="button"
               class="bei-jing-ka-kong-zhi bei-jing-ka-kong-zhi--shan-chu"
               :aria-label="shanChuBeiJingWenAn + '：' + 项.mingCheng"
@@ -106,7 +147,7 @@
               </svg>
             </button>
           </div>
-        </template>
+        </VueDraggable>
         <button
           type="button"
           class="bei-jing-ka bei-jing-ka--shang-chuan"
@@ -116,6 +157,22 @@
           <span class="bei-jing-ka-jia" aria-hidden="true">＋</span>
           <span class="bei-jing-ka-shang-chuan-wen">{{ 上传中 ? shangChuanZhongWenAn : shangChuanWenAn }}</span>
         </button>
+      </div>
+
+      <div v-if="编辑模式 === 模式.键" class="bei-jing-bian-ji-wei">
+        <WaiGuanJiuDiBianJi
+          :biao-ti="bianJiBiaoTi"
+          :ming-cheng="编辑项?.mingCheng || ''"
+          :wen-zi-yan-se="编辑初始颜色"
+          :zui-da-zi-fu="mingChengZuiDaZiFu"
+          lei-bie="beiJing"
+          :cuo-wu-wen-an="编辑错误"
+          :cao-zuo-zhong="编辑保存中"
+          @tijiao="保存编辑"
+          @huan-yuan="还原编辑"
+          @qu-xiao="结束编辑"
+          @yu-lan="更新预览"
+        />
       </div>
     </div>
 
@@ -149,32 +206,60 @@
       @que-ren="确认删除"
       @qu-xiao="取消删除"
     />
+
+    <Teleport to="body">
+      <TuPianCaiJian
+        v-if="caiJianXianShi"
+        :tu-yuan="caiJianTuYuan"
+        :yuan-mime="caiJianYuanMIME"
+        :biao-ti="huoQuFanYi('sheZhi', 'caiJianBeiJing')"
+        :ti-shi="huoQuFanYi('sheZhi', 'tuPianCaiJianTiShi')"
+        :kuan-gao-bi="0.75"
+        :wen-jian-ming="'beijing'"
+        @que-ren="queRenCaiJian"
+        @qu-xiao="guanBiCaiJian"
+      />
+    </Teleport>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, ref } from 'vue'
+import { VueDraggable } from 'vue-draggable-plus'
 import { huoQuFanYi } from '@/config/翻译表'
+import { jianShaoDongXiaoGuo } from '@/utils/动效偏好'
 import {
   WAI_GUAN_BEI_JING_MING_CHENG_ZUI_DA_ZI_FU,
   WAI_GUAN_MEI_LEI_ZUI_DA_TIAO_SHU,
   WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
   WAI_GUAN_TU_PIAN_MIME,
+  guiYiWaiGuanChuCan,
   huoQuBeiJingMengCengZhi,
+  huoQuBeiJingYuSheDingYi,
+  zhongPaiWaiGuanTiaoMu,
   type WaiGuanTiaoMu,
 } from '@/config/外观自定义'
+import { baoCunWaiGuan } from '@/api/社交'
 import { 使用用户设置仓库, type BeiJingXiangMu } from '@/stores/用户设置'
 import { tiQuCuoWuWenBen } from '@/utils/前台错误'
 import WaiGuanJiuDiBianJi from '@/components/外观就地编辑器.vue'
 import ShangChuanShuoMing from '@/components/上传说明层.vue'
 import QueRenDuiHuaKuang from '@/components/确认对话框.vue'
 
+const TuPianCaiJian = defineAsyncComponent(() => import('@/components/图片裁剪.vue'))
+
+const TUO_ZHUAI_HAO_MIAO = jianShaoDongXiaoGuo() ? 0 : 200
+function tuoZhuaiFangXiang(_shiJian: unknown, muBiao: unknown, tuoDongXiang: unknown): 'vertical' | 'horizontal' {
+  const a = tuoDongXiang instanceof Element ? tuoDongXiang.getBoundingClientRect() : null
+  const b = muBiao instanceof Element ? muBiao.getBoundingClientRect() : null
+  if (!a || !b) return 'vertical'
+  return Math.abs(b.top - a.top) <= Math.abs(b.left - a.left) ? 'horizontal' : 'vertical'
+}
+
 const 设置仓库 = 使用用户设置仓库()
 
 const biaoTiBiaoShi = 'bei-jing-she-zhi-biao-ti'
 const biaoTi = huoQuFanYi('sheZhi', 'liaoTianBeiJing')
-const shuoMingWenAn = huoQuFanYi('sheZhi', 'beiJingSheZhiShuoMing')
-const bianJiTiShi = huoQuFanYi('sheZhi', 'beiJingBianJiTiShi')
 const bianJiBiaoTi = huoQuFanYi('sheZhi', 'waiGuanBianJiBiaoTi')
 const bianJiMingChengWenAn = huoQuFanYi('sheZhi', 'waiGuanBianJiMingCheng')
 const shanChuBeiJingWenAn = huoQuFanYi('sheZhi', 'waiGuanShanChuBeiJing')
@@ -215,16 +300,25 @@ const 编辑模式 = ref<'qian' | 'shen' | null>(null)
 const 编辑项 = ref<BeiJingXiangMu | null>(null)
 const 编辑错误 = ref('')
 const 编辑保存中 = ref(false)
+const 预览值 = ref<{ mingCheng: string; wenZiYanSe: string } | null>(null)
 const 上传中 = ref(false)
 const 同步中 = ref<'' | 'qian' | 'shen'>('')
 const 显示上传说明 = ref(false)
 const 上传模式 = ref<'qian' | 'shen'>('qian')
+const caiJianXianShi = ref(false)
+const caiJianTuYuan = ref('')
+const caiJianYuanMIME = ref('image/png')
+const caiJianQianWenJian = ref<File | null>(null)
 const 显示删除确认 = ref(false)
 const 删除中 = ref(false)
 const 待删除 = ref<BeiJingXiangMu | null>(null)
 const 提示 = ref('')
 const 提示失败 = ref(false)
 const 文件输入 = ref<HTMLInputElement | null>(null)
+
+onBeforeUnmount(() => {
+  if (caiJianTuYuan.value) URL.revokeObjectURL(caiJianTuYuan.value)
+})
 
 const 编辑键 = computed(() => (编辑项.value && 编辑模式.value ? 键(编辑模式.value, 编辑项.value) : ''))
 const 编辑初始颜色 = computed(() => {
@@ -243,16 +337,30 @@ function 键(模式: 'qian' | 'shen', 项: BeiJingXiangMu): string {
   return 模式 + ':' + (项.leiXing === 'yuShe' ? 'yu-she' : 'zi-ding-yi') + ':' + 项.jian
 }
 
-function 合并项(模式: 'qian' | 'shen'): BeiJingXiangMu[] {
-  return 设置仓库.beiJingXiangMuLieBiao(模式)
+function 预设项(模式: 'qian' | 'shen'): BeiJingXiangMu[] {
+  return 设置仓库.beiJingXiangMuLieBiao(模式).filter((项) => 项.leiXing === 'yuShe')
+}
+
+function 自定义项(模式: 'qian' | 'shen'): BeiJingXiangMu[] {
+  return 设置仓库.beiJingXiangMuLieBiao(模式).filter((项) => 项.leiXing === 'ziDingYi')
 }
 
 function 是否当前(模式: 'qian' | 'shen', 项: BeiJingXiangMu): boolean {
   return 设置仓库.shiDangQianBeiJing(模式, 项)
 }
 
-function 背景项样式(项: BeiJingXiangMu): Record<string, string> {
-  const yanSe = 项.wenZiYanSe || (项.leiXing === 'ziDingYi' || 项.jian !== 'moRen' ? WAI_GUAN_MO_REN_WEN_ZI_YAN_SE : '')
+function shiYuLanZhong(模式: 'qian' | 'shen', 项: BeiJingXiangMu): boolean {
+  return 编辑模式.value === 模式 && 编辑项.value !== null && 键(模式, 编辑项.value) === 键(模式, 项)
+}
+
+function 显示名(模式: 'qian' | 'shen', 项: BeiJingXiangMu): string {
+  if (shiYuLanZhong(模式, 项) && 预览值.value) return 预览值.value.mingCheng
+  return 项.mingCheng
+}
+
+function 背景项样式(模式: 'qian' | 'shen', 项: BeiJingXiangMu): Record<string, string> {
+  const yuLanSe = shiYuLanZhong(模式, 项) && 预览值.value ? 预览值.value.wenZiYanSe : ''
+  const yanSe = yuLanSe || 项.wenZiYanSe || (项.leiXing === 'ziDingYi' || 项.jian !== 'moRen' ? WAI_GUAN_MO_REN_WEN_ZI_YAN_SE : '')
   const yangShi: Record<string, string> = {}
   if (yanSe) yangShi.color = yanSe
   if (项.leiXing === 'ziDingYi') {
@@ -261,8 +369,10 @@ function 背景项样式(项: BeiJingXiangMu): Record<string, string> {
     yangShi.backgroundSize = 'cover'
     yangShi.backgroundPosition = 'center'
     yangShi.backgroundRepeat = 'no-repeat'
-  } else if (项.jian !== 'moRen' || 项.wenZiYanSe) {
-    yangShi['--wai-guan-meng-ceng'] = huoQuBeiJingMengCengZhi(yanSe)
+  } else {
+    const dingYi = huoQuBeiJingYuSheDingYi(项.jian)
+    yangShi['--wai-guan-meng-ceng'] = dingYi.mengCeng
+    yangShi.background = dingYi.beiJing
   }
   return yangShi
 }
@@ -306,6 +416,7 @@ function 开始编辑(模式: 'qian' | 'shen', 项: BeiJingXiangMu): void {
   编辑模式.value = 模式
   编辑项.value = { ...项 }
   编辑错误.value = ''
+  预览值.value = null
   清空提示()
 }
 
@@ -313,6 +424,11 @@ function 结束编辑(): void {
   编辑模式.value = null
   编辑项.value = null
   编辑错误.value = ''
+  预览值.value = null
+}
+
+function 更新预览(zhi: { mingCheng: string; wenZiYanSe: string }): void {
+  预览值.value = zhi
 }
 
 async function 保存编辑(zhi: { mingCheng: string; wenZiYanSe: string }): Promise<void> {
@@ -367,10 +483,33 @@ async function 处理文件选择(shiJian: Event): Promise<void> {
   if (shuRu) shuRu.value = ''
   if (!wenJian) return
   清空提示()
+  if (!wenJian.type.startsWith('image/')) {
+    显示提示(huoQuFanYi('tongYong', 'feiTuPianTiShi'), true)
+    return
+  }
+  if (caiJianTuYuan.value) URL.revokeObjectURL(caiJianTuYuan.value)
+  caiJianQianWenJian.value = wenJian
+  caiJianTuYuan.value = URL.createObjectURL(wenJian)
+  caiJianYuanMIME.value = wenJian.type || 'image/png'
+  caiJianXianShi.value = true
+}
+
+function guanBiCaiJian(): void {
+  caiJianXianShi.value = false
+  if (caiJianTuYuan.value) URL.revokeObjectURL(caiJianTuYuan.value)
+  caiJianTuYuan.value = ''
+  caiJianQianWenJian.value = null
+}
+
+async function queRenCaiJian(wenJian: Blob): Promise<void> {
+  const shangChuanWenJian = new File([wenJian], caiJianQianWenJian.value?.name || 'beijing.jpg', {
+    type: wenJian.type || 'image/jpeg',
+  })
+  guanBiCaiJian()
   上传中.value = true
   显示提示(shangChuanZhongWenAn)
   try {
-    const tiaoMu = await 设置仓库.shangChuanWaiGuan('beiJing', wenJian)
+    const tiaoMu = await 设置仓库.shangChuanWaiGuan('beiJing', shangChuanWenJian)
     await 设置仓库.qieHuanBeiJing(tiaoMu.tuDiZhi, 上传模式.value)
     显示提示(保存成功文案)
   } catch (cuoWu: unknown) {
@@ -385,6 +524,22 @@ function 请求删除(项: BeiJingXiangMu): void {
   待删除.value = 项
   显示删除确认.value = true
 }
+
+async function tuoZhuaiGengXinBeiJing(xinLieBiao: WaiGuanTiaoMu[]): Promise<void> {
+  const jiuLieBiao = [...设置仓库.waiGuan.beiJing]
+  const zhongPai = zhongPaiWaiGuanTiaoMu(jiuLieBiao, xinLieBiao.map((项) => 项.id))
+  if (!zhongPai) return
+  设置仓库.waiGuan.beiJing = zhongPai
+  try {
+    const chuCan = await baoCunWaiGuan(设置仓库.waiGuan)
+    设置仓库.waiGuan = guiYiWaiGuanChuCan(chuCan)
+  } catch (cuoWu: unknown) {
+    设置仓库.waiGuan.beiJing = jiuLieBiao
+    显示提示(错误文案(cuoWu), true)
+  }
+}
+
+defineExpose({ tuoZhuaiGengXinBeiJing })
 
 function 取消删除(): void {
   if (删除中.value) return
@@ -435,13 +590,6 @@ async function 确认删除(): Promise<void> {
   min-width: 0;
 }
 
-.bei-jing-shuo-ming {
-  margin: 0;
-  font-size: var(--ziti-xiao);
-  line-height: 1.6;
-  color: var(--wenben-tishi);
-}
-
 .bei-jing-ji-shu {
   flex: none;
   padding: var(--jiange-4) var(--jiange-10);
@@ -451,12 +599,6 @@ async function 确认删除(): Promise<void> {
   color: var(--wenben-ciuse);
   font-size: var(--ziti-xiao);
   white-space: nowrap;
-}
-
-.bei-jing-bian-ji-ti-shi {
-  margin: 0;
-  font-size: var(--ziti-xiao);
-  color: var(--wenben-ciuse);
 }
 
 .bei-jing-mo-shi {
@@ -521,10 +663,6 @@ async function 确认删除(): Promise<void> {
 }
 
 .bei-jing-ka {
-  --wai-guan-kong-zhi-chi-cun: 30px;
-  --wai-guan-kong-zhi-re-qu: 36px;
-  --wai-guan-kong-zhi-tu-biao: 14px;
-
   position: relative;
   min-height: calc(var(--wai-guan-re-ku) * 2);
   border: 1.5px solid var(--biankuang-yanse);
@@ -548,40 +686,6 @@ async function 确认删除(): Promise<void> {
   box-shadow: 0 0 0 2px var(--zhuse);
 }
 
-.bei-jing-ka--moRen {
-  background: var(--liaotian-beijing);
-}
-
-.bei-jing-ka--miWuSenLin {
-  background: var(--liaotian-beijing-miWuSenLin);
-}
-
-.bei-jing-ka--haiYangZhiLan {
-  background: var(--liaotian-beijing-haiYangZhiLan);
-}
-
-.bei-jing-ka--fenSeMengJing {
-  background: var(--liaotian-beijing-fenSeMengJing);
-}
-
-.bei-jing-ka--yeKongXingHe {
-  background: var(--liaotian-beijing-yeKongXingHe);
-  background-size: cover;
-  background-position: center;
-}
-
-.bei-jing-ka--miSeTianYuan {
-  background: var(--liaotian-beijing-miSeTianYuan);
-}
-
-.bei-jing-ka--chenWuQing {
-  background: var(--liaotian-beijing-chenWuQing);
-}
-
-.bei-jing-ka--muZiXingYe {
-  background: var(--liaotian-beijing-muZiXingYe);
-}
-
 .bei-jing-ka-xuan {
   position: absolute;
   inset: 0;
@@ -590,7 +694,7 @@ async function 确认删除(): Promise<void> {
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: calc(var(--wai-guan-kong-zhi-chi-cun) + var(--jiange-6)) var(--jiange-6) var(--jiange-12);
+  padding: var(--jiange-6) var(--jiange-12);
   border: none;
   background: transparent;
   color: inherit;
@@ -628,54 +732,40 @@ async function 确认删除(): Promise<void> {
 }
 
 .bei-jing-ka-kong-zhi {
+  --wai-guan-kong-zhi-re-qu: 28px;
+
   position: absolute;
-  top: var(--jiange-6);
-  left: var(--jiange-6);
+  right: var(--jiange-4);
+  bottom: var(--jiange-2);
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: var(--wai-guan-kong-zhi-chi-cun);
-  height: var(--wai-guan-kong-zhi-chi-cun);
+  width: var(--wai-guan-kong-zhi-re-qu);
+  height: var(--wai-guan-kong-zhi-re-qu);
   padding: 0;
   border: none;
-  border-radius: 50%;
-  background: var(--zhezhao-beijing);
-  color: var(--fasong-anniu-wenben);
-  box-shadow: 0 0 0 1px var(--fasong-anniu-wenben) inset;
+  background: transparent;
+  color: inherit;
+  opacity: 0.62;
   font-family: inherit;
   line-height: 1;
   cursor: pointer;
 }
 
-.bei-jing-ka-kong-zhi::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: var(--wai-guan-kong-zhi-re-qu);
-  height: var(--wai-guan-kong-zhi-re-qu);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-}
-
 .bei-jing-ka-kong-zhi-tu-biao {
-  width: var(--wai-guan-kong-zhi-tu-biao);
-  height: var(--wai-guan-kong-zhi-tu-biao);
+  width: var(--ziti-xiao);
+  height: var(--ziti-xiao);
   pointer-events: none;
 }
 
 .bei-jing-ka-kong-zhi--shan-chu {
-  left: auto;
-  right: var(--jiange-6);
+  right: calc(var(--jiange-4) + var(--wai-guan-kong-zhi-re-qu));
 }
 
-.bei-jing-ka-kong-zhi:hover:not(:disabled) {
-  box-shadow: 0 0 0 2px var(--fasong-anniu-wenben) inset;
-}
-
-.bei-jing-ka-kong-zhi--shan-chu:hover:not(:disabled) {
-  background: var(--cuowu-yanse);
+.bei-jing-ka-kong-zhi:hover:not(:disabled),
+.bei-jing-ka-kong-zhi:focus-visible {
+  opacity: 1;
 }
 
 .bei-jing-ka-kong-zhi:focus-visible {
@@ -742,6 +832,35 @@ async function 确认删除(): Promise<void> {
 
 .bei-jing-wen-jian-shu-ru {
   display: none;
+}
+
+.bei-jing-tuo-qu {
+  display: contents;
+}
+
+.bei-jing-ka--tu.sortable-ghost {
+  opacity: 0.45;
+}
+
+.bei-jing-ka--tu.sortable-chosen {
+  cursor: grabbing;
+}
+
+.bei-jing-ka--tu.sortable-drag {
+  transition: none !important;
+  transform: scale(1.03) rotate(1deg);
+  cursor: grabbing;
+  z-index: 10;
+  border: 2px solid var(--zhuse);
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.32),
+    5px 5px 0 rgba(7, 193, 96, 0.22);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bei-jing-ka--tu.sortable-drag {
+    transform: none;
+  }
 }
 
 @media (max-width: 520px) {

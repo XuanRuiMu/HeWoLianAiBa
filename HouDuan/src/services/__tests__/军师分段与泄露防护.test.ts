@@ -1,6 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { JUN_SHI_ZHI_DAO_DUAN_DING_YI } from '../../config/军师配置'
-import { jieXiJunShiFenDuan, pinJieJunShiFenDuan } from '../军师求助'
+import { 通用知识结束标记, 通用知识开始标记 } from '../../config/通用知识库'
+import { jieXiJunShiFenDuan, pinJieJunShiFenDuan, shengChengJunShiZhiDao } from '../军师求助'
+import { gouJianJunShiQiuZhuPrompt } from '../Prompt构建器'
+import { 检索通用知识, 构建军师知识层 } from '../通用知识检索'
+import { sheZhiMockTiaoYong, type TiaoYongCanShu } from '../../utils/DeepSeek客户端'
+import type { DuiHuaLiShiXiang, JunShiQiuZhuCanShu } from '../../types'
 
 const 完整输出 = JSON.stringify({
   当前局面: '聊到周末去哪玩了，气氛还行',
@@ -114,5 +119,77 @@ describe('整段拼接', () => {
 
   it('不是 JSON 时返回 null，交给上层降级', () => {
     expect(jieXiJunShiFenDuan('我觉得你就直接问她呗')).toBeNull()
+  })
+})
+
+describe('军师知识层注入', () => {
+  const haoGanDu = { xin_ren_du: 150, qin_mi_du: 110, qu_wei_du: 90, guan_huai_du: 80, zong_fen: 430, guan_xi_jie_duan: 'shuXi' }
+
+  function zaoCanShu(liShi: DuiHuaLiShiXiang[]): JunShiQiuZhuCanShu {
+    return {
+      yong_hu_id: 'u-1',
+      jiao_se_id: 'j-1',
+      jiao_se_ming: '林知夏',
+      dui_hua_li_shi: liShi,
+      hao_gan_du: haoGanDu,
+      jun_shi_pei_zhi: { id: 'jun-1', mingCheng: '军师', xiTongTiShi: '你是军师，只输出 JSON。' },
+    }
+  }
+
+  function huiFuJiaBen(canShu: TiaoYongCanShu): string {
+    const yongHuXiaoXi = canShu.xiaoXi.find((x) => x.jiaoSe === 'user')
+    return typeof yongHuXiaoXi?.neiRong === 'string' ? yongHuXiaoXi.neiRong : ''
+  }
+
+  afterEach(() => {
+    sheZhiMockTiaoYong(null)
+  })
+
+  it('聊天记录提到知识实体时用户消息带军师知识层', async () => {
+    const buHuo: TiaoYongCanShu[] = []
+    sheZhiMockTiaoYong(async (canShu) => {
+      buHuo.push(canShu)
+      return {
+        neiRong: JSON.stringify({ 当前局面: 'a', 下一步怎么回: 'b\nc\nd', 为什么这么聊: 'e', 我看到的迹象: 'f', 鼓励: 'g' }),
+        yuanShuJu: null,
+        xinXi: { role: 'assistant', neiRong: '' },
+      }
+    })
+    const jieGuo = await shengChengJunShiZhiDao(zaoCanShu([
+      { fa_song_zhe_lei_xing: 'yonghu', fa_song_zhe_ming: '用户', nei_rong: '哈哈，你认识玄锐喜吗', shi_jian: '12:00' },
+      { fa_song_zhe_lei_xing: 'jiaose', fa_song_zhe_ming: '林知夏', nei_rong: '哈哈不认识诶', shi_jian: '12:01' },
+    ]))
+    expect(jieGuo.zhi_dao_fen_duan).not.toBeNull()
+    const yongHuXiaoXi = huiFuJiaBen(buHuo[0])
+    expect(yongHuXiaoXi).toContain(通用知识开始标记)
+    expect(yongHuXiaoXi).toContain('【通用知识·军师参考】')
+    expect(yongHuXiaoXi).toContain('燃烧之陨')
+    expect(yongHuXiaoXi.indexOf('【通用知识·军师参考】')).toBeLessThan(yongHuXiaoXi.indexOf('聊天记录：'))
+  })
+
+  it('聊天记录无关时不注入', async () => {
+    const buHuo: TiaoYongCanShu[] = []
+    sheZhiMockTiaoYong(async (canShu) => {
+      buHuo.push(canShu)
+      return {
+        neiRong: JSON.stringify({ 当前局面: 'a', 下一步怎么回: 'b\nc\nd', 为什么这么聊: 'e', 我看到的迹象: 'f', 鼓励: 'g' }),
+        yuanShuJu: null,
+        xinXi: { role: 'assistant', neiRong: '' },
+      }
+    })
+    await shengChengJunShiZhiDao(zaoCanShu([
+      { fa_song_zhe_lei_xing: 'yonghu', fa_song_zhe_ming: '用户', nei_rong: '今天吃了碗冒菜', shi_jian: '12:00' },
+    ]))
+    expect(huiFuJiaBen(buHuo[0])).not.toContain(通用知识开始标记)
+  })
+
+  it('prompt构建器仅在传入时插入知识层且位于人设之后', () => {
+    const ceng = 构建军师知识层(检索通用知识('他问玄锐暮是谁'))
+    const dai = gouJianJunShiQiuZhuPrompt('记录', '林知夏', haoGanDu, '人设段', ceng)
+    const buDai = gouJianJunShiQiuZhuPrompt('记录', '林知夏', haoGanDu, '人设段')
+    expect(dai).toContain(通用知识开始标记)
+    expect(dai).toContain(通用知识结束标记)
+    expect(dai.indexOf('人设段')).toBeLessThan(dai.indexOf('【通用知识·军师参考】'))
+    expect(buDai).not.toContain(通用知识开始标记)
   })
 })

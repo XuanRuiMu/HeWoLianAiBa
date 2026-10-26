@@ -166,7 +166,7 @@ describe('挑战页空态文案', () => {
     const 原文 =
       readFileSync(resolve(根, 'views', '挑战主页.vue'), 'utf8') +
       readFileSync(resolve(根, 'views', '挑战积分榜.vue'), 'utf8')
-    const 键组 = ['zanWuPaiHang', 'bangDanKongFu', 'quTiaoZhan', 'jiaZaiZhong', 'zanWu']
+    const 键组 = ['zanWuPaiHang', 'quTiaoZhan', 'jiaZaiZhong', 'zanWu']
     for (const 键 of 键组) {
       expect(原文, `缺少空态文案键 ${键}`).toContain(`'${键}'`)
     }

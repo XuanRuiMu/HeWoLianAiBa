@@ -10,19 +10,15 @@ import { chuFaCuoWuShangBao } from '@/utils/错误上报'
 export const 使用通知仓库 = defineStore('通知', () => {
   const tongZhiLieBiao = ref<通知[]>([])
   const weiDuShu = ref(0)
-  const jiaZaiZhong = ref(false)
   const socketLianJie = ref<Socket | null>(null)
 
   async function jiaZaiTongZhi() {
-    jiaZaiZhong.value = true
     try {
       const shuJu = await huoQuTongZhiLieBiao()
       tongZhiLieBiao.value = shuJu.lie_biao
       weiDuShu.value = shuJu.wei_du_shu
-    } catch (错误: unknown) {
-      throw 归一前台错误(错误)
-    } finally {
-      jiaZaiZhong.value = false
+    } catch (cuoWu: unknown) {
+      throw 归一前台错误(cuoWu)
     }
   }
 
@@ -39,7 +35,7 @@ export const 使用通知仓库 = defineStore('通知', () => {
 
   function lianJieSocket() {
     const 令牌 = duQuLingPai()
-    if (!令牌 || socketLianJie.value?.connected) return
+    if (!令牌 || socketLianJie.value) return
 
     const xieYiLianJie = io({
       path: '/socket.io',
@@ -67,28 +63,43 @@ export const 使用通知仓库 = defineStore('通知', () => {
   async function biaoJiYiDu(tongZhiId: string) {
     const tongZhi = tongZhiLieBiao.value.find((xiang) => xiang.id === tongZhiId)
     if (!tongZhi || tongZhi.yi_du) return
-    await biaoJiTongZhiYiDu(tongZhiId)
+    const jiuShiJian = tongZhi.yi_du_shi_jian
     tongZhi.yi_du = true
     tongZhi.yi_du_shi_jian = new Date().toISOString()
     weiDuShu.value = Math.max(0, weiDuShu.value - 1)
+    try {
+      await biaoJiTongZhiYiDu(tongZhiId)
+    } catch (cuoWu: unknown) {
+      tongZhi.yi_du = false
+      tongZhi.yi_du_shi_jian = jiuShiJian
+      weiDuShu.value += 1
+      throw cuoWu
+    }
   }
 
   async function biaoJiQuanBuYiDu() {
     if (weiDuShu.value === 0) return
-    await biaoJiQuanBuTongZhiYiDu()
+    const jiuLieBiao = tongZhiLieBiao.value
+    const jiuWeiDuShu = weiDuShu.value
     const yiDuShiJian = new Date().toISOString()
-    tongZhiLieBiao.value = tongZhiLieBiao.value.map((tongZhi) => ({
+    tongZhiLieBiao.value = jiuLieBiao.map((tongZhi) => ({
       ...tongZhi,
       yi_du: true,
       yi_du_shi_jian: tongZhi.yi_du_shi_jian || yiDuShiJian,
     }))
     weiDuShu.value = 0
+    try {
+      await biaoJiQuanBuTongZhiYiDu()
+    } catch (cuoWu: unknown) {
+      tongZhiLieBiao.value = jiuLieBiao
+      weiDuShu.value = jiuWeiDuShu
+      throw cuoWu
+    }
   }
 
   return {
     tongZhiLieBiao,
     weiDuShu,
-    jiaZaiZhong,
     jiaZaiTongZhi,
     shuaXinTongZhiBiao,
     lianJieSocket,

@@ -372,41 +372,54 @@ onBeforeUnmount(() => {
 }
 
 .yuyin-jindu-tiao {
+  box-sizing: border-box;
+  display: block;
   flex: 1 1 0;
   width: 0;
   min-width: var(--yuyin-jindu-zui-xiao-kuan);
   height: var(--yuyin-kongzhi-re-ku);
   margin: 0;
+  padding: 0;
+  border: 0;
   appearance: none;
   background: transparent;
   cursor: pointer;
 }
 
 .yuyin-jindu-tiao::-webkit-slider-runnable-track {
-  height: var(--yuyin-jindu-gao);
-  background: currentColor;
+  box-sizing: border-box;
+  height: var(--yuyin-kongzhi-re-ku);
+  border: none;
+  background: linear-gradient(currentColor, currentColor) center / 100% var(--yuyin-jindu-gao) no-repeat;
   opacity: 0.35;
 }
 
 .yuyin-jindu-tiao::-webkit-slider-thumb {
+  box-sizing: border-box;
   width: var(--yuyin-huakuai-chicun);
   height: var(--yuyin-huakuai-chicun);
-  margin-top: calc((var(--yuyin-jindu-gao) - var(--yuyin-huakuai-chicun)) / 2);
+  margin-top: calc((var(--yuyin-kongzhi-re-ku) - var(--yuyin-huakuai-chicun)) / 2);
   border: none;
   border-radius: 50%;
+  appearance: none;
+  -webkit-appearance: none;
   background: currentColor;
   opacity: 1;
 }
 
 .yuyin-jindu-tiao::-moz-range-track {
-  height: var(--yuyin-jindu-gao);
-  background: currentColor;
+  box-sizing: border-box;
+  height: var(--yuyin-kongzhi-re-ku);
+  border: none;
+  background: linear-gradient(currentColor, currentColor) center / 100% var(--yuyin-jindu-gao) no-repeat;
   opacity: 0.35;
 }
 
 .yuyin-jindu-tiao::-moz-range-thumb {
+  box-sizing: border-box;
   width: var(--yuyin-huakuai-chicun);
   height: var(--yuyin-huakuai-chicun);
+  margin: 0;
   border: none;
   border-radius: 50%;
   background: currentColor;

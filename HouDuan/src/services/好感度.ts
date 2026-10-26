@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import { HAO_GAN_DU_PEI_ZHI, HaoGanDuJieDuanYingShe } from '../config/好感度配置'
@@ -13,12 +14,23 @@ export interface HaoGanDuSiWeiBianHua {
   guan_huai_du_bian_hua: number
 }
 
+export interface HaoGanDuZengLiangShiJian {
+  shi_jian_id: string
+  jiao_se_id: string
+  xin_ren_du_bian_hua: number
+  qin_mi_du_bian_hua: number
+  qu_wei_du_bian_hua: number
+  guan_huai_du_bian_hua: number
+  zong_fen_bian_hua: number
+}
+
 export interface HaoGanDuGengXinJieGuo {
   cheng_gong: boolean
   hao_gan_du?: HaoGanDuXinXi
   ti_shi?: string
   zhuang_tai_ma?: number
   shuaiJianHouZengLiang?: number
+  zeng_liang_shi_jian?: HaoGanDuZengLiangShiJian
 }
 
 function qieGeFanWei(zhi: number, zuiDi: number, zuiGao: number): number {
@@ -206,6 +218,16 @@ export async function gengXinHaoGanDu(
     const xinZongFen = Number(gengXinJieGuo.rows[0].总分)
     const shuaiJianHouZengLiang = xinZongFen - jiuZongFen
     const xinSiWei = fenJieSiWei(xinZongFen)
+    const jiuSiWei = fenJieSiWei(jiuZongFen)
+    const zengLiangShiJian: HaoGanDuZengLiangShiJian = {
+      shi_jian_id: randomUUID(),
+      jiao_se_id,
+      xin_ren_du_bian_hua: xinSiWei.xin_ren_du - jiuSiWei.xin_ren_du,
+      qin_mi_du_bian_hua: xinSiWei.qin_mi_du - jiuSiWei.qin_mi_du,
+      qu_wei_du_bian_hua: xinSiWei.qu_wei_du - jiuSiWei.qu_wei_du,
+      guan_huai_du_bian_hua: xinSiWei.guan_huai_du - jiuSiWei.guan_huai_du,
+      zong_fen_bian_hua: shuaiJianHouZengLiang,
+    }
     const xinJieDuanMing = huoQuJieDuanMing(xinZongFen)
 
     await 数据库.query(
@@ -241,6 +263,7 @@ export async function gengXinHaoGanDu(
         guan_xi_jie_duan: xinJieDuanMing,
       },
       shuaiJianHouZengLiang,
+      zeng_liang_shi_jian: zengLiangShiJian,
     }
   } catch (cuoWu) {
     debug日志.error('好感度服务', '更新好感度失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
@@ -306,10 +329,6 @@ export async function sheZhiMiJiHaoGanDu(
       jiao_se_id,
     ],
   )
-
-const jiuJieDuanMing = huoQuJieDuanMing(jiuHaoGanDu.zong_fen)
-    if (jiuJieDuanMing !== xinJieDuanMing) {
-    }
 
     jiLuHaoGanDuBianHua(yong_hu_id, jiao_se_id, {
     xin_ren_du_bian_hua: xinSiWei.xin_ren_du - jiuHaoGanDu.xin_ren_du,

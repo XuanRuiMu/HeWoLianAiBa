@@ -93,6 +93,28 @@ select {
   outline-offset: var(--jujiao-huan-pian-yi);
 }
 
+/* 自带边框的按钮类：焦点态由焦点环顶替自身边框（同位替换，不叠双层） */
+:where(
+  .anniu-fu-zhu,
+  .anniu-zhuyao,
+  .xingbie-kapian,
+  .mbti-kaPian,
+  .qi-pao-xuan-xiang,
+  .bei-jing-ka--shang-chuan,
+  .bei-jing-ci-yao,
+  .jiu-di-bian-ji-sui-shi,
+  .jiu-di-bian-ji-se-kuai,
+  .jiu-di-bian-ji-an-niu,
+  .jiu-di-bian-ji-zi-ding-yi-se,
+  .qi-pao-shang-chuan,
+  .anniu-que-ren,
+  .suofang-anniu
+):focus-visible {
+  outline: none;
+  border-color: var(--jujiao-huan-yanse) !important;
+  box-shadow: 0 0 0 var(--jujiao-huan-kuan-du) var(--jujiao-huan-yanse);
+}
+
 
 :where(
   input:not([type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset'], [type='file'], [type='image'], [type='range'], [type='color']),

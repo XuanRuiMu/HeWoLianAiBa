@@ -1,9 +1,6 @@
 <template>
   <div class="zhang-hao-an-quan">
     <div class="sou-suo-hang">
-      <label class="sou-suo-biao-qian" for="she-zhi-sou-suo">{{
-        huoQuFanYi('sheZhi', 'souSuoBiaoTi')
-      }}</label>
       <ChangFangShuRuKuang
         标识="she-zhi-sou-suo"
         :模型值="搜索关键词"
@@ -35,7 +32,6 @@
           <TouXiang :tou-xiang="dangQianTouXiang" :mo-ren-zi="touXiangShouZi" />
         </div>
         <div class="ming-pian-wen">
-          <div class="guan-ming">{{ huoQuFanYi('sheZhi', 'mingPianGuanMing') }}</div>
           <h1 class="xing-ming">{{ dangQianMingCheng }}</h1>
           <p class="qian-ming-dan">{{ 设置仓库.qianMing || huoQuFanYi('haoYou', 'zanWuQianMing') }}</p>
           <div class="uid-hang">
@@ -93,7 +89,7 @@
         @click="切换标签(标签.值)"
         @keydown="标签键盘"
       >
-        {{ 标签.编号 }}·{{ 标签.文案 }}
+        {{ 标签.文案 }}
       </button>
     </nav>
 
@@ -103,11 +99,6 @@
       role="tabpanel"
       aria-labelledby="biao-qian-xingXiang"
     >
-      <div class="fen-zu-tou">
-        <span class="fen-zu-bian-hao">{{ huoQuFanYi('sheZhi', 'fenZuBianHaoXingXiang') }}</span>
-        <h2 class="fen-zu-biao-ti">{{ huoQuFanYi('sheZhi', 'xingXiangFenZu') }}</h2>
-      </div>
-
       <div
         v-show="命中搜索(touXiangSouSuoWenBen)"
         id="tou-xiang"
@@ -157,7 +148,7 @@
           <span>{{ huoQuFanYi('sheZhi', 'keJianXingBiaoTi') }}</span>
           <TongYongXiaLa
             mo-shi="keJianXing"
-            :biao-qian="huoQuFanYi('sheZhi', 'keJianXingBiaoTi')"
+            :aria-biao-qian="huoQuFanYi('sheZhi', 'keJianXingBiaoTi')"
             :xuan-xiang="keJianXingXuanXiang"
             :mo-xing-zhi="qianMingKeJianXing"
             @geng-xin="qianMingKeJianXing = $event as KeJianXing"
@@ -241,16 +232,6 @@
               {{ huoQuFanYi('ziLiaoSheZhi', 'xingBieNv') }}
             </button>
           </div>
-          <button
-            class="anniu-fu-zhu xiao-anniu xingbie-baocun"
-            :disabled="moRenXingBieBaoCunZhong || !moRenXingBieXuanZhong"
-            @click="baoCunMoRenXingBie"
-          >
-            {{ moRenXingBieBaoCunZhong ? huoQuFanYi('sheZhi', 'baoCunZhong') : huoQuFanYi('renZheng', 'queRen') }}
-          </button>
-          <p v-if="moRenXingBieTiShi" class="ti-shi-wen" :class="{ 'ti-shi-cuowu': moRenXingBieShiBai }">
-            {{ moRenXingBieTiShi }}
-          </p>
         </div>
 
         <div
@@ -287,29 +268,8 @@
               {{ huoQuFanYi('ziLiaoSheZhi', 'xingBieNv') }}
             </button>
           </div>
-          <button
-            class="anniu-fu-zhu xiao-anniu xingbie-baocun"
-            :disabled="moRenDuiXiangBaoCunZhong || !moRenDuiXiangXuanZhong"
-            @click="baoCunMoRenDuiXiangXingBie"
-          >
-            {{ moRenDuiXiangBaoCunZhong ? huoQuFanYi('sheZhi', 'baoCunZhong') : huoQuFanYi('renZheng', 'queRen') }}
-          </button>
-          <p
-            v-if="moRenDuiXiangTiShi"
-            class="ti-shi-wen"
-            :class="{ 'ti-shi-cuowu': moRenDuiXiangShiBai }"
-          >
-            {{ moRenDuiXiangTiShi }}
-          </p>
         </div>
       </div>
-
-      <RequestError
-        v-if="fenQuanCuoWu.moRenXingBie"
-        :cuo-wu="fenQuanCuoWu.moRenXingBie || undefined"
-        :zhong-zai="moRenXingBieBaoCunZhong || moRenDuiXiangBaoCunZhong"
-        @chong-shi="chongShiFenQuan('moRenXingBie')"
-      />
     </section>
 
     <section
@@ -318,11 +278,6 @@
       role="tabpanel"
       aria-labelledby="biao-qian-zhangHao"
     >
-      <div class="fen-zu-tou">
-        <span class="fen-zu-bian-hao">{{ huoQuFanYi('sheZhi', 'fenZuBianHaoZhangHao') }}</span>
-        <h2 class="fen-zu-biao-ti">{{ huoQuFanYi('sheZhi', 'zhangHaoFenZu') }}</h2>
-      </div>
-
       <div class="shuang-lie">
         <div
           v-show="命中搜索(miMaSouSuoWenBen)"
@@ -476,11 +431,6 @@
       role="tabpanel"
       aria-labelledby="biao-qian-yinSi"
     >
-      <div class="fen-zu-tou">
-        <span class="fen-zu-bian-hao">{{ huoQuFanYi('sheZhi', 'fenZuBianHaoYinSi') }}</span>
-        <h2 class="fen-zu-biao-ti">{{ huoQuFanYi('sheZhi', 'yinSiFenZu') }}</h2>
-      </div>
-
       <div
         v-show="命中搜索(yinSiSouSuoWenBen)"
         id="yin-si-qu"
@@ -525,7 +475,6 @@
         :class="{ 'sou-zhong-gao-liang': 搜索中 && 命中搜索(paiWeiSouSuoWenBen) }"
       >
         <h2 class="kapian-biao-ti">{{ huoQuFanYi('sheZhi', 'paiWeiBiaoTi') }}</h2>
-        <p class="kapian-miao-shu">{{ huoQuFanYi('sheZhi', 'paiWeiShuoMing') }}</p>
         <button class="anniu-fu-zhu xiao-anniu" @click="xianShiQingKongQueRen = true">
           {{ huoQuFanYi('sheZhi', 'qingKongPaiWei') }}
         </button>
@@ -538,11 +487,6 @@
       role="tabpanel"
       aria-labelledby="biao-qian-waiGuan"
     >
-      <div class="fen-zu-tou">
-        <span class="fen-zu-bian-hao">{{ huoQuFanYi('sheZhi', 'fenZuBianHaoWaiGuan') }}</span>
-        <h2 class="fen-zu-biao-ti">{{ huoQuFanYi('sheZhi', 'waiGuanFenZu') }}</h2>
-      </div>
-
       <div
         v-show="!搜索中 || 外观有命中"
         id="wai-guan-da-kuang"
@@ -622,10 +566,13 @@
       </Transition>
     </Teleport>
     <Teleport to="body">
-      <TouXiangCaiJian
+      <TuPianCaiJian
         v-if="caiJianXianShi"
         :tu-yuan="caiJianTuYuan"
         :yuan-mime="caiJianYuanMIME"
+        :biao-ti="huoQuFanYi('sheZhi', 'touXiangCaiJian')"
+        :ti-shi="huoQuFanYi('sheZhi', 'tuPianCaiJianTiShi')"
+        :wen-jian-ming="'touxiang'"
         @que-ren="queRenCaiJian"
         @qu-xiao="guanBiCaiJian"
       />
@@ -642,8 +589,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, computed, onMounted, onBeforeUnmount, watch, defineAsyncComponent } from 'vue'
+import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import { 使用用户仓库 } from '@/stores/用户'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
 import { huoQuFanYi } from '@/config/翻译表'
@@ -673,7 +620,7 @@ import {
 } from '@/api/资料'
 import { huoQuHaoYouLieBiao, type HaoYouXiang } from '@/api/社交'
 import { yaSuoTuPiang } from '@/utils/图片压缩'
-import TouXiangCaiJian from '@/components/头像裁剪.vue'
+const TuPianCaiJian = defineAsyncComponent(() => import('@/components/图片裁剪.vue'))
 import TongYongXiaLa from '@/components/通用菜单.vue'
 import QiPaoXuanZeQi from '@/components/气泡主题选择器.vue'
 import LiaoTianBeiJingSheZhi from '@/components/聊天背景设置.vue'
@@ -686,31 +633,10 @@ const QIAN_MING_ZUI_DA_ZI_FU = 500
 const 用户仓库 = 使用用户仓库()
 const 设置仓库 = 使用用户设置仓库()
 const router = useRouter()
-const route = useRoute()
 
 type BiaoQianZhi = '形象' | '账号' | '隐私' | '外观'
 const 搜索关键词 = ref('')
 const 当前标签 = ref<BiaoQianZhi>('形象')
-
-const 锚点到标签: Record<string, BiaoQianZhi> = {
-  'tou-xiang': '形象',
-  qianMing: '形象',
-  'qian-ming': '形象',
-  'yong-hu-ming': '形象',
-  'mo-ren-xing-bie': '形象',
-  'mo-ren-dui-xiang-xing-bie': '形象',
-  'mi-ma': '账号',
-  'feng-jin-qu': '账号',
-  'uid-qu': '账号',
-  'bang-ding-qu': '账号',
-  'zhu-xiao-qu': '账号',
-  'yin-si-qu': '隐私',
-  'pai-wei-qu': '隐私',
-  'tu-pian-qu': '隐私',
-  'liao-tian-bei-jing': '外观',
-  'qi-pao-xuan-ze': '外观',
-  'qi-pao-she-zhi': '外观',
-}
 
 function 切换标签(标签: BiaoQianZhi) {
   当前标签.value = 标签
@@ -743,37 +669,23 @@ const 标签列表 = computed(() => [
     值: '形象' as BiaoQianZhi,
     键: 'xingXiang',
     文案: huoQuFanYi('sheZhi', 'xingXiangFenZu'),
-    编号: huoQuFanYi('sheZhi', 'fenZuBianHaoXingXiang'),
   },
   {
     值: '账号' as BiaoQianZhi,
     键: 'zhangHao',
     文案: huoQuFanYi('sheZhi', 'zhangHaoFenZu'),
-    编号: huoQuFanYi('sheZhi', 'fenZuBianHaoZhangHao'),
   },
   {
     值: '隐私' as BiaoQianZhi,
     键: 'yinSi',
     文案: huoQuFanYi('sheZhi', 'yinSiFenZu'),
-    编号: huoQuFanYi('sheZhi', 'fenZuBianHaoYinSi'),
   },
   {
     值: '外观' as BiaoQianZhi,
     键: 'waiGuan',
     文案: huoQuFanYi('sheZhi', 'waiGuanFenZu'),
-    编号: huoQuFanYi('sheZhi', 'fenZuBianHaoWaiGuan'),
   },
 ])
-
-function gunDongDaoMaoDian() {
-  const 锚点 = route.hash.replace('#', '')
-  if (!锚点) return
-  const 目标标签 = 锚点到标签[锚点]
-  if (目标标签) 当前标签.value = 目标标签
-  nextTick(() => {
-    document.getElementById(锚点)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  })
-}
 
 const xianShiQueRen = ref(false)
 const xianShiQingKongQueRen = ref(false)
@@ -846,6 +758,9 @@ function chuLiTouXiangXuanZe() {
 
 function guanBiCaiJian() {
   caiJianXianShi.value = false
+  if (caiJianTuYuan.value) URL.revokeObjectURL(caiJianTuYuan.value)
+  caiJianTuYuan.value = ''
+  caiJianYuanMIME.value = 'image/png'
 }
 
 async function queRenCaiJian(wenJian: Blob) {
@@ -932,7 +847,7 @@ function qingFenQuanCuoWu(fenQuan: string): void {
   delete fenQuanChongShi[fenQuan]
 }
 
-const BANG_FEN_QUAN = ['uid', 'fengJin', 'paiWei', 'gongKai', 'zhuXiao', 'beiJing', 'touXiang', 'qianMing', 'yongHuMing', 'miMa', 'moRenXingBie', 'shenSu'] as const
+const BANG_FEN_QUAN = ['uid', 'fengJin', 'paiWei', 'gongKai', 'zhuXiao', 'beiJing', 'touXiang', 'qianMing', 'yongHuMing', 'miMa', 'shenSu'] as const
 
 function tongYiShiBai(cuoWu: QianTaiCuoWu | null | undefined, lingYi: QianTaiCuoWu | null | undefined): boolean {
   if (!cuoWu || !lingYi) return false
@@ -1022,14 +937,42 @@ const renJiZuJian = ref<人机测试实例 | null>(null)
 let miMaDaoJiShiQi: ReturnType<typeof setInterval> | null = null
 
 const moRenXingBieXuanZhong = ref<XingBie | null>(null)
-const moRenXingBieBaoCunZhong = ref(false)
-const moRenXingBieTiShi = ref('')
-const moRenXingBieShiBai = ref(false)
-
 const moRenDuiXiangXuanZhong = ref<XingBie | null>(null)
-const moRenDuiXiangBaoCunZhong = ref(false)
-const moRenDuiXiangTiShi = ref('')
-const moRenDuiXiangShiBai = ref(false)
+const xingBieFuWuQiKuaiZhao = { moRenXingBie: null as XingBie | null, moRenDuiXiang: null as XingBie | null }
+let xingBieJingMoBaoCunZhong = false
+
+function xingBieYouWeiBaoCun(): boolean {
+  return (
+    (moRenXingBieXuanZhong.value !== null && moRenXingBieXuanZhong.value !== xingBieFuWuQiKuaiZhao.moRenXingBie) ||
+    (moRenDuiXiangXuanZhong.value !== null && moRenDuiXiangXuanZhong.value !== xingBieFuWuQiKuaiZhao.moRenDuiXiang)
+  )
+}
+
+async function jingMoBaoCunXingBie(): Promise<void> {
+  if (xingBieJingMoBaoCunZhong) return
+  const xinXingBie = moRenXingBieXuanZhong.value
+  const xinDuiXiang = moRenDuiXiangXuanZhong.value
+  const gengXingBie = xinXingBie !== null && xinXingBie !== xingBieFuWuQiKuaiZhao.moRenXingBie
+  const gengDuiXiang = xinDuiXiang !== null && xinDuiXiang !== xingBieFuWuQiKuaiZhao.moRenDuiXiang
+  if (!gengXingBie && !gengDuiXiang) return
+  xingBieJingMoBaoCunZhong = true
+  try {
+    if (gengXingBie) {
+      const xinXi = await gengGaiMoRenXingBie(xinXingBie)
+      用户仓库.tongBuZiLiao({ mo_ren_xing_bie: xinXi.mo_ren_xing_bie })
+      xingBieFuWuQiKuaiZhao.moRenXingBie = 用户形态(xinXi.mo_ren_xing_bie)
+    }
+    if (gengDuiXiang) {
+      const xinXi = await gengGaiMoRenDuiXiangXingBie(xinDuiXiang)
+      用户仓库.tongBuZiLiao({ mu_biao_xing_bie: xinXi.mu_biao_xing_bie })
+      xingBieFuWuQiKuaiZhao.moRenDuiXiang = 用户形态(xinXi.mu_biao_xing_bie)
+    }
+  } catch (cuoWu: unknown) {
+    console.error('离页保存性别设置失败', cuoWu)
+  } finally {
+    xingBieJingMoBaoCunZhong = false
+  }
+}
 
 const keYiBaoCunMiMa = computed(
   () =>
@@ -1130,42 +1073,6 @@ async function baoCunMiMa() {
     jieShouFenQuanCuoWu('miMa', cuoWu, baoCunMiMa)
   } finally {
     miMaBaoCunZhong.value = false
-  }
-}
-
-async function baoCunMoRenXingBie() {
-  if (!moRenXingBieXuanZhong.value) return
-  moRenXingBieBaoCunZhong.value = true
-  moRenXingBieShiBai.value = false
-  moRenXingBieTiShi.value = ''
-  qingFenQuanCuoWu('moRenXingBie')
-  try {
-    await gengGaiMoRenXingBie(moRenXingBieXuanZhong.value)
-    await 用户仓库.jiaZaiYongHu()
-    moRenXingBieTiShi.value = huoQuFanYi('sheZhi', 'baoCunChengGong')
-  } catch (cuoWu: unknown) {
-    moRenXingBieShiBai.value = true
-    jieShouFenQuanCuoWu('moRenXingBie', cuoWu, baoCunMoRenXingBie)
-  } finally {
-    moRenXingBieBaoCunZhong.value = false
-  }
-}
-
-async function baoCunMoRenDuiXiangXingBie() {
-  if (!moRenDuiXiangXuanZhong.value) return
-  moRenDuiXiangBaoCunZhong.value = true
-  moRenDuiXiangShiBai.value = false
-  moRenDuiXiangTiShi.value = ''
-  qingFenQuanCuoWu('moRenXingBie')
-  try {
-    await gengGaiMoRenDuiXiangXingBie(moRenDuiXiangXuanZhong.value)
-    await 用户仓库.jiaZaiYongHu()
-    moRenDuiXiangTiShi.value = huoQuFanYi('sheZhi', 'baoCunChengGong')
-  } catch (cuoWu: unknown) {
-    moRenDuiXiangShiBai.value = true
-    jieShouFenQuanCuoWu('moRenXingBie', cuoWu, baoCunMoRenDuiXiangXingBie)
-  } finally {
-    moRenDuiXiangBaoCunZhong.value = false
   }
 }
 
@@ -1291,9 +1198,10 @@ onMounted(() => {
   yongHuMingCaoGao.value = 用户仓库.dangQianYongHu?.yong_hu_ming || ''
   moRenXingBieXuanZhong.value = 用户形态(用户仓库.dangQianYongHu?.mo_ren_xing_bie)
   moRenDuiXiangXuanZhong.value = 用户形态(用户仓库.dangQianYongHu?.mu_biao_xing_bie)
+  xingBieFuWuQiKuaiZhao.moRenXingBie = moRenXingBieXuanZhong.value
+  xingBieFuWuQiKuaiZhao.moRenDuiXiang = moRenDuiXiangXuanZhong.value
   void jiaZaiFengJinZhuangTai()
   void jiaZaiHaoYouKeXuan()
-  gunDongDaoMaoDian()
 })
 
 onBeforeUnmount(() => {
@@ -1301,6 +1209,11 @@ onBeforeUnmount(() => {
     clearInterval(miMaDaoJiShiQi)
     miMaDaoJiShiQi = null
   }
+  void jingMoBaoCunXingBie()
+})
+
+onBeforeRouteLeave(() => {
+  void jingMoBaoCunXingBie()
 })
 
 const fengJinZhuangTai = ref<FengJinZhuangTai | null>(null)
@@ -1385,11 +1298,6 @@ watch(qianMingKeJianXing, (xinZhi) => {
   if (xinZhi === 'jin_bu_fen_ren' && !haoYouKeXuan.value.length) void jiaZaiHaoYouKeXuan()
 })
 
-watch(
-  () => route.hash,
-  () => gunDongDaoMaoDian(),
-)
-
 const zhuangTai = computed(() => 用户仓库.zhuangTai)
 
 const tuPianShouQuan = computed({
@@ -1473,13 +1381,6 @@ async function zhiXingZhuXiao() {
   flex-wrap: wrap;
 }
 
-.sou-suo-biao-qian {
-  font-family: var(--biaoTiZi);
-  font-size: 14px;
-  color: var(--yeLvShen);
-  flex: none;
-}
-
 .sou-suo-qing-kong {
   flex: none;
 }
@@ -1526,21 +1427,13 @@ async function zhiXingZhuXiao() {
   font-size: 42px;
   color: var(--kaPian);
   background-color: var(--taoTu);
-  border: 3px solid var(--yeLv);
-  border-radius: 42% 58% 61% 39% / 45% 42% 58% 55%;
+  border-radius: 6px;
   overflow: hidden;
 }
 
 .ming-pian-wen {
   min-width: 0;
   flex: 1;
-}
-
-.guan-ming {
-  font-family: var(--biaoTiZi);
-  font-size: 13px;
-  letter-spacing: 4px;
-  color: var(--yeLvShen);
 }
 
 .xing-ming {
@@ -1649,30 +1542,6 @@ async function zhiXingZhuXiao() {
 .biao-qian-lan button:focus-visible {
   outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
   outline-offset: var(--jujiao-huan-pian-yi);
-}
-
-.fen-zu-tou {
-  display: flex;
-  align-items: center;
-  gap: var(--jiange-xiao);
-  margin: var(--jiange-xiao) 0 calc(var(--jiange-xiao) + var(--jiange-6));
-}
-
-.fen-zu-bian-hao {
-  font-family: var(--biaoTiZi);
-  font-size: 13px;
-  color: var(--yeLvShen);
-  border: 1.5px solid var(--yeLv);
-  border-radius: 999px;
-  padding: var(--jiange-2) var(--jiange-10);
-  flex: none;
-}
-
-.fen-zu-biao-ti {
-  font-family: var(--biaoTiZi);
-  font-size: 19px;
-  margin: 0;
-  color: var(--moSe);
 }
 
 .zhi-wu-ka-pian {
@@ -1800,10 +1669,6 @@ async function zhiXingZhuXiao() {
   grid-column: 1 / -1;
 }
 
-.xingbie-baocun {
-  margin-top: auto;
-}
-
 .yulan-hang {
   display: flex;
   align-items: center;
@@ -1814,7 +1679,7 @@ async function zhiXingZhuXiao() {
 .yulan-wei {
   width: 72px;
   height: 72px;
-  border-radius: 42% 58% 61% 39% / 45% 42% 58% 55%;
+  border-radius: 6px;
   overflow: hidden;
   flex: none;
   display: flex;
@@ -1823,8 +1688,7 @@ async function zhiXingZhuXiao() {
   font-size: 30px;
   font-family: var(--biaoTiZi);
   color: var(--kaPian);
-  background-color: var(--yeLv);
-  border: 2.5px solid var(--taoTu);
+  background-color: var(--taoTu);
 }
 
 .ti-shi-wen {
@@ -2012,13 +1876,6 @@ async function zhiXingZhuXiao() {
   cursor: not-allowed;
 }
 
-.anniu-fu-zhu:focus-visible,
-.anniu-zhu-yao:focus-visible,
-.xingbie-kapian:focus-visible {
-  outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
-  outline-offset: var(--jujiao-huan-pian-yi);
-}
-
 
 .zhu-xiao-an-niu {
   margin-top: var(--jiange-xiao);
@@ -2188,10 +2045,6 @@ async function zhiXingZhuXiao() {
   .uid-hang,
   .shu-zu {
     justify-content: center;
-  }
-
-  .guan-ming {
-    letter-spacing: 6px;
   }
 
   .yanzhengma-hang {

@@ -10,7 +10,6 @@ const ZI_LIAO_SHU_JU_JIAN = 'ziLiaoShuJu'
 const ZI_LIAO_SHE_ZHI_YI_WAN_CHENG_JIAN = 'ziLiaoSheZhiYiWanCheng'
 const JI_ZHU_ZHANG_HAO_JIAN = 'jiZhuZhangHao'
 const BAO_CUN_ZHANG_HAO_JIAN = 'baoCunZhangHao'
-const BAO_CUN_MI_MA_JIAN = 'baoCunMiMa'
 
 const ZI_LIAO_SHU_JU_BAN_BEN = 2
 
@@ -164,6 +163,31 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
     }
   }
 
+  function gengXinJiZhuZhangHao(zhi: boolean) {
+    jiZhuZhangHao.value = zhi
+    if (!zhi) {
+      jiZhuMiMa.value = false
+      ziDongDengLu.value = false
+    }
+  }
+
+  function gengXinJiZhuMiMa(zhi: boolean) {
+    jiZhuMiMa.value = zhi
+    if (zhi) {
+      jiZhuZhangHao.value = true
+    } else {
+      ziDongDengLu.value = false
+    }
+  }
+
+  function gengXinZiDongDengLu(zhi: boolean) {
+    ziDongDengLu.value = zhi
+    if (zhi) {
+      jiZhuZhangHao.value = true
+      jiZhuMiMa.value = true
+    }
+  }
+
   function sheZhiJiZhuZhangHaoMiMa(
     zhangHao: string,
     _miMa: string,
@@ -180,7 +204,6 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
     } else {
       shanChuShuJu(BAO_CUN_ZHANG_HAO_JIAN)
     }
-    shanChuShuJu(BAO_CUN_MI_MA_JIAN)
   }
 
   function qingKongZiLiao() {
@@ -223,5 +246,8 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
     huoQuXinMuZhongDeTaYouXiao,
     sheZhiJiZhuZhangHaoMiMa,
     jiaZaiJiZhuSheZhi,
+    gengXinJiZhuZhangHao,
+    gengXinJiZhuMiMa,
+    gengXinZiDongDengLu,
   }
 })

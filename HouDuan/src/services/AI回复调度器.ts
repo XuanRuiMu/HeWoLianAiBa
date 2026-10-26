@@ -916,7 +916,10 @@ private 计算本轮回复延迟(): number {
       const 评判结果 = await pingPanHaoGanDuPiLiangNei(用户消息, 角色回复LieBiao, '对方', shangXiaWen, undefined, this.用户ID, this.角色ID)
       if (评判结果.jieGuo.li_you === 'unknown') return null
       try {
-        await gengXinHaoGanDu(this.用户ID, this.角色ID, 评判结果.jieGuo, 评判结果.xiShu, 评判结果.muBiaoQuXian, 评判结果.lianXuWeiDaBiao)
+        const gengXinJieGuo = await gengXinHaoGanDu(this.用户ID, this.角色ID, 评判结果.jieGuo, 评判结果.xiShu, 评判结果.muBiaoQuXian, 评判结果.lianXuWeiDaBiao)
+        if (gengXinJieGuo.cheng_gong && gengXinJieGuo.zeng_liang_shi_jian) {
+          this.io.to(this.用户ID).emit('好感度增量', gengXinJieGuo.zeng_liang_shi_jian)
+        }
       } catch (缓存错误) {
         debug日志.error('AI调度器', '好感度缓存链路失败', { xiang_qing: { cuo_wu: String(缓存错误) } })
       }

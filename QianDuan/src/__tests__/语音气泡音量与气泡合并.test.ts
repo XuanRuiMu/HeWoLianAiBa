@@ -257,6 +257,52 @@ describe('音量采集：真实 RMS，不造假动画', () => {
   })
 })
 
+describe('语音进度圆点跨浏览器几何', () => {
+  it('WebKit 与 Firefox 共用 36px 轨道盒和居中细线，thumb 中心严格落在轨道中心', () => {
+    const 取规则 = (选择器: string): string => {
+      const 转义 = 选择器.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      return 语音源.match(new RegExp(`${转义}\\s*\\{[^}]*\\}`))?.[0] ?? ''
+    }
+    const 输入规则 = 取规则('.yuyin-jindu-tiao')
+    const webkit轨道 = 取规则('.yuyin-jindu-tiao::-webkit-slider-runnable-track')
+    const firefox轨道 = 取规则('.yuyin-jindu-tiao::-moz-range-track')
+    const webkit圆点 = 取规则('.yuyin-jindu-tiao::-webkit-slider-thumb')
+    expect(输入规则).toContain('height: var(--yuyin-kongzhi-re-ku)')
+    expect(输入规则).toContain('padding: 0')
+    expect(输入规则).toContain('border: 0')
+    for (const 轨道 of [webkit轨道, firefox轨道]) {
+      expect(轨道).toContain('height: var(--yuyin-kongzhi-re-ku)')
+      expect(轨道).toContain(
+        'background: linear-gradient(currentColor, currentColor) center / 100% var(--yuyin-jindu-gao) no-repeat',
+      )
+    }
+    expect(webkit圆点).toContain(
+      'margin-top: calc((var(--yuyin-kongzhi-re-ku) - var(--yuyin-huakuai-chicun)) / 2)',
+    )
+    expect(webkit圆点).toContain('-webkit-appearance: none')
+    expect(firefox轨道).not.toContain('align-self')
+  })
+
+  it.each([false, true])('本人态为 %s 时共用同一滑块且拖动事件保持不变', async shiBenRen => {
+    const wrapper = mount(语音气泡, {
+      props: {
+        xiaoXi: { mei_ti_shi_chang_hao_miao: 10000 },
+        boFangZhong: false,
+        xuanZhong: true,
+        jinDuMiao: 2,
+        zongMiao: 10,
+        shiBenRen,
+      },
+    })
+    const 滑块 = wrapper.get<HTMLInputElement>('input[type="range"]')
+    expect(滑块.element.value).toBe('2')
+    expect(wrapper.get('.yuyin-jindu-qu').classes().includes('yuyin-jindu-qu--benren')).toBe(shiBenRen)
+    await 滑块.setValue('4')
+    expect(wrapper.emitted('tiaoZhuan')).toEqual([[4]])
+    wrapper.unmount()
+  })
+})
+
 describe('暂停/停止收进紧凑按钮组', () => {
   it('视觉 28px、图标 13px、组内 3px、组与进度条 8px，36px 热区由 ::before 外扩', () => {
     expect(令牌源).toContain('--yuyin-kongzhi-chicun: 28px;')

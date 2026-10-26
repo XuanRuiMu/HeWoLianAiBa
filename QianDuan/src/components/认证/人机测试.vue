@@ -479,9 +479,7 @@ defineExpose({ biaoShiYanZhengShiBai })
   --moSe: var(--wenben-zhuse);
   --huiSe: var(--wenben-ciuse);
   --miao-bian-se: rgba(240, 220, 174, 0.75);
-  --chang-fang-kuang-gao-liang-dan: rgba(201, 169, 106, 0.18);
   --chang-fang-kuang-gao-liang-liang: rgba(240, 220, 174, 0.75);
-  --chang-fang-kuang-gao-liang-guang: rgba(201, 169, 106, 0.35);
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -601,9 +599,7 @@ defineExpose({ biaoShiYanZhengShiBai })
 :root[data-theme='light'] .renji-biaodan {
   --kaPian: #fffcf3;
   --miao-bian-se: rgba(163, 129, 62, 0.65);
-  --chang-fang-kuang-gao-liang-dan: rgba(163, 129, 62, 0.16);
   --chang-fang-kuang-gao-liang-liang: rgba(163, 129, 62, 0.65);
-  --chang-fang-kuang-gao-liang-guang: rgba(163, 129, 62, 0.3);
 }
 
 .renji-motaikuang-enter-active,

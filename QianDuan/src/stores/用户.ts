@@ -19,6 +19,7 @@ import {
   qingChuLingPai,
   baoCunShuaXinLingPai,
   qingChuShuaXinLingPai,
+  shiChiJiuHuiHua,
 } from '@/utils/令牌存储'
 import { 使用认证表单仓库 } from './认证表单'
 import { 使用聊天仓库 } from './聊天'
@@ -242,8 +243,7 @@ export const 使用用户仓库 = defineStore('用户', () => {
     if (youDaiChu) zhuangTai.value.deng_lu_zhong = false
   }
 
-  async function zhiXingDengLu(shouJiHao: string, miMa: string, _jiZhuMiMa = true): Promise<boolean> {
-    void _jiZhuMiMa
+  async function zhiXingDengLu(shouJiHao: string, miMa: string, ziDongDengLu = false): Promise<boolean> {
     const daiCi = kaiShiXinDai()
     恢复任务 = null
     恢复控制器 = new AbortController()
@@ -254,8 +254,8 @@ export const 使用用户仓库 = defineStore('用户', () => {
       const jieGuo = await dengLu(shouJiHao, miMa, { signal: 恢复控制器.signal })
       if (!isDaiCiYouXiao(daiCi)) return false
       令牌.value = jieGuo.令牌
-      baoCunLingPai(jieGuo.令牌, false)
-      baoCunShuaXinLingPai(jieGuo.刷新令牌, jieGuo.刷新令牌ID, false)
+      baoCunLingPai(jieGuo.令牌, ziDongDengLu)
+      baoCunShuaXinLingPai(jieGuo.刷新令牌, jieGuo.刷新令牌ID, ziDongDengLu)
       dangQianYongHu.value = jieGuo.用户
       sheZhiShenFenShiTu(jieGuo.用户)
       shenFenYiJiuXu.value = false
@@ -389,18 +389,18 @@ export const 使用用户仓库 = defineStore('用户', () => {
   function sheZhiLingPai(
     令牌值: string,
     shenFen: { jiao_se?: unknown; neng_li?: unknown } | null = null,
-    _chiJiu = true,
   ) {
-    void _chiJiu
     令牌.value = 令牌值
-    baoCunLingPai(令牌值, false)
+    baoCunLingPai(令牌值, shiChiJiuHuiHua())
     sheZhiShenFenShiTu(shenFen)
   }
 
-  function tongBuZiLiao(canShu: { tou_xiang?: string | null; qian_ming?: string | null }): void {
+  function tongBuZiLiao(canShu: { tou_xiang?: string | null; qian_ming?: string | null; mo_ren_xing_bie?: 用户['mo_ren_xing_bie']; mu_biao_xing_bie?: 用户['mu_biao_xing_bie'] }): void {
     if (!dangQianYongHu.value) return
     if (canShu.tou_xiang !== undefined) dangQianYongHu.value.tou_xiang = canShu.tou_xiang
     if (canShu.qian_ming !== undefined) dangQianYongHu.value.qian_ming = canShu.qian_ming
+    if (canShu.mo_ren_xing_bie !== undefined) dangQianYongHu.value.mo_ren_xing_bie = canShu.mo_ren_xing_bie
+    if (canShu.mu_biao_xing_bie !== undefined) dangQianYongHu.value.mu_biao_xing_bie = canShu.mu_biao_xing_bie
   }
 
   shuiHeBenDiShenFen()

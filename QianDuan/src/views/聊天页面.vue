@@ -1,6 +1,6 @@
 <template>
   <div class="liaotian-yemian" data-chat-scope="true">
-    <TiShiDai :cuo-wu="fuPanMoShi ? null : 聊天仓库.cuoWuXinXi" />
+    <TiShiDai :cuo-wu="fuPanMoShi ? null : 聊天仓库.cuoWuXinXi" :zeng-liang="fuPanMoShi ? null : 聊天仓库.haoGanDuZengLiangBiaoQian" />
     <div v-if="聊天仓库.jiaoSeQianTaiCuoWu">
       <RequestError
         :cuo-wu="聊天仓库.jiaoSeQianTaiCuoWu"

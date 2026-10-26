@@ -8,6 +8,7 @@ import { shengChengDirectorCeLue } from './Director'
 import { shengChengWriterHuiFu } from './Writer'
 import { jianChaAiWei, panDuanShiFouCaiYang, panDuanShiFouMoXingChouJian, guoLvAiWeiXiaoXi } from '../config/去AI味配置'
 import { gouJianJiaoSeShangXiaWen, type CanShuShangXiaWen } from '../config/AI参数策略'
+import { 构建确定性知识回答, 检索通用知识 } from './通用知识检索'
 import type {
   AIYinQingShuRu,
   AIYinQingShuChu,
@@ -126,6 +127,26 @@ export async function yunXingAIYinQing(
     }
   }
 
+  if (!shuRu.yong_hu_xin_xiao_xi?.trim()) {
+    return {
+      xiao_xi_lie_biao: [],
+      shi_fou_hui_fu: false,
+      shi_fou_che_hui: false,
+      jiang_ji_mo_shi: false,
+    }
+  }
+
+  const zhiShi = 检索通用知识(shuRu.yong_hu_xin_xiao_xi, !shuRu.zui_jia_shuo_de_shi)
+  const queDingHuiDa = 构建确定性知识回答(shuRu.yong_hu_xin_xiao_xi, zhiShi)
+  if (queDingHuiDa) {
+    return {
+      xiao_xi_lie_biao: [queDingHuiDa],
+      shi_fou_hui_fu: true,
+      shi_fou_che_hui: false,
+      jiang_ji_mo_shi: false,
+    }
+  }
+
   const shiYuJingTongDao = shuRu.yong_hu_xin_xiao_xi.startsWith('[系统提示：用户连发多条消息')
   const yuSuanJieGuo = shiYuJingTongDao
     ? { yunXu: true, chuFaYuJing: false }
@@ -144,16 +165,6 @@ export async function yunXingAIYinQing(
     }
   }
 
-  if (!shuRu.yong_hu_xin_xiao_xi?.trim()) {
-    return {
-      xiao_xi_lie_biao: [],
-      shi_fou_hui_fu: false,
-      shi_fou_che_hui: false,
-      jiang_ji_mo_shi: false,
-    }
-  }
-
-
   let ceLue: DirectorCeLue | undefined
   let jiang_ji_mo_shi = false
   let cuoWuXinXi: string | undefined
@@ -168,7 +179,7 @@ export async function yunXingAIYinQing(
       : undefined,
   }
 
-  const directorJieGuo = await shengChengDirectorCeLue(shuRu, shangXiaWen, waiBuXinHao)
+  const directorJieGuo = await shengChengDirectorCeLue(shuRu, shangXiaWen, waiBuXinHao, zhiShi)
   const directorSiKao = directorJieGuo.si_kao || undefined
   if (directorJieGuo.cheng_gong) {
     ceLue = directorJieGuo.ce_lue
@@ -218,7 +229,7 @@ jiang_ji_mo_shi: false,
           ce_lue: ceLue,
         }
       }
-    const writerJieGuo = await shengChengWriterHuiFu(shuRu, ceLue, shangXiaWen, waiBuXinHao)
+    const writerJieGuo = await shengChengWriterHuiFu(shuRu, ceLue, shangXiaWen, waiBuXinHao, zhiShi)
 
     let xiaoXiLieBiao = qieGeXiaoXi(writerJieGuo.xiao_xi_lie_biao, ZUI_DA_TIAO_SHU)
     if (writerJieGuo.xiao_xi_lie_biao.length > ZUI_DA_TIAO_SHU) {

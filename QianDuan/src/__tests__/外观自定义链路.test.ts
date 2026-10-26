@@ -313,7 +313,6 @@ describe('外观就地编辑：共享圆角输入框与显式提交', () => {
     expect(kuang.emitted('tijiao')).toBeUndefined()
 
     await kuang.get('.jiu-di-bian-ji-tou').trigger('click')
-    await kuang.get('.jiu-di-bian-ji-yan-se-biao-ti').trigger('click')
     await kuang.get('.jiu-di-bian-ji-sui-shi').trigger('click')
     await kuang.get('.jiu-di-bian-ji-se-kuai').trigger('click')
     expect(kuang.emitted('tijiao')).toBeUndefined()
@@ -376,38 +375,41 @@ describe('外观编辑与删除按钮：内联 SVG 图标与紧凑尺寸', () =>
       dangQianQiPao: { ziJi: '', ai: '' },
     }
     const kuang = mount(QiPaoZhuTiXuanZeQi)
-    const 控件们 = kuang.findAll('.qi-pao-kong-zhi')
-    expect(控件们).toHaveLength(4)
+    const 控件们 = kuang.findAll('.qi-pao-ka-kong-zhi')
+    expect(控件们.length).toBeGreaterThan(4)
     for (const 控件 of 控件们) {
       expect(控件.find('svg').exists()).toBe(true)
-      expect(控件.text()).toBe('')
       expect(控件.attributes('aria-label')).toBeTruthy()
     }
+    const shanChu = 控件们.filter((k) => k.classes().includes('qi-pao-ka-kong-zhi--shan-chu'))
+    expect(shanChu).toHaveLength(2)
     kuang.unmount()
   })
 
   it('不再用文字符号当图标，编辑为铅笔、删除为垃圾桶', () => {
     for (const 源 of [背景源码, 气泡源码]) {
       expect(源).not.toMatch(/[✎✕×]/)
-      expect(源.match(/class="[^"]*-kong-zhi-tu-biao"/g) ?? []).toHaveLength(2)
-      expect(源.match(/stroke="currentColor"/g) ?? []).toHaveLength(2)
-      expect(源.match(/focusable="false"/g) ?? []).toHaveLength(2)
+      expect((源.match(/class="[^"]*ka-kong-zhi-tu-biao"/g) ?? []).length).toBeGreaterThanOrEqual(2)
+      expect((源.match(/stroke="currentColor"/g) ?? []).length).toBeGreaterThanOrEqual(2)
+      expect((源.match(/focusable="false"/g) ?? []).length).toBeGreaterThanOrEqual(2)
       expect(源).toContain('M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z')
       expect(源).toContain('M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6')
     }
   })
 
-  it('按钮视觉 30px、图标 14px、热区 36px，全部走组件内变量', () => {
+  it('控件是文字字号级小图标，贴卡片右下角且不挤占名称', () => {
+    expect(背景源码).toContain('--wai-guan-kong-zhi-re-qu: 28px;')
+    expect(背景源码).toContain('width: var(--ziti-xiao);')
+    expect(背景源码).toContain('height: var(--ziti-xiao);')
+    expect(背景源码).toContain('right: var(--jiange-4);')
+    expect(背景源码).toContain('bottom: var(--jiange-2);')
+    expect(气泡源码).toContain('--qi-pao-kong-zhi-re-qu: 24px;')
+    expect(气泡源码).toContain('width: var(--ziti-xiao);')
+    expect(气泡源码).toContain('height: var(--ziti-xiao);')
+    expect(气泡源码).toContain('right: var(--jiange-2);')
+    expect(气泡源码).toContain('bottom: var(--jiange-2);')
     for (const 源 of [背景源码, 气泡源码]) {
-      expect(源).toContain('--wai-guan-kong-zhi-chi-cun: 30px;')
-      expect(源).toContain('--wai-guan-kong-zhi-re-qu: 36px;')
-      expect(源).toContain('--wai-guan-kong-zhi-tu-biao: 14px;')
-      expect(源).toContain('width: var(--wai-guan-kong-zhi-chi-cun);')
-      expect(源).toContain('height: var(--wai-guan-kong-zhi-chi-cun);')
-      expect(源).toContain('width: var(--wai-guan-kong-zhi-re-qu);')
-      expect(源).toContain('height: var(--wai-guan-kong-zhi-re-qu);')
-      expect(源).toContain('width: var(--wai-guan-kong-zhi-tu-biao);')
-      expect(源).toContain('height: var(--wai-guan-kong-zhi-tu-biao);')
+      expect(源).not.toContain('--wai-guan-kong-zhi-tu-biao')
       expect(源).not.toContain('width: var(--wai-guan-re-ku);')
     }
   })
@@ -417,5 +419,39 @@ describe('外观编辑与删除按钮：内联 SVG 图标与紧凑尺寸', () =>
     expect(背景源码).toContain("huoQuFanYi('sheZhi', 'waiGuanBianJiBiaoTi')")
     expect(气泡源码).toContain("huoQuFanYi('sheZhi', 'waiGuanBianJiBiaoTi')")
     expect(背景源码 + 气泡源码).not.toContain('编辑外观')
+  })
+})
+
+describe('FP-03 预设资源不变量', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('背景预设只更新名称和文字色，预览、保存与重进均不改变资源和蒙层', async () => {
+    const kuang = mount(LiaoTianBeiJingSheZhi)
+    const ka = kuang.get('.bei-jing-ka--chenWuQing')
+    const yuanShi = {
+      background: (ka.element as HTMLElement).style.background,
+      mengCeng: (ka.element as HTMLElement).style.getPropertyValue('--wai-guan-meng-ceng'),
+    }
+    await ka.get('.bei-jing-ka-kong-zhi').trigger('click')
+    const bianJi = kuang.getComponent(WaiGuanJiuDiBianJi)
+    bianJi.vm.$emit('yu-lan', { mingCheng: '新的预设名称', wenZiYanSe: '#000000' })
+    await nextTick()
+    expect((ka.element as HTMLElement).style.background).toBe(yuanShi.background)
+    expect((ka.element as HTMLElement).style.getPropertyValue('--wai-guan-meng-ceng')).toBe(yuanShi.mengCeng)
+    expect((ka.element as HTMLElement).style.color).toBe('rgb(0, 0, 0)')
+    bianJi.vm.$emit('tijiao', { mingCheng: '新的预设名称', wenZiYanSe: '#000000' })
+    await nextTick()
+    await nextTick()
+    expect((ka.element as HTMLElement).style.background).toBe(yuanShi.background)
+    expect((ka.element as HTMLElement).style.getPropertyValue('--wai-guan-meng-ceng')).toBe(yuanShi.mengCeng)
+    kuang.unmount()
+    const chongJin = mount(LiaoTianBeiJingSheZhi)
+    const chongJinKa = chongJin.get('.bei-jing-ka--chenWuQing')
+    expect((chongJinKa.element as HTMLElement).style.background).toBe(yuanShi.background)
+    expect((chongJinKa.element as HTMLElement).style.getPropertyValue('--wai-guan-meng-ceng')).toBe(yuanShi.mengCeng)
+    expect(chongJinKa.get('.bei-jing-ka-ming').text()).toBe('新的预设名称')
+    chongJin.unmount()
   })
 })

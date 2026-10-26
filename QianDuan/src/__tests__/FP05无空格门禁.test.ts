@@ -150,7 +150,7 @@ describe('FP-05 无空格门禁', () => {
     expect(weiGui).toEqual([])
   })
 
-  it('页面描述与协议文本零中英数字混排空格', () => {
+  it('页面描述零中英数字混排空格，协议节标题编号后必须空格', () => {
     const weiGui: string[] = []
     const yeMian = readFileSync(yeMianMiaoShuLuJing, 'utf8')
     for (const hang of yeMian.split('\n')) {
@@ -160,15 +160,14 @@ describe('FP-05 无空格门禁', () => {
         weiGui.push(`index.html :: ${hang.trim().slice(0, 80)}`)
       }
     }
+    expect(weiGui).toEqual([])
+    const jieWeiGui: string[] = []
     for (const luJing of xieYiWenBenLuJing) {
       const neiRong = readFileSync(luJing, 'utf8')
       for (const hang of neiRong.split('\n')) {
-        if (!/[一-鿿]/.test(hang)) continue
-        if (youHunPaiKongGe(hang)) {
-          weiGui.push(`${luJing} :: ${hang.trim().slice(0, 80)}`)
-        }
+        if (/^\d+\.\d+[^ \d]/.test(hang)) jieWeiGui.push(`${luJing} :: ${hang.trim().slice(0, 80)}`)
       }
     }
-    expect(weiGui).toEqual([])
+    expect(jieWeiGui).toEqual([])
   })
 })

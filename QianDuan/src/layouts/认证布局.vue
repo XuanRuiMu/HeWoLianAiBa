@@ -145,9 +145,11 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  
+
   justify-content: flex-start;
   overflow-y: auto;
+  overflow-x: hidden;
+  overflow-x: clip;
   -webkit-overflow-scrolling: touch;
   position: relative;
   padding: 5vh 0;

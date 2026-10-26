@@ -3,6 +3,7 @@ import { huoQuFanYi } from '../config/translations'
 import { JUN_SHI_ZHI_DAO_DUAN_DING_YI } from '../config/军师配置'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianJunShiQiuZhuPrompt, geShiHuaJunShiLiShi } from './Prompt构建器'
+import { 构建军师知识层, 检索通用知识 } from './通用知识检索'
 import type {
   JunShiQiuZhuCanShu,
   JunShiQiuZhuJieGuo,
@@ -16,6 +17,8 @@ export async function shengChengJunShiZhiDao(
 ): Promise<JunShiQiuZhuJieGuo> {
   try {
     const duiHuaWenBen = geShiHuaJunShiLiShi(canShu.dui_hua_li_shi, canShu.jiao_se_ming)
+    const zhiShiJianSuo = 检索通用知识(duiHuaWenBen)
+    const zhiShiCeng = zhiShiJianSuo.被注入攻击拦截 ? '' : 构建军师知识层(zhiShiJianSuo)
     const shangXiaWenShiJi = shangXiaWen ?? {
       haoGanDu: {
         zong_fen: canShu.hao_gan_du?.zong_fen,
@@ -31,6 +34,7 @@ export async function shengChengJunShiZhiDao(
           canShu.jiao_se_ming,
           canShu.hao_gan_du,
           canShu.ren_she_wen_ben,
+          zhiShiCeng,
         ),
       },
     ], shangXiaWenShiJi)

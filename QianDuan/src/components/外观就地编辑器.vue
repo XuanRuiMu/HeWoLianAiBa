@@ -22,7 +22,6 @@
     </div>
 
     <div class="jiu-di-bian-ji-yan-se">
-      <span class="jiu-di-bian-ji-yan-se-biao-ti">{{ yanSeBiaoTi }}</span>
       <button
         type="button"
         class="jiu-di-bian-ji-sui-shi"
@@ -61,7 +60,7 @@
       <button type="button" class="jiu-di-bian-ji-an-niu" :disabled="caoZuoZhong" @click="huanYuanMoRen">
         {{ huanYuanWenAn }}
       </button>
-      <span class="jiu-di-bian-ji-ti-shi">{{ huiCheTiShi }}</span>
+      <span class="jiu-di-bian-ji-zhan-wei" />
       <button type="button" class="jiu-di-bian-ji-an-niu" :disabled="caoZuoZhong" @click="quXiaoBianJi">
         {{ quXiaoWenAn }}
       </button>
@@ -108,6 +107,7 @@ const faChu = defineEmits<{
   (shiJian: 'tijiao', zhi: { mingCheng: string; wenZiYanSe: string }): void
   (shiJian: 'huan-yuan'): void
   (shiJian: 'qu-xiao'): void
+  (shiJian: 'yu-lan', zhi: { mingCheng: string; wenZiYanSe: string }): void
 }>()
 
 const shuRuKuang = ref<InstanceType<typeof ChangFangShuRuKuang> | null>(null)
@@ -118,13 +118,11 @@ const yiTiJiao = ref(false)
 const shuRuBiaoShi = 'wai-guan-bian-ji-' + Math.random().toString(36).slice(2, 9)
 
 const mingChengZhanWei = huoQuFanYi('sheZhi', 'waiGuanMingCheng')
-const yanSeBiaoTi = huoQuFanYi('sheZhi', 'waiGuanWenZiYanSe')
 const genSuiWenAn = huoQuFanYi('sheZhi', 'waiGuanYanSeGenSuiZhuti')
 const huanYuanWenAn = huoQuFanYi('sheZhi', 'waiGuanHuanYuanMoRen')
 const quXiaoWenAn = huoQuFanYi('sheZhi', 'waiGuanQuXiao')
 const baoCunWenAn = huoQuFanYi('sheZhi', 'waiGuanBaoCun')
 const baoCunZhongWenAn = huoQuFanYi('sheZhi', 'waiGuanBaoCunZhong')
-const huiCheTiShi = huoQuFanYi('sheZhi', 'waiGuanHuiCheBaoCun')
 const ziDingYiYanSeBiaoTi = huoQuFanYi('sheZhi', 'waiGuanWenZiYanSe')
 
 const ziShu = computed(() => Array.from(mingChengGaoGao.value.trim()).length)
@@ -139,25 +137,33 @@ const ziDingYiYanSeXuanZhong = computed(
 )
 const cuoWuWenAn = computed(() => benDiCuoWu.value || props.cuoWuWenAn)
 
+function faYuLan(): void {
+  faChu('yu-lan', { mingCheng: mingChengGaoGao.value, wenZiYanSe: yanSeGaoGao.value })
+}
+
 function gengXinMingCheng(zhi: string): void {
   mingChengGaoGao.value = zhi
   benDiCuoWu.value = ''
+  faYuLan()
 }
 
 function xuanZeYanSe(yanSe: string): void {
   yanSeGaoGao.value = yanSe
   benDiCuoWu.value = ''
+  faYuLan()
 }
 
 function genSuiZhuTi(): void {
   yanSeGaoGao.value = ''
   benDiCuoWu.value = ''
+  faYuLan()
 }
 
 function chuLiYanSeShuRu(shiJian: Event): void {
   const muBiao = shiJian.target as HTMLInputElement | null
   yanSeGaoGao.value = (muBiao?.value || '').toUpperCase()
   benDiCuoWu.value = ''
+  faYuLan()
 }
 
 function tiJiao(): void {
@@ -271,13 +277,6 @@ onMounted(() => {
   gap: var(--jiange-xiao);
 }
 
-.jiu-di-bian-ji-yan-se-biao-ti {
-  flex: none;
-  margin-right: var(--jiange-2);
-  font-size: var(--ziti-xiao);
-  color: var(--wenben-ciuse);
-}
-
 .jiu-di-bian-ji-sui-shi {
   min-height: var(--wai-guan-re-ku);
   padding: 0 var(--jiange-12);
@@ -357,11 +356,9 @@ onMounted(() => {
   gap: var(--jiange-xiao);
 }
 
-.jiu-di-bian-ji-ti-shi {
+.jiu-di-bian-ji-zhan-wei {
   flex: 1 1 auto;
-  min-width: 140px;
-  font-size: var(--ziti-xiao);
-  color: var(--wenben-ciuse);
+  min-width: 0;
 }
 
 .jiu-di-bian-ji-an-niu {

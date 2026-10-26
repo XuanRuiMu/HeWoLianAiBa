@@ -26,13 +26,7 @@ export interface 生成流程资料 {
 
 export type 生成流程状态 = 'kong_xian' | 'jin_xing_zhong' | 'yi_wan_cheng' | 'shi_bai'
 
-const 步骤文案键 = [
-  'zhengZaiDaKaiShouJi',
-  'zhengZaiTaoLunShuiSaoShui',
-  'zhengZaiKuoQuan',
-  'zhengZaiShengChengRenShe',
-  'zhengZaiShengChengKaiChangBai',
-] as const
+const DENG_DAI_ZHOU_QI_HAO_MIAO = 5000
 
 const 步骤进度 = [20, 40, 60, 80, 100]
 
@@ -40,7 +34,8 @@ export const 使用角色生成仓库 = defineStore('角色生成', () => {
   const zhuangTai = ref<生成流程状态>('kong_xian')
   const buZhouSuoYin = ref(0)
   const jinDu = ref(0)
-  const dangQianWenAnJian = ref<(typeof 步骤文案键)[number] | ''>('')
+  const dengDaiYuXuHao = ref(0)
+  const touRenTiShi = ref(false)
   const jiaoSeXinXi = ref<ShengChengJiaoSeJieGuo | null>(null)
   const huiHuaId = ref<string | null>(null)
   const cuoWuXinXi = ref('')
@@ -48,9 +43,14 @@ export const 使用角色生成仓库 = defineStore('角色生成', () => {
 
   let dingShiQi: ReturnType<typeof setInterval> | null = null
 
-  const dangQianWenAn = computed(() =>
-    dangQianWenAnJian.value ? huoQuFanYi('tianJiaWeiXin', dangQianWenAnJian.value) : '',
+  const dengDaiYuLieBiao = computed(() =>
+    (huoQuFanYi('tianJiaWeiXin', 'dengDaiYuLieBiao') as unknown as string[]) || [],
   )
+  const dangQianWenAn = computed(() => {
+    const lieBiao = dengDaiYuLieBiao.value
+    if (!lieBiao.length) return ''
+    return lieBiao[dengDaiYuXuHao.value % lieBiao.length]
+  })
 
   function qingChuDingShiQi() {
     if (dingShiQi) {
@@ -59,21 +59,17 @@ export const 使用角色生成仓库 = defineStore('角色生成', () => {
     }
   }
 
-  function gengXinBuZhou(suoYin: number) {
-    dangQianWenAnJian.value = 步骤文案键[suoYin]
-    jinDu.value = 步骤进度[suoYin]
+  function qiDongDengDaiLunHuan() {
+    qingChuDingShiQi()
+    dengDaiYuXuHao.value = Math.floor(Math.random() * Math.max(1, dengDaiYuLieBiao.value.length))
+    dingShiQi = setInterval(() => {
+      dengDaiYuXuHao.value += 1
+    }, DENG_DAI_ZHOU_QI_HAO_MIAO)
   }
 
   async function yunXingLiuCheng(ziLiao: 生成流程资料) {
-    let suoYin = 0
-    gengXinBuZhou(suoYin) 
-
-    dingShiQi = setInterval(() => {
-      if (suoYin < 2) {
-        suoYin++
-        gengXinBuZhou(suoYin)
-      }
-    }, 800)
+    jinDu.value = 步骤进度[0]
+    qiDongDengDaiLunHuan()
 
     try {
       const shiTiaoZhan = ziLiao.moshi === 'tiaozhan'
@@ -96,16 +92,11 @@ export const 使用角色生成仓库 = defineStore('角色生成', () => {
         )
       }
       jiaoSeXinXi.value = jiaoSe
-      qingChuDingShiQi()
 
-      suoYin = 3
-      gengXinBuZhou(suoYin) 
       const queRenHouJiaoSe = shiTiaoZhan ? jiaoSe : await queRenJiaoSe(jiaoSe)
       const jiaoSeId = queRenHouJiaoSe.id || queRenHouJiaoSe.jiao_se_id || ''
       if (!jiaoSeId) throw new Error('缺少角色ID')
 
-      suoYin = 4
-      gengXinBuZhou(suoYin) 
       const huiHua = await chuangJianHuiHua(jiaoSeId)
       huiHuaId.value = huiHua.id
       zhuangTai.value = 'yi_wan_cheng'
@@ -146,7 +137,7 @@ export const 使用角色生成仓库 = defineStore('角色生成', () => {
     zhuangTai,
     buZhouSuoYin,
     jinDu,
-    dangQianWenAnJian,
+    dengDaiYuXuHao,
     dangQianWenAn,
     jiaoSeXinXi,
     huiHuaId,

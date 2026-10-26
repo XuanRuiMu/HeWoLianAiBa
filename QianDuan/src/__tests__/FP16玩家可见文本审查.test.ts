@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { mount } from '@vue/test-utils'
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
 import 请求错误 from '@/components/请求错误.vue'
@@ -76,9 +78,13 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
       expect(装可爱).toEqual(['fanYi.liaoTian.lianFaYuJing'])
     })
 
-    it('判据⑤：省略号形态唯一为「……」', () => {
+    it('判据⑤：省略号形态唯一为「……」（对象加载等待语按用户指定用「...」）', () => {
       const 违规 = quFanYiZhi()
-        .filter(({ 文本 }) => /\.\.\./.test(文本) || /(?<!…)…(?!…)/.test(文本))
+        .filter(
+          ({ 路径, 文本 }) =>
+            !(路径.includes('dengDaiYuLieBiao') || 路径.includes('dengDaiTouRen')) &&
+            (/\.\.\./.test(文本) || /(?<!…)…(?!…)/.test(文本)),
+        )
         .map(({ 路径, 文本 }) => `${路径}：${文本}`)
       expect(违规).toEqual([])
     })
@@ -238,12 +244,12 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
       expect(设置说明).toContain('上传给AI服务')
     })
 
-    it('判据②⑦：账号页分组编号不得是 SEC-0x 这类内部占位', () => {
-      for (const 键 of ['fenZuBianHaoXingXiang', 'fenZuBianHaoZhangHao', 'fenZuBianHaoYinSi', 'fenZuBianHaoWaiGuan'] as const) {
-        const 值 = huoQuFanYi('sheZhi', 键)
-        expect(值).not.toMatch(/[A-Za-z]/)
-        expect(值.length).toBeGreaterThan(0)
-      }
+    it('判据②⑦：账号页分组编号体系已整体移除（导航只留分组名）', () => {
+      const 翻译表 = readFileSync(resolve(__dirname, '../config/翻译表.ts'), 'utf8')
+      expect(翻译表).not.toContain('fenZuBianHao')
+      const 账号页 = readFileSync(resolve(__dirname, '../views/账号与安全.vue'), 'utf8')
+      expect(账号页).not.toContain('fen-zu-bian-hao')
+      expect(账号页).not.toContain('第.*组')
     })
 
     it('判据⑤⑥：同一标识（用户编号）在名片/设置/搜索三处同一说法，不得 UID 与编号混用', () => {
@@ -265,7 +271,7 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
     it('判据③：头像类型错误与申诉理由为空各有专属文案，不复用通用兜底', () => {
       expect(huoQuFanYi('sheZhi', 'touXiangLeiXingBuZhichi')).toContain('不是图片')
       expect(huoQuFanYi('sheZhi', 'shenSuLiYouWeiXie')).toContain('申诉理由')
-      expect(huoQuFanYi('sheZhi', 'touXiangCaiJianTiShi')).toContain('拖动图片')
+      expect(huoQuFanYi('sheZhi', 'tuPianCaiJianTiShi')).toContain('拖动图片')
     })
 
     it('判据⑤：加载/进行中类文案省略号形态统一为「……」', () => {

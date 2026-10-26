@@ -109,12 +109,11 @@ defineExpose({ 聚焦, 输入元素 })
   --chang-fang-kuang-bei-jing: var(--kaPian, var(--beijing-kaopian));
   --chang-fang-kuang-wen-se: var(--moSe, var(--wenben-zhuse));
   --chang-fang-kuang-zhan-wei-se: var(--huiSe, var(--wenben-ciuse));
-  --chang-fang-kuang-gao-liang-dan: var(--shuru-gao-liang-dan-nan);
   --chang-fang-kuang-gao-liang-liang: var(--shuru-gao-liang-liang-nan);
-  --chang-fang-kuang-gao-liang-guang: var(--shuru-gao-liang-guang-nan);
   --miao-bian-se: var(--chang-fang-kuang-gao-liang-liang);
   --miao-bian-kuan: var(--chang-fang-kuang-hou-du);
   --miao-bian-shi-chang: var(--shuru-gao-liang-shi-chang);
+  --miao-bian-tui-chu-shi-chang: var(--shuru-gao-liang-tui-chu-shi-chang);
 
   position: relative;
   display: block;
@@ -126,9 +125,7 @@ defineExpose({ 聚焦, 输入元素 })
 }
 
 :root[data-xing-bie='nv'] .chang-fang-kuang-ke {
-  --chang-fang-kuang-gao-liang-dan: var(--shuru-gao-liang-dan-nv);
   --chang-fang-kuang-gao-liang-liang: var(--shuru-gao-liang-liang-nv);
-  --chang-fang-kuang-gao-liang-guang: var(--shuru-gao-liang-guang-nv);
   --miao-bian-se: var(--chang-fang-kuang-gao-liang-liang);
 }
 

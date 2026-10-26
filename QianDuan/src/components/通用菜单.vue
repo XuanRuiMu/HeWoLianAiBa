@@ -101,6 +101,7 @@ export function 使用浮层定位(
 ) {
   const 位置 = ref<浮层位置>({ top: 0, left: 0, kuanDu: 0, zuiDaGaoDu: 0, fangXiang: 'xia' })
   let 跟踪中 = false
+  let 已卸载 = false
   let 帧号 = 0
   const 间距 = xuanXiang.jianGe ?? 8
   const 边距 = xuanXiang.bianJu ?? 8
@@ -167,7 +168,7 @@ export function 使用浮层定位(
   }
 
   function 开始跟踪(): void {
-    if (跟踪中) return
+    if (已卸载 || 跟踪中) return
     跟踪中 = true
     window.addEventListener('scroll', 刷新, true)
     window.addEventListener('resize', 刷新)
@@ -184,7 +185,10 @@ export function 使用浮层定位(
     }
   }
 
-  onBeforeUnmount(结束跟踪)
+  onBeforeUnmount(() => {
+    已卸载 = true
+    结束跟踪()
+  })
 
   return { 位置, 计算, 开始跟踪, 结束跟踪 }
 }
@@ -299,6 +303,7 @@ function 首个KeYongSuoYin(): number {
 }
 
 let 焦点补偿定时: ReturnType<typeof setTimeout> | null = null
+let 打开操作 = 0
 
 function 恢复焦点(次数 = 0): void {
   const 触发器 = chuFaQiYuanSu.value
@@ -312,11 +317,13 @@ function 恢复焦点(次数 = 0): void {
 }
 
 onBeforeUnmount(() => {
+  打开操作 += 1
   if (焦点补偿定时) clearTimeout(焦点补偿定时)
 })
 
 function 打开(xuanZhongSuoYinZhi?: number): void {
   if (props.jinYong || zhanKai.value) return
+  const 本次操作 = ++打开操作
   if (焦点补偿定时) {
     clearTimeout(焦点补偿定时)
     焦点补偿定时 = null
@@ -328,6 +335,7 @@ function 打开(xuanZhongSuoYinZhi?: number): void {
       ? xuanZhongSuoYin.value
       : 首个KeYongSuoYin()
   void nextTick(() => {
+    if (本次操作 !== 打开操作 || !zhanKai.value) return
     计算()
     开始跟踪()
     确保HuoDongKeJian()
@@ -335,6 +343,7 @@ function 打开(xuanZhongSuoYinZhi?: number): void {
 }
 
 function 关闭(返回焦点: boolean): void {
+  打开操作 += 1
   if (!zhanKai.value) return
   zhanKai.value = false
   结束跟踪()

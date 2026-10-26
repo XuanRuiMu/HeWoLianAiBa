@@ -49,12 +49,8 @@ function chuangJianHouDuanTanZhen() {
 function 版本戳插件() {
   return {
     name: 'ban-ben-chuo',
-    buildStart() {
-      try {
-        fs.writeFileSync(path.resolve(process.cwd(), 'public/version.txt'), String(Date.now()))
-      } catch {
-        // 写入失败不影响构建
-      }
+    async buildStart() {
+      await fs.promises.writeFile(path.resolve(process.cwd(), 'public/version.txt'), String(Date.now())).catch(() => undefined)
     },
   }
 }
@@ -165,7 +161,9 @@ export default defineConfig({
     houDuanWeiJiuXuZhongJianJian(),
     版本戳插件(),
     体积门禁插件(),
-    vue(),
+    vue({
+      template: { compilerOptions: { isCustomElement: (biaoQian: string) => biaoQian.startsWith('cropper-') } },
+    }),
     VitePWA({
       injectRegister: false,
       registerType: 'autoUpdate',

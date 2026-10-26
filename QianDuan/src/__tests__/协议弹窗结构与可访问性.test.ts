@@ -57,7 +57,7 @@ describe('协议弹窗正文结构与阅读排版', () => {
     expect(弹窗?.querySelectorAll('.xieyi-duan').length).toBeGreaterThanOrEqual(20)
     expect(弹窗?.querySelector('pre')).toBeNull()
     expect(弹窗?.querySelector('.xieyi-zhang')?.textContent?.trim()).toBe('一、引言')
-    expect(弹窗?.querySelector('.xieyi-jie')?.textContent?.trim()).toBe('2.1服务内容')
+    expect(弹窗?.querySelector('.xieyi-jie')?.textContent?.trim()).toBe('2.1 服务内容')
     包.unmount()
   })
 
@@ -70,7 +70,7 @@ describe('协议弹窗正文结构与阅读排版', () => {
     const 弹窗 = document.querySelector('[role="dialog"]')
     expect(弹窗?.querySelector('h2')?.textContent?.trim()).toBe('隐私政策')
     expect(弹窗?.querySelector('.xieyi-zhang')?.textContent?.trim()).toBe('一、数据控制者信息')
-    expect(弹窗?.querySelector('.xieyi-jie')?.textContent?.trim()).toBe('2.1身份信息')
+    expect(弹窗?.querySelector('.xieyi-jie')?.textContent?.trim()).toBe('2.1 身份信息')
     包.unmount()
   })
 

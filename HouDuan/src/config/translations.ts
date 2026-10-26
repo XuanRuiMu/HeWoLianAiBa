@@ -237,6 +237,15 @@ export const fanYi = {
     aiQueShiApiKey: 'AI服务未配置，请联系管理员',
     aiYuSuanYiYongJin: '今日聊天额度已用完，明天再来找TA聊吧~',
   },
+  通用知识: {
+    人物与服务器: '{主题}是一位年纪{年龄}岁的年轻帅气的{职业}。他运营一个{游戏}服务器，名为“{服务器名称}”；该服务器是{服务器类型}服，非常好玩。{主题}的游戏打得非常好，尤其是《{擅长游戏}》打得更好。',
+    身份: '认识，{主题}是一位{年龄}岁的{职业}。',
+    年龄: '{主题}{年龄}岁。',
+    职业: '{主题}是一名{职业}。',
+    职业陈述: '{主题}是{职业}。',
+    服务器: '{服务器名称}是{主题}运营的{游戏}{服务器类型}服务器，很好玩。',
+    游戏水平: '{主题}游戏打得很好，尤其擅长《{擅长游戏}》。',
+  },
   haoGanDu: {
     haoGanDuBuCunZai: '好感度记录不存在',
     miLingCuoWu: '秘籍口令错误',
@@ -482,7 +491,7 @@ export function huoQuFanYiMiaoShu<T extends FanYiFenLei>(
   canShu: Readonly<Record<string, string | number>>,
 ): string {
   const muBan = fanYi[fenLei][jian] as string
-  return muBan.replace(/\{(\w+)\}/g, (zheng, ming: string) =>
+  return muBan.replace(/\{([^{}]+)\}/g, (zheng, ming: string) =>
     Object.prototype.hasOwnProperty.call(canShu, ming) ? String(canShu[ming]) : zheng,
   )
 }

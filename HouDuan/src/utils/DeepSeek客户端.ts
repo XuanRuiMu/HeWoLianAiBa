@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
 import { AI_PEI_ZHI } from '../config/AI配置'
+import { 通用知识结束标记, 通用知识开始标记, 用户内容结束标记, 用户内容开始标记 } from '../config/通用知识库'
 import { peiZhi } from '../config'
 import { huoQuFanYi } from '../config/translations'
 import { jiSuanAIChanShu, type CanShuShangXiaWen } from '../config/AI参数策略'
@@ -237,6 +238,89 @@ function guJiToken(neiRong: string | DuiHuaKuai[]): number {
   }, 0)
 }
 
+interface BaoHuQuJian {
+  kaiShi: number
+  jieShu: number
+  wenBen: string
+}
+
+function tiQuBaoHuQuJian(
+  wenBen: string,
+  kaiShiBiaoJi: string,
+  jieShuBiaoJi: string,
+  zuiHou = false,
+): BaoHuQuJian | null {
+  const kaiShi = zuiHou ? wenBen.lastIndexOf(kaiShiBiaoJi) : wenBen.indexOf(kaiShiBiaoJi)
+  if (kaiShi < 0) return null
+  const jieShuWeiZhi = wenBen.indexOf(jieShuBiaoJi, kaiShi + kaiShiBiaoJi.length)
+  if (jieShuWeiZhi < 0) return null
+  const jieShu = jieShuWeiZhi + jieShuBiaoJi.length
+  return { kaiShi, jieShu, wenBen: wenBen.slice(kaiShi, jieShu) }
+}
+
+function yiChuQuJian(wenBen: string, quJian: BaoHuQuJian | null): string {
+  return quJian ? wenBen.replace(quJian.wenBen, '') : wenBen
+}
+
+function jieQuZhiYuSuan(wenBen: string, yuSuan: number, congWei = false): string {
+  if (yuSuan <= 0 || wenBen === '') return ''
+  let di = 0
+  let gao = wenBen.length
+  while (di < gao) {
+    const zhong = Math.ceil((di + gao) / 2)
+    const houXuan = congWei ? wenBen.slice(-zhong) : wenBen.slice(0, zhong)
+    if (guJiToken(houXuan) <= yuSuan) di = zhong
+    else gao = zhong - 1
+  }
+  return congWei ? wenBen.slice(-di) : wenBen.slice(0, di)
+}
+
+function hanYouZhiShi(neiRong: string | DuiHuaKuai[]): boolean {
+  return typeof neiRong === 'string'
+    ? neiRong.includes(通用知识开始标记)
+    : neiRong.some((kuai) => kuai.type === 'input_text' && kuai.text.includes(通用知识开始标记))
+}
+
+function yaSuoZhiShiWenBen(wenBen: string, yuSuan: number): string {
+  if (guJiToken(wenBen) <= yuSuan) return wenBen
+  const zhiShi = tiQuBaoHuQuJian(wenBen, 通用知识开始标记, 通用知识结束标记)
+  if (!zhiShi) return wenBen
+  const yongHu = tiQuBaoHuQuJian(wenBen, 用户内容开始标记, 用户内容结束标记, true)
+  const guDing = [zhiShi.wenBen, yongHu?.wenBen || ''].filter(Boolean).join('\n')
+  const shengYu = Math.max(0, yuSuan - guJiToken(guDing) - 4)
+  const qiTa = yiChuQuJian(yiChuQuJian(wenBen, zhiShi), yongHu)
+  const qianZhui = jieQuZhiYuSuan(qiTa, Math.floor(shengYu / 2))
+  const houZhui = jieQuZhiYuSuan(qiTa, shengYu - guJiToken(qianZhui), true)
+  return [qianZhui, zhiShi.wenBen, houZhui, yongHu?.wenBen || ''].filter(Boolean).join('\n')
+}
+
+function yaSuoZhiShiNeiRong(neiRong: string | DuiHuaKuai[], yuSuan: number): string | DuiHuaKuai[] {
+  if (guJiToken(neiRong) <= yuSuan) return neiRong
+  if (typeof neiRong === 'string') return yaSuoZhiShiWenBen(neiRong, yuSuan)
+  const zhiShiSuoYin = neiRong.findIndex(
+    (kuai) => kuai.type === 'input_text' && kuai.text.includes(通用知识开始标记),
+  )
+  if (zhiShiSuoYin < 0) return neiRong
+  const zhiShiKuai = neiRong[zhiShiSuoYin]
+  if (zhiShiKuai.type !== 'input_text') return neiRong
+  const zuiXiaoZhiShi: DuiHuaKuai = { type: 'input_text', text: yaSuoZhiShiWenBen(zhiShiKuai.text, 0) }
+  let qiTa = neiRong.filter((_, suoYin) => suoYin !== zhiShiSuoYin)
+  const zuiXiaoToken = () => guJiToken([zuiXiaoZhiShi, ...qiTa])
+  while (zuiXiaoToken() > yuSuan && qiTa.some((kuai) => kuai.type === 'input_image')) {
+    const suoYin = qiTa.findIndex((kuai) => kuai.type === 'input_image')
+    qiTa = qiTa.filter((_, index) => index !== suoYin)
+  }
+  while (zuiXiaoToken() > yuSuan && qiTa.length > 0) {
+    qiTa = qiTa.slice(1)
+  }
+  const qiTaToken = guJiToken(qiTa)
+  const yaSuoHou: DuiHuaKuai = {
+    type: 'input_text',
+    text: yaSuoZhiShiWenBen(zhiShiKuai.text, Math.max(0, yuSuan - qiTaToken)),
+  }
+  return [yaSuoHou, ...qiTa]
+}
+
 export function yuSuanBaoHu(xiaoXi: DuiHuaXiaoXi[], yuSuan?: number): DuiHuaXiaoXi[] {
   const yuSuanZhi = yuSuan ?? AI_PEI_ZHI.prompt.shangXiaWenTokenYuSuan
   if (!yuSuanZhi || yuSuanZhi <= 0) return xiaoXi
@@ -246,6 +330,17 @@ export function yuSuanBaoHu(xiaoXi: DuiHuaXiaoXi[], yuSuan?: number): DuiHuaXiao
   const jiSuan = () => xiTongJi + qiTa.reduce((s, x) => s + guJiToken(x.neiRong), 0)
   while (qiTa.length > 1 && jiSuan() > yuSuanZhi) {
     qiTa = qiTa.slice(1)
+  }
+  const zuiHouSuoYin = qiTa.length - 1
+  if (zuiHouSuoYin >= 0 && jiSuan() > yuSuanZhi && hanYouZhiShi(qiTa[zuiHouSuoYin].neiRong)) {
+    const qiTaToken = xiTongJi + qiTa.reduce(
+      (zong, xiang, suoYin) => zong + (suoYin === zuiHouSuoYin ? 0 : guJiToken(xiang.neiRong)),
+      0,
+    )
+    qiTa[zuiHouSuoYin] = {
+      ...qiTa[zuiHouSuoYin],
+      neiRong: yaSuoZhiShiNeiRong(qiTa[zuiHouSuoYin].neiRong, Math.max(0, yuSuanZhi - qiTaToken)),
+    }
   }
   if (jiSuan() > yuSuanZhi) {
     debug日志.warn(

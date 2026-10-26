@@ -13,6 +13,26 @@ export const WAI_GUAN_BEI_JING_YU_SHE = [
 
 export type WaiGuanBeiJingYuShe = (typeof WAI_GUAN_BEI_JING_YU_SHE)[number]
 
+export interface WaiGuanBeiJingYuSheDingYi {
+  beiJing: string
+  mengCeng: string
+}
+
+export const WAI_GUAN_BEI_JING_YU_SHE_DING_YI: Record<WaiGuanBeiJingYuShe, WaiGuanBeiJingYuSheDingYi> = {
+  moRen: { beiJing: 'var(--liaotian-beijing)', mengCeng: 'transparent' },
+  miWuSenLin: { beiJing: 'var(--liaotian-beijing-miWuSenLin)', mengCeng: 'rgba(0, 0, 0, 0.72)' },
+  haiYangZhiLan: { beiJing: 'var(--liaotian-beijing-haiYangZhiLan)', mengCeng: 'rgba(0, 0, 0, 0.72)' },
+  fenSeMengJing: { beiJing: 'var(--liaotian-beijing-fenSeMengJing)', mengCeng: 'rgba(0, 0, 0, 0.72)' },
+  yeKongXingHe: { beiJing: 'var(--liaotian-beijing-yeKongXingHe)', mengCeng: 'rgba(0, 0, 0, 0.72)' },
+  miSeTianYuan: { beiJing: 'var(--liaotian-beijing-miSeTianYuan)', mengCeng: 'rgba(0, 0, 0, 0.72)' },
+  chenWuQing: { beiJing: 'var(--liaotian-beijing-chenWuQing)', mengCeng: 'rgba(0, 0, 0, 0.72)' },
+  muZiXingYe: { beiJing: 'var(--liaotian-beijing-muZiXingYe)', mengCeng: 'rgba(0, 0, 0, 0.72)' },
+}
+
+export function huoQuBeiJingYuSheDingYi(jian: string): WaiGuanBeiJingYuSheDingYi {
+  return WAI_GUAN_BEI_JING_YU_SHE_DING_YI[jian as WaiGuanBeiJingYuShe] || WAI_GUAN_BEI_JING_YU_SHE_DING_YI.moRen
+}
+
 export const BEI_JING_FEN_ZU: Record<'qian' | 'shen', readonly WaiGuanBeiJingYuShe[]> = {
   qian: ['chenWuQing', 'fenSeMengJing', 'miSeTianYuan'],
   shen: ['miWuSenLin', 'haiYangZhiLan', 'muZiXingYe', 'yeKongXingHe'],
@@ -207,6 +227,17 @@ export function xiaYiGeZiDingYiMing(leiBie: 'beiJing' | 'qiPao', yiYouMingCheng:
   let xuHao = 1
   while (yiYong.has(ziDingYiWaiGuanMing(leiBie, xuHao))) xuHao += 1
   return ziDingYiWaiGuanMing(leiBie, xuHao)
+}
+
+export function zhongPaiWaiGuanTiaoMu(jiuLieBiao: WaiGuanTiaoMu[], xinShunXu: string[]): WaiGuanTiaoMu[] | null {
+  const zhaoBiao = new Map(jiuLieBiao.map((xiang) => [xiang.id, xiang]))
+  const quZhong = new Set<string>()
+  for (const id of xinShunXu) {
+    if (quZhong.has(id)) return null
+    quZhong.add(id)
+  }
+  if (quZhong.size !== jiuLieBiao.length || jiuLieBiao.some((xiang) => !quZhong.has(xiang.id))) return null
+  return xinShunXu.map((id) => zhaoBiao.get(id) as WaiGuanTiaoMu)
 }
 
 export function guiYiWaiGuanChuCan(can: WaiGuanChuCan | null | undefined): WaiGuanShuJu {

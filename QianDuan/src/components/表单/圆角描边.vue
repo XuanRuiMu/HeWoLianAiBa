@@ -26,9 +26,8 @@ const 圆角 = ref(0)
 const 描边宽 = ref(2)
 let 观察: ResizeObserver | null = null
 
-const 画入时长 = 420
-const 兜底画入 = 420
-const 退回时长 = 200
+const 兜底画入 = 840
+const 兜底退回 = 400
 const 曲线 = 'cubic-bezier(0.4, 0, 0.2, 1)'
 
 function 读时长(名: string, 兜底: number): number {
@@ -81,7 +80,7 @@ watch(
   () => 属性.激活,
   async (开) => {
     if (!开) {
-      描边(0, 1, 退回时长)
+      描边(0, 1, 读时长('--miao-bian-tui-chu-shi-chang', 兜底退回))
       return
     }
     量取()

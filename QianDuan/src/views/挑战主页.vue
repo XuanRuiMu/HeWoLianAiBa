@@ -5,29 +5,6 @@
         <h1 class="yemian-biaoti">{{ huoQuFanYi('tiaoZhan', 'yeMianBiaoTi') }}</h1>
         <p class="yemian-fubiaoti">{{ huoQuFanYi('tiaoZhan', 'yeMianFuBiaoTi') }}</p>
       </div>
-      <dl class="tou-tongji" :aria-busy="shuJuZaiZai ? 'true' : 'false'">
-        <div class="tongji-xiang">
-          <dt>{{ huoQuFanYi('tiaoZhan', 'yiCanSaiZuBie') }}</dt>
-          <dd>
-            <span v-if="shuJuZaiZai" class="zhanwei-tiao" aria-hidden="true" />
-            <span v-else-if="qianTaiCuoWu && gaiKuangLieBiao.length === 0">{{
-              huoQuFanYi('tiaoZhan', 'zanWu')
-            }}</span>
-            <template v-else>
-              {{ canSaiShu }}<span class="tongji-fenmu">/{{ zuBieLieBiao.length }}</span>
-            </template>
-          </dd>
-        </div>
-        <div class="tongji-xiang">
-          <dt>{{ huoQuFanYi('tiaoZhan', 'zuiGaoJiFen') }}</dt>
-          <dd>
-            <span v-if="shuJuZaiZai" class="zhanwei-tiao zhanwei-tiao--chang" aria-hidden="true" />
-            <template v-else>{{
-              zuiGaoJiFen === null ? huoQuFanYi('tiaoZhan', 'zanWu') : zuiGaoJiFen
-            }}</template>
-          </dd>
-        </div>
-      </dl>
     </header>
 
     <div class="zhuti">
@@ -83,8 +60,8 @@
 
         <section class="qu" :aria-busy="shuJuZaiZai ? 'true' : 'false'">
           <div class="qu-tou">
-            <h2 class="qu-biaoti">{{ huoQuFanYi('tiaoZhan', 'woDePaiWei') }}</h2>
-            <span class="qu-fu">{{ huoQuFanYi('tiaoZhan', 'siGeZuBie') }}</span>
+            <h2 class="qu-biaoti">{{ huoQuFanYi('tiaoZhan', 'siGeZuBie') }}</h2>
+            <span class="qu-fu">{{ huoQuFanYi('tiaoZhan', 'woDePaiWei') }}</span>
           </div>
           <RequestError
             v-if="qianTaiCuoWu"
@@ -92,70 +69,57 @@
             :zhong-zai="shuJuZaiZai"
             @chong-shi="chongShiQuanBu"
           />
-          <div v-if="shuJuZaiZai" class="zubie-biao" role="status">
+          <div v-if="shuJuZaiZai" class="jifen-wangge" role="status">
             <span class="ping-mu-wai">{{ huoQuFanYi('tiaoZhan', 'jiaZaiZhong') }}</span>
-            <div v-for="序 in zuBieLieBiao.length" :key="序" class="zubie-zhanwei" aria-hidden="true">
-              <span class="zhanwei-kuai zhanwei-kuai--ming" />
+            <div
+              v-for="序 in zuBieLieBiao.length"
+              :key="序"
+              class="jifen-ka jifen-ka--zhanwei"
+              aria-hidden="true"
+            >
               <span class="zhanwei-kuai zhanwei-kuai--duan" />
-              <span class="zhanwei-kuai zhanwei-kuai--ji" />
-              <span class="zhanwei-kuai zhanwei-kuai--pai" />
               <span class="zhanwei-kuai zhanwei-kuai--fen" />
+              <span class="zhanwei-kuai zhanwei-kuai--ming" />
             </div>
           </div>
-          <div v-else-if="gaiKuangLieBiao.length > 0 || !qianTaiCuoWu" class="zubie-biao">
-            <p v-if="!qianTaiCuoWu && canSaiShu === 0" class="zubie-kong-ti">
-              {{ huoQuFanYi('tiaoZhan', 'zubieKongTiShi') }}
-            </p>
-            <div class="zubie-tou" aria-hidden="true">
-              <span>{{ huoQuFanYi('tiaoZhan', 'zuBieBiaoQian') }}</span>
-              <span>{{ huoQuFanYi('tiaoZhan', 'duanWeiBiaoQian') }}</span>
-              <span>{{ huoQuFanYi('tiaoZhan', 'zhanJiBiaoQian') }}</span>
-              <span>{{ huoQuFanYi('tiaoZhan', 'paiMingBiaoQian') }}</span>
-              <span>{{ huoQuFanYi('tiaoZhan', 'jiFenBiaoQian') }}</span>
-            </div>
-            <div
+          <div v-else-if="gaiKuangLieBiao.length > 0 || !qianTaiCuoWu" class="jifen-wangge">
+            <article
               v-for="hang in gaiKuangHang"
               :key="hang.zu_bie"
-              class="zubie-hang"
-              :class="{ 'zubie-hang--kong': hang.ji_fen === null }"
+              class="jifen-ka"
+              :data-zu-bie="hang.zu_bie"
+              :style="zuBiePeiSe[hang.zu_bie]"
             >
-              <span class="zubie-ming">
-                <span class="zubie-dian" aria-hidden="true">
-                  <span
-                    v-for="(dang, suoYin) in zuBieZuCheng(hang.zu_bie)"
-                    :key="suoYin"
-                    class="dian"
-                    :data-dang="dang"
-                  />
+              <div class="jifen-ka-tou">
+                <h3 class="zubie-ming">{{ zuBieMingCheng(hang.zu_bie) }}</h3>
+                <span v-if="hang.ji_fen !== null" class="zubie-paiming">
+                  {{
+                    hang.pai_ming === null
+                      ? huoQuFanYi('tiaoZhan', 'zanWu')
+                      : huoQuFanYi('tiaoZhan', 'mingCiGeShi').replace(
+                          '{mingci}',
+                          String(hang.pai_ming),
+                        )
+                  }}
                 </span>
-                {{ zuBieMingCheng(hang.zu_bie) }}
-              </span>
-              <div v-if="hang.ji_fen !== null" class="zubie-xinxi">
-                <span class="zubie-duanwei">{{ hang.duan_wei }}</span>
-                <span class="zubie-zhanji">{{ zhanJiWenBen(hang) }}</span>
-                <span class="zubie-paiming">{{
-                  hang.pai_ming === null
-                    ? huoQuFanYi('tiaoZhan', 'zanWu')
-                    : huoQuFanYi('tiaoZhan', 'mingCiGeShi').replace(
-                        '{mingci}',
-                        String(hang.pai_ming),
-                      )
-                }}</span>
               </div>
               <span v-if="hang.ji_fen !== null" class="zubie-jifen">
                 {{ hang.ji_fen }}<span class="jifen-danwei">{{
                   huoQuFanYi('tiaoZhan', 'fenDanWei')
                 }}</span>
               </span>
-              <span v-else class="zubie-kong">{{ huoQuFanYi('tiaoZhan', 'weiCanJia') }}</span>
-            </div>
+              <span v-else class="zubie-kong">{{ huoQuFanYi('tiaoZhan', 'weiCanSai') }}</span>
+              <div v-if="hang.ji_fen !== null" class="jifen-ka-fu">
+                <span class="zubie-duanwei">{{ hang.duan_wei }}</span>
+                <span class="zubie-zhanji">{{ zhanJiWenBen(hang) }}</span>
+              </div>
+            </article>
           </div>
         </section>
 
         <section class="rukou-qu">
           <div class="rukou-tou">
             <h2 class="rukou-biaoti">{{ huoQuFanYi('tiaoZhan', 'kaiShiXinDuiJu') }}</h2>
-            <p class="rukou-shuo">{{ huoQuFanYi('tiaoZhan', 'suiJiTishi') }}</p>
           </div>
           <div class="rukou-cao">
             <button
@@ -184,7 +148,7 @@
         <section class="qu zhaiyao-qu" :aria-busy="bangDanZaiZai ? 'true' : 'false'">
           <div class="qu-tou">
             <h2 class="qu-biaoti">{{ huoQuFanYi('tiaoZhan', 'paiHangZhaiYao') }}</h2>
-            <span class="qu-fu">{{ huoQuFanYi('tiaoZhan', 'qianSanMing') }}</span>
+            <span class="qu-fu">{{ huoQuFanYi('tiaoZhan', 'qianWuMing') }}</span>
           </div>
           <div
             ref="zuQieKuang"
@@ -209,12 +173,14 @@
               {{ zuBieMingCheng(zu) }}
             </button>
           </div>
-          <p v-if="!shuJuZaiZai && !qianTaiCuoWu" class="zhaiyao-wo">{{ bangDanWo }}</p>
+          <p v-if="bangDanWo !== null && !shuJuZaiZai && !qianTaiCuoWu" class="zhaiyao-wo">
+            {{ bangDanWo }}
+          </p>
           <div class="zhaiyao-nei-rong" :data-qie-huan="bangDanQieHuanZhong ? 'true' : 'false'">
             <Transition name="zhaiyao-dan-ru">
               <div v-show="bangDanShouCiJiaZai" class="zhaiyao-nei zhaiyao-nei--die" role="status">
                 <span class="ping-mu-wai">{{ huoQuFanYi('tiaoZhan', 'jiaZaiZhong') }}</span>
-                <div v-for="序 in 3" :key="序" class="zhaiyao-zhanwei" aria-hidden="true">
+                <div v-for="序 in 5" :key="序" class="zhaiyao-zhanwei" aria-hidden="true">
                   <span class="zhanwei-kuai zhanwei-kuai--pai" />
                   <span class="zhanwei-kuai zhanwei-kuai--ming" />
                   <span class="zhanwei-kuai zhanwei-kuai--fen" />
@@ -237,9 +203,6 @@
             <Transition name="zhaiyao-dan-ru">
               <div v-show="bangDanKong" class="zhaiyao-nei zhaiyao-nei--die">
                 <p class="zhaiyao-kong">{{ huoQuFanYi('tiaoZhan', 'zanWuPaiHang') }}</p>
-                <p class="zhaiyao-kong zhaiyao-kong--fu">
-                  {{ huoQuFanYi('tiaoZhan', 'bangDanKongFu') }}
-                </p>
               </div>
             </Transition>
             <Transition name="zhaiyao-dan-ru">
@@ -300,7 +263,6 @@
             <span aria-hidden="true">×</span>
           </button>
         </div>
-        <p class="tanchuang-shuo">{{ huoQuFanYi('tiaoZhan', 'suiJiTishi') }}</p>
         <ZhaXingTiShi :zha-xing-gai-lv="zhaXingGaiLv" />
         <div class="xingbie-hang">
           <div class="xingbie-zu" :data-dui="对象配色档">
@@ -397,7 +359,7 @@ import {
 } from '@/api/挑战'
 import { huoQuFanYi } from '@/config/翻译表'
 import { 解析性别, 用户形态, type 性别二档, type 性别选择形态 } from '@/utils/性别'
-import { 使用默认性别卡配色 } from '@/composables/use性别框体配色'
+import { 使用默认性别卡配色, 使用通用性别框体配色 } from '@/composables/use性别框体配色'
 import { 使用用户仓库 } from '@/stores/用户'
 import ZhaXingTiShi from '@/components/挑战渣型提示.vue'
 import TouXiang from '@/components/头像.vue'
@@ -497,8 +459,8 @@ function zuBieMingCheng(zuBie: ZuBie): string {
   return yingShe[zuBie]
 }
 
-function zuBieZuCheng(zuBie: ZuBie): Array<'nan' | 'nv'> {
-  const yingShe: Record<ZuBie, Array<'nan' | 'nv'>> = {
+function zuBieZuCheng(zuBie: ZuBie): [性别二档, 性别二档] {
+  const yingShe: Record<ZuBie, [性别二档, 性别二档]> = {
     nan_nv: ['nan', 'nv'],
     nv_nan: ['nv', 'nan'],
     nan_nan: ['nan', 'nan'],
@@ -506,6 +468,14 @@ function zuBieZuCheng(zuBie: ZuBie): Array<'nan' | 'nv'> {
   }
   return yingShe[zuBie]
 }
+
+const zuBiePeiSe = Object.fromEntries(
+  zuBieLieBiao.map((zuBie) => {
+    const [ziShen, duiXiang] = zuBieZuCheng(zuBie)
+    const { 样式 } = 使用通用性别框体配色({ 自身性别: ziShen, 对象性别: duiXiang })
+    return [zuBie, 样式.value]
+  }),
+) as Record<ZuBie, CSSProperties>
 
 function zhanJiWenBen(hang: ZuBieGaiKuang): string {
   return huoQuFanYi('tiaoZhan', 'zhanJiGeShi')
@@ -534,17 +504,6 @@ const shuJuZaiZai = computed(
   () => qianTaiZhuangTai.value === 'loading' && gaiKuangLieBiao.value.length === 0,
 )
 
-const canSaiShu = computed(
-  () => gaiKuangHang.value.filter((hang) => hang.ji_fen !== null).length,
-)
-
-const zuiGaoJiFen = computed<number | null>(() => {
-  const fenShu = gaiKuangHang.value
-    .map((hang) => hang.ji_fen)
-    .filter((fen): fen is number => fen !== null)
-  return fenShu.length > 0 ? Math.max(...fenShu) : null
-})
-
 const dangQianZuGaiKuang = computed<ZuBieGaiKuang | null>(
   () => gaiKuangLieBiao.value.find((hang) => hang.zu_bie === bangDanZuBie.value) ?? null,
 )
@@ -552,7 +511,7 @@ const dangQianZuGaiKuang = computed<ZuBieGaiKuang | null>(
 const bangDanWo = computed(() => {
   const hang = dangQianZuGaiKuang.value
   if (hang === null || hang.ji_fen === null || hang.pai_ming === null) {
-    return huoQuFanYi('tiaoZhan', 'woWeiCanSai')
+    return null
   }
   return huoQuFanYi('tiaoZhan', 'woZaiBenZu').replace('{mingci}', String(hang.pai_ming))
 })
@@ -598,7 +557,7 @@ async function jiaZaiBangDan() {
     if (benCiDaiCi === bangDanDaiCi) bangDanQieHuanZhong.value = false
     return
   }
-  bangDanLieBiao.value = jieGuo.slice(0, 3)
+  bangDanLieBiao.value = jieGuo.slice(0, 5)
   bangDanYiJiaZai.value = true
   bangDanQieHuanZhong.value = false
 }
@@ -845,52 +804,6 @@ onBeforeUnmount(() => {
   color: var(--tz-wen-ci);
 }
 
-.tou-tongji {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--jiange-da);
-  margin: 0;
-}
-
-.tongji-xiang {
-  display: flex;
-  flex-direction: column;
-  gap: var(--jiange-4);
-  text-align: right;
-}
-
-.tongji-xiang dt {
-  font-size: var(--tz-zi-xiao);
-  line-height: 1.4;
-  color: var(--tz-wen-ci);
-}
-
-.tongji-xiang dd {
-  margin: 0;
-  font-size: var(--tz-zi-zhong);
-  font-weight: 600;
-  line-height: 1.3;
-  font-variant-numeric: tabular-nums;
-}
-
-.tongji-fenmu {
-  font-size: var(--tz-zi-zheng);
-  font-weight: 400;
-  color: var(--tz-wen-ci);
-}
-
-.zhanwei-tiao {
-  display: inline-block;
-  width: calc(var(--jiange-da) * 2);
-  height: var(--tz-zi-zhong);
-  border-radius: var(--yuanjiao-xiao);
-  background: var(--tz-gu);
-}
-
-.zhanwei-tiao--chang {
-  width: calc(var(--jiange-da) * 3);
-}
-
 .zhuti {
   display: grid;
   grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
@@ -1070,14 +983,6 @@ onBeforeUnmount(() => {
   gap: var(--jiange-4);
 }
 
-.rukou-shuo {
-  margin: 0;
-  max-width: 46ch;
-  font-size: var(--tz-zi-zheng);
-  line-height: 1.6;
-  color: var(--tz-wen-ci);
-}
-
 .rukou-cao {
   display: flex;
   align-items: stretch;
@@ -1140,136 +1045,93 @@ onBeforeUnmount(() => {
   color: var(--tz-wen-wei);
 }
 
-.zubie-biao {
-  display: flex;
-  flex-direction: column;
+.jifen-wangge {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--jiange-12);
   min-width: 0;
 }
 
-.zubie-tou,
-.zubie-hang,
-.zubie-zhanwei {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 1.1fr) minmax(0, 0.8fr) auto;
-  align-items: center;
+.jifen-ka {
+  display: flex;
+  flex-direction: column;
   gap: var(--jiange-12);
+  min-width: 0;
+  padding: var(--jiange-zhong);
+  border: 1px solid currentColor;
+  border-radius: var(--yuanjiao-zhong);
 }
 
-.zubie-tou {
-  padding: 0 0 var(--jiange-xiao);
-  border-bottom: 1px solid var(--tz-xian);
-  font-size: var(--tz-zi-xiao);
-  line-height: 1.4;
-  color: var(--tz-wen-ci);
+.jifen-ka-tou,
+.jifen-ka-fu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--jiange-xiao);
+  min-width: 0;
 }
 
-.zubie-tou span:nth-child(4),
-.zubie-tou span:nth-child(5) {
-  text-align: right;
+.jifen-ka-tou {
+  flex-wrap: wrap;
 }
 
-.zubie-hang {
-  padding: var(--jiange-12) 0;
-  border-bottom: 1px solid var(--tz-xian-ruo);
-}
-
-.zubie-hang:last-child {
-  border-bottom: 0;
-}
-
-.zubie-hang--kong .zubie-ming {
-  color: var(--tz-wen-ci);
-  font-weight: 400;
-}
-
-.zubie-kong-ti {
-  margin: 0;
-  padding: var(--jiange-12) 0 0;
-  font-size: var(--tz-zi-zheng);
-  line-height: 1.6;
-  color: var(--tz-wen-ci);
+.jifen-ka-fu {
+  flex-wrap: wrap;
+  padding-top: var(--jiange-xiao);
+  border-top: 1px solid currentColor;
 }
 
 .zubie-ming {
-  display: flex;
-  align-items: center;
-  gap: var(--jiange-xiao);
   min-width: 0;
+  margin: 0;
   font-size: var(--tz-zi-zheng);
   font-weight: 600;
-}
-
-.zubie-dian {
-  display: inline-flex;
-  gap: var(--jiange-2);
-  flex: none;
-}
-
-.dian {
-  display: block;
-  width: var(--jiange-6);
-  height: var(--jiange-6);
-  border-radius: 50%;
-  background: var(--xingbie-nan-1);
-}
-
-.dian[data-dang='nv'] {
-  background: var(--xingbie-nv-1);
-}
-
-.zubie-xinxi {
-  display: contents;
+  line-height: 1.4;
 }
 
 .zubie-duanwei,
-.zubie-zhanji {
+.zubie-zhanji,
+.zubie-paiming {
   font-size: var(--tz-zi-xiao);
   line-height: 1.4;
-  color: var(--tz-wen-ci);
-  white-space: nowrap;
 }
 
-.zubie-zhanji {
+.zubie-zhanji,
+.zubie-paiming {
   font-variant-numeric: tabular-nums;
 }
 
 .zubie-paiming {
-  justify-self: end;
-  font-size: var(--tz-zi-xiao);
-  line-height: 1.4;
-  font-variant-numeric: tabular-nums;
-  color: var(--tz-wen-ci);
+  margin-inline-start: auto;
   white-space: nowrap;
 }
 
-.zubie-jifen {
-  justify-self: end;
-  font-size: var(--tz-zi-zhong);
+.zubie-jifen,
+.zubie-kong {
+  font-size: var(--tz-zi-da);
   font-weight: 600;
+  line-height: 1.2;
   font-variant-numeric: tabular-nums;
+}
+
+.zubie-jifen {
   white-space: nowrap;
 }
 
 .jifen-danwei {
+  margin-inline-start: var(--jiange-4);
   font-size: var(--tz-zi-xiao);
   font-weight: 400;
-  color: var(--tz-wen-ci);
 }
 
-.zubie-kong {
-  grid-column: 2 / -1;
-  font-size: var(--tz-zi-zheng);
-  line-height: 1.5;
-  color: var(--tz-wen-ci);
+.jifen-ka--zhanwei {
+  border-color: var(--tz-xian);
+  background: var(--tz-di);
 }
 
-.zubie-zhanwei {
-  padding: var(--jiange-12) 0;
-  border-bottom: 1px solid var(--tz-xian-ruo);
-}
-
-.zubie-zhanwei:last-child {
-  border-bottom: 0;
+.jifen-ka--zhanwei .zhanwei-kuai--fen {
+  width: 52%;
+  height: var(--tz-zi-da);
 }
 
 .zhanwei-kuai {
@@ -1284,11 +1146,7 @@ onBeforeUnmount(() => {
 }
 
 .zhanwei-kuai--duan {
-  width: 56%;
-}
-
-.zhanwei-kuai--ji {
-  width: 64%;
+  width: 40%;
 }
 
 .zhanwei-kuai--pai {
@@ -1462,13 +1320,6 @@ onBeforeUnmount(() => {
   line-height: 1.5;
 }
 
-.zhaiyao-kong--fu {
-  font-size: var(--tz-zi-xiao);
-  font-weight: 400;
-  line-height: 1.6;
-  color: var(--tz-wen-ci);
-}
-
 .zhaiyao-chongshi {
   align-self: flex-start;
   min-height: var(--tz-re-ku);
@@ -1619,13 +1470,6 @@ onBeforeUnmount(() => {
   cursor: not-allowed;
 }
 
-.tanchuang-shuo {
-  margin: 0;
-  font-size: var(--tz-zi-zheng);
-  line-height: 1.6;
-  color: var(--tz-wen-ci);
-}
-
 .xingbie-tanchuang :deep(.ti-shi-nei-rong) {
   color: var(--tz-wen-ci);
 }
@@ -1761,54 +1605,6 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 640px) {
-  .tou-tongji {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .tongji-xiang {
-    align-items: flex-start;
-    text-align: left;
-  }
-
-  .zubie-tou {
-    display: none;
-  }
-
-  .zubie-hang,
-  .zubie-zhanwei {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      'ming fen'
-      'xinxi xinxi';
-    gap: var(--jiange-12);
-    row-gap: var(--jiange-4);
-  }
-
-  .zubie-ming {
-    grid-area: ming;
-  }
-
-  .zubie-xinxi {
-    grid-area: xinxi;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--jiange-xiao);
-  }
-
-  .zubie-paiming {
-    justify-self: start;
-  }
-
-  .zubie-jifen {
-    grid-area: fen;
-  }
-
-  .zubie-kong {
-    grid-area: xinxi;
-  }
-
   .duiju-cao {
     width: 100%;
   }
@@ -1820,6 +1616,12 @@ onBeforeUnmount(() => {
 
   .xingbie-tanchuang {
     padding: var(--jiange-zhong);
+  }
+}
+
+@media (max-width: 480px) {
+  .jifen-wangge {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

@@ -382,6 +382,7 @@ export async function shanChuZhanJiFenLei(
       [fen_lei_id, moRenFenLeiId],
     )
     if (Number(QianYi.rowCount || 0) > 0) {
+      await jieKou.query('SELECT zhanJi_chongPaiFenLei($1)', [moRenFenLeiId])
       await jieKou.query(
         `UPDATE "战绩分类" SET "版本" = "版本" + 1 WHERE "ID" = $1 AND "用户ID" = $2`,
         [moRenFenLeiId, yong_hu_id],
@@ -595,20 +596,15 @@ export async function yiDongDangAnDaoFenLei(
       [mubiao_fen_lei_id],
     )
     const mubiaoXu = Number(xiaXu.rows[0].下一序)
-    await jieKou.query('SET CONSTRAINTS "游戏档案_分类内排序唯一" DEFERRED')
     await jieKou.query(
       `UPDATE "游戏档案" SET "分类ID" = $2, "排序" = $3 WHERE "ID" = $1`,
       [dang_an_id, mubiao_fen_lei_id, mubiaoXu],
     )
-    await jieKou.query(
-      `WITH xuHou AS (
-         SELECT "ID", row_number() OVER (ORDER BY "排序", "ID") - 1 AS "新排序"
-         FROM "游戏档案"
-         WHERE "分类ID" = $1
-       )
-       UPDATE "游戏档案" d SET "排序" = x."新排序"
-       FROM xuHou x WHERE d."ID" = x."ID"`,
-      [yuan_fen_lei_id],
+    await jieKou.query('SELECT zhanJi_chongPaiFenLei($1)', [yuan_fen_lei_id])
+    await jieKou.query('SELECT zhanJi_chongPaiFenLei($1)', [mubiao_fen_lei_id])
+    const yiDongHou = await jieKou.query(
+      'SELECT "排序" FROM "游戏档案" WHERE "ID" = $1',
+      [dang_an_id],
     )
     await jieKou.query(
       `UPDATE "战绩分类" SET "版本" = "版本" + 1
@@ -619,7 +615,7 @@ export async function yiDongDangAnDaoFenLei(
       record_id: dang_an_id,
       source_category_id: yuan_fen_lei_id,
       category_id: mubiao_fen_lei_id,
-      sort_order: mubiaoXu,
+      sort_order: Number(yiDongHou.rows[0].排序),
       source_version: yuanBanBen + 1,
       target_version: mubiaoBanBen + 1,
     }
@@ -690,7 +686,6 @@ export async function paiXuFenLeiNeiZhanJi(
     if (recordIds.every((id, index) => id === xianYouIds[index])) {
       return { category_id: fen_lei_id, record_ids: recordIds, version: dangQianBanBen }
     }
-    await jieKou.query('SET CONSTRAINTS "游戏档案_分类内排序唯一" DEFERRED')
     await jieKou.query(
       `WITH keJian AS (
          SELECT "ID", ordinality - 1 AS "新排序"
@@ -769,7 +764,6 @@ export async function huoQuDangAnLieBiao(
       LEFT JOIN "角色" r ON r."ID" = d."角色ID"
       LEFT JOIN "战绩分类" c ON c."ID" = d."分类ID"
       WHERE d."用户ID" = $1
-      -- 挑战模式进行中的对局不进入过往战绩（结束后进入胜利/失败分组）
         AND NOT (d."模式" = 'tiaozhan' AND COALESCE(d."结果类型", '') = '')
         AND ($2::uuid IS NULL OR d."分类ID" = $2)
       ORDER BY c."排序", c."ID", d."排序", d."ID"`,

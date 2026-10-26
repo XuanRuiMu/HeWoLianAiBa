@@ -161,6 +161,7 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  align-self: center;
   padding: 0 var(--jiange-4);
 }
 

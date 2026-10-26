@@ -3,6 +3,7 @@ import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianDirectorPrompt } from './Prompt构建器'
 import { paiRuZhongShiDuiLie } from './重试队列'
 import { zhuRuBenLunTuXiangKuai } from './对话渲染'
+import { 检索通用知识, type 通用知识检索结果 } from './通用知识检索'
 import type { DuiHuaKuai } from '../utils/DeepSeek客户端'
 import type { AIYinQingShuRu, DirectorCeLue } from '../types'
 import type { CanShuShangXiaWen } from '../config/AI参数策略'
@@ -72,13 +73,15 @@ export async function shengChengDirectorCeLue(
   shuRu: AIYinQingShuRu,
   shangXiaWen?: CanShuShangXiaWen,
   waiBuXinHao?: AbortSignal,
+  zhiShi: 通用知识检索结果 = 检索通用知识(shuRu.yong_hu_xin_xiao_xi, !shuRu.zui_jia_shuo_de_shi),
 ): Promise<DirectorJieGuo> {
   try {
     const tuXiangKuai = await zhuRuBenLunTuXiangKuai(shuRu.dui_hua_li_shi)
+    const tiShiCi = gouJianDirectorPrompt(shuRu, zhiShi)
     const yongHuNeiRong: string | DuiHuaKuai[] =
       tuXiangKuai.length > 0
-        ? [{ type: 'input_text', text: gouJianDirectorPrompt(shuRu) }, ...tuXiangKuai]
-        : gouJianDirectorPrompt(shuRu)
+        ? [{ type: 'input_text', text: tiShiCi }, ...tuXiangKuai]
+        : tiShiCi
 
     const daoYanZhiLing =
       '你负责判断角色这次是否回复、当下情绪、是否撤回和是否主动表白，只输出 JSON。情感分析字段写对方这条消息的语气和情绪。'

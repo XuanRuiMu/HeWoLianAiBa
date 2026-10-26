@@ -43,7 +43,8 @@
   --quxian-huan-ying: cubic-bezier(0.22, 1, 0.36, 1);
   --moshi-kapian-dong-xiao: 240ms;
   --zhuye-wen-zi-yan-shi: 200ms;
-  --shuru-gao-liang-shi-chang: 420ms;
+  --shuru-gao-liang-shi-chang: 840ms;
+  --shuru-gao-liang-tui-chu-shi-chang: 400ms;
   --gou-xuan-chi-cun: 18px;
   --daohanglan-tubiao-chi: 18px;
   --caidan-tubiao-chi: 14px;
@@ -273,13 +274,9 @@
   --shuru-xian-zhi-du-se: var(--wenben-ciuse);
   --shuru-beijing-zidong-tianchong: var(--beijing-kaopian);
   --shuru-wenben-zidong-tianchong: var(--wenben-zhuse);
-  --shuru-gao-liang-dan-nan: rgba(50, 130, 246, 0.34);
   --shuru-gao-liang-liang-nan: #8fc4ff;
-  --shuru-gao-liang-guang-nan: rgba(50, 130, 246, 0.2);
-  --shuru-gao-liang-dan-nv: rgba(255, 127, 191, 0.34);
   --shuru-gao-liang-liang-nv: #ffb8d8;
-  --shuru-gao-liang-guang-nv: rgba(255, 127, 191, 0.2);
-  
+
   --yemian-di-beijing: rgba(245, 245, 245, 0.7);
   --xingbie-nan-1: #3282F6;
   --xingbie-nan-2: #0023F5;
@@ -325,7 +322,6 @@
   
   --rili-zhe-zhao-beijing: rgba(24, 20, 12, 0.52);
   
-  --xuanzhong-wenben-yinying: 0px 1px 3px rgba(20, 24, 33, 0.22);
   --xuanzhong-qiangdiao-yinying: 0px 0px 8px rgba(176, 132, 0, 0.22);
   
   --xuanzhong-huan-yanse: #ff2d95;
@@ -497,13 +493,9 @@
   --shuru-xian-zhi-du-se: var(--wenben-ciuse);
   --shuru-beijing-zidong-tianchong: var(--beijing-kaopian);
   --shuru-wenben-zidong-tianchong: var(--wenben-zhuse);
-  --shuru-gao-liang-dan-nan: rgba(91, 155, 255, 0.42);
   --shuru-gao-liang-liang-nan: #bfe0ff;
-  --shuru-gao-liang-guang-nan: rgba(91, 155, 255, 0.34);
-  --shuru-gao-liang-dan-nv: rgba(255, 127, 191, 0.42);
   --shuru-gao-liang-liang-nv: #ffd6e8;
-  --shuru-gao-liang-guang-nv: rgba(255, 127, 191, 0.34);
-  
+
   --yemian-di-beijing: rgba(41, 41, 41, 0.6);
   
   --xingbie-nan-1: #266AF6;
@@ -549,7 +541,6 @@
   
   --rili-zhe-zhao-beijing: rgba(4, 6, 16, 0.68);
   
-  --xuanzhong-wenben-yinying: 0px 1px 3px rgba(226, 236, 255, 0.55);
   --xuanzhong-qiangdiao-yinying: 0px 0px 10px rgba(255, 215, 0, 0.55);
   
   --xuanzhong-huan-yanse: #ff2d95;

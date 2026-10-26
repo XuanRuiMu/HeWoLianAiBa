@@ -7,6 +7,7 @@ import {
   duQuShuaXinLingPai,
   baoCunShuaXinLingPai,
   qingChuShuaXinLingPai,
+  shiChiJiuHuiHua,
 } from '@/utils/令牌存储'
 import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
 import {
@@ -103,8 +104,9 @@ async function zhiXingShuaXin(): Promise<boolean> {
     }
     const shuJu = xiangYing?.data?.shu_ju
     if (!shuJu || !shuJu.令牌) return false
-    baoCunLingPai(shuJu.令牌, false)
-    baoCunShuaXinLingPai(shuJu.刷新令牌, shuJu.刷新令牌ID, false)
+    const chiJiu = shiChiJiuHuiHua()
+    baoCunLingPai(shuJu.令牌, chiJiu)
+    baoCunShuaXinLingPai(shuJu.刷新令牌, shuJu.刷新令牌ID, chiJiu)
     return true
   } catch {
     return false
