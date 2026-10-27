@@ -35,7 +35,7 @@ describe('语态抽样', () => {
     expect(chouYuTai('嗯嗯', () => 0.999)).toBe('澄清')
   })
 
-  it('分享型输入的分布贴合权重', () => {
+  it('分享型输入的分布对齐真人行为基线', () => {
     const 计: Record<string, number> = {}
     const N = 20000
     for (let i = 0; i < N; i++) {
@@ -43,10 +43,16 @@ describe('语态抽样', () => {
       计[值] = (计[值] || 0) + 1
     }
     const 占比 = (k: string) => (计[k] || 0) / N
-    expect(占比('接内容')).toBeGreaterThan(0.35)
-    expect(占比('接内容')).toBeLessThan(0.5)
+    // 真人基线（语料实验室/行为类别基线.md，2431 条相邻配对）：
+    // 接内容 27.5% ／ 说自己 23.0% ／ 极短 20.5% ／ 另起约 20% ／ 要对方解释 1.1%
+    // 旧配置接内容高达 42.3%，是「太像称职好助理」的量化根源。
+    expect(占比('接内容')).toBeGreaterThan(0.2)
+    expect(占比('接内容')).toBeLessThan(0.35)
     expect(占比('极短')).toBeGreaterThan(0.12)
-    expect(占比('极短')).toBeLessThan(0.22)
+    expect(占比('极短')).toBeLessThan(0.28)
+    expect(占比('说自己')).toBeGreaterThan(0.15)
+    expect(占比('另起')).toBeGreaterThan(0.12)
+    expect(占比('澄清')).toBeLessThan(0.08)
   })
 
   it('纯应答几乎不接内容', () => {
@@ -56,7 +62,7 @@ describe('语态抽样', () => {
       const 值 = chouYuTai('嗯嗯')
       计[值] = (计[值] || 0) + 1
     }
-    expect((计['接内容'] || 0) / N).toBeLessThan(0.15)
+    expect((计['接内容'] || 0) / N).toBeLessThan(0.25)
   })
 })
 

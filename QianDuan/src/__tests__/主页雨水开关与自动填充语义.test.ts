@@ -9,7 +9,7 @@ import { ZHU_YE_BEI_JING_YU_SHUI_JIAN, 使用用户设置仓库 } from '@/stores
 import { huoQuFanYi } from '@/config/翻译表'
 
 const 源码根 = resolve(__dirname, '..')
-const 读 = (相对: string) => readFileSync(resolve(源码根, 相对), 'utf8')
+const 读 = (相对: string) => readFileSync(resolve(源码根, 相对), 'utf8').replace(/\r\n/g, '\n')
 const 本地产 = (件: string) => `hewolianba_${件}`
 
 describe('主页背景雨水开关：默认开启、可关可开、状态唯一', () => {

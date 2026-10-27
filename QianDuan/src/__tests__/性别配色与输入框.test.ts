@@ -129,7 +129,7 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
     expect(描边).toContain('上 + 径 - 径 * Math.SQRT1_2')
   })
 
-  it('两路同一时长同一曲线，画入 840ms、退回 200ms，减动效归零', () => {
+  it('两路同一时长同一曲线，画入 840ms、退回 800ms，减动效归零', () => {
     const 令牌 = 读('styles/设计令牌.css')
     expect(输入框).toContain('--miao-bian-shi-chang: var(--shuru-gao-liang-shi-chang)')
     expect(输入框).toContain(
@@ -138,9 +138,9 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
     expect(描边).toContain("读时长('--miao-bian-shi-chang', 兜底画入)")
     expect(描边).toContain("读时长('--miao-bian-tui-chu-shi-chang', 兜底退回)")
     expect(令牌).toContain('--shuru-gao-liang-shi-chang: 840ms')
-    expect(令牌).toContain('--shuru-gao-liang-tui-chu-shi-chang: 200ms')
+    expect(令牌).toContain('--shuru-gao-liang-tui-chu-shi-chang: 800ms')
     expect(描边).toContain('const 兜底画入 = 840')
-    expect(描边).toContain('const 兜底退回 = 200')
+    expect(描边).toContain('const 兜底退回 = 800')
     expect(描边).toContain("const 曲线 = 'cubic-bezier(0.4, 0, 0.2, 1)'")
     expect(描边).toContain('路.animate(')
     expect(描边.split('路.animate(').length - 1, '只应有一处统一的描边调用').toBe(1)
@@ -149,7 +149,7 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
     expect(描边).toContain('(prefers-reduced-motion: reduce)')
   })
 
-  it('回退为 200ms、画入仍 840ms，回退不慢于画入的四分之一', () => {
+  it('回退为 800ms、画入仍 840ms，回退恰为原 200ms 的四倍', () => {
     const 令牌 = 读('styles/设计令牌.css')
     const 取毫秒 = (名: string): number => {
       const 匹配 = new RegExp(名 + ':\\s*(\\d+(?:\\.\\d+)?)ms').exec(令牌)
@@ -159,8 +159,8 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
     const 画入 = 取毫秒('--shuru-gao-liang-shi-chang')
     const 回退 = 取毫秒('--shuru-gao-liang-tui-chu-shi-chang')
     expect(画入).toBe(840)
-    expect(回退).toBe(200)
-    expect(回退).toBeLessThanOrEqual(画入 / 4 + 10)
+    expect(回退).toBe(800)
+    expect(回退).toBe(200 * 4)
   })
 
   it('失焦沿原路退回，与横条输入框同一套染色语言', () => {
@@ -170,7 +170,7 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
     expect(横条).not.toContain('miao-bian')
   })
 
-  it('真实聚焦与失焦分别产生 840ms 和 200ms 双路动画，减动效时归零', async () => {
+  it('真实聚焦与失焦分别产生 840ms 和 800ms 双路动画，减动效时归零', async () => {
     const 原动画 = SVGElement.prototype.animate
     const 原动画清单 = SVGElement.prototype.getAnimations
     const 原媒体 = globalThis.matchMedia
@@ -206,7 +206,7 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
       await nextTick()
       await 输入.trigger('blur')
       await nextTick()
-      expect(调用.map((项) => 项.选项.duration)).toEqual([840, 840, 200, 200])
+      expect(调用.map((项) => 项.选项.duration)).toEqual([840, 840, 800, 800])
       expect(调用[0].帧.map((帧) => 帧.strokeDashoffset)).toEqual([1, 0])
       expect(调用[2].帧.map((帧) => 帧.strokeDashoffset)).toEqual([0, 1])
       减动效 = true
@@ -295,9 +295,9 @@ describe('性别卡：第一二步统一按自身色填充、对象色描边', (
     ).toContain('color: inherit')
   })
 
-  it('第三步性格卡与性别无关，高光走边框令牌且旧填充方案不复活', () => {
-    expect(向导).toContain('--xingge-gao-guang-bian-ji: rgba(255, 255, 255, 0.18)')
-    expect(向导).toContain('--xingge-gao-guang-bian-zhong: rgba(255, 255, 255, 0.4)')
+  it('第三步性格卡高光改由对象性别色驱动，旧填充方案不复活', () => {
+    expect(向导).toContain('--xingge-gao-guang-se: var(--xingge-gao-guang-nan)')
+    expect(向导).toContain("--xingge-gao-guang-se: var(--xingge-gao-guang-nv)")
     expect(向导).toContain('.mbti-kaPian:hover:not(.beiXuanZhong)')
     expect(向导).not.toContain('--xingge-gao-guang-ji:')
     expect(向导).not.toContain('--xingge-gao-guang-zhong:')

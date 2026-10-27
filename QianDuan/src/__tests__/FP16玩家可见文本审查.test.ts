@@ -78,11 +78,15 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
       expect(装可爱).toEqual(['fanYi.liaoTian.lianFaYuJing'])
     })
 
-    it('判据⑤：省略号形态唯一为「……」（对象加载等待语按用户指定用「...」）', () => {
+    it('判据⑤：省略号形态唯一为「……」（对象加载等待语与聊天输入提示按用户指定用「...」）', () => {
       const 违规 = quFanYiZhi()
         .filter(
           ({ 路径, 文本 }) =>
-            !(路径.includes('dengDaiYuLieBiao') || 路径.includes('dengDaiTouRen')) &&
+            !(
+              路径.includes('dengDaiYuLieBiao') ||
+              路径.includes('dengDaiTouRen') ||
+              路径.includes('duiFangZhengZaiShuRu')
+            ) &&
             (/\.\.\./.test(文本) || /(?<!…)…(?!…)/.test(文本)),
         )
         .map(({ 路径, 文本 }) => `${路径}：${文本}`)

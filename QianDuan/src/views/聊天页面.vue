@@ -910,7 +910,7 @@ function yinYongFaSongZheMing(muBiao: CaiDanXiaoXi): string {
   if (muBiao.fa_song_zhe_lei_xing === 'yonghu') {
     return 用户仓库.dangQianYongHu?.ni_cheng || 用户仓库.dangQianYongHu?.yong_hu_ming || ''
   }
-  return 聊天仓库.jiaoSeXinXi?.ming_zi || ''
+  return 聊天仓库.jiaoSeXinXi?.wei_xin_ming || ''
 }
 
 function huoQuYinYongZhaiYao(muBiao: CaiDanXiaoXi): string {

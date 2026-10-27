@@ -281,6 +281,16 @@ describe('聊天预览挂载后与真实聊天页同构', () => {
     包.unmount()
   })
 
+  it('示例对话文案恰为需求指定的两句', () => {
+    const 包 = 挂预览()
+    const 气泡们 = 包.findAll('.qipao-neirong')
+    expect(气泡们[0].text()).toBe('你认识玄锐暮吗？')
+    expect(气泡们[1].text()).toBe('你是说那个无所不能的人吗')
+    expect(huoQuFanYi('sheZhi', 'yuLanQiPaoLai')).toBe('你认识玄锐暮吗？')
+    expect(huoQuFanYi('sheZhi', 'yuLanQiPaoQu')).toBe('你是说那个无所不能的人吗')
+    包.unmount()
+  })
+
   it('时间条文本沿用真实页的微信十二小时制带时段前缀', () => {
     const 包 = 挂预览()
     const 文本 = 包.get('.shijian-biaoqian').text()

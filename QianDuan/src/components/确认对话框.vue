@@ -11,7 +11,6 @@
       <button
         type="button"
         class="que-ren-an-niu que-ren-an-niu--ci"
-        data-shou-xuan
         :disabled="caoZuoZhong"
         @click="quXiao"
       >

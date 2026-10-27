@@ -5,6 +5,7 @@ import { createPinia, setActivePinia, type Pinia } from 'pinia'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
 import 资料设置向导 from '@/views/资料设置向导.vue'
+import { 声明块清单, 声明位置, 按档解析全部 } from './主题令牌真源'
 
 vi.mock('vue-router', () => ({
   useRouter: () => ({ push: vi.fn() }),
@@ -25,6 +26,21 @@ function 规则体们(选择器: string): string[] {
 
 function 规则体(选择器: string): string {
   return 规则体们(选择器)[0]
+}
+
+function 完整块(选择器: string): string {
+  const 起点 = 样式.indexOf(`${选择器} {`)
+  expect(起点, `缺少规则 ${选择器}`).toBeGreaterThanOrEqual(0)
+  const 起 = 样式.indexOf('{', 起点)
+  let 深 = 0
+  for (let 位 = 起; 位 < 样式.length; 位++) {
+    if (样式[位] === '{') 深++
+    else if (样式[位] === '}') {
+      深--
+      if (深 === 0) return 样式.slice(起 + 1, 位)
+    }
+  }
+  throw new Error(`规则 ${选择器} 未闭合`)
 }
 
 beforeEach(() => {
@@ -82,44 +98,68 @@ describe('性格卡高光边框：仅交互态出现局部水墨流动', () => {
     expect(体).toContain('pointer-events: none')
   })
 
-  it('hover、键盘聚焦、选中分别启动同一呼吸与漂移动画，不复制高光逻辑', () => {
+  it('hover、键盘聚焦各用静息心率周期，选中用运动后心率周期，不复制高光逻辑', () => {
     for (const 选择器 of [
       '.mbti-kaPian:hover:not(.beiXuanZhong)::after',
       '.mbti-kaPian:focus-visible::after',
-      '.mbti-kaPian.beiXuanZhong::after',
     ]) {
       expect(规则体(选择器)).toContain(
-        'xingge-huxi var(--xingge-huxi-zhouqi) ease-in-out infinite alternate',
+        'xingge-xintiao var(--xingge-xintiao-zhouqi-xuanguo) ease-in-out infinite',
       )
       expect(规则体(选择器)).toContain(
         'xingge-liu-guang-piao var(--xingge-piao-zhouqi) ease-in-out infinite alternate',
       )
     }
-    expect(样式.match(/animation:\s+xingge-huxi /g)).toHaveLength(3)
-    const 呼吸体 = 规则体('@keyframes xingge-huxi')
-    expect(呼吸体).toContain('opacity')
-    expect(呼吸体).toContain('var(--xingge-huxi-an)')
-    expect(呼吸体).not.toMatch(/transform|rotate|translate|width|height|border-width/)
+    expect(规则体('.mbti-kaPian.beiXuanZhong::after')).toContain(
+      'xingge-xintiao var(--xingge-xintiao-zhouqi-xuanzhong) ease-in-out infinite',
+    )
+    expect(样式.match(/animation:\s+xingge-xintiao /g)).toHaveLength(3)
+    const 心跳体 = 规则体('@keyframes xingge-xintiao')
+    expect(心跳体).toContain('opacity')
+    expect(心跳体).toContain('var(--xingge-huxi-an)')
+    expect(心跳体).not.toMatch(/transform|rotate|translate|width|height|border-width/)
     const 漂移体 = 规则体('@keyframes xingge-liu-guang-piao')
     expect(漂移体).toContain('background-position')
     expect(漂移体).not.toMatch(/transform|rotate|translate|width|height|border-width/)
   })
 
-  it('呼吸周期落在肉眼可辨但不闪烁的区间，且由组件变量统一调参', () => {
+  it('心跳为上升、保持、下降三段等长，不是来回往复的 alternate', () => {
+    const 心跳体 = 完整块('@keyframes xingge-xintiao')
+    const 帧们 = [...心跳体.matchAll(/([\d.%,\s]+)\{([^}]*)\}/g)].map((匹配) => ({
+      位: [...匹配[1].matchAll(/([\d.]+)%/g)].map((项) => Number(项[1])),
+      体: 匹配[2],
+    }))
+    expect(帧们.map((帧) => 帧.位)).toEqual([
+      [0, 100],
+      [33.333, 66.667],
+    ])
+    expect(帧们[0].体).toContain('var(--xingge-huxi-an)')
+    expect(帧们[1].体).toContain('var(--xingge-huxi-liang)')
+    expect(样式).not.toContain('xingge-huxi var(')
+    expect(样式).not.toContain('xingge-huxi-guang-yun')
+  })
+
+  it('周期由心率换算：每拍 60/心率 秒，悬停 60 次/分、选中 120 次/分', () => {
     const 令牌 = 规则体们('.ziliao-kapian').join('\n')
-    const 呼吸 = 令牌.match(/--xingge-huxi-zhouqi:\s*([\d.]+)s/)
-    expect(呼吸).not.toBeNull()
-    expect(Number(呼吸![1])).toBeGreaterThanOrEqual(2.2)
-    expect(Number(呼吸![1])).toBeLessThanOrEqual(3)
+    const 取值 = (名: string): number => {
+      const 匹配 = new RegExp(`--${名}:\\s*([\\d.]+)s`).exec(令牌)
+      expect(匹配, `缺少 --${名}`).not.toBeNull()
+      return Number((匹配 as RegExpMatchArray)[1])
+    }
+    const 悬停周期 = 取值('xingge-xintiao-zhouqi-xuanguo')
+    const 选中周期 = 取值('xingge-xintiao-zhouqi-xuanzhong')
+    expect(悬停周期).toBeCloseTo((3 * 60) / 60, 6)
+    expect(选中周期).toBeCloseTo((3 * 60) / 120, 6)
+    expect(悬停周期).toBeGreaterThan(选中周期)
     const 漂移 = 令牌.match(/--xingge-piao-zhouqi:\s*([\d.]+)s/)
     expect(漂移).not.toBeNull()
     expect(Number(漂移![1])).toBeGreaterThanOrEqual(6)
-    expect(令牌).toContain('--xingge-huxi-an: 0.4')
+    expect(令牌).toContain('--xingge-huxi-an: 0.35')
     expect(令牌).toContain('--xingge-huxi-liang: 1')
     expect(令牌).toContain('--xingge-huxi-an-xuan: 0.82')
   })
 
-  it('hover 与聚焦不叠发光阴影，只有选中态额外呼吸外发光', () => {
+  it('hover 与聚焦不叠发光阴影，只有选中态额外按运动后心率呼吸外发光', () => {
     for (const 选择器 of [
       '.mbti-kaPian:hover:not(.beiXuanZhong)',
       '.mbti-kaPian:focus-visible',
@@ -129,10 +169,12 @@ describe('性格卡高光边框：仅交互态出现局部水墨流动', () => {
     }
     const 选中体 = 规则体('.mbti-kaPian.beiXuanZhong')
     expect(选中体).toContain(
-      'animation: xingge-huxi-guang-yun var(--xingge-huxi-zhouqi) ease-in-out infinite alternate',
+      'animation: xingge-guang-xintiao var(--xingge-xintiao-zhouqi-xuanzhong) ease-in-out infinite',
     )
-    const 光晕体 = 规则体('@keyframes xingge-huxi-guang-yun')
+    const 光晕体 = 完整块('@keyframes xingge-guang-xintiao')
     expect(光晕体).toContain('box-shadow')
+    expect(光晕体).toContain('33.333%')
+    expect(光晕体).toContain('66.667%')
     expect(光晕体).not.toMatch(/transform|width|height|inset/)
   })
 
@@ -162,7 +204,7 @@ describe('性格卡高光边框：仅交互态出现局部水墨流动', () => {
       const 体 = 规则体(选择器)
       expect(体).toContain('opacity: 0.55')
       expect(体).toContain('animation:')
-      expect(体).toContain('xingge-huxi var(--xingge-huxi-zhouqi)')
+      expect(体).toContain('xingge-xintiao var(--xingge-xintiao-zhouqi-xuanguo)')
     }
   })
 
@@ -170,7 +212,7 @@ describe('性格卡高光边框：仅交互态出现局部水墨流动', () => {
     const 体 = 规则体('.mbti-kaPian.beiXuanZhong::after')
     expect(体).toContain('opacity: 1')
     expect(体).toContain('--xingge-huxi-an: var(--xingge-huxi-an-xuan)')
-    expect(体).toContain('xingge-huxi var(--xingge-huxi-zhouqi)')
+    expect(体).toContain('xingge-xintiao var(--xingge-xintiao-zhouqi-xuanzhong)')
   })
 
   it('转圈时代的角度属性已整体移除', () => {
@@ -201,21 +243,80 @@ describe('性格卡高光边框：仅交互态出现局部水墨流动', () => {
   })
 })
 
-describe('深浅主题下高光边框令牌均清晰可见', () => {
-  it('深色档流光与边框为白色系', () => {
-    const 深块 = 规则体们('.ziliao-kapian').join('\n')
-    expect(深块).toContain('--xingge-gao-guang-bian-ji: rgba(255, 255, 255, 0.18)')
-    expect(深块).toContain('--xingge-gao-guang-bian-zhong: rgba(255, 255, 255, 0.4)')
-    expect(深块).toContain('--xingge-liu-guang-yan: rgba(255, 255, 255, 0.95)')
-    expect(深块).toContain('--xingge-liu-guang-di: rgba(255, 255, 255, 0.22)')
+describe('高光色随对象性别与主题切换', () => {
+  const 浅色表 = 按档解析全部('light', 声明块清单())
+  const 深色表 = 按档解析全部('dark', 声明块清单())
+
+  function 相对亮度(色: string): number {
+    const 十六 = /^#([0-9a-f]{6})$/i.exec(色.trim())
+    expect(十六, `无法解析颜色 ${色}`).not.toBeNull()
+    const 串 = (十六 as RegExpMatchArray)[1]
+    const 线 = (位: number): number => {
+      const 归一 = Number.parseInt(串.slice(位, 位 + 2), 16) / 255
+      return 归一 <= 0.03928 ? 归一 / 12.92 : Math.pow((归一 + 0.055) / 1.055, 2.4)
+    }
+    return 0.2126 * 线(0) + 0.7152 * 线(2) + 0.0722 * 线(4)
+  }
+
+  it('深浅两档各自声明男女高光色，没有单侧塌陷', () => {
+    for (const 名 of ['--xingge-gao-guang-nan', '--xingge-gao-guang-nv']) {
+      expect(声明位置(名, 声明块清单()), `${名} 未明暗成对`).toEqual({
+        共用: false,
+        浅色: true,
+        深色: true,
+      })
+      expect(浅色表.get(名)).toBeTruthy()
+      expect(深色表.get(名)).toBeTruthy()
+    }
   })
 
-  it('浅色档流光与边框换深紫系，白光不在浅卡面消失', () => {
+  it('深色档取浅蓝浅粉，浅色档取深蓝深粉，两档亮度方向相反', () => {
+    const 深蓝 = String(深色表.get('--xingge-gao-guang-nan'))
+    const 深粉 = String(深色表.get('--xingge-gao-guang-nv'))
+    const 浅蓝 = String(浅色表.get('--xingge-gao-guang-nan'))
+    const 浅粉 = String(浅色表.get('--xingge-gao-guang-nv'))
+    expect(相对亮度(深蓝)).toBeGreaterThan(0.5)
+    expect(相对亮度(深粉)).toBeGreaterThan(0.4)
+    expect(相对亮度(浅蓝)).toBeLessThan(0.2)
+    expect(相对亮度(浅粉)).toBeLessThan(0.25)
+    expect(相对亮度(深蓝)).toBeGreaterThan(相对亮度(浅蓝))
+    expect(相对亮度(深粉)).toBeGreaterThan(相对亮度(浅粉))
+    const 蓝 = (色: string): number => Number.parseInt(色.slice(5, 7), 16)
+    const 红 = (色: string): number => Number.parseInt(色.slice(1, 3), 16)
+    expect(蓝(深蓝)).toBeGreaterThan(200)
+    expect(红(深粉)).toBeGreaterThan(200)
+    expect(蓝(浅蓝)).toBeGreaterThan(150)
+    expect(红(浅粉)).toBeGreaterThan(80)
+  })
+
+  it('派生高光令牌全部由对象性别色 color-mix 得出，不再硬编码白色或紫色', () => {
+    const 令牌 = 规则体们('.ziliao-kapian').join('\n')
+    expect(令牌).toContain('--xingge-gao-guang-se: var(--xingge-gao-guang-nan)')
+    for (const 名 of [
+      'xingge-gao-guang-bian-ji',
+      'xingge-gao-guang-bian-zhong',
+      'xingge-liu-guang-yan',
+      'xingge-liu-guang-di',
+    ]) {
+      expect(令牌).toMatch(
+        new RegExp(`--${名}: color-mix\\(in srgb, var\\(--xingge-gao-guang-se\\) [\\d.]+%,`),
+      )
+    }
+    expect(令牌).not.toMatch(/--xingge-[a-z-]+:\s*rgba\(255, 255, 255/)
+    expect(令牌).not.toMatch(/--xingge-[a-z-]+:\s*rgba\(90, 60, 110/)
+  })
+
+  it('对象为女档时整卡高光色切到女色，男档回到男色', () => {
+    expect(规则体(".ziliao-kapian[data-duixiang-xingbie='nv']")).toContain(
+      '--xingge-gao-guang-se: var(--xingge-gao-guang-nv)',
+    )
+    expect(向导).toContain(':data-duixiang-xingbie="对象色档"')
+  })
+
+  it('浅色档不再覆写高光色，只保留文字色', () => {
     const 体 = 规则体(":root[data-theme='light'] .ziliao-kapian")
-    expect(体).toContain('--xingge-gao-guang-bian-ji: rgba(120, 90, 140, 0.2)')
-    expect(体).toContain('--xingge-gao-guang-bian-zhong: rgba(90, 60, 110, 0.42)')
-    expect(体).toContain('--xingge-liu-guang-yan: rgba(90, 60, 110, 0.88)')
-    expect(体).toContain('--xingge-liu-guang-di: rgba(90, 60, 110, 0.24)')
+    expect(体).not.toContain('--xingge-')
+    expect(体).toContain('--ziliao-miaoshu-wenben')
   })
 })
 

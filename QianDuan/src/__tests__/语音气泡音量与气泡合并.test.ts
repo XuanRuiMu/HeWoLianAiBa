@@ -48,8 +48,10 @@ describe('气泡容器合并：全站只剩一份皮肤', () => {
     expect(容器源).toContain('border-left: var(--qipao-weiba-kuan) solid')
     expect(容器源).toContain('font-size: var(--qipao-zihao)')
     expect(容器源).toContain('line-height: var(--qipao-hangao)')
-    expect(令牌源).toContain('--qipao-yuanjiao: 6px;')
-    expect(令牌源).toContain('--qipao-weiba-shang: 13px;')
+    expect(令牌源).toContain('--qipao-yuanjiao: var(--qipao-yuanjiao-ju-li);')
+    expect(令牌源).toContain('--qipao-yuanjiao-ju-li: 6px;')
+    expect(令牌源).toContain('--qipao-weiba-shang: var(--qipao-weiba-ju-li);')
+    expect(令牌源).toContain('--qipao-weiba-ju-li: 13px;')
     expect(令牌源).toContain('--qipao-hangao: 1.45;')
   })
 })
@@ -254,6 +256,37 @@ describe('音量采集：真实 RMS，不造假动画', () => {
     await Promise.resolve()
     expect(shiYuYinYinLiangKeYong()).toBe(false)
     expect(duQuYuYinYinLiang()).toBe(1)
+  })
+})
+
+describe('喇叭三段同色，播放蓝点只属于进度滑块', () => {
+  it('喇叭圆点与两段波浪全部 currentColor，没有任何播放变色规则', () => {
+    const 圆点规则 = 语音源.match(/\.laba-duan--1\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(圆点规则).toContain('fill: currentColor')
+    expect(圆点规则).not.toContain('--yuyin-yuandian')
+    expect(语音源).not.toContain('--yuyin-yuandian-hui')
+    expect(语音源).not.toContain('--yuyin-yuandian-lan')
+    expect(语音源).not.toMatch(/\.yuyin-qipao\.bofangzhong\s+\.laba-duan--1/)
+    expect(语音源).toContain('fill="currentColor"')
+    expect(语音源).toContain('stroke="currentColor"')
+  })
+
+  it('播放器圆点默认灰、播放蓝，WebKit 与 Firefox 同源', () => {
+    const qiu = (xuanZeQi: string): string => {
+      const zhuanYi = xuanZeQi.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      return 语音源.match(new RegExp(`${zhuanYi}\\s*\\{[^}]*\\}`))?.[0] ?? ''
+    }
+    const webkit = qiu('.yuyin-jindu-tiao::-webkit-slider-thumb')
+    const firefox = qiu('.yuyin-jindu-tiao::-moz-range-thumb')
+    expect(webkit).toContain('background: var(--yuyin-jindu-yuandian-jingtai)')
+    expect(firefox).toContain('background: var(--yuyin-jindu-yuandian-jingtai)')
+    expect(qiu('.yuyin-jindu-tiao--bofang::-webkit-slider-thumb')).toContain(
+      'background: var(--yuyin-jindu-yuandian-bofang)',
+    )
+    expect(qiu('.yuyin-jindu-tiao--bofang::-moz-range-thumb')).toContain(
+      'background: var(--yuyin-jindu-yuandian-bofang)',
+    )
+    expect(语音源).toContain(':class="{ \'yuyin-jindu-tiao--bofang\': boFangZhong }"')
   })
 })
 

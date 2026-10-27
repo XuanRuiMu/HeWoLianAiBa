@@ -68,7 +68,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   const ZHENG_ZAI_SHU_RU_XIAO_SHI_YAN_CHI_HAO_MIAO = 1000
 
   const xianShiZhengZaiShuRu = ref(false)
-  const shouTiaoShiAI = ref(false)
   let yanChiDingShiQi: ReturnType<typeof setTimeout> | null = null
   let huLueJianTing = false
 
@@ -109,6 +108,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
 
   onScopeDispose(() => {
     qingLiYanChiDingShiQi()
+    清空媒体重发()
     qingLiSuoYouYuLanURL()
   })
 
@@ -335,6 +335,62 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   let linShiXiaoXiXuHao = 0
   const faSongShiBaiJiHe = ref(new Set<string>())
   let faSongDuiLie: Promise<void> = Promise.resolve()
+
+  interface 媒体重发上下文 {
+    leiXing: DuoMeiTiLeiXing
+    wenJian: File | Blob | null
+    fuJia: MeiTiFuJia
+    yinYongXiaoXiId: string | null
+    benDiYuLan: string | null
+  }
+
+  const 媒体重发表 = new Map<string, 媒体重发上下文>()
+  const 媒体重发上限 = 50
+
+  function 记录媒体重发(keHuDuanId: string, shangXiaWen: 媒体重发上下文): void {
+    媒体重发表.set(keHuDuanId, shangXiaWen)
+    while (媒体重发表.size > 媒体重发上限) {
+      const zuiJiu = 媒体重发表.keys().next().value
+      if (!zuiJiu || zuiJiu === keHuDuanId) break
+      媒体重发表.delete(zuiJiu)
+    }
+  }
+
+  function 移除媒体重发(keHuDuanId?: string | null): void {
+    if (keHuDuanId) 媒体重发表.delete(keHuDuanId)
+  }
+
+  function 清空媒体重发(): void {
+    for (const shangXiaWen of 媒体重发表.values()) {
+      if (shangXiaWen.benDiYuLan) cheXiaoYuLanURL(shangXiaWen.benDiYuLan)
+    }
+    媒体重发表.clear()
+  }
+
+  function 清除发送失败(keHuDuanId?: string | null): void {
+    if (!keHuDuanId) return
+    if (faSongShiBaiJiHe.value.has(keHuDuanId)) faSongShiBaiJiHe.value.delete(keHuDuanId)
+  }
+
+  function 清理已确认媒体(keHuDuanId?: string | null, fuWuQiXiaoXi?: 消息): void {
+    if (!keHuDuanId) return
+    const shangXiaWen = 媒体重发表.get(keHuDuanId)
+    if (!shangXiaWen) return
+    if (fuWuQiXiaoXi?.mei_ti_url && shangXiaWen.benDiYuLan) {
+      cheXiaoYuLanURL(shangXiaWen.benDiYuLan)
+    }
+    媒体重发表.delete(keHuDuanId)
+  }
+
+  function 标记发送失败(xiaoXi: 消息): void {
+    const keHuDuanId = xiaoXi.ke_hu_duan_id
+    if (!keHuDuanId) return
+    faSongShiBaiJiHe.value.add(keHuDuanId)
+    const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.ke_hu_duan_id === keHuDuanId)
+    if (suoYin !== -1) {
+      xiaoXiLieBiao.value[suoYin] = { ...xiaoXiLieBiao.value[suoYin], fa_song_zhong: false }
+    }
+  }
 
   let yiJieShouLunCi = 0
   let yiJieShouLunCiDongQiaoId: string | null = null
@@ -695,6 +751,8 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     dangQianHuiHuaId.value = huiHuaId
     读取监控历史(huiHuaId)
     xiaoXiLieBiao.value = []
+    faSongShiBaiJiHe.value = new Set()
+    清空媒体重发()
     qiangZhiYinChangXianShi()
     zuiHouXuHao = 0
     qingKongLunCiZhuangTai()
@@ -705,7 +763,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     yeMa.value = 1
     haiYouGengDuo.value = false
     jiaZaiGengDuoZhong.value = false
-    shouTiaoShiAI.value = false
     shouPingJiaZaiZhong.value = true
     jiaZaiShiBai.value = false
     shouPingQianTaiCuoWu.value = null
@@ -728,7 +785,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
         xiaoXiLieBiao.value = guiYiXiaoXiLieBiao(
           buDing.length > 0 ? [...fuWuLieBiao, ...buDing] : fuWuLieBiao,
         )
-        shouTiaoShiAI.value = xiaoXiLieBiao.value[0]?.fa_song_zhe_lei_xing === 'jiaose'
         zongShu.value = jieGuo.zong_shu
         haiYouGengDuo.value = jieGuo.hai_you_geng_duo ?? jieGuo.lie_biao.length < jieGuo.zong_shu
         补全旧内心消息()
@@ -820,11 +876,15 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       )
       if (suoYin !== -1) {
         xiaoXiLieBiao.value[suoYin] = { ...xiaoXiLieBiao.value[suoYin], fa_song_zhong: false }
+        清除发送失败(乐观消息.ke_hu_duan_id)
+        清理已确认媒体(乐观消息.ke_hu_duan_id, fuWuQiXiaoXi)
       }
       jiaRuXiaoXi(fuWuQiXiaoXi)
       return false
     }
     jiLuYiQueRenYongHuId(fuWuQiXiaoXi.id)
+    清除发送失败(乐观消息.ke_hu_duan_id)
+    清理已确认媒体(乐观消息.ke_hu_duan_id, fuWuQiXiaoXi)
     const dengJingXiaoXi = jiaGong ? jiaGong(fuWuQiXiaoXi) : fuWuQiXiaoXi
     const buQiShiChangHaoMiao =
       dengJingXiaoXi.mei_ti_shi_chang_hao_miao ?? 乐观消息.mei_ti_shi_chang_hao_miao ?? null
@@ -886,13 +946,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       return xiaoXi
     } catch (cuoWu: unknown) {
       console.error('发送消息失败', cuoWu)
-      faSongShiBaiJiHe.value.add(乐观消息.ke_hu_duan_id as string)
-      const suoYin = xiaoXiLieBiao.value.findIndex(
-        (m) => m.ke_hu_duan_id === 乐观消息.ke_hu_duan_id,
-      )
-      if (suoYin !== -1) {
-        xiaoXiLieBiao.value[suoYin] = { ...xiaoXiLieBiao.value[suoYin], fa_song_zhong: false }
-      }
+      标记发送失败(乐观消息)
       const xiaoXi = 归一前台错误(cuoWu).yingXiang
       sheZhiCuoWu(xiaoXi)
       return null
@@ -941,11 +995,124 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     return faSongYiTiaoYongHuXiaoXi(linShiXiaoXi)
   }
 
+  function 由消息恢复媒体上下文(xiaoXi: 消息): 媒体重发上下文 | null {
+    if (!(xiaoXi.lei_xing in DUO_MEI_TI_LEI_XING_SHANG_CHUAN_LEI_BIE)) return null
+    return {
+      leiXing: xiaoXi.lei_xing as DuoMeiTiLeiXing,
+      wenJian: null,
+      fuJia: {
+        ...(typeof xiaoXi.mei_ti_shi_chang_hao_miao === 'number'
+          ? { shiChangHaoMiao: xiaoXi.mei_ti_shi_chang_hao_miao }
+          : {}),
+        ...(xiaoXi.mei_ti_yuan_shi_wen_jian_ming
+          ? { wenJianMing: xiaoXi.mei_ti_yuan_shi_wen_jian_ming }
+          : {}),
+      },
+      yinYongXiaoXiId: xiaoXi.bei_yong_xiao_xi_id ?? null,
+      benDiYuLan: xiaoXi.ben_di_yu_lan_url ?? null,
+    }
+  }
+
+  async function 确保媒体标识(xiaoXi: 消息, shangXiaWen: 媒体重发上下文): Promise<string> {
+    if (typeof xiaoXi.mei_ti_id === 'string' && xiaoXi.mei_ti_id) return xiaoXi.mei_ti_id
+    const wenJian = shangXiaWen.wenJian
+    if (!wenJian) throw new Error(huoQuFanYi('duoMeiTi', 'faSongShiBai'))
+    const shangChuan = await shangChuanMeiTi(
+      xiaoXi.hui_hua_id,
+      wenJian,
+      DUO_MEI_TI_LEI_XING_SHANG_CHUAN_LEI_BIE[shangXiaWen.leiXing],
+      shangXiaWen.leiXing === 'yuYin' && typeof shangXiaWen.fuJia.shiChangHaoMiao === 'number'
+        ? { shiChangHaoMiao: shangXiaWen.fuJia.shiChangHaoMiao }
+        : undefined,
+    )
+    xiaoXi.mei_ti_id = shangChuan.mediaId
+    shangXiaWen.wenJian = null
+    return shangChuan.mediaId
+  }
+
+  async function 执行媒体发送(
+    xiaoXi: 消息,
+    shangXiaWen: 媒体重发上下文,
+    miDengJian: string,
+  ): Promise<消息 | null> {
+    try {
+      const meiTiId = await 确保媒体标识(xiaoXi, shangXiaWen)
+      const suiWenBen =
+        shangXiaWen.leiXing === 'yuYin' && typeof shangXiaWen.fuJia.zhuanXieWenBen === 'string'
+          ? shangXiaWen.fuJia.zhuanXieWenBen.trim().slice(0, 500)
+          : ''
+      const { xiaoXi: fuWuQiXiaoXi } = await faSongXiaoXiApi({
+        huiHuaId: xiaoXi.hui_hua_id,
+        neiRong: suiWenBen,
+        miDengJian,
+        leiXing: shangXiaWen.leiXing,
+        meiTiId,
+        ...(shangXiaWen.yinYongXiaoXiId
+          ? { yinYong: { beiYongXiaoXiId: shangXiaWen.yinYongXiaoXiId } }
+          : {}),
+      })
+      const fuWuQiURL =
+        fuWuQiXiaoXi.mei_ti_url || shangXiaWen.benDiYuLan || xiaoXi.mei_ti_url || ''
+      if (fuWuQiXiaoXi.mei_ti_url) cheXiaoYuLanURL(shangXiaWen.benDiYuLan)
+      duiQiLeDaXiangXiaoXi(xiaoXi, fuWuQiXiaoXi, (duiQiXiaoXi) => ({
+        ...duiQiXiaoXi,
+        mei_ti_url: fuWuQiURL,
+        ben_di_yu_lan_url: duiQiXiaoXi.mei_ti_url ? null : shangXiaWen.benDiYuLan,
+        ben_di_da_xiao_zi_jie:
+          duiQiXiaoXi.ben_di_da_xiao_zi_jie ?? xiaoXi.ben_di_da_xiao_zi_jie ?? null,
+      }))
+      移除媒体重发(xiaoXi.ke_hu_duan_id)
+      return fuWuQiXiaoXi
+    } catch (cuoWu: unknown) {
+      console.error('发送多媒体消息失败', cuoWu)
+      标记发送失败(xiaoXi)
+      if (xiaoXi.ke_hu_duan_id) 记录媒体重发(xiaoXi.ke_hu_duan_id, shangXiaWen)
+      sheZhiCuoWu(归一前台错误(cuoWu).yingXiang)
+      return null
+    }
+  }
+
+  async function 重发图文消息(xiaoXi: 消息): Promise<消息 | null> {
+    const kuai = Array.isArray(xiaoXi.nei_rong_kuai) ? xiaoXi.nei_rong_kuai : []
+    const tiJiaoKuai = keTiJiaoKuai(kuai)
+    if (tiJiaoKuai.length === 0) {
+      标记发送失败(xiaoXi)
+      sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'faSongShiBai'))
+      return null
+    }
+    try {
+      const { xiaoXi: fuWuQiXiaoXi } = await faSongXiaoXiApi({
+        huiHuaId: xiaoXi.hui_hua_id,
+        neiRong: xiaoXi.nei_rong,
+        miDengJian: queDingMiDengJian(xiaoXi),
+        leiXing: xiaoXi.lei_xing,
+        meiTiId: xiaoXi.mei_ti_id ?? null,
+        neiRongKuai: tiJiaoKuai,
+        ...(xiaoXi.bei_yong_xiao_xi_id
+          ? { yinYong: { beiYongXiaoXiId: xiaoXi.bei_yong_xiao_xi_id } }
+          : {}),
+      })
+      duiQiLeDaXiangXiaoXi(xiaoXi, fuWuQiXiaoXi, (duiQiXiaoXi) => ({
+        ...duiQiXiaoXi,
+        nei_rong_kuai: Array.isArray(duiQiXiaoXi.nei_rong_kuai)
+          ? duiQiXiaoXi.nei_rong_kuai
+          : kuai,
+      }))
+      return fuWuQiXiaoXi
+    } catch (cuoWu: unknown) {
+      console.error('发送图文混排消息失败', cuoWu)
+      标记发送失败(xiaoXi)
+      sheZhiCuoWu(归一前台错误(cuoWu).yingXiang)
+      return null
+    }
+  }
+
   async function chongShiFaSongXiaoXi(keHuDuanId: string): Promise<boolean> {
     if (!keHuDuanId || !faSongShiBaiJiHe.value.has(keHuDuanId)) return false
     const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.ke_hu_duan_id === keHuDuanId)
     if (suoYin === -1) {
       faSongShiBaiJiHe.value.delete(keHuDuanId)
+      移除媒体重发(keHuDuanId)
       return false
     }
     const yuanQiPao = xiaoXiLieBiao.value[suoYin]
@@ -953,6 +1120,23 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     qingChuCuoWu()
     const chongFaXiaoXi: 消息 = { ...yuanQiPao, fa_song_zhong: true }
     xiaoXiLieBiao.value.splice(suoYin, 1, chongFaXiaoXi)
+    if (
+      Array.isArray(yuanQiPao.nei_rong_kuai) &&
+      yuanQiPao.nei_rong_kuai.some((kuai) => kuai.lei_xing === 'tupian')
+    ) {
+      return (await 重发图文消息(chongFaXiaoXi)) !== null
+    }
+    if (yuanQiPao.lei_xing !== 'wenben') {
+      const shangXiaWen = 媒体重发表.get(keHuDuanId) ?? 由消息恢复媒体上下文(chongFaXiaoXi)
+      if (!shangXiaWen) {
+        标记发送失败(chongFaXiaoXi)
+        sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'faSongShiBai'))
+        return false
+      }
+      return (
+        (await 执行媒体发送(chongFaXiaoXi, shangXiaWen, queDingMiDengJian(chongFaXiaoXi))) !== null
+      )
+    }
     const jieGuo = await faSongYiTiaoYongHuXiaoXi(chongFaXiaoXi)
     return jieGuo !== null
   }
@@ -995,57 +1179,15 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     }
     const benCiMiDengJian = queDingMiDengJian(linShiXiaoXi)
     jiaRuXiaoXi(linShiXiaoXi)
-
-    try {
-      const huiHuaId = dangQianHuiHuaId.value
-      const meiTiId = fuJia.yiYouMeiTi
-        ? fuJia.yiYouMeiTi.meiTiId
-        : (
-            await shangChuanMeiTi(
-              huiHuaId,
-              wenJian as File | Blob,
-              DUO_MEI_TI_LEI_XING_SHANG_CHUAN_LEI_BIE[leiXing],
-              leiXing === 'yuYin' && typeof fuJia.shiChangHaoMiao === 'number'
-                ? { shiChangHaoMiao: fuJia.shiChangHaoMiao }
-                : undefined,
-            )
-          ).mediaId
-      const suiWenBen =
-        leiXing === 'yuYin' && typeof fuJia.zhuanXieWenBen === 'string'
-          ? fuJia.zhuanXieWenBen.trim().slice(0, 500)
-          : ''
-      const { xiaoXi } = await faSongXiaoXiApi({
-        huiHuaId,
-        neiRong: suiWenBen,
-        miDengJian: benCiMiDengJian,
-        leiXing,
-        meiTiId,
-        ...(beiYongId ? { yinYong: { beiYongXiaoXiId: beiYongId } } : {}),
-      })
-      const fuWuQiURL = xiaoXi.mei_ti_url || benDiYuLan || chuShiURL || ''
-      if (xiaoXi.mei_ti_url) {
-        cheXiaoYuLanURL(benDiYuLan)
-      }
-      duiQiLeDaXiangXiaoXi(linShiXiaoXi, xiaoXi, (fuWuQiXiaoXi) => ({
-        ...fuWuQiXiaoXi,
-        mei_ti_url: fuWuQiURL,
-        ben_di_yu_lan_url: fuWuQiXiaoXi.mei_ti_url ? null : benDiYuLan,
-        ben_di_da_xiao_zi_jie:
-          fuWuQiXiaoXi.ben_di_da_xiao_zi_jie ?? linShiXiaoXi.ben_di_da_xiao_zi_jie ?? null,
-      }))
-      return xiaoXi
-    } catch (cuoWu: unknown) {
-       
-      console.error('发送多媒体消息失败', cuoWu)
-      const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.ke_hu_duan_id === linShiId)
-      if (suoYin !== -1) {
-        xiaoXiLieBiao.value.splice(suoYin, 1)
-      }
-      cheXiaoYuLanURL(benDiYuLan)
-      const tiShi = 归一前台错误(cuoWu).yingXiang
-      sheZhiCuoWu(tiShi)
-      return null
+    const shangXiaWen: 媒体重发上下文 = {
+      leiXing,
+      wenJian,
+      fuJia: { ...fuJia },
+      yinYongXiaoXiId: beiYongId,
+      benDiYuLan,
     }
+    记录媒体重发(linShiId, shangXiaWen)
+    return 执行媒体发送(linShiXiaoXi, shangXiaWen, benCiMiDengJian)
   }
 
   async function faSongTuWenXiaoXi(
@@ -1167,11 +1309,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
       return xiaoXi
     } catch (cuoWu: unknown) {
       console.error('发送图文混排消息失败', cuoWu)
-      faSongShiBaiJiHe.value.add(linShiId)
-      const suoYin = xiaoXiLieBiao.value.findIndex((m) => m.ke_hu_duan_id === linShiId)
-      if (suoYin !== -1) {
-        xiaoXiLieBiao.value[suoYin] = { ...xiaoXiLieBiao.value[suoYin], fa_song_zhong: false }
-      }
+      标记发送失败(linShiXiaoXi)
       const tiShi = 归一前台错误(cuoWu).yingXiang
       sheZhiCuoWu(tiShi)
       return null
@@ -1260,6 +1398,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     shouPingQianTaiCuoWu.value = null
     jiaoSeQianTaiCuoWu.value = null
     faSongShiBaiJiHe.value = new Set()
+    清空媒体重发()
     duanKaiSocket()
   }
 
@@ -1269,7 +1408,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     jieShouHaoGanDuZengLiang,
     xiaoXiLieBiao,
     zhengZaiShuRu,
-    shouTiaoShiAI,
     aiZhuangTai,
     jiaoSeXinXi,
     youXiShiJian,

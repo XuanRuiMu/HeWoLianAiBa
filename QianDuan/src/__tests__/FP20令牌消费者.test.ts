@@ -111,6 +111,10 @@ const 幻影登记: { 令牌: string; 理由: string }[] = [
     理由: 'FP01令牌基座.test.ts 断言文案 var(--gundong-tiao-*-cursor) 的正则伪影（* 非令牌名字符）',
   },
   {
+    令牌: '--ka-hong-',
+    理由: 'FP01认证卡标题与切换动线.test.ts 断言文案 var(--ka-hong-${xuHao}) 的正则伪影（模板插值非令牌名字符）',
+  },
+  {
     令牌: '--lizi-x',
     理由: 'global.css lizi-kuosan 关键帧引用，全库无定义亦无运行时注入（已登记待裁决，非本单清理对象）',
   },
@@ -121,7 +125,27 @@ const 幻影登记: { 令牌: string; 理由: string }[] = [
   { 令牌: '--qipao-ziJi-wenBen', 理由: '同 --qipao-duiFang-beiJing，运行时注入' },
   {
     令牌: '--caijian-yulan-fu-gai',
-    理由: '图片裁剪.vue 底部实时预览把裁剪结果 dataURL 以 style 运行时注入，CSS 只消费',
+    理由: '图片裁剪.vue 底部预览把裁剪结果 dataURL 以 style 运行时注入，CSS 只消费',
+  },
+  {
+    令牌: '--caijian-yulan-chi-cun',
+    理由: '图片裁剪.vue 底部预览把填充尺寸与 dataURL 同批运行时注入，CSS 只消费',
+  },
+  {
+    令牌: '--caijian-yulan-wei-ba',
+    理由: 'FP-02b 图片裁剪.vue 对预览 dataURL 采样尾巴侧边缘色运行时注入，CSS 只消费',
+  },
+  {
+    令牌: '--qipao-ziJi-weiBa',
+    理由: 'FP-02b 用户设置仓库对图片态气泡采样边缘色运行时注入的尾巴专用色，CSS 只消费',
+  },
+  {
+    令牌: '--qipao-duiFang-weiBa',
+    理由: 'FP-02b 同 --qipao-ziJi-weiBa，AI 侧尾巴专用色运行时注入',
+  },
+  {
+    令牌: '--qipao-miaoBian-yangShi',
+    理由: 'FP-02b 气泡描边档位拼出的 box-shadow 值运行时注入，CSS 只消费',
   },
    {
     令牌: '--wai-guan-meng-ceng',

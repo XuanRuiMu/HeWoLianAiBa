@@ -78,6 +78,7 @@ export async function huoQuPaiHangBang(zuBie: ZuBie): Promise<PaiHangXiangMu[]> 
 
 export interface TiaoZhanPeiZhi {
   zha_xing_gai_lv: number
+  fang_qi_kou_fen: number
 }
 
 export async function huoQuTiaoZhanPeiZhi(): Promise<TiaoZhanPeiZhi> {

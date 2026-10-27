@@ -1,7 +1,18 @@
 import './env'
 
+// Writer 默认走非思考模式。
+// 依据一：ACL 2025《Reasoning Does Not Necessarily Improve Role-Playing Ability》
+//   实测开 CoT 反而降低角色扮演能力，机制是注意力稀释与风格漂移（推理痕迹写进正文）。
+// 依据二：本项目实机实测，Writer 开思考时会把 Director 给的正确策略执行走样——
+//   Director 策略是「不追问太多，轻轻接住，问一句是身体累还是心里累」，
+//   Writer 却输出「这么晚还没睡……要不要我陪你打会儿语音，不想说也没关系」，
+//   正是本项目自己登记的「长篇安慰+给建议+收尾」病灶。
+// 依据三：DeepSeek 思考模式下 temperature 不生效，AI参数策略里按人设微调温度的整条链路
+//   （E型/快热/渣型/关系阶段/场景）会变成死代码。
+// 思考留给 Director：它要做的判断（该不该接、接哪个点、情绪）本来就适合推理；
+// Writer 的任务是执行，不是分析。
 export const XIE_SHOU_SI_KAO =
-  (process.env['WRITER_SI_KAO_QI_YONG'] || 'true').trim().toLowerCase() !== 'false'
+  (process.env['WRITER_SI_KAO_QI_YONG'] || 'false').trim().toLowerCase() === 'true'
 
 export const XIE_SHOU_WEN_DU = Math.min(
   2,

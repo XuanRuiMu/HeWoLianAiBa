@@ -63,16 +63,18 @@ describe('FP06 气泡主题卡片真实气泡形状', () => {
     }
     const ziJiWeiBa = 取规则(卡片源, '.qi-pao-ka--ziJi::after')
     expect(ziJiWeiBa).toContain('right: calc(var(--qipao-weiba-pian) * -1)')
-    expect(ziJiWeiBa).toContain('border-left: var(--qipao-weiba-kuan) solid var(--qipao-ziJi-beiJing')
+    expect(ziJiWeiBa).toContain('border-left: var(--qipao-weiba-kuan) solid')
+    expect(ziJiWeiBa).toContain('var(--qipao-ziJi-weiBa, var(--qipao-ziJi-beiJing')
     const rongQiZiJi = 取规则(容器源, '.qipao-neirong--benren::after')
     expect(rongQiZiJi).toContain('right: calc(var(--qipao-weiba-pian) * -1)')
     expect(rongQiZiJi).toContain('border-left: var(--qipao-weiba-kuan) solid')
+    expect(rongQiZiJi).toContain('var(--qipao-ziJi-weiBa, var(--qipao-ziJi-beiJing')
     const aiWeiBa = 取规则(卡片源, '.qi-pao-ka--ai::after')
     expect(aiWeiBa).toContain('left: calc(var(--qipao-weiba-pian) * -1)')
-    expect(aiWeiBa).toMatch(/border-right:\s*var\(--qipao-weiba-kuan\) solid\s+var\(--qipao-duiFang-beiJing/)
+    expect(aiWeiBa).toMatch(/border-right:\s*var\(--qipao-weiba-kuan\) solid\s+var\(--qipao-duiFang-weiBa/)
     const rongQiJiaoSe = 取规则(容器源, '.qipao-neirong--jiaose::after')
     expect(rongQiJiaoSe).toContain('left: calc(var(--qipao-weiba-pian) * -1)')
-    expect(rongQiJiaoSe).toMatch(/border-right:\s*var\(--qipao-weiba-kuan\) solid/)
+    expect(rongQiJiaoSe).toMatch(/border-right:\s*var\(--qipao-weiba-kuan\) solid\s+var\(--qipao-duiFang-weiBa/)
   })
 
   it('卡片主体形状与真实气泡同源：同圆角令牌、无边框、同字号行高令牌', () => {

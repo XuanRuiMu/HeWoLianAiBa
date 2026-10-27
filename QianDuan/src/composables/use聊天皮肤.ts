@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, watchEffect } from 'vue'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
 
 export const MO_REN_BEI_JING = 'moRen'
@@ -18,5 +18,11 @@ export function use聊天皮肤() {
   )
   const beiJingYangShi = computed(() => sheZhi.beiJingNeiLianYangShi)
   const qiPaoYangShi = computed(() => sheZhi.ziJiQiPaoCSSBianLiang)
+  watchEffect(() => {
+    const ziJiTu = sheZhi.dangQianZiJiQiPaoTu
+    const aiTu = sheZhi.dangQianAiQiPaoTu
+    if (ziJiTu) void sheZhi.queRenQiPaoWeiBaYanSe('ziJi', ziJiTu)
+    if (aiTu) void sheZhi.queRenQiPaoWeiBaYanSe('ai', aiTu)
+  })
   return { beiJingLeiMing, beiJingYangShi, qiPaoYangShi }
 }

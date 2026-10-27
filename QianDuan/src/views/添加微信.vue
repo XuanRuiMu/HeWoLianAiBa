@@ -23,10 +23,10 @@ import type { 生成流程资料 } from '@/stores/角色生成'
 const router = useRouter()
 const 仓库 = 使用角色生成仓库()
 
-const weiXinMingCheng = computed(
-  () => 仓库.jiaoSeXinXi?.wei_xin_ming || 仓库.jiaoSeXinXi?.ming_zi || '',
+const weiXinMingCheng = computed(() => 仓库.jiaoSeXinXi?.wei_xin_ming || '')
+const moRenTouXiang = computed(() =>
+  仓库.jiaoSeXinXi ? (仓库.jiaoSeXinXi.xing_bie === 'nv' ? '👩' : '👨') : '💬',
 )
-const moRenTouXiang = computed(() => (仓库.jiaoSeXinXi?.xing_bie === 'nv' ? '👩' : '👨'))
 
 function fanHui() {
   router.push({ name: 'ziLiaoSheZhi' })

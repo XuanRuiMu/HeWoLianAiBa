@@ -99,7 +99,7 @@ beforeEach(() => {
 describe('FP09 好友页头部与副文案', () => {
   it('副文案精确为需求指定文本', () => {
     expect(huoQuFanYi('haoYou', 'zanWuHaoYouTiShi')).toBe(
-      '搜索手机号或用户名，发出好友申请。对方通过后开聊！',
+      '搜索手机号或用户名，发出好友申请\n对方通过后开聊',
     )
   })
 

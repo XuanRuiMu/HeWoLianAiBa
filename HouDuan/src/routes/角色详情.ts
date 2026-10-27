@@ -3,7 +3,8 @@ import { Router } from 'express'
 import type { Response } from 'express'
 import { huoQuFanYi } from '../config/translations'
 import { chengGongXiangYing, shiBaiXiangYing } from '../utils/xiangying'
-import { anIdChaJiaoSeXiangQing } from '../services/角色生成'
+import { anIdChaJiaoSeXiangQing, touYingGuanLiJiaoSe, touYingWanJiaKeJianJiaoSe } from '../services/角色生成'
+import { anYongHuIdJuBeiNengLi } from '../middleware/管理员'
 import { huoQuJiaoSeSuoYouZhe } from '../services/消息'
 import { zhongXinQianMingMeiTiURL } from '../services/媒体存储'
 import { yanZhengUUID } from '../utils/验证'
@@ -38,9 +39,23 @@ luYou.get(
         return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('liaoTian', 'wuQuanXian'))
       }
 
+      let youYunYingNengLi = false
+      try {
+        youYunYingNengLi = await anYongHuIdJuBeiNengLi(yongHu.yongHuId, 'cha_kan')
+      } catch (cuoWu) {
+        debug日志.error('角色接口', '运营读取能力判定失败，按无权限处理', {
+          xiang_qing: { jiao_se_id: jiaoSeId, cuo_wu: String(cuoWu) },
+        })
+        youYunYingNengLi = false
+      }
+
+      const touYingJiaoSe = youYunYingNengLi
+        ? touYingGuanLiJiaoSe(jiaoSe)
+        : touYingWanJiaKeJianJiaoSe(jiaoSe)
+
       return chengGongXiangYing(xiangYing, {
         jiao_se: {
-          ...jiaoSe,
+          ...touYingJiaoSe,
           tou_xiang: zhongXinQianMingMeiTiURL(jiaoSe.tou_xiang, yongHu.yongHuId) ?? '',
         },
         dang_an_zhuang_tai: {

@@ -92,8 +92,13 @@ const emit = defineEmits<{ fanHui: [] }>()
   font-weight: 700;
   color: var(--wenben-zhuse);
   margin: 0;
+  width: 100%;
+  min-height: 29px;
+  line-height: 1.3;
   max-width: 100%;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .zairu-jindu-tiao {

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { gouJianYuTaiCeng } from '../语态层'
+import { quYuTaiZhiLing } from '../语态控制器'
 import { gouJianWriterPrompt } from '../Prompt构建器'
 import type { AIYinQingShuRu } from '../../types'
 
@@ -10,6 +11,8 @@ function 造输入(追加: Record<string, unknown> = {}): AIYinQingShuRu {
     jiao_se: {
       wei_xin_ming: '林知夏', mbti_lei_xing: 'INTP', shen_fen: '大学生', shi_fou_zha_xing: false,
       xing_bie: 'nv', nian_ling: 22, cheng_shi: '杭州', zhi_ye: '学生', xing_ge_biao_qian: [],
+      xi_hao: ['手账', '看科普'],
+      shi_jie_xin_xi: { zuo_xi_gui_lv: '熬夜冠军但白天困', xian_shang_ai_hao: '刷短视频' },
       ai_hao: [], shuo_hua_feng_ge: '简短', bao_lu_fang_shi: '', hua_shu: [], bei_jing_gu_shi: '', tou_xiang_url: '',
     },
     hao_gan_du: { xin_ren_du: 150, qin_mi_du: 110, qu_wei_du: 90, guan_huai_du: 80, zong_fen: 430, guan_xi_jie_duan: '熟悉' },
@@ -59,6 +62,28 @@ describe('语态层', () => {
       () => 0.5,
     )
     expect(二轮).not.toContain(待办[0])
+  })
+
+  it('在忙的事项来自角色人设，不来自通用随机池', () => {
+    const 块 = gouJianYuTaiCeng(造输入(), () => 0.5)
+    const 在忙 = 块.split('【你最近在忙】')[1].split('【这一轮你就这样回】')[0]
+    expect(在忙).toContain('手账')
+    expect(在忙).toContain('看科普')
+    expect(在忙).toContain('熬夜冠军但白天困')
+    expect(在忙).toContain('刷短视频')
+    expect(在忙).not.toContain('社团招新')
+    expect(在忙).not.toContain('洗牙')
+  })
+
+  it('对方在直接问你一件事时强制接内容，不走澄清', () => {
+    const 块 = gouJianYuTaiCeng(造输入({ yong_hu_xin_xiao_xi: '林知夏，你最近在忙些啥' }), () => 0.99)
+    expect(块).toContain('这一轮就顺着对方这句话里那个具体的东西说')
+    expect(块).not.toContain('这一轮对方话里有个地方你真没跟上')
+  })
+
+  it('说自己与另起两档都禁止临场编造新的地点时间安排', () => {
+    expect(quYuTaiZhiLing('说自己')).toContain('别临场编出新的地点、时间、安排')
+    expect(quYuTaiZhiLing('另起')).toContain('别硬找话题、也别编新的安排')
   })
 })
 

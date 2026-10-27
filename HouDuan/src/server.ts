@@ -157,7 +157,10 @@ yingYong.use('/api/挑战/配置', (async (_qingQiu, xiangYing) => {
   const { debug日志 } = await import('./utils/debug日志')
   const { huoQuFanYi } = await import('./config/translations')
   try {
-    return chengGongXiangYing(xiangYing, { zha_xing_gai_lv: TIAO_ZHAN_PEI_ZHI.zhaXingGaiLv })
+    return chengGongXiangYing(xiangYing, {
+      zha_xing_gai_lv: TIAO_ZHAN_PEI_ZHI.zhaXingGaiLv,
+      fang_qi_kou_fen: TIAO_ZHAN_PEI_ZHI.fangQiKouFen,
+    })
   } catch (cuoWu) {
     debug日志.error('挑战接口', '查询挑战配置失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))

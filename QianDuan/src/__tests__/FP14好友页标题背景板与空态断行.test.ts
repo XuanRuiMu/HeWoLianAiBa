@@ -10,24 +10,24 @@ const 列表源码 = readFileSync(resolve(__dirname, '../views/好友列表.vue'
 const 翻译源码 = readFileSync(resolve(__dirname, '../config/翻译表.ts'), 'utf8')
 
 describe('FP-14 空态提示语断行', () => {
-  it('提示语只在标点后断行：keep-all 且宽度容纳第一句、容不下整句', () => {
+  it('提示语恰为需求指定的两行，行内不再带句号与感叹号', () => {
     const 规则 = /\.kong-tai-ti-shi \{([^}]*)\}/.exec(空态源码)?.[1] ?? ''
-    expect(规则).toContain('word-break: keep-all')
-    const 宽 = /max-width:\s*([\d.]+)em/.exec(规则)?.[1]
-    expect(宽).toBeDefined()
-    expect(Number(宽)).toBeGreaterThanOrEqual(17)
-    expect(Number(宽)).toBeLessThan(25)
+    expect(规则).toContain('white-space: pre-line')
+    expect(规则).not.toContain('word-break: keep-all')
   })
 
-  it('提示语字符串保持单行，不含换行与 br', () => {
+  it('提示语字符串恰为两行，用换行符而不是 br', () => {
     expect(huoQuFanYi('haoYou', 'zanWuHaoYouTiShi')).toBe(
-      '搜索手机号或用户名，发出好友申请。对方通过后开聊！',
+      '搜索手机号或用户名，发出好友申请\n对方通过后开聊',
     )
-    expect(huoQuFanYi('haoYou', 'zanWuHaoYouTiShi')).not.toContain('\n')
+    expect(huoQuFanYi('haoYou', 'zanWuHaoYouTiShi').split('\n')).toEqual([
+      '搜索手机号或用户名，发出好友申请',
+      '对方通过后开聊',
+    ])
     expect(翻译源码).not.toMatch(/zanWuHaoYouTiShi[^\n]*<br/)
   })
 
-  it('挂载后提示语渲染为完整单行文本节点', () => {
+  it('挂载后提示语按两行渲染，不再出现句号与感叹号', () => {
     const 包裹 = mount(好友空态, {
       props: {
         biaoTi: huoQuFanYi('haoYou', 'zanWuHaoYou'),
@@ -36,8 +36,9 @@ describe('FP-14 空态提示语断行', () => {
     })
     const 提示 = 包裹.find('.kong-tai-ti-shi')
     expect(提示.exists()).toBe(true)
-    expect(提示.text()).toBe('搜索手机号或用户名，发出好友申请。对方通过后开聊！')
-    expect(提示.text()).not.toContain('\n')
+    expect(提示.text()).toBe('搜索手机号或用户名，发出好友申请\n对方通过后开聊')
+    expect(提示.text()).not.toContain('。')
+    expect(提示.text()).not.toContain('！')
   })
 })
 

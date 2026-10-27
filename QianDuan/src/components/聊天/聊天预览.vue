@@ -38,7 +38,7 @@
     <p v-if="tiShiWenBen" class="yu-lan-ti-shi" :class="{ 'yu-lan-ti-shi--cuo-wu': tiShiCuoWu }" role="status">
       {{ tiShiWenBen }}
     </p>
-    <p class="yu-lan-dang-qian">{{ dangQianTi }}：{{ dangQianMing }}</p>
+    <p v-if="dangQianMing" class="yu-lan-dang-qian">{{ dangQianTi }}：{{ dangQianMing }}</p>
   </div>
 </template>
 
@@ -63,7 +63,7 @@ interface YuLanXiaoXi {
 
 const props = defineProps<{
   biaoTi: string
-  dangQianMing: string
+  dangQianMing?: string
   dangQianTi?: string
 }>()
 

@@ -31,23 +31,40 @@ import {
   WAI_GUAN_DUI_BI_DU_ZUI_XIAO,
   WAI_GUAN_MEI_LEI_ZUI_DA_TIAO_SHU,
   WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
+  WAI_GUAN_QI_PAO_MIAO_BIAN_YAN_SE_MO_REN,
   WAI_GUAN_QI_PAO_MING_CHENG_ZUI_DA_ZI_FU,
+  WAI_GUAN_QI_PAO_WEI_BA_ZHAN_WEI,
   WAI_GUAN_TU_PIAN_MIME,
   WAI_GUAN_TU_PIAN_ZUI_DA_BIAN,
   WAI_GUAN_TU_PIAN_ZUI_DA_ZI_JIE,
   WAI_GUAN_YAN_SE_GE_SHI,
   guiYiWaiGuanChuCan,
   huoQuBeiJingYuSheMing,
+  huoQuLaShenChiCunZhi,
+  huoQuMiaoBianYangShi,
   huoQuQiPaoBeiJingZhi,
+  huoQuWeiBaChiCun,
+  huoQuWeiBaWeiZhiZhi,
+  huoQuYuanJiaoDangZhi,
   kongWaiGuanShuJu,
+  shiHeFaLaShenMoShi,
+  shiHeFaWeiBaMoShi,
+  shiHeFaWeiBaWeiZhi,
+  shiHeFaYuanJiaoDangWei,
   shiKeYongQiPaoWenZiYanSe,
   shiKeYongWenZiYanSe,
   tiQuWaiGuanSha,
   xiaYiGeZiDingYiMing,
+  huoQuQiPaoMengCengZhi,
+  type QiPaoWeiBaMoShi,
+  type QiPaoWeiBaWeiZhi,
+  type QiPaoYuanJiaoDangWei,
+  type WaiGuanLaShenMoShi,
   type WaiGuanTiaoMu,
   type WaiGuanShuJu,
   type WaiGuanYanSeZu,
 } from '@/config/外观自定义'
+import { caiJiBianYuanYanSe } from '@/utils/外观采样'
 
 export const LIAO_TIAN_BEI_JING_XUAN_XIANG = ['moRen', 'miWuSenLin', 'haiYangZhiLan', 'fenSeMengJing', 'yeKongXingHe', 'miSeTianYuan', 'chenWuQing', 'muZiXingYe'] as const
 
@@ -58,6 +75,41 @@ export const BEI_JING_URL_ZUI_DA_CHANG_DU = 2000
 export const ZHU_YE_BEI_JING_YU_SHUI_JIAN = 'zhuYeBeiJingYuShui'
 
 export const ZHU_YE_BEI_JING_YU_SHUI_MO_REN = true
+
+export const BEI_JING_LA_SHEN_MO_SHI_JIAN = 'beiJingLaShenMoShi'
+
+export const QI_PAO_LA_SHEN_MO_SHI_JIAN = 'qiPaoLaShenMoShi'
+
+export const QI_PAO_WEI_BA_MO_SHI_JIAN = 'qiPaoWeiBaMoShi'
+
+export const QI_PAO_WEI_BA_WEI_ZHI_JIAN = 'qiPaoWeiBaWeiZhi'
+
+export const QI_PAO_YUAN_JIAO_DANG_WEI_JIAN = 'qiPaoYuanJiaoDangWei'
+
+export const QI_PAO_MIAO_BIAN_KAI_QI_JIAN = 'qiPaoMiaoBianKaiQi'
+
+export const QI_PAO_MIAO_BIAN_YAN_SE_JIAN = 'qiPaoMiaoBianYanSe'
+
+export const LA_SHEN_MO_SHI_MO_REN: WaiGuanLaShenMoShi = 'dengBi'
+
+function duQuLaShenMoShi(jian: string): WaiGuanLaShenMoShi {
+  const zhi = duQuShuJu<unknown>(jian, LA_SHEN_MO_SHI_MO_REN)
+  return shiHeFaLaShenMoShi(zhi) ? zhi : LA_SHEN_MO_SHI_MO_REN
+}
+
+function duQuDangWeiZhi<T extends string>(jian: string, jiaoYan: (zhi: unknown) => zhi is T, moRen: T): T {
+  const zhi = duQuShuJu<unknown>(jian, moRen)
+  return jiaoYan(zhi) ? zhi : moRen
+}
+
+function duQuKaiQi(jian: string): boolean {
+  return duQuShuJu<boolean>(jian, false) === true
+}
+
+function duQuYanSeJian(jian: string, moRen: string): string {
+  const zhi = duQuShuJu<unknown>(jian, moRen)
+  return typeof zhi === 'string' && WAI_GUAN_YAN_SE_GE_SHI.test(zhi) ? zhi.toUpperCase() : moRen
+}
 
 const MEI_TI_QIAN_MING_LU_JING = /^\/api\/媒体\/[0-9a-f]{64}(\?e=\d{1,12}&s=[0-9a-f]+)?$/
 const MEI_TI_XIN_QIAN_MING_LU_JING =
@@ -83,12 +135,12 @@ export function shiZiDingYiBeiJingURL(zhi: unknown): boolean {
   return jieXi.protocol === 'https:'
 }
 
-export function huoQuBeiJingNeiLianYangShi(beiJing: string): Record<string, string> {
+export function huoQuBeiJingNeiLianYangShi(beiJing: string, laShenMoShi: WaiGuanLaShenMoShi = 'dengBi'): Record<string, string> {
   if (!shiZiDingYiBeiJingURL(beiJing)) return {}
   const anQuanURL = beiJing.trim().replace(/["\\\n\r]/g, '')
   return {
     backgroundImage: `url("${anQuanURL}")`,
-    backgroundSize: 'cover',
+    backgroundSize: huoQuLaShenChiCunZhi(laShenMoShi),
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
   }
@@ -182,6 +234,13 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
   const gongKaiShouJiHao = ref(false)
   const gongKaiYouXiang = ref(false)
   const zhuYeBeiJingYuShui = ref(duQuShuJu<boolean>(ZHU_YE_BEI_JING_YU_SHUI_JIAN, ZHU_YE_BEI_JING_YU_SHUI_MO_REN) !== false)
+  const beiJingLaShenMoShi = ref<WaiGuanLaShenMoShi>(duQuLaShenMoShi(BEI_JING_LA_SHEN_MO_SHI_JIAN))
+  const qiPaoLaShenMoShi = ref<WaiGuanLaShenMoShi>(duQuLaShenMoShi(QI_PAO_LA_SHEN_MO_SHI_JIAN))
+  const qiPaoWeiBaMoShi = ref<QiPaoWeiBaMoShi>(duQuDangWeiZhi(QI_PAO_WEI_BA_MO_SHI_JIAN, shiHeFaWeiBaMoShi, 'moRen'))
+  const qiPaoWeiBaWeiZhi = ref<QiPaoWeiBaWeiZhi>(duQuDangWeiZhi(QI_PAO_WEI_BA_WEI_ZHI_JIAN, shiHeFaWeiBaWeiZhi, 'shang'))
+  const qiPaoYuanJiaoDangWei = ref<QiPaoYuanJiaoDangWei>(duQuDangWeiZhi(QI_PAO_YUAN_JIAO_DANG_WEI_JIAN, shiHeFaYuanJiaoDangWei, 'zhong'))
+  const qiPaoMiaoBianKaiQi = ref(duQuKaiQi(QI_PAO_MIAO_BIAN_KAI_QI_JIAN))
+  const qiPaoMiaoBianYanSe = ref(duQuYanSeJian(QI_PAO_MIAO_BIAN_YAN_SE_JIAN, WAI_GUAN_QI_PAO_MIAO_BIAN_YAN_SE_MO_REN))
   const bangDingYouXiang = ref('')
   const yiJiaZai = ref(false)
   const caoZuoCuoWu = ref<QianTaiCuoWu | null>(null)
@@ -555,22 +614,63 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
   const liaoTianBeiJing = computed(() => (使用主题仓库().dangQianZhuti === 浅色值 ? liaoTianBeiJingQian.value : liaoTianBeiJingShen.value))
   const shiYuShe = computed(() => shiYuSheBeiJing(liaoTianBeiJing.value))
   const shiZiDingYi = computed(() => shiZiDingYiBeiJingURL(liaoTianBeiJing.value))
-  const beiJingNeiLianYangShi = computed(() => huoQuBeiJingNeiLianYangShi(liaoTianBeiJing.value))
+  const beiJingNeiLianYangShi = computed(() => huoQuBeiJingNeiLianYangShi(liaoTianBeiJing.value, beiJingLaShenMoShi.value))
 
   const ziJiQiPaoCSSBianLiang = computed(() => {
     const bianLiang = huoQuQiPaoCSSBianLiang(qiPaoZiJi.value, qiPaoAI.value)
     const ziJiTu = dangQianZiJiQiPaoTu.value
     const aiTu = dangQianAiQiPaoTu.value
     if (ziJiTu && shiZiDingYiBeiJingURL(ziJiTu.tuDiZhi)) {
-      bianLiang['--qipao-ziJi-beiJing'] = huoQuQiPaoBeiJingZhi(ziJiTu.tuDiZhi, ziJiTu.wenZiYanSe)
+      bianLiang['--qipao-ziJi-beiJing'] = huoQuQiPaoBeiJingZhi(ziJiTu.tuDiZhi, ziJiTu.wenZiYanSe, qiPaoLaShenMoShi.value)
       bianLiang['--qipao-ziJi-wenBen'] = ziJiTu.wenZiYanSe || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE
+      bianLiang['--qipao-ziJi-weiBa'] = qiPaoWeiBaYanSeLu.value['ziJi-' + ziJiTu.id] || WAI_GUAN_QI_PAO_WEI_BA_ZHAN_WEI
     }
     if (aiTu && shiZiDingYiBeiJingURL(aiTu.tuDiZhi)) {
-      bianLiang['--qipao-duiFang-beiJing'] = huoQuQiPaoBeiJingZhi(aiTu.tuDiZhi, aiTu.wenZiYanSe)
+      bianLiang['--qipao-duiFang-beiJing'] = huoQuQiPaoBeiJingZhi(aiTu.tuDiZhi, aiTu.wenZiYanSe, qiPaoLaShenMoShi.value)
       bianLiang['--qipao-duiFang-wenBen'] = aiTu.wenZiYanSe || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE
+      bianLiang['--qipao-duiFang-weiBa'] = qiPaoWeiBaYanSeLu.value['ai-' + aiTu.id] || WAI_GUAN_QI_PAO_WEI_BA_ZHAN_WEI
     }
     return bianLiang
   })
+
+  const qiPaoXingZhuangBianLiang = computed<Record<string, string>>(() => {
+    const chiCun = huoQuWeiBaChiCun(qiPaoWeiBaMoShi.value)
+    return {
+      '--qipao-yuanjiao': huoQuYuanJiaoDangZhi(qiPaoYuanJiaoDangWei.value),
+      '--qipao-weiba-shang': huoQuWeiBaWeiZhiZhi(qiPaoWeiBaWeiZhi.value),
+      '--qipao-weiba-kuan': chiCun.kuan,
+      '--qipao-weiba-ban': chiCun.ban,
+      '--qipao-miaoBian-yangShi': huoQuMiaoBianYangShi(qiPaoMiaoBianKaiQi.value, qiPaoMiaoBianYanSe.value),
+    }
+  })
+
+  const qiPaoWeiBaYanSeLu = ref<Record<string, string>>({})
+  const weiBaCaiYangZhong = new Set<string>()
+
+  function quQiPaoWeiBaYanSe(buWei: 'ziJi' | 'ai', tiaoMu: WaiGuanTiaoMu): string {
+    return qiPaoWeiBaYanSeLu.value[buWei + '-' + tiaoMu.id] || ''
+  }
+
+  async function queRenQiPaoWeiBaYanSe(buWei: 'ziJi' | 'ai', tiaoMu: WaiGuanTiaoMu): Promise<void> {
+    const jian = buWei + '-' + tiaoMu.id
+    if (qiPaoWeiBaYanSeLu.value[jian] || weiBaCaiYangZhong.has(jian)) return
+    if (!shiZiDingYiBeiJingURL(tiaoMu.tuDiZhi)) return
+    weiBaCaiYangZhong.add(jian)
+    try {
+      const mengCengZhi = huoQuQiPaoMengCengZhi(tiaoMu.wenZiYanSe || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE)
+      const yanSe = await caiJiBianYuanYanSe(tiaoMu.tuDiZhi, buWei === 'ziJi' ? 'you' : 'zuo', mengCengZhi)
+      qiPaoWeiBaYanSeLu.value[jian] = yanSe || WAI_GUAN_QI_PAO_WEI_BA_ZHAN_WEI
+    } finally {
+      weiBaCaiYangZhong.delete(jian)
+    }
+  }
+
+  async function queRenQuanBuQiPaoWeiBaYanSe(): Promise<void> {
+    for (const tiaoMu of waiGuan.value.qiPao) {
+      void queRenQiPaoWeiBaYanSe('ziJi', tiaoMu)
+      void queRenQiPaoWeiBaYanSe('ai', tiaoMu)
+    }
+  }
 
   async function shangChuanDuiXiangTouXiang(wenJian: File): Promise<void> {
     const yaSuoHou = await jianYanBingYaSuo(wenJian)
@@ -603,6 +703,43 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     baoCunShuJu(ZHU_YE_BEI_JING_YU_SHUI_JIAN, zhuYeBeiJingYuShui.value)
   }
 
+  function shiYongLaShenMoShi(leiBie: 'beiJing' | 'qiPao', moShi: WaiGuanLaShenMoShi): void {
+    if (!shiHeFaLaShenMoShi(moShi)) return
+    const jian = leiBie === 'beiJing' ? BEI_JING_LA_SHEN_MO_SHI_JIAN : QI_PAO_LA_SHEN_MO_SHI_JIAN
+    const muBiaoRef = leiBie === 'beiJing' ? beiJingLaShenMoShi : qiPaoLaShenMoShi
+    muBiaoRef.value = moShi
+    baoCunShuJu(jian, muBiaoRef.value)
+  }
+
+  function shiYongQiPaoXingZhuang(buFen: {
+    weiBaMoShi?: QiPaoWeiBaMoShi
+    weiBaWeiZhi?: QiPaoWeiBaWeiZhi
+    yuanJiaoDangWei?: QiPaoYuanJiaoDangWei
+    miaoBianKaiQi?: boolean
+    miaoBianYanSe?: string
+  }): void {
+    if (buFen.weiBaMoShi && shiHeFaWeiBaMoShi(buFen.weiBaMoShi)) {
+      qiPaoWeiBaMoShi.value = buFen.weiBaMoShi
+      baoCunShuJu(QI_PAO_WEI_BA_MO_SHI_JIAN, qiPaoWeiBaMoShi.value)
+    }
+    if (buFen.weiBaWeiZhi && shiHeFaWeiBaWeiZhi(buFen.weiBaWeiZhi)) {
+      qiPaoWeiBaWeiZhi.value = buFen.weiBaWeiZhi
+      baoCunShuJu(QI_PAO_WEI_BA_WEI_ZHI_JIAN, qiPaoWeiBaWeiZhi.value)
+    }
+    if (buFen.yuanJiaoDangWei && shiHeFaYuanJiaoDangWei(buFen.yuanJiaoDangWei)) {
+      qiPaoYuanJiaoDangWei.value = buFen.yuanJiaoDangWei
+      baoCunShuJu(QI_PAO_YUAN_JIAO_DANG_WEI_JIAN, qiPaoYuanJiaoDangWei.value)
+    }
+    if (typeof buFen.miaoBianKaiQi === 'boolean') {
+      qiPaoMiaoBianKaiQi.value = buFen.miaoBianKaiQi
+      baoCunShuJu(QI_PAO_MIAO_BIAN_KAI_QI_JIAN, qiPaoMiaoBianKaiQi.value)
+    }
+    if (typeof buFen.miaoBianYanSe === 'string' && WAI_GUAN_YAN_SE_GE_SHI.test(buFen.miaoBianYanSe.trim())) {
+      qiPaoMiaoBianYanSe.value = buFen.miaoBianYanSe.trim().toUpperCase()
+      baoCunShuJu(QI_PAO_MIAO_BIAN_YAN_SE_JIAN, qiPaoMiaoBianYanSe.value)
+    }
+  }
+
   return {
     yongHuBianHao,
     shouJiHao,
@@ -613,6 +750,15 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     liaoTianBeiJing,
     liaoTianBeiJingQian,
     liaoTianBeiJingShen,
+    beiJingLaShenMoShi,
+    qiPaoLaShenMoShi,
+    qiPaoWeiBaMoShi,
+    qiPaoWeiBaWeiZhi,
+    qiPaoYuanJiaoDangWei,
+    qiPaoMiaoBianKaiQi,
+    qiPaoMiaoBianYanSe,
+    qiPaoXingZhuangBianLiang,
+    qiPaoWeiBaYanSeLu,
     waiGuan,
     duiXiangTouXiang,
     duiXiangJiaoSeId,
@@ -662,5 +808,10 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     qingKongPaiWei,
     zhuYeBeiJingYuShui,
     qieHuanZhuYeBeiJingYuShui,
+    shiYongLaShenMoShi,
+    shiYongQiPaoXingZhuang,
+    quQiPaoWeiBaYanSe,
+    queRenQiPaoWeiBaYanSe,
+    queRenQuanBuQiPaoWeiBaYanSe,
   }
 })

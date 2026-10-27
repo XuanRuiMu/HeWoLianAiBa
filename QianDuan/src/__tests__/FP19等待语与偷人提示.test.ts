@@ -42,21 +42,28 @@ describe('FP-19 对象加载等待语与偷人提示', () => {
 
   it('等待语按固定 5 秒循环，不再绑定步骤进度', () => {
     expect(生成仓库源码).toContain('DENG_DAI_ZHOU_QI_HAO_MIAO = 5000')
-    expect(生成仓库源码).toContain('setInterval(() => {\n      dengDaiYuXuHao.value += 1\n    }, DENG_DAI_ZHOU_QI_HAO_MIAO)')
+    expect(生成仓库源码).toMatch(
+      /setInterval\(\(\) => \{\s*dengDaiYuXuHao\.value \+= 1\s*\}, DENG_DAI_ZHOU_QI_HAO_MIAO\)/,
+    )
     expect(生成仓库源码).not.toContain('步骤文案键')
     expect(生成仓库源码).not.toContain("huoQuFanYi('tianJiaWeiXin', dangQianWenAnJian")
   })
 
-  it('确有开场白（首条为对象消息）时顶部显示「对方正在偷人...」，用户开口后消失', () => {
+  it('偷人提示只存在于创建对象的载入页词条，聊天页输入提示恒为「对方正在输入...」', () => {
     const touRen = huoQuFanYi('tianJiaWeiXin', 'dengDaiTouRen')
     expect(touRen).toBe('对方正在偷人...')
-    expect(聊天仓库源码).toContain("shouTiaoShiAI.value = xiaoXiLieBiao.value[0]?.fa_song_zhe_lei_xing === 'jiaose'")
-    expect(菜单源码).toContain("huoQuFanYi('tianJiaWeiXin', 'dengDaiTouRen')")
+    expect(huoQuFanYi('liaoTian', 'duiFangZhengZaiShuRu')).toBe('对方正在输入...')
+    expect(聊天仓库源码).not.toContain('shouTiaoShiAI')
+    expect(菜单源码).not.toContain('shouCiJinRuWeiDu')
+    expect(菜单源码).not.toContain("huoQuFanYi('tianJiaWeiXin', 'dengDaiTouRen')")
+    expect(菜单源码).toContain('聊天仓库.zhengZaiShuRu')
   })
 
-  it('无开场白的对象不再无条件显示「对方正在输入」（旧逻辑已根除）', () => {
+  it('聊天页输入提示只由 zhengZaiShuRu 驱动，不再有首条对象消息分支', () => {
     expect(菜单源码).toMatch(
-      /聊天仓库\.shouTiaoShiAI \? shouCiJinRuWeiDu\.value : 聊天仓库\.zhengZaiShuRu/,
+      /shiLiaoTianYe\.value\s*&&\s*!!聊天仓库\.jiaoSeXinXi\s*&&\s*聊天仓库\.zhengZaiShuRu/,
     )
+    expect(菜单源码).not.toContain('shouCiJinRuWeiDu')
+    expect(聊天仓库源码).not.toContain('shouTiaoShiAI')
   })
 })

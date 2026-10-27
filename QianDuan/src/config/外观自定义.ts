@@ -51,6 +51,10 @@ export const WAI_GUAN_TU_PIAN_MIME = ['image/jpeg', 'image/png', 'image/webp', '
 
 export const WAI_GUAN_QI_PAO_YAN_SE_XUAN_XIANG = ['#FFFFFF', '#333333', '#000000'] as const
 
+export const WAI_GUAN_QI_PAO_WEI_BA_ZHAN_WEI = '#FFFFFF'
+export const WAI_GUAN_QI_PAO_MIAO_BIAN_YAN_SE_MO_REN = '#333333'
+export const WAI_GUAN_QI_PAO_MIAO_BIAN_KUAN = '1.5px'
+
 const MENG_CENG_LIANG = { r: 255, g: 255, b: 255, a: 0.86 }
 const MENG_CENG_AN = { r: 0, g: 0, b: 0, a: 0.72 }
 const QI_PAO_MENG_CENG_LIANG = { r: 255, g: 255, b: 255, a: 0.62 }
@@ -212,9 +216,9 @@ export function huoQuQiPaoMengCengZhi(zhi: string): string {
   return xuanZeQiPaoMengCeng(yanSe) === 'liang' ? 'rgba(255, 255, 255, 0.62)' : 'rgba(0, 0, 0, 0.55)'
 }
 
-export function huoQuQiPaoBeiJingZhi(tuDiZhi: string, wenZiYanSe: string): string {
+export function huoQuQiPaoBeiJingZhi(tuDiZhi: string, wenZiYanSe: string, moShi: WaiGuanLaShenMoShi = 'dengBi'): string {
   const anQuanURL = tuDiZhi.trim().replace(/["\\\n\r]/g, '')
-  return `linear-gradient(${huoQuQiPaoMengCengZhi(wenZiYanSe)}, ${huoQuQiPaoMengCengZhi(wenZiYanSe)}), url("${anQuanURL}") center / 100% 100% no-repeat`
+  return `linear-gradient(${huoQuQiPaoMengCengZhi(wenZiYanSe)}, ${huoQuQiPaoMengCengZhi(wenZiYanSe)}), url("${anQuanURL}") center / ${huoQuLaShenChiCunZhi(moShi)} no-repeat`
 }
 
 export function ziDingYiWaiGuanMing(leiBie: 'beiJing' | 'qiPao', xuHao: number): string {
@@ -238,6 +242,89 @@ export function zhongPaiWaiGuanTiaoMu(jiuLieBiao: WaiGuanTiaoMu[], xinShunXu: st
   }
   if (quZhong.size !== jiuLieBiao.length || jiuLieBiao.some((xiang) => !quZhong.has(xiang.id))) return null
   return xinShunXu.map((id) => zhaoBiao.get(id) as WaiGuanTiaoMu)
+}
+
+export const WAI_GUAN_LA_SHEN_MO_SHI_LIE_BIAO = ['dengBi', 'henXiang', 'zongXiang', 'quanBu'] as const
+
+export type WaiGuanLaShenMoShi = (typeof WAI_GUAN_LA_SHEN_MO_SHI_LIE_BIAO)[number]
+
+export function shiHeFaLaShenMoShi(zhi: unknown): zhi is WaiGuanLaShenMoShi {
+  return typeof zhi === 'string' && (WAI_GUAN_LA_SHEN_MO_SHI_LIE_BIAO as readonly string[]).includes(zhi)
+}
+
+export function huoQuLaShenChiCunZhi(moShi: WaiGuanLaShenMoShi): string {
+  switch (moShi) {
+    case 'henXiang': return '100% auto'
+    case 'zongXiang': return 'auto 100%'
+    case 'quanBu': return '100% 100%'
+    default: return 'cover'
+  }
+}
+
+export const QI_PAO_WEI_BA_MO_SHI_LIE_BIAO = ['moRen', 'da', 'xiao', 'wu'] as const
+
+export type QiPaoWeiBaMoShi = (typeof QI_PAO_WEI_BA_MO_SHI_LIE_BIAO)[number]
+
+export function shiHeFaWeiBaMoShi(zhi: unknown): zhi is QiPaoWeiBaMoShi {
+  return typeof zhi === 'string' && (QI_PAO_WEI_BA_MO_SHI_LIE_BIAO as readonly string[]).includes(zhi)
+}
+
+export function huoQuWeiBaChiCun(moShi: QiPaoWeiBaMoShi): { kuan: string; ban: string } {
+  switch (moShi) {
+    case 'da': return { kuan: 'var(--qipao-weiba-kuan-da)', ban: 'var(--qipao-weiba-ban-da)' }
+    case 'xiao': return { kuan: 'var(--qipao-weiba-kuan-xiao)', ban: 'var(--qipao-weiba-ban-xiao)' }
+    case 'wu': return { kuan: '0px', ban: '0px' }
+    default: return { kuan: 'var(--qipao-weiba-kuan-ju-li)', ban: 'var(--qipao-weiba-ban-ju-li)' }
+  }
+}
+
+export const QI_PAO_WEI_BA_WEI_ZHI_LIE_BIAO = ['shang', 'zhong', 'xia'] as const
+
+export type QiPaoWeiBaWeiZhi = (typeof QI_PAO_WEI_BA_WEI_ZHI_LIE_BIAO)[number]
+
+export function shiHeFaWeiBaWeiZhi(zhi: unknown): zhi is QiPaoWeiBaWeiZhi {
+  return typeof zhi === 'string' && (QI_PAO_WEI_BA_WEI_ZHI_LIE_BIAO as readonly string[]).includes(zhi)
+}
+
+export function huoQuWeiBaWeiZhiZhi(weiZhi: QiPaoWeiBaWeiZhi): string {
+  switch (weiZhi) {
+    case 'zhong': return 'calc(50% - var(--qipao-weiba-ban))'
+    case 'xia': return 'calc(100% - var(--qipao-weiba-ju-li) - var(--qipao-weiba-ban) * 2)'
+    default: return 'var(--qipao-weiba-ju-li)'
+  }
+}
+
+export const QI_PAO_YUAN_JIAO_DANG_WEI_LIE_BIAO = ['xiao', 'zhong', 'da'] as const
+
+export type QiPaoYuanJiaoDangWei = (typeof QI_PAO_YUAN_JIAO_DANG_WEI_LIE_BIAO)[number]
+
+export function shiHeFaYuanJiaoDangWei(zhi: unknown): zhi is QiPaoYuanJiaoDangWei {
+  return typeof zhi === 'string' && (QI_PAO_YUAN_JIAO_DANG_WEI_LIE_BIAO as readonly string[]).includes(zhi)
+}
+
+export function huoQuYuanJiaoDangZhi(dangWei: QiPaoYuanJiaoDangWei): string {
+  switch (dangWei) {
+    case 'xiao': return 'var(--qipao-yuanjiao-dang-xiao)'
+    case 'da': return 'var(--qipao-yuanjiao-dang-da)'
+    default: return 'var(--qipao-yuanjiao-ju-li)'
+  }
+}
+
+export function huoQuMiaoBianYangShi(kai: boolean, yanSe: string): string {
+  const qingLi = yanSe.trim()
+  if (!kai || !WAI_GUAN_YAN_SE_GE_SHI.test(qingLi)) return 'none'
+  return `0 0 0 ${WAI_GUAN_QI_PAO_MIAO_BIAN_KUAN} ${qingLi}`
+}
+
+export function jieXiMengCengZhi(zhi: string): WaiGuanMengCeng | null {
+  const piPei = /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(0?\.\d+|1|0)\s*\)$/.exec(zhi.trim())
+  if (!piPei) return null
+  const r = Number(piPei[1])
+  const g = Number(piPei[2])
+  const b = Number(piPei[3])
+  const a = Number(piPei[4])
+  if ([r, g, b].some((tongDao) => tongDao > 255) || a > 1) return null
+  return { r, g, b, a }
 }
 
 export function guiYiWaiGuanChuCan(can: WaiGuanChuCan | null | undefined): WaiGuanShuJu {

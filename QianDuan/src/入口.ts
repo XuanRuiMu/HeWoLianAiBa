@@ -8,6 +8,7 @@ import './styles/全局.css'
 import './styles/liao-tian-qi-pao.css'
 import './styles/zhang-hao-an-quan-rong-cao-di.css'
 import './styles/认证卡片.css'
+import './styles/步骤过渡.css'
 import {
   anZhuangQuanJuCuoWuJianTingQi,
   chuFaCuoWuShangBao,

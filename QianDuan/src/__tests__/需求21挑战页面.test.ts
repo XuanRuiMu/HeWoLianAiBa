@@ -148,7 +148,7 @@ beforeEach(() => {
   vi.mocked(huoQuDangQianDuiJu).mockResolvedValue(null)
   vi.mocked(huoQuWoDeGaiKuang).mockResolvedValue(概况)
   vi.mocked(huoQuPaiHangBang).mockResolvedValue(榜单)
-  vi.mocked(huoQuTiaoZhanPeiZhi).mockResolvedValue({ zha_xing_gai_lv: 0.35 })
+  vi.mocked(huoQuTiaoZhanPeiZhi).mockResolvedValue({ zha_xing_gai_lv: 0.35, fang_qi_kou_fen: 15 })
   vi.mocked(fangQiDuiJu).mockResolvedValue({
     jie_guo: { jie_guo_lei_xing: 'fang_qi', zhuang_tai_wen_ben: '', ke_ji_xu_liao_tian: true },
   })
@@ -210,17 +210,25 @@ describe('挑战主页信息结构', () => {
     包.unmount()
   })
 
-  it('对局进行中时禁用开新局，放弃需二次确认且可取消', async () => {
+  it('对局进行中时禁用开新局并气泡提示，放弃需二次确认且提示扣分', async () => {
     const 包 = await 挂主页(当前对局)
     expect(包.find('.duiju-qu').exists()).toBe(true)
     expect(包.find('.duiju-ming').text()).toBe('林小满')
     expect(包.find('.anniu-kaiShi').attributes('disabled')).toBeDefined()
-    expect(包.find('.rukou-tishi').text()).toBe(huoQuFanYi('tiaoZhan', 'yiYouDuiJuTishi'))
+    expect(包.find('.rukou-tishi').exists()).toBe(false)
+    await 包.find('.kai-shi-wei').trigger('mouseenter')
+    expect(包.find('.tishi-qipao--zhong').text()).toBe(huoQuFanYi('tiaoZhan', 'yiYouDuiJuTishi'))
+    expect(包.find('.tishi-qipao--zhong').text()).toBe('请先完成已有的挑战')
     await 包.find('.duiju-cao .anniu--wei').trigger('click')
+    await flushPromises()
     expect(包.findAll('.duiju-cao .anniu')).toHaveLength(3)
     expect(包.find('.duiju-cao .anniu--wei').text()).toBe(huoQuFanYi('tiaoZhan', 'queRenFangQi'))
+    expect(包.find('.tishi-qipao--you').text()).toBe(
+      huoQuFanYi('tiaoZhan', 'fangQiKouFenTiShi').replace('{fenshu}', '15'),
+    )
     await 包.find('.duiju-cao .anniu--mo').trigger('click')
     expect(包.findAll('.duiju-cao .anniu')).toHaveLength(2)
+    expect(包.find('.tishi-qipao--you').exists()).toBe(false)
     包.unmount()
   })
 })

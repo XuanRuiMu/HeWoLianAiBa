@@ -138,7 +138,9 @@ describe('聊天页与好友页共用录音条', () => {
     expect(社交源).toContain("Extract<ShangChuanLeiBie, 'tupian' | 'biaoqingshu' | 'yuyin' | 'wenjian'>")
     expect(社交源).toContain('zhuiJia?.shiChangHaoMiao != null')
     expect(聊天API源).toContain('zhuiJia?.shiChangHaoMiao != null')
-    expect(聊天仓库源).toContain("? { shiChangHaoMiao: fuJia.shiChangHaoMiao }")
+    expect(聊天仓库源).toMatch(
+      /\? \{ shiChangHaoMiao: shangXiaWen\.fuJia\.shiChangHaoMiao \}/,
+    )
     expect(社交源).toContain('mei_ti_shi_chang_hao_miao?: number | null')
   })
 })

@@ -1,6 +1,6 @@
 import type { AIYinQingShuRu } from '../types'
 import { shiXueShengShenFen } from '../config/角色配置'
-import { chouYuTai, gouJianYuTaiKuai, quZaiMangWeiShuo, shengChengZaiMang, zaoSuiJi, type YuTai } from './语态控制器'
+import { chouYuTai, duiFangZaiWenNi, gouJianYuTaiKuai, quZaiMangWeiShuo, shengChengZaiMang, shengChengZaiMangZiRenShe, zaoSuiJi, type YuTai } from './语态控制器'
 
 const BIAO_BAI_CI = [
   '喜欢你', '爱你', '在一起', '做我女朋友', '做我男朋友', '我们交往',
@@ -22,14 +22,29 @@ export function gouJianYuTaiCeng(
   const 对方 = (shuRu.yong_hu_xin_xiao_xi || '').trim()
   if (!对方 || shuRu.zui_jia_shuo_de_shi) return ''
   if (shuRu.bi_da_shi_shi || 本轮在等一句准话(对方)) 指定语态 = '接内容'
+  // 对方在直接问你一件事时，先回答，别先确认「是不是在叫我」。
+  const 在问你 = duiFangZaiWenNi(对方)
+  if (在问你) 指定语态 = '接内容'
 
   const 是学生 = shiXueShengShenFen(shuRu.jiao_se.shen_fen || '')
-  const 全部待办 = shengChengZaiMang(是学生, zaoSuiJi('zai-mang:' + shuRu.jiao_se_id))
+  const 人设待办 = shengChengZaiMangZiRenShe(
+    {
+      xi_hao: shuRu.jiao_se.xi_hao,
+      shi_jie_xin_xi: shuRu.jiao_se.shi_jie_xin_xi as Record<string, unknown> | undefined,
+      shen_fen: shuRu.jiao_se.shen_fen,
+      zhi_ye: (shuRu.jiao_se.shi_jie_xin_xi as Record<string, unknown> | undefined)?.zhi_ye as string | undefined,
+    },
+    zaoSuiJi('zai-mang:' + shuRu.jiao_se_id),
+  )
+  const 通用待办 = 人设待办.length > 0
+    ? []
+    : shengChengZaiMang(是学生, zaoSuiJi('zai-mang:' + shuRu.jiao_se_id))
+  const 全部待办 = [...人设待办, ...通用待办]
   const 已说 = (shuRu.dui_hua_li_shi || [])
     .filter((记) => 记.fa_song_zhe_lei_xing === 'jiaose')
     .slice(-60)
     .map((记) => (记.nei_rong || '').slice(0, 120))
-  const 在忙 = quZaiMangWeiShuo(全部待办, 已说)
+  const 在忙 = 全部待办.length > 0 ? quZaiMangWeiShuo(全部待办, 已说) : []
 
   const 块 = [
     gouJianYuTaiKuai(指定语态 ?? chouYuTai(对方, 随机), 在忙),

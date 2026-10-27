@@ -36,7 +36,7 @@ vi.mock('../邮件告警', () => ({
 }))
 
 import { AI_PEI_ZHI } from '../../config/AI配置'
-import { jiSuanAIChanShu, type CanShuShangXiaWen } from '../../config/AI参数策略'
+import { jiSuanAIChanShu, XIE_SHOU_WEN_DU_SHANG_XIAN, type CanShuShangXiaWen } from '../../config/AI参数策略'
 import { yuSuanBaoHu, ziJianMoXingMingKeYong, type DuiHuaXiaoXi } from '../DeepSeek客户端'
 import { debug日志 } from '../debug日志'
 import { jiLuShiYongLiang } from '../../services/用量统计'
@@ -57,14 +57,41 @@ describe('FP-14 采样参数只在该生效的模式下下发（官方：思考�
     }
   })
 
-  it('writer 默认走思考模式：带 reasoningEffort，不带温度与 top_p', () => {
-    expect(AI_PEI_ZHI.moXing.writer.siKaoMoShi).toBe('enabled')
+  it('writer 默认走非思考模式：带温度，不带 reasoningEffort', () => {
+    expect(AI_PEI_ZHI.moXing.writer.siKaoMoShi).toBe('disabled')
     expect(AI_PEI_ZHI.moXing.writer.top_p).toBeUndefined()
-    expect(AI_PEI_ZHI.moXing.writer.wenDu).toBeUndefined()
+    expect(AI_PEI_ZHI.moXing.writer.wenDu).toBeDefined()
     const 参数 = jiSuanAIChanShu('writer')
-    expect(参数.top_p, '思考模式按官方要求带 top_p 且不低于下限').toBeGreaterThanOrEqual(0.95)
-    expect(参数.wenDu).toBeUndefined()
-    expect(参数.reasoningEffort).toBeTruthy()
+    expect(参数.wenDu).toBeCloseTo(0.9, 2)
+    expect(参数.reasoningEffort).toBeUndefined()
+  })
+
+  it('writer 的人设微调在非思考模式下真实生效', () => {
+    const E型快热 = jiSuanAIChanShu('writer', {
+      jiaoSe: { ie_lei_xing: 'E', re_shen_lei_xing: '快热', shi_fou_zha_xing: false },
+      haoGanDu: { guan_xi_jie_duan: 'pengYou' },
+    })
+    const I型慢热 = jiSuanAIChanShu('writer', {
+      jiaoSe: { ie_lei_xing: 'I', re_shen_lei_xing: '慢热', shi_fou_zha_xing: false },
+      haoGanDu: { guan_xi_jie_duan: 'pengYou' },
+    })
+    expect(E型快热.wenDu).toBeGreaterThan(I型慢热.wenDu!)
+    expect(I型慢热.wenDu).toBeLessThanOrEqual(XIE_SHOU_WEN_DU_SHANG_XIAN)
+  })
+
+  it('显式打开 Writer 思考开关时才走思考模式', async () => {
+    const 原开关 = process.env['WRITER_SI_KAO_QI_YONG']
+    process.env['WRITER_SI_KAO_QI_YONG'] = 'true'
+    vi.resetModules()
+    try {
+      const { AI_PEI_ZHI: 开后配置 } = await import('../../config/AI配置')
+      expect(开后配置.moXing.writer.siKaoMoShi).toBe('enabled')
+      expect(开后配置.moXing.writer.reasoningEffort).toBeTruthy()
+    } finally {
+      if (原开关 === undefined) delete process.env['WRITER_SI_KAO_QI_YONG']
+      else process.env['WRITER_SI_KAO_QI_YONG'] = 原开关
+      vi.resetModules()
+    }
   })
 
   it('关掉 Writer 思考开关后回到非思考模式：只配温度，无 top_p/reasoningEffort 残留', async () => {

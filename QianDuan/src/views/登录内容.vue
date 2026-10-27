@@ -13,7 +13,14 @@
             {{ huoQuFanYi('renZheng', 'yingYongMing') }}
           </h1>
           <p class="biaodan-fu-biao-ti">
-            {{ huoQuFanYi('renZheng', 'dengLuFuBiaoTi') }}
+            <span class="fu-biao-hang">
+              <span
+                v-for="(duan, duanXuHao) in 副标题段"
+                :key="duanXuHao"
+                :class="duan.jiHao !== null ? 'fu-biao-ci-' + duan.jiHao : undefined"
+              >{{ duan.wenBen }}</span>
+            </span>
+            <span class="fu-biao-hang">{{ huoQuFanYi('renZheng', 'dengLuFuBiaoTiHouBan') }}</span>
           </p>
         </div>
 
@@ -57,20 +64,10 @@
           >
             <div
               class="biaodan-moshi-pane denglu-moshi-pane"
-              :class="{
-                'shi-fu-yong': moShi === 'dengLu',
-                'qiehuan-wanding': qieHuanWanDing && moShi === 'dengLu',
-              }"
+              :class="{ 'shi-fu-yong': moShi === 'dengLu' }"
               :inert="moShi !== 'dengLu'"
             >
-              <Transition
-                :name="qieHuanDongHua"
-                @before-leave="biaoJiLiChangBiaoDan"
-                @after-enter="biaoJiRuChangWanDing"
-                @after-leave="biaoJiRuChangWanDing"
-                @enter-cancelled="biaoJiRuChangWanDing"
-                @leave-cancelled="biaoJiRuChangWanDing"
-              >
+              <Transition :name="qieHuanDongHua" @before-leave="biaoJiLiChangBiaoDan">
           <form
             v-if="moShi === 'dengLu'"
             key="dengLu"
@@ -220,20 +217,10 @@
             </div>
             <div
               class="biaodan-moshi-pane zhuce-moshi-pane"
-              :class="{
-                'shi-fu-yong': moShi === 'zhuCe',
-                'qiehuan-wanding': qieHuanWanDing && moShi === 'zhuCe',
-              }"
+              :class="{ 'shi-fu-yong': moShi === 'zhuCe' }"
               :inert="moShi !== 'zhuCe'"
             >
-              <Transition
-                :name="qieHuanDongHua"
-                @before-leave="biaoJiLiChangBiaoDan"
-                @after-enter="biaoJiRuChangWanDing"
-                @after-leave="biaoJiRuChangWanDing"
-                @enter-cancelled="biaoJiRuChangWanDing"
-                @leave-cancelled="biaoJiRuChangWanDing"
-              >
+              <Transition :name="qieHuanDongHua" @before-leave="biaoJiLiChangBiaoDan">
           <form
             v-if="moShi === 'zhuCe'"
             key="zhuCe"
@@ -490,11 +477,35 @@ const dengLuTuiChangZhong = inject<Ref<boolean>>('dengLuTuiChangZhong', ref(fals
 const moShi = ref<MoShiLeiXing>(bd.moShi)
 const qieHuanFangXiang = ref<'you' | 'zuo'>('you')
 const qieHuanDongHua = computed(() => `biaodan-qiehuan-${qieHuanFangXiang.value}`)
-const qieHuanWanDing = ref(true)
 
-function biaoJiRuChangWanDing(): void {
-  qieHuanWanDing.value = true
+const 副标题词键 = [
+  'dengLuFuBiaoTiCi1',
+  'dengLuFuBiaoTiCi2',
+  'dengLuFuBiaoTiCi3',
+  'dengLuFuBiaoTiCi4',
+] as const
+
+type 副标题段型 = { wenBen: string; jiHao: number | null }
+
+function 拆副标题模板(): 副标题段型[] {
+  const moBan = huoQuFanYi('renZheng', 'dengLuFuBiaoTiQianBan')
+  const duanLie: 副标题段型[] = []
+  const jing = /\{ci([1-4])\}/g
+  let weiZhi = 0
+  let jieGuo: RegExpExecArray | null
+  while ((jieGuo = jing.exec(moBan)) !== null) {
+    if (jieGuo.index > weiZhi) duanLie.push({ wenBen: moBan.slice(weiZhi, jieGuo.index), jiHao: null })
+    duanLie.push({
+      wenBen: huoQuFanYi('renZheng', 副标题词键[(Number(jieGuo[1]) - 1) as 0 | 1 | 2 | 3]),
+      jiHao: Number(jieGuo[1]),
+    })
+    weiZhi = jieGuo.index + jieGuo[0].length
+  }
+  if (weiZhi < moBan.length) duanLie.push({ wenBen: moBan.slice(weiZhi), jiHao: null })
+  return duanLie
 }
+
+const 副标题段 = 拆副标题模板()
 
 watch(moShi, (xinMoShi) => {
   bd.moShi = xinMoShi
@@ -964,11 +975,6 @@ function qieHuanMoShi(xinMoShi: MoShiLeiXing) {
     faSongZhong.value = false
   }
   qingLiQianTai()
-  if (xinMoShi === 'zhuCe') {
-    if (dengLuShouJiHao.value.trim() !== '') zhuCeShouJiHao.value = dengLuShouJiHao.value
-  } else if (zhuCeShouJiHao.value.trim() !== '') {
-    dengLuShouJiHao.value = zhuCeShouJiHao.value
-  }
   qieHuanFangXiang.value = xinMoShi === 'zhuCe' ? 'you' : 'zuo'
   const dangQianJiaoDian = document.activeElement as HTMLElement | null
   if (
@@ -981,7 +987,6 @@ function qieHuanMoShi(xinMoShi: MoShiLeiXing) {
   }
   const gundongQu = biaodanRongqi.value?.querySelector('.biaodan-gundong') as HTMLElement | null
   if (gundongQu) gundongQu.scrollTop = 0
-  qieHuanWanDing.value = false
   moShi.value = xinMoShi
 }
 
@@ -1538,9 +1543,13 @@ async function zhiXingZhuCe() {
   --ka-cuo: #ff5a4e;
   --ka-cuo-mian: rgba(255, 69, 58, 0.1);
   --ka-cuo-bian: rgba(255, 69, 58, 0.45);
+  --ka-hong-1: #f2b0ac;
+  --ka-hong-2: #e98f85;
+  --ka-hong-3: #dd6d61;
+  --ka-hong-4: #db5d51;
   --ka-mo: #17130a;
   --ka-duan-luo: calc(var(--jiange-da) + var(--jiange-xiao));
-  --zihao-biaoti: 20px;
+  --zihao-biaoti: 24px;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -1594,11 +1603,12 @@ async function zhiXingZhuCe() {
 
 .biaodan-tou {
   text-align: center;
+  margin-top: var(--jiange-da);
   margin-bottom: var(--jiange-da);
 }
 
 .biaodan-biaoti {
-  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'STSong', SimSun, serif;
+  font-family: 'Kaiti SC', 'STKaiti', 'KaiTi', '楷体', 'Noto Serif SC', 'Source Han Serif SC', 'STSong', SimSun, serif;
   font-size: var(--zihao-biaoti);
   font-weight: 700;
   line-height: 1.25;
@@ -1610,20 +1620,40 @@ async function zhiXingZhuCe() {
 }
 
 .biaodan-fu-biao-ti {
-  margin: var(--jiange-4) calc(var(--ka-heng-nei-ju) * -1) 0;
+  margin: var(--jiange-xiao) calc(var(--ka-heng-nei-ju) * -1) 0;
   font-size: var(--ziti-xiao);
   font-weight: 400;
   line-height: 1.6;
   letter-spacing: 0.04em;
   text-indent: 0.04em;
   color: var(--ka-ci-wen);
+  text-align: center;
+}
+
+.fu-biao-hang {
+  display: block;
+}
+
+.fu-biao-ci-1 {
+  color: var(--ka-hong-1);
+}
+
+.fu-biao-ci-2 {
+  color: var(--ka-hong-2);
+}
+
+.fu-biao-ci-3 {
+  color: var(--ka-hong-3);
+}
+
+.fu-biao-ci-4 {
+  color: var(--ka-hong-4);
 }
 
 .biaodan-gundong {
   flex: 1;
   min-height: 0;
-  
-  padding-top: calc(var(--biaoqian-qin-ru) + var(--jiange-2));
+
   margin-top: calc(var(--biaoqian-qin-ru) * -1 + var(--jiange-2) * -1);
   overflow-y: auto;
   overflow-x: hidden;
@@ -1771,16 +1801,13 @@ async function zhiXingZhuCe() {
   grid-template-rows: 1fr;
 }
 
-.biaodan-moshi-pane.shi-fu-yong.qiehuan-wanding,
-.biaodan-moshi-pane.shi-fu-yong.qiehuan-wanding > .denglu-biaodan,
-.biaodan-moshi-pane.shi-fu-yong.qiehuan-wanding > .zhuce-biaodan {
-  overflow: visible;
-}
-
 .denglu-biaodan,
 .zhuce-biaodan {
   min-height: 0;
   min-width: 0;
+  padding-top: calc(var(--biaoqian-qin-ru) + var(--jiange-2));
+  padding-left: var(--jiange-4);
+  padding-right: var(--jiange-4);
   overflow: hidden;
 }
 
@@ -2176,6 +2203,10 @@ async function zhiXingZhuCe() {
   --ka-cuo: #b3261e;
   --ka-cuo-mian: rgba(250, 81, 81, 0.1);
   --ka-cuo-bian: rgba(250, 81, 81, 0.45);
+  --ka-hong-1: #b2503f;
+  --ka-hong-2: #99362a;
+  --ka-hong-3: #7c2018;
+  --ka-hong-4: #571008;
 }
 
 :root[data-theme='light'] .biaodan-biaoti {

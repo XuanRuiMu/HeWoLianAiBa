@@ -31,7 +31,7 @@
                 <button
                   class="anniu anniu--wei"
                   type="button"
-                  @click="zhengZaiFangQiQueRen = true"
+                  @click="dianJiFangQi"
                 >
                   {{ huoQuFanYi('tiaoZhan', 'fangQiDuiJu') }}
                 </button>
@@ -54,6 +54,14 @@
                   {{ huoQuFanYi('tongYong', 'quXiao') }}
                 </button>
               </template>
+              <span v-if="xianShiFangQiTiShi" class="tishi-qipao tishi-qipao--you" role="tooltip">
+                {{
+                  huoQuFanYi('tiaoZhan', 'fangQiKouFenTiShi').replace(
+                    '{fenshu}',
+                    String(fangQiKouFen),
+                  )
+                }}
+              </span>
             </div>
           </div>
         </section>
@@ -122,20 +130,30 @@
             <h2 class="rukou-biaoti">{{ huoQuFanYi('tiaoZhan', 'kaiShiXinDuiJu') }}</h2>
           </div>
           <div class="rukou-cao">
-            <button
-              ref="kaiShiAnNiu"
-              class="anniu-kaiShi"
-              type="button"
-              :disabled="kaiShiQingQiuZhong || dangQianDuiJu !== null"
-              @click="daKaiXingBieXuanZe"
+            <div
+              class="kai-shi-wei"
+              :class="{ 'kai-shi-wei--jin': dangQianDuiJu !== null }"
+              :tabindex="dangQianDuiJu !== null ? 0 : undefined"
+              @mouseenter="xianShiKaiShiTiShi = dangQianDuiJu !== null"
+              @mouseleave="xianShiKaiShiTiShi = false"
+              @focusin="xianShiKaiShiTiShi = dangQianDuiJu !== null"
+              @focusout="xianShiKaiShiTiShi = false"
+              @click="dianJiKaiShi"
             >
-              {{ huoQuFanYi('tiaoZhan', 'kaiShiTiaoZhan') }}
-            </button>
+              <button
+                ref="kaiShiAnNiu"
+                class="anniu-kaiShi"
+                type="button"
+                :disabled="kaiShiQingQiuZhong || dangQianDuiJu !== null"
+              >
+                {{ huoQuFanYi('tiaoZhan', 'kaiShiTiaoZhan') }}
+              </button>
+              <span v-if="xianShiKaiShiTiShi" class="tishi-qipao tishi-qipao--zhong" role="tooltip">
+                {{ huoQuFanYi('tiaoZhan', 'yiYouDuiJuTishi') }}
+              </span>
+            </div>
           </div>
-          <p v-if="dangQianDuiJu" class="rukou-tishi">
-            {{ huoQuFanYi('tiaoZhan', 'yiYouDuiJuTishi') }}
-          </p>
-          <p v-else-if="cuoWuXinXi" class="rukou-tishi rukou-tishi--cuo" role="status">
+          <p v-if="cuoWuXinXi" class="rukou-tishi rukou-tishi--cuo" role="status">
             {{ cuoWuXinXi }}
           </p>
         </section>
@@ -376,10 +394,14 @@ const kaiShiCuoWu = ref<QianTaiCuoWu | null>(null)
 
 const xingBieXuanZeKeJian = ref(false)
 const xingBieBuZhou = ref(1)
-const buZhouGuoDuMing = ref('buzhou-qian-jin')
+const buZhouGuoDuMing = ref('buZhou-qianJin')
 const woDeXingBieZhi = ref<性别用户形态 | null>(null)
 const duiXiangXingBieZhi = ref<性别用户形态 | null>(null)
 const zhaXingGaiLv = ref(0.3)
+const fangQiKouFen = ref<number | null>(null)
+const peiZhiYiJiaZai = ref(false)
+const xianShiKaiShiTiShi = ref(false)
+const xianShiFangQiTiShi = ref(false)
 
 const zhengZaiFangQiQueRen = ref(false)
 const fangQiQingQiuZhong = ref(false)
@@ -512,6 +534,21 @@ async function jiaZaiShuJu() {
   await yunXing(jiaZaiShuJuNei, { chongShi: jiaZaiShuJu })
 }
 
+async function jiaZaiPeiZhi(): Promise<void> {
+  if (peiZhiYiJiaZai.value) return
+  peiZhiYiJiaZai.value = true
+  try {
+    const peiZhi = await huoQuTiaoZhanPeiZhi()
+    zhaXingGaiLv.value = peiZhi.zha_xing_gai_lv ?? 0.3
+    fangQiKouFen.value = peiZhi.fang_qi_kou_fen ?? null
+  } catch (错误: unknown) {
+    const zhengChangHua = 归一前台错误(错误)
+    kaiShiCuoWu.value = zhengChangHua.xianShi ? zhengChangHua : null
+  } finally {
+    peiZhiYiJiaZai.value = false
+  }
+}
+
 async function jiaZaiBangDan() {
   const benCiZuBie = bangDanZuBie.value
   const benCiDaiCi = ++bangDanDaiCi
@@ -567,6 +604,7 @@ onMounted(async () => {
     尺寸观察.observe(zuQieKuang.value)
   }
   await jiaZaiShuJu()
+  void jiaZaiPeiZhi()
   await jiaZaiBangDan()
 })
 
@@ -578,19 +616,19 @@ const keYiXiaYiBu = computed(() => {
 
 function xingBieShangYiBu() {
   if (xingBieBuZhou.value <= 1 || kaiShiQingQiuZhong.value) return
-  buZhouGuoDuMing.value = 'buzhou-hou-tui'
+  buZhouGuoDuMing.value = 'buZhou-houTui'
   xingBieBuZhou.value -= 1
 }
 
 function xingBieXiaYiBu() {
   if (xingBieBuZhou.value >= 3 || !keYiXiaYiBu.value) return
-  buZhouGuoDuMing.value = 'buzhou-qian-jin'
+  buZhouGuoDuMing.value = 'buZhou-qianJin'
   xingBieBuZhou.value += 1
 }
 
 function tiaoZhuanBuZhou(buZhou: number) {
   if (buZhou >= xingBieBuZhou.value || kaiShiQingQiuZhong.value) return
-  buZhouGuoDuMing.value = 'buzhou-hou-tui'
+  buZhouGuoDuMing.value = 'buZhou-houTui'
   xingBieBuZhou.value = buZhou
 }
 
@@ -629,17 +667,10 @@ async function daKaiXingBieXuanZe() {
   kaiShiCuoWu.value = null
   woDeXingBieZhi.value = null
   duiXiangXingBieZhi.value = null
-  buZhouGuoDuMing.value = 'buzhou-qian-jin'
+  buZhouGuoDuMing.value = 'buZhou-qianJin'
   xingBieBuZhou.value = 1
   xingBieXuanZeKeJian.value = true
-  try {
-    const peiZhi = await huoQuTiaoZhanPeiZhi()
-    zhaXingGaiLv.value = peiZhi.zha_xing_gai_lv ?? 0.3
-  } catch (错误: unknown) {
-    zhaXingGaiLv.value = 0.3
-    const zhengChangHua = 归一前台错误(错误)
-    kaiShiCuoWu.value = zhengChangHua.xianShi ? zhengChangHua : null
-  }
+  if (fangQiKouFen.value === null) void jiaZaiPeiZhi()
 }
 
 function guanBiXingBieXuanZe() {
@@ -663,6 +694,7 @@ async function queRenFangQi() {
   try {
     await fangQiDuiJu()
     zhengZaiFangQiQueRen.value = false
+    xianShiFangQiTiShi.value = false
     dangQianDuiJu.value = null
     await jiaZaiShuJu()
   } catch (错误: unknown) {
@@ -674,6 +706,23 @@ async function queRenFangQi() {
 
 function quXiaoFangQi() {
   zhengZaiFangQiQueRen.value = false
+  xianShiFangQiTiShi.value = false
+}
+
+async function dianJiFangQi(): Promise<void> {
+  if (fangQiQingQiuZhong.value) return
+  if (fangQiKouFen.value === null) await jiaZaiPeiZhi()
+  xianShiFangQiTiShi.value = fangQiKouFen.value !== null
+  zhengZaiFangQiQueRen.value = true
+}
+
+function dianJiKaiShi() {
+  if (dangQianDuiJu.value) {
+    xianShiKaiShiTiShi.value = true
+    return
+  }
+  if (kaiShiQingQiuZhong.value) return
+  void daKaiXingBieXuanZe()
 }
 
 function xunHuanJiaoDian(shiJian: KeyboardEvent) {
@@ -886,11 +935,79 @@ onBeforeUnmount(() => {
 }
 
 .duiju-cao {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--jiange-xiao);
   flex: none;
   flex-wrap: wrap;
+}
+
+.kai-shi-wei {
+  position: relative;
+  display: flex;
+  flex: 1 1 calc(var(--jiange-da) * 9);
+  min-width: 0;
+}
+
+.kai-shi-wei > button {
+  width: 100%;
+}
+
+.kai-shi-wei--jin {
+  cursor: not-allowed;
+}
+
+.kai-shi-wei--jin::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  cursor: not-allowed;
+  border-radius: var(--yuanjiao-xiao);
+}
+
+.tishi-qipao {
+  position: absolute;
+  z-index: 2;
+  bottom: calc(100% + var(--jiange-xiao));
+  max-width: min(78vw, calc(var(--jiange-da) * 14));
+  padding: var(--jiange-6) var(--jiange-10);
+  border: 1px solid var(--biankuang-yanse);
+  border-radius: var(--yuanjiao-xiao);
+  background: var(--xiala-beijing);
+  box-shadow: var(--xiala-yinying);
+  color: var(--tz-wen);
+  font-size: var(--tz-zi-xiao);
+  line-height: 1.4;
+  white-space: normal;
+  pointer-events: none;
+}
+
+.tishi-qipao::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  border: 6px solid transparent;
+  border-top-color: var(--xiala-beijing);
+}
+
+.tishi-qipao--zhong {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tishi-qipao--zhong::after {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tishi-qipao--you {
+  right: 0;
+}
+
+.tishi-qipao--you::after {
+  right: var(--jiange-da);
 }
 
 .anniu {
@@ -1489,27 +1606,6 @@ onBeforeUnmount(() => {
   min-height: var(--tz-re-ku);
 }
 
-.buzhou-qian-jin-enter-active,
-.buzhou-qian-jin-leave-active,
-.buzhou-hou-tui-enter-active,
-.buzhou-hou-tui-leave-active {
-  transition:
-    transform var(--tz-ka-dong) ease-out,
-    opacity var(--tz-ka-dong) ease-out;
-}
-
-.buzhou-qian-jin-enter-from,
-.buzhou-hou-tui-leave-to {
-  opacity: 0;
-  transform: translateX(28px);
-}
-
-.buzhou-qian-jin-leave-to,
-.buzhou-hou-tui-enter-from {
-  opacity: 0;
-  transform: translateX(-28px);
-}
-
 .tanchuang-caozuo {
   display: flex;
   justify-content: flex-end;
@@ -1584,10 +1680,6 @@ onBeforeUnmount(() => {
   .zu-zhishi,
   .tanchuang-guanbi,
   .jindu-dian,
-  .buzhou-qian-jin-enter-active,
-  .buzhou-qian-jin-leave-active,
-  .buzhou-hou-tui-enter-active,
-  .buzhou-hou-tui-leave-active,
   .zhaiyao-quanbu,
   .zhaiyao-chongshi,
   .zhaiyao-nei-rong,

@@ -27,14 +27,29 @@ export function panChuFaLei(触发: string): ChuFaLei {
   return '分享'
 }
 
-const QUAN_ZHONG: Record<ChuFaLei, Array<[YuTai, number]>> = {
-  纯应答: [['另起', 48], ['安排', 30], ['接内容', 10], ['极短', 8], ['说自己', 3], ['澄清', 1]],
-  是非问: [['极短', 70], ['接内容', 12], ['另起', 7], ['安排', 6], ['说自己', 4], ['澄清', 1]],
-  分享: [['接内容', 42], ['极短', 17], ['说自己', 14], ['另起', 11], ['安排', 11], ['澄清', 5]],
+// 对方在直接问你一件事（近况、状态、事实）。
+// 这种时候必须先回答，不能先确认「是不是在叫我」——
+// 真人被问「你最近在忙些啥」是直接答近况，不是反问一句。
+const ZAI_WEN_WO = /你(最近|这阵|这会儿|刚才|平时|眼下)?(在忙|在干嘛|在干什么|在做啥|忙啥|忙什么|最近咋|怎么样|干啥呢)|你(是|是不是|叫什么|多大|几岁|在哪|哪儿|做什么|干什么|上班|上学)/
+
+export function duiFangZaiWenNi(触发: string): boolean {
+  return ZAI_WEN_WO.test(触发 || '')
+}
+
+// 真人行为基线（语料实验室/实测记录 44 条探针的人工标注，以及 行为类别基线.md 的 2,431 条配对）：
+//   短反应 20% ／ 确认推进 16% ／ 给具体信息 16% ／ 追问一句 14%
+//   ／ 答自己 7% ／ 岔开 7% ／ 接梗 7% ／ 同频接话 5% ／ 反问 5% ／ 说不知道 2%
+// 本项目旧配置实测：接内容 42.3%（过高，正是「太像称职好助理」的量化根源）、
+// 说自己 14.2%（过低）、另起 10.8%（过低，深度实验里 AI 另起 0% vs 真人 20% 是唯一干净的显著差异）。
+// 下表按真人基线重配，并压低「澄清」——真人只占 1.1%，AI 高频追问多半落在这里。
+const QUAN_ZHONG_JI_REN: Record<ChuFaLei, Array<[YuTai, number]>> = {
+  纯应答: [['另起', 40], ['极短', 24], ['接内容', 14], ['说自己', 10], ['安排', 8], ['澄清', 2]],
+  是非问: [['极短', 52], ['接内容', 20], ['说自己', 12], ['另起', 10], ['安排', 4], ['澄清', 2]],
+  分享: [['接内容', 30], ['极短', 24], ['另起', 20], ['说自己', 18], ['安排', 5], ['澄清', 3]],
 }
 
 export function chouYuTai(触发: string, 随机: () => number = Math.random): YuTai {
-  const 表 = QUAN_ZHONG[panChuFaLei(触发)]
+  const 表 = QUAN_ZHONG_JI_REN[panChuFaLei(触发)]
   const 总 = 表.reduce((合计, [, 权]) => 合计 + 权, 0)
   let 余 = 随机() * 总
   for (const [态, 权] of 表) {
@@ -46,11 +61,11 @@ export function chouYuTai(触发: string, 随机: () => number = Math.random): Y
 
 const ZHI_LING: Record<YuTai, string> = {
   接内容: '这一轮就顺着对方这句话里那个具体的东西说。不用总结，不用给建议，也别再问回去。',
-  说自己: '这一轮说说你自己这边的情况或者感受。只说一件，别把几件事一起倒出来。不用回应对方说的内容。',
+  说自己: '这一轮说说你自己这边的情况或者感受。只说一件，别把几件事一起倒出来。不用回应对方说的内容。你这边在忙的事、你的日常就照上面给的那些说，别临场编出新的地点、时间、安排。',
   极短: '这一轮只给一个短反应：笑一下、一句吐槽都行，不超过六个字。不接对方的内容，不补充解释。',
-  另起: '这一轮别接对方这句话的内容。从「最近在忙」里挑一件事说，只说这一件。跟对方刚说的没关系也正常。如果这件事之前提过，就只说进展，不要原样重复。',
+  另起: '这一轮别接对方这句话的内容。从上面给你的在忙的事里挑一件说，只说这一件。跟对方刚说的没关系也正常。如果这件事之前提过，就只说进展，不要原样重复。你手上没有别的事可讲，就说一句短的把这轮收了，别硬找话题、也别编新的安排。',
   澄清: '这一轮对方话里有个地方你真没跟上——可能是打错字了、是个你不熟的行话，或者这句没说完。就用平常的话问一句，可以顺带猜一个可能，比如「奶菜是什么？奶茶还是菜？」。不要对「累」「手黑」这种常用说法装不懂，不要问「什么是X」「什么叫X」。绝不要质疑你自己刚刚说过的事：你上一句说你没吃饭、说你在加班、说你在刷手机，下一句就不能说「我什么时候说过」「你是不是发错人了」。这一轮要么是真没看懂对方那句话，要么就别用澄清。',
-  安排: '这一轮给一个具体的下一步：时间、地点，或者你要去干什么。如果你上一轮已经说过「马上到」「这就下楼」「等我一下」这类话，这一轮必须把它了结——要么说你已经到了、要么说清还要多久并给出确切的点，不要再重复一次同样的承诺。',
+  安排: '这一轮给一个具体的下一步：时间、地点，或者你要去干什么。如果你上一轮已经说过「马上到」「这就下楼」「等我一下」这类话，这一轮必须把它了结——要么说你已经到了、要么说清还要多久并给出确切的点，不要再重复一次同样的承诺。对方只是随口一问、没在约你的时候，就别自己抛出时间和地点。',
 }
 
 export function quYuTaiZhiLing(态: YuTai): string {
@@ -82,6 +97,51 @@ export function shengChengZaiMang(是学生: boolean, 随机: () => number = Mat
   return Array.from(出)
 }
 
+// 从角色人设里抽「这个人最近在忙什么」。
+// 通用池（shengChengZaiMang）里的事项与角色无关，一旦被说出口就等于凭空编造这段人生，
+// 实测出现过「九点南滨路」「明晚打两局台球」「想吃火锅」这类不在人设里的具体安排。
+// 人设里有的日常（爱好、作息、身份、专业）才是这个人真的在做的事。
+export function shengChengZaiMangZiRenShe(
+  jiaoSe: { xi_hao?: string[]; shi_jie_xin_xi?: Record<string, unknown>; shen_fen?: string; zhi_ye?: string },
+  随机: () => number = Math.random,
+): string[] {
+  const 世界 = (jiaoSe.shi_jie_xin_xi || {}) as Record<string, unknown>
+  const 取文 = (值: unknown): string => (typeof 值 === 'string' ? 值.trim() : '')
+  const 出: string[] = []
+
+  const 爱好 = (jiaoSe.xi_hao || []).map((x) => x.trim()).filter(Boolean)
+  for (const 项 of 爱好) 出.push(`在${项}`)
+
+  const 作息 = 取文(世界.zuo_xi_gui_lv)
+  if (作息) 出.push(作息)
+
+  const 日常 = 取文(世界.xian_shang_ai_hao)
+  if (日常) 出.push(`在${日常}`)
+
+  const 社交 = 取文(世界.she_jiao_quan)
+  if (社交) 出.push(社交)
+
+  const 朋友圈 = 取文(世界.peng_you_quan_xi_guan)
+  if (朋友圈) 出.push(朋友圈)
+
+  if (!出.length) {
+    const 身份 = 取文(jiaoSe.shen_fen)
+    const 专业 = 取文(jiaoSe.zhi_ye)
+    if (专业) 出.push(`忙${专业}的事`)
+    else if (身份) 出.push(`忙${身份}的事`)
+  }
+
+  if (!出.length) return []
+  const 洗 = [...new Set(出)]
+  const 结果: string[] = []
+  while (结果.length < 5 && 洗.length > 0) {
+    const 序 = Math.floor(随机() * 洗.length)
+    结果.push(洗[序])
+    洗.splice(序, 1)
+  }
+  return 结果
+}
+
 function 最长公共子串长(甲: string, 乙: string): number {
   if (!甲 || !乙) return 0
   let 最长 = 0
@@ -109,7 +169,10 @@ export function quZaiMangWeiShuo(全部: string[], 自己说过的: string[]): s
 }
 
 export function gouJianYuTaiKuai(态: YuTai, 在忙: string[]): string {
-  return `【你最近在忙】\n${在忙.join('；')}\n\n【这一轮你就这样回】\n${quYuTaiZhiLing(态)}`
+  const 在忙块 = 在忙.length > 0
+    ? `【你最近在忙】\n${在忙.join('；')}\n\n`
+    : ''
+  return `${在忙块}【这一轮你就这样回】\n${quYuTaiZhiLing(态)}`
 }
 export function zaoSuiJi(种子: string): () => number {
   let 值 = 2166136261

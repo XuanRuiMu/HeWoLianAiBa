@@ -18,7 +18,7 @@ import { useRoute, useRouter } from 'vue-router'
 import ZaiRuYe from '@/components/载入页.vue'
 import { fanYi, huoQuFanYi } from '@/config/翻译表'
 import { 使用聊天仓库 } from '@/stores/聊天'
-import { 使用用户设置仓库 } from '@/stores/用户设置'
+import { 预加载聊天页 } from '@/composables/use聊天预加载'
 
 const ZUI_DUAN_ZHAN_SHI_HAO_MIAO = 1000
 const TI_SHI_ZHOU_QI_HAO_MIAO = 3000
@@ -26,7 +26,7 @@ const TI_SHI_ZHOU_QI_HAO_MIAO = 3000
 const route = useRoute()
 const router = useRouter()
 const 聊天仓库 = 使用聊天仓库()
-const 设置仓库 = 使用用户设置仓库()
+const jiaoSeId = computed(() => String(route.params.jiaoSeId || ''))
 
 const jinDu = ref(8)
 const cuoWu = ref('')
@@ -35,11 +35,17 @@ const tiShiXuHao = ref(0)
 let lunHuanDingShiQi: ReturnType<typeof setInterval> | null = null
 let yiTiaoZhuan = false
 
+const dangQianJiaoSe = computed(() => {
+  const xinXi = 聊天仓库.jiaoSeXinXi
+  return xinXi && xinXi.id === jiaoSeId.value ? xinXi : null
+})
 const biaoTi = computed(
-  () => 聊天仓库.jiaoSeXinXi?.ming_zi || huoQuFanYi('zaiRuLiaoTian', 'zhengZaiZhaoHui'),
+  () => dangQianJiaoSe.value?.wei_xin_ming || huoQuFanYi('zaiRuLiaoTian', 'zhengZaiZhaoHui'),
 )
-const touXiang = computed(() => 聊天仓库.jiaoSeXinXi?.tou_xiang ?? null)
-const moRenZi = computed(() => (聊天仓库.jiaoSeXinXi?.xing_bie === 'nv' ? '👩' : '👨'))
+const touXiang = computed(() => dangQianJiaoSe.value?.tou_xiang ?? null)
+const moRenZi = computed(() =>
+  dangQianJiaoSe.value ? (dangQianJiaoSe.value.xing_bie === 'nv' ? '👩' : '👨') : '💬',
+)
 const dangQianTiShi = computed(() => {
   const lieBiao = fanYi.zaiRuLiaoTian.dengDaiYuLieBiao
   return lieBiao[tiShiXuHao.value % lieBiao.length] ?? ''
@@ -61,25 +67,17 @@ function fanHui() {
 }
 
 async function zhiXingYuZai() {
-  const jiaoSeId = String(route.params.jiaoSeId || '')
-  if (!jiaoSeId) {
+  const benCiJiaoSeId = jiaoSeId.value
+  if (!benCiJiaoSeId) {
     cuoWu.value = huoQuFanYi('zaiRuLiaoTian', 'jiaZaiShiBai')
     return
   }
   const kaiShiShiJian = Date.now()
   try {
-    await Promise.all([
-      (async () => {
-        await 聊天仓库.jiaZaiXiaoXi(jiaoSeId, (jieDuan) => {
-          tiShengJinDu(jieDuan === 'xiaoXi' ? 58 : 82)
-        })
-        if (聊天仓库.jiaZaiShiBai) throw new Error('首屏消息加载失败')
-      })(),
-      (async () => {
-        await 设置仓库.jiaZai().catch(() => undefined)
-        tiShengJinDu(94)
-      })(),
-    ])
+    const yuJiaZaiChengGong = await 预加载聊天页(benCiJiaoSeId, (baiFenShu) => {
+      tiShengJinDu(8 + Math.round(baiFenShu * 0.86))
+    })
+    if (!yuJiaZaiChengGong) throw new Error('聊天页预加载失败')
   } catch {
     if (yiTiaoZhuan) return
     tingZhiLunHuan()
@@ -94,8 +92,7 @@ async function zhiXingYuZai() {
   if (yiTiaoZhuan) return
   yiTiaoZhuan = true
   tiShengJinDu(100)
-  聊天仓库.biaoJiYuZai(jiaoSeId)
-  await router.replace(`/chat/${jiaoSeId}`)
+  await router.replace(`/chat/${benCiJiaoSeId}`)
 }
 
 onMounted(() => {

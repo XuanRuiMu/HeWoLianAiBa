@@ -8,6 +8,21 @@
            同时给草/花材质保底 uBendingFactor，确保弯曲可见。 */
         (function () {
             var MAX_BEND = 0.7;
+            function wanQuBuRanAn() {
+                var exp = window.__experience; if (!exp) return;
+                var sc = exp.scene || (exp.engine && exp.engine.scene);
+                if (!sc || !sc.traverse) return;
+                sc.traverse(function (o) {
+                    var m = o.material; if (!m) return;
+                    var list = Array.isArray(m) ? m : [m];
+                    for (var i = 0; i < list.length; i++) {
+                        var u = list[i].uniforms;
+                        if (u && u.uBendingColorIntensity && u.uBendingColorIntensity.value !== 0) {
+                            u.uBendingColorIntensity.value = 0;
+                        }
+                    }
+                });
+            }
             function boostBending() {
                 var exp = window.__experience; if (!exp) return;
                 var sc = exp.scene || (exp.engine && exp.engine.scene);
@@ -41,7 +56,7 @@
             function loop() {
                 var exp = window.__experience;
                 if (exp && exp.engine && exp.engine.canvas) {
-                    if ((frame++ % 30) === 0) boostBending();
+                    if ((frame++ % 30) === 0) { boostBending(); wanQuBuRanAn(); }
                     var c = window.__cursor;
                     if (c && (c.x !== lastX || c.y !== lastY)) {
                         lastX = c.x; lastY = c.y;

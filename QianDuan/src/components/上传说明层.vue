@@ -29,7 +29,7 @@
     <p class="shang-chuan-xian-du">{{ xianDuShuoMing }}</p>
 
     <template #jiaoBu>
-      <button type="button" class="shang-chuan-an-niu shang-chuan-an-niu--ci" data-shou-xuan @click="quXiao">
+      <button type="button" class="shang-chuan-an-niu shang-chuan-an-niu--ci" @click="quXiao">
         {{ zanBuWenAn }}
       </button>
       <button type="button" class="shang-chuan-an-niu shang-chuan-an-niu--zhu" @click="queRen">

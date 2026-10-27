@@ -10,6 +10,8 @@ import {
   qingXiRenSheWenBen,
   chongZhuZhaXingZiDuan,
   touYingWanJiaKeJianJiaoSe,
+  huanCunDaiQueRenJiaoSe,
+  duQuDaiQueRenJiaoSe,
   type ShengChengJiaoSeJieGuo,
   type XinMuZhongDeTaZiDing,
 } from '../services/角色生成'
@@ -159,6 +161,7 @@ luYou.post('/MBTI生成', 性别验证中间件, (qingQiu: RenZhengQingQiu, xian
       sui_ji_xing_ge: suiJiXingGe,
       xin_mu_zhong_de_ta: xinMuZhongDeTaJieXi.shu_ju,
     })
+    void huanCunDaiQueRenJiaoSe(yongHu.yongHuId, jiaoSe)
     return chengGongXiangYing(xiangYing, touYingWanJiaKeJianJiaoSe(jiaoSe))
   } catch (cuoWu) {
     chuLiJiaoSeCuoWu(xiangYing, cuoWu, CUO_WU_DAI_MA.ROLE_GENERATION_INITIALIZATION_FAILED)
@@ -180,9 +183,11 @@ luYou.post('/确认', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   }
 
   try {
+    const daiQueRenJiaoSe = await duQuDaiQueRenJiaoSe(yongHu.yongHuId)
+    const jiaoSeYuanShi = daiQueRenJiaoSe ?? xuanZhongJiaoSe
     const xiZhengHouJiaoSe = chongZhuZhaXingZiDuan(
       qingXiRenSheDuiXiang(
-        xuanZhongJiaoSe as unknown as Record<string, unknown>,
+        jiaoSeYuanShi as unknown as Record<string, unknown>,
       ) as unknown as ShengChengJiaoSeJieGuo,
     )
     const baoCunHou = await baoCunJiaoSe(yongHu.yongHuId, xiZhengHouJiaoSe)

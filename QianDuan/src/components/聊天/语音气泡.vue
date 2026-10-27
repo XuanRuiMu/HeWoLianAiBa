@@ -94,6 +94,7 @@
       </span>
       <input
         class="yuyin-jindu-tiao"
+        :class="{ 'yuyin-jindu-tiao--bofang': boFangZhong }"
         type="range"
         :min="0"
         :max="zongMiao"
@@ -277,9 +278,6 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .yuyin-pao {
-  --yuyin-yuandian-hui: color-mix(in srgb, currentColor 35%, #9e9e9e);
-  --yuyin-yuandian-lan: color-mix(in srgb, #1a73e8 82%, currentColor);
-  --yuyin-yuandian-bian-hua-shi-chang: 200ms;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -336,20 +334,7 @@ onBeforeUnmount(() => {
 }
 
 .laba-duan--1 {
-  fill: var(--yuyin-yuandian-hui);
-  transition:
-    opacity var(--yuyin-duan-yin-cang-shi-chang) var(--quxian-biao-zhun),
-    fill var(--yuyin-yuandian-bian-hua-shi-chang) var(--quxian-biao-zhun);
-}
-
-.yuyin-qipao.bofangzhong .laba-duan--1 {
-  fill: var(--yuyin-yuandian-lan);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .laba-duan--1 {
-    transition: none;
-  }
+  fill: currentColor;
 }
 
 .laba-zu--1-duan .laba-duan--2,
@@ -423,8 +408,14 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   appearance: none;
   -webkit-appearance: none;
-  background: currentColor;
+  background: var(--yuyin-jindu-yuandian-jingtai);
   opacity: 1;
+  transition: background-color var(--yuyin-jindu-yuandian-bian-hua-shi-chang)
+    var(--quxian-biao-zhun);
+}
+
+.yuyin-jindu-tiao--bofang::-webkit-slider-thumb {
+  background: var(--yuyin-jindu-yuandian-bofang);
 }
 
 .yuyin-jindu-tiao::-moz-range-track {
@@ -442,7 +433,13 @@ onBeforeUnmount(() => {
   margin: 0;
   border: none;
   border-radius: 50%;
-  background: currentColor;
+  background: var(--yuyin-jindu-yuandian-jingtai);
+  transition: background-color var(--yuyin-jindu-yuandian-bian-hua-shi-chang)
+    var(--quxian-biao-zhun);
+}
+
+.yuyin-jindu-tiao--bofang::-moz-range-thumb {
+  background: var(--yuyin-jindu-yuandian-bofang);
 }
 
 .yuyin-jindu-tiao:focus-visible {
@@ -530,5 +527,16 @@ onBeforeUnmount(() => {
   margin-top: var(--jiange-6);
   font-size: var(--ziti-xiao);
   color: var(--wenben-tishi);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .laba-duan {
+    transition: none;
+  }
+
+  .yuyin-jindu-tiao::-webkit-slider-thumb,
+  .yuyin-jindu-tiao::-moz-range-thumb {
+    transition: none;
+  }
 }
 </style>

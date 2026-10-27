@@ -237,6 +237,7 @@ import {
   guiYiWaiGuanChuCan,
   huoQuBeiJingMengCengZhi,
   huoQuBeiJingYuSheDingYi,
+  huoQuLaShenChiCunZhi,
   zhongPaiWaiGuanTiaoMu,
   type WaiGuanTiaoMu,
 } from '@/config/外观自定义'
@@ -367,7 +368,7 @@ function 背景项样式(模式: 'qian' | 'shen', 项: BeiJingXiangMu): Record<s
   if (项.leiXing === 'ziDingYi') {
     yangShi['--wai-guan-meng-ceng'] = huoQuBeiJingMengCengZhi(yanSe)
     yangShi.backgroundImage = 'url("' + 项.tuDiZhi.replace(/["\\\n\r]/g, '') + '")'
-    yangShi.backgroundSize = 'cover'
+    yangShi.backgroundSize = huoQuLaShenChiCunZhi(设置仓库.beiJingLaShenMoShi)
     yangShi.backgroundPosition = 'center'
     yangShi.backgroundRepeat = 'no-repeat'
   } else {

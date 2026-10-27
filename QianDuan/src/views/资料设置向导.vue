@@ -1,6 +1,6 @@
 <template>
   <div class="ziliao-shezhi">
-    <div class="ziliao-kapian" :data-xingbie="主色档">
+    <div class="ziliao-kapian" :data-xingbie="主色档" :data-duixiang-xingbie="对象色档">
       <div class="jindu-yuan-dian">
         <button
           v-for="buZhou in 步骤列表"
@@ -399,17 +399,23 @@ async function kaiShiLiaoTian() {
 }
 
 .ziliao-kapian {
-  --xingge-gao-guang-bian-ji: rgba(255, 255, 255, 0.18);
-  --xingge-gao-guang-bian-zhong: rgba(255, 255, 255, 0.4);
-  --xingge-liu-guang-yan: rgba(255, 255, 255, 0.95);
-  --xingge-liu-guang-di: rgba(255, 255, 255, 0.22);
-  --xingge-huxi-zhouqi: 2.6s;
+  --xingge-gao-guang-se: var(--xingge-gao-guang-nan);
+  --xingge-gao-guang-bian-ji: color-mix(in srgb, var(--xingge-gao-guang-se) 45%, transparent);
+  --xingge-gao-guang-bian-zhong: color-mix(in srgb, var(--xingge-gao-guang-se) 80%, transparent);
+  --xingge-liu-guang-yan: color-mix(in srgb, var(--xingge-gao-guang-se) 92%, #ffffff);
+  --xingge-liu-guang-di: color-mix(in srgb, var(--xingge-gao-guang-se) 38%, transparent);
+  --xingge-xintiao-zhouqi-xuanguo: 3s;
+  --xingge-xintiao-zhouqi-xuanzhong: 1.5s;
   --xingge-piao-zhouqi: 9s;
-  --xingge-huxi-an: 0.4;
+  --xingge-huxi-an: 0.35;
   --xingge-huxi-liang: 1;
   --xingge-huxi-an-xuan: 0.82;
   --xingge-huxi-guang-ruo: 0 0 6px var(--xingge-liu-guang-di);
   --xingge-huxi-guang-qiang: 0 0 18px var(--xingge-gao-guang-bian-zhong);
+}
+
+.ziliao-kapian[data-duixiang-xingbie='nv'] {
+  --xingge-gao-guang-se: var(--xingge-gao-guang-nv);
 }
 
 .ziliao-kapian {
@@ -593,7 +599,7 @@ async function kaiShiLiaoTian() {
   .mbti-kaPian:hover:not(.beiXuanZhong)::after {
     opacity: 0.55;
     animation:
-      xingge-huxi var(--xingge-huxi-zhouqi) ease-in-out infinite alternate,
+      xingge-xintiao var(--xingge-xintiao-zhouqi-xuanguo) ease-in-out infinite,
       xingge-liu-guang-piao var(--xingge-piao-zhouqi) ease-in-out infinite alternate;
   }
 }
@@ -606,21 +612,21 @@ async function kaiShiLiaoTian() {
 .mbti-kaPian:focus-visible::after {
   opacity: 0.55;
   animation:
-    xingge-huxi var(--xingge-huxi-zhouqi) ease-in-out infinite alternate,
+    xingge-xintiao var(--xingge-xintiao-zhouqi-xuanguo) ease-in-out infinite,
     xingge-liu-guang-piao var(--xingge-piao-zhouqi) ease-in-out infinite alternate;
 }
 
 .mbti-kaPian.beiXuanZhong {
   border: 1px solid var(--xingge-gao-guang-bian-zhong);
   box-shadow: 0 0 10px var(--xingge-liu-guang-di);
-  animation: xingge-huxi-guang-yun var(--xingge-huxi-zhouqi) ease-in-out infinite alternate;
+  animation: xingge-guang-xintiao var(--xingge-xintiao-zhouqi-xuanzhong) ease-in-out infinite;
 }
 
 .mbti-kaPian.beiXuanZhong::after {
   --xingge-huxi-an: var(--xingge-huxi-an-xuan);
   opacity: 1;
   animation:
-    xingge-huxi var(--xingge-huxi-zhouqi) ease-in-out infinite alternate,
+    xingge-xintiao var(--xingge-xintiao-zhouqi-xuanzhong) ease-in-out infinite,
     xingge-liu-guang-piao var(--xingge-piao-zhouqi) ease-in-out infinite alternate;
 }
 
@@ -865,10 +871,6 @@ async function kaiShiLiaoTian() {
 }
 
 :root[data-theme='light'] .ziliao-kapian {
-  --xingge-gao-guang-bian-ji: rgba(120, 90, 140, 0.2);
-  --xingge-gao-guang-bian-zhong: rgba(90, 60, 110, 0.42);
-  --xingge-liu-guang-yan: rgba(90, 60, 110, 0.88);
-  --xingge-liu-guang-di: rgba(90, 60, 110, 0.24);
   --ziliao-miaoshu-wenben: rgba(55, 42, 63, 0.86);
   --ziliao-tishi-wenben: rgba(55, 42, 63, 0.78);
   --ziliao-huaxian-wenben: rgba(55, 42, 63, 0.78);
@@ -893,55 +895,6 @@ async function kaiShiLiaoTian() {
 
 :root[data-theme='light'] .buZuo3-gundong::-webkit-scrollbar-thumb {
   background: rgba(120, 90, 140, 0.35);
-}
-
-.buZhou-qianJin-enter-active,
-.buZhou-qianJin-leave-active,
-.buZhou-houTui-enter-active,
-.buZhou-houTui-leave-active {
-  transition:
-    transform 0.35s var(--quxian-biao-zhun),
-    opacity 0.35s var(--quxian-biao-zhun);
-}
-
-.buZhou-qianJin-enter-from {
-  opacity: 0;
-  transform: translateX(100%);
-}
-
-.buZhou-qianJin-enter-to {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.buZhou-qianJin-leave-from {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.buZhou-qianJin-leave-to {
-  opacity: 0;
-  transform: translateX(-100%);
-}
-
-.buZhou-houTui-enter-from {
-  opacity: 0;
-  transform: translateX(-100%);
-}
-
-.buZhou-houTui-enter-to {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.buZhou-houTui-leave-from {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.buZhou-houTui-leave-to {
-  opacity: 0;
-  transform: translateX(100%);
 }
 
 @media (max-height: 560px) {
@@ -1015,11 +968,13 @@ async function kaiShiLiaoTian() {
   }
 }
 
-@keyframes xingge-huxi {
-  from {
+@keyframes xingge-xintiao {
+  0%,
+  100% {
     opacity: var(--xingge-huxi-an);
   }
-  to {
+  33.333%,
+  66.667% {
     opacity: var(--xingge-huxi-liang);
   }
 }
@@ -1043,20 +998,18 @@ async function kaiShiLiaoTian() {
   }
 }
 
-@keyframes xingge-huxi-guang-yun {
-  from {
+@keyframes xingge-guang-xintiao {
+  0%,
+  100% {
     box-shadow: var(--xingge-huxi-guang-ruo);
   }
-  to {
+  33.333%,
+  66.667% {
     box-shadow: var(--xingge-huxi-guang-qiang);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .buZhou-qianJin-enter-active,
-  .buZhou-qianJin-leave-active,
-  .buZhou-houTui-enter-active,
-  .buZhou-houTui-leave-active,
   .mbti-kaPian,
   .anniu-zhuYao,
   .anniu-fuZhu,

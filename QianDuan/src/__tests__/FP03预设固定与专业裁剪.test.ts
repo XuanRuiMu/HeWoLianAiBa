@@ -204,13 +204,13 @@ describe('FP03 Cropper.js 专业裁剪封装', () => {
     expect(daoChuChiCun.at(-1)).toEqual({ kuan: 1024, gao: 512 })
   })
 
-  it('组件层挂载cropper自定义元素并绑定比例、键盘与触摸', () => {
+  it('组件层挂载cropper自定义元素并绑定比例，选区不再自带键盘抢占', () => {
     expect(裁剪源码).toContain("import 'cropperjs'")
     expect(裁剪源码).toContain('<cropper-canvas')
     expect(裁剪源码).toContain('<cropper-image')
     expect(裁剪源码).toContain('<cropper-selection')
     expect(裁剪源码).toContain(':aspect-ratio="kuanGaoBi"')
-    expect(裁剪源码).toContain('keyboard')
+    expect(裁剪源码).not.toMatch(/<cropper-selection[^>]*\bkeyboard\b/)
     expect(裁剪源码).toContain('<cropper-grid')
     expect(裁剪源码).not.toContain('kaiShiTuo')
     expect(裁剪源码).not.toContain('chuLiGunLun')

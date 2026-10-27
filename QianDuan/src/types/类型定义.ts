@@ -206,6 +206,7 @@ export interface ShengChengJiaoSeJieGuo {
   hua_shu?: string[]
   bao_lu_fang_shi?: string
   shi_po_xian_suo?: string[]
+  yao_kai_kou?: boolean
 }
 
 export interface HaoGanDu {

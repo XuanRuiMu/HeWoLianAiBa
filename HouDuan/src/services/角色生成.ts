@@ -1,4 +1,5 @@
 import { 数据库 } from '../数据库'
+import { redis } from '../redis'
 import { huoQuFanYi, huoQuFanYiMiaoShu } from '../config/translations'
 import { HAO_GAN_DU_PEI_ZHI } from '../config/好感度配置'
 import { fenJieSiWei, huoQuJieDuanXinXi } from './好感度'
@@ -104,6 +105,14 @@ export const ZHA_XING_YIN_CANG_ZI_DUAN: readonly (keyof ShengChengJiaoSeJieGuo)[
   'bao_lu_fang_shi',
   'shi_po_xian_suo',
 ]
+export const JIAO_SE_YIN_SI_ZI_DUAN: readonly (keyof ShengChengJiaoSeJieGuo)[] = [
+  'ming_zi',
+  'zhen_shi_ming',
+  'bei_jing_gu_shi',
+  'shi_jie_xin_xi',
+  'xi_tong_ti_shi',
+  'ba_da_mo_kuai',
+]
 
 const REN_SHE_WEN_BEN_XING_ZI_DUAN: ReadonlySet<string> = new Set([
   'ming_zi', 'wei_xin_ming', 'zhen_shi_ming', 'shen_fen', 'wai_mao', 'xing_ge',
@@ -147,11 +156,67 @@ export function chongZhuZhaXingZiDuan(
   return jiaoSe
 }
 
-export function touYingWanJiaKeJianJiaoSe<T extends object>(jiaoSe: T): T {
+const ZHA_XING_YU_HAO_GAN_DU_YIN_CANG_ZI_DUAN: readonly (keyof ShengChengJiaoSeJieGuo)[] = [
+  ...ZHA_XING_YIN_CANG_ZI_DUAN,
+  'hao_gan_du_zong_fen',
+]
+
+const WAN_JIA_TOU_YING_YIN_CANG_ZI_DUAN: readonly (keyof ShengChengJiaoSeJieGuo)[] = [
+  ...ZHA_XING_YU_HAO_GAN_DU_YIN_CANG_ZI_DUAN,
+  ...JIAO_SE_YIN_SI_ZI_DUAN,
+]
+
+function anYinCangZiDuanTouYing<T extends object>(jiaoSe: T, yinCang: readonly (keyof ShengChengJiaoSeJieGuo)[]): T {
   const jieGuo: Record<string, unknown> = { ...(jiaoSe as Record<string, unknown>) }
-  for (const jian of ZHA_XING_YIN_CANG_ZI_DUAN) delete jieGuo[jian]
-  delete jieGuo.hao_gan_du_zong_fen
+  for (const jian of yinCang) delete jieGuo[jian as string]
   return jieGuo as T
+}
+
+export function touYingWanJiaKeJianJiaoSe<T extends object>(jiaoSe: T): T {
+  return anYinCangZiDuanTouYing(jiaoSe, WAN_JIA_TOU_YING_YIN_CANG_ZI_DUAN)
+}
+
+export function touYingGuanLiJiaoSe<T extends object>(jiaoSe: T): T {
+  return anYinCangZiDuanTouYing(jiaoSe, ZHA_XING_YU_HAO_GAN_DU_YIN_CANG_ZI_DUAN)
+}
+
+const DAI_QU_REN_JIAO_SE_JIAN_QIAN_ZHUI = 'dai_que_ren_jiao_se:'
+const DAI_QU_REN_JIAO_SE_TTL_MIAO = 1800
+
+export function daiQueRenJiaoSeJian(yong_hu_id: string): string {
+  return `${DAI_QU_REN_JIAO_SE_JIAN_QIAN_ZHUI}${yong_hu_id}`
+}
+
+export async function huanCunDaiQueRenJiaoSe(
+  yong_hu_id: string,
+  jiaoSe: ShengChengJiaoSeJieGuo,
+): Promise<void> {
+  try {
+    await redis.set(daiQueRenJiaoSeJian(yong_hu_id), JSON.stringify(jiaoSe), 'EX', DAI_QU_REN_JIAO_SE_TTL_MIAO)
+  } catch {
+    return
+  }
+}
+
+export async function duQuDaiQueRenJiaoSe(yong_hu_id: string): Promise<ShengChengJiaoSeJieGuo | null> {
+  try {
+    const zhi = await redis.get(daiQueRenJiaoSeJian(yong_hu_id))
+    if (!zhi) return null
+    const jieXi = JSON.parse(zhi) as { ming_zi?: unknown; zhen_shi_ming?: unknown }
+    if (typeof jieXi !== 'object' || jieXi === null) return null
+    if (typeof jieXi.ming_zi !== 'string' && typeof jieXi.zhen_shi_ming !== 'string') return null
+    return jieXi as ShengChengJiaoSeJieGuo
+  } catch {
+    return null
+  }
+}
+
+export async function qingChuDaiQueRenJiaoSe(yong_hu_id: string): Promise<void> {
+  try {
+    await redis.del(daiQueRenJiaoSeJian(yong_hu_id))
+  } catch {
+    return
+  }
 }
 
 export interface XinMuZhongDeTaZiDing {
@@ -312,6 +377,7 @@ export interface ShengChengJiaoSeJieGuo {
   }
   hao_gan_du_zong_fen: number
   voice_id?: string
+  yao_kai_kou?: boolean
 }
 
 function suiJiShu(min: number, max: number): number {
@@ -835,6 +901,7 @@ export async function baoCunJiaoSe(
   }
   shiWuKeHuDuan?.release()
 
+  let yiBaoCunKaiChang = false
   try {
     const kcbCanShu: Parameters<typeof shengChengKaiChangBai>[0] = {
       mbti_lei_xing: jiaoSe.mbti_lei_xing,
@@ -869,6 +936,7 @@ export async function baoCunJiaoSe(
             jiao_se_id: jiaoSeId,
             nei_rong: neiRong.trim(),
           })
+          yiBaoCunKaiChang = true
         }
       }
     }
@@ -877,6 +945,7 @@ export async function baoCunJiaoSe(
     // shengChengKaiChangBai 内部已降级到 jiangJi，此处兜底防持久化异常
   }
 
+  jiaoSe.yao_kai_kou = yiBaoCunKaiChang
   return jiaoSe
 }
 
@@ -893,7 +962,7 @@ export async function anIdChaJiaoSeXiangQing(
       : JSON.parse(String(shuJuHang.世界信息))
     : {}
 
-  return touYingWanJiaKeJianJiaoSe({
+  return {
     id: String(shuJuHang.ID),
     ming_zi: String(shuJuHang.名字),
     xing_bie: 读回性别(shuJuHang.性别, '角色生成', jiaoSeId),
@@ -936,5 +1005,5 @@ export async function anIdChaJiaoSeXiangQing(
       xi_tong_ti_shi: '',
     },
     hao_gan_du_zong_fen: 0,
-  })
+  }
 }

@@ -169,8 +169,8 @@ describe('字号只走令牌，字重只有两档', () => {
     }
   })
 
-  it('标题落在 20 档并登记为局部令牌', () => {
-    expect(取值(深档, '--zihao-biaoti')).toBe('20px')
+  it('标题落在 24 档并登记为局部令牌', () => {
+    expect(取值(深档, '--zihao-biaoti')).toBe('24px')
     expect(取值(取块(登录块, '.biaodan-biaoti {'), 'font-size')).toBe('var(--zihao-biaoti)')
   })
 })

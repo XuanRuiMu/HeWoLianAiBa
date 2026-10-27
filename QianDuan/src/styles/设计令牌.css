@@ -44,7 +44,7 @@
   --moshi-kapian-dong-xiao: 240ms;
   --zhuye-wen-zi-yan-shi: 200ms;
   --shuru-gao-liang-shi-chang: 840ms;
-  --shuru-gao-liang-tui-chu-shi-chang: 200ms;
+  --shuru-gao-liang-tui-chu-shi-chang: 800ms;
   --gou-xuan-chi-cun: 18px;
   --daohanglan-tubiao-chi: 18px;
   --caidan-tubiao-chi: 14px;
@@ -154,13 +154,23 @@
   
   --juanzhou-tong-gao-du: 28px;
   --ceng-jingge: 4200;
-  --qipao-yuanjiao: 6px;
+  --qipao-yuanjiao-ju-li: 6px;
+  --qipao-yuanjiao-dang-xiao: 2px;
+  --qipao-yuanjiao-dang-da: 14px;
+  --qipao-yuanjiao: var(--qipao-yuanjiao-ju-li);
   --qipao-zihao: 16px;
   --qipao-zihao-zhai: 15px;
   --qipao-hangao: 1.45;
-  --qipao-weiba-kuan: 6px;
-  --qipao-weiba-ban: 5px;
-  --qipao-weiba-shang: 13px;
+  --qipao-weiba-kuan-ju-li: 6px;
+  --qipao-weiba-ban-ju-li: 5px;
+  --qipao-weiba-kuan-da: 10px;
+  --qipao-weiba-ban-da: 8px;
+  --qipao-weiba-kuan-xiao: 4px;
+  --qipao-weiba-ban-xiao: 3px;
+  --qipao-weiba-kuan: var(--qipao-weiba-kuan-ju-li);
+  --qipao-weiba-ban: var(--qipao-weiba-ban-ju-li);
+  --qipao-weiba-ju-li: 13px;
+  --qipao-weiba-shang: var(--qipao-weiba-ju-li);
   --qipao-weiba-pian: 5px;
   --yuyin-laba-kuan: 18px;
   --yuyin-laba-gao: 20px;
@@ -168,6 +178,9 @@
   --yuyin-jindu-gao: 1px;
   --yuyin-jindu-xian-gao: 2px;
   --yuyin-huakuai-chicun: 8px;
+  --yuyin-jindu-yuandian-bofang: #1a73e8;
+  --yuyin-jindu-yuandian-jingtai: #9e9e9e;
+  --yuyin-jindu-yuandian-bian-hua-shi-chang: 160ms;
   --yuyin-jindu-zui-xiao-kuan: 60px;
   --yuyin-kongzhi-chicun: 28px;
   --yuyin-kongzhi-re-ku: 36px;
@@ -276,6 +289,8 @@
   --shuru-wenben-zidong-tianchong: var(--wenben-zhuse);
   --shuru-gao-liang-liang-nan: #8fc4ff;
   --shuru-gao-liang-liang-nv: #ffb8d8;
+  --xingge-gao-guang-nan: #1b46d8;
+  --xingge-gao-guang-nv: #c2185b;
 
   --yemian-di-beijing: rgba(245, 245, 245, 0.7);
   --xingbie-nan-1: #3282F6;
@@ -495,6 +510,8 @@
   --shuru-wenben-zidong-tianchong: var(--wenben-zhuse);
   --shuru-gao-liang-liang-nan: #bfe0ff;
   --shuru-gao-liang-liang-nv: #ffd6e8;
+  --xingge-gao-guang-nan: #a6d4ff;
+  --xingge-gao-guang-nv: #ffb3d9;
 
   --yemian-di-beijing: rgba(41, 41, 41, 0.6);
   

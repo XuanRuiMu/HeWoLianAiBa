@@ -39,6 +39,7 @@ withDefaults(
   line-height: var(--qipao-hangao);
   text-align: left;
   word-break: break-word;
+  box-shadow: var(--qipao-miaoBian-yangShi, none);
 }
 
 .qipao-neirong--benren {
@@ -58,13 +59,14 @@ withDefaults(
 
 .qipao-neirong--benren::after {
   right: calc(var(--qipao-weiba-pian) * -1);
-  border-left: var(--qipao-weiba-kuan) solid var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing));
+  border-left: var(--qipao-weiba-kuan) solid
+    var(--qipao-ziJi-weiBa, var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing)));
 }
 
 .qipao-neirong--jiaose::after {
   left: calc(var(--qipao-weiba-pian) * -1);
   border-right: var(--qipao-weiba-kuan) solid
-    var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing));
+    var(--qipao-duiFang-weiBa, var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing)));
 }
 
 @media (max-width: 480px) {

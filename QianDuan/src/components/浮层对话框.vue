@@ -80,9 +80,7 @@ function jinRu(): void {
   xianQianYiChu = document.body.style.overflow
   document.body.style.overflow = 'hidden'
   void nextTick(() => {
-    const shouXuan = kuang.value?.querySelector<HTMLElement>('[data-shou-xuan]')
-    const lieBiao = quKeJuJiao()
-    ;(shouXuan || lieBiao[0] || kuang.value)?.focus()
+    kuang.value?.focus({ preventScroll: true })
   })
 }
 
@@ -109,6 +107,11 @@ function chuLiJianPan(shiJian: KeyboardEvent): void {
   }
   const shou = lieBiao[0]
   const wei = lieBiao[lieBiao.length - 1]
+  if (!(document.activeElement instanceof HTMLElement) || !kuang.value?.contains(document.activeElement)) {
+    shiJian.preventDefault()
+    shou.focus()
+    return
+  }
   if (shiJian.shiftKey && document.activeElement === shou) {
     shiJian.preventDefault()
     wei.focus()
