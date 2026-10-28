@@ -440,8 +440,6 @@ private 计算本轮回复延迟(): number {
 
     try {
       if (处理ID === this.当前处理ID) this.发布AI状态('zheng_zai_shu_ru')
-      this.io.to(this.用户ID).emit('对方正在输入', this.角色ID)
-      jiLuSocketShiJian('对方正在输入', this.用户ID, { jiao_se_id: this.角色ID })
       this.io.to(管理监控房间名(this.用户ID)).emit('管理员_构建过程', {
         阶段: '思考启动',
         说明: 'AI 已收到新消息，开始分析上下文与最新用户消息',
@@ -552,6 +550,7 @@ private 计算本轮回复延迟(): number {
   }
 
   private async 执行追加消息(): Promise<void> {
+    const 本轮追加处理ID = this.当前处理ID
     if (this.上条角色消息后用户来过) return
     const chuShi = this.上条角色消息时刻
     if (!chuShi) return
@@ -582,7 +581,6 @@ private 计算本轮回复延迟(): number {
 
       const 控制器 = new AbortController()
       this.取消控制器 = 控制器
-      this.io.to(this.用户ID).emit('对方正在输入', this.角色ID)
       await deng(this.计算间隔())
 
       const 结果 = await yunXingAIYinQing(
@@ -617,9 +615,11 @@ private 计算本轮回复延迟(): number {
     } catch (cuoWu) {
       debug日志.warn('AI追加消息', '失败已静默', { xiang_qing: { cuo_wu: String(cuoWu) } })
     } finally {
-      this.取消控制器 = null
-      this.处理中 = false
-      this.发布AI状态('kong_xian')
+      if (本轮追加处理ID === this.当前处理ID) {
+        this.取消控制器 = null
+        this.处理中 = false
+        this.发布AI状态('kong_xian')
+      }
     }
   }
 

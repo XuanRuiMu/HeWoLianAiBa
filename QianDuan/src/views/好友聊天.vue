@@ -48,7 +48,7 @@
         :wai-ke-lei-ming="qiPaoWaiKeLeiMing(xiaoXi)"
         :fa-song-zhong="shiFaSongZhong(xiaoXi)"
         :fa-song-shi-bai="shiFaSongShiBai(xiaoXi)"
-        :fa-song-ti-shi="huoQuFanYi('liaoTian', 'chongXinFaSong')"
+        :fa-song-ti-shi="huoQuFaSongZhuangTaiTiShi(xiaoXi)"
         @chong-xin-fa-song="chongXinFaSong(xiaoXi.id)"
         @contextmenu.prevent="chuLiYouJianCaiDan(xiaoXi, $event)"
         @touchstart="chuLiChuMoKaiShi(xiaoXi, $event)"
@@ -340,6 +340,7 @@ import {
   YIN_YONG_DING_WEI_PEI_ZHI,
   duQuHeChengYinLiang,
   huoQuMeiTiYinYongZhanWei,
+  huoQuFaSongZhuangTaiWenAn,
 } from '@/config/消息配置'
 import { CAO_GAO_JIAN, useCaoGao } from '@/composables/use草稿'
 import RequestError from '@/components/请求错误.vue'
@@ -393,9 +394,10 @@ const LE_GUAN_QIAN_ZHUI = 'le-guan-'
 const faSongZhuangTai = ref(new Map<string, 'fa_song_zhong' | 'shi_bai'>())
 const daiChongShiFa = new Map<string, () => Promise<void>>()
 const weiDuXinShu = ref(0)
-const qiPaoYangShi = computed(() =>
-  huoQuQiPaoCSSBianLiang(设置仓库.qiPaoZiJi, guiYiHuaQiPao(haoYouQiPao.value, 设置仓库.qiPaoAI)),
-)
+const qiPaoYangShi = computed(() => ({
+  ...设置仓库.qiPaoCSSBianLiang,
+  ...huoQuQiPaoCSSBianLiang(设置仓库.qiPaoZiJi, guiYiHuaQiPao(haoYouQiPao.value, 设置仓库.qiPaoAI)),
+}))
 
 function xianShiTouXiang(xiaoXi: HaoYouXiaoXi): string | null {
   const diZhi = xiaoXi.fa_song_zhe_id === woDeId ? 用户仓库.dangQianYongHu?.tou_xiang : haoYouTouXiang.value
@@ -463,7 +465,8 @@ async function chongXinFaSong(leGuanId: string): Promise<void> {
   await chongShi()
 }
 
-async function shuaXin(shouCi = false): Promise<void> {
+async function shuaXin(shouCi = false): Promise<boolean> {
+  let chengGong = false
   await yunXing(
     async () => {
       feiHaoYou.value = false
@@ -488,6 +491,7 @@ async function shuaXin(shouCi = false): Promise<void> {
       } catch {
         /* 已读回执失败不打断消息展示 */
       }
+      chengGong = true
     },
     {
       chongShi: () => shuaXin(),
@@ -496,6 +500,7 @@ async function shuaXin(shouCi = false): Promise<void> {
       },
     },
   )
+  return chengGong
 }
 
 function fanHuiLieBiao() {
@@ -558,15 +563,27 @@ async function zhiXingFaSong(
   zhanShiLeGuanQiPao(leGuanXiaoXi)
   try {
     await qingQiu()
+    const shuaXinChengGong = await shuaXin()
+    if (!shuaXinChengGong) {
+      biaoJiFaSongShiBai(leGuanId)
+      return false
+    }
     qingChuFaSongZhuangTai(leGuanId)
     daiChongShiFa.delete(leGuanId)
-    await shuaXin()
     return true
   } catch (cuoWu: unknown) {
     biaoJiFaSongShiBai(leGuanId)
     faSongTiShi.value = duQuTiShi(cuoWu)
     return false
   }
+}
+
+function huoQuFaSongZhuangTaiTiShi(xiaoXi: HaoYouXiaoXi): string {
+  return huoQuFaSongZhuangTaiWenAn({
+    leiXing: xiaoXi.lei_xing,
+    faSongZhong: shiFaSongZhong(xiaoXi),
+    faSongShiBai: shiFaSongShiBai(xiaoXi),
+  })
 }
 
 async function faSongYiDuanWenBen(wenBen: string, miDengJian: string): Promise<boolean> {
@@ -674,7 +691,6 @@ async function faSongDaiFaTuWen(): Promise<void> {
     nei_rong_kuai: chuCanKuai,
     bei_yong_xiao_xi_id: yinYongId,
   })
-  zhanShiLeGuanQiPao(leGuanXiaoXi)
   qingKongDaiFaKuai()
   shuRuNeiRong.value = ''
   qingChuCaoGao()
@@ -705,7 +721,7 @@ const xiangCeInputRef = ref<HTMLInputElement | null>(null)
 const wenJianInputRef = ref<HTMLInputElement | null>(null)
 const yuLanURLJi = new Set<string>()
 const meiTiChongLaiYiFa = new Set<string>()
-let meiTiShiXiaoZaiTu: Promise<void> | null = null
+let meiTiShiXiaoZaiTu: Promise<boolean> | null = null
 
 const {
   xianShi: shouQuanDanChuangXianShi,

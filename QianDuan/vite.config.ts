@@ -131,6 +131,7 @@ export default defineConfig({
     environmentOptions: {
       jsdom: { url: 'http://localhost:9/' },
     },
+    css: true,
     globals: true,
     setupFiles: ['./src/__tests__/setup.ts'],
     pool: 'threads',

@@ -156,7 +156,7 @@ const emit = defineEmits<{
 
 .qipao-waike.qipao-fasong-zhong {
   filter: grayscale(1);
-  opacity: 0.68;
+  opacity: 0.8;
 }
 
 .chehui-tishi {

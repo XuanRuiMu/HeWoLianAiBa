@@ -445,7 +445,7 @@
 <script setup lang="ts">
 import { ref, computed, inject, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import type { Ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { 使用用户仓库 } from '@/stores/用户'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
 import { faSongMa, jianChaShouJiHao, YAN_ZHENG_MA_YONG_TU, type 人机验证答案 } from '@/api/认证'
@@ -469,7 +469,6 @@ const emit = defineEmits<{
 const 用户仓库 = 使用用户仓库()
 const bd = 使用认证表单仓库()
 const router = useRouter()
-const route = useRoute()
 
 type MoShiLeiXing = 'dengLu' | 'zhuCe'
 const fuMoShi = inject<Ref<MoShiLeiXing>>('denglu-moshi', ref(bd.moShi))
@@ -925,40 +924,6 @@ watch(zhuCeYongHuMing, (val) => (bd.zhuCeYongHuMing = val))
 watch(zhuCeMiMa, (val) => (bd.zhuCeMiMa = val))
 watch(zhuCeChuShengRiQi, (val) => (bd.zhuCeChuShengRiQi = val))
 
-const ZHU_CE_DEN_LU_LIN_SHI = 'zhuCeDengLuLinShi'
-
-function duQuBingHuiTianDengLuXinXi(): void {
-  let 原始: string | null
-  try {
-    原始 = localStorage.getItem(ZHU_CE_DEN_LU_LIN_SHI)
-  } catch {
-    return
-  }
-  if (!原始) return
-  try {
-    const 数据 = JSON.parse(原始) as { shouJiHao?: unknown; miMa?: unknown }
-    if (typeof 数据?.shouJiHao === 'string' && typeof 数据?.miMa === 'string') {
-      dengLuShouJiHao.value = 数据.shouJiHao
-      dengLuMiMa.value = 数据.miMa
-    }
-  } catch {
-    // 数据损坏：视为无临时凭据
-  } finally {
-    try {
-      localStorage.removeItem(ZHU_CE_DEN_LU_LIN_SHI)
-    } catch {
-      // 隐私模式下忽略
-    }
-  }
-}
-
-watch(
-  () => route.name,
-  (xinLuYou) => {
-    if (xinLuYou === 'dengLu') duQuBingHuiTianDengLuXinXi()
-  },
-)
-
 function biaoJiLiChangBiaoDan(yuanSu: Element) {
   yuanSu.setAttribute('aria-hidden', 'true')
   yuanSu.setAttribute('inert', '')
@@ -992,7 +957,6 @@ function qieHuanMoShi(xinMoShi: MoShiLeiXing) {
 
 onMounted(() => {
   tongBuSuoYouHuiTian()
-  duQuBingHuiTianDengLuXinXi()
   bd.jiaZaiJiZhuSheZhi()
   jiZhuZhangHao.value = bd.jiZhuZhangHao
   jiZhuMiMa.value = bd.jiZhuMiMa
@@ -1491,17 +1455,11 @@ async function zhiXingZhuCe() {
     )
     if (!jieMianCaoZuoYouXiao(daiCi)) return
     bd.qingKongDengLuZhuCe()
-    try {
-      localStorage.setItem(ZHU_CE_DEN_LU_LIN_SHI, JSON.stringify({ shouJiHao, miMa }))
-    } catch {
-      // 隐私模式下退化为仅跳转
-    }
+    dengLuShouJiHao.value = shouJiHao
     zhuCeZhong.value = false
     await nextTick()
     await router.push('/login')
     moShi.value = 'dengLu'
-    await nextTick()
-    duQuBingHuiTianDengLuXinXi()
   } catch (cuoWu) {
     if (!jieMianCaoZuoYouXiao(daiCi)) return
     jieShouQianTai(cuoWu, zhiXingZhuCe)

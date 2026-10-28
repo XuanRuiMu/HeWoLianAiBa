@@ -1,9 +1,10 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import 长方框输入框 from '@/components/表单/长方框输入框.vue'
+import '@/styles/设计令牌.css'
 import { 使用性别框体配色, 使用默认性别卡配色 } from '@/composables/use性别框体配色'
 import { 解析性别框体色档 } from '@/utils/性别'
 import { 按档解析全部, 声明块清单 } from './主题令牌真源'
@@ -129,18 +130,19 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
     expect(描边).toContain('上 + 径 - 径 * Math.SQRT1_2')
   })
 
-  it('两路同一时长同一曲线，画入 840ms、退回 800ms，减动效归零', () => {
+  it('时长只读设计令牌，JS 无第二份 840/800 兜底，减动效归零', () => {
     const 令牌 = 读('styles/设计令牌.css')
     expect(输入框).toContain('--miao-bian-shi-chang: var(--shuru-gao-liang-shi-chang)')
     expect(输入框).toContain(
       '--miao-bian-tui-chu-shi-chang: var(--shuru-gao-liang-tui-chu-shi-chang)',
     )
-    expect(描边).toContain("读时长('--miao-bian-shi-chang', 兜底画入)")
-    expect(描边).toContain("读时长('--miao-bian-tui-chu-shi-chang', 兜底退回)")
+    expect(描边).toContain("读时长('--miao-bian-shi-chang')")
+    expect(描边).toContain("读时长('--miao-bian-tui-chu-shi-chang')")
+    expect(描边).not.toContain('兜底')
+    expect(描边).not.toContain('840')
+    expect(描边).not.toContain('800')
     expect(令牌).toContain('--shuru-gao-liang-shi-chang: 840ms')
     expect(令牌).toContain('--shuru-gao-liang-tui-chu-shi-chang: 800ms')
-    expect(描边).toContain('const 兜底画入 = 840')
-    expect(描边).toContain('const 兜底退回 = 800')
     expect(描边).toContain("const 曲线 = 'cubic-bezier(0.4, 0, 0.2, 1)'")
     expect(描边).toContain('路.animate(')
     expect(描边.split('路.animate(').length - 1, '只应有一处统一的描边调用').toBe(1)
@@ -163,8 +165,20 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
     expect(回退).toBe(200 * 4)
   })
 
+  it('测试环境把设计令牌真注入了文档，:root 计算值与令牌文件逐字一致', () => {
+    const 令牌 = 读('styles/设计令牌.css')
+    for (const 名 of ['--shuru-gao-liang-shi-chang', '--shuru-gao-liang-tui-chu-shi-chang']) {
+      const 匹配 = new RegExp(名 + ':\\s*([^;\\n]+);').exec(令牌)
+      expect(匹配, `令牌缺少 ${名}`).not.toBeNull()
+      expect(
+        getComputedStyle(document.documentElement).getPropertyValue(名).trim(),
+        `文档中的 ${名} 与令牌文件不一致`,
+      ).toBe((匹配 as RegExpMatchArray)[1].trim())
+    }
+  })
+
   it('失焦沿原路退回，与横条输入框同一套染色语言', () => {
-    expect(描边).toContain("读时长('--miao-bian-tui-chu-shi-chang', 兜底退回)")
+    expect(描边).toContain("读时长('--miao-bian-tui-chu-shi-chang')")
     expect(描边).toContain("读时长('--miao-bian-shi-chang'")
     expect(横条).not.toContain('圆角描边')
     expect(横条).not.toContain('miao-bian')
@@ -176,6 +190,7 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
     const 原媒体 = globalThis.matchMedia
     const 原帧 = globalThis.requestAnimationFrame
     const 调用: Array<{ 帧: Keyframe[]; 选项: KeyframeEffectOptions }> = []
+    let 挂载包: VueWrapper | null = null
     let 减动效 = false
     Object.defineProperty(SVGElement.prototype, 'getAnimations', {
       configurable: true,
@@ -200,7 +215,8 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
       },
     })
     try {
-      const 包 = mount(长方框输入框)
+      const 包 = mount(长方框输入框, { attachTo: document.body })
+      挂载包 = 包
       const 输入 = 包.find('input')
       await 输入.trigger('focus')
       await nextTick()
@@ -214,6 +230,7 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
       await nextTick()
       expect(调用.slice(-2).map((项) => 项.选项.duration)).toEqual([0, 0])
     } finally {
+      挂载包?.unmount()
       Object.defineProperty(SVGElement.prototype, 'animate', { configurable: true, value: 原动画 })
       Object.defineProperty(SVGElement.prototype, 'getAnimations', {
         configurable: true,

@@ -655,10 +655,10 @@ import { huoQuFanYi } from '@/config/翻译表'
 import {
   XIAO_XI_PEI_ZHI,
   WEN_JIAN_SHURU_JIE_SHOU_KUO_ZHAN,
-  MEI_TI_XIAO_XI_LEI_XING,
   TU_PIAN_XIAO_XI_LEI_XING,
   YIN_YONG_DING_WEI_PEI_ZHI,
   huoQuMeiTiYinYongZhanWei,
+  huoQuFaSongZhuangTaiWenAn,
   duQuHeChengYinLiang,
 } from '@/config/消息配置'
 import { BIAO_QING_TIAN_JIA_PEI_ZHI } from '@/config/表情配置'
@@ -1242,16 +1242,12 @@ function guanBiTuPianYuLan() {
   yuLanXiaBiao.value = null
 }
 
-const MEI_TI_XIAO_XI_JI_HE = new Set<string>(MEI_TI_XIAO_XI_LEI_XING)
-
 function huoQuFaSongZhuangTaiTiShi(xiaoXi: 消息): string {
-  if (!xiaoXi.fa_song_zhong && shiFaSongShiBai(xiaoXi)) {
-    return huoQuFanYi('liaoTian', 'chongXinFaSong')
-  }
-  if (MEI_TI_XIAO_XI_JI_HE.has(xiaoXi.lei_xing)) {
-    return huoQuFanYi('duoMeiTi', 'shangChuanZhong')
-  }
-  return huoQuFanYi('liaoTian', 'faSongZhong')
+  return huoQuFaSongZhuangTaiWenAn({
+    leiXing: xiaoXi.lei_xing,
+    faSongZhong: xiaoXi.fa_song_zhong === true,
+    faSongShiBai: shiFaSongShiBai(xiaoXi),
+  })
 }
 
 const GU_JIA_QI_PAO_PEI_ZHI = [

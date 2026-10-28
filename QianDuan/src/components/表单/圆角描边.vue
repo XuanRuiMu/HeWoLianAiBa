@@ -26,17 +26,27 @@ const 圆角 = ref(0)
 const 描边宽 = ref(2)
 let 观察: ResizeObserver | null = null
 
-const 兜底画入 = 840
-const 兜底退回 = 800
 const 曲线 = 'cubic-bezier(0.4, 0, 0.2, 1)'
 
-function 读时长(名: string, 兜底: number): number {
-  const 壳 = 根.value?.parentElement
-  if (!壳) return 兜底
-  const 值 = getComputedStyle(壳).getPropertyValue(名).trim()
+function 解析时长文本(样式: CSSStyleDeclaration, 值: string, 已见: Set<string>): number | null {
+  const 引用 = /^var\(\s*(--[\w-]+)\s*(?:,\s*([^)]*?)\s*)?\)$/.exec(值)
+  if (引用) {
+    if (已见.has(引用[1])) return null
+    已见.add(引用[1])
+    let 替代 = 样式.getPropertyValue(引用[1]).trim()
+    if (替代 === '' && 引用[2]) 替代 = 引用[2]
+    return 解析时长文本(样式, 替代, 已见)
+  }
   const 数 = parseFloat(值)
-  if (Number.isNaN(数)) return 兜底
+  if (Number.isNaN(数)) return null
   return 值.endsWith('ms') ? 数 : 数 * 1000
+}
+
+function 读时长(名: string): number | null {
+  const 壳 = 根.value?.parentElement
+  if (!壳) return null
+  const 样式 = getComputedStyle(壳)
+  return 解析时长文本(样式, 样式.getPropertyValue(名).trim(), new Set([名]))
 }
 
 function 减动效(): boolean {
@@ -80,12 +90,15 @@ watch(
   () => 属性.激活,
   async (开) => {
     if (!开) {
-      描边(0, 1, 读时长('--miao-bian-tui-chu-shi-chang', 兜底退回))
+      const 退回 = 读时长('--miao-bian-tui-chu-shi-chang')
+      if (退回 !== null) 描边(0, 1, 退回)
       return
     }
     量取()
     await nextTick()
-    requestAnimationFrame(() => 描边(1, 0, 读时长('--miao-bian-shi-chang', 兜底画入)))
+    const 画入 = 读时长('--miao-bian-shi-chang')
+    if (画入 === null) return
+    requestAnimationFrame(() => 描边(1, 0, 画入))
   },
 )
 

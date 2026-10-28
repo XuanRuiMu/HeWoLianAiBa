@@ -299,23 +299,7 @@ const sha256 = haXi.digest('hex').toLowerCase()
   }
 }
 
-export function shengChengQianMingURL(sha256: string, yongHuId: string, youXiaoMiao?: number): string
-export function shengChengQianMingURL(sha256: string, youXiaoMiao?: number): string
-export function shengChengQianMingURL(
-  sha256: string,
-  yongHuIdHuoMiao?: string | number,
-  youXiaoMiao?: number,
-): string {
-  if (typeof yongHuIdHuoMiao === 'number' || yongHuIdHuoMiao === undefined) {
-    const youXiaoQi = (yongHuIdHuoMiao as number | undefined) ?? MEI_TI_PEI_ZHI.qianMingYouXiaoMiaoRenZheng
-    const guoQiMiao = Math.floor(Date.now() / 1000) + youXiaoQi
-    const qianMing = crypto
-      .createHmac('sha256', huoQuMeiTiQianMingMiYao())
-      .update(`${sha256}:${guoQiMiao}`)
-      .digest('hex')
-    return `/api/媒体/${sha256}?e=${guoQiMiao}&s=${qianMing}`
-  }
-  const yongHuId = yongHuIdHuoMiao
+export function shengChengQianMingURL(sha256: string, yongHuId: string, youXiaoMiao?: number): string {
   const youXiaoQi = youXiaoMiao ?? MEI_TI_PEI_ZHI.qianMingYouXiaoMiaoRenZheng
   const guoQiMiao = Math.floor(Date.now() / 1000) + youXiaoQi
   const qianFaHaoMiao = Date.now()
@@ -388,39 +372,29 @@ export async function yanZhengQianMing(
   e: unknown,
   u: unknown,
   s: unknown,
-  t?: unknown,
+  t: unknown,
 ): Promise<boolean> {
   if (typeof sha256 !== 'string' || !SHA256_GE_SHI.test(sha256)) return false
   if (typeof e !== 'string' || e === '' || typeof s !== 'string' || s === '') return false
   if (!/^\d{1,12}$/.test(e)) return false
   const guoQiMiao = parseInt(e, 10)
   if (guoQiMiao * 1000 <= Date.now()) return false
-  if (typeof u === 'string' && u !== '' && typeof t === 'string' && t !== '') {
-    if (!UUID_GE_SHI.test(u) || !/^\d{1,15}$/.test(t)) return false
-    const yuQiQianMing = crypto
-      .createHmac('sha256', huoQuMeiTiQianMingMiYao())
-      .update(`${sha256}:${e}:${u}:${t}`)
-      .digest('hex')
-    const a = Buffer.from(yuQiQianMing, 'utf8')
-    const b = Buffer.from(s, 'utf8')
-    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return false
-    try {
-      const cheXiaoShiJian = await redis.get(huoQuMeiTiCheXiaoJian(u))
-      if (cheXiaoShiJian !== null && Number(t) <= Number(cheXiaoShiJian)) return false
-      const guiShu = await yanZhengMeiTiKeDu(sha256.toLowerCase(), u)
-      return guiShu
-    } catch {
-      return false
-    }
-  }
+  if (typeof u !== 'string' || u === '' || typeof t !== 'string' || t === '') return false
+  if (!UUID_GE_SHI.test(u) || !/^\d{1,15}$/.test(t)) return false
   const yuQiQianMing = crypto
     .createHmac('sha256', huoQuMeiTiQianMingMiYao())
-    .update(`${sha256}:${e}`)
+    .update(`${sha256}:${e}:${u}:${t}`)
     .digest('hex')
   const a = Buffer.from(yuQiQianMing, 'utf8')
   const b = Buffer.from(s, 'utf8')
-  if (a.length !== b.length) return false
-  return crypto.timingSafeEqual(a, b)
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return false
+  try {
+    const cheXiaoShiJian = await redis.get(huoQuMeiTiCheXiaoJian(u))
+    if (cheXiaoShiJian !== null && Number(t) <= Number(cheXiaoShiJian)) return false
+    return await yanZhengMeiTiKeDu(sha256.toLowerCase(), u)
+  } catch {
+    return false
+  }
 }
 
 export function huoQuBenDiLuJing(sha256: string): string | null {

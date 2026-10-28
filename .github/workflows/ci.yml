@@ -127,6 +127,9 @@ jobs:
       - name: Typecheck (主配置)
         run: npm run typecheck
 
+      - name: Typecheck (测试文件)
+        run: npm run typecheck:test
+
       - name: Typecheck (度量链)
         run: npm run typecheck:度量
 

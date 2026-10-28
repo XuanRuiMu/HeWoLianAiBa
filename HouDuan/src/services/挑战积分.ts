@@ -62,14 +62,6 @@ export async function kaiShiTiaoZhan(
 ): Promise<ShengChengJiaoSeJieGuo> {
   const wanJia = 落库性别或拒绝(wan_jia_xing_bie, '挑战积分', yong_hu_id)
   const duiXiang = 落库性别或拒绝(dui_xiang_xing_bie, '挑战积分', yong_hu_id)
-  const jiaoSe = shengChengJiaoSe({
-    yong_hu_id,
-    xing_bie: duiXiang,
-    mu_biao_xing_bie: duiXiang,
-    mbti_lei_xing: null,
-    shi_fou_zha_xing: Math.random() < TIAO_ZHAN_PEI_ZHI.zhaXingGaiLv,
-    sui_ji_xing_ge: false,
-  })
 
   const jinXingZhong = await 数据库.query(
     `SELECT "ID" FROM "挑战对局" WHERE "用户ID" = $1 AND "状态" = '进行中' LIMIT 1`,
@@ -82,6 +74,15 @@ export async function kaiShiTiaoZhan(
     cuoWu.zhuang_tai_ma = 409
     throw cuoWu
   }
+
+  const jiaoSe = shengChengJiaoSe({
+    yong_hu_id,
+    xing_bie: duiXiang,
+    mu_biao_xing_bie: duiXiang,
+    mbti_lei_xing: null,
+    shi_fou_zha_xing: Math.random() < TIAO_ZHAN_PEI_ZHI.zhaXingGaiLv,
+    sui_ji_xing_ge: false,
+  })
 
 await baoCunJiaoSe(yong_hu_id, jiaoSe, 'tiaozhan')
 

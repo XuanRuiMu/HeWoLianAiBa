@@ -12,6 +12,7 @@ import {
   huoQuLaShenChiCunZhi,
   huoQuQiPaoBeiJingZhi,
   type WaiGuanLaShenMoShi,
+  type WaiGuanTiaoMu,
 } from '@/config/外观自定义'
 import {
   CAI_JIAN_BI_LI_SHANG_XIAN,
@@ -27,23 +28,32 @@ const 读 = (相对: string): string => readFileSync(resolve(源码根, 相对),
 const 裁剪源码 = 读('components/图片裁剪.vue')
 const 浮层源码 = 读('components/浮层对话框.vue')
 const 上传说明源码 = 读('components/上传说明层.vue')
-const 背景设置源码 = 读('components/聊天背景设置.vue')
-const 气泡选择源码 = 读('components/气泡主题选择器.vue')
 const 外观源码 = 读('config/外观自定义.ts')
-const 用户设置源码 = 读('stores/用户设置.ts')
 const 裁剪工具源码 = 读('utils/图片裁剪.ts')
 
-function zaiRu(xuanXiang: { yuLanLeiXing?: 'beiJing' | 'qiPao' } = {}) {
+const MEI_TI_URL = '/api/媒体/' + 'a'.repeat(64) + '?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=' + 'b'.repeat(64)
+
+function zaoTiaoMu(xuHao: number): WaiGuanTiaoMu {
+  return {
+    id: 'qipao-' + xuHao,
+    mingCheng: '自定义气泡' + xuHao,
+    tuDiZhi: MEI_TI_URL,
+    wenZiYanSe: '#FFFFFF',
+  }
+}
+
+function zaiRu(xuanXiang: { kuanGaoBi?: number; yuLanLeiXing?: 'beiJing' | 'qiPao' } = {}) {
   const cang = createPinia()
   setActivePinia(cang)
+  const { kuanGaoBi = 1, yuLanLeiXing } = xuanXiang
   return mount(TuPianCaiJian, {
     props: {
       tuYuan: 'data:image/png;base64,x',
       yuanMime: 'image/png',
       biaoTi: '裁剪测试',
       tiShi: '提示',
-      kuanGaoBi: 1,
-      ...(xuanXiang.yuLanLeiXing ? { yuLanLeiXing: xuanXiang.yuLanLeiXing } : {}),
+      kuanGaoBi,
+      ...(yuLanLeiXing ? { yuLanLeiXing } : {}),
     },
     global: { plugins: [cang] },
   })
@@ -61,11 +71,16 @@ describe('FP-02a 拖动语义反转：拖动挪动图片，选区固定居中', 
     expect(裁剪源码).toMatch(/<cropper-image\b[^>]*translatable/)
   })
 
-  it('缩放与复位后选区回画布中心：居中函数调用点齐全', () => {
-    expect(裁剪源码).toContain('function guDingXuanQuJuZhong')
-    expect(裁剪源码).toContain('$center')
-    const diaoYong = 裁剪源码.match(/guDingXuanQuJuZhong\(\)/g) || []
-    expect(diaoYong.length).toBeGreaterThanOrEqual(4)
+  it('交互结束后选区回画布中心：actionend 触发 $center', async () => {
+    const kuang = zaiRu()
+    await nextTick()
+    const xuanQu = kuang.find('cropper-selection').element as unknown as { $center: () => void }
+    const jianShi = vi.spyOn(xuanQu, '$center')
+    const huaBu = kuang.find('cropper-canvas').element
+    huaBu.dispatchEvent(new CustomEvent('actionend', { bubbles: true }))
+    await nextTick()
+    expect(jianShi).toHaveBeenCalled()
+    kuang.unmount()
   })
 
   it('图片$move是画布坐标系位移：框架无需二次换算缩放', () => {
@@ -126,9 +141,25 @@ describe('FP-02a Ctrl+滚轮与WASD平移图片', () => {
     kuang.unmount()
   })
 
-  it('平移不受缩放门禁误伤：transform事件只校验缩放档', () => {
-    expect(裁剪工具源码).toContain('export function jiSuanGunLunPingYi')
-    expect(裁剪工具源码).toContain('export function jiSuanJianPanPingYi')
+  it('平移不受缩放门禁误伤：纯位移 transform 放行，越界缩放被回绝', async () => {
+    const kuang = zaiRu()
+    await nextTick()
+    const tu = kuang.find('cropper-image').element as HTMLElement
+    const weiYi = new CustomEvent('transform', {
+      detail: { matrix: [1, 0, 0, 1, 40, -25], oldMatrix: [1, 0, 0, 1, 0, 0] },
+      cancelable: true,
+      bubbles: true,
+    })
+    tu.dispatchEvent(weiYi)
+    expect(weiYi.defaultPrevented).toBe(false)
+    const yueJie = new CustomEvent('transform', {
+      detail: { matrix: [9, 0, 0, 9, 40, -25], oldMatrix: [1, 0, 0, 1, 0, 0] },
+      cancelable: true,
+      bubbles: true,
+    })
+    tu.dispatchEvent(yueJie)
+    expect(yueJie.defaultPrevented).toBe(true)
+    kuang.unmount()
   })
 })
 
@@ -225,15 +256,22 @@ describe('FP-02a 拉伸填充四模式与预览应用同源', () => {
     expect(huoQuQiPaoBeiJingZhi('https://example.com/t.png', '#FFFFFF', 'zongXiang')).toContain('center / auto 100%')
   })
 
-  it('裁剪预览与真实聊天消费同一填充函数与同一store档位', () => {
-    expect(裁剪源码).toContain('huoQuLaShenChiCunZhi(dangQianLaShenMoShi())')
-    expect(裁剪源码).toContain("'--caijian-yulan-chi-cun'")
-    expect(裁剪源码).toContain('center / var(--caijian-yulan-chi-cun, cover)')
-    expect(裁剪源码).toContain("huoQuQiPaoBeiJingZhi(yuLanDiZhi.value, WAI_GUAN_MO_REN_WEN_ZI_YAN_SE, dangQianLaShenMoShi())")
-    expect(用户设置源码).toContain('huoQuBeiJingNeiLianYangShi(liaoTianBeiJing.value, beiJingLaShenMoShi.value)')
-    expect(用户设置源码).toContain('huoQuQiPaoBeiJingZhi(ziJiTu.tuDiZhi, ziJiTu.wenZiYanSe, qiPaoLaShenMoShi.value)')
-    expect(背景设置源码).toContain('huoQuLaShenChiCunZhi(设置仓库.beiJingLaShenMoShi)')
-    expect(气泡选择源码).toContain('huoQuQiPaoBeiJingZhi(tiaoMu.tuDiZhi, yanSe, laShenMoShi)')
+  it('真实聊天侧内联样式跟随 store 填充档位产出同参 background-size', () => {
+    setActivePinia(createPinia())
+    const cang = 使用用户设置仓库()
+    cang.shiYongLaShenMoShi('beiJing', 'henXiang')
+    cang.liaoTianBeiJingQian = 'https://example.com/t.png'
+    cang.liaoTianBeiJingShen = 'https://example.com/t.png'
+    expect(cang.beiJingNeiLianYangShi.backgroundSize).toBe('100% auto')
+    cang.shiYongLaShenMoShi('qiPao', 'quanBu')
+    cang.waiGuan = {
+      beiJing: [],
+      qiPao: [zaoTiaoMu(1)],
+      beiJingFuGai: {},
+      qiPaoFuGai: {},
+      dangQianQiPao: { ziJi: 'qipao-1', ai: '' },
+    }
+    expect(cang.qiPaoCSSBianLiang['--qipao-ziJi-beiJing']).toContain('center / 100% 100%')
   })
 
   it('默认档为等比铺满并持久化到本地，非法档被回退', async () => {
@@ -250,18 +288,38 @@ describe('FP-02a 拉伸填充四模式与预览应用同源', () => {
     expect(cang.beiJingLaShenMoShi).toBe('zongXiang')
   })
 
+  it('画布宽高由场景比例统一约束：宽被压缩时高度等比跟随，不再锁死高度', () => {
+    const kuang = zaiRu({ kuanGaoBi: 2 })
+    const huaBu = kuang.get('.caijian-huabu').element as HTMLElement
+    const duQuBiLi = (yuanSu: HTMLElement): number => Number(yuanSu.style.aspectRatio.split('/')[0].trim())
+    expect(huaBu.style.width).toBe('520px')
+    expect(huaBu.style.height).toBe('auto')
+    expect(duQuBiLi(huaBu)).toBe(2)
+    expect(huaBu.style.maxWidth).toBe('100%')
+    expect(Number.parseInt(huaBu.style.width, 10) / duQuBiLi(huaBu)).toBe(260)
+    kuang.unmount()
+
+    const shuKuang = zaiRu({ kuanGaoBi: 0.75 })
+    const shuHuaBu = shuKuang.get('.caijian-huabu').element as HTMLElement
+    expect(shuHuaBu.style.width).toBe('195px')
+    expect(duQuBiLi(shuHuaBu)).toBe(0.75)
+    expect(Number.parseInt(shuHuaBu.style.width, 10) / duQuBiLi(shuHuaBu)).toBeCloseTo(260, 6)
+    shuKuang.unmount()
+  })
+
   it('裁剪预览渲染四个填充档并联动store', async () => {
     const kuang = zaiRu({ yuLanLeiXing: 'beiJing' })
     await nextTick()
     const cang = 使用用户设置仓库()
-    const kaLieBiao = kuang.findAll('.yu-lan-tian-chong-ka')
+    const kaLieBiao = kuang.findAll('.tian-chong-ka')
     expect(kaLieBiao).toHaveLength(4)
-    expect(kaLieBiao.filter((ka) => ka.classes().includes('yu-lan-tian-chong-ka--xuan'))[0].text()).toBe(
+    expect(kaLieBiao.filter((ka) => ka.classes().includes('tian-chong-ka--xuan'))[0].text()).toBe(
       huoQuFanYi('sheZhi', 'caiJianYuLanTianChongDengBi'),
     )
     await kaLieBiao[2].trigger('click')
     await nextTick()
     expect(cang.beiJingLaShenMoShi).toBe('zongXiang')
+    expect(kaLieBiao[2].classes().includes('tian-chong-ka--xuan')).toBe(true)
     kuang.unmount()
   })
 })

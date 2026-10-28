@@ -49,7 +49,7 @@ describe('FP-09 发送中灰滤镜', () => {
   it('灰滤镜规则为去色加轻度透明，且不产生遮挡交互的蒙层', () => {
     const 体 = 规则体('.qipao-waike.qipao-fasong-zhong')
     expect(体).toContain('filter: grayscale(1)')
-    expect(体).toMatch(/opacity:\s*0\.(6|7)\d*/)
+    expect(体).toMatch(/opacity:\s*0\.8\b/)
     expect(体).not.toContain('background')
     expect(体).not.toContain('::before')
     expect(样式).not.toMatch(/\.xiaoxi-wei[^{]*\{[^}]*filter:/)

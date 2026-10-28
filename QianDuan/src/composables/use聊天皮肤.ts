@@ -17,7 +17,7 @@ export function use聊天皮肤() {
     huoQuLiaoTianBeiJingLeiMing(sheZhi.shiYuShe, sheZhi.liaoTianBeiJing),
   )
   const beiJingYangShi = computed(() => sheZhi.beiJingNeiLianYangShi)
-  const qiPaoYangShi = computed(() => sheZhi.ziJiQiPaoCSSBianLiang)
+  const qiPaoYangShi = computed(() => sheZhi.qiPaoCSSBianLiang)
   watchEffect(() => {
     const ziJiTu = sheZhi.dangQianZiJiQiPaoTu
     const aiTu = sheZhi.dangQianAiQiPaoTu

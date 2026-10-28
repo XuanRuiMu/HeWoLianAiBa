@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const 查询 = vi.fn(async () => ({ rows: [], rowCount: 0 }))
+const 查询 = vi.fn(async (..._canShu: unknown[]) => ({ rows: [], rowCount: 0 }))
 
 vi.mock('../../数据库', () => ({
   数据库: { query: (...canShu: unknown[]) => 查询(...canShu) },

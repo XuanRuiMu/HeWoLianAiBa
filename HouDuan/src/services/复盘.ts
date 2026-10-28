@@ -10,6 +10,7 @@ import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import { 渲染性别变体文案 } from '../utils/结局'
 import { 归一角色性别, type 角色性别 } from '../utils/性别'
+import { xiaoChuShuZhiXieLu } from '../utils/数值泄露过滤'
 import { type CanShuShangXiaWen } from '../config/AI参数策略'
 import { gouJianYinYongChaXun, zhanShiXiaoXiZhengWen } from './对话渲染'
 import { shiTuWenHunPaiKuai } from './消息内容块'
@@ -294,6 +295,21 @@ function zhuanHuanPiZhu(jieGou: FuPanJSONJieGou): FuPanPiZhu[] {
   return jieGuo
 }
 
+export function guoLvFuPanChuCan(jieGuo: FuPanShengChengJieGuo): FuPanShengChengJieGuo {
+  return {
+    fu_pan_nei_rong: xiaoChuShuZhiXieLu(jieGuo.fu_pan_nei_rong),
+    fu_pan_shi_jian_xian: jieGuo.fu_pan_shi_jian_xian,
+    fu_pan_pi_zhu: (jieGuo.fu_pan_pi_zhu ?? []).flatMap((xiang) => {
+      const pingLun = xiaoChuShuZhiXieLu(xiang.ping_lun)
+      if (!pingLun) return []
+      const tiaoMu: FuPanPiZhu = { xu_hao: xiang.xu_hao, ping_lun: pingLun }
+      const qingGan = xiang.qing_gan ? xiaoChuShuZhiXieLu(xiang.qing_gan) : ''
+      if (qingGan) tiaoMu.qing_gan = qingGan
+      return [tiaoMu]
+    }),
+  }
+}
+
 async function huoQuJiaoSeJiBenXinXi(jiao_se_id: string): Promise<JiaoSeJiBenXinXi | null> {
   const jieGuo = await 数据库.query(
     `SELECT "微信昵称", "性别", "MBTI", "是否渣型" FROM "角色" WHERE "ID" = $1 LIMIT 1`,
@@ -485,10 +501,10 @@ export async function shengChengFuPan(
 
   const piZhu = zhuanHuanPiZhu(jieGou)
 
-  const jieGuo: FuPanShengChengJieGuo = {
+  const jieGuo = guoLvFuPanChuCan({
     fu_pan_nei_rong: zongJie,
     fu_pan_shi_jian_xian: [],
-    fu_pan_pi_zhu: piZhu }
+    fu_pan_pi_zhu: piZhu })
 
   await gengXinFuPanNeiRong(dang_an_id, jieGuo.fu_pan_nei_rong, jieGuo.fu_pan_pi_zhu)
 

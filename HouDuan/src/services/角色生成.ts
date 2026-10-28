@@ -161,10 +161,43 @@ const ZHA_XING_YU_HAO_GAN_DU_YIN_CANG_ZI_DUAN: readonly (keyof ShengChengJiaoSeJ
   'hao_gan_du_zong_fen',
 ]
 
-const WAN_JIA_TOU_YING_YIN_CANG_ZI_DUAN: readonly (keyof ShengChengJiaoSeJieGuo)[] = [
-  ...ZHA_XING_YU_HAO_GAN_DU_YIN_CANG_ZI_DUAN,
-  ...JIAO_SE_YIN_SI_ZI_DUAN,
-]
+const WAN_JIA_KE_JIAN_XING_GUI_LEI: Record<keyof ShengChengJiaoSeJieGuo, boolean> = {
+  id: true,
+  ming_zi: false,
+  xing_bie: true,
+  nian_ling: true,
+  shen_fen: true,
+  wai_mao: true,
+  xing_ge: true,
+  bei_jing_gu_shi: false,
+  xi_hao: true,
+  yan_yu_feng_ge: true,
+  xing_wei_te_dian: true,
+  tou_xiang: true,
+  biao_qian: true,
+  xi_huan_de_lei_xing: true,
+  jia_ting_bei_jing: true,
+  qing_gan_jing_li: true,
+  shi_fou_zha_xing: false,
+  zha_fa_miao_shu: false,
+  hua_shu: false,
+  bao_lu_fang_shi: false,
+  shi_po_xian_suo: false,
+  yu_she_lei_xing: true,
+  mbti_lei_xing: true,
+  ie_lei_xing: true,
+  sui_ji_xing_ge: true,
+  re_shen_lei_xing: true,
+  hui_fu_yan_chi_hao_miao: true,
+  wei_xin_ming: true,
+  zhen_shi_ming: false,
+  shi_jie_xin_xi: false,
+  xi_tong_ti_shi: false,
+  ba_da_mo_kuai: false,
+  hao_gan_du_zong_fen: false,
+  voice_id: true,
+  yao_kai_kou: true,
+}
 
 function anYinCangZiDuanTouYing<T extends object>(jiaoSe: T, yinCang: readonly (keyof ShengChengJiaoSeJieGuo)[]): T {
   const jieGuo: Record<string, unknown> = { ...(jiaoSe as Record<string, unknown>) }
@@ -173,7 +206,12 @@ function anYinCangZiDuanTouYing<T extends object>(jiaoSe: T, yinCang: readonly (
 }
 
 export function touYingWanJiaKeJianJiaoSe<T extends object>(jiaoSe: T): T {
-  return anYinCangZiDuanTouYing(jiaoSe, WAN_JIA_TOU_YING_YIN_CANG_ZI_DUAN)
+  const yuan = jiaoSe as Record<string, unknown>
+  const jieGuo: Record<string, unknown> = {}
+  for (const [jian, keJian] of Object.entries(WAN_JIA_KE_JIAN_XING_GUI_LEI)) {
+    if (keJian && jian in yuan) jieGuo[jian] = yuan[jian]
+  }
+  return jieGuo as T
 }
 
 export function touYingGuanLiJiaoSe<T extends object>(jiaoSe: T): T {

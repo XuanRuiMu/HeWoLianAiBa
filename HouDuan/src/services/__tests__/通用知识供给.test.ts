@@ -26,7 +26,7 @@ import { redis } from '../../redis'
 import { shengChengDirectorCeLue } from '../Director'
 import { shengChengWriterHuiFu } from '../Writer'
 import * as 对话渲染 from '../对话渲染'
-import { 检索通用知识 } from '../通用知识检索'
+import { 构建通用知识内容, 检索通用知识 } from '../通用知识检索'
 import type { AIYinQingShuRu } from '../../types'
 
 function 造输入(用户消息: string): AIYinQingShuRu {
@@ -167,6 +167,7 @@ describe('对象生成共享通用知识', () => {
   })
 
   it('完全无关的日常消息也把知识层交给模型', async () => {
+    const 随机 = vi.spyOn(Math, 'random').mockReturnValue(0.5)
     const 外呼: TiaoYongCanShu[] = []
     sheZhiMockTiaoYong(async (参数) => {
       外呼.push(参数)
@@ -188,8 +189,10 @@ describe('对象生成共享通用知识', () => {
       expect(文本).toContain('<<<PUBLIC_KNOWLEDGE_START>>>')
       expect(文本).toContain('玄锐暮')
       expect(文本).toContain('22岁')
-      expect(文本).not.toContain('不接对方的内容')
     }
+    const 写手文本 = 提取文本(外呼[外呼.length - 1].xiaoXi[0].neiRong)
+    expect(写手文本).toContain('【这一轮你就这样回】')
+    随机.mockRestore()
   })
 
   it('截图里的问句不再落到「不认识」，且由角色自己的口气说出', async () => {
@@ -256,7 +259,7 @@ describe('对象生成共享通用知识', () => {
     for (const 参数 of 外呼) {
       const 文本 = 参数.xiaoXi.map((消息) => 提取文本(消息.neiRong)).join('\n')
       expect(文本).toContain(`知识标识：${知识层.条目[0].标识}`)
-      expect(文本).toContain(知识层.条目[0].内容)
+      expect(文本).toContain(构建通用知识内容(知识层.条目[0]))
       expect(文本).toContain('公共事实优先于人设中没有写的经历')
       expect(文本).toContain('不得回答不知道、不认识、没听说过')
     }
@@ -330,7 +333,7 @@ describe('对象生成共享通用知识', () => {
     expect(估算Token(最终请求体[0].content as string | DuiHuaKuai[])).toBeLessThanOrEqual(700)
     expect(最终文本.length).toBeLessThan(原始文本.length)
     expect(最终文本).toContain(`知识标识：${知识.条目[0].标识}`)
-    expect(最终文本).toContain(知识.条目[0].内容)
+    expect(最终文本).toContain(构建通用知识内容(知识.条目[0]))
     expect(最终文本).toContain('<<<USER_CONTENT_START>>>你认识玄锐暮吗<<<USER_CONTENT_END>>>')
   })
 

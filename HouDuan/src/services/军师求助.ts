@@ -4,6 +4,7 @@ import { JUN_SHI_ZHI_DAO_DUAN_DING_YI } from '../config/军师配置'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianJunShiQiuZhuPrompt, geShiHuaJunShiLiShi } from './Prompt构建器'
 import { 构建军师知识层, 检索通用知识 } from './通用知识检索'
+import { xiaoChuShuZhiXieLu } from '../utils/数值泄露过滤'
 import type {
   JunShiQiuZhuCanShu,
   JunShiQiuZhuJieGuo,
@@ -80,14 +81,6 @@ function qieDuanWenBen(wenBen: string, zuiDaZiShu: number): string {
   const zi = Array.from(qu)
   if (zi.length <= zuiDaZiShu) return qu
   return `${zi.slice(0, Math.max(0, zuiDaZiShu - 1)).join('')}…`
-}
-
-const SHU_ZHI_XIE_LU_RE =
-  /(信任度|亲密度|趣味度|关怀度|信任|亲密|趣味|关怀|总好感|好感度|总分|分值|阶段值|阶段名)[^\d。！？\n]{0,8}\d+(?:\.\d+)?\s*(?:分|点)?/g
-
-function xiaoChuShuZhiXieLu(wenBen: string): string {
-  if (!wenBen) return ''
-  return wenBen.replace(SHU_ZHI_XIE_LU_RE, '').replace(/[ \t]{2,}/g, ' ').trim()
 }
 
 export function jieXiJunShiFenDuan(neiRong: string): JunShiZhiDaoFenDuan | null {

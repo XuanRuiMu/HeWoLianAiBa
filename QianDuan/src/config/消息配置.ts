@@ -176,6 +176,22 @@ export const ZHAN_TIE_TU_PIAN_PEI_ZHI = {
 
 export const MEI_TI_XIAO_XI_LEI_XING = ['tuPian', 'biaoQingBao', 'yuYin', 'wenJian'] as const
 
+const MEI_TI_XIAO_XI_JI_HE = new Set<string>(MEI_TI_XIAO_XI_LEI_XING)
+
+export function huoQuFaSongZhuangTaiWenAn(canShu: {
+  leiXing: string
+  faSongZhong: boolean
+  faSongShiBai: boolean
+}): string {
+  if (!canShu.faSongZhong && canShu.faSongShiBai) {
+    return huoQuFanYi('liaoTian', 'chongXinFaSong')
+  }
+  if (MEI_TI_XIAO_XI_JI_HE.has(canShu.leiXing)) {
+    return huoQuFanYi('duoMeiTi', 'shangChuanZhong')
+  }
+  return huoQuFanYi('liaoTian', 'faSongZhong')
+}
+
 export const TU_PIAN_XIAO_XI_LEI_XING = ['tuPian', 'biaoQingBao'] as const
 
 export type MeiTiXiaoXiLeiXing = (typeof MEI_TI_XIAO_XI_LEI_XING)[number]

@@ -69,9 +69,11 @@ describe('隐私政策与项目现状一致', () => {
     expect(隐私).toContain('段位')
   })
 
-  it('注册后临时回填凭据的本地存储行为如实披露', () => {
+  it('注册后手机号回填披露为仅内存临时保留，不再声称写入本地存储', () => {
     expect(隐私).toContain('回填')
     expect(隐私).toContain('临时')
+    expect(隐私).toContain('不写入任何本地存储')
+    expect(隐私).not.toContain('zhuCeDengLuLinShi')
   })
 })
 

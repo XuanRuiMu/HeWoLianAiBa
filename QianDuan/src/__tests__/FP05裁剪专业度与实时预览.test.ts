@@ -2,25 +2,47 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import TuPianCaiJian from '@/components/图片裁剪.vue'
+import * as CaiJianGongJu from '@/utils/图片裁剪'
+import * as WaiGuanCaiYang from '@/utils/外观采样'
 import { huoQuFanYi } from '@/config/翻译表'
-import { jiSuanJuZhenSuoFang } from '@/utils/图片裁剪'
+import {
+  huoQuQiPaoBeiJingZhi,
+  huoQuQiPaoMengCengZhi,
+  type WaiGuanTiaoMu,
+} from '@/config/外观自定义'
+import { 使用用户设置仓库 } from '@/stores/用户设置'
+
+const { jiSuanJuZhenSuoFang } = CaiJianGongJu
 
 const 源码根 = resolve(__dirname, '..')
 const 读 = (相对: string): string => readFileSync(resolve(源码根, 相对), 'utf8')
 const 裁剪源码 = 读('components/图片裁剪.vue')
 const 背景源码 = 读('components/聊天背景设置.vue')
 const 气泡源码 = 读('components/气泡主题选择器.vue')
+const 填充选择源码 = 读('components/外观填充选择器.vue')
+
+const MEI_TI_URL = '/api/媒体/' + 'a'.repeat(64) + '?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=' + 'b'.repeat(64)
+
+function zaoTiaoMu(wenZiYanSe: string): WaiGuanTiaoMu {
+  return {
+    id: 'qipao-1',
+    mingCheng: '自定义气泡1',
+    tuDiZhi: MEI_TI_URL,
+    wenZiYanSe,
+  }
+}
 
 interface GuaZaiXuanXiang {
   kuanGaoBi?: number
   yuLanLeiXing?: 'beiJing' | 'qiPao'
+  yuLanCeZhong?: 'ziJi' | 'ai'
 }
 
 function zaiRu(xuanXiang: GuaZaiXuanXiang = {}) {
-  const { kuanGaoBi = 1, yuLanLeiXing } = xuanXiang
+  const { kuanGaoBi = 1, yuLanLeiXing, yuLanCeZhong } = xuanXiang
   const cang = createPinia()
   setActivePinia(cang)
   return mount(TuPianCaiJian, {
@@ -31,6 +53,7 @@ function zaiRu(xuanXiang: GuaZaiXuanXiang = {}) {
       tiShi: '提示',
       kuanGaoBi,
       ...(yuLanLeiXing ? { yuLanLeiXing } : {}),
+      ...(yuLanCeZhong ? { yuLanCeZhong } : {}),
     },
     global: { plugins: [cang] },
   })
@@ -168,6 +191,37 @@ describe('FP-05 裁剪底部实时聊天预览', () => {
     qiPaoKuang.unmount()
   })
 
+  it('气泡预览蒙层与尾巴采样与真实渲染同参：取当前气泡条目的文字色', async () => {
+    const kuang = zaiRu({ kuanGaoBi: 2, yuLanLeiXing: 'qiPao', yuLanCeZhong: 'ziJi' })
+    await nextTick()
+    const cang = 使用用户设置仓库()
+    cang.waiGuan = {
+      beiJing: [],
+      qiPao: [zaoTiaoMu('#FF0000')],
+      beiJingFuGai: {},
+      qiPaoFuGai: {},
+      dangQianQiPao: { ziJi: 'qipao-1', ai: '' },
+    }
+    await nextTick()
+    const xuanQu = kuang.find('cropper-selection').element as unknown as {
+      $toCanvas: () => Promise<HTMLCanvasElement>
+    }
+    vi.spyOn(xuanQu, '$toCanvas').mockResolvedValue({
+      toDataURL: () => 'data:image/png;base64,AA',
+    } as HTMLCanvasElement)
+    const caiYang = vi.spyOn(WaiGuanCaiYang, 'caiJiBianYuanYanSe').mockResolvedValue('#123456')
+    const yuanSu = kuang.find('cropper-selection').element as HTMLElement
+    yuanSu.dispatchEvent(new CustomEvent('change', { detail: { width: 200, height: 100 }, bubbles: true }))
+    await vi.waitFor(() => {
+      const yuLan = kuang.get('.caijian-yulan').element as HTMLElement
+      expect(yuLan.style.getPropertyValue('--caijian-yulan-fu-gai')).toBe(
+        huoQuQiPaoBeiJingZhi('data:image/png;base64,AA', '#FF0000', cang.qiPaoLaShenMoShi),
+      )
+    })
+    expect(caiYang).toHaveBeenCalledWith('data:image/png;base64,AA', 'you', huoQuQiPaoMengCengZhi('#FF0000'))
+    kuang.unmount()
+  })
+
   it('容器契约：背景传beiJing、气泡传qiPao，组件声明yuLanLeiXing', () => {
     expect(背景源码).toContain('yu-lan-lei-xing="beiJing"')
     expect(气泡源码).toContain('yu-lan-lei-xing="qiPao"')
@@ -192,18 +246,45 @@ describe('FP-05 专业控件文案走翻译表', () => {
     expect(裁剪源码).not.toMatch(/>\s*(自由|1:1|3:4|2:1|16:9)\s*</)
   })
 
-  it('专业工具链源码契约：边界拦截、限幅常量、最小选区、预览导出', () => {
-    expect(裁剪源码).toContain('@change="yanZhengXuanQu"')
-    expect(裁剪源码).toContain('shiJian.preventDefault()')
-    expect(裁剪源码).toContain('SUO_FANG_XIA_XIAN')
-    expect(裁剪源码).toContain('SUO_FANG_SHANG_XIAN')
-    expect(裁剪源码).toContain('XUAN_QU_ZUI_XIAO_BIAN')
-    expect(裁剪源码).toContain('$toCanvas')
-    expect(裁剪源码).toContain('$scale(')
-    expect(裁剪源码).toContain('jiSuanJuZhenSuoFang')
+  it('选区合法时确认真实导出并上抛文件，生成中按钮禁用', async () => {
+    const kuang = zaiRu({ kuanGaoBi: 1 })
+    await nextTick()
+    const xuanQu = kuang.find('cropper-selection').element as HTMLElement
+    Object.defineProperty(xuanQu, 'width', { value: 120, configurable: true })
+    Object.defineProperty(xuanQu, 'height', { value: 120, configurable: true })
+    const daoChuWenJian = new File([new Blob(['x'])], 'tupian.png', { type: 'image/png' })
+    const jianShi = vi.spyOn(CaiJianGongJu, 'daoChuCaiJianWenJian').mockResolvedValue(daoChuWenJian)
+    await kuang.get('.anniu-que-ren').trigger('click')
+    await nextTick()
+    expect(jianShi).toHaveBeenCalledTimes(1)
+    expect(kuang.emitted('que-ren')![0][0]).toBe(daoChuWenJian)
+    expect(kuang.find('.caijian-jiazai-cuowu').exists()).toBe(false)
+    kuang.unmount()
+  })
+
+  it('生成进行中重复点击被拦截且按钮禁用', async () => {
+    const kuang = zaiRu({ kuanGaoBi: 1 })
+    await nextTick()
+    const xuanQu = kuang.find('cropper-selection').element as HTMLElement
+    Object.defineProperty(xuanQu, 'width', { value: 120, configurable: true })
+    Object.defineProperty(xuanQu, 'height', { value: 120, configurable: true })
+    let fangXing: (() => void) | null = null
+    const zha = new Promise<File>((jieJue) => {
+      fangXing = () => jieJue(new File([new Blob(['x'])], 'tupian.png', { type: 'image/png' }))
+    })
+    vi.spyOn(CaiJianGongJu, 'daoChuCaiJianWenJian').mockReturnValue(zha)
+    const dianJi = kuang.get('.anniu-que-ren').trigger('click')
+    await nextTick()
+    expect((kuang.get('.anniu-que-ren').element as HTMLButtonElement).disabled).toBe(true)
+    await kuang.get('.anniu-que-ren').trigger('click')
+    fangXing!()
+    await dianJi
+    expect(kuang.emitted('que-ren')).toHaveLength(1)
+    kuang.unmount()
   })
 })
 
 afterEach(() => {
+  vi.restoreAllMocks()
   document.body.innerHTML = ''
 })

@@ -8,6 +8,7 @@
     "build": "tsc && node scripts/复制静态资源.js",
     "start": "node -r tsconfig-paths/register dist/server.js",
     "typecheck": "tsc --noEmit",
+    "typecheck:test": "tsc --noEmit -p tsconfig.test.json",
     "typecheck:度量": "tsc --noEmit -p tsconfig.度量.json",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

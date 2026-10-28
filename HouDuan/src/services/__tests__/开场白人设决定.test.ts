@@ -16,7 +16,7 @@ const 人设: KaiChangBaiShengChengCanShu = {
   xing_ge: '安静，不太主动',
   yan_yu_feng_ge: '话少，句子短',
   xi_huan_de_lei_xing: '温和的人',
-  xing_bie: '女',
+  xing_bie: 'nv',
   ming_zi: '林小满',
   bei_jing_gu_shi: '普通家庭',
   qing_gan_jing_li: '没谈过',

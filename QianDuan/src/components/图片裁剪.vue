@@ -10,6 +10,7 @@
         background
         :scale-step="0.1"
         :aria-label="biLiWenAn"
+        @actionend="huaBuCaoZuoJieShu"
       >
         <cropper-image
           ref="tuXiangRef"
@@ -155,18 +156,8 @@
         :style="yuLanFuGaiYangShi"
       >
         <LiaoTianYuLan :biao-ti="yuLanBiaoTi" />
-        <div class="yu-lan-tian-chong" role="group" :aria-label="huoQuFanYi('sheZhi', 'caiJianYuLanTianChongZu')">
-          <button
-            v-for="xiang in tianChongXuanXiang"
-            :key="xiang.zhi"
-            type="button"
-            class="yu-lan-tian-chong-ka"
-            :class="{ 'yu-lan-tian-chong-ka--xuan': xiang.xuan }"
-            :aria-pressed="xiang.xuan"
-            @click="xuanZeTianChongMoShi(xiang.zhi)"
-          >
-            {{ huoQuFanYi('sheZhi', xiang.wenJian) }}
-          </button>
+        <div class="yu-lan-tian-chong">
+          <WaiGuanTianChongXuanZe :lei-xing="yuLanLeiXingZhi" />
         </div>
       </div>
       <div class="caijian-anniu-zu">
@@ -202,6 +193,7 @@ import {
   jueDingShuChuGeShi,
 } from '@/utils/图片裁剪'
 import LiaoTianYuLan from '@/components/聊天/聊天预览.vue'
+import WaiGuanTianChongXuanZe from '@/components/外观填充选择器.vue'
 
 const QU_YU_GAO_DU = 260
 const SUO_FANG_XIA_XIAN = 0.5
@@ -254,8 +246,14 @@ const emit = defineEmits<{
   (e: 'qu-xiao'): void
 }>()
 
-const quKuan = computed(() => Math.round(QU_YU_GAO_DU * Math.max(0.2, Math.min(5, props.kuanGaoBi))))
-const shiKouYangShi = computed(() => ({ width: `${quKuan.value}px`, height: `${QU_YU_GAO_DU}px` }))
+const anQuanBiLi = computed(() => Math.max(0.2, Math.min(5, props.kuanGaoBi)))
+const quKuan = computed(() => Math.round(QU_YU_GAO_DU * anQuanBiLi.value))
+const shiKouYangShi = computed(() => ({
+  width: `${quKuan.value}px`,
+  maxWidth: '100%',
+  height: 'auto',
+  aspectRatio: String(anQuanBiLi.value),
+}))
 
 const huaBuRef = ref<CropperCanvas | null>(null)
 const tuXiangRef = ref<CropperImage | null>(null)
@@ -402,6 +400,10 @@ function guDingXuanQuJuZhong(): void {
   xuanQuRef.value?.$center()
 }
 
+function huaBuCaoZuoJieShu(): void {
+  guDingXuanQuJuZhong()
+}
+
 function xuanZhuan(fangXiang: 1 | -1): void {
   tuXiangRef.value?.$rotate((fangXiang * Math.PI) / 2)
   shuaXinBianHuan()
@@ -487,28 +489,20 @@ function quSheZhiCang(): ReturnType<typeof 使用用户设置仓库> | null {
   return sheZhiCang
 }
 
+const yuLanLeiXingZhi = computed<'beiJing' | 'qiPao'>(() => (props.yuLanLeiXing === 'qiPao' ? 'qiPao' : 'beiJing'))
+
 function dangQianLaShenMoShi(): WaiGuanLaShenMoShi {
   const cang = quSheZhiCang()
   if (!cang) return 'dengBi'
   return props.yuLanLeiXing === 'qiPao' ? cang.qiPaoLaShenMoShi : cang.beiJingLaShenMoShi
 }
 
-const TIAN_CHONG_XUAN_XIANG: Array<{ zhi: WaiGuanLaShenMoShi; wenJian: 'caiJianYuLanTianChongDengBi' | 'caiJianYuLanTianChongHenXiang' | 'caiJianYuLanTianChongZongXiang' | 'caiJianYuLanTianChongQuanBu' }> = [
-  { zhi: 'dengBi', wenJian: 'caiJianYuLanTianChongDengBi' },
-  { zhi: 'henXiang', wenJian: 'caiJianYuLanTianChongHenXiang' },
-  { zhi: 'zongXiang', wenJian: 'caiJianYuLanTianChongZongXiang' },
-  { zhi: 'quanBu', wenJian: 'caiJianYuLanTianChongQuanBu' },
-]
-
-const tianChongXuanXiang = computed(() => {
-  const dangQian = dangQianLaShenMoShi()
-  return TIAN_CHONG_XUAN_XIANG.map((xiang) => ({ ...xiang, xuan: xiang.zhi === dangQian }))
+const yuLanWenZiYanSe = computed(() => {
+  const cang = quSheZhiCang()
+  if (!cang) return WAI_GUAN_MO_REN_WEN_ZI_YAN_SE
+  const tiaoMu = props.yuLanCeZhong === 'ai' ? cang.dangQianAiQiPaoTu : cang.dangQianZiJiQiPaoTu
+  return tiaoMu?.wenZiYanSe || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE
 })
-
-function xuanZeTianChongMoShi(zhi: WaiGuanLaShenMoShi): void {
-  if (!props.yuLanLeiXing) return
-  quSheZhiCang()?.shiYongLaShenMoShi(props.yuLanLeiXing, zhi)
-}
 
 const yuLanFuGaiYangShi = computed<Record<string, string>>(() => {
   const yangShi: Record<string, string> = {
@@ -517,7 +511,7 @@ const yuLanFuGaiYangShi = computed<Record<string, string>>(() => {
   if (!yuLanDiZhi.value) return yangShi
   const zhi =
     props.yuLanLeiXing === 'qiPao'
-      ? huoQuQiPaoBeiJingZhi(yuLanDiZhi.value, WAI_GUAN_MO_REN_WEN_ZI_YAN_SE, dangQianLaShenMoShi())
+      ? huoQuQiPaoBeiJingZhi(yuLanDiZhi.value, yuLanWenZiYanSe.value, dangQianLaShenMoShi())
       : `url("${yuLanDiZhi.value}")`
   yangShi['--caijian-yulan-fu-gai'] = zhi
   if (props.yuLanLeiXing === 'qiPao' && yuLanWeiBaSe.value) {
@@ -532,7 +526,7 @@ watch(yuLanDiZhi, (zhi) => {
   yuLanWeiBaSe.value = ''
   if (!zhi || props.yuLanLeiXing !== 'qiPao') return
   const ceBie = props.yuLanCeZhong === 'ai' ? 'zuo' : 'you'
-  void caiJiBianYuanYanSe(zhi, ceBie, huoQuQiPaoMengCengZhi(WAI_GUAN_MO_REN_WEN_ZI_YAN_SE)).then((yanSe) => {
+  void caiJiBianYuanYanSe(zhi, ceBie, huoQuQiPaoMengCengZhi(yuLanWenZiYanSe.value)).then((yanSe) => {
     if (yanSe) yuLanWeiBaSe.value = yanSe
   })
 })
@@ -925,44 +919,17 @@ onBeforeUnmount(() => {
 }
 
 .yu-lan-tian-chong {
+  --tian-chong-xian: var(--caijian-kong-xian);
+  --tian-chong-wenben: var(--caijian-kong-wenben);
+  --tian-chong-zhuse: var(--caijian-zhuse);
+  --tian-chong-xuan-beijing: rgba(7, 193, 96, 0.12);
+
   display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
   gap: var(--jiange-6);
   margin-top: var(--jiange-10);
-}
-
-.yu-lan-tian-chong-ka {
-  padding: var(--jiange-4) var(--jiange-10);
-  border: 1.5px solid var(--caijian-kong-xian);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--caijian-kong-wenben);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.4;
-  cursor: pointer;
-  transition:
-    border-color 0.2s ease,
-    color 0.2s ease,
-    background 0.2s ease;
-}
-
-.yu-lan-tian-chong-ka:hover {
-  border-color: var(--caijian-zhuse);
-  color: var(--caijian-zhuse);
-}
-
-.yu-lan-tian-chong-ka:focus-visible {
-  outline: 2px solid var(--caijian-zhuse);
-  outline-offset: 2px;
-}
-
-.yu-lan-tian-chong-ka--xuan {
-  border-color: var(--caijian-zhuse);
-  color: var(--caijian-zhuse);
-  background: rgba(7, 193, 96, 0.12);
 }
 
 .caijian-anniu-zu {
@@ -1000,8 +967,7 @@ onBeforeUnmount(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .caijian-gongju-anniu,
-  .bili-ka,
-  .yu-lan-tian-chong-ka {
+  .bili-ka {
     transition: none;
   }
 }

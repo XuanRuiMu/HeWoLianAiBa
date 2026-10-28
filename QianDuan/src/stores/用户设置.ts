@@ -644,6 +644,11 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     }
   })
 
+  const qiPaoCSSBianLiang = computed<Record<string, string>>(() => ({
+    ...ziJiQiPaoCSSBianLiang.value,
+    ...qiPaoXingZhuangBianLiang.value,
+  }))
+
   const qiPaoWeiBaYanSeLu = ref<Record<string, string>>({})
   const weiBaCaiYangZhong = new Set<string>()
 
@@ -757,14 +762,13 @@ export const 使用用户设置仓库 = defineStore('用户设置', () => {
     qiPaoYuanJiaoDangWei,
     qiPaoMiaoBianKaiQi,
     qiPaoMiaoBianYanSe,
-    qiPaoXingZhuangBianLiang,
     qiPaoWeiBaYanSeLu,
     waiGuan,
     duiXiangTouXiang,
     duiXiangJiaoSeId,
     qiPaoZiJi,
     qiPaoAI,
-    ziJiQiPaoCSSBianLiang,
+    qiPaoCSSBianLiang,
     dangQianZiJiQiPaoTu,
     dangQianAiQiPaoTu,
     dangQianQiPaoBiaoShu,

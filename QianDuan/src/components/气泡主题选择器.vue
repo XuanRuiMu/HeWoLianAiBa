@@ -1,5 +1,5 @@
 <template>
-  <section class="qipao-zhuTi-xuanZeQi" :aria-label="biaoTi" :style="sheZhi.qiPaoXingZhuangBianLiang">
+  <section class="qipao-zhuTi-xuanZeQi" :aria-label="biaoTi" :style="sheZhi.qiPaoCSSBianLiang">
     <div class="qi-pao-liang-lan">
       <section v-for="zu in fenZu" :key="zu.jian" class="qi-pao-ce">
         <h3 class="qi-pao-ce-ti">{{ zu.biaoTi }}</h3>

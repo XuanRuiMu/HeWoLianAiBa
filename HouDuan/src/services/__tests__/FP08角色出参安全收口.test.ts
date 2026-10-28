@@ -58,7 +58,16 @@ const DUO_SHOU_JIAO_SE: ShengChengJiaoSeJieGuo = {
   zhen_shi_ming: '林知夏',
   shi_jie_xin_xi: { cheng_shi: '杭州', zhi_ye: '汉语言文学' },
   xi_tong_ti_shi: '你是林知夏……',
-  ba_da_mo_kuai: { ji_ben_xin_xi: '姓名：林知夏' },
+  ba_da_mo_kuai: {
+    ji_ben_xin_xi: '姓名：林知夏',
+    wai_mao: '',
+    xing_ge: '',
+    bei_jing: '',
+    yan_yu: '',
+    xing_wei: '',
+    guan_xi: '',
+    xi_tong_ti_shi: '',
+  },
   hao_gan_du_zong_fen: 520,
   voice_id: 'nv-yin-se-x-xiao_he',
 }
@@ -88,7 +97,7 @@ const SUI_CANG_GONG_KAI: (keyof ShengChengJiaoSeJieGuo)[] = [
 
 describe('FP08 角色出参敏感字段脱敏（玩家透出层）', () => {
   it('玩家透出层剥离内部名/真名/世界信息/系统提示/八大模块', () => {
-    const touYing = touYingWanJiaKeJianJiaoSe(DUO_SHOU_JIAO_SE) as Record<string, unknown>
+    const touYing = touYingWanJiaKeJianJiaoSe(DUO_SHOU_JIAO_SE) as unknown as Record<string, unknown>
     for (const jian of JIAO_SE_YIN_SI_ZI_DUAN) {
       expect(jian in touYing).toBe(false)
     }
@@ -121,7 +130,7 @@ describe('FP08 角色出参敏感字段脱敏（玩家透出层）', () => {
 
   it('运营/管理投影保留隐私字段但剥离渣型与总分', () => {
     const jiaoSe = shengChengZhaXingJiaoSe()
-    const guanLi = touYingGuanLiJiaoSe(jiaoSe) as Record<string, unknown>
+    const guanLi = touYingGuanLiJiaoSe(jiaoSe) as unknown as Record<string, unknown>
     expect(guanLi.ming_zi).toBe('林知夏')
     expect(guanLi.zhen_shi_ming).toBe('林知夏')
     expect('shi_jie_xin_xi' in guanLi).toBe(true)

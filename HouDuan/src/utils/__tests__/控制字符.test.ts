@@ -86,8 +86,10 @@ describe('端到端：消息内容块文字块清洗后不含控制字符', () =
       { lei_xing: 'wenzi', nei_rong: '第二行\n照样换行' },
     ])
     expect(jieGuo.chaoXian).toBe(false)
-    expect(jieGuo.kuai.map((xiang) => xiang.nei_rong)).toEqual(['你好世界', '第二行\n照样换行'])
-    for (const xiang of jieGuo.kuai) {
+    const kuai = jieGuo.kuai
+    expect(kuai).not.toBeNull()
+    expect((kuai ?? []).map((xiang) => xiang.nei_rong)).toEqual(['你好世界', '第二行\n照样换行'])
+    for (const xiang of kuai ?? []) {
       expect(剥离控制字符(xiang.nei_rong ?? '')).toBe(xiang.nei_rong)
     }
   })

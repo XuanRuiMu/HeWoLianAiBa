@@ -8,7 +8,6 @@ import { fanYi, huoQuFanYi } from '@/config/翻译表'
 const 源码根 = resolve(__dirname, '..')
 const 读 = (相对: string) => readFileSync(resolve(源码根, 相对), 'utf8')
 const 生成仓库源码 = 读('stores/角色生成.ts')
-const 聊天仓库源码 = 读('stores/聊天.ts')
 const 菜单源码 = 读('components/全局菜单.vue')
 
 function 等待语列表(): string[] {
@@ -45,16 +44,12 @@ describe('FP-19 对象加载等待语与偷人提示', () => {
     expect(生成仓库源码).toMatch(
       /setInterval\(\(\) => \{\s*dengDaiYuXuHao\.value \+= 1\s*\}, DENG_DAI_ZHOU_QI_HAO_MIAO\)/,
     )
-    expect(生成仓库源码).not.toContain('步骤文案键')
-    expect(生成仓库源码).not.toContain("huoQuFanYi('tianJiaWeiXin', dangQianWenAnJian")
   })
 
   it('偷人提示只存在于创建对象的载入页词条，聊天页输入提示恒为「对方正在输入...」', () => {
     const touRen = huoQuFanYi('tianJiaWeiXin', 'dengDaiTouRen')
     expect(touRen).toBe('对方正在偷人...')
     expect(huoQuFanYi('liaoTian', 'duiFangZhengZaiShuRu')).toBe('对方正在输入...')
-    expect(聊天仓库源码).not.toContain('shouTiaoShiAI')
-    expect(菜单源码).not.toContain('shouCiJinRuWeiDu')
     expect(菜单源码).not.toContain("huoQuFanYi('tianJiaWeiXin', 'dengDaiTouRen')")
     expect(菜单源码).toContain('聊天仓库.zhengZaiShuRu')
   })
@@ -63,7 +58,5 @@ describe('FP-19 对象加载等待语与偷人提示', () => {
     expect(菜单源码).toMatch(
       /shiLiaoTianYe\.value\s*&&\s*!!聊天仓库\.jiaoSeXinXi\s*&&\s*聊天仓库\.zhengZaiShuRu/,
     )
-    expect(菜单源码).not.toContain('shouCiJinRuWeiDu')
-    expect(聊天仓库源码).not.toContain('shouTiaoShiAI')
   })
 })

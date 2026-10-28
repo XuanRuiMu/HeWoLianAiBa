@@ -321,11 +321,6 @@ describe('高光色随对象性别与主题切换', () => {
 })
 
 describe('随机卡与普通卡共享盒模型', () => {
-  const 样式内容 = 样式.replace(/^<style[^>]*>/, '').replace(/<\/style>\s*$/, '')
-  const 窄屏起点 = 样式内容.indexOf('@media (max-width: 480px)')
-  const 窄屏终点 = 样式内容.indexOf('\n@keyframes', 窄屏起点)
-  const 窄屏块 = 样式内容.slice(窄屏起点, 窄屏终点)
-  const 窄屏内容 = 窄屏块.slice(窄屏块.indexOf('{') + 1, 窄屏块.lastIndexOf('}'))
 
   function 读取长度(值: string, 根样式: CSSStyleDeclaration): number {
     const 变量 = 值.match(/var\((--[^)]+)\)/)
@@ -347,6 +342,26 @@ describe('随机卡与普通卡共享盒模型', () => {
     } as DOMRect
   }
 
+  function 窄屏编译规则(): string {
+    for (const 表 of Array.from(document.styleSheets)) {
+      let 规则们: CSSRuleList
+      try {
+        规则们 = 表.cssRules
+      } catch {
+        continue
+      }
+      for (const 规则 of Array.from(规则们)) {
+        if (!(规则 instanceof CSSMediaRule)) continue
+        if (!/max-width:\s*480px/.test(规则.conditionText)) continue
+        const 内规则们 = Array.from(规则.cssRules)
+        if (!内规则们.some((内) => (内 as CSSStyleRule).selectorText?.includes('mbti-wangGe')))
+          continue
+        return 内规则们.map((内) => (内 as CSSStyleRule).cssText).join('\n')
+      }
+    }
+    return ''
+  }
+
   function 挂载几何栅格(普通数量: number, 窄屏: boolean) {
     const pinia = createPinia()
     setActivePinia(pinia)
@@ -358,8 +373,10 @@ describe('随机卡与普通卡共享盒模型', () => {
       attachTo: document.body,
       global: { plugins: [pinia] },
     })
+    const 覆盖 = 窄屏 ? 窄屏编译规则() : ''
+    if (窄屏) expect(覆盖, '未从编译样式表提取到窄屏规则').not.toBe('')
     const 样式元素 = document.createElement('style')
-    样式元素.textContent = `:root { --jiange-2: 2px; --jiange-4: 4px; --jiange-6: 6px; --jiange-xiao: 8px; --jiange-10: 10px; }\n${样式内容}\n${窄屏 ? 窄屏内容 : ''}`
+    样式元素.textContent = `:root { --jiange-2: 2px; --jiange-4: 4px; --jiange-6: 6px; --jiange-xiao: 8px; --jiange-10: 10px; }${覆盖 ? '\n' + 覆盖 : ''}`
     document.head.append(样式元素)
     清理们.push(() => {
       包.unmount()

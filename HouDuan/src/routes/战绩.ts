@@ -32,6 +32,7 @@ import { 执行落库后副作用 } from '../utils/落库后副作用'
 import { yanZhengUUID } from '../utils/验证'
 import { CUO_WU_DAI_MA, shiCuoWuDaiMa } from '../config/错误码注册表'
 import { ZHAN_JI_PEI_ZHI } from '../config/战绩配置'
+import { xiaoChuShuZhiXieLu } from '../utils/数值泄露过滤'
 
 const luYou = Router()
 
@@ -185,16 +186,17 @@ function guoLvFuPanPiZhu(pi_zhu: FuPanPiZhu[] | null): QianDuanFuPanPiZhu[] | nu
   return pi_zhu.map((xiang) => {
     const tiaoMu: QianDuanFuPanPiZhu = {
       xu_hao: xiang.xu_hao,
-      ping_lun: xiang.ping_lun,
+      ping_lun: xiaoChuShuZhiXieLu(xiang.ping_lun),
     }
-    if (xiang.qing_gan) {
-      tiaoMu.qing_gan = xiang.qing_gan
+    const qingGan = xiang.qing_gan ? xiaoChuShuZhiXieLu(xiang.qing_gan) : ''
+    if (qingGan) {
+      tiaoMu.qing_gan = qingGan
     }
     return tiaoMu
   })
 }
 
-function guoLvMinGanZiDuanXiangQing(
+export function guoLvMinGanZiDuanXiangQing(
   dang_an: DangAnXiangQing,
 ): QianDuanDangAnXiangQing {
   const junShiJiLu = dang_an.jun_shi_ji_lu || []
@@ -218,7 +220,7 @@ function guoLvMinGanZiDuanXiangQing(
     sort_order: dang_an.sort_order,
     zui_hou_liang_tiao: guoLvZuiHouLiangTiao(dang_an.zui_hou_liang_tiao),
     fu_pan_shu_ju: guoLvFuPanShiJianXian(dang_an.fu_pan_shu_ju),
-    fu_pan_nei_rong: dang_an.fu_pan_nei_rong,
+    fu_pan_nei_rong: dang_an.fu_pan_nei_rong ? xiaoChuShuZhiXieLu(dang_an.fu_pan_nei_rong) : dang_an.fu_pan_nei_rong ?? null,
     fu_pan_pi_zhu: guoLvFuPanPiZhu(dang_an.fu_pan_pi_zhu),
     jun_shi_zhi_dao_ji_lu: junShiJiLu.map(zhuanHuanJunShiJiLu),
   }

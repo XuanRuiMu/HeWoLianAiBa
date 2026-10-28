@@ -130,4 +130,14 @@ describe('角色出参字段分类完整性', () => {
     }
     expect(序列化).toContain('微信名')
   })
+
+  it('夹具外新增的敏感字段默认不可见（fail-closed）', () => {
+    const 带新增敏感字段 = {
+      ...全字段夹具,
+      ce_shi_min_gan_xin_zi_duan: '绝密新增字段内容',
+    } as unknown as ShengChengJiaoSeJieGuo
+    const 透出 = touYingWanJiaKeJianJiaoSe(带新增敏感字段) as unknown as Record<string, unknown>
+    expect('ce_shi_min_gan_xin_zi_duan' in 透出).toBe(false)
+    expect(JSON.stringify(透出)).not.toContain('绝密新增字段内容')
+  })
 })

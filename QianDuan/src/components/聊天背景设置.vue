@@ -176,6 +176,11 @@
       </div>
     </div>
 
+    <div class="bei-jing-tian-chong">
+      <span class="bei-jing-tian-chong-ming">{{ tianChongWenAn }}</span>
+      <WaiGuanTianChongXuanZe lei-xing="beiJing" />
+    </div>
+
     <p v-if="提示" class="bei-jing-ti-shi" :class="{ 'bei-jing-ti-shi--cuo-wu': 提示失败 }" role="status">
       {{ 提示 }}
     </p>
@@ -245,6 +250,7 @@ import { baoCunWaiGuan } from '@/api/社交'
 import { 使用用户设置仓库, type BeiJingXiangMu } from '@/stores/用户设置'
 import { tiQuCuoWuWenBen } from '@/utils/前台错误'
 import WaiGuanJiuDiBianJi from '@/components/外观就地编辑器.vue'
+import WaiGuanTianChongXuanZe from '@/components/外观填充选择器.vue'
 import ShangChuanShuoMing from '@/components/上传说明层.vue'
 import QueRenDuiHuaKuang from '@/components/确认对话框.vue'
 
@@ -279,6 +285,7 @@ const 同步成功文案 = huoQuFanYi('sheZhi', 'beiJingYiTongBu')
 const 失败文案 = huoQuFanYi('sheZhi', 'waiGuanBaoCunShiBai')
 const tuPianMime = WAI_GUAN_TU_PIAN_MIME.join(',')
 const mingChengZuiDaZiFu = WAI_GUAN_BEI_JING_MING_CHENG_ZUI_DA_ZI_FU
+const tianChongWenAn = huoQuFanYi('sheZhi', 'caiJianYuLanTianChongZu')
 const yiYongWenAn = computed(() =>
   huoQuFanYi('sheZhi', 'beiJingYiYongJiShu')
     .replace('{n}', String(设置仓库.waiGuan.beiJing.length))
@@ -819,6 +826,26 @@ async function 确认删除(): Promise<void> {
 
 .bei-jing-ka-shang-chuan-wen {
   line-height: 1.4;
+}
+
+.bei-jing-tian-chong {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--jiange-10);
+  padding-top: var(--jiange-12);
+  border-top: 1px solid var(--biankuang-yanse);
+  min-width: 0;
+}
+
+.bei-jing-tian-chong-ming {
+  flex: none;
+  font-size: var(--ziti-xiao);
+  color: var(--wenben-ciuse);
+}
+
+.bei-jing-tian-chong :deep(.tian-chong-xuan-ze) {
+  justify-content: flex-start;
 }
 
 .bei-jing-ti-shi {

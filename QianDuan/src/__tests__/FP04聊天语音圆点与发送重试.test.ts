@@ -32,7 +32,6 @@ const 源码根 = resolve(__dirname, '..')
 const 读源 = (xiangDui: string): string => readFileSync(resolve(源码根, xiangDui), 'utf8')
 const 语音源 = 读源('components/聊天/语音气泡.vue')
 const 菜单源 = 读源('components/全局菜单.vue')
-const 聊天仓库源 = 读源('stores/聊天.ts')
 const 令牌源 = 读源('styles/设计令牌.css')
 
 const 图片媒体标识 = '11111111-1111-4111-8111-111111111111'
@@ -162,7 +161,12 @@ describe('FP-04 媒体发送失败保留与重试', () => {
     const 失败气泡 = 唯一用户消息(仓库)
     const keHuDuanId = 失败气泡.ke_hu_duan_id as string
     vi.mocked(faSongXiaoXi).mockResolvedValue({
-      xiaoXi: 服务端消息({ id: 'fu-wu-qi-tu', mei_ti_id: 图片媒体标识, mei_ti_url: 'https://cdn/tu.png' }),
+      xiaoXi: 服务端消息({
+        id: 'fu-wu-qi-tu',
+        mi_deng_jian: 失败气泡.mi_deng_jian,
+        mei_ti_id: 图片媒体标识,
+        mei_ti_url: 'https://cdn/tu.png',
+      }),
       shiMiJi: false,
     } as never)
 
@@ -198,6 +202,7 @@ describe('FP-04 媒体发送失败保留与重试', () => {
     vi.mocked(faSongXiaoXi).mockResolvedValue({
       xiaoXi: 服务端消息({
         id: 'fu-wu-qi-yin',
+        mi_deng_jian: 失败气泡.mi_deng_jian,
         lei_xing: 'yuYin',
         mei_ti_id: 语音媒体标识,
         mei_ti_url: 'https://cdn/yin.webm',
@@ -264,6 +269,7 @@ describe('FP-04 媒体发送失败保留与重试', () => {
     vi.mocked(faSongXiaoXi).mockResolvedValue({
       xiaoXi: 服务端消息({
         id: 'fu-wu-qi-tuwen',
+        mi_deng_jian: miDengJian,
         lei_xing: 'wenben',
         nei_rong: '你好',
         nei_rong_kuai: 失败气泡.nei_rong_kuai,
@@ -316,11 +322,37 @@ describe('FP-04 媒体发送失败保留与重试', () => {
 })
 
 describe('FP-04 聊天输入提示只由输入态驱动', () => {
-  it('源码与文案不再保留偷人分支，文案恰为三个半角点', () => {
-    expect(菜单源).not.toContain('shouCiJinRuWeiDu')
-    expect(菜单源).not.toContain('shouTiaoShiAI')
+  it('聊天页在任意 aiZhuangTai 取值下渲染文本都不出现偷人文案', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const 路由 = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: { template: '<div />' } },
+        { path: '/chat/:huiHuaId', name: 'liaoTian', component: { template: '<div />' } },
+      ],
+    })
+    await 路由.push({ name: 'liaoTian', params: { huiHuaId: 'hui-hua-1' } })
+    await 路由.isReady()
+    const 仓库 = 使用聊天仓库()
+    仓库.jiaoSeXinXi = { id: 'jue-se-1', wei_xin_ming: '小玄' } as never
+    const 壳 = mount(全局菜单, { global: { plugins: [pinia, 路由] } })
+    try {
+      for (const zhuangTai of ['kong_xian', 'zheng_zai_shu_ru', 'ren_yi_wei_zhi_zhuang_tai']) {
+        仓库.aiZhuangTai = zhuangTai
+        await nextTick()
+        expect(壳.text(), `aiZhuangTai=${zhuangTai} 时不得渲染偷人文案`).not.toContain('对方正在偷人')
+      }
+      仓库.aiZhuangTai = 'zheng_zai_shu_ru'
+      await nextTick()
+      expect(壳.get('.duifang-shuru-tishi').text()).toBe('对方正在输入...')
+    } finally {
+      壳.unmount()
+    }
+  })
+
+  it('源码不再把载入页词条接进聊天输入提示，文案恰为三个半角点', () => {
     expect(菜单源).not.toContain('dengDaiTouRen')
-    expect(聊天仓库源).not.toContain('shouTiaoShiAI')
     expect(菜单源).toMatch(
       /shiLiaoTianYe\.value\s*&&\s*!!聊天仓库\.jiaoSeXinXi\s*&&\s*聊天仓库\.zhengZaiShuRu/,
     )
