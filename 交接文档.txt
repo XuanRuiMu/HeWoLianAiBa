@@ -1,0 +1,30 @@
+# 交接文档（草地背景修复 + 月亮挪位）
+更新：2026-10-28
+
+## 任务背景
+只允许改「和我恋爱吧」项目的草地背景（QianDuan/public/grass-bg/）。用户已验收通过的部分：灰斑修复、两步加载根治。进行中的部分：月亮挪到右上角。吴昊阳相关代码一行未动；另一代理在做功能类改动，互不碰文件。所有改动未提交未推送（按项目规则走总控制台）。
+
+## 已完成并验收（勿回退）
+1. 灰斑修复（用户实测通过）：根因是历史补丁把草强种在原设计土路上、留下深色缝隙。最终方案是把补种完成的种植图直接烤进 QianDuan/public/grass-bg/textures/main-island-zones.png（1024x1024）。现在三个补种函数全部空操作，草一次长成，无两步加载。原始图可从 git 历史或 背景实验室/lab-a-base 找回。
+2. block-05.js 加了网址开关：grass-bg.html?zhuti=dark 强制夜景（只影响独立测试页，游戏走父页 data-theme）。
+3. 相关测试：5 个文件 45 条全绿（FP-04背景降级与握手 / FP-09指针锁定根除 / FP04吴昊阳与秃斑同源 / 主文档内联脚本与CSP门禁 / 主页雨水开关与自动填充语义）。
+
+## 进行中：月亮挪到屏幕右上角（未验证完，接手第一件事）
+- 原理：月亮不是 3D 物体，是 AnimeSky 天穹着色器按 uMoonDirection 画的天体盘（带陨石坑纹理）。昼夜管理器 setCelestialDirection 会改它，所以必须每帧覆盖。
+- 已做：block-08.js 新增 yueLiangDingShi()，在 rend.render 包装里每帧把 uMoonDirection 设为「NDC(0.7,0.7) 反投影的世界方向」，任何窗口比例都精确落右上角。控制台可调：__yueLiangWeiZhi(x,y)，x/y 为 -0.98~0.98 的 NDC 坐标。
+- 最后一步只做了 node --check 语法通过，还没进浏览器视觉验证（浏览器里还是旧缓存版：窗口尺寸变了月亮会跑偏，这正是最后一版修掉的 bug）。
+- 验证步骤：开 http://localhost:5174/grass-bg/grass-bg.html?zhuti=dark → F12 控制台执行 fetch('./scripts/block-08.js',{cache:'reload'}) → 刷新 → 等 25 秒 → 确认右上角有大月亮；再改窗口尺寸（如 1280x1000）确认月亮仍在右上角不跑偏；查 window.__yueLiangErr 应为 null。
+- 用户要求「应用到主项目」：grass-bg 目录是独立页和游戏 iframe 共用的同一份文件，代码层面已生效；最后在游戏欢迎页（需登录态，或看 dist 部署）目视确认一次即可。
+- 验证过后：重跑上面 5 个测试文件确认无回归。
+
+## 环境状态
+- 我的 dev 服务器在 5174（后台任务，仍在跑，用户测试页开在上面，别杀）；另一代理的在 5173。两个服务器读同一份文件。
+- 浏览器截图通道经常超时，备用方案：页面内用离屏渲染导出（渲染到 RenderTarget 再 readRenderTargetPixels 转 canvas.toDataURL），本会话已验证可行。
+- 测试页若页面隐藏（document.hidden），rAF 停转、加载管线（石头塌缩→补草→吴昊阳足迹）会卡住，看诊断时注意。
+
+## 关键诊断接口（页面全局变量）
+__fengXiDiag（补缝，烤入后应为 {tian:0,kong:1}）、__redboxDiag / __grassFillDiag（painted 应为 0）、__wuBodyField / __bareDiag（吴昊阳，mode 应为 collide）、__yueLiangErr、__removeState、__getCam。
+相机机位硬编码在 block-08.js：pos[4.2706,1.157,5.1022], dist 4.664, pitch -23, yaw -6.6。
+
+## 规矩提醒
+禁止写注释；拼音命名（禁英文）；LF 行尾；改动后必须验证；error 清零；不手动 git push（走总控制台）。

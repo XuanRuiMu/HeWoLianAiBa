@@ -9,6 +9,11 @@
             var DAY = ['#d9a441', '#9c6b1e', '#b08746', '#8a6a38'];        // 白天金草 L,D,dL,dD
             var NIGHT = ['#b07be0', '#7a3fa0', '#5e2d8a', '#2e1450'];      // 夜晚紫草（深色模式=全紫草+紫地）
             var themeOverride = null;
+            try {
+                var wangZhiCanShu = new URLSearchParams(window.location.search);
+                var wangZhiZhuTi = wangZhiCanShu.get('zhuti');
+                if (wangZhiZhuTi === 'dark' || wangZhiZhuTi === 'light') themeOverride = wangZhiZhuTi;
+            } catch (eWangZhi) {}
 
             function parentTheme() {
                 try {

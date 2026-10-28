@@ -231,6 +231,28 @@ distMin: 0.6,
       try { wuBareWatch(); } catch (e2) {}
       try { wuSkyTick(); } catch (e3) { window.__wuSkyErr = String(e3 && e3.message || e3); }
     };
+    var YUE_LIANG_NDC = { x: 0.7, y: 0.7 };
+    var yueLiangFangXiang = null;
+    window.__yueLiangWeiZhi = function (x, y) {
+      if (typeof x === 'number' && isFinite(x)) YUE_LIANG_NDC.x = Math.min(0.98, Math.max(-0.98, x));
+      if (typeof y === 'number' && isFinite(y)) YUE_LIANG_NDC.y = Math.min(0.98, Math.max(-0.98, y));
+      yueLiangFangXiang = null;
+      return { x: YUE_LIANG_NDC.x, y: YUE_LIANG_NDC.y };
+    };
+    function yueLiangMuBiaoFangXiang() {
+      try {
+        var shiJie = cam.getWorldPosition(new V3c());
+        var ndc = new V3c(YUE_LIANG_NDC.x, YUE_LIANG_NDC.y, 0.5).unproject(cam);
+        return ndc.sub(shiJie).normalize();
+      } catch (eY1) { window.__yueLiangErr = String(eY1 && eY1.message || eY1); return null; }
+    }
+    function yueLiangDingShi() {
+      var fangXiang = yueLiangMuBiaoFangXiang();
+      if (!fangXiang) return;
+      var sky = scene.getObjectByName('AnimeSky');
+      if (!sky || !sky.material || !sky.material.uniforms || !sky.material.uniforms.uMoonDirection) return;
+      sky.material.uniforms.uMoonDirection.value.copy(fangXiang);
+    }
     var rend = eng.renderer.instance;
     var origRender = rend.render;
     // 预分配：同帧探针每帧原地改写它，不产生垃圾
@@ -243,6 +265,7 @@ distMin: 0.6,
         wuBodyWatch(performance.now());
         wuBareWatch();
         try { wuSkyTick(); } catch (eSky) { window.__wuSkyErr = String(eSky && eSky.message || eSky); }
+        try { yueLiangDingShi(); } catch (eYue) { window.__yueLiangErr = String(eYue && eYue.message || eYue); }
         // 吴昊阳现在与草同在世界里（贴地网格），视差让他和草一起动，
         // 不再需要在这里逐帧把位移抄给宿主 —— 那套机制已随之删除。
         out = origRender.call(this, sc, cm);
@@ -1263,6 +1286,94 @@ window.__camReady = true;
         return;
       }
       rockFilled = true;
+    }
+    var fengXiDone = false, fengXiStarted = false;
+    function buFengXi() {
+      if (fengXiDone || fengXiStarted) return;
+      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
+      if (!grass || !grass.zonesTexture || !redboxFilled || !rockFilled) return;
+      fengXiStarted = true;
+      var yuanTu = new Image();
+      yuanTu.onload = function () {
+        try {
+          var grass2 = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
+          var zt = grass2 && grass2.zonesTexture;
+          if (!zt || !zt.image) { fengXiStarted = false; return; }
+          var img = zt.image, tw = img.width, th = img.height;
+          var c2 = img.getContext('2d', { willReadFrequently: true });
+          var live = c2.getImageData(0, 0, tw, th);
+          var d = live.data;
+          var yuanHuaBu = document.createElement('canvas');
+          yuanHuaBu.width = yuanTu.naturalWidth; yuanHuaBu.height = yuanTu.naturalHeight;
+          var yuanCtx = yuanHuaBu.getContext('2d', { willReadFrequently: true });
+          yuanCtx.drawImage(yuanTu, 0, 0);
+          var od = yuanCtx.getImageData(0, 0, tw, th).data;
+          var x0 = tw, x1 = -1, y0 = th, y1 = -1;
+          var lieJi = new Array(tw).fill(0), hangJi = new Array(th).fill(0);
+          for (var py = 0; py < th; py++) {
+            for (var px = 0; px < tw; px++) {
+              var o = (py * tw + px) * 4;
+              if (Math.abs(d[o] - od[o]) > 8 || Math.abs(d[o + 1] - od[o + 1]) > 8 || Math.abs(d[o + 2] - od[o + 2]) > 8) {
+                lieJi[px]++; hangJi[py]++;
+              }
+            }
+          }
+          var chengPian = Math.max(4, Math.round(tw * 0.004));
+          for (var px2a = 0; px2a < tw; px2a++) {
+            if (lieJi[px2a] >= chengPian) { if (px2a < x0) x0 = px2a; if (px2a > x1) x1 = px2a; }
+          }
+          for (var py2a = 0; py2a < th; py2a++) {
+            if (hangJi[py2a] >= chengPian) { if (py2a < y0) y0 = py2a; if (py2a > y1) y1 = py2a; }
+          }
+          if (x1 < 0) { window.__fengXiDiag = { tian: 0, huaFuWei: 0, kong: 1 }; fengXiDone = true; return; }
+          var bianJu = Math.round(tw * 0.016);
+          var kanBuJianXian = Math.round(th * 0.78);
+          var fx0 = Math.max(0, x0 - bianJu), fx1 = Math.min(tw - 1, x1 + bianJu);
+          var fy0 = Math.max(0, y0 - bianJu, kanBuJianXian), fy1 = Math.min(th - 1, y1 + bianJu);
+          var huaJianJu = Math.round(tw * 0.14);
+          var tian = 0, huaFuWei = 0;
+          for (var fy = fy0; fy <= fy1; fy++) {
+            for (var fx = fx0; fx <= fx1; fx++) {
+              var o2 = (fy * tw + fx) * 4;
+              if (d[o2 + 1] < 100) {
+                d[o2] = 0; d[o2 + 1] = 255; d[o2 + 2] = 0; d[o2 + 3] = 255;
+                var huaUo = -1;
+                for (var k = 0; k < 14 && huaUo < 0; k++) {
+                  var du = fx + huaJianJu - k * 10;
+                  if (du < 0 || du >= tw) continue;
+                  var uo = (fy * tw + du) * 4;
+                  if (od[uo + 1] >= 100) huaUo = uo;
+                }
+                if (huaUo >= 0) { d[o2] = od[huaUo]; d[o2 + 2] = od[huaUo + 2]; }
+                tian++;
+              } else if (od[o2 + 1] >= 100 && d[o2] === 0 && d[o2 + 2] === 0 && (od[o2] > 8 || od[o2 + 2] > 8)) {
+                d[o2] = od[o2]; d[o2 + 2] = od[o2 + 2];
+                huaFuWei++;
+              }
+            }
+          }
+          c2.putImageData(live, 0, 0);
+          zt.needsUpdate = true;
+          window.__fengXiDiag = { tian: tian, huaFuWei: huaFuWei, qu: [+(fx0 / tw).toFixed(3), +(fy0 / th).toFixed(3), +(fx1 / tw).toFixed(3), +(fy1 / th).toFixed(3)] };
+          try { grass2.rebuild(); } catch (eR) { window.__fengXiErr = String(eR && eR.stack || eR); }
+          try {
+            var isl = E.world.islands.mainIsland;
+            ['flowers1', 'flowers2'].forEach(function (k2) {
+              var fk = isl && isl[k2];
+              if (fk && typeof fk.destroy === 'function' && typeof fk.init === 'function') { fk.destroy(); fk.init(); }
+            });
+          } catch (eF) { window.__fengXiErr = String(eF && eF.stack || eF); }
+          fengXiDone = true;
+        } catch (eZ) {
+          window.__fengXiErr = String(eZ && eZ.stack || eZ);
+          fengXiStarted = false;
+        }
+      };
+      yuanTu.onerror = function () {
+        window.__fengXiErr = 'yuanShiFenQuTuJiaZaiShiBai';
+        fengXiStarted = false;
+      };
+      yuanTu.src = './textures/main-island-zones.png';
     }
     // ---------- 吴昊阳身下变光秃土地 ----------
     // 引擎靠 zonesTexture 的绿通道决定哪儿长草：草与 pampa 都用 g 作采样权重，
@@ -2449,6 +2560,11 @@ window.__camReady = true;
         fillGrass();
       } catch (e2) {
         if (!window.__grassFillErr) window.__grassFillErr = String(e2 && e2.stack || e2);
+      }
+      try {
+        buFengXi();
+      } catch (e3) {
+        if (!window.__fengXiErr) window.__fengXiErr = String(e3 && e3.stack || e3);
       }
       try {
         makeBare();
