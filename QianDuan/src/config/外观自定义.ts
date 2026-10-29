@@ -51,7 +51,6 @@ export const WAI_GUAN_TU_PIAN_MIME = ['image/jpeg', 'image/png', 'image/webp', '
 
 export const WAI_GUAN_QI_PAO_YAN_SE_XUAN_XIANG = ['#FFFFFF', '#333333', '#000000'] as const
 
-export const WAI_GUAN_QI_PAO_WEI_BA_ZHAN_WEI = '#FFFFFF'
 export const WAI_GUAN_QI_PAO_MIAO_BIAN_YAN_SE_MO_REN = '#333333'
 export const WAI_GUAN_QI_PAO_MIAO_BIAN_KUAN = '1.5px'
 
@@ -289,8 +288,9 @@ export function shiHeFaWeiBaWeiZhi(zhi: unknown): zhi is QiPaoWeiBaWeiZhi {
 export function huoQuWeiBaWeiZhiZhi(weiZhi: QiPaoWeiBaWeiZhi): string {
   switch (weiZhi) {
     case 'zhong': return 'calc(50% - var(--qipao-weiba-ban))'
-    case 'xia': return 'calc(100% - var(--qipao-weiba-ju-li) - var(--qipao-weiba-ban) * 2)'
-    default: return 'var(--qipao-weiba-ju-li)'
+    case 'xia': return 'calc(100% - max(var(--qipao-weiba-ju-li), var(--qipao-yuanjiao)) - var(--qipao-weiba-ban) * 2)'
+    default:
+      return 'max(var(--qipao-yuanjiao), calc(var(--qipao-weiba-shang-bu-ju, var(--qipao-nei-ju-shang)) + 0.5lh - var(--qipao-weiba-ban)))'
   }
 }
 
@@ -316,15 +316,39 @@ export function huoQuMiaoBianYangShi(kai: boolean, yanSe: string): string {
   return `0 0 0 ${WAI_GUAN_QI_PAO_MIAO_BIAN_KUAN} ${qingLi}`
 }
 
-export function jieXiMengCengZhi(zhi: string): WaiGuanMengCeng | null {
-  const piPei = /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(0?\.\d+|1|0)\s*\)$/.exec(zhi.trim())
-  if (!piPei) return null
-  const r = Number(piPei[1])
-  const g = Number(piPei[2])
-  const b = Number(piPei[3])
-  const a = Number(piPei[4])
-  if ([r, g, b].some((tongDao) => tongDao > 255) || a > 1) return null
-  return { r, g, b, a }
+export function huoQuWeiBaMiaoBianYanSe(kai: boolean, yanSe: string): string {
+  const qingLi = yanSe.trim()
+  return kai && WAI_GUAN_YAN_SE_GE_SHI.test(qingLi) ? qingLi : 'transparent'
+}
+
+export function huoQuQiPaoWeiBaBianLiang(
+  moShi: QiPaoWeiBaMoShi,
+  weiZhi: QiPaoWeiBaWeiZhi,
+  miaoBianKaiQi: boolean,
+  miaoBianYanSe: string,
+): Record<string, string> {
+  const chiCun = huoQuWeiBaChiCun(moShi)
+  return {
+    '--qipao-weiba-shang': huoQuWeiBaWeiZhiZhi(weiZhi),
+    '--qipao-weiba-kuan': chiCun.kuan,
+    '--qipao-weiba-ban': chiCun.ban,
+    '--qipao-weiba-xian-shi': moShi === 'wu' ? 'none' : 'block',
+    '--qipao-weiba-miao-bian': huoQuWeiBaMiaoBianYanSe(miaoBianKaiQi, miaoBianYanSe),
+  }
+}
+
+export function huoQuQiPaoXingZhuangBianLiang(canShu: {
+  weiBaMoShi: QiPaoWeiBaMoShi
+  weiBaWeiZhi: QiPaoWeiBaWeiZhi
+  yuanJiaoDangWei: QiPaoYuanJiaoDangWei
+  miaoBianKaiQi: boolean
+  miaoBianYanSe: string
+}): Record<string, string> {
+  return {
+    '--qipao-yuanjiao': huoQuYuanJiaoDangZhi(canShu.yuanJiaoDangWei),
+    '--qipao-miaoBian-yangShi': huoQuMiaoBianYangShi(canShu.miaoBianKaiQi, canShu.miaoBianYanSe),
+    ...huoQuQiPaoWeiBaBianLiang(canShu.weiBaMoShi, canShu.weiBaWeiZhi, canShu.miaoBianKaiQi, canShu.miaoBianYanSe),
+  }
 }
 
 export function guiYiWaiGuanChuCan(can: WaiGuanChuCan | null | undefined): WaiGuanShuJu {

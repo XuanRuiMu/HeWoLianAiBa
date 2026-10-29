@@ -118,15 +118,25 @@
   position: relative;
   overflow: visible;
   padding-top: var(--biaoqian-qin-ru);
+}
+
+.shuru-zu::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--shuru-xian-changtai-kuan-du);
+  pointer-events: none;
   background-image:
     var(--shuru-sao-jianbian),
     linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se));
   background-repeat: no-repeat, no-repeat;
   background-position: left bottom, left bottom;
-  background-size: 0% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du);
+  background-size: 0% 100%, 100% 100%;
   transition-property: background-size;
-  transition-duration: var(--shuru-sao-chu-shi-chang), var(--shuru-sao-chu-shi-chang);
-  transition-timing-function: var(--quxian-sao-chu), var(--quxian-sao-chu);
+  transition-duration: var(--shuru-sao-chu-shi-chang);
+  transition-timing-function: var(--quxian-sao-chu);
 }
 
 .shuru-zu > .fenlie-shuru,
@@ -163,17 +173,17 @@
   outline: none;
 }
 
-.shuru-zu:focus-within {
-  background-size: 100% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du);
+.shuru-zu:focus-within::after {
+  background-size: 100% 100%, 100% 100%;
 }
 
 .fenlie-shuru::placeholder {
   color: transparent;
 }
 
-.shuru-zu:has(> .chushengriqi) {
-  background-image: none;
-  background-size: auto;
+.shuru-zu:has(> .chushengriqi)::after,
+.shuru-zu.wu-di-xian::after {
+  content: none;
 }
 
 @keyframes ziDongTianChongKaiShi {
@@ -437,7 +447,7 @@
     animation: none;
   }
 
-  .shuru-zu,
+  .shuru-zu::after,
   .shuru-zu .fenlie-shuru,
   .fudong-biaoqian {
     transition: none;

@@ -83,7 +83,7 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
         .filter(
           ({ 路径, 文本 }) =>
             !(
-              路径.includes('dengDaiYuLieBiao') ||
+              路径.includes('quWeiYu') ||
               路径.includes('dengDaiTouRen') ||
               路径.includes('duiFangZhengZaiShuRu')
             ) &&

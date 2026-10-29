@@ -5,6 +5,7 @@
       :class="{ bofangzhong: boFangZhong }"
       :shi-ben-ren="shiBenRen"
       :ke-dian-ji="true"
+      :wen-zi-nei-ju="false"
       :style="kuanYangShi"
       :aria-label="
         boFangZhong ? huoQuFanYi('duoMeiTi', 'zanTingYuYin') : huoQuFanYi('duoMeiTi', 'boFangYuYin')
@@ -303,6 +304,8 @@ onBeforeUnmount(() => {
 }
 
 .yuyin-neirong {
+  position: relative;
+  top: var(--yuyin-neirong-xia-yi);
   display: inline-flex;
   align-items: center;
   gap: var(--yuyin-laba-jian-ju);

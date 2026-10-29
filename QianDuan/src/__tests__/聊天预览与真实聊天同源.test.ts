@@ -328,6 +328,10 @@ describe('聊天预览挂载后与真实聊天页同构', () => {
 
   it('共享组件的气泡皮肤仍然只有气泡容器一份', () => {
     expect(容器源).toContain('padding: var(--jiange-9) var(--jiange-13)')
+    expect(容器源).toContain(
+      'padding-block: var(--qipao-nei-ju-shang) var(--qipao-nei-ju-xia)',
+    )
+    expect(容器源).toContain("'qipao-neirong--wen-zi-nei-ju': wenZiNeiJu")
     expect(容器源).toContain('border-radius: var(--qipao-yuanjiao)')
     expect(容器源).toContain('font-size: var(--qipao-zihao)')
     expect(容器源).toContain('line-height: var(--qipao-hangao)')

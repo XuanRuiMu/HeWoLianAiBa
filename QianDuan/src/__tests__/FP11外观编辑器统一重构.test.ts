@@ -18,7 +18,7 @@ describe('FP-11 外观编辑器统一重构', () => {
   })
 
   it('背景编辑面板追加在模式网格之后，不再在网格内插队', () => {
-    expect(背景源码).toMatch(/<\/div>\s*\n\s*<div v-if="编辑模式 === 模式\.键" class="bei-jing-bian-ji-wei">/)
+    expect(背景源码).toMatch(/<\/div>\s*\n\s*<div v-if="编辑目标\?\.模式 === 模式\.键" class="bei-jing-bian-ji-wei">/)
     expect(背景源码).not.toMatch(/v-if="编辑键 === 键\(模式\.键, 项\)"/)
   })
 
@@ -37,16 +37,16 @@ describe('FP-11 外观编辑器统一重构', () => {
 
   it('背景卡片名称实时映射预览草稿（显示名与样式都吃预览值）', () => {
     expect(背景源码).toContain('function 显示名(模式: \'qian\' | \'shen\', 项: BeiJingXiangMu): string')
-    expect(背景源码).toContain('return 预览值.value.mingCheng')
-    expect(背景源码).toContain('const yuLanSe = shiYuLanZhong(模式, 项) && 预览值.value ? 预览值.value.wenZiYanSe : \'\'')
+    expect(背景源码).toContain('return 编辑预览.value.mingCheng')
+    expect(背景源码).toContain('const yuLanSe = shiYuLanZhong(模式, 项) && 编辑预览.value ? 编辑预览.value.wenZiYanSe : \'\'')
     expect(背景源码).toContain('@yu-lan="更新预览"')
   })
 
   it('气泡名称与颜色同样实时映射', () => {
     expect(气泡源码).toContain('shiXianYuShe')
     expect(气泡源码).toContain('shiXianTiaoMu')
-    expect(气泡源码).toContain('gengXinYuSheYuLan')
-    expect(气泡源码).toContain('gengXinTiaoMuYuLan')
+    expect((气泡源码.match(/return 编辑预览\.value\.mingCheng/g) ?? []).length).toBe(2)
+    expect(气泡源码).toContain('@yu-lan="更新预览"')
   })
 
   it('删除的提示文案在源码与翻译表中都不复存在', () => {

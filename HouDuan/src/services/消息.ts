@@ -370,7 +370,7 @@ export async function huoQuJiaoSeSuoYouZhe(
 
 export async function anIdChaXiaoXi(xiao_xi_id: string): Promise<XiaoXiXinXi | null> {
   const jieGuo = await 数据库.query(
-    `SELECT m.*, mf."SHA256" AS "媒体SHA256"
+    `SELECT m.*, mf."SHA256" AS "媒体SHA256", mf."时长毫秒" AS "媒体时长毫秒"
      FROM "消息" m LEFT JOIN "媒体文件" mf ON m."媒体ID" = mf."ID"
      WHERE m."ID" = $1 LIMIT 1`,
     [xiao_xi_id],
@@ -744,7 +744,7 @@ export async function chuangJianYongHuXiaoXi(
   }
 
   const jieGuo = await 数据库.query(
-    `SELECT m.*, mf."SHA256" AS "媒体SHA256"
+    `SELECT m.*, mf."SHA256" AS "媒体SHA256", mf."时长毫秒" AS "媒体时长毫秒"
      FROM "消息" m LEFT JOIN "媒体文件" mf ON m."媒体ID" = mf."ID"
      WHERE m."ID" = $1 LIMIT 1`,
     [luo_ku_id],
@@ -808,7 +808,7 @@ export async function cheHuiYongHuXiaoXi(
        WHERE "ID" = $1
        RETURNING *
      )
-     SELECT upd.*, mf."SHA256" AS "媒体SHA256"
+     SELECT upd.*, mf."SHA256" AS "媒体SHA256", mf."时长毫秒" AS "媒体时长毫秒"
      FROM upd LEFT JOIN "媒体文件" mf ON upd."媒体ID" = mf."ID"`,
     [canShu.xiao_xi_id],
   )
@@ -845,7 +845,7 @@ export async function cheHuiJiaoSeXiaoXi(
        WHERE "ID" = $1
        RETURNING *
      )
-     SELECT upd.*, mf."SHA256" AS "媒体SHA256"
+     SELECT upd.*, mf."SHA256" AS "媒体SHA256", mf."时长毫秒" AS "媒体时长毫秒"
      FROM upd LEFT JOIN "媒体文件" mf ON upd."媒体ID" = mf."ID"`,
     [xiaoXi.ID],
   )
@@ -888,7 +888,7 @@ export async function baoCunJiaoSeMeiTiXiaoXi(
          ON CONFLICT DO NOTHING
          RETURNING *
        )
-       SELECT xin.*, mf."SHA256" AS "媒体SHA256"
+       SELECT xin.*, mf."SHA256" AS "媒体SHA256", mf."时长毫秒" AS "媒体时长毫秒"
        FROM xin LEFT JOIN "媒体文件" mf ON xin."媒体ID" = mf."ID"`,
       [canShu.yong_hu_id, canShu.jiao_se_id, qingLiNeiRong, canShu.lei_xing, canShu.mei_ti_id],
     )

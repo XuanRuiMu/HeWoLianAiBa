@@ -222,13 +222,18 @@ describe('挑战主页信息结构', () => {
     await 包.find('.duiju-cao .anniu--wei').trigger('click')
     await flushPromises()
     expect(包.findAll('.duiju-cao .anniu')).toHaveLength(3)
-    expect(包.find('.duiju-cao .anniu--wei').text()).toBe(huoQuFanYi('tiaoZhan', 'queRenFangQi'))
-    expect(包.find('.tishi-qipao--you').text()).toBe(
+    expect(包.find('.duiju-cao > .fangqi-que-ren-wei > .anniu--wei').text()).toBe(
+      huoQuFanYi('tiaoZhan', 'queRenFangQi'),
+    )
+    expect(包.get('.fangqi-que-ren-wei .tishi-qipao').element.parentElement).toBe(
+      包.get('.fangqi-que-ren-wei').element,
+    )
+    expect(包.find('.fangqi-que-ren-wei .tishi-qipao').text()).toBe(
       huoQuFanYi('tiaoZhan', 'fangQiKouFenTiShi').replace('{fenshu}', '15'),
     )
     await 包.find('.duiju-cao .anniu--mo').trigger('click')
     expect(包.findAll('.duiju-cao .anniu')).toHaveLength(2)
-    expect(包.find('.tishi-qipao--you').exists()).toBe(false)
+    expect(包.find('.fangqi-que-ren-wei .tishi-qipao').exists()).toBe(false)
     包.unmount()
   })
 })

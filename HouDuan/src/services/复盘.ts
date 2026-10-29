@@ -3,6 +3,7 @@ import { huoQuXiaoXiLieBiao } from './消息'
 import { gengXinFuPanNeiRong } from './战绩'
 import type { FuPanPiZhu, FuPanShiJianXianTiaoMu } from './战绩'
 import { HAO_GAN_DU_PEI_ZHI } from '../config/好感度配置'
+import { YUN_YING_ZI_DUAN_XIAO_XI_LEI_XING } from '../config/消息配置'
 import { huoQuWanZhengHaoGanDu, huoQuJieDuanMing } from './好感度'
 import { tiQuBingLuoKuGuanJianShiJian } from './关键事件提取'
 import { zhaXingBianTi, type MBTILeiXing } from '../config/角色配置'
@@ -21,6 +22,35 @@ export interface FuPanShengChengJieGuo {
   fu_pan_nei_rong: string
   fu_pan_shi_jian_xian: FuPanShiJianXianTiaoMu[]
   fu_pan_pi_zhu: FuPanPiZhu[]
+}
+
+export const 复盘状态 = {
+  生成中: 'sheng_cheng_zhong',
+  已完成: 'yi_wan_cheng',
+  无聊天记录: 'wu_liao_tian_ji_lu',
+} as const
+
+export const FU_PAN_YOU_XIAO_XIAO_XI_SHU_YU_JU = `
+  SELECT COUNT(*)::int AS "有效消息数"
+    FROM "消息"
+   WHERE "用户ID" = $1
+     AND "角色ID" = $2
+     AND "发送者" IN ('yonghu', 'jiaose')
+     AND COALESCE("已撤回", false) = false
+     AND COALESCE("类型", 'wenBen') <> ALL($3::varchar[])
+`
+
+export async function huoQuFuPanYouXiaoXiaoXiShu(
+  yong_hu_id: string,
+  jiao_se_id: string,
+): Promise<number> {
+  const jieGuo = await 数据库.query(FU_PAN_YOU_XIAO_XIAO_XI_SHU_YU_JU, [
+    yong_hu_id,
+    jiao_se_id,
+    [...YUN_YING_ZI_DUAN_XIAO_XI_LEI_XING],
+  ])
+  const shuZhi = Number(jieGuo.rows[0]?.有效消息数 ?? 0)
+  return Number.isFinite(shuZhi) && shuZhi > 0 ? Math.floor(shuZhi) : 0
 }
 
 interface FuPanJSONJieGou {
@@ -376,7 +406,10 @@ export async function shengChengFuPan(
   yong_hu_id: string,
   jiao_se_id: string,
   dang_an_id: string,
-): Promise<FuPanShengChengJieGuo> {
+): Promise<FuPanShengChengJieGuo | null> {
+  const youXiaoXiaoXiShu = await huoQuFuPanYouXiaoXiaoXiShu(yong_hu_id, jiao_se_id)
+  if (youXiaoXiaoXiShu === 0) return null
+
   const dangAnJieGuo = await 数据库.query(
     `SELECT "是否秘籍通关", "秘籍前好感度" FROM "游戏档案" WHERE "用户ID" = $1 AND "角色ID" = $2 LIMIT 1`,
     [yong_hu_id, jiao_se_id],

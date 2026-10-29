@@ -22,7 +22,7 @@
             :style="xuanXiangYangShi(zu.jian, yuShe)"
             @click="xuanZeYuShe(zu.jian, yuShe)"
           >
-            <span class="qi-pao-xuan-xiang-wen" @dblclick.stop="daKaiYuSheBianJi(yuShe)">
+            <span class="qi-pao-xuan-xiang-wen" data-wai-guan-gai-ming @dblclick.stop="daKaiYuSheBianJi(yuShe)">
               <span class="qi-pao-xuan-xiang-wen-nei" :title="shiXianYuShe(zu.jian, yuShe)">{{
                 shiXianYuShe(zu.jian, yuShe)
               }}</span>
@@ -33,6 +33,7 @@
               tabindex="-1"
               class="qi-pao-ka-kong-zhi"
               :aria-label="bianJiMingChengWenAn + '：' + shiXianYuShe(zu.jian, yuShe)"
+              data-wai-guan-gai-ming
               @click.stop="daKaiYuSheBianJi(yuShe)"
               @dblclick.stop="daKaiYuSheBianJi(yuShe)"
             >
@@ -50,6 +51,7 @@
                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
               </svg>
             </span>
+            <QiPaoWeiBa :ce="zu.jian === 'ziJi' ? 'you' : 'zuo'" />
           </button>
 
           <VueDraggable
@@ -90,7 +92,7 @@
                 :style="ziDingYiYangShi(zu.jian, tiaoMu)"
                 @click="xuanZeZiDingYi(zu.jian, tiaoMu.id)"
               >
-                <span class="qi-pao-xuan-xiang-wen" @dblclick.stop="daKaiBianJi(tiaoMu)">
+                <span class="qi-pao-xuan-xiang-wen" data-wai-guan-gai-ming @dblclick.stop="daKaiBianJi(tiaoMu)">
                   <span class="qi-pao-xuan-xiang-wen-nei" :title="shiXianTiaoMu(zu.jian, tiaoMu)">{{
                     shiXianTiaoMu(zu.jian, tiaoMu)
                   }}</span>
@@ -101,6 +103,7 @@
                   tabindex="-1"
                   class="qi-pao-ka-kong-zhi"
                   :aria-label="bianJiMingChengWenAn + '：' + tiaoMu.mingCheng"
+                  data-wai-guan-gai-ming
                   @click.stop="daKaiBianJi(tiaoMu)"
                   @dblclick.stop="daKaiBianJi(tiaoMu)"
                 >
@@ -143,6 +146,7 @@
                     <path d="M10 11v6M14 11v6" />
                   </svg>
                 </span>
+                <QiPaoWeiBa :ce="zu.jian === 'ziJi' ? 'you' : 'zuo'" />
               </button>
             </div>
           </VueDraggable>
@@ -161,35 +165,21 @@
       </section>
     </div>
 
-    <div v-if="预设编辑中" class="qi-pao-bian-ji-wei">
+    <div v-if="编辑目标" class="qi-pao-bian-ji-wei">
       <WaiGuanJiuDiBianJi
+        :key="编辑目标.键"
         :biao-ti="bianJiBiaoTi"
-        :ming-cheng="预设编辑中.mingCheng"
-        :wen-zi-yan-se="预设编辑中.wenZiYanSe"
+        :ming-cheng="编辑目标.名称"
+        :wen-zi-yan-se="编辑目标.文字颜色"
         :zui-da-zi-fu="WAI_GUAN_QI_PAO_MING_CHENG_ZUI_DA_ZI_FU"
         lei-bie="qiPao"
-        :cuo-wu-wen-an="预设编辑错误"
-        :cao-zuo-zhong="预设保存中"
-        @tijiao="baoChunYuSheBianJi"
-        @huan-yuan="huanYuanYuSheBianJi"
-        @qu-xiao="guanBiYuSheBianJi"
-        @yu-lan="gengXinYuSheYuLan"
-      />
-    </div>
-
-    <div v-if="bianJiZhong" class="qi-pao-bian-ji-wei">
-      <WaiGuanJiuDiBianJi
-        :biao-ti="bianJiBiaoTi"
-        :ming-cheng="bianJiZhong.mingCheng"
-        :wen-zi-yan-se="bianJiZhong.wenZiYanSe || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE"
-        :zui-da-zi-fu="WAI_GUAN_QI_PAO_MING_CHENG_ZUI_DA_ZI_FU"
-        lei-bie="qiPao"
-        :cuo-wu-wen-an="bianJiCuoWu"
+        :cuo-wu-wen-an="编辑错误"
         :cao-zuo-zhong="编辑保存中"
-        @tijiao="baoChunBianJi"
-        @huan-yuan="huanYuanBianJi"
-        @qu-xiao="guanBiBianJi"
-        @yu-lan="gengXinTiaoMuYuLan"
+        :ju-jiao-xu-hao="外观编辑.聚焦序号"
+        @tijiao="保存编辑"
+        @huan-yuan="还原编辑"
+        @qu-xiao="结束编辑"
+        @yu-lan="更新预览"
       />
     </div>
 
@@ -345,9 +335,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, ref } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
+import { 使用外观编辑仓库, type 气泡编辑目标 } from '@/stores/外观编辑'
 import { QI_PAO_YU_SHE_XUAN_XIANG, huoQuQiPaoDingYi, type QiPaoYuShe } from '@/config/气泡主题'
 import { QI_PAO_WEN_AN, huoQuQiPaoMingCheng } from '@/config/气泡主题文案'
 import { huoQuFanYi } from '@/config/翻译表'
@@ -357,7 +348,6 @@ import { baoCunWaiGuan } from '@/api/社交'
 import {
   WAI_GUAN_QI_PAO_MING_CHENG_ZUI_DA_ZI_FU,
   WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
-  WAI_GUAN_QI_PAO_WEI_BA_ZHAN_WEI,
   WAI_GUAN_TU_PIAN_MIME,
   WAI_GUAN_QI_PAO_YAN_SE_XUAN_XIANG,
   QI_PAO_WEI_BA_MO_SHI_LIE_BIAO,
@@ -375,6 +365,7 @@ import {
 import WaiGuanJiuDiBianJi from '@/components/外观就地编辑器.vue'
 import ShangChuanShuoMing from '@/components/上传说明层.vue'
 import QueRenDuiHuaKuang from '@/components/确认对话框.vue'
+import QiPaoWeiBa from '@/components/聊天/气泡尾巴.vue'
 
 const TuPianCaiJian = defineAsyncComponent(() => import('@/components/图片裁剪.vue'))
 
@@ -474,11 +465,11 @@ const fenZu = computed(() => [
   },
 ])
 
-const bianJiZhong = ref<WaiGuanTiaoMu | null>(null)
-const bianJiCuoWu = ref('')
-const 编辑保存中 = ref(false)
-const 预设预览值 = ref<{ mingCheng: string; wenZiYanSe: string } | null>(null)
-const 条目预览值 = ref<{ mingCheng: string; wenZiYanSe: string } | null>(null)
+const 外观编辑 = 使用外观编辑仓库()
+const 编辑目标 = computed(() => (外观编辑.当前目标?.区 === 'qiPao' ? 外观编辑.当前目标 : null))
+const 编辑预览 = computed(() => (编辑目标.value ? 外观编辑.预览值 : null))
+const 编辑错误 = computed(() => (编辑目标.value ? 外观编辑.错误文案 : ''))
+const 编辑保存中 = computed(() => 外观编辑.保存中)
 const tiShiWenAn = ref('')
 const tiShiShiBai = ref(false)
 const wenJianShuRu = ref<HTMLInputElement | null>(null)
@@ -494,11 +485,8 @@ const 显示删除确认 = ref(false)
 const 删除中 = ref(false)
 
 onBeforeUnmount(() => {
+  if (编辑目标.value) 外观编辑.关闭(编辑目标.value)
   if (caiJianTuYuan.value) URL.revokeObjectURL(caiJianTuYuan.value)
-})
-
-onMounted(() => {
-  void sheZhi.queRenQuanBuQiPaoWeiBaYanSe()
 })
 
 const shanChuMiaoShu = computed(() =>
@@ -508,12 +496,14 @@ const shanChuMiaoShu = computed(() =>
 )
 
 function shiXianYuShe(_buWei: 'ziJi' | 'ai', yuShe: QiPaoYuShe): string {
-  if (预设编辑中.value && 预设编辑中.value.yuShe === yuShe && 预设预览值.value) return 预设预览值.value.mingCheng
+  const muBiao = 编辑目标.value
+  if (muBiao?.类型 === 'yuShe' && muBiao.标识 === yuShe && 编辑预览.value) return 编辑预览.value.mingCheng
   return sheZhi.quQiPaoYuSheMing(yuShe)
 }
 
 function shiXianTiaoMu(_buWei: 'ziJi' | 'ai', tiaoMu: WaiGuanTiaoMu): string {
-  if (bianJiZhong.value && bianJiZhong.value.id === tiaoMu.id && 条目预览值.value) return 条目预览值.value.mingCheng
+  const muBiao = 编辑目标.value
+  if (muBiao?.类型 === 'ziDingYi' && muBiao.标识 === tiaoMu.id && 编辑预览.value) return 编辑预览.value.mingCheng
   return tiaoMu.mingCheng
 }
 
@@ -521,14 +511,12 @@ function kaWeiBaBianLiangMing(buWei: 'ziJi' | 'ai'): string {
   return buWei === 'ziJi' ? '--qipao-ziJi-beiJing' : '--qipao-duiFang-beiJing'
 }
 
-function weiBaBianLiangMing(buWei: 'ziJi' | 'ai'): string {
-  return buWei === 'ziJi' ? '--qipao-ziJi-weiBa' : '--qipao-duiFang-weiBa'
-}
-
 function xuanXiangYangShi(buWei: 'ziJi' | 'ai', yuShe: QiPaoYuShe): Record<string, string> {
   const dingYi = huoQuQiPaoDingYi(yuShe)
-  if (预设编辑中.value && 预设编辑中.value.yuShe === yuShe && 预设预览值.value?.wenZiYanSe) {
-    return { background: dingYi.beiJing, color: 预设预览值.value.wenZiYanSe, [kaWeiBaBianLiangMing(buWei)]: dingYi.beiJing }
+  const muBiao = 编辑目标.value
+  const yuLanSe = muBiao?.类型 === 'yuShe' && muBiao.标识 === yuShe ? 编辑预览.value?.wenZiYanSe : ''
+  if (yuLanSe) {
+    return { background: dingYi.beiJing, color: yuLanSe, [kaWeiBaBianLiangMing(buWei)]: dingYi.beiJing }
   }
   return {
     background: dingYi.beiJing,
@@ -538,18 +526,15 @@ function xuanXiangYangShi(buWei: 'ziJi' | 'ai', yuShe: QiPaoYuShe): Record<strin
 }
 
 function ziDingYiYangShi(buWei: 'ziJi' | 'ai', tiaoMu: WaiGuanTiaoMu): Record<string, string> {
-  const yanSe =
-    bianJiZhong.value && bianJiZhong.value.id === tiaoMu.id && 条目预览值.value?.wenZiYanSe
-      ? 条目预览值.value.wenZiYanSe
-      : tiaoMu.wenZiYanSe || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE
+  const muBiao = 编辑目标.value
+  const yuLanSe = muBiao?.类型 === 'ziDingYi' && muBiao.标识 === tiaoMu.id ? 编辑预览.value?.wenZiYanSe : ''
+  const yanSe = yuLanSe || tiaoMu.wenZiYanSe || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE
   const laShenMoShi: WaiGuanLaShenMoShi = sheZhi.qiPaoLaShenMoShi
   const beiJing = huoQuQiPaoBeiJingZhi(tiaoMu.tuDiZhi, yanSe, laShenMoShi)
-  const weiBa = sheZhi.quQiPaoWeiBaYanSe(buWei, tiaoMu) || WAI_GUAN_QI_PAO_WEI_BA_ZHAN_WEI
   return {
     background: beiJing,
     color: yanSe,
     [kaWeiBaBianLiangMing(buWei)]: beiJing,
-    [weiBaBianLiangMing(buWei)]: weiBa,
   }
 }
 
@@ -587,111 +572,83 @@ async function xuanZeZiDingYi(buWei: 'ziJi' | 'ai', id: string): Promise<void> {
   }
 }
 
-const 预设编辑中 = ref<{ yuShe: QiPaoYuShe; mingCheng: string; wenZiYanSe: string } | null>(null)
-const 预设编辑错误 = ref('')
-const 预设保存中 = ref(false)
-
 function daKaiYuSheBianJi(yuShe: QiPaoYuShe): void {
-  if (预设保存中.value) return
-  预设编辑中.value = {
-    yuShe,
-    mingCheng: sheZhi.quQiPaoYuSheMing(yuShe),
-    wenZiYanSe: sheZhi.quQiPaoYuSheYanSe(yuShe) || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
-  }
-  预设编辑错误.value = ''
-  预设预览值.value = null
   qingChuTiShi()
-}
-
-function guanBiYuSheBianJi(): void {
-  预设编辑中.value = null
-  预设编辑错误.value = ''
-  预设预览值.value = null
-}
-
-function gengXinYuSheYuLan(zhi: { mingCheng: string; wenZiYanSe: string }): void {
-  预设预览值.value = zhi
-}
-
-async function baoChunYuSheBianJi(zhi: { mingCheng: string; wenZiYanSe: string }): Promise<void> {
-  if (!预设编辑中.value) return
-  预设保存中.value = true
-  预设编辑错误.value = ''
-  try {
-    await sheZhi.gengXinQiPaoYuShe(预设编辑中.value.yuShe, zhi)
-    guanBiYuSheBianJi()
-    tiShiShiBai.value = false
-    tiShiWenAn.value = 保存成功文案
-  } catch (cuoWu: unknown) {
-    预设编辑错误.value = quCuoWuWenBen(cuoWu)
-  } finally {
-    预设保存中.value = false
-  }
-}
-
-async function huanYuanYuSheBianJi(): Promise<void> {
-  if (!预设编辑中.value) return
-  预设保存中.value = true
-  预设编辑错误.value = ''
-  try {
-    await sheZhi.huanYuanWaiGuanXiang('qiPao', { jian: 预设编辑中.value.yuShe, leiXing: 'yuShe' })
-    guanBiYuSheBianJi()
-    tiShiShiBai.value = false
-    tiShiWenAn.value = 还原成功文案
-  } catch (cuoWu: unknown) {
-    预设编辑错误.value = quCuoWuWenBen(cuoWu)
-  } finally {
-    预设保存中.value = false
-  }
+  外观编辑.打开({
+    区: 'qiPao',
+    键: 'yu-she:' + yuShe,
+    类型: 'yuShe',
+    标识: yuShe,
+    名称: sheZhi.quQiPaoYuSheMing(yuShe),
+    文字颜色: sheZhi.quQiPaoYuSheYanSe(yuShe) || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
+  })
 }
 
 function daKaiBianJi(tiaoMu: WaiGuanTiaoMu): void {
-  if (编辑保存中.value) return
-  bianJiZhong.value = { ...tiaoMu }
-  bianJiCuoWu.value = ''
-  条目预览值.value = null
   qingChuTiShi()
+  外观编辑.打开({
+    区: 'qiPao',
+    键: 'zi-ding-yi:' + tiaoMu.id,
+    类型: 'ziDingYi',
+    标识: tiaoMu.id,
+    名称: tiaoMu.mingCheng,
+    文字颜色: tiaoMu.wenZiYanSe || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
+  })
 }
 
-function guanBiBianJi(): void {
-  bianJiZhong.value = null
-  bianJiCuoWu.value = ''
-  条目预览值.value = null
+function 结束编辑(): void {
+  if (编辑目标.value) 外观编辑.关闭(编辑目标.value)
 }
 
-function gengXinTiaoMuYuLan(zhi: { mingCheng: string; wenZiYanSe: string }): void {
-  条目预览值.value = zhi
+function 更新预览(zhi: { mingCheng: string; wenZiYanSe: string }): void {
+  外观编辑.更新预览(zhi)
 }
 
-async function baoChunBianJi(zhi: { mingCheng: string; wenZiYanSe: string }): Promise<void> {
-  if (!bianJiZhong.value) return
-  编辑保存中.value = true
-  bianJiCuoWu.value = ''
+function 记录错误(muBiao: 气泡编辑目标, cuoWu: unknown): void {
+  const wenAn = quCuoWuWenBen(cuoWu)
+  if (编辑目标.value?.键 === muBiao.键) {
+    外观编辑.记下错误(wenAn)
+    return
+  }
+  tiShiShiBai.value = true
+  tiShiWenAn.value = wenAn
+}
+
+async function 保存编辑(zhi: { mingCheng: string; wenZiYanSe: string }): Promise<void> {
+  const muBiao = 编辑目标.value
+  if (!muBiao) return
+  外观编辑.保存中 = true
+  外观编辑.记下错误('')
   try {
-    await sheZhi.gengXinWaiGuanTiaoMu('qiPao', bianJiZhong.value.id, zhi)
-    guanBiBianJi()
+    if (muBiao.类型 === 'yuShe') {
+      await sheZhi.gengXinQiPaoYuShe(muBiao.标识, zhi)
+    } else {
+      await sheZhi.gengXinWaiGuanTiaoMu('qiPao', muBiao.标识, zhi)
+    }
+    外观编辑.关闭(muBiao)
     tiShiShiBai.value = false
     tiShiWenAn.value = 保存成功文案
   } catch (cuoWu: unknown) {
-    bianJiCuoWu.value = quCuoWuWenBen(cuoWu)
+    记录错误(muBiao, cuoWu)
   } finally {
-    编辑保存中.value = false
+    外观编辑.保存中 = false
   }
 }
 
-async function huanYuanBianJi(): Promise<void> {
-  if (!bianJiZhong.value) return
-  编辑保存中.value = true
-  bianJiCuoWu.value = ''
+async function 还原编辑(): Promise<void> {
+  const muBiao = 编辑目标.value
+  if (!muBiao) return
+  外观编辑.保存中 = true
+  外观编辑.记下错误('')
   try {
-    await sheZhi.huanYuanWaiGuanXiang('qiPao', { jian: bianJiZhong.value.id, leiXing: 'ziDingYi' })
-    guanBiBianJi()
+    await sheZhi.huanYuanWaiGuanXiang('qiPao', { jian: muBiao.标识, leiXing: muBiao.类型 })
+    外观编辑.关闭(muBiao)
     tiShiShiBai.value = false
     tiShiWenAn.value = 还原成功文案
   } catch (cuoWu: unknown) {
-    bianJiCuoWu.value = quCuoWuWenBen(cuoWu)
+    记录错误(muBiao, cuoWu)
   } finally {
-    编辑保存中.value = false
+    外观编辑.保存中 = false
   }
 }
 
@@ -787,7 +744,7 @@ async function queRenShanChu(): Promise<void> {
   删除中.value = true
   try {
     await sheZhi.shanChuWaiGuan('qiPao', tiaoMu.id)
-    if (bianJiZhong.value?.id === tiaoMu.id) guanBiBianJi()
+    if (编辑目标.value?.类型 === 'ziDingYi' && 编辑目标.value.标识 === tiaoMu.id) 结束编辑()
     显示删除确认.value = false
     待删除.value = null
     tiShiShiBai.value = false
@@ -840,7 +797,8 @@ async function queRenShanChu(): Promise<void> {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--jiange-xiao);
+  column-gap: max(var(--jiange-xiao), calc(var(--qipao-weiba-kuan) + var(--jiange-2)));
+  row-gap: var(--jiange-xiao);
   min-width: 0;
 }
 
@@ -862,6 +820,8 @@ async function queRenShanChu(): Promise<void> {
 }
 
 .qi-pao-xuan-xiang--ka {
+  --qipao-weiba-shang-bu-ju: var(--jiange-10);
+
   position: relative;
   padding: var(--jiange-10) var(--jiange-12);
   border: none;
@@ -879,26 +839,12 @@ async function queRenShanChu(): Promise<void> {
   white-space: nowrap;
 }
 
-.qi-pao-xuan-xiang--ka::after {
-  content: '';
-  position: absolute;
-  top: var(--qipao-weiba-shang);
-  width: 0;
-  height: 0;
-  border-top: var(--qipao-weiba-ban) solid transparent;
-  border-bottom: var(--qipao-weiba-ban) solid transparent;
+.qi-pao-ka--ziJi {
+  --qipao-weiba-tian-chong: var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing));
 }
 
-.qi-pao-ka--ziJi::after {
-  right: calc(var(--qipao-weiba-pian) * -1);
-  border-left: var(--qipao-weiba-kuan) solid
-    var(--qipao-ziJi-weiBa, var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing)));
-}
-
-.qi-pao-ka--ai::after {
-  left: calc(var(--qipao-weiba-pian) * -1);
-  border-right: var(--qipao-weiba-kuan) solid
-    var(--qipao-duiFang-weiBa, var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing)));
+.qi-pao-ka--ai {
+  --qipao-weiba-tian-chong: var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing));
 }
 
 .qi-pao-xuan-xiang--xuan {

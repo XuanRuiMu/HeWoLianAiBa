@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import { huoQuFanYi } from '@/config/翻译表'
+import { fanYi, huoQuFanYi } from '@/config/翻译表'
 import { 使用聊天仓库 } from '@/stores/聊天'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
 import { 使用角色生成仓库 } from '@/stores/角色生成'
@@ -53,7 +53,7 @@ beforeEach(() => {
 describe('FP-05 加载页预留与微信名', () => {
   it('标题槽位固定高度、单行省略，头像槽位固定尺寸，数据到达不改变卡片结构', () => {
     const 标题块 = /\.zairu-biaoti \{([^}]*)\}/.exec(载入页源)?.[1] ?? ''
-    expect(标题块).toContain('min-height: 29px')
+    expect(标题块).toContain('height: 29px')
     expect(标题块).toContain('overflow: hidden')
     expect(标题块).toContain('text-overflow: ellipsis')
     expect(标题块).toContain('white-space: nowrap')
@@ -88,9 +88,9 @@ describe('FP-05 加载页预留与微信名', () => {
       global: { plugins: [路由] },
     })
     await flushPromises()
-    expect(包.text()).toContain(huoQuFanYi('zaiRuLiaoTian', 'zhengZaiZhaoHui'))
-    expect(包.text()).not.toContain('别人的微信名')
-    expect(包.text()).not.toContain('别人的真名')
+    expect(document.body.textContent).toContain(huoQuFanYi('zaiRuLiaoTian', 'zhengZaiZhaoHui'))
+    expect(document.body.textContent).not.toContain('别人的微信名')
+    expect(document.body.textContent).not.toContain('别人的真名')
     包.unmount()
   })
 })
@@ -151,12 +151,14 @@ describe('FP-05 创建流程进度与偷人词', () => {
     chuangJianHuiHua.mockResolvedValue({ id: 'hui-hua-1' })
     const 生成 = 使用角色生成仓库()
     生成.kaiShiLiuCheng({ muBiaoXingBie: 'female', xingGeXuanZe: 'INFP' })
+    const 等待结果 = 生成.等待完成()
     await vi.waitFor(() => expect(生成.zhuangTai).toBe('yi_wan_cheng'))
+    expect(await 等待结果).toBe('yi_wan_cheng')
     expect(预加载聊天页).toHaveBeenCalledWith('hui-hua-1', expect.any(Function))
     expect(生成.touRenTiShi).toBe(true)
-    expect(生成.dangQianWenAn).toBe(huoQuFanYi('tianJiaWeiXin', 'dengDaiTouRen'))
+    expect(生成.dangQianZiLiao).toMatchObject({ muBiaoXingBie: 'female' })
+    expect('dangQianWenAn' in 生成).toBe(false)
     expect(生成.jinDu).toBe(100)
-    生成.qingChuDingShiQi()
   })
 
   it('yao_kai_kou=false 时继续轮换趣味词；预加载失败也完成创建并保留进度', async () => {
@@ -167,13 +169,15 @@ describe('FP-05 创建流程进度与偷人词', () => {
     const 警告 = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
     const 生成 = 使用角色生成仓库()
     生成.kaiShiLiuCheng({ muBiaoXingBie: 'female', xingGeXuanZe: 'INFP' })
+    const 等待结果 = 生成.等待完成()
     await vi.waitFor(() => expect(生成.zhuangTai).toBe('yi_wan_cheng'))
+    expect(await 等待结果).toBe('yi_wan_cheng')
     expect(生成.touRenTiShi).toBe(false)
-    const 趣味词 = 生成.dangQianWenAn
-    expect(趣味词).not.toBe(huoQuFanYi('tianJiaWeiXin', 'dengDaiTouRen'))
+    const 趣味词 = fanYi.zaiRuLiaoTian.quWeiYu.puTong
     expect(趣味词.length).toBeGreaterThan(0)
+    expect(趣味词).not.toContain(huoQuFanYi('tianJiaWeiXin', 'dengDaiTouRen'))
+    expect(生成.dangQianZiLiao?.muBiaoXingBie).toBe('female')
     expect(警告).toHaveBeenCalled()
     expect(生成.jinDu).toBe(100)
-    生成.qingChuDingShiQi()
   })
 })

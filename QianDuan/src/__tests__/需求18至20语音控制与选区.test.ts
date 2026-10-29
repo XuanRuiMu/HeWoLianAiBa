@@ -152,7 +152,7 @@ describe('需求19：语音时长只有一处口径，且与真实播放一致',
       return jiaYinPin
     })
     const xiaoXi = { mei_ti_url: 'blob:ce-liang-wu-qiong' }
-    expect(geShiHuaYuYinShiChang(xiaoXi)).toBe('1″')
+    expect(geShiHuaYuYinShiChang(xiaoXi)).toBe('…″')
     ceLiangYuYinShiChang(xiaoXi)
     await vi.waitFor(() => expect(geShiHuaYuYinShiChang(xiaoXi)).toBe('10″'))
     expect(jiaYinPin.beiQiuZhi).toBeGreaterThan(1e100)

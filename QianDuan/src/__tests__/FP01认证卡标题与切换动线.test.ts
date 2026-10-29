@@ -52,8 +52,8 @@ describe('FP-01 切换动画全程浮动标签不裁切', () => {
   it('浮动标签的上浮余量改由表单永久 padding-top 提供，动画全程在剪裁盒内部', () => {
     const 表单块 = 取块(登录样式, '.denglu-biaodan,\n.zhuce-biaodan {')
     expect(取值(表单块, 'padding-top')).toBe('calc(var(--biaoqian-qin-ru) + var(--jiange-2))')
-    expect(取值(表单块, 'padding-left')).toBe('var(--jiange-4)')
-    expect(取值(表单块, 'padding-right')).toBe('var(--jiange-4)')
+    expect(取值(表单块, 'padding-left')).toBe('var(--renzheng-shuru-you-nei-ju)')
+    expect(取值(表单块, 'padding-right')).toBe('var(--renzheng-shuru-you-nei-ju)')
     expect(取值(表单块, 'overflow')).toBe('hidden')
   })
 

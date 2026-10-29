@@ -9,6 +9,20 @@ export interface CaoDiDiZhiCanShu {
   chongShiShangXian?: number
   fuZhenSanWeiLunXunJianGeHaoMiao?: number
   fuZhenSanWeiChaoShiHaoMiao?: number
+  zhunBeiChaoShiHaoMiao?: number
+  jieShiChaoShiHaoMiao?: number
+  diaoShi?: boolean
+}
+
+export const caoDiDiaoShiCanShu = 'caoDiDebug'
+
+export function shiFouCaoDiDiaoShi(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return new URLSearchParams(window.location.search).get(caoDiDiaoShiCanShu) === '1'
+  } catch {
+    return false
+  }
 }
 
 export function gouJianCaoDiDiZhi(canShu?: CaoDiDiZhiCanShu): string {
@@ -24,9 +38,16 @@ export function gouJianCaoDiDiZhi(canShu?: CaoDiDiZhiCanShu): string {
   const fuZhenChaoShi = String(
     canShu?.fuZhenSanWeiChaoShiHaoMiao ?? caoDiPeiZhi.fuZhenSanWeiChaoShiHaoMiao,
   )
+  const zhunBeiChaoShi = String(
+    canShu?.zhunBeiChaoShiHaoMiao ?? caoDiPeiZhi.caoDiZhunBeiChaoShiHaoMiao,
+  )
+  const jieShiChaoShi = String(
+    canShu?.jieShiChaoShiHaoMiao ?? caoDiPeiZhi.caoDiJieShiChaoShiHaoMiao,
+  )
   const suoFang = encodeURIComponent(banBen)
   const biLi = encodeURIComponent(xiangSuBi)
-  return `/grass-bg/grass-bg.html?v=${suoFang}&fenXi=${fenXi}&xiangSuBi=${biLi}&caiYangMiao=${encodeURIComponent(caiYang)}&zhenJianGe=${encodeURIComponent(zhenJianGe)}&chongShi=${encodeURIComponent(chongShi)}&fuZhenLunXun=${encodeURIComponent(lunXun)}&fuZhenChaoShi=${encodeURIComponent(fuZhenChaoShi)}`
+  const diaoShi = (canShu?.diaoShi ?? shiFouCaoDiDiaoShi()) ? '1' : '0'
+  return `/grass-bg/grass-bg.html?v=${suoFang}&fenXi=${fenXi}&xiangSuBi=${biLi}&caiYangMiao=${encodeURIComponent(caiYang)}&zhenJianGe=${encodeURIComponent(zhenJianGe)}&chongShi=${encodeURIComponent(chongShi)}&fuZhenLunXun=${encodeURIComponent(lunXun)}&fuZhenChaoShi=${encodeURIComponent(fuZhenChaoShi)}&zhunBeiChaoShi=${encodeURIComponent(zhunBeiChaoShi)}&jieShiChaoShi=${encodeURIComponent(jieShiChaoShi)}&diaoShi=${diaoShi}`
 }
 
 export function yingPingBiFenXiQingQiu(

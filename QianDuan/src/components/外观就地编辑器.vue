@@ -1,5 +1,5 @@
 <template>
-  <div class="jiu-di-bian-ji" @click.stop @dblclick.stop @keydown.stop>
+  <div ref="gen" class="jiu-di-bian-ji" @click.stop @dblclick.stop @keydown.stop>
     <div class="jiu-di-bian-ji-tou">
       <label class="jiu-di-bian-ji-biao-ti" :for="shuRuBiaoShi">{{ biaoTi }}</label>
       <span class="jiu-di-bian-ji-ji-shu" :class="{ 'jiu-di-bian-ji-ji-shu--chao': ziShuChao }">
@@ -77,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { huoQuFanYi } from '@/config/翻译表'
 import {
   WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
@@ -96,10 +96,12 @@ const props = withDefaults(
     leiBie: 'beiJing' | 'qiPao'
     cuoWuWenAn?: string
     caoZuoZhong?: boolean
+    juJiaoXuHao?: number
   }>(),
   {
     cuoWuWenAn: '',
     caoZuoZhong: false,
+    juJiaoXuHao: 0,
   },
 )
 
@@ -111,6 +113,7 @@ const faChu = defineEmits<{
 }>()
 
 const shuRuKuang = ref<InstanceType<typeof ChangFangShuRuKuang> | null>(null)
+const gen = ref<HTMLElement | null>(null)
 const mingChengGaoGao = ref(props.mingCheng)
 const yanSeGaoGao = ref(props.wenZiYanSe.toUpperCase())
 const benDiCuoWu = ref('')
@@ -224,11 +227,30 @@ watch(
   },
 )
 
-onMounted(() => {
+function 聚焦并全选(): void {
   void nextTick(() => {
     shuRuKuang.value?.聚焦()
     shuRuKuang.value?.输入元素?.select()
   })
+}
+
+function 处理外部按下(shiJian: Event): void {
+  const muBiao = shiJian.target
+  if (!(muBiao instanceof Node)) return
+  if (gen.value?.contains(muBiao)) return
+  if (muBiao instanceof Element && muBiao.closest('[data-wai-guan-gai-ming]')) return
+  faChu('qu-xiao')
+}
+
+watch(() => props.juJiaoXuHao, 聚焦并全选)
+
+onMounted(() => {
+  聚焦并全选()
+  document.addEventListener('pointerdown', 处理外部按下, true)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', 处理外部按下, true)
 })
 </script>
 

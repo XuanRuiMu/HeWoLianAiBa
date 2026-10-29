@@ -140,6 +140,7 @@ onBeforeUnmount(() => {
 }
 
 .yemian-buju {
+  --ka-heng-nei-ju-dangqian: var(--renzheng-ka-nei-ju-heng);
   width: 100%;
   min-height: 0;
   display: flex;
@@ -157,10 +158,6 @@ onBeforeUnmount(() => {
 }
 
 .yemian-buju.denglu-moshi {
-  overflow-y: hidden;
-}
-
-.yemian-buju.wangji-mima-moshi {
   overflow-y: hidden;
 }
 
@@ -256,6 +253,11 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 767px) {
+  .yemian-buju.denglu-moshi,
+  .yemian-buju.wangji-mima-moshi {
+    --ka-heng-nei-ju-dangqian: var(--jiange-zhong);
+  }
+
   .yemian-buju:not(.zhujiemian-moshi):not(.quanping-moshi) {
     padding: var(--jiange-da) 0;
   }
@@ -265,7 +267,6 @@ onBeforeUnmount(() => {
     padding-right: var(--jiange-zhong);
   }
 
-  .yemian-buju.denglu-moshi :deep(.biaodan-rongqi),
   .yemian-buju.wangji-mima-moshi :deep(.zhaohui-ju-ke) {
     padding-left: var(--jiange-zhong);
     padding-right: var(--jiange-zhong);

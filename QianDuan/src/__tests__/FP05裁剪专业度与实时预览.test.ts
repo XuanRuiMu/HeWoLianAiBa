@@ -6,11 +6,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import TuPianCaiJian from '@/components/图片裁剪.vue'
 import * as CaiJianGongJu from '@/utils/图片裁剪'
-import * as WaiGuanCaiYang from '@/utils/外观采样'
 import { huoQuFanYi } from '@/config/翻译表'
 import {
   huoQuQiPaoBeiJingZhi,
-  huoQuQiPaoMengCengZhi,
   type WaiGuanTiaoMu,
 } from '@/config/外观自定义'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
@@ -66,6 +64,30 @@ function faSong(kuang: ReturnType<typeof mount>, xuanZeQi: string, leiXing: stri
   return shiJian.defaultPrevented
 }
 
+async function dengDaiJiuXu(): Promise<void> {
+  await nextTick()
+  await new Promise<void>((jieJue) => requestAnimationFrame(() => jieJue()))
+  await nextTick()
+}
+
+function moNiBuJu(kuang: ReturnType<typeof mount>, kuan = 200, gao = 200, yuanKuan = 400, yuanGao = 400): void {
+  const huaBu = kuang.get('.caijian-huabu').element as HTMLElement
+  vi.spyOn(huaBu, 'getBoundingClientRect').mockReturnValue({
+    width: kuan,
+    height: gao,
+    top: 0,
+    left: 0,
+    right: kuan,
+    bottom: gao,
+    x: 0,
+    y: 0,
+    toJSON: () => ({}),
+  } as DOMRect)
+  const tuXiang = kuang.get('cropper-image').element as unknown as { $image: HTMLImageElement }
+  Object.defineProperty(tuXiang.$image, 'naturalWidth', { value: yuanKuan, configurable: true })
+  Object.defineProperty(tuXiang.$image, 'naturalHeight', { value: yuanGao, configurable: true })
+}
+
 describe('FP-05 缩放反向放大根因修复', () => {
   it('矩阵缩放读数取主模长：旋转翻转后读数不塌缩', () => {
     expect(jiSuanJuZhenSuoFang([1, 0, 0, 1, 0, 0])).toBe(1)
@@ -82,22 +104,25 @@ describe('FP-05 缩放反向放大根因修复', () => {
     await huaTiao.setValue('200')
     await nextTick()
     expect(kuang.get('.suofang-bai-fen').text()).toBe('200%')
+    await huaTiao.setValue('150')
+    await nextTick()
+    expect(kuang.get('.suofang-bai-fen').text()).toBe('150%')
     await huaTiao.setValue('60')
     await nextTick()
-    expect(kuang.get('.suofang-bai-fen').text()).toBe('60%')
+    expect(kuang.get('.suofang-bai-fen').text()).toBe('100%')
     await huaTiao.setValue('200')
     await nextTick()
     expect(kuang.get('.suofang-bai-fen').text()).toBe('200%')
     kuang.unmount()
   })
 
-  it('缩放上下限50%到400%：滑条越界被夹回边界', async () => {
+  it('缩放上下限100%到400%：不允许缩到露透明边，滑条越界被夹回边界', async () => {
     const kuang = zaiRu({ kuanGaoBi: 1 })
     await nextTick()
     const huaTiao = kuang.get('.suofang-huatiao')
     await huaTiao.setValue('15')
     await nextTick()
-    expect(kuang.get('.suofang-bai-fen').text()).toBe('50%')
+    expect(kuang.get('.suofang-bai-fen').text()).toBe('100%')
     await huaTiao.setValue('999')
     await nextTick()
     expect(kuang.get('.suofang-bai-fen').text()).toBe('400%')
@@ -106,52 +131,50 @@ describe('FP-05 缩放反向放大根因修复', () => {
 
   it('滚轮与双指手势的transform事件越界被回绝，界内放行', async () => {
     const kuang = zaiRu({ kuanGaoBi: 1 })
-    await nextTick()
+    moNiBuJu(kuang)
+    await dengDaiJiuXu()
     expect(faSong(kuang, 'cropper-image', 'transform', { matrix: [99, 0, 0, 99, 0, 0], oldMatrix: [1, 0, 0, 1, 0, 0] })).toBe(true)
     expect(faSong(kuang, 'cropper-image', 'transform', { matrix: [0.1, 0, 0, 0.1, 0, 0], oldMatrix: [1, 0, 0, 1, 0, 0] })).toBe(true)
+    expect(faSong(kuang, 'cropper-image', 'transform', { matrix: [1, 0, 0, 1, 0, 0], oldMatrix: [1, 0, 0, 1, 0, 0] })).toBe(false)
     expect(faSong(kuang, 'cropper-image', 'transform', { matrix: [2, 0, 0, 2, 0, 0], oldMatrix: [1, 0, 0, 1, 0, 0] })).toBe(false)
     kuang.unmount()
   })
 })
 
-describe('FP-05 选区最小尺寸约束', () => {
-  it('selection的change事件小于48px被回绝，界内放行', async () => {
-    const kuang = zaiRu({ kuanGaoBi: 2 })
-    await nextTick()
-    expect(faSong(kuang, 'cropper-selection', 'change', { x: 0, y: 0, width: 20, height: 20 })).toBe(true)
-    expect(faSong(kuang, 'cropper-selection', 'change', { x: 0, y: 0, width: 96, height: 47 })).toBe(true)
-    expect(faSong(kuang, 'cropper-selection', 'change', { x: 0, y: 0, width: 120, height: 60 })).toBe(false)
-    kuang.unmount()
+describe('FP-05 固定帧不依赖选区尺寸', () => {
+  it('固定帧不依赖选区尺寸', () => {
+    expect(裁剪源码).not.toContain('XUAN_QU_ZUI_XIAO_BIAN')
+    expect(裁剪源码).not.toContain('caiJianXuanQuTaiXiao')
+    expect(裁剪源码).not.toContain('xuanQu.width <')
+    expect(裁剪源码).not.toContain('xuanQu.height <')
+    expect(裁剪源码).toContain('huaBu.$toCanvas')
+    expect(裁剪源码).toContain('daoChuCaiJianWenJian(huaBu')
   })
 
-  it('选区小于最小边时确认被拦截并提示，不导出', async () => {
-    const kuang = zaiRu({ kuanGaoBi: 1 })
-    await nextTick()
-    await kuang.get('.anniu-que-ren').trigger('click')
-    await nextTick()
-    expect(kuang.emitted('que-ren')).toBeUndefined()
-    expect(kuang.get('.caijian-jiazai-cuowu').text()).toBe(huoQuFanYi('sheZhi', 'caiJianXuanQuTaiXiao'))
-    kuang.unmount()
+  it('窄屏缩放行不横向溢出：滑条可收缩且读数值不被裁切', () => {
+    expect(裁剪源码).toMatch(/\.suofang-huatiao\s*\{[^}]*min-width:\s*0/)
+    expect(裁剪源码).toMatch(/\.suofang-huatiao\s*\{[^}]*flex:\s*1/)
+    expect(裁剪源码).toContain('.suofang-bai-fen')
   })
 })
 
 describe('FP-05 比例锁定切换', () => {
-  it('默认锁定场景比例，五个chips，可切换1:1与自由', async () => {
+  it('默认锁定场景比例，四个chips，自定义比例可切换且不存在自由档', async () => {
     const kuang = zaiRu({ kuanGaoBi: 2 })
     await nextTick()
     const xuanQu = kuang.get('cropper-selection').element as HTMLElement
     expect(xuanQu.getAttribute('aspect-ratio')).toBe('2')
     const kaLieBiao = kuang.findAll('.bili-ka')
-    expect(kaLieBiao).toHaveLength(5)
-    expect(kaLieBiao[0].text()).toBe(huoQuFanYi('sheZhi', 'caiJianBiLiZiYou'))
+    expect(kaLieBiao).toHaveLength(4)
+    expect(裁剪源码).not.toContain('caiJianBiLiZiYou')
     expect(kaLieBiao.filter((ka) => ka.classes().includes('bili-ka--xuan'))).toHaveLength(1)
     expect(kaLieBiao.filter((ka) => ka.classes().includes('bili-ka--xuan'))[0].text()).toBe('2:1')
-    await kaLieBiao[1].trigger('click')
-    await nextTick()
-    expect(xuanQu.getAttribute('aspect-ratio')).toBe('1')
     await kaLieBiao[0].trigger('click')
     await nextTick()
-    expect(xuanQu.getAttribute('aspect-ratio')).toBeNull()
+    expect(xuanQu.getAttribute('aspect-ratio')).toBe('1')
+    await kaLieBiao[1].trigger('click')
+    await nextTick()
+    expect(xuanQu.getAttribute('aspect-ratio')).toBe('0.75')
     kuang.unmount()
   })
 
@@ -191,7 +214,7 @@ describe('FP-05 裁剪底部实时聊天预览', () => {
     qiPaoKuang.unmount()
   })
 
-  it('气泡预览蒙层与尾巴采样与真实渲染同参：取当前气泡条目的文字色', async () => {
+  it('气泡预览蒙层与尾巴同用裁剪结果背景：不采样、不异步补色', async () => {
     const kuang = zaiRu({ kuanGaoBi: 2, yuLanLeiXing: 'qiPao', yuLanCeZhong: 'ziJi' })
     await nextTick()
     const cang = 使用用户设置仓库()
@@ -203,22 +226,30 @@ describe('FP-05 裁剪底部实时聊天预览', () => {
       dangQianQiPao: { ziJi: 'qipao-1', ai: '' },
     }
     await nextTick()
-    const xuanQu = kuang.find('cropper-selection').element as unknown as {
+    const huaBu = kuang.find('cropper-canvas').element as unknown as {
       $toCanvas: () => Promise<HTMLCanvasElement>
     }
-    vi.spyOn(xuanQu, '$toCanvas').mockResolvedValue({
+    vi.spyOn(huaBu, '$toCanvas').mockResolvedValue({
       toDataURL: () => 'data:image/png;base64,AA',
     } as HTMLCanvasElement)
-    const caiYang = vi.spyOn(WaiGuanCaiYang, 'caiJiBianYuanYanSe').mockResolvedValue('#123456')
-    const yuanSu = kuang.find('cropper-selection').element as HTMLElement
-    yuanSu.dispatchEvent(new CustomEvent('change', { detail: { width: 200, height: 100 }, bubbles: true }))
+    const tuXiang = kuang.find('cropper-image').element as HTMLElement
+    tuXiang.dispatchEvent(
+      new CustomEvent('transform', {
+        detail: { matrix: [0.5, 0, 0, 0.5, 0, 0], oldMatrix: [0.5, 0, 0, 0.5, 0, 0] },
+        cancelable: true,
+        bubbles: true,
+      }),
+    )
     await vi.waitFor(() => {
       const yuLan = kuang.get('.caijian-yulan').element as HTMLElement
       expect(yuLan.style.getPropertyValue('--caijian-yulan-fu-gai')).toBe(
         huoQuQiPaoBeiJingZhi('data:image/png;base64,AA', '#FF0000', cang.qiPaoLaShenMoShi),
       )
     })
-    expect(caiYang).toHaveBeenCalledWith('data:image/png;base64,AA', 'you', huoQuQiPaoMengCengZhi('#FF0000'))
+    const yuLan = kuang.get('.caijian-yulan').element as HTMLElement
+    expect(yuLan.style.getPropertyValue('--caijian-yulan-wei-ba')).toBe('')
+    expect(裁剪源码).toContain('--qipao-weiba-tian-chong: var(--caijian-yulan-fu-gai) !important')
+    expect(裁剪源码).not.toContain('caiJiBianYuanYanSe')
     kuang.unmount()
   })
 
@@ -249,14 +280,12 @@ describe('FP-05 专业控件文案走翻译表', () => {
   it('选区合法时确认真实导出并上抛文件，生成中按钮禁用', async () => {
     const kuang = zaiRu({ kuanGaoBi: 1 })
     await nextTick()
-    const xuanQu = kuang.find('cropper-selection').element as HTMLElement
-    Object.defineProperty(xuanQu, 'width', { value: 120, configurable: true })
-    Object.defineProperty(xuanQu, 'height', { value: 120, configurable: true })
     const daoChuWenJian = new File([new Blob(['x'])], 'tupian.png', { type: 'image/png' })
     const jianShi = vi.spyOn(CaiJianGongJu, 'daoChuCaiJianWenJian').mockResolvedValue(daoChuWenJian)
     await kuang.get('.anniu-que-ren').trigger('click')
     await nextTick()
     expect(jianShi).toHaveBeenCalledTimes(1)
+    expect(jianShi.mock.calls[0][3]).toBeGreaterThan(0)
     expect(kuang.emitted('que-ren')![0][0]).toBe(daoChuWenJian)
     expect(kuang.find('.caijian-jiazai-cuowu').exists()).toBe(false)
     kuang.unmount()
@@ -265,9 +294,6 @@ describe('FP-05 专业控件文案走翻译表', () => {
   it('生成进行中重复点击被拦截且按钮禁用', async () => {
     const kuang = zaiRu({ kuanGaoBi: 1 })
     await nextTick()
-    const xuanQu = kuang.find('cropper-selection').element as HTMLElement
-    Object.defineProperty(xuanQu, 'width', { value: 120, configurable: true })
-    Object.defineProperty(xuanQu, 'height', { value: 120, configurable: true })
     let fangXing: (() => void) | null = null
     const zha = new Promise<File>((jieJue) => {
       fangXing = () => jieJue(new File([new Blob(['x'])], 'tupian.png', { type: 'image/png' }))

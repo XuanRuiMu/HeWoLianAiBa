@@ -192,38 +192,45 @@ describe('挑战页共享滑动指示器', () => {
   })
 })
 
-describe('挑战页内容切换不重建', () => {
-  it('挑战主页的加载/错误/空态/榜单四块常驻，只切 v-show', () => {
+describe('挑战页榜单四态互斥', () => {
+  it('挑战主页的加载/错误/空态/榜单落在同一条 v-if 链上', () => {
     const 原文 = readFileSync(resolve(根, 'views', '挑战主页.vue'), 'utf8')
-    expect(原文).toContain('v-show="bangDanShouCiJiaZai"')
-    expect(原文).toContain('v-show="bangDanCuoWu"')
-    expect(原文).toContain('v-show="bangDanKong"')
-    expect(原文).toContain('v-show="bangDanYouHang"')
-    expect(原文).not.toContain('v-if="bangDanZaiZai"')
-    expect(原文).not.toContain('v-else-if="bangDanLieBiao.length === 0"')
+    expect(原文).toContain(`v-if="bangDanZhuangTai === 'jiaZai'"`)
+    expect(原文).toContain(`v-else-if="bangDanZhuangTai === 'cuoWu'"`)
+    expect(原文).toContain(`v-else-if="bangDanZhuangTai === 'kong'"`)
+    expect(原文).toContain('<ol v-else class="zhaiyao-liebiao">')
+    expect(原文).not.toContain('v-show=')
+    expect(原文).not.toContain('bangDanYiJiaZai')
+    expect(原文).not.toContain('bangDanZaiZai')
+    expect(原文).not.toContain('data-qie-huan')
   })
 
-  it('挑战积分榜的加载/空态/榜单三块常驻，只切 v-show', () => {
+  it('挑战积分榜的加载/错误/空态/榜单落在同一条 v-if 链上', () => {
     const 原文 = readFileSync(resolve(根, 'views', '挑战积分榜.vue'), 'utf8')
-    expect(原文).toContain('v-show="shouCiJiaZai"')
-    expect(原文).toContain('v-show="bangDanKong"')
-    expect(原文).toContain('v-show="youHang"')
-    expect(原文).not.toContain('v-else-if="paiHangLieBiao.length > 0"')
+    expect(原文).toContain(`v-if="bangDanZhuangTai === 'jiaZai'"`)
+    expect(原文).toContain(`v-else-if="bangDanZhuangTai === 'cuoWu'"`)
+    expect(原文).toContain(`v-else-if="bangDanZhuangTai === 'kong'"`)
+    expect(原文).toContain('<ol v-else class="bangdan-liebiao">')
+    expect(原文).not.toContain('v-show=')
+    expect(原文).not.toContain('shouCiJiaZai')
+    expect(原文).not.toContain('data-qie-huan')
   })
 
   it.each([
-    ['挑战主页', 挑战主页, '.zhaiyao-nei-rong'],
-    ['挑战积分榜', 挑战积分榜, '.bangdan-nei-rong'],
-  ])('%s 内容区用 180ms 淡入淡出加 4px 位移', (_名称, 样式, 容器) => {
-    const 位置 = 样式.indexOf(`${容器} {`)
-    expect(位置).toBeGreaterThan(-1)
-    const 块 = 样式.slice(位置, 样式.indexOf('}', 位置))
-    expect(块).toContain('display: grid')
-    expect(样式).toContain(`${容器} > * {`)
-    expect(样式).toContain('grid-area: 1 / 1')
-    expect(样式).toContain('--tz-dan-ru-dong: 180ms')
-    expect(样式).toMatch(/opacity var\(--tz-dan-ru-dong\) ease-out/)
-    expect(样式).toContain('transform: translateY(4px)')
+    ['挑战主页', 挑战主页],
+    ['挑战积分榜', 挑战积分榜],
+  ])('%s 不再保留切组变暗与旧内容叠层', (_名称, 样式) => {
+    expect(样式).not.toContain('data-qie-huan')
+    expect(样式).not.toContain('nei--die')
+  })
+
+  it.each([
+    ['挑战主页', 挑战主页, 'zhaiyao'],
+    ['挑战积分榜', 挑战积分榜, 'bangdan'],
+  ])('%s 的状态切换不再用淡出残留旧组', (_名称, 样式, 前缀) => {
+    expect(样式).not.toContain(`${前缀}-nei-rong`)
+    expect(样式).not.toContain(`${前缀}-dan-ru`)
+    expect(样式).not.toContain('grid-area: 1 / 1')
   })
 })
 
@@ -260,8 +267,8 @@ describe('挑战页性别卡规则', () => {
 
 describe('挑战页降级覆盖新增动效', () => {
   it.each([
-    ['挑战主页', 挑战主页, ['.zu-zhishi', '.zhaiyao-nei-rong', '.xingbie-zhezhao', '.xingbie-tanchuang']],
-    ['挑战积分榜', 挑战积分榜, ['.zubie-zhishi', '.bangdan-nei-rong']],
+    ['挑战主页', 挑战主页, ['.zu-zhishi', '.xingbie-zhezhao', '.xingbie-tanchuang']],
+    ['挑战积分榜', 挑战积分榜, ['.zubie-zhishi', '.kong-anniu']],
   ])('%s 的 reduced-motion 块包含新增动效类', (_名称, 样式, 类名组) => {
     const 位置 = 样式.indexOf('@media (prefers-reduced-motion: reduce)')
     expect(位置).toBeGreaterThan(-1)

@@ -80,6 +80,7 @@
           >
               <HengTiaoShuRuKuang
                 标识="denglu-shoujihao"
+                :前缀="huoQuFanYi('ui', 'shouJiHaoGuoJiQuHao')"
                 :模型值="dengLuShouJiHao"
                 :类型="'tel'"
                 :最大长度="11"
@@ -233,6 +234,7 @@
           >
               <HengTiaoShuRuKuang
                 标识="zhuce-shoujihao"
+                :前缀="huoQuFanYi('ui', 'shouJiHaoGuoJiQuHao')"
                 :模型值="zhuCeShouJiHao"
                 :类型="'tel'"
                 :最大长度="11"
@@ -352,7 +354,7 @@
               </HengTiaoShuRuKuang>
 
               
-              <div class="shuru-zu shangFu">
+              <div class="shuru-zu shangFu wu-di-xian">
                 <ChuShengRiQiXuanZeQi
                   v-model="zhuCeChuShengRiQi"
                   class="fenlie-shuru"
@@ -405,6 +407,7 @@
           <div
             ref="gundongZhuangShi"
             class="gundong-zhuangshi"
+            :class="{ 'jin-cou': gundongJinCou }"
             aria-hidden="true"
             @wheel.prevent="chuLiZhuangShiGunLun"
           >
@@ -808,9 +811,14 @@ const gundongRongQi = ref<HTMLElement | null>(null)
 const gundongHuaKuai = ref<HTMLElement | null>(null)
 const gundongGuiDao = ref<HTMLElement | null>(null)
 const gundongZhuangShi = ref<HTMLElement | null>(null)
+const gundongJinCou = ref(false)
 let gundongGuangChaQi: ResizeObserver | null = null
 const HUA_KUAI_ZUI_XIAO_GAO = 24
+const HUA_KUAI_JIN_COU_ZUI_XIAO_GAO = 12
 const GU_DAO_LIU_BAI = 14
+const JIN_COU_KE_JIAN_GAO = 96
+const JIN_COU_LIU_BAI = 2
+const GUI_DAO_ZUI_XIAO_GAO = 4
 const JIAN_TOU_BU_CHANG_BI_LI = 0.25
 let huaKuaiGaoDu = 0
 let huaKuaiGuiDaoGao = 0
@@ -825,17 +833,39 @@ function gengXinHuaKuai(): void {
   if (yiChuGao <= 0) {
     huaKuaiYuanSu.style.display = 'none'
     zhuangShiYuanSu.style.display = 'none'
+    gundongJinCou.value = false
     huaKuaiGaoDu = 0
     huaKuaiGuiDaoGao = 0
     return
   }
+  const 滚动高 = gunDongQuYuanSu.clientHeight
+  const 装饰高 = zhuangShiYuanSu.clientHeight
+  if (滚动高 <= 0 || 装饰高 <= 0) {
+    huaKuaiYuanSu.style.display = 'none'
+    zhuangShiYuanSu.style.display = 'none'
+    gundongJinCou.value = false
+    huaKuaiGaoDu = 0
+    huaKuaiGuiDaoGao = 0
+    return
+  }
+  const jinCou = 装饰高 < JIN_COU_KE_JIAN_GAO
+  const liuBai = jinCou ? JIN_COU_LIU_BAI : GU_DAO_LIU_BAI
+  const shiYongGao = 装饰高 - liuBai * 2
+  const 最小柄高 = jinCou ? HUA_KUAI_JIN_COU_ZUI_XIAO_GAO : HUA_KUAI_ZUI_XIAO_GAO
+  if (shiYongGao < 最小柄高 + GUI_DAO_ZUI_XIAO_GAO) {
+    huaKuaiYuanSu.style.display = 'none'
+    zhuangShiYuanSu.style.display = 'none'
+    gundongJinCou.value = false
+    huaKuaiGaoDu = 0
+    huaKuaiGuiDaoGao = 0
+    return
+  }
+  gundongJinCou.value = jinCou
   huaKuaiYuanSu.style.display = ''
   zhuangShiYuanSu.style.display = ''
-  const keJianGao = gunDongQuYuanSu.clientHeight
-  const shiYongGao = Math.max(0, keJianGao - GU_DAO_LIU_BAI * 2)
-  const huaKuaiGao = Math.max(
-    HUA_KUAI_ZUI_XIAO_GAO,
-    Math.round(shiYongGao * (shiYongGao / gunDongQuYuanSu.scrollHeight)),
+  const huaKuaiGao = Math.min(
+    shiYongGao - GUI_DAO_ZUI_XIAO_GAO,
+    Math.max(最小柄高, Math.round(shiYongGao * (滚动高 / gunDongQuYuanSu.scrollHeight))),
   )
   const guiDaoGao = Math.max(0, shiYongGao - huaKuaiGao)
   const dingBu = Math.round((gunDongQuYuanSu.scrollTop / yiChuGao) * guiDaoGao)
@@ -1511,15 +1541,16 @@ async function zhiXingZhuCe() {
   width: 100%;
   display: flex;
   flex-direction: column;
+  --ka-heng-nei-ju: var(--ka-heng-nei-ju-dangqian, var(--renzheng-ka-nei-ju-heng));
   background-color: var(--renzheng-mian-se);
-  border: 1px solid var(--ka-jin-xian);
+  border: var(--renzheng-ka-bian-kuan) solid var(--ka-jin-xian);
   border-radius: var(--yuanjiao-xiao);
-  outline: 1px solid var(--ka-jin-xian);
-  outline-offset: -4px;
+  outline: var(--renzheng-ka-bian-kuan) solid var(--ka-jin-xian);
+  outline-offset: calc(var(--renzheng-ka-nei-xian-pian-yi) * -1);
   box-shadow:
     0 24px 48px rgba(2, 4, 14, 0.42),
     0 6px 14px rgba(2, 4, 14, 0.34);
-  padding: var(--ka-duan-luo) var(--renzheng-ka-pian-you-nei-ju);
+  padding: var(--ka-duan-luo) var(--ka-heng-nei-ju);
   position: relative;
   max-height: 100%;
   overflow: hidden;
@@ -1534,7 +1565,7 @@ async function zhiXingZhuCe() {
   right: 7px;
   height: 14px;
   background: repeating-conic-gradient(
-    from 90deg at 50% 130%,
+    from var(--renzheng-shan-guang-qi-jiao) at 50% 130%,
     var(--ka-guang-wen) 0deg 6deg,
     transparent 6deg 12deg
   );
@@ -1543,7 +1574,6 @@ async function zhiXingZhuCe() {
 }
 
 .biaodan-neirong-qu {
-  --ka-heng-nei-ju: var(--renzheng-ka-pian-you-nei-ju);
   flex: 1;
   min-height: 0;
   display: flex;
@@ -1551,12 +1581,6 @@ async function zhiXingZhuCe() {
   gap: 0;
   position: relative;
   z-index: 1;
-}
-
-@media (max-width: 767px) {
-  .biaodan-neirong-qu {
-    --ka-heng-nei-ju: var(--jiange-zhong);
-  }
 }
 
 .biaodan-tou {
@@ -1646,21 +1670,41 @@ async function zhiXingZhuCe() {
 }
 
 .gundong-zhuangshi {
+  --renzheng-gundong-zhong-xin-ju: calc(
+    (var(--ka-heng-nei-ju) - var(--renzheng-ka-nei-bian-ju) - var(--renzheng-shuru-you-nei-ju)) / 2
+  );
+  --renzheng-gundong-chumo-kuan: min(
+    var(--renzheng-gundong-shou-kuan),
+    calc(
+      var(--ka-heng-nei-ju) + var(--renzheng-ka-bian-kuan) - var(--renzheng-gundong-zhong-xin-ju) +
+        var(--renzheng-gundong-huakuai-kuan) / 2
+    )
+  );
   position: absolute;
   top: 0;
   bottom: 0;
-  right: calc(var(--renzheng-ka-pian-you-nei-ju) / -2 - var(--renzheng-gundong-shou-kuan) / 2);
-  width: var(--renzheng-gundong-shou-kuan);
+  right: calc(
+    var(--renzheng-gundong-huakuai-kuan) / 2 - var(--renzheng-gundong-zhong-xin-ju) - var(--renzheng-gundong-chumo-kuan)
+  );
+  width: var(--renzheng-gundong-chumo-kuan);
   pointer-events: none;
+}
+
+.gundong-zhuangshi.jin-cou .gundong-jiantou {
+  display: none;
+}
+
+.gundong-zhuangshi.jin-cou .gundong-guidao {
+  top: var(--jiange-2);
+  bottom: var(--jiange-2);
 }
 
 .gundong-guidao {
   position: absolute;
   top: 14px;
   bottom: 14px;
-  left: 50%;
+  left: 0;
   width: var(--renzheng-gundong-huakuai-kuan);
-  margin-left: calc(var(--renzheng-gundong-huakuai-kuan) / -2);
   border-radius: var(--renzheng-gundong-yuan-jiao);
   background: color-mix(in srgb, var(--renzheng-gundong-huakuai-se) 26%, transparent);
   pointer-events: auto;
@@ -1674,36 +1718,48 @@ async function zhiXingZhuCe() {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: calc((var(--renzheng-gundong-shou-kuan) - var(--renzheng-gundong-huakuai-kuan)) / -2);
-  right: calc((var(--renzheng-gundong-shou-kuan) - var(--renzheng-gundong-huakuai-kuan)) / -2);
+  left: 0;
+  width: var(--renzheng-gundong-chumo-kuan);
 }
 
 .gundong-jiantou {
   position: absolute;
-  left: 50%;
-  width: 8px;
-  height: 8px;
-  border-left: 2px solid var(--renzheng-gundong-huakuai-se);
-  border-top: 2px solid var(--renzheng-gundong-huakuai-se);
+  left: 0;
+  width: var(--renzheng-gundong-chumo-kuan);
+  height: var(--renzheng-gundong-shou-kuan);
+  background: transparent;
+  border: none;
   pointer-events: auto;
   touch-action: none;
   cursor: default;
 }
 
-.gundong-jiantou::before {
+.gundong-jiantou::after {
   content: '';
   position: absolute;
-  inset: calc(var(--jiange-zhong) * -1);
+  left: calc(var(--renzheng-gundong-huakuai-kuan) / 2 - 4px);
+  width: 8px;
+  height: 8px;
+  border-left: 2px solid var(--renzheng-gundong-huakuai-se);
+  border-top: 2px solid var(--renzheng-gundong-huakuai-se);
 }
 
 .gundong-jiantou-shang {
   top: 0;
-  transform: translateX(-50%) rotate(45deg);
+}
+
+.gundong-jiantou-shang::after {
+  top: 0;
+  transform: rotate(45deg);
 }
 
 .gundong-jiantou-xia {
   bottom: 0;
-  transform: translateX(-50%) rotate(-135deg);
+}
+
+.gundong-jiantou-xia::after {
+  bottom: 0;
+  transform: rotate(-135deg);
 }
 
 .gundong-huakuai {
@@ -1764,8 +1820,8 @@ async function zhiXingZhuCe() {
   min-height: 0;
   min-width: 0;
   padding-top: calc(var(--biaoqian-qin-ru) + var(--jiange-2));
-  padding-left: var(--jiange-4);
-  padding-right: var(--jiange-4);
+  padding-left: var(--renzheng-shuru-you-nei-ju);
+  padding-right: var(--renzheng-shuru-you-nei-ju);
   overflow: hidden;
 }
 

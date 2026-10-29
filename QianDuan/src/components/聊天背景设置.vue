@@ -38,7 +38,12 @@
             :aria-label="显示名(模式.键, 项)"
             @click="选择背景(模式.键, 项)"
           >
-            <span class="bei-jing-ka-ming" :title="显示名(模式.键, 项)" @dblclick.stop="开始编辑(模式.键, 项)">
+            <span
+              class="bei-jing-ka-ming"
+              :title="显示名(模式.键, 项)"
+              data-wai-guan-gai-ming
+              @dblclick.stop="开始编辑(模式.键, 项)"
+            >
               {{ 显示名(模式.键, 项) }}
             </span>
             <span v-if="是否当前(模式.键, 项)" class="bei-jing-ka-dang-qian">{{ dangQianWenAn }}</span>
@@ -47,6 +52,7 @@
             type="button"
             class="bei-jing-ka-kong-zhi"
             :aria-label="bianJiMingChengWenAn + '：' + 项.mingCheng"
+            data-wai-guan-gai-ming
             @click.stop="开始编辑(模式.键, 项)"
           >
             <svg
@@ -97,7 +103,12 @@
               :aria-label="显示名(模式.键, 项)"
               @click="选择背景(模式.键, 项)"
             >
-              <span class="bei-jing-ka-ming" :title="显示名(模式.键, 项)" @dblclick.stop="开始编辑(模式.键, 项)">
+              <span
+                class="bei-jing-ka-ming"
+                :title="显示名(模式.键, 项)"
+                data-wai-guan-gai-ming
+                @dblclick.stop="开始编辑(模式.键, 项)"
+              >
                 {{ 显示名(模式.键, 项) }}
               </span>
               <span v-if="是否当前(模式.键, 项)" class="bei-jing-ka-dang-qian">{{ dangQianWenAn }}</span>
@@ -106,6 +117,7 @@
               type="button"
               class="bei-jing-ka-kong-zhi"
               :aria-label="bianJiMingChengWenAn + '：' + 项.mingCheng"
+              data-wai-guan-gai-ming
               @click.stop="开始编辑(模式.键, 项)"
             >
               <svg
@@ -159,15 +171,17 @@
         </button>
       </div>
 
-      <div v-if="编辑模式 === 模式.键" class="bei-jing-bian-ji-wei">
+      <div v-if="编辑目标?.模式 === 模式.键" class="bei-jing-bian-ji-wei">
         <WaiGuanJiuDiBianJi
+          :key="编辑键"
           :biao-ti="bianJiBiaoTi"
-          :ming-cheng="编辑项?.mingCheng || ''"
+          :ming-cheng="编辑初始名称"
           :wen-zi-yan-se="编辑初始颜色"
           :zui-da-zi-fu="mingChengZuiDaZiFu"
           lei-bie="beiJing"
           :cuo-wu-wen-an="编辑错误"
           :cao-zuo-zhong="编辑保存中"
+          :ju-jiao-xu-hao="外观编辑.聚焦序号"
           @tijiao="保存编辑"
           @huan-yuan="还原编辑"
           @qu-xiao="结束编辑"
@@ -248,6 +262,7 @@ import {
 } from '@/config/外观自定义'
 import { baoCunWaiGuan } from '@/api/社交'
 import { 使用用户设置仓库, type BeiJingXiangMu } from '@/stores/用户设置'
+import { 使用外观编辑仓库 } from '@/stores/外观编辑'
 import { tiQuCuoWuWenBen } from '@/utils/前台错误'
 import WaiGuanJiuDiBianJi from '@/components/外观就地编辑器.vue'
 import WaiGuanTianChongXuanZe from '@/components/外观填充选择器.vue'
@@ -305,11 +320,11 @@ const 模式列表 = [
   },
 ]
 
-const 编辑模式 = ref<'qian' | 'shen' | null>(null)
-const 编辑项 = ref<BeiJingXiangMu | null>(null)
-const 编辑错误 = ref('')
-const 编辑保存中 = ref(false)
-const 预览值 = ref<{ mingCheng: string; wenZiYanSe: string } | null>(null)
+const 外观编辑 = 使用外观编辑仓库()
+const 编辑目标 = computed(() => (外观编辑.当前目标?.区 === 'beiJing' ? 外观编辑.当前目标 : null))
+const 编辑预览 = computed(() => (编辑目标.value ? 外观编辑.预览值 : null))
+const 编辑错误 = computed(() => (编辑目标.value ? 外观编辑.错误文案 : ''))
+const 编辑保存中 = computed(() => 外观编辑.保存中)
 const 上传中 = ref(false)
 const 同步中 = ref<'' | 'qian' | 'shen'>('')
 const 显示上传说明 = ref(false)
@@ -326,14 +341,17 @@ const 提示失败 = ref(false)
 const 文件输入 = ref<HTMLInputElement | null>(null)
 
 onBeforeUnmount(() => {
+  if (编辑目标.value) 外观编辑.关闭(编辑目标.value)
   if (caiJianTuYuan.value) URL.revokeObjectURL(caiJianTuYuan.value)
 })
 
-const 编辑键 = computed(() => (编辑项.value && 编辑模式.value ? 键(编辑模式.value, 编辑项.value) : ''))
+const 编辑键 = computed(() => 编辑目标.value?.键 || '')
+const 编辑初始名称 = computed(() => 编辑目标.value?.项.mingCheng || '')
 const 编辑初始颜色 = computed(() => {
-  if (!编辑项.value) return ''
-  if (编辑项.value.wenZiYanSe) return 编辑项.value.wenZiYanSe
-  if (编辑项.value.leiXing === 'ziDingYi' || 编辑项.value.jian !== 'moRen') return WAI_GUAN_MO_REN_WEN_ZI_YAN_SE
+  const 项 = 编辑目标.value?.项
+  if (!项) return ''
+  if (项.wenZiYanSe) return 项.wenZiYanSe
+  if (项.leiXing === 'ziDingYi' || 项.jian !== 'moRen') return WAI_GUAN_MO_REN_WEN_ZI_YAN_SE
   return ''
 })
 const 删除说明 = computed(() =>
@@ -359,16 +377,16 @@ function 是否当前(模式: 'qian' | 'shen', 项: BeiJingXiangMu): boolean {
 }
 
 function shiYuLanZhong(模式: 'qian' | 'shen', 项: BeiJingXiangMu): boolean {
-  return 编辑模式.value === 模式 && 编辑项.value !== null && 键(模式, 编辑项.value) === 键(模式, 项)
+  return 编辑目标.value?.键 === 键(模式, 项)
 }
 
 function 显示名(模式: 'qian' | 'shen', 项: BeiJingXiangMu): string {
-  if (shiYuLanZhong(模式, 项) && 预览值.value) return 预览值.value.mingCheng
+  if (shiYuLanZhong(模式, 项) && 编辑预览.value) return 编辑预览.value.mingCheng
   return 项.mingCheng
 }
 
 function 背景项样式(模式: 'qian' | 'shen', 项: BeiJingXiangMu): Record<string, string> {
-  const yuLanSe = shiYuLanZhong(模式, 项) && 预览值.value ? 预览值.value.wenZiYanSe : ''
+  const yuLanSe = shiYuLanZhong(模式, 项) && 编辑预览.value ? 编辑预览.value.wenZiYanSe : ''
   const yanSe = yuLanSe || 项.wenZiYanSe || (项.leiXing === 'ziDingYi' || 项.jian !== 'moRen' ? WAI_GUAN_MO_REN_WEN_ZI_YAN_SE : '')
   const yangShi: Record<string, string> = {}
   if (yanSe) yangShi.color = yanSe
@@ -420,57 +438,53 @@ async function 同步背景(模式: 'qian' | 'shen'): Promise<void> {
 }
 
 function 开始编辑(模式: 'qian' | 'shen', 项: BeiJingXiangMu): void {
-  if (编辑保存中.value) return
-  if (编辑键.value && 编辑键.value !== 键(模式, 项)) return
-  编辑模式.value = 模式
-  编辑项.value = { ...项 }
-  编辑错误.value = ''
-  预览值.value = null
+  外观编辑.打开({ 区: 'beiJing', 键: 键(模式, 项), 模式, 项: { ...项 } })
   清空提示()
 }
 
 function 结束编辑(): void {
-  编辑模式.value = null
-  编辑项.value = null
-  编辑错误.value = ''
-  预览值.value = null
+  if (编辑目标.value) 外观编辑.关闭(编辑目标.value)
 }
 
 function 更新预览(zhi: { mingCheng: string; wenZiYanSe: string }): void {
-  预览值.value = zhi
+  外观编辑.更新预览(zhi)
 }
 
 async function 保存编辑(zhi: { mingCheng: string; wenZiYanSe: string }): Promise<void> {
-  if (!编辑项.value) return
-  编辑保存中.value = true
-  编辑错误.value = ''
+  const muBiao = 编辑目标.value
+  if (!muBiao) return
+  外观编辑.保存中 = true
+  外观编辑.记下错误('')
   try {
-    if (编辑项.value.leiXing === 'yuShe') {
-      await 设置仓库.gengXinBeiJingYuShe(编辑项.value.jian, zhi)
+    if (muBiao.项.leiXing === 'yuShe') {
+      await 设置仓库.gengXinBeiJingYuShe(muBiao.项.jian, zhi)
     } else {
-      await 设置仓库.gengXinWaiGuanTiaoMu('beiJing', 编辑项.value.jian, zhi)
+      await 设置仓库.gengXinWaiGuanTiaoMu('beiJing', muBiao.项.jian, zhi)
     }
-    结束编辑()
+    外观编辑.关闭(muBiao)
     显示提示(保存成功文案)
   } catch (cuoWu: unknown) {
-    编辑错误.value = 错误文案(cuoWu)
+    if (外观编辑.是当前(muBiao)) 外观编辑.记下错误(错误文案(cuoWu))
+    else 显示提示(错误文案(cuoWu), true)
   } finally {
-    编辑保存中.value = false
+    外观编辑.保存中 = false
   }
 }
 
 async function 还原编辑(): Promise<void> {
-  if (!编辑项.value) return
-  编辑保存中.value = true
-  编辑错误.value = ''
+  const muBiao = 编辑目标.value
+  if (!muBiao) return
+  外观编辑.保存中 = true
+  外观编辑.记下错误('')
   try {
-    await 设置仓库.huanYuanWaiGuanXiang('beiJing', 编辑项.value)
-    结束编辑()
+    await 设置仓库.huanYuanWaiGuanXiang('beiJing', muBiao.项)
+    外观编辑.关闭(muBiao)
     显示提示(还原成功文案)
   } catch (cuoWu: unknown) {
-    编辑错误.value = 错误文案(cuoWu)
+    if (外观编辑.是当前(muBiao)) 外观编辑.记下错误(错误文案(cuoWu))
+    else 显示提示(错误文案(cuoWu), true)
   } finally {
-    编辑保存中.value = false
+    外观编辑.保存中 = false
   }
 }
 
@@ -562,7 +576,7 @@ async function 确认删除(): Promise<void> {
   删除中.value = true
   try {
     await 设置仓库.shanChuWaiGuan('beiJing', 项.jian)
-    if (编辑项.value?.jian === 项.jian) 结束编辑()
+    if (编辑目标.value?.项.jian === 项.jian) 结束编辑()
     显示删除确认.value = false
     待删除.value = null
     显示提示(删除成功文案)

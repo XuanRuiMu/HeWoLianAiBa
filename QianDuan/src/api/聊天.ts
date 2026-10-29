@@ -468,6 +468,14 @@ export interface 复盘批注项 {
   qing_gan?: string
 }
 
+export const 复盘状态 = {
+  生成中: 'sheng_cheng_zhong',
+  已完成: 'yi_wan_cheng',
+  无聊天记录: 'wu_liao_tian_ji_lu',
+} as const
+
+export type 复盘状态值 = (typeof 复盘状态)[keyof typeof 复盘状态]
+
 export interface 复盘响应 {
   fu_pan_nei_rong: string | null
   fu_pan_shi_jian_xian: 复盘时间线条目[]
@@ -475,6 +483,7 @@ export interface 复盘响应 {
   jun_shi_zhi_dao_ji_lu: 军师指导记录项[]
   guan_jian_shi_jian: 关键事件项[]
   jia_zai_zhong: boolean
+  fu_pan_zhuang_tai: 复盘状态值
 }
 
 export interface 复盘时间线条目 {

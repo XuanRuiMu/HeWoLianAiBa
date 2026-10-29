@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
@@ -13,13 +13,14 @@ import {
   QI_PAO_WEI_BA_WEI_ZHI_LIE_BIAO,
   QI_PAO_YUAN_JIAO_DANG_WEI_LIE_BIAO,
   huoQuMiaoBianYangShi,
+  huoQuQiPaoWeiBaBianLiang,
+  huoQuQiPaoXingZhuangBianLiang,
   huoQuWeiBaChiCun,
+  huoQuWeiBaMiaoBianYanSe,
   huoQuWeiBaWeiZhiZhi,
   huoQuYuanJiaoDangZhi,
-  jieXiMengCengZhi,
   type WaiGuanTiaoMu,
 } from '@/config/外观自定义'
-import { heChengWeiBaYanSe, jiSuanQuYuPingJun } from '@/utils/外观采样'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
 
 const 源码根 = resolve(__dirname, '..')
@@ -27,6 +28,7 @@ const 读 = (相对: string): string => readFileSync(resolve(源码根, 相对),
 const 容器源 = 读('components/聊天/气泡容器.vue')
 const 卡片源 = 读('components/气泡主题选择器.vue')
 const 裁剪源 = 读('components/图片裁剪.vue')
+const 尾巴源 = 读('components/聊天/气泡尾巴.vue')
 
 const MEI_TI_URL = '/api/媒体/' + 'a'.repeat(64) + '?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=' + 'b'.repeat(64)
 
@@ -54,7 +56,7 @@ function 列出源码(目录: string, 后缀: RegExp): string[] {
 }
 
 function 持有形状赋值的文件(): string[] {
-  const teZheng = /'--qipao-(?:yuanjiao|weiba-shang|weiba-kuan|weiba-ban|miaoBian-yangShi)'\s*:/
+  const teZheng = /'--qipao-(?:yuanjiao|weiba-shang|weiba-kuan|weiba-ban|weiba-xian-shi|weiba-miao-bian|miaoBian-yangShi)'\s*:/
   return 列出源码(源码根, /\.(vue|ts|css|js|html)$/).filter((文件) => teZheng.test(读(文件)))
 }
 
@@ -67,13 +69,31 @@ describe('FP-02b 气泡形状档位映射', () => {
     expect([...QI_PAO_WEI_BA_MO_SHI_LIE_BIAO]).toEqual(['moRen', 'da', 'xiao', 'wu'])
   })
 
-  it('尾巴位置档位映射 top 语义：靠上/居中/靠下，公式引用档位变量自身不循环', () => {
-    expect(huoQuWeiBaWeiZhiZhi('shang')).toBe('var(--qipao-weiba-ju-li)')
+  it('尾巴位置档位映射：靠上贴合首行中心并避开圆角，居中/靠下随档位高计算', () => {
+    expect(huoQuWeiBaWeiZhiZhi('shang')).toBe(
+      'max(var(--qipao-yuanjiao), calc(var(--qipao-weiba-shang-bu-ju, var(--qipao-nei-ju-shang)) + 0.5lh - var(--qipao-weiba-ban)))',
+    )
     expect(huoQuWeiBaWeiZhiZhi('zhong')).toBe('calc(50% - var(--qipao-weiba-ban))')
-    expect(huoQuWeiBaWeiZhiZhi('xia')).toBe('calc(100% - var(--qipao-weiba-ju-li) - var(--qipao-weiba-ban) * 2)')
+    expect(huoQuWeiBaWeiZhiZhi('xia')).toBe(
+      'calc(100% - max(var(--qipao-weiba-ju-li), var(--qipao-yuanjiao)) - var(--qipao-weiba-ban) * 2)',
+    )
     for (const zhi of QI_PAO_WEI_BA_WEI_ZHI_LIE_BIAO) {
       expect(huoQuWeiBaWeiZhiZhi(zhi)).not.toContain('var(--qipao-weiba-shang)')
+      expect(huoQuWeiBaWeiZhiZhi(zhi)).not.toContain('--qipao-weiba-pian')
     }
+    for (const zhi of QI_PAO_WEI_BA_MO_SHI_LIE_BIAO) {
+      const bianLiang = huoQuQiPaoWeiBaBianLiang(zhi, 'shang', false, '')
+      expect(bianLiang['--qipao-weiba-kuan']).toBe(huoQuWeiBaChiCun(zhi).kuan)
+      expect(bianLiang['--qipao-weiba-ban']).toBe(huoQuWeiBaChiCun(zhi).ban)
+      expect(bianLiang['--qipao-weiba-xian-shi']).toBe(zhi === 'wu' ? 'none' : 'block')
+    }
+  })
+
+  it('描边颜色分流：开且合法为实色，关或非法为 transparent', () => {
+    expect(huoQuWeiBaMiaoBianYanSe(true, '#333333')).toBe('#333333')
+    expect(huoQuWeiBaMiaoBianYanSe(true, ' #aabbcc ')).toBe('#aabbcc')
+    expect(huoQuWeiBaMiaoBianYanSe(true, 'red')).toBe('transparent')
+    expect(huoQuWeiBaMiaoBianYanSe(false, '#333333')).toBe('transparent')
   })
 
   it('圆角档位映射：小/中/中为默认值/大', () => {
@@ -90,7 +110,7 @@ describe('FP-02b 气泡形状档位映射', () => {
     expect(huoQuMiaoBianYangShi(true, '')).toBe('none')
   })
 
-  it('设计令牌保留档位子令牌且默认值不变：6px 圆角、6/5 尾巴、13px 顶部基准', () => {
+  it('设计令牌保留档位子令牌且默认值不变，旧固定外伸令牌已删除', () => {
     const lingPai = 读('styles/设计令牌.css')
     expect(lingPai).toContain('--qipao-yuanjiao-ju-li: 6px;')
     expect(lingPai).toContain('--qipao-yuanjiao: var(--qipao-yuanjiao-ju-li);')
@@ -99,6 +119,8 @@ describe('FP-02b 气泡形状档位映射', () => {
     expect(lingPai).toContain('--qipao-weiba-kuan: var(--qipao-weiba-kuan-ju-li);')
     expect(lingPai).toContain('--qipao-weiba-ju-li: 13px;')
     expect(lingPai).toContain('--qipao-weiba-shang: var(--qipao-weiba-ju-li);')
+    expect(lingPai).toContain('--qipao-weiba-miao-bian-kuan: 1.5px;')
+    expect(lingPai).not.toContain('--qipao-weiba-pian')
   })
 })
 
@@ -121,24 +143,35 @@ describe('FP-02b 形状档位存储与变量注入', () => {
     expect(cang.qiPaoMiaoBianYanSe).toBe('#FF0000')
   })
 
-  it('唯一 bundle 同时携带颜色键与形状五键并随档位联动，描边关闭时为 none', () => {
+  it('唯一 bundle 同时携带颜色键与形状键并随档位联动，描边关闭时为 transparent/none', () => {
     setActivePinia(createPinia())
     const cang = 使用用户设置仓库()
     const moRen = cang.qiPaoCSSBianLiang
     expect(moRen['--qipao-ziJi-beiJing']).toBe(huoQuQiPaoDingYi(cang.qiPaoZiJi).beiJing)
     expect(moRen['--qipao-duiFang-wenBen']).toBe(huoQuQiPaoDingYi(cang.qiPaoAI).wenBen)
     expect(moRen['--qipao-yuanjiao']).toBe('var(--qipao-yuanjiao-ju-li)')
-    expect(moRen['--qipao-weiba-shang']).toBe('var(--qipao-weiba-ju-li)')
     expect(moRen['--qipao-weiba-kuan']).toBe('var(--qipao-weiba-kuan-ju-li)')
     expect(moRen['--qipao-weiba-ban']).toBe('var(--qipao-weiba-ban-ju-li)')
+    expect(moRen['--qipao-weiba-shang']).toBe(huoQuWeiBaWeiZhiZhi('shang'))
+    expect(moRen['--qipao-weiba-xian-shi']).toBe('block')
+    expect(moRen['--qipao-weiba-miao-bian']).toBe('transparent')
     expect(moRen['--qipao-miaoBian-yangShi']).toBe('none')
     cang.shiYongQiPaoXingZhuang({ weiBaMoShi: 'wu', weiBaWeiZhi: 'zhong', yuanJiaoDangWei: 'xiao', miaoBianKaiQi: true, miaoBianYanSe: '#000000' })
     const gai = cang.qiPaoCSSBianLiang
     expect(gai['--qipao-yuanjiao']).toBe('var(--qipao-yuanjiao-dang-xiao)')
     expect(gai['--qipao-weiba-shang']).toBe('calc(50% - var(--qipao-weiba-ban))')
     expect(gai['--qipao-weiba-kuan']).toBe('0px')
+    expect(gai['--qipao-weiba-xian-shi']).toBe('none')
+    expect(gai['--qipao-weiba-miao-bian']).toBe('#000000')
     expect(gai['--qipao-miaoBian-yangShi']).toBe('0 0 0 1.5px #000000')
     expect(gai['--qipao-ziJi-beiJing']).toBe(huoQuQiPaoDingYi(cang.qiPaoZiJi).beiJing)
+    expect(huoQuQiPaoXingZhuangBianLiang({
+      weiBaMoShi: 'wu',
+      weiBaWeiZhi: 'zhong',
+      yuanJiaoDangWei: 'xiao',
+      miaoBianKaiQi: true,
+      miaoBianYanSe: '#000000',
+    })['--qipao-weiba-xian-shi']).toBe('none')
   })
 
   it('真实聊天面板经 use聊天皮肤 消费同一份 bundle：非默认档位抵达渲染节点', async () => {
@@ -149,17 +182,19 @@ describe('FP-02b 形状档位存储与变量注入', () => {
     const mianBan = kuang.element as HTMLElement
     expect(mianBan.style.getPropertyValue('--qipao-yuanjiao')).toBe(huoQuYuanJiaoDangZhi('da'))
     expect(mianBan.style.getPropertyValue('--qipao-weiba-kuan')).toBe(huoQuWeiBaChiCun('da').kuan)
+    expect(mianBan.style.getPropertyValue('--qipao-weiba-miao-bian')).toBe('#FF0000')
     expect(mianBan.style.getPropertyValue('--qipao-miaoBian-yangShi')).toBe(huoQuMiaoBianYangShi(true, '#FF0000'))
     expect(mianBan.style.getPropertyValue('--qipao-ziJi-beiJing')).toBe(huoQuQiPaoDingYi(cang.qiPaoZiJi).beiJing)
     kuang.unmount()
   })
 
-  it('描边关闭时真实聊天面板注入 none 而非缺失', async () => {
+  it('描边关闭时真实聊天面板注入 none 与 transparent 而非缺失', async () => {
     setActivePinia(createPinia())
     const cang = 使用用户设置仓库()
     cang.shiYongQiPaoXingZhuang({ miaoBianKaiQi: false })
     const kuang = mount(LiaoTianMianBan, { attachTo: document.body })
     expect((kuang.element as HTMLElement).style.getPropertyValue('--qipao-miaoBian-yangShi')).toBe('none')
+    expect((kuang.element as HTMLElement).style.getPropertyValue('--qipao-weiba-miao-bian')).toBe('transparent')
     kuang.unmount()
   })
 
@@ -175,8 +210,8 @@ describe('FP-02b 形状档位存储与变量注入', () => {
     kuang.unmount()
   })
 
-  it('形状变量赋值收敛于唯一文件：stores/用户设置.ts', () => {
-    expect(持有形状赋值的文件()).toEqual(['stores/用户设置.ts'])
+  it('形状变量赋值收敛于唯一配置源：config/外观自定义.ts', () => {
+    expect(持有形状赋值的文件()).toEqual(['config/外观自定义.ts'])
   })
 
   it('选择器根节点注入同一份 bundle，卡片与真实聊天同源消费', () => {
@@ -188,21 +223,31 @@ describe('FP-02b 形状档位存储与变量注入', () => {
     expect(gen.style.getPropertyValue('--qipao-miaoBian-yangShi')).toBe('none')
     expect(gen.style.getPropertyValue('--qipao-ziJi-beiJing')).toBe(huoQuQiPaoDingYi('weiXinLv').beiJing)
     expect(容器源).toContain('border-radius: var(--qipao-yuanjiao)')
-    expect(容器源).toContain('top: var(--qipao-weiba-shang)')
+    expect(容器源).toContain('<QiPaoWeiBa')
     kuang.unmount()
   })
 })
 
-describe('FP-02b 图片态尾巴不再退化', () => {
-  it('尾巴颜色引用链以尾巴专用变量打头，复合背景串永远到不了 border-color', () => {
-    expect(容器源).toContain('border-left: var(--qipao-weiba-kuan) solid')
-    expect(容器源).toContain('var(--qipao-ziJi-weiBa, var(--qipao-ziJi-beiJing')
-    expect(容器源).toContain('var(--qipao-duiFang-weiBa, var(--qipao-duiFang-beiJing')
-    expect(卡片源).toContain('var(--qipao-ziJi-weiBa, var(--qipao-ziJi-beiJing')
-    expect(卡片源).toContain('var(--qipao-duiFang-weiBa, var(--qipao-duiFang-beiJing')
+describe('FP-02b 图片态尾巴与气泡背景同源', () => {
+  it('尾巴实现只有共享组件一处，三处消费不再各自绘制三角', () => {
+    expect(尾巴源).toContain('clip-path: polygon(')
+    expect(尾巴源).toContain('--qipao-weiba-tian-chong')
+    expect(尾巴源).toContain('--qipao-weiba-miao-bian')
+    expect(容器源).toContain("import QiPaoWeiBa from '@/components/聊天/气泡尾巴.vue'")
+    expect(容器源).toContain('<QiPaoWeiBa :ce="shiBenRen ? \'you\' : \'zuo\'" />')
+    expect(卡片源).toContain("import QiPaoWeiBa from '@/components/聊天/气泡尾巴.vue'")
+    expect(卡片源).toContain('<QiPaoWeiBa :ce="zu.jian === \'ziJi\' ? \'you\' : \'zuo\'" />')
+    for (const 源 of [容器源, 卡片源, 裁剪源]) {
+      expect(源).not.toContain('border-left: var(--qipao-weiba-kuan) solid')
+      expect(源).not.toContain('border-right: var(--qipao-weiba-kuan) solid')
+      expect(源).not.toContain('--qipao-weiba-pian')
+    }
+    expect(容器源).not.toContain('.qipao-neirong::after')
+    expect(卡片源).not.toContain('.qi-pao-xuan-xiang--ka::after')
+    expect(裁剪源).not.toContain('.qipao-neirong--benren::after')
   })
 
-  it('图片态尾巴色经唯一 bundle 抵达选择器根节点并跟随采样更新', async () => {
+  it('图片态尾巴与气泡共用同一背景变量，不再存在独立采样色', async () => {
     setActivePinia(createPinia())
     const cang = 使用用户设置仓库()
     cang.waiGuan = {
@@ -215,26 +260,20 @@ describe('FP-02b 图片态尾巴不再退化', () => {
     const kuang = mount(QiPaoZhuTiXuanZeQi, { attachTo: document.body })
     const gen = kuang.element as HTMLElement
     expect(gen.style.getPropertyValue('--qipao-ziJi-beiJing')).toContain('url(')
-    expect(gen.style.getPropertyValue('--qipao-ziJi-weiBa')).toMatch(/^#[0-9a-fA-F]{6}$/)
-    cang.qiPaoWeiBaYanSeLu['ziJi-qipao-1'] = '#AABBCC'
-    await kuang.vm.$nextTick()
-    expect(gen.style.getPropertyValue('--qipao-ziJi-weiBa')).toBe('#AABBCC')
+    expect(gen.style.getPropertyValue('--qipao-ziJi-weiBa')).toBe('')
+    expect(gen.style.getPropertyValue('--qipao-duiFang-weiBa')).toBe('')
+    expect(卡片源).toContain('--qipao-weiba-tian-chong: var(--qipao-ziJi-beiJing')
+    expect(容器源).toContain('--qipao-weiba-tian-chong: var(--qipao-nei-rong-bei-jing)')
+    expect('qiPaoWeiBaYanSeLu' in cang).toBe(false)
     kuang.unmount()
   })
 
-  it('采样落库后 AI 侧尾巴变量跟随采样色', async () => {
-    setActivePinia(createPinia())
-    const cang = 使用用户设置仓库()
-    cang.waiGuan = {
-      beiJing: [],
-      qiPao: [zaoTiaoMu(1)],
-      beiJingFuGai: {},
-      qiPaoFuGai: {},
-      dangQianQiPao: { ziJi: '', ai: 'qipao-1' },
-    }
-    cang.qiPaoWeiBaYanSeLu['ai-qipao-1'] = '#AABBCC'
-    expect(cang.qiPaoCSSBianLiang['--qipao-duiFang-weiBa']).toBe('#AABBCC')
-    expect(cang.qiPaoCSSBianLiang['--qipao-duiFang-beiJing']).toContain('url(')
+  it('AI 侧与本人侧同理，真实聊天不存在采样缓存与异步补色', () => {
+    expect(容器源).not.toContain('caiJiBianYuanYanSe')
+    expect(裁剪源).not.toContain('caiJiBianYuanYanSe')
+    expect(卡片源).not.toContain('caiJiBianYuanYanSe')
+    expect(读('stores/用户设置.ts')).not.toContain('caiJiBianYuanYanSe')
+    expect(读('composables/use聊天皮肤.ts')).not.toContain('queRenQiPaoWeiBaYanSe')
   })
 })
 
@@ -245,44 +284,19 @@ describe('FP-02b 预览单侧覆盖与真实应用一致', () => {
     expect(裁剪源).not.toContain('.caijian-yulan--qiPao :deep(.qipao-neirong)')
   })
 
-  it('选择器把上传侧别传给裁剪组件，预览尾巴色独立采样注入', () => {
+  it('选择器把上传侧别传给裁剪组件，预览尾巴与气泡填充同一变量', () => {
     expect(卡片源).toContain(':yu-lan-ce-zhong="shangChuanFang"')
     expect(裁剪源).toContain("yuLanCeZhong?: 'ziJi' | 'ai'")
-    expect(裁剪源).toContain("'--caijian-yulan-wei-ba'")
-    expect(裁剪源).toContain('caiJiBianYuanYanSe')
+    expect(裁剪源).toContain('--qipao-weiba-tian-chong: var(--caijian-yulan-fu-gai) !important')
+    expect(裁剪源).toContain('Object.assign(yangShi, cang.qiPaoCSSBianLiang)')
+    expect(裁剪源).not.toContain('--caijian-yulan-wei-ba')
     expect(裁剪源).toContain("'caijian-yulan--ce-' + props.yuLanCeZhong")
   })
 
-  it('预览尾巴色优先采样值，回退真实管道尾巴变量', () => {
-    expect(裁剪源).toContain('border-left-color: var(--caijian-yulan-wei-ba, var(--qipao-ziJi-weiBa')
-    expect(裁剪源).toContain('border-right-color: var(--caijian-yulan-wei-ba, var(--qipao-duiFang-weiBa')
-  })
-})
-
-describe('FP-02b 尾巴采样纯函数', () => {
-  it('像素区域平均：按四通道步进取均值，长度不合法返回 null', () => {
-    const siXiang = [255, 0, 0, 255, 0, 255, 0, 255]
-    const jun = jiSuanQuYuPingJun(siXiang)
-    expect(jun).toEqual({ r: 128, g: 128, b: 0 })
-    expect(jiSuanQuYuPingJun([255, 0, 0])).toBeNull()
-    expect(jiSuanQuYuPingJun([1, 2, 3, 4, 5])).toBeNull()
-  })
-
-  it('尾巴色=边缘平均与气泡蒙层合成，蒙层串非法返回 null', () => {
-    expect(jieXiMengCengZhi('rgba(255, 255, 255, 0.62)')).toEqual({ r: 255, g: 255, b: 255, a: 0.62 })
-    expect(jieXiMengCengZhi('rgba(0, 0, 0, 0.55)')).toEqual({ r: 0, g: 0, b: 0, a: 0.55 })
-    expect(jieXiMengCengZhi('rgba(999, 0, 0, 0.5)')).toBeNull()
-    expect(jieXiMengCengZhi('linear-gradient')).toBeNull()
-    const se = heChengWeiBaYanSe({ r: 100, g: 150, b: 200 }, 'rgba(255, 255, 255, 0.62)')
-    expect(se).not.toBeNull()
-    const mengCeng = jieXiMengCengZhi('rgba(255, 255, 255, 0.62)')!
-    const qiWang = [100, 150, 200].map((tongDao, i) =>
-      Math.round(mengCeng[i === 0 ? 'r' : i === 1 ? 'g' : 'b'] * mengCeng.a + tongDao * (1 - mengCeng.a)),
-    )
-    expect(se).toBe(
-      '#' + qiWang.map((zhi) => zhi.toString(16).padStart(2, '0')).join(''),
-    )
-    expect(heChengWeiBaYanSe({ r: 0, g: 0, b: 0 }, '不是蒙层串')).toBeNull()
+  it('预览不再保留旧边框色覆盖链', () => {
+    expect(裁剪源).not.toContain('caijian-yulan-wei-ba')
+    expect(裁剪源).not.toContain('border-left-color:')
+    expect(裁剪源).not.toContain('border-right-color:')
   })
 })
 
@@ -300,6 +314,7 @@ describe('FP-02b 形状设置 UI 与翻译', () => {
     await dangKa[11].trigger('click')
     expect(cang.qiPaoMiaoBianKaiQi).toBe(true)
     expect(gen.style.getPropertyValue('--qipao-miaoBian-yangShi')).toBe(huoQuMiaoBianYangShi(true, cang.qiPaoMiaoBianYanSe))
+    expect(gen.style.getPropertyValue('--qipao-weiba-miao-bian')).toBe(cang.qiPaoMiaoBianYanSe)
     await kuang.get('.qi-pao-miao-bian-se-kuai').trigger('click')
     expect(cang.qiPaoMiaoBianYanSe).toBe('#FFFFFF')
     expect(gen.style.getPropertyValue('--qipao-miaoBian-yangShi')).toBe(huoQuMiaoBianYangShi(true, '#FFFFFF'))

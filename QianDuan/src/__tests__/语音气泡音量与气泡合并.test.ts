@@ -39,13 +39,13 @@ describe('气泡容器合并：全站只剩一份皮肤', () => {
     expect((语音源.match(/--qipao-ziJi-wenBen/g) ?? []).length).toBe(1)
   })
 
-  it('容器承接内边距/圆角/三角尾/字号，全部吃令牌', () => {
+  it('容器承接内边距/圆角/尾巴/字号，全部吃令牌', () => {
     expect(容器源).toContain('padding: var(--jiange-9) var(--jiange-13)')
     expect(容器源).toContain('border-radius: var(--qipao-yuanjiao)')
-    expect(容器源).toContain(
-      'background: var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing))',
-    )
-    expect(容器源).toContain('border-left: var(--qipao-weiba-kuan) solid')
+    expect(容器源).toContain('--qipao-nei-rong-bei-jing: var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing))')
+    expect(容器源).toContain('background: var(--qipao-nei-rong-bei-jing)')
+    expect(容器源).toContain('import QiPaoWeiBa')
+    expect(容器源).toContain('<QiPaoWeiBa')
     expect(容器源).toContain('font-size: var(--qipao-zihao)')
     expect(容器源).toContain('line-height: var(--qipao-hangao)')
     expect(令牌源).toContain('--qipao-yuanjiao: var(--qipao-yuanjiao-ju-li);')
@@ -53,6 +53,41 @@ describe('气泡容器合并：全站只剩一份皮肤', () => {
     expect(令牌源).toContain('--qipao-weiba-shang: var(--qipao-weiba-ju-li);')
     expect(令牌源).toContain('--qipao-weiba-ju-li: 13px;')
     expect(令牌源).toContain('--qipao-hangao: 1.45;')
+  })
+})
+
+describe('气泡文字内衬上少下多', () => {
+  const 令牌像素 = (ming: string): number => {
+    const 命中 = new RegExp(`--${ming}\\s*:\\s*([\\d.]+)px`).exec(令牌源)
+    expect(命中, `令牌 --${ming} 未定义`).not.toBeNull()
+    return Number((命中 as RegExpMatchArray)[1])
+  }
+
+  it('桌面文字气泡上内衬小于下内衬且总和 18px，390 档回到 9/9 不改变总高', () => {
+    const 上 = 令牌像素('qipao-nei-ju-shang')
+    const 下 = 令牌像素('qipao-nei-ju-xia')
+    expect(上, '文字气泡上内衬必须小于下内衬').toBeLessThan(下)
+    expect(上 + 下, '文字气泡上下内衬总和必须保持 18px').toBe(18)
+    expect(容器源).toContain(
+      'padding-block: var(--qipao-nei-ju-shang) var(--qipao-nei-ju-xia)',
+    )
+    const 窄屏块 = 容器源.match(/@media \(max-width: 480px\) \{[\s\S]*?\n\}/)?.[0] ?? ''
+    expect(窄屏块).toContain('.qipao-neirong--wen-zi-nei-ju')
+    expect(窄屏块).toContain('padding-block: var(--jiange-9)')
+    expect(令牌像素('jiange-9')).toBe(9)
+  })
+
+  it('语音气泡退出文字内衬偏差并下移内容校正，图片与文件气泡不套用该偏差', () => {
+    expect(容器源).toContain("'qipao-neirong--wen-zi-nei-ju': wenZiNeiJu")
+    expect(语音源).toContain(':wen-zi-nei-ju="false"')
+    expect(语音源).toContain('top: var(--yuyin-neirong-xia-yi)')
+    expect(令牌像素('yuyin-neirong-xia-yi')).toBe(3)
+    const 图片源 = du('components/聊天/图片气泡.vue')
+    const 文件源 = du('components/聊天/文件气泡.vue')
+    expect(图片源).toContain('padding: 0')
+    expect(图片源).not.toContain('qipao-nei-ju')
+    expect(文件源).toContain('padding: var(--jiange-12)')
+    expect(文件源).not.toContain('qipao-nei-ju')
   })
 })
 

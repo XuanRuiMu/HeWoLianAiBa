@@ -26,7 +26,7 @@ import {
   type FuPanShiJianXianTiaoMu,
   type ZhanJiZuiHouXiaoXi,
 } from '../services/战绩'
-import { shengChengFuPan } from '../services/复盘'
+import { huoQuFuPanYouXiaoXiaoXiShu, shengChengFuPan, 复盘状态 } from '../services/复盘'
 import { huoQuJunShiJiLuLieBiao, type JunShiJiLuXiang } from '../services/军师缓存'
 import { 执行落库后副作用 } from '../utils/落库后副作用'
 import { yanZhengUUID } from '../utils/验证'
@@ -560,6 +560,20 @@ luYou.get(
         return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'), CUO_WU_DAI_MA.RESOURCE_NOT_FOUND)
       }
 
+      const youXiaoXiaoXiShu = await huoQuFuPanYouXiaoXiaoXiShu(yongHu.yongHuId, dangAn.jiao_se_id)
+      const youHuanCunFuPan = Boolean(dangAn.fu_pan_nei_rong)
+      const liShiCunZaiLiaoTian = dangAn.xiao_xi_zong_shu > 0
+      if (youXiaoXiaoXiShu === 0 && !(youHuanCunFuPan && liShiCunZaiLiaoTian)) {
+        return chengGongXiangYing(xiangYing, {
+          fu_pan_nei_rong: null,
+          fu_pan_shi_jian_xian: [],
+          fu_pan_pi_zhu: null,
+          jun_shi_zhi_dao_ji_lu: [],
+          jia_zai_zhong: false,
+          fu_pan_zhuang_tai: 复盘状态.无聊天记录,
+        })
+      }
+
       const qianDuanDangAn = guoLvMinGanZiDuanXiangQing(dangAn)
       const junShiJiLu = await huoQuJunShiJiLuLieBiao(yongHu.yongHuId, dangAn.jiao_se_id)
       const qianDuanJunShiJiLu = junShiJiLu.map(zhuanHuanJunShiJiLu)
@@ -576,6 +590,7 @@ luYou.get(
           fu_pan_pi_zhu: null,
           jun_shi_zhi_dao_ji_lu: qianDuanJunShiJiLu,
           jia_zai_zhong: true,
+          fu_pan_zhuang_tai: 复盘状态.生成中,
         })
       }
 
@@ -585,6 +600,7 @@ luYou.get(
         fu_pan_pi_zhu: qianDuanDangAn.fu_pan_pi_zhu,
         jun_shi_zhi_dao_ji_lu: qianDuanJunShiJiLu,
         jia_zai_zhong: false,
+        fu_pan_zhuang_tai: 复盘状态.已完成,
       })
     } catch (cuoWu) {
       debug日志.error('战绩接口', '获取复盘失败', { xiang_qing: { cuo_wu: String(cuoWu) } })

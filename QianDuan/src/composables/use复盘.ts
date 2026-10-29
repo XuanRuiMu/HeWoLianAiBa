@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import type { Router } from 'vue-router'
-import { huoQuFuPan, type 复盘批注项 } from '@/api/聊天'
+import { huoQuFuPan, 复盘状态, type 复盘批注项, type 复盘响应 } from '@/api/聊天'
 import { huoQuFanYi } from '@/config/翻译表'
 import type { 消息 } from '@/types/类型定义'
 
@@ -27,6 +27,7 @@ export function use复盘(yiLai: Use复盘依赖) {
   const fuPanPiZhu = ref<复盘批注项[] | null>(null)
   const fuPanZongJie = ref<string | null>(null)
   const fuPanJiaZaiZhong = ref(false)
+  const fuPanWuLiaoTianJiLu = ref(false)
   const fuPanDangAnId = ref<string | null>(null)
   let fuPanQingQiuId = 0
 
@@ -128,13 +129,32 @@ export function use复盘(yiLai: Use复盘依赖) {
     return jieGuo.length > 0 ? jieGuo : null
   })
 
+  function yingYongWuLiaoTianJiLu(): void {
+    fuPanWuLiaoTianJiLu.value = true
+    fuPanPiZhu.value = null
+    fuPanZongJie.value = null
+    fuPanJiaZaiZhong.value = false
+  }
+
   async function jiaZaiFuPanShuJu(dangAnId: string) {
     const benCiId = ++fuPanQingQiuId
+    fuPanWuLiaoTianJiLu.value = false
     fuPanJiaZaiZhong.value = true
     fuPanPiZhu.value = null
     fuPanZongJie.value = null
     try {
-      let fuPanShuJu = await huoQuFuPan(dangAnId)
+      let fuPanShuJu: 复盘响应
+      try {
+        fuPanShuJu = await huoQuFuPan(dangAnId)
+      } catch (e) {
+        console.warn('加载复盘数据失败', e)
+        return
+      }
+      if (fuPanQingQiuId !== benCiId) return
+      if (fuPanShuJu.fu_pan_zhuang_tai === 复盘状态.无聊天记录) {
+        yingYongWuLiaoTianJiLu()
+        return
+      }
       if (!fuPanShuJu.jia_zai_zhong && fuPanShuJu.fu_pan_nei_rong) {
         fuPanPiZhu.value = fuPanShuJu.fu_pan_pi_zhu
         fuPanZongJie.value = fuPanShuJu.fu_pan_nei_rong
@@ -149,8 +169,12 @@ export function use复盘(yiLai: Use复盘依赖) {
         try {
           fuPanShuJu = await huoQuFuPan(dangAnId)
         } catch (e) {
-           
           console.warn('轮询复盘数据失败', e)
+        }
+        if (fuPanQingQiuId !== benCiId) return
+        if (fuPanShuJu.fu_pan_zhuang_tai === 复盘状态.无聊天记录) {
+          yingYongWuLiaoTianJiLu()
+          return
         }
         if (fuPanShuJu.fu_pan_nei_rong || !fuPanShuJu.jia_zai_zhong) {
           fuPanPiZhu.value = fuPanShuJu.fu_pan_pi_zhu
@@ -171,6 +195,7 @@ export function use复盘(yiLai: Use复盘依赖) {
     fuPanPiZhu.value = null
     fuPanZongJie.value = null
     fuPanJiaZaiZhong.value = false
+    fuPanWuLiaoTianJiLu.value = false
     fuPanDangAnId.value = null
     fuPanQingQiuId++
     yiLai.qingKongZhuangTai()
@@ -182,6 +207,7 @@ export function use复盘(yiLai: Use复盘依赖) {
     fuPanPiZhu,
     fuPanZongJie,
     fuPanJiaZaiZhong,
+    fuPanWuLiaoTianJiLu,
     fuPanDangAnId,
     xiaoXiDaoXuHaoMap,
     piZhuMap,

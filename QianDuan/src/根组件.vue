@@ -68,7 +68,7 @@ import ShiShiRiZhi from '@/components/实时日志.vue'
 import DuanWangHengFu from '@/components/断网横幅.vue'
 import { 使用用户仓库 } from '@/stores/用户'
 import { chuFaCuoWuShangBao } from '@/utils/错误上报'
-import { gouJianCaoDiDiZhi } from '@/utils/CaoDiBeiJing'
+import { gouJianCaoDiDiZhi, shiFouCaoDiDiaoShi } from '@/utils/CaoDiBeiJing'
 import { BUJU_PEI_ZHI, caoDiPeiZhi } from '@/config/站点配置'
 import { huoQuFanYi } from '@/config/翻译表'
 import { 解析性别 } from '@/utils/性别'
@@ -111,6 +111,9 @@ const beiJingJiuXu = ref(false)
 const beiJingShiBai = ref(false)
 const jiangJiYinCang = computed(() => !shiYongCaoDiBeiJing.value || beiJingJiuXu.value)
 let beiJingDengDaiDingShiQi: ReturnType<typeof setTimeout> | null = null
+let jieShiDengDaiDingShiQi: ReturnType<typeof setTimeout> | null = null
+let jieShiQiangZhiDingShiQi: ReturnType<typeof setTimeout> | null = null
+let beiJingChangJingYiJiuXu = false
 let yiShangBaoBeiJingShiBai = false
 
 function qingLiBeiJingDengDai(): void {
@@ -119,16 +122,53 @@ function qingLiBeiJingDengDai(): void {
   beiJingDengDaiDingShiQi = null
 }
 
+function qingLiJieShiDengDai(): void {
+  if (jieShiDengDaiDingShiQi !== null) {
+    clearTimeout(jieShiDengDaiDingShiQi)
+    jieShiDengDaiDingShiQi = null
+  }
+  if (jieShiQiangZhiDingShiQi !== null) {
+    clearTimeout(jieShiQiangZhiDingShiQi)
+    jieShiQiangZhiDingShiQi = null
+  }
+}
+
 function kaiShiBeiJingDengDai(): void {
   qingLiBeiJingDengDai()
   beiJingDengDaiDingShiQi = setTimeout(() => {
     beiJingDengDaiDingShiQi = null
-    if (!beiJingJiuXu.value) chongShiBeiJingJiaZai()
+    if (!beiJingChangJingYiJiuXu) chongShiBeiJingJiaZai()
   }, caoDiPeiZhi.beiJingJiuXuChaoShiHaoMiao)
+}
+
+function faJieShiWanCheng(): void {
+  const chuangKou = grassIframe.value && grassIframe.value.contentWindow
+  if (!chuangKou) return
+  try {
+    chuangKou.postMessage({ type: 'grass-reveal-finish' }, window.location.origin)
+  } catch {
+    return
+  }
+}
+
+function kaiShiJieShiDengDai(): void {
+  qingLiJieShiDengDai()
+  if (beiJingGuaQi.value) faJieShiWanCheng()
+  jieShiDengDaiDingShiQi = setTimeout(() => {
+    jieShiDengDaiDingShiQi = null
+    if (beiJingJiuXu.value) return
+    faJieShiWanCheng()
+    jieShiQiangZhiDingShiQi = setTimeout(() => {
+      jieShiQiangZhiDingShiQi = null
+      if (!beiJingJiuXu.value) beiJingJiuXu.value = true
+    }, 800)
+  }, caoDiPeiZhi.beiJingJieShiChaoShiHaoMiao)
 }
 
 function chongShiBeiJingJiaZai(): void {
   qingLiBeiJingDengDai()
+  qingLiJieShiDengDai()
+  beiJingChangJingYiJiuXu = false
   beiJingJiuXu.value = false
   if (beiJingChongShiCiShu.value >= caoDiPeiZhi.beiJingZuiDaChongShiCiShu) {
     beiJingShiBai.value = true
@@ -184,17 +224,37 @@ function chuLiBeiJingXiaoXi(shiJian: MessageEvent) {
   }
   if (shuJu.zhuangTai === 'jiu-xu') {
     qingLiBeiJingDengDai()
-    beiJingJiuXu.value = true
+    if (beiJingJiuXu.value) {
+      tongBuBeiJingZanTing()
+      tongBuBeiJingYuShui()
+      shuChuCaoDiZhenDuan('jiu-xu', shuJu)
+      return
+    }
+    beiJingChangJingYiJiuXu = true
+    beiJingJiuXu.value = false
     beiJingShiBai.value = false
     yiShangBaoBeiJingShiBai = false
     tongBuBeiJingZanTing()
     tongBuBeiJingYuShui()
+    kaiShiJieShiDengDai()
+    shuChuCaoDiZhenDuan('jiu-xu', shuJu)
+  } else if (shuJu.zhuangTai === 'jie-shi-wan-cheng') {
+    qingLiJieShiDengDai()
+    if (beiJingJiuXu.value) return
+    beiJingJiuXu.value = true
+    beiJingShiBai.value = false
+    tongBuBeiJingZanTing()
+    tongBuBeiJingYuShui()
+    shuChuCaoDiZhenDuan('jie-shi-wan-cheng', shuJu)
   } else if (shuJu.zhuangTai === 'shi-bai') {
+    qingLiJieShiDengDai()
+    beiJingChangJingYiJiuXu = false
     beiJingJiuXu.value = false
     chongShiBeiJingJiaZai()
     if (yiShangBaoBeiJingShiBai) return
     yiShangBaoBeiJingShiBai = true
     const yuanYin = typeof shuJu.yuanYin === 'string' ? shuJu.yuanYin : ''
+    shuChuCaoDiZhenDuan('shi-bai', shuJu)
     chuFaCuoWuShangBao({
       leiBie: 'ziYuan',
       cuoWu: new Error(`caoDiMenKongShiBai:${yuanYin || 'weiZhi'}`),
@@ -202,6 +262,25 @@ function chuLiBeiJingXiaoXi(shiJian: MessageEvent) {
       fuJia: { laiYuan: 'caoDiMenKong', yuanYin },
     })
   }
+}
+
+function shuChuCaoDiZhenDuan(
+  zhuangTai: 'jiu-xu' | 'shi-bai' | 'jie-shi-wan-cheng',
+  shuJu: unknown,
+): void {
+  if (!shiFouCaoDiDiaoShi()) return
+  let zhenDuan: unknown
+  try {
+    const chuangKou = grassIframe.value?.contentWindow as
+      | (Window & { __caoDiZhunBeiZhuangTai?: unknown })
+      | null
+    zhenDuan = chuangKou?.__caoDiZhunBeiZhuangTai ?? null
+  } catch {
+    zhenDuan = null
+  }
+  if (zhuangTai === 'shi-bai') console.warn('[草地背景] 失败', zhenDuan, shuJu)
+  else if (zhuangTai === 'jie-shi-wan-cheng') console.info('[草地背景] 揭示完成', zhenDuan, shuJu)
+  else console.info('[草地背景] 就绪', zhenDuan, shuJu)
 }
 
 function chuLiBeiJingJiaZaiShiBai() {
@@ -479,6 +558,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', chuLiYeMianKeJian)
   window.removeEventListener('message', chuLiBeiJingXiaoXi)
   qingLiBeiJingDengDai()
+  qingLiJieShiDengDai()
 })
 </script>
 

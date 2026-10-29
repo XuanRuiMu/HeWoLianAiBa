@@ -2,6 +2,22 @@
 /* 完整移植：背景实验室/lab-a-base/positioner.html 的 inpage 场景代码（2026-10-21 验收版）。
    = 相机定稿位 + 吴昊阳贴地网格 + 压草碰撞 + 原作者极光/星空/云 + 远景释放。 */
 (function () {
+  // 场景就绪状态：block-09 只认 zhunBei=true，block-06 在收到 jiu-xu 后再播放揭示。
+  var zhunBeiZhuangTai = window.__caoDiZhunBeiZhuangTai = {
+    kaiShi: Math.round(performance.now()),
+    jieDuan: 'dengDai',
+    ziYuanJiuXu: false, wuPuShe: false, wuBare: false, wuBody: false, zhuTi: false,
+    xuanRanZhen: 0, chongJianCiShu: 0, zuiHouChongJian: 0,
+    wenDingKaiShi: 0, wenDingZhen: 0,
+    zhunBei: false, haoShi: 0, yuanYin: '', riZhi: []
+  };
+  function caoDiRiZhi(ming, fuJia) {
+    var Z = zhunBeiZhuangTai; if (!Z) return;
+    var tiao = { m: ming, t: Math.round(performance.now()) };
+    if (fuJia) for (var k in fuJia) tiao[k] = fuJia[k];
+    Z.riZhi.push(tiao);
+    if (Z.riZhi.length > 60) Z.riZhi.shift();
+  }
   function inpage() {
     'use strict';
     if (window.__camReady) return;
@@ -228,8 +244,8 @@ distMin: 0.6,
     window.__wuFrame = function () {
       try { enforceCamera(); } catch (e0) {}
       try { wuBodyWatch(performance.now()); } catch (e1) {}
-      try { wuBareWatch(); } catch (e2) {}
       try { wuSkyTick(); } catch (e3) { window.__wuSkyErr = String(e3 && e3.message || e3); }
+      try { jianChaZhunBei(); } catch (eZ) { window.__caoDiZhunBeiErr = String(eZ && eZ.message || eZ); }
     };
     var YUE_LIANG_NDC = { x: 0.7, y: 0.7 };
     var yueLiangFangXiang = null;
@@ -263,7 +279,6 @@ distMin: 0.6,
         // 身体碰撞看门狗：grass.rebuild() / flowers destroy+init() 都会重建材质，
         // 注入会随之丢失 ⇒ 按 500ms 节流补注入（常态只做一次 indexOf，开销可忽略）
         wuBodyWatch(performance.now());
-        wuBareWatch();
         try { wuSkyTick(); } catch (eSky) { window.__wuSkyErr = String(eSky && eSky.message || eSky); }
         try { yueLiangDingShi(); } catch (eYue) { window.__yueLiangErr = String(eYue && eYue.message || eYue); }
         // 吴昊阳现在与草同在世界里（贴地网格），视差让他和草一起动，
@@ -277,6 +292,7 @@ distMin: 0.6,
         };
         S.appliedGen = S.gen;
         S.frames++;
+        zhunBeiZhuangTai.xuanRanZhen++;
       } else {
         out = origRender.call(this, sc, cm);
       }
@@ -453,6 +469,59 @@ window.addEventListener('mousemove', function (e) {
     };
     window.__verifyCamApplied = function () { return window.__verifyCamReport().ok === true; };
 window.__camReady = true;
+
+    // ---------- 场景就绪门（资源 + 吴昊阳 + 秃斑 + 配色 + 稳定帧） ----------
+    // 只统计引擎自己的重建：补草流水线已删除，常态应为 0 次。
+    function anZhuangChongJianJiLu() {
+      var g = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
+      if (!g || typeof g.rebuild !== 'function' || g.__caoDiChongJianJiLu) return;
+      g.__caoDiChongJianJiLu = true;
+      var yuan = g.rebuild;
+      g.rebuild = function () {
+        var Z = zhunBeiZhuangTai;
+        Z.chongJianCiShu++;
+        Z.zuiHouChongJian = performance.now();
+        Z.wenDingKaiShi = 0;
+        var t = performance.now();
+        try { return yuan.apply(g, arguments); }
+        finally { caoDiRiZhi('chongJian', { hao: Math.round(performance.now() - t) }); }
+      };
+    }
+    var zuiHouZhuTiJianCha = 0;
+    function jianChaZhunBei() {
+      var Z = zhunBeiZhuangTai;
+      if (!Z || Z.zhunBei) return;
+      anZhuangChongJianJiLu();
+      var xianZai = performance.now();
+      Z.ziYuanJiuXu = !!E.resourcesReady;
+      Z.wuPuShe = !!(yiPuHao && yiBuHao && wuMesh && wuMesh.parent);
+      Z.wuBare = !!bareDone;
+      Z.wuBody = !!window.__wuBodyField;
+      if (xianZai - zuiHouZhuTiJianCha > 200) {
+        zuiHouZhuTiJianCha = xianZai;
+        try { Z.zhuTi = window.__caoDiTongBuZhuTi ? !!window.__caoDiTongBuZhuTi() : false; }
+        catch (eT) { Z.zhuTi = false; }
+      }
+      var ding = Z.ziYuanJiuXu && Z.wuPuShe && Z.wuBare && Z.zhuTi && (xianZai - Z.zuiHouChongJian > 300);
+      if (!ding) {
+        Z.wenDingKaiShi = 0;
+        Z.jieDuan = !Z.ziYuanJiuXu ? 'dengZiYuan'
+          : (!Z.wuPuShe ? 'dengWu'
+          : (!Z.wuBare ? 'dengBare'
+          : (!Z.zhuTi ? 'dengZhuTi' : 'dengWenDing')));
+        return;
+      }
+      if (!Z.wenDingKaiShi) {
+        Z.wenDingKaiShi = xianZai; Z.wenDingZhen = Z.xuanRanZhen;
+        Z.jieDuan = 'wenDing';
+        caoDiRiZhi('wenDingKaiShi');
+        return;
+      }
+      if (Z.xuanRanZhen - Z.wenDingZhen < 2 || xianZai - Z.wenDingKaiShi < 200) return;
+      Z.zhunBei = true; Z.jieDuan = 'jiuXu';
+      Z.haoShi = Math.round(xianZai - Z.kaiShi);
+      caoDiRiZhi('zhunBei', { haoShi: Z.haoShi, chongJian: Z.chongJianCiShu });
+    }
 
     // ---------- 树木开关 ----------
     // 树在引擎里的真实结构（真机探针 + patched.js 双向核实）：
@@ -793,14 +862,13 @@ window.__camReady = true;
       }
     }
 // ---------- 草的世界格子工具 ----------
-    // 草的实例矩阵里的平移就是世界坐标（草块父节点 matrixWorld 为单位阵，实测）。
-    // 统一用 0.08m 的格子去描述"关心的一片地面"，补草就基于它。
-    var CELL = 0.08;
     // 吴昊阳身下 footprint 用更细的独立网格：0.08m 的格子在屏幕上约 23px，
     // 格子中心常常落在身体的透明区，命中率只有约 30%（实测 36 格散布在 0.96×0.80m 内），
     // footprint 变成一串稀疏点，再做切比雪夫外扩就会互相融成**圆块**（实测长成椭圆）。
     // 0.027m 约合 7.8px，轮廓能实心还原，DILATE=1 也才真的是「稍大一点」（2.7cm）。
     var WU_CELL = 0.027;
+    // 秃斑高度场的粗格步长（先粗采样再双线性插值，避免逐细格打射线）
+    var CELL = 0.08;
     var DILATE = 1;              // footprint 外扩格数（WU_CELL 单位，1 格 = 2.7cm）
     var WU_BLADE_H = 0.108;
     var wuCamMargin = WU_CLEAR_MARGIN_CAM;
@@ -815,33 +883,10 @@ window.__camReady = true;
         return WU_CLEAR_MARGIN_CAM;
       }
     }
-    var wuBuiltMargin = 0, wuBarePending = 0;
-    function wuBareWatch() {
-      if (!bareDone) return;
-      var m = wuMarginFor();
-      if (!(wuBuiltMargin > 0 && Math.abs(m - wuBuiltMargin) / wuBuiltMargin > 0.15)) { wuBarePending = 0; return; }
-      var now = performance.now();
-      if (!wuBarePending) { wuBarePending = now; return; }
-      if (now - wuBarePending < 900) return;
-      wuBarePending = 0;
-      try { makeBare(); } catch (eMW) { window.__bareErr = String(eMW && eMW.stack || eMW); }
-      window.__bareRebuilds = (window.__bareRebuilds || 0) + 1;
-    }
-    // 清空模式（用户 2026-10-12：「吴昊阳底下的土地，能不能改成和草地一样的黄色」；
-    //           2026-10-12 23:51 原话：「吴昊阳的底下，改为秃地面，秃地面改为黄色」）：
-    //  'erase'  = 涂 zonesTexture（g=0 ⇒ 引擎自己就把这儿的草删掉，rebuild 也不会再长）。
-    //             配合下面的「黄遮罩」把它从棕土换成黄 ⇒ ✅ 当前默认（真秃 + 黄）。
-    //  'hide'   = **不动分区图**，只把他圈内的草/花**实例矩阵清零**（每帧/每轮都要补清，
-    //             引擎一 rebuild 就复活，且新加载进来的草块覆盖不到 ⇒ 已退役，仅留作回溯）。
-    //  'keepall'= 完全不清草，前后遮挡交给深度测试。
-    //  'collide'= ✅ 当前默认（用户 2026-10-14 定案）：**实体碰撞**。吴昊阳被当作世界里
-    //             的实体，草/花一株不删、不移，由顶点着色器的「弯曲约束」挡住 —— 弯到
-    //             接触他表面就**停住**（见 WU_BODY_GRASS_GLSL）。这里只涂黄遮罩保留秃地黄。
-    //             碰撞体 = 他身体轮廓 + 朝相机侧余量（禁区）⇒ 草只要进不了禁区，叶尖就
-    //             够不到他的画面（禁区是按 23° 俯角下叶尖投影上移 2.36×叶高定的）。
-    //  'move'   = 已退役（用户 2026-10-14 否掉）：不删草但把禁区内的草位移到禁区外，
-    //             会在边界外堆出一圈「草沿」。
-    var WU_GRASS_MODE = 'collide';
+    // 吴昊阳身下秃斑的当前设计（2026-10-14 定案）：
+    //   草/花一株不删、不移，由顶点着色器的弯曲约束把进入禁区的草挡在体表外；
+    //   地面只用一张独立的暖色遮罩覆盖。分区图 zonesTexture 完全不动，
+    //   因此整个加载过程不需要任何 grass.rebuild()。
     // ---------- 他周围一圈「清空区」（用户 2026-10-12 要求）----------
     // 「请你将吴昊阳周围的草删掉……这样子就能避免草和吴昊阳接触，从而导致看出来破绽」
     // 单位：米。以他身体占的格子为起点向四周外扩这么多，圈内的草一律清掉。
@@ -889,7 +934,7 @@ window.__camReady = true;
     //   **黄**：另开一张只覆盖他身下这一小块的遮罩贴图，注入到地形材质里，
     //           在这块把颜色换成 grassLitColor 的暖黄版（同一个光照口径 ⇒ 与周围草地同色系）。
     // 为什么不复用分区图现成通道：绿=草、红=flowers1、蓝=flowers2 都占用；
-    //   alpha 虽然没人读，但 fillRedbox/paintZones 里写死了 px[o+3]=255，基线恒为 255，
+    //   alpha 虽然没人读，但历史补草路径里写死了 px[o+3]=255，基线恒为 255，
     //   当不了「这里要涂黄」的标记 ⇒ 单开一张专用遮罩最干净。
     // ⚠️ V 轴口径（第 9 轮实测判定，别改）：在**世界方块**上把 g 涂 0 →
     //   按 y=v*H 写时那块地真的变棕（#cfa545→#a77e3b），按 y=(1-v)*H 写则画面不动。
@@ -921,7 +966,6 @@ window.__camReady = true;
     // ⚠️ 2026-10-14 13:40：**默认改回 true**。上一次失败的真因不是注入（程序级证据证明
     //    注入进了编译、uniform 也确实上传），而是碰撞体取错了——只挡「身体脚印」，
     //    拦不住站在禁区边上的草。现在碰撞体 = **整个禁区**（见 wuBareFootprint 里传 grown）。
-    var WU_BODY_COLLIDE = true;      // 总开关：false = 完全回到「删草 + 涂分区图」的旧行为
     var WU_BODY_CELL = 0.004;        // 碰撞场网格 4mm（footprint 的 27mm 太粗，边界会成锯齿）
     var WU_BODY_PAD = 0.55;          // 场覆盖范围 = 碰撞体包围盒外扩这么多米
     var WU_BODY_CLEAR = 0.028;       // 允许的最近距离（米）：顶点不得进入体表 6mm 内
@@ -994,16 +1038,7 @@ window.__camReady = true;
     var WU_BODY_FLOWER_PS_GLSL = 'gl_PointSize*=(1.0-wuCrush);';
     var wuBodyField = null;          // { tex, originX, originZ, invX, invZ, w, h, ... }
     var wuBodySD = null;             // { arr, W, H, ox, oz, cell }：有符号距离场，供验收断言
-    var wuProtectCells = null;     // 粗格(0.08m)：秃区+过渡带，任何「补草」都不许写这里
     var wuBareMask = null;         // { cv, ctx, tex } 与分区图同分辨率、同 UV 空间
-    // 分区图在「第一次涂秃之前」的像素快照（Uint8ClampedArray 副本）。
-    // 存在的唯一理由：分区图 g=0 是**永久**的（rebuild 也不复活），所以把清空半径调小
-    // 并不会让草长回来 —— 旧注释里那句「只增不减有效」就是这么来的。有了它，
-    // 「缩小秃区」就能把释放掉的像素原样写回去，草才真能往内长、靠近吴昊阳。
-    // 只在**第一次**涂之前取（之后取会把已经涂秃的样子当基线，越缩越缩不回去）。
-    var wuZonesSnap = null;
-    // 上一轮真正落地的秃区 { cells, dist }，用来算「这一轮释放掉了哪些格子」
-    var wuBarePrev = null;
     // 注入进去的 uniform 对象本体。⚠️ 调参**只能改这里的 .value**，不能靠重新注入：
     // 引擎（three）的 getProgram 是这样的（bundle 内逐字）——
     //   let He = programs.get(cacheKey);
@@ -1014,7 +1049,6 @@ window.__camReady = true;
     // 编译时存下的那几个对象，每帧上传它们的 .value ⇒ 改 .value 立刻生效。
     var wuBareU = { mul: null, grain: null };
     function wuCellKey(x, z) { return Math.floor(x / WU_CELL) + ',' + Math.floor(z / WU_CELL); }
-    function cellKey(x, z) { return Math.floor(x / CELL) + ',' + Math.floor(z / CELL); }
     var wuRay = null;
     function wuRaycastGroundY(x, z) {
       if (!wuRay) { wuRay = new eng.raycaster.raycaster.constructor(); wuRay.layers.mask = 0xffffffff; }
@@ -1023,357 +1057,6 @@ window.__camReady = true;
       wuRay.set(new V3c(x, 40, z), new V3c(0, -1, 0));
       var h = wuRay.intersectObject(mi, false)[0];
       return h ? h.point.y : null;
-    }
-    function eachGrassInstance(fn) {
-      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
-      if (!grass || !grass.chunks) return 0;
-      var im = new M4c(), n = 0;
-      grass.chunks.entries().forEach(function (e) {
-        var o = e[1], a = o.instanceMatrix.array;
-        for (var i = 0; i < o.count; i++) {
-          if (a[i * 16] === 0 && a[i * 16 + 12] === 0 && a[i * 16 + 14] === 0) continue;
-          im.fromArray(a, i * 16);
-          if (fn(im.elements[12], im.elements[13], im.elements[14], o, i)) n++;
-        }
-      });
-      return n;
-    }
-    // ---------- 删石处补草 ----------
-    // 被删掉的是玄武岩合并网格里的两块，它们压住的那片地原本不长草，
-    // 塌缩后只剩土。做法：把塌缩三角形在 XZ 上按网格实心填充出 footprint，
-    // 再量一圈紧邻 footprint 的真实草密度，按同样密度补进去。
-    var rockFilled = false;
-    function triXZFootprint(mesh) {
-      var g = mesh.geometry, pos = g.attributes.position;
-      // ⚠️ 塌缩把一个三角形的三个索引全改成同一个顶点，从塌缩后的索引里读到的三角形
-      //    已退化成点（面积 0），永远算不出 footprint。所以：用「塌缩后的索引」找出
-      //    哪些三角形被删了，再去「塌缩前备份的索引」里取它们原来的三个顶点。
-      var cur = g.index.array;
-      var orig = origIndex.get(g) || cur;
-      var cells = new Set();
-      var A = new V3c(), B = new V3c(), Cc = new V3c();
-      for (var t = 0; t < cur.length; t += 3) {
-        if (cur[t] !== cur[t + 1] || cur[t] !== cur[t + 2]) continue;
-        A.set(pos.getX(orig[t]), 0, pos.getZ(orig[t])).applyMatrix4(mesh.matrixWorld);
-        B.set(pos.getX(orig[t + 1]), 0, pos.getZ(orig[t + 1])).applyMatrix4(mesh.matrixWorld);
-        Cc.set(pos.getX(orig[t + 2]), 0, pos.getZ(orig[t + 2])).applyMatrix4(mesh.matrixWorld);
-        var x0 = Math.floor(Math.min(A.x, B.x, Cc.x) / CELL), x1 = Math.floor(Math.max(A.x, B.x, Cc.x) / CELL);
-        var z0 = Math.floor(Math.min(A.z, B.z, Cc.z) / CELL), z1 = Math.floor(Math.max(A.z, B.z, Cc.z) / CELL);
-        var den = (B.z - Cc.z) * (A.x - Cc.x) + (Cc.x - B.x) * (A.z - Cc.z);
-        if (Math.abs(den) < 1e-12) continue;
-        for (var cx = x0; cx <= x1; cx++) for (var cz = z0; cz <= z1; cz++) {
-          var px = (cx + 0.5) * CELL, pz = (cz + 0.5) * CELL;
-          var l0 = ((B.z - Cc.z) * (px - Cc.x) + (Cc.x - B.x) * (pz - Cc.z)) / den;
-          var l1 = ((Cc.z - A.z) * (px - Cc.x) + (A.x - Cc.x) * (pz - Cc.z)) / den;
-          if (l0 < -0.001 || l1 < -0.001 || l0 + l1 > 1.001) continue;
-          cells.add(cx + ',' + cz);
-        }
-      }
-      return cells;
-    }
-    // 量「紧邻秃地外一圈」的真实草密度（株/平方公里…准确说 株/m²）。
-    // ⚠️ 不能用「环形格子数」当分母：那一圈里大量格子落在岛外或悬崖上，
-    //    会把密度严重低估（实测低估到 6.7 株/m²，补出来稀稀拉拉）。
-    //    正确做法：以 footprint 外接圆为采样盘，扣掉盘内属于 footprint 的部分，
-    //    再用「环形面积」做分母。
-    function densityNear(cells) {
-      var cx = 0, cz = 0, n = 0;
-      cells.forEach(function (k) { var p = k.split(','); cx += +p[0]; cz += +p[1]; n++; });
-      if (!n) return 0;
-      cx = (cx / n + 0.5) * CELL; cz = (cz / n + 0.5) * CELL;
-      // ⚠️ 秃地周围整整一圈原生草都是 0（这块在引擎的分区图里本就不长草），
-      //    所以不能以它为中心去量。改成：先找到离它最近的那一株原生草，量它周围 0.5m 盘的密度。
-      var best = null, bestD = Infinity;
-      eachGrassInstance(function (x, y, z) {
-        var d = Math.hypot(x - cx, z - cz);
-        if (d < bestD) { bestD = d; best = [x, z]; }
-      });
-      if (!best) return 0;
-      var R = 0.5, inside = 0, total = 0;
-      eachGrassInstance(function (x, y, z) {
-        if (Math.hypot(x - best[0], z - best[1]) <= R) { total++; if (cells.has(cellKey(x, z))) inside++; }
-      });
-      var area = Math.PI * R * R;
-      if (area <= 0 || total - inside <= 0) return 0;
-      return (total - inside) / area;
-    }
-    // 把 footprint 对应到 zonesTexture 上：引擎靠这张图决定哪儿长草。
-    // 做法：遍历 main-island 的三角形，凡是世界 XZ 落在 footprint 里，
-    // 就用重心坐标把它的 uv 三角形光栅化进贴图。
-    // ⚠️ UV 一律由三角形世界坐标 ↔ 顶点 uv 反算，不假设 uv 与世界坐标的朝向关系。
-    function paintZones(cells) {
-      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
-      var mi = scene.getObjectByName('main-island');
-      if (!mi || !mi.geometry || !mi.geometry.attributes.uv) return null;
-      mi.updateMatrixWorld(true);
-      var mg = mi.geometry, mp = mg.attributes.position, uv = mg.attributes.uv;
-      var mi2 = mg.index ? mg.index.array : null;
-      var nTri = mi2 ? mi2.length / 3 : mp.count / 3;
-      var zt = grass.zonesTexture, img = zt.image, tw = img.width, th = img.height;
-      var c2 = img.getContext('2d', { willReadFrequently: true });
-      if (!c2) return null;
-      var data = c2.getImageData(0, 0, tw, th), px = data.data;
-      var W = [new V3c(), new V3c(), new V3c()];
-      var painted = 0, tris = 0;
-      for (var f = 0; f < nTri; f++) {
-        var ia = mi2 ? [mi2[f * 3], mi2[f * 3 + 1], mi2[f * 3 + 2]] : [f * 3, f * 3 + 1, f * 3 + 2];
-        for (var k = 0; k < 3; k++) W[k].set(mp.getX(ia[k]), mp.getY(ia[k]), mp.getZ(ia[k])).applyMatrix4(mi.matrixWorld);
-        var any = false;
-        for (var cx = Math.floor(Math.min(W[0].x, W[1].x, W[2].x) / CELL);
-             cx <= Math.floor(Math.max(W[0].x, W[1].x, W[2].x) / CELL) && !any; cx++) {
-          for (var cz = Math.floor(Math.min(W[0].z, W[1].z, W[2].z) / CELL);
-               cz <= Math.floor(Math.max(W[0].z, W[1].z, W[2].z) / CELL); cz++) {
-            if (cells.has(cx + ',' + cz)) { any = true; break; }
-          }
-        }
-        if (!any) continue;
-        tris++;
-        var U0 = uv.getX(ia[0]) * tw, V0 = uv.getY(ia[0]) * th;
-        var U1 = uv.getX(ia[1]) * tw, V1 = uv.getY(ia[1]) * th;
-        var U2 = uv.getX(ia[2]) * tw, V2 = uv.getY(ia[2]) * th;
-        var x0 = Math.max(0, Math.floor(Math.min(U0, U1, U2))), x1 = Math.min(tw - 1, Math.ceil(Math.max(U0, U1, U2)));
-        var y0 = Math.max(0, Math.floor(Math.min(V0, V1, V2))), y1 = Math.min(th - 1, Math.ceil(Math.max(V0, V1, V2)));
-        var den = (V1 - V2) * (U0 - U2) + (U2 - U1) * (V0 - V2);
-        if (Math.abs(den) < 1e-12) continue;
-        for (var y = y0; y <= y1; y++) for (var x = x0; x <= x1; x++) {
-          var qx = x + 0.5, qy = y + 0.5;
-          var l0 = ((V1 - V2) * (qx - U2) + (U2 - U1) * (qy - V2)) / den;
-          var l1 = ((V2 - V0) * (qx - U2) + (U0 - U2) * (qy - V2)) / den;
-          var l2 = 1 - l0 - l1;
-          if (l0 < -0.01 || l1 < -0.01 || l2 < -0.01) continue;
-          var wx = W[0].x * l0 + W[1].x * l1 + W[2].x * l2;
-          var wy = W[0].y * l0 + W[1].y * l1 + W[2].y * l2;
-          var wz = W[0].z * l0 + W[1].z * l1 + W[2].z * l2;
-          if (wy < -0.35) continue;
-          // 他身下那块地已经被判为秃区：补草一律绕过它（否则「删石补草」会把草又补回来）
-          if (wuProtectCells && wuProtectCells.has(cellKey(wx, wz))) continue;
-          if (!cells.has(cellKey(wx, wz))) continue;
-          var o = (y * tw + x) * 4;
-          if (px[o + 1] > 200 && px[o + 3] > 200) continue;
-          px[o] = 0; px[o + 1] = 255; px[o + 2] = 0; px[o + 3] = 255;
-          painted++;
-        }
-      }
-      if (painted) c2.putImageData(data, 0, 0);
-      return { painted: painted, tris: tris };
-    }
-    // ---------- 红框补草（v17，用户 2026-10-12 19:40：问题.png 西带必须长回草）----------
-    // 现象：吴昊阳西侧约 0.5m 宽的带子引擎不长草；上一任的 fillRedbox 复用 paintZones
-    //       涂绿，但红框那 11 个三角形的 UV 全塌缩到同一点，paintZones 的 den<1e-12
-    //       分支直接 continue ⇒ painted=0。
-    // 本版：fillRedbox 自己遍历三角形，**退化三角形不再跳过**，直接把塌缩的那 1~3 个 UV
-    //       像素涂 g=255。引擎 rebuild() 按三角形采样 g，整片三角形就会长草。
-    // 相机是 frozen 的，世界 XZ 矩形稳定。
-    // v17 只圈了 x∈[2.95,3.30]、z∈[3.00,3.28]（Wu 西侧一条带）。
-    // v21 实测发现「那个坑」在 x≈1.77~2.00、z≈2.61~2.81、y≈-0.06 ——
-    //      比周围草地（y≈+0.13）低约 0.2m 的**地形凹陷**，四周一圈草都不长。
-    //      故矩形扩到 [1.60,4.25]×[2.40,4.35]，把凹陷 + Wu 周边裸土一并覆盖。
-    var REDBOX_X0 = 1.60, REDBOX_X1 = 4.25, REDBOX_Z0 = 2.40, REDBOX_Z1 = 4.35;
-    var redboxFilled = false;
-    function fillRedbox() {
-      if (redboxFilled) return;
-      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
-      if (!grass || !grass.zonesTexture) return;
-      var mi = scene.getObjectByName('main-island');
-      if (!mi || !mi.geometry || !mi.geometry.attributes.uv) return;
-      mi.updateMatrixWorld(true);
-      var mg = mi.geometry, mp = mg.attributes.position, uv = mg.attributes.uv;
-      var mi2 = mg.index ? mg.index.array : null;
-      var nTri = mi2 ? mi2.length / 3 : mp.count / 3;
-      var zt = grass.zonesTexture, img = zt.image, tw = img.width, th = img.height;
-      var c2 = img.getContext('2d', { willReadFrequently: true });
-      if (!c2) return;
-      var data = c2.getImageData(0, 0, tw, th), px = data.data;
-      var V0 = new V3c(), V1 = new V3c(), V2 = new V3c();
-      var painted = 0, tris = 0, cellsInBox = 0;
-      for (var f = 0; f < nTri; f++) {
-        var ia = mi2 ? [mi2[f * 3], mi2[f * 3 + 1], mi2[f * 3 + 2]] : [f * 3, f * 3 + 1, f * 3 + 2];
-        V0.set(mp.getX(ia[0]), 0, mp.getZ(ia[0])).applyMatrix4(mi.matrixWorld);
-        V1.set(mp.getX(ia[1]), 0, mp.getZ(ia[1])).applyMatrix4(mi.matrixWorld);
-        V2.set(mp.getX(ia[2]), 0, mp.getZ(ia[2])).applyMatrix4(mi.matrixWorld);
-        var minX = Math.min(V0.x, V1.x, V2.x), maxX = Math.max(V0.x, V1.x, V2.x);
-        var minZ = Math.min(V0.z, V1.z, V2.z), maxZ = Math.max(V0.z, V1.z, V2.z);
-        if (maxX < REDBOX_X0 || minX > REDBOX_X1 || maxZ < REDBOX_Z0 || minZ > REDBOX_Z1) continue;
-        // 他身下那块地是秃区：整块三角形只要落在保护格里就跳过（红框补草别把它补回来）。
-        // 用三角形质心判定而不是逐像素判定，是因为退化分支（UV 全塌缩）没有逐像素的世界坐标可用。
-        if (wuProtectCells && wuProtectCells.has(cellKey((minX + maxX) / 2, (minZ + maxZ) / 2))) continue;
-        tris++;
-        var U0 = uv.getX(ia[0]) * tw, Tv0 = uv.getY(ia[0]) * th;
-        var U1 = uv.getX(ia[1]) * tw, Tv1 = uv.getY(ia[1]) * th;
-        var U2 = uv.getX(ia[2]) * tw, Tv2 = uv.getY(ia[2]) * th;
-        var minU = Math.min(U0, U1, U2), maxU = Math.max(U0, U1, U2);
-        var minTv = Math.min(Tv0, Tv1, Tv2), maxTv = Math.max(Tv0, Tv1, Tv2);
-        // 退化判定：3 个 UV 在亚像素级塌缩到同一点
-        var degen = (maxU - minU < 0.5) && (maxTv - minTv < 0.5);
-        function markPixel(ix, iy) {
-          if (ix < 0 || ix >= tw || iy < 0 || iy >= th) return false;
-          var o = (iy * tw + ix) * 4;
-          if (px[o + 1] > 200 && px[o + 3] > 200) return false;  // 已涂
-          px[o] = 0; px[o + 1] = 255; px[o + 2] = 0; px[o + 3] = 255;
-          return true;
-        }
-        if (degen) {
-          // 3 个 UV 全塌缩到同一点：直接涂这个像素，引擎按三角形采样 g ⇒ 整片长草
-          if (markPixel(Math.round(U0), Math.round(Tv0))) { painted++; cellsInBox++; }
-        } else {
-          // 退化兜底 den<1e-12：分别涂 3 个顶点 UV
-          var den = (Tv1 - Tv2) * (U0 - U2) + (U2 - U1) * (Tv0 - Tv2);
-          if (Math.abs(den) < 1e-12) {
-            for (var k = 0; k < 3; k++) {
-              var ku = [U0, U1, U2][k], kv = [Tv0, Tv1, Tv2][k];
-              if (markPixel(Math.round(ku), Math.round(kv))) { painted++; cellsInBox++; }
-            }
-          } else {
-            // 正常三角形：遍历 UV bbox，仅涂世界 XZ 也落在红框里的像素
-            var x0 = Math.max(0, Math.floor(minU)), x1 = Math.min(tw - 1, Math.ceil(maxU));
-            var y0 = Math.max(0, Math.floor(minTv)), y1 = Math.min(th - 1, Math.ceil(maxTv));
-            for (var y = y0; y <= y1; y++) for (var x = x0; x <= x1; x++) {
-              var qx = x + 0.5, qy = y + 0.5;
-              var l0 = ((Tv1 - Tv2) * (qx - U2) + (U2 - U1) * (qy - Tv2)) / den;
-              var l1 = ((Tv2 - Tv0) * (qx - U2) + (U0 - U2) * (qy - Tv2)) / den;
-              var l2 = 1 - l0 - l1;
-              if (l0 < -0.01 || l1 < -0.01 || l2 < -0.01) continue;
-              var wx = V0.x * l0 + V1.x * l1 + V2.x * l2;
-              var wz = V0.z * l0 + V1.z * l1 + V2.z * l2;
-              if (wx < REDBOX_X0 || wx > REDBOX_X1 || wz < REDBOX_Z0 || wz > REDBOX_Z1) continue;
-              if (markPixel(x, y)) { painted++; cellsInBox++; }
-            }
-          }
-        }
-      }
-      window.__redboxDiag = { cells: cellsInBox, painted: painted, tris: tris, box: [REDBOX_X0, REDBOX_Z0, REDBOX_X1, REDBOX_Z1] };
-      if (painted) {
-        c2.putImageData(data, 0, 0);
-        grass.zonesTexture.needsUpdate = true;
-        try {
-          grass.rebuild();
-          // 花走 r/b 通道，按 zonesTexture 同步刷新
-          var isl = E.world.islands.mainIsland;
-          ['flowers1', 'flowers2'].forEach(function (k) {
-            var fk = isl && isl[k];
-            if (fk && typeof fk.destroy === 'function' && typeof fk.init === 'function') { fk.destroy(); fk.init(); }
-          });
-        } catch (e) {
-          window.__redboxErr = String(e && e.stack || e);
-        }
-      }
-      redboxFilled = true;
-    }
-    // 让引擎自己在秃地上重新长草。
-    // ⚠️ 之前走「手工克隆草实例补上去」，无论怎么调密度和尺寸，和周围始终不像；
-    //    根因是草的外观不只取决于实例矩阵，着色器还会按草所在位置二次放大
-    //    （grassScale *= getElevation(草的XZ) * 7.0 + 0.6），手工摆放难以完全复现。
-    //    所以改走引擎自己的流程：涂 zonesTexture → grass.rebuild()。
-    //    实测 rebuild() 在草块已加载完成后单独调用是干净的（70 块不变、无报错）。
-    function fillGrass() {
-      if (rockFilled || !S.remove || !S.remove.basalt || !geomDone.basalt) return;
-      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
-      if (!grass || !grass.chunks || grass.chunks.entries().length < 20) return;
-      var b = scene.getObjectByName(S.remove.basalt.mesh);
-      if (!b || !b.geometry || !b.geometry.index) return;
-      scene.updateMatrixWorld(true);
-      b.updateMatrixWorld(true);
-      var cells = triXZFootprint(b);
-      if (!cells.size) { rockFilled = true; return; }
-      var res = paintZones(cells);
-      window.__grassFillDiag = { cells: cells.size, painted: res && res.painted, tris: res && res.tris };
-      if (!res || res.painted <= 0) { rockFilled = true; return; }
-      grass.zonesTexture.needsUpdate = true;
-      try {
-        grass.rebuild();
-      } catch (e) {
-        window.__grassFillErr = String(e && e.stack || e);
-        return;
-      }
-      rockFilled = true;
-    }
-    var fengXiDone = false, fengXiStarted = false;
-    function buFengXi() {
-      if (fengXiDone || fengXiStarted) return;
-      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
-      if (!grass || !grass.zonesTexture || !redboxFilled || !rockFilled) return;
-      fengXiStarted = true;
-      var yuanTu = new Image();
-      yuanTu.onload = function () {
-        try {
-          var grass2 = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
-          var zt = grass2 && grass2.zonesTexture;
-          if (!zt || !zt.image) { fengXiStarted = false; return; }
-          var img = zt.image, tw = img.width, th = img.height;
-          var c2 = img.getContext('2d', { willReadFrequently: true });
-          var live = c2.getImageData(0, 0, tw, th);
-          var d = live.data;
-          var yuanHuaBu = document.createElement('canvas');
-          yuanHuaBu.width = yuanTu.naturalWidth; yuanHuaBu.height = yuanTu.naturalHeight;
-          var yuanCtx = yuanHuaBu.getContext('2d', { willReadFrequently: true });
-          yuanCtx.drawImage(yuanTu, 0, 0);
-          var od = yuanCtx.getImageData(0, 0, tw, th).data;
-          var x0 = tw, x1 = -1, y0 = th, y1 = -1;
-          var lieJi = new Array(tw).fill(0), hangJi = new Array(th).fill(0);
-          for (var py = 0; py < th; py++) {
-            for (var px = 0; px < tw; px++) {
-              var o = (py * tw + px) * 4;
-              if (Math.abs(d[o] - od[o]) > 8 || Math.abs(d[o + 1] - od[o + 1]) > 8 || Math.abs(d[o + 2] - od[o + 2]) > 8) {
-                lieJi[px]++; hangJi[py]++;
-              }
-            }
-          }
-          var chengPian = Math.max(4, Math.round(tw * 0.004));
-          for (var px2a = 0; px2a < tw; px2a++) {
-            if (lieJi[px2a] >= chengPian) { if (px2a < x0) x0 = px2a; if (px2a > x1) x1 = px2a; }
-          }
-          for (var py2a = 0; py2a < th; py2a++) {
-            if (hangJi[py2a] >= chengPian) { if (py2a < y0) y0 = py2a; if (py2a > y1) y1 = py2a; }
-          }
-          if (x1 < 0) { window.__fengXiDiag = { tian: 0, huaFuWei: 0, kong: 1 }; fengXiDone = true; return; }
-          var bianJu = Math.round(tw * 0.016);
-          var kanBuJianXian = Math.round(th * 0.78);
-          var fx0 = Math.max(0, x0 - bianJu), fx1 = Math.min(tw - 1, x1 + bianJu);
-          var fy0 = Math.max(0, y0 - bianJu, kanBuJianXian), fy1 = Math.min(th - 1, y1 + bianJu);
-          var huaJianJu = Math.round(tw * 0.14);
-          var tian = 0, huaFuWei = 0;
-          for (var fy = fy0; fy <= fy1; fy++) {
-            for (var fx = fx0; fx <= fx1; fx++) {
-              var o2 = (fy * tw + fx) * 4;
-              if (d[o2 + 1] < 100) {
-                d[o2] = 0; d[o2 + 1] = 255; d[o2 + 2] = 0; d[o2 + 3] = 255;
-                var huaUo = -1;
-                for (var k = 0; k < 14 && huaUo < 0; k++) {
-                  var du = fx + huaJianJu - k * 10;
-                  if (du < 0 || du >= tw) continue;
-                  var uo = (fy * tw + du) * 4;
-                  if (od[uo + 1] >= 100) huaUo = uo;
-                }
-                if (huaUo >= 0) { d[o2] = od[huaUo]; d[o2 + 2] = od[huaUo + 2]; }
-                tian++;
-              } else if (od[o2 + 1] >= 100 && d[o2] === 0 && d[o2 + 2] === 0 && (od[o2] > 8 || od[o2 + 2] > 8)) {
-                d[o2] = od[o2]; d[o2 + 2] = od[o2 + 2];
-                huaFuWei++;
-              }
-            }
-          }
-          c2.putImageData(live, 0, 0);
-          zt.needsUpdate = true;
-          window.__fengXiDiag = { tian: tian, huaFuWei: huaFuWei, qu: [+(fx0 / tw).toFixed(3), +(fy0 / th).toFixed(3), +(fx1 / tw).toFixed(3), +(fy1 / th).toFixed(3)] };
-          try { grass2.rebuild(); } catch (eR) { window.__fengXiErr = String(eR && eR.stack || eR); }
-          try {
-            var isl = E.world.islands.mainIsland;
-            ['flowers1', 'flowers2'].forEach(function (k2) {
-              var fk = isl && isl[k2];
-              if (fk && typeof fk.destroy === 'function' && typeof fk.init === 'function') { fk.destroy(); fk.init(); }
-            });
-          } catch (eF) { window.__fengXiErr = String(eF && eF.stack || eF); }
-          fengXiDone = true;
-        } catch (eZ) {
-          window.__fengXiErr = String(eZ && eZ.stack || eZ);
-          fengXiStarted = false;
-        }
-      };
-      yuanTu.onerror = function () {
-        window.__fengXiErr = 'yuanShiFenQuTuJiaZaiShiBai';
-        fengXiStarted = false;
-      };
-      yuanTu.src = './textures/main-island-zones.png';
     }
     // ---------- 吴昊阳身下变光秃土地 ----------
     // 引擎靠 zonesTexture 的绿通道决定哪儿长草：草与 pampa 都用 g 作采样权重，
@@ -1397,7 +1080,8 @@ window.__camReady = true;
           g2.drawImage(im, 0, 0);
           wuAlpha = g2.getImageData(0, 0, cv.width, cv.height).data;
           wuAlphaW = cv.width; wuAlphaH = cv.height;
-          cb(true);          cb(true);
+          cb(true);
+          try { makeBare(); } catch (eMB) { window.__bareErr = String(eMB && eMB.stack || eMB); }
         } catch (e) { cb(false); }
       };
       im.onerror = function () { cb(false); };
@@ -1545,7 +1229,6 @@ window.__camReady = true;
       var rad = Math.max(DILATE, Math.round(WU_CLEAR_MARGIN / WU_CELL));
       wuCamMargin = wuMarginFor();
       var camRad = Math.max(0, Math.round(wuCamMargin / WU_CELL));
-      wuBuiltMargin = wuCamMargin;
       var grown = new Set();
       // 相机在水平面上的「指向相机」单位向量（从身体质心指向相机）
       var camW = cam.getWorldPosition(new V3());
@@ -1582,10 +1265,8 @@ window.__camReady = true;
       //    表现就是「草根本没把他当障碍物」。屏障必须是禁区 —— 禁区本身就是按那个 25cm
       //    阈值定出来的，草只要进不了禁区，叶尖就够不到他的画面。
       window.__m('禁区就绪');
-      if (WU_BODY_COLLIDE) {
-        try { wuBuildBodyField(grown); } catch (eBF) {
-          window.__wuBodyErr = '禁区碰撞场构建失败：' + String(eBF && eBF.stack || eBF);
-        }
+      try { wuBuildBodyField(grown); } catch (eBF) {
+        window.__wuBodyErr = '禁区碰撞场构建失败：' + String(eBF && eBF.stack || eBF);
       }
       return grown;
     }
@@ -1703,7 +1384,7 @@ window.__camReady = true;
       window.__wuBodyField = {
         w: W, h: Hh, cell: WU_BODY_CELL, bodyCells: zoneKeys.length, insideTexels: insidePx,
         origin: [+bx0.toFixed(3), +bz0.toFixed(3)], size: [+(bx1 - bx0).toFixed(3), +(bz1 - bz0).toFixed(3)],
-        clear: WU_BODY_CLEAR, range: WU_BODY_RANGE, collide: WU_BODY_COLLIDE
+        clear: WU_BODY_CLEAR, range: WU_BODY_RANGE
       };
       // 有符号距离的采样口（双线性）。验收要用它做断言：把场里编码的推挤向量解出来，
       // 断言「sd + 推挤量 ≈ CLEAR」——即推挤真的把顶点推到体外，而不是瞎推。
@@ -1786,7 +1467,7 @@ window.__camReady = true;
       return false;
     }
     function wuInjectBodyCollide() {
-      if (!WU_BODY_COLLIDE || !wuBodyField) return { grass: false, flowers: false };
+      if (!wuBodyField) return { grass: false, flowers: false };
       var out = { grass: false, flowers: false, rebound: false };
       try {
         var isl = E.world && E.world.islands && E.world.islands.mainIsland;
@@ -1813,238 +1494,17 @@ window.__camReady = true;
     // 看门狗：rebuild / destroy+init 会换掉材质，按节流补注入（常态只做一次 indexOf）
     var wuBodyWatchLast = 0;
     function wuBodyWatch(now) {
-      if (!WU_BODY_COLLIDE || !wuBodyField) return;
+      if (!wuBodyField) return;
       if (now - wuBodyWatchLast < 500) return;
       wuBodyWatchLast = now;
       try { wuInjectBodyCollide(); } catch (eW) {}
     }
-    // 同 paintZones 的三角形光栅化    // 同 paintZones 的三角形光栅化，但写 0 而不是 255：绿=0 不长草，r/b=0 不要花。
+    // 三角形光栅化：写 0 而不是 255 —— 绿=0 不长草，r/b=0 不要花。
     // keyOf 决定用哪套网格判定：吴昊阳身下传 wuCellKey（细网格，轮廓才准），
-    // 不传则用粗网格 cellKey（删石补草那条老路径不受影响）。
     // ---------- 按世界格子把草/花「实例」矩阵清零（不清分区图 ⇒ 地面保持草地色）----------
     // 草块 chunk 是 InstancedMesh，实例矩阵里的平移就是**世界坐标**（实测：草块父节点 matrixWorld
     // 为单位阵）。把整条 16 个 float 清 0 后该实例退化成一个零体积点，等同消失。
     // 花（flowers1/flowers2）同理，只是容器形态不同，这里做防御式遍历。
-    var wuHiddenCells = null;
-    // ---------- 位移模式（用户 2026-10-14 选 B）：禁区内不删草，把草移到禁区外 ----------
-    // 与 wuHideInstances 的区别只在**秃斑**：删会在地面留一个没草的坑，移不会 —— 草还在，
-    // 只是站到了禁区外面，于是「他身下仍然是黄秃地（那儿一株草都没有）」与「草地没被挖掉
-    // 一块」两件事同时成立。
-    // 落位方式：沿**最近出口**走出禁区（多源 BFS 给出每格到出口的步数与出口方向），
-    // 再在边界外 WU_MOVE_BAND 米的带子里随机落位 ⇒ 不堆成一条硬边。
-    // 天然幂等：移出去之后基座就不在禁区里了，第二次扫描不会再命中。
-    var WU_MOVE_BAND = 0.12;
-    var wuMoveCells = null;
-    function wuMoveInstances(cells) {
-      if (!cells || !cells.size) return 0;
-      var isl = E.world.islands.mainIsland;
-      if (!isl || !isl.grass || !isl.grass.chunks) return 0;
-      // 1) 禁区网格（外扩 1 格，保证边界外有格子可作 BFS 源）
-      var c0x = Infinity, c0z = Infinity, c1x = -Infinity, c1z = -Infinity;
-      cells.forEach(function (k) {
-        var p = k.split(','), cx = +p[0], cz = +p[1];
-        if (cx < c0x) c0x = cx; if (cx > c1x) c1x = cx;
-        if (cz < c0z) c0z = cz; if (cz > c1z) c1z = cz;
-      });
-      var GW = c1x - c0x + 3, GH = c1z - c0z + 3, GN = GW * GH;
-      var inZone = new Uint8Array(GN);
-      cells.forEach(function (k) {
-        var p = k.split(',');
-        var ix = (+p[0] - c0x + 1), iz = (+p[1] - c0z + 1);
-        if (ix >= 0 && iz >= 0 && ix < GW && iz < GH) inZone[iz * GW + ix] = 1;
-      });
-      // 2) 多源 BFS：从禁区外的格子向里传播「到出口的步数」+「指向出口的方向」
-      var INF = 1e9;
-      var dist = new Float32Array(GN); dist.fill(INF);
-      var dX = new Float32Array(GN), dZ = new Float32Array(GN);
-      var q = [];
-      for (var i0 = 0; i0 < GN; i0++) if (!inZone[i0]) { dist[i0] = 0; q.push(i0); }
-      var NB = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-      for (var head = 0; head < q.length; head++) {
-        var cur = q[head], cz2 = Math.floor(cur / GW), cx2 = cur % GW;
-        for (var n = 0; n < 4; n++) {
-          var nx = cx2 + NB[n][0], nz = cz2 + NB[n][1];
-          if (nx < 0 || nz < 0 || nx >= GW || nz >= GH) continue;
-          var ni = nz * GW + nx;
-          if (!inZone[ni] || dist[ni] !== INF) continue;
-          dist[ni] = dist[cur] + 1;
-          dX[ni] = cx2 - nx; dZ[ni] = cz2 - nz;      // 指向出口（即指向父节点）
-          q.push(ni);
-        }
-      }
-      // 3) 逐实例：基座在禁区内就沿出口方向一步步走出去，再在带子里随机落位
-      var moved = 0, maxSteps = 48;
-      var it = isl.grass.chunks.entries();
-      // 3.0) 高度图：草本身就长在地形上，拿它们当高度采样点。
-      //      ⚠️ 必须修 y：只改 x/z 会让移出去的草悬空或陷进地形（他的地盘 1.2m 内高差是厘米级，
-      //      10cm 高的草悬空 2cm 就看得出来）。逐点打射线太贵（实测约 11ms/次，308 株 ≈ 3.4 秒
-      //      主线程卡顿），而 0.08m 格的平均高度足够了。
-      var HCELL = 0.08, hmap = new Map();
-      for (var ci0 = 0; ci0 < it.length; ci0++) {
-        var o0 = it[ci0][1];
-        if (!o0 || !o0.instanceMatrix || !o0.count) continue;
-        var a0 = o0.instanceMatrix.array;
-        for (var i0b = 0; i0b < o0.count; i0b++) {
-          var b0 = i0b * 16, x0 = a0[b0 + 12], y0 = a0[b0 + 13], z0 = a0[b0 + 14];
-          if (a0[b0] === 0 && x0 === 0 && z0 === 0) continue;
-          var hk = Math.floor(x0 / HCELL) + ',' + Math.floor(z0 / HCELL);
-          var cur = hmap.get(hk);
-          if (cur === undefined) hmap.set(hk, { y: y0, n: 1 });
-          else { cur.y += y0; cur.n++; }
-        }
-      }
-      hmap.forEach(function (v) { v.y /= v.n; });
-      function groundYFromMap(x, z) {
-        var bx = Math.floor(x / HCELL), bz = Math.floor(z / HCELL);
-        for (var r = 0; r <= 3; r++) {                 // 由近及远找最近的采样格
-          var best = null, bestD = 1e9;
-          for (var dx = -r; dx <= r; dx++) for (var dz = -r; dz <= r; dz++) {
-            if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
-            var c = hmap.get((bx + dx) + ',' + (bz + dz));
-            if (!c) continue;
-            var d2 = dx * dx + dz * dz;
-            if (d2 < bestD) { bestD = d2; best = c; }
-          }
-          if (best) return best.y;
-        }
-        return null;
-      }
-      for (var ci = 0; ci < it.length; ci++) {
-        var o = it[ci][1];
-        if (!o || !o.instanceMatrix || !o.count) continue;
-        var a = o.instanceMatrix.array, changed = false;
-        for (var i1 = 0; i1 < o.count; i1++) {
-          var b = i1 * 16, x = a[b + 12], z = a[b + 14];
-          if (a[b] === 0 && x === 0 && z === 0) continue;     // 已被别的逻辑清零的退化实例
-          var cx3 = Math.floor(x / WU_CELL), cz3 = Math.floor(z / WU_CELL);
-          var ix3 = cx3 - c0x + 1, iz3 = cz3 - c0z + 1;
-          if (ix3 < 0 || iz3 < 0 || ix3 >= GW || iz3 >= GH) continue;
-          if (!inZone[iz3 * GW + ix3]) continue;
-          var px = x, pz = z, dirX = 0, dirZ = 0, steps = 0;
-          while (steps < maxSteps) {
-            var ixi = Math.floor(px / WU_CELL) - c0x + 1, izi = Math.floor(pz / WU_CELL) - c0z + 1;
-            if (ixi < 0 || izi < 0 || ixi >= GW || izi >= GH) break;
-            var ii = izi * GW + ixi;
-            if (!inZone[ii]) break;
-            dirX = dX[ii]; dirZ = dZ[ii];
-            if (!dirX && !dirZ) { dirX = 0; dirZ = -1; }      // 兜底：往 -Z 走
-            px += dirX * WU_CELL; pz += dirZ * WU_CELL;
-            steps++;
-          }
-          if (steps === 0) continue;
-          // 边界外随机落位：把「所有草都压在一条线上」摊开成一条带子
-          var band = Math.random() * WU_MOVE_BAND;
-          var nx2 = px + dirX * band, nz2 = pz + dirZ * band;
-          a[b + 12] = nx2;
-          a[b + 14] = nz2;
-          var gy = groundYFromMap(nx2, nz2);           // 跟着地形高度走，不悬空/不陷地
-          if (gy !== null) a[b + 13] = gy;
-          changed = true; moved++;
-        }
-        if (changed) o.instanceMatrix.needsUpdate = true;
-      }
-      window.__wuMoveDiag = { moved: moved, band: WU_MOVE_BAND, cells: cells.size, grid: [GW, GH] };
-      return moved;
-    }
-    function wuHideInstances(cells) {
-      if (!cells || !cells.size) return 0;
-      var isl = E.world.islands.mainIsland;
-      if (!isl) return 0;
-      var ZERO = new (cam.matrix.constructor)();
-      for (var z0 = 0; z0 < 16; z0++) ZERO.elements[z0] = 0;
-      var hidden = 0;
-
-      function sweep(o) {
-        if (!o || !o.instanceMatrix || !o.count) return;
-        var a = o.instanceMatrix.array, changed = false;
-        for (var i = 0; i < o.count; i++) {
-          var x = a[i * 16 + 12], z = a[i * 16 + 14];
-          // 已清零的实例：matrix 全 0 ⇒ 平移也是 0，跳过（否则会反复标脏、每帧重传）
-          if (a[i * 16] === 0 && x === 0 && z === 0) continue;
-          if (!cells.has(wuCellKey(x, z))) continue;
-          for (var k = 0; k < 16; k++) a[i * 16 + k] = 0;
-          changed = true; hidden++;
-        }
-        if (changed) o.instanceMatrix.needsUpdate = true;
-      }
-
-      try {
-        var grass = isl.grass;
-        if (grass && grass.chunks) {
-          var it = grass.chunks.entries();
-          for (var ci = 0; ci < it.length; ci++) sweep(it[ci][1]);
-        }
-      } catch (eG) { window.__wuHideErr = 'grass: ' + String(eG && eG.message || eG); }
-
-      try {
-        ['flowers1', 'flowers2'].forEach(function (fk) {
-          var f = isl[fk];
-          if (!f) return;
-          if (f.isInstancedMesh) { sweep(f); return; }
-          if (f.mesh && f.mesh.isInstancedMesh) { sweep(f.mesh); return; }
-          if (f.children) f.children.forEach(function (c) { if (c.isInstancedMesh) sweep(c); });
-        });
-      } catch (eF) { window.__wuHideErr = (window.__wuHideErr || '') + ' flowers: ' + String(eF && eF.message || eF); }
-
-      return hidden;
-    }
-
-    function eraseZones(cells, keyOf) {
-      var kf = keyOf || cellKey;
-      var kc = kf === cellKey ? CELL : WU_CELL;
-      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
-      var mi = scene.getObjectByName('main-island');
-      if (!mi || !mi.geometry || !mi.geometry.attributes.uv) return null;
-      mi.updateMatrixWorld(true);
-      var mg = mi.geometry, mp = mg.attributes.position, uv = mg.attributes.uv;
-      var mi2 = mg.index ? mg.index.array : null;
-      var nTri = mi2 ? mi2.length / 3 : mp.count / 3;
-      var zt = grass.zonesTexture, img = zt.image, tw = img.width, th = img.height;
-      var c2 = img.getContext('2d', { willReadFrequently: true });
-      if (!c2) return null;
-      var data = c2.getImageData(0, 0, tw, th), px = data.data;
-      var W = [new V3c(), new V3c(), new V3c()];
-      var painted = 0, tris = 0;
-      for (var f = 0; f < nTri; f++) {
-        var ia = mi2 ? [mi2[f * 3], mi2[f * 3 + 1], mi2[f * 3 + 2]] : [f * 3, f * 3 + 1, f * 3 + 2];
-        for (var k = 0; k < 3; k++) W[k].set(mp.getX(ia[k]), mp.getY(ia[k]), mp.getZ(ia[k])).applyMatrix4(mi.matrixWorld);
-        var any = false;
-        for (var cx = Math.floor(Math.min(W[0].x, W[1].x, W[2].x) / kc);
-             cx <= Math.floor(Math.max(W[0].x, W[1].x, W[2].x) / kc) && !any; cx++) {
-          for (var cz = Math.floor(Math.min(W[0].z, W[1].z, W[2].z) / kc);
-               cz <= Math.floor(Math.max(W[0].z, W[1].z, W[2].z) / kc); cz++) {
-            if (cells.has(cx + ',' + cz)) { any = true; break; }
-          }
-        }
-        if (!any) continue;
-        tris++;
-        var U0 = uv.getX(ia[0]) * tw, V0 = uv.getY(ia[0]) * th;
-        var U1 = uv.getX(ia[1]) * tw, V1 = uv.getY(ia[1]) * th;
-        var U2 = uv.getX(ia[2]) * tw, V2 = uv.getY(ia[2]) * th;
-        var x0 = Math.max(0, Math.floor(Math.min(U0, U1, U2))), x1 = Math.min(tw - 1, Math.ceil(Math.max(U0, U1, U2)));
-        var y0 = Math.max(0, Math.floor(Math.min(V0, V1, V2))), y1 = Math.min(th - 1, Math.ceil(Math.max(V0, V1, V2)));
-        var den = (V1 - V2) * (U0 - U2) + (U2 - U1) * (V0 - V2);
-        if (Math.abs(den) < 1e-12) continue;
-        for (var y = y0; y <= y1; y++) for (var x = x0; x <= x1; x++) {
-          var qx = x + 0.5, qy = y + 0.5;
-          var l0 = ((V1 - V2) * (qx - U2) + (U2 - U1) * (qy - V2)) / den;
-          var l1 = ((V2 - V0) * (qx - U2) + (U0 - U2) * (qy - V2)) / den;
-          var l2 = 1 - l0 - l1;
-          if (l0 < -0.01 || l1 < -0.01 || l2 < -0.01) continue;
-          var wx = W[0].x * l0 + W[1].x * l1 + W[2].x * l2;
-          var wz = W[0].z * l0 + W[1].z * l1 + W[2].z * l2;
-          var wy = W[0].y * l0 + W[1].y * l1 + W[2].y * l2;
-          if (wy < -0.35) continue;
-          if (!cells.has(kf(wx, wz))) continue;
-          var o = (y * tw + x) * 4;
-          if (!px[o + 1] && !px[o] && !px[o + 2]) continue;   // 已经是 0 就不必再写
-          px[o] = 0; px[o + 1] = 0; px[o + 2] = 0; px[o + 3] = 255;
-          painted++;
-        }
-      }
-      if (painted) c2.putImageData(data, 0, 0);
-      return { painted: painted, tris: tris };
-    }
     // ---------- 秃地「真秃 + 黄」一次成型（用户 2026-10-12 23:51）----------
     // 一次三角形遍历同时写两样东西：
     //   ① 分区图：秃区内 r=g=b=0 —— g=0 引擎自己就不再生成草（永久，rebuild 也不复活），
@@ -2117,23 +1577,19 @@ window.__camReady = true;
         return false;
       }
     }
-    // 秃区光栅化的**唯一**实现：涂（写 g=0）与还原（写回快照）共用同一套三角形插值与
-    // 同一套口径（wy<-0.35 的侧壁跳过、重心坐标 -0.01 容差、V 轴按 (u,v) 写）。
-    // 分开写两份必然漂移 —— 涂和还原只要差一格，边界就会留下洗不掉的黄或秃斑。
-    // onPixel(px, md, snap, o, wx, wz, d) 返回 true = 这一像素被改动（用于决定要不要回传纹理）
-    // pad = 世界包围盒外扩（米）
-    function wuRasterBare(cells, dist, pad, onPixel) {
+    // 秃斑遮罩光栅化：遍历 main-island 三角形，把「身体脚印 + 羽化带」按 UV 写进遮罩。
+    // 不读写 zonesTexture —— 分区图保持原样，草一株不删、不重建。
+    // onPixel(md, o, wx, wz, d) 返回 true = 这一像素被改动。
+    function wuRasterBareMask(cells, dist, pad, onPixel) {
       var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
       var mi = scene.getObjectByName('main-island');
       if (!mi || !mi.geometry || !mi.geometry.attributes.uv) return null;
-      var zt = grass.zonesTexture, img = zt.image, tw = img.width, th = img.height;
-      var c2 = img.getContext('2d', { willReadFrequently: true });
-      if (!c2) return null;
+      if (!grass || !grass.zonesTexture || !grass.zonesTexture.image) return null;
+      var img = grass.zonesTexture.image, tw = img.width, th = img.height;
       if (!wuEnsureBareMask(tw, th)) return null;
-      var data = c2.getImageData(0, 0, tw, th), px = data.data;
       var md = wuBareMask.img.data;
-      var snap = wuZonesSnap;
-      // 秃区 + 过渡带的世界包围盒：绝大多数三角形在这一次粗筛里就被扔掉
+      // 每次重算都从空白开始：视口/机位变化会让 footprint 移动，旧的黄斑必须清掉。
+      md.fill(0);
       var bx0 = Infinity, bz0 = Infinity, bx1 = -Infinity, bz1 = -Infinity;
       cells.forEach(function (k) {
         var p = k.split(','), x = (+p[0] + 0.5) * WU_CELL, z = (+p[1] + 0.5) * WU_CELL;
@@ -2169,80 +1625,28 @@ window.__camReady = true;
           var wx = W[0].x * l0 + W[1].x * l1 + W[2].x * l2;
           var wy = W[0].y * l0 + W[1].y * l1 + W[2].y * l2;
           var wz = W[0].z * l0 + W[1].z * l1 + W[2].z * l2;
-          if (wy < -0.35) continue;                       // 岛体侧壁不参与（与 paintZones 同口径）
+          if (wy < -0.35) continue;
           var d = dist.get(wuCellKey(wx, wz));
           if (d === undefined) continue;
           var o = (y * tw + x) * 4;
-          if (onPixel(px, md, snap, o, wx, wz, d)) touched++;
+          if (onPixel(md, o, wx, wz, d)) touched++;
         }
       }
-      if (touched) {
-        c2.putImageData(data, 0, 0); zt.needsUpdate = true;
-        wuBareMask.ctx.putImageData(wuBareMask.img, 0, 0); wuBareMask.tex.needsUpdate = true;
-      }
+      wuBareMask.ctx.putImageData(wuBareMask.img, 0, 0);
+      wuBareMask.tex.needsUpdate = true;
       return { touched: touched, tris: tris, tw: tw, th: th };
     }
-    // 涂秃：分区图 r=g=b=0（引擎自己不再长草，rebuild 也不复活）+ 黄遮罩按距离淡出
-    // opts.maskOnly = true：**只涂黄遮罩，不动分区图**（身体碰撞模式下用）。
-    // opts.skipG = true：**保留绿通道（草照长），只清 r/b（不要花）**——位移模式用：
-    //   草由 wuMoveInstances 移出禁区，花则干脆不在禁区里长（花太碎，移动不值当）。
-    function wuPaintBare(cells, dist, opts) {
-      var maskOnly = !!(opts && opts.maskOnly);
-      var skipG = !!(opts && opts.skipG);
+    function wuPaintBareMask(cells, dist) {
       if (!dist) dist = wuBareDistance(cells);
-      var barePx = 0, maskPx = 0;
-      var r = wuRasterBare(cells, dist, WU_BARE_FEATHER + WU_BARE_WOBBLE + WU_CELL * 2,
-        function (px, md, snap, o, wx, wz, d) {
-          var changed = false;
-          if (!maskOnly && d === 0) {
-            if (px[o] || px[o + 1] || px[o + 2]) barePx++;
-            px[o] = 0; px[o + 1] = 0; px[o + 2] = 0; px[o + 3] = 255;
-            changed = true;
-          } else if (skipG && d === 0) {
-            if (px[o] || px[o + 2]) barePx++;
-            px[o] = 0; px[o + 2] = 0; px[o + 3] = 255;   // 绿通道原样保留
-            changed = true;
-          }
+      var maskPx = 0;
+      var r = wuRasterBareMask(cells, dist, WU_BARE_FEATHER + WU_BARE_WOBBLE + WU_CELL * 2,
+        function (md, o, wx, wz, d) {
           var a = Math.round(255 * wuBareMaskValue(wx, wz, d));
-          if (a > md[o]) { md[o] = a; md[o + 1] = a; md[o + 2] = a; md[o + 3] = 255; if (a) maskPx++; changed = true; }
-          return changed;
+          if (a > md[o]) { md[o] = a; md[o + 1] = a; md[o + 2] = a; md[o + 3] = 255; if (a) maskPx++; return true; }
+          return false;
         });
       if (!r) return null;
-      return { barePx: barePx, maskPx: maskPx, tris: r.tris, cells: cells.size, maskOnly: maskOnly, skipG: skipG };
-    }
-    // ---------- 秃区**缩小**：把「上一轮涂过、这一轮不再是秃区」的像素还原回快照 ----------
-    // 判定口径（走的是 wuRasterBare 同一套光栅化，绝不另起一份）：
-    //   ① 分区图：像素所在格子在 prevCells（上一轮**秃区核心**）里、且不在 newCells 里
-    //      ⇒ 从快照写回原值，草就会在 rebuild 后自己长回来。
-    //      ⚠️ 判据必须是**秃区核心格**而不是距离场：距离场向外扩了 FEATHER+WOBBLE≈0.4m，
-    //         拿它当「仍是秃区」会把所有释放格都套进去 ⇒ 一格都还原不了（实测 restored=0）。
-    //   ② 黄遮罩：上一轮遮罩覆盖到的像素（= 本次遍历到的全部像素）**一律清零**，
-    //      交给紧随其后的 wuPaintBare 从零重涂。不能只清「不在新范围里」的 ——
-    //      遮罩写入是 `if (a > md[o])` 取 max，旧的 alpha=1 会一直压住新的淡出值，
-    //      于是草长回来了、地上却还留着一块黄。
-    function wuRestoreBare(prevCells, prevDist, newCells) {
-      if (!wuZonesSnap || !prevCells || !prevDist || !newCells) return { restored: 0, cleared: 0, tris: 0 };
-      var restored = 0, cleared = 0;
-      var r = wuRasterBare(prevCells, prevDist, WU_BARE_FEATHER + WU_BARE_WOBBLE + WU_CELL * 2,
-        function (px, md, snap, o, wx, wz, d) {
-          var key = wuCellKey(wx, wz);
-          var changed = false;
-          if (snap && prevCells.has(key) && !newCells.has(key)) {
-            if (px[o] !== snap[o] || px[o + 1] !== snap[o + 1] || px[o + 2] !== snap[o + 2]) {
-              px[o] = snap[o]; px[o + 1] = snap[o + 1]; px[o + 2] = snap[o + 2]; px[o + 3] = snap[o + 3];
-              restored++;
-              changed = true;
-            }
-          }
-          if (md[o] || md[o + 1] || md[o + 2] || md[o + 3]) {
-            md[o] = 0; md[o + 1] = 0; md[o + 2] = 0; md[o + 3] = 0;
-            cleared++;
-            changed = true;
-          }
-          return changed;
-        });
-      if (!r) return { restored: 0, cleared: 0, tris: 0 };
-      return { restored: restored, cleared: cleared, tris: r.tris };
+      return { maskPx: maskPx, tris: r.tris, cells: cells.size };
     }
     // 把「秃地描黄」注入地形材质。写点在 finalColor 之后 —— 那时 grassLitColor
     // 已经由引擎自己按 zoneBlend 混好（含同一套光照、风向、影子），直接拿它当基色，
@@ -2288,7 +1692,6 @@ window.__camReady = true;
         feather: WU_BARE_FEATHER, wobble: WU_BARE_WOBBLE,
         maskReady: !!(wuBareMask && wuBareMask.tex), maskSize: wuBareMask ? [wuBareMask.w, wuBareMask.h] : null,
         injected: !!(scene.getObjectByName('main-island') || {}).material && !!scene.getObjectByName('main-island').material.__wuBareTex,
-        protectCells: wuProtectCells ? wuProtectCells.size : 0,
         err: window.__bareYellowErr || null
       };
     };
@@ -2312,97 +1715,30 @@ window.__camReady = true;
       if (!grass || !grass.chunks || grass.chunks.entries().length < 20) return;
       var mi = scene.getObjectByName('main-island');
       if (!mi) return;
-      // alpha 必须先取到，否则轮廓判定无从做起（首轮 wuAlpha 还是 null）
       if (!wuAlpha) {
         loadWuAlpha(function (ok) { if (!ok) bareDone = true; });
         return;
       }
-      var cells = null, res = null;
-      // 异常必须留痕：曾因 wuRay 为 null 抛错被这里吞掉，footprint 静默变空，
-      // 表现只是「没效果」，查不出原因。
+      var cells = null;
       try { cells = wuBareFootprint(mi); } catch (e) {
         window.__m('足迹失败');
         window.__bareErr = String(e && e.stack || e); bareDone = true; return;
       }
       window.__m('足迹完成');
-      if (!cells || !cells.size) { bareDone = true; window.__bareDiag = { cells: 0, painted: 0, tris: 0 }; return; }
-      // 秃区+过渡带登记为「禁补草区」：删石补草 / 红框补草都必须绕开它，
-      // 否则它们后一轮把 g 写回 255，草就又从他身上长出来（旧 'hide' 模式正是这么复发的）。
-      wuProtectCells = new Set();
-      var newDist = null;
+      if (!cells || !cells.size) {
+        bareDone = true;
+        window.__bareDiag = { cells: 0, maskPx: 0, tris: 0 };
+        return;
+      }
+      var dist = null;
       try {
-        newDist = wuBareDistance(cells);
+        dist = wuBareDistance(cells);
         window.__m('距离场完成');
-        newDist.forEach(function (v, k) {
-          var p = k.split(',');
-          wuProtectCells.add(cellKey((+p[0] + 0.5) * WU_CELL, (+p[1] + 0.5) * WU_CELL));
-        });
-      } catch (eP) { window.__bareErr = '保护格构建失败：' + String(eP && eP.message || eP); }
-      // 分区图快照：只在**第一次**涂秃之前取。之后再取会把「已经涂秃的样子」当成基线，
-      // 于是越缩越缩不回去（这正是旧版「只增不减有效」的根因）。
-      if (!wuZonesSnap) {
-        try {
-          var snapImg = grass.zonesTexture.image, snapCtx = snapImg.getContext('2d', { willReadFrequently: true });
-          var snapData = snapCtx.getImageData(0, 0, snapImg.width, snapImg.height);
-          wuZonesSnap = new Uint8ClampedArray(snapData.data);
-        } catch (eSnap) { wuZonesSnap = null; }
+      } catch (eP) {
+        window.__bareErr = '距离场构建失败：' + String(eP && eP.message || eP);
+        bareDone = true; return;
       }
-      // 缩小秃区：先把「上一轮涂过、这一轮释放掉」的像素还原回快照，再重新涂。
-      // 顺序不能反 —— 先涂再还原会把新秃区也一起还原掉。
-      if (wuBarePrev && newDist) {
-        try {
-          window.__bareRestore = wuRestoreBare(wuBarePrev.cells, wuBarePrev.dist, cells);
-        } catch (eR) { window.__bareErr = '秃区还原失败：' + String(eR && eR.stack || eR); }
-      }
-      try {
-        if (WU_GRASS_MODE === 'keepall') {
-          res = { painted: 0, tris: 0 };   // 完全不清草：让深度测试自己分层
-        } else if (WU_GRASS_MODE === 'collide') {
-          // ---------- 实体碰撞模式（用户 2026-10-14 定案）----------
-          // 吴昊阳被当作**世界里的实体**：草/花一株不删、不移，由顶点着色器做「弯曲约束」
-          // ——弯到接触他表面就**停住**（见 WU_BODY_GRASS_GLSL）。这里只做两件事：
-          //   ① 分区图绿通道**原样保留** ⇒ 引擎照常在禁区里长草，才有草可被约束；
-          //   ② 涂黄遮罩 ⇒ 他身下仍是那块黄秃地（那儿一株草都不会留下，因为全被压平）。
-          wuHiddenCells = null;
-          wuMoveCells = null;
-          var paintCollide = WU_BARE_YELLOW ? wuPaintBare(cells, newDist, { maskOnly: true }) : null;
-          res = { painted: 0, tris: paintCollide && paintCollide.tris, swept: 0, paint: paintCollide };
-        } else if (WU_GRASS_MODE === 'move') {
-          // ---------- 位移模式（用户 2026-10-14 选 B）：禁区内不删草，改位移 ----------
-          // 分区图：绿通道原样保留（引擎照常在禁区里长草），只清 r/b（花不在禁区里长）；
-          // 黄遮罩照旧涂 ⇒ 他身下仍是那块黄秃地（因为那儿一株草都不会留下）。
-          // 草：由 wuMoveInstances 把禁区内的实例沿最近出口移到禁区外。
-          // 几何上与旧「删除」等价安全：禁区是按「23° 俯角下叶尖投影上移 2.36×叶高」定的。
-          wuHiddenCells = null;
-          wuMoveCells = cells;
-          var moved = wuMoveInstances(cells);
-          var paintMove = WU_BARE_YELLOW ? wuPaintBare(cells, newDist, { skipG: true }) : null;
-          res = { painted: (paintMove && paintMove.barePx) || 0, tris: paintMove && paintMove.tris, swept: moved, paint: paintMove };
-        } else if (WU_BODY_COLLIDE && WU_GRASS_MODE === 'erase') {
-          // ---------- 身体碰撞模式（实验，默认关闭）：不删草，只保留秃地黄 ----------
-          wuHiddenCells = null;
-          var paintOnly = WU_BARE_YELLOW ? wuPaintBare(cells, newDist, { maskOnly: true }) : null;
-          res = { painted: 0, tris: paintOnly && paintOnly.tris, swept: 0, paint: paintOnly };
-        } else if (WU_GRASS_MODE === 'hide') {
-          // 不清分区图 ⇒ 地形保持草地色；只把圈内的草/花实例清掉
-          wuHiddenCells = cells;
-          res = { painted: wuHideInstances(cells), tris: 0 };
-        } else {
-          // 真秃：分区图 g=0（引擎自己不再长草，永久生效）+ 黄遮罩（把这儿的棕土换成暖黄）。
-          // 顺带立刻清一遍现有实例：rebuild 是异步的，不清的话会有一瞬间草还在。
-          wuHiddenCells = cells;
-          var swept = wuHideInstances(cells);
-          var painted = WU_BARE_YELLOW ? wuPaintBare(cells, newDist) : eraseZones(cells, wuCellKey);
-          res = { painted: (painted && painted.barePx) != null ? painted.barePx : (painted && painted.painted) || 0, tris: painted && painted.tris, swept: swept, paint: painted };
-        }
-      } catch (e2) {
-        window.__bareErr = String(e2 && e2.stack || e2); bareDone = true; return;
-      }
-      // 记录这一轮真正落地的秃区：下一次把半径调小时，用它算「哪些格子被释放了」
-      if (WU_GRASS_MODE !== 'keepall' && WU_GRASS_MODE !== 'hide' && WU_GRASS_MODE !== 'collide' && newDist) {
-        wuBarePrev = { cells: cells, dist: newDist };
-      }
-      // 取证实用：秃区格子的世界包围盒（外面要靠它判定「这一株草算不算在秃区里」）
+      var paint = WU_BARE_YELLOW ? wuPaintBareMask(cells, dist) : null;
       var fb = [Infinity, Infinity, -Infinity, -Infinity];
       cells.forEach(function (k) {
         var p = k.split(','), x = (+p[0] + 0.5) * WU_CELL, z = (+p[1] + 0.5) * WU_CELL;
@@ -2412,185 +1748,28 @@ window.__camReady = true;
       window.__m('秃区完成');
       window.__bareDiag = {
         cells: cells.size, footBox: fb.map(function (v) { return +v.toFixed(3); }),
-        painted: res && res.painted, tris: res && res.tris,
-        swept: res && res.swept, maskPx: res && res.paint && res.paint.maskPx,
+        maskPx: paint && paint.maskPx, tris: paint && paint.tris,
         clearMargin: WU_CLEAR_MARGIN, clearMarginCam: WU_CLEAR_MARGIN_CAM, camMargin: +wuCamMargin.toFixed(3), bladeH: WU_BLADE_H,
         clearRadiusCells: Math.max(DILATE, Math.round(WU_CLEAR_MARGIN / WU_CELL)),
-        mode: WU_GRASS_MODE, yellow: WU_BARE_YELLOW,
-        protectCells: wuProtectCells ? wuProtectCells.size : 0,
-        restore: window.__bareRestore || null,
-        snapReady: !!wuZonesSnap,
-        yellowErr: window.__bareYellowErr || null,
-        hideErr: window.__wuHideErr || null
+        yellow: WU_BARE_YELLOW, yellowErr: window.__bareYellowErr || null,
+        bodyField: !!window.__wuBodyField
       };
-      // 黄遮罩注入与「这一轮涂了多少像素」无关：只要遮罩建起来了就该注入，
-      // 所以放在下面那两个 early-return 之前（erase 模式在「没得涂」时会直接收工）。
-      if (WU_BARE_YELLOW && WU_GRASS_MODE !== 'keepall' && wuBareMask) {
+      if (WU_BARE_YELLOW && wuBareMask) {
         try { wuInjectBareYellow(); } catch (eY) { window.__bareYellowErr = String(eY && eY.stack || eY); }
       }
-      // 'hide' 模式：一次也没清到说明草实例还没建好（或这轮格子没命中）⇒ **继续重试**，
-      // 不能像 erase 那样「painted=0 就永久放弃」，否则草加载晚了就再也不会被清掉。
-      // ⚠️ 「这一轮有没有变化」不能只看 res.painted：
-      //    缩小秃区时新范围是旧范围的**子集**，那些像素上一轮就已经是 g=0 了 ⇒
-      //    barePx 计不到（它只数「涂之前非零」的像素）、maskPx 同理 ⇒ painted=0，
-      //    按旧判据会在这里直接 return，**跳过下面的 grass.rebuild()**，草永远长不回来
-      //    （实测：缩小后 grassInstances 纹丝不动，就是这个原因）。
-      //    所以把「还原了多少 / 清了多少遮罩」一并计入。
-      var rs = window.__bareRestore;
-      var changedNow = (res && (res.painted || (res.paint && res.paint.maskPx))) ||
-                       (rs && (rs.restored || rs.cleared));
-      if (!res || (!changedNow && WU_GRASS_MODE !== 'hide')) {
-        // 秃区没得涂 ≠ 黄遮罩没建起来：那种情况下注入已经做完，直接收工
-        bareDone = true; return;
-      }
-      if (WU_GRASS_MODE === 'hide') { bareDone = true; return; }   // 分区图没动，无需 rebuild
-      // 实体碰撞模式：分区图一个字都没动（只涂了黄遮罩）⇒ 不需要 rebuild、也不需要清实例。
-      // 草/花由顶点着色器的弯曲约束挡住，不靠删/移。
-      if (WU_GRASS_MODE === 'collide') { bareDone = true; return; }
-      // 身体碰撞模式（仅旧的 erase 分支用）：分区图一个字都没动 ⇒ 不需要 rebuild。
-      // ⚠️ 判据必须带 WU_GRASS_MODE === 'erase'：位移模式下花仍需 destroy+init（r/b 改了），
-      //    这里若无条件 return，花就不会按新分区图重建。
-      if (WU_BODY_COLLIDE && WU_GRASS_MODE === 'erase') { bareDone = true; return; }
-      grass.zonesTexture.needsUpdate = true;
-      try {
-        // 位移模式只改了 r/b（花通道），绿通道原样 ⇒ 草无需 rebuild（重建反而会把实例
-        // 整批重生成、刚移出去的又回到禁区里，白折腾一轮）。花是独立系统、没有 rebuild，
-        // 必须 destroy+init 才会按新的 r/b 重新采样。
-        if (WU_GRASS_MODE !== 'move') grass.rebuild();
-        // 花是独立系统（ba 类，用 mesh 而非 chunks，且没有 rebuild），
-        // 不重建就会保留按旧分区图采出来的实例 —— 土上照样开满花。
-        // pampa 在此列外：引擎默认 pampa.count=0（质量预设里也是 0*.75），从未启用。
-        var isl = E.world.islands.mainIsland;
-        ['flowers1', 'flowers2'].forEach(function (k) {
-          var f = isl && isl[k];
-          if (f && typeof f.destroy === 'function' && typeof f.init === 'function') { f.destroy(); f.init(); }
-        });
-      } catch (e3) {
-        window.__bareErr = String(e3 && e3.stack || e3);
-        return;
-      }
-      // 位移模式：花重建不影响草，但保险起见再扫一遍（幂等，已移出的不会再命中）
-      if (WU_GRASS_MODE === 'move' && wuMoveCells) {
-        try { wuMoveInstances(wuMoveCells); } catch (eMv) { window.__wuMoveErr = String(eMv && eMv.stack || eMv); }
-      }
-      // ⚠️ 补清必须放在 rebuild() **之后**：rebuild = destroy + init，会把实例矩阵整批重建，
-      //    放在它前面的那一次清扫等于白做（实测 rebuild 后秃区里又冒出几百株）。
-      //    分区图 g=0 已经让引擎「原则上不再往这儿放草」，这里清的是边界格（引擎按相邻
-      //    纹素采样，边界上总会有几株落进来）与 rebuild 时序上的残留。
-      if (wuHiddenCells) { try { wuHideInstances(wuHiddenCells); } catch (e6) { window.__wuHideErr = String(e6 && e6.message || e6); } }
       bareDone = true;
     }
-    // 身体碰撞调参口（2026-10-14）。两者都要重算 footprint（field 里的推挤量是烘进纹理的），
-    // 所以置 bareDone=false 再跑一次 makeBare；草不再被删，重算不会伤到任何东西。
-    window.__wuSetBodyClear = function (v) {
-      var n = +v;
-      if (!isFinite(n) || n < 0 || n > 0.5) return { err: 'clear 必须在 [0, 0.5] 米' };
-      WU_BODY_CLEAR = n;
-      bareDone = false;
-      try { makeBare(); } catch (e) { window.__bareErr = String(e && e.stack || e); }
-      return { clear: WU_BODY_CLEAR, field: window.__wuBodyField || null };
-    };
-    // 开关：false = 回到「删草 + 涂分区图」的旧行为（分区图快照可还原，来回切都安全）。
-    // 关的时候必须换一张**空场纹理**而不是把 uniform 置 null —— 采样 null 会取到 three 的
-    // 默认白纹理，(1,1) 解码成 +0.16m 推挤，整片草会被推飞。
-    var wuBodyBlank = null;
-    function wuBodyBlankTex() {
-      if (wuBodyBlank) return wuBodyBlank;
-      var T = window.__THREE;
-      var cv = document.createElement('canvas'); cv.width = 1; cv.height = 1;
-      var c2 = cv.getContext('2d');
-      var im = c2.createImageData(1, 1);
-      im.data[0] = 128; im.data[1] = 128; im.data[2] = 0; im.data[3] = 255;  // 推挤=0、不压平
-      c2.putImageData(im, 0, 0);
-      wuBodyBlank = new T.CanvasTexture(cv);
-      wuBodyBlank.generateMipmaps = false; wuBodyBlank.minFilter = 1006; wuBodyBlank.magFilter = 1006;
-      wuBodyBlank.wrapS = 1001; wuBodyBlank.wrapT = 1001;
-      wuBodyBlank.needsUpdate = true;
-      return wuBodyBlank;
-    }
-    window.__wuSetBodyCollide = function (on) {
-      WU_BODY_COLLIDE = !!on;
-      var isl = E.world && E.world.islands && E.world.islands.mainIsland;
-      var mats = [];
-      if (isl && isl.grass && isl.grass.material) mats.push(isl.grass.material);
-      ['flowers1', 'flowers2'].forEach(function (k) { if (isl && isl[k] && isl[k].material) mats.push(isl[k].material); });
-      mats.forEach(function (m) {
-        if (!m.uniforms || !m.uniforms.uWuBody) return;
-        m.uniforms.uWuBody.value = WU_BODY_COLLIDE ? wuBodyField.tex : wuBodyBlankTex();
-        m.uniforms.uWuBodyRange.value = WU_BODY_COLLIDE ? WU_BODY_RANGE : 0;
-      });
-      bareDone = false;
-      try { makeBare(); } catch (e) { window.__bareErr = String(e && e.stack || e); }
-      return { collide: WU_BODY_COLLIDE, field: window.__wuBodyField || null };
-    };
-    // 位移模式的自检口：再扫一遍禁区，**返回这次又移出了几株**。
-    // 判据：正常应为 0 —— 已经移出去的基座不在禁区里，再扫不会再命中。
-    // 若返回 >0，说明有实例被引擎重建后又落回禁区（那时轮询会持续兜底）。
-    window.__wuMoveRecheck = function () { return wuMoveCells ? wuMoveInstances(wuMoveCells) : -1; };
-    window.__wuMoveState = function () {
-      return { mode: WU_GRASS_MODE, cells: wuMoveCells ? wuMoveCells.size : 0, band: WU_MOVE_BAND, diag: window.__wuMoveDiag || null };
-    };
-    // 调参口：改清空区外扩半径（米），并**立即**重算 footprint（不能只置 bareDone=false：
-    // grassTimer 在 rockFilled && bareDone 后已被 clearInterval，不会再跑）。
-    // ✅ 2026-10-13 起**增大与缩小都有效**：makeBare 会先走 wuRestoreBare 把「这一轮
-    //    释放掉」的分区图像素从快照写回，再重新涂，最后 grass.rebuild() 让草长回来。
-    //    （旧版注释写的「只增不减有效」已作废 —— 根因是没有快照可还原，现已补上。）
-    // m = 基准半径（四周）；camM = 朝相机方向额外扫掠半径（可省略）。
-    // ⚠️ camM 有硬下限：低于 2.356 × 草叶最大世界高度（实测 0.10727m ⇒ **0.2527m**），
-    //    朝相机那侧的草叶叶尖就会投影到他身上、随风在他球衣上扫过（旧实测占比 6.1%）。
-    window.__wuSetClearMargin = function (m, camM) {
-      if (isFinite(m) && m >= 0) WU_CLEAR_MARGIN = m;
-      if (isFinite(camM) && camM >= 0) WU_CLEAR_MARGIN_CAM = camM;
-      bareDone = false; wuHiddenCells = null;
-      try { makeBare(); } catch (e) { window.__bareErr = String(e && e.stack || e); }
-      if (wuHiddenCells) { try { wuHideInstances(wuHiddenCells); } catch (e2) { window.__wuHideErr = String(e2 && e2.message || e2); } }
-      return { base: WU_CLEAR_MARGIN, cam: WU_CLEAR_MARGIN_CAM, cells: wuHiddenCells ? wuHiddenCells.size : 0 };
-    };
-    var grassTimer = setInterval(function () {
-      // 红框补草要先于删石补草跑：删石补草最后会 grass.rebuild()，
-      // 早一步把红框的 g 写进 zonesTexture，rebuild 时一并生效。
-      try {
-        fillRedbox();
-      } catch (e1) {
-        if (!window.__redboxErr) window.__redboxErr = String(e1 && e1.stack || e1);
+    // 秃斑遮罩只在场景就绪前准备一次：Wu 网格铺好、wu-2d.png 到位后跑一次即可。
+    // 这里只兜底等待这些异步条件，完成后立即停表；20s 仍不成立就留痕交给就绪门判断。
+    var bareKaiShi = performance.now();
+    var bareTimer = setInterval(function () {
+      try { makeBare(); } catch (eB) { if (!window.__bareErr) window.__bareErr = String(eB && eB.stack || eB); }
+      if (bareDone || performance.now() - bareKaiShi > 20000) {
+        clearInterval(bareTimer); bareTimer = null;
+        if (!bareDone) window.__bareChaoShi = 'wuBare-20s';
       }
-      // 删石补草要反复尝试：注入时机早于草块加载完成，草块不足 20 个时直接放弃，
-      // 之后没有任何东西会再触发它，所以必须在这里持续重试。
-      try {
-        fillGrass();
-      } catch (e2) {
-        if (!window.__grassFillErr) window.__grassFillErr = String(e2 && e2.stack || e2);
-      }
-      try {
-        buFengXi();
-      } catch (e3) {
-        if (!window.__fengXiErr) window.__fengXiErr = String(e3 && e3.stack || e3);
-      }
-      try {
-        makeBare();
-      } catch (e4) {
-        // ⚠️ 异常时**不能**置 bareDone=true：E.world / wuRect / wuAlpha 都是异步就绪的，
-        // 头几轮 tick 经常因为 islands/mainIsland 还没挂上而抛"Cannot read 'mainIsland'"。
-        // 旧版把 bareDone 在这里置位 ⇒ 一次性放弃 ⇒ wuHiddenCells 永远为 null ⇒
-        // 'hide' 模式的清圈永不生效、草直接贴上吴昊阳身体。
-        if (!window.__bareErr) window.__bareErr = String(e4 && e4.stack || e4);
-      }
-      // 秃区持续补清：引擎任何一次 rebuild、或后加载进来的新草块，都可能把草重新生成出来。
-      // 必须**每种模式都跑**（旧版只在 'hide' 下跑，一旦改成 erase 这层兜底就失效了）。
-      // 已清零的实例会被跳过、无变化时不会重传实例矩阵，开销可忽略。
-      try {
-        if (wuHiddenCells) wuHideInstances(wuHiddenCells);
-      } catch (e5) { window.__wuHideErr = String(e5 && e5.message || e5); }
-      // 位移模式：草不在禁区里站着是靠「每次实例被重新生成后都再移一遍」保证的，
-      // 所以这个轮询**不能停**。幂等：已经移出去的基座不在禁区里，不会再命中。
-      try {
-        if (wuMoveCells) wuMoveInstances(wuMoveCells);
-      } catch (e6m) { window.__wuMoveErr = String(e6m && e6m.message || e6m); }
-      // 该做的都做完了就停轮询（省 CPU）。⚠️ 但秃区一旦建立就**不能停**：
-      // 引擎任何一次 rebuild（改质量预设、调草的 tweak 参数）都会让草复活，
-      // 必须留一个每 2s 的兜底补清。补清本身很便宜（遍历一遍实例矩阵，无变化不重传）。
-      if (rockFilled && bareDone && !wuHiddenCells && !wuMoveCells) clearInterval(grassTimer);
-    }, 2000);
+    }, 300);
+    try { makeBare(); } catch (eB0) { if (!window.__bareErr) window.__bareErr = String(eB0 && eB0.stack || eB0); }
     // ---------- 吴昊阳：贴地的细分网格 + 预扭曲贴图（身前草遮他 / 身后草被他遮） ----------
     // 他原来是宿主页面上的 fixed DOM 图层、z-index 恒在最上，于是**所有**草都在他身后，
     // 物理上不可能有草压过他，看着像贴纸。
@@ -2738,7 +1917,7 @@ window.__camReady = true;
       // 挂进世界（与草同一空间）：视差让他和草一起动，深度缓冲判定前后
       var isl = E.world.islands.mainIsland;
       (isl.group || scene).add(wuMesh);
-      // 网格换位 ⇒ footprint 必须随 mesh 同步重算（grassTimer 可能已停，须主动跑）
+      // 网格换位 ⇒ footprint 必须随 mesh 同步重算
       bareDone = false;
       try { makeBare(); } catch (eB) { window.__bareErr = String(eB && eB.stack || eB); }
       return true;
@@ -4058,6 +3237,15 @@ function wuBakeAuroraNoise(size) {
     if (!window.__camReady) { setTimeout(qiDong, 300); return; }
     if (!yiJianHao) luoJiWei(0);
     puWu();
+    if (!window.__caoDiZiYuanJianTing) {
+      window.__caoDiZiYuanJianTing = true;
+      try {
+        var ziYuan = window.__experience && window.__experience.resources;
+        if (ziYuan && typeof ziYuan.on === 'function') {
+          ziYuan.on('ready', function () { try { puWu(); } catch (eZR) { window.__wuPuSheErr = String(eZR && eZR.message || eZR); } });
+        }
+      } catch (eZT) {}
+    }
     if (!window.__wuBeiJingLoop) {
       window.__wuBeiJingLoop = true;
       (function chou() {

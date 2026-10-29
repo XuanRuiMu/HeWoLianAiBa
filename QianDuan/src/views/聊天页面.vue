@@ -1,7 +1,7 @@
 <template>
   <div class="liaotian-yemian" data-chat-scope="true">
     <TiShiDai :cuo-wu="fuPanMoShi ? null : 聊天仓库.cuoWuXinXi" :zeng-liang="fuPanMoShi ? null : 聊天仓库.haoGanDuZengLiangBiaoQian" />
-    <div v-if="聊天仓库.jiaoSeQianTaiCuoWu">
+    <div v-if="!fuPanWuLiaoTianJiLu && 聊天仓库.jiaoSeQianTaiCuoWu">
       <RequestError
         :cuo-wu="聊天仓库.jiaoSeQianTaiCuoWu"
         mi-xi
@@ -19,11 +19,11 @@
       @scroll="chuLiGunDong"
     >
       <XiaoXiGuJia
-        v-if="聊天仓库.shouPingJiaZaiZhong"
+        v-if="!fuPanWuLiaoTianJiLu && 聊天仓库.shouPingJiaZaiZhong"
         :hang-pei-zhi="GU_JIA_QI_PAO_PEI_ZHI"
         ding-di
       />
-      <div v-else-if="聊天仓库.jiaZaiShiBai" class="jiazai-shibai-qu">
+      <div v-else-if="!fuPanWuLiaoTianJiLu && 聊天仓库.jiaZaiShiBai" class="jiazai-shibai-qu">
         <svg class="shibai-chahua" viewBox="0 0 72 48" fill="none" aria-hidden="true">
           <circle cx="34" cy="24" r="16" fill="currentColor" />
           <circle cx="28" cy="20" r="4.5" fill="var(--liaotian-beijing)" opacity="0.35" />
@@ -43,7 +43,12 @@
           />
         </div>
       </div>
-      <TransitionGroup name="xiaoxi-guodu" tag="div" class="xiaoxi-liebiao">
+      <TransitionGroup
+        v-if="!fuPanWuLiaoTianJiLu"
+        name="xiaoxi-guodu"
+        tag="div"
+        class="xiaoxi-liebiao"
+      >
         <template v-for="(zu, suoYin) in xiaoXiFenZu" :key="'zu-' + suoYin">
           <ShiJianTiao :shi-jian="zu.shiJian" :shi-jian-chuo="zu.shiJianChuo" />
           <template v-for="xiaoXi in zu.xiaoXiLieBiao" :key="xiaoXi.ke_hu_duan_id || xiaoXi.id">
@@ -172,9 +177,14 @@
             >
               <div
                 v-if="
-                  fuPanMoShi && piZhuXiang && !xiaoXi.yi_che_hui && xiaoXi.lei_xing !== 'xitong'
+                  fuPanMoShi &&
+                  !fuPanWuLiaoTianJiLu &&
+                  piZhuXiang &&
+                  !xiaoXi.yi_che_hui &&
+                  xiaoXi.lei_xing !== 'xitong'
                 "
                 class="fupan-pizhu-xiangmu"
+                data-testid="fu-pan-pi-zhu"
                 :class="{
                   'yonghu-pizhu': xiaoXi.fa_song_zhe_lei_xing === 'yonghu',
                   'jiaose-pizhu': xiaoXi.fa_song_zhe_lei_xing === 'jiaose',
@@ -194,16 +204,27 @@
           </template>
         </template>
       </TransitionGroup>
-      <div v-if="fuPanMoShi && fuPanJiaZaiZhong" class="fupan-jiazai-qu">
+      <div
+        v-if="fuPanMoShi && fuPanWuLiaoTianJiLu"
+        class="fupan-jiazai-qu"
+        role="status"
+        data-testid="fu-pan-wu-liao-tian-ji-lu"
+      >
+        <div class="fupan-jiazai-tishi fupan-wu-liao-tian-ji-lu-tishi">
+          {{ huoQuFanYi('zhanJi', 'fuPanWuLiaoTianJiLu') }}
+        </div>
+      </div>
+      <div v-else-if="fuPanMoShi && fuPanJiaZaiZhong" class="fupan-jiazai-qu" data-testid="fu-pan-jia-zai-zhong">
         <div class="fupan-jiazai-tishi">
           <span class="fupan-jiazai-zhuanquan" />
           <span>{{ huoQuFanYi('zhanJi', 'fuPanShengChengZhong') }}</span>
         </div>
       </div>
       <div
-        v-if="fuPanMoShi && !fuPanJiaZaiZhong && fuPanZongJie"
+        v-else-if="fuPanMoShi && fuPanZongJie"
         class="fupan-zongjie-qu"
         :class="{ 'you-fen-kuai': fuPanZongJieFenKuai }"
+        data-testid="fu-pan-zong-jie"
       >
         <div class="fupan-zongjie-biaoti">{{ huoQuFanYi('zhanJi', 'fuPanZongJie') }}</div>
         <template v-if="fuPanZongJieFenKuai">
@@ -1147,6 +1168,7 @@ const {
   fuPanZongJie,
   fuPanZongJieFenKuai,
   fuPanJiaZaiZhong,
+  fuPanWuLiaoTianJiLu,
   jiaZaiFuPanShuJu,
   tuiChuFuPan,
 } = use复盘({
@@ -1706,6 +1728,7 @@ async function chuShiHuaLiaoTian() {
     return
   }
   fuPanMoShi.value = false
+  fuPanWuLiaoTianJiLu.value = false
   聊天仓库.meiYeTiaoShu = 50
   await 聊天仓库.jiaZaiXiaoXi(huiHuaId)
   chongZhiXuNiChuangKou()
@@ -2150,6 +2173,11 @@ onBeforeUnmount(() => {
   background: var(--shijian-biaoqian-beijing);
   color: var(--wenben-tishi);
   font-size: 13px;
+}
+
+.fupan-wu-liao-tian-ji-lu-tishi {
+  text-align: center;
+  line-height: 1.5;
 }
 
 .fupan-jiazai-zhuanquan {

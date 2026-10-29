@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import 长方框输入框 from '@/components/表单/长方框输入框.vue'
+import { 领取聚焦入场许可, 重置聚焦秩序 } from '@/utils/输入聚焦秩序'
 import '@/styles/设计令牌.css'
 import { 使用性别框体配色, 使用默认性别卡配色 } from '@/composables/use性别框体配色'
 import { 解析性别框体色档 } from '@/utils/性别'
@@ -118,7 +119,7 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
   })
 
   it('描边只覆盖原有边框：线宽取边框令牌、起点在左下圆弧中点、终点在右上圆弧中点', () => {
-    expect(输入框).toContain('<component :is="圆角描边" :激活="聚焦中" />')
+    expect(输入框).toContain('<component :is="圆角描边" ref="描边组件" :激活="聚焦中" />')
     expect(输入框).toContain('--miao-bian-kuan: var(--chang-fang-kuang-hou-du)')
     expect(描边).toContain('stroke-width: var(--miao-bian-kuan, 2px)')
     expect(描边).toContain('stroke-dasharray: 1 1')
@@ -184,6 +185,70 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
     expect(横条).not.toContain('miao-bian')
   })
 
+  it('聚焦入场许可只在字段身份变化时返回真', () => {
+    重置聚焦秩序()
+    const 甲 = document.createElement('input')
+    const 乙 = document.createElement('input')
+    expect(领取聚焦入场许可(null)).toBe(false)
+    expect(领取聚焦入场许可(甲)).toBe(true)
+    expect(领取聚焦入场许可(甲)).toBe(false)
+    expect(领取聚焦入场许可(乙)).toBe(true)
+    expect(领取聚焦入场许可(甲)).toBe(true)
+  })
+
+  it('同一字段失焦再聚焦不重播，切换到新字段才播放入场', async () => {
+    const 原动画 = SVGElement.prototype.animate
+    const 原清单 = SVGElement.prototype.getAnimations
+    const 原帧 = globalThis.requestAnimationFrame
+    const 调用: number[] = []
+    Object.defineProperty(SVGElement.prototype, 'getAnimations', {
+      configurable: true,
+      value: () => [],
+    })
+    Object.defineProperty(SVGElement.prototype, 'animate', {
+      configurable: true,
+      value: (_帧: Keyframe[], 选项: KeyframeEffectOptions) => {
+        调用.push(选项.duration as number)
+        return { cancel: vi.fn() }
+      },
+    })
+    Object.defineProperty(globalThis, 'requestAnimationFrame', {
+      configurable: true,
+      value: (回调: FrameRequestCallback) => {
+        回调(0)
+        return 0
+      },
+    })
+    const 包甲 = mount(长方框输入框, { attachTo: document.body })
+    const 包乙 = mount(长方框输入框, { attachTo: document.body })
+    try {
+      重置聚焦秩序()
+      const 甲 = 包甲.find('input')
+      const 乙 = 包乙.find('input')
+      await 甲.trigger('focus')
+      await nextTick()
+      expect(调用.slice(-2)).toEqual([840, 840])
+      await 甲.trigger('blur')
+      await new Promise((结束) => setTimeout(结束, 140))
+      expect(调用.slice(-2)).toEqual([800, 800])
+      await 甲.trigger('focus')
+      await nextTick()
+      expect(调用.slice(-2)).toEqual([0, 0])
+      await 乙.trigger('focus')
+      await nextTick()
+      expect(调用.slice(-2)).toEqual([840, 840])
+    } finally {
+      包甲.unmount()
+      包乙.unmount()
+      Object.defineProperty(SVGElement.prototype, 'animate', { configurable: true, value: 原动画 })
+      Object.defineProperty(SVGElement.prototype, 'getAnimations', {
+        configurable: true,
+        value: 原清单,
+      })
+      Object.defineProperty(globalThis, 'requestAnimationFrame', { configurable: true, value: 原帧 })
+    }
+  })
+
   it('真实聚焦与失焦分别产生 840ms 和 800ms 双路动画，减动效时归零', async () => {
     const 原动画 = SVGElement.prototype.animate
     const 原动画清单 = SVGElement.prototype.getAnimations
@@ -222,14 +287,15 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
       await nextTick()
       await 输入.trigger('blur')
       await nextTick()
+      await new Promise((结束) => setTimeout(结束, 140))
       expect(调用.map((项) => 项.选项.duration)).toEqual([840, 840, 800, 800])
       expect(调用[0].帧.map((帧) => 帧.strokeDashoffset)).toEqual([1, 0])
       expect(调用[2].帧.map((帧) => 帧.strokeDashoffset)).toEqual([0, 1])
       减动效 = true
+      重置聚焦秩序()
       await 输入.trigger('focus')
       await nextTick()
-      expect(调用.slice(-2).map((项) => 项.选项.duration)).toEqual([0, 0])
-    } finally {
+      expect(调用.slice(-2).map((项) => 项.选项.duration)).toEqual([0, 0])    } finally {
       挂载包?.unmount()
       Object.defineProperty(SVGElement.prototype, 'animate', { configurable: true, value: 原动画 })
       Object.defineProperty(SVGElement.prototype, 'getAnimations', {

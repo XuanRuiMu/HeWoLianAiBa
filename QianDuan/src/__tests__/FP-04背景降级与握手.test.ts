@@ -8,16 +8,21 @@ const 仓库根 = resolve(项目根, '..')
 const 读 = (相对: string) => readFileSync(resolve(项目根, 相对), 'utf8')
 
 describe('主页三维背景：就绪握手、暂停与降级', () => {
-  it('背景页只在引擎真正就绪后通知父页，并支持暂停渲染', () => {
+  it('背景页只在场景真正完成后通知父页，并支持暂停渲染', () => {
     const 背景页 = 读('public/grass-bg/grass-bg.html')
     const 握手 = 读('public/grass-bg/scripts/block-09.js')
-    expect(握手).toContain("tongZhi('jiu-xu')")
+    expect(握手).toContain("tongZhi('jiu-xu'")
     expect(握手).toContain("tongZhi('shi-bai'")
     expect(握手).toContain("type !== 'grass-pause'")
     expect(握手).toContain('__caoDiZanTing')
     expect(握手).toContain("addEventListener('webglcontextlost'")
     expect(握手).toContain('chao-shi')
+    expect(握手).toContain('__caoDiZhunBeiZhuangTai')
+    expect(握手).toContain('z.zhunBei !== true')
+    expect(握手).toContain("cao-di-jiu-xu")
     expect(背景页).not.toMatch(/<script(?![^>]*\bsrc=)[^>]*>[\s\S]*?<\/script>/i)
+    expect(背景页).toContain('.loading { display: none !important; }')
+    expect(背景页).not.toContain('scripts/block-04.js')
   })
 
   it('GPU 探测基准已本地化，不再依赖被 CSP 拦截的 unpkg', () => {
@@ -80,11 +85,76 @@ describe('主页三维背景：就绪握手、暂停与降级', () => {
     expect(配置).not.toContain('unpkg.com')
   })
 
-  it('就绪超时写入站点配置且大于背景页自检超时', () => {
+  it('就绪超时写入站点配置且父页超时大于背景页自检超时', () => {
     const 配置 = 读('src/config/站点配置.ts')
-    expect(配置).toContain('beiJingJiuXuChaoShiHaoMiao: 18000')
+    expect(配置).toContain('beiJingJiuXuChaoShiHaoMiao: 35000')
+    expect(配置).toContain('caoDiZhunBeiChaoShiHaoMiao: 30000')
     const 握手 = 读('public/grass-bg/scripts/block-09.js')
-    expect(握手).toContain('}, 15000);')
+    expect(握手).toContain('chaoShiHaoMiao = 30000')
+    expect(握手).toContain("get('zhunBeiChaoShi')")
+  })
+
+  it('场景完成门要求资源、吴昊阳、秃斑、配色与稳定帧，且不再有补草重建', () => {
+    const 场景 = 读('public/grass-bg/scripts/block-08.js')
+    for (const 锚 of ['__caoDiZhunBeiZhuangTai', 'jianChaZhunBei', 'wuPuShe', 'wuBare', 'zhuTi', 'chongJianCiShu', 'xuanRanZhen', 'wenDingKaiShi']) {
+      expect(场景).toContain(锚)
+    }
+    for (const 已删 of ['fillRedbox', 'fillGrass', 'buFengXi', 'paintZones', 'grassTimer', 'REDBOX_']) {
+      expect(场景).not.toContain(已删)
+    }
+    expect(场景).toContain("ziYuan.on('ready'")
+  })
+
+  it('主题同步改为材质创建即上色，不再全场景 400ms 轮询', () => {
+    const 主题 = 读('public/grass-bg/scripts/block-05.js')
+    expect(主题).toContain('__caoDiTongBuZhuTi')
+    expect(主题).toContain('__caoDiZhuTiJiuXu')
+    expect(主题).toContain('材质表.push')
+    expect(主题).toContain('d.initialized = true')
+    expect(主题).not.toContain('setInterval(syncTheme, 400)')
+  })
+
+  it('开场揭示在 iframe 隐藏时播放，完成后才允许父页淡入', () => {
+    const 揭示 = 读('public/grass-bg/scripts/block-06.js')
+    const 握手 = 读('public/grass-bg/scripts/block-09.js')
+    const 根 = 读('src/根组件.vue')
+    expect(揭示).toContain('cao-di-jiu-xu')
+    expect(揭示).toContain('startReveal')
+    expect(揭示).toContain('sheZhiJinDu(0)')
+    expect(揭示).toContain("cao-di-jie-shi-wan-cheng")
+    expect(揭示).toContain('grass-reveal-finish')
+    expect(揭示).toContain('jieShiChaoShi')
+    expect(揭示).not.toContain('grass-reveal-start')
+    expect(揭示).not.toContain('revealMesh.startReveal')
+    expect(握手).toContain("cao-di-jie-shi-wan-cheng")
+    expect(握手).toContain("tongZhi('jie-shi-wan-cheng'")
+    expect(根).toContain("shuJu.zhuangTai === 'jie-shi-wan-cheng'")
+    expect(根).not.toContain('qiDongCaoDiJieShi')
+    expect(根).not.toContain("type: 'grass-reveal-start'")
+    expect(根).toContain('beiJingJieShiChaoShiHaoMiao')
+    expect(根).toContain("type: 'grass-reveal-finish'")
+  })
+
+  it('揭示完成前父页保持 iframe 隐藏，超时才强制收尾', () => {
+    const 根 = 读('src/根组件.vue')
+    const 揭示开始 = 根.indexOf("if (shuJu.zhuangTai === 'jiu-xu')")
+    const 揭示完成 = 根.indexOf("if (shuJu.zhuangTai === 'jie-shi-wan-cheng')")
+    expect(揭示开始).toBeGreaterThan(-1)
+    expect(揭示完成).toBeGreaterThan(揭示开始)
+    const jiuXu段 = 根.slice(揭示开始, 揭示完成)
+    expect(jiuXu段).toContain('beiJingJiuXu.value = false')
+    expect(jiuXu段).toContain('kaiShiJieShiDengDai()')
+    expect(jiuXu段).not.toContain('beiJingJiuXu.value = true')
+    const 完成段 = 根.slice(揭示完成, 根.indexOf("if (shuJu.zhuangTai === 'shi-bai')"))
+    expect(完成段).toContain('beiJingJiuXu.value = true')
+    expect(根).toContain('if (!beiJingJiuXu.value) beiJingJiuXu.value = true')
+  })
+
+  it('揭示中泥土色在 createMaterial 同步写入后立刻恢复主题色', () => {
+    const 主题 = 读('public/grass-bg/scripts/block-05.js')
+    expect(主题).toContain('queueMicrotask')
+    expect(主题).toContain('Promise.resolve().then')
+    expect(主题).toContain('应用草地材质')
   })
 })
 
@@ -109,9 +179,10 @@ describe('FP-02 首访紫色卡屏：握手失败后的自恢复', () => {
         __experience: undefined,
       }
       new Function('window', 握手源码)(假窗口)
-      vi.advanceTimersByTime(15100)
+      vi.advanceTimersByTime(30100)
       const shiBai = 收到.find((xinXi) => xinXi.zhuangTai === 'shi-bai')
       expect(shiBai?.yuanYin).toBe('chao-shi')
+      假窗口.__caoDiZhunBeiZhuangTai = { zhunBei: true, jieDuan: 'jiuXu' }
       假窗口.__dcm = {}
       假窗口.__experience = {
         engine: {
@@ -146,6 +217,7 @@ describe('FP-02 首访紫色卡屏：握手失败后的自恢复', () => {
         WebGLRenderingContext: function LinShi() {},
         addEventListener: vi.fn(),
         __dcm: {},
+        __caoDiZhunBeiZhuangTai: { zhunBei: true, jieDuan: 'jiuXu' },
         __experience: { engine: { renderer: { instance: xuanRanQi }, camera: {}, canvas: 假画布 } },
       }
       new Function('window', 握手源码)(假窗口)
@@ -164,7 +236,7 @@ describe('FP-02 首访紫色卡屏：握手失败后的自恢复', () => {
   it('父页在超时、失败、加载错误三条路径上统一走重载重试', () => {
     const 根 = 读('src/根组件.vue')
     expect(根).toContain('function chongShiBeiJingJiaZai(): void')
-    expect(根).toContain('if (!beiJingJiuXu.value) chongShiBeiJingJiaZai()')
+    expect(根).toContain('if (!beiJingChangJingYiJiuXu) chongShiBeiJingJiaZai()')
     expect(根).toMatch(/zhuangTai === 'shi-bai'[\s\S]{0,120}chongShiBeiJingJiaZai\(\)/)
     expect(根).toMatch(/function chuLiBeiJingJiaZaiShiBai\(\) \{\s*chongShiBeiJingJiaZai\(\)\s*\}/)
     expect(根).toContain('beiJingChongShiCiShu.value >= caoDiPeiZhi.beiJingZuiDaChongShiCiShu')

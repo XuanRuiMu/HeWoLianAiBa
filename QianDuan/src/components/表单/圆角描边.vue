@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const 属性 = withDefaults(defineProps<{ 激活?: boolean; 描边宽?: number }>(), {
   激活: false,
@@ -86,19 +86,26 @@ onMounted(() => {
   }
 })
 
+function 播放入场(): void {
+  量取()
+  const 画入 = 读时长('--miao-bian-shi-chang')
+  if (画入 === null) return
+  requestAnimationFrame(() => 描边(1, 0, 画入))
+}
+
+function 定格高亮(): void {
+  量取()
+  描边(1, 0, 0)
+}
+
+defineExpose({ 播放入场, 定格高亮 })
+
 watch(
   () => 属性.激活,
-  async (开) => {
-    if (!开) {
-      const 退回 = 读时长('--miao-bian-tui-chu-shi-chang')
-      if (退回 !== null) 描边(0, 1, 退回)
-      return
-    }
-    量取()
-    await nextTick()
-    const 画入 = 读时长('--miao-bian-shi-chang')
-    if (画入 === null) return
-    requestAnimationFrame(() => 描边(1, 0, 画入))
+  (开) => {
+    if (开) return
+    const 退回 = 读时长('--miao-bian-tui-chu-shi-chang')
+    if (退回 !== null) 描边(0, 1, 退回)
   },
 )
 

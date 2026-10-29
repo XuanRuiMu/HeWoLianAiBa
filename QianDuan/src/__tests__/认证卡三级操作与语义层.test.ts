@@ -272,7 +272,7 @@ describe('间距节奏：段落 32、字段 24、组内 8，且外大内小', ()
     expect(取值(深档, '--ka-duan-luo')).toBe('calc(var(--jiange-da) + var(--jiange-xiao))')
     for (const 块 of [登录块, 找回块]) {
       const 卡 = 取块(块, '.biaodan-rongqi {')
-      expect(取值(卡, 'padding')).toBe('var(--ka-duan-luo) var(--renzheng-ka-pian-you-nei-ju)')
+      expect(取值(卡, 'padding')).toBe('var(--ka-duan-luo) var(--ka-heng-nei-ju)')
     }
   })
 

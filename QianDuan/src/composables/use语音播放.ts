@@ -56,7 +56,7 @@ export function yuYinShiChangMiao(xiaoXi: YuYinShiChangZaiTi): number {
 }
 
 export function geShiHuaYuYinShiChang(xiaoXi: YuYinShiChangZaiTi): string {
-  return `${yuYinShiChangMiao(xiaoXi)}″`
+  return yuanShiHaoMiao(xiaoXi) > 0 ? `${yuYinShiChangMiao(xiaoXi)}″` : '…″'
 }
 
 export function yuYinKuanDuPx(xiaoXi: YuYinShiChangZaiTi): number {

@@ -29,10 +29,11 @@ describe('零消息时保持微信式空白聊天区', () => {
 
   it('AI 聊天页保留加载骨架、加载失败与失败块内的重试', () => {
     const 骨架起点 = 聊天页源.indexOf('<XiaoXiGuJia')
-    const 失败起点 = 聊天页源.indexOf('<div v-else-if="聊天仓库.jiaZaiShiBai"')
+    const 失败起点 = 聊天页源.indexOf('聊天仓库.jiaZaiShiBai')
     const 列表起点 = 聊天页源.indexOf('<TransitionGroup')
     expect(骨架起点).toBeGreaterThan(-1)
     expect(失败起点).toBeGreaterThan(骨架起点)
+    expect(聊天页源.slice(失败起点 - 40, 失败起点)).toContain('v-else-if')
     expect(列表起点).toBeGreaterThan(失败起点)
     expect(聊天页源.slice(骨架起点, 失败起点)).toContain('GU_JIA_QI_PAO_PEI_ZHI')
     const 失败块 = 聊天页源.slice(失败起点, 列表起点)

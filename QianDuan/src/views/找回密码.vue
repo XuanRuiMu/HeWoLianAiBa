@@ -40,6 +40,7 @@
             <HengTiaoShuRuKuang
               ref="shouJiHaoKuang"
               标识="zhaohui-shoujihao"
+              :前缀="huoQuFanYi('ui', 'shouJiHaoGuoJiQuHao')"
               :模型值="shouJiHao"
               类型="tel"
               :最大长度="11"
@@ -588,17 +589,17 @@ onBeforeUnmount(() => {
   width: 100%;
   display: flex;
   flex-direction: column;
+  --ka-heng-nei-ju: var(--ka-heng-nei-ju-dangqian, var(--renzheng-ka-nei-ju-heng));
   background-color: var(--renzheng-mian-se);
-  border: 1px solid var(--ka-jin-xian);
+  border: var(--renzheng-ka-bian-kuan) solid var(--ka-jin-xian);
   border-radius: var(--yuanjiao-xiao);
-  outline: 1px solid var(--ka-jin-xian);
-  outline-offset: -4px;
+  outline: var(--renzheng-ka-bian-kuan) solid var(--ka-jin-xian);
+  outline-offset: calc(var(--renzheng-ka-nei-xian-pian-yi) * -1);
   box-shadow:
     0 24px 48px rgba(2, 4, 14, 0.42),
     0 6px 14px rgba(2, 4, 14, 0.34);
-  padding: var(--ka-duan-luo) var(--renzheng-ka-pian-you-nei-ju);
+  padding: var(--ka-duan-luo) var(--ka-heng-nei-ju);
   position: relative;
-  max-height: 100%;
   overflow: hidden;
 }
 
@@ -610,7 +611,7 @@ onBeforeUnmount(() => {
   right: 7px;
   height: 14px;
   background: repeating-conic-gradient(
-    from 90deg at 50% 130%,
+    from var(--renzheng-shan-guang-qi-jiao) at 50% 130%,
     var(--ka-guang-wen) 0deg 6deg,
     transparent 6deg 12deg
   );

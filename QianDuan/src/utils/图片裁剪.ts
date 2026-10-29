@@ -1,6 +1,6 @@
-import type { CropperSelection } from 'cropperjs'
+import type { CropperCanvas } from 'cropperjs'
 
-export const TU_PIAN_SHU_CHU_ZUI_DA_BIAN = 1024
+export const TU_PIAN_SHU_CHU_ZUI_DA_BIAN = 2048
 
 export const CAI_JIAN_BI_LI_XIA_XIAN = 0.2
 export const CAI_JIAN_BI_LI_SHANG_XIAN = 5
@@ -10,13 +10,23 @@ export interface PingYiBuLiang {
   y: number
 }
 
+export type CaiJianHuaBu = Pick<CropperCanvas, '$toCanvas'>
+
 export function shiHeFaBiLi(zhi: unknown): boolean {
   return typeof zhi === 'number' && Number.isFinite(zhi) && zhi >= CAI_JIAN_BI_LI_XIA_XIAN && zhi <= CAI_JIAN_BI_LI_SHANG_XIAN
 }
 
+export function guiYiGunLunZengLiang(deltaY: number, deltaMode = 0): number {
+  if (!Number.isFinite(deltaY)) return 0
+  if (deltaMode === 1) return deltaY * 16
+  if (deltaMode === 2) return deltaY * 100
+  return deltaY
+}
+
 export function jiSuanGunLunPingYi(deltaY: number, xiShu = 0.08): PingYiBuLiang {
   if (!Number.isFinite(deltaY) || deltaY === 0) return { x: 0, y: 0 }
-  return { x: 0, y: deltaY * xiShu }
+  const bu = Math.max(-80, Math.min(80, deltaY * xiShu))
+  return { x: 0, y: bu }
 }
 
 export function jiSuanJianPanPingYi(jian: string, jiaSu = false, buChang = 8): PingYiBuLiang {
@@ -53,15 +63,38 @@ export function jiSuanJuZhenSuoFang(juZhen: number[]): number {
 }
 
 export function jiSuanDaoChuChiCun(yuanKuan: number, yuanGao: number, zuiDaBian: number): { kuan: number; gao: number } {
-  const kuan = Math.max(1, Math.round(yuanKuan))
-  const gao = Math.max(1, Math.round(yuanGao))
-  const biLi = kuan / gao
-  const guiYiXiaXian = zuiDaBian * 0.95
-  if (kuan <= zuiDaBian && gao <= zuiDaBian && Math.max(kuan, gao) < guiYiXiaXian) {
-    return { kuan, gao }
+  const anQuanZuiDa = Number.isFinite(zuiDaBian) && zuiDaBian >= 1
+    ? Math.floor(zuiDaBian)
+    : TU_PIAN_SHU_CHU_ZUI_DA_BIAN
+  const kuan = Math.max(1, Math.round(Number.isFinite(yuanKuan) ? yuanKuan : 1))
+  const gao = Math.max(1, Math.round(Number.isFinite(yuanGao) ? yuanGao : 1))
+  const changBian = Math.max(kuan, gao)
+  if (changBian <= anQuanZuiDa) return { kuan, gao }
+  const yinZi = anQuanZuiDa / changBian
+  return {
+    kuan: Math.max(1, Math.round(kuan * yinZi)),
+    gao: Math.max(1, Math.round(gao * yinZi)),
   }
-  if (biLi >= 1) return { kuan: zuiDaBian, gao: Math.max(1, Math.round(zuiDaBian / biLi)) }
-  return { kuan: Math.max(1, Math.round(zuiDaBian * biLi)), gao: zuiDaBian }
+}
+
+export function jiSuanDaoChuKuan(
+  huaBuKuanCss: number,
+  juZhenSuoFang: number,
+  kuangGaoBi: number,
+  zuiDaBian: number,
+): number {
+  const kuanCss = Number(huaBuKuanCss)
+  const suoFang = Number(juZhenSuoFang)
+  const biLi = Number(kuangGaoBi)
+  const youXiao = kuanCss > 0
+    && Number.isFinite(kuanCss)
+    && suoFang > 0
+    && Number.isFinite(suoFang)
+    && biLi > 0
+    && Number.isFinite(biLi)
+  const ziRanKuan = youXiao ? kuanCss / suoFang : Math.max(1, Number.isFinite(kuanCss) ? kuanCss : 1)
+  const ziRanGao = ziRanKuan / (biLi > 0 && Number.isFinite(biLi) ? biLi : 1)
+  return jiSuanDaoChuChiCun(ziRanKuan, ziRanGao, zuiDaBian).kuan
 }
 
 export function jueDingShuChuGeShi(yuanMIME: string): { mime: string; houZhui: string } {
@@ -83,11 +116,24 @@ function huaBuZhuanBlob(huaBu: HTMLCanvasElement, mime: string): Promise<Blob> {
 }
 
 export async function daoChuCaiJianWenJian(
-  xuanQu: CropperSelection,
+  huaBu: CaiJianHuaBu,
   geShi: { mime: string; houZhui: string },
   wenJianMing: string,
+  shuChuKuan?: number,
 ): Promise<File> {
-  const yuanHuaBu = await xuanQu.$toCanvas()
+  const canShu: {
+    width?: number
+    beforeDraw: (context: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => void
+  } = {
+    beforeDraw: (context) => {
+      context.imageSmoothingEnabled = true
+      context.imageSmoothingQuality = 'high'
+    },
+  }
+  if (Number.isFinite(shuChuKuan) && (shuChuKuan as number) > 0) {
+    canShu.width = Math.max(1, Math.round(shuChuKuan as number))
+  }
+  const yuanHuaBu = await huaBu.$toCanvas(canShu)
   const chiCun = jiSuanDaoChuChiCun(yuanHuaBu.width, yuanHuaBu.height, TU_PIAN_SHU_CHU_ZUI_DA_BIAN)
   let muBiaoHuaBu = yuanHuaBu
   if (chiCun.kuan !== yuanHuaBu.width || chiCun.gao !== yuanHuaBu.height) {
@@ -96,6 +142,7 @@ export async function daoChuCaiJianWenJian(
     suoFangHuaBu.height = chiCun.gao
     const shangXiaWen = suoFangHuaBu.getContext('2d')
     if (shangXiaWen) {
+      shangXiaWen.imageSmoothingEnabled = true
       shangXiaWen.imageSmoothingQuality = 'high'
       shangXiaWen.drawImage(yuanHuaBu, 0, 0, chiCun.kuan, chiCun.gao)
       muBiaoHuaBu = suoFangHuaBu

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { chuangJianHuiHua, queRenJiaoSe, shengChengJiaoSe } from '@/api/聊天'
 import { kaiShiTiaoZhan } from '@/api/挑战'
 import { huoQuFanYi } from '@/config/翻译表'
@@ -27,52 +27,37 @@ export interface 生成流程资料 {
 
 export type 生成流程状态 = 'kong_xian' | 'jin_xing_zhong' | 'yi_wan_cheng' | 'shi_bai'
 
-const DENG_DAI_ZHOU_QI_HAO_MIAO = 5000
-
 export const 使用角色生成仓库 = defineStore('角色生成', () => {
   const zhuangTai = ref<生成流程状态>('kong_xian')
   const jinDu = ref(0)
-  const dengDaiYuXuHao = ref(0)
   const touRenTiShi = ref(false)
+  const dangQianZiLiao = ref<生成流程资料 | null>(null)
   const jiaoSeXinXi = ref<ShengChengJiaoSeJieGuo | null>(null)
   const huiHuaId = ref<string | null>(null)
   const cuoWuXinXi = ref('')
   const zaiJiaZaiYe = ref(false)
 
-  let dingShiQi: ReturnType<typeof setInterval> | null = null
+  const 完成等待者 = new Set<() => void>()
 
-  const dengDaiYuLieBiao = computed(() =>
-    (huoQuFanYi('tianJiaWeiXin', 'dengDaiYuLieBiao') as unknown as string[]) || [],
-  )
-  const dangQianWenAn = computed(() =>
-    touRenTiShi.value
-      ? huoQuFanYi('tianJiaWeiXin', 'dengDaiTouRen')
-      : (dengDaiYuLieBiao.value[dengDaiYuXuHao.value % Math.max(1, dengDaiYuLieBiao.value.length)] ?? ''),
-  )
+  function 通知完成() {
+    for (const 结束 of [...完成等待者]) 结束()
+    完成等待者.clear()
+  }
+
+  function 等待完成(): Promise<生成流程状态> {
+    if (zhuangTai.value !== 'jin_xing_zhong') return Promise.resolve(zhuangTai.value)
+    return new Promise((结束) => {
+      完成等待者.add(() => 结束(zhuangTai.value))
+    })
+  }
 
   function tiShengJinDu(zhi: number) {
     if (zhi > jinDu.value) jinDu.value = zhi
   }
 
-  function qingChuDingShiQi() {
-    if (dingShiQi) {
-      clearInterval(dingShiQi)
-      dingShiQi = null
-    }
-  }
-
-  function qiDongDengDaiLunHuan() {
-    qingChuDingShiQi()
-    dengDaiYuXuHao.value = Math.floor(Math.random() * Math.max(1, dengDaiYuLieBiao.value.length))
-    dingShiQi = setInterval(() => {
-      dengDaiYuXuHao.value += 1
-    }, DENG_DAI_ZHOU_QI_HAO_MIAO)
-  }
-
   async function yunXingLiuCheng(ziLiao: 生成流程资料) {
     jinDu.value = 10
     touRenTiShi.value = false
-    qiDongDengDaiLunHuan()
 
     try {
       const shiTiaoZhan = ziLiao.moshi === 'tiaozhan'
@@ -118,16 +103,15 @@ export const 使用角色生成仓库 = defineStore('角色生成', () => {
       if (zaiJiaZaiYe.value) tiShengJinDu(100)
       zhuangTai.value = 'yi_wan_cheng'
     } catch (cuoWu) {
-      qingChuDingShiQi()
       if (zaiJiaZaiYe.value) {
         cuoWuXinXi.value = huoQuFanYi('tianJiaWeiXin', 'shengChengShiBai')
       } else {
-         
         console.warn('生成角色流程在用户离开加载页后失败：', cuoWu)
       }
       touRenTiShi.value = false
       zhuangTai.value = 'shi_bai'
     }
+    通知完成()
   }
 
   function kaiShiLiuCheng(ziLiao: 生成流程资料) {
@@ -136,6 +120,7 @@ export const 使用角色生成仓库 = defineStore('角色生成', () => {
       return
     }
     zhuangTai.value = 'jin_xing_zhong'
+    dangQianZiLiao.value = ziLiao
     cuoWuXinXi.value = ''
     jinDu.value = 0
     touRenTiShi.value = false
@@ -156,16 +141,15 @@ export const 使用角色生成仓库 = defineStore('角色生成', () => {
   return {
     zhuangTai,
     jinDu,
-    dengDaiYuXuHao,
-    dangQianWenAn,
     touRenTiShi,
+    dangQianZiLiao,
     jiaoSeXinXi,
     huiHuaId,
     cuoWuXinXi,
     zaiJiaZaiYe,
     kaiShiLiuCheng,
+    等待完成,
     zhuCeJiaZaiYe,
     xiaoZhuJiaZaiYe,
-    qingChuDingShiQi,
   }
 })

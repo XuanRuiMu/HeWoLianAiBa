@@ -1,50 +1,57 @@
 <template>
   <div class="caijian-zhezhao" @click.self="quXiao">
-    <div class="caijian-rongqi" role="dialog" aria-modal="true" :aria-label="biaoTi">
+    <div
+      ref="rongQiRef"
+      class="caijian-rongqi"
+      role="dialog"
+      aria-modal="true"
+      :aria-label="biaoTi"
+      tabindex="-1"
+      :style="rongQiYangShi"
+      @keydown="chuLiJianPan"
+    >
       <h3 class="caijian-biaoti">{{ biaoTi }}</h3>
-      <p v-if="tuPianJiaZaiShiBai" class="caijian-jiazai-cuowu" role="alert">{{ huoQuFanYi('tongYong', 'tuPianJiaZaiShiBai') }}</p>
-      <cropper-canvas
-        ref="huaBuRef"
-        class="caijian-huabu"
-        :style="shiKouYangShi"
-        background
-        :scale-step="0.1"
-        :aria-label="biLiWenAn"
-        @actionend="huaBuCaoZuoJieShu"
-      >
-        <cropper-image
-          ref="tuXiangRef"
-          :src="tuYuan"
-          alt=""
-          rotatable
-          scalable
-          translatable
-          zoom-around-center
-          @transform="shuaXinBianHuan"
-          @load="tuPianJiaZaiChengGong"
-          @error="tuPianJiaZaiShiBai = true"
-        />
-        <cropper-selection
-          ref="xuanQuRef"
-          :aspect-ratio="kuanGaoBi"
-          :initial-coverage="1"
-          resizable
-          precise
-          @change="yanZhengXuanQu"
+      <p v-if="tuPianJiaZaiShiBai" class="caijian-jiazai-cuowu" role="alert">
+        {{ huoQuFanYi('tongYong', 'tuPianJiaZaiShiBai') }}
+      </p>
+      <div class="caijian-shitu">
+        <cropper-canvas
+          ref="huaBuRef"
+          class="caijian-huabu"
+          :class="{ 'caijian-huabu--tuozhong': zhengZaiTuoDong }"
+          :style="shiKouYangShi"
+          background
+          :aria-label="biLiWenAn"
+          @pointerdown="tuoDongAnXia"
+          @pointermove="tuoDongYiDong"
+          @pointerup="tuoDongJieShu"
+          @pointercancel="tuoDongJieShu"
+          @lostpointercapture="tuoDongJieShu"
+          @wheel.capture="gunLunSuoFang"
         >
-          <cropper-grid rows="3" columns="3" bordered covered />
-          <cropper-crosshair centered />
-          <cropper-handle action="move" theme-color="rgba(255, 255, 255, 0.35)" />
-          <cropper-handle action="n-resize" />
-          <cropper-handle action="e-resize" />
-          <cropper-handle action="s-resize" />
-          <cropper-handle action="w-resize" />
-          <cropper-handle action="ne-resize" />
-          <cropper-handle action="nw-resize" />
-          <cropper-handle action="se-resize" />
-          <cropper-handle action="sw-resize" />
-        </cropper-selection>
-      </cropper-canvas>
+          <cropper-image
+            ref="tuXiangRef"
+            class="caijian-tuxiang"
+            :src="shiJiTuYuan"
+            alt=""
+            scalable
+            translatable
+            zoom-around-center
+            initial-fit="cover"
+            max-inset="0"
+            @transform="shuaXinBianHuan"
+          />
+          <cropper-selection
+            ref="xuanQuRef"
+            class="caijian-xuanqu"
+            :aspect-ratio="kuanGaoBi"
+            precise
+          >
+            <cropper-grid rows="3" columns="3" bordered covered theme-color="rgba(255, 255, 255, 0.42)" />
+            <cropper-crosshair centered theme-color="rgba(255, 255, 255, 0.42)" />
+          </cropper-selection>
+        </cropper-canvas>
+      </div>
       <p class="caijian-tishi">{{ tiShi }}</p>
       <div class="bili-hang" role="group" :aria-label="huoQuFanYi('sheZhi', 'caiJianBiLiZu')">
         <button
@@ -61,23 +68,34 @@
         <input
           class="bili-shu-ru"
           type="text"
-          inputmode="decimal"
+          inputmode="text"
           autocomplete="off"
           :value="biLiShuRu"
           :placeholder="huoQuFanYi('sheZhi', 'caiJianBiLiZhanWei')"
           :aria-label="huoQuFanYi('sheZhi', 'caiJianBiLiZiDingYi')"
           @input="shuRuBiLi"
           @change="yingYongBiLiShuRu"
+          @keydown.enter.prevent="yingYongBiLiShuRu"
         />
       </div>
       <div class="caijian-gongju" role="toolbar" :aria-label="huoQuFanYi('sheZhi', 'suoFang')">
-        <button type="button" class="caijian-gongju-anniu" :aria-label="huoQuFanYi('sheZhi', 'caiJianXuanZhuanZuo')" @click="xuanZhuan(-1)">
+        <button
+          type="button"
+          class="caijian-gongju-anniu"
+          :aria-label="huoQuFanYi('sheZhi', 'caiJianXuanZhuanZuo')"
+          @click="xuanZhuan(-1)"
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
             <polyline points="1 4 1 10 7 10" />
             <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
           </svg>
         </button>
-        <button type="button" class="caijian-gongju-anniu" :aria-label="huoQuFanYi('sheZhi', 'caiJianXuanZhuanYou')" @click="xuanZhuan(1)">
+        <button
+          type="button"
+          class="caijian-gongju-anniu"
+          :aria-label="huoQuFanYi('sheZhi', 'caiJianXuanZhuanYou')"
+          @click="xuanZhuan(1)"
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
             <polyline points="23 4 23 10 17 10" />
             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
@@ -111,7 +129,12 @@
             <path d="M8 17l4 5 4-5" />
           </svg>
         </button>
-        <button type="button" class="caijian-gongju-anniu" :aria-label="huoQuFanYi('sheZhi', 'caiJianChongZhi')" @click="chongZhiBianHuan">
+        <button
+          type="button"
+          class="caijian-gongju-anniu"
+          :aria-label="huoQuFanYi('sheZhi', 'caiJianChongZhi')"
+          @click="chongZhiBianHuan"
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
             <polyline points="23 4 23 10 17 10" />
             <polyline points="1 20 1 14 7 14" />
@@ -121,16 +144,18 @@
         </button>
       </div>
       <div class="suofang-hang">
-        <button class="suofang-anniu" :aria-label="huoQuFanYi('sheZhi', 'suoXiao')" @click="tiaoZhengSuoFang(-0.1)">−</button>
+        <button class="suofang-anniu" :aria-label="huoQuFanYi('sheZhi', 'suoXiao')" @click="tiaoZhengSuoFang(-SUO_FANG_JIA_JIAN)">
+          −
+        </button>
         <input
           class="suofang-huatiao"
           type="range"
-          min="50"
-          max="400"
-          step="5"
+          :min="SUO_FANG_BAI_FEN_XIA"
+          :max="SUO_FANG_BAI_FEN_SHANG"
+          step="1"
           :value="suoFangBaiFenShu"
           :aria-label="huoQuFanYi('sheZhi', 'suoFang')"
-          :aria-valuetext="suoFangBaiFenShu + '%'"
+          :aria-valuetext="suoFangWenAn"
           @input="huaGanSuoFang"
         />
         <input
@@ -138,15 +163,18 @@
           type="number"
           inputmode="decimal"
           autocomplete="off"
-          min="50"
-          max="400"
+          :min="SUO_FANG_BAI_FEN_XIA"
+          :max="SUO_FANG_BAI_FEN_SHANG"
           step="0.1"
           :value="suoFangShuRu"
           :aria-label="huoQuFanYi('sheZhi', 'suoFang')"
           @change="shuRuSuoFang"
+          @keydown.enter.prevent="shuRuSuoFang"
         />
-        <button class="suofang-anniu" :aria-label="huoQuFanYi('sheZhi', 'fangDa')" @click="tiaoZhengSuoFang(0.1)">＋</button>
-        <span class="suofang-bai-fen" aria-hidden="true">{{ suoFangBaiFenShu }}%</span>
+        <button class="suofang-anniu" :aria-label="huoQuFanYi('sheZhi', 'fangDa')" @click="tiaoZhengSuoFang(SUO_FANG_JIA_JIAN)">
+          ＋
+        </button>
+        <span class="suofang-bai-fen" aria-hidden="true">{{ suoFangWenAn }}</span>
       </div>
       <p v-if="caiJianCuoWu" class="caijian-jiazai-cuowu" role="alert">{{ caiJianCuoWu }}</p>
       <div
@@ -162,7 +190,11 @@
       </div>
       <div class="caijian-anniu-zu">
         <button class="anniu-fu-zhu" @click="quXiao">{{ huoQuFanYi('renZheng', 'quXiao') }}</button>
-        <button class="anniu-que-ren" :disabled="zhengZaiShengCheng" @click="queRen">
+        <button
+          class="anniu-que-ren"
+          :disabled="zhengZaiShengCheng || tuPianJiaZaiShiBai"
+          @click="queRen"
+        >
           {{ zhengZaiShengCheng ? huoQuFanYi('sheZhi', 'shengChengZhong') : huoQuFanYi('renZheng', 'queRen') }}
         </button>
       </div>
@@ -171,7 +203,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import 'cropperjs'
 import type { CropperCanvas, CropperImage, CropperSelection } from 'cropperjs'
 import { huoQuFanYi } from '@/config/翻译表'
@@ -179,13 +211,16 @@ import {
   WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
   huoQuLaShenChiCunZhi,
   huoQuQiPaoBeiJingZhi,
-  huoQuQiPaoMengCengZhi,
   type WaiGuanLaShenMoShi,
 } from '@/config/外观自定义'
-import { caiJiBianYuanYanSe } from '@/utils/外观采样'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
 import {
+  CAI_JIAN_BI_LI_SHANG_XIAN,
+  CAI_JIAN_BI_LI_XIA_XIAN,
+  TU_PIAN_SHU_CHU_ZUI_DA_BIAN,
   daoChuCaiJianWenJian,
+  guiYiGunLunZengLiang,
+  jiSuanDaoChuKuan,
   jiSuanGunLunPingYi,
   jiSuanJianPanPingYi,
   jiSuanJuZhenSuoFang,
@@ -196,22 +231,27 @@ import LiaoTianYuLan from '@/components/聊天/聊天预览.vue'
 import WaiGuanTianChongXuanZe from '@/components/外观填充选择器.vue'
 
 const QU_YU_GAO_DU = 260
-const SUO_FANG_XIA_XIAN = 0.5
-const SUO_FANG_SHANG_XIAN = 4
-const XUAN_QU_ZUI_XIAO_BIAN = 48
-const YU_LAN_SHU_CHU_KUAN = 320
+const SUO_FANG_BAI_FEN_XIA = 100
+const SUO_FANG_BAI_FEN_SHANG = 400
+const SUO_FANG_JIA_JIAN = 10
+const YU_LAN_ZUI_DA_BIAN = 640
+const YU_LAN_MO_REN_KUAN = 320
 const GUN_LUN_PING_YI_XI_SHU = 0.08
+const GUN_LUN_SUO_FANG_BU_JIN = 10
+const GUN_LUN_JIAN_GE_HAO_MIAO = 40
 const JIAN_PAN_PING_YI_BU_CHANG = 8
+const YU_JIAN_CHAO_SHI_HAO_MIAO = 20000
+const YA_SUO_YUAN_XIANG_SU = 32000000
+const YA_SUO_YUAN_BIAN = 8192
+const YA_SUO_HOU_BIAN = 4096
 
 type BiLiWenJian =
-  | 'caiJianBiLiZiYou'
   | 'caiJianBiLiYiBiYi'
   | 'caiJianBiLiSanBiSi'
   | 'caiJianBiLiErBiYi'
   | 'caiJianBiLiShiLiuBiJiu'
 
 const BI_LI_XUAN_XIANG: Array<{ zhi: number; jian: string; wenJian: BiLiWenJian }> = [
-  { zhi: 0, jian: 'ziYou', wenJian: 'caiJianBiLiZiYou' },
   { zhi: 1, jian: 'fang', wenJian: 'caiJianBiLiYiBiYi' },
   { zhi: 0.75, jian: 'shu', wenJian: 'caiJianBiLiSanBiSi' },
   { zhi: 2, jian: 'kuan', wenJian: 'caiJianBiLiErBiYi' },
@@ -220,6 +260,12 @@ const BI_LI_XUAN_XIANG: Array<{ zhi: number; jian: string; wenJian: BiLiWenJian 
 
 function shiXiangTongBiLi(jia: number, yi: number): boolean {
   return Math.abs(jia - yi) < 0.001
+}
+
+function shouLianBiLi(zhi: unknown): number {
+  const shu = Number(zhi)
+  if (!Number.isFinite(shu) || shu <= 0) return 1
+  return Math.min(CAI_JIAN_BI_LI_SHANG_XIAN, Math.max(CAI_JIAN_BI_LI_XIA_XIAN, shu))
 }
 
 const props = withDefaults(
@@ -246,32 +292,245 @@ const emit = defineEmits<{
   (e: 'qu-xiao'): void
 }>()
 
-const anQuanBiLi = computed(() => Math.max(0.2, Math.min(5, props.kuanGaoBi)))
-const quKuan = computed(() => Math.round(QU_YU_GAO_DU * anQuanBiLi.value))
-const shiKouYangShi = computed(() => ({
-  width: `${quKuan.value}px`,
-  maxWidth: '100%',
-  height: 'auto',
-  aspectRatio: String(anQuanBiLi.value),
-}))
-
 const huaBuRef = ref<CropperCanvas | null>(null)
 const tuXiangRef = ref<CropperImage | null>(null)
 const xuanQuRef = ref<CropperSelection | null>(null)
-const zhengZaiShengCheng = ref(false)
-const bianHuanJuZhen = ref<number[]>([1, 0, 0, 1, 0, 0])
-let chuShiJuZhen: number[] | null = null
+const rongQiRef = ref<HTMLElement | null>(null)
 
-const biLiXuanXiang = ref(props.kuanGaoBi > 0 ? props.kuanGaoBi : 1)
-const kuanGaoBi = computed(() => (biLiXuanXiang.value > 0 ? biLiXuanXiang.value : undefined))
+const zhengZaiShengCheng = ref(false)
+const tuPianJiaZaiShiBai = ref(false)
+const caiJianCuoWu = ref('')
+const zhunBeiJiuXu = ref(false)
+const zhengZaiTuoDong = ref(false)
+const shiJiTuYuan = ref(props.tuYuan)
+const bianHuanJuZhen = ref<number[]>([1, 0, 0, 1, 0, 0])
+const xuanZhuanJiaoDu = ref(0)
+const shuiPingFanZhuan = ref(false)
+const chuiZhiFanZhuan = ref(false)
+const suoFangBaiFenShu = ref(SUO_FANG_BAI_FEN_XIA)
+const suoFangShuRu = ref(String(SUO_FANG_BAI_FEN_XIA))
+
+const biLiXuanXiang = ref(shouLianBiLi(props.kuanGaoBi))
+const kuanGaoBi = computed(() => biLiXuanXiang.value)
+const biLiShuRu = ref('')
+
 const biLiXuanXiangLieBiao = computed(() =>
   BI_LI_XUAN_XIANG.map((xiang) => ({ ...xiang, xuan: shiXiangTongBiLi(biLiXuanXiang.value, xiang.zhi) })),
 )
-const biLiShuRu = ref('')
+
+const shiKouYangShi = computed<Record<string, string>>(() => ({
+  width: `${Math.round(QU_YU_GAO_DU * kuanGaoBi.value)}px`,
+  maxWidth: '100%',
+  height: 'auto',
+  aspectRatio: String(kuanGaoBi.value),
+}))
+
+const rongQiYangShi = computed<Record<string, string>>(() => {
+  const yangShi: Record<string, string> = {
+    '--caijian-yulan-bi-li': String(kuanGaoBi.value),
+  }
+  const cang = quSheZhiCang()
+  if (cang) Object.assign(yangShi, cang.qiPaoCSSBianLiang)
+  return yangShi
+})
+
+function qiuZuiDaGongYue(a: number, b: number): number {
+  return b === 0 ? a : qiuZuiDaGongYue(b, a % b)
+}
+
+function geShiBiLiWenAn(zhi: number): string {
+  for (let n = 1; n <= 40; n += 1) {
+    const jiSuan = zhi * n
+    if (Math.abs(jiSuan - Math.round(jiSuan)) < 0.01) {
+      const zheng = Math.round(jiSuan)
+      const yue = qiuZuiDaGongYue(zheng, n) || 1
+      return `${zheng / yue}:${n / yue}`
+    }
+  }
+  return String(Math.round(zhi * 1000) / 1000)
+}
+
+const biLiWenAn = computed(() =>
+  huoQuFanYi('sheZhi', 'caiJianQueRenBiLi').replace('{ratio}', geShiBiLiWenAn(kuanGaoBi.value)),
+)
+
+interface ChiCun {
+  kuan: number
+  gao: number
+  yuanKuan: number
+  yuanGao: number
+}
+
+interface ZhongXin {
+  x: number
+  y: number
+}
+
+function ceLiang(): ChiCun | null {
+  const huaBu = huaBuRef.value
+  const tuXiang = tuXiangRef.value
+  if (!huaBu || !tuXiang) return null
+  const huaBuJu = huaBu.getBoundingClientRect()
+  const kuan = huaBuJu.width || huaBu.clientWidth
+  const gao = huaBuJu.height || huaBu.clientHeight
+  const yuanKuan = tuXiang.$image?.naturalWidth || tuXiang.offsetWidth
+  const yuanGao = tuXiang.$image?.naturalHeight || tuXiang.offsetHeight
+  if (!(kuan > 0) || !(gao > 0) || !(yuanKuan > 0) || !(yuanGao > 0)) return null
+  return { kuan, gao, yuanKuan, yuanGao }
+}
+
+function jiSuanFuGaiSuoFang(chiCun: ChiCun): number {
+  const huDu = (xuanZhuanJiaoDu.value * Math.PI) / 180
+  const cos = Math.abs(Math.cos(huDu))
+  const sin = Math.abs(Math.sin(huDu))
+  const waiKuan = cos * chiCun.yuanKuan + sin * chiCun.yuanGao
+  const waiGao = sin * chiCun.yuanKuan + cos * chiCun.yuanGao
+  if (!(waiKuan > 0) || !(waiGao > 0)) return 1
+  return Math.max(chiCun.kuan / waiKuan, chiCun.gao / waiGao)
+}
+
+function jiaZhongXin(zhi: number, kuangChang: number, huaBuChang: number): number {
+  if (kuangChang <= huaBuChang) return huaBuChang / 2
+  const xia = huaBuChang - kuangChang / 2
+  const shang = kuangChang / 2
+  const anQuan = Number.isFinite(zhi) ? zhi : huaBuChang / 2
+  return Math.min(shang, Math.max(xia, anQuan))
+}
+
+function gouZaoJuZhen(chiCun: ChiCun, baiFen: number, zhongXin: ZhongXin | null): number[] {
+  const suoFangBi = Math.min(SUO_FANG_BAI_FEN_SHANG, Math.max(SUO_FANG_BAI_FEN_XIA, baiFen)) / 100
+  const fuGai = jiSuanFuGaiSuoFang(chiCun)
+  const suoFang = fuGai * suoFangBi
+  const huDu = (xuanZhuanJiaoDu.value * Math.PI) / 180
+  const cos = Math.cos(huDu)
+  const sin = Math.sin(huDu)
+  const fx = shuiPingFanZhuan.value ? -1 : 1
+  const fy = chuiZhiFanZhuan.value ? -1 : 1
+  const a = fx * suoFang * cos
+  const b = fx * suoFang * sin
+  const c = fy * -suoFang * sin
+  const d = fy * suoFang * cos
+  const kuangKuan = Math.abs(a) * chiCun.yuanKuan + Math.abs(c) * chiCun.yuanGao
+  const kuangGao = Math.abs(b) * chiCun.yuanKuan + Math.abs(d) * chiCun.yuanGao
+  const zhongXinX = jiaZhongXin(zhongXin?.x ?? chiCun.kuan / 2, kuangKuan, chiCun.kuan)
+  const zhongXinY = jiaZhongXin(zhongXin?.y ?? chiCun.gao / 2, kuangGao, chiCun.gao)
+  return [
+    a,
+    b,
+    c,
+    d,
+    zhongXinX - chiCun.yuanKuan / 2,
+    zhongXinY - chiCun.yuanGao / 2,
+  ]
+}
+
+function dangQianZhongXin(chiCun: ChiCun): ZhongXin {
+  const juZhen = tuXiangRef.value?.$getTransform() ?? bianHuanJuZhen.value
+  return {
+    x: chiCun.yuanKuan / 2 + (Number(juZhen[4]) || 0),
+    y: chiCun.yuanGao / 2 + (Number(juZhen[5]) || 0),
+  }
+}
+
+function tongBuXuanQu(chiCun: ChiCun): void {
+  const xuanQu = xuanQuRef.value
+  if (!xuanQu) return
+  xuanQu.$change(0, 0, chiCun.kuan, chiCun.gao, Number.NaN, true)
+}
+
+function yingYongJuZhen(chiCun: ChiCun, zhongXin: ZhongXin | null): void {
+  const tuXiang = tuXiangRef.value
+  if (!tuXiang) return
+  const juZhen = gouZaoJuZhen(chiCun, suoFangBaiFenShu.value, zhongXin)
+  tuXiang.$setTransform(juZhen)
+}
+
+function juZhongYingYong(): void {
+  const chiCun = ceLiang()
+  if (!chiCun) return
+  tongBuXuanQu(chiCun)
+  yingYongJuZhen(chiCun, { x: chiCun.kuan / 2, y: chiCun.gao / 2 })
+}
+
+function shuaXinBianHuan(shiJian: Event): void {
+  const xiJie = (shiJian as CustomEvent<{ matrix?: number[] }>).detail
+  const juZhen = Array.isArray(xiJie?.matrix) && xiJie.matrix.length >= 6
+    ? xiJie.matrix.slice(0, 6)
+    : tuXiangRef.value?.$getTransform()
+  if (!juZhen || juZhen.length < 4) return
+  const chiCun = zhunBeiJiuXu.value ? ceLiang() : null
+  if (chiCun) {
+    const suoFang = jiSuanJuZhenSuoFang(juZhen)
+    const fuGai = jiSuanFuGaiSuoFang(chiCun)
+    const baiFen = (suoFang / fuGai) * 100
+    if (baiFen < SUO_FANG_BAI_FEN_XIA - 0.5 || baiFen > SUO_FANG_BAI_FEN_SHANG + 0.5) {
+      shiJian.preventDefault()
+      return
+    }
+    suoFangBaiFenShu.value = Math.round(baiFen * 10) / 10
+  }
+  bianHuanJuZhen.value = [...juZhen]
+  qiangZhiShuaXinYuLan()
+}
+
+watch(suoFangBaiFenShu, (zhi) => {
+  const ru = Number(suoFangShuRu.value)
+  if (!suoFangShuRu.value || !Number.isFinite(ru) || Math.abs(ru - zhi) > 1e-6) {
+    suoFangShuRu.value = xianShiShu(zhi)
+  }
+})
+
+function xianShiShu(zhi: number): string {
+  const anQuan = Number.isFinite(zhi) ? zhi : 100
+  return Math.abs(anQuan - Math.round(anQuan)) > 1e-9 ? anQuan.toFixed(1) : String(Math.round(anQuan))
+}
+
+const suoFangWenAn = computed(() => `${xianShiShu(suoFangBaiFenShu.value)}%`)
+
+function sheZhiSuoFang(baiFen: number, juZhong = false): void {
+  const ding = Number.isFinite(baiFen)
+    ? Math.min(SUO_FANG_BAI_FEN_SHANG, Math.max(SUO_FANG_BAI_FEN_XIA, baiFen))
+    : SUO_FANG_BAI_FEN_XIA
+  suoFangBaiFenShu.value = Math.round(ding * 10) / 10
+  const chiCun = ceLiang()
+  if (!chiCun) return
+  yingYongJuZhen(chiCun, juZhong ? { x: chiCun.kuan / 2, y: chiCun.gao / 2 } : dangQianZhongXin(chiCun))
+}
+
+function tiaoZhengSuoFang(buJin: number): void {
+  sheZhiSuoFang(suoFangBaiFenShu.value + buJin)
+}
+
+function huaGanSuoFang(shiJian: Event): void {
+  const muBiao = shiJian.target as HTMLInputElement | null
+  if (!muBiao) return
+  sheZhiSuoFang(Number(muBiao.value))
+}
+
+function shuRuSuoFang(shiJian: Event): void {
+  const muBiao = shiJian.target as HTMLInputElement | null
+  if (!muBiao) return
+  const zhi = Number(muBiao.value)
+  if (!Number.isFinite(zhi) || zhi <= 0) {
+    suoFangShuRu.value = xianShiShu(suoFangBaiFenShu.value)
+    return
+  }
+  sheZhiSuoFang(zhi)
+  suoFangShuRu.value = xianShiShu(suoFangBaiFenShu.value)
+}
 
 function shuRuBiLi(shiJian: Event): void {
   const muBiao = shiJian.target as HTMLInputElement | null
   biLiShuRu.value = muBiao?.value ?? ''
+}
+
+function yingYongBiLi(zhi: number): void {
+  caiJianCuoWu.value = ''
+  biLiXuanXiang.value = zhi
+  void nextTick().then(() => {
+    juZhongYingYong()
+    qiangZhiShuaXinYuLan()
+  })
 }
 
 function yingYongBiLiShuRu(): void {
@@ -285,192 +544,181 @@ function yingYongBiLiShuRu(): void {
     caiJianCuoWu.value = ''
     return
   }
-  caiJianCuoWu.value = ''
-  biLiXuanXiang.value = guiYi
-  chuShiHuaXuanQu()
-  qiangZhiShuaXinYuLan()
-}
-
-const shuiPingFanZhuan = computed(() => bianHuanJuZhen.value[0] < 0)
-const chuiZhiFanZhuan = computed(() => bianHuanJuZhen.value[3] < 0)
-const jiXianSuoFang = computed(() => (chuShiJuZhen ? jiSuanJuZhenSuoFang(chuShiJuZhen) : 1))
-const dangQianSuoFang = computed(() => jiSuanJuZhenSuoFang(bianHuanJuZhen.value))
-const suoFangBaiFenShu = computed(() => Math.round((dangQianSuoFang.value / jiXianSuoFang.value) * 100))
-
-const caiJianCuoWu = ref('')
-
-const biLiWenAn = computed(() => {
-  if (!(biLiXuanXiang.value > 0)) return huoQuFanYi('sheZhi', 'caiJianBiLiZiYou')
-  const zuiDaShu = 40
-  for (let n = 1; n <= zuiDaShu; n += 1) {
-    const jiSuan = biLiXuanXiang.value * n
-    if (Math.abs(jiSuan - Math.round(jiSuan)) < 0.01) {
-      const zheng = Math.round(jiSuan)
-      const qiuHe = (a: number, b: number): number => (b === 0 ? a : qiuHe(b, a % b))
-      const yue = qiuHe(zheng, n) || 1
-      return huoQuFanYi('sheZhi', 'caiJianQueRenBiLi').replace('{ratio}', `${zheng / yue}:${n / yue}`)
-    }
-  }
-  return huoQuFanYi('sheZhi', 'caiJianQueRenBiLi').replace('{ratio}', String(biLiXuanXiang.value))
-})
-
-function shiSuoFangHeFa(suoFang: number): boolean {
-  const rongCha = 1e-4
-  return (
-    suoFang >= SUO_FANG_XIA_XIAN * jiXianSuoFang.value - rongCha &&
-    suoFang <= SUO_FANG_SHANG_XIAN * jiXianSuoFang.value + rongCha
-  )
-}
-
-function shuaXinBianHuan(shiJian?: Event): void {
-  const xiJie = (shiJian as CustomEvent<{ matrix?: number[] }> | undefined)?.detail
-  const juZhen = Array.isArray(xiJie?.matrix) && xiJie.matrix.length >= 4 ? [...xiJie.matrix] : tuXiangRef.value?.$getTransform()
-  if (!juZhen || juZhen.length < 4) return
-  if (shiJian && !shiSuoFangHeFa(jiSuanJuZhenSuoFang(juZhen))) {
-    shiJian.preventDefault()
-    return
-  }
-  bianHuanJuZhen.value = [...juZhen]
-  qiangZhiShuaXinYuLan()
-}
-
-const tuPianJiaZaiShiBai = ref(false)
-
-watch(() => props.tuYuan, () => {
-  tuPianJiaZaiShiBai.value = false
-  caiJianCuoWu.value = ''
-  yuLanDiZhi.value = ''
-  qiangZhiShuaXinYuLan()
-})
-
-function tuPianJiaZaiChengGong(): void {
-  tuPianJiaZaiShiBai.value = false
-  chuShiHuaXuanQu()
-}
-
-function chuShiHuaXuanQu(): void {
-  const huaBu = huaBuRef.value
-  const tuXiang = tuXiangRef.value
-  const xuanQu = xuanQuRef.value
-  if (!huaBu || !tuXiang || !xuanQu) return
-  if (!chuShiJuZhen) chuShiJuZhen = [...(tuXiang.$getTransform() || [1, 0, 0, 1, 0, 0])]
-  shuaXinBianHuan()
-  if (!(biLiXuanXiang.value > 0)) {
-    qiangZhiShuaXinYuLan()
-    return
-  }
-  const huaBuJu = huaBu.getBoundingClientRect()
-  const tuJu = tuXiang.getBoundingClientRect()
-  if (!huaBuJu.width || !huaBuJu.height || !tuJu.width || !tuJu.height) return
-  const biLi = biLiXuanXiang.value
-  let kuan = tuJu.width
-  let gao = kuan / biLi
-  if (gao > tuJu.height) {
-    gao = tuJu.height
-    kuan = gao * biLi
-  }
-  const x = tuJu.left - huaBuJu.left + (tuJu.width - kuan) / 2
-  const y = tuJu.top - huaBuJu.top + (tuJu.height - gao) / 2
-  xuanQu.$change(x, y, kuan, gao, biLi)
-  guDingXuanQuJuZhong()
-  qiangZhiShuaXinYuLan()
-}
-
-function yanZhengXuanQu(shiJian: Event): void {
-  const xiJie = (shiJian as CustomEvent<{ width?: number; height?: number }>).detail
-  const kuan = Number(xiJie?.width)
-  const gao = Number(xiJie?.height)
-  if (Number.isFinite(kuan) && Number.isFinite(gao) && (kuan < XUAN_QU_ZUI_XIAO_BIAN || gao < XUAN_QU_ZUI_XIAO_BIAN)) {
-    shiJian.preventDefault()
-    return
-  }
-  qiangZhiShuaXinYuLan()
+  yingYongBiLi(guiYi)
 }
 
 function xuanZeBiLi(zhi: number): void {
   if (shiXiangTongBiLi(biLiXuanXiang.value, zhi)) return
-  caiJianCuoWu.value = ''
   biLiShuRu.value = ''
-  biLiXuanXiang.value = zhi
-  if (zhi > 0) chuShiHuaXuanQu()
-  qiangZhiShuaXinYuLan()
-}
-
-function guDingXuanQuJuZhong(): void {
-  xuanQuRef.value?.$center()
-}
-
-function huaBuCaoZuoJieShu(): void {
-  guDingXuanQuJuZhong()
+  yingYongBiLi(zhi)
 }
 
 function xuanZhuan(fangXiang: 1 | -1): void {
-  tuXiangRef.value?.$rotate((fangXiang * Math.PI) / 2)
-  shuaXinBianHuan()
-  guDingXuanQuJuZhong()
+  xuanZhuanJiaoDu.value = (xuanZhuanJiaoDu.value + fangXiang * 90 + 360) % 360
+  juZhongYingYong()
+  qiangZhiShuaXinYuLan()
 }
 
 function fanZhuan(shuiPing: boolean): void {
-  if (shuiPing) tuXiangRef.value?.$scale(-1, 1)
-  else tuXiangRef.value?.$scale(1, -1)
-  shuaXinBianHuan()
-  guDingXuanQuJuZhong()
+  if (shuiPing) shuiPingFanZhuan.value = !shuiPingFanZhuan.value
+  else chuiZhiFanZhuan.value = !chuiZhiFanZhuan.value
+  const chiCun = ceLiang()
+  if (chiCun) yingYongJuZhen(chiCun, dangQianZhongXin(chiCun))
+  qiangZhiShuaXinYuLan()
 }
 
 function chongZhiBianHuan(): void {
-  const tuXiang = tuXiangRef.value
-  if (!tuXiang) return
-  if (chuShiJuZhen) tuXiang.$setTransform(chuShiJuZhen)
-  else tuXiang.$resetTransform()
-  shuaXinBianHuan()
-  chuShiHuaXuanQu()
+  xuanZhuanJiaoDu.value = 0
+  shuiPingFanZhuan.value = false
+  chuiZhiFanZhuan.value = false
+  suoFangBaiFenShu.value = SUO_FANG_BAI_FEN_XIA
+  juZhongYingYong()
+  qiangZhiShuaXinYuLan()
 }
 
-function sheZhiSuoFang(muBiaoSuoFang: number): void {
-  const xia = SUO_FANG_XIA_XIAN * jiXianSuoFang.value
-  const shang = SUO_FANG_SHANG_XIAN * jiXianSuoFang.value
-  const ding = Math.min(shang, Math.max(xia, muBiaoSuoFang))
-  const yinZi = ding / dangQianSuoFang.value
-  if (Number.isFinite(yinZi) && yinZi > 0 && Math.abs(yinZi - 1) > 1e-4) tuXiangRef.value?.$scale(yinZi)
-  shuaXinBianHuan()
+interface TuoDongZuoBiao {
+  x: number
+  y: number
 }
 
-function tiaoZhengSuoFang(buJin: number): void {
-  sheZhiSuoFang(dangQianSuoFang.value * (1 + buJin))
-}
+const huoDongZhiZhen = new Map<number, TuoDongZuoBiao>()
+let tuoDongZhiZhenBiaoShi: number | null = null
 
-function huaGanSuoFang(shiJian: Event): void {
-  const muBiao = shiJian.target as HTMLInputElement | null
-  if (!muBiao) return
-  const baiFenShu = Math.max(50, Math.min(400, Number(muBiao.value)))
-  sheZhiSuoFang((baiFenShu / 100) * jiXianSuoFang.value)
-}
-
-const suoFangShuRu = ref('50')
-const suoFangJingQueBaiFenShu = computed(() => ((dangQianSuoFang.value / jiXianSuoFang.value) * 100))
-
-watch(suoFangJingQueBaiFenShu, (zhi) => {
-  const ru = Number(suoFangShuRu.value)
-  if (!suoFangShuRu.value || !Number.isFinite(ru) || Math.abs(ru - zhi) > 1e-6) {
-    suoFangShuRu.value = suFangXianShiZhi(zhi)
-  }
-})
-
-function suFangXianShiZhi(zhi: number): string {
-  const shiWeiShu = Math.abs(zhi - Math.round(zhi)) > 1e-9
-  return shiWeiShu ? zhi.toFixed(1) : String(Math.round(zhi))
-}
-
-function shuRuSuoFang(shiJian: Event): void {
-  const muBiao = shiJian.target as HTMLInputElement | null
-  if (!muBiao) return
-  const zhi = Number(muBiao.value)
-  if (!Number.isFinite(zhi) || zhi <= 0) {
-    suoFangShuRu.value = suFangXianShiZhi(suoFangJingQueBaiFenShu.value)
+function tuoDongAnXia(shiJian: PointerEvent): void {
+  if (shiJian.pointerType === 'mouse' && shiJian.button !== 0) return
+  huoDongZhiZhen.set(shiJian.pointerId, { x: shiJian.clientX, y: shiJian.clientY })
+  if (huoDongZhiZhen.size > 1) {
+    zhengZaiTuoDong.value = false
+    tuoDongZhiZhenBiaoShi = null
     return
   }
-  sheZhiSuoFang((zhi / 100) * jiXianSuoFang.value)
-  suoFangShuRu.value = suFangXianShiZhi(suoFangJingQueBaiFenShu.value)
+  tuoDongZhiZhenBiaoShi = shiJian.pointerId
+  zhengZaiTuoDong.value = true
+  try {
+    huaBuRef.value?.setPointerCapture?.(shiJian.pointerId)
+  } catch {
+    tuoDongZhiZhenBiaoShi = shiJian.pointerId
+  }
+  shiJian.preventDefault()
+}
+
+function tuoDongYiDong(shiJian: PointerEvent): void {
+  const shangCi = huoDongZhiZhen.get(shiJian.pointerId)
+  if (!shangCi) return
+  const dx = shiJian.clientX - shangCi.x
+  const dy = shiJian.clientY - shangCi.y
+  huoDongZhiZhen.set(shiJian.pointerId, { x: shiJian.clientX, y: shiJian.clientY })
+  if (tuoDongZhiZhenBiaoShi !== shiJian.pointerId || huoDongZhiZhen.size !== 1 || !zhengZaiTuoDong.value) return
+  if (!dx && !dy) return
+  shiJian.preventDefault()
+  tuXiangRef.value?.$move(dx, dy)
+}
+
+function tuoDongJieShu(shiJian: PointerEvent): void {
+  huoDongZhiZhen.delete(shiJian.pointerId)
+  if (tuoDongZhiZhenBiaoShi === shiJian.pointerId) {
+    tuoDongZhiZhenBiaoShi = null
+    zhengZaiTuoDong.value = false
+    try {
+      huaBuRef.value?.releasePointerCapture?.(shiJian.pointerId)
+    } catch {
+      zhengZaiTuoDong.value = false
+    }
+  }
+  if (huoDongZhiZhen.size === 0) zhengZaiTuoDong.value = false
+}
+
+let shangCiGunLunShiJian = 0
+
+function gunLunSuoFang(shiJian: WheelEvent): void {
+  if (shiJian.ctrlKey || shiJian.metaKey) return
+  const zengLiang = guiYiGunLunZengLiang(shiJian.deltaY, shiJian.deltaMode)
+  if (!zengLiang) return
+  shiJian.preventDefault()
+  shiJian.stopImmediatePropagation()
+  const xianZai = Date.now()
+  if (xianZai - shangCiGunLunShiJian < GUN_LUN_JIAN_GE_HAO_MIAO) return
+  shangCiGunLunShiJian = xianZai
+  sheZhiSuoFang(suoFangBaiFenShu.value + (zengLiang > 0 ? -GUN_LUN_SUO_FANG_BU_JIN : GUN_LUN_SUO_FANG_BU_JIN))
+}
+
+function jiaoDianZaiBianJiKuang(): boolean {
+  const jiaoDian = document.activeElement
+  return jiaoDian instanceof HTMLInputElement
+    || jiaoDian instanceof HTMLTextAreaElement
+    || jiaoDian instanceof HTMLSelectElement
+    || (jiaoDian instanceof HTMLElement && jiaoDian.isContentEditable)
+}
+
+function chuFaAnJian(shiJian: KeyboardEvent): void {
+  if (shiJian.defaultPrevented) return
+  if (shiJian.key === 'Escape') {
+    shiJian.preventDefault()
+    quXiao()
+    return
+  }
+  if (shiJian.ctrlKey || shiJian.metaKey || shiJian.altKey) return
+  const bu = jiSuanJianPanPingYi(shiJian.key, shiJian.shiftKey, JIAN_PAN_PING_YI_BU_CHANG)
+  if (!bu.x && !bu.y) return
+  if (jiaoDianZaiBianJiKuang()) return
+  shiJian.preventDefault()
+  tuXiangRef.value?.$move(bu.x, bu.y)
+}
+
+function jieHuoCtrlGunLun(shiJian: WheelEvent): void {
+  if (!shiJian.ctrlKey || tuPianJiaZaiShiBai.value) return
+  if (jiaoDianZaiBianJiKuang()) return
+  const zengLiang = guiYiGunLunZengLiang(shiJian.deltaY, shiJian.deltaMode)
+  const bu = jiSuanGunLunPingYi(zengLiang, GUN_LUN_PING_YI_XI_SHU)
+  if (!bu.x && !bu.y) return
+  shiJian.preventDefault()
+  shiJian.stopPropagation()
+  tuXiangRef.value?.$move(bu.x, bu.y)
+}
+
+function jieHuoCtrlGunLunQuanJu(shiJian: Event): void {
+  jieHuoCtrlGunLun(shiJian as WheelEvent)
+}
+
+function keJuJiaoLieBiao(): HTMLElement[] {
+  if (!rongQiRef.value) return []
+  return Array.from(
+    rongQiRef.value.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  )
+}
+
+function chuLiJianPan(shiJian: KeyboardEvent): void {
+  if (shiJian.key === 'Escape') {
+    shiJian.preventDefault()
+    shiJian.stopPropagation()
+    quXiao()
+    return
+  }
+  if (shiJian.key !== 'Tab' || !rongQiRef.value) return
+  const lieBiao = keJuJiaoLieBiao()
+  if (lieBiao.length === 0) {
+    shiJian.preventDefault()
+    rongQiRef.value.focus({ preventScroll: true })
+    return
+  }
+  const shou = lieBiao[0]
+  const wei = lieBiao[lieBiao.length - 1]
+  if (!(document.activeElement instanceof HTMLElement) || !rongQiRef.value.contains(document.activeElement)) {
+    shiJian.preventDefault()
+    shou.focus()
+    return
+  }
+  if (shiJian.shiftKey && document.activeElement === shou) {
+    shiJian.preventDefault()
+    wei.focus()
+    return
+  }
+  if (!shiJian.shiftKey && document.activeElement === wei) {
+    shiJian.preventDefault()
+    shou.focus()
+  }
 }
 
 const shiLiaoTianYuLan = computed(() => props.yuLanLeiXing === 'beiJing' || props.yuLanLeiXing === 'qiPao')
@@ -514,21 +762,7 @@ const yuLanFuGaiYangShi = computed<Record<string, string>>(() => {
       ? huoQuQiPaoBeiJingZhi(yuLanDiZhi.value, yuLanWenZiYanSe.value, dangQianLaShenMoShi())
       : `url("${yuLanDiZhi.value}")`
   yangShi['--caijian-yulan-fu-gai'] = zhi
-  if (props.yuLanLeiXing === 'qiPao' && yuLanWeiBaSe.value) {
-    yangShi['--caijian-yulan-wei-ba'] = yuLanWeiBaSe.value
-  }
   return yangShi
-})
-
-const yuLanWeiBaSe = ref('')
-
-watch(yuLanDiZhi, (zhi) => {
-  yuLanWeiBaSe.value = ''
-  if (!zhi || props.yuLanLeiXing !== 'qiPao') return
-  const ceBie = props.yuLanCeZhong === 'ai' ? 'zuo' : 'you'
-  void caiJiBianYuanYanSe(zhi, ceBie, huoQuQiPaoMengCengZhi(yuLanWenZiYanSe.value)).then((yanSe) => {
-    if (yanSe) yuLanWeiBaSe.value = yanSe
-  })
 })
 
 let yuLanPaiZhen = 0
@@ -547,10 +781,10 @@ function anPaiYuLanChongShi(): void {
 function qiangZhiShuaXinYuLan(): void {
   if (!shiLiaoTianYuLan.value) return
   if (yuLanPaiZhen) return
-  yuLanPaiZhen = requestAnimationFrame(() => {
+  yuLanPaiZhen = window.setTimeout(() => {
     yuLanPaiZhen = 0
     void shuaXinYuLan()
-  })
+  }, 16)
 }
 
 async function shuaXinYuLan(): Promise<void> {
@@ -559,15 +793,24 @@ async function shuaXinYuLan(): Promise<void> {
     yuLanDaiZhong = true
     return
   }
-  const xuanQu = xuanQuRef.value
-  if (!xuanQu) {
+  const huaBu = huaBuRef.value
+  if (!huaBu) {
     anPaiYuLanChongShi()
     return
   }
+  const chiCun = ceLiang()
+  const suoFang = jiSuanJuZhenSuoFang(tuXiangRef.value?.$getTransform() ?? bianHuanJuZhen.value)
+  const kuan = jiSuanDaoChuKuan(chiCun?.kuan ?? YU_LAN_MO_REN_KUAN, suoFang, kuanGaoBi.value, YU_LAN_ZUI_DA_BIAN)
   yuLanDaoLuZhong = true
   try {
-    const huaBu = await xuanQu.$toCanvas({ width: YU_LAN_SHU_CHU_KUAN })
-    if (shiLiaoTianYuLan.value) yuLanDiZhi.value = huaBu.toDataURL('image/png')
+    const huaBuJieGuo = await huaBu.$toCanvas({
+      width: kuan,
+      beforeDraw: (shangXiaWen) => {
+        shangXiaWen.imageSmoothingEnabled = true
+        shangXiaWen.imageSmoothingQuality = 'high'
+      },
+    })
+    if (shiLiaoTianYuLan.value) yuLanDiZhi.value = huaBuJieGuo.toDataURL('image/png')
   } catch (cuoWu) {
     console.error('裁剪预览导出失败', cuoWu)
     yuLanDiZhi.value = ''
@@ -581,88 +824,221 @@ async function shuaXinYuLan(): Promise<void> {
   if (!yuLanDiZhi.value) anPaiYuLanChongShi()
 }
 
+function xiaYiZhen(): Promise<void> {
+  return new Promise((jieJue) => window.setTimeout(() => jieJue(), 0))
+}
+
+async function chuShiHua(): Promise<void> {
+  await nextTick()
+  await xiaYiZhen()
+  zhunBeiJiuXu.value = true
+  juZhongYingYong()
+  qiangZhiShuaXinYuLan()
+}
+
+async function dengDaiTuPian(): Promise<void> {
+  try {
+    await tuXiangRef.value?.$ready()
+  } catch {
+    return
+  }
+  zhunBeiJiuXu.value = true
+  juZhongYingYong()
+  qiangZhiShuaXinYuLan()
+}
+
+function tuPianNeiBuJiaZai(): void {
+  tuPianJiaZaiShiBai.value = false
+  zhunBeiJiuXu.value = true
+  juZhongYingYong()
+  qiangZhiShuaXinYuLan()
+}
+
+function tuPianNeiBuCuoWu(): void {
+  tuPianJiaZaiShiBai.value = true
+  caiJianCuoWu.value = ''
+}
+
+let neiBuTuPian: HTMLImageElement | null = null
+let chiCunGuanCha: ResizeObserver | null = null
+let yuanShiYiChu = ''
+let yuJianXuHao = 0
+let yuJianDingShi: number | null = null
+let yaSuoDuiXiangDiZhi = ''
+
+function qingLiYuJian(): void {
+  if (yuJianDingShi !== null) {
+    window.clearTimeout(yuJianDingShi)
+    yuJianDingShi = null
+  }
+}
+
+function huiShouYaSuoDiZhi(): void {
+  if (!yaSuoDuiXiangDiZhi) return
+  URL.revokeObjectURL(yaSuoDuiXiangDiZhi)
+  yaSuoDuiXiangDiZhi = ''
+}
+
+function yaSuoChaoDaTuPian(tuPian: HTMLImageElement): void {
+  const kuan = tuPian.naturalWidth
+  const gao = tuPian.naturalHeight
+  if (!(kuan > 0) || !(gao > 0)) return
+  const chaoXiangSu = kuan * gao > YA_SUO_YUAN_XIANG_SU
+  if (!chaoXiangSu && kuan <= YA_SUO_YUAN_BIAN && gao <= YA_SUO_YUAN_BIAN) return
+  const bi = Math.min(YA_SUO_HOU_BIAN / kuan, YA_SUO_HOU_BIAN / gao, 1)
+  const huaBu = document.createElement('canvas')
+  huaBu.width = Math.max(1, Math.round(kuan * bi))
+  huaBu.height = Math.max(1, Math.round(gao * bi))
+  const shangXiaWen = huaBu.getContext('2d')
+  if (!shangXiaWen) return
+  shangXiaWen.imageSmoothingEnabled = true
+  shangXiaWen.imageSmoothingQuality = 'high'
+  shangXiaWen.drawImage(tuPian, 0, 0, huaBu.width, huaBu.height)
+  const mime = props.yuanMime === 'image/png' ? 'image/png' : 'image/jpeg'
+  huaBu.toBlob(
+    (blob) => {
+      if (!blob) return
+      huiShouYaSuoDiZhi()
+      yaSuoDuiXiangDiZhi = URL.createObjectURL(blob)
+      xuanZhuanJiaoDu.value = 0
+      shuiPingFanZhuan.value = false
+      chuiZhiFanZhuan.value = false
+      suoFangBaiFenShu.value = SUO_FANG_BAI_FEN_XIA
+      shiJiTuYuan.value = yaSuoDuiXiangDiZhi
+    },
+    mime,
+    0.92,
+  )
+}
+
+function anPaiYuJian(): void {
+  const diZhi = props.tuYuan
+  if (!diZhi || diZhi.startsWith('data:')) return
+  const xuHao = ++yuJianXuHao
+  const tuPian = new Image()
+  tuPian.decoding = 'async'
+  const jieShu = (shiBai: boolean): void => {
+    if (xuHao !== yuJianXuHao) return
+    qingLiYuJian()
+    tuPian.onload = null
+    tuPian.onerror = null
+    if (shiBai) {
+      tuPianJiaZaiShiBai.value = true
+      return
+    }
+    tuPianJiaZaiShiBai.value = false
+    yaSuoChaoDaTuPian(tuPian)
+  }
+  tuPian.onload = () => jieShu(false)
+  tuPian.onerror = () => jieShu(true)
+  yuJianDingShi = window.setTimeout(() => jieShu(true), YU_JIAN_CHAO_SHI_HAO_MIAO)
+  tuPian.src = diZhi
+}
+
+watch(() => props.tuYuan, (zhi) => {
+  yuJianXuHao += 1
+  qingLiYuJian()
+  huiShouYaSuoDiZhi()
+  xuanZhuanJiaoDu.value = 0
+  shuiPingFanZhuan.value = false
+  chuiZhiFanZhuan.value = false
+  suoFangBaiFenShu.value = SUO_FANG_BAI_FEN_XIA
+  bianHuanJuZhen.value = [1, 0, 0, 1, 0, 0]
+  if (zhi !== shiJiTuYuan.value) shiJiTuYuan.value = zhi
+  anPaiYuJian()
+})
+
+watch(shiJiTuYuan, () => {
+  caiJianCuoWu.value = ''
+  tuPianJiaZaiShiBai.value = false
+  bianHuanJuZhen.value = [1, 0, 0, 1, 0, 0]
+  void nextTick().then(() => {
+    void dengDaiTuPian()
+    void xiaYiZhen().then(() => chuShiHua())
+  })
+})
+
 function quXiao(): void {
   if (zhengZaiShengCheng.value) return
   emit('qu-xiao')
 }
 
 async function queRen(): Promise<void> {
-  const xuanQu = xuanQuRef.value
-  if (!xuanQu || zhengZaiShengCheng.value) return
-  if (xuanQu.width < XUAN_QU_ZUI_XIAO_BIAN || xuanQu.height < XUAN_QU_ZUI_XIAO_BIAN) {
-    caiJianCuoWu.value = huoQuFanYi('sheZhi', 'caiJianXuanQuTaiXiao')
-    return
-  }
+  if (zhengZaiShengCheng.value || tuPianJiaZaiShiBai.value) return
+  const huaBu = huaBuRef.value
+  if (!huaBu || !zhunBeiJiuXu.value) return
   caiJianCuoWu.value = ''
   zhengZaiShengCheng.value = true
   try {
+    const chiCun = ceLiang()
+    const suoFang = jiSuanJuZhenSuoFang(tuXiangRef.value?.$getTransform() ?? bianHuanJuZhen.value)
+    const kuan = jiSuanDaoChuKuan(
+      chiCun?.kuan ?? 0,
+      suoFang,
+      kuanGaoBi.value,
+      TU_PIAN_SHU_CHU_ZUI_DA_BIAN,
+    )
     const geShi = jueDingShuChuGeShi(props.yuanMime)
-    const wenJian = await daoChuCaiJianWenJian(xuanQu, geShi, props.wenJianMing)
+    const wenJian = await daoChuCaiJianWenJian(huaBu, geShi, props.wenJianMing, kuan)
     emit('que-ren', wenJian)
+  } catch (cuoWu) {
+    console.error('裁剪导出失败', cuoWu)
+    caiJianCuoWu.value = huoQuFanYi('tongYong', 'caoZuoShiBai')
   } finally {
     zhengZaiShengCheng.value = false
   }
 }
 
-function jiaoDianZaiBianJiKuang(): boolean {
-  const jiaoDian = document.activeElement
-  return jiaoDian instanceof HTMLInputElement
-    || jiaoDian instanceof HTMLTextAreaElement
-    || (jiaoDian instanceof HTMLElement && jiaoDian.isContentEditable)
-}
-
-function chuFaAnJian(shiJian: KeyboardEvent): void {
-  if (shiJian.key === 'Escape') {
-    quXiao()
-    return
-  }
-  const bu = jiSuanJianPanPingYi(shiJian.key, shiJian.shiftKey, JIAN_PAN_PING_YI_BU_CHANG)
-  if (!bu.x && !bu.y) return
-  if (jiaoDianZaiBianJiKuang()) return
-  shiJian.preventDefault()
-  tuXiangRef.value?.$move(bu.x, bu.y)
-}
-
-function jieHuoCtrlGunLun(shiJian: WheelEvent): void {
-  if (!shiJian.ctrlKey) return
-  const bu = jiSuanGunLunPingYi(shiJian.deltaY, GUN_LUN_PING_YI_XI_SHU)
-  if (!bu.x && !bu.y) return
-  shiJian.preventDefault()
-  shiJian.stopPropagation()
-  tuXiangRef.value?.$move(bu.x, bu.y)
-}
-
-function jieHuoGunLunQuanJu(shiJian: Event): void {
-  jieHuoCtrlGunLun(shiJian as WheelEvent)
-}
-
-function xiaYiZhen(): Promise<void> {
-  return new Promise((jieJue) => requestAnimationFrame(() => jieJue()))
-}
-
 onMounted(() => {
+  zhunBeiJiuXu.value = true
+  if (props.yuanMime && !props.yuanMime.startsWith('image/')) {
+    caiJianCuoWu.value = huoQuFanYi('tongYong', 'feiTuPianTiShi')
+    tuPianJiaZaiShiBai.value = true
+  }
   document.addEventListener('keydown', chuFaAnJian)
-  document.addEventListener('wheel', jieHuoGunLunQuanJu, { capture: true, passive: false })
-  void tuXiangRef.value
-    ?.$ready()
-    .then(async () => {
-      await xiaYiZhen()
-      await xiaYiZhen()
-      chuShiHuaXuanQu()
+  document.addEventListener('wheel', jieHuoCtrlGunLunQuanJu, { capture: true, passive: false })
+  yuanShiYiChu = document.body.style.overflow
+  document.body.style.overflow = 'hidden'
+  neiBuTuPian = tuXiangRef.value?.$image ?? null
+  neiBuTuPian?.addEventListener('load', tuPianNeiBuJiaZai)
+  neiBuTuPian?.addEventListener('error', tuPianNeiBuCuoWu)
+  if (typeof ResizeObserver !== 'undefined') {
+    chiCunGuanCha = new ResizeObserver(() => {
+      if (!zhunBeiJiuXu.value) return
+      juZhongYingYong()
+      qiangZhiShuaXinYuLan()
     })
-    .catch(() => undefined)
-  qiangZhiShuaXinYuLan()
+    if (huaBuRef.value) chiCunGuanCha.observe(huaBuRef.value)
+  }
+  anPaiYuJian()
+  void nextTick().then(() => {
+    if (rongQiRef.value) {
+      rongQiRef.value.scrollTop = 0
+      rongQiRef.value.focus({ preventScroll: true })
+    }
+  })
+  void chuShiHua()
+  void dengDaiTuPian()
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', chuFaAnJian)
-  document.removeEventListener('wheel', jieHuoGunLunQuanJu, true)
+  document.removeEventListener('wheel', jieHuoCtrlGunLunQuanJu, true)
+  document.body.style.overflow = yuanShiYiChu
+  neiBuTuPian?.removeEventListener('load', tuPianNeiBuJiaZai)
+  neiBuTuPian?.removeEventListener('error', tuPianNeiBuCuoWu)
+  neiBuTuPian = null
+  chiCunGuanCha?.disconnect()
+  chiCunGuanCha = null
+  yuJianXuHao += 1
+  qingLiYuJian()
+  huiShouYaSuoDiZhi()
   if (yuLanPaiZhen) {
-    cancelAnimationFrame(yuLanPaiZhen)
+    window.clearTimeout(yuLanPaiZhen)
     yuLanPaiZhen = 0
   }
   if (yuLanChongShi) {
-    clearTimeout(yuLanChongShi)
+    window.clearTimeout(yuLanChongShi)
     yuLanChongShi = 0
   }
 })
@@ -683,6 +1059,8 @@ onBeforeUnmount(() => {
 }
 
 .caijian-rongqi {
+  --caijian-yulan-bi-li: 3 / 4;
+
   background: var(--caijian-mian);
   border: 1px solid var(--caijian-xian);
   border-radius: 20px;
@@ -692,6 +1070,7 @@ onBeforeUnmount(() => {
   max-height: min(88vh, 860px);
   overflow-y: auto;
   text-align: center;
+  outline: none;
 }
 
 .caijian-zhezhao {
@@ -702,6 +1081,8 @@ onBeforeUnmount(() => {
   --caijian-kong-xian: rgba(255, 255, 255, 0.2);
   --caijian-kong-wenben: rgba(255, 255, 255, 0.8);
   --caijian-zhuse: #07c160;
+  --caijian-tuxiang-bian: rgba(255, 255, 255, 0.16);
+  --caijian-tuxiang-ying: rgba(0, 0, 0, 0.32);
 }
 
 .caijian-biaoti {
@@ -717,13 +1098,38 @@ onBeforeUnmount(() => {
   margin: 0 0 var(--jiange-zhong);
 }
 
+.caijian-shitu {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
 .caijian-huabu {
   position: relative;
+  min-width: 0;
+  min-height: 0;
   max-width: 100%;
   margin: 0 auto;
-  border-radius: 16px;
+  border-radius: 14px;
   overflow: hidden;
   background: var(--caijian-huabu-mian);
+  box-shadow:
+    0 0 0 1px var(--caijian-tuxiang-bian),
+    0 10px 28px var(--caijian-tuxiang-ying);
+  cursor: grab;
+}
+
+.caijian-huabu--tuozhong {
+  cursor: grabbing;
+}
+
+.caijian-tuxiang,
+.caijian-xuanqu {
+  pointer-events: none;
+}
+
+.caijian-xuanqu {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
 }
 
 .caijian-tishi {
@@ -799,24 +1205,26 @@ onBeforeUnmount(() => {
   text-align: left;
 }
 
+.caijian-yulan--beiJing :deep(.yu-lan-xiao-xi-qu) {
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: var(--caijian-yulan-bi-li, 3 / 4);
+}
+
 .caijian-yulan--beiJing :deep(.liao-tian-mian-ban) {
   background: var(--caijian-yulan-fu-gai, var(--liaotian-beijing)) center / var(--caijian-yulan-chi-cun, cover) no-repeat !important;
 }
 
 .caijian-yulan--ce-ziJi :deep(.qipao-neirong--benren) {
-  background: var(--caijian-yulan-fu-gai) !important;
-}
+  --qipao-weiba-tian-chong: var(--caijian-yulan-fu-gai) !important;
 
-.caijian-yulan--ce-ziJi :deep(.qipao-neirong--benren::after) {
-  border-left-color: var(--caijian-yulan-wei-ba, var(--qipao-ziJi-weiBa, var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing)))) !important;
+  background: var(--caijian-yulan-fu-gai) !important;
 }
 
 .caijian-yulan--ce-ai :deep(.qipao-neirong--jiaose) {
-  background: var(--caijian-yulan-fu-gai) !important;
-}
+  --qipao-weiba-tian-chong: var(--caijian-yulan-fu-gai) !important;
 
-.caijian-yulan--ce-ai :deep(.qipao-neirong--jiaose::after) {
-  border-right-color: var(--caijian-yulan-wei-ba, var(--qipao-duiFang-weiBa, var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing)))) !important;
+  background: var(--caijian-yulan-fu-gai) !important;
 }
 
 .caijian-gongju {
@@ -890,6 +1298,7 @@ onBeforeUnmount(() => {
 
 .suofang-huatiao {
   flex: 1;
+  min-width: 0;
   accent-color: var(--caijian-zhuse);
 }
 

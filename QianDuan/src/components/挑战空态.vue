@@ -8,6 +8,6 @@
   font-size: var(--tz-zi-zheng);
   font-weight: 600;
   line-height: 1.5;
-  color: var(--tz-wen-ci);
+  color: var(--tz-kong-wen);
 }
 </style>

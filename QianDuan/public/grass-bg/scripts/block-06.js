@@ -1,31 +1,122 @@
 
-        /* 缓慢移除滤镜、露出真实金色草地背景：
-           原生 reveal 被 swarmReady 卡死（生产环境 swarm 永不就绪），故在此手动触发完整 reveal：
-           - revealMesh.startReveal() 让卷须/描边辉光（uRevealProgress）0→1 淡出；
-           - postProcessing.startReveal() 让 line-glow 水体揭示（uProgress）0→1 淡出；
-           两者淡出后即露出底层真实金色草地。开场滤镜为紫色（bundle 中 lineGlowColor/glowColor=#b07be0），
-           随 reveal 渐隐，并非改色。引擎就绪(__dcm)且 reveal 方法可用后再延时触发，硬兜底 15s。 */
         (function () {
-            var done = false, scheduled = false;
-            function ready() {
-                var e = window.__experience;
-                return !!(e && e.revealMesh && e.revealMesh.startReveal &&
-                          e.postProcessing && e.postProcessing.startReveal);
-            }
-            function fire() {
-                if (done || !ready()) return;
+            var yiKaiShi = false;
+            var yiWanCheng = false;
+            var wenDingDingShiQi = null;
+            var chaoShiDingShiQi = null;
+            var zaiFuYe = false;
+            try { zaiFuYe = !!(window.parent && window.parent !== window); } catch (eFu) {}
+            var jieShiChaoShiHaoMiao = 8000;
+            var diaoShi = false;
+            try {
+                var canShuMen = new URLSearchParams(window.location.search);
+                var chaoShiCanShu = parseInt(canShuMen.get('jieShiChaoShi'), 10);
+                if (isFinite(chaoShiCanShu) && chaoShiCanShu >= 2000) jieShiChaoShiHaoMiao = chaoShiCanShu;
+                diaoShi = canShuMen.get('diaoShi') === '1';
+            } catch (eCanShu) {}
+
+            function quXiaoGuo() {
                 try {
-                    window.__experience.revealMesh.startReveal();
-                    window.__experience.postProcessing.startReveal();
-                } catch (e) { scheduled = false; return; }
-                done = true;
+                    return window.__experience.postProcessing.waterColorRevealIntegration.waterColorRevealEffect;
+                } catch (e) { return null; }
             }
-            function loop() {
-                if (done || scheduled) return;
-                if (window.__dcm && ready()) { scheduled = true; setTimeout(fire, 2000); }
-                else setTimeout(loop, 300);
+            function sheZhiJinDu(zhi) {
+                var e = quXiaoGuo(); if (!e) return false;
+                try {
+                    e.getUniform('uProgress').value = zhi;
+                    e.tweaksValue.progress = zhi;
+                    return true;
+                } catch (e2) { return false; }
             }
-            loop();
-            setTimeout(function () { if (!done) fire(); }, 15000);
+            function tingZhiJieShi() {
+                var e = quXiaoGuo();
+                try { if (e && e.tween && typeof e.tween.kill === 'function') e.tween.kill(); } catch (eKill) {}
+                sheZhiJinDu(1);
+            }
+            function jiLu(ming) {
+                try {
+                    var z = window.__caoDiZhunBeiZhuangTai;
+                    if (z && z.riZhi) z.riZhi.push({ m: 'jieShi-' + ming, t: Math.round(performance.now()) });
+                } catch (e) {}
+            }
+            function faWanCheng(yuanYin) {
+                if (yiWanCheng) return;
+                yiWanCheng = true;
+                if (wenDingDingShiQi) { clearTimeout(wenDingDingShiQi); wenDingDingShiQi = null; }
+                if (chaoShiDingShiQi) { clearTimeout(chaoShiDingShiQi); chaoShiDingShiQi = null; }
+                tingZhiJieShi();
+                jiLu('wanCheng-' + (yuanYin || 'weiZhi'));
+                if (diaoShi) console.info('[草地背景] 揭示完成', yuanYin || '');
+                try {
+                    window.dispatchEvent(new window.CustomEvent('cao-di-jie-shi-wan-cheng', { detail: { yuanYin: yuanYin || '' } }));
+                } catch (eShiJian) {}
+            }
+            function paiDuiWanCheng(yuanYin) {
+                if (yiWanCheng) return;
+                var yanShi = 500;
+                try {
+                    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) yanShi = 0;
+                } catch (eM) {}
+                if (wenDingDingShiQi) clearTimeout(wenDingDingShiQi);
+                wenDingDingShiQi = setTimeout(function () {
+                    wenDingDingShiQi = null;
+                    faWanCheng(yuanYin);
+                }, yanShi);
+            }
+            function kaiShiJieShi() {
+                if (yiKaiShi || yiWanCheng) return;
+                yiKaiShi = true;
+                jiLu('kaiShi');
+                if (!zaiFuYe) {
+                    tingZhiJieShi();
+                    jiLu('guLi');
+                    return;
+                }
+                var jianRuoDongHua = false;
+                try {
+                    jianRuoDongHua = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+                } catch (eJianRuo) {}
+                if (jianRuoDongHua) {
+                    tingZhiJieShi();
+                    faWanCheng('reduced-motion');
+                    return;
+                }
+                var exp = window.__experience;
+                if (!exp || !exp.postProcessing || typeof exp.postProcessing.startReveal !== 'function') {
+                    tingZhiJieShi();
+                    paiDuiWanCheng('wuJieKou');
+                    return;
+                }
+                chaoShiDingShiQi = setTimeout(function () {
+                    chaoShiDingShiQi = null;
+                    tingZhiJieShi();
+                    faWanCheng('chaoShi');
+                }, jieShiChaoShiHaoMiao);
+                try {
+                    exp.postProcessing.startReveal(function () {
+                        paiDuiWanCheng('callback');
+                    });
+                } catch (e) {
+                    tingZhiJieShi();
+                    faWanCheng('shiBai');
+                }
+            }
+
+            sheZhiJinDu(0);
+            window.addEventListener('cao-di-jiu-xu', kaiShiJieShi);
+            window.addEventListener('message', function (e) {
+                try {
+                    if (e.origin !== window.location.origin) return;
+                    if (!e.data || e.data.type !== 'grass-reveal-finish') return;
+                    tingZhiJieShi();
+                    if (yiWanCheng) {
+                        try {
+                            window.dispatchEvent(new window.CustomEvent('cao-di-jie-shi-wan-cheng', { detail: { yuanYin: 'waiBu-chongFu' } }));
+                        } catch (eChongFu) {}
+                        return;
+                    }
+                    faWanCheng('waiBu');
+                } catch (eM) {}
+            });
+            if (window.__caoDiZhunBeiZhuangTai && window.__caoDiZhunBeiZhuangTai.zhunBei) kaiShiJieShi();
         })();
-    

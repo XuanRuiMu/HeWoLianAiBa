@@ -60,6 +60,7 @@ export async function 合成语音(请求: TTS合成请求): Promise<TTS合成�
       'audio/mpeg',
       'yuyin',
       请求.roleId || 'system',
+      响应.duration_ms,
     )
 
     debug日志.info('TTS服务', '语音合成成功', {

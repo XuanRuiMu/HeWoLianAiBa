@@ -155,18 +155,21 @@ describe('FP03 气泡名称几何居中', () => {
 
 describe('FP03 Cropper.js 专业裁剪封装', () => {
   it('工具层接入cropperjs类型并删除全部自研裁剪数学', () => {
-    expect(裁剪工具源码).toContain("from 'cropperjs'")
+    expect(裁剪工具源码).toContain('from \'cropperjs\'')
     expect(裁剪工具源码).not.toContain('jiSuanJiChuSuoFang')
     expect(裁剪工具源码).not.toContain('yueShuPianYi')
     expect(裁剪工具源码).not.toContain('jiSuanYuanJu')
     expect(裁剪工具源码).not.toContain('xuanRanJuXing')
+    expect(裁剪工具源码).toContain('CaiJianHuaBu')
   })
 
-  it('导出尺寸长边封顶1024且保持宽高比', () => {
-    expect(jiSuanDaoChuChiCun(2048, 1024, TU_PIAN_SHU_CHU_ZUI_DA_BIAN)).toEqual({ kuan: 1024, gao: 512 })
-    expect(jiSuanDaoChuChiCun(1024, 2048, TU_PIAN_SHU_CHU_ZUI_DA_BIAN)).toEqual({ kuan: 512, gao: 1024 })
+  it('导出尺寸按原图像素密度换算，长边封顶2048且不放大', () => {
+    expect(TU_PIAN_SHU_CHU_ZUI_DA_BIAN).toBe(2048)
+    expect(jiSuanDaoChuChiCun(2048, 1024, TU_PIAN_SHU_CHU_ZUI_DA_BIAN)).toEqual({ kuan: 2048, gao: 1024 })
+    expect(jiSuanDaoChuChiCun(4096, 2048, TU_PIAN_SHU_CHU_ZUI_DA_BIAN)).toEqual({ kuan: 2048, gao: 1024 })
+    expect(jiSuanDaoChuChiCun(1024, 4096, TU_PIAN_SHU_CHU_ZUI_DA_BIAN)).toEqual({ kuan: 512, gao: 2048 })
     expect(jiSuanDaoChuChiCun(800, 600, TU_PIAN_SHU_CHU_ZUI_DA_BIAN)).toEqual({ kuan: 800, gao: 600 })
-    expect(jiSuanDaoChuChiCun(1000, 1000, TU_PIAN_SHU_CHU_ZUI_DA_BIAN)).toEqual({ kuan: 1024, gao: 1024 })
+    expect(jiSuanDaoChuChiCun(1000, 1000, TU_PIAN_SHU_CHU_ZUI_DA_BIAN)).toEqual({ kuan: 1000, gao: 1000 })
   })
 
   it('输出格式PNG保真、其余落JPG', () => {
@@ -175,11 +178,11 @@ describe('FP03 Cropper.js 专业裁剪封装', () => {
     expect(jueDingShuChuGeShi('image/webp')).toEqual({ mime: 'image/jpeg', houZhui: 'jpg' })
   })
 
-  it('按选区导出文件：大图缩到1024、命名与类型正确', async () => {
+  it('按选区导出文件：超2048自动缩小、命名与类型正确', async () => {
     const daoChuChiCun: Array<{ kuan: number; gao: number }> = []
     const huaBuGong = document.createElement('canvas')
-    huaBuGong.width = 2048
-    huaBuGong.height = 1024
+    huaBuGong.width = 4096
+    huaBuGong.height = 2048
     const quXiaoMoNi = [
       vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
         drawImage: () => undefined,
@@ -201,16 +204,21 @@ describe('FP03 Cropper.js 专业裁剪封装', () => {
     expect(wenJian).toBeInstanceOf(File)
     expect(wenJian.name).toBe('touxiang.jpg')
     expect(wenJian.type).toBe('image/jpeg')
-    expect(daoChuChiCun.at(-1)).toEqual({ kuan: 1024, gao: 512 })
+    expect(daoChuChiCun.at(-1)).toEqual({ kuan: 2048, gao: 1024 })
   })
 
-  it('组件层挂载cropper自定义元素并绑定比例，选区不再自带键盘抢占', () => {
+  it('组件层挂载cropper自定义元素并绑定比例，选区固定不可交互且图片cover铺满', () => {
     expect(裁剪源码).toContain("import 'cropperjs'")
     expect(裁剪源码).toContain('<cropper-canvas')
     expect(裁剪源码).toContain('<cropper-image')
     expect(裁剪源码).toContain('<cropper-selection')
     expect(裁剪源码).toContain(':aspect-ratio="kuanGaoBi"')
     expect(裁剪源码).not.toMatch(/<cropper-selection[^>]*\bkeyboard\b/)
+    expect(裁剪源码).not.toMatch(/<cropper-selection[^>]*\bresizable\b/)
+    expect(裁剪源码).not.toMatch(/<cropper-selection[^>]*\bmovable\b/)
+    expect(裁剪源码).not.toMatch(/<cropper-handle\b/)
+    expect(裁剪源码).toContain('max-inset="0"')
+    expect(裁剪源码).toContain('initial-fit="cover"')
     expect(裁剪源码).toContain('<cropper-grid')
     expect(裁剪源码).not.toContain('kaiShiTuo')
     expect(裁剪源码).not.toContain('chuLiGunLun')
@@ -223,10 +231,12 @@ describe('FP03 Cropper.js 专业裁剪封装', () => {
       expect(裁剪源码).toContain(`huoQuFanYi('sheZhi', '` + jian + `')`)
     }
     expect(huoQuFanYi('sheZhi', 'tuPianCaiJianTiShi')).toContain('旋转')
-    expect(裁剪源码).toContain('$rotate')
-    expect(裁剪源码).toContain('$scale')
+    expect(裁剪源码).toContain('function xuanZhuan')
+    expect(裁剪源码).toContain('function fanZhuan')
+    expect(裁剪源码).toContain('$setTransform')
+    expect(裁剪源码).toContain('$move(')
     expect(裁剪源码).not.toContain('$zoom(')
-    expect(裁剪源码).toContain('$resetTransform')
+    expect(裁剪源码).not.toContain('$resetTransform')
   })
 
   it('取消与确认事件契约保持，Esc触发取消', async () => {

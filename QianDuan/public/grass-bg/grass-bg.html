@@ -40,6 +40,9 @@
         }
         /* bundle 点击 Start 后给 .loading 加 .loaded / .hidden，隐藏它以免遮挡 canvas */
         .loading.loaded, .loading.hidden { display: none !important; }
+        /* 嵌入式背景由父页负责加载态：iframe 在场景真正就绪前保持 opacity:0，
+           因此这里永不显示原站的 loading 遮罩（#191c2d 会盖住 canvas）。 */
+        .loading { display: none !important; }
         /* 静默加载：隐藏圆形进度动画与百分比文字，仅保留不透明遮罩覆盖画布，
            避免加载期间透出夜景/紫色的瞬时帧（背景应无声无息地备好）。 */
         .progress-percentage, .loading-text { visibility: hidden !important; opacity: 0 !important; }
@@ -112,7 +115,6 @@
 
     <script src="./scripts/block-02.js"></script>
     <script src="./scripts/block-03.js"></script>
-    <script src="./scripts/block-04.js"></script>
     <script src="./scripts/block-05.js"></script>
     <script src="./scripts/block-06.js"></script>
     <script src="./scripts/block-07.js"></script>

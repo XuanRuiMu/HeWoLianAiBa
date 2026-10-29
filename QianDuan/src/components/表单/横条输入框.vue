@@ -1,5 +1,5 @@
 <template>
-  <div class="shuru-zu" :class="{ shangFu: 上浮 }">
+  <div class="shuru-zu" :class="{ shangFu: 上浮, 'you-qian-zhui': 前缀 }">
     <div v-if="包裹类" :class="包裹类">
       <div v-if="内层类" :class="内层类">
         <input
@@ -50,6 +50,7 @@
       <slot />
     </div>
     <template v-else>
+      <span v-if="前缀" class="shuru-qian-zhui">{{ 前缀 }}</span>
       <input
         :id="标识"
         ref="输入元素"
@@ -95,6 +96,7 @@ const 属性 = withDefaults(
     必填?: boolean
     包裹类?: string
     内层类?: string
+    前缀?: string
   }>(),
   {
     类型: 'text',
@@ -108,6 +110,7 @@ const 属性 = withDefaults(
     必填: false,
     包裹类: undefined,
     内层类: undefined,
+    前缀: '',
   },
 )
 
@@ -155,5 +158,38 @@ defineExpose({ 聚焦 })
 <style scoped>
 .shuru-zu {
   position: relative;
+}
+
+.shuru-zu.you-qian-zhui {
+  display: flex;
+  align-items: flex-end;
+}
+
+.shuru-qian-zhui {
+  flex: none;
+  width: var(--shuru-qian-zhui-kuan);
+  padding-bottom: var(--jiange-10);
+  font-size: var(--shuru-kuang-zihao);
+  line-height: var(--shuru-kuang-hangao);
+  letter-spacing: 0.02em;
+  color: var(--ka-ci-wen, var(--wenben-ciuse));
+  pointer-events: none;
+  user-select: none;
+}
+
+.shuru-zu.you-qian-zhui > .fenlie-shuru {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+
+.shuru-zu.you-qian-zhui .fudong-biaoqian {
+  left: var(--shuru-qian-zhui-kuan);
+}
+
+.shuru-zu.you-qian-zhui.shangFu .fudong-biaoqian,
+.shuru-zu.you-qian-zhui:focus-within .fudong-biaoqian,
+.shuru-zu.you-qian-zhui:has(.fenlie-shuru:-webkit-autofill) .fudong-biaoqian {
+  left: 0;
 }
 </style>

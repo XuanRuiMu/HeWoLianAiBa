@@ -1309,10 +1309,8 @@ onBeforeUnmount(() => {
   width: 100%;
   flex-shrink: 0;
   z-index: 100;
-  height: 52px;
-  height: calc(52px + var(--anquan-quyu-shang));
-  min-height: 52px;
-  min-height: calc(52px + var(--anquan-quyu-shang));
+  height: var(--daohanglan-gao-du);
+  min-height: var(--daohanglan-gao-du);
   background: var(--daohanglan-beijing);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -2022,10 +2020,8 @@ onBeforeUnmount(() => {
 
 @media (max-width: 767px) {
   .quanju-caidan {
-    height: 48px;
-    height: calc(48px + var(--anquan-quyu-shang));
-    min-height: 48px;
-    min-height: calc(48px + var(--anquan-quyu-shang));
+    height: var(--daohanglan-gao-du-zhai);
+    min-height: var(--daohanglan-gao-du-zhai);
   }
 
   .caidan-neirong {

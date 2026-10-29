@@ -84,12 +84,51 @@ describe('FP-06 挑战气泡与共享步骤过渡', () => {
     const 包 = await 挂主页()
     await 包.find('.duiju-cao .anniu--wei').trigger('click')
     await flushPromises()
-    expect(包.find('.tishi-qipao--you').text()).toBe(
+    const 确认钮 = 包.get('.fangqi-que-ren-wei > .anniu--wei')
+    expect(确认钮.text()).toBe(huoQuFanYi('tiaoZhan', 'queRenFangQi'))
+    const 气泡 = 包.get('.fangqi-que-ren-wei .tishi-qipao')
+    expect(气泡.text()).toBe(
       huoQuFanYi('tiaoZhan', 'fangQiKouFenTiShi').replace('{fenshu}', '15'),
     )
+    expect(气泡.element.parentElement).toBe(确认钮.element.parentElement)
+    expect(包.find('.duiju-cao > .tishi-qipao').exists()).toBe(false)
     await 包.find('.duiju-cao .anniu--mo').trigger('click')
-    expect(包.find('.tishi-qipao--you').exists()).toBe(false)
+    expect(包.find('.fangqi-que-ren-wei .tishi-qipao').exists()).toBe(false)
     包.unmount()
+  })
+
+  it('确认态气泡跟随确认按钮锚点，桌面与窄屏共用同一 DOM 结构', async () => {
+    对局.dangQian = 当前对局
+    const 桌面 = await 挂主页()
+    await 桌面.find('.duiju-cao .anniu--wei').trigger('click')
+    await flushPromises()
+    const 桌面结构 = 桌面.get('.duiju-cao').html()
+    expect(桌面.get('.fangqi-que-ren-wei .tishi-qipao').exists()).toBe(true)
+    桌面.unmount()
+
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 390,
+    })
+    const 窄屏 = await 挂主页()
+    await 窄屏.find('.duiju-cao .anniu--wei').trigger('click')
+    await flushPromises()
+    expect(窄屏.get('.duiju-cao').html()).toBe(桌面结构)
+    expect(窄屏.get('.fangqi-que-ren-wei .tishi-qipao').exists()).toBe(true)
+    窄屏.unmount()
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    })
+  })
+
+  it('放弃气泡锚点容器相对定位，旧整行右缘定位已删除', () => {
+    expect(挑战源).toMatch(/\.fangqi-que-ren-wei\s*\{[^}]*position:\s*relative/)
+    expect(挑战源).not.toMatch(/\.duiju-cao\s*\{[^}]*position:\s*relative/)
+    expect(挑战源).not.toContain('tishi-qipao--you')
+    expect(挑战源).toContain("huoQuFanYi('tiaoZhan', 'fangQiKouFenTiShi')")
   })
 
   it('普通与排位共用同一套步骤过渡，挑战页不再保留 28px 私有动画', () => {

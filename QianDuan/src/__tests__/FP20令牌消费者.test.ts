@@ -132,16 +132,12 @@ const 幻影登记: { 令牌: string; 理由: string }[] = [
     理由: '图片裁剪.vue 底部预览把填充尺寸与 dataURL 同批运行时注入，CSS 只消费',
   },
   {
-    令牌: '--caijian-yulan-wei-ba',
-    理由: 'FP-02b 图片裁剪.vue 对预览 dataURL 采样尾巴侧边缘色运行时注入，CSS 只消费',
+    令牌: '--qipao-weiba-miao-bian',
+    理由: 'FP-05B1 气泡形状 bundle 运行时注入的尾巴描边色（关=transparent），共享尾巴组件 CSS 只消费',
   },
   {
-    令牌: '--qipao-ziJi-weiBa',
-    理由: 'FP-02b 用户设置仓库对图片态气泡采样边缘色运行时注入的尾巴专用色，CSS 只消费',
-  },
-  {
-    令牌: '--qipao-duiFang-weiBa',
-    理由: 'FP-02b 同 --qipao-ziJi-weiBa，AI 侧尾巴专用色运行时注入',
+    令牌: '--qipao-weiba-xian-shi',
+    理由: 'FP-05B1 形状 bundle 运行时注入的尾巴显隐（无尾巴档=none），共享尾巴组件 CSS 只消费',
   },
   {
     令牌: '--qipao-miaoBian-yangShi',
