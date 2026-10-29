@@ -766,13 +766,14 @@ const yuLanFuGaiYangShi = computed<Record<string, string>>(() => {
 })
 
 let yuLanPaiZhen = 0
+let yiXiaoHui = false
 let yuLanDaoLuZhong = false
 let yuLanDaiZhong = false
 let yuLanChongShi = 0
 let yuLanCuoWuYiJi = false
 
 function anPaiYuLanChongShi(): void {
-  if (!shiLiaoTianYuLan.value || yuLanDiZhi.value || yuLanChongShi || tuPianJiaZaiShiBai.value) return
+  if (yiXiaoHui || !shiLiaoTianYuLan.value || yuLanDiZhi.value || yuLanChongShi || tuPianJiaZaiShiBai.value) return
   yuLanChongShi = window.setTimeout(() => {
     yuLanChongShi = 0
     qiangZhiShuaXinYuLan()
@@ -780,7 +781,7 @@ function anPaiYuLanChongShi(): void {
 }
 
 function qiangZhiShuaXinYuLan(): void {
-  if (!shiLiaoTianYuLan.value || tuPianJiaZaiShiBai.value) return
+  if (yiXiaoHui || !shiLiaoTianYuLan.value || tuPianJiaZaiShiBai.value) return
   if (yuLanPaiZhen) return
   yuLanPaiZhen = window.setTimeout(() => {
     yuLanPaiZhen = 0
@@ -789,7 +790,7 @@ function qiangZhiShuaXinYuLan(): void {
 }
 
 async function shuaXinYuLan(): Promise<void> {
-  if (!shiLiaoTianYuLan.value || tuPianJiaZaiShiBai.value) return
+  if (yiXiaoHui || !shiLiaoTianYuLan.value || tuPianJiaZaiShiBai.value) return
   if (yuLanDaoLuZhong) {
     yuLanDaiZhong = true
     return
@@ -811,7 +812,7 @@ async function shuaXinYuLan(): Promise<void> {
         shangXiaWen.imageSmoothingQuality = 'high'
       },
     })
-    if (shiLiaoTianYuLan.value) yuLanDiZhi.value = huaBuJieGuo.toDataURL('image/png')
+    if (!yiXiaoHui && shiLiaoTianYuLan.value) yuLanDiZhi.value = huaBuJieGuo.toDataURL('image/png')
   } catch (cuoWu) {
     if (!tuPianJiaZaiShiBai.value && !yuLanCuoWuYiJi) {
       yuLanCuoWuYiJi = true
@@ -834,7 +835,9 @@ function xiaYiZhen(): Promise<void> {
 
 async function chuShiHua(): Promise<void> {
   await nextTick()
+  if (yiXiaoHui) return
   await xiaYiZhen()
+  if (yiXiaoHui) return
   zhunBeiJiuXu.value = true
   juZhongYingYong()
   qiangZhiShuaXinYuLan()
@@ -846,6 +849,7 @@ async function dengDaiTuPian(): Promise<void> {
   } catch {
     return
   }
+  if (yiXiaoHui) return
   zhunBeiJiuXu.value = true
   juZhongYingYong()
   qiangZhiShuaXinYuLan()
@@ -1027,6 +1031,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  yiXiaoHui = true
   document.removeEventListener('keydown', chuFaAnJian)
   document.removeEventListener('wheel', jieHuoCtrlGunLunQuanJu, true)
   document.body.style.overflow = yuanShiYiChu

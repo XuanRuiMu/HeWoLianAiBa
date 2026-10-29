@@ -5,47 +5,104 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 const 项目根 = resolve(__dirname, '..', '..')
 const 读 = (相对: string) => readFileSync(resolve(项目根, 相对), 'utf8')
 
-type 假窗口 = Record<string, unknown> & EventTarget & { __caodiWanCheng?: unknown }
+type 假窗口 = Record<string, unknown> & EventTarget
 
-function 建揭示窗口(选项: { 独立?: boolean; 弱动画?: boolean; 超时?: number } = {}) {
+function 建揭示窗口(选项: { 独立?: boolean; 弱动画?: boolean; 缺波浪?: boolean } = {}) {
   const 窗口 = new EventTarget() as 假窗口
   窗口.CustomEvent = CustomEvent
   窗口.parent = 选项.独立 ? 窗口 : { postMessage: vi.fn() }
   窗口.location = {
-    search: `?jieShiChaoShi=${选项.超时 ?? 8000}&diaoShi=0`,
+    search: '?jieShiChaoShi=8000&yuReHaoMiao=10&diaoShi=0',
     origin: 'http://localhost:5173',
   }
   窗口.matchMedia = vi.fn(() => ({ matches: !!选项.弱动画 }))
   窗口.__caoDiZhunBeiZhuangTai = { zhunBei: false, riZhi: [] }
+
   const 进度 = { value: -1 }
+  const 光强 = { value: 5 }
   const 效果 = {
-    getUniform: () => 进度,
+    duration: 0.12,
+    getUniform: (名称: string) => {
+      if (名称 === 'uProgress') return 进度
+      if (名称 === 'uLineGlowIntensity') return 光强
+      return { value: 0 }
+    },
     tweaksValue: { progress: -1 },
     tween: { kill: vi.fn() },
   }
-  let 完成回调: (() => void) | null = null
-  const 启动 = vi.fn((回调: () => void) => {
-    完成回调 = 回调
-  })
+  const 波浪进度 = { value: -1 }
+  const 波浪材质 = { visible: false }
+  const 波浪网格 = { visible: false }
+  const 波浪 = 选项.缺波浪
+    ? null
+    : {
+        mesh: 波浪网格,
+        material: 波浪材质,
+        config: { revealDuration: 0.1 },
+        tween: { kill: vi.fn() },
+        setProgress: vi.fn((值: number) => {
+          波浪进度.value = 值
+        }),
+      }
   窗口.__experience = {
+    revealMesh: 波浪,
     postProcessing: {
-      startReveal: 启动,
       waterColorRevealIntegration: { waterColorRevealEffect: 效果 },
     },
   }
+
+  let raf回调: ((时间: number) => void) | null = null
+  vi.stubGlobal('requestAnimationFrame', vi.fn((回调: (时间: number) => void) => {
+    raf回调 = 回调
+    return 1
+  }))
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+
+  const 可播放记录: Array<{ yuanYin?: string }> = []
   const 完成记录: Array<{ yuanYin?: string }> = []
+  窗口.addEventListener('cao-di-ke-bo-fang', (事件) => {
+    可播放记录.push((事件 as CustomEvent).detail || {})
+  })
   窗口.addEventListener('cao-di-jie-shi-wan-cheng', (事件) => {
     完成记录.push((事件 as CustomEvent).detail || {})
   })
+
   new Function('window', 读('public/grass-bg/scripts/block-06.js'))(窗口)
+
   return {
     窗口,
     进度,
+    光强,
     效果,
-    启动,
+    波浪,
+    波浪进度,
+    波浪材质,
+    波浪网格,
+    可播放记录,
     完成记录,
-    触发完成回调: () => {
-      完成回调?.()
+    触发就绪: () => {
+      窗口.dispatchEvent(new CustomEvent('cao-di-jiu-xu'))
+    },
+    执行帧: (时间: number) => {
+      const 回调 = raf回调
+      raf回调 = null
+      if (回调) 回调(时间)
+    },
+    触发波浪开始: () => {
+      窗口.dispatchEvent(
+        new MessageEvent('message', {
+          data: { type: 'grass-wave-start' },
+          origin: 'http://localhost:5173',
+        }),
+      )
+    },
+    触发强制收尾: () => {
+      窗口.dispatchEvent(
+        new MessageEvent('message', {
+          data: { type: 'grass-reveal-finish' },
+          origin: 'http://localhost:5173',
+        }),
+      )
     },
   }
 }
@@ -127,85 +184,102 @@ afterEach(() => {
   document.documentElement.removeAttribute('data-theme')
 })
 
-describe('开场揭示在隐藏状态完成', () => {
-  it('就绪后开始揭示，完成回调加稳定延迟后置进度 1 并通知父页', () => {
+describe('波浪与柔和紫色滤镜的可见开场', () => {
+  it('预热后通知父页可播放，波浪材质可见且紫色滤镜从 0.5 开始', () => {
     vi.useFakeTimers()
     const 环境 = 建揭示窗口()
-    expect(环境.进度.value).toBe(0)
-    环境.窗口.dispatchEvent(new CustomEvent('cao-di-jiu-xu'))
-    expect(环境.启动).toHaveBeenCalledTimes(1)
-    expect(环境.进度.value).toBe(0)
-    环境.触发完成回调()
-    vi.advanceTimersByTime(499)
-    expect(环境.进度.value).toBe(0)
-    vi.advanceTimersByTime(1)
-    expect(环境.进度.value).toBe(1)
-    expect(环境.效果.tween.kill).toHaveBeenCalled()
-    expect(环境.完成记录).toEqual([{ yuanYin: 'callback' }])
+    expect(环境.可播放记录).toEqual([])
+    环境.触发就绪()
+    vi.advanceTimersByTime(10)
+    expect(环境.可播放记录).toEqual([{ yuanYin: 'yuRe' }])
+    expect(环境.波浪材质.visible).toBe(true)
+    expect(环境.波浪网格.visible).toBe(true)
+    expect(环境.波浪进度.value).toBe(0)
+    expect(环境.进度.value).toBe(0.5)
+    expect(环境.光强.value).toBe(1.5)
+    expect(环境.完成记录).toEqual([])
   })
 
-  it('揭示迟迟不回调时硬超时收尾，不会让 iframe 永远停在蓝底', () => {
+  it('父页启动后波浪从中心展开，紫色滤镜褪去并收尾', () => {
     vi.useFakeTimers()
-    const 环境 = 建揭示窗口({ 超时: 8000 })
-    环境.窗口.dispatchEvent(new CustomEvent('cao-di-jiu-xu'))
-    vi.advanceTimersByTime(7999)
-    expect(环境.进度.value).toBe(0)
-    vi.advanceTimersByTime(1)
+    const 环境 = 建揭示窗口()
+    环境.触发就绪()
+    vi.advanceTimersByTime(10)
+    环境.触发波浪开始()
+    环境.执行帧(0)
+    环境.执行帧(50)
+    expect(环境.波浪进度.value).toBeGreaterThan(0)
+    expect(环境.进度.value).toBeGreaterThan(0.5)
+    环境.执行帧(100)
+    环境.执行帧(150)
+    expect(环境.波浪进度.value).toBe(1)
     expect(环境.进度.value).toBe(1)
-    expect(环境.效果.tween.kill).toHaveBeenCalled()
-    expect(环境.完成记录).toEqual([{ yuanYin: 'chaoShi' }])
+    expect(环境.波浪材质.visible).toBe(false)
+    expect(环境.波浪网格.visible).toBe(false)
+    expect(环境.完成记录).toEqual([{ yuanYin: 'zhengChang' }])
   })
 
-  it('弱动画偏好下直接完成，不播放水彩揭示', () => {
+  it('弱动画偏好下直接显示最终画面，不播放波浪', () => {
     vi.useFakeTimers()
     const 环境 = 建揭示窗口({ 弱动画: true })
-    环境.窗口.dispatchEvent(new CustomEvent('cao-di-jiu-xu'))
-    expect(环境.启动).not.toHaveBeenCalled()
+    环境.触发就绪()
+    expect(环境.可播放记录).toEqual([{ yuanYin: 'yuRe' }])
+    expect(环境.完成记录).toEqual([{ yuanYin: 'zhiJie' }])
+    expect(环境.波浪材质.visible).toBe(false)
     expect(环境.进度.value).toBe(1)
-    expect(环境.完成记录).toEqual([{ yuanYin: 'reduced-motion' }])
   })
 
-  it('父页强制收尾会立即结束揭示并可重复通知', () => {
+  it('父页强制收尾会立刻结束开场并可重复通知', () => {
     vi.useFakeTimers()
     const 环境 = 建揭示窗口()
-    环境.窗口.dispatchEvent(new CustomEvent('cao-di-jiu-xu'))
-    环境.窗口.dispatchEvent(
-      new MessageEvent('message', {
-        data: { type: 'grass-reveal-finish' },
-        origin: 'http://localhost:5173',
-      }),
-    )
+    环境.触发就绪()
+    vi.advanceTimersByTime(10)
+    环境.触发强制收尾()
+    expect(环境.波浪材质.visible).toBe(false)
     expect(环境.进度.value).toBe(1)
-    expect(环境.效果.tween.kill).toHaveBeenCalled()
     expect(环境.完成记录).toEqual([{ yuanYin: 'waiBu' }])
-    环境.窗口.dispatchEvent(
-      new MessageEvent('message', {
-        data: { type: 'grass-reveal-finish' },
-        origin: 'http://localhost:5173',
-      }),
-    )
+    环境.触发强制收尾()
     expect(环境.完成记录).toEqual([{ yuanYin: 'waiBu' }, { yuanYin: 'waiBu-chongFu' }])
   })
 
-  it('独立打开背景页时直接显示最终草地，不播放揭示', () => {
+  it('波浪层缺失时不崩溃，直接完成并显示最终画面', () => {
+    vi.useFakeTimers()
+    const 环境 = 建揭示窗口({ 缺波浪: true })
+    环境.触发就绪()
+    vi.advanceTimersByTime(10)
+    expect(环境.可播放记录).toEqual([{ yuanYin: 'yuRe' }])
+    expect(环境.完成记录).toEqual([{ yuanYin: 'wuJieKou' }])
+    expect(环境.进度.value).toBe(1)
+  })
+
+  it('独立打开背景页时预热后直接播放波浪', () => {
     vi.useFakeTimers()
     const 环境 = 建揭示窗口({ 独立: true })
-    环境.窗口.dispatchEvent(new CustomEvent('cao-di-jiu-xu'))
-    expect(环境.启动).not.toHaveBeenCalled()
-    expect(环境.进度.value).toBe(1)
-    expect(环境.完成记录).toEqual([])
+    环境.触发就绪()
+    vi.advanceTimersByTime(10)
+    expect(环境.可播放记录).toEqual([{ yuanYin: 'yuRe' }])
+    expect(环境.波浪材质.visible).toBe(true)
+    expect(环境.波浪进度.value).toBe(0)
+    环境.执行帧(0)
+    环境.执行帧(50)
+    环境.执行帧(100)
+    环境.执行帧(150)
+    expect(环境.完成记录).toEqual([{ yuanYin: 'zhengChang' }])
   })
 })
 
-describe('父页握手模块转发揭示完成', () => {
-  it('就绪后转发 jie-shi-wan-cheng 及原因', () => {
+describe('父页握手模块转发可播放与完成', () => {
+  it('就绪后转发 ke-bo-fang、jie-shi-wan-cheng 及原因', () => {
     vi.useFakeTimers()
     const { 窗口, 收到 } = 建握手窗口()
     vi.advanceTimersByTime(300)
     expect(收到.some((消息) => 消息.zhuangTai === 'jiu-xu')).toBe(true)
-    窗口.dispatchEvent(new CustomEvent('cao-di-jie-shi-wan-cheng', { detail: { yuanYin: 'callback' } }))
+    窗口.dispatchEvent(new CustomEvent('cao-di-ke-bo-fang', { detail: { yuanYin: 'yuRe' } }))
+    const 可播放 = 收到.find((消息) => 消息.zhuangTai === 'ke-bo-fang')
+    expect(可播放?.yuanYin).toBe('yuRe')
+    窗口.dispatchEvent(new CustomEvent('cao-di-jie-shi-wan-cheng', { detail: { yuanYin: 'zhengChang' } }))
     const 完成 = 收到.find((消息) => 消息.zhuangTai === 'jie-shi-wan-cheng')
-    expect(完成?.yuanYin).toBe('callback')
+    expect(完成?.yuanYin).toBe('zhengChang')
     expect(完成?.haoShi).toBe(123)
   })
 })

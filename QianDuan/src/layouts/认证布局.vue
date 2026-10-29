@@ -157,10 +157,6 @@ onBeforeUnmount(() => {
   flex: 1;
 }
 
-.yemian-buju.denglu-moshi {
-  overflow-y: hidden;
-}
-
 .renzheng-huifu-cuo-wu {
   width: 100%;
   max-width: 400px;

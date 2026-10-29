@@ -15,7 +15,11 @@
     </div>
     <div
       class="cao-di-jiang-ji"
-      :class="{ 'is-yin-cang': jiangJiYinCang, 'is-zan-ting': !shiYongCaoDiBeiJing }"
+      :class="{
+        'is-yin-cang': jiangJiYinCang,
+        'is-zan-ting': !shiYongCaoDiBeiJing,
+        'is-light': shiQianSe,
+      }"
       aria-hidden="true"
     >
       <div class="jiang-ji-xing-kong" />
@@ -73,11 +77,14 @@ import { BUJU_PEI_ZHI, caoDiPeiZhi } from '@/config/站点配置'
 import { huoQuFanYi } from '@/config/翻译表'
 import { 解析性别 } from '@/utils/性别'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
+import { 使用主题仓库, 浅色值 } from '@/stores/主题'
 import { use禁止自动填充 } from '@/composables/use禁止自动填充'
 
 const route = useRoute()
 const 用户仓库 = 使用用户仓库()
 const 设置仓库 = 使用用户设置仓库()
+const 主题仓库 = 使用主题仓库()
+const shiQianSe = computed(() => 主题仓库.dangQianZhuti === 浅色值)
 
 use禁止自动填充()
 
@@ -111,9 +118,10 @@ const beiJingJiuXu = ref(false)
 const beiJingShiBai = ref(false)
 const jiangJiYinCang = computed(() => !shiYongCaoDiBeiJing.value || beiJingJiuXu.value)
 let beiJingDengDaiDingShiQi: ReturnType<typeof setTimeout> | null = null
-let jieShiDengDaiDingShiQi: ReturnType<typeof setTimeout> | null = null
-let jieShiQiangZhiDingShiQi: ReturnType<typeof setTimeout> | null = null
+let boFangDengDaiDingShiQi: ReturnType<typeof setTimeout> | null = null
+let jieShiAnQuanDingShiQi: ReturnType<typeof setTimeout> | null = null
 let beiJingChangJingYiJiuXu = false
+let boFangYiFa = false
 let yiShangBaoBeiJingShiBai = false
 
 function qingLiBeiJingDengDai(): void {
@@ -122,14 +130,14 @@ function qingLiBeiJingDengDai(): void {
   beiJingDengDaiDingShiQi = null
 }
 
-function qingLiJieShiDengDai(): void {
-  if (jieShiDengDaiDingShiQi !== null) {
-    clearTimeout(jieShiDengDaiDingShiQi)
-    jieShiDengDaiDingShiQi = null
+function qingLiBoFangDengDai(): void {
+  if (boFangDengDaiDingShiQi !== null) {
+    clearTimeout(boFangDengDaiDingShiQi)
+    boFangDengDaiDingShiQi = null
   }
-  if (jieShiQiangZhiDingShiQi !== null) {
-    clearTimeout(jieShiQiangZhiDingShiQi)
-    jieShiQiangZhiDingShiQi = null
+  if (jieShiAnQuanDingShiQi !== null) {
+    clearTimeout(jieShiAnQuanDingShiQi)
+    jieShiAnQuanDingShiQi = null
   }
 }
 
@@ -151,24 +159,44 @@ function faJieShiWanCheng(): void {
   }
 }
 
-function kaiShiJieShiDengDai(): void {
-  qingLiJieShiDengDai()
-  if (beiJingGuaQi.value) faJieShiWanCheng()
-  jieShiDengDaiDingShiQi = setTimeout(() => {
-    jieShiDengDaiDingShiQi = null
-    if (beiJingJiuXu.value) return
+function faBoFangKaiShi(): void {
+  const chuangKou = grassIframe.value && grassIframe.value.contentWindow
+  if (!chuangKou) return
+  try {
+    chuangKou.postMessage({ type: 'grass-wave-start' }, window.location.origin)
+  } catch {
+    return
+  }
+}
+
+function xianShiBingBoFang(): void {
+  if (boFangYiFa) return
+  boFangYiFa = true
+  qingLiBoFangDengDai()
+  beiJingJiuXu.value = true
+  beiJingShiBai.value = false
+  tongBuBeiJingZanTing()
+  tongBuBeiJingYuShui()
+  faBoFangKaiShi()
+  jieShiAnQuanDingShiQi = setTimeout(() => {
+    jieShiAnQuanDingShiQi = null
     faJieShiWanCheng()
-    jieShiQiangZhiDingShiQi = setTimeout(() => {
-      jieShiQiangZhiDingShiQi = null
-      if (!beiJingJiuXu.value) beiJingJiuXu.value = true
-    }, 800)
   }, caoDiPeiZhi.beiJingJieShiChaoShiHaoMiao)
+}
+
+function kaiShiBoFangDengDai(): void {
+  qingLiBoFangDengDai()
+  boFangDengDaiDingShiQi = setTimeout(() => {
+    boFangDengDaiDingShiQi = null
+    if (!boFangYiFa) xianShiBingBoFang()
+  }, caoDiPeiZhi.beiJingYuReChaoShiHaoMiao)
 }
 
 function chongShiBeiJingJiaZai(): void {
   qingLiBeiJingDengDai()
-  qingLiJieShiDengDai()
+  qingLiBoFangDengDai()
   beiJingChangJingYiJiuXu = false
+  boFangYiFa = false
   beiJingJiuXu.value = false
   if (beiJingChongShiCiShu.value >= caoDiPeiZhi.beiJingZuiDaChongShiCiShu) {
     beiJingShiBai.value = true
@@ -231,24 +259,35 @@ function chuLiBeiJingXiaoXi(shiJian: MessageEvent) {
       return
     }
     beiJingChangJingYiJiuXu = true
+    boFangYiFa = false
     beiJingJiuXu.value = false
     beiJingShiBai.value = false
     yiShangBaoBeiJingShiBai = false
+    qingLiBoFangDengDai()
     tongBuBeiJingZanTing()
     tongBuBeiJingYuShui()
-    kaiShiJieShiDengDai()
+    if (beiJingGuaQi.value) {
+      boFangYiFa = true
+      beiJingJiuXu.value = true
+      faJieShiWanCheng()
+      shuChuCaoDiZhenDuan('jiu-xu', shuJu)
+      return
+    }
+    kaiShiBoFangDengDai()
     shuChuCaoDiZhenDuan('jiu-xu', shuJu)
+  } else if (shuJu.zhuangTai === 'ke-bo-fang') {
+    if (boFangYiFa) return
+    xianShiBingBoFang()
+    shuChuCaoDiZhenDuan('ke-bo-fang', shuJu)
   } else if (shuJu.zhuangTai === 'jie-shi-wan-cheng') {
-    qingLiJieShiDengDai()
-    if (beiJingJiuXu.value) return
-    beiJingJiuXu.value = true
+    qingLiBoFangDengDai()
+    if (!beiJingJiuXu.value) beiJingJiuXu.value = true
     beiJingShiBai.value = false
-    tongBuBeiJingZanTing()
-    tongBuBeiJingYuShui()
     shuChuCaoDiZhenDuan('jie-shi-wan-cheng', shuJu)
   } else if (shuJu.zhuangTai === 'shi-bai') {
-    qingLiJieShiDengDai()
+    qingLiBoFangDengDai()
     beiJingChangJingYiJiuXu = false
+    boFangYiFa = false
     beiJingJiuXu.value = false
     chongShiBeiJingJiaZai()
     if (yiShangBaoBeiJingShiBai) return
@@ -265,7 +304,7 @@ function chuLiBeiJingXiaoXi(shiJian: MessageEvent) {
 }
 
 function shuChuCaoDiZhenDuan(
-  zhuangTai: 'jiu-xu' | 'shi-bai' | 'jie-shi-wan-cheng',
+  zhuangTai: 'jiu-xu' | 'shi-bai' | 'jie-shi-wan-cheng' | 'ke-bo-fang',
   shuJu: unknown,
 ): void {
   if (!shiFouCaoDiDiaoShi()) return
@@ -280,6 +319,7 @@ function shuChuCaoDiZhenDuan(
   }
   if (zhuangTai === 'shi-bai') console.warn('[草地背景] 失败', zhenDuan, shuJu)
   else if (zhuangTai === 'jie-shi-wan-cheng') console.info('[草地背景] 揭示完成', zhenDuan, shuJu)
+  else if (zhuangTai === 'ke-bo-fang') console.info('[草地背景] 可播放', zhenDuan, shuJu)
   else console.info('[草地背景] 就绪', zhenDuan, shuJu)
 }
 
@@ -558,7 +598,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('visibilitychange', chuLiYeMianKeJian)
   window.removeEventListener('message', chuLiBeiJingXiaoXi)
   qingLiBeiJingDengDai()
-  qingLiJieShiDengDai()
+  qingLiBoFangDengDai()
 })
 </script>
 
@@ -720,6 +760,25 @@ onBeforeUnmount(() => {
   background-size: 320px;
   opacity: 0.1;
   mix-blend-mode: soft-light;
+}
+
+.cao-di-jiang-ji.is-light {
+  background: linear-gradient(180deg, #bfe0f7 0%, #dcebf3 36%, #f4e8cf 68%, #e7ca92 100%);
+}
+
+.cao-di-jiang-ji.is-light .jiang-ji-xing-kong,
+.cao-di-jiang-ji.is-light .jiang-ji-ji-guang,
+.cao-di-jiang-ji.is-light .jiang-ji-di-ping {
+  display: none;
+}
+
+.cao-di-jiang-ji.is-light .jiang-ji-yue-liang {
+  background: radial-gradient(circle at 38% 34%, #fffdf2 0%, #ffe6a8 54%, #ffc35c 100%);
+  box-shadow:
+    0 0 28px rgba(255, 220, 140, 0.55),
+    0 0 90px rgba(255, 210, 120, 0.35),
+    0 0 180px rgba(255, 200, 100, 0.22);
+  animation: none;
 }
 
 .cao-di-jiang-ji.is-yin-cang .jiang-ji-xing-kong,

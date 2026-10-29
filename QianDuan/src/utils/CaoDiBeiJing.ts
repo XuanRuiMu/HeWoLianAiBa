@@ -11,6 +11,7 @@ export interface CaoDiDiZhiCanShu {
   fuZhenSanWeiChaoShiHaoMiao?: number
   zhunBeiChaoShiHaoMiao?: number
   jieShiChaoShiHaoMiao?: number
+  yuReHaoMiao?: number
   diaoShi?: boolean
 }
 
@@ -44,10 +45,11 @@ export function gouJianCaoDiDiZhi(canShu?: CaoDiDiZhiCanShu): string {
   const jieShiChaoShi = String(
     canShu?.jieShiChaoShiHaoMiao ?? caoDiPeiZhi.caoDiJieShiChaoShiHaoMiao,
   )
+  const yuReHaoMiao = String(canShu?.yuReHaoMiao ?? caoDiPeiZhi.caoDiYuReHaoMiao)
   const suoFang = encodeURIComponent(banBen)
   const biLi = encodeURIComponent(xiangSuBi)
   const diaoShi = (canShu?.diaoShi ?? shiFouCaoDiDiaoShi()) ? '1' : '0'
-  return `/grass-bg/grass-bg.html?v=${suoFang}&fenXi=${fenXi}&xiangSuBi=${biLi}&caiYangMiao=${encodeURIComponent(caiYang)}&zhenJianGe=${encodeURIComponent(zhenJianGe)}&chongShi=${encodeURIComponent(chongShi)}&fuZhenLunXun=${encodeURIComponent(lunXun)}&fuZhenChaoShi=${encodeURIComponent(fuZhenChaoShi)}&zhunBeiChaoShi=${encodeURIComponent(zhunBeiChaoShi)}&jieShiChaoShi=${encodeURIComponent(jieShiChaoShi)}&diaoShi=${diaoShi}`
+  return `/grass-bg/grass-bg.html?v=${suoFang}&fenXi=${fenXi}&xiangSuBi=${biLi}&caiYangMiao=${encodeURIComponent(caiYang)}&zhenJianGe=${encodeURIComponent(zhenJianGe)}&chongShi=${encodeURIComponent(chongShi)}&fuZhenLunXun=${encodeURIComponent(lunXun)}&fuZhenChaoShi=${encodeURIComponent(fuZhenChaoShi)}&zhunBeiChaoShi=${encodeURIComponent(zhunBeiChaoShi)}&jieShiChaoShi=${encodeURIComponent(jieShiChaoShi)}&yuReHaoMiao=${encodeURIComponent(yuReHaoMiao)}&diaoShi=${diaoShi}`
 }
 
 export function yingPingBiFenXiQingQiu(

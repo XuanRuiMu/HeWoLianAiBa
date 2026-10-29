@@ -86,6 +86,18 @@
     } : null);
   }
 
+  window.addEventListener('cao-di-ke-bo-fang', function (shiJian) {
+    if (!yiTongZhiJiuXu) return;
+    var z = window.__caoDiZhunBeiZhuangTai;
+    var xiQing = shiJian && shiJian.detail ? shiJian.detail : {};
+    if (diaoShi) console.info('[草地背景] 可播放', xiQing, z || null);
+    tongZhi('ke-bo-fang', '', {
+      haoShi: z ? z.haoShi : null,
+      yuanYin: xiQing.yuanYin || '',
+      riZhi: z && z.riZhi ? z.riZhi.slice(-10) : null
+    });
+  });
+
   window.addEventListener('cao-di-jie-shi-wan-cheng', function (shiJian) {
     if (!yiTongZhiJiuXu) return;
     var z = window.__caoDiZhunBeiZhuangTai;
