@@ -769,9 +769,10 @@ let yuLanPaiZhen = 0
 let yuLanDaoLuZhong = false
 let yuLanDaiZhong = false
 let yuLanChongShi = 0
+let yuLanCuoWuYiJi = false
 
 function anPaiYuLanChongShi(): void {
-  if (!shiLiaoTianYuLan.value || yuLanDiZhi.value || yuLanChongShi) return
+  if (!shiLiaoTianYuLan.value || yuLanDiZhi.value || yuLanChongShi || tuPianJiaZaiShiBai.value) return
   yuLanChongShi = window.setTimeout(() => {
     yuLanChongShi = 0
     qiangZhiShuaXinYuLan()
@@ -779,7 +780,7 @@ function anPaiYuLanChongShi(): void {
 }
 
 function qiangZhiShuaXinYuLan(): void {
-  if (!shiLiaoTianYuLan.value) return
+  if (!shiLiaoTianYuLan.value || tuPianJiaZaiShiBai.value) return
   if (yuLanPaiZhen) return
   yuLanPaiZhen = window.setTimeout(() => {
     yuLanPaiZhen = 0
@@ -788,7 +789,7 @@ function qiangZhiShuaXinYuLan(): void {
 }
 
 async function shuaXinYuLan(): Promise<void> {
-  if (!shiLiaoTianYuLan.value) return
+  if (!shiLiaoTianYuLan.value || tuPianJiaZaiShiBai.value) return
   if (yuLanDaoLuZhong) {
     yuLanDaiZhong = true
     return
@@ -812,7 +813,10 @@ async function shuaXinYuLan(): Promise<void> {
     })
     if (shiLiaoTianYuLan.value) yuLanDiZhi.value = huaBuJieGuo.toDataURL('image/png')
   } catch (cuoWu) {
-    console.error('裁剪预览导出失败', cuoWu)
+    if (!tuPianJiaZaiShiBai.value && !yuLanCuoWuYiJi) {
+      yuLanCuoWuYiJi = true
+      console.error('裁剪预览导出失败', cuoWu)
+    }
     yuLanDiZhi.value = ''
   } finally {
     yuLanDaoLuZhong = false
@@ -849,6 +853,7 @@ async function dengDaiTuPian(): Promise<void> {
 
 function tuPianNeiBuJiaZai(): void {
   tuPianJiaZaiShiBai.value = false
+  yuLanCuoWuYiJi = false
   zhunBeiJiuXu.value = true
   juZhongYingYong()
   qiangZhiShuaXinYuLan()

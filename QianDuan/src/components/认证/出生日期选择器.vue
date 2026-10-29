@@ -893,10 +893,12 @@ watch(zuHeZhi, (zhi) => {
 
 .chushengriqi .duan-shuru.duan-shuru {
   border-bottom-width: 0 !important;
+  background-image: none !important;
 }
 
 .chushengriqi .duan-shuru.duan-shuru.duan-shuru--cuo-wu {
   border-bottom-width: var(--shuru-xian-changtai-kuan-du) !important;
+  border-bottom-style: solid !important;
   border-bottom-color: var(--shuru-xian-cuowu-se) !important;
 }
 

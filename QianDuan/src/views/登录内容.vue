@@ -839,6 +839,9 @@ function gengXinHuaKuai(): void {
     return
   }
   const 滚动高 = gunDongQuYuanSu.clientHeight
+  if (zhuangShiYuanSu.style.display === 'none') {
+    zhuangShiYuanSu.style.display = ''
+  }
   const 装饰高 = zhuangShiYuanSu.clientHeight
   if (滚动高 <= 0 || 装饰高 <= 0) {
     huaKuaiYuanSu.style.display = 'none'
@@ -2225,6 +2228,42 @@ async function zhiXingZhuCe() {
 
 :root[data-theme='light'] .biaodan-biaoti {
   color: var(--ka-zhu-wen);
+}
+
+@media (max-height: 640px) {
+  .biaodan-rongqi {
+    --ka-duan-luo: var(--jiange-xiao);
+    padding-top: var(--jiange-da);
+  }
+
+  .biaodan-tou {
+    margin-top: var(--jiange-4);
+    margin-bottom: var(--jiange-4);
+  }
+
+  .biaodan-fu-biao-ti {
+    line-height: 1.45;
+  }
+}
+
+@media (max-height: 520px) {
+  .biaodan-rongqi {
+    --ka-duan-luo: var(--jiange-6);
+    padding-top: var(--jiange-da);
+  }
+
+  .biaodan-tou {
+    margin-top: var(--jiange-2);
+    margin-bottom: var(--jiange-2);
+  }
+
+  .biaodan-biao-ti {
+    font-size: var(--ziti-da);
+  }
+
+  .biaodan-fu-biao-ti {
+    display: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

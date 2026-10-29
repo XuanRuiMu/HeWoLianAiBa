@@ -143,7 +143,7 @@ select {
   ),
   textarea,
   [contenteditable]:not([contenteditable='false'])
-):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru) {
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):not(.duan-shuru) {
   border-bottom-width: var(--shuru-xian-changtai-kuan-du) !important;
   border-bottom-style: solid !important;
   border-bottom-color: transparent !important;
@@ -173,7 +173,7 @@ select {
   ),
   textarea,
   [contenteditable]:not([contenteditable='false'])
-):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):disabled {
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):not(.duan-shuru):disabled {
   background-image:
     linear-gradient(var(--shuru-xian-jinyong-se), var(--shuru-xian-jinyong-se)),
     linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se)) !important;
@@ -197,7 +197,7 @@ select {
   ),
   textarea,
   [contenteditable]:not([contenteditable='false'])
-):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):read-only {
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):not(.duan-shuru):read-only {
   background-image:
     linear-gradient(var(--shuru-xian-zhi-du-se), var(--shuru-xian-zhi-du-se)),
     linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se)) !important;
@@ -220,7 +220,7 @@ select {
   ),
   textarea,
   [contenteditable]:not([contenteditable='false'])
-):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):is([aria-invalid='true'], [data-error='true'], .is-error) {
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):not(.duan-shuru):is([aria-invalid='true'], [data-error='true'], .is-error) {
   background-image:
     linear-gradient(var(--shuru-xian-cuowu-se), var(--shuru-xian-cuowu-se)),
     linear-gradient(var(--shuru-xian-changtai-se), var(--shuru-xian-changtai-se)) !important;
@@ -243,7 +243,7 @@ select {
   ),
   textarea,
   [contenteditable]:not([contenteditable='false'])
-):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):focus {
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):not(.duan-shuru):focus {
   background-size: 100% var(--shuru-xian-changtai-kuan-du), 100% var(--shuru-xian-changtai-kuan-du) !important;
 }
 
@@ -262,7 +262,7 @@ select {
   ),
   textarea,
   [contenteditable]:not([contenteditable='false'])
-):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):-webkit-autofill {
+):not([data-chat-scope='true'] *):not([data-chat-input='true']):not(.fenlei-ming-cheng-input):not(.she-zhi-shuru):not(.fenlie-shuru):not(.duan-shuru):-webkit-autofill {
   background-color: var(--shuru-beijing-zidong-tianchong) !important;
   color: var(--shuru-wenben-zidong-tianchong) !important;
   -webkit-text-fill-color: var(--shuru-wenben-zidong-tianchong) !important;

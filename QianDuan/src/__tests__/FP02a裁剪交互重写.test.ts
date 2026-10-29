@@ -518,6 +518,14 @@ describe('FP-02a 删除"裁剪结果：实时"与确认页顶部起点', () => {
     expect(document.activeElement).toBe(rongQi)
     kuang.unmount()
   })
+  it('图片加载失败时预览重试立即停摆且导出错误只记一次', () => {
+    expect(裁剪源码).toMatch(/function anPaiYuLanChongShi\(\): void \{\n {2}if \([^\n]*tuPianJiaZaiShiBai\.value\) return/)
+    expect(裁剪源码).toMatch(/function qiangZhiShuaXinYuLan\(\): void \{\n {2}if \([^\n]*tuPianJiaZaiShiBai\.value\) return/)
+    expect(裁剪源码).toMatch(/async function shuaXinYuLan\(\): Promise<void> \{\n {2}if \([^\n]*tuPianJiaZaiShiBai\.value\) return/)
+    expect(裁剪源码).toContain('!tuPianJiaZaiShiBai.value && !yuLanCuoWuYiJi')
+    expect(裁剪源码.match(/console\.error\('裁剪预览导出失败'/g)).toHaveLength(1)
+    expect(裁剪源码).toMatch(/function tuPianNeiBuJiaZai\(\): void \{\n {2}tuPianJiaZaiShiBai\.value = false\n {2}yuLanCuoWuYiJi = false/)
+  })
 })
 
 afterEach(() => {
