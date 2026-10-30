@@ -53,8 +53,9 @@ function 媒体上下文(文本: string, 头: string): string {
 
 describe('出生日期分段输入不画底线', () => {
   it('全局输入底线链逐条排除分段日期输入', () => {
-    const 底线规则数 = (全局样式.match(/:not\(\.fenlie-shuru\)/g) || []).length
-    const 排除数 = (全局样式.match(/:not\(\.duan-shuru\)/g) || []).length
+    const 排除链们 = [...全局样式.matchAll(/:not\(:is\(([^()]*)\)\)/g)].map((项) => 项[1])
+    const 底线规则数 = 排除链们.filter((链) => 链.includes('.fenlie-shuru')).length
+    const 排除数 = 排除链们.filter((链) => 链.includes('.duan-shuru')).length
     expect(底线规则数).toBeGreaterThan(0)
     expect(排除数, '底线规则未逐条排除 .duan-shuru').toBe(底线规则数)
   })

@@ -95,7 +95,7 @@
                 {{ huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongDeTaTiShi') }}
               </p>
               <div v-show="xinMuZhongDeTaZhanKai" class="xinmuzhong-ta-biaodan">
-                <label class="xinmuzhong-xiangmu">
+                <div class="xinmuzhong-xiangmu">
                   <span class="xinmuzhong-biaoqian">{{
                     huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongWeiXinMing')
                   }}</span>
@@ -106,8 +106,8 @@
                     :占位文字="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongWeiXinMingZhanwei')"
                     @geng-xin="ziLiaoShuJu.xinMuZhongDeTa.weiXinMing = $event"
                   />
-                </label>
-                <label class="xinmuzhong-xiangmu">
+                </div>
+                <div class="xinmuzhong-xiangmu">
                   <span class="xinmuzhong-biaoqian">{{
                     huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongZhenShiMing')
                   }}</span>
@@ -118,8 +118,8 @@
                     :占位文字="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongZhenShiMingZhanwei')"
                     @geng-xin="ziLiaoShuJu.xinMuZhongDeTa.zhenShiMing = $event"
                   />
-                </label>
-                <label class="xinmuzhong-xiangmu">
+                </div>
+                <div class="xinmuzhong-xiangmu">
                   <span class="xinmuzhong-biaoqian">{{
                     huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongNianLing')
                   }}</span>
@@ -132,8 +132,8 @@
                     @geng-xin="ziLiaoShuJu.xinMuZhongDeTa.nianLing = $event"
                     @blur="guiYiNianLingShuRu"
                   />
-                </label>
-                <label class="xinmuzhong-xiangmu">
+                </div>
+                <div class="xinmuzhong-xiangmu">
                   <span class="xinmuzhong-biaoqian">{{
                     huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongTongYongTiShiCi')
                   }}</span>
@@ -146,7 +146,7 @@
                     :占位文字="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongTongYongTiShiCiZhanwei')"
                     @geng-xin="ziLiaoShuJu.xinMuZhongDeTa.tongYongTiShiCi = $event"
                   />
-                </label>
+                </div>
               </div>
             </div>
           </div>
@@ -412,6 +412,9 @@ async function kaiShiLiaoTian() {
   --xingge-huxi-an-xuan: 0;
   --xingge-wai-guang: 0 0 18px var(--xingge-gao-guang-bian-zhong);
   --xingge-wai-guang-xuanguo: 0 0 13px var(--xingge-gao-guang-bian-zhong);
+  --xingge-bian-kuang-kuan: 1px;
+  --xingge-yuan-jiao: 12px;
+  --xingge-nei-yuan-jiao: calc(var(--xingge-yuan-jiao) - var(--xingge-bian-kuang-kuan));
 }
 
 .ziliao-kapian[data-duixiang-xingbie='nv'] {
@@ -533,8 +536,8 @@ async function kaiShiLiaoTian() {
   gap: var(--jiange-2);
   padding: var(--jiange-10) var(--jiange-6) var(--jiange-xiao);
   background-color: var(--ziliao-kuai-beijing);
-  border: 1px solid var(--ziliao-kuai-biankuang);
-  border-radius: 12px;
+  border: var(--xingge-bian-kuang-kuan) solid var(--ziliao-kuai-biankuang);
+  border-radius: var(--xingge-yuan-jiao);
   color: var(--kapian-shuoming-wenben);
   cursor: pointer;
   transition-property: border-color, box-shadow, transform, color;
@@ -561,9 +564,9 @@ async function kaiShiLiaoTian() {
 .mbti-kaPian::after {
   content: '';
   position: absolute;
-  inset: 0;
-  border: 2px solid var(--xingge-liu-guang-yan);
-  border-radius: inherit;
+  inset: calc(var(--xingge-bian-kuang-kuan) * -1);
+  border: var(--xingge-bian-kuang-kuan) solid var(--xingge-liu-guang-yan);
+  border-radius: calc(var(--xingge-nei-yuan-jiao) + var(--xingge-bian-kuang-kuan));
   opacity: 0;
   transition:
     opacity 0.4s ease,
@@ -573,7 +576,7 @@ async function kaiShiLiaoTian() {
 
 @supports ((-webkit-mask-composite: xor) or (mask-composite: exclude)) {
   .mbti-kaPian::after {
-    padding: var(--jiange-2);
+    padding: var(--xingge-bian-kuang-kuan);
     border-width: 0;
     background:
       radial-gradient(ellipse, var(--xingge-liu-guang-yan), transparent 68%),
@@ -626,7 +629,7 @@ async function kaiShiLiaoTian() {
 
 .mbti-kaPian:focus-visible {
   outline: none;
-  border-color: var(--xingge-gao-guang-bian-zhong);
+  border-color: var(--xingge-gao-guang-bian-ji);
 }
 
 .mbti-kaPian:focus-visible:not(.beiXuanZhong)::before {
@@ -643,7 +646,7 @@ async function kaiShiLiaoTian() {
 
 .mbti-kaPian.beiXuanZhong {
   --xingge-huxi-an: var(--xingge-huxi-an-xuan);
-  border: 1px solid var(--xingge-gao-guang-bian-zhong);
+  border-color: var(--xingge-gao-guang-bian-ji);
 }
 
 .mbti-kaPian.beiXuanZhong::before {

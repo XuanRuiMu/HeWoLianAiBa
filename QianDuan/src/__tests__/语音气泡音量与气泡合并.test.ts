@@ -344,9 +344,9 @@ describe('语音进度圆点跨浏览器几何', () => {
     expect(输入规则).toContain('border: 0')
     for (const 轨道 of [webkit轨道, firefox轨道]) {
       expect(轨道).toContain('height: var(--yuyin-kongzhi-re-ku)')
-      expect(轨道).toContain(
-        'background: linear-gradient(currentColor, currentColor) center / 100% var(--yuyin-jindu-gao) no-repeat',
-      )
+      expect(轨道).toContain('center / 100% var(--yuyin-jindu-gao) no-repeat')
+      expect(轨道).toContain('color-mix(in srgb, currentColor 35%, transparent)')
+      expect(轨道, '轨道不得用 opacity，否则会把圆点一起压暗').not.toContain('opacity')
     }
     expect(webkit圆点).toContain(
       'margin-top: calc((var(--yuyin-kongzhi-re-ku) - var(--yuyin-huakuai-chicun)) / 2)',
@@ -402,10 +402,12 @@ describe('暂停/停止收进紧凑按钮组', () => {
     expect(语音源).not.toContain('gap: var(--jiange-12)')
   })
 
-  it('时长不再被固定宽度裁切：气泡按内容撑开且标签不收缩', () => {
-    expect(语音源).toContain('min-width: max-content')
+  it('气泡宽度由时长决定且内容不被裁切，不再用 max-content 压回文字宽度', () => {
+    expect(语音源).toContain('max-width: var(--yuyin-zui-da-kuan)')
     expect(语音源).toContain('flex: 0 0 auto')
     expect(语音源).not.toContain('overflow: hidden')
+    expect(语音源).not.toContain('min-width: max-content')
+    expect(令牌源).toContain('--yuyin-zui-da-kuan: min(260px, 68vw);')
   })
 
   it('本人态整行反转，暂停/停止贴齐气泡右侧内衬而不是飘在滑块另一头', () => {

@@ -27,6 +27,13 @@
             var yiDiYiZhen = false;
             var jingGuoHaoMiao = 0;
             var boWenShiChang = 4000;
+            var JIE_SHI_CAI_ZHI = {
+                tendrilStrength: 0.03,
+                glowIntensity: 0.3,
+                edgeWidth: 0.02,
+                noiseScale: 8
+            };
+            var JIE_SHI_ZUI_DA_HAO_MIAO = 1600;
 
             function quTiYan() {
                 try { return window.__experience; } catch (e) { return null; }
@@ -105,9 +112,27 @@
                 try { rm.mesh.visible = !!keJian; } catch (e) {}
                 try { if (rm.material) rm.material.visible = !!keJian; } catch (e) {}
                 if (keJian) {
+                    diaoZhengBoWenCaiZhi();
                     try { rm.setProgress(0); } catch (e) {}
                 }
                 return true;
+            }
+            function diaoZhengBoWenCaiZhi() {
+                var rm = quRevealMesh();
+                if (!rm || !rm.material || !rm.material.uniforms) return false;
+                try {
+                    if (typeof rm.configure === 'function') {
+                        rm.configure(JIE_SHI_CAI_ZHI);
+                        return true;
+                    }
+                    var junZhiMen = rm.material.uniforms;
+                    for (var jian in JIE_SHI_CAI_ZHI) {
+                        if (junZhiMen[jian] && typeof junZhiMen[jian] === 'object') {
+                            junZhiMen[jian].value = JIE_SHI_CAI_ZHI[jian];
+                        }
+                    }
+                    return true;
+                } catch (eDiaoZheng) { return false; }
             }
             function quShiChang() {
                 var rm = quRevealMesh();
@@ -117,7 +142,7 @@
                         bo = rm.config.revealDuration * 1000;
                     }
                 } catch (eBo) {}
-                return bo;
+                return Math.min(bo, JIE_SHI_ZUI_DA_HAO_MIAO);
             }
             function power2InOut(t) {
                 if (t <= 0) return 0;

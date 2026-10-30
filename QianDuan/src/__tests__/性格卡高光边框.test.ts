@@ -64,7 +64,7 @@ describe('性格卡零白填充：hover、聚焦、选中三态均无背景叠�
   it('选中态只动边框与发光令牌，不写任何背景叠加', () => {
     const 体 = 规则体('.mbti-kaPian.beiXuanZhong')
     expect(体).not.toContain('background')
-    expect(体).toContain('border: 1px solid var(--xingge-gao-guang-bian-zhong)')
+    expect(体).toContain('border-color: var(--xingge-gao-guang-bian-ji)')
     expect(体).toContain('--xingge-huxi-an: var(--xingge-huxi-an-xuan)')
     expect(体).not.toContain('box-shadow')
   })
@@ -93,10 +93,33 @@ describe('性格卡高光边框：仅交互态出现局部水墨流动', () => {
 
   it('高光环为恒定实线边框，不再是 conic 渐变环', () => {
     const 体 = 规则体('.mbti-kaPian::after')
-    expect(体).toContain('border: 2px solid var(--xingge-liu-guang-yan)')
+    expect(体).toContain('border: var(--xingge-bian-kuang-kuan) solid var(--xingge-liu-guang-yan)')
     expect(体).not.toContain('conic-gradient')
     expect(体).toContain('opacity: 0')
     expect(体).toContain('pointer-events: none')
+  })
+
+  it('高光环贴住边框盒：外扩一个边框宽、环厚等于边框宽、圆角同步', () => {
+    const 体 = 规则体('.mbti-kaPian::after')
+    expect(体).toContain('inset: calc(var(--xingge-bian-kuang-kuan) * -1)')
+    expect(体).toContain(
+      'border-radius: calc(var(--xingge-nei-yuan-jiao) + var(--xingge-bian-kuang-kuan))',
+    )
+    const 令牌 = 规则体们('.ziliao-kapian').join('\n')
+    expect(令牌).toContain('--xingge-bian-kuang-kuan: 1px')
+    expect(令牌).toContain('--xingge-yuan-jiao: 12px')
+    expect(令牌).toContain(
+      '--xingge-nei-yuan-jiao: calc(var(--xingge-yuan-jiao) - var(--xingge-bian-kuang-kuan))',
+    )
+    expect(规则体('.mbti-kaPian')).toContain(
+      'border: var(--xingge-bian-kuang-kuan) solid var(--ziliao-kuai-biankuang)',
+    )
+    expect(规则体('.mbti-kaPian')).toContain('border-radius: var(--xingge-yuan-jiao)')
+  })
+
+  it('边框内侧不再有第二圈半透明厚环', () => {
+    expect(样式).not.toContain('padding: var(--jiange-2)')
+    expect(规则体('.mbti-kaPian::after')).not.toContain('inset: 0')
   })
 
   it('hover、键盘聚焦各用静息心率周期，选中用运动后心率周期，不复制高光逻辑', () => {
@@ -165,7 +188,7 @@ describe('性格卡高光边框：仅交互态出现局部水墨流动', () => {
     const 体 = 规则体('@supports ((-webkit-mask-composite: xor) or (mask-composite: exclude))')
     expect(体).toContain('.mbti-kaPian::after')
     expect(体.match(/radial-gradient\(/g)).toHaveLength(4)
-    expect(体).toContain('padding: var(--jiange-2)')
+    expect(体).toContain('padding: var(--xingge-bian-kuang-kuan)')
     expect(体).toContain('border-width: 0')
     expect(体).toContain('-webkit-mask-composite: xor')
     expect(体).toContain('mask-composite: exclude')
@@ -174,7 +197,7 @@ describe('性格卡高光边框：仅交互态出现局部水墨流动', () => {
 
   it('不支持 mask 时保留无填充的边框透明度降级', () => {
     const 体 = 规则体('.mbti-kaPian::after')
-    expect(体).toContain('border: 2px solid var(--xingge-liu-guang-yan)')
+    expect(体).toContain('border: var(--xingge-bian-kuang-kuan) solid var(--xingge-liu-guang-yan)')
     expect(体).not.toContain('background:')
     expect(体).not.toContain('mask:')
   })
@@ -209,7 +232,7 @@ describe('性格卡高光边框：仅交互态出现局部水墨流动', () => {
   it('键盘聚焦撤掉全局 outline 改用高亮边框指示', () => {
     const 体 = 规则体('.mbti-kaPian:focus-visible')
     expect(体).toContain('outline: none')
-    expect(体).toContain('border-color: var(--xingge-gao-guang-bian-zhong)')
+    expect(体).toContain('border-color: var(--xingge-gao-guang-bian-ji)')
   })
 
   it('减动效偏好下心跳停转，但悬停与选中保留静态微光', () => {

@@ -98,6 +98,7 @@ function 处理聚焦(): void {
     clearTimeout(失焦定时器)
     失焦定时器 = null
   }
+  if (聚焦中.value) return
   聚焦中.value = true
   描边组件.value?.播放入场()
 }

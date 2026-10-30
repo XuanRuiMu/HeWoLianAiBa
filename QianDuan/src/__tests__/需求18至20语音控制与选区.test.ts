@@ -143,7 +143,7 @@ describe('需求19：语音时长只有一处口径，且与真实播放一致',
     const xiaoXi = { mei_ti_shi_chang_hao_miao: 10000 }
     expect(yuYinShiChangMiao(xiaoXi)).toBe(10)
     expect(geShiHuaYuYinShiChang(xiaoXi)).toBe('10″')
-    expect(yuYinKuanDuPx(xiaoXi)).toBe(120)
+    expect(yuYinKuanDuPx(xiaoXi)).toBe(220)
   })
 
   it('缺时长字段时按音频真实 duration 兜底（WebM/Opus 的 Infinity 用 seek 逼出真实值）', async () => {
@@ -156,7 +156,7 @@ describe('需求19：语音时长只有一处口径，且与真实播放一致',
     ceLiangYuYinShiChang(xiaoXi)
     await vi.waitFor(() => expect(geShiHuaYuYinShiChang(xiaoXi)).toBe('10″'))
     expect(jiaYinPin.beiQiuZhi).toBeGreaterThan(1e100)
-    expect(yuYinKuanDuPx(xiaoXi)).toBe(120)
+    expect(yuYinKuanDuPx(xiaoXi)).toBe(220)
   })
 
   it('同一地址只测一次；测不出时不写脏值也不会反复打网络', async () => {

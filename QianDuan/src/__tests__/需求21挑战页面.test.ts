@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { huoQuFanYi } from '@/config/翻译表'
+import { chuangJianQianTaiCuoWu } from '@/utils/前台错误'
 import type { PaiHangXiangMu, ZuBieGaiKuang } from '@/api/挑战'
 
 const { 路由推 } = vi.hoisted(() => ({ 路由推: vi.fn() }))
@@ -387,6 +388,42 @@ describe('挑战页空态', () => {
     const 包 = await 挂主页()
     expect(包.find('.zubie-kong-ti').exists()).toBe(false)
     expect(包.findAll('.zubie-kong')).toHaveLength(1)
+    包.unmount()
+  })
+})
+
+describe('挑战主页榜单速览按组缓存', () => {
+  it('切组只请求一次，切回缓存组不再请求也不闪骨架屏', async () => {
+    const 包 = await 挂主页()
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(1)
+    await 包.findAll('.zu-anniu')[1]?.trigger('click')
+    await flushPromises()
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(2)
+    await 包.findAll('.zu-anniu')[0]?.trigger('click')
+    await flushPromises()
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(2)
+    expect(包.findAll('.zhaiyao-zhanwei')).toHaveLength(0)
+    expect(包.find('.zhaiyao-qu').attributes('aria-busy')).toBe('false')
+    expect(包.findAll('.zhaiyao-hang')).toHaveLength(5)
+    await 包.findAll('.zu-anniu')[1]?.trigger('click')
+    await flushPromises()
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(2)
+    包.unmount()
+  })
+
+  it('失败不写缓存，重试成功后才写入缓存', async () => {
+    vi.mocked(huoQuPaiHangBang).mockRejectedValueOnce(chuangJianQianTaiCuoWu({ retryable: true }))
+    const 包 = await 挂主页()
+    expect(包.find('.zhaiyao-chongshi').exists()).toBe(true)
+    await 包.find('.zhaiyao-chongshi').trigger('click')
+    await flushPromises()
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(2)
+    expect(包.findAll('.zhaiyao-hang')).toHaveLength(5)
+    await 包.findAll('.zu-anniu')[1]?.trigger('click')
+    await flushPromises()
+    await 包.findAll('.zu-anniu')[0]?.trigger('click')
+    await flushPromises()
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(3)
     包.unmount()
   })
 })

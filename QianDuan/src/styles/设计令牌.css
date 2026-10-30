@@ -192,8 +192,10 @@
   --yuyin-huakuai-chicun: 8px;
   --yuyin-jindu-yuandian-bofang: #1a73e8;
   --yuyin-jindu-yuandian-jingtai: #9e9e9e;
+  --yuyin-yinliang-yuandian: hsl(27.5 92% 60%);
   --yuyin-jindu-yuandian-bian-hua-shi-chang: 160ms;
   --yuyin-jindu-zui-xiao-kuan: 60px;
+  --yuyin-zui-da-kuan: min(260px, 68vw);
   --yuyin-kongzhi-chicun: 28px;
   --yuyin-kongzhi-re-ku: 36px;
   --yuyin-kongzhi-tubiao: 13px;

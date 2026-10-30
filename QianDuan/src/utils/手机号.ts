@@ -1,5 +1,6 @@
 import {
   AsYouType,
+  getCountries,
   getCountryCallingCode,
   isSupportedCountry,
   parsePhoneNumberFromString,
@@ -10,40 +11,145 @@ import { fanYi } from '@/config/翻译表'
 export const DA_LU_QU_HAO = '86'
 export const DA_LU_GUO_JIA: CountryCode = 'CN'
 
-export const QU_HAO_XUAN_XIANG = [
-  { quHao: '86', guoJia: 'CN' as CountryCode, wenAnJian: 'quHaoDaLu' },
-  { quHao: '852', guoJia: 'HK' as CountryCode, wenAnJian: 'quHaoXiangGang' },
-  { quHao: '853', guoJia: 'MO' as CountryCode, wenAnJian: 'quHaoAoMen' },
-  { quHao: '886', guoJia: 'TW' as CountryCode, wenAnJian: 'quHaoTaiWan' },
-  { quHao: '1', guoJia: 'US' as CountryCode, wenAnJian: 'quHaoMeiGuo' },
-  { quHao: '1', guoJia: 'CA' as CountryCode, wenAnJian: 'quHaoJiaNaDa' },
-  { quHao: '81', guoJia: 'JP' as CountryCode, wenAnJian: 'quHaoRiBen' },
-  { quHao: '82', guoJia: 'KR' as CountryCode, wenAnJian: 'quHaoHanGuo' },
-  { quHao: '65', guoJia: 'SG' as CountryCode, wenAnJian: 'quHaoXinJiaPo' },
-  { quHao: '60', guoJia: 'MY' as CountryCode, wenAnJian: 'quHaoMaLaixiYa' },
-  { quHao: '66', guoJia: 'TH' as CountryCode, wenAnJian: 'quHaoTaiGuo' },
-  { quHao: '84', guoJia: 'VN' as CountryCode, wenAnJian: 'quHaoYueNan' },
-  { quHao: '62', guoJia: 'ID' as CountryCode, wenAnJian: 'quHaoYinNi' },
-  { quHao: '63', guoJia: 'PH' as CountryCode, wenAnJian: 'quHaoFeiLvBin' },
-  { quHao: '91', guoJia: 'IN' as CountryCode, wenAnJian: 'quHaoYinDu' },
-  { quHao: '44', guoJia: 'GB' as CountryCode, wenAnJian: 'quHaoYingGuo' },
-  { quHao: '49', guoJia: 'DE' as CountryCode, wenAnJian: 'quHaoDeGuo' },
-  { quHao: '33', guoJia: 'FR' as CountryCode, wenAnJian: 'quHaoFaGuo' },
-  { quHao: '39', guoJia: 'IT' as CountryCode, wenAnJian: 'quHaoYiDaLi' },
-  { quHao: '34', guoJia: 'ES' as CountryCode, wenAnJian: 'quHaoXiBanYa' },
-  { quHao: '7', guoJia: 'RU' as CountryCode, wenAnJian: 'quHaoELuoSi' },
-  { quHao: '61', guoJia: 'AU' as CountryCode, wenAnJian: 'quHaoAoDaLiYa' },
-  { quHao: '64', guoJia: 'NZ' as CountryCode, wenAnJian: 'quHaoXinXiLan' },
-  { quHao: '55', guoJia: 'BR' as CountryCode, wenAnJian: 'quHaoBaXi' },
-  { quHao: '52', guoJia: 'MX' as CountryCode, wenAnJian: 'quHaoMoXiGe' },
-  { quHao: '27', guoJia: 'ZA' as CountryCode, wenAnJian: 'quHaoNanFei' },
-  { quHao: '971', guoJia: 'AE' as CountryCode, wenAnJian: 'quHaoALianQiu' },
-] as const
+type FanYiUiJian = keyof typeof fanYi.ui
 
-export type QuHaoXuanXiang = (typeof QU_HAO_XUAN_XIANG)[number]
+export interface QuHaoXuanXiang {
+  quHao: string
+  guoJia: CountryCode
+  wenAnJian: FanYiUiJian | null
+  mingCheng: string
+  yingWenMing: string
+}
+
+const SHOU_XIE_MING_CHENG: Partial<Record<CountryCode, FanYiUiJian>> = {
+  CN: 'quHaoDaLu',
+  HK: 'quHaoXiangGang',
+  MO: 'quHaoAoMen',
+  TW: 'quHaoTaiWan',
+  US: 'quHaoMeiGuo',
+  CA: 'quHaoJiaNaDa',
+  JP: 'quHaoRiBen',
+  KR: 'quHaoHanGuo',
+  SG: 'quHaoXinJiaPo',
+  MY: 'quHaoMaLaixiYa',
+  TH: 'quHaoTaiGuo',
+  VN: 'quHaoYueNan',
+  ID: 'quHaoYinNi',
+  PH: 'quHaoFeiLvBin',
+  IN: 'quHaoYinDu',
+  GB: 'quHaoYingGuo',
+  DE: 'quHaoDeGuo',
+  FR: 'quHaoFaGuo',
+  IT: 'quHaoYiDaLi',
+  ES: 'quHaoXiBanYa',
+  RU: 'quHaoELuoSi',
+  AU: 'quHaoAoDaLiYa',
+  NZ: 'quHaoXinXiLan',
+  BR: 'quHaoBaXi',
+  MX: 'quHaoMoXiGe',
+  ZA: 'quHaoNanFei',
+  AE: 'quHaoALianQiu',
+}
+
+const QU_HAO_ZHU_GUO: Record<string, CountryCode> = {
+  '1': 'US',
+  '7': 'RU',
+  '39': 'IT',
+  '44': 'GB',
+  '47': 'NO',
+  '61': 'AU',
+  '212': 'MA',
+  '262': 'RE',
+  '290': 'SH',
+  '358': 'FI',
+  '590': 'GP',
+  '599': 'CW',
+}
+
+function chuangJianDiQuMingBiao(yuYan: string): Intl.DisplayNames | null {
+  try {
+    return new Intl.DisplayNames([yuYan], { type: 'region' })
+  } catch {
+    return null
+  }
+}
+
+function chuangJianPaiXuQi(): Intl.Collator | null {
+  try {
+    return new Intl.Collator('zh-Hans-CN', { collation: 'pinyin' })
+  } catch {
+    return null
+  }
+}
+
+const ZHONG_WEN_DI_QU_MING = chuangJianDiQuMingBiao('zh-CN')
+const YING_WEN_DI_QU_MING = chuangJianDiQuMingBiao('en')
+const HAN_ZI_PAI_XU = chuangJianPaiXuQi()
+
+function duDiQuMing(biao: Intl.DisplayNames | null, guoJia: CountryCode): string {
+  if (!biao) return String(guoJia)
+  try {
+    const 名 = biao.of(guoJia)
+    return 名 && 名 !== '' ? 名 : String(guoJia)
+  } catch {
+    return String(guoJia)
+  }
+}
+
+function biJiaoMingCheng(甲: string, 乙: string): number {
+  if (HAN_ZI_PAI_XU) return HAN_ZI_PAI_XU.compare(甲, 乙)
+  return 甲.localeCompare(乙, 'zh-Hans-CN')
+}
+
+function chuangJianQuHaoXuanXiang(): QuHaoXuanXiang[] {
+  const 原始 = getCountries().map((国) => {
+    const 键 = SHOU_XIE_MING_CHENG[国] ?? null
+    return {
+      quHao: String(getCountryCallingCode(国)),
+      guoJia: 国,
+      wenAnJian: 键,
+      mingCheng: 键 ? fanYi.ui[键] : duDiQuMing(ZHONG_WEN_DI_QU_MING, 国),
+      yingWenMing: duDiQuMing(YING_WEN_DI_QU_MING, 国),
+    }
+  })
+  const 排序后 = 原始.sort((甲, 乙) => {
+    if (甲.guoJia === DA_LU_GUO_JIA) return -1
+    if (乙.guoJia === DA_LU_GUO_JIA) return 1
+    return (
+      biJiaoMingCheng(甲.mingCheng, 乙.mingCheng) ||
+      biJiaoMingCheng(甲.yingWenMing, 乙.yingWenMing) ||
+      甲.guoJia.localeCompare(乙.guoJia)
+    )
+  })
+  const 分组 = new Map<string, QuHaoXuanXiang[]>()
+  for (const 项 of 排序后) {
+    const 组 = 分组.get(项.quHao)
+    if (组) 组.push(项)
+    else 分组.set(项.quHao, [项])
+  }
+  const 结果: QuHaoXuanXiang[] = []
+  const 已收 = new Set<string>()
+  for (const 项 of 排序后) {
+    if (已收.has(项.quHao)) continue
+    已收.add(项.quHao)
+    const 组 = 分组.get(项.quHao) ?? [项]
+    if (组.length > 1) {
+      const 主国 = QU_HAO_ZHU_GUO[项.quHao]
+      组.sort((甲, 乙) => {
+        const 甲主 = 甲.guoJia === 主国 ? 0 : 1
+        const 乙主 = 乙.guoJia === 主国 ? 0 : 1
+        return 甲主 - 乙主 || biJiaoMingCheng(甲.mingCheng, 乙.mingCheng)
+      })
+    }
+    结果.push(...组)
+  }
+  return 结果
+}
+
+export const QU_HAO_XUAN_XIANG: QuHaoXuanXiang[] = chuangJianQuHaoXuanXiang()
 
 export function quHaoWenAn(项: QuHaoXuanXiang): string {
-  return fanYi.ui[项.wenAnJian] || String(项.guoJia)
+  return 项.wenAnJian ? fanYi.ui[项.wenAnJian] || 项.mingCheng : 项.mingCheng
 }
 
 export function guiYiQuHao(zhi: unknown): string {

@@ -452,7 +452,6 @@
             @submit.prevent="zhiXingFeiDaLuZhuCe"
           >
               <h2 class="fei-daLu-biao-ti">{{ huoQuFanYi('ui', 'feiDaLuZhuCeBiaoTi') }}</h2>
-              <p class="fei-daLu-shuo-ming">{{ huoQuFanYi('ui', 'feiDaLuZhuCeShuoMing') }}</p>
 
               <div class="shuru-zu" :class="{ shangFu: feiDaLuShouJiShangFu }">
                 <div class="shuru-hang">
@@ -2332,10 +2331,11 @@ async function zhiXingZhuCe() {
 
 .gu-ding-qu-hao {
   flex: none;
+  padding-top: calc(var(--jiange-zhong) + var(--jiange-2));
   padding-bottom: var(--jiange-10);
   color: var(--ka-ci-wen);
   font-size: var(--shuru-kuang-zihao);
-  line-height: var(--shuru-kuang-hangao);
+  line-height: normal;
   letter-spacing: 0.02em;
   user-select: none;
 }
@@ -2386,14 +2386,6 @@ async function zhiXingZhuCe() {
   outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
   outline-offset: var(--jujiao-huan-pian-yi);
   border-radius: var(--jiange-4);
-}
-
-.fei-daLu-shuo-ming {
-  margin: 0 0 var(--jiange-zhong);
-  font-size: var(--ziti-xiao);
-  line-height: 1.6;
-  color: var(--ka-san-wen);
-  text-align: left;
 }
 
 .fei-daLu-biaodan {

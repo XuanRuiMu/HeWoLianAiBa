@@ -39,6 +39,7 @@
             v-model="搜索词"
             type="text"
             class="qu-hao-sou-suo-shu-ru"
+            data-kuang-ti="fangkuang"
             :placeholder="huoQuFanYi('ui', 'quHaoSouSuoZhanWei')"
             :aria-label="huoQuFanYi('ui', 'quHaoSouSuoZhanWei')"
             autocomplete="off"
@@ -60,7 +61,7 @@
             <span class="qu-hao-tiao-ming">{{ quHaoWenAn(项) }}</span>
           </button>
           <p v-if="候选.length === 0" class="qu-hao-kong" role="status">
-            {{ huoQuFanYi('tongYong', 'wuKeXuanXiang') }}
+            {{ huoQuFanYi('ui', 'quHaoWuPiPei') }}
           </p>
         </div>
       </div>
@@ -92,12 +93,18 @@ const 浮层样式 = ref<Record<string, string>>({})
 
 const 按钮文案 = computed(() => huoQuFanYi('ui', 'xuanZeQuHao') + '：+' + 属性.模型值)
 
+function guiYiSouSuoCi(词: string): string {
+  return 词.trim().toLowerCase().replace(/[\s+]/g, '')
+}
+
 const 候选 = computed<QuHaoXuanXiang[]>(() => {
-  const 词 = 搜索词.value.trim().toLowerCase()
+  const 词 = guiYiSouSuoCi(搜索词.value)
   if (词 === '') return [...QU_HAO_XUAN_XIANG]
   return QU_HAO_XUAN_XIANG.filter((项) => {
-    const 名 = quHaoWenAn(项).toLowerCase()
-    return 名.includes(词) || 项.quHao.includes(词) || String(项.guoJia).toLowerCase().includes(词)
+    if (项.quHao.includes(词)) return true
+    if (guiYiSouSuoCi(quHaoWenAn(项)).includes(词)) return true
+    if (项.guoJia.toLowerCase().includes(词)) return true
+    return guiYiSouSuoCi(项.yingWenMing).includes(词)
   })
 })
 
@@ -155,7 +162,7 @@ function qieHuan(): void {
   展开.value = true
   nextTick(() => {
     量取浮层()
-    搜索框.value?.focus()
+    搜索框.value?.focus({ preventScroll: true })
     window.addEventListener('resize', 量取浮层)
     window.addEventListener('scroll', 量取浮层, true)
     document.addEventListener('pointerdown', 处理外部点击, true)
@@ -168,14 +175,14 @@ function xuanZe(项: QuHaoXuanXiang): void {
     发出('update:模型值', 项.quHao)
   }
   guanBi()
-  触发行.value?.focus()
+  触发行.value?.focus({ preventScroll: true })
 }
 
 function 处理按键(事件: KeyboardEvent): void {
   if (事件.key === 'Escape') {
     事件.stopPropagation()
     guanBi()
-    触发行.value?.focus()
+    触发行.value?.focus({ preventScroll: true })
     return
   }
   if (事件.key === 'ArrowDown' || 事件.key === 'ArrowUp') {
@@ -214,15 +221,16 @@ onBeforeUnmount(卸载监听)
 
 .qu-hao-chu {
   display: inline-flex;
+  align-self: stretch;
   align-items: center;
   gap: var(--jiange-4);
-  padding: 0 0 var(--jiange-10);
+  padding: calc(var(--jiange-zhong) + var(--jiange-2)) 0 var(--jiange-10);
   background: transparent;
   border: none;
   color: var(--ka-ci-wen, var(--wenben-ciuse));
   font-family: inherit;
   font-size: var(--shuru-kuang-zihao);
-  line-height: var(--shuru-kuang-hangao);
+  line-height: normal;
   letter-spacing: 0.02em;
   cursor: pointer;
   transition: color 0.2s var(--quxian-biao-zhun);
@@ -284,17 +292,20 @@ onBeforeUnmount(卸载监听)
   box-sizing: border-box;
   width: 100%;
   padding: var(--jiange-6) var(--jiange-xiao);
-  background: transparent;
+  background: var(--touxiang-touming-beijing, transparent);
   border: var(--renzheng-ka-bian-kuan) solid var(--ka-jin-xian, var(--biankuang-yanse));
-  border-radius: var(--jiange-4);
+  border-radius: var(--shuru-kuang-yuanjiao);
   color: var(--ka-zhu-wen, var(--wenben-zhuse));
   font-family: inherit;
   font-size: var(--ziti-xiao);
+  line-height: normal;
   outline: none;
 }
 
+.qu-hao-sou-suo-shu-ru:focus,
 .qu-hao-sou-suo-shu-ru:focus-visible {
   border-color: var(--ka-jin, var(--zhuse));
+  outline: none;
 }
 
 .qu-hao-lun-ti {

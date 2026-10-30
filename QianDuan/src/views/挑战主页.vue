@@ -198,55 +198,50 @@
               {{ bangDanWo }}
             </p>
           </div>
-          <div class="zhaiyao-cao">
-            <div v-if="bangDanZhuangTai === 'jiaZai'" class="zhaiyao-nei zhaiyao-gu" role="status">
-              <span class="ping-mu-wai">{{ huoQuFanYi('tiaoZhan', 'jiaZaiZhong') }}</span>
-              <div
-                v-for="序 in 5"
-                :key="序"
-                class="zhaiyao-zhanwei"
-                aria-hidden="true"
-                :style="{ '--hang-xu-hao': 序 - 1 }"
-              >
-                <span class="zhanwei-kuai zhanwei-kuai--pai" />
-                <span class="zhanwei-kuai zhanwei-kuai--ming" />
-                <span class="zhanwei-kuai zhanwei-kuai--fen" />
+          <div ref="zhaiyaoCao" class="zhaiyao-cao">
+            <div :key="bangDanZuBie" class="zhaiyao-ceng">
+              <div v-if="bangDanZhuangTai === 'jiaZai'" class="zhaiyao-nei zhaiyao-gu" role="status">
+                <span class="ping-mu-wai">{{ huoQuFanYi('tiaoZhan', 'jiaZaiZhong') }}</span>
+                <div v-for="序 in 骨架行数" :key="序" class="zhaiyao-zhanwei" aria-hidden="true">
+                  <span class="zhanwei-kuai zhanwei-kuai--pai" />
+                  <span class="zhanwei-kuai zhanwei-kuai--ming" />
+                  <span class="zhanwei-kuai zhanwei-kuai--fen" />
+                </div>
               </div>
+              <div v-else-if="bangDanZhuangTai === 'cuoWu'" class="zhaiyao-nei">
+                <TiaoZhanKongTai>{{ bangDanCuoWu?.lianAiWenAn }}</TiaoZhanKongTai>
+                <button
+                  v-if="bangDanCuoWu?.retryable"
+                  class="zhaiyao-chongshi"
+                  type="button"
+                  @click="jiaZaiBangDan"
+                >
+                  {{ huoQuFanYi('tongYong', 'qianTaiCuoWuChongShi') }}
+                </button>
+              </div>
+              <div v-else-if="bangDanZhuangTai === 'kong'" class="zhaiyao-nei">
+                <TiaoZhanKongTai>{{ huoQuFanYi('tiaoZhan', 'zanWuPaiHang') }}</TiaoZhanKongTai>
+              </div>
+              <ol v-else class="zhaiyao-liebiao">
+                <li
+                  v-for="(xiang, suoYin) in bangDanLieBiao"
+                  :key="`${bangDanZuBie}-${suoYin}`"
+                  class="zhaiyao-hang"
+                  :class="{ 'zhaiyao-hang--yi': suoYin === 0 }"
+                >
+                  <span class="zhaiyao-paiming">{{ xiang.pai_ming }}</span>
+                  <span class="zhaiyao-wen">
+                    <span class="zhaiyao-ming">{{ xiang.yong_hu_ming }}</span>
+                    <span class="zhaiyao-duan">{{ xiang.duan_wei }}</span>
+                  </span>
+                  <span class="zhaiyao-jifen">
+                    {{ xiang.ji_fen }}<span class="jifen-danwei">{{
+                      huoQuFanYi('tiaoZhan', 'fenDanWei')
+                    }}</span>
+                  </span>
+                </li>
+              </ol>
             </div>
-            <div v-else-if="bangDanZhuangTai === 'cuoWu'" class="zhaiyao-nei">
-              <TiaoZhanKongTai>{{ bangDanCuoWu?.lianAiWenAn }}</TiaoZhanKongTai>
-              <button
-                v-if="bangDanCuoWu?.retryable"
-                class="zhaiyao-chongshi"
-                type="button"
-                @click="jiaZaiBangDan"
-              >
-                {{ huoQuFanYi('tongYong', 'qianTaiCuoWuChongShi') }}
-              </button>
-            </div>
-            <div v-else-if="bangDanZhuangTai === 'kong'" class="zhaiyao-nei">
-              <TiaoZhanKongTai>{{ huoQuFanYi('tiaoZhan', 'zanWuPaiHang') }}</TiaoZhanKongTai>
-            </div>
-            <ol v-else class="zhaiyao-liebiao">
-              <li
-                v-for="(xiang, suoYin) in bangDanLieBiao"
-                :key="`${bangDanZuBie}-${suoYin}`"
-                class="zhaiyao-hang"
-                :class="{ 'zhaiyao-hang--yi': suoYin === 0 }"
-                :style="{ '--hang-xu-hao': suoYin }"
-              >
-                <span class="zhaiyao-paiming">{{ xiang.pai_ming }}</span>
-                <span class="zhaiyao-wen">
-                  <span class="zhaiyao-ming">{{ xiang.yong_hu_ming }}</span>
-                  <span class="zhaiyao-duan">{{ xiang.duan_wei }}</span>
-                </span>
-                <span class="zhaiyao-jifen">
-                  {{ xiang.ji_fen }}<span class="jifen-danwei">{{
-                    huoQuFanYi('tiaoZhan', 'fenDanWei')
-                  }}</span>
-                </span>
-              </li>
-            </ol>
           </div>
           <button class="zhaiyao-quanbu" type="button" @click="qianWangPaiHangBang">
             {{ huoQuFanYi('tiaoZhan', 'chaKanWanZhengBang') }}
@@ -421,8 +416,14 @@ const bangDanZuBie = ref<ZuBie>('nan_nv')
 const bangDanLieBiao = ref<PaiHangXiangMu[]>([])
 const bangDanZhuangTai = ref<榜单状态>('jiaZai')
 const bangDanCuoWu = ref<QianTaiCuoWu | null>(null)
+const bangDanHuanCun = new Map<ZuBie, PaiHangXiangMu[]>()
+const 骨架行数 = 3
 let bangDanYiDongGuo = false
 let bangDanDaiCi = 0
+
+const zhaiyaoCao = ref<HTMLElement | null>(null)
+let 高度代次 = 0
+let 高度释放计时 = 0
 
 const zuQieKuang = ref<HTMLElement | null>(null)
 const zuZhishiLiangZhun = ref(false)
@@ -534,27 +535,85 @@ async function jiaZaiPeiZhi(): Promise<void> {
   }
 }
 
-async function jiaZaiBangDan() {
+function 应用榜单(行: PaiHangXiangMu[]): void {
+  bangDanLieBiao.value = 行.slice(0, 5)
+  bangDanZhuangTai.value = bangDanLieBiao.value.length > 0 ? 'bangDan' : 'kong'
+}
+
+function 降低动效(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+function 榜单内容高(): number {
+  const 内容 = zhaiyaoCao.value?.firstElementChild
+  return 内容 instanceof HTMLElement ? 内容.getBoundingClientRect().height : 0
+}
+
+function 锁定榜单高(): void {
+  const 容器 = zhaiyaoCao.value
+  if (容器 === null || 降低动效()) return
+  window.clearTimeout(高度释放计时)
+  高度代次 += 1
+  容器.style.height = `${容器.getBoundingClientRect().height}px`
+  void 容器.offsetHeight
+}
+
+function 过渡榜单高(): void {
+  const 容器 = zhaiyaoCao.value
+  if (容器 === null) return
+  window.clearTimeout(高度释放计时)
+  const 代 = ++高度代次
+  const 目标 = 榜单内容高()
+  const 当前 = 容器.getBoundingClientRect().height
+  const 差 = Math.abs(目标 - 当前)
+  if (降低动效() || 目标 <= 0 || 差 < 1) {
+    容器.style.height = ''
+    return
+  }
+  const 时长 = Math.min(440, Math.max(220, Math.round(差 * 1.6)))
+  容器.style.setProperty('--tz-gao-dong', `${时长}ms`)
+  容器.style.height = `${目标}px`
+  高度释放计时 = window.setTimeout(() => {
+    if (代 !== 高度代次) return
+    容器.style.height = ''
+    容器.style.removeProperty('--tz-gao-dong')
+  }, 时长 + 60)
+}
+
+async function jiaZaiBangDan(): Promise<boolean> {
   const benCiZuBie = bangDanZuBie.value
+  const 缓存 = bangDanHuanCun.get(benCiZuBie)
+  if (缓存 !== undefined) {
+    bangDanCuoWu.value = null
+    应用榜单(缓存)
+    return true
+  }
   const benCiDaiCi = ++bangDanDaiCi
   bangDanLieBiao.value = []
   bangDanCuoWu.value = null
   bangDanZhuangTai.value = 'jiaZai'
+  await nextTick()
+  过渡榜单高()
   try {
     const jieGuo = await huoQuPaiHangBang(benCiZuBie)
-    if (benCiDaiCi !== bangDanDaiCi) return
-    bangDanLieBiao.value = jieGuo.slice(0, 5)
-    bangDanZhuangTai.value = bangDanLieBiao.value.length > 0 ? 'bangDan' : 'kong'
+    if (benCiDaiCi !== bangDanDaiCi) return false
+    bangDanHuanCun.set(benCiZuBie, jieGuo)
+    应用榜单(jieGuo)
   } catch (错误: unknown) {
-    if (benCiDaiCi !== bangDanDaiCi) return
+    if (benCiDaiCi !== bangDanDaiCi) return false
     const zhengChangHua = 归一前台错误(错误)
-    if (!zhengChangHua.xianShi) {
+    if (zhengChangHua.xianShi) {
+      bangDanCuoWu.value = zhengChangHua
+      bangDanZhuangTai.value = 'cuoWu'
+    } else {
       bangDanZhuangTai.value = 'kong'
-      return
     }
-    bangDanCuoWu.value = zhengChangHua
-    bangDanZhuangTai.value = 'cuoWu'
   }
+  await nextTick()
+  if (benCiDaiCi !== bangDanDaiCi) return false
+  过渡榜单高()
+  return false
 }
 
 function 量ZuZhishi() {
@@ -572,14 +631,19 @@ function 量ZuZhishi() {
 
 async function chongShiQuanBu() {
   await chongShiZhuShuJu()
+  bangDanHuanCun.clear()
   await jiaZaiBangDan()
 }
 
-function qieHuanBangDanZu(zuBie: ZuBie) {
+async function qieHuanBangDanZu(zuBie: ZuBie): Promise<void> {
   if (bangDanZuBie.value === zuBie) return
   bangDanYiDongGuo = true
+  锁定榜单高()
   bangDanZuBie.value = zuBie
-  void jiaZaiBangDan()
+  const 命中缓存 = await jiaZaiBangDan()
+  if (!命中缓存) return
+  await nextTick()
+  过渡榜单高()
 }
 
 watch(bangDanZuBie, () => {
@@ -757,6 +821,7 @@ onBeforeUnmount(() => {
   if (yiSuoDingGunDong) document.body.style.overflow = yeMianYuanYiChu
   尺寸观察?.disconnect()
   尺寸观察 = null
+  window.clearTimeout(高度释放计时)
 })
 </script>
 
@@ -786,13 +851,11 @@ onBeforeUnmount(() => {
   --tz-dan-ru-dong: 180ms;
   --tz-ka-dong: 200ms;
   --tz-xian-kuan: 1px;
-  --tz-hang-shu: 5;
   --tz-hang-nei: calc(var(--tz-zi-zheng) * 1.4 + var(--jiange-2) + var(--tz-zi-xiao) * 1.4);
   --tz-hang-gao: calc(var(--tz-hang-nei) + var(--jiange-xiao) * 2 + var(--tz-xian-kuan));
-  --tz-liebiao-gao: calc(var(--tz-hang-gao) * var(--tz-hang-shu));
   --tz-wo-gao: calc(var(--tz-zi-xiao) * 1.5);
-  --tz-hang-cuo: calc(var(--moshi-kapian-dong-xiao) / 6);
-  --tz-hang-ru-yi: var(--jiange-6);
+  --tz-gao-dong: 240ms;
+  --tz-gao-quxian: cubic-bezier(0.33, 0, 0.67, 1);
   width: 100%;
   max-width: var(--tz-kuan);
   margin: 0 auto;
@@ -1304,9 +1367,15 @@ onBeforeUnmount(() => {
 }
 
 .zhaiyao-cao {
+  display: block;
+  overflow: hidden;
+  transition: height var(--tz-gao-dong) var(--tz-gao-quxian);
+}
+
+.zhaiyao-ceng {
   display: flex;
   flex-direction: column;
-  min-height: var(--tz-liebiao-gao);
+  animation: zhaiyao-ceng-ru var(--tz-ka-dong) ease-out both;
 }
 
 .zhaiyao-nei {
@@ -1317,13 +1386,11 @@ onBeforeUnmount(() => {
 
 .zhaiyao-gu {
   gap: 0;
-  min-height: var(--tz-liebiao-gao);
 }
 
 .zhaiyao-liebiao {
   display: flex;
   flex-direction: column;
-  min-height: var(--tz-liebiao-gao);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1337,8 +1404,6 @@ onBeforeUnmount(() => {
   min-height: var(--tz-hang-gao);
   padding: var(--jiange-xiao) 0;
   border-bottom: 1px solid var(--tz-xian-ruo);
-  animation: zhaiyao-hang-ru var(--tz-ka-dong) var(--quxian-tan-chu) both;
-  animation-delay: calc(var(--hang-xu-hao, 0) * var(--tz-hang-cuo));
 }
 
 .zhaiyao-hang:last-child {
@@ -1644,10 +1709,10 @@ onBeforeUnmount(() => {
   }
 }
 
-@keyframes zhaiyao-hang-ru {
+@keyframes zhaiyao-ceng-ru {
   from {
     opacity: 0;
-    transform: translateY(var(--tz-hang-ru-yi));
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -1684,7 +1749,8 @@ onBeforeUnmount(() => {
   .jindu-dian,
   .zhaiyao-quanbu,
   .zhaiyao-chongshi,
-  .zhaiyao-hang,
+  .zhaiyao-cao,
+  .zhaiyao-ceng,
   .xingbie-zhezhao,
   .xingbie-tanchuang {
     transition: none;
