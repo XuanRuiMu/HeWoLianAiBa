@@ -8,6 +8,7 @@ import { yanZhengMaShiFouZhengQue, shanChuYanZhengMa, YAN_ZHENG_MA_YONG_TU } fro
 import { zhongXinQianMingMeiTiURL } from './媒体存储'
 import { jiLuShenJiRiZhi } from './审计日志'
 import { yinBiShouJiHao } from '../utils/掩码'
+import { guiYiWeiGuoJiHao, jieXiShouJiHao, shiFouDaLuHao } from '../utils/手机号'
 import { 内部转展示, 内部转用户形态, 解析性别 } from '../utils/性别'
 import { 取管理角色, 取角色能力, type GuanLiJiaoSe, type GuanLiNengLi } from '../utils/角色能力'
 import { 包装依赖调用 } from '../utils/依赖错误'
@@ -22,6 +23,7 @@ export interface ZhuCeCanShu {
   tong_yi_xie_yi: boolean
   chu_sheng_ri_qi: string
   ip: string
+  jing_wai?: boolean
 }
 
 export interface DengLuCanShu {
@@ -74,7 +76,8 @@ export function yingSheYongHu(row: Record<string, unknown>): YongHuXinXi {
 }
 
 export function yanZhengShouJiHaoGeShi(shouJiHao: string): boolean {
-  return peiZhi.shouJiHao.zhengZe.test(shouJiHao)
+  if (!peiZhi.shouJiHao.zhengZe.test(shouJiHao)) return false
+  return jieXiShouJiHao(shouJiHao).heFa
 }
 
 export function jiSuanZhouSuiNianLing(
@@ -143,9 +146,10 @@ export function yanZhengMiMaFuZaDu(miMa: string): {
 export async function anShouJiHaoChaYongHu(
   shouJiHao: string,
 ): Promise<YongHuXinXi | null> {
+  const guoJiHao = guiYiWeiGuoJiHao(shouJiHao)
   const jieGuo = await 数据库.query(
-    `SELECT * FROM "用户" WHERE "手机号" = $1 LIMIT 1`,
-    [shouJiHao],
+    `SELECT * FROM "用户" WHERE "手机号" IN ($1, $2) LIMIT 1`,
+    [guoJiHao, shouJiHao],
   )
   if (jieGuo.rows.length === 0) return null
   return yingSheYongHu(jieGuo.rows[0])
@@ -177,7 +181,7 @@ async function jiLuDengLuShiBai(
     jiLuShenJiRiZhi({
       ip,
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'dengLuShiBai'),
-      xiang_qing: { shou_ji_hao: shouJiHao, ci_shu: dangQian },
+      xiang_qing: { shou_ji_hao: yinBiShouJiHao(shouJiHao), ci_shu: dangQian },
       lei_xing: '安全',
     }),
   )
@@ -236,17 +240,27 @@ export async function zhuCe(
     return { cheng_gong: false, cuo_wu_ma: 'XIAN_LIU', ti_shi: huoQuFanYi('renZheng', 'tiYanBanManYuan') }
   }
 
-  const yiCunZai = await anShouJiHaoChaYongHu(canShu.shou_ji_hao)
+  const guoJiHao = guiYiWeiGuoJiHao(canShu.shou_ji_hao)
+  const yiCunZai = await anShouJiHaoChaYongHu(guoJiHao)
   if (yiCunZai) {
     return { cheng_gong: false, cuo_wu_ma: 'CHONG_TU', ti_shi: huoQuFanYi('renZheng', 'shouJiHaoYiZhuCe') }
   }
 
-  const maZhengQue = await yanZhengMaShiFouZhengQue(
-    canShu.shou_ji_hao,
-    canShu.yan_zheng_ma,
-  )
-  if (!maZhengQue) {
-    return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'yanZhengMaCuoWu') }
+  if (canShu.jing_wai === true) {
+    if (shiFouDaLuHao(guoJiHao)) {
+      return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'feiDaLuZhuCeBuShouDaLuHao') }
+    }
+  } else {
+    if (!shiFouDaLuHao(guoJiHao)) {
+      return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'zhiJieShouDaLuHao') }
+    }
+    const maZhengQue = await yanZhengMaShiFouZhengQue(
+      guoJiHao,
+      canShu.yan_zheng_ma,
+    )
+    if (!maZhengQue) {
+      return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'yanZhengMaCuoWu') }
+    }
   }
 
   const qingLiYongHuMing = canShu.yong_hu_ming.trim()
@@ -266,7 +280,7 @@ export async function zhuCe(
        VALUES ($1, $2, $3, false, $4)
        RETURNING *`,
       [
-        canShu.shou_ji_hao,
+        guoJiHao,
         qingLiYongHuMing,
         miMaHaXi,
         canShu.chu_sheng_ri_qi.trim(),
@@ -280,12 +294,12 @@ export async function zhuCe(
     throw cuoWu
   }
   const yongHu = yingSheYongHu(chaRuJieGuo.rows[0])
-  await shanChuYanZhengMa(canShu.shou_ji_hao)
+  await shanChuYanZhengMa(guoJiHao)
   await jiLuShenJiRiZhi({
     yong_hu_id: yongHu.id,
     ip: canShu.ip,
     shi_jian_lei_xing: huoQuFanYi('shenJi', 'zhuCeChengGong'),
-    xiang_qing: { shou_ji_hao: canShu.shou_ji_hao },
+    xiang_qing: { shou_ji_hao: yinBiShouJiHao(guoJiHao) },
   })
 
   const lingPai = shengChengLingPai({
@@ -329,26 +343,28 @@ export async function dengLu(
     return { cheng_gong: false, cuo_wu_ma: '参数错误', ti_shi: huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu') }
   }
 
-  if (await dengLuShiBaiShiFouChaoGuo(canShu.shou_ji_hao)) {
+  const guoJiHao = guiYiWeiGuoJiHao(canShu.shou_ji_hao)
+  if (await dengLuShiBaiShiFouChaoGuo(guoJiHao)) {
     return { cheng_gong: false, cuo_wu_ma: '尝试过频', ti_shi: huoQuFanYi('renZheng', 'dengLuShiBaiPinFan') }
   }
 
-  const yongHu = await 包装依赖调用('postgres', () => anShouJiHaoChaYongHu(canShu.shou_ji_hao))
+  const yongHu = await 包装依赖调用('postgres', () => anShouJiHaoChaYongHu(guoJiHao))
   if (!yongHu) {
-    await jiLuDengLuShiBai(canShu.shou_ji_hao, canShu.ip)
+    await jiLuDengLuShiBai(guoJiHao, canShu.ip)
     await bcrypt.hash(canShu.mi_ma, 12)
     return { cheng_gong: false, cuo_wu_ma: '凭据错误', ti_shi: huoQuFanYi('renZheng', 'zhangHaoHuoMiMaCuoWu') }
   }
 
   const miMaHaXiJieGuo = await 包装依赖调用('postgres', () =>
-    数据库.query(`SELECT "密码哈希" FROM "用户" WHERE "手机号" = $1 LIMIT 1`, [
+    数据库.query(`SELECT "密码哈希" FROM "用户" WHERE "手机号" IN ($1, $2) LIMIT 1`, [
+      guoJiHao,
       canShu.shou_ji_hao,
     ]),
   )
   const miMaHaXi = miMaHaXiJieGuo.rows[0]?.密码哈希 ? String(miMaHaXiJieGuo.rows[0].密码哈希) : ''
   const miMaZhengQue = await bcrypt.compare(canShu.mi_ma, miMaHaXi)
   if (!miMaZhengQue) {
-    const ciShu = await jiLuDengLuShiBai(canShu.shou_ji_hao, canShu.ip)
+    const ciShu = await jiLuDengLuShiBai(guoJiHao, canShu.ip)
     if (ciShu >= peiZhi.xianLiu.dengLu.zuiDa) {
       return { cheng_gong: false, cuo_wu_ma: '尝试过频', ti_shi: huoQuFanYi('renZheng', 'dengLuShiBaiPinFan') }
     }
@@ -362,18 +378,18 @@ export async function dengLu(
     await 包装依赖调用('postgres', () =>
       数据库.query(`UPDATE "用户" SET "密码哈希" = $1, "更新时间" = NOW() WHERE "手机号" = $2`, [
         xinMiMaHaXi,
-        canShu.shou_ji_hao,
+        guoJiHao,
       ]),
     )
   }
 
-  await 包装依赖调用('redis', () => qingChuDengLuShiBai(canShu.shou_ji_hao))
+  await 包装依赖调用('redis', () => qingChuDengLuShiBai(guoJiHao))
   await 包装依赖调用('postgres', () =>
     jiLuShenJiRiZhi({
       yong_hu_id: yongHu.id,
       ip: canShu.ip,
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'dengLuChengGong'),
-      xiang_qing: { shou_ji_hao: canShu.shou_ji_hao },
+      xiang_qing: { shou_ji_hao: yinBiShouJiHao(guoJiHao) },
     }),
   )
 
@@ -422,9 +438,10 @@ export async function chongZhiMiMa(
     return { cheng_gong: false, ti_shi: fuZaDu.ti_shi }
   }
 
-  const yongHu = await anShouJiHaoChaYongHu(canShu.shou_ji_hao)
+  const guoJiHao = guiYiWeiGuoJiHao(canShu.shou_ji_hao)
+  const yongHu = await anShouJiHaoChaYongHu(guoJiHao)
   const maZhengQue = await yanZhengMaShiFouZhengQue(
-    canShu.shou_ji_hao,
+    guoJiHao,
     canShu.yan_zheng_ma,
     YAN_ZHENG_MA_YONG_TU.chongZhiMiMa,
   )
@@ -434,17 +451,17 @@ export async function chongZhiMiMa(
 
   const xinMiMaHaXi = await bcrypt.hash(canShu.xin_mi_ma, 12)
   await 数据库.query(
-    `UPDATE "用户" SET "密码哈希" = $1, "更新时间" = NOW() WHERE "手机号" = $2`,
-    [xinMiMaHaXi, canShu.shou_ji_hao],
+    `UPDATE "用户" SET "密码哈希" = $1, "更新时间" = NOW() WHERE "手机号" IN ($2, $3)`,
+    [xinMiMaHaXi, guoJiHao, canShu.shou_ji_hao],
   )
   await cheXiaoYongHuSuoYouRefreshToken(yongHu.id)
   await xieRuCheXiaoShiJianCuo(yongHu.id)
-  await shanChuYanZhengMa(canShu.shou_ji_hao, YAN_ZHENG_MA_YONG_TU.chongZhiMiMa)
+  await shanChuYanZhengMa(guoJiHao, YAN_ZHENG_MA_YONG_TU.chongZhiMiMa)
   await jiLuShenJiRiZhi({
     yong_hu_id: yongHu.id,
     ip: canShu.ip,
     shi_jian_lei_xing: huoQuFanYi('shenJi', 'chongZhiMiMa'),
-    xiang_qing: { shou_ji_hao: yinBiShouJiHao(canShu.shou_ji_hao) },
+    xiang_qing: { shou_ji_hao: yinBiShouJiHao(guoJiHao) },
   })
 
   return { cheng_gong: true, ti_shi: huoQuFanYi('renZheng', 'chongZhiMiMaChengGong') }
@@ -509,7 +526,7 @@ export async function gengGaiMiMa(
     yong_hu_id: canShu.yong_hu_id,
     ip: canShu.ip,
     shi_jian_lei_xing: huoQuFanYi('shenJi', 'xiuGaiMiMa'),
-    xiang_qing: { shou_ji_hao: shiJiShouJiHao },
+    xiang_qing: { shou_ji_hao: yinBiShouJiHao(shiJiShouJiHao) },
   })
 
   return { cheng_gong: true, ti_shi: huoQuFanYi('renZheng', 'xiuGaiMiMaChengGong') }

@@ -40,7 +40,6 @@
             <HengTiaoShuRuKuang
               ref="shouJiHaoKuang"
               标识="zhaohui-shoujihao"
-              :前缀="huoQuFanYi('ui', 'shouJiHaoGuoJiQuHao')"
               :模型值="shouJiHao"
               类型="tel"
               :最大长度="11"
@@ -54,7 +53,11 @@
               @geng-xin="shouJiHao = $event"
               @shu-ru="qingLiTiShi"
               @shi-jiao="shouJiHaoShiJiao"
-            />
+            >
+              <template #前缀>
+                <span class="gu-ding-qu-hao">+{{ DA_LU_QU_HAO }}</span>
+              </template>
+            </HengTiaoShuRuKuang>
             <p v-if="dangQianBuZhou === 1 && shouJiHaoCuoWuWenBen !== ''" class="zhaohui-zi-duan-ti-shi" role="alert">
               {{ shouJiHaoCuoWuWenBen }}
             </p>
@@ -83,8 +86,6 @@
                 自动完成="one-time-code"
                 :上浮="yanZhengMaShangFu"
                 必填
-                包裹类="yanzhengma-zu"
-                内层类="yanzhengma-shuru-qu"
                 :标签="huoQuFanYi('ui', 'yanZhengMa')"
                 @geng-xin="yanZhengMa = $event"
                 @shu-ru="qingLiTiShi"
@@ -113,7 +114,6 @@
                 自动完成="new-password"
                 :上浮="xinMiMaShangFu"
                 必填
-                包裹类="mima-zu"
                 :标签="huoQuFanYi('renZheng', 'xinMiMa')"
                 @geng-xin="xinMiMa = $event"
                 @shu-ru="qingLiTiShi"
@@ -167,7 +167,6 @@
                 自动完成="new-password"
                 :上浮="queRenMiMaShangFu"
                 必填
-                包裹类="mima-zu"
                 :标签="huoQuFanYi('renZheng', 'queRenXinMiMa')"
                 @geng-xin="queRenXinMiMa = $event"
                 @shu-ru="qingLiTiShi"
@@ -267,6 +266,7 @@ import { huoQuFanYi } from '@/config/翻译表'
 import { use前台错误 } from '@/composables/use前台错误'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
 import { shiRenJiYanZhengShiBai, type 人机测试实例 } from '@/utils/人机验证'
+import { DA_LU_QU_HAO } from '@/utils/手机号'
 
 const SHOU_JI_HAO_ZHENG_ZE = /^1[3-9]\d{9}$/
 const YAN_ZHENG_MA_ZHENG_ZE = /^\d{6}$/

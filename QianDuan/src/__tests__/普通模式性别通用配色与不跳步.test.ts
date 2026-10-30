@@ -42,7 +42,7 @@ describe('通用性别框体配色：自身色填充、对象色描边、自身�
       backgroundColor: 'var(--xingbie-nan-tan-beijing)',
       borderColor: 'var(--xingbie-nv-shen-biankuang)',
       color: 'var(--xingbie-nan-tan-wenben)',
-      boxShadow: '0 0 0 3px var(--xingbie-nan-xuan-huan)',
+      boxShadow: 'inset 0 0 0 var(--kuang-huan-kuan) var(--xingbie-nan-xuan-huan)',
     })
   })
 
@@ -53,7 +53,7 @@ describe('通用性别框体配色：自身色填充、对象色描边、自身�
     expect(配色.样式.value.backgroundColor).toBe('var(--xingbie-nv-tan-beijing)')
     expect(配色.样式.value.borderColor).toBe('var(--xingbie-nan-shen-biankuang)')
     expect(配色.样式.value.color).toBe('var(--xingbie-nv-tan-wenben)')
-    expect(配色.样式.value.boxShadow).toBe('0 0 0 3px var(--xingbie-nv-xuan-huan)')
+    expect(配色.样式.value.boxShadow).toBe('inset 0 0 0 var(--kuang-huan-kuan) var(--xingbie-nv-xuan-huan)')
   })
 
   it('自身未选按男性兜底，对象未选按女性兜底', () => {

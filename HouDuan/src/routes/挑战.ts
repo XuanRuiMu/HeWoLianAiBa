@@ -14,6 +14,7 @@ import {
 } from '../services/挑战积分'
 import { chuLiYouXiJieShu } from '../services/胜利失败条件'
 import { 解析性别, type 性别内部形态 } from '../utils/性别'
+import { huoQuJiaoSeBianHao } from '../services/公开编号'
 
 const luYou = Router()
 
@@ -54,7 +55,9 @@ luYou.get('/当前', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing
   }
   try {
     const duiJu = await huoQuDangQianDuiJu(yongHu.yongHuId)
-    return chengGongXiangYing(xiangYing, { dui_ju: duiJu })
+    return chengGongXiangYing(xiangYing, {
+      dui_ju: duiJu ? { ...duiJu, jiao_se_id: await huoQuJiaoSeBianHao(duiJu.jiao_se_id) } : duiJu,
+    })
   } catch (cuoWu) {
     debug日志.error('挑战接口', '查询当前挑战对局失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))

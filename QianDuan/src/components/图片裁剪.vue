@@ -38,7 +38,6 @@
             translatable
             zoom-around-center
             initial-fit="cover"
-            max-inset="0"
             @transform="shuaXinBianHuan"
           />
           <cropper-selection
@@ -47,8 +46,8 @@
             :aspect-ratio="kuanGaoBi"
             precise
           >
-            <cropper-grid rows="3" columns="3" bordered covered theme-color="rgba(255, 255, 255, 0.42)" />
-            <cropper-crosshair centered theme-color="rgba(255, 255, 255, 0.42)" />
+            <cropper-grid rows="3" columns="3" bordered covered theme-color="var(--caijian-wangge-xian)" />
+            <cropper-crosshair centered theme-color="var(--caijian-wangge-xian)" />
           </cropper-selection>
         </cropper-canvas>
       </div>
@@ -67,6 +66,7 @@
         </button>
         <input
           class="bili-shu-ru"
+          data-kuang-ti="fangkuang"
           type="text"
           inputmode="text"
           autocomplete="off"
@@ -160,6 +160,7 @@
         />
         <input
           class="suofang-shu-ru"
+          data-kuang-ti="fangkuang"
           type="number"
           inputmode="decimal"
           autocomplete="off"
@@ -231,8 +232,9 @@ import LiaoTianYuLan from '@/components/聊天/聊天预览.vue'
 import WaiGuanTianChongXuanZe from '@/components/外观填充选择器.vue'
 
 const QU_YU_GAO_DU = 260
-const SUO_FANG_BAI_FEN_XIA = 100
+const SUO_FANG_BAI_FEN_XIA = 1
 const SUO_FANG_BAI_FEN_SHANG = 400
+const SUO_FANG_BAI_FEN_MO_REN = 100
 const SUO_FANG_JIA_JIAN = 10
 const YU_LAN_ZUI_DA_BIAN = 640
 const YU_LAN_MO_REN_KUAN = 320
@@ -307,8 +309,8 @@ const bianHuanJuZhen = ref<number[]>([1, 0, 0, 1, 0, 0])
 const xuanZhuanJiaoDu = ref(0)
 const shuiPingFanZhuan = ref(false)
 const chuiZhiFanZhuan = ref(false)
-const suoFangBaiFenShu = ref(SUO_FANG_BAI_FEN_XIA)
-const suoFangShuRu = ref(String(SUO_FANG_BAI_FEN_XIA))
+const suoFangBaiFenShu = ref(SUO_FANG_BAI_FEN_MO_REN)
+const suoFangShuRu = ref(String(SUO_FANG_BAI_FEN_MO_REN))
 
 const biLiXuanXiang = ref(shouLianBiLi(props.kuanGaoBi))
 const kuanGaoBi = computed(() => biLiXuanXiang.value)
@@ -389,12 +391,20 @@ function jiSuanFuGaiSuoFang(chiCun: ChiCun): number {
   return Math.max(chiCun.kuan / waiKuan, chiCun.gao / waiGao)
 }
 
-function jiaZhongXin(zhi: number, kuangChang: number, huaBuChang: number): number {
-  if (kuangChang <= huaBuChang) return huaBuChang / 2
-  const xia = huaBuChang - kuangChang / 2
-  const shang = kuangChang / 2
+function juZhengZhongXin(zhi: number, kuangChang: number, huaBuChang: number): number {
+  const ban = kuangChang / 2
+  const xia = Math.min(ban, huaBuChang - ban)
+  const shang = Math.max(ban, huaBuChang - ban)
   const anQuan = Number.isFinite(zhi) ? zhi : huaBuChang / 2
   return Math.min(shang, Math.max(xia, anQuan))
+}
+
+function juZhengJuZhen(chiCun: ChiCun, a: number, b: number, c: number, d: number, e: number, f: number): number[] {
+  const kuangKuan = Math.abs(a) * chiCun.yuanKuan + Math.abs(c) * chiCun.yuanGao
+  const kuangGao = Math.abs(b) * chiCun.yuanKuan + Math.abs(d) * chiCun.yuanGao
+  const zhongXinX = juZhengZhongXin(e + chiCun.yuanKuan / 2, kuangKuan, chiCun.kuan)
+  const zhongXinY = juZhengZhongXin(f + chiCun.yuanGao / 2, kuangGao, chiCun.gao)
+  return [a, b, c, d, zhongXinX - chiCun.yuanKuan / 2, zhongXinY - chiCun.yuanGao / 2]
 }
 
 function gouZaoJuZhen(chiCun: ChiCun, baiFen: number, zhongXin: ZhongXin | null): number[] {
@@ -410,18 +420,9 @@ function gouZaoJuZhen(chiCun: ChiCun, baiFen: number, zhongXin: ZhongXin | null)
   const b = fx * suoFang * sin
   const c = fy * -suoFang * sin
   const d = fy * suoFang * cos
-  const kuangKuan = Math.abs(a) * chiCun.yuanKuan + Math.abs(c) * chiCun.yuanGao
-  const kuangGao = Math.abs(b) * chiCun.yuanKuan + Math.abs(d) * chiCun.yuanGao
-  const zhongXinX = jiaZhongXin(zhongXin?.x ?? chiCun.kuan / 2, kuangKuan, chiCun.kuan)
-  const zhongXinY = jiaZhongXin(zhongXin?.y ?? chiCun.gao / 2, kuangGao, chiCun.gao)
-  return [
-    a,
-    b,
-    c,
-    d,
-    zhongXinX - chiCun.yuanKuan / 2,
-    zhongXinY - chiCun.yuanGao / 2,
-  ]
+  const zhongXinX = zhongXin?.x ?? chiCun.kuan / 2
+  const zhongXinY = zhongXin?.y ?? chiCun.gao / 2
+  return juZhengJuZhen(chiCun, a, b, c, d, zhongXinX - chiCun.yuanKuan / 2, zhongXinY - chiCun.yuanGao / 2)
 }
 
 function dangQianZhongXin(chiCun: ChiCun): ZhongXin {
@@ -571,7 +572,7 @@ function chongZhiBianHuan(): void {
   xuanZhuanJiaoDu.value = 0
   shuiPingFanZhuan.value = false
   chuiZhiFanZhuan.value = false
-  suoFangBaiFenShu.value = SUO_FANG_BAI_FEN_XIA
+  suoFangBaiFenShu.value = SUO_FANG_BAI_FEN_MO_REN
   juZhongYingYong()
   qiangZhiShuaXinYuLan()
 }
@@ -583,6 +584,27 @@ interface TuoDongZuoBiao {
 
 const huoDongZhiZhen = new Map<number, TuoDongZuoBiao>()
 let tuoDongZhiZhenBiaoShi: number | null = null
+
+function tuPianJiuXu(): boolean {
+  const tuXiang = tuXiangRef.value as unknown as { $isReady?: boolean } | null
+  return tuXiang?.$isReady === true
+}
+
+function pingYi(x: number, y: number): void {
+  const tuXiang = tuXiangRef.value
+  if (!tuXiang) return
+  const jiu = tuXiang.$getTransform()
+  tuXiang.$move(x, y)
+  if (!tuPianJiuXu()) return
+  const xin = tuXiang.$getTransform()
+  if (xin.length < 6 || (xin[4] === jiu[4] && xin[5] === jiu[5])) return
+  const chiCun = ceLiang()
+  if (!chiCun) return
+  const [a, b, c, d, e, f] = xin
+  const juZheng = juZhengJuZhen(chiCun, a, b, c, d, e, f)
+  if (juZheng[4] === e && juZheng[5] === f) return
+  tuXiang.$setTransform(juZheng)
+}
 
 function tuoDongAnXia(shiJian: PointerEvent): void {
   if (shiJian.pointerType === 'mouse' && shiJian.button !== 0) return
@@ -611,7 +633,7 @@ function tuoDongYiDong(shiJian: PointerEvent): void {
   if (tuoDongZhiZhenBiaoShi !== shiJian.pointerId || huoDongZhiZhen.size !== 1 || !zhengZaiTuoDong.value) return
   if (!dx && !dy) return
   shiJian.preventDefault()
-  tuXiangRef.value?.$move(dx, dy)
+  pingYi(dx, dy)
 }
 
 function tuoDongJieShu(shiJian: PointerEvent): void {
@@ -662,7 +684,7 @@ function chuFaAnJian(shiJian: KeyboardEvent): void {
   if (!bu.x && !bu.y) return
   if (jiaoDianZaiBianJiKuang()) return
   shiJian.preventDefault()
-  tuXiangRef.value?.$move(bu.x, bu.y)
+  pingYi(bu.x, bu.y)
 }
 
 function jieHuoCtrlGunLun(shiJian: WheelEvent): void {
@@ -673,7 +695,7 @@ function jieHuoCtrlGunLun(shiJian: WheelEvent): void {
   if (!bu.x && !bu.y) return
   shiJian.preventDefault()
   shiJian.stopPropagation()
-  tuXiangRef.value?.$move(bu.x, bu.y)
+  pingYi(bu.x, bu.y)
 }
 
 function jieHuoCtrlGunLunQuanJu(shiJian: Event): void {
@@ -912,7 +934,7 @@ function yaSuoChaoDaTuPian(tuPian: HTMLImageElement): void {
       xuanZhuanJiaoDu.value = 0
       shuiPingFanZhuan.value = false
       chuiZhiFanZhuan.value = false
-      suoFangBaiFenShu.value = SUO_FANG_BAI_FEN_XIA
+      suoFangBaiFenShu.value = SUO_FANG_BAI_FEN_MO_REN
       shiJiTuYuan.value = yaSuoDuiXiangDiZhi
     },
     mime,
@@ -951,7 +973,7 @@ watch(() => props.tuYuan, (zhi) => {
   xuanZhuanJiaoDu.value = 0
   shuiPingFanZhuan.value = false
   chuiZhiFanZhuan.value = false
-  suoFangBaiFenShu.value = SUO_FANG_BAI_FEN_XIA
+  suoFangBaiFenShu.value = SUO_FANG_BAI_FEN_MO_REN
   bianHuanJuZhen.value = [1, 0, 0, 1, 0, 0]
   if (zhi !== shiJiTuYuan.value) shiJiTuYuan.value = zhi
   anPaiYuJian()
@@ -1056,9 +1078,30 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .caijian-zhezhao {
+  --caijian-mian: var(--tanchuang-beijing);
+  --caijian-xian: var(--tanchuang-biankuang);
+  --caijian-huabu-mian: var(--beijing-ciuse);
+  --caijian-ci-wenben: var(--wenben-ciuse);
+  --caijian-kong-xian: var(--biankuang-zhongjian);
+  --caijian-shuru-bian: var(--biankuang-zhongjian);
+  --caijian-kong-wenben: var(--wenben-zhuse);
+  --caijian-kong-mian: var(--shuru-quyu-beijing);
+  --caijian-zhuse: var(--zhuse);
+  --caijian-zhuse-shen: var(--zhuse-shen);
+  --caijian-tuxiang-bian: var(--biankuang-yanse);
+  --caijian-tuxiang-ying: var(--caidan-yinying);
+  --caijian-wangge-xian: color-mix(in srgb, var(--wenben-zhuse) 42%, transparent);
+  --caijian-xuanqu-xian: color-mix(in srgb, var(--wenben-zhuse) 30%, transparent);
+  --caijian-xuanzhong-mian: color-mix(in srgb, var(--caijian-zhuse) 12%, transparent);
+  --caijian-yulan-mian: color-mix(in srgb, var(--wenben-zhuse) 5%, transparent);
+  --caijian-huatiao-tiao: var(--biankuang-zhongjian);
+  --caijian-huatiao-tiao-gao: var(--jiange-4);
+  --caijian-huatiao-tou: var(--jiange-zhong);
+  --caijian-shuru-gao: var(--shuru-danxing-gao-du);
+
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--zhezhao-beijing);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
@@ -1066,6 +1109,17 @@ onBeforeUnmount(() => {
   justify-content: center;
   padding: var(--jiange-da);
   z-index: 1000;
+}
+
+:root[data-theme='light'] .caijian-zhezhao {
+  --caijian-shuru-bian: var(--wenben-ciuse);
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] .caijian-zhezhao,
+:root:not([data-theme]) .caijian-zhezhao {
+  color-scheme: dark;
 }
 
 .caijian-rongqi {
@@ -1083,22 +1137,10 @@ onBeforeUnmount(() => {
   outline: none;
 }
 
-.caijian-zhezhao {
-  --caijian-mian: rgba(20, 24, 40, 0.95);
-  --caijian-xian: rgba(255, 255, 255, 0.1);
-  --caijian-huabu-mian: #0a0a12;
-  --caijian-ci-wenben: rgba(255, 255, 255, 0.55);
-  --caijian-kong-xian: rgba(255, 255, 255, 0.2);
-  --caijian-kong-wenben: rgba(255, 255, 255, 0.8);
-  --caijian-zhuse: #07c160;
-  --caijian-tuxiang-bian: rgba(255, 255, 255, 0.16);
-  --caijian-tuxiang-ying: rgba(0, 0, 0, 0.32);
-}
-
 .caijian-biaoti {
   font-size: 18px;
   font-weight: 700;
-  color: #fff;
+  color: var(--tanchuang-biaoti);
   margin: 0 0 var(--jiange-zhong);
 }
 
@@ -1139,7 +1181,7 @@ onBeforeUnmount(() => {
 }
 
 .caijian-xuanqu {
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 0 0 1px var(--caijian-xuanqu-xian);
 }
 
 .caijian-tishi {
@@ -1179,31 +1221,23 @@ onBeforeUnmount(() => {
   color: var(--caijian-zhuse);
 }
 
-.bili-ka:focus-visible {
-  outline: 2px solid var(--caijian-zhuse);
-  outline-offset: 2px;
-}
-
 .bili-ka--xuan {
   border-color: var(--caijian-zhuse);
   color: var(--caijian-zhuse);
-  background: rgba(7, 193, 96, 0.12);
+  background: var(--caijian-xuanzhong-mian);
 }
 
 .bili-shu-ru {
-  padding: var(--jiange-6) var(--jiange-10);
-  border: 1.5px solid var(--caijian-kong-xian);
-  border-radius: 999px;
-  background: transparent;
-  color: #fff;
+  flex: none;
+  width: 92px;
+  height: var(--caijian-shuru-gao);
+  padding: 0 var(--jiange-10);
+  border: var(--juxing-shuru-biankuang) solid var(--caijian-shuru-bian);
+  border-radius: var(--juxing-shuru-yuanjiao);
+  background: var(--caijian-kong-mian);
+  color: var(--caijian-kong-wenben);
   font-size: 12px;
   line-height: 1.4;
-  width: 92px;
-}
-
-.bili-shu-ru:focus-visible {
-  outline: 2px solid var(--caijian-zhuse);
-  outline-offset: 2px;
 }
 
 .caijian-yulan {
@@ -1211,7 +1245,7 @@ onBeforeUnmount(() => {
   padding: var(--jiange-10);
   border: 1px solid var(--caijian-xian);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--caijian-yulan-mian);
   text-align: left;
 }
 
@@ -1276,15 +1310,10 @@ onBeforeUnmount(() => {
   transform: translateY(-1px);
 }
 
-.caijian-gongju-anniu:focus-visible {
-  outline: 2px solid var(--caijian-zhuse);
-  outline-offset: 2px;
-}
-
 .caijian-gongju-anniu--xuan {
   border-color: var(--caijian-zhuse);
   color: var(--caijian-zhuse);
-  background: rgba(7, 193, 96, 0.12);
+  background: var(--caijian-xuanzhong-mian);
 }
 
 .suofang-hang {
@@ -1300,8 +1329,8 @@ onBeforeUnmount(() => {
   height: 32px;
   border-radius: 50%;
   border: 1.5px solid var(--caijian-kong-xian);
-  background: transparent;
-  color: #fff;
+  background: var(--caijian-kong-mian);
+  color: var(--caijian-kong-wenben);
   font-size: 16px;
   cursor: pointer;
 }
@@ -1309,31 +1338,64 @@ onBeforeUnmount(() => {
 .suofang-huatiao {
   flex: 1;
   min-width: 0;
-  accent-color: var(--caijian-zhuse);
+  height: var(--caijian-huatiao-tou);
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.suofang-huatiao::-webkit-slider-runnable-track {
+  height: var(--caijian-huatiao-tiao-gao);
+  border-radius: 999px;
+  background: var(--caijian-huatiao-tiao);
+}
+
+.suofang-huatiao::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: var(--caijian-huatiao-tou);
+  height: var(--caijian-huatiao-tou);
+  margin-top: calc((var(--caijian-huatiao-tiao-gao) - var(--caijian-huatiao-tou)) / 2);
+  border-radius: 50%;
+  border: var(--jiange-2) solid var(--caijian-mian);
+  background: var(--caijian-zhuse);
+  box-shadow: 0 1px 3px var(--caijian-tuxiang-ying);
+}
+
+.suofang-huatiao::-moz-range-track {
+  height: var(--caijian-huatiao-tiao-gao);
+  border-radius: 999px;
+  background: var(--caijian-huatiao-tiao);
+}
+
+.suofang-huatiao::-moz-range-thumb {
+  width: var(--caijian-huatiao-tou);
+  height: var(--caijian-huatiao-tou);
+  border-radius: 50%;
+  border: var(--jiange-2) solid var(--caijian-mian);
+  background: var(--caijian-zhuse);
+  box-shadow: 0 1px 3px var(--caijian-tuxiang-ying);
 }
 
 .suofang-shu-ru {
   flex: none;
   width: 64px;
-  padding: var(--jiange-4) var(--jiange-6);
-  border: 1.5px solid var(--caijian-kong-xian);
-  border-radius: 10px;
-  background: transparent;
-  color: #fff;
+  height: var(--caijian-shuru-gao);
+  padding: 0 var(--jiange-6);
+  border: var(--juxing-shuru-biankuang) solid var(--caijian-shuru-bian);
+  border-radius: var(--juxing-shuru-yuanjiao);
+  background: var(--caijian-kong-mian);
+  color: var(--caijian-kong-wenben);
   font-size: 13px;
   text-align: right;
-}
-
-.suofang-shu-ru:focus-visible {
-  outline: 2px solid var(--caijian-zhuse);
-  outline-offset: 2px;
 }
 
 .suofang-bai-fen {
   flex: none;
   min-width: 44px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--caijian-ci-wenben);
   text-align: right;
 }
 
@@ -1341,7 +1403,7 @@ onBeforeUnmount(() => {
   --tian-chong-xian: var(--caijian-kong-xian);
   --tian-chong-wenben: var(--caijian-kong-wenben);
   --tian-chong-zhuse: var(--caijian-zhuse);
-  --tian-chong-xuan-beijing: rgba(7, 193, 96, 0.12);
+  --tian-chong-xuan-beijing: var(--caijian-xuanzhong-mian);
 
   display: flex;
   align-items: center;
@@ -1359,8 +1421,8 @@ onBeforeUnmount(() => {
 
 .anniu-fu-zhu {
   padding: var(--jiange-12) var(--jiange-da);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.7);
+  background: var(--caijian-kong-mian);
+  color: var(--caijian-kong-wenben);
   border: 1.5px solid var(--caijian-kong-xian);
   border-radius: 14px;
   font-size: 14px;
@@ -1370,8 +1432,8 @@ onBeforeUnmount(() => {
 
 .anniu-que-ren {
   padding: var(--jiange-12) var(--jiange-da);
-  background: linear-gradient(135deg, var(--caijian-zhuse), color-mix(in srgb, var(--caijian-zhuse) 78%, #00380f));
-  color: #fff;
+  background: linear-gradient(135deg, var(--caijian-zhuse), var(--caijian-zhuse-shen));
+  color: var(--fasong-anniu-wenben);
   border: none;
   border-radius: 14px;
   font-size: 14px;

@@ -82,32 +82,87 @@ describe('FP-05B1 气泡尾巴单一实现静态契约', () => {
   })
 })
 
-describe('FP-05B1 尾巴几何：任何档位零缝隙零压入', () => {
-  it('侧向外框按实际尾宽加描边宽计算，填充底边永远落在气泡边缘', () => {
+describe('FP-05B1 尾巴几何：外伸等于尾宽，底边按接缝内延压入气泡内侧', () => {
+  it('侧向外框按实际尾宽加描边宽计算，填充底边越过气泡边缘一个接缝内延', () => {
     expect(尾巴源).toContain('right: calc((var(--qipao-weiba-kuan) + var(--qipao-weiba-bian)) * -1)')
     expect(尾巴源).toContain('left: calc((var(--qipao-weiba-kuan) + var(--qipao-weiba-bian)) * -1)')
     expect(尾巴源).toContain('left: var(--qipao-weiba-bian)')
     expect(尾巴源).toContain('width: calc(100% - var(--qipao-weiba-bian))')
     expect(尾巴源).toContain('var(--qipao-weiba-ban) * 2')
+    expect(尾巴源).toContain('--qipao-weiba-jie-feng: var(--qipao-weiba-bian)')
+    expect(尾巴源).toContain('calc(var(--qipao-weiba-kuan) + var(--qipao-weiba-jie-feng))')
+    expect(尾巴源).toContain('calc(100% - var(--qipao-weiba-kuan) - var(--qipao-weiba-jie-feng))')
+    const 内延 = 取令牌像素('--qipao-weiba-miao-bian-kuan')
+    expect(内延, '接缝内延必须为正，否则亚像素缝会露出页面底色').toBeGreaterThan(0)
+    expect(内延, '接缝内延必须覆盖背景像素吸附的最大偏移（DPR>=1 时 0.5px）').toBeGreaterThanOrEqual(0.5)
     const 气泡宽 = 300
     for (const [kuan, ban] of [
       [取令牌像素('--qipao-weiba-kuan-xiao'), 取令牌像素('--qipao-weiba-ban-xiao')],
       [取令牌像素('--qipao-weiba-kuan-ju-li'), 取令牌像素('--qipao-weiba-ban-ju-li')],
       [取令牌像素('--qipao-weiba-kuan-da'), 取令牌像素('--qipao-weiba-ban-da')],
     ]) {
-      const 填充宽 = 气泡宽 + kuan
       const 右侧填充左 = 0
-      const 右底边 = 右侧填充左 + 填充宽 - kuan
-      const 右尾尖 = 右侧填充左 + 填充宽
-      expect(右底边, '尾宽 ' + kuan + ' 右侧存在缝隙或压入').toBe(气泡宽)
-      expect(右尾尖 - 右底边, '尾宽 ' + kuan + ' 右侧外伸不等于实际尾宽').toBe(kuan)
-      const 左侧填充左 = -kuan
-      const 左底边 = 左侧填充左 + kuan
-      const 左尾尖 = 左侧填充左
-      expect(左底边, '尾宽 ' + kuan + ' 左侧存在缝隙或压入').toBe(0)
-      expect(左底边 - 左尾尖, '尾宽 ' + kuan + ' 左侧外伸不等于实际尾宽').toBe(kuan)
+      const 右尾尖 = 右侧填充左 + 气泡宽 + kuan
+      const 右底边 = 右尾尖 - kuan - 内延
+      expect(右底边, '尾宽 ' + kuan + ' 右侧底边未按内延压入气泡内侧').toBe(气泡宽 - 内延)
+      expect(右底边, '尾宽 ' + kuan + ' 右侧底边越出气泡右边缘').toBeLessThanOrEqual(气泡宽)
+      expect(右尾尖 - 气泡宽, '尾宽 ' + kuan + ' 右侧外伸不等于实际尾宽').toBe(kuan)
+      const 左尾尖 = -kuan
+      const 左底边 = 左尾尖 + kuan + 内延
+      expect(左底边, '尾宽 ' + kuan + ' 左侧底边未按内延压入气泡内侧').toBe(内延)
+      expect(左底边, '尾宽 ' + kuan + ' 左侧底边越出气泡左边缘').toBeGreaterThanOrEqual(0)
+      expect(0 - 左尾尖, '尾宽 ' + kuan + ' 左侧外伸不等于实际尾宽').toBe(kuan)
       expect(ban * 2, '尾高必须为半高的两倍').toBeGreaterThan(0)
     }
+  })
+
+  it('描边层与填充层各只裁一次，元素本体不再带裁剪（消除覆盖率相乘）', () => {
+    const 取规则块 = (选择器: string): string => {
+      const 起 = 尾巴源.indexOf(选择器 + ' {')
+      if (起 < 0) return ''
+      const 终 = 尾巴源.indexOf('}', 起)
+      return 尾巴源.slice(起, 终 + 1)
+    }
+    const 本体块 = 取规则块('.qipao-weiba')
+    const 描边块 = 取规则块('.qipao-weiba::before')
+    const 填充块 = 取规则块('.qipao-weiba::after')
+    expect(本体块).not.toBe('')
+    expect(本体块, '元素本体不得再带裁剪，否则子层覆盖率会相乘').not.toContain('clip-path')
+    expect(描边块).toContain('background: var(--qipao-weiba-miao-bian, transparent)')
+    expect(填充块).toContain('background: var(--qipao-weiba-tian-chong, transparent)')
+    expect(描边块).not.toContain('clip-path')
+    expect(填充块).not.toContain('clip-path')
+    for (const 侧 of ['--you', '--zuo']) {
+      expect(取规则块('.qipao-weiba' + 侧 + '::before'), 侧 + ' 描边层缺裁剪').toContain('clip-path: polygon(')
+      expect(取规则块('.qipao-weiba' + 侧 + '::after'), 侧 + ' 填充层缺裁剪').toContain('clip-path: polygon(')
+      expect(取规则块('.qipao-weiba' + 侧 + '::after'), 侧 + ' 填充层不得再挂背景').not.toContain('background:')
+    }
+  })
+
+  it('图片皮肤填充与气泡本体同源：取样取原图色，覆盖层铺满填充盒', () => {
+    const 工具源 = 读('utils/气泡尾巴填充色.ts')
+    expect(工具源).toContain('const huiZhiWeiZhi =')
+    expect(工具源).toContain('const tuPianCeng =')
+    expect(工具源).toContain('const fuGaiCeng =')
+    expect(工具源).toContain('const tianChong = fuGaiCeng + tuPianCeng +')
+    expect(工具源).toContain('linear-gradient(')
+    expect(工具源).toContain('huiZhiWeiZhi')
+    expect(工具源, '覆盖层不得再带位置尺寸，否则其边缘会与图片边缘重合').toContain(
+      "'linear-gradient(' + fuGaiYanSeWenBen(ceng.fuGai) + ', ' + fuGaiYanSeWenBen(ceng.fuGai) + '), '",
+    )
+    expect(工具源, '取色必须在叠加覆盖层之前，底色供覆盖层之下使用').not.toContain('globalAlpha')
+    expect(工具源).not.toContain('caiJiBianYuanYanSe')
+  })
+
+  it('图片皮肤填充层整层分组：裁剪遮罩作用于合成结果而非逐层衰减', () => {
+    expect(尾巴源).toContain("'qipao-weiba--tupian': Boolean(tianChong)")
+    const 起 = 尾巴源.indexOf('.qipao-weiba--tupian::after {')
+    expect(起).toBeGreaterThan(-1)
+    const 块 = 尾巴源.slice(起, 尾巴源.indexOf('}', 起) + 1)
+    expect(块).toContain('filter: opacity(1)')
+    const 通用块起 = 尾巴源.indexOf('.qipao-weiba::after {')
+    const 通用块 = 尾巴源.slice(通用块起, 尾巴源.indexOf('}', 通用块起) + 1)
+    expect(通用块, '纯色皮肤不得常驻滤镜层，避免每条气泡都建合成层').not.toContain('filter')
   })
 
   it('靠上锚点贴合首行中心并随字号行高变化，圆角档位下自动下移避免缺角', () => {

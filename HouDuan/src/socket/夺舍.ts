@@ -1,4 +1,4 @@
-﻿import type { Server } from 'socket.io'
+import type { Server } from 'socket.io'
 import type { RenZhengSocket } from './认证'
 import { 数据库 } from '../数据库'
 import { baoCunJiaoSeXiaoXi } from '../services/AI输入准备'
@@ -13,6 +13,7 @@ import {
 import { anYongHuIdJuBeiNengLi } from '../middleware/管理员'
 import { debug日志, jiLuSocketShiJian, jiLuXiaoXiCaoZuo } from '../utils/debug日志'
 import { yanZhengUUID, maDianChangDu } from '../utils/验证'
+import { huoQuJiaoSeBianHao } from '../services/公开编号'
 import { huoQuFanYi } from '../config/translations'
 
 const DUO_SHE_HUI_FU_NEI_RONG_ZUI_DA_MA_DIAN = 2000
@@ -142,7 +143,11 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
 
       try {
         const xiaoXi = await baoCunJiaoSeXiaoXi({ yong_hu_id: suoYouZheId, jiao_se_id: jiaoSeId, nei_rong: neiRong })
-        io.to(suoYouZheId).emit('角色回复', { 角色ID: jiaoSeId, 消息列表: [xiaoXi] })
+        const duiWaiJiaoSeId = await huoQuJiaoSeBianHao(jiaoSeId)
+        io.to(suoYouZheId).emit('角色回复', {
+          角色ID: duiWaiJiaoSeId,
+          消息列表: [{ ...xiaoXi, hui_hua_id: duiWaiJiaoSeId }],
+        })
         jiLuXiaoXiCaoZuo('夺舍回复发送', suoYouZheId, jiaoSeId, 'jiaose', { socket_id: socket.id, guan_li_yuan_id: yongHu.yongHuId })
         if (huiDiao) huiDiao({ cheng_gong: true, xiao_xi: xiaoXi })
       } catch (cuoWu) {

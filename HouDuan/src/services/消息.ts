@@ -1,9 +1,10 @@
-﻿import { 数据库 } from '../数据库'
+import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import { XIAO_XI_PEI_ZHI } from '../config/消息配置'
 import { YUN_XU_XIAO_XI_LEI_XING } from '../config/媒体配置'
 import { huoQuIo } from '../socket/io'
 import { yanZhengUUID } from '../utils/验证'
+import { huoQuJiaoSeBianHao } from './公开编号'
 import { 解析结局类型, 解析结局文案 } from '../utils/结局'
 import { 归一角色性别 } from '../utils/性别'
 import { debug日志, jiLuXiaoXiCaoZuo, jiLuSocketShiJian } from '../utils/debug日志'
@@ -93,11 +94,12 @@ function tuiSongCheHuiShiJian(
   jiao_se_id: string,
   xiao_xi_id: string,
   fa_song_zhe_lei_xing: 'yonghu' | 'jiaose',
+  dui_wai_hui_hua_id: string,
 ): void {
   const io = huoQuIo()
   if (io) {
     io.to(yong_hu_id).emit('消息撤回', {
-      hui_hua_id: jiao_se_id,
+      hui_hua_id: dui_wai_hui_hua_id,
       xiao_xi_id,
       fa_song_zhe_lei_xing,
     })
@@ -813,7 +815,13 @@ export async function cheHuiYongHuXiaoXi(
     [canShu.xiao_xi_id],
   )
 
-  tuiSongCheHuiShiJian(canShu.yong_hu_id, canShu.jiao_se_id, canShu.xiao_xi_id, 'yonghu')
+  tuiSongCheHuiShiJian(
+    canShu.yong_hu_id,
+    canShu.jiao_se_id,
+    canShu.xiao_xi_id,
+    'yonghu',
+    await huoQuJiaoSeBianHao(canShu.jiao_se_id),
+  )
   jiLuCheHuiCaoZuo('用户消息撤回', canShu.yong_hu_id, canShu.jiao_se_id, canShu.xiao_xi_id)
 
   return { cheng_gong: true, xiao_xi: yingSheXiaoXi(gengXinJieGuo.rows[0]) }
@@ -851,7 +859,13 @@ export async function cheHuiJiaoSeXiaoXi(
   )
 
   const cheHuiXiaoXi = yingSheXiaoXi(gengXinJieGuo.rows[0])
-  tuiSongCheHuiShiJian(canShu.yong_hu_id, canShu.jiao_se_id, cheHuiXiaoXi.id, 'jiaose')
+  tuiSongCheHuiShiJian(
+    canShu.yong_hu_id,
+    canShu.jiao_se_id,
+    cheHuiXiaoXi.id,
+    'jiaose',
+    await huoQuJiaoSeBianHao(canShu.jiao_se_id),
+  )
   jiLuXiaoXiCaoZuo('角色消息撤回', canShu.yong_hu_id, canShu.jiao_se_id, 'jiaose', { xiao_xi_id: cheHuiXiaoXi.id })
 
   return { cheng_gong: true, xiao_xi: cheHuiXiaoXi }

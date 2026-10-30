@@ -120,7 +120,11 @@
   padding-top: var(--biaoqian-qin-ru);
 }
 
-.shuru-zu::after {
+.shuru-zhu-ti {
+  position: relative;
+}
+
+.shuru-zhu-ti::after {
   content: '';
   position: absolute;
   left: 0;
@@ -139,9 +143,7 @@
   transition-timing-function: var(--quxian-sao-chu);
 }
 
-.shuru-zu > .fenlie-shuru,
-.shuru-zu > .mima-zu > .fenlie-shuru,
-.shuru-zu > .yanzhengma-zu > .yanzhengma-shuru-qu > .fenlie-shuru {
+.shuru-zhu-ti > .fenlie-shuru {
   width: 100%;
 }
 
@@ -173,7 +175,7 @@
   outline: none;
 }
 
-.shuru-zu:focus-within::after {
+.shuru-zhu-ti:focus-within::after {
   background-size: 100% 100%, 100% 100%;
 }
 
@@ -182,7 +184,8 @@
 }
 
 .shuru-zu:has(> .chushengriqi)::after,
-.shuru-zu.wu-di-xian::after {
+.shuru-zu.wu-di-xian::after,
+.shuru-zhu-ti.wu-di-xian::after {
   content: none;
 }
 
@@ -236,49 +239,33 @@
   letter-spacing: 0.12em;
 }
 
-.mima-zu,
-.yanzhengma-zu {
-  position: relative;
-  display: flex;
-  align-items: center;
-  overflow: visible;
-  gap: var(--jiange-xiao);
-}
-
-.yanzhengma-shuru-qu {
-  flex: 1;
-  min-width: 0;
-}
-
-.mima-zu .fenlie-shuru {
-  flex: 1;
-  padding-right: calc(var(--jiange-da) + var(--jiange-zhong));
-}
-
 .mima-qiehuan {
-  position: absolute;
-  right: 0;
-  top: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--jiange-6);
+  flex: none;
+  padding: 0 0 var(--jiange-10);
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
-  z-index: 2;
-  color: rgba(239, 233, 220, 0.62);
+  transition: color 0.2s var(--quxian-biao-zhun);
+  color: var(--ka-ci-wen, rgba(239, 233, 220, 0.62));
 }
 
 .mima-qiehuan:hover {
-  transform: scale(1.15);
-  color: #d5b878;
+  color: var(--ka-jin, #d5b878);
+  transform: scale(1.08);
+}
+
+.mima-qiehuan:focus-visible {
+  outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
+  outline-offset: var(--jujiao-huan-pian-yi);
+  border-radius: var(--jiange-4);
 }
 
 .mima-tubiao {
-  width: 20px;
-  height: 20px;
+  width: var(--shuru-fu-jian-tu-biao-chi-cun);
+  height: var(--shuru-fu-jian-tu-biao-chi-cun);
   display: block;
 }
 
@@ -289,21 +276,35 @@
 
 .fasong-anniu {
   flex: none;
-  padding: var(--jiange-6) var(--jiange-xiao);
-  background: none;
-  border: 1px solid rgba(201, 169, 106, 0.5);
-  border-radius: var(--jiange-4);
-  color: #d5b878;
+  align-self: flex-end;
+  min-height: var(--shuru-anniu-re-ku);
+  padding: 0 var(--jiange-12);
+  background: transparent;
+  border: 1px solid var(--ka-jin, #c9a96a);
+  border-radius: var(--yuanjiao-xiao);
+  color: var(--ka-ci-wen, #d5b878);
   font-family: inherit;
-  font-size: 12px;
+  font-size: var(--ziti-xiao);
+  font-weight: 400;
+  letter-spacing: 0.06em;
   cursor: pointer;
   white-space: nowrap;
-  transition: border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+  transition:
+    background-color 0.2s var(--quxian-biao-zhun),
+    border-color 0.2s var(--quxian-biao-zhun),
+    color 0.2s var(--quxian-biao-zhun);
+}
+
+.fasong-anniu:focus-visible {
+  outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
+  outline-offset: var(--jujiao-huan-pian-yi);
+  border-radius: var(--jiange-4);
 }
 
 .fasong-anniu:not(:disabled):hover {
-  border-color: rgba(201, 169, 106, 0.9);
-  color: #e3c98e;
+  background: var(--ka-jin-mian, rgba(201, 169, 106, 0.1));
+  color: var(--ka-zhu-wen, #e3c98e);
+  border-color: var(--ka-jin, #c9a96a);
 }
 
 .fasong-anniu:disabled {
@@ -447,8 +448,8 @@
     animation: none;
   }
 
-  .shuru-zu::after,
-  .shuru-zu .fenlie-shuru,
+  .shuru-zhu-ti::after,
+  .shuru-zhu-ti .fenlie-shuru,
   .fudong-biaoqian {
     transition: none;
   }

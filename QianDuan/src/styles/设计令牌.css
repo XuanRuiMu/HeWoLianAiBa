@@ -62,6 +62,8 @@
   
   --biaoqian-qin-ru: 5px;
   
+  --kuang-huan-kuan: 3px;
+  
   --biaoqian-lan-gao-du: 76px;
   --shuru-kuang-zihao: 16px;
   --shuru-kuang-hangao: 1.4;
@@ -132,8 +134,13 @@
   
   --qipao-xuan-zhong-zi-zhong: 400;
   --shuru-xian-changtai-kuan-du: 1px;
-  --shuru-qian-zhui-kuan: calc(var(--shuru-kuang-zihao) * 1.9 + var(--jiange-6));
   --shuru-sao-chu-shi-chang: 1s;
+  --shuru-fu-jian-jian-ju: calc(var(--jiange-zhong) + var(--jiange-2));
+  --shuru-qu-hao-jian-tou-chi-cun: calc(var(--shuru-kuang-zihao) * 0.75);
+  --shuru-qu-hao-lie-biao-kuan: calc(var(--shuru-kuang-zihao) * 13);
+  --shuru-qu-hao-lie-biao-gao: calc(var(--shuru-kuang-zihao) * 17);
+  --shuru-qu-hao-hao-kuan: calc(var(--shuru-kuang-zihao) * 2.4);
+  --shuru-fu-jian-tu-biao-chi-cun: calc(var(--shuru-kuang-zihao) * 1.25);
   --pai-xu-shou-wei-jin-yong-bian-kuang: #4a4a58;
   --pai-xu-shou-wei-jin-yong-bei-jing: rgba(58, 58, 70, 0.45);
   --pai-xu-shou-wei-jin-yong-wen-ben: #8b8b98;
@@ -177,8 +184,9 @@
   --qipao-weiba-miao-bian-kuan: 1.5px;
   --yuyin-laba-kuan: 18px;
   --yuyin-laba-gao: 20px;
-  --yuyin-laba-jian-ju: 8px;
-  --yuyin-neirong-xia-yi: 3px;
+  --yuyin-laba-jian-ju: 10px;
+  --yuyin-shichang-zihao: 19px;
+  --yuyin-neirong-xia-yi: 0px;
   --yuyin-jindu-gao: 1px;
   --yuyin-jindu-xian-gao: 2px;
   --yuyin-huakuai-chicun: 8px;

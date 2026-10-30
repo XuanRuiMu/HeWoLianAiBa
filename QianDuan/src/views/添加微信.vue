@@ -3,7 +3,6 @@
     :chang-jing="场景"
     :tou-xiang="仓库.jiaoSeXinXi?.tou_xiang ?? null"
     :mo-ren-zi="moRenTouXiang"
-    :dui-xiang-id="duiXiangId"
     :biao-ti="biaoTi"
     :qu-wei-yu="当前趣味语"
     :jin-du="进度"
@@ -53,7 +52,6 @@ const 回退标题 = computed(() =>
     : huoQuFanYi('zaiRuLiaoTian', 'zhengZaiTianJia'),
 )
 const biaoTi = computed(() => 仓库.jiaoSeXinXi?.wei_xin_ming || 回退标题.value)
-const duiXiangId = computed(() => 仓库.jiaoSeXinXi?.id || 仓库.jiaoSeXinXi?.jiao_se_id || '')
 const moRenTouXiang = computed(() => {
   const xingBie = 仓库.jiaoSeXinXi?.xing_bie
   if (xingBie === 'nv') return '👩'

@@ -15,6 +15,7 @@ export interface 注册请求 {
   miMa: string
   tongYiXieYi: boolean
   chuShengRiQi: string
+  jingWai?: boolean
 }
 
 export interface 登录请求 {
@@ -81,7 +82,7 @@ export async function jianChaShouJiHao(
   peiZhi?: { signal?: AbortSignal },
 ): Promise<{ yi_zhu_ce: boolean }> {
   const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: { yi_zhu_ce: boolean } }>(
-    `/认证/检查手机?shouJiHao=${shouJiHao}`,
+    `/认证/检查手机?shouJiHao=${encodeURIComponent(shouJiHao)}`,
     peiZhi,
   )
   return 响应.data.shu_ju
@@ -95,6 +96,7 @@ export async function zhuCe(
   tongYiXieYi: boolean,
   chuShengRiQi: string,
   peiZhi?: { signal?: AbortSignal },
+  jingWai = false,
 ): Promise<DengLuXiangYing> {
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: DengLuXiangYing }>(
     '/认证/注册',
@@ -105,6 +107,7 @@ export async function zhuCe(
       miMa,
       tongYiXieYi,
       chuShengRiQi,
+      jingWai,
     },
     peiZhi,
   )

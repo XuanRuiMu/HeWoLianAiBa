@@ -1646,7 +1646,7 @@ async function zhiXingZhuXiao() {
   border-color: var(--xingbie-nan-shen-biankuang);
   color: var(--xingbie-nan-tan-wenben);
   font-weight: 600;
-  box-shadow: 0 0 0 3px var(--xingbie-nan-xuan-huan);
+  box-shadow: inset 0 0 0 var(--kuang-huan-kuan) var(--xingbie-nan-xuan-huan);
 }
 
 .xingbie-kapian.beiXuanZhong[data-xuan-xing-bie='nv'] {
@@ -1654,7 +1654,7 @@ async function zhiXingZhuXiao() {
   border-color: var(--xingbie-nv-shen-biankuang);
   color: var(--xingbie-nv-tan-wenben);
   font-weight: 600;
-  box-shadow: 0 0 0 3px var(--xingbie-nv-xuan-huan);
+  box-shadow: inset 0 0 0 var(--kuang-huan-kuan) var(--xingbie-nv-xuan-huan);
 }
 
 .shuang-lie {

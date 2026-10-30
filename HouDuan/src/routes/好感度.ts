@@ -1,4 +1,4 @@
-﻿import { debug日志 } from '../utils/debug日志'
+import { debug日志 } from '../utils/debug日志'
 import { Router } from 'express'
 import type { Response } from 'express'
 import { huoQuFanYi } from '../config/translations'
@@ -11,6 +11,7 @@ import {
   huoQuWanZhengHaoGanDu,
   sheZhiMiJiHaoGanDu,
 } from '../services/好感度'
+import { guiYiHuaJiaoSeBiaoShi } from '../services/公开编号'
 
 const luYou = Router()
 
@@ -29,7 +30,7 @@ luYou.get(
       return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
     }
 
-    const jiaoSeId = String(qingQiu.params.jiaoSeId || '')
+    const jiaoSeId = await guiYiHuaJiaoSeBiaoShi(qingQiu.params.jiaoSeId)
     if (!jiaoSeId) {
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
     }
@@ -56,7 +57,7 @@ luYou.get(
       return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
     }
 
-    const jiaoSeId = String(qingQiu.params.jiaoSeId || '')
+    const jiaoSeId = await guiYiHuaJiaoSeBiaoShi(qingQiu.params.jiaoSeId)
     if (!jiaoSeId) {
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
     }
@@ -84,7 +85,7 @@ luYou.post(
       return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
     }
 
-    const jiaoSeId = String(qingQiu.params.jiaoSeId || '')
+    const jiaoSeId = await guiYiHuaJiaoSeBiaoShi(qingQiu.params.jiaoSeId)
     const qingQiuTi = qingQiu.body as Record<string, unknown>
     const miLing = jieXiZiFuChuan(qingQiuTi, '秘籍', 'mi_ji')
 

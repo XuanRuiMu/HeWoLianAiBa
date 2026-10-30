@@ -122,7 +122,7 @@ describe('主页三维背景：就绪握手、暂停与降级', () => {
     expect(主题).not.toContain('setInterval(syncTheme, 400)')
   })
 
-  it('预热完成后父页才显示 iframe，再由父页启动波浪与紫色滤镜', () => {
+  it('预热完成后父页才显示 iframe，再由父页启动波浪开场', () => {
     const 揭示 = 读('public/grass-bg/scripts/block-06.js')
     const 握手 = 读('public/grass-bg/scripts/block-09.js')
     const 根 = 读('src/根组件.vue')
@@ -134,7 +134,12 @@ describe('主页三维背景：就绪握手、暂停与降级', () => {
     expect(揭示).toContain('yuReHaoMiao')
     expect(揭示).toContain('setProgress')
     expect(揭示).toContain('uProgress')
-    expect(揭示).toContain('uLineGlowIntensity')
+    expect(揭示).toContain("sheZhiXianJing(1)")
+    expect(揭示).not.toContain('uLineGlowIntensity')
+    expect(揭示).not.toContain('sheZhiXianJing(0.5)')
+    expect(揭示).not.toContain('sheZhiGuang')
+    expect(揭示).toContain('__yiPangLu')
+    expect(揭示).toContain('kanShouShuiCaiLvJing')
     expect(揭示).toContain('material.visible')
     expect(揭示).not.toContain('grass-reveal-start')
     expect(揭示).not.toContain('revealMesh.startReveal')
@@ -165,7 +170,7 @@ describe('主页三维背景：就绪握手、暂停与降级', () => {
     expect(完成段).not.toContain('xianShiBingBoFang()')
   })
 
-  it('波浪与滤镜的预热/显示/安全超时参数都来自站点配置', () => {
+  it('波浪开场的预热/显示/安全超时参数都来自站点配置', () => {
     const 配置 = 读('src/config/站点配置.ts')
     const 地址 = 读('src/utils/CaoDiBeiJing.ts')
     expect(配置).toContain('caoDiJieShiChaoShiHaoMiao: 8000')

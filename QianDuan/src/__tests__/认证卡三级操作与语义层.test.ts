@@ -258,7 +258,7 @@ describe('登录注册切换是一组可读的标签页', () => {
     expect(登录).toContain('<div class="biaoqian-qiehuan" role="tablist">')
     expect((登录.match(/role="tab"/g) || []).length).toBe(2)
     expect(登录).toContain(":aria-selected=\"moShi === 'dengLu' ? 'true' : 'false'\"")
-    expect(登录).toContain(":aria-selected=\"moShi === 'zhuCe' ? 'true' : 'false'\"")
+    expect(登录).toContain(":aria-selected=\"moShi !== 'dengLu' ? 'true' : 'false'\"")
   })
 
   it('活动标签用 class 与文字双重表达，不只靠下划线颜色', () => {

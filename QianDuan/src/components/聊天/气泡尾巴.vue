@@ -2,7 +2,7 @@
   <span
     ref="gen"
     class="qipao-weiba"
-    :class="'qipao-weiba--' + ce"
+    :class="['qipao-weiba--' + ce, { 'qipao-weiba--tupian': Boolean(tianChong) }]"
     :style="tianChong ? { '--qipao-weiba-tian-chong': tianChong } : undefined"
     aria-hidden="true"
   />
@@ -134,14 +134,21 @@ watch(
 <style scoped>
 .qipao-weiba {
   --qipao-weiba-bian: var(--qipao-weiba-miao-bian-kuan);
+  --qipao-weiba-jie-feng: var(--qipao-weiba-bian);
 
   position: absolute;
   top: 0;
   bottom: 0;
   display: var(--qipao-weiba-xian-shi, block);
-  background: var(--qipao-weiba-miao-bian, transparent);
   pointer-events: none;
   z-index: 0;
+}
+
+.qipao-weiba::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--qipao-weiba-miao-bian, transparent);
 }
 
 .qipao-weiba::after {
@@ -152,9 +159,16 @@ watch(
   background: var(--qipao-weiba-tian-chong, transparent);
 }
 
+.qipao-weiba--tupian::after {
+  filter: opacity(1);
+}
+
 .qipao-weiba--you {
   right: calc((var(--qipao-weiba-kuan) + var(--qipao-weiba-bian)) * -1);
   left: 0;
+}
+
+.qipao-weiba--you::before {
   clip-path: polygon(
     calc(100% - var(--qipao-weiba-kuan) - var(--qipao-weiba-bian))
       calc(var(--qipao-weiba-shang) - var(--qipao-weiba-bian)),
@@ -169,14 +183,20 @@ watch(
   width: calc(100% - var(--qipao-weiba-bian));
   clip-path: polygon(
     calc(100% - var(--qipao-weiba-kuan)) var(--qipao-weiba-shang),
-    100% calc(var(--qipao-weiba-shang) + var(--qipao-weiba-ban)),
-    calc(100% - var(--qipao-weiba-kuan)) calc(var(--qipao-weiba-shang) + var(--qipao-weiba-ban) * 2)
+    calc(100% - var(--qipao-weiba-kuan) - var(--qipao-weiba-jie-feng)) var(--qipao-weiba-shang),
+    calc(100% - var(--qipao-weiba-kuan) - var(--qipao-weiba-jie-feng))
+      calc(var(--qipao-weiba-shang) + var(--qipao-weiba-ban) * 2),
+    calc(100% - var(--qipao-weiba-kuan)) calc(var(--qipao-weiba-shang) + var(--qipao-weiba-ban) * 2),
+    100% calc(var(--qipao-weiba-shang) + var(--qipao-weiba-ban))
   );
 }
 
 .qipao-weiba--zuo {
   right: 0;
   left: calc((var(--qipao-weiba-kuan) + var(--qipao-weiba-bian)) * -1);
+}
+
+.qipao-weiba--zuo::before {
   clip-path: polygon(
     calc(var(--qipao-weiba-kuan) + var(--qipao-weiba-bian))
       calc(var(--qipao-weiba-shang) - var(--qipao-weiba-bian)),
@@ -191,8 +211,12 @@ watch(
   width: calc(100% - var(--qipao-weiba-bian));
   clip-path: polygon(
     var(--qipao-weiba-kuan) var(--qipao-weiba-shang),
-    0 calc(var(--qipao-weiba-shang) + var(--qipao-weiba-ban)),
-    var(--qipao-weiba-kuan) calc(var(--qipao-weiba-shang) + var(--qipao-weiba-ban) * 2)
+    calc(var(--qipao-weiba-kuan) + var(--qipao-weiba-jie-feng)) var(--qipao-weiba-shang),
+    calc(var(--qipao-weiba-kuan) + var(--qipao-weiba-jie-feng))
+      calc(var(--qipao-weiba-shang) + var(--qipao-weiba-ban) * 2),
+    var(--qipao-weiba-kuan) calc(var(--qipao-weiba-shang) + var(--qipao-weiba-ban) * 2),
+    0 calc(var(--qipao-weiba-shang) + var(--qipao-weiba-ban))
   );
 }
 </style>
+

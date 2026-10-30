@@ -91,9 +91,10 @@
       <ol v-else class="bangdan-liebiao">
         <li
           v-for="(xiangMu, suoYin) in paiHangLieBiao"
-          :key="suoYin"
+          :key="`${dangQianZuBie}-${suoYin}`"
           class="bangdan-hang"
           :class="{ 'bangdan-hang--qian': xiangMu.pai_ming <= 3 }"
+          :style="{ '--hang-xu-hao': suoYin }"
         >
           <span class="paiming-shu">{{ xiangMu.pai_ming }}</span>
           <span class="wanjia-ming">{{ xiangMu.yong_hu_ming }}</span>
@@ -256,6 +257,15 @@ onBeforeUnmount(() => {
   --tz-dong: var(--moshi-kapian-dong-xiao) var(--quxian-biao-zhun);
   --tz-zhi-shi-dong: 260ms;
   --tz-ka-dong: 200ms;
+  --tz-xian-kuan: 1px;
+  --tz-hang-shu: 5;
+  --tz-hang-nei-lv: 1.35;
+  --tz-hang-nei: calc(var(--tz-zi-zhong) * var(--tz-hang-nei-lv));
+  --tz-tou-gao: calc(var(--jiange-xiao) * 2 + var(--tz-zi-xiao) * 1.4 + var(--tz-xian-kuan));
+  --tz-hang-gao: calc(var(--tz-hang-nei) + var(--jiange-12) * 2 + var(--tz-xian-kuan));
+  --tz-liebiao-gao: calc(var(--tz-hang-gao) * var(--tz-hang-shu));
+  --tz-hang-cuo: calc(var(--moshi-kapian-dong-xiao) / 6);
+  --tz-hang-ru-yi: var(--jiange-6);
   width: 100%;
   max-width: var(--tz-kuan);
   margin: 0 auto;
@@ -435,17 +445,26 @@ onBeforeUnmount(() => {
   text-align: right;
 }
 
+.bangdan-zai {
+  min-height: calc(var(--tz-tou-gao) + var(--tz-liebiao-gao));
+  padding-top: var(--tz-tou-gao);
+}
+
 .bangdan-liebiao {
   display: flex;
   flex-direction: column;
+  min-height: var(--tz-liebiao-gao);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .bangdan-hang {
+  min-height: var(--tz-hang-gao);
   padding: var(--jiange-12) 0;
   border-bottom: 1px solid var(--tz-xian-ruo);
+  animation: bangdan-hang-ru var(--tz-ka-dong) var(--quxian-tan-chu) both;
+  animation-delay: calc(var(--hang-xu-hao, 0) * var(--tz-hang-cuo));
 }
 
 .bangdan-hang:last-child {
@@ -460,6 +479,7 @@ onBeforeUnmount(() => {
   justify-self: end;
   font-size: var(--tz-zi-zhong);
   font-weight: 600;
+  line-height: var(--tz-hang-nei-lv);
   font-variant-numeric: tabular-nums;
   color: var(--tz-wen-ci);
 }
@@ -495,6 +515,7 @@ onBeforeUnmount(() => {
   justify-self: end;
   font-size: var(--tz-zi-zhong);
   font-weight: 600;
+  line-height: var(--tz-hang-nei-lv);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -506,6 +527,7 @@ onBeforeUnmount(() => {
 }
 
 .bangdan-zhanwei {
+  min-height: var(--tz-hang-gao);
   padding: var(--jiange-12) 0;
   border-bottom: 1px solid var(--tz-xian-ruo);
 }
@@ -548,6 +570,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--jiange-xiao);
+  min-height: calc(var(--tz-tou-gao) + var(--tz-liebiao-gao));
   padding: calc(var(--jiange-da) * 2) 0 var(--jiange-da);
 }
 
@@ -613,6 +636,14 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 640px) {
+  .paihang-yemian {
+    --tz-tou-gao: 0px;
+    --tz-hang-gao: calc(
+      var(--tz-hang-nei) + var(--tz-zi-xiao) * 1.4 + var(--jiange-4) + var(--jiange-12) * 2 +
+        var(--tz-xian-kuan)
+    );
+  }
+
   .zubie-qiehuan {
     gap: var(--jiange-12);
   }
@@ -675,10 +706,22 @@ onBeforeUnmount(() => {
   }
 }
 
+@keyframes bangdan-hang-ru {
+  from {
+    opacity: 0;
+    transform: translateY(var(--tz-hang-ru-yi));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .fanhui-lianjie,
   .zubie-anNiu,
   .zubie-zhishi,
+  .bangdan-hang,
   .kong-anniu {
     transition: none;
     animation: none;

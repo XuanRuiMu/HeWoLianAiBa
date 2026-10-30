@@ -19,7 +19,7 @@
               class="laba-duan laba-duan--1"
               cx="4"
               cy="10"
-              r="2.4"
+              r="1.5"
               fill="currentColor"
               stroke="none"
             />
@@ -348,8 +348,8 @@ onBeforeUnmount(() => {
 
 .yuyin-shichang {
   flex: 0 0 auto;
-  font-size: var(--ziti-zhong);
-  font-weight: 600;
+  font-size: var(--yuyin-shichang-zihao);
+  font-weight: var(--qipao-xuan-zhong-zi-zhong);
   white-space: nowrap;
 }
 

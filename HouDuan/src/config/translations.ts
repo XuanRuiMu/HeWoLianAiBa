@@ -26,6 +26,8 @@ export const fanYi = {
   },
   renZheng: {
     shouJiHaoGeShiCuoWu: '请输入正确的手机号',
+    feiDaLuZhuCeBuShouDaLuHao: '非大陆手机号注册不支持中国大陆号码，请使用短信注册',
+    zhiJieShouDaLuHao: '短信注册仅支持中国大陆手机号，境外号码请使用非大陆手机号注册',
     yanZhengMaGeShiCuoWu: '请输入6位数字验证码',
     yongHuMingChangDuCuoWu: '用户名需要1-30个字符',
     yongHuMingTeShuZiFu: '用户名不能包含特殊字符',

@@ -111,11 +111,14 @@ export class AI回复调度器 {
     private readonly IE类型: 'I' | 'E',
     private readonly io: Server,
     回复延迟毫秒: number = 10000,
+    对外角色ID?: string,
   ) {
     this.回复延迟毫秒 = 回复延迟毫秒
+    this.对外角色ID = typeof 对外角色ID === 'string' && 对外角色ID.length > 0 ? 对外角色ID : 角色ID
   }
 
   private 回复延迟毫秒: number
+  private 对外角色ID: string
 
   设置回复延迟毫秒(haoMiao: number): void {
     this.回复延迟毫秒 = haoMiao
@@ -213,10 +216,18 @@ export class AI回复调度器 {
     this.发布AI状态('kong_xian')
   }
 
+  private 转对外消息(消息列表: XiaoXiXinXi[]): XiaoXiXinXi[] {
+    return 消息列表.map((xiaoXi) => ({
+      ...xiaoXi,
+      hui_hua_id: this.对外角色ID,
+      fa_song_zhe_id: xiaoXi.fa_song_zhe_id === this.角色ID ? this.对外角色ID : xiaoXi.fa_song_zhe_id,
+    }))
+  }
+
   private 推送角色回复(消息列表: XiaoXiXinXi[], 轮次?: LunCiShangXiaWen | null): void {
     const 事件: AIHuiFuXiaoXiShiJian = {
-      角色ID: this.角色ID,
-      消息列表,
+      角色ID: this.对外角色ID,
+      消息列表: this.转对外消息(消息列表),
       轮次: 轮次?.处理ID,
       驱动消息ID: 轮次?.驱动消息ID ?? null,
     }
@@ -246,7 +257,7 @@ export class AI回复调度器 {
     this.当前AI状态 = zhuang_tai
     this.xu_hao += 1
     this.io.to(this.用户ID).emit('AI状态', {
-      jiao_se_id: this.角色ID,
+      jiao_se_id: this.对外角色ID,
       zhuang_tai,
       xu_hao: this.xu_hao,
       shi_jian: Date.now(),
@@ -259,10 +270,10 @@ export class AI回复调度器 {
 
   private 发送系统错误提示(cuoWuXinXi: string): void {
     this.io.to(this.用户ID).emit('角色回复', {
-      角色ID: this.角色ID,
+      角色ID: this.对外角色ID,
       消息列表: [{
         id: shengChengXiTongTiShiId(),
-        hui_hua_id: this.角色ID,
+        hui_hua_id: this.对外角色ID,
         fa_song_zhe_id: 'system',
         fa_song_zhe_lei_xing: 'xitong',
         nei_rong: cuoWuXinXi,
@@ -938,7 +949,10 @@ private 计算本轮回复延迟(): number {
       try {
         const gengXinJieGuo = await gengXinHaoGanDu(this.用户ID, this.角色ID, 评判结果.jieGuo, 评判结果.xiShu, 评判结果.muBiaoQuXian, 评判结果.lianXuWeiDaBiao)
         if (gengXinJieGuo.cheng_gong && gengXinJieGuo.zeng_liang_shi_jian) {
-          this.io.to(this.用户ID).emit('好感度增量', gengXinJieGuo.zeng_liang_shi_jian)
+          this.io.to(this.用户ID).emit('好感度增量', {
+            ...gengXinJieGuo.zeng_liang_shi_jian,
+            jiao_se_id: this.对外角色ID,
+          })
         }
       } catch (缓存错误) {
         debug日志.error('AI调度器', '好感度缓存链路失败', { xiang_qing: { cuo_wu: String(缓存错误) } })

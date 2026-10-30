@@ -77,7 +77,6 @@ function 挂载页(覆盖: Record<string, unknown> = {}) {
       changJing: 'puTong',
       touXiang: null,
       moRenZi: '👩',
-      duiXiangId: 'abcdef1234567890',
       biaoTi: '微信昵称',
       quWeiYu: '正在打开手机...',
       jinDu: 40,
@@ -103,10 +102,11 @@ afterEach(() => {
 })
 
 describe('FP-11 三入口加载框：单一展示组件与单一控制器', () => {
-  it('载入页只做展示，接收场景/头像/对象ID/标题/趣味语/进度/错误/重试', () => {
+  it('载入页只做展示，接收场景/头像/标题/趣味语/进度/错误/重试，且不接收任何对象编号', () => {
     expect(载入页源).toContain('changJing: 进入聊天场景')
     expect(载入页源).toContain('touXiang?: string | null')
-    expect(载入页源).toContain('duiXiangId?: string | null')
+    expect(载入页源).not.toContain('duiXiangId')
+    expect(载入页源).not.toContain(':dui-xiang-id')
     expect(载入页源).toContain('biaoTi?: string')
     expect(载入页源).toContain('quWeiYu?: string')
     expect(载入页源).toContain('jinDu: number')
@@ -127,7 +127,7 @@ describe('FP-11 三入口加载框：单一展示组件与单一控制器', () =
       expect(源).toContain(':qu-wei-yu="当前趣味语"')
       expect(源).toContain(':jin-du="进度"')
       expect(源).toContain(':cuo-wu="错误"')
-      expect(源).toContain(':dui-xiang-id=')
+      expect(源).not.toContain(':dui-xiang-id=')
       expect(源).toContain('@zhong-shi="重试"')
       expect(源).not.toContain('setInterval')
       expect(源).not.toContain('ZUI_DUAN_ZHAN_SHI_HAO_MIAO')
@@ -157,18 +157,17 @@ describe('FP-11 三入口加载框：单一展示组件与单一控制器', () =
     expect(添加微信源).toContain("return '💬'")
   })
 
-  it('头像、标题、对象ID、趣味语、进度槽位定高，三场景结构一致', () => {
+  it('头像、标题、趣味语、进度槽位定高，三场景结构一致且均无对象编号槽位', () => {
     expect(取规则(载入样式, '.zairu-touxiang-wei')).toContain('flex: none')
     expect(取规则(载入样式, '.zairu-mingcheng-wei')).toContain('flex: none')
     expect(取规则(载入样式, '.zairu-biaoti')).toContain('height: 29px')
-    expect(取规则(载入样式, '.zairu-duixiang-id')).toContain('height: 18px')
     expect(取规则(载入样式, '.zairu-tishi')).toContain(
       'height: calc(var(--jiange-da) + var(--jiange-12))',
     )
     expect(取规则(载入样式, '.zairu-jindu-tiao')).toContain('height: 4px')
-    expect(载入样式).toMatch(
-      /@media \(max-height: 420px\) \{[\s\S]*?\.zairu-duixiang-id \{\s*height: 16px;/,
-    )
+    expect(载入样式).not.toContain('zairu-duixiang-id')
+    expect(载入页源).not.toContain('UID')
+    expect(载入页源).not.toContain('公开编号')
   })
 
   it('三套趣味语各自非空、互不重复且不共用同一数组', () => {
@@ -191,8 +190,8 @@ describe('FP-11 三入口加载框：单一展示组件与单一控制器', () =
   })
 })
 
-describe('FP-11 三场景渲染：对象ID、槽位与错误层', () => {
-  it('三场景渲染相同的在流结构与槽位高度，仅场景标记不同', async () => {
+describe('FP-11 三场景渲染：无编号槽位与错误层', () => {
+  it('三场景渲染相同的在流结构与槽位高度，仅场景标记不同且均不出现编号', async () => {
     const 结构: string[][] = []
     for (const 场景 of ['puTong', 'paiWei', 'huiYi'] as const) {
       建壳()
@@ -201,11 +200,9 @@ describe('FP-11 三场景渲染：对象ID、槽位与错误层', () => {
       const 浮层 = document.body.querySelector('.zairu-yemian') as HTMLElement
       const 卡 = 浮层.querySelector('.zairu-kaPian') as HTMLElement
       expect(浮层.dataset.changJing).toBe(场景)
-      expect(卡.querySelector('.zairu-duixiang-id')?.textContent).toBe('UID：abcdef12')
+      expect(卡.querySelector('.zairu-duixiang-id')).toBeNull()
+      expect(卡.textContent).not.toContain('UID')
       expect(getComputedStyle(卡.querySelector('.zairu-biaoti') as Element).height).toBe('29px')
-      expect(getComputedStyle(卡.querySelector('.zairu-duixiang-id') as Element).height).toBe(
-        '18px',
-      )
       expect(getComputedStyle(卡.querySelector('.zairu-tishi') as Element).height).toBe(
         'calc(var(--jiange-da) + var(--jiange-12))',
       )
@@ -218,13 +215,14 @@ describe('FP-11 三场景渲染：对象ID、槽位与错误层', () => {
     expect(结构[2]).toEqual(结构[0])
   })
 
-  it('对象ID缺失时占位文案撑住定高槽位，不改变结构', async () => {
+  it('无论传入什么，载入页都不渲染编号槽位，也不出现 UID 字样', async () => {
     建壳()
-    const 包 = 挂载页({ duiXiangId: '' })
+    const 包 = 挂载页({})
     await nextTick()
-    const 槽 = document.body.querySelector('.zairu-duixiang-id') as HTMLElement
-    expect(槽.textContent).toBe(`UID：${huoQuFanYiText()}`)
-    expect(getComputedStyle(槽).height).toBe('18px')
+    const 卡 = document.body.querySelector('.zairu-kaPian') as HTMLElement
+    expect(卡.querySelector('.zairu-duixiang-id')).toBeNull()
+    expect(卡.textContent).not.toContain('UID')
+    expect(卡.textContent).not.toContain('公开编号')
     包.unmount()
   })
 
@@ -252,11 +250,6 @@ describe('FP-11 三场景渲染：对象ID、槽位与错误层', () => {
     包.unmount()
   })
 })
-
-function huoQuFanYiText(): string {
-  const 分类 = (fanYi as Record<string, unknown>).zaiRuLiaoTian as Record<string, unknown>
-  return String(分类.idDaiHuoQu)
-}
 
 function 建控制器宿主(覆盖: Partial<进入聊天加载配置> = {}) {
   const 完成 = vi.fn()
@@ -400,10 +393,6 @@ describe('FP-11 三个真实入口的接线', () => {
     return document.body.querySelector('.zairu-tishi-wen')?.textContent?.trim() ?? ''
   }
 
-  function 当前编号文本(): string {
-    return document.body.querySelector('.zairu-duixiang-id')?.textContent?.trim() ?? ''
-  }
-
   beforeEach(() => {
     sessionStorage.clear()
     localStorage.clear()
@@ -411,7 +400,7 @@ describe('FP-11 三个真实入口的接线', () => {
     预加载聊天页.mockResolvedValue(true)
   })
 
-  it('排位入口：挑战临时资料驱动排位场景、真实对象ID与头像', async () => {
+  it('排位入口：挑战临时资料驱动排位场景、头像，且不暴露任何对象编号', async () => {
     sessionStorage.setItem(
       'ziLiaoSheZhiLinShi',
       JSON.stringify({ moshi: 'tiaozhan', woDeXingBie: '男', muBiaoXingBie: 'female' }),
@@ -425,7 +414,8 @@ describe('FP-11 三个真实入口的接线', () => {
     const 浮层 = document.body.querySelector('.zairu-yemian') as HTMLElement
     expect(浮层.dataset.changJing).toBe('paiWei')
     expect(document.body.querySelector('.zairu-biaoti')?.textContent).toBe('苏晚')
-    expect(当前编号文本()).toBe('UID：abc12345')
+    expect(document.body.querySelector('.zairu-duixiang-id')).toBeNull()
+    expect(document.body.querySelector('.zairu-kaPian')?.textContent).not.toContain('UID')
     expect(fanYi.zaiRuLiaoTian.quWeiYu.paiWei).toContain(当前趣味语文本())
     const 头像 = document.body.querySelector('.zairu-touxiang-wei img')
     expect(头像?.getAttribute('src')).toBe('https://cdn.test/su.png')
@@ -447,7 +437,8 @@ describe('FP-11 三个真实入口的接线', () => {
     expect(shengChengJiaoSe).toHaveBeenCalledWith('female', 'INFP', false, false, 'male', null)
     const 浮层 = document.body.querySelector('.zairu-yemian') as HTMLElement
     expect(浮层.dataset.changJing).toBe('puTong')
-    expect(当前编号文本()).toBe('UID：abc12345')
+    expect(document.body.querySelector('.zairu-duixiang-id')).toBeNull()
+    expect(document.body.querySelector('.zairu-kaPian')?.textContent).not.toContain('UID')
     expect(fanYi.zaiRuLiaoTian.quWeiYu.puTong).toContain(当前趣味语文本())
     包.unmount()
   })
@@ -461,7 +452,7 @@ describe('FP-11 三个真实入口的接线', () => {
     包.unmount()
   })
 
-  it('过往战绩入口：回忆场景、路由对象ID与回忆趣味语，头像未到达时保留文字占位', async () => {
+  it('过往战绩入口：回忆场景、回忆趣味语与头像占位，路由参数不进入页面文本', async () => {
     预加载聊天页.mockReturnValue(new Promise(() => undefined))
     const { 包 } = await 挂载入口(载入聊天, '/zai-ru/91d2f4a8-0c7e-4b63-9a21-5f8d3c6e0b72')
     await nextTick()
@@ -469,7 +460,9 @@ describe('FP-11 三个真实入口的接线', () => {
     const 浮层 = document.body.querySelector('.zairu-yemian') as HTMLElement
     expect(浮层.dataset.changJing).toBe('huiYi')
     expect(document.body.querySelector('.zairu-biaoti')?.textContent).toBe('正在找回这个人')
-    expect(当前编号文本()).toBe('UID：91d2f4a8')
+    expect(document.body.querySelector('.zairu-duixiang-id')).toBeNull()
+    expect(document.body.querySelector('.zairu-kaPian')?.textContent).not.toContain('UID')
+    expect(document.body.querySelector('.zairu-kaPian')?.textContent).not.toContain('91d2f4a8')
     expect(fanYi.zaiRuLiaoTian.quWeiYu.huiYi).toContain(当前趣味语文本())
     expect(document.body.querySelector('.zairu-touxiang-wei .touxiang--zi')).not.toBeNull()
     包.unmount()

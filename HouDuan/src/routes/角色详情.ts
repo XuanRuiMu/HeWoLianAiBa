@@ -7,7 +7,7 @@ import { anIdChaJiaoSeXiangQing, touYingGuanLiJiaoSe, touYingWanJiaKeJianJiaoSe 
 import { anYongHuIdJuBeiNengLi } from '../middleware/管理员'
 import { huoQuJiaoSeSuoYouZhe } from '../services/消息'
 import { zhongXinQianMingMeiTiURL } from '../services/媒体存储'
-import { yanZhengUUID } from '../utils/验证'
+import { guiYiHuaJiaoSeBiaoShi } from '../services/公开编号'
 import type { RenZhengQingQiu } from '../middleware/认证'
 
 const luYou = Router()
@@ -20,8 +20,8 @@ luYou.get(
       return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
     }
 
-    const jiaoSeId = String(qingQiu.params.jiaoSeId || '')
-    if (!yanZhengUUID(jiaoSeId)) {
+    const jiaoSeId = await guiYiHuaJiaoSeBiaoShi(qingQiu.params.jiaoSeId)
+    if (!jiaoSeId) {
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
     }
 

@@ -1,4 +1,4 @@
-﻿import { debug日志 } from '../utils/debug日志'
+import { debug日志 } from '../utils/debug日志'
 import { Router } from 'express'
 import type { Request, Response } from 'express'
 import { huoQuFanYi } from '../config/translations'
@@ -25,6 +25,7 @@ import { qianFaRenJiTiaoZhan } from '../services/人机验证'
 import { 映射登录失败 } from '../services/登录失败'
 import { zhuXiaoYongHu } from '../services/账号注销'
 import { huoQuZhenShiIP } from '../utils/真实IP'
+import { guiYiWeiGuoJiHao } from '../utils/手机号'
 import type { RenZhengQingQiu } from '../middleware/认证'
 import { CUO_WU_DAI_MA, type CuoWuDaiMa } from '../config/错误码注册表'
 
@@ -105,7 +106,7 @@ luYou.get('/检查手机', jianChaShouJiXianLiu, async (qingQiu: Request, xiangY
   if (!shouJiHao || !yanZhengShouJiHaoGeShi(shouJiHao)) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
   }
-  await anShouJiHaoChaYongHu(shouJiHao)
+  await anShouJiHaoChaYongHu(guiYiWeiGuoJiHao(shouJiHao))
   return chengGongXiangYing(xiangYing, { yi_zhu_ce: true })
 })
 
@@ -126,12 +127,16 @@ luYou.post('/发送码', 手机号验证中间件, renJiYanZhengZhongJianJian, f
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
   }
   const yongTu = zhunHuaYanZhengMaYongTu((qingQiu.body as Record<string, unknown>).yongTu)
-  const jieGuo = await faSongYanZhengMa(shouJiHao, yongTu)
+  const jieGuo = await faSongYanZhengMa(guiYiWeiGuoJiHao(shouJiHao), yongTu)
   if (!jieGuo.cheng_gong) {
     return shiBaiXiangYing(xiangYing, 503, jieGuo.ti_shi || huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai'), jieXiFaSongDaiMa(jieGuo.cuo_wu_ma))
   }
   return chengGongXiangYing(xiangYing, null)
 })
+
+function huoQuJingWaiBiaoZhi(qingQiuTi: Record<string, unknown>): boolean {
+  return qingQiuTi.jingWai === true || qingQiuTi.jing_wai === true
+}
 
 luYou.post('/注册', zhuCeXianLiu, 手机号验证中间件, 用户名验证中间件, async (qingQiu: Request, xiangYing: Response) => {
   const qingQiuTi = qingQiu.body as Record<string, unknown>
@@ -141,38 +146,48 @@ luYou.post('/注册', zhuCeXianLiu, 手机号验证中间件, 用户名验证中
   const miMa = huoQuMiMa(qingQiuTi)
   const tongYiXieYi = huoQuTongYiXieYi(qingQiuTi)
   const chuShengRiQi = huoQuChuShengRiQi(qingQiuTi)
+  const jingWai = huoQuJingWaiBiaoZhi(qingQiuTi)
 
-  if (!shouJiHao || !yanZhengMa || !yongHuMing || !miMa || tongYiXieYi === undefined || !chuShengRiQi) {
+  if (!shouJiHao || !yongHuMing || !miMa || tongYiXieYi === undefined || !chuShengRiQi) {
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.REQUEST_MISSING_PARAMETER)
+  }
+  if (!jingWai && !yanZhengMa) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.REQUEST_MISSING_PARAMETER)
   }
 
-  const { duanXinRiPeiEYuLan } = await import('../services/短信')
-  const peiEYuLan = await duanXinRiPeiEYuLan(shouJiHao, huoQuIp(qingQiu))
-  if (!peiEYuLan.yun_xu) {
-    return shiBaiXiangYing(xiangYing, 429, peiEYuLan.ti_shi || huoQuFanYi('renZheng', 'duanXinRiPeiEYongJin'), CUO_WU_DAI_MA.AUTH_SMS_RATE_LIMITED)
-  }
+  const guoJiHao = guiYiWeiGuoJiHao(shouJiHao)
 
-  const { xingWeiYanZhengXuYao, xingWeiYanZhengXiaoHao } = await import('../services/行为验证')
-  if (process.env.FP02_YAN_ZHENG_JI_LU === 'true' && await xingWeiYanZhengXuYao(shouJiHao, huoQuIp(qingQiu))) {
-    const pingZheng = typeof qingQiuTi.xingWeiPingZheng === 'string' ? String(qingQiuTi.xingWeiPingZheng) : typeof qingQiuTi.xing_wei_ping_zheng === 'string' ? String(qingQiuTi.xing_wei_ping_zheng) : ''
-    const xiaoHao = await xingWeiYanZhengXiaoHao(pingZheng, shouJiHao)
-    if (!xiaoHao) {
-      return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('renZheng', 'xuXingWeiYanZheng'), CUO_WU_DAI_MA.PERMISSION_DENIED)
+  if (!jingWai) {
+    const { duanXinRiPeiEYuLan } = await import('../services/短信')
+    const peiEYuLan = await duanXinRiPeiEYuLan(guoJiHao, huoQuIp(qingQiu))
+    if (!peiEYuLan.yun_xu) {
+      return shiBaiXiangYing(xiangYing, 429, peiEYuLan.ti_shi || huoQuFanYi('renZheng', 'duanXinRiPeiEYongJin'), CUO_WU_DAI_MA.AUTH_SMS_RATE_LIMITED)
+    }
+
+    const { xingWeiYanZhengXuYao, xingWeiYanZhengXiaoHao } = await import('../services/行为验证')
+    if (process.env.FP02_YAN_ZHENG_JI_LU === 'true' && await xingWeiYanZhengXuYao(guoJiHao, huoQuIp(qingQiu))) {
+      const pingZheng = typeof qingQiuTi.xingWeiPingZheng === 'string' ? String(qingQiuTi.xingWeiPingZheng) : typeof qingQiuTi.xing_wei_ping_zheng === 'string' ? String(qingQiuTi.xing_wei_ping_zheng) : ''
+      const xiaoHao = await xingWeiYanZhengXiaoHao(pingZheng, guoJiHao)
+      if (!xiaoHao) {
+        return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('renZheng', 'xuXingWeiYanZheng'), CUO_WU_DAI_MA.PERMISSION_DENIED)
+      }
     }
   }
 
   const jieGuo = await zhuCe({
-    shou_ji_hao: shouJiHao,
-    yan_zheng_ma: yanZhengMa,
+    shou_ji_hao: guoJiHao,
+    yan_zheng_ma: yanZhengMa ?? '',
     yong_hu_ming: yongHuMing,
     mi_ma: miMa,
     tong_yi_xie_yi: tongYiXieYi,
     chu_sheng_ri_qi: chuShengRiQi,
-    ip: huoQuIp(qingQiu) })
+    ip: huoQuIp(qingQiu),
+    jing_wai: jingWai,
+  })
 
   if (!jieGuo.cheng_gong) {
     const { jiLuZhuCeShiBai } = await import('../services/行为验证')
-    await jiLuZhuCeShiBai(shouJiHao, huoQuIp(qingQiu)).catch(() => undefined)
+    await jiLuZhuCeShiBai(guoJiHao, huoQuIp(qingQiu)).catch(() => undefined)
     return shiBaiXiangYing(xiangYing, 503, jieGuo.ti_shi || huoQuFanYi('renZheng', 'zhuCeShiBai'), jieXiZhuCeDaiMa(jieGuo.cuo_wu_ma))
   }
 

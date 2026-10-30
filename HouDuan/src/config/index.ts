@@ -1,4 +1,4 @@
-﻿import './env'
+import './env'
 import fs from 'fs'
 
 function huoQuHuanJingBianLiang(ming: string, moRen: string = ''): string {
@@ -202,7 +202,7 @@ xianLiu: {
   },
 
   shouJiHao: {
-    zhengZe: /^1[3-9]\d{9}$/,
+    zhengZe: /^\+\d{4,16}$/,
   },
 
   zhuCe: {

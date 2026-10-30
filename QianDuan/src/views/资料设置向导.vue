@@ -404,12 +404,12 @@ async function kaiShiLiaoTian() {
   --xingge-gao-guang-bian-zhong: color-mix(in srgb, var(--xingge-gao-guang-se) 80%, transparent);
   --xingge-liu-guang-yan: color-mix(in srgb, var(--xingge-gao-guang-se) 92%, #ffffff);
   --xingge-liu-guang-di: color-mix(in srgb, var(--xingge-gao-guang-se) 38%, transparent);
-  --xingge-xintiao-zhouqi-xuanguo: 3s;
+  --xingge-xintiao-zhouqi-xuanguo: 6s;
   --xingge-xintiao-zhouqi-xuanzhong: 1.5s;
   --xingge-piao-zhouqi: 9s;
   --xingge-huxi-an: 0.35;
   --xingge-huxi-liang: 1;
-  --xingge-huxi-an-xuan: 0.82;
+  --xingge-huxi-an-xuan: 0;
   --xingge-wai-guang: 0 0 18px var(--xingge-gao-guang-bian-zhong);
   --xingge-wai-guang-xuanguo: 0 0 13px var(--xingge-gao-guang-bian-zhong);
 }
@@ -473,6 +473,7 @@ async function kaiShiLiaoTian() {
   width: 100%;
   min-height: 360px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .buzuo-neirong {
@@ -549,7 +550,7 @@ async function kaiShiLiaoTian() {
 .mbti-kaPian::before {
   content: '';
   position: absolute;
-  inset: -1px;
+  inset: 0;
   border-radius: inherit;
   box-shadow: var(--xingge-wai-guang);
   opacity: 0;
@@ -560,9 +561,9 @@ async function kaiShiLiaoTian() {
 .mbti-kaPian::after {
   content: '';
   position: absolute;
-  inset: -2px;
+  inset: 0;
   border: 2px solid var(--xingge-liu-guang-yan);
-  border-radius: 14px;
+  border-radius: inherit;
   opacity: 0;
   transition:
     opacity 0.4s ease,
@@ -578,17 +579,20 @@ async function kaiShiLiaoTian() {
       radial-gradient(ellipse, var(--xingge-liu-guang-yan), transparent 68%),
       radial-gradient(ellipse, var(--xingge-liu-guang-di), transparent 72%),
       radial-gradient(ellipse, var(--xingge-liu-guang-yan), transparent 64%),
-      radial-gradient(ellipse, var(--xingge-liu-guang-di), transparent 70%);
+      radial-gradient(ellipse, var(--xingge-liu-guang-di), transparent 70%),
+      linear-gradient(var(--xingge-liu-guang-di), var(--xingge-liu-guang-di));
     background-position:
       0% 0%,
       100% 0%,
       0% 100%,
-      100% 100%;
+      100% 100%,
+      center;
     background-size:
       70% 45%,
       60% 55%,
       65% 50%,
-      55% 65%;
+      55% 65%,
+      100% 100%;
     background-repeat: no-repeat;
     -webkit-mask:
       linear-gradient(#000 0 0) content-box,

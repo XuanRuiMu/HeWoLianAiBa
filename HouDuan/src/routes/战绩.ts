@@ -33,6 +33,7 @@ import { yanZhengUUID } from '../utils/验证'
 import { CUO_WU_DAI_MA, shiCuoWuDaiMa } from '../config/错误码注册表'
 import { ZHAN_JI_PEI_ZHI } from '../config/战绩配置'
 import { xiaoChuShuZhiXieLu } from '../utils/数值泄露过滤'
+import { jiaoSeBianHaoBiao } from '../services/公开编号'
 
 const luYou = Router()
 
@@ -124,10 +125,11 @@ function guoLvZuiHouLiangTiao(
 
 function guoLvMinGanZiDuanLieBiao(
   lie_biao: DangAnLieBiaoXiang[],
+  bianHaoBiao?: Map<string, string>,
 ): QianDuanDangAnLieBiaoXiang[] {
   return lie_biao.map((dang_an) => ({
     id: dang_an.id,
-    jiao_se_id: dang_an.jiao_se_id,
+    jiao_se_id: bianHaoBiao?.get(dang_an.jiao_se_id) ?? dang_an.jiao_se_id,
     jiao_se_ming_zi: dang_an.jiao_se_ming_zi,
     shi_fou_zha_xing: dang_an.shi_fou_zha_xing,
     tou_xiang_biao_ji: dang_an.tou_xiang_biao_ji,
@@ -198,11 +200,12 @@ function guoLvFuPanPiZhu(pi_zhu: FuPanPiZhu[] | null): QianDuanFuPanPiZhu[] | nu
 
 export function guoLvMinGanZiDuanXiangQing(
   dang_an: DangAnXiangQing,
+  bianHaoBiao?: Map<string, string>,
 ): QianDuanDangAnXiangQing {
   const junShiJiLu = dang_an.jun_shi_ji_lu || []
   return {
     id: dang_an.id,
-    jiao_se_id: dang_an.jiao_se_id,
+    jiao_se_id: bianHaoBiao?.get(dang_an.jiao_se_id) ?? dang_an.jiao_se_id,
     jiao_se_ming_zi: dang_an.jiao_se_ming_zi,
     shi_fou_zha_xing: dang_an.shi_fou_zha_xing,
     tou_xiang_biao_ji: dang_an.tou_xiang_biao_ji,
@@ -352,7 +355,9 @@ luYou.get(
         yongHu.yongHuId,
         typeof fenLeiCanShu === 'string' ? fenLeiCanShu : undefined,
       )
-      return chengGongXiangYing(xiangYing, { dangAnLieBiao: guoLvMinGanZiDuanLieBiao(lieBiao) })
+      return chengGongXiangYing(xiangYing, {
+        dangAnLieBiao: guoLvMinGanZiDuanLieBiao(lieBiao, await jiaoSeBianHaoBiao(yongHu.yongHuId)),
+      })
     } catch (cuoWu) {
       return chuLiZhanJiCuoWu(xiangYing, '获取战绩列表失败', cuoWu)
     }
@@ -378,7 +383,10 @@ luYou.get(
       if (!dangAn) {
         return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'), CUO_WU_DAI_MA.RESOURCE_NOT_FOUND)
       }
-      return chengGongXiangYing(xiangYing, guoLvMinGanZiDuanXiangQing(dangAn))
+      return chengGongXiangYing(
+        xiangYing,
+        guoLvMinGanZiDuanXiangQing(dangAn, await jiaoSeBianHaoBiao(yongHu.yongHuId)),
+      )
     } catch (cuoWu) {
       debug日志.error('战绩接口', '获取战绩详情失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return shiBaiXiangYing(xiangYing, 503, '', CUO_WU_DAI_MA.DATABASE_ERROR)
@@ -574,7 +582,7 @@ luYou.get(
         })
       }
 
-      const qianDuanDangAn = guoLvMinGanZiDuanXiangQing(dangAn)
+      const qianDuanDangAn = guoLvMinGanZiDuanXiangQing(dangAn, await jiaoSeBianHaoBiao(yongHu.yongHuId))
       const junShiJiLu = await huoQuJunShiJiLuLieBiao(yongHu.yongHuId, dangAn.jiao_se_id)
       const qianDuanJunShiJiLu = junShiJiLu.map(zhuanHuanJunShiJiLu)
 

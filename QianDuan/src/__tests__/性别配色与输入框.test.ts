@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import 长方框输入框 from '@/components/表单/长方框输入框.vue'
-import { 领取聚焦入场许可, 重置聚焦秩序 } from '@/utils/输入聚焦秩序'
+
 import '@/styles/设计令牌.css'
 import { 使用性别框体配色, 使用默认性别卡配色 } from '@/composables/use性别框体配色'
 import { 解析性别框体色档 } from '@/utils/性别'
@@ -185,18 +185,13 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
     expect(横条).not.toContain('miao-bian')
   })
 
-  it('聚焦入场许可只在字段身份变化时返回真', () => {
-    重置聚焦秩序()
-    const 甲 = document.createElement('input')
-    const 乙 = document.createElement('input')
-    expect(领取聚焦入场许可(null)).toBe(false)
-    expect(领取聚焦入场许可(甲)).toBe(true)
-    expect(领取聚焦入场许可(甲)).toBe(false)
-    expect(领取聚焦入场许可(乙)).toBe(true)
-    expect(领取聚焦入场许可(甲)).toBe(true)
+  it('组件不再依赖字段身份白名单，源码中不存在聚焦秩序模块', () => {
+    expect(输入框).not.toContain('领取聚焦入场许可')
+    expect(输入框).not.toContain('输入聚焦秩序')
+    expect(描边).not.toContain('定格高亮')
   })
 
-  it('同一字段失焦再聚焦不重播，切换到新字段才播放入场', async () => {
+  it('每次重新进入输入态都重播从左下角画入的入场高光', async () => {
     const 原动画 = SVGElement.prototype.animate
     const 原清单 = SVGElement.prototype.getAnimations
     const 原帧 = globalThis.requestAnimationFrame
@@ -222,7 +217,6 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
     const 包甲 = mount(长方框输入框, { attachTo: document.body })
     const 包乙 = mount(长方框输入框, { attachTo: document.body })
     try {
-      重置聚焦秩序()
       const 甲 = 包甲.find('input')
       const 乙 = 包乙.find('input')
       await 甲.trigger('focus')
@@ -233,7 +227,7 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
       expect(调用.slice(-2)).toEqual([800, 800])
       await 甲.trigger('focus')
       await nextTick()
-      expect(调用.slice(-2)).toEqual([0, 0])
+      expect(调用.slice(-2)).toEqual([840, 840])
       await 乙.trigger('focus')
       await nextTick()
       expect(调用.slice(-2)).toEqual([840, 840])
@@ -292,7 +286,6 @@ describe('圆角长方形输入框：左下起笔、两路等长、右上汇合'
       expect(调用[0].帧.map((帧) => 帧.strokeDashoffset)).toEqual([1, 0])
       expect(调用[2].帧.map((帧) => 帧.strokeDashoffset)).toEqual([0, 1])
       减动效 = true
-      重置聚焦秩序()
       await 输入.trigger('focus')
       await nextTick()
       expect(调用.slice(-2).map((项) => 项.选项.duration)).toEqual([0, 0])    } finally {
@@ -388,9 +381,12 @@ describe('性别卡：第一二步统一按自身色填充、对象色描边', (
     expect(向导).not.toContain('xuanzhong-xingbie-bian')
   })
 
-  it('滚动区左右同值内边距不裁高亮环', () => {
+  it('滚动区左右同值内边距不裁高亮环，环本期改画在盒内', () => {
     expect(向导).toContain('padding-inline: var(--jiange-4)')
     expect(向导).not.toContain('padding-right: var(--jiange-4)')
+    expect(向导).toContain('inset: 0')
+    expect(向导).not.toContain('inset: -1px')
+    expect(向导).not.toContain('inset: -2px')
   })
 
   it('渣型勾选框复用共享组件，注册页同款尺寸与 accent 令牌', () => {
@@ -462,11 +458,11 @@ describe('账号与安全：默认性别与默认对象性别左右两卡', () =
     expect(男块).toContain('background-color: var(--xingbie-nan-tan-beijing)')
     expect(男块).toContain('border-color: var(--xingbie-nan-shen-biankuang)')
     expect(男块).toContain('color: var(--xingbie-nan-tan-wenben)')
-    expect(男块).toContain('box-shadow: 0 0 0 3px var(--xingbie-nan-xuan-huan)')
+    expect(男块).toContain('box-shadow: inset 0 0 0 var(--kuang-huan-kuan) var(--xingbie-nan-xuan-huan)')
     expect(女块).toContain('background-color: var(--xingbie-nv-tan-beijing)')
     expect(女块).toContain('border-color: var(--xingbie-nv-shen-biankuang)')
     expect(女块).toContain('color: var(--xingbie-nv-tan-wenben)')
-    expect(女块).toContain('box-shadow: 0 0 0 3px var(--xingbie-nv-xuan-huan)')
+    expect(女块).toContain('box-shadow: inset 0 0 0 var(--kuang-huan-kuan) var(--xingbie-nv-xuan-huan)')
     expect(账号页.match(/data-xuan-xing-bie="nan"/g)?.length).toBe(2)
     expect(账号页.match(/data-xuan-xing-bie="nv"/g)?.length).toBe(2)
     expect(账号页).not.toContain('--xuan-zi-ji-bei')

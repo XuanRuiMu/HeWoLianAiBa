@@ -39,9 +39,9 @@
           <button
             type="button"
             class="biaoqian-anniu"
-            :class="{ huoyue: moShi === 'zhuCe' }"
+            :class="{ huoyue: moShi !== 'dengLu' }"
             role="tab"
-            :aria-selected="moShi === 'zhuCe' ? 'true' : 'false'"
+            :aria-selected="moShi !== 'dengLu' ? 'true' : 'false'"
             aria-busy="false"
             @click="qieHuanMoShi('zhuCe')"
           >
@@ -78,41 +78,50 @@
             :tabindex="moShi !== 'dengLu' ? '-1' : undefined"
             @submit.prevent="zhiXingDengLu"
           >
-              <HengTiaoShuRuKuang
-                标识="denglu-shoujihao"
-                :前缀="huoQuFanYi('ui', 'shouJiHaoGuoJiQuHao')"
-                :模型值="dengLuShouJiHao"
-                :类型="'tel'"
-                :最大长度="11"
-                自动完成="username"
-                :上浮="dengLuShouJiShangFu"
-                必填
-                :标签="huoQuFanYi('ui', 'shouJiHao')"
-                @geng-xin="dengLuShouJiHao = $event"
-                @jiao-dian="shouJiHaoJuJiao = true"
-                @shi-jiao="shouJiHaoJuJiao = false"
-                @shu-ru="tongBuShiJiZhi($event, 'dengLuShouJiHao')"
-                @bian-geng="tongBuShiJiZhi($event, 'dengLuShouJiHao')"
-                @zi-dong-tian-chong="chuLiZiDongTianChong($event, 'dengLuShouJiHao')"
-              />
+              <div class="shuru-zu" :class="{ shangFu: dengLuShouJiShangFu }">
+                <div class="shuru-hang">
+                  <QuHaoXuanZeQi :模型值="dengLuQuHao" @geng-xin="dengLuQuHao = $event" />
+                  <div class="shuru-zhu-ti">
+                    <input
+                      id="denglu-shoujihao"
+                      :value="dengLuShouJiHao"
+                      type="tel"
+                      class="fenlie-shuru"
+                      :maxlength="shouJiHaoZuiChang"
+                      inputmode="tel"
+                      autocomplete="username"
+                      placeholder=" "
+                      required
+                      @input="gengXinDengLuShouJi(($event.target as HTMLInputElement).value)"
+                      @focus="shouJiHaoJuJiao = true"
+                      @blur="shouJiHaoJuJiao = false"
+                      @change="tongBuShiJiZhi($event, 'dengLuShouJiHao')"
+                      @animationstart="chuLiZiDongTianChong($event, 'dengLuShouJiHao')"
+                    />
+                    <label for="denglu-shoujihao" class="fudong-biaoqian">{{ huoQuFanYi('ui', 'shouJiHao') }}</label>
+                  </div>
+                </div>
+              </div>
 
-              <HengTiaoShuRuKuang
-                ref="dengLuMiMaShuRuKuang"
-                标识="denglu-mima"
-                :模型值="dengLuMiMa"
-                :类型="xianShiMiMa1 ? 'text' : 'password'"
-                自动完成="current-password"
-                :上浮="dengLuMiMaShangFu"
-                必填
-                包裹类="mima-zu"
-                :标签="huoQuFanYi('ui', 'miMa')"
-                @geng-xin="dengLuMiMa = $event"
-                @jiao-dian="miMaJuJiao = true"
-                @shi-jiao="miMaJuJiao = false"
-                @shu-ru="tongBuShiJiZhi($event, 'dengLuMiMa')"
-                @bian-geng="tongBuShiJiZhi($event, 'dengLuMiMa')"
-                @zi-dong-tian-chong="chuLiZiDongTianChong($event, 'dengLuMiMa')"
-              >
+              <div class="shuru-zu" :class="{ shangFu: dengLuMiMaShangFu }">
+                <div class="shuru-hang">
+                  <div class="shuru-zhu-ti">
+                    <input
+                      id="denglu-mima"
+                      :value="dengLuMiMa"
+                      :type="xianShiMiMa1 ? 'text' : 'password'"
+                      class="fenlie-shuru"
+                      autocomplete="current-password"
+                      placeholder=" "
+                      required
+                      @input="gengXinDengLuMiMa(($event.target as HTMLInputElement).value)"
+                      @focus="miMaJuJiao = true"
+                      @blur="miMaJuJiao = false"
+                      @change="tongBuShiJiZhi($event, 'dengLuMiMa')"
+                      @animationstart="chuLiZiDongTianChong($event, 'dengLuMiMa')"
+                    />
+                    <label for="denglu-mima" class="fudong-biaoqian">{{ huoQuFanYi('ui', 'miMa') }}</label>
+                  </div>
 <button
                     type="button"
                     aria-busy="false"
@@ -151,7 +160,8 @@
                       <circle cx="12" cy="12" r="3" />
                     </svg>
                   </button>
-              </HengTiaoShuRuKuang>
+                </div>
+              </div>
 
               <div class="ji-zhu-xuan-xiang">
                 <div class="ji-zhu-hang-1">
@@ -218,8 +228,8 @@
             </div>
             <div
               class="biaodan-moshi-pane zhuce-moshi-pane"
-              :class="{ 'shi-fu-yong': moShi === 'zhuCe' }"
-              :inert="moShi !== 'zhuCe'"
+              :class="{ 'shi-fu-yong': moShi !== 'dengLu' }"
+              :inert="moShi === 'dengLu'"
             >
               <Transition :name="qieHuanDongHua" @before-leave="biaoJiLiChangBiaoDan">
           <form
@@ -232,88 +242,117 @@
             :tabindex="moShi !== 'zhuCe' ? '-1' : undefined"
             @submit.prevent="zhiXingZhuCe"
           >
-              <HengTiaoShuRuKuang
-                标识="zhuce-shoujihao"
-                :前缀="huoQuFanYi('ui', 'shouJiHaoGuoJiQuHao')"
-                :模型值="zhuCeShouJiHao"
-                :类型="'tel'"
-                :最大长度="11"
-                自动完成="tel"
-                :上浮="zhuCeShouJiShangFu"
-                必填
-                :标签="huoQuFanYi('ui', 'shouJiHao')"
-                @geng-xin="zhuCeShouJiHao = $event"
-                @jiao-dian="zhuCeShouJiJuJiao = true"
-                @shi-jiao="zhuCeShouJiJuJiao = false"
-                @shu-ru="tongBuShiJiZhi($event, 'zhuCeShouJiHao')"
-                @bian-geng="tongBuShiJiZhi($event, 'zhuCeShouJiHao')"
-                @zi-dong-tian-chong="chuLiZiDongTianChong($event, 'zhuCeShouJiHao')"
-              />
+              <div class="shuru-zu" :class="{ shangFu: zhuCeShouJiShangFu }">
+                <div class="shuru-hang">
+                  <span class="gu-ding-qu-hao">+{{ DA_LU_QU_HAO }}</span>
+                  <div class="shuru-zhu-ti">
+                    <input
+                      id="zhuce-shoujihao"
+                      :value="zhuCeShouJiHao"
+                      type="tel"
+                      class="fenlie-shuru"
+                      maxlength="11"
+                      inputmode="tel"
+                      autocomplete="tel"
+                      placeholder=" "
+                      required
+                      @input="gengXinZhuCeShouJi(($event.target as HTMLInputElement).value)"
+                      @focus="zhuCeShouJiJuJiao = true"
+                      @blur="zhuCeShouJiJuJiao = false"
+                      @change="tongBuShiJiZhi($event, 'zhuCeShouJiHao')"
+                      @animationstart="chuLiZiDongTianChong($event, 'zhuCeShouJiHao')"
+                    />
+                    <label for="zhuce-shoujihao" class="fudong-biaoqian">{{ huoQuFanYi('ui', 'shouJiHao') }}</label>
+                  </div>
+                  <button
+                    type="button"
+                    class="fei-daLu-ru-kou fei-daLu-ru-kou--hang"
+                    @click="kaiShiFeiDaLuZhuCe"
+                  >
+                    {{ huoQuFanYi('ui', 'feiDaLuShouJiHaoZhuCe') }}
+                  </button>
+                </div>
+                <p v-if="zhuCeShouJiTiShi !== ''" class="zhaohui-zi-duan-ti-shi" role="alert">
+                  {{ zhuCeShouJiTiShi }}
+                </p>
+              </div>
 
-              <HengTiaoShuRuKuang
-                标识="zhuce-yanzhengma"
-                :模型值="zhuCeYanZhengMa"
-                :类型="'tel'"
-                :最大长度="6"
-                自动完成="one-time-code"
-                :上浮="zhuCeYanZhengMaShangFu"
-                必填
-                包裹类="yanzhengma-zu"
-                内层类="yanzhengma-shuru-qu"
-                :标签="huoQuFanYi('ui', 'yanZhengMa')"
-                @geng-xin="zhuCeYanZhengMa = $event"
-                @jiao-dian="yanZhengMaJuJiao = true"
-                @shi-jiao="yanZhengMaJuJiao = false"
-                @shu-ru="tongBuShiJiZhi($event, 'zhuCeYanZhengMa')"
-                @bian-geng="tongBuShiJiZhi($event, 'zhuCeYanZhengMa')"
-                @zi-dong-tian-chong="chuLiZiDongTianChong($event, 'zhuCeYanZhengMa')"
-              >
-                <button
-                  type="button"
-                  :aria-busy="faSongZhong ? 'true' : 'false'"
-                  class="fasong-anniu"
-                  :disabled="!keYiFaSong || faSongZhong"
-                  @click="zhiXingFaSongMa"
-                >
-                  {{ faSongWenBen }}
-                </button>
-              </HengTiaoShuRuKuang>
+              <div class="shuru-zu" :class="{ shangFu: zhuCeYanZhengMaShangFu }">
+                <div class="shuru-hang">
+                  <div class="shuru-zhu-ti">
+                    <input
+                      id="zhuce-yanzhengma"
+                      :value="zhuCeYanZhengMa"
+                      type="tel"
+                      class="fenlie-shuru"
+                      maxlength="6"
+                      inputmode="numeric"
+                      autocomplete="one-time-code"
+                      placeholder=" "
+                      required
+                      @input="gengXinZhuCeYanZhengMa(($event.target as HTMLInputElement).value)"
+                      @focus="yanZhengMaJuJiao = true"
+                      @blur="yanZhengMaJuJiao = false"
+                      @change="tongBuShiJiZhi($event, 'zhuCeYanZhengMa')"
+                      @animationstart="chuLiZiDongTianChong($event, 'zhuCeYanZhengMa')"
+                    />
+                    <label for="zhuce-yanzhengma" class="fudong-biaoqian">{{ huoQuFanYi('ui', 'yanZhengMa') }}</label>
+                  </div>
+                  <button
+                    type="button"
+                    :aria-busy="faSongZhong ? 'true' : 'false'"
+                    class="fasong-anniu"
+                    :disabled="!keYiFaSong || faSongZhong"
+                    @click="zhiXingFaSongMa"
+                  >
+                    {{ faSongWenBen }}
+                  </button>
+                </div>
+              </div>
 
-              <HengTiaoShuRuKuang
-                标识="zhuce-yonghuming"
-                :模型值="zhuCeYongHuMing"
-                :类型="'text'"
-                :最大长度="30"
-                自动完成="username"
-                :上浮="zhuCeYongHuMingShangFu"
-                必填
-                :标签="huoQuFanYi('ui', 'yongHuMing')"
-                @geng-xin="zhuCeYongHuMing = $event"
-                @jiao-dian="yongHuMingJuJiao = true"
-                @shi-jiao="yongHuMingJuJiao = false"
-                @shu-ru="tongBuShiJiZhi($event, 'zhuCeYongHuMing')"
-                @bian-geng="tongBuShiJiZhi($event, 'zhuCeYongHuMing')"
-                @zi-dong-tian-chong="chuLiZiDongTianChong($event, 'zhuCeYongHuMing')"
-              />
+              <div class="shuru-zu" :class="{ shangFu: zhuCeYongHuMingShangFu }">
+                <div class="shuru-hang">
+                  <div class="shuru-zhu-ti">
+                    <input
+                      id="zhuce-yonghuming"
+                      :value="zhuCeYongHuMing"
+                      type="text"
+                      class="fenlie-shuru"
+                      maxlength="30"
+                      autocomplete="username"
+                      placeholder=" "
+                      required
+                      @input="gengXinZhuCeYongHuMing(($event.target as HTMLInputElement).value)"
+                      @focus="yongHuMingJuJiao = true"
+                      @blur="yongHuMingJuJiao = false"
+                      @change="tongBuShiJiZhi($event, 'zhuCeYongHuMing')"
+                      @animationstart="chuLiZiDongTianChong($event, 'zhuCeYongHuMing')"
+                    />
+                    <label for="zhuce-yonghuming" class="fudong-biaoqian">{{ huoQuFanYi('ui', 'yongHuMing') }}</label>
+                  </div>
+                </div>
+              </div>
 
-              <HengTiaoShuRuKuang
-                ref="zhuCeMiMaShuRuKuang"
-                标识="zhuce-mima"
-                :模型值="zhuCeMiMa"
-                :类型="xianShiMiMa2 ? 'text' : 'password'"
-                自动完成="new-password"
-                :上浮="zhuCeMiMaShangFu"
-                必填
-                包裹类="mima-zu"
-                :标签="huoQuFanYi('ui', 'miMa')"
-                @geng-xin="zhuCeMiMa = $event"
-                @jiao-dian="zhuCeMiMaJuJiao = true"
-                @shi-jiao="zhuCeMiMaJuJiao = false"
-                @shu-ru="tongBuShiJiZhi($event, 'zhuCeMiMa')"
-                @bian-geng="tongBuShiJiZhi($event, 'zhuCeMiMa')"
-                @zi-dong-tian-chong="chuLiZiDongTianChong($event, 'zhuCeMiMa')"
-              >
-<button
+              <div class="shuru-zu" :class="{ shangFu: zhuCeMiMaShangFu }">
+                <div class="shuru-hang">
+                  <div class="shuru-zhu-ti">
+                    <input
+                      id="zhuce-mima"
+                      :value="zhuCeMiMa"
+                      :type="xianShiMiMa2 ? 'text' : 'password'"
+                      class="fenlie-shuru"
+                      autocomplete="new-password"
+                      placeholder=" "
+                      required
+                      @input="gengXinZhuCeMiMa(($event.target as HTMLInputElement).value)"
+                      @focus="zhuCeMiMaJuJiao = true"
+                      @blur="zhuCeMiMaJuJiao = false"
+                      @change="tongBuShiJiZhi($event, 'zhuCeMiMa')"
+                      @animationstart="chuLiZiDongTianChong($event, 'zhuCeMiMa')"
+                    />
+                    <label for="zhuce-mima" class="fudong-biaoqian">{{ huoQuFanYi('ui', 'miMa') }}</label>
+                  </div>
+                  <button
                     type="button"
                     aria-busy="false"
                     class="mima-qiehuan"
@@ -351,7 +390,8 @@
                       <circle cx="12" cy="12" r="3" />
                     </svg>
                   </button>
-              </HengTiaoShuRuKuang>
+                </div>
+              </div>
 
               
               <div class="shuru-zu shangFu wu-di-xian">
@@ -398,6 +438,155 @@
                     ? huoQuFanYi('renZheng', 'zhuCeZhong')
                     : huoQuFanYi('renZheng', 'zhuCe')
                 }}
+              </button>
+
+          </form>
+          </Transition>
+
+          <Transition :name="qieHuanDongHua" @before-leave="biaoJiLiChangBiaoDan">
+          <form
+            v-if="moShi === 'feiDaLu'"
+            key="feiDaLu"
+            class="zhuce-biaodan fei-daLu-biaodan"
+            data-form-mode="feiDaLu"
+            @submit.prevent="zhiXingFeiDaLuZhuCe"
+          >
+              <h2 class="fei-daLu-biao-ti">{{ huoQuFanYi('ui', 'feiDaLuZhuCeBiaoTi') }}</h2>
+              <p class="fei-daLu-shuo-ming">{{ huoQuFanYi('ui', 'feiDaLuZhuCeShuoMing') }}</p>
+
+              <div class="shuru-zu" :class="{ shangFu: feiDaLuShouJiShangFu }">
+                <div class="shuru-hang">
+                  <QuHaoXuanZeQi :模型值="feiDaLuQuHao" @geng-xin="feiDaLuQuHao = $event" />
+                  <div class="shuru-zhu-ti">
+                    <input
+                      id="feidalu-shoujihao"
+                      :value="feiDaLuShouJiHao"
+                      type="tel"
+                      class="fenlie-shuru"
+                      :maxlength="feiDaLuZuiChang"
+                      inputmode="tel"
+                      autocomplete="tel"
+                      placeholder=" "
+                      required
+                      @input="feiDaLuShouJiHao = ($event.target as HTMLInputElement).value"
+                      @focus="feiDaLuShouJiJuJiao = true"
+                      @blur="feiDaLuShouJiJuJiao = false"
+                    />
+                    <label for="feidalu-shoujihao" class="fudong-biaoqian">{{ huoQuFanYi('ui', 'shouJiHao') }}</label>
+                  </div>
+                </div>
+                <p v-if="feiDaLuShouJiTiShi !== ''" class="zhaohui-zi-duan-ti-shi" role="alert">
+                  {{ feiDaLuShouJiTiShi }}
+                </p>
+              </div>
+
+              <div class="shuru-zu" :class="{ shangFu: feiDaLuYongHuMingShangFu }">
+                <div class="shuru-hang">
+                  <div class="shuru-zhu-ti">
+                    <input
+                      id="feidalu-yonghuming"
+                      :value="feiDaLuYongHuMing"
+                      type="text"
+                      class="fenlie-shuru"
+                      maxlength="30"
+                      autocomplete="username"
+                      placeholder=" "
+                      required
+                      @input="feiDaLuYongHuMing = ($event.target as HTMLInputElement).value"
+                      @focus="feiDaLuYongHuMingJuJiao = true"
+                      @blur="feiDaLuYongHuMingJuJiao = false"
+                    />
+                    <label for="feidalu-yonghuming" class="fudong-biaoqian">{{ huoQuFanYi('ui', 'yongHuMing') }}</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="shuru-zu" :class="{ shangFu: feiDaLuMiMaShangFu }">
+                <div class="shuru-hang">
+                  <div class="shuru-zhu-ti">
+                    <input
+                      id="feidalu-mima"
+                      :value="feiDaLuMiMa"
+                      :type="feiDaLuXianShiMiMa ? 'text' : 'password'"
+                      class="fenlie-shuru"
+                      autocomplete="new-password"
+                      placeholder=" "
+                      required
+                      @input="feiDaLuMiMa = ($event.target as HTMLInputElement).value"
+                      @focus="feiDaLuMiMaJuJiao = true"
+                      @blur="feiDaLuMiMaJuJiao = false"
+                    />
+                    <label for="feidalu-mima" class="fudong-biaoqian">{{ huoQuFanYi('ui', 'miMa') }}</label>
+                  </div>
+                  <button
+                    type="button"
+                    aria-busy="false"
+                    class="mima-qiehuan"
+                    :aria-label="feiDaLuXianShiMiMa ? huoQuFanYi('ui', 'yinCangMiMa') : huoQuFanYi('ui', 'xianShiMiMa')"
+                    :aria-pressed="feiDaLuXianShiMiMa"
+                    @mousedown.prevent
+                    @click="feiDaLuXianShiMiMa = !feiDaLuXianShiMiMa"
+                  >
+                    <svg
+                      v-if="feiDaLuXianShiMiMa"
+                      class="mima-tubiao"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                      />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                    <svg
+                      v-else
+                      class="mima-tubiao"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="shuru-zu shangFu wu-di-xian">
+                <ChuShengRiQiXuanZeQi
+                  v-model="feiDaLuChuShengRiQi"
+                  class="fenlie-shuru"
+                  :id-qian-zhui="'feidalu-chushengriqi'"
+                  :zui-xiao="'1900-01-01'"
+                  :zui-da="jinRiRiQi"
+                />
+                <label for="feidalu-chushengriqi" class="fudong-biaoqian">{{
+                  huoQuFanYi('ui', 'chuShengRiQi')
+                }}</label>
+              </div>
+
+              <button
+                type="submit"
+                class="anniu-zhuyao"
+                :aria-busy="feiDaLuZhuCeZhong ? 'true' : 'false'"
+                :disabled="feiDaLuZhuCeZhong || !feiDaLuKeYiZhuCe"
+              >
+                {{
+                  feiDaLuZhuCeZhong
+                    ? huoQuFanYi('renZheng', 'zhuCeZhong')
+                    : huoQuFanYi('renZheng', 'zhuCe')
+                }}
+              </button>
+
+              <button type="button" class="fei-daLu-ru-kou" @click="fanHuiDaLuZhuCe">
+                {{ huoQuFanYi('ui', 'fanHuiDaLuZhuCe') }}
               </button>
           </form>
           </Transition>
@@ -458,6 +647,17 @@ import { shiRenJiYanZhengShiBai, type 人机测试实例 } from '@/utils/人机�
 import HengTiaoShuRuKuang from '@/components/表单/横条输入框.vue'
 import { huoQuFanYi } from '@/config/翻译表'
 import { quXian } from '@/config/设计令牌'
+import QuHaoXuanZeQi from '@/components/表单/区号选择器.vue'
+import {
+  DA_LU_QU_HAO,
+  DA_LU_SHOU_JI_HAO_CHANG,
+  guiYiQuHao,
+  huoQuBenDiHao,
+  panDingBenDiHao,
+  quanJuQuHaoZuiChang,
+  shiFouDaLuHao,
+  zuChengGuoJiHao,
+} from '@/utils/手机号'
 import 协议模态框 from '@/components/协议模态框.vue'
 import RequestError from '@/components/请求错误.vue'
 import { use前台错误 } from '@/composables/use前台错误'
@@ -466,15 +666,16 @@ import RenJiYanZheng from '@/components/认证/人机测试.vue'
 
 const emit = defineEmits<{
   (e: 'dengLuChengGong'): void
-  (e: 'gengXinMoShi', moshi: 'dengLu' | 'zhuCe'): void
+  (e: 'gengXinMoShi', moshi: 'dengLu' | 'zhuCe' | 'feiDaLu'): void
 }>()
 
 const 用户仓库 = 使用用户仓库()
 const bd = 使用认证表单仓库()
 const router = useRouter()
 
-type MoShiLeiXing = 'dengLu' | 'zhuCe'
+type MoShiLeiXing = 'dengLu' | 'zhuCe' | 'feiDaLu'
 const fuMoShi = inject<Ref<MoShiLeiXing>>('denglu-moshi', ref(bd.moShi))
+const HUO_QU_XIANG_GANG = '852'
 const dengLuTuiChangZhong = inject<Ref<boolean>>('dengLuTuiChangZhong', ref(false))
 const moShi = ref<MoShiLeiXing>(bd.moShi)
 const qieHuanFangXiang = ref<'you' | 'zuo'>('you')
@@ -510,13 +711,28 @@ function 拆副标题模板(): 副标题段型[] {
 const 副标题段 = 拆副标题模板()
 
 watch(moShi, (xinMoShi) => {
-  bd.moShi = xinMoShi
-  emit('gengXinMoShi', xinMoShi)
-  fuMoShi.value = xinMoShi
+  const 存储模式 = xinMoShi === 'feiDaLu' ? 'zhuCe' : xinMoShi
+  bd.moShi = 存储模式
+  emit('gengXinMoShi', 存储模式)
+  fuMoShi.value = 存储模式
 })
 
 const dengLuShouJiHao = ref(bd.dengLuShouJiHao)
+const dengLuQuHao = ref(DA_LU_QU_HAO)
 const dengLuMiMa = ref(bd.dengLuMiMa)
+const feiDaLuQuHao = ref(HUO_QU_XIANG_GANG)
+const feiDaLuShouJiHao = ref('')
+const feiDaLuYongHuMing = ref('')
+const feiDaLuMiMa = ref('')
+const feiDaLuChuShengRiQi = ref('')
+const feiDaLuXianShiMiMa = ref(false)
+const feiDaLuZhuCeZhong = ref(false)
+const feiDaLuShouJiJuJiao = ref(false)
+const feiDaLuYongHuMingJuJiao = ref(false)
+const feiDaLuMiMaJuJiao = ref(false)
+const feiDaLuShouJiJiaoCuo = ref(false)
+const shouJiHaoZuiChang = computed(() => 15 + quanJuQuHaoZuiChang())
+const feiDaLuZuiChang = computed(() => 15 + quanJuQuHaoZuiChang())
 const jiZhuZhangHao = ref(bd.jiZhuZhangHao)
 const jiZhuMiMa = ref(bd.jiZhuMiMa)
 const ziDongDengLu = ref(bd.ziDongDengLu)
@@ -583,6 +799,16 @@ const zhuCeShouJiJuJiao = ref(false)
 const yanZhengMaJuJiao = ref(false)
 const yongHuMingJuJiao = ref(false)
 const zhuCeMiMaJuJiao = ref(false)
+
+const feiDaLuShouJiShangFu = computed(
+  () => feiDaLuShouJiJuJiao.value || feiDaLuShouJiHao.value.length > 0,
+)
+const feiDaLuYongHuMingShangFu = computed(
+  () => feiDaLuYongHuMingJuJiao.value || feiDaLuYongHuMing.value.length > 0,
+)
+const feiDaLuMiMaShangFu = computed(
+  () => feiDaLuMiMaJuJiao.value || feiDaLuMiMa.value.length > 0,
+)
 
 const dengLuShouJiZiDong = ref(false)
 const dengLuMiMaZiDong = ref(false)
@@ -743,6 +969,10 @@ type CuoWuZiDuan =
   | 'zhuCeYongHuMing'
   | 'zhuCeMiMa'
   | 'zhuCeChuShengRiQi'
+  | 'feiDaLuShouJiHao'
+  | 'feiDaLuYongHuMing'
+  | 'feiDaLuMiMa'
+  | 'feiDaLuChuShengRiQi'
 
 const ZI_DUAN_YUAN_SU_ID: Record<CuoWuZiDuan, string> = {
   dengLuShouJiHao: 'denglu-shoujihao',
@@ -752,6 +982,10 @@ const ZI_DUAN_YUAN_SU_ID: Record<CuoWuZiDuan, string> = {
   zhuCeYongHuMing: 'zhuce-yonghuming',
   zhuCeMiMa: 'zhuce-mima',
   zhuCeChuShengRiQi: 'zhuce-chushengriqi',
+  feiDaLuShouJiHao: 'feidalu-shoujihao',
+  feiDaLuYongHuMing: 'feidalu-yonghuming',
+  feiDaLuMiMa: 'feidalu-mima',
+  feiDaLuChuShengRiQi: 'feidalu-chushengriqi',
 }
 
 function zhaoDongZiDuan(ziDuan: CuoWuZiDuan): void {
@@ -770,14 +1004,22 @@ function daiMaPanDuanZiDuan(
     case QIAN_TAI_DAI_MA.AUTH_PASSWORD_RESET_FAILED:
       return null
     case QIAN_TAI_DAI_MA.AUTH_ACCOUNT_ALREADY_EXISTS:
-      return dangQianMoShi === 'zhuCe' ? 'zhuCeShouJiHao' : 'dengLuShouJiHao'
+      if (dangQianMoShi === 'zhuCe') return 'zhuCeShouJiHao'
+      if (dangQianMoShi === 'feiDaLu') return 'feiDaLuShouJiHao'
+      return 'dengLuShouJiHao'
     case QIAN_TAI_DAI_MA.AUTH_INVALID_CREDENTIALS:
-      return dangQianMoShi === 'zhuCe' ? 'zhuCeMiMa' : 'dengLuMiMa'
+      if (dangQianMoShi === 'zhuCe') return 'zhuCeMiMa'
+      if (dangQianMoShi === 'feiDaLu') return 'feiDaLuMiMa'
+      return 'dengLuMiMa'
     case QIAN_TAI_DAI_MA.AUTH_USERNAME_CHANGE_FAILED:
     case QIAN_TAI_DAI_MA.RESOURCE_CONFLICT:
-      return dangQianMoShi === 'zhuCe' ? 'zhuCeYongHuMing' : null
+      if (dangQianMoShi === 'zhuCe') return 'zhuCeYongHuMing'
+      if (dangQianMoShi === 'feiDaLu') return 'feiDaLuYongHuMing'
+      return null
     case QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID:
-      return dangQianMoShi === 'zhuCe' ? 'zhuCeShouJiHao' : 'dengLuShouJiHao'
+      if (dangQianMoShi === 'zhuCe') return 'zhuCeShouJiHao'
+      if (dangQianMoShi === 'feiDaLu') return 'feiDaLuShouJiHao'
+      return 'dengLuShouJiHao'
     default:
       return null
   }
@@ -965,15 +1207,16 @@ function biaoJiLiChangBiaoDan(yuanSu: Element) {
 
 function qieHuanMoShi(xinMoShi: MoShiLeiXing) {
   if (xinMoShi === moShi.value) return
-  if (dengLuZhong.value || zhuCeZhong.value || faSongZhong.value) {
+  if (dengLuZhong.value || zhuCeZhong.value || faSongZhong.value || feiDaLuZhuCeZhong.value) {
     zhiFouJieMianCaoZuo()
     用户仓库.取消待处理认证()
     dengLuZhong.value = false
     zhuCeZhong.value = false
     faSongZhong.value = false
+    feiDaLuZhuCeZhong.value = false
   }
   qingLiQianTai()
-  qieHuanFangXiang.value = xinMoShi === 'zhuCe' ? 'you' : 'zuo'
+  qieHuanFangXiang.value = xinMoShi === 'dengLu' ? 'zuo' : 'you'
   const dangQianJiaoDian = document.activeElement as HTMLElement | null
   if (
     dangQianJiaoDian &&
@@ -1055,7 +1298,123 @@ onBeforeUnmount(() => {
   bd.zhuCeMiMa = ''
 })
 
-const dengLuShouJiHeFa = computed(() => /^1[3-9]\d{9}$/.test(dengLuShouJiHao.value))
+const dengLuGuoJiHao = computed(() => zuChengGuoJiHao(dengLuQuHao.value, dengLuShouJiHao.value))
+const dengLuShouJiHeFa = computed(() => panDingBenDiHao(dengLuQuHao.value, dengLuShouJiHao.value).heFa)
+
+const feiDaLuGuoJiHao = computed(() => zuChengGuoJiHao(feiDaLuQuHao.value, feiDaLuShouJiHao.value))
+const feiDaLuPanDing = computed(() => panDingBenDiHao(feiDaLuQuHao.value, feiDaLuShouJiHao.value))
+const feiDaLuShiDaLu = computed(() => shiFouDaLuHao(feiDaLuGuoJiHao.value))
+const feiDaLuShouJiHeFa = computed(() => feiDaLuPanDing.value.heFa && !feiDaLuShiDaLu.value)
+const feiDaLuShouJiTiShi = computed(() => {
+  if (feiDaLuShouJiHao.value.length === 0) return ''
+  if (feiDaLuShiDaLu.value) return huoQuFanYi('ui', 'feiDaLuBuShouDaLuHao')
+  if (!feiDaLuShouJiHeFa.value) return huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu')
+  return ''
+})
+
+const zhuCeShouJiTiShi = computed(() => {
+  if (zhuCeShouJiHao.value.length < DA_LU_SHOU_JI_HAO_CHANG) return ''
+  return zhuCeShouJiHeFa.value ? '' : huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu')
+})
+const feiDaLuYongHuMingHeFa = computed(() => {
+  const qingLiHou = feiDaLuYongHuMing.value.trim()
+  return (
+    qingLiHou.length >= 1 && qingLiHou.length <= 30 && !YONG_HU_MING_TE_SHU_ZI_FU.test(qingLiHou)
+  )
+})
+const feiDaLuZhouSui = computed(() => jiSuanZhouSui(feiDaLuChuShengRiQi.value))
+const feiDaLuKeYiZhuCe = computed(
+  () =>
+    feiDaLuShouJiHeFa.value &&
+    feiDaLuYongHuMingHeFa.value &&
+    feiDaLuMiMa.value.length > 0 &&
+    !feiDaLuZhuCeZhong.value &&
+    (feiDaLuZhouSui.value ?? -1) >= ZHU_CE_ZUI_XIAO_NIAN_LING,
+)
+
+function gengXinDengLuShouJi(zhi: string): void {
+  dengLuShouJiHao.value = zhi.replace(/\D/g, '')
+  shouJiHaoJuJiao.value = true
+}
+
+function gengXinDengLuMiMa(zhi: string): void {
+  dengLuMiMa.value = zhi
+  miMaJuJiao.value = true
+}
+
+function gengXinZhuCeShouJi(zhi: string): void {
+  zhuCeShouJiHao.value = zhi.replace(/\D/g, '')
+  zhuCeShouJiJuJiao.value = true
+}
+
+function gengXinZhuCeYanZhengMa(zhi: string): void {
+  zhuCeYanZhengMa.value = zhi.replace(/\D/g, '')
+  yanZhengMaJuJiao.value = true
+}
+
+function gengXinZhuCeYongHuMing(zhi: string): void {
+  zhuCeYongHuMing.value = zhi
+  yongHuMingJuJiao.value = true
+}
+
+function gengXinZhuCeMiMa(zhi: string): void {
+  zhuCeMiMa.value = zhi
+  zhuCeMiMaJuJiao.value = true
+}
+
+function kaiShiFeiDaLuZhuCe(): void {
+  qieHuanMoShi('feiDaLu')
+  if (feiDaLuShouJiHao.value === '') feiDaLuQuHao.value = HUO_QU_XIANG_GANG
+}
+
+function fanHuiDaLuZhuCe(): void {
+  qieHuanMoShi('zhuCe')
+}
+
+async function zhiXingFeiDaLuZhuCe() {
+  if (feiDaLuZhuCeZhong.value) return
+  feiDaLuShouJiJiaoCuo.value = true
+  if (!feiDaLuKeYiZhuCe.value) {
+    if (!feiDaLuShouJiHeFa.value) {
+      sheZhiBenDiYanZhengCuoWu(feiDaLuShouJiTiShi.value || huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'))
+    } else if (!feiDaLuYongHuMingHeFa.value) {
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'yongHuMingChangDuCuoWu'))
+    } else if (feiDaLuMiMa.value.length === 0) {
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'miMaKong'))
+    } else if (feiDaLuZhouSui.value === null) {
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'chuShengRiQiGeShiCuoWu'))
+    } else {
+      sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'weiChengNianRenJinZhi'))
+    }
+    return
+  }
+  const daiCi = kaiShiJieMianCaoZuo()
+  const shouJiHao = feiDaLuGuoJiHao.value
+  const yongHuMing = feiDaLuYongHuMing.value
+  const miMa = feiDaLuMiMa.value
+  const chuShengRiQi = feiDaLuChuShengRiQi.value
+  feiDaLuZhuCeZhong.value = true
+  qingLiQianTai()
+  try {
+    await 用户仓库.zhiXingZhuCe(shouJiHao, '', yongHuMing, miMa, true, chuShengRiQi, true, true)
+    if (!jieMianCaoZuoYouXiao(daiCi)) return
+    bd.qingKongDengLuZhuCe()
+    dengLuQuHao.value = feiDaLuQuHao.value
+    dengLuShouJiHao.value = feiDaLuShouJiHao.value
+    feiDaLuZhuCeZhong.value = false
+    await nextTick()
+    await router.push('/login')
+    moShi.value = 'dengLu'
+  } catch (cuoWu) {
+    if (!jieMianCaoZuoYouXiao(daiCi)) return
+    jieShouQianTai(cuoWu, zhiXingFeiDaLuZhuCe)
+  } finally {
+    if (jieMianCaoZuoYouXiao(daiCi)) {
+      feiDaLuZhuCeZhong.value = false
+      认证操作控制器 = null
+    }
+  }
+}
 const keYiDengLu = computed(
   () =>
     dengLuShouJiHeFa.value &&
@@ -1063,7 +1422,7 @@ const keYiDengLu = computed(
     !dengLuZhong.value,
 )
 
-const zhuCeShouJiHeFa = computed(() => /^1[3-9]\d{9}$/.test(zhuCeShouJiHao.value))
+const zhuCeShouJiHeFa = computed(() => panDingBenDiHao(DA_LU_QU_HAO, zhuCeShouJiHao.value).heFa)
 const zhuCeYanZhengMaHeFa = computed(() => /^\d{6}$/.test(zhuCeYanZhengMa.value))
 const YONG_HU_MING_TE_SHU_ZI_FU = /[!@#$%^&*()+=[\]{}|\\:;"'<>?/~`]/
 const zhuCeYongHuMingHeFa = computed(() => {
@@ -1402,7 +1761,7 @@ function chuFaLiuLanQiBaoCunMiMa(shouJiHao: string, miMa: string): void {
 async function zhiXingDengLu() {
   if (!keYiDengLu.value || dengLuZhong.value) return
   const daiCi = kaiShiJieMianCaoZuo()
-  const shouJiHao = dengLuShouJiHao.value
+  const shouJiHao = dengLuGuoJiHao.value
   const miMa = dengLuMiMa.value
   const jiZhuMiMaZhi = jiZhuMiMa.value
   dengLuZhong.value = true
@@ -1469,7 +1828,8 @@ async function zhiXingZhuCe() {
     return
   }
   const daiCi = kaiShiJieMianCaoZuo()
-  const shouJiHao = zhuCeShouJiHao.value
+  const benDiHao = zhuCeShouJiHao.value
+  const shouJiHao = zuChengGuoJiHao(DA_LU_QU_HAO, benDiHao)
   const yanZhengMa = zhuCeYanZhengMa.value
   const yongHuMing = zhuCeYongHuMing.value
   const miMa = zhuCeMiMa.value
@@ -1488,10 +1848,10 @@ async function zhiXingZhuCe() {
     )
     if (!jieMianCaoZuoYouXiao(daiCi)) return
     bd.qingKongDengLuZhuCe()
-    dengLuShouJiHao.value = shouJiHao
     zhuCeZhong.value = false
     await nextTick()
     await router.push('/login')
+    dengLuShouJiHao.value = benDiHao
     moShi.value = 'dengLu'
   } catch (cuoWu) {
     if (!jieMianCaoZuoYouXiao(daiCi)) return
@@ -1957,6 +2317,89 @@ async function zhiXingZhuCe() {
   margin-bottom: var(--ziduan-jian-ju);
 }
 
+.shuru-hang {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--shuru-fu-jian-jian-ju);
+  min-width: 0;
+}
+
+.shuru-zhu-ti {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.gu-ding-qu-hao {
+  flex: none;
+  padding-bottom: var(--jiange-10);
+  color: var(--ka-ci-wen);
+  font-size: var(--shuru-kuang-zihao);
+  line-height: var(--shuru-kuang-hangao);
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.fei-daLu-ru-kou {
+  display: block;
+  width: 100%;
+  margin: var(--jiange-12) 0 0;
+  padding: var(--jiange-6) 0;
+  background: transparent;
+  border: none;
+  color: var(--ka-ci-wen);
+  font-family: inherit;
+  font-size: var(--ziti-xiao);
+  line-height: 1.5;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 0.2s var(--quxian-biao-zhun);
+}
+
+.fei-daLu-ru-kou--hang {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  flex: none;
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
+  min-height: var(--shuru-anniu-re-ku);
+}
+
+.fei-daLu-biao-ti {
+  margin: 0 0 var(--jiange-6);
+  font-size: var(--ziti-zhong);
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--ka-zhu-wen, var(--wenben-zhuse));
+  text-align: left;
+}
+
+.fei-daLu-ru-kou:hover {
+  color: var(--ka-zhu-wen);
+}
+
+.fei-daLu-ru-kou:focus-visible {
+  outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
+  outline-offset: var(--jujiao-huan-pian-yi);
+  border-radius: var(--jiange-4);
+}
+
+.fei-daLu-shuo-ming {
+  margin: 0 0 var(--jiange-zhong);
+  font-size: var(--ziti-xiao);
+  line-height: 1.6;
+  color: var(--ka-san-wen);
+  text-align: left;
+}
+
+.fei-daLu-biaodan {
+  min-height: 0;
+}
+
 .wangji-mima-lianjie {
   background: none;
   border: none;
@@ -2090,19 +2533,9 @@ async function zhiXingZhuCe() {
   outline-offset: var(--jujiao-huan-pian-yi);
 }
 
-.yanzhengma-zu {
-  display: flex;
-  gap: var(--jiange-12);
-  align-items: flex-end;
-}
-
-.yanzhengma-shuru-qu {
-  flex: 1;
-  position: relative;
-}
-
 .fasong-anniu {
-  flex-shrink: 0;
+  flex: none;
+  align-self: flex-end;
   min-height: var(--shuru-anniu-re-ku);
   padding: 0 var(--jiange-12);
   background: transparent;
@@ -2438,9 +2871,9 @@ async function zhiXingZhuCe() {
 }
 
 .mima-qiehuan {
-  top: 50%;
-  transform: translateY(-50%);
-  padding: var(--jiange-6);
+  position: relative;
+  align-self: flex-end;
+  padding: 0 0 var(--jiange-10);
   color: var(--ka-ci-wen);
   border-radius: var(--yuanjiao-xiao);
 }
@@ -2456,7 +2889,6 @@ async function zhiXingZhuCe() {
 }
 
 .mima-qiehuan:hover {
-  transform: translateY(-50%);
   color: var(--ka-zhu-wen);
 }
 

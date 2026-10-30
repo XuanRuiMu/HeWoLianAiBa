@@ -46,7 +46,7 @@ function 组装选中样式(
   对象色档: 性别二档,
   带光晕: boolean,
 ): CSSProperties {
-  const 选中环 = `0 0 0 3px ${环色[自身色档]}`
+  const 选中环 = `inset 0 0 0 var(--kuang-huan-kuan) ${环色[自身色档]}`
   return {
     backgroundColor: 淡填充色[自身色档],
     borderColor: 深边框色[对象色档],
@@ -73,7 +73,7 @@ export function 使用性别框体配色(输入: 性别框体配色输入) {
     backgroundColor: 填充色[色档.value],
     borderColor: 边框色[色档.value],
     color: 文字色[色档.value],
-    boxShadow: `0 0 0 3px ${环色[色档.value]}, 0 10px 26px ${光晕色[色档.value]}`,
+    boxShadow: `inset 0 0 0 var(--kuang-huan-kuan) ${环色[色档.value]}, 0 10px 26px ${光晕色[色档.value]}`,
   }))
   return { 色档, 样式 }
 }

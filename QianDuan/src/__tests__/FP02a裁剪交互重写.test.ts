@@ -101,7 +101,7 @@ function faSongZhiZhen(yuanSu: Element, leiXing: string, x: number, y: number, z
 }
 
 describe('FP-02a 固定裁剪框：拖动挪图，框不可拖不可缩放', () => {
-  it('选区不再可拖可缩放，无手柄，图片cover铺满且禁止露边', () => {
+  it('选区不再可拖可缩放，无手柄，图片cover铺满且达100%时不许露边', () => {
     const xuanQuKai = /<cropper-selection\b[^>]*>/.exec(裁剪源码)
     expect(xuanQuKai).toBeTruthy()
     const biaoQian = xuanQuKai![0]
@@ -110,7 +110,9 @@ describe('FP-02a 固定裁剪框：拖动挪图，框不可拖不可缩放', () 
     expect(biaoQian).not.toMatch(/\bkeyboard\b/)
     expect(裁剪源码).not.toMatch(/<cropper-handle\b/)
     expect(裁剪源码).not.toContain('action="move"')
-    expect(裁剪源码).toContain('max-inset="0"')
+    expect(裁剪源码).not.toContain('max-inset="0"')
+    expect(裁剪源码).toContain('function juZhengJuZhen')
+    expect(裁剪源码).toContain('function pingYi')
     expect(裁剪源码).toContain('initial-fit="cover"')
     expect(裁剪源码).toMatch(/<cropper-image\b[^>]*translatable/)
   })
@@ -281,9 +283,12 @@ describe('FP-02a Ctrl+滚轮与WASD平移图片', () => {
     const yueJie = shiJian([9, 0, 0, 9, 40, -25])
     tu.dispatchEvent(yueJie)
     expect(yueJie.defaultPrevented).toBe(true)
-    const suoXiaoYueJie = shiJian([0.1, 0, 0, 0.1, 0, 0])
+    const suoXiaoYueJie = shiJian([0.001, 0, 0, 0.001, 0, 0])
     tu.dispatchEvent(suoXiaoYueJie)
     expect(suoXiaoYueJie.defaultPrevented).toBe(true)
+    const xiaXianFangXing = shiJian([0.005, 0, 0, 0.005, 0, 0])
+    tu.dispatchEvent(xiaXianFangXing)
+    expect(xiaXianFangXing.defaultPrevented).toBe(false)
     kuang.unmount()
   })
 })
@@ -341,7 +346,7 @@ describe('FP-02a 比例与缩放自定义输入', () => {
     kuang.unmount()
   })
 
-  it('缩放数值输入按100%到400%边界夹取，不放大透明边，输入中途不覆写', async () => {
+  it('缩放数值输入按1%到400%边界夹取，越界夹回边界，输入中途不覆写', async () => {
     const kuang = zaiRu()
     await nextTick()
     const shuRu = kuang.get('input.suofang-shu-ru')
@@ -353,8 +358,13 @@ describe('FP-02a 比例与缩放自定义输入', () => {
     await shuRu.setValue('9')
     await shuRu.trigger('change')
     await nextTick()
-    expect(kuang.get('.suofang-bai-fen').text()).toBe('100%')
-    expect(shuRu.element.value).toBe('100')
+    expect(kuang.get('.suofang-bai-fen').text()).toBe('9%')
+    expect(shuRu.element.value).toBe('9')
+    await shuRu.setValue('0.5')
+    await shuRu.trigger('change')
+    await nextTick()
+    expect(kuang.get('.suofang-bai-fen').text()).toBe('1%')
+    expect(shuRu.element.value).toBe('1')
     await shuRu.setValue('175.5')
     await shuRu.trigger('change')
     await nextTick()
@@ -371,7 +381,26 @@ describe('FP-02a 比例与缩放自定义输入', () => {
     await shuRu.setValue('88')
     await shuRu.trigger('change')
     await nextTick()
-    expect(kuang.get('.suofang-bai-fen').text()).toBe('100%')
+    expect(kuang.get('.suofang-bai-fen').text()).toBe('88%')
+    expect(shuRu.element.value).toBe('88')
+    kuang.unmount()
+  })
+
+  it('滑杆与数字框下限同为1、上限同为400，且1%时导出宽度仍封顶2048', async () => {
+    const kuang = zaiRu()
+    await nextTick()
+    const 滑杆 = kuang.get('.suofang-huatiao').element as HTMLInputElement
+    const 数字框 = kuang.get('.suofang-shu-ru').element as HTMLInputElement
+    expect(滑杆.min).toBe('1')
+    expect(滑杆.max).toBe('400')
+    expect(滑杆.step).toBe('1')
+    expect(数字框.min).toBe('1')
+    expect(数字框.max).toBe('400')
+    await kuang.get('.suofang-huatiao').setValue('1')
+    await nextTick()
+    expect(kuang.get('.suofang-bai-fen').text()).toBe('1%')
+    expect(jiSuanDaoChuKuan(330, 0.005, 1, 2048)).toBe(2048)
+    expect(jiSuanDaoChuKuan(330, 0.01, 1, 2048)).toBe(2048)
     kuang.unmount()
   })
 

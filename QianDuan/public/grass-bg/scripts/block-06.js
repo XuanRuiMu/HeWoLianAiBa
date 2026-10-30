@@ -18,6 +18,7 @@
             var yiZhunBei = false;
             var yiBoFang = false;
             var yiWanCheng = false;
+            var kanShouJinXingZhong = false;
             var yuReDingShiQi = null;
             var huiTuiDingShiQi = null;
             var anQuanDingShiQi = null;
@@ -26,7 +27,6 @@
             var yiDiYiZhen = false;
             var jingGuoHaoMiao = 0;
             var boWenShiChang = 4000;
-            var xianJingShiChang = 5000;
 
             function quTiYan() {
                 try { return window.__experience; } catch (e) { return null; }
@@ -35,33 +35,68 @@
                 var tiYan = quTiYan();
                 try { return tiYan && tiYan.revealMesh; } catch (e) { return null; }
             }
-            function quXiaoGuo() {
+            function quShuiCaiXiaoGuo() {
                 try {
                     return quTiYan().postProcessing.waterColorRevealIntegration.waterColorRevealEffect;
                 } catch (e) { return null; }
+            }
+            function sheZhiXianJing(zhi) {
+                var xiaoGuo = quShuiCaiXiaoGuo();
+                if (!xiaoGuo) return false;
+                try {
+                    var junZhi = xiaoGuo.getUniform('uProgress');
+                    if (junZhi) junZhi.value = zhi;
+                    if (xiaoGuo.tweaksValue) xiaoGuo.tweaksValue.progress = zhi;
+                    return true;
+                } catch (eJunZhi) { return false; }
+            }
+            function guanBiShuiCaiLvJing() {
+                var xiaoGuo = quShuiCaiXiaoGuo();
+                if (!xiaoGuo) return false;
+                try {
+                    if (xiaoGuo.tween && typeof xiaoGuo.tween.kill === 'function') xiaoGuo.tween.kill();
+                } catch (eTween) {}
+                return sheZhiXianJing(1);
+            }
+            function baoZhuangShuiCaiXiaoGuo() {
+                var xiaoGuo = quShuiCaiXiaoGuo();
+                if (!xiaoGuo || xiaoGuo.__yiPangLu) return false;
+                xiaoGuo.__yiPangLu = true;
+                xiaoGuo.start = function (wanChengHuiDiao) {
+                    guanBiShuiCaiLvJing();
+                    if (typeof wanChengHuiDiao === 'function') {
+                        try { wanChengHuiDiao(); } catch (eWanCheng) {}
+                    }
+                };
+                var yuanPeiZhi = xiaoGuo.configure;
+                if (typeof yuanPeiZhi === 'function') {
+                    xiaoGuo.configure = function () {
+                        var jieGuo = yuanPeiZhi.apply(xiaoGuo, arguments);
+                        guanBiShuiCaiLvJing();
+                        return jieGuo;
+                    };
+                }
+                return true;
+            }
+            function kanShouShuiCaiLvJing() {
+                if (kanShouJinXingZhong) return;
+                kanShouJinXingZhong = true;
+                var qiShi = performance.now();
+                var zhen = function (shiJian) {
+                    baoZhuangShuiCaiXiaoGuo();
+                    var yiGuanBi = guanBiShuiCaiLvJing();
+                    if (yiGuanBi || shiJian - qiShi > 180000) {
+                        kanShouJinXingZhong = false;
+                        return;
+                    }
+                    requestAnimationFrame(zhen);
+                };
+                requestAnimationFrame(zhen);
             }
             function sheZhiBoWen(zhi) {
                 var rm = quRevealMesh();
                 if (!rm || typeof rm.setProgress !== 'function') return false;
                 try { rm.setProgress(zhi); return true; } catch (e) { return false; }
-            }
-            function sheZhiXianJing(zhi) {
-                var e = quXiaoGuo();
-                if (!e) return false;
-                try {
-                    e.getUniform('uProgress').value = zhi;
-                    e.tweaksValue.progress = zhi;
-                    return true;
-                } catch (e2) { return false; }
-            }
-            function sheZhiGuang(qiang) {
-                var e = quXiaoGuo();
-                if (!e) return false;
-                try {
-                    var u = e.getUniform('uLineGlowIntensity');
-                    if (u) u.value = qiang;
-                    return true;
-                } catch (e2) { return false; }
             }
             function xianShiBoWen(keJian) {
                 var rm = quRevealMesh();
@@ -76,28 +111,18 @@
             }
             function quShiChang() {
                 var rm = quRevealMesh();
-                var e = quXiaoGuo();
                 var bo = 4000;
-                var xian = 5000;
                 try {
                     if (rm && rm.config && isFinite(rm.config.revealDuration) && rm.config.revealDuration > 0) {
                         bo = rm.config.revealDuration * 1000;
                     }
                 } catch (eBo) {}
-                try {
-                    if (e && isFinite(e.duration) && e.duration > 0) xian = e.duration * 1000;
-                } catch (eXian) {}
-                return { bo: bo, xian: xian };
+                return bo;
             }
             function power2InOut(t) {
                 if (t <= 0) return 0;
                 if (t >= 1) return 1;
                 return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-            }
-            function power2Out(t) {
-                if (t <= 0) return 0;
-                if (t >= 1) return 1;
-                return 1 - Math.pow(1 - t, 3);
             }
             function jiLu(ming) {
                 try {
@@ -121,7 +146,8 @@
             }
             function sheZhiZuiZhong() {
                 xianShiBoWen(false);
-                sheZhiXianJing(1);
+                baoZhuangShuiCaiXiaoGuo();
+                guanBiShuiCaiLvJing();
             }
             function faWanCheng(yuanYin) {
                 if (yiWanCheng) return;
@@ -156,16 +182,13 @@
                 yiBoFang = true;
                 if (huiTuiDingShiQi) { clearTimeout(huiTuiDingShiQi); huiTuiDingShiQi = null; }
                 if (!xianShiBoWen(true)) {
-                    sheZhiXianJing(1);
+                    sheZhiZuiZhong();
                     faWanCheng('wuBoWen');
                     return;
                 }
                 sheZhiBoWen(0);
-                sheZhiXianJing(0.5);
-                sheZhiGuang(1.5);
-                var shiChang = quShiChang();
-                boWenShiChang = shiChang.bo;
-                xianJingShiChang = shiChang.xian;
+                guanBiShuiCaiLvJing();
+                boWenShiChang = quShiChang();
                 shangCiShiJian = 0;
                 yiDiYiZhen = false;
                 jingGuoHaoMiao = 0;
@@ -183,10 +206,8 @@
                     shangCiShiJian = shiJian;
                     jingGuoHaoMiao += bu;
                     var boT = Math.min(jingGuoHaoMiao / boWenShiChang, 1);
-                    var xianT = Math.min(jingGuoHaoMiao / xianJingShiChang, 1);
                     sheZhiBoWen(power2InOut(boT));
-                    sheZhiXianJing(0.5 + 0.5 * power2Out(xianT));
-                    if (boT >= 1 && xianT >= 1) {
+                    if (boT >= 1) {
                         faWanCheng('zhengChang');
                         return;
                     }
@@ -205,18 +226,16 @@
                 if (yiZhunBei || yiBoFang || yiWanCheng) return;
                 yiZhunBei = true;
                 var rm = quRevealMesh();
-                var e = quXiaoGuo();
-                if (!rm || !rm.mesh || !e) {
+                if (!rm || !rm.mesh) {
                     sheZhiZuiZhong();
                     jiLu('wuJieKou');
                     faKeBoFang();
                     faWanCheng('wuJieKou');
                     return;
                 }
-                sheZhiGuang(1.5);
                 xianShiBoWen(true);
                 sheZhiBoWen(0);
-                sheZhiXianJing(0.5);
+                guanBiShuiCaiLvJing();
                 jiLu('zhunBei');
                 faKeBoFang();
                 if (!zaiFuYe) {
@@ -239,13 +258,11 @@
                 }
                 if (zaiFuYe) {
                     xianShiBoWen(false);
-                    sheZhiXianJing(1);
                 } else {
                     xianShiBoWen(true);
                     sheZhiBoWen(0);
-                    sheZhiXianJing(0.5);
                 }
-                sheZhiGuang(1.5);
+                guanBiShuiCaiLvJing();
                 var yanShi = yuReHaoMiao;
                 if (yanShi <= 0) {
                     zhunBeiBoFang();
@@ -258,7 +275,9 @@
             }
 
             xianShiBoWen(false);
-            sheZhiXianJing(1);
+            baoZhuangShuiCaiXiaoGuo();
+            guanBiShuiCaiLvJing();
+            kanShouShuiCaiLvJing();
             window.addEventListener('cao-di-jiu-xu', yuRe);
             window.addEventListener('message', function (e) {
                 try {

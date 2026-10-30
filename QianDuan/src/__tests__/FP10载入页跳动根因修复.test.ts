@@ -42,7 +42,6 @@ function 建页() {
   return mount(载入页, {
     props: {
       changJing: 'huiYi',
-      duiXiangId: 'jue-se-1-abcd',
       biaoTi: '正在找回这个人',
       jinDu: 8,
       quWeiYu: '正在翻找和这个人的聊天记录...',
@@ -86,10 +85,11 @@ describe('FP-10 载入页跳动根因：脱离 transform 包含块', () => {
 })
 
 describe('FP-10 载入页内容定高：任意内容不改变卡片在流高度与中心', () => {
-  it('头像、标题、对象ID、趣味语槽位定高，卡片不再内部滚动', () => {
+  it('头像、标题、趣味语槽位定高，卡片不再内部滚动，且不再存在任何对象编号槽位', () => {
     expect(载入页源).toMatch(/\.zairu-touxiang-wei \{[\s\S]*?width: 88px;[\s\S]*?height: 88px;/)
     expect(取规则(载入样式, '.zairu-biaoti')).toContain('height: 29px')
-    expect(取规则(载入样式, '.zairu-duixiang-id')).toContain('height: 18px')
+    expect(载入页源).not.toContain('zairu-duixiang-id')
+    expect(载入页源).not.toContain('duiXiangId')
     expect(取规则(载入样式, '.zairu-mingcheng-wei')).toContain('flex: none')
     expect(取规则(载入样式, '.zairu-tishi')).toContain(
       'height: calc(var(--jiange-da) + var(--jiange-12))',
@@ -124,21 +124,19 @@ describe('FP-10 载入页内容定高：任意内容不改变卡片在流高度�
     expect(初始结构).toEqual(['zairu-touxiang-wei', 'zairu-mingcheng-wei', 'zairu-zhuangtai'])
 
     const 标题高 = (): string => getComputedStyle(卡.querySelector('.zairu-biaoti') as Element).height
-    const 编号高 = (): string =>
-      getComputedStyle(卡.querySelector('.zairu-duixiang-id') as Element).height
     const 趣语高 = (): string => getComputedStyle(卡.querySelector('.zairu-tishi') as Element).height
     const 趣语定高 = 'calc(var(--jiange-da) + var(--jiange-12))'
     expect(标题高()).toBe('29px')
-    expect(编号高()).toBe('18px')
     expect(趣语高()).toBe(趣语定高)
-    expect(卡.querySelector('.zairu-duixiang-id')?.textContent).toBe('UID：jue-se-1')
+    expect(卡.querySelector('.zairu-duixiang-id')).toBeNull()
+    expect(卡.textContent).not.toContain('UID')
 
-    await 包.setProps({ biaoTi: '🍏🍎', duiXiangId: 'abcdef1234567890' })
+    await 包.setProps({ biaoTi: '🍏🍎' })
     await nextTick()
     expect(在流结构()).toEqual(初始结构)
     expect(标题高()).toBe('29px')
-    expect(编号高()).toBe('18px')
-    expect(卡.querySelector('.zairu-duixiang-id')?.textContent).toBe('UID：abcdef12')
+    expect(卡.querySelector('.zairu-duixiang-id')).toBeNull()
+    expect(卡.textContent).not.toContain('UID')
 
     await 包.setProps({
       biaoTi: '很长很长的微信名称很长很长的微信名称很长很长的微信名称',
@@ -147,7 +145,6 @@ describe('FP-10 载入页内容定高：任意内容不改变卡片在流高度�
     await nextTick()
     expect(在流结构()).toEqual(初始结构)
     expect(标题高()).toBe('29px')
-    expect(编号高()).toBe('18px')
     expect(趣语高()).toBe(趣语定高)
 
     await 包.setProps({ cuoWu: huoQuFanYi('zaiRuLiaoTian', 'jiaZaiShiBai') })
@@ -158,8 +155,8 @@ describe('FP-10 载入页内容定高：任意内容不改变卡片在流高度�
     expect(错误层.getAttribute('role')).toBe('alert')
     expect(getComputedStyle(错误层).position).toBe('absolute')
     expect(标题高()).toBe('29px')
-    expect(编号高()).toBe('18px')
     expect(趣语高()).toBe(趣语定高)
+    expect(卡.querySelector('.zairu-duixiang-id')).toBeNull()
 
     await 浮层!.querySelector<HTMLButtonElement>('.zairu-fanhui')!.click()
     expect(包.emitted('fanHui')).toHaveLength(1)

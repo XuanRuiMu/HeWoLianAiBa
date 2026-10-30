@@ -140,7 +140,7 @@ describe('性格卡高光边框：仅交互态出现局部水墨流动', () => {
     expect(样式).not.toContain('xingge-huxi-guang-yun')
   })
 
-  it('周期由心率换算：每拍 60/心率 秒，悬停 60 次/分、选中 120 次/分', () => {
+  it('周期由心率换算：悬停周期为选中周期的四倍（悬停 30 次/分、选中 120 次/分）', () => {
     const 令牌 = 规则体们('.ziliao-kapian').join('\n')
     const 取值 = (名: string): number => {
       const 匹配 = new RegExp(`--${名}:\\s*([\\d.]+)s`).exec(令牌)
@@ -149,16 +149,16 @@ describe('性格卡高光边框：仅交互态出现局部水墨流动', () => {
     }
     const 悬停周期 = 取值('xingge-xintiao-zhouqi-xuanguo')
     const 选中周期 = 取值('xingge-xintiao-zhouqi-xuanzhong')
-    expect(悬停周期).toBeCloseTo((3 * 60) / 60, 6)
+    expect(悬停周期).toBeCloseTo((3 * 60) / 30, 6)
     expect(选中周期).toBeCloseTo((3 * 60) / 120, 6)
-    expect(悬停周期).toBeGreaterThan(选中周期)
+    expect(悬停周期).toBe(选中周期 * 4)
     expect(样式).not.toContain('xingge-guang-xintiao')
     const 漂移 = 令牌.match(/--xingge-piao-zhouqi:\s*([\d.]+)s/)
     expect(漂移).not.toBeNull()
     expect(Number(漂移![1])).toBeGreaterThanOrEqual(6)
     expect(令牌).toContain('--xingge-huxi-an: 0.35')
     expect(令牌).toContain('--xingge-huxi-liang: 1')
-    expect(令牌).toContain('--xingge-huxi-an-xuan: 0.82')
+    expect(令牌).toContain('--xingge-huxi-an-xuan: 0')
   })
 
   it('水墨层用四层局部渐变和边框遮罩，不产生全卡白色填充', () => {
@@ -191,7 +191,7 @@ describe('性格卡高光边框：仅交互态出现局部水墨流动', () => {
     }
   })
 
-  it('选中态全亮呼吸，最暗相位抬到 0.82', () => {
+  it('选中态呼吸到最暗相位时高光完全消失', () => {
     const 体 = 规则体('.mbti-kaPian.beiXuanZhong::after')
     expect(体).toContain('opacity: 1')
     expect(体).toContain('xingge-xintiao var(--xingge-xintiao-zhouqi-xuanzhong)')
@@ -247,7 +247,7 @@ describe('性格卡外发光：悬停与聚焦按静息心率呼吸，选中按�
     const 体 = 规则体('.mbti-kaPian::before')
     expect(体).toContain("content: ''")
     expect(体).toContain('position: absolute')
-    expect(体).toContain('inset: -1px')
+    expect(体).toContain('inset: 0')
     expect(体).toContain('border-radius: inherit')
     expect(体).toContain('box-shadow: var(--xingge-wai-guang)')
     expect(体).toContain('opacity: 0')
@@ -289,7 +289,7 @@ describe('性格卡外发光：悬停与聚焦按静息心率呼吸，选中按�
     ])
   })
 
-  it('悬停外发光弱于选中：扩散更小、最暗相位更暗', () => {
+  it('悬停外发光扩散更小，选中态最暗相位完全无高光', () => {
     const 令牌 = 规则体们('.ziliao-kapian').join('\n')
     const 取扩散 = (名: string): number => {
       const 匹配 = new RegExp(`--${名}:\\s*0 0 ([\\d.]+)px`).exec(令牌)
@@ -307,7 +307,8 @@ describe('性格卡外发光：悬停与聚焦按静息心率呼吸，选中按�
       expect(匹配, `缺少 --${名}`).not.toBeNull()
       return Number((匹配 as RegExpMatchArray)[1])
     }
-    expect(取透明度('xingge-huxi-an')).toBeLessThan(取透明度('xingge-huxi-an-xuan'))
+    expect(取透明度('xingge-huxi-an-xuan')).toBe(0)
+    expect(取透明度('xingge-huxi-an')).toBeGreaterThan(0)
     expect(规则体('.mbti-kaPian.beiXuanZhong')).toContain(
       '--xingge-huxi-an: var(--xingge-huxi-an-xuan)',
     )

@@ -3,7 +3,6 @@
     chang-jing="huiYi"
     :tou-xiang="touXiang"
     :mo-ren-zi="moRenZi"
-    :dui-xiang-id="jiaoSeId"
     :biao-ti="biaoTi"
     :qu-wei-yu="当前趣味语"
     :jin-du="进度"

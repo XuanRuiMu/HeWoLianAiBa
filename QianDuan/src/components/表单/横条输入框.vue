@@ -1,7 +1,8 @@
 <template>
-  <div class="shuru-zu" :class="{ shangFu: 上浮, 'you-qian-zhui': 前缀 }">
-    <div v-if="包裹类" :class="包裹类">
-      <div v-if="内层类" :class="内层类">
+  <div class="shuru-zu" :class="{ shangFu: 上浮, 'you-fu-jian': 有附加 }">
+    <div class="shuru-hang">
+      <slot name="前缀" />
+      <div class="shuru-zhu-ti">
         <input
           :id="标识"
           ref="输入元素"
@@ -24,56 +25,8 @@
         />
         <label :for="标识" class="fudong-biaoqian">{{ 标签 }}</label>
       </div>
-      <template v-else>
-        <input
-          :id="标识"
-          ref="输入元素"
-          :value="模型值"
-          :type="类型"
-          class="fenlie-shuru"
-          :maxlength="最大长度"
-          :inputmode="输入模式"
-          :autocomplete="自动填充"
-          :readonly="只读"
-          :disabled="禁用"
-          :aria-invalid="无效 ? 'true' : undefined"
-          :required="必填"
-          placeholder=" "
-          @input="处理输入"
-          @change="处理变更"
-          @focus="处理聚焦"
-          @blur="处理失焦"
-          @animationstart="处理自动填充"
-        />
-        <label :for="标识" class="fudong-biaoqian">{{ 标签 }}</label>
-      </template>
-      <slot />
+      <slot name="后缀" />
     </div>
-    <template v-else>
-      <span v-if="前缀" class="shuru-qian-zhui">{{ 前缀 }}</span>
-      <input
-        :id="标识"
-        ref="输入元素"
-        :value="模型值"
-        :type="类型"
-        class="fenlie-shuru"
-        :maxlength="最大长度"
-        :inputmode="输入模式"
-        :autocomplete="自动填充"
-        :readonly="只读"
-        :disabled="禁用"
-        :aria-invalid="无效 ? 'true' : undefined"
-        :required="必填"
-        placeholder=" "
-        @input="处理输入"
-        @change="处理变更"
-        @focus="处理聚焦"
-        @blur="处理失焦"
-        @animationstart="处理自动填充"
-      />
-      <label :for="标识" class="fudong-biaoqian">{{ 标签 }}</label>
-      <slot />
-    </template>
   </div>
 </template>
 
@@ -94,9 +47,7 @@ const 属性 = withDefaults(
     禁用?: boolean
     无效?: boolean
     必填?: boolean
-    包裹类?: string
-    内层类?: string
-    前缀?: string
+    有附加?: boolean
   }>(),
   {
     类型: 'text',
@@ -108,9 +59,7 @@ const 属性 = withDefaults(
     禁用: false,
     无效: false,
     必填: false,
-    包裹类: undefined,
-    内层类: undefined,
-    前缀: '',
+    有附加: false,
   },
 )
 
@@ -160,36 +109,16 @@ defineExpose({ 聚焦 })
   position: relative;
 }
 
-.shuru-zu.you-qian-zhui {
+.shuru-hang {
   display: flex;
   align-items: flex-end;
-}
-
-.shuru-qian-zhui {
-  flex: none;
-  width: var(--shuru-qian-zhui-kuan);
-  padding-bottom: var(--jiange-10);
-  font-size: var(--shuru-kuang-zihao);
-  line-height: var(--shuru-kuang-hangao);
-  letter-spacing: 0.02em;
-  color: var(--ka-ci-wen, var(--wenben-ciuse));
-  pointer-events: none;
-  user-select: none;
-}
-
-.shuru-zu.you-qian-zhui > .fenlie-shuru {
-  flex: 1;
-  width: auto;
+  gap: var(--shuru-fu-jian-jian-ju);
   min-width: 0;
 }
 
-.shuru-zu.you-qian-zhui .fudong-biaoqian {
-  left: var(--shuru-qian-zhui-kuan);
-}
-
-.shuru-zu.you-qian-zhui.shangFu .fudong-biaoqian,
-.shuru-zu.you-qian-zhui:focus-within .fudong-biaoqian,
-.shuru-zu.you-qian-zhui:has(.fenlie-shuru:-webkit-autofill) .fudong-biaoqian {
-  left: 0;
+.shuru-zhu-ti {
+  position: relative;
+  flex: 1;
+  min-width: 0;
 }
 </style>

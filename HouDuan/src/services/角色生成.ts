@@ -163,6 +163,7 @@ const ZHA_XING_YU_HAO_GAN_DU_YIN_CANG_ZI_DUAN: readonly (keyof ShengChengJiaoSeJ
 
 const WAN_JIA_KE_JIAN_XING_GUI_LEI: Record<keyof ShengChengJiaoSeJieGuo, boolean> = {
   id: true,
+  gong_kai_bian_hao: false,
   ming_zi: false,
   xing_bie: true,
   nian_ling: true,
@@ -205,17 +206,31 @@ function anYinCangZiDuanTouYing<T extends object>(jiaoSe: T, yinCang: readonly (
   return jieGuo as T
 }
 
+export function duiWaiJiaoSeBiaoShi(jiaoSe: object): string {
+  const yuan = jiaoSe as Record<string, unknown>
+  const bianHao = typeof yuan.gong_kai_bian_hao === 'string' ? yuan.gong_kai_bian_hao.trim() : ''
+  if (bianHao) return bianHao
+  const yuanShi = yuan.id
+  return typeof yuanShi === 'string' ? yuanShi : ''
+}
+
 export function touYingWanJiaKeJianJiaoSe<T extends object>(jiaoSe: T): T {
   const yuan = jiaoSe as Record<string, unknown>
   const jieGuo: Record<string, unknown> = {}
   for (const [jian, keJian] of Object.entries(WAN_JIA_KE_JIAN_XING_GUI_LEI)) {
-    if (keJian && jian in yuan) jieGuo[jian] = yuan[jian]
+    if (!keJian) continue
+    if (jian === 'id') continue
+    if (jian in yuan) jieGuo[jian] = yuan[jian]
   }
+  jieGuo.id = duiWaiJiaoSeBiaoShi(jiaoSe)
   return jieGuo as T
 }
 
 export function touYingGuanLiJiaoSe<T extends object>(jiaoSe: T): T {
-  return anYinCangZiDuanTouYing(jiaoSe, ZHA_XING_YU_HAO_GAN_DU_YIN_CANG_ZI_DUAN)
+  const jieGuo = anYinCangZiDuanTouYing(jiaoSe, ZHA_XING_YU_HAO_GAN_DU_YIN_CANG_ZI_DUAN) as Record<string, unknown>
+  delete jieGuo.gong_kai_bian_hao
+  jieGuo.id = duiWaiJiaoSeBiaoShi(jiaoSe)
+  return jieGuo as T
 }
 
 const DAI_QU_REN_JIAO_SE_JIAN_QIAN_ZHUI = 'dai_que_ren_jiao_se:'
@@ -416,6 +431,7 @@ export interface ShengChengJiaoSeJieGuo {
   hao_gan_du_zong_fen: number
   voice_id?: string
   yao_kai_kou?: boolean
+  gong_kai_bian_hao?: string
 }
 
 function suiJiShu(min: number, max: number): number {
@@ -828,7 +844,7 @@ export async function baoCunJiaoSe(
       "IE类型", "热身类型", "回复延迟毫秒", "开场白", "MBTI", "微信昵称", "真实姓名", "世界信息", "对局模式", "音色ID",
       "封存", "可继续聊天", "结局状态", "随机性格"
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34)
-    RETURNING "ID"`,
+    RETURNING "ID", "公开编号"`,
     [
       yongHuId,
       jiaoSe.ming_zi,
@@ -870,6 +886,7 @@ export async function baoCunJiaoSe(
   const jiaoSeIdNei = String(chaRuJiaoSe.rows[0].ID)
   jiaoSeId = jiaoSeIdNei
   jiaoSe.id = jiaoSeIdNei
+  jiaoSe.gong_kai_bian_hao = String(chaRuJiaoSe.rows[0]['公开编号'] || '').trim() || jiaoSeIdNei
 
   await zhiXing.query(
     `INSERT INTO "好感度" (
@@ -1002,6 +1019,7 @@ export async function anIdChaJiaoSeXiangQing(
 
   return {
     id: String(shuJuHang.ID),
+    gong_kai_bian_hao: String(shuJuHang['公开编号'] || '').trim() || String(shuJuHang.ID),
     ming_zi: String(shuJuHang.名字),
     xing_bie: 读回性别(shuJuHang.性别, '角色生成', jiaoSeId),
     nian_ling: Number(shuJuHang.年龄),

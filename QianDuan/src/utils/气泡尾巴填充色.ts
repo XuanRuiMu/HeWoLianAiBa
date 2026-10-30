@@ -114,6 +114,10 @@ export function qiuBianYuanZhongXinY(jianBian: string, gao: number): number {
   return gao / 2
 }
 
+function fuGaiYanSeWenBen(fuGai: { r: number; g: number; b: number; a: number }): string {
+  return 'rgba(' + fuGai.r + ', ' + fuGai.g + ', ' + fuGai.b + ', ' + fuGai.a + ')'
+}
+
 function jiaZaiTuPian(url: string): Promise<HTMLImageElement> {
   const yiYou = huanCunTuPian.get(url)
   if (yiYou) return yiYou
@@ -171,12 +175,6 @@ export async function caiJiQiPaoBianYuanTianChong(canShu: {
     huaBi.imageSmoothingEnabled = true
     huaBi.imageSmoothingQuality = 'high'
     huaBi.drawImage(tu, huiZhi.x, huiZhi.y, huiZhi.kuan, huiZhi.gao)
-    if (ceng.fuGai && ceng.fuGai.a > 0) {
-      huaBi.globalAlpha = Math.min(1, ceng.fuGai.a)
-      huaBi.fillStyle = 'rgb(' + ceng.fuGai.r + ' ' + ceng.fuGai.g + ' ' + ceng.fuGai.b + ')'
-      huaBi.fillRect(0, 0, hua.width, hua.height)
-      huaBi.globalAlpha = 1
-    }
     const kaiShiX = Math.max(0, Math.min(hua.width - 1, Math.floor(x)))
     const kaiShiY = Math.max(0, Math.min(hua.height - 1, Math.round(y) - 4))
     const hangShu = Math.max(1, Math.min(hua.height - kaiShiY, 9))
@@ -193,10 +191,7 @@ export async function caiJiQiPaoBianYuanTianChong(canShu: {
     const yanSe = 'rgb(' + quZhongWeiZhi(hong) + ' ' + quZhongWeiZhi(lv) + ' ' + quZhongWeiZhi(lan) + ')'
     const anQuanURL = ceng.url.replace(/["\\\n\r]/g, '')
     const yuan = (zhi: number) => Math.round(zhi * 100) / 100
-    const tuPianCeng =
-      'url("' +
-      anQuanURL +
-      '") ' +
+    const huiZhiWeiZhi =
       yuan(huiZhi.x + canShu.shuiPingPianYi) +
       'px ' +
       yuan(huiZhi.y) +
@@ -205,7 +200,12 @@ export async function caiJiQiPaoBianYuanTianChong(canShu: {
       'px ' +
       yuan(huiZhi.gao) +
       'px no-repeat'
-    const tianChong = tuPianCeng + ' ' + yanSe
+    const tuPianCeng = 'url("' + anQuanURL + '") ' + huiZhiWeiZhi
+    const fuGaiCeng =
+      ceng.fuGai && ceng.fuGai.a > 0
+        ? 'linear-gradient(' + fuGaiYanSeWenBen(ceng.fuGai) + ', ' + fuGaiYanSeWenBen(ceng.fuGai) + '), '
+        : ''
+    const tianChong = fuGaiCeng + tuPianCeng + ' ' + yanSe
     huanCunYanSe.set(jian, tianChong)
     return tianChong
   } catch {

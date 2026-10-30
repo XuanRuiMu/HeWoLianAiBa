@@ -14,7 +14,6 @@
           </div>
           <div class="zairu-mingcheng-wei">
             <h2 class="zairu-biaoti">{{ biaoTi }}</h2>
-            <p class="zairu-duixiang-id">{{ uidBiaoQian }}{{ xianShiDuiXiangId || idDaiHuoQu }}</p>
           </div>
           <div class="zairu-zhuangtai">
             <div
@@ -54,16 +53,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import TouXiang from '@/components/头像.vue'
 import { huoQuFanYi } from '@/config/翻译表'
 import type { 进入聊天场景 } from '@/composables/use进入聊天加载'
 
-const props = defineProps<{
+defineProps<{
   changJing: 进入聊天场景
   touXiang?: string | null
   moRenZi?: string
-  duiXiangId?: string | null
   biaoTi?: string
   quWeiYu?: string
   jinDu: number
@@ -75,12 +72,9 @@ const emit = defineEmits<{ fanHui: []; zhongShi: [] }>()
 
 const guaZaiMuBiao =
   (typeof document !== 'undefined' && document.querySelector('.app-rongqi')) || document.body
-const uidBiaoQian = huoQuFanYi('zaiRuLiaoTian', 'uidBiaoQian')
-const idDaiHuoQu = huoQuFanYi('zaiRuLiaoTian', 'idDaiHuoQu')
 const fanHuiWenAn = huoQuFanYi('zaiRuLiaoTian', 'fanHui')
 const chongShiWenAn = huoQuFanYi('tongYong', 'qianTaiCuoWuChongShi')
 const jinDuBiaoQian = huoQuFanYi('zaiRuLiaoTian', 'jinDuBiaoQian')
-const xianShiDuiXiangId = computed(() => (props.duiXiangId ?? '').trim().slice(0, 8))
 </script>
 
 <style scoped>
@@ -157,21 +151,6 @@ const xianShiDuiXiangId = computed(() => (props.duiXiangId ?? '').trim().slice(0
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: none;
-}
-
-.zairu-duixiang-id {
-  width: 100%;
-  height: 18px;
-  margin: 0;
-  flex: none;
-  font-size: 12px;
-  line-height: 18px;
-  color: var(--wenben-ciuse);
-  letter-spacing: 0.2px;
-  font-variant-numeric: tabular-nums;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .zairu-zhuangtai {
@@ -327,12 +306,6 @@ const xianShiDuiXiangId = computed(() => (props.duiXiangId ?? '').trim().slice(0
     font-size: 18px;
     height: 24px;
     line-height: 24px;
-  }
-
-  .zairu-duixiang-id {
-    height: 16px;
-    line-height: 16px;
-    font-size: 11px;
   }
 
   .zairu-zhuangtai {

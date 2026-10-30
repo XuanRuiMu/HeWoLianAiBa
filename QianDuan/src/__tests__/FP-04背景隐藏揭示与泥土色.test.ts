@@ -19,16 +19,16 @@ function 建揭示窗口(选项: { 独立?: boolean; 弱动画?: boolean; 缺波
   窗口.__caoDiZhunBeiZhuangTai = { zhunBei: false, riZhi: [] }
 
   const 进度 = { value: -1 }
-  const 光强 = { value: 5 }
   const 效果 = {
-    duration: 0.12,
+    duration: 0.06,
     getUniform: (名称: string) => {
       if (名称 === 'uProgress') return 进度
-      if (名称 === 'uLineGlowIntensity') return 光强
       return { value: 0 }
     },
     tweaksValue: { progress: -1 },
     tween: { kill: vi.fn() },
+    start: vi.fn(),
+    configure: vi.fn(),
   }
   const 波浪进度 = { value: -1 }
   const 波浪材质 = { visible: false }
@@ -38,7 +38,7 @@ function 建揭示窗口(选项: { 独立?: boolean; 弱动画?: boolean; 缺波
     : {
         mesh: 波浪网格,
         material: 波浪材质,
-        config: { revealDuration: 0.1 },
+        config: { revealDuration: 0.05 },
         tween: { kill: vi.fn() },
         setProgress: vi.fn((值: number) => {
           波浪进度.value = 值
@@ -72,7 +72,6 @@ function 建揭示窗口(选项: { 独立?: boolean; 弱动画?: boolean; 缺波
   return {
     窗口,
     进度,
-    光强,
     效果,
     波浪,
     波浪进度,
@@ -184,8 +183,8 @@ afterEach(() => {
   document.documentElement.removeAttribute('data-theme')
 })
 
-describe('波浪与柔和紫色滤镜的可见开场', () => {
-  it('预热后通知父页可播放，波浪材质可见且紫色滤镜从 0.5 开始', () => {
+describe('只保留波浪的开场', () => {
+  it('预热后通知父页可播放，波浪材质可见且水彩滤镜已旁路', () => {
     vi.useFakeTimers()
     const 环境 = 建揭示窗口()
     expect(环境.可播放记录).toEqual([])
@@ -195,12 +194,11 @@ describe('波浪与柔和紫色滤镜的可见开场', () => {
     expect(环境.波浪材质.visible).toBe(true)
     expect(环境.波浪网格.visible).toBe(true)
     expect(环境.波浪进度.value).toBe(0)
-    expect(环境.进度.value).toBe(0.5)
-    expect(环境.光强.value).toBe(1.5)
+    expect(环境.进度.value).toBe(1)
     expect(环境.完成记录).toEqual([])
   })
 
-  it('父页启动后波浪从中心展开，紫色滤镜褪去并收尾', () => {
+  it('父页启动后波浪从中心展开，展开完成即收尾', () => {
     vi.useFakeTimers()
     const 环境 = 建揭示窗口()
     环境.触发就绪()
@@ -208,10 +206,6 @@ describe('波浪与柔和紫色滤镜的可见开场', () => {
     环境.触发波浪开始()
     环境.执行帧(0)
     环境.执行帧(50)
-    expect(环境.波浪进度.value).toBeGreaterThan(0)
-    expect(环境.进度.value).toBeGreaterThan(0.5)
-    环境.执行帧(100)
-    环境.执行帧(150)
     expect(环境.波浪进度.value).toBe(1)
     expect(环境.进度.value).toBe(1)
     expect(环境.波浪材质.visible).toBe(false)
@@ -240,6 +234,18 @@ describe('波浪与柔和紫色滤镜的可见开场', () => {
     expect(环境.完成记录).toEqual([{ yuanYin: 'waiBu' }])
     环境.触发强制收尾()
     expect(环境.完成记录).toEqual([{ yuanYin: 'waiBu' }, { yuanYin: 'waiBu-chongFu' }])
+  })
+
+  it('水彩滤镜从装载起就常驻旁路，外部再调 start 也不会冒出 0.5 起始值', () => {
+    vi.useFakeTimers()
+    const 环境 = 建揭示窗口()
+    expect(环境.进度.value).toBe(1)
+    环境.效果.start(() => {})
+    expect(环境.进度.value).toBe(1)
+    环境.效果.tweaksValue.progress = 0.5
+    环境.效果.configure({ progress: 0.5, duration: 5 })
+    expect(环境.进度.value).toBe(1)
+    expect(环境.效果.tweaksValue.progress).toBe(1)
   })
 
   it('波浪层缺失时不崩溃，直接完成并显示最终画面', () => {

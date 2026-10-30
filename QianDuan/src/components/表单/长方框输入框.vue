@@ -48,7 +48,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
 import 圆角描边 from './圆角描边.vue'
-import { 领取聚焦入场许可 } from '@/utils/输入聚焦秩序'
+
 
 defineOptions({ inheritAttrs: false })
 
@@ -89,7 +89,7 @@ const emit = defineEmits<{ 'geng-xin': [值: string] }>()
 
 const 输入元素 = ref<HTMLInputElement | HTMLTextAreaElement | null>(null)
 const 聚焦中 = ref(false)
-const 描边组件 = ref<{ 播放入场: () => void; 定格高亮: () => void } | null>(null)
+const 描边组件 = ref<{ 播放入场: () => void } | null>(null)
 const 失焦退场延迟毫秒 = 120
 let 失焦定时器: ReturnType<typeof setTimeout> | null = null
 
@@ -98,10 +98,8 @@ function 处理聚焦(): void {
     clearTimeout(失焦定时器)
     失焦定时器 = null
   }
-  const 是新字段 = 领取聚焦入场许可(输入元素.value)
   聚焦中.value = true
-  if (是新字段) 描边组件.value?.播放入场()
-  else 描边组件.value?.定格高亮()
+  描边组件.value?.播放入场()
 }
 
 function 处理失焦(): void {

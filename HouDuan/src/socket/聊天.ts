@@ -8,6 +8,7 @@ import type { XiaoXiXinXi } from '../services/消息'
 import { jiLuSocketShiJian, jiLuXiaoXiCaoZuo, debug日志 } from '../utils/debug日志'
 import { huoQuFanYi } from '../config/translations'
 import { yanZhengUUID } from '../utils/验证'
+import { guiYiHuaJiaoSeBiaoShi, huoQuJiaoSeBianHao } from '../services/公开编号'
 import { redis } from '../redis'
 import { huoQuIo } from './io'
 import { 按身份同步管理房间 } from './管理通道'
@@ -122,9 +123,10 @@ async function queBaoJiaoSeTiaoDuQi(
     return null
   }
 
-  const [ie类型, huiFuYanChiHaoMiao] = await Promise.all([
+  const [ie类型, huiFuYanChiHaoMiao, duiWaiJiaoSeId] = await Promise.all([
     huoQuJiaoSeIELeiXing(jiao_se_id),
     huoQuJiaoSeHuiFuYanChiHaoMiao(jiao_se_id),
+    huoQuJiaoSeBianHao(jiao_se_id),
   ])
   if (!ie类型) {
     await shiFangTiaoDuQiSuo(yong_hu_id, jiao_se_id, BEN_CHENG_PROCESSE_ID)
@@ -133,7 +135,7 @@ async function queBaoJiaoSeTiaoDuQi(
 
   const jiLu: TiaoDuQiJiLu = {
     角色ID: jiao_se_id,
-    调度器: new AI回复调度器(jiao_se_id, yong_hu_id, ie类型, io, huiFuYanChiHaoMiao),
+    调度器: new AI回复调度器(jiao_se_id, yong_hu_id, ie类型, io, huiFuYanChiHaoMiao, duiWaiJiaoSeId),
     归属Socket: new Set<string>(),
   }
   jiaoSeTiaoDuQiMap.set(jian, jiLu)
@@ -241,8 +243,8 @@ export function 初始化聊天Socket(io: Server): void {
           debug日志.warn('聊天Socket', 'Socket超限丢弃不踢人', { xiang_qing: { socket_id: socket.id } })
           return
         }
-        const 角色ID字符串 = typeof 角色ID === 'string' ? 角色ID : ''
-        if (!角色ID字符串 || !yanZhengUUID(角色ID字符串)) {
+        const 角色ID字符串 = await guiYiHuaJiaoSeBiaoShi(角色ID)
+        if (!角色ID字符串) {
           socket.emit('错误', huoQuFanYi('tongYong', 'queShaoCanShu'))
           return
         }

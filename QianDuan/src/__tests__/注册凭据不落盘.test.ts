@@ -106,7 +106,7 @@ describe('注册成功后凭据只在内存流转', () => {
     await flushPromises()
     await nextTick()
     expect(注册间谍).toHaveBeenCalledTimes(1)
-    expect(注册间谍).toHaveBeenCalledWith(手机号, 验证码, '测试玩家', 密码, true, '2000-01-01')
+    expect(注册间谍).toHaveBeenCalledWith('+86' + 手机号, 验证码, '测试玩家', 密码, true, '2000-01-01')
   }
 
   it('注册成功后两个存储区均为空，不出现任何密码字段', async () => {

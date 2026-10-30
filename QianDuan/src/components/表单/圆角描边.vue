@@ -93,12 +93,7 @@ function 播放入场(): void {
   requestAnimationFrame(() => 描边(1, 0, 画入))
 }
 
-function 定格高亮(): void {
-  量取()
-  描边(1, 0, 0)
-}
-
-defineExpose({ 播放入场, 定格高亮 })
+defineExpose({ 播放入场 })
 
 watch(
   () => 属性.激活,

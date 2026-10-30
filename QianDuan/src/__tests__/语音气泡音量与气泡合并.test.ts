@@ -77,11 +77,15 @@ describe('气泡文字内衬上少下多', () => {
     expect(令牌像素('jiange-9')).toBe(9)
   })
 
-  it('语音气泡退出文字内衬偏差并下移内容校正，图片与文件气泡不套用该偏差', () => {
+  it('语音气泡退出文字内衬偏差并按令牌居中，时长字号与字重同源吃令牌，图片与文件气泡不套用该偏差', () => {
     expect(容器源).toContain("'qipao-neirong--wen-zi-nei-ju': wenZiNeiJu")
     expect(语音源).toContain(':wen-zi-nei-ju="false"')
     expect(语音源).toContain('top: var(--yuyin-neirong-xia-yi)')
-    expect(令牌像素('yuyin-neirong-xia-yi')).toBe(3)
+    expect(令牌像素('yuyin-neirong-xia-yi'), '语音内容按令牌居中，不再整体下移').toBe(0)
+    expect(语音源).toContain('font-size: var(--yuyin-shichang-zihao)')
+    expect(令牌像素('yuyin-shichang-zihao'), '时长字号只认令牌').toBe(19)
+    expect(语音源).toContain('font-weight: var(--qipao-xuan-zhong-zi-zhong)')
+    expect(语音源, '时长字重不得再写死 600').not.toContain('font-weight: 600')
     const 图片源 = du('components/聊天/图片气泡.vue')
     const 文件源 = du('components/聊天/文件气泡.vue')
     expect(图片源).toContain('padding: 0')

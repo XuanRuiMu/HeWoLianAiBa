@@ -200,14 +200,15 @@ describe('全站禁止浏览器自动填充：共享输入框默认关闭', () =
 
   it('登录/注册/找回密码保留正确的账号密码语义', () => {
     const 登录 = 读('views/登录内容.vue')
-    expect(登录).toContain('标识="denglu-shoujihao"')
-    expect(登录).toContain('自动完成="username"')
-    expect(登录).toContain('自动完成="current-password"')
-    expect(登录).toContain('自动完成="new-password"')
+    expect(登录).toContain('id="denglu-shoujihao"')
+    expect(登录).toContain('autocomplete="username"')
+    expect(登录).toContain('autocomplete="current-password"')
+    expect(登录.match(/autocomplete="new-password"/g)?.length).toBe(2)
+    expect(登录).toContain('id="feidalu-shoujihao"')
     const 找回 = 读('views/找回密码.vue')
     expect(找回).toContain('自动完成="tel"')
     expect(找回).toContain('自动完成="one-time-code"')
-    expect(找回).toContain('自动完成="new-password"')
+    expect(找回.match(/自动完成="new-password"/g)?.length).toBe(2)
   })
 
   it('改密页旧密码/新密码/验证码语义正确，搜索框不再被当成账号', () => {

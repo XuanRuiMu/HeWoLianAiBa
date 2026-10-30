@@ -291,6 +291,7 @@ export const 使用用户仓库 = defineStore('用户', () => {
     tongYiXieYi: boolean,
     chuShengRiQi: string,
     _jiZhuMiMa = true,
+    jingWai = false,
   ): Promise<boolean> {
     void _jiZhuMiMa
     const daiCi = kaiShiXinDai()
@@ -308,6 +309,7 @@ export const 使用用户仓库 = defineStore('用户', () => {
         tongYiXieYi,
         chuShengRiQi,
         { signal: 恢复控制器.signal },
+        jingWai,
       )
       if (!isDaiCiYouXiao(daiCi)) return false
       if (令牌.value || duQuLingPai()) 清空用户状态()
