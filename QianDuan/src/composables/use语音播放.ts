@@ -2,7 +2,7 @@ import { reactive, ref, watch } from 'vue'
 import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
 import type { 消息 } from '@/types/类型定义'
 import { guanLianYuYinYinPin, jieChuYuYinYinPin } from '@/composables/use语音音量'
-import { 语音音量键, 语音音量表, duQuYuYinYinLiang } from '@/utils/语音音量存储'
+import { 语音音量键, 语音音量表, duQuYuYinYinLiang, yuYinYinLiangZengYi } from '@/utils/语音音量存储'
 
 interface Use语音播放依赖 {
   huoQuDiZhi: (xiaoXi: 消息) => string | undefined
@@ -321,7 +321,7 @@ export function use语音播放(yiLai: Use语音播放依赖) {
   function yingYongYinLiang(yinPin: HTMLAudioElement, xiaoXi: 消息): void {
     const 目标 = Math.max(
       0,
-      Math.min(1, tongDaoYinLiang() * duQuYuYinYinLiang(xiaoXi)),
+      Math.min(1, tongDaoYinLiang() * yuYinYinLiangZengYi(duQuYuYinYinLiang(xiaoXi))),
     )
     try {
       yinPin.muted = 目标 <= 0

@@ -3,6 +3,7 @@ import {
   HAO_YOU_SHANG_CHUAN_LEI_BIE,
   LEI_BIE_LIE_BIAO,
   YU_YIN_SHI_CHANG_SHANG_XIAN_HAO_MIAO,
+  YU_YIN_SHI_CHANG_XIA_XIAN_HAO_MIAO,
   guiYiHuaShangChuanShiChang,
   shiHaoYouShangChuanLeiBie,
 } from '../../config/媒体配置'
@@ -34,6 +35,15 @@ describe('上传时长归一化', () => {
     expect(guiYiHuaShangChuanShiChang(4999.6)).toBe(5000)
     expect(guiYiHuaShangChuanShiChang(YU_YIN_SHI_CHANG_SHANG_XIAN_HAO_MIAO)).toBe(
       YU_YIN_SHI_CHANG_SHANG_XIAN_HAO_MIAO,
+    )
+  })
+
+  it('不足 1 秒的语音一律不落库', () => {
+    expect(guiYiHuaShangChuanShiChang(999)).toBeNull()
+    expect(guiYiHuaShangChuanShiChang(500)).toBeNull()
+    expect(guiYiHuaShangChuanShiChang('999')).toBeNull()
+    expect(guiYiHuaShangChuanShiChang(YU_YIN_SHI_CHANG_XIA_XIAN_HAO_MIAO)).toBe(
+      YU_YIN_SHI_CHANG_XIA_XIAN_HAO_MIAO,
     )
   })
 

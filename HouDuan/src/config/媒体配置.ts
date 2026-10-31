@@ -200,13 +200,15 @@ export function shiHaoYouShangChuanLeiBie(zhi: unknown): zhi is MeiTiLeiBie {
   return (HAO_YOU_SHANG_CHUAN_LEI_BIE as readonly string[]).includes(String(zhi ?? ''))
 }
 
+export const YU_YIN_SHI_CHANG_XIA_XIAN_HAO_MIAO = 1000
 export const YU_YIN_SHI_CHANG_SHANG_XIAN_HAO_MIAO = 60 * 1000
 
 export function guiYiHuaShangChuanShiChang(zhi: unknown): number | null {
   if (typeof zhi !== 'number' && typeof zhi !== 'string') return null
   const shu = typeof zhi === 'number' ? zhi : Number(zhi)
-  if (!Number.isFinite(shu) || shu <= 0) return null
+  if (!Number.isFinite(shu)) return null
   const zhengShu = Math.round(shu)
+  if (zhengShu < YU_YIN_SHI_CHANG_XIA_XIAN_HAO_MIAO) return null
   if (zhengShu > YU_YIN_SHI_CHANG_SHANG_XIAN_HAO_MIAO) return null
   return zhengShu
 }

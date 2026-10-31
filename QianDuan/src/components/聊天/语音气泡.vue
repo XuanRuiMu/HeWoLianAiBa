@@ -242,7 +242,7 @@ const jinDuXianYangShi = computed(() => ({
 }))
 
 const yinLiang = computed(() => duQuBenTiaoYinLiang(props.xiaoXi))
-const yinLiangWenBen = computed(() => `${Math.round(yinLiang.value * 100)}%`)
+const yinLiangWenBen = computed(() => `${Math.round(yinLiang.value * 200)}%`)
 const yinLiangYangShi = computed(() => ({
   '--yuyin-yinliang-yuandian': yuYinYinLiangSeXiang(yinLiang.value),
 }))

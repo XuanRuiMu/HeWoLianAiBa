@@ -117,6 +117,11 @@ export function sheZhiYuYinYinLiang(载体: 语音音量载体, 值: unknown): n
   return 规整值
 }
 
+export function yuYinYinLiangZengYi(值: number): number {
+  const 规整值 = 规整(值) ?? 默认音量
+  return 规整值 / 默认音量
+}
+
 export function yuYinYinLiangSeXiang(值: number): string {
   const 规整值 = 规整(值) ?? 默认音量
   const 色相 = 55 * (1 - 规整值)

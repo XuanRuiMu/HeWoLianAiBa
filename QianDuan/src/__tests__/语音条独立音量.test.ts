@@ -4,6 +4,7 @@ import {
   duQuYuYinYinLiang,
   sheZhiYuYinYinLiang,
   yuYinYinLiangSeXiang,
+  yuYinYinLiangZengYi,
   语音音量键,
   语音音量表,
 } from '@/utils/语音音量存储'
@@ -32,24 +33,31 @@ describe('每条语音独立音量', () => {
     expect(duQuYuYinYinLiang({ id: 'm1' })).toBe(1)
   })
 
-  it('同一条消息的不同滑杆位置必须得到不同音量，全程无死区', () => {
-    const 取样点 = [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1]
-    const 音量们 = 取样点.map((值) => {
-      sheZhiYuYinYinLiang({ id: 'p' }, 值)
-      return duQuYuYinYinLiang({ id: 'p' })
-    })
-    expect(音量们).toEqual(取样点)
-    expect(new Set(音量们).size).toBe(取样点.length)
-    for (let 序 = 1; 序 < 音量们.length; 序 += 1) {
-      expect(音量们[序]).toBeGreaterThan(音量们[序 - 1])
-    }
-    expect(音量们[0]).toBe(0)
-    expect(音量们[音量们.length - 1]).toBe(1)
+  it('中位即 100%：滑杆中点倍率为 1，底端 0、顶端 2', () => {
+    expect(YU_YIN_YIN_LIANG_MO_REN).toBe(0.5)
+    expect(yuYinYinLiangZengYi(0.5)).toBe(1)
+    expect(yuYinYinLiangZengYi(0)).toBe(0)
+    expect(yuYinYinLiangZengYi(1)).toBe(2)
+    expect(yuYinYinLiangZengYi(0.25)).toBeCloseTo(0.5, 6)
   })
 
-  it('默认中位不等于上限，保证中位之上仍有可感知的提升空间', () => {
-    expect(YU_YIN_YIN_LIANG_MO_REN).toBeLessThan(1)
-    expect(YU_YIN_YIN_LIANG_MO_REN).toBeGreaterThan(0)
+  it('增益全程单调递增，滑杆每一档都对应不同倍率', () => {
+    const 取样点 = [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1]
+    const 倍率们 = 取样点.map((值) => yuYinYinLiangZengYi(值))
+    expect(new Set(倍率们).size).toBe(取样点.length)
+    for (let 序 = 1; 序 < 倍率们.length; 序 += 1) {
+      expect(倍率们[序]).toBeGreaterThan(倍率们[序 - 1])
+    }
+  })
+
+  it('与全局音量相乘，最终封顶在系统上限 1', () => {
+    const 合成 = (全局: number, 值: number) =>
+      Math.max(0, Math.min(1, 全局 * yuYinYinLiangZengYi(值)))
+    expect(合成(1, 0.5)).toBe(1)
+    expect(合成(0.5, 0.5)).toBe(0.5)
+    expect(合成(0.5, 1)).toBe(1)
+    expect(合成(0.5, 0)).toBe(0)
+    expect(合成(0.5, 0.25)).toBe(0.25)
   })
 
   it('圆点颜色从黄到红，中点橙色', () => {
