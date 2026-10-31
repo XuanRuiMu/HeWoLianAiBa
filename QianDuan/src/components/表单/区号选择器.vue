@@ -27,7 +27,7 @@
       <div
         v-if="展开"
         ref="浮层"
-        class="qu-hao-lie-biao"
+        class="qu-hao-lie-biao renzheng-ka-pei-se"
         role="listbox"
         :aria-label="huoQuFanYi('ui', 'quHaoLieBiao')"
         :style="浮层样式"
@@ -74,8 +74,9 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { huoQuFanYi } from '@/config/翻译表'
 import { QU_HAO_XUAN_XIANG, quHaoWenAn, type QuHaoXuanXiang } from '@/utils/手机号'
 
-const 属性 = withDefaults(defineProps<{ 模型值: string; 禁用?: boolean }>(), {
+const 属性 = withDefaults(defineProps<{ 模型值: string; 禁用?: boolean; 排除区号?: string[] }>(), {
   禁用: false,
+  排除区号: () => [],
 })
 
 const 发出 = defineEmits<{
@@ -97,10 +98,15 @@ function guiYiSouSuoCi(词: string): string {
   return 词.trim().toLowerCase().replace(/[\s+]/g, '')
 }
 
+const 可选区号 = computed<QuHaoXuanXiang[]>(() => {
+  const 排除 = new Set(属性.排除区号.map((码) => 码.replace(/\D/g, '')))
+  return 排除.size === 0 ? QU_HAO_XUAN_XIANG : QU_HAO_XUAN_XIANG.filter((项) => !排除.has(项.quHao))
+})
+
 const 候选 = computed<QuHaoXuanXiang[]>(() => {
   const 词 = guiYiSouSuoCi(搜索词.value)
-  if (词 === '') return [...QU_HAO_XUAN_XIANG]
-  return QU_HAO_XUAN_XIANG.filter((项) => {
+  if (词 === '') return 可选区号.value
+  return 可选区号.value.filter((项) => {
     if (项.quHao.includes(词)) return true
     if (guiYiSouSuoCi(quHaoWenAn(项)).includes(词)) return true
     if (项.guoJia.toLowerCase().includes(词)) return true

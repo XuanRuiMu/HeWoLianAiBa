@@ -1,6 +1,6 @@
 <template>
   <div class="zhaohui-ju-ke">
-    <div class="biaodan-rongqi">
+    <div class="biaodan-rongqi renzheng-ka-pei-se">
       <div class="juanzhou-gan juanzhou-gan-shang" />
       <div class="biaodan-neirong-qu">
         <div class="biaodan-tou">
@@ -570,20 +570,6 @@ onBeforeUnmount(() => {
 }
 
 .biaodan-rongqi {
-  --ka-zhu-wen: #efe9dc;
-  --ka-ci-wen: #d5b878;
-  --ka-san-wen: #a99f8a;
-  --ka-jin: #c9a96a;
-  --ka-jin-shen: #8a6a2f;
-  --ka-jin-liang: #f0dcae;
-  --ka-jin-xian: rgba(201, 169, 106, 0.34);
-  --ka-jin-mian: rgba(201, 169, 106, 0.1);
-  --ka-guang-wen: rgba(201, 169, 106, 0.3);
-  --ka-cuo: #ff5a4e;
-  --ka-cuo-mian: rgba(255, 69, 58, 0.1);
-  --ka-cuo-bian: rgba(255, 69, 58, 0.45);
-  --ka-mo: #17130a;
-  --ka-duan-luo: calc(var(--jiange-da) + var(--jiange-xiao));
   --zihao-biaoti: 20px;
   --zihao-tubiao: 22px;
   width: 100%;
@@ -883,21 +869,6 @@ onBeforeUnmount(() => {
 
 .zhaohui-fan-hui:active {
   color: var(--ka-jin-shen);
-}
-
-:root[data-theme='light'] .biaodan-rongqi {
-  --ka-zhu-wen: #2e2a20;
-  --ka-ci-wen: #8a6a2f;
-  --ka-san-wen: #6f6350;
-  --ka-jin: #a3813e;
-  --ka-jin-shen: #6d5424;
-  --ka-jin-liang: #f7ead0;
-  --ka-jin-xian: rgba(163, 129, 62, 0.4);
-  --ka-jin-mian: rgba(163, 129, 62, 0.1);
-  --ka-guang-wen: rgba(163, 129, 62, 0.26);
-  --ka-cuo: #b3261e;
-  --ka-cuo-mian: rgba(250, 81, 81, 0.1);
-  --ka-cuo-bian: rgba(250, 81, 81, 0.45);
 }
 
 :root[data-theme='light'] .biaodan-biaoti {

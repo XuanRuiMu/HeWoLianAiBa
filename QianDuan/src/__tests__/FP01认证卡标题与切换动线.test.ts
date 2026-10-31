@@ -84,7 +84,8 @@ describe('FP-01 切到注册不再带出登录手机号', () => {
 
   it('记住账号体验保留：仍由认证表单仓库回填登录框', () => {
     expect(登录).toContain('bd.jiaZaiJiZhuSheZhi()')
-    expect(登录).toContain('dengLuShouJiHao.value = bd.dengLuShouJiHao')
+    expect(登录).toContain('get: () => bd.dengLuShouJiHao')
+    expect(登录).toContain('get: () => bd.dengLuQuHao')
   })
 })
 

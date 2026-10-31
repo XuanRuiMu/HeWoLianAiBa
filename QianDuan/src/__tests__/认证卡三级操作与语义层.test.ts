@@ -8,6 +8,7 @@ const 读 = (相对: string) => readFileSync(resolve(源码根, 相对), 'utf8')
 const 登录 = 读('views/登录内容.vue')
 const 找回 = 读('views/找回密码.vue')
 const 令牌 = 读('styles/设计令牌.css')
+const 卡片样式 = 读('styles/认证卡片.css')
 
 function 取样式块(源码: string, 名: string): string {
   const 匹配 = /<style[^>]*>([\s\S]*?)<\/style>/.exec(源码)
@@ -72,36 +73,36 @@ const 语义名 = [
   '--ka-cuo-bian',
 ]
 
-const 深档 = 取块(登录块, '.biaodan-rongqi {')
-const 浅档 = 取块(登录块, ":root[data-theme='light'] .biaodan-rongqi {")
-const 找回深档 = 取块(找回块, '.biaodan-rongqi {')
-const 找回浅档 = 取块(找回块, ":root[data-theme='light'] .biaodan-rongqi {")
+const 深档 = 取块(卡片样式, '.renzheng-ka-pei-se {')
+const 浅档 = 取块(卡片样式, ":root[data-theme='light'] .renzheng-ka-pei-se {")
 
 const 认证面 = [...令牌.matchAll(/--renzheng-mian-se:\s*(#[0-9a-f]{6})/gi)].map((m) => m[1].toLowerCase())
 const 深卡面 = 认证面.reduce((甲, 乙) => (亮度(甲) <= 亮度(乙) ? 甲 : 乙))
 const 浅卡面 = 认证面.reduce((甲, 乙) => (亮度(甲) >= 亮度(乙) ? 甲 : 乙))
 
 describe('认证卡语义层：一色一名，深浅两档各自成套', () => {
-  it('登录页与找回密码页声明同一套十二枚语义名', () => {
+  it('调色板单点声明十二枚语义名，深浅两档各自成套', () => {
     for (const 名 of 语义名) {
-      expect(取值(深档, 名), '登录深档缺 ' + 名).not.toBeNull()
-      expect(取值(浅档, 名), '登录浅档缺 ' + 名).not.toBeNull()
-      expect(取值(找回深档, 名), '找回深档缺 ' + 名).not.toBeNull()
-      expect(取值(找回浅档, 名), '找回浅档缺 ' + 名).not.toBeNull()
+      expect(取值(深档, 名), '深档缺 ' + 名).not.toBeNull()
+      expect(取值(浅档, 名), '浅档缺 ' + 名).not.toBeNull()
     }
   })
 
   it('浅档每一枚都与深档不同值，不是照抄', () => {
     for (const 名 of 语义名) {
       expect(取值(浅档, 名), 名 + ' 浅档与深档同值，等于没做浅档').not.toBe(取值(深档, 名))
-      expect(取值(找回浅档, 名)).not.toBe(取值(找回深档, 名))
     }
   })
 
-  it('两页的同一枚语义名取值完全一致', () => {
-    for (const 名 of 语义名) {
-      expect(取值(深档, 名), 名 + ' 两页深档不一致').toBe(取值(找回深档, 名))
-      expect(取值(浅档, 名), 名 + ' 两页浅档不一致').toBe(取值(找回浅档, 名))
+  it('两页与传送层共用同一套语义名，不再各自抄一份', () => {
+    expect(登录).toContain('class="biaodan-rongqi renzheng-ka-pei-se"')
+    expect(找回).toContain('class="biaodan-rongqi renzheng-ka-pei-se"')
+    expect(读('components/表单/区号选择器.vue')).toContain(
+      'class="qu-hao-lie-biao renzheng-ka-pei-se"',
+    )
+    for (const 块 of [登录块, 找回块]) {
+      expect(块).not.toMatch(/--ka-zhu-wen:/)
+      expect(块).not.toMatch(/--ka-jin:/)
     }
   })
 
@@ -170,7 +171,7 @@ describe('字号只走令牌，字重只有两档', () => {
   })
 
   it('标题落在 24 档并登记为局部令牌', () => {
-    expect(取值(深档, '--zihao-biaoti')).toBe('24px')
+    expect(取值(取块(登录块, '.biaodan-rongqi {'), '--zihao-biaoti')).toBe('24px')
     expect(取值(取块(登录块, '.biaodan-biaoti {'), 'font-size')).toBe('var(--zihao-biaoti)')
   })
 })

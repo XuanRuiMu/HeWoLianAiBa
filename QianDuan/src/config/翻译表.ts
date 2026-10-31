@@ -274,8 +274,6 @@ export const fanYi = {
     quHaoLieBiao: '区号列表',
     feiDaLuShouJiHaoZhuCe: '非+86手机号',
     feiDaLuZhuCeBiaoTi: '非大陆手机号注册',
-    feiDaLuBuShouDaLuHao: '大陆手机号请返回使用短信注册',
-    feiDaLuShouJiHaoTiShi: '请填写完整手机号，区号可切换',
     fanHuiDaLuZhuCe: '返回大陆手机号注册',
     quHaoSouSuoZhanWei: '搜索国家、地区或数字',
     quHaoWuPiPei: '没有匹配的国家或地区',

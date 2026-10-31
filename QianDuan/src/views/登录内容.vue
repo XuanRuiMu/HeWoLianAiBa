@@ -2,7 +2,7 @@
   <div class="denglu-neirong">
     <div
       ref="biaodanRongqi"
-      class="biaodan-rongqi"
+      class="biaodan-rongqi renzheng-ka-pei-se"
       @focusin="tongBuSuoYouHuiTian(true)"
       @pointerdown.capture="tongBuSuoYouHuiTian(true)"
       @keydown.capture="tongBuSuoYouHuiTian(true)"
@@ -456,7 +456,11 @@
 
               <div class="shuru-zu" :class="{ shangFu: feiDaLuShouJiShangFu }">
                 <div class="shuru-hang">
-                  <QuHaoXuanZeQi :模型值="feiDaLuQuHao" @geng-xin="feiDaLuQuHao = $event" />
+                  <QuHaoXuanZeQi
+                    :模型值="feiDaLuQuHao"
+                    :排除区号="FEI_DA_LU_PAI_CHU_QU_HAO"
+                    @geng-xin="feiDaLuQuHao = $event"
+                  />
                   <div class="shuru-zhu-ti">
                     <input
                       id="feidalu-shoujihao"
@@ -468,7 +472,7 @@
                       autocomplete="tel"
                       placeholder=" "
                       required
-                      @input="feiDaLuShouJiHao = ($event.target as HTMLInputElement).value"
+                      @input="gengXinFeiDaLuShouJi(($event.target as HTMLInputElement).value)"
                       @focus="feiDaLuShouJiJuJiao = true"
                       @blur="feiDaLuShouJiJuJiao = false"
                     />
@@ -651,11 +655,11 @@ import QuHaoXuanZeQi from '@/components/表单/区号选择器.vue'
 import {
   DA_LU_QU_HAO,
   DA_LU_SHOU_JI_HAO_CHANG,
+  guiYiBenDiHao,
   guiYiQuHao,
   huoQuBenDiHao,
   panDingBenDiHao,
   quanJuQuHaoZuiChang,
-  shiFouDaLuHao,
   zuChengGuoJiHao,
 } from '@/utils/手机号'
 import 协议模态框 from '@/components/协议模态框.vue'
@@ -676,6 +680,7 @@ const router = useRouter()
 type MoShiLeiXing = 'dengLu' | 'zhuCe' | 'feiDaLu'
 const fuMoShi = inject<Ref<MoShiLeiXing>>('denglu-moshi', ref(bd.moShi))
 const HUO_QU_XIANG_GANG = '852'
+const FEI_DA_LU_PAI_CHU_QU_HAO = [DA_LU_QU_HAO]
 const dengLuTuiChangZhong = inject<Ref<boolean>>('dengLuTuiChangZhong', ref(false))
 const moShi = ref<MoShiLeiXing>(bd.moShi)
 const qieHuanFangXiang = ref<'you' | 'zuo'>('you')
@@ -717,8 +722,18 @@ watch(moShi, (xinMoShi) => {
   fuMoShi.value = 存储模式
 })
 
-const dengLuShouJiHao = ref(bd.dengLuShouJiHao)
-const dengLuQuHao = ref(DA_LU_QU_HAO)
+const dengLuShouJiHao = computed({
+  get: () => bd.dengLuShouJiHao,
+  set: (zhi: string) => {
+    bd.dengLuShouJiHao = zhi
+  },
+})
+const dengLuQuHao = computed({
+  get: () => bd.dengLuQuHao,
+  set: (zhi: string) => {
+    bd.dengLuQuHao = zhi
+  },
+})
 const dengLuMiMa = ref(bd.dengLuMiMa)
 const feiDaLuQuHao = ref(HUO_QU_XIANG_GANG)
 const feiDaLuShouJiHao = ref('')
@@ -1222,7 +1237,6 @@ function chuLiGundongGunDong(): void {
 
 let daoJiShiDingShiQi: ReturnType<typeof setInterval> | null = null
 
-watch(dengLuShouJiHao, (val) => (bd.dengLuShouJiHao = val))
 watch(dengLuMiMa, (val) => (bd.dengLuMiMa = val))
 watch(
   () => bd.jiZhuZhangHao,
@@ -1286,14 +1300,6 @@ onMounted(() => {
   jiZhuZhangHao.value = bd.jiZhuZhangHao
   jiZhuMiMa.value = bd.jiZhuMiMa
   ziDongDengLu.value = bd.ziDongDengLu
-  const dengLuShouJiHaoYuanSu = biaodanRongqi.value?.querySelector('#denglu-shoujihao') as HTMLInputElement | null
-  const dengLuMiMaYuanSu = biaodanRongqi.value?.querySelector('#denglu-mima') as HTMLInputElement | null
-  if ((!dengLuShouJiHaoYuanSu || dengLuShouJiHaoYuanSu.value === '') && bd.dengLuShouJiHao) {
-    dengLuShouJiHao.value = bd.dengLuShouJiHao
-  }
-  if ((!dengLuMiMaYuanSu || dengLuMiMaYuanSu.value === '') && bd.dengLuMiMa) {
-    dengLuMiMa.value = bd.dengLuMiMa
-  }
   if (bd.yanZhengMaFaSongShiJian) {
     const shengYu = Math.max(0, 60 - Math.floor((Date.now() - bd.yanZhengMaFaSongShiJian) / 1000))
     if (shengYu > 0) kaiShiDaoJiShi(shengYu)
@@ -1352,11 +1358,9 @@ const dengLuShouJiHeFa = computed(() => panDingBenDiHao(dengLuQuHao.value, dengL
 
 const feiDaLuGuoJiHao = computed(() => zuChengGuoJiHao(feiDaLuQuHao.value, feiDaLuShouJiHao.value))
 const feiDaLuPanDing = computed(() => panDingBenDiHao(feiDaLuQuHao.value, feiDaLuShouJiHao.value))
-const feiDaLuShiDaLu = computed(() => shiFouDaLuHao(feiDaLuGuoJiHao.value))
-const feiDaLuShouJiHeFa = computed(() => feiDaLuPanDing.value.heFa && !feiDaLuShiDaLu.value)
+const feiDaLuShouJiHeFa = computed(() => feiDaLuPanDing.value.heFa)
 const feiDaLuShouJiTiShi = computed(() => {
   if (feiDaLuShouJiHao.value.length === 0) return ''
-  if (feiDaLuShiDaLu.value) return huoQuFanYi('ui', 'feiDaLuBuShouDaLuHao')
   if (!feiDaLuShouJiHeFa.value) return huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu')
   return ''
 })
@@ -1382,7 +1386,7 @@ const feiDaLuKeYiZhuCe = computed(
 )
 
 function gengXinDengLuShouJi(zhi: string): void {
-  dengLuShouJiHao.value = zhi.replace(/\D/g, '')
+  dengLuShouJiHao.value = guiYiBenDiHao(dengLuQuHao.value, zhi)
   shouJiHaoJuJiao.value = true
 }
 
@@ -1392,7 +1396,7 @@ function gengXinDengLuMiMa(zhi: string): void {
 }
 
 function gengXinZhuCeShouJi(zhi: string): void {
-  zhuCeShouJiHao.value = zhi.replace(/\D/g, '')
+  zhuCeShouJiHao.value = guiYiBenDiHao(DA_LU_QU_HAO, zhi)
   zhuCeShouJiJuJiao.value = true
 }
 
@@ -1413,7 +1417,11 @@ function gengXinZhuCeMiMa(zhi: string): void {
 
 function kaiShiFeiDaLuZhuCe(): void {
   qieHuanMoShi('feiDaLu')
-  if (feiDaLuShouJiHao.value === '') feiDaLuQuHao.value = HUO_QU_XIANG_GANG
+  if (feiDaLuQuHao.value === DA_LU_QU_HAO) feiDaLuQuHao.value = HUO_QU_XIANG_GANG
+}
+
+function gengXinFeiDaLuShouJi(zhi: string): void {
+  feiDaLuShouJiHao.value = guiYiBenDiHao(feiDaLuQuHao.value, zhi)
 }
 
 function fanHuiDaLuZhuCe(): void {
@@ -1819,13 +1827,7 @@ async function zhiXingDengLu() {
     await 用户仓库.zhiXingDengLu(shouJiHao, miMa, ziDongDengLu.value)
     if (!jieMianCaoZuoYouXiao(daiCi)) return
     if (jiZhuMiMaZhi) chuFaLiuLanQiBaoCunMiMa(shouJiHao, miMa)
-    bd.sheZhiJiZhuZhangHaoMiMa(
-      shouJiHao,
-      miMa,
-      jiZhuZhangHao.value,
-      jiZhuMiMaZhi,
-      ziDongDengLu.value,
-    )
+    bd.sheZhiJiZhuZhangHaoMiMa(jiZhuZhangHao.value, jiZhuMiMaZhi, ziDongDengLu.value)
     bd.qingKongDengLuZhuCe()
     emit('dengLuChengGong')
     await qiDongDinggeFeixing('/')
@@ -1931,24 +1933,10 @@ async function zhiXingZhuCe() {
 }
 
 .biaodan-rongqi {
-  --ka-zhu-wen: #efe9dc;
-  --ka-ci-wen: #d5b878;
-  --ka-san-wen: #a99f8a;
-  --ka-jin: #c9a96a;
-  --ka-jin-shen: #8a6a2f;
-  --ka-jin-liang: #f0dcae;
-  --ka-jin-xian: rgba(201, 169, 106, 0.34);
-  --ka-jin-mian: rgba(201, 169, 106, 0.1);
-  --ka-guang-wen: rgba(201, 169, 106, 0.3);
-  --ka-cuo: #ff5a4e;
-  --ka-cuo-mian: rgba(255, 69, 58, 0.1);
-  --ka-cuo-bian: rgba(255, 69, 58, 0.45);
   --ka-hong-1: #f2b0ac;
   --ka-hong-2: #e98f85;
   --ka-hong-3: #dd6d61;
   --ka-hong-4: #db5d51;
-  --ka-mo: #17130a;
-  --ka-duan-luo: calc(var(--jiange-da) + var(--jiange-xiao));
   --zihao-biaoti: 24px;
   width: 100%;
   display: flex;
@@ -2711,18 +2699,6 @@ async function zhiXingZhuCe() {
 }
 
 :root[data-theme='light'] .biaodan-rongqi {
-  --ka-zhu-wen: #2e2a20;
-  --ka-ci-wen: #8a6a2f;
-  --ka-san-wen: #6f6350;
-  --ka-jin: #a3813e;
-  --ka-jin-shen: #6d5424;
-  --ka-jin-liang: #f7ead0;
-  --ka-jin-xian: rgba(163, 129, 62, 0.4);
-  --ka-jin-mian: rgba(163, 129, 62, 0.1);
-  --ka-guang-wen: rgba(163, 129, 62, 0.26);
-  --ka-cuo: #b3261e;
-  --ka-cuo-mian: rgba(250, 81, 81, 0.1);
-  --ka-cuo-bian: rgba(250, 81, 81, 0.45);
   --ka-hong-1: #b2503f;
   --ka-hong-2: #99362a;
   --ka-hong-3: #7c2018;

@@ -209,6 +209,30 @@ export function huoQuBenDiHao(guoJiHao: string, quHao: string): string {
   return 原文.slice(前缀.length).replace(/\D/g, '')
 }
 
+export function guiYiBenDiHao(quHao: string, yuanShi: string): string {
+  const 数字 = String(yuanShi ?? '').replace(/\D/g, '')
+  const 码 = guiYiQuHao(quHao)
+  if (数字.length <= 码.length || !数字.startsWith(码)) return 数字
+  const 余 = 数字.slice(码.length)
+  if (panDingGuoJiHao('+' + 数字).heFa && panDingBenDiHao(码, 余).heFa) return 余
+  return 数字
+}
+
+export function fenJieGuoJiHao(guoJiHao: string): { quHao: string; benDiHao: string } | null {
+  const 数字 = String(guoJiHao ?? '').replace(/\D/g, '')
+  if (数字.length < 5) return null
+  const 区号集 = [...new Set(QU_HAO_XUAN_XIANG.map((项) => 项.quHao))].sort(
+    (甲, 乙) => 乙.length - 甲.length || 甲.localeCompare(乙),
+  )
+  for (const 码 of 区号集) {
+    if (!数字.startsWith(码)) continue
+    const 本地 = 数字.slice(码.length)
+    if (本地 === '') continue
+    if (panDingBenDiHao(码, 本地).heFa) return { quHao: 码, benDiHao: 本地 }
+  }
+  return null
+}
+
 export function geShiHuaBenDiHao(quHao: string, benDiHao: string): string {
   const 国 = huoQuGuoJia(guiYiQuHao(quHao))
   if (!国) return benDiHao

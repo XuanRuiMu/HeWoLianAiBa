@@ -4,14 +4,48 @@ import type { 性别, 性格选择, 人设标签 } from '@/types/类型定义'
 import { baoCunShuJu, duQuShuJu, shanChuShuJu } from '@/utils/本地存储'
 import { 记住密码键, 自动登录键 } from '@/constants/认证键'
 import { guiYiNianLing } from '@/utils/输入验证'
+import { DA_LU_QU_HAO, fenJieGuoJiHao, guiYiQuHao, panDingBenDiHao } from '@/utils/手机号'
 
 const ZI_LIAO_DANG_QIAN_BU_ZHOU_JIAN = 'ziLiaoDangQianBuZhou'
 const ZI_LIAO_SHU_JU_JIAN = 'ziLiaoShuJu'
 const ZI_LIAO_SHE_ZHI_YI_WAN_CHENG_JIAN = 'ziLiaoSheZhiYiWanCheng'
-const JI_ZHU_ZHANG_HAO_JIAN = 'jiZhuZhangHao'
 const BAO_CUN_ZHANG_HAO_JIAN = 'baoCunZhangHao'
+const BAO_CUN_ZHANG_HAO_BAN_BEN = 1
 
 const ZI_LIAO_SHU_JU_BAN_BEN = 2
+
+interface JiZhuZhangHaoJiLu {
+  banBen: number
+  quHao: string
+  benDiHao: string
+}
+
+function duQuJiZhuZhangHao(): { quHao: string; benDiHao: string } | null {
+  const yuanShi = duQuShuJu<unknown>(BAO_CUN_ZHANG_HAO_JIAN, null)
+  if (yuanShi === null) return null
+  if (typeof yuanShi === 'string') {
+    const chaiFen = fenJieGuoJiHao(yuanShi)
+    if (chaiFen !== null) {
+      baoCunShuJu(BAO_CUN_ZHANG_HAO_JIAN, {
+        banBen: BAO_CUN_ZHANG_HAO_BAN_BEN,
+        ...chaiFen,
+      } satisfies JiZhuZhangHaoJiLu)
+      return chaiFen
+    }
+    shanChuShuJu(BAO_CUN_ZHANG_HAO_JIAN)
+    return null
+  }
+  if (typeof yuanShi === 'object') {
+    const jiLu = yuanShi as Partial<JiZhuZhangHaoJiLu>
+    if (jiLu.banBen === BAO_CUN_ZHANG_HAO_BAN_BEN) {
+      const quHao = guiYiQuHao(jiLu.quHao)
+      const benDiHao = String(jiLu.benDiHao ?? '').replace(/\D/g, '')
+      if (benDiHao !== '' && panDingBenDiHao(quHao, benDiHao).heFa) return { quHao, benDiHao }
+    }
+  }
+  shanChuShuJu(BAO_CUN_ZHANG_HAO_JIAN)
+  return null
+}
 
 interface ZiLiaoShuJuNeiRong {
   niCheng: string
@@ -56,6 +90,7 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
   type MoShiLeiXing = 'dengLu' | 'zhuCe'
 
   const moShi = ref<MoShiLeiXing>('dengLu')
+  const dengLuQuHao = ref(DA_LU_QU_HAO)
   const dengLuShouJiHao = ref('')
   const dengLuMiMa = ref('')
   const zhuCeShouJiHao = ref('')
@@ -139,6 +174,7 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
 
   function qingKongDengLuZhuCe() {
     moShi.value = 'dengLu'
+    dengLuQuHao.value = DA_LU_QU_HAO
     dengLuShouJiHao.value = ''
     dengLuMiMa.value = ''
     zhuCeShouJiHao.value = ''
@@ -152,15 +188,15 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
   }
 
   function jiaZaiJiZhuSheZhi() {
-    const baoCunZhangHao = duQuShuJu<string>(BAO_CUN_ZHANG_HAO_JIAN, null)
-    jiZhuZhangHao.value = baoCunZhangHao !== null
+    const jiLu = duQuJiZhuZhangHao()
+    jiZhuZhangHao.value = jiLu !== null
     jiZhuMiMa.value = duQuShuJu<boolean>(记住密码键, false) === true
     if (!jiZhuZhangHao.value) jiZhuMiMa.value = false
     ziDongDengLu.value = duQuShuJu<boolean>(自动登录键, false) === true
     if (!jiZhuMiMa.value) ziDongDengLu.value = false
-    if (baoCunZhangHao !== null) {
-      dengLuShouJiHao.value = baoCunZhangHao
-    }
+    if (jiLu === null || dengLuShouJiHao.value !== '') return
+    dengLuQuHao.value = jiLu.quHao
+    dengLuShouJiHao.value = jiLu.benDiHao
   }
 
   function gengXinJiZhuZhangHao(zhi: boolean) {
@@ -189,21 +225,24 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
   }
 
   function sheZhiJiZhuZhangHaoMiMa(
-    zhangHao: string,
-    _miMa: string,
     jiZhuZhangHaoZhi: boolean,
     jiZhuMiMaZhi: boolean,
     ziDongDengLuZhi = false,
   ) {
-    void _miMa
-    baoCunShuJu(JI_ZHU_ZHANG_HAO_JIAN, jiZhuZhangHaoZhi)
     baoCunShuJu(记住密码键, jiZhuMiMaZhi)
     baoCunShuJu(自动登录键, ziDongDengLuZhi)
-    if (jiZhuZhangHaoZhi) {
-      baoCunShuJu(BAO_CUN_ZHANG_HAO_JIAN, zhangHao)
-    } else {
+    const quHao = guiYiQuHao(dengLuQuHao.value)
+    const benDiHao = dengLuShouJiHao.value.replace(/\D/g, '')
+    if (!jiZhuZhangHaoZhi || !panDingBenDiHao(quHao, benDiHao).heFa) {
       shanChuShuJu(BAO_CUN_ZHANG_HAO_JIAN)
+      return
     }
+    const jiLu: JiZhuZhangHaoJiLu = {
+      banBen: BAO_CUN_ZHANG_HAO_BAN_BEN,
+      quHao,
+      benDiHao,
+    }
+    baoCunShuJu(BAO_CUN_ZHANG_HAO_JIAN, jiLu)
   }
 
   function qingKongZiLiao() {
@@ -224,6 +263,7 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
 
   return {
     moShi,
+    dengLuQuHao,
     dengLuShouJiHao,
     dengLuMiMa,
     zhuCeShouJiHao,
