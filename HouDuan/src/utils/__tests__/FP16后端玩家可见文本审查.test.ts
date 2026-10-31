@@ -183,7 +183,10 @@ describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
 
     it('凭据错误不泄露账号是否存在，也不责怪用户', () => {
       const 消息 = huoQuCuoWuXianRong(CUO_WU_DAI_MA.AUTH_INVALID_CREDENTIALS).message
-      expect(消息).toBe('账号或密码错误')
+      // 守卫语义：只指向「密码」这一侧，不得暴露账号是否注册过；
+      // 具体措辞可随时改写（docs/错误码大全.md 明确 message 不是归类依据）。
+      expect(消息).toMatch(/密码/)
+      expect(消息).not.toMatch(/未注册|没有注册|不存在|找不到|没有这个账号/)
     })
 
     it('注册关闭：不可重试且不承诺重试', () => {

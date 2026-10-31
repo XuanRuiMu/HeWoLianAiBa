@@ -88,8 +88,12 @@ describe('玩家看到的是事实，不是文学化兜底', () => {
       const 文本 = mount(请求错误, { props: { cuoWu: chuangJianQianTaiCuoWu({ code: daiMa }) } })
         .get('.qian-tai-cuo-wu-wen-an')
         .text()
-      expect(文本, `${daiMa} 未说明是服务器问题`).toContain('服务器')
-      expect(文本).toContain('不是你的账号或密码')
+      // 守卫语义要点而非固定措辞：文案措辞可随时改写（见 docs/错误码大全.md），
+      // 但「这是服务端故障」与「与你本人无关」两条信息不得丢失。
+      expect(文本, `${daiMa} 未说明是服务端问题`).toMatch(/服务器|后台/)
+      expect(文本, `${daiMa} 未说明与玩家自身无关`).toMatch(
+        /不是你的账号或密码|跟你的账号密码没关系|与你的账号或密码无关|和你.{0,3}账号.{0,3}密码无关/,
+      )
     }
   })
 })

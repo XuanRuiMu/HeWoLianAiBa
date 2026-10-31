@@ -114,8 +114,10 @@ describe('注册失败原因不再折叠成同一个错误码', () => {
       CUO_WU_DAI_MA.SERVICE_UNAVAILABLE,
     ] as const) {
       const 文案 = huoQuCuoWuXianRong(码).message
-      expect(文案).toContain('服务器的问题')
-      expect(文案).toContain('与你的账号或密码无关')
+      expect(文案, `${码} 未说明是服务端故障`).toMatch(/服务器|服务端/)
+      expect(文案, `${码} 未说明与玩家自身无关`).toMatch(
+        /与你的账号或密码无关|跟你的账号密码没关系|不是你的账号或密码/,
+      )
     }
   })
 })
@@ -141,7 +143,7 @@ describe('zhuCe 服务层返回可直接定位的原因', () => {
     expect(过期.juTiYuanYin).toBe('YAN_ZHENG_MA_GUO_QI')
     expect(超限.juTiYuanYin).toBe('YAN_ZHENG_MA_CHANG_SHI_GUO_DUO')
     expect(过期.ti_shi).not.toBe(超限.ti_shi)
-    expect(超限.ti_shi).toContain('重新获取')
+    expect(超限.ti_shi).toMatch(/重新获取|重新要一条|再要一条/)
   })
 
   it('密码强度不足给出密码专用原因', async () => {
