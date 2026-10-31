@@ -1,4 +1,4 @@
-﻿import { debug日志 } from '../utils/debug日志'
+import { debug日志 } from '../utils/debug日志'
 import Dysmsapi, { SendSmsRequest } from '@alicloud/dysmsapi20170525'
 import Dypnsapi, { SendSmsVerifyCodeRequest } from '@alicloud/dypnsapi20170525'
 import { $OpenApiUtil } from '@alicloud/openapi-core'
@@ -6,6 +6,8 @@ import crypto from 'crypto'
 import { peiZhi } from '../config'
 import { redis } from '../redis'
 import { huoQuFanYi } from '../config/translations'
+import { jieXiShouJiHao } from '../utils/手机号'
+import { parsePhoneNumberFromString } from 'libphonenumber-js/min'
 
 const ZUI_DA_CUO_WU_CHANG_SHI = 5
 
@@ -38,9 +40,59 @@ export function shengChengSuiJiYanZhengMa(): string {
   return crypto.randomInt(100000, 1000000).toString()
 }
 
+interface GuoJiHaoFenJie {
+  guoJiaHao: string
+  benDiHao: string
+}
+
+export function 拆分国际号(yuanShi: string): GuoJiHaoFenJie | null {
+  const jieXi = jieXiShouJiHao(yuanShi)
+  if (!jieXi.heFa || !jieXi.guoJia) return null
+  const chunShuZi = jieXi.guoJiHao.replace(/^\+/, '')
+  const guoJiaHao = String(
+    (parsePhoneNumberCountryCode(jieXi.guoJiHao) ?? '').trim(),
+  )
+  if (!/^\d{1,4}$/.test(guoJiaHao) || !chunShuZi.startsWith(guoJiaHao)) return null
+  const benDiHao = chunShuZi.slice(guoJiaHao.length)
+  if (!/^\d{4,15}$/.test(benDiHao)) return null
+  return { guoJiaHao, benDiHao }
+}
+
+function parsePhoneNumberCountryCode(guoJiHao: string): string | null {
+  try {
+    const jieXi = parsePhoneNumberFromString(guoJiHao)
+    return jieXi && jieXi.countryCallingCode ? jieXi.countryCallingCode : null
+  } catch {
+    return null
+  }
+}
+
+interface DuanXinYeWuJieGuo {
+  cheng_gong: boolean
+  daiMa: string
+  yuanYin: string
+}
+
+export function 解析短信业务结果(xiangYing: unknown): DuanXinYeWuJieGuo {
+  const baoFeng = (xiangYing as { body?: Record<string, unknown> } | null)?.body
+  if (!baoFeng || typeof baoFeng !== 'object') {
+    return { cheng_gong: true, daiMa: '', yuanYin: '' }
+  }
+  const chengGong = baoFeng.Success ?? baoFeng.success
+  const daiMa = String(baoFeng.Code ?? baoFeng.code ?? '')
+  const yuanYin = String(baoFeng.Message ?? baoFeng.message ?? '')
+  if (chengGong === false) {
+    return { cheng_gong: false, daiMa: daiMa || 'WEI_ZHI', yuanYin }
+  }
+  if (chengGong === undefined && daiMa !== '' && daiMa !== 'OK') {
+    return { cheng_gong: false, daiMa, yuanYin }
+  }
+  return { cheng_gong: true, daiMa, yuanYin }
+}
+
 export type DuanXinFaSongJieGuo =
   | { cheng_gong: true }
-  | { cheng_gong: false; cuo_wu_ma: 'XIAN_LIU' | 'NEI_BU_CUO_WU'; ti_shi?: string }
+  | { cheng_gong: false; cuo_wu_ma: 'XIAN_LIU' | 'NEI_BU_CUO_WU' | 'CAN_SHU_CUO_WU'; ti_shi?: string }
 
 export async function faSongYanZhengMa(
   shouJiHao: string,
@@ -64,6 +116,10 @@ export async function faSongYanZhengMa(
 
     try {
       if (gongYingShang === 'pnvs') {
+        const fenJie = 拆分国际号(shouJiHao)
+        if (!fenJie) {
+          return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu') }
+        }
         const keHuDuan = new Dypnsapi(
           new $OpenApiUtil.Config({
             accessKeyId: fangWenMiYaoId,
@@ -72,18 +128,25 @@ export async function faSongYanZhengMa(
           }),
         )
         const youXiaoFenZhong = Math.max(1, Math.ceil(peiZhi.yanZhengMa.youXiaoQi / 60))
-        await keHuDuan.sendSmsVerifyCode(
+        const xiangYing = await keHuDuan.sendSmsVerifyCode(
           new SendSmsVerifyCodeRequest({
-            phoneNumber: shouJiHao,
+            phoneNumber: fenJie.benDiHao,
             signName: qianMing,
             templateCode: moBanDaiMa,
             templateParam: JSON.stringify({ code: yanZhengMa, min: String(youXiaoFenZhong) }),
-            countryCode: '86',
+            countryCode: fenJie.guoJiaHao,
             validTime: youXiaoFenZhong,
             codeLength: peiZhi.yanZhengMa.changDu,
             returnVerifyCode: false,
           }),
         )
+        const yeWu = 解析短信业务结果(xiangYing)
+        if (!yeWu.cheng_gong) {
+          debug日志.error('短信服务', '阿里云短信业务失败', {
+            xiang_qing: { dai_ma: yeWu.daiMa, yuan_yin: yeWu.yuanYin },
+          })
+          return { cheng_gong: false, cuo_wu_ma: 'NEI_BU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai') }
+        }
       } else {
         const keHuDuan = new Dysmsapi(
           new $OpenApiUtil.Config({
@@ -92,7 +155,7 @@ export async function faSongYanZhengMa(
             endpoint: 'dysmsapi.aliyuncs.com',
           }),
         )
-        await keHuDuan.sendSms(
+        const xiangYing = await keHuDuan.sendSms(
           new SendSmsRequest({
             phoneNumbers: shouJiHao,
             signName: qianMing,
@@ -100,6 +163,13 @@ export async function faSongYanZhengMa(
             templateParam: JSON.stringify({ code: yanZhengMa }),
           }),
         )
+        const yeWu = 解析短信业务结果(xiangYing)
+        if (!yeWu.cheng_gong) {
+          debug日志.error('短信服务', '阿里云短信业务失败', {
+            xiang_qing: { dai_ma: yeWu.daiMa, yuan_yin: yeWu.yuanYin },
+          })
+          return { cheng_gong: false, cuo_wu_ma: 'NEI_BU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'yanZhengMaFaSongShiBai') }
+        }
       }
     } catch (cuoWu) {
       debug日志.error('短信服务', '阿里云短信发送失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
@@ -117,15 +187,17 @@ export async function faSongYanZhengMa(
   return { cheng_gong: true }
 }
 
+export type 验证码校验结果 = '通过' | '错误' | '已过期' | '尝试超限'
+
 export async function yanZhengMaShiFouZhengQue(
   shouJiHao: string,
   yanZhengMa: string,
   yongTu: YanZhengMaYongTu = YAN_ZHENG_MA_YONG_TU.zhuCe,
-): Promise<boolean> {
+): Promise<验证码校验结果> {
   const cuoWuJian = huoQuCuoWuJiShuJian(shouJiHao, yongTu)
   const cuoWuCiShu = Number(await redis.get(cuoWuJian)) || 0
   if (cuoWuCiShu >= ZUI_DA_CUO_WU_CHANG_SHI) {
-    return false
+    return '尝试超限'
   }
 
   const cunChuMa = await redis.get(huoQuYanZhengMaJian(shouJiHao, yongTu))
@@ -135,14 +207,15 @@ export async function yanZhengMaShiFouZhengQue(
       crypto.timingSafeEqual(Buffer.from(cunChuMa), Buffer.from(yanZhengMa))
     if (piPei) {
       await redis.del(cuoWuJian)
-      return true
+      return '通过'
     }
     const xinCuoWuCiShu = await redis.incr(cuoWuJian)
     await redis.expire(cuoWuJian, peiZhi.yanZhengMa.youXiaoQi)
     if (xinCuoWuCiShu >= ZUI_DA_CUO_WU_CHANG_SHI) {
       await shanChuYanZhengMa(shouJiHao, yongTu)
+      return '尝试超限'
     }
-    return false
+    return '错误'
   }
 
   if (
@@ -151,9 +224,9 @@ export async function yanZhengMaShiFouZhengQue(
     yongTu === YAN_ZHENG_MA_YONG_TU.zhuCe &&
     yanZhengMa === peiZhi.yanZhengMa.kaiFaMoShiGuDing
   ) {
-    return true
+    return '通过'
   }
-  return false
+  return '已过期'
 }
 
 export async function shanChuYanZhengMa(

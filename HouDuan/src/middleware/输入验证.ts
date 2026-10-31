@@ -45,7 +45,7 @@ export function 手机号验证中间件(
 ): void {
   const 手机号 = 获取请求字符串(请求, 'shouJiHao', 'shou_ji_hao')
   if (!手机号 || !验证手机号(手机号)) {
-    shiBaiXiangYing(响应, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+    shiBaiXiangYing(响应, 400, '', CUO_WU_DAI_MA.AUTH_PHONE_NOT_ACCEPTED)
     return
   }
   下一步()
@@ -58,7 +58,7 @@ export function 用户名验证中间件(
 ): void {
   const 用户名 = 获取请求字符串(请求, 'yongHuMing', 'yong_hu_ming')
   if (!用户名 || !验证用户名(用户名)) {
-    shiBaiXiangYing(响应, 400, huoQuFanYi('renZheng', 'yongHuMingTeShuZiFu'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+    shiBaiXiangYing(响应, 400, '', CUO_WU_DAI_MA.AUTH_USERNAME_INVALID)
     return
   }
   下一步()

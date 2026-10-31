@@ -19,7 +19,7 @@ const 自动填充块 = 取块(样式, '.fenlie-shuru:-webkit-autofill,')
 const 输入组块 = 取块(样式, '.shuru-zu {')
 const 输入主体块 = 取块(样式, '.shuru-zhu-ti {')
 const 底线块 = 取块(样式, '.shuru-zhu-ti::after {')
-const 聚焦块 = 取块(样式, '.shuru-zhu-ti:focus-within::after {')
+const 聚焦块 = 取块(样式, '.shuru-zhu-ti:has(> .fenlie-shuru:focus)::after {')
 const 日期块 = 取块(样式, '.shuru-zu:has(> .chushengriqi)::after,')
 const 减动效块 = 样式.slice(样式.indexOf('@media (prefers-reduced-motion: reduce)'))
 
@@ -75,6 +75,17 @@ describe('输入框底线绘制层级', () => {
 
   it('聚焦态把扫光层扩满宽度', () => {
     expect(取值(聚焦块, 'background-size')).toBe('100% 100%, 100% 100%')
+  })
+
+  it('聚焦判定只认输入框本身，容器内任何后代获得焦点都不得触发', () => {
+    expect(样式).not.toContain(':focus-within')
+    expect(样式).toContain('.shuru-zhu-ti:has(> .fenlie-shuru:focus)::after')
+    const 上浮块 = 样式.slice(
+      样式.indexOf('.shuru-zu.shangFu .fudong-biaoqian,'),
+      样式.indexOf('}', 样式.indexOf('.shuru-zu.shangFu .fudong-biaoqian,')),
+    )
+    expect(上浮块).toContain('.shuru-zu:has(> .shuru-zhu-ti > .fenlie-shuru:focus) .fudong-biaoqian')
+    expect(上浮块).not.toContain(':focus-within')
   })
 
   it('出生日期字段不画底线，含无 :has 环境的显式类兜底', () => {

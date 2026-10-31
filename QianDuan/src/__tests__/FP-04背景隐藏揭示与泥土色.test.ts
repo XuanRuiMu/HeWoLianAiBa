@@ -308,3 +308,39 @@ describe('草地材质创建后泥土色立即恢复主题色', () => {
     expect(材质.uniforms.uDarkDirt.value.hex).toBe('#2e1450')
   })
 })
+
+describe('揭示波形保持噪声驱动与原始时长', () => {
+  it('不再覆写 revealMesh 的姿态参数，默认 tendrilStrength/noiseScale 原样保留', () => {
+    const 源码 = 读('public/grass-bg/scripts/block-06.js')
+    expect(源码).not.toContain('JIE_SHI_CAI_ZHI')
+    expect(源码).not.toContain('diaoZhengBoWenCaiZhi')
+    expect(源码).not.toMatch(/tendrilStrength\s*:/)
+    expect(源码).not.toMatch(/noiseScale\s*:/)
+  })
+
+  it('揭示时长完全取 rm.config.revealDuration，不设上限封顶', () => {
+    const 源码 = 读('public/grass-bg/scripts/block-06.js')
+    expect(源码).not.toContain('JIE_SHI_ZUI_DA_HAO_MIAO')
+    expect(源码).not.toMatch(/Math\.min\s*\(\s*bo\s*,/)
+    expect(源码).toContain('rm.config.revealDuration * 1000')
+  })
+
+  it('revealDuration 为 4s 时揭示时长不小于 4000ms', () => {
+    vi.useFakeTimers()
+    const 环境 = 建揭示窗口({ 独立: true })
+    环境.波浪.config.revealDuration = 4
+    环境.触发就绪()
+    vi.advanceTimersByTime(10)
+    环境.执行帧(0)
+    let 时间 = 0
+    let 已展开 = false
+    for (let 帧 = 0; 帧 < 400 && !已展开; 帧++) {
+      时间 += 16
+      环境.执行帧(时间)
+      if (环境.完成记录.length) 已展开 = true
+    }
+    expect(已展开).toBe(true)
+    expect(时间).toBeGreaterThanOrEqual(4000)
+  })
+})
+

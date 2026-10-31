@@ -1,6 +1,7 @@
 import { debug日志 } from './utils/debug日志'
 import Redis from 'ioredis'
 import { peiZhi } from './config'
+import { biaoJiWeiJiuXu, biaoJiYiJiuXu } from './utils/依赖就绪'
 
 function jieXiRedisLianJie(lianJie: string): { shiFouTLS: boolean; zhuJi: string; duanKou: number; miMa?: string; ShuJuKu?: number } {
   const qingLi = lianJie.trim()
@@ -34,12 +35,28 @@ if (redisPeiZhi.shiFouTLS) {
   console.info('[Redis] 检测到rediss加密连接串，已启用TLS传输')
 }
 
+export interface RedisLianJiePeiZhi {
+  host: string
+  port: number
+  password?: string
+  db?: number
+  tls?: Record<string, never>
+}
+
+export function gouJianRedisLianJiePeiZhi(lianJie: string, huanJingMiMa?: string): RedisLianJiePeiZhi {
+  const jieXi = jieXiRedisLianJie(lianJie)
+  const jiBen: RedisLianJiePeiZhi = {
+    host: jieXi.zhuJi,
+    port: jieXi.duanKou,
+    ...(jieXi.miMa ?? huanJingMiMa ? { password: jieXi.miMa ?? huanJingMiMa } : {}),
+    ...(jieXi.ShuJuKu === undefined ? {} : { db: jieXi.ShuJuKu }),
+  }
+  if (jieXi.shiFouTLS) jiBen.tls = {}
+  return jiBen
+}
+
 export const redis = new Redis({
-  host: redisPeiZhi.zhuJi,
-  port: redisPeiZhi.duanKou,
-  password: redisPeiZhi.miMa,
-  db: redisPeiZhi.ShuJuKu,
-  ...(redisPeiZhi.shiFouTLS ? { tls: {} } : {}),
+  ...gouJianRedisLianJiePeiZhi(peiZhi.redisLianJie, process.env.REDIS_PASSWORD),
   maxRetriesPerRequest: null,
   commandTimeout: 3000,
   retryStrategy: (ciShu) => Math.min(ciShu * 500, 5000),
@@ -49,9 +66,15 @@ export const redis = new Redis({
 const YU_RE_READY_CHAO_SHI_HAO_MIAO = 15000
 
 let jiuXuChengNuo: Promise<void> | null = null
+let yiTanCeShiBai = false
 
-export function dengDaiRedisJiuXu(): Promise<void> {
+export function biaoJiRedisYiTanCeShiBai(): void {
+  yiTanCeShiBai = true
+}
+
+export function dengDaiRedisJiuXu(zuiDaHaoMiao: number = YU_RE_READY_CHAO_SHI_HAO_MIAO): Promise<void> {
   if (redis.status === 'ready') return Promise.resolve()
+  if (yiTanCeShiBai) return Promise.resolve()
   if (!jiuXuChengNuo) {
     jiuXuChengNuo = new Promise<void>((jieShu) => {
       const jieShuZhi = () => {
@@ -60,7 +83,7 @@ export function dengDaiRedisJiuXu(): Promise<void> {
         jiuXuChengNuo = null
         jieShu()
       }
-      const jiShiQi = setTimeout(jieShuZhi, YU_RE_READY_CHAO_SHI_HAO_MIAO)
+      const jiShiQi = setTimeout(jieShuZhi, zuiDaHaoMiao)
       redis.once('ready', jieShuZhi)
     })
   }
@@ -75,6 +98,7 @@ const RONG_DUAN_YU_ZHI = 5
 const RONG_DUAN_HUI_FU_HAO_MIAO = 30000
 
 redis.on('error', (cuoWu) => {
+  biaoJiWeiJiuXu('redis', cuoWu)
   rongDuanLianXuShiBai += 1
   if (rongDuanLianXuShiBai >= RONG_DUAN_YU_ZHI && rongDuanZhuangTai === 'biHe') {
     rongDuanZhuangTai = 'kaiLu'
@@ -84,9 +108,34 @@ redis.on('error', (cuoWu) => {
 })
 
 redis.on('ready', () => {
+  yiTanCeShiBai = false
+  biaoJiYiJiuXu('redis')
   rongDuanLianXuShiBai = 0
   rongDuanZhuangTai = 'biHe'
 })
+
+redis.on('end', () => {
+  biaoJiWeiJiuXu('redis', new Error('Redis连接已断开'))
+})
+
+export async function tanCeRedisJiuXu(): Promise<boolean> {
+  try {
+    const jieGuo = await redis.ping()
+    if (jieGuo !== 'PONG') {
+      yiTanCeShiBai = true
+      biaoJiWeiJiuXu('redis', new Error(`Redis ping 返回异常：${String(jieGuo)}`))
+      debug日志.warn('Redis连接', 'Redis 探测未通过', { xiang_qing: { cuo_wu: `ping 返回 ${String(jieGuo)}` } })
+      return false
+    }
+    biaoJiYiJiuXu('redis')
+    return true
+  } catch (cuoWu) {
+    yiTanCeShiBai = true
+    biaoJiWeiJiuXu('redis', cuoWu)
+    debug日志.warn('Redis连接', 'Redis 探测未通过', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 300) } })
+    return false
+  }
+}
 
 export function redisRongDuanShiFouKaiLu(): boolean {
   if (rongDuanZhuangTai === 'kaiLu' && Date.now() - rongDuanKaiLuShiJian > RONG_DUAN_HUI_FU_HAO_MIAO) {

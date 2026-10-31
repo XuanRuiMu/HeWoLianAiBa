@@ -1,13 +1,14 @@
-﻿import { debug日志 } from '../utils/debug日志'
+import { debug日志 } from '../utils/debug日志'
 import { Router } from 'express'
 import type { Request, Response } from 'express'
 import promClient from 'prom-client'
-import { 数据库 } from '../数据库'
-import { redis } from '../redis'
+import { tanCeShuJuKuJiuXu } from '../数据库'
+import { tanCeRedisJiuXu } from '../redis'
 import { huoQuZhenShiIP, shiDuanKeXinDaiLi } from '../utils/真实IP'
 import { chuangJianCuoWuXiangYing, shiBaiXiangYing } from '../utils/xiangying'
 import { queDingXiangYingZhuanZongId } from '../middleware/日志追踪'
 import { CUO_WU_DAI_MA, type CuoWuDaiMa } from '../config/错误码注册表'
+import { huoQuJiuXuKuaiZhao } from '../utils/依赖就绪'
 
 const zhuCeBiao = new promClient.Registry()
 promClient.collectDefaultMetrics({ register: zhuCeBiao })
@@ -27,43 +28,74 @@ const qingQiuHaoShi = new promClient.Histogram({
   registers: [zhuCeBiao],
 })
 
-type JianKangZhuangTai = {
+const TAN_CE_JIE_LIU_HAO_MIAO = 1000
+
+let shangCiTanCeShiJian = 0
+let tanCeJinXingZhong: Promise<void> | null = null
+
+async function anXuTanCe(): Promise<void> {
+  const xianZai = Date.now()
+  if (xianZai - shangCiTanCeShiJian < TAN_CE_JIE_LIU_HAO_MIAO) return
+  if (tanCeJinXingZhong !== null) {
+    await tanCeJinXingZhong
+    return
+  }
+  shangCiTanCeShiJian = xianZai
+  tanCeJinXingZhong = (async () => {
+    try {
+      await Promise.all([tanCeShuJuKuJiuXu(), tanCeRedisJiuXu()])
+    } finally {
+      tanCeJinXingZhong = null
+    }
+  })()
+  await tanCeJinXingZhong
+}
+
+interface JianKangZhuangTai {
   ShuJuKu: 'zhengChang' | 'yiChang'
   huanCun: 'zhengChang' | 'yiChang'
+  ciKu: 'zhengChang' | 'yiChang'
   daiMa: CuoWuDaiMa | null
 }
 
+function xuanCuoWuDaiMa(kuaiZhao: { postgres: boolean; redis: boolean }): CuoWuDaiMa | null {
+  if (kuaiZhao.postgres && kuaiZhao.redis) return null
+  if (!kuaiZhao.postgres && !kuaiZhao.redis) return CUO_WU_DAI_MA.DEPENDENCIES_UNAVAILABLE
+  return kuaiZhao.postgres
+    ? CUO_WU_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE
+    : CUO_WU_DAI_MA.DEPENDENCY_POSTGRES_UNAVAILABLE
+}
+
 async function jianChaJianKang(): Promise<JianKangZhuangTai> {
-  let ShuJuKu: JianKangZhuangTai['ShuJuKu'] = 'yiChang'
-  let huanCun: JianKangZhuangTai['huanCun'] = 'yiChang'
-  try {
-    await 数据库.query('SELECT 1')
-    ShuJuKu = 'zhengChang'
-  } catch {
-    ShuJuKu = 'yiChang'
+  await anXuTanCe()
+  const kuaiZhao = huoQuJiuXuKuaiZhao()
+  return {
+    ShuJuKu: kuaiZhao.postgres ? 'zhengChang' : 'yiChang',
+    huanCun: kuaiZhao.redis ? 'zhengChang' : 'yiChang',
+    ciKu: kuaiZhao.词库 ? 'zhengChang' : 'yiChang',
+    daiMa: xuanCuoWuDaiMa(kuaiZhao),
   }
-  try {
-    const jieGuo = await redis.ping()
-    if (jieGuo === 'PONG') huanCun = 'zhengChang'
-  } catch {
-    huanCun = 'yiChang'
-  }
-  const daiMa = ShuJuKu === 'yiChang' && huanCun === 'yiChang'
-    ? CUO_WU_DAI_MA.DEPENDENCIES_UNAVAILABLE
-    : ShuJuKu === 'yiChang'
-      ? CUO_WU_DAI_MA.DEPENDENCY_POSTGRES_UNAVAILABLE
-      : huanCun === 'yiChang'
-        ? CUO_WU_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE
-        : null
-  return { ShuJuKu, huanCun, daiMa }
 }
 
 async function faSongJianKang(xiangYing: Response): Promise<void> {
-  const zhuangTai = await jianChaJianKang()
+  let zhuangTai: JianKangZhuangTai
+  try {
+    zhuangTai = await jianChaJianKang()
+  } catch (cuoWu) {
+    debug日志.error('健康检查', '健康检查执行失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+    zhuangTai = {
+      ShuJuKu: 'yiChang',
+      huanCun: 'yiChang',
+      ciKu: 'yiChang',
+      daiMa: CUO_WU_DAI_MA.DEPENDENCIES_UNAVAILABLE,
+    }
+  }
+
   const shuJu = {
     zhuangTai: zhuangTai.daiMa ? 'yiChang' : 'jianKang',
     shu_ju_ku: zhuangTai.ShuJuKu,
     huan_cun: zhuangTai.huanCun,
+    shen_he_ci_ku: zhuangTai.ciKu,
     shi_jian_chuo: new Date().toISOString(),
   }
   if (!zhuangTai.daiMa) {

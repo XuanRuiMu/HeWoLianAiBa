@@ -19,7 +19,8 @@ import {
   setMoRenXingBie,
   setMoRenDuiXiangXingBie,
   yanZhengShouJiHaoGeShi,
-  shuaXinLingPai } from '../services/认证'
+  shuaXinLingPai,
+  注册失败错误码 } from '../services/认证'
 import { faSongYanZhengMa, zhunHuaYanZhengMaYongTu } from '../services/短信'
 import { qianFaRenJiTiaoZhan } from '../services/人机验证'
 import { 映射登录失败 } from '../services/登录失败'
@@ -27,7 +28,7 @@ import { zhuXiaoYongHu } from '../services/账号注销'
 import { huoQuZhenShiIP } from '../utils/真实IP'
 import { guiYiWeiGuoJiHao } from '../utils/手机号'
 import type { RenZhengQingQiu } from '../middleware/认证'
-import { CUO_WU_DAI_MA, type CuoWuDaiMa } from '../config/错误码注册表'
+import { CUO_WU_DAI_MA, huoQuCuoWuXianRong, type CuoWuDaiMa } from '../config/错误码注册表'
 
 const luYou = Router()
 
@@ -35,13 +36,6 @@ function jieXiFaSongDaiMa(cuoWuMa: unknown): CuoWuDaiMa {
   return cuoWuMa === 'XIAN_LIU'
     ? CUO_WU_DAI_MA.AUTH_SMS_RATE_LIMITED
     : CUO_WU_DAI_MA.AUTH_SMS_SEND_FAILED
-}
-
-function jieXiZhuCeDaiMa(cuoWuMa: unknown): CuoWuDaiMa {
-  if (cuoWuMa === 'CHONG_TU') return CUO_WU_DAI_MA.AUTH_ACCOUNT_ALREADY_EXISTS
-  if (cuoWuMa === 'XIAN_LIU') return CUO_WU_DAI_MA.AUTH_REGISTRATION_CLOSED
-  if (cuoWuMa === 'NEI_BU_CUO_WU') return CUO_WU_DAI_MA.AUTH_REGISTRATION_FAILED
-  return CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID
 }
 
 function huoQuIp(qingQiu: Request): string {
@@ -188,7 +182,8 @@ luYou.post('/注册', zhuCeXianLiu, 手机号验证中间件, 用户名验证中
   if (!jieGuo.cheng_gong) {
     const { jiLuZhuCeShiBai } = await import('../services/行为验证')
     await jiLuZhuCeShiBai(guoJiHao, huoQuIp(qingQiu)).catch(() => undefined)
-    return shiBaiXiangYing(xiangYing, 503, jieGuo.ti_shi || huoQuFanYi('renZheng', 'zhuCeShiBai'), jieXiZhuCeDaiMa(jieGuo.cuo_wu_ma))
+    const daiMa = 注册失败错误码(jieGuo.cuo_wu_ma, jieGuo.juTiYuanYin)
+    return shiBaiXiangYing(xiangYing, huoQuCuoWuXianRong(daiMa).httpStatus, '', daiMa)
   }
 
   return chengGongXiangYing(xiangYing, jieGuo.shu_ju, huoQuFanYi('tongYong', 'caoZuoChengGong'))
@@ -213,7 +208,7 @@ luYou.post('/登录', dengLuXianLiu, dengLuIPLianLiu, 手机号验证中间件, 
     return shiBaiXiangYing(
       xiangYing,
       yingShe.状态码,
-      jieGuo.ti_shi,
+      '',
       yingShe.错误码,
     )
   }

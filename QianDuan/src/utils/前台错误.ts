@@ -92,6 +92,7 @@ export function shiQianTaiCuoWu(zhi: unknown): zhi is QianTaiCuoWu {
   return zhi instanceof QianTaiCuoWu
 }
 
+
 function duQuWenBenLeiXing(leiXing: QianTaiWenBenLeiXing): { yingXiang: string; xiaYiBu: string } {
   switch (leiXing) {
     case 'qingQiu':
@@ -118,6 +119,11 @@ function duQuWenBenLeiXing(leiXing: QianTaiWenBenLeiXing): { yingXiang: string; 
       return {
         yingXiang: huoQuFanYi('tongYong', 'jianQuanWenTiYingXiang'),
         xiaYiBu: huoQuFanYi('tongYong', 'jianQuanWenTiXiaYiBu'),
+      }
+    case 'pingZheng':
+      return {
+        yingXiang: huoQuFanYi('tongYong', 'pingZhengWenTiYingXiang'),
+        xiaYiBu: huoQuFanYi('tongYong', 'pingZhengWenTiXiaYiBu'),
       }
     case 'quanXian':
       return {
@@ -422,8 +428,6 @@ export function 归一前台错误(zhi: unknown): QianTaiCuoWu {
 
 export function tiQuCuoWuWenBen(cuoWu: unknown, moRenWenAn: string): string {
   if (shiQianTaiCuoWu(cuoWu)) {
-    const houTaiWenAn = cuoWu.houTaiBaoFeng?.message?.trim()
-    if (houTaiWenAn && /^[\u4e00-\u9fa5]/.test(houTaiWenAn)) return houTaiWenAn
     const benDiWenAn = cuoWu.lianAiWenAn?.trim()
     if (benDiWenAn && /^[\u4e00-\u9fa5]/.test(benDiWenAn)) return benDiWenAn
     return moRenWenAn

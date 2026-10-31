@@ -29,6 +29,7 @@ import biaoQingLuYou from './routes/表情'
 import ziLiaoLuYou from './routes/资料'
 import { chengGongXiangYing, shiBaiXiangYing } from './utils/xiangying'
 import { 全YuZhanCuoWuChuLi } from './middleware/错误处理'
+import { 依赖闸门中间件 } from './middleware/依赖闸门'
 import { CUO_WU_DAI_MA, YingYongCuoWu } from './config/错误码注册表'
 import { qiDongShenJiRiZhiGuiDangDingShiQi, tingZhiShenJiRiZhiGuiDang } from './services/审计日志归档'
 import { qiDongShuJuBaoCunQingLiDingShiQi, tingZhiShuJuBaoCunQingLi } from './services/数据保存期限'
@@ -43,8 +44,10 @@ import { chuShiHuaDuoSheSocket } from './socket/夺舍'
 import { sheZhiIo } from './socket/io'
 import { chuShiHuaOTel } from './utils/OTel'
 import { 数据库 } from './数据库'
-import { redis, dengDaiRedisJiuXu } from './redis'
+import { redis } from './redis'
+import { 启动前强校验 } from './启动校验'
 import { guanBiRiZhiYinQing, 日志引擎 } from './utils/日志引擎'
+
 chuShiHuaOTel()
 
 const yingYong = express()
@@ -173,6 +176,8 @@ yingYong.get('/api/健康', (_qingQiu, xiangYing) => {
   chengGongXiangYing(xiangYing, { zhuang_tai: 'ok' })
 })
 
+yingYong.use(依赖闸门中间件)
+
 yingYong.use('/api/认证', renZhengLuYou)
 yingYong.use('/api/生成角色', jiaoSeLuYou)
 yingYong.use('/api/角色', jiaoSeXiangQingLuYou)
@@ -285,87 +290,6 @@ export function 注册停机处理器(tingJi: () => Promise<void>): void {
     void import('./utils/邮件告警').then(({ faSongGaoJing }) => faSongGaoJing('jin_cheng_beng_kui', '进程未捕获异常告警', neiBu.cuo_wu).catch(() => undefined))
     void tingJi().finally(() => process.exit(1))
   })
-}
-
-async function 启动前强校验(): Promise<void> {
-  const { debug日志 } = await import('./utils/debug日志')
-  const { 数据库 } = await import('./数据库')
-  const { redis } = await import('./redis')
-
-  try {
-    const lianJie = String(peiZhi.redisLianJie || '')
-    const yaoQiuTLS = /^rediss:\/\//i.test(lianJie.trim())
-    const shiJiTLS = Boolean((redis.options as unknown as Record<string, unknown>)?.['tls'])
-    if (yaoQiuTLS && !shiJiTLS) {
-      debug日志.error('启动校验', 'rediss连接未启用TLS，拒绝明文降级启动', { xiang_qing: { cuo_wu_ma: CUO_WU_DAI_MA.DOCKER_STARTUP_REDIS_TLS_INVALID, lian_jie_qian_zhui: 'rediss://***' } })
-      process.exit(1)
-    }
-    if (yaoQiuTLS && shiJiTLS) {
-      debug日志.info('启动校验', 'rediss加密传输已启用')
-    }
-  } catch (cuoWu) {
-    debug日志.error('启动校验', 'rediss传输校验失败', { xiang_qing: { cuo_wu_ma: CUO_WU_DAI_MA.DOCKER_STARTUP_REDIS_TLS_INVALID, cuo_wu: String(cuoWu) } })
-    process.exit(1)
-  }
-
-  let redisLianTong = false
-  let redisZuiHouCuoWu: unknown = null
-  for (let ci = 0; ci < 5 && !redisLianTong; ci++) {
-    try {
-      await Promise.race([
-        redis.ping(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis连接超时')), 3000))
-      ])
-      redisLianTong = true
-    } catch (e) {
-      redisZuiHouCuoWu = e
-      await new Promise((jieJue) => setTimeout(jieJue, 2000))
-    }
-  }
-  if (!redisLianTong) {
-    debug日志.error('启动校验', 'Redis 不可用，拒绝启动', { xiang_qing: { cuo_wu_ma: CUO_WU_DAI_MA.DOCKER_STARTUP_REDIS_UNAVAILABLE, cuo_wu: String(redisZuiHouCuoWu) } })
-    try {
-      await redis.quit()
-    } catch {
-      // 忽略关闭错误
-    }
-    await new Promise((jieJue) => setTimeout(jieJue, 500))
-    process.exit(1)
-  }
-  debug日志.info('启动校验', 'Redis 连接正常')
-
-  let pgLianTong = false
-  let pgZuiHouCuoWu: unknown = null
-  for (let ci = 0; ci < 5 && !pgLianTong; ci++) {
-    try {
-      await Promise.race([
-        数据库.query('SELECT 1'),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('PostgreSQL连接超时')), 3000))
-      ])
-      pgLianTong = true
-    } catch (e) {
-      pgZuiHouCuoWu = e
-      await new Promise((jieJue) => setTimeout(jieJue, 2000))
-    }
-  }
-  if (!pgLianTong) {
-    debug日志.error('启动校验', 'PostgreSQL 不可用，拒绝启动', { xiang_qing: { cuo_wu_ma: CUO_WU_DAI_MA.DOCKER_STARTUP_POSTGRES_UNAVAILABLE, cuo_wu: String(pgZuiHouCuoWu) } })
-    process.exit(1)
-  }
-  debug日志.info('启动校验', 'PostgreSQL 连接正常')
-
-  await dengDaiRedisJiuXu()
-
-  try {
-    const { jiaZaiZuiXinCiKu, huoQuCiKuMuLu } = await import('./services/审核词库')
-    const ciKu = await jiaZaiZuiXinCiKu(true)
-    debug日志.info('启动校验', '审核词库已加载', { xiang_qing: { ban_ben: ciKu.banBen, lu_jing: huoQuCiKuMuLu() } })
-  } catch (cuoWu) {
-    debug日志.error('启动校验', '审核词库不可加载，拒绝启动（构建产物缺非 TS 资源时会出现）', {
-      xiang_qing: { cuo_wu_ma: CUO_WU_DAI_MA.DOCKER_STARTUP_MODERATION_RESOURCE_UNAVAILABLE, cuo_wu: String(cuoWu), zhan: cuoWu instanceof Error ? cuoWu.stack : undefined },
-    })
-    process.exit(1)
-  }
 }
 
 if (require.main === module) {

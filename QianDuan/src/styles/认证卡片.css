@@ -175,7 +175,7 @@
   outline: none;
 }
 
-.shuru-zhu-ti:focus-within::after {
+.shuru-zhu-ti:has(> .fenlie-shuru:focus)::after {
   background-size: 100% 100%, 100% 100%;
 }
 
@@ -230,7 +230,7 @@
 }
 
 .shuru-zu.shangFu .fudong-biaoqian,
-.shuru-zu:focus-within .fudong-biaoqian,
+.shuru-zu:has(> .shuru-zhu-ti > .fenlie-shuru:focus) .fudong-biaoqian,
 .shuru-zu:has(.fenlie-shuru:-webkit-autofill) .fudong-biaoqian {
   top: calc(var(--biaoqian-qin-ru) * -1);
   font-size: 11px;

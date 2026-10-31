@@ -6,7 +6,7 @@
   var zhunBeiZhuangTai = window.__caoDiZhunBeiZhuangTai = {
     kaiShi: Math.round(performance.now()),
     jieDuan: 'dengDai',
-    ziYuanJiuXu: false, wuPuShe: false, wuBare: false, wuBody: false, zhuTi: false,
+    ziYuanJiuXu: false, wuPuShe: false, wuBare: false, wuBody: false, zhuTi: false, caoDiJiuXu: false,
     xuanRanZhen: 0, chongJianCiShu: 0, zuiHouChongJian: 0,
     wenDingKaiShi: 0, wenDingZhen: 0,
     zhunBei: false, haoShi: 0, yuanYin: '', riZhi: []
@@ -487,28 +487,70 @@ window.__camReady = true;
         finally { caoDiRiZhi('chongJian', { hao: Math.round(performance.now() - t) }); }
       };
     }
+    var CAO_DI_WEN_DING_CI_SHU = 6;
+    var CAO_DI_WEN_DING_ZUO_ZHEN = 6;
+    var CAO_DI_WEN_DING_HAO_MIAO = 400;
     var zuiHouZhuTiJianCha = 0;
+    var caoDiChunKuangJianCha = 0;
+    var caoDiChunKuang = { shu: -1, ziDing: 0, wenDingZiDing: 0 };
+    var wenDingQianTi = {
+      ziYuan: false, wuPuShe: false, bareZhuRu: false,
+      zhuTi: false, caoDiPuShe: false, caoDiWenDing: false
+    };
+    function caoDiKuaiZongShu() {
+      var g = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
+      if (!g || !g.chunks || typeof g.chunks.entries !== 'function') return -1;
+      try { return g.chunks.entries().length; } catch (eK) { return -1; }
+    }
+    function caoDiKuaiWenDing(xianZai, shu) {
+      if (shu <= 0) { caoDiChunKuang.shu = shu; caoDiChunKuang.wenDingZiDing = 0; return false; }
+      if (xianZai - caoDiChunKuangJianCha < 100) return wenDingQianTi.caoDiWenDing;
+      caoDiChunKuangJianCha = xianZai;
+      if (shu !== caoDiChunKuang.shu) { caoDiChunKuang.shu = shu; caoDiChunKuang.wenDingZiDing = 0; }
+      else caoDiChunKuang.wenDingZiDing++;
+      var chongJianAnJing = xianZai - zhunBeiZhuangTai.zuiHouChongJian > 300;
+      return caoDiChunKuang.wenDingZiDing >= CAO_DI_WEN_DING_CI_SHU && chongJianAnJing;
+    }
+    function bareYiZhuRu() {
+      if (!bareDone || !wuBareMask || !wuBareMask.tex) return false;
+      var mi = scene.getObjectByName('main-island');
+      var mat = mi && mi.material;
+      if (!mat) return false;
+      if (mat.__wuBareTex !== wuBareMask.tex) return false;
+      return true;
+    }
     function jianChaZhunBei() {
       var Z = zhunBeiZhuangTai;
       if (!Z || Z.zhunBei) return;
       anZhuangChongJianJiLu();
       var xianZai = performance.now();
-      Z.ziYuanJiuXu = !!E.resourcesReady;
-      Z.wuPuShe = !!(yiPuHao && yiBuHao && wuMesh && wuMesh.parent);
-      Z.wuBare = !!bareDone;
+      wenDingQianTi.ziYuan = !!E.resourcesReady;
+      wenDingQianTi.wuPuShe = !!(yiPuHao && yiBuHao && wuMesh && wuMesh.parent);
+      wenDingQianTi.bareZhuRu = bareYiZhuRu();
+      var chunKuangShu = caoDiKuaiZongShu();
+      wenDingQianTi.caoDiPuShe = chunKuangShu > 0;
+      wenDingQianTi.caoDiWenDing = caoDiKuaiWenDing(xianZai, chunKuangShu);
+      Z.ziYuanJiuXu = wenDingQianTi.ziYuan;
+      Z.wuPuShe = wenDingQianTi.wuPuShe;
+      Z.wuBare = wenDingQianTi.bareZhuRu;
+      Z.caoDiJiuXu = wenDingQianTi.caoDiPuShe && wenDingQianTi.caoDiWenDing;
       Z.wuBody = !!window.__wuBodyField;
       if (xianZai - zuiHouZhuTiJianCha > 200) {
         zuiHouZhuTiJianCha = xianZai;
-        try { Z.zhuTi = window.__caoDiTongBuZhuTi ? !!window.__caoDiTongBuZhuTi() : false; }
-        catch (eT) { Z.zhuTi = false; }
+        try { wenDingQianTi.zhuTi = window.__caoDiTongBuZhuTi ? !!window.__caoDiTongBuZhuTi() : false; }
+        catch (eT) { wenDingQianTi.zhuTi = false; }
       }
-      var ding = Z.ziYuanJiuXu && Z.wuPuShe && Z.wuBare && Z.zhuTi && (xianZai - Z.zuiHouChongJian > 300);
+      Z.zhuTi = wenDingQianTi.zhuTi;
+      var ding = wenDingQianTi.ziYuan && wenDingQianTi.wuPuShe && wenDingQianTi.bareZhuRu
+        && wenDingQianTi.zhuTi && wenDingQianTi.caoDiPuShe && wenDingQianTi.caoDiWenDing;
       if (!ding) {
         Z.wenDingKaiShi = 0;
-        Z.jieDuan = !Z.ziYuanJiuXu ? 'dengZiYuan'
-          : (!Z.wuPuShe ? 'dengWu'
-          : (!Z.wuBare ? 'dengBare'
-          : (!Z.zhuTi ? 'dengZhuTi' : 'dengWenDing')));
+        Z.jieDuan = !wenDingQianTi.ziYuan ? 'dengZiYuan'
+          : (!wenDingQianTi.wuPuShe ? 'dengWu'
+          : (!wenDingQianTi.bareZhuRu ? 'dengBare'
+          : (!wenDingQianTi.zhuTi ? 'dengZhuTi'
+          : (!wenDingQianTi.caoDiPuShe ? 'dengCaoDi'
+          : 'dengCaoDiWenDing'))));
         return;
       }
       if (!Z.wenDingKaiShi) {
@@ -517,7 +559,7 @@ window.__camReady = true;
         caoDiRiZhi('wenDingKaiShi');
         return;
       }
-      if (Z.xuanRanZhen - Z.wenDingZhen < 2 || xianZai - Z.wenDingKaiShi < 200) return;
+      if (Z.xuanRanZhen - Z.wenDingZhen < CAO_DI_WEN_DING_ZUO_ZHEN || xianZai - Z.wenDingKaiShi < CAO_DI_WEN_DING_HAO_MIAO) return;
       Z.zhunBei = true; Z.jieDuan = 'jiuXu';
       Z.haoShi = Math.round(xianZai - Z.kaiShi);
       caoDiRiZhi('zhunBei', { haoShi: Z.haoShi, chongJian: Z.chongJianCiShu });

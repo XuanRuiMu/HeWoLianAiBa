@@ -110,14 +110,21 @@ describe('外观自定义命名与蒙层', () => {
 })
 
 describe('外观自定义报错文案', () => {
-  it('后台给出的具体提示优先于通用权限文案', () => {
+  it('已知错误码一律走注册表译文，不解析后端 message', () => {
     const cuoWu = chuangJianQianTaiCuoWu({
       code: QIAN_TAI_DAI_MA.PERMISSION_DENIED,
       retryable: false,
       httpStatus: 403,
       houTaiBaoFeng: { code: 'PERMISSION_DENIED', message: '图片安全审核暂时不可用，请重试当前操作' },
     })
-    expect(tiQuCuoWuWenBen(cuoWu, '这次没有保存成功，请再试一次')).toBe('图片安全审核暂时不可用，请重试当前操作')
+    expect(tiQuCuoWuWenBen(cuoWu, '这次没有保存成功，请再试一次')).toBe(
+      huoQuFanYi('lianAi', 'LianAi_012'),
+    )
+  })
+
+  it('只有无后端码的本地错误才允许使用本地中文原文', () => {
+    const benDi = chuangJianQianTaiCuoWu({ code: QIAN_TAI_DAI_MA.WEI_ZHI, yingXiang: '这个文件不能用' })
+    expect(tiQuCuoWuWenBen(benDi, '兜底')).toBe(huoQuFanYi('lianAi', 'LianAi_004'))
   })
 
   it('本地校验的中文提示原样上屏，非中文回退默认文案', () => {

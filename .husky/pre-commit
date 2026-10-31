@@ -1,3 +1,3 @@
 set -e
-cd qianDuan && npm run lint && npx vue-tsc -b && cd ..
-cd houDuan && npm run lint && npx tsc --noEmit
+cd QianDuan && npm run lint && npx vue-tsc -b && cd ..
+cd HouDuan && npm run lint && npx tsc --noEmit

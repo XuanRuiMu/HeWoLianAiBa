@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'fs'
-import { dengLiCuoWuXianRongLieBiao, huoQuCuoWuXianRong, type CuoWuDaiMa } from '../../src/config/错误码注册表'
+import { CUO_WU_DAI_MA, dengLiCuoWuXianRongLieBiao, huoQuCuoWuXianRong, type CuoWuDaiMa } from '../../src/config/错误码注册表'
 import { 错误码文档路径, duiQu旧码映射, 生成错误码文档 } from '../错误码文档'
 
 const 已提交文档 = readFileSync(错误码文档路径, 'utf8')
@@ -149,9 +149,9 @@ describe('错误码大全与注册表同源', () => {
     expect(dengLiCuoWuXianRongLieBiao.length).toBe(查码行(已提交文档).length - duiQu旧码映射().length)
   })
 
-  it('全部 59 个注册码都在文档里，旧码只出现在兼容映射表', () => {
+  it('全部注册码都在文档里，旧码只出现在兼容映射表', () => {
     const 注册码 = dengLiCuoWuXianRongLieBiao as readonly CuoWuDaiMa[]
-    expect(注册码.length).toBe(59)
+    expect(注册码.length).toBe(Object.keys(CUO_WU_DAI_MA).length)
     const 旧码 = new Set(duiQu旧码映射().map((项) => 项.旧码))
     for (const 码 of 注册码) {
       expect(旧码.has(码), `${码} 不得同时是旧码`).toBe(false)

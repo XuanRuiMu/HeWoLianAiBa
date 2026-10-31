@@ -3,8 +3,9 @@ import { 数据库 } from '../数据库'
 import { redis } from '../redis'
 import { peiZhi } from '../config'
 import { huoQuFanYi } from '../config/translations'
+import { CUO_WU_DAI_MA, type CuoWuDaiMa } from '../config/错误码注册表'
 import { shengChengLingPai, xieRuCheXiaoShiJianCuo, cunChuRefreshToken, randomUUID, xiaoHaoRefreshToken, jianCeRefreshTokenChongFu, cheXiaoYongHuSuoYouRefreshToken, shanChuRefreshToken } from '../utils/jwt'
-import { yanZhengMaShiFouZhengQue, shanChuYanZhengMa, YAN_ZHENG_MA_YONG_TU } from './短信'
+import { yanZhengMaShiFouZhengQue, shanChuYanZhengMa, YAN_ZHENG_MA_YONG_TU, type 验证码校验结果 } from './短信'
 import { zhongXinQianMingMeiTiURL } from './媒体存储'
 import { jiLuShenJiRiZhi } from './审计日志'
 import { yinBiShouJiHao } from '../utils/掩码'
@@ -200,39 +201,99 @@ async function dengLuShiBaiShiFouChaoGuo(
   return parseInt(ciShu, 10) >= peiZhi.xianLiu.dengLu.zuiDa
 }
 
-export type ZhuCeCuoWuMa = 'CAN_SHU_CUO_WU' | 'CHONG_TU' | 'XIAN_LIU' | 'NEI_BU_CUO_WU'
+export function 注册失败错误码(cuoWuMa: ZhuCeCuoWuMa, yuanYin?: CuoWuYuanYin): CuoWuDaiMa {
+  if (cuoWuMa === 'YONG_HU_MING_CHONG_FU') return CUO_WU_DAI_MA.AUTH_USERNAME_TAKEN
+  if (cuoWuMa === 'CHONG_TU') return CUO_WU_DAI_MA.AUTH_ACCOUNT_ALREADY_EXISTS
+  if (cuoWuMa === 'XIAN_LIU') return CUO_WU_DAI_MA.AUTH_REGISTRATION_CLOSED
+  if (cuoWuMa === 'NEI_BU_CUO_WU') return CUO_WU_DAI_MA.AUTH_REGISTRATION_FAILED
+  if (yuanYin === 'YONG_HU_MING_BU_HE_FA') return CUO_WU_DAI_MA.AUTH_USERNAME_INVALID
+  if (yuanYin === 'YAN_ZHENG_MA_CUO_WU') return CUO_WU_DAI_MA.AUTH_VERIFICATION_CODE_INVALID
+  if (yuanYin === 'YAN_ZHENG_MA_GUO_QI') return CUO_WU_DAI_MA.AUTH_VERIFICATION_CODE_EXPIRED
+  if (yuanYin === 'YAN_ZHENG_MA_CHANG_SHI_GUO_DUO') return CUO_WU_DAI_MA.AUTH_VERIFICATION_CODE_ATTEMPTS_EXCEEDED
+  if (yuanYin === 'SHOU_JI_HAO_DI_QU_BU_FU') return CUO_WU_DAI_MA.AUTH_PHONE_NOT_ACCEPTED
+  if (yuanYin === 'MI_MA_FU_ZA_DU_BU_ZU') return CUO_WU_DAI_MA.AUTH_PASSWORD_WEAK
+  if (yuanYin === 'CHU_SHENG_RI_QI_BU_HE_FA') return CUO_WU_DAI_MA.AUTH_BIRTH_DATE_INVALID
+  if (yuanYin === 'WEI_TONG_YI_XIE_YI') return CUO_WU_DAI_MA.AUTH_AGREEMENT_REQUIRED
+  return CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID
+}
 
-export async function zhuCe(
-  canShu: ZhuCeCanShu,
-): Promise<{ cheng_gong: boolean; shu_ju?: DengLuXiangYing; ti_shi?: string; cuo_wu_ma?: ZhuCeCuoWuMa }> {
+export function yanZhengMaShiBaiJieGuo(
+  结果: Exclude<验证码校验结果, '通过'>,
+): { cheng_gong: false; cuo_wu_ma: ZhuCeCuoWuMa; ti_shi: string; juTiYuanYin: CuoWuYuanYin } {
+  if (结果 === '尝试超限') {
+    return {
+      cheng_gong: false,
+      cuo_wu_ma: 'CAN_SHU_CUO_WU',
+      ti_shi: huoQuFanYi('renZheng', 'yanZhengMaChangShiGuoDuo'),
+      juTiYuanYin: 'YAN_ZHENG_MA_CHANG_SHI_GUO_DUO',
+    }
+  }
+  if (结果 === '已过期') {
+    return {
+      cheng_gong: false,
+      cuo_wu_ma: 'CAN_SHU_CUO_WU',
+      ti_shi: huoQuFanYi('renZheng', 'yanZhengMaGuoQi'),
+      juTiYuanYin: 'YAN_ZHENG_MA_GUO_QI',
+    }
+  }
+  return {
+    cheng_gong: false,
+    cuo_wu_ma: 'CAN_SHU_CUO_WU',
+    ti_shi: huoQuFanYi('renZheng', 'yanZhengMaCuoWu'),
+    juTiYuanYin: 'YAN_ZHENG_MA_CUO_WU',
+  }
+}
+
+export type CuoWuYuanYin =
+  | 'SHOU_JI_HAO_DI_QU_BU_FU'
+  | 'YONG_HU_MING_BU_HE_FA'
+  | 'MI_MA_FU_ZA_DU_BU_ZU'
+  | 'WEI_TONG_YI_XIE_YI'
+  | 'CHU_SHENG_RI_QI_BU_HE_FA'
+  | 'YAN_ZHENG_MA_CUO_WU'
+  | 'YAN_ZHENG_MA_GUO_QI'
+  | 'YAN_ZHENG_MA_CHANG_SHI_GUO_DUO'
+
+export type ZhuCeCuoWuMa =
+  | 'CAN_SHU_CUO_WU'
+  | 'CHONG_TU'
+  | 'YONG_HU_MING_CHONG_FU'
+  | 'XIAN_LIU'
+  | 'NEI_BU_CUO_WU'
+
+type ZhuCeJieGuo =
+  | { cheng_gong: true; shu_ju: DengLuXiangYing }
+  | { cheng_gong: false; cuo_wu_ma: ZhuCeCuoWuMa; ti_shi: string; juTiYuanYin?: CuoWuYuanYin }
+
+export async function zhuCe(canShu: ZhuCeCanShu): Promise<ZhuCeJieGuo> {
   if (!yanZhengShouJiHaoGeShi(canShu.shou_ji_hao)) {
-    return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu') }
+    return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), juTiYuanYin: 'SHOU_JI_HAO_DI_QU_BU_FU' }
   }
 
   const yongHuMingJieGuo = yanZhengYongHuMingGeShi(canShu.yong_hu_ming)
   if (!yongHuMingJieGuo.he_fa) {
-    return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: yongHuMingJieGuo.ti_shi }
+    return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: yongHuMingJieGuo.ti_shi, juTiYuanYin: 'YONG_HU_MING_BU_HE_FA' }
   }
 
   if (!canShu.mi_ma || canShu.mi_ma.length === 0) {
-    return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'miMaKong') }
+    return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'miMaKong'), juTiYuanYin: 'MI_MA_FU_ZA_DU_BU_ZU' }
   }
 
   const miMaFuZaDu = yanZhengMiMaFuZaDu(canShu.mi_ma)
   if (!miMaFuZaDu.he_fa) {
-    return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: miMaFuZaDu.ti_shi }
+    return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: miMaFuZaDu.ti_shi, juTiYuanYin: 'MI_MA_FU_ZA_DU_BU_ZU' }
   }
 
   if (canShu.tong_yi_xie_yi !== true) {
-    return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'weiTongYiXieYi') }
+    return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'weiTongYiXieYi'), juTiYuanYin: 'WEI_TONG_YI_XIE_YI' }
   }
 
   const zhouSui = jiSuanZhouSuiNianLing(canShu.chu_sheng_ri_qi)
   if (zhouSui === null) {
-    return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'chuShengRiQiGeShiCuoWu') }
+    return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'chuShengRiQiGeShiCuoWu'), juTiYuanYin: 'CHU_SHENG_RI_QI_BU_HE_FA' }
   }
   if (zhouSui < 14 || zhouSui < peiZhi.zhuCe.zuiXiaoNianLing) {
-    return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'weiChengNianRenJinZhi') }
+    return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'weiChengNianRenJinZhi'), juTiYuanYin: 'CHU_SHENG_RI_QI_BU_HE_FA' }
   }
 
   const zongShuJieGuo = await 数据库.query(`SELECT COUNT(*) AS "总数" FROM "用户"`)
@@ -248,18 +309,18 @@ export async function zhuCe(
 
   if (canShu.jing_wai === true) {
     if (shiFouDaLuHao(guoJiHao)) {
-      return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'feiDaLuZhuCeBuShouDaLuHao') }
+      return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'feiDaLuZhuCeBuShouDaLuHao'), juTiYuanYin: 'SHOU_JI_HAO_DI_QU_BU_FU' }
     }
   } else {
     if (!shiFouDaLuHao(guoJiHao)) {
-      return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'zhiJieShouDaLuHao') }
+      return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'zhiJieShouDaLuHao'), juTiYuanYin: 'SHOU_JI_HAO_DI_QU_BU_FU' }
     }
-    const maZhengQue = await yanZhengMaShiFouZhengQue(
+    const maJiaoYan = await yanZhengMaShiFouZhengQue(
       guoJiHao,
       canShu.yan_zheng_ma,
     )
-    if (!maZhengQue) {
-      return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'yanZhengMaCuoWu') }
+    if (maJiaoYan !== '通过') {
+      return yanZhengMaShiBaiJieGuo(maJiaoYan)
     }
   }
 
@@ -269,7 +330,7 @@ export async function zhuCe(
     [qingLiYongHuMing],
   )
   if (yongHuMingYiCunZai.rows.length > 0) {
-    return { cheng_gong: false, cuo_wu_ma: 'CHONG_TU', ti_shi: huoQuFanYi('renZheng', 'yongHuMingYiCunZai') }
+    return { cheng_gong: false, cuo_wu_ma: 'YONG_HU_MING_CHONG_FU', ti_shi: huoQuFanYi('renZheng', 'yongHuMingYiCunZai') }
   }
 
   const miMaHaXi = await bcrypt.hash(canShu.mi_ma, 12)
@@ -287,8 +348,12 @@ export async function zhuCe(
       ],
     )
   } catch (cuoWu) {
-    const pgCuoWu = cuoWu as { code?: string; constraint?: string }
+    const pgCuoWu = cuoWu as { code?: string; constraint?: string; detail?: string }
     if (pgCuoWu.code === '23505') {
+      const mingCheng = `${pgCuoWu.constraint ?? ''} ${pgCuoWu.detail ?? ''}`
+      if (mingCheng.includes('用户名')) {
+        return { cheng_gong: false, cuo_wu_ma: 'YONG_HU_MING_CHONG_FU', ti_shi: huoQuFanYi('renZheng', 'yongHuMingYiCunZai') }
+      }
       return { cheng_gong: false, cuo_wu_ma: 'CHONG_TU', ti_shi: huoQuFanYi('renZheng', 'shouJiHaoYiZhuCe') }
     }
     throw cuoWu
@@ -440,13 +505,16 @@ export async function chongZhiMiMa(
 
   const guoJiHao = guiYiWeiGuoJiHao(canShu.shou_ji_hao)
   const yongHu = await anShouJiHaoChaYongHu(guoJiHao)
-  const maZhengQue = await yanZhengMaShiFouZhengQue(
+  const maJiaoYan = await yanZhengMaShiFouZhengQue(
     guoJiHao,
     canShu.yan_zheng_ma,
     YAN_ZHENG_MA_YONG_TU.chongZhiMiMa,
   )
-  if (!yongHu || !maZhengQue) {
+  if (!yongHu) {
     return { cheng_gong: false, ti_shi: tongYiTiShi }
+  }
+  if (maJiaoYan !== '通过') {
+    return { cheng_gong: false, ti_shi: yanZhengMaShiBaiJieGuo(maJiaoYan).ti_shi }
   }
 
   const xinMiMaHaXi = await bcrypt.hash(canShu.xin_mi_ma, 12)
@@ -490,13 +558,13 @@ export async function gengGaiMiMa(
   }
   const shiJiShouJiHao = String(yongHuHang.rows[0].手机号)
 
-  const maZhengQue = await yanZhengMaShiFouZhengQue(
+  const maJiaoYan = await yanZhengMaShiFouZhengQue(
     shiJiShouJiHao,
     canShu.yan_zheng_ma,
     YAN_ZHENG_MA_YONG_TU.chongZhiMiMa,
   )
-  if (!maZhengQue) {
-    return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'yanZhengMaCuoWu') }
+  if (maJiaoYan !== '通过') {
+    return { cheng_gong: false, ti_shi: yanZhengMaShiBaiJieGuo(maJiaoYan).ti_shi }
   }
 
   const yongHu = await anIdChaYongHu(canShu.yong_hu_id)

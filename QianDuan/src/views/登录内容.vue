@@ -49,15 +49,16 @@
           </button>
         </div>
 
-        <RequestError
-          v-if="qianTaiCuoWu"
-          :cuo-wu="qianTaiCuoWu"
-          :zhong-zai="faSongZhong || dengLuZhong || zhuCeZhong"
-          @chong-shi="chongShi"
-        />
-
         <div class="gundong-waike">
           <div ref="gundongRongQi" class="biaodan-gundong" @scroll="chuLiGundongGunDong">
+          <RequestError
+            v-if="qianTaiCuoWu"
+            class="biaodan-cuo-wu"
+            mi-xi
+            :cuo-wu="qianTaiCuoWu"
+            :zhong-zai="faSongZhong || dengLuZhong || zhuCeZhong"
+            @chong-shi="chongShi"
+          />
           <div
             class="biaodan-xingwei"
             :class="moShi === 'dengLu' ? 'denglu-moshi' : 'zhuce-moshi'"
@@ -987,10 +988,39 @@ const ZI_DUAN_YUAN_SU_ID: Record<CuoWuZiDuan, string> = {
   feiDaLuChuShengRiQi: 'feidalu-chushengriqi',
 }
 
+function 保证字段在滚动区内可见(
+  yuanSu: HTMLElement,
+  gunDongQu: HTMLElement | null,
+): void {
+  if (!gunDongQu) return
+  const shiQu = gunDongQu.getBoundingClientRect()
+  const zhanWei = gunDongQu.querySelector('.biaodan-cuo-wu') as HTMLElement | null
+  const zhanWeiGao = zhanWei ? Math.max(0, zhanWei.getBoundingClientRect().height) : 0
+  const keJianShang = shiQu.top + zhanWeiGao
+  const keJianXia = shiQu.bottom
+  const yuanSuQu = yuanSu.getBoundingClientRect()
+  const shangFangChu = yuanSuQu.top < keJianShang
+  const xiaFangChu = yuanSuQu.bottom > keJianXia
+  if (!shangFangChu && !xiaFangChu) return
+  const chaZhi = shangFangChu
+    ? yuanSuQu.top - keJianShang
+    : yuanSuQu.bottom - keJianXia
+  const muBiao = gunDongQu.scrollTop + chaZhi
+  const zuiDaHuaDong = Math.max(0, gunDongQu.scrollHeight - gunDongQu.clientHeight)
+  gunDongQu.scrollTo({
+    top: Math.min(zuiDaHuaDong, Math.max(0, muBiao)),
+    behavior: 'instant',
+  })
+}
+
 function zhaoDongZiDuan(ziDuan: CuoWuZiDuan): void {
   nextTick(() => {
     const yuanSu = document.getElementById(ZI_DUAN_YUAN_SU_ID[ziDuan])
-    if (yuanSu instanceof HTMLInputElement && yuanSu.isConnected) yuanSu.focus()
+    if (!(yuanSu instanceof HTMLInputElement) || !yuanSu.isConnected) return
+    const gunDongQu = biaodanRongqi.value?.querySelector('.biaodan-gundong') as HTMLElement | null
+    保证字段在滚动区内可见(yuanSu, gunDongQu)
+    yuanSu.focus({ preventScroll: true })
+    保证字段在滚动区内可见(yuanSu, gunDongQu)
   })
 }
 
@@ -1011,9 +1041,29 @@ function daiMaPanDuanZiDuan(
       if (dangQianMoShi === 'feiDaLu') return 'feiDaLuMiMa'
       return 'dengLuMiMa'
     case QIAN_TAI_DAI_MA.AUTH_USERNAME_CHANGE_FAILED:
+    case QIAN_TAI_DAI_MA.AUTH_USERNAME_TAKEN:
+    case QIAN_TAI_DAI_MA.AUTH_USERNAME_INVALID:
     case QIAN_TAI_DAI_MA.RESOURCE_CONFLICT:
       if (dangQianMoShi === 'zhuCe') return 'zhuCeYongHuMing'
       if (dangQianMoShi === 'feiDaLu') return 'feiDaLuYongHuMing'
+      return null
+    case QIAN_TAI_DAI_MA.AUTH_VERIFICATION_CODE_INVALID:
+    case QIAN_TAI_DAI_MA.AUTH_VERIFICATION_CODE_EXPIRED:
+    case QIAN_TAI_DAI_MA.AUTH_VERIFICATION_CODE_ATTEMPTS_EXCEEDED:
+      if (dangQianMoShi === 'zhuCe') return 'zhuCeYanZhengMa'
+      return null
+    case QIAN_TAI_DAI_MA.AUTH_PASSWORD_WEAK:
+      if (dangQianMoShi === 'zhuCe') return 'zhuCeMiMa'
+      if (dangQianMoShi === 'feiDaLu') return 'feiDaLuMiMa'
+      return 'dengLuMiMa'
+    case QIAN_TAI_DAI_MA.AUTH_PHONE_NOT_ACCEPTED:
+      if (dangQianMoShi === 'zhuCe') return 'zhuCeShouJiHao'
+      if (dangQianMoShi === 'feiDaLu') return 'feiDaLuShouJiHao'
+      return 'dengLuShouJiHao'
+    case QIAN_TAI_DAI_MA.AUTH_BIRTH_DATE_INVALID:
+    case QIAN_TAI_DAI_MA.AUTH_AGREEMENT_REQUIRED:
+      if (dangQianMoShi === 'zhuCe') return 'zhuCeChuShengRiQi'
+      if (dangQianMoShi === 'feiDaLu') return 'feiDaLuChuShengRiQi'
       return null
     case QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID:
       if (dangQianMoShi === 'zhuCe') return 'zhuCeShouJiHao'
@@ -1994,6 +2044,34 @@ async function zhiXingZhuCe() {
   color: var(--ka-hong-4);
 }
 
+.biaodan-cuo-wu {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin-bottom: var(--jiange-12);
+  background: var(--renzheng-mian-se);
+}
+
+.biaodan-cuo-wu :deep(.qian-tai-cuo-wu-wen-an) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+@media (max-height: 760px), (max-width: 420px) {
+  .biaodan-cuo-wu :deep(.cuowu-tishi-shuo-ming),
+  .biaodan-cuo-wu :deep(.cuowu-tishi-ma-zu) {
+    display: none;
+  }
+
+  .biaodan-cuo-wu :deep(.cuowu-tishi-wei) {
+    gap: var(--jiange-xiao);
+  }
+}
+
+
 .biaodan-gundong {
   flex: 1;
   min-height: 0;
@@ -2655,6 +2733,21 @@ async function zhiXingZhuCe() {
   color: var(--ka-zhu-wen);
 }
 
+@media (max-height: 960px) {
+  .biaodan-rongqi {
+    --ka-duan-luo: var(--jiange-zhong);
+  }
+
+  .biaodan-tou {
+    margin-top: var(--jiange-zhong);
+    margin-bottom: var(--jiange-zhong);
+  }
+
+  .shuru-zu {
+    --ziduan-jian-ju: var(--jiange-zhong);
+  }
+}
+
 @media (max-height: 640px) {
   .biaodan-rongqi {
     --ka-duan-luo: var(--jiange-xiao);
@@ -2856,7 +2949,7 @@ async function zhiXingZhuCe() {
 }
 
 :deep(.shuru-zu.shangFu .fudong-biaoqian),
-:deep(.shuru-zu:focus-within .fudong-biaoqian),
+:deep(.shuru-zu:has(> .shuru-zhu-ti > .fenlie-shuru:focus) .fudong-biaoqian),
 :deep(.shuru-zu:has(.fenlie-shuru:-webkit-autofill) .fudong-biaoqian) {
   color: var(--ka-ci-wen);
   font-size: var(--ziti-xiao);

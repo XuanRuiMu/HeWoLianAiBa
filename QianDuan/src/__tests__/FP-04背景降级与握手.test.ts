@@ -107,6 +107,10 @@ describe('主页三维背景：就绪握手、暂停与降级', () => {
     for (const 锚 of ['__caoDiZhunBeiZhuangTai', 'jianChaZhunBei', 'wuPuShe', 'wuBare', 'zhuTi', 'chongJianCiShu', 'xuanRanZhen', 'wenDingKaiShi']) {
       expect(场景).toContain(锚)
     }
+    for (const 新增 of ['caoDiJiuXu', 'caoDiKuaiZongShu', 'caoDiKuaiWenDing', 'bareYiZhuRu', 'CAO_DI_WEN_DING_CI_SHU']) {
+      expect(场景).toContain(新增)
+    }
+    expect(场景).toContain('dengCaoDi')
     for (const 已删 of ['fillRedbox', 'fillGrass', 'buFengXi', 'paintZones', 'grassTimer', 'REDBOX_']) {
       expect(场景).not.toContain(已删)
     }

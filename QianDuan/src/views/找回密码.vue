@@ -1033,7 +1033,7 @@ onBeforeUnmount(() => {
 }
 
 :deep(.shuru-zu.shangFu .fudong-biaoqian),
-:deep(.shuru-zu:focus-within .fudong-biaoqian),
+:deep(.shuru-zu:has(> .shuru-zhu-ti > .fenlie-shuru:focus) .fudong-biaoqian),
 :deep(.shuru-zu:has(.fenlie-shuru:-webkit-autofill) .fudong-biaoqian) {
   color: var(--ka-ci-wen);
   font-size: var(--ziti-xiao);
