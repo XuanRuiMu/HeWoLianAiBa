@@ -1,0 +1,17 @@
+{
+  "//": "独立配置：scripts/ 不在主 tsconfig.json 的 include 里（include 只有 src/**/*），且主配置未声明 types，导致 `npx tsc --noEmit` 根本看不到 scripts/ 下的文件——守卫脚本的编译错误会静默通过。本配置让两个守卫脚本进入类型检查，且不影响主编译产物（outDir 独立、不参与 build）。",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["./*.ts"],
+  "exclude": ["./__tests__/**"]
+}

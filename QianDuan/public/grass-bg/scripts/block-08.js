@@ -1,0 +1,3312 @@
+
+/* 完整移植：背景实验室/lab-a-base/positioner.html 的 inpage 场景代码（2026-10-21 验收版）。
+   = 相机定稿位 + 吴昊阳贴地网格 + 压草碰撞 + 原作者极光/星空/云 + 远景释放。 */
+(function () {
+  // 场景就绪状态：block-09 只认 zhunBei=true，block-06 在收到 jiu-xu 后再播放揭示。
+  var zhunBeiZhuangTai = window.__caoDiZhunBeiZhuangTai = {
+    kaiShi: Math.round(performance.now()),
+    jieDuan: 'dengDai',
+    ziYuanJiuXu: false, wuPuShe: false, wuBare: false, wuBody: false, zhuTi: false, caoDiJiuXu: false,
+    xuanRanZhen: 0, chongJianCiShu: 0, zuiHouChongJian: 0,
+    wenDingKaiShi: 0, wenDingZhen: 0,
+    zhunBei: false, haoShi: 0, yuanYin: '', riZhi: []
+  };
+  function caoDiRiZhi(ming, fuJia) {
+    var Z = zhunBeiZhuangTai; if (!Z) return;
+    var tiao = { m: ming, t: Math.round(performance.now()) };
+    if (fuJia) for (var k in fuJia) tiao[k] = fuJia[k];
+    Z.riZhi.push(tiao);
+    if (Z.riZhi.length > 60) Z.riZhi.shift();
+  }
+  function inpage() {
+    'use strict';
+    if (window.__camReady) return;
+    var E = window.__experience;
+    if (!E || !E.engine) { console.warn('[摆位器] 引擎未就绪'); return; }
+    var eng = E.engine;
+    var cam = eng.camera.instance;
+    var group = eng.camera.group;
+    var scene = eng.scene;
+    // V3 必须保留：S.pos = new V3() 依赖它。
+    // ⚠️ 曾因删除 3D 吴昊阳代码时连带删掉这一行，导致 inpage 抛 ReferenceError、
+    //    __camReady 永不置 true、轮询 40 次后显示「注入失败」，相机整体失效。
+    var V3 = cam.position.constructor;
+
+    // 隐藏开场全屏遮罩（renderOrder 999，会盖住一切）
+    try {
+      var rm = E.revealMesh || scene.getObjectByName('__reveal_mesh__');
+      if (rm) { rm.visible = false; if (rm.material) rm.material.visible = false; }
+    } catch (e) {}
+
+    // ================= 我的世界式第一人称相机内核 =================
+    // 状态模型：pos（机位）+ yaw/pitch（视角）+ dist（沿视线推拉的距离）
+    // 引擎陷阱：引擎每帧在渲染前用自己的 controls.update() / parallax / cameraLookAround
+    // 覆盖机位，所以在 renderer.instance.render 外包一层，真正绘制前一刻强制写入。
+    var D2R = Math.PI / 180;
+    var QT = cam.quaternion.constructor;
+    var EU = cam.rotation.constructor;
+
+    var CFG = {
+      speedPerFrame: 0.16,   // 单位/帧 @60fps ≈ 9.6 单位/秒
+      sprintPerFrame: 0.6,   // 单位/帧 @60fps ≈ 36 单位/秒（已不再绑定按键；保留供 tuning JSON 设值）
+      sensitivity: 0.15,     // 度/像素
+      pitchLimit: 89,        // 俯仰夹紧 ±89°
+distMin: 0.6,
+        distMax: 120,
+        // 机位高度下限（世界单位）。地形最低点约 -6，低于此值引擎会卸载地形 chunk。
+        // 由本轮实测反推：y=-24.7 时 main-island / top-island / MainIsland 组
+        // 与 66 棵树被卸载；y=-8 仍在安全范围内。
+        minHeight: -8,
+        wheelStep: 0.12        // 滚轮每格 dist 乘数
+    };
+    window.__camCfg = CFG;
+    // tuning 导入回填：CFG 是闭包变量，只能经这个接口改。
+    // 逐字段白名单 + 量程校验，非法值一律拒绝并回报，绝不整个替换（否则一个残缺
+    // JSON 就能把速度/限位打成 0，导致相机完全不动）。
+    // ⚠️ pitchLimit/distMin/distMax 改完后必须立刻重夹当前的 S.pitch/S.dist，
+    //    否则「新的限位」与「已越界的旧值」并存，相机状态自相矛盾。
+    window.__setCfg = function (patch) {
+      var RANGE = {
+        speedPerFrame: [0.01, 5], sprintPerFrame: [0.01, 20], sensitivity: [0.01, 3],
+        pitchLimit: [1, 89], distMin: [0.1, 60], distMax: [1, 400], wheelStep: [0.01, 2],
+        minHeight: [-200, 0]
+      };
+      var bad = [], applied = [];
+      Object.keys(RANGE).forEach(function (k) {
+        if (!patch || patch[k] === undefined) return;
+        var n = typeof patch[k] === 'number' ? patch[k] : parseFloat(patch[k]);
+        if (!isFinite(n)) { bad.push(k); return; }
+        var lo = RANGE[k][0], hi = RANGE[k][1];
+        if (n < lo || n > hi) { bad.push(k + '(' + n + '→夹到' + (n < lo ? lo : hi) + ')'); n = Math.min(hi, Math.max(lo, n)); }
+        CFG[k] = n; applied.push(k);
+      });
+      if (applied.length) {
+        S.pitch = clamp(S.pitch, -CFG.pitchLimit, CFG.pitchLimit);
+        S.dist = clamp(S.dist, CFG.distMin, CFG.distMax);
+        touch();
+      }
+      return { applied: applied, bad: bad };
+    };
+
+    var keys = {};
+    var S = {
+      pos: new V3(),
+      yaw: 0,
+      pitch: 0,
+      dist: 5.3,
+        // 2026-10-07 重置：默认不冻结；用户可自由旋转做选景（Enter 仍可切冻结）。
+        frozen: false,
+        // 2026-10-07 重置：原生树/营火/石头全部恢复引擎默认（可见）。
+        // enforceCamera 内仅在「为 false」时调 applyTrees/applyProps 来隐藏它们；
+        // 设 true 后这两条 if 分支不触发，引擎原生可见性保持。
+        treesVisible: true,
+        props: { campfire: true, rocks: true },
+        sway: true,
+        gen: 0,            // 状态版本号：每次改动 +1
+      appliedGen: -1,    // 最近一次渲染时用的版本号
+      frames: 0,         // 已强制写入机位的主场景渲染次数
+      applied: null,
+      // 删除物配置只在此闭包内（inpage S）；父页 DEFAULTS 与 JSON 不携带，以防漂移。
+      remove: {
+        hide: ['tree-trunk-main-big'],
+        foliageOwner: 'tree-main',
+        foliageOcclusion: 'foliage-occlusion',
+        occlusionTol: 0.1,
+        basalt: {
+          mesh: 'basalt-main-old',
+          seeds: [[3.745, 0.055, 5.361], [2.877, 0.035, 4.092]],
+          seedTol: 0.3,
+          maxVerts: 5000,
+          densBoost: 5.0
+        }
+      }
+    };
+    window.__camState = S;
+
+    // ⚠️ clamp / wrapDeg 必须对非有限值设防：粘贴的 JSON 里一个 "abc" 或 1e999(Infinity)
+    //    会穿透进来，NaN 一路进 three 的 matrixWorld 让整页黑屏且不可自愈；
+    //    而 wrapDeg 若用 while 循环遇 Infinity（Inf-360===Inf）会永不退出，直接挂死 iframe
+    //    与宿主两个主线程，整页只能强杀。故一律先 isFinite 白名单，再取模/夹紧。
+    function finite(v, fb) { var n = typeof v === 'number' ? v : parseFloat(v); return isFinite(n) ? n : fb; }
+    function clamp(v, a, b) { v = finite(v, a); return v < a ? a : (v > b ? b : v); }
+    // 归约到 [-180, 180)。⚠️ 偏移量必须是 540 而不是 360：
+    // ((v%360)+360)%360-180 会归约到 (-180, 0]，把 yaw=66 变成 -114（方向虽等价但
+    // 面板读数与用户输入相反）。+540 才是标准的 [-180,180) 归约。
+    function wrapDeg(v) { v = finite(v, 0); return ((v % 360) + 540) % 360 - 180; }
+    // 视线单位向量（与 Euler 'YXZ' + 相机默认 -Z 朝向完全一致）
+    function dirOf(yawDeg, pitchDeg) {
+      var t = yawDeg * D2R, p = pitchDeg * D2R, cp = Math.cos(p);
+      return { x: -cp * Math.sin(t), y: Math.sin(p), z: -cp * Math.cos(t) };
+    }
+    function rightOf(yawDeg) {
+      var t = yawDeg * D2R;
+      return { x: Math.cos(t), y: 0, z: -Math.sin(t) };
+    }
+    var eul = new EU(0, 0, 0, 'YXZ');
+    var quat = new QT();
+    function quatOf(yawDeg, pitchDeg) {
+      eul.set(pitchDeg * D2R, yawDeg * D2R, 0, 'YXZ');
+      return quat.setFromEuler(eul);
+    }
+    function focusOf() {
+      var d = dirOf(S.yaw, S.pitch);
+      return { x: S.pos.x + d.x * S.dist, y: S.pos.y + d.y * S.dist, z: S.pos.z + d.z * S.dist };
+    }
+    function touch() { S.gen++; }
+    function emit() {
+      if (window.__onCam) window.__onCam(window.__getCam());
+    }
+
+    // 初始机位 = 引擎当前机位（世界朝向换算成 yaw/pitch，注入瞬间视觉零跳变）
+    cam.updateMatrixWorld(true);
+    (function initPose() {
+      var e0 = new EU().setFromQuaternion(cam.getWorldQuaternion(new QT()), 'YXZ');
+      S.pitch = clamp(Math.round(e0.x / D2R * 10) / 10, -CFG.pitchLimit, CFG.pitchLimit);
+      S.yaw = wrapDeg(Math.round(e0.y / D2R * 10) / 10);
+      S.pos.copy(cam.position);
+    })();
+
+    // 冻结 grass-bg 的鼠标视差光标：在 iframe 自己的 window 作用域内把 __cursor 钉死为 0，
+    // 使 grass-bg 的 cam.group.rotation 视差晃动与草弯曲合成同时失效（不改动生产文件）
+    // ⚠️ 2026-10-14：加了开关。身体碰撞这条需求的验收必须能**真的拨动草**，而钉死 __cursor
+    //    等于把拨动整个关掉 —— 那样"拨动拨不到他身上"根本无从复现。默认仍钉死（保持既有
+    //    相机验收口径不变），需要时调 window.__setBendAllowed(true) 放开。
+    var WU_CURSOR_FREEZE = true;
+    function applyCursorFreeze() {
+      try {
+        if (WU_CURSOR_FREEZE) {
+          Object.defineProperty(window, '__cursor', {
+            configurable: true,
+            get: function () { return { x: 0, y: 0 }; },
+            set: function () {}
+          });
+        } else {
+          Object.defineProperty(window, '__cursor', {
+            configurable: true, writable: true,
+            value: { x: 0, y: 0 }
+          });
+        }
+      } catch (eCur) { window.__cursor = { x: 0, y: 0 }; }
+    }
+    applyCursorFreeze();
+    window.__setBendAllowed = function (on) {
+      WU_CURSOR_FREEZE = !on;
+      applyCursorFreeze();
+      return { bendAllowed: !WU_CURSOR_FREEZE };
+    };
+    window.__bendState = function () { return { frozen: WU_CURSOR_FREEZE }; };
+
+    // ---------- 渲染前强制写入机位（核心） ----------
+    function stopEngineCamera() {
+      try { eng.camera.disableControls(); } catch (e0) {}
+      try { if (eng.camera.controls) eng.camera.controls.enabled = false; } catch (e1) {}
+      try { if (E.cameraLookAround) E.cameraLookAround.disable(); } catch (e2) {}
+      try {
+        if (E.parallax) {
+          if (S.sway) { if (!E.parallax.enabled) E.parallax.enable(); }
+          else E.parallax.disable();
+        }
+      } catch (e3) {}
+    }
+    function enforceCamera() {
+      stopEngineCamera();
+      // 渲染前重申树/营火/石头的可见性：引擎 update()/cullingBatch 会按距离重写
+      // chunk.visible，只有在真正绘制前一刻写入才能压住它（此时晚于引擎的每帧更新）。
+      if (!S.treesVisible) applyTrees();
+      if (!S.props.campfire || !S.props.rocks) applyProps();
+      enforceRemove();
+      // 相机组归零：引擎 parallax（真实指针位置）与 grass-bg 的 __cursor 晃动全部失效
+      if (!S.sway) group.position.set(0, 0, 0);
+      // 位移以外的变换一律归零：引擎视差只写 group.position，这里保证不会有别的东西
+      // 往组上叠旋转/缩放，保证视差行为确定可测。
+      group.rotation.set(0, 0, 0);
+      group.scale.set(1, 1, 1);
+      group.updateMatrix();
+      group.updateMatrixWorld(true);
+      // 吴昊阳视差补偿：他被沿视线抬升后离相机更近，同样的相机平移他在屏幕上位移更大
+      // （实测 1.396 倍于脚下草 → 露馅）。高度场各点抬升量不同 ⇒ 必须逐顶点补偿
+      // （刚体平移实测残留 5px 滑动）。
+      if (wuMesh) wuApplyParallax(group.position);
+      cam.position.copy(S.pos);
+      cam.quaternion.copy(quatOf(S.yaw, S.pitch));
+      cam.scale.set(1, 1, 1);
+      cam.updateMatrix();
+      cam.updateMatrixWorld(true);
+      cam.matrixWorldInverse.copy(cam.matrixWorld).invert();
+      eng.camera.updateFrustum();
+      // 幽灵预览放在**相机写入之后**、渲染之前：
+      // 地面射线走 Raycaster.setFromCamera(cam)，吃的是 cam.matrixWorld 与投影矩阵逆，
+      // 放在相机更新之前会用到上一帧的矩阵（冻结时恰好无差，但移动时会差一帧）。
+      // 冻结态下同样要执行 —— 用户要求「冻结只冻摄像头，不冻场地」。
+      updateGhost();
+    }
+
+    window.__wuFrame = function () {
+      try { enforceCamera(); } catch (e0) {}
+      try { wuBodyWatch(performance.now()); } catch (e1) {}
+      try { wuSkyTick(); } catch (e3) { window.__wuSkyErr = String(e3 && e3.message || e3); }
+      try { jianChaZhunBei(); } catch (eZ) { window.__caoDiZhunBeiErr = String(eZ && eZ.message || eZ); }
+    };
+    var YUE_LIANG_NDC = { x: 0.7, y: 0.7 };
+    var yueLiangFangXiang = null;
+    window.__yueLiangWeiZhi = function (x, y) {
+      if (typeof x === 'number' && isFinite(x)) YUE_LIANG_NDC.x = Math.min(0.98, Math.max(-0.98, x));
+      if (typeof y === 'number' && isFinite(y)) YUE_LIANG_NDC.y = Math.min(0.98, Math.max(-0.98, y));
+      yueLiangFangXiang = null;
+      return { x: YUE_LIANG_NDC.x, y: YUE_LIANG_NDC.y };
+    };
+    function yueLiangMuBiaoFangXiang() {
+      try {
+        var shiJie = cam.getWorldPosition(new V3c());
+        var ndc = new V3c(YUE_LIANG_NDC.x, YUE_LIANG_NDC.y, 0.5).unproject(cam);
+        return ndc.sub(shiJie).normalize();
+      } catch (eY1) { window.__yueLiangErr = String(eY1 && eY1.message || eY1); return null; }
+    }
+    function yueLiangDingShi() {
+      var fangXiang = yueLiangMuBiaoFangXiang();
+      if (!fangXiang) return;
+      var sky = scene.getObjectByName('AnimeSky');
+      if (!sky || !sky.material || !sky.material.uniforms || !sky.material.uniforms.uMoonDirection) return;
+      sky.material.uniforms.uMoonDirection.value.copy(fangXiang);
+    }
+    var rend = eng.renderer.instance;
+    var origRender = rend.render;
+    // 预分配：同帧探针每帧原地改写它，不产生垃圾
+    rend.render = function (sc, cm) {
+      var out;
+      if (cm === cam) {
+        enforceCamera();
+        // 身体碰撞看门狗：grass.rebuild() / flowers destroy+init() 都会重建材质，
+        // 注入会随之丢失 ⇒ 按 500ms 节流补注入（常态只做一次 indexOf，开销可忽略）
+        wuBodyWatch(performance.now());
+        try { wuSkyTick(); } catch (eSky) { window.__wuSkyErr = String(eSky && eSky.message || eSky); }
+        try { yueLiangDingShi(); } catch (eYue) { window.__yueLiangErr = String(eYue && eYue.message || eYue); }
+        // 吴昊阳现在与草同在世界里（贴地网格），视差让他和草一起动，
+        // 不再需要在这里逐帧把位移抄给宿主 —— 那套机制已随之删除。
+        out = origRender.call(this, sc, cm);
+        S.applied = {
+          t: performance.now(),
+          px: cam.position.x, py: cam.position.y, pz: cam.position.z,
+          qx: cam.quaternion.x, qy: cam.quaternion.y, qz: cam.quaternion.z, qw: cam.quaternion.w,
+          gen: S.gen, yaw: S.yaw, pitch: S.pitch, dist: S.dist
+        };
+        S.appliedGen = S.gen;
+        S.frames++;
+        zhunBeiZhuangTai.xuanRanZhen++;
+      } else {
+        out = origRender.call(this, sc, cm);
+      }
+      return out;
+    };
+    window.__camWrapped = true;
+
+    // ---------- 键盘（WASD 平移 / QE 升降 / Shift 疾跑） ----------
+window.__camKey = function (code, down) { keys[code] = !!down; };
+    // ---------- Enter：完全冻结相机 ----------
+    // 冻结 = 视角与机位都锁死：转视角、平移、升降、推拉、滚轮、程序化 __setCam 全部拒绝。
+    function setFrozen(on, silent) {
+      S.frozen = !!on;
+      if (S.frozen) {
+        keys = {};                       // 清掉残留按键，避免解锁瞬间突然平移
+      }
+      if (window.__onFreeze) window.__onFreeze(S.frozen, !!silent);
+      return S.frozen;
+    }
+    window.__camFrozen = function () { return !!S.frozen; };
+    window.__camSetFrozen = setFrozen;
+    // Enter 切冻结。⚠️ 必须忽略 e.repeat，否则长按会来回抖。
+    // 两侧都做成「切换」而不是「只冻结」—— 用户要求冻结后按 Enter 能恢复。
+    // 幂等由 setFrozen 自身保证，双触发也只会切换两次回到原状，不会卡死。
+    window.addEventListener('keydown', function (e) {
+      if (e.code === 'Enter' && !e.repeat) { e.preventDefault(); setFrozen(!S.frozen); }
+    });
+  // 方向键只做 preventDefault（避免浏览器滚动），不承担任何功能 ——
+  // 吴昊阳已是屏幕固定图层，不再有「按相机朝向微调落点」这种世界坐标操作。
+  window.addEventListener('keydown', function (e) {
+    keys[e.code] = true;
+    if (e.code === 'Space' || e.code.indexOf('Arrow') === 0) e.preventDefault();
+  });
+    window.addEventListener('keyup', function (e) { keys[e.code] = false; });
+    window.addEventListener('blur', function () { keys = {}; });
+
+    // ---------- 鼠标：转视角 ----------
+    function addLook(dx, dy) {
+      if (S.frozen) return;
+      if (!dx && !dy) return;
+      S.yaw = wrapDeg(S.yaw - dx * CFG.sensitivity);
+      S.pitch = clamp(S.pitch - dy * CFG.sensitivity, -CFG.pitchLimit, CFG.pitchLimit);
+      touch(); emit();
+    }
+    window.__camMouse = addLook;
+window.addEventListener('mousemove', function (e) {
+        // 早前这里有个 `if (e.target.id === 'lab-wu') return;` 的死分支 ——
+        // 它来自实验室 A 版小样的 HTML 贴纸，而本页面加载的是生产场景（已核实生产
+        // grass-bg.html 里 lab-wu / lab-hint / lab-mountains / lab-aurora 全部 0 命中），
+        // 该元素根本不存在。这条死分支曾让三轴审查误判「屏幕上有两个吴昊阳」，已删除。
+        // ⚠️ 放置模式下本监听必须让位：光标要留给幽灵预览，只有右键拖拽才转视角
+        //    （由放置段自己的 mousemove 处理）。否则一次移动会转两次视角。
+        if (S.place && S.place.mode) return;
+        addLook(e.movementX || 0, e.movementY || 0);
+      });
+
+    // ---------- 滚轮：沿视线方向拉远 / 接近 ----------
+    window.addEventListener('wheel', function (e) {
+      if (!S.frozen) {
+        var nd = clamp(S.dist * (1 + Math.sign(e.deltaY) * CFG.wheelStep), CFG.distMin, CFG.distMax);
+        if (nd !== S.dist) {
+          var d = dirOf(S.yaw, S.pitch), k = nd - S.dist;
+          S.pos.x -= d.x * k; S.pos.y -= d.y * k; S.pos.z -= d.z * k;
+          // 俯视拉近时沿视线下冲同样能压穿地形下限（与 WASD/__setCam 同一防线），
+          // 低于下限会让引擎卸载地形 chunk、画面只剩天空
+          if (S.pos.y < CFG.minHeight) S.pos.y = CFG.minHeight;
+          S.dist = nd;
+          touch(); emit();
+        }
+      }
+      e.preventDefault();
+    }, { passive: false });
+
+    // ---------- 每帧积分：平移机位 ----------
+    var lastT = 0;
+    function loop(t) {
+      requestAnimationFrame(loop);
+      if (S.frozen) return;                 // 冻结：完全不做机位积分
+      var dt = lastT ? (t - lastT) / 1000 : 0;
+      lastT = t;
+      if (dt > 0.25) dt = 0.25;
+      // ⚠️ 疾跑已移除：Shift 现在是「下降」（用户 2026-03 裁决「Shift 只做下降，舍弃加速」）。
+      // 若同时保留疾跑，按住 Shift 前进会一边加速一边下降，两个语义直接打架。
+      var sp = CFG.speedPerFrame * dt * 60;
+      if (!(sp > 0)) return;
+      var f = dirOf(S.yaw, S.pitch), r = rightOf(S.yaw), moved = false;
+      if (keys['KeyW']) { S.pos.x += f.x * sp; S.pos.y += f.y * sp; S.pos.z += f.z * sp; moved = true; }
+      if (keys['KeyS']) { S.pos.x -= f.x * sp; S.pos.y -= f.y * sp; S.pos.z -= f.z * sp; moved = true; }
+      if (keys['KeyD']) { S.pos.x += r.x * sp; S.pos.z += r.z * sp; moved = true; }
+      if (keys['KeyA']) { S.pos.x -= r.x * sp; S.pos.z -= r.z * sp; moved = true; }
+      if (keys['KeyQ'] || keys['Space']) { S.pos.y += sp; moved = true; }
+      // Shift = 下降（疾跑已于同轮移除，见上方注释）
+      if (keys['KeyE'] || keys['ShiftLeft'] || keys['ShiftRight']) { S.pos.y -= sp; moved = true; }
+      // ⚠️ 机位高度必须夹在地形之下：实测按住 Shift 约 2.5 秒就掉到 y=-24.7，
+      //    而引擎会把远离相机的地形 chunk 整个卸载 → 画面只剩天空，场景「消失」，
+      //    实测 main-island / top-island / MainIsland 组、162 棵树全部被卸载到 96 棵。
+      //    这是真实缺陷（不是测试问题），必须有下限。
+      if (moved && S.pos.y < CFG.minHeight) {
+        S.pos.y = CFG.minHeight;
+        touch(); emit();
+      }
+      if (moved) { touch(); emit(); }
+    }
+    requestAnimationFrame(loop);
+
+    // ---------- 宿主接口 ----------
+    window.__getCam = function () {
+      var f = focusOf();
+      return {
+        y: +S.pos.y.toFixed(4), d: +S.dist.toFixed(4),
+        p: +S.pitch.toFixed(2), a: +S.yaw.toFixed(2),
+        px: +S.pos.x.toFixed(4), py: +S.pos.y.toFixed(4), pz: +S.pos.z.toFixed(4),
+        tx: +f.x.toFixed(4), ty: +f.y.toFixed(4), tz: +f.z.toFixed(4),
+        frozen: !!S.frozen
+      };
+    };
+    window.__setCam = function (o) {
+      o = o || {};
+      if (S.frozen) return false;            // 冻结时连程序化设值也拒绝，才是「完全固定」
+      // 每个数值入口都过白名单：非有限值直接拒绝（保持原值），绝不让 NaN 进 S
+      if (o.y !== undefined && isFinite(o.y)) S.pos.y = Math.max(o.y, CFG.minHeight);
+      if (o.px !== undefined && isFinite(o.px)) S.pos.x = o.px;
+      if (o.pz !== undefined && isFinite(o.pz)) S.pos.z = o.pz;
+      if (o.dist !== undefined && isFinite(o.dist)) S.dist = clamp(o.dist, CFG.distMin, CFG.distMax);
+      if (o.pitch !== undefined && isFinite(o.pitch)) S.pitch = clamp(o.pitch, -CFG.pitchLimit, CFG.pitchLimit);
+      if (o.yaw !== undefined && isFinite(o.yaw)) S.yaw = wrapDeg(o.yaw);
+      touch(); emit();
+      return true;
+    };
+    window.__setTarget = function (x, y, z) {
+      if (S.frozen) return false;
+      if (!isFinite(x) || !isFinite(y) || !isFinite(z)) return false;
+      var d = dirOf(S.yaw, S.pitch);
+      S.pos.set(x - d.x * S.dist, y - d.y * S.dist, z - d.z * S.dist);
+      // 同 __setCam：程序化设位也要夹住高度，否则能绕过 loop 的下限直接穿地
+      if (S.pos.y < CFG.minHeight) S.pos.y = CFG.minHeight;
+      touch(); emit();
+      return true;
+    };
+
+    // ---------- 验证接口：证明渲染时机位确实由 __camState 控制 ----------
+    window.__verifyCamReport = function () {
+      var rep = { wrapped: !!window.__camWrapped, frames: S.frames, gen: S.gen,
+                  appliedGen: S.appliedGen, ok: false, reason: '' };
+      if (!rep.wrapped) { rep.reason = 'renderer.instance.render 未被包装'; return rep; }
+      if (!S.frames) { rep.reason = '还没发生主场景渲染'; return rep; }
+      if (!S.applied) { rep.reason = '没有渲染记录'; return rep; }
+      if (S.appliedGen !== S.gen) { rep.reason = '状态已变但尚未重新渲染'; return rep; }
+      var q = quatOf(S.yaw, S.pitch);
+      rep.dPos = Math.abs(cam.position.x - S.pos.x) + Math.abs(cam.position.y - S.pos.y) + Math.abs(cam.position.z - S.pos.z);
+      rep.dQuat = Math.abs(cam.quaternion.x - q.x) + Math.abs(cam.quaternion.y - q.y)
+                + Math.abs(cam.quaternion.z - q.z) + Math.abs(cam.quaternion.w - q.w);
+      rep.dApplied = Math.abs(S.applied.px - S.pos.x) + Math.abs(S.applied.py - S.pos.y)
+                   + Math.abs(S.applied.pz - S.pos.z);
+      rep.dGroup = (S.sway ? 0 : group.position.length())
+                 + Math.abs(group.rotation.x) + Math.abs(group.rotation.y) + Math.abs(group.rotation.z)
+                 + Math.abs(group.scale.x - 1);
+      rep.pos = [+cam.position.x.toFixed(5), +cam.position.y.toFixed(5), +cam.position.z.toFixed(5)];
+      rep.quat = [+cam.quaternion.x.toFixed(6), +cam.quaternion.y.toFixed(6), +cam.quaternion.z.toFixed(6), +cam.quaternion.w.toFixed(6)];
+      rep.expect = { pos: [+S.pos.x.toFixed(5), +S.pos.y.toFixed(5), +S.pos.z.toFixed(5)],
+                     quat: [+q.x.toFixed(6), +q.y.toFixed(6), +q.z.toFixed(6), +q.w.toFixed(6)] };
+      // ⚠️ NaN 与任何阈值比较恒为 false，所以下面 dPos>1e-4 这类护栏在 NaN 下会全部放行，
+      //    让「已黑屏/机位是 NaN」的坏状态谎报 ok。必须先做非有限值拦截。
+      if (!isFinite(rep.dPos) || !isFinite(rep.dQuat) || !isFinite(rep.dApplied) || !isFinite(rep.dGroup)) {
+        rep.reason = '状态或机位含非有限数值（NaN/Infinity），渲染结果不可信'; return rep;
+      }
+      if (rep.dPos > 1e-4) { rep.reason = '机位被覆盖 Δ=' + rep.dPos; return rep; }
+      if (rep.dQuat > 1e-4) { rep.reason = '朝向被覆盖 Δ=' + rep.dQuat; return rep; }
+      if (rep.dApplied > 1e-4) { rep.reason = '渲染瞬间写入值与状态不符 Δ=' + rep.dApplied; return rep; }
+      if (rep.dGroup > 1e-6) { rep.reason = '相机组仍带视差偏移 Δ=' + rep.dGroup; return rep; }
+      rep.ok = true;
+      rep.reason = '渲染前机位由 __camState 强制写入，渲染后未被引擎覆盖';
+      return rep;
+    };
+    window.__verifyCamApplied = function () { return window.__verifyCamReport().ok === true; };
+window.__camReady = true;
+
+    // ---------- 场景就绪门（资源 + 吴昊阳 + 秃斑 + 配色 + 稳定帧） ----------
+    // 只统计引擎自己的重建：补草流水线已删除，常态应为 0 次。
+    function anZhuangChongJianJiLu() {
+      var g = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
+      if (!g || typeof g.rebuild !== 'function' || g.__caoDiChongJianJiLu) return;
+      g.__caoDiChongJianJiLu = true;
+      var yuan = g.rebuild;
+      g.rebuild = function () {
+        var Z = zhunBeiZhuangTai;
+        Z.chongJianCiShu++;
+        Z.zuiHouChongJian = performance.now();
+        Z.wenDingKaiShi = 0;
+        var t = performance.now();
+        try { return yuan.apply(g, arguments); }
+        finally { caoDiRiZhi('chongJian', { hao: Math.round(performance.now() - t) }); }
+      };
+    }
+    var CAO_DI_WEN_DING_CI_SHU = 6;
+    var CAO_DI_WEN_DING_ZUO_ZHEN = 6;
+    var CAO_DI_WEN_DING_HAO_MIAO = 400;
+    var zuiHouZhuTiJianCha = 0;
+    var caoDiChunKuangJianCha = 0;
+    var caoDiChunKuang = { shu: -1, ziDing: 0, wenDingZiDing: 0 };
+    var wenDingQianTi = {
+      ziYuan: false, wuPuShe: false, bareZhuRu: false,
+      zhuTi: false, caoDiPuShe: false, caoDiWenDing: false
+    };
+    function caoDiKuaiZongShu() {
+      var g = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
+      if (!g || !g.chunks || typeof g.chunks.entries !== 'function') return -1;
+      try { return g.chunks.entries().length; } catch (eK) { return -1; }
+    }
+    function caoDiKuaiWenDing(xianZai, shu) {
+      if (shu <= 0) { caoDiChunKuang.shu = shu; caoDiChunKuang.wenDingZiDing = 0; return false; }
+      if (xianZai - caoDiChunKuangJianCha < 100) return wenDingQianTi.caoDiWenDing;
+      caoDiChunKuangJianCha = xianZai;
+      if (shu !== caoDiChunKuang.shu) { caoDiChunKuang.shu = shu; caoDiChunKuang.wenDingZiDing = 0; }
+      else caoDiChunKuang.wenDingZiDing++;
+      var chongJianAnJing = xianZai - zhunBeiZhuangTai.zuiHouChongJian > 300;
+      return caoDiChunKuang.wenDingZiDing >= CAO_DI_WEN_DING_CI_SHU && chongJianAnJing;
+    }
+    function bareYiZhuRu() {
+      if (!bareDone || !wuBareMask || !wuBareMask.tex) return false;
+      var mi = scene.getObjectByName('main-island');
+      var mat = mi && mi.material;
+      if (!mat) return false;
+      if (mat.__wuBareTex !== wuBareMask.tex) return false;
+      return true;
+    }
+    function jianChaZhunBei() {
+      var Z = zhunBeiZhuangTai;
+      if (!Z || Z.zhunBei) return;
+      anZhuangChongJianJiLu();
+      var xianZai = performance.now();
+      wenDingQianTi.ziYuan = !!E.resourcesReady;
+      wenDingQianTi.wuPuShe = !!(yiPuHao && yiBuHao && wuMesh && wuMesh.parent);
+      wenDingQianTi.bareZhuRu = bareYiZhuRu();
+      var chunKuangShu = caoDiKuaiZongShu();
+      wenDingQianTi.caoDiPuShe = chunKuangShu > 0;
+      wenDingQianTi.caoDiWenDing = caoDiKuaiWenDing(xianZai, chunKuangShu);
+      Z.ziYuanJiuXu = wenDingQianTi.ziYuan;
+      Z.wuPuShe = wenDingQianTi.wuPuShe;
+      Z.wuBare = wenDingQianTi.bareZhuRu;
+      Z.caoDiJiuXu = wenDingQianTi.caoDiPuShe && wenDingQianTi.caoDiWenDing;
+      Z.wuBody = !!window.__wuBodyField;
+      if (xianZai - zuiHouZhuTiJianCha > 200) {
+        zuiHouZhuTiJianCha = xianZai;
+        try { wenDingQianTi.zhuTi = window.__caoDiTongBuZhuTi ? !!window.__caoDiTongBuZhuTi() : false; }
+        catch (eT) { wenDingQianTi.zhuTi = false; }
+      }
+      Z.zhuTi = wenDingQianTi.zhuTi;
+      var ding = wenDingQianTi.ziYuan && wenDingQianTi.wuPuShe && wenDingQianTi.bareZhuRu
+        && wenDingQianTi.zhuTi && wenDingQianTi.caoDiPuShe && wenDingQianTi.caoDiWenDing;
+      if (!ding) {
+        Z.wenDingKaiShi = 0;
+        Z.jieDuan = !wenDingQianTi.ziYuan ? 'dengZiYuan'
+          : (!wenDingQianTi.wuPuShe ? 'dengWu'
+          : (!wenDingQianTi.bareZhuRu ? 'dengBare'
+          : (!wenDingQianTi.zhuTi ? 'dengZhuTi'
+          : (!wenDingQianTi.caoDiPuShe ? 'dengCaoDi'
+          : 'dengCaoDiWenDing'))));
+        return;
+      }
+      if (!Z.wenDingKaiShi) {
+        Z.wenDingKaiShi = xianZai; Z.wenDingZhen = Z.xuanRanZhen;
+        Z.jieDuan = 'wenDing';
+        caoDiRiZhi('wenDingKaiShi');
+        return;
+      }
+      if (Z.xuanRanZhen - Z.wenDingZhen < CAO_DI_WEN_DING_ZUO_ZHEN || xianZai - Z.wenDingKaiShi < CAO_DI_WEN_DING_HAO_MIAO) return;
+      Z.zhunBei = true; Z.jieDuan = 'jiuXu';
+      Z.haoShi = Math.round(xianZai - Z.kaiShi);
+      caoDiRiZhi('zhunBei', { haoShi: Z.haoShi, chongJian: Z.chongJianCiShu });
+    }
+
+    // ---------- 树木开关 ----------
+    // 树在引擎里的真实结构（真机探针 + patched.js 双向核实）：
+    //   E.world.islands.trees.group   = 组 R9，298 个子节点
+    //   E.world.islands.foliage.group = **同一个 group**（kids 列表逐项相同，非两个）
+    //   组内含 foliage-occlusion、Foliage_chunk_*，也含 top/main/sounds/
+    //   simplified_scene/Waterfall_drops/waterfall-* 等**非树对象** → 整组处理会误伤。
+    //   E.world.distantTerrain.foliage = 类 m5，远景树叶 DistantFoliage_chunk_*（Points），
+    //   挂在 Experience 组下、不在 islands 组内。
+    //
+    // ⚠️⚠️ 三轮方案实测记录（都在真机跑过，勿走回头路）：
+    //  1) scene.traverse 设 visible=false
+    //     ✗ 引擎每帧 update() 的 cullingBatch 按距离重写 chunk.visible
+    //       → 隐藏数秒后 60 个 chunk 全部复现。
+    //  2) 组件 group.visible=false
+    //     ✗ culling 改的是子节点 visible，压不住；且整组会连带隐藏瀑布/水花/声音。
+    //  3) removeFromParent() 把树摘出场景
+    //     ✗✗ **直接把引擎打崩**：cullingBatch 仍持有这些 mesh 并调用其 .traverse()，
+    //       父节点消失后抛「Cannot read properties of undefined (reading 'traverse')」，
+    //       页面每帧报错。引擎与场景树是强耦合的，不能靠摘除来隐藏。
+    //
+    // 最终方案：在**渲染前**对树 mesh 逐个重申 visible=false。
+    // 渲染前一刻写入，晚于引擎 update()/culling，所以不会被覆盖；
+    // 又因为对象仍在树上，引擎的 culling 不会崩。
+    // 'tree-' 前缀覆盖树干与全部树组对象：实测场景里有 96 个 tree-* 对象不叫
+    // tree-trunk-*（含远景枯树 mesh），旧前缀删不掉它们，「已删除」后画面里
+    // 仍残留成排枯树。放置物克隆件名带 pl-x- 前缀，不会被这里误伤。
+    var TREE_PREFIX = ['tree-', 'Foliage_chunk', 'foliage-occlusion', 'DistantFoliage_chunk'];
+    function isTree(name) {
+      var n = name || '';
+      for (var i = 0; i < TREE_PREFIX.length; i++) if (n.indexOf(TREE_PREFIX[i]) === 0) return true;
+      return false;
+    }
+    var treeMeshes = [];      // 缓存树 mesh，避免每帧全场景 traverse
+    var lastTreeScan = 0;
+    function collectTrees(force) {
+      var now = performance.now();
+      // 树异步加载，节流重扫；force 时立即重扫
+      if (!force && now - lastTreeScan < 1000) return;
+      lastTreeScan = now;
+      treeMeshes = [];
+      scene.traverse(function (o) {
+        if (o.name && isTree(o.name)) treeMeshes.push(o);
+      });
+    }
+    // ⚠️ 恢复时必须显式写回 true：之前被我们置为 false 的 chunk，引擎 culling
+    //    不一定会改回来（它只在「距离变化导致状态翻转」时才写），
+    //    实测不写 true 会导致「删除后恢复」时树一直不出现。
+    function applyTrees() {
+      collectTrees();
+      var on = S.treesVisible;
+      for (var i = 0; i < treeMeshes.length; i++) {
+        treeMeshes[i].visible = on;
+      }
+      return treeMeshes.length;
+    }
+    window.__setTrees = function (on) {
+      S.treesVisible = !!on;
+      var n = applyTrees();
+      if (on) collectTrees(true);      // 恢复时刷新一次缓存即可
+      var st = { treesVisible: on, tracked: n };
+      if (window.__onTrees) window.__onTrees(on, st);
+      return st;
+    };
+    window.__treesState = function () {
+      collectTrees(true);
+      var vis = 0;
+      for (var i = 0; i < treeMeshes.length; i++) if (treeMeshes[i].visible) vis++;
+      return { treesVisible: !!S.treesVisible, total: treeMeshes.length, visible: vis,
+               hidden: treeMeshes.length - vis };
+    };
+    // ---------- 营火 / 石头 移除 ----------
+    // 真机探针实测的对象结构（都与地形无关，可安全移除）：
+    //   营火：场景对象 `campfire`（Object3D，11 个子节点：campfire-wood* × 11
+    //         + fire + sparks）；另有顶层点光源 `CampfireLight`；
+    //         组件句柄 E.world.islands.campfire（类 nx，含 woodMeshes/fire/sparks）。
+    //   石头：`floating-rocks`（Object3D，24 个子节点，全是 basalt-floating-rock*）。
+    //
+    // ⚠️ 绝不能碰的地形（用户要求「不破坏地形、草地」）：
+    //   MainIsland / TopIsland 组、main-island / top-island 网格、
+    //   main-island-basalt（岛体玄武岩）、DistantTerrainGround_*（远景地形）、
+    //   Grass_* 草叶、AnimeSky、DistantWater。
+    //   下面全部用精确名匹配，不含 terrain/island/grass 任何关键词。
+    //
+    // 与树同理：引擎 update() 会重写 visible，所以也在渲染前重申（见 enforceCamera）。
+    // ⚠️ 营火的「火」与「火光」并不在 campfire 组内 —— 这是实测踩过的坑：
+    //   组名带 campfire 的只有 11 根木柴（campfire-wood*），
+    //   而火焰 `Campfire_fire`(Mesh) 与火星 `Campfire_sparks`(Points) 挂在 **islands** 组下、
+    //   与 campfire 组平级，所以早期版本关掉整组后木柴消失、火和火星却还在。
+    //   另外还有一个 Audio 类型的 `campfire`（音效）同样平级，容易被漏掉。
+    //   点光源 `CampfireLight` 是 scene 顶层，也要一并关。
+    var PROP_TARGETS = {
+      campfire: {
+        label: '营火',
+        names: ['campfire', 'Campfire_fire', 'Campfire_sparks', 'CampfireLight'],
+        lightName: 'CampfireLight'
+      },
+      rocks: { label: '石头', names: ['floating-rocks'] }
+    };
+    var propNodes = { campfire: [], rocks: [] };
+    var lastPropScan = 0;
+    function collectProps(force) {
+      var now = performance.now();
+      if (!force && now - lastPropScan < 1000) return;
+      lastPropScan = now;
+      propNodes = { campfire: [], rocks: [] };
+      scene.traverse(function (o) {
+        if (!o.name) return;
+        for (var k in PROP_TARGETS) {
+          if (PROP_TARGETS[k].names.indexOf(o.name) >= 0) { propNodes[k].push(o); break; }
+        }
+      });
+      // 营火点光源挂在 scene 顶层（不在 campfire 组内），单独收进来
+      var lt = PROP_TARGETS.campfire.lightName;
+      var lo = scene.getObjectByName(lt);
+      if (lo && propNodes.campfire.indexOf(lo) < 0) propNodes.campfire.push(lo);
+    }
+    function applyProps() {
+      collectProps();
+      var st = {};
+      for (var k in PROP_TARGETS) {
+        var want = S.props[k];
+        var hidden = 0;
+        for (var i = 0; i < propNodes[k].length; i++) {
+          propNodes[k][i].visible = want;
+          if (!want) hidden++;
+        }
+        st[k] = { nodes: propNodes[k].length, hidden: hidden, visible: want };
+      }
+      return st;
+    }
+    window.__setProps = function (patch) {
+      if (patch && typeof patch === 'object') {
+        if (patch.campfire !== undefined) S.props.campfire = !!patch.campfire;
+        if (patch.rocks !== undefined) S.props.rocks = !!patch.rocks;
+      }
+      var st = applyProps();
+      if (window.__onProps) window.__onProps(st);
+      return st;
+    };
+    window.__propsState = function () {
+      var st = applyProps();
+      return { campfireVisible: !!S.props.campfire, rocksVisible: !!S.props.rocks,
+               campfire: st.campfire, rocks: st.rocks };
+    };
+    // 2026-10-07 重置：删除"用户要求移除营火与石头/树"的二次初始化（v3~v7 期间的"原景隐藏"默认）。
+    // S 已在 506~524 行初始化为 treesVisible=true、props.campfire=true、props.rocks=true；
+    // enforceCamera() 仅在「为 false」时调用 applyTrees/applyProps（见 589/590），因此这两个 flag
+    // 为 true 时不会触发任何"隐藏"动作 —— 原生树/营火/石头全程保持引擎默认可见。
+    // 移除此段后，"树异步加载后被强制隐藏"的兜底也一并消失，这是预期的：重置后不再有任何隐藏需求。
+
+    // ---------- 指定原生对象删除（2026-10-07 用户圈定三处） ----------
+    var M4c = cam.matrix.constructor;
+    var V3c = window.__THREE.Vector3;
+    var ZERO_M = new M4c();
+    (function () { for (var z = 0; z < 16; z++) ZERO_M.elements[z] = 0; })();
+    var hideFound = [];
+    var lastHideScan = 0;
+    var killedLeaves = [];
+    var leafOrig = new Map();
+    var leafDone = new Set();
+    var lastLeafScan = 0;
+    var geomDone = {};
+    var origIndex = new Map();
+    function underPlaced(o) {
+      for (var p = o; p; p = p.parent) if (p.name && p.name.indexOf('pl-') === 0) return true;
+      return false;
+    }
+    function chainMatrix(o, stop) {
+      var m = new M4c();
+      for (var p = o; p && p !== stop; p = p.parent) {
+        if (p.matrixAutoUpdate) p.updateMatrix();
+        m.premultiply(p.matrix);
+      }
+      return m;
+    }
+    function crownsIn(frameObj) {
+      var owner = scene.getObjectByName(S.remove.foliageOwner);
+      if (!owner || underPlaced(owner)) return [];
+      var inv = chainMatrix(frameObj, null).invert(), out = [];
+      owner.traverse(function (o) {
+        if (o === owner || o.isMesh || o.isPoints || !/foliage/i.test(o.name || '')) return;
+        out.push(new V3c().setFromMatrixPosition(chainMatrix(o, null)).applyMatrix4(inv));
+      });
+      return out;
+    }
+    function collectHide() {
+      var now = performance.now();
+      if (now - lastHideScan < 1000) return;
+      lastHideScan = now;
+      hideFound = [];
+      var names = S.remove.hide || [];
+      scene.traverse(function (o) {
+        if (o.name && names.indexOf(o.name) >= 0 && !underPlaced(o)) hideFound.push(o);
+      });
+    }
+    function scanLeaves() {
+      var now = performance.now();
+      if (now - lastLeafScan < 5000) return;
+      lastLeafScan = now;
+      if (!S.remove.foliageOwner) return;
+      scene.traverse(function (o) {
+        if (!o.isInstancedMesh || !o.name || o.name.indexOf('Foliage_chunk_') !== 0) return;
+        if (leafDone.has(o.uuid)) return;
+        var bc = o.geometry.attributes.bushCenter;
+        if (!bc) return;
+        var crowns = crownsIn(o);
+        if (!crowns.length) return;
+        var arr = o.instanceMatrix.array, hit = 0, orig = leafOrig.get(o.uuid);
+        for (var i = 0; i < o.count; i++) {
+          var bx = bc.array[i * bc.itemSize], by = bc.array[i * bc.itemSize + 1], bz = bc.array[i * bc.itemSize + 2];
+          for (var k = 0; k < crowns.length; k++) {
+            var dx = bx - crowns[k].x, dy = by - crowns[k].y, dz = bz - crowns[k].z;
+            if (dx * dx + dy * dy + dz * dz < 1e-8) {
+              if (!orig) { orig = {}; leafOrig.set(o.uuid, orig); }
+              if (!orig[i]) orig[i] = Array.prototype.slice.call(arr, i * 16, i * 16 + 16);
+              o.setMatrixAt(i, ZERO_M);
+              killedLeaves.push([o, i]);
+              hit++;
+              break;
+            }
+          }
+        }
+        leafDone.add(o.uuid);
+        if (hit) o.instanceMatrix.needsUpdate = true;
+      });
+    }
+    function leafMatrixArray(chunk, i) {
+      var orig = leafOrig.get(chunk.uuid);
+      if (orig && orig[i]) return { arr: orig[i], off: 0 };
+      return { arr: chunk.instanceMatrix.array, off: i * 16 };
+    }
+    function meshComponents(mesh) {
+      var g = mesh.geometry, pos = g.attributes.position, idx = g.index.array, n = pos.count;
+      var keyMap = new Map(), rep = new Int32Array(n), par = new Int32Array(n);
+      for (var i = 0; i < n; i++) {
+        var k = Math.round(pos.getX(i) * 1000) + ',' + Math.round(pos.getY(i) * 1000) + ',' + Math.round(pos.getZ(i) * 1000);
+        if (!keyMap.has(k)) keyMap.set(k, i);
+        rep[i] = keyMap.get(k);
+        par[i] = i;
+      }
+      function find(x) { while (par[x] !== x) { par[x] = par[par[x]]; x = par[x]; } return x; }
+      for (var t = 0; t < idx.length; t += 3) {
+        var a = find(rep[idx[t]]), b = find(rep[idx[t + 1]]);
+        if (a !== b) par[a] = b;
+        var c = find(rep[idx[t + 2]]); b = find(b);
+        if (c !== b) par[c] = b;
+      }
+      var root = new Int32Array(n), comps = new Map();
+      for (var j = 0; j < n; j++) {
+        var r = find(rep[j]);
+        root[j] = r;
+        var cs = comps.get(r);
+        if (!cs) { cs = { n: 0, c: new V3c() }; comps.set(r, cs); }
+        cs.n++;
+        cs.c.x += pos.getX(j); cs.c.y += pos.getY(j); cs.c.z += pos.getZ(j);
+      }
+      comps.forEach(function (cs) { cs.c.divideScalar(cs.n); });
+      return { root: root, comps: comps };
+    }
+    function collapseComponents(mesh, pick) {
+      var info = meshComponents(mesh), kill = new Set();
+      info.comps.forEach(function (cs, r) { if (pick(cs)) kill.add(r); });
+      if (!kill.size) return 0;
+      var g = mesh.geometry, idx = g.index.array;
+      if (!origIndex.has(g)) origIndex.set(g, idx.slice());
+      for (var t = 0; t < idx.length; t += 3) {
+        if (kill.has(info.root[idx[t]])) { idx[t + 1] = idx[t]; idx[t + 2] = idx[t]; }
+      }
+      g.index.needsUpdate = true;
+      return kill.size;
+    }
+    var lastGeomTry = 0;
+    function removeGeometry() {
+      var R = S.remove;
+      if (geomDone.occlusion && geomDone.basalt) return;
+      var now = performance.now();
+      if (now - lastGeomTry < 5000) return;
+      lastGeomTry = now;
+      if (!geomDone.occlusion && R.foliageOcclusion) {
+        var occ = scene.getObjectByName(R.foliageOcclusion);
+        if (occ && occ.geometry && occ.geometry.index && !underPlaced(occ)) {
+          var crowns = crownsIn(occ), tol2 = R.occlusionTol * R.occlusionTol;
+          if (crowns.length) {
+            geomDone.occlusion = collapseComponents(occ, function (cs) {
+              for (var k = 0; k < crowns.length; k++) if (crowns[k].distanceToSquared(cs.c) <= tol2) return true;
+              return false;
+            });
+          }
+        }
+      }
+      if (!geomDone.basalt && R.basalt) {
+        var b = scene.getObjectByName(R.basalt.mesh);
+        if (b && b.geometry && b.geometry.index && !underPlaced(b)) {
+          var inv = chainMatrix(b, null).invert();
+          var seeds = R.basalt.seeds.map(function (s) { return new V3c(s[0], s[1], s[2]).applyMatrix4(inv); });
+          var sc = new V3c().setFromMatrixScale(chainMatrix(b, null));
+          var tol = R.basalt.seedTol / Math.max(sc.x, sc.y, sc.z, 1e-6);
+          geomDone.basalt = collapseComponents(b, function (cs) {
+            if (cs.n > R.basalt.maxVerts) return false;
+            for (var k = 0; k < seeds.length; k++) if (seeds[k].distanceToSquared(cs.c) <= tol * tol) return true;
+            return false;
+          });
+        }
+      }
+    }
+    function restoreCloneGeometry(src, clone) {
+      if (!S.remove) return;
+      var targets = [S.remove.foliageOcclusion, S.remove.basalt && S.remove.basalt.mesh];
+      var a = [], b = [];
+      src.traverse(function (o) { a.push(o); });
+      clone.traverse(function (o) { b.push(o); });
+      for (var i = 0; i < a.length && i < b.length; i++) {
+        var g = a[i].geometry;
+        if (!g || !g.index || targets.indexOf(a[i].name) < 0) continue;
+        var ng = g.clone(), keep = origIndex.get(g);
+        if (keep) { ng.index.array.set(keep); ng.index.needsUpdate = true; }
+        b[i].geometry = ng;
+      }
+    }
+    function enforceRemove() {
+      if (!S.remove) return;
+      collectHide();
+      for (var i = 0; i < hideFound.length; i++) hideFound[i].visible = false;
+      scanLeaves();
+      removeGeometry();
+      if (killedLeaves.length) {
+        var dirty = [];
+        for (var j = 0; j < killedLeaves.length; j++) {
+          var o = killedLeaves[j][0], idx = killedLeaves[j][1];
+          var arr = o.instanceMatrix.array, off = idx * 16;
+          if (arr[off] !== 0 || arr[off + 12] !== 0 || arr[off + 13] !== 0 || arr[off + 14] !== 0) {
+            o.setMatrixAt(idx, ZERO_M);
+            if (dirty.indexOf(o) < 0) dirty.push(o);
+          }
+        }
+        for (var j2 = 0; j2 < dirty.length; j2++) dirty[j2].instanceMatrix.needsUpdate = true;
+      }
+    }
+// ---------- 草的世界格子工具 ----------
+    // 吴昊阳身下 footprint 用更细的独立网格：0.08m 的格子在屏幕上约 23px，
+    // 格子中心常常落在身体的透明区，命中率只有约 30%（实测 36 格散布在 0.96×0.80m 内），
+    // footprint 变成一串稀疏点，再做切比雪夫外扩就会互相融成**圆块**（实测长成椭圆）。
+    // 0.027m 约合 7.8px，轮廓能实心还原，DILATE=1 也才真的是「稍大一点」（2.7cm）。
+    var WU_CELL = 0.027;
+    // 秃斑高度场的粗格步长（先粗采样再双线性插值，避免逐细格打射线）
+    var CELL = 0.08;
+    var DILATE = 1;              // footprint 外扩格数（WU_CELL 单位，1 格 = 2.7cm）
+    var WU_BLADE_H = 0.108;
+    var wuCamMargin = WU_CLEAR_MARGIN_CAM;
+    function wuMarginFor() {
+      try {
+        var d = cam.getWorldDirection(new V3());
+        var dn = Math.abs(d.y);
+        var tn = dn / Math.max(0.08, Math.sqrt(Math.max(0.0, 1.0 - dn * dn)));
+        return Math.min(0.6, Math.max(WU_CLEAR_MARGIN_CAM, WU_BLADE_H * 0.25 / Math.max(0.08, tn)));
+      } catch (eMf) {
+        window.__wuCamMarginErr = String(eMf && eMf.message || eMf);
+        return WU_CLEAR_MARGIN_CAM;
+      }
+    }
+    // 吴昊阳身下秃斑的当前设计（2026-10-14 定案）：
+    //   草/花一株不删、不移，由顶点着色器的弯曲约束把进入禁区的草挡在体表外；
+    //   地面只用一张独立的暖色遮罩覆盖。分区图 zonesTexture 完全不动，
+    //   因此整个加载过程不需要任何 grass.rebuild()。
+    // ---------- 他周围一圈「清空区」（用户 2026-10-12 要求）----------
+    // 「请你将吴昊阳周围的草删掉……这样子就能避免草和吴昊阳接触，从而导致看出来破绽」
+    // 单位：米。以他身体占的格子为起点向四周外扩这么多，圈内的草一律清掉。
+    // 0.30 时圈太大、看着很突兀（用户反馈「删的太多了」）⇒ 收到 0.10：
+    // 草叶离地 0.09~0.17m，被拨弯后水平最多再伸约 0.1m，0.10 足以让草碰不到他。
+    // 0 = 旧行为（只擦身下；轮廓外缘留草、下缘还留一条草带，让草从他身侧长出来）。
+    // 2026-10-13 再收到 0.05：用户反馈「身下那片秃地范围太大，让周围的草往内缩小一圈
+    // 靠近吴昊阳」。本轮实测草叶**最大**世界高度只有 0.10727m（几何 maxY 0.07152 ×
+    // 实例最大缩放 1.5，70 个 chunk 取上界），不是旧注释写的 0.171m ⇒ 0.05m（5.4cm）
+    // 已超过叶片被拨弯后的水平伸长量，其余三侧（非相机侧）叶尖是「往画面上方」移、
+    // 根本不会横向压到他身上，留 5cm 只是防拨弯接触。
+    var WU_CLEAR_MARGIN = 0.07;
+    // ---------- 朝相机方向额外清空（用户 2026-10-12 22:35 新要求）----------
+    // 「将该背景中，吴昊阳身下和周围的草，删掉，防止草的吹动/鼠标交互效果，
+    //   落到吴昊阳身上，穿模，导致穿帮」
+    //
+    // 为什么光靠 0.10m 不够（几何推导，非调参）：
+    //   相机俯角 23°。一株草叶顶点离地 h 时，它在屏幕上会「上移」到相当于地面点
+    //   再远离相机 h/tan(23°) = 2.356h 的位置。
+    //   ⚠️ 旧注释取 h=0.171m ⇒ 0.403m，**本轮实测证伪**：遍历全部 70 个 chunk，
+    //   草叶几何 maxY=0.07152、实例缩放上界 1.5 ⇒ 最高叶片世界高度 **0.10727m**
+    //   ⇒ 真实阈值 = 2.356 × 0.10727 = **0.2527m**。0.40m 是**多留了约 15cm**。
+    //   于是「基座在相机一侧、离他轮廓 0.2527m 以内」的草叶，叶尖才会投到他的轮廓上；
+    //   而它比他近 ⇒ 深度测试通过 ⇒ 直接画在他身上。风一吹/鼠标一拨，叶尖就在他身上扫过。
+    //   ⇒ 只需**朝相机那一侧**多清到刚过阈值即可，其余三侧留 WU_CLEAR_MARGIN。
+    // 2026-10-13 用户要求「草往内缩小一圈靠近吴昊阳」⇒ 0.40 → 0.26（略高于实测阈值
+    // 0.2527，留 0.7cm 余量）。这是**零穿模代价**的收紧：阈值以下再小才会重现
+    // 「叶尖扫过他球衣」的穿帮（旧实测证据：两帧差分，他球衣上有草叶在两帧间移动，占比 6.1%）。
+    var WU_CLEAR_MARGIN_CAM = 0.065;
+    // ---------- 秃地「黄遮罩」（用户 2026-10-12 23:51：秃地面要改成黄色）----------
+    // 引擎事实（逐字读 bundle 核对，不是猜）：
+    //   ① 哪儿长草：grass.rebuild() → destroy+init → terrainSampler.sample(count,
+    //      {weightTexture:zonesTexture, weightChannel:'g'}) ⇒ 分区图**绿通道**就是草的权重，
+    //      g=0 的格子引擎压根不会生成草 ⇒ 「秃」用 g=0 表达是**引擎原生且永久**的，
+    //      不需要任何每帧补清（旧 'hide' 模式要靠定时器反复清零实例，rebuild 就复活）。
+    //   ② 地形怎么选色：islands:cliffs 的片元着色器
+    //        zoneBlend  = texture2D(uZonesTexture, vec2(vUv.x, 1.0-vUv.y)).g;
+    //        slopeBlend = addNoiseToBlend(zoneBlend, perlin, uNoiseScale);
+    //        finalColor = mix(cliffLitColor, grassLitColor, slopeBlend);
+    //      g=0 是**带 triplanar 贴图细节的土/崖色**（实测 #a77e3b，明显发棕），
+    //      g=1 是**没有贴图的平草地色**（实测 #cfa545）。⇒ 「秃」和「黄」在引擎里是
+    //      同一根旋钮的两端，取一端就丢另一端。
+    // 所以拆成两件事、各用各的旋钮：
+    //   **秃**：分区图 g=0（引擎原生、永久、不依赖补清）。
+    //   **黄**：另开一张只覆盖他身下这一小块的遮罩贴图，注入到地形材质里，
+    //           在这块把颜色换成 grassLitColor 的暖黄版（同一个光照口径 ⇒ 与周围草地同色系）。
+    // 为什么不复用分区图现成通道：绿=草、红=flowers1、蓝=flowers2 都占用；
+    //   alpha 虽然没人读，但历史补草路径里写死了 px[o+3]=255，基线恒为 255，
+    //   当不了「这里要涂黄」的标记 ⇒ 单开一张专用遮罩最干净。
+    // ⚠️ V 轴口径（第 9 轮实测判定，别改）：在**世界方块**上把 g 涂 0 →
+    //   按 y=v*H 写时那块地真的变棕（#cfa545→#a77e3b），按 y=(1-v)*H 写则画面不动。
+    //   ⇒ 分区图与遮罩都必须按 (u, v) 写、由着色器里的 1.0-vUv.y 去对。
+    var WU_BARE_YELLOW = true;
+    // 线性空间乘在 grassLitColor 上的暖黄系数。取值是**像素取色迭代**出来的：
+    // 用 wu-2d.png 的 alpha 圈出「他身下那块地」，逐帧量它与两侧草地对照区的亮度比
+    // （风会让全场明暗脉动，故取 4 帧平均）。实测：mul=[1,1,1] ⇒ 比 0.913、
+    // [1.07,1.05,0.97] ⇒ 0.918、[1.22,1.16,1.0] ⇒ 0.928、[1.4,1.3,1.05] ⇒ 0.958。
+    // 秃地没有草叶那层加亮，天生比「有草的对照区」暗约 9%，这是物理上补不回来的；
+    // 再往上加就会变成一块发光的秃斑 ⇒ 取 1.22 这档：明显更暖更亮，又不发光。
+    var WU_BARE_MUL = [1.22, 1.16, 1.00];
+    // 用引擎自己的 colorVariation（0~1 的噪声）做明暗颗粒 ⇒ 像土面而不是一块平色
+    var WU_BARE_GRAIN = 0.34;
+    // 遮罩向外淡出（米）：必须**大于**秃区本身，让黄色的过渡落在还长着草的地上；
+    // 秃区内一律 alpha=1（把那里的棕土整块盖掉），淡出只在秃区之外发生。
+    var WU_BARE_FEATHER = 0.30;
+    // 遮罩边缘的自然起伏（米）：纯圆边像贴上去的
+    var WU_BARE_WOBBLE = 0.09;
+    // ================= 吴昊阳身体碰撞（用户 2026-10-14）=================
+    // 需求原话：「不是删除草，而是草碰都碰不到吴昊阳……无论鼠标怎么拨动都拨动不到他身上
+    //   （拨动其他地方仍然完全符合现在这样）」「草叶扫过球衣这种穿模根本不能存在」。
+    // 做法：把吴昊阳当**实体障碍物** —— 草/花不再被删，而是
+    //   ① 基座落在他身体里 ⇒ 压平（现实中被他压住的草），由他的贴图挡住 ⇒ 看不见；
+    //   ② 顶点落在他身体里（拨动/风带进去）⇒ 沿外推方向推到体表外 ⇒ 被他的身体挡住。
+    // ⚠️ 为什么必须做在顶点着色器里：鼠标拨动是 IslandBender 在 GPU 上刷 1024² 弯曲纹理、
+    //   草的顶点着色器直接采样它做形变（`vec4 bendData=texture(uBendingTexture,aUv)`），
+    //   CPU 侧根本拦不住 —— 只有 myWorldPosition 算完之后那一行是唯一可拦的点。
+    // ⚠️ 2026-10-14 13:40：**默认改回 true**。上一次失败的真因不是注入（程序级证据证明
+    //    注入进了编译、uniform 也确实上传），而是碰撞体取错了——只挡「身体脚印」，
+    //    拦不住站在禁区边上的草。现在碰撞体 = **整个禁区**（见 wuBareFootprint 里传 grown）。
+    var WU_BODY_CELL = 0.004;        // 碰撞场网格 4mm（footprint 的 27mm 太粗，边界会成锯齿）
+    var WU_BODY_PAD = 0.55;          // 场覆盖范围 = 碰撞体包围盒外扩这么多米
+    var WU_BODY_CLEAR = 0.028;       // 允许的最近距离（米）：顶点不得进入体表 6mm 内
+    var WU_BODY_RANGE = 0.16;        // 有符号距离编码量程（±0.16m ⇒ 8bit 分辨率 1.25mm）
+    var WU_BODY_CRUSH = 0.012;       // 压住过渡：基座深入禁区 1.2cm 以上 ⇒ 完全不可见（边界保持干净）
+    var WU_BODY_UNIFORMS = [
+      'uniform sampler2D uWuBody;',
+      'uniform vec2 uWuBodyOrigin;',
+      'uniform vec2 uWuBodyInv;',
+      'uniform float uWuBodyRange;',
+      'uniform float uWuBodyClear;',
+      'uniform float uWuBodyCrush;'
+    ].join('\n');
+    // 世界 XZ → 场 UV。⚠️ v 必须翻转：场数据按「世界 z 从小到大」填进画布**行**，
+    // 而 three 的 CanvasTexture 默认 flipY=true（图片顶部 ⇒ 纹理 v=1）⇒ 世界 z 小的一侧
+    // 落在 v=1。少了这个 1.0- ，采样位置在 z 方向就是**镜像**的，压平/约束会作用到错的地方。
+    var WU_BODY_UV_FN = [
+      'vec2 wuBodyUv(vec2 wxz){',
+      'vec2 t=(wxz-uWuBodyOrigin)*uWuBodyInv;',
+      'return vec2(t.x,1.0-t.y);',
+      '}'
+    ].join('\n');
+    // 草：锚在最终世界坐标那一行之后
+    var WU_BODY_VS_GRASS = 'vec3 myWorldPosition=scaledPosition+grassOrigin;';
+    var WU_BODY_GRASS_GLSL = [
+      '{',
+      // ① 重算「不弯曲」位置：把 finalGrassInclination 合成链里的**拨动**那一步撤掉，
+      //    只保留「地形对齐 + 风」—— 这就是这株草没被拨动时会待的位置。
+      'vec3 wuRestInc=inclineVectorTowardSlerp(terrainAdjustedNormal,normalize(localWindDirection),windStrength);',
+      'mat3 wuRestAlign=createAlignmentMatrix(grassNormal,normalize(wuRestInc));',
+      'vec3 wuRestPos=instanceRotation*(wuRestAlign*randomlyRotatedPosition)*grassScale+grassOrigin;',
+      // ② 采样实体场（R 通道 = 有符号距离，体内为负）
+      'float wuSdF=(texture(uWuBody,wuBodyUv(myWorldPosition.xz)).r-0.5)*2.0*uWuBodyRange;',
+      'float wuSdR=(texture(uWuBody,wuBodyUv(wuRestPos.xz)).r-0.5)*2.0*uWuBodyRange;',
+      'float wuSdO=(texture(uWuBody,wuBodyUv(grassOrigin.xz)).r-0.5)*2.0*uWuBodyRange;',
+      // ③ 弯曲约束：沿「不弯 → 全弯」这条路径找刚好接触他表面的那个点。SDF 沿路径近似线性，
+      //    一步插值即可 —— 草弯到接触就**停住**，形状保持自然（不是被硬推到边界、压扁折角）。
+      'float wuCrush=clamp(-wuSdO/uWuBodyCrush,0.0,1.0);',
+      'float wuT=1.0;',
+      'if(wuCrush<=0.0&&wuSdF<uWuBodyClear){',
+      'wuT=clamp((wuSdR-uWuBodyClear)/max(wuSdR-wuSdF,1e-4),0.0,1.0);',
+      '}',
+      'myWorldPosition=mix(wuRestPos,myWorldPosition,wuT);',
+      // ④ 基座落在禁区里 ⇒ 被他压住：**整体收缩到根部**（不是只压平 y）。
+      //    ⚠️ 踩过的坑：只压平 y 的话，草叶变成「贴地的扁平草叶」，从 23° 俯角看仍然可见，
+      //    会把地面的黄秃地整片盖住 ⇒ 用户看到的就是「秃地没了」。收缩到根部后三角形退化成
+      //    零面积、被光栅化丢弃，禁区内不再有可见草叶，黄遮罩才露得出来。
+      //    注意：草实例本身**没有被删**（矩阵还在、分区图绿通道原样），只是被压住看不见。
+      'myWorldPosition=mix(myWorldPosition,grassOrigin,wuCrush);',
+      '}'
+    ].join('\n');
+    // 花：锚在最终位置那一行之后；压平的花还要把点精灵尺寸缩到 0，否则还是一朵花立在那儿
+    var WU_BODY_VS_FLOWER = 'newPosition=flowerOrigin+(flowerInclination*elevation);';
+    var WU_BODY_VS_FLOWER_PS = 'gl_PointSize*=(1.0/-mvPosition.z);';
+    var WU_BODY_FLOWER_GLSL = [
+      // 花的位置 = 花根 + 倾斜方向 × 高度。撤掉拨动那一步 ⇒ 不弯曲位置 = 花根 + 法线 × 高度。
+      'vec3 wuFlowerRest=flowerOrigin+(flowerNormal*elevation);',
+      'float wuFSdF=(texture(uWuBody,wuBodyUv(newPosition.xz)).r-0.5)*2.0*uWuBodyRange;',
+      'float wuFSdR=(texture(uWuBody,wuBodyUv(wuFlowerRest.xz)).r-0.5)*2.0*uWuBodyRange;',
+      'float wuFSdO=(texture(uWuBody,wuBodyUv(flowerOrigin.xz)).r-0.5)*2.0*uWuBodyRange;',
+      'float wuCrush=clamp(-wuFSdO/uWuBodyCrush,0.0,1.0);',
+      'float wuFT=1.0;',
+      'if(wuCrush<=0.0&&wuFSdF<uWuBodyClear){',
+      'wuFT=clamp((wuFSdR-uWuBodyClear)/max(wuFSdR-wuFSdF,1e-4),0.0,1.0);',
+      '}',
+      'newPosition=mix(wuFlowerRest,newPosition,wuFT);',
+      // 同草：基座在禁区里 ⇒ 收缩到花根（点精灵尺寸也归零），黄秃地才露得出来
+      'newPosition=mix(newPosition,flowerOrigin,wuCrush);'
+    ].join('\n');
+    var WU_BODY_FLOWER_PS_GLSL = 'gl_PointSize*=(1.0-wuCrush);';
+    var wuBodyField = null;          // { tex, originX, originZ, invX, invZ, w, h, ... }
+    var wuBodySD = null;             // { arr, W, H, ox, oz, cell }：有符号距离场，供验收断言
+    var wuBareMask = null;         // { cv, ctx, tex } 与分区图同分辨率、同 UV 空间
+    // 注入进去的 uniform 对象本体。⚠️ 调参**只能改这里的 .value**，不能靠重新注入：
+    // 引擎（three）的 getProgram 是这样的（bundle 内逐字）——
+    //   let He = programs.get(cacheKey);
+    //   if (He !== undefined) { …; }        // 命中缓存：**不会**再调 onBeforeCompile
+    //   else { uniforms = getUniforms(E); E.onBeforeCompile(_e, x); program = acquireProgram(…); }
+    // 而 cacheKey 默认取 material.onBeforeCompile.toString() ⇒ 同一个函数体永远命中缓存，
+    // 重新注入等于白写（实测：改系数后画面纹丝不动）。命中缓存时 uniforms 仍沿用第一次
+    // 编译时存下的那几个对象，每帧上传它们的 .value ⇒ 改 .value 立刻生效。
+    var wuBareU = { mul: null, grain: null };
+    function wuCellKey(x, z) { return Math.floor(x / WU_CELL) + ',' + Math.floor(z / WU_CELL); }
+    var wuRay = null;
+    function wuRaycastGroundY(x, z) {
+      if (!wuRay) { wuRay = new eng.raycaster.raycaster.constructor(); wuRay.layers.mask = 0xffffffff; }
+      var mi = scene.getObjectByName('main-island');
+      if (!mi) return null;
+      wuRay.set(new V3c(x, 40, z), new V3c(0, -1, 0));
+      var h = wuRay.intersectObject(mi, false)[0];
+      return h ? h.point.y : null;
+    }
+    // ---------- 吴昊阳身下变光秃土地 ----------
+    // 引擎靠 zonesTexture 的绿通道决定哪儿长草：草与 pampa 都用 g 作采样权重，
+    // 地形材质也读同一个 g（uZonesTexture + addNoiseScale 0.1）去混泥土色。
+    // 所以把他身下的格子在 g 通道涂 0 再 rebuild，就同时得到「不长草」+「地形混成土色」，
+    // 边界自带噪声混合，不会是硬矩形。花走 r/b 通道，一并涂 0 才像真的光秃秃。
+    var wuRect = null, wuAlpha = null, bareDone = false;
+    window.__wuSetLayerRect = function (l, t, w, h) {
+      if (wuRect && wuRect.l === l && wuRect.t === t && wuRect.w === w && wuRect.h === h) return;
+      wuRect = { l: l, t: t, w: w, h: h };
+    };
+    // 取他那张图的 alpha，用来按真实轮廓而不是外接矩形圈出他压住的地
+    function loadWuAlpha(cb) {
+      if (wuAlpha) return cb(true);
+      var im = new Image();
+      im.onload = function () {
+        try {
+          var cv = document.createElement('canvas');
+          cv.width = im.naturalWidth; cv.height = im.naturalHeight;
+          var g2 = cv.getContext('2d', { willReadFrequently: true });
+          g2.drawImage(im, 0, 0);
+          wuAlpha = g2.getImageData(0, 0, cv.width, cv.height).data;
+          wuAlphaW = cv.width; wuAlphaH = cv.height;
+          cb(true);
+          try { makeBare(); } catch (eMB) { window.__bareErr = String(eMB && eMB.stack || eMB); }
+        } catch (e) { cb(false); }
+      };
+      im.onerror = function () { cb(false); };
+      im.src = './wu-2d.png';
+    }
+    var wuAlphaW = 0, wuAlphaH = 0;
+    // ---------- 地形位移采样（让他的深度对齐「看得见的地面」）----------
+    // 引擎的地形在**顶点着色器**里被整体抬高：
+    //   elevatedPos = vWorldPos + vec3(0, elevation, 0)
+    //   elevation = getElevation(vWorldPos.xz, uDisplacementMap) = texture(map, xz*0.3).r * 0.15
+    // 而射线打在**未位移**的网格上 ⇒ 只用地形命中点的深度，他会落在可见地面之后、被地面盖住
+    // （实测：偏置 0.06 时他几乎全被身下那块地盖掉，0.20 才露出来 —— 正是漏了这 0~0.15m 位移）。
+    // 所以把这份位移补回来：uv = xz*0.3、wrap = Repeat、r/255*0.15，与着色器逐字对齐。
+    var wuDisp = null;
+    function wuBuildDisp() {
+      if (wuDisp) return true;
+      var tex = null;
+      scene.traverse(function (o) {
+        if (tex) return;
+        var m = o.material;
+        if (!m || !m.uniforms) return;
+        var u = m.uniforms.uDisplacementMap;
+        if (u && u.value) tex = u.value;
+      });
+      var im = tex && tex.image;
+      if (!im || !im.width) return false;
+      try {
+        var cv = document.createElement('canvas');
+        cv.width = im.width; cv.height = im.height;
+        var c2 = cv.getContext('2d', { willReadFrequently: true });
+        c2.drawImage(im, 0, 0);
+        wuDisp = { W: im.width, H: im.height, d: c2.getImageData(0, 0, im.width, im.height).data };
+      } catch (eD) { window.__wuDispErr = String(eD && eD.message || eD); return false; }
+      return true;
+    }
+    // 与着色器同口径取 elevation（m）。贴图未就绪时返回 0（宁可偏低，也不会把他抬到空中）。
+    function wuElev(x, z) {
+      if (!wuDisp) return 0;
+      var u = x * 0.3, v = z * 0.3;
+      u = u - Math.floor(u); v = v - Math.floor(v);
+      var ix = Math.min(wuDisp.W - 1, Math.max(0, Math.floor(u * wuDisp.W)));
+      var iz = Math.min(wuDisp.H - 1, Math.max(0, Math.floor(v * wuDisp.H)));
+      return wuDisp.d[(iz * wuDisp.W + ix) * 4] / 255 * 0.15;
+    }
+
+    // ---------- 他的深度：贴在地形上的一层（深度与画面解耦）----------
+    // 用户需求（2026-10-11）：
+    //   ① 草被拨到他身上要**停住**（像现实），不要被推得弹开；
+    //   ② 草不能永远在他图层之下 —— 该在他前面的草必须画在他身上。
+    //
+    // 做法：顶点仍严格落在**原视线上**（投影逐像素不变 ⇒ 颜色/位置/比例一丁点不改），
+    // 只改「沿视线走多远」：每个顶点的视深度 = **它所在像素处的地面视深度** − WU_GROUND_OFFSET。
+    // ⇒ 他是**贴在地形上的一层**（地形的一部分），而不是一张悬在相机前面的卡片。
+    //
+    // 为什么这样能同时满足两条（判据可推，不是调参）：
+    //   草叶顶点 V 投到像素 p 时 V 必在射线 p 上，于是
+    //     d(草) = d_g(p) − h_g/sinP（h_g = 草叶离地高度；实测上界 0.171m、常态约 0.09m）
+    //     d(他) = d_g(p) − WU_GROUND_OFFSET
+    //   ⇒ **h_g > WU_GROUND_OFFSET·sinP 的草画在他身上；更矮的草被他挡住**，与水平位置无关。
+    //   于是「部分草在他身前、部分在他身后」是天然结果。
+    //   （旧版把深度设成「比最近地面还近的常数平面」⇒ 他压住一切草 ⇒ 草永远在他图层之下。）
+    //
+    // WU_GROUND_OFFSET 是唯一旋钮：**调大 ⇒ 更多草被他挡住（他更「压住」草）；调小 ⇒ 更多草画在他身上**。
+    // 不能为 0：他的网格比地面粗，必须留余量避免与地面 z-fight。
+    var WU_GROUND_OFFSET = 0.04;
+    // 材质侧：让他成为**真正的深度实体** —— 写深度 + alpha 裁剪。
+    // 不写深度时，排在他之后绘制的透明物件（粒子/蝴蝶/远处植被）会无视他直接覆盖上来。
+    var WU_ALPHA_TEST = 0.02;
+    function wuBareFootprint(mi) {
+      window.__m('足迹计算开始');
+      if (!wuBase || !wuAlpha || wuRayN !== WU_SEG) return null;
+      var N = wuRayN;
+      // 1) 世界包围盒直接取自人物网格的基准顶点——footprint 与 mesh 几何同源，
+      //    mesh 不动秃斑永不动（此前按屏幕矩形打射线，视口变化时 mesh 与秃斑分家）
+      var minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity, got = 0;
+      for (var qB = 0; qB <= N * (N + 1) + N; qB++) {
+        if (wuBase[qB * 3 + 1] < -500) continue;
+        var bx = wuBase[qB * 3], bz = wuBase[qB * 3 + 2];
+        got++;
+        if (bx < minX) minX = bx; if (bx > maxX) maxX = bx;
+        if (bz < minZ) minZ = bz; if (bz > maxZ) maxZ = bz;
+      }
+      if (got < (N + 1) * (N + 1) * 0.5) return null;
+      var pad = WU_CELL * 2;
+      minX -= pad; maxX += pad; minZ -= pad; maxZ += pad;
+      // 2) 地面高度：先在粗格(0.08m)上竖直打射线建高度场，细格再双线性插值。
+      //    直接对每个细格调 __groundY 会在屏幕上卡住 25 秒（实测 2250 次竖直射线）。
+      var lx0 = Math.floor(minX / CELL), lx1 = Math.floor(maxX / CELL);
+      var lz0 = Math.floor(minZ / CELL), lz1 = Math.floor(maxZ / CELL);
+      var H = {};
+      for (var ax = lx0; ax <= lx1; ax++) for (var az = lz0; az <= lz1; az++) {
+        var gy0 = wuGaoDuKuai((ax + 0.5) * CELL, (az + 0.5) * CELL);
+        H[ax + ',' + az] = gy0 === null ? window.__groundY((ax + 0.5) * CELL, (az + 0.5) * CELL) : gy0;
+      }
+      // 3) 身体判定同样以网格为源：每个世界格子在网格四边形内做重心插值得出贴图 UV，
+      //    alpha>32 ⇒ 属于他身体。透视扭曲由三角形重心坐标自然吸收，不经屏幕投影。
+      function wuZhongXin(ax, az, bx, bz, cx, cz, px, pz) {
+        var d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz);
+        if (Math.abs(d) < 1e-12) return null;
+        var l1 = ((bz - cz) * (px - cx) + (cx - bx) * (pz - cz)) / d;
+        var l2 = ((cz - az) * (px - cx) + (ax - cx) * (pz - cz)) / d;
+        var l3 = 1 - l1 - l2;
+        return (l1 >= -1e-6 && l2 >= -1e-6 && l3 >= -1e-6) ? [l1, l2, l3] : null;
+      }
+      var hitSet = new Set();
+      for (var gb = 0; gb < N; gb++) {
+        for (var ga = 0; ga < N; ga++) {
+          var i00 = gb * (N + 1) + ga, i10 = i00 + 1, i01 = i00 + N + 1, i11 = i01 + 1;
+          if (wuBase[i00 * 3 + 1] < -500 || wuBase[i10 * 3 + 1] < -500 ||
+              wuBase[i01 * 3 + 1] < -500 || wuBase[i11 * 3 + 1] < -500) continue;
+          var x00 = wuBase[i00 * 3], z00 = wuBase[i00 * 3 + 2];
+          var x10 = wuBase[i10 * 3], z10 = wuBase[i10 * 3 + 2];
+          var x01 = wuBase[i01 * 3], z01 = wuBase[i01 * 3 + 2];
+          var x11 = wuBase[i11 * 3], z11 = wuBase[i11 * 3 + 2];
+          var qMinX = Math.min(x00, x10, x01, x11), qMaxX = Math.max(x00, x10, x01, x11);
+          var qMinZ = Math.min(z00, z10, z01, z11), qMaxZ = Math.max(z00, z10, z01, z11);
+          var u00 = ga / N, v00 = gb / N, u11 = (ga + 1) / N, v11 = (gb + 1) / N;
+          for (var cxq = Math.floor(qMinX / WU_CELL); cxq <= Math.floor(qMaxX / WU_CELL); cxq++) {
+            for (var czq = Math.floor(qMinZ / WU_CELL); czq <= Math.floor(qMaxZ / WU_CELL); czq++) {
+              var pxg = (cxq + 0.5) * WU_CELL, pzg = (czq + 0.5) * WU_CELL;
+              var t1 = wuZhongXin(x00, z00, x10, z10, x11, z11, pxg, pzg);
+              var uvA, uvB;
+              if (t1) {
+                uvA = t1[0] * u00 + t1[1] * u11 + t1[2] * u11;
+                uvB = t1[0] * v00 + t1[1] * v00 + t1[2] * v11;
+              } else {
+                var t2 = wuZhongXin(x00, z00, x11, z11, x01, z01, pxg, pzg);
+                if (!t2) continue;
+                uvA = t2[0] * u00 + t2[1] * u11 + t2[2] * u00;
+                uvB = t2[0] * v00 + t2[1] * v11 + t2[2] * v11;
+              }
+              var iu = Math.floor(uvA * wuAlphaW), iv = Math.floor(uvB * wuAlphaH);
+              if (iu < 0 || iu >= wuAlphaW || iv < 0 || iv >= wuAlphaH) continue;
+              if (wuAlpha[(iv * wuAlphaW + iu) * 4 + 3] > 32) hitSet.add(cxq + ',' + czq);
+            }
+          }
+        }
+      }
+      var hits = Array.from(hitSet);
+      if (!hits.length) return null;
+      // 4) 「他身体占的格子」向四周外扩 WU_CLEAR_MARGIN 米（欧氏圆，不是方角）——
+      //    这一圈里的草一律清掉 ⇒ 没有任何草能贴到他身上。
+      //    再**朝相机方向**多扫掠 WU_CLEAR_MARGIN_CAM 米：草叶叶尖会因俯角投影上移
+      //    约 2.356×叶高，只有相机这一侧的草才可能把叶尖投到他身上（见上方推导）。
+      var rad = Math.max(DILATE, Math.round(WU_CLEAR_MARGIN / WU_CELL));
+      wuCamMargin = wuMarginFor();
+      var camRad = Math.max(0, Math.round(wuCamMargin / WU_CELL));
+      var grown = new Set();
+      // 相机在水平面上的「指向相机」单位向量（从身体质心指向相机）
+      var camW = cam.getWorldPosition(new V3());
+      var bcx = 0, bcz = 0;
+      for (var q0 = 0; q0 < hits.length; q0++) {
+        var p0 = hits[q0].split(',');
+        bcx += (+p0[0] + 0.5) * WU_CELL; bcz += (+p0[1] + 0.5) * WU_CELL;
+      }
+      bcx /= hits.length; bcz /= hits.length;
+      var ddx = camW.x - bcx, ddz = camW.z - bcz;
+      var dl = Math.sqrt(ddx * ddx + ddz * ddz) || 1;
+      var ux = ddx / dl, uz = ddz / dl;
+      // 把「基准圆」贴到 (bx,bz) 上
+      function stamp(bx, bz) {
+        for (var dx = -rad; dx <= rad; dx++) {
+          var rem = rad * rad - dx * dx;
+          if (rem < 0) continue;
+          var dzMax = Math.floor(Math.sqrt(rem));
+          for (var dz = -dzMax; dz <= dzMax; dz++) grown.add((bx + dx) + ',' + (bz + dz));
+        }
+      }
+      for (var q = 0; q < hits.length; q++) {
+        var pr = hits[q].split(','), hx = +pr[0], hz = +pr[1];
+        stamp(hx, hz);
+        // 朝相机方向扫掠：每前进 1 格盖一次基准圆
+        for (var k = 1; k <= camRad; k++) {
+          stamp(hx + Math.round(ux * k), hz + Math.round(uz * k));
+        }
+      }
+      // 禁区碰撞场：把**整个禁区**（不只是他的身体脚印）做成一张可被顶点着色器查询的场。
+      // ⚠️ 这里传 `grown`（禁区）而不是 `hits`（身体脚印）是本功能的**关键**，踩过坑：
+      //    只挡「身体脚印」时，一株站在禁区边上（离他 5cm）的草被拨动时基座仍在脚印外
+      //    ⇒ 钳制不响应；而它的叶尖按 23° 俯角会上移 2.36×叶高 ≈ 25cm ⇒ 直接盖到他画面上，
+      //    表现就是「草根本没把他当障碍物」。屏障必须是禁区 —— 禁区本身就是按那个 25cm
+      //    阈值定出来的，草只要进不了禁区，叶尖就够不到他的画面。
+      window.__m('禁区就绪');
+      try { wuBuildBodyField(grown); } catch (eBF) {
+        window.__wuBodyErr = '禁区碰撞场构建失败：' + String(eBF && eBF.stack || eBF);
+      }
+      return grown;
+    }
+    // ---------- 身体碰撞场：把「他的身体」做成一张顶点着色器可查询的场 ----------
+    // 纹理通道（RGBA8，世界 XZ 线性映射 uv=(xz-origin)*inv，与引擎自己的 bending 纹理同一套约定）：
+    //   R,G = 推挤向量（世界 XZ，编码 *0.5+0.5，量程 ±WU_BODY_RANGE）：把落进身体的顶点推到体外
+    //   A   = 压平系数（基座在身体里 = 255）：被他的身体压住的草/花贴地，由他的贴图挡住
+    // 判定网格 4mm。掩膜口径与 footprint 完全一致（地面点投回屏幕 → wu-2d.png 原始 alpha>32），
+    // 高度复用 footprint 已建好的粗格高度场做双线性插值 —— 绝不逐格打射线（那是 25 秒级开销）。
+    function wuBuildBodyField(hits) {
+      // 归一化：调用方传的是 Set（禁区 grown），早期版本传的是数组（身体脚印 hits）。
+      var zoneKeys = [];
+      if (hits && typeof hits.forEach === 'function') hits.forEach(function (k) { zoneKeys.push(k); });
+      else if (hits) for (var iK = 0; iK < hits.length; iK++) zoneKeys.push(hits[iK]);
+      if (!zoneKeys.length) return false;
+      if (!wuAlpha || !wuBase) return false;
+      var bx0 = Infinity, bz0 = Infinity, bx1 = -Infinity, bz1 = -Infinity;
+      for (var q = 0; q < zoneKeys.length; q++) {
+        var pr = zoneKeys[q].split(','), x = (+pr[0] + 0.5) * WU_CELL, z = (+pr[1] + 0.5) * WU_CELL;
+        if (x < bx0) bx0 = x; if (x > bx1) bx1 = x;
+        if (z < bz0) bz0 = z; if (z > bz1) bz1 = z;
+      }
+      bx0 -= WU_BODY_PAD; bx1 += WU_BODY_PAD; bz0 -= WU_BODY_PAD; bz1 += WU_BODY_PAD;
+      var W = Math.max(8, Math.round((bx1 - bx0) / WU_BODY_CELL));
+      var Hh = Math.max(8, Math.round((bz1 - bz0) / WU_BODY_CELL));
+      if (W * Hh > 4000000) { window.__wuBodyErr = '身体场过大：' + W + 'x' + Hh; return false; }
+      var mask = new Uint8Array(W * Hh);
+      // 掩膜 = **禁区格子集**（不是 alpha 投影！）。
+      // ⚠️ 这里踩过一个关键坑：早先版本用「细格地面点投回屏幕测 alpha>32」建掩膜，那建出来的
+      //    永远是**他的身体轮廓**，跟传进来的 hits/grown 无关 —— 于是碰撞体始终只有他的脚印，
+      //    站在禁区边上的草被拨动时基座仍在脚印外 ⇒ 钳制不响应、叶尖照样盖到他画面上。
+      //    禁区格是 27mm 粒度，掩膜也按 27mm 判定 ⇒ 与旧「删除」方案的判定粒度完全一致
+      //    （删除也是按叶片基座所在的 27mm 格是否在禁区内决定的）。
+      //    副产品：不再需要逐格打射线 + 投影，构建快很多。
+      var zoneSet = new Set(zoneKeys);
+      for (var cz = 0; cz < Hh; cz++) {
+        var zz = bz0 + (cz + 0.5) * WU_BODY_CELL;
+        var kz = Math.floor(zz / WU_CELL);
+        for (var cx = 0; cx < W; cx++) {
+          var xx = bx0 + (cx + 0.5) * WU_BODY_CELL;
+          if (zoneSet.has(Math.floor(xx / WU_CELL) + ',' + kz)) mask[cz * W + cx] = 1;
+        }
+      }
+      // 查莫弗距离变换（两趟），分别求「到身体格」与「到空格」的距离 ⇒ 有符号距离
+      function wuChamfer(seed) {
+        var D = new Float32Array(W * Hh), INF = 1e9, i;
+        for (i = 0; i < W * Hh; i++) D[i] = (mask[i] === seed) ? 0 : INF;
+        for (var z1 = 0; z1 < Hh; z1++) for (var x1 = 0; x1 < W; x1++) {
+          var a = z1 * W + x1, d = D[a];
+          if (x1 > 0) d = Math.min(d, D[a - 1] + 1);
+          if (z1 > 0) d = Math.min(d, D[a - W] + 1);
+          if (x1 > 0 && z1 > 0) d = Math.min(d, D[a - W - 1] + 1.4142);
+          if (x1 < W - 1 && z1 > 0) d = Math.min(d, D[a - W + 1] + 1.4142);
+          D[a] = d;
+        }
+        for (var z2 = Hh - 1; z2 >= 0; z2--) for (var x2 = W - 1; x2 >= 0; x2--) {
+          var b = z2 * W + x2, e = D[b];
+          if (x2 < W - 1) e = Math.min(e, D[b + 1] + 1);
+          if (z2 < Hh - 1) e = Math.min(e, D[b + W] + 1);
+          if (x2 < W - 1 && z2 < Hh - 1) e = Math.min(e, D[b + W + 1] + 1.4142);
+          if (x2 > 0 && z2 < Hh - 1) e = Math.min(e, D[b + W - 1] + 1.4142);
+          D[b] = e;
+        }
+        return D;
+      }
+      var dToBody = wuChamfer(1), dToEmpty = wuChamfer(0);
+      var sd = new Float32Array(W * Hh);
+      for (var i6 = 0; i6 < W * Hh; i6++) {
+        sd[i6] = mask[i6] ? -dToEmpty[i6] * WU_BODY_CELL : dToBody[i6] * WU_BODY_CELL;
+      }
+      var T = window.__THREE;
+      if (!T || !T.CanvasTexture) { window.__wuBodyErr = '缺 __THREE.CanvasTexture'; return false; }
+      var cv2 = document.createElement('canvas');
+      cv2.width = W; cv2.height = Hh;
+      var ctx2 = cv2.getContext('2d');
+      var img2 = ctx2.createImageData(W, Hh), px2 = img2.data;
+      var enc = 1 / (2 * WU_BODY_RANGE), insidePx = 0;
+      for (var z3 = 0; z3 < Hh; z3++) for (var x3 = 0; x3 < W; x3++) {
+        var i7 = z3 * W + x3;
+        var xm = x3 > 0 ? sd[i7 - 1] : sd[i7], xp = x3 < W - 1 ? sd[i7 + 1] : sd[i7];
+        var zm = z3 > 0 ? sd[i7 - W] : sd[i7], zp = z3 < Hh - 1 ? sd[i7 + W] : sd[i7];
+        var gx = xp - xm, gz = zp - zm;
+        var gl2 = Math.sqrt(gx * gx + gz * gz);
+        var dirX = 0.0, dirZ = 0.0;
+        if (gl2 > 1e-9) { dirX = gx / gl2; dirZ = gz / gl2; }
+        if (sd[i7] < 0) insidePx++;
+        var o4 = i7 * 4;
+        // R = 有符号距离（编码到 [0,255]，量程 ±WU_BODY_RANGE）—— 顶点着色器用它求「停住」的位置
+        var sde = sd[i7] * enc + 0.5;
+        if (sde < 0) sde = 0; else if (sde > 1) sde = 1;
+        px2[o4] = Math.round(sde * 255);
+        // G,B = 外推方向（单位向量，编码 *0.5+0.5）—— 备用（兜底推出去那条路径要用）
+        px2[o4 + 1] = Math.round((dirX * 0.5 + 0.5) * 255);
+        // ⚠️ alpha 恒置 255、方向放 G/B：2D 画布按**预乘 alpha** 存储，A=0 的像素 RGB 会被清零。
+        //    实测踩过这个坑：所有「体外」纹素的向量本应编码 128，却因为 A=0 变成 0，
+        //    上传 GPU 后解码成 -1 ⇒ 整片草被推偏。
+        px2[o4 + 2] = Math.round((dirZ * 0.5 + 0.5) * 255);
+        px2[o4 + 3] = 255;
+      }
+      ctx2.putImageData(img2, 0, 0);
+      var tex = new T.CanvasTexture(cv2);
+      tex.generateMipmaps = false;
+      tex.minFilter = 1006; tex.magFilter = 1006;   // LinearFilter：推挤场要平滑
+      tex.wrapS = 1001; tex.wrapT = 1001;           // ClampToEdge：场外一律取边缘（那里推挤=0）
+      tex.needsUpdate = true;
+      var prev = wuBodyField;
+      wuBodyField = {
+        tex: tex, cv: cv2, originX: bx0, originZ: bz0,
+        invX: 1 / (bx1 - bx0), invZ: 1 / (bz1 - bz0),
+        w: W, h: Hh, cell: WU_BODY_CELL,
+        bodyCells: zoneKeys.length, insideTexels: insidePx,
+        sizeX: +(bx1 - bx0).toFixed(3), sizeZ: +(bz1 - bz0).toFixed(3)
+      };
+      window.__m('碰撞场完成');
+      window.__wuBodyField = {
+        w: W, h: Hh, cell: WU_BODY_CELL, bodyCells: zoneKeys.length, insideTexels: insidePx,
+        origin: [+bx0.toFixed(3), +bz0.toFixed(3)], size: [+(bx1 - bx0).toFixed(3), +(bz1 - bz0).toFixed(3)],
+        clear: WU_BODY_CLEAR, range: WU_BODY_RANGE
+      };
+      // 有符号距离的采样口（双线性）。验收要用它做断言：把场里编码的推挤向量解出来，
+      // 断言「sd + 推挤量 ≈ CLEAR」——即推挤真的把顶点推到体外，而不是瞎推。
+      wuBodySD = { arr: sd, W: W, H: Hh, ox: bx0, oz: bz0, cell: WU_BODY_CELL };
+      // 诊断口：他身体在屏幕上的矩形（像素，iframe 画布坐标系）。排查「采样对齐」用。
+      window.__wuRectGet = function () {
+        return wuRect ? { l: wuRect.l, t: wuRect.t, w: wuRect.w, h: wuRect.h, cw: cv2 ? cv2.width : null } : null;
+      };
+      window.__wuBodySDAt = function (x, z) {
+        if (!wuBodySD) return null;
+        var fx = (x - wuBodySD.ox) / wuBodySD.cell - 0.5, fz = (z - wuBodySD.oz) / wuBodySD.cell - 0.5;
+        var ix = Math.floor(fx), iz = Math.floor(fz), tx = fx - ix, tz = fz - iz;
+        var g = function (a, b) {
+          if (a < 0 || b < 0 || a >= wuBodySD.W || b >= wuBodySD.H) return null;
+          return wuBodySD.arr[b * wuBodySD.W + a];
+        };
+        var h00 = g(ix, iz), h10 = g(ix + 1, iz), h01 = g(ix, iz + 1), h11 = g(ix + 1, iz + 1);
+        if (h00 === null || h10 === null || h01 === null || h11 === null) return null;
+        return (h00 * (1 - tx) + h10 * tx) * (1 - tz) + (h01 * (1 - tx) + h11 * tx) * tz;
+      };
+      wuInjectBodyCollide();
+      if (prev && prev.tex && prev.tex !== tex) { try { prev.tex.dispose(); } catch (eD) {} }
+      window.__wuBodyErr = null;
+      return true;
+    }
+    // 把碰撞场接进草与花的顶点着色器。
+    // ⚠️ 引擎每次 grass.rebuild() / flowers destroy+init() 都会**重建材质**（实测 uuid 变化），
+    //    所以本函数必须可重复调用：已注入过的材质直接刷新 uniform 值，新材质才做源码注入。
+    function wuPatchBodyShader(mat, anchor, glsl, anchor2, glsl2, tag) {
+      if (!mat || typeof mat.vertexShader !== 'string') return false;
+      if (mat.vertexShader.indexOf('uWuBody') >= 0) return true;   // 已注入
+      var vs = mat.vertexShader;
+      var mm = vs.indexOf('void main()');
+      if (mm < 0) { window.__wuBodyErr = tag + '：着色器里找不到 void main()'; return false; }
+      vs = vs.slice(0, mm) + WU_BODY_UNIFORMS + '\n' + WU_BODY_UV_FN + '\n' + vs.slice(mm);
+      var at = vs.indexOf(anchor);
+      if (at < 0) { window.__wuBodyErr = tag + '：锚点未命中「' + anchor + '」'; return false; }
+      var cut = at + anchor.length;
+      vs = vs.slice(0, cut) + '\n' + glsl + '\n' + vs.slice(cut);
+      if (anchor2) {
+        var at2 = vs.indexOf(anchor2);
+        if (at2 < 0) { window.__wuBodyErr = tag + '：第二锚点未命中「' + anchor2 + '」'; return false; }
+        var cut2 = at2 + anchor2.length;
+        vs = vs.slice(0, cut2) + '\n' + glsl2 + '\n' + vs.slice(cut2);
+      }
+      mat.vertexShader = vs;
+      mat.needsUpdate = true;
+      return true;
+    }
+    // 绑定 uniform 值。⚠️ 与「源码注入」必须**分开、各自独立可重复**：
+    //   实测踩过 —— 注入时 mat.uniforms 可能还不存在（引擎材质在 clone 之后才补 uniforms），
+    //   若把绑定塞在「源码已注入就 return」的分支后面，就会变成「源码里有 uWuBody、
+    //   uniforms 里没有」⇒ 着色器引用未声明标识符、编译失败、整片草消失。
+    //   所以：每次看门狗都调本函数补绑，返回值表示这次是否新建了条目（需要重编译一次）。
+    function wuBindBodyUniforms(mat) {
+      if (!mat) return false;
+      // ⚠️ 不能用 new (window.__THREE.Vector2)()：实测 window.__THREE 是**精选子集**
+      //    （只有 CanvasTexture / Mesh / PlaneGeometry / MeshBasicMaterial 等），没有 Vector2。
+      //    踩过这个坑：绑定函数第一行就 return false ⇒ 源码注入了、uniforms 没绑 ⇒
+      //    着色器引用未声明标识符、编译失败。three 上传 vec2 时直接读 v.x/v.y，
+      //    所以纯对象 {x,y} 完全等价，且不依赖任何构造器。
+      if (!mat.uniforms) mat.uniforms = {};       // 引擎还没建就自己建
+      if (!mat.uniforms.uWuBody) {
+        mat.uniforms.uWuBody = { value: wuBodyField.tex };
+        mat.uniforms.uWuBodyOrigin = { value: { x: wuBodyField.originX, y: wuBodyField.originZ } };
+        mat.uniforms.uWuBodyInv = { value: { x: wuBodyField.invX, y: wuBodyField.invZ } };
+        mat.uniforms.uWuBodyRange = { value: WU_BODY_RANGE };
+        mat.uniforms.uWuBodyClear = { value: WU_BODY_CLEAR };
+        mat.uniforms.uWuBodyCrush = { value: WU_BODY_CRUSH };
+        return true;
+      }
+      mat.uniforms.uWuBody.value = window.__wuBodyForceTex || wuBodyField.tex;
+      mat.uniforms.uWuBodyOrigin.value.x = wuBodyField.originX;
+      mat.uniforms.uWuBodyOrigin.value.y = wuBodyField.originZ;
+      mat.uniforms.uWuBodyInv.value.x = wuBodyField.invX;
+      mat.uniforms.uWuBodyInv.value.y = wuBodyField.invZ;
+      mat.uniforms.uWuBodyRange.value = WU_BODY_RANGE;
+      if (mat.uniforms.uWuBodyClear) mat.uniforms.uWuBodyClear.value = WU_BODY_CLEAR;
+      if (mat.uniforms.uWuBodyCrush) mat.uniforms.uWuBodyCrush.value = WU_BODY_CRUSH;
+      return false;
+    }
+    function wuInjectBodyCollide() {
+      if (!wuBodyField) return { grass: false, flowers: false };
+      var out = { grass: false, flowers: false, rebound: false };
+      try {
+        var isl = E.world && E.world.islands && E.world.islands.mainIsland;
+        var gm = isl && isl.grass && isl.grass.material;
+        if (gm) {
+          if (wuBindBodyUniforms(gm)) gm.needsUpdate = true;   // 补绑后要重编译一次才认到新 uniform
+          out.grass = wuPatchBodyShader(gm, WU_BODY_VS_GRASS, WU_BODY_GRASS_GLSL, null, null, '草');
+        }
+      } catch (eG) { window.__wuBodyErr = '草注入异常：' + String(eG && eG.stack || eG); }
+      try {
+        var isl2 = E.world && E.world.islands && E.world.islands.mainIsland;
+        ['flowers1', 'flowers2'].forEach(function (k) {
+          var f = isl2 && isl2[k];
+          if (!f || !f.material) return;
+          if (wuBindBodyUniforms(f.material)) f.material.needsUpdate = true;
+          if (wuPatchBodyShader(f.material, WU_BODY_VS_FLOWER, WU_BODY_FLOWER_GLSL, WU_BODY_VS_FLOWER_PS, WU_BODY_FLOWER_PS_GLSL, '花')) {
+            out.flowers = true;
+          }
+        });
+      } catch (eF) { window.__wuBodyErr = '花注入异常：' + String(eF && eF.stack || eF); }
+      window.__wuBodyInject = out;
+      return out;
+    }
+    // 看门狗：rebuild / destroy+init 会换掉材质，按节流补注入（常态只做一次 indexOf）
+    var wuBodyWatchLast = 0;
+    function wuBodyWatch(now) {
+      if (!wuBodyField) return;
+      if (now - wuBodyWatchLast < 500) return;
+      wuBodyWatchLast = now;
+      try { wuInjectBodyCollide(); } catch (eW) {}
+    }
+    // 三角形光栅化：写 0 而不是 255 —— 绿=0 不长草，r/b=0 不要花。
+    // keyOf 决定用哪套网格判定：吴昊阳身下传 wuCellKey（细网格，轮廓才准），
+    // ---------- 按世界格子把草/花「实例」矩阵清零（不清分区图 ⇒ 地面保持草地色）----------
+    // 草块 chunk 是 InstancedMesh，实例矩阵里的平移就是**世界坐标**（实测：草块父节点 matrixWorld
+    // 为单位阵）。把整条 16 个 float 清 0 后该实例退化成一个零体积点，等同消失。
+    // 花（flowers1/flowers2）同理，只是容器形态不同，这里做防御式遍历。
+    // ---------- 秃地「真秃 + 黄」一次成型（用户 2026-10-12 23:51）----------
+    // 一次三角形遍历同时写两样东西：
+    //   ① 分区图：秃区内 r=g=b=0 —— g=0 引擎自己就不再生成草（永久，rebuild 也不复活），
+    //      r/b=0 顺带不要花；
+    //   ② 黄遮罩：与分区图**同分辨率、同 UV 口径**的另一张图，秃区内 1、向外淡出到 0，
+    //      由地形着色器读（见文件上方「秃地黄遮罩」段的原理说明）。
+    // 两者的 V 轴都按 (u,v) 写（第 9 轮实测判定：着色器里的 1.0-vUv.y 会把它翻回正）。
+    // 距离场在 2.7cm 的格子上扩散，用来算淡出值；只扫到 FEATHER+WOBBLE 那么远。
+    function wuBareDistance(cells) {
+      var maxRing = Math.ceil((WU_BARE_FEATHER + WU_BARE_WOBBLE) / WU_CELL);
+      var dist = new Map();
+      var cur = [];
+      cells.forEach(function (k) { if (!dist.has(k)) { dist.set(k, 0); cur.push(k); } });
+      var ring = 0;
+      while (ring < maxRing && cur.length) {
+        ring++;
+        var next = [];
+        for (var i = 0; i < cur.length; i++) {
+          var p = cur[i].split(','), cxi = +p[0], czi = +p[1];
+          for (var dx = -1; dx <= 1; dx++) for (var dz = -1; dz <= 1; dz++) {
+            if (!dx && !dz) continue;
+            var nk = (cxi + dx) + ',' + (czi + dz);
+            if (dist.has(nk)) continue;
+            dist.set(nk, ring * WU_CELL);
+            next.push(nk);
+          }
+        }
+        cur = next;
+      }
+      return dist;
+    }
+    function wuHash01(x, z) { var s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return s - Math.floor(s); }
+    function wuNoise01(x, z) {
+      var u = x / 0.34, v = z / 0.34;
+      var ix = Math.floor(u), iz = Math.floor(v), tx = u - ix, tz = v - iz;
+      tx = tx * tx * (3 - 2 * tx); tz = tz * tz * (3 - 2 * tz);
+      var a = wuHash01(ix, iz), b = wuHash01(ix + 1, iz);
+      var c = wuHash01(ix, iz + 1), d = wuHash01(ix + 1, iz + 1);
+      return (a * (1 - tx) + b * tx) * (1 - tz) + (c * (1 - tx) + d * tx) * tz;
+    }
+    // 秃区内恒 1（把下面的棕土整块盖掉）；秃区外按距离淡出，
+    // 淡出半径被一圈噪声扰动 ⇒ 边缘是自然起伏的，不是一块圆饼
+    function wuBareMaskValue(x, z, d) {
+      if (d <= 0) return 1;
+      var F = WU_BARE_FEATHER + (wuNoise01(x, z) - 0.5) * 2 * WU_BARE_WOBBLE;
+      if (F <= 1e-6) return 0;
+      var t = 1 - d / F;
+      if (t <= 0) return 0;
+      if (t >= 1) return 1;
+      return t * t * (3 - 2 * t);
+    }
+    function wuEnsureBareMask(w, h) {
+      if (wuBareMask && wuBareMask.w === w && wuBareMask.h === h) return true;
+      var T = window.__THREE;
+      if (!T || !T.CanvasTexture) { window.__bareYellowErr = '缺 __THREE.CanvasTexture，无法建黄遮罩'; return false; }
+      try {
+        var cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        var ctx = cv.getContext('2d');
+        var img = ctx.createImageData(w, h);     // 全 0：未涂处 alpha=0 ⇒ 不着色
+        var tex = new T.CanvasTexture(cv);
+        tex.generateMipmaps = false;
+        tex.minFilter = 1006;                    // LinearFilter：淡出带才平滑
+        tex.magFilter = 1006;
+        tex.wrapS = 1001; tex.wrapT = 1001;      // ClampToEdgeWrapping
+        wuBareMask = { cv: cv, ctx: ctx, img: img, tex: tex, w: w, h: h };
+        return true;
+      } catch (e) {
+        window.__bareYellowErr = '黄遮罩创建失败：' + String(e && e.message || e);
+        return false;
+      }
+    }
+    // 秃斑遮罩光栅化：遍历 main-island 三角形，把「身体脚印 + 羽化带」按 UV 写进遮罩。
+    // 不读写 zonesTexture —— 分区图保持原样，草一株不删、不重建。
+    // onPixel(md, o, wx, wz, d) 返回 true = 这一像素被改动。
+    function wuRasterBareMask(cells, dist, pad, onPixel) {
+      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
+      var mi = scene.getObjectByName('main-island');
+      if (!mi || !mi.geometry || !mi.geometry.attributes.uv) return null;
+      if (!grass || !grass.zonesTexture || !grass.zonesTexture.image) return null;
+      var img = grass.zonesTexture.image, tw = img.width, th = img.height;
+      if (!wuEnsureBareMask(tw, th)) return null;
+      var md = wuBareMask.img.data;
+      // 每次重算都从空白开始：视口/机位变化会让 footprint 移动，旧的黄斑必须清掉。
+      md.fill(0);
+      var bx0 = Infinity, bz0 = Infinity, bx1 = -Infinity, bz1 = -Infinity;
+      cells.forEach(function (k) {
+        var p = k.split(','), x = (+p[0] + 0.5) * WU_CELL, z = (+p[1] + 0.5) * WU_CELL;
+        if (x < bx0) bx0 = x; if (x > bx1) bx1 = x;
+        if (z < bz0) bz0 = z; if (z > bz1) bz1 = z;
+      });
+      bx0 -= pad; bx1 += pad; bz0 -= pad; bz1 += pad;
+      mi.updateMatrixWorld(true);
+      var mg = mi.geometry, mp = mg.attributes.position, uv = mg.attributes.uv;
+      var mi2 = mg.index ? mg.index.array : null;
+      var nTri = mi2 ? mi2.length / 3 : mp.count / 3;
+      var W = [new V3c(), new V3c(), new V3c()];
+      var tris = 0, touched = 0;
+      for (var f = 0; f < nTri; f++) {
+        var ia = mi2 ? [mi2[f * 3], mi2[f * 3 + 1], mi2[f * 3 + 2]] : [f * 3, f * 3 + 1, f * 3 + 2];
+        for (var k = 0; k < 3; k++) W[k].set(mp.getX(ia[k]), mp.getY(ia[k]), mp.getZ(ia[k])).applyMatrix4(mi.matrixWorld);
+        if (Math.max(W[0].x, W[1].x, W[2].x) < bx0 || Math.min(W[0].x, W[1].x, W[2].x) > bx1) continue;
+        if (Math.max(W[0].z, W[1].z, W[2].z) < bz0 || Math.min(W[0].z, W[1].z, W[2].z) > bz1) continue;
+        tris++;
+        var U0 = uv.getX(ia[0]) * tw, V0 = uv.getY(ia[0]) * th;
+        var U1 = uv.getX(ia[1]) * tw, V1 = uv.getY(ia[1]) * th;
+        var U2 = uv.getX(ia[2]) * tw, V2 = uv.getY(ia[2]) * th;
+        var x0 = Math.max(0, Math.floor(Math.min(U0, U1, U2))), x1 = Math.min(tw - 1, Math.ceil(Math.max(U0, U1, U2)));
+        var y0 = Math.max(0, Math.floor(Math.min(V0, V1, V2))), y1 = Math.min(th - 1, Math.ceil(Math.max(V0, V1, V2)));
+        var den = (V1 - V2) * (U0 - U2) + (U2 - U1) * (V0 - V2);
+        if (Math.abs(den) < 1e-12) continue;
+        for (var y = y0; y <= y1; y++) for (var x = x0; x <= x1; x++) {
+          var qx = x + 0.5, qy = y + 0.5;
+          var l0 = ((V1 - V2) * (qx - U2) + (U2 - U1) * (qy - V2)) / den;
+          var l1 = ((V2 - V0) * (qx - U2) + (U0 - U2) * (qy - V2)) / den;
+          var l2 = 1 - l0 - l1;
+          if (l0 < -0.01 || l1 < -0.01 || l2 < -0.01) continue;
+          var wx = W[0].x * l0 + W[1].x * l1 + W[2].x * l2;
+          var wy = W[0].y * l0 + W[1].y * l1 + W[2].y * l2;
+          var wz = W[0].z * l0 + W[1].z * l1 + W[2].z * l2;
+          if (wy < -0.35) continue;
+          var d = dist.get(wuCellKey(wx, wz));
+          if (d === undefined) continue;
+          var o = (y * tw + x) * 4;
+          if (onPixel(md, o, wx, wz, d)) touched++;
+        }
+      }
+      wuBareMask.ctx.putImageData(wuBareMask.img, 0, 0);
+      wuBareMask.tex.needsUpdate = true;
+      return { touched: touched, tris: tris, tw: tw, th: th };
+    }
+    function wuPaintBareMask(cells, dist) {
+      if (!dist) dist = wuBareDistance(cells);
+      var maskPx = 0;
+      var r = wuRasterBareMask(cells, dist, WU_BARE_FEATHER + WU_BARE_WOBBLE + WU_CELL * 2,
+        function (md, o, wx, wz, d) {
+          var a = Math.round(255 * wuBareMaskValue(wx, wz, d));
+          if (a > md[o]) { md[o] = a; md[o + 1] = a; md[o + 2] = a; md[o + 3] = 255; if (a) maskPx++; return true; }
+          return false;
+        });
+      if (!r) return null;
+      return { maskPx: maskPx, tris: r.tris, cells: cells.size };
+    }
+    // 把「秃地描黄」注入地形材质。写点在 finalColor 之后 —— 那时 grassLitColor
+    // 已经由引擎自己按 zoneBlend 混好（含同一套光照、风向、影子），直接拿它当基色，
+    // 于是这块地和周围草地天然同一色系，不会出现「贴了一块别的黄」的割裂感。
+    function wuInjectBareYellow() {
+      var mi = scene.getObjectByName('main-island');
+      if (!mi || !mi.material) { window.__bareYellowErr = '找不到 main-island 材质，无法注入黄'; return false; }
+      var mat = mi.material;
+      if (wuBareMask && mat.__wuBareTex === wuBareMask.tex) return true;   // 已注入同一张遮罩
+      if (!wuBareMask) { window.__bareYellowErr = '黄遮罩尚未建立，无法注入'; return false; }
+      var SRC = 'vec3 finalColor=mix(cliffLitColor,grassLitColor,slopeBlend);';
+      var DECL = 'uniform sampler2D uBareMask;uniform vec3 uBareMul;uniform float uBareGrain;\n';
+      var CODE = '\n{float wuBareA=texture2D(uBareMask,vec2(vUv.x,1.0-vUv.y)).r;\n' +
+                 ' if(wuBareA>0.003){\n' +
+                 '  vec3 wuBare=grassLitColor*uBareMul*(1.0+uBareGrain*(colorVariation-0.5));\n' +
+                 '  finalColor=mix(finalColor,wuBare,clamp(wuBareA,0.0,1.0));}}\n';
+      mat.onBeforeCompile = function (sh) {
+        var fs = sh.fragmentShader;
+        if (fs.indexOf(SRC) < 0) { window.__bareYellowErr = '注入点未命中：地形片元着色器里找不到 finalColor 那一行'; return; }
+        if (fs.indexOf('void main() {') >= 0) fs = fs.replace('void main() {', DECL + 'void main() {');
+        else if (fs.indexOf('void main(){') >= 0) fs = fs.replace('void main(){', DECL + 'void main(){');
+        else { window.__bareYellowErr = '注入点未命中：找不到 main 声明'; return; }
+        fs = fs.replace(SRC, SRC + CODE);
+        if (fs.indexOf('wuBareA') < 0) { window.__bareYellowErr = '注入失败：替换未生效'; return; }
+        sh.uniforms.uBareMask = { value: wuBareMask.tex };
+        // uniform 对象复用：重复编译时不要换新对象，否则外面持有的引用会失联
+        if (!wuBareU.mul) wuBareU.mul = { value: { x: WU_BARE_MUL[0], y: WU_BARE_MUL[1], z: WU_BARE_MUL[2] } };
+        if (!wuBareU.grain) wuBareU.grain = { value: WU_BARE_GRAIN };
+        sh.uniforms.uBareMul = wuBareU.mul;
+        sh.uniforms.uBareGrain = wuBareU.grain;
+        sh.fragmentShader = fs;
+        window.__bareYellowErr = null;
+      };
+      mat.__wuBareTex = wuBareMask.tex;
+      mat.needsUpdate = true;      // 材质已编译过，必须置脏才会重走 onBeforeCompile
+      return true;
+    }
+    window.__wuBareState = function () {
+      return {
+        yellow: WU_BARE_YELLOW, mul: WU_BARE_MUL.slice(), grain: WU_BARE_GRAIN,
+        // 真正在跑的值（uniform 对象上的），用于确认调参有没有生效
+        live: wuBareU.mul ? { mul: [wuBareU.mul.value.x, wuBareU.mul.value.y, wuBareU.mul.value.z], grain: wuBareU.grain.value } : null,
+        feather: WU_BARE_FEATHER, wobble: WU_BARE_WOBBLE,
+        maskReady: !!(wuBareMask && wuBareMask.tex), maskSize: wuBareMask ? [wuBareMask.w, wuBareMask.h] : null,
+        injected: !!(scene.getObjectByName('main-island') || {}).material && !!scene.getObjectByName('main-island').material.__wuBareTex,
+        err: window.__bareYellowErr || null
+      };
+    };
+    // 调参口：改暖黄系数/颗粒强度。直接改 uniform 的 .value（见 wuBareU 处的说明：
+    // 重新注入会被 three 的程序缓存吃掉，等于白写）。还没注入过就先只改常量，
+    // 等注入时自然带上。
+    window.__wuBareTint = function (mul, grain) {
+      if (mul && mul.length === 3) WU_BARE_MUL = [+mul[0], +mul[1], +mul[2]];
+      if (isFinite(grain)) WU_BARE_GRAIN = +grain;
+      if (wuBareU.mul) { wuBareU.mul.value.x = WU_BARE_MUL[0]; wuBareU.mul.value.y = WU_BARE_MUL[1]; wuBareU.mul.value.z = WU_BARE_MUL[2]; }
+      if (wuBareU.grain) wuBareU.grain.value = WU_BARE_GRAIN;
+      var mi = scene.getObjectByName('main-island');
+      // 材质还没注入过（遮罩也还没建）：补一次注入
+      if (mi && mi.material && !wuBareU.mul) wuInjectBareYellow();
+      return { mul: WU_BARE_MUL.slice(), grain: WU_BARE_GRAIN, applied: !!wuBareU.mul, err: window.__bareYellowErr || null };
+    };
+    function makeBare() {
+      if (bareDone || !wuBase) return;
+      window.__m('足印开始');
+      var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
+      if (!grass || !grass.chunks || grass.chunks.entries().length < 20) return;
+      var mi = scene.getObjectByName('main-island');
+      if (!mi) return;
+      if (!wuAlpha) {
+        loadWuAlpha(function (ok) { if (!ok) bareDone = true; });
+        return;
+      }
+      var cells = null;
+      try { cells = wuBareFootprint(mi); } catch (e) {
+        window.__m('足迹失败');
+        window.__bareErr = String(e && e.stack || e); bareDone = true; return;
+      }
+      window.__m('足迹完成');
+      if (!cells || !cells.size) {
+        bareDone = true;
+        window.__bareDiag = { cells: 0, maskPx: 0, tris: 0 };
+        return;
+      }
+      var dist = null;
+      try {
+        dist = wuBareDistance(cells);
+        window.__m('距离场完成');
+      } catch (eP) {
+        window.__bareErr = '距离场构建失败：' + String(eP && eP.message || eP);
+        bareDone = true; return;
+      }
+      var paint = WU_BARE_YELLOW ? wuPaintBareMask(cells, dist) : null;
+      var fb = [Infinity, Infinity, -Infinity, -Infinity];
+      cells.forEach(function (k) {
+        var p = k.split(','), x = (+p[0] + 0.5) * WU_CELL, z = (+p[1] + 0.5) * WU_CELL;
+        if (x < fb[0]) fb[0] = x; if (z < fb[1]) fb[1] = z;
+        if (x > fb[2]) fb[2] = x; if (z > fb[3]) fb[3] = z;
+      });
+      window.__m('秃区完成');
+      window.__bareDiag = {
+        cells: cells.size, footBox: fb.map(function (v) { return +v.toFixed(3); }),
+        maskPx: paint && paint.maskPx, tris: paint && paint.tris,
+        clearMargin: WU_CLEAR_MARGIN, clearMarginCam: WU_CLEAR_MARGIN_CAM, camMargin: +wuCamMargin.toFixed(3), bladeH: WU_BLADE_H,
+        clearRadiusCells: Math.max(DILATE, Math.round(WU_CLEAR_MARGIN / WU_CELL)),
+        yellow: WU_BARE_YELLOW, yellowErr: window.__bareYellowErr || null,
+        bodyField: !!window.__wuBodyField
+      };
+      if (WU_BARE_YELLOW && wuBareMask) {
+        try { wuInjectBareYellow(); } catch (eY) { window.__bareYellowErr = String(eY && eY.stack || eY); }
+      }
+      bareDone = true;
+    }
+    // 秃斑遮罩只在场景就绪前准备一次：Wu 网格铺好、wu-2d.png 到位后跑一次即可。
+    // 这里只兜底等待这些异步条件，完成后立即停表；20s 仍不成立就留痕交给就绪门判断。
+    var bareKaiShi = performance.now();
+    var bareTimer = setInterval(function () {
+      try { makeBare(); } catch (eB) { if (!window.__bareErr) window.__bareErr = String(eB && eB.stack || eB); }
+      if (bareDone || performance.now() - bareKaiShi > 20000) {
+        clearInterval(bareTimer); bareTimer = null;
+        if (!bareDone) window.__bareChaoShi = 'wuBare-20s';
+      }
+    }, 300);
+    try { makeBare(); } catch (eB0) { if (!window.__bareErr) window.__bareErr = String(eB0 && eB0.stack || eB0); }
+    // ---------- 吴昊阳：贴地的细分网格 + 预扭曲贴图（身前草遮他 / 身后草被他遮） ----------
+    // 他原来是宿主页面上的 fixed DOM 图层、z-index 恒在最上，于是**所有**草都在他身后，
+    // 物理上不可能有草压过他，看着像贴纸。
+    //
+    // 为什么不用「朝向相机的公告板」：实测那样做，quad 的世界 Y 范围是 -0.383~0.253，
+    // 而脚下地面在 y=0.0986 —— 下半截直接埋进地形里被挡住；抬到不埋要抬 0.45m，
+    // 等于屏幕**上移 176px** 直接出画。
+    // 为什么不用「完全贴平」：那样透视压缩成一条扁带，完全认不出（实测截图）。
+    //
+    // 相机是**冻结**的，所以可以两者兼得：造一片真正躺在地面上的细分网格，
+    // 再把每个顶点的 UV 设成「该顶点投影到屏幕后，对应原图的哪个像素」。
+    // 于是外观与原来的屏幕贴图完全一致，而几何上他真的躺在地上，
+    // 深度缓冲就能正确判定：比他近的草遮住他，比他远的草被他遮住。
+    var WU_SEG = 28;                    // 网格细分：每格约 10px，透视误差可忽略
+    // 顶点沿视线回退 WU_LIFT 放置：仍在原视线上 ⇒ 投影与原屏幕矩形逐像素重合（外观零变化），
+    // 而深度整体抬高 WU_LIFT ⇒ 深度缓冲按「草叶可达高度 0.171m」这一上界判定前后。
+    // 抬升量的取值依据见上方「抬升量」段（统一、略大于草叶上界、且不可取大）。
+    // 视差补偿系数（布局时实测算出）：顶点沿视线回退后离相机更近，同样的相机平移
+    // 他在屏幕上位移更大（实测 1.396 倍于脚下草 → 露馅）。让他按 (1 - 抬升后深度/原深度)
+    // 的比例**跟随相机平移**，屏幕上与脚下草的位移即逐像素一致 —— 与早期 DOM 图层
+    // 方案同口径（中心对齐的刚体补偿，四角残差当年用户已验收）。
+    var WU_PARALLAX_K = 0;
+    var wuMesh = null;
+    // 引擎后处理链是 pmndrs ToneMappingEffect(ACES_FILMIC)：
+    //   color *= exposure/0.6 → ACESInputMat → RRTAndODTFit → ACESOutputMat → saturate → 输出编码 sRGB
+    // 原图是 sRGB 字节，直接当贴图会被 ACES 提亮（实测 +70~+80，颜色被改）。
+    // 这里在着色器里对采样结果施加**逆 ACES**，使最终落回画布的颜色与原图逐字节一致
+    // （逆函数输出可超过 1.0，故必须走着色器而不是 8 位贴图预补偿，否则高光会被削顶）。
+    var WU_ACES_SRC = [
+      'vec3 wuAcesInv(vec3 y){',
+      '  vec3 t = mat3(',
+      '     0.6430382486, 0.0592686904, 0.0059619013,',
+      '     0.3111867518, 0.9314364869, 0.0639290157,',
+      '     0.0457754574, 0.0092949157, 0.9301183842) * y;',
+      '  vec3 qa = vec3(1.0) - 0.983729 * t;',
+      '  vec3 qb = 0.0245786 - 0.4329510 * t;',
+      '  vec3 qc = -0.000090537 - 0.238081 * t;',
+      '  vec3 qd = max(qb * qb - 4.0 * qa * qc, 0.0);',
+      '  vec3 xq = (-qb + sqrt(qd)) / (2.0 * qa);',
+      '  vec3 xl = -qc / qb;',
+      '  vec3 x = mix(xl, xq, step(1.0e-6, abs(qa)));',
+      '  return 0.6 * (mat3(',
+      '     1.7647409720, -0.1470278520, -0.0363368301,',
+      '    -0.6757776782, 1.1602515117, -0.1624364369,',
+      '    -0.0889632938, -0.0132236597, 1.1987732670) * x);',
+      '}'
+    ].join('\n');
+    function buildWuGroundMesh(cb) {
+      var T = window.__THREE;
+      if (!T || !T.Mesh || !T.PlaneGeometry || !T.CanvasTexture || !T.MeshBasicMaterial) {
+        if (cb) cb(false); return;
+      }
+      var im = new Image();
+      im.onload = function () {
+        try {
+          var cv = document.createElement('canvas');
+          cv.width = im.naturalWidth; cv.height = im.naturalHeight;
+          cv.getContext('2d').drawImage(im, 0, 0);
+          var tex = new T.CanvasTexture(cv);
+          tex.colorSpace = 'srgb';       // 硬件 sRGB 解码：贴图像素按线性参与后续链路
+          tex.needsUpdate = true;
+          var mat = new T.MeshBasicMaterial({
+            map: tex, transparent: true, depthTest: true, depthWrite: true,
+            alphaTest: WU_ALPHA_TEST,
+            side: 2, toneMapped: false, fog: false
+          });
+          mat.onBeforeCompile = function (sh) {
+            var fs = sh.fragmentShader
+              .replace('void main() {', WU_ACES_SRC + '\nvoid main() {')
+              .replace('#include <map_fragment>',
+                '#ifdef USE_MAP\n' +
+                '\tvec4 sampledDiffuseColor = texture2D( map, vMapUv );\n' +
+                '\t#ifdef DECODE_VIDEO_TEXTURE\n' +
+                '\t\tsampledDiffuseColor = sRGBTransferEOTF( sampledDiffuseColor );\n' +
+                '\t#endif\n' +
+                '\tsampledDiffuseColor.rgb = wuAcesInv( sampledDiffuseColor.rgb );\n' +
+                '\tdiffuseColor *= sampledDiffuseColor;\n' +
+                '#endif');
+            // replace 失配会静默返回原串（不抛异常），而着色器是懒编译、失败不进 try/catch，
+            // __wuMeshState 仍会回报 ready:true —— 必须留痕，否则颜色问题会静默复发。
+            if (fs.indexOf('wuAcesInv') < 0 || fs.indexOf('#include <map_fragment>') >= 0) {
+              window.__wuMeshErr = '逆 ACES 着色器注入失败：目标分块未命中（引擎 three 版本可能变更）';
+            }
+            sh.fragmentShader = fs;
+          };
+          // PlaneGeometry(1,1,N,N) 自带细分与索引，只需把顶点摆到地面
+          wuMesh = new T.Mesh(new T.PlaneGeometry(1, 1, WU_SEG, WU_SEG), mat);
+          wuMesh.frustumCulled = false;
+          wuMesh.renderOrder = 1;
+          window.__wuMesh = wuMesh;      // 测试精确取用，避免遍历猜错对象
+          if (cb) cb(true);
+        } catch (e) {
+          window.__wuMeshErr = String(e && e.stack || e);
+          if (cb) cb(false);
+        }
+      };
+      im.onerror = function () { window.__wuMeshErr = '原图加载失败: ' + im.src; if (cb) cb(false); };
+      im.src = './wu-2d.png';
+    }
+    // 把网格摆到地面上：**以屏幕网格为参数化**，对目标矩形内的每个网格点直接向地面打射线，
+    // 于是这片网格就是「那个屏幕矩形」在地面上的精确预像 —— 不需要任何拟合/缩放迭代
+    // （试过拟合：地面两轴都带 X/Z 分量，互相耦合，独立缩放会震荡；统一缩放则有一维对不上）。
+    // UV 用 PlaneGeometry 的默认值即可：顶点 ix→u、iy→1-v，正好对应屏幕的左右与上下。
+    //
+    // 顶点放在「沿视线回退 back = 抬升量/sinP」处：仍在同一条视线上，投影与原屏幕点逐像素重合，
+    // 但高出地面「抬升量」—— 抬升量决定草叶(9cm)与他谁在前：抬升量 < 0.09m 处草压住他，
+    // > 0.09m 处他压住草。所以抬升量 = 该处身体离地高度时，前后遮挡关系就是物理正确的。
+    //
+    // 射线采样（贵，每点一次 raycaster）与抬升量写入（便宜）分离：
+    // 相机冻结时射线不变，调抬升场只需重跑 wuApplyLift，不必重新打射线。
+    var wuRayData = null, wuRayN = -1;
+    function layoutWuGroundMesh(rect, imgW, imgH) {
+      if (!wuMesh) return false;
+      var vw = eng.canvas.clientWidth || eng.sizes.width;
+      var vh = eng.canvas.clientHeight || eng.sizes.height;
+      var N = WU_SEG;
+      var miss = 0, total = (N + 1) * (N + 1);
+      // 视线起点必须取相机的**世界**位置：groundRc.setFromCamera 用的是 matrixWorld
+      // （含 CameraGroup 视差位移），若用 cam.position（组内局部值），
+      // 回退方向会与真实视线差一个视差偏置，顶点投影随之偏出屏幕矩形。
+      var camW = cam.getWorldPosition(new V3());
+      cam.updateMatrixWorld(true);
+      if (!wuRayData || wuRayN !== N) { wuRayData = new Float32Array(total * 8); wuRayN = N; }
+      var rd = wuRayData;
+      for (var b = 0; b <= N; b++) {
+        var sy = rect.t + rect.h * (b / N);
+        var ny = -(sy / vh) * 2 + 1;
+        for (var a = 0; a <= N; a++) {
+          var sx = rect.l + rect.w * (a / N);
+          var h = groundHit((sx / vw) * 2 - 1, ny);
+          var q = b * (N + 1) + a;
+          if (!h) { miss++; rd[q * 8 + 3] = 0; rd[q * 8 + 7] = -1; continue; }
+          // 视线单位方向（相机→命中点）与俯角正弦
+          var dx = h.point.x - camW.x, dy = h.point.y - camW.y, dz = h.point.z - camW.z;
+          var len = Math.sqrt(dx * dx + dy * dy + dz * dz) || 1;
+          rd[q * 8] = h.point.x; rd[q * 8 + 1] = h.point.y; rd[q * 8 + 2] = h.point.z;
+          rd[q * 8 + 3] = dx / len; rd[q * 8 + 4] = dy / len; rd[q * 8 + 5] = dz / len;
+          rd[q * 8 + 6] = h.distance; rd[q * 8 + 7] = -dy / len;   // sinP（>0）
+        }
+      }
+      // 打空比例过高说明地形还没就绪：仍照旧写一遍顶点（缺失点标 −999 即不可见），
+      // 保持与旧实现一致的「失败态」—— 绝不留着上一次的旧位置冒充有效布局。
+      wuApplyLift();
+      if (miss > total * 0.02) return false;       // 地形尚未就绪，交给宿主重试
+      // 挂进世界（与草同一空间）：视差让他和草一起动，深度缓冲判定前后
+      var isl = E.world.islands.mainIsland;
+      (isl.group || scene).add(wuMesh);
+      // 网格换位 ⇒ footprint 必须随 mesh 同步重算
+      bareDone = false;
+      try { makeBare(); } catch (eB) { window.__bareErr = String(eB && eB.stack || eB); }
+      return true;
+    }
+    // 由射线数据写入顶点位置：每个顶点的视深度 = 该像素处地面视深度 − WU_GROUND_OFFSET。
+    // 顶点严格落在原视线上 ⇒ 投影逐像素不变（外观零变化），只改「沿视线走多远」。
+    // 同时记下「基准位置」与**逐顶点视差补偿系数**（贴地后系数极小，但口径保持一致）。
+    var wuBase = null, wuComp = null, wuCompGp = [NaN, NaN, NaN], wuDepthRange = null;
+    function wuApplyLift() {
+      // 射线采样与当前细分密度必须同代：换过密度后必须先重打射线（__wuLayoutMesh），
+      // 否则顶点数与 wuRayData 不匹配，写进去的就是错位数据。
+      if (!wuMesh || !wuRayData || wuRayN !== WU_SEG) return false;
+      var N = wuRayN, g = wuMesh.geometry;
+      var pos = g.attributes.position.array;
+      var mvi = cam.matrixWorldInverse;
+      var viewZ = function (x, y, z) { return -(mvi.elements[2] * x + mvi.elements[6] * y + mvi.elements[10] * z + mvi.elements[14]); };
+      var rd = wuRayData;
+      var total = (N + 1) * (N + 1);
+      if (!wuBase || wuBase.length !== total * 3) wuBase = new Float32Array(total * 3);
+      if (!wuComp || wuComp.length !== total) wuComp = new Float32Array(total);
+      // 相机世界位置与前向（f̂）：顶点沿各自视线放置。
+      var camW = cam.getWorldPosition(new V3());
+      cam.updateMatrixWorld(true);
+      var e = cam.matrixWorld.elements;
+      var fx = -e[8], fy = -e[9], fz = -e[10];
+      var fl = Math.sqrt(fx * fx + fy * fy + fz * fz) || 1;
+      fx /= fl; fy /= fl; fz /= fl;
+      wuBuildDisp();   // 位移贴图就绪后才能对齐可见地面（失败留痕，不静默）
+      var kSum = 0, kNum = 0, zMin = Infinity, zMax = -Infinity;
+      for (var b = 0; b <= N; b++) {
+        for (var a = 0; a <= N; a++) {
+          var q = b * (N + 1) + a;
+          if (rd[q * 8 + 7] < 0) { pos[q * 3] = 0; pos[q * 3 + 1] = -999; pos[q * 3 + 2] = 0; wuComp[q] = 0; continue; }
+          var ux = rd[q * 8 + 3], uy = rd[q * 8 + 4], uz = rd[q * 8 + 5];
+          var dist = rd[q * 8 + 6], sinP = rd[q * 8 + 7];
+          var gx = rd[q * 8], gz = rd[q * 8 + 2];
+          var cosT = ux * fx + uy * fy + uz * fz;
+          if (cosT < 0.2) cosT = 0.2;
+          var zGrd = dist * cosT;                       // **未位移**地面的视深度
+          // 可见地面 = 未位移地面 + elevation（地形顶点着色器抬高的那 0~0.15m）
+          var zVis = zGrd - wuElev(gx, gz) / Math.max(0.02, sinP);
+          var zTarget = zVis - WU_GROUND_OFFSET;        // 贴着**看得见的地面**、但略靠相机一点（避开 z-fight）
+          var t = zTarget / cosT;
+          pos[q * 3] = camW.x + ux * t;
+          pos[q * 3 + 1] = camW.y + uy * t;
+          pos[q * 3 + 2] = camW.z + uz * t;
+          wuBase[q * 3] = pos[q * 3]; wuBase[q * 3 + 1] = pos[q * 3 + 1]; wuBase[q * 3 + 2] = pos[q * 3 + 2];
+          var zLift = viewZ(pos[q * 3], pos[q * 3 + 1], pos[q * 3 + 2]);
+          var c = (zGrd > 1e-6 && zLift < zGrd) ? 1 - zLift / zGrd : 0;
+          wuComp[q] = c;
+          if (c > 0) { kSum += c; kNum++; }
+          if (zTarget < zMin) zMin = zTarget;
+          if (zTarget > zMax) zMax = zTarget;
+        }
+      }
+      WU_PARALLAX_K = kNum ? kSum / kNum : 0;
+      wuDepthRange = isFinite(zMin) ? { min: +zMin.toFixed(3), max: +zMax.toFixed(3) } : null;
+      wuCompGp[0] = wuCompGp[1] = wuCompGp[2] = NaN;   // 强制下一次重算
+      wuApplyParallax(null, true);
+      g.attributes.position.needsUpdate = true;
+      g.computeBoundingSphere();
+      g.computeBoundingBox();
+      window.__wuLiftErr = null;   // 本轮成功：清掉上一次的失败留痕
+      return true;
+    }
+    // 逐顶点视差补偿：pos_i = 基准_i + comp_i × 相机组位移。gp 不变则直接返回（不动几何）。
+    function wuApplyParallax(gp, force) {
+      // 同 wuApplyLift：射线采样必须与当前细分密度同代，否则写进去的就是错位数据。
+      if (!wuMesh || !wuBase || !wuComp || wuRayN !== WU_SEG) return false;
+      var gx = gp ? gp.x : 0, gy = gp ? gp.y : 0, gz = gp ? gp.z : 0;
+      if (!force && gx === wuCompGp[0] && gy === wuCompGp[1] && gz === wuCompGp[2]) return false;
+      wuCompGp[0] = gx; wuCompGp[1] = gy; wuCompGp[2] = gz;
+      var n = wuComp.length, pos = wuMesh.geometry.attributes.position.array;
+      for (var q = 0; q < n; q++) {
+        if (wuBase[q * 3 + 1] < -500) { pos[q * 3] = 0; pos[q * 3 + 1] = -999; pos[q * 3 + 2] = 0; continue; }
+        var c = wuComp[q];
+        pos[q * 3] = wuBase[q * 3] + c * gx;
+        pos[q * 3 + 1] = wuBase[q * 3 + 1] + c * gy;
+        pos[q * 3 + 2] = wuBase[q * 3 + 2] + c * gz;
+      }
+      wuMesh.geometry.attributes.position.needsUpdate = true;
+      wuMesh.position.set(0, 0, 0);   // 补偿已烘进顶点，不能再叠加刚体平移
+      return true;
+    }
+    // 相机签名 + 停稳后重排
+    function wuCamSig() {
+      var p = cam.position, q = cam.quaternion;
+      return p.x.toFixed(4) + ',' + p.y.toFixed(4) + ',' + p.z.toFixed(4) + ',' +
+             q.x.toFixed(4) + ',' + q.y.toFixed(4) + ',' + q.z.toFixed(4) + ',' + q.w.toFixed(4);
+    }
+    var WU_CAM_DEBOUNCE = 180;
+    var wuCamSigLast = null, wuCamMovedAt = 0;
+    var wuCamWatch = setInterval(function () {
+      try {
+        var sig = wuCamSig();
+        if (sig !== wuCamSigLast) { wuCamSigLast = sig; wuCamMovedAt = Date.now(); return; }
+        if (wuCamMovedAt && Date.now() - wuCamMovedAt > WU_CAM_DEBOUNCE) {
+          wuCamMovedAt = 0;
+          // ⚠️ 曾试过「粗采样 + 解析放置」的快速路径（11×11 采样，约 0.9s）：独立终验实测其顶点
+          //    投影包围盒偏离目标矩形约 1~4px，违反「屏幕位置/比例一丁点不许改」，故已删除。
+          //    这里用**精细路径**（逐点打射线，实测逐像素精确），代价是每次重排约 6 秒。
+          //    （用户已明确相机恒定不动，本分支实际不会触发，仅作保险。）
+          if (!layoutWuGroundMesh(wuRect)) wuCamMovedAt = Date.now() - WU_CAM_DEBOUNCE + 300;  // 地形未就绪则 300ms 后重试
+        }
+      } catch (eC) { window.__wuCamErr = String(eC && eC.message || eC); }
+    }, 200);
+
+    var wuSkyOn = true, wuSkyI = 1, wuSkyMesh = null, wuSkyU = null, wuSkyNight = 0, wuSkyErr = null, wuSkyTickN = 0, wuSkyDistOn = false, wuSkySig = null;
+    var WU_AUR_GLSL = "varying vec3 vWuDir;\nuniform sampler2D uWuNoise;\nuniform float uWuT;\nuniform float uWuAur;\nuniform float uWuInt;\nuniform float uWuAlt;\nfloat wuSampleAuroraNoise(vec2 p){\nvec2 noiseUV=p/20.0+0.5;\nvec4 noise=texture2D(uWuNoise,noiseUV);\nfloat shortStep=1.667;\nfloat longStep=5.0;\nfloat totalCycle=shortStep*3.0+longStep;\nfloat t=mod(uWuT,totalCycle);\nfloat n0,n1,blend;\nif(t<shortStep){n0=noise.r;n1=noise.g;blend=t/shortStep;}\nelse if(t<shortStep*2.0){n0=noise.g;n1=noise.b;blend=(t-shortStep)/shortStep;}\nelse if(t<shortStep*3.0){n0=noise.b;n1=noise.a;blend=(t-shortStep*2.0)/shortStep;}\nelse{n0=noise.a;n1=noise.r;blend=(t-shortStep*3.0)/longStep;}\nreturn mix(n0,n1,blend);}\nfloat wuHash21(in vec2 n){return fract(sin(dot(n,vec2(12.9898,4.1414)))*43758.5453);}\nvec4 wuAurora(vec3 ro,vec3 rd){\nvec4 col=vec4(0.0);\nvec4 avgCol=vec4(0.0);\nfloat stepSize=50.0/32.0;\nfor(float i=0.0;i<32.0;i++){\nfloat baseIdx=i*stepSize;\nfloat jitter=wuHash21(gl_FragCoord.xy+vec2(i*13.37,0.0))*stepSize;\nfloat idx=baseIdx+mod(jitter,stepSize);\nfloat of=0.006*wuHash21(gl_FragCoord.xy)*smoothstep(0.0,15.0,idx);\nfloat pt=((uWuAlt+pow(idx,1.4)*0.002)-ro.y)/(rd.y*2.0+0.4);\npt-=of;\nvec3 bpos=ro+pt*rd;\nvec2 p=bpos.zx;\nfloat rzt=wuSampleAuroraNoise(p);\nvec4 col2=vec4(0.0,0.0,0.0,rzt);\ncol2.rgb=(sin(1.0-vec3(2.15,-0.5,1.2)+idx*0.043)*0.5+0.5)*rzt;\navgCol=mix(avgCol,col2,0.5);\ncol+=avgCol*exp2(-idx*0.065-2.5)*smoothstep(0.0,5.0,idx)*stepSize;\n}\ncol*=clamp(rd.y*15.0+0.4,0.0,1.0);\nreturn col*1.05;}\nvec3 wuAuroraColor(vec3 rd){\nfloat horizonFade=smoothstep(0.0,0.15,rd.y);\nif(horizonFade<=0.0){return vec3(0.0);}\nvec4 aur=wuAurora(vec3(0.0),rd);\nreturn aur.rgb*uWuInt*aur.a*uWuAur*horizonFade;}\n\nfloat wuCloudBank(vec3 rd){\n  float y = rd.y;\n  float band = smoothstep(-0.62, -0.26, y) * (1.0 - smoothstep(-0.04, 0.16, y));\n  if (band <= 0.001) return 0.0;\n  float az = atan(rd.z, rd.x);\n  vec2 p = vec2(az * 1.15 + uWuT * 0.004, 0.62 / max(0.10, abs(y) + 0.12));\n  float n = texture2D(uWuNoise, p * vec2(0.30, 0.20)).r;\n  n = n * 0.62 + texture2D(uWuNoise, p * vec2(0.74, 0.46) + 0.37).r * 0.38;\n  n = smoothstep(0.46, 0.80, n);\n  return n * band;\n}\nvec3 wuCloudColor(vec3 rd, float night){\n  if (night > 0.98) return vec3(0.0);\n  float a = wuCloudBank(rd);\n  if (a <= 0.0) return vec3(0.0);\n  vec3 warm = vec3(1.00, 0.88, 0.76);\n  vec3 cool = vec3(0.82, 0.86, 0.94);\n  float h = clamp((rd.y + 0.62) / 0.78, 0.0, 1.0);\n  vec3 col = mix(warm, cool, h * 0.55);\n  return col * a * 0.50 * (1.0 - clamp(night, 0.0, 1.0));\n}";
+function wuTri(x) {
+  var f = x - Math.floor(x);
+  return Math.min(0.49, Math.max(0.01, Math.abs(f - 0.5)));
+}
+function wuRot2(x, y, a) {
+  var c = Math.cos(a), s = Math.sin(a);
+  return [c * x - s * y, s * x + c * y];
+}
+function wuTriNoiseRaw(px, py, time) {
+  var z = 1.8, z2 = 2.5, rz = 0.0;
+  var r0 = wuRot2(px, py, px * 0.06);
+  var p = [r0[0], r0[1]];
+  var bp = [p[0], p[1]];
+  for (var i = 0; i < 5; i++) {
+    var ta = wuTri(bp[0] * 1.85), tb = wuTri(bp[1] * 1.85);
+    var dg = [(ta + tb) * 0.75, wuTri(bp[1] * 1.85 + ta) * 0.75];
+    dg = wuRot2(dg[0], dg[1], time * 0.2);
+    p[0] -= dg[0] / z2;
+    p[1] -= dg[1] / z2;
+    bp[0] *= 1.3; bp[1] *= 1.3;
+    z2 *= 0.45; z *= 0.42;
+    var k = 1.21 + (rz - 1.0) * 0.02;
+    p[0] *= k; p[1] *= k;
+    rz += wuTri(p[0] + wuTri(p[1])) * z;
+    var m = [0.95534 * p[0] - 0.29552 * p[1], 0.29552 * p[0] + 0.95534 * p[1]];
+    var r1 = wuRot2(m[0], m[1], -1.0);
+    p[0] = r1[0]; p[1] = r1[1];
+  }
+  return rz;
+}
+function wuTriNoise(px, py, time) {
+  var rz = wuTriNoiseRaw(px, py, time);
+  return Math.min(0.55, Math.max(0.0, 1.0 / Math.pow(Math.max(1e-6, rz) * 29.0, 1.3)));
+}
+function wuBakeAuroraNoise(size) {
+  var cv = document.createElement('canvas');
+  cv.width = size; cv.height = size;
+  var cx = cv.getContext('2d');
+  var img = cx.createImageData(size, size);
+  var d = img.data, x, y, i4;
+  for (y = 0; y < size; y++) {
+    for (x = 0; x < size; x++) {
+      var u = (x + 0.5) / size, v = (y + 0.5) / size;
+      var px = (u - 0.5) * 20.0, py = (v - 0.5) * 20.0;
+      i4 = (y * size + x) * 4;
+      d[i4] = Math.round(wuTriNoise(px, py, 0.0) / 0.55 * 255);
+      d[i4 + 1] = Math.round(wuTriNoise(px, py, 2.5) / 0.55 * 255);
+      d[i4 + 2] = Math.round(wuTriNoise(px, py, 5.0) / 0.55 * 255);
+      d[i4 + 3] = Math.round(wuTriNoise(px, py, 7.5) / 0.55 * 255);
+    }
+  }
+  cx.putImageData(img, 0, 0);
+  return cv;
+}
+    function wuSkyLightSig() {
+      try {
+        var mi = scene.getObjectByName('main-island');
+        var u = mi && mi.material && mi.material.uniforms;
+        var g = u && u.uGrassLightColor && u.uGrassLightColor.value;
+        var li = (u && u.lightIntensity && u.lightIntensity.value) || 1;
+        if (g) return [g.r * li, g.g * li, g.b * li];
+      } catch (eL) { window.__wuSkyErr = String(eL && eL.message || eL); }
+      return null;
+    }
+    function wuSkyBuild() {
+      if (wuSkyMesh) return true;
+      var TH = window.__THREE;
+      if (!TH || !TH.Mesh || !TH.MeshBasicMaterial || !TH.CanvasTexture) return false;
+      var skySrc = scene.getObjectByName('AnimeSky');
+      if (!skySrc || !skySrc.geometry) return false;
+      try {
+        var nz = new TH.CanvasTexture(wuBakeAuroraNoise(256));
+        nz.colorSpace = '';
+        nz.needsUpdate = true;
+        window.__wuSkyNoise = nz;
+        wuSkyU = { uAmt: { value: 0 }, uT: { value: 0 }, uInt: { value: 1 }, uAlt: { value: 0.8 }, uStar: { value: 1 }, uStarAmt: { value: 1 }, uCloudAmt: { value: 1 }, uNoise: { value: nz } };
+        var mat = new TH.MeshBasicMaterial({ color: 0xffffff, side: 1, transparent: true, depthWrite: false, depthTest: true, blending: 2, fog: false });
+        mat.onBeforeCompile = function (sh) {
+          sh.uniforms.uWuNoise = wuSkyU.uNoise;
+          sh.uniforms.uWuT = wuSkyU.uT;
+          sh.uniforms.uWuAur = wuSkyU.uAmt;
+          sh.uniforms.uWuInt = wuSkyU.uInt;
+          sh.uniforms.uWuAlt = wuSkyU.uAlt;
+          sh.uniforms.uWuStarOn = wuSkyU.uStar;
+          sh.uniforms.uWuStarAmt = wuSkyU.uStarAmt;
+          sh.uniforms.uWuCloudAmt = wuSkyU.uCloudAmt;
+          sh.vertexShader = 'varying vec3 vWuDir;\n' + sh.vertexShader;
+          sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n  vWuDir = normalize( ( modelMatrix * vec4( transformed, 1.0 ) ).xyz - cameraPosition );');
+          sh.fragmentShader = WU_AUR_GLSL + sh.fragmentShader;
+          sh.fragmentShader = sh.fragmentShader.replace('#include <opaque_fragment>', 'vec3 wuD = normalize( vWuDir );\n' + 'gl_FragColor = vec4( wuAuroraColor( wuD ) + wuCloudColor( wuD, uWuAur ), 1.0 );');
+        };
+        wuSkyMesh = new TH.Mesh(skySrc.geometry, mat);
+        wuSkyMesh.name = 'wu-sky-aurora';
+        wuSkyMesh.frustumCulled = false;
+        wuSkyMesh.renderOrder = 5;
+        wuSkyMesh.visible = false;
+        wuSkyMesh.position.copy(skySrc.position);
+        wuSkyMesh.quaternion.copy(skySrc.quaternion);
+        wuSkyMesh.scale.copy(skySrc.scale).multiplyScalar(0.985);
+        scene.add(wuSkyMesh);
+        window.__wuSkyMesh = wuSkyMesh;
+        window.__wuSkyU = wuSkyU;
+        window.__wuSkyStars = function (v) { wuSkyU.uStar.value = v ? 1 : 0; return wuSkyU.uStar.value; };
+        window.__wuSkyAmt = function (s, c) { if (isFinite(s)) wuSkyU.uStarAmt.value = Math.max(0, +s); if (isFinite(c)) wuSkyU.uCloudAmt.value = Math.max(0, +c); return { star: wuSkyU.uStarAmt.value, cloud: wuSkyU.uCloudAmt.value }; };
+        return true;
+      } catch (eA) {
+        wuSkyErr = String(eA && eA.message || eA);
+        window.__wuSkyErr = wuSkyErr;
+        return false;
+      }
+    }
+    function wuSkyPurge() {
+      var killed = { meshes: 0, geoms: 0, mats: 0, texs: 0, roots: 0 };
+      var targets = [];
+      scene.traverse(function (o) {
+        if (o && o.name && o.name.indexOf('Distant') === 0) targets.push(o);
+      });
+      if (!targets.length) return killed;
+      var inside = [];
+      for (var i = 0; i < targets.length; i++) {
+        var t = targets[i];
+        if (inside.indexOf(t) >= 0) continue;
+        t.traverse(function (o) { inside.push(o); });
+      }
+      var keepMat = [];
+      scene.traverse(function (o) {
+        if (inside.indexOf(o) >= 0) return;
+        if (!o.material) return;
+        var mm = o.material;
+        if (Array.isArray(mm)) { for (var j = 0; j < mm.length; j++) keepMat.push(mm[j]); }
+        else keepMat.push(mm);
+      });
+      var killedMat = [];
+      function killTex(tex) {
+        if (!tex || tex.__wuPurged) return;
+        tex.__wuPurged = true;
+        try { tex.dispose(); killed.texs++; } catch (eT) {}
+      }
+      function killMat(m) {
+        if (!m || m.__wuPurged || keepMat.indexOf(m) >= 0 || killedMat.indexOf(m) >= 0) return;
+        killedMat.push(m);
+        m.__wuPurged = true;
+        for (var k in m) {
+          if (!Object.prototype.hasOwnProperty.call(m, k)) continue;
+          var v = m[k];
+          if (v && v.isTexture) killTex(v);
+          else if (v && Array.isArray(v)) {
+            for (var q = 0; q < v.length; q++) { if (v[q] && v[q].isTexture) killTex(v[q]); }
+          }
+        }
+        try { m.dispose(); killed.mats++; } catch (eM) {}
+      }
+      for (var n = 0; n < inside.length; n++) {
+        var o2 = inside[n];
+        if (o2.isMesh || o2.isInstancedMesh || o2.isPoints || o2.isLine) {
+          killed.meshes++;
+          if (o2.geometry && !o2.geometry.__wuPurged) {
+            o2.geometry.__wuPurged = true;
+            try { o2.geometry.dispose(); killed.geoms++; } catch (eG) {}
+          }
+          var m2 = o2.material;
+          if (Array.isArray(m2)) { for (var z = 0; z < m2.length; z++) killMat(m2[z]); }
+          else killMat(m2);
+        }
+      }
+      for (var r = 0; r < targets.length; r++) {
+        var rt = targets[r];
+        if (rt.parent) { rt.parent.remove(rt); killed.roots++; }
+      }
+      wuSkyDistOn = false;
+      return killed;
+    }
+    function wuSkyDistant(show) {
+      var n = 0;
+      try {
+        scene.traverse(function (o) {
+          var nm = o && o.name;
+          if (!nm || nm.indexOf('Distant') !== 0) return;
+          o.visible = !!show;
+          n++;
+        });
+      } catch (eD2) { window.__wuSkyErr = String(eD2 && eD2.message || eD2); }
+      return n;
+    }
+    function wuExtendStars() {
+      if (window.__wuStarExtend) return true;
+      try {
+        var sky = scene.getObjectByName('AnimeSky');
+        if (!sky || !sky.material || !sky.material.fragmentShader) return false;
+        var fs = sky.material.fragmentShader;
+        if (fs.indexOf('y>-1.0){starContribution') > 0) { window.__wuStarExtend = true; return true; }
+        var nf = fs.replace('y>-0.1){starContribution', 'y>-1.0){starContribution');
+        if (nf === fs) return false;
+        sky.material.fragmentShader = nf;
+        sky.material.needsUpdate = true;
+        window.__wuStarExtend = true;
+        return true;
+      } catch (eX) { window.__wuStarErr = String(eX && eX.message || eX); return false; }
+    }
+    function wuSkyTick() {
+      if (!wuSkyBuild()) return;
+      wuSkyTickN++;
+      var sig = wuSkyLightSig();
+      if (sig) wuSkySig = sig;
+      var night = wuSkyNight;
+      if (wuSkySig) {
+        var dn = (wuSkySig[2] - wuSkySig[0]) / (wuSkySig[2] + wuSkySig[0] + 1e-3);
+        night = Math.min(1, Math.max(0, (dn + 0.20) / 0.45));
+      }
+      if (!wuSkyOn) night = 0;
+      wuSkyNight += (night - wuSkyNight) * 0.05;
+      wuSkyU.uAmt.value = wuSkyNight;
+      wuSkyU.uInt.value = wuSkyI;
+      if (wuSkyNight > 0.004) wuSkyU.uT.value = wuSkyU.uT.value + 0.016;
+      wuSkyMesh.visible = wuSkyNight > 0.004;
+      if ((wuSkyTickN % 30) === 1) wuSkyDistant(wuSkyDistOn);
+      if (!window.__wuStarExtend) wuExtendStars();
+      if (!window.__wuSkyAutoPurged && wuSkyTickN > 60 && !wuSkyDistOn) {
+        window.__wuSkyAutoPurged = true;
+        try { window.__wuSkyPurged = wuSkyPurge(); } catch (eAP) { window.__wuSkyErr = String(eAP && eAP.message || eAP); }
+      }
+      if (!wuSkyDistOn && wuSkyTickN > 60 && (wuSkyTickN % 150) === 0) {
+        try {
+          var wuLeft = 0;
+          scene.traverse(function (o2) { if (o2 && o2.name && o2.name.indexOf('Distant') === 0) wuLeft++; });
+          if (wuLeft > 0) window.__wuSkyPurged = wuSkyPurge();
+        } catch (eAP2) { window.__wuSkyErr = String(eAP2 && eAP2.message || eAP2); }
+      }
+    }
+    window.__wuSkyPurge = function () { var k = wuSkyPurge(); window.__wuSkyPurged = k; return k; };
+    window.__wuSky = function (p) {
+      p = p || {};
+      if (p.on !== undefined) wuSkyOn = !!p.on;
+      if (p.intensity !== undefined && isFinite(+p.intensity)) wuSkyI = Math.min(3, Math.max(0, +p.intensity));
+      if (p.distMt !== undefined) { wuSkyDistOn = !!p.distMt; wuSkyDistant(wuSkyDistOn); }
+      if (p.build) wuSkyBuild();
+      return window.__wuSkyState();
+    };
+    window.__wuSkyState = function () {
+      var hidden = 0, total = 0;
+      try {
+        scene.traverse(function (o) { if (o && o.name && o.name.indexOf('Distant') === 0) { total++; if (!o.visible) hidden++; } });
+      } catch (eS2) {}
+      return {
+        on: wuSkyOn, intensity: wuSkyI, distMt: wuSkyDistOn, mesh: !!wuSkyMesh,
+        night: +wuSkyNight.toFixed(3), amt: wuSkyU ? +wuSkyU.uAmt.value.toFixed(3) : null,
+        sig: wuSkySig ? [+wuSkySig[0].toFixed(4), +wuSkySig[1].toFixed(4), +wuSkySig[2].toFixed(4)] : null,
+        distantTotal: total, distantHidden: hidden, err: wuSkyErr
+      };
+    };
+    window.__wuBuildMesh = buildWuGroundMesh;
+    window.__wuLayoutMesh = layoutWuGroundMesh;
+    // 只重算抬升量（复用上一次的射线采样，秒回）。调参/取证用。
+    window.__wuRelift = function () { return wuApplyLift(); };
+    // 取证/调参接口：改「他贴地的那一点点偏置」并立即重算顶点。
+    // 调大 ⇒ 更多草被他挡住（他更「压住」草）；调小 ⇒ 更多草画在他身上。
+    window.__wuSetLift = function (off) {
+      if (isFinite(off)) WU_GROUND_OFFSET = off;
+      wuApplyLift();
+      return { groundOffset: WU_GROUND_OFFSET, depthRange: wuDepthRange };
+    };
+    window.__wuLiftState = function () {
+      return {
+        mode: 'groundDecal',
+        groundOffset: WU_GROUND_OFFSET,
+        depthRange: wuDepthRange,
+        dispReady: !!wuDisp, dispErr: window.__wuDispErr || null,
+        parallaxK: +WU_PARALLAX_K.toFixed(4),
+        alphaTest: WU_ALPHA_TEST,
+        seg: WU_SEG,
+        err: window.__wuLiftErr || null
+      };
+    };
+    window.__wuSetReveal = function (op) {
+      if (!wuMesh) return false;
+      wuMesh.material.opacity = op;
+      wuMesh.visible = op > 0.002;
+      return true;
+    };
+    window.__wuMeshState = function () {
+      if (!wuMesh) return { ready: false, err: window.__wuMeshErr || null };
+      var g = wuMesh.geometry;
+      // boxY 现场扫顶点：逐帧视差补偿直接改顶点、不重算 boundingBox，
+      // 用缓存的 boundingBox 会读到上一轮的旧值（诊断口不能说谎）。
+      var p = g.attributes.position.array, lo = Infinity, hi = -Infinity;
+      for (var i = 1; i < p.length; i += 3) { if (p[i] < lo) lo = p[i]; if (p[i] > hi) hi = p[i]; }
+      return {
+        ready: true, parent: wuMesh.parent && (wuMesh.parent.name || wuMesh.parent.type),
+        opacity: wuMesh.material.opacity, visible: wuMesh.visible,
+        depthTest: wuMesh.material.depthTest, depthWrite: wuMesh.material.depthWrite,
+        verts: g.attributes.position.count, seg: WU_SEG,
+        parallaxK: +WU_PARALLAX_K.toFixed(4),
+        boxY: isFinite(lo) ? [+lo.toFixed(3), +hi.toFixed(3)] : null
+      };
+    };
+    window.__removeState = function () {
+      return {
+        hidden: hideFound.map(function (o) { return o.name + ':' + o.visible; }),
+        leafChunksScanned: leafDone.size,
+        killedLeaves: killedLeaves.length,
+        occlusionComps: geomDone.occlusion || 0,
+        basaltComps: geomDone.basalt || 0
+      };
+    };
+
+    // ================= 自由放置编辑器 =================
+    // 需求：原树/营火/石头隐藏后，能自由重新摆放，且每个实例可再编辑。
+    //
+    // ⚠️ 本段所有构造器与原型都来自真机探针实测 —— 这个引擎只导出 7 个类，
+    //     凭记忆写必然踩空：
+    //   · window.__THREE 只有 Mesh / MeshBasicMaterial / Vector3 / Color 等 7 个，
+    //     **没有** Raycaster、Vector2、Group、InstancedMesh、Matrix4、DoubleSide。
+    //   · Raycaster 只能兜底取 eng.raycaster.raycaster 的构造器（实测名 r1），
+    //     且它的 layers.mask = 2147483648（1<<31，引擎的 INTERACTIVE_LAYER）——
+    //     只能打到可交互物件、打不到地形。地面射线必须显式写回 layers.mask = 1。
+    //   · Raycaster.setFromCamera 只读 coords.x / coords.y，传普通 {x,y} 对象即可，
+    //     不需要真的 Vector2（这是绕过 __THREE 缺类的关键）。
+    //   · Matrix4 从 cam.matrix.constructor 拿；Quaternion/Euler 就是上面的 QT/EU。
+    //   · 通用容器节点取 scene.getObjectByName('campfire') 的原型（普通 Object3D）。
+    //   · 营火的 fire / sparks / light / audio 都在 camp 组**之外**且与之平级，
+    //     克隆时必须换算成相对原营火组世界坐标的局部偏移，否则会叠回原位。
+    var TB = window.__THREE || {};
+    var M4 = cam.matrix.constructor;                 // Matrix4（__THREE 未导出）
+    // 放置参数。maxDist 挡掉「射线掠过岛屿、命中 y=-353 的远景地形平面」的情况 ——
+    // 实测相机在 (8,2.6,14) 时，光标稍偏右下的合法落点会一路飞到 z=-1100 的
+    // DistantTerrainGround_1_2 上（距离约 1100），用户完全没这个意图却静默放了个物件。
+    // 相机推拉上限是 120，所以 150 足够宽松，同时把这类离谱落点挡在外面。
+    var PLC = {
+      maxDist: 150, maxItems: 200, campfireWarn: 6,
+      scaleMin: 0.05, scaleMax: 30,
+      // 变体目录。每个变体指向运行时场景中已存在的「真物件」名，由 findProto 解析为对象。
+      // 三类物件的根本错因就是上一任没用这些「真物件」做克隆，而是用 Foliage_chunk 的单个
+      // billboard 假冒树、用 abs(rockscale) 假冒石、用 9 倍世界缩放假冒营火——见 PROGRESS §6。
+      variants: {
+        tree: [
+          // tree-main = 大树（带树干的唯一一棵）：树干 9.6 m + 树冠 ~43 簇叶子 ≈ ~2000 billboard
+          { id: 'big',   label: '🌲 大树(tree-main)', src: 'tree-main',
+            hasTrunk: true, hasFoliage: true, defaultScale: 1, note: '带树干，约 2000 个叶 billboard' },
+          { id: 't008',  label: '🌳 小树(tree-008)',  src: 'tree-008',
+            hasTrunk: false, hasFoliage: true, defaultScale: 1, note: '无树干，~220 叶 billboard' },
+          { id: 't001',  label: '🌳 小树(tree-001)',  src: 'tree-001',
+            hasTrunk: false, hasFoliage: true, defaultScale: 1, note: '无树干，~175 叶 billboard' }
+        ],
+        campfire: [
+          { id: 'default', label: '🔥 营火', src: 'campfire',
+            defaultScale: 1, note: '11 根木柴 + 火焰 + 火星 + 点光源 + 音效' }
+        ],
+        rock: [
+          // 上一任始终克隆 basalt-floating-rock（4.6 cm，最小的那个），所以「石头压根看不到」。
+          // 原始场景里「石头」实际指这两种大块玄武岩（dark angular formations）。
+          { id: 'big-top',   label: '🪨 巨石(basalt-top-old)',  src: 'basalt-top-old',
+            defaultScale: 0.4, note: '约 7.3×1.5×11.9 m，默认 ×0.4 ≈ 3 m' },
+          { id: 'big-main',  label: '🪨 巨石(basalt-main-old)', src: 'basalt-main-old',
+            defaultScale: 0.4, note: '约 11.3×2.7×17.1 m，默认 ×0.4 ≈ 4.5 m' },
+          { id: 'pebble',    label: '· 碎石(basalt-floating-rock)', src: 'basalt-floating-rock',
+            defaultScale: 8, note: '原始 4.6 cm，默认 ×8 ≈ 37 cm' }
+        ]
+      },
+      defaultVariant: { tree: 'big', campfire: 'default', rock: 'big-top' }
+    };
+    window.__placeCfg = PLC;
+    var RayCtor = (eng.raycaster && eng.raycaster.raycaster)
+      ? Object.getPrototypeOf(eng.raycaster.raycaster).constructor : null;
+    var groundRc = null;
+    if (RayCtor) {
+      groundRc = new RayCtor();
+      groundRc.near = 0;
+      groundRc.far = 3000;
+      groundRc.layers.mask = 1;                      // 关键：回到默认层才能打到地形
+    }
+    // ---------- 地形目标与地面射线 ----------
+    var terrainList = [], terrainStamp = 0;
+        function buildTerrain(force) {
+      var now = performance.now();
+      if (!force && now - terrainStamp < 2000) return terrainList;
+      terrainStamp = now;
+      var out = [];
+      scene.traverse(function (o) {
+        if (!o.isMesh || !o.geometry) return;
+        var n = (o.name || '').toLowerCase();
+        if (n.indexOf('grass') >= 0) return;
+        if (n.indexOf('pl-') === 0) return;
+        if (n.indexOf('island') < 0 && n.indexOf('basalt') < 0 &&
+            n.indexOf('terrain') < 0 && n.indexOf('ground') < 0) return;
+        out.push(o);
+      });
+      terrainList = out;
+      return out;
+    }
+    function castGround(nx, ny, list) {
+      if (!groundRc || !list.length) return null;
+      try {
+        groundRc.layers.mask = 1;                    // 每发都重申，防止被引擎改回 1<<31
+        groundRc.setFromCamera({ x: nx, y: ny }, cam);
+        var hits = groundRc.intersectObjects(list, false);
+        return hits.length ? hits[0] : null;
+      } catch (eG) { return null; }
+    }
+    function wuGaoDuKuai(x, z) {
+      var d = window.__diXing;
+      if (!d) return null;
+      var cx = (x - d.x0) / d.bu, cz = (z - d.z0) / d.bu;
+      if (cx < 0 || cz < 0 || cx >= d.n - 1 || cz >= d.n - 1) return null;
+      var ix = Math.floor(cx), iz = Math.floor(cz), tx = cx - ix, tz = cz - iz;
+      var s = d.shuJu, w = d.n;
+      var a = s[iz * w + ix], b = s[iz * w + ix + 1], c = s[(iz + 1) * w + ix], e = s[(iz + 1) * w + ix + 1];
+      if (a === -32768 || b === -32768 || c === -32768 || e === -32768) return null;
+      return ((a * (1 - tx) + b * tx) * (1 - tz) + (c * (1 - tx) + e * tx) * tz) / 1000;
+    }
+    function wuSheXianDiMian(nx, ny) {
+      if (!groundRc || !window.__diXing) return null;
+      groundRc.layers.mask = 1;
+      groundRc.setFromCamera({ x: nx, y: ny }, cam);
+      var ray = groundRc.ray, o = ray.origin, dv = ray.direction;
+      var t = 0.25, chuBu = 0.05;
+      for (var bu = 0; bu < 140; bu++) {
+        var x = o.x + dv.x * t, y = o.y + dv.y * t, z = o.z + dv.z * t;
+        var h = wuGaoDuKuai(x, z);
+        if (h === null) return null;
+        if (y - h <= 0) {
+          var lo = Math.max(0, t - chuBu), hi = t;
+          for (var k = 0; k < 18; k++) {
+            var m = (lo + hi) / 2;
+            var hm = wuGaoDuKuai(o.x + dv.x * m, o.z + dv.z * m);
+            if (hm === null) return null;
+            if (o.y + dv.y * m - hm <= 0) hi = m; else lo = m;
+          }
+          var th = (lo + hi) / 2;
+          return { distance: th, point: new V3(o.x + dv.x * th, o.y + dv.y * th, o.z + dv.z * th) };
+        }
+        if (t > 6 && y < -0.6) return null;
+        chuBu = Math.min(0.5, chuBu * 1.42);
+        t += chuBu;
+      }
+      return null;
+    }
+    function groundHit(nx, ny) {
+      var h = wuSheXianDiMian(nx, ny);
+      if (!h) {
+        h = castGround(nx, ny, buildTerrain());
+        if (!h) h = castGround(nx, ny, buildTerrain(true));
+      }
+      if (h && h.distance > PLC.maxDist) h = null;
+      return h;
+    }
+    window.__groundHit = function (nx, ny) {
+      var h = groundHit(nx, ny);
+      return h ? { x: h.point.x, y: h.point.y, z: h.point.z, name: h.object.name } : null;
+    };
+    window.__groundY = function (x, z) {
+      // 竖直射线：从高空垂直打，命中点 y 即该 xz 的地面高度
+      try {
+        if (!groundRc) return null;
+        groundRc.layers.mask = 1;
+        groundRc.set(new V3(x, 500, z), new V3(0, -1, 0));
+        var hits = groundRc.intersectObjects(buildTerrain(), false);
+        var h = hits.length ? hits[0] : null;
+        // 打空=岛外；命中点低于固定界限说明穿岛打到了 y=-353 的远景地形平面
+        // （实测 (-4.4,-7.2) 就会中招，把物件贴到岛下 350 m）——都按无效处理。
+        // 用固定常数而非 CFG.minHeight：minHeight 可被 tuning 调到 0，会把低处地形全判无效
+        if (!h || h.point.y < -30) return null;
+        return +h.point.y.toFixed(5);
+      } catch (eY) { return null; }
+    };
+    // ---------- 原型解析 ----------
+    // ⚠️ 这一版彻底换了做法：不再「合成」物件，而是把运行时场景里**真实存在的那棵树 /
+    //    那个营火 / 那块石头**整套克隆出来，只做「锚点归零 + 世界缩放还原」两件事。
+    //    三类物件的错因都实证过（探针 + GLB 解析 + 着色器反读）：
+    //      · 树：Foliage_chunk 的「一个实例」其实是一片 2 cm 的叶子 billboard，
+    //        一棵真树 = 4~43 个「树冠」节点 × 每冠 ~44 片叶 ≈ 175~2000 片。
+    //        只放 1 片 → 屏幕上就是一撮草。
+    //      · 营火：campfire 组原点在世界 (0,0,0)，而木柴在 x=+3.07 → 直接克隆会把柴堆
+    //        甩到 3 米外，只剩火焰停在落点 →「营火只有火」。
+    //      · 石头：basalt-floating-rock 世界尺寸只有 4.6 cm（24 颗里最小的那颗），
+    //        而且顶点着色器不做任何膨胀 → 放下去就是看不见。
+    var PROTO = { ok: false };
+    var ISL = 9;                       // islands 组的世界缩放（实测，勿改）
+    function invIslands() { return new M4().copy(scene.getObjectByName('islands').matrixWorld).invert(); }
+    // 源对象在「islands 局部空间」的矩阵（剥掉 islands 的 9 倍缩放）
+    function localOf(o) {
+      scene.updateMatrixWorld(true);
+      var isl = scene.getObjectByName('islands');
+      if (!isl) return new M4().copy(o.matrixWorld);
+      return new M4().multiplyMatrices(new M4().copy(isl.matrixWorld).invert(), new M4().copy(o.matrixWorld));
+    }
+    function inIslands(o) {
+      var q = o.parent;
+      while (q) { if (q.name === 'islands') return true; q = q.parent; }
+      return false;
+    }
+    // 树/石头原型填充：幂等，可反复调用（只补缺失条目，全是 getObjectByName，代价极小）
+    function fillTreesAndRocks() {
+      // 树：只缓存「组引用」。树是异步流入的，实测 20 秒时 findProto 即可成功，
+      // 而树干/树冠的世界矩阵要更晚才就位 —— 早前把冠点坐标快照进 PROTO，
+      // 之后每次放置都用加载中间态的错值当锚点（实测整树被抬高 ~1.25 m）。
+      // 树干/树冠/木柴坐标一律由 buildInstance 在放置时实时收集。
+      PROTO.trees = PROTO.trees || {};
+      ['tree-main', 'tree-001', 'tree-002', 'tree-003', 'tree-005', 'tree-006', 'tree-007',
+       'tree-008', 'tree-009', 'tree-010', 'tree-011'].forEach(function (tn) {
+        if (PROTO.trees[tn]) return;
+        var g = scene.getObjectByName(tn);
+        if (!g || !g.children.length) return;      // 组还没填充内容，下轮重试
+        PROTO.trees[tn] = { group: g, inIsl: inIslands(g) };
+      });
+      // 石头：同样只存引用
+      PROTO.rocks = PROTO.rocks || {};
+      ['basalt-top-old', 'basalt-main-old', 'basalt-floating-rock'].forEach(function (rn) {
+        if (PROTO.rocks[rn]) return;
+        var o = scene.getObjectByName(rn);
+        if (!o || !o.geometry) return;
+        PROTO.rocks[rn] = { obj: o, inIsl: inIslands(o) };
+      });
+    }
+    function findProto() {
+      if (PROTO.ok) {
+        // 闩锁后仍补抓缺失的树/石头变体：某组若晚于闩锁才加载，否则会永久
+        // 「构建失败」且无提示。placeState 被高频调用，补扫节流到 2 秒一次。
+        var nowS = performance.now();
+        if (nowS - (PROTO.lastSweep || 0) >= 2000) {
+          PROTO.lastSweep = nowS;
+          fillTreesAndRocks();
+        }
+        return true;
+      }
+      scene.updateMatrixWorld(true);
+      var isl = scene.getObjectByName('islands');
+      var camp = scene.getObjectByName('campfire');
+      if (!isl || !camp) return false;
+      // 营火只缓存「组引用」；木柴堆中心由 buildInstance 实时重算。
+      // 引擎对象是异步就位的，这里若快照坐标，放置就会用加载中间态的错值。
+      var n0 = 0;
+      camp.traverse(function (o) { if (o.isMesh) n0++; });
+      if (!n0) return false;                       // 营火尚未就位，下轮重试
+      PROTO.islands = isl;
+      PROTO.camp = camp;
+      PROTO.fire = scene.getObjectByName('Campfire_fire');
+      PROTO.sparks = scene.getObjectByName('Campfire_sparks');
+      PROTO.light = scene.getObjectByName('CampfireLight');
+      if (!PROTO.audio) {
+        scene.traverse(function (o) {
+          if (!PROTO.audio && o.name === 'campfire' && (o.isAudio || o.type === 'Audio')) PROTO.audio = o;
+        });
+      }
+      // 树/石头原型引用（幂等填充，闩锁后还会节流补抓）
+      fillTreesAndRocks();
+      // 树叶实例索引：每个 chunk 的每个实例 → bushCenter（用于配对树冠）
+      if (!PROTO.chunks) {
+        var cs = [];
+        scene.traverse(function (o) {
+          if (o.isInstancedMesh && o.name && o.name.indexOf('Foliage_chunk') === 0) cs.push(o);
+        });
+        if (!cs.length) return false;
+        PROTO.chunks = cs;
+        PROTO.instCtor = Object.getPrototypeOf(cs[0]).constructor;
+        PROTO.nodeCtor = Object.getPrototypeOf(camp).constructor;
+      }
+      PROTO.ok = true;
+      PROTO.lastSweep = performance.now();
+      return true;
+    }
+    // 把某个树冠（islands 局部坐标 c）在全部 chunk 里的叶子实例找出来。
+    // 判据：实例的 bushCenter 属性 === 树冠的局部坐标（实测逐位相等，容差 1e-4）。
+    function leavesOfCrown(c) {
+      var out = [];
+      for (var k = 0; k < PROTO.chunks.length; k++) {
+        var ch = PROTO.chunks[k];
+        var bc = ch.geometry.attributes.bushCenter;
+        if (!bc) continue;
+        var list = [];
+        for (var i = 0; i < ch.count; i++) {
+          var dx = bc.array[i * bc.itemSize] - c.local.x;
+          var dy = bc.array[i * bc.itemSize + 1] - c.local.y;
+          var dz = bc.array[i * bc.itemSize + 2] - c.local.z;
+          if (dx * dx + dy * dy + dz * dz < 1e-8) list.push(i);
+        }
+        if (list.length) out.push({ chunk: ch, idx: list });
+      }
+      return out;
+    }
+    // ⚠️ 原型必须「内容一加载就抓」，不能等用户第一次点放置才去找。
+    //    实测引擎会按相机距离卸载远处 chunk：同一台机器上树从 161 掉到 97、
+    //    `basalt-floating-rock` 直接消失，此时 __placeEnter 只会回「原型尚未加载完成」。
+    //    抓在卸载之前、之后一直持有引用（clone 只用几何/材质/子节点，不依赖原对象在树上），
+    //    相机在哪儿都能放。
+    // 原型抓取：成功即停，失败不设重试上限。树/营火/石头是异步加载的，
+    // 偶发资源抖动会让加载远超 4 分钟（实测出现过 120 秒仍未就绪的会话），
+    // 早前的 480 次上限放弃后，放置会永久报「原型未加载」且无任何提示。
+    var protoTimer = setInterval(function () {
+      if (findProto()) clearInterval(protoTimer);
+    }, 500);
+    // ---------- 通用工具 ----------
+    // 世界 AABB（把 geometry bbox 的 8 个角点变换到世界，避免 InstancedMesh 的坑）
+    function worldBox(objs, extraPts) {
+      var mn = null, mx = null;
+      function acc(v) {
+        if (!mn) { mn = [v.x, v.y, v.z]; mx = [v.x, v.y, v.z]; }
+        else {
+          mn[0] = Math.min(mn[0], v.x); mn[1] = Math.min(mn[1], v.y); mn[2] = Math.min(mn[2], v.z);
+          mx[0] = Math.max(mx[0], v.x); mx[1] = Math.max(mx[1], v.y); mx[2] = Math.max(mx[2], v.z);
+        }
+      }
+      objs.forEach(function (o) {
+        if (!o.geometry) return;
+        try { if (!o.geometry.boundingBox) o.geometry.computeBoundingBox(); } catch (e) { return; }
+        var bb = o.geometry.boundingBox; if (!bb) return;
+        var m = new M4().copy(o.matrixWorld), v = new V3();
+        if (o.isInstancedMesh && o.instanceMatrix) {
+          // 树叶等 InstancedMesh 的几何只有单个 ~2cm billboard，真实范围靠逐实例
+          // 矩阵撑开 —— 只按几何 bbox 算会得出无意义的假盒子，必须逐实例聚合
+          var inst = new M4();
+          for (var ii = 0; ii < o.count; ii++) {
+            inst.fromArray(o.instanceMatrix.array, ii * 16);
+            inst.premultiply(m);
+            for (var i2 = 0; i2 < 8; i2++) {
+              v.set(i2 & 1 ? bb.max.x : bb.min.x, i2 & 2 ? bb.max.y : bb.min.y, i2 & 4 ? bb.max.z : bb.min.z);
+              v.applyMatrix4(inst); acc(v);
+            }
+          }
+          return;
+        }
+        for (var i = 0; i < 8; i++) {
+          v.set(i & 1 ? bb.max.x : bb.min.x, i & 2 ? bb.max.y : bb.min.y, i & 4 ? bb.max.z : bb.min.z);
+          v.applyMatrix4(m); acc(v);
+        }
+      });
+      (extraPts || []).forEach(function (p) { acc(p); });
+      if (!mn) return null;
+      return { min: new V3(mn[0], mn[1], mn[2]), max: new V3(mx[0], mx[1], mx[2]),
+               size: new V3(mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2]),
+               center: new V3((mn[0] + mx[0]) / 2, (mn[1] + mx[1]) / 2, (mn[2] + mx[2]) / 2) };
+    }
+    function variantOf(kind, variantId) {
+      var list = PLC.variants[kind] || [];
+      for (var i = 0; i < list.length; i++) if (list[i].id === variantId) return list[i];
+      return list[0] || null;
+    }
+    // 把「源对象」克隆成放置物的子节点：
+    //   · 源在 islands 下 → 挂 inner（scale=9），clone.matrix = T(-anchorL) × localOf(src)
+    //   · 源不在 islands（如 CampfireLight 挂在 MainScene）→ 直接挂 outer，clone.matrix = T(-anchorW) × src.matrixWorld
+    // 结果：源在世界里的「锚点」精确落到落点 P，且相对形状与原始完全一致 × 缩放倍率。
+    function addClone(parent, src, anchorL, anchorW, ghost, name) {
+      if (!src) return null;
+      var c = src.clone(true);
+      restoreCloneGeometry(src, c);
+      c.name = name || ('pl-' + (src.name || 'obj'));
+      // ⚠️ 必须重命名子件，引擎的「场景树木/营火/石头已隐藏」开关按名
+      //    前缀（tree-*、Foliage_chunk_*、basalt-* 等）整树设 visible=false；
+      //    克隆出来的子件若沿用原名，会在每一帧被那个开关压成不可见 ——「放进场景了却
+      //    一颗像素都没有」。重命名克隆要带 pl- 前缀显式指定。
+      c.traverse(function (o) {
+        if (o !== c && o.name) o.name = 'pl-x-' + o.name;
+      });
+      if (inIslands(src)) {
+        c.matrix.copy(new M4().multiplyMatrices(new M4().makeTranslation(-anchorL.x, -anchorL.y, -anchorL.z), localOf(src)));
+      } else {
+        c.matrix.copy(new M4().multiplyMatrices(new M4().makeTranslation(-anchorW.x, -anchorW.y, -anchorW.z), new M4().copy(src.matrixWorld)));
+      }
+      c.matrixAutoUpdate = false;
+      c.matrixWorldNeedsUpdate = true;
+      if (ghost && ghostMat) {
+        c.traverse(function (o) { if (o.isMesh && o.material && !o.isInstancedMesh) o.material = ghostMat; });
+      }
+      parent.add(c);
+      return c;
+    }
+    // ---------- 幽灵预览 ----------
+    // 树叶是自定义 ShaderMaterial，opacity uniform 不存在，改材质透明度压不住，
+    // 所以幽灵一律换成 MeshBasicMaterial（探针10 实测能正常渲染）。
+    var ghostMat = TB.MeshBasicMaterial
+      ? new TB.MeshBasicMaterial({ color: 0x7fe08a, transparent: true, opacity: 0.32, depthWrite: false })
+      : null;
+    var ghostCache = {};
+    // ⚠️ 幽灵必须与真正放下去的物件**同一个构建函数、同一套矩阵**，
+    //    否则「预览看着对 / 放下就变形」会再次变成盲区（上一任就是两边各写一套）。
+    function ghostFor(kind, variantId) {
+      var vid = (variantOf(kind, variantId || (S.place.variant && S.place.variant[kind])) || {}).id;
+      var key = kind + ':' + vid;
+      if (ghostCache[key]) return ghostCache[key];
+      var node = buildInstance(kind, 'ghost-' + vid, vid, true);
+      if (!node) return null;
+      node.name = 'ghost-' + key;
+      node.visible = false;
+      ghostCache[key] = node;
+      return node;
+    }
+    // ---------- 树叶：按实例裁剪几何 ----------
+    // ⚠️ 逐实例属性必须和 instanceMatrix 一起裁、一起平移，否则全部错位：
+    //   · count=N 却用共享几何 → 读到的是**前 N 个别人的** packData/bushCenter；
+    //   · bushCenter 不跟着 instanceMatrix 平移 → 着色器的 AO
+    //     （calculateAmbientOcclusion(originalPos, bushCenter)）整片算错。
+    var LEAF_ATTRS = ['packData1', 'packData2', 'bushCenter', 'channelMask', 'colorVariation'];
+    function croppedLeafGeo(chunk, idx, anchorL) {
+      var g = chunk.geometry.clone();
+      // 克隆体会继承源 chunk 的包围球/盒（覆盖全岛的假大盒）——置空让它按裁剪后
+      // 顶点重算，避免未来引擎改动时视锥剔除或 __placeBox 读数失真
+      g.boundingBox = null;
+      g.boundingSphere = null;
+      for (var i = 0; i < LEAF_ATTRS.length; i++) {
+        var nm = LEAF_ATTRS[i];
+        var src = chunk.geometry.attributes[nm];
+        if (!src || !src.array) continue;
+        var isz = src.itemSize, Ctor = Object.getPrototypeOf(src).constructor;
+        var arr = new src.array.constructor(idx.length * isz);
+        for (var k = 0; k < idx.length; k++) {
+          for (var j = 0; j < isz; j++) arr[k * isz + j] = src.array[idx[k] * isz + j];
+          if (nm === 'bushCenter') {
+            arr[k * isz] -= anchorL.x; arr[k * isz + 1] -= anchorL.y; arr[k * isz + 2] -= anchorL.z;
+          }
+        }
+        var na = new Ctor(arr, isz);
+        na.isInstancedBufferAttribute = true;      // 必须仍是逐实例，否则会被当普通顶点属性
+        na.meshPerAttribute = 1;
+        g.setAttribute(nm, na);
+      }
+      return g;
+    }
+    // 一棵树 = 若干「树冠」× 每冠约 44 片叶。把这些叶子从各 Foliage_chunk 里挑出来，
+    // 按 chunk 分组各建一个 InstancedMesh（不同 chunk 的逐实例属性是各自的）。
+    function addFoliage(parent, crowns, anchorL, id) {
+      var byChunk = {}, order = [];
+      crowns.forEach(function (c) {
+        leavesOfCrown(c).forEach(function (grp) {
+          var key = grp.chunk.uuid;
+          if (!byChunk[key]) { byChunk[key] = { chunk: grp.chunk, idx: [] }; order.push(key); }
+          byChunk[key].idx = byChunk[key].idx.concat(grp.idx);
+        });
+      });
+      var total = 0;
+      order.forEach(function (key) {
+        var e = byChunk[key], ch = e.chunk, idx = e.idx;
+        if (!idx.length) return;
+        var im = new PROTO.instCtor(croppedLeafGeo(ch, idx, anchorL), ch.material, idx.length);
+        im.name = 'pl-leaves-' + id;
+        var a = im.instanceMatrix.array, m = new M4(), p = new V3(), q = new QT(), s = new V3(), t = new M4();
+        for (var k = 0; k < idx.length; k++) {
+          var lm = leafMatrixArray(ch, idx[k]);
+          m.fromArray(lm.arr, lm.off);
+          m.decompose(p, q, s);
+          t.makeTranslation(p.x - anchorL.x, p.y - anchorL.y, p.z - anchorL.z);
+          for (var w = 0; w < 16; w++) a[k * 16 + w] = t.elements[w];
+        }
+        im.instanceMatrix.needsUpdate = true;
+        im.count = idx.length;
+        // 矩阵已把锚点减掉，节点自身保持单位阵（缩放由 outer/inner 负责）
+        im.matrix.identity();
+        im.matrixAutoUpdate = false;
+        im.matrixWorldNeedsUpdate = true;
+        parent.add(im);
+        total += idx.length;
+      });
+      return total;
+    }
+    // ---------- 实例构建 ----------
+    var KIND_LABEL = { tree: '树', campfire: '营火', rock: '石头' };
+    S.place = { mode: false, kind: 'tree', items: [], sel: null, nextId: 1, groundY: null,
+                variant: { tree: PLC.defaultVariant.tree,
+                           campfire: PLC.defaultVariant.campfire,
+                           rock: PLC.defaultVariant.rock },
+                // 「下一个要放多大」：每个类型各自记住，切换型号时回到该型号的默认值
+                scale: { tree: (variantOf('tree', PLC.defaultVariant.tree) || {}).defaultScale || 1,
+                         campfire: (variantOf('campfire', PLC.defaultVariant.campfire) || {}).defaultScale || 1,
+                         rock: (variantOf('rock', PLC.defaultVariant.rock) || {}).defaultScale || 1 } };
+    S.cursor = { nx: 0, ny: 0, has: false };
+    function buildInstance(kind, id, variantId, ghost) {
+      if (!findProto()) return null;
+      var V = variantOf(kind, variantId);
+      if (!V) return null;
+      // 两级容器：outer 承担「落点 + 旋转 + 用户缩放」，inner 还原 islands 的 9 倍世界缩放。
+      // 这样岛屿内的子件（树/木柴/火/火星/石头）挂 inner，不在 islands 下的（点光源）挂 outer。
+      var outer = new PROTO.nodeCtor();
+      outer.name = 'place-' + kind + '-' + id;
+      var inner = new PROTO.nodeCtor();
+      inner.name = 'pl-inner-' + id;
+      inner.scale.set(ISL, ISL, ISL);
+      outer.add(inner);
+      var anchorW = null, leaves = 0;
+      if (kind === 'tree') {
+        var tr = PROTO.trees[V.src];
+        if (!tr) return null;
+        // 树干/树冠位置实时收集 —— 树异步就位，任何早前的快照都不可信（见 findProto 注释）
+        var crowns = [], trunks = [];
+        tr.group.traverse(function (o) {
+          if (o === tr.group) return;
+          var p = new V3(); o.getWorldPosition(p);
+          if (o.isMesh) trunks.push(o);
+          else crowns.push({ name: o.name, local: new V3(p.x / ISL, p.y / ISL, p.z / ISL), world: p.clone() });
+        });
+        // 锚点 = 树干+树冠世界包围盒的「底面中心」→ 树站在落点上，而不是吊在半空
+        var box = worldBox(trunks, crowns.map(function (c) { return c.world; }));
+        if (!box) return null;
+        anchorW = new V3(box.center.x, box.min.y, box.center.z);
+        var tL = new V3(anchorW.x / ISL, anchorW.y / ISL, anchorW.z / ISL);
+        // 组克隆负责树干（树冠节点是空 Object3D，克隆出来没有几何）
+        if (!addClone(inner, tr.group, tL, anchorW, ghost, 'pl-treegrp-' + id)) return null;
+        leaves = addFoliage(inner, crowns, tL, id);
+      } else if (kind === 'rock') {
+        var r = PROTO.rocks[V.src];
+        if (!r) return null;
+        var rb = worldBox([r.obj], null);
+        if (!rb) return null;
+        anchorW = new V3(rb.center.x, rb.min.y, rb.center.z);
+        var rL = new V3(anchorW.x / ISL, anchorW.y / ISL, anchorW.z / ISL);
+        if (!addClone(inner, r.obj, rL, anchorW, ghost, 'pl-rock-' + id)) return null;
+      } else if (kind === 'campfire') {
+        // 木柴堆中心实时重算（全部木柴 mesh 世界坐标的均值，不能用组原点）
+        var acc = new V3(), v0 = new V3(), nn = 0;
+        PROTO.camp.traverse(function (o) { if (o.isMesh) { o.getWorldPosition(v0); acc.add(v0); nn++; } });
+        if (!nn) return null;
+        acc.multiplyScalar(1 / nn);
+        anchorW = acc;
+        var cL = new V3(acc.x / ISL, acc.y / ISL, acc.z / ISL);
+        if (!addClone(inner, PROTO.camp, cL, anchorW, ghost, 'pl-wood-' + id)) return null;
+        addClone(inner, PROTO.fire, cL, anchorW, ghost, 'pl-fire-' + id);
+        addClone(inner, PROTO.sparks, cL, anchorW, ghost, 'pl-sparks-' + id);
+        if (!ghost) {   // 幽灵只是视觉预览：不带真实点光源（会照亮场景），也不带音频
+          addClone(outer, PROTO.light, cL, anchorW, ghost, 'pl-light-' + id);   // 不在 islands 下
+          addClone(inner, PROTO.audio, cL, anchorW, ghost, 'pl-audio-' + id);
+        }
+      } else { return null; }
+      outer.traverse(function (o) { o.frustumCulled = false; });
+      // ⚠️ clone() 会连 visible 一起复制，而源对象此刻可能正被「默认隐藏」开关压成 false
+      //    → 不逐个强制 true 就会出现「放进场景了却一个像素都看不见」。
+      outer.traverse(function (o) { o.visible = true; });
+      outer.userData.leaves = leaves;
+      outer.userData.anchorW = anchorW;
+      if (!ghost) scene.add(outer);
+      return outer;
+    }
+    function itemById(id) {
+      for (var i = 0; i < S.place.items.length; i++) if (S.place.items[i].id === id) return S.place.items[i];
+      return null;
+    }
+    function applyItem(it) {
+      if (!it || !it.node) return;
+      it.node.position.set(it.x, it.y, it.z);
+      it.node.rotation.set(0, it.rotY * D2R, 0);
+      it.node.scale.set(it.scale, it.scale, it.scale);
+    }
+    function addItem(kind, x, y, z, rotY, scale, variantId) {
+      // 容量上限对鼠标落位 / __placeAdd / 导入三条路径统一生效
+      if (S.place.items.length >= PLC.maxItems) {
+        if (window.__onPlaceWarn) window.__onPlaceWarn('已达上限 ' + PLC.maxItems + ' 个，无法继续放置');
+        return null;
+      }
+      var V = variantOf(kind, variantId || (S.place.variant && S.place.variant[kind]));
+      if (!V) return null;
+      var id = S.place.nextId++;
+      var node = buildInstance(kind, id, V.id, false);
+      if (!node) return null;
+      var it = { id: id, kind: kind, variant: V.id, node: node,
+                 x: +finite(x, 0), y: +finite(y, 0), z: +finite(z, 0),
+                 rotY: +finite(rotY, 0),
+                 scale: Math.min(PLC.scaleMax, Math.max(PLC.scaleMin,
+                          finite(scale, V.defaultScale))) };
+      applyItem(it);
+      S.place.items.push(it);
+      S.place.sel = id;
+      return it;
+    }
+    // 只释放「派生资源」：裁剪树叶几何是每个实例独立新建的，必须 dispose，
+    // 否则反复增删/重导入会持续累积 GPU 缓冲。树干/木柴/石头/火焰的几何与
+    // 原场景对象共享（clone 不复制几何），绝不能释放，否则原生树会碎掉。
+    function disposeItemNode(n) {
+      n.traverse(function (o) {
+        if (o.isInstancedMesh && o.name && o.name.indexOf('pl-leaves-') === 0) {
+          if (o.geometry) o.geometry.dispose();
+          if (o.dispose) o.dispose();
+        }
+      });
+    }
+    function deleteItem(id) {
+      var it = itemById(id);
+      if (!it) return false;
+      if (it.node && it.node.parent) { disposeItemNode(it.node); it.node.parent.remove(it.node); }
+      S.place.items.splice(S.place.items.indexOf(it), 1);
+      if (S.place.sel === id) S.place.sel = null;
+      return true;
+    }
+    function clearItems() {
+      for (var i = 0; i < S.place.items.length; i++) {
+        var n = S.place.items[i].node;
+        if (n && n.parent) { disposeItemNode(n); n.parent.remove(n); }
+      }
+      S.place.items = [];
+      S.place.sel = null;
+    }
+    function ghostKey(kind) {
+      var vid = (variantOf(kind, S.place.variant && S.place.variant[kind]) || {}).id;
+      return kind + ':' + vid;
+    }
+    function placeState() {
+      var sel = itemById(S.place.sel);
+      var gk = ghostKey(S.place.kind), gh = ghostCache[gk];
+      function vlabel(kind, vid) { var v = variantOf(kind, vid); return v ? v.label : vid; }
+      return {
+        mode: !!S.place.mode, kind: S.place.kind, count: S.place.items.length,
+        variant: (S.place.variant && S.place.variant[S.place.kind]) || null,
+        nextScale: (S.place.scale && S.place.scale[S.place.kind]) || 1,
+        variantList: (PLC.variants[S.place.kind] || []).map(function (v) {
+          return { id: v.id, label: v.label, note: v.note, defaultScale: v.defaultScale }; }),
+        sel: S.place.sel, ready: findProto(),
+        ghost: { has: !!(gh && gh.visible),
+                 pos: gh ? [+gh.position.x.toFixed(3), +gh.position.y.toFixed(3), +gh.position.z.toFixed(3)] : null },
+        items: S.place.items.map(function (o) {
+          return { id: o.id, kind: o.kind, label: KIND_LABEL[o.kind],
+                   variant: o.variant, variantLabel: vlabel(o.kind, o.variant),
+                   x: +o.x.toFixed(4), y: +o.y.toFixed(4), z: +o.z.toFixed(4),
+                   rotY: +o.rotY.toFixed(2), scale: +o.scale.toFixed(4),
+                   leaves: o.node ? (o.node.userData.leaves || 0) : 0,
+                   kids: o.node ? o.node.children.length : 0 };
+        }),
+        selected: sel ? { id: sel.id, kind: sel.kind, variant: sel.variant,
+                          variantLabel: vlabel(sel.kind, sel.variant),
+                          x: sel.x, y: sel.y, z: sel.z,
+                          rotY: sel.rotY, scale: sel.scale,
+                          ground: window.__groundY(sel.x, sel.z) } : null
+      };
+    }
+    function notifyPlace() { if (window.__onPlace) window.__onPlace(placeState()); }
+    // ---------- 幽灵跟随光标（渲染前一刻更新，与相机强制写入同一时机） ----------
+    function updateGhost() {
+      var kind = S.place.kind, gk = ghostKey(kind);
+      // ⚠️ 切换物件类型/型号时，上一个幽灵必须收起来。
+      //    幽灵节点是按「类型:型号」缓存并常驻场景的（只是靠 visible 控制），
+      //    只更新当前键而不管 others 的话，切一次型号屏幕上就会同时挂着好几个预览。
+      for (var k in ghostCache) {
+        if (k !== gk && ghostCache[k]) ghostCache[k].visible = false;
+      }
+      if (!S.place.mode) {
+        for (var k2 in ghostCache) if (ghostCache[k2]) ghostCache[k2].visible = false;
+        return;
+      }
+      var node = ghostFor(kind);
+      if (!node) return;
+      // 幽灵必须用「即将落位的那个缩放」，否则「预览 1 倍 / 放下变 0.4 倍」会吓一跳
+      var sv = (S.place.scale && S.place.scale[kind]) || 1;
+      node.scale.set(sv, sv, sv);
+      if (node.parent !== scene) scene.add(node);
+      if (!S.cursor.has) { node.visible = false; return; }
+      var h = groundHit(S.cursor.nx, S.cursor.ny);
+      if (!h) { node.visible = false; return; }
+      node.visible = true;
+      node.position.set(h.point.x, h.point.y, h.point.z);
+    }
+    // ---------- 放置模式：光标 + 左键落位 + 右键转视角 ----------
+    function canvasRect() {
+      var cv = eng.canvas || document.querySelector('canvas');
+      return (cv && cv.getBoundingClientRect) ? cv.getBoundingClientRect() : null;
+    }
+    window.addEventListener('mousemove', function (e) {
+      if (S.place.mode) {
+        var r = canvasRect();
+        if (r && r.width > 0 && r.height > 0) {
+          S.cursor.nx = ((e.clientX - r.left) / r.width) * 2 - 1;
+          S.cursor.ny = -((e.clientY - r.top) / r.height) * 2 + 1;
+          S.cursor.has = true;
+        }
+        if (e.buttons & 2) addLook(e.movementX || 0, e.movementY || 0);   // 右键拖拽转视角
+        // ⚠️ 非放置模式**不要**在这里再调 addLook：上面的原始 mousemove 监听已经调了，
+        //    两处都调会让每次鼠标移动转两次视角（yaw/pitch 变化量翻倍）。
+        //    这个重复曾把「变化量与 sensitivity 精确一致」的验证打挂，是本轮真实回归。
+        return;
+      }
+      // 放置模式之外一律交给原始监听处理，本监听不碰视角
+    });
+    window.addEventListener('mouseleave', function () { S.cursor.has = false; });
+    window.addEventListener('mousedown', function (e) {
+      if (!S.place.mode || e.button !== 0) return;
+      e.preventDefault();
+      var node = ghostFor(S.place.kind);
+      if (!node || !node.visible) { notifyPlace(); return; }
+      var it = addItem(S.place.kind, node.position.x, node.position.y, node.position.z, 0,
+                       S.place.scale[S.place.kind], S.place.variant[S.place.kind]);
+      if (!it) return;
+      // 点光源每个营火一份，点多了会拖垮帧率，这里给一句实话而不是静默
+      if (S.place.kind === 'campfire' && S.place.items.length > PLC.campfireWarn) {
+        if (window.__onPlaceWarn) window.__onPlaceWarn('营火已超过 ' + PLC.campfireWarn + ' 个，每个都带点光源，帧率可能下降');
+      }
+      notifyPlace();
+    }, true);
+    window.addEventListener('contextmenu', function (e) { if (S.place.mode) e.preventDefault(); });
+    window.addEventListener('keydown', function (e) {
+      if (e.code === 'Escape' && S.place.mode) window.__placeExit();
+    });
+    // ---------- 宿主接口 ----------
+    window.__placeEnter = function (kind, variantId) {
+      if (!findProto()) return { ok: false, reason: '原型尚未加载完成（树/营火/石头还没出现）' };
+      S.place.kind = (kind === 'campfire' || kind === 'rock') ? kind : 'tree';
+      if (variantId) {
+        // 型号白名单：非法值拒绝写入，否则状态回显的 variant 与实际放置型号不一致
+        var vok = false;
+        (PLC.variants[S.place.kind] || []).forEach(function (vv) { if (vv.id === variantId) vok = true; });
+        if (vok) S.place.variant[S.place.kind] = variantId;
+      }
+      S.place.mode = true;
+      ghostFor(S.place.kind);
+      notifyPlace();
+      return { ok: true, state: placeState() };
+    };
+    // 切换型号：换源对象 + 把「下一个缩放」复位到该型号的默认值
+    window.__placeSetVariant = function (variantId) {
+      var list = PLC.variants[S.place.kind] || [];
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].id === variantId) {
+          S.place.variant[S.place.kind] = variantId;
+          S.place.scale[S.place.kind] = list[i].defaultScale;
+          if (S.place.mode) ghostFor(S.place.kind);
+          notifyPlace();
+          return placeState();
+        }
+      }
+      return placeState();
+    };
+    window.__placeSetScale = function (v) {
+      var n = parseFloat(v);
+      if (!isFinite(n)) return placeState();
+      S.place.scale[S.place.kind] = Math.min(PLC.scaleMax, Math.max(PLC.scaleMin, n));
+      notifyPlace();
+      return placeState();
+    };
+    // 程序化落位：给自动化验证与「按坐标精确摆」用，与鼠标落位走同一条 addItem
+    window.__placeAdd = function (kind, x, y, z, rotY, scale, variantId) {
+      if (!findProto()) return { ok: false, reason: '原型未加载' };
+      var V = variantOf(kind, variantId || (S.place.variant && S.place.variant[kind]));
+      if (!V) return { ok: false, reason: '型号不存在: ' + variantId };
+      var it = addItem(kind, x, y, z, rotY || 0,
+                       (scale === undefined || scale === null) ? S.place.scale[kind] : scale, V.id);
+      if (!it) {
+        // addItem 返回 null 有两种原因：容量打满（已 toast）或构建失败——reason 如实区分
+        return { ok: false, reason: S.place.items.length >= PLC.maxItems ? '已达上限' : '构建失败' };
+      }
+      notifyPlace();
+      return { ok: true, item: { id: it.id, kind: it.kind, variant: it.variant,
+                                 x: it.x, y: it.y, z: it.z, scale: it.scale,
+                                 leaves: it.node.userData.leaves || 0 }, state: placeState() };
+    };
+    // 世界包围盒回读：验证「放下去的东西到底多大、在哪」的唯一可信手段
+    window.__placeBox = function (id) {
+      var it = itemById(id);
+      if (!it || !it.node) return null;
+      scene.updateMatrixWorld(true);
+      var meshes = [], pts = [];
+      it.node.traverse(function (o) {
+        if (o.isMesh) meshes.push(o);
+      });
+      var b = worldBox(meshes, pts);
+      if (!b) return null;
+      return { min: [+b.min.x.toFixed(3), +b.min.y.toFixed(3), +b.min.z.toFixed(3)],
+               max: [+b.max.x.toFixed(3), +b.max.y.toFixed(3), +b.max.z.toFixed(3)],
+               size: [+b.size.x.toFixed(3), +b.size.y.toFixed(3), +b.size.z.toFixed(3)],
+               meshes: meshes.length };
+    };
+    window.__placeExit = function () {
+      S.place.mode = false;
+      S.cursor.has = false;
+      for (var k in ghostCache) if (ghostCache[k]) ghostCache[k].visible = false;
+      notifyPlace();
+      return placeState();
+    };
+    window.__placeSelect = function (id) {
+      S.place.sel = (id === null || id === undefined) ? null : id;
+      notifyPlace();
+      return placeState();
+    };
+    window.__placePatch = function (id, patch) {
+      var it = itemById(id);
+      if (!it || !patch) return false;
+      // 粘贴的 JSON 是不可信输入：每个字段都过 isFinite 白名单，NaN 绝不能进 three
+      if (patch.x !== undefined && isFinite(+patch.x)) it.x = +patch.x;
+      if (patch.y !== undefined && isFinite(+patch.y)) it.y = +patch.y;
+      if (patch.z !== undefined && isFinite(+patch.z)) it.z = +patch.z;
+      if (patch.rotY !== undefined && isFinite(+patch.rotY)) it.rotY = +patch.rotY;
+      if (patch.scale !== undefined && isFinite(+patch.scale)) {
+        it.scale = Math.min(PLC.scaleMax, Math.max(PLC.scaleMin, +patch.scale));
+      }
+      applyItem(it);
+      notifyPlace();
+      return true;
+    };
+    window.__placeGround = function (id) {
+      var it = itemById(id);
+      if (!it) return false;
+      var y = window.__groundY(it.x, it.z);
+      if (y === null) return false;
+      it.y = y;
+      applyItem(it);
+      notifyPlace();
+      return true;
+    };
+    window.__placeDelete = function (id) { var r = deleteItem(id); notifyPlace(); return r; };
+    window.__placeClear = function () { clearItems(); notifyPlace(); return placeState(); };
+    window.__placeState = placeState;
+    window.__placeImport = function (list) {
+      // ⚠️ 形状校验必须放在 clearItems 之前：非数组输入直接原样返回，
+      //    绝不能把用户已摆好的 placements 先清掉再报错（破坏性导入无 undo）
+      if (!Array.isArray(list)) return { ok: false, bad: 0, state: placeState() };
+      clearItems();
+      // 返回形状必须与下面成功分支完全一致（{ok,bad,state}）：
+      // 早前这里直接 return placeState()，宿主/门禁按 .bad/.state 取值就全是 undefined。
+      var bad = 0;
+      for (var i = 0; i < list.length && i < PLC.maxItems; i++) {
+        var o = list[i];
+        if (!o || (o.kind !== 'tree' && o.kind !== 'campfire' && o.kind !== 'rock')) { bad++; continue; }
+        if (!isFinite(+o.x) || !isFinite(+o.y) || !isFinite(+o.z)) { bad++; continue; }
+        if (!addItem(o.kind, o.x, o.y, o.z, o.rotY, o.scale, o.variant)) { bad++; }
+      }
+      if (list.length > PLC.maxItems) bad += list.length - PLC.maxItems;  // 截断部分也要说出来
+      S.place.sel = S.place.items.length ? S.place.items[S.place.items.length - 1].id : null;
+      notifyPlace();
+      return { ok: bad === 0, bad: bad, state: placeState() };
+    };
+  }
+
+  if (!window.__m) {
+    window.__m = function (n) { (window.__tm || (window.__tm = [])).push([n, Math.round(performance.now())]); };
+    window.__m('页面脚本开始');
+    try {
+      new PerformanceObserver(function (list) {
+        var a = window.__lt || (window.__lt = []);
+        list.getEntries().forEach(function (e) { a.push([Math.round(e.startTime), Math.round(e.duration)]); });
+      }).observe({ entryTypes: ['longtask'] });
+    } catch (eLT) {}
+  }
+  (function naDiXing() {
+    try {
+      fetch('./di-xing-gao-du.json').then(function (r) { return r.json(); }).then(function (o) {
+        var bin = atob(o.data), buf = new ArrayBuffer(bin.length), u8 = new Uint8Array(buf);
+        for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+        window.__diXing = { x0: o.x0, z0: o.z0, n: o.n, bu: (o.x1 - o.x0) / o.n, shuJu: new Int16Array(buf) };
+        window.__m('地形高度图就绪');
+      }).catch(function () {});
+    } catch (e0) {}
+  })();
+  var WU_ASPECT = 443 / 312;
+  var CAM = { pos: [4.2706, 1.157, 5.1022], d: 4.664, p: -23, a: -6.6 };
+  var WU = { x: 24.5, y: 71, s: 24, bili: 16 / 9 };
+  var yiJianHao = false, yiPuHao = false, yiBuHao = false, puTries = 0;
+
+  function wuRect() {
+    var kuan = window.innerWidth;
+    var gao = Math.max(1, window.innerHeight);
+    var biLi = kuan / gao;
+    var w = kuan * (WU.s / 100) * (WU.bili / biLi);
+    var h = w / WU_ASPECT;
+    var cx = kuan * WU.x / 100;
+    if (cx - w / 2 < 0 || cx + w / 2 > kuan) cx = kuan / 2;
+    var cy = gao * WU.y / 100;
+    return { l: cx - w / 2, t: cy - h / 2, w: w, h: h };
+  }
+
+  window.__wuRectCalc = wuRect;
+  function luoJiWei(n) {
+    if (!window.__setCam) return false;
+    n = n || 0;
+    try { window.__camSetFrozen(false, true); } catch (e1) {}
+    try {
+      window.__setCam({ px: CAM.pos[0], py: CAM.pos[1], pz: CAM.pos[2], dist: CAM.d, pitch: CAM.p, yaw: CAM.a });
+    } catch (e2) { return false; }
+    var cm = window.__getCam ? window.__getCam() : null;
+    var daoWei = !!cm
+      && Math.abs(cm.px - CAM.pos[0]) < 1e-3
+      && Math.abs(cm.py - CAM.pos[1]) < 1e-3
+      && Math.abs(cm.pz - CAM.pos[2]) < 1e-3
+      && Math.abs(cm.d - CAM.d) < 1e-3
+      && Math.abs(cm.p - CAM.p) < 1e-2
+      && Math.abs(cm.a - CAM.a) < 1e-2;
+    if (!daoWei) {
+      if (n < 10) { setTimeout(function () { luoJiWei(n + 1); }, 200); return false; }
+      try { window.__camSetFrozen(true, true); } catch (e3) {}
+      yiJianHao = true;
+      return false;
+    }
+    try { window.__camSetFrozen(true, true); } catch (e4) {}
+    yiJianHao = true;
+    return true;
+  }
+
+  function puWu() {
+    var r = wuRect();
+    try { if (window.__wuSetLayerRect) window.__wuSetLayerRect(r.l, r.t, r.w, r.h); } catch (e5) {}
+    if (!yiPuHao) {
+      if (window.__wuBuildMesh) {
+        window.__m('建面片');
+        try { window.__wuBuildMesh(function (ok) { if (ok) { window.__m('面片完成'); yiPuHao = true; puWu(); } }); } catch (e6) {}
+      }
+      return;
+    }
+    if (!yiBuHao && window.__wuLayoutMesh) {
+      window.__m('铺设开始');
+      try { if (window.__wuLayoutMesh(r)) { yiBuHao = true; window.__m('铺设完成'); } } catch (e7) {}
+    }
+  }
+
+  window.addEventListener('resize', function () { puWu(); });
+
+  function qiDong() {
+    if (!window.__experience || !window.__experience.engine || !window.__experience.engine.scene) {
+      setTimeout(qiDong, 300);
+      return;
+    }
+    if (!window.__mEng) { window.__mEng = 1; window.__m('引擎就绪'); }
+    window.__m('注入开始');
+    try { inpage(); } catch (e8) {
+      window.__beiJingCuoWu = String(e8 && e8.message || e8);
+      if (!window.__camReady) { setTimeout(qiDong, 500); return; }
+    }
+    if (!window.__mCam) { window.__mCam = 1; window.__m('注入结束'); }
+    if (!window.__camReady) { setTimeout(qiDong, 300); return; }
+    if (!yiJianHao) luoJiWei(0);
+    puWu();
+    if (!window.__caoDiZiYuanJianTing) {
+      window.__caoDiZiYuanJianTing = true;
+      try {
+        var ziYuan = window.__experience && window.__experience.resources;
+        if (ziYuan && typeof ziYuan.on === 'function') {
+          ziYuan.on('ready', function () { try { puWu(); } catch (eZR) { window.__wuPuSheErr = String(eZR && eZR.message || eZR); } });
+        }
+      } catch (eZT) {}
+    }
+    if (!window.__wuBeiJingLoop) {
+      window.__wuBeiJingLoop = true;
+      (function chou() {
+        try { if (window.__wuFrame) window.__wuFrame(); } catch (eL) { window.__wuFrameErr = String(eL && eL.message || eL); }
+        requestAnimationFrame(chou);
+      })();
+    }
+    if (!window.__wuPaiQi) {
+      window.__wuPaiQi = true;
+      var houTui = function (n) {
+        var yanShi = Math.min(8000, 1000 * (n + 1));
+        setTimeout(function () {
+          if (!yiPuHao || (!yiBuHao && puTries < 30)) { puTries++; puWu(); }
+          if (!yiPuHao || (!yiBuHao && puTries < 30)) houTui(n + 1);
+        }, yanShi);
+      };
+      houTui(0);
+    }
+  }
+  qiDong();
+})();
+

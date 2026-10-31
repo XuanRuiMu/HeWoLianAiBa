@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <title>草地背景</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" crossorigin href="./references/-assets-index-DF8svE4a.css">
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #0a0a12;
+        }
+        /* 草地背景页：只显示 canvas 草地，隐藏一切原型 UI 叠层 */
+        body.simplified nav,
+        body.simplified .viewpoints-progress,
+        body.simplified .sound-icon,
+        body.simplified #home .look-around-hint,
+        body.simplified #home .explore-hint,
+        body.simplified #about,
+        body.simplified #contact,
+        body.simplified .update,
+        body.simplified #point-template,
+        body.simplified .loading,
+        body.simplified #dayNightSwitch {
+            display: none !important;
+        }
+        /* 默认即隐藏所有非 canvas 元素（不依赖 .simplified 类） */
+        nav, .viewpoints-progress, .sound-icon,
+        #home .look-around-hint, #home .explore-hint,
+        #about, #contact, .update, #point-template, #dayNightSwitch {
+            display: none !important;
+        }
+        /* bundle 点击 Start 后给 .loading 加 .loaded / .hidden，隐藏它以免遮挡 canvas */
+        .loading.loaded, .loading.hidden { display: none !important; }
+        /* 嵌入式背景由父页负责加载态：iframe 在场景真正就绪前保持 opacity:0，
+           因此这里永不显示原站的 loading 遮罩（#191c2d 会盖住 canvas）。 */
+        .loading { display: none !important; }
+        /* 静默加载：隐藏圆形进度动画与百分比文字，仅保留不透明遮罩覆盖画布，
+           避免加载期间透出夜景/紫色的瞬时帧（背景应无声无息地备好）。 */
+        .progress-percentage, .loading-text { visibility: hidden !important; opacity: 0 !important; }
+        /* loading 保持原生可见与可点击；bundle 进入后会自行隐藏它。背景页在 iframe 中，
+           真实项目主页的 UI 会覆盖其上，因此 Loading 闪光只会在页面加载最初 1-2s 透出。 */
+        /* canvas 铺满 */
+        canvas.webgl {
+            position: fixed;
+            inset: 0;
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+    </style>
+
+    <script src="./scripts/block-01.js"></script>
+</head>
+<body data-section="home">
+    <canvas class="webgl"></canvas>
+    <div id="root">
+        <nav class="hidden">
+            <a class="glass-effect active" href="#home">Explore</a>
+            <a class="glass-effect" href="#about">About</a>
+            <a class="glass-effect" href="#contact">Contact</a>
+        </nav>
+        <div class="viewpoints-progress glass-effect hidden">
+            <div class="circle-container visited">
+                <div class="ring"></div>
+                <div class="circle"></div>
+            </div>
+            <span></span>
+        </div>
+        
+        <div class="switch" id="dayNightSwitch" style="display:none">
+            <div class="stars">
+                <div class="star"></div><div class="star"></div><div class="star"></div>
+                <div class="star"></div><div class="star"></div>
+            </div>
+            <div class="clouds"><div class="cloud"></div><div class="cloud"></div></div>
+            <div class="switch-handle">
+                <svg class="sun-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="6.5" fill="#FFA500"/><path d="M12 3.5V1" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/></svg>
+                <svg class="moon-icon" viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="#C4C4C4"/></svg>
+            </div>
+        </div>
+        <div class="sound-icon glass-effect hidden" data-sound="on"><span></span><span></span><span></span></div>
+        <section id="home">
+            <div class="look-around-hint"><span class="orbit"></span><span class="glass-effect">Touch &amp; move to look around</span></div>
+            <div class="explore-hint"><svg></svg><span class="glass-effect">Tap here to explore</span></div>
+        </section>
+        <section id="about" class="hidden"><div class="about-container glass-effect"><span class="close">+</span><h1>Jordan Breton</h1></div></section>
+        <section id="contact" class="hidden"><div class="header"><h1>Your brand deserves to stand out!</h1></div></section>
+    </div>
+    <div class="loading">
+        <div class="progress-percentage">
+            <div class="circle-container animated">
+                <div class="ring"></div>
+                <div class="circle"><span>0%</span><button>Start</button></div>
+            </div>
+        </div>
+        <div class="loading-text">Initializing...</div>
+    </div>
+    <div class="update hidden glass-effect active">
+        <h1>✨ Portfolio update!</h1>
+        <div class="text"><p>A new version is available.</p></div>
+        <button class="glass-effect">Reload now</button>
+    </div>
+    <template id="point-template">
+        <div class="circle-container"><div class="ring"></div><div class="circle"></div></div>
+    </template>
+
+    <script src="./scripts/block-02.js"></script>
+    <script src="./scripts/block-03.js"></script>
+    <script src="./scripts/block-05.js"></script>
+    <script src="./scripts/block-06.js"></script>
+    <script src="./scripts/block-07.js"></script>
+<script src="./scripts/block-08.js"></script>
+<script src="./scripts/block-09.js"></script>
+<script src="./scripts/block-10.js"></script>
+</body>
+</html>

@@ -1,0 +1,697 @@
+:root {
+  --shi-jiao-kou-gao-du: 100dvh;
+  --bu-ju-gao-du: 100dvh;
+
+  
+  --ceng-caidan: 1300;
+  --ceng-junshi: 1500;
+  --ceng-junshi-jilu: 1600;
+  --ceng-xieyi: 2000;
+  --ceng-rili: 2050;
+  --ceng-shouquan: 2100;
+  --ceng-yu-lan: 2500;
+  --ceng-tiaoshi-riji: 3000;
+  --ceng-tiaoshi-mianban: 3100;
+  --ceng-duanwang: 4000;
+  --ceng-banben: 4100;
+
+  
+  --jiange-da: 24px;
+  --jiange-zhong: 16px;
+  
+  --jiange-12: 12px;
+  --jiange-10: 10px;
+  --jiange-xiao: 8px;
+  --jiange-6: 6px;
+  --jiange-4: 4px;
+  --jiange-2: 2px;
+  
+  --jiange-15: 15px;
+  --jiange-13: 13px;
+  --jiange-11: 11px;
+  --jiange-9: 9px;
+  --jiange-7: 7px;
+  --jiange-5: 5px;
+  --jiange-3: 3px;
+  --jiange-1: 1px;
+  --ziti-da: 18px;
+  --ziti-zhong: 14px;
+  --ziti-xiao: 12px;
+  --quxian-biao-zhun: cubic-bezier(0.4, 0, 0.2, 1);
+  --quxian-tan-chu: cubic-bezier(0.16, 1, 0.3, 1);
+  --quxian-ruan: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --quxian-huan-ying: cubic-bezier(0.22, 1, 0.36, 1);
+  --moshi-kapian-dong-xiao: 240ms;
+  --zhuye-wen-zi-yan-shi: 200ms;
+  --shuru-gao-liang-shi-chang: 840ms;
+  --shuru-gao-liang-tui-chu-shi-chang: 800ms;
+  --gou-xuan-chi-cun: 18px;
+  --daohanglan-tubiao-chi: 18px;
+  --caidan-tubiao-chi: 14px;
+
+  
+  --yuanjiao-da: 16px;
+  --yuanjiao-zhong: 12px;
+  --yuanjiao-xiao: 8px;
+  --anquan-quyu-shang: env(safe-area-inset-top, 0px);
+  --anquan-quyu-xia: env(safe-area-inset-bottom, 0px);
+  --nuanhui-lan: #6B8CA6;
+  --roufen-zi: #C4A0B0;
+
+  
+  
+  --biaoqian-qin-ru: 5px;
+  
+  --kuang-huan-kuan: 3px;
+  
+  --biaoqian-lan-gao-du: 76px;
+  --shuru-kuang-zihao: 16px;
+  --shuru-kuang-hangao: 1.4;
+  --shuru-kuang-hangxing-gao: calc(var(--shuru-kuang-zihao) * var(--shuru-kuang-hangao));
+  --shuru-kuang-shang-xia-neidian: 6px;
+  --shuru-kuang-zuo-you-neidian: 12px;
+  --shuru-kuang-biankuang: 0.5px;
+  
+  --shuru-kuang-yuanjiao: 6px;
+  --juxing-shuru-yuanjiao: 10px;
+  --juxing-shuru-biankuang: 2px;
+  --shuru-anniu-re-ku: 44px;
+  --wai-guan-re-ku: 44px;
+  --shuru-danxing-gao-du: 35px;
+  --shuru-tubiao-chicun: var(--shuru-danxing-gao-du);
+  
+  --shuru-zhan-kai-gao-du: 50vh;
+  --shuru-tubiao-glyph-chicun: 22px;
+  
+  --daifa-kuai-tu-kuan: 64px;
+  --daifa-kuai-tu-gao: 64px;
+  
+  --daifa-kuai-tu-yuanjiao: 6px;
+  --daifa-kuai-tu-jiange: 0.5ch;
+  --tuwen-tu-zuidakuan: 180px;
+  --tuwen-tu-zuida-gao: 200px;
+  
+  
+  --duomeiti-biaoqingbao-chicun: 120px;
+  
+  --yinyong-kuang-yuanjiao: 8px;
+  --yinyong-kuang-neidian: 12px;
+  --yinyong-kuang-zihao: 12px;
+  --yinyong-tiao-hangao: 16px;
+  --yinyong-kuai-hangao: 16.8px;
+  --yinyong-hang-shu: 2;
+  --yinyong-tiao-zuida-gao-du: calc(var(--yinyong-tiao-hangao) * var(--yinyong-hang-shu));
+  --yinyong-kuai-zuida-gao-du: calc(var(--yinyong-kuai-hangao) * var(--yinyong-hang-shu));
+  --yinyong-kuai-zuo-neidian: calc(var(--yinyong-se-tiao-kuan-du) + var(--yinyong-se-tiao-ju-li));
+  --yinyong-kuai-zuida-kuan: 272px;
+  --yinyong-kuai-shang-jian-ju: 4px;
+  --yinyong-se-tiao-kuan-du: 3px;
+  --yinyong-se-tiao-ju-li: 9px;
+  --yinyong-guanbi-chicun: 11px;
+  --yinyong-guanbi-neidian: 5px;
+  
+  --tishi-dai-lie-ju: 10px;
+  --tishi-dai-neidian-shang-xia: 3px;
+  --tishi-dai-neidian-zuo-you: 12px;
+  --tishi-dai-zihao: 11px;
+  --gundong-tiao-cursor: default;
+  --gundong-tiao-huakuai-cursor: default;
+  --gundong-tiao-guidao-cursor: default;
+  
+  --liaotian-beijing-miWuSenLin: linear-gradient(135deg, #1a2f1a, #2d4a2d);
+  --liaotian-beijing-haiYangZhiLan: linear-gradient(to bottom, #7fb8f0, #2f6db3);
+  --liaotian-beijing-fenSeMengJing: linear-gradient(135deg, #f7d6e0, #f2a7c3);
+  --liaotian-beijing-yeKongXingHe: url('/背景/夜空星河.jpg');
+  --liaotian-beijing-miSeTianYuan: linear-gradient(135deg, #f5f0e1, #e8dcc3);
+  --liaotian-beijing-chenWuQing: linear-gradient(135deg, #dcebe4, #a9cbc0);
+  --liaotian-beijing-muZiXingYe:
+    radial-gradient(1.5px 1.5px at 18% 30%, #ffffff 55%, transparent 56%),
+    radial-gradient(1px 1px at 64% 14%, #ffffff 55%, transparent 56%),
+    radial-gradient(1.5px 1.5px at 82% 44%, #d9e2ff 55%, transparent 56%),
+    radial-gradient(1px 1px at 38% 62%, #ffffff 55%, transparent 56%),
+    radial-gradient(2px 2px at 55% 80%, #e8ecff 55%, transparent 56%),
+    linear-gradient(160deg, #1b1440 0%, #2c1f5e 45%, #4a2f7a 100%);
+  
+  --qipao-xuan-zhong-zi-zhong: 400;
+  --shuru-xian-changtai-kuan-du: 1px;
+  --shuru-sao-chu-shi-chang: 1s;
+  --shuru-fu-jian-jian-ju: calc(var(--jiange-zhong) + var(--jiange-2));
+  --shuru-qu-hao-jian-tou-chi-cun: calc(var(--shuru-kuang-zihao) * 0.75);
+  --shuru-qu-hao-lie-biao-kuan: calc(var(--shuru-kuang-zihao) * 13);
+  --shuru-qu-hao-lie-biao-gao: calc(var(--shuru-kuang-zihao) * 17);
+  --shuru-qu-hao-hao-kuan: calc(var(--shuru-kuang-zihao) * 2.4);
+  --shuru-fu-jian-tu-biao-chi-cun: calc(var(--shuru-kuang-zihao) * 1.25);
+  --pai-xu-shou-wei-jin-yong-bian-kuang: #4a4a58;
+  --pai-xu-shou-wei-jin-yong-bei-jing: rgba(58, 58, 70, 0.45);
+  --pai-xu-shou-wei-jin-yong-wen-ben: #8b8b98;
+  --quxian-sao-chu: cubic-bezier(0.22, 0.9, 0.24, 1);
+  
+  --jujiao-huan-kuan-du-wenben: 1px;
+  --jujiao-huan-pian-yi-wenben: 0px;
+  
+  --rili-nian-kuan: calc(var(--shuru-kuang-zihao) * 2.6);
+  --rili-erwei-kuan: calc(var(--shuru-kuang-zihao) * 2.2);
+  
+  --rili-tanchuang-nei-pad: 16px;
+  --rili-tanchuang-zhou-ju: 4px;
+  --rili-tanchuang-yuan-jiao: 12px;
+  --rili-ri-ge-kuan: 32px;
+  --rili-anniu-chicun: 36px;
+  --rili-jin-ri-dian: 4px;
+  --rili-tanchuang-kuan: calc(var(--rili-ri-ge-kuan) * 7 + var(--rili-tanchuang-zhou-ju) * 6 + var(--rili-tanchuang-nei-pad) * 2);
+  
+  --juanzhou-tong-gao-du: 28px;
+  --ceng-jingge: 4200;
+  --qipao-yuanjiao-ju-li: 6px;
+  --qipao-yuanjiao-dang-xiao: 2px;
+  --qipao-yuanjiao-dang-da: 14px;
+  --qipao-yuanjiao: var(--qipao-yuanjiao-ju-li);
+  --qipao-zihao: 16px;
+  --qipao-zihao-zhai: 15px;
+  --qipao-hangao: 1.45;
+  --qipao-nei-ju-shang: 8px;
+  --qipao-nei-ju-xia: 10px;
+  --qipao-weiba-kuan-ju-li: 6px;
+  --qipao-weiba-ban-ju-li: 5px;
+  --qipao-weiba-kuan-da: 10px;
+  --qipao-weiba-ban-da: 8px;
+  --qipao-weiba-kuan-xiao: 4px;
+  --qipao-weiba-ban-xiao: 3px;
+  --qipao-weiba-kuan: var(--qipao-weiba-kuan-ju-li);
+  --qipao-weiba-ban: var(--qipao-weiba-ban-ju-li);
+  --qipao-weiba-ju-li: 13px;
+  --qipao-weiba-shang: var(--qipao-weiba-ju-li);
+  --qipao-weiba-miao-bian-kuan: 1.5px;
+  --yuyin-laba-kuan: 18px;
+  --yuyin-laba-gao: 20px;
+  --yuyin-laba-jian-ju: 10px;
+  --yuyin-shichang-zihao: 19px;
+  --yuyin-neirong-xia-yi: 0px;
+  --yuyin-jindu-gao: 1px;
+  --yuyin-jindu-xian-gao: 2px;
+  --yuyin-huakuai-chicun: 8px;
+  --yuyin-jindu-yuandian-bofang: #1a73e8;
+  --yuyin-jindu-yuandian-jingtai: #9e9e9e;
+  --yuyin-yinliang-yuandian: hsl(27.5 92% 60%);
+  --yuyin-jindu-yuandian-bian-hua-shi-chang: 160ms;
+  --yuyin-jindu-zui-xiao-kuan: 60px;
+  --yuyin-zui-da-kuan: min(260px, 68vw);
+  --yuyin-kongzhi-chicun: 28px;
+  --yuyin-kongzhi-re-ku: 36px;
+  --yuyin-kongzhi-tubiao: 13px;
+  --yuyin-kongzhi-jian-ju: 3px;
+  --yuyin-duan-yin-cang-shi-chang: 100ms;
+  --zhuanwenzi-zihao: 14px;
+  --zhuanwenzi-hangao: 1.5;
+  --jiaobiao-chicun: 20px;
+  --jiaobiao-zihao: 13px;
+  --jiaobiao-biankuang: 2px;
+  
+  --shijian-tiao-neidian-shang-xia: 2px;
+  --shijian-tiao-neidian-zuo-you: 6px;
+  --shijian-tiao-yuanjiao: 4px;
+  --shijian-tiao-xia-jian-ju: 12px;
+  
+  --wenjian-ka-zui-xiao-kuan: 200px;
+  --wenjian-tubiao-chicun: 34px;
+  --wenjian-xiazai-he-chicun: 30px;
+  --wenjian-xiazai-glyph-chicun: 20px;
+  --wenjian-fengexi-kuan: 0.5px;
+  
+  --wenjian-se-word: #2b579a;
+  --wenjian-se-excel: #217346;
+  --wenjian-se-ppt: #c43e1c;
+  --wenjian-se-pdf: #e5252a;
+  --wenjian-se-txt: #6b7280;
+  --wenjian-se-yasuo: #b45309;
+  --wenjian-se-yinshipin: #7c3aed;
+  
+  --renzheng-qiehuan-weiyi: 110%;
+  --renzheng-qiehuan-shi-chang: 0.5s;
+  --renzheng-gundong-yuan-jiao: 8px;
+  --renzheng-dingge-guang-yun: 0 0 32px rgba(201, 169, 106, 0.45);
+  --renzheng-gundong-huakuai-kuan: 3px;
+  --renzheng-gundong-shou-kuan: 24px;
+  --renzheng-ka-pian-you-nei-ju: calc(var(--jiange-da) + var(--jiange-4));
+  --renzheng-ka-nei-ju-heng: var(--renzheng-ka-pian-you-nei-ju);
+  --renzheng-shuru-you-nei-ju: var(--jiange-4);
+  --renzheng-ka-bian-kuan: 1px;
+  --renzheng-ka-nei-xian-pian-yi: 4px;
+  --renzheng-ka-nei-bian-ju: calc(var(--renzheng-ka-bian-kuan) + var(--renzheng-ka-nei-xian-pian-yi));
+  --renzheng-shan-guang-qi-jiao: 93deg;
+  --qu-xiao-jia-shen: 0.82;
+  --deng-lu-shi-xu: 0.25s;
+  --zhao-hui-ju-ke-kuan: 420px;
+  --zhao-hui-jin-du-jian-ju: var(--jiange-zhong);
+  --zhao-hui-jin-du-xia-ju: var(--jiange-12);
+  --zhao-hui-jin-du-xian-gao: var(--jiange-2);
+  --zhao-hui-xu-hao-chi-cun: 20px;
+  --zhao-hui-shang-yi-bu-gao: 44px;
+  --zhao-hui-dao-ji-shi-miao: 60;
+  --zhao-hui-tiao-zhuan-miao: 8;
+  --daohanglan-gao-du: calc(52px + var(--anquan-quyu-shang));
+  --daohanglan-gao-du-zhai: calc(48px + var(--anquan-quyu-shang));
+}
+
+:root[data-theme="light"] {
+  --zhuse: #07C160;
+  --zhuse-shen: #06AD56;
+  --beijing-zhuse: #EDEDED;
+  --beijing-ciuse: #F7F7F7;
+  --beijing-kaopian: #FFFFFF;
+  --wenben-zhuse: #191919;
+  --wenben-ciuse: #888888;
+  --wenben-tishi: #B2B2B2;
+  --biankuang-yanse: #E5E5E5;
+  --chenggong-yanse: #07C160;
+  --cuowu-yanse: #FA5151;
+  --cuowu-wenben: #FA5151;
+  --jinggao-yanse: #FFC300;
+  --xiaoxi-yonghu-beijing: #95EC69;
+  --xiaoxi-jiaose-beijing: #FFFFFF;
+  --yinying-yanse: rgba(0, 0, 0, 0.08);
+  
+  --ziti-jiazu: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --wen-zi-ci-se: #666666;
+  --jing-gao-se: #ff9800;
+  --xiaoxi-yonghu-wenben: #000000;
+  --xiaoxi-jiaose-wenben: #000000;
+  --liaotian-beijing: #ededed;
+  
+  --gundong-tiao-beijing: rgba(110, 110, 110, 0.85);
+  --gundong-tiao-hover: rgba(80, 80, 80, 0.95);
+  --gundong-tiao-huakuai: rgba(110, 110, 110, 0.85);
+  --gundong-tiao-huakuai-hover: rgba(80, 80, 80, 0.95);
+  --gundong-tiao-guidao: rgba(140, 140, 140, 0.16);
+  --gundong-tiao-kuan-du: 8px;
+  --gundong-tiao-guidao-hover: var(--gundong-tiao-guidao);
+  --gundong-tiao-huakuai-jujiao: var(--gundong-tiao-huakuai-hover);
+  --gundong-tiao-guidao-jujiao: var(--gundong-tiao-guidao-hover);
+  
+  --jujiao-huan-yanse: #5a7a94;
+  --jujiao-huan-kuan-du: 2px;
+  --jujiao-huan-pian-yi: 2px;
+  --shuru-xian-changtai-se: var(--renzheng-shuru-xian-se);
+  --shuru-xian-jujiao-se: var(--jujiao-huan-yanse);
+  
+  --shuru-sao-jianbian: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 10%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 26%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 44%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 62%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 80%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 98%, transparent)
+  );
+  --shuru-xian-cuowu-se: var(--cuowu-yanse);
+  --shuru-xian-jinyong-se: var(--wenben-tishi);
+  --shuru-xian-zhi-du-se: var(--wenben-ciuse);
+  --shuru-beijing-zidong-tianchong: var(--beijing-kaopian);
+  --shuru-wenben-zidong-tianchong: var(--wenben-zhuse);
+  --shuru-gao-liang-liang-nan: #8fc4ff;
+  --shuru-gao-liang-liang-nv: #ffb8d8;
+  --xingge-gao-guang-nan: #1b46d8;
+  --xingge-gao-guang-nv: #c2185b;
+
+  --yemian-di-beijing: rgba(245, 245, 245, 0.7);
+  --xingbie-nan-1: #3282F6;
+  --xingbie-nan-2: #0023F5;
+  --xingbie-nan-wenben: #ffffff;
+  
+  --xingbie-nv-1: #FF7FBF;
+  --xingbie-nv-2: #F45FA8;
+  --xingbie-nv-wenben: #ffffff;
+  --xingbie-zhongxing-1: #8e8e93;
+  --xingbie-zhongxing-2: #636366;
+  --xingbie-zhongxing-wenben: #ffffff;
+  
+  --xingbie-nan-xuan-biankuang: #0023F5;
+  --xingbie-nan-xuan-beijing: #3282F6;
+  --xingbie-nan-xuan-wenben: #000B4D;
+  --xingbie-nv-xuan-biankuang: #D6246E;
+  --xingbie-nv-xuan-beijing: #FF80BF;
+  --xingbie-nv-xuan-wenben: #5C0F2E;
+  --xingbie-nan-tan-beijing: #dcebff;
+  --xingbie-nan-tan-wenben: #0b2a6f;
+  --xingbie-nan-shen-biankuang: var(--xingbie-nan-xuan-biankuang);
+  --xingbie-nv-tan-beijing: #ffe4ef;
+  --xingbie-nv-tan-wenben: #7a1039;
+  --xingbie-nv-shen-biankuang: var(--xingbie-nv-xuan-biankuang);
+  
+  --xingbie-nan-xuan-huan: rgba(0, 35, 245, 0.15);
+  --xingbie-nan-xuan-guangyun: rgba(0, 35, 245, 0.22);
+  --xingbie-nv-xuan-huan: rgba(214, 36, 110, 0.15);
+  --xingbie-nv-xuan-guangyun: rgba(214, 36, 110, 0.22);
+  
+  --qiangdiao-fen: #c4577e;
+  --kapian-mian-biankuang: rgba(23, 32, 55, 0.5);
+  --kapian-mian-zhengwen: #2b3038;
+  --kapian-mian-biaoti: #14181f;
+  --kapian-shuoming-wenben: #191919;
+  --moshi-kapian-zheyan: rgba(255, 255, 255, 0.75);
+  --moshi-kapian-hover-yinying: 0 10px 28px rgba(20, 24, 33, 0.12);
+  
+  --renzheng-mian-se: #fffcf3;
+  --renzheng-shuru-xian-se: rgba(46, 42, 32, 0.11);
+  
+  --renzheng-gundong-huakuai-se: #a3813e;
+  
+  --rili-zhe-zhao-beijing: rgba(24, 20, 12, 0.52);
+  
+  --xuanzhong-qiangdiao-yinying: 0px 0px 8px rgba(176, 132, 0, 0.22);
+  
+  --xuanzhong-huan-yanse: #ff2d95;
+  --xuanzhong-guangyun-yanse: rgba(255, 45, 149, 0.12);
+  --junshi-biankuang: #E5E5E5;
+  --shijian-biaoqian-beijing: #DADADA;
+  --shuru-zhanwei-se: #C8C8C8;
+  --shuru-fu-anniu-se: #191919;
+  --shuru-quyu-biankuang: #d6d6d6;
+  --guanbi-anniu-beijing: #F5F5F5;
+  --guanbi-anniu-hover: #EBEBEB;
+  --junshi-zhuse: #8B6914;
+  --junshi-zhuse-touming: rgba(212, 165, 116, 0.1);
+  --junshi-jinggao-wenben: #D48806;
+  --junshi-zhaiyao-beijing: #f0f5ff;
+  --caidan-hover: #F5F5F5;
+  --caidan-active: #E8E8E8;
+  --chehui-caidan-beijing: rgba(255, 255, 255, 0.92);
+  --chehui-caidan-wenben: #1c1c1e;
+  --chehui-caidan-hover: rgba(0, 0, 0, 0.05);
+  --chehui-caidan-active: rgba(0, 0, 0, 0.09);
+  --chehui-caidan-biankuang: rgba(0, 0, 0, 0.08);
+  --biankuang-qianse: #D9D9D9;
+  --biankuang-fenqu: #f0f0f0;
+  --beijing-qianse: #fafafa;
+  --biankuang-zhongjian: #d0d0d0;
+  --touxiang-yinying: 0 1px 3px rgba(0,0,0,0.08);
+  --qipao-yinying: 0 1px 2px rgba(0,0,0,0.06);
+  --caidan-yinying: 0 4px 16px rgba(0,0,0,0.15);
+  --biao-qian-chenggong-beijing: #eef9f0;
+  --biao-qian-chenggong-wenben: #15803d;
+  --biao-qian-shibai-beijing: #fef2f2;
+  --biao-qian-shibai-wenben: #dc2626;
+  --biao-qian-jinggao-beijing: #fff8ed;
+  --biao-qian-jinggao-wenben: #c2410c;
+  --silu-beijing: #fdf4ff;
+  --silu-biankuang: #a855f7;
+  --silu-wenben: #9333ea;
+  --gandu-zheng-se: #16a34a;
+  --gandu-fu-se: #dc2626;
+  --xinmuzhong-duibi-se: #191919;
+  --xinmuzhong-qukuai-beijing: #ffffff;
+  --xinmuzhong-qukuai-biankuang: #e5e5e5;
+  --beijing-jianbian-1: #E8F4FD;
+  --beijing-jianbian-2: #D0E4F0;
+  --beijing-jianbian-3: #F5DDE5;
+  --beijing-jianbian-4: #FAEBF0;
+  --boli-beijing: rgba(255, 255, 255, 0.06);
+  --boli-beijing-shen: rgba(255, 255, 255, 0.12);
+  --boli-mohu: blur(12px);
+  --boli-biankuang: rgba(255, 255, 255, 0.1);
+  --boli-yinying: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --zhezhao-beijing: rgba(0, 0, 0, 0.4);
+  --fasong-anniu-wenben: #ffffff;
+  
+  --fasong-anniu-jinyong-beijing: var(--zhuse-shen);
+  --yanse-zhanji: #6C5CE7;
+  --yanse-zhanji-qian: #A29BFE;
+  --yanse-weixian: #ff6b6b;
+  --yanse-weixian-shen: #ff4444;
+  --yanse-qiangdiao: #a78bfa;
+  --yanse-biaobai: #ff6b9d;
+  --daohanglan-beijing: rgba(255, 255, 255, 0.72);
+  --daohanglan-xiabiankuang: rgba(0, 0, 0, 0.06);
+  --daohanglan-yinying: 0 2px 16px rgba(0, 0, 0, 0.06);
+  --daohanglan-wenben: rgba(0, 0, 0, 0.75);
+  --daohanglan-ciwenben: rgba(0, 0, 0, 0.6);
+  --daohanglan-qiangwenben: rgba(0, 0, 0, 0.85);
+  --daohanglan-jiantou: rgba(0, 0, 0, 0.4);
+  --daohanglan-hover: rgba(0, 0, 0, 0.04);
+  --daohanglan-qianbeijing: rgba(0, 0, 0, 0.03);
+  --daohanglan-qianbiankuang: rgba(0, 0, 0, 0.06);
+  --daohanglan-zhongbeijing: rgba(0, 0, 0, 0.06);
+  --xiala-beijing: rgba(255, 255, 255, 0.95);
+  --xiala-biankuang: rgba(0, 0, 0, 0.08);
+  --xiala-yinying: 0 12px 40px rgba(0, 0, 0, 0.14);
+  --xiala-wenben: rgba(0, 0, 0, 0.75);
+  --xiala-hover-beijing: rgba(0, 0, 0, 0.05);
+  --xiala-hover-wenben: rgba(0, 0, 0, 0.9);
+  --tanchuang-beijing: rgba(255, 255, 255, 0.95);
+  --tanchuang-biankuang: rgba(0, 0, 0, 0.08);
+  --tanchuang-yinying: 0 24px 64px rgba(0, 0, 0, 0.1);
+  --tanchuang-biaoti: #191919;
+  --tanchuang-fanhui-beijing: #f2f2f2;
+  --cuowu-touming-beijing: rgba(250, 81, 81, 0.08);
+  --cuowu-touming-biankuang: rgba(250, 81, 81, 0.2);
+  --tongzhi-badge-beijing: #e63956;
+  --tongzhi-badge-wenben: #ffffff;
+  --touxiang-touming-beijing: rgba(0, 0, 0, 0.06);
+  --touxiang-beijing-moren: #d6d6d6;
+  --shuru-quyu-beijing: #f7f7f7;
+  --emoji-huoyue-beijing: rgba(255, 193, 7, 0.15);
+  --nuanhui-lan-touming-yinying: rgba(107, 140, 166, 0.2);
+  --junshi-anniu-beijing: rgba(167, 139, 250, 0.08);
+  --junshi-anniu-hover-beijing: rgba(167, 139, 250, 0.15);
+  --tuichu-hover-beijing: rgba(250, 81, 81, 0.08);
+
+  
+  --liuli-fuchuang-beijing: rgba(255, 255, 255, 0.85);
+  --liuli-fuchuang-biankuang: rgba(255, 255, 255, 0.95);
+  --liuli-fuchuang-yinying: 0 24px 60px rgba(70, 50, 110, 0.25);
+  --liuli-neirong-beijing: rgba(244, 238, 248, 0.5);
+  --liuli-kuai-beijing: rgba(244, 238, 248, 0.62);
+  --liuli-kuai-biankuang: rgba(120, 90, 140, 0.14);
+  --liuli-anniu-beijing: rgba(55, 42, 63, 0.04);
+  --liuli-anniu-biankuang: rgba(55, 42, 63, 0.18);
+  --liuli-anniu-wenben: rgba(55, 42, 63, 0.7);
+  --liuli-anniu-hover: rgba(55, 42, 63, 0.09);
+  --liuli-qiangdiao: #b34a68;
+  --liuli-jishu-di: #b34a68;
+  --liuli-jishu-wenben: #ffffff;
+  --liuli-lengxian: linear-gradient(90deg, transparent, rgba(255, 255, 255, 1), transparent);
+}
+
+:root,
+:root[data-theme="dark"] {
+  --zhuse: #34C759;
+  --zhuse-shen: #28A745;
+  --beijing-zhuse: #000000;
+  --beijing-ciuse: #1C1C1E;
+  --beijing-kaopian: #2C2C2E;
+  --wenben-zhuse: #F5F5F7;
+  --wenben-ciuse: #8E8E93;
+  --wenben-tishi: #636366;
+  --biankuang-yanse: #38383A;
+  --chenggong-yanse: #30D158;
+  --cuowu-yanse: #FF453A;
+  --cuowu-wenben: #FF453A;
+  --jinggao-yanse: #FFD60A;
+  --xiaoxi-yonghu-beijing: #95EC69;
+  --xiaoxi-jiaose-beijing: #3A3A3C;
+  --yinying-yanse: rgba(255, 255, 255, 0.08);
+  
+  --ziti-jiazu: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --wen-zi-ci-se: #b0b0b0;
+  --jing-gao-se: #ffa726;
+  --xiaoxi-yonghu-wenben: #000000;
+  --xiaoxi-jiaose-wenben: #E0E0E0;
+  --liaotian-beijing: #111111;
+  
+  --gundong-tiao-beijing: rgba(150, 150, 150, 0.9);
+  --gundong-tiao-hover: rgba(180, 180, 180, 0.95);
+  --gundong-tiao-huakuai: rgba(150, 150, 150, 0.9);
+  --gundong-tiao-huakuai-hover: rgba(180, 180, 180, 0.95);
+  --gundong-tiao-guidao: rgba(140, 140, 140, 0.25);
+  --gundong-tiao-kuan-du: 8px;
+  --gundong-tiao-guidao-hover: var(--gundong-tiao-guidao);
+  --gundong-tiao-huakuai-jujiao: var(--gundong-tiao-huakuai-hover);
+  --gundong-tiao-guidao-jujiao: var(--gundong-tiao-guidao-hover);
+  
+  --jujiao-huan-yanse: #8eafc5;
+  --jujiao-huan-kuan-du: 2px;
+  --jujiao-huan-pian-yi: 2px;
+  --shuru-xian-changtai-se: var(--renzheng-shuru-xian-se);
+  --shuru-xian-jujiao-se: var(--jujiao-huan-yanse);
+  
+  --shuru-sao-jianbian: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 10%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 26%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 44%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 62%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 80%, transparent),
+    color-mix(in srgb, var(--shuru-xian-jujiao-se) 98%, transparent)
+  );
+  --shuru-xian-cuowu-se: var(--cuowu-yanse);
+  --shuru-xian-jinyong-se: var(--wenben-tishi);
+  --shuru-xian-zhi-du-se: var(--wenben-ciuse);
+  --shuru-beijing-zidong-tianchong: var(--beijing-kaopian);
+  --shuru-wenben-zidong-tianchong: var(--wenben-zhuse);
+  --shuru-gao-liang-liang-nan: #bfe0ff;
+  --shuru-gao-liang-liang-nv: #ffd6e8;
+  --xingge-gao-guang-nan: #a6d4ff;
+  --xingge-gao-guang-nv: #ffb3d9;
+
+  --yemian-di-beijing: rgba(41, 41, 41, 0.6);
+  
+  --xingbie-nan-1: #266AF6;
+  --xingbie-nan-2: #3B5BF0;
+  --xingbie-nan-wenben: #ffffff;
+  --xingbie-nv-1: #FF8FC4;
+  --xingbie-nv-2: #F06BAE;
+  --xingbie-nv-wenben: #ffffff;
+  --xingbie-zhongxing-1: #6f84a0;
+  --xingbie-zhongxing-2: #5b6f8a;
+  --xingbie-zhongxing-wenben: #ffffff;
+  
+  --xingbie-nan-xuan-biankuang: #1E4FE0;
+  --xingbie-nan-xuan-beijing: #3282F6;
+  --xingbie-nan-xuan-wenben: #000B4D;
+  --xingbie-nv-xuan-biankuang: #FF5FA8;
+  --xingbie-nv-xuan-beijing: #FF80BF;
+  --xingbie-nv-xuan-wenben: #5C0F2E;
+  --xingbie-nan-tan-beijing: rgba(50, 130, 246, 0.22);
+  --xingbie-nan-tan-wenben: #dcebff;
+  --xingbie-nan-shen-biankuang: var(--xingbie-nan-xuan-biankuang);
+  --xingbie-nv-tan-beijing: rgba(255, 127, 191, 0.22);
+  --xingbie-nv-tan-wenben: #ffd6e8;
+  --xingbie-nv-shen-biankuang: var(--xingbie-nv-xuan-biankuang);
+  
+  --xingbie-nan-xuan-huan: rgba(91, 155, 255, 0.14);
+  --xingbie-nan-xuan-guangyun: rgba(91, 155, 255, 0.22);
+  --xingbie-nv-xuan-huan: rgba(255, 95, 168, 0.14);
+  --xingbie-nv-xuan-guangyun: rgba(255, 95, 168, 0.22);
+  
+  --qiangdiao-fen: #d98ca6;
+  --kapian-mian-biankuang: rgba(226, 232, 240, 0.45);
+  --kapian-mian-zhengwen: #dfe4ec;
+  --kapian-mian-biaoti: #ffffff;
+  --kapian-shuoming-wenben: #FFFFFF;
+  --moshi-kapian-zheyan: rgba(26, 30, 40, 0.75);
+  --moshi-kapian-hover-yinying: 0 14px 40px rgba(0, 0, 0, 0.28);
+  
+  --renzheng-mian-se: #161b2e;
+  --renzheng-shuru-xian-se: rgba(226, 232, 240, 0.11);
+  
+  --renzheng-gundong-huakuai-se: #d5b878;
+  
+  --rili-zhe-zhao-beijing: rgba(4, 6, 16, 0.68);
+  
+  --xuanzhong-qiangdiao-yinying: 0px 0px 10px rgba(255, 215, 0, 0.55);
+  
+  --xuanzhong-huan-yanse: #ff2d95;
+  --xuanzhong-guangyun-yanse: rgba(255, 45, 149, 0.12);
+  --junshi-biankuang: #38383A;
+  --shijian-biaoqian-beijing: #2A2A2A;
+  --shuru-zhanwei-se: #636366;
+  --shuru-fu-anniu-se: #d1d1d6;
+  --shuru-quyu-biankuang: #2c2c2e;
+  --guanbi-anniu-beijing: #2C2C2E;
+  --guanbi-anniu-hover: #3A3A3C;
+  --junshi-zhuse: #d4a843;
+  --junshi-zhuse-touming: rgba(212, 168, 67, 0.08);
+  --junshi-jinggao-wenben: #d4a843;
+  --junshi-zhaiyao-beijing: #1a2030;
+  --caidan-hover: #333333;
+  --caidan-active: #444444;
+  --chehui-caidan-beijing: rgba(44, 44, 46, 0.92);
+  --chehui-caidan-wenben: #f2f2f7;
+  --chehui-caidan-hover: rgba(255, 255, 255, 0.08);
+  --chehui-caidan-active: rgba(255, 255, 255, 0.14);
+  --chehui-caidan-biankuang: rgba(255, 255, 255, 0.1);
+  --biankuang-qianse: #38383A;
+  --biankuang-fenqu: #333333;
+  --beijing-qianse: #252525;
+  --biankuang-zhongjian: #444444;
+  --touxiang-yinying: 0 1px 3px rgba(0,0,0,0.2);
+  --qipao-yinying: 0 1px 2px rgba(0,0,0,0.15);
+  --caidan-yinying: 0 4px 16px rgba(0,0,0,0.3);
+  --biao-qian-chenggong-beijing: #0a1810;
+  --biao-qian-chenggong-wenben: #30d158;
+  --biao-qian-shibai-beijing: #2a1010;
+  --biao-qian-shibai-wenben: #ff453a;
+  --biao-qian-jinggao-beijing: #2a2000;
+  --biao-qian-jinggao-wenben: #ffa726;
+  --silu-beijing: #170e1f;
+  --silu-biankuang: #bf5af2;
+  --silu-wenben: #bf5af2;
+  --gandu-zheng-se: #30d158;
+  --gandu-fu-se: #dc2626;
+  --xinmuzhong-duibi-se: #ffffff;
+  --xinmuzhong-qukuai-beijing: rgba(255, 255, 255, 0.04);
+  --xinmuzhong-qukuai-biankuang: rgba(255, 255, 255, 0.1);
+  --beijing-jianbian-1: #1A2836;
+  --beijing-jianbian-2: #0F1C28;
+  --beijing-jianbian-3: #2A1A24;
+  --beijing-jianbian-4: #1A0F16;
+  --boli-beijing: rgba(255, 255, 255, 0.06);
+  --boli-beijing-shen: rgba(255, 255, 255, 0.12);
+  --boli-mohu: blur(12px);
+  --boli-biankuang: rgba(255, 255, 255, 0.1);
+  --boli-yinying: 0 8px 32px rgba(0, 0, 0, 0.2);
+  --zhezhao-beijing: rgba(0, 0, 0, 0.6);
+  --fasong-anniu-wenben: #ffffff;
+  --fasong-anniu-jinyong-beijing: var(--zhuse-shen);
+  --yanse-zhanji: #6C5CE7;
+  --yanse-zhanji-qian: #A29BFE;
+  --pai-xu-shou-wei-jin-yong-bian-kuang: #4a4a58;
+  --pai-xu-shou-wei-jin-yong-bei-jing: rgba(58, 58, 70, 0.45);
+  --pai-xu-shou-wei-jin-yong-wen-ben: #8b8b98;
+  --yanse-weixian: #ff6b6b;
+  --yanse-weixian-shen: #ff4444;
+  --yanse-qiangdiao: #a78bfa;
+  --yanse-biaobai: #ff6b9d;
+  --daohanglan-beijing: rgba(20, 24, 40, 0.72);
+  --daohanglan-xiabiankuang: rgba(255, 255, 255, 0.08);
+  --daohanglan-yinying: 0 2px 16px rgba(0, 0, 0, 0.15);
+  --daohanglan-wenben: rgba(255, 255, 255, 0.85);
+  --daohanglan-ciwenben: rgba(255, 255, 255, 0.7);
+  --daohanglan-qiangwenben: rgba(255, 255, 255, 0.9);
+  --daohanglan-jiantou: rgba(255, 255, 255, 0.5);
+  --daohanglan-hover: rgba(255, 255, 255, 0.08);
+  --daohanglan-qianbeijing: rgba(255, 255, 255, 0.06);
+  --daohanglan-qianbiankuang: rgba(255, 255, 255, 0.08);
+  --daohanglan-zhongbeijing: rgba(255, 255, 255, 0.12);
+  --xiala-beijing: rgba(20, 24, 40, 0.92);
+  --xiala-biankuang: rgba(255, 255, 255, 0.1);
+  --xiala-yinying: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --xiala-wenben: rgba(255, 255, 255, 0.8);
+  --xiala-hover-beijing: rgba(255, 255, 255, 0.1);
+  --xiala-hover-wenben: #ffffff;
+  --tanchuang-beijing: rgba(20, 24, 40, 0.92);
+  --tanchuang-biankuang: rgba(255, 255, 255, 0.12);
+  --tanchuang-yinying: 0 24px 64px rgba(0, 0, 0, 0.4);
+  --tanchuang-biaoti: #ffffff;
+  --tanchuang-fanhui-beijing: #3a3a3c;
+  --cuowu-touming-beijing: rgba(250, 81, 81, 0.12);
+  --cuowu-touming-biankuang: rgba(250, 81, 81, 0.25);
+  --tongzhi-badge-beijing: #ff4d6d;
+  --tongzhi-badge-wenben: #ffffff;
+  --touxiang-touming-beijing: rgba(255, 255, 255, 0.1);
+  --touxiang-beijing-moren: #3a3a3c;
+  --shuru-quyu-beijing: #1c1c1e;
+  --emoji-huoyue-beijing: rgba(255, 193, 7, 0.25);
+  --nuanhui-lan-touming-yinying: rgba(107, 140, 166, 0.3);
+  --junshi-anniu-beijing: rgba(167, 139, 250, 0.12);
+  --junshi-anniu-hover-beijing: rgba(167, 139, 250, 0.22);
+  --tuichu-hover-beijing: rgba(250, 81, 81, 0.12);
+
+  
+  --liuli-fuchuang-beijing: rgba(15, 17, 38, 0.78);
+  --liuli-fuchuang-biankuang: rgba(255, 255, 255, 0.13);
+  --liuli-fuchuang-yinying: 0 24px 60px rgba(4, 6, 20, 0.55);
+  --liuli-neirong-beijing: rgba(255, 255, 255, 0.035);
+  --liuli-kuai-beijing: rgba(255, 255, 255, 0.05);
+  --liuli-kuai-biankuang: rgba(255, 255, 255, 0.09);
+  --liuli-anniu-beijing: rgba(255, 255, 255, 0.06);
+  --liuli-anniu-biankuang: rgba(255, 255, 255, 0.14);
+  --liuli-anniu-wenben: rgba(242, 240, 250, 0.7);
+  --liuli-anniu-hover: rgba(255, 255, 255, 0.12);
+  --liuli-qiangdiao: #e0a2b8;
+  --liuli-jishu-di: #b35f7e;
+  --liuli-jishu-wenben: #ffffff;
+  --liuli-lengxian: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+}

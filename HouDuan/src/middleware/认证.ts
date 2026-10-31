@@ -1,0 +1,101 @@
+import type { Request, Response, NextFunction } from 'express'
+import { yanZhengLingPai, lingPaiShiFouYiCheXiao, type LingPaiZaiHe } from '../utils/jwt'
+import { huoQuFanYi } from '../config/translations'
+import { shiBaiXiangYing } from '../utils/xiangying'
+import { redis } from '../redis'
+import { CUO_WU_DAI_MA } from '../config/错误码注册表'
+
+export interface RenZhengQingQiu extends Request {
+  yong_hu?: LingPaiZaiHe
+}
+
+export interface GongKaiLuJing {
+  fang_fa: string | string[]
+  lu_jing: string
+}
+
+export const gongKaiLuJingBaiMingDan: GongKaiLuJing[] = [
+  { fang_fa: 'GET', lu_jing: '/api/认证/人机挑战' },
+  { fang_fa: 'GET', lu_jing: '/api/认证/检查手机' },
+  { fang_fa: 'POST', lu_jing: '/api/认证/发送码' },
+  { fang_fa: 'POST', lu_jing: '/api/认证/注册' },
+  { fang_fa: 'POST', lu_jing: '/api/认证/登录' },
+  { fang_fa: 'POST', lu_jing: '/api/认证/重置密码' },
+  { fang_fa: 'GET', lu_jing: '/api/健康' },
+  { fang_fa: 'GET', lu_jing: '/api/媒体/' },
+]
+
+function luJingPiPei(qingQiuLuJing: string, muBiaoLuJing: string): boolean {
+  if (muBiaoLuJing.includes('?')) {
+    return qingQiuLuJing.startsWith(muBiaoLuJing.split('?')[0])
+  }
+  if (muBiaoLuJing.endsWith('/')) {
+    return qingQiuLuJing.startsWith(muBiaoLuJing)
+  }
+  return qingQiuLuJing === muBiaoLuJing
+}
+
+export async function renZhengZhongJianJian(
+  qingQiu: RenZhengQingQiu,
+  xiangYing: Response,
+  xiaYiBu: NextFunction,
+): Promise<void> {
+  const fangFa = qingQiu.method
+  let luJing = qingQiu.path
+  try {
+    luJing = decodeURIComponent(qingQiu.path)
+  } catch {
+    shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+    return
+  }
+
+  const zaiBaiMingDan = gongKaiLuJingBaiMingDan.some((xiang) => {
+    const fangFaPiPei = Array.isArray(xiang.fang_fa)
+      ? xiang.fang_fa.includes(fangFa)
+      : xiang.fang_fa === fangFa
+    return fangFaPiPei && luJingPiPei(luJing, xiang.lu_jing)
+  })
+
+  if (zaiBaiMingDan) {
+    xiaYiBu()
+    return
+  }
+
+  const authorization = qingQiu.headers.authorization
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+    return
+  }
+
+  const lingPai = authorization.slice(7)
+  try {
+    const zaiHe = yanZhengLingPai(lingPai)
+    try {
+      const { redisRongDuanShiFouKaiLu } = await import('../redis')
+      if (!redisRongDuanShiFouKaiLu()) {
+        if (zaiHe.jti) {
+          const { daiRongDuanZhiXing } = await import('../redis')
+          const yiDiaoXiao = await daiRongDuanZhiXing(`jwt_blacklist:${zaiHe.jti}`, () => redis.get(`jwt_blacklist:${zaiHe.jti}`))
+          if (yiDiaoXiao) {
+            shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTH_TOKEN_INVALID)
+            return
+          }
+        }
+        if (await lingPaiShiFouYiCheXiao(zaiHe.yongHuId, zaiHe.iat, zaiHe.qianFaHaoMiao)) {
+          shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTH_TOKEN_INVALID)
+          return
+        }
+      } else {
+        const { debug日志 } = await import('../utils/debug日志')
+        debug日志.warn('认证中间件', 'Redis熔断开路，吊销检查降级放行', { xiang_qing: { yong_hu_id: zaiHe.yongHuId } })
+      }
+    } catch {
+      const { debug日志 } = await import('../utils/debug日志')
+      debug日志.warn('认证中间件', '吊销检查失败降级放行', { xiang_qing: { yong_hu_id: zaiHe.yongHuId } })
+    }
+    qingQiu.yong_hu = zaiHe
+    xiaYiBu()
+  } catch {
+    shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTH_TOKEN_INVALID)
+  }
+}
