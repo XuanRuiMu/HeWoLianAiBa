@@ -79,6 +79,9 @@ const emit = defineEmits<{
   position: relative;
   max-width: 100%;
   margin-bottom: var(--jiange-zhong);
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .xiaoxi-xiangmu.yonghu-xiaoxi {
@@ -154,9 +157,18 @@ const emit = defineEmits<{
   background: transparent;
 }
 
-.qipao-waike.qipao-fasong-zhong {
-  filter: grayscale(1);
-  opacity: 0.8;
+.qipao-waike.qipao-fasong-zhong::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--xiaoxi-wei-fasong-zhe-zhao);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.qipao-waike.qipao-fasong-zhong :deep(.qipao-weiba) {
+  filter: brightness(0.55);
 }
 
 .chehui-tishi {

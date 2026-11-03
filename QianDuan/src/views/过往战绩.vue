@@ -31,16 +31,7 @@
         />
       </div>
       <div
-        v-if="zhanKu.jiaZaiZhong || zhanKu.jiLuJiaZaiZhong"
-        class="jiazai-zhuangtai"
-        role="status"
-        aria-live="polite"
-      >
-        <div class="kong-tubiao" aria-hidden="true">⏳</div>
-        <div>{{ huoQuFanYi('zhanJi', 'jiaZaiZhong') }}</div>
-      </div>
-      <div
-        v-else-if="zhanKu.qianTaiCuoWu && dangAnLieBiao.length === 0"
+        v-if="zhanKu.qianTaiCuoWu && dangAnLieBiao.length === 0"
         class="kong-zhuangtai jiaZai-cuoWu-zhuangtai"
       >
         <RequestError
@@ -1162,7 +1153,7 @@ async function yidongJiLu(recordId: string, fangXiang: -1 | 1): Promise<void> {
 }
 
 onMounted(() => {
-  void zhanKu.jiaZai()
+  if (zhanKu.fenLeiZhuangTai === 'weiKaiShi' && !zhanKu.jiaZaiZhong) void zhanKu.jiaZai()
 })
 
 onUnmounted(() => {
@@ -1228,7 +1219,6 @@ defineExpose({
   -webkit-user-select: none;
 }
 
-.jiazai-zhuangtai,
 .kong-zhuangtai {
   
   margin: 0 var(--jiange-4);
@@ -1257,7 +1247,6 @@ defineExpose({
   color: rgba(242, 242, 237, 0.88);
 }
 
-:root[data-theme='light'] .jiazai-zhuangtai,
 :root[data-theme='light'] .kong-zhuangtai {
   background: rgba(255, 255, 255, 0.9);
   border: 2px solid #14141a;
@@ -2054,7 +2043,6 @@ defineExpose({
   color: #5a5a66;
 }
 
-:root[data-theme='light'] .jiazai-zhuangtai,
 :root[data-theme='light'] .kong-zhuangtai {
   color: #3a3a46;
 }

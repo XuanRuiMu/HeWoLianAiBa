@@ -165,7 +165,7 @@ describe('FP09 通知页语义与层级', () => {
     包.unmount()
   })
 
-  it('空态使用矢量图标而非emoji，加载态为骨架屏', () => {
+  it('空态使用矢量图标而非emoji，首屏加载不再渲染骨架与空态', () => {
     挂载状态.仓库.tongZhiLieBiao = []
     挂载状态.仓库.weiDuShu = 0
     const 空包 = mount(通知页面)
@@ -175,8 +175,11 @@ describe('FP09 通知页语义与层级', () => {
 
     挂载状态.refs.zhuangTai.value = 'loading'
     const 载包 = mount(通知页面)
-    expect(载包.findAll('.gujia-xiang').length).toBe(5)
-    expect(载包.find('.tongzhi-gujia[role="status"]').exists()).toBe(true)
+    expect(载包.find('.tongzhi-dengdai[aria-hidden="true"]').exists()).toBe(true)
+    expect(载包.find('.tongzhi-gujia').exists()).toBe(false)
+    expect(载包.findAll('.gujia-xiang').length).toBe(0)
+    expect(载包.find('.tongzhi-kong').exists()).toBe(false)
+    expect(载包.text()).not.toContain(huoQuFanYi('tongZhi', 'zanWuTongZhi'))
     载包.unmount()
   })
 

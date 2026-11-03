@@ -193,6 +193,7 @@ export const fanYi = {
     fanYiShiBai: '翻译失败，请重试',
     yuYinZhuanWenZiShiBai: '语音转文字失败，请重试',
     yuYinLiJieShiBai: '语音理解失败，已按文字继续回复',
+    yuYinWuFaShiBie: '无法识别具体内容',
     duoMoTaiFuWuBuKeYong: '多模态服务未开启，请联系管理员配置',
     shengTuShiBai: '图片生成失败，请重试',
     shengTuPeiEYongJin: '今日生成额度已用完，明天再试',

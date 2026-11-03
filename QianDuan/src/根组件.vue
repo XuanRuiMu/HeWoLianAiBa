@@ -12,6 +12,7 @@
           </Transition>
         </router-view>
       </main>
+      <YeMianGuoDuZaiRu />
     </div>
     <div
       class="cao-di-jiang-ji"
@@ -70,6 +71,7 @@ import QuanJuCaiDan from '@/components/全局菜单.vue'
 import CuoWuBianJie from '@/components/错误边界.vue'
 import ShiShiRiZhi from '@/components/实时日志.vue'
 import DuanWangHengFu from '@/components/断网横幅.vue'
+import YeMianGuoDuZaiRu from '@/components/页面过渡载入.vue'
 import { 使用用户仓库 } from '@/stores/用户'
 import { chuFaCuoWuShangBao } from '@/utils/错误上报'
 import { gouJianCaoDiDiZhi, shiFouCaoDiDiaoShi } from '@/utils/CaoDiBeiJing'

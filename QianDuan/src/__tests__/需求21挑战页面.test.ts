@@ -5,7 +5,8 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { huoQuFanYi } from '@/config/翻译表'
 import { chuangJianQianTaiCuoWu } from '@/utils/前台错误'
-import type { PaiHangXiangMu, ZuBieGaiKuang } from '@/api/挑战'
+import type { PaiHangXiangMu, ZuBie, ZuBieGaiKuang } from '@/api/挑战'
+import { use挑战榜单 } from '@/composables/use挑战榜单'
 
 const { 路由推 } = vi.hoisted(() => ({ 路由推: vi.fn() }))
 
@@ -145,6 +146,7 @@ async function 挂榜单() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  use挑战榜单().qingChu()
   sessionStorage.clear()
   vi.mocked(huoQuDangQianDuiJu).mockResolvedValue(null)
   vi.mocked(huoQuWoDeGaiKuang).mockResolvedValue(概况)
@@ -207,6 +209,7 @@ describe('挑战主页信息结构', () => {
     expect(包.find('.zhaiyao-hang').text()).toContain('江晚吟')
     expect(包.findAll('.zhaiyao-hang')[4]?.text()).toContain('姜杳杳')
     expect(包.find('.zhaiyao-wo').text()).toContain('3')
+    expect(包.find('.zhaiyao-qu').classes()).not.toContain('zhaiyao-qu--jinci')
     expect(huoQuPaiHangBang).toHaveBeenCalledWith('nan_nv')
     包.unmount()
   })
@@ -393,37 +396,63 @@ describe('挑战页空态', () => {
 })
 
 describe('挑战主页榜单速览按组缓存', () => {
-  it('切组只请求一次，切回缓存组不再请求也不闪骨架屏', async () => {
+  it('进页一次并发预取四组榜单，切组读缓存零请求也不闪骨架屏', async () => {
     const 包 = await 挂主页()
-    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(1)
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(4)
+    expect(huoQuPaiHangBang).toHaveBeenNthCalledWith(1, 'nan_nv')
+    expect(huoQuPaiHangBang).toHaveBeenNthCalledWith(2, 'nv_nan')
+    expect(huoQuPaiHangBang).toHaveBeenNthCalledWith(3, 'nan_nan')
+    expect(huoQuPaiHangBang).toHaveBeenNthCalledWith(4, 'nv_nv')
     await 包.findAll('.zu-anniu')[1]?.trigger('click')
     await flushPromises()
-    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(2)
-    await 包.findAll('.zu-anniu')[0]?.trigger('click')
-    await flushPromises()
-    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(2)
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(4)
     expect(包.findAll('.zhaiyao-zhanwei')).toHaveLength(0)
     expect(包.find('.zhaiyao-qu').attributes('aria-busy')).toBe('false')
     expect(包.findAll('.zhaiyao-hang')).toHaveLength(5)
-    await 包.findAll('.zu-anniu')[1]?.trigger('click')
+    await 包.findAll('.zu-anniu')[0]?.trigger('click')
     await flushPromises()
-    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(2)
-    包.unmount()
-  })
-
-  it('失败不写缓存，重试成功后才写入缓存', async () => {
-    vi.mocked(huoQuPaiHangBang).mockRejectedValueOnce(chuangJianQianTaiCuoWu({ retryable: true }))
-    const 包 = await 挂主页()
-    expect(包.find('.zhaiyao-chongshi').exists()).toBe(true)
-    await 包.find('.zhaiyao-chongshi').trigger('click')
-    await flushPromises()
-    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(2)
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(4)
     expect(包.findAll('.zhaiyao-hang')).toHaveLength(5)
     await 包.findAll('.zu-anniu')[1]?.trigger('click')
     await flushPromises()
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(4)
+    expect(包.find('.zhaiyao-qu').classes()).not.toContain('zhaiyao-qu--jinci')
+    包.unmount()
+  })
+
+  it('空榜时速览卡收紧且不渲染我方占位行', async () => {
+    vi.mocked(huoQuPaiHangBang).mockResolvedValue([])
+    const 包 = await 挂主页()
+    expect(包.find('.zhaiyao-qu').classes()).toContain('zhaiyao-qu--jinci')
+    expect(包.find('.zhaiyao-wo-wei').exists()).toBe(false)
+    expect(包.findAll('.zhaiyao-hang')).toHaveLength(0)
+    包.unmount()
+  })
+
+  it('预取失败走单榜兜底，兜底也失败才显示重试，重试成功后写缓存', async () => {
+    let nanNvQingQiuCiShu = 0
+    vi.mocked(huoQuPaiHangBang).mockImplementation(async (zuBie: ZuBie) => {
+      if (zuBie === 'nan_nv') {
+        nanNvQingQiuCiShu += 1
+        if (nanNvQingQiuCiShu <= 2) {
+          throw chuangJianQianTaiCuoWu({ retryable: true })
+        }
+      }
+      return 榜单
+    })
+    const 包 = await 挂主页()
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(5)
+    expect(包.find('.zhaiyao-chongshi').exists()).toBe(true)
+    await 包.find('.zhaiyao-chongshi').trigger('click')
+    await flushPromises()
+    expect(nanNvQingQiuCiShu).toBe(3)
+    expect(包.findAll('.zhaiyao-hang')).toHaveLength(5)
+    await 包.findAll('.zu-anniu')[1]?.trigger('click')
+    await flushPromises()
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(6)
     await 包.findAll('.zu-anniu')[0]?.trigger('click')
     await flushPromises()
-    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(3)
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(6)
     包.unmount()
   })
 })

@@ -3,6 +3,7 @@
   --bu-ju-gao-du: 100dvh;
 
   
+  --ceng-guodu: 1200;
   --ceng-caidan: 1300;
   --ceng-junshi: 1500;
   --ceng-junshi-jilu: 1600;
@@ -67,7 +68,6 @@
   --biaoqian-lan-gao-du: 76px;
   --shuru-kuang-zihao: 16px;
   --shuru-kuang-hangao: 1.4;
-  --shuru-kuang-hangxing-gao: calc(var(--shuru-kuang-zihao) * var(--shuru-kuang-hangao));
   --shuru-kuang-shang-xia-neidian: 6px;
   --shuru-kuang-zuo-you-neidian: 12px;
   --shuru-kuang-biankuang: 0.5px;
@@ -277,6 +277,7 @@
   --jing-gao-se: #ff9800;
   --xiaoxi-yonghu-wenben: #000000;
   --xiaoxi-jiaose-wenben: #000000;
+  --xiaoxi-wei-fasong-zhe-zhao: rgba(0, 0, 0, 0.4);
   --liaotian-beijing: #ededed;
   
   --gundong-tiao-beijing: rgba(110, 110, 110, 0.85);
@@ -378,9 +379,6 @@
   --caidan-active: #E8E8E8;
   --chehui-caidan-beijing: rgba(255, 255, 255, 0.92);
   --chehui-caidan-wenben: #1c1c1e;
-  --chehui-caidan-hover: rgba(0, 0, 0, 0.05);
-  --chehui-caidan-active: rgba(0, 0, 0, 0.09);
-  --chehui-caidan-biankuang: rgba(0, 0, 0, 0.08);
   --biankuang-qianse: #D9D9D9;
   --biankuang-fenqu: #f0f0f0;
   --beijing-qianse: #fafafa;
@@ -413,8 +411,6 @@
   --boli-yinying: 0 8px 32px rgba(0, 0, 0, 0.08);
   --zhezhao-beijing: rgba(0, 0, 0, 0.4);
   --fasong-anniu-wenben: #ffffff;
-  
-  --fasong-anniu-jinyong-beijing: var(--zhuse-shen);
   --yanse-zhanji: #6C5CE7;
   --yanse-zhanji-qian: #A29BFE;
   --yanse-weixian: #ff6b6b;
@@ -498,6 +494,7 @@
   --jing-gao-se: #ffa726;
   --xiaoxi-yonghu-wenben: #000000;
   --xiaoxi-jiaose-wenben: #E0E0E0;
+  --xiaoxi-wei-fasong-zhe-zhao: rgba(0, 0, 0, 0.45);
   --liaotian-beijing: #111111;
   
   --gundong-tiao-beijing: rgba(150, 150, 150, 0.9);
@@ -599,9 +596,6 @@
   --caidan-active: #444444;
   --chehui-caidan-beijing: rgba(44, 44, 46, 0.92);
   --chehui-caidan-wenben: #f2f2f7;
-  --chehui-caidan-hover: rgba(255, 255, 255, 0.08);
-  --chehui-caidan-active: rgba(255, 255, 255, 0.14);
-  --chehui-caidan-biankuang: rgba(255, 255, 255, 0.1);
   --biankuang-qianse: #38383A;
   --biankuang-fenqu: #333333;
   --beijing-qianse: #252525;
@@ -634,7 +628,6 @@
   --boli-yinying: 0 8px 32px rgba(0, 0, 0, 0.2);
   --zhezhao-beijing: rgba(0, 0, 0, 0.6);
   --fasong-anniu-wenben: #ffffff;
-  --fasong-anniu-jinyong-beijing: var(--zhuse-shen);
   --yanse-zhanji: #6C5CE7;
   --yanse-zhanji-qian: #A29BFE;
   --pai-xu-shou-wei-jin-yong-bian-kuang: #4a4a58;

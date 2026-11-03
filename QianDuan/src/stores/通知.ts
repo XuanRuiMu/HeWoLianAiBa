@@ -10,16 +10,25 @@ import { chuFaCuoWuShangBao } from '@/utils/错误上报'
 export const 使用通知仓库 = defineStore('通知', () => {
   const tongZhiLieBiao = ref<通知[]>([])
   const weiDuShu = ref(0)
+  const yiJiaZaiGuo = ref(false)
   const socketLianJie = ref<Socket | null>(null)
+  let jiaZaiChengNuo: Promise<void> | null = null
 
   async function jiaZaiTongZhi() {
-    try {
-      const shuJu = await huoQuTongZhiLieBiao()
-      tongZhiLieBiao.value = shuJu.lie_biao
-      weiDuShu.value = shuJu.wei_du_shu
-    } catch (cuoWu: unknown) {
-      throw 归一前台错误(cuoWu)
-    }
+    if (jiaZaiChengNuo) return jiaZaiChengNuo
+    jiaZaiChengNuo = (async () => {
+      try {
+        const shuJu = await huoQuTongZhiLieBiao()
+        tongZhiLieBiao.value = shuJu.lie_biao
+        weiDuShu.value = shuJu.wei_du_shu
+        yiJiaZaiGuo.value = true
+      } catch (cuoWu: unknown) {
+        throw 归一前台错误(cuoWu)
+      } finally {
+        jiaZaiChengNuo = null
+      }
+    })()
+    return jiaZaiChengNuo
   }
 
   function shuaXinTongZhiBiao() {
@@ -100,6 +109,7 @@ export const 使用通知仓库 = defineStore('通知', () => {
   return {
     tongZhiLieBiao,
     weiDuShu,
+    yiJiaZaiGuo,
     jiaZaiTongZhi,
     shuaXinTongZhiBiao,
     lianJieSocket,

@@ -30,18 +30,10 @@
       </div>
 
       <div
-        v-else-if="qianTaiZhuangTai === 'loading'"
-        class="tongzhi-gujia"
-        role="status"
-        :aria-label="huoQuFanYi('tongZhi', 'jiaZaiZhong')"
-      >
-        <span class="ping-mu-wai">{{ huoQuFanYi('tongZhi', 'jiaZaiZhong') }}</span>
-        <div v-for="序 in 5" :key="序" class="gujia-xiang" aria-hidden="true">
-          <span class="gujia-kuai gujia-kuai--duan" />
-          <span class="gujia-kuai gujia-kuai--chang" />
-          <span class="gujia-kuai gujia-kuai--zhong" />
-        </div>
-      </div>
+        v-else-if="通知仓库.tongZhiLieBiao.length === 0 && qianTaiZhuangTai === 'loading'"
+        class="tongzhi-dengdai"
+        aria-hidden="true"
+      />
 
       <div v-else-if="通知仓库.tongZhiLieBiao.length === 0" class="tongzhi-kong">
         <span class="kong-tubiao" aria-hidden="true">
@@ -143,7 +135,7 @@ async function biaoJiQuanBuYiDu() {
 }
 
 onMounted(() => {
-  void jiaZaiTongZhi()
+  if (!通知仓库.yiJiaZaiGuo) void jiaZaiTongZhi()
   通知仓库.lianJieSocket()
 })
 </script>
@@ -230,82 +222,6 @@ onMounted(() => {
 .quanbu-anniu:disabled {
   opacity: 0.55;
   cursor: not-allowed;
-}
-
-.ping-mu-wai {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.tongzhi-gujia {
-  display: flex;
-  flex-direction: column;
-  gap: var(--jiange-10);
-}
-
-.gujia-xiang {
-  display: flex;
-  flex-direction: column;
-  gap: var(--jiange-6);
-  padding: var(--jiange-zhong);
-  border-radius: var(--yuanjiao-zhong);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-:root[data-theme='light'] .gujia-xiang {
-  background: rgba(255, 255, 255, 0.6);
-  border-color: rgba(0, 0, 0, 0.05);
-}
-
-.gujia-kuai {
-  display: block;
-  height: 12px;
-  border-radius: 999px;
-  background: linear-gradient(
-    100deg,
-    rgba(255, 255, 255, 0.08) 40%,
-    rgba(255, 255, 255, 0.18) 50%,
-    rgba(255, 255, 255, 0.08) 60%
-  );
-  background-size: 200% 100%;
-  animation: gujia-liuguang 1.4s ease-in-out infinite;
-}
-
-:root[data-theme='light'] .gujia-kuai {
-  background: linear-gradient(
-    100deg,
-    rgba(0, 0, 0, 0.06) 40%,
-    rgba(0, 0, 0, 0.12) 50%,
-    rgba(0, 0, 0, 0.06) 60%
-  );
-  background-size: 200% 100%;
-}
-
-.gujia-kuai--duan {
-  width: 32%;
-}
-
-.gujia-kuai--chang {
-  width: 88%;
-}
-
-.gujia-kuai--zhong {
-  width: 62%;
-}
-
-@keyframes gujia-liuguang {
-  from {
-    background-position: 180% 0;
-  }
-
-  to {
-    background-position: -80% 0;
-  }
 }
 
 .tongzhi-kong {
@@ -539,10 +455,6 @@ onMounted(() => {
   .yidu-anniu:hover {
     transition: none;
     transform: none;
-  }
-
-  .gujia-kuai {
-    animation: none;
   }
 
   .liebiao-guodu-enter-active,

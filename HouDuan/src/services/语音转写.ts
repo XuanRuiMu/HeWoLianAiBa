@@ -21,7 +21,7 @@ export async function mianFeiZhuanXieYuYin(canShu: { meiTiId: string }): Promise
   if (zhuanXieMock) {
     try {
       const jieGuo = await zhuanXieMock(canShu)
-      return qingXi(jieGuo) || null
+      return qingXi(jieGuo)
     } catch (cuoWu) {
       debug日志.warn('语音转写', '转写mock调用失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
       return null
@@ -67,7 +67,13 @@ export async function mianFeiZhuanXieYuYin(canShu: { meiTiId: string }): Promise
       body: biaoDan,
       signal: kongZhi.signal,
     })
-    if (!xiangYing.ok) return null
+    if (!xiangYing.ok) {
+      const cuoWai = await xiangYing.text().catch(() => '')
+      debug日志.warn('语音转写', 'ASR响应非2xx，已降级', {
+        xiang_qing: { zhuang_tai: xiangYing.status, xiang_ying: cuoWai.slice(0, 300) },
+      })
+      return null
+    }
     const shuJu = (await xiangYing.json()) as Record<string, unknown>
     const wenBen =
       typeof shuJu['wen_ben'] === 'string'
@@ -75,7 +81,7 @@ export async function mianFeiZhuanXieYuYin(canShu: { meiTiId: string }): Promise
         : typeof shuJu['text'] === 'string'
           ? String(shuJu['text'])
           : ''
-    return qingXi(wenBen) || null
+    return qingXi(wenBen)
   } catch (cuoWu) {
     debug日志.warn('语音转写', '免费转写失败，已降级', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return null

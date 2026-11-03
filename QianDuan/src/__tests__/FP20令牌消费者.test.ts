@@ -68,12 +68,6 @@ const 零消费白名单: { 令牌: string; 理由: string }[] = [
 
 const 已知消费者: { 令牌: string; 理由: string; 位置: string[] }[] = [
   {
-    令牌: '--jing-gao-se',
-    理由:
-      '消息配置.ts 的 liangGuangLingPai 登记令牌名字符串；引用气泡块.vue 经 getPropertyValue(该配置) 间接取运行时值（本文件无令牌字面量）',
-    位置: ['src/config/消息配置.ts'],
-  },
-  {
     令牌: '--biao-qian-chenggong-wenben',
     理由: '战报海报.ts 胜利分支 zhuangTaiWenBen 令牌名字符串，同 quLingPai 消费链',
     位置: ['src/utils/战报海报.ts'],
@@ -154,6 +148,14 @@ const 幻影登记: { 令牌: string; 理由: string }[] = [
   {
     令牌: '--hang-xu-hao',
     理由: '挑战主页.vue 榜单逐行错峰入场：行号以 :style 运行时注入，CSS 只按 var() 计算动画延迟',
+  },
+  {
+    令牌: '--qipao-caidan-weiba-x',
+    理由: 'FP-7 use长按菜单.ts 实测定稿后经 :style 注入菜单根的尾巴尖水平位置，菜单 CSS 只消费',
+  },
+  {
+    令牌: '--qipao-nei-rong-wen-ben',
+    理由: 'FP-7 聊天页面.vue/好友聊天.vue 按消息侧别经 :style 注入菜单文字色，菜单 CSS 只消费',
   },
 ]
 

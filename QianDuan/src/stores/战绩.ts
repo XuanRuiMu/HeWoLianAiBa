@@ -116,7 +116,6 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
   async function jiaZaiDangQianFenLei(categoryId: string): Promise<boolean> {
     const shenFen = ++shenFenFu
     dangQianFenLeiId.value = categoryId
-    dangAnLieBiao.value = []
     jiLuXianShiPaiXu.value = null
     jiLuJiaZaiZhong.value = true
     qingCuoWu()

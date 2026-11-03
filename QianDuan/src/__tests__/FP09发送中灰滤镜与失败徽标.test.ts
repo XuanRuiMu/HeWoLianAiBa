@@ -46,12 +46,20 @@ describe('FP-09 发送中灰滤镜', () => {
     expect(包裹.find('.fasong-zhuangtai').exists()).toBe(false)
   })
 
-  it('灰滤镜规则为去色加轻度透明，且不产生遮挡交互的蒙层', () => {
-    const 体 = 规则体('.qipao-waike.qipao-fasong-zhong')
-    expect(体).toContain('filter: grayscale(1)')
-    expect(体).toMatch(/opacity:\s*0\.8\b/)
-    expect(体).not.toContain('background')
-    expect(体).not.toContain('::before')
+  it('发送中气泡蒙深色遮罩：::after 遮罩存在且不拦截交互，规则内无去色滤镜', () => {
+    const 体 = 规则体('.qipao-waike.qipao-fasong-zhong::after')
+    expect(体).toContain("content: ''")
+    expect(体).toContain('position: absolute')
+    expect(体).toContain('inset: 0')
+    expect(体).toContain('background: var(--xiaoxi-wei-fasong-zhe-zhao)')
+    expect(体).toContain('border-radius: inherit')
+    expect(体).toContain('pointer-events: none')
+    expect(体).toContain('z-index: 2')
+    expect(体).not.toContain('filter')
+    expect(体).not.toContain('opacity')
+    expect(规则体('.qipao-waike.qipao-fasong-zhong :deep(.qipao-weiba)')).toContain(
+      'filter: brightness(0.55)',
+    )
     expect(样式).not.toMatch(/\.xiaoxi-wei[^{]*\{[^}]*filter:/)
     expect(样式).not.toMatch(/\.fasong-zhuangtai[^{]*\{[^}]*filter:/)
   })

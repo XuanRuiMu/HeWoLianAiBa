@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { huoQuFanYi } from '@/config/翻译表'
-import type { PaiHangXiangMu, ZuBieGaiKuang } from '@/api/挑战'
+import type { PaiHangXiangMu, ZuBie, ZuBieGaiKuang } from '@/api/挑战'
 
 const { 路由推 } = vi.hoisted(() => ({ 路由推: vi.fn() }))
 
@@ -22,6 +22,7 @@ vi.mock('@/api/挑战', () => ({
 import 挑战主页 from '@/views/挑战主页.vue'
 import 挑战积分榜 from '@/views/挑战积分榜.vue'
 import { huoQuDangQianDuiJu, huoQuPaiHangBang, huoQuWoDeGaiKuang } from '@/api/挑战'
+import { use挑战榜单 } from '@/composables/use挑战榜单'
 
 const 本目录 = dirname(fileURLToPath(import.meta.url))
 const 根 = resolve(本目录, '..')
@@ -38,6 +39,7 @@ const 概况: ZuBieGaiKuang[] = []
 
 beforeEach(() => {
   vi.clearAllMocks()
+  use挑战榜单().qingChu()
   sessionStorage.clear()
   vi.mocked(huoQuDangQianDuiJu).mockResolvedValue(null)
   vi.mocked(huoQuWoDeGaiKuang).mockResolvedValue(概况)
@@ -230,14 +232,18 @@ describe('FP-13 空态永久灰与榜单四态单一源', () => {
     expect(挑战积分榜源).toContain('<ol v-else class="bangdan-liebiao">')
   })
 
-  it('主页切组立即清空旧榜单并显示骨架，返回后进入空态', async () => {
-    vi.mocked(huoQuPaiHangBang).mockResolvedValueOnce(榜单甲)
+  it('主页切组命中缓存立即渲染，未预取成功的组走单榜兜底并显示骨架', async () => {
+    vi.mocked(huoQuPaiHangBang).mockImplementation(async (zuBie: ZuBie) => {
+      if (zuBie === 'nan_nv') return 榜单甲
+      if (zuBie === 'nv_nan') throw new Error('yuQuShiBai')
+      return []
+    })
     const 包 = mount(挑战主页, { attachTo: document.body })
     await flushPromises()
     await flushPromises()
     expect(包.findAll('.zhaiyao-hang')).toHaveLength(1)
     const 延迟 = 延迟榜单()
-    vi.mocked(huoQuPaiHangBang).mockReturnValueOnce(延迟.承诺)
+    vi.mocked(huoQuPaiHangBang).mockImplementationOnce(() => 延迟.承诺)
     await 包.findAll('.zu-anniu')[1]?.trigger('click')
     await nextTick()
     expect(包.findAll('.zhaiyao-hang')).toHaveLength(0)
@@ -254,14 +260,16 @@ describe('FP-13 空态永久灰与榜单四态单一源', () => {
     包.unmount()
   })
 
-  it('主页快速连续切组只接受最后一次响应', async () => {
-    vi.mocked(huoQuPaiHangBang).mockResolvedValueOnce(榜单甲)
+  it('主页快速连续切组未命中缓存时只接受最后一次响应', async () => {
+    vi.mocked(huoQuPaiHangBang).mockRejectedValue(new Error('yuQuShiBai'))
     const 包 = mount(挑战主页, { attachTo: document.body })
     await flushPromises()
     await flushPromises()
     const 慢 = 延迟榜单()
     const 快 = 延迟榜单()
-    vi.mocked(huoQuPaiHangBang).mockReturnValueOnce(慢.承诺).mockReturnValueOnce(快.承诺)
+    vi.mocked(huoQuPaiHangBang).mockResolvedValue([])
+    vi.mocked(huoQuPaiHangBang).mockImplementationOnce(() => 慢.承诺)
+    vi.mocked(huoQuPaiHangBang).mockImplementationOnce(() => 快.承诺)
     await 包.findAll('.zu-anniu')[1]?.trigger('click')
     await 包.findAll('.zu-anniu')[2]?.trigger('click')
     await nextTick()
@@ -276,7 +284,7 @@ describe('FP-13 空态永久灰与榜单四态单一源', () => {
   })
 
   it('主页错误态只显示错误空态，不与骨架或残留列表叠加', async () => {
-    vi.mocked(huoQuPaiHangBang).mockRejectedValueOnce(new Error('接口异常'))
+    vi.mocked(huoQuPaiHangBang).mockRejectedValue(new Error('接口异常'))
     const 包 = mount(挑战主页, { attachTo: document.body })
     await flushPromises()
     await flushPromises()

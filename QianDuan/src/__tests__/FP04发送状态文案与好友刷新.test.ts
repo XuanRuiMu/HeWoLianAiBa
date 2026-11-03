@@ -64,9 +64,17 @@ describe('FP-04 好友页发送状态收口', () => {
     expect(tiaoYongShu).toBe(2)
   })
 
-  it('发送中外壳透明度提升为 0.8，缓解语音条叠加过淡', () => {
-    const ti = 消息行源.match(/\.qipao-waike\.qipao-fasong-zhong\s*\{([^}]*)\}/)?.[1] ?? ''
-    expect(ti).toContain('filter: grayscale(1)')
-    expect(ti).toContain('opacity: 0.8')
+  it('发送中气泡蒙深色遮罩，保持原色且不拦截交互', () => {
+    const ti = 消息行源.match(/\.qipao-waike\.qipao-fasong-zhong::after\s*\{([^}]*)\}/)?.[1] ?? ''
+    expect(ti).toContain("content: ''")
+    expect(ti).toContain('background: var(--xiaoxi-wei-fasong-zhe-zhao)')
+    expect(ti).toContain('pointer-events: none')
+    expect(ti).toContain('z-index: 2')
+    expect(ti).not.toContain('filter')
+    expect(ti).not.toContain('opacity')
+    const weiBa =
+      消息行源.match(/\.qipao-waike\.qipao-fasong-zhong :deep\(\.qipao-weiba\)\s*\{([^}]*)\}/)?.[1] ??
+      ''
+    expect(weiBa).toContain('filter: brightness(0.55)')
   })
 })

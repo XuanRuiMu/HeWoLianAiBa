@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI } from '@/config/消息配置'
 import type { 消息 } from '@/types/类型定义'
+import { duQuYuYinYinLiang, yuYinYinLiangZengYi } from '@/utils/语音音量存储'
 
 export interface YuYinShiBieQi {
   lang: string
@@ -20,7 +21,7 @@ interface YuYinZhuanWenZiYiLai {
   sheZhiCuoWu?: (xinXi: string) => void
   shiBieQiGongChang?: () => YuYinShiBieQi | null
   zhuanXieQingQiu?: (xiaoXi: 消息) => Promise<string | null>
-  huoQuYinLiang?: () => number | null
+  huoQuYinLiang?: (xiaoXi: 消息) => number | null
 }
 
 function xiaoXiJian(xiaoXi: 消息): string {
@@ -208,7 +209,20 @@ export function use语音转文字(yiLai: YuYinZhuanWenZiYiLai) {
     }
     zhuanXieZhongJiHe.value.add(jian)
     try {
-      const wenBen = await shiBieBoFang(diZhi, shiBieQi, yiLai.huoQuYinLiang?.() ?? null)
+      let tongDaoZhi: number | null = null
+      try {
+        const 值 = yiLai.huoQuYinLiang?.(xiaoXi)
+        if (typeof 值 === 'number' && Number.isFinite(值)) {
+          tongDaoZhi = Math.max(0, Math.min(1, 值))
+        }
+      } catch {
+        tongDaoZhi = null
+      }
+      const shiBingYinLiangZhi =
+        tongDaoZhi === null
+          ? null
+          : Math.max(0, Math.min(1, tongDaoZhi * yuYinYinLiangZengYi(duQuYuYinYinLiang(xiaoXi))))
+      const wenBen = await shiBieBoFang(diZhi, shiBieQi, shiBingYinLiangZhi)
       if (!wenBen) {
         return jiLuShiBai(jian)
       }

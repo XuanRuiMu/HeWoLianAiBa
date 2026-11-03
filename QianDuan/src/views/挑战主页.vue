@@ -83,20 +83,10 @@
             :zhong-zai="shuJuZaiZai"
             @chong-shi="chongShiQuanBu"
           />
-          <div v-if="shuJuZaiZai" class="jifen-wangge" role="status">
-            <span class="ping-mu-wai">{{ huoQuFanYi('tiaoZhan', 'jiaZaiZhong') }}</span>
-            <div
-              v-for="序 in zuBieLieBiao.length"
-              :key="序"
-              class="jifen-ka jifen-ka--zhanwei"
-              aria-hidden="true"
-            >
-              <span class="zhanwei-kuai zhanwei-kuai--duan" />
-              <span class="zhanwei-kuai zhanwei-kuai--fen" />
-              <span class="zhanwei-kuai zhanwei-kuai--ming" />
-            </div>
-          </div>
-          <div v-else-if="gaiKuangLieBiao.length > 0 || !qianTaiCuoWu" class="jifen-wangge">
+          <div
+            v-if="!shuJuZaiZai && (gaiKuangLieBiao.length > 0 || !qianTaiCuoWu)"
+            class="jifen-wangge"
+          >
             <article
               v-for="hang in gaiKuangHang"
               :key="hang.zu_bie"
@@ -166,7 +156,11 @@
       </div>
 
       <aside class="zhuti-ce">
-        <section class="qu zhaiyao-qu" :aria-busy="bangDanZhuangTai === 'jiaZai' ? 'true' : 'false'">
+        <section
+          class="qu zhaiyao-qu"
+          :class="{ 'zhaiyao-qu--jinci': bangDanZhuangTai === 'kong' }"
+          :aria-busy="bangDanZhuangTai === 'jiaZai' ? 'true' : 'false'"
+        >
           <div class="qu-tou">
             <h2 class="qu-biaoti">{{ huoQuFanYi('tiaoZhan', 'paiHangZhaiYao') }}</h2>
           </div>
@@ -193,20 +187,22 @@
               {{ zuBieMingCheng(zu) }}
             </button>
           </div>
-          <div class="zhaiyao-wo-wei">
-            <p v-if="bangDanZhuangTai === 'bangDan' && bangDanWo !== null" class="zhaiyao-wo">
+          <div v-if="bangDanZhuangTai === 'bangDan'" class="zhaiyao-wo-wei">
+            <p v-if="bangDanWo !== null" class="zhaiyao-wo">
               {{ bangDanWo }}
             </p>
           </div>
           <div ref="zhaiyaoCao" class="zhaiyao-cao">
             <div :key="bangDanZuBie" class="zhaiyao-ceng">
               <div v-if="bangDanZhuangTai === 'jiaZai'" class="zhaiyao-nei zhaiyao-gu" role="status">
-                <span class="ping-mu-wai">{{ huoQuFanYi('tiaoZhan', 'jiaZaiZhong') }}</span>
-                <div v-for="序 in 骨架行数" :key="序" class="zhaiyao-zhanwei" aria-hidden="true">
-                  <span class="zhanwei-kuai zhanwei-kuai--pai" />
-                  <span class="zhanwei-kuai zhanwei-kuai--ming" />
-                  <span class="zhanwei-kuai zhanwei-kuai--fen" />
-                </div>
+                <template v-if="shouPingYiWanCheng">
+                  <span class="ping-mu-wai">{{ huoQuFanYi('tiaoZhan', 'jiaZaiZhong') }}</span>
+                  <div v-for="序 in 骨架行数" :key="序" class="zhaiyao-zhanwei" aria-hidden="true">
+                    <span class="zhanwei-kuai zhanwei-kuai--pai" />
+                    <span class="zhanwei-kuai zhanwei-kuai--ming" />
+                    <span class="zhanwei-kuai zhanwei-kuai--fen" />
+                  </div>
+                </template>
               </div>
               <div v-else-if="bangDanZhuangTai === 'cuoWu'" class="zhaiyao-nei">
                 <TiaoZhanKongTai>{{ bangDanCuoWu?.lianAiWenAn }}</TiaoZhanKongTai>
@@ -366,12 +362,12 @@ import {
   fangQiDuiJu,
   huoQuWoDeGaiKuang,
   huoQuTiaoZhanPeiZhi,
-  huoQuPaiHangBang,
   type TiaoZhanDuiJu,
   type ZuBie,
   type ZuBieGaiKuang,
   type PaiHangXiangMu,
 } from '@/api/挑战'
+import { use挑战榜单 } from '@/composables/use挑战榜单'
 import { huoQuFanYi } from '@/config/翻译表'
 import { 选择形态, type 性别二档, type 性别用户形态 } from '@/utils/性别'
 import { 使用通用性别框体配色 } from '@/composables/use性别框体配色'
@@ -382,6 +378,9 @@ import TouXiang from '@/components/头像.vue'
 import RequestError from '@/components/请求错误.vue'
 import { use前台错误 } from '@/composables/use前台错误'
 import { 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
+import { quYuQuJiaoJie } from '@/router/预取'
+
+const LU_YOU_MING = 'tiaoZhanZhuYe'
 
 const router = useRouter()
 
@@ -416,7 +415,8 @@ const bangDanZuBie = ref<ZuBie>('nan_nv')
 const bangDanLieBiao = ref<PaiHangXiangMu[]>([])
 const bangDanZhuangTai = ref<榜单状态>('jiaZai')
 const bangDanCuoWu = ref<QianTaiCuoWu | null>(null)
-const bangDanHuanCun = new Map<ZuBie, PaiHangXiangMu[]>()
+const shouPingYiWanCheng = ref(false)
+const { bangDanHuanCun, huoQuZuBangDan, yuQuQuanBu, qingChu } = use挑战榜单()
 const 骨架行数 = 3
 let bangDanYiDongGuo = false
 let bangDanDaiCi = 0
@@ -507,7 +507,8 @@ const bangDanWo = computed(() => {
 })
 
 async function jiaZaiShuJuNei() {
-  const [duiJu, gaiKuang] = await Promise.all([huoQuDangQianDuiJu(), huoQuWoDeGaiKuang()])
+  const yuQu = quYuQuJiaoJie<Promise<[TiaoZhanDuiJu | null, ZuBieGaiKuang[]]>>(LU_YOU_MING)
+  const [duiJu, gaiKuang] = await (yuQu ?? Promise.all([huoQuDangQianDuiJu(), huoQuWoDeGaiKuang()]))
   dangQianDuiJu.value = duiJu
   gaiKuangLieBiao.value = gaiKuang
   if (!bangDanYiDongGuo) {
@@ -583,7 +584,7 @@ function 过渡榜单高(): void {
 
 async function jiaZaiBangDan(): Promise<boolean> {
   const benCiZuBie = bangDanZuBie.value
-  const 缓存 = bangDanHuanCun.get(benCiZuBie)
+  const 缓存 = bangDanHuanCun.value.get(benCiZuBie)
   if (缓存 !== undefined) {
     bangDanCuoWu.value = null
     应用榜单(缓存)
@@ -596,9 +597,8 @@ async function jiaZaiBangDan(): Promise<boolean> {
   await nextTick()
   过渡榜单高()
   try {
-    const jieGuo = await huoQuPaiHangBang(benCiZuBie)
+    const jieGuo = await huoQuZuBangDan(benCiZuBie)
     if (benCiDaiCi !== bangDanDaiCi) return false
-    bangDanHuanCun.set(benCiZuBie, jieGuo)
     应用榜单(jieGuo)
   } catch (错误: unknown) {
     if (benCiDaiCi !== bangDanDaiCi) return false
@@ -631,7 +631,8 @@ function 量ZuZhishi() {
 
 async function chongShiQuanBu() {
   await chongShiZhuShuJu()
-  bangDanHuanCun.clear()
+  qingChu()
+  await yuQuQuanBu(zuBieLieBiao)
   await jiaZaiBangDan()
 }
 
@@ -659,9 +660,11 @@ onMounted(async () => {
     尺寸观察 = new ResizeObserver(量ZuZhishi)
     尺寸观察.observe(zuQieKuang.value)
   }
+  void yuQuQuanBu(zuBieLieBiao)
   await jiaZaiShuJu()
   void jiaZaiPeiZhi()
   await jiaZaiBangDan()
+  shouPingYiWanCheng.value = true
 })
 
 const keYiXiaYiBu = computed(() => {
@@ -1266,16 +1269,6 @@ onBeforeUnmount(() => {
   font-weight: 400;
 }
 
-.jifen-ka--zhanwei {
-  border-color: var(--tz-xian);
-  background: var(--tz-di);
-}
-
-.jifen-ka--zhanwei .zhanwei-kuai--fen {
-  width: 52%;
-  height: var(--tz-zi-da);
-}
-
 .zhanwei-kuai {
   display: block;
   height: var(--tz-zi-zheng);
@@ -1357,6 +1350,11 @@ onBeforeUnmount(() => {
 
 .zhaiyao-wo-wei {
   min-height: var(--tz-wo-gao);
+}
+
+.zhaiyao-qu--jinci {
+  gap: var(--jiange-xiao);
+  padding-block: var(--jiange-zhong);
 }
 
 .zhaiyao-wo {

@@ -1,5 +1,5 @@
 <template>
-  <div class="denglu-neirong">
+  <div class="denglu-neirong" :class="{ 'tui-chang-yin-cang': dengLuTuiChangZhong }">
     <div
       ref="biaodanRongqi"
       class="biaodan-rongqi renzheng-ka-pei-se"
@@ -302,7 +302,7 @@
                   <button
                     type="button"
                     :aria-busy="faSongZhong ? 'true' : 'false'"
-                    class="fasong-anniu"
+                    class="yanzhengma-anniu"
                     :disabled="!keYiFaSong || faSongZhong"
                     @click="zhiXingFaSongMa"
                   >
@@ -1723,7 +1723,22 @@ async function 定格飞向用户位(层: HTMLElement, 用户位: HTMLElement): 
   await dengDaiDongHua(飞行, 1000)
 }
 
+function yuReZhuJieMianZuJian(): void {
+  try {
+    const jieXi = router.resolve({ name: 'zhuJieMian' })
+    for (const jiLu of jieXi.matched) {
+      const muBiao = jiLu.components?.default
+      if (typeof muBiao === 'function') {
+        void (muBiao as () => Promise<unknown>)().catch(() => undefined)
+      }
+    }
+  } catch {
+    return
+  }
+}
+
 async function qiDongDinggeFeixing(mubiaoLuJing: string) {
+  yuReZhuJieMianZuJian()
   dengLuTuiChangZhong.value = true
   try {
     const 活卡 = biaodanRongqi.value
@@ -1921,15 +1936,20 @@ async function zhiXingZhuCe() {
 .denglu-neirong {
   width: 100%;
   max-width: 420px;
-  
+
   height: 100%;
   padding: 0 calc(var(--jiange-da) + var(--jiange-xiao));
-  
+
   margin: auto;
-  
+
   display: grid;
   grid-template-rows: minmax(0, 1fr);
   place-items: center;
+}
+
+.denglu-neirong.tui-chang-yin-cang {
+  visibility: hidden;
+  transition: none;
 }
 
 .biaodan-rongqi {
@@ -2328,7 +2348,7 @@ async function zhiXingZhuCe() {
 .biaoqian-anniu,
 .mima-qiehuan,
 .anniu-zhuyao:not(:disabled),
-.fasong-anniu:not(:disabled) {
+.yanzhengma-anniu:not(:disabled) {
   cursor: pointer;
 }
 
@@ -2591,7 +2611,7 @@ async function zhiXingZhuCe() {
   outline-offset: var(--jujiao-huan-pian-yi);
 }
 
-.fasong-anniu {
+.yanzhengma-anniu {
   flex: none;
   align-self: flex-end;
   min-height: var(--shuru-anniu-re-ku);
@@ -2611,18 +2631,18 @@ async function zhiXingZhuCe() {
     color 0.2s var(--quxian-biao-zhun);
 }
 
-.fasong-anniu:hover:not(:disabled) {
+.yanzhengma-anniu:hover:not(:disabled) {
   background: var(--ka-jin-mian);
   color: var(--ka-zhu-wen);
   border-color: var(--ka-jin);
 }
 
-.fasong-anniu:focus-visible {
+.yanzhengma-anniu:focus-visible {
   outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
   outline-offset: var(--jujiao-huan-pian-yi);
 }
 
-.fasong-anniu:disabled {
+.yanzhengma-anniu:disabled {
   color: var(--ka-san-wen);
   border-color: var(--ka-jin-xian);
   cursor: not-allowed;
@@ -2767,7 +2787,7 @@ async function zhiXingZhuCe() {
   .biaoqian-anniu.huoyue::after,
   .anniu-zhuyao,
   .anniu-zhuyao::before,
-  .fasong-anniu,
+  .yanzhengma-anniu,
   .mima-qiehuan,
   .wangji-mima-lianjie,
   .ji-zhu-xuan-ze,

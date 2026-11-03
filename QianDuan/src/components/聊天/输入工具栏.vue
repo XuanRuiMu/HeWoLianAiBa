@@ -35,15 +35,14 @@
       </svg>
     </button>
     <button
-      v-if="keFaSong"
       type="button"
       class="fasong-anniu"
+      :disabled="!keFaSong"
       @click="emit('fa-song')"
     >
       {{ faSongWenZi }}
     </button>
     <button
-      v-else
       type="button"
       class="gengduo-plus-anniu"
       :class="{ huoyue: gengDuoHuoyue }"
@@ -92,7 +91,7 @@ const emit = defineEmits<{
 .shuru-rongqi {
   display: flex;
   align-items: flex-end;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--jiange-xiao);
 }
 
@@ -143,10 +142,12 @@ const emit = defineEmits<{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: var(--shuru-kuang-shang-xia-neidian) calc(var(--jiange-12) + var(--jiange-2));
-  border: var(--shuru-kuang-biankuang) solid transparent;
+  height: var(--shuru-danxing-gao-du);
+  padding: 0 calc(var(--jiange-12) + var(--jiange-2));
+  border: none;
   min-width: var(--shuru-anniu-re-ku);
-  line-height: var(--shuru-kuang-hangxing-gao);
+  line-height: 1;
+  flex-shrink: 0;
   background: var(--zhuse);
   color: var(--fasong-anniu-wenben);
   border-radius: 6px;
@@ -154,7 +155,7 @@ const emit = defineEmits<{
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: opacity 0.15s ease, background-color 0.15s ease;
+  transition: filter 0.15s ease;
 }
 
 .fasong-anniu::before {
@@ -167,12 +168,16 @@ const emit = defineEmits<{
   transform: translate(-50%, -50%);
 }
 
-.fasong-anniu:hover {
-  opacity: 0.85;
+@media (hover: hover) {
+  .fasong-anniu:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
 }
 
 .fasong-anniu:disabled {
-  background: var(--fasong-anniu-jinyong-beijing);
+  background: var(--zhuse);
+  color: var(--fasong-anniu-wenben);
   cursor: not-allowed;
+  filter: brightness(var(--qu-xiao-jia-shen));
 }
 </style>

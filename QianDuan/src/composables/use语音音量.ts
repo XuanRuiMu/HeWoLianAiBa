@@ -5,6 +5,8 @@ const YU_YIN_YIN_LIANG_PEI_ZHI = {
   fangDaBeiShu: 2.4,
 } as const
 
+export const YU_YIN_ZENG_YI_SHANG_XIAN = 4
+
 export type YuYinKeJianDuanShu = 1 | 2 | 3
 
 export const YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI = {
@@ -17,10 +19,13 @@ export const YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI = {
 let yinPinShangXiaWen: AudioContext | null = null
 let dangQianYinPin: HTMLAudioElement | null = null
 let dangQianFenXiQi: AnalyserNode | null = null
+let dangQianZengYiJieDian: GainNode | null = null
+let qingQiuZengYiBeiShu = 1
 let shiYuShuJu: Uint8Array<ArrayBuffer> | null = null
 let pingHuaZhi = 0
 
 const fenXiQiBiao = new WeakMap<HTMLAudioElement, AnalyserNode>()
+const zengYiBiao = new WeakMap<HTMLAudioElement, GainNode>()
 const jianTingBiao = new WeakSet<HTMLAudioElement>()
 
 function quDeShangXiaWen(): AudioContext | null {
@@ -61,6 +66,20 @@ function lianJieFenXiQi(yinPin: HTMLAudioElement): void {
   if (yiYou) {
     dangQianFenXiQi = yiYou
     shiYuShuJu = new Uint8Array(yiYou.fftSize)
+    const yiYouZengYi = zengYiBiao.get(yinPin)
+    if (yiYouZengYi) {
+      try {
+        yiYouZengYi.gain.value = qingQiuZengYiBeiShu
+      } catch {
+        return
+      }
+      dangQianZengYiJieDian = yiYouZengYi
+    }
+    try {
+      yinPin.volume = 1
+    } catch {
+      return
+    }
     return
   }
   if (!shiTongYuanDiZhi(yinPin)) return
@@ -73,20 +92,28 @@ function lianJieFenXiQi(yinPin: HTMLAudioElement): void {
       if (dangQianYinPin !== yinPin || dangQianFenXiQi) return
       try {
         const yuan = shangXiaWen.createMediaElementSource(yinPin)
+        const zengYi = shangXiaWen.createGain()
         const fenXiQi = shangXiaWen.createAnalyser()
         fenXiQi.fftSize = YU_YIN_YIN_LIANG_PEI_ZHI.fftChiCun
         fenXiQi.smoothingTimeConstant = YU_YIN_YIN_LIANG_PEI_ZHI.pingHuaXiShu
-        yuan.connect(fenXiQi)
+        yuan.connect(zengYi)
+        zengYi.connect(fenXiQi)
         fenXiQi.connect(shangXiaWen.destination)
+        zengYi.gain.value = qingQiuZengYiBeiShu
+        yinPin.volume = 1
+        zengYiBiao.set(yinPin, zengYi)
         fenXiQiBiao.set(yinPin, fenXiQi)
+        dangQianZengYiJieDian = zengYi
         dangQianFenXiQi = fenXiQi
         shiYuShuJu = new Uint8Array(fenXiQi.fftSize)
         pingHuaZhi = 0
       } catch {
+        dangQianZengYiJieDian = null
         dangQianFenXiQi = null
       }
     })
     .catch(() => {
+      dangQianZengYiJieDian = null
       dangQianFenXiQi = null
     })
 }
@@ -96,6 +123,7 @@ export function guanLianYuYinYinPin(yinPin: HTMLAudioElement): void {
   if (dangQianYinPin === yinPin) return
   dangQianYinPin = yinPin
   dangQianFenXiQi = null
+  dangQianZengYiJieDian = null
   shiYuShuJu = null
   pingHuaZhi = 0
   if (jianTingBiao.has(yinPin)) return
@@ -107,12 +135,36 @@ export function jieChuYuYinYinPin(yinPin?: HTMLAudioElement): void {
   if (yinPin && dangQianYinPin && dangQianYinPin !== yinPin) return
   dangQianYinPin = null
   dangQianFenXiQi = null
+  dangQianZengYiJieDian = null
   shiYuShuJu = null
   pingHuaZhi = 0
 }
 
 export function shiYuYinYinLiangKeYong(): boolean {
   return dangQianFenXiQi !== null
+}
+
+export function shiYuYinZengYiKeYong(): boolean {
+  return dangQianZengYiJieDian !== null
+}
+
+export function duQuYuYinZengYiQingQiu(): number {
+  return qingQiuZengYiBeiShu
+}
+
+export function sheZhiYuYinZengYi(beiShu: number): void {
+  const shu = Number(beiShu)
+  const anQuan = Number.isFinite(shu)
+    ? Math.min(YU_YIN_ZENG_YI_SHANG_XIAN, Math.max(0, shu))
+    : 1
+  qingQiuZengYiBeiShu = anQuan
+  const jieDian = dangQianZengYiJieDian
+  if (!jieDian) return
+  try {
+    jieDian.gain.value = anQuan
+  } catch {
+    return
+  }
 }
 
 export function duQuYuYinYinLiang(): number {

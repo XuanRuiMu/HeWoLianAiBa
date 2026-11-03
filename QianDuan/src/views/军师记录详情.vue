@@ -7,13 +7,7 @@
         @chong-shi="chongShi"
       />
     </div>
-    <div v-else-if="qianTaiZhuangTai === 'loading'" class="jiaZai-zhuangtai" role="status">
-      {{ huoQuFanYi('junShi', 'jiaZaiZhong') }}
-    </div>
-    <div v-else-if="!jiLuShuJu" class="kong-zhuangtai" role="status">
-      {{ huoQuFanYi('junShi', 'weiZhaoDaoJiLu') }}
-    </div>
-    <template v-else>
+    <template v-else-if="jiLuShuJu">
       <div class="jilu-xiangqing-kapian">
         <div class="jilu-tou">
           <button class="fanhui-anniu" @click="fanhui">
@@ -72,6 +66,9 @@
         </div>
       </div>
     </template>
+    <div v-else-if="qianTaiZhuangTai !== 'loading'" class="kong-zhuangtai" role="status">
+      {{ huoQuFanYi('junShi', 'weiZhaoDaoJiLu') }}
+    </div>
   </div>
 </template>
 
@@ -86,10 +83,12 @@ import 军师指导分段 from '@/components/军师指导分段.vue'
 import 提示带 from '@/components/提示带.vue'
 import RequestError from '@/components/请求错误.vue'
 import { use前台错误 } from '@/composables/use前台错误'
+import { quYuQuJiaoJie } from '@/router/预取'
 import type { JunShiJiLu } from '@/types/类型定义'
 
 const route = useRoute()
 const router = useRouter()
+const LU_YOU_MING = 'junShiJiLuXiangQing'
 const jiLuShuJu = ref<JunShiJiLu | null>(null)
 const touXiangShiBai = ref(false)
 const { cuoWu: qianTaiCuoWu, zhuangTai: qianTaiZhuangTai, yunXing, chongShi } = use前台错误()
@@ -99,7 +98,8 @@ async function jiaZaiShuJu() {
     async () => {
       const jiaoSeId = route.params.jiaoSeId as string
       const jiLuId = route.params.jiLuId as string
-      const lieBiao = await huoQuJunShiJiLu(jiaoSeId)
+      const yuQu = quYuQuJiaoJie<Promise<JunShiJiLu[]>>(LU_YOU_MING)
+      const lieBiao = await (yuQu ?? huoQuJunShiJiLu(jiaoSeId))
       jiLuShuJu.value = lieBiao.find((j) => j.shi_jian === jiLuId) || null
     },
     { chongShi: jiaZaiShuJu },
@@ -155,7 +155,6 @@ watch(
   background: var(--gundong-tiao-hover);
 }
 
-.jiaZai-zhuangtai,
 .kong-zhuangtai {
   text-align: center;
   padding: calc(var(--jiange-da) * 2) var(--jiange-zhong);
@@ -163,7 +162,6 @@ watch(
   font-size: 14px;
 }
 
-:root[data-theme='light'] .jiaZai-zhuangtai,
 :root[data-theme='light'] .kong-zhuangtai {
   color: rgba(0, 0, 0, 0.4);
 }

@@ -91,27 +91,53 @@ function 收敛条数(): void {
   }
 }
 
+function wenBenBiaoShi(zhi: unknown): string | null {
+  if (zhi === null || zhi === undefined) return null
+  const wen = String(zhi)
+  return wen === '' ? null : wen
+}
+
 export function 语音音量键(载体: 语音音量载体): string {
-  const 标识 = 载体.ke_hu_duan_id ?? 载体.id
-  if (标识 !== null && 标识 !== undefined && String(标识) !== '') return 'x:' + String(标识)
+  const id = wenBenBiaoShi(载体.id)
+  if (id !== null) return 'x:' + id
+  const keHuDuan = wenBenBiaoShi(载体.ke_hu_duan_id)
+  if (keHuDuan !== null) return 'x:kd:' + keHuDuan
   const 地址 = 载体.mei_ti_url || 载体.ben_di_yu_lan_url || ''
   return 地址 === '' ? '' : 'u:' + 地址
 }
 
+function 全部音量键(载体: 语音音量载体): string[] {
+  const 键们: string[] = []
+  const id = wenBenBiaoShi(载体.id)
+  if (id !== null) 键们.push('x:' + id)
+  const keHuDuan = wenBenBiaoShi(载体.ke_hu_duan_id)
+  if (keHuDuan !== null) 键们.push('x:kd:' + keHuDuan)
+  if (键们.length === 0) {
+    const 地址 = 载体.mei_ti_url || 载体.ben_di_yu_lan_url || ''
+    if (地址 !== '') 键们.push('u:' + 地址)
+  }
+  return 键们
+}
+
 export function duQuYuYinYinLiang(载体: 语音音量载体): number {
   装载()
-  const 值 = 语音音量表.get(语音音量键(载体))
-  return 值 === undefined ? 默认音量 : 值
+  for (const 键 of 全部音量键(载体)) {
+    const 值 = 语音音量表.get(键)
+    if (值 !== undefined) return 值
+  }
+  return 默认音量
 }
 
 export function sheZhiYuYinYinLiang(载体: 语音音量载体, 值: unknown): number {
   装载()
-  const 键 = 语音音量键(载体)
+  const 键们 = 全部音量键(载体)
   const 规整值 = 规整(值)
-  if (键 === '' || 规整值 === null) return duQuYuYinYinLiang(载体)
-  if (语音音量表.get(键) === 规整值) return 规整值
-  语音音量表.delete(键)
-  语音音量表.set(键, 规整值)
+  if (键们.length === 0 || 规整值 === null) return duQuYuYinYinLiang(载体)
+  if (键们.every((键) => 语音音量表.get(键) === 规整值)) return 规整值
+  for (const 键 of 键们) {
+    语音音量表.delete(键)
+    语音音量表.set(键, 规整值)
+  }
   收敛条数()
   排期落盘()
   return 规整值

@@ -274,7 +274,7 @@
   display: none;
 }
 
-.fasong-anniu {
+.yanzhengma-anniu {
   flex: none;
   align-self: flex-end;
   min-height: var(--shuru-anniu-re-ku);
@@ -295,29 +295,29 @@
     color 0.2s var(--quxian-biao-zhun);
 }
 
-.fasong-anniu:focus-visible {
+.yanzhengma-anniu:focus-visible {
   outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
   outline-offset: var(--jujiao-huan-pian-yi);
   border-radius: var(--jiange-4);
 }
 
-.fasong-anniu:not(:disabled):hover {
+.yanzhengma-anniu:not(:disabled):hover {
   background: var(--ka-jin-mian, rgba(201, 169, 106, 0.1));
   color: var(--ka-zhu-wen, #e3c98e);
   border-color: var(--ka-jin, #c9a96a);
 }
 
-.fasong-anniu:disabled {
+.yanzhengma-anniu:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 
-:root[data-theme='light'] .fasong-anniu {
+:root[data-theme='light'] .yanzhengma-anniu {
   border-color: rgba(138, 106, 47, 0.5);
   color: #8a6a2f;
 }
 
-:root[data-theme='light'] .fasong-anniu:not(:disabled):hover {
+:root[data-theme='light'] .yanzhengma-anniu:not(:disabled):hover {
   border-color: rgba(138, 106, 47, 0.9);
   color: #6b5223;
 }
@@ -456,7 +456,7 @@
 
   .anniu-zhuyao,
   .anniu-zhuyao::before,
-  .fasong-anniu,
+  .yanzhengma-anniu,
   .mima-qiehuan {
     transition: none;
   }

@@ -92,7 +92,7 @@
               >
                 <button
                   type="button"
-                  class="fasong-anniu"
+                  class="yanzhengma-anniu"
                   :aria-busy="faSongZhong ? 'true' : 'false'"
                   :disabled="!keYiChongFa"
                   @click="zhiXingFaSong"
@@ -943,7 +943,7 @@ onBeforeUnmount(() => {
   box-shadow: none;
 }
 
-.fasong-anniu {
+.yanzhengma-anniu {
   flex: none;
   min-height: var(--shuru-anniu-re-ku);
   padding: 0 var(--jiange-xiao);
@@ -962,18 +962,18 @@ onBeforeUnmount(() => {
     color 0.2s var(--quxian-biao-zhun);
 }
 
-.fasong-anniu:hover:not(:disabled) {
+.yanzhengma-anniu:hover:not(:disabled) {
   background: var(--ka-jin-mian);
   color: var(--ka-zhu-wen);
   border-color: var(--ka-jin);
 }
 
-.fasong-anniu:focus-visible {
+.yanzhengma-anniu:focus-visible {
   outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
   outline-offset: var(--jujiao-huan-pian-yi);
 }
 
-.fasong-anniu:disabled {
+.yanzhengma-anniu:disabled {
   color: var(--ka-san-wen);
   border-color: var(--ka-jin-xian);
   cursor: not-allowed;

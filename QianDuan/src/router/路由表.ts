@@ -2,6 +2,21 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { duQuLingPai } from '@/utils/令牌存储'
 import { jiaZaiShiBaiLuYou, zhuCeLuYouCuoWuChuLi } from './错误处理'
+import { anJingHua, cunYuQuJiaoJie, kaiShiLuYouYuQu, tuiJinLuYouPiCi } from './预取'
+
+const jiaZaiGuoWangZhanJi = () => import('@/views/过往战绩.vue')
+const jiaZaiTongZhiYe = () => import('@/views/通知页面.vue')
+const jiaZaiZhangHaoAnQuan = () => import('@/views/账号与安全.vue')
+const jiaZaiJunShiJiLu = () => import('@/views/军师记录详情.vue')
+const jiaZaiTiaoZhanZhuYe = () => import('@/views/挑战主页.vue')
+const jiaZaiTiaoZhanPaiHangBang = () => import('@/views/挑战积分榜.vue')
+const jiaZaiHaoYouLieBiao = () => import('@/views/好友列表.vue')
+
+const tiaoZhanZuBieLieBiao = ['nan_nv', 'nv_nan', 'nan_nan', 'nv_nv'] as const
+
+function duZiFuCanShu(zhi: unknown): string {
+  return typeof zhi === 'string' ? zhi : ''
+}
 
 const luYou: RouteRecordRaw[] = [
   jiaZaiShiBaiLuYou,
@@ -36,8 +51,20 @@ const luYou: RouteRecordRaw[] = [
       {
         path: 'tong-zhi',
         name: 'tongZhi',
-        component: () => import('@/views/通知页面.vue'),
-        meta: { xuYaoDengLu: true },
+        component: jiaZaiTongZhiYe,
+        meta: {
+          xuYaoDengLu: true,
+          yuJiaZai: {
+            wenAn: 'tongZhi',
+            renWu: [
+              async () => {
+                const { 使用通知仓库 } = await import('@/stores/通知')
+                return 使用通知仓库().jiaZaiTongZhi()
+              },
+            ],
+            zuJian: jiaZaiTongZhiYe,
+          },
+        },
       },
       {
         path: 'chat/:huiHuaId',
@@ -54,8 +81,20 @@ const luYou: RouteRecordRaw[] = [
       {
         path: 'guo-wang-zhan-ji',
         name: 'guoWangZhanJi',
-        component: () => import('@/views/过往战绩.vue'),
-        meta: { xuYaoDengLu: true },
+        component: jiaZaiGuoWangZhanJi,
+        meta: {
+          xuYaoDengLu: true,
+          yuJiaZai: {
+            wenAn: 'guoWangZhanJi',
+            renWu: [
+              async () => {
+                const { 使用战绩仓库 } = await import('@/stores/战绩')
+                return 使用战绩仓库().jiaZai()
+              },
+            ],
+            zuJian: jiaZaiGuoWangZhanJi,
+          },
+        },
       },
       {
         path: 'zai-ru/:jiaoSeId',
@@ -66,32 +105,113 @@ const luYou: RouteRecordRaw[] = [
       {
         path: 'zhang-hao-an-quan',
         name: 'zhangHaoAnQuan',
-        component: () => import('@/views/账号与安全.vue'),
-        meta: { xuYaoDengLu: true },
+        component: jiaZaiZhangHaoAnQuan,
+        meta: {
+          xuYaoDengLu: true,
+          yuJiaZai: {
+            wenAn: 'zhangHaoAnQuan',
+            renWu: [
+              async (to) => {
+                const [{ huoQuFengJinZhuangTai }, { huoQuHaoYouLieBiao }, { 使用用户设置仓库 }] =
+                  await Promise.all([
+                    import('@/api/资料'),
+                    import('@/api/社交'),
+                    import('@/stores/用户设置'),
+                  ])
+                const fengJin = anJingHua(huoQuFengJinZhuangTai())
+                const haoYouKeXuan = anJingHua(huoQuHaoYouLieBiao())
+                cunYuQuJiaoJie(to.name, { fengJin, haoYouKeXuan })
+                return Promise.all([fengJin, haoYouKeXuan, 使用用户设置仓库().jiaZai()])
+              },
+            ],
+            zuJian: jiaZaiZhangHaoAnQuan,
+          },
+        },
       },
       {
         path: 'junshi-jilu/:jiaoSeId/:jiLuId',
         name: 'junShiJiLuXiangQing',
-        component: () => import('@/views/军师记录详情.vue'),
-        meta: { xuYaoDengLu: true },
+        component: jiaZaiJunShiJiLu,
+        meta: {
+          xuYaoDengLu: true,
+          yuJiaZai: {
+            wenAn: 'junShiJiLuXiangQing',
+            renWu: [
+              async (to) => {
+                const { huoQuJunShiJiLu } = await import('@/api/聊天')
+                const chengNuo = anJingHua(huoQuJunShiJiLu(duZiFuCanShu(to.params.jiaoSeId)))
+                cunYuQuJiaoJie(to.name, chengNuo)
+                return chengNuo
+              },
+            ],
+            zuJian: jiaZaiJunShiJiLu,
+          },
+        },
       },
       {
         path: 'tiao-zhan',
         name: 'tiaoZhanZhuYe',
-        component: () => import('@/views/挑战主页.vue'),
-        meta: { xuYaoDengLu: true },
+        component: jiaZaiTiaoZhanZhuYe,
+        meta: {
+          xuYaoDengLu: true,
+          yuJiaZai: {
+            wenAn: 'tiaoZhanZhuYe',
+            renWu: [
+              async (to) => {
+                const [{ huoQuDangQianDuiJu }, { huoQuWoDeGaiKuang }, { use挑战榜单 }] =
+                  await Promise.all([
+                    import('@/api/挑战'),
+                    import('@/api/挑战'),
+                    import('@/composables/use挑战榜单'),
+                  ])
+                const zhuShuJu = anJingHua(
+                  Promise.all([huoQuDangQianDuiJu(), huoQuWoDeGaiKuang()]),
+                )
+                cunYuQuJiaoJie(to.name, zhuShuJu)
+                return Promise.all([zhuShuJu, use挑战榜单().yuQuQuanBu(tiaoZhanZuBieLieBiao)])
+              },
+            ],
+            zuJian: jiaZaiTiaoZhanZhuYe,
+          },
+        },
       },
       {
         path: 'tiao-zhan/pai-hang',
         name: 'tiaoZhanPaiHangBang',
-        component: () => import('@/views/挑战积分榜.vue'),
-        meta: { xuYaoDengLu: true },
+        component: jiaZaiTiaoZhanPaiHangBang,
+        meta: {
+          xuYaoDengLu: true,
+          yuJiaZai: {
+            wenAn: 'tiaoZhanPaiHangBang',
+            renWu: [
+              async (to) => {
+                const { huoQuPaiHangBang } = await import('@/api/挑战')
+                const chengNuo = anJingHua(huoQuPaiHangBang('nan_nv'))
+                cunYuQuJiaoJie(to.name, chengNuo)
+                return chengNuo
+              },
+            ],
+            zuJian: jiaZaiTiaoZhanPaiHangBang,
+          },
+        },
       },
       {
         path: 'hao-you',
         name: 'haoYouLieBiao',
-        component: () => import('@/views/好友列表.vue'),
-        meta: { xuYaoDengLu: true },
+        component: jiaZaiHaoYouLieBiao,
+        meta: {
+          xuYaoDengLu: true,
+          yuJiaZai: {
+            wenAn: 'haoYouLieBiao',
+            renWu: [
+              async () => {
+                const { 使用好友仓库 } = await import('@/stores/好友')
+                return 使用好友仓库().chuShiHua()
+              },
+            ],
+            zuJian: jiaZaiHaoYouLieBiao,
+          },
+        },
       },
       {
         path: 'hao-you/:haoYouId',
@@ -139,9 +259,14 @@ function huoQuLingPai(): string | null {
 }
 
 router.beforeEach(async (to, _from) => {
+  tuiJinLuYouPiCi()
   const youLingPai = Boolean(huoQuLingPai())
   if (to.meta.xuYaoDengLu && !youLingPai) {
     return { name: 'dengLu', replace: true }
+  }
+  const yuJiaZai = to.meta.yuJiaZai
+  if (yuJiaZai && youLingPai && _from.matched.length > 0) {
+    await kaiShiLuYouYuQu(yuJiaZai, to)
   }
 })
 

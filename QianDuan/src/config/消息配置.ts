@@ -128,16 +128,6 @@ function danDaoBaiFenBi(peiZhi: Partial<ShengYinPeiZhi>, tongDao: ShengYinTongDa
   return tongDao in peiZhi ? guiYiHuaShengYin((peiZhi as Record<string, unknown>)[tongDao]) : null
 }
 
-export function heChengShengYinYinLiang(peiZhi: Partial<ShengYinPeiZhi> & Record<'zong', number | null>): number | null {
-  const ge = SHENG_YIN_TONG_DAO_XUAN_XIANG.map((tongDao) => danDaoBaiFenBi(peiZhi, tongDao))
-  for (const baiFenBi of ge) {
-    if (baiFenBi === 0) return 0
-  }
-  const xianShi = ge.filter((baiFenBi): baiFenBi is number => baiFenBi !== null)
-  if (!xianShi.length) return null
-  return Math.min(...xianShi) / SHENG_YIN_BAI_FEN_BI.zuiDa
-}
-
 export function heChengDanTongDaoYinLiang(
   peiZhi: Partial<ShengYinPeiZhi> & Record<'zong', number | null>,
   tongDao: ShengYinTongDao,
@@ -149,12 +139,8 @@ export function heChengDanTongDaoYinLiang(
   return shangXian === null ? null : shangXian / SHENG_YIN_BAI_FEN_BI.zuiDa
 }
 
-export function duQuHeChengYinLiang(): number | null {
-  try {
-    return heChengShengYinYinLiang(duQuShengYinTongDao())
-  } catch {
-    return null
-  }
+export function xuanZeYuYinTongDao(faSongZheLeiXing: unknown): ShengYinTongDao {
+  return faSongZheLeiXing === 'yonghu' ? 'yongHuYuYin' : 'duiXiangYuYin'
 }
 
 export const LU_YIN_PEI_ZHI = {
@@ -226,10 +212,11 @@ export const LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI = {
   changAnChuFaHaoMiao: 500,
   yinYongZhaiYaoZuiDaZiFu: 30,
   yuYinZhuanXieChaoShiHaoMiao: 70000,
-  caiDanYuGuKuan: 148,
-  caiDanYuGuGao: 168,
   caiDanBianJu: 8,
-  caiDanXiaFangPianYi: 20,
+  caiDanWeiBaJianGe: 12,
+  caiDanWeiBaNeiSuo: 16,
+  youJianQuChongHaoMiao: 700,
+  chuMoPianYiXianZhi: 10,
 } as const
 
 const YIN_YONG_MEI_TI_ZHAN_WEI_JIAN = {

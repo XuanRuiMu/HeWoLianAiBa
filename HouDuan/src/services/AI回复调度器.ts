@@ -10,6 +10,7 @@ import {
 import { anIdChaYongHu } from './认证'
 import { cheHuiJiaoSeXiaoXi } from './消息'
 import { huoQuHuoJieXiShiPinMiaoShu } from './视频理解'
+import { huoQuYinPinShiJianMiaoShu } from './语音理解'
 import { gouJianYinYongChaXun, quBenLunJiaoDianXiaoXiXiang, zhanShiXiaoXiZhengWen } from './对话渲染'
 import {
   jianCeYongHuXiaoXiBingChuLi,
@@ -770,6 +771,16 @@ private 计算本轮回复延迟(): number {
           视频画面描述: jieXi.huaMianMiaoShu,
           视频转写文本: jieXi.zhuanXieWenBen,
         }, 引用回口)
+      }
+    }
+    if (焦点消息.meiTiLeiBie === 'yuyin' && !焦点消息.yi_che_hui) {
+      const sha256 = (焦点消息.meiTiSha256 || '').toLowerCase()
+      const mime = (焦点消息.meiTiMIME || '').toLowerCase()
+      if (/^[0-9a-f]{64}$/.test(sha256) && mime.startsWith('audio/')) {
+        const miaoShu = await huoQuYinPinShiJianMiaoShu({ sha256, mime })
+        if (miaoShu) {
+          return zhanShiXiaoXiZhengWen(焦点消息, { 音频事件描述: miaoShu }, 引用回口)
+        }
       }
     }
     return zhanShiXiaoXiZhengWen(焦点消息, undefined, 引用回口)

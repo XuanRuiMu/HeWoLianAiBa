@@ -13,6 +13,7 @@ export const ZAI_TI_BIAO_JI_SHUO_MING =
 export interface ZhuangZaiBuFen {
   视频画面描述?: string | null
   视频转写文本?: string | null
+  音频事件描述?: string | null
 }
 
 function shiShiPinWenjian(xiaoXi: DuiHuaLiShiXiang): boolean {
@@ -79,16 +80,24 @@ function zhanShiWenJianNeiRongKuai(xiaoXi: DuiHuaLiShiXiang): string {
   return `${WEN_JIAN_KUAI_KAI}\n${zhongHeFengLanNeiBiaoJi(tiQu.wenBen)}\n${WEN_JIAN_KUAI_BI}\n${shengMing.join('')}`
 }
 
+function yuYinWuFaShiBieZhanShi(shiChangHaoMiao?: number | null): string {
+  const haoMiao = shiChangHaoMiao == null ? NaN : Number(shiChangHaoMiao)
+  const shiChang = Number.isFinite(haoMiao) && haoMiao > 0 ? `(${Math.round(haoMiao / 1000)}秒)` : ''
+  return `[语音${shiChang}：${huoQuFanYi('liaoTian', 'yuYinWuFaShiBie')}]`
+}
+
 function zhanShiZaiTiZhengWen(xiaoXi: DuiHuaLiShiXiang, buFen?: ZhuangZaiBuFen): string {
   if (xiaoXi.meiTiLeiBie === 'yuyin' && !xiaoXi.yi_che_hui) {
     const zhuanXie = (xiaoXi.nei_rong || '').trim()
-    if (zhuanXie) {
+    const yinPinShiJian = (buFen?.音频事件描述 || '').trim() || tiQuYinPinShiJian(zhuanXie)
+    if (zhuanXie || yinPinShiJian) {
       return gouJianYuYinKeDuWenBen({
-        zhuanXieWenBen: zhuanXie,
-        yinPinShiJianMiaoShu: tiQuYinPinShiJian(zhuanXie),
+        zhuanXieWenBen: zhuanXie || null,
+        yinPinShiJianMiaoShu: yinPinShiJian || null,
         shiChangHaoMiao: xiaoXi.meiTiShiChangHaoMiao ?? null,
       })
     }
+    return yuYinWuFaShiBieZhanShi(xiaoXi.meiTiShiChangHaoMiao ?? null)
   }
   if (xiaoXi.meiTiLeiBie === 'wenjian' && !xiaoXi.yi_che_hui && shiShiPinWenjian(xiaoXi)) {
     const zhuanXie = (xiaoXi.nei_rong || '').trim()

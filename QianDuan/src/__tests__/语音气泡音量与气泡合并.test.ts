@@ -223,6 +223,10 @@ function zhuangAudioContext(boXing: 'youSheng' | 'jingYin'): () => void {
     state = 'running'
     destination = { connect: (): void => undefined }
     createMediaElementSource = (): { connect: () => void } => ({ connect: () => undefined })
+    createGain = (): { gain: { value: number }; connect: () => void } => ({
+      gain: { value: 1 },
+      connect: () => undefined,
+    })
     createAnalyser = (): JiaFenXiQi => new JiaFenXiQi()
     resume = (): Promise<void> => Promise.resolve()
   }

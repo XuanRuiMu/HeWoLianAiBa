@@ -57,258 +57,252 @@
       </div>
     </header>
 
-    <div v-if="zhengZaiChuShiHua" class="jia-zai" role="status" aria-live="polite">
-      {{ huoQuFanYi('haoYou', 'jiaZaiZhong') }}
-    </div>
+    <RequestError
+      v-if="qianTaiCuoWuZhi"
+      :cuo-wu="qianTaiCuoWuZhi"
+      :zhong-zai="qianTaiZhuangTai === 'loading'"
+      @chong-shi="chongShi"
+    />
 
-    <template v-else>
-      <RequestError
-        v-if="qianTaiCuoWuZhi"
-        :cuo-wu="qianTaiCuoWuZhi"
-        :zhong-zai="qianTaiZhuangTai === 'loading'"
-        @chong-shi="chongShi"
-      />
+    <p v-if="caoZuoTiShi" class="cao-zuo-ti-shi" role="status">{{ caoZuoTiShi }}</p>
 
-      <p v-if="caoZuoTiShi" class="cao-zuo-ti-shi" role="status">{{ caoZuoTiShi }}</p>
+    <nav class="ru-kou-qu" :aria-label="huoQuFanYi('haoYou', 'haoYouZongLan')">
+      <button
+        class="ru-kou-ka"
+        type="button"
+        data-testid="hao-you-xin-de-peng-you"
+        @click="qieHuanMianBan('shenQing')"
+      >
+        <span class="ru-kou-tu" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </span>
+        <span class="ru-kou-wen-zi">
+          <span class="ru-kou-biao-ti">{{ huoQuFanYi('haoYou', 'xinDePengYouRuKou') }}</span>
+          <span class="ru-kou-shuo-ming">{{ xinPengYouShuoMing }}</span>
+        </span>
+        <span v-if="shouDaoLieBiao.length" class="hong-dian" aria-hidden="true">{{ hongDianShu }}</span>
+      </button>
 
-      <nav class="ru-kou-qu" :aria-label="huoQuFanYi('haoYou', 'haoYouZongLan')">
-        <button
-          class="ru-kou-ka"
-          type="button"
-          data-testid="hao-you-xin-de-peng-you"
-          @click="qieHuanMianBan('shenQing')"
-        >
-          <span class="ru-kou-tu" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
+      <button
+        class="ru-kou-ka"
+        type="button"
+        data-testid="hao-you-tong-zhi-ru-kou"
+        @click="jinRuTongZhi"
+      >
+        <span class="ru-kou-tu" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9z" />
+            <path d="M10 19a2 2 0 0 0 4 0" />
+          </svg>
+        </span>
+        <span class="ru-kou-wen-zi">
+          <span class="ru-kou-biao-ti">{{ huoQuFanYi('haoYou', 'haoYouTongZhiRuKou') }}</span>
+          <span class="ru-kou-shuo-ming">{{ tongZhiShuoMing }}</span>
+        </span>
+        <span v-if="通知仓库.weiDuShu > 0" class="hong-dian" aria-hidden="true">{{ tongZhiHongDian }}</span>
+      </button>
+    </nav>
+
+    <Transition name="hao-you-mian-ban" mode="out-in">
+    <section v-if="zhengZaiSouSuo" class="mian-ban" data-testid="hao-you-sou-suo-mian-ban">
+      <h2 class="fen-ku-biao-ti">{{ huoQuFanYi('haoYou', 'souSuoJieGuoBiaoJi') }}</h2>
+
+      <ul v-if="benDiJieGuo.length" class="lie-biao">
+        <HaoYouTiao
+          v-for="haoYou in benDiJieGuo"
+          :key="haoYou.id"
+          :hao-you-id="haoYou.id"
+          :ming-cheng="xianShiMing(haoYou)"
+          :tou-xiang="haoYou.tou_xiang"
+          :qian-ming="qianMingWen(haoYou)"
+          :bei-zhu="beiZhuWen(haoYou)"
+          :huo-yue-tai="huoYueTai(haoYou.id)"
+          :huo-yue-wen-zi="huoYueWenZi(haoYou.id)"
+          :zui-jin-zhai-yao="zuiJinZhaiYao(haoYou.id)"
+          :zui-jin-shi-jian="zuiJinShiJian(haoYou.id)"
+          @jin-ru="jinRuLiaoTian"
+          @da-kai-zi-liao="daKaiZiLiaoKa"
+          @bao-cun-bei-zhu="baoCunBeiZhu"
+          @shan-chu="shanChu"
+        />
+      </ul>
+      <p v-else class="wu-jie-guo">{{ huoQuFanYi('haoYou', 'benDiWuPiPei') }}</p>
+
+      <button class="quan-zhan-anniu" type="button" :disabled="souSuoZhong" @click="zhiXingQuanZhanSouSuo">
+        {{ souSuoZhong ? huoQuFanYi('haoYou', 'quanZhanSouSuoZhong') : huoQuFanYi('haoYou', 'quanZhanSouSuo') }}
+      </button>
+
+      <p v-if="souSuoWuJieGuo" class="wu-jie-guo">{{ huoQuFanYi('haoYou', 'quanZhanWuJieGuo') }}</p>
+
+      <ul v-if="souSuoJieGuo.length" class="jie-guo-lie-biao" :aria-label="huoQuFanYi('haoYou', 'quanZhanJieGuoBiaoJi')">
+        <li v-for="yongHu in souSuoJieGuo" :key="yongHu.id" class="jie-guo-tiao">
+          <button class="zhi-liao-anniu" type="button" :aria-label="huoQuFanYi('haoYou', 'ziLiaoKa')" @click="daKaiZiLiaoKa(yongHu.id)">
+            <span class="zhi-liao-tou-xiang">
+              <TouXiang :tou-xiang="yongHu.tou_xiang" :mo-ren-zi="(yongHu.ni_cheng || yongHu.yong_hu_ming || '?').slice(0, 1)" />
+            </span>
+          </button>
+          <span class="jie-guo-wen-zi">
+            <span class="jie-guo-ming">{{ yongHu.ni_cheng || yongHu.yong_hu_ming || yongHu.shou_ji_hao }}</span>
+            <span class="jie-guo-fu">{{ yongHu.qian_ming || huoQuFanYi('haoYou', 'zanWuQianMing') }}</span>
           </span>
-          <span class="ru-kou-wen-zi">
-            <span class="ru-kou-biao-ti">{{ huoQuFanYi('haoYou', 'xinDePengYouRuKou') }}</span>
-            <span class="ru-kou-shuo-ming">{{ xinPengYouShuoMing }}</span>
-          </span>
-          <span v-if="shouDaoLieBiao.length" class="hong-dian" aria-hidden="true">{{ hongDianShu }}</span>
+          <button
+            class="zhu-anniu"
+            type="button"
+            :disabled="yongHu.shi_hao_you || zhengZaiShenQing === yongHu.id"
+            @click="faSongShenQing(yongHu)"
+          >
+            {{ yongHu.shi_hao_you ? huoQuFanYi('haoYou', 'yiShiHaoYou') : huoQuFanYi('haoYou', 'tianJiaHaoYou') }}
+          </button>
+        </li>
+      </ul>
+    </section>
+
+    <section v-else-if="dangQianMianBan === 'shenQing'" class="mian-ban" data-testid="hao-you-shen-qing-mian-ban">
+      <div class="mian-ban-tou">
+        <button class="fan-hui-anniu" type="button" @click="qieHuanMianBan('haoYou')">
+          <span aria-hidden="true">←</span>
+          <span>{{ huoQuFanYi('haoYou', 'fanHuiHaoYouLieBiao') }}</span>
         </button>
+        <h2 class="mian-ban-biao-ti">{{ huoQuFanYi('haoYou', 'xinDePengYouRuKou') }}</h2>
+      </div>
 
+      <h3 class="fen-ku-biao-ti">{{ huoQuFanYi('haoYou', 'shouDaoShenQing') }}</h3>
+      <p v-if="haoYouCangKu.shenQingCuoWu" class="cuo-wu-ti-shi" role="status">
+        {{ huoQuFanYi('haoYou', 'shenQingJiaZaiShiBai') }}
+      </p>
+      <HaoYouKongTai
+        v-else-if="!shouDaoLieBiao.length"
+        :biao-ti="huoQuFanYi('haoYou', 'zanWuShenQing')"
+        :ti-shi="huoQuFanYi('haoYou', 'zanWuShenQingTiShi')"
+      />
+      <ul v-else class="shen-qing-lie-biao">
+        <li v-for="shenQing in shouDaoLieBiao" :key="shenQing.id" class="shen-qing-tiao">
+          <button class="zhi-liao-anniu" type="button" :aria-label="huoQuFanYi('haoYou', 'ziLiaoKa')" @click="daKaiZiLiaoKa(shenQing.shen_qing_zhe_id || shenQing.id)">
+            <span class="zhi-liao-tou-xiang">
+              <TouXiang :tou-xiang="shenQing.tou_xiang" :mo-ren-zi="(shenQing.ni_cheng || shenQing.yong_hu_ming || '?').slice(0, 1)" />
+            </span>
+          </button>
+          <span class="jie-guo-wen-zi">
+            <span class="jie-guo-ming">{{ shenQing.ni_cheng || shenQing.yong_hu_ming || huoQuFanYi('haoYou', 'weiMingMing') }}</span>
+            <span class="jie-guo-fu">{{ huoQuFanYi('haoYou', 'shenQingDaiChuLi') }}</span>
+          </span>
+          <span class="shen-qing-anniu-zu">
+            <button class="zhu-anniu" type="button" @click="jieShou(shenQing.id)">{{ huoQuFanYi('haoYou', 'jieShou') }}</button>
+            <button class="ci-anniu" type="button" @click="juJue(shenQing.id)">{{ huoQuFanYi('haoYou', 'juJue') }}</button>
+          </span>
+        </li>
+      </ul>
+
+      <h3 class="fen-ku-biao-ti">{{ huoQuFanYi('haoYou', 'faChuShenQing') }}</h3>
+      <p v-if="haoYouCangKu.shenQingCuoWu" class="cuo-wu-ti-shi" role="status">
+        {{ huoQuFanYi('haoYou', 'shenQingJiaZaiShiBai') }}
+      </p>
+      <HaoYouKongTai
+        v-else-if="!faChuLieBiao.length"
+        :biao-ti="huoQuFanYi('haoYou', 'zanWuFaChuShenQing')"
+        :ti-shi="huoQuFanYi('haoYou', 'zanWuFaChuShenQingTiShi')"
+      />
+      <ul v-else class="shen-qing-lie-biao">
+        <li v-for="shenQing in faChuLieBiao" :key="shenQing.id" class="shen-qing-tiao">
+          <button class="zhi-liao-anniu" type="button" :aria-label="huoQuFanYi('haoYou', 'ziLiaoKa')" @click="daKaiZiLiaoKa(shenQing.jie_shou_zhe_id || shenQing.id)">
+            <span class="zhi-liao-tou-xiang">
+              <TouXiang :tou-xiang="shenQing.tou_xiang" :mo-ren-zi="(shenQing.ni_cheng || shenQing.yong_hu_ming || '?').slice(0, 1)" />
+            </span>
+          </button>
+          <span class="jie-guo-wen-zi">
+            <span class="jie-guo-ming">{{ shenQing.ni_cheng || shenQing.yong_hu_ming || huoQuFanYi('haoYou', 'weiMingMing') }}</span>
+            <span class="jie-guo-fu">{{ huoQuFanYi('haoYou', 'yiFaSongDengDai') }}</span>
+          </span>
+        </li>
+      </ul>
+    </section>
+
+    <section v-else class="mian-ban" data-testid="hao-you-ming-ce">
+      <p v-if="haoYouCangKu.haoYouCuoWu" class="cuo-wu-ti-shi" role="status">
+        {{ huoQuFanYi('haoYou', 'haoYouJiaZaiShiBai') }}
+      </p>
+
+      <nav v-if="fenZuLieBiao.length > 1" class="zi-mu-lan" :aria-label="huoQuFanYi('haoYou', 'ziMuSuoYin')">
         <button
-          class="ru-kou-ka"
+          v-for="fenZu in fenZuLieBiao"
+          :key="'zi-mu-' + fenZu.shouZiMu"
+          class="zi-mu-anniu"
           type="button"
-          data-testid="hao-you-tong-zhi-ru-kou"
-          @click="jinRuTongZhi"
+          :aria-label="`${huoQuFanYi('haoYou', 'tiaoDaoFenZu')} ${fenZu.shouZiMu}`"
+          @click="tiaoDaoFenZu(fenZu.shouZiMu)"
         >
-          <span class="ru-kou-tu" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <path d="M6 9a6 6 0 1 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 13 6 9z" />
-              <path d="M10 19a2 2 0 0 0 4 0" />
-            </svg>
-          </span>
-          <span class="ru-kou-wen-zi">
-            <span class="ru-kou-biao-ti">{{ huoQuFanYi('haoYou', 'haoYouTongZhiRuKou') }}</span>
-            <span class="ru-kou-shuo-ming">{{ tongZhiShuoMing }}</span>
-          </span>
-          <span v-if="通知仓库.weiDuShu > 0" class="hong-dian" aria-hidden="true">{{ tongZhiHongDian }}</span>
+          {{ fenZu.shouZiMu }}
         </button>
       </nav>
 
-      <Transition name="hao-you-mian-ban" mode="out-in">
-      <section v-if="zhengZaiSouSuo" class="mian-ban" data-testid="hao-you-sou-suo-mian-ban">
-        <h2 class="fen-ku-biao-ti">{{ huoQuFanYi('haoYou', 'souSuoJieGuoBiaoJi') }}</h2>
+      <template v-if="haoYouLieBiao.length">
+        <section v-if="zuiJinLianXiLieBiao.length" class="fen-zu">
+          <h2 class="fen-zu-biao-ti">
+            <span class="fen-zu-zi">{{ huoQuFanYi('haoYou', 'zuiJinLianXi') }}</span>
+            <span class="fen-zu-xian" aria-hidden="true"></span>
+          </h2>
+          <ul class="lie-biao">
+            <HaoYouTiao
+              v-for="haoYou in zuiJinLianXiLieBiao"
+              :key="'zui-jin-' + haoYou.id"
+              :hao-you-id="haoYou.id"
+              :ming-cheng="xianShiMing(haoYou)"
+              :tou-xiang="haoYou.tou_xiang"
+              :qian-ming="qianMingWen(haoYou)"
+              :bei-zhu="beiZhuWen(haoYou)"
+              :huo-yue-tai="huoYueTai(haoYou.id)"
+              :huo-yue-wen-zi="huoYueWenZi(haoYou.id)"
+              :zui-jin-zhai-yao="zuiJinZhaiYao(haoYou.id)"
+              :zui-jin-shi-jian="zuiJinShiJian(haoYou.id)"
+              @jin-ru="jinRuLiaoTian"
+              @da-kai-zi-liao="daKaiZiLiaoKa"
+              @bao-cun-bei-zhu="baoCunBeiZhu"
+              @shan-chu="shanChu"
+            />
+          </ul>
+        </section>
 
-        <ul v-if="benDiJieGuo.length" class="lie-biao">
-          <HaoYouTiao
-            v-for="haoYou in benDiJieGuo"
-            :key="haoYou.id"
-            :hao-you-id="haoYou.id"
-            :ming-cheng="xianShiMing(haoYou)"
-            :tou-xiang="haoYou.tou_xiang"
-            :qian-ming="qianMingWen(haoYou)"
-            :bei-zhu="beiZhuWen(haoYou)"
-            :huo-yue-tai="huoYueTai(haoYou.id)"
-            :huo-yue-wen-zi="huoYueWenZi(haoYou.id)"
-            :zui-jin-zhai-yao="zuiJinZhaiYao(haoYou.id)"
-            :zui-jin-shi-jian="zuiJinShiJian(haoYou.id)"
-            @jin-ru="jinRuLiaoTian"
-            @da-kai-zi-liao="daKaiZiLiaoKa"
-            @bao-cun-bei-zhu="baoCunBeiZhu"
-            @shan-chu="shanChu"
-          />
-        </ul>
-        <p v-else class="wu-jie-guo">{{ huoQuFanYi('haoYou', 'benDiWuPiPei') }}</p>
+        <section v-for="fenZu in fenZuLieBiao" :key="fenZu.shouZiMu" class="fen-zu" :data-fen-zu="fenZu.shouZiMu">
+          <h2 class="fen-zu-biao-ti">
+            <span class="fen-zu-zi">{{ fenZu.shouZiMu }}</span>
+            <span class="fen-zu-shu">{{ fenZu.lieBiao.length }}</span>
+            <span class="fen-zu-xian" aria-hidden="true"></span>
+          </h2>
+          <ul class="lie-biao">
+            <HaoYouTiao
+              v-for="haoYou in fenZu.lieBiao"
+              :key="haoYou.id"
+              :hao-you-id="haoYou.id"
+              :ming-cheng="xianShiMing(haoYou)"
+              :tou-xiang="haoYou.tou_xiang"
+              :qian-ming="qianMingWen(haoYou)"
+              :bei-zhu="beiZhuWen(haoYou)"
+              :huo-yue-tai="huoYueTai(haoYou.id)"
+              :huo-yue-wen-zi="huoYueWenZi(haoYou.id)"
+              :zui-jin-zhai-yao="zuiJinZhaiYao(haoYou.id)"
+              :zui-jin-shi-jian="zuiJinShiJian(haoYou.id)"
+              @jin-ru="jinRuLiaoTian"
+              @da-kai-zi-liao="daKaiZiLiaoKa"
+              @bao-cun-bei-zhu="baoCunBeiZhu"
+              @shan-chu="shanChu"
+            />
+          </ul>
+        </section>
+      </template>
 
-        <button class="quan-zhan-anniu" type="button" :disabled="souSuoZhong" @click="zhiXingQuanZhanSouSuo">
-          {{ souSuoZhong ? huoQuFanYi('haoYou', 'quanZhanSouSuoZhong') : huoQuFanYi('haoYou', 'quanZhanSouSuo') }}
-        </button>
+      <HaoYouKongTai
+        v-else
+        :biao-ti="huoQuFanYi('haoYou', 'zanWuHaoYou')"
+        :ti-shi="huoQuFanYi('haoYou', 'zanWuHaoYouTiShi')"
+        :anniu-wen-zi="huoQuFanYi('haoYou', 'quTianJiaHaoYou')"
+        @dian-ji="juJiaoSouSuo"
+      />
 
-        <p v-if="souSuoWuJieGuo" class="wu-jie-guo">{{ huoQuFanYi('haoYou', 'quanZhanWuJieGuo') }}</p>
-
-        <ul v-if="souSuoJieGuo.length" class="jie-guo-lie-biao" :aria-label="huoQuFanYi('haoYou', 'quanZhanJieGuoBiaoJi')">
-          <li v-for="yongHu in souSuoJieGuo" :key="yongHu.id" class="jie-guo-tiao">
-            <button class="zhi-liao-anniu" type="button" :aria-label="huoQuFanYi('haoYou', 'ziLiaoKa')" @click="daKaiZiLiaoKa(yongHu.id)">
-              <span class="zhi-liao-tou-xiang">
-                <TouXiang :tou-xiang="yongHu.tou_xiang" :mo-ren-zi="(yongHu.ni_cheng || yongHu.yong_hu_ming || '?').slice(0, 1)" />
-              </span>
-            </button>
-            <span class="jie-guo-wen-zi">
-              <span class="jie-guo-ming">{{ yongHu.ni_cheng || yongHu.yong_hu_ming || yongHu.shou_ji_hao }}</span>
-              <span class="jie-guo-fu">{{ yongHu.qian_ming || huoQuFanYi('haoYou', 'zanWuQianMing') }}</span>
-            </span>
-            <button
-              class="zhu-anniu"
-              type="button"
-              :disabled="yongHu.shi_hao_you || zhengZaiShenQing === yongHu.id"
-              @click="faSongShenQing(yongHu)"
-            >
-              {{ yongHu.shi_hao_you ? huoQuFanYi('haoYou', 'yiShiHaoYou') : huoQuFanYi('haoYou', 'tianJiaHaoYou') }}
-            </button>
-          </li>
-        </ul>
-      </section>
-
-      <section v-else-if="dangQianMianBan === 'shenQing'" class="mian-ban" data-testid="hao-you-shen-qing-mian-ban">
-        <div class="mian-ban-tou">
-          <button class="fan-hui-anniu" type="button" @click="qieHuanMianBan('haoYou')">
-            <span aria-hidden="true">←</span>
-            <span>{{ huoQuFanYi('haoYou', 'fanHuiHaoYouLieBiao') }}</span>
-          </button>
-          <h2 class="mian-ban-biao-ti">{{ huoQuFanYi('haoYou', 'xinDePengYouRuKou') }}</h2>
-        </div>
-
-        <h3 class="fen-ku-biao-ti">{{ huoQuFanYi('haoYou', 'shouDaoShenQing') }}</h3>
-        <p v-if="haoYouCangKu.shenQingCuoWu" class="cuo-wu-ti-shi" role="status">
-          {{ huoQuFanYi('haoYou', 'shenQingJiaZaiShiBai') }}
-        </p>
-        <HaoYouKongTai
-          v-else-if="!shouDaoLieBiao.length"
-          :biao-ti="huoQuFanYi('haoYou', 'zanWuShenQing')"
-          :ti-shi="huoQuFanYi('haoYou', 'zanWuShenQingTiShi')"
-        />
-        <ul v-else class="shen-qing-lie-biao">
-          <li v-for="shenQing in shouDaoLieBiao" :key="shenQing.id" class="shen-qing-tiao">
-            <button class="zhi-liao-anniu" type="button" :aria-label="huoQuFanYi('haoYou', 'ziLiaoKa')" @click="daKaiZiLiaoKa(shenQing.shen_qing_zhe_id || shenQing.id)">
-              <span class="zhi-liao-tou-xiang">
-                <TouXiang :tou-xiang="shenQing.tou_xiang" :mo-ren-zi="(shenQing.ni_cheng || shenQing.yong_hu_ming || '?').slice(0, 1)" />
-              </span>
-            </button>
-            <span class="jie-guo-wen-zi">
-              <span class="jie-guo-ming">{{ shenQing.ni_cheng || shenQing.yong_hu_ming || huoQuFanYi('haoYou', 'weiMingMing') }}</span>
-              <span class="jie-guo-fu">{{ huoQuFanYi('haoYou', 'shenQingDaiChuLi') }}</span>
-            </span>
-            <span class="shen-qing-anniu-zu">
-              <button class="zhu-anniu" type="button" @click="jieShou(shenQing.id)">{{ huoQuFanYi('haoYou', 'jieShou') }}</button>
-              <button class="ci-anniu" type="button" @click="juJue(shenQing.id)">{{ huoQuFanYi('haoYou', 'juJue') }}</button>
-            </span>
-          </li>
-        </ul>
-
-        <h3 class="fen-ku-biao-ti">{{ huoQuFanYi('haoYou', 'faChuShenQing') }}</h3>
-        <p v-if="haoYouCangKu.shenQingCuoWu" class="cuo-wu-ti-shi" role="status">
-          {{ huoQuFanYi('haoYou', 'shenQingJiaZaiShiBai') }}
-        </p>
-        <HaoYouKongTai
-          v-else-if="!faChuLieBiao.length"
-          :biao-ti="huoQuFanYi('haoYou', 'zanWuFaChuShenQing')"
-          :ti-shi="huoQuFanYi('haoYou', 'zanWuFaChuShenQingTiShi')"
-        />
-        <ul v-else class="shen-qing-lie-biao">
-          <li v-for="shenQing in faChuLieBiao" :key="shenQing.id" class="shen-qing-tiao">
-            <button class="zhi-liao-anniu" type="button" :aria-label="huoQuFanYi('haoYou', 'ziLiaoKa')" @click="daKaiZiLiaoKa(shenQing.jie_shou_zhe_id || shenQing.id)">
-              <span class="zhi-liao-tou-xiang">
-                <TouXiang :tou-xiang="shenQing.tou_xiang" :mo-ren-zi="(shenQing.ni_cheng || shenQing.yong_hu_ming || '?').slice(0, 1)" />
-              </span>
-            </button>
-            <span class="jie-guo-wen-zi">
-              <span class="jie-guo-ming">{{ shenQing.ni_cheng || shenQing.yong_hu_ming || huoQuFanYi('haoYou', 'weiMingMing') }}</span>
-              <span class="jie-guo-fu">{{ huoQuFanYi('haoYou', 'yiFaSongDengDai') }}</span>
-            </span>
-          </li>
-        </ul>
-      </section>
-
-      <section v-else class="mian-ban" data-testid="hao-you-ming-ce">
-        <p v-if="haoYouCangKu.haoYouCuoWu" class="cuo-wu-ti-shi" role="status">
-          {{ huoQuFanYi('haoYou', 'haoYouJiaZaiShiBai') }}
-        </p>
-
-        <nav v-if="fenZuLieBiao.length > 1" class="zi-mu-lan" :aria-label="huoQuFanYi('haoYou', 'ziMuSuoYin')">
-          <button
-            v-for="fenZu in fenZuLieBiao"
-            :key="'zi-mu-' + fenZu.shouZiMu"
-            class="zi-mu-anniu"
-            type="button"
-            :aria-label="`${huoQuFanYi('haoYou', 'tiaoDaoFenZu')} ${fenZu.shouZiMu}`"
-            @click="tiaoDaoFenZu(fenZu.shouZiMu)"
-          >
-            {{ fenZu.shouZiMu }}
-          </button>
-        </nav>
-
-        <template v-if="haoYouLieBiao.length">
-          <section v-if="zuiJinLianXiLieBiao.length" class="fen-zu">
-            <h2 class="fen-zu-biao-ti">
-              <span class="fen-zu-zi">{{ huoQuFanYi('haoYou', 'zuiJinLianXi') }}</span>
-              <span class="fen-zu-xian" aria-hidden="true"></span>
-            </h2>
-            <ul class="lie-biao">
-              <HaoYouTiao
-                v-for="haoYou in zuiJinLianXiLieBiao"
-                :key="'zui-jin-' + haoYou.id"
-                :hao-you-id="haoYou.id"
-                :ming-cheng="xianShiMing(haoYou)"
-                :tou-xiang="haoYou.tou_xiang"
-                :qian-ming="qianMingWen(haoYou)"
-                :bei-zhu="beiZhuWen(haoYou)"
-                :huo-yue-tai="huoYueTai(haoYou.id)"
-                :huo-yue-wen-zi="huoYueWenZi(haoYou.id)"
-                :zui-jin-zhai-yao="zuiJinZhaiYao(haoYou.id)"
-                :zui-jin-shi-jian="zuiJinShiJian(haoYou.id)"
-                @jin-ru="jinRuLiaoTian"
-                @da-kai-zi-liao="daKaiZiLiaoKa"
-                @bao-cun-bei-zhu="baoCunBeiZhu"
-                @shan-chu="shanChu"
-              />
-            </ul>
-          </section>
-
-          <section v-for="fenZu in fenZuLieBiao" :key="fenZu.shouZiMu" class="fen-zu" :data-fen-zu="fenZu.shouZiMu">
-            <h2 class="fen-zu-biao-ti">
-              <span class="fen-zu-zi">{{ fenZu.shouZiMu }}</span>
-              <span class="fen-zu-shu">{{ fenZu.lieBiao.length }}</span>
-              <span class="fen-zu-xian" aria-hidden="true"></span>
-            </h2>
-            <ul class="lie-biao">
-              <HaoYouTiao
-                v-for="haoYou in fenZu.lieBiao"
-                :key="haoYou.id"
-                :hao-you-id="haoYou.id"
-                :ming-cheng="xianShiMing(haoYou)"
-                :tou-xiang="haoYou.tou_xiang"
-                :qian-ming="qianMingWen(haoYou)"
-                :bei-zhu="beiZhuWen(haoYou)"
-                :huo-yue-tai="huoYueTai(haoYou.id)"
-                :huo-yue-wen-zi="huoYueWenZi(haoYou.id)"
-                :zui-jin-zhai-yao="zuiJinZhaiYao(haoYou.id)"
-                :zui-jin-shi-jian="zuiJinShiJian(haoYou.id)"
-                @jin-ru="jinRuLiaoTian"
-                @da-kai-zi-liao="daKaiZiLiaoKa"
-                @bao-cun-bei-zhu="baoCunBeiZhu"
-                @shan-chu="shanChu"
-              />
-            </ul>
-          </section>
-        </template>
-
-        <HaoYouKongTai
-          v-else
-          :biao-ti="huoQuFanYi('haoYou', 'zanWuHaoYou')"
-          :ti-shi="huoQuFanYi('haoYou', 'zanWuHaoYouTiShi')"
-          :anniu-wen-zi="huoQuFanYi('haoYou', 'quTianJiaHaoYou')"
-          @dian-ji="juJiaoSouSuo"
-        />
-
-        <p class="tong-ji">{{ jiShuWenZi }}</p>
-      </section>
-      </Transition>
-    </template>
+      <p class="tong-ji">{{ jiShuWenZi }}</p>
+    </section>
+    </Transition>
 
     <Teleport to="body">
       <YongHuZiLiaoKa
@@ -373,7 +367,6 @@ let dingBuGuanCha: ResizeObserver | null = null
 const { cuoWu: qianTaiCuoWu, zhuangTai: qianTaiZhuangTai, jieShou: jieShouQianTai, chongShi, qingLi } = use前台错误()
 const qianTaiCuoWuZhi = computed(() => qianTaiCuoWu.value)
 
-const zhengZaiChuShiHua = computed(() => !haoYouCangKu.yiChuShiHua)
 const shouDaoLieBiao = computed(() => haoYouCangKu.shouDaoLieBiao ?? [])
 const faChuLieBiao = computed(() => haoYouCangKu.faChuLieBiao ?? [])
 const haoYouLieBiao = computed(() => haoYouCangKu.haoYouLieBiao ?? [])
@@ -625,7 +618,7 @@ watch(
 )
 
 onMounted(() => {
-  void haoYouCangKu.chuShiHua()
+  if (!haoYouCangKu.yiChuShiHua) void haoYouCangKu.chuShiHua()
   gengXinDingBuGao()
   window.addEventListener('resize', gengXinDingBuGao)
   if (typeof ResizeObserver !== 'undefined' && dingBu.value) {
@@ -875,13 +868,6 @@ defineExpose({ dangQianMianBan, guanJianZi, benDiJieGuo, haoYouLieBiao })
 
 .hao-you-sou-suo-qing:hover {
   color: var(--hao-you-jin);
-}
-
-.jia-zai {
-  padding: var(--jiange-da) var(--jiange-zhong);
-  text-align: center;
-  font-size: 14px;
-  color: var(--hao-you-ye-ci-wen-ben);
 }
 
 .cao-zuo-ti-shi {

@@ -20,6 +20,7 @@ vi.mock('@/api/挑战', () => ({
 }))
 
 import 挑战主页 from '@/views/挑战主页.vue'
+import { use挑战榜单 } from '@/composables/use挑战榜单'
 
 const 本目录 = dirname(fileURLToPath(import.meta.url))
 const 根 = resolve(本目录, '..')
@@ -53,6 +54,7 @@ async function 挂主页(): Promise<VueWrapper> {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  use挑战榜单().qingChu()
   sessionStorage.clear()
   对局.dangQian = null
 })

@@ -190,7 +190,7 @@ describe('主次弱三级操作', () => {
 
   it('次操作：透明底 + 1px 金边（发送码、上一步）', () => {
     for (const 块 of [登录块, 找回块]) {
-      const 次 = 取块(块, '.fasong-anniu {')
+      const 次 = 取块(块, '.yanzhengma-anniu {')
       expect(取值(次, 'background')).toBe('transparent')
       expect(取值(次, 'border')).toBe('1px solid var(--ka-jin)')
     }
@@ -221,7 +221,7 @@ describe('触控热区与键盘可达', () => {
   it('每个可点元素都撑到 44px 或有 44px 外扩热区', () => {
     expect(取值(取块(登录块, '.biaoqian-anniu {'), 'min-height')).toBe('var(--shuru-anniu-re-ku)')
     for (const 块 of [登录块, 找回块]) {
-      expect(取值(取块(块, '.fasong-anniu {'), 'min-height')).toBe('var(--shuru-anniu-re-ku)')
+      expect(取值(取块(块, '.yanzhengma-anniu {'), 'min-height')).toBe('var(--shuru-anniu-re-ku)')
       expect(取值(取块(块, '.anniu-zhuyao {'), 'min-height')).toBe('var(--shuru-anniu-re-ku)')
     }
     expect(取值(取块(登录块, '.wangji-mima-lianjie {'), 'min-height')).toBe('var(--shuru-anniu-re-ku)')
@@ -239,7 +239,7 @@ describe('触控热区与键盘可达', () => {
       '.biaoqian-anniu',
       '.wangji-mima-lianjie',
       '.anniu-zhuyao',
-      '.fasong-anniu',
+      '.yanzhengma-anniu',
       '.mima-qiehuan',
       '.xieyi-lianjie',
       '.ji-zhu-fu-xuan',
@@ -247,7 +247,7 @@ describe('触控热区与键盘可达', () => {
     for (const 选择器 of 登录选择器) {
       expect(登录块, 选择器 + ' 缺 focus-visible').toContain(选择器 + ':focus-visible')
     }
-    for (const 选择器 of ['.zhaohui-shang-yi-bu', '.zhaohui-fan-hui', '.anniu-zhuyao', '.fasong-anniu', '.mima-qiehuan']) {
+    for (const 选择器 of ['.zhaohui-shang-yi-bu', '.zhaohui-fan-hui', '.anniu-zhuyao', '.yanzhengma-anniu', '.mima-qiehuan']) {
       expect(找回块, 选择器 + ' 缺 focus-visible').toContain(选择器 + ':focus-visible')
     }
     expect(登录块).toContain('.ji-zhu-fu-xuan:focus-visible + .ji-zhu-wen-ben::before')

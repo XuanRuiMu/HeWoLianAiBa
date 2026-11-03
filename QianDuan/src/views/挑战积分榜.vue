@@ -53,14 +53,16 @@
       </div>
 
       <div v-if="bangDanZhuangTai === 'jiaZai'" class="bangdan-zai" role="status">
-        <span class="ping-mu-wai">{{ huoQuFanYi('tiaoZhan', 'jiaZaiZhong') }}</span>
-        <div v-for="序 in 5" :key="序" class="bangdan-zhanwei" aria-hidden="true">
-          <span class="zhanwei-kuai zhanwei-kuai--pai" />
-          <span class="zhanwei-kuai zhanwei-kuai--ming" />
-          <span class="zhanwei-kuai zhanwei-kuai--duan" />
-          <span class="zhanwei-kuai zhanwei-kuai--ji" />
-          <span class="zhanwei-kuai zhanwei-kuai--fen" />
-        </div>
+        <template v-if="shouPingYiWanCheng">
+          <span class="ping-mu-wai">{{ huoQuFanYi('tiaoZhan', 'jiaZaiZhong') }}</span>
+          <div v-for="序 in 5" :key="序" class="bangdan-zhanwei" aria-hidden="true">
+            <span class="zhanwei-kuai zhanwei-kuai--pai" />
+            <span class="zhanwei-kuai zhanwei-kuai--ming" />
+            <span class="zhanwei-kuai zhanwei-kuai--duan" />
+            <span class="zhanwei-kuai zhanwei-kuai--ji" />
+            <span class="zhanwei-kuai zhanwei-kuai--fen" />
+          </div>
+        </template>
       </div>
       <div v-else-if="bangDanZhuangTai === 'cuoWu'" class="bangdan-zai">
         <RequestError :cuo-wu="qianTaiCuoWu" @chong-shi="jiaZaiPaiHang" />
@@ -121,6 +123,9 @@ import { huoQuFanYi } from '@/config/翻译表'
 import RequestError from '@/components/请求错误.vue'
 import TiaoZhanKongTai from '@/components/挑战空态.vue'
 import { 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
+import { quYuQuJiaoJie } from '@/router/预取'
+
+const LU_YOU_MING = 'tiaoZhanPaiHangBang'
 
 const router = useRouter()
 
@@ -132,6 +137,7 @@ type 榜单状态 = 'jiaZai' | 'cuoWu' | 'kong' | 'bangDan'
 
 const bangDanZhuangTai = ref<榜单状态>('jiaZai')
 const qianTaiCuoWu = ref<QianTaiCuoWu | null>(null)
+const shouPingYiWanCheng = ref(false)
 let paiHangDaiCi = 0
 
 const zuQieKuang = ref<HTMLElement | null>(null)
@@ -172,8 +178,9 @@ async function jiaZaiPaiHang() {
   paiHangLieBiao.value = []
   qianTaiCuoWu.value = null
   bangDanZhuangTai.value = 'jiaZai'
+  const yuQu = quYuQuJiaoJie<Promise<PaiHangXiangMu[]>>(LU_YOU_MING)
   try {
-    const jieGuo = await huoQuPaiHangBang(benCiZuBie)
+    const jieGuo = await (yuQu ?? huoQuPaiHangBang(benCiZuBie))
     if (benCiDaiCi !== paiHangDaiCi) return
     paiHangLieBiao.value = jieGuo
     bangDanZhuangTai.value = jieGuo.length > 0 ? 'bangDan' : 'kong'
@@ -186,6 +193,8 @@ async function jiaZaiPaiHang() {
     }
     qianTaiCuoWu.value = zhengChangHua
     bangDanZhuangTai.value = 'cuoWu'
+  } finally {
+    shouPingYiWanCheng.value = true
   }
 }
 

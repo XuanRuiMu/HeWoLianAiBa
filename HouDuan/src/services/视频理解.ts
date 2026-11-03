@@ -8,6 +8,7 @@ import { huoQuBenDiLuJing } from './媒体存储'
 import { huoQuGuiJiLiuDongMiYao, huoQuDuoMoTaiPeiZhi } from '../config/多模态配置'
 import { AI_PEI_ZHI } from '../config/AI配置'
 import { redis } from '../redis'
+import { huoQuFFmpegLuJing, tiQuYinPinWeiWav } from '../utils/音频转码'
 
 const execFileAsync = promisify(execFile)
 
@@ -29,12 +30,6 @@ const neiCunHuanCun = new Map<string, ShiPinJieXiJieGuo>()
 
 export function sheZhiShiPinJieXiHuanCun(sha256: string, jieGuo: ShiPinJieXiJieGuo): void {
   neiCunHuanCun.set(sha256, jieGuo)
-}
-
-export function huoQuFFmpegLuJing(): string | null {
-  const peiZhiLuJing = (process.env['SHI_PIN_JIE_XI_FFMPEG_LU_JING'] || '').trim()
-  if (peiZhiLuJing && fs.existsSync(peiZhiLuJing)) return peiZhiLuJing
-  return null
 }
 
 function qingXi(wenBen: string | null | undefined, shangXian: number): string | null {
@@ -136,7 +131,7 @@ export async function jieXiShiPin(sha256: string, yiLai: ShiPinJieXiYiLai = {}):
   const huanCun = await duQuJieXiHuanCun(sha256)
   if (huanCun) return huanCun
   const kong: ShiPinJieXiJieGuo = { huaMianMiaoShu: null, zhuanXieWenBen: null, jiangJiZhaiYao: null }
-  const ffmpegLuJing = huoQuFFmpegLuJing()
+  const ffmpegLuJing = await huoQuFFmpegLuJing()
   const benDiLuJing = huoQuBenDiLuJing(sha256)
   if (!ffmpegLuJing || !benDiLuJing) {
     kong.jiangJiZhaiYao = '视频理解降级：转码链路暂不可用，已保留占位'
@@ -145,7 +140,6 @@ export async function jieXiShiPin(sha256: string, yiLai: ShiPinJieXiYiLai = {}):
   }
   const linShiMuLu = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'shipin-jiexi-'))
   const zhenLuJing = path.join(linShiMuLu, 'zhen.jpg')
-  const shengLuJing = path.join(linShiMuLu, 'sheng.wav')
   const zhiXing = yiLai.zhiXingMingLing ?? (async (luJing: string, canShu: string[]) => {
     try {
       await execFileAsync(luJing, canShu, { timeout: 60000 })
@@ -162,12 +156,9 @@ export async function jieXiShiPin(sha256: string, yiLai: ShiPinJieXiYiLai = {}):
         kong.huaMianMiaoShu = await (yiLai.miaoShuTuPian ?? moRenMiaoShuTuPian)(tuPianZiJie)
       }
     }
-    const shengJieGuo = await zhiXing(ffmpegLuJing, ['-y', '-v', 'error', '-i', benDiLuJing, '-vn', '-ac', '1', '-ar', '16000', '-t', '20', shengLuJing])
-    if (shengJieGuo.bianMa === 0 && fs.existsSync(shengLuJing)) {
-      const yinPinZiJie = await fs.promises.readFile(shengLuJing)
-      if (yinPinZiJie.length > 0) {
-        kong.zhuanXieWenBen = await (yiLai.zhuanXieYinPin ?? moRenZhuanXieYinPin)(yinPinZiJie, 'audio/wav')
-      }
+    const yinPinZiJie = await tiQuYinPinWeiWav(benDiLuJing, { zhiXingMingLing: zhiXing, zuiChangMiao: 20 })
+    if (yinPinZiJie && yinPinZiJie.length > 0) {
+      kong.zhuanXieWenBen = await (yiLai.zhuanXieYinPin ?? moRenZhuanXieYinPin)(yinPinZiJie, 'audio/wav')
     }
   } catch (cuoWu) {
     debug日志.warn('视频理解', '解析视频失败，已降级为占位', { xiang_qing: { cuo_wu: String(cuoWu) } })
@@ -187,7 +178,7 @@ export async function huoQuHuoJieXiShiPinMiaoShu(sha256: string | null | undefin
   if (!sha256 || !/^[0-9a-f]{64}$/.test(sha256)) return kong
   const huanCun = await duQuJieXiHuanCun(sha256)
   if (huanCun) return huanCun
-  if (!huoQuFFmpegLuJing()) return kong
+  if (!(await huoQuFFmpegLuJing())) return kong
   try {
     return await Promise.race([
       jieXiShiPin(sha256),

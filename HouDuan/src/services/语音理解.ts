@@ -1,5 +1,6 @@
 import { debug日志 } from '../utils/debug日志'
-import { huoQuDuoMoTaiPeiZhi, huoQuGuiJiLiuDongMiYao } from '../config/多模态配置'
+import { huoQuYinPinShiJianMiaoShuZhiJie } from './语音理解调用'
+import { 数据库 } from '../数据库'
 
 export interface YuYinKeDuCanShu {
   zhuanXieWenBen?: string | null
@@ -63,13 +64,6 @@ export function tiQuYinPinShiJian(zhuanXie: string | null | undefined): string |
   return mingDan.join('、')
 }
 
-async function yuShiKouDiaoYong(_canShu: { sha256: string; mime: string }, _chaoShiHaoMiao: number): Promise<string | null> {
-  const peiZhi = huoQuDuoMoTaiPeiZhi()
-  const miYao = huoQuGuiJiLiuDongMiYao()
-  if (!peiZhi.yuYinLiJieQiYong || miYao.trim() === '' || peiZhi.guiJiLiuDongYuYinMoXing.trim() === '') return null
-  return null
-}
-
 export async function huoQuYinPinShiJianMiaoShu(canShu: { sha256: string; mime: string }): Promise<string | null> {
   if (yinPinMock) {
     try {
@@ -82,10 +76,26 @@ export async function huoQuYinPinShiJianMiaoShu(canShu: { sha256: string; mime: 
   if (typeof canShu.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(canShu.sha256)) return null
   if (typeof canShu.mime !== 'string' || !canShu.mime.startsWith('audio/')) return null
   try {
-    const peiZhi = huoQuDuoMoTaiPeiZhi()
-    return await yuShiKouDiaoYong(canShu, peiZhi.qingQiuChaoShiHaoMiao)
+    return await huoQuYinPinShiJianMiaoShuZhiJie(canShu)
   } catch (cuoWu) {
     debug日志.warn('语音理解', '音频事件理解失败，已降级为本地转写', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return null
   }
+}
+
+export async function buQiYinPinShiJianMiaoShu(xiaoXi: { lei_xing: string; mei_ti_id?: string | null }): Promise<string | null> {
+  if (xiaoXi.lei_xing !== 'yuYin') return null
+  const meiTiId = (xiaoXi.mei_ti_id || '').trim()
+  if (!meiTiId) return null
+  let sha256 = ''
+  let mime = 'audio/webm'
+  try {
+    const chaXun = await 数据库.query(`SELECT "SHA256", "MIME" FROM "媒体文件" WHERE "ID" = $1 LIMIT 1`, [meiTiId])
+    if (chaXun.rows.length === 0) return null
+    sha256 = String(chaXun.rows[0].SHA256 || '').toLowerCase()
+    if (chaXun.rows[0].MIME) mime = String(chaXun.rows[0].MIME)
+  } catch {
+    return null
+  }
+  return huoQuYinPinShiJianMiaoShu({ sha256, mime })
 }

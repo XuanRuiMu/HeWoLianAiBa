@@ -53,6 +53,7 @@ import { 数据库 } from '../数据库'
 import { miJiKouLingPiPei, sheZhiMiJiHaoGanDu } from '../services/好感度'
 import { fanYiWenBen } from '../services/翻译'
 import { buQiYuYinZhuanXie, mianFeiZhuanXieYuYin } from '../services/语音转写'
+import { buQiYinPinShiJianMiaoShu } from '../services/语音理解'
 import { huoQuDuoMoTaiQianDuanShiTu, chongZaiDuoMoTaiHuanJing } from '../config/多模态配置'
 import { gouJianYuYinKeDuWenBen } from '../services/语音理解'
 import { gouJianShiPinKeDuWenBen } from '../services/视频多模态'
@@ -536,7 +537,11 @@ luYou.post(
         执行落库后副作用(
           '落库后触发AI调度器',
           async () => {
-            const zhunBeiHao = await buQiYuYinZhuanXie(luoKuXiaoXi)
+            const [zhuanXieJieGuo] = await Promise.allSettled([
+              buQiYuYinZhuanXie(luoKuXiaoXi),
+              buQiYinPinShiJianMiaoShu(luoKuXiaoXi),
+            ])
+            const zhunBeiHao = zhuanXieJieGuo.status === 'fulfilled' ? zhuanXieJieGuo.value : luoKuXiaoXi
             await luoKuChuFaJiaoSeTiaoDuQi(yongHu.yongHuId, jiaoSeId, zhunBeiHao)
           },
           { yong_hu_id: yongHu.yongHuId, jiao_se_id: jiaoSeId },
@@ -838,16 +843,18 @@ luYou.post(
     }
     try {
       const wenBen = await mianFeiZhuanXieYuYin({ meiTiId: meiTiId.trim() })
-      if (!wenBen) {
+      if (wenBen === null) {
         return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('liaoTian', 'yuYinZhuanWenZiShiBai'))
       }
-      try {
-        await 数据库.query(
-          `UPDATE "消息" SET "内容" = $2 WHERE "媒体ID" = $1 AND "类型" = 'yuYin' AND "已撤回" = false AND COALESCE(BTRIM("内容"), '') = ''`,
-          [meiTiId.trim(), wenBen],
-        )
-      } catch (huiXie) {
-        debug日志.warn('消息接口', '语音转写回写消息内容失败', { xiang_qing: { cuo_wu: String(huiXie) } })
+      if (wenBen.trim()) {
+        try {
+          await 数据库.query(
+            `UPDATE "消息" SET "内容" = $2 WHERE "媒体ID" = $1 AND "类型" = 'yuYin' AND "已撤回" = false AND COALESCE(BTRIM("内容"), '') = ''`,
+            [meiTiId.trim(), wenBen],
+          )
+        } catch (huiXie) {
+          debug日志.warn('消息接口', '语音转写回写消息内容失败', { xiang_qing: { cuo_wu: String(huiXie) } })
+        }
       }
       return chengGongXiangYing(xiangYing, { zhuanXieWenBen: wenBen })
     } catch (cuoWu) {

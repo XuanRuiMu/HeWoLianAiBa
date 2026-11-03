@@ -1,12 +1,18 @@
 import { reactive, ref, watch } from 'vue'
 import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
 import type { 消息 } from '@/types/类型定义'
-import { guanLianYuYinYinPin, jieChuYuYinYinPin } from '@/composables/use语音音量'
+import {
+  YU_YIN_ZENG_YI_SHANG_XIAN,
+  guanLianYuYinYinPin,
+  jieChuYuYinYinPin,
+  sheZhiYuYinZengYi,
+  shiYuYinYinLiangKeYong,
+} from '@/composables/use语音音量'
 import { 语音音量键, 语音音量表, duQuYuYinYinLiang, yuYinYinLiangZengYi } from '@/utils/语音音量存储'
 
 interface Use语音播放依赖 {
   huoQuDiZhi: (xiaoXi: 消息) => string | undefined
-  huoQuYinLiang?: () => number | null
+  huoQuYinLiang?: (xiaoXi: 消息) => number | null
 }
 
 export interface YuYinShiChangZaiTi {
@@ -308,9 +314,9 @@ export function use语音播放(yiLai: Use语音播放依赖) {
     }
   }
 
-  function tongDaoYinLiang(): number {
+  function tongDaoYinLiang(xiaoXi: 消息): number {
     try {
-      const 值 = yiLai.huoQuYinLiang?.()
+      const 值 = yiLai.huoQuYinLiang?.(xiaoXi)
       if (typeof 值 !== 'number' || !Number.isFinite(值)) return 1
       return Math.max(0, Math.min(1, 值))
     } catch {
@@ -321,18 +327,25 @@ export function use语音播放(yiLai: Use语音播放依赖) {
   function yingYongYinLiang(yinPin: HTMLAudioElement, xiaoXi: 消息): void {
     const 目标 = Math.max(
       0,
-      Math.min(1, tongDaoYinLiang() * yuYinYinLiangZengYi(duQuYuYinYinLiang(xiaoXi))),
+      Math.min(
+        YU_YIN_ZENG_YI_SHANG_XIAN,
+        tongDaoYinLiang(xiaoXi) * yuYinYinLiangZengYi(duQuYuYinYinLiang(xiaoXi)),
+      ),
     )
     try {
       yinPin.muted = 目标 <= 0
-      yinPin.volume = 目标
+      sheZhiYuYinZengYi(目标)
+      yinPin.volume = shiYuYinYinLiangKeYong() ? 1 : Math.min(1, 目标)
     } catch {
       return
     }
   }
 
   watch(
-    () => (dangQianXiaoXi ? 语音音量表.get(语音音量键(dangQianXiaoXi)) : undefined),
+    () => {
+      void 语音音量表.size
+      return dangQianXiaoXi ? 语音音量表.get(语音音量键(dangQianXiaoXi)) : undefined
+    },
     () => {
       if (!dangQianYinPin || !dangQianXiaoXi) return
       yingYongYinLiang(dangQianYinPin, dangQianXiaoXi)

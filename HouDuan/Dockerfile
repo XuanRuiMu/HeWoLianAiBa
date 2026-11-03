@@ -11,6 +11,7 @@ RUN npm run build
 FROM node:26-alpine AS production
 WORKDIR /app
 COPY package*.json ./
+RUN apk add --no-cache ffmpeg
 RUN npm ci --omit=dev && npm cache verify
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/QianYi ./QianYi

@@ -619,6 +619,7 @@ import {
   type FengJinZhuangTai,
 } from '@/api/资料'
 import { huoQuHaoYouLieBiao, type HaoYouXiang } from '@/api/社交'
+import { quYuQuJiaoJie } from '@/router/预取'
 import { yaSuoTuPiang } from '@/utils/图片压缩'
 const TuPianCaiJian = defineAsyncComponent(() => import('@/components/图片裁剪.vue'))
 import TongYongXiaLa from '@/components/通用菜单.vue'
@@ -633,6 +634,7 @@ const QIAN_MING_ZUI_DA_ZI_FU = 500
 const 用户仓库 = 使用用户仓库()
 const 设置仓库 = 使用用户设置仓库()
 const router = useRouter()
+const LU_YOU_MING = 'zhangHaoAnQuan'
 
 type BiaoQianZhi = '形象' | '账号' | '隐私' | '外观'
 const 搜索关键词 = ref('')
@@ -1184,6 +1186,34 @@ const 无匹配 = computed(
   () => 搜索中.value && !形象有命中.value && !账号有命中.value && !隐私有命中.value && !外观有命中.value,
 )
 
+function yingYongYuZaiFengJinYuHaoYouKeXuan(): void {
+  const yuQu = quYuQuJiaoJie<{
+    fengJin: Promise<FengJinZhuangTai>
+    haoYouKeXuan: Promise<HaoYouXiang[]>
+  }>(LU_YOU_MING)
+  if (!yuQu) {
+    void jiaZaiFengJinZhuangTai()
+    void jiaZaiHaoYouKeXuan()
+    return
+  }
+  void yuQu.fengJin
+    .then((zhi) => {
+      fengJinZhuangTai.value = zhi
+      qingFenQuanCuoWu('fengJin')
+    })
+    .catch((cuoWu: unknown) => {
+      fengJinZhuangTai.value = null
+      jieShouFenQuanCuoWu('fengJin', cuoWu, jiaZaiFengJinZhuangTai)
+    })
+  void yuQu.haoYouKeXuan
+    .then((lieBiao) => {
+      haoYouKeXuan.value = lieBiao
+    })
+    .catch(() => {
+      haoYouKeXuan.value = []
+    })
+}
+
 onMounted(() => {
   shenSuCaoGaoYiHuiFu.value = huiFuShenSuCaoGao()
   void 设置仓库.jiaZai().then(() => {
@@ -1200,8 +1230,7 @@ onMounted(() => {
   moRenDuiXiangXuanZhong.value = 用户形态(用户仓库.dangQianYongHu?.mu_biao_xing_bie)
   xingBieFuWuQiKuaiZhao.moRenXingBie = moRenXingBieXuanZhong.value
   xingBieFuWuQiKuaiZhao.moRenDuiXiang = moRenDuiXiangXuanZhong.value
-  void jiaZaiFengJinZhuangTai()
-  void jiaZaiHaoYouKeXuan()
+  yingYongYuZaiFengJinYuHaoYouKeXuan()
 })
 
 onBeforeUnmount(() => {

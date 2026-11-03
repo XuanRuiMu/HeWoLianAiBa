@@ -17,7 +17,7 @@
         <Transition :name="qieHuanDongHua || 'yemian-nei-guodu'" mode="out-in">
           <component
             :is="Component"
-            v-if="Component && keXuJinLuYou && !dengLuTuiChangZhong"
+            v-if="Component && keXuJinLuYou"
             :key="dangQianLuYou.path"
             @deng-lu-cheng-gong="chuLiDengLuChengGong"
             @geng-xin-moshi="gengXinMoShi"
@@ -97,6 +97,7 @@ watch(
   [() => user.认证状态, () => route.name],
   ([zhuangTai, luYouMingCheng]) => {
     if (luYouMingCheng === 'dengLu' && zhuangTai === '已认证' && bd.ziDongDengLu) {
+      if (dengLuTuiChangZhong.value) return
       void router.replace({ name: 'zhuJieMian' })
       return
     }

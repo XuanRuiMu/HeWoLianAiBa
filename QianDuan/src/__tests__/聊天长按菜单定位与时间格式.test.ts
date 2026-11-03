@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import { use长按菜单 } from '@/composables/use长按菜单'
 import { fenZuXiaoXiAnShiJian, geShiHuaXiaoXiShiJian } from '@/utils/消息时间分组'
 import { huoQuFanYi } from '@/config/翻译表'
@@ -11,6 +11,36 @@ function 造触屏(x: number, y: number) {
   return { touches: [{ clientX: x, clientY: y }], changedTouches: [] } as unknown as TouchEvent
 }
 
+function 造右键(x: number, y: number) {
+  return { clientX: x, clientY: y } as MouseEvent
+}
+
+function 假菜单盒(kuan: number, gao: number) {
+  return {
+    getBoundingClientRect: () => ({
+      width: kuan,
+      height: gao,
+      top: 0,
+      left: 0,
+      right: kuan,
+      bottom: gao,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    }),
+  } as unknown as HTMLElement
+}
+
+function 造文本消息(id: string, neiRong: string) {
+  return {
+    id,
+    nei_rong: neiRong,
+    lei_xing: 'wenben',
+    shi_jian_chuo: Date.now(),
+    fa_song_zhe_lei_xing: 'yonghu',
+  }
+}
+
 function 挂长按菜单() {
   return use长按菜单({
     dangQianShiJian: ref(Date.now()),
@@ -18,36 +48,205 @@ function 挂长按菜单() {
   })
 }
 
-describe('触屏长按菜单贴指定位并避让视口', () => {
+describe('长按菜单两阶段实测定位', () => {
   beforeEach(() => vi.useFakeTimers())
-  afterEach(() => vi.useRealTimers())
-
-  it('长按文本时菜单定位在触点附近，不再停在左上角', () => {
-    const quan = 挂长按菜单()
-    window.innerWidth = 390
-    window.innerHeight = 844
-    const xiaoXi = { id: 'a', nei_rong: '在吗', lei_xing: 'wenben', shi_jian_chuo: Date.now(), fa_song_zhe_lei_xing: 'yonghu' }
-    quan.chuMoKaiShiWenBen(xiaoXi as never, 造触屏(200, 400))
-    vi.advanceTimersByTime(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao + 20)
-    expect(quan.wenBenCaiDanZhanKai.value).toBe(true)
-    const { top, left } = quan.wenBenCaiDanYangShi.value
-    expect(left).not.toBe('0px')
-    expect(top).not.toBe('0px')
-    expect(parseFloat(left)).toBeLessThanOrEqual(390 - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanYuGuKuan)
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
   })
 
-  it('触点靠近右下边缘时菜单被夹回视口内', () => {
+  it('下方放得下时菜单摆在点击点下方，尾巴朝上且尖对点击点', () => {
+    window.innerWidth = 390
+    window.innerHeight = 844
     const quan = 挂长按菜单()
+    quan.caiDanYuanSu.value = 假菜单盒(148, 159)
+    quan.daKaiWenBenCaiDan(造文本消息('a', '在吗') as never, 造右键(200, 100))
+    quan.dingGaoCaiDanWeiZhi()
+    expect(quan.wenBenCaiDanZhanKai.value).toBe(true)
+    expect(quan.caiDanDingWei.value.dingGao).toBe(true)
+    expect(quan.caiDanDingWei.value.weiZhi).toBe('xia')
+    expect(quan.caiDanDingWei.value.top).toBe(`${100 + LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanWeiBaJianGe}px`)
+    expect(quan.caiDanDingWei.value.left).toBe(`${200 - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanWeiBaNeiSuo}px`)
+    expect(quan.caiDanDingWei.value.weiBaX).toBe(`${LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanWeiBaNeiSuo}px`)
+  })
+
+  it('顶部放不下时翻转到点击点上方，尾巴朝下', () => {
+    window.innerWidth = 390
+    window.innerHeight = 300
+    const quan = 挂长按菜单()
+    quan.caiDanYuanSu.value = 假菜单盒(148, 159)
+    quan.daKaiWenBenCaiDan(造文本消息('b', '在吗') as never, 造右键(200, 180))
+    quan.dingGaoCaiDanWeiZhi()
+    expect(quan.caiDanDingWei.value.weiZhi).toBe('shang')
+    expect(quan.caiDanDingWei.value.top).toBe(`${180 - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanWeiBaJianGe - 159}px`)
+    expect(quan.caiDanDingWei.value.left).toBe(`${200 - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanWeiBaNeiSuo}px`)
+  })
+
+  it('两侧都放不下时仍夹回视口内不溢出', () => {
     window.innerWidth = 320
     window.innerHeight = 480
-    const xiaoXi = { id: 'b', nei_rong: '好', lei_xing: 'wenben', shi_jian_chuo: Date.now(), fa_song_zhe_lei_xing: 'yonghu' }
-    quan.chuMoKaiShiWenBen(xiaoXi as never, 造触屏(319, 479))
+    const quan = 挂长按菜单()
+    quan.caiDanYuanSu.value = 假菜单盒(148, 159)
+    quan.daKaiWenBenCaiDan(造文本消息('c', '好') as never, 造右键(319, 479))
+    quan.dingGaoCaiDanWeiZhi()
+    const { top, left, weiBaX } = quan.caiDanDingWei.value
+    expect(quan.caiDanDingWei.value.weiZhi).toBe('shang')
+    expect(parseFloat(top)).toBeGreaterThanOrEqual(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu)
+    expect(parseFloat(top)).toBeLessThanOrEqual(480 - 159 - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu)
+    expect(parseFloat(left)).toBeLessThanOrEqual(320 - 148 - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu)
+    expect(parseFloat(left)).toBeGreaterThanOrEqual(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu)
+    expect(parseFloat(weiBaX)).toBeLessThanOrEqual(148 - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanWeiBaNeiSuo)
+  })
+
+  it('右缘夹取时尾巴尖内缩对准点击点水平位置', () => {
+    window.innerWidth = 390
+    window.innerHeight = 844
+    const quan = 挂长按菜单()
+    quan.caiDanYuanSu.value = 假菜单盒(148, 159)
+    quan.daKaiWenBenCaiDan(造文本消息('d', '长文本') as never, 造右键(380, 400))
+    quan.dingGaoCaiDanWeiZhi()
+    expect(quan.caiDanDingWei.value.left).toBe(`${390 - 148 - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu}px`)
+    expect(quan.caiDanDingWei.value.weiBaX).toBe(`${148 - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanWeiBaNeiSuo}px`)
+  })
+
+  it('两阶段：打开先隐藏占位，渲染实测后才定稿', async () => {
+    window.innerWidth = 390
+    window.innerHeight = 844
+    const zhenDuiLie: FrameRequestCallback[] = []
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      (huiDiao: FrameRequestCallback) => (zhenDuiLie.push(huiDiao), zhenDuiLie.length),
+    )
+    vi.stubGlobal('cancelAnimationFrame', () => undefined)
+    const quan = 挂长按菜单()
+    quan.caiDanYuanSu.value = 假菜单盒(148, 159)
+    quan.chuMoKaiShiWenBen(造文本消息('e', '在吗') as never, 造触屏(200, 400))
+    expect(quan.wenBenCaiDanZhanKai.value).toBe(false)
     vi.advanceTimersByTime(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao + 20)
-    const { top, left } = quan.wenBenCaiDanYangShi.value
-    expect(parseFloat(left)).toBeLessThanOrEqual(320 - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanYuGuKuan)
-    expect(parseFloat(left)).toBeGreaterThanOrEqual(0)
-    expect(parseFloat(top)).toBeGreaterThanOrEqual(0)
-    expect(parseFloat(top)).toBeLessThanOrEqual(480 - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanYuGuGao)
+    expect(quan.wenBenCaiDanZhanKai.value).toBe(true)
+    expect(quan.caiDanDingWei.value.dingGao).toBe(false)
+    expect(quan.caiDanDingWei.value.top).toBe(`${400 + LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanWeiBaJianGe}px`)
+    await nextTick()
+    expect(zhenDuiLie.length).toBeGreaterThan(0)
+    zhenDuiLie.splice(0).forEach((huiDiao) => huiDiao(0))
+    expect(quan.caiDanDingWei.value.dingGao).toBe(true)
+    expect(quan.caiDanDingWei.value.top).toBe(`${400 + LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanWeiBaJianGe}px`)
+    expect(quan.caiDanDingWei.value.weiZhi).toBe('xia')
+  })
+
+  it('菜单元素缺失时兜底可见，不留在隐藏态', () => {
+    window.innerWidth = 390
+    window.innerHeight = 844
+    const quan = 挂长按菜单()
+    quan.daKaiWenBenCaiDan(造文本消息('f', '在吗') as never, 造右键(200, 400))
+    quan.dingGaoCaiDanWeiZhi()
+    expect(quan.caiDanDingWei.value.dingGao).toBe(true)
+  })
+})
+
+describe('长按菜单通道去重与取消', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('Android 双通道：长按打开后窗口期内 contextmenu 不再重复打开', () => {
+    window.innerWidth = 390
+    window.innerHeight = 844
+    const quan = 挂长按菜单()
+    quan.caiDanYuanSu.value = 假菜单盒(148, 159)
+    quan.chuMoKaiShiTuPian(
+      { id: 'g', nei_rong: '', lei_xing: 'tuPian', shi_jian_chuo: Date.now(), fa_song_zhe_lei_xing: 'yonghu' } as never,
+      造触屏(50, 60),
+    )
+    vi.advanceTimersByTime(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao + 20)
+    expect(quan.tuPianCaiDanZhanKai.value).toBe(true)
+    quan.dingGaoCaiDanWeiZhi()
+    const yuanDingWei = { ...quan.caiDanDingWei.value }
+    quan.daKaiTuPianCaiDan(
+      { id: 'g', nei_rong: '', lei_xing: 'tuPian', shi_jian_chuo: Date.now(), fa_song_zhe_lei_xing: 'yonghu' } as never,
+      造右键(300, 300),
+    )
+    expect(quan.caiDanDingWei.value).toEqual(yuanDingWei)
+    vi.advanceTimersByTime(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.youJianQuChongHaoMiao + 20)
+    quan.daKaiTuPianCaiDan(
+      { id: 'g', nei_rong: '', lei_xing: 'tuPian', shi_jian_chuo: Date.now(), fa_song_zhe_lei_xing: 'yonghu' } as never,
+      造右键(300, 300),
+    )
+    expect(quan.caiDanDingWei.value.dingGao).toBe(false)
+    expect(quan.caiDanDingWei.value.top).toBe(`${300 + LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanWeiBaJianGe}px`)
+  })
+
+  it('touchmove 位移超过阈值才取消长按计时', () => {
+    window.innerWidth = 390
+    window.innerHeight = 844
+    const quan = 挂长按菜单()
+    const xiaoXi = 造文本消息('h', '在吗') as never
+    quan.chuMoKaiShiWenBen(xiaoXi, 造触屏(100, 100))
+    quan.chuMoYiDongQuXiao(造触屏(105, 105))
+    vi.advanceTimersByTime(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao + 20)
+    expect(quan.wenBenCaiDanZhanKai.value).toBe(true)
+    quan.guanBiCaiDan()
+    quan.chuMoKaiShiWenBen(xiaoXi, 造触屏(100, 100))
+    quan.chuMoYiDongQuXiao(造触屏(111, 100))
+    vi.advanceTimersByTime(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao + 20)
+    expect(quan.wenBenCaiDanZhanKai.value).toBe(false)
+  })
+
+  it('打开期间窗口尺寸变化直接关闭菜单', () => {
+    window.innerWidth = 390
+    window.innerHeight = 844
+    const quan = 挂长按菜单()
+    quan.daKaiWenBenCaiDan(造文本消息('i', '在吗') as never, 造右键(200, 400))
+    expect(quan.wenBenCaiDanZhanKai.value).toBe(true)
+    window.dispatchEvent(new Event('resize'))
+    expect(quan.wenBenCaiDanZhanKai.value).toBe(false)
+  })
+})
+
+describe('长按菜单视觉与皮肤接线契约', () => {
+  const 读视图 = (文件: string): string => readFileSync(resolve(__dirname, '../views', 文件), 'utf8')
+
+  it('两页菜单都挂共享尾巴组件，不自绘三角不复刻侧向类', () => {
+    for (const [文件, 块数] of [
+      ['聊天页面.vue', 4],
+      ['好友聊天.vue', 3],
+    ] as const) {
+      const 源 = 读视图(文件)
+      expect(源).toContain("import QiPaoWeiBa from '@/components/聊天/气泡尾巴.vue'")
+      expect(源.match(/<QiPaoWeiBa /g)).toHaveLength(块数)
+      expect(源).not.toContain('clip-path')
+      expect(源).not.toContain('qipao-weiba--')
+    }
+  })
+
+  it('Teleport 断开级联：皮肤变量与尾巴驱动量经菜单根内联下发', () => {
+    for (const 文件 of ['聊天页面.vue', '好友聊天.vue']) {
+      const 源 = 读视图(文件)
+      expect(源).toContain("'--qipao-caidan-weiba-x'")
+      expect(源).toContain("'--qipao-weiba-tian-chong'")
+      expect(源).toContain("'--qipao-nei-rong-bei-jing'")
+    }
+  })
+
+  it('菜单样式走气泡同款变量与令牌层级，估算定位常量已删除', () => {
+    const 样式源 = readFileSync(resolve(__dirname, '../styles/liao-tian-qi-pao.css'), 'utf8')
+    expect(样式源).toContain('z-index: var(--ceng-caidan)')
+    expect(样式源).toContain('background: var(--qipao-nei-rong-bei-jing, var(--chehui-caidan-beijing))')
+    expect(样式源).toContain('border-radius: var(--qipao-yuanjiao, 12px)')
+    expect(样式源).toContain('min-height: 44px')
+    expect(样式源).not.toContain('1500')
+    const 配置源 = readFileSync(resolve(__dirname, '../config/消息配置.ts'), 'utf8')
+    expect(配置源).not.toContain('caiDanYuGuKuan')
+    expect(配置源).not.toContain('caiDanYuGuGao')
+    expect(配置源).not.toContain('caiDanXiaFangPianYi')
+  })
+
+  it('iOS 长按目标禁系统预览：消息行组件内声明 touch-callout 与 user-select', () => {
+    const 行源 = readFileSync(resolve(__dirname, '../components/聊天/消息行.vue'), 'utf8')
+    expect(行源).toContain('-webkit-touch-callout: none')
+    expect(行源).toContain('user-select: none')
   })
 })
 

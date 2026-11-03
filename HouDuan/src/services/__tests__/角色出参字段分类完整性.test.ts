@@ -45,6 +45,7 @@ const 全字段夹具: Record<keyof ShengChengJiaoSeJieGuo, unknown> = {
   wei_xin_ming: '微信名',
   zhen_shi_ming: '真名',
   shi_jie_xin_xi: { cheng_shi: '城' },
+  gong_kai_bian_hao: 'GZ-000001',
   xi_tong_ti_shi: '系统提示',
   ba_da_mo_kuai: {
     ji_ben_xin_xi: '基本信息',
@@ -95,6 +96,7 @@ const 玩家不可见字段 = [
   'bao_lu_fang_shi',
   'shi_po_xian_suo',
   'hao_gan_du_zong_fen',
+  'gong_kai_bian_hao',
 ] as const satisfies readonly (keyof ShengChengJiaoSeJieGuo)[]
 
 type 未分类字段 = Exclude<

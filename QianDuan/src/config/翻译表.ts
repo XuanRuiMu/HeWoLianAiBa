@@ -369,7 +369,6 @@ export const fanYi = {
     quanBuYiDu: '全部已读',
     biaoWeiYiDu: '标为已读',
     weiDuJiaoChi: '{shu}条未读',
-    jiaZaiZhong: '加载中……',
     zanWuTongZhi: '信箱还空着，有新消息会第一时间送到',
     xinXiTiShi: '有新消息时会在这里提醒你',
   },
@@ -568,7 +567,6 @@ export const fanYi = {
     biaoQingZhengZaiChuLi: '正在处理上一张表情，请稍候',
   },
   zhanJi: {
-    jiaZaiZhong: '加载中……',
     zanWuZhanJi: '回忆册还空着，先去攒一段心动的故事吧',
     liaoTianTianShu: '聊天{天}天',
     jiXu: '继续',
@@ -875,7 +873,6 @@ export const fanYi = {
     beiZhuZhanWei: '给好友起个备注名，最多30个字',
     baoCunBeiZhu: '保存备注',
     liaoTianRuKou: '进入聊天',
-    jiaZaiZhong: '正在加载……',
     shenQingJiaZaiShiBai: '申请列表没能加载，好友列表不受影响',
     haoYouJiaZaiShiBai: '好友列表没能加载，申请列表不受影响',
     zanWuFaChuShenQing: '还没有发出过好友申请',
@@ -1315,6 +1312,16 @@ export const fanYi = {
         '马上就好，正在最后确认一遍...',
       ],
     },
+  },
+  guoDuZaiRu: {
+    moRen: '正在加载……',
+    guoWangZhanJi: '正在加载过往战绩……',
+    tongZhi: '正在加载通知……',
+    zhangHaoAnQuan: '正在加载账号与安全……',
+    junShiJiLuXiangQing: '正在加载军师记录详情……',
+    tiaoZhanZhuYe: '正在加载挑战主页……',
+    tiaoZhanPaiHangBang: '正在加载挑战积分榜……',
+    haoYouLieBiao: '正在加载好友列表……',
   },
 } as const
 

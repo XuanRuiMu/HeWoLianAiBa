@@ -234,7 +234,7 @@ xianLiu: {
     ziDuanMing: jieXiZiFuChuanLieBiao(
       huoQuHuanJingBianLiang(
         'MIN_GAN_ZI_DUAN_MING',
-        'password,miMa,mi_ma,yanZhengMa,yan_zheng_ma,token,lingPai,ling_pai,jwt,miYao,mi_yao,apiKey,api_key,apiMiYao,api_mi_yao,fangWenMiYao,fang_wen_mi_yao,fangWenMiYaoMiMa,fang_wen_mi_yao_mi_ma,ALIYUN_ACCESS_KEY_SECRET,DEEPSEEK_API_KEY,JWT_SECRET,GUI_JI_LIU_DONG_API_MI_YAO,TU_XIANG_SHENG_CHENG_API_MI_YAO,SHI_PIN_SHENG_CHENG_API_MI_YAO,shou_ji_hao,shouJiHao,手机号,手机',
+        'password,miMa,mi_ma,yanZhengMa,yan_zheng_ma,token,lingPai,ling_pai,jwt,miYao,mi_yao,apiKey,api_key,apiMiYao,api_mi_yao,fangWenMiYao,fang_wen_mi_yao,fangWenMiYaoMiMa,fang_wen_mi_yao_mi_ma,ALIYUN_ACCESS_KEY_SECRET,DEEPSEEK_API_KEY,JWT_SECRET,GUI_JI_LIU_DONG_API_MI_YAO,TU_XIANG_SHENG_CHENG_API_MI_YAO,SHI_PIN_SHENG_CHENG_API_MI_YAO,YIN_PIN_LI_JIE_API_MI_YAO,shou_ji_hao,shouJiHao,手机号,手机',
       ),
     ),
   },
