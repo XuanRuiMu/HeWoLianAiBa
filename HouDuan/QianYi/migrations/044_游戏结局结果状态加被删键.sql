@@ -50,7 +50,7 @@ BEGIN
             ));
     EXCEPTION
         WHEN check_violation THEN
-            RAISE EXCEPTION '044：游戏结局.结果状态 仍有归一前的显示文案，CHECK 无法建立。请先执行 scripts/归一游戏结局结果状态.ts 做存量清洗。';
+            RAISE EXCEPTION '044：游戏结局.结果状态 仍有归一前的显示文案，CHECK 无法建立。请先按 src/utils/结局.ts 的文案→枚举键映射清洗存量数据（清洗脚本已随仓库清理移除，可用 git log --all -- HouDuan/scripts/归一游戏结局结果状态.ts 从历史取回），清洗完成后重跑本迁移。';
     END;
 END;
 $q$;

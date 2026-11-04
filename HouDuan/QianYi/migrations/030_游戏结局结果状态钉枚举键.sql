@@ -10,8 +10,9 @@
 -- 脚本与本迁移的分工（为什么清洗不在本文件里做）：
 --   「中文文案 → 枚举键」的映射表（当前文案 + 性别变体文案 + 文案改版前的 `胜利-/失败-` 历史值）
 --   只存在于 TS 侧（`backend/src/utils/结局.ts`，且其本身由 `translations.jieJu` 派生）。
---   在本文件重抄一份 CASE 就是造出第二个真源 —— 那正是本任务要消灭的病，故存量清洗归
---   `backend/scripts/归一游戏结局结果状态.ts`（它 import 同一张识别表，不另抄映射）。
+--   存量清洗的脚本 `归一游戏结局结果状态.ts` 已随仓库清理移除，需要时可用
+--   `git log --all -- HouDuan/scripts/归一游戏结局结果状态.ts` 从历史取回；映射仍只住在
+--   `src/utils/结局.ts`（它由 `translations.jieJu` 派生，不另抄映射）。
 --   本文件只负责钉不变量：下面的枚举键清单是 schema 常量，SQL 里无法 import TS，
 --   只能落字面量，因此它与 `translations.jieJu` 键集合、`YouXiJieGuoLeiXing`、
 --   `utils/结局.结局枚举列表` 的同源关系由 `backend/scripts/__tests__/迁移030结局归一.test.ts`
@@ -72,7 +73,7 @@ BEGIN
         WHEN check_violation THEN
             -- plpgsql 的 RAISE 只接受单个字符串字面量（`||` 与相邻字面量拼接都会 syntax error，已实测），
             -- 故本条消息写成一行。
-            RAISE EXCEPTION '030：游戏结局.结果状态 仍有归一前的显示文案，CHECK 无法建立。请先执行 backend/scripts/归一游戏结局结果状态.ts 做存量清洗（文案→枚举键的唯一映射在 backend/src/utils/结局.ts），清洗完成后重跑本迁移。';
+            RAISE EXCEPTION '030：游戏结局.结果状态 仍有归一前的显示文案，CHECK 无法建立。请先按 src/utils/结局.ts 的文案→枚举键映射清洗存量数据（清洗脚本已随仓库清理移除，可用 git log --all -- HouDuan/scripts/归一游戏结局结果状态.ts 从历史取回），清洗完成后重跑本迁移。';
     END;
 
     RAISE NOTICE '030：游戏结局.结果状态 已钉死为枚举键集合';
