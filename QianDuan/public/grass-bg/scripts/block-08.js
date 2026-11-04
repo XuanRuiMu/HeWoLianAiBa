@@ -904,60 +904,16 @@ window.__camReady = true;
       }
     }
 // ---------- 草的世界格子工具 ----------
-    // 吴昊阳身下 footprint 用更细的独立网格：0.08m 的格子在屏幕上约 23px，
-    // 格子中心常常落在身体的透明区，命中率只有约 30%（实测 36 格散布在 0.96×0.80m 内），
-    // footprint 变成一串稀疏点，再做切比雪夫外扩就会互相融成**圆块**（实测长成椭圆）。
-    // 0.027m 约合 7.8px，轮廓能实心还原，DILATE=1 也才真的是「稍大一点」（2.7cm）。
     var WU_CELL = 0.027;
-    // 秃斑高度场的粗格步长（先粗采样再双线性插值，避免逐细格打射线）
-    var CELL = 0.08;
-    var DILATE = 1;              // footprint 外扩格数（WU_CELL 单位，1 格 = 2.7cm）
+    var WU_QU_KUAN_VH = 0.03;
     var WU_BLADE_H = 0.108;
-    var wuCamMargin = WU_CLEAR_MARGIN_CAM;
-    function wuMarginFor() {
-      try {
-        var d = cam.getWorldDirection(new V3());
-        var dn = Math.abs(d.y);
-        var tn = dn / Math.max(0.08, Math.sqrt(Math.max(0.0, 1.0 - dn * dn)));
-        return Math.min(0.6, Math.max(WU_CLEAR_MARGIN_CAM, WU_BLADE_H * 0.25 / Math.max(0.08, tn)));
-      } catch (eMf) {
-        window.__wuCamMarginErr = String(eMf && eMf.message || eMf);
-        return WU_CLEAR_MARGIN_CAM;
-      }
+    function touYingDi(wx, wz, dy) {
+      var gy = wuGaoDuKuai(wx, wz);
+      if (gy === null) gy = window.__groundY ? window.__groundY(wx, wz) : 0;
+      if (gy === null || gy === undefined) gy = 0;
+      var v = new V3(wx, gy + (dy || 0), wz).project(cam);
+      return { x: (v.x * 0.5 + 0.5) * window.innerWidth, y: (0.5 - v.y * 0.5) * window.innerHeight };
     }
-    // 吴昊阳身下秃斑的当前设计（2026-10-14 定案）：
-    //   草/花一株不删、不移，由顶点着色器的弯曲约束把进入禁区的草挡在体表外；
-    //   地面只用一张独立的暖色遮罩覆盖。分区图 zonesTexture 完全不动，
-    //   因此整个加载过程不需要任何 grass.rebuild()。
-    // ---------- 他周围一圈「清空区」（用户 2026-10-12 要求）----------
-    // 「请你将吴昊阳周围的草删掉……这样子就能避免草和吴昊阳接触，从而导致看出来破绽」
-    // 单位：米。以他身体占的格子为起点向四周外扩这么多，圈内的草一律清掉。
-    // 0.30 时圈太大、看着很突兀（用户反馈「删的太多了」）⇒ 收到 0.10：
-    // 草叶离地 0.09~0.17m，被拨弯后水平最多再伸约 0.1m，0.10 足以让草碰不到他。
-    // 0 = 旧行为（只擦身下；轮廓外缘留草、下缘还留一条草带，让草从他身侧长出来）。
-    // 2026-10-13 再收到 0.05：用户反馈「身下那片秃地范围太大，让周围的草往内缩小一圈
-    // 靠近吴昊阳」。本轮实测草叶**最大**世界高度只有 0.10727m（几何 maxY 0.07152 ×
-    // 实例最大缩放 1.5，70 个 chunk 取上界），不是旧注释写的 0.171m ⇒ 0.05m（5.4cm）
-    // 已超过叶片被拨弯后的水平伸长量，其余三侧（非相机侧）叶尖是「往画面上方」移、
-    // 根本不会横向压到他身上，留 5cm 只是防拨弯接触。
-    var WU_CLEAR_MARGIN = 0.07;
-    // ---------- 朝相机方向额外清空（用户 2026-10-12 22:35 新要求）----------
-    // 「将该背景中，吴昊阳身下和周围的草，删掉，防止草的吹动/鼠标交互效果，
-    //   落到吴昊阳身上，穿模，导致穿帮」
-    //
-    // 为什么光靠 0.10m 不够（几何推导，非调参）：
-    //   相机俯角 23°。一株草叶顶点离地 h 时，它在屏幕上会「上移」到相当于地面点
-    //   再远离相机 h/tan(23°) = 2.356h 的位置。
-    //   ⚠️ 旧注释取 h=0.171m ⇒ 0.403m，**本轮实测证伪**：遍历全部 70 个 chunk，
-    //   草叶几何 maxY=0.07152、实例缩放上界 1.5 ⇒ 最高叶片世界高度 **0.10727m**
-    //   ⇒ 真实阈值 = 2.356 × 0.10727 = **0.2527m**。0.40m 是**多留了约 15cm**。
-    //   于是「基座在相机一侧、离他轮廓 0.2527m 以内」的草叶，叶尖才会投到他的轮廓上；
-    //   而它比他近 ⇒ 深度测试通过 ⇒ 直接画在他身上。风一吹/鼠标一拨，叶尖就在他身上扫过。
-    //   ⇒ 只需**朝相机那一侧**多清到刚过阈值即可，其余三侧留 WU_CLEAR_MARGIN。
-    // 2026-10-13 用户要求「草往内缩小一圈靠近吴昊阳」⇒ 0.40 → 0.26（略高于实测阈值
-    // 0.2527，留 0.7cm 余量）。这是**零穿模代价**的收紧：阈值以下再小才会重现
-    // 「叶尖扫过他球衣」的穿帮（旧实测证据：两帧差分，他球衣上有草叶在两帧间移动，占比 6.1%）。
-    var WU_CLEAR_MARGIN_CAM = 0.065;
     // ---------- 秃地「黄遮罩」（用户 2026-10-12 23:51：秃地面要改成黄色）----------
     // 引擎事实（逐字读 bundle 核对，不是猜）：
     //   ① 哪儿长草：grass.rebuild() → destroy+init → terrainSampler.sample(count,
@@ -1196,108 +1152,133 @@ window.__camReady = true;
       window.__m('足迹计算开始');
       if (!wuBase || !wuAlpha || wuRayN !== WU_SEG) return null;
       var N = wuRayN;
-      // 1) 世界包围盒直接取自人物网格的基准顶点——footprint 与 mesh 几何同源，
-      //    mesh 不动秃斑永不动（此前按屏幕矩形打射线，视口变化时 mesh 与秃斑分家）
+      wuBuildDisp();
       var minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity, got = 0;
+      var pjL = Infinity, pjT = Infinity, pjR = -Infinity, pjB = -Infinity;
       for (var qB = 0; qB <= N * (N + 1) + N; qB++) {
         if (wuBase[qB * 3 + 1] < -500) continue;
-        var bx = wuBase[qB * 3], bz = wuBase[qB * 3 + 2];
+        var bx = wuBase[qB * 3], by = wuBase[qB * 3 + 1], bz = wuBase[qB * 3 + 2];
         got++;
         if (bx < minX) minX = bx; if (bx > maxX) maxX = bx;
         if (bz < minZ) minZ = bz; if (bz > maxZ) maxZ = bz;
+        var pj = new V3(bx, by, bz).project(cam);
+        var px = (pj.x * 0.5 + 0.5) * window.innerWidth;
+        var py = (0.5 - pj.y * 0.5) * window.innerHeight;
+        if (px < pjL) pjL = px; if (px > pjR) pjR = px;
+        if (py < pjT) pjT = py; if (py > pjB) pjB = py;
       }
       if (got < (N + 1) * (N + 1) * 0.5) return null;
-      var pad = WU_CELL * 2;
+      if (!(pjR - pjL > 2) || !(pjB - pjT > 2)) return null;
+      var rect = { l: pjL, t: pjT, w: pjR - pjL, h: pjB - pjT };
+      var pad = WU_CELL * 3;
       minX -= pad; maxX += pad; minZ -= pad; maxZ += pad;
-      // 2) 地面高度：先在粗格(0.08m)上竖直打射线建高度场，细格再双线性插值。
-      //    直接对每个细格调 __groundY 会在屏幕上卡住 25 秒（实测 2250 次竖直射线）。
-      var lx0 = Math.floor(minX / CELL), lx1 = Math.floor(maxX / CELL);
-      var lz0 = Math.floor(minZ / CELL), lz1 = Math.floor(maxZ / CELL);
-      var H = {};
-      for (var ax = lx0; ax <= lx1; ax++) for (var az = lz0; az <= lz1; az++) {
-        var gy0 = wuGaoDuKuai((ax + 0.5) * CELL, (az + 0.5) * CELL);
-        H[ax + ',' + az] = gy0 === null ? window.__groundY((ax + 0.5) * CELL, (az + 0.5) * CELL) : gy0;
-      }
-      // 3) 身体判定同样以网格为源：每个世界格子在网格四边形内做重心插值得出贴图 UV，
-      //    alpha>32 ⇒ 属于他身体。透视扭曲由三角形重心坐标自然吸收，不经屏幕投影。
-      function wuZhongXin(ax, az, bx, bz, cx, cz, px, pz) {
-        var d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz);
-        if (Math.abs(d) < 1e-12) return null;
-        var l1 = ((bz - cz) * (px - cx) + (cx - bx) * (pz - cz)) / d;
-        var l2 = ((cz - az) * (px - cx) + (ax - cx) * (pz - cz)) / d;
-        var l3 = 1 - l1 - l2;
-        return (l1 >= -1e-6 && l2 >= -1e-6 && l3 >= -1e-6) ? [l1, l2, l3] : null;
-      }
+      var mubiaoPx = window.innerHeight * WU_QU_KUAN_VH;
       var hitSet = new Set();
-      for (var gb = 0; gb < N; gb++) {
-        for (var ga = 0; ga < N; ga++) {
-          var i00 = gb * (N + 1) + ga, i10 = i00 + 1, i01 = i00 + N + 1, i11 = i01 + 1;
-          if (wuBase[i00 * 3 + 1] < -500 || wuBase[i10 * 3 + 1] < -500 ||
-              wuBase[i01 * 3 + 1] < -500 || wuBase[i11 * 3 + 1] < -500) continue;
-          var x00 = wuBase[i00 * 3], z00 = wuBase[i00 * 3 + 2];
-          var x10 = wuBase[i10 * 3], z10 = wuBase[i10 * 3 + 2];
-          var x01 = wuBase[i01 * 3], z01 = wuBase[i01 * 3 + 2];
-          var x11 = wuBase[i11 * 3], z11 = wuBase[i11 * 3 + 2];
-          var qMinX = Math.min(x00, x10, x01, x11), qMaxX = Math.max(x00, x10, x01, x11);
-          var qMinZ = Math.min(z00, z10, z01, z11), qMaxZ = Math.max(z00, z10, z01, z11);
-          var u00 = ga / N, v00 = gb / N, u11 = (ga + 1) / N, v11 = (gb + 1) / N;
-          for (var cxq = Math.floor(qMinX / WU_CELL); cxq <= Math.floor(qMaxX / WU_CELL); cxq++) {
-            for (var czq = Math.floor(qMinZ / WU_CELL); czq <= Math.floor(qMaxZ / WU_CELL); czq++) {
-              var pxg = (cxq + 0.5) * WU_CELL, pzg = (czq + 0.5) * WU_CELL;
-              var t1 = wuZhongXin(x00, z00, x10, z10, x11, z11, pxg, pzg);
-              var uvA, uvB;
-              if (t1) {
-                uvA = t1[0] * u00 + t1[1] * u11 + t1[2] * u11;
-                uvB = t1[0] * v00 + t1[1] * v00 + t1[2] * v11;
-              } else {
-                var t2 = wuZhongXin(x00, z00, x11, z11, x01, z01, pxg, pzg);
-                if (!t2) continue;
-                uvA = t2[0] * u00 + t2[1] * u11 + t2[2] * u00;
-                uvB = t2[0] * v00 + t2[1] * v11 + t2[2] * v11;
-              }
-              var iu = Math.floor(uvA * wuAlphaW), iv = Math.floor(uvB * wuAlphaH);
-              if (iu < 0 || iu >= wuAlphaW || iv < 0 || iv >= wuAlphaH) continue;
-              if (wuAlpha[(iv * wuAlphaW + iu) * 4 + 3] > 32) hitSet.add(cxq + ',' + czq);
-            }
-          }
+      for (var gcx = Math.floor(minX / WU_CELL); gcx <= Math.floor(maxX / WU_CELL); gcx++) {
+        for (var gcz = Math.floor(minZ / WU_CELL); gcz <= Math.floor(maxZ / WU_CELL); gcz++) {
+          var pxg = (gcx + 0.5) * WU_CELL, pzg = (gcz + 0.5) * WU_CELL;
+          if (wuGaoDuKuai(pxg, pzg) === null) continue;
+          var sxg = touYingDi(pxg, pzg, wuElev(pxg, pzg));
+          var uvg = (sxg.x - rect.l) / rect.w, vvg = (sxg.y - rect.t) / rect.h;
+          if (uvg < 0 || uvg >= 1 || vvg < 0 || vvg >= 1) continue;
+          var iug = Math.floor(uvg * wuAlphaW), ivg = Math.floor(vvg * wuAlphaH);
+          if (iug < 0 || iug >= wuAlphaW || ivg < 0 || ivg >= wuAlphaH) continue;
+          if (wuAlpha[(ivg * wuAlphaW + iug) * 4 + 3] > 32) hitSet.add(gcx + ',' + gcz);
         }
       }
       var hits = Array.from(hitSet);
       if (!hits.length) return null;
-      // 4) 「他身体占的格子」向四周外扩 WU_CLEAR_MARGIN 米（欧氏圆，不是方角）——
-      //    这一圈里的草一律清掉 ⇒ 没有任何草能贴到他身上。
-      //    再**朝相机方向**多扫掠 WU_CLEAR_MARGIN_CAM 米：草叶叶尖会因俯角投影上移
-      //    约 2.356×叶高，只有相机这一侧的草才可能把叶尖投到他身上（见上方推导）。
-      var rad = Math.max(DILATE, Math.round(WU_CLEAR_MARGIN / WU_CELL));
-      wuCamMargin = wuMarginFor();
-      var camRad = Math.max(0, Math.round(wuCamMargin / WU_CELL));
       var grown = new Set();
-      // 相机在水平面上的「指向相机」单位向量（从身体质心指向相机）
-      var camW = cam.getWorldPosition(new V3());
-      var bcx = 0, bcz = 0;
-      for (var q0 = 0; q0 < hits.length; q0++) {
-        var p0 = hits[q0].split(',');
-        bcx += (+p0[0] + 0.5) * WU_CELL; bcz += (+p0[1] + 0.5) * WU_CELL;
+      var hbX0 = Infinity, hbX1 = -Infinity, hbZ0 = Infinity, hbZ1 = -Infinity;
+      for (var qt = 0; qt < hits.length; qt++) {
+        var pt = hits[qt].split(','), gxt = +pt[0], gzt = +pt[1];
+        var wxt = (gxt + 0.5) * WU_CELL, wzt = (gzt + 0.5) * WU_CELL;
+        if (wxt < hbX0) hbX0 = wxt; if (wxt > hbX1) hbX1 = wxt;
+        if (wzt < hbZ0) hbZ0 = wzt; if (wzt > hbZ1) hbZ1 = wzt;
       }
-      bcx /= hits.length; bcz /= hits.length;
-      var ddx = camW.x - bcx, ddz = camW.z - bcz;
-      var dl = Math.sqrt(ddx * ddx + ddz * ddz) || 1;
-      var ux = ddx / dl, uz = ddz / dl;
-      // 把「基准圆」贴到 (bx,bz) 上
-      function stamp(bx, bz) {
-        for (var dx = -rad; dx <= rad; dx++) {
-          var rem = rad * rad - dx * dx;
-          if (rem < 0) continue;
-          var dzMax = Math.floor(Math.sqrt(rem));
-          for (var dz = -dzMax; dz <= dzMax; dz++) grown.add((bx + dx) + ',' + (bz + dz));
+      var imgMinX = wuAlphaW, imgMaxX = -1, imgMinY = wuAlphaH, imgMaxY = -1;
+      for (var ivA = 0; ivA < wuAlphaH; ivA++) {
+        var rowA = ivA * wuAlphaW;
+        for (var iuA = 0; iuA < wuAlphaW; iuA++) {
+          if (wuAlpha[(rowA + iuA) * 4 + 3] <= 32) continue;
+          if (iuA < imgMinX) imgMinX = iuA; if (iuA > imgMaxX) imgMaxX = iuA;
+          if (ivA < imgMinY) imgMinY = ivA; if (ivA > imgMaxY) imgMaxY = ivA;
         }
       }
-      for (var q = 0; q < hits.length; q++) {
-        var pr = hits[q].split(','), hx = +pr[0], hz = +pr[1];
-        stamp(hx, hz);
-        // 朝相机方向扫掠：每前进 1 格盖一次基准圆
-        for (var k = 1; k <= camRad; k++) {
-          stamp(hx + Math.round(ux * k), hz + Math.round(uz * k));
+      if (imgMaxX < 0) return null;
+      var bodyShuPx = {
+        zuo: rect.l + (imgMinX + 0.5) / wuAlphaW * rect.w,
+        shang: rect.t + (imgMinY + 0.5) / wuAlphaH * rect.h,
+        you: rect.l + (imgMaxX + 0.5) / wuAlphaW * rect.w,
+        xia: rect.t + (imgMaxY + 0.5) / wuAlphaH * rect.h
+      };
+      var zhongXinX = (hbX0 + hbX1) * 0.5, zhongXinZ = (hbZ0 + hbZ1) * 0.5;
+      var yeJianPx = Math.abs(touYingDi(zhongXinX, zhongXinZ, WU_BLADE_H).y - touYingDi(zhongXinX, zhongXinZ, 0).y) + 8;
+      var waiKuo = mubiaoPx + yeJianPx;
+      var quX0 = Math.floor(bodyShuPx.zuo - waiKuo);
+      var quY0 = Math.floor(bodyShuPx.shang - waiKuo);
+      var quX1 = Math.ceil(bodyShuPx.you + waiKuo);
+      var quY1 = Math.ceil(bodyShuPx.xia + waiKuo);
+      var quKuan = Math.max(1, quX1 - quX0 + 1), quGao = Math.max(1, quY1 - quY0 + 1);
+      var juLi = new Float32Array(quKuan * quGao);
+      for (var qf = 0; qf < juLi.length; qf++) juLi[qf] = 1e9;
+      var px0 = Math.max(quX0, Math.floor(rect.l)), px1 = Math.min(quX1, Math.ceil(rect.l + rect.w) - 1);
+      var py0 = Math.max(quY0, Math.floor(rect.t)), py1 = Math.min(quY1, Math.ceil(rect.t + rect.h) - 1);
+      for (var pyq = py0; pyq <= py1; pyq++) {
+        var rowQ = Math.min(wuAlphaH - 1, Math.floor((pyq + 0.5 - rect.t) / rect.h * wuAlphaH)) * wuAlphaW;
+        var offQ = (pyq - quY0) * quKuan;
+        for (var pxq = px0; pxq <= px1; pxq++) {
+          var colQ = Math.min(wuAlphaW - 1, Math.floor((pxq + 0.5 - rect.l) / rect.w * wuAlphaW));
+          if (wuAlpha[(rowQ + colQ) * 4 + 3] > 32) juLi[offQ + (pxq - quX0)] = 0;
+        }
+      }
+      var CHU = 1, XIE = 1.41421356;
+      for (var yc = 0; yc < quGao; yc++) {
+        for (var xc = 0; xc < quKuan; xc++) {
+          var ic = yc * quKuan + xc;
+          if (juLi[ic] === 0) continue;
+          var vc = juLi[ic];
+          if (xc > 0) vc = Math.min(vc, juLi[ic - 1] + CHU);
+          if (yc > 0) {
+            vc = Math.min(vc, juLi[ic - quKuan] + CHU);
+            if (xc > 0) vc = Math.min(vc, juLi[ic - quKuan - 1] + XIE);
+            if (xc < quKuan - 1) vc = Math.min(vc, juLi[ic - quKuan + 1] + XIE);
+          }
+          juLi[ic] = vc;
+        }
+      }
+      for (var yd = quGao - 1; yd >= 0; yd--) {
+        for (var xd = quKuan - 1; xd >= 0; xd--) {
+          var id = yd * quKuan + xd;
+          if (juLi[id] === 0) continue;
+          var vd = juLi[id];
+          if (xd < quKuan - 1) vd = Math.min(vd, juLi[id + 1] + CHU);
+          if (yd < quGao - 1) {
+            vd = Math.min(vd, juLi[id + quKuan] + CHU);
+            if (xd < quKuan - 1) vd = Math.min(vd, juLi[id + quKuan + 1] + XIE);
+            if (xd > 0) vd = Math.min(vd, juLi[id + quKuan - 1] + XIE);
+          }
+          juLi[id] = vd;
+        }
+      }
+      var miMeiPx = Math.max((maxX - minX) / rect.w, (maxZ - minZ) / rect.h);
+      var kuoBian = (mubiaoPx + yeJianPx) * miMeiPx + WU_CELL * 2;
+      var gx0 = Math.floor((hbX0 - kuoBian) / WU_CELL), gx1 = Math.floor((hbX1 + kuoBian) / WU_CELL);
+      var gz0 = Math.floor((hbZ0 - kuoBian) / WU_CELL), gz1 = Math.floor((hbZ1 + kuoBian) / WU_CELL);
+      for (var gcx = gx0; gcx <= gx1; gcx++) {
+        for (var gcz = gz0; gcz <= gz1; gcz++) {
+          var xw = (gcx + 0.5) * WU_CELL, zw = (gcz + 0.5) * WU_CELL;
+          if (wuGaoDuKuai(xw, zw) === null) continue;
+          var elw = wuElev(xw, zw);
+          var sb = touYingDi(xw, zw, elw);
+          var cxp = Math.round(sb.x) - quX0, cyp = Math.round(sb.y) - quY0;
+          var zhongW = cxp >= 0 && cxp < quKuan && cyp >= 0 && cyp < quGao && juLi[cyp * quKuan + cxp] <= mubiaoPx;
+          if (!zhongW) {
+            var stp = touYingDi(xw, zw, elw > WU_BLADE_H ? elw : WU_BLADE_H);
+            var cxt = Math.round(stp.x) - quX0, cyt = Math.round(stp.y) - quY0;
+            zhongW = cxt >= 0 && cxt < quKuan && cyt >= 0 && cyt < quGao && juLi[cyt * quKuan + cxt] <= mubiaoPx;
+          }
+          if (zhongW) grown.add(gcx + ',' + gcz);
         }
       }
       // 禁区碰撞场：把**整个禁区**（不只是他的身体脚印）做成一张可被顶点着色器查询的场。
@@ -1310,6 +1291,52 @@ window.__camReady = true;
       try { wuBuildBodyField(grown); } catch (eBF) {
         window.__wuBodyErr = '禁区碰撞场构建失败：' + String(eBF && eBF.stack || eBF);
       }
+      window.__wuFootHits = hitSet;
+      window.__wuFootQu = grown;
+      window.__wuQuJuLi = function (sx, sy) {
+        var px = Math.round(sx) - quX0, py = Math.round(sy) - quY0;
+        if (px < 0 || py < 0 || px >= quKuan || py >= quGao) return null;
+        return juLi[py * quKuan + px];
+      };
+      window.__wuTouYing = touYingDi;
+      window.__wuTiGao = wuElev;
+      window.__wuGaoDu = wuGaoDuKuai;
+      window.__wuJianXi = function () {
+        var quS = window.__wuFootQu;
+        if (!quS) return null;
+        function fanWei(set) {
+          var l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
+          set.forEach(function (k) {
+            var p = k.split(','), x = (+p[0] + 0.5) * WU_CELL, z = (+p[1] + 0.5) * WU_CELL;
+            var s = touYingDi(x, z, wuElev(x, z));
+            if (s.x < l) l = s.x;
+            if (s.x > r) r = s.x;
+            if (s.y < t) t = s.y;
+            if (s.y > b) b = s.y;
+          });
+          return { zuo: +l.toFixed(1), shang: +t.toFixed(1), you: +r.toFixed(1), xia: +b.toFixed(1), kuan: +(r - l).toFixed(1), gao: +(b - t).toFixed(1) };
+        }
+        var B = {
+          zuo: +bodyShuPx.zuo.toFixed(1), shang: +bodyShuPx.shang.toFixed(1),
+          you: +bodyShuPx.you.toFixed(1), xia: +bodyShuPx.xia.toFixed(1),
+          kuan: +(bodyShuPx.you - bodyShuPx.zuo).toFixed(1), gao: +(bodyShuPx.xia - bodyShuPx.shang).toFixed(1)
+        };
+        var Q = fanWei(quS);
+        return {
+          vp: [window.innerWidth, window.innerHeight], dpr: window.devicePixelRatio,
+          rect: { l: +rect.l.toFixed(1), t: +rect.t.toFixed(1), w: +rect.w.toFixed(1), h: +rect.h.toFixed(1) },
+          body: B, qu: Q,
+          gap: {
+            shang: +(B.shang - Q.shang).toFixed(1),
+            xia: +(Q.xia - B.xia).toFixed(1),
+            zuo: +(B.zuo - Q.zuo).toFixed(1),
+            you: +(Q.you - B.you).toFixed(1)
+          },
+          mubiaoPx: +mubiaoPx.toFixed(1),
+          yeJianPx: +yeJianPx.toFixed(1),
+          zongShu: { hits: hitSet.size, qu: quS.size }
+        };
+      };
       return grown;
     }
     // ---------- 身体碰撞场：把「他的身体」做成一张顶点着色器可查询的场 ----------
@@ -1791,8 +1818,7 @@ window.__camReady = true;
       window.__bareDiag = {
         cells: cells.size, footBox: fb.map(function (v) { return +v.toFixed(3); }),
         maskPx: paint && paint.maskPx, tris: paint && paint.tris,
-        clearMargin: WU_CLEAR_MARGIN, clearMarginCam: WU_CLEAR_MARGIN_CAM, camMargin: +wuCamMargin.toFixed(3), bladeH: WU_BLADE_H,
-        clearRadiusCells: Math.max(DILATE, Math.round(WU_CLEAR_MARGIN / WU_CELL)),
+        quKuanVh: WU_QU_KUAN_VH,
         yellow: WU_BARE_YELLOW, yellowErr: window.__bareYellowErr || null,
         bodyField: !!window.__wuBodyField
       };
@@ -3246,6 +3272,19 @@ function wuBakeAuroraNoise(size) {
     return true;
   }
 
+  var yiBuRect = null, chongPaiDingShiQi = null;
+  function chongPaiWu() {
+    if (chongPaiDingShiQi) { clearTimeout(chongPaiDingShiQi); chongPaiDingShiQi = null; }
+    chongPaiDingShiQi = setTimeout(function () {
+      chongPaiDingShiQi = null;
+      if (!window.__wuLayoutMesh) return;
+      var rr = wuRect();
+      var ok = false;
+      try { ok = !!window.__wuLayoutMesh(rr); } catch (e8) { window.__wuCamErr = String(e8 && e8.message || e8); }
+      if (ok) { yiBuHao = true; yiBuRect = rr; }
+      else if (puTries < 30) { puTries++; chongPaiWu(); }
+    }, 400);
+  }
   function puWu() {
     var r = wuRect();
     try { if (window.__wuSetLayerRect) window.__wuSetLayerRect(r.l, r.t, r.w, r.h); } catch (e5) {}
@@ -3256,10 +3295,17 @@ function wuBakeAuroraNoise(size) {
       }
       return;
     }
-    if (!yiBuHao && window.__wuLayoutMesh) {
-      window.__m('铺设开始');
-      try { if (window.__wuLayoutMesh(r)) { yiBuHao = true; window.__m('铺设完成'); } } catch (e7) {}
+    if (!yiBuHao) {
+      if (window.__wuLayoutMesh) {
+        window.__m('铺设开始');
+        try { if (window.__wuLayoutMesh(r)) { yiBuHao = true; yiBuRect = r; window.__m('铺设完成'); } } catch (e7) {}
+      }
+      return;
     }
+    var cha = !yiBuRect
+      || Math.abs(r.l - yiBuRect.l) > 1 || Math.abs(r.t - yiBuRect.t) > 1
+      || Math.abs(r.w - yiBuRect.w) > 1 || Math.abs(r.h - yiBuRect.h) > 1;
+    if (cha) chongPaiWu();
   }
 
   window.addEventListener('resize', function () { puWu(); });
