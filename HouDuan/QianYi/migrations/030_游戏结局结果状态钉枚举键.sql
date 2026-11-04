@@ -9,21 +9,22 @@
 --
 -- 脚本与本迁移的分工（为什么清洗不在本文件里做）：
 --   「中文文案 → 枚举键」的映射表（当前文案 + 性别变体文案 + 文案改版前的 `胜利-/失败-` 历史值）
---   只存在于 TS 侧（`backend/src/utils/结局.ts`，且其本身由 `translations.jieJu` 派生）。
+--   只存在于 TS 侧（`src/utils/结局.ts`，且其本身由 `translations.jieJu` 派生）。
 --   存量清洗的脚本 `归一游戏结局结果状态.ts` 已随仓库清理移除，需要时可用
 --   `git log --all -- HouDuan/scripts/归一游戏结局结果状态.ts` 从历史取回；映射仍只住在
 --   `src/utils/结局.ts`（它由 `translations.jieJu` 派生，不另抄映射）。
 --   本文件只负责钉不变量：下面的枚举键清单是 schema 常量，SQL 里无法 import TS，
 --   只能落字面量，因此它与 `translations.jieJu` 键集合、`YouXiJieGuoLeiXing`、
---   `utils/结局.结局枚举列表` 的同源关系由 `backend/scripts/__tests__/迁移030结局归一.test.ts`
---   的「三处键集合全等」用例钉住 —— 加结局时漏改本约束，那条用例必红。
---   注意：本文件已进台账（校验和固化），**不得回改**。日后新增结局键时，另起一个迁移
+--   `utils/结局.结局枚举列表` 的同源关系由 `scripts/__tests__/结局键集合与数据库约束同源.test.ts`
+--   钉住 —— 加结局时漏改本约束，那条用例必红。
+--   注意：本文件已进台账（校验和固化）。本次只改了注释与报错文案，已用 `run_migration --rebaseline --apply`
+--   重新登记指纹；任何 SQL 语义改动仍不得在本文件内进行。日后新增结局键时，另起一个迁移
 --   `DROP CONSTRAINT IF EXISTS "ck_游戏结局_结果状态"` 再按新键集 `ADD CONSTRAINT`。
 --
 -- 为什么只有 CHECK、不像 024 那样再配一个归一触发器：
 --   024 需要触发器，是因为镜像里旧后端仍会把 '男'/'女' 直接写进性别列，单加 CHECK 会让建角色全 500。
---   本列的写口只有 `xieRuYouXiJieJu` / 结算事务内的那条 INSERT，两处都只传枚举键（`结局落库.test.ts`
---   已把「三处写入参数都是枚举键」钉成用例）；而触发器要归一文案就必须把映射表抄进 SQL，
+--   本列的写口只有 `xieRuYouXiJieJu` / 结算事务内的那条 INSERT（`src/services/胜利失败条件.ts`
+--   的两处 `INSERT INTO "游戏结局"`），两处都只传枚举键；而触发器要归一文案就必须把映射表抄进 SQL，
 --   第二真源又回来了。故此处刻意只做 CHECK。
 --
 -- `jinxing_zhong` 不在允许集合内（查证结论，非猜测）：
