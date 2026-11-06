@@ -64,17 +64,10 @@ describe('FP-04 好友页发送状态收口', () => {
     expect(tiaoYongShu).toBe(2)
   })
 
-  it('发送中气泡蒙深色遮罩，保持原色且不拦截交互', () => {
-    const ti = 消息行源.match(/\.qipao-waike\.qipao-fasong-zhong::after\s*\{([^}]*)\}/)?.[1] ?? ''
-    expect(ti).toContain("content: ''")
-    expect(ti).toContain('background: var(--xiaoxi-wei-fasong-zhe-zhao)')
-    expect(ti).toContain('pointer-events: none')
-    expect(ti).toContain('z-index: 2')
-    expect(ti).not.toContain('filter')
-    expect(ti).not.toContain('opacity')
-    const weiBa =
-      消息行源.match(/\.qipao-waike\.qipao-fasong-zhong :deep\(\.qipao-weiba\)\s*\{([^}]*)\}/)?.[1] ??
-      ''
-    expect(weiBa).toContain('filter: brightness(0.55)')
+  it('发送中气泡整体压暗只有一种单一滤镜机制，深浅走设计令牌', () => {
+    const ti = 消息行源.match(/\.qipao-waike\.qipao-fasong-zhong\s*\{([^}]*)\}/)?.[1] ?? ''
+    expect(ti).toContain('filter: brightness(var(--xiaoxi-fasong-zhong-liang-du))')
+    expect(消息行源).not.toMatch(/\.qipao-waike\.qipao-fasong-zhong::after\s*\{/)
+    expect(消息行源).not.toContain(':deep(.qipao-weiba)')
   })
 })

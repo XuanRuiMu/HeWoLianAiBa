@@ -55,3 +55,56 @@
     transition: none !important;
   }
 }
+
+.fanYe-cao {
+  --fan-ye-dong: 300ms;
+  position: relative;
+  overflow: hidden;
+}
+
+.fanYe-ceng {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.fanYe-qianJin-enter-active,
+.fanYe-qianJin-leave-active,
+.fanYe-houTui-enter-active,
+.fanYe-houTui-leave-active {
+  transition: transform var(--fan-ye-dong) var(--quxian-biao-zhun);
+}
+
+.fanYe-qianJin-enter-from,
+.fanYe-houTui-leave-to {
+  transform: translateX(100%);
+}
+
+.fanYe-qianJin-enter-to,
+.fanYe-qianJin-leave-from,
+.fanYe-houTui-enter-to,
+.fanYe-houTui-leave-from {
+  transform: translateX(0);
+}
+
+.fanYe-qianJin-leave-to,
+.fanYe-houTui-enter-from {
+  transform: translateX(-100%);
+}
+
+.fanYe-qianJin-leave-active,
+.fanYe-houTui-leave-active {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fanYe-qianJin-enter-active,
+  .fanYe-qianJin-leave-active,
+  .fanYe-houTui-enter-active,
+  .fanYe-houTui-leave-active {
+    transition: none !important;
+    transform: none !important;
+  }
+}

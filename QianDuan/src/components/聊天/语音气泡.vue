@@ -1,5 +1,5 @@
 <template>
-  <div class="yuyin-pao" :class="{ 'yuyin-pao--benren': shiBenRen }">
+  <div ref="paoYuanSu" class="yuyin-pao" :class="{ 'yuyin-pao--benren': shiBenRen }">
     <QiPaoRongQi
       class="yuyin-qipao"
       :class="{ bofangzhong: boFangZhong, 'yuyin-qipao--benren': shiBenRen }"
@@ -169,6 +169,7 @@ import {
   ceLiangYuYinShiChang,
   geShiHuaYuYinShiChang,
   jiXuDangQianYuYin,
+  quXiaoCeLiangYuYinShiChang,
   tingZhiDangQianYuYin,
   yuYinKuanYangShi,
   zanTingDangQianYuYin,
@@ -217,10 +218,72 @@ const emit = defineEmits<{
 const kuanYangShi = computed(() => yuYinKuanYangShi(props.xiaoXi))
 const shiChangWenBen = computed(() => geShiHuaYuYinShiChang(props.xiaoXi))
 
-onMounted(() => ceLiangYuYinShiChang(props.xiaoXi))
+const paoYuanSu = ref<HTMLElement | null>(null)
+let ceLiangGuanCha: IntersectionObserver | null = null
+let ceLiangJiCunDiZhi = ''
+let ceLiangKeJian = false
+
+function dangQianCeLiangDiZhi(): string {
+  return props.xiaoXi.mei_ti_url || props.xiaoXi.ben_di_yu_lan_url || ''
+}
+
+function fangXiaCeLiang(): void {
+  if (ceLiangJiCunDiZhi === '') return
+  quXiaoCeLiangYuYinShiChang({ mei_ti_url: ceLiangJiCunDiZhi })
+  ceLiangJiCunDiZhi = ''
+}
+
+function dengJiCeLiang(): void {
+  const diZhi = dangQianCeLiangDiZhi()
+  if (diZhi === '') {
+    fangXiaCeLiang()
+    return
+  }
+  if (ceLiangJiCunDiZhi === diZhi) return
+  fangXiaCeLiang()
+  ceLiangJiCunDiZhi = diZhi
+  ceLiangYuYinShiChang(props.xiaoXi)
+}
+
+function chuLiKeJianXing(keJian: boolean): void {
+  ceLiangKeJian = keJian
+  if (keJian) dengJiCeLiang()
+  else fangXiaCeLiang()
+}
+
+function anZhuangCeLiangGuanCha(): void {
+  const yuanSu = paoYuanSu.value
+  if (!yuanSu) return
+  if (typeof IntersectionObserver !== 'function') {
+    chuLiKeJianXing(true)
+    return
+  }
+  const zaiXianCheng = `${DUO_MEI_TI_PEI_ZHI.yuYinCeLiangKeShiQuYuZaiXianChengPx}px 0px`
+  ceLiangGuanCha = new IntersectionObserver(
+    (xiangQing) => {
+      for (const xiang of xiangQing) chuLiKeJianXing(xiang.isIntersecting)
+    },
+    { rootMargin: zaiXianCheng, threshold: 0 },
+  )
+  ceLiangGuanCha.observe(yuanSu)
+}
+
+function xieZaiCeLiangGuanCha(): void {
+  if (ceLiangGuanCha) {
+    ceLiangGuanCha.disconnect()
+    ceLiangGuanCha = null
+  }
+  ceLiangKeJian = false
+  fangXiaCeLiang()
+}
+
+onMounted(() => anZhuangCeLiangGuanCha())
+
 watch(
   () => [props.xiaoXi.mei_ti_url, props.xiaoXi.ben_di_yu_lan_url],
-  () => ceLiangYuYinShiChang(props.xiaoXi),
+  () => {
+    if (ceLiangKeJian) dengJiCeLiang()
+  },
 )
 
 function qieHuanZanTing(): void {
@@ -319,6 +382,7 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  xieZaiCeLiangGuanCha()
   qingChuZhen()
 })
 </script>

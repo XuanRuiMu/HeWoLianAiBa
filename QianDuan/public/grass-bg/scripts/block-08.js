@@ -397,6 +397,7 @@ window.addEventListener('mousemove', function (e) {
       if (moved) { touch(); emit(); }
     }
     requestAnimationFrame(loop);
+    if (window.__caoDiXunHuan && window.__caoDiXunHuan.guiDangChongFang) window.__caoDiXunHuan.guiDangChongFang('ji-wei', function () { lastT = 0; });
 
     // ---------- 宿主接口 ----------
     window.__getCam = function () {

@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { mount } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import 语音录音条 from '@/components/聊天/语音录音条.vue'
 import { huoQuFanYi } from '@/config/翻译表'
-import { LU_YIN_PEI_ZHI } from '@/config/消息配置'
+import { DUO_MEI_TI_PEI_ZHI, LU_YIN_PEI_ZHI } from '@/config/消息配置'
 
 const 根 = resolve(__dirname, '..')
 const 读 = (xiangDui: string): string => readFileSync(resolve(根, xiangDui), 'utf8')
@@ -179,5 +179,168 @@ describe('好友语音上传契约', () => {
     const canShu = post.mock.calls[0][2] as Record<string, unknown>
     expect(canShu.params).toMatchObject({ jieShouZheId: 'hao-you-1', leiBie: 'tupian' })
     expect('shiChangHaoMiao' in (canShu.params as Record<string, unknown>)).toBe(false)
+  })
+})
+
+function zaoJiaMediaRecorder() {
+  class Jia {
+    static isTypeSupported = vi.fn().mockReturnValue(true)
+    state = 'inactive'
+    mimeType = 'audio/webm;codecs=opus'
+    ondataavailable: ((e: { data: Blob }) => void) | null = null
+    onerror: ((e: Event) => void) | null = null
+    private _listeners = new Map<string, Set<() => void>>()
+    addEventListener(type: string, fn: () => void) {
+      if (!this._listeners.has(type)) this._listeners.set(type, new Set())
+      this._listeners.get(type)!.add(fn)
+    }
+    start() {
+      this.state = 'recording'
+      const chunk = new Blob(['x'], { type: 'audio/webm' })
+      queueMicrotask(() => this.ondataavailable?.({ data: chunk }))
+    }
+    stop() {
+      this.state = 'inactive'
+      queueMicrotask(() => {
+        for (const fn of [...(this._listeners.get('stop') ?? [])]) fn()
+      })
+    }
+  }
+  return Jia
+}
+
+async function moNiWanChengLuYin(ceLiangJieGuo: number | null) {
+  const ceLiangMock = vi.fn().mockResolvedValue(ceLiangJieGuo)
+  vi.doMock('@/composables/use语音播放', () => ({ ceLiangYinPinShiChang: ceLiangMock }))
+
+  const Jia = zaoJiaMediaRecorder()
+  vi.stubGlobal('MediaRecorder', Jia)
+
+  const jiaGuiDao = { stop: vi.fn() }
+  const jiaLiuPian = { getTracks: () => [jiaGuiDao] }
+  const yuanDescriptor = Object.getOwnPropertyDescriptor(navigator, 'mediaDevices')
+  Object.defineProperty(navigator, 'mediaDevices', {
+    value: { getUserMedia: vi.fn().mockResolvedValue(jiaLiuPian) },
+    configurable: true,
+  })
+
+  const faSongYuYinMock = vi.fn().mockResolvedValue(undefined)
+  try {
+    const { use录音 } = await import('@/composables/use录音')
+    const { kaiShiLuYin, wanChengLuYin } = use录音({
+      sheZhiCuoWu: vi.fn(),
+      faSongYuYin: faSongYuYinMock,
+      gunDongDaoDiBu: vi.fn(),
+    })
+    await kaiShiLuYin()
+    vi.advanceTimersByTime(4200)
+    await wanChengLuYin(true)
+  } finally {
+    if (yuanDescriptor) Object.defineProperty(navigator, 'mediaDevices', yuanDescriptor)
+    else delete (navigator as unknown as Record<string, unknown>).mediaDevices
+  }
+
+  return { faSongYuYinMock, ceLiangMock }
+}
+
+describe('FP-01 录音上报实测音频时长', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('上报 shiChangHaoMiao 等于 blob 实测时长而非墙钟耗时', async () => {
+    const { faSongYuYinMock, ceLiangMock } = await moNiWanChengLuYin(4000)
+    expect(ceLiangMock).toHaveBeenCalledWith(
+      expect.stringContaining('blob:'),
+      DUO_MEI_TI_PEI_ZHI.yuYinFaSongCeLiangChaoShiHaoMiao,
+    )
+    expect(faSongYuYinMock).toHaveBeenCalledTimes(1)
+    const [, fuJia] = faSongYuYinMock.mock.calls[0] as [Blob, { shiChangHaoMiao: number }]
+    expect(fuJia.shiChangHaoMiao).toBe(4000)
+  })
+
+  it('实测失败时回退墙钟耗时并写日志且仍上报正整数', async () => {
+    const warnMock = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { faSongYuYinMock } = await moNiWanChengLuYin(null)
+    expect(faSongYuYinMock).toHaveBeenCalledTimes(1)
+    const [, fuJia] = faSongYuYinMock.mock.calls[0] as [Blob, { shiChangHaoMiao: number }]
+    expect(fuJia.shiChangHaoMiao).toBe(4200)
+    expect(warnMock).toHaveBeenCalledTimes(1)
+    expect(warnMock).toHaveBeenCalledWith(
+      expect.stringContaining('[录音]'),
+      expect.any(Number),
+    )
+    warnMock.mockRestore()
+  })
+
+  it('发送前那一跳的超时是独立短值且远小于挂载自愈超时', () => {
+    expect(DUO_MEI_TI_PEI_ZHI.yuYinFaSongCeLiangChaoShiHaoMiao).toBeLessThan(
+      DUO_MEI_TI_PEI_ZHI.yuYinShiChangCeLiangChaoShiHaoMiao,
+    )
+    expect(DUO_MEI_TI_PEI_ZHI.yuYinFaSongCeLiangChaoShiHaoMiao).toBeGreaterThan(0)
+    expect(读('composables/use录音.ts')).toContain('yuYinFaSongCeLiangChaoShiHaoMiao')
+  })
+
+  it('实测迟迟不回时发送路径只等短超时就回退墙钟', async () => {
+    vi.useRealTimers()
+
+    class JiaWuHuiYinPin {
+      preload = ''
+      src = ''
+      duration = Number.NaN
+      currentTime = 0
+      addEventListener(): void {}
+      removeEventListener(): void {}
+      pause(): void {}
+      load(): void {}
+      removeAttribute(): void {}
+    }
+    vi.stubGlobal('Audio', JiaWuHuiYinPin as unknown as typeof Audio)
+    vi.stubGlobal('MediaRecorder', zaoJiaMediaRecorder())
+    const jiaGuiDao = { stop: vi.fn() }
+    const jiaLiuPian = { getTracks: () => [jiaGuiDao] }
+    const yuanDescriptor = Object.getOwnPropertyDescriptor(navigator, 'mediaDevices')
+    Object.defineProperty(navigator, 'mediaDevices', {
+      value: { getUserMedia: vi.fn().mockResolvedValue(jiaLiuPian) },
+      configurable: true,
+    })
+    const warnMock = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    const faSongYuYinMock = vi.fn().mockResolvedValue(undefined)
+    try {
+      const { use录音 } = await import('@/composables/use录音')
+      const { kaiShiLuYin, wanChengLuYin } = use录音({
+        sheZhiCuoWu: vi.fn(),
+        faSongYuYin: faSongYuYinMock,
+        gunDongDaoDiBu: vi.fn(),
+      })
+      await kaiShiLuYin()
+      await new Promise((deng) => {
+        setTimeout(deng, DUO_MEI_TI_PEI_ZHI.yuYinZuiDuanMiao * 1000 + 200)
+      })
+      const kaiShi = Date.now()
+      await wanChengLuYin(true)
+      const dengDaiHaoMiao = Date.now() - kaiShi
+      expect(faSongYuYinMock).toHaveBeenCalledTimes(1)
+      const [, fuJia] = faSongYuYinMock.mock.calls[0] as [Blob, { shiChangHaoMiao: number }]
+      expect(fuJia.shiChangHaoMiao).toBeGreaterThan(0)
+      expect(warnMock).toHaveBeenCalledTimes(1)
+      expect(dengDaiHaoMiao).toBeLessThan(
+        DUO_MEI_TI_PEI_ZHI.yuYinShiChangCeLiangChaoShiHaoMiao -
+          DUO_MEI_TI_PEI_ZHI.yuYinFaSongCeLiangChaoShiHaoMiao,
+      )
+      expect(dengDaiHaoMiao).toBeLessThan(DUO_MEI_TI_PEI_ZHI.yuYinFaSongCeLiangChaoShiHaoMiao + 600)
+    } finally {
+      warnMock.mockRestore()
+      if (yuanDescriptor) Object.defineProperty(navigator, 'mediaDevices', yuanDescriptor)
+      else delete (navigator as unknown as Record<string, unknown>).mediaDevices
+      vi.unstubAllGlobals()
+    }
   })
 })

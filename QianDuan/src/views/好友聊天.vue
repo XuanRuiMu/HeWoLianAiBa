@@ -207,83 +207,13 @@
       />
     </footer>
     
-    <Teleport to="body">
-      <Transition name="zhezhao-xianshi">
-        <div v-if="yuYinCaiDanZhanKai" class="chehui-zhezhao" @click="guanBiYuYinCaiDan">
-          <div ref="caiDanYuanSu" class="chehui-caidan" :class="caiDanLeiMing" :style="caiDanYangShi">
-            <span
-              class="chehui-weiba"
-              :class="caiDanDingWei.weiZhi === 'xia' ? 'chehui-weiba--shang' : 'chehui-weiba--xia'"
-              aria-hidden="true"
-            >
-              <QiPaoWeiBa :ce="caiDanDingWei.weiZhi === 'xia' ? 'you' : 'zuo'" />
-            </span>
-            <button
-              v-for="xiang in huoQuYuYinCaiDanXiang()"
-              :key="xiang"
-              class="chehui-xiangmu"
-              :class="{ 'chehui-xiangmu--weixian': xiang === 'cheHui' }"
-              @click="zhiXingYuYinCaiDanXiang(xiang)"
-            >
-              {{ huoQuFanYi('liaoTian', xiang) }}
-            </button>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
-    <Teleport to="body">
-      <Transition name="zhezhao-xianshi">
-        <div v-if="wenBenCaiDanZhanKai" class="chehui-zhezhao" @click="guanBiWenBenCaiDan">
-          <div ref="caiDanYuanSu" class="chehui-caidan" :class="caiDanLeiMing" :style="caiDanYangShi">
-            <span
-              class="chehui-weiba"
-              :class="caiDanDingWei.weiZhi === 'xia' ? 'chehui-weiba--shang' : 'chehui-weiba--xia'"
-              aria-hidden="true"
-            >
-              <QiPaoWeiBa :ce="caiDanDingWei.weiZhi === 'xia' ? 'you' : 'zuo'" />
-            </span>
-            <button
-              v-for="xiang in huoQuWenBenCaiDanXiang()"
-              :key="xiang"
-              class="chehui-xiangmu"
-              :class="{ 'chehui-xiangmu--weixian': xiang === 'cheHui' }"
-              @click="zhiXingWenBenCaiDanXiang(xiang)"
-            >
-              {{ huoQuFanYi('liaoTian', xiang) }}
-            </button>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
-
-    <Teleport to="body">
-      <Transition name="zhezhao-xianshi">
-        <div
-          v-if="tuPianCaiDanZhanKai"
-          class="chehui-zhezhao"
-          @click="guanBiTuPianCaiDan"
-        >
-          <div ref="caiDanYuanSu" class="chehui-caidan" :class="caiDanLeiMing" :style="caiDanYangShi">
-            <span
-              class="chehui-weiba"
-              :class="caiDanDingWei.weiZhi === 'xia' ? 'chehui-weiba--shang' : 'chehui-weiba--xia'"
-              aria-hidden="true"
-            >
-              <QiPaoWeiBa :ce="caiDanDingWei.weiZhi === 'xia' ? 'you' : 'zuo'" />
-            </span>
-            <button
-              v-for="xiang in huoQuTuPianCaiDanXiang()"
-              :key="xiang"
-              class="chehui-xiangmu"
-              :class="{ 'chehui-xiangmu--weixian': xiang === 'cheHui' }"
-              @click="zhiXingTuPianCaiDanXiang(xiang)"
-            >
-              {{ huoQuFanYi('liaoTian', xiang) }}
-            </button>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <XiaoXiCaoZuoCaiDan
+      :kai-qi="caiDanZhengDaKai"
+      :ji-dian="dangQianJiDian"
+      :cai-dan-xiang="dangQianCaiDanXiang"
+      @guan-bi="guanBiCaiDan"
+      @xuan-zhong="zhiXingCaiDanXiang"
+    />
     <TuPianYuLan
       :tu="yuLanTuPianLieBiao"
       :xia-biao="yuLanXiaBiao"
@@ -378,7 +308,7 @@ import YinYongTiao from '@/components/聊天/引用条.vue'
 import YinYongQiPaoKuai from '@/components/聊天/引用气泡块.vue'
 import FanYiJieGuo from '@/components/聊天/翻译结果框.vue'
 import QiPaoRongQi from '@/components/聊天/气泡容器.vue'
-import QiPaoWeiBa from '@/components/聊天/气泡尾巴.vue'
+import XiaoXiCaoZuoCaiDan from '@/components/聊天/消息操作菜单.vue'
 import TuPianQiPao from '@/components/聊天/图片气泡.vue'
 import TuWenKuai from '@/components/聊天/图文块.vue'
 import YuYinQiPao from '@/components/聊天/语音气泡.vue'
@@ -1091,31 +1021,14 @@ const { tianJiaTuPianDaoBiaoQing } = use添加到表情<HaoYouXiaoXi>({
 const dangQianShiJian = ref(Date.now())
 const {
   chuMoJieShu,
-  caiDanDingWei,
-  caiDanYuanSu,
-  caiDanBenRen,
+  dangQianCaiDanXiang,
+  dangQianJiDian,
+  caiDanZhengDaKai,
   chuMoYiDongQuXiao,
-  yuYinCaiDanZhanKai,
-  daKaiYuYinCaiDan,
-  chuMoKaiShiYuYin,
-  chuMoJieShuYuYin,
-  guanBiYuYinCaiDan,
-  huoQuYuYinCaiDanXiang,
-  zhiXingYuYinCaiDanXiang,
-  wenBenCaiDanZhanKai,
-  daKaiWenBenCaiDan,
-  chuMoKaiShiWenBen,
-  chuMoJieShuWenBen,
-  guanBiWenBenCaiDan,
-  huoQuWenBenCaiDanXiang,
-  zhiXingWenBenCaiDanXiang,
-  tuPianCaiDanZhanKai,
-  daKaiTuPianCaiDan,
-  chuMoKaiShiTuPian,
-  chuMoJieShuTuPian,
-  guanBiTuPianCaiDan,
-  huoQuTuPianCaiDanXiang,
-  zhiXingTuPianCaiDanXiang,
+  guanBiCaiDan,
+  daKaiCaiDan,
+  chuMoKaiShi,
+  zhiXingCaiDanXiang,
   huoQuFanYiJieGuo,
   huoQuFanYiCuoWu,
   shiFanYiZhong,
@@ -1140,29 +1053,6 @@ const {
   },
   sheZhiCuoWu: jiuDiTiShi,
 })
-
-const caiDanLeiMing = computed(() => ({
-  'chehui-caidan--dingGao': caiDanDingWei.value.dingGao,
-  'chehui-caidan--weiXia': caiDanDingWei.value.weiZhi === 'xia',
-  'chehui-caidan--weiShang': caiDanDingWei.value.weiZhi === 'shang',
-}))
-
-const caiDanYangShi = computed(() => ({
-  top: caiDanDingWei.value.top,
-  left: caiDanDingWei.value.left,
-  visibility: caiDanDingWei.value.dingGao ? ('visible' as const) : ('hidden' as const),
-  '--qipao-caidan-weiba-x': caiDanDingWei.value.weiBaX,
-  ...qiPaoYangShi.value,
-  '--qipao-nei-rong-bei-jing':
-    caiDanBenRen.value === false
-      ? 'var(--qipao-duiFang-beiJing, var(--chehui-caidan-beijing))'
-      : 'var(--qipao-ziJi-beiJing, var(--chehui-caidan-beijing))',
-  '--qipao-nei-rong-wen-ben':
-    caiDanBenRen.value === false
-      ? 'var(--qipao-duiFang-wenBen, var(--chehui-caidan-wenben))'
-      : 'var(--qipao-ziJi-wenBen, var(--chehui-caidan-wenben))',
-  '--qipao-weiba-tian-chong': 'var(--qipao-nei-rong-bei-jing)',
-}))
 
 function huoQuFanYiZhuangTai(xiaoXi: HaoYouXiaoXi): 'loading' | 'success' | 'empty' | 'error' {
   if (shiFanYiZhong(xiaoXi)) return 'loading'
@@ -1302,42 +1192,17 @@ function huoQuYinYongZhaiYao(muBiao: CaiDanXiaoXi): string {
 }
 
 function chuLiYouJianCaiDan(xiaoXi: HaoYouXiaoXi, shiJian: MouseEvent) {
-  if (xiaoXi.id.startsWith('le-guan-')) return
-  if (xiaoXi.lei_xing === 'yuYin') {
-    daKaiYuYinCaiDan(xiaoXi, shiJian)
-    return
-  }
-  if (xiaoXi.lei_xing === 'wenben') {
-    daKaiWenBenCaiDan(xiaoXi, shiJian)
-    return
-  }
-  if (shiTuPianXiaoXi(xiaoXi)) {
-    daKaiTuPianCaiDan(xiaoXi, shiJian)
-    return
-  }
+  if (xiaoXi.id.startsWith(LE_GUAN_QIAN_ZHUI)) return
+  daKaiCaiDan(xiaoXi, shiJian)
 }
 
 function chuLiChuMoKaiShi(xiaoXi: HaoYouXiaoXi, shiJian: TouchEvent) {
-  if (xiaoXi.id.startsWith('le-guan-')) return
-  if (xiaoXi.lei_xing === 'yuYin') {
-    chuMoKaiShiYuYin(xiaoXi, shiJian)
-    return
-  }
-  if (xiaoXi.lei_xing === 'wenben') {
-    chuMoKaiShiWenBen(xiaoXi, shiJian)
-    return
-  }
-  if (shiTuPianXiaoXi(xiaoXi)) {
-    chuMoKaiShiTuPian(xiaoXi, shiJian)
-    return
-  }
+  if (xiaoXi.id.startsWith(LE_GUAN_QIAN_ZHUI)) return
+  chuMoKaiShi(xiaoXi, shiJian)
 }
 
 function chuLiChuMoJieShu() {
   chuMoJieShu()
-  chuMoJieShuYuYin()
-  chuMoJieShuWenBen()
-  chuMoJieShuTuPian()
 }
 
 function chuLiChuMoYiDong(shiJian: TouchEvent) {
@@ -1453,9 +1318,4 @@ onBeforeUnmount(() => {
   font-size: 12px;
   color: var(--cuowu-yanse, #ff6b6b);
 }
-
-.zhezhao-xianshi-enter-active { transition: opacity 0.25s ease; }
-.zhezhao-xianshi-leave-active { transition: opacity 0.15s ease; }
-.zhezhao-xianshi-enter-from,
-.zhezhao-xianshi-leave-to { opacity: 0; }
 </style>

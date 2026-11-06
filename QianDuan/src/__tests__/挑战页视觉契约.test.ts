@@ -192,6 +192,78 @@ describe('挑战页共享滑动指示器', () => {
   })
 })
 
+describe('挑战页榜单横向翻页', () => {
+  const 主页原文 = readFileSync(resolve(根, 'views', '挑战主页.vue'), 'utf8')
+  const 榜单原文 = readFileSync(resolve(根, 'views', '挑战积分榜.vue'), 'utf8')
+  const 过渡原文 = readFileSync(resolve(根, 'styles', '步骤过渡.css'), 'utf8')
+
+  it.each([
+    ['挑战主页', 主页原文, 'zhaiyao-cao fanYe-cao', 'zhaiyao-ceng fanYe-ceng'],
+    ['挑战积分榜', 榜单原文, 'fanYe-cao', 'bangdan-ceng fanYe-ceng'],
+  ])('%s 的面板挂在同一套横向翻页容器与同一份过渡来源上', (_名称, 原文, 容器类, 面板类) => {
+    expect(原文).toContain(`class="${容器类}"`)
+    expect(原文).toContain(`class="${面板类}"`)
+    expect(原文).toContain(':name="fanYeGuoDuMing"')
+    expect(原文).toContain("ref<FanYeGuoDuMing>('fanYe-qianJin')")
+    expect(原文).toContain('qieZuFanYeGuoDuMing(')
+    expect(原文).toContain("from '@/composables/use挑战榜单'")
+    expect(原文).not.toContain('v-show=')
+    expect(原文).not.toContain('data-qie-huan')
+  })
+
+  it('翻页机制只在共享样式里定义一次：两个方向都位移整屏且离场面板脱流', () => {
+    expect(过渡原文).toContain('.fanYe-qianJin-enter-active,')
+    expect(过渡原文).toContain('.fanYe-houTui-enter-active,')
+    expect(过渡原文).toContain(
+      'transition: transform var(--fan-ye-dong) var(--quxian-biao-zhun);',
+    )
+    expect(过渡原文).toMatch(
+      /\.fanYe-qianJin-enter-from,\s*\.fanYe-houTui-leave-to\s*\{\s*transform: translateX\(100%\)/,
+    )
+    expect(过渡原文).toMatch(
+      /\.fanYe-qianJin-leave-to,\s*\.fanYe-houTui-enter-from\s*\{\s*transform: translateX\(-100%\)/,
+    )
+    const 脱流匹配 =
+      /\.fanYe-qianJin-leave-active,\s*\.fanYe-houTui-leave-active\s*\{([^}]*)\}/.exec(过渡原文)
+    expect(脱流匹配, '缺少离场面板脱流规则').not.toBeNull()
+    const 脱流块 = 脱流匹配?.[1] ?? ''
+    expect(脱流块).toContain('position: absolute')
+    expect(脱流块).toContain('pointer-events: none')
+    const 容器块 = /(^|\n)\.fanYe-cao\s*\{([^}]*)\}/.exec(过渡原文)?.[2] ?? ''
+    expect(容器块).toContain('position: relative')
+    expect(容器块).toContain('overflow: hidden')
+    const 降级块 = 过渡原文.slice(过渡原文.lastIndexOf('@media (prefers-reduced-motion: reduce)'))
+    expect(降级块).toContain('.fanYe-qianJin-leave-active,')
+    expect(降级块).toContain('transition: none !important')
+  })
+
+  it('两页都不再保留淡入上移与逐行错峰的双轨动画', () => {
+    expect(挑战主页).not.toContain('zhaiyao-ceng-ru')
+    expect(挑战主页).not.toMatch(/\.zhaiyao-ceng\s*\{[^}]*animation/)
+    expect(挑战积分榜).not.toContain('bangdan-hang-ru')
+    expect(挑战积分榜).not.toContain('--hang-xu-hao')
+    expect(挑战积分榜).not.toMatch(/\.bangdan-hang\s*\{[^}]*animation/)
+    expect(挑战积分榜).not.toMatch(/\.bangdan-ceng\s*\{[^}]*animation/)
+    expect(榜单原文).not.toContain('--tz-hang-cuo')
+    expect(榜单原文).not.toContain('--tz-hang-ru-yi')
+  })
+
+  it('翻页容器不额外撑高：积分榜四态共用同一份预留高度令牌', () => {
+    const 面板块起 = 挑战积分榜.indexOf('.bangdan-ceng {')
+    const 面板块 = 挑战积分榜.slice(面板块起, 挑战积分榜.indexOf('}', 面板块起))
+    expect(面板块).toContain('min-height: calc(var(--tz-tou-gao) + var(--tz-liebiao-gao))')
+    expect(挑战积分榜).not.toMatch(/\.bangdan-zai\s*\{[^}]*min-height/)
+    expect(挑战积分榜).not.toMatch(/\.bangdan-kong\s*\{[^}]*min-height/)
+    expect(挑战积分榜).toContain('min-height: var(--tz-liebiao-gao)')
+  })
+
+  it('速览面板高度仍由补间托底，且测量的是入场面板', () => {
+    expect(挑战主页).toMatch(/\.zhaiyao-cao\s*\{[^}]*transition: height var\(--tz-gao-dong\)/)
+    expect(主页原文).toContain("!项.className.includes('leave-active')")
+    expect(主页原文).not.toContain('firstElementChild')
+  })
+})
+
 describe('挑战页榜单四态互斥', () => {
   it('挑战主页的加载/错误/空态/榜单落在同一条 v-if 链上', () => {
     const 原文 = readFileSync(resolve(根, 'views', '挑战主页.vue'), 'utf8')

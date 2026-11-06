@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
@@ -6,6 +6,7 @@ import 消息行 from '@/components/聊天/消息行.vue'
 
 const 源码 = readFileSync(resolve(__dirname, '../components/聊天/消息行.vue'), 'utf8')
 const 样式 = 源码.slice(源码.indexOf('<style'))
+const 聊天组件目录 = resolve(__dirname, '../components/聊天')
 
 function 规则体们(选择器: string): string[] {
   const 转义 = 选择器.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -46,22 +47,39 @@ describe('FP-09 发送中灰滤镜', () => {
     expect(包裹.find('.fasong-zhuangtai').exists()).toBe(false)
   })
 
-  it('发送中气泡蒙深色遮罩：::after 遮罩存在且不拦截交互，规则内无去色滤镜', () => {
-    const 体 = 规则体('.qipao-waike.qipao-fasong-zhong::after')
-    expect(体).toContain("content: ''")
-    expect(体).toContain('position: absolute')
-    expect(体).toContain('inset: 0')
-    expect(体).toContain('background: var(--xiaoxi-wei-fasong-zhe-zhao)')
-    expect(体).toContain('border-radius: inherit')
-    expect(体).toContain('pointer-events: none')
-    expect(体).toContain('z-index: 2')
-    expect(体).not.toContain('filter')
+  it('发送中唯一压暗机制是作用于整个气泡外壳的单一滤镜，深浅走设计令牌', () => {
+    expect(规则体们('.qipao-waike.qipao-fasong-zhong')).toHaveLength(1)
+    const 体 = 规则体('.qipao-waike.qipao-fasong-zhong')
+    expect(体).toContain('filter: brightness(var(--xiaoxi-fasong-zhong-liang-du))')
+    expect(体).not.toMatch(/brightness\(\s*0?\.\d/)
     expect(体).not.toContain('opacity')
-    expect(规则体('.qipao-waike.qipao-fasong-zhong :deep(.qipao-weiba)')).toContain(
-      'filter: brightness(0.55)',
-    )
+    expect(样式).not.toMatch(/\.qipao-fasong-zhong::after/)
+    expect(样式).not.toContain('--xiaoxi-wei-fasong-zhe-zhao')
     expect(样式).not.toMatch(/\.xiaoxi-wei[^{]*\{[^}]*filter:/)
     expect(样式).not.toMatch(/\.fasong-zhuangtai[^{]*\{[^}]*filter:/)
+  })
+
+  it('不存在任何针对气泡尾巴的发送态单独压暗规则，防止竖线复发', () => {
+    expect(样式).not.toContain(':deep(.qipao-weiba)')
+    expect(样式).not.toMatch(/[^{}]*fasong[^{}]*weiba[^{}]*\{/)
+    expect(样式).not.toMatch(/[^{}]*weiba[^{}]*fasong[^{}]*\{/)
+    for (const 文件 of readdirSync(聊天组件目录)) {
+      if (!文件.endsWith('.vue')) continue
+      const 组件源码 = readFileSync(resolve(聊天组件目录, 文件), 'utf8')
+      const 组件样式 = 组件源码.slice(组件源码.indexOf('<style'))
+      for (const 匹配 of 组件样式.matchAll(/([^{}]+)\{([^}]*)\}/g)) {
+        const 选择器 = 匹配[1]
+        const 声明 = 匹配[2]
+        const 是尾巴规则 = 选择器.includes('weiba')
+        const 是发送态规则 = 选择器.includes('fasong')
+        if (是尾巴规则 && 是发送态规则) {
+          throw new Error(`${文件} 存在同时命中尾巴与发送态的规则：${选择器}`)
+        }
+        if (是尾巴规则) {
+          expect(声明, `${文件} 不应给气泡尾巴写亮度压暗`).not.toMatch(/brightness/)
+        }
+      }
+    }
   })
 
   it('头像与状态节点不在被滤镜的内容容器内，外壳不裁剪圆角', () => {

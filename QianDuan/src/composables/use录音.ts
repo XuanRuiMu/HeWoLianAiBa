@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { DUO_MEI_TI_PEI_ZHI, LU_YIN_PEI_ZHI } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/翻译表'
+import { ceLiangYinPinShiChang } from '@/composables/use语音播放'
 
 const LU_YIN_SHANG_HUA_QU_XIAO_JU_LI = 80
 const LU_YIN_TING_ZHI_DENG_DAI_HAO_MIAO = 2000
@@ -223,8 +224,21 @@ export function use录音(yiLai: Use录音依赖) {
             : mime.includes('aac')
               ? 'aac'
               : 'webm'
+    const ceLiangDiZhi = URL.createObjectURL(erJinZhiDuiXiang)
+    let ceLiangHaoMiao: number | null
+    try {
+      ceLiangHaoMiao = await ceLiangYinPinShiChang(
+        ceLiangDiZhi,
+        DUO_MEI_TI_PEI_ZHI.yuYinFaSongCeLiangChaoShiHaoMiao,
+      )
+    } finally {
+      URL.revokeObjectURL(ceLiangDiZhi)
+    }
+    if (ceLiangHaoMiao === null) {
+      console.warn('[录音] 语音时长实测失败，回退墙钟耗时:', yongShiHaoMiao)
+    }
     await yiLai.faSongYuYin(erJinZhiDuiXiang, {
-      shiChangHaoMiao: Math.round(yongShiHaoMiao),
+      shiChangHaoMiao: Math.round(ceLiangHaoMiao ?? yongShiHaoMiao),
       wenJianMing: `yuyin-${Date.now()}.${kuoZhanMing}`,
     })
     yiLai.gunDongDaoDiBu()

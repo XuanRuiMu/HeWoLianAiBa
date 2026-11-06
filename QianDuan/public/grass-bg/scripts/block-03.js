@@ -20,6 +20,7 @@
                 }
             }
             if (document.readyState !== 'loading') sweep();
+            if (window.__caoDiXunHuan && window.__caoDiXunHuan.guiDangChongFang) window.__caoDiXunHuan.guiDangChongFang('qing-li', sweep);
             var mo = new MutationObserver(function () { sweep(); });
             mo.observe(document.documentElement, { childList: true, subtree: true });
             var t = setInterval(sweep, 300);

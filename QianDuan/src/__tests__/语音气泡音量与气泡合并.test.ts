@@ -5,7 +5,9 @@ import { describe, expect, it, vi } from 'vitest'
 import 语音气泡 from '@/components/聊天/语音气泡.vue'
 import {
   YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI,
+  YU_YIN_YIN_LIANG_PEI_ZHI,
   jiSuanYuYinKeJianDuanShu,
+  type YuYinKeJianDuanShu,
 } from '@/composables/use语音音量'
 
 const 根 = resolve(__dirname, '..')
@@ -299,6 +301,233 @@ describe('音量采集：真实 RMS，不造假动画', () => {
     await Promise.resolve()
     expect(shiYuYinYinLiangKeYong()).toBe(false)
     expect(duQuYuYinYinLiang()).toBe(1)
+  })
+})
+
+const ZHEN_JIAN_GE_HAO_MIAO = 1000 / 60
+
+function yinJieBoGuo(bei: number): number[] {
+  const qiang = 0.09 * bei
+  const zhong = 0.04 * bei
+  const ruo = 0.012 * bei
+  const jing = 0.0004 * bei
+  const xu: number[] = []
+  for (let xun = 0; xun < 4; xun += 1) {
+    for (const [shuiPing, zhenShu] of [
+      [qiang, 9],
+      [zhong, 9],
+      [qiang, 9],
+      [jing, 14],
+      [ruo, 9],
+      [zhong, 9],
+      [jing, 14],
+    ] as const) {
+      for (let zhen = 0; zhen < zhenShu; zhen += 1) xu.push(shuiPing)
+    }
+  }
+  return xu
+}
+
+async function moNiYuYinBoFang(
+  rmsXuLie: number[],
+  xuanXiang: { tiaoShi?: boolean; duQuShiBai?: boolean } = {},
+): Promise<{ moKuai: typeof import('@/composables/use语音音量'); biLi: number[] }> {
+  vi.resetModules()
+  let dangQianZhen = 0
+  class JiaDanJingFenXiQi {
+    fftSize = YU_YIN_YIN_LIANG_PEI_ZHI.fftChiCun
+    smoothingTimeConstant = YU_YIN_YIN_LIANG_PEI_ZHI.pingHuaXiShu
+    connect(): void {}
+    getFloatTimeDomainData = (huan: Float32Array): void => {
+      if (xuanXiang.duQuShiBai) throw new Error('时域读取不可用')
+      const rms = rmsXuLie[Math.min(dangQianZhen, rmsXuLie.length - 1)]
+      dangQianZhen += 1
+      const fengZhi = Math.min(1, rms * Math.SQRT2)
+      for (let suoYin = 0; suoYin < huan.length; suoYin += 1) {
+        huan[suoYin] = fengZhi * Math.sin(suoYin * 0.35)
+      }
+    }
+  }
+  class JiaDanJingShangXiaWen {
+    state = 'running'
+    destination = { connect: (): void => undefined }
+    createMediaElementSource = (): { connect: () => void } => ({ connect: () => undefined })
+    createGain = (): { gain: { value: number }; connect: () => void } => ({
+      gain: { value: 1 },
+      connect: () => undefined,
+    })
+    createAnalyser = (): JiaDanJingFenXiQi => new JiaDanJingFenXiQi()
+    resume = (): Promise<void> => Promise.resolve()
+  }
+  const yuan = window.AudioContext
+  Object.defineProperty(window, 'AudioContext', {
+    value: JiaDanJingShangXiaWen as unknown as typeof AudioContext,
+    configurable: true,
+    writable: true,
+  })
+  let haoMiao = 0
+  const shiZhong = vi.spyOn(performance, 'now').mockImplementation(() => haoMiao)
+  try {
+    const moKuai = await import('@/composables/use语音音量')
+    if (xuanXiang.tiaoShi) moKuai.sheZhiYuYinYinLiangTiaoShi(true)
+    const { yinPin, chuFaPlay } = zaoJiaYinPin()
+    moKuai.guanLianYuYinYinPin(yinPin)
+    chuFaPlay()
+    await Promise.resolve()
+    await Promise.resolve()
+    const biLi: number[] = []
+    for (let suoYin = 0; suoYin < rmsXuLie.length; suoYin += 1) {
+      haoMiao += ZHEN_JIAN_GE_HAO_MIAO
+      biLi.push(moKuai.duQuYuYinYinLiang())
+    }
+    yinPin.paused = true
+    moKuai.jieChuYuYinYinPin(yinPin)
+    return { moKuai, biLi }
+  } finally {
+    shiZhong.mockRestore()
+    Object.defineProperty(window, 'AudioContext', {
+      value: yuan,
+      configurable: true,
+      writable: true,
+    })
+  }
+}
+
+function quDuanShuXu(
+  moKuai: typeof import('@/composables/use语音音量'),
+  biLi: number[],
+): YuYinKeJianDuanShu[] {
+  let shang: YuYinKeJianDuanShu = 3
+  const duan: YuYinKeJianDuanShu[] = []
+  for (const zhi of biLi) {
+    shang = moKuai.jiSuanYuYinKeJianDuanShu(zhi, shang)
+    duan.push(shang)
+  }
+  return duan
+}
+
+function zhanBi(duanXu: YuYinKeJianDuanShu[], mubiaoDuanShu: YuYinKeJianDuanShu): number {
+  return duanXu.filter((yiDuanShu) => yiDuanShu === mubiaoDuanShu).length / duanXu.length
+}
+
+describe('真实语音量级：声波弧随响度出现 1/2/3 格', () => {
+  it('测试信号本身就是真实语音的 RMS 量级，不再用满幅假信号掩盖标定问题', () => {
+    const zhenShi = yinJieBoGuo(1)
+    expect(Math.max(...zhenShi)).toBeLessThan(0.16)
+    expect(Math.max(...zhenShi)).toBeGreaterThan(0.02)
+    expect(Math.min(...zhenShi)).toBeLessThan(0.001)
+  })
+
+  it.each([1.8, 1, 0.06])('电平倍率 %s 的语音都能出现全部三档且低档不占绝大多数', async (bei) => {
+    const { moKuai, biLi } = await moNiYuYinBoFang(yinJieBoGuo(bei))
+    const duan = quDuanShuXu(moKuai, biLi)
+    expect(duan).toContain(1)
+    expect(duan).toContain(2)
+    expect(duan).toContain(3)
+    expect(zhanBi(duan, 1), '一档不再是唯一档位').toBeLessThan(0.8)
+    expect(Math.max(...biLi), '映射必须能冲到高音门限之上').toBeGreaterThanOrEqual(
+      YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.shengRuGaoYin,
+    )
+  })
+
+  it('同一音节轮廓在悬殊电平下档位基本重合，绝对录音电平不再决定档位', async () => {
+    const xu = yinJieBoGuo(1)
+    const zhongYin = await moNiYuYinBoFang(xu)
+    const diYin = await moNiYuYinBoFang(
+      xu.map((zhi) => zhi * 0.06),
+    )
+    const gaoYin = await moNiYuYinBoFang(
+      xu.map((zhi) => zhi * 1.8),
+    )
+    const zhongDuan = quDuanShuXu(zhongYin.moKuai, zhongYin.biLi)
+    const diDuan = quDuanShuXu(diYin.moKuai, diYin.biLi)
+    const gaoDuan = quDuanShuXu(gaoYin.moKuai, gaoYin.biLi)
+    let chaZong = 0
+    let zuiDaCha = 0
+    let buYiZhi = 0
+    for (let suoYin = 0; suoYin < xu.length; suoYin += 1) {
+      const diCha = Math.abs(diYin.biLi[suoYin] - zhongYin.biLi[suoYin])
+      const gaoCha = Math.abs(gaoYin.biLi[suoYin] - zhongYin.biLi[suoYin])
+      chaZong += Math.max(diCha, gaoCha)
+      zuiDaCha = Math.max(zuiDaCha, diCha, gaoCha)
+      if (diDuan[suoYin] !== zhongDuan[suoYin]) buYiZhi += 1
+      if (gaoDuan[suoYin] !== zhongDuan[suoYin]) buYiZhi += 1
+    }
+    expect(chaZong / xu.length, '电平相差 30 倍时映射曲线必须整体一致').toBeLessThan(0.08)
+    expect(zuiDaCha, '电平相差 30 倍时单帧最大偏差不得改变档位结论').toBeLessThan(0.3)
+    expect(buYiZhi / (xu.length * 2), '电平相差 30 倍时档位一致率必须高于 85%').toBeLessThan(0.15)
+  })
+
+  it('响后接静音：回到一格并稳定停住，不会满格也不会卡在两格', async () => {
+    const rmsXu = [...yinJieBoGuo(1).slice(0, 64), ...new Array<number>(72).fill(0)]
+    const { moKuai, biLi } = await moNiYuYinBoFang(rmsXu)
+    const duan = quDuanShuXu(moKuai, biLi)
+    expect(new Set(duan.slice(-24)), '静音末段必须恒为一格').toEqual(new Set([1]))
+    expect(biLi.at(-1)).toBeLessThan(YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.jiangHuiDiYin)
+  })
+
+  it('低于绝对门限的底噪恒为一格，不会被自适应放大成有声', async () => {
+    const diXian = Math.pow(10, YU_YIN_YIN_LIANG_PEI_ZHI.canKaoDiXianFenBei / 20)
+    const { moKuai, biLi } = await moNiYuYinBoFang(new Array<number>(120).fill(diXian / 100))
+    expect(new Set(biLi)).toEqual(new Set([0]))
+    expect(new Set(quDuanShuXu(moKuai, biLi))).toEqual(new Set([1]))
+  })
+
+  it('档位逐帧最多变一格，迟滞带内不出现跳档闪烁', async () => {
+    const { moKuai, biLi } = await moNiYuYinBoFang(yinJieBoGuo(1))
+    const duan = quDuanShuXu(moKuai, biLi)
+    for (let suoYin = 1; suoYin < duan.length; suoYin += 1) {
+      expect(Math.abs(duan[suoYin] - duan[suoYin - 1]), '出现跳档闪烁').toBeLessThanOrEqual(1)
+    }
+  })
+
+  it('连续两帧之间的换档次数受控，不出现高频抖动', async () => {
+    const { moKuai, biLi } = await moNiYuYinBoFang(yinJieBoGuo(1))
+    const duan = quDuanShuXu(moKuai, biLi)
+    let ciShu = 0
+    for (let suoYin = 1; suoYin < duan.length; suoYin += 1)
+      if (duan[suoYin] !== duan[suoYin - 1]) ciShu += 1
+    expect(ciShu / duan.length, '每帧换档比例过高说明在闪烁').toBeLessThan(0.3)
+  })
+
+  it('时域读取异常只告警一次，且逐帧回落到无法分析预置值', async () => {
+    const gaoJing = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const renQun = yinJieBoGuo(1)
+    const { moKuai, biLi } = await moNiYuYinBoFang(renQun, { duQuShiBai: true })
+    expect(biLi).toHaveLength(renQun.length)
+    expect(new Set(biLi), '读取失败必须每帧回落到预置值而不是抛错').toEqual(
+      new Set([YU_YIN_YIN_LIANG_PEI_ZHI.wuFaFenXiYuZhi]),
+    )
+    expect(
+      gaoJing.mock.calls.filter((yiTiao) => String(yiTiao[0]).includes('[语音音量]')).length,
+      '异常日志不得逐帧刷屏',
+    ).toBe(1)
+    gaoJing.mockRestore()
+  })
+
+  it('调试开关默认关闭，打开后打印标定状态且受最小日志间隔约束', async () => {
+    const guanBi = vi.spyOn(console, 'debug').mockImplementation(() => undefined)
+    const wuTiaoShi = await moNiYuYinBoFang(yinJieBoGuo(1))
+    expect(
+      guanBi.mock.calls.filter((yiTiao) => String(yiTiao[0]).includes('[语音音量]')).length,
+      '默认不得打印标定日志',
+    ).toBe(0)
+    guanBi.mockClear()
+    await moNiYuYinBoFang(yinJieBoGuo(1), { tiaoShi: true })
+    const tiaoShu = guanBi.mock.calls.filter((yiTiao) =>
+      String(yiTiao[0]).includes('[语音音量]'),
+    ).length
+    expect(tiaoShu, '开关打开后必须能看到标定状态').toBeGreaterThan(0)
+    expect(
+      tiaoShu,
+      '调试日志不得低于配置的最小间隔',
+    ).toBeLessThanOrEqual(
+      Math.ceil(
+        (wuTiaoShi.biLi.length * ZHEN_JIAN_GE_HAO_MIAO) /
+          YU_YIN_YIN_LIANG_PEI_ZHI.zuiXiaoRiZhiJianGeHaoMiao,
+      ) + 1,
+    )
+    guanBi.mockRestore()
   })
 })
 

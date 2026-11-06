@@ -157,18 +157,8 @@ const emit = defineEmits<{
   background: transparent;
 }
 
-.qipao-waike.qipao-fasong-zhong::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--xiaoxi-wei-fasong-zhe-zhao);
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.qipao-waike.qipao-fasong-zhong :deep(.qipao-weiba) {
-  filter: brightness(0.55);
+.qipao-waike.qipao-fasong-zhong {
+  filter: brightness(var(--xiaoxi-fasong-zhong-liang-du));
 }
 
 .chehui-tishi {

@@ -7,11 +7,13 @@ import 图片预览 from '@/components/聊天/图片预览.vue'
 import 消息行 from '@/components/聊天/消息行.vue'
 import 语音气泡 from '@/components/聊天/语音气泡.vue'
 import { huoQuFanYi } from '@/config/翻译表'
+import { 声明块清单, 按档解析全部, 声明位置 } from './主题令牌真源'
 
 const 根 = resolve(__dirname, '..')
 const 读 = (xiangDui: string): string => readFileSync(resolve(根, xiangDui), 'utf8')
 
 const 聊天页源 = 读('views/聊天页面.vue')
+const 全局样式源 = 读('styles/全局.css')
 const 好友页源 = 读('views/好友聊天.vue')
 const 引用条源 = 读('components/聊天/引用条.vue')
 const 输入区源 = 读('components/聊天/图文输入区.vue')
@@ -148,8 +150,11 @@ describe('输入栏还原微信顺序并收成唯一真源', () => {
     expect(栏).not.toContain('v-else')
     expect(取规则(输入栏源, '.fasong-anniu')).toContain('height: var(--shuru-danxing-gao-du)')
     expect(取规则(输入栏源, '.fasong-anniu')).toContain('line-height: 1')
-    expect(取规则(输入栏源, '.fasong-anniu:disabled')).toContain('filter: brightness(var(--qu-xiao-jia-shen))')
-    expect(取规则(输入栏源, '.fasong-anniu:disabled')).not.toContain('--fasong-anniu-jinyong-beijing')
+    const 禁用规则 = 取规则(输入栏源, '.fasong-anniu:disabled')
+    expect(禁用规则).toContain('filter: brightness(var(--fasong-anniu-jinyong-liang-du))')
+    expect(禁用规则).not.toContain('--qu-xiao-jia-shen')
+    expect(禁用规则).not.toContain('--fasong-anniu-jinyong-beijing')
+    expect(禁用规则).not.toMatch(/brightness\(\s*0?\.\d/)
     expect(输入栏源).toContain('.fasong-anniu:hover:not(:disabled)')
     expect(输入栏源).toContain('filter: brightness(1.08)')
     expect(输入栏源).not.toContain('opacity: 0.85')
@@ -157,6 +162,33 @@ describe('输入栏还原微信顺序并收成唯一真源', () => {
     expect(好友页源).toContain(':ke-fa-song="youKeFaSong"')
     const 联动 = 取函数(聊天页源, 'watch(keYiFaSong')
     expect(联动).toContain('guanBiGengDuoMianBan()')
+  })
+
+  it('发送按钮禁用压暗走专用亮度令牌，深浅两档成对且恰为共享加深的两倍', () => {
+    const 块们 = 声明块清单()
+    const 浅色 = 按档解析全部('light', 块们)
+    const 深色 = 按档解析全部('dark', 块们)
+    const 浅值 = 浅色.get('--fasong-anniu-jinyong-liang-du')
+    const 深值 = 深色.get('--fasong-anniu-jinyong-liang-du')
+    expect(浅值, '浅色档未定义发送按钮禁用亮度令牌').toBe('0.64')
+    expect(深值, '深色档未定义发送按钮禁用亮度令牌').toBe('0.64')
+    expect(声明位置('--fasong-anniu-jinyong-liang-du', 块们)).toEqual({
+      共用: false,
+      浅色: true,
+      深色: true,
+    })
+    const 浅共享 = 浅色.get('--qu-xiao-jia-shen')
+    const 深共享 = 深色.get('--qu-xiao-jia-shen')
+    expect(浅共享, '浅色档跨模块共享加深令牌不得被本需求改动').toBe('0.82')
+    expect(深共享, '深色档跨模块共享加深令牌不得被本需求改动').toBe('0.82')
+    expect(1 - Number(浅值)).toBeCloseTo(2 * (1 - Number(浅共享)), 10)
+    expect(1 - Number(深值)).toBeCloseTo(2 * (1 - Number(深共享)), 10)
+    expect(输入栏源.match(/\.fasong-anniu:disabled\s*\{/g) ?? []).toHaveLength(1)
+    expect(输入栏源.match(/\.fasong-anniu\s*\{/g) ?? []).toHaveLength(1)
+    expect(输入栏源).not.toContain('--qu-xiao-jia-shen')
+    const 忙碌规则 = 取规则(全局样式源, ".anniu-zhuyao[aria-busy='true']")
+    expect(忙碌规则).toContain('filter: brightness(var(--qu-xiao-jia-shen))')
+    expect(忙碌规则).not.toContain('--fasong-anniu-jinyong-liang-du')
   })
 })
 

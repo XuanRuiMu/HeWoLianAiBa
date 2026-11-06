@@ -14,6 +14,7 @@ export interface CaoDiPeiZhi {
   tieTuZuiDaChongShiCiShu: number
   fenXiCaiYangZuiXiaoJianGeMiao: number
   beiJingZuiDaChongShiCiShu: number
+  beiJingChongShiDengDaiHaoMiao: number
   beiJingJiuXuChaoShiHaoMiao: number
   caoDiZhunBeiChaoShiHaoMiao: number
   caoDiJieShiChaoShiHaoMiao: number
@@ -34,6 +35,7 @@ export const caoDiPeiZhi: CaoDiPeiZhi = {
   tieTuZuiDaChongShiCiShu: 5,
   fenXiCaiYangZuiXiaoJianGeMiao: 60,
   beiJingZuiDaChongShiCiShu: 1,
+  beiJingChongShiDengDaiHaoMiao: 2000,
   beiJingJiuXuChaoShiHaoMiao: 35000,
   caoDiZhunBeiChaoShiHaoMiao: 30000,
   caoDiJieShiChaoShiHaoMiao: 8000,

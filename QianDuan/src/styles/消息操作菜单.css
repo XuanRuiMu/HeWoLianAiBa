@@ -1,0 +1,205 @@
+:root {
+  --xiaoxi-caidan-yuanjiao: 14px;
+  --xiaoxi-caidan-xiang-yuanjiao: 9px;
+  --xiaoxi-caidan-xiang-gao: 44px;
+  --xiaoxi-caidan-xiang-shui-ping: 14px;
+  --xiaoxi-caidan-zi-ju: 0.1px;
+  --xiaoxi-caidan-mo-hu: 20px;
+  --xiaoxi-caidan-du-ru: 0.16s;
+  --xiaoxi-caidan-du-chu: 0.12s;
+}
+
+:root,
+:root[data-theme="dark"] {
+  --xiaoxi-caidan-beijing: rgba(24, 24, 26, 0.92);
+  --xiaoxi-caidan-biankuang: rgba(255, 255, 255, 0.1);
+  --xiaoxi-caidan-wenben: #f2f2f7;
+  --xiaoxi-caidan-xiang-hover: rgba(255, 255, 255, 0.1);
+  --xiaoxi-caidan-xiang-active: rgba(255, 255, 255, 0.18);
+  --xiaoxi-caidan-weixian: #ff453a;
+  --xiaoxi-caidan-weixian-hover: rgba(255, 69, 58, 0.16);
+  --xiaoxi-caidan-weixian-active: rgba(255, 69, 58, 0.26);
+  --xiaoxi-caidan-fengexian: rgba(255, 255, 255, 0.12);
+  --xiaoxi-caidan-yinying-zhu: rgba(0, 0, 0, 0.55);
+  --xiaoxi-caidan-yinying-fu: rgba(0, 0, 0, 0.38);
+  --xiaoxi-caidan-gundongtiao: rgba(255, 255, 255, 0.22);
+}
+
+:root[data-theme="light"] {
+  --xiaoxi-caidan-beijing: rgba(255, 255, 255, 0.94);
+  --xiaoxi-caidan-biankuang: rgba(60, 60, 67, 0.14);
+  --xiaoxi-caidan-wenben: #1c1c1e;
+  --xiaoxi-caidan-xiang-hover: rgba(120, 120, 128, 0.1);
+  --xiaoxi-caidan-xiang-active: rgba(120, 120, 128, 0.18);
+  --xiaoxi-caidan-weixian: #d70015;
+  --xiaoxi-caidan-weixian-hover: rgba(215, 0, 21, 0.08);
+  --xiaoxi-caidan-weixian-active: rgba(215, 0, 21, 0.14);
+  --xiaoxi-caidan-fengexian: rgba(60, 60, 67, 0.16);
+  --xiaoxi-caidan-yinying-zhu: rgba(0, 0, 0, 0.16);
+  --xiaoxi-caidan-yinying-fu: rgba(0, 0, 0, 0.06);
+  --xiaoxi-caidan-gundongtiao: rgba(120, 120, 128, 0.4);
+}
+
+.xiaoxi-caidan-zhezhao {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--ceng-caidan);
+  background: transparent;
+}
+
+.xiaoxi-caidan-dingdian {
+  position: fixed;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.xiaoxi-caidan {
+  position: fixed;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  padding: var(--jiange-6);
+  border: none;
+  border-radius: var(--xiaoxi-caidan-yuanjiao);
+  background: var(--xiaoxi-caidan-beijing);
+  color: var(--xiaoxi-caidan-wenben);
+  font-family: var(--ziti-jiazu);
+  box-shadow:
+    inset 0 0 0 1px var(--xiaoxi-caidan-biankuang),
+    0 16px 40px var(--xiaoxi-caidan-yinying-zhu),
+    0 2px 8px var(--xiaoxi-caidan-yinying-fu);
+  backdrop-filter: blur(var(--xiaoxi-caidan-mo-hu));
+  -webkit-backdrop-filter: blur(var(--xiaoxi-caidan-mo-hu));
+  transform-origin: top center;
+}
+
+.xiaoxi-caidan[data-fang-xiang="shang"] {
+  transform-origin: bottom center;
+}
+
+.xiaoxi-caidan[data-ding-gao="0"] {
+  visibility: hidden;
+}
+
+.xiaoxi-caidan[data-ding-gao="1"] {
+  animation: xiaoxi-caidan-danchu var(--xiaoxi-caidan-du-ru) var(--quxian-tan-chu);
+}
+
+@keyframes xiaoxi-caidan-danchu {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.xiaoxi-caidan-lie {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--jiange-2);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--xiaoxi-caidan-gundongtiao) transparent;
+}
+
+.xiaoxi-caidan-xiangmu {
+  display: flex;
+  flex: none;
+  align-items: center;
+  width: 100%;
+  min-height: var(--xiaoxi-caidan-xiang-gao);
+  padding: 0 var(--xiaoxi-caidan-xiang-shui-ping);
+  border: none;
+  border-radius: var(--xiaoxi-caidan-xiang-yuanjiao);
+  background: transparent;
+  color: var(--xiaoxi-caidan-wenben);
+  font-family: inherit;
+  font-size: var(--ziti-zhong);
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: var(--xiaoxi-caidan-zi-ju);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--quxian-biao-zhun),
+    color var(--quxian-biao-zhun);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.xiaoxi-caidan-ming {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.xiaoxi-caidan-xiangmu--weixian {
+  color: var(--xiaoxi-caidan-weixian);
+}
+
+.xiaoxi-caidan-xiangmu--weixian:not(:first-child) {
+  box-shadow: inset 0 1px 0 var(--xiaoxi-caidan-fengexian);
+}
+
+.xiaoxi-caidan-xiangmu:active {
+  background: var(--xiaoxi-caidan-xiang-active);
+}
+
+.xiaoxi-caidan-xiangmu--weixian:active {
+  background: var(--xiaoxi-caidan-weixian-active);
+}
+
+.xiaoxi-caidan-xiangmu:focus-visible {
+  outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
+  outline-offset: var(--jujiao-huan-pian-yi);
+}
+
+@media (hover: hover) {
+  .xiaoxi-caidan-xiangmu:hover {
+    background: var(--xiaoxi-caidan-xiang-hover);
+  }
+
+  .xiaoxi-caidan-xiangmu--weixian:hover {
+    background: var(--xiaoxi-caidan-weixian-hover);
+  }
+}
+
+.xiaoxi-caidan-guodu-enter-active {
+  transition: opacity var(--xiaoxi-caidan-du-ru) var(--quxian-biao-zhun);
+}
+
+.xiaoxi-caidan-guodu-leave-active {
+  pointer-events: none;
+  transition: opacity var(--xiaoxi-caidan-du-chu) ease;
+}
+
+.xiaoxi-caidan-guodu-enter-from,
+.xiaoxi-caidan-guodu-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xiaoxi-caidan[data-ding-gao="1"] {
+    animation: none;
+  }
+
+  .xiaoxi-caidan-xiangmu,
+  .xiaoxi-caidan-guodu-enter-active,
+  .xiaoxi-caidan-guodu-leave-active {
+    transition: none;
+  }
+}

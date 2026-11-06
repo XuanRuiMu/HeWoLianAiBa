@@ -1,4 +1,4 @@
-import { reactive, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
 import type { 消息 } from '@/types/类型定义'
 import {
@@ -9,6 +9,7 @@ import {
   shiYuYinYinLiangKeYong,
 } from '@/composables/use语音音量'
 import { 语音音量键, 语音音量表, duQuYuYinYinLiang, yuYinYinLiangZengYi } from '@/utils/语音音量存储'
+import { duQuYuYinShiChang, jiLuYuYinShiChang, yuYinShiChangJian } from '@/utils/语音时长存储'
 
 interface Use语音播放依赖 {
   huoQuDiZhi: (xiaoXi: 消息) => string | undefined
@@ -32,9 +33,12 @@ interface YuYinBoFangKongZhi {
 
 const WEI_QIONG_DING_WEI_MIAO = 1e101
 
-const ceDeShiChangHaoMiao = reactive(new Map<string, number>())
-const ceLiangShiBaiDiZhi = new Set<string>()
+const ceLiangShiBaiJian = new Set<string>()
+const ceLiangXingQu = new Map<string, number>()
+const ceLiangDuiLie = new Map<string, string>()
 const ceLiangRenWu = new Map<string, Promise<number | null>>()
+const ceLiangQuXiaoMap = new Map<string, () => void>()
+let ceLiangYunXingShu = 0
 
 let dangQianKongZhi: YuYinBoFangKongZhi | null = null
 let jianPanJianTingZhong = false
@@ -48,8 +52,8 @@ function yuYinDiZhi(xiaoXi: YuYinShiChangZaiTi): string {
 }
 
 function yuanShiHaoMiao(xiaoXi: YuYinShiChangZaiTi): number {
-  const yiCeDe = ceDeShiChangHaoMiao.get(yuYinDiZhi(xiaoXi))
-  if (typeof yiCeDe === 'number' && yiCeDe > 0) return yiCeDe
+  const yiCeDe = duQuYuYinShiChang(yuYinDiZhi(xiaoXi))
+  if (yiCeDe !== null) return yiCeDe
   const yuanShi = Number(xiaoXi.mei_ti_shi_chang_hao_miao)
   return Number.isFinite(yuanShi) && yuanShi > 0 ? yuanShi : 0
 }
@@ -114,8 +118,25 @@ function shiFangYinPin(yinPin: HTMLAudioElement): void {
   }
 }
 
-function ceLiangYinPinShiChang(diZhi: string): Promise<number | null> {
-  return new Promise((jieJue) => {
+interface CeLiangRenWuXiang {
+  jieGuo: Promise<number | null>
+  quXiao: () => void
+}
+
+function guiZeChaoShi(chaoShiHaoMiao: number | undefined): number {
+  return typeof chaoShiHaoMiao === 'number' &&
+    Number.isFinite(chaoShiHaoMiao) &&
+    chaoShiHaoMiao > 0
+    ? chaoShiHaoMiao
+    : DUO_MEI_TI_PEI_ZHI.yuYinShiChangCeLiangChaoShiHaoMiao
+}
+
+function chuangJianCeLiangRenWu(
+  diZhi: string,
+  chaoShiHaoMiao: number | undefined,
+): CeLiangRenWuXiang {
+  let quXiaoChangXu: () => void = () => undefined
+  const jieGuo = new Promise<number | null>((jieJue) => {
     if (typeof Audio === 'undefined') {
       jieJue(null)
       return
@@ -153,33 +174,96 @@ function ceLiangYinPinShiChang(diZhi: string): Promise<number | null> {
     yinPin.addEventListener('durationchange', changShiDu)
     yinPin.addEventListener('timeupdate', changShiDu)
     yinPin.addEventListener('error', jieShuShiBai)
-    chaoShiDingShi = setTimeout(
-      jieShuShiBai,
-      DUO_MEI_TI_PEI_ZHI.yuYinShiChangCeLiangChaoShiHaoMiao,
-    )
+    chaoShiDingShi = setTimeout(jieShuShiBai, guiZeChaoShi(chaoShiHaoMiao))
     yinPin.src = diZhi
+    quXiaoChangXu = (): void => jieShu(null)
   })
+  return {
+    jieGuo,
+    quXiao: (): void => {
+      quXiaoChangXu()
+    },
+  }
+}
+
+export function ceLiangYinPinShiChang(
+  diZhi: string,
+  chaoShiHaoMiao?: number,
+): Promise<number | null> {
+  return chuangJianCeLiangRenWu(diZhi, chaoShiHaoMiao).jieGuo
+}
+
+function liuZhuanBingFaCeLiang(): void {
+  while (
+    ceLiangYunXingShu < DUO_MEI_TI_PEI_ZHI.yuYinCeLiangBingFaShangXian &&
+    ceLiangDuiLie.size > 0
+  ) {
+    const xiaYi = ceLiangDuiLie.entries().next()
+    if (xiaYi.done) return
+    const jian = xiaYi.value[0]
+    const diZhi = xiaYi.value[1]
+    ceLiangDuiLie.delete(jian)
+    if (!ceLiangXingQu.has(jian)) continue
+    if (duQuYuYinShiChang(diZhi) !== null || ceLiangShiBaiJian.has(jian)) {
+      ceLiangXingQu.delete(jian)
+      continue
+    }
+    kaiShiCeLiang(jian, diZhi)
+  }
+}
+
+function kaiShiCeLiang(jian: string, diZhi: string): void {
+  ceLiangYunXingShu += 1
+  let yiQuXiao = false
+  const renWu = chuangJianCeLiangRenWu(
+    diZhi,
+    DUO_MEI_TI_PEI_ZHI.yuYinShiChangCeLiangChaoShiHaoMiao,
+  )
+  const benQuXiao = renWu.quXiao
+  ceLiangQuXiaoMap.set(jian, () => {
+    yiQuXiao = true
+    benQuXiao()
+  })
+  const jieGuo = renWu.jieGuo.then((haoMiao) => {
+    ceLiangYunXingShu -= 1
+    ceLiangRenWu.delete(jian)
+    ceLiangQuXiaoMap.delete(jian)
+    if (!yiQuXiao) {
+      if (haoMiao !== null) jiLuYuYinShiChang(diZhi, haoMiao)
+      else ceLiangShiBaiJian.add(jian)
+    }
+    liuZhuanBingFaCeLiang()
+    return haoMiao
+  })
+  ceLiangRenWu.set(jian, jieGuo)
 }
 
 export function ceLiangYuYinShiChang(xiaoXi: YuYinShiChangZaiTi): void {
   const diZhi = yuYinDiZhi(xiaoXi)
   if (diZhi === '') return
-  if (ceDeShiChangHaoMiao.has(diZhi) || ceLiangShiBaiDiZhi.has(diZhi) || ceLiangRenWu.has(diZhi)) return
-  const yuanShi = Number(xiaoXi.mei_ti_shi_chang_hao_miao)
-  if (Number.isFinite(yuanShi) && yuanShi > 0) return
-  const renWu = ceLiangYinPinShiChang(diZhi).then((haoMiao) => {
-    ceLiangRenWu.delete(diZhi)
-    if (haoMiao !== null) ceDeShiChangHaoMiao.set(diZhi, haoMiao)
-    else ceLiangShiBaiDiZhi.add(diZhi)
-    return haoMiao
-  })
-  ceLiangRenWu.set(diZhi, renWu)
+  const jian = yuYinShiChangJian(diZhi)
+  if (jian === '') return
+  if (duQuYuYinShiChang(diZhi) !== null || ceLiangShiBaiJian.has(jian)) return
+  ceLiangXingQu.set(jian, (ceLiangXingQu.get(jian) ?? 0) + 1)
+  if (!ceLiangRenWu.has(jian) && !ceLiangDuiLie.has(jian)) ceLiangDuiLie.set(jian, diZhi)
+  liuZhuanBingFaCeLiang()
 }
 
-function jiLuYiCeShiChang(diZhi: string, haoMiao: number): void {
-  if (diZhi === '' || !(haoMiao > 0)) return
-  if (ceDeShiChangHaoMiao.get(diZhi) === haoMiao) return
-  ceDeShiChangHaoMiao.set(diZhi, haoMiao)
+export function quXiaoCeLiangYuYinShiChang(xiaoXi: YuYinShiChangZaiTi): void {
+  const diZhi = yuYinDiZhi(xiaoXi)
+  if (diZhi === '') return
+  const jian = yuYinShiChangJian(diZhi)
+  if (jian === '') return
+  const xingQu = ceLiangXingQu.get(jian)
+  if (xingQu === undefined) return
+  if (xingQu > 1) {
+    ceLiangXingQu.set(jian, xingQu - 1)
+    return
+  }
+  ceLiangXingQu.delete(jian)
+  ceLiangDuiLie.delete(jian)
+  const quXiao = ceLiangQuXiaoMap.get(jian)
+  if (quXiao) quXiao()
 }
 
 function shiKeBianJiYuanSu(muBiao: EventTarget | null): boolean {
@@ -404,7 +488,7 @@ export function use语音播放(yiLai: Use语音播放依赖) {
       if (dangQianYinPin !== yinPin) return
       const haoMiao = duQuYinPinHaoMiao(yinPin)
       if (haoMiao <= 0) return
-      jiLuYiCeShiChang(diZhi, haoMiao)
+      jiLuYuYinShiChang(diZhi, haoMiao)
       boFangZongMiao.value = haoMiao / 1000
     }
     yinPin.addEventListener('loadedmetadata', cunShiChang)

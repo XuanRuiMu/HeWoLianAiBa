@@ -178,6 +178,6 @@ const emit = defineEmits<{
   background: var(--zhuse);
   color: var(--fasong-anniu-wenben);
   cursor: not-allowed;
-  filter: brightness(var(--qu-xiao-jia-shen));
+  filter: brightness(var(--fasong-anniu-jinyong-liang-du));
 }
 </style>

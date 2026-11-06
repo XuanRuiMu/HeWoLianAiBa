@@ -122,9 +122,16 @@ const jiangJiYinCang = computed(() => !shiYongCaoDiBeiJing.value || beiJingJiuXu
 let beiJingDengDaiDingShiQi: ReturnType<typeof setTimeout> | null = null
 let boFangDengDaiDingShiQi: ReturnType<typeof setTimeout> | null = null
 let jieShiAnQuanDingShiQi: ReturnType<typeof setTimeout> | null = null
+let beiJingChongShiDengDaiDingShiQi: ReturnType<typeof setTimeout> | null = null
 let beiJingChangJingYiJiuXu = false
 let boFangYiFa = false
 let yiShangBaoBeiJingShiBai = false
+
+function qingLiBeiJingChongShiDengDai(): void {
+  if (beiJingChongShiDengDaiDingShiQi === null) return
+  clearTimeout(beiJingChongShiDengDaiDingShiQi)
+  beiJingChongShiDengDaiDingShiQi = null
+}
 
 function qingLiBeiJingDengDai(): void {
   if (beiJingDengDaiDingShiQi === null) return
@@ -197,6 +204,7 @@ function kaiShiBoFangDengDai(): void {
 function chongShiBeiJingJiaZai(): void {
   qingLiBeiJingDengDai()
   qingLiBoFangDengDai()
+  qingLiBeiJingChongShiDengDai()
   beiJingChangJingYiJiuXu = false
   boFangYiFa = false
   beiJingJiuXu.value = false
@@ -206,9 +214,10 @@ function chongShiBeiJingJiaZai(): void {
   }
   beiJingChongShiCiShu.value += 1
   yingJiaZaiBeiJing.value = false
-  setTimeout(() => {
+  beiJingChongShiDengDaiDingShiQi = setTimeout(() => {
+    beiJingChongShiDengDaiDingShiQi = null
     yingJiaZaiBeiJing.value = true
-  }, 2000)
+  }, caoDiPeiZhi.beiJingChongShiDengDaiHaoMiao)
 }
 
 function tongBuBeiJingZanTing(): void {
@@ -254,6 +263,7 @@ function chuLiBeiJingXiaoXi(shiJian: MessageEvent) {
   }
   if (shuJu.zhuangTai === 'jiu-xu') {
     qingLiBeiJingDengDai()
+    qingLiBeiJingChongShiDengDai()
     if (beiJingJiuXu.value) {
       tongBuBeiJingZanTing()
       tongBuBeiJingYuShui()
@@ -404,25 +414,37 @@ function chuLiLuoPan(e: DeviceOrientationEvent) {
 }
 
 function zhuCeLuoPan() {
-  if (luoPanYiZhuCe) return
+  if (luoPanYiZhuCe || !shiYongCaoDiBeiJing.value) return
   luoPanYiZhuCe = true
   window.addEventListener('deviceorientation', chuLiLuoPan, { passive: true })
 }
+
+function zhuXiaoLuoPan() {
+  if (!luoPanYiZhuCe) return
+  luoPanYiZhuCe = false
+  window.removeEventListener('deviceorientation', chuLiLuoPan)
+}
+
 async function qiDongLuoPan() {
   zhuCeLuoPan()
-  if (luoPanYiQingQiu) return
+  if (!shiYongCaoDiBeiJing.value || luoPanYiQingQiu) return
   const lei = window.DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> } | undefined
   if (!lei || typeof lei.requestPermission !== 'function') return
   luoPanYiQingQiu = true
   try {
     const jg = await lei.requestPermission()
-    if (jg === 'granted') { luoPanYiZhuCe = true; luoPanJiZhun = null }
+    if (jg === 'granted') { luoPanJiZhun = null; zhuCeLuoPan() }
   } catch {
     return
   } finally {
     luoPanYiQingQiu = false
   }
 }
+
+watch(shiYongCaoDiBeiJing, (xuYaoBeiJing) => {
+  if (xuYaoBeiJing) zhuCeLuoPan()
+  else zhuXiaoLuoPan()
+})
 
 function chuLiYeMianKeJian() {
   if (!document.hidden) luoPanJiZhun = null
@@ -596,11 +618,12 @@ onBeforeUnmount(() => {
   window.removeEventListener('pointermove', chuLiGuangBiaoYiDong)
   window.removeEventListener('touchmove', chuLiChuMoYiDong)
   window.removeEventListener('pointerdown', qiDongLuoPan)
-  window.removeEventListener('deviceorientation', chuLiLuoPan)
+  zhuXiaoLuoPan()
   document.removeEventListener('visibilitychange', chuLiYeMianKeJian)
   window.removeEventListener('message', chuLiBeiJingXiaoXi)
   qingLiBeiJingDengDai()
   qingLiBoFangDengDai()
+  qingLiBeiJingChongShiDengDai()
 })
 </script>
 

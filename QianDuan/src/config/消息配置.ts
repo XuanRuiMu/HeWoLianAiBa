@@ -23,6 +23,13 @@ export const DUO_MEI_TI_PEI_ZHI = {
   yuYinJinDuBuZhouMiao: 0.1,
   yuYinJinDuXianGaoPx: 2,
   yuYinShiChangCeLiangChaoShiHaoMiao: 8000,
+  yuYinFaSongCeLiangChaoShiHaoMiao: 400,
+  yuYinCeLiangBingFaShangXian: 2,
+  yuYinCeLiangKeShiQuYuZaiXianChengPx: 240,
+  yuYinShiChangChiJiuShangXian: 400,
+  yuYinShiChangChiJiuZuiDaHaoMiao: 10 * 60 * 1000,
+  yuYinShiChangChiJiuShiXiaoHaoMiao: 30 * 24 * 60 * 60 * 1000,
+  yuYinShiChangXieRuYanChiHaoMiao: 320,
   wenJianMingZuiDaXianShiZiFu: 24,
 } as const
 
@@ -206,18 +213,62 @@ export const EMOJI_MIANBAN_PEI_ZHI = {
 } as const
 
 export const LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI = {
+  cheHuiCaiDanXiang: ['cheHui'],
   yuYinCaiDanXiang: ['yuYinZhuanWenZi', 'yinYong', 'cheHui'],
   wenBenCaiDanXiang: ['fuZhi', 'fanYi', 'yinYong', 'cheHui'],
   tuPianCaiDanXiang: ['tianJiaDaoBiaoQing', 'baoCunTuPian', 'yinYong', 'cheHui'],
+  weiXianCaiDanXiang: ['cheHui'],
   changAnChuFaHaoMiao: 500,
   yinYongZhaiYaoZuiDaZiFu: 30,
   yuYinZhuanXieChaoShiHaoMiao: 70000,
-  caiDanBianJu: 8,
-  caiDanWeiBaJianGe: 12,
-  caiDanWeiBaNeiSuo: 16,
+  caiDanBianJu: 16,
+  caiDanJianGe: 12,
+  caiDanZuiXiaoKuanDu: 176,
+  caiDanZuiDaKuanDu: 268,
+  caiDanZuiDaGaoDu: 320,
   youJianQuChongHaoMiao: 700,
   chuMoPianYiXianZhi: 10,
 } as const
+
+const CAI_DAN_XIANG_AN_LEI_XING = {
+  cheHui: LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.cheHuiCaiDanXiang,
+  yuYin: LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.yuYinCaiDanXiang,
+  wenBen: LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.wenBenCaiDanXiang,
+  tuPian: LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.tuPianCaiDanXiang,
+} as const satisfies Record<string, readonly string[]>
+
+export type XiaoXiCaiDanLeiXing = keyof typeof CAI_DAN_XIANG_AN_LEI_XING
+
+export const CAI_DAN_LEI_XING_MO_REN: XiaoXiCaiDanLeiXing = 'cheHui'
+
+const CAI_DAN_LEI_XING_AN_XIAO_XI_LEI_XING = {
+  yuYin: 'yuYin',
+  wenben: 'wenBen',
+  tuPian: 'tuPian',
+} as const satisfies Partial<Record<string, XiaoXiCaiDanLeiXing>>
+
+export function huoQuCaiDanLeiXing(xiaoXiLeiXing: string): XiaoXiCaiDanLeiXing {
+  const piPei = (
+    CAI_DAN_LEI_XING_AN_XIAO_XI_LEI_XING as Partial<Record<string, XiaoXiCaiDanLeiXing>>
+  )[xiaoXiLeiXing]
+  return piPei ?? CAI_DAN_LEI_XING_MO_REN
+}
+
+const WEI_XIAN_CAI_DAN_JI_HE: ReadonlySet<string> = new Set<string>(
+  LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.weiXianCaiDanXiang,
+)
+
+export type XiaoXiCaiDanXiang = YuYinCaiDanXiang | WenBenCaiDanXiang | TuPianCaiDanXiang
+
+export function huoQuYuanShiCaiDanXiang(
+  leiXing: XiaoXiCaiDanLeiXing,
+): readonly XiaoXiCaiDanXiang[] {
+  return CAI_DAN_XIANG_AN_LEI_XING[leiXing]
+}
+
+export function shiWeiXianCaiDanXiang(xiang: string): boolean {
+  return WEI_XIAN_CAI_DAN_JI_HE.has(xiang)
+}
 
 const YIN_YONG_MEI_TI_ZHAN_WEI_JIAN = {
   tuPian: 'yinYongTuPianZhanWei',

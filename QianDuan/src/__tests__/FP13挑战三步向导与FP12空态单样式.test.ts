@@ -297,14 +297,43 @@ describe('FP-13 空态永久灰与榜单四态单一源', () => {
     包.unmount()
   })
 
-  it('积分榜切组清空旧榜单、显示骨架并丢弃过期响应', async () => {
-    vi.mocked(huoQuPaiHangBang).mockResolvedValueOnce(榜单甲)
+  it('积分榜切组读预加载缓存零请求，不闪骨架且只留一个面板', async () => {
+    vi.mocked(huoQuPaiHangBang).mockImplementation(async (zuBie: ZuBie) =>
+      zuBie === 'nv_nan' ? 榜单乙 : 榜单甲,
+    )
     const 包 = mount(挑战积分榜)
+    await flushPromises()
+    await flushPromises()
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(4)
+    expect(包.find('.bangdan-hang').text()).toContain('江晚吟')
+    await 包.findAll('.zubie-anNiu')[1]?.trigger('click')
+    await flushPromises()
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(4)
+    expect(包.findAll('.bangdan-zhanwei')).toHaveLength(0)
+    expect(包.find('.bangdan-hang').text()).toContain('后来的赢家')
+    expect(包.findAll('.bangdan-ceng')).toHaveLength(1)
+    await 包.findAll('.zubie-anNiu')[0]?.trigger('click')
+    await flushPromises()
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(4)
+    expect(包.find('.bangdan-hang').text()).toContain('江晚吟')
+    expect(包.findAll('.bangdan-ceng')).toHaveLength(1)
+    包.unmount()
+  })
+
+  it('积分榜缓存未命中时清空旧榜单、显示骨架并丢弃过期响应', async () => {
+    vi.mocked(huoQuPaiHangBang).mockImplementation(async (zuBie: ZuBie) => {
+      if (zuBie === 'nan_nv') return 榜单甲
+      throw new Error('yuQuShiBai')
+    })
+    const 包 = mount(挑战积分榜)
+    await flushPromises()
     await flushPromises()
     expect(包.findAll('.bangdan-hang')).toHaveLength(1)
     const 慢 = 延迟榜单()
     const 快 = 延迟榜单()
-    vi.mocked(huoQuPaiHangBang).mockReturnValueOnce(慢.承诺).mockReturnValueOnce(快.承诺)
+    vi.mocked(huoQuPaiHangBang).mockResolvedValue([])
+    vi.mocked(huoQuPaiHangBang).mockImplementationOnce(() => 慢.承诺)
+    vi.mocked(huoQuPaiHangBang).mockImplementationOnce(() => 快.承诺)
     await 包.findAll('.zubie-anNiu')[1]?.trigger('click')
     await nextTick()
     expect(包.findAll('.bangdan-hang')).toHaveLength(0)
@@ -318,12 +347,14 @@ describe('FP-13 空态永久灰与榜单四态单一源', () => {
     await flushPromises()
     expect(包.find('.bangdan-hang').text()).toContain('后来的赢家')
     expect(包.findAll('.bangdan-hang')).toHaveLength(1)
+    expect(包.findAll('.bangdan-ceng')).toHaveLength(1)
     包.unmount()
   })
 
   it('积分榜错误态只显示请求错误块，不叠加骨架或列表', async () => {
-    vi.mocked(huoQuPaiHangBang).mockRejectedValueOnce(new Error('接口异常'))
+    vi.mocked(huoQuPaiHangBang).mockRejectedValue(new Error('接口异常'))
     const 包 = mount(挑战积分榜)
+    await flushPromises()
     await flushPromises()
     expect(包.find('.qian-tai-cuo-wu').exists()).toBe(true)
     expect(包.findAll('.bangdan-zhanwei')).toHaveLength(0)

@@ -148,6 +148,7 @@
                 return window.__caoDiZhuTiJiuXu;
             }
             window.__caoDiTongBuZhuTi = function () { return 同步主题(); };
+            if (window.__caoDiXunHuan && window.__caoDiXunHuan.guiDangChongFang) window.__caoDiXunHuan.guiDangChongFang('zhu-ti', 同步主题);
 
             // 父页主题变化即时响应（避免轮询间隔内的短暂相位错位）
             try {

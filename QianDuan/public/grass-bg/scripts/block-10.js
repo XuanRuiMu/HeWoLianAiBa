@@ -27,5 +27,7 @@
     同步雨();
   });
 
+  if (window.__caoDiXunHuan && window.__caoDiXunHuan.guiDangChongFang) window.__caoDiXunHuan.guiDangChongFang('yu-shui', 同步雨);
+
   setInterval(同步雨, 1200);
 })();

@@ -71,3 +71,6 @@ docker-compose.override.yml
 /.agents/
 /和我恋爱吧原始需求.txt
 /验收证据-草地空隙/
+
+/QianDuan/.agents/
+/HouDuan/.agents/

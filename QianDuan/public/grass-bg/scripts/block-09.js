@@ -26,9 +26,28 @@
     } catch (e) {}
   }
 
+  function yiYunXuZanTing() {
+    var xun = window.__caoDiXunHuan;
+    if (!xun || typeof xun.yiYunXuZanTing !== 'function') return true;
+    try { return xun.yiYunXuZanTing() === true; } catch (eMen) { return true; }
+  }
+
+  function yiZanTing() {
+    var xun = window.__caoDiXunHuan;
+    if (!xun || typeof xun.yiZuSai !== 'function') return false;
+    try { return xun.yiZuSai() === true; } catch (eSai) { return false; }
+  }
+
+  function kaiZanTingMen(yuanYin) {
+    var xun = window.__caoDiXunHuan;
+    if (!xun || typeof xun.kaiZanTingMen !== 'function') return;
+    try { xun.kaiZanTingMen(yuanYin); } catch (eMen) {}
+  }
+
   function biaoShiShiBai(yuanYin) {
     if (yiTongZhiShiBai) return;
     yiTongZhiShiBai = true;
+    kaiZanTingMen('shi-bai');
     var z = window.__caoDiZhunBeiZhuangTai;
     if (diaoShi) console.warn('[草地背景] 失败', yuanYin, z || null);
     tongZhi('shi-bai', yuanYin, z ? { jieDuan: z.jieDuan, haoShi: z.haoShi, chongJian: z.chongJianCiShu } : null);
@@ -41,7 +60,7 @@
     if (!xuanRanQi || typeof xuanRanQi.render !== 'function') return false;
     var yuanShi = xuanRanQi.render.bind(xuanRanQi);
     xuanRanQi.render = function () {
-      if (window.__caoDiZanTing) return;
+      if (window.__caoDiZanTing && yiYunXuZanTing()) return;
       return yuanShi.apply(xuanRanQi, arguments);
     };
     yiBaoZhuangXuanRanQi = true;
@@ -68,6 +87,7 @@
   function tongZhiJiuXu() {
     if (yiTongZhiJiuXu) return;
     yiTongZhiJiuXu = true;
+    kaiZanTingMen('jiu-xu');
     if (jianCeDingShiQi) {
       clearInterval(jianCeDingShiQi);
       jianCeDingShiQi = null;
@@ -129,7 +149,12 @@
   window.addEventListener('message', function (shiJian) {
     var shuJu = shiJian.data;
     if (!shuJu || shuJu.type !== 'grass-pause') return;
-    window.__caoDiZanTing = !!shuJu.paused;
+    var yao = !!shuJu.paused;
+    window.__caoDiZanTing = yao;
+    var xun = window.__caoDiXunHuan;
+    if (xun && typeof xun.sheZanTing === 'function') {
+      try { xun.sheZanTing(yao, 'grass-pause'); } catch (eXun) {}
+    }
   });
 
   if (!window.WebGLRenderingContext) {
@@ -138,12 +163,17 @@
   }
 
   jianCeDingShiQi = setInterval(jianCe, 200);
-  setTimeout(function () {
+  function chaoShiJianCha() {
     if (yiTongZhiJiuXu) return;
+    if (yiZanTing()) {
+      setTimeout(chaoShiJianCha, chaoShiHaoMiao);
+      return;
+    }
     var z = window.__caoDiZhunBeiZhuangTai;
     biaoShiShiBai('chao-shi');
     if (z && !z.yuanYin) z.yuanYin = 'chao-shi:' + (z.jieDuan || 'wu-zhuang-tai');
     if (jianCeDingShiQi) clearInterval(jianCeDingShiQi);
     jianCeDingShiQi = setInterval(jianCe, 1000);
-  }, chaoShiHaoMiao);
+  }
+  setTimeout(chaoShiJianCha, chaoShiHaoMiao);
 })();

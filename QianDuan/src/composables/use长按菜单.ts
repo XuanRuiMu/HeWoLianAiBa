@@ -1,6 +1,12 @@
-import { computed, getCurrentScope, nextTick, onScopeDispose, ref, shallowRef, type Ref } from 'vue'
-import { XIAO_XI_PEI_ZHI, LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI } from '@/config/消息配置'
-import type { TuPianCaiDanXiang, WenBenCaiDanXiang, YuYinCaiDanXiang } from '@/config/消息配置'
+import { computed, getCurrentScope, onScopeDispose, ref, shallowRef, type Ref } from 'vue'
+import {
+  XIAO_XI_PEI_ZHI,
+  LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI,
+  CAI_DAN_LEI_XING_MO_REN,
+  huoQuCaiDanLeiXing,
+  huoQuYuanShiCaiDanXiang,
+} from '@/config/消息配置'
+import type { XiaoXiCaiDanLeiXing, XiaoXiCaiDanXiang } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/翻译表'
 import { QIAN_TAI_DAI_MA, type QianTaiDaiMa } from '@/config/前台错误码'
 import { chuangJianQianTaiCuoWu, 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
@@ -17,14 +23,11 @@ export interface CaiDanXiaoXi {
   ke_hu_duan_id?: string
 }
 
-export type CaiDanLeiXing = 'cheHui' | 'yuYin' | 'wenBen' | 'tuPian'
+export type CaiDanLeiXing = XiaoXiCaiDanLeiXing
 
-export interface CaiDanDingWeiZhuangTai {
-  dingGao: boolean
-  weiZhi: 'xia' | 'shang'
-  top: string
-  left: string
-  weiBaX: string
+export interface CaiDanJiDian {
+  x: number
+  y: number
 }
 
 interface Use长按菜单依赖<T> {
@@ -39,17 +42,14 @@ interface Use长按菜单依赖<T> {
   zhiChiTuPianYinYong?: boolean
 }
 
-function shiYuYinXiaoXi(xiaoXi: CaiDanXiaoXi): boolean {
-  return xiaoXi.lei_xing === 'yuYin' && !xiaoXi.yi_che_hui && xiaoXi.fa_song_zhe_lei_xing !== 'xitong'
-}
-
-function shiWenBenXiaoXi(xiaoXi: CaiDanXiaoXi): boolean {
-  return xiaoXi.lei_xing === 'wenben' && !xiaoXi.yi_che_hui && xiaoXi.fa_song_zhe_lei_xing !== 'xitong'
-}
-
-function shiTuPianXiaoXi(xiaoXi: CaiDanXiaoXi): boolean {
+function shiHeCaiDanLeiXing(
+  xiaoXi: CaiDanXiaoXi,
+  leiXing: XiaoXiCaiDanLeiXing,
+): boolean {
   return (
-    xiaoXi.lei_xing === 'tuPian' && !xiaoXi.yi_che_hui && xiaoXi.fa_song_zhe_lei_xing !== 'xitong'
+    huoQuCaiDanLeiXing(xiaoXi.lei_xing) === leiXing &&
+    !xiaoXi.yi_che_hui &&
+    xiaoXi.fa_song_zhe_lei_xing !== 'xitong'
   )
 }
 
@@ -114,18 +114,10 @@ export function keYiJieGuanXuanQu(cao: Node | null | undefined, xuanQu?: Selecti
   return cao.contains(xuanQu.anchorNode) && cao.contains(xuanQu.focusNode)
 }
 
-function xinDingWeiZhuangTai(): CaiDanDingWeiZhuangTai {
-  return { dingGao: false, weiZhi: 'xia', top: '0px', left: '0px', weiBaX: '50%' }
-}
-
 export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长按菜单依赖<T>) {
   const dangQianCaiDan = ref<CaiDanLeiXing | null>(null)
   const dangQianXiaoXi = shallowRef<T | null>(null)
-  const caiDanDingWei = ref<CaiDanDingWeiZhuangTai>(xinDingWeiZhuangTai())
-  const caiDanYuanSu = ref<HTMLElement | null>(null)
-  const caiDanBenRen = computed<boolean | null>(() =>
-    dangQianXiaoXi.value ? dangQianXiaoXi.value.fa_song_zhe_lei_xing === 'yonghu' : null,
-  )
+  const dangQianJiDian = ref<CaiDanJiDian | null>(null)
   const yinYongXiaoXi = shallowRef<T | null>(null)
   const fanYiJieGuoJiLu = ref(new Map<string, string>())
   const fanYiZhongJiHe = ref(new Set<string>())
@@ -137,99 +129,33 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
   const fanYiYuanYu = ref('auto')
   const fanYiMuBiaoYu = ref('zh')
   let changAnDingShiQi: ReturnType<typeof setTimeout> | null = null
-  let changAnDengDai: { xiaoXi: T; leiXing: CaiDanLeiXing; dian: { x: number; y: number } } | null = null
-  let dangQianJiaoDian: { x: number; y: number } | null = null
+  let changAnDengDai: { xiaoXi: T; leiXing: CaiDanLeiXing; dian: CaiDanJiDian } | null = null
   let chuMoTongDaoShiKe = 0
-  let dingGaoZhen = 0
-  let dengDaiDingGao = false
   let chuangKongJianKongZhong = false
 
-  const cheHuiCaiDanZhanKai = computed({
-    get: () => dangQianCaiDan.value === 'cheHui',
-    set: (kai: boolean) => {
-      if (!kai) guanBiCaiDan()
-    },
-  })
-  const yuYinCaiDanZhanKai = computed({
-    get: () => dangQianCaiDan.value === 'yuYin',
-    set: (kai: boolean) => {
-      if (!kai) guanBiCaiDan()
-    },
-  })
-  const wenBenCaiDanZhanKai = computed({
-    get: () => dangQianCaiDan.value === 'wenBen',
-    set: (kai: boolean) => {
-      if (!kai) guanBiCaiDan()
-    },
-  })
-  const tuPianCaiDanZhanKai = computed({
-    get: () => dangQianCaiDan.value === 'tuPian',
-    set: (kai: boolean) => {
-      if (!kai) guanBiCaiDan()
-    },
+  const dangQianCaiDanLeiXing = computed<CaiDanLeiXing | null>(() => dangQianCaiDan.value)
+  const caiDanZhengDaKai = computed(() => dangQianCaiDan.value !== null)
+
+  const dangQianCaiDanXiang = computed<readonly XiaoXiCaiDanXiang[]>(() => {
+    const leiXing = dangQianCaiDan.value
+    if (!leiXing) return []
+    const xiaoXi = dangQianXiaoXi.value
+    let xiang: XiaoXiCaiDanXiang[] = [...huoQuYuanShiCaiDanXiang(leiXing)]
+    if (!xiaoXi) return xiang
+    const keYinYong =
+      keYinYongXiaoXi(xiaoXi) && (leiXing !== 'tuPian' || yiLai.zhiChiTuPianYinYong === true)
+    if (!keYinYong) xiang = xiang.filter((zhi) => zhi !== 'yinYong')
+    if (!keXianShiCheHui(xiaoXi)) xiang = xiang.filter((zhi) => zhi !== 'cheHui')
+    return xiang
   })
 
-  function quXiaoDian(shiJian: MouseEvent | TouchEvent): { x: number; y: number } {
+  function quXiaoDian(shiJian: MouseEvent | TouchEvent): CaiDanJiDian {
     if ('touches' in shiJian) {
       const dian = shiJian.touches[0] ?? shiJian.changedTouches?.[0]
       return { x: dian ? dian.clientX : 0, y: dian ? dian.clientY : 0 }
     }
     const shuBiao = shiJian as MouseEvent
     return { x: shuBiao.clientX, y: shuBiao.clientY }
-  }
-
-  function quXiaoDingGaoZhen(): void {
-    if (dingGaoZhen) {
-      cancelAnimationFrame(dingGaoZhen)
-      dingGaoZhen = 0
-    }
-    dengDaiDingGao = false
-  }
-
-  function dingGaoCaiDanWeiZhi(): void {
-    const yuanSu = caiDanYuanSu.value
-    const dian = dangQianJiaoDian
-    if (!yuanSu || !dian || typeof window === 'undefined') {
-      caiDanDingWei.value = { ...caiDanDingWei.value, dingGao: true }
-      return
-    }
-    const he = yuanSu.getBoundingClientRect()
-    const kuan = window.innerWidth
-    const gao = window.innerHeight
-    const caiDanKuan = he.width
-    const caiDanGao = he.height
-    const bianJu = LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu
-    const jianGe = LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanWeiBaJianGe
-    const neiSuo = LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanWeiBaNeiSuo
-    const fangXia = dian.y + jianGe + caiDanGao <= gao - bianJu
-    const fangShang = dian.y - jianGe - caiDanGao >= bianJu
-    const weiZhi: 'xia' | 'shang' = fangXia || !fangShang ? 'xia' : 'shang'
-    let ding = weiZhi === 'xia' ? dian.y + jianGe : dian.y - jianGe - caiDanGao
-    ding = Math.max(bianJu, Math.min(ding, gao - caiDanGao - bianJu))
-    let zuo = dian.x - neiSuo
-    zuo = Math.max(bianJu, Math.min(zuo, kuan - caiDanKuan - bianJu))
-    const weiBaX = Math.max(neiSuo, Math.min(dian.x - zuo, caiDanKuan - neiSuo))
-    caiDanDingWei.value = {
-      dingGao: true,
-      weiZhi,
-      top: `${ding}px`,
-      left: `${zuo}px`,
-      weiBaX: `${weiBaX}px`,
-    }
-  }
-
-  function anPaiDingGao(): void {
-    quXiaoDingGaoZhen()
-    dengDaiDingGao = true
-    void nextTick(() => {
-      if (!dengDaiDingGao) return
-      dingGaoZhen = requestAnimationFrame(() => {
-        dingGaoZhen = 0
-        if (!dengDaiDingGao) return
-        dengDaiDingGao = false
-        dingGaoCaiDanWeiZhi()
-      })
-    })
   }
 
   function lianJieChuangKouJianKong(): void {
@@ -247,32 +173,16 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
   function guanBiCaiDan(): void {
     dangQianCaiDan.value = null
     dangQianXiaoXi.value = null
-    dangQianJiaoDian = null
-    quXiaoDingGaoZhen()
+    dangQianJiDian.value = null
     duanKaiChuangKouJianKong()
   }
 
-  function daKaiCaiDanNeiBu(xiaoXi: T, leiXing: CaiDanLeiXing, dian: { x: number; y: number }): void {
+  function daKaiCaiDanNeiBu(xiaoXi: T, leiXing: CaiDanLeiXing, dian: CaiDanJiDian): void {
     guanBiDingShiQi()
     dangQianXiaoXi.value = xiaoXi
     dangQianCaiDan.value = leiXing
-    dangQianJiaoDian = dian
-    const bianJu = LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu
-    const neiSuo = LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanWeiBaNeiSuo
-    const jianGe = LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanWeiBaJianGe
-    const cuShiZuo =
-      typeof window === 'undefined'
-        ? dian.x
-        : Math.max(bianJu, Math.min(dian.x - neiSuo, window.innerWidth - bianJu))
-    caiDanDingWei.value = {
-      dingGao: false,
-      weiZhi: 'xia',
-      top: `${dian.y + jianGe}px`,
-      left: `${cuShiZuo}px`,
-      weiBaX: `${neiSuo}px`,
-    }
+    dangQianJiDian.value = dian
     lianJieChuangKouJianKong()
-    anPaiDingGao()
   }
 
   function youJianBeiPingBi(): boolean {
@@ -280,13 +190,10 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
   }
 
   function tongGuoLeiXingShenCha(xiaoXi: T, leiXing: CaiDanLeiXing): boolean {
-    if (leiXing === 'yuYin') return shiYuYinXiaoXi(xiaoXi)
-    if (leiXing === 'wenBen') return shiWenBenXiaoXi(xiaoXi)
-    if (leiXing === 'tuPian') return shiTuPianXiaoXi(xiaoXi)
+    if (!shiHeCaiDanLeiXing(xiaoXi, leiXing)) return false
+    if (leiXing !== CAI_DAN_LEI_XING_MO_REN) return true
     return (
-      !shiYuYinXiaoXi(xiaoXi) &&
       xiaoXi.fa_song_zhe_lei_xing === 'yonghu' &&
-      !xiaoXi.yi_che_hui &&
       Date.now() - xiaoXi.shi_jian_chuo <= XIAO_XI_PEI_ZHI.cheHuiShiXian
     )
   }
@@ -331,78 +238,22 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
     if (pianYi > LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.chuMoPianYiXianZhi) guanBiDingShiQi()
   }
 
-  function daKaiCaiDan(xiaoXi: T, shiJian: MouseEvent | TouchEvent) {
-    daKaiYouJianCaiDanLeiXing(xiaoXi, 'cheHui', shiJian)
+  function daKaiCaiDan(xiaoXi: T, shiJian: MouseEvent | TouchEvent): void {
+    daKaiYouJianCaiDanLeiXing(xiaoXi, huoQuCaiDanLeiXing(xiaoXi.lei_xing), shiJian)
   }
 
-  function chuMoKaiShi(xiaoXi: T, shiJian: TouchEvent) {
-    chuMoKaiShiLeiXing(xiaoXi, 'cheHui', shiJian)
+  function chuMoKaiShi(xiaoXi: T, shiJian: TouchEvent): void {
+    chuMoKaiShiLeiXing(xiaoXi, huoQuCaiDanLeiXing(xiaoXi.lei_xing), shiJian)
   }
 
-  function chuMoJieShu() {
+  function chuMoJieShu(): void {
     guanBiDingShiQi()
-  }
-
-  function daKaiYuYinCaiDan(xiaoXi: T, shiJian: MouseEvent | TouchEvent) {
-    daKaiYouJianCaiDanLeiXing(xiaoXi, 'yuYin', shiJian)
-  }
-
-  function chuMoKaiShiYuYin(xiaoXi: T, shiJian: TouchEvent) {
-    chuMoKaiShiLeiXing(xiaoXi, 'yuYin', shiJian)
-  }
-
-  function chuMoJieShuYuYin() {
-    guanBiDingShiQi()
-  }
-
-  function guanBiYuYinCaiDan() {
-    guanBiCaiDan()
-  }
-
-  function huoQuYuYinCaiDanXiang(xiaoXi?: T): YuYinCaiDanXiang[] {
-    const muBiao = xiaoXi ?? (dangQianCaiDan.value === 'yuYin' ? dangQianXiaoXi.value : null)
-    const quanBu = [...LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.yuYinCaiDanXiang]
-    if (!muBiao) return quanBu
-    const kejian = keYinYongXiaoXi(muBiao) ? quanBu : quanBu.filter((xiang) => xiang !== 'yinYong')
-    if (keXianShiCheHui(muBiao)) return kejian
-    return kejian.filter((xiang) => xiang !== 'cheHui')
   }
 
   function sheZhiYinYongMuBiao(muBiao: T): boolean {
     if (!keYinYongXiaoXi(muBiao)) return false
     yinYongXiaoXi.value = { ...muBiao }
     return true
-  }
-
-  async function zhiXingYuYinCaiDanXiang(xiang: YuYinCaiDanXiang) {
-    const muBiao = dangQianCaiDan.value === 'yuYin' ? dangQianXiaoXi.value : null
-    guanBiCaiDan()
-    if (!muBiao) return
-    if (xiang === 'yinYong') {
-      sheZhiYinYongMuBiao(muBiao)
-      return
-    }
-    if (xiang === 'cheHui') {
-      await yiLai.cheHuiXiaoXi(muBiao.id)
-      return
-    }
-    await yiLai.qieHuanYuYinZhuanWenZi?.(muBiao)
-  }
-
-  function daKaiWenBenCaiDan(xiaoXi: T, shiJian: MouseEvent | TouchEvent) {
-    daKaiYouJianCaiDanLeiXing(xiaoXi, 'wenBen', shiJian)
-  }
-
-  function chuMoKaiShiWenBen(xiaoXi: T, shiJian: TouchEvent) {
-    chuMoKaiShiLeiXing(xiaoXi, 'wenBen', shiJian)
-  }
-
-  function chuMoJieShuWenBen() {
-    guanBiDingShiQi()
-  }
-
-  function guanBiWenBenCaiDan() {
-    guanBiCaiDan()
   }
 
   function keXianShiCheHui(xiaoXi: T): boolean {
@@ -412,13 +263,31 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
     return yiLai.dangQianShiJian.value - xiaoXi.shi_jian_chuo <= XIAO_XI_PEI_ZHI.cheHuiShiXian
   }
 
-  function huoQuWenBenCaiDanXiang(xiaoXi?: T): WenBenCaiDanXiang[] {
-    const muBiao = xiaoXi ?? (dangQianCaiDan.value === 'wenBen' ? dangQianXiaoXi.value : null)
-    const quanBu = [...LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.wenBenCaiDanXiang]
-    if (!muBiao) return quanBu
-    const kejian = keYinYongXiaoXi(muBiao) ? quanBu : quanBu.filter((xiang) => xiang !== 'yinYong')
-    if (keXianShiCheHui(muBiao)) return kejian
-    return kejian.filter((xiang) => xiang !== 'cheHui')
+  const caiDanXiangChuli: Record<XiaoXiCaiDanXiang, (muBiao: T) => Promise<unknown> | void> = {
+    cheHui: (muBiao) => yiLai.cheHuiXiaoXi(muBiao.id),
+    yinYong: (muBiao) => {
+      sheZhiYinYongMuBiao(muBiao)
+    },
+    fuZhi: async (muBiao) => {
+      const fuZhiHanShu = yiLai.fuZhiWenBen ?? fuZhiWenBen
+      const chengGong = await fuZhiHanShu(muBiao.nei_rong || '')
+      if (!chengGong) {
+        yiLai.sheZhiCuoWu?.(huoQuFanYi('liaoTian', 'fuZhiShiBai'))
+      }
+    },
+    fanYi: (muBiao) => qingQiuWenBenFanYi(muBiao),
+    yuYinZhuanWenZi: (muBiao) => yiLai.qieHuanYuYinZhuanWenZi?.(muBiao),
+    baoCunTuPian: (muBiao) => yiLai.baoCunMeiTi?.(muBiao),
+    tianJiaDaoBiaoQing: (muBiao) => yiLai.tianJiaDaoBiaoQing?.(muBiao),
+  }
+
+  async function zhiXingCaiDanXiang(xiang: XiaoXiCaiDanXiang): Promise<void> {
+    const muBiao = dangQianXiaoXi.value
+    const keXuanXiang = dangQianCaiDanXiang.value
+    guanBiCaiDan()
+    if (!muBiao) return
+    if (!keXuanXiang.includes(xiang)) return
+    await caiDanXiangChuli[xiang](muBiao)
   }
 
   function huoQuFanYiJieGuo(xiaoXi: T): string | undefined {
@@ -532,105 +401,13 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
     }
   }
 
-  async function zhiXingWenBenCaiDanXiang(xiang: WenBenCaiDanXiang) {
-    const muBiao = dangQianCaiDan.value === 'wenBen' ? dangQianXiaoXi.value : null
-    guanBiCaiDan()
-    if (!muBiao) return
-    if (xiang === 'yinYong') {
-      sheZhiYinYongMuBiao(muBiao)
-      return
-    }
-    if (xiang === 'cheHui') {
-      await yiLai.cheHuiXiaoXi(muBiao.id)
-      return
-    }
-    if (xiang === 'fuZhi') {
-      const fuZhiHanShu = yiLai.fuZhiWenBen ?? fuZhiWenBen
-      const chengGong = await fuZhiHanShu(muBiao.nei_rong || '')
-      if (!chengGong) {
-        yiLai.sheZhiCuoWu?.(huoQuFanYi('liaoTian', 'fuZhiShiBai'))
-      }
-      return
-    }
-    await qingQiuWenBenFanYi(muBiao)
-  }
-
-  function daKaiTuPianCaiDan(xiaoXi: T, shiJian: MouseEvent | TouchEvent) {
-    daKaiYouJianCaiDanLeiXing(xiaoXi, 'tuPian', shiJian)
-  }
-
-  function chuMoKaiShiTuPian(xiaoXi: T, shiJian: TouchEvent) {
-    chuMoKaiShiLeiXing(xiaoXi, 'tuPian', shiJian)
-  }
-
-  function chuMoJieShuTuPian() {
-    guanBiDingShiQi()
-  }
-
-  function guanBiTuPianCaiDan() {
-    guanBiCaiDan()
-  }
-
-  function huoQuTuPianCaiDanXiang(xiaoXi?: T): TuPianCaiDanXiang[] {
-    const muBiao = xiaoXi ?? (dangQianCaiDan.value === 'tuPian' ? dangQianXiaoXi.value : null)
-    const quanBu = (
-      yiLai.zhiChiTuPianYinYong
-        ? [...LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.tuPianCaiDanXiang]
-        : LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.tuPianCaiDanXiang.filter(
-            (xiang) => xiang !== 'yinYong',
-          )
-    ) as TuPianCaiDanXiang[]
-    const kejian = muBiao && !keYinYongXiaoXi(muBiao) ? quanBu.filter((xiang) => xiang !== 'yinYong') : quanBu
-    if (muBiao && !keXianShiCheHui(muBiao)) {
-      return kejian.filter((xiang) => xiang !== 'cheHui')
-    }
-    return kejian
-  }
-
-  async function zhiXingTuPianCaiDanXiang(xiang: TuPianCaiDanXiang) {
-    const muBiao = dangQianCaiDan.value === 'tuPian' ? dangQianXiaoXi.value : null
-    guanBiCaiDan()
-    if (!muBiao) return
-    if (xiang === 'cheHui') {
-      await yiLai.cheHuiXiaoXi(muBiao.id)
-      return
-    }
-    if (xiang === 'yinYong') {
-      sheZhiYinYongMuBiao(muBiao)
-      return
-    }
-    if (xiang === 'baoCunTuPian') {
-      await yiLai.baoCunMeiTi?.(muBiao)
-      return
-    }
-    await yiLai.tianJiaDaoBiaoQing?.(muBiao)
-  }
-
-  function sheZhiYinYong(xiaoXi: T) {
+  function sheZhiYinYong(xiaoXi: T): void {
     sheZhiYinYongMuBiao(xiaoXi)
     guanBiCaiDan()
   }
 
-  function quXiaoYinYong() {
+  function quXiaoYinYong(): void {
     yinYongXiaoXi.value = null
-  }
-
-  async function zhiXingCheHui() {
-    const muBiao = dangQianCaiDan.value === 'cheHui' ? dangQianXiaoXi.value : null
-    guanBiCaiDan()
-    if (!muBiao) return
-    await yiLai.cheHuiXiaoXi(muBiao.id)
-  }
-
-  function xianShiCheHuiAnNiu(xiaoXi: T): boolean {
-    if (xiaoXi.fa_song_zhe_lei_xing !== 'yonghu') return false
-    if (xiaoXi.yi_che_hui) return false
-    if (!xiaoXi.shi_jian_chuo) return false
-    return yiLai.dangQianShiJian.value - xiaoXi.shi_jian_chuo <= XIAO_XI_PEI_ZHI.cheHuiShiXian
-  }
-
-  async function zhiXingCheHuiXiaoXi(xiaoXi: T) {
-    await yiLai.cheHuiXiaoXi(xiaoXi.id)
   }
 
   if (getCurrentScope()) {
@@ -641,40 +418,17 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
   }
 
   return {
-    caiDanDingWei,
-    caiDanYuanSu,
-    caiDanBenRen,
-    dingGaoCaiDanWeiZhi,
+    dangQianCaiDanLeiXing,
+    dangQianCaiDanXiang,
+    dangQianXiaoXi,
+    dangQianJiDian,
+    caiDanZhengDaKai,
     guanBiCaiDan,
     chuMoYiDongQuXiao,
-    cheHuiCaiDanZhanKai,
     daKaiCaiDan,
     chuMoKaiShi,
     chuMoJieShu,
-    zhiXingCheHui,
-    xianShiCheHuiAnNiu,
-    zhiXingCheHuiXiaoXi,
-    yuYinCaiDanZhanKai,
-    daKaiYuYinCaiDan,
-    chuMoKaiShiYuYin,
-    chuMoJieShuYuYin,
-    guanBiYuYinCaiDan,
-    huoQuYuYinCaiDanXiang,
-    zhiXingYuYinCaiDanXiang,
-    wenBenCaiDanZhanKai,
-    daKaiWenBenCaiDan,
-    chuMoKaiShiWenBen,
-    chuMoJieShuWenBen,
-    guanBiWenBenCaiDan,
-    huoQuWenBenCaiDanXiang,
-    zhiXingWenBenCaiDanXiang,
-    tuPianCaiDanZhanKai,
-    daKaiTuPianCaiDan,
-    chuMoKaiShiTuPian,
-    chuMoJieShuTuPian,
-    guanBiTuPianCaiDan,
-    huoQuTuPianCaiDanXiang,
-    zhiXingTuPianCaiDanXiang,
+    zhiXingCaiDanXiang,
     huoQuFanYiJieGuo,
     huoQuFanYiCuoWu,
     shiFanYiZhong,

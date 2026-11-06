@@ -12,8 +12,6 @@ const jiaZaiTiaoZhanZhuYe = () => import('@/views/挑战主页.vue')
 const jiaZaiTiaoZhanPaiHangBang = () => import('@/views/挑战积分榜.vue')
 const jiaZaiHaoYouLieBiao = () => import('@/views/好友列表.vue')
 
-const tiaoZhanZuBieLieBiao = ['nan_nv', 'nv_nan', 'nan_nan', 'nv_nv'] as const
-
 function duZiFuCanShu(zhi: unknown): string {
   return typeof zhi === 'string' ? zhi : ''
 }
@@ -158,17 +156,13 @@ const luYou: RouteRecordRaw[] = [
             wenAn: 'tiaoZhanZhuYe',
             renWu: [
               async (to) => {
-                const [{ huoQuDangQianDuiJu }, { huoQuWoDeGaiKuang }, { use挑战榜单 }] =
-                  await Promise.all([
-                    import('@/api/挑战'),
-                    import('@/api/挑战'),
-                    import('@/composables/use挑战榜单'),
-                  ])
+                const { huoQuDangQianDuiJu, huoQuWoDeGaiKuang } = await import('@/api/挑战')
+                const { use挑战榜单 } = await import('@/composables/use挑战榜单')
                 const zhuShuJu = anJingHua(
                   Promise.all([huoQuDangQianDuiJu(), huoQuWoDeGaiKuang()]),
                 )
                 cunYuQuJiaoJie(to.name, zhuShuJu)
-                return Promise.all([zhuShuJu, use挑战榜单().yuQuQuanBu(tiaoZhanZuBieLieBiao)])
+                return Promise.all([zhuShuJu, use挑战榜单().yuQuQuanBu()])
               },
             ],
             zuJian: jiaZaiTiaoZhanZhuYe,
@@ -184,11 +178,9 @@ const luYou: RouteRecordRaw[] = [
           yuJiaZai: {
             wenAn: 'tiaoZhanPaiHangBang',
             renWu: [
-              async (to) => {
-                const { huoQuPaiHangBang } = await import('@/api/挑战')
-                const chengNuo = anJingHua(huoQuPaiHangBang('nan_nv'))
-                cunYuQuJiaoJie(to.name, chengNuo)
-                return chengNuo
+              async () => {
+                const { use挑战榜单 } = await import('@/composables/use挑战榜单')
+                return anJingHua(use挑战榜单().yuQuQuanBu())
               },
             ],
             zuJian: jiaZaiTiaoZhanPaiHangBang,

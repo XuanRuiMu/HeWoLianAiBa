@@ -192,52 +192,58 @@
               {{ bangDanWo }}
             </p>
           </div>
-          <div ref="zhaiyaoCao" class="zhaiyao-cao">
-            <div :key="bangDanZuBie" class="zhaiyao-ceng">
-              <div v-if="bangDanZhuangTai === 'jiaZai'" class="zhaiyao-nei zhaiyao-gu" role="status">
-                <template v-if="shouPingYiWanCheng">
-                  <span class="ping-mu-wai">{{ huoQuFanYi('tiaoZhan', 'jiaZaiZhong') }}</span>
-                  <div v-for="序 in 骨架行数" :key="序" class="zhaiyao-zhanwei" aria-hidden="true">
-                    <span class="zhanwei-kuai zhanwei-kuai--pai" />
-                    <span class="zhanwei-kuai zhanwei-kuai--ming" />
-                    <span class="zhanwei-kuai zhanwei-kuai--fen" />
-                  </div>
-                </template>
-              </div>
-              <div v-else-if="bangDanZhuangTai === 'cuoWu'" class="zhaiyao-nei">
-                <TiaoZhanKongTai>{{ bangDanCuoWu?.lianAiWenAn }}</TiaoZhanKongTai>
-                <button
-                  v-if="bangDanCuoWu?.retryable"
-                  class="zhaiyao-chongshi"
-                  type="button"
-                  @click="jiaZaiBangDan"
+          <div ref="zhaiyaoCao" class="zhaiyao-cao fanYe-cao">
+            <Transition :name="fanYeGuoDuMing">
+              <div :key="bangDanZuBie" class="zhaiyao-ceng fanYe-ceng">
+                <div
+                  v-if="bangDanZhuangTai === 'jiaZai'"
+                  class="zhaiyao-nei zhaiyao-gu"
+                  role="status"
                 >
-                  {{ huoQuFanYi('tongYong', 'qianTaiCuoWuChongShi') }}
-                </button>
+                  <template v-if="shouPingYiWanCheng">
+                    <span class="ping-mu-wai">{{ huoQuFanYi('tiaoZhan', 'jiaZaiZhong') }}</span>
+                    <div v-for="序 in 骨架行数" :key="序" class="zhaiyao-zhanwei" aria-hidden="true">
+                      <span class="zhanwei-kuai zhanwei-kuai--pai" />
+                      <span class="zhanwei-kuai zhanwei-kuai--ming" />
+                      <span class="zhanwei-kuai zhanwei-kuai--fen" />
+                    </div>
+                  </template>
+                </div>
+                <div v-else-if="bangDanZhuangTai === 'cuoWu'" class="zhaiyao-nei">
+                  <TiaoZhanKongTai>{{ bangDanCuoWu?.lianAiWenAn }}</TiaoZhanKongTai>
+                  <button
+                    v-if="bangDanCuoWu?.retryable"
+                    class="zhaiyao-chongshi"
+                    type="button"
+                    @click="jiaZaiBangDan"
+                  >
+                    {{ huoQuFanYi('tongYong', 'qianTaiCuoWuChongShi') }}
+                  </button>
+                </div>
+                <div v-else-if="bangDanZhuangTai === 'kong'" class="zhaiyao-nei">
+                  <TiaoZhanKongTai>{{ huoQuFanYi('tiaoZhan', 'zanWuPaiHang') }}</TiaoZhanKongTai>
+                </div>
+                <ol v-else class="zhaiyao-liebiao">
+                  <li
+                    v-for="(xiang, suoYin) in bangDanLieBiao"
+                    :key="`${bangDanZuBie}-${suoYin}`"
+                    class="zhaiyao-hang"
+                    :class="{ 'zhaiyao-hang--yi': suoYin === 0 }"
+                  >
+                    <span class="zhaiyao-paiming">{{ xiang.pai_ming }}</span>
+                    <span class="zhaiyao-wen">
+                      <span class="zhaiyao-ming">{{ xiang.yong_hu_ming }}</span>
+                      <span class="zhaiyao-duan">{{ xiang.duan_wei }}</span>
+                    </span>
+                    <span class="zhaiyao-jifen">
+                      {{ xiang.ji_fen }}<span class="jifen-danwei">{{
+                        huoQuFanYi('tiaoZhan', 'fenDanWei')
+                      }}</span>
+                    </span>
+                  </li>
+                </ol>
               </div>
-              <div v-else-if="bangDanZhuangTai === 'kong'" class="zhaiyao-nei">
-                <TiaoZhanKongTai>{{ huoQuFanYi('tiaoZhan', 'zanWuPaiHang') }}</TiaoZhanKongTai>
-              </div>
-              <ol v-else class="zhaiyao-liebiao">
-                <li
-                  v-for="(xiang, suoYin) in bangDanLieBiao"
-                  :key="`${bangDanZuBie}-${suoYin}`"
-                  class="zhaiyao-hang"
-                  :class="{ 'zhaiyao-hang--yi': suoYin === 0 }"
-                >
-                  <span class="zhaiyao-paiming">{{ xiang.pai_ming }}</span>
-                  <span class="zhaiyao-wen">
-                    <span class="zhaiyao-ming">{{ xiang.yong_hu_ming }}</span>
-                    <span class="zhaiyao-duan">{{ xiang.duan_wei }}</span>
-                  </span>
-                  <span class="zhaiyao-jifen">
-                    {{ xiang.ji_fen }}<span class="jifen-danwei">{{
-                      huoQuFanYi('tiaoZhan', 'fenDanWei')
-                    }}</span>
-                  </span>
-                </li>
-              </ol>
-            </div>
+            </Transition>
           </div>
           <button class="zhaiyao-quanbu" type="button" @click="qianWangPaiHangBang">
             {{ huoQuFanYi('tiaoZhan', 'chaKanWanZhengBang') }}
@@ -367,7 +373,12 @@ import {
   type ZuBieGaiKuang,
   type PaiHangXiangMu,
 } from '@/api/挑战'
-import { use挑战榜单 } from '@/composables/use挑战榜单'
+import {
+  use挑战榜单,
+  qieZuFanYeGuoDuMing,
+  tiaoZhanZuBieLieBiao,
+  type FanYeGuoDuMing,
+} from '@/composables/use挑战榜单'
 import { huoQuFanYi } from '@/config/翻译表'
 import { 选择形态, type 性别二档, type 性别用户形态 } from '@/utils/性别'
 import { 使用通用性别框体配色 } from '@/composables/use性别框体配色'
@@ -384,7 +395,7 @@ const LU_YOU_MING = 'tiaoZhanZhuYe'
 
 const router = useRouter()
 
-const zuBieLieBiao: ZuBie[] = ['nan_nv', 'nv_nan', 'nan_nan', 'nv_nv']
+const zuBieLieBiao = tiaoZhanZuBieLieBiao
 
 const tiaoZhanBuZhouLieBiao = [1, 2, 3]
 
@@ -422,6 +433,7 @@ let bangDanYiDongGuo = false
 let bangDanDaiCi = 0
 
 const zhaiyaoCao = ref<HTMLElement | null>(null)
+const fanYeGuoDuMing = ref<FanYeGuoDuMing>('fanYe-qianJin')
 let 高度代次 = 0
 let 高度释放计时 = 0
 
@@ -547,8 +559,13 @@ function 降低动效(): boolean {
 }
 
 function 榜单内容高(): number {
-  const 内容 = zhaiyaoCao.value?.firstElementChild
-  return 内容 instanceof HTMLElement ? 内容.getBoundingClientRect().height : 0
+  const 容器 = zhaiyaoCao.value
+  if (容器 === null) return 0
+  const 在流面板 = Array.from(容器.children).filter(
+    (项): 项 is HTMLElement => 项 instanceof HTMLElement && !项.className.includes('leave-active'),
+  )
+  const 面板 = 在流面板[在流面板.length - 1]
+  return 面板 instanceof HTMLElement ? 面板.getBoundingClientRect().height : 0
 }
 
 function 锁定榜单高(): void {
@@ -584,13 +601,13 @@ function 过渡榜单高(): void {
 
 async function jiaZaiBangDan(): Promise<boolean> {
   const benCiZuBie = bangDanZuBie.value
+  const benCiDaiCi = ++bangDanDaiCi
   const 缓存 = bangDanHuanCun.value.get(benCiZuBie)
   if (缓存 !== undefined) {
     bangDanCuoWu.value = null
     应用榜单(缓存)
     return true
   }
-  const benCiDaiCi = ++bangDanDaiCi
   bangDanLieBiao.value = []
   bangDanCuoWu.value = null
   bangDanZhuangTai.value = 'jiaZai'
@@ -632,13 +649,14 @@ function 量ZuZhishi() {
 async function chongShiQuanBu() {
   await chongShiZhuShuJu()
   qingChu()
-  await yuQuQuanBu(zuBieLieBiao)
+  await yuQuQuanBu()
   await jiaZaiBangDan()
 }
 
 async function qieHuanBangDanZu(zuBie: ZuBie): Promise<void> {
   if (bangDanZuBie.value === zuBie) return
   bangDanYiDongGuo = true
+  fanYeGuoDuMing.value = qieZuFanYeGuoDuMing(bangDanZuBie.value, zuBie)
   锁定榜单高()
   bangDanZuBie.value = zuBie
   const 命中缓存 = await jiaZaiBangDan()
@@ -660,7 +678,7 @@ onMounted(async () => {
     尺寸观察 = new ResizeObserver(量ZuZhishi)
     尺寸观察.observe(zuQieKuang.value)
   }
-  void yuQuQuanBu(zuBieLieBiao)
+  void yuQuQuanBu()
   await jiaZaiShuJu()
   void jiaZaiPeiZhi()
   await jiaZaiBangDan()
@@ -1365,15 +1383,12 @@ onBeforeUnmount(() => {
 }
 
 .zhaiyao-cao {
-  display: block;
-  overflow: hidden;
   transition: height var(--tz-gao-dong) var(--tz-gao-quxian);
 }
 
 .zhaiyao-ceng {
   display: flex;
   flex-direction: column;
-  animation: zhaiyao-ceng-ru var(--tz-ka-dong) ease-out both;
 }
 
 .zhaiyao-nei {
@@ -1707,17 +1722,6 @@ onBeforeUnmount(() => {
   }
 }
 
-@keyframes zhaiyao-ceng-ru {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes xingbie-zhe-zhao-ru {
   from {
     opacity: 0;
@@ -1748,7 +1752,6 @@ onBeforeUnmount(() => {
   .zhaiyao-quanbu,
   .zhaiyao-chongshi,
   .zhaiyao-cao,
-  .zhaiyao-ceng,
   .xingbie-zhezhao,
   .xingbie-tanchuang {
     transition: none;

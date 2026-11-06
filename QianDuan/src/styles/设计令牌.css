@@ -251,6 +251,26 @@
   --zhao-hui-tiao-zhuan-miao: 8;
   --daohanglan-gao-du: calc(52px + var(--anquan-quyu-shang));
   --daohanglan-gao-du-zhai: calc(48px + var(--anquan-quyu-shang));
+
+  --guodu-jiao-kuan: clamp(232px, 52vmin, 600px);
+  --guodu-jin-chang-du: 150ms;
+  --guodu-jin-yan-er: 70ms;
+  --guodu-jin-yan-san: 140ms;
+  --guodu-jin-chang-san: 140ms;
+  --guodu-jin-yan-zi: 170ms;
+  --guodu-jin-chang-ye: 90ms;
+  --guodu-tui-chang-du: 160ms;
+  --guodu-tui-yan-er: 60ms;
+  --guodu-tui-yan-san: 120ms;
+  --guodu-tui-chang-ye: 280ms;
+  --guodu-bi-kuan-lun: 2.1;
+  --guodu-bi-kuan-tuo: 1.5;
+  --guodu-bi-kuan-tian: 1.25;
+  --guodu-bi-kuan-wen: 1.5;
+  --guodu-bi-kuan-fu-wen: 1.1;
+  --guodu-wen-guang-kuan: 7px;
+  --guodu-wen-kuan: min(86%, 520px);
+  --guodu-zi-ju: 0.08em;
 }
 
 :root[data-theme="light"] {
@@ -277,7 +297,7 @@
   --jing-gao-se: #ff9800;
   --xiaoxi-yonghu-wenben: #000000;
   --xiaoxi-jiaose-wenben: #000000;
-  --xiaoxi-wei-fasong-zhe-zhao: rgba(0, 0, 0, 0.4);
+  --xiaoxi-fasong-zhong-liang-du: 0.6;
   --liaotian-beijing: #ededed;
   
   --gundong-tiao-beijing: rgba(110, 110, 110, 0.85);
@@ -411,6 +431,7 @@
   --boli-yinying: 0 8px 32px rgba(0, 0, 0, 0.08);
   --zhezhao-beijing: rgba(0, 0, 0, 0.4);
   --fasong-anniu-wenben: #ffffff;
+  --fasong-anniu-jinyong-liang-du: 0.64;
   --yanse-zhanji: #6C5CE7;
   --yanse-zhanji-qian: #A29BFE;
   --yanse-weixian: #ff6b6b;
@@ -467,6 +488,14 @@
   --liuli-jishu-di: #b34a68;
   --liuli-jishu-wenben: #ffffff;
   --liuli-lengxian: linear-gradient(90deg, transparent, rgba(255, 255, 255, 1), transparent);
+
+  --guodu-mian-bu: #f4eee2;
+  --guodu-mo-mu: #17120d;
+  --guodu-cheng-se: #d0611f;
+  --guodu-wen-zi: #1b1610;
+  --guodu-tian-du: 0.62;
+  --guodu-wen-du: 0.3;
+  --guodu-fu-wen-du: 0.14;
 }
 
 :root,
@@ -494,7 +523,7 @@
   --jing-gao-se: #ffa726;
   --xiaoxi-yonghu-wenben: #000000;
   --xiaoxi-jiaose-wenben: #E0E0E0;
-  --xiaoxi-wei-fasong-zhe-zhao: rgba(0, 0, 0, 0.45);
+  --xiaoxi-fasong-zhong-liang-du: 0.55;
   --liaotian-beijing: #111111;
   
   --gundong-tiao-beijing: rgba(150, 150, 150, 0.9);
@@ -628,6 +657,7 @@
   --boli-yinying: 0 8px 32px rgba(0, 0, 0, 0.2);
   --zhezhao-beijing: rgba(0, 0, 0, 0.6);
   --fasong-anniu-wenben: #ffffff;
+  --fasong-anniu-jinyong-liang-du: 0.64;
   --yanse-zhanji: #6C5CE7;
   --yanse-zhanji-qian: #A29BFE;
   --pai-xu-shou-wei-jin-yong-bian-kuang: #4a4a58;
@@ -687,4 +717,12 @@
   --liuli-jishu-di: #b35f7e;
   --liuli-jishu-wenben: #ffffff;
   --liuli-lengxian: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+
+  --guodu-mian-bu: #413a2c;
+  --guodu-mo-mu: #f2e9d6;
+  --guodu-cheng-se: #ff9b3f;
+  --guodu-wen-zi: #fbf6ea;
+  --guodu-tian-du: 0.74;
+  --guodu-wen-du: 0.34;
+  --guodu-fu-wen-du: 0.18;
 }

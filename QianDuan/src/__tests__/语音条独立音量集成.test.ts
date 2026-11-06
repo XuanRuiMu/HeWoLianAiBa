@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import type { 消息 } from '@/types/类型定义'
 import type { YuYinShiBieQi } from '@/composables/use语音转文字'
+import { YU_YIN_YIN_LIANG_PEI_ZHI } from '@/composables/use语音音量'
 
 const YUAN_SHI_AUDIO = globalThis.Audio
 const YUAN_SHI_AUDIO_CONTEXT = window.AudioContext
@@ -63,35 +64,63 @@ function zhuangWebAudio(huanChong: 'youSheng' | 'jingYin'): {
 } {
   const lianJieJiLu: string[] = []
   const zengYiZhi = { value: 1 }
+  type ShangYou = { ming: string; gain?: { value: number } }
+  type MuBiaoJieDian = ShangYou & { shangYou: ShangYou[] }
+  function lianJieDao(ben: ShangYou, ming: string, muBiao: MuBiaoJieDian): void {
+    lianJieJiLu.push(`${ming}->${muBiao.ming}`)
+    muBiao.shangYou.push(ben)
+  }
   class JiaFenXiQi {
     ming = 'fenXiQi'
-    fftSize = 512
-    smoothingTimeConstant = 0.5
-    connect(): void {
-      lianJieJiLu.push('fenXiQi->destination')
+    fftSize = YU_YIN_YIN_LIANG_PEI_ZHI.fftChiCun
+    smoothingTimeConstant = YU_YIN_YIN_LIANG_PEI_ZHI.pingHuaXiShu
+    shangYou: ShangYou[] = []
+    connect(muBiao: MuBiaoJieDian): void {
+      lianJieDao(this, this.ming, muBiao)
+    }
+    private shuChuQiangDu(): number {
+      if (huanChong === 'jingYin') return 0
+      let beiShu = 1
+      for (const shang of this.shangYou) {
+        if (shang.ming === 'zengYi' && shang.gain) beiShu *= shang.gain.value
+      }
+      return 0.3 * beiShu
     }
     getByteTimeDomainData(huan: Uint8Array): void {
+      const fengZhi = this.shuChuQiangDu() * Math.SQRT2 * 128
       for (let suoYin = 0; suoYin < huan.length; suoYin += 1) {
-        huan[suoYin] = huanChong === 'jingYin' ? 128 : 128 + Math.round(60 * Math.sin(suoYin / 5))
+        huan[suoYin] = 128 + Math.round(fengZhi * Math.sin(suoYin / 5))
+      }
+    }
+    getFloatTimeDomainData(huan: Float32Array): void {
+      const fengZhi = this.shuChuQiangDu() * Math.SQRT2
+      for (let suoYin = 0; suoYin < huan.length; suoYin += 1) {
+        huan[suoYin] = fengZhi * Math.sin(suoYin / 5)
       }
     }
   }
   class JiaZengYi {
     ming = 'zengYi'
     gain = zengYiZhi
-    connect(muBiao: { ming: string }): void {
-      lianJieJiLu.push(`zengYi->${muBiao.ming}`)
+    shangYou: ShangYou[] = []
+    connect(muBiao: MuBiaoJieDian): void {
+      lianJieDao(this, this.ming, muBiao)
     }
   }
   class JiaYuan {
     ming = 'yuan'
-    connect(muBiao: { ming: string }): void {
-      lianJieJiLu.push(`yuan->${muBiao.ming}`)
+    shangYou: ShangYou[] = []
+    connect(muBiao: MuBiaoJieDian): void {
+      lianJieDao(this, this.ming, muBiao)
     }
   }
   class JiaShangXiaWen {
     state = 'running'
-    destination = { ming: 'destination', connect: (): void => undefined }
+    destination = {
+      ming: 'destination',
+      shangYou: [] as ShangYou[],
+      connect: (): void => undefined,
+    }
     createMediaElementSource = (): JiaYuan => new JiaYuan()
     createGain = (): JiaZengYi => new JiaZengYi()
     createAnalyser = (): JiaFenXiQi => new JiaFenXiQi()
@@ -171,7 +200,7 @@ describe('语音播放音量链路', () => {
     boFang.tingZhiYinPinBoFang()
   })
 
-  it('接入 WebAudio 后媒体链路为 源→增益→分析器→输出，增益可超过 1 且 element.volume 恒为 1', async () => {
+  it('接入 WebAudio 后媒体链路为 源→分析器→增益→输出，增益可超过 1 且 element.volume 恒为 1', async () => {
     vi.resetModules()
     vi.stubGlobal('Audio', JiaBoFangYinPin as unknown as typeof Audio)
     const { lianJieJiLu, zengYiZhi, haiYuan } = zhuangWebAudio('youSheng')
@@ -185,7 +214,7 @@ describe('语音播放音量链路', () => {
     boFang.qieHuanYuYinBoFang(xiaoXi)
     const yinPin = JiaBoFangYinPin.shiLiMen.at(-1) as JiaBoFangYinPin
     await dengDaiWeiRenWu()
-    expect(lianJieJiLu).toEqual(['yuan->zengYi', 'zengYi->fenXiQi', 'fenXiQi->destination'])
+    expect(lianJieJiLu).toEqual(['yuan->fenXiQi', 'fenXiQi->zengYi', 'zengYi->destination'])
     expect(yinPin.volume).toBe(1)
     expect(yinPin.muted).toBe(false)
     expect(zengYiZhi.value).toBe(1)
@@ -202,6 +231,42 @@ describe('语音播放音量链路', () => {
     expect(zengYiZhi.value).toBe(1.5)
     expect(yinPin.muted).toBe(false)
     boFang.tingZhiYinPinBoFang()
+    haiYuan()
+  })
+
+  it('声波弧测量增益之前的信号：本条音量拉低时档位不会整体塌陷', async () => {
+    vi.resetModules()
+    vi.stubGlobal('Audio', JiaBoFangYinPin as unknown as typeof Audio)
+    const { zengYiZhi, lianJieJiLu, haiYuan } = zhuangWebAudio('youSheng')
+    const { use语音播放 } = await import('@/composables/use语音播放')
+    const yinLiang = await import('@/composables/use语音音量')
+    let haoMiao = 0
+    const shiZhong = vi.spyOn(performance, 'now').mockImplementation(() => haoMiao)
+    const boFang = use语音播放({
+      huoQuDiZhi: () => '/api/媒体/签名URL?zeng-yi-qian=1',
+      huoQuYinLiang: () => 1,
+    })
+    boFang.qieHuanYuYinBoFang(zaoXiaoXi('fp02-zeng-yi-qian'))
+    await dengDaiWeiRenWu()
+    expect(lianJieJiLu).toEqual(['yuan->fenXiQi', 'fenXiQi->zengYi', 'zengYi->destination'])
+    expect(yinLiang.shiYuYinYinLiangKeYong()).toBe(true)
+    const ceLiang = (): number[] => {
+      const ce: number[] = []
+      for (let zhen = 0; zhen < 20; zhen += 1) {
+        haoMiao += 1000 / 60
+        ce.push(yinLiang.duQuYuYinYinLiang())
+      }
+      return ce
+    }
+    const menKan = yinLiang.YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.shengRuGaoYin
+    const zaiShengYiQian = ceLiang()
+    yinLiang.sheZhiYuYinZengYi(0.05)
+    expect(zengYiZhi.value).toBe(0.05)
+    const zaiShengYiHou = ceLiang()
+    expect(Math.min(...zaiShengYiQian), '正常音量下稳定语音应维持高档').toBeGreaterThanOrEqual(menKan)
+    expect(Math.min(...zaiShengYiHou), '音量滑到 5% 不得改变声波弧档位').toBeGreaterThanOrEqual(menKan)
+    boFang.tingZhiYinPinBoFang()
+    shiZhong.mockRestore()
     haiYuan()
   })
 
@@ -229,7 +294,7 @@ describe('语音播放音量链路', () => {
     await dengDaiWeiRenWu()
     expect(duiFangYinPin.volume).toBe(1)
     expect(zengYiZhi.value).toBe(0.25)
-    expect(lianJieJiLu.filter((ji) => ji === 'yuan->zengYi')).toHaveLength(2)
+    expect(lianJieJiLu.filter((ji) => ji === 'yuan->fenXiQi')).toHaveLength(2)
     boFang.tingZhiYinPinBoFang()
     haiYuan()
   })

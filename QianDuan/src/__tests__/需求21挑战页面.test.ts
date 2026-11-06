@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import { huoQuFanYi } from '@/config/翻译表'
 import { chuangJianQianTaiCuoWu } from '@/utils/前台错误'
 import type { PaiHangXiangMu, ZuBie, ZuBieGaiKuang } from '@/api/挑战'
-import { use挑战榜单 } from '@/composables/use挑战榜单'
+import { use挑战榜单, qieZuFanYeGuoDuMing } from '@/composables/use挑战榜单'
 
 const { 路由推 } = vi.hoisted(() => ({ 路由推: vi.fn() }))
 
@@ -348,14 +348,21 @@ describe('挑战积分榜', () => {
     包.unmount()
   })
 
-  it('切换组别重新请求并从第一组开始渲染', async () => {
+  it('切换组别读预加载缓存零请求，方向索引靠右的组用前进翻页', async () => {
     const 第二条 = 榜单[1]
     if (!第二条) throw new Error('缺少第二条榜单')
-    vi.mocked(huoQuPaiHangBang).mockResolvedValue([第二条])
+    vi.mocked(huoQuPaiHangBang).mockImplementation(async (zuBie: ZuBie) =>
+      zuBie === 'nan_nv' ? 榜单 : [第二条],
+    )
     const 包 = await 挂榜单()
+    await flushPromises()
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(4)
     await 包.findAll('.zubie-anNiu')[1]?.trigger('click')
     await flushPromises()
-    expect(huoQuPaiHangBang).toHaveBeenLastCalledWith('nv_nan')
+    expect(huoQuPaiHangBang).toHaveBeenCalledTimes(4)
+    expect(qieZuFanYeGuoDuMing('nan_nv', 'nv_nan')).toBe('fanYe-qianJin')
+    expect(qieZuFanYeGuoDuMing('nv_nv', 'nan_nv')).toBe('fanYe-houTui')
+    expect(包.find('.bangdan-ceng').exists()).toBe(true)
     expect(包.find('.bangdan-hang').text()).toContain('把所有温柔都留给夏天')
     包.unmount()
   })
