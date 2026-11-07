@@ -7,7 +7,12 @@ import { mount } from '@vue/test-utils'
 import 提示带 from '@/components/提示带.vue'
 import { 使用聊天仓库 } from '@/stores/聊天'
 import { fanYi, huoQuFanYi } from '@/config/翻译表'
-import { faSongXiaoXi as faSongXiaoXiApi, huoQuJiaoSeXiangQing, huoQuXiaoXi } from '@/api/聊天'
+import {
+  faSongXiaoXi as faSongXiaoXiApi,
+  huoQuHaoGanDuLeiJiBianHua,
+  huoQuJiaoSeXiangQing,
+  huoQuXiaoXi,
+} from '@/api/聊天'
 
 vi.mock('@/api/聊天')
 
@@ -19,7 +24,9 @@ const 提示带源码 = 读源('components/提示带.vue')
 
 const WEI_DU = fanYi.zhanJi.haoGanDuWeiDu
 
-function wuWei(fuGai: Partial<Record<'xinRen' | 'qinMi' | 'quWei' | 'guanHuai' | 'zongFen', number>> = {}) {
+function wuWei(
+  fuGai: Partial<Record<'xinRen' | 'qinMi' | 'quWei' | 'guanHuai' | 'zongFen', number>> = {},
+) {
   return [
     { mingCheng: WEI_DU.xinRenBianHua, shuZhi: fuGai.xinRen ?? 0 },
     { mingCheng: WEI_DU.qinMiBianHua, shuZhi: fuGai.qinMi ?? 0 },
@@ -47,7 +54,18 @@ beforeEach(() => {
   localStorage.clear()
   vi.clearAllMocks()
   vi.mocked(huoQuXiaoXi).mockResolvedValue({ lie_biao: [], zong_shu: 0 } as never)
-  vi.mocked(huoQuJiaoSeXiangQing).mockResolvedValue({ jiao_se: null, dang_an_zhuang_tai: null } as never)
+  vi.mocked(huoQuJiaoSeXiangQing).mockResolvedValue({
+    jiao_se: null,
+    dang_an_zhuang_tai: null,
+  } as never)
+  vi.mocked(huoQuHaoGanDuLeiJiBianHua).mockResolvedValue({
+    lun_ci_shu: 0,
+    xin_ren_du_bian_hua: 0,
+    qin_mi_du_bian_hua: 0,
+    qu_wei_du_bian_hua: 0,
+    guan_huai_du_bian_hua: 0,
+    zong_fen_bian_hua: 0,
+  })
 })
 
 describe('聊天好感度增量只读接收', () => {
@@ -67,7 +85,10 @@ describe('聊天好感度增量只读接收', () => {
       zengLiangShiJian('e-1', { qin_mi_du_bian_hua: 2, zong_fen_bian_hua: 3 }),
     )
     expect(仓库.haoGanDuZengLiangBiaoQian).toEqual(wuWei({ qinMi: 2, zongFen: 3 }))
-    expect(仓库.haoGanDuZengLiangBiaoQian[0]).toEqual({ mingCheng: WEI_DU.xinRenBianHua, shuZhi: 0 })
+    expect(仓库.haoGanDuZengLiangBiaoQian[0]).toEqual({
+      mingCheng: WEI_DU.xinRenBianHua,
+      shuZhi: 0,
+    })
     expect(仓库.haoGanDuZengLiangBiaoQian[2]).toEqual({ mingCheng: WEI_DU.quWeiBianHua, shuZhi: 0 })
   })
 
@@ -85,20 +106,28 @@ describe('聊天好感度增量只读接收', () => {
     const 仓库 = 使用聊天仓库()
     await 仓库.jiaZaiXiaoXi('j-1')
     仓库.jieShouHaoGanDuZengLiang(
-      zengLiangShiJian('e-a', { xin_ren_du_bian_hua: 2, qin_mi_du_bian_hua: 3, zong_fen_bian_hua: 5 }),
+      zengLiangShiJian('e-a', {
+        xin_ren_du_bian_hua: 2,
+        qin_mi_du_bian_hua: 3,
+        zong_fen_bian_hua: 5,
+      }),
     )
     仓库.jieShouHaoGanDuZengLiang(
-      zengLiangShiJian('e-b', { xin_ren_du_bian_hua: -1, qin_mi_du_bian_hua: -1, zong_fen_bian_hua: -2 }),
+      zengLiangShiJian('e-b', {
+        xin_ren_du_bian_hua: -1,
+        qin_mi_du_bian_hua: -1,
+        zong_fen_bian_hua: -2,
+      }),
     )
-    expect(仓库.haoGanDuZengLiangBiaoQian).toEqual(
-      wuWei({ xinRen: 1, qinMi: 2, zongFen: 3 }),
-    )
+    expect(仓库.haoGanDuZengLiangBiaoQian).toEqual(wuWei({ xinRen: 1, qinMi: 2, zongFen: 3 }))
   })
 
   it('非当前会话、畸形或越权负载一律忽略', async () => {
     const 仓库 = 使用聊天仓库()
     await 仓库.jiaZaiXiaoXi('j-1')
-    仓库.jieShouHaoGanDuZengLiang(zengLiangShiJian('e-ta', { zong_fen_bian_hua: 9, jiao_se_id: 'j-2' } as never))
+    仓库.jieShouHaoGanDuZengLiang(
+      zengLiangShiJian('e-ta', { zong_fen_bian_hua: 9, jiao_se_id: 'j-2' } as never),
+    )
     仓库.jieShouHaoGanDuZengLiang(null)
     仓库.jieShouHaoGanDuZengLiang('x')
     仓库.jieShouHaoGanDuZengLiang({ jiao_se_id: 'j-1', zong_fen_bian_hua: 5 })
@@ -124,7 +153,24 @@ describe('聊天好感度增量只读接收', () => {
     expect(仓库.haoGanDuZengLiangBiaoQian).toEqual(wuWei({ qinMi: 1 }))
   })
 
-  it('发送新消息开启新一轮，本轮增量标签复位为0', async () => {
+  it('重新载入会话时从数据库恢复从开始到现在的累计变化', async () => {
+    vi.mocked(huoQuHaoGanDuLeiJiBianHua).mockResolvedValueOnce({
+      lun_ci_shu: 9,
+      xin_ren_du_bian_hua: 12,
+      qin_mi_du_bian_hua: 8,
+      qu_wei_du_bian_hua: 6,
+      guan_huai_du_bian_hua: 4,
+      zong_fen_bian_hua: 30,
+    })
+    const 仓库 = 使用聊天仓库()
+    await 仓库.jiaZaiXiaoXi('j-1')
+    expect(huoQuHaoGanDuLeiJiBianHua).toHaveBeenCalledWith('j-1')
+    expect(仓库.haoGanDuZengLiangBiaoQian).toEqual(
+      wuWei({ xinRen: 12, qinMi: 8, quWei: 6, guanHuai: 4, zongFen: 30 }),
+    )
+  })
+
+  it('发送新消息不再清空累计变化，断线重进前后数值连续', async () => {
     vi.mocked(faSongXiaoXiApi).mockResolvedValue({
       xiaoXi: { id: 's-1', hui_hua_id: 'j-1', lei_xing: 'wenben', nei_rong: 'hi' },
     } as never)
@@ -133,13 +179,24 @@ describe('聊天好感度增量只读接收', () => {
     仓库.jieShouHaoGanDuZengLiang(zengLiangShiJian('e-1', { zong_fen_bian_hua: 2 }))
     expect(仓库.haoGanDuZengLiangBiaoQian).toEqual(wuWei({ zongFen: 2 }))
     await 仓库.faSongXiaoXi('新一轮')
-    expect(仓库.haoGanDuZengLiangBiaoQian).toEqual(wuWei())
+    expect(仓库.haoGanDuZengLiangBiaoQian).toEqual(wuWei({ zongFen: 2 }))
+  })
+
+  it('累计变化接口失败不影响聊天首屏，本轮仍可从实时事件继续累计', async () => {
+    vi.mocked(huoQuHaoGanDuLeiJiBianHua).mockRejectedValueOnce(new Error('网络失败'))
+    const 仓库 = 使用聊天仓库()
+    await 仓库.jiaZaiXiaoXi('j-1')
+    expect(仓库.jiaZaiShiBai).toBe(false)
+    仓库.jieShouHaoGanDuZengLiang(zengLiangShiJian('e-fail', { qin_mi_du_bian_hua: 1 }))
+    expect(仓库.haoGanDuZengLiangBiaoQian).toEqual(wuWei({ qinMi: 1 }))
   })
 
   it('切换会话与清空状态都会复位增量展示且不残留上一会话数值', async () => {
     const 仓库 = 使用聊天仓库()
     await 仓库.jiaZaiXiaoXi('j-1')
-    仓库.jieShouHaoGanDuZengLiang(zengLiangShiJian('e-1', { zong_fen_bian_hua: 2, qin_mi_du_bian_hua: 4 }))
+    仓库.jieShouHaoGanDuZengLiang(
+      zengLiangShiJian('e-1', { zong_fen_bian_hua: 2, qin_mi_du_bian_hua: 4 }),
+    )
     await 仓库.jiaZaiXiaoXi('j-2')
     expect(仓库.haoGanDuZengLiangBiaoQian).toEqual(wuWei())
     expect(仓库.haoGanDuZengLiangBiaoQian.some((xiang) => xiang.shuZhi !== 0)).toBe(false)
@@ -265,7 +322,9 @@ describe('好感度增量监听注册', () => {
     expect(jianTing.has('好感度增量')).toBe(true)
     await 仓库.jiaZaiXiaoXi('j-9')
     expect(仓库.haoGanDuZengLiangBiaoQian).toEqual(wuWei())
-    jianTing.get('好感度增量')!(zengLiangShiJian('e-wan', { zong_fen_bian_hua: 2, jiao_se_id: 'j-9' }))
+    jianTing.get('好感度增量')!(
+      zengLiangShiJian('e-wan', { zong_fen_bian_hua: 2, jiao_se_id: 'j-9' }),
+    )
     expect(仓库.haoGanDuZengLiangBiaoQian).toEqual(wuWei({ zongFen: 2 }))
   })
 

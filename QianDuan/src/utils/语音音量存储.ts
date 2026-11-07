@@ -6,6 +6,7 @@ const 默认音量 = 0.5
 const 最小音量 = 0
 const 最大音量 = 1
 const 写入延迟毫秒 = 320
+export const YU_YIN_YIN_LIANG_BAI_FEN_BI = 200
 
 export interface 语音音量载体 {
   ke_hu_duan_id?: string | number | null

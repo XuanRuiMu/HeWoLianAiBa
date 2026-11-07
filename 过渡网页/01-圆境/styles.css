@@ -1,0 +1,376 @@
+:root {
+  color-scheme: dark;
+  --paper: #f1e9db;
+  --ink: #15130f;
+  --night: #111114;
+  --cream: #f4ede2;
+  --muted: #8c877f;
+  --line: rgba(244, 237, 226, 0.16);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+html {
+  background: var(--night);
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  min-height: 100svh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background:
+    radial-gradient(
+      1100px 760px at 82% 10%,
+      rgba(160, 122, 76, 0.12),
+      transparent 58%
+    ),
+    radial-gradient(
+      900px 680px at 8% 90%,
+      rgba(92, 111, 115, 0.13),
+      transparent 58%
+    ),
+    var(--night);
+  color: var(--cream);
+  font-family:
+    "Songti SC", "STSong", "Noto Serif CJK SC", "Source Han Serif SC", Georgia,
+    serif;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  opacity: 0.18;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.28'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+}
+.destination {
+  position: relative;
+  display: flex;
+  min-height: 100svh;
+  flex-direction: column;
+  overflow: hidden;
+  padding: max(24px, env(safe-area-inset-top)) clamp(22px, 5vw, 72px)
+    max(22px, env(safe-area-inset-bottom));
+  isolation: isolate;
+}
+.topbar,
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+}
+.topbar {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 11px;
+  color: var(--cream);
+  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  text-decoration: none;
+}
+.brand-mark {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border: 1px solid #c5a875;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--night);
+  background: #c5a875;
+}
+.topbar-meta,
+.foot {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.19em;
+  text-transform: uppercase;
+}
+.hero {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 1050px;
+  padding: clamp(44px, 10vh, 110px) 0;
+}
+.kicker {
+  margin: 0 0 clamp(20px, 4vh, 38px);
+  color: #bb9f75;
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+h1 {
+  margin: 0;
+  font-size: clamp(46px, 9.2vw, 140px);
+  font-weight: 400;
+  letter-spacing: -0.075em;
+  line-height: 0.92;
+}
+h1 em {
+  color: #c6a97e;
+  font-style: normal;
+}
+.hero-bottom {
+  display: flex;
+  max-width: 700px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  margin-top: clamp(30px, 6vh, 64px);
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.hero-bottom p {
+  max-width: 360px;
+  margin: 0;
+  color: #a49d92;
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  line-height: 1.85;
+}
+.replay {
+  min-width: 112px;
+  min-height: 44px;
+  flex: none;
+  padding: 0 18px;
+  border: 1px solid rgba(244, 237, 226, 0.3);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cream);
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition:
+    background-color 0.35s var(--ease),
+    color 0.35s var(--ease),
+    border-color 0.35s var(--ease);
+}
+.replay:hover,
+.replay:focus-visible {
+  border-color: transparent;
+  background: var(--paper);
+  color: var(--ink);
+}
+.replay:focus-visible {
+  outline: 2px solid #c5a875;
+  outline-offset: 3px;
+}
+.orbit {
+  position: absolute;
+  z-index: -1;
+  border: 1px solid rgba(197, 168, 117, 0.14);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.orbit-one {
+  width: min(62vw, 820px);
+  aspect-ratio: 1;
+  top: -30%;
+  right: -18%;
+}
+.orbit-two {
+  width: min(34vw, 430px);
+  aspect-ratio: 1;
+  bottom: 6%;
+  left: -12%;
+  border-color: rgba(129, 158, 161, 0.12);
+}
+.foot {
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.foot span:first-child {
+  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+}
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  transition:
+    opacity 0.85s var(--ease),
+    transform 1.05s var(--ease);
+}
+body.is-ready .reveal {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+body.is-ready .kicker {
+  transition-delay: 0.06s;
+}
+body.is-ready h1 {
+  transition-delay: 0.14s;
+}
+body.is-ready .hero-bottom {
+  transition-delay: 0.26s;
+}
+body.is-ready .foot {
+  transition-delay: 0.36s;
+}
+.pageload-overlay {
+  z-index: 1000;
+  pointer-events: none;
+}
+.pageload-overlay svg path {
+  fill: var(--paper);
+}
+.pageload-overlay::after {
+  background: #bd9862;
+}
+.pageload-overlay::before {
+  background: #a9c1c0;
+}
+.loader-meta {
+  position: fixed;
+  z-index: 1001;
+  right: clamp(22px, 5vw, 72px);
+  bottom: max(24px, env(safe-area-inset-bottom));
+  left: clamp(22px, 5vw, 72px);
+  color: var(--ink);
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(0, 14px, 0);
+  transition:
+    opacity 0.6s var(--ease),
+    transform 0.8s var(--ease);
+}
+body.is-loading .loader-meta,
+body.is-hiding .loader-meta {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+body.is-ready .loader-meta {
+  opacity: 0;
+  transform: translate3d(0, -8px, 0);
+}
+.loader-top,
+.loader-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+.loader-label {
+  font-family: "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+  font-size: clamp(24px, 3vw, 36px);
+  letter-spacing: 0.08em;
+}
+.loader-number {
+  font-size: clamp(34px, 5vw, 64px);
+  font-variant-numeric: tabular-nums;
+  font-weight: 300;
+  letter-spacing: -0.06em;
+  line-height: 0.8;
+}
+.loader-rule {
+  height: 1px;
+  margin: 17px 0 12px;
+  overflow: hidden;
+  background: rgba(21, 19, 15, 0.22);
+}
+.loader-rule i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--ink);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+.loader-foot {
+  color: rgba(21, 19, 15, 0.56);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+body.is-hiding .pageload-overlay {
+  pointer-events: none;
+}
+@media (max-width: 640px) {
+  .destination {
+    padding-inline: 20px;
+  }
+  .topbar-meta {
+    display: none;
+  }
+  .hero {
+    padding-block: 40px;
+  }
+  h1 {
+    font-size: clamp(51px, 15vw, 82px);
+    line-height: 0.98;
+  }
+  .hero-bottom {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .replay {
+    width: 100%;
+  }
+  .foot span:last-child {
+    display: none;
+  }
+  .loader-meta {
+    right: 20px;
+    left: 20px;
+  }
+}
+@media (max-height: 480px) and (orientation: landscape) {
+  .destination {
+    padding-block: 14px;
+  }
+  .hero {
+    padding-block: 22px;
+  }
+  h1 {
+    font-size: clamp(38px, 9vh, 62px);
+  }
+  .hero-bottom {
+    margin-top: 20px;
+    padding-top: 12px;
+  }
+  .hero-bottom p,
+  .foot {
+    display: none;
+  }
+  .loader-meta {
+    bottom: 12px;
+  }
+  .loader-label {
+    font-size: 20px;
+  }
+  .loader-number {
+    font-size: 30px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .loader-meta,
+  .replay {
+    transition: none;
+  }
+  .pageload-overlay::after,
+  .pageload-overlay::before {
+    animation: none;
+  }
+}

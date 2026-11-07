@@ -313,13 +313,17 @@ describe('消息操作菜单浮层定位', () => {
     expect(zhuang.emitted()['guan-bi']).toHaveLength(2)
   })
 
-  it('点遮罩关闭，浮层本体不吃到关闭', async () => {
+  it('外部指针按下关闭，浮层本体不吃到关闭且不拦截原手势', async () => {
     const zhuang = 挂菜单(['fuZhi'])
     await 等浮层定稿()
-    浮层().click()
+    浮层().dispatchEvent(new Event('pointerdown', { bubbles: true, cancelable: true }))
     expect(zhuang.emitted()['guan-bi']).toBeUndefined()
-    遮罩().click()
+    const 外部 = new Event('pointerdown', { bubbles: true, cancelable: true })
+    document.body.dispatchEvent(外部)
+    await Promise.resolve()
+    expect(外部.defaultPrevented).toBe(false)
     expect(zhuang.emitted()['guan-bi']).toHaveLength(1)
+    expect(遮罩()).not.toBeNull()
   })
 
   it('触点变化后重新实测并保持定稿', async () => {
@@ -961,9 +965,7 @@ describe('聊天时间条按微信十二小时制显示', () => {
   })
 
   it('时间戳晚于现在时只输出时段与时间', () => {
-    expect(geShiHuaXiaoXiShiJian(造(2026, 10, 24, 7, 0), 造(2026, 10, 23, 20, 0))).toBe(
-      '早上7:00',
-    )
+    expect(geShiHuaXiaoXiShiJian(造(2026, 10, 24, 7, 0), 造(2026, 10, 23, 20, 0))).toBe('早上7:00')
   })
 })
 

@@ -42,10 +42,7 @@ interface Use长按菜单依赖<T> {
   zhiChiTuPianYinYong?: boolean
 }
 
-function shiHeCaiDanLeiXing(
-  xiaoXi: CaiDanXiaoXi,
-  leiXing: XiaoXiCaiDanLeiXing,
-): boolean {
+function shiHeCaiDanLeiXing(xiaoXi: CaiDanXiaoXi, leiXing: XiaoXiCaiDanLeiXing): boolean {
   return (
     huoQuCaiDanLeiXing(xiaoXi.lei_xing) === leiXing &&
     !xiaoXi.yi_che_hui &&
@@ -106,7 +103,10 @@ export function huoQuYinYongZhaiYao(xiaoXi: CaiDanXiaoXi): string {
   return `${neiRong.slice(0, shangXian)}...`
 }
 
-export function keYiJieGuanXuanQu(cao: Node | null | undefined, xuanQu?: Selection | null): boolean {
+export function keYiJieGuanXuanQu(
+  cao: Node | null | undefined,
+  xuanQu?: Selection | null,
+): boolean {
   if (!cao || typeof document === 'undefined') return false
   const huoYue = document.activeElement
   if (huoYue && cao.contains(huoYue)) return true
@@ -179,6 +179,7 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
 
   function daKaiCaiDanNeiBu(xiaoXi: T, leiXing: CaiDanLeiXing, dian: CaiDanJiDian): void {
     guanBiDingShiQi()
+    guanBiCaiDan()
     dangQianXiaoXi.value = xiaoXi
     dangQianCaiDan.value = leiXing
     dangQianJiDian.value = dian
@@ -358,7 +359,10 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
     fanYiQingQiuDaiCi.set(jian, benCi)
     const yuanWen = typeof xiaoXi.nei_rong === 'string' ? xiaoXi.nei_rong.trim() : ''
     if (!yuanWen) {
-      sheZhiFanYiWenTiCuoWu(jian, chuangJianFanYiCuoWu(QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID, false))
+      sheZhiFanYiWenTiCuoWu(
+        jian,
+        chuangJianFanYiCuoWu(QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID, false),
+      )
       return null
     }
     fanYiChuCuoJiHe.value.delete(jian)
@@ -390,7 +394,10 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
       if (benCi !== fanYiQingQiuDaiCi.get(jian)) return null
       const zhengChangHua = 归一前台错误(错误)
       if (zhengChangHua.xianShi) {
-        sheZhiFanYiWenTiCuoWu(jian, chuangJianFanYiCuoWu(zhengChangHua.code, zhengChangHua.retryable))
+        sheZhiFanYiWenTiCuoWu(
+          jian,
+          chuangJianFanYiCuoWu(zhengChangHua.code, zhengChangHua.retryable),
+        )
       }
       return null
     } finally {

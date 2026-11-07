@@ -150,9 +150,25 @@ export interface FaSongXiaoXiCanShu {
 
 export async function faSongXiaoXi(
   canShu: FaSongXiaoXiCanShu,
-): Promise<{ xiaoXi: Xiaoxi; shiMiJi: boolean; weiJiGanYu?: boolean; yuanZhuReXian?: string; ganYuTiShi?: string; chaoShiTiXingMiao?: number }> {
+): Promise<{
+  xiaoXi: Xiaoxi
+  shiMiJi: boolean
+  weiJiGanYu?: boolean
+  yuanZhuReXian?: string
+  ganYuTiShi?: string
+  chaoShiTiXingMiao?: number
+}> {
   const { huiHuaId, neiRong, miDengJian, leiXing, meiTiId, neiRongKuai, yinYong } = canShu
-  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: Xiaoxi & { shi_mi_ji?: boolean; wei_ji_gan_yu?: boolean; yuan_zhu_re_xian?: string; gan_yu_ti_shi?: string; chao_shi_ti_xing_miao?: number } }>(
+  const 响应 = await http.post<{
+    cheng_gong: boolean
+    shu_ju: Xiaoxi & {
+      shi_mi_ji?: boolean
+      wei_ji_gan_yu?: boolean
+      yuan_zhu_re_xian?: string
+      gan_yu_ti_shi?: string
+      chao_shi_ti_xing_miao?: number
+    }
+  }>(
     `/聊天/会话/${huiHuaId}/消息`,
     {
       neiRong,
@@ -177,6 +193,30 @@ export async function faSongXiaoXi(
 
 export async function cheHuiXiaoXi(huiHuaId: string, xiaoXiId: string): Promise<void> {
   await http.put(`/聊天/会话/${huiHuaId}/消息/${xiaoXiId}/撤回`)
+}
+
+export interface HaoGanDuLeiJiBianHua {
+  lun_ci_shu: number
+  xin_ren_du_bian_hua: number
+  qin_mi_du_bian_hua: number
+  qu_wei_du_bian_hua: number
+  guan_huai_du_bian_hua: number
+  zong_fen_bian_hua: number
+}
+
+export async function huoQuHaoGanDuLeiJiBianHua(huiHuaId: string): Promise<HaoGanDuLeiJiBianHua> {
+  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: HaoGanDuLeiJiBianHua }>(
+    `/好感度/${huiHuaId}/累计变化`,
+  )
+  const shuJu = 响应.data.shu_ju
+  return {
+    lun_ci_shu: shuJu?.lun_ci_shu ?? 0,
+    xin_ren_du_bian_hua: shuJu?.xin_ren_du_bian_hua ?? 0,
+    qin_mi_du_bian_hua: shuJu?.qin_mi_du_bian_hua ?? 0,
+    qu_wei_du_bian_hua: shuJu?.qu_wei_du_bian_hua ?? 0,
+    guan_huai_du_bian_hua: shuJu?.guan_huai_du_bian_hua ?? 0,
+    zong_fen_bian_hua: shuJu?.zong_fen_bian_hua ?? 0,
+  }
 }
 
 export async function fanYiWenBen(
@@ -381,7 +421,11 @@ function zuZhuangXinMuZhongDeTa(
   const jieGuo: Record<string, string | number> = {}
   if (ziLiao.weiXinMing) jieGuo.wei_xin_ming = ziLiao.weiXinMing
   if (ziLiao.zhenShiMing) jieGuo.zhen_shi_ming = ziLiao.zhenShiMing
-  if (ziLiao.nianLing !== undefined && ziLiao.nianLing !== null && String(ziLiao.nianLing).trim() !== '') {
+  if (
+    ziLiao.nianLing !== undefined &&
+    ziLiao.nianLing !== null &&
+    String(ziLiao.nianLing).trim() !== ''
+  ) {
     const shu = Number(String(ziLiao.nianLing).trim())
     if (Number.isFinite(shu)) jieGuo.nian_ling = Math.max(0, Math.min(100, Math.round(shu)))
   }
@@ -509,7 +553,11 @@ export async function huoQuDuoMoTaiPeiZhi(): Promise<DuoMoTaiPeiZhi> {
 
 export async function qingQiuYuYinLiJie(
   huiHuaId: string,
-  canShu: { zhuanXieWenBen?: string; yinPinShiJianMiaoShu?: string; shiChangHaoMiao?: number | null },
+  canShu: {
+    zhuanXieWenBen?: string
+    yinPinShiJianMiaoShu?: string
+    shiChangHaoMiao?: number | null
+  },
 ): Promise<string> {
   const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: { keDuWenBen: string } }>(
     `/聊天/会话/${huiHuaId}/语音理解`,

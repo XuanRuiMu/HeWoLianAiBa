@@ -53,6 +53,7 @@
         @contextmenu.prevent="chuLiYouJianCaiDan(xiaoXi, $event)"
         @touchstart="chuLiChuMoKaiShi(xiaoXi, $event)"
         @touchend="chuLiChuMoJieShu"
+        @touchcancel="chuLiChuMoJieShu"
         @touchmove="chuLiChuMoYiDong($event)"
       >
         <template v-if="xiaoXi.lei_xing === 'yuYin'">

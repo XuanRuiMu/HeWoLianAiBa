@@ -21,6 +21,7 @@ export const DUO_MEI_TI_PEI_ZHI = {
   yuYinZuiChangKuanPx: 260,
   yuYinPaoNeidianPx: 12,
   yuYinJinDuBuZhouMiao: 0.1,
+  yuYinShiJianXiaoShuWei: 1,
   yuYinJinDuXianGaoPx: 2,
   yuYinShiChangCeLiangChaoShiHaoMiao: 8000,
   yuYinFaSongCeLiangChaoShiHaoMiao: 400,
@@ -39,7 +40,13 @@ export const SHENG_YIN_BAI_FEN_BI = {
   moRen: 50,
 } as const
 
-export const SHENG_YIN_TONG_DAO_XUAN_XIANG = ['zong', 'yinYue', 'yongHuYuYin', 'duiXiangYuYin', 'shiPin'] as const
+export const SHENG_YIN_TONG_DAO_XUAN_XIANG = [
+  'zong',
+  'yinYue',
+  'yongHuYuYin',
+  'duiXiangYuYin',
+  'shiPin',
+] as const
 
 export type ShengYinTongDao = (typeof SHENG_YIN_TONG_DAO_XUAN_XIANG)[number]
 
@@ -67,13 +74,18 @@ const JIU_DANG_BAI_FEN_BI: Record<string, number | null> = {
 }
 
 export function shiHeFaShengYinTongDao(zhi: unknown): zhi is ShengYinTongDao {
-  return typeof zhi === 'string' && (SHENG_YIN_TONG_DAO_XUAN_XIANG as readonly string[]).includes(zhi)
+  return (
+    typeof zhi === 'string' && (SHENG_YIN_TONG_DAO_XUAN_XIANG as readonly string[]).includes(zhi)
+  )
 }
 
 export function guiYiHuaShengYin(zhi: unknown): number | null {
   if (typeof zhi === 'number') {
     if (!Number.isFinite(zhi)) return null
-    return Math.min(SHENG_YIN_BAI_FEN_BI.zuiDa, Math.max(SHENG_YIN_BAI_FEN_BI.zuiXiao, Math.round(zhi)))
+    return Math.min(
+      SHENG_YIN_BAI_FEN_BI.zuiDa,
+      Math.max(SHENG_YIN_BAI_FEN_BI.zuiXiao, Math.round(zhi)),
+    )
   }
   if (typeof zhi === 'string') {
     const baiFenBi = JIU_DANG_BAI_FEN_BI[zhi]
@@ -274,7 +286,9 @@ const YIN_YONG_MEI_TI_ZHAN_WEI_JIAN = {
   tuPian: 'yinYongTuPianZhanWei',
   biaoQingBao: 'yinYongBiaoQingBaoZhanWei',
   wenJian: 'yinYongWenJianZhanWei',
-} as const satisfies Partial<Record<(typeof MEI_TI_XIAO_XI_LEI_XING)[number], FanYiZiJian<'liaoTian'>>>
+} as const satisfies Partial<
+  Record<(typeof MEI_TI_XIAO_XI_LEI_XING)[number], FanYiZiJian<'liaoTian'>>
+>
 
 export function huoQuMeiTiYinYongZhanWei(leiXing: string): string | null {
   const jian = (YIN_YONG_MEI_TI_ZHAN_WEI_JIAN as Partial<Record<string, FanYiZiJian<'liaoTian'>>>)[

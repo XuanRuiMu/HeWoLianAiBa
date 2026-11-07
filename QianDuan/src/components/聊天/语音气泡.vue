@@ -41,86 +41,88 @@
       </span>
       <span class="yuyin-jindu-xian" :style="jinDuXianYangShi" />
     </QiPaoRongQi>
-    <div v-if="xuanZhong" class="yuyin-kongzhi-qu" :class="{ 'yuyin-kongzhi-qu--benren': shiBenRen }">
+    <div
+      v-if="xuanZhong"
+      class="yuyin-kongzhi-qu"
+      :class="{ 'yuyin-kongzhi-qu--benren': shiBenRen }"
+    >
       <div class="yuyin-jindu-qu" :class="{ 'yuyin-jindu-qu--benren': shiBenRen }">
-      <span class="yuyin-kongzhi-zu">
-        <button
-          type="button"
-          class="yuyin-kongzhi"
-          :aria-label="
-            boFangZhong ? huoQuFanYi('duoMeiTi', 'zanTingYuYin') : huoQuFanYi('duoMeiTi', 'jiXuYuYin')
-          "
-          :title="
-            boFangZhong ? huoQuFanYi('duoMeiTi', 'zanTingYuYin') : huoQuFanYi('duoMeiTi', 'jiXuYuYin')
-          "
-          @click.stop="qieHuanZanTing"
-        >
-          <svg
-            v-if="boFangZhong"
-            class="yuyin-kongzhi-tubiao"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
+        <span class="yuyin-shuzhi yuyin-shijian-wenben" aria-hidden="true">
+          {{ boFangShiJianWenBen }}
+        </span>
+        <input
+          class="yuyin-jindu-tiao"
+          :class="{ 'yuyin-jindu-tiao--bofang': boFangZhong }"
+          type="range"
+          :min="0"
+          :max="zongMiao"
+          :step="DUO_MEI_TI_PEI_ZHI.yuYinJinDuBuZhouMiao"
+          :value="jinDuMiao"
+          :aria-label="huoQuFanYi('duoMeiTi', 'tiaoZhuanYuYinJinDu')"
+          :aria-valuetext="boFangShiJianWenBen"
+          @click.stop
+          @input.stop="chuLiTuoDong"
+        />
+        <span class="yuyin-kongzhi-zu">
+          <button
+            type="button"
+            class="yuyin-kongzhi"
+            :aria-label="
+              boFangZhong
+                ? huoQuFanYi('duoMeiTi', 'zanTingYuYin')
+                : huoQuFanYi('duoMeiTi', 'jiXuYuYin')
+            "
+            :title="
+              boFangZhong
+                ? huoQuFanYi('duoMeiTi', 'zanTingYuYin')
+                : huoQuFanYi('duoMeiTi', 'jiXuYuYin')
+            "
+            @click.stop="qieHuanZanTing"
           >
-            <rect x="6" y="4" width="4" height="16" rx="1" />
-            <rect x="14" y="4" width="4" height="16" rx="1" />
-          </svg>
-          <svg
-            v-else
-            class="yuyin-kongzhi-tubiao"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
+            <svg
+              v-if="boFangZhong"
+              class="yuyin-kongzhi-tubiao"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <rect x="6" y="4" width="4" height="16" rx="1" />
+              <rect x="14" y="4" width="4" height="16" rx="1" />
+            </svg>
+            <svg
+              v-else
+              class="yuyin-kongzhi-tubiao"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M7 4.4a1 1 0 0 1 1.53-.85l11.2 7.6a1 1 0 0 1 0 1.7l-11.2 7.6A1 1 0 0 1 7 19.6z"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="yuyin-kongzhi"
+            :aria-label="huoQuFanYi('duoMeiTi', 'tingZhiYuYin')"
+            :title="huoQuFanYi('duoMeiTi', 'tingZhiYuYin')"
+            @click.stop="tingZhiBoFang"
           >
-            <path
-              d="M7 4.4a1 1 0 0 1 1.53-.85l11.2 7.6a1 1 0 0 1 0 1.7l-11.2 7.6A1 1 0 0 1 7 19.6z"
-            />
-          </svg>
-        </button>
-        <button
-          type="button"
-          class="yuyin-kongzhi"
-          :aria-label="huoQuFanYi('duoMeiTi', 'tingZhiYuYin')"
-          :title="huoQuFanYi('duoMeiTi', 'tingZhiYuYin')"
-          @click.stop="tingZhiBoFang"
-        >
-          <svg
-            class="yuyin-kongzhi-tubiao"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <rect x="5" y="5" width="14" height="14" rx="2" />
-          </svg>
-        </button>
-      </span>
-      <input
-        class="yuyin-jindu-tiao"
-        :class="{ 'yuyin-jindu-tiao--bofang': boFangZhong }"
-        type="range"
-        :min="0"
-        :max="zongMiao"
-        :step="DUO_MEI_TI_PEI_ZHI.yuYinJinDuBuZhouMiao"
-        :value="jinDuMiao"
-        :aria-label="huoQuFanYi('duoMeiTi', 'tiaoZhuanYuYinJinDu')"
-        @click.stop
-        @input.stop="chuLiTuoDong"
-      />
+            <svg
+              class="yuyin-kongzhi-tubiao"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <rect x="5" y="5" width="14" height="14" rx="2" />
+            </svg>
+          </button>
+        </span>
       </div>
       <div class="yuyin-yinliang-qu" :class="{ 'yuyin-yinliang-qu--benren': shiBenRen }">
-        <svg
-          class="yuyin-yinliang-tubiao"
-          viewBox="0 0 16 16"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M8.2 2.6 4.6 5.6H2.2v4.8h2.4l3.6 3z" />
-          <path d="M11 5.6a3.4 3.4 0 0 1 0 4.8" />
-        </svg>
+        <span class="yuyin-shuzhi yuyin-yinliang-wenben" aria-hidden="true">
+          {{ yinLiangWenBen }}
+        </span>
         <input
           class="yuyin-jindu-tiao yuyin-jindu-tiao--yinliang"
           type="range"
@@ -134,6 +136,19 @@
           @click.stop
           @input.stop="gengXinYinLiang"
         />
+        <svg
+          class="yuyin-yinliang-tubiao"
+          viewBox="0 0 16 16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M8.2 2.6 4.6 5.6H2.2v4.8h2.4l3.6 3z" />
+          <path d="M11 5.6a3.4 3.4 0 0 1 0 4.8" />
+        </svg>
       </div>
     </div>
     <div v-if="zhuanXieZhong" class="yuyin-zhuanwenzi-zhuangtai">
@@ -167,6 +182,7 @@ import { huoQuFanYi } from '@/config/翻译表'
 import QiPaoRongQi from '@/components/聊天/气泡容器.vue'
 import {
   ceLiangYuYinShiChang,
+  geShiHuaYuYinBoFangShiJian,
   geShiHuaYuYinShiChang,
   jiXuDangQianYuYin,
   quXiaoCeLiangYuYinShiChang,
@@ -184,6 +200,7 @@ import {
   duQuYuYinYinLiang as duQuBenTiaoYinLiang,
   sheZhiYuYinYinLiang,
   yuYinYinLiangSeXiang,
+  YU_YIN_YIN_LIANG_BAI_FEN_BI,
 } from '@/utils/语音音量存储'
 
 const props = withDefaults(
@@ -217,6 +234,9 @@ const emit = defineEmits<{
 
 const kuanYangShi = computed(() => yuYinKuanYangShi(props.xiaoXi))
 const shiChangWenBen = computed(() => geShiHuaYuYinShiChang(props.xiaoXi))
+const boFangShiJianWenBen = computed(() =>
+  geShiHuaYuYinBoFangShiJian(props.jinDuMiao, props.zongMiao),
+)
 
 const paoYuanSu = ref<HTMLElement | null>(null)
 let ceLiangGuanCha: IntersectionObserver | null = null
@@ -305,7 +325,9 @@ const jinDuXianYangShi = computed(() => ({
 }))
 
 const yinLiang = computed(() => duQuBenTiaoYinLiang(props.xiaoXi))
-const yinLiangWenBen = computed(() => `${Math.round(yinLiang.value * 200)}%`)
+const yinLiangWenBen = computed(
+  () => `${Math.round(yinLiang.value * YU_YIN_YIN_LIANG_BAI_FEN_BI)}%`,
+)
 const yinLiangYangShi = computed(() => ({
   '--yuyin-yinliang-yuandian': yuYinYinLiangSeXiang(yinLiang.value),
 }))
@@ -472,6 +494,30 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
+.yuyin-shuzhi {
+  flex: 0 0 auto;
+  color: var(--wenben-zhuse);
+  color: color-mix(
+    in srgb,
+    var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing)) var(--yuyin-shuzhi-zhuse-bi-li),
+    var(--wenben-zhuse)
+  );
+  font-size: var(--yuyin-shuzhi-zihao);
+  font-weight: var(--yuyin-shuzhi-zi-zhong);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.yuyin-kongzhi-qu--benren .yuyin-shuzhi {
+  color: var(--wenben-zhuse);
+  color: color-mix(
+    in srgb,
+    var(--qipao-ziJi-beiJing, var(--xiaoxi-yonghu-beijing)) var(--yuyin-shuzhi-zhuse-bi-li),
+    var(--wenben-zhuse)
+  );
+}
+
 .yuyin-jindu-xian {
   position: absolute;
   bottom: 0;
@@ -495,6 +541,38 @@ onBeforeUnmount(() => {
 
 .yuyin-jindu-qu--benren {
   flex-direction: row-reverse;
+}
+
+.yuyin-jindu-qu--benren > :nth-child(1) {
+  order: 3;
+}
+
+.yuyin-jindu-qu--benren > :nth-child(2) {
+  order: 2;
+}
+
+.yuyin-jindu-qu--benren > :nth-child(3) {
+  order: 1;
+}
+
+.yuyin-yinliang-qu--benren > :nth-child(1) {
+  order: 3;
+}
+
+.yuyin-yinliang-qu--benren > :nth-child(2) {
+  order: 2;
+}
+
+.yuyin-yinliang-qu--benren > :nth-child(3) {
+  order: 1;
+}
+
+.yuyin-shijian-wenben {
+  min-width: var(--yuyin-shuzhi-shijian-kuan);
+}
+
+.yuyin-yinliang-wenben {
+  min-width: var(--yuyin-shuzhi-yinliang-kuan);
 }
 
 .yuyin-kongzhi-qu {
@@ -547,12 +625,11 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   height: var(--yuyin-kongzhi-re-ku);
   border: none;
-  background:
-    linear-gradient(
-        color-mix(in srgb, currentColor 35%, transparent),
-        color-mix(in srgb, currentColor 35%, transparent)
-      )
-      center / 100% var(--yuyin-jindu-gao) no-repeat;
+  background: linear-gradient(
+      color-mix(in srgb, currentColor 35%, transparent),
+      color-mix(in srgb, currentColor 35%, transparent)
+    )
+    center / 100% var(--yuyin-jindu-gao) no-repeat;
 }
 
 .yuyin-jindu-tiao::-webkit-slider-thumb {
@@ -578,12 +655,11 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
   height: var(--yuyin-kongzhi-re-ku);
   border: none;
-  background:
-    linear-gradient(
-        color-mix(in srgb, currentColor 35%, transparent),
-        color-mix(in srgb, currentColor 35%, transparent)
-      )
-      center / 100% var(--yuyin-jindu-gao) no-repeat;
+  background: linear-gradient(
+      color-mix(in srgb, currentColor 35%, transparent),
+      color-mix(in srgb, currentColor 35%, transparent)
+    )
+    center / 100% var(--yuyin-jindu-gao) no-repeat;
 }
 
 .yuyin-jindu-tiao::-moz-range-thumb {

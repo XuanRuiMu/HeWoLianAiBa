@@ -79,6 +79,7 @@
               @contextmenu.prevent="fuPanMoShi ? null : daKaiCaiDan(xiaoXi, $event)"
               @touchstart="fuPanMoShi ? null : chuMoKaiShi(xiaoXi, $event)"
               @touchend="chuMoJieShu"
+              @touchcancel="chuMoJieShu"
               @touchmove="fuPanMoShi ? null : chuMoYiDongQuXiao($event)"
             >
               <template v-if="shiXiTongXiaoXi(xiaoXi)">

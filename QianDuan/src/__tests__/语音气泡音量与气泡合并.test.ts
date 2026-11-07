@@ -35,16 +35,24 @@ describe('气泡容器合并：全站只剩一份皮肤', () => {
       /background|color|border-radius|padding/,
     )
     expect(语音源).not.toContain('.qipao-neirong')
-    expect((语音源.match(/--qipao-duiFang-beiJing/g) ?? []).length, '转写块气泡色只能一处').toBe(1)
-    expect((语音源.match(/--qipao-duiFang-wenBen/g) ?? []).length).toBe(1)
-    expect((语音源.match(/--qipao-ziJi-beiJing/g) ?? []).length).toBe(1)
-    expect((语音源.match(/--qipao-ziJi-wenBen/g) ?? []).length).toBe(1)
+    expect(
+      (语音源.match(/background:\s*var\(--qipao-duiFang-beiJing/g) ?? []).length,
+      '转写块气泡底色只能一处',
+    ).toBe(1)
+    expect(
+      (语音源.match(/background:\s*var\(--qipao-ziJi-beiJing/g) ?? []).length,
+      '本人转写块气泡底色只能一处',
+    ).toBe(1)
+    expect((语音源.match(/color:\s*var\(--qipao-duiFang-wenBen/g) ?? []).length).toBe(1)
+    expect((语音源.match(/color:\s*var\(--qipao-ziJi-wenBen/g) ?? []).length).toBe(1)
   })
 
   it('容器承接内边距/圆角/尾巴/字号，全部吃令牌', () => {
     expect(容器源).toContain('padding: var(--jiange-9) var(--jiange-13)')
     expect(容器源).toContain('border-radius: var(--qipao-yuanjiao)')
-    expect(容器源).toContain('--qipao-nei-rong-bei-jing: var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing))')
+    expect(容器源).toContain(
+      '--qipao-nei-rong-bei-jing: var(--qipao-duiFang-beiJing, var(--xiaoxi-jiaose-beijing))',
+    )
     expect(容器源).toContain('background: var(--qipao-nei-rong-bei-jing)')
     expect(容器源).toContain('import QiPaoWeiBa')
     expect(容器源).toContain('<QiPaoWeiBa')
@@ -70,9 +78,7 @@ describe('气泡文字内衬上少下多', () => {
     const 下 = 令牌像素('qipao-nei-ju-xia')
     expect(上, '文字气泡上内衬必须小于下内衬').toBeLessThan(下)
     expect(上 + 下, '文字气泡上下内衬总和必须保持 18px').toBe(18)
-    expect(容器源).toContain(
-      'padding-block: var(--qipao-nei-ju-shang) var(--qipao-nei-ju-xia)',
-    )
+    expect(容器源).toContain('padding-block: var(--qipao-nei-ju-shang) var(--qipao-nei-ju-xia)')
     const 窄屏块 = 容器源.match(/@media \(max-width: 480px\) \{[\s\S]*?\n\}/)?.[0] ?? ''
     expect(窄屏块).toContain('.qipao-neirong--wen-zi-nei-ju')
     expect(窄屏块).toContain('padding-block: var(--jiange-9)')
@@ -433,12 +439,8 @@ describe('真实语音量级：声波弧随响度出现 1/2/3 格', () => {
   it('同一音节轮廓在悬殊电平下档位基本重合，绝对录音电平不再决定档位', async () => {
     const xu = yinJieBoGuo(1)
     const zhongYin = await moNiYuYinBoFang(xu)
-    const diYin = await moNiYuYinBoFang(
-      xu.map((zhi) => zhi * 0.06),
-    )
-    const gaoYin = await moNiYuYinBoFang(
-      xu.map((zhi) => zhi * 1.8),
-    )
+    const diYin = await moNiYuYinBoFang(xu.map((zhi) => zhi * 0.06))
+    const gaoYin = await moNiYuYinBoFang(xu.map((zhi) => zhi * 1.8))
     const zhongDuan = quDuanShuXu(zhongYin.moKuai, zhongYin.biLi)
     const diDuan = quDuanShuXu(diYin.moKuai, diYin.biLi)
     const gaoDuan = quDuanShuXu(gaoYin.moKuai, gaoYin.biLi)
@@ -518,10 +520,7 @@ describe('真实语音量级：声波弧随响度出现 1/2/3 格', () => {
       String(yiTiao[0]).includes('[语音音量]'),
     ).length
     expect(tiaoShu, '开关打开后必须能看到标定状态').toBeGreaterThan(0)
-    expect(
-      tiaoShu,
-      '调试日志不得低于配置的最小间隔',
-    ).toBeLessThanOrEqual(
+    expect(tiaoShu, '调试日志不得低于配置的最小间隔').toBeLessThanOrEqual(
       Math.ceil(
         (wuTiaoShi.biLi.length * ZHEN_JIAN_GE_HAO_MIAO) /
           YU_YIN_YIN_LIANG_PEI_ZHI.zuiXiaoRiZhiJianGeHaoMiao,
@@ -588,7 +587,7 @@ describe('语音进度圆点跨浏览器几何', () => {
     expect(firefox轨道).not.toContain('align-self')
   })
 
-  it.each([false, true])('本人态为 %s 时共用同一滑块且拖动事件保持不变', async shiBenRen => {
+  it.each([false, true])('本人态为 %s 时共用同一滑块且拖动事件保持不变', async (shiBenRen) => {
     const wrapper = mount(语音气泡, {
       props: {
         xiaoXi: { mei_ti_shi_chang_hao_miao: 10000 },
@@ -601,7 +600,9 @@ describe('语音进度圆点跨浏览器几何', () => {
     })
     const 滑块 = wrapper.get<HTMLInputElement>('input[type="range"]')
     expect(滑块.element.value).toBe('2')
-    expect(wrapper.get('.yuyin-jindu-qu').classes().includes('yuyin-jindu-qu--benren')).toBe(shiBenRen)
+    expect(wrapper.get('.yuyin-jindu-qu').classes().includes('yuyin-jindu-qu--benren')).toBe(
+      shiBenRen,
+    )
     await 滑块.setValue('4')
     expect(wrapper.emitted('tiaoZhuan')).toEqual([[4]])
     wrapper.unmount()

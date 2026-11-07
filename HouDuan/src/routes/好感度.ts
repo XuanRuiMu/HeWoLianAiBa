@@ -12,6 +12,7 @@ import {
   sheZhiMiJiHaoGanDu,
 } from '../services/好感度'
 import { guiYiHuaJiaoSeBiaoShi } from '../services/公开编号'
+import { huoQuHaoGanDuLeiJiBianHua } from '../services/好感度历史'
 
 const luYou = Router()
 
@@ -75,6 +76,29 @@ luYou.get(
   },
 )
 
+
+luYou.get(
+  '/:jiaoSeId/累计变化',
+  async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+    const yongHu = qingQiu.yong_hu
+    if (!yongHu) {
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
+    }
+
+    const jiaoSeId = await guiYiHuaJiaoSeBiaoShi(qingQiu.params.jiaoSeId)
+    if (!jiaoSeId) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
+    }
+
+    try {
+      const jieGuo = await huoQuHaoGanDuLeiJiBianHua(yongHu.yongHuId, jiaoSeId)
+      return chengGongXiangYing(xiangYing, jieGuo)
+    } catch (cuoWu) {
+      debug日志.error('好感度接口', '获取好感度累计变化失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+      return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
+    }
+  },
+)
 
 luYou.post(
   '/:jiaoSeId/秘籍',

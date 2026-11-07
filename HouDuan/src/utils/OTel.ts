@@ -1,6 +1,9 @@
 import { context, trace, diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api'
 import { NodeSDK } from '@opentelemetry/sdk-node'
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node'
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http'
+import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express'
+import { PgInstrumentation } from '@opentelemetry/instrumentation-pg'
+import { IORedisInstrumentation } from '@opentelemetry/instrumentation-ioredis'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace'
 import { resourceFromAttributes } from '@opentelemetry/resources'
@@ -38,18 +41,16 @@ export function chuShiHuaOTel(): void {
   sdkShiLi = new NodeSDK({
     resource: ziYuan,
     traceExporter: baoLuQi,
-    instrumentations: [getNodeAutoInstrumentations()],
+    instrumentations: [
+      new HttpInstrumentation(),
+      new ExpressInstrumentation(),
+      new PgInstrumentation(),
+      new IORedisInstrumentation(),
+    ],
   })
 
   sdkShiLi.start()
   yiChuShiHua = true
-
-  try {
-    require('http')
-    require('https')
-  } catch {
-    // 忽略加载失败
-  }
 }
 
 export function huoQuDangQianTraceId(): string {

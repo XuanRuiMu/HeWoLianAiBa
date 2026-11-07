@@ -1,12 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="xiaoxi-caidan-guodu">
-      <div
-        v-if="kaiQi && jiDian"
-        class="xiaoxi-caidan-zhezhao"
-        @click="emit('guan-bi')"
-        @keydown="chuLiAnJian"
-      >
+      <div v-if="kaiQi && jiDian" class="xiaoxi-caidan-zhezhao" @keydown="chuLiAnJian">
         <span
           ref="dingDianYuanSu"
           class="xiaoxi-caidan-dingdian"
@@ -20,6 +15,7 @@
           :data-fang-xiang="weiZhi.fangXiang"
           :style="fuCengYangShi"
           @click.stop
+          @contextmenu.prevent
         >
           <div
             ref="lieBiaoYuanSu"
@@ -109,6 +105,26 @@ const fuCengYangShi = computed(() => ({
 let huiFuYuanSu: HTMLElement | null = null
 let dingWeiCiShu = 0
 let caiDanZaiZhanKai = false
+let waiBuJianTingZhong = false
+
+function chuLiWaiBuZhiZhen(shiJian: Event): void {
+  const muBiao = shiJian.target
+  if (!(muBiao instanceof Node)) return
+  if (fuCengYuanSu.value?.contains(muBiao)) return
+  emit('guan-bi')
+}
+
+function lianJieWaiBuJianTing(): void {
+  if (waiBuJianTingZhong || typeof document === 'undefined') return
+  document.addEventListener('pointerdown', chuLiWaiBuZhiZhen, true)
+  waiBuJianTingZhong = true
+}
+
+function duanKaiWaiBuJianTing(): void {
+  if (!waiBuJianTingZhong || typeof document === 'undefined') return
+  document.removeEventListener('pointerdown', chuLiWaiBuZhiZhen, true)
+  waiBuJianTingZhong = false
+}
 
 function xiangMuYuanSu(suoYin: number): HTMLElement | null {
   return fuCengYuanSu.value?.querySelectorAll<HTMLElement>('.xiaoxi-caidan-xiangmu')[suoYin] ?? null
@@ -195,6 +211,7 @@ function zhanKaiCaiDan(): void {
   if (!caiDanZaiZhanKai) {
     caiDanZaiZhanKai = true
     huiFuYuanSu = (document.activeElement as HTMLElement | null) ?? null
+    lianJieWaiBuJianTing()
   }
   dingWei()
 }
@@ -203,6 +220,7 @@ function shouQiCaiDan(): void {
   if (!caiDanZaiZhanKai) return
   caiDanZaiZhanKai = false
   dingWeiCiShu += 1
+  duanKaiWaiBuJianTing()
   jieShuGenZong()
   if (huiFuYuanSu?.isConnected) huiFuYuanSu.focus({ preventScroll: true })
   huiFuYuanSu = null

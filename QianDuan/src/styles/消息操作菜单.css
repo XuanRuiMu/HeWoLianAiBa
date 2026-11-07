@@ -48,6 +48,7 @@
   bottom: 0;
   z-index: var(--ceng-caidan);
   background: transparent;
+  pointer-events: none;
 }
 
 .xiaoxi-caidan-dingdian {
@@ -77,6 +78,7 @@
   backdrop-filter: blur(var(--xiaoxi-caidan-mo-hu));
   -webkit-backdrop-filter: blur(var(--xiaoxi-caidan-mo-hu));
   transform-origin: top center;
+  pointer-events: auto;
 }
 
 .xiaoxi-caidan[data-fang-xiang="shang"] {

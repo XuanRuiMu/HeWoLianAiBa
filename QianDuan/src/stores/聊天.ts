@@ -11,6 +11,7 @@ import {
   cheHuiXiaoXi as cheHuiXiaoXiApi,
   biaoJiYiDu,
   huoQuJiaoSeXiangQing,
+  huoQuHaoGanDuLeiJiBianHua,
 } from '@/api/聊天'
 import { huoQuFanYi, fanYi } from '@/config/翻译表'
 import { queDingMiDengJian } from '@/utils/发件箱'
@@ -789,6 +790,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     if (dangQianHuiHuaId.value && dangQianHuiHuaId.value !== huiHuaId) 持久化监控()
     qingChuJiaoSeZengLiangJiLu(huiHuaId)
     dangQianHuiHuaId.value = huiHuaId
+    const leiJiDai = Promise.resolve(huoQuHaoGanDuLeiJiBianHua(huiHuaId)).catch(() => null)
     读取监控历史(huiHuaId)
     xiaoXiLieBiao.value = []
     faSongShiBaiJiHe.value = new Set()
@@ -844,6 +846,20 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
         shouPingQianTaiCuoWu.value = 归一前台错误(cuoWu)
       }
       jieDuanTiShi?.('xiaoXi')
+      const leiJi = await leiJiDai
+      if (benCi !== jiaZaiDaiCi) return
+      if (leiJi) {
+        haoGanDuBianHuaJiLu.value = {
+          ...haoGanDuBianHuaJiLu.value,
+          [huiHuaId]: {
+            xin_ren_du_bian_hua: leiJi.xin_ren_du_bian_hua,
+            qin_mi_du_bian_hua: leiJi.qin_mi_du_bian_hua,
+            qu_wei_du_bian_hua: leiJi.qu_wei_du_bian_hua,
+            guan_huai_du_bian_hua: leiJi.guan_huai_du_bian_hua,
+            zong_fen_bian_hua: leiJi.zong_fen_bian_hua,
+          },
+        }
+      }
       try {
         const { jiao_se, dang_an_zhuang_tai } = await huoQuJiaoSeXiangQing(huiHuaId)
         if (benCi !== jiaZaiDaiCi) return
@@ -1032,7 +1048,6 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     yinYongXiaoXiId?: string | null,
   ): Promise<消息 | null> {
     if (!dangQianHuiHuaId.value || !neiRong.trim()) return null
-    qingChuJiaoSeZengLiangJiLu(dangQianHuiHuaId.value)
     const qingLiNeiRong = neiRong.trim()
     if (qingLiNeiRong.length > zuiDaXiaoXiChangDu) {
       sheZhiCuoWu(huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'))

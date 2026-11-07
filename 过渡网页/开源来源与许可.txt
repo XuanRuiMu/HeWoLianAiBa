@@ -1,0 +1,29 @@
+过渡页候选的开源来源
+
+一、01-圆境
+仓库：https://github.com/codrops/PageLoadingEffects
+提交：d4348fe750a3903d962775f76b77fc41d203b0d4
+原始文件：css/component.css、js/classie.js、js/snap.svg-min.js、js/svgLoader.js
+许可：MIT。Codrops 官方说明 https://codrops.com/codrops/licensing/
+本目录的改动：只替换页面文案、版式、颜色与播放节奏；圆形形变与过渡驱动保留原实现。
+
+二、02-熔金
+仓库：https://github.com/n3r4zzurr0/svg-spinners
+提交：abfa05c49acf005b8b1e0ef8eb25a67a7057eb20
+原始文件：svg-css/gooey-balls-1.svg、svg-css/12-dots-scale-rotate.svg
+许可：MIT，Copyright (c) Utkarsh Verma，全文见 LICENSE-svg-spinners.txt
+本目录的改动：SVG 文件原样保存，通过 CSS 滤镜适配金色主题；页面版式与揭晓动画为本地实现。
+
+三、03-纸间
+仓库：https://github.com/epicmaxco/epic-spinners
+提交：3a4dda1d72fbeb2da9ac75bdd53df948e9c3f869
+原始文件：packages/epic-spinners/src/components/SemipolarSpinner.vue 的 CSS 段
+许可：MIT，Copyright (c) 2018 Epicmax LLC，全文见 LICENSE-epic-spinners.txt
+本目录的改动：原 CSS 原样保存为 semipolar.css；通过额外样式调整颜色与显示比例，页面版式与揭晓动画为本地实现。
+
+四、04-极光
+仓库：https://github.com/n3r4zzurr0/svg-spinners
+提交：abfa05c49acf005b8b1e0ef8eb25a67a7057eb20
+原始文件：svg-css/blocks-wave.svg
+许可：MIT，Copyright (c) Utkarsh Verma，全文见 LICENSE-svg-spinners.txt
+本目录的改动：SVG 文件原样保存，通过 CSS 滤镜适配青绿色主题；页面版式与揭晓动画为本地实现。
