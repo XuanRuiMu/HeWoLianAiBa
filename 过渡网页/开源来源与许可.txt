@@ -35,9 +35,16 @@
 许可：Codrops 许可（个人/商业项目可免费集成或二次开发，不得原样再发布/转售），见 https://codrops.com/codrops/licensing/ ；js 头部标注 MIT
 本目录的改动：Revealer 驱动与角部方向（cornertopleft/cornerbottomright/top）保留原实现；三层关键帧改名为 xiemu-mu-* 并适配紫金配色；页面版式、三段顺序编排（左上→右下→中间）与文案为本地实现。vendor/codrops 内保留原始文件备查。
 
-六、06-棋幕
+六、06-心幕（原「棋幕」，按用户要求改为恋爱心形并加速）
 仓库：https://github.com/Nischint007/barba-js-dynamic-grid-transition-08
 提交：ef888c76c8007aef9487d189b4c614dd599dc436
 原始文件：script.js（GSAP clip-path 棋格帘幕）、style.css（四层棋格结构）
 许可：仓库未附独立 LICENSE 文件，README 为教学系列示例；GSAP 依其官方许可（标准免费许可），本地已内置 gsap.min.js 3.13.0
-本目录的改动：保留 GSAP 棋格交错动画思路，重写为 8×5 棋格按「左上组→右下组→中间组」的距离排序依次缩放覆盖/退幕；去掉 Barba 路由依赖改为单页双场景演示；配色与文案为本地实现。vendor 内保留原始 script.js/style.css/README 备查。
+本目录的改动：
+- 保留 GSAP 分组帘幕思路，把棋格改为恋爱心形；
+- 心形为本地实现（Path2D 画布预渲染成 4 张心形贴图，动画时只改 transform/opacity，避免逐帧重绘 SVG 造成的掉帧）；
+- 心形按「左上组 → 右下组 → 中间组」的归一化距离排序依次绽放、同序收回；
+- 去掉 Barba 路由依赖，改为单页双场景演示；
+- 时长压缩：全时段 1.27 秒（入幕约 0.85 秒 + 退幕约 0.42 秒），三视口实测零长帧（>50ms）；
+- 配色取产品主色 #FF6B9D 一系。
+vendor 内保留原始 script.js / style.css / README 备查。

@@ -303,17 +303,15 @@
       }
       .visual--qimu {
         background:
-          conic-gradient(from 0deg at 50% 50%, #1b1440 0 25%, #2c1f5e 0 50%, #4a2f7a 0 75%, #c9a96a 0),
-          #14101f;
-        background-size: 56px 56px;
+          radial-gradient(60% 70% at 30% 30%, rgba(255, 107, 157, 0.35), transparent 70%),
+          linear-gradient(150deg, #2a1030, #120b16);
       }
       .visual--qimu::before {
-        content: "06";
-        color: rgba(244, 239, 230, 0.92);
-        font-size: clamp(66px, 11vw, 150px);
-        font-weight: 400;
-        letter-spacing: -0.08em;
-        text-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+        content: "♥";
+        color: #ff6b9d;
+        font-size: clamp(80px, 13vw, 170px);
+        line-height: 1;
+        text-shadow: 0 8px 40px rgba(255, 107, 157, 0.5);
       }
       @keyframes pulse {
         50% {
@@ -410,7 +408,7 @@
           <h1>把等待，<span>也做成一段体验。</span></h1>
         </div>
         <p class="intro">
-          六种完全不同的气质。05 斜幕与 06 棋幕按「左上先覆 → 右下接力 → 中间收尾」的顺序覆盖全屏，最贴合你的要求；每页自动演示一次，可随时重播。请在大屏和手机上各看一遍。
+          六种完全不同的气质。06 心幕（恋爱心形）与 05 斜幕按「左上先覆 → 右下接力 → 中间收尾」的顺序覆盖全屏，心幕全时段只要 1.27 秒；每页自动演示一次，可随时重播。请在大屏和手机上各看一遍。
         </p>
       </header>
       <section class="grid" aria-label="过渡页候选">
@@ -499,15 +497,15 @@
           <div class="visual visual--qimu" aria-hidden="true"></div>
           <div class="body">
             <div>
-              <p class="meta">06 / Mosaic curtain</p>
-              <h2>棋幕</h2>
+              <p class="meta">06 / Heart curtain</p>
+              <h2>心幕</h2>
               <p class="desc">
-                40 枚棋格按「左上 → 右下 → 中间」分组依次绽放覆盖，再同序退幕。节奏感更强，艺术拼色。
+                恋爱心形按「左上 → 右下 → 中间」分组依次绽放，铺满后同序收回。全时段 1.27 秒，只动位移与透明度，帧帧丝滑。
               </p>
             </div>
-            <a class="open" href="./06-棋幕/index.html">进入预览</a>
+            <a class="open" href="./06-心幕/index.html">进入预览</a>
             <p class="source">
-              动画原码：Nischint007 / barba-js-dynamic-grid-transition-08（GSAP 棋格）· 改造为角部分组顺序
+              动画原码：Nischint007 / barba-js-dynamic-grid-transition-08（GSAP 分组帘幕）· 由棋格改造为心形
             </p>
           </div>
         </article>
