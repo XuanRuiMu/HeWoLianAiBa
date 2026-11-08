@@ -202,8 +202,15 @@
   --yuyin-kongzhi-jian-ju: 3px;
   --yuyin-shuzhi-zihao: 11px;
   --yuyin-shuzhi-zi-zhong: 500;
-  --yuyin-shuzhi-shijian-kuan: 52px;
-  --yuyin-shuzhi-yinliang-kuan: 38px;
+  --yuyin-shijian-wenben-zui-xiao-kuan: 9ch;
+  --yuyin-yinliang-wenben-zui-xiao-kuan: 4ch;
+  --yuyin-fenge-xian-kuan: 2px;
+  --yuyin-fenge-xian-se-xiang: 299.4;
+  --yuyin-fenge-xian-bao-he: 38.6%;
+  --yuyin-fenge-xian-liang-du: 46.5%;
+  --yuyin-fenge-xian-yanse: hsl(
+    var(--yuyin-fenge-xian-se-xiang) var(--yuyin-fenge-xian-bao-he) var(--yuyin-fenge-xian-liang-du)
+  );
   --yuyin-shuzhi-zhuse-bi-li: 50%;
   --yuyin-duan-yin-cang-shi-chang: 100ms;
   --zhuanwenzi-zihao: 14px;
@@ -279,6 +286,7 @@
 }
 
 :root[data-theme="light"] {
+  --yuyin-fenge-xian-liang-du: 38%;
   --zhuse: #07C160;
   --zhuse-shen: #06AD56;
   --beijing-zhuse: #EDEDED;

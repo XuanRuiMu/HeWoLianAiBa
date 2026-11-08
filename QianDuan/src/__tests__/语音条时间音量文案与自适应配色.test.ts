@@ -74,23 +74,58 @@ describe('语音条数值颜色跟随气泡主色并保证页面可读', () => {
     )
     expect(组件源).not.toMatch(/color:\s*(#2e7d32|#4caf50|green)/)
     expect(令牌源).toContain('--yuyin-shuzhi-zihao: 11px;')
-    expect(令牌源).toContain('--yuyin-shuzhi-shijian-kuan: 52px;')
-    expect(令牌源).toContain('--yuyin-shuzhi-yinliang-kuan: 38px;')
+    expect(令牌源).toContain('--yuyin-fenge-xian-kuan: 2px;')
+    expect(令牌源).toMatch(/--yuyin-fenge-xian-yanse:\s*hsl\(/)
+    expect(令牌源).toContain('--yuyin-fenge-xian-se-xiang: 299.4;')
+    expect(令牌源).toMatch(/:root\[data-theme="light"\]\s*\{[^}]*--yuyin-fenge-xian-liang-du:/)
+    expect(令牌源).not.toContain('--yuyin-shuzhi-shijian-kuan')
+    expect(令牌源).not.toContain('--yuyin-shuzhi-yinliang-kuan')
   })
 
-  it('数字使用等宽字形，时间与音量各自固定宽度，播放时文本不抖动', () => {
+  it('数字使用等宽字形，两行共享同一网格数值轨道，播放时文本不抖动', () => {
     const 数值规则 = 组件源.match(/\.yuyin-shuzhi\s*\{[^}]*\}/)?.[0] ?? ''
     expect(数值规则).toContain('font-variant-numeric: tabular-nums')
     expect(数值规则).toContain('white-space: nowrap')
-    expect(组件源).toContain('min-width: var(--yuyin-shuzhi-shijian-kuan)')
-    expect(组件源).toContain('min-width: var(--yuyin-shuzhi-yinliang-kuan)')
+    expect(组件源).not.toMatch(/var\(\s*--yuyin-shuzhi-shijian-kuan/)
+    expect(组件源).not.toMatch(/var\(\s*--yuyin-shuzhi-yinliang-kuan/)
+    expect(组件源).toMatch(/\.yuyin-shijian-wenben\s*\{[^}]*grid-area: shijian/)
+    expect(组件源).toMatch(/\.yuyin-yinliang-wenben\s*\{[^}]*grid-area: baifenbi/)
+    const 时间规则 = 组件源.match(/\.yuyin-shijian-wenben\s*\{[^}]*\}/)?.[0] ?? ''
+    const 音量规则 = 组件源.match(/\.yuyin-yinliang-wenben\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(时间规则).toContain('min-width: var(--yuyin-shijian-wenben-zui-xiao-kuan)')
+    expect(音量规则).toContain('min-width: var(--yuyin-yinliang-wenben-zui-xiao-kuan)')
+    expect(时间规则).toContain('justify-self: stretch')
+    expect(时间规则).toContain('text-align: center')
+    expect(音量规则).toContain('justify-self: stretch')
+    expect(音量规则).toContain('text-align: center')
+    expect(令牌源).toContain('--yuyin-shijian-wenben-zui-xiao-kuan: 9ch;')
+    expect(令牌源).toContain('--yuyin-yinliang-wenben-zui-xiao-kuan: 4ch;')
+    const 网格规则 = 组件源.match(/\.yuyin-kongzhi-qu\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(网格规则).toContain('display: grid')
+    expect(网格规则).toContain('justify-items: center')
+    expect(网格规则).toContain('align-items: center')
+    expect(网格规则).toContain('minmax(var(--yuyin-jindu-zui-xiao-kuan), 1fr)')
   })
 
-  it('本人态保持外层文案在左、按钮或喇叭在右，避免反转后文字与控件乱序', () => {
-    expect(组件源).toContain('.yuyin-jindu-qu--benren > :nth-child(1)')
-    expect(组件源).toContain('.yuyin-jindu-qu--benren > :nth-child(3)')
-    expect(组件源).toContain('.yuyin-yinliang-qu--benren > :nth-child(1)')
-    expect(组件源).toContain('.yuyin-yinliang-qu--benren > :nth-child(3)')
-    expect(组件源.match(/order: 3/g)).toHaveLength(2)
+  it('横条格用显式修饰类直配网格槽位，不依赖 :has() 做布局路由', () => {
+    expect(组件源).toContain('class="yuyin-hengtiao-ge yuyin-hengtiao-ge--jindu"')
+    expect(组件源).toContain('class="yuyin-hengtiao-ge yuyin-hengtiao-ge--yinliang"')
+    expect(组件源).toMatch(/\.yuyin-hengtiao-ge--jindu\s*\{[^}]*grid-area: jindu/)
+    expect(组件源).toMatch(/\.yuyin-hengtiao-ge--yinliang\s*\{[^}]*grid-area: yinliang/)
+    expect(组件源).not.toContain(':has(')
+  })
+
+  it('本人态用同一网格镜像列序为图标|条|数值，竖线仍连续且无行级order补丁', () => {
+    expect(组件源).toContain('.yuyin-kongzhi-qu--benren')
+    expect(组件源).toContain("'tubiao jindu shijian'")
+    expect(组件源).toContain("'laba yinliang baifenbi'")
+    expect(组件源).not.toContain('nth-child')
+    expect(组件源).not.toContain('yuyin-jindu-qu')
+    expect(组件源).not.toContain('yuyin-yinliang-qu')
+    expect(组件源.match(/row-reverse/g)).toHaveLength(1)
+    expect(组件源).toContain('.yuyin-neirong--benren {\n  flex-direction: row-reverse;')
+    expect(组件源).not.toMatch(/(?:^|[\s{;])order:/)
+    const 镜像规则 = 组件源.match(/\.yuyin-kongzhi-qu--benren\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(镜像规则).toContain('grid-template-areas')
   })
 })

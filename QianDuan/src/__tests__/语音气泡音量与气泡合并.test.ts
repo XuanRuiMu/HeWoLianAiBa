@@ -600,7 +600,7 @@ describe('语音进度圆点跨浏览器几何', () => {
     })
     const 滑块 = wrapper.get<HTMLInputElement>('input[type="range"]')
     expect(滑块.element.value).toBe('2')
-    expect(wrapper.get('.yuyin-jindu-qu').classes().includes('yuyin-jindu-qu--benren')).toBe(
+    expect(wrapper.get('.yuyin-kongzhi-qu').classes().includes('yuyin-kongzhi-qu--benren')).toBe(
       shiBenRen,
     )
     await 滑块.setValue('4')
@@ -623,8 +623,10 @@ describe('暂停/停止收进紧凑按钮组', () => {
     )
     expect(语音源).toContain('width: var(--yuyin-kongzhi-tubiao)')
     expect(语音源).toContain('height: var(--yuyin-kongzhi-tubiao)')
-    expect(语音源).toContain('padding-inline: var(--jiange-13)')
-    expect(语音源).toContain('margin-top: var(--jiange-xiao)')
+    const 控制区规则 = 语音源.match(/\.yuyin-kongzhi-qu\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(控制区规则).toContain('padding-inline: var(--jiange-13)')
+    expect(控制区规则).toContain('margin-top: var(--jiange-xiao)')
+    expect(控制区规则).toContain('column-gap: var(--jiange-xiao)')
     expect(令牌源).not.toContain('--yuyin-re-ku:')
   })
 
@@ -632,7 +634,7 @@ describe('暂停/停止收进紧凑按钮组', () => {
     expect(语音源).toContain('class="yuyin-kongzhi-zu"')
     expect(语音源).toContain('.yuyin-kongzhi-zu {')
     expect(语音源).toContain('gap: var(--yuyin-kongzhi-jian-ju)')
-    expect(语音源).toContain('gap: var(--jiange-xiao)')
+    expect(语音源).toContain('column-gap: var(--jiange-xiao)')
     expect(语音源).not.toContain('gap: var(--jiange-12)')
   })
 
@@ -644,10 +646,12 @@ describe('暂停/停止收进紧凑按钮组', () => {
     expect(令牌源).toContain('--yuyin-zui-da-kuan: min(260px, 68vw);')
   })
 
-  it('本人态整行反转，暂停/停止贴齐气泡右侧内衬而不是飘在滑块另一头', () => {
-    expect(语音源).toContain('class="yuyin-jindu-qu"')
-    expect(语音源).toContain("'yuyin-jindu-qu--benren': shiBenRen")
-    expect(语音源).toContain('.yuyin-jindu-qu--benren')
-    expect(语音源).toContain('flex-direction: row-reverse')
+  it('本人态网格列序镜像，暂停/停止列与喇叭列共享同一图标轨道', () => {
+    expect(语音源).toContain('class="yuyin-kongzhi-qu"')
+    expect(语音源).toContain("'yuyin-kongzhi-qu--benren': shiBenRen")
+    expect(语音源).toContain('.yuyin-kongzhi-qu--benren')
+    const 镜像规则 = 语音源.match(/\.yuyin-kongzhi-qu--benren\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(镜像规则).toContain("'tubiao jindu shijian'")
+    expect(镜像规则).toContain("'laba yinliang baifenbi'")
   })
 })
