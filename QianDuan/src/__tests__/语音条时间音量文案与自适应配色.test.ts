@@ -74,10 +74,8 @@ describe('语音条数值颜色跟随气泡主色并保证页面可读', () => {
     )
     expect(组件源).not.toMatch(/color:\s*(#2e7d32|#4caf50|green)/)
     expect(令牌源).toContain('--yuyin-shuzhi-zihao: 11px;')
-    expect(令牌源).toContain('--yuyin-fenge-xian-kuan: 2px;')
-    expect(令牌源).toMatch(/--yuyin-fenge-xian-yanse:\s*hsl\(/)
-    expect(令牌源).toContain('--yuyin-fenge-xian-se-xiang: 299.4;')
-    expect(令牌源).toMatch(/:root\[data-theme="light"\]\s*\{[^}]*--yuyin-fenge-xian-liang-du:/)
+    expect(令牌源).not.toContain('--yuyin-fenge-xian')
+    expect(组件源).not.toContain('border-inline')
     expect(令牌源).not.toContain('--yuyin-shuzhi-shijian-kuan')
     expect(令牌源).not.toContain('--yuyin-shuzhi-yinliang-kuan')
   })
@@ -115,7 +113,7 @@ describe('语音条数值颜色跟随气泡主色并保证页面可读', () => {
     expect(组件源).not.toContain(':has(')
   })
 
-  it('本人态用同一网格镜像列序为图标|条|数值，竖线仍连续且无行级order补丁', () => {
+  it('本人态用同一网格镜像列序为图标|条|数值，无行级order补丁', () => {
     expect(组件源).toContain('.yuyin-kongzhi-qu--benren')
     expect(组件源).toContain("'tubiao jindu shijian'")
     expect(组件源).toContain("'laba yinliang baifenbi'")

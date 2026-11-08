@@ -574,7 +574,6 @@ onBeforeUnmount(() => {
   align-self: stretch;
   width: 100%;
   min-width: 0;
-  border-inline: var(--yuyin-fenge-xian-kuan) solid var(--yuyin-fenge-xian-yanse);
 }
 
 .yuyin-hengtiao-ge--jindu {

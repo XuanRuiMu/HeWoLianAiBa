@@ -27,3 +27,17 @@
 原始文件：svg-css/blocks-wave.svg
 许可：MIT，Copyright (c) Utkarsh Verma，全文见 LICENSE-svg-spinners.txt
 本目录的改动：SVG 文件原样保存，通过 CSS 滤镜适配青绿色主题；页面版式与揭晓动画为本地实现。
+
+五、05-斜幕
+仓库：https://github.com/codrops/PageRevealEffects
+提交：0939dd213a7b204c16732c9453cdf7580027a67b
+原始文件：js/main.js（Revealer）、js/classie.js、js/modernizr-custom.js、css/component.css 的 effect-3 三层关键帧与角部方向几何
+许可：Codrops 许可（个人/商业项目可免费集成或二次开发，不得原样再发布/转售），见 https://codrops.com/codrops/licensing/ ；js 头部标注 MIT
+本目录的改动：Revealer 驱动与角部方向（cornertopleft/cornerbottomright/top）保留原实现；三层关键帧改名为 xiemu-mu-* 并适配紫金配色；页面版式、三段顺序编排（左上→右下→中间）与文案为本地实现。vendor/codrops 内保留原始文件备查。
+
+六、06-棋幕
+仓库：https://github.com/Nischint007/barba-js-dynamic-grid-transition-08
+提交：ef888c76c8007aef9487d189b4c614dd599dc436
+原始文件：script.js（GSAP clip-path 棋格帘幕）、style.css（四层棋格结构）
+许可：仓库未附独立 LICENSE 文件，README 为教学系列示例；GSAP 依其官方许可（标准免费许可），本地已内置 gsap.min.js 3.13.0
+本目录的改动：保留 GSAP 棋格交错动画思路，重写为 8×5 棋格按「左上组→右下组→中间组」的距离排序依次缩放覆盖/退幕；去掉 Barba 路由依赖改为单页双场景演示；配色与文案为本地实现。vendor 内保留原始 script.js/style.css/README 备查。
