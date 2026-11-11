@@ -4,10 +4,11 @@ import { huoQuFanYi } from '../config/translations'
 import { CUO_WU_DAI_MA } from '../config/错误码注册表'
 import { shiBaiXiangYing } from '../utils/xiangying'
 import { 是可识别性别 } from '../utils/性别'
+import { guiYiWeiGuoJiHao } from '../utils/手机号'
 import { qingLiTiJiaoKuai } from '../services/消息内容块'
 
 export function 验证手机号(值: unknown): 值 is string {
-  return typeof 值 === 'string' && peiZhi.shouJiHao.zhengZe.test(值)
+  return typeof 值 === 'string' && peiZhi.shouJiHao.zhengZe.test(guiYiWeiGuoJiHao(值))
 }
 
 export function 验证用户名(值: unknown): 值 is string {

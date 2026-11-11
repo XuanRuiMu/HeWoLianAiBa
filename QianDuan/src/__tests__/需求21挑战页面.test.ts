@@ -158,7 +158,7 @@ beforeEach(() => {
 })
 
 describe('挑战主页信息结构', () => {
-  it('我的排位积分以四组独立计分二级标题和固定顺序配色卡展示', async () => {
+  it('四组独立计分作为积分区唯一标题并按固定顺序配色卡展示', async () => {
     const 包 = await 挂主页()
     const 卡 = 包.findAll('.jifen-ka')
     expect(卡).toHaveLength(4)
@@ -194,7 +194,8 @@ describe('挑战主页信息结构', () => {
     )
     expect(卡[2]?.find('.zubie-kong').text()).toBe(huoQuFanYi('tiaoZhan', 'weiCanSai'))
     expect(包.find('.qu-biaoti').text()).toBe('四组独立计分')
-    expect(包.find('.qu-fu').text()).toBe('我的排位积分')
+    expect(包.find('.qu-fu').exists()).toBe(false)
+    expect(包.text()).not.toContain('我的排位积分')
     expect(包.find('.tou-tongji').exists()).toBe(false)
     expect(包.find('.zubie-kong-ti').exists()).toBe(false)
     expect(包.text()).not.toContain('##')

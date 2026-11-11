@@ -550,6 +550,8 @@ onBeforeUnmount(() => {
   grid-template-areas:
     'tubiao jindu shijian'
     'laba yinliang baifenbi';
+  margin-top: 0;
+  padding-inline: var(--jiange-13) 0;
 }
 
 .yuyin-shijian-wenben {

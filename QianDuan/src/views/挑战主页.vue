@@ -75,7 +75,6 @@
         <section class="qu" :aria-busy="shuJuZaiZai ? 'true' : 'false'">
           <div class="qu-tou">
             <h2 class="qu-biaoti">{{ huoQuFanYi('tiaoZhan', 'siGeZuBie') }}</h2>
-            <span class="qu-fu">{{ huoQuFanYi('tiaoZhan', 'woDePaiWei') }}</span>
           </div>
           <RequestError
             v-if="qianTaiCuoWu"
@@ -959,12 +958,6 @@ onBeforeUnmount(() => {
   font-size: var(--tz-zi-zhong);
   font-weight: 600;
   line-height: 1.3;
-}
-
-.qu-fu {
-  font-size: var(--tz-zi-xiao);
-  line-height: 1.4;
-  color: var(--tz-wen-ci);
 }
 
 .duiju-qu {

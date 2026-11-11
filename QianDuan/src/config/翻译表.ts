@@ -777,7 +777,6 @@ export const fanYi = {
     zuBieNvNan: '女 × 男',
     zuBieNanNan: '男 × 男',
     zuBieNvNv: '女 × 女',
-    woDePaiWei: '我的排位积分',
     siGeZuBie: '四组独立计分',
     duanWeiBiaoQian: '段位',
     zhanJiBiaoQian: '战绩',

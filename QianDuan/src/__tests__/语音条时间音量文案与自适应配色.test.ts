@@ -125,5 +125,7 @@ describe('语音条数值颜色跟随气泡主色并保证页面可读', () => {
     expect(组件源).not.toMatch(/(?:^|[\s{;])order:/)
     const 镜像规则 = 组件源.match(/\.yuyin-kongzhi-qu--benren\s*\{[^}]*\}/)?.[0] ?? ''
     expect(镜像规则).toContain('grid-template-areas')
+    expect(镜像规则).toContain('padding-inline: var(--jiange-13) 0')
+    expect(镜像规则).toContain('margin-top: 0')
   })
 })

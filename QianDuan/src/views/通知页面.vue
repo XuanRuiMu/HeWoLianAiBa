@@ -142,10 +142,29 @@ onMounted(() => {
 
 <style scoped>
 .tongzhi-yemian {
+  --tongzhi-xiang-mian: rgba(32, 32, 37, 0.92);
+  --tongzhi-xiang-xuanfu-mian: rgba(45, 45, 51, 0.94);
+  --tongzhi-xiang-weidu-mian: color-mix(
+    in srgb,
+    var(--yanse-biaobai) 12%,
+    rgba(32, 32, 37, 0.92)
+  );
+  --tongzhi-kong-mian: rgba(18, 18, 20, 0.86);
   width: 100%;
   min-height: calc(100vh - 52px);
   padding: var(--jiange-da);
   background: transparent;
+}
+
+:root[data-theme='light'] .tongzhi-yemian {
+  --tongzhi-xiang-mian: rgba(255, 255, 255, 0.74);
+  --tongzhi-xiang-xuanfu-mian: rgba(255, 255, 255, 0.88);
+  --tongzhi-xiang-weidu-mian: color-mix(
+    in srgb,
+    var(--yanse-biaobai) 8%,
+    rgba(255, 255, 255, 0.74)
+  );
+  --tongzhi-kong-mian: rgba(255, 255, 255, 0.7);
 }
 
 .tongzhi-rongqi {
@@ -230,7 +249,7 @@ onMounted(() => {
   align-items: center;
   gap: var(--jiange-12);
   padding: calc(var(--jiange-da) * 2 + var(--jiange-12)) var(--jiange-da);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--tongzhi-kong-mian);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -238,7 +257,6 @@ onMounted(() => {
 }
 
 :root[data-theme='light'] .tongzhi-kong {
-  background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
@@ -296,7 +314,7 @@ onMounted(() => {
   align-items: flex-start;
   gap: var(--jiange-xiao);
   padding: var(--jiange-zhong);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--tongzhi-xiang-mian);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--yuanjiao-zhong);
   cursor: pointer;
@@ -308,21 +326,19 @@ onMounted(() => {
 
 .tongzhi-xiang:hover {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--tongzhi-xiang-xuanfu-mian);
 }
 
 .tongzhi-xiang.weidu {
   border-color: color-mix(in srgb, var(--yanse-biaobai) 35%, transparent);
-  background: color-mix(in srgb, var(--yanse-biaobai) 10%, transparent);
+  background: var(--tongzhi-xiang-weidu-mian);
 }
 
 :root[data-theme='light'] .tongzhi-xiang {
-  background: rgba(255, 255, 255, 0.74);
   border-color: rgba(0, 0, 0, 0.06);
 }
 
 :root[data-theme='light'] .tongzhi-xiang.weidu {
-  background: color-mix(in srgb, var(--yanse-biaobai) 8%, transparent);
   border-color: color-mix(in srgb, var(--yanse-biaobai) 22%, transparent);
 }
 

@@ -77,8 +77,9 @@ export function yingSheYongHu(row: Record<string, unknown>): YongHuXinXi {
 }
 
 export function yanZhengShouJiHaoGeShi(shouJiHao: string): boolean {
-  if (!peiZhi.shouJiHao.zhengZe.test(shouJiHao)) return false
-  return jieXiShouJiHao(shouJiHao).heFa
+  const guoJiHao = guiYiWeiGuoJiHao(shouJiHao)
+  if (!peiZhi.shouJiHao.zhengZe.test(guoJiHao)) return false
+  return jieXiShouJiHao(guoJiHao).heFa
 }
 
 export function jiSuanZhouSuiNianLing(
