@@ -38,7 +38,7 @@ interface IhdrXinXi {
   gao: number
   weiShen: number
   yanSeLeiXing: number
-  interlace: number
+  geXingBiaoZhi: number
 }
 
 function duIhdr(huan: Buffer): IhdrXinXi | null {
@@ -50,7 +50,7 @@ function duIhdr(huan: Buffer): IhdrXinXi | null {
     gao: huan.readUInt32BE(20),
     weiShen: huan[24],
     yanSeLeiXing: huan[25],
-    interlace: huan[28],
+    geXingBiaoZhi: huan[28],
   }
 }
 
@@ -109,7 +109,7 @@ export function caiDiaoPNGDiBu(tuPian: Buffer, diBuBiLi: number): Buffer {
   try {
     const ihdr = duIhdr(tuPian)
     if (!ihdr) return tuPian
-    if (ihdr.weiShen !== 8 || ihdr.interlace !== 0) return tuPian
+    if (ihdr.weiShen !== 8 || ihdr.geXingBiaoZhi !== 0) return tuPian
     const meiXingZiJie = meiXiangZiJieShu(ihdr.yanSeLeiXing)
     if (meiXingZiJie === 0) return tuPian
     if (diBuBiLi <= 0 || diBuBiLi >= 0.5) return tuPian

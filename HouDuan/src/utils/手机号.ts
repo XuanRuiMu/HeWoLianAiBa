@@ -12,7 +12,9 @@ export interface ShouJiHaoJieXi {
 }
 
 export function guiYiWeiGuoJiHao(yuanShi: string): string {
-  const qingLi = String(yuanShi ?? '').trim().replace(/[\s\-()]/g, '')
+  const qingLi = String(yuanShi ?? '')
+    .trim()
+    .replace(/[\s\-()（）\uFF0B\uFF0D\u2010-\u2015]/g, '')
   if (qingLi === '') return ''
   if (qingLi.startsWith('+')) return qingLi
   if (/^\d{11}$/.test(qingLi) && /^1[3-9]/.test(qingLi)) return '+' + DA_LU_QU_HAO + qingLi

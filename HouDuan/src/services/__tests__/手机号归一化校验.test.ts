@@ -22,6 +22,15 @@ describe('手机号格式校验按归一化后的国际号判定', () => {
     expect(yanZhengShouJiHaoGeShi('+85298765432')).toBe(true)
   })
 
+  it('中文输入法的全角括号、全角加减号与各类连字符都能清洗', () => {
+    expect(yanZhengShouJiHaoGeShi('166（）00001234')).toBe(true)
+    expect(yanZhengShouJiHaoGeShi('（166）00001234')).toBe(true)
+    expect(yanZhengShouJiHaoGeShi('166－00001234')).toBe(true)
+    expect(yanZhengShouJiHaoGeShi('＋8616600001234')).toBe(true)
+    expect(yanZhengShouJiHaoGeShi('166–0000–1234')).toBe(true)
+    expect(yanZhengShouJiHaoGeShi('+86（166）00001234')).toBe(true)
+  })
+
   it('垃圾输入与空串一律拒绝', () => {
     expect(yanZhengShouJiHaoGeShi('')).toBe(false)
     expect(yanZhengShouJiHaoGeShi('12345')).toBe(false)

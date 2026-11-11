@@ -150,6 +150,12 @@ onMounted(() => {
     rgba(32, 32, 37, 0.92)
   );
   --tongzhi-kong-mian: rgba(18, 18, 20, 0.86);
+  --tongzhi-mian-biankuang: rgba(255, 255, 255, 0.08);
+  --tongzhi-kong-tubiao-di: rgba(255, 255, 255, 0.06);
+  --tongzhi-kong-tubiao-se: rgba(255, 255, 255, 0.55);
+  --tongzhi-kong-wenben: rgba(255, 255, 255, 0.7);
+  --tongzhi-kong-fuwen: rgba(255, 255, 255, 0.4);
+  --tongzhi-fen-wenben: #ff8fac;
   width: 100%;
   min-height: calc(100vh - 52px);
   padding: var(--jiange-da);
@@ -165,6 +171,12 @@ onMounted(() => {
     rgba(255, 255, 255, 0.74)
   );
   --tongzhi-kong-mian: rgba(255, 255, 255, 0.7);
+  --tongzhi-mian-biankuang: rgba(0, 0, 0, 0.06);
+  --tongzhi-kong-tubiao-di: rgba(0, 0, 0, 0.04);
+  --tongzhi-kong-tubiao-se: rgba(0, 0, 0, 0.45);
+  --tongzhi-kong-wenben: rgba(0, 0, 0, 0.6);
+  --tongzhi-kong-fuwen: rgba(0, 0, 0, 0.35);
+  --tongzhi-fen-wenben: #c4385f;
 }
 
 .tongzhi-rongqi {
@@ -202,7 +214,7 @@ onMounted(() => {
   border-radius: 999px;
   background: color-mix(in srgb, var(--yanse-biaobai) 16%, transparent);
   border: 1px solid color-mix(in srgb, var(--yanse-biaobai) 30%, transparent);
-  color: #ff8fac;
+  color: var(--tongzhi-fen-wenben);
   font-size: 12px;
   font-weight: 600;
   line-height: 1.6;
@@ -212,7 +224,6 @@ onMounted(() => {
 :root[data-theme='light'] .weidu-jiaochi {
   background: color-mix(in srgb, var(--yanse-biaobai) 10%, transparent);
   border-color: color-mix(in srgb, var(--yanse-biaobai) 24%, transparent);
-  color: #c4385f;
 }
 
 .quanbu-anniu {
@@ -252,12 +263,8 @@ onMounted(() => {
   background: var(--tongzhi-kong-mian);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--tongzhi-mian-biankuang);
   border-radius: var(--yuanjiao-da);
-}
-
-:root[data-theme='light'] .tongzhi-kong {
-  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .kong-tubiao {
@@ -267,13 +274,8 @@ onMounted(() => {
   width: 72px;
   height: 72px;
   border-radius: var(--yuanjiao-zhong);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.55);
-}
-
-:root[data-theme='light'] .kong-tubiao {
-  background: rgba(0, 0, 0, 0.04);
-  color: rgba(0, 0, 0, 0.45);
+  background: var(--tongzhi-kong-tubiao-di);
+  color: var(--tongzhi-kong-tubiao-se);
 }
 
 .kong-tubiao svg {
@@ -284,22 +286,14 @@ onMounted(() => {
 .kong-wenben {
   font-size: 18px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--tongzhi-kong-wenben);
   margin: 0;
-}
-
-:root[data-theme='light'] .kong-wenben {
-  color: rgba(0, 0, 0, 0.6);
 }
 
 .kong-fuwen {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--tongzhi-kong-fuwen);
   margin: 0;
-}
-
-:root[data-theme='light'] .kong-fuwen {
-  color: rgba(0, 0, 0, 0.35);
 }
 
 .tongzhi-liebiao {
@@ -315,7 +309,7 @@ onMounted(() => {
   gap: var(--jiange-xiao);
   padding: var(--jiange-zhong);
   background: var(--tongzhi-xiang-mian);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--tongzhi-mian-biankuang);
   border-radius: var(--yuanjiao-zhong);
   cursor: pointer;
   transition:
@@ -334,12 +328,8 @@ onMounted(() => {
   background: var(--tongzhi-xiang-weidu-mian);
 }
 
-:root[data-theme='light'] .tongzhi-xiang {
-  border-color: rgba(0, 0, 0, 0.06);
-}
-
-:root[data-theme='light'] .tongzhi-xiang.weidu {
-  border-color: color-mix(in srgb, var(--yanse-biaobai) 22%, transparent);
+.tongzhi-xiang.weidu:hover {
+  background: color-mix(in srgb, var(--yanse-biaobai) 12%, var(--tongzhi-xiang-xuanfu-mian));
 }
 
 .weidu-yuandian {
@@ -404,7 +394,7 @@ onMounted(() => {
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--yanse-biaobai) 30%, transparent);
   background: color-mix(in srgb, var(--yanse-biaobai) 12%, transparent);
-  color: #ff8fac;
+  color: var(--tongzhi-fen-wenben);
   font-size: 12px;
   font-weight: 600;
   transition: background 0.18s ease, transform 0.18s ease;
@@ -413,7 +403,6 @@ onMounted(() => {
 :root[data-theme='light'] .yidu-anniu {
   border-color: rgba(196, 56, 95, 0.26);
   background: color-mix(in srgb, var(--yanse-biaobai) 10%, transparent);
-  color: #c4385f;
 }
 
 .yidu-anniu:hover {
