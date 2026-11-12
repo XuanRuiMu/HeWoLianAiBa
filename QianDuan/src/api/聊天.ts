@@ -427,7 +427,7 @@ function zuZhuangXinMuZhongDeTa(
     String(ziLiao.nianLing).trim() !== ''
   ) {
     const shu = Number(String(ziLiao.nianLing).trim())
-    if (Number.isFinite(shu)) jieGuo.nian_ling = Math.max(0, Math.min(100, Math.round(shu)))
+    if (Number.isFinite(shu)) jieGuo.nian_ling = Math.max(10, Math.min(99, Math.round(shu)))
   }
   if (ziLiao.tongYongTiShiCi) jieGuo.tong_yong_ti_shi_ci = ziLiao.tongYongTiShiCi
   return Object.keys(jieGuo).length > 0 ? jieGuo : undefined
