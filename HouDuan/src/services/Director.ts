@@ -16,6 +16,17 @@ export interface DirectorJieGuo {
   yuan_wen?: string
 }
 
+const YUN_XU_YI_TU = new Set([
+  '好笑', '感动', '无语', '赞同', '撒娇', '安慰', '庆祝', '破冰', '告别', '卖萌', '生气', '委屈',
+])
+
+function biaoQingYiTuZhi(zhi: unknown): string | null {
+  if (typeof zhi !== 'string') return null
+  const qingLi = zhi.trim()
+  if (qingLi === '' || qingLi === 'null') return null
+  return YUN_XU_YI_TU.has(qingLi) ? qingLi : null
+}
+
 function moRenCeLue(): DirectorCeLue {
   return {
     yong_hu_yi_tu: 'unknown',
@@ -26,6 +37,7 @@ function moRenCeLue(): DirectorCeLue {
     shi_jian_qing_xu: 'unknown',
     shi_fou_che_hui: false,
     shi_fou_zhu_dong_biao_bai: false,
+    biao_qing_yi_tu: null,
   }
 }
 
@@ -65,6 +77,7 @@ export function jieXiDirectorXiangYing(neiRong: string): { ceLue: DirectorCeLue;
       shi_jian_qing_xu: String(shuJu['时间情绪'] || shuJu['shi_jian_qing_xu'] || 'unknown'),
       shi_fou_che_hui: Boolean(shuJu['是否撤回'] ?? shuJu['shi_fou_che_hui'] ?? false),
       shi_fou_zhu_dong_biao_bai: Boolean(shuJu['是否主动表白'] ?? shuJu['shi_fou_zhu_dong_biao_bai'] ?? false),
+      biao_qing_yi_tu: biaoQingYiTuZhi(shuJu['biao_qing_yi_tu']),
     },
     jieXiChengGong: true,
   }
@@ -90,10 +103,10 @@ export async function shengChengDirectorCeLue(
       typeof 内容 === 'string' ? `${内容}\n\n${daoYanZhiLing}` : [...内容, { type: 'input_text', text: daoYanZhiLing }]
     const xiaoXi = [{ jiaoSe: 'user' as const, neiRong: 带导演指令(yongHuNeiRong) }]
 
-    let xiangYing = await genJuPeiZhiTiaoYong('director', xiaoXi, shangXiaWen, waiBuXinHao)
+    let xiangYing = await genJuPeiZhiTiaoYong('DaoYan', xiaoXi, shangXiaWen, waiBuXinHao)
     if (xiangYing.neiRong.trim() === '') {
       await new Promise((r) => setTimeout(r, 10000))
-      xiangYing = await genJuPeiZhiTiaoYong('director', xiaoXi, shangXiaWen, waiBuXinHao)
+      xiangYing = await genJuPeiZhiTiaoYong('DaoYan', xiaoXi, shangXiaWen, waiBuXinHao)
     }
 
     const { ceLue, jieXiChengGong } = jieXiDirectorXiangYing(xiangYing.neiRong)
@@ -101,7 +114,7 @@ export async function shengChengDirectorCeLue(
       debug日志.error('AI导演', 'Director响应解析失败，已标unknown并入重试队列', {
         xiang_qing: { yuan_wen_chang_du: xiangYing.neiRong.length },
       })
-      void paiRuZhongShiDuiLie({ leiXing: 'director', yuanYin: 'jie_xi_shi_bai' })
+      void paiRuZhongShiDuiLie({ leiXing: 'DaoYan', yuanYin: 'jie_xi_shi_bai' })
       return { cheng_gong: false, ce_lue: ceLue, cuo_wu: 'JIE_XI_SHI_BAI', yuan_wen: xiangYing.neiRong }
     }
     return { cheng_gong: true, ce_lue: ceLue, si_kao: xiangYing.siKaoNeiRong || undefined, yuan_wen: xiangYing.neiRong }

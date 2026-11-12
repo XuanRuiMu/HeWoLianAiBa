@@ -99,3 +99,41 @@ export function panDuanShiFouMoXingChouJian(suiJiShu: number = Math.random()): b
 }
 
 export const QU_AI_WEI_HUI_DU_GUAN_JIAN = 'QU_AI_WEI_HUI_DU'
+
+const TAO_HUA_CI_BIAO = [
+  '抱抱你',
+  '抱紧你',
+  '你是最棒的',
+  '你真棒',
+  '为你骄傲',
+  '我永远陪着你',
+  '加油哦',
+  '你值得被爱',
+  '一切都会好起来的',
+  '摸摸头',
+  '给你一个么么哒',
+  '么么哒',
+]
+
+export const TAO_HUA_PEI_ZHI = {
+  ciBiao: duQuCiBiao('TAO_HUA_CI_BIAO', TAO_HUA_CI_BIAO),
+  caiYangBiLi: duQuFuDian('TAO_HUA_CAI_YANG_BI_LI', 0.5, 0, 1),
+} as const
+
+export interface TaoHuaJianChaJieGuo {
+  mingZhong: string[]
+  tongGuo: boolean
+}
+
+export function jianChaTaoHua(wenBen: string, ciBiao: readonly string[] = TAO_HUA_PEI_ZHI.ciBiao): TaoHuaJianChaJieGuo {
+  const mingZhong: string[] = []
+  if (typeof wenBen !== 'string' || !wenBen) return { mingZhong, tongGuo: true }
+  for (const ci of ciBiao) {
+    if (ci && wenBen.includes(ci) && !mingZhong.includes(ci)) mingZhong.push(ci)
+  }
+  return { mingZhong, tongGuo: mingZhong.length === 0 }
+}
+
+export function panDuanTaoHuaCaiYang(suiJiShu: number = Math.random()): boolean {
+  return suiJiShu < TAO_HUA_PEI_ZHI.caiYangBiLi
+}

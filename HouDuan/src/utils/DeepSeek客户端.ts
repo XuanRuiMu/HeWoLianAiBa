@@ -458,7 +458,7 @@ export async function tiaoYongDeepSeek(
       throw rongDuanCuoWu
     }
     try {
-      const benCiChaoShi = moXingLeiXing === 'writer' ? 120 * 1000 : 60 * 1000
+      const benCiChaoShi = moXingLeiXing === 'XieShou' ? 120 * 1000 : 60 * 1000
       const chaoShiKongZhi = new AbortController()
       const chaoShiDingShi = setTimeout(() => chaoShiKongZhi.abort(), benCiChaoShi)
       const youXiaoXinHao = waiBuXinHao ?? chaoShiKongZhi.signal

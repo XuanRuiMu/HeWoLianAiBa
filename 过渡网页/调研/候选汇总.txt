@@ -1,0 +1,243 @@
+Dujltqzv/Some-Many-Books|25972||2026/6/18 5:36:05|页面过渡|个人收藏书籍列表　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　
+barbajs/barba|12996|TypeScript|2024/12/2 22:33:28|page transitions css|Create badass, fluid and smooth transitions between your website’s pages
+cirosantilli/x86-bare-metal-examples|5445|Assembly|2022/7/18 5:40:51|页面过渡|Dozens of minimal operating systems to learn x86 system programming. Tested on Ubuntu 17.10 host in QEMU 2.10 and real hardware. Userland cheat at: ht
+blivesta/animsition|3775|CSS|2019/11/19 5:15:32|page transitions css|A simple and easy jQuery plugin for CSS animated page transitions.
+cirosantilli/china-dictatorship|3334|HTML|2026/2/5 7:59:11|页面过渡|反中共政治宣传库。Anti Chinese government propaganda. 住在中国真名用户的网友请别给星星，不然你要被警察请喝茶。常见问答集，新闻集和饭店和音乐建议。卐习万岁卐。冠状病毒审查郝海东新疆改造中心六四事件法轮功 996.ICU709大抓捕巴拿马文件邓家贵低端人口西藏骚乱。
+amirdew/CollectionViewPagingLayout|2797|Swift|2023/4/2 9:42:58|page transition collection|A simple but highly customizable UICollectionViewLayout for UICollectionView -- Simple SwiftUI views that let you make page-view effects.
+codrops/PageTransitions|2315|CSS|2024/8/5 18:25:17|page transitions css|A showcase collection of various page transition effects using CSS animations.
+gege-circle/.github|2094||2025/10/4 7:56:18|页面过渡|这里是GitHub的草场，也是戈戈圈爱好者的交流地，主要讨论动漫、游戏、科技、人文、生活等所有话题，欢迎各位小伙伴们在此讨论趣事。This is GitHub grassland, and the community place for Gege circle lovers, mainly disc
+argyleink/transition.css|2018|CSS|2025/6/16 20:08:23|clip-path transition|:octocat: Drop-in CSS transitions
+XuYang8026/UniversalProject|2014|Objective-C|2018/3/7 12:16:51|转场动画|基于MVC架构的iOS轻量级框架，封装了基类、基于猿题库YTKNetwork的网络服务、工具库，NavigationController转场动画/瀑布流/粒子动画/小demo，已适配iOS11 & iPhone X。欢迎Star🌟 
+sdras/page-transitions-travelapp|1714|Vue|2023/10/17 4:53:54|vue page transition|Travel App, Native-like Page Transitions
+alanwangmodify/WXSTransition|1518|Objective-C|2018/7/25 9:14:04|转场动画|🍎 界面转场动画集
+popwarsweet/PageControls|1099|Swift|2022/5/2 20:03:58|page transition collection|This is a selection of custom page controls to replace UIPageControl, inspired by a dribbble found here: https://dribbble.com/shots/2578447-Page-Contr
+jaweii/Vueg----page-transition-plugin|1039|JavaScript|2021/2/23 5:45:56|vue page transition|为Vue应用添加页面间的转场特效( Page level transition plugin for vue-router)
+meursyphus/ssgoi|1016|TypeScript|2026/11/9 23:51:41|react page transition|animated page transition for major ssr frameworks and browsers, including Safari
+yuwind/HHTransition|840|Objective-C|2024/5/8 5:46:45|转场动画|主流转场动画，无侵入，API简单易用。
+tangtiancheng/DouYinComment|716|Objective-C|2026/8/24 4:53:17|转场动画|iOS Widget Video Gif Play Animation 1. gif视频播放小组件, 帧动画小组件, 摇摇乐小组件, 网易云iOS小组件,动态Widget,时钟组件,风扇组件,滚动照片组件; 2.抖音视频转场动画,抖音左滑push进个人主页, 评论手势拖拽效果 , 视频播放, 边下边
+codrops/PageLoadingEffects|640|CSS|2014/4/23 8:08:18|page load animation|Modern ways of revealing new content using SVG animations.
+pxvr-official/1|563||2021/3/15 13:23:42|页面过渡|無許諾配信 企業理念剽窃 動物の森収益化 大神ミオ権利者削除 戌神権利侵害発言 常闇トワ炎上 夜空メルストーカー被害 建築王サポーター放置 赤十字マーク 魔乃アロエ卒業 一つの中國支持声明 大空昴3Dライブ 無限延期清掃員職業差別 日清コラボ楽曲 musedash非公開 rog案件取り消し 壁画ライ
+trungdq88/react-router-page-transition|548|JavaScript|2020/11/18 14:35:01|page transitions css|Highly customizable page transition component for your React Router
+illinois/next-page-transitions|546|JavaScript|2023/3/10 16:27:13|react page transition|Simple and customizable page transitions for Next.js apps
+PedroBern/react-tiger-transition|478|JavaScript|2023/1/4 12:43:41|react page transition|Full page transitions with react-router.
+xavxyz/nextjs-page-transitions|462|JavaScript|2021/1/25 10:52:49|react page transition|Travel App, Native-like Page Transitions (Next.js)
+Steveeeie/react-page-transition|447|TypeScript|2026/4/2 13:56:08|react page transition|A React component that makes it easy to use the page transitions from the Codedrops page transitions demo with React
+wangpeiming110/EnterAnimation|400|Java|2023/2/23 10:38:18|转场动画|android  进入/转场动画，入场动画效果合集，自定义view实现动画，百叶窗，擦除，盒状，阶梯，菱形效果，轮子，劈裂，棋盘，切入，扇形展开，十字扩展，随机线条，向内溶解，圆形扩展效果，适用于任何view和viewgroup，activity即用于页面根部viewgroup，自定义viewgro
+Orlandster/vue-page-transition|394|HTML|2022/12/8 21:37:06|vue page transition|A lightweight Vue.js plugin for page / route transitions.
+cirosantilli/china-dictatroship-7|389|HTML|2026/2/5 7:59:02|页面过渡|反中共政治宣传库。Anti Chinese government propaganda. https://github.com/cirosantilli/china-dictatorship 的备份backup. 住在中国真名用户的网友请别给星星，不然你要被警察请喝茶。常见问答集，新闻集和饭店和音乐
+adrianhajdin/gsap_cocktails|388|JavaScript|2025/6/20 9:49:51|reveal animation gsap|A modern cocktail website built with React and TailwindCSS, featuring smooth GSAP animations such as SplitText reveals, scroll-triggered effects, para
+yangchong211/YCScrollPager|382|Java|2022/4/2 8:42:24|页面过渡|仿抖音，快手，短视频，竖直方向，一次滚动一个页面的封装库。目前支持ViewPager做法，也支持RecyclerView做法……使用ViewPager则只是修改滑动速率，以及滚动翻页过渡时间；使用recyclerView打造丝滑切换视频的功能，更多内容可以看demo
+ismamz/next-transition-router|369|TypeScript|2026/10/7 4:12:06|page transition gsap|Easily add animated transitions between pages using Next.js App Router and your favorite animation library.
+LekoArts/gatsby-starter-portfolio-emilia|357|TypeScript|2025/6/26 7:47:35|react page transition|Minimalistic portfolio/photography site with masonry grid, page transitions and big images. Themeable with Theme UI. Includes Light/Dark mode.
+cirosantilli/cirosantilli|331|JavaScript|2026/9/22 7:03:41|页面过渡|小粉红小朋友们，新issue 在这儿开： https://github.com/cirosantilli/china-dictatorship/issues # 21世纪新政宣言（2020年4月5曰笫四次修改稿)（2020年6月19曰第七次修改，以下“【】”内文字为非正文内容的说明）20世纪苏联的消
+enesozturk/react-native-instagram|330|TypeScript|2022/12/10 12:40:04|react page transition|Instagram iOS page transitions implementation with FlashList and Reanimated
+chrisneagu/FTC-Skystone-Dark-Angels-Romania-2020|324|Java|2024/4/12 5:48:35|transition effect website|NOTICE This repository contains the public FTC SDK for the SKYSTONE (2019-2020) competition season. If you are looking for the current season's FTC SD
+LekoArts/gatsby-starter-portfolio-emma|279|MDX|2025/6/26 7:47:36|react page transition|Minimalistic portfolio with full-width grid, page transitions, support for additional MDX pages, and a focus on large images. Especially designers and
+Sfedfcv/redesigned-pancake|278||2021/5/16 5:22:26|liquid transition page|Skip to content github / docs Code Issues 80 Pull requests 35 Discussions Actions Projects 2 Security Insights Merge branch 'main' into 1862-Add-Travi
+michalzalobny/threejs-page-transition|216|TypeScript|2022/5/17 23:47:11|nextjs page transition|Web application, that uses THREE.JS and NextJS for the transitions between pages 👾. I've created this project to test the possibility of merging SPA'
+mRFWq7LwNPZjaVv5v6eo/cihna-dictattorshrip-8|216|HTML|2026/2/5 7:59:02|页面过渡|反中共政治宣传库。Anti Chinese government propaganda. https://github.com/cirosantilli/china-dictatorship 的备份backup. 住在中国真名用户的网友请别给星星，不然你要被警察请喝茶。常见问答集，新闻集和饭店和音乐
+panbinibn/OpenPacketFix_|214||2022/8/12 1:54:00|页面过渡|大陆修宪香港恶法台湾武统朝鲜毁约美中冷战等都是王沪宁愚弄习思想极左命运共同体的大策划中共窃国这半个多世纪所犯下的滔天罪恶，前期是毛泽东策划的，中期6.4前后是邓小平策划的，黄牛数据分析后期是毛的极左追随者三朝罪恶元凶王沪宁策划的。王沪宁高小肆业因文革政治和情报需要保送“学院外语班“红色仕途翻身，所以
+wrongakram/nextjs-page-transitions|200|JavaScript|2023/3/2 10:56:10|nextjs page transition|Page transitions using framer motion and next.js
+johnpolacek/TweenPages|197|JavaScript|2022/8/1 13:22:10|page transition gsap|Build complex animated page transitions with GSAP and Next.js
+domchristie/turn|184|JavaScript|2024/1/27 11:59:28|page transitions css|📖 Animate page transitions in Turbo Drive apps
+jettbrains/-L-|169||2021/8/18 13:41:54|page transitions css|W3C Strategic Highlights  September 2019  This report was prepared for the September 2019 W3C Advisory Committee Meeting (W3C Member link). See the ac
+sdras/page-transitions-simple|157|Vue|2018/4/23 10:45:28|vue page transition|Vue/Nuxt Page Transitions- Simple Demonstration
+codrops/RotatedRevealers|156|JavaScript|2020/2/25 13:45:24|page transition gsap|Animated rotated overlays, or "reveal" elements for interesting page transition effects.
+codrops/PageRevealEffects|138|CSS|2016/6/1 12:38:57|page transitions css|Some ideas for modern multi-layer page transitions using CSS Animations.
+LukyVj/GSS|128|TypeScript|2026/10/26 16:25:54|page transitions css|❴ ● ❵ GSS — GPU Style Sheets. A CSS-like language for 3D scenes: selectors, the cascade, nesting, keyframes and transitions, compiled into one raymarc
+ngoue/animeXYZ|114|JavaScript|2021/2/1 21:46:23|page load animation|An animation library that makes a tiny Naruto run across the bottom of your screen every time a new page loads
+repairearth/vue-router-transition|110|JavaScript|2017/2/13 3:41:13|vue page transition|A page transition plugin for vue-router
+codrops/ShapesSlideshow|109|JavaScript|2021/3/10 19:47:52|clip-path transition|An experimental slideshow using clip-path to create shape transitions between slides.
+harshalbenake/hbworkspace1-100|100|Java|2020/11/12 8:31:52|page load animation|(1) Name :- accelormeterSensor Description :- Using acceloremeter sensor to print Sensor event values.  (2) Name :- ActionBarDropdownNavigation Descri
+codrops/PixelTransition|96|HTML|2023/4/5 9:52:54|page transition gsap|Ideas for pixel page transitions based on an animation by Niccolò Miranda.
+klonnet23/helloy-word|92||2022/8/29 16:59:38|page load animation|    {   "releases": {     "2.0.4": [       "[Fixed] Refresh for Enterprise repositories did not handle API error querying branches - #7713",       "[F
+iart-ai/web-animation-skills|89|HTML|2026/11/11 16:14:57|page transition gsap|Web animation skills for Claude Code — GSAP, SVG, Lottie, micro-interactions, page transitions, and 60fps performance, installed straight into your ag
+codrops/RapidLayersAnimation|85|JavaScript|2020/4/7 9:10:21|intro animation website|A rapid layers animation of images as a splash intro or page transition on a website.
+olivierlarose/nextjs-framer-page-transition|82|JavaScript|2023/12/14 3:30:54|nextjs page transition|
+popwarsweet/CardCollectionView|80|Swift|2016/10/7 4:38:32|page transition collection|A blank template for a paged collection view of cards. It contains an animated transition for transitioning each card to a full screen.
+aymanch-03/shadcn-pricing-page|76|TypeScript|2025/9/8 23:14:59|nextjs page transition|Responsive and customizable pricing component built with shadcn/ui. Features payment frequency toggles, tier highlights and smooth price transitions.
+codrops/UnrevealEffects|75|HTML|2023/2/23 5:36:47|page transitions css|Some explorations of page transitions using covering elements and CSS clip-paths.
+codrops/LayersAnimation|75|JavaScript|2023/10/31 15:16:05|clip-path transition|Some ideas for speedy page transition animations with layered images using clip-path.
+milkevich/routeveil|73|TypeScript|2026/8/9 0:57:26|overlay page transition|Cinematic page and overlay transitions for React Router
+FunTechInc/mekuri|68|TypeScript|2024/5/24 8:04:32|nextjs page transition|📕 Page transition animation for React
+codrops/PolaroidStackGrid|60|JavaScript|2016/2/17 12:52:28|intro animation website|Demos for the [tutorial](http://tympanus.net/codrops/?p=26096) on how to create an intro animation where a decorative Polaroid stacks becomes a grid s
+JoseRFelix/page-transition-tutorial|58|JavaScript|2020/10/17 8:21:36|nextjs page transition|Simple examples of how to use Framer Motion for page transitions.
+kndnsow/speedmeter|57|JavaScript|2024/6/29 8:03:54|page transitions css|A web application for measuring internet speed and ping times in real-time, featuring dynamic charts and smooth page transitions using CSS animations.
+codrops/interlude|51|TypeScript|2026/11/4 6:57:52|page transition gsap|A starter for custom page transitions in Astro, built on Astro's ClientRouter and GSAP, with WebGL transitions in three.js.
+Munna-Scriptz/Happy-Birthday|50|CSS|2025/11/26 12:08:41|page load animation|A simple but beautifully animated Birthday Wishing Website featuring custom SVG cake loaders, smooth page transitions, and a 3D letter-opening animati
+cortiz2894/mouse-effects|47|TypeScript|2026/2/3 15:21:49|gsap reveals|A collection of interactive mouse effects built with Next.js, Three.js, and GSAP. This project showcases creative cursor interactions including water 
+vohidjon123/google|46||2022/4/13 14:01:22|overlay page transition|(function(sttc){/*     Copyright The Closure Library Authors.   SPDX-License-Identifier: Apache-2.0  */  var n;function aa(a){var b=0;return function(
+mercerheather476/turbo-garbanzo|40||2022/8/7 12:16:51|blob transition|![AppAuth for Android](https://rawgit.com/openid/AppAuth-Android/master/appauth_lockup.svg)  [![Download](https://img.shields.io/maven-central/v/net.o
+lifeofsoumya/NextJS-featuredStarterTemplate|40|TypeScript|2025/5/13 11:25:23|page load animation|Features: Tailwind CSS, Google analytics, Page loader animation, Dynamic Head component | SEO, Responsive Navbar, Footer, Font setup, EsLint
+josiah-brown/page-transitions-with-gasp-and-next|40|TypeScript|2023/11/25 23:56:49|page transition gsap|A simple demo of animating between pages with GSAP and Next.js App Router
+codegridweb/Page-Transition-Using-BarbaJS-And-GSAP|35|HTML|2020/4/4 16:10:37|page transition gsap|
+tahseenquraishi/flutter-travel-app|35|Dart|2021/4/25 11:02:36|stagger transition page|This app contain two pages. In first page user will see the list of places to visit and in other page detail of places will be shown. Apart from that 
+maoberlehner/vue-router-page-transitions|33|Vue|2018/6/10 8:18:29|vue page transition|This is an example project for the following article: https://markus.oberlehner.net/blog/vue-router-page-transitions/
+Muzammil-Bit/muzammil_hussain|30|Dart|2026/1/9 10:20:34|page load animation|My personal portfolio website built with Dart & Flutter with beautiful animations on every page and a custom pre-loader that is displayed when flutter
+MAGGIx1404/awwward-rebuild|30|HTML|2021/12/2 5:31:26|webgl page transition|Awwward website rebuild. Full webpages with page transitions, text reveal animations, webgl effects and many more.
+olivierlarose/nextjs-gsap-page-transition|29|JavaScript|2024/3/31 15:17:41|page transition gsap|
+sixfwa/nextjs-gsap-page-transitions|28|TypeScript|2024/3/7 15:11:38|page transition gsap|
+vguillou/neon-page-behavior|25|HTML|2016/5/30 19:55:18|overlay page transition|Make the most of Polymer's 'neon-animated-pages' effortlessly. NeonPageBehavior fires events allowing more control over a page's lifecycle, allows you
+gcolombi/nextjs-starter|25|JavaScript|2023/6/27 20:39:35|page transition collection|A Next.js starter that includes a collection of reusable components, hooks, and utilities to build amazing projects with complex animations and page t
+lhai36366/lhai36366|24||2025/2/22 22:22:30|page load animation|WPF Partial Trust Security Article 10 minutes to read In general, Internet applications should be restricted from having direct access to critical sys
+WebDevSimplified/CSS-Page-Animation-On-Load|23|CSS|2019/12/1 2:06:44|page load animation|
+uvhw/Bitcoin-Foundation|22|C++|2022/2/14 0:05:49|split reveal transition|Bitcoin: A Peer-to-Peer Electronic Cash System Satoshi Nakamoto satoshin@gmx.com www.bitcoin.org Abstract. A purely peer-to-peer version of electronic
+alikinvv/svg-mask-slider|22|HTML|2019/2/27 12:13:33|svg mask transition|A touch-enabled image slider that smoothly transitions between images and text using SVG clipping and masking technology.
+geekytime/vuex-router|21|JavaScript|2020/9/8 4:16:39|vue page transition|Move a Vue app's location state into the Vuex store. Allows super-easy page-based routing with built-in slide transitions.
+mhowerton91/history|21||2024/7/26 17:21:18|clip-path transition|<!DOCTYPE html> <!-- Copyright 2016 Google Inc. All Rights Reserved.  Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
+ZTStory/vue_page_transition|19|Vue|2023/4/17 2:07:47|vue page transition|vue 移动端页面仿iOS过场动画
+tylergaw/mpa-view-transitions-sandbox|19|HTML|2024/12/12 16:05:37|page transition collection|A collection of example view transitions for multi-page sites
+codrops/isle-thorne-collective|18|TypeScript|2026/11/4 7:20:20|page transition collection|A free furniture shop template for Astro, with content collections, Tailwind CSS and page transitions.
+Relaxkartikey/prior-gsap-animation-portfolio-website-template|17|JavaScript|2026/7/12 6:45:40|reveal animation gsap|Free open-source GSAP ScrollTrigger website template with canvas frame-scrub, parallax video, clip-path reveals & cinematic scroll effects. Vanilla HT
+Rogerio111/Rogerio|16||2015/8/27 2:19:06|blob transition|<!DOCTYPE html> <html> <head> <meta charset="utf-8"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <meta name="description" content="Eat cells
+dragonsea0927/nextjs-typescript-starter|14|TypeScript|2024/8/8 11:53:21|page transition collection|A Next.js TypeScript starter that includes a collection of reusable components, hooks, and utilities to build amazing projects with complex animations
+davidschubert/nuxt3-gsap-textreveal|13|Vue|2023/12/15 12:33:56|reveal animation gsap|A GSAP Text Reveal Component for Nuxt 3. Animation on GSAP ScrollTrigger & GSAP SmoothScroller
+rr3s1/awwWW|12|JavaScript|2025/1/10 18:50:38|clip-path transition|AwwWW / Awwwards Winning Website | Modern Website inspired by Zentry, featuring scroll-triggered animations, geometric transitions and video storytell
+taimoorshahzada/Text-Reveal-Animation-on-scroll-using-GSAP-ScrollTrigger-Plugin-and-Smooth-Scrollbar|12|HTML|2022/4/3 19:22:25|reveal animation gsap|
+codegridweb/website-intro-animation-using-tweenmax|12|HTML|2021/8/15 2:04:07|intro animation website|
+codegridweb/website-intro-animation-using-gsap|11|HTML|2022/7/28 3:31:24|intro animation website|
+Kano85/landingpage-1124-nextjs15-ts-gsap|11|TypeScript|2025/6/8 21:00:52|locomotive scroll transition|IT'S READY  !! 🚀 Next.js 15 Portfolio: A cutting-edge portfolio showcasing the latest in web development, built with Next.js 15, GSAP animations, and
+ZyadWKhedr/LiquidGlass-NavBar|10|Dart|2025/12/7 9:37:50|liquid transition page|Floating, glass-style bottom navbar with draggable indicator and smooth page transitions. Supports tap and swipe gestures. Fully synced with Riverpod 
+DevrajDC/page-reveal-transitions|10|HTML|2024/4/9 18:27:06|reveal animation gsap|Awesome animated page reveal transition and SVG path animation using GSAP.
+thewebdeveloper2017/ilearnmacquarie20178|10||2017/3/3 3:16:15|overlay page transition|<!DOCTYPE html> <html  dir="ltr" lang="en" xml:lang="en"> <head>   <!-- front -->   <meta name="viewport" content="width=device-width, initial-scale=1
+codrops/SeamTransitions|10|JavaScript|2026/10/30 12:01:09|webgl page transition|Eleven scroll-driven transitions for the seam between a hero and the page under it, made with GSAP, WebGL and canvas.
+codegridweb/Paragraph-Lines-Reveal-Animation-Using-GSAP|9|HTML|2020/9/10 7:00:14|reveal animation gsap|
+jdgp-hub/hint---Infotrader|9||2022/1/24 9:02:29|shape transition css| WarningElements must have sufficient color contrast: Element has insufficient color contrast of 1.67 (foreground color: #777777, background color: #1
+SuperRogerio/css|9||2018/8/8 17:32:49|overlay page transition|*{margin:0;padding:0}html{font-size:100%;height:100%}* html{scrollbar-3dlight-color:#;scrollbar-arrow-color:#;scrollbar-darkshadow-color:#;scrollbar-f
+zayennn/Timed-Card-Opening|8|JavaScript|2025/11/10 17:35:52|reveal animation gsap|A smooth auto-cycling card showcase animation built with GSAP. Each card will appear alternately at specific time intervals, complete with smooth tran
+suryakant1811/EcoSheri|8|JavaScript|2025/1/20 19:42:53|locomotive scroll transition|EcoSheri is a visually stunning and eco-friendly web project powered by Shery.js for smooth animations and advanced interactivity. It features a susta
+Thakuma07/Poppr-MenuAnimation|8|JavaScript|2026/4/17 10:11:54|reveal animation gsap|Building a fullscreen overlay menu with a morphing SVG wipe transition and elastic character reveal using GSAP SplitText. Inspired by an Awwwards Site
+beepy/vue-contextual-transition|7|TypeScript|2026/8/3 21:40:39|vue page transition|Easy-ish cross-browser transitioning between pages with shared elements and/or sequential order with Vue 3.
+BetterTyped/react-cards-opening|7|TypeScript|2026/10/12 15:24:40|gsap reveals|🃏 Card opening animations for React. A card flies out, hums, flips and lands, with rarity effects from a hop to a legendary foil. For pack openings, 
+boccdotdev/data-reveal|7|TypeScript|2026/10/22 15:11:51|gsap reveals|Scroll-triggered reveal animations driven by data-reveal attributes. GSAP-powered, code-split, zero-config.
+codegridweb/gsap-landing-page-reveal-animation|7|HTML|2021/8/22 11:28:10|reveal animation gsap|
+suryakant1811/Shery-UI|7|HTML|2025/1/27 10:53:39|locomotive scroll transition| A visually stunning web template using Locomotive Scroll and GSAP for smooth animations and captivating transitions. The project features a preloader
+prashantkoirala465/Modern-Preloader|7|JavaScript|2025/1/31 1:27:50|preloader animation web|A sophisticated and visually appealing preloader animation built with GSAP (GreenSock Animation Platform) and modern web technologies. This project de
+glauberxyz/modulato|7|TypeScript|2026/10/28 18:04:22|webgl page transition|Animation-first React framework — transitions with coexisting pages, a persistent URL-aware shell, and motion tokens tweakable live. Built LLM-first.
+xiaolin-zero/vue-transition-router|7|JavaScript|2021/11/25 12:06:25|vue page transition|A page transition plugin for vue-router
+taimoorshahzada/Curtain-Effect-Page-Transition-using-GSAP-and-SVG-Morph|7|CSS|2022/8/6 7:44:38|curtain transition page|
+ResoCoder/flutter-custom-staggered-page-transition-tutorial|6|Dart|2020/5/26 17:05:10|stagger transition page|
+Pusri27/luxe-digital-landing|6|TypeScript|2025/12/21 4:47:06|preloader animation web|A world-class premium landing page for web development agencies. Built with Next.js 16, Framer Motion, and Lenis. Features cinematic preloader, per-ch
+IngressoRapidoWebComponents/spinner-backdrop|5|HTML|2020/3/30 17:48:31|overlay page transition|Shows a `paper-spinner` and a backdrop overlay with a great fade-in/fade-out animation to entire container. Perfect for page route transition!
+SRIKANTH284/Web-Page-Pencil-Preloader|5|CSS|2023/7/20 4:08:42|preloader animation web|A preloader, or what is called a loading screen, is what some websites display before the main content of the webpage loads. A simple yet effective ou
+Puran167/preloader|5|HTML|2024/7/2 11:29:34|preloader animation web|A preloader — or what some call a loading screen — is the what you see on some sites before the main content of the web page is loaded. Preloaders can
+amangouste225/Website-Preloader-Animation-|5|JavaScript|2024/1/5 21:23:15|preloader animation web|Website Preloader Animation 
+rohitumbare/Rejouice|4|CSS|2025/1/17 5:20:48|preloader animation web|Rejouice is a visually striking and interactive web experience designed to push the boundaries of grid layouts and modern web animations. Built with H
+zayennn/christmas-tree-animations|4|HTML|2025/12/17 0:18:33|shape transition css|🌟 Starry Tree — 3D animated Christmas tree made with 100 twinkling stars. Watch as stars spiral and rotate in mesmerizing 3D space with pulsing anima
+bao2012/blog|4||2017/7/15 2:18:48|overlay page transition|= B. Body =====================================*/ body{background:#fff;position:relative;font:normal normal 13px Arial, Tahoma, Helvetica, FreeSans, s
+leobaray/blobsmith-autotile-wirer|4|GDScript|2026/11/4 14:25:14|blob transition|Free MIT Godot 4 tilesets, already wired: 47-blob and 16-tile terrains (grass, stone, sand, water), transitions, animated water, isometric, hexagon (p
+hosseinnabi-ir/Website-Preloader-Animation-using-JavaScript|4|CSS|2025/12/20 10:12:19|preloader animation web|
+sunil4472/Animated-Footer|4|CSS|2023/5/4 11:07:50|transition effect website| This footer features custom animations and transitions, creating an eye-catching effect that captures the attention of website visitors. Through the 
+omar3432/11.js|4||2020/4/8 13:10:52|overlay page transition|<![CDATA[ /* ===========================================================  # Template    : Levon  # Version     : 3.2  # Platform    : Blogger  # Categ
+Masonli1203/Persona3-like-web|4|TypeScript|2026/9/25 21:12:48|diagonal transition page|A Persona 3-inspired portfolio template with diagonal UI, custom cursor, glass-clock and circular page transitions. Next.js + TypeScript + Tailwind + 
+Traxxouu/Portfolio|4|TypeScript|2026/11/8 14:46:03|liquid transition page|Portfolio personnel moderne avec Next.js 15, TypeScript & Tailwind v4. Design minimaliste avec glassmorphism, animations fluides et mode sombre/clair 
+HarrisonCN/Motionary|4|TypeScript|2026/11/11 22:18:42|webgl page transition|Motionary (formerly use-scroll-animate) is a dependency-free scroll animation library with 237 mo-* Web Components (91 core components and 146 widgets
+UmairOye/liquid_swipe_transition_animation_compose|3|Kotlin|2026/3/3 9:23:34|blob transition|A minimal Android demo app that showcases a liquid swipe transition between screens—inspired by fluid, blob-style edges—built entirely with Jetpack Co
+OfTheWolf/SplitRevealTransition|3|Swift|2018/9/26 21:43:13|split reveal transition|UITableView Cell Split and Reveal Transition Animation
+ntamas/react-shapeshifter|3|JavaScript|2026/10/26 0:46:21|shape transition css|A React component that is able to render various commonly used button shapes with only three lines, morphing smootly between shapes using CSS transiti
+Nischint007/barba-js-gooey-transition-07|3|HTML|2026/7/2 5:59:03|transition effect website|An experimental Gooey Transition built with Barba.js and GSAP. Fluid vertical segments sweep inward from the viewport edges, creating an organic scene
+segebee/pageTransitions|3|HTML|2021/6/10 0:49:10|highway page transition|Page Transitions with Highway JS and the GSAP library, bundled with Parcel JS
+Nischint007/barba-js-dual-stairs-04|3|HTML|2026/4/22 10:22:12|transition effect website|A smooth dual-layer stair transition built with Barba.js and GSAP. Top and bottom panels animate in sync to create a clean page reveal effect. Designe
+shoaibn98/Angle_Preloader|3|JavaScript|2023/10/31 17:08:49|preloader animation web|A preloader in HTML is a small animation or graphic displayed on a webpage while its content and resources are loading, preloaders are essential eleme
+Netmai/eclipse|3||2022/7/1 10:45:34|blob transition|<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>  <div id="cachecontent">   <meta name='viewport' content='wid
+2k25adityasharma/luffy-cinematic-scroll|3|JavaScript|2026/8/17 16:44:42|intro animation website|A cinematic, scroll-driven Luffy intro website featuring frame-by-frame animation, immersive visuals, smooth interactions, and a responsive premium UI
+LalanaChami/Flutter_Pharma_Care-App|3|Dart|2020/8/19 6:31:13|splash screen animation web|📱🏥🚀The flutter app for Pharma Care Web app. This is a web view app with flare(Rive) animated splash screen.
+Erick-SN/ClipPathTransition|3|CSS|2020/7/21 22:24:01|clip-path transition|Material design animation with CSS
+nerddaddy/web-demo-video_skills|3||2026/2/21 17:02:42|intro animation website|Create professional website demo videos by combining Playwright browser recording with Remotion video composition — AI generates the scenario, records
+hassanyousuf/h_yousuf_a_chugh_autoApp|3|JavaScript|2018/12/9 5:12:47|splash screen animation web|AUTO BUILD Part 1:   Project Description:  The basis of this assignment is to create an interactive application using 3D, video, audio and still image
+IBsai2112/MOVAA-Clothing-Brand|3|JavaScript|2026/2/22 13:49:37|locomotive scroll transition|An interactive Fashion Studio landing page built with React.js, incorporating smooth scrolling using Locomotive Scroll and dynamic animations with GSA
+lookacat/vue-blob-menu-animation|3|Vue|2021/12/4 12:45:48|blob transition|A awesome menu highlighting animation making the transition look fluid.
+MayureshPahelkar/City-Skyline|3|CSS|2024/11/19 7:32:36|shape transition css|Create a dynamic city skyline using HTML and CSS, featuring rectangular shapes styled as buildings and windows under a day sky that transitions to a n
+priyanshJain543/Magma-main-TASK-5|2|JavaScript|2026/1/16 13:28:04|locomotive scroll transition|An advanced frontend experiment in motion design and scroll-driven interactivity. By bridging GSAP ScrollTrigger with Locomotive Scroll, this Magma.io
+Jellepepe/inkblob_navigation_bar|2|Dart|2024/7/15 10:29:03|blob transition|A custom navigation bar with smooth & dynamic ink blob transition effect.
+jaysonxpro/-DOCTYPE-html-title-codeschool.com-title-h2-how-to-make-a-search-bar-in-h|2||2020/9/13 4:48:55|transition effect website|<!DOCTYPE html>                      <title>codeschool.com</title> <h2>how to make a search bar in html</h2>  <code><!DOCTYPE html> <html> <head> <lin
+Jatin083/Ochi|2|JavaScript|2024/6/11 5:25:47|locomotive scroll transition|Explore the Ochi Clone Website, a project crafted with React.js, Tailwind CSS, Framer Motion, GSAP, and Locomotive Scroll. Experience the sleek design
+CodedRay01/Dynamic-Particle-Loader|2|JavaScript|2026/2/13 5:31:19|transition effect website|Dynamic Particle Loader creates a stunning animation where thousands of particles form any image smoothly. After a set time, the particles disperse in
+sadeepas/loading-screen-for-business-website|2|HTML|2025/5/8 9:22:44|preloader animation web|Business Website Loader This project includes a stylish preloader for a business website. It displays an engaging loading animation with a glowing, ro
+its-abdul-developer/-Digital-Product-Design-Agency-Award-Winning-UX-amp-UI-Agency-LAZAREV.-|2|HTML|2025/10/15 10:56:38|locomotive scroll transition|This project is a clone of LAZAREV — Digital Product Design Agency, built using HTML, CSS, JavaScript, GSAP, and Locomotive Scroll. It showcases smoot
+salahuddingfx/Portfolio|2|CSS|2025/12/12 3:33:46|intro animation website|This is a fully animated and responsive portfolio website built with modern design principles. It features a custom intro loader, dynamic typing anima
+watermelon588/portfolio|2|HTML|2026/10/3 17:21:06|liquid transition page|Monorepo portfolio showcasing full-stack & AI projects with liquid page transitions, GSAP physics, and interactive case studies
+ATS2604/personal-portfolio|2|HTML|2025/12/9 13:29:15|intro animation website|A responsive personal portfolio website showcasing my skills in programming, cloud computing, cybersecurity, and data analysis. Includes smooth animat
+Haiderraza185/Kinetic-Loader|2||2025/5/7 10:03:49|shape transition css|A Kinetic CSS Loader is a visually engaging loading animation created using CSS that conveys motion or energy, often with smooth transitions, spinning
+vedang685/ModernWebDev-CynthiaUgwu|2|CSS|2023/8/28 1:45:10|locomotive scroll transition|Discover the responsive modern web dev project purely created on html, css and javascript 🚀. Experience seamless scrolling, captivating transitions, 
+taimoorshahzada/Animated-Agency-Website-with-Intro-Animation-using-GSAP|2|HTML|2023/9/26 21:43:33|intro animation website|
+sadeepas/loading-screen-for-website|2|HTML|2025/5/8 8:51:59|splash screen animation web| Advanced Colorful Loader A visually appealing, responsive, and animated loader built with pure HTML and CSS. It features three rotating neon rings wi
+solodev/parallax-hero|2|HTML|2016/9/27 12:34:06|transition effect website| back arrow How to Create a Parallax Hero Image by Matthieu McClintock   A Parallax Hero Image creates a depth and transition effect when scrolling do
+colealanroberts-zz/Ghost|2|JavaScript|2019/2/26 16:47:55|intro animation website|A tiny (1.8kb) Javascript (ES6) library for adding beautiful intro animations to your website.
+oksr/react-dynamic-island|2|TypeScript|2026/5/30 14:14:12|clip-path transition|Apple's Dynamic Island in React - spring-physics morphing, squircle clip paths, and smooth layout  transitions.
+MaheshVenuFlutter/mv_neural_web_animation|2|C++|2025/5/20 16:17:15|splash screen animation web|A customizable Flutter widget that simulates a dynamic neural network animation using animated dots and connecting lines. Inspired by neural web visua
+mmsuper777/world777|2||2022/1/19 9:32:16|overlay page transition| */:root{--blue:#007bff;--indigo:#6610f2;--purple:#6f42c1;--pink:#e83e8c;--red:#dc3545;--orange:#fd7e14;--yellow:#ffc107;--green:#28a745;--teal:#20c99
+Ekta25Mishra/gta-vi-landing-page|1|JavaScript|2026/1/15 10:12:12|svg mask transition|A visually rich **GTA VI–inspired animated landing page** built using **React**, **GSAP**, and **Tailwind CSS**.   This project focuses on smooth intr
+Prachitii10/Shapes-game|1|CSS|2025/6/29 16:39:44|shape transition css|An interactive layout using HTML and CSS to demonstrate shape styling and hover effects. Includes square, circle, and diamond elements with visual tra
+helexdev1004/Three.js-DogStudio|1|JavaScript|2026/7/20 9:52:51|webgl page transition|A modern, interactive 3D landing page built with Three.js and WebGL, featuring immersive animations, smooth camera transitions
+nscg/-Masonry-PACKAGED-v3.1.5-Cascading-grid-layout-library-http-masonry.desandro.com-MI|1||2015/5/9 0:58:41|split reveal transition|/*!  * Masonry PACKAGED v3.1.5  * Cascading grid layout library  * http://masonry.desandro.com  * MIT License  * by David DeSandro  */  !function(a){f
+Thakuma07/page-transition-main|1|TypeScript|2026/3/30 6:20:03|stagger transition page|🌊 High-performance, staggered page transitions for Next.js 15+ using GSAP. Features a visually striking "shutter" reveal effect, seamless App Router 
+Emmjeyyyy/rift-gen-emm|1|JavaScript|2026/5/26 14:03:41|webgl page transition|A scroll-driven WebGL transition showcase. Each page tears open a glowing fiery rift powered by GLSL shaders, Three.js, and React.
+Zuhriddin2010/Image-Masking-CSS|1|CSS|2026/6/1 6:57:19|shape transition css|✨ Key Features  🎭 Advanced Image Masking Display images through custom shapes and creative masks.  🖼️ Unique Visual Effects Transform ordinary image
+GustavoGomezPG/Isotope|1|JavaScript|2026/2/27 7:08:50|taxi page transition|Isotope — A modern WordPress starter theme with Vite 7, Tailwind CSS 4, Taxi.js page transitions, GSAP animations, Lenis smooth scroll, and Lottie pre
+Atuoha/page_transition|1|C++|2024/1/24 9:55:39|stagger transition page|Article Project - Impl Flutter Custom & Staggered Page Transition Animation
+syedmaaz55/clip-path-animation|1|HTML|2026/9/6 20:48:16|clip-path transition|An interactive Clip Path Animation project built with HTML, CSS, and JavaScript. It uses smooth clip-path transitions, creative shapes, and dynamic an
+Nischint007/barba-js-dynamic-grid-transition-08|1|HTML|2026/6/12 6:03:59|stagger transition page|A premium dynamic grid page transition built with GSAP and Barba.js. Modular tiles animate with staggered motion to create a seamless, cinematic wipe 
+vaishkiyarminal001/CssArtInfinite|1|HTML|2023/5/25 22:14:57|shape transition css|CSS art is a mesmerizing masterpiece, seamlessly blending intricate details and captivating transitions. The vibrant colors and carefully crafted shap
+Muhammad112233-creator/valkarn|1|HTML|2026/9/27 13:52:16|webgl page transition|> Immersive five-gate scroll website template for story worlds — comic sagas, game    > universes, book series. Vanilla HTML/CSS/JS, no build step, We
+Usmantanoli252/Animated-Pre-Loader|1|HTML|2026/6/27 6:01:58|stagger transition page|Interactive preloader animation created with HTML, CSS, JavaScript and GSAP. Features staggered text animation, directional motion effects and smooth 
+feeroz-Ali/YouTube-plash-Screen-Animation|1|HTML|2025/7/31 6:27:24|splash screen animation web|A simple web-based YouTube-style splash screen animation with a custom play icon, animated progress bar, and delayed content reveal. Built with HTML, 
+wearepixelflow/liquid-gooey-cursor|1|HTML|2026/7/16 15:27:13|liquid transition page|A premium liquid gooey cursor built with HTML, CSS & JavaScript featuring SVG metaballs, magnetic interactions, smooth page transitions, and fluid mot
+sam-a1a/LiquidBoarding|1|Kotlin|2026/8/9 13:14:33|liquid transition page|Cuberto's liquid swipe onboarding transition, rebuilt in Jetpack Compose. One composable, one state holder, one bezier path - no views, no bitmaps, no
+kimamov/reactWebGlPageTransition|1|JavaScript|2023/1/4 5:34:44|webgl page transition|page transitions using webgl and react 
+thir-max/-khon.github.io|1||2026/9/1 9:56:50|curtain transition page|<!DOCTYPE html> <html lang="th"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>โขน — ศิล
+KARANKANOJIA7830/Page-Transition-WITH-GSAP-Animation|1|CSS|2022/10/4 7:43:05|transition effect website|This is single page website with animation effect including sliding transitions, with GSAP Animation. The technology used in this project are HTML, CS
+jeslor/css_mask_animation|1|JavaScript|2024/9/18 6:32:03|shape transition css|This React app showcases stunning CSS mask animations 🎭, where users can explore dynamic content reveals with smooth transitions and creative mask sh
+Aking16/page-transitions|1||2024/12/8 11:42:43|transition effect website|Page transition effect in your website!
+patsma/nuxt4page-transitions|1|JavaScript|2025/10/13 16:17:35|stagger transition page|🎨 Page transition system for Nuxt 4 with GSAP & SplitText. Manual control via Vue directives (v-page-split,   v-page-fade, v-page-clip, v-page-stagge
+ZyadWKhedr/Liquid_NavBar|1|Dart|2026/10/6 13:31:12|liquid transition page|A beautiful, customizable liquid-glass floating navigation bar for Flutter with a draggable indicator and parallax page transitions.
+alihahamed/curtain|1|TypeScript|2026/11/10 9:28:33|curtain transition page|Characterful page transitions for the Next.js App Router. Install with the shadcn CLI.
+AkshatBhole/Magma-Clone|1|CSS|2025/7/26 13:53:54|locomotive scroll transition|Recreated the interactive Magma website experience using GSAP ScrollTrigger and Locomotive.js for smooth scrolling and advanced scroll-based animation
+agayevseyhun802-sys/adanaa-lahmacun|1||2026/10/22 20:06:06|split reveal transition|<!DOCTYPE html> <html lang="tr"> <head> <meta charset="utf-8"> <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"
+oppatrickk/flutter_shader_transitions|1|Dart|2026/11/1 22:11:54|shader transition page|GPU-accelerated, shader-based page transitions for Flutter
+Mayanshh/portfolio|1|TypeScript|2026/10/8 9:35:58|shader transition page|An immersive, award-winning 3D portfolio built with Next.js 15, Three.js, and GSAP. Featuring seamless page transitions, custom shaders, and high-perf
+Mirror-Image/js-native-slider-with-the-control-buttons-and-animations|1|CSS|2022/12/4 6:10:28|clip-path transition|Pure JS slider with the control buttons and a clip-path animation between the transitions
+Sakshi-2508/squishy|1|C++|2026/6/2 9:58:43|liquid transition page|Beautiful organic page transitions for Flutter. Add liquid, elastic, gooey, and stretchy navigation animations to your app with just one line.
+yvesvinckier/portfolio-page-transition-webgl-barbajs|1|HTML|2023/3/16 13:33:37|webgl page transition|
+jayawardhanadskp/AnimationsFlutter|1|Dart|2024/10/25 7:25:43|stagger transition page|Showcase Implicit Animations, Explicit Animations, Page Transition Animations, Staggered Animations and custom animation with CustomPainter
+nidhii1401/Ochi-Clone|1|JavaScript|2025/2/13 4:08:26|locomotive scroll transition|A fully responsive clone of the Ochi Design website using ReactJS, incorporating advanced animations powered by Locomotive Scroll and Framer Motion fo
+axc0054/ntelligent-animation-mcp|0|TypeScript|2026/5/29 1:43:25|shader transition page|MCP server for Barba.js page transitions, Lenis smooth scroll, and WebGL/OGL shader authoring — 15 tools
+christopherscott/page-transitions|0|JavaScript|2015/3/12 15:32:08|liquid transition page|Example app showing basic use of animated page transitions using Ember and Liquid Fire
+AgomezProgramingUEFI/animate-page-route-transition-staggered|0|C++|2026/6/5 16:42:52|stagger transition page|
+AntoninB4440/page-transition-highway|0|HTML|2020/11/25 8:12:07|highway page transition|
+AboodyAlaze/expo-delivery-transitions|0|Swift|2026/10/25 17:28:26|curtain transition page|Creative page transitions for Expo Router: delivery bike/car courier, liquid glass pour, radar sweep, hex aperture, curtain drop and more. Native Kotl
+Acci4i0/2Dgallery|0|JavaScript|2026/9/8 16:05:06|curtain transition page|Animated photo portfolio: counting preloader, curtain page transitions, filmstrip scrubbing. Rebuild study.
+and1hotsauce1111/page-transition|0|HTML|2021/6/10 9:07:33|highway page transition|parcel + Highway + gsap 練習切換頁面轉場動畫
+Amit-yadav011/StudioGL|0|JavaScript|2026/7/1 14:03:36|shader transition page|Immersive 3D web experience built with React Three Fiber, GSAP and custom GLSL shaders featuring scroll-driven animations and cinematic page transitio
+xxxyz-cloud/shader-page-transition|0|TypeScript|2026/8/17 5:57:12|shader transition page|
+AantrikshX/GTA-6-inspired-landing|0|JavaScript|2026/1/16 15:59:57|svg mask transition|A creative frontend mini project focused on GSAP animations, SVG mask reveals, smooth transitions, and interactive motion design.
+xdesro/taxi-hash-demo|0|JavaScript|2024/12/14 18:06:09|taxi page transition|Minimal demo to reproduce bug with transitions occuring on anchors that have `data-taxi-ignore` props, are anchors to the current page, etc.
+Muhthoriqas/Web-SplashScreen|0|CSS|2022/7/10 16:34:01|splash screen animation web|Simpel Splash Screen Animation
+Touch-Moon/Lab__wave-page-transition|0|HTML|2026/6/18 16:39:49|curtain transition page|Freeze-the-thumbnail → travelling wave → curtain page transition. Vanilla Canvas 2D, one file, live control panel.
+Moamin-AbuEwaida/smooth-page-transitions|0|HTML|2022/3/21 9:20:20|highway page transition|building a small website to run pages transitions using Highway DogStudio
+notjacobhamilton/Landing-Page|0|JavaScript|2026/1/17 8:04:38|splash screen animation web|A modern, minimal landing page for freelance web development, featuring smooth animations and a cinematic splash screen.
+ns556799/js-page-transitions|0|HTML|2019/4/11 13:42:10|highway page transition|Page transitions with GSAP and Highway - built using Parcel
+mmohamud1/Page-Transitions|0|HTML|2020/10/24 22:29:54|highway page transition|Page transitions practise using Highway, GSAP and Parcel Bundle 
+Oliverluo0723/Mask-Section-Transition|0|JavaScript|2025/3/8 9:23:21|svg mask transition|SVG Mask Section Transition / Demo
+marcoshenrique-dev/loading-animation|0|TypeScript|2023/10/7 17:46:17|splash screen animation web|Funcionalide de splash screen para web usando css + tailwind + react
+krybinski/page-transition-highwayjs|0|HTML|2021/6/11 12:31:44|highway page transition|Basic page transitions with Highway.js and GSAP
+Kavin-Kumar9905/eclipse-zero-cinematic-storytelling|0|CSS|2026/6/17 14:24:45|split reveal transition|A cinematic sci-fi storytelling experience built with HTML, CSS, and Vanilla JavaScript. Features split-screen transitions, cinematic text reveals, am
+renderffx/splash_screen|0|TypeScript|2024/11/18 16:41:20|splash screen animation web|Customizable splash screen for mobile/web apps with animations, logos, and smooth transition effects.
+roboweaver/spectrum-paper-turn-prototype|0|TypeScript|2026/10/4 16:47:52|diagonal transition page|Adobe Spectrum card-to-page diagonal paper-turn transition prototype
+Jaiguruu/Hyrup-Landing-Page|0|TypeScript|2026/2/18 10:42:49|shader transition page|This project utilizes a **Glassmorphic** and **Neo-Minimalist** design language. It uses a combination of smooth CSS transitions and high-performance 
+itsarslanaslam/GTA-VI|0|JavaScript|2025/7/1 12:10:47|svg mask transition|🎮 GTA VI Inspired Animated Landing Page A highly interactive and cinematic landing page inspired by GTA VI, built using React, GSAP, and Tailwind CSS
+isiyemijoe/flutter_staggered_animation|0||2021/4/14 16:00:45|stagger transition page|Implementation of staggered and page transition in flutter 
+SeijiNoda/Page_Transition-Highway.js|0|HTML|2021/6/16 22:15:42|highway page transition|A simple test of a Javavscript-based page transition
+SheldonLaw/transition-tabs|0|HTML|2016/9/6 3:33:27|svg mask transition|基于svg mask的tab切换动画
+harsh98001/GTAVI-main|0|JavaScript|2025/6/21 13:53:15|svg mask transition|GTA VI  Page I developed an interactive and visually engaging landing page for GTA VI using React.js and Vite for fast performance and modular structu
+happycodehouse/mask-scroll-transition|0|SCSS|2026/6/4 4:25:24|svg mask transition|🪟 Scroll-driven image transition using SVG masks and horizontal blinds.
+hamzamir1618/Bazooka|0|HTML|2026/11/11 12:42:07|curtain transition page|1968 Cairo cinema poster aesthetic featuring misregistered risograph headlines, silkscreen ink textures, bilingual Arabic/English display typography, 
+GagandeipSingh/Liquid-Page-Transition|0|C++|2026/5/15 16:12:27|liquid transition page|
+felipevlourenco/page-transition|0|HTML|2023/1/5 9:29:45|highway page transition|Page transitions example using Highway.js
+Tailzip/diagonal-page-transition|0|CSS|2014/4/3 23:10:25|diagonal transition page|
+taktxbip/page-transitions-highway-webgl|0|JavaScript|2022/5/24 19:49:18|highway page transition|#s3e3 ALL YOUR HTML, Page transitions with Highway.js and WebGL
+thearpankumar/portfolio-thearpanhq.in|0|TypeScript|2026/10/19 18:42:49|shader transition page|Scroll-driven 3D portfolio: a character that follows you down the page, a living starfield, shader transitions and a black-hole footer.
+drift-creative-systems/drift-wipe|0|PHP|2026/11/3 10:54:22|curtain transition page|Drift: Wipe — free WordPress plugin for full-screen page transitions (fade, slide up, curtain) with real page loads underneath. GPLv2 or later.
+Tomstyleuk/taxiJS-page-transition|0|HTML|2024/8/7 15:25:52|taxi page transition|
+deniskolzun13/azoth-site|0|JavaScript|2026/10/7 23:07:20|shader transition page|WebGL portfolio one-pager: shader glitch transitions, procedural covers, cost calculator, RU/EN
+maliyan04/flux-counter|0|HTML|2026/8/19 6:35:23|splash screen animation web|A beautiful glass-morphism counter web app with a splash screen, dark visible numbers, and smooth spring animations. Built with HTML, CSS, and JavaScr

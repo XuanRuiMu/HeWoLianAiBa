@@ -49,7 +49,7 @@ const 慢热上下文: CanShuShangXiaWen = {
 
 describe('FP-14 采样参数只在该生效的模式下下发（官方：思考模式 temperature 不生效、非思考模式 top_p 恒为 1.0）', () => {
   it('思考场景不下发温度，且 top_p 不低于官方下限 0.95', () => {
-    for (const 键 of ['director', 'jiYiZhaiYao', 'junShiQiuZhu', 'kaiChangBai', 'fuPanShengCheng'] as const) {
+    for (const 键 of ['DaoYan', 'JiYiZhaiYao', 'JunShiQiuZhu', 'KaiChangBai', 'FuPanShengCheng'] as const) {
       const 参数 = jiSuanAIChanShu(键, 慢热上下文)
       expect(参数.wenDu, 键).toBeUndefined()
       expect(参数.top_p, 键).toBeGreaterThanOrEqual(0.95)
@@ -58,20 +58,20 @@ describe('FP-14 采样参数只在该生效的模式下下发（官方：思考�
   })
 
   it('writer 默认走非思考模式：带温度，不带 reasoningEffort', () => {
-    expect(AI_PEI_ZHI.moXing.writer.siKaoMoShi).toBe('disabled')
-    expect(AI_PEI_ZHI.moXing.writer.top_p).toBeUndefined()
-    expect(AI_PEI_ZHI.moXing.writer.wenDu).toBeDefined()
-    const 参数 = jiSuanAIChanShu('writer')
+    expect(AI_PEI_ZHI.moXing.XieShou.siKaoMoShi).toBe('disabled')
+    expect(AI_PEI_ZHI.moXing.XieShou.top_p).toBeUndefined()
+    expect(AI_PEI_ZHI.moXing.XieShou.wenDu).toBeDefined()
+    const 参数 = jiSuanAIChanShu('XieShou')
     expect(参数.wenDu).toBeCloseTo(0.9, 2)
     expect(参数.reasoningEffort).toBeUndefined()
   })
 
   it('writer 的人设微调在非思考模式下真实生效', () => {
-    const E型快热 = jiSuanAIChanShu('writer', {
+    const E型快热 = jiSuanAIChanShu('XieShou', {
       jiaoSe: { ie_lei_xing: 'E', re_shen_lei_xing: '快热', shi_fou_zha_xing: false },
       haoGanDu: { guan_xi_jie_duan: 'pengYou' },
     })
-    const I型慢热 = jiSuanAIChanShu('writer', {
+    const I型慢热 = jiSuanAIChanShu('XieShou', {
       jiaoSe: { ie_lei_xing: 'I', re_shen_lei_xing: '慢热', shi_fou_zha_xing: false },
       haoGanDu: { guan_xi_jie_duan: 'pengYou' },
     })
@@ -85,8 +85,8 @@ describe('FP-14 采样参数只在该生效的模式下下发（官方：思考�
     vi.resetModules()
     try {
       const { AI_PEI_ZHI: 开后配置 } = await import('../../config/AI配置')
-      expect(开后配置.moXing.writer.siKaoMoShi).toBe('enabled')
-      expect(开后配置.moXing.writer.reasoningEffort).toBeTruthy()
+      expect(开后配置.moXing.XieShou.siKaoMoShi).toBe('enabled')
+      expect(开后配置.moXing.XieShou.reasoningEffort).toBeTruthy()
     } finally {
       if (原开关 === undefined) delete process.env['WRITER_SI_KAO_QI_YONG']
       else process.env['WRITER_SI_KAO_QI_YONG'] = 原开关
@@ -103,12 +103,12 @@ describe('FP-14 采样参数只在该生效的模式下下发（官方：思考�
     try {
       const { AI_PEI_ZHI: 关后配置 } = await import('../../config/AI配置')
       const { jiSuanAIChanShu: 关后计算 } = await import('../../config/AI参数策略')
-      expect(关后配置.moXing.writer.siKaoMoShi).toBe('disabled')
-      expect(关后配置.moXing.writer.top_p).toBeUndefined()
-      expect(关后配置.moXing.writer.reasoningEffort).toBeUndefined()
-      expect(关后计算('writer').wenDu).toBeCloseTo(1.0, 2)
-      expect(关后计算('writer', 慢热上下文).wenDu).toBeGreaterThan(0.5)
-      expect(关后计算('writer', 慢热上下文).wenDu).toBeLessThanOrEqual(1.15)
+      expect(关后配置.moXing.XieShou.siKaoMoShi).toBe('disabled')
+      expect(关后配置.moXing.XieShou.top_p).toBeUndefined()
+      expect(关后配置.moXing.XieShou.reasoningEffort).toBeUndefined()
+      expect(关后计算('XieShou').wenDu).toBeCloseTo(1.0, 2)
+      expect(关后计算('XieShou', 慢热上下文).wenDu).toBeGreaterThan(0.5)
+      expect(关后计算('XieShou', 慢热上下文).wenDu).toBeLessThanOrEqual(1.15)
     } finally {
       if (原开关 === undefined) delete process.env['WRITER_SI_KAO_QI_YONG']
       else process.env['WRITER_SI_KAO_QI_YONG'] = 原开关
@@ -119,11 +119,11 @@ describe('FP-14 采样参数只在该生效的模式下下发（官方：思考�
   })
 
   it('非思考场景下发温度但不下发 top_p，人设/关系/场景修正仍生效', () => {
-    const 参数 = jiSuanAIChanShu('qingGanFenXi', 慢热上下文)
+    const 参数 = jiSuanAIChanShu('QingGanFenXi', 慢热上下文)
     expect(参数.top_p).toBeUndefined()
     expect(参数.siKaoMoShi).toBe('disabled')
     expect(参数.wenDu).toBeCloseTo(0.3, 2)
-    expect(jiSuanAIChanShu('qingGanFenXi').wenDu).toBeCloseTo(0.2, 2)
+    expect(jiSuanAIChanShu('QingGanFenXi').wenDu).toBeCloseTo(0.2, 2)
   })
 
   it('AI 配置里不再残留永远不生效的采样字段', () => {
@@ -235,7 +235,7 @@ describe('FP-14 缓存命中量落库', () => {
 
   it('把 cached_tokens 累计进「缓存命中Token」，且不超过输入 token', async () => {
     await jiLuShiYongLiang({
-      moXingLeiXing: 'writer',
+      moXingLeiXing: 'XieShou',
       moXing: 'deepseek-flash',
       shuRuToken: 1000,
       shuChuToken: 200,
@@ -243,7 +243,7 @@ describe('FP-14 缓存命中量落库', () => {
       mingZhongToken: 900,
     })
     await jiLuShiYongLiang({
-      moXingLeiXing: 'writer',
+      moXingLeiXing: 'XieShou',
       moXing: 'deepseek-flash',
       shuRuToken: 1000,
       shuChuToken: 200,
@@ -259,7 +259,7 @@ describe('FP-14 缓存命中量落库', () => {
 
   it('未上报命中量时按 0 落库（旧调用方不受影响）', async () => {
     await jiLuShiYongLiang({
-      moXingLeiXing: 'qingGanFenXi',
+      moXingLeiXing: 'QingGanFenXi',
       moXing: 'deepseek-flash',
       shuRuToken: 10,
       shuChuToken: 5,

@@ -1,6 +1,8 @@
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianWriterPrompt } from './Prompt构建器'
 import { zhuRuBenLunTuXiangKuai } from './对话渲染'
+import { gouJianTouXiangKuai } from './AI视觉辅助'
+import { shengChengBiaoQingHouXuanWenBen } from './系统表情'
 import { daiShuKaiChangYuanYu, fuJiaKaiChangYuanYu, qingLiXiaoXi } from './开场候选约束'
 import { 检索通用知识, type 通用知识检索结果 } from './通用知识检索'
 import type { DuiHuaKuai } from '../utils/DeepSeek客户端'
@@ -15,10 +17,17 @@ export async function shengChengWriterHuiFu(
   zhiShi: 通用知识检索结果 = 检索通用知识(shuRu.yong_hu_xin_xiao_xi, !shuRu.zui_jia_shuo_de_shi),
 ): Promise<WriterJieGuo> {
   const tiShiCi = gouJianWriterPrompt(shuRu, ceLue, zhiShi)
+  const biaoQingHouXuan = await shengChengBiaoQingHouXuanWenBen(
+    ceLue?.biao_qing_yi_tu ?? null,
+    shuRu.yong_hu_id,
+  )
+  const tiShiCiWanZheng = biaoQingHouXuan ? `${tiShiCi}\n\n${biaoQingHouXuan}` : tiShiCi
 
   const tuXiangKuai = await zhuRuBenLunTuXiangKuai(shuRu.dui_hua_li_shi)
+  const touXiangKuai = await gouJianTouXiangKuai(shuRu.yong_hu_xin_xiao_xi, shuRu.jiao_se.tou_xiang)
+  const quanBuKuai = [...tuXiangKuai, ...touXiangKuai]
   const yongHuNeiRong: string | DuiHuaKuai[] =
-    tuXiangKuai.length > 0 ? [{ type: 'input_text', text: tiShiCi }, ...tuXiangKuai] : tiShiCi
+    quanBuKuai.length > 0 ? [{ type: 'input_text', text: tiShiCiWanZheng }, ...quanBuKuai] : tiShiCiWanZheng
 
   const chenJinZhiLing = shuRu.shi_fou_di_yi_lun
     ? `\n${'【从现在起，你就是TA】'}：用第一人称在心里嘀咕，完全变成对方眼中的恋人，别跳出来分析。`
@@ -44,7 +53,7 @@ export async function shengChengWriterHuiFu(
     ? [{ jiaoSe: 'user' as const, neiRong: 带角色指令(fuJiaKaiChangYuanYu(yongHuNeiRongFuJia, kaiChang.wenBen)) }]
     : xiaoXi
 
-  const xiangYing = await genJuPeiZhiTiaoYong('writer', xiaoXiDaiYu, shangXiaWen, waiBuXinHao)
+  const xiangYing = await genJuPeiZhiTiaoYong('XieShou', xiaoXiDaiYu, shangXiaWen, waiBuXinHao)
 
   return {
     xiao_xi_lie_biao: qingLiXiaoXi(xiangYing.neiRong),

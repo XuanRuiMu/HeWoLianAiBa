@@ -62,7 +62,7 @@ export async function shenHeNeiRongAnQuan(xiaoXi: string): Promise<AnQuanShenHeJ
   }
 
   try {
-    const xiangYing = await genJuPeiZhiTiaoYong('anQuanShenHe', [
+    const xiangYing = await genJuPeiZhiTiaoYong('AnQuanShenHe', [
       { jiaoSe: 'system', neiRong: '判断消息是否违规，只输出 JSON。' },
       { jiaoSe: 'user', neiRong: gouJianAnQuanShenHePrompt(xiaoXi) },
     ])

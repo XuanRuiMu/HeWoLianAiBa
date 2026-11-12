@@ -1,50 +1,25 @@
-过渡页候选的开源来源
+过渡网页 · 三段背景 来源与许可
 
-一、01-圆境
-仓库：https://github.com/codrops/PageLoadingEffects
-提交：d4348fe750a3903d962775f76b77fc41d203b0d4
-原始文件：css/component.css、js/classie.js、js/snap.svg-min.js、js/svgLoader.js
-许可：MIT。Codrops 官方说明 https://codrops.com/codrops/licensing/
-本目录的改动：只替换页面文案、版式、颜色与播放节奏；圆形形变与过渡驱动保留原实现。
+一、当前保留的成品
+目录：过渡网页/三段背景/
+文件：index.html、styles.css、script.js、自动演示.js、vendor/gsap.min.js、LICENSE-gsap-reveals.txt
+效果：三条不同颜色的斜带（墨蓝 #111827 / 雾蓝 #2f6fa8 / 暗玫红 #b4485c）依次错开出场；三条全部铺满后停留约 0.66 秒，换页在这段遮盖期间完成；再逐条错开褪去。斜切 skewX(-12deg)，总时长约 3.26 秒，打开约半秒自动演示一次，可点「重播」。
+自包含：全部资源均为相对路径，不依赖任何素材库，也不需要联网。
 
-二、02-熔金
-仓库：https://github.com/n3r4zzurr0/svg-spinners
-提交：abfa05c49acf005b8b1e0ef8eb25a67a7057eb20
-原始文件：svg-css/gooey-balls-1.svg、svg-css/12-dots-scale-rotate.svg
-许可：MIT，Copyright (c) Utkarsh Verma，全文见 LICENSE-svg-spinners.txt
-本目录的改动：SVG 文件原样保存，通过 CSS 滤镜适配金色主题；页面版式与揭晓动画为本地实现。
+二、来源
+仓库：https://github.com/i-amraj/gsap-reveals
+原始 demo：26_seamless_page_transitions/05_split_column_curtain_shift
+原始 demo 说明：五条竖列按上下方向交替推入、换页、再反向推出
+许可：MIT，Copyright (c) 2026 Raj Soni，全文见 三段背景/LICENSE-gsap-reveals.txt
 
-三、03-纸间
-仓库：https://github.com/epicmaxco/epic-spinners
-提交：3a4dda1d72fbeb2da9ac75bdd53df948e9c3f869
-原始文件：packages/epic-spinners/src/components/SemipolarSpinner.vue 的 CSS 段
-许可：MIT，Copyright (c) 2018 Epicmax LLC，全文见 LICENSE-epic-spinners.txt
-本目录的改动：原 CSS 原样保存为 semipolar.css；通过额外样式调整颜色与显示比例，页面版式与揭晓动画为本地实现。
+三、本目录的改动
+- 五条同色竖列改成三条不同颜色的斜带，配色为墨蓝／雾蓝／暗玫红，各带轻微渐变
+- 斜切 skewX(-12deg) 保留原实现；平移仍用 yPercent，方向按 data-dir 上下交替
+- 时间轴按需求整条重排（script.js，参数集中在 节奏 对象）：入场 0.7 秒、段间 0.32 秒；三条铺满后停留 0.66 秒；换页放在停留时段的 45% 处；退场 0.7 秒、段间 0.28 秒；新页内容在退场过程中错开显现；总时长约 3.26 秒
+- 新增 归位()：每次播放前把三条带子设回屏幕外，避免首帧露出整屏
+- 自动演示：加载 500 毫秒后自动播放一次，中文「重播」按钮，演示中防重入，单次解锁时长 4200 毫秒
+- 外部 GSAP 改为本地 vendor/gsap.min.js；删除外部字体、统计脚本与返回上级死链；面向用户的文字全部中文并写在 HTML 里；补空图标
+- 补窄屏媒体查询：手机竖屏标题不再单挂一个字
 
-四、04-极光
-仓库：https://github.com/n3r4zzurr0/svg-spinners
-提交：abfa05c49acf005b8b1e0ef8eb25a67a7057eb20
-原始文件：svg-css/blocks-wave.svg
-许可：MIT，Copyright (c) Utkarsh Verma，全文见 LICENSE-svg-spinners.txt
-本目录的改动：SVG 文件原样保存，通过 CSS 滤镜适配青绿色主题；页面版式与揭晓动画为本地实现。
-
-五、05-斜幕
-仓库：https://github.com/codrops/PageRevealEffects
-提交：0939dd213a7b204c16732c9453cdf7580027a67b
-原始文件：js/main.js（Revealer）、js/classie.js、js/modernizr-custom.js、css/component.css 的 effect-3 三层关键帧与角部方向几何
-许可：Codrops 许可（个人/商业项目可免费集成或二次开发，不得原样再发布/转售），见 https://codrops.com/codrops/licensing/ ；js 头部标注 MIT
-本目录的改动：Revealer 驱动与角部方向（cornertopleft/cornerbottomright/top）保留原实现；三层关键帧改名为 xiemu-mu-* 并适配紫金配色；页面版式、三段顺序编排（左上→右下→中间）与文案为本地实现。vendor/codrops 内保留原始文件备查。
-
-六、06-心幕（原「棋幕」，按用户要求改为恋爱心形并加速）
-仓库：https://github.com/Nischint007/barba-js-dynamic-grid-transition-08
-提交：ef888c76c8007aef9487d189b4c614dd599dc436
-原始文件：script.js（GSAP clip-path 棋格帘幕）、style.css（四层棋格结构）
-许可：仓库未附独立 LICENSE 文件，README 为教学系列示例；GSAP 依其官方许可（标准免费许可），本地已内置 gsap.min.js 3.13.0
-本目录的改动：
-- 保留 GSAP 分组帘幕思路，把棋格改为恋爱心形；
-- 心形为本地实现（Path2D 画布预渲染成 4 张心形贴图，动画时只改 transform/opacity，避免逐帧重绘 SVG 造成的掉帧）；
-- 心形按「左上组 → 右下组 → 中间组」的归一化距离排序依次绽放、同序收回；
-- 去掉 Barba 路由依赖，改为单页双场景演示；
-- 时长压缩：全时段 1.27 秒（入幕约 0.85 秒 + 退幕约 0.42 秒），三视口实测零长帧（>50ms）；
-- 配色取产品主色 #FF6B9D 一系。
-vendor 内保留原始 script.js / style.css / README 备查。
+四、许可与发布
+MIT 允许商用、修改、分发与再授权，唯一条件是保留版权声明与许可声明，LICENSE-gsap-reveals.txt 已随附在本目录。

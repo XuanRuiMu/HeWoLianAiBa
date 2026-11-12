@@ -14,7 +14,7 @@ export async function fenXiQingGan(
     if (waiBuXinHao?.aborted) {
       return { fen_shu: 0, fen_xi: '' }
     }
-    const xiangYing = await genJuPeiZhiTiaoYong('qingGanFenXi', [
+    const xiangYing = await genJuPeiZhiTiaoYong('QingGanFenXi', [
       { jiaoSe: 'system', neiRong: '判断用户消息的情绪倾向，只输出 JSON。' },
       { jiaoSe: 'user', neiRong: gouJianQingGanFenXiPrompt(xiaoXi, jiaoSeMing) },
     ], shangXiaWen, waiBuXinHao)

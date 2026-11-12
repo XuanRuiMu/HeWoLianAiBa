@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { huoQuBenDiLuJing } from './媒体存储'
+import { huoQuBenDiLuJing, tiQuMeiTiSha } from './媒体存储'
 import type { DuiHuaKuai } from '../utils/DeepSeek客户端'
 import type { DuiHuaLiShiXiang } from '../types'
 
@@ -59,6 +59,37 @@ export function meiTiZhanShiWenBen(
     }
     default:
       return null
+  }
+}
+
+const TOU_XIANG_CHU_FA_CI: readonly string[] = ['头像', '你的照片', '你的自拍', '你的图片', '换个头像', '换头像']
+
+export function yongHuTiDaoTouXiang(yongHuXiaoXi: string): boolean {
+  if (!yongHuXiaoXi) return false
+  return TOU_XIANG_CHU_FA_CI.some((ci) => yongHuXiaoXi.includes(ci))
+}
+
+export async function gouJianTouXiangKuai(
+  yongHuXiaoXi: string,
+  touXiangYinYong: string | undefined,
+): Promise<DuiHuaKuai[]> {
+  if (!yongHuTiDaoTouXiang(yongHuXiaoXi)) return []
+  const sha = tiQuMeiTiSha(touXiangYinYong)
+  if (!sha) return []
+  const luJing = huoQuBenDiLuJing(sha)
+  if (!luJing) return []
+  try {
+    const huanChong = await fs.promises.readFile(luJing)
+    return [
+      { type: 'input_text', text: '上面这张是你自己的微信头像（同一条消息，不是对方发的）' },
+      {
+        type: 'input_image',
+        image_url: `data:image/png;base64,${huanChong.toString('base64')}`,
+        detail: 'low',
+      },
+    ]
+  } catch {
+    return []
   }
 }
 

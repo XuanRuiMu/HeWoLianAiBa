@@ -26,7 +26,7 @@ export async function shengChengJunShiZhiDao(
         guan_xi_jie_duan: canShu.hao_gan_du?.guan_xi_jie_duan,
       },
     }
-    const xiangYing = await genJuPeiZhiTiaoYong('junShiQiuZhu', [
+    const xiangYing = await genJuPeiZhiTiaoYong('JunShiQiuZhu', [
       { jiaoSe: 'system', neiRong: canShu.jun_shi_pei_zhi.xiTongTiShi },
       {
         jiaoSe: 'user',

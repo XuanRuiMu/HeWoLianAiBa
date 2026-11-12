@@ -212,7 +212,7 @@ export async function shengChengKaiChangBai(
 
   let xiangYing: Awaited<ReturnType<typeof genJuPeiZhiTiaoYong>>
   try {
-    xiangYing = await genJuPeiZhiTiaoYong('kaiChangBai' as keyof typeof AI_PEI_ZHI.moXing, [
+    xiangYing = await genJuPeiZhiTiaoYong('KaiChangBai' as keyof typeof AI_PEI_ZHI.moXing, [
       { jiaoSe: 'system', neiRong: '你现在就是这个人。刚加了一个刚认识的人，对方还没说话。你先判断自己会不会主动开口、开口发几条、发什么，全部由你自己的性格决定，不要做任何"应该主动一点"的道德判断，性格被动的人就是不主动。' },
       { jiaoSe: 'user', neiRong: gouJianKaiChangBaiTiShi(canShu) },
     ], shangXiaWenShiJi)

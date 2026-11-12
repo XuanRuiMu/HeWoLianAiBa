@@ -104,6 +104,8 @@ export async function huoQuAIJiaoSeXinXi(
     yan_yu_feng_ge: anQuanZiFuChuan(shuJuHang.言语风格),
     xing_wei_te_dian: '',
     tou_xiang: anQuanZiFuChuan(shuJuHang.头像),
+    tou_xiang_miao_shu: anQuanZiFuChuan(shuJuHang.头像描述) || undefined,
+    ren_she_ka: anQuanZiFuChuan(shuJuHang.自述卡) || undefined,
     xi_huan_de_lei_xing: xiHuanDeLeiXing,
     jia_ting_bei_jing: jiaTingBeiJing,
     qing_gan_jing_li: qingGanJingLi,

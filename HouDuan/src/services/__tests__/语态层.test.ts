@@ -98,13 +98,17 @@ describe('Writer 提示词接入', () => {
     expect(提示).not.toContain('【这一轮你就这样回】')
   })
 
-  it('语态层排在最后，不打断历史前缀的缓存', () => {
+  it('语态层在动态区且本轮消息收尾，历史前缀不被动态块打断', () => {
     const 提示 = gouJianWriterPrompt(造输入(), { shi_fou_hui_fu: true })
     const 语态位 = 提示.indexOf('【这一轮你就这样回】')
     const 人设位 = 提示.indexOf('【你自己】')
+    const 历史位 = 提示.indexOf('【刚才聊了什么】')
+    const 本轮位 = 提示.indexOf('对方刚发给你的消息')
     expect(人设位).toBeGreaterThan(-1)
-    expect(语态位).toBeGreaterThan(人设位)
-    expect(提示.endsWith('对方已经知道的信息不用重复。')).toBe(true)
+    expect(历史位).toBeGreaterThan(人设位)
+    expect(语态位).toBeGreaterThan(历史位)
+    expect(本轮位).toBeGreaterThan(语态位)
+    expect(提示.endsWith('对方已经知道的信息不用重复。')).toBe(false)
   })
 })
 

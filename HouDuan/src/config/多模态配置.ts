@@ -62,7 +62,7 @@ export function huoQuDuoMoTaiPeiZhi(): DuoMoTaiPeiZhi {
     yinPinLiJieMoXing: duQu('YIN_PIN_LI_JIE_MO_XING', ''),
     yinPinLiJieZuiDaZiJie: duQuZhengShu('YIN_PIN_LI_JIE_ZUI_DA_ZI_JIE', 10485760, 1024, 10485760),
     shiPinLiJieQiYong: duQuBuEr('SHI_PIN_LI_JIE_QI_YONG', false),
-    tuXiangShengChengQiYong: duQuBuEr('TU_XIANG_SHENG_CHENG_QI_YONG', false),
+    tuXiangShengChengQiYong: duQuBuEr('TU_XIANG_SHENG_CHENG_QI_YONG', true),
     tuXiangShengChengJiChuUrl: duQu('TU_XIANG_SHENG_CHENG_JI_CHU_URL', 'https://api.siliconflow.cn/v1'),
     tuXiangShengChengMoXing: duQu('TU_XIANG_SHENG_CHENG_MO_XING', ''),
     shiPinShengChengQiYong: duQuBuEr('SHI_PIN_SHENG_CHENG_QI_YONG', false),

@@ -19,7 +19,7 @@ export async function chouQuZiWoShiShi(
     .map((xiang) => `${xiang.fa_song_zhe_lei_xing === 'jiaose' ? '我' : '对方'}: ${xiang.nei_rong}`)
     .join('\n')
 
-  const caiJi = genJuPeiZhiTiaoYong('writer', [
+  const caiJi = genJuPeiZhiTiaoYong('XieShou', [
     { jiaoSe: 'system', neiRong: '你负责从聊天记录里提取「我」自己说过的事实，列成清单。' },
     {
       jiaoSe: 'user',

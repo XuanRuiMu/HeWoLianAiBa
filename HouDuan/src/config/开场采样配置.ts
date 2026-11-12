@@ -22,6 +22,11 @@ export function duJieBaoKaiGuan(ming: string): boolean {
   return (process.env[ming] || '').trim().toLowerCase() === 'true'
 }
 
+export function duJieBaoKaiGuanMoRenKai(ming: string): boolean {
+  const zhi = (process.env[ming] || '').trim().toLowerCase()
+  return zhi !== 'false' && zhi !== '0' && zhi !== 'off'
+}
+
 export const KAI_CHANG_KAI_GUAN_MING = 'KAI_CHANG_QIAN_ZHI_QI_YONG'
 
 export const KAI_CHANG_PEI_ZHI = {

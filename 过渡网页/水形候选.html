@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>水形候选 · GitHub 现成方案索引</title>
+    <link rel="icon" href="data:," />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        background: #0d0810;
+        color: #efe4ec;
+        font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        padding: 34px 22px 70px;
+      }
+      h1 { font-size: 21px; font-weight: 600; }
+      .副 { margin-top: 10px; font-size: 13px; color: #a08c9c; line-height: 1.85; max-width: 880px; }
+      .列 { margin-top: 26px; display: grid; gap: 16px; max-width: 980px; }
+      .项 {
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 13px;
+        background: #150e1a;
+        padding: 16px 18px;
+      }
+      .题 { font-size: 15.5px; font-weight: 600; color: #ff9ebc; }
+      .题 span { font-size: 12px; color: #6f6274; font-weight: 400; margin-left: 8px; }
+      .说 { margin-top: 7px; font-size: 13px; line-height: 1.8; color: #b3a0ae; }
+      .链 { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
+      .链 a {
+        font-size: 12.5px;
+        color: #ff6b9d;
+        text-decoration: none;
+        border: 1px solid rgba(255, 107, 157, 0.4);
+        border-radius: 999px;
+        padding: 6px 14px;
+      }
+      .链 a:hover { background: rgba(255, 107, 157, 0.12); }
+      .注 { margin-top: 9px; font-size: 12px; color: #7b6c80; }
+    </style>
+  </head>
+  <body>
+    <h1>GitHub 现成的「液体 / 有机形状」过渡方案</h1>
+    <p class="副">
+      下面每个都是从 GitHub 实际克隆下来、并在本机验证过能打开的项目，不是我自己画的。
+      点「看演示」直接看原作者的效果；「仓库」是它的源码出处。
+    </p>
+
+    <div class="列">
+      <div class="项">
+        <p class="题">OrganicShapeAnimations<span>codrops · SVG clipPath 有机形状</span></p>
+        <p class="说">
+          用不规则的有机形状做遮罩，形状本身在变形，把画面“咬”出来。
+          最接近你说的“水渍边界不规则地漫过去”。
+        </p>
+        <div class="链">
+          <a href="/_候选源码3/OrganicShapeAnimations/index.html">看演示</a>
+          <a href="https://github.com/codrops/OrganicShapeAnimations">仓库</a>
+        </div>
+      </div>
+
+      <div class="项">
+        <p class="题">CoverPageTransition<span>codrops · 覆盖页过渡</span></p>
+        <p class="说">
+          一整块形状从一角生长、铺满全屏，再露出新页面。是“覆盖”而不是“位移”，结构最适合接进路由切换。
+        </p>
+        <div class="链">
+          <a href="/_候选源码3/CoverPageTransition/dist/index.html">看演示</a>
+          <a href="https://github.com/codrops/CoverPageTransition">仓库</a>
+        </div>
+      </div>
+
+      <div class="项">
+        <p class="题">UnrevealEffects<span>codrops · clip-path 覆盖揭示</span></p>
+        <p class="说">
+          专门研究“覆盖元素 + clip-path”做页面切换，多个变体，边界形状多样。
+        </p>
+        <div class="链">
+          <a href="/_候选源码3/UnrevealEffects/src/index.html">看演示一</a>
+          <a href="/_候选源码3/UnrevealEffects/src/index2.html">看演示二</a>
+          <a href="/_候选源码3/UnrevealEffects/src/index3.html">看演示三</a>
+          <a href="https://github.com/codrops/UnrevealEffects">仓库</a>
+        </div>
+      </div>
+
+      <div class="项">
+        <p class="题">SuperfluidLayout<span>codrops · 超流体</span></p>
+        <p class="说">
+          名字就是“超流体”，用文字块当图案做流转揭示，质感流动但形状是文字，不是水。
+        </p>
+        <div class="链">
+          <a href="/_候选源码3/SuperfluidLayout/dist/index.html">看演示</a>
+          <a href="https://github.com/codrops/SuperfluidLayout">仓库</a>
+        </div>
+      </div>
+
+      <div class="项">
+        <p class="题">MorphingPageTransition<span>codrops · 形状变形过渡</span></p>
+        <p class="说">一条 SVG 路径变形为另一条，作为整屏过渡的形状骨架。</p>
+        <div class="链">
+          <a href="/_候选源码3/MorphingPageTransition/index.html">看演示</a>
+          <a href="https://github.com/codrops/MorphingPageTransition">仓库</a>
+        </div>
+      </div>
+
+      <div class="项">
+        <p class="题">CreativeGooeyEffects<span>codrops · 黏稠融合</span></p>
+        <p class="说">
+          黏稠（gooey）质感的经典作品，圆与圆之间会“拉丝”融合。是液滴融合的参考底座。
+        </p>
+        <div class="链">
+          <a href="/_候选源码3/CreativeGooeyEffects/index.html">看演示</a>
+          <a href="https://github.com/codrops/CreativeGooeyEffects">仓库</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

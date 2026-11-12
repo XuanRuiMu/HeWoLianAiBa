@@ -145,6 +145,7 @@ export const fanYi = {
     shengChengMoXingFuWuWuXianZhi: '角色生成服务暂时不可用，请重试当前操作',
     shengChengMoXingHuiFuBuHeFa: '角色生成结果异常，请重试当前操作',
     baoCunJiaoSeShiBai: '角色没有保存成功，本次修改未生效，请重试当前操作',
+    renSheJuJue: '创建对象的资料未通过检查，请调整后重新提交',
   },
   qiDong: {
     jiaoBenBuWanZheng: '启动文件不完整',
@@ -201,6 +202,7 @@ export const fanYi = {
     shiPinShengChengShiBai: '视频生成失败，请重试',
     shiPinPeiEYongJin: '今日生成额度已用完，明天再试',
     zhuDongFenXiangTuPian: '分享一张图片给你~',
+    zhuDongFenXiangFengJing: '刚拍的这片天，还行',
     shengTuGaiYouAIDaiFa: '图片与视频由AI对象在合适时主动发起，无需手动触发',
     bingDuSaoMiaoShiBai: '文件安全扫描没有完成，本次没有发送，请重试当前操作',
     wenJianZhengWenShengMing:
@@ -478,6 +480,19 @@ export const fanYi = {
     mingPianBuCunZai: '该用户不存在',
     touXiangHanWeiGui: '头像图片违规，请更换后重试',
     shenSuYiTiJiao: '申诉已提交，请等待审核',
+  },
+  renSheShenHe: {
+    nianLingBuHeFa: '年龄需要是10到99之间的整数',
+    wuYouXiaoCanShu: '至少要填一项内容（微信名、真实姓名、年龄或补充描述）',
+    xingShiBuHeGui: '真实姓名需要是「姓氏+名」的形式，比如王小明、钱多多',
+    xingShiChongTu: '真实姓名和补充描述里的名字对不上，改成一致的再试试',
+    zangHua: '填写的内容里有不合适的话，换个说法再试试',
+    weiFaNeiRong: '填写的内容违反了相关规定，无法创建',
+    zhuRuGongJi: '填写的内容像是给程序下的命令，不是人物描述，无法创建',
+    feiRenWuMiaoShu: '这段描述没法对应到一个具体的人，写点性格、职业、爱好这样的信息',
+    miaoShuMaoDun: '描述里有几处互相矛盾，改一改再试试',
+    luoJiBuKeNeng: '描述里的年龄或关系在现实中说不通，改一改再试试',
+    shenHeBuKeYong: '创建审核暂时没有完成，本次不生成对象',
   },
 } as const
 

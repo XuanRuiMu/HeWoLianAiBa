@@ -296,12 +296,12 @@ describe('对象生成共享通用知识', () => {
     expect(结果.xiao_xi_lie_biao).toEqual(['玄锐暮22岁。'])
   })
 
-  it.each(['writer', 'director'] as const)('%s长上下文与多模态预算裁剪后的最终请求体保留知识和本轮问题', async (模式) => {
+  it.each(['XieShou', 'DaoYan'] as const)('%s长上下文与多模态预算裁剪后的最终请求体保留知识和本轮问题', async (模式) => {
     const 外呼: TiaoYongCanShu[] = []
     sheZhiMockTiaoYong(async (参数) => {
       外呼.push(参数)
       return {
-        neiRong: 模式 === 'director'
+        neiRong: 模式 === 'DaoYan'
           ? '{"用户意图":"事实问答","情感分析":"平静","回复策略":"依据公共事实回答","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
           : '认识',
         yuanShuJu: {},
@@ -321,7 +321,7 @@ describe('对象生成共享通用知识', () => {
       shi_jian: '12:00',
     })) as unknown as AIYinQingShuRu['dui_hua_li_shi']
 
-    if (模式 === 'director') await shengChengDirectorCeLue(输入)
+    if (模式 === 'DaoYan') await shengChengDirectorCeLue(输入)
     else await shengChengWriterHuiFu(输入)
     媒体.mockRestore()
 

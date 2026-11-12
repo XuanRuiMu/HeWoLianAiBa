@@ -16,7 +16,7 @@ export interface 进入聊天加载配置 {
   覆盖趣味语?: () => string
   最短展示毫秒?: number
   换词毫秒?: number
-  可重试?: boolean
+  可重试?: boolean | (() => boolean)
 }
 
 export const ZUI_DUAN_ZHAN_SHI_HAO_MIAO = 1000
@@ -29,7 +29,11 @@ export function 使用进入聊天加载(配置: 进入聊天加载配置) {
   const 进行中 = ref(false)
   const 已进入 = ref(false)
   const 趣味语序 = ref(0)
-  const 可重试 = computed(() => 配置.可重试 !== false)
+  const 可重试 = computed(() => {
+    const zhi = 配置.可重试
+    if (typeof zhi === 'function') return zhi() !== false
+    return zhi !== false
+  })
 
   const 趣味语列表 = computed(() => {
     const 原列表 = 配置.趣味语列表()

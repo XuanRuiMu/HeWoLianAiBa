@@ -40,7 +40,7 @@ async function yingYongXiShu(
 }
 
 async function jiaoHuLLM(
-  moXing: 'haoGanDuPingPan',
+  moXing: 'HaoGanDuPingPan',
   xiaoXiLieBiao: Array<{ jiaoSe: 'user' | 'system' | 'assistant'; neiRong: string }>,
   shangXiaWen?: CanShuShangXiaWen,
 ): Promise<{ neiRong: string }> {
@@ -73,7 +73,7 @@ async function pingPanHaoGanDuBianHuaNei(
       }
     }
 
-    const xiangYing = await jiaoHuLLM('haoGanDuPingPan', [
+    const xiangYing = await jiaoHuLLM('HaoGanDuPingPan', [
       { jiaoSe: 'system', neiRong: '根据一轮对话判断好感变化，只输出 JSON。' },
       {
         jiaoSe: 'user',
@@ -86,7 +86,7 @@ async function pingPanHaoGanDuBianHuaNei(
       debug日志.error('好感度评判', '好感度评判解析失败，已标unknown不落分并入重试队列', {
         xiang_qing: { yuan_wen_chang_du: xiangYing.neiRong.length },
       })
-      void paiRuZhongShiDuiLie({ leiXing: 'haoGanDuPingPan', yuanYin: 'jie_xi_shi_bai' })
+      void paiRuZhongShiDuiLie({ leiXing: 'HaoGanDuPingPan', yuanYin: 'jie_xi_shi_bai' })
       return {
         jieGuo: {
           xin_ren_du_bian_hua: 0,
@@ -128,7 +128,7 @@ async function pingPanHaoGanDuBianHuaNei(
     return { jieGuo, xiShu, muBiaoQuXian, lianXuWeiDaBiao, pingJunShuaiJianHou }
   } catch (cuoWu) {
     debug日志.error('好感度评判', '好感度评判失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
-    void paiRuZhongShiDuiLie({ leiXing: 'haoGanDuPingPan', yuanYin: 'diao_yong_yi_chang' })
+    void paiRuZhongShiDuiLie({ leiXing: 'HaoGanDuPingPan', yuanYin: 'diao_yong_yi_chang' })
     return {
       jieGuo: {
         xin_ren_du_bian_hua: 0,
@@ -206,7 +206,7 @@ async function pingPanHaoGanDuPiLiangNei(
     const huiFuDuanLuo = jiaoSeHuiFuLieBiao
       .map((huiFu, xuHao) => `${xuHao + 1}. ${huiFu}`)
       .join('\n')
-    const xiangYing = await jiaoHuLLM('haoGanDuPingPan', [
+    const xiangYing = await jiaoHuLLM('HaoGanDuPingPan', [
       { jiaoSe: 'system', neiRong: '根据一轮对话判断好感变化，只输出 JSON。' },
       {
         jiaoSe: 'user',
@@ -226,7 +226,7 @@ async function pingPanHaoGanDuPiLiangNei(
       debug日志.error('好感度评判', '好感度批量评判解析失败，已标unknown不落分并入重试队列', {
         xiang_qing: { yuan_wen_chang_du: xiangYing.neiRong.length },
       })
-      void paiRuZhongShiDuiLie({ leiXing: 'haoGanDuPingPan', yuanYin: 'pi_liang_jie_xi_shi_bai' })
+      void paiRuZhongShiDuiLie({ leiXing: 'HaoGanDuPingPan', yuanYin: 'pi_liang_jie_xi_shi_bai' })
       return {
         jieGuo: {
           xin_ren_du_bian_hua: 0,
@@ -267,7 +267,7 @@ async function pingPanHaoGanDuPiLiangNei(
     return { jieGuo, xiShu, muBiaoQuXian, lianXuWeiDaBiao, pingJunShuaiJianHou }
   } catch (cuoWu) {
     debug日志.error('好感度评判', '好感度批量评判失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
-    void paiRuZhongShiDuiLie({ leiXing: 'haoGanDuPingPan', yuanYin: 'pi_liang_diao_yong_yi_chang' })
+    void paiRuZhongShiDuiLie({ leiXing: 'HaoGanDuPingPan', yuanYin: 'pi_liang_diao_yong_yi_chang' })
     return {
       jieGuo: {
         xin_ren_du_bian_hua: 0,

@@ -15,7 +15,7 @@ export async function tiQuGuanJianShiJian(
     if (waiBuXinHao?.aborted) {
       return []
     }
-    const xiangYing = await genJuPeiZhiTiaoYong('guanJianShiJian', [
+    const xiangYing = await genJuPeiZhiTiaoYong('GuanJianShiJian', [
       { jiaoSe: 'system', neiRong: '从聊天记录里挑出关键事件，只输出 JSON 数组。' },
       { jiaoSe: 'user', neiRong: gouJianGuanJianShiJianPrompt(duiHuaWenBen, jiaoSeMing) },
     ], shangXiaWen, waiBuXinHao)

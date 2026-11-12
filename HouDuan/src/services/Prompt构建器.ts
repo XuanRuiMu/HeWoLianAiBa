@@ -4,7 +4,8 @@ import { JUN_SHI_ZHI_DAO_DUAN_DING_YI } from '../config/军师配置'
 import { SHENG_LI_SHI_BAI_PEI_ZHI } from '../config/胜利失败配置'
 import { huoQuShiJianChangJingWenBen } from '../config/时间场景配置'
 import { MBTI_YU_QI_CHI } from '../config/风格语气映射'
-import { duJieBaoKaiGuan } from '../config/开场采样配置'
+import { duJieBaoKaiGuanMoRenKai } from '../config/开场采样配置'
+import { yanZhengRenSheKa } from './人设自述卡'
 import { shiXueShengShenFen } from '../config/角色配置'
 import { gouJianYuTaiCeng } from './语态层'
 import { 构建通用知识层, 检索通用知识, type 通用知识检索结果 } from './通用知识检索'
@@ -20,7 +21,7 @@ interface FengGeShiLiBiao {
 }
 
 let FENG_GE_SHI_LI_BIAO: FengGeShiLiBiao | null = null
-const FENG_GE_SHI_LI_KAI_GUAN = duJieBaoKaiGuan('FENG_GE_SHI_LI_QI_YONG')
+const FENG_GE_SHI_LI_KAI_GUAN = duJieBaoKaiGuanMoRenKai('FENG_GE_SHI_LI_QI_YONG')
 
 function huoQuShiLiBiao(): FengGeShiLiBiao {
   if (!FENG_GE_SHI_LI_BIAO) {
@@ -98,10 +99,13 @@ function huoQuXinQing(haoGanDu: HaoGanDuXinXi): string {
   return xinQingMap[jieDuan] || '平淡'
 }
 
-function gouJianDiYiCeng(): string {
+export function gouJianDiYiCeng(): string {
   return [
     '【你现在的状态】',
     '你是一个活人在手机上随手打字。',
+    '你可以不同意对方：说「我不太喜欢」「我不这么觉得」都正常，温柔的反对比「你说得都对」更像真人。',
+    '被夸的时候，普通人会得意、会岔开、会自嘲，就是不大会说「谢谢你的肯定」。',
+    '对方情绪低落时，陪着聊那件事本身就是安慰；不用急着让TA好起来，也不用给建议清单。',
     '对方说的那句话，你想接就接；不想接就换一句，也正常。',
     '对方约你、请你的时候，回的要是这件事本身——想去就去，不想去就说不去，忙就说哪天方便。别绕开它去讲别的，也别光应一声就不接话了。',
     '回完这一句就收住：对方没问的话，别顺带交代你人在哪、在干嘛、什么状态，或者真刚好赶上一件事。想到的那些是留给下几句的，这轮先不说。',
@@ -171,6 +175,17 @@ function gouJianDiErCeng(jiaoSe: AIJiaoSeXinXi): string {
     quWenBen(世界.zuo_xi_gui_lv) ? `作息${quWenBen(世界.zuo_xi_gui_lv)}` : '',
     jiaoSe.xi_hao && jiaoSe.xi_hao.length > 0 ? `爱好${jiaoSe.xi_hao.slice(0, 4).join('、')}` : '',
   ].filter(Boolean)
+
+  const ziShuKa = yanZhengRenSheKa(jiaoSe.ren_she_ka ?? '')
+  if (ziShuKa) {
+    return [
+      '【你是这样一个人】',
+      `微信昵称：${jiaoSe.wei_xin_ming}`,
+      `性别：${内部转展示(jiaoSe.xing_bie)}`,
+      '下面这段是你自己的自述，完全按它的身份、性格、习惯来说话：',
+      ziShuKa,
+    ].join('\n')
+  }
 
   return [
     '【你是这样一个人】',
@@ -256,25 +271,29 @@ function gouJianDiLiuCeng(shuRu: AIYinQingShuRu, shiFouDiYiLun: boolean): string
     ? `\n${AI_PEI_ZHI.prompt.jiaoSeChenJinZhiLing}：从下一轮开始，你思考的时候用第一人称“我”在心里嘀咕，完全变成${jiaoSe.wei_xin_ming}，别跳出来分析。`
     : ''
 
-  const benLunShuoHua = shuRu.zui_jia_shuo_de_shi
-    ? `你此刻想跟 TA 说的：${baoZhuangYongHuNeiRong(shuRu.zui_jia_shuo_de_shi)}`
-    : `对方刚发给你的消息：${baoZhuangYongHuNeiRong(shuRu.yong_hu_xin_xiao_xi)}`
-
   return [
     '【你自己】',
     `你的微信昵称：${jiaoSe.wei_xin_ming}`,
     '消息里、转发的消息里提到你的昵称或名字时，那就是在说你，按自己的事接。',
     `你的真名：${jiaoSe.ming_zi}（只有很熟的时候才自然提到，别主动自我介绍）`,
     `你的性别：${内部转展示(jiaoSe.xing_bie)}`,
+    ...(jiaoSe.tou_xiang_miao_shu
+      ? [`你的微信头像：${jiaoSe.tou_xiang_miao_shu}（别人看到的就是它，聊到头像就像聊自己的东西一样自然）`]
+      : []),
     `性格：${jiaoSe.mbti_lei_xing}`,
     ...zhaXingBuFen,
     DING_JIE_FU_SHENG_MING,
     `你就是${jiaoSe.wei_xin_ming}，跟对方处在${huoQuGuanXiJieDuanMing(shuRu.hao_gan_du)}阶段，按这个人的性格来。`,
-    benLunShuoHua,
     chenJinZhiLing,
   ]
     .filter(Boolean)
     .join('\n')
+}
+
+export function gouJianBenLunXiaoXiKuai(shuRu: AIYinQingShuRu): string {
+  return shuRu.zui_jia_shuo_de_shi
+    ? `你此刻想跟 TA 说的：${baoZhuangYongHuNeiRong(shuRu.zui_jia_shuo_de_shi)}`
+    : `对方刚发给你的消息：${baoZhuangYongHuNeiRong(shuRu.yong_hu_xin_xiao_xi)}`
 }
 
 const fengGeShiLiHuoQuCache = new Map<string, string>()
@@ -376,7 +395,6 @@ export function GouJianGongXiangQianZhui(shuRu: AIYinQingShuRu): string {
     gouJianDiErCeng(shuRu.jiao_se),
     构建恋爱身份层(shuRu.yong_hu_xing_bie, shuRu.jiao_se.xing_bie),
     gouJianFengGeShiLiCeng(shuRu.jiao_se),
-    gouJianDiWuCeng(shuRu),
   ]
     .filter((ceng) => ceng.trim() !== '')
     .join('\n\n')
@@ -481,14 +499,15 @@ export function gouJianWriterPrompt(
 ): string {
   const cengCi = [
     GouJianGongXiangQianZhui(shuRu),
-    gouJianGuanJianShiJianCeng(shuRu),
+    构建通用知识层(zhiShi),
     gouJianDiYiCeng(),
-    构建必答事实层(shuRu.bi_da_shi_shi),
-    gouJianJingXiangTiShi(shuRu),
+    gouJianDiLiuCeng(shuRu, shuRu.shi_fou_di_yi_lun),
+    gouJianGuanJianShiJianCeng(shuRu),
+    gouJianDiWuCeng(shuRu),
     gouJianDiSanCeng(shuRu),
     gouJianDiSiCeng(shuRu.hao_gan_du),
-    构建通用知识层(zhiShi),
-    gouJianDiLiuCeng(shuRu, shuRu.shi_fou_di_yi_lun),
+    构建必答事实层(shuRu.bi_da_shi_shi),
+    gouJianJingXiangTiShi(shuRu),
     构建接住点层(ceLue?.yao_jie_zhu_de_dian),
   ].filter((ceng) => ceng.trim() !== '')
 
@@ -513,6 +532,8 @@ export function gouJianWriterPrompt(
     if (yuTaiCeng) cengCi.push(yuTaiCeng)
   }
 
+  cengCi.push(gouJianBenLunXiaoXiKuai(shuRu))
+
   return cengCi.join('\n\n')
 }
 
@@ -522,8 +543,9 @@ export function gouJianDirectorPrompt(
 ): string {
   return [
     GouJianGongXiangQianZhui(shuRu),
-    gouJianGuanJianShiJianCeng(shuRu),
     构建通用知识层(zhiShi),
+    gouJianGuanJianShiJianCeng(shuRu),
+    gouJianDiWuCeng(shuRu),
     构建必答事实层(shuRu.bi_da_shi_shi),
     '',
     '【现在轮到你】你是这场恋爱聊天的导演。上面那个就是你的演员，根据 TA 的人设和刚才聊的内容，给 TA 写一张小纸条，告诉 TA 怎么回。',
@@ -581,7 +603,8 @@ export function gouJianDirectorPrompt(
     '  "回复条数": number（0-5）,',
     '  "时间情绪": "string",',
     '  "是否撤回": boolean,',
-    '  "是否主动表白": boolean',
+    '  "是否主动表白": boolean,',
+    '  "biao_qing_yi_tu": "string或null"',
     '}',
     '',
     '【这条里要接住的点】',
@@ -594,6 +617,12 @@ export function gouJianDirectorPrompt(
     '是否主动表白只允许两种取值：true=表白，false=不表白，不存在中间态；重复表白意图合并为一次判定。',
     '正常角色表白成功 → 恋爱胜利；渣男渣女表白成功（对方接受）→ 对方被骗，算失败。',
     '对方主动表白不归这个字段管，有单独的判定逻辑。',
+    '',
+    '【表情包意图】',
+    'biao_qing_yi_tu 是本轮角色发表情包的情绪标签，取值：好笑、感动、无语、赞同、撒娇、安慰、庆祝、破冰、告别、卖萌、生气、委屈，不想发就给 null。',
+    '时机：接到好笑的事/对方自嘲/玩梗给「好笑」；对方分享喜事给「庆祝」；对方难过先写认真文字、可给「安慰」；答应请求或表达喜欢给「撒娇」；对方刚发表情包回敬时按对方那张的情绪给；话题接不下去给「破冰」。',
+    '对方严肃求助、情绪危机、深夜倾诉时必须给 null，只许认真文字。',
+    '普通日常聊天大部分时候给 null，想发才发。',
   ].join('\n')
 }
 

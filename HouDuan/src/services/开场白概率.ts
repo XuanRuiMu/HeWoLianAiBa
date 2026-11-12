@@ -57,7 +57,7 @@ export async function jiSuanKaiChangBaiGaiLv(
   }
   try {
     const xiangYing = await genJuPeiZhiTiaoYong(
-      'kaiChangBaiGaiLv' as keyof typeof AI_PEI_ZHI.moXing,
+      'KaiChangBaiGaiLv' as keyof typeof AI_PEI_ZHI.moXing,
       [{ jiaoSe: 'user', neiRong: gouJianGaiLvTiShi(canShu) }],
     )
     const gaiLv = jieXiGaiLv(xiangYing.neiRong)

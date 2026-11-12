@@ -6,7 +6,7 @@ import { redis } from '../redis'
 import { huoQuIo } from '../socket/io'
 import { shengChengDirectorCeLue } from './Director'
 import { shengChengWriterHuiFu } from './Writer'
-import { jianChaAiWei, panDuanShiFouCaiYang, panDuanShiFouMoXingChouJian, guoLvAiWeiXiaoXi } from '../config/去AI味配置'
+import { jianChaAiWei, panDuanShiFouCaiYang, panDuanShiFouMoXingChouJian, guoLvAiWeiXiaoXi, jianChaTaoHua, panDuanTaoHuaCaiYang } from '../config/去AI味配置'
 import { gouJianJiaoSeShangXiaWen, type CanShuShangXiaWen } from '../config/AI参数策略'
 import { 检索通用知识, 提取必答事实 } from './通用知识检索'
 import type {
@@ -343,6 +343,17 @@ cuo_wu_xin_xi: huoQuFanYi('AI', 'ShenHeWeiGui'),
       if (panDuanShiFouMoXingChouJian()) {
         const { paiRuZhongShiDuiLie } = await import('./重试队列')
         await paiRuZhongShiDuiLie({ leiXing: 'quAiWeiChouJian', yuanYin: aiWeiJianCha.mingZhong.slice(0, 3).join(',') || 'gui_ze_ming_zhong' }).catch(() => undefined)
+      }
+    }
+
+    const taoHuaJianCha = jianChaTaoHua(aiWeiWenBen)
+    if (!taoHuaJianCha.tongGuo && panDuanTaoHuaCaiYang()) {
+      debug日志.warn('AI引擎', 'Writer输出命中温暖套话，采样送检（不拦截）', {
+        xiang_qing: { jiao_se_id: shuRu.jiao_se_id, ming_zhong: taoHuaJianCha.mingZhong.slice(0, 5) },
+      })
+      if (panDuanShiFouMoXingChouJian()) {
+        const { paiRuZhongShiDuiLie } = await import('./重试队列')
+        await paiRuZhongShiDuiLie({ leiXing: 'quAiWeiChouJian', yuanYin: 'tao_hua:' + taoHuaJianCha.mingZhong.slice(0, 3).join(',') }).catch(() => undefined)
       }
     }
 

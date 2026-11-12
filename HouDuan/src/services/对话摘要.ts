@@ -137,7 +137,7 @@ export async function shengChengBingLuoKuZhaiYao(yongHuId: string, jiaoSeId: str
     if (daiGaiShu < peiZhi.chuFaXiaoXiShu) return true
     const { wenBen: yuanLiao, xinMaoDian } = await huoQuZhaiYaoYuanLiao(yongHuId, jiaoSeId, maoDian)
     if (!yuanLiao.trim()) return true
-    const xiangYing = await genJuPeiZhiTiaoYong('jiYiZhaiYao', [
+    const xiangYing = await genJuPeiZhiTiaoYong('JiYiZhaiYao', [
       { jiaoSe: 'system', neiRong: '把聊天记录里值得记住的东西串成几句话，只输出摘要正文。' },
       { jiaoSe: 'user', neiRong: gouJianJiYiZhaiYaoPrompt(yuanLiao, jiaoSeMing, xianYou?.zhaiYaoNeiRong || '') },
     ])

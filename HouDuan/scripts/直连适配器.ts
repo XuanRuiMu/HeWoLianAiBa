@@ -101,7 +101,7 @@ export async function 生成导演策略(
   shangXiaWen?: CanShuShangXiaWen,
 ): Promise<{ 成败: boolean; 策略: DirectorCeLue; 原文: string }> {
   const 系统 = '你负责判断角色这次是否回复、当下情绪、是否撤回和是否主动表白，只输出 JSON。情感分析字段写对方这条消息的语气和情绪。'
-  const 回 = await 直连外呼('director', [
+  const 回 = await 直连外呼('DaoYan', [
     { jiaoSe: 'system', neiRong: 系统 },
     { jiaoSe: 'user', neiRong: prompt },
   ], undefined, shangXiaWen)
@@ -159,7 +159,7 @@ export async function 生成写手回复(
     ? ['【你这会儿的感觉】', ceLue.shi_fou_hui_fu === false ? '这次先不回（已读不回）' : '这次要回', '情绪：' + (ceLue.shi_jian_qing_xu || '正常')].join('\n')
     : ''
   const 全量 = ceLueKuai ? prompt + '\n\n' + ceLueKuai : prompt
-  const 回 = await 直连外呼('writer', [
+  const 回 = await 直连外呼('XieShou', [
     { jiaoSe: 'system', neiRong: 系统 },
     { jiaoSe: 'user', neiRong: 全量 },
   ], undefined, shangXiaWen)

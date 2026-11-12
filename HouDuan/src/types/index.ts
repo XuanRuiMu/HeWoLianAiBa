@@ -93,6 +93,8 @@ export interface AIJiaoSeXinXi {
   yan_yu_feng_ge: string
   xing_wei_te_dian: string
   tou_xiang: string
+  tou_xiang_miao_shu?: string
+  ren_she_ka?: string
   xi_huan_de_lei_xing: string
   jia_ting_bei_jing: string
   qing_gan_jing_li: string
@@ -189,6 +191,7 @@ export interface DirectorCeLue {
   shi_fou_che_hui: boolean
   shi_fou_zhu_dong_biao_bai?: boolean
   yao_jie_zhu_de_dian?: string
+  biao_qing_yi_tu?: string | null
 }
 
 export interface WriterJieGuo {

@@ -146,7 +146,7 @@ export async function jianCeSiLianHeYi(
       ]
     : []
 
-  const xiangYing = await genJuPeiZhiTiaoYong('siLianJian', [
+  const xiangYing = await genJuPeiZhiTiaoYong('SiLianJian', [
     {
       jiaoSe: 'system',
       neiRong:
@@ -613,7 +613,7 @@ async function shengChengJingGaoFanYing(jiao_se?: AIJiaoSeXinXi): Promise<string
         `说话风格：${jiao_se.yan_yu_feng_ge}`,
       ]
     : []
-  const xiangYing = await genJuPeiZhiTiaoYong('jiaoSeJingGaoFanYing', [
+  const xiangYing = await genJuPeiZhiTiaoYong('JiaoSeJingGaoFanYing', [
     { jiaoSe: 'system', neiRong: '你是恋爱模拟游戏的角色反应生成器。只输出 JSON。' },
     {
       jiaoSe: 'user',
@@ -701,7 +701,7 @@ async function shengChengChaQuJingGaoFanYing(yuan_yin: string, jiao_se?: AIJiaoS
         `说话风格：${jiao_se.yan_yu_feng_ge}`,
       ]
     : []
-  const xiangYing = await genJuPeiZhiTiaoYong('jiaoSeJingGaoFanYing', [
+  const xiangYing = await genJuPeiZhiTiaoYong('JiaoSeJingGaoFanYing', [
     { jiaoSe: 'system', neiRong: '你是恋爱模拟游戏的角色反应生成器。只输出 JSON。' },
     {
       jiaoSe: 'user',
@@ -835,7 +835,7 @@ export async function chuLiYongHuJuJueAIHuoJieShou(
     用户名: '用户',
     最多条数: SHENG_LI_SHI_BAI_PEI_ZHI.biaoBaiPanDuanLiShiTiaoShu,
     时间在前: true })
-  const xiangYing = await genJuPeiZhiTiaoYong('jieShouBiaoBaiJianCe', [
+  const xiangYing = await genJuPeiZhiTiaoYong('JieShouBiaoBaiJianCe', [
     { jiaoSe: 'system', neiRong: '判断用户回复是接受表白还是拒绝，只输出 JSON。' },
     {
       jiaoSe: 'user',

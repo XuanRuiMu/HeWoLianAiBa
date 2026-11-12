@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>水形辨认 · 四种「水从左下铺到右上」的意思</title>
+    <link rel="icon" href="data:," />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        background: #0d0810;
+        color: #efe4ec;
+        font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        padding: 32px 20px 60px;
+        min-height: 100vh;
+      }
+      h1 { font-size: 20px; font-weight: 600; letter-spacing: 0.04em; }
+      .副 { margin-top: 10px; font-size: 13px; color: #a08c9c; line-height: 1.8; }
+      .网 {
+        margin-top: 28px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 22px;
+        max-width: 1220px;
+      }
+      .卡 {
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 14px;
+        overflow: hidden;
+        background: #150e1a;
+      }
+      .画 { display: block; width: 100%; height: auto; aspect-ratio: 8 / 5; }
+      .文 { padding: 12px 14px 14px; }
+      .题 { font-size: 15px; font-weight: 600; color: #ff9ebc; }
+      .说 { margin-top: 6px; font-size: 12.5px; color: #a08c9c; line-height: 1.75; }
+      .控 {
+        position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%);
+        display: flex; align-items: center; gap: 14px;
+      }
+      button {
+        border: 1px solid rgba(255, 107, 157, 0.55);
+        border-radius: 999px;
+        background: rgba(18, 11, 22, 0.82);
+        color: #ff6b9d;
+        font-size: 14px;
+        padding: 10px 22px;
+        cursor: pointer;
+        backdrop-filter: blur(6px);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>「像水泼在地上、从左下漫到右上」——你指的是哪一种？</h1>
+    <p class="副">
+      四张图都只表达“覆盖方向与边界形态”，颜色与画面内容不代表最终效果。<br />
+      请告诉我编号（甲乙丙丁），或指出“像 A 但边界更碎 / 像 B 但更慢”这类组合，我再去找对应的现成方案。
+    </p>
+
+    <div class="网">
+      <div class="卡">
+        <canvas class="画" data-hua="甲" width="640" height="400"></canvas>
+        <div class="文">
+          <p class="题">甲 · 液态水线推进</p>
+          <p class="说">一条会晃动的液态边界，从左下角斜着推向右上角。边界是连续的一条线，像水面漫过地砖。</p>
+        </div>
+      </div>
+
+      <div class="卡">
+        <canvas class="画" data-hua="乙" width="640" height="400"></canvas>
+        <div class="文">
+          <p class="题">乙 · 液滴膨胀后融合</p>
+          <p class="说">左下角先冒出几团水，各自胀大、互相黏在一起，最后连成整片。边缘是圆的、软的，能看到融合的过程。</p>
+        </div>
+      </div>
+
+      <div class="卡">
+        <canvas class="画" data-hua="丙" width="640" height="400"></canvas>
+        <div class="文">
+          <p class="题">丙 · 水波涟漪扩散</p>
+          <p class="说">以左下角为落点，一圈圈涟漪向外扩大，圈内被水填满。像一滴水砸进水面。</p>
+        </div>
+      </div>
+
+      <div class="卡">
+        <canvas class="画" data-hua="丁" width="640" height="400"></canvas>
+        <div class="文">
+          <p class="题">丁 · 水渍渗透蔓延</p>
+          <p class="说">没有清晰水线，是零散的湿痕先出现，再彼此连成片铺满。边缘毛糙、有纤维感，像纸被水浸透。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="控">
+      <button type="button" data-chongbo>重播四张</button>
+    </div>
+
+    <script>
+      const 旧色 = '#241a3d';
+      const 新色 = '#ff6b9d';
+      const 底 = '#1a1122';
+      const 时长 = 1600;
+      const 停 = 900;
+
+      function 画甲(笔, 宽, 高, p) {
+        笔.fillStyle = 旧色;
+        笔.fillRect(0, 0, 宽, 高);
+        const 满 = 宽 + 高;
+        const 推 = p * 满 * 1.15;
+        笔.fillStyle = 新色;
+        笔.beginPath();
+        笔.moveTo(0, 高);
+        笔.lineTo(0, 高 - 推);
+        const 步 = 8;
+        for (let x = 0; x <= 宽; x += 步) {
+          const 深 = 高 - 推 + (x * 0.62);
+          const 波 =
+            Math.sin(x * 0.028 + p * 9) * 9 +
+            Math.sin(x * 0.071 - p * 6) * 5 +
+            Math.sin(x * 0.013 + p * 3) * 12;
+          笔.lineTo(x, 深 + 波);
+        }
+        笔.lineTo(宽, 高);
+        笔.closePath();
+        笔.fill();
+      }
+
+      function 画乙(笔, 宽, 高, p) {
+        笔.fillStyle = 底;
+        笔.fillRect(0, 0, 宽, 高);
+        笔.save();
+        笔.filter = 'blur(18px) contrast(26)';
+        笔.fillStyle = '#fff';
+        const 团 = [
+          [0.06, 0.94, 0.2],
+          [0.2, 0.86, 0.16],
+          [0.32, 0.96, 0.18],
+          [0.1, 0.76, 0.14],
+          [0.46, 0.9, 0.15],
+          [0.6, 0.98, 0.17],
+          [0.26, 0.7, 0.13],
+          [0.72, 0.92, 0.16],
+          [0.84, 0.99, 0.15],
+          [0.5, 0.76, 0.12],
+        ];
+        const 尺 = 宽 * (0.1 + p * 1.9);
+        团.forEach((t, i) => {
+          const 序 = Math.max(0, Math.min(1, p * 1.7 - i * 0.055));
+          if (序 <= 0) return;
+          const r = 尺 * (0.35 + 序 * 0.75);
+          const cx = 宽 * (t[0] + 序 * 0.14);
+          const cy = 高 * (t[1] - 序 * 0.14) - 序 * 高 * 0.1;
+          笔.beginPath();
+          笔.arc(cx, cy, r * 1.25, 0, Math.PI * 2);
+          笔.fill();
+        });
+        笔.restore();
+        笔.globalCompositeOperation = 'source-atop';
+        笔.fillStyle = 新色;
+        笔.fillRect(0, 0, 宽, 高);
+        笔.globalCompositeOperation = 'source-over';
+      }
+
+      function 画丙(笔, 宽, 高, p) {
+        笔.fillStyle = 旧色;
+        笔.fillRect(0, 0, 宽, 高);
+        const 心X = 0;
+        const 心Y = 高;
+        const 远 = Math.hypot(宽, 高) * 1.06;
+        const 圈数 = 5;
+        for (let i = 0; i < 圈数; i += 1) {
+          const 偏 = i / 圈数;
+          const 本 = Math.max(0, p * (1 + 偏 * 0.5) - 偏 * 0.42);
+          if (本 <= 0) continue;
+          const r = 本 * 远;
+          笔.beginPath();
+          笔.arc(心X, 心Y, r, 0, Math.PI * 2);
+          笔.fillStyle = i === 0 ? 新色 : `rgba(255,107,157,${0.55 - i * 0.06})`;
+          笔.fill();
+        }
+        笔.beginPath();
+        笔.arc(心X, 心Y, p * 远, 0, Math.PI * 2);
+        笔.fillStyle = 新色;
+        笔.fill();
+      }
+
+      function 画丁(笔, 宽, 高, p) {
+        笔.fillStyle = 旧色;
+        笔.fillRect(0, 0, 宽, 高);
+        const 格 = 12;
+        for (let y = 0; y < 高; y += 格) {
+          for (let x = 0; x < 宽; x += 格) {
+            const 距 = (x / 宽) * 0.55 + (1 - y / 高) * 0.55;
+            const 乱 =
+              Math.sin(x * 0.11 + y * 0.07) * 0.09 +
+              Math.cos(x * 0.05 - y * 0.13) * 0.07 +
+              Math.sin((x + y) * 0.021) * 0.12;
+            const 阈 = 距 + 乱;
+            if (p * 1.35 > 阈) {
+              笔.fillStyle = 新色;
+              笔.fillRect(x, y, 格 + 0.6, 格 + 0.6);
+            }
+          }
+        }
+      }
+
+      const 画们 = { 甲: 画甲, 乙: 画乙, 丙: 画丙, 丁: 画丁 };
+      const 板们 = [...document.querySelectorAll('[data-hua]')].map((布) => ({
+        布,
+        笔: 布.getContext('2d'),
+        画: 画们[布.dataset.hua],
+      }));
+      let 起 = 0;
+      function 重播() {
+        起 = performance.now();
+      }
+      function 帧(时) {
+        const 过 = 时 - 起;
+        const 总 = 时长 + 停;
+        const 周 = ((过 % 总) + 总) % 总;
+        const p = Math.min(1, 周 / 时长);
+        const 缓 = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+        板们.forEach((b) => {
+          b.笔.clearRect(0, 0, b.布.width, b.布.height);
+          b.画(b.笔, b.布.width, b.布.height, 缓);
+        });
+        requestAnimationFrame(帧);
+      }
+      document.querySelector('[data-chongbo]').addEventListener('click', 重播);
+      重播();
+      requestAnimationFrame(帧);
+    </script>
+  </body>
+</html>

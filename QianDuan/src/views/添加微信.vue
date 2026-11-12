@@ -64,6 +64,7 @@ const { 进度, 当前趣味语, 错误, 可重试, 开始, 重试 } = 使用进
   趣味语列表: () => fanYi.zaiRuLiaoTian.quWeiYu[场景.value],
   覆盖趣味语: () => (仓库.touRenTiShi ? huoQuFanYi('tianJiaWeiXin', 'dengDaiTouRen') : ''),
   错误文案: () => 仓库.cuoWuXinXi || huoQuFanYi('tianJiaWeiXin', 'shengChengShiBai'),
+  可重试: () => !仓库.shiFouShenHeJuJue,
   执行: async ({ 上报进度 }) => {
     const 当前状态 = () => 仓库.zhuangTai
     if (当前状态() === 'yi_wan_cheng') {

@@ -105,7 +105,7 @@ export function jiSuanAIChanShu(
   else if (changJing === 'anWei') wenDu += 0.05
 
   wenDu = qianZhiWenDu(wenDu)
-  if (moXingLeiXing === 'writer') wenDu = Math.min(wenDu, XIE_SHOU_WEN_DU_SHANG_XIAN)
+  if (moXingLeiXing === 'XieShou') wenDu = Math.min(wenDu, XIE_SHOU_WEN_DU_SHANG_XIAN)
 
   const jiChu: MoXingCanShu = {
     moXing: ji.moXing,

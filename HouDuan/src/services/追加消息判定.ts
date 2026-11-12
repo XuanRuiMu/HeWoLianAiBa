@@ -1,9 +1,9 @@
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
-import { duJieBaoKaiGuan } from '../config/开场采样配置'
+import { duJieBaoKaiGuanMoRenKai } from '../config/开场采样配置'
 import { gouJianFengGeShiLiCeng } from './Prompt构建器'
 import type { AIJiaoSeXinXi, HaoGanDuXinXi, DuiHuaLiShiXiang } from '../types'
 
-const MO_XING_MING = 'qingGanFenXi' as const
+const MO_XING_MING = 'QingGanFenXi' as const
 
 export interface ZuiJiaPanDuan {
   youShiMeDongXi: boolean
@@ -72,7 +72,7 @@ function jieXi(neiRong: string): ZuiJiaPanDuan {
 }
 
 export async function panDuanZuiJia(shuRu: ZuiJiaPanDuanShuRu): Promise<ZuiJiaPanDuan> {
-  if (!duJieBaoKaiGuan('ZUI_JIA_QI_YONG')) return { youShiMeDongXi: false }
+  if (!duJieBaoKaiGuanMoRenKai('ZUI_JIA_QI_YONG')) return { youShiMeDongXi: false }
   if (process.env.VITEST === 'true') return { youShiMeDongXi: false }
   try {
     const xiangYing = await genJuPeiZhiTiaoYong(MO_XING_MING, [

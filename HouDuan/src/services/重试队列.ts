@@ -1,7 +1,7 @@
 import { redis } from '../redis'
 import { debug日志 } from '../utils/debug日志'
 
-export type ZhongShiLeiXing = 'director' | 'haoGanDuPingPan' | 'quAiWeiChouJian'
+export type ZhongShiLeiXing = 'DaoYan' | 'HaoGanDuPingPan' | 'quAiWeiChouJian' | 'touXiangShengCheng'
 
 export interface ZhongShiXiang {
   leiXing: ZhongShiLeiXing

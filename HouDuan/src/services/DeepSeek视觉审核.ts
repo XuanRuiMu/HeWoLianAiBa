@@ -143,7 +143,7 @@ export async function shenHeTuPianAnQuan(wenJianLuJing: string): Promise<AnQuanS
   const mime = getMimeFromFile(wenJianLuJing)
 
   try {
-    const xiangYing = await genJuPeiZhiTiaoYong('tuPianShenHe', [
+    const xiangYing = await genJuPeiZhiTiaoYong('TuPianShenHe', [
       { jiaoSe: 'system', neiRong: gouJianTuPianShenHePrompt() },
       {
         jiaoSe: 'user',

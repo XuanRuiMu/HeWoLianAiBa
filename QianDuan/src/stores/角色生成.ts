@@ -35,6 +35,7 @@ export const 使用角色生成仓库 = defineStore('角色生成', () => {
   const jiaoSeXinXi = ref<ShengChengJiaoSeJieGuo | null>(null)
   const huiHuaId = ref<string | null>(null)
   const cuoWuXinXi = ref('')
+  const shiFouShenHeJuJue = ref(false)
   const zaiJiaZaiYe = ref(false)
 
   const 完成等待者 = new Set<() => void>()
@@ -103,10 +104,18 @@ export const 使用角色生成仓库 = defineStore('角色生成', () => {
       if (zaiJiaZaiYe.value) tiShengJinDu(100)
       zhuangTai.value = 'yi_wan_cheng'
     } catch (cuoWu) {
+      const fuWuQiTiShi = duQuFuWuQiTiShi(cuoWu)
       if (zaiJiaZaiYe.value) {
-        cuoWuXinXi.value = huoQuFanYi('tianJiaWeiXin', 'shengChengShiBai')
+        if (fuWuQiTiShi) {
+          cuoWuXinXi.value = fuWuQiTiShi
+          shiFouShenHeJuJue.value = shiRenSheJuJueCuoWu(cuoWu)
+        } else {
+          cuoWuXinXi.value = huoQuFanYi('tianJiaWeiXin', 'shengChengShiBai')
+          shiFouShenHeJuJue.value = false
+        }
       } else {
         console.warn('生成角色流程在用户离开加载页后失败：', cuoWu)
+        shiFouShenHeJuJue.value = false
       }
       touRenTiShi.value = false
       zhuangTai.value = 'shi_bai'
@@ -122,6 +131,7 @@ export const 使用角色生成仓库 = defineStore('角色生成', () => {
     zhuangTai.value = 'jin_xing_zhong'
     dangQianZiLiao.value = ziLiao
     cuoWuXinXi.value = ''
+    shiFouShenHeJuJue.value = false
     jinDu.value = 0
     touRenTiShi.value = false
     huiHuaId.value = null
@@ -146,6 +156,7 @@ export const 使用角色生成仓库 = defineStore('角色生成', () => {
     jiaoSeXinXi,
     huiHuaId,
     cuoWuXinXi,
+    shiFouShenHeJuJue,
     zaiJiaZaiYe,
     kaiShiLiuCheng,
     等待完成,
@@ -153,3 +164,20 @@ export const 使用角色生成仓库 = defineStore('角色生成', () => {
     xiaoZhuJiaZaiYe,
   }
 })
+
+function duQuFuWuQiTiShi(cuoWu: unknown): string | null {
+  const xiangYingShuJu = (cuoWu as { response?: { data?: { ti_shi?: unknown } } })?.response?.data
+  const zhi = xiangYingShuJu?.ti_shi
+  if (typeof zhi !== 'string') return null
+  const wenBen = zhi.trim()
+  if (wenBen === '' || wenBen.length > 200) return null
+  if (!/[\u4e00-\u9fff]/.test(wenBen)) return null
+  return wenBen
+}
+
+function shiRenSheJuJueCuoWu(cuoWu: unknown): boolean {
+  const daiMa = (cuoWu as { response?: { data?: { cuo_wu_ma?: unknown; code?: unknown } } })?.response
+    ?.data
+  const zhi = typeof daiMa?.cuo_wu_ma === 'string' ? daiMa.cuo_wu_ma : daiMa?.code
+  return zhi === 'ROLE_GENERATION_PERSONA_REJECTED'
+}

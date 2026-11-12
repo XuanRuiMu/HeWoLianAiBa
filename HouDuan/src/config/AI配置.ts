@@ -39,7 +39,7 @@ export const AI_PEI_ZHI = {
   },
 
   moXing: {
-    director: {
+    DaoYan: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       top_p: 0.95,
       zuiDaTokens: 32000,
@@ -48,7 +48,7 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    writer: {
+    XieShou: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       zuiDaTokens: 4000,
       siKaoMoShi: XIE_SHOU_SI_KAO ? 'enabled' : 'disabled',
@@ -57,7 +57,7 @@ export const AI_PEI_ZHI = {
         : { wenDu: XIE_SHOU_WEN_DU }),
     } as MoXingCanShu,
 
-    qingGanFenXi: {
+    QingGanFenXi: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.2,
       zuiDaTokens: 32000,
@@ -65,7 +65,7 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    haoGanDuPingPan: {
+    HaoGanDuPingPan: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.2,
       zuiDaTokens: 32000,
@@ -73,7 +73,7 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    jiYiZhaiYao: {
+    JiYiZhaiYao: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       top_p: 0.95,
       zuiDaTokens: 32000,
@@ -81,7 +81,7 @@ export const AI_PEI_ZHI = {
       reasoningEffort: 'medium',
     } as MoXingCanShu,
 
-    anQuanShenHe: {
+    AnQuanShenHe: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
       zuiDaTokens: 32000,
@@ -89,7 +89,22 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    guanJianShiJian: {
+    RenSheShenHe: {
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      wenDu: 0,
+      zuiDaTokens: 2000,
+      siKaoMoShi: 'disabled',
+      xiangYingGeShi: { type: 'json_object' },
+    } as MoXingCanShu,
+
+    RenSheKa: {
+      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      wenDu: 0.9,
+      zuiDaTokens: 1000,
+      siKaoMoShi: 'disabled',
+    } as MoXingCanShu,
+
+    GuanJianShiJian: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.2,
       zuiDaTokens: 32000,
@@ -97,7 +112,7 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    junShiQiuZhu: {
+    JunShiQiuZhu: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       top_p: 0.95,
       zuiDaTokens: 64000,
@@ -106,7 +121,7 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    biaoBaiJianCe: {
+    BiaoBaiJianCe: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
       zuiDaTokens: 32000,
@@ -114,7 +129,7 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    huShanJianCe: {
+    HuShanJianCe: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
       zuiDaTokens: 32000,
@@ -122,7 +137,7 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    shiPoJianCe: {
+    ShiPoJianCe: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
       zuiDaTokens: 32000,
@@ -130,7 +145,7 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    jieShouBiaoBaiJianCe: {
+    JieShouBiaoBaiJianCe: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
       zuiDaTokens: 32000,
@@ -138,7 +153,7 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    shenJingBingJianCe: {
+    ShenJingBingJianCe: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
       zuiDaTokens: 32000,
@@ -146,7 +161,7 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    tuPianShenHe: {
+    TuPianShenHe: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
       zuiDaTokens: 32000,
@@ -154,7 +169,7 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    siLianJian: {
+    SiLianJian: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
       zuiDaTokens: 32000,
@@ -162,7 +177,7 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    jiaoSeJingGaoFanYing: {
+    JiaoSeJingGaoFanYing: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
       zuiDaTokens: 32000,
@@ -170,7 +185,7 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    kaiChangBai: {
+    KaiChangBai: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       top_p: 0.95,
       zuiDaTokens: 16000,
@@ -179,7 +194,7 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'json_object' },
     } as MoXingCanShu,
 
-    kaiChangBaiGaiLv: {
+    KaiChangBaiGaiLv: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0,
       zuiDaTokens: 30,
@@ -187,7 +202,7 @@ export const AI_PEI_ZHI = {
       xiangYingGeShi: { type: 'text' },
     } as MoXingCanShu,
 
-    fuPanShengCheng: {
+    FuPanShengCheng: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       top_p: 0.95,
       zuiDaTokens: 64000,
@@ -298,22 +313,22 @@ export function xuanZeHuiDuFenZu(
 }
 
 export const MO_XING_HUI_DU_CE_LUE: Record<string, MoXingHuiDuCeLue> = {
-  director: duQuHuiDu('director', [
+  DaoYan: duQuHuiDu('DaoYan', [
     { mingCheng: 'gaoJingQueMax', biLi: 90, reasoningEffort: 'max' },
     { mingCheng: 'shouLianMedium', biLi: 10, reasoningEffort: 'medium' },
   ]),
-  junShiQiuZhu: duQuHuiDu('junShiQiuZhu', [
+  JunShiQiuZhu: duQuHuiDu('JunShiQiuZhu', [
     { mingCheng: 'jiZhun', biLi: 100, reasoningEffort: 'medium' },
   ]),
-  kaiChangBai: duQuHuiDu('kaiChangBai', [
+  KaiChangBai: duQuHuiDu('KaiChangBai', [
     { mingCheng: 'chenJinMax', biLi: 80, reasoningEffort: 'max' },
     { mingCheng: 'shouLianMedium', biLi: 20, reasoningEffort: 'medium' },
   ]),
-  jiYiZhaiYao: duQuHuiDu('jiYiZhaiYao', [
+  JiYiZhaiYao: duQuHuiDu('JiYiZhaiYao', [
     { mingCheng: 'wenDingMax', biLi: 90, reasoningEffort: 'max' },
     { mingCheng: 'shouLianMedium', biLi: 10, reasoningEffort: 'medium' },
   ]),
-  fuPanShengCheng: duQuHuiDu('fuPanShengCheng', [
+  FuPanShengCheng: duQuHuiDu('FuPanShengCheng', [
     { mingCheng: 'fuPanMax', biLi: 90, reasoningEffort: 'max' },
     { mingCheng: 'shouLianMedium', biLi: 10, reasoningEffort: 'medium' },
   ]),

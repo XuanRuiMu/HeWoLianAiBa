@@ -2,6 +2,9 @@ import type { Server } from 'socket.io'
 import { yunXingAIYinQing } from './AI引擎'
 import { pingPanHaoGanDuPiLiangNei } from './好感度评判'
 import { gengXinHaoGanDu, huoQuWanZhengHaoGanDu } from './好感度'
+import { changShiTouXiangYanHua } from './头像生成'
+import { jieXiBiaoQingZhiLing, faSongBiaoQingBaoXiaoXi } from './系统表情'
+import { chuLiQueXiKouJian } from './亲密度缺席扣减'
 import {
   baoCunJiaoSeXiaoXi,
   huoQuAIJiaoSeXinXi,
@@ -41,7 +44,7 @@ import { panDuanZuiJia } from './追加消息判定'
 import { tuiDuanZuoXi, panDuanZuoXi, zuoXiKaiQi } from '../config/角色作息'
 import { shengChengBurstJianGeHaoMiao, burstLianFaZuiChangBiJieShu } from '../config/角色配置'
 import { duShiChaXiaShi } from '../config/时区'
-import { duJieBaoKaiGuan } from '../config/开场采样配置'
+import { duJieBaoKaiGuanMoRenKai } from '../config/开场采样配置'
 import { huoQuShiJianChangJingWenBen } from '../config/时间场景配置'
 import { 用户形态转内部 } from '../utils/性别'
 import type { 性别内部形态 } from '../utils/性别'
@@ -101,7 +104,6 @@ export class AI回复调度器 {
   private 上条角色消息时刻 = 0
   private 上条角色消息后用户来过 = false
   private 本轮睡着中 = false
-  private 本轮醒来小时 = 0
 
   private static readonly 去重登记上限 = 8
   private static readonly 去重窗口毫秒 = 60 * 1000
@@ -144,6 +146,7 @@ export class AI回复调度器 {
 
     this.重置()
     this.预取回填摘要()
+    void chuLiQueXiKouJian(this.用户ID, this.角色ID).catch(() => undefined)
     const benCiJianCeID = ++this.当前检测ID
     return this.检测用户消息并决定后续(benCiJianCeID)
   }
@@ -354,15 +357,12 @@ export class AI回复调度器 {
   }
 
 private 启动AI计时器(): void {
-  const yanChi = this.计算本轮回复延迟()
-  const anQuShangXian = 14 * 3600_000
-  const shiJian = Math.max(0, Math.min(anQuShangXian, yanChi))
-  this.本轮睡着中 = yanChi > this.回复延迟毫秒 * 2 && yanChi > 60_000
+  this.本轮睡着中 = zuoXiKaiQi() && this.睡着()
 
   this.计时器 = setTimeout(() => {
     this.计时器 = null
     void this.触发AI处理()
-  }, shiJian)
+  }, Math.max(0, this.回复延迟毫秒))
   this.发布AI状态('deng_dai_zhong')
 }
 
@@ -384,17 +384,6 @@ private 当地现在小时(): number {
   return new Date().getHours()
 }
 
-private 计算本轮回复延迟(): number {
-  if (!zuoXiKaiQi()) return this.回复延迟毫秒
-  const renShe = this.当前角色
-  if (!renShe) return this.回复延迟毫秒
-  const wenBen = `${renShe.bei_jing_gu_shi || ''}${renShe.xing_wei_te_dian || ''}${(renShe.shi_jie_xin_xi?.zhi_ye as string) || ''}`
-  const panDuan = panDuanZuoXi(this.当地现在小时(), tuiDuanZuoXi(wenBen))
-  if (!panDuan.shiFuZhe) return this.回复延迟毫秒
-  this.本轮醒来小时 = panDuan.qiXingXiaoShi
-  return panDuan.dengDaiMiaoShu
-}
-
   private 是否等待表白回复(): boolean {
     qingChuGuoQiDengDaiZhuangTai()
     const jian = shengChengDengDaiBiaoBaiJian(this.用户ID, this.角色ID)
@@ -410,10 +399,7 @@ private 计算本轮回复延迟(): number {
   private 构造时间场景提示(): string {
     const jiBen = huoQuShiJianChangJingWenBen()
     if (!this.本轮睡着中) return jiBen
-    const qiXing = Math.floor(this.本轮醒来小时)
-    const xianZai = Math.floor(this.当地现在小时())
-    const geXiaoShi = ((xianZai - qiXing + 24) % 24) || 24
-    return `${jiBen}\n（你之前睡着了，TA 那会儿发的消息你刚醒才看到，中间过了约 ${geXiaoShi} 小时。）`
+    return `${jiBen}\n（现在是你的睡觉时间，这条消息刚被你看到。回复可以很短、迷糊或带点起床气，说完可以接着睡。）`
   }
 
   private 设置等待表白回复状态(): void {    dengDaiBiaoBaiHuiFuMap.set(shengChengDengDaiBiaoBaiJian(this.用户ID, this.角色ID), {
@@ -532,7 +518,7 @@ private 计算本轮回复延迟(): number {
 
   private 安排追加消息(): void {
     if (!this.当前角色) return
-    if (!duJieBaoKaiGuan('ZUI_JIA_QI_YONG')) return
+    if (!duJieBaoKaiGuanMoRenKai('ZUI_JIA_QI_YONG')) return
     if (process.env.VITEST === 'true') return
     if (this.是否等待表白回复()) return
 
@@ -815,6 +801,36 @@ private 计算本轮回复延迟(): number {
         continue
       }
 
+      const tieZhiDuanMing = jieXiBiaoQingZhiLing(消息列表[i])
+      if (tieZhiDuanMing) {
+        const biaoQingXiaoXi = await faSongBiaoQingBaoXiaoXi(this.用户ID, this.角色ID, tieZhiDuanMing).catch(
+          (cuoWu: unknown) => {
+            debug日志.warn('AI调度器', '表情包消息发送失败，本条跳过', {
+              xiang_qing: { jiao_se_id: this.角色ID, duan_ming: tieZhiDuanMing, cuo_wu: String(cuoWu) },
+            })
+            return null
+          },
+        )
+        if (biaoQingXiaoXi) {
+          yiFaSongLieBiao.push(消息列表[i])
+          this.登记送达(消息列表[i])
+          this.自上一条角色消息以来的用户消息计数 = 0
+          try {
+            this.推送角色回复([biaoQingXiaoXi], 轮次)
+          } catch (cuoWu) {
+            debug日志.error('AI调度器', '表情包回复推送异常', {
+              xiang_qing: { jiao_se_id: this.角色ID, xiao_xi_id: biaoQingXiaoXi.id, cuo_wu: String(cuoWu) },
+            })
+          }
+          jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 1, xiao_xi_id: biaoQingXiaoXi.id })
+          continue
+        }
+        debug日志.warn('AI调度器', '贴纸指令未命中表情库，本条丢弃', {
+          xiang_qing: { jiao_se_id: this.角色ID, duan_ming: tieZhiDuanMing },
+        })
+        continue
+      }
+
       const 保存结果 = await baoCunJiaoSeXiaoXi({
         yong_hu_id: this.用户ID,
         jiao_se_id: this.角色ID,
@@ -867,6 +883,11 @@ private 计算本轮回复延迟(): number {
           })
         }
       }
+      void changShiTouXiangYanHua({
+        yongHuId: this.用户ID,
+        jiaoSeId: this.角色ID,
+        laiYuan: 'qinMiDuBianHua',
+      }).catch(() => undefined)
       const jieShuJieGuo = await chuLiAIHuiFuHouJieShuJianCha(this.用户ID, this.角色ID)
       if (jieShuJieGuo) {
         this.清除等待表白回复状态()
@@ -945,6 +966,11 @@ private 计算本轮回复延迟(): number {
     } catch {
       // 忽略
     }
+    void changShiTouXiangYanHua({
+      yongHuId: this.用户ID,
+      jiaoSeId: this.角色ID,
+      laiYuan: 'zhaiYaoShengCheng',
+    }).catch(() => undefined)
   }
 
   private async 更新好感度(

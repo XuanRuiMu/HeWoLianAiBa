@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>交错斜列 · 三段依次而来</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="curtain-clip">
+    <div class="column-curtain" id="columnCurtain">
+      <div class="col-strip col-1" data-dir="down"></div>
+      <div class="col-strip col-2" data-dir="up"></div>
+      <div class="col-strip col-3" data-dir="down"></div>
+    </div>
+  </div>
+
+  <div class="page-container">
+    <div class="view-panel" id="viewA">
+      <span class="badge">序 · 列</span>
+      <h1>三道斜影，依次而来</h1>
+      <p>三段斜影一条一条推来，铺满之后稍作停留，再一条条褪去。</p>
+      <button class="trigger-btn" id="btnToB">看下一幕 →</button>
+    </div>
+
+    <div class="view-panel is-hidden" id="viewB">
+      <span class="badge badge-emerald">承 · 见</span>
+      <h1>下一页，自有它的次序</h1>
+      <p>三段依次退开，新的段落安静落定，不必催促，也不必回头。</p>
+      <button class="trigger-btn" id="btnToA">← 回到序章</button>
+    </div>
+
+    <footer class="footer-action">
+      <button type="button" id="replayBtn" class="back-link">重播</button>
+    </footer>
+  </div>
+
+  <script src="vendor/gsap.min.js"></script>
+  <script src="script.js"></script>
+  <script src="自动演示.js"></script>
+</body>
+</html>

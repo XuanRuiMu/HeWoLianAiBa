@@ -127,6 +127,8 @@
                     :模型值="ziLiaoShuJu.xinMuZhongDeTa.nianLing"
                     类型="number"
                     :step="1"
+                    :min="10"
+                    :max="99"
                     :标签="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongNianLing')"
                     :占位文字="huoQuFanYi('ziLiaoSheZhi', 'xinMuZhongNianLingZhanwei')"
                     @geng-xin="ziLiaoShuJu.xinMuZhongDeTa.nianLing = $event"
@@ -190,7 +192,6 @@ import XingBieGouXuan from '@/components/表单/性别勾选框.vue'
 import XingBieXuanZeBuZhou from '@/components/资料设置/性别选择步骤.vue'
 import { congTongYongTiShiCiTuiCeXingGe } from '@/utils/通用提示词性格'
 import { 使用通用性别框体配色 } from '@/composables/use性别框体配色'
-import { guiYiNianLing } from '@/utils/输入验证'
 import { track } from '@/utils/埋点'
 
 const 仓库 = 使用认证表单仓库()
@@ -286,14 +287,37 @@ const 可以下一步 = computed(() => {
   return false
 })
 
-const 可以开始 = computed(() => !!ziLiaoShuJu.xingGeXuanZe)
+const 可以开始 = computed(
+  () => !!ziLiaoShuJu.xingGeXuanZe && (!xinMuZhongYiTianXie.value || nianLingHeFa.value),
+)
 
 const 随机选中 = ref(false)
 const 随机性格标记 = ref(false)
 const xinMuZhongDeTaZhanKai = ref(false)
 
+const xinMuZhongYiTianXie = computed(() => {
+  const ta = ziLiaoShuJu.xinMuZhongDeTa
+  return Boolean(
+    ta.weiXinMing.trim() ||
+      ta.zhenShiMing.trim() ||
+      ta.nianLing.trim() ||
+      ta.tongYongTiShiCi.trim(),
+  )
+})
+
+const nianLingHeFa = computed(() => {
+  const wenBen = ziLiaoShuJu.xinMuZhongDeTa.nianLing.trim()
+  if (!/^\d+$/.test(wenBen)) return false
+  const shu = Number(wenBen)
+  return Number.isInteger(shu) && shu >= 10 && shu <= 99
+})
+
 function guiYiNianLingShuRu() {
-  ziLiaoShuJu.xinMuZhongDeTa.nianLing = guiYiNianLing(ziLiaoShuJu.xinMuZhongDeTa.nianLing)
+  const wenBen = ziLiaoShuJu.xinMuZhongDeTa.nianLing.trim()
+  if (!wenBen) return
+  const shu = Number(wenBen)
+  if (!Number.isFinite(shu)) return
+  ziLiaoShuJu.xinMuZhongDeTa.nianLing = String(Math.max(10, Math.min(99, Math.round(shu))))
 }
 
 function xuanZeXingGe(mbti: MBTI类型) {

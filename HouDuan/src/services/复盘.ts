@@ -514,7 +514,7 @@ export async function shengChengFuPan(
     ...(guanJianShiJian.length > 0 ? { guanJianShiJian } : {}),
     ...(miJiTiShi ? { miJiTiShi } : {}) })
 
-  const xiangYing = await genJuPeiZhiTiaoYong('fuPanShengCheng', [
+  const xiangYing = await genJuPeiZhiTiaoYong('FuPanShengCheng', [
     { jiaoSe: 'system', neiRong: '帮朋友复盘一段恋爱模拟聊天，结合后台数据客观分析，只输出 JSON。' },
     { jiaoSe: 'user', neiRong: prompt },
   ], fuPanShangXiaWen)
