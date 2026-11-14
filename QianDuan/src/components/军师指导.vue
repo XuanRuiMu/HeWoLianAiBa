@@ -160,7 +160,7 @@ import {
 import { fanYi, huoQuFanYi } from '@/config/翻译表'
 import RequestError from '@/components/请求错误.vue'
 import { chuangJianQianTaiCuoWu, 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { QianTaiDaiMa } from '@/config/前台错误码'
 import { shengChengTouXiangURL, junShiMoRenTouXiang } from '@/utils/头像'
 import TouXiang from '@/components/头像.vue'
 import { 使用军师仓库, shiYouXiaoJiaoSeId } from '@/stores/军师'
@@ -212,8 +212,8 @@ const yiZhiDaoXiangTongNeiRong = computed(
 )
 
 let lunXunShiJianQi: ReturnType<typeof setInterval> | null = null
-const LUN_XUN_JIAN_GE_HAO_MIAO = 3000
-const JIAN_YI_YU_LAN_CHANG_DU = 50
+const LunXunJianGeHaoMiao = 3000
+const JianYiYuLanChangDu = 50
 
 function tingZhiLunXun() {
   if (lunXunShiJianQi) {
@@ -226,7 +226,7 @@ function qiDongLunXun() {
   tingZhiLunXun()
   lunXunShiJianQi = setInterval(() => {
     void chaXunBingGengXinZhuangTai()
-  }, LUN_XUN_JIAN_GE_HAO_MIAO)
+  }, LunXunJianGeHaoMiao)
 }
 
 function huoQuJunShiZhuangTai(junShiId: string): JunShiZhuangTaiLeiXing {
@@ -334,23 +334,23 @@ async function qingQiuZhiDao(junShi: JunShiXinXi) {
     tingZhiLunXun()
   } catch (e: unknown) {
     const zhengChangHua = 归一前台错误(e)
-    if (zhengChangHua.code === QIAN_TAI_DAI_MA.JUN_SHI_ZAI_ZHI_DAO_ZHONG) {
+    if (zhengChangHua.code === QianTaiDaiMa.JUN_SHI_ZAI_ZHI_DAO_ZHONG) {
       return
     }
     qingQiuZhongJunShiId.value = null
-    if (zhengChangHua.code === QIAN_TAI_DAI_MA.JUN_SHI_CHONG_FU) {
+    if (zhengChangHua.code === QianTaiDaiMa.JUN_SHI_CHONG_FU) {
       cuoWuTiShiMap.value = {
         ...cuoWuTiShiMap.value,
         [junShi.id]: chuangJianQianTaiCuoWu({
-          code: QIAN_TAI_DAI_MA.JUN_SHI_CHONG_FU,
+          code: QianTaiDaiMa.JUN_SHI_CHONG_FU,
           yingXiang: huoQuFanYi('junShi', 'junShiChongFu'),
         }),
       }
-    } else if (zhengChangHua.code === QIAN_TAI_DAI_MA.WU_LIAO_TIAN_JI_LU) {
+    } else if (zhengChangHua.code === QianTaiDaiMa.WU_LIAO_TIAN_JI_LU) {
       cuoWuTiShiMap.value = {
         ...cuoWuTiShiMap.value,
         [junShi.id]: chuangJianQianTaiCuoWu({
-          code: QIAN_TAI_DAI_MA.WU_LIAO_TIAN_JI_LU,
+          code: QianTaiDaiMa.WU_LIAO_TIAN_JI_LU,
           yingXiang: huoQuFanYi('junShi', 'wuLiaoTianJiLu'),
         }),
       }
@@ -375,8 +375,8 @@ function guanBiZhiDaoJiLu() {
 function huoQuJianYiYuLan(jiLu: JunShiJiLu): string {
   const jianYi = jiLu.jian_yi_fen_duan?.xiaYiBuZenMeHui?.trim() || jiLu.jian_yi || ''
   if (!jianYi) return ''
-  return jianYi.length > JIAN_YI_YU_LAN_CHANG_DU
-    ? jianYi.slice(0, JIAN_YI_YU_LAN_CHANG_DU) + '...'
+  return jianYi.length > JianYiYuLanChangDu
+    ? jianYi.slice(0, JianYiYuLanChangDu) + '...'
     : jianYi
 }
 

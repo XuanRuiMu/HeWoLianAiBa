@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
-import { HAO_GAN_DU_PEI_ZHI, HaoGanDuJieDuanYingShe } from '../config/好感度配置'
+import { HaoGanDuPeiZhi, HaoGanDuJieDuanYingShe } from '../config/好感度配置'
 import { chuLiYouXiJieShu } from './胜利失败条件'
 import { debug日志, jiLuHaoGanDuBianHua } from '../utils/debug日志'
 import type { HaoGanDuXinXi, GongKaiHaoGanDuXinXi, WanZhengHaoGanDuXinXi } from '../types'
@@ -38,7 +38,7 @@ function qieGeFanWei(zhi: number, zuiDi: number, zuiGao: number): number {
 }
 
 export function miJiKouLingPiPei(shuRu: string): boolean {
-  const kouLing = HAO_GAN_DU_PEI_ZHI.miJi.miLing
+  const kouLing = HaoGanDuPeiZhi.miJi.miLing
   if (kouLing.length === 0) return false
   if (typeof shuRu !== 'string' || shuRu.length !== kouLing.length) return false
   let chaZhi = 0
@@ -49,28 +49,28 @@ export function miJiKouLingPiPei(shuRu: string): boolean {
 }
 
 export function jiSuanZongFen(siWei: { xin_ren_du: number; qin_mi_du: number; qu_wei_du: number; guan_huai_du: number }): number {
-  const { quanZhong } = HAO_GAN_DU_PEI_ZHI
+  const { quanZhong } = HaoGanDuPeiZhi
   const fenShu =
     siWei.xin_ren_du * quanZhong.xinRenDu +
     siWei.qin_mi_du * quanZhong.qinMiDu +
     siWei.qu_wei_du * quanZhong.quWeiDu +
     siWei.guan_huai_du * quanZhong.guanHuaiDu
 
-  return Math.round(qieGeFanWei(fenShu, HAO_GAN_DU_PEI_ZHI.fanWei.zuiDiFen, HAO_GAN_DU_PEI_ZHI.fanWei.zuiGaoFen))
+  return Math.round(qieGeFanWei(fenShu, HaoGanDuPeiZhi.fanWei.zuiDiFen, HaoGanDuPeiZhi.fanWei.zuiGaoFen))
 }
 
 export function jiSuanShuaiJianBianHua(dangQianFen: number, bianHua: number): number {
-  const qieGeFen = qieGeFanWei(dangQianFen, HAO_GAN_DU_PEI_ZHI.fanWei.zuiDiFen, HAO_GAN_DU_PEI_ZHI.fanWei.zuiGaoFen)
+  const qieGeFen = qieGeFanWei(dangQianFen, HaoGanDuPeiZhi.fanWei.zuiDiFen, HaoGanDuPeiZhi.fanWei.zuiGaoFen)
   const shuaiJianXiShu = Math.max(
-    1 - qieGeFen / HAO_GAN_DU_PEI_ZHI.fanWei.zuiGaoFen,
-    HAO_GAN_DU_PEI_ZHI.shuaiJian.zuiDiBaoLiu,
+    1 - qieGeFen / HaoGanDuPeiZhi.fanWei.zuiGaoFen,
+    HaoGanDuPeiZhi.shuaiJian.zuiDiBaoLiu,
   )
   return bianHua * shuaiJianXiShu
 }
 
 export function fenJieSiWei(zongFen: number): Omit<HaoGanDuXinXi, 'guan_xi_jie_duan'> {
-  const qieGeFen = qieGeFanWei(zongFen, HAO_GAN_DU_PEI_ZHI.fanWei.zuiDiFen, HAO_GAN_DU_PEI_ZHI.fanWei.zuiGaoFen)
-  const { quanZhong } = HAO_GAN_DU_PEI_ZHI
+  const qieGeFen = qieGeFanWei(zongFen, HaoGanDuPeiZhi.fanWei.zuiDiFen, HaoGanDuPeiZhi.fanWei.zuiGaoFen)
+  const { quanZhong } = HaoGanDuPeiZhi
 
   return {
     xin_ren_du: Math.round(qieGeFen * quanZhong.xinRenDu),
@@ -82,9 +82,9 @@ export function fenJieSiWei(zongFen: number): Omit<HaoGanDuXinXi, 'guan_xi_jie_d
 }
 
 export function huoQuJieDuanXinXi(zongFen: number): HaoGanDuJieDuanYingShe {
-  const qieGeFen = qieGeFanWei(zongFen, HAO_GAN_DU_PEI_ZHI.fanWei.zuiDiFen, HAO_GAN_DU_PEI_ZHI.fanWei.zuiGaoFen)
+  const qieGeFen = qieGeFanWei(zongFen, HaoGanDuPeiZhi.fanWei.zuiDiFen, HaoGanDuPeiZhi.fanWei.zuiGaoFen)
 
-  const jieDuanLieBiao = Object.values(HAO_GAN_DU_PEI_ZHI.jieDuan)
+  const jieDuanLieBiao = Object.values(HaoGanDuPeiZhi.jieDuan)
   for (const jieDuan of jieDuanLieBiao) {
     if (qieGeFen >= jieDuan.xiaXian && qieGeFen <= jieDuan.shangXian) {
       return jieDuan
@@ -103,9 +103,9 @@ export function huoQuXinQing(zongFen: number): string {
 }
 
 export function huoQuLiuCengJiMingCheng(zongFen: number): string {
-  const qieGeFen = qieGeFanWei(zongFen, HAO_GAN_DU_PEI_ZHI.fanWei.zuiDiFen, HAO_GAN_DU_PEI_ZHI.fanWei.zuiGaoFen)
+  const qieGeFen = qieGeFanWei(zongFen, HaoGanDuPeiZhi.fanWei.zuiDiFen, HaoGanDuPeiZhi.fanWei.zuiGaoFen)
 
-  const cengJiLieBiao = Object.values(HAO_GAN_DU_PEI_ZHI.liuCengJi)
+  const cengJiLieBiao = Object.values(HaoGanDuPeiZhi.liuCengJi)
   for (const cengJi of cengJiLieBiao) {
     if (qieGeFen >= cengJi.xiaXian && qieGeFen <= cengJi.shangXian) {
       return cengJi.mingCheng
@@ -119,7 +119,7 @@ export function jiSuanSiWeiBianHuaHouDeZongFen(
   dangQianFen: number,
   bianHua: HaoGanDuSiWeiBianHua,
 ): number {
-  const { quanZhong } = HAO_GAN_DU_PEI_ZHI
+  const { quanZhong } = HaoGanDuPeiZhi
   const yuanShiBianHua =
     bianHua.xin_ren_du_bian_hua * quanZhong.xinRenDu +
     bianHua.qin_mi_du_bian_hua * quanZhong.qinMiDu +
@@ -127,7 +127,7 @@ export function jiSuanSiWeiBianHuaHouDeZongFen(
     bianHua.guan_huai_du_bian_hua * quanZhong.guanHuaiDu
 
   const shiJiBianHua = jiSuanShuaiJianBianHua(dangQianFen, yuanShiBianHua)
-  return qieGeFanWei(Math.round(dangQianFen + shiJiBianHua), HAO_GAN_DU_PEI_ZHI.fanWei.zuiDiFen, HAO_GAN_DU_PEI_ZHI.fanWei.zuiGaoFen)
+  return qieGeFanWei(Math.round(dangQianFen + shiJiBianHua), HaoGanDuPeiZhi.fanWei.zuiDiFen, HaoGanDuPeiZhi.fanWei.zuiGaoFen)
 }
 
 export async function huoQuWanZhengHaoGanDu(
@@ -179,7 +179,7 @@ export async function gengXinHaoGanDu(
   lianXuWeiDaBiao?: number,
   ): Promise<HaoGanDuGengXinJieGuo> {
   try {
-    const { quanZhong } = HAO_GAN_DU_PEI_ZHI
+    const { quanZhong } = HaoGanDuPeiZhi
     const yuanShiBianHua =
       bianHua.xin_ren_du_bian_hua * quanZhong.xinRenDu +
       bianHua.qin_mi_du_bian_hua * quanZhong.qinMiDu +
@@ -202,10 +202,10 @@ export async function gengXinHaoGanDu(
        WHERE "用户ID" = $5 AND "角色ID" = $6
        RETURNING "总分", "互动次数"`,
       [
-        HAO_GAN_DU_PEI_ZHI.fanWei.zuiDiFen,
-        HAO_GAN_DU_PEI_ZHI.fanWei.zuiGaoFen,
+        HaoGanDuPeiZhi.fanWei.zuiDiFen,
+        HaoGanDuPeiZhi.fanWei.zuiGaoFen,
         yuanShiBianHua,
-        HAO_GAN_DU_PEI_ZHI.shuaiJian.zuiDiBaoLiu,
+        HaoGanDuPeiZhi.shuaiJian.zuiDiBaoLiu,
         yong_hu_id,
         jiao_se_id,
       ],
@@ -303,7 +303,7 @@ export async function sheZhiMiJiHaoGanDu(
     [yong_hu_id, jiao_se_id, miJiQianZongFen],
   )
 
-  const muBiaoFen = HAO_GAN_DU_PEI_ZHI.miJi.muBiaoFen
+  const muBiaoFen = HaoGanDuPeiZhi.miJi.muBiaoFen
   const xinSiWei = fenJieSiWei(muBiaoFen)
   const xinJieDuanMing = huoQuJieDuanMing(muBiaoFen)
 
@@ -359,7 +359,7 @@ export async function chuShiHuaHaoGanDu(
   jiao_se_id: string,
   zong_fen: number,
 ): Promise<void> {
-  const qieGeFen = qieGeFanWei(zong_fen, HAO_GAN_DU_PEI_ZHI.fanWei.zuiDiFen, HAO_GAN_DU_PEI_ZHI.fanWei.zuiGaoFen)
+  const qieGeFen = qieGeFanWei(zong_fen, HaoGanDuPeiZhi.fanWei.zuiDiFen, HaoGanDuPeiZhi.fanWei.zuiGaoFen)
   const siWei = fenJieSiWei(qieGeFen)
   const jieDuanMing = huoQuJieDuanMing(qieGeFen)
 

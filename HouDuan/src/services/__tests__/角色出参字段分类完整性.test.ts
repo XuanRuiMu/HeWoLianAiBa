@@ -9,7 +9,7 @@ vi.mock('../../redis', () => ({
 }))
 
 import {
-  JIAO_SE_YIN_SI_ZI_DUAN,
+  JiaoSeYinSiZiDuan,
   touYingWanJiaKeJianJiaoSe,
   type ShengChengJiaoSeJieGuo,
 } from '../角色生成'
@@ -89,7 +89,7 @@ const 玩家可见字段 = [
 ] as const satisfies readonly (keyof ShengChengJiaoSeJieGuo)[]
 
 const 玩家不可见字段 = [
-  ...JIAO_SE_YIN_SI_ZI_DUAN,
+  ...JiaoSeYinSiZiDuan,
   'shi_fou_zha_xing',
   'zha_fa_miao_shu',
   'hua_shu',

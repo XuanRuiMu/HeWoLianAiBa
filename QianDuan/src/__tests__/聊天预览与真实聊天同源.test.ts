@@ -8,8 +8,8 @@ import { 使用用户设置仓库 } from '@/stores/用户设置'
 import { huoQuQiPaoCSSBianLiang } from '@/config/气泡主题'
 import { huoQuFanYi } from '@/config/翻译表'
 import {
-  MO_REN_BEI_JING,
-  ZI_DING_YI_BEI_JING_LEI_MING,
+  MoRenBeiJing,
+  ZiDingYiBeiJingLeiMing,
   huoQuLiaoTianBeiJingLeiMing,
 } from '@/composables/use聊天皮肤'
 
@@ -239,9 +239,9 @@ describe('聊天预览复用真实聊天页的渲染实现', () => {
 describe('聊天皮肤真源函数', () => {
   it('预设背景按档位出类名，自定义背景统一走内联样式档', () => {
     expect(huoQuLiaoTianBeiJingLeiMing(true, 'chenWuQing')).toBe('beijing-chenWuQing')
-    expect(huoQuLiaoTianBeiJingLeiMing(true, '')).toBe(`beijing-${MO_REN_BEI_JING}`)
-    expect(huoQuLiaoTianBeiJingLeiMing(true, null)).toBe(`beijing-${MO_REN_BEI_JING}`)
-    expect(huoQuLiaoTianBeiJingLeiMing(false, 'https://x/自定义.jpg')).toBe(ZI_DING_YI_BEI_JING_LEI_MING)
+    expect(huoQuLiaoTianBeiJingLeiMing(true, '')).toBe(`beijing-${MoRenBeiJing}`)
+    expect(huoQuLiaoTianBeiJingLeiMing(true, null)).toBe(`beijing-${MoRenBeiJing}`)
+    expect(huoQuLiaoTianBeiJingLeiMing(false, 'https://x/自定义.jpg')).toBe(ZiDingYiBeiJingLeiMing)
   })
 })
 
@@ -263,7 +263,7 @@ describe('聊天预览挂载后与真实聊天页同构', () => {
     const 包 = 挂预览()
     const 面板 = 包.get('.yu-lan-xiao-xi-qu')
     expect(面板.classes()).toContain('liao-tian-mian-ban')
-    expect(面板.classes()).toContain(`beijing-${MO_REN_BEI_JING}`)
+    expect(面板.classes()).toContain(`beijing-${MoRenBeiJing}`)
     expect(面板.attributes('aria-label')).toBe(huoQuFanYi('sheZhi', 'liaoTianYuLan'))
     expect(包.findAll('.shijian-biaoqian')).toHaveLength(1)
     const 行们 = 包.findAll('.xiaoxi-xiangmu')

@@ -30,13 +30,13 @@ const 卡片源 = 读('components/气泡主题选择器.vue')
 const 裁剪源 = 读('components/图片裁剪.vue')
 const 尾巴源 = 读('components/聊天/气泡尾巴.vue')
 
-const MEI_TI_URL = '/api/媒体/' + 'a'.repeat(64) + '?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=' + 'b'.repeat(64)
+const MeiTiUrl = '/api/媒体/' + 'a'.repeat(64) + '?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=' + 'b'.repeat(64)
 
 function zaoTiaoMu(xuHao: number): WaiGuanTiaoMu {
   return {
     id: 'qipao-' + xuHao,
     mingCheng: '自定义气泡' + xuHao,
-    tuDiZhi: MEI_TI_URL,
+    tuDiZhi: MeiTiUrl,
     wenZiYanSe: '#FFFFFF',
   }
 }

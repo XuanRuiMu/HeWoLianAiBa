@@ -2,10 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { nextTick } from 'vue'
 import type { 消息 } from '@/types/类型定义'
 import type { YuYinShiBieQi } from '@/composables/use语音转文字'
-import { YU_YIN_YIN_LIANG_PEI_ZHI } from '@/composables/use语音音量'
+import { YuYinYinLiangPeiZhi } from '@/composables/use语音音量'
 
-const YUAN_SHI_AUDIO = globalThis.Audio
-const YUAN_SHI_AUDIO_CONTEXT = window.AudioContext
+const YuanShiAudio = globalThis.Audio
+const YuanShiAudioContext = window.AudioContext
 
 class JiaBoFangYinPin {
   static shiLiMen: JiaBoFangYinPin[] = []
@@ -72,8 +72,8 @@ function zhuangWebAudio(huanChong: 'youSheng' | 'jingYin'): {
   }
   class JiaFenXiQi {
     ming = 'fenXiQi'
-    fftSize = YU_YIN_YIN_LIANG_PEI_ZHI.fftChiCun
-    smoothingTimeConstant = YU_YIN_YIN_LIANG_PEI_ZHI.pingHuaXiShu
+    fftSize = YuYinYinLiangPeiZhi.fftChiCun
+    smoothingTimeConstant = YuYinYinLiangPeiZhi.pingHuaXiShu
     shangYou: ShangYou[] = []
     connect(muBiao: MuBiaoJieDian): void {
       lianJieDao(this, this.ming, muBiao)
@@ -134,7 +134,7 @@ function zhuangWebAudio(huanChong: 'youSheng' | 'jingYin'): {
   return {
     haiYuan: () => {
       Object.defineProperty(window, 'AudioContext', {
-        value: YUAN_SHI_AUDIO_CONTEXT,
+        value: YuanShiAudioContext,
         configurable: true,
         writable: true,
       })
@@ -158,9 +158,9 @@ async function dengDaiWeiRenWu(): Promise<void> {
 }
 
 afterEach(() => {
-  vi.stubGlobal('Audio', YUAN_SHI_AUDIO)
+  vi.stubGlobal('Audio', YuanShiAudio)
   Object.defineProperty(window, 'AudioContext', {
-    value: YUAN_SHI_AUDIO_CONTEXT,
+    value: YuanShiAudioContext,
     configurable: true,
     writable: true,
   })
@@ -258,7 +258,7 @@ describe('语音播放音量链路', () => {
       }
       return ce
     }
-    const menKan = yinLiang.YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.shengRuGaoYin
+    const menKan = yinLiang.YuYinKeJianDuanShuPeiZhi.shengRuGaoYin
     const zaiShengYiQian = ceLiang()
     yinLiang.sheZhiYuYinZengYi(0.05)
     expect(zengYiZhi.value).toBe(0.05)

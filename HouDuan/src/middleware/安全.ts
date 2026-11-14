@@ -22,7 +22,7 @@ export const gaoWeiSQLZhuRuMoShi = [
   /CONCAT\s*\(/i,
 ]
 
-const RONG_YI_WU_SHANG_WEI_JIN_CI_LIE_BIAO = gaoWeiSQLZhuRuMoShi.slice(6)
+const RongYiWuShangWeiJinCiLieBiao = gaoWeiSQLZhuRuMoShi.slice(6)
 
 export const puTongSQLZhuRuMoShi = [
   /SELECT\s+.*\s+FROM/i,
@@ -41,10 +41,10 @@ export const puTongSQLZhuRuMoShi = [
   /";\s*--/i,
 ]
 
-const CHU_CAN_KONG_ZHI_ZI_FU = /[\u0000-\u0008\u000B-\u001F\u007F\uFFFE\uFFFF]/g
+const ChuCanKongZhiZiFu = /[\u0000-\u0008\u000B-\u001F\u007F\uFFFE\uFFFF]/g
 
 function 剥离出参控制字符(zhi: string): string {
-  return zhi.replace(CHU_CAN_KONG_ZHI_ZI_FU, '')
+  return zhi.replace(ChuCanKongZhiZiFu, '')
 }
 
 export function 构造安全出参(zhi: unknown): unknown {
@@ -69,7 +69,7 @@ function jianCeGaoWeiSQLZhuRu(zhi: unknown, zuiShaoGongXian = 1): boolean {
     if (typeof zhi === 'string') {
       return {
         qiangTeZheng: gaoWeiSQLZhuRuMoShi.slice(0, 6).filter((moShi) => moShi.test(zhi)).length,
-        ruoTeXheng: RONG_YI_WU_SHANG_WEI_JIN_CI_LIE_BIAO.filter((moShi) => moShi.test(zhi)).length,
+        ruoTeXheng: RongYiWuShangWeiJinCiLieBiao.filter((moShi) => moShi.test(zhi)).length,
       }
     }
     if (Array.isArray(zhi)) {

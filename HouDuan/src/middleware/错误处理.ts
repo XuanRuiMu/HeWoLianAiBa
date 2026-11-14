@@ -2,11 +2,7 @@ import type { ErrorRequestHandler } from 'express'
 import { debug日志 } from '../utils/debug日志'
 import { shiBaiXiangYing } from '../utils/xiangying'
 import { huoQuCuoWuXianRong } from '../config/错误码注册表'
-import {
-  CUO_WU_DAI_MA,
-  YingYongCuoWu,
-  type CuoWuDaiMa,
-} from '../config/错误码注册表'
+import {CuoWuDaiMa, YingYongCuoWu} from '../config/错误码注册表'
 import { 依赖对应错误码, 推断依赖来源 } from '../utils/依赖错误'
 
 function jieXiDaiMa(cuoWu: unknown): CuoWuDaiMa {
@@ -15,11 +11,11 @@ function jieXiDaiMa(cuoWu: unknown): CuoWuDaiMa {
   if (依赖) return 依赖对应错误码(依赖)
   if (cuoWu && typeof cuoWu === 'object') {
     const xing = cuoWu as { type?: unknown; status?: unknown; statusCode?: unknown }
-    if (xing.type === 'entity.too.large') return CUO_WU_DAI_MA.PAYLOAD_TOO_LARGE
-    if (xing.type === 'entity.parse.failed') return CUO_WU_DAI_MA.REQUEST_BODY_INVALID
-    if (xing.status === 413 || xing.statusCode === 413) return CUO_WU_DAI_MA.PAYLOAD_TOO_LARGE
+    if (xing.type === 'entity.too.large') return CuoWuDaiMa.PAYLOAD_TOO_LARGE
+    if (xing.type === 'entity.parse.failed') return CuoWuDaiMa.REQUEST_BODY_INVALID
+    if (xing.status === 413 || xing.statusCode === 413) return CuoWuDaiMa.PAYLOAD_TOO_LARGE
   }
-  return CUO_WU_DAI_MA.INTERNAL_ERROR
+  return CuoWuDaiMa.INTERNAL_ERROR
 }
 
 export const 全YuZhanCuoWuChuLi: ErrorRequestHandler = (cuoWu, _qingQiu, xiangYing, xiaYiBu) => {

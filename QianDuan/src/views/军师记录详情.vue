@@ -88,7 +88,7 @@ import type { JunShiJiLu } from '@/types/类型定义'
 
 const route = useRoute()
 const router = useRouter()
-const LU_YOU_MING = 'junShiJiLuXiangQing'
+const LuYouMing = 'junShiJiLuXiangQing'
 const jiLuShuJu = ref<JunShiJiLu | null>(null)
 const touXiangShiBai = ref(false)
 const { cuoWu: qianTaiCuoWu, zhuangTai: qianTaiZhuangTai, yunXing, chongShi } = use前台错误()
@@ -98,7 +98,7 @@ async function jiaZaiShuJu() {
     async () => {
       const jiaoSeId = route.params.jiaoSeId as string
       const jiLuId = route.params.jiLuId as string
-      const yuQu = quYuQuJiaoJie<Promise<JunShiJiLu[]>>(LU_YOU_MING)
+      const yuQu = quYuQuJiaoJie<Promise<JunShiJiLu[]>>(LuYouMing)
       const lieBiao = await (yuQu ?? huoQuJunShiJiLu(jiaoSeId))
       jiLuShuJu.value = lieBiao.find((j) => j.shi_jian === jiLuId) || null
     },

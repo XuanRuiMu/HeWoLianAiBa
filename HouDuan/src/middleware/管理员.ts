@@ -6,7 +6,7 @@ import { huoQuFanYi } from '../config/translations'
 import { shiBaiXiangYing } from '../utils/xiangying'
 import { 取管理角色, 角色具备能力, type GuanLiJiaoSe, type GuanLiNengLi } from '../utils/角色能力'
 import type { RenZhengQingQiu } from './认证'
-import { CUO_WU_DAI_MA, JIU_DAI_MA } from '../config/错误码注册表'
+import { CuoWuDaiMa, JiuDaiMa } from '../config/错误码注册表'
 
 export interface GuanLiQingQiu extends RenZhengQingQiu {
   guan_li_jiao_se?: GuanLiJiaoSe
@@ -16,7 +16,7 @@ const huanCunYouXiaoQiHaoMiao = 30 * 1000
 const huanCunRongLiangShangXian = 5000
 const jiaoSeHuanCun = new Map<string, { zhi: GuanLiJiaoSe | null; daoQiHaoMiao: number }>()
 
-const SHI_XIAO_PIN_DAO = 'guan_li_shi_xiao'
+const ShiXiaoPinDao = 'guan_li_shi_xiao'
 let yiDingYueShiXiao = false
 
 export function 解析失效载荷(xiaoXi: string): string | null {
@@ -44,9 +44,9 @@ function queBaoDingYue(): void {
   yiDingYueShiXiao = true
   try {
     const dingYueDuan = redis.duplicate()
-    void dingYueDuan.subscribe(SHI_XIAO_PIN_DAO).catch(() => undefined)
+    void dingYueDuan.subscribe(ShiXiaoPinDao).catch(() => undefined)
     dingYueDuan.on('message', (pinDao: string, xiaoXi: string) => {
-      if (pinDao === SHI_XIAO_PIN_DAO) chuLiShiXiaoXiaoXi(xiaoXi)
+      if (pinDao === ShiXiaoPinDao) chuLiShiXiaoXiaoXi(xiaoXi)
     })
   } catch {
     yiDingYueShiXiao = false
@@ -61,7 +61,7 @@ export function qingChuJiaoSeHuanCun(yongHuId?: string): void {
   }
   queBaoDingYue()
   try {
-    void redis.publish(SHI_XIAO_PIN_DAO, JSON.stringify({ yongHuId: yongHuId ?? null })).catch(() => undefined)
+    void redis.publish(ShiXiaoPinDao, JSON.stringify({ yongHuId: yongHuId ?? null })).catch(() => undefined)
   } catch {
     return
   }
@@ -109,21 +109,21 @@ async function menKong(
 ): Promise<void> {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
-    shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+    shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
     return
   }
 
   try {
     const jiaoSe = await anYongHuIdQuJiaoSe(yongHu.yongHuId)
     if (!角色具备能力(jiaoSe, xuYaoNengLi)) {
-      shiBaiXiangYing(xiangYing, 403, huoQuFanYi('guanLiYuan', 'wuGuanLiQuanXian'), JIU_DAI_MA.WU_GUAN_LI_QUAN_XIAN)
+      shiBaiXiangYing(xiangYing, 403, huoQuFanYi('guanLiYuan', 'wuGuanLiQuanXian'), JiuDaiMa.WU_GUAN_LI_QUAN_XIAN)
       return
     }
     ;(qingQiu as GuanLiQingQiu).guan_li_jiao_se = jiaoSe as GuanLiJiaoSe
     xiaYiBu()
   } catch (cuoWu) {
     debug日志.error('管理员门禁', '管理身份校验失败', { xiang_qing: { cuo_wu: String(cuoWu), men_kong: xuYaoNengLi } })
-    shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'), CUO_WU_DAI_MA.DATABASE_ERROR)
+    shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'), CuoWuDaiMa.DATABASE_ERROR)
   }
 }
 

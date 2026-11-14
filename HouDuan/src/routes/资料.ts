@@ -9,9 +9,9 @@ import type { RenZhengQingQiu } from '../middleware/认证'
 import { 数据库 } from '../数据库'
 import { yanZhengUUID } from '../utils/验证'
 import { 清洗玩家文本 } from '../utils/控制字符'
-import { SHEN_HE_FU_WU_BU_KE_YONG_JIAN } from '../config/媒体配置'
+import { ShenHeFuWuBuKeYongJian } from '../config/媒体配置'
 import {
-  KE_JIAN_XING_LIE_BIAO,
+  KeJianXingLieBiao,
   shiHeFaKeJianXing,
   panDuanKeJian,
   chaXunShiHaoYou,
@@ -32,16 +32,16 @@ import {
   tiJiaoShenSu,
 } from '../services/账号封禁'
 import { 获取IP } from '../services/IP封禁'
-import { QI_PAO_AI_MO_REN, QI_PAO_YU_SHE_XUAN_XIANG, QI_PAO_ZI_JI_MO_REN } from '../config/气泡主题'
+import { QiPaoAiMoRen, QiPaoYuSheXuanXiang, QiPaoZiJiMoRen } from '../config/气泡主题'
 
 const luYou = Router()
 
-const QI_PAO_YU_SHE = new Set<string>(QI_PAO_YU_SHE_XUAN_XIANG as readonly string[])
+const QiPaoYuShe = new Set<string>(QiPaoYuSheXuanXiang as readonly string[])
 
-const QIAN_MING_ZUI_DA_ZI_FU = 500
-const BAI_MING_DAN_ZUI_DA_REN_SHU = 200
-const TOU_XIANG_ZUI_DA_ZI_JIE = 2 * 1024 * 1024
-const TOU_XIANG_MIME_BAI_MING_DAN = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const QianMingZuiDaZiFu = 500
+const BaiMingDanZuiDaRenShu = 200
+const TouXiangZuiDaZiJie = 2 * 1024 * 1024
+const TouXiangMimeBaiMingDan = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
 function quZiFuChuan(qingQiuTi: Record<string, unknown>, ...jians: string[]): string {
   for (const jian of jians) {
@@ -53,7 +53,7 @@ function quZiFuChuan(qingQiuTi: Record<string, unknown>, ...jians: string[]): st
 async function yanZhengBaiMingDan(zhi: unknown): Promise<{ he_fa: boolean; lie_biao: string[] }> {
   if (!Array.isArray(zhi)) return { he_fa: false, lie_biao: [] }
   const quChong = [...new Set(zhi.filter((x) => typeof x === 'string'))] as string[]
-  if (quChong.length > BAI_MING_DAN_ZUI_DA_REN_SHU) return { he_fa: false, lie_biao: [] }
+  if (quChong.length > BaiMingDanZuiDaRenShu) return { he_fa: false, lie_biao: [] }
   if (!quChong.every((id) => yanZhengUUID(id))) return { he_fa: false, lie_biao: [] }
   if (quChong.length === 0) return { he_fa: true, lie_biao: [] }
   const cunZai = await 数据库.query(
@@ -73,7 +73,7 @@ luYou.put('/签名', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing
   }
   const qingQiuTi = qingQiu.body as Record<string, unknown>
   const qianMing = 清洗玩家文本(quZiFuChuan(qingQiuTi, 'qianMing', 'qian_ming'))
-  if (Array.from(qianMing).length > QIAN_MING_ZUI_DA_ZI_FU) {
+  if (Array.from(qianMing).length > QianMingZuiDaZiFu) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('ziLiao', 'qianMingTaiChang'))
   }
   const keJianXingRaw = quZiFuChuan(qingQiuTi, 'keJianXing', 'ke_jian_xing') || 'gong_kai'
@@ -98,7 +98,7 @@ luYou.put('/签名', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing
   try {
     if (qianMing) {
       const shenHe = await shenHeNeiRongAnQuan(qianMing)
-      if (shenHe.wei_gui && shenHe.lei_xing === SHEN_HE_FU_WU_BU_KE_YONG_JIAN) {
+      if (shenHe.wei_gui && shenHe.lei_xing === ShenHeFuWuBuKeYongJian) {
         return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
       }
       if (shenHe.wei_gui) {
@@ -162,7 +162,7 @@ luYou.post('/头像', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
       yiXiangYing = true
       fn()
     }
-    const busboy = Busboy({ headers: qingQiu.headers, defParamCharset: 'utf8', limits: { files: 1, fileSize: TOU_XIANG_ZUI_DA_ZI_JIE } })
+    const busboy = Busboy({ headers: qingQiu.headers, defParamCharset: 'utf8', limits: { files: 1, fileSize: TouXiangZuiDaZiJie } })
     busboy.on('file', (_fieldMing, wenJianLiu, xinXi) => {
       if (yiXiangYing || chuLiGuoWenJian) {
         wenJianLiu.resume()
@@ -170,14 +170,14 @@ luYou.post('/头像', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
       }
       chuLiGuoWenJian = true
       const wenJianLeiXing = String(xinXi.mimeType || '').split(';')[0].trim().toLowerCase()
-      if (!TOU_XIANG_MIME_BAI_MING_DAN.has(wenJianLeiXing)) {
+      if (!TouXiangMimeBaiMingDan.has(wenJianLeiXing)) {
         wenJianLiu.resume()
         huiYing(() => shiBaiXiangYing(xiangYing, 400, huoQuFanYi('ziLiao', 'touXiangGeShiCuoWu')))
         return
       }
       liuShiBaoCunMeiTi(wenJianLiu, xinXi.filename || 'touxiang', wenJianLeiXing, 'tupian', yongHu.yongHuId)
         .then((jieGuo) => {
-          if (jieGuo.daXiao > TOU_XIANG_ZUI_DA_ZI_JIE) {
+          if (jieGuo.daXiao > TouXiangZuiDaZiJie) {
             huiYing(() => shiBaiXiangYing(xiangYing, 400, huoQuFanYi('ziLiao', 'touXiangTaiDa')))
             return
           }
@@ -235,11 +235,11 @@ async function duQuDuiFangQiPao(muBiaoId: string, lie: string, moRen: string): P
     const hang = jieGuo.rows[0]
     if (lie === '气泡自己') {
       const zhi = hang?.['气泡自己']
-      return hang?.['气泡已显式设置'] === true && typeof zhi === 'string' && QI_PAO_YU_SHE.has(zhi) ? zhi : null
+      return hang?.['气泡已显式设置'] === true && typeof zhi === 'string' && QiPaoYuShe.has(zhi) ? zhi : null
     }
     if (!hang) return moRen
     const zhi = hang[lie]
-    return typeof zhi === 'string' && QI_PAO_YU_SHE.has(zhi) ? zhi : moRen
+    return typeof zhi === 'string' && QiPaoYuShe.has(zhi) ? zhi : moRen
   } catch {
     return moRen
   }
@@ -280,8 +280,8 @@ luYou.get('/名片/:userId', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, x
       qian_ming: qianMing,
       shi_hao_you: shiHaoYou,
       shi_zi_ji: shiZiJi,
-      qi_pao_zi_ji: await duQuDuiFangQiPao(muBiaoId, '气泡自己', QI_PAO_ZI_JI_MO_REN),
-      qi_pao_ai: await duQuDuiFangQiPao(muBiaoId, '气泡AI', QI_PAO_AI_MO_REN),
+      qi_pao_zi_ji: await duQuDuiFangQiPao(muBiaoId, '气泡自己', QiPaoZiJiMoRen),
+      qi_pao_ai: await duQuDuiFangQiPao(muBiaoId, '气泡AI', QiPaoAiMoRen),
     })
   } catch (cuoWu) {
     debug日志.error('资料接口', '查询名片失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
@@ -327,5 +327,5 @@ luYou.post('/申诉', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
   }
 })
 
-export { KE_JIAN_XING_LIE_BIAO }
+export { KeJianXingLieBiao }
 export default luYou

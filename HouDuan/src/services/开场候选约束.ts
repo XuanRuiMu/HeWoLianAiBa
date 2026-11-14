@@ -1,8 +1,8 @@
-import { KAI_CHANG_PEI_ZHI, huoQuKaiChangBiao } from '../config/开场采样配置'
+import { KaiChangPeiZhi, huoQuKaiChangBiao } from '../config/开场采样配置'
 import { debug日志 } from '../utils/debug日志'
 import type { DuiHuaKuai } from '../utils/DeepSeek客户端'
 
-const ZI_SHU = 2
+const ZiShu = 2
 
 export function qingLiXiaoXi(neiRong: string): string[] {
   if (!neiRong) return []
@@ -42,13 +42,13 @@ export function renZhiShouZiCountZhi(): RegExp {
   return /我(都|又|已经|好像|老是)*[^，。！？\n]{0,6}?(提|说|聊|问|念|喊)(了|过)?\s*(?:已经|第)?\s*[一二三四五六七八九十两0-9]{1,3}\s*(次|遍)(?:了)?/g
 }
 
-export function quChuKaiChangToken(wenBen: string, ziShu: number = ZI_SHU): string | null {
+export function quChuKaiChangToken(wenBen: string, ziShu: number = ZiShu): string | null {
   const zheng = wenBen.replace(/[\s　]+/g, '')
   if (zheng.length < ziShu) return null
   return zheng.slice(0, ziShu)
 }
 
-export const QIAN_JING_JIE_DONG = [
+export const QianJingJieDong = [
   '加油', '生日', '新年', '过年', '恭喜', '早安', '晚安', '早上', '晚上', '昨晚', '今晚',
   '周末', '昨天', '明天', '每天', '天天',
   '亲爱', '亲亲', '抱抱', '爱你', '表白', '祝你', '哥哥', '姐姐', '羡慕', '宝贝',
@@ -56,7 +56,7 @@ export const QIAN_JING_JIE_DONG = [
 ]
 
 export function shiQianJingJieDong(kaiChang: string): boolean {
-  return QIAN_JING_JIE_DONG.some((d) => kaiChang.startsWith(d))
+  return QianJingJieDong.some((d) => kaiChang.startsWith(d))
 }
 
 export function caiYangKaiChangHouXuan(
@@ -84,13 +84,13 @@ export function caiYangKaiChangHouXuan(
 }
 
 export function daiShuKaiChangYuanYu(): { wenBen: string; houXuan: string[] } {
-  if (!KAI_CHANG_PEI_ZHI.kaiGuan) return { wenBen: '', houXuan: [] }
-  const houXuan = caiYangKaiChangHouXuan(KAI_CHANG_PEI_ZHI.houXuanGeShu)
+  if (!KaiChangPeiZhi.kaiGuan) return { wenBen: '', houXuan: [] }
+  const houXuan = caiYangKaiChangHouXuan(KaiChangPeiZhi.houXuanGeShu)
   if (houXuan.length === 0) {
-    debug日志.warn('开场候选约束', '候选为空，本轮不加约束', { xiang_qing: { houXuanGeShu: KAI_CHANG_PEI_ZHI.houXuanGeShu } })
+    debug日志.warn('开场候选约束', '候选为空，本轮不加约束', { xiang_qing: { houXuanGeShu: KaiChangPeiZhi.houXuanGeShu } })
     return { wenBen: '', houXuan: [] }
   }
-  if (KAI_CHANG_PEI_ZHI.kaiFaMoShi) {
+  if (KaiChangPeiZhi.kaiFaMoShi) {
     debug日志.debug('开场候选约束', '已注入开场候选', { xiang_qing: { houXuan } })
   }
   return {

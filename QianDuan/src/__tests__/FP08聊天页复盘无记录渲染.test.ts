@@ -25,8 +25,8 @@ vi.mock('@/api/聊天', async () => {
   }
 })
 
-const HUI_HUA_ID = '22222222-2222-4222-8222-222222222222'
-const DANG_AN_ID = '33333333-3333-4333-8333-333333333333'
+const HuiHuaId = '22222222-2222-4222-8222-222222222222'
+const DangAnId = '33333333-3333-4333-8333-333333333333'
 
 function zaoFuPanXiangYing(fuGai: Record<string, unknown> = {}) {
   return {
@@ -60,7 +60,7 @@ async function guaZai() {
       { path: '/guo-wang-zhan-ji', component: { template: '<div />' } },
     ],
   })
-  await router.push({ path: `/chat/${HUI_HUA_ID}`, query: { fuPan: '1', dangAnId: DANG_AN_ID } })
+  await router.push({ path: `/chat/${HuiHuaId}`, query: { fuPan: '1', dangAnId: DangAnId } })
   await router.isReady()
 
   const wrapper = shallowMount(聊天页面, {

@@ -4,7 +4,7 @@ import { gengXinHaoGanDu, huoQuWanZhengHaoGanDu } from './好感度'
 import { huoQuIo } from '../socket/io'
 import { redis } from '../redis'
 import { baoCunJiaoSeXiaoXi } from './AI输入准备'
-import { BEI_CHA_QU_PEI_ZHI, SHENG_LI_SHI_BAI_PEI_ZHI, QUE_XIN_DU_YUE_SHU } from '../config/胜利失败配置'
+import { BeiChaQuPeiZhi, ShengLiShiBaiPeiZhi, QueXinDuYueShu } from '../config/胜利失败配置'
 import {
   gouJianDanTiaoTuXiangKuai,
   shiTuXiangLeiBie } from './AI视觉辅助'
@@ -29,7 +29,7 @@ import type {
   YouXiJieShuJieGuo } from '../types'
 import type { CanShuShangXiaWen } from '../config/AI参数策略'
 import { gouJianJiaoSeShangXiaWen } from '../config/AI参数策略'
-import { DING_JIE_FU_SHENG_MING, baoZhuangYongHuNeiRong } from './Prompt构建器'
+import { DingJieFuShengMing, baoZhuangYongHuNeiRong } from './Prompt构建器'
 
 function jieXiJSONXiangYing(neiRong: string): Record<string, unknown> {
   const qingLiNeiRong = neiRong.trim()
@@ -70,7 +70,7 @@ function anQuanQueXinDu(zhi: unknown): number {
 function chuLiYuanYin(zhi: unknown): string {
   const yuanWen = String(zhi ?? '').trim()
   if (!yuanWen) return ''
-  if (BEI_CHA_QU_PEI_ZHI.yuanYinHeXin.includes(yuanWen)) return yuanWen
+  if (BeiChaQuPeiZhi.yuanYinHeXin.includes(yuanWen)) return yuanWen
   const guiZe: Array<[string, string]> = [
     ['注入', '提示词注入'],
     ['指令', '提示词注入'],
@@ -88,12 +88,12 @@ function chuLiYuanYin(zhi: unknown): string {
   return mingZhong ? mingZhong[1] : ''
 }
 
-const BIAO_BAI_LEI_XING_YING_SHE: Record<string, BiaoBaiJianCeJieGuo['biao_bai_lei_xing']> = {
+const BiaoBaiLeiXingYingShe: Record<string, BiaoBaiJianCeJieGuo['biao_bai_lei_xing']> = {
   直接表白: 'zhi_jie_biao_bai',
   暗示表白: 'an_shi_biao_bai',
   要求确立关系: 'yao_qiu_que_li_guan_xi' }
 
-const ZHAN_JIE_ZHONG_SHI_CI_SHU = 3
+const ZhanJieZhongShiCiShu = 3
 
 export async function jianCeSiLianHeYi(
   xiaoXi: string,
@@ -126,7 +126,7 @@ export async function jianCeSiLianHeYi(
   const liShiWenBen = zhanShiLiShiWenBen(背景, {
     角色名: '角色',
     用户名: '用户',
-    最多条数: SHENG_LI_SHI_BAI_PEI_ZHI.jianCeLiShiTiaoShu,
+    最多条数: ShengLiShiBaiPeiZhi.jianCeLiShiTiaoShu,
     时间在前: true })
 
   const renSheDuanLuo = jiaoSe
@@ -157,7 +157,7 @@ export async function jianCeSiLianHeYi(
         [
           '对下面这条用户消息完成五类判定。',
           '',
-          DING_JIE_FU_SHENG_MING,
+          DingJieFuShengMing,
           '',
           ...(jiaoSe
             ? [
@@ -225,7 +225,7 @@ export async function jianCeSiLianHeYi(
 
   const shuJu = jieXiJSONXiangYing(xiangYing.neiRong)
   const biaoBaiLeiXing = String(shuJu['表白类型'] ?? '非表白')
-  const youXiaoLeiXing = BIAO_BAI_LEI_XING_YING_SHE[biaoBaiLeiXing] || 'fei_biao_bai'
+  const youXiaoLeiXing = BiaoBaiLeiXingYingShe[biaoBaiLeiXing] || 'fei_biao_bai'
   const renSheNengJieShou = Boolean(
     shuJu['人设能接受'] ?? shuJu['ren_she_neng_jie_shou'] ?? shuJu['发散思维人设'] ?? false,
   )
@@ -497,7 +497,7 @@ export async function chuLiYouXiJieShu(
     } catch (cuoWu) {
       await keHuDuanShiWu.query('ROLLBACK').catch(() => undefined)
       zhongShiCiShu += 1
-      if (zhongShiCiShu >= ZHAN_JIE_ZHONG_SHI_CI_SHU) throw cuoWu
+      if (zhongShiCiShu >= ZhanJieZhongShiCiShu) throw cuoWu
       await new Promise((jieJue) => setTimeout(jieJue, 100 * zhongShiCiShu))
     } finally {
       keHuDuanShiWu.release()
@@ -534,7 +534,7 @@ export async function chuLiYongHuBiaoBai(
       hao_gan_du: hao_gan_du_zong_fen })
   }
 
-  if (hao_gan_du_zong_fen >= SHENG_LI_SHI_BAI_PEI_ZHI.biaoBaiHaoGanDuYuZhi) {
+  if (hao_gan_du_zong_fen >= ShengLiShiBaiPeiZhi.biaoBaiHaoGanDuYuZhi) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'sheng_li_ai_qing', {
       lei_xing: '用户主动表白成功',
       hao_gan_du: hao_gan_du_zong_fen })
@@ -652,7 +652,7 @@ export async function chuLiShenJingBing(
 
   if (fa_san_si_wei_ren_she) return null
 
-  const jingGaoPeiZhi = SHENG_LI_SHI_BAI_PEI_ZHI.shenJingBingJingGao
+  const jingGaoPeiZhi = ShengLiShiBaiPeiZhi.shenJingBingJingGao
   const jingGaoJian = `${jingGaoPeiZhi.redisJianQianZhui}${yong_hu_id}:${jiao_se_id}`
   let shouCiChuFa = false
   try {
@@ -759,7 +759,7 @@ export async function chuLiBeiChaQu(
     return null
   }
 
-  const peiZhi = BEI_CHA_QU_PEI_ZHI
+  const peiZhi = BeiChaQuPeiZhi
   const shiZhiRuZhuRu = yuan_yin === peiZhi.zhiRuZhuRuYuanYin
 
   if (!shiZhiRuZhuRu) {
@@ -833,7 +833,7 @@ export async function chuLiYongHuJuJueAIHuoJieShou(
   const liShiWenBen = zhanShiLiShiWenBen(背景, {
     角色名: '角色',
     用户名: '用户',
-    最多条数: SHENG_LI_SHI_BAI_PEI_ZHI.biaoBaiPanDuanLiShiTiaoShu,
+    最多条数: ShengLiShiBaiPeiZhi.biaoBaiPanDuanLiShiTiaoShu,
     时间在前: true })
   const xiangYing = await genJuPeiZhiTiaoYong('JieShouBiaoBaiJianCe', [
     { jiaoSe: 'system', neiRong: '判断用户回复是接受表白还是拒绝，只输出 JSON。' },
@@ -863,7 +863,7 @@ export async function chuLiYongHuJuJueAIHuoJieShou(
   const jieShou = Boolean(shuJu['是否接受'] ?? shuJu['shi_fou_jie_shou'] ?? false)
   const queXinDu = anQuanQueXinDu(shuJu['确信度'] ?? shuJu['que_xin_du'] ?? 0)
   const moHuHuiFu = Boolean(shuJu['是否模糊回复'] ?? false)
-  const yueShu = SHENG_LI_SHI_BAI_PEI_ZHI.biaoBaiHuiFuQueXinDuYueShu
+  const yueShu = ShengLiShiBaiPeiZhi.biaoBaiHuiFuQueXinDuYueShu
 
   if (!moHuHuiFu && jieShou && queXinDu > yueShu) {
     return chuLiAIJieShouBiaoBai(yong_hu_id, jiao_se_id, jiao_se)
@@ -900,7 +900,7 @@ export async function jianCeYongHuXiaoXiBingChuLi(
     return chuLiYongHuJuJueAIHuoJieShou(yong_hu_id, jiao_se_id, jiao_se, xiao_xi, undefined, dui_hua_li_shi)
   }
 
-  const tongYongYueShu = QUE_XIN_DU_YUE_SHU.tongYongJianCe
+  const tongYongYueShu = QueXinDuYueShu.tongYongJianCe
   if (jianCeJieGuo.biao_bai.shi_fou_biao_bai && jianCeJieGuo.biao_bai.que_xin_du > tongYongYueShu) {
     return chuLiYongHuBiaoBai(yong_hu_id, jiao_se_id, hao_gan_du_zong_fen)
   }
@@ -915,7 +915,7 @@ export async function jianCeYongHuXiaoXiBingChuLi(
 
   if (
     jianCeJieGuo.bei_sha_qu.shi_fou_cha_qu &&
-    jianCeJieGuo.bei_sha_qu.que_xin_du > BEI_CHA_QU_PEI_ZHI.queXinDuYueShu
+    jianCeJieGuo.bei_sha_qu.que_xin_du > BeiChaQuPeiZhi.queXinDuYueShu
   ) {
     return chuLiBeiChaQu(
       yong_hu_id,
@@ -927,7 +927,7 @@ export async function jianCeYongHuXiaoXiBingChuLi(
 
   if (
     jianCeJieGuo.shen_jing_bing.shi_fou_shen_jing_bing &&
-    jianCeJieGuo.shen_jing_bing.que_xin_du > SHENG_LI_SHI_BAI_PEI_ZHI.shenJingBingQueXinDuYueShu
+    jianCeJieGuo.shen_jing_bing.que_xin_du > ShengLiShiBaiPeiZhi.shenJingBingQueXinDuYueShu
   ) {
     return chuLiShenJingBing(
       yong_hu_id,

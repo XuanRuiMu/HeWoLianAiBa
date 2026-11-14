@@ -144,14 +144,14 @@
         </button>
       </div>
       <div class="suofang-hang">
-        <button class="suofang-anniu" :aria-label="huoQuFanYi('sheZhi', 'suoXiao')" @click="tiaoZhengSuoFang(-SUO_FANG_JIA_JIAN)">
+        <button class="suofang-anniu" :aria-label="huoQuFanYi('sheZhi', 'suoXiao')" @click="tiaoZhengSuoFang(-SuoFangJiaJian)">
           −
         </button>
         <input
           class="suofang-huatiao"
           type="range"
-          :min="SUO_FANG_BAI_FEN_XIA"
-          :max="SUO_FANG_BAI_FEN_SHANG"
+          :min="SuoFangBaiFenXia"
+          :max="SuoFangBaiFenShang"
           step="1"
           :value="suoFangBaiFenShu"
           :aria-label="huoQuFanYi('sheZhi', 'suoFang')"
@@ -164,15 +164,15 @@
           type="number"
           inputmode="decimal"
           autocomplete="off"
-          :min="SUO_FANG_BAI_FEN_XIA"
-          :max="SUO_FANG_BAI_FEN_SHANG"
+          :min="SuoFangBaiFenXia"
+          :max="SuoFangBaiFenShang"
           step="0.1"
           :value="suoFangShuRu"
           :aria-label="huoQuFanYi('sheZhi', 'suoFang')"
           @change="shuRuSuoFang"
           @keydown.enter.prevent="shuRuSuoFang"
         />
-        <button class="suofang-anniu" :aria-label="huoQuFanYi('sheZhi', 'fangDa')" @click="tiaoZhengSuoFang(SUO_FANG_JIA_JIAN)">
+        <button class="suofang-anniu" :aria-label="huoQuFanYi('sheZhi', 'fangDa')" @click="tiaoZhengSuoFang(SuoFangJiaJian)">
           ＋
         </button>
         <span class="suofang-bai-fen" aria-hidden="true">{{ suoFangWenAn }}</span>
@@ -209,16 +209,16 @@ import 'cropperjs'
 import type { CropperCanvas, CropperImage, CropperSelection } from 'cropperjs'
 import { huoQuFanYi } from '@/config/翻译表'
 import {
-  WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
+  WaiGuanMoRenWenZiYanSe,
   huoQuLaShenChiCunZhi,
   huoQuQiPaoBeiJingZhi,
   type WaiGuanLaShenMoShi,
 } from '@/config/外观自定义'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
 import {
-  CAI_JIAN_BI_LI_SHANG_XIAN,
-  CAI_JIAN_BI_LI_XIA_XIAN,
-  TU_PIAN_SHU_CHU_ZUI_DA_BIAN,
+  CaiJianBiLiShangXian,
+  CaiJianBiLiXiaXian,
+  TuPianShuChuZuiDaBian,
   daoChuCaiJianWenJian,
   guiYiGunLunZengLiang,
   jiSuanDaoChuKuan,
@@ -231,21 +231,21 @@ import {
 import LiaoTianYuLan from '@/components/聊天/聊天预览.vue'
 import WaiGuanTianChongXuanZe from '@/components/外观填充选择器.vue'
 
-const QU_YU_GAO_DU = 260
-const SUO_FANG_BAI_FEN_XIA = 1
-const SUO_FANG_BAI_FEN_SHANG = 400
-const SUO_FANG_BAI_FEN_MO_REN = 100
-const SUO_FANG_JIA_JIAN = 10
-const YU_LAN_ZUI_DA_BIAN = 640
-const YU_LAN_MO_REN_KUAN = 320
-const GUN_LUN_PING_YI_XI_SHU = 0.08
-const GUN_LUN_SUO_FANG_BU_JIN = 10
-const GUN_LUN_JIAN_GE_HAO_MIAO = 40
-const JIAN_PAN_PING_YI_BU_CHANG = 8
-const YU_JIAN_CHAO_SHI_HAO_MIAO = 20000
-const YA_SUO_YUAN_XIANG_SU = 32000000
-const YA_SUO_YUAN_BIAN = 8192
-const YA_SUO_HOU_BIAN = 4096
+const QuYuGaoDu = 260
+const SuoFangBaiFenXia = 1
+const SuoFangBaiFenShang = 400
+const SuoFangBaiFenMoRen = 100
+const SuoFangJiaJian = 10
+const YuLanZuiDaBian = 640
+const YuLanMoRenKuan = 320
+const GunLunPingYiXiShu = 0.08
+const GunLunSuoFangBuJin = 10
+const GunLunJianGeHaoMiao = 40
+const JianPanPingYiBuChang = 8
+const YuJianChaoShiHaoMiao = 20000
+const YaSuoYuanXiangSu = 32000000
+const YaSuoYuanBian = 8192
+const YaSuoHouBian = 4096
 
 type BiLiWenJian =
   | 'caiJianBiLiYiBiYi'
@@ -253,7 +253,7 @@ type BiLiWenJian =
   | 'caiJianBiLiErBiYi'
   | 'caiJianBiLiShiLiuBiJiu'
 
-const BI_LI_XUAN_XIANG: Array<{ zhi: number; jian: string; wenJian: BiLiWenJian }> = [
+const BiLiXuanXiang: Array<{ zhi: number; jian: string; wenJian: BiLiWenJian }> = [
   { zhi: 1, jian: 'fang', wenJian: 'caiJianBiLiYiBiYi' },
   { zhi: 0.75, jian: 'shu', wenJian: 'caiJianBiLiSanBiSi' },
   { zhi: 2, jian: 'kuan', wenJian: 'caiJianBiLiErBiYi' },
@@ -267,7 +267,7 @@ function shiXiangTongBiLi(jia: number, yi: number): boolean {
 function shouLianBiLi(zhi: unknown): number {
   const shu = Number(zhi)
   if (!Number.isFinite(shu) || shu <= 0) return 1
-  return Math.min(CAI_JIAN_BI_LI_SHANG_XIAN, Math.max(CAI_JIAN_BI_LI_XIA_XIAN, shu))
+  return Math.min(CaiJianBiLiShangXian, Math.max(CaiJianBiLiXiaXian, shu))
 }
 
 const props = withDefaults(
@@ -309,19 +309,19 @@ const bianHuanJuZhen = ref<number[]>([1, 0, 0, 1, 0, 0])
 const xuanZhuanJiaoDu = ref(0)
 const shuiPingFanZhuan = ref(false)
 const chuiZhiFanZhuan = ref(false)
-const suoFangBaiFenShu = ref(SUO_FANG_BAI_FEN_MO_REN)
-const suoFangShuRu = ref(String(SUO_FANG_BAI_FEN_MO_REN))
+const suoFangBaiFenShu = ref(SuoFangBaiFenMoRen)
+const suoFangShuRu = ref(String(SuoFangBaiFenMoRen))
 
 const biLiXuanXiang = ref(shouLianBiLi(props.kuanGaoBi))
 const kuanGaoBi = computed(() => biLiXuanXiang.value)
 const biLiShuRu = ref('')
 
 const biLiXuanXiangLieBiao = computed(() =>
-  BI_LI_XUAN_XIANG.map((xiang) => ({ ...xiang, xuan: shiXiangTongBiLi(biLiXuanXiang.value, xiang.zhi) })),
+  BiLiXuanXiang.map((xiang) => ({ ...xiang, xuan: shiXiangTongBiLi(biLiXuanXiang.value, xiang.zhi) })),
 )
 
 const shiKouYangShi = computed<Record<string, string>>(() => ({
-  width: `${Math.round(QU_YU_GAO_DU * kuanGaoBi.value)}px`,
+  width: `${Math.round(QuYuGaoDu * kuanGaoBi.value)}px`,
   maxWidth: '100%',
   height: 'auto',
   aspectRatio: String(kuanGaoBi.value),
@@ -408,7 +408,7 @@ function juZhengJuZhen(chiCun: ChiCun, a: number, b: number, c: number, d: numbe
 }
 
 function gouZaoJuZhen(chiCun: ChiCun, baiFen: number, zhongXin: ZhongXin | null): number[] {
-  const suoFangBi = Math.min(SUO_FANG_BAI_FEN_SHANG, Math.max(SUO_FANG_BAI_FEN_XIA, baiFen)) / 100
+  const suoFangBi = Math.min(SuoFangBaiFenShang, Math.max(SuoFangBaiFenXia, baiFen)) / 100
   const fuGai = jiSuanFuGaiSuoFang(chiCun)
   const suoFang = fuGai * suoFangBi
   const huDu = (xuanZhuanJiaoDu.value * Math.PI) / 180
@@ -464,7 +464,7 @@ function shuaXinBianHuan(shiJian: Event): void {
     const suoFang = jiSuanJuZhenSuoFang(juZhen)
     const fuGai = jiSuanFuGaiSuoFang(chiCun)
     const baiFen = (suoFang / fuGai) * 100
-    if (baiFen < SUO_FANG_BAI_FEN_XIA - 0.5 || baiFen > SUO_FANG_BAI_FEN_SHANG + 0.5) {
+    if (baiFen < SuoFangBaiFenXia - 0.5 || baiFen > SuoFangBaiFenShang + 0.5) {
       shiJian.preventDefault()
       return
     }
@@ -490,8 +490,8 @@ const suoFangWenAn = computed(() => `${xianShiShu(suoFangBaiFenShu.value)}%`)
 
 function sheZhiSuoFang(baiFen: number, juZhong = false): void {
   const ding = Number.isFinite(baiFen)
-    ? Math.min(SUO_FANG_BAI_FEN_SHANG, Math.max(SUO_FANG_BAI_FEN_XIA, baiFen))
-    : SUO_FANG_BAI_FEN_XIA
+    ? Math.min(SuoFangBaiFenShang, Math.max(SuoFangBaiFenXia, baiFen))
+    : SuoFangBaiFenXia
   suoFangBaiFenShu.value = Math.round(ding * 10) / 10
   const chiCun = ceLiang()
   if (!chiCun) return
@@ -572,7 +572,7 @@ function chongZhiBianHuan(): void {
   xuanZhuanJiaoDu.value = 0
   shuiPingFanZhuan.value = false
   chuiZhiFanZhuan.value = false
-  suoFangBaiFenShu.value = SUO_FANG_BAI_FEN_MO_REN
+  suoFangBaiFenShu.value = SuoFangBaiFenMoRen
   juZhongYingYong()
   qiangZhiShuaXinYuLan()
 }
@@ -659,9 +659,9 @@ function gunLunSuoFang(shiJian: WheelEvent): void {
   shiJian.preventDefault()
   shiJian.stopImmediatePropagation()
   const xianZai = Date.now()
-  if (xianZai - shangCiGunLunShiJian < GUN_LUN_JIAN_GE_HAO_MIAO) return
+  if (xianZai - shangCiGunLunShiJian < GunLunJianGeHaoMiao) return
   shangCiGunLunShiJian = xianZai
-  sheZhiSuoFang(suoFangBaiFenShu.value + (zengLiang > 0 ? -GUN_LUN_SUO_FANG_BU_JIN : GUN_LUN_SUO_FANG_BU_JIN))
+  sheZhiSuoFang(suoFangBaiFenShu.value + (zengLiang > 0 ? -GunLunSuoFangBuJin : GunLunSuoFangBuJin))
 }
 
 function jiaoDianZaiBianJiKuang(): boolean {
@@ -680,7 +680,7 @@ function chuFaAnJian(shiJian: KeyboardEvent): void {
     return
   }
   if (shiJian.ctrlKey || shiJian.metaKey || shiJian.altKey) return
-  const bu = jiSuanJianPanPingYi(shiJian.key, shiJian.shiftKey, JIAN_PAN_PING_YI_BU_CHANG)
+  const bu = jiSuanJianPanPingYi(shiJian.key, shiJian.shiftKey, JianPanPingYiBuChang)
   if (!bu.x && !bu.y) return
   if (jiaoDianZaiBianJiKuang()) return
   shiJian.preventDefault()
@@ -691,7 +691,7 @@ function jieHuoCtrlGunLun(shiJian: WheelEvent): void {
   if (!shiJian.ctrlKey || tuPianJiaZaiShiBai.value) return
   if (jiaoDianZaiBianJiKuang()) return
   const zengLiang = guiYiGunLunZengLiang(shiJian.deltaY, shiJian.deltaMode)
-  const bu = jiSuanGunLunPingYi(zengLiang, GUN_LUN_PING_YI_XI_SHU)
+  const bu = jiSuanGunLunPingYi(zengLiang, GunLunPingYiXiShu)
   if (!bu.x && !bu.y) return
   shiJian.preventDefault()
   shiJian.stopPropagation()
@@ -769,9 +769,9 @@ function dangQianLaShenMoShi(): WaiGuanLaShenMoShi {
 
 const yuLanWenZiYanSe = computed(() => {
   const cang = quSheZhiCang()
-  if (!cang) return WAI_GUAN_MO_REN_WEN_ZI_YAN_SE
+  if (!cang) return WaiGuanMoRenWenZiYanSe
   const tiaoMu = props.yuLanCeZhong === 'ai' ? cang.dangQianAiQiPaoTu : cang.dangQianZiJiQiPaoTu
-  return tiaoMu?.wenZiYanSe || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE
+  return tiaoMu?.wenZiYanSe || WaiGuanMoRenWenZiYanSe
 })
 
 const yuLanFuGaiYangShi = computed<Record<string, string>>(() => {
@@ -824,7 +824,7 @@ async function shuaXinYuLan(): Promise<void> {
   }
   const chiCun = ceLiang()
   const suoFang = jiSuanJuZhenSuoFang(tuXiangRef.value?.$getTransform() ?? bianHuanJuZhen.value)
-  const kuan = jiSuanDaoChuKuan(chiCun?.kuan ?? YU_LAN_MO_REN_KUAN, suoFang, kuanGaoBi.value, YU_LAN_ZUI_DA_BIAN)
+  const kuan = jiSuanDaoChuKuan(chiCun?.kuan ?? YuLanMoRenKuan, suoFang, kuanGaoBi.value, YuLanZuiDaBian)
   yuLanDaoLuZhong = true
   try {
     const huaBuJieGuo = await huaBu.$toCanvas({
@@ -914,9 +914,9 @@ function yaSuoChaoDaTuPian(tuPian: HTMLImageElement): void {
   const kuan = tuPian.naturalWidth
   const gao = tuPian.naturalHeight
   if (!(kuan > 0) || !(gao > 0)) return
-  const chaoXiangSu = kuan * gao > YA_SUO_YUAN_XIANG_SU
-  if (!chaoXiangSu && kuan <= YA_SUO_YUAN_BIAN && gao <= YA_SUO_YUAN_BIAN) return
-  const bi = Math.min(YA_SUO_HOU_BIAN / kuan, YA_SUO_HOU_BIAN / gao, 1)
+  const chaoXiangSu = kuan * gao > YaSuoYuanXiangSu
+  if (!chaoXiangSu && kuan <= YaSuoYuanBian && gao <= YaSuoYuanBian) return
+  const bi = Math.min(YaSuoHouBian / kuan, YaSuoHouBian / gao, 1)
   const huaBu = document.createElement('canvas')
   huaBu.width = Math.max(1, Math.round(kuan * bi))
   huaBu.height = Math.max(1, Math.round(gao * bi))
@@ -934,7 +934,7 @@ function yaSuoChaoDaTuPian(tuPian: HTMLImageElement): void {
       xuanZhuanJiaoDu.value = 0
       shuiPingFanZhuan.value = false
       chuiZhiFanZhuan.value = false
-      suoFangBaiFenShu.value = SUO_FANG_BAI_FEN_MO_REN
+      suoFangBaiFenShu.value = SuoFangBaiFenMoRen
       shiJiTuYuan.value = yaSuoDuiXiangDiZhi
     },
     mime,
@@ -962,7 +962,7 @@ function anPaiYuJian(): void {
   }
   tuPian.onload = () => jieShu(false)
   tuPian.onerror = () => jieShu(true)
-  yuJianDingShi = window.setTimeout(() => jieShu(true), YU_JIAN_CHAO_SHI_HAO_MIAO)
+  yuJianDingShi = window.setTimeout(() => jieShu(true), YuJianChaoShiHaoMiao)
   tuPian.src = diZhi
 }
 
@@ -973,7 +973,7 @@ watch(() => props.tuYuan, (zhi) => {
   xuanZhuanJiaoDu.value = 0
   shuiPingFanZhuan.value = false
   chuiZhiFanZhuan.value = false
-  suoFangBaiFenShu.value = SUO_FANG_BAI_FEN_MO_REN
+  suoFangBaiFenShu.value = SuoFangBaiFenMoRen
   bianHuanJuZhen.value = [1, 0, 0, 1, 0, 0]
   if (zhi !== shiJiTuYuan.value) shiJiTuYuan.value = zhi
   anPaiYuJian()
@@ -1007,7 +1007,7 @@ async function queRen(): Promise<void> {
       chiCun?.kuan ?? 0,
       suoFang,
       kuanGaoBi.value,
-      TU_PIAN_SHU_CHU_ZUI_DA_BIAN,
+      TuPianShuChuZuiDaBian,
     )
     const geShi = jueDingShuChuGeShi(props.yuanMime)
     const wenJian = await daoChuCaiJianWenJian(huaBu, geShi, props.wenJianMing, kuan)

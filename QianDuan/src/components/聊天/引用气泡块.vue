@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { huoQuFanYi } from '@/config/翻译表'
-import { YIN_YONG_DING_WEI_PEI_ZHI, huoQuMeiTiYinYongZhanWei } from '@/config/消息配置'
+import { YinYongDingWeiPeiZhi, huoQuMeiTiYinYongZhanWei } from '@/config/消息配置'
 import { huoQuYinYongZhaiYao, type CaiDanXiaoXi } from '@/composables/use长按菜单'
 
 const props = defineProps<{
@@ -47,7 +47,7 @@ let douDongJiShu = 0
 
 function liangGuangDingWei(mubiaoYuanSu: HTMLElement): void {
   const yanSe = getComputedStyle(document.documentElement)
-    .getPropertyValue(YIN_YONG_DING_WEI_PEI_ZHI.liangGuangLingPai)
+    .getPropertyValue(YinYongDingWeiPeiZhi.liangGuangLingPai)
     .trim()
   const 可动画 = mubiaoYuanSu as HTMLElement & {
     animate?: (
@@ -56,12 +56,12 @@ function liangGuangDingWei(mubiaoYuanSu: HTMLElement): void {
     ) => unknown
   }
   if (!yanSe || typeof 可动画.animate !== 'function') return
-  const guangYun = `0 0 ${YIN_YONG_DING_WEI_PEI_ZHI.guangYunMoHu}px 0 ${yanSe}`
+  const guangYun = `0 0 ${YinYongDingWeiPeiZhi.guangYunMoHu}px 0 ${yanSe}`
   可动画.animate(
     [{ offset: 0.5, boxShadow: guangYun }],
     {
-      duration: YIN_YONG_DING_WEI_PEI_ZHI.liangGuangHaoMiao,
-      iterations: YIN_YONG_DING_WEI_PEI_ZHI.liangGuangCiShu,
+      duration: YinYongDingWeiPeiZhi.liangGuangHaoMiao,
+      iterations: YinYongDingWeiPeiZhi.liangGuangCiShu,
       easing: 'linear',
     },
   )
@@ -71,13 +71,13 @@ function dingWei(): void {
   if (!keDingWei.value || !props.beiYongXiaoXiId) return
   const rongQi = props.gunDongRongQi()
   const muBiaoYuanSu = document.getElementById(
-    `${YIN_YONG_DING_WEI_PEI_ZHI.domQianZhui}${props.beiYongXiaoXiId}`,
+    `${YinYongDingWeiPeiZhi.domQianZhui}${props.beiYongXiaoXiId}`,
   )
   if (!rongQi || !muBiaoYuanSu) return
   const rongQiDing = rongQi.getBoundingClientRect().top
   const muBiaoDing = muBiaoYuanSu.getBoundingClientRect().top
   if (muBiaoDing < rongQiDing) {
-    const douDong = (douDongJiShu % 2) * YIN_YONG_DING_WEI_PEI_ZHI.douDongXianShi
+    const douDong = (douDongJiShu % 2) * YinYongDingWeiPeiZhi.douDongXianShi
     douDongJiShu += 1
     rongQi.scrollTop = Math.max(0, muBiaoDing + rongQi.scrollTop - rongQiDing - douDong)
   }

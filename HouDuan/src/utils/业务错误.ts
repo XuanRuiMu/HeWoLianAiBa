@@ -5,7 +5,7 @@ export interface 业务错误形态 {
   readonly cuo_wu_ma?: string
 }
 
-const ZUI_DA_WEN_AN_CHANG_DU = 200
+const ZuiDaWenAnChangDu = 200
 
 function 取业务错误(cuoWu: unknown): (Error & 业务错误形态) | undefined {
   if (!(cuoWu instanceof Error)) return undefined
@@ -19,7 +19,7 @@ function 清洗上屏文案(wenBen: string): string {
   return 剥离控制字符(wenBen)
     .replace(/[\r\n\t]+/g, ' ')
     .trim()
-    .slice(0, ZUI_DA_WEN_AN_CHANG_DU)
+    .slice(0, ZuiDaWenAnChangDu)
 }
 
 export function 取业务错误文案(cuoWu: unknown, huiTuiWenAn: string): string {

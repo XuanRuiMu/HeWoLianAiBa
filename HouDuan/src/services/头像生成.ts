@@ -10,9 +10,9 @@ import { diaoYongShengTuJieKou } from './图像生成'
 import { liuShiBaoCunMeiTi, shengChengMeiTiYinYong } from './媒体存储'
 import { paiRuZhongShiDuiLie } from './重试队列'
 import {
-  TOU_XIANG_PEI_ZHI,
-  MBTI_QI_ZHI,
-  JI_DIAO_QI_ZHI,
+  TouXiangPeiZhi,
+  MbtiQiZhi,
+  JiDiaoQiZhi,
   tuiDaoQingXuJiDiao,
   qianJinJiDiao,
   type TouXiangQiZhi,
@@ -62,12 +62,12 @@ function jieXiJSON<T>(wenBen: string, moRen: T): T {
   }
 }
 
-const FENG_GE_KU = jieXiJSON<{ 通用: { 构图约束: string; 通用负面词: string }; 风格: TouXiangFengGe[] }>(
+const FengGeKu = jieXiJSON<{ 通用: { 构图约束: string; 通用负面词: string }; 风格: TouXiangFengGe[] }>(
   duQuJSON('头像风格库.json'),
   { 通用: { 构图约束: '', 通用负面词: '' }, 风格: [] },
 )
 
-const PI_PEI_GUI_ZE = jieXiJSON<TouXiangPiPeiGuiZe>(duQuJSON('头像匹配规则.json'), {
+const PiPeiGuiZe = jieXiJSON<TouXiangPiPeiGuiZe>(duQuJSON('头像匹配规则.json'), {
   年龄档: [],
   气质加分: {},
   身份加分: {},
@@ -90,7 +90,7 @@ export interface TouXiangFengGeXuanZe {
 }
 
 function tuiDaoNianLingDang(nianLing: number): string {
-  for (const dang of PI_PEI_GUI_ZE.年龄档) {
+  for (const dang of PiPeiGuiZe.年龄档) {
     if (nianLing >= dang.最小年龄 && nianLing <= dang.最大年龄) return dang.档名
   }
   return '青年'
@@ -98,7 +98,7 @@ function tuiDaoNianLingDang(nianLing: number): string {
 
 export function tuiDaoTouXiangQiZhi(mbti: string, xingGeWenBen?: string): TouXiangQiZhi {
   const congXingGe = xingGeWenBen ? tuiDaoQingXuJiDiao(xingGeWenBen) : null
-  const congMbti = MBTI_QI_ZHI[mbti]
+  const congMbti = MbtiQiZhi[mbti]
   if (congXingGe === '阴郁') return '冷感'
   if (congMbti) return congMbti
   if (congXingGe === '明朗') return '活泼'
@@ -123,23 +123,23 @@ export function xuanZeTouXiangFengGe(canShu: {
   yiYongFengGe?: string[]
   jiDiao?: QingXuJiDiao
 }): TouXiangFengGeXuanZe | null {
-  if (FENG_GE_KU.风格.length === 0) return null
+  if (FengGeKu.风格.length === 0) return null
   const nianLingDang = tuiDaoNianLingDang(canShu.nianLing)
-  const qiZhi = canShu.jiDiao ? JI_DIAO_QI_ZHI[canShu.jiDiao] : tuiDaoTouXiangQiZhi(canShu.mbti, canShu.xingGeWenBen)
+  const qiZhi = canShu.jiDiao ? JiDiaoQiZhi[canShu.jiDiao] : tuiDaoTouXiangQiZhi(canShu.mbti, canShu.xingGeWenBen)
   const shenFen = canShu.shenFen ?? ''
   const xiHao = canShu.xiHao ?? []
   const yiYong = new Set(canShu.yiYongFengGe ?? [])
 
-  const deFen = FENG_GE_KU.风格.map((fengGe) => {
+  const deFen = FengGeKu.风格.map((fengGe) => {
     let zongFen = 0
-    const nianLingJia = PI_PEI_GUI_ZE.年龄档.find((dang) => dang.档名 === nianLingDang)?.风格加分[fengGe.类别] ?? 0
+    const nianLingJia = PiPeiGuiZe.年龄档.find((dang) => dang.档名 === nianLingDang)?.风格加分[fengGe.类别] ?? 0
     zongFen += nianLingJia
-    zongFen += PI_PEI_GUI_ZE.气质加分[qiZhi]?.[fengGe.类别] ?? 0
-    zongFen += PI_PEI_GUI_ZE.身份加分[shenFen]?.[fengGe.类别] ?? 0
+    zongFen += PiPeiGuiZe.气质加分[qiZhi]?.[fengGe.类别] ?? 0
+    zongFen += PiPeiGuiZe.身份加分[shenFen]?.[fengGe.类别] ?? 0
     if (xiHao.some((hao) => fengGe.爱好线索.some((suo) => hao.includes(suo) || suo.includes(hao)))) {
-      zongFen += PI_PEI_GUI_ZE.爱好命中加分
+      zongFen += PiPeiGuiZe.爱好命中加分
     }
-    if (yiYong.has(fengGe.类别)) zongFen -= PI_PEI_GUI_ZE.避免重复.同批已用风格扣分
+    if (yiYong.has(fengGe.类别)) zongFen -= PiPeiGuiZe.避免重复.同批已用风格扣分
     return { fengGe, zongFen }
   }).sort((qian, hou) => hou.zongFen - qian.zongFen)
 
@@ -159,7 +159,7 @@ export function zuZhuangTouXiangTiShiCi(
   canShu: { nianLing: number; xingBie: string; waiMao: string; xiHao?: string[] },
 ): TouXiangTiShiCiZuZhuang {
   const { fengGe, qiZhi, nianLingDang } = xuanZe
-  const zhuanYi = PI_PEI_GUI_ZE.人物转译
+  const zhuanYi = PiPeiGuiZe.人物转译
   const peiSe = zhuanYi.气质配色[qiZhi] ?? ''
   const fenWei = zhuanYi.气质氛围[qiZhi] ?? ''
   const nianLingGan = zhuanYi.年龄感[nianLingDang] ?? ''
@@ -185,9 +185,9 @@ export function zuZhuangTouXiangTiShiCi(
 
   const bufen = [fengGe.画风锚点, zhuTi]
   if (fengGe.视线约束) bufen.push(fengGe.视线约束)
-  bufen.push(FENG_GE_KU.通用.构图约束)
+  bufen.push(FengGeKu.通用.构图约束)
   const prompt = bufen.filter((bu) => bu.trim() !== '').join('，')
-  const negativePrompt = [FENG_GE_KU.通用.通用负面词, fengGe.专用负面词]
+  const negativePrompt = [FengGeKu.通用.通用负面词, fengGe.专用负面词]
     .filter((bu) => bu.trim() !== '')
     .join(',')
 
@@ -197,10 +197,10 @@ export function zuZhuangTouXiangTiShiCi(
 
 async function dengDaiShengChengDuiLie(): Promise<void> {
   const jian = 'tou_xiang_sheng_cheng_dui_lie'
-  for (let ciShu = 0; ciShu < TOU_XIANG_PEI_ZHI.zhengPianZuiDaChangShiCiShu + 3; ciShu++) {
-    const deDao = await redis.set(jian, '1', 'PX', TOU_XIANG_PEI_ZHI.paiDuiJianGeHaoMiao, 'NX')
+  for (let ciShu = 0; ciShu < TouXiangPeiZhi.zhengPianZuiDaChangShiCiShu + 3; ciShu++) {
+    const deDao = await redis.set(jian, '1', 'PX', TouXiangPeiZhi.paiDuiJianGeHaoMiao, 'NX')
     if (deDao === 'OK' || deDao === 1 || deDao === true) return
-    await new Promise((jieJue) => setTimeout(jieJue, Math.min(TOU_XIANG_PEI_ZHI.paiDuiJianGeHaoMiao, 2000)))
+    await new Promise((jieJue) => setTimeout(jieJue, Math.min(TouXiangPeiZhi.paiDuiJianGeHaoMiao, 2000)))
   }
 }
 
@@ -237,11 +237,11 @@ export async function shengChengJiaoSeTouXiang(canShu: {
   })
 
   await dengDaiShengChengDuiLie()
-  for (let ciShu = 0; ciShu < TOU_XIANG_PEI_ZHI.zhengPianZuiDaChangShiCiShu; ciShu++) {
+  for (let ciShu = 0; ciShu < TouXiangPeiZhi.zhengPianZuiDaChangShiCiShu; ciShu++) {
     const jieGuo = await diaoYongShengTuJieKou({
       tiShiCi: zuZhuang.prompt,
       fuMianTiShiCi: zuZhuang.negativePrompt,
-      tuXiangChiCun: TOU_XIANG_PEI_ZHI.tuXiangChiCun,
+      tuXiangChiCun: TouXiangPeiZhi.tuXiangChiCun,
     })
     if (!jieGuo.cheng_gong || !jieGuo.tuPianZiJie) {
       debug日志.warn('头像生成', `正片第${ciShu + 1}次生成失败`, {
@@ -249,7 +249,7 @@ export async function shengChengJiaoSeTouXiang(canShu: {
       })
       continue
     }
-    const caiJian = caiDiaoPNGDiBu(jieGuo.tuPianZiJie, TOU_XIANG_PEI_ZHI.caiDiBuBiLi)
+    const caiJian = caiDiaoPNGDiBu(jieGuo.tuPianZiJie, TouXiangPeiZhi.caiDiBuBiLi)
     const cunChu = await liuShiBaoCunMeiTi(
       Readable.from(caiJian),
       `touxiang-${canShu.jiaoSeId}-${Date.now()}.png`,
@@ -273,10 +273,10 @@ export async function shengChengJiaoSeTouXiang(canShu: {
   return { chengGong: false }
 }
 
-const YAN_HUA_ZHENG_JU_QIAN_ZHUI = 'tou_xiang_yan_hua_zheng_ju:'
+const YanHuaZhengJuQianZhui = 'tou_xiang_yan_hua_zheng_ju:'
 
 function yanHuaZhengJuJian(jiaoSeId: string): string {
-  return `${YAN_HUA_ZHENG_JU_QIAN_ZHUI}${jiaoSeId}`
+  return `${YanHuaZhengJuQianZhui}${jiaoSeId}`
 }
 
 export async function jiLuTouXiangYanHuaZhengJu(
@@ -289,9 +289,9 @@ export async function jiLuTouXiangYanHuaZhengJu(
     if (yiYou.includes(laiYuan)) return false
     await redis.lpush(jian, laiYuan)
     await redis.ltrim(jian, 0, 9)
-    await redis.expire(jian, TOU_XIANG_PEI_ZHI.yanHuaZhengJuTtlMiao)
+    await redis.expire(jian, TouXiangPeiZhi.yanHuaZhengJuTtlMiao)
     const quChong = await redis.lrange(jian, 0, -1)
-    return quChong.length >= TOU_XIANG_PEI_ZHI.yanHuaZhengJuMenDian
+    return quChong.length >= TouXiangPeiZhi.yanHuaZhengJuMenDian
   } catch {
     return false
   }
@@ -308,7 +308,7 @@ export async function changShiTouXiangYanHua(canShu: {
 }): Promise<boolean> {
   const yingGaiChuFa = await jiLuTouXiangYanHuaZhengJu(canShu.jiaoSeId, canShu.laiYuan)
   if (!yingGaiChuFa) return false
-  if (suiJiShu() >= TOU_XIANG_PEI_ZHI.yanHuaChuFaGaiLv) return false
+  if (suiJiShu() >= TouXiangPeiZhi.yanHuaChuFaGaiLv) return false
 
   const jiaoSeHang = await 数据库.query(
     `SELECT "用户ID", "年龄", "性别", "MBTI", "性格", "身份", "外貌", "爱好", "头像描述", "情绪基调" FROM "角色" WHERE "ID" = $1 LIMIT 1`,
@@ -348,11 +348,11 @@ export async function changShiTouXiangYanHua(canShu: {
   const jieGuo = await diaoYongShengTuJieKou({
     tiShiCi: zuZhuang.prompt,
     fuMianTiShiCi: zuZhuang.negativePrompt,
-    tuXiangChiCun: TOU_XIANG_PEI_ZHI.tuXiangChiCun,
+    tuXiangChiCun: TouXiangPeiZhi.tuXiangChiCun,
   })
   if (!jieGuo.cheng_gong || !jieGuo.tuPianZiJie) return false
 
-  const caiJian = caiDiaoPNGDiBu(jieGuo.tuPianZiJie, TOU_XIANG_PEI_ZHI.caiDiBuBiLi)
+  const caiJian = caiDiaoPNGDiBu(jieGuo.tuPianZiJie, TouXiangPeiZhi.caiDiBuBiLi)
   const cunChu = await liuShiBaoCunMeiTi(
     Readable.from(caiJian),
     `touxiang-yanhua-${canShu.jiaoSeId}-${Date.now()}.png`,

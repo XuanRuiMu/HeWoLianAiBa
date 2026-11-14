@@ -20,7 +20,7 @@
     >
       <XiaoXiGuJia
         v-if="!fuPanWuLiaoTianJiLu && 聊天仓库.shouPingJiaZaiZhong"
-        :hang-pei-zhi="GU_JIA_QI_PAO_PEI_ZHI"
+        :hang-pei-zhi="GuJiaQiPaoPeiZhi"
         ding-di
       />
       <div v-else-if="!fuPanWuLiaoTianJiLu && 聊天仓库.jiaZaiShiBai" class="jiazai-shibai-qu">
@@ -316,7 +316,7 @@
           :wen-ben="shuRuNeiRong"
           :guang-biao="daiFaGuangBiao"
           :zhan-wei-fu="huoQuFanYi('liaoTian', 'shuRuXiaoXi')"
-          :zui-da-chang-du="XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu"
+          :zui-da-chang-du="XiaoXiPeiZhi.zuiDaXiaoXiChangDu"
           :zhan-kai="shuRuKuangZhanKai"
           @geng-xin-guang-biao="daiFaGengXinGuangBiao"
           @bian-ji="chuLiShuRuQuBianJi"
@@ -455,7 +455,7 @@
               </div>
               <div class="biaoqingbao-wangge">
                 <button
-                  v-for="tieZhi in BIAO_QING_BAO_LIE_BIAO"
+                  v-for="tieZhi in BiaoQingBaoLieBiao"
                   :key="tieZhi.id"
                   class="biaoqingbao-xiangmu"
                   @click="jiaRuDaiFaTieZhi(tieZhi)"
@@ -486,14 +486,14 @@
         ref="wenJianInputRef"
         class="yincang-wenjian-shuru"
         type="file"
-        :accept="WEN_JIAN_SHURU_JIE_SHOU_KUO_ZHAN"
+        :accept="WenJianShuruJieShouKuoZhan"
         @change="chuLiWenJianXuanZe"
       />
       <input
         ref="biaoQingInputRef"
         class="yincang-wenjian-shuru"
         type="file"
-        :accept="BIAO_QING_TIAN_JIA_PEI_ZHI.wenJianJieShou"
+        :accept="BiaoQingTianJiaPeiZhi.wenJianJieShou"
         @change="chuLiBiaoQingXuanZe"
       />
     </footer>
@@ -607,22 +607,22 @@ import { 使用表情仓库 } from '@/stores/表情'
 
 import { huoQuFanYi } from '@/config/翻译表'
 import {
-  XIAO_XI_PEI_ZHI,
-  WEN_JIAN_SHURU_JIE_SHOU_KUO_ZHAN,
-  TU_PIAN_XIAO_XI_LEI_XING,
-  YIN_YONG_DING_WEI_PEI_ZHI,
+  XiaoXiPeiZhi,
+  WenJianShuruJieShouKuoZhan,
+  TuPianXiaoXiLeiXing,
+  YinYongDingWeiPeiZhi,
   huoQuMeiTiYinYongZhanWei,
   huoQuFaSongZhuangTaiWenAn,
   duQuShengYinTongDao,
   heChengDanTongDaoYinLiang,
   xuanZeYuYinTongDao,
 } from '@/config/消息配置'
-import { BIAO_QING_TIAN_JIA_PEI_ZHI } from '@/config/表情配置'
+import { BiaoQingTianJiaPeiZhi } from '@/config/表情配置'
 import { yaSuoTuPiang } from '@/utils/图片压缩'
 import { queDingMiDengJian } from '@/utils/发件箱'
 import {
   xuanRanBiaoQingBao,
-  BIAO_QING_BAO_LIE_BIAO,
+  BiaoQingBaoLieBiao,
   type BiaoQingBaoDingYi,
 } from '@/utils/表情包库'
 import type { BiaoQingXiang } from '@/api/表情'
@@ -667,11 +667,11 @@ import { use粘贴图片 } from '@/composables/use粘贴图片'
 import { use待发图文, type BianJiQiDuan, type DaiFaGuangBiao } from '@/composables/use待发图文'
 import { use输入区展开档 } from '@/composables/use输入区展开档'
 import {
-  BIAO_QING_BAO_MEI_TI_LEI_BIE,
+  BiaoQingBaoMeiTiLeiBie,
   huoQuXianShiKuai,
   shiXuYaoKuaiXuanRan,
 } from '@/utils/消息内容块'
-import { CAO_GAO_JIAN, useCaoGao } from '@/composables/use草稿'
+import { CaoGaoJian, useCaoGao } from '@/composables/use草稿'
 
 defineOptions({
   name: 'liaoTian',
@@ -698,7 +698,7 @@ function duQuShengYinYinLiang(xiaoXi: 消息): number | null {
 const shuRuNeiRong = ref('')
 const caoGaoJian = computed(() => {
   const huiHuaId = typeof route.params.huiHuaId === 'string' ? route.params.huiHuaId : ''
-  return huiHuaId ? CAO_GAO_JIAN.aiLiaoTian(huiHuaId) : ''
+  return huiHuaId ? CaoGaoJian.aiLiaoTian(huiHuaId) : ''
 })
 const { huiFuCaoGao, qingChuCaoGao } = useCaoGao(caoGaoJian, shuRuNeiRong)
 const caoGaoYiHuiFu = ref(false)
@@ -713,7 +713,7 @@ const xiaoxiQuYuRef = computed(() => mianBanJiaGou.value?.$el ?? null)
 const guanLiJianKongZhanKai = ref(false)
 const dangQianShiJian = ref(Date.now())
 let cheHuiFanZhuanDingShiQi: ReturnType<typeof setTimeout> | null = null
-const CHE_HUI_FAN_ZHUAN_HUAN_CHONG_HAO_MIAO = 1000
+const CheHuiFanZhuanHuanChongHaoMiao = 1000
 let yiTongGuoMountedChuShiHua = false
 
 function jiSuanXiaYiCheHuiDaoQiShiKe(): number | null {
@@ -724,7 +724,7 @@ function jiSuanXiaYiCheHuiDaoQiShiKe(): number | null {
     if (xiaoXi.yi_che_hui) continue
     const chuo = xiaoXi.shi_jian_chuo
     if (typeof chuo !== 'number' || !Number.isFinite(chuo)) continue
-    const daoQiShiKe = chuo + XIAO_XI_PEI_ZHI.cheHuiShiXian
+    const daoQiShiKe = chuo + XiaoXiPeiZhi.cheHuiShiXian
     if (daoQiShiKe <= Date.now()) continue
     if (zuiZaoDaoQi === null || daoQiShiKe < zuiZaoDaoQi) zuiZaoDaoQi = daoQiShiKe
   }
@@ -744,7 +744,7 @@ function anPaiCheHuiFanZhuan() {
       dangQianShiJian.value = Date.now()
       anPaiCheHuiFanZhuan()
     },
-    Math.max(0, xiaYiDaoQiShiKe + CHE_HUI_FAN_ZHUAN_HUAN_CHONG_HAO_MIAO - Date.now()),
+    Math.max(0, xiaYiDaoQiShiKe + CheHuiFanZhuanHuanChongHaoMiao - Date.now()),
   )
 }
 
@@ -838,7 +838,7 @@ function chongXinFanYi(xiaoXi: 消息) {
 }
 
 function yinYongXiangId(xiaoXi: 消息): string {
-  return `${YIN_YONG_DING_WEI_PEI_ZHI.domQianZhui}${xiaoXi.id}`
+  return `${YinYongDingWeiPeiZhi.domQianZhui}${xiaoXi.id}`
 }
 
 function huoQuXiaoXiGunDongRongQi(): HTMLElement | null {
@@ -1026,7 +1026,7 @@ function chuLiShuRuQuBianJi(duan: BianJiQiDuan[], xianShiXuanRanIds: string[]): 
 }
 
 function chaRuShuRuQuWenBen(wenBen: string, guangBiao?: DaiFaGuangBiao | null): void {
-  const shengYu = XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu - shuRuNeiRong.value.length
+  const shengYu = XiaoXiPeiZhi.zuiDaXiaoXiChangDu - shuRuNeiRong.value.length
   if (shengYu <= 0) {
     聊天仓库.sheZhiCuoWu(huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'))
     return
@@ -1110,7 +1110,7 @@ async function chongQianXiaoXiMeiTiURL(xiaoXi: 消息): Promise<string | null> {
   return xinURL
 }
 
-const TU_PIAN_YU_LAN_LEI_XING = new Set<string>(TU_PIAN_XIAO_XI_LEI_XING)
+const TuPianYuLanLeiXing = new Set<string>(TuPianXiaoXiLeiXing)
 
 const quanBuTuPianDiZhi = computed<string[]>(() => {
   const lieBiao = Array.isArray(聊天仓库.xiaoXiLieBiao) ? 聊天仓库.xiaoXiLieBiao : []
@@ -1121,7 +1121,7 @@ const quanBuTuPianDiZhi = computed<string[]>(() => {
     for (const kuai of huoQuXianShiKuai(xiaoXi)) {
       if (kuai.lei_xing === 'tupian' && kuai.mei_ti_url) diZhi.push(kuai.mei_ti_url)
     }
-    if (!shiXuYaoKuaiXuanRan(xiaoXi) && TU_PIAN_YU_LAN_LEI_XING.has(xiaoXi.lei_xing)) {
+    if (!shiXuYaoKuaiXuanRan(xiaoXi) && TuPianYuLanLeiXing.has(xiaoXi.lei_xing)) {
       const meiTiURL = huoQuXiaoXiMeiTiURL(xiaoXi)
       if (meiTiURL) diZhi.push(meiTiURL)
     }
@@ -1151,7 +1151,7 @@ function huoQuFaSongZhuangTaiTiShi(xiaoXi: 消息): string {
   })
 }
 
-const GU_JIA_QI_PAO_PEI_ZHI = [
+const GuJiaQiPaoPeiZhi = [
   { kuanDu: '150px', shiYouCe: true },
   { kuanDu: '200px', shiYouCe: false },
   { kuanDu: '120px', shiYouCe: true },
@@ -1232,7 +1232,7 @@ async function jiaRuDaiFaTieZhi(tieZhi: BiaoQingBaoDingYi) {
   try {
     const blob = await xuanRanBiaoQingBao(tieZhi.emoji, tieZhi.wenZi)
     const wenJian = new File([blob], `${tieZhi.id}.png`, { type: blob.type || 'image/png' })
-    const jieGuo = chaRuDaiFaTuPian(wenJian, BIAO_QING_BAO_MEI_TI_LEI_BIE)
+    const jieGuo = chaRuDaiFaTuPian(wenJian, BiaoQingBaoMeiTiLeiBie)
     if (jieGuo.yuanYin === 'chao_xian') {
       聊天仓库.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'kuaiChaoXian'))
     }
@@ -1306,7 +1306,7 @@ watch(emojiMianBanZhanKai, (zhanKai) => {
   }
   biaoQingZhongLaYiFa.value = false
   const yongHuId = 用户仓库.dangQianYongHu?.id || ''
-  if (yongHuId) void 表情仓库.jiaZai(yongHuId)
+  if (yongHuId) void 表情仓库.jiaZai(yongHuId, true)
 })
 
 function huoQuWenJianMing(xiaoXi: 消息): string {
@@ -1343,7 +1343,7 @@ const liaoTianSuoDing = computed(() => {
 const keYiFaSong = computed(() => {
   if (daiFaTouDiZhong.value) return false
   const neiRong = shuRuNeiRong.value.trim()
-  if (neiRong.length > XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu) return false
+  if (neiRong.length > XiaoXiPeiZhi.zuiDaXiaoXiChangDu) return false
   return neiRong.length > 0 || daiFaYouTuPian.value
 })
 
@@ -1500,7 +1500,7 @@ async function faSong() {
     return
   }
   if (!keYiFaSong.value) return
-  if (neiRong.length > XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu) {
+  if (neiRong.length > XiaoXiPeiZhi.zuiDaXiaoXiChangDu) {
     聊天仓库.sheZhiCuoWu(huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'))
     return
   }

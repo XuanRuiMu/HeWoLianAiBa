@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { huoQuFanYi } from '@/config/翻译表'
-import { XIAO_XI_PEI_ZHI } from '@/config/消息配置'
+import { XiaoXiPeiZhi } from '@/config/消息配置'
 import { fenZuXiaoXiAnShiJian, geShiHuaXiaoXiShiJian } from '@/utils/消息时间分组'
 
 const 根 = resolve(__dirname, '..')
@@ -35,7 +35,7 @@ describe('零消息时保持微信式空白聊天区', () => {
     expect(失败起点).toBeGreaterThan(骨架起点)
     expect(聊天页源.slice(失败起点 - 40, 失败起点)).toContain('v-else-if')
     expect(列表起点).toBeGreaterThan(失败起点)
-    expect(聊天页源.slice(骨架起点, 失败起点)).toContain('GU_JIA_QI_PAO_PEI_ZHI')
+    expect(聊天页源.slice(骨架起点, 失败起点)).toContain('GuJiaQiPaoPeiZhi')
     const 失败块 = 聊天页源.slice(失败起点, 列表起点)
     expect(失败块).toContain('聊天仓库.shouPingQianTaiCuoWu')
     expect(失败块).toContain('@chong-shi="chongShiJiaZai"')
@@ -98,7 +98,7 @@ describe('聊天时间分隔按微信五分钟规则', () => {
   })
 
   it('合并阈值与微信一致为五分钟', () => {
-    expect(XIAO_XI_PEI_ZHI.heBingShiJianYuZhi).toBe(5 * 60 * 1000)
+    expect(XiaoXiPeiZhi.heBingShiJianYuZhi).toBe(5 * 60 * 1000)
   })
 })
 

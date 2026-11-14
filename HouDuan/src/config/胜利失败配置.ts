@@ -4,7 +4,7 @@ function duQuQueXinDu(ming: string, moRen: number): number {
   return Math.max(0, Math.min(1, yuan))
 }
 
-export const QUE_XIN_DU_YUE_SHU = {
+export const QueXinDuYueShu = {
   get shenJingBing(): number {
     return duQuQueXinDu('SHEN_JING_BING_QUE_XIN_DU_YUE_SHU', 0.7)
   },
@@ -16,7 +16,7 @@ export const QUE_XIN_DU_YUE_SHU = {
   },
 }
 
-export const BEI_CHA_QU_PEI_ZHI = {
+export const BeiChaQuPeiZhi = {
   get queXinDuYueShu(): number {
     return duQuQueXinDu('BEI_CHA_QU_QUE_XIN_DU_YUE_SHU', 0.65)
   },
@@ -32,12 +32,12 @@ export const BEI_CHA_QU_PEI_ZHI = {
   yuanYinHeXin: ['像渣男渣女', '提示词注入', '不像真人说话', '不符合我的条件', '情商太低'],
 }
 
-export const SHENG_LI_SHI_BAI_PEI_ZHI = {
+export const ShengLiShiBaiPeiZhi = {
   get shenJingBingQueXinDuYueShu(): number {
-    return QUE_XIN_DU_YUE_SHU.shenJingBing
+    return QueXinDuYueShu.shenJingBing
   },
   get biaoBaiHuiFuQueXinDuYueShu(): number {
-    return QUE_XIN_DU_YUE_SHU.biaoBaiHuiFu
+    return QueXinDuYueShu.biaoBaiHuiFu
   },
   biaoBaiPanDuanLiShiTiaoShu: 10,
   jianCeLiShiTiaoShu: 10,

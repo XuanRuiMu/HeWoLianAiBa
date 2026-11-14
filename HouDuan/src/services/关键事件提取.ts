@@ -1,6 +1,6 @@
 ﻿import { debug日志 } from '../utils/debug日志'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
-import { gouJianGuanJianShiJianPrompt, JI_YI_ZHU_RU_YUE_SHU } from './Prompt构建器'
+import { gouJianGuanJianShiJianPrompt, JiYiZhuRuYueShu } from './Prompt构建器'
 import { 数据库 } from '../数据库'
 import type { GongJianShiJianJieGuo } from '../types'
 import type { CanShuShangXiaWen } from '../config/AI参数策略'
@@ -82,7 +82,7 @@ export async function duQuGuanJianShiJianZhuRu(
     }))
     mingZhongPaiXu(quanBu, benLunXiaoXi)
     const hangLieBiao = quanBu.slice(0, zuiDaTiaoShu).map((hang) => hang.wenBen)
-    return `【关键事件】\n${JI_YI_ZHU_RU_YUE_SHU}\n${hangLieBiao.join('\n')}`
+    return `【关键事件】\n${JiYiZhuRuYueShu}\n${hangLieBiao.join('\n')}`
   } catch (cuoWu) {
     debug日志.error('关键事件提取', '关键事件检索注入失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return ''

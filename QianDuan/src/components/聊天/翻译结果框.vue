@@ -86,7 +86,7 @@ import { huoQuFanYi } from '@/config/翻译表'
 import RequestError from '@/components/请求错误.vue'
 import { chuangJianQianTaiCuoWu, type QianTaiCuoWu } from '@/utils/前台错误'
 import TongYongXiaLa from '@/components/通用菜单.vue'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { QianTaiDaiMa } from '@/config/前台错误码'
 
 const props = defineProps<{
   zhuangTai: 'loading' | 'success' | 'empty' | 'error'
@@ -103,7 +103,7 @@ const emit = defineEmits<{
   (e: 'chongShi'): void
 }>()
 
-const YUAN_YU_XUAN_XIANG = [
+const YuanYuXuanXiang = [
   { zhi: 'auto', jian: 'fanYiZiDong' },
   { zhi: 'zh', jian: 'fanYiYuYanZh' },
   { zhi: 'en', jian: 'fanYiYuYanEn' },
@@ -115,11 +115,11 @@ const YUAN_YU_XUAN_XIANG = [
   { zhi: 'ru', jian: 'fanYiYuYanRu' },
 ] as const
 
-const MU_BIAO_YU_XUAN_XIANG = YUAN_YU_XUAN_XIANG.filter((xiang) => xiang.zhi !== 'auto')
+const MuBiaoYuXuanXiang = YuanYuXuanXiang.filter((xiang) => xiang.zhi !== 'auto')
 
 const shuangTi = getCurrentInstance()?.uid ?? 0
 const fankuiId = `fanyi-fuzhi-tishi-${shuangTi}`
-const FU_ZHI_TI_SHI_HAO_MIAO = 2000
+const FuZhiTiShiHaoMiao = 2000
 const fuZhiTiShi = ref('')
 const fuZhiZhong = ref(false)
 let fuZhiJiShiQi: ReturnType<typeof setTimeout> | null = null
@@ -129,7 +129,7 @@ const xianShiCuoWu = computed(
   () =>
     props.cuoWu ||
     chuangJianQianTaiCuoWu({
-      code: QIAN_TAI_DAI_MA.XIE_YI,
+      code: QianTaiDaiMa.XIE_YI,
       retryable: true,
       yingXiang: huoQuFanYi('liaoTian', 'fanYiShiBai'),
     }),
@@ -145,11 +145,11 @@ function gengXinMuBiaoYuZhi(zhi: string): void {
 }
 
 const yuanYuXuanXiang = computed(() =>
-  YUAN_YU_XUAN_XIANG.map((xiang) => ({ zhi: xiang.zhi, wenZi: huoQuFanYi('liaoTian', xiang.jian) })),
+  YuanYuXuanXiang.map((xiang) => ({ zhi: xiang.zhi, wenZi: huoQuFanYi('liaoTian', xiang.jian) })),
 )
 
 const muBiaoYuXuanXiang = computed(() =>
-  MU_BIAO_YU_XUAN_XIANG.map((xiang) => ({ zhi: xiang.zhi, wenZi: huoQuFanYi('liaoTian', xiang.jian) })),
+  MuBiaoYuXuanXiang.map((xiang) => ({ zhi: xiang.zhi, wenZi: huoQuFanYi('liaoTian', xiang.jian) })),
 )
 
 function qingChuFuZhiTiShi(): void {
@@ -173,7 +173,7 @@ async function fuZhiJieGuo(): Promise<void> {
     fuZhiTiShi.value = huoQuFanYi('liaoTian', 'fuZhiShiBai')
   } finally {
     fuZhiZhong.value = false
-    fuZhiJiShiQi = setTimeout(qingChuFuZhiTiShi, FU_ZHI_TI_SHI_HAO_MIAO)
+    fuZhiJiShiQi = setTimeout(qingChuFuZhiTiShi, FuZhiTiShiHaoMiao)
   }
 }
 

@@ -1,10 +1,10 @@
 import { 数据库 } from '../数据库'
 import { redis } from '../redis'
 import { huoQuFanYi, huoQuFanYiMiaoShu } from '../config/translations'
-import { HAO_GAN_DU_PEI_ZHI } from '../config/好感度配置'
+import { HaoGanDuPeiZhi } from '../config/好感度配置'
 import { fenJieSiWei, huoQuJieDuanXinXi } from './好感度'
 import {
-  CUO_WU_DAI_MA,
+  CuoWuDaiMa,
   JiaoSeShengChengCuoWu,
 } from '../config/错误码注册表'
 import { huoQuNiChengKu } from '../utils/昵称解析'
@@ -50,13 +50,13 @@ import {
   huiFuYanChiZuiDaHaoMiao,
   获取默认音色,
 } from '../config/角色配置'
-import { XUE_KE_TONG_YI_CI, ZHI_YE_TONG_YI_CI } from '../config/职业同义词'
+import { XueKeTongYiCi, ZhiYeTongYiCi } from '../config/职业同义词'
 import { baoCunJiaoSeXiaoXi } from './AI输入准备'
 import { shengChengKaiChangBai } from './开场白生成'
 
-const REN_SHE_WEN_BEN_ZUI_DA_CHANG_DU = 500
+const RenSheWenBenZuiDaChangDu = 500
 
-const ZHI_LING_TE_ZHENG_MO_SHI: RegExp[] = [
+const ZhiLingTeZhengMoShi: RegExp[] = [
   /ignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/gi,
   /disregard\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/gi,
   /forget\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/gi,
@@ -71,16 +71,16 @@ const ZHI_LING_TE_ZHENG_MO_SHI: RegExp[] = [
 export function qingXiRenSheWenBen(wenBen: string): string {
   if (typeof wenBen !== 'string') return ''
   let jieGuo = 剥离控制字符(wenBen)
-  for (const moShi of ZHI_LING_TE_ZHENG_MO_SHI) {
+  for (const moShi of ZhiLingTeZhengMoShi) {
     jieGuo = jieGuo.replace(moShi, '')
   }
-  if (jieGuo.length > REN_SHE_WEN_BEN_ZUI_DA_CHANG_DU) {
-    jieGuo = jieGuo.slice(0, REN_SHE_WEN_BEN_ZUI_DA_CHANG_DU)
+  if (jieGuo.length > RenSheWenBenZuiDaChangDu) {
+    jieGuo = jieGuo.slice(0, RenSheWenBenZuiDaChangDu)
   }
   return jieGuo
 }
 
-const REN_SHE_BAI_MING_DAN_ZI_DUAN: ReadonlySet<string> = new Set([
+const RenSheBaiMingDanZiDuan: ReadonlySet<string> = new Set([
   'id', 'ming_zi', 'wei_xin_ming', 'zhen_shi_ming', 'xing_bie', 'nian_ling',
   'mbti_lei_xing', 'ie_lei_xing', 're_shen_lei_xing', 'yu_she_lei_xing',
   'shen_fen', 'wai_mao', 'xing_ge', 'bei_jing_gu_shi', 'xi_hao', 'biao_qian',
@@ -91,21 +91,21 @@ const REN_SHE_BAI_MING_DAN_ZI_DUAN: ReadonlySet<string> = new Set([
   'hui_fu_yan_chi_hao_miao',
 ])
 
-export const KE_HU_DUAN_JIN_ZI_DUAN: readonly string[] = [
+export const KeHuDuanJinZiDuan: readonly string[] = [
   'hao_gan_du_zong_fen',
   'zha_fa_miao_shu',
   'hua_shu',
   'bao_lu_fang_shi',
   'shi_po_xian_suo',
 ]
-export const ZHA_XING_YIN_CANG_ZI_DUAN: readonly (keyof ShengChengJiaoSeJieGuo)[] = [
+export const ZhaXingYinCangZiDuan: readonly (keyof ShengChengJiaoSeJieGuo)[] = [
   'shi_fou_zha_xing',
   'zha_fa_miao_shu',
   'hua_shu',
   'bao_lu_fang_shi',
   'shi_po_xian_suo',
 ]
-export const JIAO_SE_YIN_SI_ZI_DUAN: readonly (keyof ShengChengJiaoSeJieGuo)[] = [
+export const JiaoSeYinSiZiDuan: readonly (keyof ShengChengJiaoSeJieGuo)[] = [
   'ming_zi',
   'zhen_shi_ming',
   'bei_jing_gu_shi',
@@ -114,7 +114,7 @@ export const JIAO_SE_YIN_SI_ZI_DUAN: readonly (keyof ShengChengJiaoSeJieGuo)[] =
   'ba_da_mo_kuai',
 ]
 
-const REN_SHE_WEN_BEN_XING_ZI_DUAN: ReadonlySet<string> = new Set([
+const RenSheWenBenXingZiDuan: ReadonlySet<string> = new Set([
   'ming_zi', 'wei_xin_ming', 'zhen_shi_ming', 'shen_fen', 'wai_mao', 'xing_ge',
   'bei_jing_gu_shi', 'yan_yu_feng_ge', 'xing_wei_te_dian', 'xi_huan_de_lei_xing',
   'jia_ting_bei_jing', 'qing_gan_jing_li', 'zha_fa_miao_shu', 'bao_lu_fang_shi',
@@ -124,10 +124,10 @@ export function qingXiRenSheDuiXiang<T extends Record<string, unknown>>(jiaoSe: 
   const jieGuo: Record<string, unknown> = {}
   const yuan = jiaoSe as Record<string, unknown>
   for (const jian of Object.keys(yuan)) {
-    if (!REN_SHE_BAI_MING_DAN_ZI_DUAN.has(jian)) continue
-    if (KE_HU_DUAN_JIN_ZI_DUAN.includes(jian)) continue
+    if (!RenSheBaiMingDanZiDuan.has(jian)) continue
+    if (KeHuDuanJinZiDuan.includes(jian)) continue
     const zhi = yuan[jian]
-    if (REN_SHE_WEN_BEN_XING_ZI_DUAN.has(jian) && typeof zhi === 'string') {
+    if (RenSheWenBenXingZiDuan.has(jian) && typeof zhi === 'string') {
       jieGuo[jian] = qingXiRenSheWenBen(zhi)
     } else {
       jieGuo[jian] = zhi
@@ -156,12 +156,12 @@ export function chongZhuZhaXingZiDuan(
   return jiaoSe
 }
 
-const ZHA_XING_YU_HAO_GAN_DU_YIN_CANG_ZI_DUAN: readonly (keyof ShengChengJiaoSeJieGuo)[] = [
-  ...ZHA_XING_YIN_CANG_ZI_DUAN,
+const ZhaXingYuHaoGanDuYinCangZiDuan: readonly (keyof ShengChengJiaoSeJieGuo)[] = [
+  ...ZhaXingYinCangZiDuan,
   'hao_gan_du_zong_fen',
 ]
 
-const WAN_JIA_KE_JIAN_XING_GUI_LEI: Record<keyof ShengChengJiaoSeJieGuo, boolean> = {
+const WanJiaKeJianXingGuiLei: Record<keyof ShengChengJiaoSeJieGuo, boolean> = {
   id: true,
   gong_kai_bian_hao: false,
   ming_zi: false,
@@ -217,7 +217,7 @@ export function duiWaiJiaoSeBiaoShi(jiaoSe: object): string {
 export function touYingWanJiaKeJianJiaoSe<T extends object>(jiaoSe: T): T {
   const yuan = jiaoSe as Record<string, unknown>
   const jieGuo: Record<string, unknown> = {}
-  for (const [jian, keJian] of Object.entries(WAN_JIA_KE_JIAN_XING_GUI_LEI)) {
+  for (const [jian, keJian] of Object.entries(WanJiaKeJianXingGuiLei)) {
     if (!keJian) continue
     if (jian === 'id') continue
     if (jian in yuan) jieGuo[jian] = yuan[jian]
@@ -227,17 +227,17 @@ export function touYingWanJiaKeJianJiaoSe<T extends object>(jiaoSe: T): T {
 }
 
 export function touYingGuanLiJiaoSe<T extends object>(jiaoSe: T): T {
-  const jieGuo = anYinCangZiDuanTouYing(jiaoSe, ZHA_XING_YU_HAO_GAN_DU_YIN_CANG_ZI_DUAN) as Record<string, unknown>
+  const jieGuo = anYinCangZiDuanTouYing(jiaoSe, ZhaXingYuHaoGanDuYinCangZiDuan) as Record<string, unknown>
   delete jieGuo.gong_kai_bian_hao
   jieGuo.id = duiWaiJiaoSeBiaoShi(jiaoSe)
   return jieGuo as T
 }
 
-const DAI_QU_REN_JIAO_SE_JIAN_QIAN_ZHUI = 'dai_que_ren_jiao_se:'
-const DAI_QU_REN_JIAO_SE_TTL_MIAO = 1800
+const DaiQuRenJiaoSeJianQianZhui = 'dai_que_ren_jiao_se:'
+const DaiQuRenJiaoSeTtlMiao = 1800
 
 export function daiQueRenJiaoSeJian(yong_hu_id: string): string {
-  return `${DAI_QU_REN_JIAO_SE_JIAN_QIAN_ZHUI}${yong_hu_id}`
+  return `${DaiQuRenJiaoSeJianQianZhui}${yong_hu_id}`
 }
 
 export async function huanCunDaiQueRenJiaoSe(
@@ -245,7 +245,7 @@ export async function huanCunDaiQueRenJiaoSe(
   jiaoSe: ShengChengJiaoSeJieGuo,
 ): Promise<void> {
   try {
-    await redis.set(daiQueRenJiaoSeJian(yong_hu_id), JSON.stringify(jiaoSe), 'EX', DAI_QU_REN_JIAO_SE_TTL_MIAO)
+    await redis.set(daiQueRenJiaoSeJian(yong_hu_id), JSON.stringify(jiaoSe), 'EX', DaiQuRenJiaoSeTtlMiao)
   } catch {
     return
   }
@@ -287,7 +287,7 @@ export interface CongTiShiCiTiQuJieGuo {
   jia_xiang?: string
 }
 
-const TONG_YONG_TI_SHI_CI_NIAN_LING_SHANG_XIAN = 100
+const TongYongTiShiCiNianLingShangXian = 100
 
 function anChangDuPaiXuQuChong(wenBenZu: string[]): string[] {
   const weiYi = Array.from(new Set(wenBenZu.filter((wenBen) => wenBen.trim().length > 0)))
@@ -302,7 +302,7 @@ export function congTongYongTiShiCiTiQuRenShe(tiShiCi: string): CongTiShiCiTiQuJ
   const nianLingPiPei = wenBen.match(/(\d{1,3})\s*岁/)
   if (nianLingPiPei) {
     const nianLing = Number(nianLingPiPei[1])
-    if (Number.isInteger(nianLing) && nianLing >= 0 && nianLing <= TONG_YONG_TI_SHI_CI_NIAN_LING_SHANG_XIAN) {
+    if (Number.isInteger(nianLing) && nianLing >= 0 && nianLing <= TongYongTiShiCiNianLingShangXian) {
       jieGuo.nian_ling = nianLing
     }
   }
@@ -329,7 +329,7 @@ export function congTongYongTiShiCiTiQuRenShe(tiShiCi: string): CongTiShiCiTiQuJ
     }
   }
   if (!jieGuo.zhi_ye) {
-    const tongYiHouXuan = Object.entries({ ...XUE_KE_TONG_YI_CI, ...ZHI_YE_TONG_YI_CI })
+    const tongYiHouXuan = Object.entries({ ...XueKeTongYiCi, ...ZhiYeTongYiCi })
       .sort(([qian], [hou]) => hou.length - qian.length)
     for (const [chengHu, guiFanCi] of tongYiHouXuan) {
       if (wenBen.includes(chengHu)) {
@@ -463,7 +463,7 @@ function huoQuMbti(mbtiLeiXing?: MBTILeiXing | null, tongYongTiShiCi?: string): 
   return suiJiXuanZe(mbtiLieBiao)
 }
 
-const MBTI_WEI_DU_GUAN_JIAN_CI: ReadonlyArray<{ weiDu: 0 | 1 | 2 | 3; zheng: string; fu: string; ci: string[] }> = [
+const MbtiWeiDuGuanJianCi: ReadonlyArray<{ weiDu: 0 | 1 | 2 | 3; zheng: string; fu: string; ci: string[] }> = [
   { weiDu: 0, zheng: 'E', fu: 'I', ci: ['外向', '社牛', '热情', '爱笑', '话痨', '自来熟', '表演', '领导', '开朗', '活泼', '社交'] },
   { weiDu: 0, zheng: 'I', fu: 'E', ci: ['内向', '社恐', '安静', '慢热', '独处', '神秘', '治愈', '文静', '宅', '敏感'] },
   { weiDu: 1, zheng: 'S', fu: 'N', ci: ['务实', '踏实', '可靠', '细节', '组织', '照顾', '实干', '稳重'] },
@@ -479,7 +479,7 @@ export function anTongYongTiShiCiXuanZuiJinMbti(tiShiCi?: string): MBTILeiXing |
   const wenBen = tiShiCi
   const deFen: Record<string, number> = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 }
   let mingZhong = 0
-  for (const xiang of MBTI_WEI_DU_GUAN_JIAN_CI) {
+  for (const xiang of MbtiWeiDuGuanJianCi) {
     for (const guanJian of xiang.ci) {
       if (guanJian.length > 0 && wenBen.includes(guanJian)) {
         deFen[xiang.zheng] += guanJian.length
@@ -631,8 +631,8 @@ export function shengChengHaoGanDuZongFen(
 
 function huoQuGuanXiJieDuan(haoGanDu: number): string {
   const jieDuan = huoQuJieDuanXinXi(haoGanDu)
-  return Object.keys(HAO_GAN_DU_PEI_ZHI.jieDuan).find(
-    (jian) => HAO_GAN_DU_PEI_ZHI.jieDuan[jian as keyof typeof HAO_GAN_DU_PEI_ZHI.jieDuan] === jieDuan,
+  return Object.keys(HaoGanDuPeiZhi.jieDuan).find(
+    (jian) => HaoGanDuPeiZhi.jieDuan[jian as keyof typeof HaoGanDuPeiZhi.jieDuan] === jieDuan,
   ) ?? 'lengDan'
 }
 
@@ -803,7 +803,7 @@ export async function baoCunJiaoSe(
   try {
     xingBieLuoKu = 落库性别或拒绝(jiaoSe.xing_bie, '角色生成', yongHuId)
   } catch (cuoWu) {
-    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_INPUT_INVALID, cuoWu)
+    throw new JiaoSeShengChengCuoWu(CuoWuDaiMa.ROLE_GENERATION_INPUT_INVALID, cuoWu)
   }
   const lianJieHanShu = (数据库 as unknown as { connect?: unknown }).connect
   let shiWuKeHuDuan: { query: (wen: string, can?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>>; rowCount?: number | null }>; release: () => void } | undefined
@@ -952,7 +952,7 @@ export async function baoCunJiaoSe(
       shiWuKeHuDuan.release()
     }
     if (cuoWu instanceof JiaoSeShengChengCuoWu) throw cuoWu
-    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_PERSISTENCE_FAILED, cuoWu)
+    throw new JiaoSeShengChengCuoWu(CuoWuDaiMa.ROLE_GENERATION_PERSISTENCE_FAILED, cuoWu)
   }
   shiWuKeHuDuan?.release()
 

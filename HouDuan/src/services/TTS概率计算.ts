@@ -1,12 +1,12 @@
 import type { AIJiaoSeXinXi, HaoGanDuXinXi, DirectorCeLue } from '../types'
 import { debug日志 } from '../utils/debug日志'
-import { TTS_PEI_ZHI } from '../config/TTS触发配置'
+import { TtsPeiZhi } from '../config/TTS触发配置'
 
-const 基础概率 = TTS_PEI_ZHI.jiChuGaiLv
-const 概率上限 = TTS_PEI_ZHI.gaiLvShangXian
-const 概率下限 = TTS_PEI_ZHI.gaiLvXiaXian
+const 基础概率 = TtsPeiZhi.jiChuGaiLv
+const 概率上限 = TtsPeiZhi.gaiLvShangXian
+const 概率下限 = TtsPeiZhi.gaiLvXiaXian
 
-export const TTS_DOU_DONG_FU_DU = TTS_PEI_ZHI.douDongFuDu
+export const TtsDouDongFuDu = TtsPeiZhi.douDongFuDu
 
 const 关系阶段系数: Record<string, number> = {
   lengDan: 0.3,
@@ -63,9 +63,9 @@ function 计算场景系数(策略?: DirectorCeLue): { 系数: number; 禁用: b
 
   const 策略文本 = `${策略.hui_fu_ce_lue}${策略.qing_gan_fen_xi}${策略.yong_hu_yi_tu}`.toLowerCase()
 
-  const 禁用关键词 = TTS_PEI_ZHI.jinYongGuanJianCi
+  const 禁用关键词 = TtsPeiZhi.jinYongGuanJianCi
 
-  const 加成关键词 = TTS_PEI_ZHI.jiaChengGuanJianCi
+  const 加成关键词 = TtsPeiZhi.jiaChengGuanJianCi
 
   const 是否禁用 = 禁用关键词.some(词 => 策略文本.includes(词.toLowerCase()))
   if (是否禁用) {
@@ -74,14 +74,14 @@ function 计算场景系数(策略?: DirectorCeLue): { 系数: number; 禁用: b
 
   const 是否加成 = 加成关键词.some(词 => 策略文本.includes(词.toLowerCase()))
   if (是否加成) {
-    return { 系数: TTS_PEI_ZHI.jiaChengXiShu, 禁用: false }
+    return { 系数: TtsPeiZhi.jiaChengXiShu, 禁用: false }
   }
 
   return { 系数: 1.0, 禁用: false }
 }
 
 function 生成随机抖动(随机数: number = Math.random()): number {
-  return 1 - TTS_PEI_ZHI.douDongFuDu + 随机数 * TTS_PEI_ZHI.douDongFuDu * 2
+  return 1 - TtsPeiZhi.douDongFuDu + 随机数 * TtsPeiZhi.douDongFuDu * 2
 }
 
 export interface TTS概率计算输入 {

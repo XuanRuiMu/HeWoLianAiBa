@@ -1,7 +1,7 @@
 import dotenv from 'dotenv'
 import fs from 'fs'
 import path from 'path'
-import { HAO_GAN_DU_PEI_ZHI } from './好感度配置'
+import { HaoGanDuPeiZhi } from './好感度配置'
 
 function duQu(ming: string, moRen: string = ''): string {
   const wenJianLuJing = process.env[`${ming}_FILE`]
@@ -74,7 +74,7 @@ export function huoQuDuoMoTaiPeiZhi(): DuoMoTaiPeiZhi {
     shiPinTiShiCiZuiDaZiFu: duQuZhengShu('SHI_PIN_TI_SHI_CI_ZUI_DA_ZI_FU', 200, 10, 500),
     zhuDongShengTuZuiDiZongFen: duQuZhengShu(
       'ZHU_DONG_SHENG_TU_ZUI_DI_ZONG_FEN',
-      HAO_GAN_DU_PEI_ZHI.jieDuan.aiMei.xiaXian,
+      HaoGanDuPeiZhi.jieDuan.aiMei.xiaXian,
       0,
       1000,
     ),

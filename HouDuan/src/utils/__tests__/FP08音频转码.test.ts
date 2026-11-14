@@ -19,7 +19,7 @@ vi.mock('../debug日志', () => ({
 
 import { chongZhiFFmpegLuJingHuanCun, huoQuFFmpegLuJing, tiQuYinPinWeiWav } from '../音频转码'
 
-const HUAN_JING_BIAN_LIANG = 'SHI_PIN_JIE_XI_FFMPEG_LU_JING'
+const HuanJingBianLiang = 'SHI_PIN_JIE_XI_FFMPEG_LU_JING'
 
 function sheZhiMoRenTanCeShiBai(): void {
   execFileMock.mockImplementation(
@@ -32,24 +32,24 @@ function sheZhiMoRenTanCeShiBai(): void {
 describe('音频转码共享工具（FFmpeg 发现与 wav 抽取）', () => {
   beforeEach(() => {
     chongZhiFFmpegLuJingHuanCun()
-    delete process.env[HUAN_JING_BIAN_LIANG]
+    delete process.env[HuanJingBianLiang]
     execFileMock.mockReset()
     sheZhiMoRenTanCeShiBai()
   })
 
   afterEach(() => {
     chongZhiFFmpegLuJingHuanCun()
-    delete process.env[HUAN_JING_BIAN_LIANG]
+    delete process.env[HuanJingBianLiang]
   })
 
   it('配置了存在的 ffmpeg 路径时直接使用，不探测 PATH', async () => {
-    process.env[HUAN_JING_BIAN_LIANG] = os.tmpdir()
+    process.env[HuanJingBianLiang] = os.tmpdir()
     expect(await huoQuFFmpegLuJing()).toBe(os.tmpdir())
     expect(execFileMock).not.toHaveBeenCalled()
   })
 
   it('配置路径不存在且 PATH 探测失败时返回 null 不抛错', async () => {
-    process.env[HUAN_JING_BIAN_LIANG] = 'Z:/bu/cun/zai/ffmpeg.exe'
+    process.env[HuanJingBianLiang] = 'Z:/bu/cun/zai/ffmpeg.exe'
     expect(await huoQuFFmpegLuJing()).toBeNull()
     expect(execFileMock).toHaveBeenCalledTimes(1)
   })

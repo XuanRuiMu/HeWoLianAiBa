@@ -19,7 +19,7 @@ function duQuCiBiao(ming: string, moRen: string[]): string[] {
   return yuan.split(',').map((x) => x.trim()).filter((x) => x !== '')
 }
 
-const MO_REN_CI_BIAO = [
+const MoRenCiBiao = [
   '作为 AI',
   '作为AI',
   '作为人工智能',
@@ -31,7 +31,7 @@ const MO_REN_CI_BIAO = [
   '元话语',
 ]
 
-const MO_REN_GUO_LV_CI_BIAO = [
+const MoRenGuoLvCiBiao = [
   '作为 AI',
   '作为AI',
   '作为人工智能',
@@ -47,8 +47,8 @@ const MO_REN_GUO_LV_CI_BIAO = [
   '作为一个AI',
 ]
 
-export const AI_WEI_GUO_LV_PEI_ZHI = {
-  ciBiao: duQuCiBiao('QU_AI_WEI_GUO_LV_CI_BIAO', MO_REN_GUO_LV_CI_BIAO),
+export const AiWeiGuoLvPeiZhi = {
+  ciBiao: duQuCiBiao('QU_AI_WEI_GUO_LV_CI_BIAO', MoRenGuoLvCiBiao),
 } as const
 
 export interface AiWeiGuoLvJieGuo {
@@ -56,7 +56,7 @@ export interface AiWeiGuoLvJieGuo {
   beiFengSha: string[]
 }
 
-export function guoLvAiWeiXiaoXi(xiaoXiLieBiao: readonly string[], ciBiao: readonly string[] = AI_WEI_GUO_LV_PEI_ZHI.ciBiao): AiWeiGuoLvJieGuo {
+export function guoLvAiWeiXiaoXi(xiaoXiLieBiao: readonly string[], ciBiao: readonly string[] = AiWeiGuoLvPeiZhi.ciBiao): AiWeiGuoLvJieGuo {
   const baoLiu: string[] = []
   const beiFengSha: string[] = []
   for (const tiao of xiaoXiLieBiao) {
@@ -69,8 +69,8 @@ export function guoLvAiWeiXiaoXi(xiaoXiLieBiao: readonly string[], ciBiao: reado
   return { baoLiu, beiFengSha }
 }
 
-export const QU_AI_WEI_PEI_ZHI = {
-  ciBiao: duQuCiBiao('QU_AI_WEI_CI_BIAO', MO_REN_CI_BIAO),
+export const QuAiWeiPeiZhi = {
+  ciBiao: duQuCiBiao('QU_AI_WEI_CI_BIAO', MoRenCiBiao),
   caiYangBiLi: duQuFuDian('QU_AI_WEI_CAI_YANG_BI_LI', 0.1, 0, 1),
   moXingChouJianBiLi: duQuFuDian('QU_AI_WEI_MO_XING_CHOU_JIAN_BI_LI', 0.05, 0, 1),
   huiDuKaiGuan: (process.env['QU_AI_WEI_HUI_DU_QI_YONG'] || '').trim().toLowerCase() !== 'false',
@@ -81,7 +81,7 @@ export interface QuAiWeiJianChaJieGuo {
   tongGuo: boolean
 }
 
-export function jianChaAiWei(wenBen: string, ciBiao: readonly string[] = QU_AI_WEI_PEI_ZHI.ciBiao): QuAiWeiJianChaJieGuo {
+export function jianChaAiWei(wenBen: string, ciBiao: readonly string[] = QuAiWeiPeiZhi.ciBiao): QuAiWeiJianChaJieGuo {
   const mingZhong: string[] = []
   if (typeof wenBen !== 'string' || !wenBen) return { mingZhong, tongGuo: true }
   for (const ci of ciBiao) {
@@ -91,16 +91,16 @@ export function jianChaAiWei(wenBen: string, ciBiao: readonly string[] = QU_AI_W
 }
 
 export function panDuanShiFouCaiYang(suiJiShu: number = Math.random()): boolean {
-  return suiJiShu < QU_AI_WEI_PEI_ZHI.caiYangBiLi
+  return suiJiShu < QuAiWeiPeiZhi.caiYangBiLi
 }
 
 export function panDuanShiFouMoXingChouJian(suiJiShu: number = Math.random()): boolean {
-  return suiJiShu < QU_AI_WEI_PEI_ZHI.moXingChouJianBiLi
+  return suiJiShu < QuAiWeiPeiZhi.moXingChouJianBiLi
 }
 
-export const QU_AI_WEI_HUI_DU_GUAN_JIAN = 'QU_AI_WEI_HUI_DU'
+export const QuAiWeiHuiDuGuanJian = 'QU_AI_WEI_HUI_DU'
 
-const TAO_HUA_CI_BIAO = [
+const TaoHuaCiBiao = [
   '抱抱你',
   '抱紧你',
   '你是最棒的',
@@ -115,8 +115,8 @@ const TAO_HUA_CI_BIAO = [
   '么么哒',
 ]
 
-export const TAO_HUA_PEI_ZHI = {
-  ciBiao: duQuCiBiao('TAO_HUA_CI_BIAO', TAO_HUA_CI_BIAO),
+export const TaoHuaPeiZhi = {
+  ciBiao: duQuCiBiao('TAO_HUA_CI_BIAO', TaoHuaCiBiao),
   caiYangBiLi: duQuFuDian('TAO_HUA_CAI_YANG_BI_LI', 0.5, 0, 1),
 } as const
 
@@ -125,7 +125,7 @@ export interface TaoHuaJianChaJieGuo {
   tongGuo: boolean
 }
 
-export function jianChaTaoHua(wenBen: string, ciBiao: readonly string[] = TAO_HUA_PEI_ZHI.ciBiao): TaoHuaJianChaJieGuo {
+export function jianChaTaoHua(wenBen: string, ciBiao: readonly string[] = TaoHuaPeiZhi.ciBiao): TaoHuaJianChaJieGuo {
   const mingZhong: string[] = []
   if (typeof wenBen !== 'string' || !wenBen) return { mingZhong, tongGuo: true }
   for (const ci of ciBiao) {
@@ -135,5 +135,5 @@ export function jianChaTaoHua(wenBen: string, ciBiao: readonly string[] = TAO_HU
 }
 
 export function panDuanTaoHuaCaiYang(suiJiShu: number = Math.random()): boolean {
-  return suiJiShu < TAO_HUA_PEI_ZHI.caiYangBiLi
+  return suiJiShu < TaoHuaPeiZhi.caiYangBiLi
 }

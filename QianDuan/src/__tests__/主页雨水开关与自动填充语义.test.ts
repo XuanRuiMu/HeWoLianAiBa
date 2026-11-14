@@ -5,7 +5,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import 横条输入框 from '@/components/表单/横条输入框.vue'
 import 长方框输入框 from '@/components/表单/长方框输入框.vue'
-import { ZHU_YE_BEI_JING_YU_SHUI_JIAN, 使用用户设置仓库 } from '@/stores/用户设置'
+import { ZhuYeBeiJingYuShuiJian, 使用用户设置仓库 } from '@/stores/用户设置'
 import { huoQuFanYi } from '@/config/翻译表'
 
 const 源码根 = resolve(__dirname, '..')
@@ -23,27 +23,27 @@ describe('主页背景雨水开关：默认开启、可关可开、状态唯一'
     expect(仓库.zhuYeBeiJingYuShui).toBe(true)
     仓库.qieHuanZhuYeBeiJingYuShui(false)
     expect(仓库.zhuYeBeiJingYuShui).toBe(false)
-    expect(JSON.parse(localStorage.getItem(本地产(ZHU_YE_BEI_JING_YU_SHUI_JIAN)) as string)).toBe(false)
+    expect(JSON.parse(localStorage.getItem(本地产(ZhuYeBeiJingYuShuiJian)) as string)).toBe(false)
   })
 
   it('刷新后沿用上次选择，再次开启即恢复', () => {
-    localStorage.setItem(本地产(ZHU_YE_BEI_JING_YU_SHUI_JIAN), 'false')
+    localStorage.setItem(本地产(ZhuYeBeiJingYuShuiJian), 'false')
     setActivePinia(createPinia())
     const 仓库 = 使用用户设置仓库()
     expect(仓库.zhuYeBeiJingYuShui).toBe(false)
     仓库.qieHuanZhuYeBeiJingYuShui(true)
     expect(仓库.zhuYeBeiJingYuShui).toBe(true)
-    expect(JSON.parse(localStorage.getItem(本地产(ZHU_YE_BEI_JING_YU_SHUI_JIAN)) as string)).toBe(true)
+    expect(JSON.parse(localStorage.getItem(本地产(ZhuYeBeiJingYuShuiJian)) as string)).toBe(true)
   })
 
   it('旧存储为损坏值时不报错，按默认开启处理，再次切换仍写入', () => {
-    localStorage.setItem(本地产(ZHU_YE_BEI_JING_YU_SHUI_JIAN), '不是合法JSON')
+    localStorage.setItem(本地产(ZhuYeBeiJingYuShuiJian), '不是合法JSON')
     setActivePinia(createPinia())
     const 仓库 = 使用用户设置仓库()
     expect(仓库.zhuYeBeiJingYuShui).toBe(true)
     仓库.qieHuanZhuYeBeiJingYuShui(false)
     expect(仓库.zhuYeBeiJingYuShui).toBe(false)
-    expect(JSON.parse(localStorage.getItem(本地产(ZHU_YE_BEI_JING_YU_SHUI_JIAN)) as string)).toBe(false)
+    expect(JSON.parse(localStorage.getItem(本地产(ZhuYeBeiJingYuShuiJian)) as string)).toBe(false)
   })
 
   it('菜单雨水项是单行点击切换，文案精确为切换雨水状态', () => {

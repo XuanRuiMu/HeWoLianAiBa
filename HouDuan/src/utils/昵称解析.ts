@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 
-const WEN_JIAN_LU_JING = path.resolve(
+const WenJianLuJing = path.resolve(
   __dirname,
   '..',
   '..',
@@ -23,11 +23,11 @@ function qingLiHang(wenBen: string): string {
 }
 
 export function jieXiNiChengKu(): NiChengKu {
-  if (!fs.existsSync(WEN_JIAN_LU_JING)) {
+  if (!fs.existsSync(WenJianLuJing)) {
     return { nan: [], nv: [] }
   }
 
-  const neiRong = fs.readFileSync(WEN_JIAN_LU_JING, 'utf-8')
+  const neiRong = fs.readFileSync(WenJianLuJing, 'utf-8')
   const hangLieBiao = neiRong.split('\n').map(qingLiHang)
 
   const jieGuo: NiChengKu = { nan: [], nv: [] }

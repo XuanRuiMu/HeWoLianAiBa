@@ -5,20 +5,13 @@ import { mount } from '@vue/test-utils'
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
 import 请求错误 from '@/components/请求错误.vue'
 import { fanYi, huoQuFanYi, type FanYiJian, type FanYiZiJian } from '@/config/翻译表'
-import {
-  QIAN_TAI_DAI_MA,
-  WEN_BEN_LEI_XING_QUAN_LU,
-  huoQuLianAiMa,
-  xianShiLianAiMa,
-  type QianTaiDaiMa,
-  type QianTaiWenBenLeiXing,
-} from '@/config/前台错误码'
+import {QianTaiDaiMa, WenBenLeiXingQuanLu, huoQuLianAiMa, xianShiLianAiMa, type QianTaiWenBenLeiXing} from '@/config/前台错误码'
 import { chuangJianQianTaiCuoWu, 归一前台错误 } from '@/utils/前台错误'
 
-const XU_LIU_WU = /base64|DeepSeek|axios|DOMException|EncodingError|ECONNRESET|ECONNREFUSED|getaddrinfo|127\.0\.0\.1|localhost|\/srv\/|\/app\/|SELECT\s|INSERT\s|UPDATE\s|DELETE\s|stack:|SQLSTATE|postgres|mysql|password|api[_-]?key|bearer\s|jwt|SEC-0\d/i
-const ZHAN_WEI = /\{\{|\}\}|undefined|null|NaN|\[object /
-const FU_YAN = /出错了|未知错误|请稍后重试|稍后再试|开小差/
-const ZHUANG_KAI_A = /啦|呀|哦|呢~|吧~|~|！{2,}/
+const XuLiuWu = /base64|DeepSeek|axios|DOMException|EncodingError|ECONNRESET|ECONNREFUSED|getaddrinfo|127\.0\.0\.1|localhost|\/srv\/|\/app\/|SELECT\s|INSERT\s|UPDATE\s|DELETE\s|stack:|SQLSTATE|postgres|mysql|password|api[_-]?key|bearer\s|jwt|SEC-0\d/i
+const ZhanWei = /\{\{|\}\}|undefined|null|NaN|\[object /
+const FuYan = /出错了|未知错误|请稍后重试|稍后再试|开小差/
+const ZhuangKaiA = /啦|呀|哦|呢~|吧~|~|！{2,}/
 
 function quFanYiZhi(): { 路径: string; 文本: string }[] {
   const 出: { 路径: string; 文本: string }[] = []
@@ -54,7 +47,7 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
     it('判据①②：无内部实现/第三方原文、无占位符与脏值、无出戏占位编号', () => {
       const 违规 = quFanYiZhi()
         .filter(({ 路径 }) => !/^fanYi\.tongYong\.beiAnHao$|^fanYi\.tongYong\.suanFaBeiAnHao$/.test(路径))
-        .filter(({ 文本 }) => XU_LIU_WU.test(文本) || ZHAN_WEI.test(文本))
+        .filter(({ 文本 }) => XuLiuWu.test(文本) || ZhanWei.test(文本))
         .map(({ 路径, 文本 }) => `${路径}：${文本}`)
       expect(违规).toEqual([])
     })
@@ -64,7 +57,7 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
         /liaoTian\.lianFaYuJing$|^fanYi\.(junShi|tiaoZhan|zhuYe|ziLiaoSheZhi)\.|^fanYi\.zhanJi\.zhaXingJingGao$/
       const 违规 = quFanYiZhi()
         .filter(({ 路径 }) => !角色文风.test(路径))
-        .filter(({ 文本 }) => FU_YAN.test(文本) || ZHUANG_KAI_A.test(文本))
+        .filter(({ 文本 }) => FuYan.test(文本) || ZhuangKaiA.test(文本))
         .map(({ 路径, 文本 }) => `${路径}：${文本}`)
       expect(违规).toEqual([])
     })
@@ -73,7 +66,7 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
       const 角色文风 = /liaoTian\.lianFaYuJing$/
       const 装可爱 = quFanYiZhi()
         .filter(({ 路径 }) => 角色文风.test(路径))
-        .filter(({ 文本 }) => ZHUANG_KAI_A.test(文本))
+        .filter(({ 文本 }) => ZhuangKaiA.test(文本))
         .map(({ 路径 }) => 路径)
       expect(装可爱).toEqual(['fanYi.liaoTian.lianFaYuJing'])
     })
@@ -107,7 +100,7 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
 
     it('判据③：14 类错误的「下一步」都给出可执行动作，且不承诺页面不存在的追踪编号', () => {
       const 违规: string[] = []
-      for (const leiXing of WEN_BEN_LEI_XING_QUAN_LU) {
+      for (const leiXing of WenBenLeiXingQuanLu) {
         const cuoWu = chuangJianQianTaiCuoWu({ leiXing, traceId: null })
         if (cuoWu.xiaYiBu.trim() === '') 违规.push(`${leiXing}：下一步为空`)
         if (/追踪编号/.test(cuoWu.xiaYiBu)) 违规.push(`${leiXing}：无追踪编号却要求提供它：${cuoWu.xiaYiBu}`)
@@ -127,10 +120,10 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
       mount(请求错误, { props: { cuoWu: chuangJianQianTaiCuoWu({ code: daiMa, traceId }) } })
 
     it('判据①⑧：主区只渲染沉浸文案与恋爱码，不上屏技术码原形与诊断块', () => {
-      for (const daiMa of Object.values(QIAN_TAI_DAI_MA)) {
+      for (const daiMa of Object.values(QianTaiDaiMa)) {
         const wrapper = 装面板(daiMa)
         if (wrapper.find('.qian-tai-cuo-wu').exists() === false) {
-          expect(daiMa, `${daiMa} 不该渲染却渲染了`).toBe(QIAN_TAI_DAI_MA.QU_XIAO)
+          expect(daiMa, `${daiMa} 不该渲染却渲染了`).toBe(QianTaiDaiMa.QU_XIAO)
           continue
         }
         const lianAiMa = huoQuLianAiMa(daiMa)
@@ -157,8 +150,8 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
     })
 
     it('判据③：可重试码有重试按钮，不可重试码没有，且按钮态与文案不矛盾', () => {
-      const 可重试 = [QIAN_TAI_DAI_MA.WANG_LUO, QIAN_TAI_DAI_MA.CHAO_SHI, QIAN_TAI_DAI_MA.SERVICE_UNAVAILABLE]
-      const 不可重试 = [QIAN_TAI_DAI_MA.AUTHENTICATION_REQUIRED, QIAN_TAI_DAI_MA.ZHAN_JI_FEN_LEI_BIAN_GENG]
+      const 可重试 = [QianTaiDaiMa.WANG_LUO, QianTaiDaiMa.CHAO_SHI, QianTaiDaiMa.SERVICE_UNAVAILABLE]
+      const 不可重试 = [QianTaiDaiMa.AUTHENTICATION_REQUIRED, QianTaiDaiMa.ZHAN_JI_FEN_LEI_BIAN_GENG]
       for (const daiMa of 可重试) {
         const wrapper = 装面板(daiMa)
         expect(wrapper.find('.qian-tai-cuo-wu-chong-shi').exists(), `${daiMa} 缺重试按钮`).toBe(true)
@@ -171,9 +164,9 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
     })
 
     it('判据②⑧：恋爱码行只渲染恋爱码与复制按钮，不渲染追踪编号字样', () => {
-      const wrapper = 装面板(QIAN_TAI_DAI_MA.SERVICE_UNAVAILABLE, null)
+      const wrapper = 装面板(QianTaiDaiMa.SERVICE_UNAVAILABLE, null)
       expect(wrapper.get('.qian-tai-cuo-wu-lian-ai-ma').text()).toBe(
-        huoQuLianAiMa(QIAN_TAI_DAI_MA.SERVICE_UNAVAILABLE),
+        huoQuLianAiMa(QianTaiDaiMa.SERVICE_UNAVAILABLE),
       )
       expect(wrapper.text()).not.toContain(huoQuFanYi('tongYong', 'qianTaiCuoWuZhenZongBianHao'))
       expect(wrapper.text()).not.toContain(huoQuFanYi('tongYong', 'qianTaiCuoWuZhenCha'))
@@ -188,7 +181,7 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
         '',
       ]) {
         const wrapper = mount(请求错误, {
-          props: { cuoWu: chuangJianQianTaiCuoWu({ code: QIAN_TAI_DAI_MA.WEI_ZHI, traceId: 脏 }) },
+          props: { cuoWu: chuangJianQianTaiCuoWu({ code: QianTaiDaiMa.WEI_ZHI, traceId: 脏 }) },
         })
         const 文本 = wrapper.text()
         expect(文本).not.toContain('password')
@@ -211,20 +204,20 @@ describe('FP-16 主项目最终玩家可见文本审查（前端）', () => {
     })
 
     it('判据③：错误不装成空态或加载中（aria 语义恒为错误，游戏化文案即主行）', () => {
-      const wrapper = 装面板(QIAN_TAI_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE)
+      const wrapper = 装面板(QianTaiDaiMa.DEPENDENCY_REDIS_UNAVAILABLE)
       expect(wrapper.get('[role="alert"]').exists()).toBe(true)
       expect(wrapper.get('[aria-live="assertive"]').exists()).toBe(true)
       expect(wrapper.text()).not.toContain(huoQuFanYi('tongYong', 'banBenYiGengXin'))
       expect(wrapper.find('.qian-tai-cuo-wu-biaoti').exists()).toBe(false)
       expect(wrapper.get('.qian-tai-cuo-wu-wen-an').text()).toBe(
-        huoQuFanYi('lianAi', huoQuLianAiMa(QIAN_TAI_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE) as never),
+        huoQuFanYi('lianAi', huoQuLianAiMa(QianTaiDaiMa.DEPENDENCY_REDIS_UNAVAILABLE) as never),
       )
     })
 
     it('判据⑨：超长用户输入不被回显进错误面板（面板文本长度有界）', () => {
       const 巨长 = 'あ'.repeat(5000)
       const wrapper = mount(请求错误, {
-        props: { cuoWu: chuangJianQianTaiCuoWu({ code: QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID, yingXiang: 巨长 }) },
+        props: { cuoWu: chuangJianQianTaiCuoWu({ code: QianTaiDaiMa.REQUEST_PARAMETER_INVALID, yingXiang: 巨长 }) },
       })
       expect(wrapper.get('.qian-tai-cuo-wu-lian-ai-ma').text().length).toBeLessThan(80)
       expect(wrapper.text()).not.toContain(巨长.slice(0, 20))

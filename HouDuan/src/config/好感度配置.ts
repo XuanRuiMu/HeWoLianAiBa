@@ -23,7 +23,7 @@ export interface LiuCengJiYingShe {
   shangXian: number
 }
 
-export const HAO_GAN_DU_PEI_ZHI = {
+export const HaoGanDuPeiZhi = {
   quanZhong: {
     xinRenDu: 0.35,
     qinMiDu: 0.25,
@@ -86,8 +86,8 @@ export const HAO_GAN_DU_PEI_ZHI = {
   },
 } as const
 
-export type HaoGanDuJieDuanJian = keyof typeof HAO_GAN_DU_PEI_ZHI.jieDuan
+export type HaoGanDuJieDuanJian = keyof typeof HaoGanDuPeiZhi.jieDuan
 
 export function huoQuJiChuHaoGanDuFanWei(mbti: MBTILeiXing): [number, number] {
-  return HAO_GAN_DU_PEI_ZHI.jiChuFanWei[mbti]
+  return HaoGanDuPeiZhi.jiChuFanWei[mbti]
 }

@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI } from '@/config/消息配置'
+import { LiaoTianYouJianCaiDanPeiZhi } from '@/config/消息配置'
 import type { 消息 } from '@/types/类型定义'
 import { duQuYuYinYinLiang, yuYinYinLiangZengYi } from '@/utils/语音音量存储'
 
@@ -69,7 +69,7 @@ function shiBieBoFang(diZhi: string, shiBieQi: YuYinShiBieQi, yinLiang?: number 
     const chaoShi = setTimeout(() => {
       qingLi()
       juJue(new Error('timeout'))
-    }, LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.yuYinZhuanXieChaoShiHaoMiao)
+    }, LiaoTianYouJianCaiDanPeiZhi.yuYinZhuanXieChaoShiHaoMiao)
     function qingLi() {
       if (yiJieShu) return
       yiJieShu = true

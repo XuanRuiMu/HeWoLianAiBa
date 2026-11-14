@@ -15,20 +15,20 @@ export interface HaoYouFenZuXiang {
   lieBiao: HaoYouXiang[]
 }
 
-const HAN_YU_PIN_YIN_ANCHORS = [
+const HanYuPinYinAnchors = [
   '啊', '芭', '擦', '搭', '鹅', '发', '噶', '哈', '击', '喀', '垃', '妈', '拿', '哦', '啪', '期',
   '然', '撒', '塌', '挖', '昔', '压', '匝',
 ] as const
-const HAN_YU_PIN_YIN_SHOU_ZI_MU = [
+const HanYuPinYinShouZiMu = [
   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
   'R', 'S', 'T', 'W', 'X', 'Y', 'Z',
 ] as const
-const PIN_YIN_COLLATOR = new Intl.Collator('zh')
+const PinYinCollator = new Intl.Collator('zh')
 
 function hanYuPinYinShouZiMu(danZi: string): string | null {
-  for (let i = HAN_YU_PIN_YIN_ANCHORS.length - 1; i >= 0; i -= 1) {
-    if (PIN_YIN_COLLATOR.compare(danZi, HAN_YU_PIN_YIN_ANCHORS[i] as string) >= 0) {
-      return HAN_YU_PIN_YIN_SHOU_ZI_MU[i] as string
+  for (let i = HanYuPinYinAnchors.length - 1; i >= 0; i -= 1) {
+    if (PinYinCollator.compare(danZi, HanYuPinYinAnchors[i] as string) >= 0) {
+      return HanYuPinYinShouZiMu[i] as string
     }
   }
   return null

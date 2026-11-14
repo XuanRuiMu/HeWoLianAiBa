@@ -4,13 +4,13 @@ import { redis } from '../redis'
 import type { JunShiZhiDaoFenDuan } from '../types'
 import type { XiaoXiXinXi } from './消息'
 
-const JUN_SHI_HA_XI_KEY = '军师哈希'
-const JUN_SHI_JI_LU_KEY = '军师记录'
-const JI_LU_ZUI_DA_SHU_LIANG = 20
-const TTL_MIAO = 30 * 24 * 60 * 60
+const JunShiHaXiKey = '军师哈希'
+const JunShiJiLuKey = '军师记录'
+const JiLuZuiDaShuLiang = 20
+const TtlMiao = 30 * 24 * 60 * 60
 
-const JUN_SHI_ZHI_DAO_ZHUANG_TAI_KEY = '军师指导状态'
-const ZHUANG_TAI_TTL_MIAO = 5 * 60
+const JunShiZhiDaoZhuangTaiKey = '军师指导状态'
+const ZhuangTaiTtlMiao = 5 * 60
 
 export type JunShiZhiDaoZhuangTai = 'zhi_dao_zhong' | 'yi_wan_cheng'
 
@@ -98,7 +98,7 @@ export async function jianChaJunShiChongFu(
   ha_xi: string,
 ): Promise<boolean> {
   try {
-    const lie_biao = await redis.lrange(`${JUN_SHI_HA_XI_KEY}:${yong_hu_id}:${jiao_se_id}`, 0, -1)
+    const lie_biao = await redis.lrange(`${JunShiHaXiKey}:${yong_hu_id}:${jiao_se_id}`, 0, -1)
     return lie_biao.includes(ha_xi)
   } catch (cuo_wu) {
     debug日志.error('军师缓存', '检查军师重复失败', { xiang_qing: { cuo_wu: String(cuo_wu) } })
@@ -112,10 +112,10 @@ export async function baoCunJunShiHaXi(
   ha_xi: string,
 ): Promise<void> {
   try {
-    const jianMing = `${JUN_SHI_HA_XI_KEY}:${yong_hu_id}:${jiao_se_id}`
+    const jianMing = `${JunShiHaXiKey}:${yong_hu_id}:${jiao_se_id}`
     await redis.lpush(jianMing, ha_xi)
     await redis.ltrim(jianMing, 0, 199)
-    await redis.expire(jianMing, TTL_MIAO)
+    await redis.expire(jianMing, TtlMiao)
   } catch (cuo_wu) {
     debug日志.error('军师缓存', '保存军师哈希失败', { xiang_qing: { cuo_wu: String(cuo_wu) } })
   }
@@ -127,10 +127,10 @@ export async function baoCunJunShiJiLu(
   ji_lu: JunShiJiLuXiang,
 ): Promise<void> {
   try {
-    const jianMing = `${JUN_SHI_JI_LU_KEY}:${yong_hu_id}:${jiao_se_id}`
+    const jianMing = `${JunShiJiLuKey}:${yong_hu_id}:${jiao_se_id}`
     await redis.lpush(jianMing, JSON.stringify(ji_lu))
-    await redis.ltrim(jianMing, 0, JI_LU_ZUI_DA_SHU_LIANG - 1)
-    await redis.expire(jianMing, TTL_MIAO)
+    await redis.ltrim(jianMing, 0, JiLuZuiDaShuLiang - 1)
+    await redis.expire(jianMing, TtlMiao)
   } catch (cuo_wu) {
     debug日志.error('军师缓存', '保存军师记录失败', { xiang_qing: { cuo_wu: String(cuo_wu) } })
   }
@@ -141,7 +141,7 @@ export async function huoQuJunShiJiLuLieBiao(
   jiao_se_id: string,
 ): Promise<JunShiJiLuXiang[]> {
   try {
-    const jianMing = `${JUN_SHI_JI_LU_KEY}:${yong_hu_id}:${jiao_se_id}`
+    const jianMing = `${JunShiJiLuKey}:${yong_hu_id}:${jiao_se_id}`
     const lie_biao = await redis.lrange(jianMing, 0, -1)
     return lie_biao.map((xiang) => JSON.parse(xiang) as JunShiJiLuXiang)
   } catch (cuo_wu) {
@@ -156,8 +156,8 @@ export async function sheZhiJunShiZhiDaoZhuangTai(
   zhuang_tai: JunShiZhiDaoZhuangTaiXinXi,
 ): Promise<void> {
   try {
-    const jianMing = `${JUN_SHI_ZHI_DAO_ZHUANG_TAI_KEY}:${yong_hu_id}:${jiao_se_id}`
-    await redis.set(jianMing, JSON.stringify(zhuang_tai), 'EX', ZHUANG_TAI_TTL_MIAO)
+    const jianMing = `${JunShiZhiDaoZhuangTaiKey}:${yong_hu_id}:${jiao_se_id}`
+    await redis.set(jianMing, JSON.stringify(zhuang_tai), 'EX', ZhuangTaiTtlMiao)
   } catch (cuo_wu) {
     debug日志.error('军师缓存', '设置军师指导状态失败', { xiang_qing: { cuo_wu: String(cuo_wu) } })
   }
@@ -168,7 +168,7 @@ export async function huoQuJunShiZhiDaoZhuangTai(
   jiao_se_id: string,
 ): Promise<JunShiZhiDaoZhuangTaiXinXi | null> {
   try {
-    const jianMing = `${JUN_SHI_ZHI_DAO_ZHUANG_TAI_KEY}:${yong_hu_id}:${jiao_se_id}`
+    const jianMing = `${JunShiZhiDaoZhuangTaiKey}:${yong_hu_id}:${jiao_se_id}`
     const zhi = await redis.get(jianMing)
     if (!zhi) return null
     return JSON.parse(zhi) as JunShiZhiDaoZhuangTaiXinXi
@@ -183,7 +183,7 @@ export async function shanChuJunShiZhiDaoZhuangTai(
   jiao_se_id: string,
 ): Promise<void> {
   try {
-    const jianMing = `${JUN_SHI_ZHI_DAO_ZHUANG_TAI_KEY}:${yong_hu_id}:${jiao_se_id}`
+    const jianMing = `${JunShiZhiDaoZhuangTaiKey}:${yong_hu_id}:${jiao_se_id}`
     await redis.del(jianMing)
   } catch (cuo_wu) {
     debug日志.error('军师缓存', '删除军师指导状态失败', { xiang_qing: { cuo_wu: String(cuo_wu) } })

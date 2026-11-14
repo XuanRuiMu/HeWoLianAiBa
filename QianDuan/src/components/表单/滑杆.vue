@@ -67,7 +67,7 @@ const emit = defineEmits<{
   (e: 'geng-xin', zhi: number): void
 }>()
 
-const SHIFT_BU_JIN = 10
+const ShiftBuJin = 10
 
 const shuRu = ref<HTMLInputElement | null>(null)
 const tuoZhuaiZhong = ref(false)
@@ -99,7 +99,7 @@ function chuLiJianPan(shiJian: KeyboardEvent): void {
   const yuanSu = shiJian.target as HTMLInputElement | null
   if (!yuanSu || props.jinYong) return
   const fangXiang = shiJian.key === 'ArrowLeft' ? -1 : 1
-  const muBiao = Math.min(props.zuiDa, Math.max(props.zuiXiao, Number(yuanSu.value) + fangXiang * SHIFT_BU_JIN))
+  const muBiao = Math.min(props.zuiDa, Math.max(props.zuiXiao, Number(yuanSu.value) + fangXiang * ShiftBuJin))
   shiJian.preventDefault()
   if (muBiao === Number(yuanSu.value)) return
   yuanSu.value = String(muBiao)

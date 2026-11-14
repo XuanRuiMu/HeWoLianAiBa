@@ -399,7 +399,7 @@ export interface RenShe {
   chuang_jian_shi_jian: string
 }
 
-export const GUANXI_JIEDUAN_MAP: Record<GuanxiJieduan, string> = {
+export const GuanxiJieduanMap: Record<GuanxiJieduan, string> = {
   lengDan: '冷淡',
   shuYuan: '疏远',
   renShi: '认识',
@@ -412,7 +412,7 @@ export const GUANXI_JIEDUAN_MAP: Record<GuanxiJieduan, string> = {
   shenAi: '深爱',
 }
 
-export const GUANXI_JIEDUAN_ORDER: GuanxiJieduan[] = [
+export const GuanxiJieduanOrder: GuanxiJieduan[] = [
   'lengDan',
   'shuYuan',
   'renShi',
@@ -425,7 +425,7 @@ export const GUANXI_JIEDUAN_ORDER: GuanxiJieduan[] = [
   'shenAi',
 ]
 
-export const XING_GE_XUAN_ZE_MAP: Record<XingGeXuanZe, string> = {
+export const XingGeXuanZeMap: Record<XingGeXuanZe, string> = {
   ISTJ: '物流师',
   ISFJ: '守护者',
   INFJ: '提倡者',
@@ -444,7 +444,7 @@ export const XING_GE_XUAN_ZE_MAP: Record<XingGeXuanZe, string> = {
   ENTP: '辩论家',
 }
 
-export const REN_SHE_BIAO_QIAN_MAP: Record<RenSheBiaoQian, string> = {
+export const RenSheBiaoQianMap: Record<RenSheBiaoQian, string> = {
   neiLianXueBa: '内敛学霸',
   huoPoSheJiaoDaRen: '活泼社交达人',
   wenYiQingNian: '文艺青年',
@@ -453,7 +453,7 @@ export const REN_SHE_BIAO_QIAN_MAP: Record<RenSheBiaoQian, string> = {
   youMoHuaLao: '幽默话痨',
 }
 
-export const HAO_GAN_DU_CENG_JI_MAP: Record<
+export const HaoGanDuCengJiMap: Record<
   string,
   { min: number; max: number; ming_cheng: string }
 > = {
@@ -494,7 +494,7 @@ export interface TongZhi {
   yi_du_shi_jian: string | null
 }
 
-export const FAN_KUI_LEI_BIE_MAP: Record<FanKuiLeiBie, string> = {
+export const FanKuiLeiBieMap: Record<FanKuiLeiBie, string> = {
   jiaoSeBuHeShi: '角色不合适',
   huiFuBuHeShi: '回复不合适',
   neiRongBuDang: '内容不当',
@@ -503,7 +503,7 @@ export const FAN_KUI_LEI_BIE_MAP: Record<FanKuiLeiBie, string> = {
 }
 
 export function huoQuHaoGanDuCengJi(haoGanDu: number): string {
-  for (const [, dingYi] of Object.entries(HAO_GAN_DU_CENG_JI_MAP)) {
+  for (const [, dingYi] of Object.entries(HaoGanDuCengJiMap)) {
     if (haoGanDu >= dingYi.min && haoGanDu <= dingYi.max) return dingYi.ming_cheng
   }
   return '冷淡'
@@ -517,6 +517,6 @@ export type 通知 = TongZhi
 export type 档案详情 = DangAnXiangQing
 export type MBTI类型 = MBTILeiXing
 export type 性格选择 = XingGeXuanZe
-export const 性格选择映射 = XING_GE_XUAN_ZE_MAP
+export const 性格选择映射 = XingGeXuanZeMap
 export type 人设标签 = RenSheBiaoQian
 export type 性别 = XingBie

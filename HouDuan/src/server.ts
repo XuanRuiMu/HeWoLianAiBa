@@ -30,7 +30,7 @@ import ziLiaoLuYou from './routes/资料'
 import { chengGongXiangYing, shiBaiXiangYing } from './utils/xiangying'
 import { 全YuZhanCuoWuChuLi } from './middleware/错误处理'
 import { 依赖闸门中间件 } from './middleware/依赖闸门'
-import { CUO_WU_DAI_MA, YingYongCuoWu } from './config/错误码注册表'
+import { CuoWuDaiMa, YingYongCuoWu } from './config/错误码注册表'
 import { qiDongShenJiRiZhiGuiDangDingShiQi, tingZhiShenJiRiZhiGuiDang } from './services/审计日志归档'
 import { qiDongShuJuBaoCunQingLiDingShiQi, tingZhiShuJuBaoCunQingLi } from './services/数据保存期限'
 import { chuangJianHTTPRiZhiZhongJianJian } from './utils/debug日志'
@@ -99,7 +99,7 @@ yingYong.use(cors({
     } catch {
       // 解析失败则按不允许处理
     }
-    huiDiao(new YingYongCuoWu(CUO_WU_DAI_MA.ORIGIN_DENIED))
+    huiDiao(new YingYongCuoWu(CuoWuDaiMa.ORIGIN_DENIED))
   },
   credentials: true,
 }))
@@ -116,7 +116,7 @@ yingYong.use((qingQiu, xiangYing, xiaYiBu) => {
     } catch {
       // 计数失败不阻断400响应
     }
-    shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+    shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CuoWuDaiMa.REQUEST_PARAMETER_INVALID)
     return
   }
   xiaYiBu()
@@ -155,14 +155,14 @@ yingYong.use(changGuiXianLiu)
 yingYong.use('/api/logs', riZhiJieShouXianLiu, riZhiJieShouLuYou)
 yingYong.use('/api/config/feature-flags', gongNengKaiGuanLuYou)
 yingYong.use('/api/挑战/配置', (async (_qingQiu, xiangYing) => {
-  const { TIAO_ZHAN_PEI_ZHI } = await import('./config/挑战配置')
+  const { TiaoZhanPeiZhi } = await import('./config/挑战配置')
   const { chengGongXiangYing, shiBaiXiangYing } = await import('./utils/xiangying')
   const { debug日志 } = await import('./utils/debug日志')
   const { huoQuFanYi } = await import('./config/translations')
   try {
     return chengGongXiangYing(xiangYing, {
-      zha_xing_gai_lv: TIAO_ZHAN_PEI_ZHI.zhaXingGaiLv,
-      fang_qi_kou_fen: TIAO_ZHAN_PEI_ZHI.fangQiKouFen,
+      zha_xing_gai_lv: TiaoZhanPeiZhi.zhaXingGaiLv,
+      fang_qi_kou_fen: TiaoZhanPeiZhi.fangQiKouFen,
     })
   } catch (cuoWu) {
     debug日志.error('挑战接口', '查询挑战配置失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
@@ -202,7 +202,7 @@ yingYong.use((_qingQiu, xiangYing) => {
   } catch {
     // 计数失败不阻断404响应
   }
-  shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'), CUO_WU_DAI_MA.RESOURCE_NOT_FOUND)
+  shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'), CuoWuDaiMa.RESOURCE_NOT_FOUND)
 })
 
 yingYong.use(全YuZhanCuoWuChuLi)

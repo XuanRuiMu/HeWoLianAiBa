@@ -54,15 +54,15 @@ vi.mock('../../services/战绩', async () => {
 
 import luYou from '../战绩'
 
-const YONG_HU = '11111111-1111-4111-8111-111111111111'
-const JIAO_SE = '22222222-2222-4222-8222-222222222222'
-const DANG_AN = '33333333-3333-4333-8333-333333333333'
+const YongHu = '11111111-1111-4111-8111-111111111111'
+const JiaoSe = '22222222-2222-4222-8222-222222222222'
+const DangAn = '33333333-3333-4333-8333-333333333333'
 
 function chuangJianYingYong() {
   const yingYong = express()
   yingYong.use(express.json())
   yingYong.use((qingQiu, _xiangYing, xiaYiBu) => {
-    ;(qingQiu as unknown as { yong_hu: { yongHuId: string } }).yong_hu = { yongHuId: YONG_HU }
+    ;(qingQiu as unknown as { yong_hu: { yongHuId: string } }).yong_hu = { yongHuId: YongHu }
     xiaYiBu()
   })
   yingYong.use((qingQiu, _xiangYing, xiaYiBu) => {
@@ -75,9 +75,9 @@ function chuangJianYingYong() {
 
 function zaoDangAn(fuGai: Record<string, unknown> = {}) {
   return {
-    id: DANG_AN,
-    yong_hu_id: YONG_HU,
-    jiao_se_id: JIAO_SE,
+    id: DangAn,
+    yong_hu_id: YongHu,
+    jiao_se_id: JiaoSe,
     jiao_se_ming_zi: '小玄',
     tou_xiang_biao_ji: 'pu',
     jie_guo_lei_xing: '在一起了',
@@ -117,7 +117,7 @@ describe('GET /战绩/复盘/:dangAnId 空记录契约', () => {
       }),
     )
 
-    const xiangYing = await request(chuangJianYingYong()).get(`/战绩/复盘/${DANG_AN}`)
+    const xiangYing = await request(chuangJianYingYong()).get(`/战绩/复盘/${DangAn}`)
 
     expect(xiangYing.status, JSON.stringify(xiangYing.body)).toBe(200)
     expect(xiangYing.body.shu_ju).toEqual({
@@ -128,7 +128,7 @@ describe('GET /战绩/复盘/:dangAnId 空记录契约', () => {
       jia_zai_zhong: false,
       fu_pan_zhuang_tai: 'wu_liao_tian_ji_lu',
     })
-    expect(计数).toHaveBeenCalledWith(YONG_HU, JIAO_SE)
+    expect(计数).toHaveBeenCalledWith(YongHu, JiaoSe)
     expect(生成).not.toHaveBeenCalled()
   })
 
@@ -142,7 +142,7 @@ describe('GET /战绩/复盘/:dangAnId 空记录契约', () => {
       }),
     )
 
-    const xiangYing = await request(chuangJianYingYong()).get(`/战绩/复盘/${DANG_AN}`)
+    const xiangYing = await request(chuangJianYingYong()).get(`/战绩/复盘/${DangAn}`)
 
     expect(xiangYing.status).toBe(200)
     expect(xiangYing.body.shu_ju.fu_pan_nei_rong).toBe('用户表现：节奏稳')
@@ -161,7 +161,7 @@ describe('GET /战绩/复盘/:dangAnId 空记录契约', () => {
       }),
     )
 
-    const xiangYing = await request(chuangJianYingYong()).get(`/战绩/复盘/${DANG_AN}`)
+    const xiangYing = await request(chuangJianYingYong()).get(`/战绩/复盘/${DangAn}`)
 
     expect(xiangYing.status).toBe(200)
     expect(xiangYing.body.shu_ju.fu_pan_nei_rong).toBe('历史复盘：这段关系里你很真诚')
@@ -174,13 +174,13 @@ describe('GET /战绩/复盘/:dangAnId 空记录契约', () => {
     计数.mockResolvedValue(2)
     档案详情.mockResolvedValue(zaoDangAn())
 
-    const xiangYing = await request(chuangJianYingYong()).get(`/战绩/复盘/${DANG_AN}`)
+    const xiangYing = await request(chuangJianYingYong()).get(`/战绩/复盘/${DangAn}`)
 
     expect(xiangYing.status).toBe(200)
     expect(xiangYing.body.shu_ju.fu_pan_nei_rong).toBeNull()
     expect(xiangYing.body.shu_ju.jia_zai_zhong).toBe(true)
     expect(xiangYing.body.shu_ju.fu_pan_zhuang_tai).toBe('sheng_cheng_zhong')
     expect(生成).toHaveBeenCalledTimes(1)
-    expect(生成).toHaveBeenCalledWith(YONG_HU, JIAO_SE, DANG_AN)
+    expect(生成).toHaveBeenCalledWith(YongHu, JiaoSe, DangAn)
   })
 })

@@ -47,7 +47,7 @@
         <input
           class="jiu-di-bian-ji-yan-se-shu-ru"
           type="color"
-          :value="yanSeGaoGao || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE"
+          :value="yanSeGaoGao || WaiGuanMoRenWenZiYanSe"
           :disabled="caoZuoZhong"
           :aria-label="ziDingYiYanSeBiaoTi"
           @input="chuLiYanSeShuRu"
@@ -80,8 +80,8 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { huoQuFanYi } from '@/config/翻译表'
 import {
-  WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
-  WAI_GUAN_YAN_SE_XUAN_XIANG,
+  WaiGuanMoRenWenZiYanSe,
+  WaiGuanYanSeXuanXiang,
   shiKeYongQiPaoWenZiYanSe,
   shiKeYongWenZiYanSe,
 } from '@/config/外观自定义'
@@ -131,7 +131,7 @@ const ziDingYiYanSeBiaoTi = huoQuFanYi('sheZhi', 'waiGuanWenZiYanSe')
 const ziShu = computed(() => Array.from(mingChengGaoGao.value.trim()).length)
 const ziShuChao = computed(() => ziShu.value > props.zuiDaZiFu)
 const keYongYanSe = computed(() =>
-  WAI_GUAN_YAN_SE_XUAN_XIANG.filter((yanSe) =>
+  WaiGuanYanSeXuanXiang.filter((yanSe) =>
     props.leiBie === 'qiPao' ? shiKeYongQiPaoWenZiYanSe(yanSe) : shiKeYongWenZiYanSe(yanSe),
   ),
 )

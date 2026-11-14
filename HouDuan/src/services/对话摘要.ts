@@ -1,9 +1,9 @@
 import { 数据库 } from '../数据库'
 import { redis } from '../redis'
 import { debug日志 } from '../utils/debug日志'
-import { AI_PEI_ZHI } from '../config/AI配置'
+import { AiPeiZhi } from '../config/AI配置'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
-import { gouJianJiYiZhaiYaoPrompt, JI_YI_ZHU_RU_YUE_SHU } from './Prompt构建器'
+import { gouJianJiYiZhaiYaoPrompt, JiYiZhuRuYueShu } from './Prompt构建器'
 import { huoQuFanYi } from '../config/translations'
 
 export interface DuiHuaZhaiYaoJiLu {
@@ -14,7 +14,7 @@ export interface DuiHuaZhaiYaoJiLu {
 }
 
 function huoQuZhaiYaoPeiZhi(): { zuiDaZiFu: number; chuFaXiaoXiShu: number; yuanLiaoXiaoXiShu: number; suoTtlMiao: number } {
-  const zhaiYao = AI_PEI_ZHI.zhaiYao
+  const zhaiYao = AiPeiZhi.zhaiYao
   return {
     zuiDaZiFu: zhaiYao.zuiDaZiFu,
     chuFaXiaoXiShu: zhaiYao.chuFaXiaoXiShu,
@@ -22,7 +22,7 @@ function huoQuZhaiYaoPeiZhi(): { zuiDaZiFu: number; chuFaXiaoXiShu: number; yuan
     suoTtlMiao: zhaiYao.suoTtlMiao,
   }
 }
-const ZHAI_YAO_REDIS_JIAN_QIAN_ZHUI = 'dui_hua_zhai_yao_sheng_cheng_zhong:'
+const ZhaiYaoRedisJianQianZhui = 'dui_hua_zhai_yao_sheng_cheng_zhong:'
 
 export function qieDuanZhaiYao(neiRong: string): string {
   const qingLi = (neiRong || '').trim()
@@ -61,11 +61,11 @@ export async function duQuDuiHuaZhaiYao(yongHuId: string, jiaoSeId: string): Pro
 
 export function gouJianZhaiYaoZhuRuWenBen(zhaiYao: DuiHuaZhaiYaoJiLu | null): string {
   if (!zhaiYao || !zhaiYao.zhaiYaoNeiRong) return ''
-  return `【此前的记忆摘要】\n${JI_YI_ZHU_RU_YUE_SHU}\n${zhaiYao.zhaiYaoNeiRong}`
+  return `【此前的记忆摘要】\n${JiYiZhuRuYueShu}\n${zhaiYao.zhaiYaoNeiRong}`
 }
 
-const TONG_BU_HUAN_CUN = new Map<string, string>()
-const TONG_BU_HUAN_CUN_ZUI_DA = 500
+const TongBuHuanCun = new Map<string, string>()
+const TongBuHuanCunZuiDa = 500
 
 function huoQuTongBuJian(yongHuId: string, jiaoSeId: string): string {
   return `${yongHuId}:${jiaoSeId}`
@@ -74,18 +74,18 @@ function huoQuTongBuJian(yongHuId: string, jiaoSeId: string): string {
 export function huanCunTongBuZhaiYao(yongHuId: string, jiaoSeId: string, zhuRuWenBen: string): void {
   const jian = huoQuTongBuJian(yongHuId, jiaoSeId)
   if (!zhuRuWenBen) {
-    TONG_BU_HUAN_CUN.delete(jian)
+    TongBuHuanCun.delete(jian)
     return
   }
-  if (!TONG_BU_HUAN_CUN.has(jian) && TONG_BU_HUAN_CUN.size >= TONG_BU_HUAN_CUN_ZUI_DA) {
-    const shouJian = TONG_BU_HUAN_CUN.keys().next().value
-    if (shouJian !== undefined) TONG_BU_HUAN_CUN.delete(shouJian)
+  if (!TongBuHuanCun.has(jian) && TongBuHuanCun.size >= TongBuHuanCunZuiDa) {
+    const shouJian = TongBuHuanCun.keys().next().value
+    if (shouJian !== undefined) TongBuHuanCun.delete(shouJian)
   }
-  TONG_BU_HUAN_CUN.set(jian, zhuRuWenBen)
+  TongBuHuanCun.set(jian, zhuRuWenBen)
 }
 
 export function duQuTongBuZhaiYao(yongHuId: string, jiaoSeId: string): string {
-  return TONG_BU_HUAN_CUN.get(huoQuTongBuJian(yongHuId, jiaoSeId)) ?? ''
+  return TongBuHuanCun.get(huoQuTongBuJian(yongHuId, jiaoSeId)) ?? ''
 }
 
 async function huoQuXiaoXiZongShu(yongHuId: string, jiaoSeId: string, maoDian?: string | null): Promise<number> {
@@ -121,7 +121,7 @@ async function huoQuZhaiYaoYuanLiao(
 
 export async function shengChengBingLuoKuZhaiYao(yongHuId: string, jiaoSeId: string, jiaoSeMing: string): Promise<boolean> {
   const peiZhi = huoQuZhaiYaoPeiZhi()
-  const suoJian = `${ZHAI_YAO_REDIS_JIAN_QIAN_ZHUI}${yongHuId}:${jiaoSeId}`
+  const suoJian = `${ZhaiYaoRedisJianQianZhui}${yongHuId}:${jiaoSeId}`
   try {
     const qiangZhan = await redis.set(suoJian, '1', 'EX', peiZhi.suoTtlMiao, 'NX')
     if (qiangZhan !== 'OK') return false

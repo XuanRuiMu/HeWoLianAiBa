@@ -73,7 +73,7 @@ export function duiQu旧码映射(): 旧码映射行[] {
   if (声明.length !== 1) {
     throw new Error(`注册表里的旧码映射声明解析到 ${声明.length} 处，必须恰好一处`)
   }
-  const 行 = [...声明[0][1].matchAll(/([A-Z][A-Z0-9_]*):\s*CUO_WU_DAI_MA\.([A-Z][A-Z0-9_]*)/g)].map(
+  const 行 = [...声明[0][1].matchAll(/([A-Z][A-Z0-9_]*):\s*CuoWuDaiMa\.([A-Z][A-Z0-9_]*)/g)].map(
     (匹配) => ({ 旧码: 匹配[1], 现码: 匹配[2] as CuoWuDaiMa }),
   )
   if (行.length === 0) {

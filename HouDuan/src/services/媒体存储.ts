@@ -9,7 +9,7 @@ import { redis } from '../redis'
 import { peiZhi } from '../config'
 import type { FanYiJian } from '../config/translations'
 import {
-  MEI_TI_PEI_ZHI,
+  MeiTiPeiZhi,
   huoQuWenJianDaXiaoShangXianZiJie,
   shiHeFaLeiBie,
   shiYunXuMIME,
@@ -35,10 +35,10 @@ export class MeiTiCunChuCuoWu extends Error {
   }
 }
 
-const SHA256_GE_SHI = /^[0-9a-f]{64}$/
-const UUID_GE_SHI = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const Sha256GeShi = /^[0-9a-f]{64}$/
+const UuidGeShi = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-const YUN_XU_QIAN_MING_SUAN_FA = new Set(['sha256'])
+const YunXuQianMingSuanFa = new Set(['sha256'])
 let meiTiQianMingMiYaoHuanCun: string | null = null
 
 function yanZhengMiYaoShang(miYao: string): void {
@@ -76,14 +76,14 @@ export function chongZhiMeiTiQianMingMiYao(): void {
   meiTiQianMingMiYaoHuanCun = null
 }
 
-void YUN_XU_QIAN_MING_SUAN_FA
+void YunXuQianMingSuanFa
 
 async function queBaoMuLu(cunZai: string): Promise<void> {
   await fs.promises.mkdir(cunZai, { recursive: true })
 }
 
 function huoQuLinShiMuLu(): string {
-  return path.join(MEI_TI_PEI_ZHI.cunChuGenMuLu, 'tmp')
+  return path.join(MeiTiPeiZhi.cunChuGenMuLu, 'tmp')
 }
 
 async function qingChuWenJian(luJing: string): Promise<void> {
@@ -147,9 +147,9 @@ export async function liuShiBaoCunMeiTi(
   const daXiaoShangXian =
     leiBie === 'wenjian'
       ? huoQuWenJianDaXiaoShangXianZiJie(yuanShiWenJianMing, qingLiMIME)
-      : MEI_TI_PEI_ZHI.daXiaoShangXianZiJie[leiBie as keyof typeof MEI_TI_PEI_ZHI.daXiaoShangXianZiJie]
+      : MeiTiPeiZhi.daXiaoShangXianZiJie[leiBie as keyof typeof MeiTiPeiZhi.daXiaoShangXianZiJie]
   const linShiMuLu = huoQuLinShiMuLu()
-  await queBaoMuLu(MEI_TI_PEI_ZHI.cunChuGenMuLu)
+  await queBaoMuLu(MeiTiPeiZhi.cunChuGenMuLu)
   await queBaoMuLu(linShiMuLu)
   const linShiLuJing = path.join(linShiMuLu, `${crypto.randomUUID()}.tmp`)
 
@@ -242,7 +242,7 @@ const sha256 = haXi.digest('hex').toLowerCase()
     }
   }
 
-  const muBiaoMuLu = path.join(MEI_TI_PEI_ZHI.cunChuGenMuLu, sha256.slice(0, 2))
+  const muBiaoMuLu = path.join(MeiTiPeiZhi.cunChuGenMuLu, sha256.slice(0, 2))
   const muBiaoLuJing = path.join(muBiaoMuLu, sha256)
   await queBaoMuLu(muBiaoMuLu)
 
@@ -300,7 +300,7 @@ const sha256 = haXi.digest('hex').toLowerCase()
 }
 
 export function shengChengQianMingURL(sha256: string, yongHuId: string, youXiaoMiao?: number): string {
-  const youXiaoQi = youXiaoMiao ?? MEI_TI_PEI_ZHI.qianMingYouXiaoMiaoRenZheng
+  const youXiaoQi = youXiaoMiao ?? MeiTiPeiZhi.qianMingYouXiaoMiaoRenZheng
   const guoQiMiao = Math.floor(Date.now() / 1000) + youXiaoQi
   const qianFaHaoMiao = Date.now()
   const qianMing = crypto
@@ -314,11 +314,11 @@ export function shengChengMeiTiYinYong(sha256: string): string {
   return `/api/媒体/${sha256.toLowerCase()}`
 }
 
-const MEI_TI_YIN_YONG_GE_SHI = /^\/api\/媒体\/([0-9a-f]{64})(\?.*)?$/i
+const MeiTiYinYongGeShi = /^\/api\/媒体\/([0-9a-f]{64})(\?.*)?$/i
 
 export function tiQuMeiTiSha(cunChuZhi: unknown): string | null {
   if (typeof cunChuZhi !== 'string') return null
-  const piPei = MEI_TI_YIN_YONG_GE_SHI.exec(cunChuZhi.trim())
+  const piPei = MeiTiYinYongGeShi.exec(cunChuZhi.trim())
   if (!piPei) return null
   return piPei[1].toLowerCase()
 }
@@ -331,7 +331,7 @@ export function zhongXinQianMingMeiTiURL(
   if (!cunChuZhi) return null
   const sha256 = tiQuMeiTiSha(cunChuZhi)
   if (!sha256) return cunChuZhi
-  return shengChengQianMingURL(sha256, yongHuId, youXiaoMiao ?? MEI_TI_PEI_ZHI.zhanShiYouXiaoMiao)
+  return shengChengQianMingURL(sha256, yongHuId, youXiaoMiao ?? MeiTiPeiZhi.zhanShiYouXiaoMiao)
 }
 
 function huoQuMeiTiCheXiaoJian(yongHuId: string): string {
@@ -342,7 +342,7 @@ export async function cheXiaoYongHuMeiTiQianMing(yongHuId: string): Promise<void
   await redis.set(huoQuMeiTiCheXiaoJian(yongHuId), String(Date.now()), 'EX', 30 * 24 * 60 * 60)
 }
 
-export const MEI_TI_KE_DU_YU_JU = `
+export const MeiTiKeDuYuJu = `
 SELECT 1
   FROM "媒体文件" mf
  WHERE mf."SHA256" = $1
@@ -363,7 +363,7 @@ SELECT 1
  LIMIT 1`
 
 export async function yanZhengMeiTiKeDu(meiTiSha: string, yongHuId: string): Promise<boolean> {
-  const jieGuo = await 数据库.query(MEI_TI_KE_DU_YU_JU, [meiTiSha, yongHuId])
+  const jieGuo = await 数据库.query(MeiTiKeDuYuJu, [meiTiSha, yongHuId])
   return jieGuo.rows.length > 0
 }
 
@@ -374,13 +374,13 @@ export async function yanZhengQianMing(
   s: unknown,
   t: unknown,
 ): Promise<boolean> {
-  if (typeof sha256 !== 'string' || !SHA256_GE_SHI.test(sha256)) return false
+  if (typeof sha256 !== 'string' || !Sha256GeShi.test(sha256)) return false
   if (typeof e !== 'string' || e === '' || typeof s !== 'string' || s === '') return false
   if (!/^\d{1,12}$/.test(e)) return false
   const guoQiMiao = parseInt(e, 10)
   if (guoQiMiao * 1000 <= Date.now()) return false
   if (typeof u !== 'string' || u === '' || typeof t !== 'string' || t === '') return false
-  if (!UUID_GE_SHI.test(u) || !/^\d{1,15}$/.test(t)) return false
+  if (!UuidGeShi.test(u) || !/^\d{1,15}$/.test(t)) return false
   const yuQiQianMing = crypto
     .createHmac('sha256', huoQuMeiTiQianMingMiYao())
     .update(`${sha256}:${e}:${u}:${t}`)
@@ -398,9 +398,9 @@ export async function yanZhengQianMing(
 }
 
 export function huoQuBenDiLuJing(sha256: string): string | null {
-  if (!SHA256_GE_SHI.test(sha256)) return null
+  if (!Sha256GeShi.test(sha256)) return null
   const di = sha256.toLowerCase()
-  return path.join(MEI_TI_PEI_ZHI.cunChuGenMuLu, di.slice(0, 2), di)
+  return path.join(MeiTiPeiZhi.cunChuGenMuLu, di.slice(0, 2), di)
 }
 
 export async function shanChuMeiTiWenJian(sha256: string): Promise<void> {

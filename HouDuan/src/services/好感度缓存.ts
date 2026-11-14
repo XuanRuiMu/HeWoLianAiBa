@@ -1,12 +1,12 @@
 import { redis } from '../redis'
 import { 数据库 } from '../数据库'
-import { HAO_GAN_DU_PEI_ZHI } from '../config/好感度配置'
+import { HaoGanDuPeiZhi } from '../config/好感度配置'
 import { debug日志 } from '../utils/debug日志'
 import type { HaoGanDuPingPanJieGuo } from '../types'
 
-const ZENG_LIANG_KEY_QIAN_ZHUI = 'hao_gan_du_zeng_liang:'
-const ZENG_LIANG_TTL = 3 * 60 * 60 * 1000
-const ZENG_LIANG_MAX_LEN = 10
+const ZengLiangKeyQianZhui = 'hao_gan_du_zeng_liang:'
+const ZengLiangTtl = 3 * 60 * 60 * 1000
+const ZengLiangMaxLen = 10
 
 export interface ZengLiangJiLu {
     lunXu: number
@@ -25,7 +25,7 @@ export interface XiShuJiSuanJieGuo {
 }
 
 function huoQuKey(yongHuId: string, jiaoSeId: string): string {
-    return `${ZENG_LIANG_KEY_QIAN_ZHUI}${yongHuId}:${jiaoSeId}`
+    return `${ZengLiangKeyQianZhui}${yongHuId}:${jiaoSeId}`
 }
 
 export function jiSuanMuBiaoQuXian(dangQianFen: number, huDongCiShu: number): number {
@@ -55,8 +55,8 @@ export async function jiLuZengLiang(
 
     try {
         await redis.lpush(jianMing, JSON.stringify(jiLu))
-        await redis.ltrim(jianMing, 0, ZENG_LIANG_MAX_LEN - 1)
-        await redis.pexpire(jianMing, ZENG_LIANG_TTL)
+        await redis.ltrim(jianMing, 0, ZengLiangMaxLen - 1)
+        await redis.pexpire(jianMing, ZengLiangTtl)
     } catch (cuoWu) {
         debug日志.error('好感度缓存', '增量缓存写入失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
     }
@@ -129,14 +129,14 @@ export async function jiSuanXiShu(
     return { xiShu, lianXuWeiDaBiao: xiShu > 1 ? lianXuWeiDaBiao + 1 : 0, muBiaoQuXian: muBiao, pingJunShuaiJianHou: pingJun }
 }
 
-const BAO_DI_KEY_QIAN_ZHUI = 'hao_gan_du_bao_di:'
+const BaoDiKeyQianZhui = 'hao_gan_du_bao_di:'
 
 export async function yingYongHuiHuaBaoDi(
     huiHuaJian: string,
     jieGuo: HaoGanDuPingPanJieGuo,
 ): Promise<HaoGanDuPingPanJieGuo> {
-    const baoDi = HAO_GAN_DU_PEI_ZHI.pingPanBaoDi
-    const jianMing = `${BAO_DI_KEY_QIAN_ZHUI}${huiHuaJian}`
+    const baoDi = HaoGanDuPeiZhi.pingPanBaoDi
+    const jianMing = `${BaoDiKeyQianZhui}${huiHuaJian}`
     try {
         const zongFen =
             jieGuo.xin_ren_du_bian_hua +

@@ -15,20 +15,20 @@ interface ShangBaoTi {
   shi_jian_chuo?: unknown
 }
 
-const SHANG_BAO_LEI_XING_JI_HE: ReadonlySet<ShangBaoLeiXing> = new Set([
+const ShangBaoLeiXingJiHe: ReadonlySet<ShangBaoLeiXing> = new Set([
   'cuoWu',
   'xingNengZhiBiao',
   'mai_dian',
 ])
 
-const ZUI_DA_XIANG_QING_ZI_DIAN_SHU = 50
-const ZUI_DA_ZHI_CHANG_DU = 500
+const ZuiDaXiangQingZiDianShu = 50
+const ZuiDaZhiChangDu = 500
 
-const ZUI_DA_SHI_JIAN_MING_CHANG_DU = 100
+const ZuiDaShiJianMingChangDu = 100
 
 function jieDuanZhi(zhi: unknown, shenDu: number): unknown {
   if (typeof zhi === 'string') {
-    return zhi.length > ZUI_DA_ZHI_CHANG_DU ? `${zhi.slice(0, ZUI_DA_ZHI_CHANG_DU)}…[截断]` : zhi
+    return zhi.length > ZuiDaZhiChangDu ? `${zhi.slice(0, ZuiDaZhiChangDu)}…[截断]` : zhi
   }
   if (typeof zhi === 'number' || typeof zhi === 'boolean' || zhi === null || zhi === undefined) {
     return zhi
@@ -46,7 +46,7 @@ function jieDuanZhi(zhi: unknown, shenDu: number): unknown {
     }
     return jieGuo
   }
-  return String(zhi).slice(0, ZUI_DA_ZHI_CHANG_DU)
+  return String(zhi).slice(0, ZuiDaZhiChangDu)
 }
 
 function shiYouXiaoXiangQing(zhi: unknown): zhi is Record<string, unknown> {
@@ -55,7 +55,7 @@ function shiYouXiaoXiangQing(zhi: unknown): zhi is Record<string, unknown> {
   }
   const duiXiang = zhi as Record<string, unknown>
   const jianShu = Object.keys(duiXiang).length
-  if (jianShu === 0 || jianShu > ZUI_DA_XIANG_QING_ZI_DIAN_SHU) {
+  if (jianShu === 0 || jianShu > ZuiDaXiangQingZiDianShu) {
     return false
   }
   return true
@@ -76,7 +76,7 @@ function tuoMinShangBaoZhi(zhi: unknown): unknown {
 
 function shiYouXiaoTi(ti: ShangBaoTi): ti is { lei_xing: ShangBaoLeiXing; xiang_qing: Record<string, unknown> } {
   if (typeof ti.lei_xing !== 'string') return false
-  if (!SHANG_BAO_LEI_XING_JI_HE.has(ti.lei_xing as ShangBaoLeiXing)) return false
+  if (!ShangBaoLeiXingJiHe.has(ti.lei_xing as ShangBaoLeiXing)) return false
   return shiYouXiaoXiangQing(ti.xiang_qing)
 }
 
@@ -92,7 +92,7 @@ function shiYouXiaoMaiDianTi(ti: ShangBaoTi): ti is MaiDianTi {
   if (
     typeof ti.shi_jian !== 'string' ||
     ti.shi_jian.length === 0 ||
-    ti.shi_jian.length > ZUI_DA_SHI_JIAN_MING_CHANG_DU
+    ti.shi_jian.length > ZuiDaShiJianMingChangDu
   ) {
     return false
   }

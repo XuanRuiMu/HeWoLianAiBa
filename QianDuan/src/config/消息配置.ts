@@ -1,6 +1,6 @@
 import { huoQuFanYi, type FanYiZiJian } from './翻译表'
 
-export const XIAO_XI_PEI_ZHI = {
+export const XiaoXiPeiZhi = {
   cheHuiShiXian: 2 * 60 * 1000,
   zuiDaXiaoXiChangDu: 500,
   ziFuTongJiXianShiYuZhi: 400,
@@ -11,7 +11,7 @@ export const XIAO_XI_PEI_ZHI = {
   haoYouLunXunJianGeHaoMiao: 30 * 1000,
 }
 
-export const DUO_MEI_TI_PEI_ZHI = {
+export const DuoMeiTiPeiZhi = {
   yuYinZuiDaMiao: 60,
   yuYinZuiDuanMiao: 1,
   tuPianQiPaoZuiDaKuanPx: 180,
@@ -34,13 +34,13 @@ export const DUO_MEI_TI_PEI_ZHI = {
   wenJianMingZuiDaXianShiZiFu: 24,
 } as const
 
-export const SHENG_YIN_BAI_FEN_BI = {
+export const ShengYinBaiFenBi = {
   zuiXiao: 0,
   zuiDa: 100,
   moRen: 50,
 } as const
 
-export const SHENG_YIN_TONG_DAO_XUAN_XIANG = [
+export const ShengYinTongDaoXuanXiang = [
   'zong',
   'yinYue',
   'yongHuYuYin',
@@ -48,11 +48,11 @@ export const SHENG_YIN_TONG_DAO_XUAN_XIANG = [
   'shiPin',
 ] as const
 
-export type ShengYinTongDao = (typeof SHENG_YIN_TONG_DAO_XUAN_XIANG)[number]
+export type ShengYinTongDao = (typeof ShengYinTongDaoXuanXiang)[number]
 
 export type ShengYinPeiZhi = Record<ShengYinTongDao, number | null>
 
-export const SHENG_YIN_TONG_DAO_MO_REN: ShengYinPeiZhi = {
+export const ShengYinTongDaoMoRen: ShengYinPeiZhi = {
   zong: null,
   yinYue: null,
   yongHuYuYin: null,
@@ -60,11 +60,11 @@ export const SHENG_YIN_TONG_DAO_MO_REN: ShengYinPeiZhi = {
   shiPin: null,
 }
 
-const SHENG_YIN_CUN_CHU_JIAN = 'lian-ai-ba-sheng-yin-tong-dao'
+const ShengYinCunChuJian = 'lian-ai-ba-sheng-yin-tong-dao'
 
-export const SHENG_YIN_TONG_DAO_JIU_JIAN = 'lian-ai-ba-sheng-yin'
+export const ShengYinTongDaoJiuJian = 'lian-ai-ba-sheng-yin'
 
-const JIU_DANG_BAI_FEN_BI: Record<string, number | null> = {
+const JiuDangBaiFenBi: Record<string, number | null> = {
   genSuiXiTong: null,
   jingYin: 0,
   xiao: 25,
@@ -75,7 +75,7 @@ const JIU_DANG_BAI_FEN_BI: Record<string, number | null> = {
 
 export function shiHeFaShengYinTongDao(zhi: unknown): zhi is ShengYinTongDao {
   return (
-    typeof zhi === 'string' && (SHENG_YIN_TONG_DAO_XUAN_XIANG as readonly string[]).includes(zhi)
+    typeof zhi === 'string' && (ShengYinTongDaoXuanXiang as readonly string[]).includes(zhi)
   )
 }
 
@@ -83,12 +83,12 @@ export function guiYiHuaShengYin(zhi: unknown): number | null {
   if (typeof zhi === 'number') {
     if (!Number.isFinite(zhi)) return null
     return Math.min(
-      SHENG_YIN_BAI_FEN_BI.zuiDa,
-      Math.max(SHENG_YIN_BAI_FEN_BI.zuiXiao, Math.round(zhi)),
+      ShengYinBaiFenBi.zuiDa,
+      Math.max(ShengYinBaiFenBi.zuiXiao, Math.round(zhi)),
     )
   }
   if (typeof zhi === 'string') {
-    const baiFenBi = JIU_DANG_BAI_FEN_BI[zhi]
+    const baiFenBi = JiuDangBaiFenBi[zhi]
     return baiFenBi === undefined ? null : baiFenBi
   }
   return null
@@ -103,13 +103,13 @@ function anQuanDuQuShengYin(jian: string): string | null {
 }
 
 export function duQuShengYinTongDao(): ShengYinPeiZhi {
-  const moRen: ShengYinPeiZhi = { ...SHENG_YIN_TONG_DAO_MO_REN }
-  const xinPeiZhi = anQuanDuQuShengYin(SHENG_YIN_CUN_CHU_JIAN)
-  const jiuDang = anQuanDuQuShengYin(SHENG_YIN_TONG_DAO_JIU_JIAN)
+  const moRen: ShengYinPeiZhi = { ...ShengYinTongDaoMoRen }
+  const xinPeiZhi = anQuanDuQuShengYin(ShengYinCunChuJian)
+  const jiuDang = anQuanDuQuShengYin(ShengYinTongDaoJiuJian)
   if (typeof xinPeiZhi === 'string' && xinPeiZhi) {
     try {
       const jieXi = JSON.parse(xinPeiZhi) as Record<string, unknown>
-      for (const tongDao of SHENG_YIN_TONG_DAO_XUAN_XIANG) {
+      for (const tongDao of ShengYinTongDaoXuanXiang) {
         if (tongDao in jieXi) moRen[tongDao] = guiYiHuaShengYin(jieXi[tongDao])
       }
       if (!('yongHuYuYin' in jieXi) && !('duiXiangYuYin' in jieXi) && 'yuYin' in jieXi) {
@@ -124,7 +124,7 @@ export function duQuShengYinTongDao(): ShengYinPeiZhi {
   }
   if (typeof jiuDang === 'string' && jiuDang) {
     const qianRong = guiYiHuaShengYin(jiuDang)
-    for (const tongDao of SHENG_YIN_TONG_DAO_XUAN_XIANG) {
+    for (const tongDao of ShengYinTongDaoXuanXiang) {
       moRen[tongDao] = qianRong
     }
   }
@@ -132,12 +132,12 @@ export function duQuShengYinTongDao(): ShengYinPeiZhi {
 }
 
 export function baoCunShengYinTongDao(peiZhi: ShengYinPeiZhi): void {
-  localStorage.setItem(SHENG_YIN_CUN_CHU_JIAN, JSON.stringify(peiZhi))
+  localStorage.setItem(ShengYinCunChuJian, JSON.stringify(peiZhi))
 }
 
 export function qingChuJiuShengYinJian(): void {
   try {
-    localStorage.removeItem(SHENG_YIN_TONG_DAO_JIU_JIAN)
+    localStorage.removeItem(ShengYinTongDaoJiuJian)
   } catch {
     return
   }
@@ -155,32 +155,32 @@ export function heChengDanTongDaoYinLiang(
   const danDao = danDaoBaiFenBi(peiZhi, tongDao)
   if (zong === 0 || danDao === 0) return 0
   const shangXian = zong === null ? danDao : danDao === null ? zong : Math.min(zong, danDao)
-  return shangXian === null ? null : shangXian / SHENG_YIN_BAI_FEN_BI.zuiDa
+  return shangXian === null ? null : shangXian / ShengYinBaiFenBi.zuiDa
 }
 
 export function xuanZeYuYinTongDao(faSongZheLeiXing: unknown): ShengYinTongDao {
   return faSongZheLeiXing === 'yonghu' ? 'yongHuYuYin' : 'duiXiangYuYin'
 }
 
-export const LU_YIN_PEI_ZHI = {
+export const LuYinPeiZhi = {
   dianPingTiaoShu: 12,
 } as const
 
-export const XIAO_XI_KUAI_PEI_ZHI = {
+export const XiaoXiKuaiPeiZhi = {
   zuiDaKuaiShu: 20,
   zuiDaTuPianShu: 9,
   tuPianZhanWei: '[图片]',
   biaoQingBaoZhanWei: '[表情包]',
 } as const
 
-export const ZHAN_TIE_TU_PIAN_PEI_ZHI = {
+export const ZhanTieTuPianPeiZhi = {
   zuiDaZiJieZiJie: 20 * 1024 * 1024,
   yunXuMIME: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as readonly string[],
 } as const
 
-export const MEI_TI_XIAO_XI_LEI_XING = ['tuPian', 'biaoQingBao', 'yuYin', 'wenJian'] as const
+export const MeiTiXiaoXiLeiXing = ['tuPian', 'biaoQingBao', 'yuYin', 'wenJian'] as const
 
-const MEI_TI_XIAO_XI_JI_HE = new Set<string>(MEI_TI_XIAO_XI_LEI_XING)
+const MeiTiXiaoXiJiHe = new Set<string>(MeiTiXiaoXiLeiXing)
 
 export function huoQuFaSongZhuangTaiWenAn(canShu: {
   leiXing: string
@@ -190,17 +190,17 @@ export function huoQuFaSongZhuangTaiWenAn(canShu: {
   if (!canShu.faSongZhong && canShu.faSongShiBai) {
     return huoQuFanYi('liaoTian', 'chongXinFaSong')
   }
-  if (MEI_TI_XIAO_XI_JI_HE.has(canShu.leiXing)) {
+  if (MeiTiXiaoXiJiHe.has(canShu.leiXing)) {
     return huoQuFanYi('duoMeiTi', 'shangChuanZhong')
   }
   return huoQuFanYi('liaoTian', 'faSongZhong')
 }
 
-export const TU_PIAN_XIAO_XI_LEI_XING = ['tuPian', 'biaoQingBao'] as const
+export const TuPianXiaoXiLeiXing = ['tuPian', 'biaoQingBao'] as const
 
-export type MeiTiXiaoXiLeiXing = (typeof MEI_TI_XIAO_XI_LEI_XING)[number]
+export type MeiTiXiaoXiLeiXing = (typeof MeiTiXiaoXiLeiXing)[number]
 
-export const WEN_JIAN_SHURU_JIE_SHOU_KUO_ZHAN = [
+export const WenJianShuruJieShouKuoZhan = [
   '.pdf',
   '.txt',
   '.doc',
@@ -220,15 +220,16 @@ export const WEN_JIAN_SHURU_JIE_SHOU_KUO_ZHAN = [
   '.html',
 ].join(',')
 
-export const EMOJI_MIANBAN_PEI_ZHI = {
+export const EmojiMianbanPeiZhi = {
   guoDuShouWeiHaoMiao: 600,
 } as const
 
-export const LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI = {
+export const LiaoTianYouJianCaiDanPeiZhi = {
   cheHuiCaiDanXiang: ['cheHui'],
   yuYinCaiDanXiang: ['yuYinZhuanWenZi', 'yinYong', 'cheHui'],
   wenBenCaiDanXiang: ['fuZhi', 'fanYi', 'yinYong', 'cheHui'],
   tuPianCaiDanXiang: ['tianJiaDaoBiaoQing', 'baoCunTuPian', 'yinYong', 'cheHui'],
+  biaoQingBaoCaiDanXiang: ['tianJiaDaoBiaoQing', 'baoCunTuPian', 'yinYong', 'cheHui'],
   weiXianCaiDanXiang: ['cheHui'],
   changAnChuFaHaoMiao: 500,
   yinYongZhaiYaoZuiDaZiFu: 30,
@@ -242,62 +243,70 @@ export const LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI = {
   chuMoPianYiXianZhi: 10,
 } as const
 
-const CAI_DAN_XIANG_AN_LEI_XING = {
-  cheHui: LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.cheHuiCaiDanXiang,
-  yuYin: LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.yuYinCaiDanXiang,
-  wenBen: LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.wenBenCaiDanXiang,
-  tuPian: LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.tuPianCaiDanXiang,
+const CaiDanXiangAnLeiXing = {
+  cheHui: LiaoTianYouJianCaiDanPeiZhi.cheHuiCaiDanXiang,
+  yuYin: LiaoTianYouJianCaiDanPeiZhi.yuYinCaiDanXiang,
+  wenBen: LiaoTianYouJianCaiDanPeiZhi.wenBenCaiDanXiang,
+  tuPian: LiaoTianYouJianCaiDanPeiZhi.tuPianCaiDanXiang,
+  biaoQingBao: LiaoTianYouJianCaiDanPeiZhi.biaoQingBaoCaiDanXiang,
 } as const satisfies Record<string, readonly string[]>
 
-export type XiaoXiCaiDanLeiXing = keyof typeof CAI_DAN_XIANG_AN_LEI_XING
+export type XiaoXiCaiDanLeiXing = keyof typeof CaiDanXiangAnLeiXing
 
-export const CAI_DAN_LEI_XING_MO_REN: XiaoXiCaiDanLeiXing = 'cheHui'
+export const CaiDanLeiXingMoRen: XiaoXiCaiDanLeiXing = 'cheHui'
 
-const CAI_DAN_LEI_XING_AN_XIAO_XI_LEI_XING = {
+export const CaiDanLeiXingBiaoQingBao: XiaoXiCaiDanLeiXing = 'biaoQingBao'
+
+const CaiDanLeiXingAnXiaoXiLeiXing = {
   yuYin: 'yuYin',
   wenben: 'wenBen',
   tuPian: 'tuPian',
+  biaoQingBao: CaiDanLeiXingBiaoQingBao,
 } as const satisfies Partial<Record<string, XiaoXiCaiDanLeiXing>>
 
 export function huoQuCaiDanLeiXing(xiaoXiLeiXing: string): XiaoXiCaiDanLeiXing {
   const piPei = (
-    CAI_DAN_LEI_XING_AN_XIAO_XI_LEI_XING as Partial<Record<string, XiaoXiCaiDanLeiXing>>
+    CaiDanLeiXingAnXiaoXiLeiXing as Partial<Record<string, XiaoXiCaiDanLeiXing>>
   )[xiaoXiLeiXing]
-  return piPei ?? CAI_DAN_LEI_XING_MO_REN
+  return piPei ?? CaiDanLeiXingMoRen
 }
 
-const WEI_XIAN_CAI_DAN_JI_HE: ReadonlySet<string> = new Set<string>(
-  LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.weiXianCaiDanXiang,
+const WeiXianCaiDanJiHe: ReadonlySet<string> = new Set<string>(
+  LiaoTianYouJianCaiDanPeiZhi.weiXianCaiDanXiang,
 )
 
-export type XiaoXiCaiDanXiang = YuYinCaiDanXiang | WenBenCaiDanXiang | TuPianCaiDanXiang
+export type XiaoXiCaiDanXiang =
+  | YuYinCaiDanXiang
+  | WenBenCaiDanXiang
+  | TuPianCaiDanXiang
+  | BiaoQingBaoCaiDanXiang
 
 export function huoQuYuanShiCaiDanXiang(
   leiXing: XiaoXiCaiDanLeiXing,
 ): readonly XiaoXiCaiDanXiang[] {
-  return CAI_DAN_XIANG_AN_LEI_XING[leiXing]
+  return CaiDanXiangAnLeiXing[leiXing]
 }
 
 export function shiWeiXianCaiDanXiang(xiang: string): boolean {
-  return WEI_XIAN_CAI_DAN_JI_HE.has(xiang)
+  return WeiXianCaiDanJiHe.has(xiang)
 }
 
-const YIN_YONG_MEI_TI_ZHAN_WEI_JIAN = {
+const YinYongMeiTiZhanWeiJian = {
   tuPian: 'yinYongTuPianZhanWei',
   biaoQingBao: 'yinYongBiaoQingBaoZhanWei',
   wenJian: 'yinYongWenJianZhanWei',
 } as const satisfies Partial<
-  Record<(typeof MEI_TI_XIAO_XI_LEI_XING)[number], FanYiZiJian<'liaoTian'>>
+  Record<(typeof MeiTiXiaoXiLeiXing)[number], FanYiZiJian<'liaoTian'>>
 >
 
 export function huoQuMeiTiYinYongZhanWei(leiXing: string): string | null {
-  const jian = (YIN_YONG_MEI_TI_ZHAN_WEI_JIAN as Partial<Record<string, FanYiZiJian<'liaoTian'>>>)[
+  const jian = (YinYongMeiTiZhanWeiJian as Partial<Record<string, FanYiZiJian<'liaoTian'>>>)[
     leiXing
   ]
   return jian ? huoQuFanYi('liaoTian', jian) : null
 }
 
-export const YIN_YONG_DING_WEI_PEI_ZHI = {
+export const YinYongDingWeiPeiZhi = {
   domQianZhui: 'xiaoxi-',
   douDongXianShi: 1,
   guangYunMoHu: 10,
@@ -307,10 +316,13 @@ export const YIN_YONG_DING_WEI_PEI_ZHI = {
 } as const
 
 export type YuYinCaiDanXiang =
-  (typeof LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI)['yuYinCaiDanXiang'][number]
+  (typeof LiaoTianYouJianCaiDanPeiZhi)['yuYinCaiDanXiang'][number]
 
 export type WenBenCaiDanXiang =
-  (typeof LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI)['wenBenCaiDanXiang'][number]
+  (typeof LiaoTianYouJianCaiDanPeiZhi)['wenBenCaiDanXiang'][number]
 
 export type TuPianCaiDanXiang =
-  (typeof LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI)['tuPianCaiDanXiang'][number]
+  (typeof LiaoTianYouJianCaiDanPeiZhi)['tuPianCaiDanXiang'][number]
+
+export type BiaoQingBaoCaiDanXiang =
+  (typeof LiaoTianYouJianCaiDanPeiZhi)['biaoQingBaoCaiDanXiang'][number]

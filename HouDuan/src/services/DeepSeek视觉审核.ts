@@ -1,9 +1,9 @@
 import { createHash } from 'crypto'
 import {
-  SHEN_HE_FU_WU_BU_KE_YONG_JIAN,
-  SHEN_HE_MO_SHI_BEN_DI,
-  SHEN_HE_WEI_GUI_LEI_BIE,
-  SHEN_HE_XI_TONG_CUO_WU_JIAN,
+  ShenHeFuWuBuKeYongJian,
+  ShenHeMoShiBenDi,
+  ShenHeWeiGuiLeiBie,
+  ShenHeXiTongCuoWuJian,
   quShenHeMoShi,
 } from '../config/媒体配置'
 import { debug日志 } from '../utils/debug日志'
@@ -13,7 +13,7 @@ import type { AnQuanShenHeJieGuo } from '../types'
 import fs from 'fs'
 
 function gouJianTuPianShenHePrompt(): string {
-  const leiBieShuoMing = SHEN_HE_WEI_GUI_LEI_BIE.map((lb, i) => `${i + 1}. ${lb}`).join('\n')
+  const leiBieShuoMing = ShenHeWeiGuiLeiBie.map((lb, i) => `${i + 1}. ${lb}`).join('\n')
   return [
     '你是内容安全审核专家，请分析这张图片是否包含违规内容。',
     '',
@@ -59,7 +59,7 @@ function jieXiShenHeJieGuo(neiRong: string): AnQuanShenHeJieGuo {
   const yanZhongChengDu = shuJu['严重程度'] ?? shuJu['yan_zhong_cheng_du']
   const liYou = String(shuJu['理由'] ?? shuJu['li_you'] ?? '')
 
-  const shiHeFaLeiBie = SHEN_HE_WEI_GUI_LEI_BIE.includes(leiXing)
+  const shiHeFaLeiBie = ShenHeWeiGuiLeiBie.includes(leiXing)
   const zhengQueWeiGui = weiGui && queXinDu > 0.8 && shiHeFaLeiBie
 
   return {
@@ -79,7 +79,7 @@ function xiuZhengYanZhongChengDu(
   return undefined
 }
 
-export const SHEN_HE_JIE_LUN_YU_JU = {
+export const ShenHeJieLunYuJu = {
   查结论: `SELECT "违规" AS wei_gui, "类别" AS lei_xing, "理由" AS li_you,
                   "严重程度" AS yan_zhong_cheng_du
              FROM "媒体审核结论" WHERE "SHA256" = $1`,
@@ -90,7 +90,7 @@ export const SHEN_HE_JIE_LUN_YU_JU = {
 async function chaXunJieLunHuanCun(sha256: string): Promise<AnQuanShenHeJieGuo | null> {
   let jieGuo: { rows: Array<Record<string, unknown>> }
   try {
-    jieGuo = await 数据库.query(SHEN_HE_JIE_LUN_YU_JU.查结论, [sha256])
+    jieGuo = await 数据库.query(ShenHeJieLunYuJu.查结论, [sha256])
   } catch (cuoWu) {
     debug日志.error('图片审核', '结论缓存查询失败，退回真实审核', {
       xiang_qing: { cuo_wu: String(cuoWu) },
@@ -110,7 +110,7 @@ async function chaXunJieLunHuanCun(sha256: string): Promise<AnQuanShenHeJieGuo |
 
 async function xieRuJieLunHuanCun(sha256: string, jieLun: AnQuanShenHeJieGuo): Promise<void> {
   try {
-    await 数据库.query(SHEN_HE_JIE_LUN_YU_JU.写结论, [
+    await 数据库.query(ShenHeJieLunYuJu.写结论, [
       sha256,
       jieLun.wei_gui,
       jieLun.lei_xing ?? '',
@@ -125,14 +125,14 @@ async function xieRuJieLunHuanCun(sha256: string, jieLun: AnQuanShenHeJieGuo): P
 }
 
 export async function shenHeTuPianAnQuan(wenJianLuJing: string): Promise<AnQuanShenHeJieGuo> {
-  if (quShenHeMoShi() === SHEN_HE_MO_SHI_BEN_DI) return { wei_gui: false, lei_xing: '', li_you: '' }
+  if (quShenHeMoShi() === ShenHeMoShiBenDi) return { wei_gui: false, lei_xing: '', li_you: '' }
 
   let tuPianHuanChong: Buffer
   try {
     tuPianHuanChong = await fs.promises.readFile(wenJianLuJing)
   } catch (cuoWu) {
     debug日志.error('图片审核', '读取图片文件失败', { xiang_qing: { lu_jing: wenJianLuJing, cuo_wu: String(cuoWu) } })
-    return { wei_gui: true, lei_xing: SHEN_HE_XI_TONG_CUO_WU_JIAN, li_you: '图片读取失败' }
+    return { wei_gui: true, lei_xing: ShenHeXiTongCuoWuJian, li_you: '图片读取失败' }
   }
 
   const neiRongHaXi = createHash('sha256').update(tuPianHuanChong).digest('hex')
@@ -161,7 +161,7 @@ export async function shenHeTuPianAnQuan(wenJianLuJing: string): Promise<AnQuanS
     debug日志.error('图片审核', 'AI视觉审核调用失败，安全兜底拦截', { xiang_qing: { lu_jing: wenJianLuJing, cuo_wu: String(cuoWu) } })
     return {
       wei_gui: true,
-      lei_xing: SHEN_HE_FU_WU_BU_KE_YONG_JIAN,
+      lei_xing: ShenHeFuWuBuKeYongJian,
       li_you: '图片安全审核暂时不可用，请稍后再试',
     }
   }

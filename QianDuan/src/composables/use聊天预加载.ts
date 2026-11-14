@@ -4,20 +4,20 @@ import { 使用用户仓库 } from '@/stores/用户'
 import { shengChengTouXiangURL } from '@/utils/头像'
 import type { 消息 } from '@/types/类型定义'
 
-const TU_PIAN_LEI_XING = new Set(['tuPian', 'biaoQingBao'])
-const ZUI_DUO_YU_JIA_ZAI_TU_PIAN = 12
-const DAN_ZHANG_TU_PIAN_DENG_DAI_HAO_MIAO = 3000
+const TuPianLeiXing = new Set(['tuPian', 'biaoQingBao'])
+const ZuiDuoYuJiaZaiTuPian = 12
+const DanZhangTuPianDengDaiHaoMiao = 3000
 
 function shouJiTuPian(消息列表: 消息[]): string[] {
   const diZhi: string[] = []
   for (const xiaoXi of 消息列表.slice(-20)) {
     if (xiaoXi.yi_che_hui) continue
-    if (TU_PIAN_LEI_XING.has(xiaoXi.lei_xing) && xiaoXi.mei_ti_url) diZhi.push(xiaoXi.mei_ti_url)
+    if (TuPianLeiXing.has(xiaoXi.lei_xing) && xiaoXi.mei_ti_url) diZhi.push(xiaoXi.mei_ti_url)
     for (const kuai of xiaoXi.nei_rong_kuai ?? []) {
       if (kuai.lei_xing === 'tupian' && kuai.mei_ti_url) diZhi.push(kuai.mei_ti_url)
     }
   }
-  return [...new Set(diZhi)].slice(-ZUI_DUO_YU_JIA_ZAI_TU_PIAN)
+  return [...new Set(diZhi)].slice(-ZuiDuoYuJiaZaiTuPian)
 }
 
 async function yuJiaZaiTuPian(diZhi: string): Promise<void> {
@@ -29,7 +29,7 @@ async function yuJiaZaiTuPian(diZhi: string): Promise<void> {
   try {
     await Promise.race([
       typeof tu.decode === 'function' ? tu.decode() : Promise.resolve(),
-      new Promise<void>((jieShu) => setTimeout(jieShu, DAN_ZHANG_TU_PIAN_DENG_DAI_HAO_MIAO)),
+      new Promise<void>((jieShu) => setTimeout(jieShu, DanZhangTuPianDengDaiHaoMiao)),
     ])
   } catch {
     return

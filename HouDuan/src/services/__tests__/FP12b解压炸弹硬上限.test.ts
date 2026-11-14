@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import path from 'path'
 import { zipSync, strToU8 } from 'fflate'
 import { tiQuWenDangWenBen } from '../文档文本提取'
-import { WEN_DANG_TI_QU_PEI_ZHI } from '../../config/媒体配置'
+import { WenDangTiQuPeiZhi } from '../../config/媒体配置'
 import { debug日志 } from '../../utils/debug日志'
 
 
@@ -21,8 +21,8 @@ vi.mock('../媒体存储', () => ({
     /^[0-9a-f]{64}$/.test(sha) ? path.join('___测试不落盘___', sha.slice(0, 2), sha) : null,
 }))
 
-const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+const DocxMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+const XlsxMime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 const MI = 1024 * 1024
 
 function 降级分类(): string[] {
@@ -72,7 +72,7 @@ function xlsx工作表(填充字节数: number, 正文: string): Uint8Array {
   )
 }
 
-function 提文档(ziJie: Buffer, ming = 'a.docx', mime = DOCX_MIME) {
+function 提文档(ziJie: Buffer, ming = 'a.docx', mime = DocxMime) {
   return tiQuWenDangWenBen({ mime, yuanShiWenJianMing: ming, ziJie })
 }
 
@@ -82,7 +82,7 @@ afterEach(() => {
 
 describe('M-5 OOXML 解压按实测产物设硬上限，且超限即在流式途中中止', () => {
   it('自述体积谎报 10 字节、实测膨胀超单条目上限的 docx：不抛、不 500、返回占位（null）', async () => {
-    const 膨胀字节数 = WEN_DANG_TI_QU_PEI_ZHI.danTiaoMuJieYaZiJieShangXian + 4 * MI
+    const 膨胀字节数 = WenDangTiQuPeiZhi.danTiaoMuJieYaZiJieShangXian + 4 * MI
     const zip = 打包({ 'word/document.xml': docx正文(膨胀字节数) })
     expect(zip.length).toBeLessThan(MI) 
     const 结果 = await 提文档(改自述体积(zip, 10))
@@ -91,21 +91,21 @@ describe('M-5 OOXML 解压按实测产物设硬上限，且超限即在流式途
   })
 
   it('每条都低于单条目上限、总产物超总上限：合法小条目也不交出正文（中止是整次解压级别）', async () => {
-    const danTiao = WEN_DANG_TI_QU_PEI_ZHI.danTiaoMuJieYaZiJieShangXian
+    const danTiao = WenDangTiQuPeiZhi.danTiaoMuJieYaZiJieShangXian
     const 每片 = danTiao / 2
-    const 片数 = Math.ceil(WEN_DANG_TI_QU_PEI_ZHI.jieYaZongZiJieShangXian / 每片) + 1
+    const 片数 = Math.ceil(WenDangTiQuPeiZhi.jieYaZongZiJieShangXian / 每片) + 1
     const ru: Record<string, Uint8Array> = { 'xl/sharedStrings.xml': strToU8('<sst/>') }
     for (let xu = 1; xu <= 片数; xu++) {
       ru[`xl/worksheets/sheet${xu}.xml`] = xlsx工作表(xu === 1 ? 0 : 每片, xu === 1 ? '首段正文' : '尾段正文')
     }
-    const 结果 = await 提文档(打包(ru), 'a.xlsx', XLSX_MIME)
+    const 结果 = await 提文档(打包(ru), 'a.xlsx', XlsxMime)
     expect(结果).toBeNull() 
     expect(降级分类()).toContain('解压产物或条目数超过实测硬上限')
   })
 
   it('条目数洪流：超过实测条目上限后连后面的合法正文都不再解', async () => {
     const ru: Record<string, Uint8Array> = {}
-    for (let xu = 0; xu <= WEN_DANG_TI_QU_PEI_ZHI.jieYaTiaoMuShuShangXian; xu++) {
+    for (let xu = 0; xu <= WenDangTiQuPeiZhi.jieYaTiaoMuShuShangXian; xu++) {
       ru[`qita/${xu}.bin`] = strToU8('x')
     }
     ru['word/document.xml'] = docx正文(0, '洪流后的正文')

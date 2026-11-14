@@ -1,5 +1,5 @@
 import { ref, watch, type Ref } from 'vue'
-import { EMOJI_MIANBAN_PEI_ZHI } from '@/config/消息配置'
+import { EmojiMianbanPeiZhi } from '@/config/消息配置'
 
 export type EmojiTabLeiXing = 'emoji' | 'biaoqingbao'
 
@@ -279,7 +279,7 @@ export function use表情面板(yiLai: Use表情面板依赖) {
     mianBanGuoDuDingShi = setTimeout(() => {
       huiDaoZhenShiDiBu()
       jieShuMianBanGuoDu()
-    }, EMOJI_MIANBAN_PEI_ZHI.guoDuShouWeiHaoMiao)
+    }, EmojiMianbanPeiZhi.guoDuShouWeiHaoMiao)
   })
 
   function qieHuanEmojiMianBan() {

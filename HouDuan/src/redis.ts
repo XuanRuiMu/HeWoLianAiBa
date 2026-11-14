@@ -63,7 +63,7 @@ export const redis = new Redis({
   enableReadyCheck: true,
 })
 
-const YU_RE_READY_CHAO_SHI_HAO_MIAO = 15000
+const YuReReadyChaoShiHaoMiao = 15000
 
 let jiuXuChengNuo: Promise<void> | null = null
 let yiTanCeShiBai = false
@@ -72,7 +72,7 @@ export function biaoJiRedisYiTanCeShiBai(): void {
   yiTanCeShiBai = true
 }
 
-export function dengDaiRedisJiuXu(zuiDaHaoMiao: number = YU_RE_READY_CHAO_SHI_HAO_MIAO): Promise<void> {
+export function dengDaiRedisJiuXu(zuiDaHaoMiao: number = YuReReadyChaoShiHaoMiao): Promise<void> {
   if (redis.status === 'ready') return Promise.resolve()
   if (yiTanCeShiBai) return Promise.resolve()
   if (!jiuXuChengNuo) {
@@ -94,13 +94,13 @@ type RongDuanZhuangTai = 'biHe' | 'kaiLu' | 'banKai'
 let rongDuanZhuangTai: RongDuanZhuangTai = 'biHe'
 let rongDuanLianXuShiBai = 0
 let rongDuanKaiLuShiJian = 0
-const RONG_DUAN_YU_ZHI = 5
-const RONG_DUAN_HUI_FU_HAO_MIAO = 30000
+const RongDuanYuZhi = 5
+const RongDuanHuiFuHaoMiao = 30000
 
 redis.on('error', (cuoWu) => {
   biaoJiWeiJiuXu('redis', cuoWu)
   rongDuanLianXuShiBai += 1
-  if (rongDuanLianXuShiBai >= RONG_DUAN_YU_ZHI && rongDuanZhuangTai === 'biHe') {
+  if (rongDuanLianXuShiBai >= RongDuanYuZhi && rongDuanZhuangTai === 'biHe') {
     rongDuanZhuangTai = 'kaiLu'
     rongDuanKaiLuShiJian = Date.now()
   }
@@ -138,7 +138,7 @@ export async function tanCeRedisJiuXu(): Promise<boolean> {
 }
 
 export function redisRongDuanShiFouKaiLu(): boolean {
-  if (rongDuanZhuangTai === 'kaiLu' && Date.now() - rongDuanKaiLuShiJian > RONG_DUAN_HUI_FU_HAO_MIAO) {
+  if (rongDuanZhuangTai === 'kaiLu' && Date.now() - rongDuanKaiLuShiJian > RongDuanHuiFuHaoMiao) {
     rongDuanZhuangTai = 'banKai'
   }
   return rongDuanZhuangTai === 'kaiLu'
@@ -157,7 +157,7 @@ export async function daiRongDuanZhiXing<T>(mingCheng: string, dongZuo: () => Pr
     return jieGuo
   } catch (cuoWu) {
     rongDuanLianXuShiBai += 1
-    if (rongDuanLianXuShiBai >= RONG_DUAN_YU_ZHI && rongDuanZhuangTai === 'biHe') {
+    if (rongDuanLianXuShiBai >= RongDuanYuZhi && rongDuanZhuangTai === 'biHe') {
       rongDuanZhuangTai = 'kaiLu'
       rongDuanKaiLuShiJian = Date.now()
       void import('./utils/邮件告警').then(({ faSongGaoJing }) => faSongGaoJing('redis_rong_duan', 'Redis熔断开路告警', `Redis连续失败${rongDuanLianXuShiBai}次已熔断`).catch(() => undefined))

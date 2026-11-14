@@ -32,7 +32,7 @@ type TianChongWenJian =
   | 'caiJianYuLanTianChongZongXiang'
   | 'caiJianYuLanTianChongQuanBu'
 
-const WEN_JIAN_JI: Record<WaiGuanLaShenMoShi, TianChongWenJian> = {
+const WenJianJi: Record<WaiGuanLaShenMoShi, TianChongWenJian> = {
   dengBi: 'caiJianYuLanTianChongDengBi',
   henXiang: 'caiJianYuLanTianChongHenXiang',
   zongXiang: 'caiJianYuLanTianChongZongXiang',
@@ -46,7 +46,7 @@ const dangQianMoShi = computed(() => (props.leiXing === 'qiPao' ? sheZhi.qiPaoLa
 const xuanXiang = computed(() =>
   WAI_GUAN_LA_SHEN_MO_SHI_LIE_BIAO.map((zhi) => ({
     zhi,
-    wenJian: WEN_JIAN_JI[zhi],
+    wenJian: WenJianJi[zhi],
     xuan: zhi === dangQianMoShi.value,
   })),
 )

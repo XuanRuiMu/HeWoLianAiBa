@@ -23,15 +23,15 @@ interface TiaoDuQiJiLu {
 const socketTiaoDuQiMap = new Map<string, TiaoDuQiJiLu>()
 const jiaoSeTiaoDuQiMap = new Map<string, TiaoDuQiJiLu>()
 
-const TIAO_DU_QI_SUO_QIAN_ZHUI = 'tiao_du_qi_suo:'
-const TIAO_DU_QI_SUO_MIAO = 30000
-const TIAO_DU_QI_XU_QI_MIAO = Math.floor(TIAO_DU_QI_SUO_MIAO / 3)
-const BEN_CHENG_PROCESSE_ID = `${process.pid}-${Math.random().toString(36).slice(2, 10)}`
+const TiaoDuQiSuoQianZhui = 'tiao_du_qi_suo:'
+const TiaoDuQiSuoMiao = 30000
+const TiaoDuQiXuQiMiao = Math.floor(TiaoDuQiSuoMiao / 3)
+const BenChengProcesseId = `${process.pid}-${Math.random().toString(36).slice(2, 10)}`
 
 async function changShiRenLingTiaoDuQi(yongHuId: string, jiaoSeId: string, lingZhuBiaoShi: string): Promise<boolean> {
-  const suoJian = `${TIAO_DU_QI_SUO_QIAN_ZHUI}${yongHuId}:${jiaoSeId}`
+  const suoJian = `${TiaoDuQiSuoQianZhui}${yongHuId}:${jiaoSeId}`
   try {
-    const jieGuo = await redis.set(suoJian, lingZhuBiaoShi, 'PX', TIAO_DU_QI_SUO_MIAO, 'NX')
+    const jieGuo = await redis.set(suoJian, lingZhuBiaoShi, 'PX', TiaoDuQiSuoMiao, 'NX')
     return jieGuo === 'OK'
   } catch {
     return true
@@ -41,15 +41,15 @@ async function changShiRenLingTiaoDuQi(yongHuId: string, jiaoSeId: string, lingZ
 function kaiShiXuQiTiaoDuQiSuo(jian: string, jiLu: TiaoDuQiJiLu, yongHuId: string, jiaoSeId: string): void {
   jiLu.续期定时器 = setInterval(() => {
     void (async () => {
-      const suoJian = `${TIAO_DU_QI_SUO_QIAN_ZHUI}${yongHuId}:${jiaoSeId}`
+      const suoJian = `${TiaoDuQiSuoQianZhui}${yongHuId}:${jiaoSeId}`
       let chiYou: string | null = null
       try {
         chiYou = await redis.get(suoJian)
       } catch {
         return
       }
-      if (chiYou === BEN_CHENG_PROCESSE_ID) {
-        await redis.pexpire(suoJian, TIAO_DU_QI_SUO_MIAO).catch(() => undefined)
+      if (chiYou === BenChengProcesseId) {
+        await redis.pexpire(suoJian, TiaoDuQiSuoMiao).catch(() => undefined)
         return
       }
       debug日志.warn('聊天Socket', '调度器认领锁易主，本进程作废轮次并放弃记录', {
@@ -62,7 +62,7 @@ function kaiShiXuQiTiaoDuQiSuo(jian: string, jiLu: TiaoDuQiJiLu, yongHuId: strin
         if (zaiJi === jiLu) socketTiaoDuQiMap.delete(socketId)
       }
     })()
-  }, TIAO_DU_QI_XU_QI_MIAO)
+  }, TiaoDuQiXuQiMiao)
   jiLu.续期定时器.unref?.()
 }
 
@@ -74,7 +74,7 @@ function tingZhiXuQiTiaoDuQiSuo(jiLu: TiaoDuQiJiLu): void {
 }
 
 async function shiFangTiaoDuQiSuo(yongHuId: string, jiaoSeId: string, lingZhuBiaoShi: string): Promise<void> {
-  const suoJian = `${TIAO_DU_QI_SUO_QIAN_ZHUI}${yongHuId}:${jiaoSeId}`
+  const suoJian = `${TiaoDuQiSuoQianZhui}${yongHuId}:${jiaoSeId}`
   try {
     const chiYou = await redis.get(suoJian)
     if (chiYou === lingZhuBiaoShi) {
@@ -116,7 +116,7 @@ async function queBaoJiaoSeTiaoDuQi(
   const jiuJiLu = jiaoSeTiaoDuQiMap.get(jian)
   if (jiuJiLu) return jiuJiLu
 
-  if (!(await changShiRenLingTiaoDuQi(yong_hu_id, jiao_se_id, BEN_CHENG_PROCESSE_ID))) {
+  if (!(await changShiRenLingTiaoDuQi(yong_hu_id, jiao_se_id, BenChengProcesseId))) {
     debug日志.warn('聊天Socket', '调度器已被他处认领，本进程禁建禁覆盖', {
       xiang_qing: { jiao_se_id, user_id: yong_hu_id },
     })
@@ -129,7 +129,7 @@ async function queBaoJiaoSeTiaoDuQi(
     huoQuJiaoSeBianHao(jiao_se_id),
   ])
   if (!ie类型) {
-    await shiFangTiaoDuQiSuo(yong_hu_id, jiao_se_id, BEN_CHENG_PROCESSE_ID)
+    await shiFangTiaoDuQiSuo(yong_hu_id, jiao_se_id, BenChengProcesseId)
     return null
   }
 
@@ -212,17 +212,17 @@ export async function luoKuChuFaJiaoSeTiaoDuQi(
   }
 }
 
-const SOCKET_XIAN_LIU_PREFIX = 'socket_xian_liu:'
-const SOCKET_XIAN_LIU_MAX = 10
-const SOCKET_XIAN_LIU_WINDOW = 10 * 1000
+const SocketXianLiuPrefix = 'socket_xian_liu:'
+const SocketXianLiuMax = 10
+const SocketXianLiuWindow = 10 * 1000
 
 async function jianCeSocketXianLiu(yongHuId: string): Promise<boolean> {
-  const jianMing = `${SOCKET_XIAN_LIU_PREFIX}${yongHuId}`
+  const jianMing = `${SocketXianLiuPrefix}${yongHuId}`
   const dangQian = await redis.incr(jianMing)
   if (dangQian === 1) {
-    await redis.pexpire(jianMing, SOCKET_XIAN_LIU_WINDOW)
+    await redis.pexpire(jianMing, SocketXianLiuWindow)
   }
-  return dangQian <= SOCKET_XIAN_LIU_MAX
+  return dangQian <= SocketXianLiuMax
 }
 
 export function 初始化聊天Socket(io: Server): void {
@@ -268,7 +268,7 @@ export function 初始化聊天Socket(io: Server): void {
           jiuJiLu.归属Socket.delete(socket.id)
           if (jiuJiLu.归属Socket.size === 0) {
             shanChuJiaoSeJiLuRuGuo(jiuJiLu, jiuJian)
-            void shiFangTiaoDuQiSuo(用户ID, jiuJiLu.角色ID, BEN_CHENG_PROCESSE_ID)
+            void shiFangTiaoDuQiSuo(用户ID, jiuJiLu.角色ID, BenChengProcesseId)
           }
         }
 
@@ -297,7 +297,7 @@ export function 初始化聊天Socket(io: Server): void {
         const jian = shengChengJiaoSeTiaoDuQiJian(用户ID, jiLu.角色ID)
         if (jiLu.归属Socket.size === 0 && jiaoSeTiaoDuQiMap.get(jian) === jiLu) {
           shanChuJiaoSeJiLuRuGuo(jiLu, jian)
-          void shiFangTiaoDuQiSuo(用户ID, jiLu.角色ID, BEN_CHENG_PROCESSE_ID)
+          void shiFangTiaoDuQiSuo(用户ID, jiLu.角色ID, BenChengProcesseId)
           void guangBoTiaoDuQiBianGeng(用户ID, jiLu.角色ID, 'shi_fang')
         }
       }

@@ -2,16 +2,16 @@ import { redis } from '../redis'
 import { 数据库 } from '../数据库'
 import { debug日志 } from '../utils/debug日志'
 
-const DUO_SHE_QIAN_ZHUI = '夺舍:'
-const DUO_SHE_ZU_YUE_MIAO = 300
-const DUO_SHE_XIN_TIAO_JIAN_GE_MIAO = 60
+const DuoSheQianZhui = '夺舍:'
+const DuoSheZuYueMiao = 300
+const DuoSheXinTiaoJianGeMiao = 60
 
 function shengChengDuoSheJian(jiao_se_id: string): string {
-  return `${DUO_SHE_QIAN_ZHUI}${jiao_se_id}`
+  return `${DuoSheQianZhui}${jiao_se_id}`
 }
 
 function huoQuXinTiaoJian(jiao_se_id: string): string {
-  return `${DUO_SHE_QIAN_ZHUI}xin_tiao:${jiao_se_id}`
+  return `${DuoSheQianZhui}xin_tiao:${jiao_se_id}`
 }
 
 export async function sheZhiDuoSheZhuangTai(
@@ -21,8 +21,8 @@ export async function sheZhiDuoSheZhuangTai(
   const jian = shengChengDuoSheJian(jiao_se_id)
   const xianYou = await redis.get(jian)
   const qiangZhan = Boolean(xianYou && xianYou !== guan_li_yuan_id)
-  await redis.set(jian, guan_li_yuan_id, 'EX', DUO_SHE_ZU_YUE_MIAO)
-  await redis.set(huoQuXinTiaoJian(jiao_se_id), String(Date.now()), 'EX', DUO_SHE_ZU_YUE_MIAO)
+  await redis.set(jian, guan_li_yuan_id, 'EX', DuoSheZuYueMiao)
+  await redis.set(huoQuXinTiaoJian(jiao_se_id), String(Date.now()), 'EX', DuoSheZuYueMiao)
   try {
     await jiLuDuoShe(guan_li_yuan_id, jiao_se_id)
   } catch {
@@ -39,17 +39,17 @@ export async function sheZhiDuoSheZhuangTai(
 export async function duoSheXinTiao(jiao_se_id: string, guan_li_yuan_id: string): Promise<boolean> {
   const dangQian = await redis.get(shengChengDuoSheJian(jiao_se_id))
   if (dangQian !== guan_li_yuan_id) return false
-  await redis.expire(shengChengDuoSheJian(jiao_se_id), DUO_SHE_ZU_YUE_MIAO)
-  await redis.set(huoQuXinTiaoJian(jiao_se_id), String(Date.now()), 'EX', DUO_SHE_ZU_YUE_MIAO)
+  await redis.expire(shengChengDuoSheJian(jiao_se_id), DuoSheZuYueMiao)
+  await redis.set(huoQuXinTiaoJian(jiao_se_id), String(Date.now()), 'EX', DuoSheZuYueMiao)
   return true
 }
 
 export async function huoQuDuoSheZuYueMiao(): Promise<number> {
-  return DUO_SHE_ZU_YUE_MIAO
+  return DuoSheZuYueMiao
 }
 
 export async function huoQuDuoSheXinTiaoGeMiao(): Promise<number> {
-  return DUO_SHE_XIN_TIAO_JIAN_GE_MIAO
+  return DuoSheXinTiaoJianGeMiao
 }
 
 async function jiLuDuoSheQiangZhan(guan_li_yuan_id: string, jiao_se_id: string, yuanChiYou: string): Promise<void> {
@@ -72,14 +72,14 @@ export async function shanChuDuoSheZhuangTai(jiao_se_id: string): Promise<void> 
 export async function shiFangGuanLiYuanQuanBuDuoShe(guan_li_yuan_id: string): Promise<string[]> {
   let jianLieBiao: string[] = []
   try {
-    jianLieBiao = await (redis as unknown as { keys: (moShi: string) => Promise<string[]> }).keys(`${DUO_SHE_QIAN_ZHUI}*`)
+    jianLieBiao = await (redis as unknown as { keys: (moShi: string) => Promise<string[]> }).keys(`${DuoSheQianZhui}*`)
   } catch {
     return []
   }
   const shiFang: string[] = []
   for (const jian of jianLieBiao) {
     if (jian.includes('xin_tiao:')) continue
-    const jiaoSeId = jian.slice(DUO_SHE_QIAN_ZHUI.length)
+    const jiaoSeId = jian.slice(DuoSheQianZhui.length)
     try {
       const chiYou = await redis.get(jian)
       if (chiYou === guan_li_yuan_id) {

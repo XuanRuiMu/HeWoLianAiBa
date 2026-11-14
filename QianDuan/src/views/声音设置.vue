@@ -61,9 +61,9 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { huoQuFanYi, type FanYiZiJian } from '@/config/翻译表'
 import {
-  SHENG_YIN_BAI_FEN_BI,
-  SHENG_YIN_TONG_DAO_MO_REN,
-  SHENG_YIN_TONG_DAO_XUAN_XIANG,
+  ShengYinBaiFenBi,
+  ShengYinTongDaoMoRen,
+  ShengYinTongDaoXuanXiang,
   baoCunShengYinTongDao,
   duQuShengYinTongDao,
   guiYiHuaShengYin,
@@ -76,7 +76,7 @@ import RequestError from '@/components/请求错误.vue'
 import HuaGan from '@/components/表单/滑杆.vue'
 import { 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
 
-const SHENG_YIN_TONG_DAO_JIAN: Record<ShengYinTongDao, FanYiZiJian<'sheZhi'>> = {
+const ShengYinTongDaoJian: Record<ShengYinTongDao, FanYiZiJian<'sheZhi'>> = {
   zong: 'shengYinTongDaoZong',
   yinYue: 'shengYinTongDaoYinYue',
   yongHuYuYin: 'shengYinTongDaoYongHuYuYin',
@@ -84,14 +84,14 @@ const SHENG_YIN_TONG_DAO_JIAN: Record<ShengYinTongDao, FanYiZiJian<'sheZhi'>> = 
   shiPin: 'shengYinTongDaoShiPin',
 }
 
-const tongDaoPeiZhi = reactive<ShengYinPeiZhi>({ ...SHENG_YIN_TONG_DAO_MO_REN })
+const tongDaoPeiZhi = reactive<ShengYinPeiZhi>({ ...ShengYinTongDaoMoRen })
 const caoZuoCuoWu = ref<QianTaiCuoWu | null>(null)
 const shiTingYuanSu = ref<HTMLAudioElement | null>(null)
 
 const tongDaoLieBiao = computed(() =>
-  SHENG_YIN_TONG_DAO_XUAN_XIANG.map((zhi) => ({
+  ShengYinTongDaoXuanXiang.map((zhi) => ({
     zhi,
-    biaoTi: huoQuFanYi('sheZhi', SHENG_YIN_TONG_DAO_JIAN[zhi]),
+    biaoTi: huoQuFanYi('sheZhi', ShengYinTongDaoJian[zhi]),
   })),
 )
 
@@ -100,7 +100,7 @@ function shiGenSuiXiTong(tongDao: ShengYinTongDao): boolean {
 }
 
 function yinLiangZhi(tongDao: ShengYinTongDao): number {
-  return tongDaoPeiZhi[tongDao] ?? SHENG_YIN_BAI_FEN_BI.moRen
+  return tongDaoPeiZhi[tongDao] ?? ShengYinBaiFenBi.moRen
 }
 
 function duShuWenZi(tongDao: ShengYinTongDao): string {
@@ -111,7 +111,7 @@ function duShuWenZi(tongDao: ShengYinTongDao): string {
 
 onMounted(() => {
   const qianRong = duQuShengYinTongDao()
-  for (const tongDao of SHENG_YIN_TONG_DAO_XUAN_XIANG) {
+  for (const tongDao of ShengYinTongDaoXuanXiang) {
     tongDaoPeiZhi[tongDao] = qianRong[tongDao]
   }
   try {

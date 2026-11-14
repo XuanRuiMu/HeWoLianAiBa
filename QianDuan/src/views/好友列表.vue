@@ -328,7 +328,7 @@ import {
   type HaoYouSouSuoXiang,
   type HaoYouXiang,
 } from '@/api/社交'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { QianTaiDaiMa } from '@/config/前台错误码'
 import { 归一前台错误 } from '@/utils/前台错误'
 import { weiDuFengDing } from '@/utils/未读封顶'
 import { jianShaoDongXiaoGuo } from '@/utils/动效偏好'
@@ -495,7 +495,7 @@ async function zhiXingQuanZhanSouSuo(): Promise<void> {
     souSuoJieGuo.value = await haoYouCangKu.souSuo(wenBen)
     if (!souSuoJieGuo.value.length) souSuoWuJieGuo.value = true
   } catch (cuoWu: unknown) {
-    if (归一前台错误(cuoWu).code === QIAN_TAI_DAI_MA.RESOURCE_NOT_FOUND) {
+    if (归一前台错误(cuoWu).code === QianTaiDaiMa.RESOURCE_NOT_FOUND) {
       souSuoWuJieGuo.value = true
     } else {
       jieShouQianTai(cuoWu, zhiXingQuanZhanSouSuo)

@@ -47,7 +47,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { 使用浮层定位 } from '@/components/通用菜单.vue'
-import { LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI, shiWeiXianCaiDanXiang } from '@/config/消息配置'
+import { LiaoTianYouJianCaiDanPeiZhi, shiWeiXianCaiDanXiang } from '@/config/消息配置'
 import type { XiaoXiCaiDanXiang } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/翻译表'
 import type { CaiDanJiDian } from '@/composables/use长按菜单'
@@ -80,11 +80,11 @@ const {
   结束跟踪: jieShuGenZong,
 } = 使用浮层定位(dingDianYuanSu, fuCengYuanSu, {
   duiQi: 'zuo',
-  jianGe: LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanJianGe,
-  bianJu: LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu,
-  zuiDaGaoDu: LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanZuiDaGaoDu,
-  zuiXiaoKuanDu: LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanZuiXiaoKuanDu,
-  zuiDaKuanDu: LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanZuiDaKuanDu,
+  jianGe: LiaoTianYouJianCaiDanPeiZhi.caiDanJianGe,
+  bianJu: LiaoTianYouJianCaiDanPeiZhi.caiDanBianJu,
+  zuiDaGaoDu: LiaoTianYouJianCaiDanPeiZhi.caiDanZuiDaGaoDu,
+  zuiXiaoKuanDu: LiaoTianYouJianCaiDanPeiZhi.caiDanZuiXiaoKuanDu,
+  zuiDaKuanDu: LiaoTianYouJianCaiDanPeiZhi.caiDanZuiDaKuanDu,
 })
 
 const caiDanXiangQing = computed(() =>

@@ -3,7 +3,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { 数据库 } from '../../数据库'
-import { MEI_TI_PEI_ZHI } from '../../config/媒体配置'
+import { MeiTiPeiZhi } from '../../config/媒体配置'
 import { qingLiGuoQiYuYinWenJian } from '../数据保存期限'
 
 const 手机号 = '19900000099'
@@ -27,7 +27,7 @@ describe.skipIf(!数据库可达)('语音文件保存期限', () => {
       [手机号, '语音清理测试'],
     )
     用户ID = String(yongHu.rows[0].ID)
-    文件路径 = path.join(MEI_TI_PEI_ZHI.cunChuGenMuLu, 哈希.slice(0, 2), 哈希)
+    文件路径 = path.join(MeiTiPeiZhi.cunChuGenMuLu, 哈希.slice(0, 2), 哈希)
     await fs.promises.mkdir(path.dirname(文件路径), { recursive: true })
     await fs.promises.writeFile(文件路径, 'voice')
     await 数据库.query(

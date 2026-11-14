@@ -1,10 +1,10 @@
 import { ref } from 'vue'
-import { QIAN_TAI_DAI_MA, daiMaHuoQuTongYongDaiMa } from '@/config/前台错误码'
+import { QianTaiDaiMa, daiMaHuoQuTongYongDaiMa } from '@/config/前台错误码'
 import { chuangJianQianTaiCuoWu, 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
 
-const MO_REN_KAI_GUAN: Record<string, boolean> = { junShi: true }
+const MoRenKaiGuan: Record<string, boolean> = { junShi: true }
 
-const kaiGuan = ref<Record<string, boolean>>({ ...MO_REN_KAI_GUAN })
+const kaiGuan = ref<Record<string, boolean>>({ ...MoRenKaiGuan })
 
 export const teZhengKaiGuanCuoWu = ref<QianTaiCuoWu | null>(null)
 
@@ -26,12 +26,12 @@ function yingYongHeFaKaiGuan(shuJu: unknown): Record<string, boolean> | null {
 }
 
 export function sheZhiTeZhengKaiGuan(xin: Record<string, boolean>): void {
-  kaiGuan.value = { ...MO_REN_KAI_GUAN, ...xin }
+  kaiGuan.value = { ...MoRenKaiGuan, ...xin }
   teZhengKaiGuanCuoWu.value = null
 }
 
 export function chongZhiTeZhengKaiGuan(): void {
-  kaiGuan.value = { ...MO_REN_KAI_GUAN }
+  kaiGuan.value = { ...MoRenKaiGuan }
   teZhengKaiGuanCuoWu.value = null
 }
 
@@ -48,7 +48,7 @@ export async function laQuTeZhengKaiGuan(): Promise<void> {
       xiangYing = await yuanShiFetch('/api/config/feature-flags', { cache: 'no-store', signal: kongZhi.signal })
     } catch {
       teZhengKaiGuanCuoWu.value = chuangJianQianTaiCuoWu({
-        code: QIAN_TAI_DAI_MA.WANG_LUO,
+        code: QianTaiDaiMa.WANG_LUO,
         retryable: true,
         yuanLeiXing: 'wangLuo',
       })
@@ -57,7 +57,7 @@ export async function laQuTeZhengKaiGuan(): Promise<void> {
       clearTimeout(dingShi)
     }
     if (!xiangYing.ok) {
-      const daiMa = daiMaHuoQuTongYongDaiMa(xiangYing.status) || QIAN_TAI_DAI_MA.WEI_ZHI
+      const daiMa = daiMaHuoQuTongYongDaiMa(xiangYing.status) || QianTaiDaiMa.WEI_ZHI
       teZhengKaiGuanCuoWu.value = chuangJianQianTaiCuoWu({
         code: daiMa,
         httpStatus: xiangYing.status,
@@ -67,10 +67,10 @@ export async function laQuTeZhengKaiGuan(): Promise<void> {
     const jieXi: unknown = await xiangYing.json()
     const heFa = yingYongHeFaKaiGuan(jieXi)
     if (heFa === null) {
-      teZhengKaiGuanCuoWu.value = chuangJianQianTaiCuoWu({ code: QIAN_TAI_DAI_MA.XIE_YI })
+      teZhengKaiGuanCuoWu.value = chuangJianQianTaiCuoWu({ code: QianTaiDaiMa.XIE_YI })
       return
     }
-    kaiGuan.value = { ...MO_REN_KAI_GUAN, ...heFa }
+    kaiGuan.value = { ...MoRenKaiGuan, ...heFa }
     teZhengKaiGuanCuoWu.value = null
   } catch (错误: unknown) {
     teZhengKaiGuanCuoWu.value = 归一前台错误(错误)

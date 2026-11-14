@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { JUN_SHI_ZHI_DAO_DUAN_DING_YI } from '../../config/军师配置'
+import { JunShiZhiDaoDuanDingYi } from '../../config/军师配置'
 import { 通用知识结束标记, 通用知识开始标记 } from '../../config/通用知识库'
 import { jieXiJunShiFenDuan, pinJieJunShiFenDuan, shengChengJunShiZhiDao } from '../军师求助'
 import { gouJianJunShiQiuZhuPrompt } from '../Prompt构建器'
@@ -32,7 +32,7 @@ describe('军师分段协议', () => {
   })
 
   it('分段定义与类型键位同源，多一个少一个都会发现', () => {
-    const dingYiJian = JUN_SHI_ZHI_DAO_DUAN_DING_YI.map((duan) => duan.ziDuan).sort()
+    const dingYiJian = JunShiZhiDaoDuanDingYi.map((duan) => duan.ziDuan).sort()
     expect(dingYiJian).toEqual([
       'dangQianJuMian',
       'guLi',
@@ -43,7 +43,7 @@ describe('军师分段协议', () => {
   })
 
   it('每个分段定义都带字数上限与要求，不许留空', () => {
-    for (const duan of JUN_SHI_ZHI_DAO_DUAN_DING_YI) {
+    for (const duan of JunShiZhiDaoDuanDingYi) {
       expect(duan.zuiDaZiShu).toBeGreaterThan(0)
       expect(duan.yaoQiu.trim().length).toBeGreaterThan(0)
       expect(duan.moXingJian.trim().length).toBeGreaterThan(0)

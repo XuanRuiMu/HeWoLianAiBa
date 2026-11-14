@@ -37,8 +37,8 @@ import {
   quKongHangShou,
   shiBiaoQingBaoKuai,
   shiXuanGuaMoWeiHuanXing,
-  SHU_RU_KONG_HANG_SHOU,
-  XIAO_XI_KUAI_LEI_XING,
+  ShuRuKongHangShou,
+  XiaoXiKuaiLeiXingZhi,
   yingSheChuDuanPianYi,
   yingSheHuiDuanPianYi,
 } from '@/utils/消息内容块'
@@ -216,7 +216,7 @@ function qianMing(weiBenCiBianJiWenBen?: string): string {
   if (props.kuaiLieBiao.length === 0) return `w:${weiBenCiBianJiWenBen ?? props.wenBen}`
   return props.kuaiLieBiao
     .map((kuai) => {
-      if (kuai.lei_xing === XIAO_XI_KUAI_LEI_XING.tuPian) {
+      if (kuai.lei_xing === XiaoXiKuaiLeiXingZhi.tuPian) {
         return `i:${kuai.id}:${kuai.yu_lan_url ?? kuai.mei_ti_id ?? ''}:${shiBiaoQingBaoKuai(kuai) ? 1 : 0}`
       }
       return `t:${kuai.id}:${kuai.nei_rong}`
@@ -230,7 +230,7 @@ function xieRuWenBen(rongQi: HTMLElement, wenBen: string): void {
     if (yiDuan !== '') rongQi.appendChild(document.createTextNode(yiDuan))
   })
   if (wenBen === '' || wenBen.endsWith('\n')) {
-    rongQi.appendChild(document.createTextNode(SHU_RU_KONG_HANG_SHOU))
+    rongQi.appendChild(document.createTextNode(ShuRuKongHangShou))
   }
 }
 
@@ -354,7 +354,7 @@ function xuanRan(): void {
     // 空流的可选点＝末尾哨兵文本节点（xieRuWenBen 负责补），占位符靠 .wei-kong 类，不依赖 :empty
   } else {
     props.kuaiLieBiao.forEach((kuai) => {
-      cao.appendChild(kuai.lei_xing === XIAO_XI_KUAI_LEI_XING.tuPian ? zaoTuPianKuai(kuai) : zaoWenZiKuai(kuai))
+      cao.appendChild(kuai.lei_xing === XiaoXiKuaiLeiXingZhi.tuPian ? zaoTuPianKuai(kuai) : zaoWenZiKuai(kuai))
     })
   }
   yiXuanRanQianMing = qianMing()

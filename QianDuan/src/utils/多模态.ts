@@ -1,11 +1,11 @@
 import type { 消息 } from '@/types/类型定义'
 
-const SHI_PIN_HOU_ZHUI = ['.mp4', '.mov', '.webm', '.m4v']
+const ShiPinHouZhui = ['.mp4', '.mov', '.webm', '.m4v']
 
 export function shiShiPinXiaoXi(xiaoXi: Pick<消息, 'lei_xing' | 'mei_ti_yuan_shi_wen_jian_ming'>): boolean {
   if (xiaoXi.lei_xing !== 'wenJian') return false
   const ming = (xiaoXi.mei_ti_yuan_shi_wen_jian_ming || '').toLowerCase()
-  return SHI_PIN_HOU_ZHUI.some((hou) => ming.endsWith(hou))
+  return ShiPinHouZhui.some((hou) => ming.endsWith(hou))
 }
 
 export function yanZhengShengChengTiShiCi(tiShiCi: unknown, zuiDaZiFu = 200): { heFa: boolean; qingXiHou: string } {

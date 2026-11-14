@@ -5,7 +5,7 @@ import { mount } from '@vue/test-utils'
 import 语音气泡 from '@/components/聊天/语音气泡.vue'
 import { geShiHuaYuYinBoFangShiJian, geShiHuaYuYinShiChang } from '@/composables/use语音播放'
 import { sheZhiYuYinYinLiang, 语音音量表 } from '@/utils/语音音量存储'
-import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
+import { DuoMeiTiPeiZhi } from '@/config/消息配置'
 
 const 组件源 = readFileSync(resolve(__dirname, '../components/聊天/语音气泡.vue'), 'utf8')
 const 令牌源 = readFileSync(resolve(__dirname, '../styles/设计令牌.css'), 'utf8')
@@ -30,7 +30,7 @@ beforeEach(() => {
 
 describe('语音条播放时间与音量文案', () => {
   it('当前时间与总时间使用同一套一位小数格式，越界值夹紧且非数值归零', () => {
-    expect(DUO_MEI_TI_PEI_ZHI.yuYinShiJianXiaoShuWei).toBe(1)
+    expect(DuoMeiTiPeiZhi.yuYinShiJianXiaoShuWei).toBe(1)
     expect(geShiHuaYuYinBoFangShiJian(3.1, 4.8)).toBe('3.1/4.8')
     expect(geShiHuaYuYinBoFangShiJian(0, 10)).toBe('0.0/10.0')
     expect(geShiHuaYuYinBoFangShiJian(9, 4.8)).toBe('4.8/4.8')

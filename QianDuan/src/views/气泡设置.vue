@@ -1,6 +1,6 @@
 <template>
   <div class="qipao-she-zhi-ye">
-    <h2 class="qipao-ye-biao-ti">{{ QI_PAO_WEN_AN.biaoTi }}</h2>
+    <h2 class="qipao-ye-biao-ti">{{ QiPaoWenAn.biaoTi }}</h2>
     <RequestError
       v-if="sheZhi.caoZuoCuoWu"
       :cuo-wu="sheZhi.caoZuoCuoWu"
@@ -26,7 +26,7 @@ import WaiGuanTianChongXuanZe from '@/components/外观填充选择器.vue'
 import LiaoTianYuLan from '@/components/聊天/聊天预览.vue'
 import RequestError from '@/components/请求错误.vue'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
-import { QI_PAO_WEN_AN } from '@/config/气泡主题文案'
+import { QiPaoWenAn } from '@/config/气泡主题文案'
 import { huoQuFanYi } from '@/config/翻译表'
 
 const sheZhi = 使用用户设置仓库()

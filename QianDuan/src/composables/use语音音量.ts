@@ -1,4 +1,4 @@
-export const YU_YIN_YIN_LIANG_PEI_ZHI = {
+export const YuYinYinLiangPeiZhi = {
   fftChiCun: 512,
   pingHuaXiShu: 0.55,
   zuiDiZhanFenBei: -90,
@@ -16,13 +16,13 @@ export const YU_YIN_YIN_LIANG_PEI_ZHI = {
   wuFaFenXiYuZhi: 1,
 } as const
 
-const FEN_BEI_MI_SHU = 20
+const FenBeiMiShu = 20
 
-export const YU_YIN_ZENG_YI_SHANG_XIAN = 4
+export const YuYinZengYiShangXian = 4
 
 export type YuYinKeJianDuanShu = 1 | 2 | 3
 
-export const YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI = {
+export const YuYinKeJianDuanShuPeiZhi = {
   shengRuZhongYin: 0.34,
   shengRuGaoYin: 0.66,
   jiangHuiDiYin: 0.24,
@@ -36,7 +36,7 @@ let dangQianZengYiJieDian: GainNode | null = null
 let qingQiuZengYiBeiShu = 1
 let shiYuShuJu: Uint8Array<ArrayBuffer> | null = null
 let danJingShuJu: Float32Array<ArrayBuffer> | null = null
-let canKaoFenBei: number = YU_YIN_YIN_LIANG_PEI_ZHI.canKaoDiXianFenBei
+let canKaoFenBei: number = YuYinYinLiangPeiZhi.canKaoDiXianFenBei
 let xianShiZhi = 0
 let yiJianCe = false
 let zuiJinCaiYangHaoMiao = 0
@@ -46,7 +46,7 @@ let canKaoZaiShangXian = false
 let duQuTuJing = 0
 let tiaoShiKaiGuan = false
 let yiBaoGaoYiChang = false
-const DU_QU_TU_JING = { wu: 0, danJing: 1, ziJie: 2 } as const
+const DuQuTuJing = { wu: 0, danJing: 1, ziJie: 2 } as const
 
 const fenXiQiBiao = new WeakMap<HTMLAudioElement, AnalyserNode>()
 const zengYiBiao = new WeakMap<HTMLAudioElement, GainNode>()
@@ -103,7 +103,7 @@ function daYinYuYinTiaoShi(mingCheng: string, xiang: Record<string, number>): vo
   if (!tiaoShiKaiGuan) return
   if (typeof console === 'undefined' || typeof console.debug !== 'function') return
   const shiJian = huoQuShiJianHaoMiao()
-  if (shiJian - zuiJinRiZhiHaoMiao < YU_YIN_YIN_LIANG_PEI_ZHI.zuiXiaoRiZhiJianGeHaoMiao) return
+  if (shiJian - zuiJinRiZhiHaoMiao < YuYinYinLiangPeiZhi.zuiXiaoRiZhiJianGeHaoMiao) return
   zuiJinRiZhiHaoMiao = shiJian
   console.debug('[语音音量] ' + mingCheng, xiang)
 }
@@ -120,14 +120,14 @@ function quRiZhiShu(zhi: number): number {
 }
 
 function chongZhiYinLiangZhuangTai(): void {
-  canKaoFenBei = YU_YIN_YIN_LIANG_PEI_ZHI.canKaoDiXianFenBei
+  canKaoFenBei = YuYinYinLiangPeiZhi.canKaoDiXianFenBei
   xianShiZhi = 0
   yiJianCe = false
   zuiJinCaiYangHaoMiao = huoQuShiJianHaoMiao()
   zuiJinRiZhiHaoMiao = Number.NEGATIVE_INFINITY
   canKaoZaiDiXian = false
   canKaoZaiShangXian = false
-  duQuTuJing = DU_QU_TU_JING.wu
+  duQuTuJing = DuQuTuJing.wu
   yiBaoGaoYiChang = false
 }
 
@@ -138,13 +138,13 @@ function jiSuanXianShu(jianGeHaoMiao: number, shiChangHaoMiao: number): number {
 
 function jiaZaiCanKaoFenBei(fenBei: number): number {
   return Math.min(
-    YU_YIN_YIN_LIANG_PEI_ZHI.canKaoShangXianFenBei,
-    Math.max(YU_YIN_YIN_LIANG_PEI_ZHI.canKaoDiXianFenBei, fenBei),
+    YuYinYinLiangPeiZhi.canKaoShangXianFenBei,
+    Math.max(YuYinYinLiangPeiZhi.canKaoDiXianFenBei, fenBei),
   )
 }
 
 function jiSuanZhanShiBiLi(fenBei: number, canKao: number): number {
-  const biLi = 1 + (fenBei - canKao) / YU_YIN_YIN_LIANG_PEI_ZHI.keShiFanWeiFenBei
+  const biLi = 1 + (fenBei - canKao) / YuYinYinLiangPeiZhi.keShiFanWeiFenBei
   return Math.min(1, Math.max(0, biLi))
 }
 
@@ -161,8 +161,8 @@ function jiSuanZiJieJunFang(shuJu: Uint8Array): number {
   let fangHe = 0
   for (let suoYin = 0; suoYin < shuJu.length; suoYin += 1) {
     const pianYi =
-      (shuJu[suoYin] - YU_YIN_YIN_LIANG_PEI_ZHI.ziJieZhongXian) /
-      YU_YIN_YIN_LIANG_PEI_ZHI.ziJieQuanFu
+      (shuJu[suoYin] - YuYinYinLiangPeiZhi.ziJieZhongXian) /
+      YuYinYinLiangPeiZhi.ziJieQuanFu
     fangHe += pianYi * pianYi
   }
   return Math.sqrt(fangHe / shuJu.length)
@@ -173,31 +173,31 @@ function huoQuShiYuJunFang(fenXiQi: AnalyserNode): number | null {
   if (danJing && typeof fenXiQi.getFloatTimeDomainData === 'function') {
     try {
       fenXiQi.getFloatTimeDomainData(danJing)
-      duQuTuJing = DU_QU_TU_JING.danJing
+      duQuTuJing = DuQuTuJing.danJing
       return jiSuanDanJingJunFang(danJing)
     } catch {
-      duQuTuJing = DU_QU_TU_JING.wu
+      duQuTuJing = DuQuTuJing.wu
       baoGaoYuYinYiChang('单精度时域读取失败', { tuJing: duQuTuJing })
       return null
     }
   }
   const ziJie = shiYuShuJu
   if (!ziJie) {
-    duQuTuJing = DU_QU_TU_JING.wu
+    duQuTuJing = DuQuTuJing.wu
     baoGaoYuYinYiChang('没有可用的时域缓冲区', { tuJing: duQuTuJing })
     return null
   }
   if (typeof fenXiQi.getByteTimeDomainData !== 'function') {
-    duQuTuJing = DU_QU_TU_JING.wu
+    duQuTuJing = DuQuTuJing.wu
     baoGaoYuYinYiChang('分析器不支持时域读取', { tuJing: duQuTuJing })
     return null
   }
   try {
     fenXiQi.getByteTimeDomainData(ziJie)
-    duQuTuJing = DU_QU_TU_JING.ziJie
+    duQuTuJing = DuQuTuJing.ziJie
     return jiSuanZiJieJunFang(ziJie)
   } catch {
-    duQuTuJing = DU_QU_TU_JING.wu
+    duQuTuJing = DuQuTuJing.wu
     baoGaoYuYinYiChang('字节时域读取失败', { tuJing: duQuTuJing })
     return null
   }
@@ -239,8 +239,8 @@ function lianJieFenXiQi(yinPin: HTMLAudioElement): void {
         const yuan = shangXiaWen.createMediaElementSource(yinPin)
         const zengYi = shangXiaWen.createGain()
         const fenXiQi = shangXiaWen.createAnalyser()
-        fenXiQi.fftSize = YU_YIN_YIN_LIANG_PEI_ZHI.fftChiCun
-        fenXiQi.smoothingTimeConstant = YU_YIN_YIN_LIANG_PEI_ZHI.pingHuaXiShu
+        fenXiQi.fftSize = YuYinYinLiangPeiZhi.fftChiCun
+        fenXiQi.smoothingTimeConstant = YuYinYinLiangPeiZhi.pingHuaXiShu
         yuan.connect(fenXiQi)
         fenXiQi.connect(zengYi)
         zengYi.connect(shangXiaWen.destination)
@@ -303,7 +303,7 @@ export function duQuYuYinZengYiQingQiu(): number {
 export function sheZhiYuYinZengYi(beiShu: number): void {
   const shu = Number(beiShu)
   const anQuan = Number.isFinite(shu)
-    ? Math.min(YU_YIN_ZENG_YI_SHANG_XIAN, Math.max(0, shu))
+    ? Math.min(YuYinZengYiShangXian, Math.max(0, shu))
     : 1
   qingQiuZengYiBeiShu = anQuan
   const jieDian = dangQianZengYiJieDian
@@ -316,7 +316,7 @@ export function sheZhiYuYinZengYi(beiShu: number): void {
 }
 
 export function duQuYuYinYinLiang(): number {
-  const buKeYong = YU_YIN_YIN_LIANG_PEI_ZHI.wuFaFenXiYuZhi
+  const buKeYong = YuYinYinLiangPeiZhi.wuFaFenXiYuZhi
   const fenXiQi = dangQianFenXiQi
   const yinPin = dangQianYinPin
   if (!fenXiQi || !yinPin) return buKeYong
@@ -325,13 +325,13 @@ export function duQuYuYinYinLiang(): number {
   if (junFang === null) return buKeYong
   const xianZaiHaoMiao = huoQuShiJianHaoMiao()
   const jianGeHaoMiao = Math.min(
-    YU_YIN_YIN_LIANG_PEI_ZHI.zuiDaCaiYangJianGeHaoMiao,
+    YuYinYinLiangPeiZhi.zuiDaCaiYangJianGeHaoMiao,
     Math.max(0, xianZaiHaoMiao - zuiJinCaiYangHaoMiao),
   )
   zuiJinCaiYangHaoMiao = xianZaiHaoMiao
   const fenBei = Math.max(
-    YU_YIN_YIN_LIANG_PEI_ZHI.zuiDiZhanFenBei,
-    FEN_BEI_MI_SHU * Math.log10(junFang),
+    YuYinYinLiangPeiZhi.zuiDiZhanFenBei,
+    FenBeiMiShu * Math.log10(junFang),
   )
   if (!yiJianCe) {
     yiJianCe = true
@@ -348,12 +348,12 @@ export function duQuYuYinYinLiang(): number {
   const canKaoXiShu = jiSuanXianShu(
     jianGeHaoMiao,
     fenBei > canKaoFenBei
-      ? YU_YIN_YIN_LIANG_PEI_ZHI.fengZhiShengShiChangHaoMiao
-      : YU_YIN_YIN_LIANG_PEI_ZHI.fengZhiJiangShiChangHaoMiao,
+      ? YuYinYinLiangPeiZhi.fengZhiShengShiChangHaoMiao
+      : YuYinYinLiangPeiZhi.fengZhiJiangShiChangHaoMiao,
   )
   canKaoFenBei = jiaZaiCanKaoFenBei(canKaoFenBei + (fenBei - canKaoFenBei) * canKaoXiShu)
-  const zaiDiXian = canKaoFenBei <= YU_YIN_YIN_LIANG_PEI_ZHI.canKaoDiXianFenBei
-  const zaiShangXian = canKaoFenBei >= YU_YIN_YIN_LIANG_PEI_ZHI.canKaoShangXianFenBei
+  const zaiDiXian = canKaoFenBei <= YuYinYinLiangPeiZhi.canKaoDiXianFenBei
+  const zaiShangXian = canKaoFenBei >= YuYinYinLiangPeiZhi.canKaoShangXianFenBei
   if ((zaiDiXian && !canKaoZaiDiXian) || (zaiShangXian && !canKaoZaiShangXian)) {
     daYinYuYinTiaoShi('参考线贴钳位', {
       zaiDiXian: zaiDiXian ? 1 : 0,
@@ -368,8 +368,8 @@ export function duQuYuYinYinLiang(): number {
   const xianShiXiShu = jiSuanXianShu(
     jianGeHaoMiao,
     muBiaoZhi > xianShiZhi
-      ? YU_YIN_YIN_LIANG_PEI_ZHI.xianShiShengShiChangHaoMiao
-      : YU_YIN_YIN_LIANG_PEI_ZHI.xianShiJiangShiChangHaoMiao,
+      ? YuYinYinLiangPeiZhi.xianShiShengShiChangHaoMiao
+      : YuYinYinLiangPeiZhi.xianShiJiangShiChangHaoMiao,
   )
   xianShiZhi = Math.min(1, Math.max(0, xianShiZhi + (muBiaoZhi - xianShiZhi) * xianShiXiShu))
   return xianShiZhi
@@ -389,16 +389,16 @@ export function jiSuanYuYinKeJianDuanShu(
   const zhi = Math.min(1, Math.max(0, biLi))
   const shangCi = guiYiKeJianDuanShu(shangCiDuanShu)
   if (shangCi === 1) {
-    if (zhi >= YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.shengRuGaoYin) return 3
-    if (zhi >= YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.shengRuZhongYin) return 2
+    if (zhi >= YuYinKeJianDuanShuPeiZhi.shengRuGaoYin) return 3
+    if (zhi >= YuYinKeJianDuanShuPeiZhi.shengRuZhongYin) return 2
     return 1
   }
   if (shangCi === 2) {
-    if (zhi >= YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.shengRuGaoYin) return 3
-    if (zhi < YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.jiangHuiDiYin) return 1
+    if (zhi >= YuYinKeJianDuanShuPeiZhi.shengRuGaoYin) return 3
+    if (zhi < YuYinKeJianDuanShuPeiZhi.jiangHuiDiYin) return 1
     return 2
   }
-  if (zhi < YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.jiangHuiDiYin) return 1
-  if (zhi < YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.jiangHuiZhongYin) return 2
+  if (zhi < YuYinKeJianDuanShuPeiZhi.jiangHuiDiYin) return 1
+  if (zhi < YuYinKeJianDuanShuPeiZhi.jiangHuiZhongYin) return 2
   return 3
 }

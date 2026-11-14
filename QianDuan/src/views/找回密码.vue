@@ -55,7 +55,7 @@
               @shi-jiao="shouJiHaoShiJiao"
             >
               <template #前缀>
-                <span class="gu-ding-qu-hao">+{{ DA_LU_QU_HAO }}</span>
+                <span class="gu-ding-qu-hao">+{{ DaLuQuHao }}</span>
               </template>
             </HengTiaoShuRuKuang>
             <p v-if="dangQianBuZhou === 1 && shouJiHaoCuoWuWenBen !== ''" class="zhaohui-zi-duan-ti-shi" role="alert">
@@ -248,7 +248,7 @@
     <RenJiYanZheng
       ref="renJiZuJian"
       :xian-shi="renJiXianShi"
-      :yong-tu="YAN_ZHENG_MA_YONG_TU.chongZhiMiMa"
+      :yong-tu="YanZhengMaYongTu.chongZhiMiMa"
       :deng-dai-zhong="faSongZhong"
       @guan-bi="renJiXianShi = false"
       @ti-jiao="tiJiaoRenJi"
@@ -259,18 +259,18 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { chongZhiMiMa, faSongMa, YAN_ZHENG_MA_YONG_TU, type 人机验证答案 } from '@/api/认证'
+import { chongZhiMiMa, faSongMa, YanZhengMaYongTu, type 人机验证答案 } from '@/api/认证'
 import HengTiaoShuRuKuang from '@/components/表单/横条输入框.vue'
 import RenJiYanZheng from '@/components/认证/人机测试.vue'
 import { huoQuFanYi } from '@/config/翻译表'
 import { use前台错误 } from '@/composables/use前台错误'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
 import { shiRenJiYanZhengShiBai, type 人机测试实例 } from '@/utils/人机验证'
-import { DA_LU_QU_HAO } from '@/utils/手机号'
+import { DaLuQuHao } from '@/utils/手机号'
 
-const SHOU_JI_HAO_ZHENG_ZE = /^1[3-9]\d{9}$/
-const YAN_ZHENG_MA_ZHENG_ZE = /^\d{6}$/
-const XIN_MI_MA_ZHENG_ZE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/
+const ShouJiHaoZhengZe = /^1[3-9]\d{9}$/
+const YanZhengMaZhengZe = /^\d{6}$/
+const XinMiMaZhengZe = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/
 
 const bd = 使用认证表单仓库()
 const route = useRoute()
@@ -309,9 +309,9 @@ const yanZhengMaShangFu = computed(() => yanZhengMa.value.length > 0)
 const xinMiMaShangFu = computed(() => xinMiMa.value.length > 0)
 const queRenMiMaShangFu = computed(() => queRenXinMiMa.value.length > 0)
 
-const shouJiHaoHeFa = computed(() => SHOU_JI_HAO_ZHENG_ZE.test(shouJiHao.value.trim()))
-const yanZhengMaHeFa = computed(() => YAN_ZHENG_MA_ZHENG_ZE.test(yanZhengMa.value))
-const xinMiMaHeFa = computed(() => XIN_MI_MA_ZHENG_ZE.test(xinMiMa.value))
+const shouJiHaoHeFa = computed(() => ShouJiHaoZhengZe.test(shouJiHao.value.trim()))
+const yanZhengMaHeFa = computed(() => YanZhengMaZhengZe.test(yanZhengMa.value))
+const xinMiMaHeFa = computed(() => XinMiMaZhengZe.test(xinMiMa.value))
 const miMaYiZhi = computed(() => xinMiMa.value.length > 0 && xinMiMa.value === queRenXinMiMa.value)
 
 const keYiFaSong = computed(
@@ -478,7 +478,7 @@ async function tiJiaoRenJi(yanZheng: 人机验证答案): Promise<void> {
   qingLiTiShi()
   qingQiuCuoWuWeiZhi.value = dangQianBuZhou.value === 1 ? 'shouJiHao' : 'yanZhengMa'
   try {
-    await faSongMa(hao, YAN_ZHENG_MA_YONG_TU.chongZhiMiMa, undefined, yanZheng)
+    await faSongMa(hao, YanZhengMaYongTu.chongZhiMiMa, undefined, yanZheng)
     if (dai !== daiCi) return
     renJiXianShi.value = false
     shouJiHao.value = hao
@@ -548,8 +548,8 @@ async function zhiXingChongZhi(): Promise<void> {
 
 onMounted(() => {
   const daiRu = typeof route.query.shouJiHao === 'string' ? route.query.shouJiHao.trim() : ''
-  if (SHOU_JI_HAO_ZHENG_ZE.test(daiRu)) shouJiHao.value = daiRu
-  else if (SHOU_JI_HAO_ZHENG_ZE.test(bd.dengLuShouJiHao)) shouJiHao.value = bd.dengLuShouJiHao
+  if (ShouJiHaoZhengZe.test(daiRu)) shouJiHao.value = daiRu
+  else if (ShouJiHaoZhengZe.test(bd.dengLuShouJiHao)) shouJiHao.value = bd.dengLuShouJiHao
   juJiao(shouJiHaoKuang)
 })
 

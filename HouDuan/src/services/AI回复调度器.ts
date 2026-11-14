@@ -3,7 +3,9 @@ import { yunXingAIYinQing } from './AI引擎'
 import { pingPanHaoGanDuPiLiangNei } from './好感度评判'
 import { gengXinHaoGanDu, huoQuWanZhengHaoGanDu } from './好感度'
 import { changShiTouXiangYanHua } from './头像生成'
-import { jieXiBiaoQingZhiLing, faSongBiaoQingBaoXiaoXi } from './系统表情'
+import { faSongBiaoQingBaoXiaoXi } from './系统表情'
+import { qieFenTieZhi, qingXiTieZhiCanPian } from './贴纸标记'
+import { BiaoQingBaoYunXing, BiaoQingFaSongYuanYin } from '../config/表情包配置'
 import { chuLiQueXiKouJian } from './亲密度缺席扣减'
 import {
   baoCunJiaoSeXiaoXi,
@@ -21,7 +23,7 @@ import {
   chuLiYouXiJieShu,
 } from './胜利失败条件'
 import { jiaoSeShiFouBeiDuoShe } from './夺舍'
-import { XIAO_XI_PEI_ZHI } from '../config/消息配置'
+import { XiaoXiPeiZhi } from '../config/消息配置'
 import { debug日志, jiLuSocketShiJian, jiLuXiaoXiCaoZuo } from '../utils/debug日志'
 import { 管理监控房间名 } from '../socket/管理通道'
 import { gouJianJiaoSeShangXiaWen, type CanShuShangXiaWen } from '../config/AI参数策略'
@@ -39,7 +41,7 @@ import type { XiaoXiXinXi } from './消息'
 import { 尝试合成语音 } from './TTS服务'
 import { 转换TTS文本 } from './TTS文本预处理'
 import { 计算TTS概率 } from './TTS概率计算'
-import { TTS_PEI_ZHI } from '../config/TTS触发配置'
+import { TtsPeiZhi } from '../config/TTS触发配置'
 import { panDuanZuiJia } from './追加消息判定'
 import { tuiDuanZuoXi, panDuanZuoXi, zuoXiKaiQi } from '../config/角色作息'
 import { shengChengBurstJianGeHaoMiao, burstLianFaZuiChangBiJieShu } from '../config/角色配置'
@@ -63,7 +65,7 @@ interface LunCiShangXiaWen {
   驱动消息ID: string | null
 }
 
-const DENG_DAI_BIAO_BAI_GUO_QI_SHI_JIAN = 30 * 60 * 1000
+const DengDaiBiaoBaiGuoQiShiJian = 30 * 60 * 1000
 
 interface DengDaiBiaoBaiHuiFuZhuangTai {
   deng_dai_zhong: boolean
@@ -79,7 +81,7 @@ function shengChengDengDaiBiaoBaiJian(yong_hu_id: string, jiao_se_id: string): s
 function qingChuGuoQiDengDaiZhuangTai(): void {
   const xianZai = Date.now()
   for (const [jian, zhuangTai] of dengDaiBiaoBaiHuiFuMap.entries()) {
-    if (xianZai - zhuangTai.chuang_jian_shi_jian > DENG_DAI_BIAO_BAI_GUO_QI_SHI_JIAN) {
+    if (xianZai - zhuangTai.chuang_jian_shi_jian > DengDaiBiaoBaiGuoQiShiJian) {
       dengDaiBiaoBaiHuiFuMap.delete(jian)
     }
   }
@@ -99,6 +101,7 @@ export class AI回复调度器 {
   private 本轮已发送预警 = false
   private 本轮驱动消息ID: string | null = null
   private 已送达登记 = new Map<string, number>()
+  private 本轮贴纸账 = new Map<number, number>()
 
   private 追加计时器: NodeJS.Timeout | null = null
   private 上条角色消息时刻 = 0
@@ -133,13 +136,13 @@ export class AI回复调度器 {
     this.自上一条角色消息以来的用户消息计数 += 1
     this.上条角色消息后用户来过 = true
 
-    if (this.自上一条角色消息以来的用户消息计数 === XIAO_XI_PEI_ZHI.lianFaYuJingTiaoShu && !this.本轮已发送预警) {
+    if (this.自上一条角色消息以来的用户消息计数 === XiaoXiPeiZhi.lianFaYuJingTiaoShu && !this.本轮已发送预警) {
       this.重置()
       this.当前检测ID += 1
       return this.触发连发预警()
     }
 
-    if (this.自上一条角色消息以来的用户消息计数 >= XIAO_XI_PEI_ZHI.lianFaMianDaRaoTiaoShu) {
+    if (this.自上一条角色消息以来的用户消息计数 >= XiaoXiPeiZhi.lianFaMianDaRaoTiaoShu) {
       this.触发连发免打扰判负()
       return Promise.resolve()
     }
@@ -212,12 +215,31 @@ export class AI回复调度器 {
       this.追加计时器 = null
     }
     this.当前处理ID += 1
+    this.本轮贴纸账.clear()
     if (this.取消控制器) {
       this.取消控制器.abort()
       this.取消控制器 = null
     }
     this.处理中 = false
     this.发布AI状态('kong_xian')
+  }
+
+  private 取本轮已发贴纸数(处理ID: number): number {
+    const yiFa = this.本轮贴纸账.get(处理ID)
+    return typeof yiFa === 'number' && Number.isFinite(yiFa) ? yiFa : 0
+  }
+
+  private 记本轮已发贴纸(处理ID: number, zhangShu: number): void {
+    this.本轮贴纸账.set(处理ID, zhangShu)
+  }
+
+  private 清理过期贴纸账(dangQianChuLiID: number): void {
+    for (const jiLuChuLiID of [...this.本轮贴纸账.keys()]) {
+      if (jiLuChuLiID === dangQianChuLiID) continue
+      if (jiLuChuLiID < dangQianChuLiID) {
+        this.本轮贴纸账.delete(jiLuChuLiID)
+      }
+    }
   }
 
   private 转对外消息(消息列表: XiaoXiXinXi[]): XiaoXiXinXi[] {
@@ -389,7 +411,7 @@ private 当地现在小时(): number {
     const jian = shengChengDengDaiBiaoBaiJian(this.用户ID, this.角色ID)
     const zhuangTai = dengDaiBiaoBaiHuiFuMap.get(jian)
     if (!zhuangTai) return false
-    if (Date.now() - zhuangTai.chuang_jian_shi_jian > DENG_DAI_BIAO_BAI_GUO_QI_SHI_JIAN) {
+    if (Date.now() - zhuangTai.chuang_jian_shi_jian > DengDaiBiaoBaiGuoQiShiJian) {
       dengDaiBiaoBaiHuiFuMap.delete(jian)
       return false
     }
@@ -418,6 +440,7 @@ private 当地现在小时(): number {
       处理ID,
       驱动消息ID: this.本轮驱动消息ID,
     }
+    this.清理过期贴纸账(处理ID)
     this.处理中 = true
     this.取消控制器 = new AbortController()
     const 信号 = this.取消控制器.signal
@@ -785,35 +808,78 @@ private 当地现在小时(): number {
       轮次.驱动消息ID,
     )
     const yiFaSongLieBiao: string[] = []
+    const yiFaWenZiDuanLieBiao: string[] = []
     this.连发剩余条数 = 0
 
-    for (let i = 0; i < 消息列表.length; i++) {
-      if (信号.aborted || 处理ID !== this.当前处理ID) return
-      if (i > 0) {
-        await this.等待间隔(信号)
+    let yiFaTieZhiShu = this.取本轮已发贴纸数(处理ID)
+    const jinRuShiTieZhiShu = yiFaTieZhiShu
+    let chuLiDuanShu = 0
+    let benLunYiFaChuNeiRong = false
+    let shangYiDuanShiTieZhi = false
+
+    for (const yuanShiXiaoXi of 消息列表) {
+      for (const duan of qieFenTieZhi(yuanShiXiaoXi)) {
         if (信号.aborted || 处理ID !== this.当前处理ID) return
-      }
+        if (chuLiDuanShu > 0) {
+          if (shangYiDuanShiTieZhi) {
+            await this.等待贴纸后短间隔(信号)
+          } else {
+            await this.等待间隔(信号)
+          }
+          if (信号.aborted || 处理ID !== this.当前处理ID) return
+        }
+        chuLiDuanShu += 1
 
-      if (this.已送达过(消息列表[i])) {
-        debug日志.warn('AI调度器', '本轮回复与刚送达的一条同文本，已丢弃', {
-          xiang_qing: { jiao_se_id: this.角色ID, lun_ci: 处理ID, tiao_shu: i + 1 },
-        })
-        continue
-      }
-
-      const tieZhiDuanMing = jieXiBiaoQingZhiLing(消息列表[i])
-      if (tieZhiDuanMing) {
-        const biaoQingXiaoXi = await faSongBiaoQingBaoXiaoXi(this.用户ID, this.角色ID, tieZhiDuanMing).catch(
-          (cuoWu: unknown) => {
-            debug日志.warn('AI调度器', '表情包消息发送失败，本条跳过', {
-              xiang_qing: { jiao_se_id: this.角色ID, duan_ming: tieZhiDuanMing, cuo_wu: String(cuoWu) },
+        if (duan.leiXing === 'tupian') {
+          if (!BiaoQingBaoYunXing.daKai) {
+            debug日志.debug('AI调度器', '表情包总开关关着，这一段按文字处理，不发出标记', {
+              xiang_qing: {
+                jiao_se_id: this.角色ID,
+                lun_ci: 处理ID,
+                duan_ming: duan.neiRong,
+                yuan_yin: BiaoQingFaSongYuanYin.daKaiGuanBi,
+              },
             })
-            return null
-          },
-        )
-        if (biaoQingXiaoXi) {
-          yiFaSongLieBiao.push(消息列表[i])
-          this.登记送达(消息列表[i])
+            shangYiDuanShiTieZhi = false
+            continue
+          }
+          if (yiFaTieZhiShu >= BiaoQingBaoYunXing.zuiDaMeiLunZhangShu) {
+            debug日志.warn('AI调度器', '本轮表情包张数已到上限，这一段丢弃', {
+              xiang_qing: {
+                jiao_se_id: this.角色ID,
+                lun_ci: 处理ID,
+                duan_ming: duan.neiRong,
+                yi_fa_zhang_shu: yiFaTieZhiShu,
+                shang_xian: BiaoQingBaoYunXing.zuiDaMeiLunZhangShu,
+              },
+            })
+            shangYiDuanShiTieZhi = false
+            continue
+          }
+          const biaoQingXiaoXi = await faSongBiaoQingBaoXiaoXi(this.用户ID, this.角色ID, duan.neiRong).catch(
+            (cuoWu: unknown) => {
+              debug日志.warn('AI调度器', '表情包消息发送抛错，这一段丢弃', {
+                xiang_qing: {
+                  jiao_se_id: this.角色ID,
+                  lun_ci: 处理ID,
+                  duan_ming: duan.neiRong,
+                  cuo_wu: String(cuoWu).slice(0, 200),
+                },
+              })
+              return null
+            },
+          )
+          if (!biaoQingXiaoXi) {
+            debug日志.warn('AI调度器', '贴纸短名没发出去，只丢这一段，后面的文字照发', {
+              xiang_qing: { jiao_se_id: this.角色ID, lun_ci: 处理ID, duan_ming: duan.neiRong },
+            })
+            shangYiDuanShiTieZhi = false
+            continue
+          }
+          yiFaTieZhiShu += 1
+          this.记本轮已发贴纸(处理ID, yiFaTieZhiShu)
+          benLunYiFaChuNeiRong = true
+          shangYiDuanShiTieZhi = true
           this.自上一条角色消息以来的用户消息计数 = 0
           try {
             this.推送角色回复([biaoQingXiaoXi], 轮次)
@@ -822,65 +888,129 @@ private 当地现在小时(): number {
               xiang_qing: { jiao_se_id: this.角色ID, xiao_xi_id: biaoQingXiaoXi.id, cuo_wu: String(cuoWu) },
             })
           }
-          jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 1, xiao_xi_id: biaoQingXiaoXi.id })
+          jiLuSocketShiJian('角色回复', this.用户ID, {
+            jiao_se_id: this.角色ID,
+            xiao_xi_shu: 1,
+            xiao_xi_id: biaoQingXiaoXi.id,
+            duan_ming: duan.neiRong,
+          })
           continue
         }
-        debug日志.warn('AI调度器', '贴纸指令未命中表情库，本条丢弃', {
-          xiang_qing: { jiao_se_id: this.角色ID, duan_ming: tieZhiDuanMing },
+
+        shangYiDuanShiTieZhi = false
+        const qingXiHouWenBen = qingXiTieZhiCanPian(duan.neiRong)
+        if (qingXiHouWenBen === '') continue
+
+        if (this.已送达过(qingXiHouWenBen)) {
+          debug日志.warn('AI调度器', '本轮回复与刚送达的一条同文本，已丢弃', {
+            xiang_qing: { jiao_se_id: this.角色ID, lun_ci: 处理ID, duan_shu: chuLiDuanShu },
+          })
+          continue
+        }
+
+        const 保存结果 = await baoCunJiaoSeXiaoXi({
+          yong_hu_id: this.用户ID,
+          jiao_se_id: this.角色ID,
+          nei_rong: qingXiHouWenBen,
         })
-        continue
-      }
 
-      const 保存结果 = await baoCunJiaoSeXiaoXi({
-        yong_hu_id: this.用户ID,
-        jiao_se_id: this.角色ID,
-        nei_rong: 消息列表[i],
-      })
+        this.自上一条角色消息以来的用户消息计数 = 0
+        benLunYiFaChuNeiRong = true
 
-      this.自上一条角色消息以来的用户消息计数 = 0
-
-      yiFaSongLieBiao.push(消息列表[i])
-      this.登记送达(消息列表[i])
-      try {
-        this.推送角色回复([保存结果], 轮次)
-      } catch (cuoWu) {
-        debug日志.error('AI调度器', '角色回复推送异常', {
-          xiang_qing: { jiao_se_id: this.角色ID, xiao_xi_id: 保存结果?.id, cuo_wu: String(cuoWu) },
+        yiFaSongLieBiao.push(qingXiHouWenBen)
+        yiFaWenZiDuanLieBiao.push(qingXiHouWenBen)
+        this.登记送达(qingXiHouWenBen)
+        try {
+          this.推送角色回复([保存结果], 轮次)
+        } catch (cuoWu) {
+          debug日志.error('AI调度器', '角色回复推送异常', {
+            xiang_qing: { jiao_se_id: this.角色ID, xiao_xi_id: 保存结果?.id, cuo_wu: String(cuoWu) },
+          })
+        }
+        jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 1, xiao_xi_id: 保存结果?.id })
+        this.io.to(管理监控房间名(this.用户ID)).emit('管理员_构建过程', {
+          阶段: '输出回复',
+          说明: `第 ${yiFaWenZiDuanLieBiao.length} 段文字已生成并写入对话`,
+          内容: qingXiHouWenBen,
+          时间: Date.now(),
+          轮次: 处理ID,
         })
       }
-      jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 1, xiao_xi_id: 保存结果?.id })
-      this.io.to(管理监控房间名(this.用户ID)).emit('管理员_构建过程', {
-        阶段: '输出回复',
-        说明: `第 ${i + 1} 条回复已生成并写入对话`,
-        内容: 消息列表[i],
-        时间: Date.now(),
-        轮次: 处理ID,
-      })
     }
 
     if (信号.aborted || 处理ID !== this.当前处理ID) return
 
-    if (最新用户消息 && yiFaSongLieBiao.length > 0) {
-      const 好感度变化 = await this.更新好感度(最新用户消息, yiFaSongLieBiao)
-      if (信号.aborted || 处理ID !== this.当前处理ID) return
-      if (好感度变化) {
-        this.io.to(管理监控房间名(this.用户ID)).emit('管理员_好感度变化', {
-          变化: {
-            信任: 好感度变化.xin_ren_du_bian_hua,
-            亲密: 好感度变化.qin_mi_du_bian_hua,
-            趣味: 好感度变化.qu_wei_du_bian_hua,
-            关怀: 好感度变化.guan_huai_du_bian_hua,
-          },
-          时间: Date.now(),
-          轮次: 处理ID,
+    const benLunYiFaChuTiaoShu = yiFaSongLieBiao.length + (yiFaTieZhiShu - jinRuShiTieZhiShu)
+    if (benLunYiFaChuTiaoShu === 0 && 消息列表.length > 0) {
+      const yuanShiWenBen = 消息列表.join('\n')
+      const douDiWenBen = qingXiTieZhiCanPian(yuanShiWenBen)
+      if (douDiWenBen !== '') {
+        const 保存结果 = await baoCunJiaoSeXiaoXi({
+          yong_hu_id: this.用户ID,
+          jiao_se_id: this.角色ID,
+          nei_rong: douDiWenBen,
         })
-        if (好感度变化.li_you) {
-          this.io.to(管理监控房间名(this.用户ID)).emit('管理员_隐藏信息', {
-            类型: '好感度评判理由',
-            内容: 好感度变化.li_you,
+        this.自上一条角色消息以来的用户消息计数 = 0
+        benLunYiFaChuNeiRong = true
+        yiFaSongLieBiao.push(douDiWenBen)
+        yiFaWenZiDuanLieBiao.push(douDiWenBen)
+        this.登记送达(douDiWenBen)
+        try {
+          this.推送角色回复([保存结果], 轮次)
+        } catch (cuoWu) {
+          debug日志.error('AI调度器', '兜底文字推送异常', {
+            xiang_qing: { jiao_se_id: this.角色ID, xiao_xi_id: 保存结果?.id, cuo_wu: String(cuoWu) },
+          })
+        }
+        jiLuSocketShiJian('角色回复', this.用户ID, {
+          jiao_se_id: this.角色ID,
+          xiao_xi_shu: 1,
+          xiao_xi_id: 保存结果?.id,
+          lai_yuan: BiaoQingFaSongYuanYin.douDiBuFa,
+        })
+        debug日志.warn('AI调度器', '整轮一条都没发出去，已用清洗后的原文补一条兜底文字', {
+          xiang_qing: {
+            jiao_se_id: this.角色ID,
+            lun_ci: 处理ID,
+            yuan_yin: BiaoQingFaSongYuanYin.zhengLunKong,
+            duan_shu: chuLiDuanShu,
+          },
+        })
+      } else {
+        debug日志.warn('AI调度器', '整轮只有贴纸且贴纸没发出去，清洗后也没有文字可补，本轮玩家收不到内容', {
+          xiang_qing: {
+            jiao_se_id: this.角色ID,
+            lun_ci: 处理ID,
+            yuan_yin: BiaoQingFaSongYuanYin.qingXiHouKong,
+            duan_shu: chuLiDuanShu,
+          },
+        })
+      }
+    }
+
+    if (最新用户消息 && benLunYiFaChuNeiRong) {
+      if (yiFaSongLieBiao.length > 0) {
+        const 好感度变化 = await this.更新好感度(最新用户消息, yiFaSongLieBiao)
+        if (信号.aborted || 处理ID !== this.当前处理ID) return
+        if (好感度变化) {
+          this.io.to(管理监控房间名(this.用户ID)).emit('管理员_好感度变化', {
+            变化: {
+              信任: 好感度变化.xin_ren_du_bian_hua,
+              亲密: 好感度变化.qin_mi_du_bian_hua,
+              趣味: 好感度变化.qu_wei_du_bian_hua,
+              关怀: 好感度变化.guan_huai_du_bian_hua,
+            },
             时间: Date.now(),
             轮次: 处理ID,
           })
+          if (好感度变化.li_you) {
+            this.io.to(管理监控房间名(this.用户ID)).emit('管理员_隐藏信息', {
+              类型: '好感度评判理由',
+              内容: 好感度变化.li_you,
+              时间: Date.now(),
+              轮次: 处理ID,
+            })
+          }
         }
       }
       void changShiTouXiangYanHua({
@@ -896,9 +1026,9 @@ private 当地现在小时(): number {
       }
     }
 
-    if (this.当前角色 && yiFaSongLieBiao.length > 0 && 处理ID === this.当前处理ID) {
-      const 首条回复 = yiFaSongLieBiao[0]
-      const tts文本 = 转换TTS文本(首条回复).slice(0, TTS_PEI_ZHI.tuiSongZuiDaZiFu)
+    if (this.当前角色 && yiFaWenZiDuanLieBiao.length > 0 && 处理ID === this.当前处理ID) {
+      const 首条回复 = yiFaWenZiDuanLieBiao[0]
+      const tts文本 = 转换TTS文本(首条回复).slice(0, TtsPeiZhi.tuiSongZuiDaZiFu)
       const 概率结果 = 计算TTS概率({
         角色: this.当前角色,
         好感度: await (async () => {
@@ -1006,6 +1136,16 @@ private 当地现在小时(): number {
       return 1500 + Math.random() * 3000
     }
     return 400 + Math.random() * 1200
+  }
+
+  private async 等待贴纸后短间隔(信号: AbortSignal): Promise<void> {
+    const { jiZhun, douDong } = BiaoQingBaoYunXing.tieZhiHouDuanJianGe
+    const jianGe = Math.floor(jiZhun + Math.random() * douDong)
+    const 开始时间 = Date.now()
+    while (Date.now() - 开始时间 < jianGe) {
+      if (信号.aborted) return
+      await new Promise((resolve) => setTimeout(resolve, 50))
+    }
   }
 
   private async 等待间隔(信号: AbortSignal): Promise<void> {

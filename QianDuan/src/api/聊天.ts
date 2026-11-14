@@ -22,7 +22,7 @@ import type {
   ZhanJiFenLeiShanChuJieGuo,
 } from '@/types/类型定义'
 
-export const DUO_MEI_TI_LEI_XING_SHANG_CHUAN_LEI_BIE: Record<DuoMeiTiLeiXing, ShangChuanLeiBie> = {
+export const DuoMeiTiLeiXingShangChuanLeiBie: Record<DuoMeiTiLeiXing, ShangChuanLeiBie> = {
   tuPian: 'tupian',
   biaoQingBao: 'biaoqingshu',
   yuYin: 'yuyin',
@@ -93,7 +93,7 @@ export interface MeiTiShangChuanJieGuo {
   mei_ti_url: string | null
 }
 
-const MO_REN_SHANG_CHUAN_WEN_JIAN_MING: Record<ShangChuanLeiBie, string> = {
+const MoRenShangChuanWenJianMing: Record<ShangChuanLeiBie, string> = {
   tupian: 'tupian.jpg',
   biaoqingshu: 'biaoqingshu.png',
   yuyin: 'yuyin.webm',
@@ -101,7 +101,7 @@ const MO_REN_SHANG_CHUAN_WEN_JIAN_MING: Record<ShangChuanLeiBie, string> = {
 }
 
 export function anMimeTuiDaoWenJianMing(leiBie: ShangChuanLeiBie, mime: string): string {
-  const moRen = MO_REN_SHANG_CHUAN_WEN_JIAN_MING[leiBie]
+  const moRen = MoRenShangChuanWenJianMing[leiBie]
   if (leiBie !== 'yuyin') return moRen
   if (mime.includes('mp4')) return `yuyin-${Date.now()}.m4a`
   if (mime.includes('ogg')) return `yuyin-${Date.now()}.ogg`

@@ -70,7 +70,7 @@ import { 依赖不可用错误 } from '../../utils/依赖错误'
 import { biaoJiYiJiuXu, 重置就绪状态, huoQuJiuXuKuaiZhao } from '../../utils/依赖就绪'
 import { 校验redissTLS, 启动前强校验 } from '../../启动校验'
 
-const YE_WU_LU_JING = '/ye-wu'
+const YeWuLuJing = '/ye-wu'
 
 function daQiFuWu(peizhi: (yingYong: express.Express) => void): Promise<{ url: string; guan: () => Promise<void> }> {
   const yingYong = express()
@@ -90,7 +90,7 @@ function daQiFuWu(peizhi: (yingYong: express.Express) => void): Promise<{ url: s
 }
 
 async function qingQiu(url: string, fangFa = 'POST'): Promise<{ zhuangTaiMa: number; ti: Record<string, unknown> }> {
-  const xiangYing = await fetch(`${url}${YE_WU_LU_JING}`, {
+  const xiangYing = await fetch(`${url}${YeWuLuJing}`, {
     method: fangFa,
     headers: { 'Content-Type': 'application/json' },
     body: fangFa === 'POST' ? JSON.stringify({ shouJiHao: '+8613900000001', miMa: 'Fpdeg12345' }) : undefined,
@@ -112,7 +112,7 @@ describe('FP-DEG 依赖未就绪时业务路由返回结构化 503', () => {
     biaoJiYiJiuXu('词库')
     const { url, guan } = await daQiFuWu((yingYong) => {
       yingYong.use(依赖闸门中间件)
-      yingYong.post(YE_WU_LU_JING, (_q, s) => s.json({ cheng_gong: true }))
+      yingYong.post(YeWuLuJing, (_q, s) => s.json({ cheng_gong: true }))
     })
     try {
       const { zhuangTaiMa, ti } = await qingQiu(url)
@@ -129,7 +129,7 @@ describe('FP-DEG 依赖未就绪时业务路由返回结构化 503', () => {
   it('两个依赖都不可用 → 503 + DEPENDENCIES_UNAVAILABLE', async () => {
     const { url, guan } = await daQiFuWu((yingYong) => {
       yingYong.use(依赖闸门中间件)
-      yingYong.post(YE_WU_LU_JING, (_q, s) => s.json({ cheng_gong: true }))
+      yingYong.post(YeWuLuJing, (_q, s) => s.json({ cheng_gong: true }))
     })
     try {
       const { zhuangTaiMa, ti } = await qingQiu(url)
@@ -146,7 +146,7 @@ describe('FP-DEG 依赖未就绪时业务路由返回结构化 503', () => {
     biaoJiYiJiuXu('词库')
     const { url, guan } = await daQiFuWu((yingYong) => {
       yingYong.use(依赖闸门中间件)
-      yingYong.post(YE_WU_LU_JING, (_q, s) => s.json({ cheng_gong: true }))
+      yingYong.post(YeWuLuJing, (_q, s) => s.json({ cheng_gong: true }))
     })
     try {
       const { zhuangTaiMa, ti } = await qingQiu(url)
@@ -161,7 +161,7 @@ describe('FP-DEG 依赖未就绪时业务路由返回结构化 503', () => {
     biaoJiYiJiuXu('redis')
     biaoJiYiJiuXu('词库')
     const { url, guan } = await daQiFuWu((yingYong) => {
-      yingYong.post(YE_WU_LU_JING, (_q, _s, xiaYiBu) => {
+      yingYong.post(YeWuLuJing, (_q, _s, xiaYiBu) => {
         xiaYiBu(new 依赖不可用错误('postgres', Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:5499'), { code: 'ECONNREFUSED' })))
       })
     })

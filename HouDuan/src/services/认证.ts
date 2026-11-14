@@ -3,9 +3,9 @@ import { 数据库 } from '../数据库'
 import { redis } from '../redis'
 import { peiZhi } from '../config'
 import { huoQuFanYi } from '../config/translations'
-import { CUO_WU_DAI_MA, type CuoWuDaiMa } from '../config/错误码注册表'
+import {CuoWuDaiMa} from '../config/错误码注册表'
 import { shengChengLingPai, xieRuCheXiaoShiJianCuo, cunChuRefreshToken, randomUUID, xiaoHaoRefreshToken, jianCeRefreshTokenChongFu, cheXiaoYongHuSuoYouRefreshToken, shanChuRefreshToken } from '../utils/jwt'
-import { yanZhengMaShiFouZhengQue, shanChuYanZhengMa, YAN_ZHENG_MA_YONG_TU, type 验证码校验结果 } from './短信'
+import { yanZhengMaShiFouZhengQue, shanChuYanZhengMa, YanZhengMaYongTu, type 验证码校验结果 } from './短信'
 import { zhongXinQianMingMeiTiURL } from './媒体存储'
 import { jiLuShenJiRiZhi } from './审计日志'
 import { yinBiShouJiHao } from '../utils/掩码'
@@ -203,19 +203,19 @@ async function dengLuShiBaiShiFouChaoGuo(
 }
 
 export function 注册失败错误码(cuoWuMa: ZhuCeCuoWuMa, yuanYin?: CuoWuYuanYin): CuoWuDaiMa {
-  if (cuoWuMa === 'YONG_HU_MING_CHONG_FU') return CUO_WU_DAI_MA.AUTH_USERNAME_TAKEN
-  if (cuoWuMa === 'CHONG_TU') return CUO_WU_DAI_MA.AUTH_ACCOUNT_ALREADY_EXISTS
-  if (cuoWuMa === 'XIAN_LIU') return CUO_WU_DAI_MA.AUTH_REGISTRATION_CLOSED
-  if (cuoWuMa === 'NEI_BU_CUO_WU') return CUO_WU_DAI_MA.AUTH_REGISTRATION_FAILED
-  if (yuanYin === 'YONG_HU_MING_BU_HE_FA') return CUO_WU_DAI_MA.AUTH_USERNAME_INVALID
-  if (yuanYin === 'YAN_ZHENG_MA_CUO_WU') return CUO_WU_DAI_MA.AUTH_VERIFICATION_CODE_INVALID
-  if (yuanYin === 'YAN_ZHENG_MA_GUO_QI') return CUO_WU_DAI_MA.AUTH_VERIFICATION_CODE_EXPIRED
-  if (yuanYin === 'YAN_ZHENG_MA_CHANG_SHI_GUO_DUO') return CUO_WU_DAI_MA.AUTH_VERIFICATION_CODE_ATTEMPTS_EXCEEDED
-  if (yuanYin === 'SHOU_JI_HAO_DI_QU_BU_FU') return CUO_WU_DAI_MA.AUTH_PHONE_NOT_ACCEPTED
-  if (yuanYin === 'MI_MA_FU_ZA_DU_BU_ZU') return CUO_WU_DAI_MA.AUTH_PASSWORD_WEAK
-  if (yuanYin === 'CHU_SHENG_RI_QI_BU_HE_FA') return CUO_WU_DAI_MA.AUTH_BIRTH_DATE_INVALID
-  if (yuanYin === 'WEI_TONG_YI_XIE_YI') return CUO_WU_DAI_MA.AUTH_AGREEMENT_REQUIRED
-  return CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID
+  if (cuoWuMa === 'YONG_HU_MING_CHONG_FU') return CuoWuDaiMa.AUTH_USERNAME_TAKEN
+  if (cuoWuMa === 'CHONG_TU') return CuoWuDaiMa.AUTH_ACCOUNT_ALREADY_EXISTS
+  if (cuoWuMa === 'XIAN_LIU') return CuoWuDaiMa.AUTH_REGISTRATION_CLOSED
+  if (cuoWuMa === 'NEI_BU_CUO_WU') return CuoWuDaiMa.AUTH_REGISTRATION_FAILED
+  if (yuanYin === 'YONG_HU_MING_BU_HE_FA') return CuoWuDaiMa.AUTH_USERNAME_INVALID
+  if (yuanYin === 'YAN_ZHENG_MA_CUO_WU') return CuoWuDaiMa.AUTH_VERIFICATION_CODE_INVALID
+  if (yuanYin === 'YAN_ZHENG_MA_GUO_QI') return CuoWuDaiMa.AUTH_VERIFICATION_CODE_EXPIRED
+  if (yuanYin === 'YAN_ZHENG_MA_CHANG_SHI_GUO_DUO') return CuoWuDaiMa.AUTH_VERIFICATION_CODE_ATTEMPTS_EXCEEDED
+  if (yuanYin === 'SHOU_JI_HAO_DI_QU_BU_FU') return CuoWuDaiMa.AUTH_PHONE_NOT_ACCEPTED
+  if (yuanYin === 'MI_MA_FU_ZA_DU_BU_ZU') return CuoWuDaiMa.AUTH_PASSWORD_WEAK
+  if (yuanYin === 'CHU_SHENG_RI_QI_BU_HE_FA') return CuoWuDaiMa.AUTH_BIRTH_DATE_INVALID
+  if (yuanYin === 'WEI_TONG_YI_XIE_YI') return CuoWuDaiMa.AUTH_AGREEMENT_REQUIRED
+  return CuoWuDaiMa.REQUEST_PARAMETER_INVALID
 }
 
 export function yanZhengMaShiBaiJieGuo(
@@ -509,7 +509,7 @@ export async function chongZhiMiMa(
   const maJiaoYan = await yanZhengMaShiFouZhengQue(
     guoJiHao,
     canShu.yan_zheng_ma,
-    YAN_ZHENG_MA_YONG_TU.chongZhiMiMa,
+    YanZhengMaYongTu.chongZhiMiMa,
   )
   if (!yongHu) {
     return { cheng_gong: false, ti_shi: tongYiTiShi }
@@ -525,7 +525,7 @@ export async function chongZhiMiMa(
   )
   await cheXiaoYongHuSuoYouRefreshToken(yongHu.id)
   await xieRuCheXiaoShiJianCuo(yongHu.id)
-  await shanChuYanZhengMa(guoJiHao, YAN_ZHENG_MA_YONG_TU.chongZhiMiMa)
+  await shanChuYanZhengMa(guoJiHao, YanZhengMaYongTu.chongZhiMiMa)
   await jiLuShenJiRiZhi({
     yong_hu_id: yongHu.id,
     ip: canShu.ip,
@@ -562,7 +562,7 @@ export async function gengGaiMiMa(
   const maJiaoYan = await yanZhengMaShiFouZhengQue(
     shiJiShouJiHao,
     canShu.yan_zheng_ma,
-    YAN_ZHENG_MA_YONG_TU.chongZhiMiMa,
+    YanZhengMaYongTu.chongZhiMiMa,
   )
   if (maJiaoYan !== '通过') {
     return { cheng_gong: false, ti_shi: yanZhengMaShiBaiJieGuo(maJiaoYan).ti_shi }

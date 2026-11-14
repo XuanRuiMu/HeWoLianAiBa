@@ -1,6 +1,6 @@
 import { debug日志 } from '../utils/debug日志'
 import { huoQuFanYi } from '../config/translations'
-import { JUN_SHI_ZHI_DAO_DUAN_DING_YI } from '../config/军师配置'
+import { JunShiZhiDaoDuanDingYi } from '../config/军师配置'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianJunShiQiuZhuPrompt, geShiHuaJunShiLiShi } from './Prompt构建器'
 import { 构建军师知识层, 检索通用知识 } from './通用知识检索'
@@ -93,7 +93,7 @@ export function jieXiJunShiFenDuan(neiRong: string): JunShiZhiDaoFenDuan | null 
     kanDaoDeJiXiang: '',
     guLi: '',
   }
-  for (const duan of JUN_SHI_ZHI_DAO_DUAN_DING_YI) {
+  for (const duan of JunShiZhiDaoDuanDingYi) {
     const yuanShi = duiXiang[duan.moXingJian]
     const wenBen = typeof yuanShi === 'string' ? yuanShi : ''
     fenDuan[duan.ziDuan] = qieDuanWenBen(xiaoChuShuZhiXieLu(wenBen), duan.zuiDaZiShu)
@@ -111,7 +111,7 @@ export function jieXiJunShiFenDuan(neiRong: string): JunShiZhiDaoFenDuan | null 
 }
 
 export function pinJieJunShiFenDuan(fenDuan: JunShiZhiDaoFenDuan): string {
-  return JUN_SHI_ZHI_DAO_DUAN_DING_YI.map((duan) => fenDuan[duan.ziDuan])
+  return JunShiZhiDaoDuanDingYi.map((duan) => fenDuan[duan.ziDuan])
     .filter((zhi) => zhi.length > 0)
     .join('\n')
 }

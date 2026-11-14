@@ -32,12 +32,12 @@ export interface 资料请求 {
   yunXuZhaNanZhaNv: boolean
 }
 
-export const YAN_ZHENG_MA_YONG_TU = {
+export const YanZhengMaYongTu = {
   zhuCe: 'zhuCe',
   chongZhiMiMa: 'chongZhiMiMa',
 } as const
 
-export type YanZhengMaYongTu = (typeof YAN_ZHENG_MA_YONG_TU)[keyof typeof YAN_ZHENG_MA_YONG_TU]
+export type YanZhengMaYongTu = (typeof YanZhengMaYongTu)[keyof typeof YanZhengMaYongTu]
 
 export interface 人机验证答案 {
   renJiPiaoJu: string
@@ -51,7 +51,7 @@ export interface 人机挑战 {
 }
 
 export async function huoQuRenJiTiaoZhan(
-  yongTu: YanZhengMaYongTu = YAN_ZHENG_MA_YONG_TU.zhuCe,
+  yongTu: YanZhengMaYongTu = YanZhengMaYongTu.zhuCe,
   peiZhi?: { signal?: AbortSignal },
 ): Promise<人机挑战> {
   const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: 人机挑战 }>(
@@ -63,7 +63,7 @@ export async function huoQuRenJiTiaoZhan(
 
 export async function faSongMa(
   shouJiHao: string,
-  yongTu: YanZhengMaYongTu = YAN_ZHENG_MA_YONG_TU.zhuCe,
+  yongTu: YanZhengMaYongTu = YanZhengMaYongTu.zhuCe,
   peiZhi?: { signal?: AbortSignal },
   renJi?: 人机验证答案,
 ): Promise<void> {

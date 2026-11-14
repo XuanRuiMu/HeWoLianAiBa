@@ -8,8 +8,8 @@ import {
 } from 'libphonenumber-js/min'
 import { fanYi } from '@/config/翻译表'
 
-export const DA_LU_QU_HAO = '86'
-export const DA_LU_GUO_JIA: CountryCode = 'CN'
+export const DaLuQuHao = '86'
+export const DaLuGuoJia: CountryCode = 'CN'
 
 type FanYiUiJian = keyof typeof fanYi.ui
 
@@ -21,7 +21,7 @@ export interface QuHaoXuanXiang {
   yingWenMing: string
 }
 
-const SHOU_XIE_MING_CHENG: Partial<Record<CountryCode, FanYiUiJian>> = {
+const ShouXieMingCheng: Partial<Record<CountryCode, FanYiUiJian>> = {
   CN: 'quHaoDaLu',
   HK: 'quHaoXiangGang',
   MO: 'quHaoAoMen',
@@ -51,7 +51,7 @@ const SHOU_XIE_MING_CHENG: Partial<Record<CountryCode, FanYiUiJian>> = {
   AE: 'quHaoALianQiu',
 }
 
-const QU_HAO_ZHU_GUO: Record<string, CountryCode> = {
+const QuHaoZhuGuo: Record<string, CountryCode> = {
   '1': 'US',
   '7': 'RU',
   '39': 'IT',
@@ -82,9 +82,9 @@ function chuangJianPaiXuQi(): Intl.Collator | null {
   }
 }
 
-const ZHONG_WEN_DI_QU_MING = chuangJianDiQuMingBiao('zh-CN')
-const YING_WEN_DI_QU_MING = chuangJianDiQuMingBiao('en')
-const HAN_ZI_PAI_XU = chuangJianPaiXuQi()
+const ZhongWenDiQuMing = chuangJianDiQuMingBiao('zh-CN')
+const YingWenDiQuMing = chuangJianDiQuMingBiao('en')
+const HanZiPaiXu = chuangJianPaiXuQi()
 
 function duDiQuMing(biao: Intl.DisplayNames | null, guoJia: CountryCode): string {
   if (!biao) return String(guoJia)
@@ -97,24 +97,24 @@ function duDiQuMing(biao: Intl.DisplayNames | null, guoJia: CountryCode): string
 }
 
 function biJiaoMingCheng(甲: string, 乙: string): number {
-  if (HAN_ZI_PAI_XU) return HAN_ZI_PAI_XU.compare(甲, 乙)
+  if (HanZiPaiXu) return HanZiPaiXu.compare(甲, 乙)
   return 甲.localeCompare(乙, 'zh-Hans-CN')
 }
 
 function chuangJianQuHaoXuanXiang(): QuHaoXuanXiang[] {
   const 原始 = getCountries().map((国) => {
-    const 键 = SHOU_XIE_MING_CHENG[国] ?? null
+    const 键 = ShouXieMingCheng[国] ?? null
     return {
       quHao: String(getCountryCallingCode(国)),
       guoJia: 国,
       wenAnJian: 键,
-      mingCheng: 键 ? fanYi.ui[键] : duDiQuMing(ZHONG_WEN_DI_QU_MING, 国),
-      yingWenMing: duDiQuMing(YING_WEN_DI_QU_MING, 国),
+      mingCheng: 键 ? fanYi.ui[键] : duDiQuMing(ZhongWenDiQuMing, 国),
+      yingWenMing: duDiQuMing(YingWenDiQuMing, 国),
     }
   })
   const 排序后 = 原始.sort((甲, 乙) => {
-    if (甲.guoJia === DA_LU_GUO_JIA) return -1
-    if (乙.guoJia === DA_LU_GUO_JIA) return 1
+    if (甲.guoJia === DaLuGuoJia) return -1
+    if (乙.guoJia === DaLuGuoJia) return 1
     return (
       biJiaoMingCheng(甲.mingCheng, 乙.mingCheng) ||
       biJiaoMingCheng(甲.yingWenMing, 乙.yingWenMing) ||
@@ -134,7 +134,7 @@ function chuangJianQuHaoXuanXiang(): QuHaoXuanXiang[] {
     已收.add(项.quHao)
     const 组 = 分组.get(项.quHao) ?? [项]
     if (组.length > 1) {
-      const 主国 = QU_HAO_ZHU_GUO[项.quHao]
+      const 主国 = QuHaoZhuGuo[项.quHao]
       组.sort((甲, 乙) => {
         const 甲主 = 甲.guoJia === 主国 ? 0 : 1
         const 乙主 = 乙.guoJia === 主国 ? 0 : 1
@@ -146,7 +146,7 @@ function chuangJianQuHaoXuanXiang(): QuHaoXuanXiang[] {
   return 结果
 }
 
-export const QU_HAO_XUAN_XIANG: QuHaoXuanXiang[] = chuangJianQuHaoXuanXiang()
+export const QuHaoXuanXiang: QuHaoXuanXiang[] = chuangJianQuHaoXuanXiang()
 
 export function quHaoWenAn(项: QuHaoXuanXiang): string {
   return 项.wenAnJian ? fanYi.ui[项.wenAnJian] || 项.mingCheng : 项.mingCheng
@@ -154,11 +154,11 @@ export function quHaoWenAn(项: QuHaoXuanXiang): string {
 
 export function guiYiQuHao(zhi: unknown): string {
   const qingLi = String(zhi ?? '').replace(/\D/g, '')
-  return qingLi === '' ? DA_LU_QU_HAO : qingLi
+  return qingLi === '' ? DaLuQuHao : qingLi
 }
 
 export function huoQuGuoJia(quHao: string): CountryCode | null {
-  const 命中 = QU_HAO_XUAN_XIANG.find((项) => 项.quHao === quHao)
+  const 命中 = QuHaoXuanXiang.find((项) => 项.quHao === quHao)
   return 命中 ? 命中.guoJia : null
 }
 
@@ -174,16 +174,16 @@ export interface ShouJiHaoPanDing {
   guoJia: CountryCode | null
 }
 
-const DA_LU_SHOU_JI_HAO_ZHENG_ZE = /^1[3-9]\d{9}$/
+const DaLuShouJiHaoZhengZe = /^1[3-9]\d{9}$/
 
-export const DA_LU_SHOU_JI_HAO_CHANG = 11
+export const DaLuShouJiHaoChang = 11
 
 export function panDingGuoJiHao(guoJiHao: string): ShouJiHaoPanDing {
   const 原文 = String(guoJiHao ?? '').trim()
   if (!/^\+\d{4,15}$/.test(原文)) return { heFa: false, guoJiHao: 原文, guoJia: null }
-  if (原文.startsWith('+' + DA_LU_QU_HAO)) {
-    const 本地 = 原文.slice(DA_LU_QU_HAO.length + 1)
-    if (!DA_LU_SHOU_JI_HAO_ZHENG_ZE.test(本地)) {
+  if (原文.startsWith('+' + DaLuQuHao)) {
+    const 本地 = 原文.slice(DaLuQuHao.length + 1)
+    if (!DaLuShouJiHaoZhengZe.test(本地)) {
       return { heFa: false, guoJiHao: 原文, guoJia: 'CN' }
     }
   }
@@ -221,7 +221,7 @@ export function guiYiBenDiHao(quHao: string, yuanShi: string): string {
 export function fenJieGuoJiHao(guoJiHao: string): { quHao: string; benDiHao: string } | null {
   const 数字 = String(guoJiHao ?? '').replace(/\D/g, '')
   if (数字.length < 5) return null
-  const 区号集 = [...new Set(QU_HAO_XUAN_XIANG.map((项) => 项.quHao))].sort(
+  const 区号集 = [...new Set(QuHaoXuanXiang.map((项) => 项.quHao))].sort(
     (甲, 乙) => 乙.length - 甲.length || 甲.localeCompare(乙),
   )
   for (const 码 of 区号集) {
@@ -242,15 +242,15 @@ export function geShiHuaBenDiHao(quHao: string, benDiHao: string): string {
 
 export function shiFouDaLuHao(guoJiHao: string): boolean {
   const 原文 = String(guoJiHao ?? '').trim()
-  return 原文.startsWith('+' + DA_LU_QU_HAO) && /^\+861[3-9]\d{9}$/.test(原文)
+  return 原文.startsWith('+' + DaLuQuHao) && /^\+861[3-9]\d{9}$/.test(原文)
 }
 
 export function quanJuQuHaoZuiChang(): number {
-  return Math.max(...QU_HAO_XUAN_XIANG.map((项) => 项.quHao.length), 2)
+  return Math.max(...QuHaoXuanXiang.map((项) => 项.quHao.length), 2)
 }
 
 export function quanJuGuoJiaLieBiao(): CountryCode[] {
-  return [...new Set(QU_HAO_XUAN_XIANG.map((项) => 项.guoJia))]
+  return [...new Set(QuHaoXuanXiang.map((项) => 项.guoJia))]
 }
 
 export function quHaoKeYong(quHao: string): boolean {

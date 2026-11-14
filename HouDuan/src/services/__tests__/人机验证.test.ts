@@ -75,7 +75,7 @@ vi.mock('../../redis', () => {
 })
 
 import {
-  REN_JI_ZI_FU_BIAO,
+  RenJiZiFuBiao,
   guiYiHuaRenJiDaAn,
   qianFaRenJiTiaoZhan,
   shengChengRenJiDaAn,
@@ -102,7 +102,7 @@ describe('人机验证答案生成', () => {
     for (let 轮次 = 0; 轮次 < 200; 轮次 += 1) {
       const 答案 = shengChengRenJiDaAn()
       expect(答案).toHaveLength(4)
-      for (const 字符 of 答案) expect(REN_JI_ZI_FU_BIAO).toContain(字符)
+      for (const 字符 of 答案) expect(RenJiZiFuBiao).toContain(字符)
       expect(答案).not.toMatch(/[O0I1]/)
     }
   })

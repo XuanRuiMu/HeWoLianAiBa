@@ -6,14 +6,14 @@ export interface YanZhengJieGuo {
   xiaoXi?: string
 }
 
-const SHOU_JI_HAO_ZHENG_ZE = /^1[3-9]\d{9}$/
-const YONG_HU_MING_TE_SHU_ZI_FU = /[!@#$%^&*()+=[\]{}|\\:;"'<>?/~`]/
+const ShouJiHaoZhengZe = /^1[3-9]\d{9}$/
+const YongHuMingTeShuZiFu = /[!@#$%^&*()+=[\]{}|\\:;"'<>?/~`]/
 const YONG_HU_MING_ZUI_XIAO = 1
 const YONG_HU_MING_ZUI_DA = 30
 const LIAO_TIAN_NEI_RONG_ZUI_DA = 500
 
 export function yanZhengShouJiHao(zhi: unknown): YanZhengJieGuo {
-  if (typeof zhi === 'string' && SHOU_JI_HAO_ZHENG_ZE.test(zhi)) {
+  if (typeof zhi === 'string' && ShouJiHaoZhengZe.test(zhi)) {
     return { heFa: true }
   }
   return { heFa: false, xiaoXi: huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu') }
@@ -27,7 +27,7 @@ export function yanZhengYongHuMing(zhi: unknown): YanZhengJieGuo {
   if (qingLi.length < YONG_HU_MING_ZUI_XIAO || qingLi.length > YONG_HU_MING_ZUI_DA) {
     return { heFa: false, xiaoXi: huoQuFanYi('renZheng', 'yongHuMingChangDuCuoWu') }
   }
-  if (YONG_HU_MING_TE_SHU_ZI_FU.test(qingLi)) {
+  if (YongHuMingTeShuZiFu.test(qingLi)) {
     return { heFa: false, xiaoXi: huoQuFanYi('renZheng', 'yongHuMingTeShuZiFu') }
   }
   return { heFa: true }

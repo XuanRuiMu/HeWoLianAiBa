@@ -44,7 +44,7 @@ export function rongHeYuYinXiaoXiNeiRong(neiRong: string | null | undefined, mei
   return gouJianYuYinKeDuWenBen({ zhuanXieWenBen: zhuanXie, yinPinShiJianMiaoShu: null, shiChangHaoMiao: canShu?.shiChangHaoMiao ?? null })
 }
 
-const YIN_PIN_SHI_JIAN_BIAO_QIAN: Array<{ moShi: RegExp; mingCheng: string }> = [
+const YinPinShiJianBiaoQian: Array<{ moShi: RegExp; mingCheng: string }> = [
   { moShi: /<(music|song|singing)[^>]*>/gi, mingCheng: '音乐' },
   { moShi: /<(dog|bark|汪)[^>]*>|狗叫|犬吠|汪/gi, mingCheng: '狗叫' },
   { moShi: /<(cat|meow|喵)[^>]*>|猫叫|喵/gi, mingCheng: '猫叫' },
@@ -56,7 +56,7 @@ const YIN_PIN_SHI_JIAN_BIAO_QIAN: Array<{ moShi: RegExp; mingCheng: string }> = 
 export function tiQuYinPinShiJian(zhuanXie: string | null | undefined): string | null {
   if (typeof zhuanXie !== 'string' || !zhuanXie.trim()) return null
   const mingDan: string[] = []
-  for (const xiang of YIN_PIN_SHI_JIAN_BIAO_QIAN) {
+  for (const xiang of YinPinShiJianBiaoQian) {
     xiang.moShi.lastIndex = 0
     if (xiang.moShi.test(zhuanXie) && !mingDan.includes(xiang.mingCheng)) mingDan.push(xiang.mingCheng)
   }

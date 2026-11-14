@@ -47,18 +47,18 @@ const props = defineProps<{
   zhengDuan: string
 }>()
 
-const FU_ZHI_TI_SHI_HAO_MIAO = 2000
+const FuZhiTiShiHaoMiao = 2000
 
 type JunShiCiYaoJian = FanYiZiJian<'junShi'>
 
-const CI_YAO_DUAN: Array<{ ziDuan: keyof JunShiZhiDaoFenDuan; fanYiJian: JunShiCiYaoJian }> = [
+const CiYaoDuan: Array<{ ziDuan: keyof JunShiZhiDaoFenDuan; fanYiJian: JunShiCiYaoJian }> = [
   { ziDuan: 'dangQianJuMian', fanYiJian: 'dangQianJuMian' },
   { ziDuan: 'weiShenMeZheMeLiao', fanYiJian: 'weiShenMeZheMeLiao' },
   { ziDuan: 'kanDaoDeJiXiang', fanYiJian: 'kanDaoDeJiXiang' },
   { ziDuan: 'guLi', fanYiJian: 'guLi' },
 ]
 
-const HOU_XUAN_BIAO_QIAN: JunShiCiYaoJian[] = ['houXuanWenTuo', 'houXuanTuiJin', 'houXuanShouZhuo']
+const HouXuanBiaoQian: JunShiCiYaoJian[] = ['houXuanWenTuo', 'houXuanTuiJin', 'houXuanShouZhuo']
 
 const houXuanHang = computed(() => {
   const zhi = (props.fenDuan?.xiaYiBuZenMeHui || '').trim()
@@ -67,12 +67,12 @@ const houXuanHang = computed(() => {
     .split('\n')
     .map((hang) => hang.trim())
     .filter((hang) => hang.length > 0)
-    .slice(0, HOU_XUAN_BIAO_QIAN.length)
-    .map((neiRong, suoYin) => ({ neiRong, fanYiJian: HOU_XUAN_BIAO_QIAN[suoYin] }))
+    .slice(0, HouXuanBiaoQian.length)
+    .map((neiRong, suoYin) => ({ neiRong, fanYiJian: HouXuanBiaoQian[suoYin] }))
 })
 
 const ciYaoDuan = computed(() =>
-  CI_YAO_DUAN.map((duan) => ({
+  CiYaoDuan.map((duan) => ({
     ziDuan: duan.ziDuan,
     fanYiJian: duan.fanYiJian,
     neiRong: (props.fenDuan?.[duan.ziDuan] || '').trim(),
@@ -93,7 +93,7 @@ function xianShiTiShi(tiShi: string) {
   if (fuZhiJiShiQi) clearTimeout(fuZhiJiShiQi)
   fuZhiJiShiQi = setTimeout(() => {
     fuZhiTiShi.value = ''
-  }, FU_ZHI_TI_SHI_HAO_MIAO)
+  }, FuZhiTiShiHaoMiao)
 }
 
 async function keFuZhi(wenBen: string): Promise<boolean> {

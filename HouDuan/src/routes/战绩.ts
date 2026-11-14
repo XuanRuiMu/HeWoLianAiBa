@@ -30,14 +30,14 @@ import { huoQuFuPanYouXiaoXiaoXiShu, shengChengFuPan, 复盘状态 } from '../se
 import { huoQuJunShiJiLuLieBiao, type JunShiJiLuXiang } from '../services/军师缓存'
 import { 执行落库后副作用 } from '../utils/落库后副作用'
 import { yanZhengUUID } from '../utils/验证'
-import { CUO_WU_DAI_MA, shiCuoWuDaiMa } from '../config/错误码注册表'
-import { ZHAN_JI_PEI_ZHI } from '../config/战绩配置'
+import { CuoWuDaiMa, shiCuoWuDaiMa } from '../config/错误码注册表'
+import { ZhanJiPeiZhi } from '../config/战绩配置'
 import { xiaoChuShuZhiXieLu } from '../utils/数值泄露过滤'
 import { jiaoSeBianHaoBiao } from '../services/公开编号'
 
 const luYou = Router()
 
-const ZHAN_JI_PI_LIANG_SHAN_CHU_ZUI_DA = 50
+const ZhanJiPiLiangShanChuZuiDa = 50
 
 function chuLiZhanJiCuoWu(xiangYing: Response, caoZuo: string, cuoWu: unknown): void {
   if (cuoWu instanceof ZhanJiFenLeiCuoWu) {
@@ -54,12 +54,12 @@ function chuLiZhanJiCuoWu(xiangYing: Response, caoZuo: string, cuoWu: unknown): 
       xiangYing,
       409,
       huoQuFanYi('zhanJi', 'fenLeiShuJuYiBianHua'),
-      CUO_WU_DAI_MA.ZHAN_JI_SHU_JU_BIAN_HUA,
+      CuoWuDaiMa.ZHAN_JI_SHU_JU_BIAN_HUA,
     )
     return
   }
   debug日志.error('战绩接口', caoZuo, { xiang_qing: { cuo_wu: String(cuoWu) } })
-  shiBaiXiangYing(xiangYing, 503, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'), CUO_WU_DAI_MA.DATABASE_ERROR)
+  shiBaiXiangYing(xiangYing, 503, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'), CuoWuDaiMa.DATABASE_ERROR)
 }
 
 interface QianDuanJunShiZhiDaoJiLu {
@@ -119,7 +119,7 @@ function guoLvZuiHouLiangTiao(
     .map((tiao) => ({
       shi_jian: tiao.shi_jian,
       fa_song_zhe: tiao.fa_song_zhe === 'yonghu' ? 'yonghu' : 'jiaose',
-      zhai_yao: Array.from(tiao.zhai_yao).slice(0, ZHAN_JI_PEI_ZHI.zhaiYaoZuiDaMaDian).join(''),
+      zhai_yao: Array.from(tiao.zhai_yao).slice(0, ZhanJiPeiZhi.zhaiYaoZuiDaMaDian).join(''),
     }))
 }
 
@@ -235,7 +235,7 @@ luYou.get(
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
     }
     try {
       const lieBiao = await huoQuZhanJiFenLeiLieBiao(yongHu.yongHuId)
@@ -252,14 +252,14 @@ luYou.put(
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
     }
     const categoryIds = qingQiu.body?.categoryIds
     if (
       !Array.isArray(categoryIds) ||
       !categoryIds.every((id) => typeof id === 'string' && yanZhengUUID(id))
     ) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CuoWuDaiMa.REQUEST_PARAMETER_INVALID)
     }
     try {
       const jieGuo = await baoCunFenLeiPaiXu(yongHu.yongHuId, categoryIds)
@@ -276,12 +276,12 @@ luYou.put(
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
     }
     const fenLeiId = String(qingQiu.params.fenLeiId || '')
     const expectedVersion = qingQiu.body?.expectedVersion
     if (!yanZhengUUID(fenLeiId) || !Number.isSafeInteger(expectedVersion) || Number(expectedVersion) < 0) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CuoWuDaiMa.REQUEST_PARAMETER_INVALID)
     }
     try {
       const fenLei = await sheZhiMoRenZhanJiFenLei(yongHu.yongHuId, fenLeiId, expectedVersion)
@@ -298,7 +298,7 @@ luYou.post(
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
     }
     try {
       const fenLei = await chuangJianZhanJiFenLei(yongHu.yongHuId, qingQiu.body?.mingCheng)
@@ -315,12 +315,12 @@ luYou.put(
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
     }
     const fenLeiId = String(qingQiu.params.fenLeiId || '')
     const expectedVersion = qingQiu.body?.expectedVersion
     if (!yanZhengUUID(fenLeiId) || !Number.isSafeInteger(expectedVersion) || Number(expectedVersion) < 0) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CuoWuDaiMa.REQUEST_PARAMETER_INVALID)
     }
     try {
       const fenLei = await gengMingZhanJiFenLei(
@@ -342,12 +342,12 @@ luYou.get(
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
     }
 
     const fenLeiCanShu = qingQiu.query?.categoryId
     if (fenLeiCanShu !== undefined && !yanZhengUUID(fenLeiCanShu)) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CuoWuDaiMa.REQUEST_PARAMETER_INVALID)
     }
 
     try {
@@ -370,18 +370,18 @@ luYou.get(
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
     }
 
     const dangAnId = String(qingQiu.params.dangAnId || '')
     if (!dangAnId) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.REQUEST_MISSING_PARAMETER)
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CuoWuDaiMa.REQUEST_MISSING_PARAMETER)
     }
 
     try {
       const dangAn = await huoQuDangAnXiangQing(yongHu.yongHuId, dangAnId)
       if (!dangAn) {
-        return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'), CUO_WU_DAI_MA.RESOURCE_NOT_FOUND)
+        return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'), CuoWuDaiMa.RESOURCE_NOT_FOUND)
       }
       return chengGongXiangYing(
         xiangYing,
@@ -389,7 +389,7 @@ luYou.get(
       )
     } catch (cuoWu) {
       debug日志.error('战绩接口', '获取战绩详情失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
-      return shiBaiXiangYing(xiangYing, 503, '', CUO_WU_DAI_MA.DATABASE_ERROR)
+      return shiBaiXiangYing(xiangYing, 503, '', CuoWuDaiMa.DATABASE_ERROR)
     }
   },
 )
@@ -400,7 +400,7 @@ luYou.put(
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
     }
     const fenLeiId = String(qingQiu.params.fenLeiId || '')
     const recordIds = qingQiu.body?.recordIds
@@ -412,7 +412,7 @@ luYou.put(
       !Number.isSafeInteger(expectedVersion) ||
       Number(expectedVersion) < 0
     ) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CuoWuDaiMa.REQUEST_PARAMETER_INVALID)
     }
     try {
       const jieGuo = await paiXuFenLeiNeiZhanJi(
@@ -434,7 +434,7 @@ luYou.put(
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
     }
     const fenLeiId = String(qingQiu.params.fenLeiId || '')
     const dangAnId = String(qingQiu.params.dangAnId || '')
@@ -447,7 +447,7 @@ luYou.put(
       !Number.isSafeInteger(expectedVersion) ||
       Number(expectedVersion) < 0
     ) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CuoWuDaiMa.REQUEST_PARAMETER_INVALID)
     }
     try {
       const jieGuo = await yiDongDangAnDaoFenLei(
@@ -470,7 +470,7 @@ luYou.delete(
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
     }
     const fenLeiId = String(qingQiu.params.fenLeiId || '')
     const banBenCanShu = qingQiu.query?.expectedVersion
@@ -479,7 +479,7 @@ luYou.delete(
         ? Number(banBenCanShu)
         : Number.NaN
     if (!yanZhengUUID(fenLeiId) || !Number.isSafeInteger(yuBenBanBen) || yuBenBanBen < 0) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CuoWuDaiMa.REQUEST_PARAMETER_INVALID)
     }
     try {
       const jieGuo = await shanChuZhanJiFenLei(yongHu.yongHuId, fenLeiId, yuBenBanBen)
@@ -496,23 +496,23 @@ luYou.delete(
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
     }
 
     const dangAnId = String(qingQiu.params.dangAnId || '')
     if (!dangAnId) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.REQUEST_MISSING_PARAMETER)
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CuoWuDaiMa.REQUEST_MISSING_PARAMETER)
     }
 
     try {
       const chengGong = await shanChuDangAn(yongHu.yongHuId, dangAnId)
       if (!chengGong) {
-        return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'), CUO_WU_DAI_MA.RESOURCE_NOT_FOUND)
+        return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'), CuoWuDaiMa.RESOURCE_NOT_FOUND)
       }
       return chengGongXiangYing(xiangYing, { cheng_gong: true })
     } catch (cuoWu) {
       debug日志.error('战绩接口', '删除战绩失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
-      return shiBaiXiangYing(xiangYing, 503, '', CUO_WU_DAI_MA.DATABASE_ERROR)
+      return shiBaiXiangYing(xiangYing, 503, '', CuoWuDaiMa.DATABASE_ERROR)
     }
   },
 )
@@ -523,19 +523,19 @@ luYou.post(
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
     }
 
     const bianHaoLieBiao = qingQiu.body?.dangAnIds
     if (!Array.isArray(bianHaoLieBiao) || bianHaoLieBiao.length === 0) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.REQUEST_MISSING_PARAMETER)
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CuoWuDaiMa.REQUEST_MISSING_PARAMETER)
     }
-    if (bianHaoLieBiao.length > ZHAN_JI_PI_LIANG_SHAN_CHU_ZUI_DA) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+    if (bianHaoLieBiao.length > ZhanJiPiLiangShanChuZuiDa) {
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CuoWuDaiMa.REQUEST_PARAMETER_INVALID)
     }
     const youXiaoIds = bianHaoLieBiao.filter((id): id is string => yanZhengUUID(id))
     if (youXiaoIds.length !== bianHaoLieBiao.length) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CuoWuDaiMa.REQUEST_PARAMETER_INVALID)
     }
 
     try {
@@ -543,7 +543,7 @@ luYou.post(
       return chengGongXiangYing(xiangYing, { cheng_gong: true, shan_chu_ids: shanChuIds })
     } catch (cuoWu) {
       debug日志.error('战绩接口', '批量删除战绩失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
-      return shiBaiXiangYing(xiangYing, 503, '', CUO_WU_DAI_MA.DATABASE_ERROR)
+      return shiBaiXiangYing(xiangYing, 503, '', CuoWuDaiMa.DATABASE_ERROR)
     }
   },
 )
@@ -554,18 +554,18 @@ luYou.get(
   async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     const yongHu = qingQiu.yong_hu
     if (!yongHu) {
-      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+      return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
     }
 
     const dangAnId = String(qingQiu.params.dangAnId || '')
     if (!dangAnId) {
-      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.REQUEST_MISSING_PARAMETER)
+      return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CuoWuDaiMa.REQUEST_MISSING_PARAMETER)
     }
 
     try {
       const dangAn = await huoQuDangAnXiangQing(yongHu.yongHuId, dangAnId)
       if (!dangAn) {
-        return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'), CUO_WU_DAI_MA.RESOURCE_NOT_FOUND)
+        return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'), CuoWuDaiMa.RESOURCE_NOT_FOUND)
       }
 
       const youXiaoXiaoXiShu = await huoQuFuPanYouXiaoXiaoXiShu(yongHu.yongHuId, dangAn.jiao_se_id)
@@ -612,7 +612,7 @@ luYou.get(
       })
     } catch (cuoWu) {
       debug日志.error('战绩接口', '获取复盘失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
-      return shiBaiXiangYing(xiangYing, 503, '', CUO_WU_DAI_MA.DATABASE_ERROR)
+      return shiBaiXiangYing(xiangYing, 503, '', CuoWuDaiMa.DATABASE_ERROR)
     }
   },
 )

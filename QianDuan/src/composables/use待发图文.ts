@@ -1,6 +1,6 @@
 import { computed, ref, watch, type Ref } from 'vue'
 import type { XiaoXiKuaiLeiXing } from '@/types/类型定义'
-import { panDingKuaiChaoXian, XIAO_XI_KUAI_LEI_XING } from '@/utils/消息内容块'
+import { panDingKuaiChaoXian, XiaoXiKuaiLeiXingZhi } from '@/utils/消息内容块'
 import { queDingMiDengJian } from '@/utils/发件箱'
 
 export interface DaiFaKuai {
@@ -61,7 +61,7 @@ export function use待发图文(yiLai: Use待发图文依赖) {
   function wenZiKuai(neiRong: string): DaiFaKuai {
     const kuai: DaiFaKuai = {
       id: xinJianId(),
-      lei_xing: XIAO_XI_KUAI_LEI_XING.wenZi,
+      lei_xing: XiaoXiKuaiLeiXingZhi.wenZi,
       nei_rong: neiRong,
       wen_jian: null,
       mei_ti_id: null,
@@ -82,11 +82,11 @@ export function use待发图文(yiLai: Use待发图文依赖) {
   }
 
   function shiWenZiKuai(kuai: DaiFaKuai | undefined | null): kuai is DaiFaKuai {
-    return !!kuai && kuai.lei_xing === XIAO_XI_KUAI_LEI_XING.wenZi
+    return !!kuai && kuai.lei_xing === XiaoXiKuaiLeiXingZhi.wenZi
   }
 
   function shiTuPianKuai(kuai: DaiFaKuai): boolean {
-    return kuai.lei_xing === XIAO_XI_KUAI_LEI_XING.tuPian
+    return kuai.lei_xing === XiaoXiKuaiLeiXingZhi.tuPian
   }
 
   function luoXieKuaiXuLie(lieBiao: DaiFaKuai[]): void {
@@ -159,7 +159,7 @@ export function use待发图文(yiLai: Use待发图文依赖) {
     const yuLan = yiLai.chuangJianYuLan ? yiLai.chuangJianYuLan(wenJian) : null
     const tuKuai: DaiFaKuai = {
       id: xinJianId(),
-      lei_xing: XIAO_XI_KUAI_LEI_XING.tuPian,
+      lei_xing: XiaoXiKuaiLeiXingZhi.tuPian,
       nei_rong: '',
       wen_jian: wenJian,
       mei_ti_id: null,
@@ -179,7 +179,7 @@ export function use待发图文(yiLai: Use待发图文依赖) {
       hou = { kuaiId: houKuai.id, pianYi: 0 }
     } else {
       const kuai = dangQian.kuaiId === '' ? null : huoQuKuai(dangQian.kuaiId)
-      if (kuai && kuai.lei_xing === XIAO_XI_KUAI_LEI_XING.wenZi) {
+      if (kuai && kuai.lei_xing === XiaoXiKuaiLeiXingZhi.wenZi) {
         const pian = qiaJia(dangQian.pianYi, kuai.nei_rong.length)
         const xinWen = wenZiKuai(kuai.nei_rong.slice(pian))
         kuai.nei_rong = kuai.nei_rong.slice(0, pian)
@@ -191,7 +191,7 @@ export function use待发图文(yiLai: Use待发图文依赖) {
         }
         luoXieKuaiXuLie(xinXu)
         hou = { kuaiId: xinWen.id, pianYi: 0 }
-      } else if (kuai && kuai.lei_xing === XIAO_XI_KUAI_LEI_XING.tuPian) {
+      } else if (kuai && kuai.lei_xing === XiaoXiKuaiLeiXingZhi.tuPian) {
         const chaWei = dangQian.pianYi > 0 ? huoQuXiaBiao(kuai.id) + 1 : huoQuXiaBiao(kuai.id)
         const QianDuan = kuaiLieBiao.value.slice(0, chaWei)
         const HouDuan = kuaiLieBiao.value.slice(chaWei)
@@ -229,11 +229,11 @@ export function use待发图文(yiLai: Use待发图文依赖) {
       return true
     }
     const kuai = dangQian.kuaiId === '' ? null : huoQuKuai(dangQian.kuaiId)
-    if (kuai && kuai.lei_xing === XIAO_XI_KUAI_LEI_XING.wenZi) {
+    if (kuai && kuai.lei_xing === XiaoXiKuaiLeiXingZhi.wenZi) {
       const pian = qiaJia(dangQian.pianYi, kuai.nei_rong.length)
       kuai.nei_rong = `${kuai.nei_rong.slice(0, pian)}${wenBen}${kuai.nei_rong.slice(pian)}`
       xieGuangBiao({ kuaiId: kuai.id, pianYi: pian + wenBen.length })
-    } else if (kuai && kuai.lei_xing === XIAO_XI_KUAI_LEI_XING.tuPian) {
+    } else if (kuai && kuai.lei_xing === XiaoXiKuaiLeiXingZhi.tuPian) {
       const chaWei = dangQian.pianYi > 0 ? huoQuXiaBiao(kuai.id) + 1 : huoQuXiaBiao(kuai.id)
       const zuoLin = kuaiLieBiao.value[chaWei - 1]
       if (dangQian.pianYi === 0 && shiWenZiKuai(zuoLin)) {

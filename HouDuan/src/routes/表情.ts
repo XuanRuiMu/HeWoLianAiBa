@@ -12,11 +12,11 @@ import { liuShiBaoCunMeiTi, MeiTiCunChuCuoWu, shengChengQianMingURL } from '../s
 import { panDingMeiTiShenHeChuCan } from '../services/媒体审核出参'
 import { chaXunZhangHaoFengJin, jiLuZhangHaoWeiGui } from '../services/账号封禁'
 import { 获取IP } from '../services/IP封禁'
-import { BIAO_QING_PEI_ZHI, BIAO_QING_MEI_TI_LEI_BIE } from '../config/表情配置'
+import { BiaoQingPeiZhi, BiaoQingMeiTiLeiBie } from '../config/表情配置'
 
 const luYou = Router()
 
-const KONG_ZHI_ZI_FU = new RegExp('[\\u0000-\\u001f\\u007f]', 'g')
+const KongZhiZiFu = new RegExp('[\\u0000-\\u001f\\u007f]', 'g')
 
 interface BiaoQingXing {
   id: string
@@ -31,11 +31,11 @@ interface BiaoQingXing {
 
 function qingLiDuanMing(yuanShiWenJianMing: unknown): string {
   const ming = String(yuanShiWenJianMing ?? '')
-    .replace(KONG_ZHI_ZI_FU, '')
+    .replace(KongZhiZiFu, '')
     .trim()
   if (!ming) return ''
   return Array.from(ming)
-    .slice(0, BIAO_QING_PEI_ZHI.duanMingZuiDaChangDu)
+    .slice(0, BiaoQingPeiZhi.duanMingZuiDaChangDu)
     .join('')
 }
 
@@ -53,7 +53,7 @@ function zhuangHuaBiaoQingXing(hang: Record<string, unknown>, yongHuId: string):
   }
 }
 
-export const BIAO_QING_YU_JU = {
+export const BiaoQingYuJu = {
   查列表: `
   SELECT b."ID" AS id, b."媒体ID" AS mei_ti_id, m."SHA256" AS sha256, m."MIME" AS mime,
          b."短名" AS duan_ming, b."排序" AS pai_xu, b."创建时间" AS chuang_jian_shi_jian
@@ -96,7 +96,7 @@ export function biaoQingDengJiSuoJian(yongHuId: string): string {
 }
 
 async function quBiaoQingLieBiao(yongHuId: string): Promise<BiaoQingXing[]> {
-  const jieGuo = await 数据库.query(BIAO_QING_YU_JU.查列表, [yongHuId])
+  const jieGuo = await 数据库.query(BiaoQingYuJu.查列表, [yongHuId])
   return jieGuo.rows.map((hang: Record<string, unknown>) => zhuangHuaBiaoQingXing(hang, yongHuId))
 }
 
@@ -112,31 +112,31 @@ async function dengJiBiaoQing(
 ): Promise<DengJiJieGuo> {
   const lianJie = await 数据库.connect()
   try {
-    await lianJie.query(BIAO_QING_YU_JU.开启事务)
-    await lianJie.query(BIAO_QING_YU_JU.取登记锁, [biaoQingDengJiSuoJian(yongHuId)])
+    await lianJie.query(BiaoQingYuJu.开启事务)
+    await lianJie.query(BiaoQingYuJu.取登记锁, [biaoQingDengJiSuoJian(yongHuId)])
 
-    const yiYou = await lianJie.query(BIAO_QING_YU_JU.按内容查一条, [yongHuId, meiTi.sha256])
+    const yiYou = await lianJie.query(BiaoQingYuJu.按内容查一条, [yongHuId, meiTi.sha256])
     if (yiYou.rows.length > 0) {
       const biaoQing = zhuangHuaBiaoQingXing(yiYou.rows[0] as Record<string, unknown>, yongHuId)
-      await lianJie.query(BIAO_QING_YU_JU.回收媒体行, [meiTi.mediaId, yongHuId])
-      await lianJie.query(BIAO_QING_YU_JU.提交事务)
+      await lianJie.query(BiaoQingYuJu.回收媒体行, [meiTi.mediaId, yongHuId])
+      await lianJie.query(BiaoQingYuJu.提交事务)
       return { zhuang_tai: 'yi_cun_zai', biao_qing: biaoQing }
     }
 
-    const jiShu = await lianJie.query(BIAO_QING_YU_JU.计数与下一序, [yongHuId])
+    const jiShu = await lianJie.query(BiaoQingYuJu.计数与下一序, [yongHuId])
     const shuHang = jiShu.rows[0] as Record<string, unknown> | undefined
-    if (Number(shuHang?.shu ?? 0) >= BIAO_QING_PEI_ZHI.meiYongHuZuiDaTiaoShu) {
-      await lianJie.query(BIAO_QING_YU_JU.回滚事务)
+    if (Number(shuHang?.shu ?? 0) >= BiaoQingPeiZhi.meiYongHuZuiDaTiaoShu) {
+      await lianJie.query(BiaoQingYuJu.回滚事务)
       return { zhuang_tai: 'yi_man' }
     }
 
-    const chaRu = await lianJie.query(BIAO_QING_YU_JU.插入, [
+    const chaRu = await lianJie.query(BiaoQingYuJu.插入, [
       yongHuId,
       meiTi.mediaId,
       duanMing,
       Number(shuHang?.xu ?? 0),
     ])
-    await lianJie.query(BIAO_QING_YU_JU.提交事务)
+    await lianJie.query(BiaoQingYuJu.提交事务)
     const hang = chaRu.rows[0] as Record<string, unknown>
     return {
       zhuang_tai: 'xin_zeng',
@@ -146,7 +146,7 @@ async function dengJiBiaoQing(
       ),
     }
   } catch (cuoWu) {
-    await lianJie.query(BIAO_QING_YU_JU.回滚事务).catch(() => undefined)
+    await lianJie.query(BiaoQingYuJu.回滚事务).catch(() => undefined)
     throw cuoWu
   } finally {
     lianJie.release()
@@ -225,7 +225,7 @@ luYou.post('/我的', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
         wenJianLiu,
         xinXi.filename || 'biaoqing',
         xinXi.mimeType || '',
-        BIAO_QING_MEI_TI_LEI_BIE,
+        BiaoQingMeiTiLeiBie,
         yongHu.yongHuId,
       )
         .then(async (jieGuo) => {
@@ -284,7 +284,7 @@ luYou.delete(
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
     }
     try {
-      const jieGuo = await 数据库.query(BIAO_QING_YU_JU.删除, [biaoQingId, yongHu.yongHuId])
+      const jieGuo = await 数据库.query(BiaoQingYuJu.删除, [biaoQingId, yongHu.yongHuId])
       if (jieGuo.rowCount === 0) {
         return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('liaoTian', 'biaoQingBuCunZai'))
       }
@@ -307,7 +307,7 @@ luYou.put(
     if (!Array.isArray(yuanShi) || yuanShi.length === 0) {
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
     }
-    if (yuanShi.length > BIAO_QING_PEI_ZHI.meiYongHuZuiDaTiaoShu) {
+    if (yuanShi.length > BiaoQingPeiZhi.meiYongHuZuiDaTiaoShu) {
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
     }
     const idLieBiao = yuanShi.map((xiang) => String(xiang ?? '').trim().toLowerCase())
@@ -318,7 +318,7 @@ luYou.put(
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
     }
     try {
-      const dangQian = await 数据库.query(BIAO_QING_YU_JU.本人标识, [yongHu.yongHuId])
+      const dangQian = await 数据库.query(BiaoQingYuJu.本人标识, [yongHu.yongHuId])
       const benRenJi = new Set(
         dangQian.rows.map((hang: Record<string, unknown>) => String(hang['id'])),
       )
@@ -328,7 +328,7 @@ luYou.put(
       ) {
         return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('liaoTian', 'biaoQingBuCunZai'))
       }
-      await 数据库.query(BIAO_QING_YU_JU.批量改序, [yongHu.yongHuId, idLieBiao])
+      await 数据库.query(BiaoQingYuJu.批量改序, [yongHu.yongHuId, idLieBiao])
       const lieBiao = await quBiaoQingLieBiao(yongHu.yongHuId)
       return chengGongXiangYing(xiangYing, { lie_biao: lieBiao, zong_shu: lieBiao.length })
     } catch (cuoWu) {

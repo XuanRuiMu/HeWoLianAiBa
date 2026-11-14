@@ -3,9 +3,9 @@ import type { RouteLocationNormalized } from 'vue-router'
 import { fanYi, huoQuFanYi } from '@/config/翻译表'
 import { chuFaCuoWuShangBao } from '@/utils/错误上报'
 
-export const JING_SU_HAO_MIAO = 60
-export const GUO_DU_ZUI_DUAN_ZHAN_SHI_HAO_MIAO = 400
-export const GUO_DU_CHAO_SHI_HAO_MIAO = 8000
+export const JingSuHaoMiao = 60
+export const GuoDuZuiDuanZhanShiHaoMiao = 400
+export const GuoDuChaoShiHaoMiao = 8000
 
 export type YuQuRenWu = (to: RouteLocationNormalized) => unknown
 
@@ -20,7 +20,7 @@ export interface GuoDuZhuangTai {
   wenAn: string
 }
 
-const GUO_DU_WEN_AN_FEN_LEI = 'guoDuZaiRu' as const
+const GuoDuWenAnFenLei = 'guoDuZaiRu' as const
 
 export const guoDuZhuangTai = shallowRef<GuoDuZhuangTai>({ jinXingZhong: false, wenAn: '' })
 
@@ -39,9 +39,9 @@ export function tuiJinLuYouPiCi(): number {
 }
 
 export function jieXiGuoDuWenAn(wenAn: unknown): string {
-  const ziDian = fanYi[GUO_DU_WEN_AN_FEN_LEI] as Record<string, string>
+  const ziDian = fanYi[GuoDuWenAnFenLei] as Record<string, string>
   if (typeof wenAn === 'string' && wenAn in ziDian) return ziDian[wenAn]
-  return huoQuFanYi(GUO_DU_WEN_AN_FEN_LEI, 'moRen')
+  return huoQuFanYi(GuoDuWenAnFenLei, 'moRen')
 }
 
 export function anJingHua<T>(chengNuo: Promise<T>): Promise<T> {
@@ -87,13 +87,13 @@ export async function kaiShiLuYouYuQu(
   peiZhi: YuJiaZaiPeiZhi,
   to: RouteLocationNormalized,
 ): Promise<void> {
-  const jieZhi = Date.now() + GUO_DU_CHAO_SHI_HAO_MIAO
+  const jieZhi = Date.now() + GuoDuChaoShiHaoMiao
   const renWuChengNuo = peiZhi.renWu.map((renWu) => faQiRenWu(renWu, to))
   if (peiZhi.zuJian) renWuChengNuo.push(faQiRenWu(peiZhi.zuJian, to))
   const quanBu = Promise.all(renWuChengNuo)
   const yiJiuXu = await Promise.race([
     quanBu.then(() => true),
-    dengDaiHaoMiao(JING_SU_HAO_MIAO).then(() => false),
+    dengDaiHaoMiao(JingSuHaoMiao).then(() => false),
   ])
   const benCiPiCi = luYouPiCi
   if (yiJiuXu || benCiPiCi !== luYouPiCi) return
@@ -106,7 +106,7 @@ export async function kaiShiLuYouYuQu(
     ])
   } finally {
     if (benCiPiCi === luYouPiCi) {
-      const shengYu = Math.max(0, GUO_DU_ZUI_DUAN_ZHAN_SHI_HAO_MIAO - (Date.now() - zhanShiKaiShi))
+      const shengYu = Math.max(0, GuoDuZuiDuanZhanShiHaoMiao - (Date.now() - zhanShiKaiShi))
       if (shengYu > 0) await dengDaiHaoMiao(shengYu)
       if (benCiPiCi === luYouPiCi) guoDuZhuangTai.value = { jinXingZhong: false, wenAn: '' }
     }

@@ -25,7 +25,7 @@ export function panDuanKeFouZhuDongShengTu(panDing: ZhuDongShengTuPanDing): bool
   return panDing.suiJiShu < panDing.gaiLv
 }
 
-const FENG_JING_GUAN_JIAN_CI: readonly string[] = [
+const FengJingGuanJianCi: readonly string[] = [
   '天气', '天空', '日出', '日落', '夕阳', '晚霞', '下雨', '下雪', '彩虹',
   '云', '风', '晴', '阴天', '夜景', '星空', '月亮', '湖', '海', '山', '外面',
 ]
@@ -41,7 +41,7 @@ export function dangQianJingSeZhuTi(xianZai: Date = new Date()): string {
 
 export function panDuanFengJingChangJing(changJingWenBen: string, huiFuWenBen: string): boolean {
   const wenBen = `${changJingWenBen}\n${huiFuWenBen}`
-  return FENG_JING_GUAN_JIAN_CI.some((ci) => wenBen.includes(ci))
+  return FengJingGuanJianCi.some((ci) => wenBen.includes(ci))
 }
 
 function huoQuRiQi(): string {

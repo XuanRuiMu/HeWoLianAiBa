@@ -2,7 +2,7 @@ import { duJieBaoKaiGuan } from './开场采样配置'
 
 export type ZuoXiLeiXing = 'zaoShui' | 'wanShui' | 'buZeGui'
 
-export const XING_QING_SHI_JIAN_LEI_XING: Record<ZuoXiLeiXing, { qi: number; zhong: number }> = {
+export const XingQingShiJianLeiXing: Record<ZuoXiLeiXing, { qi: number; zhong: number }> = {
   zaoShui: { qi: 7.5, zhong: 23.5 },
   wanShui: { qi: 11, zhong: 26 },// 26 > 24 ⇒ 跨午夜
   buZeGui: { qi: 9, zhong: 24 },
@@ -24,7 +24,7 @@ export interface ZuoXiPanDuan {
 
 export function panDuanZuoXi(xiaoShi: number, leiXing: ZuoXiLeiXing = 'zaoShui'): ZuoXiPanDuan {
   const fuZuo = duZheFuZuoXi()
-  const fanWei = fuZuo || XING_QING_SHI_JIAN_LEI_XING[leiXing]
+  const fanWei = fuZuo || XingQingShiJianLeiXing[leiXing]
   const xiaoShiZheng = ((xiaoShi % 24) + 24) % 24
 
   if (fanWei.zhong > 24) {
@@ -48,9 +48,9 @@ export function panDuanZuoXi(xiaoShi: number, leiXing: ZuoXiLeiXing = 'zaoShui')
   }
 }
 
-export const ZUO_XI_KAI_GUAN_MING = 'XING_ZUO_QI_YONG'
+export const ZuoXiKaiGuanMing = 'XING_ZUO_QI_YONG'
 export function zuoXiKaiQi(): boolean {
-  return duJieBaoKaiGuan(ZUO_XI_KAI_GUAN_MING)
+  return duJieBaoKaiGuan(ZuoXiKaiGuanMing)
 }
 
 export function duZheFuZuoXi(): { qi: number; zhong: number } | null {

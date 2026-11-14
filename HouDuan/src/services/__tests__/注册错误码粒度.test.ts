@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { CUO_WU_DAI_MA, dengLiCuoWuXianRongLieBiao, huoQuCuoWuXianRong, shiCuoWuDaiMa } from '../../config/错误码注册表'
+import { CuoWuDaiMa, dengLiCuoWuXianRongLieBiao, huoQuCuoWuXianRong, shiCuoWuDaiMa } from '../../config/错误码注册表'
 import { fanYi } from '../../config/translations'
 
 const yanZhengMaJieGuo = { zhi: '通过' as '通过' | '错误' | '已过期' | '尝试超限' }
@@ -52,45 +52,45 @@ describe('注册失败原因不再折叠成同一个错误码', () => {
     )
     expect(new Set(码).size).toBe(3)
     expect(码).toEqual([
-      CUO_WU_DAI_MA.AUTH_VERIFICATION_CODE_INVALID,
-      CUO_WU_DAI_MA.AUTH_VERIFICATION_CODE_EXPIRED,
-      CUO_WU_DAI_MA.AUTH_VERIFICATION_CODE_ATTEMPTS_EXCEEDED,
+      CuoWuDaiMa.AUTH_VERIFICATION_CODE_INVALID,
+      CuoWuDaiMa.AUTH_VERIFICATION_CODE_EXPIRED,
+      CuoWuDaiMa.AUTH_VERIFICATION_CODE_ATTEMPTS_EXCEEDED,
     ])
   })
 
   it('三者都不是账号已存在，也不是通用参数错误', () => {
     for (const 结果 of ['错误', '已过期', '尝试超限'] as const) {
       const 码 = jieXiZhuCeDaiMa('CAN_SHU_CUO_WU', yanZhengMaShiBaiJieGuo(结果).juTiYuanYin)
-      expect(码).not.toBe(CUO_WU_DAI_MA.AUTH_ACCOUNT_ALREADY_EXISTS)
-      expect(码).not.toBe(CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+      expect(码).not.toBe(CuoWuDaiMa.AUTH_ACCOUNT_ALREADY_EXISTS)
+      expect(码).not.toBe(CuoWuDaiMa.REQUEST_PARAMETER_INVALID)
     }
   })
 
   it('账号已存在与用户名被占用是两条不同的码', () => {
     const 手机号冲突 = jieXiZhuCeDaiMa('CHONG_TU')
     const 用户名冲突 = jieXiZhuCeDaiMa('YONG_HU_MING_CHONG_FU')
-    expect(手机号冲突).toBe(CUO_WU_DAI_MA.AUTH_ACCOUNT_ALREADY_EXISTS)
-    expect(用户名冲突).toBe(CUO_WU_DAI_MA.AUTH_USERNAME_TAKEN)
+    expect(手机号冲突).toBe(CuoWuDaiMa.AUTH_ACCOUNT_ALREADY_EXISTS)
+    expect(用户名冲突).toBe(CuoWuDaiMa.AUTH_USERNAME_TAKEN)
     expect(手机号冲突).not.toBe(用户名冲突)
   })
 
   it('手机号地区不符与密码强度不足是两条不同的码', () => {
     const 地区 = jieXiZhuCeDaiMa('CAN_SHU_CUO_WU', 'SHOU_JI_HAO_DI_QU_BU_FU')
     const 密码 = jieXiZhuCeDaiMa('CAN_SHU_CUO_WU', 'MI_MA_FU_ZA_DU_BU_ZU')
-    expect(地区).toBe(CUO_WU_DAI_MA.AUTH_PHONE_NOT_ACCEPTED)
-    expect(密码).toBe(CUO_WU_DAI_MA.AUTH_PASSWORD_WEAK)
+    expect(地区).toBe(CuoWuDaiMa.AUTH_PHONE_NOT_ACCEPTED)
+    expect(密码).toBe(CuoWuDaiMa.AUTH_PASSWORD_WEAK)
     expect(地区).not.toBe(密码)
   })
 
   it('每个新码的 message 都是中文精确原因，且互不相同', () => {
     const 新码 = [
-      CUO_WU_DAI_MA.AUTH_VERIFICATION_CODE_INVALID,
-      CUO_WU_DAI_MA.AUTH_VERIFICATION_CODE_EXPIRED,
-      CUO_WU_DAI_MA.AUTH_VERIFICATION_CODE_ATTEMPTS_EXCEEDED,
-      CUO_WU_DAI_MA.AUTH_PHONE_NOT_ACCEPTED,
-      CUO_WU_DAI_MA.AUTH_PASSWORD_WEAK,
-      CUO_WU_DAI_MA.AUTH_ACCOUNT_ALREADY_EXISTS,
-      CUO_WU_DAI_MA.AUTH_USERNAME_TAKEN,
+      CuoWuDaiMa.AUTH_VERIFICATION_CODE_INVALID,
+      CuoWuDaiMa.AUTH_VERIFICATION_CODE_EXPIRED,
+      CuoWuDaiMa.AUTH_VERIFICATION_CODE_ATTEMPTS_EXCEEDED,
+      CuoWuDaiMa.AUTH_PHONE_NOT_ACCEPTED,
+      CuoWuDaiMa.AUTH_PASSWORD_WEAK,
+      CuoWuDaiMa.AUTH_ACCOUNT_ALREADY_EXISTS,
+      CuoWuDaiMa.AUTH_USERNAME_TAKEN,
     ] as const
     const 文案 = 新码.map((码) => huoQuCuoWuXianRong(码).message)
     for (const 条 of 文案) {
@@ -100,18 +100,18 @@ describe('注册失败原因不再折叠成同一个错误码', () => {
   })
 
   it('验证码错误码的 message 明确含「验证码」，不含通用参数兜底文案', () => {
-    const 错误 = huoQuCuoWuXianRong(CUO_WU_DAI_MA.AUTH_VERIFICATION_CODE_INVALID).message
+    const 错误 = huoQuCuoWuXianRong(CuoWuDaiMa.AUTH_VERIFICATION_CODE_INVALID).message
     expect(错误).toContain('验证码')
     expect(错误).not.toBe(fanYi.tongYong.canShuBuHeFa)
-    expect(huoQuCuoWuXianRong(CUO_WU_DAI_MA.AUTH_VERIFICATION_CODE_EXPIRED).message).toContain('验证码')
-    expect(huoQuCuoWuXianRong(CUO_WU_DAI_MA.AUTH_VERIFICATION_CODE_ATTEMPTS_EXCEEDED).message).toContain('验证码')
+    expect(huoQuCuoWuXianRong(CuoWuDaiMa.AUTH_VERIFICATION_CODE_EXPIRED).message).toContain('验证码')
+    expect(huoQuCuoWuXianRong(CuoWuDaiMa.AUTH_VERIFICATION_CODE_ATTEMPTS_EXCEEDED).message).toContain('验证码')
   })
 
   it('服务端依赖不可用的文案明确说明是服务器问题、与账号密码无关', () => {
     for (const 码 of [
-      CUO_WU_DAI_MA.DEPENDENCY_POSTGRES_UNAVAILABLE,
-      CUO_WU_DAI_MA.DEPENDENCIES_UNAVAILABLE,
-      CUO_WU_DAI_MA.SERVICE_UNAVAILABLE,
+      CuoWuDaiMa.DEPENDENCY_POSTGRES_UNAVAILABLE,
+      CuoWuDaiMa.DEPENDENCIES_UNAVAILABLE,
+      CuoWuDaiMa.SERVICE_UNAVAILABLE,
     ] as const) {
       const 文案 = huoQuCuoWuXianRong(码).message
       expect(文案, `${码} 未说明是服务端故障`).toMatch(/服务器|服务端/)
@@ -151,7 +151,7 @@ describe('zhuCe 服务层返回可直接定位的原因', () => {
     const 结果 = await zhuCe({ ...基础参数(), mi_ma: 'abc' })
     if (结果.cheng_gong) throw new Error('不应注册成功')
     expect(结果.juTiYuanYin).toBe('MI_MA_FU_ZA_DU_BU_ZU')
-    expect(jieXiZhuCeDaiMa(结果.cuo_wu_ma, 结果.juTiYuanYin)).toBe(CUO_WU_DAI_MA.AUTH_PASSWORD_WEAK)
+    expect(jieXiZhuCeDaiMa(结果.cuo_wu_ma, 结果.juTiYuanYin)).toBe(CuoWuDaiMa.AUTH_PASSWORD_WEAK)
   })
 })
 

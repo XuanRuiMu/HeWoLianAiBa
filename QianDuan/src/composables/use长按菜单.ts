@@ -1,14 +1,16 @@
 import { computed, getCurrentScope, onScopeDispose, ref, shallowRef, type Ref } from 'vue'
 import {
-  XIAO_XI_PEI_ZHI,
-  LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI,
-  CAI_DAN_LEI_XING_MO_REN,
+  XiaoXiPeiZhi,
+  LiaoTianYouJianCaiDanPeiZhi,
+  CaiDanLeiXingMoRen,
+  CaiDanLeiXingBiaoQingBao,
   huoQuCaiDanLeiXing,
+  huoQuMeiTiYinYongZhanWei,
   huoQuYuanShiCaiDanXiang,
 } from '@/config/消息配置'
 import type { XiaoXiCaiDanLeiXing, XiaoXiCaiDanXiang } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/翻译表'
-import { QIAN_TAI_DAI_MA, type QianTaiDaiMa } from '@/config/前台错误码'
+import {QianTaiDaiMa} from '@/config/前台错误码'
 import { chuangJianQianTaiCuoWu, 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
 import { shiBenDiLinShiXiaoXi } from '@/utils/消息内容块'
 import type { 消息 } from '@/types/类型定义'
@@ -97,8 +99,12 @@ export async function fuZhiWenBen(wenBen: string): Promise<boolean> {
 
 export function huoQuYinYongZhaiYao(xiaoXi: CaiDanXiaoXi): string {
   if (xiaoXi.lei_xing === 'yuYin') return huoQuFanYi('liaoTian', 'yinYongYuYinZhanWei')
+  if (xiaoXi.lei_xing === 'biaoQingBao') {
+    const zhanWei = huoQuMeiTiYinYongZhanWei('biaoQingBao')
+    if (zhanWei) return zhanWei
+  }
   const neiRong = xiaoXi.nei_rong || ''
-  const shangXian = LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.yinYongZhaiYaoZuiDaZiFu
+  const shangXian = LiaoTianYouJianCaiDanPeiZhi.yinYongZhaiYaoZuiDaZiFu
   if (neiRong.length <= shangXian) return neiRong
   return `${neiRong.slice(0, shangXian)}...`
 }
@@ -187,15 +193,16 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
   }
 
   function youJianBeiPingBi(): boolean {
-    return Date.now() - chuMoTongDaoShiKe < LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.youJianQuChongHaoMiao
+    return Date.now() - chuMoTongDaoShiKe < LiaoTianYouJianCaiDanPeiZhi.youJianQuChongHaoMiao
   }
 
   function tongGuoLeiXingShenCha(xiaoXi: T, leiXing: CaiDanLeiXing): boolean {
     if (!shiHeCaiDanLeiXing(xiaoXi, leiXing)) return false
-    if (leiXing !== CAI_DAN_LEI_XING_MO_REN) return true
+    if (leiXing === CaiDanLeiXingBiaoQingBao) return true
+    if (leiXing !== CaiDanLeiXingMoRen) return true
     return (
       xiaoXi.fa_song_zhe_lei_xing === 'yonghu' &&
-      Date.now() - xiaoXi.shi_jian_chuo <= XIAO_XI_PEI_ZHI.cheHuiShiXian
+      Date.now() - xiaoXi.shi_jian_chuo <= XiaoXiPeiZhi.cheHuiShiXian
     )
   }
 
@@ -229,14 +236,14 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
       if (!dengDai) return
       chuMoTongDaoShiKe = Date.now()
       daKaiCaiDanNeiBu(dengDai.xiaoXi, dengDai.leiXing, dengDai.dian)
-    }, LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao)
+    }, LiaoTianYouJianCaiDanPeiZhi.changAnChuFaHaoMiao)
   }
 
   function chuMoYiDongQuXiao(shiJian: TouchEvent): void {
     if (!changAnDingShiQi || !changAnDengDai) return
     const dian = quXiaoDian(shiJian)
     const pianYi = Math.hypot(dian.x - changAnDengDai.dian.x, dian.y - changAnDengDai.dian.y)
-    if (pianYi > LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.chuMoPianYiXianZhi) guanBiDingShiQi()
+    if (pianYi > LiaoTianYouJianCaiDanPeiZhi.chuMoPianYiXianZhi) guanBiDingShiQi()
   }
 
   function daKaiCaiDan(xiaoXi: T, shiJian: MouseEvent | TouchEvent): void {
@@ -261,7 +268,7 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
     if (xiaoXi.fa_song_zhe_lei_xing !== 'yonghu') return false
     if (xiaoXi.yi_che_hui) return false
     if (!xiaoXi.shi_jian_chuo) return false
-    return yiLai.dangQianShiJian.value - xiaoXi.shi_jian_chuo <= XIAO_XI_PEI_ZHI.cheHuiShiXian
+    return yiLai.dangQianShiJian.value - xiaoXi.shi_jian_chuo <= XiaoXiPeiZhi.cheHuiShiXian
   }
 
   const caiDanXiangChuli: Record<XiaoXiCaiDanXiang, (muBiao: T) => Promise<unknown> | void> = {
@@ -288,7 +295,9 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
     guanBiCaiDan()
     if (!muBiao) return
     if (!keXuanXiang.includes(xiang)) return
-    await caiDanXiangChuli[xiang](muBiao)
+    const chuLi = caiDanXiangChuli[xiang]
+    if (typeof chuLi !== 'function') return
+    await chuLi(muBiao)
   }
 
   function huoQuFanYiJieGuo(xiaoXi: T): string | undefined {
@@ -361,7 +370,7 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
     if (!yuanWen) {
       sheZhiFanYiWenTiCuoWu(
         jian,
-        chuangJianFanYiCuoWu(QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID, false),
+        chuangJianFanYiCuoWu(QianTaiDaiMa.REQUEST_PARAMETER_INVALID, false),
       )
       return null
     }
@@ -371,7 +380,7 @@ export function use长按菜单<T extends CaiDanXiaoXi = 消息>(yiLai: Use长�
     fanYiZhongJiHe.value.add(jian)
     try {
       if (!yiLai.fanYiQingQiu) {
-        sheZhiFanYiWenTiCuoWu(jian, chuangJianFanYiCuoWu(QIAN_TAI_DAI_MA.WEI_ZHI, false))
+        sheZhiFanYiWenTiCuoWu(jian, chuangJianFanYiCuoWu(QianTaiDaiMa.WEI_ZHI, false))
         return null
       }
       const jieGuo = await yiLai.fanYiQingQiu(yuanWen, fanYiYuanYu.value, fanYiMuBiaoYu.value)

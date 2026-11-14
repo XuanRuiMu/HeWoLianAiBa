@@ -9,7 +9,7 @@ import {
   qingChuShuaXinLingPai,
   shiChiJiuHuiHua,
 } from '@/utils/令牌存储'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { QianTaiDaiMa } from '@/config/前台错误码'
 import {
   QianTaiCuoWu,
   chuangJianQianTaiCuoWu,
@@ -122,7 +122,7 @@ function changShiShuaXinLingPai(): Promise<boolean> {
   return shuaXinJinXingZhong
 }
 
-const JIN_XING_ZHONG_QING_QIU = new Map<string, Set<AbortController>>()
+const JinXingZhongQingQiu = new Map<string, Set<AbortController>>()
 
 function shengChengQingQiuKey(配置: InternalAxiosRequestConfig): string {
   return `${配置.method?.toUpperCase() || 'GET'}:${配置.url}`
@@ -130,19 +130,19 @@ function shengChengQingQiuKey(配置: InternalAxiosRequestConfig): string {
 
 function dengJiaJinXingQingQiu(配置: KeZhongShiPeiZhi, 控制器: AbortController): void {
   const key = shengChengQingQiuKey(配置)
-  const tongYiFang = JIN_XING_ZHONG_QING_QIU.get(key) || new Set<AbortController>()
+  const tongYiFang = JinXingZhongQingQiu.get(key) || new Set<AbortController>()
   tongYiFang.add(控制器)
-  JIN_XING_ZHONG_QING_QIU.set(key, tongYiFang)
+  JinXingZhongQingQiu.set(key, tongYiFang)
 }
 
 function qingLiJinXingZhong(配置: InternalAxiosRequestConfig): void {
   const daiZhengPeiZhi = 配置 as KeZhongShiPeiZhi
   const key = shengChengQingQiuKey(配置)
-  const tongYiFang = JIN_XING_ZHONG_QING_QIU.get(key)
+  const tongYiFang = JinXingZhongQingQiu.get(key)
   const 控制器 = daiZhengPeiZhi.__qingQiuKongZhiQi
   if (!tongYiFang || !控制器) return
   tongYiFang.delete(控制器)
-  if (tongYiFang.size === 0) JIN_XING_ZHONG_QING_QIU.delete(key)
+  if (tongYiFang.size === 0) JinXingZhongQingQiu.delete(key)
 }
 
 function shengChengTraceId(): string {
@@ -286,15 +286,15 @@ const 包装实例 = {
       ? 执行带重试(() => 实例.delete<T>(url, 配置), true, 配置)
       : 实例.delete<T>(url, 配置),
   取消所有请求: () => {
-    JIN_XING_ZHONG_QING_QIU.forEach(( tongYiFang) => tongYiFang.forEach((控制器) => 控制器.abort()))
-    JIN_XING_ZHONG_QING_QIU.clear()
+    JinXingZhongQingQiu.forEach(( tongYiFang) => tongYiFang.forEach((控制器) => 控制器.abort()))
+    JinXingZhongQingQiu.clear()
   },
   取消请求: (方法: string, url: string) => {
     const key = `${方法.toUpperCase()}:${url}`
-    const tongYiFang = JIN_XING_ZHONG_QING_QIU.get(key)
+    const tongYiFang = JinXingZhongQingQiu.get(key)
     if (!tongYiFang) return
     tongYiFang.forEach((控制器) => 控制器.abort())
-    JIN_XING_ZHONG_QING_QIU.delete(key)
+    JinXingZhongQingQiu.delete(key)
   },
 }
 
@@ -334,7 +334,7 @@ function shangBaQianTaiCuoWu(cuoWu: QianTaiCuoWu, yuanLeiXing: string, url?: str
     if (!shiYouXiangYingWenFeng(响应.data)) {
       const traceId = guiYiBaoFengTraceId(null, { response: { headers: 响应.headers } })
       return Promise.reject(chuangJianQianTaiCuoWu({
-        code: QIAN_TAI_DAI_MA.XIE_YI,
+        code: QianTaiDaiMa.XIE_YI,
         retryable: true,
         traceId,
         httpStatus: 响应.status,

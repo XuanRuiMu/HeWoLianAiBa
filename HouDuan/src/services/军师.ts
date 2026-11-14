@@ -1,5 +1,5 @@
-﻿import { JUN_SHI_PEI_ZHI, JUN_SHI_PEI_ZHI_MO_REN } from '../config/军师配置'
-import { AI_PEI_ZHI } from '../config/AI配置'
+﻿import { JunShiPeiZhi, JunShiPeiZhiMoRen } from '../config/军师配置'
+import { AiPeiZhi } from '../config/AI配置'
 import { huoQuFanYi } from '../config/translations'
 import { gouJianJiaoSeShangXiaWen } from '../config/AI参数策略'
 import { huoQuWanZhengHaoGanDu } from './好感度'
@@ -100,7 +100,7 @@ function gouJianJunShiRenSheDuan(jiaoSe: AIJiaoSeXinXi): string {
 
 export async function huoQuJunShiLieBiao(): Promise<JunShiLieBiaoXiangYing> {
   return {
-    junShiLieBiao: Object.values(JUN_SHI_PEI_ZHI).map((peiZhi) => ({
+    junShiLieBiao: Object.values(JunShiPeiZhi).map((peiZhi) => ({
       id: peiZhi.id,
       mingCheng: peiZhi.mingCheng,
       fuBiaoTi: peiZhi.fuBiaoTi,
@@ -140,7 +140,7 @@ export async function huoQuJunShiJiLu(
 export async function qingQiuJunShiZhiDao(
   canShu: JunShiZhiDaoCanShu,
 ): Promise<{ cheng_gong: boolean; jie_guo?: JunShiZhiDaoJieGuo; cuo_wu_ma?: string; ti_shi?: string; zhuang_tai_ma?: number }> {
-  const junShiPeiZhi = JUN_SHI_PEI_ZHI[canShu.jun_shi_id || ''] || JUN_SHI_PEI_ZHI_MO_REN
+  const junShiPeiZhi = JunShiPeiZhi[canShu.jun_shi_id || ''] || JunShiPeiZhiMoRen
 
   const jiaoSeSuoYouZhe = await huoQuJiaoSeSuoYouZhe(canShu.jiao_se_id)
   if (!jiaoSeSuoYouZhe) {
@@ -173,7 +173,7 @@ export async function qingQiuJunShiZhiDao(
     yong_hu_id: canShu.yong_hu_id,
     jiao_se_id: canShu.jiao_se_id,
     ye_ma: 1,
-    mei_ye_tiao_shu: AI_PEI_ZHI.prompt.junShiLiShiXiaoXiShuLiang,
+    mei_ye_tiao_shu: AiPeiZhi.prompt.junShiLiShiXiaoXiShuLiang,
   })
 
   const youXiaoXiaoXi = xiaoXiJieGuo.lie_biao
@@ -327,7 +327,7 @@ export async function huoQuJunShiZhiDaoZhuangTaiXinXi(
     yong_hu_id,
     jiao_se_id,
     ye_ma: 1,
-    mei_ye_tiao_shu: AI_PEI_ZHI.prompt.junShiLiShiXiaoXiShuLiang,
+    mei_ye_tiao_shu: AiPeiZhi.prompt.junShiLiShiXiaoXiShuLiang,
   })
   const dangQianLieBiao = xiaoXiJieGuo.lie_biao
     .filter((xiao_xi) => xiao_xi.fa_song_zhe_lei_xing !== 'xitong')

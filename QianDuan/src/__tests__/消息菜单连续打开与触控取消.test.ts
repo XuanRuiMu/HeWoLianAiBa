@@ -5,7 +5,7 @@ import { mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import 消息操作菜单 from '@/components/聊天/消息操作菜单.vue'
 import { use长按菜单 } from '@/composables/use长按菜单'
-import { LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI } from '@/config/消息配置'
+import { LiaoTianYouJianCaiDanPeiZhi } from '@/config/消息配置'
 
 const 组件源 = readFileSync(resolve(__dirname, '../components/聊天/消息操作菜单.vue'), 'utf8')
 const 样式源 = readFileSync(resolve(__dirname, '../styles/消息操作菜单.css'), 'utf8')
@@ -123,7 +123,7 @@ describe('消息菜单连续打开的事件命中', () => {
       })
       菜单.chuMoKaiShi(消息 as never, 触摸)
       菜单.chuMoJieShu()
-      vi.advanceTimersByTime(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao + 50)
+      vi.advanceTimersByTime(LiaoTianYouJianCaiDanPeiZhi.changAnChuFaHaoMiao + 50)
       expect(菜单.caiDanZhengDaKai.value).toBe(false)
     } finally {
       vi.useRealTimers()

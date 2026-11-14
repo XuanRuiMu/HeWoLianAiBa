@@ -1,5 +1,5 @@
 
-export const XUE_KE_TONG_YI_CI: Readonly<Record<string, string>> = {
+export const XueKeTongYiCi: Readonly<Record<string, string>> = {
   '计算机': '计算机科学',
   '软件工程': '计算机科学',
   '软件开发': '计算机科学',
@@ -22,7 +22,7 @@ export const XUE_KE_TONG_YI_CI: Readonly<Record<string, string>> = {
   '医学生': '护理',
 }
 
-export const ZHI_YE_TONG_YI_CI: Readonly<Record<string, string>> = {
+export const ZhiYeTongYiCi: Readonly<Record<string, string>> = {
   '教师': '教育',
   '老师': '教育',
   '教员': '教育',

@@ -138,11 +138,11 @@
           :多行="true"
           :行数="3"
           :占位文字="huoQuFanYi('sheZhi', 'qianMingZhanWei')"
-          :最大长度="QIAN_MING_ZUI_DA_ZI_FU"
+          :最大长度="QianMingZuiDaZiFu"
           :错误提示文字="fenQuanCuoWu.qianMing?.lianAiWenAn || ''"
           @geng-xin="qianMingCaoGao = $event"
         />
-        <p class="zi-fu-ji-shu">{{ qianMingZiShu }}/{{ QIAN_MING_ZUI_DA_ZI_FU }}</p>
+        <p class="zi-fu-ji-shu">{{ qianMingZiShu }}/{{ QianMingZuiDaZiFu }}</p>
         <p v-if="qianMingCaoGaoYiHuiFu" class="ti-shi-wen" role="status">{{ huoQuFanYi('tongYong', 'caoGaoYiHuiFu') }}</p>
         <label class="ke-jian-xing-hang">
           <span>{{ huoQuFanYi('sheZhi', 'keJianXingBiaoTi') }}</span>
@@ -507,7 +507,7 @@
           class="wai-guan-fen-duan"
           :class="{ 'sou-zhong-gao-liang': 搜索中 && 命中搜索(qiPaoSouSuoWenBen) }"
         >
-          <h2 class="kapian-biao-ti">{{ QI_PAO_WEN_AN.biaoTi }}</h2>
+          <h2 class="kapian-biao-ti">{{ QiPaoWenAn.biaoTi }}</h2>
           <QiPaoXuanZeQi />
         </div>
 
@@ -580,7 +580,7 @@
     <RenJiYanZheng
       ref="renJiZuJian"
       :xian-shi="renJiXianShi"
-      :yong-tu="YAN_ZHENG_MA_YONG_TU.chongZhiMiMa"
+      :yong-tu="YanZhengMaYongTu.chongZhiMiMa"
       :deng-dai-zhong="miMaFaSongZhong"
       @guan-bi="renJiXianShi = false"
       @ti-jiao="tiJiaoRenJi"
@@ -603,8 +603,8 @@ import {
   归一前台错误,
   type QianTaiCuoWu,
 } from '@/utils/前台错误'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
-import { gengGaiYongHuMing, gengGaiMiMa, gengGaiMoRenXingBie, gengGaiMoRenDuiXiangXingBie, faSongMa, YAN_ZHENG_MA_YONG_TU, type 人机验证答案 } from '@/api/认证'
+import { QianTaiDaiMa } from '@/config/前台错误码'
+import { gengGaiYongHuMing, gengGaiMiMa, gengGaiMoRenXingBie, gengGaiMoRenDuiXiangXingBie, faSongMa, YanZhengMaYongTu, type 人机验证答案 } from '@/api/认证'
 import RenJiYanZheng from '@/components/认证/人机测试.vue'
 import { shiRenJiYanZhengShiBai, type 人机测试实例 } from '@/utils/人机验证'
 import type { XingBie } from '@/types/类型定义'
@@ -613,7 +613,7 @@ import {
   shangChuanTouXiang,
   huoQuFengJinZhuangTai,
   tiJiaoShenSu as tiJiaoShenSuApi,
-  KE_JIAN_XING_LIE_BIAO,
+  KeJianXingLieBiao,
   shiHeFaKeJianXing,
   type KeJianXing,
   type FengJinZhuangTai,
@@ -626,15 +626,15 @@ import TongYongXiaLa from '@/components/通用菜单.vue'
 import QiPaoXuanZeQi from '@/components/气泡主题选择器.vue'
 import LiaoTianBeiJingSheZhi from '@/components/聊天背景设置.vue'
 import LiaoTianYuLan from '@/components/聊天/聊天预览.vue'
-import { QI_PAO_WEN_AN, QI_PAO_MING_CHENG_WEN_AN } from '@/config/气泡主题文案'
-import { CAO_GAO_JIAN, useCaoGao } from '@/composables/use草稿'
+import { QiPaoWenAn, QiPaoMingChengWenAn } from '@/config/气泡主题文案'
+import { CaoGaoJian, useCaoGao } from '@/composables/use草稿'
 
-const QIAN_MING_ZUI_DA_ZI_FU = 500
+const QianMingZuiDaZiFu = 500
 
 const 用户仓库 = 使用用户仓库()
 const 设置仓库 = 使用用户设置仓库()
 const router = useRouter()
-const LU_YOU_MING = 'zhangHaoAnQuan'
+const LuYouMing = 'zhangHaoAnQuan'
 
 type BiaoQianZhi = '形象' | '账号' | '隐私' | '外观'
 const 搜索关键词 = ref('')
@@ -785,7 +785,7 @@ async function queRenCaiJian(wenJian: Blob) {
 }
 
 const qianMingCaoGao = ref('')
-const { huiFuCaoGao: huiFuQianMingCaoGao, qingChuCaoGao: qingChuQianMingCaoGao } = useCaoGao(CAO_GAO_JIAN.qianMing, qianMingCaoGao)
+const { huiFuCaoGao: huiFuQianMingCaoGao, qingChuCaoGao: qingChuQianMingCaoGao } = useCaoGao(CaoGaoJian.qianMing, qianMingCaoGao)
 const qianMingCaoGaoYiHuiFu = ref(false)
 const qianMingKeJianXing = ref<KeJianXing>('gong_kai')
 const qianMingBaiMingDan = ref<string[]>([])
@@ -797,7 +797,7 @@ const haoYouKeXuan = ref<HaoYouXiang[]>([])
 const qianMingZiShu = computed(() => qianMingCaoGao.value.length)
 
 const keJianXingXuanXiang = computed(() =>
-  (KE_JIAN_XING_LIE_BIAO as readonly KeJianXing[]).map((zhi) => ({
+  (KeJianXingLieBiao as readonly KeJianXing[]).map((zhi) => ({
     zhi,
     wenZi: keJianXingWenZi(zhi),
   })),
@@ -830,7 +830,7 @@ function jieShouFenQuanCuoWu(fenQuan: string, cuoWu: unknown, chongShi?: () => u
 
 function jieShouBenDiQingQiuCuoWu(fenQuan: string, yingXiang: string): void {
   jieShouFenQuanCuoWu(fenQuan, chuangJianQianTaiCuoWu({
-    code: QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID,
+    code: QianTaiDaiMa.REQUEST_PARAMETER_INVALID,
     retryable: false,
     yingXiang,
     xiaYiBu: huoQuFanYi('tongYong', 'qingQiuWenTiXiaYiBu'),
@@ -849,7 +849,7 @@ function qingFenQuanCuoWu(fenQuan: string): void {
   delete fenQuanChongShi[fenQuan]
 }
 
-const BANG_FEN_QUAN = ['uid', 'fengJin', 'paiWei', 'gongKai', 'zhuXiao', 'beiJing', 'touXiang', 'qianMing', 'yongHuMing', 'miMa', 'shenSu'] as const
+const BangFenQuan = ['uid', 'fengJin', 'paiWei', 'gongKai', 'zhuXiao', 'beiJing', 'touXiang', 'qianMing', 'yongHuMing', 'miMa', 'shenSu'] as const
 
 function tongYiShiBai(cuoWu: QianTaiCuoWu | null | undefined, lingYi: QianTaiCuoWu | null | undefined): boolean {
   if (!cuoWu || !lingYi) return false
@@ -858,7 +858,7 @@ function tongYiShiBai(cuoWu: QianTaiCuoWu | null | undefined, lingYi: QianTaiCuo
 
 const dingCengCuoWu = computed<QianTaiCuoWu | null>(() => {
   const quanJu = 设置仓库.caoZuoCuoWu
-  for (const fenQuan of BANG_FEN_QUAN) {
+  for (const fenQuan of BangFenQuan) {
     const cuoWu = fenQuanCuoWu.value[fenQuan]
     if (!cuoWu) continue
     if (quanJu && tongYiShiBai(quanJu, cuoWu)) continue
@@ -869,7 +869,7 @@ const dingCengCuoWu = computed<QianTaiCuoWu | null>(() => {
 
 function chongShiDingCeng(): void {
   const quanJu = 设置仓库.caoZuoCuoWu
-  const xianZai = BANG_FEN_QUAN.find((fenQuan) => fenQuanCuoWu.value[fenQuan])
+  const xianZai = BangFenQuan.find((fenQuan) => fenQuanCuoWu.value[fenQuan])
   if (!xianZai) {
     void 设置仓库.chongShi()
     return
@@ -1024,7 +1024,7 @@ async function tiJiaoRenJi(yanZheng: 人机验证答案) {
   miMaTiShi.value = ''
   qingFenQuanCuoWu('miMa')
   try {
-    await faSongMa(用户仓库.dangQianYongHu!.shou_ji_hao, YAN_ZHENG_MA_YONG_TU.chongZhiMiMa, undefined, yanZheng)
+    await faSongMa(用户仓库.dangQianYongHu!.shou_ji_hao, YanZhengMaYongTu.chongZhiMiMa, undefined, yanZheng)
     renJiXianShi.value = false
     miMaDaoJiShi.value = 60
     if (miMaDaoJiShiQi) clearInterval(miMaDaoJiShiQi)
@@ -1149,7 +1149,7 @@ const beiJingSouSuoWenBen = computed(() => {
 })
 const qiPaoSouSuoWenBen = computed(
   () =>
-    `${QI_PAO_WEN_AN.biaoTi} ${QI_PAO_WEN_AN.ziJiBiaoTi} ${QI_PAO_WEN_AN.aiBiaoTi} ${Object.values(QI_PAO_MING_CHENG_WEN_AN).join(' ')} ${huoQuFanYi('sheZhi', 'qiPaoMingCheng')} ${huoQuFanYi('sheZhi', 'shangChuanZiDingYiQiPao')} ${huoQuFanYi('sheZhi', 'shanChuZiDingYiQiPao')} ${设置仓库.waiGuan.qiPao.map((xiang) => xiang.mingCheng).join(' ')}`,
+    `${QiPaoWenAn.biaoTi} ${QiPaoWenAn.ziJiBiaoTi} ${QiPaoWenAn.aiBiaoTi} ${Object.values(QiPaoMingChengWenAn).join(' ')} ${huoQuFanYi('sheZhi', 'qiPaoMingCheng')} ${huoQuFanYi('sheZhi', 'shangChuanZiDingYiQiPao')} ${huoQuFanYi('sheZhi', 'shanChuZiDingYiQiPao')} ${设置仓库.waiGuan.qiPao.map((xiang) => xiang.mingCheng).join(' ')}`,
 )
 const paiWeiSouSuoWenBen = computed(
   () => `${huoQuFanYi('sheZhi', 'paiWeiBiaoTi')} ${huoQuFanYi('sheZhi', 'qingKongPaiWei')}`,
@@ -1190,7 +1190,7 @@ function yingYongYuZaiFengJinYuHaoYouKeXuan(): void {
   const yuQu = quYuQuJiaoJie<{
     fengJin: Promise<FengJinZhuangTai>
     haoYouKeXuan: Promise<HaoYouXiang[]>
-  }>(LU_YOU_MING)
+  }>(LuYouMing)
   if (!yuQu) {
     void jiaZaiFengJinZhuangTai()
     void jiaZaiHaoYouKeXuan()
@@ -1247,7 +1247,7 @@ onBeforeRouteLeave(() => {
 
 const fengJinZhuangTai = ref<FengJinZhuangTai | null>(null)
 const shenSuLiYou = ref('')
-const { huiFuCaoGao: huiFuShenSuCaoGao, qingChuCaoGao: qingChuShenSuCaoGao } = useCaoGao(CAO_GAO_JIAN.shenSu, shenSuLiYou)
+const { huiFuCaoGao: huiFuShenSuCaoGao, qingChuCaoGao: qingChuShenSuCaoGao } = useCaoGao(CaoGaoJian.shenSu, shenSuLiYou)
 const shenSuCaoGaoYiHuiFu = ref(false)
 const shenSuTiJiaoZhong = ref(false)
 const shenSuTiShi = ref('')

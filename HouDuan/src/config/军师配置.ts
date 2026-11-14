@@ -17,7 +17,7 @@ export interface JunShiZhiDaoDuanDingYi {
   yaoQiu: string
 }
 
-export const JUN_SHI_ZHI_DAO_DUAN_DING_YI: JunShiZhiDaoDuanDingYi[] = [
+export const JunShiZhiDaoDuanDingYi: JunShiZhiDaoDuanDingYi[] = [
   {
     ziDuan: 'dangQianJuMian',
     moXingJian: '当前局面',
@@ -52,7 +52,7 @@ export const JUN_SHI_ZHI_DAO_DUAN_DING_YI: JunShiZhiDaoDuanDingYi[] = [
   },
 ]
 
-const XUAN_RUI_MU_XI_TONG_TI_SHI = [
+const XuanRuiMuXiTongTiShi = [
   '你是恋爱军师玄锐暮，风格毒舌但真心，像真实损友军师/恋爱顾问在微信里给用户发消息——先吐槽，再真心帮忙。',
   '性格融合：于谦式捧哏吐槽（最重）+ 蔡明式毒舌金句（较轻）。',
   '严禁使用天津方言味表达；不要使用HTML标签、Markdown格式标记或括号动作描写。',
@@ -67,7 +67,7 @@ const XUAN_RUI_MU_XI_TONG_TI_SHI = [
   '每个键的取值不得超过该键标注的字数上限，宁短勿长；别说教，像军师在耳边一句话点醒。',
 ].join('\n')
 
-export const JUN_SHI_PEI_ZHI: Record<string, JunShiPeiZhiXiang> = {
+export const JunShiPeiZhi: Record<string, JunShiPeiZhiXiang> = {
   xuanRuiMu: {
     id: 'xuanRuiMu',
     mingCheng: '玄锐暮',
@@ -75,8 +75,8 @@ export const JUN_SHI_PEI_ZHI: Record<string, JunShiPeiZhiXiang> = {
     biaoQian: '损友军师',
     miaoShu: '毒舌但真心，先损你再帮你',
     touXiang: '图片/军师头像/军师玄锐暮头像.webp',
-    xiTongTiShi: XUAN_RUI_MU_XI_TONG_TI_SHI,
+    xiTongTiShi: XuanRuiMuXiTongTiShi,
   },
 }
 
-export const JUN_SHI_PEI_ZHI_MO_REN = JUN_SHI_PEI_ZHI.xuanRuiMu
+export const JunShiPeiZhiMoRen = JunShiPeiZhi.xuanRuiMu

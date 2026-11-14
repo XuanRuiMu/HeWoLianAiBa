@@ -1,12 +1,12 @@
 import { ref } from 'vue'
-import { DUO_MEI_TI_PEI_ZHI, LU_YIN_PEI_ZHI } from '@/config/消息配置'
+import { DuoMeiTiPeiZhi, LuYinPeiZhi } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/翻译表'
 import { ceLiangYinPinShiChang } from '@/composables/use语音播放'
 
-const LU_YIN_SHANG_HUA_QU_XIAO_JU_LI = 80
-const LU_YIN_TING_ZHI_DENG_DAI_HAO_MIAO = 2000
-const LU_YIN_CAI_YANG_JIAN_GE_HAO_MIAO = 60
-const LU_YIN_QIANG_DU_FANG_DA = 4
+const LuYinShangHuaQuXiaoJuLi = 80
+const LuYinTingZhiDengDaiHaoMiao = 2000
+const LuYinCaiYangJianGeHaoMiao = 60
+const LuYinQiangDuFangDa = 4
 
 interface Use录音依赖 {
   sheZhiCuoWu: (xinXi: string) => void
@@ -23,7 +23,7 @@ export function use录音(yiLai: Use录音依赖) {
   const luYinMiao = ref(0)
   const luYinShangHuaQuXiao = ref(false)
   const luYinBoXing = ref<number[]>(
-    Array.from({ length: LU_YIN_PEI_ZHI.dianPingTiaoShu }, () => 0),
+    Array.from({ length: LuYinPeiZhi.dianPingTiaoShu }, () => 0),
   )
   let yinPinShangXiaWen: AudioContext | null = null
   let yinPinFenXiQi: AnalyserNode | null = null
@@ -84,14 +84,14 @@ export function use录音(yiLai: Use录音依赖) {
     yinPinCaiYangShuJu = null
     yinPinShangCiCaiYangHaoMiao = 0
     yinPinYiCaiYang = false
-    luYinBoXing.value = Array.from({ length: LU_YIN_PEI_ZHI.dianPingTiaoShu }, () => 0)
+    luYinBoXing.value = Array.from({ length: LuYinPeiZhi.dianPingTiaoShu }, () => 0)
   }
 
   function caiYangJieZou(shijianHaoMiao: number) {
     const fenXiQi = yinPinFenXiQi
     const shuJu = yinPinCaiYangShuJu
     if (!fenXiQi || !shuJu) return
-    if (shijianHaoMiao - yinPinShangCiCaiYangHaoMiao >= LU_YIN_CAI_YANG_JIAN_GE_HAO_MIAO) {
+    if (shijianHaoMiao - yinPinShangCiCaiYangHaoMiao >= LuYinCaiYangJianGeHaoMiao) {
       yinPinShangCiCaiYangHaoMiao = shijianHaoMiao
       fenXiQi.getByteTimeDomainData(shuJu)
       let pingFangHe = 0
@@ -99,11 +99,11 @@ export function use录音(yiLai: Use录音依赖) {
         const pianYi = (shuJu[xiaBiao] - 128) / 128
         pingFangHe += pianYi * pianYi
       }
-      const qiangDu = Math.min(1, Math.sqrt(pingFangHe / shuJu.length) * LU_YIN_QIANG_DU_FANG_DA)
+      const qiangDu = Math.min(1, Math.sqrt(pingFangHe / shuJu.length) * LuYinQiangDuFangDa)
       if (!yinPinYiCaiYang) {
         yinPinYiCaiYang = true
         luYinBoXing.value = Array.from(
-          { length: LU_YIN_PEI_ZHI.dianPingTiaoShu },
+          { length: LuYinPeiZhi.dianPingTiaoShu },
           () => qiangDu,
         )
       } else {
@@ -162,7 +162,7 @@ export function use录音(yiLai: Use录音依赖) {
 
   function dengDaiLuYinTingZhi(luYinQi: MediaRecorder): Promise<void> {
     return new Promise<void>((jieJue) => {
-      const dingShi = setTimeout(jieJue, LU_YIN_TING_ZHI_DENG_DAI_HAO_MIAO)
+      const dingShi = setTimeout(jieJue, LuYinTingZhiDengDaiHaoMiao)
       luYinQi.addEventListener(
         'stop',
         () => {
@@ -205,7 +205,7 @@ export function use录音(yiLai: Use录音依赖) {
     if (!faSong) return
     if (!luYinMoShi.value) luYinMoShi.value = true
 
-    if (yongShiHaoMiao < DUO_MEI_TI_PEI_ZHI.yuYinZuiDuanMiao * 1000) {
+    if (yongShiHaoMiao < DuoMeiTiPeiZhi.yuYinZuiDuanMiao * 1000) {
       yiLai.sheZhiCuoWu(huoQuFanYi('duoMeiTi', 'shuoHuaTaiDuan'))
       luYinMoShi.value = false
       return
@@ -229,7 +229,7 @@ export function use录音(yiLai: Use录音依赖) {
     try {
       ceLiangHaoMiao = await ceLiangYinPinShiChang(
         ceLiangDiZhi,
-        DUO_MEI_TI_PEI_ZHI.yuYinFaSongCeLiangChaoShiHaoMiao,
+        DuoMeiTiPeiZhi.yuYinFaSongCeLiangChaoShiHaoMiao,
       )
     } finally {
       URL.revokeObjectURL(ceLiangDiZhi)
@@ -306,7 +306,7 @@ export function use录音(yiLai: Use录音依赖) {
 
     luYinJiShiQi = setInterval(() => {
       luYinMiao.value = Math.floor((Date.now() - luYinKaiShiHaoMiao) / 1000)
-      if (luYinMiao.value >= DUO_MEI_TI_PEI_ZHI.yuYinZuiDaMiao) {
+      if (luYinMiao.value >= DuoMeiTiPeiZhi.yuYinZuiDaMiao) {
         songKaiLuYin()
       }
     }, 1000)
@@ -328,7 +328,7 @@ export function use录音(yiLai: Use录音依赖) {
       luYinQiDianY = event.clientY
       return
     }
-    luYinShangHuaQuXiao.value = luYinQiDianY - event.clientY > LU_YIN_SHANG_HUA_QU_XIAO_JU_LI
+    luYinShangHuaQuXiao.value = luYinQiDianY - event.clientY > LuYinShangHuaQuXiaoJuLi
   }
 
   return {

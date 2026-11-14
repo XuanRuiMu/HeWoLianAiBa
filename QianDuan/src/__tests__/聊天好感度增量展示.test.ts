@@ -22,17 +22,17 @@ const 聊天仓库源码 = 读源('stores/聊天.ts')
 const 聊天页面源码 = 读源('views/聊天页面.vue')
 const 提示带源码 = 读源('components/提示带.vue')
 
-const WEI_DU = fanYi.zhanJi.haoGanDuWeiDu
+const WeiDu = fanYi.zhanJi.haoGanDuWeiDu
 
 function wuWei(
   fuGai: Partial<Record<'xinRen' | 'qinMi' | 'quWei' | 'guanHuai' | 'zongFen', number>> = {},
 ) {
   return [
-    { mingCheng: WEI_DU.xinRenBianHua, shuZhi: fuGai.xinRen ?? 0 },
-    { mingCheng: WEI_DU.qinMiBianHua, shuZhi: fuGai.qinMi ?? 0 },
-    { mingCheng: WEI_DU.quWeiBianHua, shuZhi: fuGai.quWei ?? 0 },
-    { mingCheng: WEI_DU.guanHuaiBianHua, shuZhi: fuGai.guanHuai ?? 0 },
-    { mingCheng: WEI_DU.zongFenBianHua, shuZhi: fuGai.zongFen ?? 0 },
+    { mingCheng: WeiDu.xinRenBianHua, shuZhi: fuGai.xinRen ?? 0 },
+    { mingCheng: WeiDu.qinMiBianHua, shuZhi: fuGai.qinMi ?? 0 },
+    { mingCheng: WeiDu.quWeiBianHua, shuZhi: fuGai.quWei ?? 0 },
+    { mingCheng: WeiDu.guanHuaiBianHua, shuZhi: fuGai.guanHuai ?? 0 },
+    { mingCheng: WeiDu.zongFenBianHua, shuZhi: fuGai.zongFen ?? 0 },
   ]
 }
 
@@ -86,10 +86,10 @@ describe('聊天好感度增量只读接收', () => {
     )
     expect(仓库.haoGanDuZengLiangBiaoQian).toEqual(wuWei({ qinMi: 2, zongFen: 3 }))
     expect(仓库.haoGanDuZengLiangBiaoQian[0]).toEqual({
-      mingCheng: WEI_DU.xinRenBianHua,
+      mingCheng: WeiDu.xinRenBianHua,
       shuZhi: 0,
     })
-    expect(仓库.haoGanDuZengLiangBiaoQian[2]).toEqual({ mingCheng: WEI_DU.quWeiBianHua, shuZhi: 0 })
+    expect(仓库.haoGanDuZengLiangBiaoQian[2]).toEqual({ mingCheng: WeiDu.quWeiBianHua, shuZhi: 0 })
   })
 
   it('同一事件ID重复投递不重复累加展示', async () => {
@@ -219,8 +219,8 @@ describe('AI声明行增量标签展示', () => {
 
   it('增量标签与AI声明同一行内展示且正负分色', () => {
     const 包 = guaZai([
-      { mingCheng: WEI_DU.qinMiBianHua, shuZhi: 2 },
-      { mingCheng: WEI_DU.guanHuaiBianHua, shuZhi: -1 },
+      { mingCheng: WeiDu.qinMiBianHua, shuZhi: 2 },
+      { mingCheng: WeiDu.guanHuaiBianHua, shuZhi: -1 },
     ])
     const rongQi = 包.find('.tishi-dai')
     expect(rongQi.exists()).toBe(true)
@@ -233,8 +233,8 @@ describe('AI声明行增量标签展示', () => {
     expect(shengMing.text()).toContain(huoQuFanYi('tongYong', 'aiTiShiTiao'))
     const xiangMu = 包.findAll('.tishi-dai-zengliang-xiang')
     expect(xiangMu).toHaveLength(2)
-    expect(xiangMu[0].text()).toBe(`${WEI_DU.qinMiBianHua} +2`)
-    expect(xiangMu[1].text()).toBe(`${WEI_DU.guanHuaiBianHua} -1`)
+    expect(xiangMu[0].text()).toBe(`${WeiDu.qinMiBianHua} +2`)
+    expect(xiangMu[1].text()).toBe(`${WeiDu.guanHuaiBianHua} -1`)
     expect(xiangMu[0].classes()).toContain('zheng')
     expect(xiangMu[1].classes()).toContain('fu')
     包.unmount()
@@ -245,11 +245,11 @@ describe('AI声明行增量标签展示', () => {
     const xiangMu = 包.findAll('.tishi-dai-zengliang-xiang')
     expect(xiangMu).toHaveLength(5)
     expect(xiangMu.map((xiang) => xiang.text())).toEqual([
-      `${WEI_DU.xinRenBianHua} +0`,
-      `${WEI_DU.qinMiBianHua} +0`,
-      `${WEI_DU.quWeiBianHua} +0`,
-      `${WEI_DU.guanHuaiBianHua} +0`,
-      `${WEI_DU.zongFenBianHua} +0`,
+      `${WeiDu.xinRenBianHua} +0`,
+      `${WeiDu.qinMiBianHua} +0`,
+      `${WeiDu.quWeiBianHua} +0`,
+      `${WeiDu.guanHuaiBianHua} +0`,
+      `${WeiDu.zongFenBianHua} +0`,
     ])
     for (const xiang of xiangMu) {
       expect(xiang.classes()).toContain('ling')
@@ -261,13 +261,13 @@ describe('AI声明行增量标签展示', () => {
 
   it('0值中性class无动画且红色负值仍带fu', () => {
     const 包 = guaZai([
-      { mingCheng: WEI_DU.xinRenBianHua, shuZhi: 0 },
-      { mingCheng: WEI_DU.quWeiBianHua, shuZhi: -3 },
+      { mingCheng: WeiDu.xinRenBianHua, shuZhi: 0 },
+      { mingCheng: WeiDu.quWeiBianHua, shuZhi: -3 },
     ])
     const xiangMu = 包.findAll('.tishi-dai-zengliang-xiang')
-    expect(xiangMu[0].text()).toBe(`${WEI_DU.xinRenBianHua} +0`)
+    expect(xiangMu[0].text()).toBe(`${WeiDu.xinRenBianHua} +0`)
     expect(xiangMu[0].classes()).toContain('ling')
-    expect(xiangMu[1].text()).toBe(`${WEI_DU.quWeiBianHua} -3`)
+    expect(xiangMu[1].text()).toBe(`${WeiDu.quWeiBianHua} -3`)
     expect(xiangMu[1].classes()).toContain('fu')
     expect(提示带源码).toContain('.tishi-dai-zengliang-xiang.ling')
     expect(提示带源码).toMatch(/\.tishi-dai-zengliang-xiang\.ling\s*\{[^}]*animation:\s*none/)

@@ -119,7 +119,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
+import { DuoMeiTiPeiZhi } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/翻译表'
 
 const props = defineProps<{
@@ -130,7 +130,7 @@ const props = defineProps<{
   shiBenRen: boolean
 }>()
 
-const WEN_JIAN_KUO_ZHAN_TU_BIAO: Array<{ kuoZhan: string[]; leiXing: string }> = [
+const WenJianKuoZhanTuBiao: Array<{ kuoZhan: string[]; leiXing: string }> = [
   { kuoZhan: ['doc', 'docx'], leiXing: 'word' },
   { kuoZhan: ['xls', 'xlsx', 'csv'], leiXing: 'excel' },
   { kuoZhan: ['ppt', 'pptx'], leiXing: 'ppt' },
@@ -148,14 +148,14 @@ function huoQuKuoZhanMing(mingZi: string): string {
 
 const tuBiaoLeiXing = computed(() => {
   const kuoZhan = huoQuKuoZhanMing(props.mingCheng)
-  for (const tiaoMu of WEN_JIAN_KUO_ZHAN_TU_BIAO) {
+  for (const tiaoMu of WenJianKuoZhanTuBiao) {
     if (tiaoMu.kuoZhan.includes(kuoZhan)) return tiaoMu.leiXing
   }
   return 'qita'
 })
 
 const xianShiMing = computed(() => {
-  const xian = DUO_MEI_TI_PEI_ZHI.wenJianMingZuiDaXianShiZiFu
+  const xian = DuoMeiTiPeiZhi.wenJianMingZuiDaXianShiZiFu
   if (props.mingCheng.length <= xian) return props.mingCheng
   return `${props.mingCheng.slice(0, xian)}...`
 })

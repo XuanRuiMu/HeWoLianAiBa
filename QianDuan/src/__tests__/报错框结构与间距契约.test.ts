@@ -7,7 +7,7 @@ import 请求错误 from '@/components/请求错误.vue'
 import 错误边界 from '@/components/错误边界.vue'
 import { chuangJianQianTaiCuoWu } from '@/utils/前台错误'
 import { huoQuFanYi } from '@/config/翻译表'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { QianTaiDaiMa } from '@/config/前台错误码'
 
 const 本目录 = dirname(fileURLToPath(import.meta.url))
 const 源码根 = resolve(本目录, '..')
@@ -45,7 +45,7 @@ const 关闭热区块 = 取声明块(样式, '.cuowu-tishi-guan-bi::before')
 const 装 = (shiXiang: Record<string, unknown> = {}) =>
   mount(请求错误, {
     props: {
-      cuoWu: chuangJianQianTaiCuoWu({ code: QIAN_TAI_DAI_MA.WANG_LUO, traceId: 'contract-0001' }),
+      cuoWu: chuangJianQianTaiCuoWu({ code: QianTaiDaiMa.WANG_LUO, traceId: 'contract-0001' }),
       ...shiXiang,
     },
   })
@@ -78,7 +78,7 @@ describe('报错框结构契约', () => {
 
   it('标题一句 + 说明一句，说明只取下一步，不回显影响与上游长文', () => {
     const 包 = 装()
-    const 文案 = chuangJianQianTaiCuoWu({ code: QIAN_TAI_DAI_MA.WANG_LUO, traceId: 'contract-0001' })
+    const 文案 = chuangJianQianTaiCuoWu({ code: QianTaiDaiMa.WANG_LUO, traceId: 'contract-0001' })
     expect(包.get('.qian-tai-cuo-wu-wen-an').text()).toBe(文案.lianAiWenAn)
     expect(包.get('.cuowu-tishi-shuo-ming').text()).toBe(文案.xiaYiBu)
     expect(包.get('.qian-tai-cuo-wu').text()).not.toContain(文案.yingXiang)
@@ -90,7 +90,7 @@ describe('报错框结构契约', () => {
     expect(包.findAll('.cuowu-tishi-zhu-anniu')).toHaveLength(1)
     expect(包.get('.cuowu-tishi-zhu-anniu').classes()).toContain('qian-tai-cuo-wu-chong-shi')
     expect(包.get('.cuowu-tishi-ci-anniu').classes()).toContain('qian-tai-cuo-wu-fu-zhi')
-    const 不可重试 = 装({ cuoWu: chuangJianQianTaiCuoWu({ code: QIAN_TAI_DAI_MA.AUTH_INVALID_CREDENTIALS }) })
+    const 不可重试 = 装({ cuoWu: chuangJianQianTaiCuoWu({ code: QianTaiDaiMa.AUTH_INVALID_CREDENTIALS }) })
     expect(不可重试.find('.cuowu-tishi-zhu-anniu').exists()).toBe(false)
     expect(不可重试.find('.cuowu-tishi-wei').exists()).toBe(false)
   })
@@ -116,7 +116,7 @@ describe('报错框结构契约', () => {
     const 包 = 装()
     await 包.get('.cuowu-tishi-guan-bi').trigger('click')
     expect(包.find('.qian-tai-cuo-wu').exists()).toBe(false)
-    await 包.setProps({ cuoWu: chuangJianQianTaiCuoWu({ code: QIAN_TAI_DAI_MA.CHAO_SHI }) })
+    await 包.setProps({ cuoWu: chuangJianQianTaiCuoWu({ code: QianTaiDaiMa.CHAO_SHI }) })
     expect(包.find('.qian-tai-cuo-wu').exists()).toBe(true)
   })
 })

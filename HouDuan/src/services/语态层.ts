@@ -2,16 +2,16 @@ import type { AIYinQingShuRu } from '../types'
 import { shiXueShengShenFen } from '../config/角色配置'
 import { chouYuTai, duiFangZaiWenNi, gouJianYuTaiKuai, quZaiMangWeiShuo, shengChengZaiMang, shengChengZaiMangZiRenShe, zaoSuiJi, type YuTai } from './语态控制器'
 
-const BIAO_BAI_CI = [
+const BiaoBaiCi = [
   '喜欢你', '爱你', '在一起', '做我女朋友', '做我男朋友', '我们交往',
   '跟我在一起', '我想你当我', '你愿不愿意跟', '我们要不要处',
 ]
 
-const DENG_ZHUN_HUA_TE_ZHENG =
+const DengZhunHuaTeZheng =
   /介意|介不介意|会不会介意|你介|嫌弃|嫌我|讨厌我|受得了|接受不了|愿不愿意|同不同意|同意吗|在意吗|在不在意|能接受|接受吗|喜欢我吗|你接受/
 
 export function 本轮在等一句准话(对方消息: string): boolean {
-  return DENG_ZHUN_HUA_TE_ZHENG.test(对方消息 || '')
+  return DengZhunHuaTeZheng.test(对方消息 || '')
 }
 
 export function gouJianYuTaiCeng(
@@ -51,7 +51,7 @@ export function gouJianYuTaiCeng(
     '【别复读】\n你上一轮已经说过的话不要再原样说一遍，尤其是「你定地方发我」这类。对方已经知道的信息不用重复。',
   ]
 
-  if (BIAO_BAI_CI.some((词) => 对方.includes(词))) {
+  if (BiaoBaiCi.some((词) => 对方.includes(词))) {
     块.push(
       '【这一刻你躲不掉】\n如果对方这句话是在说喜欢你、想跟你在一起、或者确认你们是什么关系，你必须先就这件事给一个明确的回应，一句两句都行。不要跳过它去说几点见、去说吃饭、去说你那边的忙。答应就答应，装没看见是不行的。',
     )

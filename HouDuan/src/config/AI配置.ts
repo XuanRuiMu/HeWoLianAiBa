@@ -11,10 +11,10 @@ import './env'
 //   （E型/快热/渣型/关系阶段/场景）会变成死代码。
 // 思考留给 Director：它要做的判断（该不该接、接哪个点、情绪）本来就适合推理；
 // Writer 的任务是执行，不是分析。
-export const XIE_SHOU_SI_KAO =
+export const XieShouSiKao =
   (process.env['WRITER_SI_KAO_QI_YONG'] || 'false').trim().toLowerCase() === 'true'
 
-export const XIE_SHOU_WEN_DU = Math.min(
+export const XieShouWenDu = Math.min(
   2,
   Math.max(0, parseFloat(process.env.WRITER_WENDU || '0.9') || 0.9),
 )
@@ -31,7 +31,7 @@ export interface MoXingCanShu {
   }
 }
 
-export const AI_PEI_ZHI = {
+export const AiPeiZhi = {
   deepSeek: {
     apiMiYao: process.env.DEEPSEEK_API_KEY || '',
     jiChuUrl: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
@@ -51,10 +51,10 @@ export const AI_PEI_ZHI = {
     XieShou: {
       moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       zuiDaTokens: 4000,
-      siKaoMoShi: XIE_SHOU_SI_KAO ? 'enabled' : 'disabled',
-      ...(XIE_SHOU_SI_KAO
+      siKaoMoShi: XieShouSiKao ? 'enabled' : 'disabled',
+      ...(XieShouSiKao
         ? { reasoningEffort: process.env['WRITER_SI_KAO_QIANG_DU'] || 'medium' }
-        : { wenDu: XIE_SHOU_WEN_DU }),
+        : { wenDu: XieShouWenDu }),
     } as MoXingCanShu,
 
     QingGanFenXi: {
@@ -312,7 +312,7 @@ export function xuanZeHuiDuFenZu(
   return ceLue.fenZu[ceLue.fenZu.length - 1]
 }
 
-export const MO_XING_HUI_DU_CE_LUE: Record<string, MoXingHuiDuCeLue> = {
+export const MoXingHuiDuCeLue: Record<string, MoXingHuiDuCeLue> = {
   DaoYan: duQuHuiDu('DaoYan', [
     { mingCheng: 'gaoJingQueMax', biLi: 90, reasoningEffort: 'max' },
     { mingCheng: 'shouLianMedium', biLi: 10, reasoningEffort: 'medium' },
@@ -334,14 +334,14 @@ export const MO_XING_HUI_DU_CE_LUE: Record<string, MoXingHuiDuCeLue> = {
   ]),
 }
 
-export type AIMoXingLeiXing = keyof typeof AI_PEI_ZHI.moXing
+export type AIMoXingLeiXing = keyof typeof AiPeiZhi.moXing
 
 export function yingYongHuiDuCanShu(
   moXingLeiXing: string,
   jiChu: MoXingCanShu,
   suiJiShu: number = Math.random(),
 ): MoXingCanShu {
-  const ceLue = MO_XING_HUI_DU_CE_LUE[moXingLeiXing]
+  const ceLue = MoXingHuiDuCeLue[moXingLeiXing]
   if (!ceLue || !ceLue.qiYong) return jiChu
   const fenZu = xuanZeHuiDuFenZu(ceLue, suiJiShu)
   return {

@@ -1,11 +1,11 @@
 ﻿import { debug日志 } from '../utils/debug日志'
-import { AI_PEI_ZHI } from '../config/AI配置'
+import { AiPeiZhi } from '../config/AI配置'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianHaoGanDuPingPanPrompt } from './Prompt构建器'
 import { paiRuZhongShiDuiLie } from './重试队列'
 import type { HaoGanDuPingPanJieGuo } from '../types'
 import type { CanShuShangXiaWen } from '../config/AI参数策略'
-import { shiFouManRe, MAN_RE_HAO_GAN_DU_JIA_CHENG } from '../config/AI参数策略'
+import { shiFouManRe, ManReHaoGanDuJiaCheng } from '../config/AI参数策略'
 import { jiSuanXiShu, yingYongHuiHuaBaoDi } from './好感度缓存'
 import { huoQuWanZhengHaoGanDu } from './好感度'
 
@@ -20,8 +20,8 @@ export interface PingPanJieGuoYuXiShu {
 function xiuZhengFanWei(zhi: number): number {
   if (Number.isNaN(zhi)) return 0
   return Math.max(
-    AI_PEI_ZHI.haoGanDu.zuiXiaoBianHua,
-    Math.min(AI_PEI_ZHI.haoGanDu.zuiDaBianHua, zhi),
+    AiPeiZhi.haoGanDu.zuiXiaoBianHua,
+    Math.min(AiPeiZhi.haoGanDu.zuiDaBianHua, zhi),
   )
 }
 
@@ -102,7 +102,7 @@ async function pingPanHaoGanDuBianHuaNei(
       }
     }
 
-    const manReJiaCheng = shiFouManRe(shangXiaWen) ? MAN_RE_HAO_GAN_DU_JIA_CHENG : 1
+    const manReJiaCheng = shiFouManRe(shangXiaWen) ? ManReHaoGanDuJiaCheng : 1
 
     const yuanShiJieGuo: HaoGanDuPingPanJieGuo = {
       xin_ren_du_bian_hua: xiuZhengFanWei(
@@ -241,7 +241,7 @@ async function pingPanHaoGanDuPiLiangNei(
         pingJunShuaiJianHou,
       }
     }
-    const manReJiaCheng = shiFouManRe(shangXiaWen) ? MAN_RE_HAO_GAN_DU_JIA_CHENG : 1
+    const manReJiaCheng = shiFouManRe(shangXiaWen) ? ManReHaoGanDuJiaCheng : 1
 
     const yuanShiJieGuo: HaoGanDuPingPanJieGuo = {
       xin_ren_du_bian_hua: xiuZhengFanWei(
@@ -299,11 +299,11 @@ export async function pingPanHaoGanDuPiLiang(
 
 export { pingPanHaoGanDuBianHuaNei, pingPanHaoGanDuPiLiangNei }
 
-const PING_PAN_BI_TIAN_JIAN = ['信任度变化', '亲密度变化', '趣味度变化', '关怀度变化'] as const
+const PingPanBiTianJian = ['信任度变化', '亲密度变化', '趣味度变化', '关怀度变化'] as const
 
 function shiFouYouXiaoPingPan(shuJu: Record<string, unknown>): boolean {
   if (!shuJu || Object.keys(shuJu).length === 0) return false
-  return PING_PAN_BI_TIAN_JIAN.some((jian) => shuJu[jian] !== undefined || shuJu[zhuanXiaHuaXian(jian)] !== undefined)
+  return PingPanBiTianJian.some((jian) => shuJu[jian] !== undefined || shuJu[zhuanXiaHuaXian(jian)] !== undefined)
 }
 
 function zhuanXiaHuaXian(jian: string): string {

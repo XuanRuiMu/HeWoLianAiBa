@@ -130,7 +130,7 @@ describe('FP-11 三入口加载框：单一展示组件与单一控制器', () =
       expect(源).not.toContain(':dui-xiang-id=')
       expect(源).toContain('@zhong-shi="重试"')
       expect(源).not.toContain('setInterval')
-      expect(源).not.toContain('ZUI_DUAN_ZHAN_SHI_HAO_MIAO')
+      expect(源).not.toContain('ZuiDuanZhanShiHaoMiao')
       expect(源).not.toContain('TI_SHI_ZHOU_QI_HAO_MIAO')
     }
     expect(生成仓库源).not.toContain('setInterval')
@@ -298,8 +298,8 @@ describe('FP-11 控制器：最短 1 秒、每 3 秒换词、错误重试取消'
   })
 
   it('按配置周期轮换趣味语，默认常量为 3000 毫秒', async () => {
-    expect(控制器源).toContain('HUAN_CI_ZHOU_QI_HAO_MIAO = 3000')
-    expect(控制器源).toContain('配置.换词毫秒 ?? HUAN_CI_ZHOU_QI_HAO_MIAO')
+    expect(控制器源).toContain('HuanCiZhouQiHaoMiao = 3000')
+    expect(控制器源).toContain('配置.换词毫秒 ?? HuanCiZhouQiHaoMiao')
     const { 包, 控制器 } = 建控制器宿主({ 最短展示毫秒: 3000, 换词毫秒: 40 })
     const 初始 = 控制器.当前趣味语.value
     expect(await 等待直到(() => 控制器.当前趣味语.value !== 初始)).toBe(true)

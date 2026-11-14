@@ -14,7 +14,7 @@ import { huoQuQiPaoDingYi } from '@/config/气泡主题'
 import { zhongPaiWaiGuanTiaoMu, type WaiGuanChuCan, type WaiGuanTiaoMu } from '@/config/外观自定义'
 import { baoCunWaiGuan } from '@/api/社交'
 import {
-  TU_PIAN_SHU_CHU_ZUI_DA_BIAN,
+  TuPianShuChuZuiDaBian,
   daoChuCaiJianWenJian,
   jiSuanDaoChuChiCun,
   jueDingShuChuGeShi,
@@ -43,8 +43,8 @@ vi.mock('@/api/社交', async (yuanShi) => {
   }
 })
 
-const SHA_YANG_LI = 'a'.repeat(64)
-const MEI_TI_URL = '/api/媒体/' + SHA_YANG_LI + '?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=' + 'b'.repeat(64)
+const ShaYangLi = 'a'.repeat(64)
+const MeiTiUrl = '/api/媒体/' + ShaYangLi + '?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=' + 'b'.repeat(64)
 
 const 源码根 = resolve(__dirname, '..')
 const 读 = (相对: string) => readFileSync(resolve(源码根, 相对), 'utf8')
@@ -59,7 +59,7 @@ function zaoTiaoMu(xuHao: number, leiBie: 'beiJing' | 'qiPao'): WaiGuanTiaoMu {
   return {
     id: qianZhui + '-' + xuHao,
     mingCheng: '自定义' + (leiBie === 'beiJing' ? '背景' : '气泡') + xuHao,
-    tuDiZhi: MEI_TI_URL,
+    tuDiZhi: MeiTiUrl,
     wenZiYanSe: '#FFFFFF',
   }
 }
@@ -164,12 +164,12 @@ describe('FP03 Cropper.js 专业裁剪封装', () => {
   })
 
   it('导出尺寸按原图像素密度换算，长边封顶2048且不放大', () => {
-    expect(TU_PIAN_SHU_CHU_ZUI_DA_BIAN).toBe(2048)
-    expect(jiSuanDaoChuChiCun(2048, 1024, TU_PIAN_SHU_CHU_ZUI_DA_BIAN)).toEqual({ kuan: 2048, gao: 1024 })
-    expect(jiSuanDaoChuChiCun(4096, 2048, TU_PIAN_SHU_CHU_ZUI_DA_BIAN)).toEqual({ kuan: 2048, gao: 1024 })
-    expect(jiSuanDaoChuChiCun(1024, 4096, TU_PIAN_SHU_CHU_ZUI_DA_BIAN)).toEqual({ kuan: 512, gao: 2048 })
-    expect(jiSuanDaoChuChiCun(800, 600, TU_PIAN_SHU_CHU_ZUI_DA_BIAN)).toEqual({ kuan: 800, gao: 600 })
-    expect(jiSuanDaoChuChiCun(1000, 1000, TU_PIAN_SHU_CHU_ZUI_DA_BIAN)).toEqual({ kuan: 1000, gao: 1000 })
+    expect(TuPianShuChuZuiDaBian).toBe(2048)
+    expect(jiSuanDaoChuChiCun(2048, 1024, TuPianShuChuZuiDaBian)).toEqual({ kuan: 2048, gao: 1024 })
+    expect(jiSuanDaoChuChiCun(4096, 2048, TuPianShuChuZuiDaBian)).toEqual({ kuan: 2048, gao: 1024 })
+    expect(jiSuanDaoChuChiCun(1024, 4096, TuPianShuChuZuiDaBian)).toEqual({ kuan: 512, gao: 2048 })
+    expect(jiSuanDaoChuChiCun(800, 600, TuPianShuChuZuiDaBian)).toEqual({ kuan: 800, gao: 600 })
+    expect(jiSuanDaoChuChiCun(1000, 1000, TuPianShuChuZuiDaBian)).toEqual({ kuan: 1000, gao: 1000 })
   })
 
   it('输出格式PNG保真、其余落JPG', () => {

@@ -128,7 +128,7 @@ describe('记住账号：结构化持久化与旧值迁移', () => {
 describe('手机号输入边界：任何入口都不把区号写进输入框', () => {
   it('登录与注册的手机号输入统一走本地号归一', () => {
     expect(登录).toContain('dengLuShouJiHao.value = guiYiBenDiHao(dengLuQuHao.value, zhi)')
-    expect(登录).toContain('zhuCeShouJiHao.value = guiYiBenDiHao(DA_LU_QU_HAO, zhi)')
+    expect(登录).toContain('zhuCeShouJiHao.value = guiYiBenDiHao(DaLuQuHao, zhi)')
     expect(登录).toContain('feiDaLuShouJiHao.value = guiYiBenDiHao(feiDaLuQuHao.value, zhi)')
     expect(登录).not.toContain('dengLuShouJiHao.value = zhi')
     expect(登录).not.toContain('feiDaLuShouJiHao = ($event.target as HTMLInputElement).value')
@@ -169,9 +169,9 @@ describe('非大陆注册页结构上不可能出现 +86', () => {
   })
 
   it('非大陆表单绑定排除区号，进入时把遗留的 86 归一到境外默认', () => {
-    expect(登录).toContain(':排除区号="FEI_DA_LU_PAI_CHU_QU_HAO"')
-    expect(登录).toContain('const FEI_DA_LU_PAI_CHU_QU_HAO = [DA_LU_QU_HAO]')
-    expect(登录).toContain('if (feiDaLuQuHao.value === DA_LU_QU_HAO) feiDaLuQuHao.value = HUO_QU_XIANG_GANG')
+    expect(登录).toContain(':排除区号="FeiDaLuPaiChuQuHao"')
+    expect(登录).toContain('const FeiDaLuPaiChuQuHao = [DaLuQuHao]')
+    expect(登录).toContain('if (feiDaLuQuHao.value === DaLuQuHao) feiDaLuQuHao.value = HuoQuXiangGang')
     expect(登录).not.toContain('feiDaLuBuShouDaLuHao')
   })
 })

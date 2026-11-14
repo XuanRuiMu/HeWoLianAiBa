@@ -20,7 +20,7 @@ vi.mock('@/api/请求', () => ({
 }))
 
 vi.mock('@/api/认证', () => ({
-  YAN_ZHENG_MA_YONG_TU: { zhuCe: 'zhuCe', chongZhiMiMa: 'chongZhiMiMa' },
+  YanZhengMaYongTu: { zhuCe: 'zhuCe', chongZhiMiMa: 'chongZhiMiMa' },
   huoQuRenJiTiaoZhan: 接口.取挑战,
   faSongMa: 接口.发码,
   chongZhiMiMa: 接口.重置,
@@ -224,7 +224,7 @@ describe('三个发码入口的票据与用途契约', () => {
     const 登录 = 读('views/登录内容.vue')
     const 发送段 = 登录.slice(登录.indexOf('async function zhiXingFaSongMa'), 登录.indexOf('function kaiShiDaoJiShi'))
     expect(发送段).toContain('renJiXianShi.value = true')
-    expect(发送段).toContain('await faSongMa(shouJiHao, YAN_ZHENG_MA_YONG_TU.zhuCe')
+    expect(发送段).toContain('await faSongMa(shouJiHao, YanZhengMaYongTu.zhuCe')
     expect(发送段).toContain('yanZheng')
     expect(发送段.indexOf('await faSongMa')).toBeLessThan(发送段.indexOf('kaiShiDaoJiShi()'))
     expect(发送段).toContain('biaoShiYanZhengShiBai()')
@@ -234,7 +234,7 @@ describe('三个发码入口的票据与用途契约', () => {
     const 找回 = 读('views/找回密码.vue')
     const 发送段 = 找回.slice(找回.indexOf('function zhiXingFaSong'), 找回.indexOf('function zhiXingTiJiao'))
     expect(发送段).toContain('renJiXianShi.value = true')
-    expect(发送段).toContain('await faSongMa(hao, YAN_ZHENG_MA_YONG_TU.chongZhiMiMa, undefined, yanZheng)')
+    expect(发送段).toContain('await faSongMa(hao, YanZhengMaYongTu.chongZhiMiMa, undefined, yanZheng)')
     expect(发送段.indexOf('await faSongMa')).toBeLessThan(发送段.indexOf('kaiShiDaoJiShi()'))
   })
 
@@ -242,7 +242,7 @@ describe('三个发码入口的票据与用途契约', () => {
     const 账号 = 读('views/账号与安全.vue')
     const 发送段 = 账号.slice(账号.indexOf('function zhiXingFaSongMiMaMa'), 账号.indexOf('async function baoCunMiMa'))
     expect(发送段).toContain('renJiXianShi.value = true')
-    expect(发送段).toContain('await faSongMa(用户仓库.dangQianYongHu!.shou_ji_hao, YAN_ZHENG_MA_YONG_TU.chongZhiMiMa, undefined, yanZheng)')
+    expect(发送段).toContain('await faSongMa(用户仓库.dangQianYongHu!.shou_ji_hao, YanZhengMaYongTu.chongZhiMiMa, undefined, yanZheng)')
     expect(发送段).not.toContain('await faSongMa(用户仓库.dangQianYongHu!.shou_ji_hao)')
     expect(发送段.indexOf('await faSongMa')).toBeLessThan(发送段.indexOf('miMaDaoJiShi.value = 60'))
   })

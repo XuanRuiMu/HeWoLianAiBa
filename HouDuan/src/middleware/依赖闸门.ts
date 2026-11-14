@@ -1,25 +1,25 @@
 import type { Request, Response, NextFunction } from 'express'
 import { debug日志 } from '../utils/debug日志'
 import { shiBaiXiangYing } from '../utils/xiangying'
-import { CUO_WU_DAI_MA, type CuoWuDaiMa } from '../config/错误码注册表'
+import {CuoWuDaiMa} from '../config/错误码注册表'
 import { huoQuJiuXuKuaiZhao, type 就绪快照 } from '../utils/依赖就绪'
 
-const RI_ZHI_JIE_LIU_HAO_MIAO = 30000
+const RiZhiJieLiuHaoMiao = 30000
 
 let shangCiRiZhiShiJian = 0
 let shangCiRiZhiDaiMa = ''
 
 export function 选址依赖错误码(kuaiZhao: 就绪快照): CuoWuDaiMa | null {
   if (kuaiZhao.postgres && kuaiZhao.redis) return null
-  if (!kuaiZhao.postgres && !kuaiZhao.redis) return CUO_WU_DAI_MA.DEPENDENCIES_UNAVAILABLE
+  if (!kuaiZhao.postgres && !kuaiZhao.redis) return CuoWuDaiMa.DEPENDENCIES_UNAVAILABLE
   return kuaiZhao.postgres
-    ? CUO_WU_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE
-    : CUO_WU_DAI_MA.DEPENDENCY_POSTGRES_UNAVAILABLE
+    ? CuoWuDaiMa.DEPENDENCY_REDIS_UNAVAILABLE
+    : CuoWuDaiMa.DEPENDENCY_POSTGRES_UNAVAILABLE
 }
 
 function jiLuJiangJi(cuoWuMa: CuoWuDaiMa, kuaiZhao: 就绪快照): void {
   const xianZai = Date.now()
-  if (cuoWuMa === shangCiRiZhiDaiMa && xianZai - shangCiRiZhiShiJian < RI_ZHI_JIE_LIU_HAO_MIAO) return
+  if (cuoWuMa === shangCiRiZhiDaiMa && xianZai - shangCiRiZhiShiJian < RiZhiJieLiuHaoMiao) return
   shangCiRiZhiShiJian = xianZai
   shangCiRiZhiDaiMa = cuoWuMa
   debug日志.error('依赖闸门', '依赖未就绪，业务请求已拒绝并返回结构化 503', {

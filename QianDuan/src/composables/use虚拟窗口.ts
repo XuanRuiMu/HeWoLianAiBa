@@ -9,17 +9,17 @@ interface Use虚拟窗口依赖 {
   xiaoxiQuYuRef: Ref<HTMLElement | null>
 }
 
-const XU_NI_MAN_RENDER_YU_ZHI = 150
-const XU_NI_CHU_SHI_WEI_BU = 120
-const XU_NI_KUO_ZHAN_BU_CHANG = 80
-const XU_NI_XIAN_SHI_CHUANG_KOU = 100
+const XuNiManRenderYuZhi = 150
+const XuNiChuShiWeiBu = 120
+const XuNiKuoZhanBuChang = 80
+const XuNiXianShiChuangKou = 100
 
 export function use虚拟窗口(yiLai: Use虚拟窗口依赖) {
   const xuNiQiSuoYin = ref<number | null>(null)
   const xuNiXinHao = ref(0)
 
   function huoQuYouXiaoQiSuoYin(zongShu: number): number {
-    return Math.max(0, xuNiQiSuoYin.value ?? Math.max(0, zongShu - XU_NI_CHU_SHI_WEI_BU))
+    return Math.max(0, xuNiQiSuoYin.value ?? Math.max(0, zongShu - XuNiChuShiWeiBu))
   }
 
   function chongZhiXuNiChuangKou(): void {
@@ -31,12 +31,12 @@ export function use虚拟窗口(yiLai: Use虚拟窗口依赖) {
     void xuNiXinHao.value
     const lieBiao = yiLai.huoQuXiaoXiLieBiao()
     if (!Array.isArray(lieBiao)) return []
-    if (lieBiao.length <= XU_NI_MAN_RENDER_YU_ZHI) return lieBiao
+    if (lieBiao.length <= XuNiManRenderYuZhi) return lieBiao
     if (xuNiQiSuoYin.value === null) {
-      return lieBiao.slice(Math.max(0, lieBiao.length - XU_NI_CHU_SHI_WEI_BU))
+      return lieBiao.slice(Math.max(0, lieBiao.length - XuNiChuShiWeiBu))
     }
     const qi = Math.min(xuNiQiSuoYin.value, Math.max(0, lieBiao.length - 1))
-    const wei = Math.min(lieBiao.length, qi + XU_NI_XIAN_SHI_CHUANG_KOU + (qi > 0 ? XU_NI_KUO_ZHAN_BU_CHANG : 0))
+    const wei = Math.min(lieBiao.length, qi + XuNiXianShiChuangKou + (qi > 0 ? XuNiKuoZhanBuChang : 0))
     return lieBiao.slice(qi, wei)
   })
 
@@ -44,7 +44,7 @@ export function use虚拟窗口(yiLai: Use虚拟窗口依赖) {
     void xuNiXinHao.value
     const lieBiao = yiLai.huoQuXiaoXiLieBiao()
     const zong = Array.isArray(lieBiao) ? lieBiao.length : 0
-    if (zong <= XU_NI_MAN_RENDER_YU_ZHI) return 0
+    if (zong <= XuNiManRenderYuZhi) return 0
     return huoQuYouXiaoQiSuoYin(zong)
   })
 
@@ -71,7 +71,7 @@ export function use虚拟窗口(yiLai: Use虚拟窗口依赖) {
     const dangQianQi = huoQuYouXiaoQiSuoYin(zongShu)
     if (dangQianQi <= 0) return
     void wenDingKuoZhanXuNiChuangKou(() => {
-      xuNiQiSuoYin.value = Math.max(0, dangQianQi - XU_NI_KUO_ZHAN_BU_CHANG)
+      xuNiQiSuoYin.value = Math.max(0, dangQianQi - XuNiKuoZhanBuChang)
       xuNiXinHao.value++
     })
   }

@@ -2,7 +2,7 @@ export type YuTai = '接内容' | '说自己' | '极短' | '另起' | '澄清' |
 
 export type ChuFaLei = '纯应答' | '是非问' | '分享'
 
-const CHUN_YING_DA_BAI_MING_DAN = [
+const ChunYingDaBaiMingDan = [
   '嗯', '嗯嗯', '恩', '恩恩', '嗯哪', '好', '好的', '好滴', '好呀', '好嘞', '好吧',
   '行', '行啊', '行吧', '可以', '收到', '知道了', '明白', '懂了',
   '对', '对啊', '对的', '是', '是的', '是啊', '哦', '噢', '喔',
@@ -11,10 +11,10 @@ const CHUN_YING_DA_BAI_MING_DAN = [
   '下次约', '改天约', '再说吧', '那就这样', '先这样', '回头聊', '晚安', '早安',
 ]
 
-const XIAO_SHU_CI = /[\s，。、！？!?,.~～…\-—：:；;"'“”‘’()（）【】\[\]\u{1F602}\u{1F923}\u{1F605}\u{1F64F}\u{1F44D}\u2764]/gu
+const XiaoShuCi = /[\s，。、！？!?,.~～…\-—：:；;"'“”‘’()（）【】\[\]\u{1F602}\u{1F923}\u{1F605}\u{1F64F}\u{1F44D}\u2764]/gu
 
 export function xiXiChuFa(触发: string): string {
-  return (触发 || '').replace(XIAO_SHU_CI, '').replace(/[hH]{3,}/g, '').replace(/哈{2,}/g, '').trim()
+  return (触发 || '').replace(XiaoShuCi, '').replace(/[hH]{3,}/g, '').replace(/哈{2,}/g, '').trim()
 }
 
 const SHI_FEI_WEN = /[?？]|吗|呢$|吧$|是不是|有没有|要不要|能不能|可不可以|对不对|好不好|行不行|哪[里儿个些]|什么|啥|几点|几号|多久|怎么|咋|为什么|为啥|谁|多少|如何/
@@ -22,7 +22,7 @@ const SHI_FEI_WEN = /[?？]|吗|呢$|吧$|是不是|有没有|要不要|能不�
 export function panChuFaLei(触发: string): ChuFaLei {
   const 净 = xiXiChuFa(触发)
   if (SHI_FEI_WEN.test(触发 || '')) return '是非问'
-  if (CHUN_YING_DA_BAI_MING_DAN.includes(净)) return '纯应答'
+  if (ChunYingDaBaiMingDan.includes(净)) return '纯应答'
   if (净.length <= 4) return '纯应答'
   return '分享'
 }

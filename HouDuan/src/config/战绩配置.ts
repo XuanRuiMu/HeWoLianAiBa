@@ -1,4 +1,4 @@
-export const ZHAN_JI_PEI_ZHI = {
+export const ZhanJiPeiZhi = {
   fenLeiMingChengZuiDaChangDu: 20,
   zuiHouXiaoXiMeiJiaoSeTiaoShu: 2,
   zhaiYaoZuiDaMaDian: 30,

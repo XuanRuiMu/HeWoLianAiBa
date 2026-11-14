@@ -173,6 +173,7 @@ export const fanYi = {
     meiTiNeiRongYuMIMEBuFu: '文件内容与类型不符',
     qianMingWuXiao: '访问链接无效或已过期',
     meiTiBuCunZai: '媒体文件不存在',
+    meiTiYiShiXiao: '这个图片已经失效了',
     meiTiBiXuXianChuanShu: '请先上传媒体文件再发送',
     meiTiWuQuanXian: '无权使用该媒体文件',
     meiTiQueShaoWenJian: '未收到上传的文件',

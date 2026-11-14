@@ -13,7 +13,7 @@ function duQuXiaoShu(ming: string, moRen: number, zuiXiao: number, zuiDa: number
   return Math.max(zuiXiao, Math.min(zuiDa, yuan))
 }
 
-export const TOU_XIANG_PEI_ZHI = {
+export const TouXiangPeiZhi = {
   paiDuiJianGeHaoMiao: duQuZhengShu('TOU_XIANG_PAI_DUI_JIAN_GE_HAO_MIAO', 10000),
   caiDiBuBiLi: duQuXiaoShu('TOU_XIANG_CAI_DI_BU_BI_LI', 0.06, 0, 0.2),
   tuXiangChiCun: duQuHuanJing('TOU_XIANG_TU_XIANG_CHI_CUN', '1024x1024'),
@@ -24,9 +24,9 @@ export const TOU_XIANG_PEI_ZHI = {
   houBeiDuiLieZuiDaTiaoShu: duQuZhengShu('TOU_XIANG_HOU_BEI_DUI_LIE_ZUI_DA_TIAO_SHU', 200),
 } as const
 
-export const TOU_XIANG_YAN_JING_SHU_XIAN = '目光望向画面侧边，不与观看者对视'
+export const TouXiangYanJingShuXian = '目光望向画面侧边，不与观看者对视'
 
-export const QI_ZHI_QI_DIAO = {
+export const QiZhiQiDiao = {
   冷感: '阴郁',
   沉稳: '平静',
   文艺: '平静',
@@ -34,19 +34,19 @@ export const QI_ZHI_QI_DIAO = {
   活泼: '明朗',
 } as const
 
-export type TouXiangQiZhi = keyof typeof QI_ZHI_QI_DIAO
+export type TouXiangQiZhi = keyof typeof QiZhiQiDiao
 
 export type QingXuJiDiao = '阴郁' | '平静' | '明朗'
 
-export const JI_DIAO_YAN_JIN_SHUN_XU: readonly QingXuJiDiao[] = ['阴郁', '平静', '明朗']
+export const JiDiaoYanJinShunXu: readonly QingXuJiDiao[] = ['阴郁', '平静', '明朗']
 
-export const JI_DIAO_QI_ZHI: Record<QingXuJiDiao, TouXiangQiZhi> = {
+export const JiDiaoQiZhi: Record<QingXuJiDiao, TouXiangQiZhi> = {
   阴郁: '冷感',
   平静: '沉稳',
   明朗: '活泼',
 }
 
-export const MBTI_QI_ZHI: Record<string, TouXiangQiZhi> = {
+export const MbtiQiZhi: Record<string, TouXiangQiZhi> = {
   INTJ: '沉稳',
   INTP: '冷感',
   ENTJ: '沉稳',
@@ -74,6 +74,6 @@ export function tuiDaoQingXuJiDiao(xingGeWenBen: string): QingXuJiDiao {
 }
 
 export function qianJinJiDiao(dangQian: QingXuJiDiao): QingXuJiDiao {
-  const suoYin = JI_DIAO_YAN_JIN_SHUN_XU.indexOf(dangQian)
-  return JI_DIAO_YAN_JIN_SHUN_XU[Math.min(suoYin + 1, JI_DIAO_YAN_JIN_SHUN_XU.length - 1)]
+  const suoYin = JiDiaoYanJinShunXu.indexOf(dangQian)
+  return JiDiaoYanJinShunXu[Math.min(suoYin + 1, JiDiaoYanJinShunXu.length - 1)]
 }

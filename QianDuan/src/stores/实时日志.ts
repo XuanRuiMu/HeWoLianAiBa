@@ -22,15 +22,15 @@ interface RiZhiPiLiangZaiHe {
   diu_qi_shu: number
 }
 
-export const SHI_JIAN_DING_YUE_RI_ZHI = '日志_订阅'
-export const SHI_JIAN_QU_XIAO_RI_ZHI = '日志_取消订阅'
-export const SHI_JIAN_RI_ZHI_PI_LIANG = '日志_批量'
+export const ShiJianDingYueRiZhi = '日志_订阅'
+export const ShiJianQuXiaoRiZhi = '日志_取消订阅'
+export const ShiJianRiZhiPiLiang = '日志_批量'
 
-export const HUAN_CHONG_ZUI_DA_TIAO_SHU = 1000
-export const QUAN_BU_JI_BIE: RiZhiJiBie[] = ['debug', 'info', 'warn', 'error']
+export const HuanChongZuiDaTiaoShu = 1000
+export const QuanBuJiBie: RiZhiJiBie[] = ['debug', 'info', 'warn', 'error']
 
 export const 使用实时日志仓库 = defineStore('实时日志', () => {
-  const huanChongQu: (RiZhiTiaoMu | undefined)[] = new Array(HUAN_CHONG_ZUI_DA_TIAO_SHU)
+  const huanChongQu: (RiZhiTiaoMu | undefined)[] = new Array(HuanChongZuiDaTiaoShu)
   let xieRuYouBiao = 0
   let yiXieRuZongShu = 0
 
@@ -50,11 +50,11 @@ export const 使用实时日志仓库 = defineStore('实时日志', () => {
   const socketLianJie = ref<Socket | null>(null)
 
   function shengChengKuaiZhao(): RiZhiTiaoMu[] {
-    const zongShu = Math.min(yiXieRuZongShu, HUAN_CHONG_ZUI_DA_TIAO_SHU)
+    const zongShu = Math.min(yiXieRuZongShu, HuanChongZuiDaTiaoShu)
     const jieGuo: RiZhiTiaoMu[] = new Array(zongShu)
-    const qiShi = (xieRuYouBiao - zongShu + HUAN_CHONG_ZUI_DA_TIAO_SHU) % HUAN_CHONG_ZUI_DA_TIAO_SHU
+    const qiShi = (xieRuYouBiao - zongShu + HuanChongZuiDaTiaoShu) % HuanChongZuiDaTiaoShu
     for (let pianYi = 0; pianYi < zongShu; pianYi += 1) {
-      jieGuo[pianYi] = huanChongQu[(qiShi + pianYi) % HUAN_CHONG_ZUI_DA_TIAO_SHU] as RiZhiTiaoMu
+      jieGuo[pianYi] = huanChongQu[(qiShi + pianYi) % HuanChongZuiDaTiaoShu] as RiZhiTiaoMu
     }
     return jieGuo
   }
@@ -62,7 +62,7 @@ export const 使用实时日志仓库 = defineStore('实时日志', () => {
   function xieRuHuanChong(tiaoMuLieBiao: RiZhiTiaoMu[]) {
     for (const tiaoMu of tiaoMuLieBiao) {
       huanChongQu[xieRuYouBiao] = tiaoMu
-      xieRuYouBiao = (xieRuYouBiao + 1) % HUAN_CHONG_ZUI_DA_TIAO_SHU
+      xieRuYouBiao = (xieRuYouBiao + 1) % HuanChongZuiDaTiaoShu
       yiXieRuZongShu += 1
     }
   }
@@ -95,12 +95,12 @@ export const 使用实时日志仓库 = defineStore('实时日志', () => {
 
     xieYiLianJie.on('connect', () => {
       yiLianJie.value = true
-      xieYiLianJie.emit(SHI_JIAN_DING_YUE_RI_ZHI)
+      xieYiLianJie.emit(ShiJianDingYueRiZhi)
     })
     xieYiLianJie.on('disconnect', () => {
       yiLianJie.value = false
     })
-    xieYiLianJie.on(SHI_JIAN_RI_ZHI_PI_LIANG, chuLiPiLiang)
+    xieYiLianJie.on(ShiJianRiZhiPiLiang, chuLiPiLiang)
 
     socketLianJie.value = xieYiLianJie
   }
@@ -108,8 +108,8 @@ export const 使用实时日志仓库 = defineStore('实时日志', () => {
   function duanKai() {
     const xieYiLianJie = socketLianJie.value
     if (!xieYiLianJie) return
-    if (xieYiLianJie.connected) xieYiLianJie.emit(SHI_JIAN_QU_XIAO_RI_ZHI)
-    xieYiLianJie.off(SHI_JIAN_RI_ZHI_PI_LIANG, chuLiPiLiang)
+    if (xieYiLianJie.connected) xieYiLianJie.emit(ShiJianQuXiaoRiZhi)
+    xieYiLianJie.off(ShiJianRiZhiPiLiang, chuLiPiLiang)
     xieYiLianJie.disconnect()
     socketLianJie.value = null
     yiLianJie.value = false

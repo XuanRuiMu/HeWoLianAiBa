@@ -11,7 +11,7 @@ function huoQuZhaXingGaiLv(): number {
   return 0.3
 }
 
-export const TIAO_ZHAN_PEI_ZHI = {
+export const TiaoZhanPeiZhi = {
   chuShiJiFen: 1000,
 
   shengLiJiaFen: 25,
@@ -42,8 +42,8 @@ export const TIAO_ZHAN_PEI_ZHI = {
   ] as Array<{ mingCheng: string; xiaXian: number }>,
 } as const
 
-export const ZU_BIE_LIE_BIAO = ['nan_nv', 'nv_nan', 'nan_nan', 'nv_nv'] as const
-export type ZuBie = (typeof ZU_BIE_LIE_BIAO)[number]
+export const ZuBieLieBiao = ['nan_nv', 'nv_nan', 'nan_nan', 'nv_nv'] as const
+export type ZuBie = (typeof ZuBieLieBiao)[number]
 
 export function huoQuZuBie(
   wanJiaXingBie: 性别内部形态,
@@ -54,8 +54,8 @@ export function huoQuZuBie(
 }
 
 export function huoQuDuanWeiMing(lishiZuiGaoFen: number): string {
-  for (const duanWei of TIAO_ZHAN_PEI_ZHI.duanWeiLieBiao) {
+  for (const duanWei of TiaoZhanPeiZhi.duanWeiLieBiao) {
     if (lishiZuiGaoFen >= duanWei.xiaXian) return duanWei.mingCheng
   }
-  return TIAO_ZHAN_PEI_ZHI.duanWeiLieBiao[TIAO_ZHAN_PEI_ZHI.duanWeiLieBiao.length - 1].mingCheng
+  return TiaoZhanPeiZhi.duanWeiLieBiao[TiaoZhanPeiZhi.duanWeiLieBiao.length - 1].mingCheng
 }

@@ -3,19 +3,19 @@ import { huoQuFanYi } from '../config/translations'
 import { huoQuDuoMoTaiPeiZhi, huoQuShiPinShengChengMiYao } from '../config/多模态配置'
 import { redis } from '../redis'
 
-const SHI_PIN_MIME_BAI_MING_DAN = ['video/mp4', 'video/quicktime', 'video/webm'] as const
+const ShiPinMimeBaiMingDan = ['video/mp4', 'video/quicktime', 'video/webm'] as const
 
-const SHI_PIN_KUO_ZHAN_MING = ['.mp4', '.mov', '.webm', '.m4v'] as const
+const ShiPinKuoZhanMing = ['.mp4', '.mov', '.webm', '.m4v'] as const
 
 export function shiShiPinMIME(mime: unknown): boolean {
-  return typeof mime === 'string' && (SHI_PIN_MIME_BAI_MING_DAN as readonly string[]).includes(mime.toLowerCase())
+  return typeof mime === 'string' && (ShiPinMimeBaiMingDan as readonly string[]).includes(mime.toLowerCase())
 }
 
 export function shiShiPinWenJian(mime?: string | null, wenJianMing?: string | null): boolean {
   if (mime && shiShiPinMIME(mime)) return true
   if (typeof wenJianMing === 'string') {
     const xiao = wenJianMing.toLowerCase()
-    return SHI_PIN_KUO_ZHAN_MING.some((hou) => xiao.endsWith(hou))
+    return ShiPinKuoZhanMing.some((hou) => xiao.endsWith(hou))
   }
   return false
 }

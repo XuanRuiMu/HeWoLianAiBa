@@ -9,6 +9,7 @@ import { shengChengWriterHuiFu } from './Writer'
 import { jianChaAiWei, panDuanShiFouCaiYang, panDuanShiFouMoXingChouJian, guoLvAiWeiXiaoXi, jianChaTaoHua, panDuanTaoHuaCaiYang } from '../config/去AI味配置'
 import { gouJianJiaoSeShangXiaWen, type CanShuShangXiaWen } from '../config/AI参数策略'
 import { 检索通用知识, 提取必答事实 } from './通用知识检索'
+import { qingXiTieZhiCanPian } from './贴纸标记'
 import type {
   AIYinQingShuChu,
   AIYinQingShuRu,
@@ -24,7 +25,7 @@ export * from './安全审核'
 export * from './军师求助'
 export * from './关键事件提取'
 
-const ZUI_DA_TIAO_SHU = 5
+const ZuiDaTiaoShu = 5
 
 function shuoDaoLeShiShi(xiaoXiLieBiao: readonly string[], biDaShiShi: BiDaShiShi): boolean {
   const 合文 = xiaoXiLieBiao.join('\n')
@@ -34,7 +35,7 @@ function shuoDaoLeShiShi(xiaoXiLieBiao: readonly string[], biDaShiShi: BiDaShiSh
 }
 
 function xiuZhengTiaoShu(tiaoShu: number): number {
-  return Math.max(0, Math.min(ZUI_DA_TIAO_SHU, tiaoShu))
+  return Math.max(0, Math.min(ZuiDaTiaoShu, tiaoShu))
 }
 
 function hanWeiJinCi(wenBen: string): boolean {
@@ -45,7 +46,7 @@ function qieGeXiaoXi(xiaoXiLieBiao: string[], tiaoShu: number): string[] {
   return xiaoXiLieBiao.slice(0, xiuZhengTiaoShu(tiaoShu))
 }
 
-const YU_SUAN_YU_JING_YU_LIANG = 50
+const YuSuanYuJingYuLiang = 50
 
 function tuiSongXiTongTiShi(yongHuId: string, jiaoSeId: string, wenBen: string): void {
   const io = huoQuIo()
@@ -66,7 +67,7 @@ function tuiSongXiTongTiShi(yongHuId: string, jiaoSeId: string, wenBen: string):
 }
 
 const yuSuanNeiCunJiShu = new Map<string, { count: number; riQi: string; resetTime: number }>()
-const YU_SUAN_NEI_CUN_ZUI_DA = 500
+const YuSuanNeiCunZuiDa = 500
 
 function qingLiGuoQiNeiCun(): void {
   const xianZai = Date.now()
@@ -75,7 +76,7 @@ function qingLiGuoQiNeiCun(): void {
       yuSuanNeiCunJiShu.delete(jianMing)
     }
   }
-  while (yuSuanNeiCunJiShu.size > YU_SUAN_NEI_CUN_ZUI_DA) {
+  while (yuSuanNeiCunJiShu.size > YuSuanNeiCunZuiDa) {
     const shouJian = yuSuanNeiCunJiShu.keys().next().value
     if (shouJian === undefined) break
     yuSuanNeiCunJiShu.delete(shouJian)
@@ -92,7 +93,7 @@ async function jianChaMeiRiYuSuan(yongHuId: string): Promise<{ yunXu: boolean; c
     }
     const yuSuan = peiZhi.meiRiAIQingQiuYuSuan
     let chuFaYuJing = false
-    if (yiYong >= yuSuan - YU_SUAN_YU_JING_YU_LIANG && yiYong <= yuSuan) {
+    if (yiYong >= yuSuan - YuSuanYuJingYuLiang && yiYong <= yuSuan) {
       const sheZhi = await redis.set(`ai_yu_suan_yu_jing:${yongHuId}:${riQi}`, '1', 'EX', 86400, 'NX')
       chuFaYuJing = sheZhi === 'OK'
     }
@@ -115,7 +116,7 @@ async function jianChaMeiRiYuSuan(yongHuId: string): Promise<{ yunXu: boolean; c
     jiLu.count++
     const yiYong = jiLu.count
     let chuFaYuJing = false
-    if (yiYong >= yuSuan - YU_SUAN_YU_JING_YU_LIANG && yiYong <= yuSuan) {
+    if (yiYong >= yuSuan - YuSuanYuJingYuLiang && yiYong <= yuSuan) {
       chuFaYuJing = true
     }
     return { yunXu: yiYong <= yuSuan, chuFaYuJing }
@@ -284,19 +285,19 @@ jiang_ji_mo_shi: false,
       }
     }
 
-    let xiaoXiLieBiao = qieGeXiaoXi(writerJieGuo.xiao_xi_lie_biao, ZUI_DA_TIAO_SHU)
-    if (writerJieGuo.xiao_xi_lie_biao.length > ZUI_DA_TIAO_SHU) {
+    let xiaoXiLieBiao = qieGeXiaoXi(writerJieGuo.xiao_xi_lie_biao, ZuiDaTiaoShu)
+    if (writerJieGuo.xiao_xi_lie_biao.length > ZuiDaTiaoShu) {
       debug日志.warn('AI引擎', 'Writer 输出条数超失控护栏，已截断', {
         xiang_qing: {
           jiao_se_id: shuRu.jiao_se_id,
           yong_hu_id: shuRu.yong_hu_id,
           yuan_shu_liao: writerJieGuo.xiao_xi_lie_biao.length,
-          huo_liu: ZUI_DA_TIAO_SHU,
+          huo_liu: ZuiDaTiaoShu,
         },
       })
     }
 
-    const weiJinTiaoMu = xiaoXiLieBiao.filter((tiao) => hanWeiJinCi(tiao))
+    const weiJinTiaoMu = xiaoXiLieBiao.filter((tiao) => hanWeiJinCi(qingXiTieZhiCanPian(tiao)))
     if (weiJinTiaoMu.length > 0) {
       debug日志.error('AI引擎', 'Writer输出命中本地违禁词兜底，已拦截本轮回复', {
         xiang_qing: {

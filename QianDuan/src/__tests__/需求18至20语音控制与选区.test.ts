@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { mount } from '@vue/test-utils'
 import 语音气泡 from '@/components/聊天/语音气泡.vue'
-import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
+import { DuoMeiTiPeiZhi } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/翻译表'
 import {
   ceLiangYuYinShiChang,
@@ -18,8 +18,8 @@ import {
 } from '@/composables/use语音播放'
 import type { 消息 } from '@/types/类型定义'
 
-const QI_PAO_YUAN = readFileSync(resolve(__dirname, '../components/聊天/语音气泡.vue'), 'utf8')
-const SHU_RU_YUAN = readFileSync(resolve(__dirname, '../components/聊天/图文输入区.vue'), 'utf8')
+const QiPaoYuan = readFileSync(resolve(__dirname, '../components/聊天/语音气泡.vue'), 'utf8')
+const ShuRuYuan = readFileSync(resolve(__dirname, '../components/聊天/图文输入区.vue'), 'utf8')
 
 function zaoShiJianChi() {
   const chi = new Map<string, Set<() => void>>()
@@ -201,15 +201,15 @@ describe('需求18：暂停/停止按钮与空格键', () => {
     expect(wenBen).toBe('暂停语音')
     expect(huoQuFanYi('duoMeiTi', 'jiXuYuYin')).toBe('继续播放语音')
     expect(huoQuFanYi('duoMeiTi', 'tingZhiYuYin')).toBe('停止语音并回到开头')
-    expect((QI_PAO_YUAN.match(/class="yuyin-kongzhi"/g) ?? []).length).toBe(2)
-    expect(QI_PAO_YUAN).toContain('class="yuyin-kongzhi-zu"')
-    expect(QI_PAO_YUAN).toContain('width: var(--yuyin-kongzhi-chicun)')
-    expect(QI_PAO_YUAN).toContain('height: var(--yuyin-kongzhi-chicun)')
-    expect(QI_PAO_YUAN).toContain(
+    expect((QiPaoYuan.match(/class="yuyin-kongzhi"/g) ?? []).length).toBe(2)
+    expect(QiPaoYuan).toContain('class="yuyin-kongzhi-zu"')
+    expect(QiPaoYuan).toContain('width: var(--yuyin-kongzhi-chicun)')
+    expect(QiPaoYuan).toContain('height: var(--yuyin-kongzhi-chicun)')
+    expect(QiPaoYuan).toContain(
       'inset: calc((var(--yuyin-kongzhi-chicun) - var(--yuyin-kongzhi-re-ku)) / 2)',
     )
-    expect(QI_PAO_YUAN).toContain('gap: var(--yuyin-kongzhi-jian-ju)')
-    expect(QI_PAO_YUAN).not.toMatch(/[⏸⏹▶⏯⏪]/u)
+    expect(QiPaoYuan).toContain('gap: var(--yuyin-kongzhi-jian-ju)')
+    expect(QiPaoYuan).not.toMatch(/[⏸⏹▶⏯⏪]/u)
   })
 
   it('组件挂载后按播放态切换暂停/继续与停止的读屏口径，且不再重复渲染第二份总时长', () => {
@@ -287,15 +287,15 @@ describe('需求18：暂停/停止按钮与空格键', () => {
 
 describe('需求20：聊天输入框划词必须可见', () => {
   it('不再用 user-select:none 关掉选区，选中底色走主题令牌且深浅两档同一枚', () => {
-    expect(SHU_RU_YUAN).not.toMatch(/user-select:\s*none/)
-    expect(SHU_RU_YUAN).toMatch(
+    expect(ShuRuYuan).not.toMatch(/user-select:\s*none/)
+    expect(ShuRuYuan).toMatch(
       /\.shuru-kuang::selection,\s*\.shuru-kuang \*::selection\s*\{[^}]*background:\s*color-mix\(in srgb, var\(--jujiao-huan-yanse\) 32%, transparent\)/,
     )
   })
 
   it('选中态不再被「透明背景」压掉，文字色跟随继承色', () => {
-    const qiDian = SHU_RU_YUAN.indexOf('::selection')
-    const guiZe = SHU_RU_YUAN.slice(qiDian, SHU_RU_YUAN.indexOf('}', qiDian) + 1)
+    const qiDian = ShuRuYuan.indexOf('::selection')
+    const guiZe = ShuRuYuan.slice(qiDian, ShuRuYuan.indexOf('}', qiDian) + 1)
     expect(guiZe).not.toContain('background: transparent')
     expect(guiZe).toContain('color: inherit')
   })
@@ -348,7 +348,7 @@ function zaoKeKongCeLiangYinPin(
 
 async function dengDaiLuoPan(): Promise<void> {
   await new Promise((deng) => {
-    setTimeout(deng, DUO_MEI_TI_PEI_ZHI.yuYinShiChangXieRuYanChiHaoMiao + 80)
+    setTimeout(deng, DuoMeiTiPeiZhi.yuYinShiChangXieRuYanChiHaoMiao + 80)
   })
 }
 
@@ -405,7 +405,7 @@ describe('FP-01B 语音时长持久化与测量调度', () => {
       const xiaoXi = { mei_ti_url: qianMingYi, mei_ti_shi_chang_hao_miao: 5000 }
       expect(erFen.boFang.geShiHuaYuYinShiChang(xiaoXi)).toBe('4″')
       expect(erFen.boFang.yuYinKuanDuPx(xiaoXi)).toBe(
-        4 * DUO_MEI_TI_PEI_ZHI.yuYinMeiMiaoKuanPx + DUO_MEI_TI_PEI_ZHI.yuYinJiChuKuanPx,
+        4 * DuoMeiTiPeiZhi.yuYinMeiMiaoKuanPx + DuoMeiTiPeiZhi.yuYinJiChuKuanPx,
       )
       erFen.boFang.ceLiangYuYinShiChang(xiaoXi)
       expect(faQi).toEqual([])
@@ -446,7 +446,7 @@ describe('FP-01B 语音时长持久化与测量调度', () => {
 
   it('并发有上限、同一地址不重复排队、撤销后不再请求', async () => {
     localStorage.clear()
-    const shangXian = DUO_MEI_TI_PEI_ZHI.yuYinCeLiangBingFaShangXian
+    const shangXian = DuoMeiTiPeiZhi.yuYinCeLiangBingFaShangXian
     const zongShu = shangXian + 3
     const qianZhui = Date.now()
     const diZhiLieBiao = Array.from(
@@ -517,7 +517,7 @@ describe('FP-01B 语音时长持久化与测量调度', () => {
 
   it('超出条数上限只留最近的，超过有效期的条目重新载入时被丢弃', async () => {
     localStorage.clear()
-    const shangXian = DUO_MEI_TI_PEI_ZHI.yuYinShiChangChiJiuShangXian
+    const shangXian = DuoMeiTiPeiZhi.yuYinShiChangChiJiuShangXian
     const qianZhui = Date.now()
     const diZhi = (suoYin: number): string => wangLuoDiZhi(`shou-xian-${qianZhui}-${suoYin}`)
     const moKuai = await chongXinDaoRu()
@@ -529,7 +529,7 @@ describe('FP-01B 语音时长持久化与测量调度', () => {
     expect(moKuai.chiJiu.duQuYuYinShiChang(diZhi(shangXian + 4))).toBe(2000 + shangXian + 4)
     await dengDaiLuoPan()
 
-    const cunChuJian = moKuai.chiJiu.YU_YIN_SHI_CHANG_CUN_CHU_JIAN
+    const cunChuJian = moKuai.chiJiu.YuYinShiChangCunChuJian
     const yuanWen = JSON.parse(localStorage.getItem(cunChuJian) ?? '{}') as Record<
       string,
       [number, number]
@@ -539,7 +539,7 @@ describe('FP-01B 语音时长持久化与测量调度', () => {
     if (jian) {
       yuanWen[jian] = [
         3000,
-        Date.now() - DUO_MEI_TI_PEI_ZHI.yuYinShiChangChiJiuShiXiaoHaoMiao - 1000,
+        Date.now() - DuoMeiTiPeiZhi.yuYinShiChangChiJiuShiXiaoHaoMiao - 1000,
       ]
     }
     localStorage.setItem(cunChuJian, JSON.stringify(yuanWen))

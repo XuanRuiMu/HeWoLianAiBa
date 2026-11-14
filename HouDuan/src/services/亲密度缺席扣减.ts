@@ -7,8 +7,8 @@ function duQuZhengShu(ming: string, moRen: number): number {
   return Number.isFinite(yuan) && yuan > 0 ? yuan : moRen
 }
 
-export const QUE_XI_CHU_FA_XIAO_SHI = duQuZhengShu('QUE_XI_CHU_FA_XIAO_SHI', 12)
-export const QUE_XI_KOU_JIAN_FEN = duQuZhengShu('QUE_XI_KOU_JIAN_FEN', 1)
+export const QueXiChuFaXiaoShi = duQuZhengShu('QUE_XI_CHU_FA_XIAO_SHI', 12)
+export const QueXiKouJianFen = duQuZhengShu('QUE_XI_KOU_JIAN_FEN', 1)
 
 export async function chuLiQueXiKouJian(yongHuId: string, jiaoSeId: string): Promise<boolean> {
   const biaoJi = `que_xi_kou_jian:${yongHuId}:${jiaoSeId}`
@@ -21,13 +21,13 @@ export async function chuLiQueXiKouJian(yongHuId: string, jiaoSeId: string): Pro
     if (qianYiHuDong.rows.length === 0) return false
     const qianYiShiKe = new Date(String(qianYiHuDong.rows[0].创建时间)).getTime()
     const geShiHaoMiao = Date.now() - qianYiShiKe
-    if (geShiHaoMiao < QUE_XI_CHU_FA_XIAO_SHI * 3600_000) {
+    if (geShiHaoMiao < QueXiChuFaXiaoShi * 3600_000) {
       if (yiKou) await redis.del(biaoJi)
       return false
     }
     if (yiKou) return false
 
-    const kouJian = QUE_XI_KOU_JIAN_FEN
+    const kouJian = QueXiKouJianFen
     const weiDuKouJian = Math.floor(kouJian / 4)
     const gengXin = await 数据库.query(
       `UPDATE "好感度" SET

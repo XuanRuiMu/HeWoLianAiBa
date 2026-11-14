@@ -120,7 +120,7 @@ export async function jiLuAIShiBai(cuoWuXinXi?: string): Promise<void> {
 
 export type GaoJingJiBie = 'P1' | 'P2' | 'P3' | 'P4'
 
-const GAO_JING_SHENG_JI_BIAO: Record<GaoJingJiBie, { lengQueHaoMiao: number; shengJiHou: GaoJingJiBie | null }> = {
+const GaoJingShengJiBiao: Record<GaoJingJiBie, { lengQueHaoMiao: number; shengJiHou: GaoJingJiBie | null }> = {
   P4: { lengQueHaoMiao: 60 * 60 * 1000, shengJiHou: 'P3' },
   P3: { lengQueHaoMiao: 30 * 60 * 1000, shengJiHou: 'P2' },
   P2: { lengQueHaoMiao: 15 * 60 * 1000, shengJiHou: 'P1' },
@@ -139,7 +139,7 @@ export async function faSongFenJiGaoJing(
   biaoTi: string,
   neiRong: string,
 ): Promise<boolean> {
-  const peiZhiXiang = GAO_JING_SHENG_JI_BIAO[jiBie]
+  const peiZhiXiang = GaoJingShengJiBiao[jiBie]
   const fenJiJian = huoQuFenJiJian(jiBie, jian)
   const shangCi = fenJiLengQueBiao.get(fenJiJian)
   if (shangCi && Date.now() - shangCi < peiZhiXiang.lengQueHaoMiao) {

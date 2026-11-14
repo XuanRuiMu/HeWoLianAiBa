@@ -20,8 +20,8 @@ export interface 违规记录结果 {
 
 const 违规前缀 = '违规:'
 const 封禁前缀 = '封禁:'
-const ZUI_CHANG_FENG_JIN_HAO_MIAO = 30 * 24 * 60 * 60 * 1000
-const NAT_YU_JING_YU_ZHI = 50
+const ZuiChangFengJinHaoMiao = 30 * 24 * 60 * 60 * 1000
+const NatYuJingYuZhi = 50
 
 function 标准化IP(ip: string): string {
   if (ip.startsWith('::ffff:')) {
@@ -86,7 +86,7 @@ export async function 记录违规(
     const 解封时间 = new Date(Date.now() + 封禁时长)
     await 设置封禁(ip, 封禁时长, 原因)
     await 持久化封禁记录(ip, 原因, 严重程度, 解封时间)
-    if (当前次数 >= NAT_YU_JING_YU_ZHI) {
+    if (当前次数 >= NatYuJingYuZhi) {
       debug日志.warn('IP封禁', 'NAT共享出口预警：同IP高频违规疑似NAT', { xiang_qing: { ci_shu: 当前次数 } })
       try {
         const { faSongGaoJing } = await import('../utils/邮件告警')
@@ -107,7 +107,7 @@ function 计算封禁时长(次数: number): number | undefined {
   if (次数 === 2) return 60 * 60 * 1000
   if (次数 === 3) return 24 * 60 * 60 * 1000
   if (次数 === 4) return 7 * 24 * 60 * 60 * 1000
-  if (次数 >= 5) return ZUI_CHANG_FENG_JIN_HAO_MIAO
+  if (次数 >= 5) return ZuiChangFengJinHaoMiao
   return undefined
 }
 

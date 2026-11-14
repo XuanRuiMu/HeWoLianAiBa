@@ -1,17 +1,6 @@
 import axios from 'axios'
 import { huoQuFanYi } from '@/config/翻译表'
-import {
-  QIAN_TAI_DAI_MA,
-  daiMaHuoQuTongYongDaiMa,
-  guiYiQianTaiDaiMa,
-  huoQuLianAiMa,
-  huoQuWenBenLeiXing,
-  moRenKeChongShi,
-  xianShiLianAiMa,
-  type LianAiMa,
-  type QianTaiDaiMa,
-  type QianTaiWenBenLeiXing,
-} from '@/config/前台错误码'
+import {QianTaiDaiMa, daiMaHuoQuTongYongDaiMa, guiYiQianTaiDaiMa, huoQuLianAiMa, huoQuWenBenLeiXing, moRenKeChongShi, xianShiLianAiMa, type LianAiMa, type QianTaiWenBenLeiXing} from '@/config/前台错误码'
 
 export interface HouTaiCuoWuBaoFeng {
   code?: string
@@ -246,7 +235,7 @@ export function chuangJianQianTaiCuoWu(
   canShu: ChuangJianQianTaiCuoWuCanShu = {},
   yuanShiCuoWu?: unknown,
 ): QianTaiCuoWu {
-  const code = canShu.code || QIAN_TAI_DAI_MA.WEI_ZHI
+  const code = canShu.code || QianTaiDaiMa.WEI_ZHI
   const lianAiMa = huoQuLianAiMa(code)
   const leiXing = canShu.leiXing || huoQuWenBenLeiXing(code)
   const wenBen = duQuWenBenLeiXing(leiXing)
@@ -275,7 +264,7 @@ export function chuangJianQianTaiCuoWu(
       houTaiBaoFeng,
       jiuDaiMa: canShu.jiuDaiMa ?? null,
       zhongShiCiShu: Math.max(1, canShu.zhongShiCiShu || 1),
-      xianShi: code !== QIAN_TAI_DAI_MA.QU_XIAO,
+      xianShi: code !== QianTaiDaiMa.QU_XIAO,
       xianShiDaiMa: xianShiLianAiMa(code),
     },
     yuanShiCuoWu,
@@ -319,7 +308,7 @@ export function 归一前台错误(zhi: unknown): QianTaiCuoWu {
   if (shiQuXiaoCuoWu(zhi)) {
     return chuangJianQianTaiCuoWu(
       {
-        code: QIAN_TAI_DAI_MA.QU_XIAO,
+        code: QianTaiDaiMa.QU_XIAO,
         retryable: false,
         traceId,
         httpStatus: zhuangTai,
@@ -349,7 +338,7 @@ export function 归一前台错误(zhi: unknown): QianTaiCuoWu {
       baoFeng === null &&
       !youBaoFengZiDian)
   ) {
-    const daiMa = QIAN_TAI_DAI_MA.XIE_YI
+    const daiMa = QianTaiDaiMa.XIE_YI
     return chuangJianQianTaiCuoWu(
       {
         code: daiMa,
@@ -365,7 +354,7 @@ export function 归一前台错误(zhi: unknown): QianTaiCuoWu {
     )
   }
   if (zhuangTai === null && (houTaiDaiMa || baoFeng || jiuDaiMa)) {
-    const daiMa = houTaiDaiMa || QIAN_TAI_DAI_MA.WEI_ZHI
+    const daiMa = houTaiDaiMa || QianTaiDaiMa.WEI_ZHI
     return chuangJianQianTaiCuoWu(
       {
         code: daiMa,
@@ -387,12 +376,12 @@ export function 归一前台错误(zhi: unknown): QianTaiCuoWu {
       axiosDaiMa === 'ECONNABORTED' || axiosDaiMa === 'ETIMEDOUT' || axiosDaiMa === 'ERR_CANCELED'
     const benJiLiXian = axiosTong && typeof navigator !== 'undefined' && navigator.onLine === false
     const daiMa = !axiosTong
-      ? QIAN_TAI_DAI_MA.WEI_ZHI
+      ? QianTaiDaiMa.WEI_ZHI
       : benJiLiXian
-        ? QIAN_TAI_DAI_MA.LI_XIAN
+        ? QianTaiDaiMa.LI_XIAN
         : chaoShi
-          ? QIAN_TAI_DAI_MA.CHAO_SHI
-          : QIAN_TAI_DAI_MA.WANG_LUO
+          ? QianTaiDaiMa.CHAO_SHI
+          : QianTaiDaiMa.WANG_LUO
     return chuangJianQianTaiCuoWu(
       {
         code: daiMa,
@@ -408,8 +397,8 @@ export function 归一前台错误(zhi: unknown): QianTaiCuoWu {
   }
   const daiMa =
     houTaiDaiMa ||
-    (youZhiDingDaiMa ? QIAN_TAI_DAI_MA.WEI_ZHI : daiMaHuoQuTongYongDaiMa(zhuangTai)) ||
-    QIAN_TAI_DAI_MA.WEI_ZHI
+    (youZhiDingDaiMa ? QianTaiDaiMa.WEI_ZHI : daiMaHuoQuTongYongDaiMa(zhuangTai)) ||
+    QianTaiDaiMa.WEI_ZHI
   return chuangJianQianTaiCuoWu(
     {
       code: daiMa,

@@ -4,7 +4,7 @@ function duQuZhengShu(ming: string, moRen: number, zuiXiao: number, zuiDa: numbe
   return Math.max(zuiXiao, Math.min(zuiDa, yuan))
 }
 
-export const SHI_JIAN_CHANG_JING_PEI_ZHI = {
+export const ShiJianChangJingPeiZhi = {
   qiYong: (process.env['SHI_JIAN_CHANG_JING_QI_YONG'] || 'true').trim().toLowerCase() !== 'false',
   huanCunMiao: duQuZhengShu('SHI_JIAN_CHANG_JING_HUAN_CUN_MIAO', 60, 0, 3600),
 } as const
@@ -18,7 +18,7 @@ export interface ShiJianChangJing {
   yuQiCeLue: string
 }
 
-const DUAN_YU_QI: Record<ShiJianDuan, string> = {
+const DuanYuQi: Record<ShiJianDuan, string> = {
   shenYe: '深夜了，说话放轻一点，别太闹腾，可以带点困意和温柔',
   lingChen: '凌晨夜深人静，语气放缓，多一点陪伴感，别吵',
   qingChen: '清晨刚醒，语气清爽轻快，带点起床气的真实感也行',
@@ -46,20 +46,20 @@ export function jiSuanShiJianChangJing(riQi: Date = new Date()): ShiJianChangJin
     duan,
     xiaoShi,
     changJingWenBen: `现在是${String(xiaoShi).padStart(2, '0')}点`,
-    yuQiCeLue: DUAN_YU_QI[duan],
+    yuQiCeLue: DuanYuQi[duan],
   }
 }
 
 let huanCun: { wenBen: string; guoQi: number } | null = null
 
 export function huoQuShiJianChangJingWenBen(riQi: Date = new Date()): string {
-  if (!SHI_JIAN_CHANG_JING_PEI_ZHI.qiYong) return '正常聊天时间'
+  if (!ShiJianChangJingPeiZhi.qiYong) return '正常聊天时间'
   const xianZai = Date.now()
   if (huanCun && xianZai < huanCun.guoQi) return huanCun.wenBen
   const jieGuo = jiSuanShiJianChangJing(riQi)
   const wenBen = `${jieGuo.changJingWenBen}（${jieGuo.yuQiCeLue}）`
-  if (SHI_JIAN_CHANG_JING_PEI_ZHI.huanCunMiao > 0) {
-    huanCun = { wenBen, guoQi: xianZai + SHI_JIAN_CHANG_JING_PEI_ZHI.huanCunMiao * 1000 }
+  if (ShiJianChangJingPeiZhi.huanCunMiao > 0) {
+    huanCun = { wenBen, guoQi: xianZai + ShiJianChangJingPeiZhi.huanCunMiao * 1000 }
   }
   return wenBen
 }

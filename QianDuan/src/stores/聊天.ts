@@ -7,7 +7,7 @@ import {
   huoQuXiaoXi,
   faSongXiaoXi as faSongXiaoXiApi,
   shangChuanMeiTi,
-  DUO_MEI_TI_LEI_XING_SHANG_CHUAN_LEI_BIE,
+  DuoMeiTiLeiXingShangChuanLeiBie,
   cheHuiXiaoXi as cheHuiXiaoXiApi,
   biaoJiYiDu,
   huoQuJiaoSeXiangQing,
@@ -16,7 +16,7 @@ import {
 import { huoQuFanYi, fanYi } from '@/config/翻译表'
 import { queDingMiDengJian } from '@/utils/发件箱'
 import {
-  BIAO_QING_BAO_MEI_TI_LEI_BIE,
+  BiaoQingBaoMeiTiLeiBie,
   guiYiXiaoXiLeiXing,
   keTiJiaoKuai,
   kuaiDaoXiaoXiLeiXing,
@@ -66,7 +66,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   const xiaoXiLieBiao = ref<消息[]>([])
   const aiZhuangTai = ref<'kong_xian' | 'deng_dai_zhong' | 'zheng_zai_shu_ru'>('kong_xian')
   let zuiHouXuHao = 0
-  const ZHENG_ZAI_SHU_RU_XIAO_SHI_YAN_CHI_HAO_MIAO = 1000
+  const ZhengZaiShuRuXiaoShiYanChiHaoMiao = 1000
 
   const xianShiZhengZaiShuRu = ref(false)
   let yanChiDingShiQi: ReturnType<typeof setTimeout> | null = null
@@ -101,7 +101,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
         yanChiDingShiQi = setTimeout(() => {
           xianShiZhengZaiShuRu.value = false
           yanChiDingShiQi = null
-        }, ZHENG_ZAI_SHU_RU_XIAO_SHI_YAN_CHI_HAO_MIAO)
+        }, ZhengZaiShuRuXiaoShiYanChiHaoMiao)
       }
     },
     { flush: 'sync' },
@@ -128,8 +128,8 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   const haoGanDuBianHuaJiLu = ref<Record<string, HaoGanDuZengLiangJiLu>>({})
   const yiShouZengLiangIds = new Set<string>()
   const zengLiangIdDuiLie: string[] = []
-  const ZENG_LIANG_ID_SHANG_XIAN = 500
-  const ZENG_LIANG_BAI_MING_DAN = new Set([
+  const ZengLiangIdShangXian = 500
+  const ZengLiangBaiMingDan = new Set([
     'shi_jian_id',
     'jiao_se_id',
     'xin_ren_du_bian_hua',
@@ -138,7 +138,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     'guan_huai_du_bian_hua',
     'zong_fen_bian_hua',
   ])
-  const ZENG_LIANG_WEI_DU = [
+  const ZengLiangWeiDu = [
     'xin_ren_du_bian_hua',
     'qin_mi_du_bian_hua',
     'qu_wei_du_bian_hua',
@@ -152,16 +152,16 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     if (typeof fuZai.shi_jian_id !== 'string' || typeof fuZai.jiao_se_id !== 'string') return
     if (fuZai.jiao_se_id !== dangQianHuiHuaId.value) return
     for (const jian of Object.keys(fuZai)) {
-      if (!ZENG_LIANG_BAI_MING_DAN.has(jian)) return
+      if (!ZengLiangBaiMingDan.has(jian)) return
     }
-    const shuZhi: Record<(typeof ZENG_LIANG_WEI_DU)[number], number> = {
+    const shuZhi: Record<(typeof ZengLiangWeiDu)[number], number> = {
       xin_ren_du_bian_hua: 0,
       qin_mi_du_bian_hua: 0,
       qu_wei_du_bian_hua: 0,
       guan_huai_du_bian_hua: 0,
       zong_fen_bian_hua: 0,
     }
-    for (const wei of ZENG_LIANG_WEI_DU) {
+    for (const wei of ZengLiangWeiDu) {
       const zhi = fuZai[wei]
       if (zhi === undefined) continue
       if (typeof zhi !== 'number' || !Number.isInteger(zhi)) return
@@ -171,7 +171,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     if (yiShouZengLiangIds.has(shiJianId)) return
     yiShouZengLiangIds.add(shiJianId)
     zengLiangIdDuiLie.push(shiJianId)
-    if (zengLiangIdDuiLie.length > ZENG_LIANG_ID_SHANG_XIAN) {
+    if (zengLiangIdDuiLie.length > ZengLiangIdShangXian) {
       const zuiJiu = zengLiangIdDuiLie.shift()
       if (zuiJiu) yiShouZengLiangIds.delete(zuiJiu)
     }
@@ -771,7 +771,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
 
   const yuZaiHuiHuaId = ref<string | null>(null)
   let yuZaiShiJian = 0
-  const YU_ZAI_YOU_XIAO_HAO_MIAO = 30000
+  const YuZaiYouXiaoHaoMiao = 30000
 
   function biaoJiYuZai(huiHuaId: string) {
     yuZaiHuiHuaId.value = huiHuaId
@@ -782,7 +782,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     huiHuaId: string,
     jieDuanTiShi?: (jieDuan: 'xiaoXi' | 'jiaoSe') => void,
   ) {
-    if (yuZaiHuiHuaId.value === huiHuaId && Date.now() - yuZaiShiJian < YU_ZAI_YOU_XIAO_HAO_MIAO) {
+    if (yuZaiHuiHuaId.value === huiHuaId && Date.now() - yuZaiShiJian < YuZaiYouXiaoHaoMiao) {
       yuZaiHuiHuaId.value = null
       return
     }
@@ -1075,7 +1075,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
   }
 
   function 由消息恢复媒体上下文(xiaoXi: 消息): 媒体重发上下文 | null {
-    if (!(xiaoXi.lei_xing in DUO_MEI_TI_LEI_XING_SHANG_CHUAN_LEI_BIE)) return null
+    if (!(xiaoXi.lei_xing in DuoMeiTiLeiXingShangChuanLeiBie)) return null
     return {
       leiXing: xiaoXi.lei_xing as DuoMeiTiLeiXing,
       wenJian: null,
@@ -1099,7 +1099,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
     const shangChuan = await shangChuanMeiTi(
       xiaoXi.hui_hua_id,
       wenJian,
-      DUO_MEI_TI_LEI_XING_SHANG_CHUAN_LEI_BIE[shangXiaWen.leiXing],
+      DuoMeiTiLeiXingShangChuanLeiBie[shangXiaWen.leiXing],
       shangXiaWen.leiXing === 'yuYin' && typeof shangXiaWen.fuJia.shiChangHaoMiao === 'number'
         ? { shiChangHaoMiao: shangXiaWen.fuJia.shiChangHaoMiao }
         : undefined,
@@ -1316,7 +1316,7 @@ export const 使用聊天仓库 = defineStore('聊天', () => {
         const shangChuan = await shangChuanMeiTi(
           huiHuaId,
           wenJian,
-          xiang.mei_ti_lei_bie === BIAO_QING_BAO_MEI_TI_LEI_BIE ? BIAO_QING_BAO_MEI_TI_LEI_BIE : 'tupian',
+          xiang.mei_ti_lei_bie === BiaoQingBaoMeiTiLeiBie ? BiaoQingBaoMeiTiLeiBie : 'tupian',
         )
         xiang.mei_ti_id = shangChuan.mediaId
         if (shangChuan.leiBie) xiang.mei_ti_lei_bie = shangChuan.leiBie

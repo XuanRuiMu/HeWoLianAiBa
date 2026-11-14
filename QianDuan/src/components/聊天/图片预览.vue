@@ -43,8 +43,8 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { huoQuFanYi } from '@/config/翻译表'
 
-const CHANG_TU_BI_LI = 2.4
-const HUA_DONG_MIN_PIAN_YI = 44
+const ChangTuBiLi = 2.4
+const HuaDongMinPianYi = 44
 
 const shuRu = defineProps<{ tu: string[]; xiaBiao: number | null }>()
 const faChu = defineEmits<{ 'guan-bi': []; 'geng-xin-xia-biao': [xiaBiao: number] }>()
@@ -75,7 +75,7 @@ function chuLiJiaZaiWanCheng(shiJian: Event): void {
   const tu = shiJian.target as HTMLImageElement
   const kuan = tu.naturalWidth
   const gao = tu.naturalHeight
-  changTu.value = kuan > 0 && gao / kuan >= CHANG_TU_BI_LI
+  changTu.value = kuan > 0 && gao / kuan >= ChangTuBiLi
 }
 
 function kaiShiHuaDong(shiJian: TouchEvent): void {
@@ -88,7 +88,7 @@ function jieShuHuaDong(shiJian: TouchEvent): void {
   if (!dian || !huaDongQiDianX) return
   const pianYi = dian.clientX - huaDongQiDianX
   huaDongQiDianX = 0
-  if (Math.abs(pianYi) < HUA_DONG_MIN_PIAN_YI) return
+  if (Math.abs(pianYi) < HuaDongMinPianYi) return
   qieHuan(pianYi < 0 ? 1 : -1)
 }
 

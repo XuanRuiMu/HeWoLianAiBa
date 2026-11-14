@@ -1,5 +1,5 @@
 import http from './请求'
-import { BIAO_QING_TIAN_JIA_PEI_ZHI } from '@/config/表情配置'
+import { BiaoQingTianJiaPeiZhi } from '@/config/表情配置'
 import { huoQuFanYi } from '@/config/翻译表'
 
 export interface BiaoQingXiang {
@@ -18,7 +18,7 @@ export interface BiaoQingLieBiao {
   zong_shu: number
 }
 
-export const MO_REN_WEN_JIAN_MING = 'biaoqing.png'
+export const MoRenWenJianMing = 'biaoqing.png'
 
 export interface TianJiaBiaoQingJieGuo {
   xiang: BiaoQingXiang
@@ -39,14 +39,14 @@ export async function tianJiaBiaoQing(
 ): Promise<TianJiaBiaoQingJieGuo> {
   const formData = new FormData()
   const ming =
-    wenJianMing || (wenJian instanceof File && wenJian.name ? wenJian.name : MO_REN_WEN_JIAN_MING)
+    wenJianMing || (wenJian instanceof File && wenJian.name ? wenJian.name : MoRenWenJianMing)
   formData.append('file', wenJian, ming)
   const xiangYing = await http.post<{
     cheng_gong: boolean
     shu_ju: { biao_qing: BiaoQingXiang; yi_cun_zai?: boolean }
   }>('/表情/我的', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
-    timeout: BIAO_QING_TIAN_JIA_PEI_ZHI.chaoShiHaoMiao,
+    timeout: BiaoQingTianJiaPeiZhi.chaoShiHaoMiao,
   })
   const shuJu = xiangYing.data?.shu_ju
   if (!shuJu || !shuJu.biao_qing) throw new Error(huoQuFanYi('duoMeiTi', 'biaoQingTianJiaShiBai'))

@@ -11,7 +11,7 @@ export interface CuoWuShangBaoCanShu {
 
 type CuoWuShangBaoHanShu = (canShu: CuoWuShangBaoCanShu) => void
 
-const SHANG_BAO_URL = '/api/logs'
+const ShangBaoUrl = '/api/logs'
 
 type ShangBaoLeiXing = 'cuoWu' | 'xingNengZhiBiao'
 
@@ -23,11 +23,11 @@ interface ShangBaoTi {
 let dangQianShangBaoHanShu: CuoWuShangBaoHanShu | null = null
 let yiAnZhuang = false
 
-const SHANG_BAO_ZHI_WEN = new Map<string, number>()
-const ZHI_WEN_LENG_QUE_HAO_MIAO = 60000
-const CAI_YANG_LV = 1
-const PI_LIANG_CHI_CUN = 10
-const PI_LIANG_SHUA_XIN_HAO_MIAO = 5000
+const ShangBaoZhiWen = new Map<string, number>()
+const ZhiWenLengQueHaoMiao = 60000
+const CaiYangLv = 1
+const PiLiangChiCun = 10
+const PiLiangShuaXinHaoMiao = 5000
 let piLiangDuiLie: ShangBaoTi[] = []
 let piLiangDingShi: ReturnType<typeof setTimeout> | null = null
 
@@ -52,7 +52,7 @@ function paiKongPiLiang(): void {
 
 function paiDuiPiLiang(ti: ShangBaoTi): void {
   piLiangDuiLie.push(ti)
-  if (piLiangDuiLie.length >= PI_LIANG_CHI_CUN) {
+  if (piLiangDuiLie.length >= PiLiangChiCun) {
     paiKongPiLiang()
     return
   }
@@ -60,7 +60,7 @@ function paiDuiPiLiang(ti: ShangBaoTi): void {
     piLiangDingShi = setTimeout(() => {
       piLiangDingShi = null
       paiKongPiLiang()
-    }, PI_LIANG_SHUA_XIN_HAO_MIAO)
+    }, PiLiangShuaXinHaoMiao)
   }
 }
 
@@ -69,7 +69,7 @@ export function sheZhiCuoWuShangBaoHanShu(hanShu: CuoWuShangBaoHanShu | null): v
 }
 
 export function chongZhiCuoWuShangBaoZhuangTai(): void {
-  SHANG_BAO_ZHI_WEN.clear()
+  ShangBaoZhiWen.clear()
   piLiangDuiLie = []
   if (piLiangDingShi) {
     clearTimeout(piLiangDingShi)
@@ -122,7 +122,7 @@ function faSongRiZhi(shuJuTi: ShangBaoTi): void {
       globalThis as { fetch?: (url: string, init?: RequestInit) => Promise<Response> }
     ).fetch
     if (typeof yuanShiFetch === 'function') {
-      void yuanShiFetch(SHANG_BAO_URL, {
+      void yuanShiFetch(ShangBaoUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: wenBen,
@@ -167,24 +167,24 @@ export function moRenShangBaoHanShu(canShu: CuoWuShangBaoCanShu): void {
     xiang_qing: { ...xiangQing, ban_ben: yingYongBanBen },
   }
   const wen = zhiWen(canShu.cuoWu, canShu.leiBie)
-  const shangCi = SHANG_BAO_ZHI_WEN.get(wen)
-  if (shangCi && Date.now() - shangCi < ZHI_WEN_LENG_QUE_HAO_MIAO) {
+  const shangCi = ShangBaoZhiWen.get(wen)
+  if (shangCi && Date.now() - shangCi < ZhiWenLengQueHaoMiao) {
     return
   }
-  SHANG_BAO_ZHI_WEN.set(wen, Date.now())
+  ShangBaoZhiWen.set(wen, Date.now())
   faSongRiZhi(ti)
 }
 
 export function moRenPiLiangShangBao(canShu: CuoWuShangBaoCanShu): void {
   const wen = zhiWen(canShu.cuoWu, canShu.leiBie)
-  const shangCi = SHANG_BAO_ZHI_WEN.get(wen)
-  if (shangCi && Date.now() - shangCi < ZHI_WEN_LENG_QUE_HAO_MIAO) {
+  const shangCi = ShangBaoZhiWen.get(wen)
+  if (shangCi && Date.now() - shangCi < ZhiWenLengQueHaoMiao) {
     return
   }
-  if (Math.random() > CAI_YANG_LV) {
+  if (Math.random() > CaiYangLv) {
     return
   }
-  SHANG_BAO_ZHI_WEN.set(wen, Date.now())
+  ShangBaoZhiWen.set(wen, Date.now())
   const shangBaoLeiXing: ShangBaoLeiXing =
     canShu.fuJia?.shangBaoLeiXing === 'xingNengZhiBiao' ? 'xingNengZhiBiao' : 'cuoWu'
   let xiangQing: Record<string, unknown>

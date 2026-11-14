@@ -37,14 +37,14 @@
 
     <div class="rizhi-gongju-lan">
       <button
-        v-for="jiBie in QUAN_BU_JI_BIE"
+        v-for="jiBie in QuanBuJiBie"
         :key="'jb-' + jiBie"
         type="button"
         class="rizhi-jibie-kai"
         :class="['rizhi-jibie-' + jiBie, { 'rizhi-jibie-guan': !日志仓库.qiYongJiBie[jiBie] }]"
         @click="日志仓库.qieHuanJiBie(jiBie)"
       >
-        {{ huoQuFanYi('shiShiRiZhi', JI_BIE_FAN_YI_JIAN[jiBie]) }}
+        {{ huoQuFanYi('shiShiRiZhi', JiBieFanYiJian[jiBie]) }}
       </button>
 
       <ChangFangShuRuKuang
@@ -81,12 +81,12 @@
             :key="'rz-' + (qiShiSuoYin + xuHao)"
             class="rizhi-hang"
             :class="'rizhi-hang-' + tiaoMu.ji_bie"
-            :style="{ height: HANG_GAO + 'px' }"
+            :style="{ height: HangGao + 'px' }"
             :title="xuLieHuaTiaoMu(tiaoMu)"
           >
             <span class="rizhi-shijian">{{ geShiHuaShiJian(tiaoMu.shi_jian) }}</span>
             <span class="rizhi-jibie" :class="'rizhi-jibie-' + tiaoMu.ji_bie">
-              {{ huoQuFanYi('shiShiRiZhi', JI_BIE_FAN_YI_JIAN[tiaoMu.ji_bie]) }}
+              {{ huoQuFanYi('shiShiRiZhi', JiBieFanYiJian[tiaoMu.ji_bie]) }}
             </span>
             <span class="rizhi-leixing">{{ tiaoMu.lei_xing }}</span>
             <span class="rizhi-xiaoxi">{{ tiaoMu.xiao_xi }}</span>
@@ -105,14 +105,14 @@ import { huoQuFanYi } from '@/config/翻译表'
 import ChangFangShuRuKuang from '@/components/表单/长方框输入框.vue'
 import { use可拖动浮窗 } from '@/composables/use可拖动浮窗'
 import { 使用用户仓库 } from '@/stores/用户'
-import { 使用实时日志仓库, QUAN_BU_JI_BIE, type RiZhiTiaoMu } from '@/stores/实时日志'
+import { 使用实时日志仓库, QuanBuJiBie, type RiZhiTiaoMu } from '@/stores/实时日志'
 
-const HANG_GAO = 22
-const HUAN_CHONG_HANG_SHU = 8
-const DI_BU_YU_ZHI = 24
-const FU_ZHI_TI_SHI_HAO_MIAO = 1500
+const HangGao = 22
+const HuanChongHangShu = 8
+const DiBuYuZhi = 24
+const FuZhiTiShiHaoMiao = 1500
 
-const JI_BIE_FAN_YI_JIAN = {
+const JiBieFanYiJian = {
   debug: 'jiBieDebug',
   info: 'jiBieInfo',
   warn: 'jiBieWarn',
@@ -143,16 +143,16 @@ const { 浮窗样式, 拖动中, 开始拖动 } = use可拖动浮窗({
 let chiCunGuanChaQi: ResizeObserver | null = null
 let fuZhiJiShiQi: ReturnType<typeof setTimeout> | null = null
 
-const zongGaoDu = computed(() => 日志仓库.guoLvHouLieBiao.length * HANG_GAO)
+const zongGaoDu = computed(() => 日志仓库.guoLvHouLieBiao.length * HangGao)
 
 const qiShiSuoYin = computed(() =>
-  Math.max(0, Math.floor(gunDongDingBu.value / HANG_GAO) - HUAN_CHONG_HANG_SHU),
+  Math.max(0, Math.floor(gunDongDingBu.value / HangGao) - HuanChongHangShu),
 )
 
 const jieShuSuoYin = computed(() =>
   Math.min(
     日志仓库.guoLvHouLieBiao.length,
-    Math.ceil((gunDongDingBu.value + shiChuangGaoDu.value) / HANG_GAO) + HUAN_CHONG_HANG_SHU,
+    Math.ceil((gunDongDingBu.value + shiChuangGaoDu.value) / HangGao) + HuanChongHangShu,
   ),
 )
 
@@ -160,7 +160,7 @@ const keJianTiaoMu = computed(() =>
   日志仓库.guoLvHouLieBiao.slice(qiShiSuoYin.value, jieShuSuoYin.value),
 )
 
-const pianYiGaoDu = computed(() => qiShiSuoYin.value * HANG_GAO)
+const pianYiGaoDu = computed(() => qiShiSuoYin.value * HangGao)
 
 function chuLiGunDong() {
   const yuanSu = gunDongQu.value
@@ -171,7 +171,7 @@ function chuLiGunDong() {
 function zaiDiBu(): boolean {
   const yuanSu = gunDongQu.value
   if (!yuanSu) return true
-  return yuanSu.scrollHeight - yuanSu.scrollTop - yuanSu.clientHeight <= DI_BU_YU_ZHI
+  return yuanSu.scrollHeight - yuanSu.scrollTop - yuanSu.clientHeight <= DiBuYuZhi
 }
 
 function gunDongDaoDiBu() {
@@ -239,7 +239,7 @@ async function fuZhi() {
   if (fuZhiJiShiQi) clearTimeout(fuZhiJiShiQi)
   fuZhiJiShiQi = setTimeout(() => {
     fuZhiTiShi.value = ''
-  }, FU_ZHI_TI_SHI_HAO_MIAO)
+  }, FuZhiTiShiHaoMiao)
 }
 
 function chuLiKuaiJieJian(shiJian: KeyboardEvent) {

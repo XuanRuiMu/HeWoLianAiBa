@@ -1,5 +1,5 @@
 import { huoQuFanYi } from '@/config/翻译表'
-import { ZHAN_TIE_TU_PIAN_PEI_ZHI } from '@/config/消息配置'
+import { ZhanTieTuPianPeiZhi } from '@/config/消息配置'
 
 interface Use粘贴图片依赖 {
   fanJiaTuPian: (wenJian: File) => unknown
@@ -7,7 +7,7 @@ interface Use粘贴图片依赖 {
   sheZhiCuoWu: (xinXi: string) => void
 }
 
-const JU_JUE_FAN_YI_JIAN = {
+const JuJueFanYiJian = {
   leiXing: 'zhanTieMIMEBuZhiChi',
   guoDa: 'zhanTieTuPianGuoDa',
   weiKong: 'zhanTieTuPianWeiKong',
@@ -77,7 +77,7 @@ function panDingZhanTie(shuJu: DataTransfer | null): ZhanTieJieXi {
         buKeDu = true
         continue
       }
-      const juJue = panDingTuPianJuJue(wenJian, ZHAN_TIE_TU_PIAN_PEI_ZHI)
+      const juJue = panDingTuPianJuJue(wenJian, ZhanTieTuPianPeiZhi)
       if (juJue) {
         if (!juJueYuanYin) juJueYuanYin = juJue
         continue
@@ -91,7 +91,7 @@ function panDingZhanTie(shuJu: DataTransfer | null): ZhanTieJieXi {
       const wenJian = wenJianLieBiao[xiaBiao]
       if (!shiTuPianWenJian(wenJian)) continue
       youTuXiangXiang = true
-      const juJue = panDingTuPianJuJue(wenJian, ZHAN_TIE_TU_PIAN_PEI_ZHI)
+      const juJue = panDingTuPianJuJue(wenJian, ZhanTieTuPianPeiZhi)
       if (juJue) {
         if (!juJueYuanYin) juJueYuanYin = juJue
         continue
@@ -126,7 +126,7 @@ export function use粘贴图片(yiLai: Use粘贴图片依赖) {
     if (jieXi.wenBen.trim() !== '' && yiLai.fanJiaWenZi) yiLai.fanJiaWenZi(jieXi.wenBen)
     for (const wenJian of jieXi.tuPianLieBiao) jiaOuDaiFaTu(yiLai, wenJian)
     if (jieXi.juJueYuanYin) {
-      yiLai.sheZhiCuoWu(huoQuFanYi('duoMeiTi', JU_JUE_FAN_YI_JIAN[jieXi.juJueYuanYin]))
+      yiLai.sheZhiCuoWu(huoQuFanYi('duoMeiTi', JuJueFanYiJian[jieXi.juJueYuanYin]))
       return
     }
     if (jieXi.buKeDu && jieXi.tuPianLieBiao.length === 0) {

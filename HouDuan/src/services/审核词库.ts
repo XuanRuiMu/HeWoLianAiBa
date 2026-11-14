@@ -22,22 +22,22 @@ export interface CiKuBanBen {
 
 let huanCunCiKu: CiKuBanBen | null = null
 let huanCunShiJian = 0
-const HUAN_CUN_GENG_XIN_JIAN_GE = 60 * 1000
+const HuanCunGengXinJianGe = 60 * 1000
 
-const CI_KU_MU_LU = path.resolve(__dirname, '../config/审核词库')
+const CiKuMuLu = path.resolve(__dirname, '../config/审核词库')
 
 export function huoQuCiKuMuLu(): string {
-  return CI_KU_MU_LU
+  return CiKuMuLu
 }
 
 export async function jiaZaiZuiXinCiKu(qiangZhiShuaXin = false): Promise<CiKuBanBen> {
   const xianZai = Date.now()
-  if (!qiangZhiShuaXin && huanCunCiKu && xianZai - huanCunShiJian < HUAN_CUN_GENG_XIN_JIAN_GE) {
+  if (!qiangZhiShuaXin && huanCunCiKu && xianZai - huanCunShiJian < HuanCunGengXinJianGe) {
     return huanCunCiKu
   }
 
   try {
-    const wenJianLieBiao = await fs.readdir(CI_KU_MU_LU)
+    const wenJianLieBiao = await fs.readdir(CiKuMuLu)
     const banBenWenJian = wenJianLieBiao
       .filter((wenJian) => wenJian.endsWith('.json') && wenJian.startsWith('v'))
       .sort((a, b) => {
@@ -51,7 +51,7 @@ export async function jiaZaiZuiXinCiKu(qiangZhiShuaXin = false): Promise<CiKuBan
     }
 
     const zuiXinWenJian = banBenWenJian[0]
-    const wenJingLuJing = path.join(CI_KU_MU_LU, zuiXinWenJian)
+    const wenJingLuJing = path.join(CiKuMuLu, zuiXinWenJian)
     const wenJianNeiRong = await fs.readFile(wenJingLuJing, 'utf-8')
     const ciKu = JSON.parse(wenJianNeiRong) as CiKuBanBen
 
@@ -134,4 +134,4 @@ function qingChuHuanCunNeiBu(): void {
   huanCunShiJian = 0
 }
 
-export { qingChuHuanCunNeiBu as qingChuHuanCun, qingChuHuanCunNeiBu as chongZhiCiKuHuanCun }
+export {qingChuHuanCunNeiBu as chongZhiCiKuHuanCun}

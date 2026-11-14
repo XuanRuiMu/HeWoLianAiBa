@@ -4,6 +4,7 @@ import { gouJianDirectorPrompt } from './Prompt构建器'
 import { paiRuZhongShiDuiLie } from './重试队列'
 import { zhuRuBenLunTuXiangKuai } from './对话渲染'
 import { 检索通用知识, type 通用知识检索结果 } from './通用知识检索'
+import { BiaoQingYunXingBiaoQian } from '../config/表情包配置'
 import type { DuiHuaKuai } from '../utils/DeepSeek客户端'
 import type { AIYinQingShuRu, DirectorCeLue } from '../types'
 import type { CanShuShangXiaWen } from '../config/AI参数策略'
@@ -16,15 +17,13 @@ export interface DirectorJieGuo {
   yuan_wen?: string
 }
 
-const YUN_XU_YI_TU = new Set([
-  '好笑', '感动', '无语', '赞同', '撒娇', '安慰', '庆祝', '破冰', '告别', '卖萌', '生气', '委屈',
-])
+const YunXuYiTu = new Set<string>(BiaoQingYunXingBiaoQian)
 
 function biaoQingYiTuZhi(zhi: unknown): string | null {
   if (typeof zhi !== 'string') return null
   const qingLi = zhi.trim()
   if (qingLi === '' || qingLi === 'null') return null
-  return YUN_XU_YI_TU.has(qingLi) ? qingLi : null
+  return YunXuYiTu.has(qingLi) ? qingLi : null
 }
 
 function moRenCeLue(): DirectorCeLue {

@@ -1,4 +1,4 @@
-import { AI_PEI_ZHI, yingYongHuiDuCanShu } from './AI配置'
+import { AiPeiZhi, yingYongHuiDuCanShu } from './AI配置'
 import type { MoXingCanShu } from './AI配置'
 import type { AIJiaoSeXinXi } from '../types'
 
@@ -7,7 +7,7 @@ export function gouJianJiaoSeShangXiaWen(
 ): CanShuShangXiaWen['jiaoSe'] {
   if (!jiaoSe) return undefined
   const wenBen = [jiaoSe.xing_ge, jiaoSe.yan_yu_feng_ge].filter(Boolean).join('')
-  const faSan = FA_SAN_GUAN_JIAN_CI.some((ci) => wenBen.includes(ci))
+  const faSan = FaSanGuanJianCi.some((ci) => wenBen.includes(ci))
   return {
     ie_lei_xing: jiaoSe.ie_lei_xing,
     re_shen_lei_xing: jiaoSe.re_shen_lei_xing,
@@ -31,41 +31,41 @@ export interface CanShuShangXiaWen {
   changJing?: 'riChang' | 'chaoJia' | 'biaoBai' | 'langMan' | 'anWei' | 'shenJingBing' | string
 }
 
-export const MAN_RE_HAO_GAN_DU_JIA_CHENG = 1.15
+export const ManReHaoGanDuJiaCheng = 1.15
 
 export function shiFouManRe(shangXiaWen?: CanShuShangXiaWen): boolean {
   return shangXiaWen?.jiaoSe?.re_shen_lei_xing === '慢热'
 }
 
-const WEN_DU_XIA_XIAN = 0
-const WEN_DU_SHANG_XIAN = 2
+const WenDuXiaXian = 0
+const WenDuShangXian = 2
 
-export const XIE_SHOU_WEN_DU_SHANG_XIAN = Math.min(
-  WEN_DU_SHANG_XIAN,
+export const XieShouWenDuShangXian = Math.min(
+  WenDuShangXian,
   Math.max(0, parseFloat(process.env['WRITER_WENDU_SHANG_XIAN'] || '1.15') || 1.15),
 )
 
-const NUAN_XING = ['温柔', '浪漫', '热情', '活泼', '撒娇', '黏人', '黏']
-const LI_XING = ['理性', '冷静', '严谨', '克制', '高冷', '毒舌', '冷漠']
-const FA_SAN_GUAN_JIAN_CI = ['发散', '无厘头', '脑洞', '恶搞', '沙雕']
+const NuanXing = ['温柔', '浪漫', '热情', '活泼', '撒娇', '黏人', '黏']
+const LiXing = ['理性', '冷静', '严谨', '克制', '高冷', '毒舌', '冷漠']
+const FaSanGuanJianCi = ['发散', '无厘头', '脑洞', '恶搞', '沙雕']
 
-const TOP_P_SI_KAO_XIA_XIAN = 0.95
+const TopPSiKaoXiaXian = 0.95
 
 function qianZhiWenDu(wenDu: number): number {
-  const qianZhi = Math.min(WEN_DU_SHANG_XIAN, Math.max(WEN_DU_XIA_XIAN, wenDu))
+  const qianZhi = Math.min(WenDuShangXian, Math.max(WenDuXiaXian, wenDu))
   return Number(qianZhi.toFixed(2))
 }
 
 export function jiSuanAIChanShu(
-  moXingLeiXing: keyof typeof AI_PEI_ZHI.moXing,
+  moXingLeiXing: keyof typeof AiPeiZhi.moXing,
   shangXiaWen?: CanShuShangXiaWen,
 ): MoXingCanShu {
-  const ji = AI_PEI_ZHI.moXing[moXingLeiXing]
+  const ji = AiPeiZhi.moXing[moXingLeiXing]
 
   if (ji.siKaoMoShi === 'enabled') {
     return yingYongHuiDuCanShu(moXingLeiXing, {
       moXing: ji.moXing,
-      top_p: Math.max(TOP_P_SI_KAO_XIA_XIAN, ji.top_p ?? TOP_P_SI_KAO_XIA_XIAN),
+      top_p: Math.max(TopPSiKaoXiaXian, ji.top_p ?? TopPSiKaoXiaXian),
       zuiDaTokens: ji.zuiDaTokens,
       siKaoMoShi: ji.siKaoMoShi,
       reasoningEffort: ji.reasoningEffort,
@@ -88,11 +88,11 @@ export function jiSuanAIChanShu(
     const wenBen = [j.xing_ge, j.yan_yu_feng_ge].filter(Boolean).join('')
     const faSan =
       j.shi_fou_fa_san_si_wei === true ||
-      FA_SAN_GUAN_JIAN_CI.some((ci) => wenBen.includes(ci))
+      FaSanGuanJianCi.some((ci) => wenBen.includes(ci))
     if (faSan) wenDu += 0.05
 
-    if (NUAN_XING.some((ci) => wenBen.includes(ci))) wenDu += 0.1
-    if (LI_XING.some((ci) => wenBen.includes(ci))) wenDu -= 0.1
+    if (NuanXing.some((ci) => wenBen.includes(ci))) wenDu += 0.1
+    if (LiXing.some((ci) => wenBen.includes(ci))) wenDu -= 0.1
   }
 
   const guanXiJieDuan = shangXiaWen?.haoGanDu?.guan_xi_jie_duan
@@ -105,7 +105,7 @@ export function jiSuanAIChanShu(
   else if (changJing === 'anWei') wenDu += 0.05
 
   wenDu = qianZhiWenDu(wenDu)
-  if (moXingLeiXing === 'XieShou') wenDu = Math.min(wenDu, XIE_SHOU_WEN_DU_SHANG_XIAN)
+  if (moXingLeiXing === 'XieShou') wenDu = Math.min(wenDu, XieShouWenDuShangXian)
 
   const jiChu: MoXingCanShu = {
     moXing: ji.moXing,

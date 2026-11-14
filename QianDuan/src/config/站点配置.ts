@@ -2,7 +2,7 @@ export const yingYongBanBen = '1.3.0'
 
 export const shengChengJiaoSeChaoShiHaoMiao = 120000
 
-export const BUJU_PEI_ZHI = {
+export const BujuPeiZhi = {
   jianPanZhanKaiYuZhi: 150,
 } as const
 

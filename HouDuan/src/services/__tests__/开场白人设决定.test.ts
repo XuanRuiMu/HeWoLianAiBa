@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AI_PEI_ZHI } from '../../config/AI配置'
+import { AiPeiZhi } from '../../config/AI配置'
 import {
   dangWeiZhuanGaiLv,
   jieXiZhuDongDangWei,
@@ -27,7 +27,7 @@ const 人设: KaiChangBaiShengChengCanShu = {
 
 describe('开场白由人设决定', () => {
   it('四档映射到配置里的开口率，不是随机数', () => {
-    const 表 = AI_PEI_ZHI.prompt.kaiChangBaiZhuDongDangWei
+    const 表 = AiPeiZhi.prompt.kaiChangBaiZhuDongDangWei
     expect(dangWeiZhuanGaiLv('主动型')).toBe(表['主动型'])
     expect(dangWeiZhuanGaiLv('中间型')).toBe(表['中间型'])
     expect(dangWeiZhuanGaiLv('被动型')).toBe(表['被动型'])
@@ -41,7 +41,7 @@ describe('开场白由人设决定', () => {
   })
 
   it('四档错峰后整体期望落在 50% 附近', () => {
-    const 表 = AI_PEI_ZHI.prompt.kaiChangBaiZhuDongDangWei
+    const 表 = AiPeiZhi.prompt.kaiChangBaiZhuDongDangWei
     const 分布: Record<string, number> = { 主动型: 0.37, 中间型: 0.51, 被动型: 0.12 }
     const 期望 = Object.entries(分布).reduce((he, [dangWei, quan]) => he + 表[dangWei] * quan, 0)
     expect(期望).toBeGreaterThan(0.4)
@@ -49,8 +49,8 @@ describe('开场白由人设决定', () => {
   })
 
   it('未知档位退回默认档，不抛错', () => {
-    expect(jieXiZhuDongDangWei('??')).toBe(AI_PEI_ZHI.prompt.kaiChangBaiMoRenZhuDongDangWei)
-    expect(jieXiZhuDongDangWei(undefined)).toBe(AI_PEI_ZHI.prompt.kaiChangBaiMoRenZhuDongDangWei)
+    expect(jieXiZhuDongDangWei('??')).toBe(AiPeiZhi.prompt.kaiChangBaiMoRenZhuDongDangWei)
+    expect(jieXiZhuDongDangWei(undefined)).toBe(AiPeiZhi.prompt.kaiChangBaiMoRenZhuDongDangWei)
   })
 
   it('档位名夹在多余文字里也能认出来', () => {
@@ -96,7 +96,7 @@ describe('开场白生成结果的落库口径', () => {
       xiao_xi_lie_biao: ['嗨'],
     }))
     const jieGuo = await shengChengKaiChangBai(人设)
-    expect(jieGuo.zhu_dong_dang_wei).toBe(AI_PEI_ZHI.prompt.kaiChangBaiMoRenZhuDongDangWei)
+    expect(jieGuo.zhu_dong_dang_wei).toBe(AiPeiZhi.prompt.kaiChangBaiMoRenZhuDongDangWei)
     sheZhiKaiChangBaiMock(null)
   })
 })

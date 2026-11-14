@@ -1,11 +1,11 @@
 import { 数据库 } from '../数据库'
 import { yanZhengUUID } from '../utils/验证'
 
-export const JIAO_SE_BIAN_HAO_ZHENG_ZE = /^JS[0-9A-F]{16}$/
-export const YONG_HU_BIAN_HAO_ZHENG_ZE = /^YH[0-9A-F]{16}$/
+export const JiaoSeBianHaoZhengZe = /^JS[0-9A-F]{16}$/
+export const YongHuBianHaoZhengZe = /^YH[0-9A-F]{16}$/
 
-const HUAN_CUN_SHANG_XIAN = 2000
-const HUAN_CUN_HAO_MIAO = 5 * 60 * 1000
+const HuanCunShangXian = 2000
+const HuanCunHaoMiao = 5 * 60 * 1000
 
 interface HuanCunXiang {
   zhi: string | null
@@ -18,14 +18,14 @@ const jiaoSeFanXiangHuanCun = new Map<string, HuanCunXiang>()
 const yongHuFanXiangHuanCun = new Map<string, HuanCunXiang>()
 
 function xieHuanCun(cun: Map<string, HuanCunXiang>, jian: string, zhi: string | null): void {
-  if (cun.size >= HUAN_CUN_SHANG_XIAN) cun.clear()
+  if (cun.size >= HuanCunShangXian) cun.clear()
   cun.set(jian, { zhi, shiJian: Date.now() })
 }
 
 function duHuanCun(cun: Map<string, HuanCunXiang>, jian: string): string | null | undefined {
   const xiang = cun.get(jian)
   if (!xiang) return undefined
-  if (Date.now() - xiang.shiJian > HUAN_CUN_HAO_MIAO) {
+  if (Date.now() - xiang.shiJian > HuanCunHaoMiao) {
     cun.delete(jian)
     return undefined
   }
@@ -40,11 +40,11 @@ export function qingKongGongKaiBianHaoHuanCun(): void {
 }
 
 export function shiHeFaJiaoSeBianHao(zhi: unknown): zhi is string {
-  return typeof zhi === 'string' && JIAO_SE_BIAN_HAO_ZHENG_ZE.test(zhi)
+  return typeof zhi === 'string' && JiaoSeBianHaoZhengZe.test(zhi)
 }
 
 export function shiHeFaYongHuBianHao(zhi: unknown): zhi is string {
-  return typeof zhi === 'string' && YONG_HU_BIAN_HAO_ZHENG_ZE.test(zhi)
+  return typeof zhi === 'string' && YongHuBianHaoZhengZe.test(zhi)
 }
 
 export function shiHeFaGongKaiBianHao(zhi: unknown): zhi is string {

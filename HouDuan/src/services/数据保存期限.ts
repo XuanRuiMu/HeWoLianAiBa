@@ -3,9 +3,9 @@ import { peiZhi } from '../config'
 import { 日志引擎 } from '../utils/日志引擎'
 import { shanChuMeiTiWenJian } from './媒体存储'
 
-const PI_LIANG_DA_XIAO = 5000
+const PiLiangDaXiao = 5000
 
-export const SHU_JU_BAO_CUN_QI_XIAN = {
+export const ShuJuBaoCunQiXian = {
   liaoTianJiLuTian: 30,
   yuYinWenJianTian: 7,
   tongZhiTian: 90,
@@ -21,11 +21,11 @@ export async function qingLiGuoQiLiaoTianJiLu(): Promise<number> {
          WHERE "创建时间" < NOW() - ($1 || ' days')::interval
          LIMIT $2
        )`,
-      [String(SHU_JU_BAO_CUN_QI_XIAN.liaoTianJiLuTian), PI_LIANG_DA_XIAO],
+      [String(ShuJuBaoCunQiXian.liaoTianJiLuTian), PiLiangDaXiao],
     )
     const benPi = jieGuo.rowCount ?? 0
     zongShanChu += benPi
-    if (benPi < PI_LIANG_DA_XIAO) break
+    if (benPi < PiLiangDaXiao) break
   }
   return zongShanChu
 }
@@ -40,11 +40,11 @@ export async function qingLiGuoQiTongZhi(): Promise<number> {
          WHERE "创建时间" < NOW() - ($1 || ' days')::interval
          LIMIT $2
        )`,
-      [String(SHU_JU_BAO_CUN_QI_XIAN.tongZhiTian), PI_LIANG_DA_XIAO],
+      [String(ShuJuBaoCunQiXian.tongZhiTian), PiLiangDaXiao],
     )
     const benPi = jieGuo.rowCount ?? 0
     zongShanChu += benPi
-    if (benPi < PI_LIANG_DA_XIAO) break
+    if (benPi < PiLiangDaXiao) break
   }
   return zongShanChu
 }
@@ -61,7 +61,7 @@ export async function qingLiGuoQiYuYinWenJian(): Promise<number> {
          LIMIT $2
        )
        RETURNING "SHA256"`,
-      [String(SHU_JU_BAO_CUN_QI_XIAN.yuYinWenJianTian), PI_LIANG_DA_XIAO],
+      [String(ShuJuBaoCunQiXian.yuYinWenJianTian), PiLiangDaXiao],
     )
     const benPi = jieGuo.rowCount ?? 0
     zongShanChu += benPi
@@ -70,7 +70,7 @@ export async function qingLiGuoQiYuYinWenJian(): Promise<number> {
       const yinYong = await 数据库.query('SELECT 1 FROM "媒体文件" WHERE "SHA256" = $1 LIMIT 1', [sha])
       if ((yinYong.rowCount ?? 0) === 0) await shanChuMeiTiWenJian(sha)
     }
-    if (benPi < PI_LIANG_DA_XIAO) break
+    if (benPi < PiLiangDaXiao) break
   }
   return zongShanChu
 }

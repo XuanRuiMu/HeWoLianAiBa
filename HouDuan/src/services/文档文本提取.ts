@@ -4,10 +4,10 @@ import { 数据库 } from '../数据库'
 import { debug日志 } from '../utils/debug日志'
 import { yanZhengUUID } from '../utils/验证'
 import {
-  GUI_DANG_LEI_XING,
-  WEN_DANG_HOU_ZHUI_LEI_XING,
-  WEN_DANG_MIME_LEI_XING,
-  WEN_DANG_TI_QU_PEI_ZHI,
+  GuiDangLeiXing,
+  WenDangHouZhuiLeiXing,
+  WenDangMimeLeiXing,
+  WenDangTiQuPeiZhi,
   type WenDangJieXiLeiXing,
 } from '../config/媒体配置'
 import { huoQuBenDiLuJing } from './媒体存储'
@@ -48,27 +48,27 @@ export function panDingJieXiLeiXing(
   const qingLiMIME = String(mime || '').split(';')[0].trim().toLowerCase()
   const qingMing = String(yuanShiWenJianMing || '').trim().toLowerCase()
   const houZhui = quHouZhui(qingMing)
-  if (houZhui && (GUI_DANG_LEI_XING.houZhui as readonly string[]).includes(houZhui)) return null
-  if (qingLiMIME && (GUI_DANG_LEI_XING.mime as readonly string[]).includes(qingLiMIME)) return null
+  if (houZhui && (GuiDangLeiXing.houZhui as readonly string[]).includes(houZhui)) return null
+  if (qingLiMIME && (GuiDangLeiXing.mime as readonly string[]).includes(qingLiMIME)) return null
   if (qingMing.includes('.') && qingMing.endsWith('.')) return null
-  const youMIME = WEN_DANG_MIME_LEI_XING[qingLiMIME]
+  const youMIME = WenDangMimeLeiXing[qingLiMIME]
   if (youMIME) {
-    const chongTu = WEN_DANG_HOU_ZHUI_LEI_XING[houZhui]
+    const chongTu = WenDangHouZhuiLeiXing[houZhui]
     if (chongTu && chongTu !== youMIME) return null
     return youMIME
   }
   if (qingLiMIME && qingLiMIME !== 'application/octet-stream' && houZhui) {
-    const youHouZhui = WEN_DANG_HOU_ZHUI_LEI_XING[houZhui]
+    const youHouZhui = WenDangHouZhuiLeiXing[houZhui]
     return youHouZhui ?? null
   }
-  const chunHouZhui = WEN_DANG_HOU_ZHUI_LEI_XING[houZhui]
+  const chunHouZhui = WenDangHouZhuiLeiXing[houZhui]
   return chunHouZhui ?? null
 }
 
-const DAI_MA_SHI_TI = /&(#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6}|[a-zA-Z][a-zA-Z0-9]{1,9});/g
+const DaiMaShiTi = /&(#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6}|[a-zA-Z][a-zA-Z0-9]{1,9});/g
 
 function jieXinShiTi(wenBen: string): string {
-  return wenBen.replace(DAI_MA_SHI_TI, (zheng, ming: string) => {
+  return wenBen.replace(DaiMaShiTi, (zheng, ming: string) => {
     if (ming.charCodeAt(0) === 35) {
       const shiLiu = ming.charCodeAt(1) === 120 || ming.charCodeAt(1) === 88
       const ma = shiLiu ? parseInt(ming.slice(2), 16) : parseInt(ming.slice(1), 10)
@@ -140,7 +140,7 @@ function kongZhiZhanBi(wenBen: string): number {
 
 export function anMaDianCaiDuan(
   wenBen: string,
-  shangXian: number = WEN_DANG_TI_QU_PEI_ZHI.tiQuWenBenZiFuShangXian,
+  shangXian: number = WenDangTiQuPeiZhi.tiQuWenBenZiFuShangXian,
 ): DuiHuaWenJianTiQu {
   if (shangXian <= 0) return { wenBen: '', beiCaiDuan: wenBen.length > 0 }
   let pianYi = 0
@@ -166,7 +166,7 @@ function shouKouJieGuo(yuanShi: string | null): DuiHuaWenJianTiQu | null {
     .replace(/\n{3,}/g, '\n\n')
     .trim()
   if (!qingLi) return null
-  if (kongZhiZhanBi(qingLi) > WEN_DANG_TI_QU_PEI_ZHI.kongZhiFuBiLiShangXian) {
+  if (kongZhiZhanBi(qingLi) > WenDangTiQuPeiZhi.kongZhiFuBiLiShangXian) {
     jiLuJiangJi('伪装扩展名或二进制内容')
     return null
   }
@@ -182,10 +182,10 @@ function jieYaOOXMLTiaoMu(
   ziJie: Buffer,
   xuYao: (ming: string) => boolean,
 ): Promise<Record<string, Uint8Array>> {
-  const danTiaoShangXian = WEN_DANG_TI_QU_PEI_ZHI.danTiaoMuJieYaZiJieShangXian
-  const zongZiJieShangXian = WEN_DANG_TI_QU_PEI_ZHI.jieYaZongZiJieShangXian
-  const tiaoMuShangXian = WEN_DANG_TI_QU_PEI_ZHI.jieYaTiaoMuShuShangXian
-  const fenYeZiJie = WEN_DANG_TI_QU_PEI_ZHI.jieYaFenYeZiJie
+  const danTiaoShangXian = WenDangTiQuPeiZhi.danTiaoMuJieYaZiJieShangXian
+  const zongZiJieShangXian = WenDangTiQuPeiZhi.jieYaZongZiJieShangXian
+  const tiaoMuShangXian = WenDangTiQuPeiZhi.jieYaTiaoMuShuShangXian
+  const fenYeZiJie = WenDangTiQuPeiZhi.jieYaFenYeZiJie
   return new Promise((jieJue) => {
     const chengPin: Record<string, Uint8Array> = {}
     let dangQian: { ming: string; pian: Uint8Array[]; ziJie: number } | null = null
@@ -424,11 +424,11 @@ async function anSha256TiQu(
   const luJing = huoQuBenDiLuJing(xing.sha256)
   if (!luJing) return null
   const tongJi = await fs.promises.stat(luJing)
-  if (!tongJi.isFile() || tongJi.size === 0 || tongJi.size > WEN_DANG_TI_QU_PEI_ZHI.danWenJianZiJieShangXian) {
+  if (!tongJi.isFile() || tongJi.size === 0 || tongJi.size > WenDangTiQuPeiZhi.danWenJianZiJieShangXian) {
     return null
   }
   const ziJie = await fs.promises.readFile(luJing)
-  if (ziJie.length === 0 || ziJie.length > WEN_DANG_TI_QU_PEI_ZHI.danWenJianZiJieShangXian) return null
+  if (ziJie.length === 0 || ziJie.length > WenDangTiQuPeiZhi.danWenJianZiJieShangXian) return null
   return await tiQuWenDangWenBen({
     mime: xing.mime,
     yuanShiWenJianMing: xing.yuanShiWenJianMing,
@@ -440,7 +440,7 @@ async function huoQuHuoJieXiWenJian(xing: MeiTiXing): Promise<DuiHuaWenJianTiQu 
   const mingZhong = xing.sha256
   const zaiTu = tiQuHuanCun.get(mingZhong)
   if (zaiTu) return zaiTu
-  if (tiQuHuanCun.size >= WEN_DANG_TI_QU_PEI_ZHI.tiQuHuanCunTiaoMuShangXian) {
+  if (tiQuHuanCun.size >= WenDangTiQuPeiZhi.tiQuHuanCunTiaoMuShangXian) {
     const zuiJiu = tiQuHuanCun.keys().next().value
     if (zuiJiu !== undefined) tiQuHuanCun.delete(zuiJiu)
   }

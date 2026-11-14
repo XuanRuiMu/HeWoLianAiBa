@@ -7,16 +7,16 @@ export type SiKaoShiJian =
   | 'guan-li-yuan-yin-cang-xin-xi'
   | 'guan-li-yuan-hao-gan-du-bian-hua'
 
-export const SI_KAO_SHI_JIAN_BAI_MING_DAN: readonly SiKaoShiJian[] = [
+export const SiKaoShiJianBaiMingDan: readonly SiKaoShiJian[] = [
   'guan-li-yuan-shen-du-si-kao',
   'guan-li-yuan-gou-jian-guo-cheng',
   'guan-li-yuan-yin-cang-xin-xi',
   'guan-li-yuan-hao-gan-du-bian-hua',
 ]
 
-export const SI_KAO_NEI_RONG_ZUI_DA_ZI_FU = 1500
+export const SiKaoNeiRongZuiDaZiFu = 1500
 
-const SI_KAO_TI_SHI = {
+const SiKaoTiShi = {
   weiZhiShiJian: '未知思考事件',
   neiRongWeiKong: '思考内容为空',
   luoKuShiBai: '思考落库失败',
@@ -35,21 +35,21 @@ export interface JiLuSiKaoCanShu {
 
 function qieDuanNeiRong(neiRong: string): { cunChu: string; yuanWenChangDu: number } {
   const yuanWenChangDu = neiRong.length
-  if (yuanWenChangDu <= SI_KAO_NEI_RONG_ZUI_DA_ZI_FU) {
+  if (yuanWenChangDu <= SiKaoNeiRongZuiDaZiFu) {
     return { cunChu: neiRong, yuanWenChangDu }
   }
-  return { cunChu: `${neiRong.slice(0, SI_KAO_NEI_RONG_ZUI_DA_ZI_FU)}……`, yuanWenChangDu }
+  return { cunChu: `${neiRong.slice(0, SiKaoNeiRongZuiDaZiFu)}……`, yuanWenChangDu }
 }
 
 export async function jiLuSiKao(
   canShu: JiLuSiKaoCanShu,
 ): Promise<{ cheng_gong: boolean; ti_shi?: string }> {
-  if (!SI_KAO_SHI_JIAN_BAI_MING_DAN.includes(canShu.shi_jian)) {
-    return { cheng_gong: false, ti_shi: SI_KAO_TI_SHI.weiZhiShiJian }
+  if (!SiKaoShiJianBaiMingDan.includes(canShu.shi_jian)) {
+    return { cheng_gong: false, ti_shi: SiKaoTiShi.weiZhiShiJian }
   }
   const neiRong = canShu.nei_rong.trim()
   if (!neiRong) {
-    return { cheng_gong: false, ti_shi: SI_KAO_TI_SHI.neiRongWeiKong }
+    return { cheng_gong: false, ti_shi: SiKaoTiShi.neiRongWeiKong }
   }
   const { cunChu, yuanWenChangDu } = qieDuanNeiRong(canShu.nei_rong)
   try {
@@ -71,6 +71,6 @@ export async function jiLuSiKao(
     return { cheng_gong: true }
   } catch (cuoWu) {
     debug日志.error('思考记录', '思考落库失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
-    return { cheng_gong: false, ti_shi: SI_KAO_TI_SHI.luoKuShiBai }
+    return { cheng_gong: false, ti_shi: SiKaoTiShi.luoKuShiBai }
   }
 }

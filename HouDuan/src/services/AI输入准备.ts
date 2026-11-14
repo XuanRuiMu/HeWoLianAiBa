@@ -1,6 +1,6 @@
 import { 数据库 } from '../数据库'
 import { huiFuYanChiJiZhunHaoMiao } from '../config/角色配置'
-import { AI_PEI_ZHI } from '../config/AI配置'
+import { AiPeiZhi } from '../config/AI配置'
 import { jiLuXiaoXiCaoZuo } from '../utils/debug日志'
 import { 内部转展示, 读回性别 } from '../utils/性别'
 import type {
@@ -134,7 +134,7 @@ export async function huoQuAIJiaoSeXinXi(
 export async function huoQuZuiJinDuiHuaLiShi(
   yong_hu_id: string,
   jiao_se_id: string,
-  shu_liang: number = AI_PEI_ZHI.prompt.liShiXiaoXiShuLiang + AI_PEI_ZHI.prompt.liShiCaiDuanBuZhang,
+  shu_liang: number = AiPeiZhi.prompt.liShiXiaoXiShuLiang + AiPeiZhi.prompt.liShiCaiDuanBuZhang,
 ): Promise<DuiHuaLiShiXiang[]> {
   const jieGuo = await 数据库.query(
     `SELECT m.*, mf."SHA256" AS "媒体SHA256", mf."MIME" AS "媒体MIME", mf."类别" AS "媒体类别",
@@ -191,14 +191,14 @@ export async function huoQuZuiJinDuiHuaLiShi(
 export async function baoCunJiaoSeXiaoXi(
   canShu: BaoCunJiaoSeXiaoXiCanShu,
 ): Promise<XiaoXiXinXi> {
-  const ZUI_DA_CHONG_SHI_CI_SHU = 10
-  const CHU_SHI_CHONG_SHI_YAN_CHI_MS = 50
+  const ZuiDaChongShiCiShu = 10
+  const ChuShiChongShiYanChiMs = 50
 
   const huiHuaSuoJian = huiHuaXiaoXiSuoJian(canShu.yong_hu_id, canShu.jiao_se_id)
 
   let lastError: Error | null = null
 
-  for (let ciShu = 0; ciShu <= ZUI_DA_CHONG_SHI_CI_SHU; ciShu++) {
+  for (let ciShu = 0; ciShu <= ZuiDaChongShiCiShu; ciShu++) {
     const keHuDuan = await 数据库.connect()
     try {
       await keHuDuan.query('BEGIN')
@@ -251,8 +251,8 @@ export async function baoCunJiaoSeXiaoXi(
       const pgError = cuoWu as { code?: string; constraint?: string }
 
       if (pgError.code === '23505' && pgError.constraint?.includes('客户端序号')) {
-        if (ciShu < ZUI_DA_CHONG_SHI_CI_SHU) {
-          const yanChi = CHU_SHI_CHONG_SHI_YAN_CHI_MS * Math.pow(2, ciShu)
+        if (ciShu < ZuiDaChongShiCiShu) {
+          const yanChi = ChuShiChongShiYanChiMs * Math.pow(2, ciShu)
           await new Promise(resolve => setTimeout(resolve, yanChi))
           continue
         }

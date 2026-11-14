@@ -1,6 +1,6 @@
 import { huoQuFanYi } from '@/config/翻译表'
-import { BIAO_QING_QU_TU_PEI_ZHI } from '@/config/表情配置'
-import { MO_REN_WEN_JIAN_MING } from '@/api/表情'
+import { BiaoQingQuTuPeiZhi } from '@/config/表情配置'
+import { MoRenWenJianMing } from '@/api/表情'
 import type { TianJiaJieGuo } from '@/composables/use表情提交'
 import type { 消息 } from '@/types/类型定义'
 
@@ -30,7 +30,7 @@ function keChongQian(zhuangTaiMa: number): boolean {
 
 async function laHuiWenJian(diZhi: string): Promise<Response | null> {
   const kongZhi = new AbortController()
-  const dingShiQi = setTimeout(() => kongZhi.abort(), BIAO_QING_QU_TU_PEI_ZHI.quTuChaoShiHaoMiao)
+  const dingShiQi = setTimeout(() => kongZhi.abort(), BiaoQingQuTuPeiZhi.quTuChaoShiHaoMiao)
   try {
     return await globalThis.fetch(diZhi, { signal: kongZhi.signal })
   } catch {
@@ -68,7 +68,7 @@ export function use添加到表情<T extends BiaoQingMuBiaoXiaoXi = 消息>(
         return
       }
       const blob = await xiangYing.blob()
-      const wenJianMing = yiLai.huoQuWenJianMing?.(xiaoXi) || MO_REN_WEN_JIAN_MING
+      const wenJianMing = yiLai.huoQuWenJianMing?.(xiaoXi) || MoRenWenJianMing
       const jieGuo = await yiLai.tiJiaoWenJian(new File([blob], wenJianMing, { type: blob.type }))
       if (jieGuo === 'xinZeng') yiLai.sheZhiTiShi(huoQuFanYi('duoMeiTi', 'biaoQingYiTianJia'))
       else if (jieGuo === 'yiCunZai') yiLai.sheZhiTiShi(huoQuFanYi('duoMeiTi', 'biaoQingYiZaiKu'))

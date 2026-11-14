@@ -20,7 +20,7 @@
 </template>
 
 <script lang="ts">
-export const MO_REN_ZI = { jiaose: '👤', yonghu: '🧑', duiju: '⚔️' } as const
+export const MoRenZi = { jiaose: '👤', yonghu: '🧑', duiju: '⚔️' } as const
 </script>
 
 <script setup lang="ts">
@@ -39,7 +39,7 @@ const chuCuoWu = defineEmits<{ error: [] }>()
 const shiTu = computed(() => shiTuPianDiZhi(props.touXiang))
 const tuDiZhi = computed(() => props.touXiang ?? '')
 const moRenZi = computed(
-  () => props.moRenZi?.trim() || (props.shenFen ? MO_REN_ZI[props.shenFen] : ''),
+  () => props.moRenZi?.trim() || (props.shenFen ? MoRenZi[props.shenFen] : ''),
 )
 const tiHuanWenBen = huoQuFanYi('haoYou', 'touXiang')
 </script>

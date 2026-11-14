@@ -1,6 +1,6 @@
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
-import { LEI_BIE_DAO_XIAO_XI_LEI_XING, SHEN_HE_FU_WU_BU_KE_YONG_JIAN, type MeiTiLeiBie } from '../config/媒体配置'
+import { LeiBieDaoXiaoXiLeiXing, ShenHeFuWuBuKeYongJian, type MeiTiLeiBie } from '../config/媒体配置'
 import { shenHeTuPianAnQuan } from './DeepSeek视觉审核'
 import { yanZhengUUID } from '../utils/验证'
 
@@ -24,7 +24,7 @@ export async function yanZhengHaoYouMeiTiGuiShu(
   const hang = chaXun.rows[0]
   if (String(hang.上传者ID) !== yongHuId) return meiTiBuKeYong()
   const leiBie = String(hang.类别 ?? '')
-  if (LEI_BIE_DAO_XIAO_XI_LEI_XING[leiBie as MeiTiLeiBie] !== leiXing) return meiTiBuKeYong()
+  if (LeiBieDaoXiaoXiLeiXing[leiBie as MeiTiLeiBie] !== leiXing) return meiTiBuKeYong()
   return { he_fa: true, ti_shi: '' }
 }
 
@@ -44,7 +44,7 @@ export async function shenHeHaoYouMeiTi(
   if (!shiTuPian) return { wei_gui: false, lei_xing: '', li_you: '' }
   const { huoQuBenDiLuJing } = await import('./媒体存储')
   const luJing = huoQuBenDiLuJing(String(chaXun.rows[0].SHA256 || ''))
-  if (!luJing) return { wei_gui: true, lei_xing: SHEN_HE_FU_WU_BU_KE_YONG_JIAN, li_you: huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu') }
+  if (!luJing) return { wei_gui: true, lei_xing: ShenHeFuWuBuKeYongJian, li_you: huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu') }
   const jieGuo = await shenHeTuPianAnQuan(luJing)
   return { wei_gui: jieGuo.wei_gui, lei_xing: jieGuo.lei_xing || '', li_you: jieGuo.li_you || '' }
 }

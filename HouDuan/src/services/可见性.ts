@@ -1,6 +1,6 @@
 import { 数据库 } from '../数据库'
 
-export const KE_JIAN_XING_LIE_BIAO = [
+export const KeJianXingLieBiao = [
   'gong_kai',
   'jin_hao_you',
   'jin_bu_fen_ren',
@@ -8,10 +8,10 @@ export const KE_JIAN_XING_LIE_BIAO = [
   'jin_zi_ji',
 ] as const
 
-export type KeJianXing = (typeof KE_JIAN_XING_LIE_BIAO)[number]
+export type KeJianXing = (typeof KeJianXingLieBiao)[number]
 
 export function shiHeFaKeJianXing(zhi: unknown): zhi is KeJianXing {
-  return typeof zhi === 'string' && (KE_JIAN_XING_LIE_BIAO as readonly string[]).includes(zhi)
+  return typeof zhi === 'string' && (KeJianXingLieBiao as readonly string[]).includes(zhi)
 }
 
 export interface KeJianShangXiaWen {

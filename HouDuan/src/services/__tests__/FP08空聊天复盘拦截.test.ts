@@ -40,20 +40,20 @@ vi.mock('../文档文本提取', () => ({ buQiWenJianTiQuWenBen: vi.fn(async (li
 vi.mock('../../utils/DeepSeek客户端', () => ({ genJuPeiZhiTiaoYong: 调用模型 }))
 
 import {
-  FU_PAN_YOU_XIAO_XIAO_XI_SHU_YU_JU,
+  FuPanYouXiaoXiaoXiShuYuJu,
   huoQuFuPanYouXiaoXiaoXiShu,
   shengChengFuPan,
   复盘状态,
 } from '../复盘'
 
-const YONG_HU = '11111111-1111-4111-8111-111111111111'
-const JIAO_SE = '22222222-2222-4222-8222-222222222222'
-const DANG_AN = '33333333-3333-4333-8333-333333333333'
+const YongHu = '11111111-1111-4111-8111-111111111111'
+const JiaoSe = '22222222-2222-4222-8222-222222222222'
+const DangAn = '33333333-3333-4333-8333-333333333333'
 
 const 正常消息 = {
   id: 'm-1',
-  hui_hua_id: JIAO_SE,
-  fa_song_zhe_id: YONG_HU,
+  hui_hua_id: JiaoSe,
+  fa_song_zhe_id: YongHu,
   fa_song_zhe_lei_xing: 'yonghu',
   ai_biao_shi: false,
   nei_rong: '今天好累',
@@ -72,29 +72,29 @@ beforeEach(() => {
 
 describe('空聊天复盘拦截', () => {
   it('有效消息计数只收真实对话，排除系统消息、撤回与内心活动', async () => {
-    expect(FU_PAN_YOU_XIAO_XIAO_XI_SHU_YU_JU).toContain(`"发送者" IN ('yonghu', 'jiaose')`)
-    expect(FU_PAN_YOU_XIAO_XIAO_XI_SHU_YU_JU).toContain('COALESCE("已撤回", false) = false')
-    expect(FU_PAN_YOU_XIAO_XIAO_XI_SHU_YU_JU).toContain('COALESCE("类型", \'wenBen\') <> ALL($3::varchar[])')
+    expect(FuPanYouXiaoXiaoXiShuYuJu).toContain(`"发送者" IN ('yonghu', 'jiaose')`)
+    expect(FuPanYouXiaoXiaoXiShuYuJu).toContain('COALESCE("已撤回", false) = false')
+    expect(FuPanYouXiaoXiaoXiShuYuJu).toContain('COALESCE("类型", \'wenBen\') <> ALL($3::varchar[])')
 
     查询.mockResolvedValueOnce({ rows: [{ 有效消息数: 0 }] })
-    await expect(huoQuFuPanYouXiaoXiaoXiShu(YONG_HU, JIAO_SE)).resolves.toBe(0)
-    expect(查询).toHaveBeenCalledWith(FU_PAN_YOU_XIAO_XIAO_XI_SHU_YU_JU, [
-      YONG_HU,
-      JIAO_SE,
+    await expect(huoQuFuPanYouXiaoXiaoXiShu(YongHu, JiaoSe)).resolves.toBe(0)
+    expect(查询).toHaveBeenCalledWith(FuPanYouXiaoXiaoXiShuYuJu, [
+      YongHu,
+      JiaoSe,
       ['neiXinHuoDong'],
     ])
 
     查询.mockResolvedValueOnce({ rows: [{ 有效消息数: '7' }] })
-    await expect(huoQuFuPanYouXiaoXiaoXiShu(YONG_HU, JIAO_SE)).resolves.toBe(7)
+    await expect(huoQuFuPanYouXiaoXiaoXiShu(YongHu, JiaoSe)).resolves.toBe(7)
 
     查询.mockResolvedValueOnce({ rows: [] })
-    await expect(huoQuFuPanYouXiaoXiaoXiShu(YONG_HU, JIAO_SE)).resolves.toBe(0)
+    await expect(huoQuFuPanYouXiaoXiaoXiShu(YongHu, JiaoSe)).resolves.toBe(0)
   })
 
   it('零有效消息时不调模型、不写库，直接返回空状态', async () => {
     查询.mockResolvedValueOnce({ rows: [{ 有效消息数: 0 }] })
 
-    const jieGuo = await shengChengFuPan(YONG_HU, JIAO_SE, DANG_AN)
+    const jieGuo = await shengChengFuPan(YongHu, JiaoSe, DangAn)
 
     expect(jieGuo).toBeNull()
     expect(消息列表).not.toHaveBeenCalled()
@@ -107,7 +107,7 @@ describe('空聊天复盘拦截', () => {
   it('仅有系统消息与撤回消息的聊天同样不进入生成链路', async () => {
     查询.mockResolvedValueOnce({ rows: [{ 有效消息数: 0 }] })
 
-    const jieGuo = await shengChengFuPan(YONG_HU, JIAO_SE, DANG_AN)
+    const jieGuo = await shengChengFuPan(YongHu, JiaoSe, DangAn)
 
     expect(jieGuo).toBeNull()
     expect(消息列表).not.toHaveBeenCalled()
@@ -134,12 +134,12 @@ describe('空聊天复盘拦截', () => {
       }),
     })
 
-    const jieGuo = await shengChengFuPan(YONG_HU, JIAO_SE, DANG_AN)
+    const jieGuo = await shengChengFuPan(YongHu, JiaoSe, DangAn)
 
     expect(jieGuo?.fu_pan_nei_rong).toContain('用户表现：节奏稳')
     expect(jieGuo?.fu_pan_pi_zhu).toHaveLength(1)
     expect(调用模型).toHaveBeenCalledTimes(1)
     expect(落库).toHaveBeenCalledTimes(1)
-    expect(落库).toHaveBeenCalledWith(DANG_AN, jieGuo?.fu_pan_nei_rong, jieGuo?.fu_pan_pi_zhu)
+    expect(落库).toHaveBeenCalledWith(DangAn, jieGuo?.fu_pan_nei_rong, jieGuo?.fu_pan_pi_zhu)
   })
 })

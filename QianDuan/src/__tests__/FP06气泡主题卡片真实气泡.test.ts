@@ -5,7 +5,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import QiPaoZhuTiXuanZeQi from '@/components/气泡主题选择器.vue'
 import { huoQuQiPaoDingYi } from '@/config/气泡主题'
-import { QI_PAO_WEN_AN } from '@/config/气泡主题文案'
+import { QiPaoWenAn } from '@/config/气泡主题文案'
 import { huoQuQiPaoBeiJingZhi, type WaiGuanTiaoMu } from '@/config/外观自定义'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
 
@@ -14,13 +14,13 @@ const 读 = (相对: string): string => readFileSync(resolve(源码根, 相对),
 const 卡片源 = 读('components/气泡主题选择器.vue')
 const 容器源 = 读('components/聊天/气泡容器.vue')
 
-const MEI_TI_URL = '/api/媒体/' + 'a'.repeat(64) + '?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=' + 'b'.repeat(64)
+const MeiTiUrl = '/api/媒体/' + 'a'.repeat(64) + '?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=' + 'b'.repeat(64)
 
 function zaoTiaoMu(xuHao: number): WaiGuanTiaoMu {
   return {
     id: 'qipao-' + xuHao,
     mingCheng: '自定义气泡' + xuHao,
-    tuDiZhi: MEI_TI_URL,
+    tuDiZhi: MeiTiUrl,
     wenZiYanSe: '#FFFFFF',
   }
 }
@@ -41,10 +41,10 @@ describe('FP06 气泡主题卡片真实气泡形状', () => {
   it('两个大功能框换位：AI气泡在前（桌面左列），我的气泡在后（桌面右列）', () => {
     const kuang = mount(QiPaoZhuTiXuanZeQi)
     const biaoTiMen = kuang.findAll('.qi-pao-ce-ti').map((jie) => jie.text())
-    expect(biaoTiMen).toEqual([QI_PAO_WEN_AN.aiBiaoTi, QI_PAO_WEN_AN.ziJiBiaoTi])
+    expect(biaoTiMen).toEqual([QiPaoWenAn.aiBiaoTi, QiPaoWenAn.ziJiBiaoTi])
     const ce = kuang.findAll('.qi-pao-ce')
-    expect(ce[0].text()).toContain(QI_PAO_WEN_AN.aiBiaoTi)
-    expect(ce[1].text()).toContain(QI_PAO_WEN_AN.ziJiBiaoTi)
+    expect(ce[0].text()).toContain(QiPaoWenAn.aiBiaoTi)
+    expect(ce[1].text()).toContain(QiPaoWenAn.ziJiBiaoTi)
     kuang.unmount()
   })
 
@@ -111,8 +111,8 @@ describe('FP06 气泡主题卡片真实气泡形状', () => {
   it('预设卡片内联注入真实聊天同名背景变量，尾巴颜色即气泡颜色', () => {
     const kuang = mount(QiPaoZhuTiXuanZeQi)
     const ce = kuang.findAll('.qi-pao-ce')
-    const aiCe = ce.find((qu) => qu.text().includes(QI_PAO_WEN_AN.aiBiaoTi))
-    const ziJiCe = ce.find((qu) => qu.text().includes(QI_PAO_WEN_AN.ziJiBiaoTi))
+    const aiCe = ce.find((qu) => qu.text().includes(QiPaoWenAn.aiBiaoTi))
+    const ziJiCe = ce.find((qu) => qu.text().includes(QiPaoWenAn.ziJiBiaoTi))
     expect(aiCe).toBeTruthy()
     expect(ziJiCe).toBeTruthy()
     const aiKa = aiCe!.get('[data-yu-she="weiXinLv"]').element as HTMLElement

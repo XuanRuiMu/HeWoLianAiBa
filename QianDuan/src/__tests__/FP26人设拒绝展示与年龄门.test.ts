@@ -18,7 +18,7 @@ import { 使用角色生成仓库 } from '@/stores/角色生成'
 import { 使用进入聊天加载 } from '@/composables/use进入聊天加载'
 import type { 生成流程资料 } from '@/stores/角色生成'
 
-const ZI_LIAO: 生成流程资料 = {
+const ZiLiao: 生成流程资料 = {
   xingBie: 'male',
   muBiaoXingBie: 'female',
   xingGeXuanZe: 'INFP',
@@ -51,7 +51,7 @@ describe('FP-26 人设拒绝展示', () => {
         },
       },
     })
-    仓库.kaiShiLiuCheng(ZI_LIAO)
+    仓库.kaiShiLiuCheng(ZiLiao)
     await 仓库.等待完成()
     expect(仓库.zhuangTai).toBe('shi_bai')
     expect(仓库.shiFouShenHeJuJue).toBe(true)
@@ -61,7 +61,7 @@ describe('FP-26 人设拒绝展示', () => {
   it('非拒绝失败不标记拒绝且用通用文案', async () => {
     const 仓库 = 使用角色生成仓库()
     shengChengJiaoSeMock.mockRejectedValue(new Error('network down'))
-    仓库.kaiShiLiuCheng(ZI_LIAO)
+    仓库.kaiShiLiuCheng(ZiLiao)
     await 仓库.等待完成()
     expect(仓库.zhuangTai).toBe('shi_bai')
     expect(仓库.shiFouShenHeJuJue).toBe(false)
@@ -73,7 +73,7 @@ describe('FP-26 人设拒绝展示', () => {
     shengChengJiaoSeMock.mockRejectedValue({
       response: { data: { ti_shi: '年龄需要是10到99之间的整数', cuo_wu_ma: 'ROLE_GENERATION_PERSONA_REJECTED' } },
     })
-    仓库.kaiShiLiuCheng(ZI_LIAO)
+    仓库.kaiShiLiuCheng(ZiLiao)
     await 仓库.等待完成()
     expect(仓库.shiFouShenHeJuJue).toBe(true)
     shengChengJiaoSeMock.mockResolvedValue({
@@ -82,7 +82,7 @@ describe('FP-26 人设拒绝展示', () => {
       xing_bie: 'nv',
       yao_kai_kou: false,
     })
-    仓库.kaiShiLiuCheng(ZI_LIAO)
+    仓库.kaiShiLiuCheng(ZiLiao)
     expect(仓库.shiFouShenHeJuJue).toBe(false)
   })
 })

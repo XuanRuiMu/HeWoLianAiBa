@@ -1,4 +1,4 @@
-import { XIAO_XI_PEI_ZHI } from '@/config/消息配置'
+import { XiaoXiPeiZhi } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/翻译表'
 import type { 消息 } from '@/types/类型定义'
 
@@ -12,8 +12,8 @@ export interface XiaoXiFenZuXiang<X extends ShiJianZaiTi = 消息> {
   xiaoXiLieBiao: X[]
 }
 
-const YI_TIAN_HAO_MIAO = 24 * 60 * 60 * 1000
-const ZUI_DUO_XING_QI_TIAN_SHU = 6
+const YiTianHaoMiao = 24 * 60 * 60 * 1000
+const ZuiDuoXingQiTianShu = 6
 
 type ShiDuanJian = 'lingChen' | 'zaoShang' | 'shangWu' | 'zhongWu' | 'xiaWu' | 'wanShang'
 type XingQiJian =
@@ -25,7 +25,7 @@ type XingQiJian =
   | 'xingQiWu'
   | 'xingQiLiu'
 
-const SHI_DUAN_QI_SHI_XIAN: ReadonlyArray<readonly [number, ShiDuanJian]> = [
+const ShiDuanQiShiXian: ReadonlyArray<readonly [number, ShiDuanJian]> = [
   [0, 'lingChen'],
   [6, 'zaoShang'],
   [9, 'shangWu'],
@@ -34,7 +34,7 @@ const SHI_DUAN_QI_SHI_XIAN: ReadonlyArray<readonly [number, ShiDuanJian]> = [
   [18, 'wanShang'],
 ]
 
-const XING_QI_JIAN: readonly XingQiJian[] = [
+const XingQiJian: readonly XingQiJian[] = [
   'xingQiRi',
   'xingQiYi',
   'xingQiEr',
@@ -51,8 +51,8 @@ function zhuanBeiJing(shiJianChuo: number): Date {
 }
 
 function luoQuShiDuanJian(shi: number): ShiDuanJian {
-  let jieGuo: ShiDuanJian = SHI_DUAN_QI_SHI_XIAN[0][1]
-  for (const [qiShi, jian] of SHI_DUAN_QI_SHI_XIAN) {
+  let jieGuo: ShiDuanJian = ShiDuanQiShiXian[0][1]
+  for (const [qiShi, jian] of ShiDuanQiShiXian) {
     if (shi >= qiShi) jieGuo = jian
   }
   return jieGuo
@@ -73,14 +73,14 @@ function benRiLingDian(riQi: Date): number {
 }
 
 function tianShuCha(beiJing: Date, xianZai: Date): number {
-  return Math.round((benRiLingDian(xianZai) - benRiLingDian(beiJing)) / YI_TIAN_HAO_MIAO)
+  return Math.round((benRiLingDian(xianZai) - benRiLingDian(beiJing)) / YiTianHaoMiao)
 }
 
 function luoQuRiQiQianZhui(beiJing: Date, xianZai: Date): string {
   const cha = tianShuCha(beiJing, xianZai)
   if (cha <= 0) return ''
   if (cha === 1) return huoQuFanYi('shiJian', 'zuoTian')
-  if (cha <= ZUI_DUO_XING_QI_TIAN_SHU) return huoQuFanYi('shiJian', XING_QI_JIAN[beiJing.getDay()])
+  if (cha <= ZuiDuoXingQiTianShu) return huoQuFanYi('shiJian', XingQiJian[beiJing.getDay()])
 
   const yue = String(beiJing.getMonth() + 1)
   const ri = String(beiJing.getDate())
@@ -112,7 +112,7 @@ function xuYaoXinShiJianTiao<X extends ShiJianZaiTi>(qianChuo: number | null, xi
   if (!Number.isFinite(shiJianChuo) || !Number.isFinite(qianChuo)) return true
   if (shiJianChuo < qianChuo) return true
   const jianGe = shiJianChuo - qianChuo
-  if (jianGe > XIAO_XI_PEI_ZHI.heBingShiJianYuZhi) return true
+  if (jianGe > XiaoXiPeiZhi.heBingShiJianYuZhi) return true
   return shiKuaTian(qianChuo, shiJianChuo)
 }
 

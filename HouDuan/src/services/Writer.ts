@@ -3,6 +3,7 @@ import { gouJianWriterPrompt } from './Prompt构建器'
 import { zhuRuBenLunTuXiangKuai } from './对话渲染'
 import { gouJianTouXiangKuai } from './AI视觉辅助'
 import { shengChengBiaoQingHouXuanWenBen } from './系统表情'
+import { panDuanBiaoQingZaiTi } from './表情载体'
 import { daiShuKaiChangYuanYu, fuJiaKaiChangYuanYu, qingLiXiaoXi } from './开场候选约束'
 import { 检索通用知识, type 通用知识检索结果 } from './通用知识检索'
 import type { DuiHuaKuai } from '../utils/DeepSeek客户端'
@@ -17,10 +18,8 @@ export async function shengChengWriterHuiFu(
   zhiShi: 通用知识检索结果 = 检索通用知识(shuRu.yong_hu_xin_xiao_xi, !shuRu.zui_jia_shuo_de_shi),
 ): Promise<WriterJieGuo> {
   const tiShiCi = gouJianWriterPrompt(shuRu, ceLue, zhiShi)
-  const biaoQingHouXuan = await shengChengBiaoQingHouXuanWenBen(
-    ceLue?.biao_qing_yi_tu ?? null,
-    shuRu.yong_hu_id,
-  )
+  const zaiTiJueCe = panDuanBiaoQingZaiTi(shuRu, ceLue)
+  const biaoQingHouXuan = await shengChengBiaoQingHouXuanWenBen(ceLue?.biao_qing_yi_tu ?? null, zaiTiJueCe)
   const tiShiCiWanZheng = biaoQingHouXuan ? `${tiShiCi}\n\n${biaoQingHouXuan}` : tiShiCi
 
   const tuXiangKuai = await zhuRuBenLunTuXiangKuai(shuRu.dui_hua_li_shi)

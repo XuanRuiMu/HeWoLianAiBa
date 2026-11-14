@@ -11,7 +11,7 @@ export interface MiDengJianZaiTi {
   mi_deng_jian?: string | null
 }
 
-const UUID_GE_SHI = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UuidGeShi = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 function shengChengWenDingUUID(): string {
   const suiJiZiJie = new Uint8Array(16)
@@ -29,22 +29,22 @@ function shengChengWenDingUUID(): string {
 
 export function queDingMiDengJian<T extends MiDengJianZaiTi>(zaiTi: T): string {
   const xianYou = zaiTi.mi_deng_jian
-  if (typeof xianYou === 'string' && UUID_GE_SHI.test(xianYou)) return xianYou
+  if (typeof xianYou === 'string' && UuidGeShi.test(xianYou)) return xianYou
   const xin = shengChengWenDingUUID()
   zaiTi.mi_deng_jian = xin
   return xin
 }
 
-const FA_JIAN_XIANG_JIAN = 'fa-jian-xiang'
-const JIAN_TING_ZHE = new Set<(shu: number) => void>()
+const FaJianXiangJian = 'fa-jian-xiang'
+const JianTingZhe = new Set<(shu: number) => void>()
 
 function duQuLieBiao(): DaiFaXiang[] {
-  return duQuShuJu<DaiFaXiang[]>(FA_JIAN_XIANG_JIAN, []) ?? []
+  return duQuShuJu<DaiFaXiang[]>(FaJianXiangJian, []) ?? []
 }
 
 function tongZhiBianGeng(): void {
   const shu = duQuLieBiao().length
-  for (const ting of JIAN_TING_ZHE) {
+  for (const ting of JianTingZhe) {
     try {
       ting(shu)
     } catch {
@@ -60,14 +60,14 @@ export function jiaRuFaJianXiang(
   const jian = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
   const lieBiao = duQuLieBiao()
   lieBiao.push({ jian, lei_xing, zai_he, shi_jian_chuo: Date.now() })
-  baoCunShuJu(FA_JIAN_XIANG_JIAN, lieBiao.slice(-100))
+  baoCunShuJu(FaJianXiangJian, lieBiao.slice(-100))
   tongZhiBianGeng()
   return jian
 }
 
 export function yiChuFaJianXiang(jian: string): void {
   baoCunShuJu(
-    FA_JIAN_XIANG_JIAN,
+    FaJianXiangJian,
     duQuLieBiao().filter((x) => x.jian !== jian),
   )
   tongZhiBianGeng()
@@ -82,17 +82,17 @@ export function tiaoMuMiDengJian(jian: string): string | null {
   const xiang = lieBiao.find((x) => x.jian === jian)
   if (!xiang) return null
   const yiYou = xiang.zai_he.mi_deng_jian
-  if (typeof yiYou === 'string' && UUID_GE_SHI.test(yiYou)) return yiYou
+  if (typeof yiYou === 'string' && UuidGeShi.test(yiYou)) return yiYou
   const xin = shengChengWenDingUUID()
   xiang.zai_he.mi_deng_jian = xin
-  baoCunShuJu(FA_JIAN_XIANG_JIAN, lieBiao)
+  baoCunShuJu(FaJianXiangJian, lieBiao)
   return xin
 }
 
 export function jianTingDaiFaSong(ting: (shu: number) => void): () => void {
-  JIAN_TING_ZHE.add(ting)
+  JianTingZhe.add(ting)
   return () => {
-    JIAN_TING_ZHE.delete(ting)
+    JianTingZhe.delete(ting)
   }
 }
 

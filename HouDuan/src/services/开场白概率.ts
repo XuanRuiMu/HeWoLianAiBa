@@ -1,16 +1,16 @@
-import { AI_PEI_ZHI } from '../config/AI配置'
+import { AiPeiZhi } from '../config/AI配置'
 import { peiZhi } from '../config'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { 内部转展示 } from '../utils/性别'
 import type { KaiChangBaiShengChengCanShu } from './开场白生成'
 import {
-  CUO_WU_DAI_MA,
+  CuoWuDaiMa,
   JiaoSeShengChengCuoWu,
 } from '../config/错误码注册表'
 
-const DOU_BEI_GAI_LV = AI_PEI_ZHI.prompt.kaiChangBaiFaSongGaiLv
-const ZUI_XIAO = 0.1
-const ZUI_DA = 0.9
+const DouBeiGaiLv = AiPeiZhi.prompt.kaiChangBaiFaSongGaiLv
+const ZuiXiao = 0.1
+const ZuiDa = 0.9
 
 function gouJianGaiLvTiShi(canShu: KaiChangBaiShengChengCanShu): string {
   const xingBieMiaoShu = `${内部转展示(canShu.xing_bie)}生`
@@ -41,32 +41,32 @@ function jieXiGaiLv(shuRu: string): number | null {
   const zhi = Number(piPei[0])
   if (!Number.isFinite(zhi) || zhi <= 0 || zhi > 100) return null
   const biLi = zhi > 1 ? zhi / 100 : zhi
-  return Math.min(ZUI_DA, Math.max(ZUI_XIAO, biLi))
+  return Math.min(ZuiDa, Math.max(ZuiXiao, biLi))
 }
 
 export async function jiSuanKaiChangBaiGaiLv(
   canShu: KaiChangBaiShengChengCanShu,
 ): Promise<number> {
-  const apiMiYao = peiZhi.deepSeek.apiMiYao || AI_PEI_ZHI.deepSeek.apiMiYao
+  const apiMiYao = peiZhi.deepSeek.apiMiYao || AiPeiZhi.deepSeek.apiMiYao
   if (!apiMiYao) {
-    if (process.env.VITEST === 'true') return DOU_BEI_GAI_LV
-    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_MODEL_UNAVAILABLE)
+    if (process.env.VITEST === 'true') return DouBeiGaiLv
+    throw new JiaoSeShengChengCuoWu(CuoWuDaiMa.ROLE_GENERATION_MODEL_UNAVAILABLE)
   }
   if (process.env.VITEST === 'true') {
-    return DOU_BEI_GAI_LV
+    return DouBeiGaiLv
   }
   try {
     const xiangYing = await genJuPeiZhiTiaoYong(
-      'KaiChangBaiGaiLv' as keyof typeof AI_PEI_ZHI.moXing,
+      'KaiChangBaiGaiLv' as keyof typeof AiPeiZhi.moXing,
       [{ jiaoSe: 'user', neiRong: gouJianGaiLvTiShi(canShu) }],
     )
     const gaiLv = jieXiGaiLv(xiangYing.neiRong)
     if (gaiLv === null) {
-      throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID)
+      throw new JiaoSeShengChengCuoWu(CuoWuDaiMa.ROLE_GENERATION_RESPONSE_INVALID)
     }
     return gaiLv
   } catch (cuoWu) {
     if (cuoWu instanceof JiaoSeShengChengCuoWu) throw cuoWu
-    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_MODEL_CALL_FAILED, cuoWu)
+    throw new JiaoSeShengChengCuoWu(CuoWuDaiMa.ROLE_GENERATION_MODEL_CALL_FAILED, cuoWu)
   }
 }

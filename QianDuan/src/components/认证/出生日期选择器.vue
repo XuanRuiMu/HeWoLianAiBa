@@ -1,6 +1,6 @@
 <template>
   <div ref="genYuanSu" class="chushengriqi" role="group" :aria-label="zuHeMing" @click="chuLiDianJi">
-    <template v-for="(duan, xu) in DUAN_QING_DAN" :key="duan.ming">
+    <template v-for="(duan, xu) in DuanQingDan" :key="duan.ming">
       <input
         :id="duanId(duan)"
         :ref="(yuan: unknown) => dengJiDuanYinYong(duan.ming, yuan)"
@@ -26,7 +26,7 @@
         @keydown="chuLiAnJian(duan.ming, $event)"
         @paste="chuLiTieRu($event)"
       />
-      <span v-if="xu < DUAN_QING_DAN.length - 1" class="fenge" aria-hidden="true">{{ FENGEFU }}</span>
+      <span v-if="xu < DuanQingDan.length - 1" class="fenge" aria-hidden="true">{{ FENGEFU }}</span>
     </template>
     <button
       :ref="dengJiDaKaiYinYong"
@@ -187,21 +187,21 @@ interface DuanDingYi {
   geShi: string
 }
 
-const DUAN_QING_DAN: DuanDingYi[] = [
+const DuanQingDan: DuanDingYi[] = [
   { ming: 'nian', idHouZhui: '', weiShu: 4, geShi: 'YYYY' },
   { ming: 'yue', idHouZhui: '-yue', weiShu: 2, geShi: 'MM' },
   { ming: 'ri', idHouZhui: '-ri', weiShu: 2, geShi: 'DD' },
 ]
 
-const YUE_SHANG_XIAN = 12
-const RI_SHANG_XIAN = 31
+const YueShangXian = 12
+const RiShangXian = 31
 const FENGEFU = '-'
-const ZHOU_ZHANG_SHU = 7
-const RI_ZHOU_ZHANG = 6
-const NIAN_ZUI_XIAO = 1000
-const NIAN_ZUI_DA = 9999
-const XING_QI_JIAN = ['xingQiYi', 'xingQiEr', 'xingQiSan', 'xingQiSi', 'xingQiWu', 'xingQiLiu', 'xingQiRi'] as const
-const XING_QI_MING = [
+const ZhouZhangShu = 7
+const RiZhouZhang = 6
+const NianZuiXiao = 1000
+const NianZuiDa = 9999
+const XingQiJian = ['xingQiYi', 'xingQiEr', 'xingQiSan', 'xingQiSi', 'xingQiWu', 'xingQiLiu', 'xingQiRi'] as const
+const XingQiMing = [
   'xingQiYiMing',
   'xingQiErMing',
   'xingQiSanMing',
@@ -210,17 +210,17 @@ const XING_QI_MING = [
   'xingQiLiuMing',
   'xingQiRiMing',
 ] as const
-const JIAO_DIAN_YI_ZOU: Partial<Record<string, number>> = {
+const JiaoDianYiZou: Partial<Record<string, number>> = {
   ArrowLeft: -1,
   ArrowRight: 1,
-  ArrowUp: -ZHOU_ZHANG_SHU,
-  ArrowDown: ZHOU_ZHANG_SHU,
+  ArrowUp: -ZhouZhangShu,
+  ArrowDown: ZhouZhangShu,
   a: -1,
   d: 1,
-  w: -ZHOU_ZHANG_SHU,
-  s: ZHOU_ZHANG_SHU,
+  w: -ZhouZhangShu,
+  s: ZhouZhangShu,
 }
-const GUN_LUN_HUAN_YUE_YU_ZHI = 50
+const GunLunHuanYueYuZhi = 50
 
 interface RiQiSan {
   nian: number
@@ -327,7 +327,7 @@ function shuaXinJinRiKuaiZhao(): void {
 
 onMounted(() => {
   shuaXinJinRiKuaiZhao()
-  wuYeDingShiQi = setInterval(shuaXinJinRiKuaiZhao, WU_YE_SHUA_XIN_JIAN_GE)
+  wuYeDingShiQi = setInterval(shuaXinJinRiKuaiZhao, WuYeShuaXinJianGe)
 })
 
 onBeforeUnmount(() => {
@@ -338,16 +338,16 @@ onBeforeUnmount(() => {
 })
 
 const duanChaoBiao: Record<DuanMing, DuanDingYi> = {
-  nian: DUAN_QING_DAN[0],
-  yue: DUAN_QING_DAN[1],
-  ri: DUAN_QING_DAN[2],
+  nian: DuanQingDan[0],
+  yue: DuanQingDan[1],
+  ri: DuanQingDan[2],
 }
 
 const fanWeiXia = computed<RiQiSan>(
-  () => jieXiRiQi(props.zuiXiao) ?? { nian: NIAN_ZUI_XIAO, yue: 1, ri: 1 },
+  () => jieXiRiQi(props.zuiXiao) ?? { nian: NianZuiXiao, yue: 1, ri: 1 },
 )
 const fanWeiDa = computed<RiQiSan>(
-  () => jieXiRiQi(props.zuiDa) ?? { nian: NIAN_ZUI_DA, yue: YUE_SHANG_XIAN, ri: 31 },
+  () => jieXiRiQi(props.zuiDa) ?? { nian: NianZuiDa, yue: YueShangXian, ri: 31 },
 )
 
 function shiFouKeXuan(riQi: RiQiSan): boolean {
@@ -390,8 +390,8 @@ const quanDuanYiTian = computed(() => {
 const youDuanChaoJie = computed(() => {
   const { nian, yue, ri } = yiQueRen.value
   if (nian !== null && (nian < fanWeiXia.value.nian || nian > fanWeiDa.value.nian)) return true
-  if (yue !== null && (yue < 1 || yue > YUE_SHANG_XIAN)) return true
-  return ri !== null && (ri < 1 || ri > RI_SHANG_XIAN)
+  if (yue !== null && (yue < 1 || yue > YueShangXian)) return true
+  return ri !== null && (ri < 1 || ri > RiShangXian)
 })
 
 const shiFouBaoChu = computed(() => {
@@ -409,13 +409,13 @@ function duanBaoChu(ming: DuanMing): boolean {
   const da = fanWeiDa.value
   if (ming === 'nian') return zhi < xia.nian || zhi > da.nian
   if (ming === 'yue') {
-    if (zhi < 1 || zhi > YUE_SHANG_XIAN) return true
+    if (zhi < 1 || zhi > YueShangXian) return true
     if (nian === da.nian && zhi > da.yue) return true
     return nian === xia.nian && zhi < xia.yue
   }
   if (zhi < 1) return true
-  const yueHeFa = yue !== null && yue >= 1 && yue <= YUE_SHANG_XIAN
-  const benYueTian = nian !== null && yueHeFa ? yueTianShu(nian, yue) : RI_SHANG_XIAN
+  const yueHeFa = yue !== null && yue >= 1 && yue <= YueShangXian
+  const benYueTian = nian !== null && yueHeFa ? yueTianShu(nian, yue) : RiShangXian
   if (zhi > benYueTian) return true
   if (nian === da.nian && yue === da.yue && zhi > da.ri) return true
   return nian === xia.nian && yue === xia.yue && zhi < xia.ri
@@ -442,11 +442,11 @@ function duanQuJian(ming: DuanMing): { xia: number; shang: number } {
   }
   if (ming === 'yue') {
     const xia = nian === xiao.nian ? xiao.yue : 1
-    const shang = nian === da.nian ? da.yue : YUE_SHANG_XIAN
+    const shang = nian === da.nian ? da.yue : YueShangXian
     return { xia, shang }
   }
   const xia = nian === xiao.nian && yue === xiao.yue ? xiao.ri : 1
-  const benYue = nian !== null && yue !== null ? yueTianShu(nian, yue) : RI_SHANG_XIAN
+  const benYue = nian !== null && yue !== null ? yueTianShu(nian, yue) : RiShangXian
   const shang = nian === da.nian && yue === da.yue ? da.ri : benYue
   return { xia, shang }
 }
@@ -498,8 +498,8 @@ function buJinDuan(muBiaoMing: DuanMing, pian: number, tingLiuMing?: DuanMing): 
 }
 
 function yiDongJuJiao(ming: DuanMing, fangXiang: number, shiJian: KeyboardEvent): void {
-  const xu = DUAN_QING_DAN.findIndex((duan) => duan.ming === ming)
-  const muBiao = DUAN_QING_DAN[xu + fangXiang]
+  const xu = DuanQingDan.findIndex((duan) => duan.ming === ming)
+  const muBiao = DuanQingDan[xu + fangXiang]
   if (!muBiao) return
   const yinYong = duanYinYong[ming]
   const wenBen = yinYong ? yinYong.value : ''
@@ -511,7 +511,7 @@ function yiDongJuJiao(ming: DuanMing, fangXiang: number, shiJian: KeyboardEvent)
 
 function chuLiDianJi(shiJian: MouseEvent): void {
   if ((shiJian.target as HTMLElement).tagName === 'INPUT') return
-  const kongDuan = DUAN_QING_DAN.find(
+  const kongDuan = DuanQingDan.find(
     (duan) => yiQueRen.value[duan.ming] === null && zhengZaiShuRu.value[duan.ming] === '',
   )
   xuanZhongDuan(kongDuan ? kongDuan.ming : 'nian')
@@ -600,9 +600,9 @@ const fanYiYue = computed(() => huoQuFanYi('ui', 'riQiYue'))
 const fanYiRi = computed(() => huoQuFanYi('ui', 'riQiRi'))
 
 const xingQiQingDan = computed(() =>
-  XING_QI_JIAN.map((jian, xu) => ({
+  XingQiJian.map((jian, xu) => ({
     jian: huoQuFanYi('ui', jian),
-    ming: huoQuFanYi('ui', XING_QI_MING[xu]),
+    ming: huoQuFanYi('ui', XingQiMing[xu]),
   })),
 )
 
@@ -639,19 +639,19 @@ function riWenBen(riQi: RiQiSan): string {
 
 const zhouLie = computed<RiGe[][]>(() => {
   const yueYi = new Date(chaKanNian.value, chaKanYue.value - 1, 1)
-  const zhouShou = (yueYi.getDay() + 6) % ZHOU_ZHANG_SHU
+  const zhouShou = (yueYi.getDay() + 6) % ZhouZhangShu
   const shouGe = new Date(chaKanNian.value, chaKanYue.value - 1, 1 - zhouShou)
   const jin = jinRi.value
   const xuan = xianDangXuanZhong.value
   const jiaoDian = jiaoDianZhi.value
   const hang: RiGe[][] = []
-  for (let zhouXu = 0; zhouXu < RI_ZHOU_ZHANG; zhouXu++) {
+  for (let zhouXu = 0; zhouXu < RiZhouZhang; zhouXu++) {
     const lie: RiGe[] = []
-    for (let lieXu = 0; lieXu < ZHOU_ZHANG_SHU; lieXu++) {
+    for (let lieXu = 0; lieXu < ZhouZhangShu; lieXu++) {
       const tian = new Date(
         shouGe.getFullYear(),
         shouGe.getMonth(),
-        shouGe.getDate() + zhouXu * ZHOU_ZHANG_SHU + lieXu,
+        shouGe.getDate() + zhouXu * ZhouZhangShu + lieXu,
       )
       const ge: RiQiSan = {
         nian: tian.getFullYear(),
@@ -709,7 +709,7 @@ function yiDongYue(pian: number): void {
 }
 
 function yiDongNian(pian: number): void {
-  yiDongYue(pian * YUE_SHANG_XIAN)
+  yiDongYue(pian * YueShangXian)
 }
 
 function yiDongJiaoDianGe(tianShu: number): void {
@@ -725,7 +725,7 @@ function daoBenYueBian(jie: 'kaishi' | 'jieshu'): void {
   yiDongJiaoDianGe(tianShu)
 }
 
-const WU_YE_SHUA_XIN_JIAN_GE = 60000
+const WuYeShuaXinJianGe = 60000
 let wuYeDingShiQi: ReturnType<typeof setInterval> | null = null
 
 function huiDaoJinRi(): void {
@@ -800,7 +800,7 @@ function chuLiTanchuangGunLun(shiJian: WheelEvent): void {
   if (!yuan || yuan.scrollHeight > yuan.clientHeight) return
   shiJian.preventDefault()
   gunLunLeiJi += shiJian.deltaY
-  if (Math.abs(gunLunLeiJi) < GUN_LUN_HUAN_YUE_YU_ZHI) return
+  if (Math.abs(gunLunLeiJi) < GunLunHuanYueYuZhi) return
   const pian = gunLunLeiJi > 0 ? 1 : -1
   gunLunLeiJi = 0
   yiDongYue(pian)
@@ -821,7 +821,7 @@ function chuLiTanchuangAnJian(shiJian: KeyboardEvent): void {
   if (!(shiJian.target as HTMLElement).classList.contains('rili-ri')) return
   const anJianMing = shiJian.key.length === 1 ? shiJian.key.toLowerCase() : shiJian.key
   const tianShu =
-    shiJian.ctrlKey || shiJian.metaKey || shiJian.altKey ? undefined : JIAO_DIAN_YI_ZOU[anJianMing]
+    shiJian.ctrlKey || shiJian.metaKey || shiJian.altKey ? undefined : JiaoDianYiZou[anJianMing]
   if (tianShu !== undefined) {
     shiJian.preventDefault()
     yiDongJiaoDianGe(tianShu)

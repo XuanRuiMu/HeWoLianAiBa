@@ -7,11 +7,11 @@ import { debug日志 } from './debug日志'
 
 const execFileAsync = promisify(execFile)
 
-const FFMPEG_LU_JING_HUAN_CUN_BIAN_LIANG = 'SHI_PIN_JIE_XI_FFMPEG_LU_JING'
-const YIN_PIN_ZHUAN_MA_CAI_YANG_LV = 16000
-const YIN_PIN_ZHUAN_MA_SHENG_DAO_SHU = 1
-const YIN_PIN_ZHUAN_MA_ZUI_CHANG_MIAO = 60
-const FFMPEG_TAN_CE_CHAO_SHI_HAO_MIAO = 10000
+const FfmpegLuJingHuanCunBianLiang = 'SHI_PIN_JIE_XI_FFMPEG_LU_JING'
+const YinPinZhuanMaCaiYangLv = 16000
+const YinPinZhuanMaShengDaoShu = 1
+const YinPinZhuanMaZuiChangMiao = 60
+const FfmpegTanCeChaoShiHaoMiao = 10000
 
 export interface YinPinZhuanMaYiLai {
   zhiXingMingLing?: (luJing: string, canShu: string[]) => Promise<{ bianMa: number }>
@@ -26,13 +26,13 @@ export function chongZhiFFmpegLuJingHuanCun(): void {
 
 export async function huoQuFFmpegLuJing(): Promise<string | null> {
   if (ffmpegLuJingHuanCun !== undefined) return ffmpegLuJingHuanCun
-  const peiZhiLuJing = (process.env[FFMPEG_LU_JING_HUAN_CUN_BIAN_LIANG] || '').trim()
+  const peiZhiLuJing = (process.env[FfmpegLuJingHuanCunBianLiang] || '').trim()
   if (peiZhiLuJing && fs.existsSync(peiZhiLuJing)) {
     ffmpegLuJingHuanCun = peiZhiLuJing
     return ffmpegLuJingHuanCun
   }
   try {
-    await execFileAsync('ffmpeg', ['-version'], { timeout: FFMPEG_TAN_CE_CHAO_SHI_HAO_MIAO })
+    await execFileAsync('ffmpeg', ['-version'], { timeout: FfmpegTanCeChaoShiHaoMiao })
     ffmpegLuJingHuanCun = 'ffmpeg'
   } catch {
     ffmpegLuJingHuanCun = null
@@ -44,7 +44,7 @@ export async function tiQuYinPinWeiWav(yuanLuJing: string, yiLai: YinPinZhuanMaY
   if (typeof yuanLuJing !== 'string' || yuanLuJing.trim() === '') return null
   const ffmpegLuJing = await huoQuFFmpegLuJing()
   if (!ffmpegLuJing) return null
-  const zuiChangMiao = yiLai.zuiChangMiao && yiLai.zuiChangMiao > 0 ? yiLai.zuiChangMiao : YIN_PIN_ZHUAN_MA_ZUI_CHANG_MIAO
+  const zuiChangMiao = yiLai.zuiChangMiao && yiLai.zuiChangMiao > 0 ? yiLai.zuiChangMiao : YinPinZhuanMaZuiChangMiao
   const linShiMuLu = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'yinpin-zhuanma-'))
   const wavLuJing = path.join(linShiMuLu, 'sheng.wav')
   const canShu = [
@@ -55,9 +55,9 @@ export async function tiQuYinPinWeiWav(yuanLuJing: string, yiLai: YinPinZhuanMaY
     yuanLuJing,
     '-vn',
     '-ac',
-    String(YIN_PIN_ZHUAN_MA_SHENG_DAO_SHU),
+    String(YinPinZhuanMaShengDaoShu),
     '-ar',
-    String(YIN_PIN_ZHUAN_MA_CAI_YANG_LV),
+    String(YinPinZhuanMaCaiYangLv),
     '-t',
     String(zuiChangMiao),
     wavLuJing,

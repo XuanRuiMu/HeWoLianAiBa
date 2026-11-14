@@ -21,8 +21,8 @@ import {
   caiJueRenShe,
   renSheJuJueTiShi,
   shiFouHeFaNianLingShuRu,
-  NIAN_LING_XIA_XIAN,
-  NIAN_LING_SHANG_XIAN,
+  NianLingXiaXian,
+  NianLingShangXian,
 } from '../services/人设审核'
 import { shengChengJiaoSeTouXiang } from '../services/头像生成'
 import { shengChengRenSheKa, yaoSuCongJiaoSe, type RenSheKaYaoSu } from '../services/人设自述卡'
@@ -33,7 +33,7 @@ import { 性别验证中间件 } from '../middleware/输入验证'
 import { 解析性别 } from '../utils/性别'
 import { setMoRenXingBie } from '../services/认证'
 import {
-  CUO_WU_DAI_MA,
+  CuoWuDaiMa,
   JiaoSeShengChengCuoWu,
 } from '../config/错误码注册表'
 
@@ -42,7 +42,7 @@ const luYou = Router()
 function chuLiJiaoSeCuoWu(
   xiangYing: Response,
   cuoWu: unknown,
-  houTuiDaiMa: typeof CUO_WU_DAI_MA.ROLE_GENERATION_INITIALIZATION_FAILED | typeof CUO_WU_DAI_MA.ROLE_GENERATION_PERSISTENCE_FAILED,
+  houTuiDaiMa: typeof CuoWuDaiMa.ROLE_GENERATION_INITIALIZATION_FAILED | typeof CuoWuDaiMa.ROLE_GENERATION_PERSISTENCE_FAILED,
 ): void {
   const daiMa = cuoWu instanceof JiaoSeShengChengCuoWu ? cuoWu.code : houTuiDaiMa
   debug日志.error('角色接口', '角色生成失败', { xiang_qing: { cuo_wu_ma: daiMa } })
@@ -72,12 +72,12 @@ function yanZhengMbti(zhi: string): zhi is MBTILeiXing {
   return mbtiLieBiao.includes(zhi as MBTILeiXing)
 }
 
-const XIN_MU_ZHONG_DE_TA_WEN_BEN_XIAN_ZHI: Record<string, number> = {
+const XinMuZhongDeTaWenBenXianZhi: Record<string, number> = {
   wei_xin_ming: 30,
   zhen_shi_ming: 20,
 }
 
-const TONG_YONG_TI_SHI_CI_ZUI_DA_CHANG_DU = 500
+const TongYongTiShiCiZuiDaChangDu = 500
 
 function jieXiXinMuZhongDeTa(
   zhi: unknown,
@@ -90,7 +90,7 @@ function jieXiXinMuZhongDeTa(
   const yuan = zhi as Record<string, unknown>
   const jieGuo: XinMuZhongDeTaZiDing = {}
 
-  for (const [jian, xianZhi] of Object.entries(XIN_MU_ZHONG_DE_TA_WEN_BEN_XIAN_ZHI)) {
+  for (const [jian, xianZhi] of Object.entries(XinMuZhongDeTaWenBenXianZhi)) {
     const zhi = yuan[jian]
     if (zhi === undefined || zhi === null || zhi === '') continue
     if (typeof zhi !== 'string') {
@@ -116,7 +116,7 @@ function jieXiXinMuZhongDeTa(
       return { cheng_gong: false, cuo_wu: huoQuFanYi('tongYong', 'queShaoCanShu') }
     }
     const yuanWenBen = yuan.tong_yong_ti_shi_ci.trim()
-    if (yuanWenBen.length > TONG_YONG_TI_SHI_CI_ZUI_DA_CHANG_DU) {
+    if (yuanWenBen.length > TongYongTiShiCiZuiDaChangDu) {
       return { cheng_gong: false, cuo_wu: huoQuFanYi('tongYong', 'queShaoCanShu') }
     }
     const qingXiHou = qingXiRenSheWenBen(yuanWenBen)
@@ -131,7 +131,7 @@ function jieXiXinMuZhongDeTa(
 luYou.post('/MBTI生成', 性别验证中间件, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
-    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
   }
 
   const qingQiuTi = qingQiu.body as Record<string, unknown>
@@ -143,7 +143,7 @@ luYou.post('/MBTI生成', 性别验证中间件, async (qingQiu: RenZhengQingQiu
 
   const zhengLiXingBie = 解析性别(xingBie)
   if (!zhengLiXingBie) {
-    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.ROLE_GENERATION_INPUT_INVALID)
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CuoWuDaiMa.ROLE_GENERATION_INPUT_INVALID)
   }
 
   const zhengLiMuBiaoXingBie = 解析性别(muBiaoXingBie) ?? undefined
@@ -157,7 +157,7 @@ luYou.post('/MBTI生成', 性别验证中间件, async (qingQiu: RenZhengQingQiu
 
   const xinMuZhongDeTaJieXi = jieXiXinMuZhongDeTa(qingQiuTi.xinMuZhongDeTa)
   if (!xinMuZhongDeTaJieXi.cheng_gong) {
-    return shiBaiXiangYing(xiangYing, 400, xinMuZhongDeTaJieXi.cuo_wu, CUO_WU_DAI_MA.ROLE_GENERATION_INPUT_INVALID)
+    return shiBaiXiangYing(xiangYing, 400, xinMuZhongDeTaJieXi.cuo_wu, CuoWuDaiMa.ROLE_GENERATION_INPUT_INVALID)
   }
 
   let shengXiaoZiDuan = xinMuZhongDeTaJieXi.shu_ju
@@ -168,7 +168,7 @@ luYou.post('/MBTI生成', 性别验证中间件, async (qingQiu: RenZhengQingQiu
         xiangYing,
         400,
         renSheJuJueTiShi(renSheCaiJue.yuanYinMa ?? 'shenHeBuKeYong'),
-        CUO_WU_DAI_MA.ROLE_GENERATION_PERSONA_REJECTED,
+        CuoWuDaiMa.ROLE_GENERATION_PERSONA_REJECTED,
       )
     }
     shengXiaoZiDuan = renSheCaiJue.guiYiHou
@@ -181,13 +181,13 @@ luYou.post('/MBTI生成', 性别验证中间件, async (qingQiu: RenZhengQingQiu
       const tiQu = congTongYongTiShiCiTiQuRenShe(shengXiaoZiDuan.tong_yong_ti_shi_ci)
       if (
         typeof tiQu.nian_ling === 'number' &&
-        (tiQu.nian_ling < NIAN_LING_XIA_XIAN || tiQu.nian_ling > NIAN_LING_SHANG_XIAN)
+        (tiQu.nian_ling < NianLingXiaXian || tiQu.nian_ling > NianLingShangXian)
       ) {
         return shiBaiXiangYing(
           xiangYing,
           400,
           huoQuFanYi('renSheShenHe', 'nianLingBuHeFa'),
-          CUO_WU_DAI_MA.ROLE_GENERATION_PERSONA_REJECTED,
+          CuoWuDaiMa.ROLE_GENERATION_PERSONA_REJECTED,
         )
       }
     }
@@ -206,7 +206,7 @@ luYou.post('/MBTI生成', 性别验证中间件, async (qingQiu: RenZhengQingQiu
     void huanCunDaiQueRenJiaoSe(yongHu.yongHuId, jiaoSe)
     return chengGongXiangYing(xiangYing, touYingWanJiaKeJianJiaoSe(jiaoSe))
   } catch (cuoWu) {
-    chuLiJiaoSeCuoWu(xiangYing, cuoWu, CUO_WU_DAI_MA.ROLE_GENERATION_INITIALIZATION_FAILED)
+    chuLiJiaoSeCuoWu(xiangYing, cuoWu, CuoWuDaiMa.ROLE_GENERATION_INITIALIZATION_FAILED)
     return
   }
 })
@@ -214,14 +214,14 @@ luYou.post('/MBTI生成', 性别验证中间件, async (qingQiu: RenZhengQingQiu
 luYou.post('/确认', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) {
-    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+    return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
   }
 
   const qingQiuTi = qingQiu.body as Record<string, unknown>
   const xuanZhongJiaoSe = qingQiuTi.xuanZhongJiaoSe as ShengChengJiaoSeJieGuo | undefined
 
   if (!xuanZhongJiaoSe || typeof xuanZhongJiaoSe !== 'object') {
-    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CUO_WU_DAI_MA.ROLE_GENERATION_INPUT_INVALID)
+    return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CuoWuDaiMa.ROLE_GENERATION_INPUT_INVALID)
   }
 
   try {
@@ -252,7 +252,7 @@ luYou.post('/确认', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
     }
     return chengGongXiangYing(xiangYing, touYingWanJiaKeJianJiaoSe(huiXian))
   } catch (cuoWu) {
-    chuLiJiaoSeCuoWu(xiangYing, cuoWu, CUO_WU_DAI_MA.ROLE_GENERATION_PERSISTENCE_FAILED)
+    chuLiJiaoSeCuoWu(xiangYing, cuoWu, CuoWuDaiMa.ROLE_GENERATION_PERSISTENCE_FAILED)
     return
   }
 })

@@ -1,6 +1,6 @@
 import { jianChaFuCong } from './开场候选约束'
 
-const KOU_JING = 20
+const KouJing = 20
 
 export function kaiChangToken(wenBen: string): string {
   return wenBen.replace(/[\s　]+/g, '').slice(0, 2)
@@ -8,7 +8,7 @@ export function kaiChangToken(wenBen: string): string {
 
 export function shouJiJiuJinKaiChangToken(
   liShi: Array<{ fa_song_zhe_lei_xing: string; nei_rong: string }>,
-  kouJing: number = KOU_JING,
+  kouJing: number = KouJing,
 ): Set<string> {
   const kaiShiWei: number[] = []
   let kaiShi = -1

@@ -5,39 +5,39 @@ function huoQuHuanJingBianLiang(ming: string, moRen: string): string {
   return process.env[ming] || moRen
 }
 
-const ZI_JIE = 1024
+const ZiJie = 1024
 
-export const SHEN_HE_MO_SHI_AI = 'ai' as const
+export const ShenHeMoShiAi = 'ai' as const
 
-export const SHEN_HE_MO_SHI_BEN_DI = '本地' as const
+export const ShenHeMoShiBenDi = '本地' as const
 
-export type ShenHeMoShi = typeof SHEN_HE_MO_SHI_AI | typeof SHEN_HE_MO_SHI_BEN_DI
+export type ShenHeMoShi = typeof ShenHeMoShiAi | typeof ShenHeMoShiBenDi
 
 export function quShenHeMoShi(): ShenHeMoShi {
   const yuanZhi = huoQuHuanJingBianLiang('MEI_TI_SHEN_HE_MO_SHI', '').trim().toLowerCase()
-  if (yuanZhi === 'local' || yuanZhi === SHEN_HE_MO_SHI_BEN_DI) return SHEN_HE_MO_SHI_BEN_DI
-  return SHEN_HE_MO_SHI_AI
+  if (yuanZhi === 'local' || yuanZhi === ShenHeMoShiBenDi) return ShenHeMoShiBenDi
+  return ShenHeMoShiAi
 }
 
-export const SHEN_HE_FU_WU_BU_KE_YONG_JIAN = '审核服务不可用' as const
+export const ShenHeFuWuBuKeYongJian = '审核服务不可用' as const
 
-export const SHEN_HE_XI_TONG_CUO_WU_JIAN = '系统错误' as const
+export const ShenHeXiTongCuoWuJian = '系统错误' as const
 
-export const SHEN_HE_WEI_GUI_LEI_BIE: readonly string[] = Object.keys(fanYi.shenHeLeiBie).filter(
-  (jian) => jian !== SHEN_HE_FU_WU_BU_KE_YONG_JIAN,
+export const ShenHeWeiGuiLeiBie: readonly string[] = Object.keys(fanYi.shenHeLeiBie).filter(
+  (jian) => jian !== ShenHeFuWuBuKeYongJian,
 )
 
-export const MEI_TI_PEI_ZHI = {
+export const MeiTiPeiZhi = {
   cunChuGenMuLu: huoQuHuanJingBianLiang(
     'MEI_TI_CUN_CHU_GEN_MU_LU',
     path.join(__dirname, '../../uploads/media'),
   ),
 
   daXiaoShangXianZiJie: {
-    tupian: 20 * ZI_JIE * ZI_JIE,
-    biaoqingshu: 10 * ZI_JIE * ZI_JIE,
-    yuyin: 10 * ZI_JIE * ZI_JIE,
-    wenjian: 50 * ZI_JIE * ZI_JIE,
+    tupian: 20 * ZiJie * ZiJie,
+    biaoqingshu: 10 * ZiJie * ZiJie,
+    yuyin: 10 * ZiJie * ZiJie,
+    wenjian: 50 * ZiJie * ZiJie,
   },
 
   mimeBaiMingDan: {
@@ -78,14 +78,14 @@ export const MEI_TI_PEI_ZHI = {
   zhanShiYouXiaoMiao: parseInt(huoQuHuanJingBianLiang('MEI_TI_ZHAN_SHI_YOU_XIAO_MIAO', '86400'), 10),
 } as const
 
-export const WEN_JIAN_FEN_LEI_DA_XIAO_SHANG_XIAN: Readonly<Record<'wenben' | 'wendang', number>> = {
-  wenben: 2 * ZI_JIE * ZI_JIE,
-  wendang: 10 * ZI_JIE * ZI_JIE,
+export const WenJianFenLeiDaXiaoShangXian: Readonly<Record<'wenben' | 'wendang', number>> = {
+  wenben: 2 * ZiJie * ZiJie,
+  wendang: 10 * ZiJie * ZiJie,
 }
 
-export const WEN_BEN_KUO_ZHAN: readonly string[] = ['txt', 'md', 'markdown']
+export const WenBenKuoZhan: readonly string[] = ['txt', 'md', 'markdown']
 
-export const WEN_DANG_KUO_ZHAN: readonly string[] = [
+export const WenDangKuoZhan: readonly string[] = [
   'doc',
   'docx',
   'pdf',
@@ -97,9 +97,9 @@ export const WEN_DANG_KUO_ZHAN: readonly string[] = [
   'htm',
 ]
 
-const WEN_BEN_MIME: readonly string[] = ['text/plain', 'text/markdown']
+const WenBenMime: readonly string[] = ['text/plain', 'text/markdown']
 
-const WEN_DANG_MIME: readonly string[] = [
+const WenDangMime: readonly string[] = [
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -117,31 +117,31 @@ function huoQuKuoZhanMing(mingCheng: string): string {
 
 export function huoQuWenJianDaXiaoShangXianZiJie(mingCheng: string, mime: string): number {
   const kuoZhan = huoQuKuoZhanMing(mingCheng)
-  if (WEN_BEN_KUO_ZHAN.includes(kuoZhan)) return WEN_JIAN_FEN_LEI_DA_XIAO_SHANG_XIAN.wenben
-  if (WEN_DANG_KUO_ZHAN.includes(kuoZhan)) return WEN_JIAN_FEN_LEI_DA_XIAO_SHANG_XIAN.wendang
+  if (WenBenKuoZhan.includes(kuoZhan)) return WenJianFenLeiDaXiaoShangXian.wenben
+  if (WenDangKuoZhan.includes(kuoZhan)) return WenJianFenLeiDaXiaoShangXian.wendang
   const qingLiMIME = String(mime || '').split(';')[0].trim().toLowerCase()
-  if (WEN_BEN_MIME.includes(qingLiMIME)) return WEN_JIAN_FEN_LEI_DA_XIAO_SHANG_XIAN.wenben
-  if (WEN_DANG_MIME.includes(qingLiMIME)) return WEN_JIAN_FEN_LEI_DA_XIAO_SHANG_XIAN.wendang
-  return MEI_TI_PEI_ZHI.daXiaoShangXianZiJie.wenjian
+  if (WenBenMime.includes(qingLiMIME)) return WenJianFenLeiDaXiaoShangXian.wenben
+  if (WenDangMime.includes(qingLiMIME)) return WenJianFenLeiDaXiaoShangXian.wendang
+  return MeiTiPeiZhi.daXiaoShangXianZiJie.wenjian
 }
 
-export const WEN_DANG_TI_QU_PEI_ZHI = {
-  danWenJianZiJieShangXian: 10 * ZI_JIE * ZI_JIE,
+export const WenDangTiQuPeiZhi = {
+  danWenJianZiJieShangXian: 10 * ZiJie * ZiJie,
   tiQuWenBenZiFuShangXian: 20000,
-  danTiaoMuJieYaZiJieShangXian: 8 * ZI_JIE * ZI_JIE,
-  jieYaZongZiJieShangXian: 32 * ZI_JIE * ZI_JIE,
+  danTiaoMuJieYaZiJieShangXian: 8 * ZiJie * ZiJie,
+  jieYaZongZiJieShangXian: 32 * ZiJie * ZiJie,
   jieYaTiaoMuShuShangXian: 4096,
-  jieYaFenYeZiJie: 16 * ZI_JIE,
+  jieYaFenYeZiJie: 16 * ZiJie,
   kongZhiFuBiLiShangXian: 0.3,
   tiQuHuanCunTiaoMuShangXian: 64,
 } as const
 
-export const GUI_DANG_LEI_XING = {
+export const GuiDangLeiXing = {
   mime: ['application/zip', 'application/vnd.rar', 'application/x-7z-compressed'] as readonly string[],
   houZhui: ['zip', 'rar', '7z'] as readonly string[],
 }
 
-export const WEN_DANG_JIE_XI_LEI_XING = [
+export const WenDangJieXiLeiXing = [
   'txt',
   'md',
   'csv',
@@ -153,9 +153,9 @@ export const WEN_DANG_JIE_XI_LEI_XING = [
   'pdf',
 ] as const
 
-export type WenDangJieXiLeiXing = (typeof WEN_DANG_JIE_XI_LEI_XING)[number]
+export type WenDangJieXiLeiXing = (typeof WenDangJieXiLeiXing)[number]
 
-export const WEN_DANG_MIME_LEI_XING: Readonly<Record<string, WenDangJieXiLeiXing>> = {
+export const WenDangMimeLeiXing: Readonly<Record<string, WenDangJieXiLeiXing>> = {
   'text/plain': 'txt',
   'text/markdown': 'md',
   'text/csv': 'csv',
@@ -167,7 +167,7 @@ export const WEN_DANG_MIME_LEI_XING: Readonly<Record<string, WenDangJieXiLeiXing
   'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
 }
 
-export const WEN_DANG_HOU_ZHUI_LEI_XING: Readonly<Record<string, WenDangJieXiLeiXing>> = {
+export const WenDangHouZhuiLeiXing: Readonly<Record<string, WenDangJieXiLeiXing>> = {
   txt: 'txt',
   md: 'md',
   markdown: 'md',
@@ -181,49 +181,49 @@ export const WEN_DANG_HOU_ZHUI_LEI_XING: Readonly<Record<string, WenDangJieXiLei
   pdf: 'pdf',
 }
 
-export const LEI_BIE_LIE_BIAO = ['tupian', 'biaoqingshu', 'yuyin', 'wenjian'] as const
+export const LeiBieLieBiao = ['tupian', 'biaoqingshu', 'yuyin', 'wenjian'] as const
 
-export type MeiTiLeiBie = (typeof LEI_BIE_LIE_BIAO)[number]
+export type MeiTiLeiBie = (typeof LeiBieLieBiao)[number]
 
-export const BIAO_QING_SHU_LEI_BIE: MeiTiLeiBie = 'biaoqingshu'
+export const BiaoQingShuLeiBie: MeiTiLeiBie = 'biaoqingshu'
 
-export const LEI_BIE_DAO_XIAO_XI_LEI_XING: Record<MeiTiLeiBie, string> = {
+export const LeiBieDaoXiaoXiLeiXing: Record<MeiTiLeiBie, string> = {
   tupian: 'tuPian',
-  [BIAO_QING_SHU_LEI_BIE]: 'biaoQingBao',
+  [BiaoQingShuLeiBie]: 'biaoQingBao',
   yuyin: 'yuYin',
   wenjian: 'wenJian',
 }
 
-export const HAO_YOU_SHANG_CHUAN_LEI_BIE = LEI_BIE_LIE_BIAO
+export const HaoYouShangChuanLeiBie = LeiBieLieBiao
 
 export function shiHaoYouShangChuanLeiBie(zhi: unknown): zhi is MeiTiLeiBie {
-  return (HAO_YOU_SHANG_CHUAN_LEI_BIE as readonly string[]).includes(String(zhi ?? ''))
+  return (HaoYouShangChuanLeiBie as readonly string[]).includes(String(zhi ?? ''))
 }
 
-export const YU_YIN_SHI_CHANG_XIA_XIAN_HAO_MIAO = 1000
-export const YU_YIN_SHI_CHANG_SHANG_XIAN_HAO_MIAO = 60 * 1000
+export const YuYinShiChangXiaXianHaoMiao = 1000
+export const YuYinShiChangShangXianHaoMiao = 60 * 1000
 
 export function guiYiHuaShangChuanShiChang(zhi: unknown): number | null {
   if (typeof zhi !== 'number' && typeof zhi !== 'string') return null
   const shu = typeof zhi === 'number' ? zhi : Number(zhi)
   if (!Number.isFinite(shu)) return null
   const zhengShu = Math.round(shu)
-  if (zhengShu < YU_YIN_SHI_CHANG_XIA_XIAN_HAO_MIAO) return null
-  if (zhengShu > YU_YIN_SHI_CHANG_SHANG_XIAN_HAO_MIAO) return null
+  if (zhengShu < YuYinShiChangXiaXianHaoMiao) return null
+  if (zhengShu > YuYinShiChangShangXianHaoMiao) return null
   return zhengShu
 }
 
-export const YUN_XU_XIAO_XI_LEI_XING = ['wenben', ...Object.values(LEI_BIE_DAO_XIAO_XI_LEI_XING)]
+export const YunXuXiaoXiLeiXing = ['wenben', ...Object.values(LeiBieDaoXiaoXiLeiXing)]
 
 export function shiHeFaLeiBie(zhi: unknown): zhi is MeiTiLeiBie {
-  return typeof zhi === 'string' && (LEI_BIE_LIE_BIAO as readonly string[]).includes(zhi)
+  return typeof zhi === 'string' && (LeiBieLieBiao as readonly string[]).includes(zhi)
 }
 
 export function shiHeFaXiaoXiLeiXing(zhi: unknown): zhi is string {
-  return typeof zhi === 'string' && YUN_XU_XIAO_XI_LEI_XING.includes(zhi)
+  return typeof zhi === 'string' && YunXuXiaoXiLeiXing.includes(zhi)
 }
 
 export function shiYunXuMIME(leiBie: MeiTiLeiBie, mime: string): boolean {
-  const baiMingDan = MEI_TI_PEI_ZHI.mimeBaiMingDan[leiBie] as readonly string[]
+  const baiMingDan = MeiTiPeiZhi.mimeBaiMingDan[leiBie] as readonly string[]
   return baiMingDan.includes(mime)
 }

@@ -1,9 +1,9 @@
 import { inflateSync, deflateSync } from 'zlib'
 import { debug日志 } from './debug日志'
 
-const PNG_QIAN_MING = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+const PngQianMing = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
 
-const CRC_BIAO: number[] = (() => {
+const CrcBiao: number[] = (() => {
   const biao: number[] = []
   for (let n = 0; n < 256; n++) {
     let c = n
@@ -18,7 +18,7 @@ const CRC_BIAO: number[] = (() => {
 function crc32(huan: Buffer): number {
   let c = 0xffffffff
   for (let i = 0; i < huan.length; i++) {
-    c = CRC_BIAO[(c ^ huan[i]) & 0xff] ^ (c >>> 8)
+    c = CrcBiao[(c ^ huan[i]) & 0xff] ^ (c >>> 8)
   }
   return (c ^ 0xffffffff) >>> 0
 }
@@ -42,7 +42,7 @@ interface IhdrXinXi {
 }
 
 function duIhdr(huan: Buffer): IhdrXinXi | null {
-  if (huan.length < 33 || !huan.subarray(0, 8).equals(PNG_QIAN_MING)) return null
+  if (huan.length < 33 || !huan.subarray(0, 8).equals(PngQianMing)) return null
   if (huan.readUInt32BE(8) !== 13) return null
   if (huan.readUInt32BE(12) !== 0x49484452) return null
   return {
@@ -140,7 +140,7 @@ export function caiDiaoPNGDiBu(tuPian: Buffer, diBuBiLi: number): Buffer {
     xinIhdr[12] = 0
 
     return Buffer.concat([
-      PNG_QIAN_MING,
+      PngQianMing,
       xieKuai('IHDR', xinIhdr),
       xieKuai('IDAT', xinShuJu),
       xieKuai('IEND', Buffer.alloc(0)),

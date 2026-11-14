@@ -72,7 +72,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { huoQuFanYi } from '@/config/翻译表'
-import { QU_HAO_XUAN_XIANG, quHaoWenAn, type QuHaoXuanXiang } from '@/utils/手机号'
+import {QuHaoXuanXiang, quHaoWenAn} from '@/utils/手机号'
 
 const 属性 = withDefaults(defineProps<{ 模型值: string; 禁用?: boolean; 排除区号?: string[] }>(), {
   禁用: false,
@@ -100,7 +100,7 @@ function guiYiSouSuoCi(词: string): string {
 
 const 可选区号 = computed<QuHaoXuanXiang[]>(() => {
   const 排除 = new Set(属性.排除区号.map((码) => 码.replace(/\D/g, '')))
-  return 排除.size === 0 ? QU_HAO_XUAN_XIANG : QU_HAO_XUAN_XIANG.filter((项) => !排除.has(项.quHao))
+  return 排除.size === 0 ? QuHaoXuanXiang : QuHaoXuanXiang.filter((项) => !排除.has(项.quHao))
 })
 
 const 候选 = computed<QuHaoXuanXiang[]>(() => {

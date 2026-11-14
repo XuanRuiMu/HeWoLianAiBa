@@ -25,10 +25,10 @@ import {
   qingChuRenSheShenHeMock,
 } from '../人设审核'
 import type { XinMuZhongDeTaZiDing } from '../角色生成'
-import { REN_SHE_JIA_JU, ZHU_RU_YANG_LI, type RenSheJiaJuZu } from './人设示例夹具'
+import { RenSheJiaJu, ZhuRuYangLi, type RenSheJiaJuZu } from './人设示例夹具'
 import { shiFouXingShi } from '../../config/姓氏表'
 
-const JU_JUE_SHOU_HU = async (): Promise<never> => {
+const JuJueShouHu = async (): Promise<never> => {
   throw new Error('审核AI不应被调用：该组应由硬规则层裁决')
 }
 
@@ -47,14 +47,14 @@ describe('50组人设示例判定（对象人设示例.txt 2026-11-11 修订版�
   })
 
   it('夹具应覆盖50组且通过数与拒绝数与裁定口径一致', () => {
-    expect(REN_SHE_JIA_JU).toHaveLength(50)
-    const tongGuo = REN_SHE_JIA_JU.filter((zu) => zu.qiWang.jieLun === 'tongGuo')
-    const juJue = REN_SHE_JIA_JU.filter((zu) => zu.qiWang.jieLun === 'juJue')
+    expect(RenSheJiaJu).toHaveLength(50)
+    const tongGuo = RenSheJiaJu.filter((zu) => zu.qiWang.jieLun === 'tongGuo')
+    const juJue = RenSheJiaJu.filter((zu) => zu.qiWang.jieLun === 'juJue')
     expect(tongGuo).toHaveLength(33)
     expect(juJue).toHaveLength(17)
   })
 
-  for (const zu of REN_SHE_JIA_JU) {
+  for (const zu of RenSheJiaJu) {
     it(`组${zu.zuHao} ${zu.zuMing} → ${zu.qiWang.jieLun}${zu.qiWang.yuanYinMa ? '/' + zu.qiWang.yuanYinMa : ''}`, async () => {
       if (zu.moNiShenHe) {
         const moNi = zu.moNiShenHe
@@ -65,7 +65,7 @@ describe('50组人设示例判定（对象人设示例.txt 2026-11-11 修订版�
           ziDuanPanDing: moNi.zi_duan_pan_ding ?? {},
         }))
       } else {
-        sheZhiRenSheShenHeMock(JU_JUE_SHOU_HU)
+        sheZhiRenSheShenHeMock(JuJueShouHu)
       }
 
       if (zu.luYouCengNianLing !== undefined) {
@@ -114,9 +114,9 @@ describe('注入与越狱拦截', () => {
     qingChuRenSheShenHeMock()
   })
 
-  for (const yang of ZHU_RU_YANG_LI) {
+  for (const yang of ZhuRuYangLi) {
     it(`拦截：${yang.mingCheng}`, async () => {
-      sheZhiRenSheShenHeMock(JU_JUE_SHOU_HU)
+      sheZhiRenSheShenHeMock(JuJueShouHu)
       const jieGuo = await caiJueRenShe({
         nian_ling: 20,
         tong_yong_ti_shi_ci: yang.neiRong,
@@ -183,7 +183,7 @@ describe('微信名宽松尺度', () => {
   })
 
   it('污言秽语微信名拒绝（词库扫描）', async () => {
-    sheZhiRenSheShenHeMock(JU_JUE_SHOU_HU)
+    sheZhiRenSheShenHeMock(JuJueShouHu)
     const jieGuo = await caiJueRenShe({ wei_xin_ming: '草拟吗', nian_ling: 19 })
     expect(jieGuo.jieLun).toBe('juJue')
     expect(jieGuo.yuanYinMa).toBe('zangHua')

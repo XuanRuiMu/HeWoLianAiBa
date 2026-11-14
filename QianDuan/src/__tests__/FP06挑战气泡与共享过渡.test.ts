@@ -147,7 +147,7 @@ describe('FP-06 挑战气泡与共享步骤过渡', () => {
   })
 
   it('放弃扣分由后端配置单一真源下发，前端不硬编码分值', () => {
-    expect(后端源).toContain('fang_qi_kou_fen: TIAO_ZHAN_PEI_ZHI.fangQiKouFen')
+    expect(后端源).toContain('fang_qi_kou_fen: TiaoZhanPeiZhi.fangQiKouFen')
     expect(挑战源).not.toContain('15分')
     expect(挑战源).not.toContain('减少15')
     expect(挑战源).toContain("huoQuFanYi('tiaoZhan', 'fangQiKouFenTiShi')")

@@ -7,18 +7,18 @@ export type RiZhiDingYueZhe = (tiaoMu: RiZhiTiaoMu) => void
 const dingYueZheJiHe = new Set<RiZhiDingYueZhe>()
 let fenFaZhong = false
 
-const JWT_ZHENG_ZE = /^[A-Za-z0-9+/=_-]+(\.[A-Za-z0-9+/=_-]+){2,}$/
-const JWT_ZUI_DUAN_CHANG_DU = 40
-const TUO_MIN_ZHAN_WEI = '***'
+const JwtZhengZe = /^[A-Za-z0-9+/=_-]+(\.[A-Za-z0-9+/=_-]+){2,}$/
+const JwtZuiDuanChangDu = 40
+const TuoMinZhanWei = '***'
 
 function tuoMinZiFuChuan(yuanShi: string): string {
   let jieGuo = yuanShi
   for (const guanJianZi of peiZhi.minGanZiDuan.guanJianZi) {
     const zhengZe = new RegExp(`"${guanJianZi}"\\s*:\\s*"[^"]*"`, 'gi')
-    jieGuo = jieGuo.replace(zhengZe, `"${guanJianZi}":"${TUO_MIN_ZHAN_WEI}"`)
+    jieGuo = jieGuo.replace(zhengZe, `"${guanJianZi}":"${TuoMinZhanWei}"`)
   }
-  if (JWT_ZHENG_ZE.test(jieGuo) && jieGuo.length > JWT_ZUI_DUAN_CHANG_DU) {
-    return TUO_MIN_ZHAN_WEI
+  if (JwtZhengZe.test(jieGuo) && jieGuo.length > JwtZuiDuanChangDu) {
+    return TuoMinZhanWei
   }
   const zuiDaZiFu = riZhiTuiSongPeiZhi.danTiaoZuiDaZiFu
   if (jieGuo.length > zuiDaZiFu) {
@@ -35,7 +35,7 @@ function shiMinGanJianMing(jianMing: string): boolean {
 function tuoMinZhi(zhi: unknown, shengYuCengJi: number): unknown {
   if (typeof zhi === 'string') return tuoMinZiFuChuan(zhi)
   if (zhi === null || typeof zhi !== 'object') return zhi
-  if (shengYuCengJi <= 0) return TUO_MIN_ZHAN_WEI
+  if (shengYuCengJi <= 0) return TuoMinZhanWei
 
   const zuiDaJianShu = riZhiTuiSongPeiZhi.xiangQingZuiDaJianShu
   if (Array.isArray(zhi)) {
@@ -48,7 +48,7 @@ function tuoMinZhi(zhi: unknown, shengYuCengJi: number): unknown {
     if (yiChuLi >= zuiDaJianShu) break
     yiChuLi += 1
     jieGuo[jian] = shiMinGanJianMing(jian)
-      ? TUO_MIN_ZHAN_WEI
+      ? TuoMinZhanWei
       : tuoMinZhi(zhiXiang, shengYuCengJi - 1)
   }
   return jieGuo

@@ -1,6 +1,6 @@
 import { yingYongBanBen } from '@/config/站点配置'
 
-const SHANG_BAO_URL = '/api/logs'
+const ShangBaoUrl = '/api/logs'
 
 function faSongMaiDian(wenBen: string): void {
   try {
@@ -10,7 +10,7 @@ function faSongMaiDian(wenBen: string): void {
     if (typeof yuanShiFetch !== 'function') {
       return
     }
-    void yuanShiFetch(SHANG_BAO_URL, {
+    void yuanShiFetch(ShangBaoUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: wenBen,

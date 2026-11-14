@@ -16,7 +16,7 @@ import { yanZhengUUID, maDianChangDu } from '../utils/验证'
 import { huoQuJiaoSeBianHao } from '../services/公开编号'
 import { huoQuFanYi } from '../config/translations'
 
-const DUO_SHE_HUI_FU_NEI_RONG_ZUI_DA_MA_DIAN = 2000
+const DuoSheHuiFuNeiRongZuiDaMaDian = 2000
 
 async function panDuanKeGaoWei(yongHuId: string): Promise<boolean> {
   try {
@@ -129,7 +129,7 @@ export function chuShiHuaDuoSheSocket(io: Server): void {
         !yanZhengUUID(jiaoSeId) ||
         !yanZhengUUID(muBiaoYongHuId) ||
         typeof neiRong !== 'string' ||
-        maDianChangDu(neiRong) > DUO_SHE_HUI_FU_NEI_RONG_ZUI_DA_MA_DIAN
+        maDianChangDu(neiRong) > DuoSheHuiFuNeiRongZuiDaMaDian
       ) {
         if (huiDiao) huiDiao({ cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'canShuBuHeFa') })
         return

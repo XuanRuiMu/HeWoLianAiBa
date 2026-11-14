@@ -41,9 +41,9 @@ function jieXiZiFuChuanLieBiao(zhi: string): string[] {
 
 const heFaYunXingHuanJingLieBiao = ['development', 'test', 'production']
 
-const MO_REN_WEI_JIN_CI_LIE_BIAO = '强奸,轮奸,性侵,幼女,未成年人性行为,制毒,冰毒制作,自杀教程,炸弹制作'
+const MoRenWeiJinCiLieBiao = '强奸,轮奸,性侵,幼女,未成年人性行为,制毒,冰毒制作,自杀教程,炸弹制作'
 
-const MO_REN_SHU_RU_WEI_JIN_CI_LIE_BIAO = `${MO_REN_WEI_JIN_CI_LIE_BIAO},恐怖袭击,制造爆炸物,煽动分裂国家,颠覆国家政权,极端组织招募,约炮,裸聊,援交,有偿一夜情,上门特殊服务,博彩,赌球,刷单返利,转账解冻,加微信领钱`
+const MoRenShuRuWeiJinCiLieBiao = `${MoRenWeiJinCiLieBiao},恐怖袭击,制造爆炸物,煽动分裂国家,颠覆国家政权,极端组织招募,约炮,裸聊,援交,有偿一夜情,上门特殊服务,博彩,赌球,刷单返利,转账解冻,加微信领钱`
 
 export function huoQuQiDongHuanJingCuoWu(huanJing: string | undefined): string | null {
   if (huanJing !== undefined && huanJing !== '' && heFaYunXingHuanJingLieBiao.includes(huanJing)) {
@@ -254,11 +254,11 @@ xianLiu: {
   riZhiGunDongWenJianDaXiao: huoQuHuanJingBianLiang('LOG_ROLLING_FILE_SIZE', '500m'),
 
   shuChuWeiJinCiLieBiao: jieXiZiFuChuanLieBiao(
-    huoQuHuanJingBianLiang('SHU_CHU_WEI_JIN_CI', MO_REN_WEI_JIN_CI_LIE_BIAO),
+    huoQuHuanJingBianLiang('SHU_CHU_WEI_JIN_CI', MoRenWeiJinCiLieBiao),
   ),
 
   shuRuWeiJinCiLieBiao: jieXiZiFuChuanLieBiao(
-    huoQuHuanJingBianLiang('SHU_RU_WEI_JIN_CI', MO_REN_SHU_RU_WEI_JIN_CI_LIE_BIAO),
+    huoQuHuanJingBianLiang('SHU_RU_WEI_JIN_CI', MoRenShuRuWeiJinCiLieBiao),
   ),
 
   meiRiAIQingQiuYuSuan: parseInt(huoQuHuanJingBianLiang('MEI_RI_AI_QING_QIU_YU_SUAN', '600'), 10),

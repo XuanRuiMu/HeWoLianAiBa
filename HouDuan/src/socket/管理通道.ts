@@ -2,10 +2,10 @@ import type { Socket } from 'socket.io'
 import { anYongHuIdJuBeiNengLi } from '../middleware/管理员'
 import { debug日志 } from '../utils/debug日志'
 
-const GUAN_LI_FANG_JIAN_QIAN_ZHUI = 'guan-li:'
+const GuanLiFangJianQianZhui = 'guan-li:'
 
 export function 管理监控房间名(用户ID: string): string {
-  return `${GUAN_LI_FANG_JIAN_QIAN_ZHUI}${用户ID}`
+  return `${GuanLiFangJianQianZhui}${用户ID}`
 }
 
 export async function 按身份同步管理房间(socket: Socket, 用户ID: string): Promise<void> {

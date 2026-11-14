@@ -1,4 +1,4 @@
-export const QI_PAO_YU_SHE_XUAN_XIANG = [
+export const QiPaoYuSheXuanXiang = [
   'weiXinLv',
   'tianKongLan',
   'yingFen',
@@ -9,15 +9,15 @@ export const QI_PAO_YU_SHE_XUAN_XIANG = [
   'wuQingLan',
 ] as const
 
-export type QiPaoYuShe = (typeof QI_PAO_YU_SHE_XUAN_XIANG)[number]
+export type QiPaoYuShe = (typeof QiPaoYuSheXuanXiang)[number]
 
-export const QI_PAO_ZI_JI_MO_REN: QiPaoYuShe = 'weiXinLv'
-export const QI_PAO_AI_MO_REN: QiPaoYuShe = 'yunBai'
+export const QiPaoZiJiMoRen: QiPaoYuShe = 'weiXinLv'
+export const QiPaoAiMoRen: QiPaoYuShe = 'yunBai'
 
-const QI_PAO_YU_SHE_JI_HE = new Set<string>(QI_PAO_YU_SHE_XUAN_XIANG)
+const QiPaoYuSheJiHe = new Set<string>(QiPaoYuSheXuanXiang)
 
 export function shiHeFaQiPao(zhi: unknown): zhi is QiPaoYuShe {
-  return typeof zhi === 'string' && QI_PAO_YU_SHE_JI_HE.has(zhi)
+  return typeof zhi === 'string' && QiPaoYuSheJiHe.has(zhi)
 }
 
 export function guiYiHuaQiPao(zhi: unknown, moRen: QiPaoYuShe): QiPaoYuShe {

@@ -5,7 +5,7 @@ import {
   zhongXinQianMingMeiTiURL,
 } from './媒体存储'
 
-export const WAI_GUAN_BEI_JING_YU_SHE = [
+export const WaiGuanBeiJingYuShe = [
   'moRen',
   'miWuSenLin',
   'haiYangZhiLan',
@@ -16,9 +16,9 @@ export const WAI_GUAN_BEI_JING_YU_SHE = [
   'muZiXingYe',
 ] as const
 
-export type WaiGuanBeiJingYuShe = (typeof WAI_GUAN_BEI_JING_YU_SHE)[number]
+export type WaiGuanBeiJingYuShe = (typeof WaiGuanBeiJingYuShe)[number]
 
-export const QI_PAO_YU_SHE_XUAN_XIANG = [
+export const QiPaoYuSheXuanXiang = [
   'weiXinLv',
   'tianKongLan',
   'yingFen',
@@ -29,16 +29,16 @@ export const QI_PAO_YU_SHE_XUAN_XIANG = [
   'wuQingLan',
 ] as const
 
-export const WAI_GUAN_BEI_JING_MING_CHENG_ZUI_DA_ZI_FU = 20
-export const WAI_GUAN_QI_PAO_MING_CHENG_ZUI_DA_ZI_FU = 12
-export const WAI_GUAN_MEI_LEI_ZUI_DA_TIAO_SHU = 24
-export const WAI_GUAN_YAN_SE_GE_SHI = /^#[0-9a-f]{6}$/i
-export const WAI_GUAN_MO_REN_WEN_ZI_YAN_SE = '#FFFFFF'
-export const WAI_GUAN_DUI_BI_DU_ZUI_XIAO = 4.5
+export const WaiGuanBeiJingMingChengZuiDaZiFu = 20
+export const WaiGuanQiPaoMingChengZuiDaZiFu = 12
+export const WaiGuanMeiLeiZuiDaTiaoShu = 24
+export const WaiGuanYanSeGeShi = /^#[0-9a-f]{6}$/i
+export const WaiGuanMoRenWenZiYanSe = '#FFFFFF'
+export const WaiGuanDuiBiDuZuiXiao = 4.5
 
-const MENG_CENG_LIANG = { r: 255, g: 255, b: 255, a: 0.86 }
-const MENG_CENG_AN = { r: 0, g: 0, b: 0, a: 0.72 }
-const ZUI_HUAI_BEI_JING = { liang: 0, an: 255 }
+const MengCengLiang = { r: 255, g: 255, b: 255, a: 0.86 }
+const MengCengAn = { r: 0, g: 0, b: 0, a: 0.72 }
+const ZuiHuaiBeiJing = { liang: 0, an: 255 }
 
 export interface WaiGuanYanSeZu {
   r: number
@@ -88,14 +88,14 @@ export class WaiGuanCuoWu extends Error {
   }
 }
 
-const UUID_GE_SHI = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UuidGeShi = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export function shiUUID(zhi: unknown): zhi is string {
-  return typeof zhi === 'string' && UUID_GE_SHI.test(zhi.trim())
+  return typeof zhi === 'string' && UuidGeShi.test(zhi.trim())
 }
 
 export function jieXiYanSe(zhi: string): WaiGuanYanSeZu | null {
-  if (!WAI_GUAN_YAN_SE_GE_SHI.test(zhi)) return null
+  if (!WaiGuanYanSeGeShi.test(zhi)) return null
   return {
     r: parseInt(zhi.slice(1, 3), 16),
     g: parseInt(zhi.slice(3, 5), 16),
@@ -130,8 +130,8 @@ export function heChengMengCeng(mengCeng: WaiGuangMengCeng, beiJingHui: number):
 }
 
 export function xuanZeMengCeng(yanSe: WaiGuanYanSeZu): 'liang' | 'an' {
-  const liangDuiBi = jiSuanDuiBiDu(yanSe, heChengMengCeng(MENG_CENG_LIANG, ZUI_HUAI_BEI_JING.liang))
-  const anDuiBi = jiSuanDuiBiDu(yanSe, heChengMengCeng(MENG_CENG_AN, ZUI_HUAI_BEI_JING.an))
+  const liangDuiBi = jiSuanDuiBiDu(yanSe, heChengMengCeng(MengCengLiang, ZuiHuaiBeiJing.liang))
+  const anDuiBi = jiSuanDuiBiDu(yanSe, heChengMengCeng(MengCengAn, ZuiHuaiBeiJing.an))
   return liangDuiBi >= anDuiBi ? 'liang' : 'an'
 }
 
@@ -141,9 +141,9 @@ export function shiKeYongWenZiYanSe(zhi: string): boolean {
   const mengCeng = xuanZeMengCeng(yanSe)
   const houJing =
     mengCeng === 'liang'
-      ? heChengMengCeng(MENG_CENG_LIANG, ZUI_HUAI_BEI_JING.liang)
-      : heChengMengCeng(MENG_CENG_AN, ZUI_HUAI_BEI_JING.an)
-  return jiSuanDuiBiDu(yanSe, houJing) >= WAI_GUAN_DUI_BI_DU_ZUI_XIAO
+      ? heChengMengCeng(MengCengLiang, ZuiHuaiBeiJing.liang)
+      : heChengMengCeng(MengCengAn, ZuiHuaiBeiJing.an)
+  return jiSuanDuiBiDu(yanSe, houJing) >= WaiGuanDuiBiDuZuiXiao
 }
 
 export function kongWaiGuanShuJu(): WaiGuanShuJu {
@@ -161,7 +161,7 @@ function jiSuanZiFuShu(zhi: string): number {
 function guiYiYanSe(zhi: unknown): string {
   const wenBen = quWenBen(zhi)
   if (!wenBen) return ''
-  if (!WAI_GUAN_YAN_SE_GE_SHI.test(wenBen)) return ''
+  if (!WaiGuanYanSeGeShi.test(wenBen)) return ''
   return wenBen.toUpperCase()
 }
 
@@ -199,7 +199,7 @@ function guiYiTiaoMu(
     id: id.toLowerCase(),
     mingCheng,
     meiTiYinYong: shengChengMeiTiYinYong(sha),
-    wenZiYanSe: wenZiYanSe || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
+    wenZiYanSe: wenZiYanSe || WaiGuanMoRenWenZiYanSe,
   }
 }
 
@@ -213,7 +213,7 @@ function guiYiTiaoMuLieBiao(
     if (yanGe) throw new WaiGuanCuoWu(huoQuFanYi('tongYong', 'canShuBuHeFa'))
     return []
   }
-  if (yuan.length > WAI_GUAN_MEI_LEI_ZUI_DA_TIAO_SHU) {
+  if (yuan.length > WaiGuanMeiLeiZuiDaTiaoShu) {
     if (yanGe) throw new WaiGuanCuoWu(huoQuFanYi('sheZhi', 'waiGuanTiaoMuTaiDuo'))
     return []
   }
@@ -240,7 +240,7 @@ function guiYiFuGai(yuan: unknown, yanGe: boolean, leiBie: 'beiJing' | 'qiPao'):
   }
   const chu: Record<string, WaiGuanFuGai> = {}
   for (const [jian, zhi] of Object.entries(yuan as Record<string, unknown>)) {
-    const heFaJian = leiBie === 'beiJing' ? WAI_GUAN_BEI_JING_YU_SHE : QI_PAO_YU_SHE_XUAN_XIANG
+    const heFaJian = leiBie === 'beiJing' ? WaiGuanBeiJingYuShe : QiPaoYuSheXuanXiang
     if (!(heFaJian as readonly string[]).includes(jian)) {
       if (yanGe) throw new WaiGuanCuoWu(huoQuFanYi('tongYong', 'canShuBuHeFa'))
       continue
@@ -252,7 +252,7 @@ function guiYiFuGai(yuan: unknown, yanGe: boolean, leiBie: 'beiJing' | 'qiPao'):
     const xiang = zhi as Record<string, unknown>
     const mingCheng = guiYiMingCheng(
       xiang.mingCheng,
-      leiBie === 'beiJing' ? WAI_GUAN_BEI_JING_MING_CHENG_ZUI_DA_ZI_FU : WAI_GUAN_QI_PAO_MING_CHENG_ZUI_DA_ZI_FU,
+      leiBie === 'beiJing' ? WaiGuanBeiJingMingChengZuiDaZiFu : WaiGuanQiPaoMingChengZuiDaZiFu,
     )
     const yanSeYuanShi = quWenBen(xiang.wenZiYanSe)
     const wenZiYanSe = guiYiYanSe(yanSeYuanShi)
@@ -306,10 +306,10 @@ function guiYiShuJu(yuan: unknown, yanGe: boolean): WaiGuanShuJu {
   const xiang = yuan as Record<string, unknown>
   const beiJing = guiYiTiaoMuLieBiao(
     xiang.beiJing,
-    WAI_GUAN_BEI_JING_MING_CHENG_ZUI_DA_ZI_FU,
+    WaiGuanBeiJingMingChengZuiDaZiFu,
     yanGe,
   )
-  const qiPao = guiYiTiaoMuLieBiao(xiang.qiPao, WAI_GUAN_QI_PAO_MING_CHENG_ZUI_DA_ZI_FU, yanGe)
+  const qiPao = guiYiTiaoMuLieBiao(xiang.qiPao, WaiGuanQiPaoMingChengZuiDaZiFu, yanGe)
   return {
     beiJing,
     qiPao,

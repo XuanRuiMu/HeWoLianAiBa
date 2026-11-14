@@ -6,10 +6,10 @@ import { peiZhi } from '../config'
 import { huoQuFanYi } from '../config/translations'
 import { debug日志 } from '../utils/debug日志'
 
-const NEI_WANG_ZHU_JI = [/^localhost$/i, /^127\./, /^10\./, /^192\.168\./, /^172\.(1[6-9]|2\d|3[01])\./, /^0\.0\.0\.0$/, /^169\.254\./, /^\[?(::1|::ffff:.*|::)\]?$/i]
+const NeiWangZhuJi = [/^localhost$/i, /^127\./, /^10\./, /^192\.168\./, /^172\.(1[6-9]|2\d|3[01])\./, /^0\.0\.0\.0$/, /^169\.254\./, /^\[?(::1|::ffff:.*|::)\]?$/i]
 
 function shiNeiWangZhuJi(zhuJiMing: string): boolean {
-  return NEI_WANG_ZHU_JI.some((biaoDaShi) => biaoDaShi.test(zhuJiMing))
+  return NeiWangZhuJi.some((biaoDaShi) => biaoDaShi.test(zhuJiMing))
 }
 
 async function dnsJieXiQuanBuShiGongWang(zhuJiMing: string): Promise<boolean> {

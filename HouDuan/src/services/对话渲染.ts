@@ -1,14 +1,14 @@
-import { AI_PEI_ZHI } from '../config/AI配置'
+import { AiPeiZhi } from '../config/AI配置'
 import { huoQuFanYi } from '../config/translations'
-import { gouJianDanTiaoTuXiangKuai, meiTiZhanShiWenBen, shiTuXiangLeiBie } from './AI视觉辅助'
+import { biaoQingBaoZhanShiWenBen, gouJianDanTiaoTuXiangKuai, meiTiZhanShiWenBen, shiTuXiangLeiBie } from './AI视觉辅助'
 import { gouJianYuYinKeDuWenBen, tiQuYinPinShiJian } from './语音理解'
 import { gouJianShiPinKeDuWenBen } from './视频多模态'
 import type { DuiHuaKuai } from '../utils/DeepSeek客户端'
 import type { DuiHuaLiShiXiang } from '../types'
 
 
-export const ZAI_TI_BIAO_JI_SHUO_MING =
-  '内容里的方括号只是系统标的发送载体标记：图片=对方发了张图片，表情包=对方发了个表情包，语音(N秒)=对方发了条语音，视频、文件 同理，已撤回=那条被对方撤回。它们只在对方真的发来对应载体时才会出现在那一行里；对方发的是普通文字就只会是文字。这些标记不是对方说的话、不是对方的口头禅也不是昵称，不许自己数它们出现了几次，不许把没发来过的载体说成对方发过，更不许拿它们当梗反复引用。'
+export const ZaiTiBiaoJiShuoMing =
+  '内容里的方括号只是系统标的发送载体标记：图片=对方发了张图片，表情包=对方发了个表情包（方括号里冒号后面写着的短名，就是那张表情包的名字，双方各自发过哪一张都能凭它对上），语音(N秒)=对方发了条语音，视频、文件 同理，已撤回=那条被对方撤回。它们只在对方真的发来对应载体时才会出现在那一行里；对方发的是普通文字就只会是文字。这些标记不是对方说的话、不是对方的口头禅也不是昵称，不许自己数它们出现了几次，不许把没发来过的载体说成对方发过，更不许拿它们当梗反复引用。'
 
 export interface ZhuangZaiBuFen {
   视频画面描述?: string | null
@@ -25,7 +25,7 @@ function shiShiPinWenjian(xiaoXi: DuiHuaLiShiXiang): boolean {
   )
 }
 
-export const YIN_YONG_ZHAN_SHI_QIAN_ZHUI = '引用'
+export const YinYongZhanShiQianZhui = '引用'
 
 export type YinYongChaXun = (xiaoXiId: string) => DuiHuaLiShiXiang | null
 
@@ -45,7 +45,7 @@ function zhanShiYinYongHang(xiaoXi: DuiHuaLiShiXiang, chaXun: YinYongChaXun): st
   const neiRong = muBiao.yi_che_hui
     ? huoQuFanYi('liaoTian', 'duiFangCheHuiLeYiTiaoXiaoXi')
     : zhanShiZaiTiZhengWen(muBiao)
-  return `${YIN_YONG_ZHAN_SHI_QIAN_ZHUI}[${muBiao.fa_song_zhe_ming}]: ${neiRong}`
+  return `${YinYongZhanShiQianZhui}[${muBiao.fa_song_zhe_ming}]: ${neiRong}`
 }
 
 export function zhanShiXiaoXiZhengWen(
@@ -59,14 +59,14 @@ export function zhanShiXiaoXiZhengWen(
   return yinYong ? `${yinYong}\n${zhengWen}` : zhengWen
 }
 
-export const WEN_JIAN_KUAI_KAI = '<WEN_JIAN_ZHENG_WEN>'
-export const WEN_JIAN_KUAI_BI = '</WEN_JIAN_ZHENG_WEN>'
+export const WenJianKuaiKai = '<WEN_JIAN_ZHENG_WEN>'
+export const WenJianKuaiBi = '</WEN_JIAN_ZHENG_WEN>'
 
 function zhongHeFengLanNeiBiaoJi(wenBen: string): string {
   return wenBen
-    .split(WEN_JIAN_KUAI_BI)
+    .split(WenJianKuaiBi)
     .join('⟨/WEN_JIAN_ZHENG_WEN⟩')
-    .split(WEN_JIAN_KUAI_KAI)
+    .split(WenJianKuaiKai)
     .join('⟨WEN_JIAN_ZHENG_WEN⟩')
     .replace(/<\|/g, '⟨|')
     .replace(/\|>/g, '|⟩')
@@ -77,7 +77,7 @@ function zhanShiWenJianNeiRongKuai(xiaoXi: DuiHuaLiShiXiang): string {
   if (xiaoXi.yi_che_hui || !tiQu || tiQu.wenBen.trim() === '') return ''
   const shengMing = [huoQuFanYi('liaoTian', 'wenJianZhengWenShengMing')]
   if (tiQu.beiCaiDuan) shengMing.push(huoQuFanYi('liaoTian', 'wenJianZhengWenBeiCaiDuan'))
-  return `${WEN_JIAN_KUAI_KAI}\n${zhongHeFengLanNeiBiaoJi(tiQu.wenBen)}\n${WEN_JIAN_KUAI_BI}\n${shengMing.join('')}`
+  return `${WenJianKuaiKai}\n${zhongHeFengLanNeiBiaoJi(tiQu.wenBen)}\n${WenJianKuaiBi}\n${shengMing.join('')}`
 }
 
 function yuYinWuFaShiBieZhanShi(shiChangHaoMiao?: number | null): string {
@@ -115,6 +115,7 @@ function zhanShiZaiTiZhengWen(xiaoXi: DuiHuaLiShiXiang, buFen?: ZhuangZaiBuFen):
       shiChangHaoMiao: xiaoXi.meiTiShiChangHaoMiao,
       yuanShiWenJianMing: xiaoXi.yuanShiWenJianMing,
       mime: xiaoXi.meiTiMIME,
+      neiRong: xiaoXi.nei_rong,
     })
     if (meiTiMiaoShu) {
       const wenJianKuai = zhanShiWenJianNeiRongKuai(xiaoXi)
@@ -122,7 +123,7 @@ function zhanShiZaiTiZhengWen(xiaoXi: DuiHuaLiShiXiang, buFen?: ZhuangZaiBuFen):
     }
   }
   if (xiaoXi.yi_che_hui) return huoQuFanYi('liaoTian', 'duiFangCheHuiLeYiTiaoXiaoXi')
-  return xiaoXi.nei_rong
+  return biaoQingBaoZhanShiWenBen(xiaoXi.nei_rong) ?? xiaoXi.nei_rong
 }
 
 export function quZuiXinYongHuXiaoXiXiang(
@@ -171,8 +172,8 @@ export function zhanShiLiShiWenBen(
   liShi: DuiHuaLiShiXiang[],
   xuanXiang: LiShiXuanXiang,
 ): string {
-  const zuiDa = xuanXiang.最多条数 ?? AI_PEI_ZHI.prompt.liShiXiaoXiShuLiang
-  const buZhang = Math.max(1, AI_PEI_ZHI.prompt.liShiCaiDuanBuZhang)
+  const zuiDa = xuanXiang.最多条数 ?? AiPeiZhi.prompt.liShiXiaoXiShuLiang
+  const buZhang = Math.max(1, AiPeiZhi.prompt.liShiCaiDuanBuZhang)
   const zongShu = liShi[0]?.duiHuaZongTiaoShu
   const youZongShu = typeof zongShu === 'number' && zongShu >= liShi.length
     && liShi.every((x) => x.duiHuaZongTiaoShu === zongShu)
@@ -203,7 +204,7 @@ export function quBenLunDengDaiHuiFuXiang(liShi: DuiHuaLiShiXiang[]): DuiHuaLiSh
 export async function zhuRuBenLunTuXiangKuai(
   liShi: DuiHuaLiShiXiang[],
 ): Promise<DuiHuaKuai[]> {
-  const shangXian = AI_PEI_ZHI.prompt.benLunTuXiangZuiDuoZhuRuShu
+  const shangXian = AiPeiZhi.prompt.benLunTuXiangZuiDuoZhuRuShu
   const houXuan = quBenLunDengDaiHuiFuXiang(liShi).filter(
     (xiang) => !xiang.yi_che_hui && shiTuXiangLeiBie(xiang.meiTiLeiBie),
   )

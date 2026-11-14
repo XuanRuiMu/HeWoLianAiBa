@@ -1,7 +1,7 @@
 import { onBeforeUnmount, watch, type Ref } from 'vue'
 
-const CAO_GAO_QIAN_ZHUI = 'caoGao:'
-const CAO_GAO_ZUI_DA_ZI_FU = 2000
+const CaoGaoQianZhui = 'caoGao:'
+const CaoGaoZuiDaZiFu = 2000
 
 export type CaoGaoJianYuan = string | Ref<string>
 
@@ -21,7 +21,7 @@ function shiHeFaCaoGaoJian(jian: unknown): jian is string {
 function duQuCaoGao(jian: string): string {
   try {
     if (typeof sessionStorage === 'undefined') return ''
-    return sessionStorage.getItem(CAO_GAO_QIAN_ZHUI + jian) || ''
+    return sessionStorage.getItem(CaoGaoQianZhui + jian) || ''
   } catch {
     return ''
   }
@@ -30,9 +30,9 @@ function duQuCaoGao(jian: string): string {
 function xieRuCaoGao(jian: string, zhi: string): void {
   try {
     if (typeof sessionStorage === 'undefined') return
-    const qingLi = typeof zhi === 'string' ? zhi.slice(0, CAO_GAO_ZUI_DA_ZI_FU) : ''
-    if (!qingLi) sessionStorage.removeItem(CAO_GAO_QIAN_ZHUI + jian)
-    else sessionStorage.setItem(CAO_GAO_QIAN_ZHUI + jian, qingLi)
+    const qingLi = typeof zhi === 'string' ? zhi.slice(0, CaoGaoZuiDaZiFu) : ''
+    if (!qingLi) sessionStorage.removeItem(CaoGaoQianZhui + jian)
+    else sessionStorage.setItem(CaoGaoQianZhui + jian, qingLi)
   } catch {
     // 会话存储不可用时静默跳过，不影响输入
   }
@@ -41,7 +41,7 @@ function xieRuCaoGao(jian: string, zhi: string): void {
 function shanChuCaoGao(jian: string): void {
   try {
     if (typeof sessionStorage === 'undefined') return
-    sessionStorage.removeItem(CAO_GAO_QIAN_ZHUI + jian)
+    sessionStorage.removeItem(CaoGaoQianZhui + jian)
   } catch {
     // 静默跳过
   }
@@ -61,7 +61,7 @@ export function useCaoGao(caoGaoJianYuan: CaoGaoJianYuan, neiRong: Ref<string>):
     if (!jian || neiRong.value) return false
     const cunGao = duQuCaoGao(jian)
     if (!cunGao) return false
-    neiRong.value = cunGao.slice(0, CAO_GAO_ZUI_DA_ZI_FU)
+    neiRong.value = cunGao.slice(0, CaoGaoZuiDaZiFu)
     return true
   }
 
@@ -101,7 +101,7 @@ export function useCaoGao(caoGaoJianYuan: CaoGaoJianYuan, neiRong: Ref<string>):
   return { huiFuCaoGao, qingChuCaoGao }
 }
 
-export const CAO_GAO_JIAN = {
+export const CaoGaoJian = {
   aiLiaoTian: (huiHuaId: string) => `ai:${huiHuaId}`,
   haoYouLiaoTian: (haoYouId: string) => `haoYou:${haoYouId}`,
   shenSu: 'shenSu',

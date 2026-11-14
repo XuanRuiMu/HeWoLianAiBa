@@ -3,7 +3,7 @@ import {
   type CountryCode,
 } from 'libphonenumber-js/min'
 
-export const DA_LU_QU_HAO = '86'
+export const DaLuQuHao = '86'
 
 export interface ShouJiHaoJieXi {
   heFa: boolean
@@ -17,7 +17,7 @@ export function guiYiWeiGuoJiHao(yuanShi: string): string {
     .replace(/[\s\-()（）\uFF0B\uFF0D\u2010-\u2015]/g, '')
   if (qingLi === '') return ''
   if (qingLi.startsWith('+')) return qingLi
-  if (/^\d{11}$/.test(qingLi) && /^1[3-9]/.test(qingLi)) return '+' + DA_LU_QU_HAO + qingLi
+  if (/^\d{11}$/.test(qingLi) && /^1[3-9]/.test(qingLi)) return '+' + DaLuQuHao + qingLi
   if (/^86\d{11}$/.test(qingLi)) return '+' + qingLi
   return '+' + qingLi
 }

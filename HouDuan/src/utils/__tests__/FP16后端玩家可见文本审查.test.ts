@@ -2,22 +2,17 @@ import { describe, it, expect } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import {
-  CUO_WU_DAI_MA,
-  dengLiCuoWuXianRongLieBiao,
-  huoQuCuoWuXianRong,
-  type CuoWuDaiMa,
-} from '../../config/错误码注册表'
+import {CuoWuDaiMa, dengLiCuoWuXianRongLieBiao, huoQuCuoWuXianRong} from '../../config/错误码注册表'
 import { fanYi, huoQuFanYi } from '../../config/translations'
 
 const dangQianMuLu = dirname(fileURLToPath(import.meta.url))
 const houDuanFanYiLuJing = resolve(dangQianMuLu, '../../config/translations.ts')
 
-const XU_LIU_WU = /base64|DeepSeek|axios|DOMException|EncodingError|ECONNRESET|ECONNREFUSED|getaddrinfo|127\.0\.0\.1|localhost|localhost:|\/srv\/|\/app\/|SELECT\s|INSERT\s|UPDATE\s|DELETE\s|stack:|SQLSTATE|postgres|mysql|redis|password|api[_-]?key|bearer\s|jwt/i
-const ZHAN_WEI = /\{\{|\}\}|undefined|null|NaN|\{tongYong\}|\{qiDong\}|\{jiaoSe\}|\{zhanJi\}|\{renZheng\}|\{anQuan\}|\{guanLiYuan\}|\{shenJi\}|\{shenHeLeiBie\}|\{AI\}|\{haoGanDu\}|\{junShi\}|\{haoYou\}|\{sheZhi\}|\{ziLiao\}|\{liaoTian\}|\{tiaoZhan\}|\{tongHua\}|\{fuPan\}|\{jieJu\}/
-const FU_YAN = /出错了|未知错误|请稍后重试|稍后再试|请稍后再试|开小差|不知道发生了什么|请稍候看看/
-const ZHUANG_KAI_A = /啦|呀|哦|呢~|吧~|~|！{2,}|么~|哈{2,}/
-const XIAO_HUAN = /请/
+const XuLiuWu = /base64|DeepSeek|axios|DOMException|EncodingError|ECONNRESET|ECONNREFUSED|getaddrinfo|127\.0\.0\.1|localhost|localhost:|\/srv\/|\/app\/|SELECT\s|INSERT\s|UPDATE\s|DELETE\s|stack:|SQLSTATE|postgres|mysql|redis|password|api[_-]?key|bearer\s|jwt/i
+const ZhanWei = /\{\{|\}\}|undefined|null|NaN|\{tongYong\}|\{qiDong\}|\{jiaoSe\}|\{zhanJi\}|\{renZheng\}|\{anQuan\}|\{guanLiYuan\}|\{shenJi\}|\{shenHeLeiBie\}|\{AI\}|\{haoGanDu\}|\{junShi\}|\{haoYou\}|\{sheZhi\}|\{ziLiao\}|\{liaoTian\}|\{tiaoZhan\}|\{tongHua\}|\{fuPan\}|\{jieJu\}/
+const FuYan = /出错了|未知错误|请稍后重试|稍后再试|请稍后再试|开小差|不知道发生了什么|请稍候看看/
+const ZhuangKaiA = /啦|呀|哦|呢~|吧~|~|！{2,}|么~|哈{2,}/
+const XiaoHuan = /请/
 
 describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
   describe('每个错误码的最终 message', () => {
@@ -28,15 +23,15 @@ describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
         if (typeof 消息 !== 'string' || 消息.trim() === '') 缺键.push(daiMa)
       }
       expect(缺键).toEqual([])
-      expect(dengLiCuoWuXianRongLieBiao.length).toBe(Object.keys(CUO_WU_DAI_MA).length)
+      expect(dengLiCuoWuXianRongLieBiao.length).toBe(Object.keys(CuoWuDaiMa).length)
     })
 
     it('判据①②：无内部实现/第三方原文、无占位符与脏值', () => {
       const 违规: string[] = []
       for (const daiMa of dengLiCuoWuXianRongLieBiao) {
         const 消息 = huoQuCuoWuXianRong(daiMa).message
-        if (XU_LIU_WU.test(消息)) 违规.push(`${daiMa} 内部原文：${消息}`)
-        if (ZHAN_WEI.test(消息)) 违规.push(`${daiMa} 占位/脏值：${消息}`)
+        if (XuLiuWu.test(消息)) 违规.push(`${daiMa} 内部原文：${消息}`)
+        if (ZhanWei.test(消息)) 违规.push(`${daiMa} 占位/脏值：${消息}`)
       }
       expect(违规).toEqual([])
     })
@@ -45,8 +40,8 @@ describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
       const 违规: string[] = []
       for (const daiMa of dengLiCuoWuXianRongLieBiao) {
         const 消息 = huoQuCuoWuXianRong(daiMa).message
-        if (FU_YAN.test(消息)) 违规.push(`${daiMa} 敷衍：${消息}`)
-        if (ZHUANG_KAI_A.test(消息)) 违规.push(`${daiMa} 装可爱：${消息}`)
+        if (FuYan.test(消息)) 违规.push(`${daiMa} 敷衍：${消息}`)
+        if (ZhuangKaiA.test(消息)) 违规.push(`${daiMa} 装可爱：${消息}`)
       }
       expect(违规).toEqual([])
     })
@@ -99,7 +94,7 @@ describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
     it('判据①②：无内部原文、无占位符与脏值', () => {
       const 违规 = 全值()
         .filter(({ 路径 }) => !/beiAnHao|suanFaBeiAnHao|beiAnJinXingZhong/.test(路径))
-        .filter(({ 文本 }) => XU_LIU_WU.test(文本) || ZHAN_WEI.test(文本))
+        .filter(({ 文本 }) => XuLiuWu.test(文本) || ZhanWei.test(文本))
         .map(({ 路径, 文本 }) => `${路径}：${文本}`)
       expect(违规).toEqual([])
     })
@@ -108,7 +103,7 @@ describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
       const 角色文风 = /(^|\.)(AI|jieGuoTongGuanChi|jieGuoShiBaiChi|fuPan|junShi)\.|liaoTian\.(aiYuSuanYiYongJin|lianFaYuJing|zhuDongFenXiangTuPian)$/
       const 违规 = 全值()
         .filter(({ 路径 }) => !角色文风.test(路径))
-        .filter(({ 文本 }) => FU_YAN.test(文本) || ZHUANG_KAI_A.test(文本))
+        .filter(({ 文本 }) => FuYan.test(文本) || ZhuangKaiA.test(文本))
         .map(({ 路径, 文本 }) => `${路径}：${文本}`)
       expect(违规).toEqual([])
     })
@@ -117,7 +112,7 @@ describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
       const 角色文风 = /(^|\.)(AI|jieGuoTongGuanChi|jieGuoShiBaiChi|fuPan|junShi)\.|liaoTian\.(aiYuSuanYiYongJin|lianFaYuJing|zhuDongFenXiangTuPian)$/
       const 装可爱 = 全值()
         .filter(({ 路径 }) => 角色文风.test(路径))
-        .filter(({ 文本 }) => ZHUANG_KAI_A.test(文本))
+        .filter(({ 文本 }) => ZhuangKaiA.test(文本))
         .map(({ 路径 }) => 路径)
       const 拖尾省略号 = 全值()
         .filter(({ 路径 }) => 角色文风.test(路径))
@@ -156,33 +151,33 @@ describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
     }
 
     it('500 兜底：不含「出错了」，说明影响且不承诺重试', () => {
-      const 显示 = 判读(CUO_WU_DAI_MA.INTERNAL_ERROR)
+      const 显示 = 判读(CuoWuDaiMa.INTERNAL_ERROR)
       expect(显示.影响).toBe('这次操作没有完成，当前内容可能仍是上次结果')
-      expect(显示.影响).not.toMatch(FU_YAN)
+      expect(显示.影响).not.toMatch(FuYan)
       expect(显示.可重试).toBe(false)
     })
 
     it('登录态失效：不说「令牌」，给出重新登录动作', () => {
-      expect(huoQuCuoWuXianRong(CUO_WU_DAI_MA.AUTH_TOKEN_INVALID).message).toBe('登录状态已失效，请重新登录')
-      expect(huoQuCuoWuXianRong(CUO_WU_DAI_MA.AUTH_REFRESH_TOKEN_INVALID).message).toBe('登录状态已失效，请重新登录')
+      expect(huoQuCuoWuXianRong(CuoWuDaiMa.AUTH_TOKEN_INVALID).message).toBe('登录状态已失效，请重新登录')
+      expect(huoQuCuoWuXianRong(CuoWuDaiMa.AUTH_REFRESH_TOKEN_INVALID).message).toBe('登录状态已失效，请重新登录')
     })
 
     it('上游/缓存/依赖不可用：不泄露内部组件名', () => {
       for (const daiMa of [
-        CUO_WU_DAI_MA.UPSTREAM_NETWORK_ERROR,
-        CUO_WU_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE,
-        CUO_WU_DAI_MA.DEPENDENCIES_UNAVAILABLE,
-        CUO_WU_DAI_MA.DEPENDENCY_POSTGRES_UNAVAILABLE,
-        CUO_WU_DAI_MA.DATABASE_ERROR,
+        CuoWuDaiMa.UPSTREAM_NETWORK_ERROR,
+        CuoWuDaiMa.DEPENDENCY_REDIS_UNAVAILABLE,
+        CuoWuDaiMa.DEPENDENCIES_UNAVAILABLE,
+        CuoWuDaiMa.DEPENDENCY_POSTGRES_UNAVAILABLE,
+        CuoWuDaiMa.DATABASE_ERROR,
       ] as CuoWuDaiMa[]) {
         const 消息 = huoQuCuoWuXianRong(daiMa).message
         expect(消息).not.toMatch(/上游|缓存|依赖|数据库|Redis|Postgres/)
-        expect(消息).toMatch(XIAO_HUAN)
+        expect(消息).toMatch(XiaoHuan)
       }
     })
 
     it('凭据错误不泄露账号是否存在，也不责怪用户', () => {
-      const 消息 = huoQuCuoWuXianRong(CUO_WU_DAI_MA.AUTH_INVALID_CREDENTIALS).message
+      const 消息 = huoQuCuoWuXianRong(CuoWuDaiMa.AUTH_INVALID_CREDENTIALS).message
       // 守卫语义：只指向「密码」这一侧，不得暴露账号是否注册过；
       // 具体措辞可随时改写（docs/错误码大全.md 明确 message 不是归类依据）。
       expect(消息).toMatch(/密码/)
@@ -190,20 +185,20 @@ describe('FP-16 主项目最终 API 可见文本审查（后端）', () => {
     })
 
     it('注册关闭：不可重试且不承诺重试', () => {
-      const 元 = huoQuCuoWuXianRong(CUO_WU_DAI_MA.AUTH_REGISTRATION_CLOSED)
+      const 元 = huoQuCuoWuXianRong(CuoWuDaiMa.AUTH_REGISTRATION_CLOSED)
       expect(元.retryable).toBe(false)
       expect(元.message).not.toMatch(/重试|稍后/)
     })
 
     it('战绩排序：不说「排序ID」等内部字段名', () => {
-      const 消息 = huoQuCuoWuXianRong(CUO_WU_DAI_MA.ZHAN_JI_PAI_XU_ID_CHONG_FU).message
+      const 消息 = huoQuCuoWuXianRong(CuoWuDaiMa.ZHAN_JI_PAI_XU_ID_CHONG_FU).message
       expect(消息).not.toMatch(/ID|参数/)
       expect(消息).toMatch(/重新排序/)
     })
 
     it('用户输入与超长文本安全：错误文案长度有上界（不得把入参回显进文案）', () => {
       const 长样本 = 'x'.repeat(4000)
-      const 消息 = huoQuCuoWuXianRong(CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID).message
+      const 消息 = huoQuCuoWuXianRong(CuoWuDaiMa.REQUEST_PARAMETER_INVALID).message
       expect(长样本.startsWith(消息)).toBe(false)
       expect(`${消息}${长样本}`.startsWith(消息)).toBe(true)
       for (const daiMa of dengLiCuoWuXianRongLieBiao) {

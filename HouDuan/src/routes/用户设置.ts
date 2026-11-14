@@ -26,24 +26,24 @@ import { panDingMeiTiShenHeChuCan } from '../services/媒体审核出参'
 import { chaXunZhangHaoFengJin, jiLuZhangHaoWeiGui } from '../services/账号封禁'
 import { 获取IP } from '../services/IP封禁'
 import {
-  QI_PAO_AI_MO_REN,
-  QI_PAO_ZI_JI_MO_REN,
+  QiPaoAiMoRen,
+  QiPaoZiJiMoRen,
   shiHeFaQiPao as danYuanShiHeFaQiPao,
 } from '../config/气泡主题'
 
 const luYou = Router()
 
-const LIAO_TIAN_BEI_JING_YU_SHE = new Set(['moRen', 'miWuSenLin', 'haiYangZhiLan', 'fenSeMengJing', 'yeKongXingHe', 'miSeTianYuan', 'chenWuQing', 'muZiXingYe'])
-const BEI_JING_URL_ZUI_DA_CHANG_DU = 2000
-const MEI_TI_QIAN_MING_LU_JING = /^\/api\/媒体\/[0-9a-f]{64}(\?e=\d{1,12}&s=[0-9a-f]+)?$/
-const NEI_WANG_ZHU_JI = [/^localhost$/i, /^127\./, /^10\./, /^192\.168\./, /^172\.(1[6-9]|2\d|3[01])\./, /^0\.0\.0\.0$/, /^169\.254\./, /^\[?(::1|::ffff:.*|::)\]?$/i]
+const LiaoTianBeiJingYuShe = new Set(['moRen', 'miWuSenLin', 'haiYangZhiLan', 'fenSeMengJing', 'yeKongXingHe', 'miSeTianYuan', 'chenWuQing', 'muZiXingYe'])
+const BeiJingUrlZuiDaChangDu = 2000
+const MeiTiQianMingLuJing = /^\/api\/媒体\/[0-9a-f]{64}(\?e=\d{1,12}&s=[0-9a-f]+)?$/
+const NeiWangZhuJi = [/^localhost$/i, /^127\./, /^10\./, /^192\.168\./, /^172\.(1[6-9]|2\d|3[01])\./, /^0\.0\.0\.0$/, /^169\.254\./, /^\[?(::1|::ffff:.*|::)\]?$/i]
 
 function shiZiDingYiBeiJingURL(zhi: unknown): boolean {
   if (typeof zhi !== 'string') return false
   const qingLi = zhi.trim()
-  if (!qingLi || qingLi.length > BEI_JING_URL_ZUI_DA_CHANG_DU) return false
+  if (!qingLi || qingLi.length > BeiJingUrlZuiDaChangDu) return false
   if (qingLi.startsWith('/')) {
-    if (MEI_TI_QIAN_MING_LU_JING.test(qingLi)) return true
+    if (MeiTiQianMingLuJing.test(qingLi)) return true
     const xinQianMing = /^\/api\/媒体\/[0-9a-f]{64}\?e=\d{1,12}&u=[0-9a-f-]{36}&t=\d{1,15}&s=[0-9a-f]+$/i.test(qingLi)
     return xinQianMing
   }
@@ -55,12 +55,12 @@ function shiZiDingYiBeiJingURL(zhi: unknown): boolean {
   }
   if (jieXi.protocol !== 'https:') return false
   if (jieXi.username || jieXi.password) return false
-  if (NEI_WANG_ZHU_JI.some((biaoDaShi) => biaoDaShi.test(jieXi.hostname))) return false
+  if (NeiWangZhuJi.some((biaoDaShi) => biaoDaShi.test(jieXi.hostname))) return false
   return true
 }
 
 export function shiHeFaLiaoTianBeiJing(zhi: unknown): zhi is string {
-  return typeof zhi === 'string' && (LIAO_TIAN_BEI_JING_YU_SHE.has(zhi) || shiZiDingYiBeiJingURL(zhi))
+  return typeof zhi === 'string' && (LiaoTianBeiJingYuShe.has(zhi) || shiZiDingYiBeiJingURL(zhi))
 }
 
 export function shiHeFaQiPao(zhi: unknown): zhi is string {
@@ -219,8 +219,8 @@ luYou.get('/', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Resp
       liao_tian_bei_jing: zhanShiBeiJing,
       liao_tian_bei_jing_qian: zhanShiQian,
       liao_tian_bei_jing_shen: zhanShiShen,
-      qi_pao_zi_ji: duQuQiPao(sheZhi, '气泡自己', QI_PAO_ZI_JI_MO_REN),
-      qi_pao_ai: duQuQiPao(sheZhi, '气泡AI', QI_PAO_AI_MO_REN),
+      qi_pao_zi_ji: duQuQiPao(sheZhi, '气泡自己', QiPaoZiJiMoRen),
+      qi_pao_ai: duQuQiPao(sheZhi, '气泡AI', QiPaoAiMoRen),
       gong_kai_zhang_hao: sheZhi['公开账号'] !== false,
       gong_kai_shou_ji_hao: sheZhi['公开手机号'] === true,
       gong_kai_you_xiang: sheZhi['公开邮箱'] === true,

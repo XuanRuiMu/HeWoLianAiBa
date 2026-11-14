@@ -8,9 +8,9 @@ export interface FanYiJieGuo {
   ti_shi?: string
 }
 
-export const FAN_YI_ZHI_CHI_YU_YAN = ['zh', 'en', 'ja', 'ko', 'fr', 'de', 'es', 'ru'] as const
+export const FanYiZhiChiYuYan = ['zh', 'en', 'ja', 'ko', 'fr', 'de', 'es', 'ru'] as const
 
-export type FanYiYuYan = (typeof FAN_YI_ZHI_CHI_YU_YAN)[number] | 'auto'
+export type FanYiYuYan = (typeof FanYiZhiChiYuYan)[number] | 'auto'
 
 function guiFanYuYan(zhi: unknown, moRen: FanYiYuYan): FanYiYuYan {
   if (typeof zhi !== 'string') return moRen
@@ -29,7 +29,7 @@ function guiFanYuYan(zhi: unknown, moRen: FanYiYuYan): FanYiYuYan {
   return yingShe[qingLi] ?? moRen
 }
 
-const YU_YAN_MING: Record<string, string> = {
+const YuYanMing: Record<string, string> = {
   zh: '中文', en: '英文', ja: '日文', ko: '韩文', fr: '法文', de: '德文', es: '西班牙文', ru: '俄文',
 }
 
@@ -47,8 +47,8 @@ export async function fanYiWenBen(
   }
   const yuanYuGuiFan = guiFanYuYan(yuanYu, 'auto')
   const muBiaoYuGuiFan = guiFanYuYan(muBiaoYu, 'zh')
-  const muBiaoMing = YU_YAN_MING[muBiaoYuGuiFan] ?? '中文'
-  const yuanShuoMing = yuanYuGuiFan === 'auto' ? '原文（可能为混合语言）' : YU_YAN_MING[yuanYuGuiFan] ?? '原文'
+  const muBiaoMing = YuYanMing[muBiaoYuGuiFan] ?? '中文'
+  const yuanShuoMing = yuanYuGuiFan === 'auto' ? '原文（可能为混合语言）' : YuYanMing[yuanYuGuiFan] ?? '原文'
   try {
     const xiangYing = await tiaoYongDeepSeek(
       {

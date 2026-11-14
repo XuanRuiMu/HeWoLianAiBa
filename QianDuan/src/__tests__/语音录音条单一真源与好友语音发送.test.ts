@@ -4,7 +4,7 @@ import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import 语音录音条 from '@/components/聊天/语音录音条.vue'
 import { huoQuFanYi } from '@/config/翻译表'
-import { DUO_MEI_TI_PEI_ZHI, LU_YIN_PEI_ZHI } from '@/config/消息配置'
+import { DuoMeiTiPeiZhi, LuYinPeiZhi } from '@/config/消息配置'
 
 const 根 = resolve(__dirname, '..')
 const 读 = (xiangDui: string): string => readFileSync(resolve(根, xiangDui), 'utf8')
@@ -54,9 +54,9 @@ describe('语音录音条单一真源组件', () => {
     const 包 = guaZaiLuYinTiao({
       luYinZhong: true,
       luYinMiao: 7,
-      luYinBoXing: Array.from({ length: LU_YIN_PEI_ZHI.dianPingTiaoShu }, (_, xuhao) => xuhao / 100),
+      luYinBoXing: Array.from({ length: LuYinPeiZhi.dianPingTiaoShu }, (_, xuhao) => xuhao / 100),
     })
-    expect(包.findAll('.luyin-dianping-tiao')).toHaveLength(LU_YIN_PEI_ZHI.dianPingTiaoShu)
+    expect(包.findAll('.luyin-dianping-tiao')).toHaveLength(LuYinPeiZhi.dianPingTiaoShu)
     expect(包.find('.luyin-jishi').text()).toBe('7s')
     expect(包.find('.luyin-anzhu-an').text()).toContain(huoQuFanYi('duoMeiTi', 'songKaiFaSong'))
     expect(包.find('.luyin-guanbi-anniu').exists()).toBe(false)
@@ -80,7 +80,7 @@ describe('语音录音条单一真源组件', () => {
   it('波形条高度按强度百分比钳制', () => {
     const 包 = guaZaiLuYinTiao({
       luYinZhong: true,
-      luYinBoXing: Array.from({ length: LU_YIN_PEI_ZHI.dianPingTiaoShu }, () => 0.5),
+      luYinBoXing: Array.from({ length: LuYinPeiZhi.dianPingTiaoShu }, () => 0.5),
     })
     const 首条 = 包.find('.luyin-dianping-tiao')
     expect(首条.attributes('style')).toContain('height: 50%')
@@ -258,7 +258,7 @@ describe('FP-01 录音上报实测音频时长', () => {
     const { faSongYuYinMock, ceLiangMock } = await moNiWanChengLuYin(4000)
     expect(ceLiangMock).toHaveBeenCalledWith(
       expect.stringContaining('blob:'),
-      DUO_MEI_TI_PEI_ZHI.yuYinFaSongCeLiangChaoShiHaoMiao,
+      DuoMeiTiPeiZhi.yuYinFaSongCeLiangChaoShiHaoMiao,
     )
     expect(faSongYuYinMock).toHaveBeenCalledTimes(1)
     const [, fuJia] = faSongYuYinMock.mock.calls[0] as [Blob, { shiChangHaoMiao: number }]
@@ -280,10 +280,10 @@ describe('FP-01 录音上报实测音频时长', () => {
   })
 
   it('发送前那一跳的超时是独立短值且远小于挂载自愈超时', () => {
-    expect(DUO_MEI_TI_PEI_ZHI.yuYinFaSongCeLiangChaoShiHaoMiao).toBeLessThan(
-      DUO_MEI_TI_PEI_ZHI.yuYinShiChangCeLiangChaoShiHaoMiao,
+    expect(DuoMeiTiPeiZhi.yuYinFaSongCeLiangChaoShiHaoMiao).toBeLessThan(
+      DuoMeiTiPeiZhi.yuYinShiChangCeLiangChaoShiHaoMiao,
     )
-    expect(DUO_MEI_TI_PEI_ZHI.yuYinFaSongCeLiangChaoShiHaoMiao).toBeGreaterThan(0)
+    expect(DuoMeiTiPeiZhi.yuYinFaSongCeLiangChaoShiHaoMiao).toBeGreaterThan(0)
     expect(读('composables/use录音.ts')).toContain('yuYinFaSongCeLiangChaoShiHaoMiao')
   })
 
@@ -322,7 +322,7 @@ describe('FP-01 录音上报实测音频时长', () => {
       })
       await kaiShiLuYin()
       await new Promise((deng) => {
-        setTimeout(deng, DUO_MEI_TI_PEI_ZHI.yuYinZuiDuanMiao * 1000 + 200)
+        setTimeout(deng, DuoMeiTiPeiZhi.yuYinZuiDuanMiao * 1000 + 200)
       })
       const kaiShi = Date.now()
       await wanChengLuYin(true)
@@ -332,10 +332,10 @@ describe('FP-01 录音上报实测音频时长', () => {
       expect(fuJia.shiChangHaoMiao).toBeGreaterThan(0)
       expect(warnMock).toHaveBeenCalledTimes(1)
       expect(dengDaiHaoMiao).toBeLessThan(
-        DUO_MEI_TI_PEI_ZHI.yuYinShiChangCeLiangChaoShiHaoMiao -
-          DUO_MEI_TI_PEI_ZHI.yuYinFaSongCeLiangChaoShiHaoMiao,
+        DuoMeiTiPeiZhi.yuYinShiChangCeLiangChaoShiHaoMiao -
+          DuoMeiTiPeiZhi.yuYinFaSongCeLiangChaoShiHaoMiao,
       )
-      expect(dengDaiHaoMiao).toBeLessThan(DUO_MEI_TI_PEI_ZHI.yuYinFaSongCeLiangChaoShiHaoMiao + 600)
+      expect(dengDaiHaoMiao).toBeLessThan(DuoMeiTiPeiZhi.yuYinFaSongCeLiangChaoShiHaoMiao + 600)
     } finally {
       warnMock.mockRestore()
       if (yuanDescriptor) Object.defineProperty(navigator, 'mediaDevices', yuanDescriptor)

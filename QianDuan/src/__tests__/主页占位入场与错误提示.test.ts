@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import 请求错误 from '@/components/请求错误.vue'
 import { chuangJianQianTaiCuoWu } from '@/utils/前台错误'
 import { huoQuFanYi } from '@/config/翻译表'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { QianTaiDaiMa } from '@/config/前台错误码'
 
 const 本目录 = dirname(fileURLToPath(import.meta.url))
 const 读源 = (...路径段: string[]) => readFileSync(resolve(本目录, '..', ...路径段), 'utf8')
@@ -62,7 +62,7 @@ describe('主页占位入场', () => {
 
 describe('错误提示设计语言', () => {
   it('请求错误复用全局 .cuowu-tishi 底面并自带红色图标', () => {
-    const 包 = mount(请求错误, { props: { cuoWu: chuangJianQianTaiCuoWu({ code: QIAN_TAI_DAI_MA.AUTH_INVALID_CREDENTIALS }) } })
+    const 包 = mount(请求错误, { props: { cuoWu: chuangJianQianTaiCuoWu({ code: QianTaiDaiMa.AUTH_INVALID_CREDENTIALS }) } })
     expect(包.find('.qian-tai-cuo-wu').classes()).toContain('cuowu-tishi')
     expect(包.find('.qian-tai-cuo-wu-tubiao').exists()).toBe(true)
     expect(包.find('.qian-tai-cuo-wu-biaoti').exists()).toBe(false)
@@ -71,8 +71,8 @@ describe('错误提示设计语言', () => {
 
   it('数据库/缓存不可用只显示依赖故障文案，绝不冒充密码错误', () => {
     for (const [daiMa, lianAiMa] of [
-      [QIAN_TAI_DAI_MA.DEPENDENCY_POSTGRES_UNAVAILABLE, 'LianAi_043'],
-      [QIAN_TAI_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE, 'LianAi_044'],
+      [QianTaiDaiMa.DEPENDENCY_POSTGRES_UNAVAILABLE, 'LianAi_043'],
+      [QianTaiDaiMa.DEPENDENCY_REDIS_UNAVAILABLE, 'LianAi_044'],
     ] as const) {
       const 包 = mount(请求错误, { props: { cuoWu: chuangJianQianTaiCuoWu({ code: daiMa }) } })
       const 文案 = 包.find('.qian-tai-cuo-wu-wen-an').text()

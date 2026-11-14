@@ -1,134 +1,265 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const chaXunMock = vi.hoisted(() => vi.fn())
+const quHouXuanMock = vi.hoisted(() => vi.fn())
 
-vi.mock('../../数据库', () => ({
-  数据库: {
-    query: (...canShu: unknown[]) => chaXunMock(...canShu),
-    connect: vi.fn(async () => ({ query: vi.fn(), release: vi.fn() })),
-  },
-}))
+const chaAnDuanMingMock = vi.hoisted(() => vi.fn())
+
+const duanMingDaoUUIDMock = vi.hoisted(() => vi.fn())
 
 const baoCunMeiTiXiaoXiMock = vi.hoisted(() => vi.fn())
+
+vi.mock('../表情包库', () => ({
+  quHouXuan: (...canShu: unknown[]) => quHouXuanMock(...canShu),
+  chaAnDuanMing: (...canShu: unknown[]) => chaAnDuanMingMock(...canShu),
+  duanMingDaoUUID: (...canShu: unknown[]) => duanMingDaoUUIDMock(...canShu),
+}))
 
 vi.mock('../消息', () => ({
   baoCunJiaoSeMeiTiXiaoXi: (...canShu: unknown[]) => baoCunMeiTiXiaoXiMock(...canShu),
 }))
 
+vi.mock('../../数据库', () => ({
+  数据库: {
+    query: vi.fn(async () => ({ rows: [] })),
+    connect: vi.fn(async () => ({ query: vi.fn(), release: vi.fn() })),
+  },
+}))
+
 import {
-  jieXiBiaoQingZhiLing,
-  zuZhuangBiaoQingHouXuanKuai,
-  houXuanXiTongBiaoQing,
-  faSongBiaoQingBaoXiaoXi,
-  shengChengBiaoQingHouXuanWenBen,
   chaZhaoBiaoQingAnDuanMing,
+  faSongBiaoQingBaoXiaoXi,
+  houXuanXiTongBiaoQing,
+  shengChengBiaoQingHouXuanWenBen,
+  zuZhuangBiaoQingHouXuanKuai,
+  type XiTongBiaoQingXiang,
 } from '../系统表情'
 import { jieXiDirectorXiangYing } from '../Director'
-import { BIAO_QING_BAO_YUN_XING } from '../../config/表情包配置'
+import { BiaoQingBaoYunXing } from '../../config/表情包配置'
+import type { BiaoQingZaiTiJueCe } from '../表情载体'
 
-function hang(zhi: Partial<Record<string, unknown>>): Record<string, unknown> {
+function fangXingJueCe(gengDuo: Partial<BiaoQingZaiTiJueCe> = {}): BiaoQingZaiTiJueCe {
   return {
-    ID: 'id-1', 短名: '笑哭', 描述: '眯眼大笑', 情绪标签: '好笑', 适用场景: '接住好笑的事',
-    SHA256: 'A'.repeat(64), MIME: 'image/png', ...zhi,
+    geiHouXuan: true,
+    yuanYin: '放行',
+    yunXuFengGe: ['黄脸', '祝福'],
+    guanXiJieDuanXuHao: 6,
+    nianLingDang: '长辈',
+    qiWangJianGeLunShu: 20,
+    shangCiFaTuLunShu: null,
+    quXiang: '正常',
+    ...gengDuo,
   }
 }
 
-describe('贴纸指令解析', () => {
-  it('整行指令按短名解析（中英文冒号都行）', () => {
-    expect(jieXiBiaoQingZhiLing('[贴纸:笑哭]')).toBe('笑哭')
-    expect(jieXiBiaoQingZhiLing('[贴纸：狗头]')).toBe('狗头')
-    expect(jieXiBiaoQingZhiLing('  [贴纸: 求求了]  ')).toBe('求求了')
-  })
+function kuTiaoMu(zhi: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    duanMing: '熊猫头无语',
+    miaoShu: '熊猫头旁边写着无语',
+    qingXuBiaoQian: '无语',
+    shiYongChangJing: '接住无话可说的场面',
+    qiYong: true,
+    sha256: 'a'.repeat(64),
+    mime: 'image/png',
+    ziJieShu: 4096,
+    wenJianMing: 'xiong-mao-tou.png',
+    wenJianLuJing: '/tmp/xiong-mao-tou.png',
+    ...zhi,
+  }
+}
 
-  it('行内混排、空名、普通文本都不解析', () => {
-    expect(jieXiBiaoQingZhiLing('看这个[贴纸:笑哭]好笑')).toBeNull()
-    expect(jieXiBiaoQingZhiLing('[贴纸:]')).toBeNull()
-    expect(jieXiBiaoQingZhiLing('今天好累啊')).toBeNull()
-    expect(jieXiBiaoQingZhiLing('[贴图:笑哭]')).toBeNull()
-  })
+function xiang(zhi: Partial<XiTongBiaoQingXiang> = {}): XiTongBiaoQingXiang {
+  return {
+    id: 'uuid-1',
+    duanMing: '熊猫头无语',
+    miaoShu: '熊猫头旁边写着无语',
+    qingXuBiaoQian: '无语',
+    shiYongChangJing: '接住无话可说的场面',
+    sha256: 'a'.repeat(64),
+    mime: 'image/png',
+    ...zhi,
+  }
+}
+
+beforeEach(() => {
+  quHouXuanMock.mockReset()
+  chaAnDuanMingMock.mockReset()
+  duanMingDaoUUIDMock.mockReset()
+  baoCunMeiTiXiaoXiMock.mockReset()
+  duanMingDaoUUIDMock.mockImplementation((duanMing: string) => `uuid-${duanMing}`)
 })
 
-describe('候选块组装', () => {
-  it('系统与用户候选都带短名与描述', () => {
-    const kuai = zuZhuangBiaoQingHouXuanKuai(
-      [{ id: '1', duanMing: '笑哭', miaoShu: '眯眼大笑', qingXuBiaoQian: '好笑', shiYongChangJing: '接住好笑的事', sha256: 'a', mime: 'image/png' }],
-      [{ duanMing: '我家猫', miaoShu: '用户收藏的表情包', meiTiId: 'm-1' }],
-    )
-    expect(kuai).toContain('[贴纸:笑哭]')
-    expect(kuai).toContain('情绪:好笑')
-    expect(kuai).toContain('[贴纸:我家猫]')
-    expect(kuai).toContain('最多一张')
+describe('候选来自表情包库', () => {
+  it('按意图取候选并补上稳定 id', async () => {
+    quHouXuanMock.mockResolvedValue([kuTiaoMu()])
+    const lieBiao = await houXuanXiTongBiaoQing('无语', 8)
+    expect(quHouXuanMock).toHaveBeenCalledWith('无语', 8)
+    expect(lieBiao).toHaveLength(1)
+    expect(lieBiao[0]).toMatchObject({
+      id: 'uuid-熊猫头无语',
+      duanMing: '熊猫头无语',
+      miaoShu: '熊猫头旁边写着无语',
+      qingXuBiaoQian: '无语',
+      shiYongChangJing: '接住无话可说的场面',
+      sha256: 'a'.repeat(64),
+      mime: 'image/png',
+    })
   })
 
-  it('候选为空时返回空串', () => {
-    expect(zuZhuangBiaoQingHouXuanKuai([], [])).toBe('')
-  })
-})
-
-describe('候选查询', () => {
-  beforeEach(() => {
-    chaXunMock.mockReset()
-  })
-
-  it('带意图时按标签过滤并限量', async () => {
-    chaXunMock.mockResolvedValue({ rows: [hang({})] })
-    const jieGuo = await houXuanXiTongBiaoQing('好笑', 8)
-    expect(jieGuo).toHaveLength(1)
-    const [yuJu, canShu] = chaXunMock.mock.calls[0] as [string, unknown[]]
-    expect(yuJu).toContain('LIKE')
-    expect(canShu).toEqual(['%好笑%', 8])
-  })
-
-  it('无意图时不过滤', async () => {
-    chaXunMock.mockResolvedValue({ rows: [] })
+  it('意图为空或空白时按无标签取候选', async () => {
+    quHouXuanMock.mockResolvedValue([kuTiaoMu()])
     await houXuanXiTongBiaoQing(null, 8)
-    const [yuJu, canShu] = chaXunMock.mock.calls[0] as [string, unknown[]]
-    expect(yuJu).not.toContain('LIKE')
-    expect(canShu).toEqual([8])
+    expect(quHouXuanMock).toHaveBeenLastCalledWith(null, 8)
+    await houXuanXiTongBiaoQing('   ', 8)
+    expect(quHouXuanMock).toHaveBeenLastCalledWith(null, 8)
+  })
+
+  it('库为空时返回空数组且不抛错', async () => {
+    quHouXuanMock.mockResolvedValue([])
+    await expect(houXuanXiTongBiaoQing('无语', 8)).resolves.toEqual([])
+  })
+
+  it('库读取抛错时返回空数组且不抛错', async () => {
+    quHouXuanMock.mockRejectedValue(new Error('目录不存在'))
+    await expect(houXuanXiTongBiaoQing('无语', 8)).resolves.toEqual([])
+  })
+})
+
+describe('按短名查条目', () => {
+  it('命中时返回条目并对短名去空白', async () => {
+    chaAnDuanMingMock.mockResolvedValue(kuTiaoMu())
+    const jieGuo = await chaZhaoBiaoQingAnDuanMing('  熊猫头无语  ')
+    expect(chaAnDuanMingMock).toHaveBeenCalledWith('熊猫头无语')
+    expect(jieGuo).toMatchObject({ duanMing: '熊猫头无语', mime: 'image/png' })
+  })
+
+  it('未命中返回空', async () => {
+    chaAnDuanMingMock.mockResolvedValue(null)
+    await expect(chaZhaoBiaoQingAnDuanMing('不存在的短名')).resolves.toBeNull()
+  })
+
+  it('停用条目不参与发送', async () => {
+    chaAnDuanMingMock.mockResolvedValue(kuTiaoMu({ qiYong: false }))
+    await expect(chaZhaoBiaoQingAnDuanMing('熊猫头无语')).resolves.toBeNull()
+  })
+
+  it('空短名与查询抛错都返回空', async () => {
+    chaAnDuanMingMock.mockResolvedValue(kuTiaoMu())
+    await expect(chaZhaoBiaoQingAnDuanMing('   ')).resolves.toBeNull()
+    expect(chaAnDuanMingMock).not.toHaveBeenCalled()
+    chaAnDuanMingMock.mockRejectedValue(new Error('扫描炸了'))
+    await expect(chaZhaoBiaoQingAnDuanMing('熊猫头无语')).resolves.toBeNull()
   })
 })
 
 describe('表情包消息发送', () => {
-  beforeEach(() => {
-    chaXunMock.mockReset()
-    baoCunMeiTiXiaoXiMock.mockReset()
-  })
-
-  it('命中系统表情并复用已有媒体行', async () => {
-    chaXunMock.mockImplementation((yuJu: string) => {
-      if (yuJu.includes('FROM "系统表情"')) return Promise.resolve({ rows: [hang({})] })
-      if (yuJu.includes('FROM "媒体文件"')) return Promise.resolve({ rows: [{ ID: 'm-9' }] })
-      return Promise.resolve({ rows: [] })
-    })
+  it('走无媒体行加短名的落库参数', async () => {
+    chaAnDuanMingMock.mockResolvedValue(kuTiaoMu())
     baoCunMeiTiXiaoXiMock.mockResolvedValue({ id: 'x-1', lei_xing: 'biaoQingBao' })
-    const jieGuo = await faSongBiaoQingBaoXiaoXi('u-1', 'j-1', '笑哭')
+    const jieGuo = await faSongBiaoQingBaoXiaoXi('u-1', 'j-1', '熊猫头无语')
     expect(jieGuo?.id).toBe('x-1')
+    expect(baoCunMeiTiXiaoXiMock).toHaveBeenCalledTimes(1)
     const canShu = baoCunMeiTiXiaoXiMock.mock.calls[0][0] as Record<string, unknown>
+    expect(canShu.mei_ti_id).toBeNull()
+    expect(canShu.duan_ming).toBe('熊猫头无语')
     expect(canShu.lei_xing).toBe('biaoQingBao')
-    expect(canShu.mei_ti_id).toBe('m-9')
+    expect(canShu.yong_hu_id).toBe('u-1')
+    expect(canShu.jiao_se_id).toBe('j-1')
+    expect(canShu.nei_rong).toBe('[贴纸:熊猫头无语]')
   })
 
-  it('未命中表情库返回空且不落库', async () => {
-    chaXunMock.mockResolvedValue({ rows: [] })
-    const jieGuo = await faSongBiaoQingBaoXiaoXi('u-1', 'j-1', '不存在的')
-    expect(jieGuo).toBeNull()
+  it('未命中表情库时不落库', async () => {
+    chaAnDuanMingMock.mockResolvedValue(null)
+    await expect(faSongBiaoQingBaoXiaoXi('u-1', 'j-1', '不存在的')).resolves.toBeNull()
+    expect(baoCunMeiTiXiaoXiMock).not.toHaveBeenCalled()
+  })
+
+  it('落库失败时返回空且不抛错', async () => {
+    chaAnDuanMingMock.mockResolvedValue(kuTiaoMu())
+    baoCunMeiTiXiaoXiMock.mockRejectedValue(new Error('unique 冲突'))
+    await expect(faSongBiaoQingBaoXiaoXi('u-1', 'j-1', '熊猫头无语')).resolves.toBeNull()
+  })
+
+  it('空短名直接丢弃', async () => {
+    await expect(faSongBiaoQingBaoXiaoXi('u-1', 'j-1', '   ')).resolves.toBeNull()
+    expect(chaAnDuanMingMock).not.toHaveBeenCalled()
     expect(baoCunMeiTiXiaoXiMock).not.toHaveBeenCalled()
   })
 })
 
+describe('候选块组装', () => {
+  it('说明文字放开图的形态且不写死一图一文', () => {
+    const kuai = zuZhuangBiaoQingHouXuanKuai([xiang()])
+    expect(kuai).toContain('【表情包候选】')
+    expect(kuai).toContain('[贴纸:熊猫头无语]')
+    expect(kuai).toContain('位置本身就是语气')
+    expect(kuai).toContain('只发一张图')
+    expect(kuai).toContain('别再用文字说一遍')
+    expect(kuai).toContain(`一轮最多 ${BiaoQingBaoYunXing.zuiDaMeiLunZhangShu} 张`)
+    expect(kuai).not.toContain('不是把话说完再补一张图')
+    expect(kuai).not.toContain('用一张图代替你要打的那个词')
+    expect(kuai).toContain('情绪:无语')
+    expect(kuai).toContain('场景:接住无话可说的场面')
+  })
+
+  it('描述与场景为空时有兜底文案', () => {
+    const kuai = zuZhuangBiaoQingHouXuanKuai([xiang({ miaoShu: '', shiYongChangJing: '' })])
+    expect(kuai).toContain('描述:无')
+    expect(kuai).toContain('场景:通用')
+  })
+
+  it('候选为空时返回空串', () => {
+    expect(zuZhuangBiaoQingHouXuanKuai([])).toBe('')
+  })
+})
+
 describe('候选文本总开关', () => {
-  it('意图为空时直接返回空串', async () => {
-    expect(await shengChengBiaoQingHouXuanWenBen(null, 'u-1')).toBe('')
+  it('意图为空但门控放行时仍给候选', async () => {
+    quHouXuanMock.mockResolvedValue([kuTiaoMu()])
+    await expect(shengChengBiaoQingHouXuanWenBen(null, fangXingJueCe())).resolves.toContain(
+      '[贴纸:熊猫头无语]',
+    )
+    expect(quHouXuanMock).toHaveBeenCalled()
+  })
+
+  it('门控拒绝时返回空串且不查库', async () => {
+    await expect(
+      shengChengBiaoQingHouXuanWenBen('无语', fangXingJueCe({ geiHouXuan: false })),
+    ).resolves.toBe('')
+    expect(quHouXuanMock).not.toHaveBeenCalled()
+  })
+
+  it('门控放行时把人设风格与关系阶段透传给图库', async () => {
+    quHouXuanMock.mockResolvedValue([kuTiaoMu()])
+    await shengChengBiaoQingHouXuanWenBen('无语', fangXingJueCe())
+    expect(quHouXuanMock).toHaveBeenCalledWith('无语', BiaoQingBaoYunXing.houXuanShuLiang, {
+      yunXuFengGe: ['黄脸', '祝福'],
+      guanXiJieDuanXuHao: 6,
+    })
   })
 
   it('库关闭时返回空串', async () => {
-    const yuan = BIAO_QING_BAO_YUN_XING.daKai
-    ;(BIAO_QING_BAO_YUN_XING as { daKai: boolean }).daKai = false
+    const yuan = BiaoQingBaoYunXing.daKai
+    ;(BiaoQingBaoYunXing as { daKai: boolean }).daKai = false
     try {
-      expect(await shengChengBiaoQingHouXuanWenBen('好笑', 'u-1')).toBe('')
+      quHouXuanMock.mockResolvedValue([kuTiaoMu()])
+      await expect(shengChengBiaoQingHouXuanWenBen('无语', fangXingJueCe())).resolves.toBe('')
+      expect(quHouXuanMock).not.toHaveBeenCalled()
     } finally {
-      ;(BIAO_QING_BAO_YUN_XING as { daKai: boolean }).daKai = yuan
+      ;(BiaoQingBaoYunXing as { daKai: boolean }).daKai = yuan
     }
+  })
+
+  it('打开且库有候选时拼出候选块', async () => {
+    quHouXuanMock.mockResolvedValue([kuTiaoMu()])
+    const wenBen = await shengChengBiaoQingHouXuanWenBen('无语', fangXingJueCe())
+    expect(wenBen).toContain('[贴纸:熊猫头无语]')
+    expect(quHouXuanMock).toHaveBeenCalled()
+  })
+
+  it('不传门控决策时一律不给候选，避免绕过人设判断', async () => {
+    quHouXuanMock.mockResolvedValue([kuTiaoMu()])
+    await expect(shengChengBiaoQingHouXuanWenBen('无语')).resolves.toBe('')
+    expect(quHouXuanMock).not.toHaveBeenCalled()
   })
 })
 
@@ -145,23 +276,5 @@ describe('Director 表情包意图解析', () => {
     expect(kong.ceLue.biao_qing_yi_tu).toBeNull()
     const queSheng = jieXiDirectorXiangYing('{}')
     expect(queSheng.ceLue.biao_qing_yi_tu).toBeNull()
-  })
-})
-
-describe('贴纸短名跨库查找', () => {
-  beforeEach(() => {
-    chaXunMock.mockReset()
-  })
-
-  it('先查系统库再查用户库', async () => {
-    chaXunMock.mockImplementation((yuJu: string) => {
-      if (yuJu.includes('FROM "系统表情"')) return Promise.resolve({ rows: [] })
-      if (yuJu.includes('FROM "用户表情"')) {
-        return Promise.resolve({ rows: [{ ID: 'm-5', SHA256: 'B'.repeat(64), MIME: 'image/gif' }] })
-      }
-      return Promise.resolve({ rows: [] })
-    })
-    const jieGuo = await chaZhaoBiaoQingAnDuanMing('u-1', '我家猫')
-    expect(jieGuo).toMatchObject({ meiTiId: 'm-5', mime: 'image/gif' })
   })
 })

@@ -13,7 +13,7 @@ import {
 } from '@/api/聊天'
 import { huoQuFanYi } from '@/config/翻译表'
 import { chuangJianQianTaiCuoWu, 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { QianTaiDaiMa } from '@/config/前台错误码'
 import type { DangAnXiangQing, ZhanJiFenLei } from '@/types/类型定义'
 
 export type ZhanJiCunKuanJieGuoLeiXing =
@@ -47,7 +47,7 @@ function shiBaoHuJieGuo(kind: ZhanJiCunKuanJieGuoLeiXing, tiShiWenBen: string): 
 
 function shiChongTu(cuoWu: unknown): boolean {
   const daiMa = 归一前台错误(cuoWu).code
-  return daiMa === QIAN_TAI_DAI_MA.ZHAN_JI_FEN_LEI_BIAN_GENG || daiMa === QIAN_TAI_DAI_MA.RESOURCE_CONFLICT
+  return daiMa === QianTaiDaiMa.ZHAN_JI_FEN_LEI_BIAN_GENG || daiMa === QianTaiDaiMa.RESOURCE_CONFLICT
 }
 
 function paiXuZiDuanDengYu(ids: string[]): boolean {

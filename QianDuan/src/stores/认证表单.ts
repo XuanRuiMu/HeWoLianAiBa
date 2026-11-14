@@ -4,15 +4,15 @@ import type { 性别, 性格选择, 人设标签 } from '@/types/类型定义'
 import { baoCunShuJu, duQuShuJu, shanChuShuJu } from '@/utils/本地存储'
 import { 记住密码键, 自动登录键 } from '@/constants/认证键'
 import { guiYiNianLing } from '@/utils/输入验证'
-import { DA_LU_QU_HAO, fenJieGuoJiHao, guiYiQuHao, panDingBenDiHao } from '@/utils/手机号'
+import { DaLuQuHao, fenJieGuoJiHao, guiYiQuHao, panDingBenDiHao } from '@/utils/手机号'
 
-const ZI_LIAO_DANG_QIAN_BU_ZHOU_JIAN = 'ziLiaoDangQianBuZhou'
-const ZI_LIAO_SHU_JU_JIAN = 'ziLiaoShuJu'
-const ZI_LIAO_SHE_ZHI_YI_WAN_CHENG_JIAN = 'ziLiaoSheZhiYiWanCheng'
-const BAO_CUN_ZHANG_HAO_JIAN = 'baoCunZhangHao'
-const BAO_CUN_ZHANG_HAO_BAN_BEN = 1
+const ZiLiaoDangQianBuZhouJian = 'ziLiaoDangQianBuZhou'
+const ZiLiaoShuJuJian = 'ziLiaoShuJu'
+const ZiLiaoSheZhiYiWanChengJian = 'ziLiaoSheZhiYiWanCheng'
+const BaoCunZhangHaoJian = 'baoCunZhangHao'
+const BaoCunZhangHaoBanBen = 1
 
-const ZI_LIAO_SHU_JU_BAN_BEN = 2
+const ZiLiaoShuJuBanBen = 2
 
 interface JiZhuZhangHaoJiLu {
   banBen: number
@@ -21,29 +21,29 @@ interface JiZhuZhangHaoJiLu {
 }
 
 function duQuJiZhuZhangHao(): { quHao: string; benDiHao: string } | null {
-  const yuanShi = duQuShuJu<unknown>(BAO_CUN_ZHANG_HAO_JIAN, null)
+  const yuanShi = duQuShuJu<unknown>(BaoCunZhangHaoJian, null)
   if (yuanShi === null) return null
   if (typeof yuanShi === 'string') {
     const chaiFen = fenJieGuoJiHao(yuanShi)
     if (chaiFen !== null) {
-      baoCunShuJu(BAO_CUN_ZHANG_HAO_JIAN, {
-        banBen: BAO_CUN_ZHANG_HAO_BAN_BEN,
+      baoCunShuJu(BaoCunZhangHaoJian, {
+        banBen: BaoCunZhangHaoBanBen,
         ...chaiFen,
       } satisfies JiZhuZhangHaoJiLu)
       return chaiFen
     }
-    shanChuShuJu(BAO_CUN_ZHANG_HAO_JIAN)
+    shanChuShuJu(BaoCunZhangHaoJian)
     return null
   }
   if (typeof yuanShi === 'object') {
     const jiLu = yuanShi as Partial<JiZhuZhangHaoJiLu>
-    if (jiLu.banBen === BAO_CUN_ZHANG_HAO_BAN_BEN) {
+    if (jiLu.banBen === BaoCunZhangHaoBanBen) {
       const quHao = guiYiQuHao(jiLu.quHao)
       const benDiHao = String(jiLu.benDiHao ?? '').replace(/\D/g, '')
       if (benDiHao !== '' && panDingBenDiHao(quHao, benDiHao).heFa) return { quHao, benDiHao }
     }
   }
-  shanChuShuJu(BAO_CUN_ZHANG_HAO_JIAN)
+  shanChuShuJu(BaoCunZhangHaoJian)
   return null
 }
 
@@ -65,7 +65,7 @@ interface ZiLiaoShuJuXinFeng {
 function qianYiZiLiaoShuJu(yuanShuJu: unknown): ZiLiaoShuJuNeiRong | null {
   if (typeof yuanShuJu !== 'object' || yuanShuJu === null) return null
   const xinFeng = yuanShuJu as Partial<ZiLiaoShuJuXinFeng>
-  if (xinFeng.banBen !== ZI_LIAO_SHU_JU_BAN_BEN) return null
+  if (xinFeng.banBen !== ZiLiaoShuJuBanBen) return null
   if (typeof xinFeng.shuJu !== 'object' || xinFeng.shuJu === null) return null
   return xinFeng.shuJu
 }
@@ -90,7 +90,7 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
   type MoShiLeiXing = 'dengLu' | 'zhuCe'
 
   const moShi = ref<MoShiLeiXing>('dengLu')
-  const dengLuQuHao = ref(DA_LU_QU_HAO)
+  const dengLuQuHao = ref(DaLuQuHao)
   const dengLuShouJiHao = ref('')
   const dengLuMiMa = ref('')
   const zhuCeShouJiHao = ref('')
@@ -134,17 +134,17 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
   }
 
   function jiaZaiZiLiaoZhuangTai() {
-    const buZhou = duQuShuJu<number>(ZI_LIAO_DANG_QIAN_BU_ZHOU_JIAN, null)
+    const buZhou = duQuShuJu<number>(ZiLiaoDangQianBuZhouJian, null)
     if (buZhou !== null) ziLiaoDangQianBuZhou.value = buZhou
 
     let yuanShi: unknown = null
     try {
-      const luoDu = localStorage.getItem(`hewolianba_${ZI_LIAO_SHU_JU_JIAN}`)
+      const luoDu = localStorage.getItem(`hewolianba_${ZiLiaoShuJuJian}`)
       if (luoDu !== null) yuanShi = JSON.parse(luoDu)
     } catch {
       yuanShi = null
     }
-    if (yuanShi === null) yuanShi = duQuShuJu<unknown>(ZI_LIAO_SHU_JU_JIAN, null)
+    if (yuanShi === null) yuanShi = duQuShuJu<unknown>(ZiLiaoShuJuJian, null)
     const heFaShuJu = qianYiZiLiaoShuJu(yuanShi)
     if (heFaShuJu !== null) {
       Object.assign(ziLiaoShuJu, heFaShuJu)
@@ -152,29 +152,29 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
   }
 
   function baoCunZiLiaoZhuangTai() {
-    baoCunShuJu(ZI_LIAO_DANG_QIAN_BU_ZHOU_JIAN, ziLiaoDangQianBuZhou.value)
+    baoCunShuJu(ZiLiaoDangQianBuZhouJian, ziLiaoDangQianBuZhou.value)
     const xinFeng: ZiLiaoShuJuXinFeng = {
-      banBen: ZI_LIAO_SHU_JU_BAN_BEN,
+      banBen: ZiLiaoShuJuBanBen,
       shuJu: ziLiaoShuJu,
     }
     try {
-      localStorage.setItem(`hewolianba_${ZI_LIAO_SHU_JU_JIAN}`, JSON.stringify(xinFeng))
+      localStorage.setItem(`hewolianba_${ZiLiaoShuJuJian}`, JSON.stringify(xinFeng))
     } catch {
-      baoCunShuJu(ZI_LIAO_SHU_JU_JIAN, xinFeng)
+      baoCunShuJu(ZiLiaoShuJuJian, xinFeng)
     }
   }
 
   function huoQuZiLiaoSheZhiYiWanCheng(): boolean {
-    return duQuShuJu<boolean>(ZI_LIAO_SHE_ZHI_YI_WAN_CHENG_JIAN, false) === true
+    return duQuShuJu<boolean>(ZiLiaoSheZhiYiWanChengJian, false) === true
   }
 
   function sheZhiZiLiaoSheZhiYiWanCheng(wanCheng: boolean) {
-    baoCunShuJu(ZI_LIAO_SHE_ZHI_YI_WAN_CHENG_JIAN, wanCheng)
+    baoCunShuJu(ZiLiaoSheZhiYiWanChengJian, wanCheng)
   }
 
   function qingKongDengLuZhuCe() {
     moShi.value = 'dengLu'
-    dengLuQuHao.value = DA_LU_QU_HAO
+    dengLuQuHao.value = DaLuQuHao
     dengLuShouJiHao.value = ''
     dengLuMiMa.value = ''
     zhuCeShouJiHao.value = ''
@@ -234,15 +234,15 @@ export const 使用认证表单仓库 = defineStore('认证表单', () => {
     const quHao = guiYiQuHao(dengLuQuHao.value)
     const benDiHao = dengLuShouJiHao.value.replace(/\D/g, '')
     if (!jiZhuZhangHaoZhi || !panDingBenDiHao(quHao, benDiHao).heFa) {
-      shanChuShuJu(BAO_CUN_ZHANG_HAO_JIAN)
+      shanChuShuJu(BaoCunZhangHaoJian)
       return
     }
     const jiLu: JiZhuZhangHaoJiLu = {
-      banBen: BAO_CUN_ZHANG_HAO_BAN_BEN,
+      banBen: BaoCunZhangHaoBanBen,
       quHao,
       benDiHao,
     }
-    baoCunShuJu(BAO_CUN_ZHANG_HAO_JIAN, jiLu)
+    baoCunShuJu(BaoCunZhangHaoJian, jiLu)
   }
 
   function qingKongZiLiao() {

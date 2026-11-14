@@ -67,7 +67,7 @@
                 标识="renji-daan"
                 :模型值="daAn"
                 类型="text"
-                :最大长度="REN_JI_DA_AN_CHANG_DU"
+                :最大长度="RenJiDaAnChangDu"
                 自动完成="off"
                 :占位文字="huoQuFanYi('renZheng', 'renJiYanZhengShuRu')"
                 :标签="huoQuFanYi('renZheng', 'renJiYanZhengShuRu')"
@@ -111,7 +111,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from 'vue'
 import { huoQuRenJiTiaoZhan, type YanZhengMaYongTu, type 人机验证答案 } from '@/api/认证'
 import ChangFangShuRuKuang from '@/components/表单/长方框输入框.vue'
-import { REN_JI_DA_AN_CHANG_DU, REN_JI_DA_AN_ZHENG_ZE } from '@/config/人机验证'
+import { RenJiDaAnChangDu, RenJiDaAnZhengZe } from '@/config/人机验证'
 import { huoQuFanYi } from '@/config/翻译表'
 
 const 属性 = withDefaults(
@@ -224,7 +224,7 @@ function gengXinDaAn(zhi: string): void {
 function queRen(): void {
   if (属性.dengDaiZhong || jiaZaiZhong.value || guoQi.value || !tiaoZhan.value) return
   const guiYi = daAn.value.trim().toUpperCase()
-  if (!REN_JI_DA_AN_ZHENG_ZE.test(guiYi)) {
+  if (!RenJiDaAnZhengZe.test(guiYi)) {
     cuoWu.value = huoQuFanYi('renZheng', 'renJiYanZhengShiBai')
     shuRuKuang.value?.聚焦()
     return

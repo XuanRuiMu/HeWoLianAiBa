@@ -1,9 +1,17 @@
-import { createHash } from 'crypto'
-import { 数据库 } from '../数据库'
 import { debug日志 } from '../utils/debug日志'
-import { huoQuBenDiLuJing } from './媒体存储'
 import { baoCunJiaoSeMeiTiXiaoXi, type XiaoXiXinXi } from './消息'
-import { BIAO_QING_BAO_YUN_XING } from '../config/表情包配置'
+import { chaAnDuanMing, duanMingDaoUUID, quHouXuan, type BiaoQingKuTiaoMu } from './表情包库'
+import { BiaoQingShuLeiBie, LeiBieDaoXiaoXiLeiXing } from '../config/媒体配置'
+import {
+  BiaoQingBaoYunXing,
+  BiaoQingDaiDaBiao,
+  BiaoQingFaSongShiJiWenAn,
+  BiaoQingFaSongYuanYin,
+  BiaoQingHouXuanWenAn,
+  BiaoQingTieZhiShiLi,
+  BiaoQingTieZhiZhanWei,
+} from '../config/表情包配置'
+import type { BiaoQingZaiTiJueCe } from './表情载体'
 
 export interface XiTongBiaoQingXiang {
   id: string
@@ -15,153 +23,101 @@ export interface XiTongBiaoQingXiang {
   mime: string
 }
 
-interface BiaoQingHang {
-  ID: unknown
-  短名: unknown
-  描述: unknown
-  情绪标签: unknown
-  适用场景: unknown
-  SHA256: unknown
-  MIME: unknown
+const RiZhiLeiXing = '系统表情'
+
+const BiaoQingXiaoXiLeiXing = LeiBieDaoXiaoXiLeiXing[BiaoQingShuLeiBie]
+
+function tianChongMoBan(moBan: string, zhi: Readonly<Record<string, string>>): string {
+  let jieGuo = moBan
+  for (const [jian, zhiXiang] of Object.entries(zhi)) {
+    jieGuo = jieGuo.split(`{${jian}}`).join(zhiXiang)
+  }
+  return jieGuo
 }
 
-function zhuangXiang(hang: BiaoQingHang): XiTongBiaoQingXiang {
+function tieZhiWenBen(duanMing: string): string {
+  return BiaoQingTieZhiShiLi.split(BiaoQingTieZhiZhanWei).join(duanMing)
+}
+
+function zhuangXiang(tiaoMu: BiaoQingKuTiaoMu): XiTongBiaoQingXiang {
   return {
-    id: String(hang.ID),
-    duanMing: String(hang.短名 || ''),
-    miaoShu: String(hang.描述 || ''),
-    qingXuBiaoQian: String(hang.情绪标签 || ''),
-    shiYongChangJing: String(hang.适用场景 || ''),
-    sha256: String(hang.SHA256 || '').toLowerCase(),
-    mime: String(hang.MIME || 'image/png'),
+    id: duanMingDaoUUID(tiaoMu.duanMing),
+    duanMing: tiaoMu.duanMing,
+    miaoShu: tiaoMu.miaoShu,
+    qingXuBiaoQian: tiaoMu.qingXuBiaoQian,
+    shiYongChangJing: tiaoMu.shiYongChangJing,
+    sha256: tiaoMu.sha256,
+    mime: tiaoMu.mime,
   }
 }
 
-export async function houXuanXiTongBiaoQing(yiTu: string | null | undefined, shuLiang: number): Promise<XiTongBiaoQingXiang[]> {
+export async function houXuanXiTongBiaoQing(
+  yiTu: string | null | undefined,
+  shuLiang: number,
+  jueCe?: BiaoQingZaiTiJueCe,
+): Promise<XiTongBiaoQingXiang[]> {
   const youXiaoYiTu = typeof yiTu === 'string' && yiTu.trim() !== '' ? yiTu.trim() : null
-  const canShu: unknown[] = []
-  let tiaoJian = ''
-  if (youXiaoYiTu) {
-    canShu.push(`%${youXiaoYiTu}%`)
-    tiaoJian = `AND ("情绪标签" LIKE $1 OR "适用场景" LIKE $1)`
-  }
-  canShu.push(shuLiang)
-  const jieGuo = await 数据库.query(
-    `SELECT "ID", "短名", "描述", "情绪标签", "适用场景", "SHA256", "MIME"
-       FROM "系统表情"
-      WHERE "启用" = TRUE ${tiaoJian}
-      ORDER BY random()
-      LIMIT $${canShu.length}`,
-    canShu,
-  )
-  return jieGuo.rows.map((hang) => zhuangXiang(hang as BiaoQingHang))
-}
-
-export async function houXuanYongHuBiaoQing(yongHuId: string, shuLiang: number): Promise<Array<{ duanMing: string; miaoShu: string; meiTiId: string }>> {
-  const jieGuo = await 数据库.query(
-    `SELECT b."ID", b."短名", m."ID" AS "媒体ID"
-       FROM "用户表情" b
-       JOIN "媒体文件" m ON m."ID" = b."媒体ID"
-      WHERE b."用户ID" = $1
-      ORDER BY random()
-      LIMIT $2`,
-    [yongHuId, shuLiang],
-  )
-  return jieGuo.rows.map((hang: Record<string, unknown>) => ({
-    duanMing: String(hang.短名 || ''),
-    miaoShu: '用户收藏的表情包',
-    meiTiId: String(hang.媒体ID || ''),
-  })).filter((xiang) => xiang.duanMing !== '' && xiang.meiTiId !== '')
-}
-
-export function zuZhuangBiaoQingHouXuanKuai(
-  xiTong: XiTongBiaoQingXiang[],
-  yongHu: Array<{ duanMing: string; miaoShu: string; meiTiId: string }>,
-): string {
-  if (xiTong.length === 0 && yongHu.length === 0) return ''
-  const hang: string[] = []
-  for (const xiang of xiTong) {
-    hang.push(
-      `- [贴纸:${xiang.duanMing}] 描述:${xiang.miaoShu || '无'} | 情绪:${xiang.qingXuBiaoQian} | 场景:${xiang.shiYongChangJing || '通用'}`,
-    )
-  }
-  for (const xiang of yongHu) {
-    hang.push(`- [贴纸:${xiang.duanMing}] 描述:${xiang.miaoShu} | 对方收藏过的表情包`)
-  }
-  return [
-    '【表情包候选】',
-    '只有当你真的想发表情包时，才单独一行输出其中一条指令，格式必须完全一致；一条回复最多一张；不想发就不输出。',
-    ...hang,
-  ].join('\n')
-}
-
-export function jieXiBiaoQingZhiLing(neiRong: string): string | null {
-  const piPei = /^\s*\[贴纸[:：]\s*([^\]】]{1,30})\]\s*$/.exec(neiRong.trim())
-  if (!piPei) return null
-  const duanMing = piPei[1].trim()
-  return duanMing === '' ? null : duanMing
-}
-
-export async function chaZhaoBiaoQingAnDuanMing(
-  yongHuId: string,
-  duanMing: string,
-): Promise<{ sha256: string; mime: string; meiTiId: string | null } | null> {
-  const xiTong = await 数据库.query(
-    `SELECT "SHA256", "MIME" FROM "系统表情" WHERE "短名" = $1 AND "启用" = TRUE LIMIT 1`,
-    [duanMing],
-  )
-  if (xiTong.rows.length > 0) {
-    return {
-      sha256: String(xiTong.rows[0].SHA256).toLowerCase(),
-      mime: String(xiTong.rows[0].MIME || 'image/png'),
-      meiTiId: null,
-    }
-  }
-  const yongHu = await 数据库.query(
-    `SELECT m."ID", m."SHA256", m."MIME"
-       FROM "用户表情" b
-       JOIN "媒体文件" m ON m."ID" = b."媒体ID"
-      WHERE b."用户ID" = $1 AND b."短名" = $2
-      LIMIT 1`,
-    [yongHuId, duanMing],
-  )
-  if (yongHu.rows.length > 0) {
-    return {
-      sha256: String(yongHu.rows[0].SHA256).toLowerCase(),
-      mime: String(yongHu.rows[0].MIME || 'image/png'),
-      meiTiId: String(yongHu.rows[0].ID),
-    }
-  }
-  return null
-}
-
-async function queBaoYongHuMeiTiHang(
-  yongHuId: string,
-  sha256: string,
-  mime: string,
-): Promise<string | null> {
-  const yiYou = await 数据库.query(
-    `SELECT "ID" FROM "媒体文件" WHERE "上传者ID" = $1 AND "SHA256" = $2 LIMIT 1`,
-    [yongHuId, sha256],
-  )
-  if (yiYou.rows.length > 0) return String(yiYou.rows[0].ID)
-  const luJing = huoQuBenDiLuJing(sha256)
-  if (!luJing) return null
-  const fs = await import('fs')
-  let daXiao = 0
   try {
-    daXiao = (await fs.promises.stat(luJing)).size
-  } catch {
+    const guoLv = jueCe
+      ? { yunXuFengGe: jueCe.yunXuFengGe, guanXiJieDuanXuHao: jueCe.guanXiJieDuanXuHao }
+      : undefined
+    const lieBiao = guoLv
+      ? await quHouXuan(youXiaoYiTu, shuLiang, guoLv)
+      : await quHouXuan(youXiaoYiTu, shuLiang)
+    if (lieBiao.length === 0) {
+      debug日志.warn(RiZhiLeiXing, '表情包库没有可用候选，本轮不给表情包', {
+        xiang_qing: {
+          yuan_yin: BiaoQingFaSongYuanYin.kuWeiKong,
+          qing_xu: youXiaoYiTu ?? '',
+          qing_qiu_shu_liang: shuLiang,
+        },
+      })
+      return []
+    }
+    debug日志.debug(RiZhiLeiXing, '表情包候选已就绪', {
+      xiang_qing: { qing_xu: youXiaoYiTu ?? '', hou_xuan_shu: lieBiao.length },
+    })
+    return lieBiao.map(zhuangXiang)
+  } catch (cuoWu) {
+    debug日志.warn(RiZhiLeiXing, '表情包库读取失败，本轮不给表情包', {
+      xiang_qing: {
+        yuan_yin: BiaoQingFaSongYuanYin.kuWeiKong,
+        cuo_wu: String(cuoWu).slice(0, 200),
+      },
+    })
+    return []
+  }
+}
+
+export async function chaZhaoBiaoQingAnDuanMing(duanMing: string): Promise<XiTongBiaoQingXiang | null> {
+  if (typeof duanMing !== 'string') return null
+  const jianHua = duanMing.trim()
+  if (jianHua === '') return null
+  try {
+    const tiaoMu = await chaAnDuanMing(jianHua)
+    if (!tiaoMu) {
+      debug日志.debug(RiZhiLeiXing, '贴纸短名未命中表情包库', {
+        xiang_qing: { duan_ming: jianHua, yuan_yin: BiaoQingFaSongYuanYin.weiMingZhong },
+      })
+      return null
+    }
+    if (!tiaoMu.qiYong) {
+      debug日志.warn(RiZhiLeiXing, '贴纸条目已停用，按未命中处理', {
+        xiang_qing: { duan_ming: jianHua, yuan_yin: BiaoQingFaSongYuanYin.yiJinYong },
+      })
+      return null
+    }
+    return zhuangXiang(tiaoMu)
+  } catch (cuoWu) {
+    debug日志.warn(RiZhiLeiXing, '表情包库查询失败，按未命中处理', {
+      xiang_qing: {
+        duan_ming: jianHua,
+        yuan_yin: BiaoQingFaSongYuanYin.weiMingZhong,
+        cuo_wu: String(cuoWu).slice(0, 200),
+      },
+    })
     return null
   }
-  const chaRu = await 数据库.query(
-    `INSERT INTO "媒体文件" ("SHA256", "原始文件名", "MIME", "大小字节", "类别", "上传者ID")
-     VALUES ($1, $2, $3, $4, 'biaoqingshu', $5)
-     RETURNING "ID"`,
-    [sha256, `biaoqing-${sha256.slice(0, 12)}`, mime, daXiao, yongHuId],
-  )
-  if (chaRu.rows.length === 0) return null
-  return String(chaRu.rows[0].ID)
 }
 
 export async function faSongBiaoQingBaoXiaoXi(
@@ -169,47 +125,71 @@ export async function faSongBiaoQingBaoXiaoXi(
   jiaoSeId: string,
   duanMing: string,
 ): Promise<XiaoXiXinXi | null> {
-  const biaoQing = await chaZhaoBiaoQingAnDuanMing(yongHuId, duanMing)
-  if (!biaoQing) {
-    debug日志.warn('系统表情', '贴纸指令未命中表情库', {
-      xiang_qing: { jiao_se_id: jiaoSeId, duan_ming: duanMing },
+  const jianHua = typeof duanMing === 'string' ? duanMing.trim() : ''
+  if (jianHua === '') {
+    debug日志.warn(RiZhiLeiXing, '贴纸指令没有短名，本条丢弃', {
+      yong_hu_id: yongHuId,
+      jiao_se_id: jiaoSeId,
+      xiang_qing: { yuan_yin: BiaoQingFaSongYuanYin.weiMingZhong },
     })
     return null
   }
-  let meiTiId = biaoQing.meiTiId
-  if (!meiTiId) {
-    meiTiId = await queBaoYongHuMeiTiHang(yongHuId, biaoQing.sha256, biaoQing.mime)
+  const biaoQing = await chaZhaoBiaoQingAnDuanMing(jianHua)
+  if (!biaoQing) return null
+  try {
+    return await baoCunJiaoSeMeiTiXiaoXi({
+      yong_hu_id: yongHuId,
+      jiao_se_id: jiaoSeId,
+      nei_rong: tieZhiWenBen(biaoQing.duanMing),
+      lei_xing: BiaoQingXiaoXiLeiXing,
+      mei_ti_id: null,
+      duan_ming: biaoQing.duanMing,
+    })
+  } catch (cuoWu) {
+    debug日志.warn(RiZhiLeiXing, '表情包消息落库失败，本条丢弃', {
+      yong_hu_id: yongHuId,
+      jiao_se_id: jiaoSeId,
+      xiang_qing: {
+        duan_ming: biaoQing.duanMing,
+        yuan_yin: BiaoQingFaSongYuanYin.luoKuShiBai,
+        cuo_wu: String(cuoWu).slice(0, 200),
+      },
+    })
+    return null
   }
-  if (!meiTiId) return null
-  return await baoCunJiaoSeMeiTiXiaoXi({
-    yong_hu_id: yongHuId,
-    jiao_se_id: jiaoSeId,
-    nei_rong: `[贴纸:${duanMing}]`,
-    lei_xing: 'biaoQingBao',
-    mei_ti_id: meiTiId,
-  })
 }
 
-export function jiSuanBiaoQingSha256(huanChong: Buffer): string {
-  return createHash('sha256').update(huanChong).digest('hex')
+export function zuZhuangBiaoQingHouXuanKuai(tiaoMuLieBiao: XiTongBiaoQingXiang[]): string {
+  if (tiaoMuLieBiao.length === 0) return ''
+  const shiLi = tieZhiWenBen(tiaoMuLieBiao[0].duanMing)
+  const shuoMing = BiaoQingHouXuanWenAn.daiTiShuoMing.map((hang) =>
+    tianChongMoBan(hang, {
+      tie_zhi_shi_li: shiLi,
+      zui_da_zhang_shu: String(BiaoQingBaoYunXing.zuiDaMeiLunZhangShu),
+    }),
+  )
+  const hangLieBiao = tiaoMuLieBiao.map((xiang) =>
+    tianChongMoBan(BiaoQingHouXuanWenAn.hangMoBan, {
+      tie_zhi_shi_li: tieZhiWenBen(xiang.duanMing),
+      miao_shu: xiang.miaoShu || BiaoQingHouXuanWenAn.moShuKong,
+      qing_xu: xiang.qingXuBiaoQian || BiaoQingDaiDaBiao,
+      chang_jing: xiang.shiYongChangJing || BiaoQingHouXuanWenAn.changJingKong,
+    }),
+  )
+  return [
+    BiaoQingHouXuanWenAn.biaoTi,
+    ...shuoMing,
+    BiaoQingFaSongShiJiWenAn,
+    ...hangLieBiao,
+  ].join('\n')
 }
 
 export async function shengChengBiaoQingHouXuanWenBen(
   yiTu: string | null | undefined,
-  yongHuId: string,
+  jueCe?: BiaoQingZaiTiJueCe,
 ): Promise<string> {
-  if (!BIAO_QING_BAO_YUN_XING.daKai) return ''
-  if (!yiTu) return ''
-  try {
-    const [xiTong, yongHu] = await Promise.all([
-      houXuanXiTongBiaoQing(yiTu, BIAO_QING_BAO_YUN_XING.houXuanShuLiang),
-      houXuanYongHuBiaoQing(yongHuId, BIAO_QING_BAO_YUN_XING.yongHuBiaoQingHouXuanShu),
-    ])
-    return zuZhuangBiaoQingHouXuanKuai(xiTong, yongHu)
-  } catch (cuoWu) {
-    debug日志.warn('系统表情', '候选生成失败，本轮不发表情包', {
-      xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) },
-    })
-    return ''
-  }
+  if (!BiaoQingBaoYunXing.daKai) return ''
+  if (!jueCe || !jueCe.geiHouXuan) return ''
+  const lieBiao = await houXuanXiTongBiaoQing(yiTu, BiaoQingBaoYunXing.houXuanShuLiang, jueCe)
+  return zuZhuangBiaoQingHouXuanKuai(lieBiao)
 }

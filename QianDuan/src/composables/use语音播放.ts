@@ -1,8 +1,8 @@
 import { ref, watch } from 'vue'
-import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
+import { DuoMeiTiPeiZhi } from '@/config/消息配置'
 import type { 消息 } from '@/types/类型定义'
 import {
-  YU_YIN_ZENG_YI_SHANG_XIAN,
+  YuYinZengYiShangXian,
   guanLianYuYinYinPin,
   jieChuYuYinYinPin,
   sheZhiYuYinZengYi,
@@ -36,7 +36,7 @@ interface YuYinBoFangKongZhi {
   boFangZhong: () => boolean
 }
 
-const WEI_QIONG_DING_WEI_MIAO = 1e101
+const WeiQiongDingWeiMiao = 1e101
 
 const ceLiangShiBaiJian = new Set<string>()
 const ceLiangXingQu = new Map<string, number>()
@@ -65,8 +65,8 @@ function yuanShiHaoMiao(xiaoXi: YuYinShiChangZaiTi): number {
 
 export function yuYinShiChangMiao(xiaoXi: YuYinShiChangZaiTi): number {
   return Math.min(
-    DUO_MEI_TI_PEI_ZHI.yuYinZuiDaMiao,
-    Math.max(DUO_MEI_TI_PEI_ZHI.yuYinZuiDuanMiao, Math.round(yuanShiHaoMiao(xiaoXi) / 1000)),
+    DuoMeiTiPeiZhi.yuYinZuiDaMiao,
+    Math.max(DuoMeiTiPeiZhi.yuYinZuiDuanMiao, Math.round(yuanShiHaoMiao(xiaoXi) / 1000)),
   )
 }
 
@@ -81,15 +81,15 @@ function guiYiBoFangMiao(zhi: number): number {
 export function geShiHuaYuYinBoFangShiJian(dangQianMiao: number, zongMiao: number): string {
   const zong = guiYiBoFangMiao(zongMiao)
   const dangQian = Math.min(guiYiBoFangMiao(dangQianMiao), zong)
-  const weiShu = DUO_MEI_TI_PEI_ZHI.yuYinShiJianXiaoShuWei
+  const weiShu = DuoMeiTiPeiZhi.yuYinShiJianXiaoShuWei
   return `${dangQian.toFixed(weiShu)}/${zong.toFixed(weiShu)}`
 }
 
 export function yuYinKuanDuPx(xiaoXi: YuYinShiChangZaiTi): number {
   const tu =
-    yuYinShiChangMiao(xiaoXi) * DUO_MEI_TI_PEI_ZHI.yuYinMeiMiaoKuanPx +
-    DUO_MEI_TI_PEI_ZHI.yuYinJiChuKuanPx
-  return Math.min(DUO_MEI_TI_PEI_ZHI.yuYinZuiChangKuanPx, tu)
+    yuYinShiChangMiao(xiaoXi) * DuoMeiTiPeiZhi.yuYinMeiMiaoKuanPx +
+    DuoMeiTiPeiZhi.yuYinJiChuKuanPx
+  return Math.min(DuoMeiTiPeiZhi.yuYinZuiChangKuanPx, tu)
 }
 
 export function yuYinKuanYangShi(xiaoXi: YuYinShiChangZaiTi): { width: string } {
@@ -115,7 +115,7 @@ function cuShiWuQiongShiChang(yinPin: HTMLAudioElement): void {
   }
   if (shiChangMiao !== Infinity || !(Number(yinPin.currentTime) <= 0)) return
   try {
-    yinPin.currentTime = WEI_QIONG_DING_WEI_MIAO
+    yinPin.currentTime = WeiQiongDingWeiMiao
   } catch {
     return
   }
@@ -139,7 +139,7 @@ interface CeLiangRenWuXiang {
 function guiZeChaoShi(chaoShiHaoMiao: number | undefined): number {
   return typeof chaoShiHaoMiao === 'number' && Number.isFinite(chaoShiHaoMiao) && chaoShiHaoMiao > 0
     ? chaoShiHaoMiao
-    : DUO_MEI_TI_PEI_ZHI.yuYinShiChangCeLiangChaoShiHaoMiao
+    : DuoMeiTiPeiZhi.yuYinShiChangCeLiangChaoShiHaoMiao
 }
 
 function chuangJianCeLiangRenWu(
@@ -206,7 +206,7 @@ export function ceLiangYinPinShiChang(
 
 function liuZhuanBingFaCeLiang(): void {
   while (
-    ceLiangYunXingShu < DUO_MEI_TI_PEI_ZHI.yuYinCeLiangBingFaShangXian &&
+    ceLiangYunXingShu < DuoMeiTiPeiZhi.yuYinCeLiangBingFaShangXian &&
     ceLiangDuiLie.size > 0
   ) {
     const xiaYi = ceLiangDuiLie.entries().next()
@@ -226,7 +226,7 @@ function liuZhuanBingFaCeLiang(): void {
 function kaiShiCeLiang(jian: string, diZhi: string): void {
   ceLiangYunXingShu += 1
   let yiQuXiao = false
-  const renWu = chuangJianCeLiangRenWu(diZhi, DUO_MEI_TI_PEI_ZHI.yuYinShiChangCeLiangChaoShiHaoMiao)
+  const renWu = chuangJianCeLiangRenWu(diZhi, DuoMeiTiPeiZhi.yuYinShiChangCeLiangChaoShiHaoMiao)
   const benQuXiao = renWu.quXiao
   ceLiangQuXiaoMap.set(jian, () => {
     yiQuXiao = true
@@ -353,7 +353,7 @@ export function tingZhiDangQianYuYin(): boolean {
   return true
 }
 
-const YU_YIN_SHUANG_JI_JIAN_GE_HAO_MIAO = 260
+const YuYinShuangJiJianGeHaoMiao = 260
 
 export function use语音播放(yiLai: Use语音播放依赖) {
   const boFangZhongXiaoXiKey = ref<string | null>(null)
@@ -420,7 +420,7 @@ export function use语音播放(yiLai: Use语音播放依赖) {
     const 目标 = Math.max(
       0,
       Math.min(
-        YU_YIN_ZENG_YI_SHANG_XIAN,
+        YuYinZengYiShangXian,
         tongDaoYinLiang(xiaoXi) * yuYinYinLiangZengYi(duQuYuYinYinLiang(xiaoXi)),
       ),
     )
@@ -591,7 +591,7 @@ export function use语音播放(yiLai: Use语音播放依赖) {
       const muBiao = daiDianJiXiaoXi
       qingLiDianJiDingShiQi()
       if (muBiao) qieHuanYuYinBoFang(muBiao)
-    }, YU_YIN_SHUANG_JI_JIAN_GE_HAO_MIAO)
+    }, YuYinShuangJiJianGeHaoMiao)
   }
 
   function tiaoZhuanYuYinJinDu(xiaoXi: 消息, miao: number) {

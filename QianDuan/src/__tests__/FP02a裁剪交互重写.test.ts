@@ -15,8 +15,8 @@ import {
   type WaiGuanTiaoMu,
 } from '@/config/外观自定义'
 import {
-  CAI_JIAN_BI_LI_SHANG_XIAN,
-  CAI_JIAN_BI_LI_XIA_XIAN,
+  CaiJianBiLiShangXian,
+  CaiJianBiLiXiaXian,
   guiYiGunLunZengLiang,
   jiSuanDaoChuKuan,
   jiSuanGunLunPingYi,
@@ -33,13 +33,13 @@ const 上传说明源码 = 读('components/上传说明层.vue')
 const 外观源码 = 读('config/外观自定义.ts')
 const 裁剪工具源码 = 读('utils/图片裁剪.ts')
 
-const MEI_TI_URL = '/api/媒体/' + 'a'.repeat(64) + '?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=' + 'b'.repeat(64)
+const MeiTiUrl = '/api/媒体/' + 'a'.repeat(64) + '?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=' + 'b'.repeat(64)
 
 function zaoTiaoMu(xuHao: number): WaiGuanTiaoMu {
   return {
     id: 'qipao-' + xuHao,
     mingCheng: '自定义气泡' + xuHao,
-    tuDiZhi: MEI_TI_URL,
+    tuDiZhi: MeiTiUrl,
     wenZiYanSe: '#FFFFFF',
   }
 }
@@ -310,7 +310,7 @@ describe('FP-02a 比例与缩放自定义输入', () => {
     expect(jiXiBiLiWenBen('0:4')).toBeNull()
     expect(jiXiBiLiWenBen('-3:4')).toBeNull()
     ;[0.1, 5.01, Infinity, NaN].forEach((zhi) => expect(shiHeFaBiLi(zhi)).toBe(false))
-    ;[CAI_JIAN_BI_LI_XIA_XIAN, CAI_JIAN_BI_LI_SHANG_XIAN].forEach((zhi) => expect(shiHeFaBiLi(zhi)).toBe(true))
+    ;[CaiJianBiLiXiaXian, CaiJianBiLiShangXian].forEach((zhi) => expect(shiHeFaBiLi(zhi)).toBe(true))
   })
 
   it('比例输入应用后选区与画布比例跟随，非法输入留在框内并报翻译错误', async () => {

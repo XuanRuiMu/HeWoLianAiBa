@@ -4,9 +4,9 @@ import { mount, flushPromises } from '@vue/test-utils'
 import type { RouteLocationNormalized } from 'vue-router'
 import { fanYi, huoQuFanYi } from '@/config/翻译表'
 import {
-  GUO_DU_CHAO_SHI_HAO_MIAO,
-  GUO_DU_ZUI_DUAN_ZHAN_SHI_HAO_MIAO,
-  JING_SU_HAO_MIAO,
+  GuoDuChaoShiHaoMiao,
+  GuoDuZuiDuanZhanShiHaoMiao,
+  JingSuHaoMiao,
   anJingHua,
   cunYuQuJiaoJie,
   guoDuZhuangTai,
@@ -150,10 +150,10 @@ describe('FP-6 预取任务与过渡页状态机', () => {
   it('竞速临界：任务在竞速窗口内完成也不显示过渡页', async () => {
     const peiZhi: YuJiaZaiPeiZhi = {
       wenAn: 'guoWangZhanJi',
-      renWu: [() => new Promise((jieJue) => setTimeout(() => jieJue('man'), JING_SU_HAO_MIAO - 10))],
+      renWu: [() => new Promise((jieJue) => setTimeout(() => jieJue('man'), JingSuHaoMiao - 10))],
     }
     const yunXing = kaiShiLuYouYuQu(peiZhi, 假路由('guoWangZhanJi'))
-    await vi.advanceTimersByTimeAsync(JING_SU_HAO_MIAO)
+    await vi.advanceTimersByTimeAsync(JingSuHaoMiao)
     await yunXing
     expect(guoDuZhuangTai.value.jinXingZhong).toBe(false)
   })
@@ -166,16 +166,16 @@ describe('FP-6 预取任务与过渡页状态机', () => {
       renWu: [() => jia.chengNuo, () => yi.chengNuo],
     }
     const yunXing = kaiShiLuYouYuQu(peiZhi, 假路由('guoWangZhanJi'))
-    await vi.advanceTimersByTimeAsync(JING_SU_HAO_MIAO)
+    await vi.advanceTimersByTimeAsync(JingSuHaoMiao)
     expect(guoDuZhuangTai.value.jinXingZhong).toBe(true)
     expect(guoDuZhuangTai.value.wenAn).toBe(huoQuFanYi('guoDuZaiRu', 'guoWangZhanJi'))
 
     jia.duiXian('jia')
-    await vi.advanceTimersByTimeAsync(GUO_DU_ZUI_DUAN_ZHAN_SHI_HAO_MIAO)
+    await vi.advanceTimersByTimeAsync(GuoDuZuiDuanZhanShiHaoMiao)
     expect(guoDuZhuangTai.value.jinXingZhong).toBe(true)
 
     yi.duiXian('yi')
-    await vi.advanceTimersByTimeAsync(GUO_DU_ZUI_DUAN_ZHAN_SHI_HAO_MIAO)
+    await vi.advanceTimersByTimeAsync(GuoDuZuiDuanZhanShiHaoMiao)
     await yunXing
     expect(guoDuZhuangTai.value.jinXingZhong).toBe(false)
     expect(guoDuZhuangTai.value.wenAn).toBe('')
@@ -201,9 +201,9 @@ describe('FP-6 预取任务与过渡页状态机', () => {
       renWu: [() => new Promise(() => undefined)],
     }
     const yunXing = kaiShiLuYouYuQu(peiZhi, 假路由('guoWangZhanJi'))
-    await vi.advanceTimersByTimeAsync(JING_SU_HAO_MIAO)
+    await vi.advanceTimersByTimeAsync(JingSuHaoMiao)
     expect(guoDuZhuangTai.value.jinXingZhong).toBe(true)
-    await vi.advanceTimersByTimeAsync(GUO_DU_CHAO_SHI_HAO_MIAO)
+    await vi.advanceTimersByTimeAsync(GuoDuChaoShiHaoMiao)
     await yunXing
     expect(guoDuZhuangTai.value.jinXingZhong).toBe(false)
     expect(chuFaCuoWuShangBao).not.toHaveBeenCalled()
@@ -217,10 +217,10 @@ describe('FP-6 预取任务与过渡页状态机', () => {
       zuJian: () => kuai.chengNuo,
     }
     const yunXing = kaiShiLuYouYuQu(peiZhi, 假路由('guoWangZhanJi'))
-    await vi.advanceTimersByTimeAsync(JING_SU_HAO_MIAO)
+    await vi.advanceTimersByTimeAsync(JingSuHaoMiao)
     expect(guoDuZhuangTai.value.jinXingZhong).toBe(true)
     kuai.duiXian(undefined)
-    await vi.advanceTimersByTimeAsync(GUO_DU_ZUI_DUAN_ZHAN_SHI_HAO_MIAO)
+    await vi.advanceTimersByTimeAsync(GuoDuZuiDuanZhanShiHaoMiao)
     await yunXing
     expect(guoDuZhuangTai.value.jinXingZhong).toBe(false)
   })
@@ -229,12 +229,12 @@ describe('FP-6 预取任务与过渡页状态机', () => {
     const man = 挂起<string>()
     const peiZhi: YuJiaZaiPeiZhi = { wenAn: 'guoWangZhanJi', renWu: [() => man.chengNuo] }
     const jiu = kaiShiLuYouYuQu(peiZhi, 假路由('guoWangZhanJi'))
-    await vi.advanceTimersByTimeAsync(JING_SU_HAO_MIAO)
+    await vi.advanceTimersByTimeAsync(JingSuHaoMiao)
     expect(guoDuZhuangTai.value.jinXingZhong).toBe(true)
     tuiJinLuYouPiCi()
     guoDuZhuangTai.value = { jinXingZhong: false, wenAn: '' }
     man.duiXian('wan')
-    await vi.advanceTimersByTimeAsync(GUO_DU_CHAO_SHI_HAO_MIAO)
+    await vi.advanceTimersByTimeAsync(GuoDuChaoShiHaoMiao)
     await jiu
     expect(guoDuZhuangTai.value.jinXingZhong).toBe(false)
   })
@@ -374,7 +374,7 @@ describe('FP-6 三段笔触出现顺序与时长', () => {
     const 第三段终 = 段三起 + 三段长
     expect(第一段终).toBeLessThanOrEqual(第二段终)
     expect(第二段终).toBeLessThanOrEqual(第三段终)
-    expect(第三段终).toBeLessThanOrEqual(GUO_DU_ZUI_DUAN_ZHAN_SHI_HAO_MIAO)
+    expect(第三段终).toBeLessThanOrEqual(GuoDuZuiDuanZhanShiHaoMiao)
   })
 
   it('退场按入场逆序收尾：填充先撤、右下第二、左上最后，且根节点时长覆盖全部子动画', () => {
@@ -396,7 +396,7 @@ describe('FP-6 三段笔触出现顺序与时长', () => {
     const 退三段延 = 取毫秒('--guodu-tui-yan-san')
     expect(退二段延).toBeLessThan(退三段延)
     expect(退三段延 + 一笔退长).toBeLessThanOrEqual(取毫秒('--guodu-tui-chang-ye'))
-    expect(取毫秒('--guodu-tui-chang-ye')).toBeLessThanOrEqual(GUO_DU_ZUI_DUAN_ZHAN_SHI_HAO_MIAO)
+    expect(取毫秒('--guodu-tui-chang-ye')).toBeLessThanOrEqual(GuoDuZuiDuanZhanShiHaoMiao)
   })
 
   it('三段几何铺满不露边：楔形用 meet 等比贴角缩放、填充用像素级 pattern，禁 slice/none/path()', () => {
@@ -631,14 +631,14 @@ describe('FP-6 路由接入契约', () => {
     }
   })
 
-  it('交接消费页的 LU_YOU_MING 与路由名一一对应', () => {
+  it('交接消费页的 LuYouMing 与路由名一一对应', () => {
     const duiZhao: Array<[string, string]> = [
       ['views/账号与安全.vue', 'zhangHaoAnQuan'],
       ['views/军师记录详情.vue', 'junShiJiLuXiangQing'],
       ['views/挑战主页.vue', 'tiaoZhanZhuYe'],
     ]
     for (const [wen, ming] of duiZhao) {
-      expect(读源(wen)).toContain(`const LU_YOU_MING = '${ming}'`)
+      expect(读源(wen)).toContain(`const LuYouMing = '${ming}'`)
     }
   })
 

@@ -56,7 +56,7 @@
           type="range"
           :min="0"
           :max="zongMiao"
-          :step="DUO_MEI_TI_PEI_ZHI.yuYinJinDuBuZhouMiao"
+          :step="DuoMeiTiPeiZhi.yuYinJinDuBuZhouMiao"
           :value="jinDuMiao"
           :aria-label="huoQuFanYi('duoMeiTi', 'tiaoZhuanYuYinJinDu')"
           :aria-valuetext="boFangShiJianWenBen"
@@ -177,7 +177,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
+import { DuoMeiTiPeiZhi } from '@/config/消息配置'
 import { huoQuFanYi } from '@/config/翻译表'
 import QiPaoRongQi from '@/components/聊天/气泡容器.vue'
 import {
@@ -200,7 +200,7 @@ import {
   duQuYuYinYinLiang as duQuBenTiaoYinLiang,
   sheZhiYuYinYinLiang,
   yuYinYinLiangSeXiang,
-  YU_YIN_YIN_LIANG_BAI_FEN_BI,
+  YuYinYinLiangBaiFenBi,
 } from '@/utils/语音音量存储'
 
 const props = withDefaults(
@@ -278,7 +278,7 @@ function anZhuangCeLiangGuanCha(): void {
     chuLiKeJianXing(true)
     return
   }
-  const zaiXianCheng = `${DUO_MEI_TI_PEI_ZHI.yuYinCeLiangKeShiQuYuZaiXianChengPx}px 0px`
+  const zaiXianCheng = `${DuoMeiTiPeiZhi.yuYinCeLiangKeShiQuYuZaiXianChengPx}px 0px`
   ceLiangGuanCha = new IntersectionObserver(
     (xiangQing) => {
       for (const xiang of xiangQing) chuLiKeJianXing(xiang.isIntersecting)
@@ -326,7 +326,7 @@ const jinDuXianYangShi = computed(() => ({
 
 const yinLiang = computed(() => duQuBenTiaoYinLiang(props.xiaoXi))
 const yinLiangWenBen = computed(
-  () => `${Math.round(yinLiang.value * YU_YIN_YIN_LIANG_BAI_FEN_BI)}%`,
+  () => `${Math.round(yinLiang.value * YuYinYinLiangBaiFenBi)}%`,
 )
 const yinLiangYangShi = computed(() => ({
   '--yuyin-yinliang-yuandian': yuYinYinLiangSeXiang(yinLiang.value),

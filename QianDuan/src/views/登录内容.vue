@@ -245,7 +245,7 @@
           >
               <div class="shuru-zu" :class="{ shangFu: zhuCeShouJiShangFu }">
                 <div class="shuru-hang">
-                  <span class="gu-ding-qu-hao">+{{ DA_LU_QU_HAO }}</span>
+                  <span class="gu-ding-qu-hao">+{{ DaLuQuHao }}</span>
                   <div class="shuru-zhu-ti">
                     <input
                       id="zhuce-shoujihao"
@@ -458,7 +458,7 @@
                 <div class="shuru-hang">
                   <QuHaoXuanZeQi
                     :模型值="feiDaLuQuHao"
-                    :排除区号="FEI_DA_LU_PAI_CHU_QU_HAO"
+                    :排除区号="FeiDaLuPaiChuQuHao"
                     @geng-xin="feiDaLuQuHao = $event"
                   />
                   <div class="shuru-zhu-ti">
@@ -630,7 +630,7 @@
     <RenJiYanZheng
       ref="renJiZuJian"
       :xian-shi="renJiXianShi"
-      :yong-tu="YAN_ZHENG_MA_YONG_TU.zhuCe"
+      :yong-tu="YanZhengMaYongTu.zhuCe"
       :deng-dai-zhong="faSongZhong"
       @guan-bi="renJiXianShi = false"
       @ti-jiao="tiJiaoRenJi"
@@ -644,8 +644,8 @@ import type { Ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { 使用用户仓库 } from '@/stores/用户'
 import { 使用认证表单仓库 } from '@/stores/认证表单'
-import { faSongMa, jianChaShouJiHao, YAN_ZHENG_MA_YONG_TU, type 人机验证答案 } from '@/api/认证'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { faSongMa, jianChaShouJiHao, YanZhengMaYongTu, type 人机验证答案 } from '@/api/认证'
+import { QianTaiDaiMa } from '@/config/前台错误码'
 import { chuangJianQianTaiCuoWu, 归一前台错误 } from '@/utils/前台错误'
 import { shiRenJiYanZhengShiBai, type 人机测试实例 } from '@/utils/人机验证'
 import HengTiaoShuRuKuang from '@/components/表单/横条输入框.vue'
@@ -653,8 +653,8 @@ import { huoQuFanYi } from '@/config/翻译表'
 import { quXian } from '@/config/设计令牌'
 import QuHaoXuanZeQi from '@/components/表单/区号选择器.vue'
 import {
-  DA_LU_QU_HAO,
-  DA_LU_SHOU_JI_HAO_CHANG,
+  DaLuQuHao,
+  DaLuShouJiHaoChang,
   guiYiBenDiHao,
   guiYiQuHao,
   huoQuBenDiHao,
@@ -679,8 +679,8 @@ const router = useRouter()
 
 type MoShiLeiXing = 'dengLu' | 'zhuCe' | 'feiDaLu'
 const fuMoShi = inject<Ref<MoShiLeiXing>>('denglu-moshi', ref(bd.moShi))
-const HUO_QU_XIANG_GANG = '852'
-const FEI_DA_LU_PAI_CHU_QU_HAO = [DA_LU_QU_HAO]
+const HuoQuXiangGang = '852'
+const FeiDaLuPaiChuQuHao = [DaLuQuHao]
 const dengLuTuiChangZhong = inject<Ref<boolean>>('dengLuTuiChangZhong', ref(false))
 const moShi = ref<MoShiLeiXing>(bd.moShi)
 const qieHuanFangXiang = ref<'you' | 'zuo'>('you')
@@ -735,7 +735,7 @@ const dengLuQuHao = computed({
   },
 })
 const dengLuMiMa = ref(bd.dengLuMiMa)
-const feiDaLuQuHao = ref(HUO_QU_XIANG_GANG)
+const feiDaLuQuHao = ref(HuoQuXiangGang)
 const feiDaLuShouJiHao = ref('')
 const feiDaLuYongHuMing = ref('')
 const feiDaLuMiMa = ref('')
@@ -851,7 +851,7 @@ const zhuCeMiMaShangFu = computed(
   () => zhuCeMiMaJuJiao.value || zhuCeMiMa.value.length > 0 || zhuCeMiMaZiDong.value,
 )
 
-const ZI_DONG_TIAN_CHONG_DONG_HUA_MING = 'ziDongTianChongKaiShi'
+const ZiDongTianChongDongHuaMing = 'ziDongTianChongKaiShi'
 
 type FuDongZiDuanMing =
   | 'dengLuShouJiHao'
@@ -891,7 +891,7 @@ function tongBuShiJiZhi(shijian: Event, ziDuanMing: FuDongZiDuanMing) {
 
 function chuLiZiDongTianChong(shijian: Event, ziDuanMing: FuDongZiDuanMing) {
   const dongHuaShijian = shijian as AnimationEvent
-  if (dongHuaShijian.animationName !== ZI_DONG_TIAN_CHONG_DONG_HUA_MING) return
+  if (dongHuaShijian.animationName !== ZiDongTianChongDongHuaMing) return
   const ziDongBiaoZhi = fuDongZiDongYingShe[ziDuanMing]
   const muBiao = fuDongZhiYingShe[ziDuanMing]
   const shuRuKuang = shijian.target as HTMLInputElement | null
@@ -953,8 +953,8 @@ function tongBuPageshow() {
 
 let shouZhenTongBuId: number | null = null
 let huiTianLunXunId: ReturnType<typeof setInterval> | null = null
-const HUI_TIAN_LUN_XUN_CI_SHU = 20
-const HUI_TIAN_LUN_XUN_JIAN_GE = 250
+const HuiTianLunXunCiShu = 20
+const HuiTianLunXunJianGe = 250
 
 function tingZhiHuiTianLunXun(): void {
   if (huiTianLunXunId !== null) {
@@ -969,8 +969,8 @@ function qiDongHuiTianLunXun(): void {
   huiTianLunXunId = setInterval(() => {
     ciShu += 1
     tongBuSuoYouHuiTian()
-    if (ciShu >= HUI_TIAN_LUN_XUN_CI_SHU) tingZhiHuiTianLunXun()
-  }, HUI_TIAN_LUN_XUN_JIAN_GE)
+    if (ciShu >= HuiTianLunXunCiShu) tingZhiHuiTianLunXun()
+  }, HuiTianLunXunJianGe)
 }
 
 const dengLuMiMaShuRuKuang = ref<{ 聚焦: () => void } | null>(null)
@@ -989,7 +989,7 @@ type CuoWuZiDuan =
   | 'feiDaLuMiMa'
   | 'feiDaLuChuShengRiQi'
 
-const ZI_DUAN_YUAN_SU_ID: Record<CuoWuZiDuan, string> = {
+const ZiDuanYuanSuId: Record<CuoWuZiDuan, string> = {
   dengLuShouJiHao: 'denglu-shoujihao',
   dengLuMiMa: 'denglu-mima',
   zhuCeShouJiHao: 'zhuce-shoujihao',
@@ -1030,7 +1030,7 @@ function 保证字段在滚动区内可见(
 
 function zhaoDongZiDuan(ziDuan: CuoWuZiDuan): void {
   nextTick(() => {
-    const yuanSu = document.getElementById(ZI_DUAN_YUAN_SU_ID[ziDuan])
+    const yuanSu = document.getElementById(ZiDuanYuanSuId[ziDuan])
     if (!(yuanSu instanceof HTMLInputElement) || !yuanSu.isConnected) return
     const gunDongQu = biaodanRongqi.value?.querySelector('.biaodan-gundong') as HTMLElement | null
     保证字段在滚动区内可见(yuanSu, gunDongQu)
@@ -1045,42 +1045,42 @@ function daiMaPanDuanZiDuan(
 ): CuoWuZiDuan | null {
   if (!daiMa) return null
   switch (daiMa) {
-    case QIAN_TAI_DAI_MA.AUTH_PASSWORD_RESET_FAILED:
+    case QianTaiDaiMa.AUTH_PASSWORD_RESET_FAILED:
       return null
-    case QIAN_TAI_DAI_MA.AUTH_ACCOUNT_ALREADY_EXISTS:
+    case QianTaiDaiMa.AUTH_ACCOUNT_ALREADY_EXISTS:
       if (dangQianMoShi === 'zhuCe') return 'zhuCeShouJiHao'
       if (dangQianMoShi === 'feiDaLu') return 'feiDaLuShouJiHao'
       return 'dengLuShouJiHao'
-    case QIAN_TAI_DAI_MA.AUTH_INVALID_CREDENTIALS:
+    case QianTaiDaiMa.AUTH_INVALID_CREDENTIALS:
       if (dangQianMoShi === 'zhuCe') return 'zhuCeMiMa'
       if (dangQianMoShi === 'feiDaLu') return 'feiDaLuMiMa'
       return 'dengLuMiMa'
-    case QIAN_TAI_DAI_MA.AUTH_USERNAME_CHANGE_FAILED:
-    case QIAN_TAI_DAI_MA.AUTH_USERNAME_TAKEN:
-    case QIAN_TAI_DAI_MA.AUTH_USERNAME_INVALID:
-    case QIAN_TAI_DAI_MA.RESOURCE_CONFLICT:
+    case QianTaiDaiMa.AUTH_USERNAME_CHANGE_FAILED:
+    case QianTaiDaiMa.AUTH_USERNAME_TAKEN:
+    case QianTaiDaiMa.AUTH_USERNAME_INVALID:
+    case QianTaiDaiMa.RESOURCE_CONFLICT:
       if (dangQianMoShi === 'zhuCe') return 'zhuCeYongHuMing'
       if (dangQianMoShi === 'feiDaLu') return 'feiDaLuYongHuMing'
       return null
-    case QIAN_TAI_DAI_MA.AUTH_VERIFICATION_CODE_INVALID:
-    case QIAN_TAI_DAI_MA.AUTH_VERIFICATION_CODE_EXPIRED:
-    case QIAN_TAI_DAI_MA.AUTH_VERIFICATION_CODE_ATTEMPTS_EXCEEDED:
+    case QianTaiDaiMa.AUTH_VERIFICATION_CODE_INVALID:
+    case QianTaiDaiMa.AUTH_VERIFICATION_CODE_EXPIRED:
+    case QianTaiDaiMa.AUTH_VERIFICATION_CODE_ATTEMPTS_EXCEEDED:
       if (dangQianMoShi === 'zhuCe') return 'zhuCeYanZhengMa'
       return null
-    case QIAN_TAI_DAI_MA.AUTH_PASSWORD_WEAK:
+    case QianTaiDaiMa.AUTH_PASSWORD_WEAK:
       if (dangQianMoShi === 'zhuCe') return 'zhuCeMiMa'
       if (dangQianMoShi === 'feiDaLu') return 'feiDaLuMiMa'
       return 'dengLuMiMa'
-    case QIAN_TAI_DAI_MA.AUTH_PHONE_NOT_ACCEPTED:
+    case QianTaiDaiMa.AUTH_PHONE_NOT_ACCEPTED:
       if (dangQianMoShi === 'zhuCe') return 'zhuCeShouJiHao'
       if (dangQianMoShi === 'feiDaLu') return 'feiDaLuShouJiHao'
       return 'dengLuShouJiHao'
-    case QIAN_TAI_DAI_MA.AUTH_BIRTH_DATE_INVALID:
-    case QIAN_TAI_DAI_MA.AUTH_AGREEMENT_REQUIRED:
+    case QianTaiDaiMa.AUTH_BIRTH_DATE_INVALID:
+    case QianTaiDaiMa.AUTH_AGREEMENT_REQUIRED:
       if (dangQianMoShi === 'zhuCe') return 'zhuCeChuShengRiQi'
       if (dangQianMoShi === 'feiDaLu') return 'feiDaLuChuShengRiQi'
       return null
-    case QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID:
+    case QianTaiDaiMa.REQUEST_PARAMETER_INVALID:
       if (dangQianMoShi === 'zhuCe') return 'zhuCeShouJiHao'
       if (dangQianMoShi === 'feiDaLu') return 'feiDaLuShouJiHao'
       return 'dengLuShouJiHao'
@@ -1119,13 +1119,13 @@ const gundongGuiDao = ref<HTMLElement | null>(null)
 const gundongZhuangShi = ref<HTMLElement | null>(null)
 const gundongJinCou = ref(false)
 let gundongGuangChaQi: ResizeObserver | null = null
-const HUA_KUAI_ZUI_XIAO_GAO = 24
-const HUA_KUAI_JIN_COU_ZUI_XIAO_GAO = 12
-const GU_DAO_LIU_BAI = 14
-const JIN_COU_KE_JIAN_GAO = 96
-const JIN_COU_LIU_BAI = 2
-const GUI_DAO_ZUI_XIAO_GAO = 4
-const JIAN_TOU_BU_CHANG_BI_LI = 0.25
+const HuaKuaiZuiXiaoGao = 24
+const HuaKuaiJinCouZuiXiaoGao = 12
+const GuDaoLiuBai = 14
+const JinCouKeJianGao = 96
+const JinCouLiuBai = 2
+const GuiDaoZuiXiaoGao = 4
+const JianTouBuChangBiLi = 0.25
 let huaKuaiGaoDu = 0
 let huaKuaiGuiDaoGao = 0
 let tuoDongQiDian: { zuoBiaoY: number; gunDongDingBu: number } | null = null
@@ -1157,11 +1157,11 @@ function gengXinHuaKuai(): void {
     huaKuaiGuiDaoGao = 0
     return
   }
-  const jinCou = 装饰高 < JIN_COU_KE_JIAN_GAO
-  const liuBai = jinCou ? JIN_COU_LIU_BAI : GU_DAO_LIU_BAI
+  const jinCou = 装饰高 < JinCouKeJianGao
+  const liuBai = jinCou ? JinCouLiuBai : GuDaoLiuBai
   const shiYongGao = 装饰高 - liuBai * 2
-  const 最小柄高 = jinCou ? HUA_KUAI_JIN_COU_ZUI_XIAO_GAO : HUA_KUAI_ZUI_XIAO_GAO
-  if (shiYongGao < 最小柄高 + GUI_DAO_ZUI_XIAO_GAO) {
+  const 最小柄高 = jinCou ? HuaKuaiJinCouZuiXiaoGao : HuaKuaiZuiXiaoGao
+  if (shiYongGao < 最小柄高 + GuiDaoZuiXiaoGao) {
     huaKuaiYuanSu.style.display = 'none'
     zhuangShiYuanSu.style.display = 'none'
     gundongJinCou.value = false
@@ -1173,7 +1173,7 @@ function gengXinHuaKuai(): void {
   huaKuaiYuanSu.style.display = ''
   zhuangShiYuanSu.style.display = ''
   const huaKuaiGao = Math.min(
-    shiYongGao - GUI_DAO_ZUI_XIAO_GAO,
+    shiYongGao - GuiDaoZuiXiaoGao,
     Math.max(最小柄高, Math.round(shiYongGao * (滚动高 / gunDongQuYuanSu.scrollHeight))),
   )
   const guiDaoGao = Math.max(0, shiYongGao - huaKuaiGao)
@@ -1223,7 +1223,7 @@ function anGuiDaoTiaoZhuan(shijian: PointerEvent): void {
 function anJianTouGunDong(fangXiang: 1 | -1): void {
   const gunDongQuYuanSu = gundongRongQi.value
   if (!gunDongQuYuanSu) return
-  gunDongQuYuanSu.scrollTop += fangXiang * gunDongQuYuanSu.clientHeight * JIAN_TOU_BU_CHANG_BI_LI
+  gunDongQuYuanSu.scrollTop += fangXiang * gunDongQuYuanSu.clientHeight * JianTouBuChangBiLi
 }
 
 function chuLiZhuangShiGunLun(shijian: WheelEvent): void {
@@ -1366,13 +1366,13 @@ const feiDaLuShouJiTiShi = computed(() => {
 })
 
 const zhuCeShouJiTiShi = computed(() => {
-  if (zhuCeShouJiHao.value.length < DA_LU_SHOU_JI_HAO_CHANG) return ''
+  if (zhuCeShouJiHao.value.length < DaLuShouJiHaoChang) return ''
   return zhuCeShouJiHeFa.value ? '' : huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu')
 })
 const feiDaLuYongHuMingHeFa = computed(() => {
   const qingLiHou = feiDaLuYongHuMing.value.trim()
   return (
-    qingLiHou.length >= 1 && qingLiHou.length <= 30 && !YONG_HU_MING_TE_SHU_ZI_FU.test(qingLiHou)
+    qingLiHou.length >= 1 && qingLiHou.length <= 30 && !YongHuMingTeShuZiFu.test(qingLiHou)
   )
 })
 const feiDaLuZhouSui = computed(() => jiSuanZhouSui(feiDaLuChuShengRiQi.value))
@@ -1396,7 +1396,7 @@ function gengXinDengLuMiMa(zhi: string): void {
 }
 
 function gengXinZhuCeShouJi(zhi: string): void {
-  zhuCeShouJiHao.value = guiYiBenDiHao(DA_LU_QU_HAO, zhi)
+  zhuCeShouJiHao.value = guiYiBenDiHao(DaLuQuHao, zhi)
   zhuCeShouJiJuJiao.value = true
 }
 
@@ -1417,7 +1417,7 @@ function gengXinZhuCeMiMa(zhi: string): void {
 
 function kaiShiFeiDaLuZhuCe(): void {
   qieHuanMoShi('feiDaLu')
-  if (feiDaLuQuHao.value === DA_LU_QU_HAO) feiDaLuQuHao.value = HUO_QU_XIANG_GANG
+  if (feiDaLuQuHao.value === DaLuQuHao) feiDaLuQuHao.value = HuoQuXiangGang
 }
 
 function gengXinFeiDaLuShouJi(zhi: string): void {
@@ -1479,13 +1479,13 @@ const keYiDengLu = computed(
     !dengLuZhong.value,
 )
 
-const zhuCeShouJiHeFa = computed(() => panDingBenDiHao(DA_LU_QU_HAO, zhuCeShouJiHao.value).heFa)
+const zhuCeShouJiHeFa = computed(() => panDingBenDiHao(DaLuQuHao, zhuCeShouJiHao.value).heFa)
 const zhuCeYanZhengMaHeFa = computed(() => /^\d{6}$/.test(zhuCeYanZhengMa.value))
-const YONG_HU_MING_TE_SHU_ZI_FU = /[!@#$%^&*()+=[\]{}|\\:;"'<>?/~`]/
+const YongHuMingTeShuZiFu = /[!@#$%^&*()+=[\]{}|\\:;"'<>?/~`]/
 const zhuCeYongHuMingHeFa = computed(() => {
   const qingLiHou = zhuCeYongHuMing.value.trim()
   return (
-    qingLiHou.length >= 1 && qingLiHou.length <= 30 && !YONG_HU_MING_TE_SHU_ZI_FU.test(qingLiHou)
+    qingLiHou.length >= 1 && qingLiHou.length <= 30 && !YongHuMingTeShuZiFu.test(qingLiHou)
   )
 })
 
@@ -1554,7 +1554,7 @@ async function zhiXingFaSongMa() {
       await jianChaShouJiHao(shouJiHao, { signal: 认证操作控制器?.signal })
     } catch (jianChaCuoWu: unknown) {
       if (!jieMianCaoZuoYouXiao(daiCi)) return
-      if (归一前台错误(jianChaCuoWu).code !== QIAN_TAI_DAI_MA.RESOURCE_NOT_FOUND) {
+      if (归一前台错误(jianChaCuoWu).code !== QianTaiDaiMa.RESOURCE_NOT_FOUND) {
         jieShouQianTai(jianChaCuoWu, zhiXingFaSongMa)
         return
       }
@@ -1573,7 +1573,7 @@ async function tiJiaoRenJi(yanZheng: 人机验证答案) {
   faSongZhong.value = true
   qingLiQianTai()
   try {
-    await faSongMa(shouJiHao, YAN_ZHENG_MA_YONG_TU.zhuCe, { signal: 认证操作控制器?.signal }, yanZheng)
+    await faSongMa(shouJiHao, YanZhengMaYongTu.zhuCe, { signal: 认证操作控制器?.signal }, yanZheng)
     if (!jieMianCaoZuoYouXiao(daiCi)) return
     renJiXianShi.value = false
     bd.yanZhengMaFaSongShiJian = Date.now()
@@ -1861,7 +1861,7 @@ async function zhiXingDengLu() {
 function sheZhiBenDiYanZhengCuoWu(yingXiang: string, ziDuan?: CuoWuZiDuan) {
   jieShouQianTai(
     chuangJianQianTaiCuoWu({
-      code: QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID,
+      code: QianTaiDaiMa.REQUEST_PARAMETER_INVALID,
       retryable: false,
       yingXiang,
     }),
@@ -1876,7 +1876,7 @@ async function zhiXingZhuCe() {
       sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), 'zhuCeShouJiHao')
     } else if (!zhuCeYanZhengMaHeFa.value) {
       sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'yanZhengMaGeShiCuoWu'), 'zhuCeYanZhengMa')
-    } else if (YONG_HU_MING_TE_SHU_ZI_FU.test(zhuCeYongHuMing.value.trim())) {
+    } else if (YongHuMingTeShuZiFu.test(zhuCeYongHuMing.value.trim())) {
       sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'yongHuMingTeShuZiFu'), 'zhuCeYongHuMing')
     } else if (!zhuCeYongHuMingHeFa.value) {
       sheZhiBenDiYanZhengCuoWu(huoQuFanYi('renZheng', 'yongHuMingChangDuCuoWu'), 'zhuCeYongHuMing')
@@ -1895,7 +1895,7 @@ async function zhiXingZhuCe() {
   }
   const daiCi = kaiShiJieMianCaoZuo()
   const benDiHao = zhuCeShouJiHao.value
-  const shouJiHao = zuChengGuoJiHao(DA_LU_QU_HAO, benDiHao)
+  const shouJiHao = zuChengGuoJiHao(DaLuQuHao, benDiHao)
   const yanZhengMa = zhuCeYanZhengMa.value
   const yongHuMing = zhuCeYongHuMing.value
   const miMa = zhuCeMiMa.value

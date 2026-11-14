@@ -1,14 +1,32 @@
 import fs from 'fs'
 import { huoQuBenDiLuJing, tiQuMeiTiSha } from './媒体存储'
+import { shiDanChunTieZhi, tiQuTieZhiDuanMing } from './贴纸标记'
 import type { DuiHuaKuai } from '../utils/DeepSeek客户端'
 import type { DuiHuaLiShiXiang } from '../types'
 
-const TU_XIANG_LEI_BIE = new Set(['tupian', 'biaoqingshu'])
+export interface MeiTiZhanShiXuanXiang {
+  yiCheHui?: boolean
+  shiChangHaoMiao?: number | null
+  yuanShiWenJianMing?: string | null
+  mime?: string | null
+  neiRong?: string | null
+}
 
-const SHI_PIN_MIME_JI_HE = new Set(['video/mp4', 'video/quicktime', 'video/webm'])
+const BiaoQingBaoQianZhui = '[表情包'
+
+export function biaoQingBaoZhanShiWenBen(neiRong?: string | null): string | null {
+  if (typeof neiRong !== 'string' || !shiDanChunTieZhi(neiRong)) return null
+  const duanMing = tiQuTieZhiDuanMing(neiRong)[0]
+  if (typeof duanMing !== 'string' || duanMing === '') return null
+  return `${BiaoQingBaoQianZhui}:${duanMing}]`
+}
+
+const TuXiangLeiBie = new Set(['tupian', 'biaoqingshu'])
+
+const ShiPinMimeJiHe = new Set(['video/mp4', 'video/quicktime', 'video/webm'])
 
 export function shiShiPinNeiRong(mime?: string | null, wenJianMing?: string | null): boolean {
-  if (typeof mime === 'string' && SHI_PIN_MIME_JI_HE.has(mime.toLowerCase())) return true
+  if (typeof mime === 'string' && ShiPinMimeJiHe.has(mime.toLowerCase())) return true
   if (typeof wenJianMing === 'string') {
     const xiao = wenJianMing.toLowerCase()
     return xiao.endsWith('.mp4') || xiao.endsWith('.mov') || xiao.endsWith('.webm') || xiao.endsWith('.m4v')
@@ -17,25 +35,22 @@ export function shiShiPinNeiRong(mime?: string | null, wenJianMing?: string | nu
 }
 
 export function shiTuXiangLeiBie(leiBie: string | null | undefined): boolean {
-  return typeof leiBie === 'string' && TU_XIANG_LEI_BIE.has(leiBie)
+  return typeof leiBie === 'string' && TuXiangLeiBie.has(leiBie)
 }
 
 export function meiTiZhanShiWenBen(
   leiBie: string | null | undefined,
-  xuanXiang?: {
-    yiCheHui?: boolean
-    shiChangHaoMiao?: number | null
-    yuanShiWenJianMing?: string | null
-    mime?: string | null
-  },
+  xuanXiang?: MeiTiZhanShiXuanXiang,
 ): string | null {
   if (!leiBie) return null
   const yiCheHui = Boolean(xuanXiang?.yiCheHui)
   switch (leiBie) {
     case 'tupian':
       return yiCheHui ? '[用户撤回了一张图片]' : '[图片]'
-    case 'biaoqingshu':
-      return yiCheHui ? '[用户撤回了一个表情包]' : '[表情包]'
+    case 'biaoqingshu': {
+      if (yiCheHui) return '[用户撤回了一个表情包]'
+      return biaoQingBaoZhanShiWenBen(xuanXiang?.neiRong) ?? '[表情包]'
+    }
     case 'yuyin': {
       if (yiCheHui) return '[用户撤回了一条语音]'
       const haoMiao = xuanXiang?.shiChangHaoMiao
@@ -62,11 +77,11 @@ export function meiTiZhanShiWenBen(
   }
 }
 
-const TOU_XIANG_CHU_FA_CI: readonly string[] = ['头像', '你的照片', '你的自拍', '你的图片', '换个头像', '换头像']
+const TouXiangChuFaCi: readonly string[] = ['头像', '你的照片', '你的自拍', '你的图片', '换个头像', '换头像']
 
 export function yongHuTiDaoTouXiang(yongHuXiaoXi: string): boolean {
   if (!yongHuXiaoXi) return false
-  return TOU_XIANG_CHU_FA_CI.some((ci) => yongHuXiaoXi.includes(ci))
+  return TouXiangChuFaCi.some((ci) => yongHuXiaoXi.includes(ci))
 }
 
 export async function gouJianTouXiangKuai(

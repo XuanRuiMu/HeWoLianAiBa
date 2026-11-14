@@ -27,21 +27,21 @@ export function duJieBaoKaiGuanMoRenKai(ming: string): boolean {
   return zhi !== 'false' && zhi !== '0' && zhi !== 'off'
 }
 
-export const KAI_CHANG_KAI_GUAN_MING = 'KAI_CHANG_QIAN_ZHI_QI_YONG'
+export const KaiChangKaiGuanMing = 'KAI_CHANG_QIAN_ZHI_QI_YONG'
 
-export const KAI_CHANG_PEI_ZHI = {
-  kaiGuan: duJieBaoKaiGuan(KAI_CHANG_KAI_GUAN_MING),
+export const KaiChangPeiZhi = {
+  kaiGuan: duJieBaoKaiGuan(KaiChangKaiGuanMing),
   houXuanGeShu: duZhengShu('KAI_CHANG_HOU_XUAN_GE_SHU', 5, 2, 12),
   biaoTiaoShuXian: duZhengShu('KAI_CHANG_BIAO_TIAO_SHU', BIAO._shouYong, 1, BIAO._shouYong),
   kaiFaMoShi: (process.env['KAI_CHANG_KAI_FA_MO_SHI'] || '').trim().toLowerCase() === 'true',
 } as const
 
 export function huoQuKaiChangBiao(): { kaiChang: string[]; quanZhong: number[] } {
-  const shu = Math.min(BIAO.kaiChang.length, KAI_CHANG_PEI_ZHI.biaoTiaoShuXian)
+  const shu = Math.min(BIAO.kaiChang.length, KaiChangPeiZhi.biaoTiaoShuXian)
   return { kaiChang: BIAO.kaiChang.slice(0, shu), quanZhong: BIAO.quanZhong.slice(0, shu) }
 }
 
-export const KAI_CHANG_BIAO_YUAN_XIN = {
+export const KaiChangBiaoYuanXin = {
   shouYongShu: BIAO._shouYong,
   fuHanLv: BIAO._fuHanLv,
   kuaiShu: BIAO._jiShu?.kuaiShu ?? 0,

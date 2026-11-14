@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  WAI_GUAN_MEI_LEI_ZUI_DA_TIAO_SHU,
+  WaiGuanMeiLeiZuiDaTiaoShu,
   WaiGuanCuoWu,
   guiYiCunChuShuJu,
   guiYiShangChuanShuJu,
@@ -13,9 +13,9 @@ import {
   xuanZeMengCeng,
 } from '../外观自定义'
 
-const SHA_A = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-const SHA_B = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
-const BIAO_SHI = '11111111-1111-4111-8111-111111111111'
+const ShaA = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+const ShaB = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+const BiaoShi = '11111111-1111-4111-8111-111111111111'
 
 function qingDan(tiaoMu: Record<string, unknown>[]): Record<string, unknown> {
   return { beiJing: tiaoMu, qiPao: [], beiJingFuGai: {}, dangQianQiPao: { ziJi: '', ai: '' } }
@@ -60,21 +60,21 @@ describe('外观自定义上传校验', () => {
     const shuJu = guiYiShangChuanShuJu(
       qingDan([
         {
-          id: BIAO_SHI,
+          id: BiaoShi,
           mingCheng: '夜景',
-          tuDiZhi: `/api/媒体/${SHA_A}?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=abc`,
+          tuDiZhi: `/api/媒体/${ShaA}?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=abc`,
           wenZiYanSe: '#ffffff',
         },
       ]),
     )
     expect(shuJu.beiJing).toHaveLength(1)
-    expect(shuJu.beiJing[0].meiTiYinYong).toBe(`/api/媒体/${SHA_A}`)
+    expect(shuJu.beiJing[0].meiTiYinYong).toBe(`/api/媒体/${ShaA}`)
     expect(shuJu.beiJing[0].wenZiYanSe).toBe('#FFFFFF')
   })
 
   it('未给文字颜色时回落到白色', () => {
     const shuJu = guiYiShangChuanShuJu(
-      qingDan([{ id: BIAO_SHI, mingCheng: '夜景', tuDiZhi: `/api/媒体/${SHA_A}` }]),
+      qingDan([{ id: BiaoShi, mingCheng: '夜景', tuDiZhi: `/api/媒体/${ShaA}` }]),
     )
     expect(shuJu.beiJing[0].wenZiYanSe).toBe('#FFFFFF')
   })
@@ -82,19 +82,19 @@ describe('外观自定义上传校验', () => {
   it('非媒体地址被拒绝', () => {
     expect(() =>
       guiYiShangChuanShuJu(
-        qingDan([{ id: BIAO_SHI, mingCheng: '夜景', tuDiZhi: 'https://example.com/a.png' }]),
+        qingDan([{ id: BiaoShi, mingCheng: '夜景', tuDiZhi: 'https://example.com/a.png' }]),
       ),
     ).toThrow(WaiGuanCuoWu)
   })
 
   it('空名称与超长名称被拒绝', () => {
     expect(() =>
-      guiYiShangChuanShuJu(qingDan([{ id: BIAO_SHI, mingCheng: '   ', tuDiZhi: `/api/媒体/${SHA_A}` }])),
+      guiYiShangChuanShuJu(qingDan([{ id: BiaoShi, mingCheng: '   ', tuDiZhi: `/api/媒体/${ShaA}` }])),
     ).toThrow(WaiGuanCuoWu)
     expect(() =>
       guiYiShangChuanShuJu(
         qingDan([
-          { id: BIAO_SHI, mingCheng: '一'.repeat(21), tuDiZhi: `/api/媒体/${SHA_A}` },
+          { id: BiaoShi, mingCheng: '一'.repeat(21), tuDiZhi: `/api/媒体/${ShaA}` },
         ]),
       ),
     ).toThrow(WaiGuanCuoWu)
@@ -103,13 +103,13 @@ describe('外观自定义上传校验', () => {
   it('非法标识与非法颜色被拒绝', () => {
     expect(() =>
       guiYiShangChuanShuJu(
-        qingDan([{ id: 'abc', mingCheng: '夜景', tuDiZhi: `/api/媒体/${SHA_A}` }]),
+        qingDan([{ id: 'abc', mingCheng: '夜景', tuDiZhi: `/api/媒体/${ShaA}` }]),
       ),
     ).toThrow(WaiGuanCuoWu)
     expect(() =>
       guiYiShangChuanShuJu(
         qingDan([
-          { id: BIAO_SHI, mingCheng: '夜景', tuDiZhi: `/api/媒体/${SHA_A}`, wenZiYanSe: '白色' },
+          { id: BiaoShi, mingCheng: '夜景', tuDiZhi: `/api/媒体/${ShaA}`, wenZiYanSe: '白色' },
         ]),
       ),
     ).toThrow(WaiGuanCuoWu)
@@ -120,9 +120,9 @@ describe('外观自定义上传校验', () => {
       guiYiShangChuanShuJu(
         qingDan([
           {
-            id: BIAO_SHI,
+            id: BiaoShi,
             mingCheng: '夜景',
-            tuDiZhi: `/api/媒体/${SHA_A}`,
+            tuDiZhi: `/api/媒体/${ShaA}`,
             wenZiYanSe: '#777777',
           },
         ]),
@@ -131,18 +131,18 @@ describe('外观自定义上传校验', () => {
   })
 
   it('条目数量超上限被拒绝', () => {
-    const tiaoMu = Array.from({ length: WAI_GUAN_MEI_LEI_ZUI_DA_TIAO_SHU + 1 }, (_, xuHao) => ({
+    const tiaoMu = Array.from({ length: WaiGuanMeiLeiZuiDaTiaoShu + 1 }, (_, xuHao) => ({
       id: `${String(xuHao).padStart(8, '0')}-1111-4111-8111-111111111111`,
       mingCheng: `背景${xuHao}`,
-      tuDiZhi: `/api/媒体/${SHA_A}`,
+      tuDiZhi: `/api/媒体/${ShaA}`,
     }))
     expect(() => guiYiShangChuanShuJu(qingDan(tiaoMu))).toThrow(WaiGuanCuoWu)
   })
 
   it('重复标识被拒绝', () => {
     const tiaoMu = [
-      { id: BIAO_SHI, mingCheng: '一', tuDiZhi: `/api/媒体/${SHA_A}` },
-      { id: BIAO_SHI, mingCheng: '二', tuDiZhi: `/api/媒体/${SHA_B}` },
+      { id: BiaoShi, mingCheng: '一', tuDiZhi: `/api/媒体/${ShaA}` },
+      { id: BiaoShi, mingCheng: '二', tuDiZhi: `/api/媒体/${ShaB}` },
     ]
     expect(() => guiYiShangChuanShuJu(qingDan(tiaoMu))).toThrow(WaiGuanCuoWu)
   })
@@ -170,19 +170,19 @@ describe('外观自定义存储解码', () => {
   it('宽松模式丢弃非法条目而不是整体失败', () => {
     const shuJu = guiYiCunChuShuJu({
       beiJing: [
-        { id: BIAO_SHI, mingCheng: '夜景', tuDiZhi: `/api/媒体/${SHA_A}` },
-        { id: 'bad', mingCheng: '坏', tuDiZhi: `/api/媒体/${SHA_B}` },
-        { id: BIAO_SHI, mingCheng: '重复', tuDiZhi: `/api/媒体/${SHA_B}` },
+        { id: BiaoShi, mingCheng: '夜景', tuDiZhi: `/api/媒体/${ShaA}` },
+        { id: 'bad', mingCheng: '坏', tuDiZhi: `/api/媒体/${ShaB}` },
+        { id: BiaoShi, mingCheng: '重复', tuDiZhi: `/api/媒体/${ShaB}` },
       ],
-      qiPao: [{ id: BIAO_SHI, mingCheng: '气泡', tuDiZhi: `/api/媒体/${SHA_B}` }],
+      qiPao: [{ id: BiaoShi, mingCheng: '气泡', tuDiZhi: `/api/媒体/${ShaB}` }],
       beiJingFuGai: { chenWuQing: { mingCheng: '晨雾', wenZiYanSe: '#FFFFFF' }, weiZhi: { mingCheng: 'x' } },
-      dangQianQiPao: { ziJi: BIAO_SHI, ai: '99999999-9999-4999-8999-999999999999' },
+      dangQianQiPao: { ziJi: BiaoShi, ai: '99999999-9999-4999-8999-999999999999' },
     })
     expect(shuJu.beiJing).toHaveLength(1)
     expect(shuJu.qiPao).toHaveLength(1)
     expect(shuJu.beiJingFuGai.chenWuQing.mingCheng).toBe('晨雾')
     expect(shuJu.beiJingFuGai.weiZhi).toBeUndefined()
-    expect(shuJu.dangQianQiPao).toEqual({ ziJi: BIAO_SHI, ai: '' })
+    expect(shuJu.dangQianQiPao).toEqual({ ziJi: BiaoShi, ai: '' })
   })
 
   it('空值解码为空外观', () => {
@@ -201,19 +201,19 @@ describe('外观自定义出参与媒体校验', () => {
   it('按用户重签图片地址并保留无参引用入库', () => {
     const shuJu = guiYiShangChuanShuJu(
       qingDan([
-        { id: BIAO_SHI, mingCheng: '夜景', tuDiZhi: `/api/媒体/${SHA_A}` },
-        { id: '22222222-2222-4222-8222-222222222222', mingCheng: '夜景二', tuDiZhi: `/api/媒体/${SHA_B}` },
+        { id: BiaoShi, mingCheng: '夜景', tuDiZhi: `/api/媒体/${ShaA}` },
+        { id: '22222222-2222-4222-8222-222222222222', mingCheng: '夜景二', tuDiZhi: `/api/媒体/${ShaB}` },
       ]),
     )
     const chuCan = shengChengChuCan(shuJu, '11111111-1111-4111-8111-111111111111')
-    expect(chuCan.bei_jing[0].tu_di_zhi).toContain(`/api/媒体/${SHA_A}?e=`)
+    expect(chuCan.bei_jing[0].tu_di_zhi).toContain(`/api/媒体/${ShaA}?e=`)
     expect(chuCan.bei_jing[0].tu_di_zhi).toContain('&s=')
     expect(chuCan.bei_jing[1].ming_cheng).toBe('夜景二')
-    expect([...tiQuShuJuNeiSha(shuJu)].sort()).toEqual([SHA_A, SHA_B].sort())
+    expect([...tiQuShuJuNeiSha(shuJu)].sort()).toEqual([ShaA, ShaB].sort())
   })
 
   it('出参字段为下划线命名且空外观为零条目', () => {
-    const kong = shengChengChuCan(guiYiCunChuShuJu({}), BIAO_SHI)
+    const kong = shengChengChuCan(guiYiCunChuShuJu({}), BiaoShi)
     expect(Object.keys(kong).sort()).toEqual(['bei_jing', 'bei_jing_fu_gai', 'dang_qian_qi_pao', 'qi_pao', 'qi_pao_fu_gai'])
     expect(kong.bei_jing).toEqual([])
     expect(kong.qi_pao).toEqual([])

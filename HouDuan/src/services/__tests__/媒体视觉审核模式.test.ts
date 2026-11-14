@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest'
-import { SHEN_HE_MO_SHI_BEN_DI, quShenHeMoShi } from '../../config/媒体配置'
+import { ShenHeMoShiBenDi, quShenHeMoShi } from '../../config/媒体配置'
 import { shenHeTuPianAnQuan } from '../DeepSeek视觉审核'
 
 const YuanShiMoShi = process.env.MEI_TI_SHEN_HE_MO_SHI
@@ -17,9 +17,9 @@ describe('视觉审核模式解析', () => {
 
   it('配置 local 或 本地 时只做本地校验', () => {
     process.env.MEI_TI_SHEN_HE_MO_SHI = 'local'
-    expect(quShenHeMoShi()).toBe(SHEN_HE_MO_SHI_BEN_DI)
+    expect(quShenHeMoShi()).toBe(ShenHeMoShiBenDi)
     process.env.MEI_TI_SHEN_HE_MO_SHI = '本地'
-    expect(quShenHeMoShi()).toBe(SHEN_HE_MO_SHI_BEN_DI)
+    expect(quShenHeMoShi()).toBe(ShenHeMoShiBenDi)
   })
 
   it('其它取值一律回落外部审核，非法值不放宽', () => {

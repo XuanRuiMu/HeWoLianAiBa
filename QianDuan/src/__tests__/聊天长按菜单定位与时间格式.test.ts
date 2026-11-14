@@ -3,12 +3,13 @@ import { resolve, join } from 'node:path'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { ref } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
-import { use长按菜单 } from '@/composables/use长按菜单'
+import { use长按菜单, huoQuYinYongZhaiYao } from '@/composables/use长按菜单'
 import XiaoXiCaoZuoCaiDan from '@/components/聊天/消息操作菜单.vue'
 import { huoQuFanYi } from '@/config/翻译表'
 import {
-  LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI,
-  CAI_DAN_LEI_XING_MO_REN,
+  LiaoTianYouJianCaiDanPeiZhi,
+  CaiDanLeiXingMoRen,
+  CaiDanLeiXingBiaoQingBao,
   huoQuCaiDanLeiXing,
   huoQuYuanShiCaiDanXiang,
   shiWeiXianCaiDanXiang,
@@ -40,8 +41,8 @@ function 造文本消息(id: string, neiRong: string, 附加: Record<string, unk
   }
 }
 
-function 造消息(leiXing: string, id: string) {
-  return 造文本消息(id, '', { lei_xing: leiXing })
+function 造消息(leiXing: string, id: string, 附加: Record<string, unknown> = {}) {
+  return 造文本消息(id, '', { lei_xing: leiXing, ...附加 })
 }
 
 function 挂长按菜单(附加依赖: Record<string, unknown> = {}) {
@@ -154,7 +155,7 @@ function 取钩子体(源: string, 钩子名: string): string {
   return 尾 < 0 ? 源.slice(起) : 源.slice(起, 尾 + 4)
 }
 
-function 挂菜单(项: readonly string[] = [...LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.wenBenCaiDanXiang]) {
+function 挂菜单(项: readonly string[] = [...LiaoTianYouJianCaiDanPeiZhi.wenBenCaiDanXiang]) {
   const zhuang = mount(XiaoXiCaoZuoCaiDan, {
     props: { kaiQi: true, jiDian: { x: 假几何.dianX, y: 假几何.dianY }, caiDanXiang: 项 },
   })
@@ -192,7 +193,7 @@ describe('消息操作菜单浮层定位', () => {
     await 等浮层定稿()
     const pan = 浮层()
     expect(pan.dataset.fangXiang).toBe('xia')
-    expect(pan.style.top).toBe(`${100 + LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanJianGe}px`)
+    expect(pan.style.top).toBe(`${100 + LiaoTianYouJianCaiDanPeiZhi.caiDanJianGe}px`)
     expect(pan.style.maxHeight).toBe('159px')
   })
 
@@ -203,7 +204,7 @@ describe('消息操作菜单浮层定位', () => {
     await 等浮层定稿()
     const pan = 浮层()
     expect(pan.dataset.fangXiang).toBe('shang')
-    expect(pan.style.top).toBe(`${LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu}px`)
+    expect(pan.style.top).toBe(`${LiaoTianYouJianCaiDanPeiZhi.caiDanBianJu}px`)
     expect(pan.style.maxHeight).toBe('152px')
   })
 
@@ -219,9 +220,9 @@ describe('消息操作菜单浮层定位', () => {
     const zuo = parseFloat(pan.style.left)
     const ding = parseFloat(pan.style.top)
     expect(pan.dataset.fangXiang).toBe('shang')
-    expect(zuo).toBeGreaterThanOrEqual(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu)
-    expect(zuo + kuan).toBeLessThanOrEqual(320 - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu)
-    expect(ding).toBeGreaterThanOrEqual(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu)
+    expect(zuo).toBeGreaterThanOrEqual(LiaoTianYouJianCaiDanPeiZhi.caiDanBianJu)
+    expect(zuo + kuan).toBeLessThanOrEqual(320 - LiaoTianYouJianCaiDanPeiZhi.caiDanBianJu)
+    expect(ding).toBeGreaterThanOrEqual(LiaoTianYouJianCaiDanPeiZhi.caiDanBianJu)
     expect(ding + parseFloat(pan.style.maxHeight)).toBeLessThanOrEqual(480)
   })
 
@@ -230,12 +231,12 @@ describe('消息操作菜单浮层定位', () => {
     假几何.ziRanKuan = 40
     挂菜单()
     await 等浮层定稿()
-    expect(浮层().style.width).toBe(`${LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanZuiXiaoKuanDu}px`)
+    expect(浮层().style.width).toBe(`${LiaoTianYouJianCaiDanPeiZhi.caiDanZuiXiaoKuanDu}px`)
     清浮层()
     假几何.ziRanKuan = 400
     挂菜单()
     await 等浮层定稿()
-    expect(浮层().style.width).toBe(`${LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanZuiDaKuanDu}px`)
+    expect(浮层().style.width).toBe(`${LiaoTianYouJianCaiDanPeiZhi.caiDanZuiDaKuanDu}px`)
   })
 
   it('两阶段：实测定稿前浮层不可见，定稿后才可见', async () => {
@@ -258,7 +259,7 @@ describe('消息操作菜单浮层定位', () => {
     const keYongGao = parseFloat(pan.style.maxHeight)
     expect(keYongGao).toBeLessThan(288)
     expect(keYongGao + panDing).toBeLessThanOrEqual(
-      390 - LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu,
+      390 - LiaoTianYouJianCaiDanPeiZhi.caiDanBianJu,
     )
     const 样式源 = readFileSync(菜单样式路径, 'utf8')
     expect(样式源).toMatch(/\.xiaoxi-caidan\s*\{[^}]*overflow:\s*hidden/)
@@ -276,8 +277,8 @@ describe('消息操作菜单浮层定位', () => {
     expect(xiang[1].textContent?.trim()).toBe(huoQuFanYi('liaoTian', 'cheHui'))
   })
 
-  it('表情包落到的默认菜单只渲染改造前那一项：单个危险项撤回', async () => {
-    挂菜单([...huoQuYuanShiCaiDanXiang(CAI_DAN_LEI_XING_MO_REN)])
+  it('默认档只渲染撤回这一项危险项，表情包已不再落回默认档', async () => {
+    挂菜单([...huoQuYuanShiCaiDanXiang(CaiDanLeiXingMoRen)])
     await 等浮层定稿()
     const xiang = 按钮组()
     expect(xiang).toHaveLength(1)
@@ -335,9 +336,9 @@ describe('消息操作菜单浮层定位', () => {
     await 等浮层定稿()
     const pan = 浮层()
     expect(pan.dataset.dingGao).toBe('1')
-    expect(pan.style.top).toBe(`${300 + LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanJianGe}px`)
+    expect(pan.style.top).toBe(`${300 + LiaoTianYouJianCaiDanPeiZhi.caiDanJianGe}px`)
     expect(parseFloat(pan.style.left)).toBeGreaterThanOrEqual(
-      LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.caiDanBianJu,
+      LiaoTianYouJianCaiDanPeiZhi.caiDanBianJu,
     )
   })
 })
@@ -524,37 +525,93 @@ describe('长按菜单状态机与通道去重', () => {
     expect(quan.dangQianCaiDanLeiXing.value).toBe('cheHui')
   })
 
-  it('表情包菜单项回到改造前：只有撤回一项且不并入图片菜单', () => {
-    const quan = 挂长按菜单({ zhiChiTuPianYinYong: true })
-    quan.daKaiCaiDan(造消息('biaoQingBao', 'e') as never, 造右键(200, 100))
-    expect(quan.dangQianCaiDanLeiXing.value).toBe(CAI_DAN_LEI_XING_MO_REN)
-    expect([...quan.dangQianCaiDanXiang.value]).toEqual(['cheHui'])
-    expect([...quan.dangQianCaiDanXiang.value]).toEqual([...huoQuYuanShiCaiDanXiang('cheHui')])
-    expect([...quan.dangQianCaiDanXiang.value]).not.toContain('tianJiaDaoBiaoQing')
-    expect([...quan.dangQianCaiDanXiang.value]).not.toContain('baoCunTuPian')
-    expect([...quan.dangQianCaiDanXiang.value]).not.toContain('yinYong')
+  it('表情包独立成档：AI 发来的有引用与保存，没有撤回也没有复制', () => {
+    const quan = 挂长按菜单()
+    quan.daKaiCaiDan(
+      造消息('biaoQingBao', 'e', {
+        fa_song_zhe_lei_xing: 'jiaose',
+        shi_jian_chuo: Date.now() - 10_000_000,
+      }) as never,
+      造右键(200, 100),
+    )
+    expect(quan.dangQianCaiDanLeiXing.value).toBe(CaiDanLeiXingBiaoQingBao)
+    const xiang = [...quan.dangQianCaiDanXiang.value]
+    expect(xiang).toEqual(
+      [...huoQuYuanShiCaiDanXiang(CaiDanLeiXingBiaoQingBao)].filter((zhi) => zhi !== 'cheHui'),
+    )
+    expect(xiang).toContain('yinYong')
+    expect(xiang).toContain('baoCunTuPian')
+    expect(xiang).toContain('tianJiaDaoBiaoQing')
+    expect(xiang).not.toContain('cheHui')
+    expect(xiang).not.toContain('fuZhi')
   })
 
-  it('图片菜单仍保持改造前那四项，表情包与图片不再共用', () => {
+  it('表情包自己发的且在时限内多出撤回项，超时后只剩引用与保存', () => {
+    const quan = 挂长按菜单()
+    quan.daKaiCaiDan(造消息('biaoQingBao', 'e-zi') as never, 造右键(200, 100))
+    expect([...quan.dangQianCaiDanXiang.value]).toContain('cheHui')
+    quan.guanBiCaiDan()
+    quan.daKaiCaiDan(
+      造消息('biaoQingBao', 'e-jiu', { shi_jian_chuo: Date.now() - 10_000_000 }) as never,
+      造右键(200, 100),
+    )
+    const xiang = [...quan.dangQianCaiDanXiang.value]
+    expect(xiang).not.toContain('cheHui')
+    expect(xiang).toContain('yinYong')
+    expect(xiang).toContain('baoCunTuPian')
+  })
+
+  it('表情包不进复制处理路径，引用摘要是占位而不是内部标记', async () => {
+    const shiJi: string[] = []
+    const quan = 挂长按菜单({
+      fuZhiWenBen: async (wenBen: string) => {
+        shiJi.push(`fuZhi:${wenBen}`)
+        return true
+      },
+    })
+    const biaoQing = 造消息('biaoQingBao', 'e-fu', { nei_rong: '[贴纸:熊猫头无语]' })
+    expect(huoQuYinYongZhaiYao(biaoQing)).toBe(huoQuFanYi('liaoTian', 'yinYongBiaoQingBaoZhanWei'))
+    expect(huoQuYinYongZhaiYao(biaoQing)).not.toContain('贴纸')
+    quan.daKaiCaiDan(biaoQing as never, 造右键(200, 100))
+    await quan.zhiXingCaiDanXiang('fuZhi')
+    expect(shiJi).toEqual([])
+  })
+
+  it('表情包菜单项缺注入时安全跳过，不抛错也不误伤撤回', async () => {
+    const shiJi: string[] = []
+    const quan = 挂长按菜单({
+      cheHuiXiaoXi: async (id: string) => {
+        shiJi.push(`cheHui:${id}`)
+      },
+    })
+    quan.daKaiCaiDan(造消息('biaoQingBao', 'e-que') as never, 造右键(200, 100))
+    await quan.zhiXingCaiDanXiang('baoCunTuPian')
+    quan.daKaiCaiDan(造消息('biaoQingBao', 'e-que2') as never, 造右键(200, 100))
+    await quan.zhiXingCaiDanXiang('tianJiaDaoBiaoQing')
+    expect(shiJi).toEqual([])
+    quan.daKaiCaiDan(造消息('biaoQingBao', 'e-que3') as never, 造右键(200, 100))
+    await quan.zhiXingCaiDanXiang('cheHui')
+    expect(shiJi).toEqual(['cheHui:e-que3'])
+  })
+
+  it('图片菜单与表情包菜单各自成档，默认档不再吞掉表情包与图片', () => {
     const quan = 挂长按菜单({ zhiChiTuPianYinYong: true })
     quan.daKaiCaiDan(造消息('tuPian', 'e2') as never, 造右键(200, 100))
     expect(quan.dangQianCaiDanLeiXing.value).toBe('tuPian')
-    const tuXiang = [...quan.dangQianCaiDanXiang.value]
-    expect(tuXiang).toEqual([...huoQuYuanShiCaiDanXiang('tuPian')])
+    expect([...quan.dangQianCaiDanXiang.value]).toEqual([...huoQuYuanShiCaiDanXiang('tuPian')])
     quan.guanBiCaiDan()
     quan.daKaiCaiDan(造消息('biaoQingBao', 'e3') as never, 造右键(200, 100))
-    const biaoXiang = [...quan.dangQianCaiDanXiang.value]
-    expect(biaoXiang).toEqual(['cheHui'])
-    expect(biaoXiang).not.toEqual(tuXiang)
+    expect(quan.dangQianCaiDanLeiXing.value).toBe(CaiDanLeiXingBiaoQingBao)
+    expect([...quan.dangQianCaiDanXiang.value]).not.toContain('fuZhi')
   })
 
   it('类型到菜单类型是显式配置映射，未列出的类型统一落到默认菜单', () => {
     expect(huoQuCaiDanLeiXing('tuPian')).toBe('tuPian')
     expect(huoQuCaiDanLeiXing('wenben')).toBe('wenBen')
     expect(huoQuCaiDanLeiXing('yuYin')).toBe('yuYin')
-    expect(huoQuCaiDanLeiXing('biaoQingBao')).toBe(CAI_DAN_LEI_XING_MO_REN)
-    expect(huoQuCaiDanLeiXing('wenJian')).toBe(CAI_DAN_LEI_XING_MO_REN)
-    expect(huoQuCaiDanLeiXing('未登记类型')).toBe(CAI_DAN_LEI_XING_MO_REN)
+    expect(huoQuCaiDanLeiXing('biaoQingBao')).toBe(CaiDanLeiXingBiaoQingBao)
+    expect(huoQuCaiDanLeiXing('wenJian')).toBe(CaiDanLeiXingMoRen)
+    expect(huoQuCaiDanLeiXing('未登记类型')).toBe(CaiDanLeiXingMoRen)
   })
 
   it('菜单项集合顺序与危险标记全部来自消息配置真源', () => {
@@ -562,7 +619,7 @@ describe('长按菜单状态机与通道去重', () => {
     quan.daKaiCaiDan(造文本消息('f', '在吗') as never, 造右键(200, 100))
     expect([...quan.dangQianCaiDanXiang.value]).toEqual(['fuZhi', 'fanYi', 'yinYong', 'cheHui'])
     expect([...huoQuYuanShiCaiDanXiang('wenBen')]).toEqual([
-      ...LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.wenBenCaiDanXiang,
+      ...LiaoTianYouJianCaiDanPeiZhi.wenBenCaiDanXiang,
     ])
     expect(shiWeiXianCaiDanXiang('cheHui')).toBe(true)
     expect(shiWeiXianCaiDanXiang('fuZhi')).toBe(false)
@@ -635,12 +692,12 @@ describe('长按菜单状态机与通道去重', () => {
   it('Android 双通道：长按打开后窗口期内 contextmenu 不再重复打开', () => {
     const quan = 挂长按菜单()
     quan.chuMoKaiShi(造文本消息('q', '在吗') as never, 造触屏(50, 60))
-    vi.advanceTimersByTime(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao + 20)
+    vi.advanceTimersByTime(LiaoTianYouJianCaiDanPeiZhi.changAnChuFaHaoMiao + 20)
     expect(quan.caiDanZhengDaKai.value).toBe(true)
     expect(quan.dangQianJiDian.value).toEqual({ x: 50, y: 60 })
     quan.daKaiCaiDan(造文本消息('q', '在吗') as never, 造右键(300, 300))
     expect(quan.dangQianJiDian.value).toEqual({ x: 50, y: 60 })
-    vi.advanceTimersByTime(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.youJianQuChongHaoMiao + 20)
+    vi.advanceTimersByTime(LiaoTianYouJianCaiDanPeiZhi.youJianQuChongHaoMiao + 20)
     quan.daKaiCaiDan(造文本消息('q', '在吗') as never, 造右键(300, 300))
     expect(quan.dangQianJiDian.value).toEqual({ x: 300, y: 300 })
   })
@@ -650,19 +707,19 @@ describe('长按菜单状态机与通道去重', () => {
     const xiaoXi = 造文本消息('r', '在吗') as never
     quan.chuMoKaiShi(xiaoXi, 造触屏(100, 100))
     quan.chuMoYiDongQuXiao(造触屏(105, 105))
-    vi.advanceTimersByTime(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao + 20)
+    vi.advanceTimersByTime(LiaoTianYouJianCaiDanPeiZhi.changAnChuFaHaoMiao + 20)
     expect(quan.caiDanZhengDaKai.value).toBe(true)
     quan.guanBiCaiDan()
     quan.chuMoKaiShi(xiaoXi, 造触屏(100, 100))
     quan.chuMoYiDongQuXiao(造触屏(111, 100))
-    vi.advanceTimersByTime(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao + 20)
+    vi.advanceTimersByTime(LiaoTianYouJianCaiDanPeiZhi.changAnChuFaHaoMiao + 20)
     expect(quan.caiDanZhengDaKai.value).toBe(false)
   })
 
   it('长按未到时长不打开，touchend 撤掉计时器', () => {
     const quan = 挂长按菜单()
     quan.chuMoKaiShi(造文本消息('s', '在吗') as never, 造触屏(100, 100))
-    vi.advanceTimersByTime(LIAO_TIAN_YOU_JIAN_CAI_DAN_PEI_ZHI.changAnChuFaHaoMiao - 20)
+    vi.advanceTimersByTime(LiaoTianYouJianCaiDanPeiZhi.changAnChuFaHaoMiao - 20)
     quan.chuMoJieShu()
     vi.advanceTimersByTime(1000)
     expect(quan.caiDanZhengDaKai.value).toBe(false)

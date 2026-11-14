@@ -37,11 +37,11 @@ type QingQiuRiZhiDuiXiang = {
   error: (leiXing: string, xiaoXi: string, xiangQing?: Record<string, unknown>) => void
 }
 
-const TUO_MIN_ZHI = '***'
+const TuoMinZhi = '***'
 const ZUI_DA_RiZhiShenDu = 8
 const ZUI_DA_RiZhiShuZu = 100
-const JWT_ZHENG_ZE = /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g
-const DAI_MING_ZHI = /([A-Za-z][A-Za-z0-9+.-]*:\/\/[^:/\s]+:)[^@\s/]+@/g
+const JwtZhengZe = /eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g
+const DaiMingZhi = /([A-Za-z][A-Za-z0-9+.-]*:\/\/[^:/\s]+:)[^@\s/]+@/g
 
 function zhuanYiZhengZe(zhi: string): string {
   return zhi.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -57,8 +57,8 @@ export function tuoMinRiZhiWenBen(zhi: string): string {
     jieGuo = jieGuo.replace(meiYinHao, '$1***')
   }
   jieGuo = jieGuo.replace(/Bearer\s+[A-Za-z0-9._~+/=-]+/gi, 'Bearer ***')
-  jieGuo = jieGuo.replace(JWT_ZHENG_ZE, TUO_MIN_ZHI)
-  jieGuo = jieGuo.replace(DAI_MING_ZHI, '$1***@')
+  jieGuo = jieGuo.replace(JwtZhengZe, TuoMinZhi)
+  jieGuo = jieGuo.replace(DaiMingZhi, '$1***@')
   return jieGuo
 }
 
@@ -77,11 +77,11 @@ function tuoMinZhi(zhi: unknown, shenDu: number): unknown {
       zhan: tuoMinRiZhiWenBen(zhi.stack || ''),
     }
   }
-  if (shenDu <= 0) return TUO_MIN_ZHI
+  if (shenDu <= 0) return TuoMinZhi
   if (Array.isArray(zhi)) return zhi.slice(0, ZUI_DA_RiZhiShuZu).map((xiang) => tuoMinZhi(xiang, shenDu - 1))
   const jieGuo: Record<string, unknown> = {}
   for (const [jian, zhiXiang] of Object.entries(zhi as Record<string, unknown>).slice(0, ZUI_DA_RiZhiShuZu)) {
-    jieGuo[jian] = shiMinGanJianMing(jian) ? TUO_MIN_ZHI : tuoMinZhi(zhiXiang, shenDu - 1)
+    jieGuo[jian] = shiMinGanJianMing(jian) ? TuoMinZhi : tuoMinZhi(zhiXiang, shenDu - 1)
   }
   return jieGuo
 }

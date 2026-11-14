@@ -1,7 +1,7 @@
 import type { QiPaoYuShe } from './气泡主题'
 import { huoQuFanYi } from './翻译表'
 
-export const QI_PAO_WEN_AN = {
+export const QiPaoWenAn = {
   biaoTi: huoQuFanYi('qiPao', 'biaoTi'),
   ziJiBiaoTi: huoQuFanYi('qiPao', 'ziJiBiaoTi'),
   aiBiaoTi: huoQuFanYi('qiPao', 'aiBiaoTi'),
@@ -10,7 +10,7 @@ export const QI_PAO_WEN_AN = {
   dangQian: huoQuFanYi('qiPao', 'dangQian'),
 } as const
 
-export const QI_PAO_MING_CHENG_WEN_AN: Record<QiPaoYuShe, string> = {
+export const QiPaoMingChengWenAn: Record<QiPaoYuShe, string> = {
   weiXinLv: huoQuFanYi('qiPao', 'weiXinLv'),
   tianKongLan: huoQuFanYi('qiPao', 'tianKongLan'),
   yingFen: huoQuFanYi('qiPao', 'yingFen'),

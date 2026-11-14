@@ -1,11 +1,11 @@
-import { AI_PEI_ZHI } from '../config/AI配置'
+import { AiPeiZhi } from '../config/AI配置'
 import { peiZhi } from '../config'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { 内部转展示, type 性别内部形态 } from '../utils/性别'
 import type { MBTILeiXing } from '../config/角色配置'
 import type { CanShuShangXiaWen } from '../config/AI参数策略'
 import {
-  CUO_WU_DAI_MA,
+  CuoWuDaiMa,
   JiaoSeShengChengCuoWu,
 } from '../config/错误码注册表'
 
@@ -85,16 +85,16 @@ function gouJianKaiChangBaiTiShi(canShu: KaiChangBaiShengChengCanShu): string {
   ].filter(Boolean).join('\n')
 }
 
-const SHOU_JI_HAO_RE = /1[3-9]\d{9}/
-const WEI_XIN_HAO_RE = /^[a-zA-Z][a-zA-Z0-9_-]{5,19}$/
+const ShouJiHaoRe = /1[3-9]\d{9}/
+const WeiXinHaoRe = /^[a-zA-Z][a-zA-Z0-9_-]{5,19}$/
 
 function anQuanGuoLvXiaoXi(neiRong: string, mingZi?: string): string | null {
   const qingLi = neiRong.trim()
   if (!qingLi) return null
-  if (SHOU_JI_HAO_RE.test(qingLi)) return null
+  if (ShouJiHaoRe.test(qingLi)) return null
   const tokens = qingLi.split(/[\s,，。.!！?？:：;；]+/).filter(Boolean)
   for (const token of tokens) {
-    if (WEI_XIN_HAO_RE.test(token)) return null
+    if (WeiXinHaoRe.test(token)) return null
   }
   if (/qq|扣/i.test(qingLi) && /(?:^|\s)[1-9]\d{4,11}(?:\s|$)/.test(qingLi)) return null
   if (/\d+\s*(?:栋|单元|室|号楼|楼|门)/.test(qingLi)) return null
@@ -107,47 +107,47 @@ function jieXiJSONNeiRong(
   mingZi?: string,
 ): { dang_wei: string; gai_lv: number; xiao_xi_lie_biao: string[] } {
   if (typeof neiRong !== 'string') {
-    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID)
+    throw new JiaoSeShengChengCuoWu(CuoWuDaiMa.ROLE_GENERATION_RESPONSE_INVALID)
   }
   const kaiShi = neiRong.indexOf('{')
   const jieShu = neiRong.lastIndexOf('}')
   if (kaiShi < 0 || jieShu <= kaiShi) {
-    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID)
+    throw new JiaoSeShengChengCuoWu(CuoWuDaiMa.ROLE_GENERATION_RESPONSE_INVALID)
   }
   let jieGuo: unknown
   try {
     jieGuo = JSON.parse(neiRong.slice(kaiShi, jieShu + 1))
   } catch (cuoWu) {
-    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID, cuoWu)
+    throw new JiaoSeShengChengCuoWu(CuoWuDaiMa.ROLE_GENERATION_RESPONSE_INVALID, cuoWu)
   }
   if (!jieGuo || typeof jieGuo !== 'object' || !Array.isArray((jieGuo as { xiao_xi_lie_biao?: unknown }).xiao_xi_lie_biao)) {
-    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID)
+    throw new JiaoSeShengChengCuoWu(CuoWuDaiMa.ROLE_GENERATION_RESPONSE_INVALID)
   }
   const xiaoXiLieBiao = (jieGuo as { xiao_xi_lie_biao: unknown[] }).xiao_xi_lie_biao
     .map((x: unknown) => (typeof x === 'string' ? anQuanGuoLvXiaoXi(x, mingZi) : null))
     .filter((x: string | null): x is string => x !== null)
     .slice(0, 5)
   if (xiaoXiLieBiao.length === 0) {
-    throw new JiaoSeShengChengCuoWu(CUO_WU_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID)
+    throw new JiaoSeShengChengCuoWu(CuoWuDaiMa.ROLE_GENERATION_RESPONSE_INVALID)
   }
   const dangWei = jieXiZhuDongDangWei((jieGuo as { 主动程度?: unknown })['主动程度'])
   return { dang_wei: dangWei, gai_lv: dangWeiZhuanGaiLv(dangWei), xiao_xi_lie_biao: xiaoXiLieBiao }
 }
 
 export function jieXiZhuDongDangWei(zhi: unknown): string {
-  const biao = AI_PEI_ZHI.prompt.kaiChangBaiZhuDongDangWei
+  const biao = AiPeiZhi.prompt.kaiChangBaiZhuDongDangWei
   const wenBen = typeof zhi === 'string' ? zhi.trim() : ''
   if (wenBen && Object.prototype.hasOwnProperty.call(biao, wenBen)) return wenBen
   for (const dangWei of Object.keys(biao)) {
     if (wenBen.includes(dangWei)) return dangWei
   }
-  return AI_PEI_ZHI.prompt.kaiChangBaiMoRenZhuDongDangWei
+  return AiPeiZhi.prompt.kaiChangBaiMoRenZhuDongDangWei
 }
 
 export function dangWeiZhuanGaiLv(dangWei: string): number {
-  const biao = AI_PEI_ZHI.prompt.kaiChangBaiZhuDongDangWei
+  const biao = AiPeiZhi.prompt.kaiChangBaiZhuDongDangWei
   const zhi = biao[dangWei]
-  if (typeof zhi !== 'number' || !Number.isFinite(zhi)) return AI_PEI_ZHI.prompt.kaiChangBaiFaSongGaiLv
+  if (typeof zhi !== 'number' || !Number.isFinite(zhi)) return AiPeiZhi.prompt.kaiChangBaiFaSongGaiLv
   return Math.min(0.95, Math.max(0.02, zhi))
 }
 
@@ -170,8 +170,8 @@ function jiangJiKaiChangBai(canShu: KaiChangBaiShengChengCanShu): KaiChangBaiShe
     .map((x) => anQuanGuoLvXiaoXi(x, canShu.ming_zi))
     .filter((x): x is string => x !== null)
   return {
-    zhu_dong_dang_wei: AI_PEI_ZHI.prompt.kaiChangBaiMoRenZhuDongDangWei,
-    zhu_dong_kai_kou_gai_lv: AI_PEI_ZHI.prompt.kaiChangBaiFaSongGaiLv,
+    zhu_dong_dang_wei: AiPeiZhi.prompt.kaiChangBaiMoRenZhuDongDangWei,
+    zhu_dong_kai_kou_gai_lv: AiPeiZhi.prompt.kaiChangBaiFaSongGaiLv,
     xiao_xi_lie_biao: guoLvHou.slice(0, 5),
   }
 }
@@ -186,16 +186,16 @@ export async function shengChengKaiChangBai(
       .map((x) => anQuanGuoLvXiaoXi(x, canShu.ming_zi))
       .filter((x: string | null): x is string => x !== null)
     return {
-      zhu_dong_dang_wei: mockJieGuo.zhu_dong_dang_wei || AI_PEI_ZHI.prompt.kaiChangBaiMoRenZhuDongDangWei,
+      zhu_dong_dang_wei: mockJieGuo.zhu_dong_dang_wei || AiPeiZhi.prompt.kaiChangBaiMoRenZhuDongDangWei,
       zhu_dong_kai_kou_gai_lv:
         typeof mockJieGuo.zhu_dong_kai_kou_gai_lv === 'number'
           ? Math.min(0.95, Math.max(0.03, mockJieGuo.zhu_dong_kai_kou_gai_lv))
-          : AI_PEI_ZHI.prompt.kaiChangBaiFaSongGaiLv,
+          : AiPeiZhi.prompt.kaiChangBaiFaSongGaiLv,
       xiao_xi_lie_biao: guoLvHou.slice(0, 5),
     }
   }
 
-  const apiMiYao = peiZhi.deepSeek.apiMiYao || AI_PEI_ZHI.deepSeek.apiMiYao
+  const apiMiYao = peiZhi.deepSeek.apiMiYao || AiPeiZhi.deepSeek.apiMiYao
   if (!apiMiYao || process.env.VITEST === 'true') {
     return jiangJiKaiChangBai(canShu)
   }
@@ -212,7 +212,7 @@ export async function shengChengKaiChangBai(
 
   let xiangYing: Awaited<ReturnType<typeof genJuPeiZhiTiaoYong>>
   try {
-    xiangYing = await genJuPeiZhiTiaoYong('KaiChangBai' as keyof typeof AI_PEI_ZHI.moXing, [
+    xiangYing = await genJuPeiZhiTiaoYong('KaiChangBai' as keyof typeof AiPeiZhi.moXing, [
       { jiaoSe: 'system', neiRong: '你现在就是这个人。刚加了一个刚认识的人，对方还没说话。你先判断自己会不会主动开口、开口发几条、发什么，全部由你自己的性格决定，不要做任何"应该主动一点"的道德判断，性格被动的人就是不主动。' },
       { jiaoSe: 'user', neiRong: gouJianKaiChangBaiTiShi(canShu) },
     ], shangXiaWenShiJi)

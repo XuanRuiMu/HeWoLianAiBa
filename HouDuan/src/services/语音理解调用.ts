@@ -4,11 +4,11 @@ import { huoQuBenDiLuJing } from './媒体存储'
 import { huoQuFFmpegLuJing, tiQuYinPinWeiWav } from '../utils/音频转码'
 import { redis } from '../redis'
 
-const HUAN_CUN_QIAN_ZHUI = 'yuyin_shijian:'
-const HUAN_CUN_YOU_XIAO_MIAO = 7 * 24 * 60 * 60
-const MIAO_SHU_ZUI_DA_ZI_FU = 200
-const QING_QIU_CHAO_SHI_DI_XIAN_HAO_MIAO = 60000
-const ZHI_LING_CI =
+const HuanCunQianZhui = 'yuyin_shijian:'
+const HuanCunYouXiaoMiao = 7 * 24 * 60 * 60
+const MiaoShuZuiDaZiFu = 200
+const QingQiuChaoShiDiXianHaoMiao = 60000
+const ZhiLingCi =
   '请用不超过200字客观描述这段语音：说了什么内容、说话人的语气情绪、背景环境声、是否在唱歌以及唱歌表现。只陈述听到的事实，不评价、不讨好；听不清的部分就写听不清，禁止编造。'
 const neiCunHuanCun = new Map<string, string>()
 
@@ -22,7 +22,7 @@ function shiFouJinZhiCeShiWaiHu(): boolean {
 
 function qingXiMiaoShu(wenBen: unknown): string | null {
   if (typeof wenBen !== 'string') return null
-  const jieGuo = wenBen.trim().slice(0, MIAO_SHU_ZUI_DA_ZI_FU)
+  const jieGuo = wenBen.trim().slice(0, MiaoShuZuiDaZiFu)
   return jieGuo || null
 }
 
@@ -46,7 +46,7 @@ export async function duQuYinPinShiJianHuanCun(sha256: string, moXing: string): 
   const neiCun = neiCunHuanCun.get(jian)
   if (neiCun !== undefined) return neiCun
   try {
-    const cunChu = await redis.get(`${HUAN_CUN_QIAN_ZHUI}${jian}`)
+    const cunChu = await redis.get(`${HuanCunQianZhui}${jian}`)
     if (!cunChu) return null
     const jieXi = JSON.parse(cunChu) as unknown
     const miaoShu = qingXiMiaoShu(jieXi)
@@ -61,7 +61,7 @@ async function xieRuYinPinShiJianHuanCun(sha256: string, moXing: string, miaoShu
   const jian = `${sha256}:${moXing}`
   neiCunHuanCun.set(jian, miaoShu)
   try {
-    await redis.setex(`${HUAN_CUN_QIAN_ZHUI}${jian}`, HUAN_CUN_YOU_XIAO_MIAO, JSON.stringify(miaoShu))
+    await redis.setex(`${HuanCunQianZhui}${jian}`, HuanCunYouXiaoMiao, JSON.stringify(miaoShu))
   } catch {
     /* 缓存失败不阻断主流程 */
   }
@@ -98,7 +98,7 @@ export async function huoQuYinPinShiJianMiaoShuZhiJie(canShu: { sha256: string; 
     )
   }
   const kongZhi = new AbortController()
-  const dingShi = setTimeout(() => kongZhi.abort(), Math.max(peiZhi.qingQiuChaoShiHaoMiao, QING_QIU_CHAO_SHI_DI_XIAN_HAO_MIAO))
+  const dingShi = setTimeout(() => kongZhi.abort(), Math.max(peiZhi.qingQiuChaoShiHaoMiao, QingQiuChaoShiDiXianHaoMiao))
   try {
     const xiangYing = await fetch(`${peiZhi.yinPinLiJieJiChuUrl.trim().replace(/\/$/, '')}/chat/completions`, {
       method: 'POST',
@@ -111,7 +111,7 @@ export async function huoQuYinPinShiJianMiaoShuZhiJie(canShu: { sha256: string; 
             role: 'user',
             content: [
               { type: 'input_audio', input_audio: { data: base64, format: 'wav' } },
-              { type: 'text', text: ZHI_LING_CI },
+              { type: 'text', text: ZhiLingCi },
             ],
           },
         ],

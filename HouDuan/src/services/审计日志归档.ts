@@ -2,7 +2,7 @@ import { 数据库 } from '../数据库'
 import { peiZhi } from '../config'
 import { 日志引擎 } from '../utils/日志引擎'
 
-const PI_LIANG_DA_XIAO = 5000
+const PiLiangDaXiao = 5000
 
 export async function qingLiGuoQiShenJiRiZhi(): Promise<number> {
   const baoLiuTian = peiZhi.shenJiRiZhiBaoLiuTian
@@ -15,11 +15,11 @@ export async function qingLiGuoQiShenJiRiZhi(): Promise<number> {
          WHERE "创建时间" < NOW() - ($1 || ' days')::interval
          LIMIT $2
        )`,
-      [String(baoLiuTian), PI_LIANG_DA_XIAO],
+      [String(baoLiuTian), PiLiangDaXiao],
     )
     const benPi = jieGuo.rowCount ?? 0
     zongShanChu += benPi
-    if (benPi < PI_LIANG_DA_XIAO) break
+    if (benPi < PiLiangDaXiao) break
   }
   if (zongShanChu > 0) {
     日志引擎.info('shenJiGuiDang', `审计日志归档清理完成`, { shan_chu_tiao_shu: zongShanChu, bao_liu_tian: baoLiuTian })

@@ -6,7 +6,7 @@ import path from 'path'
 import { debug日志 } from '../utils/debug日志'
 import { huoQuBenDiLuJing } from './媒体存储'
 import { huoQuGuiJiLiuDongMiYao, huoQuDuoMoTaiPeiZhi } from '../config/多模态配置'
-import { AI_PEI_ZHI } from '../config/AI配置'
+import { AiPeiZhi } from '../config/AI配置'
 import { redis } from '../redis'
 import { huoQuFFmpegLuJing, tiQuYinPinWeiWav } from '../utils/音频转码'
 
@@ -24,8 +24,8 @@ export interface ShiPinJieXiYiLai {
   zhuanXieYinPin?: (yinPinZiJie: Buffer, mime: string) => Promise<string | null>
 }
 
-const HUAN_CUN_QIAN_ZHUI = 'shipin_jiexi:'
-const HUAN_CUN_YOU_XIAO_MIAO = 7 * 24 * 60 * 60
+const HuanCunQianZhui = 'shipin_jiexi:'
+const HuanCunYouXiaoMiao = 7 * 24 * 60 * 60
 const neiCunHuanCun = new Map<string, ShiPinJieXiJieGuo>()
 
 export function sheZhiShiPinJieXiHuanCun(sha256: string, jieGuo: ShiPinJieXiJieGuo): void {
@@ -42,7 +42,7 @@ export async function duQuJieXiHuanCun(sha256: string): Promise<ShiPinJieXiJieGu
   const benDi = neiCunHuanCun.get(sha256)
   if (benDi) return benDi
   try {
-    const cunChu = await redis.get(HUAN_CUN_QIAN_ZHUI + sha256)
+    const cunChu = await redis.get(HuanCunQianZhui + sha256)
     if (!cunChu) return null
     const jieGuo = JSON.parse(cunChu) as ShiPinJieXiJieGuo
     neiCunHuanCun.set(sha256, jieGuo)
@@ -55,14 +55,14 @@ export async function duQuJieXiHuanCun(sha256: string): Promise<ShiPinJieXiJieGu
 export async function xieRuJieXiHuanCun(sha256: string, jieGuo: ShiPinJieXiJieGuo): Promise<void> {
   neiCunHuanCun.set(sha256, jieGuo)
   try {
-    await redis.setex(HUAN_CUN_QIAN_ZHUI + sha256, HUAN_CUN_YOU_XIAO_MIAO, JSON.stringify(jieGuo))
+    await redis.setex(HuanCunQianZhui + sha256, HuanCunYouXiaoMiao, JSON.stringify(jieGuo))
   } catch {
     /* 缓存失败不阻断主流程 */
   }
 }
 
 async function moRenMiaoShuTuPian(tuPianZiJie: Buffer): Promise<string | null> {
-  const moXing = AI_PEI_ZHI.deepSeek.moXing
+  const moXing = AiPeiZhi.deepSeek.moXing
   const jiChu = (process.env.DEEPSEEK_BASE_URL || '').trim().replace(/\/$/, '')
   const miYao = (process.env.DEEPSEEK_API_KEY || '').trim()
   if (!jiChu || !miYao) return null

@@ -8,7 +8,7 @@ import {
   归一前台错误,
   type QianTaiCuoWu,
 } from '@/utils/前台错误'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { QianTaiDaiMa } from '@/config/前台错误码'
 import { huoQuFanYi } from '@/config/翻译表'
 import { 主页入场 } from '@/config/设计令牌'
 import { track } from '@/utils/埋点'
@@ -24,7 +24,7 @@ import {
 import { 使用认证表单仓库 } from './认证表单'
 import { 使用聊天仓库 } from './聊天'
 
-const TU_PIAN_SHOU_QUAN_JIAN = 'hewolianba_tuPianShouQuan'
+const TuPianShouQuanJian = 'hewolianba_tuPianShouQuan'
 
 export type 认证状态类型 = '冷启动' | '恢复中' | '已认证' | '匿名' | '恢复失败可重试'
 
@@ -68,7 +68,7 @@ export const 使用用户仓库 = defineStore('用户', () => {
     dangQianJiaoSe.value = shenFen ? 归一管理角色(shenFen.jiao_se) : null
     nengLieBiao.value = shenFen ? 归一管理能力列表(shenFen.neng_li) : []
   }
-  const tuPianShouQuan = ref<boolean>(duQuShuJu<boolean>(TU_PIAN_SHOU_QUAN_JIAN) === true)
+  const tuPianShouQuan = ref<boolean>(duQuShuJu<boolean>(TuPianShouQuanJian) === true)
   const zhuangTai = ref<登录状态>({
     deng_lu_zhong: false,
     cuo_wu_xin_xi: null,
@@ -78,7 +78,7 @@ export const 使用用户仓库 = defineStore('用户', () => {
 
   function sheZhiTuPianShouQuan(zhi: boolean): void {
     tuPianShouQuan.value = zhi
-    baoCunShuJu(TU_PIAN_SHOU_QUAN_JIAN, zhi)
+    baoCunShuJu(TuPianShouQuanJian, zhi)
   }
 
   async function zhiXingZhuXiao(): Promise<void> {
@@ -171,7 +171,7 @@ export const 使用用户仓库 = defineStore('用户', () => {
         认证状态.value = '恢复失败可重试'
         shenFenYiJiuXu.value = false
         恢复错误.value = chuangJianQianTaiCuoWu({
-          code: QIAN_TAI_DAI_MA.AUTH_TOKEN_INVALID,
+          code: QianTaiDaiMa.AUTH_TOKEN_INVALID,
           retryable: true,
         })
         return false

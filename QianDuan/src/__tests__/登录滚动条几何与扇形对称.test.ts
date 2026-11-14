@@ -212,14 +212,14 @@ describe('短视口滚动条紧凑模式与找回密码纵向可达', () => {
     expect(取块(登录样式, '.gundong-zhuangshi.jin-cou .gundong-guidao {')).toContain(
       'top: var(--jiange-2)',
     )
-    expect(登录).toContain('const JIN_COU_KE_JIAN_GAO = 96')
-    expect(登录).toContain('const JIN_COU_LIU_BAI = 2')
-    expect(登录).toContain('const GUI_DAO_ZUI_XIAO_GAO = 4')
-    expect(登录).toContain('const HUA_KUAI_JIN_COU_ZUI_XIAO_GAO = 12')
+    expect(登录).toContain('const JinCouKeJianGao = 96')
+    expect(登录).toContain('const JinCouLiuBai = 2')
+    expect(登录).toContain('const GuiDaoZuiXiaoGao = 4')
+    expect(登录).toContain('const HuaKuaiJinCouZuiXiaoGao = 12')
     expect(登录).toContain('gundongJinCou.value = jinCou')
     expect(登录).toContain('const 装饰高 = zhuangShiYuanSu.clientHeight')
     expect(登录).toContain('const 滚动高 = gunDongQuYuanSu.clientHeight')
-    expect(登录).toContain('shiYongGao - GUI_DAO_ZUI_XIAO_GAO')
+    expect(登录).toContain('shiYongGao - GuiDaoZuiXiaoGao')
   })
 
   it('找回密码不再禁止纵向滚动，卡片按内容自然增高由布局滚动兜底', () => {

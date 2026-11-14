@@ -3,7 +3,7 @@ import { yanZhengLingPai, lingPaiShiFouYiCheXiao, type LingPaiZaiHe } from '../u
 import { huoQuFanYi } from '../config/translations'
 import { shiBaiXiangYing } from '../utils/xiangying'
 import { redis } from '../redis'
-import { CUO_WU_DAI_MA } from '../config/错误码注册表'
+import { CuoWuDaiMa } from '../config/错误码注册表'
 
 export interface RenZhengQingQiu extends Request {
   yong_hu?: LingPaiZaiHe
@@ -45,7 +45,7 @@ export async function renZhengZhongJianJian(
   try {
     luJing = decodeURIComponent(qingQiu.path)
   } catch {
-    shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CUO_WU_DAI_MA.REQUEST_PARAMETER_INVALID)
+    shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'), CuoWuDaiMa.REQUEST_PARAMETER_INVALID)
     return
   }
 
@@ -63,7 +63,7 @@ export async function renZhengZhongJianJian(
 
   const authorization = qingQiu.headers.authorization
   if (!authorization || !authorization.startsWith('Bearer ')) {
-    shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTHENTICATION_REQUIRED)
+    shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
     return
   }
 
@@ -77,12 +77,12 @@ export async function renZhengZhongJianJian(
           const { daiRongDuanZhiXing } = await import('../redis')
           const yiDiaoXiao = await daiRongDuanZhiXing(`jwt_blacklist:${zaiHe.jti}`, () => redis.get(`jwt_blacklist:${zaiHe.jti}`))
           if (yiDiaoXiao) {
-            shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTH_TOKEN_INVALID)
+            shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTH_TOKEN_INVALID)
             return
           }
         }
         if (await lingPaiShiFouYiCheXiao(zaiHe.yongHuId, zaiHe.iat, zaiHe.qianFaHaoMiao)) {
-          shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTH_TOKEN_INVALID)
+          shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTH_TOKEN_INVALID)
           return
         }
       } else {
@@ -96,6 +96,6 @@ export async function renZhengZhongJianJian(
     qingQiu.yong_hu = zaiHe
     xiaYiBu()
   } catch {
-    shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CUO_WU_DAI_MA.AUTH_TOKEN_INVALID)
+    shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTH_TOKEN_INVALID)
   }
 }

@@ -1,12 +1,12 @@
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import {
-  CUO_WU_DAI_MA,
+  CuoWuDaiMa,
   YingYongCuoWu,
   huoQuCuoWuXianRong,
   type ZhanJiFenLeiCuoWuDaiMa,
 } from '../config/错误码注册表'
-import { ZHAN_JI_PEI_ZHI } from '../config/战绩配置'
+import { ZhanJiPeiZhi } from '../config/战绩配置'
 import type { PoolClient } from 'pg'
 import type { YouXiJieGuoLeiXing } from '../types'
 import { 解析结局类型, 解析结局文案 } from '../utils/结局'
@@ -122,7 +122,7 @@ export class ZhanJiFenLeiCuoWu extends YingYongCuoWu {
 function zhengLiFenLeiMingCheng(zhi: unknown): string {
   if (typeof zhi !== 'string') {
     throw new ZhanJiFenLeiCuoWu(
-      CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_MING_CHENG_WU_XIAO,
+      CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_WU_XIAO,
       400,
       'fenLeiMingChengBuNengWeiKong',
     )
@@ -130,14 +130,14 @@ function zhengLiFenLeiMingCheng(zhi: unknown): string {
   const jieXi = zhi.trim()
   if (!jieXi) {
     throw new ZhanJiFenLeiCuoWu(
-      CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_MING_CHENG_WU_XIAO,
+      CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_WU_XIAO,
       400,
       'fenLeiMingChengBuNengWeiKong',
     )
   }
-  if ([...jieXi].length > ZHAN_JI_PEI_ZHI.fenLeiMingChengZuiDaChangDu) {
+  if ([...jieXi].length > ZhanJiPeiZhi.fenLeiMingChengZuiDaChangDu) {
     throw new ZhanJiFenLeiCuoWu(
-      CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_MING_CHENG_CHANG,
+      CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_CHANG,
       400,
       'fenLeiMingChengTaiChang',
     )
@@ -233,7 +233,7 @@ export async function chuangJianZhanJiFenLei(
       )
       if (chongFu.rows.length > 0) {
         throw new ZhanJiFenLeiCuoWu(
-          CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU,
+          CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU,
           409,
           'fenLeiMingChengYiCunZai',
         )
@@ -249,7 +249,7 @@ export async function chuangJianZhanJiFenLei(
   } catch (cuoWu) {
     if ((cuoWu as { code?: string }).code === '23505') {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU,
+        CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU,
         409,
         'fenLeiMingChengYiCunZai',
       )
@@ -266,7 +266,7 @@ export async function gengMingZhanJiFenLei(
 ): Promise<ZhanJiFenLei> {
   const jingZhengHouDeMingCheng = zhengLiFenLeiMingCheng(ming_cheng)
   if (!Number.isSafeInteger(yu_ben_ban_ben) || Number(yu_ben_ban_ben) < 0) {
-    throw new Error(CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA)
+    throw new Error(CuoWuDaiMa.ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA)
   }
   try {
     return await zaiShiYongLiaoZhongYunXing(yong_hu_id, async (jieKou) => {
@@ -277,14 +277,14 @@ export async function gengMingZhanJiFenLei(
       )
       if (xianYou.rows.length === 0) {
         throw new ZhanJiFenLeiCuoWu(
-          CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BU_CUN_ZAI,
+          CuoWuDaiMa.ZHAN_JI_FEN_LEI_BU_CUN_ZAI,
           404,
           'fenLeiBuCunZai',
         )
       }
       if (Number(xianYou.rows[0].版本) !== Number(yu_ben_ban_ben)) {
         throw new ZhanJiFenLeiCuoWu(
-          CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BIAN_GENG,
+          CuoWuDaiMa.ZHAN_JI_FEN_LEI_BIAN_GENG,
           409,
           'fenLeiShuJuYiBianHua',
         )
@@ -298,7 +298,7 @@ export async function gengMingZhanJiFenLei(
       )
       if (chongFu.rows.length > 0) {
         throw new ZhanJiFenLeiCuoWu(
-          CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU,
+          CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU,
           409,
           'fenLeiMingChengYiCunZai',
         )
@@ -319,7 +319,7 @@ export async function gengMingZhanJiFenLei(
   } catch (cuoWu) {
     if ((cuoWu as { code?: string }).code === '23505') {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU,
+        CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU,
         409,
         'fenLeiMingChengYiCunZai',
       )
@@ -334,7 +334,7 @@ export async function shanChuZhanJiFenLei(
   yu_ben_ban_ben: unknown,
 ): Promise<ZhanJiFenLeiShanChuJieGuo> {
   if (!Number.isSafeInteger(yu_ben_ban_ben) || Number(yu_ben_ban_ben) < 0) {
-    throw new Error(CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA)
+    throw new Error(CuoWuDaiMa.ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA)
   }
   return zaiShiYongLiaoZhongYunXing(yong_hu_id, async (jieKou) => {
     const fenLei = await jieKou.query(
@@ -344,21 +344,21 @@ export async function shanChuZhanJiFenLei(
     )
     if (fenLei.rows.length === 0) {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BU_CUN_ZAI,
+        CuoWuDaiMa.ZHAN_JI_FEN_LEI_BU_CUN_ZAI,
         404,
         'fenLeiBuCunZai',
       )
     }
     if (fenLei.rows[0].是否默认) {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_MO_REN_FEN_LEI_BU_NENG_SHAN_CHU,
+        CuoWuDaiMa.ZHAN_JI_MO_REN_FEN_LEI_BU_NENG_SHAN_CHU,
         409,
         'moRenFenLeiBuNengShanChu',
       )
     }
     if (Number(fenLei.rows[0].版本) !== Number(yu_ben_ban_ben)) {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BIAN_GENG,
+        CuoWuDaiMa.ZHAN_JI_FEN_LEI_BIAN_GENG,
         409,
         'fenLeiShuJuYiBianHua',
       )
@@ -394,7 +394,7 @@ export async function shanChuZhanJiFenLei(
     )
     if (shanChu.rows.length !== 1) {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BU_CUN_ZAI,
+        CuoWuDaiMa.ZHAN_JI_FEN_LEI_BU_CUN_ZAI,
         404,
         'fenLeiBuCunZai',
       )
@@ -413,7 +413,7 @@ export async function sheZhiMoRenZhanJiFenLei(
   yu_ben_ban_ben: unknown,
 ): Promise<ZhanJiFenLei> {
   if (!Number.isSafeInteger(yu_ben_ban_ben) || Number(yu_ben_ban_ben) < 0) {
-    throw new Error(CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA)
+    throw new Error(CuoWuDaiMa.ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA)
   }
   return zaiShiYongLiaoZhongYunXing(yong_hu_id, async (jieKou) => {
     const fenLei = await jieKou.query(
@@ -423,14 +423,14 @@ export async function sheZhiMoRenZhanJiFenLei(
     )
     if (fenLei.rows.length === 0) {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BU_CUN_ZAI,
+        CuoWuDaiMa.ZHAN_JI_FEN_LEI_BU_CUN_ZAI,
         404,
         'fenLeiBuCunZai',
       )
     }
     if (Number(fenLei.rows[0].版本) !== Number(yu_ben_ban_ben)) {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BIAN_GENG,
+        CuoWuDaiMa.ZHAN_JI_FEN_LEI_BIAN_GENG,
         409,
         'fenLeiShuJuYiBianHua',
       )
@@ -471,7 +471,7 @@ export async function baoCunFenLeiPaiXu(
     !fen_lei_ids.every((id) => typeof id === 'string' && id.length > 0)
   ) {
     throw new ZhanJiFenLeiCuoWu(
-      CUO_WU_DAI_MA.ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA,
+      CuoWuDaiMa.ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA,
       400,
       'paiXuCanShuBuHeFa',
     )
@@ -479,7 +479,7 @@ export async function baoCunFenLeiPaiXu(
   const bianHaoLieBiao = fen_lei_ids as string[]
   if (new Set(bianHaoLieBiao).size !== bianHaoLieBiao.length) {
     throw new ZhanJiFenLeiCuoWu(
-      CUO_WU_DAI_MA.ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA,
+      CuoWuDaiMa.ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA,
       400,
       'paiXuCanShuBuHeFa',
     )
@@ -492,7 +492,7 @@ export async function baoCunFenLeiPaiXu(
     const xianYouIds = new Set(xianYou.rows.map((xing) => String(xing.ID)))
     if (xianYouIds.size !== bianHaoLieBiao.length || !bianHaoLieBiao.every((id) => xianYouIds.has(id))) {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA,
+        CuoWuDaiMa.ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA,
         400,
         'paiXuCanShuBuHeFa',
       )
@@ -536,11 +536,11 @@ export async function yiDongDangAnDaoFenLei(
   yu_ben_ban_ben: unknown,
 ): Promise<ZhanJiDangAnYiDongJieGuo> {
   if (!Number.isSafeInteger(yu_ben_ban_ben) || Number(yu_ben_ban_ben) < 0) {
-    throw new Error(CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA)
+    throw new Error(CuoWuDaiMa.ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA)
   }
   if (yuan_fen_lei_id === mubiao_fen_lei_id) {
     throw new ZhanJiFenLeiCuoWu(
-      CUO_WU_DAI_MA.ZHAN_JI_BU_NENG_YIDONG_DAO_DANG_QIAN_FEN_LEI,
+      CuoWuDaiMa.ZHAN_JI_BU_NENG_YIDONG_DAO_DANG_QIAN_FEN_LEI,
       400,
       'buNengYiDongDaoDangQianFenLei',
     )
@@ -554,7 +554,7 @@ export async function yiDongDangAnDaoFenLei(
     )
     if (fenLeiList.rows.length !== 2) {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BU_CUN_ZAI,
+        CuoWuDaiMa.ZHAN_JI_FEN_LEI_BU_CUN_ZAI,
         404,
         'fenLeiBuCunZai',
       )
@@ -566,7 +566,7 @@ export async function yiDongDangAnDaoFenLei(
     const mubiaoBanBen = fenLeiMap.get(mubiao_fen_lei_id) as number
     if (yuanBanBen !== Number(yu_ben_ban_ben)) {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BIAN_GENG,
+        CuoWuDaiMa.ZHAN_JI_FEN_LEI_BIAN_GENG,
         409,
         'fenLeiShuJuYiBianHua',
       )
@@ -578,14 +578,14 @@ export async function yiDongDangAnDaoFenLei(
     )
     if (dangAn.rows.length === 0) {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_DANG_AN_BU_CUN_ZAI,
+        CuoWuDaiMa.ZHAN_JI_DANG_AN_BU_CUN_ZAI,
         404,
         'dangAnBuCunZai',
       )
     }
     if (String(dangAn.rows[0].分类ID) !== yuan_fen_lei_id) {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_DANG_AN_BU_SHU_YU_FEN_LEI,
+        CuoWuDaiMa.ZHAN_JI_DANG_AN_BU_SHU_YU_FEN_LEI,
         409,
         'dangAnBuShuYuFenLei',
       )
@@ -634,12 +634,12 @@ export async function paiXuFenLeiNeiZhanJi(
     !Number.isSafeInteger(yu_ben_ban_ben) ||
     Number(yu_ben_ban_ben) < 0
   ) {
-    throw new Error(CUO_WU_DAI_MA.ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA)
+    throw new Error(CuoWuDaiMa.ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA)
   }
   const recordIds = (dang_an_id_ji as string[]).map((id) => id.toLowerCase())
   if (new Set(recordIds).size !== recordIds.length) {
     throw new ZhanJiFenLeiCuoWu(
-      CUO_WU_DAI_MA.ZHAN_JI_PAI_XU_ID_CHONG_FU,
+      CuoWuDaiMa.ZHAN_JI_PAI_XU_ID_CHONG_FU,
       400,
       'paiXuIDChongFu',
     )
@@ -651,7 +651,7 @@ export async function paiXuFenLeiNeiZhanJi(
     )
     if (fenLei.rows.length === 0) {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BU_CUN_ZAI,
+        CuoWuDaiMa.ZHAN_JI_FEN_LEI_BU_CUN_ZAI,
         404,
         'fenLeiBuCunZai',
       )
@@ -659,7 +659,7 @@ export async function paiXuFenLeiNeiZhanJi(
     const dangQianBanBen = Number(fenLei.rows[0].版本)
     if (dangQianBanBen !== Number(yu_ben_ban_ben)) {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BIAN_GENG,
+        CuoWuDaiMa.ZHAN_JI_FEN_LEI_BIAN_GENG,
         409,
         'fenLeiShuJuYiBianHua',
       )
@@ -678,7 +678,7 @@ export async function paiXuFenLeiNeiZhanJi(
       recordIds.some((id) => !xianYouJi.has(id))
     ) {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_PAI_XU_JI_LU_BU_WU_ZHEN,
+        CuoWuDaiMa.ZHAN_JI_PAI_XU_JI_LU_BU_WU_ZHEN,
         409,
         'paiXuBiXuBaoHanFenLeiQuanBuKeJianZhanJi',
       )
@@ -724,7 +724,7 @@ function zhaiYaoZuiHouXiaoXi(hang: Record<string, unknown>): string {
       : huoQuFanYi('liaoTian', 'duiFangCheHuiLeYiTiaoXiaoXi')
   }
   const wenBen = typeof hang.内容 === 'string' ? hang.内容.trim() : ''
-  if (wenBen) return Array.from(wenBen).slice(0, ZHAN_JI_PEI_ZHI.zhaiYaoZuiDaMaDian).join('')
+  if (wenBen) return Array.from(wenBen).slice(0, ZhanJiPeiZhi.zhaiYaoZuiDaMaDian).join('')
   const lei = typeof hang.类型 === 'string' ? hang.类型 : ''
   if (lei === 'yuYin') return huoQuFanYi('zhanJi', 'yuYinZhaiYao')
   if (lei === 'tuPian') return huoQuFanYi('zhanJi', 'tuPianZhaiYao')
@@ -748,7 +748,7 @@ export async function huoQuDangAnLieBiao(
     )
     if (fenLei.rows.length === 0) {
       throw new ZhanJiFenLeiCuoWu(
-        CUO_WU_DAI_MA.ZHAN_JI_FEN_LEI_BU_CUN_ZAI,
+        CuoWuDaiMa.ZHAN_JI_FEN_LEI_BU_CUN_ZAI,
         404,
         'fenLeiBuCunZai',
       )
@@ -784,12 +784,12 @@ export async function huoQuDangAnLieBiao(
          ) fen_zu
         WHERE hang_hao <= $3
         ORDER BY "角色ID", "创建时间" DESC, "ID" DESC`,
-      [yong_hu_id, jiaoSeIds, ZHAN_JI_PEI_ZHI.zuiHouXiaoXiMeiJiaoSeTiaoShu],
+      [yong_hu_id, jiaoSeIds, ZhanJiPeiZhi.zuiHouXiaoXiMeiJiaoSeTiaoShu],
     )
     for (const hang of xiaoXi.rows as Record<string, unknown>[]) {
       const jiaoSeId = String(hang.角色ID)
       const lieBiao = zuiHouAnJiaoSe.get(jiaoSeId)
-      if (lieBiao && lieBiao.length >= ZHAN_JI_PEI_ZHI.zuiHouXiaoXiMeiJiaoSeTiaoShu) continue
+      if (lieBiao && lieBiao.length >= ZhanJiPeiZhi.zuiHouXiaoXiMeiJiaoSeTiaoShu) continue
       const zhaiYao = zhaiYaoZuiHouXiaoXi(hang)
       if (!zhaiYao) continue
       const tiao: ZhanJiZuiHouXiaoXi = {

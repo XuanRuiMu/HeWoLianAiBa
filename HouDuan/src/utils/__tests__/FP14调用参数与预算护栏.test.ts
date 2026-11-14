@@ -35,8 +35,8 @@ vi.mock('../邮件告警', () => ({
   jiLuAIShiBai: vi.fn(),
 }))
 
-import { AI_PEI_ZHI } from '../../config/AI配置'
-import { jiSuanAIChanShu, XIE_SHOU_WEN_DU_SHANG_XIAN, type CanShuShangXiaWen } from '../../config/AI参数策略'
+import { AiPeiZhi } from '../../config/AI配置'
+import { jiSuanAIChanShu, XieShouWenDuShangXian, type CanShuShangXiaWen } from '../../config/AI参数策略'
 import { yuSuanBaoHu, ziJianMoXingMingKeYong, type DuiHuaXiaoXi } from '../DeepSeek客户端'
 import { debug日志 } from '../debug日志'
 import { jiLuShiYongLiang } from '../../services/用量统计'
@@ -58,9 +58,9 @@ describe('FP-14 采样参数只在该生效的模式下下发（官方：思考�
   })
 
   it('writer 默认走非思考模式：带温度，不带 reasoningEffort', () => {
-    expect(AI_PEI_ZHI.moXing.XieShou.siKaoMoShi).toBe('disabled')
-    expect(AI_PEI_ZHI.moXing.XieShou.top_p).toBeUndefined()
-    expect(AI_PEI_ZHI.moXing.XieShou.wenDu).toBeDefined()
+    expect(AiPeiZhi.moXing.XieShou.siKaoMoShi).toBe('disabled')
+    expect(AiPeiZhi.moXing.XieShou.top_p).toBeUndefined()
+    expect(AiPeiZhi.moXing.XieShou.wenDu).toBeDefined()
     const 参数 = jiSuanAIChanShu('XieShou')
     expect(参数.wenDu).toBeCloseTo(0.9, 2)
     expect(参数.reasoningEffort).toBeUndefined()
@@ -76,7 +76,7 @@ describe('FP-14 采样参数只在该生效的模式下下发（官方：思考�
       haoGanDu: { guan_xi_jie_duan: 'pengYou' },
     })
     expect(E型快热.wenDu).toBeGreaterThan(I型慢热.wenDu!)
-    expect(I型慢热.wenDu).toBeLessThanOrEqual(XIE_SHOU_WEN_DU_SHANG_XIAN)
+    expect(I型慢热.wenDu).toBeLessThanOrEqual(XieShouWenDuShangXian)
   })
 
   it('显式打开 Writer 思考开关时才走思考模式', async () => {
@@ -84,7 +84,7 @@ describe('FP-14 采样参数只在该生效的模式下下发（官方：思考�
     process.env['WRITER_SI_KAO_QI_YONG'] = 'true'
     vi.resetModules()
     try {
-      const { AI_PEI_ZHI: 开后配置 } = await import('../../config/AI配置')
+      const { AiPeiZhi: 开后配置 } = await import('../../config/AI配置')
       expect(开后配置.moXing.XieShou.siKaoMoShi).toBe('enabled')
       expect(开后配置.moXing.XieShou.reasoningEffort).toBeTruthy()
     } finally {
@@ -101,7 +101,7 @@ describe('FP-14 采样参数只在该生效的模式下下发（官方：思考�
     process.env['WRITER_WENDU'] = '1.0'
     vi.resetModules()
     try {
-      const { AI_PEI_ZHI: 关后配置 } = await import('../../config/AI配置')
+      const { AiPeiZhi: 关后配置 } = await import('../../config/AI配置')
       const { jiSuanAIChanShu: 关后计算 } = await import('../../config/AI参数策略')
       expect(关后配置.moXing.XieShou.siKaoMoShi).toBe('disabled')
       expect(关后配置.moXing.XieShou.top_p).toBeUndefined()
@@ -127,7 +127,7 @@ describe('FP-14 采样参数只在该生效的模式下下发（官方：思考�
   })
 
   it('AI 配置里不再残留永远不生效的采样字段', () => {
-    for (const [键, 基座] of Object.entries(AI_PEI_ZHI.moXing)) {
+    for (const [键, 基座] of Object.entries(AiPeiZhi.moXing)) {
       if (基座.siKaoMoShi === 'enabled') expect(基座.wenDu, `${键} 思考模式不该配温度`).toBeUndefined()
       else expect(基座.top_p, `${键} 非思考模式 top_p 恒为 1.0`).toBeUndefined()
     }
@@ -178,7 +178,7 @@ describe('FP-14 模型名在册自检', () => {
     globalThis.fetch = vi.fn(async () => ({
       ok: true,
       status: 200,
-      json: async () => ({ data: [{ id: AI_PEI_ZHI.deepSeek.moXing }, { id: 'deepseek-v4-pro' }] }),
+      json: async () => ({ data: [{ id: AiPeiZhi.deepSeek.moXing }, { id: 'deepseek-v4-pro' }] }),
     })) as unknown as typeof fetch
     await expect(ziJianMoXingMingKeYong()).resolves.toBe(true)
   })

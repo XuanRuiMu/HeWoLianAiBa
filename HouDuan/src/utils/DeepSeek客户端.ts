@@ -1,5 +1,5 @@
 import OpenAI from 'openai'
-import { AI_PEI_ZHI } from '../config/AI配置'
+import { AiPeiZhi } from '../config/AI配置'
 import { 通用知识结束标记, 通用知识开始标记, 用户内容结束标记, 用户内容开始标记 } from '../config/通用知识库'
 import { peiZhi } from '../config'
 import { huoQuFanYi } from '../config/translations'
@@ -41,10 +41,10 @@ export interface FenLeiCuoWu extends Error {
   zhuangTaiMa?: number
 }
 
-const KE_ZHONG_SHI_ZUI_DA_CI_SHU = AI_PEI_ZHI.zhongShi.keZhongShiZuiDaCiShu
-const KONG_XIANG_YING_ZUI_DA_CI_SHU = AI_PEI_ZHI.kongXiangYing.zuiDaCiShu
-const RONG_DUAN_LIAN_XU_SHI_BAI_YU_ZHI = AI_PEI_ZHI.zhongShi.rongDuanLianXuShiBaiYuZhi
-const RONG_DUAN_LENG_QUE_HAO_MIAO = AI_PEI_ZHI.zhongShi.rongDuanLengQueHaoMiao
+const KeZhongShiZuiDaCiShu = AiPeiZhi.zhongShi.keZhongShiZuiDaCiShu
+const KongXiangYingZuiDaCiShu = AiPeiZhi.kongXiangYing.zuiDaCiShu
+const RongDuanLianXuShiBaiYuZhi = AiPeiZhi.zhongShi.rongDuanLianXuShiBaiYuZhi
+const RongDuanLengQueHaoMiao = AiPeiZhi.zhongShi.rongDuanLengQueHaoMiao
 
 let rongDuanKaiQiShiJian = 0
 let lianXuShiBaiCiShu = 0
@@ -56,7 +56,7 @@ export function chongZhiRongDuan(): void {
 
 function rongDuanShiFouKaiQi(): boolean {
   if (!rongDuanKaiQiShiJian) return false
-  if (Date.now() - rongDuanKaiQiShiJian > RONG_DUAN_LENG_QUE_HAO_MIAO) {
+  if (Date.now() - rongDuanKaiQiShiJian > RongDuanLengQueHaoMiao) {
     rongDuanKaiQiShiJian = 0
     lianXuShiBaiCiShu = 0
     return false
@@ -70,7 +70,7 @@ function jiLuChengGongRongDuan(): void {
 
 function jiLuShiBaiRongDuan(): void {
   lianXuShiBaiCiShu += 1
-  if (lianXuShiBaiCiShu >= RONG_DUAN_LIAN_XU_SHI_BAI_YU_ZHI) {
+  if (lianXuShiBaiCiShu >= RongDuanLianXuShiBaiYuZhi) {
     rongDuanKaiQiShiJian = Date.now()
   }
 }
@@ -120,7 +120,7 @@ function jieXiZhuangTaiMa(zhi: unknown): number | null {
 }
 
 function jiSuanTuiBiHaoMiao(changCi: number): number {
-  return Math.min(AI_PEI_ZHI.zhongShi.tuiBiJiChuHaoMiao * 2 ** changCi, AI_PEI_ZHI.zhongShi.tuiBiZuiDaHaoMiao)
+  return Math.min(AiPeiZhi.zhongShi.tuiBiJiChuHaoMiao * 2 ** changCi, AiPeiZhi.zhongShi.tuiBiZuiDaHaoMiao)
 }
 
 function dengDai(haoMiao: number): Promise<void> {
@@ -182,8 +182,8 @@ export function GouJianQingQiuShuRu<T extends { jiaoSe: string; neiRong: unknown
 
 export function huoQuDeepSeekKeHuDuan(): OpenAI {
   if (shiLi) return shiLi
-  const apiMiYao = peiZhi.deepSeek.apiMiYao || AI_PEI_ZHI.deepSeek.apiMiYao
-  const jiChuUrl = peiZhi.deepSeek.jiChuUrl || AI_PEI_ZHI.deepSeek.jiChuUrl
+  const apiMiYao = peiZhi.deepSeek.apiMiYao || AiPeiZhi.deepSeek.apiMiYao
+  const jiChuUrl = peiZhi.deepSeek.jiChuUrl || AiPeiZhi.deepSeek.jiChuUrl
 
   shiLi = new OpenAI({
     apiKey: apiMiYao,
@@ -198,9 +198,9 @@ export function chongZhiDeepSeekKeHuDuan(): void {
 }
 
 export async function ziJianMoXingMingKeYong(): Promise<boolean> {
-  const jiChu = (peiZhi.deepSeek.jiChuUrl || AI_PEI_ZHI.deepSeek.jiChuUrl).replace(/\/$/, '')
-  const miYao = (peiZhi.deepSeek.apiMiYao || AI_PEI_ZHI.deepSeek.apiMiYao).trim()
-  const qiYongMoXing = (peiZhi.deepSeek.moXing || AI_PEI_ZHI.deepSeek.moXing).trim()
+  const jiChu = (peiZhi.deepSeek.jiChuUrl || AiPeiZhi.deepSeek.jiChuUrl).replace(/\/$/, '')
+  const miYao = (peiZhi.deepSeek.apiMiYao || AiPeiZhi.deepSeek.apiMiYao).trim()
+  const qiYongMoXing = (peiZhi.deepSeek.moXing || AiPeiZhi.deepSeek.moXing).trim()
   if (!miYao || !jiChu) return true
   try {
     const xiangYing = await fetch(`${jiChu}/v1/models`, {
@@ -227,14 +227,14 @@ export async function ziJianMoXingMingKeYong(): Promise<boolean> {
   }
 }
 
-const MEI_ZI_TOKEN_SHU_LV = 0.6
-const TU_PIAN_GU_DING_TOKEN = 1024
+const MeiZiTokenShuLv = 0.6
+const TuPianGuDingToken = 1024
 
 function guJiToken(neiRong: string | DuiHuaKuai[]): number {
-  if (typeof neiRong === 'string') return Math.ceil(neiRong.length * MEI_ZI_TOKEN_SHU_LV)
+  if (typeof neiRong === 'string') return Math.ceil(neiRong.length * MeiZiTokenShuLv)
   return neiRong.reduce((zong, kuai) => {
-    if (kuai.type === 'input_text') return zong + Math.ceil(kuai.text.length * MEI_ZI_TOKEN_SHU_LV)
-    return zong + TU_PIAN_GU_DING_TOKEN
+    if (kuai.type === 'input_text') return zong + Math.ceil(kuai.text.length * MeiZiTokenShuLv)
+    return zong + TuPianGuDingToken
   }, 0)
 }
 
@@ -322,7 +322,7 @@ function yaSuoZhiShiNeiRong(neiRong: string | DuiHuaKuai[], yuSuan: number): str
 }
 
 export function yuSuanBaoHu(xiaoXi: DuiHuaXiaoXi[], yuSuan?: number): DuiHuaXiaoXi[] {
-  const yuSuanZhi = yuSuan ?? AI_PEI_ZHI.prompt.shangXiaWenTokenYuSuan
+  const yuSuanZhi = yuSuan ?? AiPeiZhi.prompt.shangXiaWenTokenYuSuan
   if (!yuSuanZhi || yuSuanZhi <= 0) return xiaoXi
   const xiTong = xiaoXi.filter((x) => x.jiaoSe === 'system')
   let qiTa = xiaoXi.filter((x) => x.jiaoSe !== 'system')
@@ -391,7 +391,7 @@ export async function tiaoYongDeepSeek(
 
   const kaiShiShiJian = Date.now()
   const keHuDuan = huoQuDeepSeekKeHuDuan()
-  const moXing = canShu.moXing || AI_PEI_ZHI.deepSeek.moXing
+  const moXing = canShu.moXing || AiPeiZhi.deepSeek.moXing
   const xiangYingGeShi = canShu.xiangYingGeShi || { type: 'text' as const }
 
   if (peiZhi.kaiFaMoShi) {
@@ -445,11 +445,11 @@ export async function tiaoYongDeepSeek(
       throw new Error('[DeepSeek客户端] 调用已取消，中止重试等待')
     }
   }
-  for (let changCi = 0; changCi <= KE_ZHONG_SHI_ZUI_DA_CI_SHU; changCi++) {
+  for (let changCi = 0; changCi <= KeZhongShiZuiDaCiShu; changCi++) {
     jianChaQuXiao()
     if (rongDuanShiFouKaiQi()) {
       if (长测自主恢复 && Date.now() - 自主恢复起点 < 自主恢复上限毫秒) {
-        await dengDai(Math.min(RONG_DUAN_LENG_QUE_HAO_MIAO, 20_000))
+        await dengDai(Math.min(RongDuanLengQueHaoMiao, 20_000))
         changCi -= 1
         continue
       }
@@ -474,12 +474,12 @@ export async function tiaoYongDeepSeek(
       }
 
       let zhongXinXiangYing = xiangYing
-      while (tiQuXiangYing(zhongXinXiangYing).neiRong.trim() === '' && kongXiangYingCiShu < KONG_XIANG_YING_ZUI_DA_CI_SHU) {
+      while (tiQuXiangYing(zhongXinXiangYing).neiRong.trim() === '' && kongXiangYingCiShu < KongXiangYingZuiDaCiShu) {
         kongXiangYingCiShu += 1
         debug日志.warn('DeepSeek客户端', '[AI调用] 响应为空，退避后重试', {
           xiang_qing: { moXingLeiXing, moXing, ciShu: kongXiangYingCiShu },
         })
-        const deng = Math.min(AI_PEI_ZHI.kongXiangYing.tuiBiJiChuHaoMiao * kongXiangYingCiShu, AI_PEI_ZHI.kongXiangYing.tuiBiZuiDaHaoMiao)
+        const deng = Math.min(AiPeiZhi.kongXiangYing.tuiBiJiChuHaoMiao * kongXiangYingCiShu, AiPeiZhi.kongXiangYing.tuiBiZuiDaHaoMiao)
         if (waiBuXinHao) {
           await Promise.race([
             dengDai(deng),
@@ -554,7 +554,7 @@ export async function tiaoYongDeepSeek(
         void import('./邮件告警').then(({ jiLuAIShiBai }) => jiLuAIShiBai(cuoWuXinXi)).catch(() => {})
         throw cuoWu
       }
-      if (changCi >= KE_ZHONG_SHI_ZUI_DA_CI_SHU) {
+      if (changCi >= KeZhongShiZuiDaCiShu) {
         if (长测自主恢复 && Date.now() - 自主恢复起点 < 自主恢复上限毫秒) {
           changCi -= 1
           await dengDai(20_000)
@@ -582,7 +582,7 @@ export async function tiaoYongDeepSeek(
 }
 
 export function genJuPeiZhiTiaoYong(
-  moXingLeiXing: keyof typeof AI_PEI_ZHI.moXing,
+  moXingLeiXing: keyof typeof AiPeiZhi.moXing,
   xiaoXi: DuiHuaXiaoXi[],
   shangXiaWen?: CanShuShangXiaWen,
   waiBuXinHao?: AbortSignal,

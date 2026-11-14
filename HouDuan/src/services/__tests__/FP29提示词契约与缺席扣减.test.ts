@@ -20,8 +20,8 @@ vi.mock('../../数据库', () => ({
 
 import { gouJianWriterPrompt, gouJianDiYiCeng, gouJianBenLunXiaoXiKuai } from '../Prompt构建器'
 import type { AIYinQingShuRu } from '../../types'
-import { jianChaTaoHua, panDuanTaoHuaCaiYang, TAO_HUA_PEI_ZHI } from '../../config/去AI味配置'
-import { chuLiQueXiKouJian, QUE_XI_CHU_FA_XIAO_SHI } from '../亲密度缺席扣减'
+import { jianChaTaoHua, panDuanTaoHuaCaiYang, TaoHuaPeiZhi } from '../../config/去AI味配置'
+import { chuLiQueXiKouJian, QueXiChuFaXiaoShi } from '../亲密度缺席扣减'
 import { yanZhengRenSheKa } from '../人设自述卡'
 
 function zuZhuangShuRu(gengDuo: Partial<AIYinQingShuRu> = {}): AIYinQingShuRu {
@@ -63,6 +63,32 @@ function zuZhuangShuRu(gengDuo: Partial<AIYinQingShuRu> = {}): AIYinQingShuRu {
     ...gengDuo,
   } as AIYinQingShuRu
 }
+
+describe('说话方式不按年龄套统一模板', () => {
+  function daiNianLing(nianLing: number): AIYinQingShuRu {
+    const jiChu = zuZhuangShuRu()
+    return { ...jiChu, jiao_se: { ...jiChu.jiao_se, nian_ling: nianLing } }
+  }
+
+  it('各年龄人设都保留各自的说话方式，不出现统一习惯文案', () => {
+    for (const nianLing of [22, 45, 65, 90]) {
+      const tiShi = gouJianWriterPrompt(daiNianLing(nianLing))
+      expect(tiShi).toContain('说话方式：轻声细语')
+      expect(tiShi).not.toContain('不斗图')
+      expect(tiShi).not.toContain('🌹')
+    }
+  })
+
+  it('人设里已有的说话方式原样保留，不被改写', () => {
+    const jiChu = zuZhuangShuRu()
+    const tiShi = gouJianWriterPrompt({
+      ...jiChu,
+      jiao_se: { ...jiChu.jiao_se, nian_ling: 70, yan_yu_feng_ge: '爱开玩笑，常用网络梗' },
+    })
+    expect(tiShi).toContain('说话方式：爱开玩笑，常用网络梗')
+    expect(tiShi).not.toContain('不斗图')
+  })
+})
 
 describe('FP-29 Writer提示词契约（缓存层序与去游戏化）', () => {
   it('层序：稳定块在历史之前，历史在动态块之前，本轮消息在最后', () => {
@@ -125,7 +151,7 @@ describe('FP-29 温暖套话采样', () => {
   it('采样比例可复现', () => {
     expect(panDuanTaoHuaCaiYang(0)).toBe(true)
     expect(panDuanTaoHuaCaiYang(1)).toBe(false)
-    expect(TAO_HUA_PEI_ZHI.ciBiao.length).toBeGreaterThan(5)
+    expect(TaoHuaPeiZhi.ciBiao.length).toBeGreaterThan(5)
   })
 })
 
@@ -161,7 +187,7 @@ describe('FP-29 缺席单次扣减', () => {
   })
 
   it('阈值常量为正整数', () => {
-    expect(QUE_XI_CHU_FA_XIAO_SHI).toBeGreaterThanOrEqual(1)
+    expect(QueXiChuFaXiaoShi).toBeGreaterThanOrEqual(1)
   })
 })
 

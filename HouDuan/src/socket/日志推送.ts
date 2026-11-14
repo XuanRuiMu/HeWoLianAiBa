@@ -5,9 +5,9 @@ import { riZhiTuiSongPeiZhi } from '../config/日志推送配置'
 import { dingYueRiZhi } from '../utils/日志订阅'
 import { debug日志, type RiZhiTiaoMu } from '../utils/debug日志'
 
-export const SHI_JIAN_DING_YUE_RI_ZHI = '日志_订阅'
-export const SHI_JIAN_QU_XIAO_RI_ZHI = '日志_取消订阅'
-export const SHI_JIAN_RI_ZHI_PI_LIANG = '日志_批量'
+export const ShiJianDingYueRiZhi = '日志_订阅'
+export const ShiJianQuXiaoRiZhi = '日志_取消订阅'
+export const ShiJianRiZhiPiLiang = '日志_批量'
 
 export interface RiZhiPiLiangZaiHe {
   tiao_mu_lie_biao: RiZhiTiaoMu[]
@@ -58,7 +58,7 @@ function chongShuaHuanChong(): void {
   const piCi = huanChongQu.splice(0, riZhiTuiSongPeiZhi.piCiZuiDaTiaoShu)
   const zaiHe: RiZhiPiLiangZaiHe = { tiao_mu_lie_biao: piCi, diu_qi_shu: diuQiShu }
   diuQiShu = 0
-  dangQianIo.to(riZhiTuiSongPeiZhi.fangJianMing).emit(SHI_JIAN_RI_ZHI_PI_LIANG, zaiHe)
+  dangQianIo.to(riZhiTuiSongPeiZhi.fangJianMing).emit(ShiJianRiZhiPiLiang, zaiHe)
 }
 
 function qiDongGuanDao(): void {
@@ -96,7 +96,7 @@ export function chuShiHuaRiZhiTuiSongSocket(io: Server): void {
     const yongHu = socket.yong_hu
     if (!yongHu) return
 
-    socket.on(SHI_JIAN_DING_YUE_RI_ZHI, async (huiDiao?: (jieGuo: unknown) => void) => {
+    socket.on(ShiJianDingYueRiZhi, async (huiDiao?: (jieGuo: unknown) => void) => {
       if (!(await panDuanKeGaoWei(yongHu.yongHuId))) return
       socket.join(riZhiTuiSongPeiZhi.fangJianMing)
       dingYueSocketJiHe.add(socket.id)
@@ -104,7 +104,7 @@ export function chuShiHuaRiZhiTuiSongSocket(io: Server): void {
       if (typeof huiDiao === 'function') huiDiao({ cheng_gong: true })
     })
 
-    socket.on(SHI_JIAN_QU_XIAO_RI_ZHI, async (huiDiao?: (jieGuo: unknown) => void) => {
+    socket.on(ShiJianQuXiaoRiZhi, async (huiDiao?: (jieGuo: unknown) => void) => {
       if (!(await panDuanKeGaoWei(yongHu.yongHuId))) return
       socket.leave(riZhiTuiSongPeiZhi.fangJianMing)
       yiChuDingYue(socket.id)

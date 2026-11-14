@@ -9,19 +9,19 @@ import { huoQuFanYi } from '../config/translations'
 import { jieXiShouJiHao } from '../utils/手机号'
 import { parsePhoneNumberFromString } from 'libphonenumber-js/min'
 
-const ZUI_DA_CUO_WU_CHANG_SHI = 5
+const ZuiDaCuoWuChangShi = 5
 
-export const YAN_ZHENG_MA_YONG_TU = {
+export const YanZhengMaYongTu = {
   zhuCe: 'zhuCe',
   chongZhiMiMa: 'chongZhiMiMa',
 } as const
 
-export type YanZhengMaYongTu = (typeof YAN_ZHENG_MA_YONG_TU)[keyof typeof YAN_ZHENG_MA_YONG_TU]
+export type YanZhengMaYongTu = (typeof YanZhengMaYongTu)[keyof typeof YanZhengMaYongTu]
 
 export function zhunHuaYanZhengMaYongTu(zhi: unknown): YanZhengMaYongTu {
-  return zhi === YAN_ZHENG_MA_YONG_TU.chongZhiMiMa
-    ? YAN_ZHENG_MA_YONG_TU.chongZhiMiMa
-    : YAN_ZHENG_MA_YONG_TU.zhuCe
+  return zhi === YanZhengMaYongTu.chongZhiMiMa
+    ? YanZhengMaYongTu.chongZhiMiMa
+    : YanZhengMaYongTu.zhuCe
 }
 
 function huoQuCuoWuJiShuJian(shouJiHao: string, yongTu: YanZhengMaYongTu): string {
@@ -96,7 +96,7 @@ export type DuanXinFaSongJieGuo =
 
 export async function faSongYanZhengMa(
   shouJiHao: string,
-  yongTu: YanZhengMaYongTu = YAN_ZHENG_MA_YONG_TU.zhuCe,
+  yongTu: YanZhengMaYongTu = YanZhengMaYongTu.zhuCe,
 ): Promise<DuanXinFaSongJieGuo> {
   const jianGeJian = huoQuFaSongJianGeJian(shouJiHao)
   const yiFaSong = await redis.get(jianGeJian)
@@ -192,11 +192,11 @@ export type 验证码校验结果 = '通过' | '错误' | '已过期' | '尝试�
 export async function yanZhengMaShiFouZhengQue(
   shouJiHao: string,
   yanZhengMa: string,
-  yongTu: YanZhengMaYongTu = YAN_ZHENG_MA_YONG_TU.zhuCe,
+  yongTu: YanZhengMaYongTu = YanZhengMaYongTu.zhuCe,
 ): Promise<验证码校验结果> {
   const cuoWuJian = huoQuCuoWuJiShuJian(shouJiHao, yongTu)
   const cuoWuCiShu = Number(await redis.get(cuoWuJian)) || 0
-  if (cuoWuCiShu >= ZUI_DA_CUO_WU_CHANG_SHI) {
+  if (cuoWuCiShu >= ZuiDaCuoWuChangShi) {
     return '尝试超限'
   }
 
@@ -211,7 +211,7 @@ export async function yanZhengMaShiFouZhengQue(
     }
     const xinCuoWuCiShu = await redis.incr(cuoWuJian)
     await redis.expire(cuoWuJian, peiZhi.yanZhengMa.youXiaoQi)
-    if (xinCuoWuCiShu >= ZUI_DA_CUO_WU_CHANG_SHI) {
+    if (xinCuoWuCiShu >= ZuiDaCuoWuChangShi) {
       await shanChuYanZhengMa(shouJiHao, yongTu)
       return '尝试超限'
     }
@@ -221,7 +221,7 @@ export async function yanZhengMaShiFouZhengQue(
   if (
     peiZhi.kaiFaMoShi &&
     process.env.VITEST === 'true' &&
-    yongTu === YAN_ZHENG_MA_YONG_TU.zhuCe &&
+    yongTu === YanZhengMaYongTu.zhuCe &&
     yanZhengMa === peiZhi.yanZhengMa.kaiFaMoShiGuDing
   ) {
     return '通过'
@@ -233,7 +233,7 @@ export async function shanChuYanZhengMa(
   shouJiHao: string,
   yongTu?: YanZhengMaYongTu,
 ): Promise<void> {
-  const yongTuLie = yongTu ? [yongTu] : Object.values(YAN_ZHENG_MA_YONG_TU)
+  const yongTuLie = yongTu ? [yongTu] : Object.values(YanZhengMaYongTu)
   for (const yong of yongTuLie) {
     await redis.del(huoQuYanZhengMaJian(shouJiHao, yong))
     await redis.del(huoQuCuoWuJiShuJian(shouJiHao, yong))

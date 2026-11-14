@@ -10,7 +10,7 @@ import { 使用用户仓库 } from '@/stores/用户'
 import { 使用聊天仓库 } from '@/stores/聊天'
 import { teZhengKaiGuanCuoWu } from '@/utils/TeZhengKaiGuan'
 import { chuangJianQianTaiCuoWu } from '@/utils/前台错误'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { QianTaiDaiMa } from '@/config/前台错误码'
 
 const { 强制刷新当前页面 } = vi.hoisted(() => ({ 强制刷新当前页面: vi.fn() }))
 
@@ -600,7 +600,7 @@ describe('FP-04 聊天顶栏真实宽度状态机', () => {
       环境.设置宽度(520)
       await 环境.稳定测量()
       期望可见集合(环境.壳, 5)
-      teZhengKaiGuanCuoWu.value = chuangJianQianTaiCuoWu({ code: QIAN_TAI_DAI_MA.WANG_LUO })
+      teZhengKaiGuanCuoWu.value = chuangJianQianTaiCuoWu({ code: QianTaiDaiMa.WANG_LUO })
       await 环境.等待测量()
       expect(环境.壳.find('.junshi-kaiGuanWeiQueRen').exists()).toBe(true)
       期望可见集合(环境.壳, 4)

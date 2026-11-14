@@ -1,6 +1,6 @@
 import type { MBTI类型 } from '@/types/类型定义'
 
-const MBTI_LIE_BIAO: MBTI类型[] = [
+const MbtiLieBiao: MBTI类型[] = [
   'ISTJ',
   'ISFJ',
   'INFJ',
@@ -19,7 +19,7 @@ const MBTI_LIE_BIAO: MBTI类型[] = [
   'ENTP',
 ]
 
-const GUAN_JIAN_CI: Array<{ zheng: string; ci: string[] }> = [
+const GuanJianCi: Array<{ zheng: string; ci: string[] }> = [
   { zheng: 'E', ci: ['外向', '社牛', '热情', '爱笑', '话痨', '自来熟', '表演', '领导', '开朗', '活泼', '社交', '交朋友'] },
   { zheng: 'I', ci: ['内向', '社恐', '安静', '慢热', '独处', '神秘', '治愈', '文静', '宅', '敏感'] },
   { zheng: 'S', ci: ['务实', '踏实', '可靠', '靠谱', '细节', '组织', '照顾', '实干', '稳重'] },
@@ -34,7 +34,7 @@ export function congTongYongTiShiCiTuiCeXingGe(tiShiCi: string): MBTI类型 | nu
   if (typeof tiShiCi !== 'string' || tiShiCi.trim().length === 0) return null
   const deFen: Record<string, number> = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 }
   let mingZhong = 0
-  for (const xiang of GUAN_JIAN_CI) {
+  for (const xiang of GuanJianCi) {
     for (const guanJian of xiang.ci) {
       if (guanJian.length > 0 && tiShiCi.includes(guanJian)) {
         deFen[xiang.zheng] += guanJian.length
@@ -46,5 +46,5 @@ export function congTongYongTiShiCiTuiCeXingGe(tiShiCi: string): MBTI类型 | nu
   const xuan = (a: string, b: string): string =>
     deFen[a] === deFen[b] ? b : deFen[a] > deFen[b] ? a : b
   const jieGuo = `${xuan('E', 'I')}${xuan('S', 'N')}${xuan('T', 'F')}${xuan('J', 'P')}`
-  return (MBTI_LIE_BIAO as string[]).includes(jieGuo) ? (jieGuo as MBTI类型) : null
+  return (MbtiLieBiao as string[]).includes(jieGuo) ? (jieGuo as MBTI类型) : null
 }

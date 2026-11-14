@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { YU_YIN_ZENG_YI_SHANG_XIAN } from '@/composables/use语音音量'
+import { YuYinZengYiShangXian } from '@/composables/use语音音量'
 import {
   heChengDanTongDaoYinLiang,
   xuanZeYuYinTongDao,
 } from '@/config/消息配置'
 import {
-  YU_YIN_YIN_LIANG_MO_REN,
+  YuYinYinLiangMoRen,
   duQuYuYinYinLiang,
   sheZhiYuYinYinLiang,
   yuYinYinLiangSeXiang,
@@ -75,7 +75,7 @@ describe('每条语音独立音量', () => {
   })
 
   it('默认落在最中间，取值夹在 0 到 1 之间', () => {
-    expect(YU_YIN_YIN_LIANG_MO_REN).toBe(0.5)
+    expect(YuYinYinLiangMoRen).toBe(0.5)
     expect(duQuYuYinYinLiang({ id: 'm1' })).toBe(0.5)
     expect(sheZhiYuYinYinLiang({ id: 'm1' }, 2)).toBe(1)
     expect(sheZhiYuYinYinLiang({ id: 'm2' }, -3)).toBe(0)
@@ -84,7 +84,7 @@ describe('每条语音独立音量', () => {
   })
 
   it('中位即 100%：滑杆中点倍率为 1，底端 0、顶端 2', () => {
-    expect(YU_YIN_YIN_LIANG_MO_REN).toBe(0.5)
+    expect(YuYinYinLiangMoRen).toBe(0.5)
     expect(yuYinYinLiangZengYi(0.5)).toBe(1)
     expect(yuYinYinLiangZengYi(0)).toBe(0)
     expect(yuYinYinLiangZengYi(1)).toBe(2)
@@ -109,8 +109,8 @@ describe('每条语音独立音量', () => {
     expect(huiLuo(0.5, 0)).toBe(0)
     expect(huiLuo(0.5, 0.25)).toBe(0.25)
     const zengYi = (全局: number, 值: number) =>
-      Math.max(0, Math.min(YU_YIN_ZENG_YI_SHANG_XIAN, 全局 * yuYinYinLiangZengYi(值)))
-    expect(YU_YIN_ZENG_YI_SHANG_XIAN).toBe(4)
+      Math.max(0, Math.min(YuYinZengYiShangXian, 全局 * yuYinYinLiangZengYi(值)))
+    expect(YuYinZengYiShangXian).toBe(4)
     expect(zengYi(1, 0.5)).toBe(1)
     expect(zengYi(1, 1)).toBe(2)
     expect(zengYi(0.5, 1)).toBe(1)

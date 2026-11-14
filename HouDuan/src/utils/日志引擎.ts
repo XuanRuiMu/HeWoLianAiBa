@@ -14,9 +14,9 @@ const riZhiMuLu = path.resolve(process.cwd(), 'logs')
 const lengCunMuLu = path.join(riZhiMuLu, 'cold')
 const riZhiWenJian = path.join(riZhiMuLu, 'debug.log')
 
-const KAI_FA_WEN_JIAN_ZUI_DA = 20 * 1024 * 1024
-const KAI_FA_LUN_ZHUAN_BAO_LIU = 3
-const LUN_ZHUAN_WEN_JIAN_OB = /^debug\.\d{4}-\d{2}-\d{2}\.\d+\.log$/
+const KaiFaWenJianZuiDa = 20 * 1024 * 1024
+const KaiFaLunZhuanBaoLiu = 3
+const LunZhuanWenJianOb = /^debug\.\d{4}-\d{2}-\d{2}\.\d+\.log$/
 
 let dangQianJiBie: pino.LevelWithSilent
 let riZhiQi: pino.Logger
@@ -63,8 +63,8 @@ export function gouJianShengChanTargets(riZhiWenJian: string): RiZhiTargetPeiZhi
 
 export function lunZhuanKaiFaWenJian(
   wenJianLuJing: string = riZhiWenJian,
-  zuiDaZiShu: number = KAI_FA_WEN_JIAN_ZUI_DA,
-  baoLiuFenShu: number = KAI_FA_LUN_ZHUAN_BAO_LIU,
+  zuiDaZiShu: number = KaiFaWenJianZuiDa,
+  baoLiuFenShu: number = KaiFaLunZhuanBaoLiu,
 ): boolean {
   try {
     if (!fs.existsSync(wenJianLuJing)) return false
@@ -74,7 +74,7 @@ export function lunZhuanKaiFaWenJian(
     fs.renameSync(wenJianLuJing, path.join(path.dirname(wenJianLuJing), `debug.${riQi}.${Date.now()}.log`))
 
     const muLu = path.dirname(wenJianLuJing)
-    const liBiao = fs.readdirSync(muLu).filter((w) => LUN_ZHUAN_WEN_JIAN_OB.test(w)).sort()
+    const liBiao = fs.readdirSync(muLu).filter((w) => LunZhuanWenJianOb.test(w)).sort()
     const baoLiuShangXian = Math.max(0, baoLiuFenShu) + 1
     while (liBiao.length > baoLiuShangXian) {
       const guoQi = liBiao.shift()

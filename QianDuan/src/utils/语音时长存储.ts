@@ -1,11 +1,11 @@
 import { reactive } from 'vue'
-import { DUO_MEI_TI_PEI_ZHI } from '@/config/消息配置'
+import { DuoMeiTiPeiZhi } from '@/config/消息配置'
 
 const 存储键 = 'yuYinShiChang'
-const 条数上限 = DUO_MEI_TI_PEI_ZHI.yuYinShiChangChiJiuShangXian
-const 持久最长毫秒 = DUO_MEI_TI_PEI_ZHI.yuYinShiChangChiJiuZuiDaHaoMiao
-const 失效毫秒 = DUO_MEI_TI_PEI_ZHI.yuYinShiChangChiJiuShiXiaoHaoMiao
-const 写入延迟毫秒 = DUO_MEI_TI_PEI_ZHI.yuYinShiChangXieRuYanChiHaoMiao
+const 条数上限 = DuoMeiTiPeiZhi.yuYinShiChangChiJiuShangXian
+const 持久最长毫秒 = DuoMeiTiPeiZhi.yuYinShiChangChiJiuZuiDaHaoMiao
+const 失效毫秒 = DuoMeiTiPeiZhi.yuYinShiChangChiJiuShiXiaoHaoMiao
+const 写入延迟毫秒 = DuoMeiTiPeiZhi.yuYinShiChangXieRuYanChiHaoMiao
 const 网络协议集合 = new Set(['http:', 'https:'])
 
 export const 语音时长表 = reactive(new Map<string, number>())
@@ -152,8 +152,8 @@ export function jiLuYuYinShiChang(地址: string, 毫秒: unknown): number | nul
   return 时长
 }
 
-export const YU_YIN_SHI_CHANG_TIAO_SHU_SHANG_XIAN = 条数上限
+export const YuYinShiChangTiaoShuShangXian = 条数上限
 
-export const YU_YIN_SHI_CHANG_CUN_CHU_JIAN = 存储键
+export const YuYinShiChangCunChuJian = 存储键
 
 装载()

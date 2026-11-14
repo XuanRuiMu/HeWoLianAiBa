@@ -75,7 +75,7 @@
           :model-value="设置仓库.waiGuan.beiJing"
           :disabled="上传中 || 删除中 || 同步中 !== '' || 编辑保存中"
           :direction="tuoZhuaiFangXiang"
-            :animation="TUO_ZHUAI_HAO_MIAO"
+            :animation="TuoZhuaiHaoMiao"
           :delay="300"
           :delay-on-touch-only="true"
           :filter="'.bei-jing-ka-kong-zhi'"
@@ -249,10 +249,10 @@ import { VueDraggable } from 'vue-draggable-plus'
 import { huoQuFanYi } from '@/config/翻译表'
 import { jianShaoDongXiaoGuo } from '@/utils/动效偏好'
 import {
-  WAI_GUAN_BEI_JING_MING_CHENG_ZUI_DA_ZI_FU,
-  WAI_GUAN_MEI_LEI_ZUI_DA_TIAO_SHU,
-  WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
-  WAI_GUAN_TU_PIAN_MIME,
+  WaiGuanBeiJingMingChengZuiDaZiFu,
+  WaiGuanMeiLeiZuiDaTiaoShu,
+  WaiGuanMoRenWenZiYanSe,
+  WaiGuanTuPianMime,
   guiYiWaiGuanChuCan,
   huoQuBeiJingMengCengZhi,
   huoQuBeiJingYuSheDingYi,
@@ -271,7 +271,7 @@ import QueRenDuiHuaKuang from '@/components/确认对话框.vue'
 
 const TuPianCaiJian = defineAsyncComponent(() => import('@/components/图片裁剪.vue'))
 
-const TUO_ZHUAI_HAO_MIAO = jianShaoDongXiaoGuo() ? 0 : 200
+const TuoZhuaiHaoMiao = jianShaoDongXiaoGuo() ? 0 : 200
 function tuoZhuaiFangXiang(_shiJian: unknown, muBiao: unknown, tuoDongXiang: unknown): 'vertical' | 'horizontal' {
   const a = tuoDongXiang instanceof Element ? tuoDongXiang.getBoundingClientRect() : null
   const b = muBiao instanceof Element ? muBiao.getBoundingClientRect() : null
@@ -298,13 +298,13 @@ const 还原成功文案 = huoQuFanYi('sheZhi', 'waiGuanYiHuiFuMoRen')
 const 删除成功文案 = huoQuFanYi('sheZhi', 'beiJingYiShanChu')
 const 同步成功文案 = huoQuFanYi('sheZhi', 'beiJingYiTongBu')
 const 失败文案 = huoQuFanYi('sheZhi', 'waiGuanBaoCunShiBai')
-const tuPianMime = WAI_GUAN_TU_PIAN_MIME.join(',')
-const mingChengZuiDaZiFu = WAI_GUAN_BEI_JING_MING_CHENG_ZUI_DA_ZI_FU
+const tuPianMime = WaiGuanTuPianMime.join(',')
+const mingChengZuiDaZiFu = WaiGuanBeiJingMingChengZuiDaZiFu
 const tianChongWenAn = huoQuFanYi('sheZhi', 'caiJianYuLanTianChongZu')
 const yiYongWenAn = computed(() =>
   huoQuFanYi('sheZhi', 'beiJingYiYongJiShu')
     .replace('{n}', String(设置仓库.waiGuan.beiJing.length))
-    .replace('{zuiDa}', String(WAI_GUAN_MEI_LEI_ZUI_DA_TIAO_SHU)),
+    .replace('{zuiDa}', String(WaiGuanMeiLeiZuiDaTiaoShu)),
 )
 
 const 模式列表 = [
@@ -351,7 +351,7 @@ const 编辑初始颜色 = computed(() => {
   const 项 = 编辑目标.value?.项
   if (!项) return ''
   if (项.wenZiYanSe) return 项.wenZiYanSe
-  if (项.leiXing === 'ziDingYi' || 项.jian !== 'moRen') return WAI_GUAN_MO_REN_WEN_ZI_YAN_SE
+  if (项.leiXing === 'ziDingYi' || 项.jian !== 'moRen') return WaiGuanMoRenWenZiYanSe
   return ''
 })
 const 删除说明 = computed(() =>
@@ -387,7 +387,7 @@ function 显示名(模式: 'qian' | 'shen', 项: BeiJingXiangMu): string {
 
 function 背景项样式(模式: 'qian' | 'shen', 项: BeiJingXiangMu): Record<string, string> {
   const yuLanSe = shiYuLanZhong(模式, 项) && 编辑预览.value ? 编辑预览.value.wenZiYanSe : ''
-  const yanSe = yuLanSe || 项.wenZiYanSe || (项.leiXing === 'ziDingYi' || 项.jian !== 'moRen' ? WAI_GUAN_MO_REN_WEN_ZI_YAN_SE : '')
+  const yanSe = yuLanSe || 项.wenZiYanSe || (项.leiXing === 'ziDingYi' || 项.jian !== 'moRen' ? WaiGuanMoRenWenZiYanSe : '')
   const yangShi: Record<string, string> = {}
   if (yanSe) yangShi.color = yanSe
   if (项.leiXing === 'ziDingYi') {

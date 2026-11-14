@@ -1,9 +1,9 @@
 import type { CropperCanvas } from 'cropperjs'
 
-export const TU_PIAN_SHU_CHU_ZUI_DA_BIAN = 2048
+export const TuPianShuChuZuiDaBian = 2048
 
-export const CAI_JIAN_BI_LI_XIA_XIAN = 0.2
-export const CAI_JIAN_BI_LI_SHANG_XIAN = 5
+export const CaiJianBiLiXiaXian = 0.2
+export const CaiJianBiLiShangXian = 5
 
 export interface PingYiBuLiang {
   x: number
@@ -13,7 +13,7 @@ export interface PingYiBuLiang {
 export type CaiJianHuaBu = Pick<CropperCanvas, '$toCanvas'>
 
 export function shiHeFaBiLi(zhi: unknown): boolean {
-  return typeof zhi === 'number' && Number.isFinite(zhi) && zhi >= CAI_JIAN_BI_LI_XIA_XIAN && zhi <= CAI_JIAN_BI_LI_SHANG_XIAN
+  return typeof zhi === 'number' && Number.isFinite(zhi) && zhi >= CaiJianBiLiXiaXian && zhi <= CaiJianBiLiShangXian
 }
 
 export function guiYiGunLunZengLiang(deltaY: number, deltaMode = 0): number {
@@ -65,7 +65,7 @@ export function jiSuanJuZhenSuoFang(juZhen: number[]): number {
 export function jiSuanDaoChuChiCun(yuanKuan: number, yuanGao: number, zuiDaBian: number): { kuan: number; gao: number } {
   const anQuanZuiDa = Number.isFinite(zuiDaBian) && zuiDaBian >= 1
     ? Math.floor(zuiDaBian)
-    : TU_PIAN_SHU_CHU_ZUI_DA_BIAN
+    : TuPianShuChuZuiDaBian
   const kuan = Math.max(1, Math.round(Number.isFinite(yuanKuan) ? yuanKuan : 1))
   const gao = Math.max(1, Math.round(Number.isFinite(yuanGao) ? yuanGao : 1))
   const changBian = Math.max(kuan, gao)
@@ -134,7 +134,7 @@ export async function daoChuCaiJianWenJian(
     canShu.width = Math.max(1, Math.round(shuChuKuan as number))
   }
   const yuanHuaBu = await huaBu.$toCanvas(canShu)
-  const chiCun = jiSuanDaoChuChiCun(yuanHuaBu.width, yuanHuaBu.height, TU_PIAN_SHU_CHU_ZUI_DA_BIAN)
+  const chiCun = jiSuanDaoChuChiCun(yuanHuaBu.width, yuanHuaBu.height, TuPianShuChuZuiDaBian)
   let muBiaoHuaBu = yuanHuaBu
   if (chiCun.kuan !== yuanHuaBu.width || chiCun.gao !== yuanHuaBu.height) {
     const suoFangHuaBu = document.createElement('canvas')

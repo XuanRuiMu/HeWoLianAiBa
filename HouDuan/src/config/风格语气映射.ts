@@ -12,7 +12,7 @@ const F = '自嘲自黑'
 const G = '撒娇求关注'
 const H = '捧场起哄'
 
-export const MBTI_YU_QI_CHI: Record<string, YuQiChiShe> = {
+export const MbtiYuQiChi: Record<string, YuQiChiShe> = {
   INTJ: { zhu: [A, E], ci: [B] },
   ISTJ: { zhu: [A, C], ci: [F] },
   INFJ: { zhu: [D, A], ci: [F] },

@@ -1,4 +1,4 @@
-import { CUO_WU_DAI_MA, type CuoWuDaiMa } from '../config/错误码注册表'
+import {CuoWuDaiMa} from '../config/错误码注册表'
 import type { 依赖名称 } from './依赖就绪'
 
 export type { 依赖名称 }
@@ -34,11 +34,11 @@ export async function 包装依赖调用<T>(
 
 export function 依赖对应错误码(依赖: 依赖名称): CuoWuDaiMa {
   return 依赖 === 'postgres'
-    ? CUO_WU_DAI_MA.DEPENDENCY_POSTGRES_UNAVAILABLE
-    : CUO_WU_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE
+    ? CuoWuDaiMa.DEPENDENCY_POSTGRES_UNAVAILABLE
+    : CuoWuDaiMa.DEPENDENCY_REDIS_UNAVAILABLE
 }
 
-const POSTGRES_DAI_MA = new Set([
+const PostgresDaiMa = new Set([
   '28P01',
   '3D000',
   '42P01',
@@ -51,7 +51,7 @@ const POSTGRES_DAI_MA = new Set([
   '08004',
 ])
 
-const REDIS_DAI_MA = new Set([
+const RedisDaiMa = new Set([
   'NOAUTH',
   'WRONGPASS',
   'NR_CLOSED',
@@ -59,7 +59,7 @@ const REDIS_DAI_MA = new Set([
   'CONNECTION_BROKEN',
 ])
 
-const LIAN_JIE_CUO_WU_DAI_MA = new Set([
+const LianJieCuoWuDaiMa = new Set([
   'ECONNREFUSED',
   'ENOTFOUND',
   'ETIMEDOUT',
@@ -76,9 +76,9 @@ export function 推断依赖来源(值: unknown): 依赖名称 | null {
   const 对象 = 值 as { code?: unknown; severity?: unknown; message?: unknown; syscall?: unknown }
   const 代码 = typeof 对象.code === 'string' ? 对象.code : ''
   const 文案 = typeof 对象.message === 'string' ? 对象.message : ''
-  if (POSTGRES_DAI_MA.has(代码) || typeof 对象.severity === 'string') return 'postgres'
-  if (REDIS_DAI_MA.has(代码)) return 'redis'
-  if (LIAN_JIE_CUO_WU_DAI_MA.has(代码)) {
+  if (PostgresDaiMa.has(代码) || typeof 对象.severity === 'string') return 'postgres'
+  if (RedisDaiMa.has(代码)) return 'redis'
+  if (LianJieCuoWuDaiMa.has(代码)) {
     if (/:5432|postgres/i.test(文案)) return 'postgres'
     if (/:6379|rediss?:\/\//i.test(文案)) return 'redis'
     return null

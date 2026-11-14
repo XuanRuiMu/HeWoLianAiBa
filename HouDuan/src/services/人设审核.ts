@@ -1,7 +1,7 @@
 import { debug日志 } from '../utils/debug日志'
 import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { jiaZaiZuiXinCiKu, saoMiaoNeiRong } from './审核词库'
-import { baoZhuangYongHuNeiRong, DING_JIE_FU_SHENG_MING } from './Prompt构建器'
+import { baoZhuangYongHuNeiRong, DingJieFuShengMing } from './Prompt构建器'
 import { shiFouXingShi } from '../config/姓氏表'
 import { huoQuFanYi } from '../config/translations'
 import type { XinMuZhongDeTaZiDing } from './角色生成'
@@ -45,7 +45,7 @@ export function qingChuRenSheShenHeMock(): void {
   renSheShenHeMock = null
 }
 
-const ZHI_LING_TE_ZHENG: RegExp[] = [
+const ZhiLingTeZheng: RegExp[] = [
   /ignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/gi,
   /disregard\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/gi,
   /forget\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/gi,
@@ -90,15 +90,15 @@ export interface YingJianRenSheJieGuo {
   yuanYinMa?: RenSheJuJueYuanYinMa
 }
 
-export const NIAN_LING_XIA_XIAN = 10
-export const NIAN_LING_SHANG_XIAN = 99
+export const NianLingXiaXian = 10
+export const NianLingShangXian = 99
 
 export function shiFouHeFaNianLingShuRu(yuanZhi: unknown): boolean {
   if (yuanZhi === undefined || yuanZhi === null || yuanZhi === '') return true
   const yuanWen = String(yuanZhi).trim()
   if (!/^\d+$/.test(yuanWen)) return false
   const shu = Number(yuanWen)
-  return Number.isInteger(shu) && shu >= NIAN_LING_XIA_XIAN && shu <= NIAN_LING_SHANG_XIAN
+  return Number.isInteger(shu) && shu >= NianLingXiaXian && shu <= NianLingShangXian
 }
 
 export function yingJianRenShe(ziDuan: XinMuZhongDeTaZiDing): YingJianRenSheJieGuo {
@@ -130,7 +130,7 @@ export function yingJianRenShe(ziDuan: XinMuZhongDeTaZiDing): YingJianRenSheJieG
   const wenBenZiDuan = [ziDuan.wei_xin_ming, ziDuan.zhen_shi_ming, ziDuan.tong_yong_ti_shi_ci]
   for (const wenBen of wenBenZiDuan) {
     if (!wenBen) continue
-    for (const moShi of ZHI_LING_TE_ZHENG) {
+    for (const moShi of ZhiLingTeZheng) {
       if (moShi.test(wenBen)) {
         moShi.lastIndex = 0
         return { juJue: true, yuanYinMa: 'zhuRuGongJi' }
@@ -167,7 +167,7 @@ export function gouJianRenSheShenHePrompt(ziDuan: XinMuZhongDeTaZiDing): string 
     typeof ziDuan.nian_ling === 'number' ? String(ziDuan.nian_ling) : '（未填）'
   return [
     '你是恋爱聊天App的角色创建审核器。用户想创建一个虚拟聊天对象，下面成对标记里的是用户填写的资料。',
-    DING_JIE_FU_SHENG_MING,
+    DingJieFuShengMing,
     '<judge_rules>',
     '通过（人物可成立）：',
     '- 信息指向一个具体的人：性格/身份/职业/爱好/经历/关系任一可落地；',
@@ -203,7 +203,7 @@ export function gouJianRenSheShenHePrompt(ziDuan: XinMuZhongDeTaZiDing): string 
   ].join('\n')
 }
 
-const YUN_XU_BIAO_JI: ReadonlySet<string> = new Set([
+const YunXuBiaoJi: ReadonlySet<string> = new Set([
   'zhuRuGongJi',
   'weiFaNeiRong',
   'zangHua',
@@ -213,7 +213,7 @@ const YUN_XU_BIAO_JI: ReadonlySet<string> = new Set([
   'feiRenWuMiaoShu',
 ])
 
-const YUN_XU_YUAN_YIN_MA: ReadonlySet<string> = new Set([
+const YunXuYuanYinMa: ReadonlySet<string> = new Set([
   'zhuRuGongJi',
   'weiFaNeiRong',
   'zangHua',
@@ -249,7 +249,7 @@ function yanZhengShenHeChuCan(shuJu: Record<string, unknown> | null): RenSheShen
   const biaoJiZhi = shuJu['biao_ji']
   if (!Array.isArray(biaoJiZhi)) return { heFa: false }
   const biaoJi = biaoJiZhi.filter(
-    (biao): biao is string => typeof biao === 'string' && YUN_XU_BIAO_JI.has(biao),
+    (biao): biao is string => typeof biao === 'string' && YunXuBiaoJi.has(biao),
   )
   const ziDuanPanDingZhi = shuJu['zi_duan_pan_ding']
   if (!ziDuanPanDingZhi || typeof ziDuanPanDingZhi !== 'object' || Array.isArray(ziDuanPanDingZhi)) {
@@ -262,7 +262,7 @@ function yanZhengShenHeChuCan(shuJu: Record<string, unknown> | null): RenSheShen
     const panDing = xiang['pan_ding']
     if (panDing !== 'tongGuo' && panDing !== 'buFen' && panDing !== 'juJue') return { heFa: false }
     const yuanYinMa = xiang['yuan_yin_ma']
-    if (yuanYinMa !== null && yuanYinMa !== undefined && !YUN_XU_YUAN_YIN_MA.has(String(yuanYinMa))) {
+    if (yuanYinMa !== null && yuanYinMa !== undefined && !YunXuYuanYinMa.has(String(yuanYinMa))) {
       return { heFa: false }
     }
     const baoLiu = xiang['bao_liu_pian_duan']
@@ -288,7 +288,7 @@ async function diaoYongShenHe(ziDuan: XinMuZhongDeTaZiDing): Promise<RenSheShenH
   }
 }
 
-const BIAO_JI_YOU_XIAN_JI: readonly RenSheJuJueYuanYinMa[] = [
+const BiaoJiYouXianJi: readonly RenSheJuJueYuanYinMa[] = [
   'zhuRuGongJi',
   'weiFaNeiRong',
   'zangHua',
@@ -323,7 +323,7 @@ export async function caiJueRenShe(
     }
   }
 
-  for (const biao of BIAO_JI_YOU_XIAN_JI) {
+  for (const biao of BiaoJiYouXianJi) {
     if (shenHe.biaoJi?.includes(biao)) {
       return { jieLun: 'juJue', yuanYinMa: biao, baoLiuPianDuan: [], guiYiHou }
     }
@@ -332,7 +332,7 @@ export async function caiJueRenShe(
   const weiXinPanDing = shenHe.ziDuanPanDing?.['wei_xin_ming']
   if (weiXinPanDing?.pan_ding === 'juJue') {
     const yuanYinMa =
-      typeof weiXinPanDing.yuan_yin_ma === 'string' && YUN_XU_YUAN_YIN_MA.has(weiXinPanDing.yuan_yin_ma)
+      typeof weiXinPanDing.yuan_yin_ma === 'string' && YunXuYuanYinMa.has(weiXinPanDing.yuan_yin_ma)
         ? (weiXinPanDing.yuan_yin_ma as RenSheJuJueYuanYinMa)
         : 'zangHua'
     return { jieLun: 'juJue', yuanYinMa, baoLiuPianDuan: [], guiYiHou }
@@ -341,7 +341,7 @@ export async function caiJueRenShe(
   const zhenMingPanDing = shenHe.ziDuanPanDing?.['zhen_shi_ming']
   if (zhenMingPanDing?.pan_ding === 'juJue') {
     const yuanYinMa =
-      typeof zhenMingPanDing.yuan_yin_ma === 'string' && YUN_XU_YUAN_YIN_MA.has(zhenMingPanDing.yuan_yin_ma)
+      typeof zhenMingPanDing.yuan_yin_ma === 'string' && YunXuYuanYinMa.has(zhenMingPanDing.yuan_yin_ma)
         ? (zhenMingPanDing.yuan_yin_ma as RenSheJuJueYuanYinMa)
         : 'xingShiChongTu'
     return { jieLun: 'juJue', yuanYinMa, baoLiuPianDuan: [], guiYiHou }
@@ -350,7 +350,7 @@ export async function caiJueRenShe(
   const miaoShuPanDing = shenHe.ziDuanPanDing?.['tong_yong_ti_shi_ci']
   if (miaoShuPanDing?.pan_ding === 'juJue') {
     const yuanYinMa =
-      typeof miaoShuPanDing.yuan_yin_ma === 'string' && YUN_XU_YUAN_YIN_MA.has(miaoShuPanDing.yuan_yin_ma)
+      typeof miaoShuPanDing.yuan_yin_ma === 'string' && YunXuYuanYinMa.has(miaoShuPanDing.yuan_yin_ma)
         ? (miaoShuPanDing.yuan_yin_ma as RenSheJuJueYuanYinMa)
         : 'feiRenWuMiaoShu'
     return { jieLun: 'juJue', yuanYinMa, baoLiuPianDuan: [], guiYiHou }

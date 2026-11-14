@@ -51,10 +51,10 @@ describe('FP-19 对象加载等待语与偷人提示', () => {
   })
 
   it('等待语由统一控制器按 3 秒循环，最短展示 1 秒，生成仓库不再持有定时器', () => {
-    expect(控制器源码).toContain('HUAN_CI_ZHOU_QI_HAO_MIAO = 3000')
-    expect(控制器源码).toContain('ZUI_DUAN_ZHAN_SHI_HAO_MIAO = 1000')
+    expect(控制器源码).toContain('HuanCiZhouQiHaoMiao = 3000')
+    expect(控制器源码).toContain('ZuiDuanZhanShiHaoMiao = 1000')
     expect(控制器源码).toMatch(
-      /setInterval\(\(\) => \{\s*趣味语序\.value \+= 1\s*\}, 配置\.换词毫秒 \?\? HUAN_CI_ZHOU_QI_HAO_MIAO\)/,
+      /setInterval\(\(\) => \{\s*趣味语序\.value \+= 1\s*\}, 配置\.换词毫秒 \?\? HuanCiZhouQiHaoMiao\)/,
     )
     expect(生成仓库源码).not.toContain('setInterval')
     expect(生成仓库源码).not.toContain('dengDaiYuLieBiao')

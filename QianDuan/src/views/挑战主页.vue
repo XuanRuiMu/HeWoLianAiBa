@@ -390,7 +390,7 @@ import { use前台错误 } from '@/composables/use前台错误'
 import { 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
 import { quYuQuJiaoJie } from '@/router/预取'
 
-const LU_YOU_MING = 'tiaoZhanZhuYe'
+const LuYouMing = 'tiaoZhanZhuYe'
 
 const router = useRouter()
 
@@ -518,7 +518,7 @@ const bangDanWo = computed(() => {
 })
 
 async function jiaZaiShuJuNei() {
-  const yuQu = quYuQuJiaoJie<Promise<[TiaoZhanDuiJu | null, ZuBieGaiKuang[]]>>(LU_YOU_MING)
+  const yuQu = quYuQuJiaoJie<Promise<[TiaoZhanDuiJu | null, ZuBieGaiKuang[]]>>(LuYouMing)
   const [duiJu, gaiKuang] = await (yuQu ?? Promise.all([huoQuDangQianDuiJu(), huoQuWoDeGaiKuang()]))
   dangQianDuiJu.value = duiJu
   gaiKuangLieBiao.value = gaiKuang

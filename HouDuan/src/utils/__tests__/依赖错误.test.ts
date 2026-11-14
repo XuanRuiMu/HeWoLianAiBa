@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CUO_WU_DAI_MA } from '../../config/错误码注册表'
+import { CuoWuDaiMa } from '../../config/错误码注册表'
 import {
   依赖不可用错误,
   依赖对应错误码,
@@ -27,8 +27,8 @@ describe('依赖错误归类', () => {
   })
 
   it('依赖名映射到各自的 503 错误码', () => {
-    expect(依赖对应错误码('postgres')).toBe(CUO_WU_DAI_MA.DEPENDENCY_POSTGRES_UNAVAILABLE)
-    expect(依赖对应错误码('redis')).toBe(CUO_WU_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE)
+    expect(依赖对应错误码('postgres')).toBe(CuoWuDaiMa.DEPENDENCY_POSTGRES_UNAVAILABLE)
+    expect(依赖对应错误码('redis')).toBe(CuoWuDaiMa.DEPENDENCY_REDIS_UNAVAILABLE)
   })
 
   it('能从未包装的数据库错误里识别依赖来源', () => {

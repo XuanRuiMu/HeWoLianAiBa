@@ -20,13 +20,13 @@ export interface Use好友概览返回值 {
   qingKong: () => void
 }
 
-const ZAI_XIAN_HAO_MIAO = 5 * 60 * 1000
-const JIN_RI_HAO_MIAO = 24 * 60 * 60 * 1000
-const ZUI_JIN_HAO_MIAO = 7 * 24 * 60 * 60 * 1000
-const ZUI_DA_YU_QU_SHU = 24
-const BING_FA_SHU = 4
-const YI_TIAN_HAO_MIAO = 24 * 60 * 60 * 1000
-const ZHAI_YAO_ZI_SHOU = 40
+const ZaiXianHaoMiao = 5 * 60 * 1000
+const JinRiHaoMiao = 24 * 60 * 60 * 1000
+const ZuiJinHaoMiao = 7 * 24 * 60 * 60 * 1000
+const ZuiDaYuQuShu = 24
+const BingFaShu = 4
+const YiTianHaoMiao = 24 * 60 * 60 * 1000
+const ZhaiYaoZiShou = 40
 
 function zhaiYaoWenBen(xiaoXi: HaoYouXiaoXi): string {
   if (xiaoXi.yi_che_hui) return huoQuFanYi('haoYou', 'xiaoXiYiCheHui')
@@ -37,7 +37,7 @@ function zhaiYaoWenBen(xiaoXi: HaoYouXiaoXi): string {
   if (leiBie === 'biaoqingshu') return huoQuFanYi('haoYou', 'xiaoXiBiaoQing')
   const chunWen = (xiaoXi.nei_rong || '').replace(/\s+/g, ' ').trim()
   if (!chunWen) return huoQuFanYi('haoYou', 'xiaoXiWuNeiRong')
-  return chunWen.length > ZHAI_YAO_ZI_SHOU ? `${chunWen.slice(0, ZHAI_YAO_ZI_SHOU)}……` : chunWen
+  return chunWen.length > ZhaiYaoZiShou ? `${chunWen.slice(0, ZhaiYaoZiShou)}……` : chunWen
 }
 
 function xingQiWenBen(xingQi: number): string {
@@ -67,10 +67,10 @@ export function geShiHuaHaoYouShiJian(shiJianChuo: number, xianZai: number = Dat
   const fen = String(riQi.getMinutes()).padStart(2, '0')
   const shiFen = `${shi}:${fen}`
   if (muBiaoLingDian === jinTianLingDian) return shiFen
-  if (muBiaoLingDian === jinTianLingDian - YI_TIAN_HAO_MIAO) {
+  if (muBiaoLingDian === jinTianLingDian - YiTianHaoMiao) {
     return `${huoQuFanYi('shiJian', 'zuoTian')} ${shiFen}`
   }
-  if (muBiaoLingDian > jinTianLingDian - 7 * YI_TIAN_HAO_MIAO) return xingQiWenBen(riQi.getDay())
+  if (muBiaoLingDian > jinTianLingDian - 7 * YiTianHaoMiao) return xingQiWenBen(riQi.getDay())
   const yue = String(riQi.getMonth() + 1).padStart(2, '0')
   const ri = String(riQi.getDate()).padStart(2, '0')
   if (riQi.getFullYear() === new Date(xianZai).getFullYear()) return `${yue}-${ri}`
@@ -104,7 +104,7 @@ export function use好友概览(): Use好友概览返回值 {
   async function jiaZai(haoYouLieBiao: HaoYouXiang[]): Promise<void> {
     lingPai += 1
     const dangQianLingPai = lingPai
-    const duiLie = haoYouLieBiao.slice(0, ZUI_DA_YU_QU_SHU).map((haoYou) => haoYou.id)
+    const duiLie = haoYouLieBiao.slice(0, ZuiDaYuQuShu).map((haoYou) => haoYou.id)
     if (!duiLie.length) {
       zuiJinDongTai.value = {}
       jiaZaiZhong.value = false
@@ -118,7 +118,7 @@ export function use好友概览(): Use好友概览返回值 {
         await yuQuYiGe(haoYouId, dangQianLingPai)
       }
     }
-    await Promise.all(Array.from({ length: BING_FA_SHU }, gongZuo))
+    await Promise.all(Array.from({ length: BingFaShu }, gongZuo))
     if (dangQianLingPai === lingPai) jiaZaiZhong.value = false
   }
 
@@ -130,9 +130,9 @@ export function use好友概览(): Use好友概览返回值 {
     const dongTai = huoQuZuiJin(haoYouId)
     if (!dongTai) return 'weiZhi'
     const cha = Date.now() - dongTai.shiJianChuo
-    if (cha <= ZAI_XIAN_HAO_MIAO) return 'zaiXian'
-    if (cha <= JIN_RI_HAO_MIAO) return 'jinRi'
-    if (cha <= ZUI_JIN_HAO_MIAO) return 'zuiJin'
+    if (cha <= ZaiXianHaoMiao) return 'zaiXian'
+    if (cha <= JinRiHaoMiao) return 'jinRi'
+    if (cha <= ZuiJinHaoMiao) return 'zuiJin'
     return 'liXian'
   }
 

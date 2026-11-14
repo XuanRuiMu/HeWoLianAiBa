@@ -4,11 +4,11 @@ import { huoQuJunShiZhiDaoZhuangTai } from '@/api/聊天'
 import { 归一前台错误, type QianTaiCuoWu } from '@/utils/前台错误'
 import type { JunShiZhiDaoZhuangTaiXinXi } from '@/types/类型定义'
 
-const JIAO_SE_ID_ZHENG_ZE =
+const JiaoSeIdZhengZe =
   /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
 
 export function shiYouXiaoJiaoSeId(id: string): boolean {
-  return typeof id === 'string' && JIAO_SE_ID_ZHENG_ZE.test(id)
+  return typeof id === 'string' && JiaoSeIdZhengZe.test(id)
 }
 
 export const 使用军师仓库 = defineStore('军师', () => {

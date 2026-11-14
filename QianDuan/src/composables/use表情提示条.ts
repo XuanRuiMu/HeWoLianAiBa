@@ -1,5 +1,5 @@
 import { ref, type Ref } from 'vue'
-import { BIAO_QING_QU_TU_PEI_ZHI } from '@/config/表情配置'
+import { BiaoQingQuTuPeiZhi } from '@/config/表情配置'
 
 interface Use表情提示条返回值 {
   tiShi: Ref<string | null>
@@ -17,7 +17,7 @@ export function use表情提示条(): Use表情提示条返回值 {
     tiShiDingShiQi = setTimeout(() => {
       tiShiDingShiQi = null
       tiShi.value = null
-    }, BIAO_QING_QU_TU_PEI_ZHI.tiShiXiaoShiHaoMiao)
+    }, BiaoQingQuTuPeiZhi.tiShiXiaoShiHaoMiao)
   }
 
   function yinXia(): void {

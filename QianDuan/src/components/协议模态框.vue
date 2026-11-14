@@ -82,9 +82,9 @@ const emit = defineEmits<{
   (e: 'guanBi'): void
 }>()
 
-const ZHANG_ZHENG_ZE = /^[一二三四五六七八九十百]+、\S/
-const JIE_ZHENG_ZE = /^\d+(?:\.\d+)+\s*\S/
-const JIAO_DIAN_XUAN_ZE_QI =
+const ZhangZhengZe = /^[一二三四五六七八九十百]+、\S/
+const JieZhengZe = /^\d+(?:\.\d+)+\s*\S/
+const JiaoDianXuanZeQi =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 const biaoTiId = useId()
@@ -104,11 +104,11 @@ const yuanShiWenBen = computed(() => {
 })
 
 function shiZhangBiaoTi(wenBen: string): boolean {
-  return ZHANG_ZHENG_ZE.test(wenBen) && wenBen.length <= 30 && !/[。；：]$/.test(wenBen)
+  return ZhangZhengZe.test(wenBen) && wenBen.length <= 30 && !/[。；：]$/.test(wenBen)
 }
 
 function shiJieBiaoTi(wenBen: string): boolean {
-  return JIE_ZHENG_ZE.test(wenBen) && wenBen.length <= 40 && !/[。；：]$/.test(wenBen)
+  return JieZhengZe.test(wenBen) && wenBen.length <= 40 && !/[。；：]$/.test(wenBen)
 }
 
 function fenXiXieyi(yuanWen: string): XieyiKuai[] {
@@ -169,7 +169,7 @@ function chuLiJianPan(shiJian: KeyboardEvent): void {
   if (shiJian.key !== 'Tab') return
   const rongQi = tanChuangQu.value
   if (!rongQi) return
-  const keJiaoDian = Array.from(rongQi.querySelectorAll<HTMLElement>(JIAO_DIAN_XUAN_ZE_QI)).filter(
+  const keJiaoDian = Array.from(rongQi.querySelectorAll<HTMLElement>(JiaoDianXuanZeQi)).filter(
     (yuanSu) => !yuanSu.hasAttribute('disabled') && yuanSu.getAttribute('aria-hidden') !== 'true',
   )
   if (keJiaoDian.length === 0) return

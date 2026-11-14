@@ -1,7 +1,9 @@
+import type { PoolClient, QueryResult } from 'pg'
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
-import { XIAO_XI_PEI_ZHI } from '../config/消息配置'
-import { YUN_XU_XIAO_XI_LEI_XING } from '../config/媒体配置'
+import { XiaoXiPeiZhi } from '../config/消息配置'
+import { BiaoQingShuLeiBie, LeiBieDaoXiaoXiLeiXing, YunXuXiaoXiLeiXing } from '../config/媒体配置'
+import { BiaoQingDuanMingZuiDaChang } from '../config/表情包配置'
 import { huoQuIo } from '../socket/io'
 import { yanZhengUUID } from '../utils/验证'
 import { huoQuJiaoSeBianHao } from './公开编号'
@@ -9,7 +11,9 @@ import { 解析结局类型, 解析结局文案 } from '../utils/结局'
 import { 归一角色性别 } from '../utils/性别'
 import { debug日志, jiLuXiaoXiCaoZuo, jiLuSocketShiJian } from '../utils/debug日志'
 import { shengChengQianMingURL } from './媒体存储'
+import { chaAnDuanMing, duanMingDaoUUID } from './表情包库'
 import {
+  XiaoXiKuaiLeiXing,
   diuQiDaoCuoWuJian,
   fanGouKuai,
   jiLuKuaiDiuQi,
@@ -22,9 +26,14 @@ import {
   type XiaoXiKuai,
 } from './消息内容块'
 
+const BiaoQingXiaoXiLeiXing = LeiBieDaoXiaoXiLeiXing[BiaoQingShuLeiBie]
+
+const TieZhiDuanMingZhengZe = /^\s*\[贴纸[:：]\s*([^\]】]+?)\s*\]\s*$/
+
 export interface XiaoXiKuaiChuCan extends XiaoXiKuai {
   mei_ti_url?: string | null
   mei_ti_lei_bie?: string | null
+  duan_ming?: string | null
 }
 
 interface KuaiMeiTiXinXi {
@@ -114,6 +123,59 @@ function tuiSongCheHuiShiJian(
 export interface KuaiShangXiaWen {
   kuaiOf(xiaoXiId: string): XiaoXiKuai[] | null
   meiTiOf(meiTiId: string): KuaiMeiTiXinXi | null
+  biaoQingShaOf?(duanMing: string): string | null
+}
+
+function quKuaiShuZu(zhi: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(zhi)) return []
+  const jieGuo: Record<string, unknown>[] = []
+  for (const yuan of zhi) {
+    if (typeof yuan !== 'object' || yuan === null || Array.isArray(yuan)) continue
+    jieGuo.push(yuan as Record<string, unknown>)
+  }
+  return jieGuo
+}
+
+function quTieZhiDuanMing(xiang: Record<string, unknown>): string | null {
+  if (xiang.lei_xing !== XiaoXiKuaiLeiXing.tuPian) return null
+  const meiTiId = typeof xiang.mei_ti_id === 'string' ? xiang.mei_ti_id.trim() : ''
+  if (meiTiId !== '') return null
+  const duanMing = typeof xiang.duan_ming === 'string' ? xiang.duan_ming.trim() : ''
+  if (duanMing === '' || duanMing.length > BiaoQingDuanMingZuiDaChang) return null
+  return duanMing
+}
+
+function jieXiTieZhiDuanMing(zhi: unknown): string | null {
+  if (typeof zhi !== 'string') return null
+  const piPei = TieZhiDuanMingZhengZe.exec(zhi)
+  if (!piPei) return null
+  const duanMing = piPei[1].trim()
+  if (duanMing === '' || duanMing.length > BiaoQingDuanMingZuiDaChang) return null
+  return duanMing
+}
+
+function shouJiTieZhiDuanMing(row: Record<string, unknown>): Set<string> {
+  const jieGuo = new Set<string>()
+  for (const xiang of quKuaiShuZu(row.内容块)) {
+    const duanMing = quTieZhiDuanMing(xiang)
+    if (duanMing) jieGuo.add(duanMing)
+  }
+  return jieGuo
+}
+
+function yingSheTieZhiKuai(
+  duanMing: string,
+  shangXiaWen: KuaiShangXiaWen,
+  zhuTi: string,
+): XiaoXiKuaiChuCan {
+  const sha256 = shangXiaWen.biaoQingShaOf?.(duanMing) ?? null
+  return {
+    lei_xing: XiaoXiKuaiLeiXing.tuPian,
+    duan_ming: duanMing,
+    mei_ti_id: duanMingDaoUUID(duanMing),
+    mei_ti_url: sha256 ? shengChengQianMingURL(sha256, zhuTi) : null,
+    mei_ti_lei_bie: BiaoQingShuLeiBie,
+  }
 }
 
 export interface KuaiTouYingMianXiang {
@@ -123,7 +185,7 @@ export interface KuaiTouYingMianXiang {
   qianMingZhuTi(hang: Record<string, unknown>): string
 }
 
-const AI_KUAI_TOU_YING: KuaiTouYingMianXiang = {
+const AiKuaiTouYing: KuaiTouYingMianXiang = {
   cheHuiLie: '已撤回',
   sha256Lie: '媒体SHA256',
   leiBieLie: '媒体类别',
@@ -139,7 +201,7 @@ export function haoYouKuaiTouYing(duZheId: string): KuaiTouYingMianXiang {
   }
 }
 
-const WU_KUAI_SHANG_XIA_WEN: KuaiShangXiaWen = {
+const WuKuaiShangXiaWen: KuaiShangXiaWen = {
   kuaiOf: () => null,
   meiTiOf: () => null,
 }
@@ -224,13 +286,24 @@ function anHangKuai(row: Record<string, unknown>): XiaoXiKuai[] {
 
 export async function gouKuaiShangXiaWen(
   rows: Record<string, unknown>[],
-  mianXiang: KuaiTouYingMianXiang = AI_KUAI_TOU_YING,
+  mianXiang: KuaiTouYingMianXiang = AiKuaiTouYing,
 ): Promise<KuaiShangXiaWen> {
   const kuaiAnId = new Map<string, XiaoXiKuai[]>()
   const meiTiIds = new Set<string>()
+  const duanMingJi = new Set<string>()
   for (const row of rows) {
-    const xiaoXiId = String(row.ID ?? '')
     if (row[mianXiang.cheHuiLie]) continue
+    const tieZhiMing = shouJiTieZhiDuanMing(row)
+    if (tieZhiMing.size > 0) {
+      for (const duanMing of tieZhiMing) duanMingJi.add(duanMing)
+      for (const xiang of quKuaiShuZu(row.内容块)) {
+        if (xiang.lei_xing !== XiaoXiKuaiLeiXing.tuPian) continue
+        const meiTiId = typeof xiang.mei_ti_id === 'string' ? xiang.mei_ti_id.trim() : ''
+        if (meiTiId !== '' && yanZhengUUID(meiTiId)) meiTiIds.add(meiTiId)
+      }
+      continue
+    }
+    const xiaoXiId = String(row.ID ?? '')
     const kuai = anHangKuai(row)
     kuaiAnId.set(xiaoXiId, kuai)
     for (const xiang of kuai) {
@@ -252,23 +325,73 @@ export async function gouKuaiShangXiaWen(
       })
     }
   }
+  const biaoQingAnDuanMing = new Map<string, string>()
+  if (duanMingJi.size > 0) {
+    const mingLie = [...duanMingJi]
+    const tiaoMuLie = await Promise.all(mingLie.map((duanMing) => chaAnDuanMing(duanMing)))
+    mingLie.forEach((duanMing, wei) => {
+      const tiaoMu = tiaoMuLie[wei]
+      if (tiaoMu) biaoQingAnDuanMing.set(duanMing, tiaoMu.sha256.toLowerCase())
+    })
+  }
   return {
     kuaiOf: (xiaoXiId) => kuaiAnId.get(xiaoXiId) ?? null,
     meiTiOf: (meiTiId) => meiTiAnId.get(meiTiId) ?? null,
+    biaoQingShaOf: (duanMing) => biaoQingAnDuanMing.get(duanMing.trim()) ?? null,
   }
+}
+
+function yingSheDanKuai(
+  xiang: XiaoXiKuai,
+  beiYongLeiBie: string | null,
+  zhuTi: string,
+  benHangMeiTi: (meiTiId: string) => KuaiMeiTiXinXi | null,
+): XiaoXiKuaiChuCan {
+  if (xiang.lei_xing !== XiaoXiKuaiLeiXing.tuPian) return { ...xiang }
+  const meiTi = benHangMeiTi(xiang.mei_ti_id ?? '')
+  if (!meiTi) return { ...xiang, mei_ti_url: null, mei_ti_lei_bie: beiYongLeiBie }
+  return {
+    ...xiang,
+    mei_ti_url: shengChengQianMingURL(meiTi.sha256, zhuTi),
+    mei_ti_lei_bie: meiTi.lei_bie || beiYongLeiBie,
+  }
+}
+
+function yingSheYuanShiKuai(
+  xiang: Record<string, unknown>,
+  shangXiaWen: KuaiShangXiaWen,
+  zhuTi: string,
+  beiYongLeiBie: string | null,
+  benHangMeiTi: (meiTiId: string) => KuaiMeiTiXinXi | null,
+): XiaoXiKuaiChuCan | null {
+  const duanMing = quTieZhiDuanMing(xiang)
+  if (duanMing) return yingSheTieZhiKuai(duanMing, shangXiaWen, zhuTi)
+  if (xiang.lei_xing === XiaoXiKuaiLeiXing.wenZi) {
+    return {
+      lei_xing: XiaoXiKuaiLeiXing.wenZi,
+      nei_rong: typeof xiang.nei_rong === 'string' ? xiang.nei_rong : '',
+    }
+  }
+  const meiTiId = typeof xiang.mei_ti_id === 'string' ? xiang.mei_ti_id.trim() : ''
+  if (meiTiId === '' || !yanZhengUUID(meiTiId)) return null
+  return yingSheDanKuai(
+    { lei_xing: XiaoXiKuaiLeiXing.tuPian, mei_ti_id: meiTiId },
+    beiYongLeiBie,
+    zhuTi,
+    benHangMeiTi,
+  )
 }
 
 export function yingSheKuaiChuCan(
   row: Record<string, unknown>,
   shangXiaWen: KuaiShangXiaWen,
   cheHuiWenAn: string,
-  mianXiang: KuaiTouYingMianXiang = AI_KUAI_TOU_YING,
+  mianXiang: KuaiTouYingMianXiang = AiKuaiTouYing,
 ): XiaoXiKuaiChuCan[] {
   if (row[mianXiang.cheHuiLie]) {
     return [{ lei_xing: 'wenzi', nei_rong: cheHuiWenAn }]
   }
   const xiaoXiId = String(row.ID ?? '')
-  const kuai: XiaoXiKuai[] = shangXiaWen.kuaiOf(xiaoXiId) ?? anHangKuai(row)
   const beiYongLeiBie = leiXingDaoMeiTiLeiBie(String(row.类型 || 'wenben'))
   const benHangMeiTi = (meiTiId: string): KuaiMeiTiXinXi | null => {
     const caiDao = shangXiaWen.meiTiOf(meiTiId)
@@ -280,23 +403,37 @@ export function yingSheKuaiChuCan(
       lei_bie: String(row[mianXiang.leiBieLie] ?? '') || beiYongLeiBie || '',
     }
   }
-  return kuai.map((xiang) => {
-    if (xiang.lei_xing !== 'tupian') return { ...xiang }
-    const meiTiId = xiang.mei_ti_id ?? ''
-    const meiTi = benHangMeiTi(meiTiId)
-    if (!meiTi) return { ...xiang, mei_ti_url: null, mei_ti_lei_bie: beiYongLeiBie }
-    return {
-      ...xiang,
-      mei_ti_url: shengChengQianMingURL(meiTi.sha256, mianXiang.qianMingZhuTi(row)),
-      mei_ti_lei_bie: meiTi.lei_bie || beiYongLeiBie,
+  const zhuTi = String(mianXiang.qianMingZhuTi(row))
+  const yuanKuai = quKuaiShuZu(row.内容块)
+  if (yuanKuai.some((xiang) => quTieZhiDuanMing(xiang) !== null)) {
+    const jieGuo: XiaoXiKuaiChuCan[] = []
+    for (const xiang of yuanKuai) {
+      const chuCan = yingSheYuanShiKuai(xiang, shangXiaWen, zhuTi, beiYongLeiBie, benHangMeiTi)
+      if (chuCan) jieGuo.push(chuCan)
     }
-  })
+    return jieGuo
+  }
+  const kuai: XiaoXiKuai[] = shangXiaWen.kuaiOf(xiaoXiId) ?? anHangKuai(row)
+  return kuai.map((xiang) => yingSheDanKuai(xiang, beiYongLeiBie, zhuTi, benHangMeiTi))
 }
 
-function yingSheXiaoXi(
+async function chaTieZhiSha256(row: Record<string, unknown>): Promise<string | null> {
+  const duanMing = jieXiTieZhiDuanMing(row.内容)
+  if (duanMing === null) return null
+  const tiaoMu = await chaAnDuanMing(duanMing)
+  if (!tiaoMu) {
+    debug日志.warn('消息服务', '贴纸短名未命中表情包库，按无媒体出参', {
+      xiang_qing: { xiao_xi_id: String(row.ID ?? ''), duan_ming: duanMing },
+    })
+    return null
+  }
+  return tiaoMu.sha256.toLowerCase()
+}
+
+async function yingSheXiaoXi(
   row: Record<string, unknown>,
-  shangXiaWen: KuaiShangXiaWen = WU_KUAI_SHANG_XIA_WEN,
-): XiaoXiXinXi {
+  shangXiaWen: KuaiShangXiaWen = WuKuaiShangXiaWen,
+): Promise<XiaoXiXinXi> {
   const faSongZheLeiXing =
     row.发送者 === 'yonghu' ? 'yonghu' : row.发送者 === 'jiaose' ? 'jiaose' : 'xitong'
   const faSongZheId =
@@ -309,6 +446,11 @@ function yingSheXiaoXi(
   const cheHuiWenAn = huoQuFanYi('liaoTian', 'duiFangCheHuiLeYiTiaoXiaoXi')
   const meiTiId = row.媒体ID ? String(row.媒体ID) : null
   const neiRong = yiCheHui ? cheHuiWenAn : String(row.内容)
+  const leiXing = String(row.类型 || 'wenben')
+  const meiTiSha256 = row.媒体SHA256 ? String(row.媒体SHA256).toLowerCase() : ''
+  const tieZhiSha256 =
+    meiTiSha256 === '' && leiXing === BiaoQingXiaoXiLeiXing ? await chaTieZhiSha256(row) : null
+  const qianMingSha256 = meiTiSha256 !== '' ? meiTiSha256 : tieZhiSha256
 
   return {
     id: String(row.ID),
@@ -317,7 +459,7 @@ function yingSheXiaoXi(
     fa_song_zhe_lei_xing: faSongZheLeiXing,
     ai_biao_shi: faSongZheLeiXing === 'jiaose',
     nei_rong: neiRong,
-    lei_xing: String(row.类型 || 'wenben'),
+    lei_xing: leiXing,
     nei_rong_kuai: yingSheKuaiChuCan(row, shangXiaWen, cheHuiWenAn),
     bei_yong_xiao_xi_id: row.被引用消息ID ? String(row.被引用消息ID) : null,
     shi_jian_chuo: new Date(String(row.创建时间)).getTime(),
@@ -328,10 +470,14 @@ function yingSheXiaoXi(
     ke_hu_duan_xu_hao: row.客户端序号 != null ? Number(row.客户端序号) : null,
     mi_deng_jian: row.幂等键 ? String(row.幂等键) : null,
     mei_ti_id: meiTiId,
-    mei_ti_url: row.媒体SHA256
-      ? shengChengQianMingURL(String(row.媒体SHA256).toLowerCase(), String(row.用户ID))
+    mei_ti_url: qianMingSha256
+      ? shengChengQianMingURL(qianMingSha256, String(row.用户ID))
       : null,
-    mei_ti_lei_bie: row.媒体类别 ? String(row.媒体类别) : null,
+    mei_ti_lei_bie: row.媒体类别
+      ? String(row.媒体类别)
+      : leiXing === BiaoQingXiaoXiLeiXing
+        ? BiaoQingShuLeiBie
+        : null,
     mei_ti_shi_chang_hao_miao: row.媒体时长毫秒 != null ? Number(row.媒体时长毫秒) : null,
     mei_ti_yuan_shi_wen_jian_ming: row.媒体原始文件名 ? String(row.媒体原始文件名) : null,
   }
@@ -379,7 +525,7 @@ export async function anIdChaXiaoXi(xiao_xi_id: string): Promise<XiaoXiXinXi | n
   )
   if (jieGuo.rows.length === 0) return null
   const shangXiaWen = await gouKuaiShangXiaWen(jieGuo.rows as Record<string, unknown>[])
-  return yingSheXiaoXi(jieGuo.rows[0], shangXiaWen)
+  return await yingSheXiaoXi(jieGuo.rows[0], shangXiaWen)
 }
 
 function huoQuZongShuHuanCunJian(yong_hu_id: string, jiao_se_id: string): string {
@@ -405,7 +551,29 @@ function qingLiMiDengJian(zhi: unknown, yong_hu_id: string): string | null {
   return zhi
 }
 
-const ZONG_SHU_HUAN_CUN_MIAO = 60
+const ZongShuHuanCunMiao = 60
+
+async function suoDingHuiHua(
+  keHuDuan: PoolClient,
+  yong_hu_id: string,
+  jiao_se_id: string,
+): Promise<void> {
+  await keHuDuan.query('SELECT pg_advisory_xact_lock($1)', [
+    huiHuaXiaoXiSuoJian(yong_hu_id, jiao_se_id),
+  ])
+}
+
+async function huoQuXiaYiKeHuDuanXuHao(
+  keHuDuan: PoolClient,
+  yong_hu_id: string,
+  jiao_se_id: string,
+): Promise<number> {
+  const xuHaoJieGuo = await keHuDuan.query(
+    `SELECT COALESCE(MAX("客户端序号"), 0) as zui_da FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
+    [yong_hu_id, jiao_se_id],
+  )
+  return Number(xuHaoJieGuo.rows[0]?.zui_da ?? 0) + 1
+}
 
 export interface BeiYinYongJianYan {
   cheng_gong: boolean
@@ -421,14 +589,14 @@ export interface BeiYinYongMianXiang {
   quYiCheHui(hang: Record<string, unknown>): boolean
 }
 
-export const AI_BEI_YIN_YONG_MIAN_XIANG: BeiYinYongMianXiang = {
+export const AiBeiYinYongMianXiang: BeiYinYongMianXiang = {
   yuJu: `SELECT "用户ID", "角色ID", "已撤回" FROM "消息" WHERE "ID" = $1 LIMIT 1`,
   shuYuBenRen: (hang, benRenId) => String(hang.用户ID) === String(benRenId),
   shiZaiTongYiDuiHua: (hang, _benRenId, duiXiangId) => String(hang.角色ID) === String(duiXiangId),
   quYiCheHui: (hang) => Boolean(hang.已撤回),
 }
 
-export const HAO_YOU_BEI_YIN_YONG_MIAN_XIANG: BeiYinYongMianXiang = {
+export const HaoYouBeiYinYongMianXiang: BeiYinYongMianXiang = {
   yuJu: `SELECT "发送者ID", "接收者ID", "撤回" FROM "好友消息" WHERE "ID" = $1 LIMIT 1`,
   shuYuBenRen: (hang, benRenId) =>
     String(hang.发送者ID) === String(benRenId) || String(hang.接收者ID) === String(benRenId),
@@ -452,7 +620,7 @@ export async function yanZhengBeiYinYong(
   zhi: unknown,
   yong_hu_id: string,
   dui_xiang_id: string,
-  mianXiang: BeiYinYongMianXiang = AI_BEI_YIN_YONG_MIAN_XIANG,
+  mianXiang: BeiYinYongMianXiang = AiBeiYinYongMianXiang,
 ): Promise<BeiYinYongJianYan> {
   if (zhi == null || zhi === '') return { cheng_gong: true, id: null }
   if (typeof zhi !== 'string' || !yanZhengUUID(zhi)) {
@@ -503,7 +671,7 @@ async function huoQuZongShu(yong_hu_id: string, jiao_se_id: string): Promise<num
   const zongShu = parseInt(String(zongShuJieGuo.rows[0].zong_shu), 10)
   try {
     const { redis } = await import('../redis')
-    await redis.setex(huanCunJian, ZONG_SHU_HUAN_CUN_MIAO, String(zongShu))
+    await redis.setex(huanCunJian, ZongShuHuanCunMiao, String(zongShu))
   } catch {
     // 缓存写入失败不影响主流程
   }
@@ -565,8 +733,10 @@ export async function huoQuXiaoXiLieBiao(
 
   const haiYouGengDuo = rows.length > meiYeTiaoShu
   const buQuKuai = await gouKuaiShangXiaWen(rows)
-  const lieBiao = (haiYouGengDuo ? rows.slice(0, meiYeTiaoShu) : rows).map((hang) =>
-    yingSheXiaoXi(hang, buQuKuai),
+  const lieBiao = await Promise.all(
+    (haiYouGengDuo ? rows.slice(0, meiYeTiaoShu) : rows).map((hang) =>
+      yingSheXiaoXi(hang, buQuKuai),
+    ),
   )
 
   if (shiYongYouBiao) {
@@ -593,7 +763,7 @@ export async function chuangJianYongHuXiaoXi(
   const jianYing = kuaiXieRu.jianYing
 
   const leiXing = jianYing ? jianYing.lei_xing : canShu.lei_xing ?? 'wenben'
-  if (!YUN_XU_XIAO_XI_LEI_XING.includes(leiXing)) {
+  if (!YunXuXiaoXiLeiXing.includes(leiXing)) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'xiaoXiLeiXingFeiFa'), zhuang_tai_ma: 400 }
   }
   const shiMeiTi = leiXing !== 'wenben'
@@ -652,22 +822,20 @@ export async function chuangJianYongHuXiaoXi(
   const beiYongXiaoXiId = beiYong.id ?? null
 
   const miDengJian = qingLiMiDengJian(canShu.mi_deng_jian, canShu.yong_hu_id)
-  const ZUI_DA_CHONG_SHI_CI_SHU = 10
+  const ZuiDaChongShiCiShu = 10
   let luo_ku_id: string | null = null
   let cuoWu: unknown = null
 
-  for (let ciShu = 0; ciShu <= ZUI_DA_CHONG_SHI_CI_SHU; ciShu++) {
+  for (let ciShu = 0; ciShu <= ZuiDaChongShiCiShu; ciShu++) {
     const keHuDuan = await 数据库.connect()
     try {
       await keHuDuan.query('BEGIN')
-      await keHuDuan.query('SELECT pg_advisory_xact_lock($1)', [
-        huiHuaXiaoXiSuoJian(canShu.yong_hu_id, canShu.jiao_se_id),
-      ])
-      const xuHaoJieGuo = await keHuDuan.query(
-        `SELECT COALESCE(MAX("客户端序号"), 0) as zui_da FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
-        [canShu.yong_hu_id, canShu.jiao_se_id],
+      await suoDingHuiHua(keHuDuan, canShu.yong_hu_id, canShu.jiao_se_id)
+      const benTiaoXuHao = await huoQuXiaYiKeHuDuanXuHao(
+        keHuDuan,
+        canShu.yong_hu_id,
+        canShu.jiao_se_id,
       )
-      const benTiaoXuHao = Number(xuHaoJieGuo.rows[0]?.zui_da ?? 0) + 1
       const chaRu = await keHuDuan.query(
         `INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "客户端序号", "媒体ID", "幂等键", "内容块", "被引用消息ID")
          VALUES ($1, $2, $3, 'yonghu', $4, true, $5, $6, $7, $8::jsonb, $9)
@@ -725,7 +893,7 @@ export async function chuangJianYongHuXiaoXi(
       if (
         pgCuoWu.code === '23505' &&
         pgCuoWu.constraint?.includes('客户端序号') &&
-        ciShu < ZUI_DA_CHONG_SHI_CI_SHU
+        ciShu < ZuiDaChongShiCiShu
       ) {
         await new Promise((resolve) => setTimeout(resolve, 50 * Math.pow(2, ciShu)))
         continue
@@ -758,7 +926,7 @@ export async function chuangJianYongHuXiaoXi(
     return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'faSongShiBai'), zhuang_tai_ma: 500 }
   }
 
-  const xiaoXi = yingSheXiaoXi(
+  const xiaoXi = await yingSheXiaoXi(
     jieGuo.rows[0],
     await gouKuaiShangXiaWen(jieGuo.rows as Record<string, unknown>[]),
   )
@@ -797,7 +965,7 @@ export async function cheHuiYongHuXiaoXi(
 
   const xiaoXi = xiaoXiJieGuo.rows[0]
   const chuangJianShiJian = new Date(String(xiaoXi.创建时间)).getTime()
-  if (Date.now() - chuangJianShiJian > XIAO_XI_PEI_ZHI.cheHuiShiXian) {
+  if (Date.now() - chuangJianShiJian > XiaoXiPeiZhi.cheHuiShiXian) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'cheHuiShiBai'), zhuang_tai_ma: 400 }
   }
   if (xiaoXi.已撤回) {
@@ -824,7 +992,7 @@ export async function cheHuiYongHuXiaoXi(
   )
   jiLuCheHuiCaoZuo('用户消息撤回', canShu.yong_hu_id, canShu.jiao_se_id, canShu.xiao_xi_id)
 
-  return { cheng_gong: true, xiao_xi: yingSheXiaoXi(gengXinJieGuo.rows[0]) }
+  return { cheng_gong: true, xiao_xi: await yingSheXiaoXi(gengXinJieGuo.rows[0]) }
 }
 
 export async function cheHuiJiaoSeXiaoXi(
@@ -843,7 +1011,7 @@ export async function cheHuiJiaoSeXiaoXi(
 
   const xiaoXi = xiaoXiJieGuo.rows[0]
   const chuangJianShiJian = new Date(String(xiaoXi.创建时间)).getTime()
-  if (Date.now() - chuangJianShiJian > XIAO_XI_PEI_ZHI.cheHuiShiXian) {
+  if (Date.now() - chuangJianShiJian > XiaoXiPeiZhi.cheHuiShiXian) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'cheHuiShiBai') }
   }
 
@@ -858,7 +1026,7 @@ export async function cheHuiJiaoSeXiaoXi(
     [xiaoXi.ID],
   )
 
-  const cheHuiXiaoXi = yingSheXiaoXi(gengXinJieGuo.rows[0])
+  const cheHuiXiaoXi = await yingSheXiaoXi(gengXinJieGuo.rows[0])
   tuiSongCheHuiShiJian(
     canShu.yong_hu_id,
     canShu.jiao_se_id,
@@ -886,37 +1054,152 @@ export interface BaoCunJiaoSeMeiTiCanShu {
   jiao_se_id: string
   nei_rong: string
   lei_xing: string
-  mei_ti_id: string
+  mei_ti_id: string | null
+  duan_ming?: string | null
 }
 
-export async function baoCunJiaoSeMeiTiXiaoXi(
+interface CunChuNeiRongKuai {
+  lei_xing: string
+  mei_ti_id?: string
+  mei_ti_lei_bie?: string
+  duan_ming?: string
+}
+
+function qingLiJiaoSeDuanMing(zhi: unknown, yong_hu_id: string): string | null {
+  if (zhi === null || zhi === undefined) return null
+  if (typeof zhi !== 'string') {
+    debug日志.warn('消息服务', '表情包短名类型非法，按无短名处理', { yong_hu_id })
+    return null
+  }
+  const jianHua = zhi.trim()
+  if (jianHua === '') return null
+  if (jianHua.length > BiaoQingDuanMingZuiDaChang) {
+    debug日志.warn('消息服务', '表情包短名超长，按无短名处理', {
+      yong_hu_id,
+      xiang_qing: { chang_du: jianHua.length, shang_xian: BiaoQingDuanMingZuiDaChang },
+    })
+    return null
+  }
+  return jianHua
+}
+
+function qingLiJiaoSeMeiTiId(zhi: unknown, yong_hu_id: string): string | null {
+  if (zhi === null || zhi === undefined || zhi === '') return null
+  if (!yanZhengUUID(zhi)) {
+    debug日志.warn('消息服务', '角色多媒体消息媒体ID非法，按无媒体行处理', { yong_hu_id })
+    return null
+  }
+  return zhi
+}
+
+function gouZaoJiaoSeNeiRongKuai(
+  leiXing: string,
+  meiTiId: string | null,
+  duanMing: string | null,
+): CunChuNeiRongKuai[] | null {
+  if (leiXing === BiaoQingXiaoXiLeiXing && duanMing !== null) {
+    return [
+      {
+        lei_xing: XiaoXiKuaiLeiXing.tuPian,
+        mei_ti_lei_bie: BiaoQingShuLeiBie,
+        duan_ming: duanMing,
+      },
+    ]
+  }
+  if (meiTiId === null) return null
+  const leiBie = leiXingDaoMeiTiLeiBie(leiXing)
+  if (leiBie === null) return null
+  return [{ lei_xing: XiaoXiKuaiLeiXing.tuPian, mei_ti_id: meiTiId, mei_ti_lei_bie: leiBie }]
+}
+
+async function xieRuJiaoSeMeiTiHang(
   canShu: BaoCunJiaoSeMeiTiCanShu,
-): Promise<XiaoXiXinXi> {
-  const qingLiNeiRong = (canShu.nei_rong || '').trim().slice(0, 500)
-  let jieGuo
+  leiXing: string,
+  meiTiId: string | null,
+  kuai: CunChuNeiRongKuai[] | null,
+  qingLiNeiRong: string,
+): Promise<QueryResult> {
+  const keHuDuan = await 数据库.connect()
   try {
-    jieGuo = await 数据库.query(
+    await keHuDuan.query('BEGIN')
+    await suoDingHuiHua(keHuDuan, canShu.yong_hu_id, canShu.jiao_se_id)
+    const benTiaoXuHao = await huoQuXiaYiKeHuDuanXuHao(
+      keHuDuan,
+      canShu.yong_hu_id,
+      canShu.jiao_se_id,
+    )
+    const jieGuo = await keHuDuan.query(
       `WITH xin AS (
-         INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "媒体ID")
-         VALUES ($1, $2, $3, 'jiaose', $4, true, $5)
+         INSERT INTO "消息" ("用户ID", "角色ID", "内容", "发送者", "类型", "已读", "客户端序号", "媒体ID", "内容块")
+         VALUES ($1, $2, $3, 'jiaose', $4, true, $5, $6, $7::jsonb)
          ON CONFLICT DO NOTHING
          RETURNING *
        )
        SELECT xin.*, mf."SHA256" AS "媒体SHA256", mf."时长毫秒" AS "媒体时长毫秒"
        FROM xin LEFT JOIN "媒体文件" mf ON xin."媒体ID" = mf."ID"`,
-      [canShu.yong_hu_id, canShu.jiao_se_id, qingLiNeiRong, canShu.lei_xing, canShu.mei_ti_id],
+      [
+        canShu.yong_hu_id,
+        canShu.jiao_se_id,
+        qingLiNeiRong,
+        leiXing,
+        benTiaoXuHao,
+        meiTiId,
+        kuai ? JSON.stringify(kuai) : null,
+      ],
     )
+    await keHuDuan.query('COMMIT')
+    return jieGuo
   } catch (cuoWu) {
+    await keHuDuan.query('ROLLBACK').catch(() => undefined)
     const { faSongGaoJing } = await import('../utils/邮件告警')
-    await faSongGaoJing('xiao_xi_luo_ku_shi_bai', '消息落库失败告警', `角色多媒体消息落库失败：${String(cuoWu).slice(0, 300)}`).catch(() => undefined)
+    await faSongGaoJing(
+      'xiao_xi_luo_ku_shi_bai',
+      '消息落库失败告警',
+      `角色多媒体消息落库失败：${String(cuoWu).slice(0, 300)}`,
+    ).catch(() => undefined)
     throw cuoWu
+  } finally {
+    keHuDuan.release()
   }
+}
+
+export async function baoCunJiaoSeMeiTiXiaoXi(
+  canShu: BaoCunJiaoSeMeiTiCanShu,
+): Promise<XiaoXiXinXi> {
+  const leiXing = String(canShu.lei_xing || '')
+  if (!YunXuXiaoXiLeiXing.includes(leiXing)) {
+    debug日志.warn('消息服务', '角色多媒体消息类型非法，已拒绝落库', {
+      yong_hu_id: canShu.yong_hu_id,
+      jiao_se_id: canShu.jiao_se_id,
+      xiang_qing: { lei_xing: leiXing },
+    })
+    throw new Error('角色多媒体消息类型非法')
+  }
+  const qingLiNeiRong = (canShu.nei_rong || '').trim().slice(0, XiaoXiPeiZhi.zuiDaXiaoXiChangDu)
+  const meiTiId = qingLiJiaoSeMeiTiId(canShu.mei_ti_id, canShu.yong_hu_id)
+  const duanMing =
+    leiXing === BiaoQingXiaoXiLeiXing
+      ? qingLiJiaoSeDuanMing(canShu.duan_ming, canShu.yong_hu_id)
+      : null
+  if (meiTiId === null && duanMing === null) {
+    debug日志.warn('消息服务', '角色多媒体消息既无媒体ID也无表情包短名，已拒绝落库', {
+      yong_hu_id: canShu.yong_hu_id,
+      jiao_se_id: canShu.jiao_se_id,
+      xiang_qing: { lei_xing: leiXing },
+    })
+    throw new Error('角色多媒体消息缺少媒体标识')
+  }
+  const kuai = gouZaoJiaoSeNeiRongKuai(leiXing, meiTiId, duanMing)
+  const jieGuo = await xieRuJiaoSeMeiTiHang(canShu, leiXing, meiTiId, kuai, qingLiNeiRong)
   if (jieGuo.rows.length === 0) {
     const { faSongGaoJing } = await import('../utils/邮件告警')
     await faSongGaoJing('xiao_xi_luo_ku_shi_bai', '消息落库失败告警', '角色多媒体消息落库返回空行').catch(() => undefined)
     throw new Error('角色多媒体消息落库返回空行')
   }
-  const xiaoXi = yingSheXiaoXi(jieGuo.rows[0])
+  const xiaoXi = await yingSheXiaoXi(
+    jieGuo.rows[0],
+    await gouKuaiShangXiaWen(jieGuo.rows as Record<string, unknown>[]),
+  )
   await shiXiaoXiaoXiZongShuHuanCun(canShu.yong_hu_id, canShu.jiao_se_id)
   jiLuXiaoXiCaoZuo('角色多媒体消息发送', canShu.yong_hu_id, canShu.jiao_se_id, 'jiaose', { xiao_xi_id: xiaoXi.id })
   return xiaoXi

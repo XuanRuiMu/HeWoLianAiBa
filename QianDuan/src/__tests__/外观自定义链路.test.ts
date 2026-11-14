@@ -8,7 +8,7 @@ import WaiGuanJiuDiBianJi from '@/components/外观就地编辑器.vue'
 import LiaoTianBeiJingSheZhi from '@/components/聊天背景设置.vue'
 import QiPaoZhuTiXuanZeQi from '@/components/气泡主题选择器.vue'
 import {
-  WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
+  WaiGuanMoRenWenZiYanSe,
   guiYiWaiGuanChuCan,
   huoQuBeiJingMengCengZhi,
   huoQuQiPaoBeiJingZhi,
@@ -20,7 +20,7 @@ import {
 } from '@/config/外观自定义'
 import { huoQuFanYi } from '@/config/翻译表'
 import { chuangJianQianTaiCuoWu, tiQuCuoWuWenBen } from '@/utils/前台错误'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { QianTaiDaiMa } from '@/config/前台错误码'
 import { TuPianChiCunCuoWu, yaSuoTuPiang } from '@/utils/图片压缩'
 import { baoCunLiaoTianBeiJing, shangChuanWaiGuanTuPian, baoCunWaiGuan } from '@/api/社交'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
@@ -50,8 +50,8 @@ vi.mock('@/api/社交', async (yuanShi) => {
   }
 })
 
-const SHA_YANG_LI = 'a'.repeat(64)
-const MEI_TI_URL = '/api/媒体/' + SHA_YANG_LI + '?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=' + 'b'.repeat(64)
+const ShaYangLi = 'a'.repeat(64)
+const MeiTiUrl = '/api/媒体/' + ShaYangLi + '?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=' + 'b'.repeat(64)
 
 function zaoTuPian(leiXing = 'image/png'): File {
   return new File([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])], 'yang-li.png', { type: leiXing })
@@ -84,8 +84,8 @@ describe('外观自定义命名与蒙层', () => {
   it('白字配深蒙层、黑字配浅蒙层，蒙层令牌带透明度', () => {
     expect(huoQuBeiJingMengCengZhi('#FFFFFF')).toContain('0.72')
     expect(huoQuBeiJingMengCengZhi('#000000')).toContain('0.86')
-    expect(huoQuQiPaoBeiJingZhi(MEI_TI_URL, '#FFFFFF')).toContain('0.55')
-    expect(huoQuQiPaoBeiJingZhi(MEI_TI_URL, '#000000')).toContain('0.62')
+    expect(huoQuQiPaoBeiJingZhi(MeiTiUrl, '#FFFFFF')).toContain('0.55')
+    expect(huoQuQiPaoBeiJingZhi(MeiTiUrl, '#000000')).toContain('0.62')
   })
 
   it('对比度不足的文字色被拒绝，黑白两色可用', () => {
@@ -97,14 +97,14 @@ describe('外观自定义命名与蒙层', () => {
 
   it('出参归一保留媒体签名地址并剔除悬空当前气泡', () => {
     const chu = guiYiWaiGuanChuCan({
-      bei_jing: [{ id: '1', ming_cheng: '自定义背景1', tu_di_zhi: MEI_TI_URL, wen_zi_yan_se: '#FFFFFF' }],
+      bei_jing: [{ id: '1', ming_cheng: '自定义背景1', tu_di_zhi: MeiTiUrl, wen_zi_yan_se: '#FFFFFF' }],
       qi_pao: [],
       bei_jing_fu_gai: {},
     qi_pao_fu_gai: {},
       dang_qian_qi_pao: { ziJi: 'bu-cun-zai', ai: '' },
     })
     expect(chu.beiJing).toHaveLength(1)
-    expect(tiQuWaiGuanSha(chu.beiJing[0].tuDiZhi)).toBe(SHA_YANG_LI)
+    expect(tiQuWaiGuanSha(chu.beiJing[0].tuDiZhi)).toBe(ShaYangLi)
     expect(chu.dangQianQiPao).toEqual({ ziJi: '', ai: '' })
   })
 })
@@ -112,7 +112,7 @@ describe('外观自定义命名与蒙层', () => {
 describe('外观自定义报错文案', () => {
   it('已知错误码一律走注册表译文，不解析后端 message', () => {
     const cuoWu = chuangJianQianTaiCuoWu({
-      code: QIAN_TAI_DAI_MA.PERMISSION_DENIED,
+      code: QianTaiDaiMa.PERMISSION_DENIED,
       retryable: false,
       httpStatus: 403,
       houTaiBaoFeng: { code: 'PERMISSION_DENIED', message: '图片安全审核暂时不可用，请重试当前操作' },
@@ -123,7 +123,7 @@ describe('外观自定义报错文案', () => {
   })
 
   it('只有无后端码的本地错误才允许使用本地中文原文', () => {
-    const benDi = chuangJianQianTaiCuoWu({ code: QIAN_TAI_DAI_MA.WEI_ZHI, yingXiang: '这个文件不能用' })
+    const benDi = chuangJianQianTaiCuoWu({ code: QianTaiDaiMa.WEI_ZHI, yingXiang: '这个文件不能用' })
     expect(tiQuCuoWuWenBen(benDi, '兜底')).toBe(huoQuFanYi('lianAi', 'LianAi_004'))
   })
 
@@ -172,7 +172,7 @@ describe('外观上传仓库链路', () => {
     const cang = 使用用户设置仓库()
     const tiaoMu = await cang.shangChuanWaiGuan('beiJing', zaoTuPian())
     expect(tiaoMu.mingCheng).toBe('自定义背景1')
-    expect(tiaoMu.wenZiYanSe).toBe(WAI_GUAN_MO_REN_WEN_ZI_YAN_SE)
+    expect(tiaoMu.wenZiYanSe).toBe(WaiGuanMoRenWenZiYanSe)
     expect(shangChuanWaiGuanTuPian).toHaveBeenCalledTimes(1)
     expect(baoCunWaiGuan).toHaveBeenCalledTimes(1)
     expect(cang.waiGuan.beiJing.map((xiang) => xiang.mingCheng)).toEqual(['自定义背景1'])
@@ -191,7 +191,7 @@ describe('外观上传仓库链路', () => {
       beiJing: Array.from({ length: 24 }, (_, xuHao) => ({
         id: String(xuHao),
         mingCheng: '自定义背景' + String(xuHao + 1),
-        tuDiZhi: MEI_TI_URL,
+        tuDiZhi: MeiTiUrl,
         wenZiYanSe: '#FFFFFF',
       })),
       qiPao: [],
@@ -373,7 +373,7 @@ describe('外观编辑与删除按钮：内联 SVG 图标与紧凑尺寸', () =>
         {
           id: 'qi-pao-ce-shi',
           mingCheng: '自定义气泡1',
-          tuDiZhi: MEI_TI_URL,
+          tuDiZhi: MeiTiUrl,
           wenZiYanSe: '#FFFFFF',
         },
       ],

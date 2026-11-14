@@ -6,7 +6,7 @@
 
         <div class="qi-pao-qun" role="radiogroup" :aria-label="zu.biaoTi">
           <button
-            v-for="yuShe in QI_PAO_YU_SHE_XUAN_XIANG"
+            v-for="yuShe in QiPaoYuSheXuanXiang"
             :key="'yu-she-' + yuShe"
             type="button"
             class="qi-pao-xuan-xiang qi-pao-xuan-xiang--ka"
@@ -59,7 +59,7 @@
             :model-value="sheZhi.waiGuan.qiPao"
             :disabled="上传中 || 删除中"
             :direction="tuoZhuaiFangXiang"
-            :animation="TUO_ZHUAI_HAO_MIAO"
+            :animation="TuoZhuaiHaoMiao"
             :delay="300"
             :delay-on-touch-only="true"
             :filter="'.qi-pao-ka-kong-zhi'"
@@ -171,7 +171,7 @@
         :biao-ti="bianJiBiaoTi"
         :ming-cheng="编辑目标.名称"
         :wen-zi-yan-se="编辑目标.文字颜色"
-        :zui-da-zi-fu="WAI_GUAN_QI_PAO_MING_CHENG_ZUI_DA_ZI_FU"
+        :zui-da-zi-fu="WaiGuanQiPaoMingChengZuiDaZiFu"
         lei-bie="qiPao"
         :cuo-wu-wen-an="编辑错误"
         :cao-zuo-zhong="编辑保存中"
@@ -298,7 +298,7 @@
         </div>
         <div v-if="sheZhi.qiPaoMiaoBianKaiQi" class="qi-pao-miao-bian-se" role="group" :aria-label="miaoBianSeWen">
           <button
-            v-for="yanSe in QI_PAO_MIAO_BIAN_SE_XUAN_XIANG"
+            v-for="yanSe in QiPaoMiaoBianSeXuanXiang"
             :key="'miao-bian-' + yanSe"
             type="button"
             class="qi-pao-miao-bian-se-kuai"
@@ -339,17 +339,17 @@ import { computed, defineAsyncComponent, onBeforeUnmount, ref } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
 import { 使用外观编辑仓库, type 气泡编辑目标 } from '@/stores/外观编辑'
-import { QI_PAO_YU_SHE_XUAN_XIANG, huoQuQiPaoDingYi, type QiPaoYuShe } from '@/config/气泡主题'
-import { QI_PAO_WEN_AN, huoQuQiPaoMingCheng } from '@/config/气泡主题文案'
+import { QiPaoYuSheXuanXiang, huoQuQiPaoDingYi, type QiPaoYuShe } from '@/config/气泡主题'
+import { QiPaoWenAn, huoQuQiPaoMingCheng } from '@/config/气泡主题文案'
 import { huoQuFanYi } from '@/config/翻译表'
 import { jianShaoDongXiaoGuo } from '@/utils/动效偏好'
 import { tiQuCuoWuWenBen } from '@/utils/前台错误'
 import { baoCunWaiGuan } from '@/api/社交'
 import {
-  WAI_GUAN_QI_PAO_MING_CHENG_ZUI_DA_ZI_FU,
-  WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
-  WAI_GUAN_TU_PIAN_MIME,
-  WAI_GUAN_QI_PAO_YAN_SE_XUAN_XIANG,
+  WaiGuanQiPaoMingChengZuiDaZiFu,
+  WaiGuanMoRenWenZiYanSe,
+  WaiGuanTuPianMime,
+  WaiGuanQiPaoYanSeXuanXiang,
   QI_PAO_WEI_BA_MO_SHI_LIE_BIAO,
   QI_PAO_WEI_BA_WEI_ZHI_LIE_BIAO,
   QI_PAO_YUAN_JIAO_DANG_WEI_LIE_BIAO,
@@ -369,7 +369,7 @@ import QiPaoWeiBa from '@/components/聊天/气泡尾巴.vue'
 
 const TuPianCaiJian = defineAsyncComponent(() => import('@/components/图片裁剪.vue'))
 
-const TUO_ZHUAI_HAO_MIAO = jianShaoDongXiaoGuo() ? 0 : 200
+const TuoZhuaiHaoMiao = jianShaoDongXiaoGuo() ? 0 : 200
 function tuoZhuaiFangXiang(_shiJian: unknown, muBiao: unknown, tuoDongXiang: unknown): 'vertical' | 'horizontal' {
   const a = tuoDongXiang instanceof Element ? tuoDongXiang.getBoundingClientRect() : null
   const b = muBiao instanceof Element ? muBiao.getBoundingClientRect() : null
@@ -377,7 +377,7 @@ function tuoZhuaiFangXiang(_shiJian: unknown, muBiao: unknown, tuoDongXiang: unk
   return Math.abs(b.top - a.top) <= Math.abs(b.left - a.left) ? 'horizontal' : 'vertical'
 }
 
-const biaoTi = QI_PAO_WEN_AN.biaoTi
+const biaoTi = QiPaoWenAn.biaoTi
 const sheZhi = 使用用户设置仓库()
 
 const shanChuWenAn = huoQuFanYi('sheZhi', 'waiGuanShanChuQiPao')
@@ -391,7 +391,7 @@ const shanChuZhongWenAn = huoQuFanYi('sheZhi', 'shanChuZhongWenAn')
 const 保存成功文案 = huoQuFanYi('sheZhi', 'waiGuanShangChuanChengGong')
 const 还原成功文案 = huoQuFanYi('sheZhi', 'waiGuanYiHuiFuMoRen')
 const 失败文案 = huoQuFanYi('sheZhi', 'waiGuanBaoCunShiBai')
-const tuPianMime = WAI_GUAN_TU_PIAN_MIME.join(',')
+const tuPianMime = WaiGuanTuPianMime.join(',')
 
 const xingZhuangBiaoTiWen = huoQuFanYi('qiPao', 'xingZhuangBiaoTi')
 const weiBaDaXiaoWen = huoQuFanYi('qiPao', 'weiBaDaXiao')
@@ -401,20 +401,20 @@ const miaoBianWen = huoQuFanYi('qiPao', 'miaoBianBiaoTi')
 const miaoBianKaiWen = huoQuFanYi('qiPao', 'miaoBianKai')
 const miaoBianGuanWen = huoQuFanYi('qiPao', 'miaoBianGuan')
 const miaoBianSeWen = huoQuFanYi('qiPao', 'miaoBianYanSe')
-const QI_PAO_MIAO_BIAN_SE_XUAN_XIANG = WAI_GUAN_QI_PAO_YAN_SE_XUAN_XIANG
+const QiPaoMiaoBianSeXuanXiang = WaiGuanQiPaoYanSeXuanXiang
 
-const WEI_BA_MO_SHI_WEN_JIAN: Record<QiPaoWeiBaMoShi, 'weiBaMoRen' | 'weiBaDa' | 'weiBaXiao' | 'weiBaWu'> = {
+const WeiBaMoShiWenJian: Record<QiPaoWeiBaMoShi, 'weiBaMoRen' | 'weiBaDa' | 'weiBaXiao' | 'weiBaWu'> = {
   moRen: 'weiBaMoRen',
   da: 'weiBaDa',
   xiao: 'weiBaXiao',
   wu: 'weiBaWu',
 }
-const WEI_BA_WEI_ZHI_WEN_JIAN: Record<QiPaoWeiBaWeiZhi, 'weiBaShang' | 'weiBaZhong' | 'weiBaXia'> = {
+const WeiBaWeiZhiWenJian: Record<QiPaoWeiBaWeiZhi, 'weiBaShang' | 'weiBaZhong' | 'weiBaXia'> = {
   shang: 'weiBaShang',
   zhong: 'weiBaZhong',
   xia: 'weiBaXia',
 }
-const YUAN_JIAO_WEN_JIAN: Record<QiPaoYuanJiaoDangWei, 'yuanJiaoXiao' | 'yuanJiaoZhong' | 'yuanJiaoDa'> = {
+const YuanJiaoWenJian: Record<QiPaoYuanJiaoDangWei, 'yuanJiaoXiao' | 'yuanJiaoZhong' | 'yuanJiaoDa'> = {
   xiao: 'yuanJiaoXiao',
   zhong: 'yuanJiaoZhong',
   da: 'yuanJiaoDa',
@@ -423,27 +423,27 @@ const YUAN_JIAO_WEN_JIAN: Record<QiPaoYuanJiaoDangWei, 'yuanJiaoXiao' | 'yuanJia
 const weiBaMoShiXuanXiang = computed(() =>
   QI_PAO_WEI_BA_MO_SHI_LIE_BIAO.map((zhi) => ({
     zhi,
-    wen: huoQuFanYi('qiPao', WEI_BA_MO_SHI_WEN_JIAN[zhi]),
+    wen: huoQuFanYi('qiPao', WeiBaMoShiWenJian[zhi]),
     xuan: sheZhi.qiPaoWeiBaMoShi === zhi,
   })),
 )
 const weiBaWeiZhiXuanXiang = computed(() =>
   QI_PAO_WEI_BA_WEI_ZHI_LIE_BIAO.map((zhi) => ({
     zhi,
-    wen: huoQuFanYi('qiPao', WEI_BA_WEI_ZHI_WEN_JIAN[zhi]),
+    wen: huoQuFanYi('qiPao', WeiBaWeiZhiWenJian[zhi]),
     xuan: sheZhi.qiPaoWeiBaWeiZhi === zhi,
   })),
 )
 const yuanJiaoXuanXiang = computed(() =>
   QI_PAO_YUAN_JIAO_DANG_WEI_LIE_BIAO.map((zhi) => ({
     zhi,
-    wen: huoQuFanYi('qiPao', YUAN_JIAO_WEN_JIAN[zhi]),
+    wen: huoQuFanYi('qiPao', YuanJiaoWenJian[zhi]),
     xuan: sheZhi.qiPaoYuanJiaoDangWei === zhi,
   })),
 )
 
 const shiZiDingYiMiaoBianSe = computed(
-  () => !QI_PAO_MIAO_BIAN_SE_XUAN_XIANG.includes(sheZhi.qiPaoMiaoBianYanSe as (typeof QI_PAO_MIAO_BIAN_SE_XUAN_XIANG)[number]),
+  () => !QiPaoMiaoBianSeXuanXiang.includes(sheZhi.qiPaoMiaoBianYanSe as (typeof QiPaoMiaoBianSeXuanXiang)[number]),
 )
 
 function chuLiMiaoBianSeShuRu(shiJian: Event): void {
@@ -455,12 +455,12 @@ function chuLiMiaoBianSeShuRu(shiJian: Event): void {
 const fenZu = computed(() => [
   {
     jian: 'ai' as const,
-    biaoTi: QI_PAO_WEN_AN.aiBiaoTi,
+    biaoTi: QiPaoWenAn.aiBiaoTi,
     xuanZhongZiDingYi: sheZhi.waiGuan.dangQianQiPao.ai,
   },
   {
     jian: 'ziJi' as const,
-    biaoTi: QI_PAO_WEN_AN.ziJiBiaoTi,
+    biaoTi: QiPaoWenAn.ziJiBiaoTi,
     xuanZhongZiDingYi: sheZhi.waiGuan.dangQianQiPao.ziJi,
   },
 ])
@@ -528,7 +528,7 @@ function xuanXiangYangShi(buWei: 'ziJi' | 'ai', yuShe: QiPaoYuShe): Record<strin
 function ziDingYiYangShi(buWei: 'ziJi' | 'ai', tiaoMu: WaiGuanTiaoMu): Record<string, string> {
   const muBiao = 编辑目标.value
   const yuLanSe = muBiao?.类型 === 'ziDingYi' && muBiao.标识 === tiaoMu.id ? 编辑预览.value?.wenZiYanSe : ''
-  const yanSe = yuLanSe || tiaoMu.wenZiYanSe || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE
+  const yanSe = yuLanSe || tiaoMu.wenZiYanSe || WaiGuanMoRenWenZiYanSe
   const laShenMoShi: WaiGuanLaShenMoShi = sheZhi.qiPaoLaShenMoShi
   const beiJing = huoQuQiPaoBeiJingZhi(tiaoMu.tuDiZhi, yanSe, laShenMoShi)
   return {
@@ -580,7 +580,7 @@ function daKaiYuSheBianJi(yuShe: QiPaoYuShe): void {
     类型: 'yuShe',
     标识: yuShe,
     名称: sheZhi.quQiPaoYuSheMing(yuShe),
-    文字颜色: sheZhi.quQiPaoYuSheYanSe(yuShe) || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
+    文字颜色: sheZhi.quQiPaoYuSheYanSe(yuShe) || WaiGuanMoRenWenZiYanSe,
   })
 }
 
@@ -592,7 +592,7 @@ function daKaiBianJi(tiaoMu: WaiGuanTiaoMu): void {
     类型: 'ziDingYi',
     标识: tiaoMu.id,
     名称: tiaoMu.mingCheng,
-    文字颜色: tiaoMu.wenZiYanSe || WAI_GUAN_MO_REN_WEN_ZI_YAN_SE,
+    文字颜色: tiaoMu.wenZiYanSe || WaiGuanMoRenWenZiYanSe,
   })
 }
 

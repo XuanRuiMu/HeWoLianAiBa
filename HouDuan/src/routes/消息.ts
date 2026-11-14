@@ -20,8 +20,10 @@ import {
 } from '../services/消息出参收口'
 import { kuaiShenHeWenBen, qingLiTiJiaoKuai } from '../services/消息内容块'
 import { liuShiBaoCunMeiTi, MeiTiCunChuCuoWu, shengChengQianMingURL } from '../services/媒体存储'
+import { chaAnDuanMing, duanMingDaoUUID } from '../services/表情包库'
+import { tiQuTieZhiDuanMing } from '../services/贴纸标记'
 import { panDingMeiTiShenHeChuCan } from '../services/媒体审核出参'
-import { SHEN_HE_FU_WU_BU_KE_YONG_JIAN, guiYiHuaShangChuanShiChang, shiHeFaLeiBie, shiHeFaXiaoXiLeiXing } from '../config/媒体配置'
+import { ShenHeFuWuBuKeYongJian, guiYiHuaShangChuanShiChang, shiHeFaLeiBie, shiHeFaXiaoXiLeiXing } from '../config/媒体配置'
 import { shenHeNeiRongAnQuan, jianCeWeiJiXinHao } from '../services/安全审核'
 import { peiZhi } from '../config'
 import { jiLuShenJiRiZhi } from '../services/审计日志'
@@ -449,7 +451,7 @@ luYou.post(
           })
         }
         const anQuanJieGuo = await shenHeNeiRongAnQuan(shenHeWenBen)
-        if (anQuanJieGuo.wei_gui && anQuanJieGuo.lei_xing !== SHEN_HE_FU_WU_BU_KE_YONG_JIAN) {
+        if (anQuanJieGuo.wei_gui && anQuanJieGuo.lei_xing !== ShenHeFuWuBuKeYongJian) {
           await jiLuZhangHaoWeiGui({
             yongHuId: yongHu.yongHuId,
             ip: 获取IP(qingQiu),
@@ -787,6 +789,30 @@ luYou.get(
         [meiTiId, yongHu.yongHuId, jiaoSeId],
       )
       if (meiTiJieGuo.rows.length === 0) {
+        const tieZhiJieGuo = await 数据库.query(
+          `SELECT "内容" FROM "消息"
+            WHERE "用户ID" = $1 AND "角色ID" = $2 AND "类型" = 'biaoQingBao' AND "媒体ID" IS NULL
+            ORDER BY "创建时间" DESC
+            LIMIT 300`,
+          [yongHu.yongHuId, jiaoSeId],
+        )
+        let duanMing: string | null = null
+        for (const hang of tieZhiJieGuo.rows as Record<string, unknown>[]) {
+          const mingLieBiao = tiQuTieZhiDuanMing(String(hang.内容 || ''))
+          if (mingLieBiao.length === 0) continue
+          if (duanMingDaoUUID(mingLieBiao[0]) === meiTiId) {
+            duanMing = mingLieBiao[0]
+            break
+          }
+        }
+        if (duanMing) {
+          const tiaoMu = await chaAnDuanMing(duanMing)
+          if (tiaoMu && tiaoMu.sha256) {
+            return chengGongXiangYing(xiangYing, {
+              mei_ti_url: shengChengQianMingURL(tiaoMu.sha256.toLowerCase(), yongHu.yongHuId),
+            })
+          }
+        }
         return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('liaoTian', 'meiTiBuCunZai'))
       }
 

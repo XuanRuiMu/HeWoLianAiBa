@@ -22,13 +22,13 @@ const 背景源码 = 读('components/聊天背景设置.vue')
 const 气泡源码 = 读('components/气泡主题选择器.vue')
 const 填充选择源码 = 读('components/外观填充选择器.vue')
 
-const MEI_TI_URL = '/api/媒体/' + 'a'.repeat(64) + '?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=' + 'b'.repeat(64)
+const MeiTiUrl = '/api/媒体/' + 'a'.repeat(64) + '?e=1&u=11111111-1111-4111-8111-111111111111&t=1&s=' + 'b'.repeat(64)
 
 function zaoTiaoMu(wenZiYanSe: string): WaiGuanTiaoMu {
   return {
     id: 'qipao-1',
     mingCheng: '自定义气泡1',
-    tuDiZhi: MEI_TI_URL,
+    tuDiZhi: MeiTiUrl,
     wenZiYanSe,
   }
 }

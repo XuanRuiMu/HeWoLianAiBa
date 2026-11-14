@@ -75,7 +75,7 @@ import YeMianGuoDuZaiRu from '@/components/页面过渡载入.vue'
 import { 使用用户仓库 } from '@/stores/用户'
 import { chuFaCuoWuShangBao } from '@/utils/错误上报'
 import { gouJianCaoDiDiZhi, shiFouCaoDiDiaoShi } from '@/utils/CaoDiBeiJing'
-import { BUJU_PEI_ZHI, caoDiPeiZhi } from '@/config/站点配置'
+import { BujuPeiZhi, caoDiPeiZhi } from '@/config/站点配置'
 import { huoQuFanYi } from '@/config/翻译表'
 import { 解析性别 } from '@/utils/性别'
 import { 使用用户设置仓库 } from '@/stores/用户设置'
@@ -383,7 +383,7 @@ function chuLiChuMoYiDong(e: TouchEvent) {
 }
 
 const luoPanZhiZhen = { x: 0, y: 0 }
-const LUO_PAN_MAN_LIANG = 10
+const LuoPanManLiang = 10
 let luoPanJiZhun: { beta: number; gamma: number } | null = null
 let luoPanYiTing = false
 let luoPanYiQingQiu = false
@@ -397,7 +397,7 @@ function shiFouChuMo(): boolean {
 }
 
 function shouXian(zhi: number): number {
-  const fu = LUO_PAN_MAN_LIANG
+  const fu = LuoPanManLiang
   return zhi > fu ? fu : zhi < -fu ? -fu : zhi
 }
 
@@ -407,8 +407,8 @@ function chuLiLuoPan(e: DeviceOrientationEvent) {
   const gamma = e.gamma
   if (beta === null || gamma === null) return
   if (!luoPanJiZhun) luoPanJiZhun = { beta, gamma }
-  luoPanZhiZhen.x = shouXian(gamma - luoPanJiZhun.gamma) / LUO_PAN_MAN_LIANG
-  luoPanZhiZhen.y = -shouXian(beta - luoPanJiZhun.beta) / LUO_PAN_MAN_LIANG
+  luoPanZhiZhen.x = shouXian(gamma - luoPanJiZhun.gamma) / LuoPanManLiang
+  luoPanZhiZhen.y = -shouXian(beta - luoPanJiZhun.beta) / LuoPanManLiang
   luoPanYiTing = true
   zhuRuCaoDiGuangBiao()
 }
@@ -539,7 +539,7 @@ function gengXinShiJiaoKouGaoDu() {
   }
   const keShiGaoDu = window.visualViewport.height
   if (keShiGaoDu <= 0) return
-  const jianPanZhanKai = buJuGaoDu - keShiGaoDu >= BUJU_PEI_ZHI.jianPanZhanKaiYuZhi
+  const jianPanZhanKai = buJuGaoDu - keShiGaoDu >= BujuPeiZhi.jianPanZhanKaiYuZhi
   document.documentElement.style.setProperty(
     '--shi-jiao-kou-gao-du',
     `${jianPanZhanKai ? keShiGaoDu : buJuGaoDu}px`,

@@ -21,7 +21,7 @@ vi.mock('../../redis', () => ({
 }))
 
 import {
-  JIAO_SE_YIN_SI_ZI_DUAN,
+  JiaoSeYinSiZiDuan,
   daiQueRenJiaoSeJian,
   duQuDaiQueRenJiaoSe,
   huanCunDaiQueRenJiaoSe,
@@ -30,7 +30,7 @@ import {
   type ShengChengJiaoSeJieGuo,
 } from '../角色生成'
 
-const DUO_SHOU_JIAO_SE: ShengChengJiaoSeJieGuo = {
+const DuoShouJiaoSe: ShengChengJiaoSeJieGuo = {
   id: '6ef2a94a-67be-4e9b-9c93-f0a2c9df6f21',
   ming_zi: '林知夏',
   xing_bie: 'nv',
@@ -74,7 +74,7 @@ const DUO_SHOU_JIAO_SE: ShengChengJiaoSeJieGuo = {
 
 function shengChengZhaXingJiaoSe(): ShengChengJiaoSeJieGuo {
   return {
-    ...DUO_SHOU_JIAO_SE,
+    ...DuoShouJiaoSe,
     shi_fou_zha_xing: true,
     zha_fa_miao_shu: '表面贴贴，背后操控',
     hua_shu: ['你不懂我'],
@@ -83,7 +83,7 @@ function shengChengZhaXingJiaoSe(): ShengChengJiaoSeJieGuo {
   }
 }
 
-const SUI_CANG_GONG_KAI: (keyof ShengChengJiaoSeJieGuo)[] = [
+const SuiCangGongKai: (keyof ShengChengJiaoSeJieGuo)[] = [
   'wei_xin_ming',
   'xing_bie',
   'nian_ling',
@@ -97,19 +97,19 @@ const SUI_CANG_GONG_KAI: (keyof ShengChengJiaoSeJieGuo)[] = [
 
 describe('FP08 角色出参敏感字段脱敏（玩家透出层）', () => {
   it('玩家透出层剥离内部名/真名/世界信息/系统提示/八大模块', () => {
-    const touYing = touYingWanJiaKeJianJiaoSe(DUO_SHOU_JIAO_SE) as unknown as Record<string, unknown>
-    for (const jian of JIAO_SE_YIN_SI_ZI_DUAN) {
+    const touYing = touYingWanJiaKeJianJiaoSe(DuoShouJiaoSe) as unknown as Record<string, unknown>
+    for (const jian of JiaoSeYinSiZiDuan) {
       expect(jian in touYing).toBe(false)
     }
     expect('hao_gan_du_zong_fen' in touYing).toBe(false)
     expect('shi_fou_zha_xing' in touYing).toBe(false)
-    for (const jian of SUI_CANG_GONG_KAI) {
+    for (const jian of SuiCangGongKai) {
       expect(jian in touYing).toBe(true)
     }
   })
 
   it('序列化响应中不残留任何敏感值', () => {
-    const xuLie = JSON.stringify(touYingWanJiaKeJianJiaoSe(DUO_SHOU_JIAO_SE))
+    const xuLie = JSON.stringify(touYingWanJiaKeJianJiaoSe(DuoShouJiaoSe))
     expect(xuLie).not.toContain('林知夏')
     expect(xuLie).toContain('夏目小樱')
     const zhaXing = JSON.stringify(touYingWanJiaKeJianJiaoSe(shengChengZhaXingJiaoSe()))
@@ -124,7 +124,7 @@ describe('FP08 角色出参敏感字段脱敏（玩家透出层）', () => {
     expect((yuanShi as unknown as Record<string, unknown>).ming_zi).toBe('林知夏')
     expect((yuanShi as unknown as Record<string, unknown>).zhen_shi_ming).toBe('林知夏')
     expect((yuanShi as unknown as Record<string, unknown>).shi_jie_xin_xi).toEqual(
-      DUO_SHOU_JIAO_SE.shi_jie_xin_xi,
+      DuoShouJiaoSe.shi_jie_xin_xi,
     )
   })
 
@@ -142,7 +142,7 @@ describe('FP08 角色出参敏感字段脱敏（玩家透出层）', () => {
   })
 
   it('隐私字段名单与内部属性调用点一致', () => {
-    expect(new Set(JIAO_SE_YIN_SI_ZI_DUAN)).toEqual(
+    expect(new Set(JiaoSeYinSiZiDuan)).toEqual(
       new Set([
         'ming_zi',
         'zhen_shi_ming',
@@ -157,18 +157,18 @@ describe('FP08 角色出参敏感字段脱敏（玩家透出层）', () => {
 
 describe('FP08 待确认角色缓存（头端持久化回归兜底）', () => {
   it('生成结果能缓存并原样读回', async () => {
-    await huanCunDaiQueRenJiaoSe(DUO_SHOU_JIAO_SE.id, DUO_SHOU_JIAO_SE)
-    const jian = daiQueRenJiaoSeJian(DUO_SHOU_JIAO_SE.id)
+    await huanCunDaiQueRenJiaoSe(DuoShouJiaoSe.id, DuoShouJiaoSe)
+    const jian = daiQueRenJiaoSeJian(DuoShouJiaoSe.id)
     expect(cunChu.has(jian)).toBe(true)
-    const duQu = await duQuDaiQueRenJiaoSe(DUO_SHOU_JIAO_SE.id)
-    expect(duQu).toEqual(DUO_SHOU_JIAO_SE)
+    const duQu = await duQuDaiQueRenJiaoSe(DuoShouJiaoSe.id)
+    expect(duQu).toEqual(DuoShouJiaoSe)
   })
 
   it('缓存写入带过期时间且键按用户隔离', async () => {
-    await huanCunDaiQueRenJiaoSe(DUO_SHOU_JIAO_SE.id, DUO_SHOU_JIAO_SE)
+    await huanCunDaiQueRenJiaoSe(DuoShouJiaoSe.id, DuoShouJiaoSe)
     expect(sheZhiCanXu[0]?.[2]).toBe('EX')
     expect(sheZhiCanXu[0]?.[3]).toBe(1800)
-    expect(daiQueRenJiaoSeJian(DUO_SHOU_JIAO_SE.id)).toMatch(/^dai_que_ren_jiao_se:/)
+    expect(daiQueRenJiaoSeJian(DuoShouJiaoSe.id)).toMatch(/^dai_que_ren_jiao_se:/)
   })
 
   it('键缺失或载荷损坏时按无缓存处理', async () => {

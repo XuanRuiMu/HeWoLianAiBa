@@ -1,20 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import {
-  HAO_YOU_SHANG_CHUAN_LEI_BIE,
-  LEI_BIE_LIE_BIAO,
-  YU_YIN_SHI_CHANG_SHANG_XIAN_HAO_MIAO,
-  YU_YIN_SHI_CHANG_XIA_XIAN_HAO_MIAO,
+  HaoYouShangChuanLeiBie,
+  LeiBieLieBiao,
+  YuYinShiChangShangXianHaoMiao,
+  YuYinShiChangXiaXianHaoMiao,
   guiYiHuaShangChuanShiChang,
   shiHaoYouShangChuanLeiBie,
 } from '../../config/媒体配置'
-import { HAO_YOU_YU_JU, yingSheHaoYouXiaoXi } from '../../routes/好友'
+import { HaoYouYuJu, yingSheHaoYouXiaoXi } from '../../routes/好友'
 import type { KuaiShangXiaWen } from '../../services/消息'
 
-const WU_KUAI: KuaiShangXiaWen = { kuaiOf: () => null, meiTiOf: () => null }
+const WuKuai: KuaiShangXiaWen = { kuaiOf: () => null, meiTiOf: () => null }
 
 describe('好友媒体上传白名单', () => {
   it('语音在好友上传白名单内，与全量媒体类别一致', () => {
-    expect(HAO_YOU_SHANG_CHUAN_LEI_BIE).toEqual(LEI_BIE_LIE_BIAO)
+    expect(HaoYouShangChuanLeiBie).toEqual(LeiBieLieBiao)
     expect(shiHaoYouShangChuanLeiBie('yuyin')).toBe(true)
     expect(shiHaoYouShangChuanLeiBie('tupian')).toBe(true)
     expect(shiHaoYouShangChuanLeiBie('biaoqingshu')).toBe(true)
@@ -33,8 +33,8 @@ describe('上传时长归一化', () => {
     expect(guiYiHuaShangChuanShiChang(5000)).toBe(5000)
     expect(guiYiHuaShangChuanShiChang('7000')).toBe(7000)
     expect(guiYiHuaShangChuanShiChang(4999.6)).toBe(5000)
-    expect(guiYiHuaShangChuanShiChang(YU_YIN_SHI_CHANG_SHANG_XIAN_HAO_MIAO)).toBe(
-      YU_YIN_SHI_CHANG_SHANG_XIAN_HAO_MIAO,
+    expect(guiYiHuaShangChuanShiChang(YuYinShiChangShangXianHaoMiao)).toBe(
+      YuYinShiChangShangXianHaoMiao,
     )
   })
 
@@ -42,15 +42,15 @@ describe('上传时长归一化', () => {
     expect(guiYiHuaShangChuanShiChang(999)).toBeNull()
     expect(guiYiHuaShangChuanShiChang(500)).toBeNull()
     expect(guiYiHuaShangChuanShiChang('999')).toBeNull()
-    expect(guiYiHuaShangChuanShiChang(YU_YIN_SHI_CHANG_XIA_XIAN_HAO_MIAO)).toBe(
-      YU_YIN_SHI_CHANG_XIA_XIAN_HAO_MIAO,
+    expect(guiYiHuaShangChuanShiChang(YuYinShiChangXiaXianHaoMiao)).toBe(
+      YuYinShiChangXiaXianHaoMiao,
     )
   })
 
   it('非法或超上限的时长一律不落库', () => {
     expect(guiYiHuaShangChuanShiChang(0)).toBeNull()
     expect(guiYiHuaShangChuanShiChang(-1)).toBeNull()
-    expect(guiYiHuaShangChuanShiChang(YU_YIN_SHI_CHANG_SHANG_XIAN_HAO_MIAO + 1)).toBeNull()
+    expect(guiYiHuaShangChuanShiChang(YuYinShiChangShangXianHaoMiao + 1)).toBeNull()
     expect(guiYiHuaShangChuanShiChang(Number.NaN)).toBeNull()
     expect(guiYiHuaShangChuanShiChang(Number.POSITIVE_INFINITY)).toBeNull()
     expect(guiYiHuaShangChuanShiChang('abc')).toBeNull()
@@ -63,8 +63,8 @@ describe('上传时长归一化', () => {
 
 describe('好友消息查询与出参带出语音时长', () => {
   it('两条分页语句都取媒体时长列', () => {
-    expect(HAO_YOU_YU_JU.查消息列表).toContain('f."时长毫秒"')
-    expect(HAO_YOU_YU_JU.查更早消息).toContain('f."时长毫秒"')
+    expect(HaoYouYuJu.查消息列表).toContain('f."时长毫秒"')
+    expect(HaoYouYuJu.查更早消息).toContain('f."时长毫秒"')
   })
 
   it('语音时长映射为 mei_ti_shi_chang_hao_miao 出参', () => {
@@ -88,7 +88,7 @@ describe('好友消息查询与出参带出语音时长', () => {
         时长毫秒: 8000,
       },
       'wo',
-      WU_KUAI,
+      WuKuai,
     )
     expect(chuCan.lei_xing).toBe('yuYin')
     expect(chuCan.mei_ti_shi_chang_hao_miao).toBe(8000)
@@ -113,9 +113,9 @@ describe('好友消息查询与出参带出语音时长', () => {
       大小字节: null,
       时长毫秒: null,
     }
-    expect(yingSheHaoYouXiaoXi(jiChu, 'wo', WU_KUAI).mei_ti_shi_chang_hao_miao).toBeNull()
+    expect(yingSheHaoYouXiaoXi(jiChu, 'wo', WuKuai).mei_ti_shi_chang_hao_miao).toBeNull()
     expect(
-      yingSheHaoYouXiaoXi({ ...jiChu, 撤回: true, 时长毫秒: 8000 }, 'wo', WU_KUAI)
+      yingSheHaoYouXiaoXi({ ...jiChu, 撤回: true, 时长毫秒: 8000 }, 'wo', WuKuai)
         .mei_ti_shi_chang_hao_miao,
     ).toBeNull()
   })

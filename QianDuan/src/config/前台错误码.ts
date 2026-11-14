@@ -1,4 +1,4 @@
-export const QIAN_TAI_DAI_MA = {
+export const QianTaiDaiMa = {
   WANG_LUO: 'FRONTEND_NETWORK_ERROR',
   CHAO_SHI: 'FRONTEND_TIMEOUT',
   XIE_YI: 'FRONTEND_RESPONSE_INVALID',
@@ -95,7 +95,7 @@ export type LianAiMa =
   | 'LianAi_071' | 'LianAi_072' | 'LianAi_073' | 'LianAi_074' | 'LianAi_075'
   | 'LianAi_076'
 
-export const LIAN_AI_DAI_MA: Readonly<Record<QianTaiDaiMa, LianAiMa>> = {
+export const LianAiDaiMa: Readonly<Record<QianTaiDaiMa, LianAiMa>> = {
   FRONTEND_NETWORK_ERROR: 'LianAi_001',
   FRONTEND_TIMEOUT: 'LianAi_002',
   FRONTEND_RESPONSE_INVALID: 'LianAi_003',
@@ -175,19 +175,19 @@ export const LIAN_AI_DAI_MA: Readonly<Record<QianTaiDaiMa, LianAiMa>> = {
 }
 
 export function huoQuLianAiMa(daiMa: QianTaiDaiMa): LianAiMa {
-  return LIAN_AI_DAI_MA[daiMa]
+  return LianAiDaiMa[daiMa]
 }
 
-const MIAN_MA_DAI_MA: ReadonlySet<QianTaiDaiMa> = new Set<QianTaiDaiMa>([
-  QIAN_TAI_DAI_MA.AUTH_INVALID_CREDENTIALS,
-  QIAN_TAI_DAI_MA.AUTH_PASSWORD_RESET_FAILED,
+const MianMaDaiMa: ReadonlySet<QianTaiDaiMa> = new Set<QianTaiDaiMa>([
+  QianTaiDaiMa.AUTH_INVALID_CREDENTIALS,
+  QianTaiDaiMa.AUTH_PASSWORD_RESET_FAILED,
 ])
 
 export function xianShiLianAiMa(daiMa: QianTaiDaiMa): boolean {
-  return !MIAN_MA_DAI_MA.has(daiMa)
+  return !MianMaDaiMa.has(daiMa)
 }
 
-export type QianTaiDaiMa = (typeof QIAN_TAI_DAI_MA)[keyof typeof QIAN_TAI_DAI_MA]
+export type QianTaiDaiMa = (typeof QianTaiDaiMa)[keyof typeof QianTaiDaiMa]
 
 export type QianTaiWenBenLeiXing =
   | 'qingQiu'
@@ -206,7 +206,7 @@ export type QianTaiWenBenLeiXing =
   | 'tongYong'
   | 'quXiao'
 
-export const WEN_BEN_LEI_XING_QUAN_LU: readonly QianTaiWenBenLeiXing[] = [
+export const WenBenLeiXingQuanLu: readonly QianTaiWenBenLeiXing[] = [
   'qingQiu',
   'wangLuo',
   'chaoShi',
@@ -224,7 +224,7 @@ export const WEN_BEN_LEI_XING_QUAN_LU: readonly QianTaiWenBenLeiXing[] = [
   'quXiao',
 ]
 
-export const WEN_BEN_ZU: Readonly<Record<QianTaiDaiMa, QianTaiWenBenLeiXing>> = {
+export const WenBenZu: Readonly<Record<QianTaiDaiMa, QianTaiWenBenLeiXing>> = {
   FRONTEND_NETWORK_ERROR: 'wangLuo',
   FRONTEND_TIMEOUT: 'chaoShi',
   FRONTEND_RESPONSE_INVALID: 'fangWen',
@@ -303,72 +303,72 @@ export const WEN_BEN_ZU: Readonly<Record<QianTaiDaiMa, QianTaiWenBenLeiXing>> = 
   FRONTEND_OFFLINE: 'wangLuo',
 }
 
-const JIU_DAI_MA_BIAN_SHE: Readonly<Record<string, QianTaiDaiMa>> = {
-  CAN_SHU_CUO_WU: QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID,
-  WEI_SHOU_QUAN: QIAN_TAI_DAI_MA.AUTHENTICATION_REQUIRED,
-  LING_PAI_WU_XIAO: QIAN_TAI_DAI_MA.AUTH_TOKEN_INVALID,
-  WU_GUAN_LI_QUAN_XIAN: QIAN_TAI_DAI_MA.PERMISSION_DENIED,
-  WEI_ZHAO_DAO: QIAN_TAI_DAI_MA.RESOURCE_NOT_FOUND,
-  YONG_HU_MING_CHONG_FU: QIAN_TAI_DAI_MA.AUTH_USERNAME_TAKEN,
+const JiuDaiMaBianShe: Readonly<Record<string, QianTaiDaiMa>> = {
+  CAN_SHU_CUO_WU: QianTaiDaiMa.REQUEST_PARAMETER_INVALID,
+  WEI_SHOU_QUAN: QianTaiDaiMa.AUTHENTICATION_REQUIRED,
+  LING_PAI_WU_XIAO: QianTaiDaiMa.AUTH_TOKEN_INVALID,
+  WU_GUAN_LI_QUAN_XIAN: QianTaiDaiMa.PERMISSION_DENIED,
+  WEI_ZHAO_DAO: QianTaiDaiMa.RESOURCE_NOT_FOUND,
+  YONG_HU_MING_CHONG_FU: QianTaiDaiMa.AUTH_USERNAME_TAKEN,
 }
 
-const KE_CHONG_SHI_DAI_MA = new Set<QianTaiDaiMa>([
-  QIAN_TAI_DAI_MA.WANG_LUO,
-  QIAN_TAI_DAI_MA.LI_XIAN,
-  QIAN_TAI_DAI_MA.CHAO_SHI,
-  QIAN_TAI_DAI_MA.XIE_YI,
-  QIAN_TAI_DAI_MA.RATE_LIMITED,
-  QIAN_TAI_DAI_MA.UPSTREAM_NETWORK_ERROR,
-  QIAN_TAI_DAI_MA.SERVICE_UNAVAILABLE,
-  QIAN_TAI_DAI_MA.UPSTREAM_TIMEOUT,
-  QIAN_TAI_DAI_MA.DATABASE_ERROR,
-  QIAN_TAI_DAI_MA.INTERNAL_ERROR,
-  QIAN_TAI_DAI_MA.AUTH_SMS_RATE_LIMITED,
-  QIAN_TAI_DAI_MA.AUTH_SMS_SEND_FAILED,
-  QIAN_TAI_DAI_MA.AUTH_REGISTRATION_FAILED,
-  QIAN_TAI_DAI_MA.ROLE_GENERATION_MODEL_UNAVAILABLE,
-  QIAN_TAI_DAI_MA.ROLE_GENERATION_MODEL_CALL_FAILED,
-  QIAN_TAI_DAI_MA.ROLE_GENERATION_RESPONSE_INVALID,
-  QIAN_TAI_DAI_MA.ROLE_GENERATION_PERSISTENCE_FAILED,
-  QIAN_TAI_DAI_MA.JUN_SHI_ZAI_ZHI_DAO_ZHONG,
-  QIAN_TAI_DAI_MA.DEPENDENCY_POSTGRES_UNAVAILABLE,
-  QIAN_TAI_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE,
-  QIAN_TAI_DAI_MA.DEPENDENCIES_UNAVAILABLE,
-  QIAN_TAI_DAI_MA.DOCKER_STARTUP_MIGRATION_FAILED,
-  QIAN_TAI_DAI_MA.DOCKER_STARTUP_REDIS_UNAVAILABLE,
-  QIAN_TAI_DAI_MA.DOCKER_STARTUP_POSTGRES_UNAVAILABLE,
-  QIAN_TAI_DAI_MA.WEI_ZHI,
+const KeChongShiDaiMa = new Set<QianTaiDaiMa>([
+  QianTaiDaiMa.WANG_LUO,
+  QianTaiDaiMa.LI_XIAN,
+  QianTaiDaiMa.CHAO_SHI,
+  QianTaiDaiMa.XIE_YI,
+  QianTaiDaiMa.RATE_LIMITED,
+  QianTaiDaiMa.UPSTREAM_NETWORK_ERROR,
+  QianTaiDaiMa.SERVICE_UNAVAILABLE,
+  QianTaiDaiMa.UPSTREAM_TIMEOUT,
+  QianTaiDaiMa.DATABASE_ERROR,
+  QianTaiDaiMa.INTERNAL_ERROR,
+  QianTaiDaiMa.AUTH_SMS_RATE_LIMITED,
+  QianTaiDaiMa.AUTH_SMS_SEND_FAILED,
+  QianTaiDaiMa.AUTH_REGISTRATION_FAILED,
+  QianTaiDaiMa.ROLE_GENERATION_MODEL_UNAVAILABLE,
+  QianTaiDaiMa.ROLE_GENERATION_MODEL_CALL_FAILED,
+  QianTaiDaiMa.ROLE_GENERATION_RESPONSE_INVALID,
+  QianTaiDaiMa.ROLE_GENERATION_PERSISTENCE_FAILED,
+  QianTaiDaiMa.JUN_SHI_ZAI_ZHI_DAO_ZHONG,
+  QianTaiDaiMa.DEPENDENCY_POSTGRES_UNAVAILABLE,
+  QianTaiDaiMa.DEPENDENCY_REDIS_UNAVAILABLE,
+  QianTaiDaiMa.DEPENDENCIES_UNAVAILABLE,
+  QianTaiDaiMa.DOCKER_STARTUP_MIGRATION_FAILED,
+  QianTaiDaiMa.DOCKER_STARTUP_REDIS_UNAVAILABLE,
+  QianTaiDaiMa.DOCKER_STARTUP_POSTGRES_UNAVAILABLE,
+  QianTaiDaiMa.WEI_ZHI,
 ])
 
 export function guiYiQianTaiDaiMa(zhi: unknown): QianTaiDaiMa | null {
   if (typeof zhi !== 'string') return null
-  if (Object.hasOwn(WEN_BEN_ZU, zhi)) return zhi as QianTaiDaiMa
-  return JIU_DAI_MA_BIAN_SHE[zhi] || null
+  if (Object.hasOwn(WenBenZu, zhi)) return zhi as QianTaiDaiMa
+  return JiuDaiMaBianShe[zhi] || null
 }
 
 export function huoQuWenBenLeiXing(daiMa: QianTaiDaiMa): QianTaiWenBenLeiXing {
-  return WEN_BEN_ZU[daiMa]
+  return WenBenZu[daiMa]
 }
 
 export function moRenKeChongShi(daiMa: QianTaiDaiMa): boolean {
-  return KE_CHONG_SHI_DAI_MA.has(daiMa)
+  return KeChongShiDaiMa.has(daiMa)
 }
 
 export function daiMaHuoQuTongYongDaiMa(zhuangTai: number): QianTaiDaiMa | null {
   const xianRong: Readonly<Record<number, QianTaiDaiMa>> = {
-    400: QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID,
-    401: QIAN_TAI_DAI_MA.AUTHENTICATION_REQUIRED,
-    403: QIAN_TAI_DAI_MA.PERMISSION_DENIED,
-    404: QIAN_TAI_DAI_MA.RESOURCE_NOT_FOUND,
-    405: QIAN_TAI_DAI_MA.METHOD_NOT_ALLOWED,
-    409: QIAN_TAI_DAI_MA.RESOURCE_CONFLICT,
-    413: QIAN_TAI_DAI_MA.PAYLOAD_TOO_LARGE,
-    422: QIAN_TAI_DAI_MA.REQUEST_PARAMETER_INVALID,
-    429: QIAN_TAI_DAI_MA.RATE_LIMITED,
-    500: QIAN_TAI_DAI_MA.INTERNAL_ERROR,
-    502: QIAN_TAI_DAI_MA.UPSTREAM_NETWORK_ERROR,
-    503: QIAN_TAI_DAI_MA.SERVICE_UNAVAILABLE,
-    504: QIAN_TAI_DAI_MA.UPSTREAM_TIMEOUT,
+    400: QianTaiDaiMa.REQUEST_PARAMETER_INVALID,
+    401: QianTaiDaiMa.AUTHENTICATION_REQUIRED,
+    403: QianTaiDaiMa.PERMISSION_DENIED,
+    404: QianTaiDaiMa.RESOURCE_NOT_FOUND,
+    405: QianTaiDaiMa.METHOD_NOT_ALLOWED,
+    409: QianTaiDaiMa.RESOURCE_CONFLICT,
+    413: QianTaiDaiMa.PAYLOAD_TOO_LARGE,
+    422: QianTaiDaiMa.REQUEST_PARAMETER_INVALID,
+    429: QianTaiDaiMa.RATE_LIMITED,
+    500: QianTaiDaiMa.INTERNAL_ERROR,
+    502: QianTaiDaiMa.UPSTREAM_NETWORK_ERROR,
+    503: QianTaiDaiMa.SERVICE_UNAVAILABLE,
+    504: QianTaiDaiMa.UPSTREAM_TIMEOUT,
   }
   return xianRong[zhuangTai] || null
 }

@@ -18,13 +18,13 @@ export interface ZhangHaoFengJinZhuangTai {
   shenSuZhuangTai: ShenSuZhuangTai
 }
 
-const ZHANG_HAO_WEI_GUI_QIAN_ZHUI = '账号违规:'
-const ZUI_CHANG_FENG_JIN_HAO_MIAO = 30 * 24 * 60 * 60 * 1000
-const WEI_GUI_JI_SHU_YOU_XIAO_HAO_MIAO = 30 * 24 * 60 * 60 * 1000
-const FEN_ZHONG_HAO_MIAO = 60 * 1000
-const TIAN_HAO_MIAO = 24 * 60 * 60 * 1000
+const ZhangHaoWeiGuiQianZhui = '账号违规:'
+const ZuiChangFengJinHaoMiao = 30 * 24 * 60 * 60 * 1000
+const WeiGuiJiShuYouXiaoHaoMiao = 30 * 24 * 60 * 60 * 1000
+const FenZhongHaoMiao = 60 * 1000
+const TianHaoMiao = 24 * 60 * 60 * 1000
 
-const KONG_ZHUANG_TAI: ZhangHaoFengJinZhuangTai = {
+const KongZhuangTai: ZhangHaoFengJinZhuangTai = {
   beiFengJin: false,
   jiBie: 'zheng_chang',
   weiGuiCiShu: 0,
@@ -45,19 +45,19 @@ export function jiSuanZhangHaoFengJinShiChang(ciShu: number): number | undefined
   if (ciShu === 1) return 60 * 1000
   if (ciShu === 2) return 24 * 60 * 60 * 1000
   if (ciShu === 3) return 7 * 24 * 60 * 60 * 1000
-  if (ciShu >= 4) return ZUI_CHANG_FENG_JIN_HAO_MIAO
+  if (ciShu >= 4) return ZuiChangFengJinHaoMiao
   return undefined
 }
 
 function fengJinShiChangChenShu(ciShu: number, jiBie: FengJinJiBie): string {
   const haoMiao = jiSuanZhangHaoFengJinShiChang(ciShu)
   if (jiBie === 'zheng_chang' || haoMiao === undefined) return huoQuFanYi('fengJinJiBie', jiBie)
-  const tianShu = haoMiao / TIAN_HAO_MIAO
+  const tianShu = haoMiao / TianHaoMiao
   if (Number.isInteger(tianShu)) {
     return huoQuFanYiMiaoShu('fengJinJiBie', 'fengJinShiChangTian', { shiChang: tianShu })
   }
   return huoQuFanYiMiaoShu('fengJinJiBie', 'fengJinShiChangFenZhong', {
-    shiChang: haoMiao / FEN_ZHONG_HAO_MIAO,
+    shiChang: haoMiao / FenZhongHaoMiao,
   })
 }
 
@@ -79,7 +79,7 @@ export function fengJinTongZhiZhengWen(
 }
 
 export async function chaXunZhangHaoFengJin(yongHuId: string): Promise<ZhangHaoFengJinZhuangTai> {
-  if (!yongHuId) return KONG_ZHUANG_TAI
+  if (!yongHuId) return KongZhuangTai
   let hang: Record<string, unknown> | null = null
   try {
     const jieGuo = await 数据库.query(
@@ -89,7 +89,7 @@ export async function chaXunZhangHaoFengJin(yongHuId: string): Promise<ZhangHaoF
     hang = (jieGuo.rows[0] as Record<string, unknown> | undefined) || null
   } catch (cuoWu) {
     debug日志.error('账号封禁', '查询封禁行失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
-    return KONG_ZHUANG_TAI
+    return KongZhuangTai
   }
   const ciShu = Number(hang?.['违规次数'] || 0)
   const jiBieRaw = hang?.['级别']
@@ -148,7 +148,7 @@ export async function jiLuZhangHaoWeiGui(canShu: {
     keHuDuan.release()
   }
   try {
-    await redis.set(`${ZHANG_HAO_WEI_GUI_QIAN_ZHUI}${yongHuId}`, String(ciShu), 'PX', WEI_GUI_JI_SHU_YOU_XIAO_HAO_MIAO)
+    await redis.set(`${ZhangHaoWeiGuiQianZhui}${yongHuId}`, String(ciShu), 'PX', WeiGuiJiShuYouXiaoHaoMiao)
   } catch {
     /* 缓存回写失败不阻断封禁 */
   }
@@ -222,7 +222,7 @@ export async function shenHeShenSu(
   if (tongGuo) {
     await 数据库.query(`DELETE FROM "账号封禁" WHERE "用户ID" = $1`, [muBiaoId])
     try {
-      await redis.del(`${ZHANG_HAO_WEI_GUI_QIAN_ZHUI}${muBiaoId}`)
+      await redis.del(`${ZhangHaoWeiGuiQianZhui}${muBiaoId}`)
     } catch {
       /* 缓存清理失败不阻断 */
     }

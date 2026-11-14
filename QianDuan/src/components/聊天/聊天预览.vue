@@ -67,8 +67,8 @@ const props = defineProps<{
   dangQianTi?: string
 }>()
 
-const YU_LAN_LAI_XI_JIAN_GE = 3 * 60 * 1000
-const YU_LAN_HUI_FU_JIAN_GE = 1 * 60 * 1000
+const YuLanLaiXiJianGe = 3 * 60 * 1000
+const YuLanHuiFuJianGe = 1 * 60 * 1000
 
 const sheZhi = 使用用户设置仓库()
 const laiWen = huoQuFanYi('sheZhi', 'yuLanQiPaoLai')
@@ -81,14 +81,14 @@ const yuLanXiaoXiLieBiao = computed<YuLanXiaoXi[]>(() => {
   const xianZai = Date.now()
   return [
     {
-      shi_jian_chuo: xianZai - YU_LAN_LAI_XI_JIAN_GE,
+      shi_jian_chuo: xianZai - YuLanLaiXiJianGe,
       shiBenRen: false,
       neiRong: laiWen,
       touXiang: sheZhi.duiXiangTouXiang,
       shenFen: 'jiaose',
     },
     {
-      shi_jian_chuo: xianZai - YU_LAN_HUI_FU_JIAN_GE,
+      shi_jian_chuo: xianZai - YuLanHuiFuJianGe,
       shiBenRen: true,
       neiRong: quWen,
       touXiang: sheZhi.touXiang,

@@ -2,9 +2,9 @@ import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import type { DuiHuaLiShiXiang } from '../types'
 import type { CanShuShangXiaWen } from '../config/AI参数策略'
 
-const ZUI_JIN_TIAO_SHU = 8
-const ZUI_DUO_SHI_SHI_TIAO_SHU = 6
-const CHAO_SHI_HAO_MIAO = 15000
+const ZuiJinTiaoShu = 8
+const ZuiDuoShiShiTiaoShu = 6
+const ChaoShiHaoMiao = 15000
 
 export async function chouQuZiWoShiShi(
   duiHuaLiShi: DuiHuaLiShiXiang[],
@@ -12,7 +12,7 @@ export async function chouQuZiWoShiShi(
 ): Promise<string[]> {
   const zuiJin = duiHuaLiShi
     .filter((xiang) => xiang.fa_song_zhe_lei_xing === 'yonghu' || xiang.fa_song_zhe_lei_xing === 'jiaose')
-    .slice(-ZUI_JIN_TIAO_SHU)
+    .slice(-ZuiJinTiaoShu)
   if (zuiJin.length === 0) return []
 
   const wenBen = zuiJin
@@ -34,7 +34,7 @@ export async function chouQuZiWoShiShi(
     },
   ], shangXiaWen).catch(() => null)
 
-  const chaoShi = new Promise<null>((jieJue) => setTimeout(() => jieJue(null), CHAO_SHI_HAO_MIAO))
+  const chaoShi = new Promise<null>((jieJue) => setTimeout(() => jieJue(null), ChaoShiHaoMiao))
   const xiangYing = await Promise.race([caiJi, chaoShi])
   if (!xiangYing) return []
 
@@ -45,5 +45,5 @@ export async function chouQuZiWoShiShi(
     .split('\n')
     .map((hang) => hang.replace(/^[·•\-\*\d]+[\.、\)]?\s*/, '').trim())
     .filter((hang) => hang.length > 0 && hang !== '无')
-    .slice(0, ZUI_DUO_SHI_SHI_TIAO_SHU)
+    .slice(0, ZuiDuoShiShiTiaoShu)
 }

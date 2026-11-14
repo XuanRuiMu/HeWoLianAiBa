@@ -5,8 +5,8 @@ import { mount } from '@vue/test-utils'
 import HengTiaoShuRuKuang from '@/components/表单/横条输入框.vue'
 import 区号选择器 from '@/components/表单/区号选择器.vue'
 import {
-  DA_LU_QU_HAO,
-  QU_HAO_XUAN_XIANG,
+  DaLuQuHao,
+  QuHaoXuanXiang,
   huoQuGuoJia,
   panDingBenDiHao,
   panDingGuoJiHao,
@@ -54,9 +54,9 @@ describe('手机号区号：选号器与输入框职责分离', () => {
 
   it('登录与注册都使用可选区号，注册端固定 +86 文案。找回密码走固定区号前缀槽', () => {
     expect(登录.match(/<QuHaoXuanZeQi/g)?.length).toBe(2)
-    expect(登录).toContain('gu-ding-qu-hao">+{{ DA_LU_QU_HAO }}')
+    expect(登录).toContain('gu-ding-qu-hao">+{{ DaLuQuHao }}')
     expect(找回).toContain('<template #前缀>')
-    expect(找回).toContain('gu-ding-qu-hao">+{{ DA_LU_QU_HAO }}')
+    expect(找回).toContain('gu-ding-qu-hao">+{{ DaLuQuHao }}')
   })
 
   it('翻译表提供区号与境外注册文案，无硬编码中文', () => {
@@ -91,24 +91,24 @@ describe('手机号解析与区号判定', () => {
   })
 
   it('区号清单覆盖大陆且大陆排第一，默认区号是 86', () => {
-    expect(QU_HAO_XUAN_XIANG[0].quHao).toBe('86')
-    expect(DA_LU_QU_HAO).toBe('86')
-    expect(new Set(QU_HAO_XUAN_XIANG.map((项) => 项.quHao + 项.guoJia)).size).toBe(
-      QU_HAO_XUAN_XIANG.length,
+    expect(QuHaoXuanXiang[0].quHao).toBe('86')
+    expect(DaLuQuHao).toBe('86')
+    expect(new Set(QuHaoXuanXiang.map((项) => 项.quHao + 项.guoJia)).size).toBe(
+      QuHaoXuanXiang.length,
     )
   })
 
   it('区号清单覆盖全世界所有国家地区，大陆固定第一', () => {
-    expect(QU_HAO_XUAN_XIANG.length).toBe(245)
-    expect(QU_HAO_XUAN_XIANG[0].guoJia).toBe('CN')
-    expect(QU_HAO_XUAN_XIANG.filter((项) => 项.quHao === '86').length).toBe(1)
+    expect(QuHaoXuanXiang.length).toBe(245)
+    expect(QuHaoXuanXiang[0].guoJia).toBe('CN')
+    expect(QuHaoXuanXiang.filter((项) => 项.quHao === '86').length).toBe(1)
     expect(quanJuQuHaoZuiChang()).toBe(3)
-    expect(QU_HAO_XUAN_XIANG.every((项) => /^\d{1,3}$/.test(项.quHao))).toBe(true)
-    expect(QU_HAO_XUAN_XIANG.every((项) => 项.mingCheng.length > 0)).toBe(true)
+    expect(QuHaoXuanXiang.every((项) => /^\d{1,3}$/.test(项.quHao))).toBe(true)
+    expect(QuHaoXuanXiang.every((项) => 项.mingCheng.length > 0)).toBe(true)
   })
 
   it('港澳台用中文全称，其余按本地化地区名下发', () => {
-    const 取 = (国: string) => quHaoWenAn(QU_HAO_XUAN_XIANG.find((项) => 项.guoJia === 国)!)
+    const 取 = (国: string) => quHaoWenAn(QuHaoXuanXiang.find((项) => 项.guoJia === 国)!)
     expect(取('CN')).toBe('中国大陆')
     expect(取('HK')).toBe('中国香港')
     expect(取('MO')).toBe('中国澳门')
@@ -132,18 +132,18 @@ describe('手机号解析与区号判定', () => {
     const 锚名: string[] = []
     const 全名: string[] = []
     let 起 = 1
-    while (起 < QU_HAO_XUAN_XIANG.length) {
+    while (起 < QuHaoXuanXiang.length) {
       let 止 = 起
-      while (止 < QU_HAO_XUAN_XIANG.length && QU_HAO_XUAN_XIANG[止].quHao === QU_HAO_XUAN_XIANG[起].quHao) 止 += 1
-      const 组 = QU_HAO_XUAN_XIANG.slice(起, 止)
-      expect(组[0].guoJia).toBe(huoQuGuoJia(QU_HAO_XUAN_XIANG[起].quHao))
+      while (止 < QuHaoXuanXiang.length && QuHaoXuanXiang[止].quHao === QuHaoXuanXiang[起].quHao) 止 += 1
+      const 组 = QuHaoXuanXiang.slice(起, 止)
+      expect(组[0].guoJia).toBe(huoQuGuoJia(QuHaoXuanXiang[起].quHao))
       锚名.push(组.map((项) => 项.mingCheng).sort(比较器.compare)[0])
       全名.push(...组.map((项) => 项.mingCheng))
       起 = 止
     }
     expect(全名.length).toBe(244)
     expect([...全名].sort()).toEqual(
-      [...QU_HAO_XUAN_XIANG.slice(1).map((项) => 项.mingCheng)].sort(),
+      [...QuHaoXuanXiang.slice(1).map((项) => 项.mingCheng)].sort(),
     )
     expect(锚名).toEqual([...锚名].sort(比较器.compare))
   })

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { deflateSync } from 'zlib'
 import { caiDiaoPNGDiBu } from '../PNG裁剪'
 
-const CRC_BIAO: number[] = (() => {
+const CrcBiao: number[] = (() => {
   const biao: number[] = []
   for (let n = 0; n < 256; n++) {
     let c = n
@@ -17,7 +17,7 @@ const CRC_BIAO: number[] = (() => {
 function crc32(huan: Buffer): number {
   let c = 0xffffffff
   for (let i = 0; i < huan.length; i++) {
-    c = CRC_BIAO[(c ^ huan[i]) & 0xff] ^ (c >>> 8)
+    c = CrcBiao[(c ^ huan[i]) & 0xff] ^ (c >>> 8)
   }
   return (c ^ 0xffffffff) >>> 0
 }

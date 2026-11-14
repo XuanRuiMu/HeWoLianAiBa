@@ -3,10 +3,10 @@
     v-for="(kuai, xiaBiao) in kuaiLieBiao"
     :key="xiaBiao"
     class="tuwen-kuai"
-    :class="kuai.lei_xing === XIAO_XI_KUAI_LEI_XING.tuPian ? 'tuwen-kuai--tu' : 'tuwen-kuai--wen'"
+    :class="kuai.lei_xing === XiaoXiKuaiLeiXingZhi.tuPian ? 'tuwen-kuai--tu' : 'tuwen-kuai--wen'"
   >
     <img
-      v-if="kuai.lei_xing === XIAO_XI_KUAI_LEI_XING.tuPian"
+      v-if="kuai.lei_xing === XiaoXiKuaiLeiXingZhi.tuPian"
       class="tuwen-kuai-tu"
       :class="{ 'tuwen-kuai-tu--biaoqingbao': shiBiaoQingBaoKuai(kuai) }"
       :src="kuai.mei_ti_url || tuDiZhi || ''"
@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { huoQuFanYi } from '@/config/翻译表'
-import { XIAO_XI_KUAI_LEI_XING, shiBiaoQingBaoKuai } from '@/utils/消息内容块'
+import { XiaoXiKuaiLeiXingZhi, shiBiaoQingBaoKuai } from '@/utils/消息内容块'
 import type { XiaoXiKuaiChuCan } from '@/types/类型定义'
 
 withDefaults(

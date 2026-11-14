@@ -7,7 +7,7 @@ import { tanCeRedisJiuXu } from '../redis'
 import { huoQuZhenShiIP, shiDuanKeXinDaiLi } from '../utils/真实IP'
 import { chuangJianCuoWuXiangYing, shiBaiXiangYing } from '../utils/xiangying'
 import { queDingXiangYingZhuanZongId } from '../middleware/日志追踪'
-import { CUO_WU_DAI_MA, type CuoWuDaiMa } from '../config/错误码注册表'
+import {CuoWuDaiMa} from '../config/错误码注册表'
 import { huoQuJiuXuKuaiZhao } from '../utils/依赖就绪'
 
 const zhuCeBiao = new promClient.Registry()
@@ -28,14 +28,14 @@ const qingQiuHaoShi = new promClient.Histogram({
   registers: [zhuCeBiao],
 })
 
-const TAN_CE_JIE_LIU_HAO_MIAO = 1000
+const TanCeJieLiuHaoMiao = 1000
 
 let shangCiTanCeShiJian = 0
 let tanCeJinXingZhong: Promise<void> | null = null
 
 async function anXuTanCe(): Promise<void> {
   const xianZai = Date.now()
-  if (xianZai - shangCiTanCeShiJian < TAN_CE_JIE_LIU_HAO_MIAO) return
+  if (xianZai - shangCiTanCeShiJian < TanCeJieLiuHaoMiao) return
   if (tanCeJinXingZhong !== null) {
     await tanCeJinXingZhong
     return
@@ -60,10 +60,10 @@ interface JianKangZhuangTai {
 
 function xuanCuoWuDaiMa(kuaiZhao: { postgres: boolean; redis: boolean }): CuoWuDaiMa | null {
   if (kuaiZhao.postgres && kuaiZhao.redis) return null
-  if (!kuaiZhao.postgres && !kuaiZhao.redis) return CUO_WU_DAI_MA.DEPENDENCIES_UNAVAILABLE
+  if (!kuaiZhao.postgres && !kuaiZhao.redis) return CuoWuDaiMa.DEPENDENCIES_UNAVAILABLE
   return kuaiZhao.postgres
-    ? CUO_WU_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE
-    : CUO_WU_DAI_MA.DEPENDENCY_POSTGRES_UNAVAILABLE
+    ? CuoWuDaiMa.DEPENDENCY_REDIS_UNAVAILABLE
+    : CuoWuDaiMa.DEPENDENCY_POSTGRES_UNAVAILABLE
 }
 
 async function jianChaJianKang(): Promise<JianKangZhuangTai> {
@@ -87,7 +87,7 @@ async function faSongJianKang(xiangYing: Response): Promise<void> {
       ShuJuKu: 'yiChang',
       huanCun: 'yiChang',
       ciKu: 'yiChang',
-      daiMa: CUO_WU_DAI_MA.DEPENDENCIES_UNAVAILABLE,
+      daiMa: CuoWuDaiMa.DEPENDENCIES_UNAVAILABLE,
     }
   }
 
@@ -120,7 +120,7 @@ luYou.get('/readyz', async (_qingQiu: Request, xiangYing: Response) => {
 luYou.get('/metrics', (qingQiu: Request, xiangYing: Response) => {
   const duiXiang = huoQuZhenShiIP(qingQiu)
   if (!shiDuanKeXinDaiLi(duiXiang) && !shiDuanKeXinDaiLi(qingQiu.socket.remoteAddress || '')) {
-    shiBaiXiangYing(xiangYing, 403, '', CUO_WU_DAI_MA.PERMISSION_DENIED)
+    shiBaiXiangYing(xiangYing, 403, '', CuoWuDaiMa.PERMISSION_DENIED)
     return
   }
   void (async () => {
@@ -130,7 +130,7 @@ luYou.get('/metrics', (qingQiu: Request, xiangYing: Response) => {
       xiangYing.end(zhiBiaoWenBen)
     } catch (cuoWu) {
       debug日志.error('监控指标', '生成metrics失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
-      shiBaiXiangYing(xiangYing, 500, '', CUO_WU_DAI_MA.INTERNAL_ERROR)
+      shiBaiXiangYing(xiangYing, 500, '', CuoWuDaiMa.INTERNAL_ERROR)
     }
   })()
 })

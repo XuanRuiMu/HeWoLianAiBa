@@ -122,7 +122,7 @@
           </div>
           <div class="biaoqingbao-wangge">
             <button
-              v-for="tieZhi in BIAO_QING_BAO_LIE_BIAO"
+              v-for="tieZhi in BiaoQingBaoLieBiao"
               :key="tieZhi.id"
               class="biaoqingbao-xiangmu"
               @click="faChu('jia-ru-tie-zhi', tieZhi)"
@@ -152,7 +152,7 @@ import { 使用表情仓库 } from '@/stores/表情'
 import { 使用用户仓库 } from '@/stores/用户'
 import { use表情面板 } from '@/composables/use表情面板'
 import { use表情提交 } from '@/composables/use表情提交'
-import { BIAO_QING_BAO_LIE_BIAO, type BiaoQingBaoDingYi } from '@/utils/表情包库'
+import { BiaoQingBaoLieBiao, type BiaoQingBaoDingYi } from '@/utils/表情包库'
 import type { BiaoQingXiang } from '@/api/表情'
 
 export interface BiaoQingMianBanRongQi {
@@ -211,7 +211,7 @@ watch(
       return
     }
     const yongHuId = 用户仓库.dangQianYongHu?.id
-    if (yongHuId) void 表情仓库.jiaZai(yongHuId)
+    if (yongHuId) void 表情仓库.jiaZai(yongHuId, true)
     await nextTick()
     yuZaiEmojiZiXing()
   },

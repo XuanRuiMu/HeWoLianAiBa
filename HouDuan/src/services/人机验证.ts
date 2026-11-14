@@ -4,13 +4,13 @@ import { peiZhi } from '../config'
 import { debug日志 } from '../utils/debug日志'
 import type { YanZhengMaYongTu } from './短信'
 
-export const REN_JI_ZI_FU_BIAO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+export const RenJiZiFuBiao = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
-const REN_JI_PIAO_JU_ZHENG_ZE = /^rj_[0-9a-f]{32}$/
-const REN_JI_DA_AN_ZHENG_ZE = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$/
-const REN_JI_DA_AN_CHANG_DU = 4
+const RenJiPiaoJuZhengZe = /^rj_[0-9a-f]{32}$/
+const RenJiDaAnZhengZe = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$/
+const RenJiDaAnChangDu = 4
 
-const REN_JI_ZI_XING: Readonly<Record<string, readonly string[]>> = {
+const RenJiZiXing: Readonly<Record<string, readonly string[]>> = {
   A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
   B: ['11110', '10001', '10001', '11110', '10001', '10001', '11110'],
   C: ['01110', '10001', '10000', '10000', '10000', '10001', '01110'],
@@ -85,7 +85,7 @@ function geShiHuaShu(zhi: number): string {
 }
 
 function shengChengZiXingZu(ziFu: string, xuHao: number): string {
-  const ziXing = REN_JI_ZI_XING[ziFu]
+  const ziXing = RenJiZiXing[ziFu]
   if (!ziXing) return ''
   const jiZhunX = 19 + xuHao * 40 + suiJi(5) - 2
   const jiZhunY = 13 + suiJi(5) - 2
@@ -106,8 +106,8 @@ function shengChengZiXingZu(ziFu: string, xuHao: number): string {
 
 export function shengChengRenJiDaAn(): string {
   let daAn = ''
-  for (let xuHao = 0; xuHao < REN_JI_DA_AN_CHANG_DU; xuHao += 1) {
-    daAn += REN_JI_ZI_FU_BIAO[suiJi(REN_JI_ZI_FU_BIAO.length)]
+  for (let xuHao = 0; xuHao < RenJiDaAnChangDu; xuHao += 1) {
+    daAn += RenJiZiFuBiao[suiJi(RenJiZiFuBiao.length)]
   }
   return daAn
 }
@@ -136,7 +136,7 @@ function huoQuCunChuJian(piaoJu: string): string {
 }
 
 export function shiHeFaRenJiPiaoJu(zhi: unknown): zhi is string {
-  return typeof zhi === 'string' && REN_JI_PIAO_JU_ZHENG_ZE.test(zhi)
+  return typeof zhi === 'string' && RenJiPiaoJuZhengZe.test(zhi)
 }
 
 export function guiYiHuaRenJiDaAn(zhi: unknown): string {
@@ -144,7 +144,7 @@ export function guiYiHuaRenJiDaAn(zhi: unknown): string {
 }
 
 export function shiHeFaRenJiDaAn(zhi: unknown): zhi is string {
-  return REN_JI_DA_AN_ZHENG_ZE.test(guiYiHuaRenJiDaAn(zhi))
+  return RenJiDaAnZhengZe.test(guiYiHuaRenJiDaAn(zhi))
 }
 
 function anQuanXiangDeng(cunChu: string, tiJiao: string): boolean {

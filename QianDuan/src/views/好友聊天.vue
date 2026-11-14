@@ -31,7 +31,7 @@
       :aria-label="huoQuFanYi('liaoTian', 'xiaoXiLieBiao')"
       @scroll.passive="chuLiXiaoXiGunDong"
     >
-      <XiaoXiGuJia v-if="zaiJiaGengZao" :hang-pei-zhi="GU_JIA_GENG_ZAO_PEI_ZHI" />
+      <XiaoXiGuJia v-if="zaiJiaGengZao" :hang-pei-zhi="GuJiaGengZaoPeiZhi" />
       <template v-for="zu in xiaoXiFenZu" :key="'zu-' + zu.shiJianChuo">
       <ShiJianTiao :shi-jian="zu.shiJian" :shi-jian-chuo="zu.shiJianChuo" />
       <XiaoXiHang
@@ -167,7 +167,7 @@
           :guang-biao="daiFaGuangBiao"
           :zhan-kai="shuRuKuangZhanKai"
           :zhan-wei-fu="huoQuFanYi('haoYou', 'shuRuXiaoXi')"
-          :zui-da-chang-du="XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu"
+          :zui-da-chang-du="XiaoXiPeiZhi.zuiDaXiaoXiChangDu"
           @geng-xin-guang-biao="daiFaGengXinGuangBiao"
           @bian-ji="chuLiShuRuQuBianJi"
           @cha-ru-wen-ben="chaRuShuRuQuWenBen"
@@ -203,7 +203,7 @@
         ref="wenJianInputRef"
         class="yincang-wenjian-shuru"
         type="file"
-        :accept="WEN_JIAN_SHURU_JIE_SHOU_KUO_ZHAN"
+        :accept="WenJianShuruJieShouKuoZhan"
         @change="chuLiWenJianXuanZe"
       />
     </footer>
@@ -280,7 +280,7 @@ import {
   kuaiDaoZhengWen,
   kuaiDaoXiaoXiLeiXing,
   keTiJiaoKuai,
-  BIAO_QING_BAO_MEI_TI_LEI_BIE,
+  BiaoQingBaoMeiTiLeiBie,
 } from '@/utils/消息内容块'
 import { xuanRanBiaoQingBao, type BiaoQingBaoDingYi } from '@/utils/表情包库'
 import type { BiaoQingXiang } from '@/api/表情'
@@ -288,18 +288,18 @@ import { use语音转文字 } from '@/composables/use语音转文字'
 import { use语音播放 } from '@/composables/use语音播放'
 import { use录音 } from '@/composables/use录音'
 import {
-  WEN_JIAN_SHURU_JIE_SHOU_KUO_ZHAN,
-  MEI_TI_XIAO_XI_LEI_XING,
-  TU_PIAN_XIAO_XI_LEI_XING,
-  XIAO_XI_PEI_ZHI,
-  YIN_YONG_DING_WEI_PEI_ZHI,
+  WenJianShuruJieShouKuoZhan,
+  MeiTiXiaoXiLeiXing,
+  TuPianXiaoXiLeiXing,
+  XiaoXiPeiZhi,
+  YinYongDingWeiPeiZhi,
   duQuShengYinTongDao,
   heChengDanTongDaoYinLiang,
   xuanZeYuYinTongDao,
   huoQuMeiTiYinYongZhanWei,
   huoQuFaSongZhuangTaiWenAn,
 } from '@/config/消息配置'
-import { CAO_GAO_JIAN, useCaoGao } from '@/composables/use草稿'
+import { CaoGaoJian, useCaoGao } from '@/composables/use草稿'
 import RequestError from '@/components/请求错误.vue'
 import KongTai from '@/components/空态.vue'
 import { use前台错误 } from '@/composables/use前台错误'
@@ -336,7 +336,7 @@ const woDeId = 用户仓库.dangQianYongHu?.id || ''
 const xiaoXiLieBiao = ref<HaoYouXiaoXi[]>([])
 const xiaoXiFenZu = computed(() => fenZuXiaoXiAnShiJian(xiaoXiLieBiao.value))
 const shuRuNeiRong = ref('')
-const { huiFuCaoGao, qingChuCaoGao } = useCaoGao(CAO_GAO_JIAN.haoYouLiaoTian(haoYouId), shuRuNeiRong)
+const { huiFuCaoGao, qingChuCaoGao } = useCaoGao(CaoGaoJian.haoYouLiaoTian(haoYouId), shuRuNeiRong)
 const caoGaoYiHuiFu = ref(false)
 const faSongZhong = ref(false)
 const mianBanJiaGou = ref<{ $el?: HTMLElement } | null>(null)
@@ -348,7 +348,7 @@ const haoYouTouXiang = ref<string | null>(null)
 const haoYouMing = ref('')
 const haoYouQiPao = ref<string | null>(null)
 const lunXunDingShi = ref<number | null>(null)
-const LE_GUAN_QIAN_ZHUI = 'le-guan-'
+const LeGuanQianZhui = 'le-guan-'
 const faSongZhuangTai = ref(new Map<string, 'fa_song_zhong' | 'shi_bai'>())
 const daiChongShiFa = new Map<string, () => Promise<void>>()
 const weiDuXinShu = ref(0)
@@ -384,14 +384,14 @@ function gunDongDaoDiBu() {
 function shiZaiDiBu(): boolean {
   const rongQi = xiaoxiQuYuRef.value
   if (!rongQi) return true
-  return rongQi.scrollHeight - rongQi.scrollTop - rongQi.clientHeight <= XIAO_XI_PEI_ZHI.diBuYuZhiXiangSu
+  return rongQi.scrollHeight - rongQi.scrollTop - rongQi.clientHeight <= XiaoXiPeiZhi.diBuYuZhiXiangSu
 }
 
 function heBingXiaoXiLieBiao(fuWuQi: HaoYouXiaoXi[], laiYuan: HaoYouXiaoXi[]): HaoYouXiaoXi[] {
   return heBingXiaoXi(
     fuWuQi,
     laiYuan,
-    (xiaoXi) => xiaoXi.id.startsWith(LE_GUAN_QIAN_ZHUI) && faSongZhuangTai.value.has(xiaoXi.id),
+    (xiaoXi) => xiaoXi.id.startsWith(LeGuanQianZhui) && faSongZhuangTai.value.has(xiaoXi.id),
   )
 }
 
@@ -432,7 +432,7 @@ async function shuaXin(shouCi = false): Promise<boolean> {
       const yiCunId = new Set(xiaoXiLieBiao.value.map((xiaoXi) => xiaoXi.id))
       const { lieBiao: fuWuQi, haiYouGengDuo } = await huoQuHaoYouXiaoXi(
         haoYouId,
-        XIAO_XI_PEI_ZHI.haoYouXiaoXiZuiDaTiaoShu,
+        XiaoXiPeiZhi.haoYouXiaoXiZuiDaTiaoShu,
       )
       haiYouGengDuoShi.value = haiYouGengDuo
       const heBing = heBingXiaoXiLieBiao(fuWuQi, xiaoXiLieBiao.value)
@@ -480,7 +480,7 @@ interface LeGuanBuCan {
 
 function chuangJianLeGuanXiaoXi(jian: string, bu: LeGuanBuCan): HaoYouXiaoXi {
   return {
-    id: `${LE_GUAN_QIAN_ZHUI}${jian}`,
+    id: `${LeGuanQianZhui}${jian}`,
     fa_song_zhe_id: woDeId,
     fa_song_zhe_lei_xing: 'yonghu',
     jie_shou_zhe_id: haoYouId,
@@ -614,7 +614,7 @@ async function faSongDaiFaTuWen(): Promise<void> {
       const shangChuan = await shangChuanHaoYouMeiTi(
         haoYouId,
         xiang.wen_jian,
-        xiang.mei_ti_lei_bie === BIAO_QING_BAO_MEI_TI_LEI_BIE ? 'biaoqingshu' : 'tupian',
+        xiang.mei_ti_lei_bie === BiaoQingBaoMeiTiLeiBie ? 'biaoqingshu' : 'tupian',
       )
       chuCanKuai.push({
         lei_xing: 'tupian',
@@ -673,8 +673,8 @@ function duQuTiShi(cuoWu: unknown): string {
   return 归一前台错误(cuoWu).lianAiWenAn
 }
 
-const MEI_TI_LEI_XING = new Set<string>(MEI_TI_XIAO_XI_LEI_XING)
-const TU_PIAN_LEI_XING = new Set<string>(TU_PIAN_XIAO_XI_LEI_XING)
+const MeiTiLeiXing = new Set<string>(MeiTiXiaoXiLeiXing)
+const TuPianLeiXing = new Set<string>(TuPianXiaoXiLeiXing)
 const xiangCeInputRef = ref<HTMLInputElement | null>(null)
 const wenJianInputRef = ref<HTMLInputElement | null>(null)
 const yuLanURLJi = new Set<string>()
@@ -692,11 +692,11 @@ const {
 })
 
 function shiTuPianXiaoXi(xiaoXi: HaoYouXiaoXi): boolean {
-  return TU_PIAN_LEI_XING.has(xiaoXi.lei_xing)
+  return TuPianLeiXing.has(xiaoXi.lei_xing)
 }
 
 function shiMeiTiXiaoXi(xiaoXi: HaoYouXiaoXi): boolean {
-  return MEI_TI_LEI_XING.has(xiaoXi.lei_xing) && !!xiaoXi.mei_ti_url
+  return MeiTiLeiXing.has(xiaoXi.lei_xing) && !!xiaoXi.mei_ti_url
 }
 
 function meiTiWaiKeLeiMing(xiaoXi: HaoYouXiaoXi): string {
@@ -760,7 +760,7 @@ const yuLanTuPianLieBiao = ref<string[]>([])
 const yuLanXiaBiao = ref<number | null>(null)
 const zaiJiaGengZao = ref(false)
 const haiYouGengDuoShi = ref(false)
-const GU_JIA_GENG_ZAO_PEI_ZHI = [
+const GuJiaGengZaoPeiZhi = [
   { kuanDu: '46%', shiYouCe: false },
   { kuanDu: '32%', shiYouCe: true },
   { kuanDu: '54%', shiYouCe: false },
@@ -827,7 +827,7 @@ async function faSongBiaoQingBao(biaoQing: BiaoQingXiang): Promise<void> {
       nei_rong: '',
       mei_ti_id: biaoQing.mei_ti_id,
       mei_ti_url: biaoQing.mei_ti_url,
-      mei_ti_lei_bie: BIAO_QING_BAO_MEI_TI_LEI_BIE,
+      mei_ti_lei_bie: BiaoQingBaoMeiTiLeiBie,
       mei_ti_yuan_shi_wen_jian_ming: biaoQing.duan_ming || null,
     }),
     async () => {
@@ -845,7 +845,7 @@ async function jiaRuDaiFaTieZhi(tieZhi: BiaoQingBaoDingYi): Promise<void> {
   try {
     const blob = await xuanRanBiaoQingBao(tieZhi.emoji, tieZhi.wenZi)
     const wenJian = new File([blob], `${tieZhi.id}.png`, { type: blob.type || 'image/png' })
-    const jieGuo = chaRuDaiFaTuPian(wenJian, BIAO_QING_BAO_MEI_TI_LEI_BIE)
+    const jieGuo = chaRuDaiFaTuPian(wenJian, BiaoQingBaoMeiTiLeiBie)
     if (jieGuo.yuanYin === 'chao_xian') jiuDiTiShi(huoQuFanYi('duoMeiTi', 'kuaiChaoXian'))
   } catch {
     jiuDiTiShi(huoQuFanYi('duoMeiTi', 'biaoQingBaoXuanRanShiBai'))
@@ -855,7 +855,7 @@ async function jiaRuDaiFaTieZhi(tieZhi: BiaoQingBaoDingYi): Promise<void> {
 function chuLiXiaoXiGunDong(): void {
   dingZaiDiBu.value = shiZaiDiBu()
   if (weiDuXinShu.value > 0 && dingZaiDiBu.value) weiDuXinShu.value = 0
-  if (xiaoxiQuYuRef.value && xiaoxiQuYuRef.value.scrollTop <= XIAO_XI_PEI_ZHI.dingBuYuZhiXiangSu) {
+  if (xiaoxiQuYuRef.value && xiaoxiQuYuRef.value.scrollTop <= XiaoXiPeiZhi.dingBuYuZhiXiangSu) {
     void jiaZaiGengZao()
   }
 }
@@ -864,12 +864,12 @@ async function jiaZaiGengZao(): Promise<void> {
   if (zaiJiaGengZao.value || !haiYouGengDuoShi.value) return
   const rongQi = xiaoxiQuYuRef.value
   if (!rongQi) return
-  const zuiZao = xiaoXiLieBiao.value.find((xiaoXi) => !xiaoXi.id.startsWith(LE_GUAN_QIAN_ZHUI))
+  const zuiZao = xiaoXiLieBiao.value.find((xiaoXi) => !xiaoXi.id.startsWith(LeGuanQianZhui))
   if (!zuiZao) return
   zaiJiaGengZao.value = true
   const juDiDiBu = rongQi.scrollHeight - rongQi.scrollTop
   try {
-    const ye = await huoQuHaoYouXiaoXi(haoYouId, XIAO_XI_PEI_ZHI.haoYouXiaoXiZuiDaTiaoShu, {
+    const ye = await huoQuHaoYouXiaoXi(haoYouId, XiaoXiPeiZhi.haoYouXiaoXiZuiDaTiaoShu, {
       shi_jian_chuo: zuiZao.shi_jian_chuo,
       id: zuiZao.id,
     })
@@ -946,7 +946,7 @@ function jiaruDaiFaTuPian(wenJian: File | Blob): void {
 }
 
 function chaRuShuRuQuWenBen(wenBen: string, guangBiao?: DaiFaGuangBiao | null): void {
-  const shangXian = XIAO_XI_PEI_ZHI.zuiDaXiaoXiChangDu
+  const shangXian = XiaoXiPeiZhi.zuiDaXiaoXiChangDu
   const shengYu = shangXian - shuRuNeiRong.value.length
   if (shengYu <= 0) return
   daiFaChaRuWenZi(wenBen.slice(0, shengYu), guangBiao ?? null)
@@ -1170,7 +1170,7 @@ function dianJiLuYinQiehuan(): void {
 }
 
 function yinYongXiangId(xiaoXi: HaoYouXiaoXi): string {
-  return `${YIN_YONG_DING_WEI_PEI_ZHI.domQianZhui}${xiaoXi.id}`
+  return `${YinYongDingWeiPeiZhi.domQianZhui}${xiaoXi.id}`
 }
 
 function huoQuXiaoXiGunDongRongQi(): HTMLElement | null {
@@ -1193,12 +1193,12 @@ function huoQuYinYongZhaiYao(muBiao: CaiDanXiaoXi): string {
 }
 
 function chuLiYouJianCaiDan(xiaoXi: HaoYouXiaoXi, shiJian: MouseEvent) {
-  if (xiaoXi.id.startsWith(LE_GUAN_QIAN_ZHUI)) return
+  if (xiaoXi.id.startsWith(LeGuanQianZhui)) return
   daKaiCaiDan(xiaoXi, shiJian)
 }
 
 function chuLiChuMoKaiShi(xiaoXi: HaoYouXiaoXi, shiJian: TouchEvent) {
-  if (xiaoXi.id.startsWith(LE_GUAN_QIAN_ZHUI)) return
+  if (xiaoXi.id.startsWith(LeGuanQianZhui)) return
   chuMoKaiShi(xiaoXi, shiJian)
 }
 
@@ -1263,7 +1263,7 @@ onMounted(async () => {
   lunXunDingShi.value = window.setInterval(() => {
     if (document.visibilityState !== 'visible') return
     void shuaXin()
-  }, XIAO_XI_PEI_ZHI.haoYouLunXunJianGeHaoMiao)
+  }, XiaoXiPeiZhi.haoYouLunXunJianGeHaoMiao)
 })
 
 onBeforeUnmount(() => {

@@ -11,15 +11,15 @@ type ZhuiZongQingQiu = Request & {
   span_id: string
 }
 
-const QING_QIU_ID_ZUI_DI_CHANG_DU = 16
-const QING_QIU_ID_ZUI_DA_CHANG_DU = 128
-const QING_QIU_ID_HEFA_ZE = /^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$/
+const QingQiuIdZuiDiChangDu = 16
+const QingQiuIdZuiDaChangDu = 128
+const QingQiuIdHefaZe = /^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$/
 
 export function jieXiQingQiuZhuanZongId(zhi: unknown): string | null {
   if (typeof zhi !== 'string') return null
   const jieGuo = zhi.trim()
-  if (jieGuo.length < QING_QIU_ID_ZUI_DI_CHANG_DU || jieGuo.length > QING_QIU_ID_ZUI_DA_CHANG_DU) return null
-  return QING_QIU_ID_HEFA_ZE.test(jieGuo) ? jieGuo : null
+  if (jieGuo.length < QingQiuIdZuiDiChangDu || jieGuo.length > QingQiuIdZuiDaChangDu) return null
+  return QingQiuIdHefaZe.test(jieGuo) ? jieGuo : null
 }
 
 export function shengChengQingQiuZhuanZongId(): string {

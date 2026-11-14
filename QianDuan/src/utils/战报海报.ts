@@ -1,25 +1,25 @@
 import { huoQuFanYi } from '@/config/翻译表'
 import { huoQuQiPaoDingYi, type QiPaoYuShe } from '@/config/气泡主题'
-import { EMOJI_ZITI_DUI } from './表情包库'
+import { EmojiZitiDui } from './表情包库'
 
-export const ZHAN_BAO_KUAN = 1080
-export const ZHAN_BAO_GAO = 1440
+export const ZhanBaoKuan = 1080
+export const ZhanBaoGao = 1440
 
-const BIAN_JU = 72
-const NEI_KUAN = ZHAN_BAO_KUAN - BIAN_JU * 2
-const DING_BU_Y = 130
-const BIAO_TI_Y = 225
-const BIAO_QING_Y = 390
-const BIAO_QING_ZHAI_JING = 200
-const MING_CHEN_Y = 545
-const MIAO_SHU_Y = 590
-const SHU_JU_KUAN_GE = 136
-const SHU_JU_XING_JIAN_GE = 20
-const SHU_JU_GE_MEI_HANG = 2
-const WEI_ZHU_Y = ZHAN_BAO_GAO - 200
-const KAPIAN_YUAN_JIAO = 28
-const HANG_JU = 1.3
-const ZHI_HAO = {
+const BianJu = 72
+const NeiKuan = ZhanBaoKuan - BianJu * 2
+const DingBuY = 130
+const BiaoTiY = 225
+const BiaoQingY = 390
+const BiaoQingZhaiJing = 200
+const MingChenY = 545
+const MiaoShuY = 590
+const ShuJuKuanGe = 136
+const ShuJuXingJianGe = 20
+const ShuJuGeMeiHang = 2
+const WeiZhuY = ZhanBaoGao - 200
+const KapianYuanJiao = 28
+const HangJu = 1.3
+const ZhiHao = {
   yingYongMing: 32,
   biaoTi: 72,
   biaoQing: 110,
@@ -32,7 +32,7 @@ const ZHI_HAO = {
   fuBiaoTi: 30,
   mianZe: 26,
 } as const
-const JIE_GUO_ZUI_DA_HANG_SHU = 2
+const JieGuoZuiDaHangShu = 2
 
 export interface ZhanBaoShuRu {
   jiaoSeMing: string
@@ -153,28 +153,28 @@ function duanHang(
 }
 
 function huaBeiJing(huaBuShangXiaWen: CanvasRenderingContext2D, pin: YangShiPin): void {
-  const jianBian = huaBuShangXiaWen.createLinearGradient(0, 0, ZHAN_BAO_KUAN, ZHAN_BAO_GAO)
+  const jianBian = huaBuShangXiaWen.createLinearGradient(0, 0, ZhanBaoKuan, ZhanBaoGao)
   const zhi = pin.beijing.length
   pin.beijing.forEach((se, suoYin) => {
     jianBian.addColorStop(zhi === 1 ? 1 : suoYin / (zhi - 1), se)
   })
   huaBuShangXiaWen.fillStyle = jianBian
-  huaBuShangXiaWen.fillRect(0, 0, ZHAN_BAO_KUAN, ZHAN_BAO_GAO)
+  huaBuShangXiaWen.fillRect(0, 0, ZhanBaoKuan, ZhanBaoGao)
 }
 
 function huaDingBu(huaBuShangXiaWen: CanvasRenderingContext2D, pin: YangShiPin): void {
   huaBuShangXiaWen.textAlign = 'center'
   huaBuShangXiaWen.textBaseline = 'middle'
-  huaBuShangXiaWen.font = `${ZHI_HAO.yingYongMing}px ${pin.ziTiJiaZu}`
+  huaBuShangXiaWen.font = `${ZhiHao.yingYongMing}px ${pin.ziTiJiaZu}`
   huaBuShangXiaWen.fillStyle = pin.ciWenBen
-  huaBuShangXiaWen.fillText(quChuKongBai(huoQuFanYi('renZheng', 'yingYongMing')), ZHAN_BAO_KUAN / 2, DING_BU_Y)
+  huaBuShangXiaWen.fillText(quChuKongBai(huoQuFanYi('renZheng', 'yingYongMing')), ZhanBaoKuan / 2, DingBuY)
 
-  huaBuShangXiaWen.font = `${ZHI_HAO.biaoTi}px ${pin.ziTiJiaZu}`
+  huaBuShangXiaWen.font = `${ZhiHao.biaoTi}px ${pin.ziTiJiaZu}`
   huaBuShangXiaWen.fillStyle = pin.zhuWenBen
   huaBuShangXiaWen.fillText(
     quChuKongBai(huoQuFanYi('zhanJi', 'fenXiangHaiBaoBiaoTi')),
-    ZHAN_BAO_KUAN / 2,
-    BIAO_TI_Y,
+    ZhanBaoKuan / 2,
+    BiaoTiY,
   )
 }
 
@@ -185,11 +185,11 @@ function huaBiaoQing(
 ): void {
   yuanJiaoJuXing(
     huaBuShangXiaWen,
-    ZHAN_BAO_KUAN / 2 - BIAO_QING_ZHAI_JING / 2,
-    BIAO_QING_Y - BIAO_QING_ZHAI_JING / 2,
-    BIAO_QING_ZHAI_JING,
-    BIAO_QING_ZHAI_JING,
-    BIAO_QING_ZHAI_JING / 2,
+    ZhanBaoKuan / 2 - BiaoQingZhaiJing / 2,
+    BiaoQingY - BiaoQingZhaiJing / 2,
+    BiaoQingZhaiJing,
+    BiaoQingZhaiJing,
+    BiaoQingZhaiJing / 2,
   )
   huaBuShangXiaWen.fillStyle = pin.kaPian
   huaBuShangXiaWen.fill()
@@ -198,17 +198,17 @@ function huaBiaoQing(
   huaBuShangXiaWen.stroke()
   huaBuShangXiaWen.textAlign = 'center'
   huaBuShangXiaWen.textBaseline = 'middle'
-  huaBuShangXiaWen.font = `${ZHI_HAO.biaoQing}px ${EMOJI_ZITI_DUI}`
-  huaBuShangXiaWen.fillText(yiLai.biaoQing, ZHAN_BAO_KUAN / 2, BIAO_QING_Y + 4)
+  huaBuShangXiaWen.font = `${ZhiHao.biaoQing}px ${EmojiZitiDui}`
+  huaBuShangXiaWen.fillText(yiLai.biaoQing, ZhanBaoKuan / 2, BiaoQingY + 4)
 }
 
 function huaJiaoSeMing(huaBuShangXiaWen: CanvasRenderingContext2D, pin: YangShiPin, ming: string): void {
   huaBuShangXiaWen.textAlign = 'center'
   huaBuShangXiaWen.textBaseline = 'middle'
-  huaBuShangXiaWen.font = `${ZHI_HAO.jiaoSeMing}px ${pin.ziTiJiaZu}`
+  huaBuShangXiaWen.font = `${ZhiHao.jiaoSeMing}px ${pin.ziTiJiaZu}`
   huaBuShangXiaWen.fillStyle = pin.qiangDiao
-  const hangList = duanHang(huaBuShangXiaWen, ming, NEI_KUAN, 1)
-  huaBuShangXiaWen.fillText(hangList[0] ?? '', ZHAN_BAO_KUAN / 2, MING_CHEN_Y)
+  const hangList = duanHang(huaBuShangXiaWen, ming, NeiKuan, 1)
+  huaBuShangXiaWen.fillText(hangList[0] ?? '', ZhanBaoKuan / 2, MingChenY)
 }
 
 function huaJieGuo(
@@ -217,36 +217,36 @@ function huaJieGuo(
   yiLai: ZhanBaoShuRu,
 ): number {
   const qiPao = huoQuQiPaoDingYi(yiLai.qiPaoAI)
-  huaBuShangXiaWen.font = `${ZHI_HAO.miaoShuZhengWen}px ${pin.ziTiJiaZu}`
-  const hangList = duanHang(huaBuShangXiaWen, yiLai.jieGuoWenBen, NEI_KUAN - 96, JIE_GUO_ZUI_DA_HANG_SHU)
-  const zhengWenGao = ZHI_HAO.miaoShuZhengWen * HANG_JU
+  huaBuShangXiaWen.font = `${ZhiHao.miaoShuZhengWen}px ${pin.ziTiJiaZu}`
+  const hangList = duanHang(huaBuShangXiaWen, yiLai.jieGuoWenBen, NeiKuan - 96, JieGuoZuiDaHangShu)
+  const zhengWenGao = ZhiHao.miaoShuZhengWen * HangJu
   const paoGao = 80 + Math.max(1, hangList.length) * zhengWenGao
-  yuanJiaoJuXing(huaBuShangXiaWen, BIAN_JU, MIAO_SHU_Y, NEI_KUAN, paoGao, KAPIAN_YUAN_JIAO)
+  yuanJiaoJuXing(huaBuShangXiaWen, BianJu, MiaoShuY, NeiKuan, paoGao, KapianYuanJiao)
   huaBuShangXiaWen.fillStyle = qiPao.beiJing
   huaBuShangXiaWen.fill()
 
   huaBuShangXiaWen.textAlign = 'center'
   huaBuShangXiaWen.textBaseline = 'middle'
-  huaBuShangXiaWen.font = `${ZHI_HAO.miaoShuBiaoQian}px ${pin.ziTiJiaZu}`
+  huaBuShangXiaWen.font = `${ZhiHao.miaoShuBiaoQian}px ${pin.ziTiJiaZu}`
   huaBuShangXiaWen.fillStyle = qiPao.wenBen
-  huaBuShangXiaWen.fillText(quChuKongBai(huoQuFanYi('zhanJi', 'haiBaoJieGuoBiaoQian')), ZHAN_BAO_KUAN / 2, MIAO_SHU_Y + 40)
-  huaBuShangXiaWen.font = `${ZHI_HAO.miaoShuZhengWen}px ${pin.ziTiJiaZu}`
+  huaBuShangXiaWen.fillText(quChuKongBai(huoQuFanYi('zhanJi', 'haiBaoJieGuoBiaoQian')), ZhanBaoKuan / 2, MiaoShuY + 40)
+  huaBuShangXiaWen.font = `${ZhiHao.miaoShuZhengWen}px ${pin.ziTiJiaZu}`
   hangList.forEach((hang, suoYin) => {
-    huaBuShangXiaWen.fillText(hang, ZHAN_BAO_KUAN / 2, MIAO_SHU_Y + 78 + zhengWenGao * (suoYin + 0.5))
+    huaBuShangXiaWen.fillText(hang, ZhanBaoKuan / 2, MiaoShuY + 78 + zhengWenGao * (suoYin + 0.5))
   })
 
   const zhuangTaiWen =
     yiLai.jieGuoFenLei === 'shengli'
       ? quChuKongBai(huoQuFanYi('zhanJi', 'zhuangTaiShengLi'))
       : quChuKongBai(huoQuFanYi('zhanJi', 'zhuangTaiShiBai'))
-  const paoDiBu = MIAO_SHU_Y + paoGao
-  huaBuShangXiaWen.font = `${ZHI_HAO.zhuangTai}px ${pin.ziTiJiaZu}`
+  const paoDiBu = MiaoShuY + paoGao
+  huaBuShangXiaWen.font = `${ZhiHao.zhuangTai}px ${pin.ziTiJiaZu}`
   const biaoQianKuan = huaBuShangXiaWen.measureText(zhuangTaiWen).width + 56
-  const biaoQianGao = ZHI_HAO.zhuangTai * 2
+  const biaoQianGao = ZhiHao.zhuangTai * 2
   const biaoQianY = paoDiBu + 22
   yuanJiaoJuXing(
     huaBuShangXiaWen,
-    ZHAN_BAO_KUAN / 2 - biaoQianKuan / 2,
+    ZhanBaoKuan / 2 - biaoQianKuan / 2,
     biaoQianY,
     biaoQianKuan,
     biaoQianGao,
@@ -255,7 +255,7 @@ function huaJieGuo(
   huaBuShangXiaWen.fillStyle = pin.zhuangTaiBeiJing
   huaBuShangXiaWen.fill()
   huaBuShangXiaWen.fillStyle = pin.zhuangTaiWenBen
-  huaBuShangXiaWen.fillText(zhuangTaiWen, ZHAN_BAO_KUAN / 2, biaoQianY + biaoQianGao / 2)
+  huaBuShangXiaWen.fillText(zhuangTaiWen, ZhanBaoKuan / 2, biaoQianY + biaoQianGao / 2)
   return biaoQianY + biaoQianGao
 }
 
@@ -289,13 +289,13 @@ function huaShuJuGe(
 ): number {
   const lieBiao = shuJuGeList(yiLai)
   if (lieBiao.length === 0) return qiShiY
-  const geKuan = (NEI_KUAN - SHU_JU_XING_JIAN_GE * (SHU_JU_GE_MEI_HANG - 1)) / SHU_JU_GE_MEI_HANG
+  const geKuan = (NeiKuan - ShuJuXingJianGe * (ShuJuGeMeiHang - 1)) / ShuJuGeMeiHang
   lieBiao.forEach((tiao, suoYin) => {
-    const hang = Math.floor(suoYin / SHU_JU_GE_MEI_HANG)
-    const lie = suoYin % SHU_JU_GE_MEI_HANG
-    const x = BIAN_JU + lie * (geKuan + SHU_JU_XING_JIAN_GE)
-    const y = qiShiY + hang * (SHU_JU_KUAN_GE + SHU_JU_XING_JIAN_GE)
-    yuanJiaoJuXing(huaBuShangXiaWen, x, y, geKuan, SHU_JU_KUAN_GE, KAPIAN_YUAN_JIAO)
+    const hang = Math.floor(suoYin / ShuJuGeMeiHang)
+    const lie = suoYin % ShuJuGeMeiHang
+    const x = BianJu + lie * (geKuan + ShuJuXingJianGe)
+    const y = qiShiY + hang * (ShuJuKuanGe + ShuJuXingJianGe)
+    yuanJiaoJuXing(huaBuShangXiaWen, x, y, geKuan, ShuJuKuanGe, KapianYuanJiao)
     huaBuShangXiaWen.fillStyle = pin.kaPian
     huaBuShangXiaWen.fill()
     huaBuShangXiaWen.strokeStyle = pin.kaPianBianKuang
@@ -304,43 +304,43 @@ function huaShuJuGe(
     huaBuShangXiaWen.textAlign = 'center'
     huaBuShangXiaWen.textBaseline = 'middle'
     huaBuShangXiaWen.fillStyle = pin.ciWenBen
-    huaBuShangXiaWen.font = `${ZHI_HAO.shuJuBiaoQian}px ${pin.ziTiJiaZu}`
+    huaBuShangXiaWen.font = `${ZhiHao.shuJuBiaoQian}px ${pin.ziTiJiaZu}`
     huaBuShangXiaWen.fillText(tiao.biaoQian, x + geKuan / 2, y + 42)
     huaBuShangXiaWen.fillStyle = pin.zhuWenBen
-    huaBuShangXiaWen.font = `${ZHI_HAO.shuJuZhi}px ${pin.ziTiJiaZu}`
+    huaBuShangXiaWen.font = `${ZhiHao.shuJuZhi}px ${pin.ziTiJiaZu}`
     const zhiHang = duanHang(huaBuShangXiaWen, tiao.zhi, geKuan - 48, 1)
     huaBuShangXiaWen.fillText(zhiHang[0] ?? '', x + geKuan / 2, y + 94)
   })
-  const hangShu = Math.ceil(lieBiao.length / SHU_JU_GE_MEI_HANG)
-  return qiShiY + hangShu * SHU_JU_KUAN_GE + (hangShu - 1) * SHU_JU_XING_JIAN_GE
+  const hangShu = Math.ceil(lieBiao.length / ShuJuGeMeiHang)
+  return qiShiY + hangShu * ShuJuKuanGe + (hangShu - 1) * ShuJuXingJianGe
 }
 
 function huaWeiZhu(huaBuShangXiaWen: CanvasRenderingContext2D, pin: YangShiPin): void {
-  const jianBian = huaBuShangXiaWen.createLinearGradient(BIAN_JU, WEI_ZHU_Y, BIAN_JU + NEI_KUAN, WEI_ZHU_Y)
+  const jianBian = huaBuShangXiaWen.createLinearGradient(BianJu, WeiZhuY, BianJu + NeiKuan, WeiZhuY)
   jianBian.addColorStop(0, pin.qiangDiao)
   jianBian.addColorStop(1, pin.qiangDiaoQian)
-  yuanJiaoJuXing(huaBuShangXiaWen, BIAN_JU, WEI_ZHU_Y, NEI_KUAN, 8, 4)
+  yuanJiaoJuXing(huaBuShangXiaWen, BianJu, WeiZhuY, NeiKuan, 8, 4)
   huaBuShangXiaWen.fillStyle = jianBian
   huaBuShangXiaWen.fill()
 
   huaBuShangXiaWen.textAlign = 'center'
   huaBuShangXiaWen.textBaseline = 'middle'
   huaBuShangXiaWen.fillStyle = pin.zhuWenBen
-  huaBuShangXiaWen.font = `${ZHI_HAO.fuBiaoTi}px ${pin.ziTiJiaZu}`
+  huaBuShangXiaWen.font = `${ZhiHao.fuBiaoTi}px ${pin.ziTiJiaZu}`
   huaBuShangXiaWen.fillText(
     quChuKongBai(huoQuFanYi('renZheng', 'yingYongFuBiaoTi')),
-    ZHAN_BAO_KUAN / 2,
-    WEI_ZHU_Y + 52,
+    ZhanBaoKuan / 2,
+    WeiZhuY + 52,
   )
   huaBuShangXiaWen.fillStyle = pin.ciWenBen
-  huaBuShangXiaWen.font = `${ZHI_HAO.mianZe}px ${pin.ziTiJiaZu}`
-  huaBuShangXiaWen.fillText(quChuKongBai(huoQuFanYi('tongYong', 'aiTiShiTiao')), ZHAN_BAO_KUAN / 2, WEI_ZHU_Y + 104)
+  huaBuShangXiaWen.font = `${ZhiHao.mianZe}px ${pin.ziTiJiaZu}`
+  huaBuShangXiaWen.fillText(quChuKongBai(huoQuFanYi('tongYong', 'aiTiShiTiao')), ZhanBaoKuan / 2, WeiZhuY + 104)
 }
 
 export async function shengChengZhanBaoHaiBao(yiLai: ZhanBaoShuRu): Promise<Blob> {
   const huaBu = document.createElement('canvas')
-  huaBu.width = ZHAN_BAO_KUAN
-  huaBu.height = ZHAN_BAO_GAO
+  huaBu.width = ZhanBaoKuan
+  huaBu.height = ZhanBaoGao
   const huaBuShangXiaWen = huaBu.getContext('2d')
   if (!huaBuShangXiaWen) throw new Error(huoQuFanYi('zhanJi', 'haiBaoShengChengShiBai'))
   const pin = quYangShiPin(yiLai.jieGuoFenLei)

@@ -16,20 +16,20 @@ export interface LingPaiZaiHe {
   refreshTokenId?: string
 }
 
-const REFRESH_TOKEN_PREFIX = 'refresh_token:'
-const REFRESH_TOKEN_USER_PREFIX = 'refresh_token_user:'
-const REFRESH_TOKEN_XIAO_HAO_PREFIX = 'xiao_hao_refresh_token:'
-const REFRESH_TOKEN_TTL = peiZhi.shuaXinLingPaiYouXiaoMiao
-const XIAO_HAO_BIAO_JI_TTL = 24 * 60 * 60
+const RefreshTokenPrefix = 'refresh_token:'
+const RefreshTokenUserPrefix = 'refresh_token_user:'
+const RefreshTokenXiaoHaoPrefix = 'xiao_hao_refresh_token:'
+const RefreshTokenTtl = peiZhi.shuaXinLingPaiYouXiaoMiao
+const XiaoHaoBiaoJiTtl = 24 * 60 * 60
 
 export async function cunChuRefreshToken(
   yongHuId: string,
   tokenId: string,
 ): Promise<void> {
-  const jianMing = `${REFRESH_TOKEN_PREFIX}${yongHuId}:${tokenId}`
-  await redis.set(jianMing, yongHuId, 'EX', REFRESH_TOKEN_TTL)
-  await redis.sadd(`${REFRESH_TOKEN_USER_PREFIX}${yongHuId}`, tokenId)
-  await redis.expire(`${REFRESH_TOKEN_USER_PREFIX}${yongHuId}`, REFRESH_TOKEN_TTL)
+  const jianMing = `${RefreshTokenPrefix}${yongHuId}:${tokenId}`
+  await redis.set(jianMing, yongHuId, 'EX', RefreshTokenTtl)
+  await redis.sadd(`${RefreshTokenUserPrefix}${yongHuId}`, tokenId)
+  await redis.expire(`${RefreshTokenUserPrefix}${yongHuId}`, RefreshTokenTtl)
 }
 
 function duQuRefreshTokenYongHuId(cunChuZhi: string): string | null {
@@ -45,7 +45,7 @@ function duQuRefreshTokenYongHuId(cunChuZhi: string): string | null {
 void duQuRefreshTokenYongHuId
 
 
-const XIAO_HAO_LUA = `
+const XiaoHaoLua = `
 local huo = redis.call('GET', KEYS[1])
 if not huo then return 0 end
 local yongHu = huo
@@ -64,12 +64,12 @@ export async function xiaoHaoRefreshToken(
   tokenId: string,
   yongHuId: string,
 ): Promise<{ chengGong: boolean; cuoWu?: string }> {
-  const jianMing = `${REFRESH_TOKEN_PREFIX}${yongHuId}:${tokenId}`
-  const yongHuJian = `${REFRESH_TOKEN_USER_PREFIX}${yongHuId}`
-  const tombKey = `${REFRESH_TOKEN_XIAO_HAO_PREFIX}${yongHuId}:${tokenId}`
+  const jianMing = `${RefreshTokenPrefix}${yongHuId}:${tokenId}`
+  const yongHuJian = `${RefreshTokenUserPrefix}${yongHuId}`
+  const tombKey = `${RefreshTokenXiaoHaoPrefix}${yongHuId}:${tokenId}`
   const jieGuo = (await (redis as unknown as {
     eval: (jiaoBen: string, jianShu: number, ...canShu: string[]) => Promise<unknown>
-  }).eval(XIAO_HAO_LUA, 3, jianMing, yongHuJian, tombKey, yongHuId, tokenId, String(XIAO_HAO_BIAO_JI_TTL))) as number
+  }).eval(XiaoHaoLua, 3, jianMing, yongHuJian, tombKey, yongHuId, tokenId, String(XiaoHaoBiaoJiTtl))) as number
   if (jieGuo === 1) return { chengGong: true }
   if (jieGuo === -1) return { chengGong: false, cuoWu: 'refresh token用户不匹配' }
   return { chengGong: false, cuoWu: 'refresh token不存在或已过期' }
@@ -79,27 +79,27 @@ export async function jianCeRefreshTokenChongFu(
   tokenId: string,
   yongHuId: string,
 ): Promise<boolean> {
-  const xiaoHaoJian = `${REFRESH_TOKEN_XIAO_HAO_PREFIX}${yongHuId}:${tokenId}`
+  const xiaoHaoJian = `${RefreshTokenXiaoHaoPrefix}${yongHuId}:${tokenId}`
   const beiXiaoHao = await redis.exists(xiaoHaoJian)
   if (beiXiaoHao === 0) return false
-  const huoJian = `${REFRESH_TOKEN_PREFIX}${yongHuId}:${tokenId}`
+  const huoJian = `${RefreshTokenPrefix}${yongHuId}:${tokenId}`
   return (await redis.exists(huoJian)) === 0
 }
 
 export async function cheXiaoYongHuSuoYouRefreshToken(yongHuId: string): Promise<void> {
-  const yongHuJian = `${REFRESH_TOKEN_USER_PREFIX}${yongHuId}`
+  const yongHuJian = `${RefreshTokenUserPrefix}${yongHuId}`
   const tokenIds = await redis.smembers(yongHuJian)
   if (tokenIds.length > 0) {
-    const jianMingLieBiao = tokenIds.map((tid) => `${REFRESH_TOKEN_PREFIX}${yongHuId}:${tid}`)
+    const jianMingLieBiao = tokenIds.map((tid) => `${RefreshTokenPrefix}${yongHuId}:${tid}`)
     await redis.del(...jianMingLieBiao)
   }
   await redis.del(yongHuJian)
 }
 
 export async function shanChuRefreshToken(tokenId: string, yongHuId: string): Promise<void> {
-  const jianMing = `${REFRESH_TOKEN_PREFIX}${yongHuId}:${tokenId}`
+  const jianMing = `${RefreshTokenPrefix}${yongHuId}:${tokenId}`
   await redis.del(jianMing)
-  await redis.srem(`${REFRESH_TOKEN_USER_PREFIX}${yongHuId}`, tokenId)
+  await redis.srem(`${RefreshTokenUserPrefix}${yongHuId}`, tokenId)
 }
 
 export function huoQuLingPaiZuiDaYouXiaoQiMiao(): number {

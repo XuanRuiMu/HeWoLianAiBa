@@ -7,7 +7,7 @@ import { shiBaiXiangYing } from '../utils/xiangying'
 import { huoQuZhenShiIP } from '../utils/真实IP'
 import { redis, dengDaiRedisJiuXu } from '../redis'
 import { debug日志 } from '../utils/debug日志'
-import { CUO_WU_DAI_MA } from '../config/错误码注册表'
+import { CuoWuDaiMa } from '../config/错误码注册表'
 
 function chuangJianRedisStore(): RedisStore {
   const cunChu = new RedisStore({
@@ -79,7 +79,7 @@ function tongYongXianLiu(
         res,
         429,
         (huoQuFanYi as (fenLei: FanYiFenLei, jian: string) => string)(fanYiFenLei, cuoWuTiShi),
-        CUO_WU_DAI_MA.RATE_LIMITED,
+        CuoWuDaiMa.RATE_LIMITED,
       )
     },
   })
@@ -209,7 +209,7 @@ export async function duanXinRiPeiEZhuJi(
     }
     const jieGuo = await duanXinRiPeiEYunXu(shouJiHao, huoQuZhenShiIP(qingQiu))
     if (!jieGuo.yun_xu) {
-      shiBaiXiangYing(xiangYing, 429, jieGuo.ti_shi || huoQuFanYi('renZheng', 'duanXinRiPeiEYongJin'), CUO_WU_DAI_MA.AUTH_SMS_RATE_LIMITED)
+      shiBaiXiangYing(xiangYing, 429, jieGuo.ti_shi || huoQuFanYi('renZheng', 'duanXinRiPeiEYongJin'), CuoWuDaiMa.AUTH_SMS_RATE_LIMITED)
       return
     }
     xiaYiBu()

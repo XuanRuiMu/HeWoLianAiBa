@@ -120,8 +120,12 @@ services:
       SHU_JU_KU_LIAN_CHI_ZUI_DA: ${SHU_JU_KU_LIAN_CHI_ZUI_DA:-20}
       SHU_JU_KU_LIAN_JIE_CHAO_SHI_HAO_MIAO: ${SHU_JU_KU_LIAN_JIE_CHAO_SHI_HAO_MIAO:-10000}
       SHU_JU_KU_YU_JU_CHAO_SHI_HAO_MIAO: ${SHU_JU_KU_YU_JU_CHAO_SHI_HAO_MIAO:-30000}
+
+      TZ: ${TZ:-Asia/Shanghai}
     volumes:
       - ./微信昵称:/微信昵称:ro
+
+      - ./表情包:/app/表情包:ro
 
       - media_uploads:/app/uploads/media
 

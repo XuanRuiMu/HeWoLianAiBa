@@ -19,8 +19,8 @@ export interface 进入聊天加载配置 {
   可重试?: boolean | (() => boolean)
 }
 
-export const ZUI_DUAN_ZHAN_SHI_HAO_MIAO = 1000
-export const HUAN_CI_ZHOU_QI_HAO_MIAO = 3000
+export const ZuiDuanZhanShiHaoMiao = 1000
+export const HuanCiZhouQiHaoMiao = 3000
 
 export function 使用进入聊天加载(配置: 进入聊天加载配置) {
   const 场景 = computed(配置.场景)
@@ -62,7 +62,7 @@ export function 使用进入聊天加载(配置: 进入聊天加载配置) {
     趣味语序.value = Math.floor(Math.random() * 条数)
     换词定时器 = setInterval(() => {
       趣味语序.value += 1
-    }, 配置.换词毫秒 ?? HUAN_CI_ZHOU_QI_HAO_MIAO)
+    }, 配置.换词毫秒 ?? HuanCiZhouQiHaoMiao)
   }
 
   function 上报进度(值: number) {
@@ -97,7 +97,7 @@ export function 使用进入聊天加载(配置: 进入聊天加载配置) {
       if (已取消) return
       const 剩余毫秒 = Math.max(
         0,
-        (配置.最短展示毫秒 ?? ZUI_DUAN_ZHAN_SHI_HAO_MIAO) - (Date.now() - 起始时间),
+        (配置.最短展示毫秒 ?? ZuiDuanZhanShiHaoMiao) - (Date.now() - 起始时间),
       )
       if (剩余毫秒 > 0) await 等待最短时长(剩余毫秒)
       if (已取消) return

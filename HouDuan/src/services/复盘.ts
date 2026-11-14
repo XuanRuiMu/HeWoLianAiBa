@@ -2,8 +2,8 @@ import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { huoQuXiaoXiLieBiao } from './消息'
 import { gengXinFuPanNeiRong } from './战绩'
 import type { FuPanPiZhu, FuPanShiJianXianTiaoMu } from './战绩'
-import { HAO_GAN_DU_PEI_ZHI } from '../config/好感度配置'
-import { YUN_YING_ZI_DUAN_XIAO_XI_LEI_XING } from '../config/消息配置'
+import { HaoGanDuPeiZhi } from '../config/好感度配置'
+import { YunYingZiDuanXiaoXiLeiXing } from '../config/消息配置'
 import { huoQuWanZhengHaoGanDu, huoQuJieDuanMing } from './好感度'
 import { tiQuBingLuoKuGuanJianShiJian } from './关键事件提取'
 import { zhaXingBianTi, type MBTILeiXing } from '../config/角色配置'
@@ -30,7 +30,7 @@ export const 复盘状态 = {
   无聊天记录: 'wu_liao_tian_ji_lu',
 } as const
 
-export const FU_PAN_YOU_XIAO_XIAO_XI_SHU_YU_JU = `
+export const FuPanYouXiaoXiaoXiShuYuJu = `
   SELECT COUNT(*)::int AS "有效消息数"
     FROM "消息"
    WHERE "用户ID" = $1
@@ -44,10 +44,10 @@ export async function huoQuFuPanYouXiaoXiaoXiShu(
   yong_hu_id: string,
   jiao_se_id: string,
 ): Promise<number> {
-  const jieGuo = await 数据库.query(FU_PAN_YOU_XIAO_XIAO_XI_SHU_YU_JU, [
+  const jieGuo = await 数据库.query(FuPanYouXiaoXiaoXiShuYuJu, [
     yong_hu_id,
     jiao_se_id,
-    [...YUN_YING_ZI_DUAN_XIAO_XI_LEI_XING],
+    [...YunYingZiDuanXiaoXiLeiXing],
   ])
   const shuZhi = Number(jieGuo.rows[0]?.有效消息数 ?? 0)
   return Number.isFinite(shuZhi) && shuZhi > 0 ? Math.floor(shuZhi) : 0
@@ -94,8 +94,8 @@ interface FuPanPromptCanShu {
   miJiTiShi?: string
 }
 
-const FU_PAN_MAX_XIAO_XI = 999
-const FU_PAN_MAX_PI_ZHU = 15
+const FuPanMaxXiaoXi = 999
+const FuPanMaxPiZhu = 15
 
 function jieXiJSONXiangYing(neiRong: string): FuPanJSONJieGou {
   const qingLiNeiRong = neiRong.trim()
@@ -233,7 +233,7 @@ function gouJianFuPanPrompt(canShu: FuPanPromptCanShu): string {
     '}',
     '',
     '【pi_zhu 要求】',
-    `1. 从聊天记录里挑 ${FU_PAN_MAX_PI_ZHU} 条以内的关键消息做点评（不必每条都点评）。`,
+    `1. 从聊天记录里挑 ${FuPanMaxPiZhu} 条以内的关键消息做点评（不必每条都点评）。`,
     '2. xu_hao 是消息序号（对应下面聊天记录的序号，从1开始）。必须准确对应，不要编造不存在的序号。',
     '3. pi_zhu_nei_rong 是对该条消息的点评，自然口语，像朋友吐槽。',
     '4. qing_gan 是情感标签：积极/消极/中性。',
@@ -320,7 +320,7 @@ function zhuanHuanPiZhu(jieGou: FuPanJSONJieGou): FuPanPiZhu[] {
       tiaoMu.qing_gan = qingGan
     }
     jieGuo.push(tiaoMu)
-    if (jieGuo.length >= FU_PAN_MAX_PI_ZHU) break
+    if (jieGuo.length >= FuPanMaxPiZhu) break
   }
   return jieGuo
 }
@@ -423,7 +423,7 @@ export async function shengChengFuPan(
     yong_hu_id,
     jiao_se_id,
     ye_ma: 1,
-    mei_ye_tiao_shu: FU_PAN_MAX_XIAO_XI })
+    mei_ye_tiao_shu: FuPanMaxXiaoXi })
 
   let xiaoXiLieBiao: DuiHuaLiShiXiang[] = xiaoXiJieGuo.lie_biao
     .filter((xiaoXi) => xiaoXi.fa_song_zhe_lei_xing !== 'xitong')
@@ -446,7 +446,7 @@ export async function shengChengFuPan(
 
   let miJiTiShi: string | undefined
   if (shiFouMiJi) {
-    const miJiMiLing = (HAO_GAN_DU_PEI_ZHI.miJi.miLing || '').trim().toLowerCase()
+    const miJiMiLing = (HaoGanDuPeiZhi.miJi.miLing || '').trim().toLowerCase()
     const miJiSuoYin = miJiMiLing
       ? xiaoXiLieBiao.findIndex(
           (x) => x.fa_song_zhe_lei_xing === 'yonghu' && x.nei_rong.trim().toLowerCase() === miJiMiLing,

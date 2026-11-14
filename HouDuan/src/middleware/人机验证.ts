@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express'
 import { huoQuFanYi } from '../config/translations'
-import { CUO_WU_DAI_MA } from '../config/错误码注册表'
+import { CuoWuDaiMa } from '../config/错误码注册表'
 import { shiBaiXiangYing } from '../utils/xiangying'
 import { huoQuZhenShiIP } from '../utils/真实IP'
 import { zhunHuaYanZhengMaYongTu } from '../services/短信'
@@ -27,7 +27,7 @@ export async function renJiYanZhengZhongJianJian(
       xiangYing,
       400,
       huoQuFanYi('renZheng', 'renJiYanZhengWeiTongGuo'),
-      CUO_WU_DAI_MA.AUTH_HUMAN_VERIFICATION_FAILED,
+      CuoWuDaiMa.AUTH_HUMAN_VERIFICATION_FAILED,
     )
     return
   }
@@ -41,7 +41,7 @@ export async function renJiYanZhengZhongJianJian(
       xiangYing,
       503,
       huoQuFanYi('tongYong', 'huanCunWeiBeiHouXu'),
-      CUO_WU_DAI_MA.DEPENDENCY_REDIS_UNAVAILABLE,
+      CuoWuDaiMa.DEPENDENCY_REDIS_UNAVAILABLE,
     )
     return
   }
@@ -49,6 +49,6 @@ export async function renJiYanZhengZhongJianJian(
     xiangYing,
     400,
     huoQuFanYi('renZheng', 'renJiYanZhengWeiTongGuo'),
-    CUO_WU_DAI_MA.AUTH_HUMAN_VERIFICATION_FAILED,
+    CuoWuDaiMa.AUTH_HUMAN_VERIFICATION_FAILED,
   )
 }

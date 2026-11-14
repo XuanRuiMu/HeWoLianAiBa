@@ -158,7 +158,7 @@
             ref="luoWeiJuBing"
             :model-value="xianShiDangAnLieBiao"
             :disabled="!shiFouShouDongPaiXu || zhanKu.paiXuZhong || zhanKu.caoZuoZhong"
-            :animation="ZHAN_JI_LUO_WEI.tuoZhuaiHaoMiao"
+            :animation="ZhanJiLuoWei.tuoZhuaiHaoMiao"
             :filter="'.gouxuan-anniu, .caozuo-anniu, .yi-dong-fenlei, .paiXu-cao-zuo'"
             :prevent-on-filter="false"
             ghost-class="sortable-ghost"
@@ -343,15 +343,15 @@ import { VueDraggable } from 'vue-draggable-plus'
 import { piLiangShanChuDangAn, shanChuDangAn } from '@/api/聊天'
 import type { 档案详情 } from '@/types/类型定义'
 import { huoQuFanYi } from '@/config/翻译表'
-import { quXian, ZHAN_JI_LUO_WEI } from '@/config/设计令牌'
-import TouXiang, { MO_REN_ZI } from '@/components/头像.vue'
+import { quXian, ZhanJiLuoWei } from '@/config/设计令牌'
+import TouXiang, { MoRenZi } from '@/components/头像.vue'
 import RequestError from '@/components/请求错误.vue'
 import {
   chuangJianQianTaiCuoWu,
   归一前台错误,
   type QianTaiCuoWu,
 } from '@/utils/前台错误'
-import { QIAN_TAI_DAI_MA } from '@/config/前台错误码'
+import { QianTaiDaiMa } from '@/config/前台错误码'
 import ZhanJiFenLeiGuanLi from '@/components/战绩分类管理.vue'
 import TongYongXiaLa from '@/components/通用菜单.vue'
 import { track } from '@/utils/埋点'
@@ -372,7 +372,7 @@ interface PaiXuXuanXiang {
   biaoTi: string
 }
 
-const FEN_LEI_MEI_YE_TIAO_SHU = 50
+const FenLeiMeiYeTiaoShu = 50
 const router = useRouter()
 const zhanKu = 使用战绩仓库()
 const sheZhiCangKu = 使用用户设置仓库()
@@ -438,7 +438,7 @@ async function boFangLuoWeiDongHua(qianWeiZhi: Map<string, number>): Promise<voi
             { transform: `translateY(${pianYi}px)` },
             { transform: 'translateY(0px)' },
           ],
-          { duration: ZHAN_JI_LUO_WEI.shiChangHaoMiao, easing: quXian.huanYing },
+          { duration: ZhanJiLuoWei.shiChangHaoMiao, easing: quXian.huanYing },
         ),
       )
     } catch {
@@ -474,7 +474,7 @@ const paiXuXuanXiangList = computed<PaiXuXuanXiang[]>(() => [
 const zhanJiXianShiTiShi = computed(() => tiShiXinXi.value)
 
 const zongYeShu = computed(() =>
-  Math.max(1, Math.ceil(zhanKu.dangAnLieBiao.length / FEN_LEI_MEI_YE_TIAO_SHU)),
+  Math.max(1, Math.ceil(zhanKu.dangAnLieBiao.length / FenLeiMeiYeTiaoShu)),
 )
 
 function qieHuanFenLeiYe(fangXiang: 1 | -1): void {
@@ -545,8 +545,8 @@ const xianShiDangAnLieBiao = computed<档案详情[]>(() => {
   } else if (!shiFouShouDongPaiXu.value) {
     lieBiao = paiXuFenLei(lieBiao)
   }
-  const qi = (fenLeiYeMa.value - 1) * FEN_LEI_MEI_YE_TIAO_SHU
-  return lieBiao.slice(qi, qi + FEN_LEI_MEI_YE_TIAO_SHU)
+  const qi = (fenLeiYeMa.value - 1) * FenLeiMeiYeTiaoShu
+  return lieBiao.slice(qi, qi + FenLeiMeiYeTiaoShu)
 })
 
 const dangAnLieBiao = computed(() => xianShiDangAnLieBiao.value)
@@ -744,7 +744,7 @@ function zhuangTaiYangShi(jieGuoLeiXing: string | undefined): string {
 function jiaoSeBiaoQing(dangAn: 档案详情): string {
   if (dangAn.tou_xiang_biao_ji === 'zha') return '😈'
   if (dangAn.tou_xiang_biao_ji === 'ai') return '💕'
-  return MO_REN_ZI.jiaose
+  return MoRenZi.jiaose
 }
 
 function huoQuDangAnQuanJuSuoYin(dangAnId: string | undefined): number {
@@ -849,8 +849,8 @@ function daKaiFuPan(dangAn: 档案详情) {
 
 type FenXiangChuKou = 'fenxiang' | 'quxiao' | 'xiaZai' | 'fuZhi' | 'shibai'
 
-const TI_SHI_HAO_MIAO = 2600
-const XIA_ZAI_SHI_FANG_HAO_MIAO = 1000
+const TiShiHaoMiao = 2600
+const XiaZaiShiFangHaoMiao = 1000
 const fenXiangZhong = ref(false)
 const fenXiangCuoWu = ref<QianTaiCuoWu | null>(null)
 const fenXiangZhongJiLu = ref<档案详情 | null>(null)
@@ -869,7 +869,7 @@ function xianShiTiShi(wenBen: string) {
   if (tiShiJiShiQi) clearTimeout(tiShiJiShiQi)
   tiShiJiShiQi = setTimeout(() => {
     tiShiXinXi.value = ''
-  }, TI_SHI_HAO_MIAO)
+  }, TiShiHaoMiao)
 }
 
 function qingKongFenXiangFuZu() {
@@ -945,7 +945,7 @@ function xiaZaiTuPian(tuPian: Blob, wenJianMing: string): boolean {
       const dingShiQi = setTimeout(() => {
         daiShiFangDingShi.delete(dingShiQi)
         shiFangLianJie(diZhi)
-      }, XIA_ZAI_SHI_FANG_HAO_MIAO)
+      }, XiaZaiShiFangHaoMiao)
       daiShiFangDingShi.add(dingShiQi)
     }
   }
@@ -984,7 +984,7 @@ async function wenChuFenXiang(tuPian: Blob, shuRu: ZhanBaoShuRu): Promise<FenXia
       })
       return 'fenxiang'
     } catch (cuoWu: unknown) {
-      if (归一前台错误(cuoWu).code === QIAN_TAI_DAI_MA.QU_XIAO) return 'quxiao'
+      if (归一前台错误(cuoWu).code === QianTaiDaiMa.QU_XIAO) return 'quxiao'
       // 系统面板报错：继续降级为下载
     }
   }
@@ -1024,7 +1024,7 @@ async function fenXiangJieJu(dangAn: 档案详情) {
     tuPian = await shengChengZhanBaoHaiBao(shuRu)
   } catch {
     fenXiangCuoWu.value = chuangJianQianTaiCuoWu({
-      code: QIAN_TAI_DAI_MA.WEI_ZHI,
+      code: QianTaiDaiMa.WEI_ZHI,
       retryable: true,
     })
     xianShiTiShi('')
@@ -1041,7 +1041,7 @@ async function fenXiangJieJu(dangAn: 档案详情) {
     })
   } catch {
     fenXiangCuoWu.value = chuangJianQianTaiCuoWu({
-      code: QIAN_TAI_DAI_MA.WEI_ZHI,
+      code: QianTaiDaiMa.WEI_ZHI,
       retryable: true,
     })
     xianShiTiShi('')
@@ -1099,7 +1099,7 @@ function onTuoZhuaiGengXin(lieBiao: 档案详情[]): void {
 
 function zhuanHuanDangQianYe(ids: string[]): string[] {
   const quanBu = zhanKu.dangAnLieBiao.map((dangAnXiang) => dangAnXiang.id)
-  const qi = (fenLeiYeMa.value - 1) * FEN_LEI_MEI_YE_TIAO_SHU
+  const qi = (fenLeiYeMa.value - 1) * FenLeiMeiYeTiaoShu
   const fuBu = [...quanBu]
   fuBu.splice(qi, ids.length, ...ids)
   return fuBu

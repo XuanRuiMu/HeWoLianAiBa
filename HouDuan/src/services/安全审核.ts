@@ -3,7 +3,7 @@ import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
 import { gouJianAnQuanShenHePrompt } from './Prompt构建器'
 import { peiZhi } from '../config'
 import { huoQuFanYi } from '../config/translations'
-import { SHEN_HE_FU_WU_BU_KE_YONG_JIAN } from '../config/媒体配置'
+import { ShenHeFuWuBuKeYongJian } from '../config/媒体配置'
 import { jiaZaiZuiXinCiKu, saoMiaoNeiRong } from './审核词库'
 import type { AnQuanShenHeJieGuo } from '../types'
 
@@ -91,14 +91,14 @@ export async function shenHeNeiRongAnQuan(xiaoXi: string): Promise<AnQuanShenHeJ
       }
       return {
         wei_gui: true,
-        lei_xing: SHEN_HE_FU_WU_BU_KE_YONG_JIAN,
+        lei_xing: ShenHeFuWuBuKeYongJian,
         li_you: huoQuFanYi('anQuan', 'shenHeFuWuBuKeYong'),
       }
     } catch (cuoWu2) {
       debug日志.error('安全审核', '[安全审核] 降级扫描自身失败，按违规拦截', { xiang_qing: { cuo_wu: String(cuoWu2) } })
       return {
         wei_gui: true,
-        lei_xing: SHEN_HE_FU_WU_BU_KE_YONG_JIAN,
+        lei_xing: ShenHeFuWuBuKeYongJian,
         li_you: huoQuFanYi('anQuan', 'shenHeFuWuBuKeYong'),
       }
     }

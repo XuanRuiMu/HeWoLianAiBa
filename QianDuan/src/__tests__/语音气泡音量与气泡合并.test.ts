@@ -4,8 +4,8 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import 语音气泡 from '@/components/聊天/语音气泡.vue'
 import {
-  YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI,
-  YU_YIN_YIN_LIANG_PEI_ZHI,
+  YuYinKeJianDuanShuPeiZhi,
+  YuYinYinLiangPeiZhi,
   jiSuanYuYinKeJianDuanShu,
   type YuYinKeJianDuanShu,
 } from '@/composables/use语音音量'
@@ -159,7 +159,7 @@ describe('三段圆弧按音量只改显隐，形状与未播放完全一致', (
 
   it('升降门限分离形成迟滞，边界音量不会来回闪段', () => {
     const { shengRuZhongYin, shengRuGaoYin, jiangHuiDiYin, jiangHuiZhongYin } =
-      YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI
+      YuYinKeJianDuanShuPeiZhi
     expect(shengRuZhongYin).toBeGreaterThan(jiangHuiDiYin)
     expect(shengRuGaoYin).toBeGreaterThan(jiangHuiZhongYin)
     expect(jiSuanYuYinKeJianDuanShu(shengRuZhongYin - 0.01, 1)).toBe(1)
@@ -341,8 +341,8 @@ async function moNiYuYinBoFang(
   vi.resetModules()
   let dangQianZhen = 0
   class JiaDanJingFenXiQi {
-    fftSize = YU_YIN_YIN_LIANG_PEI_ZHI.fftChiCun
-    smoothingTimeConstant = YU_YIN_YIN_LIANG_PEI_ZHI.pingHuaXiShu
+    fftSize = YuYinYinLiangPeiZhi.fftChiCun
+    smoothingTimeConstant = YuYinYinLiangPeiZhi.pingHuaXiShu
     connect(): void {}
     getFloatTimeDomainData = (huan: Float32Array): void => {
       if (xuanXiang.duQuShiBai) throw new Error('时域读取不可用')
@@ -432,7 +432,7 @@ describe('真实语音量级：声波弧随响度出现 1/2/3 格', () => {
     expect(duan).toContain(3)
     expect(zhanBi(duan, 1), '一档不再是唯一档位').toBeLessThan(0.8)
     expect(Math.max(...biLi), '映射必须能冲到高音门限之上').toBeGreaterThanOrEqual(
-      YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.shengRuGaoYin,
+      YuYinKeJianDuanShuPeiZhi.shengRuGaoYin,
     )
   })
 
@@ -465,11 +465,11 @@ describe('真实语音量级：声波弧随响度出现 1/2/3 格', () => {
     const { moKuai, biLi } = await moNiYuYinBoFang(rmsXu)
     const duan = quDuanShuXu(moKuai, biLi)
     expect(new Set(duan.slice(-24)), '静音末段必须恒为一格').toEqual(new Set([1]))
-    expect(biLi.at(-1)).toBeLessThan(YU_YIN_KE_JIAN_DUAN_SHU_PEI_ZHI.jiangHuiDiYin)
+    expect(biLi.at(-1)).toBeLessThan(YuYinKeJianDuanShuPeiZhi.jiangHuiDiYin)
   })
 
   it('低于绝对门限的底噪恒为一格，不会被自适应放大成有声', async () => {
-    const diXian = Math.pow(10, YU_YIN_YIN_LIANG_PEI_ZHI.canKaoDiXianFenBei / 20)
+    const diXian = Math.pow(10, YuYinYinLiangPeiZhi.canKaoDiXianFenBei / 20)
     const { moKuai, biLi } = await moNiYuYinBoFang(new Array<number>(120).fill(diXian / 100))
     expect(new Set(biLi)).toEqual(new Set([0]))
     expect(new Set(quDuanShuXu(moKuai, biLi))).toEqual(new Set([1]))
@@ -498,7 +498,7 @@ describe('真实语音量级：声波弧随响度出现 1/2/3 格', () => {
     const { moKuai, biLi } = await moNiYuYinBoFang(renQun, { duQuShiBai: true })
     expect(biLi).toHaveLength(renQun.length)
     expect(new Set(biLi), '读取失败必须每帧回落到预置值而不是抛错').toEqual(
-      new Set([YU_YIN_YIN_LIANG_PEI_ZHI.wuFaFenXiYuZhi]),
+      new Set([YuYinYinLiangPeiZhi.wuFaFenXiYuZhi]),
     )
     expect(
       gaoJing.mock.calls.filter((yiTiao) => String(yiTiao[0]).includes('[语音音量]')).length,
@@ -523,7 +523,7 @@ describe('真实语音量级：声波弧随响度出现 1/2/3 格', () => {
     expect(tiaoShu, '调试日志不得低于配置的最小间隔').toBeLessThanOrEqual(
       Math.ceil(
         (wuTiaoShi.biLi.length * ZHEN_JIAN_GE_HAO_MIAO) /
-          YU_YIN_YIN_LIANG_PEI_ZHI.zuiXiaoRiZhiJianGeHaoMiao,
+          YuYinYinLiangPeiZhi.zuiXiaoRiZhiJianGeHaoMiao,
       ) + 1,
     )
     guanBi.mockRestore()

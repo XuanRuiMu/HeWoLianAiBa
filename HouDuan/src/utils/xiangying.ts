@@ -12,7 +12,7 @@ import { 剥离控制字符 } from './控制字符'
 
 const ZUI_DA_ZhongWenBenChangDu = 500
 const ZUI_DA_ChongShiMiaoShuHaoMiao = 24 * 60 * 60 * 1000
-const KE_AN_QUAN_FIELD_BAI_MING_DAN: ReadonlySet<string> = new Set([
+const KeAnQuanFieldBaiMingDan: ReadonlySet<string> = new Set([
   'username',
   'expectedVersion',
   'recordIds',
@@ -39,7 +39,7 @@ function anQuanZiDuanCuoWu(wenBen: unknown): Record<string, string> | undefined 
   if (!wenBen || typeof wenBen !== 'object' || Array.isArray(wenBen)) return undefined
   const jieGuo: Record<string, string> = {}
   for (const [jian, zhi] of Object.entries(wenBen)) {
-    if (!KE_AN_QUAN_FIELD_BAI_MING_DAN.has(jian)) continue
+    if (!KeAnQuanFieldBaiMingDan.has(jian)) continue
     if (typeof zhi !== 'string') continue
     const anQuanZhi = 剥离控制字符(zhi).trim().slice(0, 200)
     if (anQuanZhi) jieGuo[jian] = anQuanZhi

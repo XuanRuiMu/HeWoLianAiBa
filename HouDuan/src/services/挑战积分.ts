@@ -2,7 +2,7 @@
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import {
-  TIAO_ZHAN_PEI_ZHI,
+  TiaoZhanPeiZhi,
   huoQuZuBie,
   huoQuDuanWeiMing,
   type ZuBie,
@@ -80,7 +80,7 @@ export async function kaiShiTiaoZhan(
     xing_bie: duiXiang,
     mu_biao_xing_bie: duiXiang,
     mbti_lei_xing: null,
-    shi_fou_zha_xing: Math.random() < TIAO_ZHAN_PEI_ZHI.zhaXingGaiLv,
+    shi_fou_zha_xing: Math.random() < TiaoZhanPeiZhi.zhaXingGaiLv,
     sui_ji_xing_ge: false,
   })
 
@@ -162,7 +162,7 @@ export async function jieSuanTiaoZhanDuiJu(
     let bianDong: number
 
     if (shiFangQi) {
-      bianDong = -TIAO_ZHAN_PEI_ZHI.fangQiKouFen
+      bianDong = -TiaoZhanPeiZhi.fangQiKouFen
       await yingYongJiFenBianDong(yong_hu_id, zuBie, bianDong, 'qi_quan')
     } else if (shiShengLi) {
       const lianShengXinXi = await 数据库.query(
@@ -173,20 +173,20 @@ export async function jieSuanTiaoZhanDuiJu(
       if (lianShengXinXi.rows.length > 0) {
         const dangQianLianSheng = Number(lianShengXinXi.rows[0].连胜 || 0)
         const xinLianSheng = dangQianLianSheng + 1
-        if (xinLianSheng >= TIAO_ZHAN_PEI_ZHI.chuFaLianSheng) {
+        if (xinLianSheng >= TiaoZhanPeiZhi.chuFaLianSheng) {
           jiaCheng =
             Math.min(
-              xinLianSheng - TIAO_ZHAN_PEI_ZHI.chuFaLianSheng + 1,
+              xinLianSheng - TiaoZhanPeiZhi.chuFaLianSheng + 1,
               Math.floor(
-                (TIAO_ZHAN_PEI_ZHI.jiaFenShangXian - TIAO_ZHAN_PEI_ZHI.shengLiJiaFen) /
-                  TIAO_ZHAN_PEI_ZHI.lianShengJiaFen,
+                (TiaoZhanPeiZhi.jiaFenShangXian - TiaoZhanPeiZhi.shengLiJiaFen) /
+                  TiaoZhanPeiZhi.lianShengJiaFen,
               ),
-            ) * TIAO_ZHAN_PEI_ZHI.lianShengJiaFen
+            ) * TiaoZhanPeiZhi.lianShengJiaFen
         }
       }
       bianDong = Math.min(
-        TIAO_ZHAN_PEI_ZHI.shengLiJiaFen + jiaCheng,
-        TIAO_ZHAN_PEI_ZHI.jiaFenShangXian,
+        TiaoZhanPeiZhi.shengLiJiaFen + jiaCheng,
+        TiaoZhanPeiZhi.jiaFenShangXian,
       )
       await yingYongJiFenBianDong(yong_hu_id, zuBie, bianDong, 'sheng_li')
     } else {
@@ -200,11 +200,11 @@ export async function jieSuanTiaoZhanDuiJu(
             Number(changCiXinXi.rows[0].负场 || 0) +
             Number(changCiXinXi.rows[0].弃权场 || 0)
           : 0
-      if (zongChangCi < TIAO_ZHAN_PEI_ZHI.dingJiBaoHuJuShu) {
+      if (zongChangCi < TiaoZhanPeiZhi.dingJiBaoHuJuShu) {
         bianDong = 0
         await yingYongJiFenBianDong(yong_hu_id, zuBie, 0, 'shi_bai')
       } else {
-        bianDong = -TIAO_ZHAN_PEI_ZHI.shiBaiKouFen
+        bianDong = -TiaoZhanPeiZhi.shiBaiKouFen
         await yingYongJiFenBianDong(yong_hu_id, zuBie, bianDong, 'shi_bai')
       }
     }
@@ -276,7 +276,7 @@ export async function huoQuPaiHangBang(zuBie: string): Promise<PaiHangXiangMu[]>
       WHERE j."组别" = $1
       ORDER BY j."积分" DESC, j."更新时间" ASC
       LIMIT $2`,
-    [zuBie, TIAO_ZHAN_PEI_ZHI.paiHangTiaoShu],
+    [zuBie, TiaoZhanPeiZhi.paiHangTiaoShu],
   )
 
   return jieGuo.rows.map((shuJuHang, suoYin) => ({

@@ -1,7 +1,7 @@
 import { huoQuFanYi } from '@/config/翻译表'
 
-export const YA_SUO_CHANG_BIAN_SHANG_XIAN = 1280
-export const YA_SUO_ZHI_LIANG = 0.8
+export const YaSuoChangBianShangXian = 1280
+export const YaSuoZhiLiang = 0.8
 
 export interface WeiTuYuan {
   width: number
@@ -88,7 +88,7 @@ export async function yaSuoTuPiang(file: File | Blob, zuiDaChiCun?: number): Pro
     }
     const changBian = Math.max(weiTu.width, weiTu.height)
     const suoFangBiLi =
-      changBian > YA_SUO_CHANG_BIAN_SHANG_XIAN ? YA_SUO_CHANG_BIAN_SHANG_XIAN / changBian : 1
+      changBian > YaSuoChangBianShangXian ? YaSuoChangBianShangXian / changBian : 1
 
     const huaBu = document.createElement('canvas')
     huaBu.width = Math.max(1, Math.round(weiTu.width * suoFangBiLi))
@@ -96,7 +96,7 @@ export async function yaSuoTuPiang(file: File | Blob, zuiDaChiCun?: number): Pro
     const huaBuShangXiaWen = huaBu.getContext('2d')
     if (!huaBuShangXiaWen) return file
     weiTu.huiZhi(huaBuShangXiaWen, huaBu.width, huaBu.height)
-    return await zhuanBlob(huaBu, 'image/jpeg', YA_SUO_ZHI_LIANG)
+    return await zhuanBlob(huaBu, 'image/jpeg', YaSuoZhiLiang)
   } finally {
     weiTu.shiFang()
   }
