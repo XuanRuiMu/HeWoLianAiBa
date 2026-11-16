@@ -119,9 +119,8 @@ export class AI回复调度器 {
   private 连续沉默轮数 = 0
   private 强制语言: string | null = null
 
-  private static readonly 去重登记上限 = 8
-  private static readonly 去重窗口毫秒 = 10 * 60 * 1000
-
+  private static readonly 去重登记上限 = 12
+  private static readonly 去重窗口毫秒 = 15 * 60 * 1000
   constructor(
     private readonly 角色ID: string,
     private readonly 用户ID: string,
