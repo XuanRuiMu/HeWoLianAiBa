@@ -303,6 +303,8 @@ if (require.main === module) {
     })
 
     qiDongShenJiRiZhiGuiDangDingShiQi()
+    const { chuShiHuaMoXingLuYou } = await import('./services/模型路由')
+    chuShiHuaMoXingLuYou()
     void 自检模型名可用()
     qiDongShuJuBaoCunQingLiDingShiQi()
 
