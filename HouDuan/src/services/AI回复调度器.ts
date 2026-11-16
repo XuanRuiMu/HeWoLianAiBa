@@ -779,6 +779,13 @@ private 当地现在小时(): number {
         guanJianZhuRu = ''
       }
     }
+    let lianWangZhuRu = ""
+    try {
+      const { huoQuLianWangSouSuoZhuRu } = await import("./联网搜索")
+      lianWangZhuRu = await huoQuLianWangSouSuoZhuRu(最新消息文本, 是第一轮)
+    } catch (e) {
+      debug日志.warn("AI调度器", "联网搜索失败，不影响本轮回复", { xiang_qing: { cuo_wu: String(e) } })
+    }
 
     this.io.to(管理监控房间名(this.用户ID)).emit('管理员_构建过程', {
       阶段: '策略规划',
@@ -806,6 +813,7 @@ private 当地现在小时(): number {
       tu_pian_shou_quan: tuPianShouQuan,
       ji_yi_zhai_yao: yuQuZhaiYao || undefined,
       guan_jian_shi_jian: guanJianZhuRu || undefined,
+      lianWangSouSuo: lianWangZhuRu || undefined,
       dang_qian_xin_qing: xinQingNow.ming || undefined,
       xin_qing_qiang_du: xinQingNow.ming ? xinQingNow.qiangDu : undefined,
       yong_hu_yu_yan: this.用户语言,

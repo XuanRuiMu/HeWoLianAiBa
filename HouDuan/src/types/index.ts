@@ -251,6 +251,7 @@ export interface AIYinQingShuRu {
   qiang_zhi_yu_yan?: string
   huiYingDengJi?: number
   weiDuiXianChengNuo?: string[]
+  lianWangSouSuo?: string
   zuiJinDuanMing?: string[]
 }
 

@@ -650,6 +650,7 @@ export function gouJianDirectorPrompt(
   return [
     GouJianGongXiangQianZhui(shuRu),
     构建通用知识层(zhiShi),
+    ...(shuRu.lianWangSouSuo ? [shuRu.lianWangSouSuo] : []),
     gouJianGuanJianShiJianCeng(shuRu),
     gouJianDiWuCeng(shuRu),
     构建必答事实层(shuRu.bi_da_shi_shi),
