@@ -180,9 +180,16 @@ export function 构建请求输入<T extends { jiaoSe: string; neiRong: unknown 
   return xiaoXi.map((x) => ({ role: x.jiaoSe, content: x.neiRong }))
 }
 
-const 自定义路由: Array<{ piPei: RegExp; miYao: string; jiChu: string; moXing: string; headersOverride?: Record<string, string> }> = []
+const 自定义路由: Array<{ piPei: RegExp; miYao: string; jiChu: string; moXing: string }> = []
 
-export function zhuCeZiDingYiLuYou(piPei: RegExp, peiZhiXiang: { miYao: string; jiChu: string; moXing: string; headersOverride?: Record<string, string> }): void {
+function piPeiLuYouUrl(url: string): { miYao: string; jiChu: string; moXing: string } | null {
+  for (const xiang of 自定义路由) {
+    if (xiang.piPei.test(url)) return { miYao: xiang.miYao, jiChu: xiang.jiChu, moXing: xiang.moXing }
+  }
+  return null
+}
+
+export function zhuCeZiDingYiLuYou(piPei: RegExp, peiZhiXiang: { miYao: string; jiChu: string; moXing: string }): void {
   自定义路由.push({ piPei, ...peiZhiXiang, jiChu: peiZhiXiang.jiChu.replace(/\/$/, '') })
 }
 
@@ -190,72 +197,32 @@ export function qingKongZiDingYiLuYou(): void {
   自定义路由.length = 0
 }
 
-function xuanZeLuYou(url: string): { miYao: string; jiChu: string; moXing: string; headersOverride?: Record<string, string> } | null {
-  for (const xiang of 自定义路由) {
-    if (xiang.piPei.test(url)) return { miYao: xiang.miYao, jiChu: xiang.jiChu, moXing: xiang.moXing }
-  }
-  return null
-}
-
-const yiDingZhiFetch = async (shuRu: Parameters<typeof fetch>[0], chuShiCanShu?: Parameters<typeof fetch>[1]): Promise<Response> => {
-  const url = typeof shuRu === 'string' ? shuRu : shuRu instanceof URL ? shuRu.toString() : String((shuRu as Request).url)
-  const luYou = xuanZeLuYou(url)
+async function daiLiMoXingZhiHuan(shuRu: Parameters<typeof fetch>[0], chuShiCanShu?: RequestInit): Promise<Response> {
+  const url = String(shuRu)
+  const luYou = piPeiLuYouUrl(url)
   if (!luYou) return fetch(shuRu, chuShiCanShu)
   const chuShi = (chuShiCanShu || {}) as RequestInit & { body?: string }
   const yuanBody = JSON.parse(String(chuShi.body || '{}')) as Record<string, unknown>
-  const xinBody: Record<string, unknown> = { model: luYou.moXing, messages: [] as unknown }
-  const shuRuZhuTi = yuanBody.input as Array<{ role?: string; content?: unknown }> | undefined
-  if (Array.isArray(shuRuZhuTi)) {
-    xinBody.messages = shuRuZhuTi.map((x) => ({
-      role: x.role,
-      content: Array.isArray(x.content)
-        ? (x.content as Array<{ type: string; text?: string; image_url?: { url: string }; detail?: string }>).map((kuai) => (kuai.type === 'input_text' ? { type: 'text', text: kuai.text } : kuai.type === 'input_image' ? { type: 'image_url', image_url: kuai.image_url } : kuai))
-        : x.content,
-    }))
-  }
-  if (yuanBody.text && (yuanBody.text as { format?: { type?: string } }).format?.type === 'json_object') xinBody.response_format = { type: 'json_object' }
-  if (typeof yuanBody.temperature === 'number') xinBody.temperature = yuanBody.temperature
-  if (typeof yuanBody.top_p === 'number') xinBody.top_p = yuanBody.top_p
-  if (yuanBody.max_output_tokens) xinBody.max_tokens = yuanBody.max_output_tokens
-  if (yuanBody.reasoning) {
-    const effort = (yuanBody.reasoning as { effort?: string }).effort
-    if (effort && effort !== 'none') xinBody.reasoning_effort = effort
-  }
-  const xinChuShi: RequestInit = { method: 'POST', headers: { 'Content-Type': 'application/json', ...(luYou.headersOverride || {}) }, body: JSON.stringify(xinBody) }
-  if (chuShi.signal) xinChuShi.signal = chuShi.signal
-  const xiangYing = await fetch(`${luYou.jiChu}/chat/completions`, xinChuShi)
-  const shuJu = (await xiangYing.json().catch(() => ({}))) as {
-    choices?: Array<{ message?: { content?: string; reasoning_content?: string } }>
-    usage?: Record<string, unknown>
-    error?: { message?: string }
-  }
+  const xinBody = zhuanHuanResponsesWeiChat({ ...yuanBody, model: luYou.moXing })
+  const xiangYing = await fetch(`${luYou.jiChu}/chat/completions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${luYou.miYao}` },
+    body: JSON.stringify(xinBody),
+    signal: chuShi.signal,
+  })
+  const shuJu = (await xiangYing.json().catch(() => ({}))) as ChatCompletionShimResponse
   if (!xiangYing.ok || shuJu.error) {
     const xinCuo = new Error(shuJu.error?.message || `HTTP ${xiangYing.status}`) as Error & { status?: number }
     xinCuo.status = xiangYing.status
     throw xinCuo
   }
-  const yuanNeiRong = shuJu.choices?.[0]?.message?.content
-  const neiRong = (typeof yuanNeiRong === 'string' ? yuanNeiRong : Array.isArray(yuanNeiRong) ? (yuanNeiRong as Array<{ type?: string; text?: string }>).map((k) => (k.type === 'text' ? String(k.text ?? '') : '')).join('') : JSON.stringify(yuanNeiRong ?? ''))
-  const yongLiang = shuJu.usage
-  const xinTi = {
-    id: 'chat-fallback',
-    object: 'response',
-    created_at: Math.floor(Date.now() / 1000),
-    status: 'completed',
-    model: luYou.moXing,
-    output: [
-      { type: 'message', role: 'assistant', status: 'completed', content: [{ type: 'output_text', text: neiRong }] },
-    ],
-    usage: yongLiang
-      ? {
-          input_tokens: Number(yongLiang.prompt_tokens ?? 0) || 0,
-          output_tokens: Number(yongLiang.completion_tokens ?? 0) || 0,
-          total_tokens: Number(yongLiang.total_tokens ?? 0) || 0,
-          input_tokens_details: { cached_tokens: Number(yongLiang.prompt_cache_hit_tokens ?? 0) || 0 },
-        }
-      : undefined,
-  }
-  return new Response(JSON.stringify(xinTi), { status: 200, headers: { 'Content-Type': 'application/json' } })
+  return chuangJianChatXiangYing(shuJu)
+}
+
+const yiDingZhiFetch = async (shuRu: Parameters<typeof fetch>[0], chuShiCanShu?: Parameters<typeof fetch>[1]): Promise<Response> => {
+  const url = String(shuRu)
+  if (piPeiLuYouUrl(url) !== null) return daiLiMoXingZhiHuan(shuRu, chuShiCanShu)
+  return fetch(shuRu, chuShiCanShu)
 }
 export function 获取DeepSeek客户端(): OpenAI {
   if (实例) return 实例
@@ -272,6 +239,61 @@ export function 获取DeepSeek客户端(): OpenAI {
   return 实例
 }
 
+type ChatCompletionShimResponse = {
+  choices?: Array<{ message?: { content?: string; reasoning_content?: string } }>
+  usage?: Record<string, unknown>
+  error?: { message?: string }
+}
+
+function zhuanHuanResponsesWeiChat(yuanBody: Record<string, unknown>): Record<string, unknown> {
+  const shuRu = yuanBody.input as Array<{ role?: string; content?: unknown }> | undefined
+  const messages = Array.isArray(shuRu)
+    ? shuRu.map((x) => ({
+        role: x.role,
+        content: Array.isArray(x.content)
+          ? (x.content as Array<{ type: string; text?: string; image_url?: { url: string } }>).map((kuai) =>
+              kuai.type === 'input_text'
+                ? { type: 'text', text: kuai.text }
+                : kuai.type === 'input_image'
+                  ? { type: 'image_url', image_url: kuai.image_url }
+                  : kuai,
+            )
+          : x.content,
+      }))
+    : []
+  const xinBody: Record<string, unknown> = { model: yuanBody.model, messages }
+  const jsonFormat = (yuanBody.text as { format?: { type?: string } } | undefined)?.format?.type === 'json_object'
+  if (jsonFormat) xinBody.response_format = { type: 'json_object' }
+  if (typeof yuanBody.temperature === 'number') xinBody.temperature = yuanBody.temperature
+  if (typeof yuanBody.top_p === 'number') xinBody.top_p = yuanBody.top_p
+  if (yuanBody.max_output_tokens) xinBody.max_tokens = yuanBody.max_output_tokens
+  const effort = (yuanBody.reasoning as { effort?: string } | undefined)?.effort
+  if (effort && effort !== 'none') xinBody.reasoning_effort = effort === 'max' ? 'high' : effort
+  return xinBody
+}
+
+function chuangJianChatXiangYing(shuJu: ChatCompletionShimResponse): Response {
+  const neiRong = shuJu.choices?.[0]?.message?.content ?? ''
+  const yongLiang = shuJu.usage
+  const xinTi = {
+    id: 'chat-shim',
+    object: 'response',
+    created_at: Math.floor(Date.now() / 1000),
+    status: 'completed',
+    output: [
+      { type: 'message', role: 'assistant', status: 'completed', content: [{ type: 'output_text', text: neiRong }] },
+    ],
+    usage: yongLiang
+      ? {
+          input_tokens: Number(yongLiang.prompt_tokens ?? 0) || 0,
+          output_tokens: Number(yongLiang.completion_tokens ?? 0) || 0,
+          total_tokens: Number(yongLiang.total_tokens ?? 0) || 0,
+          input_tokens_details: { cached_tokens: Number(yongLiang.prompt_cache_hit_tokens ?? 0) || 0 },
+        }
+      : undefined,
+  }
+  return new Response(JSON.stringify(xinTi), { status: 200, headers: { 'Content-Type': 'application/json' } })
+}
 export function 重置DeepSeek客户端(): void {
   实例 = null
 }
