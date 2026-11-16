@@ -568,7 +568,6 @@ private 当地现在小时(): number {
     if (process.env.VITEST === 'true') return
     if (this.是否等待表白回复()) return
 
-    if (this.睡着()) return
 
     this.上条角色消息时刻 = Date.now()
     this.上条角色消息后用户来过 = false
@@ -599,7 +598,6 @@ private 当地现在小时(): number {
     const chuShi = this.上条角色消息时刻
     if (!chuShi) return
 
-    if (this.睡着()) return
 
     try {
       const [角色, 好感度, 历史消息] = await Promise.all([
