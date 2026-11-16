@@ -1,14 +1,14 @@
 import { 数据库 } from '../数据库'
 import { huiFuYanChiJiZhunHaoMiao } from '../config/角色配置'
-import { AiPeiZhi } from '../config/AI配置'
+import { AI配置 } from '../config/AI配置'
 import { jiLuXiaoXiCaoZuo } from '../utils/debug日志'
 import { 内部转展示, 读回性别 } from '../utils/性别'
 import type {
   AIJiaoSeXinXi,
   DuiHuaLiShiXiang,
 } from '../types'
-import type { XiaoXiXinXi } from './消息'
-import { huiHuaXiaoXiSuoJian, shiXiaoXiaoXiZongShuHuanCun } from './消息'
+import type { 消息信息 } from './消息'
+import { 会话消息所辖, 失效消息总数缓存 } from './消息'
 import { qingLiLuoKuKuai, shiTuWenHunPaiKuai } from './消息内容块'
 import { buQiWenJianTiQuWenBen } from './文档文本提取'
 
@@ -114,6 +114,9 @@ export async function huoQuAIJiaoSeXinXi(
     hua_shu: shuJuHang.是否渣型 ? anQuanZiFuChuanShuZu(shuJuHang.话术) : undefined,
     bao_lu_fang_shi: shuJuHang.是否渣型 ? anQuanZiFuChuan(shuJuHang.暴露方式) : undefined,
     shi_po_xian_suo: shuJuHang.是否渣型 ? anQuanZiFuChuanShuZu(shuJuHang.识破线索) : undefined,
+    dang_qian_xin_qing: anQuanZiFuChuan(shuJuHang.当前心情) || undefined,
+    xin_qing_qiang_du: Number(shuJuHang.心情强度) || 0,
+    xin_qing_geng_xin_shi_jian: Number(shuJuHang.心情更新时刻) || 0,
     voice_id: yinSeId || undefined,
     shi_jie_xin_xi: typeof shiJieXinXi === 'object' && shiJieXinXi !== null
       ? (shiJieXinXi as Record<string, unknown>)
@@ -134,7 +137,7 @@ export async function huoQuAIJiaoSeXinXi(
 export async function huoQuZuiJinDuiHuaLiShi(
   yong_hu_id: string,
   jiao_se_id: string,
-  shu_liang: number = AiPeiZhi.prompt.liShiXiaoXiShuLiang + AiPeiZhi.prompt.liShiCaiDuanBuZhang,
+  shu_liang: number = AI配置.prompt.liShiXiaoXiShuLiang + AI配置.prompt.liShiCaiDuanBuZhang,
 ): Promise<DuiHuaLiShiXiang[]> {
   const jieGuo = await 数据库.query(
     `SELECT m.*, mf."SHA256" AS "媒体SHA256", mf."MIME" AS "媒体MIME", mf."类别" AS "媒体类别",
@@ -188,13 +191,13 @@ export async function huoQuZuiJinDuiHuaLiShi(
   return await buQiWenJianTiQuWenBen(liShi)
 }
 
-export async function baoCunJiaoSeXiaoXi(
+export async function 保存角色XiaoXi(
   canShu: BaoCunJiaoSeXiaoXiCanShu,
-): Promise<XiaoXiXinXi> {
+): Promise<消息信息> {
   const ZuiDaChongShiCiShu = 10
   const ChuShiChongShiYanChiMs = 50
 
-  const huiHuaSuoJian = huiHuaXiaoXiSuoJian(canShu.yong_hu_id, canShu.jiao_se_id)
+  const huiHuaSuoJian = 会话消息所辖(canShu.yong_hu_id, canShu.jiao_se_id)
 
   let lastError: Error | null = null
 
@@ -238,7 +241,7 @@ export async function baoCunJiaoSeXiaoXi(
         mei_ti_url: null,
       }
       jiLuXiaoXiCaoZuo('角色消息发送', canShu.yong_hu_id, canShu.jiao_se_id, 'jiaose', { xiao_xi_id: xiaoXi.id })
-      await shiXiaoXiaoXiZongShuHuanCun(canShu.yong_hu_id, canShu.jiao_se_id).catch(() => {})
+      await 失效消息总数缓存(canShu.yong_hu_id, canShu.jiao_se_id).catch(() => {})
       return xiaoXi
     } catch (cuoWu) {
       try {

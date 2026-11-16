@@ -95,6 +95,14 @@ export const WenDangKuoZhan: readonly string[] = [
   'pptx',
   'html',
   'htm',
+  'png',
+  'jpg',
+  'jpeg',
+  'webp',
+  'gif',
+  'bmp',
+  'tif',
+  'tiff',
 ]
 
 const WenBenMime: readonly string[] = ['text/plain', 'text/markdown']
@@ -108,6 +116,12 @@ const WenDangMime: readonly string[] = [
   'application/vnd.ms-powerpoint',
   'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   'text/html',
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+  'image/bmp',
+  'image/tiff',
 ]
 
 function huoQuKuoZhanMing(mingCheng: string): string {
@@ -141,7 +155,7 @@ export const GuiDangLeiXing = {
   houZhui: ['zip', 'rar', '7z'] as readonly string[],
 }
 
-export const WenDangJieXiLeiXing = [
+export const 文档解析类型 = [
   'txt',
   'md',
   'csv',
@@ -151,11 +165,12 @@ export const WenDangJieXiLeiXing = [
   'xlsx',
   'pptx',
   'pdf',
+  'ocr',
 ] as const
 
-export type WenDangJieXiLeiXing = (typeof WenDangJieXiLeiXing)[number]
+export type 文档解析类型 = (typeof 文档解析类型)[number]
 
-export const WenDangMimeLeiXing: Readonly<Record<string, WenDangJieXiLeiXing>> = {
+export const WenDangMimeLeiXing: Readonly<Record<string, 文档解析类型>> = {
   'text/plain': 'txt',
   'text/markdown': 'md',
   'text/csv': 'csv',
@@ -165,9 +180,15 @@ export const WenDangMimeLeiXing: Readonly<Record<string, WenDangJieXiLeiXing>> =
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
   'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+  'image/png': 'ocr',
+  'image/jpeg': 'ocr',
+  'image/webp': 'ocr',
+  'image/gif': 'ocr',
+  'image/bmp': 'ocr',
+  'image/tiff': 'ocr',
 }
 
-export const WenDangHouZhuiLeiXing: Readonly<Record<string, WenDangJieXiLeiXing>> = {
+export const WenDangHouZhuiLeiXing: Readonly<Record<string, 文档解析类型>> = {
   txt: 'txt',
   md: 'md',
   markdown: 'md',
@@ -179,17 +200,25 @@ export const WenDangHouZhuiLeiXing: Readonly<Record<string, WenDangJieXiLeiXing>
   xlsx: 'xlsx',
   pptx: 'pptx',
   pdf: 'pdf',
+  png: 'ocr',
+  jpg: 'ocr',
+  jpeg: 'ocr',
+  webp: 'ocr',
+  gif: 'ocr',
+  bmp: 'ocr',
+  tif: 'ocr',
+  tiff: 'ocr',
 }
 
 export const LeiBieLieBiao = ['tupian', 'biaoqingshu', 'yuyin', 'wenjian'] as const
 
 export type MeiTiLeiBie = (typeof LeiBieLieBiao)[number]
 
-export const BiaoQingShuLeiBie: MeiTiLeiBie = 'biaoqingshu'
+export const 表情书类别: MeiTiLeiBie = 'biaoqingshu'
 
-export const LeiBieDaoXiaoXiLeiXing: Record<MeiTiLeiBie, string> = {
+export const 类别到消息类型: Record<MeiTiLeiBie, string> = {
   tupian: 'tuPian',
-  [BiaoQingShuLeiBie]: 'biaoQingBao',
+  [表情书类别]: 'biaoQingBao',
   yuyin: 'yuYin',
   wenjian: 'wenJian',
 }
@@ -213,7 +242,7 @@ export function guiYiHuaShangChuanShiChang(zhi: unknown): number | null {
   return zhengShu
 }
 
-export const YunXuXiaoXiLeiXing = ['wenben', ...Object.values(LeiBieDaoXiaoXiLeiXing)]
+export const YunXuXiaoXiLeiXing = ['wenben', ...Object.values(类别到消息类型)]
 
 export function shiHeFaLeiBie(zhi: unknown): zhi is MeiTiLeiBie {
   return typeof zhi === 'string' && (LeiBieLieBiao as readonly string[]).includes(zhi)
@@ -224,6 +253,6 @@ export function shiHeFaXiaoXiLeiXing(zhi: unknown): zhi is string {
 }
 
 export function shiYunXuMIME(leiBie: MeiTiLeiBie, mime: string): boolean {
-  const baiMingDan = MeiTiPeiZhi.mimeBaiMingDan[leiBie] as readonly string[]
-  return baiMingDan.includes(mime)
+  const 白名单 = MeiTiPeiZhi.mimeBaiMingDan[leiBie] as readonly string[]
+  return 白名单.includes(mime)
 }

@@ -2,7 +2,7 @@
 import { createHash } from 'crypto'
 import { redis } from '../redis'
 import type { JunShiZhiDaoFenDuan } from '../types'
-import type { XiaoXiXinXi } from './消息'
+import type { 消息信息 } from './消息'
 
 const JunShiHaXiKey = '军师哈希'
 const JunShiJiLuKey = '军师记录'
@@ -56,7 +56,7 @@ export interface JunShiJiLuHouTaiShuJu {
   fu_pan_tiao_mu: never[]
 }
 
-export interface JunShiJiLuXiang {
+export interface 军师记录项 {
   jian_yi: string
   jian_yi_fen_duan?: JunShiZhiDaoFenDuan | null
   shi_jian: string
@@ -77,7 +77,7 @@ function geShiHuaShiJian(shi_jian_chuo: number): string {
   return `${xiao_shi}:${fen_zhong}`
 }
 
-export function jiSuanLiaoTianHaXi(xiao_xi_lie_biao: XiaoXiXinXi[]): string {
+export function jiSuanLiaoTianHaXi(xiao_xi_lie_biao: 消息信息[]): string {
   const you_xiao_xiao_xi = xiao_xi_lie_biao.filter(
     (xiao_xi) => !xiao_xi.yi_che_hui && xiao_xi.fa_song_zhe_lei_xing !== 'xitong',
   )
@@ -124,7 +124,7 @@ export async function baoCunJunShiHaXi(
 export async function baoCunJunShiJiLu(
   yong_hu_id: string,
   jiao_se_id: string,
-  ji_lu: JunShiJiLuXiang,
+  ji_lu: 军师记录项,
 ): Promise<void> {
   try {
     const jianMing = `${JunShiJiLuKey}:${yong_hu_id}:${jiao_se_id}`
@@ -139,11 +139,11 @@ export async function baoCunJunShiJiLu(
 export async function huoQuJunShiJiLuLieBiao(
   yong_hu_id: string,
   jiao_se_id: string,
-): Promise<JunShiJiLuXiang[]> {
+): Promise<军师记录项[]> {
   try {
     const jianMing = `${JunShiJiLuKey}:${yong_hu_id}:${jiao_se_id}`
     const lie_biao = await redis.lrange(jianMing, 0, -1)
-    return lie_biao.map((xiang) => JSON.parse(xiang) as JunShiJiLuXiang)
+    return lie_biao.map((xiang) => JSON.parse(xiang) as 军师记录项)
   } catch (cuo_wu) {
     debug日志.error('军师缓存', '读取军师记录失败', { xiang_qing: { cuo_wu: String(cuo_wu) } })
     return []

@@ -12,7 +12,7 @@ export interface JunShiPeiZhiXiang {
 
 export interface JunShiZhiDaoDuanDingYi {
   ziDuan: keyof JunShiZhiDaoFenDuan
-  moXingJian: string
+  模型键: string
   zuiDaZiShu: number
   yaoQiu: string
 }
@@ -20,33 +20,33 @@ export interface JunShiZhiDaoDuanDingYi {
 export const JunShiZhiDaoDuanDingYi: JunShiZhiDaoDuanDingYi[] = [
   {
     ziDuan: 'dangQianJuMian',
-    moXingJian: '当前局面',
+    模型键: '当前局面',
     zuiDaZiShu: 40,
     yaoQiu: '一句话讲清现在聊到了什么状态，你的毒舌吐槽只放在这一段。',
   },
   {
     ziDuan: 'xiaYiBuZenMeHui',
-    moXingJian: '下一步怎么回',
+    模型键: '下一步怎么回',
     zuiDaZiShu: 120,
     yaoQiu:
       '给三条用户能直接复制发出去的成品话术，每条一行、互不重复、每条不超过 40 字，按顺序分别是：第一行走稳妥路线（顺着现在的话题往下接，不冒险）；第二行走推进路线（主动一点，把关系往前带一步）；第三行走收着路线（先不推进，把话头留住等对方接）。只写话术本身，不要写「第一」「稳妥」这类标签，不要加引号，不要写「你可以说」，不要写解释。',
   },
   {
     ziDuan: 'weiShenMeZheMeLiao',
-    moXingJian: '为什么这么聊',
+    模型键: '为什么这么聊',
     zuiDaZiShu: 60,
     yaoQiu: '简短说明为什么这么回，必须指向对方最后发来的那条消息。',
   },
   {
     ziDuan: 'kanDaoDeJiXiang',
-    moXingJian: '我看到的迹象',
+    模型键: '我看到的迹象',
     zuiDaZiShu: 50,
     yaoQiu:
       '只写你在聊天记录里直接看到的可观察事实：谁先起的话、谁回得变慢了、句子变长了还是变短了、有没有回避话题、有没有主动找话题。禁止下结论、禁止贴标签、禁止说「TA喜欢你」「TA是渣女」「TA不值得」这类判断，判断留给朋友自己。没有值得说的就留空字符串。',
   },
   {
     ziDuan: 'guLi',
-    moXingJian: '鼓励',
+    模型键: '鼓励',
     zuiDaZiShu: 30,
     yaoQiu: '可选的一句话鼓励；确实没必要就留空字符串。',
   },

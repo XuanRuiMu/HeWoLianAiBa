@@ -1,6 +1,6 @@
 import type { 性别内部形态 } from '../utils/性别'
-import type { GuanLiJiaoSe, GuanLiNengLi } from '../utils/角色能力'
-import type { XiaoXiKuaiChuCan } from '../services/消息'
+import type { 管理角色, 管理能力 } from '../utils/角色能力'
+import type { 消息块ChuCan } from '../services/消息'
 import type { CuoWuDaiMa } from '../config/错误码注册表'
 
 export interface ApiXiangYing<T> {
@@ -28,8 +28,8 @@ export interface YongHuXinXi {
   tou_xiang: string | null
   sheng_ri: string | null
   qian_ming: string | null
-  jiao_se: GuanLiJiaoSe | null
-  neng_li: GuanLiNengLi[]
+  jiao_se: 管理角色 | null
+  neng_li: 管理能力[]
   ce_shi?: boolean
   huo_yue_ren_she_id: string | null
   hai_wang_fen_shu: number
@@ -103,7 +103,11 @@ export interface AIJiaoSeXinXi {
   hua_shu?: string[]
   bao_lu_fang_shi?: string
   shi_po_xian_suo?: string[]
+  dang_qian_xin_qing?: string
+  xin_qing_qiang_du?: number
+  xin_qing_geng_xin_shi_jian?: number
   shi_jie_xin_xi: Record<string, unknown>
+  chi_you_yu_yan?: string[]
   voice_id?: string
   ba_da_mo_kuai: {
     ji_ben_xin_xi: string
@@ -168,7 +172,7 @@ export interface HaoYouXiaoXiChuCan {
   jie_shou_zhe_id: string
   nei_rong: string
   lei_xing: string
-  nei_rong_kuai: XiaoXiKuaiChuCan[]
+  nei_rong_kuai: 消息块ChuCan[]
   bei_yong_xiao_xi_id: string | null
   mei_ti_id: string | null
   mei_ti_url: string | null
@@ -192,7 +196,31 @@ export interface DirectorCeLue {
   shi_fou_zhu_dong_biao_bai?: boolean
   yao_jie_zhu_de_dian?: string
   biao_qing_yi_tu?: string | null
+  guan_xi_bian_hua?: GuanXiBianHua
+  xin_qing?: XinQingMingZhi | null
+  xin_qing_qiang_du?: number | null
+  xin_qing_li_you?: string | null
+  yao_qiu_huan_yu_yan?: string | null
+  bu_hui_li_you?: string
 }
+
+export type GuanXiBianHua = '更近' | '更远' | '没变'
+
+export type XinQingMingZhi =
+  | '开心'
+  | '平静'
+  | '好奇'
+  | '期待'
+  | '心动'
+  | '甜蜜'
+  | '愉悦'
+  | '烦躁'
+  | '难过'
+  | '委屈'
+  | '生气'
+  | '冷淡'
+  | '疲惫'
+  | '焦虑'
 
 export interface WriterJieGuo {
   xiao_xi_lie_biao: string[]
@@ -216,6 +244,14 @@ export interface AIYinQingShuRu {
   guan_jian_shi_jian?: string
   yong_hu_xing_bie?: 性别内部形态
   bi_da_shi_shi?: BiDaShiShi
+  dang_qian_xin_qing?: string
+  xin_qing_qiang_du?: number
+  xin_qing_geng_xin_shi_jian?: number
+  yong_hu_yu_yan?: string
+  qiang_zhi_yu_yan?: string
+  huiYingDengJi?: number
+  weiDuiXianChengNuo?: string[]
+  zuiJinDuanMing?: string[]
 }
 
 export interface BiDaShiShi {

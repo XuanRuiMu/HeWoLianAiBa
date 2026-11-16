@@ -1,16 +1,16 @@
-import { AiPeiZhi } from '../config/AI配置'
+import { AI配置 } from '../config/AI配置'
 import { peiZhi } from '../config'
-import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/DeepSeek客户端'
 import { 内部转展示, type 性别内部形态 } from '../utils/性别'
-import type { MBTILeiXing } from '../config/角色配置'
-import type { CanShuShangXiaWen } from '../config/AI参数策略'
+import type { MBTI类型 } from '../config/角色配置'
+import type { 参数上下文 } from '../config/AI参数策略'
 import {
   CuoWuDaiMa,
   JiaoSeShengChengCuoWu,
 } from '../config/错误码注册表'
 
 export interface KaiChangBaiShengChengCanShu {
-  mbti_lei_xing: MBTILeiXing
+  mbti_lei_xing: MBTI类型
   ie_lei_xing: 'I' | 'E'
   re_shen_lei_xing: '慢热' | '快热'
   shi_fou_zha_xing: boolean
@@ -135,19 +135,19 @@ function jieXiJSONNeiRong(
 }
 
 export function jieXiZhuDongDangWei(zhi: unknown): string {
-  const biao = AiPeiZhi.prompt.kaiChangBaiZhuDongDangWei
+  const biao = AI配置.prompt.kaiChangBaiZhuDongDangWei
   const wenBen = typeof zhi === 'string' ? zhi.trim() : ''
   if (wenBen && Object.prototype.hasOwnProperty.call(biao, wenBen)) return wenBen
   for (const dangWei of Object.keys(biao)) {
     if (wenBen.includes(dangWei)) return dangWei
   }
-  return AiPeiZhi.prompt.kaiChangBaiMoRenZhuDongDangWei
+  return AI配置.prompt.kaiChangBaiMoRenZhuDongDangWei
 }
 
 export function dangWeiZhuanGaiLv(dangWei: string): number {
-  const biao = AiPeiZhi.prompt.kaiChangBaiZhuDongDangWei
+  const biao = AI配置.prompt.kaiChangBaiZhuDongDangWei
   const zhi = biao[dangWei]
-  if (typeof zhi !== 'number' || !Number.isFinite(zhi)) return AiPeiZhi.prompt.kaiChangBaiFaSongGaiLv
+  if (typeof zhi !== 'number' || !Number.isFinite(zhi)) return AI配置.prompt.kaiChangBaiFaSongGaiLv
   return Math.min(0.95, Math.max(0.02, zhi))
 }
 
@@ -170,15 +170,15 @@ function jiangJiKaiChangBai(canShu: KaiChangBaiShengChengCanShu): KaiChangBaiShe
     .map((x) => anQuanGuoLvXiaoXi(x, canShu.ming_zi))
     .filter((x): x is string => x !== null)
   return {
-    zhu_dong_dang_wei: AiPeiZhi.prompt.kaiChangBaiMoRenZhuDongDangWei,
-    zhu_dong_kai_kou_gai_lv: AiPeiZhi.prompt.kaiChangBaiFaSongGaiLv,
+    zhu_dong_dang_wei: AI配置.prompt.kaiChangBaiMoRenZhuDongDangWei,
+    zhu_dong_kai_kou_gai_lv: AI配置.prompt.kaiChangBaiFaSongGaiLv,
     xiao_xi_lie_biao: guoLvHou.slice(0, 5),
   }
 }
 
 export async function shengChengKaiChangBai(
   canShu: KaiChangBaiShengChengCanShu,
-  shangXiaWen?: CanShuShangXiaWen,
+  shangXiaWen?: 参数上下文,
 ): Promise<KaiChangBaiShengChengJieGuo> {
   if (kaiChangBaiMock) {
     const mockJieGuo = kaiChangBaiMock(canShu)
@@ -186,17 +186,17 @@ export async function shengChengKaiChangBai(
       .map((x) => anQuanGuoLvXiaoXi(x, canShu.ming_zi))
       .filter((x: string | null): x is string => x !== null)
     return {
-      zhu_dong_dang_wei: mockJieGuo.zhu_dong_dang_wei || AiPeiZhi.prompt.kaiChangBaiMoRenZhuDongDangWei,
+      zhu_dong_dang_wei: mockJieGuo.zhu_dong_dang_wei || AI配置.prompt.kaiChangBaiMoRenZhuDongDangWei,
       zhu_dong_kai_kou_gai_lv:
         typeof mockJieGuo.zhu_dong_kai_kou_gai_lv === 'number'
           ? Math.min(0.95, Math.max(0.03, mockJieGuo.zhu_dong_kai_kou_gai_lv))
-          : AiPeiZhi.prompt.kaiChangBaiFaSongGaiLv,
+          : AI配置.prompt.kaiChangBaiFaSongGaiLv,
       xiao_xi_lie_biao: guoLvHou.slice(0, 5),
     }
   }
 
-  const apiMiYao = peiZhi.deepSeek.apiMiYao || AiPeiZhi.deepSeek.apiMiYao
-  if (!apiMiYao || process.env.VITEST === 'true') {
+  const api密钥 = peiZhi.deepSeek.api密钥 || AI配置.deepSeek.api密钥
+  if (!api密钥 || process.env.VITEST === 'true') {
     return jiangJiKaiChangBai(canShu)
   }
 
@@ -210,9 +210,9 @@ export async function shengChengKaiChangBai(
     },
   }
 
-  let xiangYing: Awaited<ReturnType<typeof genJuPeiZhiTiaoYong>>
+  let xiangYing: Awaited<ReturnType<typeof 按配置调用>>
   try {
-    xiangYing = await genJuPeiZhiTiaoYong('KaiChangBai' as keyof typeof AiPeiZhi.moXing, [
+    xiangYing = await 按配置调用('KaiChangBai' as keyof typeof AI配置.模型, [
       { jiaoSe: 'system', neiRong: '你现在就是这个人。刚加了一个刚认识的人，对方还没说话。你先判断自己会不会主动开口、开口发几条、发什么，全部由你自己的性格决定，不要做任何"应该主动一点"的道德判断，性格被动的人就是不主动。' },
       { jiaoSe: 'user', neiRong: gouJianKaiChangBaiTiShi(canShu) },
     ], shangXiaWenShiJi)

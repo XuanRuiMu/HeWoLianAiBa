@@ -1,17 +1,17 @@
 import { XiaoXiPeiZhi } from '../config/消息配置'
-import { LeiBieDaoXiaoXiLeiXing } from '../config/媒体配置'
+import { 类别到消息类型 } from '../config/媒体配置'
 import { meiTiZhanShiWenBen, shiTuXiangLeiBie } from './AI视觉辅助'
 import { yanZhengUUID } from '../utils/验证'
 import { 清洗玩家文本 } from '../utils/控制字符'
 import { debug日志 } from '../utils/debug日志'
 
 
-export const XiaoXiKuaiLeiXing = { wenZi: 'wenzi', tuPian: 'tupian' } as const
+export const 消息块LeiXing = { wenZi: 'wenzi', tuPian: 'tupian' } as const
 
-export type XiaoXiKuaiLeiXing = (typeof XiaoXiKuaiLeiXing)[keyof typeof XiaoXiKuaiLeiXing]
+export type 消息块LeiXing = (typeof 消息块LeiXing)[keyof typeof 消息块LeiXing]
 
-export interface XiaoXiKuai {
-  lei_xing: XiaoXiKuaiLeiXing
+export interface 消息块 {
+  lei_xing: 消息块LeiXing
   nei_rong?: string
   mei_ti_id?: string
 }
@@ -28,7 +28,7 @@ export type KuaiDiuQiYuanYin =
   | 'mei_ti_lei_bie_bu_fu'
 
 export interface QingLiTiJiaoJieGuo {
-  kuai: XiaoXiKuai[] | null
+  kuai: 消息块[] | null
   diuQi: KuaiDiuQiYuanYin[]
   chaoXian: boolean
   daiPanDingMeiTiId: string[]
@@ -44,10 +44,10 @@ export function xiaoXiKuaiPeiZhi() {
 }
 
 function meiTiLeiBieDaoKuaiXiaoXiLeiXing(leiBie: string): string | null {
-  return (LeiBieDaoXiaoXiLeiXing as Record<string, string | undefined>)[leiBie] ?? null
+  return (类别到消息类型 as Record<string, string | undefined>)[leiBie] ?? null
 }
 
-function quKuaiShuZu(zhi: unknown, changDing: string): unknown[] | null {
+function 取块数组(zhi: unknown, changDing: string): unknown[] | null {
   if (Array.isArray(zhi)) return zhi
   if (typeof zhi === 'string' && zhi.trim() !== '') {
     try {
@@ -66,17 +66,17 @@ function quKuaiShuZu(zhi: unknown, changDing: string): unknown[] | null {
   return null
 }
 
-function isKuaiLeiXing(zhi: unknown): zhi is XiaoXiKuaiLeiXing {
-  return zhi === XiaoXiKuaiLeiXing.wenZi || zhi === XiaoXiKuaiLeiXing.tuPian
+function isKuaiLeiXing(zhi: unknown): zhi is 消息块LeiXing {
+  return zhi === 消息块LeiXing.wenZi || zhi === 消息块LeiXing.tuPian
 }
 
 export function qingLiTiJiaoKuai(zhi: unknown, changDing = '消息发送'): QingLiTiJiaoJieGuo {
   const peiZhi = xiaoXiKuaiPeiZhi()
   const diuQi: KuaiDiuQiYuanYin[] = []
-  const kuai: XiaoXiKuai[] = []
+  const kuai: 消息块[] = []
   const daiPanDingMeiTiId: string[] = []
 
-  const shuZu = quKuaiShuZu(zhi, changDing)
+  const shuZu = 取块数组(zhi, changDing)
   if (shuZu === null) {
     return { kuai: null, diuQi, chaoXian: false, daiPanDingMeiTiId }
   }
@@ -100,7 +100,7 @@ export function qingLiTiJiaoKuai(zhi: unknown, changDing = '消息发送'): Qing
       diuQi.push('lei_xing_wu_ren')
       continue
     }
-    if (xiang.lei_xing === XiaoXiKuaiLeiXing.tuPian) {
+    if (xiang.lei_xing === 消息块LeiXing.tuPian) {
       const meiTiId = typeof xiang.mei_ti_id === 'string' ? xiang.mei_ti_id.trim() : ''
       if (!meiTiId || !yanZhengUUID(meiTiId)) {
         diuQi.push('mei_ti_id_bu_he_fa')
@@ -112,7 +112,7 @@ export function qingLiTiJiaoKuai(zhi: unknown, changDing = '消息发送'): Qing
       }
       tuPianShu += 1
       if (!daiPanDingMeiTiId.includes(meiTiId)) daiPanDingMeiTiId.push(meiTiId)
-      kuai.push({ lei_xing: XiaoXiKuaiLeiXing.tuPian, mei_ti_id: meiTiId })
+      kuai.push({ lei_xing: 消息块LeiXing.tuPian, mei_ti_id: meiTiId })
       continue
     }
     const yuanWen = typeof xiang.nei_rong === 'string' ? xiang.nei_rong : ''
@@ -125,20 +125,20 @@ export function qingLiTiJiaoKuai(zhi: unknown, changDing = '消息发送'): Qing
       return { kuai: [], diuQi, chaoXian: true, daiPanDingMeiTiId }
     }
     ziShu += wenZi.length
-    kuai.push({ lei_xing: XiaoXiKuaiLeiXing.wenZi, nei_rong: wenZi })
+    kuai.push({ lei_xing: 消息块LeiXing.wenZi, nei_rong: wenZi })
   }
 
   return { kuai, diuQi, chaoXian: false, daiPanDingMeiTiId }
 }
 
 export function yingYongMeiTiPanDing(
-  kuai: XiaoXiKuai[],
+  kuai: 消息块[],
   meiTiXinXi: Map<string, { lei_bie: string; suo_shu: boolean }>,
-): { baoLiu: XiaoXiKuai[]; diuQi: KuaiDiuQiYuanYin[] } {
-  const baoLiu: XiaoXiKuai[] = []
+): { baoLiu: 消息块[]; diuQi: KuaiDiuQiYuanYin[] } {
+  const baoLiu: 消息块[] = []
   const diuQi: KuaiDiuQiYuanYin[] = []
   for (const xiang of kuai) {
-    if (xiang.lei_xing !== XiaoXiKuaiLeiXing.tuPian) {
+    if (xiang.lei_xing !== 消息块LeiXing.tuPian) {
       baoLiu.push(xiang)
       continue
     }
@@ -161,12 +161,12 @@ export function yingYongMeiTiPanDing(
 }
 
 export function shunXuKeDuWenBen(
-  kuai: XiaoXiKuai[],
+  kuai: 消息块[],
   xuanXiang?: { leiBieLeiXing?: (meiTiId: string | undefined) => string | undefined; yiCheHui?: boolean },
 ): string {
   let jieGuo = ''
   for (const xiang of kuai) {
-    if (xiang.lei_xing === XiaoXiKuaiLeiXing.wenZi) {
+    if (xiang.lei_xing === 消息块LeiXing.wenZi) {
       jieGuo += xiang.nei_rong ?? ''
       continue
     }
@@ -178,20 +178,20 @@ export function shunXuKeDuWenBen(
   return jieGuo
 }
 
-export interface JianRongJianYing {
+export interface 兼容剪映 {
   nei_rong: string
   lei_xing: string
   mei_ti_id: string | null
 }
 
 export function paiShengJianRong(
-  kuai: XiaoXiKuai[],
+  kuai: 消息块[],
   meiTiXinXi: Map<string, { lei_bie: string }> = new Map(),
-): JianRongJianYing {
+): 兼容剪映 {
   const leiBieOf = (meiTiId: string | undefined) =>
     meiTiId ? meiTiXinXi.get(meiTiId)?.lei_bie : undefined
-  const tuPianKuai = kuai.find((xiang) => xiang.lei_xing === XiaoXiKuaiLeiXing.tuPian)
-  const youWenZi = kuai.some((xiang) => xiang.lei_xing === XiaoXiKuaiLeiXing.wenZi)
+  const tuPianKuai = kuai.find((xiang) => xiang.lei_xing === 消息块LeiXing.tuPian)
+  const youWenZi = kuai.some((xiang) => xiang.lei_xing === 消息块LeiXing.wenZi)
   const shouTuPianLeiBie = tuPianKuai ? leiBieOf(tuPianKuai.mei_ti_id) : undefined
   if (!youWenZi && shouTuPianLeiBie) {
     const leiXing = meiTiLeiBieDaoKuaiXiaoXiLeiXing(shouTuPianLeiBie)
@@ -213,29 +213,29 @@ export interface LiShiHangZiDuan {
 }
 
 export function leiXingDaoMeiTiLeiBie(leiXing: string): string | null {
-  for (const [leiBie, xiaoXiLeiXing] of Object.entries(LeiBieDaoXiaoXiLeiXing)) {
+  for (const [leiBie, xiaoXiLeiXing] of Object.entries(类别到消息类型)) {
     if (xiaoXiLeiXing === leiXing) return leiBie
   }
   return null
 }
 
-export function fanGouKuai(xiang: LiShiHangZiDuan): XiaoXiKuai[] {
-  const jieGuo: XiaoXiKuai[] = []
+export function fanGouKuai(xiang: LiShiHangZiDuan): 消息块[] {
+  const jieGuo: 消息块[] = []
   const wuWenBenLeiBie = xiang.lei_xing === 'wenben' ? null : leiXingDaoMeiTiLeiBie(xiang.lei_xing)
   const shiTuPian = wuWenBenLeiBie !== null && shiTuXiangLeiBie(wuWenBenLeiBie)
   if (shiTuPian && xiang.mei_ti_id) {
-    jieGuo.push({ lei_xing: XiaoXiKuaiLeiXing.tuPian, mei_ti_id: xiang.mei_ti_id })
+    jieGuo.push({ lei_xing: 消息块LeiXing.tuPian, mei_ti_id: xiang.mei_ti_id })
   }
   if (xiang.nei_rong !== '') {
-    jieGuo.push({ lei_xing: XiaoXiKuaiLeiXing.wenZi, nei_rong: xiang.nei_rong })
+    jieGuo.push({ lei_xing: 消息块LeiXing.wenZi, nei_rong: xiang.nei_rong })
   }
   if (jieGuo.length === 0) {
-    jieGuo.push({ lei_xing: XiaoXiKuaiLeiXing.wenZi, nei_rong: '' })
+    jieGuo.push({ lei_xing: 消息块LeiXing.wenZi, nei_rong: '' })
   }
   return jieGuo
 }
 
-export function qingLiLuoKuKuai(zhi: unknown, xiaoXiId: string): XiaoXiKuai[] | null {
+export function qingLiLuoKuKuai(zhi: unknown, xiaoXiId: string): 消息块[] | null {
   const shuZu = Array.isArray(zhi) ? zhi : null
   if (!shuZu) {
     if (zhi !== undefined && zhi !== null) {
@@ -245,19 +245,19 @@ export function qingLiLuoKuKuai(zhi: unknown, xiaoXiId: string): XiaoXiKuai[] | 
     }
     return null
   }
-  const jieGuo: XiaoXiKuai[] = []
+  const jieGuo: 消息块[] = []
   for (const yuan of shuZu) {
     if (typeof yuan !== 'object' || yuan === null || Array.isArray(yuan)) continue
     const xiang = yuan as Record<string, unknown>
     if (!isKuaiLeiXing(xiang.lei_xing)) continue
-    if (xiang.lei_xing === XiaoXiKuaiLeiXing.tuPian) {
+    if (xiang.lei_xing === 消息块LeiXing.tuPian) {
       const meiTiId = typeof xiang.mei_ti_id === 'string' ? xiang.mei_ti_id : ''
       if (!meiTiId || !yanZhengUUID(meiTiId)) continue
-      jieGuo.push({ lei_xing: XiaoXiKuaiLeiXing.tuPian, mei_ti_id: meiTiId })
+      jieGuo.push({ lei_xing: 消息块LeiXing.tuPian, mei_ti_id: meiTiId })
       continue
     }
     const wenZi = typeof xiang.nei_rong === 'string' ? xiang.nei_rong : ''
-    jieGuo.push({ lei_xing: XiaoXiKuaiLeiXing.wenZi, nei_rong: wenZi })
+    jieGuo.push({ lei_xing: 消息块LeiXing.wenZi, nei_rong: wenZi })
   }
   if (jieGuo.length === 0) {
     debug日志.warn('消息内容块', '库内内容块无一可解析，回退为按行反构', {
@@ -268,26 +268,26 @@ export function qingLiLuoKuKuai(zhi: unknown, xiaoXiId: string): XiaoXiKuai[] | 
   return jieGuo
 }
 
-export function jiLuKuaiDiuQi(diuQi: KuaiDiuQiYuanYin[], changDing: string, yongHuId?: string): void {
+export function jiLuKuaiDiuQi(diuQi: KuaiDiuQiYuanYin[], changDing: string, 用户ID?: string): void {
   if (diuQi.length === 0) return
   const zhiFangTu: Record<string, number> = {}
   for (const yin of diuQi) zhiFangTu[yin] = (zhiFangTu[yin] ?? 0) + 1
   debug日志.warn('消息内容块', '内容块脏数据已丢弃', {
-    xiang_qing: { chang_ding: changDing, yong_hu_id: yongHuId ?? '', diu_qi: zhiFangTu },
+    xiang_qing: { chang_ding: changDing, yong_hu_id: 用户ID ?? '', diu_qi: zhiFangTu },
   })
 }
 
-export function kuaiShenHeWenBen(kuai: XiaoXiKuai[]): string {
+export function kuaiShenHeWenBen(kuai: 消息块[]): string {
   return kuai
-    .filter((xiang) => xiang.lei_xing === XiaoXiKuaiLeiXing.wenZi)
+    .filter((xiang) => xiang.lei_xing === 消息块LeiXing.wenZi)
     .map((xiang) => xiang.nei_rong ?? '')
     .join('')
 }
 
-export function shiTuWenHunPaiKuai(kuai: XiaoXiKuai[] | null | undefined): boolean {
+export function shiTuWenHunPaiKuai(kuai: 消息块[] | null | undefined): boolean {
   if (!kuai || kuai.length < 2) return false
-  const youWenZi = kuai.some((xiang) => xiang.lei_xing === XiaoXiKuaiLeiXing.wenZi)
-  const youTuPian = kuai.some((xiang) => xiang.lei_xing === XiaoXiKuaiLeiXing.tuPian)
+  const youWenZi = kuai.some((xiang) => xiang.lei_xing === 消息块LeiXing.wenZi)
+  const youTuPian = kuai.some((xiang) => xiang.lei_xing === 消息块LeiXing.tuPian)
   return youWenZi && youTuPian
 }
 

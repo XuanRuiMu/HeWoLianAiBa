@@ -11,204 +11,204 @@ import './env'
 //   （E型/快热/渣型/关系阶段/场景）会变成死代码。
 // 思考留给 Director：它要做的判断（该不该接、接哪个点、情绪）本来就适合推理；
 // Writer 的任务是执行，不是分析。
-export const XieShouSiKao =
+export const 写手思考 =
   (process.env['WRITER_SI_KAO_QI_YONG'] || 'false').trim().toLowerCase() === 'true'
 
-export const XieShouWenDu = Math.min(
+export const 写手温度 = Math.min(
   2,
   Math.max(0, parseFloat(process.env.WRITER_WENDU || '0.9') || 0.9),
 )
 
 export interface MoXingCanShu {
-  moXing: string
+  模型: string
   wenDu?: number
   top_p?: number
-  zuiDaTokens?: number
-  siKaoMoShi?: 'enabled' | 'disabled'
-  reasoningEffort?: string
-  xiangYingGeShi?: {
+  最大Tokens?: number
+  思考模式?: 'enabled' | 'disabled'
+  思考强度?: string
+  响应格式?: {
     type: 'json_object' | 'text'
   }
 }
 
-export const AiPeiZhi = {
+export const AI配置 = {
   deepSeek: {
-    apiMiYao: process.env.DEEPSEEK_API_KEY || '',
-    jiChuUrl: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
-    moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+    api密钥: process.env.DEEPSEEK_API_KEY || '',
+    基础地址: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
+    模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
   },
 
-  moXing: {
+  模型: {
     DaoYan: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       top_p: 0.95,
-      zuiDaTokens: 32000,
-      siKaoMoShi: 'enabled',
-      reasoningEffort: 'medium',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 32000,
+      思考模式: 'enabled',
+      思考强度: 'medium',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     XieShou: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
-      zuiDaTokens: 4000,
-      siKaoMoShi: XieShouSiKao ? 'enabled' : 'disabled',
-      ...(XieShouSiKao
-        ? { reasoningEffort: process.env['WRITER_SI_KAO_QIANG_DU'] || 'medium' }
-        : { wenDu: XieShouWenDu }),
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      最大Tokens: 4000,
+      思考模式: 写手思考 ? 'enabled' : 'disabled',
+      ...(写手思考
+        ? { 思考强度: process.env['WRITER_SI_KAO_QIANG_DU'] || 'medium' }
+        : { wenDu: 写手温度 }),
     } as MoXingCanShu,
 
     QingGanFenXi: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.2,
-      zuiDaTokens: 32000,
-      siKaoMoShi: 'disabled',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 32000,
+      思考模式: 'disabled',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     HaoGanDuPingPan: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.2,
-      zuiDaTokens: 32000,
-      siKaoMoShi: 'disabled',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 32000,
+      思考模式: 'disabled',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     JiYiZhaiYao: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       top_p: 0.95,
-      zuiDaTokens: 32000,
-      siKaoMoShi: 'enabled',
-      reasoningEffort: 'medium',
+      最大Tokens: 32000,
+      思考模式: 'enabled',
+      思考强度: 'medium',
     } as MoXingCanShu,
 
     AnQuanShenHe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
-      zuiDaTokens: 32000,
-      siKaoMoShi: 'disabled',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 32000,
+      思考模式: 'disabled',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     RenSheShenHe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0,
-      zuiDaTokens: 2000,
-      siKaoMoShi: 'disabled',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 2000,
+      思考模式: 'disabled',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     RenSheKa: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.9,
-      zuiDaTokens: 1000,
-      siKaoMoShi: 'disabled',
+      最大Tokens: 1000,
+      思考模式: 'disabled',
     } as MoXingCanShu,
 
     GuanJianShiJian: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.2,
-      zuiDaTokens: 32000,
-      siKaoMoShi: 'disabled',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 32000,
+      思考模式: 'disabled',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     JunShiQiuZhu: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       top_p: 0.95,
-      zuiDaTokens: 64000,
-      siKaoMoShi: 'enabled',
-      reasoningEffort: 'medium',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 64000,
+      思考模式: 'enabled',
+      思考强度: 'medium',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     BiaoBaiJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
-      zuiDaTokens: 32000,
-      siKaoMoShi: 'disabled',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 32000,
+      思考模式: 'disabled',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     HuShanJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
-      zuiDaTokens: 32000,
-      siKaoMoShi: 'disabled',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 32000,
+      思考模式: 'disabled',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     ShiPoJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
-      zuiDaTokens: 32000,
-      siKaoMoShi: 'disabled',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 32000,
+      思考模式: 'disabled',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     JieShouBiaoBaiJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
-      zuiDaTokens: 32000,
-      siKaoMoShi: 'disabled',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 32000,
+      思考模式: 'disabled',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     ShenJingBingJianCe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
-      zuiDaTokens: 32000,
-      siKaoMoShi: 'disabled',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 32000,
+      思考模式: 'disabled',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     TuPianShenHe: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
-      zuiDaTokens: 32000,
-      siKaoMoShi: 'disabled',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 32000,
+      思考模式: 'disabled',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     SiLianJian: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
-      zuiDaTokens: 32000,
-      siKaoMoShi: 'disabled',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 32000,
+      思考模式: 'disabled',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     JiaoSeJingGaoFanYing: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0.1,
-      zuiDaTokens: 32000,
-      siKaoMoShi: 'disabled',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 32000,
+      思考模式: 'disabled',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     KaiChangBai: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       top_p: 0.95,
-      zuiDaTokens: 16000,
-      siKaoMoShi: 'enabled',
-      reasoningEffort: 'medium',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 16000,
+      思考模式: 'enabled',
+      思考强度: 'medium',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
     KaiChangBaiGaiLv: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       wenDu: 0,
-      zuiDaTokens: 30,
-      siKaoMoShi: 'disabled',
-      xiangYingGeShi: { type: 'text' },
+      最大Tokens: 30,
+      思考模式: 'disabled',
+      响应格式: { type: 'text' },
     } as MoXingCanShu,
 
     FuPanShengCheng: {
-      moXing: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
       top_p: 0.95,
-      zuiDaTokens: 64000,
-      siKaoMoShi: 'enabled',
-      reasoningEffort: 'medium',
-      xiangYingGeShi: { type: 'json_object' },
+      最大Tokens: 64000,
+      思考模式: 'enabled',
+      思考强度: 'medium',
+      响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
   },
@@ -266,31 +266,31 @@ export const AiPeiZhi = {
     suoTtlMiao: 10 * 60,
   },
 
-  xiangYingGeShi: {
+  响应格式: {
     wenBen: 'text',
     json: 'json_object',
   },
 } as const
 
-export interface MoXingHuiDuFenZu {
+export interface 模型灰度分组 {
   mingCheng: string
   biLi: number
-  reasoningEffort?: string
+  思考强度?: string
 }
 
-export interface MoXingHuiDuCeLue {
+export interface 模型灰度策略 {
   qiYong: boolean
-  fenZu: MoXingHuiDuFenZu[]
+  fenZu: 模型灰度分组[]
 }
 
-function duQuHuiDu(moXingLeiXing: string, moRenFenZu: MoXingHuiDuFenZu[]): MoXingHuiDuCeLue {
-  const kaiGuan = (process.env[`HUI_DU_${moXingLeiXing.toUpperCase()}_QI_YONG`] || '').trim().toLowerCase()
+function duQuHuiDu(模型类型: string, moRenFenZu: 模型灰度分组[]): 模型灰度策略 {
+  const kaiGuan = (process.env[`HUI_DU_${模型类型.toUpperCase()}_QI_YONG`] || '').trim().toLowerCase()
   const qiYong = kaiGuan === '1' || kaiGuan === 'true' || kaiGuan === 'yes' || kaiGuan === 'on'
   if (!qiYong) return { qiYong: false, fenZu: moRenFenZu.slice(0, 1) }
-  const yuanWen = process.env[`HUI_DU_${moXingLeiXing.toUpperCase()}_FEN_ZU`]
+  const yuanWen = process.env[`HUI_DU_${模型类型.toUpperCase()}_FEN_ZU`]
   if (!yuanWen) return { qiYong: true, fenZu: moRenFenZu }
   try {
-    const jieXi = JSON.parse(yuanWen) as MoXingHuiDuFenZu[]
+    const jieXi = JSON.parse(yuanWen) as 模型灰度分组[]
     const guoLv = jieXi.filter((zu) => typeof zu.mingCheng === 'string' && typeof zu.biLi === 'number' && zu.biLi > 0)
     if (guoLv.length === 0) return { qiYong: true, fenZu: moRenFenZu }
     return { qiYong: true, fenZu: guoLv }
@@ -300,9 +300,9 @@ function duQuHuiDu(moXingLeiXing: string, moRenFenZu: MoXingHuiDuFenZu[]): MoXin
 }
 
 export function xuanZeHuiDuFenZu(
-  ceLue: MoXingHuiDuCeLue,
+  ceLue: 模型灰度策略,
   suiJiShu: number = Math.random(),
-): MoXingHuiDuFenZu {
+): 模型灰度分组 {
   const zong = ceLue.fenZu.reduce((he, zu) => he + zu.biLi, 0)
   let leiJi = 0
   for (const zu of ceLue.fenZu) {
@@ -312,40 +312,40 @@ export function xuanZeHuiDuFenZu(
   return ceLue.fenZu[ceLue.fenZu.length - 1]
 }
 
-export const MoXingHuiDuCeLue: Record<string, MoXingHuiDuCeLue> = {
+export const 模型灰度策略: Record<string, 模型灰度策略> = {
   DaoYan: duQuHuiDu('DaoYan', [
-    { mingCheng: 'gaoJingQueMax', biLi: 90, reasoningEffort: 'max' },
-    { mingCheng: 'shouLianMedium', biLi: 10, reasoningEffort: 'medium' },
+    { mingCheng: 'gaoJingQueMax', biLi: 90, 思考强度: 'max' },
+    { mingCheng: 'shouLianMedium', biLi: 10, 思考强度: 'medium' },
   ]),
   JunShiQiuZhu: duQuHuiDu('JunShiQiuZhu', [
-    { mingCheng: 'jiZhun', biLi: 100, reasoningEffort: 'medium' },
+    { mingCheng: 'jiZhun', biLi: 100, 思考强度: 'medium' },
   ]),
   KaiChangBai: duQuHuiDu('KaiChangBai', [
-    { mingCheng: 'chenJinMax', biLi: 80, reasoningEffort: 'max' },
-    { mingCheng: 'shouLianMedium', biLi: 20, reasoningEffort: 'medium' },
+    { mingCheng: 'chenJinMax', biLi: 80, 思考强度: 'max' },
+    { mingCheng: 'shouLianMedium', biLi: 20, 思考强度: 'medium' },
   ]),
   JiYiZhaiYao: duQuHuiDu('JiYiZhaiYao', [
-    { mingCheng: 'wenDingMax', biLi: 90, reasoningEffort: 'max' },
-    { mingCheng: 'shouLianMedium', biLi: 10, reasoningEffort: 'medium' },
+    { mingCheng: 'wenDingMax', biLi: 90, 思考强度: 'max' },
+    { mingCheng: 'shouLianMedium', biLi: 10, 思考强度: 'medium' },
   ]),
   FuPanShengCheng: duQuHuiDu('FuPanShengCheng', [
-    { mingCheng: 'fuPanMax', biLi: 90, reasoningEffort: 'max' },
-    { mingCheng: 'shouLianMedium', biLi: 10, reasoningEffort: 'medium' },
+    { mingCheng: 'fuPanMax', biLi: 90, 思考强度: 'max' },
+    { mingCheng: 'shouLianMedium', biLi: 10, 思考强度: 'medium' },
   ]),
 }
 
-export type AIMoXingLeiXing = keyof typeof AiPeiZhi.moXing
+export type AI模型类型 = keyof typeof AI配置.模型
 
 export function yingYongHuiDuCanShu(
-  moXingLeiXing: string,
+  模型类型: string,
   jiChu: MoXingCanShu,
   suiJiShu: number = Math.random(),
 ): MoXingCanShu {
-  const ceLue = MoXingHuiDuCeLue[moXingLeiXing]
+  const ceLue = 模型灰度策略[模型类型]
   if (!ceLue || !ceLue.qiYong) return jiChu
   const fenZu = xuanZeHuiDuFenZu(ceLue, suiJiShu)
   return {
     ...jiChu,
-    reasoningEffort: fenZu.reasoningEffort || jiChu.reasoningEffort,
+    思考强度: fenZu.思考强度 || jiChu.思考强度,
   }
 }

@@ -102,19 +102,6 @@ export function huoQuXinQing(zongFen: number): string {
   return huoQuJieDuanXinXi(zongFen).xinQing
 }
 
-export function huoQuLiuCengJiMingCheng(zongFen: number): string {
-  const qieGeFen = qieGeFanWei(zongFen, HaoGanDuPeiZhi.fanWei.zuiDiFen, HaoGanDuPeiZhi.fanWei.zuiGaoFen)
-
-  const cengJiLieBiao = Object.values(HaoGanDuPeiZhi.liuCengJi)
-  for (const cengJi of cengJiLieBiao) {
-    if (qieGeFen >= cengJi.xiaXian && qieGeFen <= cengJi.shangXian) {
-      return cengJi.mingCheng
-    }
-  }
-
-  return cengJiLieBiao[0].mingCheng
-}
-
 export function jiSuanSiWeiBianHuaHouDeZongFen(
   dangQianFen: number,
   bianHua: HaoGanDuSiWeiBianHua,

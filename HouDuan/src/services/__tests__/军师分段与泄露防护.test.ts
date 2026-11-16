@@ -4,7 +4,7 @@ import { 通用知识结束标记, 通用知识开始标记 } from '../../config
 import { jieXiJunShiFenDuan, pinJieJunShiFenDuan, shengChengJunShiZhiDao } from '../军师求助'
 import { gouJianJunShiQiuZhuPrompt } from '../Prompt构建器'
 import { 检索通用知识, 构建军师知识层 } from '../通用知识检索'
-import { sheZhiMockTiaoYong, type TiaoYongCanShu } from '../../utils/DeepSeek客户端'
+import { sheZhiMockTiaoYong, type 调用参数 } from '../../utils/DeepSeek客户端'
 import type { DuiHuaLiShiXiang, JunShiQiuZhuCanShu } from '../../types'
 
 const 完整输出 = JSON.stringify({
@@ -46,7 +46,7 @@ describe('军师分段协议', () => {
     for (const duan of JunShiZhiDaoDuanDingYi) {
       expect(duan.zuiDaZiShu).toBeGreaterThan(0)
       expect(duan.yaoQiu.trim().length).toBeGreaterThan(0)
-      expect(duan.moXingJian.trim().length).toBeGreaterThan(0)
+      expect(duan.模型键.trim().length).toBeGreaterThan(0)
     }
   })
 })
@@ -136,7 +136,7 @@ describe('军师知识层注入', () => {
     }
   }
 
-  function huiFuJiaBen(canShu: TiaoYongCanShu): string {
+  function huiFuJiaBen(canShu: 调用参数): string {
     const yongHuXiaoXi = canShu.xiaoXi.find((x) => x.jiaoSe === 'user')
     return typeof yongHuXiaoXi?.neiRong === 'string' ? yongHuXiaoXi.neiRong : ''
   }
@@ -146,7 +146,7 @@ describe('军师知识层注入', () => {
   })
 
   it('聊天记录提到知识实体时用户消息带军师知识层', async () => {
-    const buHuo: TiaoYongCanShu[] = []
+    const buHuo: 调用参数[] = []
     sheZhiMockTiaoYong(async (canShu) => {
       buHuo.push(canShu)
       return {
@@ -168,7 +168,7 @@ describe('军师知识层注入', () => {
   })
 
   it('聊天记录无关时也注入军师知识层', async () => {
-    const buHuo: TiaoYongCanShu[] = []
+    const buHuo: 调用参数[] = []
     sheZhiMockTiaoYong(async (canShu) => {
       buHuo.push(canShu)
       return {
@@ -187,7 +187,7 @@ describe('军师知识层注入', () => {
   })
 
   it('注入攻击的聊天记录不带知识层', async () => {
-    const buHuo: TiaoYongCanShu[] = []
+    const buHuo: 调用参数[] = []
     sheZhiMockTiaoYong(async (canShu) => {
       buHuo.push(canShu)
       return {

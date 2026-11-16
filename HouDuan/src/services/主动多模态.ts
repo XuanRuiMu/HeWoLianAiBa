@@ -8,7 +8,7 @@ import { redis } from '../redis'
 import { huoQuWanZhengHaoGanDu } from './好感度'
 import { diaoYongShengTuJieKou } from './图像生成'
 import { liuShiBaoCunMeiTi } from './媒体存储'
-import { baoCunJiaoSeMeiTiXiaoXi } from './消息'
+import { 保存角色媒体消息 } from './消息'
 import { huoQuIo } from '../socket/io'
 
 export interface ZhuDongShengTuPanDing {
@@ -48,27 +48,27 @@ function huoQuRiQi(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-async function zhuDongShengTuJinRiYiYong(yongHuId: string): Promise<number> {
-  const zhi = Number(await redis.get(`zhu_dong_sheng_tu:${yongHuId}:${huoQuRiQi()}`)) || 0
+async function zhuDongShengTuJinRiYiYong(用户ID: string): Promise<number> {
+  const zhi = Number(await redis.get(`zhu_dong_sheng_tu:${用户ID}:${huoQuRiQi()}`)) || 0
   return zhi
 }
 
-async function jiShuZhuDongShengTu(yongHuId: string): Promise<void> {
-  const jian = `zhu_dong_sheng_tu:${yongHuId}:${huoQuRiQi()}`
+async function jiShuZhuDongShengTu(用户ID: string): Promise<void> {
+  const jian = `zhu_dong_sheng_tu:${用户ID}:${huoQuRiQi()}`
   const zhi = await redis.incr(jian)
   if (zhi === 1) await redis.expire(jian, 2 * 24 * 60 * 60)
 }
 
 export async function huoQuZhuDongShengTuZiGe(
-  yongHuId: string,
+  用户ID: string,
   jiaoSeId: string,
 ): Promise<{ keYi: boolean; zongFen: number; fengCun: boolean }> {
   const peiZhi = huoQuDuoMoTaiPeiZhi()
-  const haoGanDu = await huoQuWanZhengHaoGanDu(yongHuId, jiaoSeId)
+  const haoGanDu = await huoQuWanZhengHaoGanDu(用户ID, jiaoSeId)
   if (!haoGanDu) return { keYi: false, zongFen: 0, fengCun: true }
   const jiaoSe = await 数据库.query(`SELECT "封存" FROM "角色" WHERE "ID" = $1 AND "用户ID" = $2 LIMIT 1`, [
     jiaoSeId,
-    yongHuId,
+    用户ID,
   ])
   if (jiaoSe.rows.length === 0) return { keYi: false, zongFen: 0, fengCun: true }
   const fengCun = Boolean(jiaoSe.rows[0].封存)
@@ -83,7 +83,7 @@ export async function huoQuZhuDongShengTuZiGe(
 }
 
 export async function changShiZhuDongShengTu(canShu: {
-  yongHuId: string
+  用户ID: string
   jiaoSeId: string
   huiFuWenBen: string
   suiJiShu?: number
@@ -92,7 +92,7 @@ export async function changShiZhuDongShengTu(canShu: {
   if (!peiZhi.tuXiangShengChengQiYong) return false
   let ziGe: { keYi: boolean; zongFen: number; fengCun: boolean }
   try {
-    ziGe = await huoQuZhuDongShengTuZiGe(canShu.yongHuId, canShu.jiaoSeId)
+    ziGe = await huoQuZhuDongShengTuZiGe(canShu.用户ID, canShu.jiaoSeId)
   } catch (cuoWu) {
     debug日志.warn('主动多模态', '主动生图资格查询失败，本轮跳过', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return false
@@ -113,7 +113,7 @@ export async function changShiZhuDongShengTu(canShu: {
     return false
   }
   try {
-    if ((await zhuDongShengTuJinRiYiYong(canShu.yongHuId)) >= peiZhi.zhuDongShengTuRiShangXian) return false
+    if ((await zhuDongShengTuJinRiYiYong(canShu.用户ID)) >= peiZhi.zhuDongShengTuRiShangXian) return false
     const tiShiCi = `手机随手拍的写实照片，${dangQianJingSeZhuTi()}，自然光线，真实感`.slice(0, 200)
     const fuMianTiShiCi = '文字,水印,人物,人脸,食物,自拍,手,卡通,插画'
     const jieGuo = await diaoYongShengTuJieKou({ tiShiCi, fuMianTiShiCi })
@@ -123,18 +123,18 @@ export async function changShiZhuDongShengTu(canShu: {
       `zhudong-${Date.now()}.png`,
       jieGuo.mime || 'image/png',
       'tupian',
-      canShu.yongHuId,
+      canShu.用户ID,
     )
-    const xiaoXi = await baoCunJiaoSeMeiTiXiaoXi({
-      yong_hu_id: canShu.yongHuId,
+    const xiaoXi = await 保存角色媒体消息({
+      yong_hu_id: canShu.用户ID,
       jiao_se_id: canShu.jiaoSeId,
       nei_rong: huoQuFanYi('liaoTian', 'zhuDongFenXiangFengJing'),
       lei_xing: 'tuPian',
       mei_ti_id: cunChu.mediaId,
     })
-    await jiShuZhuDongShengTu(canShu.yongHuId)
+    await jiShuZhuDongShengTu(canShu.用户ID)
     const io = huoQuIo()
-    if (io) io.to(canShu.yongHuId).emit('角色回复', { 角色ID: canShu.jiaoSeId, 消息列表: [xiaoXi] })
+    if (io) io.to(canShu.用户ID).emit('角色回复', { 角色ID: canShu.jiaoSeId, 消息列表: [xiaoXi] })
     return true
   } catch (cuoWu) {
     debug日志.warn('主动多模态', '主动生图失败，本轮跳过', { xiang_qing: { cuo_wu: String(cuoWu) } })

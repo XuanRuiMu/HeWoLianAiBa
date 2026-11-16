@@ -6,7 +6,7 @@ import { Server } from 'socket.io'
 import { peiZhi } from './config'
 import { huoQuFanYi } from './config/translations'
 import { debug日志, qingLiNeiBuCuoWu } from './utils/debug日志'
-import { ziJianMoXingMingKeYong } from './utils/DeepSeek客户端'
+import { 自检模型名可用 } from './utils/DeepSeek客户端'
 import { renZhengZhongJianJian } from './middleware/认证'
 import { changGuiXianLiu, riZhiJieShouXianLiu } from './middleware/限流'
 import { anQuanZhongJianJian } from './middleware/安全'
@@ -39,6 +39,7 @@ import riZhiJieShouLuYou from './routes/日志接收'
 import gongNengKaiGuanLuYou from './routes/功能开关'
 import { renZhengSocketZhongJianJian } from './socket/认证'
 import { 初始化聊天Socket } from './socket/聊天'
+import { startRetryConsumer } from './services/重试消费者'
 import { chuShiHuaTongZhiSocket } from './socket/通知'
 import { chuShiHuaDuoSheSocket } from './socket/夺舍'
 import { sheZhiIo } from './socket/io'
@@ -221,6 +222,7 @@ sheZhiIo(io)
 初始化聊天Socket(io)
 chuShiHuaTongZhiSocket(io)
 chuShiHuaDuoSheSocket(io)
+startRetryConsumer()
 
 export interface 停机资源 {
   SocketIO: { disconnectSockets: (yuanYin?: boolean) => void }
@@ -301,7 +303,7 @@ if (require.main === module) {
     })
 
     qiDongShenJiRiZhiGuiDangDingShiQi()
-    void ziJianMoXingMingKeYong()
+    void 自检模型名可用()
     qiDongShuJuBaoCunQingLiDingShiQi()
 
     const tingJi = async (): Promise<void> => {

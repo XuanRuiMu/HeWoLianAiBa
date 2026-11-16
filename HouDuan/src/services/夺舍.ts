@@ -108,8 +108,8 @@ export async function huoQuJiaoSeYongHuId(jiao_se_id: string): Promise<string | 
     [jiao_se_id],
   )
   if (jieGuo.rows.length === 0) return null
-  const yongHuId = jieGuo.rows[0].用户ID
-  return yongHuId ? String(yongHuId) : null
+  const 用户ID = jieGuo.rows[0].用户ID
+  return 用户ID ? String(用户ID) : null
 }
 
 export async function jiLuDuoShe(

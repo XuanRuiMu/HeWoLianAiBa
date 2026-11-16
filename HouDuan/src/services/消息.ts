@@ -2,8 +2,8 @@ import type { PoolClient, QueryResult } from 'pg'
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import { XiaoXiPeiZhi } from '../config/消息配置'
-import { BiaoQingShuLeiBie, LeiBieDaoXiaoXiLeiXing, YunXuXiaoXiLeiXing } from '../config/媒体配置'
-import { BiaoQingDuanMingZuiDaChang } from '../config/表情包配置'
+import { 表情书类别, 类别到消息类型, YunXuXiaoXiLeiXing } from '../config/媒体配置'
+import { 表情短名最大长 } from '../config/表情包配置'
 import { huoQuIo } from '../socket/io'
 import { yanZhengUUID } from '../utils/验证'
 import { huoQuJiaoSeBianHao } from './公开编号'
@@ -11,9 +11,9 @@ import { 解析结局类型, 解析结局文案 } from '../utils/结局'
 import { 归一角色性别 } from '../utils/性别'
 import { debug日志, jiLuXiaoXiCaoZuo, jiLuSocketShiJian } from '../utils/debug日志'
 import { shengChengQianMingURL } from './媒体存储'
-import { chaAnDuanMing, duanMingDaoUUID } from './表情包库'
+import { 按短名查, 短名转UUID } from './表情包库'
 import {
-  XiaoXiKuaiLeiXing,
+  消息块LeiXing,
   diuQiDaoCuoWuJian,
   fanGouKuai,
   jiLuKuaiDiuQi,
@@ -22,26 +22,26 @@ import {
   qingLiLuoKuKuai,
   qingLiTiJiaoKuai,
   yingYongMeiTiPanDing,
-  type JianRongJianYing,
-  type XiaoXiKuai,
+  type 兼容剪映,
+  type 消息块,
 } from './消息内容块'
 
-const BiaoQingXiaoXiLeiXing = LeiBieDaoXiaoXiLeiXing[BiaoQingShuLeiBie]
+const 表情消息类型 = 类别到消息类型[表情书类别]
 
-const TieZhiDuanMingZhengZe = /^\s*\[贴纸[:：]\s*([^\]】]+?)\s*\]\s*$/
+const 贴纸短名正则 = /^\s*\[贴纸[:：]\s*([^\]】]+?)\s*\]\s*$/
 
-export interface XiaoXiKuaiChuCan extends XiaoXiKuai {
+export interface 消息块ChuCan extends 消息块 {
   mei_ti_url?: string | null
   mei_ti_lei_bie?: string | null
   duan_ming?: string | null
 }
 
-interface KuaiMeiTiXinXi {
+interface 块媒体信息 {
   sha256: string
   lei_bie: string
 }
 
-export interface XiaoXiXinXi {
+export interface 消息信息 {
   id: string
   hui_hua_id: string
   fa_song_zhe_id: string
@@ -49,7 +49,7 @@ export interface XiaoXiXinXi {
   ai_biao_shi: boolean
   nei_rong: string
   lei_xing: string
-  nei_rong_kuai?: XiaoXiKuaiChuCan[]
+  nei_rong_kuai?: 消息块ChuCan[]
   bei_yong_xiao_xi_id?: string | null
   shi_jian_chuo: number
   yi_du: boolean
@@ -65,7 +65,7 @@ export interface XiaoXiXinXi {
   mei_ti_yuan_shi_wen_jian_ming?: string | null
 }
 
-export interface FaSongXiaoXiCanShu {
+export interface 发消息参数 {
   yong_hu_id: string
   jiao_se_id: string
   nei_rong: string
@@ -77,7 +77,7 @@ export interface FaSongXiaoXiCanShu {
   bei_yong_xiao_xi_id?: string | null
 }
 
-export interface HuoQuXiaoXiCanShu {
+export interface 取消息参数 {
   yong_hu_id: string
   jiao_se_id: string
   ye_ma?: number
@@ -87,18 +87,18 @@ export interface HuoQuXiaoXiCanShu {
   you_biao_id?: string | null
 }
 
-export interface CheHuiXiaoXiCanShu {
+export interface 撤回消息参数 {
   yong_hu_id: string
   jiao_se_id: string
   xiao_xi_id: string
 }
 
-export interface CheHuiJiaoSeXiaoXiCanShu {
+export interface 撤回角色消息参数 {
   yong_hu_id: string
   jiao_se_id: string
 }
 
-function tuiSongCheHuiShiJian(
+function 推送撤回事件(
   yong_hu_id: string,
   jiao_se_id: string,
   xiao_xi_id: string,
@@ -120,13 +120,13 @@ function tuiSongCheHuiShiJian(
   }
 }
 
-export interface KuaiShangXiaWen {
-  kuaiOf(xiaoXiId: string): XiaoXiKuai[] | null
-  meiTiOf(meiTiId: string): KuaiMeiTiXinXi | null
+export interface 块上下文 {
+  kuaiOf(xiaoXiId: string): 消息块[] | null
+  meiTiOf(meiTiId: string): 块媒体信息 | null
   biaoQingShaOf?(duanMing: string): string | null
 }
 
-function quKuaiShuZu(zhi: unknown): Record<string, unknown>[] {
+function 取块数组(zhi: unknown): Record<string, unknown>[] {
   if (!Array.isArray(zhi)) return []
   const jieGuo: Record<string, unknown>[] = []
   for (const yuan of zhi) {
@@ -136,63 +136,63 @@ function quKuaiShuZu(zhi: unknown): Record<string, unknown>[] {
   return jieGuo
 }
 
-function quTieZhiDuanMing(xiang: Record<string, unknown>): string | null {
-  if (xiang.lei_xing !== XiaoXiKuaiLeiXing.tuPian) return null
+function 取贴纸短名(xiang: Record<string, unknown>): string | null {
+  if (xiang.lei_xing !== 消息块LeiXing.tuPian) return null
   const meiTiId = typeof xiang.mei_ti_id === 'string' ? xiang.mei_ti_id.trim() : ''
   if (meiTiId !== '') return null
   const duanMing = typeof xiang.duan_ming === 'string' ? xiang.duan_ming.trim() : ''
-  if (duanMing === '' || duanMing.length > BiaoQingDuanMingZuiDaChang) return null
+  if (duanMing === '' || duanMing.length > 表情短名最大长) return null
   return duanMing
 }
 
-function jieXiTieZhiDuanMing(zhi: unknown): string | null {
+function 解析贴纸短名(zhi: unknown): string | null {
   if (typeof zhi !== 'string') return null
-  const piPei = TieZhiDuanMingZhengZe.exec(zhi)
+  const piPei = 贴纸短名正则.exec(zhi)
   if (!piPei) return null
   const duanMing = piPei[1].trim()
-  if (duanMing === '' || duanMing.length > BiaoQingDuanMingZuiDaChang) return null
+  if (duanMing === '' || duanMing.length > 表情短名最大长) return null
   return duanMing
 }
 
 function shouJiTieZhiDuanMing(row: Record<string, unknown>): Set<string> {
   const jieGuo = new Set<string>()
-  for (const xiang of quKuaiShuZu(row.内容块)) {
-    const duanMing = quTieZhiDuanMing(xiang)
+  for (const xiang of 取块数组(row.内容块)) {
+    const duanMing = 取贴纸短名(xiang)
     if (duanMing) jieGuo.add(duanMing)
   }
   return jieGuo
 }
 
-function yingSheTieZhiKuai(
+function 映射贴纸块(
   duanMing: string,
-  shangXiaWen: KuaiShangXiaWen,
+  shangXiaWen: 块上下文,
   zhuTi: string,
-): XiaoXiKuaiChuCan {
+): 消息块ChuCan {
   const sha256 = shangXiaWen.biaoQingShaOf?.(duanMing) ?? null
   return {
-    lei_xing: XiaoXiKuaiLeiXing.tuPian,
+    lei_xing: 消息块LeiXing.tuPian,
     duan_ming: duanMing,
-    mei_ti_id: duanMingDaoUUID(duanMing),
+    mei_ti_id: 短名转UUID(duanMing),
     mei_ti_url: sha256 ? shengChengQianMingURL(sha256, zhuTi) : null,
-    mei_ti_lei_bie: BiaoQingShuLeiBie,
+    mei_ti_lei_bie: 表情书类别,
   }
 }
 
-export interface KuaiTouYingMianXiang {
+export interface 块头像面向 {
   cheHuiLie: string
   sha256Lie: string
   leiBieLie: string
   qianMingZhuTi(hang: Record<string, unknown>): string
 }
 
-const AiKuaiTouYing: KuaiTouYingMianXiang = {
+const AI块头像: 块头像面向 = {
   cheHuiLie: '已撤回',
   sha256Lie: '媒体SHA256',
   leiBieLie: '媒体类别',
   qianMingZhuTi: (hang) => String(hang.用户ID),
 }
 
-export function haoYouKuaiTouYing(duZheId: string): KuaiTouYingMianXiang {
+export function 好友块头像(duZheId: string): 块头像面向 {
   return {
     cheHuiLie: '撤回',
     sha256Lie: 'SHA256',
@@ -201,14 +201,14 @@ export function haoYouKuaiTouYing(duZheId: string): KuaiTouYingMianXiang {
   }
 }
 
-const WuKuaiShangXiaWen: KuaiShangXiaWen = {
+const Wu块上下文: 块上下文 = {
   kuaiOf: () => null,
   meiTiOf: () => null,
 }
 
-async function chaKuaiMeiTiGuiShu(
+async function 查块媒体归属(
   meiTiIds: string[],
-  yongHuId: string,
+  用户ID: string,
 ): Promise<Map<string, { lei_bie: string; suo_shu: boolean }>> {
   const jieGuo = new Map<string, { lei_bie: string; suo_shu: boolean }>()
   if (meiTiIds.length === 0) return jieGuo
@@ -219,28 +219,28 @@ async function chaKuaiMeiTiGuiShu(
   for (const hang of chaXun.rows as Record<string, unknown>[]) {
     jieGuo.set(String(hang.ID), {
       lei_bie: String(hang.类别 ?? ''),
-      suo_shu: String(hang.上传者ID) === yongHuId,
+      suo_shu: String(hang.上传者ID) === 用户ID,
     })
   }
   return jieGuo
 }
 
-export interface KuaiXieRuJieGuo {
+export interface 块写入结果 {
   cheng_gong: boolean
-  kuai: XiaoXiKuai[] | null
-  jianYing: JianRongJianYing | null
+  kuai: 消息块[] | null
+  jianYing: 兼容剪映 | null
   ti_shi?: string
   zhuang_tai_ma?: number
 }
 
-export async function qingLiXiaoXiKuaiXieRu(
+export async function qingLi消息块XieRu(
   zhi: unknown,
-  yongHuId: string,
+  用户ID: string,
   changDing: string,
-): Promise<KuaiXieRuJieGuo> {
+): Promise<块写入结果> {
   const tiJiao = qingLiTiJiaoKuai(zhi, changDing)
   if (tiJiao.chaoXian) {
-    jiLuKuaiDiuQi(tiJiao.diuQi, `${changDing}·长度超限`, yongHuId)
+    jiLuKuaiDiuQi(tiJiao.diuQi, `${changDing}·长度超限`, 用户ID)
     return {
       cheng_gong: false,
       kuai: null,
@@ -250,13 +250,13 @@ export async function qingLiXiaoXiKuaiXieRu(
     }
   }
   if (tiJiao.kuai === null) {
-    jiLuKuaiDiuQi(tiJiao.diuQi, changDing, yongHuId)
+    jiLuKuaiDiuQi(tiJiao.diuQi, changDing, 用户ID)
     return { cheng_gong: true, kuai: null, jianYing: null }
   }
-  const meiTiXinXi = await chaKuaiMeiTiGuiShu(tiJiao.daiPanDingMeiTiId, yongHuId)
+  const meiTiXinXi = await 查块媒体归属(tiJiao.daiPanDingMeiTiId, 用户ID)
   const panDing = yingYongMeiTiPanDing(tiJiao.kuai, meiTiXinXi)
   const quanBuDiuQi = [...tiJiao.diuQi, ...panDing.diuQi]
-  jiLuKuaiDiuQi(quanBuDiuQi, changDing, yongHuId)
+  jiLuKuaiDiuQi(quanBuDiuQi, changDing, 用户ID)
   if (panDing.baoLiu.length === 0) {
     return {
       cheng_gong: false,
@@ -273,7 +273,7 @@ export async function qingLiXiaoXiKuaiXieRu(
   }
 }
 
-function anHangKuai(row: Record<string, unknown>): XiaoXiKuai[] {
+function anHangKuai(row: Record<string, unknown>): 消息块[] {
   return (
     qingLiLuoKuKuai(row.内容块, String(row.ID ?? '')) ??
     fanGouKuai({
@@ -284,11 +284,11 @@ function anHangKuai(row: Record<string, unknown>): XiaoXiKuai[] {
   )
 }
 
-export async function gouKuaiShangXiaWen(
+export async function gou块上下文(
   rows: Record<string, unknown>[],
-  mianXiang: KuaiTouYingMianXiang = AiKuaiTouYing,
-): Promise<KuaiShangXiaWen> {
-  const kuaiAnId = new Map<string, XiaoXiKuai[]>()
+  mianXiang: 块头像面向 = AI块头像,
+): Promise<块上下文> {
+  const kuaiAnId = new Map<string, 消息块[]>()
   const meiTiIds = new Set<string>()
   const duanMingJi = new Set<string>()
   for (const row of rows) {
@@ -296,8 +296,8 @@ export async function gouKuaiShangXiaWen(
     const tieZhiMing = shouJiTieZhiDuanMing(row)
     if (tieZhiMing.size > 0) {
       for (const duanMing of tieZhiMing) duanMingJi.add(duanMing)
-      for (const xiang of quKuaiShuZu(row.内容块)) {
-        if (xiang.lei_xing !== XiaoXiKuaiLeiXing.tuPian) continue
+      for (const xiang of 取块数组(row.内容块)) {
+        if (xiang.lei_xing !== 消息块LeiXing.tuPian) continue
         const meiTiId = typeof xiang.mei_ti_id === 'string' ? xiang.mei_ti_id.trim() : ''
         if (meiTiId !== '' && yanZhengUUID(meiTiId)) meiTiIds.add(meiTiId)
       }
@@ -310,7 +310,7 @@ export async function gouKuaiShangXiaWen(
       if (xiang.lei_xing === 'tupian' && xiang.mei_ti_id) meiTiIds.add(xiang.mei_ti_id)
     }
   }
-  const meiTiAnId = new Map<string, KuaiMeiTiXinXi>()
+  const meiTiAnId = new Map<string, 块媒体信息>()
   if (meiTiIds.size > 0) {
     const jieGuo = await 数据库.query(
       `SELECT "ID", "SHA256", "类别" FROM "媒体文件" WHERE "ID" = ANY($1::uuid[])`,
@@ -328,7 +328,7 @@ export async function gouKuaiShangXiaWen(
   const biaoQingAnDuanMing = new Map<string, string>()
   if (duanMingJi.size > 0) {
     const mingLie = [...duanMingJi]
-    const tiaoMuLie = await Promise.all(mingLie.map((duanMing) => chaAnDuanMing(duanMing)))
+    const tiaoMuLie = await Promise.all(mingLie.map((duanMing) => 按短名查(duanMing)))
     mingLie.forEach((duanMing, wei) => {
       const tiaoMu = tiaoMuLie[wei]
       if (tiaoMu) biaoQingAnDuanMing.set(duanMing, tiaoMu.sha256.toLowerCase())
@@ -341,13 +341,13 @@ export async function gouKuaiShangXiaWen(
   }
 }
 
-function yingSheDanKuai(
-  xiang: XiaoXiKuai,
+function 映射单块(
+  xiang: 消息块,
   beiYongLeiBie: string | null,
   zhuTi: string,
-  benHangMeiTi: (meiTiId: string) => KuaiMeiTiXinXi | null,
-): XiaoXiKuaiChuCan {
-  if (xiang.lei_xing !== XiaoXiKuaiLeiXing.tuPian) return { ...xiang }
+  benHangMeiTi: (meiTiId: string) => 块媒体信息 | null,
+): 消息块ChuCan {
+  if (xiang.lei_xing !== 消息块LeiXing.tuPian) return { ...xiang }
   const meiTi = benHangMeiTi(xiang.mei_ti_id ?? '')
   if (!meiTi) return { ...xiang, mei_ti_url: null, mei_ti_lei_bie: beiYongLeiBie }
   return {
@@ -357,43 +357,43 @@ function yingSheDanKuai(
   }
 }
 
-function yingSheYuanShiKuai(
+function 映射原始块(
   xiang: Record<string, unknown>,
-  shangXiaWen: KuaiShangXiaWen,
+  shangXiaWen: 块上下文,
   zhuTi: string,
   beiYongLeiBie: string | null,
-  benHangMeiTi: (meiTiId: string) => KuaiMeiTiXinXi | null,
-): XiaoXiKuaiChuCan | null {
-  const duanMing = quTieZhiDuanMing(xiang)
-  if (duanMing) return yingSheTieZhiKuai(duanMing, shangXiaWen, zhuTi)
-  if (xiang.lei_xing === XiaoXiKuaiLeiXing.wenZi) {
+  benHangMeiTi: (meiTiId: string) => 块媒体信息 | null,
+): 消息块ChuCan | null {
+  const duanMing = 取贴纸短名(xiang)
+  if (duanMing) return 映射贴纸块(duanMing, shangXiaWen, zhuTi)
+  if (xiang.lei_xing === 消息块LeiXing.wenZi) {
     return {
-      lei_xing: XiaoXiKuaiLeiXing.wenZi,
+      lei_xing: 消息块LeiXing.wenZi,
       nei_rong: typeof xiang.nei_rong === 'string' ? xiang.nei_rong : '',
     }
   }
   const meiTiId = typeof xiang.mei_ti_id === 'string' ? xiang.mei_ti_id.trim() : ''
   if (meiTiId === '' || !yanZhengUUID(meiTiId)) return null
-  return yingSheDanKuai(
-    { lei_xing: XiaoXiKuaiLeiXing.tuPian, mei_ti_id: meiTiId },
+  return 映射单块(
+    { lei_xing: 消息块LeiXing.tuPian, mei_ti_id: meiTiId },
     beiYongLeiBie,
     zhuTi,
     benHangMeiTi,
   )
 }
 
-export function yingSheKuaiChuCan(
+export function 映射块出参(
   row: Record<string, unknown>,
-  shangXiaWen: KuaiShangXiaWen,
+  shangXiaWen: 块上下文,
   cheHuiWenAn: string,
-  mianXiang: KuaiTouYingMianXiang = AiKuaiTouYing,
-): XiaoXiKuaiChuCan[] {
+  mianXiang: 块头像面向 = AI块头像,
+): 消息块ChuCan[] {
   if (row[mianXiang.cheHuiLie]) {
     return [{ lei_xing: 'wenzi', nei_rong: cheHuiWenAn }]
   }
   const xiaoXiId = String(row.ID ?? '')
   const beiYongLeiBie = leiXingDaoMeiTiLeiBie(String(row.类型 || 'wenben'))
-  const benHangMeiTi = (meiTiId: string): KuaiMeiTiXinXi | null => {
+  const benHangMeiTi = (meiTiId: string): 块媒体信息 | null => {
     const caiDao = shangXiaWen.meiTiOf(meiTiId)
     if (caiDao) return caiDao
     const benHangSha = row[mianXiang.sha256Lie]
@@ -404,23 +404,23 @@ export function yingSheKuaiChuCan(
     }
   }
   const zhuTi = String(mianXiang.qianMingZhuTi(row))
-  const yuanKuai = quKuaiShuZu(row.内容块)
-  if (yuanKuai.some((xiang) => quTieZhiDuanMing(xiang) !== null)) {
-    const jieGuo: XiaoXiKuaiChuCan[] = []
+  const yuanKuai = 取块数组(row.内容块)
+  if (yuanKuai.some((xiang) => 取贴纸短名(xiang) !== null)) {
+    const jieGuo: 消息块ChuCan[] = []
     for (const xiang of yuanKuai) {
-      const chuCan = yingSheYuanShiKuai(xiang, shangXiaWen, zhuTi, beiYongLeiBie, benHangMeiTi)
+      const chuCan = 映射原始块(xiang, shangXiaWen, zhuTi, beiYongLeiBie, benHangMeiTi)
       if (chuCan) jieGuo.push(chuCan)
     }
     return jieGuo
   }
-  const kuai: XiaoXiKuai[] = shangXiaWen.kuaiOf(xiaoXiId) ?? anHangKuai(row)
-  return kuai.map((xiang) => yingSheDanKuai(xiang, beiYongLeiBie, zhuTi, benHangMeiTi))
+  const kuai: 消息块[] = shangXiaWen.kuaiOf(xiaoXiId) ?? anHangKuai(row)
+  return kuai.map((xiang) => 映射单块(xiang, beiYongLeiBie, zhuTi, benHangMeiTi))
 }
 
-async function chaTieZhiSha256(row: Record<string, unknown>): Promise<string | null> {
-  const duanMing = jieXiTieZhiDuanMing(row.内容)
+async function 查贴纸哈希(row: Record<string, unknown>): Promise<string | null> {
+  const duanMing = 解析贴纸短名(row.内容)
   if (duanMing === null) return null
-  const tiaoMu = await chaAnDuanMing(duanMing)
+  const tiaoMu = await 按短名查(duanMing)
   if (!tiaoMu) {
     debug日志.warn('消息服务', '贴纸短名未命中表情包库，按无媒体出参', {
       xiang_qing: { xiao_xi_id: String(row.ID ?? ''), duan_ming: duanMing },
@@ -430,10 +430,10 @@ async function chaTieZhiSha256(row: Record<string, unknown>): Promise<string | n
   return tiaoMu.sha256.toLowerCase()
 }
 
-async function yingSheXiaoXi(
+async function 映射消息(
   row: Record<string, unknown>,
-  shangXiaWen: KuaiShangXiaWen = WuKuaiShangXiaWen,
-): Promise<XiaoXiXinXi> {
+  shangXiaWen: 块上下文 = Wu块上下文,
+): Promise<消息信息> {
   const faSongZheLeiXing =
     row.发送者 === 'yonghu' ? 'yonghu' : row.发送者 === 'jiaose' ? 'jiaose' : 'xitong'
   const faSongZheId =
@@ -449,7 +449,7 @@ async function yingSheXiaoXi(
   const leiXing = String(row.类型 || 'wenben')
   const meiTiSha256 = row.媒体SHA256 ? String(row.媒体SHA256).toLowerCase() : ''
   const tieZhiSha256 =
-    meiTiSha256 === '' && leiXing === BiaoQingXiaoXiLeiXing ? await chaTieZhiSha256(row) : null
+    meiTiSha256 === '' && leiXing === 表情消息类型 ? await 查贴纸哈希(row) : null
   const qianMingSha256 = meiTiSha256 !== '' ? meiTiSha256 : tieZhiSha256
 
   return {
@@ -460,7 +460,7 @@ async function yingSheXiaoXi(
     ai_biao_shi: faSongZheLeiXing === 'jiaose',
     nei_rong: neiRong,
     lei_xing: leiXing,
-    nei_rong_kuai: yingSheKuaiChuCan(row, shangXiaWen, cheHuiWenAn),
+    nei_rong_kuai: 映射块出参(row, shangXiaWen, cheHuiWenAn),
     bei_yong_xiao_xi_id: row.被引用消息ID ? String(row.被引用消息ID) : null,
     shi_jian_chuo: new Date(String(row.创建时间)).getTime(),
     yi_du: Boolean(row.已读),
@@ -475,15 +475,15 @@ async function yingSheXiaoXi(
       : null,
     mei_ti_lei_bie: row.媒体类别
       ? String(row.媒体类别)
-      : leiXing === BiaoQingXiaoXiLeiXing
-        ? BiaoQingShuLeiBie
+      : leiXing === 表情消息类型
+        ? 表情书类别
         : null,
     mei_ti_shi_chang_hao_miao: row.媒体时长毫秒 != null ? Number(row.媒体时长毫秒) : null,
     mei_ti_yuan_shi_wen_jian_ming: row.媒体原始文件名 ? String(row.媒体原始文件名) : null,
   }
 }
 
-export interface JiaoSeSuoYouZheXinXi {
+export interface 角色所有者信息 {
   yong_hu_id: string | null
   shi_fou_feng_cun: boolean
   ke_ji_xu_liao_tian: boolean
@@ -491,9 +491,9 @@ export interface JiaoSeSuoYouZheXinXi {
   shi_fou_zha_xing: boolean
 }
 
-export async function huoQuJiaoSeSuoYouZhe(
+export async function 取角色所有者(
   jiao_se_id: string,
-): Promise<JiaoSeSuoYouZheXinXi | null> {
+): Promise<角色所有者信息 | null> {
   if (!yanZhengUUID(jiao_se_id)) {
     return null
   }
@@ -516,7 +516,7 @@ export async function huoQuJiaoSeSuoYouZhe(
   }
 }
 
-export async function anIdChaXiaoXi(xiao_xi_id: string): Promise<XiaoXiXinXi | null> {
+export async function 按ID查消息(xiao_xi_id: string): Promise<消息信息 | null> {
   const jieGuo = await 数据库.query(
     `SELECT m.*, mf."SHA256" AS "媒体SHA256", mf."时长毫秒" AS "媒体时长毫秒"
      FROM "消息" m LEFT JOIN "媒体文件" mf ON m."媒体ID" = mf."ID"
@@ -524,15 +524,15 @@ export async function anIdChaXiaoXi(xiao_xi_id: string): Promise<XiaoXiXinXi | n
     [xiao_xi_id],
   )
   if (jieGuo.rows.length === 0) return null
-  const shangXiaWen = await gouKuaiShangXiaWen(jieGuo.rows as Record<string, unknown>[])
-  return await yingSheXiaoXi(jieGuo.rows[0], shangXiaWen)
+  const shangXiaWen = await gou块上下文(jieGuo.rows as Record<string, unknown>[])
+  return await 映射消息(jieGuo.rows[0], shangXiaWen)
 }
 
 function huoQuZongShuHuanCunJian(yong_hu_id: string, jiao_se_id: string): string {
   return `xiao_xi_zong_shu:${yong_hu_id}:${jiao_se_id}`
 }
 
-export function huiHuaXiaoXiSuoJian(yong_hu_id: string, jiao_se_id: string): number {
+export function 会话消息所辖(yong_hu_id: string, jiao_se_id: string): number {
   return (
     Math.abs(
       [...`${yong_hu_id}:${jiao_se_id}`].reduce((lei, zi) => (lei * 31 + zi.charCodeAt(0)) | 0, 7),
@@ -559,7 +559,7 @@ async function suoDingHuiHua(
   jiao_se_id: string,
 ): Promise<void> {
   await keHuDuan.query('SELECT pg_advisory_xact_lock($1)', [
-    huiHuaXiaoXiSuoJian(yong_hu_id, jiao_se_id),
+    会话消息所辖(yong_hu_id, jiao_se_id),
   ])
 }
 
@@ -575,28 +575,28 @@ async function huoQuXiaYiKeHuDuanXuHao(
   return Number(xuHaoJieGuo.rows[0]?.zui_da ?? 0) + 1
 }
 
-export interface BeiYinYongJianYan {
+export interface 被引用检验 {
   cheng_gong: boolean
   id?: string | null
   ti_shi?: string
   zhuang_tai_ma?: number
 }
 
-export interface BeiYinYongMianXiang {
+export interface 被引用面向 {
   yuJu: string
   shuYuBenRen(hang: Record<string, unknown>, benRenId: string, duiXiangId: string): boolean
   shiZaiTongYiDuiHua(hang: Record<string, unknown>, benRenId: string, duiXiangId: string): boolean
   quYiCheHui(hang: Record<string, unknown>): boolean
 }
 
-export const AiBeiYinYongMianXiang: BeiYinYongMianXiang = {
+export const Ai被引用面向: 被引用面向 = {
   yuJu: `SELECT "用户ID", "角色ID", "已撤回" FROM "消息" WHERE "ID" = $1 LIMIT 1`,
   shuYuBenRen: (hang, benRenId) => String(hang.用户ID) === String(benRenId),
   shiZaiTongYiDuiHua: (hang, _benRenId, duiXiangId) => String(hang.角色ID) === String(duiXiangId),
   quYiCheHui: (hang) => Boolean(hang.已撤回),
 }
 
-export const HaoYouBeiYinYongMianXiang: BeiYinYongMianXiang = {
+export const HaoYou被引用面向: 被引用面向 = {
   yuJu: `SELECT "发送者ID", "接收者ID", "撤回" FROM "好友消息" WHERE "ID" = $1 LIMIT 1`,
   shuYuBenRen: (hang, benRenId) =>
     String(hang.发送者ID) === String(benRenId) || String(hang.接收者ID) === String(benRenId),
@@ -608,7 +608,7 @@ export const HaoYouBeiYinYongMianXiang: BeiYinYongMianXiang = {
   quYiCheHui: (hang) => Boolean(hang.撤回),
 }
 
-export function shiZiYinYong(
+export function 是自引用(
   benXingId: string | null | undefined,
   beiYongId: string | null | undefined,
 ): boolean {
@@ -616,12 +616,12 @@ export function shiZiYinYong(
   return String(benXingId) === String(beiYongId)
 }
 
-export async function yanZhengBeiYinYong(
+export async function 校验被引用(
   zhi: unknown,
   yong_hu_id: string,
   dui_xiang_id: string,
-  mianXiang: BeiYinYongMianXiang = AiBeiYinYongMianXiang,
-): Promise<BeiYinYongJianYan> {
+  mianXiang: 被引用面向 = Ai被引用面向,
+): Promise<被引用检验> {
   if (zhi == null || zhi === '') return { cheng_gong: true, id: null }
   if (typeof zhi !== 'string' || !yanZhengUUID(zhi)) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'yinYongXiaoXiFeiFa'), zhuang_tai_ma: 400 }
@@ -643,7 +643,7 @@ export async function yanZhengBeiYinYong(
   return { cheng_gong: true, id: zhi }
 }
 
-export async function shiXiaoXiaoXiZongShuHuanCun(
+export async function 失效消息总数缓存(
   yong_hu_id: string,
   jiao_se_id: string,
 ): Promise<void> {
@@ -662,7 +662,6 @@ async function huoQuZongShu(yong_hu_id: string, jiao_se_id: string): Promise<num
     const huanCun = await redis.get(huanCunJian)
     if (huanCun !== null) return parseInt(huanCun, 10)
   } catch {
-    // 缓存读取失败退回直查
   }
   const zongShuJieGuo = await 数据库.query(
     `SELECT COUNT(*) as zong_shu FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
@@ -673,14 +672,13 @@ async function huoQuZongShu(yong_hu_id: string, jiao_se_id: string): Promise<num
     const { redis } = await import('../redis')
     await redis.setex(huanCunJian, ZongShuHuanCunMiao, String(zongShu))
   } catch {
-    // 缓存写入失败不影响主流程
   }
   return zongShu
 }
 
-export async function huoQuXiaoXiLieBiao(
-  canShu: HuoQuXiaoXiCanShu,
-): Promise<{ lie_biao: XiaoXiXinXi[]; zong_shu: number; hai_you_geng_duo?: boolean }> {
+export async function 取消息列表(
+  canShu: 取消息参数,
+): Promise<{ lie_biao: 消息信息[]; zong_shu: number; hai_you_geng_duo?: boolean }> {
   const yeMa = Math.max(1, canShu.ye_ma || 1)
   const meiYeTiaoShu = Math.min(999, Math.max(1, canShu.mei_ye_tiao_shu || 50))
 
@@ -732,10 +730,10 @@ export async function huoQuXiaoXiLieBiao(
   }
 
   const haiYouGengDuo = rows.length > meiYeTiaoShu
-  const buQuKuai = await gouKuaiShangXiaWen(rows)
+  const buQuKuai = await gou块上下文(rows)
   const lieBiao = await Promise.all(
     (haiYouGengDuo ? rows.slice(0, meiYeTiaoShu) : rows).map((hang) =>
-      yingSheXiaoXi(hang, buQuKuai),
+      映射消息(hang, buQuKuai),
     ),
   )
 
@@ -748,10 +746,10 @@ export async function huoQuXiaoXiLieBiao(
   return { lie_biao: lieBiao, zong_shu: zongShu, hai_you_geng_duo: haiYouGengDuo }
 }
 
-export async function chuangJianYongHuXiaoXi(
-  canShu: FaSongXiaoXiCanShu,
-): Promise<{ cheng_gong: boolean; xiao_xi?: XiaoXiXinXi; ti_shi?: string; zhuang_tai_ma?: number }> {
-  const kuaiXieRu = await qingLiXiaoXiKuaiXieRu(
+export async function 创建用户消息(
+  canShu: 发消息参数,
+): Promise<{ cheng_gong: boolean; xiao_xi?: 消息信息; ti_shi?: string; zhuang_tai_ma?: number }> {
+  const kuaiXieRu = await qingLi消息块XieRu(
     canShu.nei_rong_kuai,
     canShu.yong_hu_id,
     '用户消息发送',
@@ -786,7 +784,7 @@ export async function chuangJianYongHuXiaoXi(
     return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'xiaoXiNeiRongGuoChang'), zhuang_tai_ma: 400 }
   }
 
-  const jiaoSe = await huoQuJiaoSeSuoYouZhe(canShu.jiao_se_id)
+  const jiaoSe = await 取角色所有者(canShu.jiao_se_id)
   if (!jiaoSe) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'jiaoSeBuCunZai'), zhuang_tai_ma: 404 }
   }
@@ -811,7 +809,7 @@ export async function chuangJianYongHuXiaoXi(
     }
   }
 
-  const beiYong = await yanZhengBeiYinYong(
+  const beiYong = await 校验被引用(
     canShu.bei_yong_xiao_xi_id,
     canShu.yong_hu_id,
     canShu.jiao_se_id,
@@ -871,7 +869,7 @@ export async function chuangJianYongHuXiaoXi(
         debug日志.warn('消息服务', '用户消息重复提交，按幂等键返回原行', {
           xiang_qing: { yong_hu_id: canShu.yong_hu_id, jiao_se_id: canShu.jiao_se_id, xiao_xi_id: String(mingZhong.ID) },
         })
-        if (beiYongXiaoXiId && shiZiYinYong(mingZhong.ID, beiYongXiaoXiId)) {
+        if (beiYongXiaoXiId && 是自引用(mingZhong.ID, beiYongXiaoXiId)) {
           return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'yinYongXiaoXiFeiFa'), zhuang_tai_ma: 400 }
         }
         luo_ku_id = String(mingZhong.ID)
@@ -886,7 +884,6 @@ export async function chuangJianYongHuXiaoXi(
       try {
         await keHuDuan.query('ROLLBACK')
       } catch {
-        // 忽略回滚失败
       }
       keHuDuan.release()
       const pgCuoWu = yiChang as { code?: string; constraint?: string }
@@ -926,11 +923,11 @@ export async function chuangJianYongHuXiaoXi(
     return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'faSongShiBai'), zhuang_tai_ma: 500 }
   }
 
-  const xiaoXi = await yingSheXiaoXi(
+  const xiaoXi = await 映射消息(
     jieGuo.rows[0],
-    await gouKuaiShangXiaWen(jieGuo.rows as Record<string, unknown>[]),
+    await gou块上下文(jieGuo.rows as Record<string, unknown>[]),
   )
-  await shiXiaoXiaoXiZongShuHuanCun(canShu.yong_hu_id, canShu.jiao_se_id)
+  await 失效消息总数缓存(canShu.yong_hu_id, canShu.jiao_se_id)
   jiLuXiaoXiCaoZuo('用户消息发送', canShu.yong_hu_id, canShu.jiao_se_id, 'yonghu', { xiao_xi_id: xiaoXi.id })
   return { cheng_gong: true, xiao_xi: xiaoXi }
 }
@@ -944,10 +941,10 @@ function jiLuCheHuiCaoZuo(
   jiLuXiaoXiCaoZuo(caoZuo, yong_hu_id, jiao_se_id, 'yonghu', { xiao_xi_id })
 }
 
-export async function cheHuiYongHuXiaoXi(
-  canShu: CheHuiXiaoXiCanShu,
-): Promise<{ cheng_gong: boolean; xiao_xi?: XiaoXiXinXi; ti_shi?: string; zhuang_tai_ma?: number }> {
-  const jiaoSe = await huoQuJiaoSeSuoYouZhe(canShu.jiao_se_id)
+export async function 撤回用户消息(
+  canShu: 撤回消息参数,
+): Promise<{ cheng_gong: boolean; xiao_xi?: 消息信息; ti_shi?: string; zhuang_tai_ma?: number }> {
+  const jiaoSe = await 取角色所有者(canShu.jiao_se_id)
   if (!jiaoSe) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'jiaoSeBuCunZai'), zhuang_tai_ma: 404 }
   }
@@ -983,7 +980,7 @@ export async function cheHuiYongHuXiaoXi(
     [canShu.xiao_xi_id],
   )
 
-  tuiSongCheHuiShiJian(
+  推送撤回事件(
     canShu.yong_hu_id,
     canShu.jiao_se_id,
     canShu.xiao_xi_id,
@@ -992,12 +989,12 @@ export async function cheHuiYongHuXiaoXi(
   )
   jiLuCheHuiCaoZuo('用户消息撤回', canShu.yong_hu_id, canShu.jiao_se_id, canShu.xiao_xi_id)
 
-  return { cheng_gong: true, xiao_xi: await yingSheXiaoXi(gengXinJieGuo.rows[0]) }
+  return { cheng_gong: true, xiao_xi: await 映射消息(gengXinJieGuo.rows[0]) }
 }
 
-export async function cheHuiJiaoSeXiaoXi(
-  canShu: CheHuiJiaoSeXiaoXiCanShu,
-): Promise<{ cheng_gong: boolean; xiao_xi?: XiaoXiXinXi; ti_shi?: string; zhuang_tai_ma?: number }> {
+export async function 撤回角色消息(
+  canShu: 撤回角色消息参数,
+): Promise<{ cheng_gong: boolean; xiao_xi?: 消息信息; ti_shi?: string; zhuang_tai_ma?: number }> {
   const xiaoXiJieGuo = await 数据库.query(
     `SELECT * FROM "消息"
      WHERE "用户ID" = $1 AND "角色ID" = $2 AND "发送者" = 'jiaose' AND "已撤回" = false
@@ -1026,8 +1023,8 @@ export async function cheHuiJiaoSeXiaoXi(
     [xiaoXi.ID],
   )
 
-  const cheHuiXiaoXi = await yingSheXiaoXi(gengXinJieGuo.rows[0])
-  tuiSongCheHuiShiJian(
+  const cheHuiXiaoXi = await 映射消息(gengXinJieGuo.rows[0])
+  推送撤回事件(
     canShu.yong_hu_id,
     canShu.jiao_se_id,
     cheHuiXiaoXi.id,
@@ -1039,7 +1036,7 @@ export async function cheHuiJiaoSeXiaoXi(
   return { cheng_gong: true, xiao_xi: cheHuiXiaoXi }
 }
 
-export async function biaoJiSuoYouWeiDu(
+export async function 标记所有维度(
   yong_hu_id: string,
   jiao_se_id: string,
 ): Promise<void> {
@@ -1049,7 +1046,7 @@ export async function biaoJiSuoYouWeiDu(
   )
 }
 
-export interface BaoCunJiaoSeMeiTiCanShu {
+export interface 保存角色媒体参数 {
   yong_hu_id: string
   jiao_se_id: string
   nei_rong: string
@@ -1073,10 +1070,10 @@ function qingLiJiaoSeDuanMing(zhi: unknown, yong_hu_id: string): string | null {
   }
   const jianHua = zhi.trim()
   if (jianHua === '') return null
-  if (jianHua.length > BiaoQingDuanMingZuiDaChang) {
+  if (jianHua.length > 表情短名最大长) {
     debug日志.warn('消息服务', '表情包短名超长，按无短名处理', {
       yong_hu_id,
-      xiang_qing: { chang_du: jianHua.length, shang_xian: BiaoQingDuanMingZuiDaChang },
+      xiang_qing: { chang_du: jianHua.length, shang_xian: 表情短名最大长 },
     })
     return null
   }
@@ -1097,11 +1094,11 @@ function gouZaoJiaoSeNeiRongKuai(
   meiTiId: string | null,
   duanMing: string | null,
 ): CunChuNeiRongKuai[] | null {
-  if (leiXing === BiaoQingXiaoXiLeiXing && duanMing !== null) {
+  if (leiXing === 表情消息类型 && duanMing !== null) {
     return [
       {
-        lei_xing: XiaoXiKuaiLeiXing.tuPian,
-        mei_ti_lei_bie: BiaoQingShuLeiBie,
+        lei_xing: 消息块LeiXing.tuPian,
+        mei_ti_lei_bie: 表情书类别,
         duan_ming: duanMing,
       },
     ]
@@ -1109,11 +1106,11 @@ function gouZaoJiaoSeNeiRongKuai(
   if (meiTiId === null) return null
   const leiBie = leiXingDaoMeiTiLeiBie(leiXing)
   if (leiBie === null) return null
-  return [{ lei_xing: XiaoXiKuaiLeiXing.tuPian, mei_ti_id: meiTiId, mei_ti_lei_bie: leiBie }]
+  return [{ lei_xing: 消息块LeiXing.tuPian, mei_ti_id: meiTiId, mei_ti_lei_bie: leiBie }]
 }
 
 async function xieRuJiaoSeMeiTiHang(
-  canShu: BaoCunJiaoSeMeiTiCanShu,
+  canShu: 保存角色媒体参数,
   leiXing: string,
   meiTiId: string | null,
   kuai: CunChuNeiRongKuai[] | null,
@@ -1163,9 +1160,9 @@ async function xieRuJiaoSeMeiTiHang(
   }
 }
 
-export async function baoCunJiaoSeMeiTiXiaoXi(
-  canShu: BaoCunJiaoSeMeiTiCanShu,
-): Promise<XiaoXiXinXi> {
+export async function 保存角色媒体消息(
+  canShu: 保存角色媒体参数,
+): Promise<消息信息> {
   const leiXing = String(canShu.lei_xing || '')
   if (!YunXuXiaoXiLeiXing.includes(leiXing)) {
     debug日志.warn('消息服务', '角色多媒体消息类型非法，已拒绝落库', {
@@ -1178,7 +1175,7 @@ export async function baoCunJiaoSeMeiTiXiaoXi(
   const qingLiNeiRong = (canShu.nei_rong || '').trim().slice(0, XiaoXiPeiZhi.zuiDaXiaoXiChangDu)
   const meiTiId = qingLiJiaoSeMeiTiId(canShu.mei_ti_id, canShu.yong_hu_id)
   const duanMing =
-    leiXing === BiaoQingXiaoXiLeiXing
+    leiXing === 表情消息类型
       ? qingLiJiaoSeDuanMing(canShu.duan_ming, canShu.yong_hu_id)
       : null
   if (meiTiId === null && duanMing === null) {
@@ -1196,11 +1193,11 @@ export async function baoCunJiaoSeMeiTiXiaoXi(
     await faSongGaoJing('xiao_xi_luo_ku_shi_bai', '消息落库失败告警', '角色多媒体消息落库返回空行').catch(() => undefined)
     throw new Error('角色多媒体消息落库返回空行')
   }
-  const xiaoXi = await yingSheXiaoXi(
+  const xiaoXi = await 映射消息(
     jieGuo.rows[0],
-    await gouKuaiShangXiaWen(jieGuo.rows as Record<string, unknown>[]),
+    await gou块上下文(jieGuo.rows as Record<string, unknown>[]),
   )
-  await shiXiaoXiaoXiZongShuHuanCun(canShu.yong_hu_id, canShu.jiao_se_id)
+  await 失效消息总数缓存(canShu.yong_hu_id, canShu.jiao_se_id)
   jiLuXiaoXiCaoZuo('角色多媒体消息发送', canShu.yong_hu_id, canShu.jiao_se_id, 'jiaose', { xiao_xi_id: xiaoXi.id })
   return xiaoXi
 }

@@ -24,7 +24,7 @@ import {
   sheZhiRenSheShenHeMock,
   qingChuRenSheShenHeMock,
 } from '../人设审核'
-import type { XinMuZhongDeTaZiDing } from '../角色生成'
+import type { 心中のTA自定义 } from '../角色生成'
 import { RenSheJiaJu, ZhuRuYangLi, type RenSheJiaJuZu } from './人设示例夹具'
 import { shiFouXingShi } from '../../config/姓氏表'
 
@@ -32,8 +32,8 @@ const JuJueShouHu = async (): Promise<never> => {
   throw new Error('审核AI不应被调用：该组应由硬规则层裁决')
 }
 
-function zuZhuanZiDuan(zu: RenSheJiaJuZu): XinMuZhongDeTaZiDing {
-  const ziDuan: XinMuZhongDeTaZiDing = {}
+function zuZhuanZiDuan(zu: RenSheJiaJuZu): 心中のTA自定义 {
+  const ziDuan: 心中のTA自定义 = {}
   if (zu.weiXinMing) ziDuan.wei_xin_ming = zu.weiXinMing
   if (zu.zhenShiMing) ziDuan.zhen_shi_ming = zu.zhenShiMing
   if (typeof zu.nianLing === 'number') ziDuan.nian_ling = zu.nianLing

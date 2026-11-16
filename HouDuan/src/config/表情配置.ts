@@ -1,4 +1,4 @@
-import { BiaoQingShuLeiBie } from './媒体配置'
+import { 表情书类别 } from './媒体配置'
 
 function huoQuZhengShu(ming: string, moRen: number): number {
   const yuanZhi = process.env[ming]
@@ -14,4 +14,4 @@ export const BiaoQingPeiZhi = {
   meiYongHuZuiDaTiaoShu: huoQuZhengShu('BIAO_QING_MEI_YONGHU_SHANG_XIAN', 200),
 } as const
 
-export const BiaoQingMeiTiLeiBie = BiaoQingShuLeiBie
+export const BiaoQingMeiTiLeiBie = 表情书类别

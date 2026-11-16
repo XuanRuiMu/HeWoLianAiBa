@@ -33,10 +33,10 @@ const quanLiangPeiZhi = {
   yuYinLiJieQiYong: true,
   guiJiLiuDongJiChuUrl: 'https://api.siliconflow.example/v1',
   guiJiLiuDongYuYinMoXing: 'SenseVoiceSmall',
-  yinPinLiJieQiYong: true,
-  yinPinLiJieJiChuUrl: 'https://dashscope.example/compatible-mode/v1',
-  yinPinLiJieMoXing: 'qwen3.8-omni-flash',
-  yinPinLiJieZuiDaZiJie: 10485760,
+  音频理解启用: true,
+  音频理解基础地址: 'https://dashscope.example/compatible-mode/v1',
+  音频理解模型: 'qwen3.8-omni-flash',
+  音频理解最大字节: 10485760,
   shiPinLiJieQiYong: false,
   tuXiangShengChengQiYong: false,
   tuXiangShengChengJiChuUrl: 'https://api.siliconflow.example/v1',
@@ -133,7 +133,7 @@ describe('语音理解调用（阿里百炼 qwen-omni 音频事件描述）', ()
   })
 
   it('开关关闭时直接降级返回 null', async () => {
-    vi.mocked(huoQuDuoMoTaiPeiZhi).mockReturnValue({ ...quanLiangPeiZhi, yinPinLiJieQiYong: false })
+    vi.mocked(huoQuDuoMoTaiPeiZhi).mockReturnValue({ ...quanLiangPeiZhi, 音频理解启用: false })
     expect(await huoQuYinPinShiJianMiaoShuZhiJie({ sha256, mime: 'audio/wav' })).toBeNull()
     expect(fetch).not.toHaveBeenCalled()
     expect(zhuanMa).not.toHaveBeenCalled()
@@ -154,7 +154,7 @@ describe('语音理解调用（阿里百炼 qwen-omni 音频事件描述）', ()
   })
 
   it('base64 载荷超过配置的最大字节时降级返回 null 且不发请求', async () => {
-    vi.mocked(huoQuDuoMoTaiPeiZhi).mockReturnValue({ ...quanLiangPeiZhi, yinPinLiJieZuiDaZiJie: 8 })
+    vi.mocked(huoQuDuoMoTaiPeiZhi).mockReturnValue({ ...quanLiangPeiZhi, 音频理解最大字节: 8 })
     expect(await huoQuYinPinShiJianMiaoShuZhiJie({ sha256, mime: 'audio/wav' })).toBeNull()
     expect(fetch).not.toHaveBeenCalled()
     expect(huanCunSetex).not.toHaveBeenCalled()

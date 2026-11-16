@@ -38,6 +38,17 @@ vi.mock('../../数据库', () => ({
 vi.mock('../媒体存储', () => ({
   huoQuBenDiLuJing: vi.fn(() => LinShiYinPin),
 }))
+vi.mock('../../utils/音频转码', () => ({
+  huoQuFFmpegLuJing: vi.fn(async () => 'ffmpeg'),
+  tiQuYinPinWeiWav: vi.fn(async () => Buffer.from([0x00, 0x01])),
+}))
+vi.mock('../DeepSeek官方工具', () => ({
+  shiBieYuYin: vi.fn(async (canShu: { wavZiJie: Buffer }) => {
+    const xiangYing = await (globalThis.fetch as unknown as (u: string, i?: unknown) => Promise<Response>)('http://asr.test', { method: 'POST', body: canShu.wavZiJie })
+    const shuJu = (await xiangYing.json()) as { text?: string }
+    return { cheng_gong: xiangYing.ok, wenBen: String(shuJu.text ?? ''), shiChangHaoMiao: null }
+  }),
+}))
 
 import { mianFeiZhuanXieYuYin, sheZhiYuYinZhuanXieMock } from '../语音转写'
 

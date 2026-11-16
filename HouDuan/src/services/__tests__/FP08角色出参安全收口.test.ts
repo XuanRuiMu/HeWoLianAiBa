@@ -21,10 +21,10 @@ vi.mock('../../redis', () => ({
 }))
 
 import {
-  JiaoSeYinSiZiDuan,
-  daiQueRenJiaoSeJian,
-  duQuDaiQueRenJiaoSe,
-  huanCunDaiQueRenJiaoSe,
+  角色隐私字段,
+  待确认角色键,
+  读待确认角色 as duQuDaiQueRenJiaoSe,
+  缓存待确认角色 as huanCunDaiQueRenJiaoSe,
   touYingGuanLiJiaoSe,
   touYingWanJiaKeJianJiaoSe,
   type ShengChengJiaoSeJieGuo,
@@ -98,7 +98,7 @@ const SuiCangGongKai: (keyof ShengChengJiaoSeJieGuo)[] = [
 describe('FP08 角色出参敏感字段脱敏（玩家透出层）', () => {
   it('玩家透出层剥离内部名/真名/世界信息/系统提示/八大模块', () => {
     const touYing = touYingWanJiaKeJianJiaoSe(DuoShouJiaoSe) as unknown as Record<string, unknown>
-    for (const jian of JiaoSeYinSiZiDuan) {
+    for (const jian of 角色隐私字段) {
       expect(jian in touYing).toBe(false)
     }
     expect('hao_gan_du_zong_fen' in touYing).toBe(false)
@@ -142,7 +142,7 @@ describe('FP08 角色出参敏感字段脱敏（玩家透出层）', () => {
   })
 
   it('隐私字段名单与内部属性调用点一致', () => {
-    expect(new Set(JiaoSeYinSiZiDuan)).toEqual(
+    expect(new Set(角色隐私字段)).toEqual(
       new Set([
         'ming_zi',
         'zhen_shi_ming',
@@ -158,7 +158,7 @@ describe('FP08 角色出参敏感字段脱敏（玩家透出层）', () => {
 describe('FP08 待确认角色缓存（头端持久化回归兜底）', () => {
   it('生成结果能缓存并原样读回', async () => {
     await huanCunDaiQueRenJiaoSe(DuoShouJiaoSe.id, DuoShouJiaoSe)
-    const jian = daiQueRenJiaoSeJian(DuoShouJiaoSe.id)
+    const jian = 待确认角色键(DuoShouJiaoSe.id)
     expect(cunChu.has(jian)).toBe(true)
     const duQu = await duQuDaiQueRenJiaoSe(DuoShouJiaoSe.id)
     expect(duQu).toEqual(DuoShouJiaoSe)
@@ -168,12 +168,12 @@ describe('FP08 待确认角色缓存（头端持久化回归兜底）', () => {
     await huanCunDaiQueRenJiaoSe(DuoShouJiaoSe.id, DuoShouJiaoSe)
     expect(sheZhiCanXu[0]?.[2]).toBe('EX')
     expect(sheZhiCanXu[0]?.[3]).toBe(1800)
-    expect(daiQueRenJiaoSeJian(DuoShouJiaoSe.id)).toMatch(/^dai_que_ren_jiao_se:/)
+    expect(待确认角色键(DuoShouJiaoSe.id)).toMatch(/^dai_que_ren_jiao_se:/)
   })
 
   it('键缺失或载荷损坏时按无缓存处理', async () => {
     cunChu.set(
-      daiQueRenJiaoSeJian('e5d4a95a-67be-4e9b-9c93-f0a2c9df6f22'),
+      待确认角色键('e5d4a95a-67be-4e9b-9c93-f0a2c9df6f22'),
       '{不是合法JSON',
     )
     expect(await duQuDaiQueRenJiaoSe('e5d4a95a-67be-4e9b-9c93-f0a2c9df6f22')).toBeNull()
@@ -182,7 +182,7 @@ describe('FP08 待确认角色缓存（头端持久化回归兜底）', () => {
 
   it('非角色形状的载荷拒绝读取', async () => {
     cunChu.set(
-      daiQueRenJiaoSeJian('a1b4a95a-67be-4e9b-9c93-f0a2c9df6f44'),
+      待确认角色键('a1b4a95a-67be-4e9b-9c93-f0a2c9df6f44'),
       JSON.stringify({ wei_xin_ming: 'xiaomu' }),
     )
     expect(await duQuDaiQueRenJiaoSe('a1b4a95a-67be-4e9b-9c93-f0a2c9df6f44')).toBeNull()

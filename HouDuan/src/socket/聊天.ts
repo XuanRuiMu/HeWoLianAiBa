@@ -4,7 +4,7 @@ import { AI回复调度器 } from '../services/AI回复调度器'
 import { huoQuJiaoSeIELeiXing, huoQuJiaoSeHuiFuYanChiHaoMiao } from '../services/AI输入准备'
 import { jiaoSeShiFouBeiDuoShe, huoQuJiaoSeYongHuId } from '../services/夺舍'
 import { zhuanFaYongHuXiaoXiGeiGuanLiYuan } from './夺舍'
-import type { XiaoXiXinXi } from '../services/消息'
+import type { 消息信息 } from '../services/消息'
 import { jiLuSocketShiJian, jiLuXiaoXiCaoZuo, debug日志 } from '../utils/debug日志'
 import { huoQuFanYi } from '../config/translations'
 import { yanZhengUUID } from '../utils/验证'
@@ -28,8 +28,8 @@ const TiaoDuQiSuoMiao = 30000
 const TiaoDuQiXuQiMiao = Math.floor(TiaoDuQiSuoMiao / 3)
 const BenChengProcesseId = `${process.pid}-${Math.random().toString(36).slice(2, 10)}`
 
-async function changShiRenLingTiaoDuQi(yongHuId: string, jiaoSeId: string, lingZhuBiaoShi: string): Promise<boolean> {
-  const suoJian = `${TiaoDuQiSuoQianZhui}${yongHuId}:${jiaoSeId}`
+async function changShiRenLingTiaoDuQi(用户ID: string, jiaoSeId: string, lingZhuBiaoShi: string): Promise<boolean> {
+  const suoJian = `${TiaoDuQiSuoQianZhui}${用户ID}:${jiaoSeId}`
   try {
     const jieGuo = await redis.set(suoJian, lingZhuBiaoShi, 'PX', TiaoDuQiSuoMiao, 'NX')
     return jieGuo === 'OK'
@@ -38,10 +38,10 @@ async function changShiRenLingTiaoDuQi(yongHuId: string, jiaoSeId: string, lingZ
   }
 }
 
-function kaiShiXuQiTiaoDuQiSuo(jian: string, jiLu: TiaoDuQiJiLu, yongHuId: string, jiaoSeId: string): void {
+function kaiShiXuQiTiaoDuQiSuo(jian: string, jiLu: TiaoDuQiJiLu, 用户ID: string, jiaoSeId: string): void {
   jiLu.续期定时器 = setInterval(() => {
     void (async () => {
-      const suoJian = `${TiaoDuQiSuoQianZhui}${yongHuId}:${jiaoSeId}`
+      const suoJian = `${TiaoDuQiSuoQianZhui}${用户ID}:${jiaoSeId}`
       let chiYou: string | null = null
       try {
         chiYou = await redis.get(suoJian)
@@ -73,8 +73,8 @@ function tingZhiXuQiTiaoDuQiSuo(jiLu: TiaoDuQiJiLu): void {
   }
 }
 
-async function shiFangTiaoDuQiSuo(yongHuId: string, jiaoSeId: string, lingZhuBiaoShi: string): Promise<void> {
-  const suoJian = `${TiaoDuQiSuoQianZhui}${yongHuId}:${jiaoSeId}`
+async function shiFangTiaoDuQiSuo(用户ID: string, jiaoSeId: string, lingZhuBiaoShi: string): Promise<void> {
+  const suoJian = `${TiaoDuQiSuoQianZhui}${用户ID}:${jiaoSeId}`
   try {
     const chiYou = await redis.get(suoJian)
     if (chiYou === lingZhuBiaoShi) {
@@ -85,15 +85,15 @@ async function shiFangTiaoDuQiSuo(yongHuId: string, jiaoSeId: string, lingZhuBia
   }
 }
 
-async function guangBoTiaoDuQiBianGeng(yongHuId: string, jiaoSeId: string, dongZuo: string): Promise<void> {
+async function guangBoTiaoDuQiBianGeng(用户ID: string, jiaoSeId: string, dongZuo: string): Promise<void> {
   try {
-    await redis.publish(`tiao_du_qi_guang_bo:${yongHuId}`, JSON.stringify({ jiao_se_id: jiaoSeId, dong_zuo: dongZuo, shi_jian: Date.now() }))
+    await redis.publish(`tiao_du_qi_guang_bo:${用户ID}`, JSON.stringify({ jiao_se_id: jiaoSeId, dong_zuo: dongZuo, shi_jian: Date.now() }))
   } catch {
     // 广播失败不阻断
   }
 }
 
-function shengChengJiaoSeTiaoDuQiJian(yong_hu_id: string, jiao_se_id: string): string {
+function 生成角色TiaoDuQiJian(yong_hu_id: string, jiao_se_id: string): string {
   return `${yong_hu_id}:${jiao_se_id}`
 }
 
@@ -112,7 +112,7 @@ async function queBaoJiaoSeTiaoDuQi(
   jiao_se_id: string,
   io: Server,
 ): Promise<TiaoDuQiJiLu | null> {
-  const jian = shengChengJiaoSeTiaoDuQiJian(yong_hu_id, jiao_se_id)
+  const jian = 生成角色TiaoDuQiJian(yong_hu_id, jiao_se_id)
   const jiuJiLu = jiaoSeTiaoDuQiMap.get(jian)
   if (jiuJiLu) return jiuJiLu
 
@@ -156,18 +156,18 @@ export function huoQuJiaoSeTiaoDuQi(
   yong_hu_id: string,
   jiao_se_id: string,
 ): AI回复调度器 | null {
-  return jiaoSeTiaoDuQiMap.get(shengChengJiaoSeTiaoDuQiJian(yong_hu_id, jiao_se_id))?.调度器 || null
+  return jiaoSeTiaoDuQiMap.get(生成角色TiaoDuQiJian(yong_hu_id, jiao_se_id))?.调度器 || null
 }
 
 export function chongZhiJiaoSeTiaoDuQi(yong_hu_id: string, jiao_se_id: string): void {
-  const jiLu = jiaoSeTiaoDuQiMap.get(shengChengJiaoSeTiaoDuQiJian(yong_hu_id, jiao_se_id))
+  const jiLu = jiaoSeTiaoDuQiMap.get(生成角色TiaoDuQiJian(yong_hu_id, jiao_se_id))
   if (jiLu) {
     jiLu.调度器.处理用户消息()
   }
 }
 
 export function zhongDuanJiaoSeTiaoDuQi(yong_hu_id: string, jiao_se_id: string): void {
-  const jiLu = jiaoSeTiaoDuQiMap.get(shengChengJiaoSeTiaoDuQiJian(yong_hu_id, jiao_se_id))
+  const jiLu = jiaoSeTiaoDuQiMap.get(生成角色TiaoDuQiJian(yong_hu_id, jiao_se_id))
   if (jiLu) {
     jiLu.调度器.重置()
   }
@@ -176,7 +176,7 @@ export function zhongDuanJiaoSeTiaoDuQi(yong_hu_id: string, jiao_se_id: string):
 export async function luoKuChuFaJiaoSeTiaoDuQi(
   yong_hu_id: string,
   jiao_se_id: string,
-  xiao_xi: XiaoXiXinXi,
+  xiao_xi: 消息信息,
 ): Promise<void> {
   try {
     if (!yong_hu_id || !yanZhengUUID(jiao_se_id) || !xiao_xi?.id) return
@@ -216,8 +216,8 @@ const SocketXianLiuPrefix = 'socket_xian_liu:'
 const SocketXianLiuMax = 10
 const SocketXianLiuWindow = 10 * 1000
 
-async function jianCeSocketXianLiu(yongHuId: string): Promise<boolean> {
-  const jianMing = `${SocketXianLiuPrefix}${yongHuId}`
+async function jianCeSocketXianLiu(用户ID: string): Promise<boolean> {
+  const jianMing = `${SocketXianLiuPrefix}${用户ID}`
   const dangQian = await redis.incr(jianMing)
   if (dangQian === 1) {
     await redis.pexpire(jianMing, SocketXianLiuWindow)
@@ -227,7 +227,7 @@ async function jianCeSocketXianLiu(yongHuId: string): Promise<boolean> {
 
 export function 初始化聊天Socket(io: Server): void {
   io.on('connection', (socket: RenZhengSocket) => {
-    const 用户ID = socket.yong_hu?.yongHuId
+    const 用户ID = socket.yong_hu?.用户ID
     if (!用户ID) {
       socket.disconnect(true)
       return
@@ -264,7 +264,7 @@ export function 初始化聊天Socket(io: Server): void {
 
         const jiuJiLu = socketTiaoDuQiMap.get(socket.id)
         if (jiuJiLu && jiuJiLu.角色ID !== 角色ID字符串) {
-          const jiuJian = shengChengJiaoSeTiaoDuQiJian(用户ID, jiuJiLu.角色ID)
+          const jiuJian = 生成角色TiaoDuQiJian(用户ID, jiuJiLu.角色ID)
           jiuJiLu.归属Socket.delete(socket.id)
           if (jiuJiLu.归属Socket.size === 0) {
             shanChuJiaoSeJiLuRuGuo(jiuJiLu, jiuJian)
@@ -294,7 +294,7 @@ export function 初始化聊天Socket(io: Server): void {
       socketTiaoDuQiMap.delete(socket.id)
       if (jiLu) {
         jiLu.归属Socket.delete(socket.id)
-        const jian = shengChengJiaoSeTiaoDuQiJian(用户ID, jiLu.角色ID)
+        const jian = 生成角色TiaoDuQiJian(用户ID, jiLu.角色ID)
         if (jiLu.归属Socket.size === 0 && jiaoSeTiaoDuQiMap.get(jian) === jiLu) {
           shanChuJiaoSeJiLuRuGuo(jiLu, jian)
           void shiFangTiaoDuQiSuo(用户ID, jiLu.角色ID, BenChengProcesseId)

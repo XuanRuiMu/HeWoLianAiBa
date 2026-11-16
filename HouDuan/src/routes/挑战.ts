@@ -32,7 +32,7 @@ luYou.post('/开始', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
   }
 
   try {
-    const jiaoSe = await kaiShiTiaoZhan(yongHu.yongHuId, woDeXingBie, duiXiangXingBie)
+    const jiaoSe = await kaiShiTiaoZhan(yongHu.用户ID, woDeXingBie, duiXiangXingBie)
     return chengGongXiangYing(xiangYing, jiaoSe)
   } catch (cuoWu) {
     const zhuangTaiMa = (cuoWu as Error & { zhuang_tai_ma?: number }).zhuang_tai_ma ?? 500
@@ -54,7 +54,7 @@ luYou.get('/当前', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing
     return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
   }
   try {
-    const duiJu = await huoQuDangQianDuiJu(yongHu.yongHuId)
+    const duiJu = await huoQuDangQianDuiJu(yongHu.用户ID)
     return chengGongXiangYing(xiangYing, {
       dui_ju: duiJu ? { ...duiJu, jiao_se_id: await huoQuJiaoSeBianHao(duiJu.jiao_se_id) } : duiJu,
     })
@@ -70,12 +70,12 @@ luYou.post('/放弃', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
     return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
   }
   try {
-    const duiJu = await huoQuDangQianDuiJu(yongHu.yongHuId)
+    const duiJu = await huoQuDangQianDuiJu(yongHu.用户ID)
     if (!duiJu) {
       return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tiaoZhan', 'wuJinXingZhongDuiJu'))
     }
     const jieGuo = await chuLiYouXiJieShu(
-      yongHu.yongHuId,
+      yongHu.用户ID,
       duiJu.jiao_se_id,
       'shi_bai_fang_qi_tiao_zhan',
       { lei_xing: '用户主动放弃挑战' },
@@ -116,7 +116,7 @@ luYou.get('/我的概况', changGuiXianLiu, async (qingQiu: RenZhengQingQiu, xia
     return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
   }
   try {
-    const gaiKuang = await huoQuWoDeGaiKuang(yongHu.yongHuId)
+    const gaiKuang = await huoQuWoDeGaiKuang(yongHu.用户ID)
     return chengGongXiangYing(xiangYing, { gai_kuang: gaiKuang })
   } catch (cuoWu) {
     debug日志.error('挑战接口', '查询挑战概况失败', { xiang_qing: { cuo_wu: String(cuoWu) } })

@@ -2,7 +2,7 @@ import type { Server } from 'socket.io'
 import { chuShiHuaRiZhiTuiSongSocket } from './日志推送'
 
 export type ChuanBoIo = Server & {
-  chuangJianJiaoSeTiaoDuQiSuo?: (yongHuId: string, jiaoSeId: string) => Promise<unknown>
+  chuangJianJiaoSeTiaoDuQiSuo?: (用户ID: string, jiaoSeId: string) => Promise<unknown>
 }
 
 let io: ChuanBoIo | null = null

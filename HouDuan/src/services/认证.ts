@@ -10,13 +10,14 @@ import { zhongXinQianMingMeiTiURL } from './媒体存储'
 import { jiLuShenJiRiZhi } from './审计日志'
 import { yinBiShouJiHao } from '../utils/掩码'
 import { guiYiWeiGuoJiHao, jieXiShouJiHao, shiFouDaLuHao } from '../utils/手机号'
+import { shiQuYouXiao } from '../config/语言与时区'
 import { 内部转展示, 内部转用户形态, 解析性别 } from '../utils/性别'
-import { 取管理角色, 取角色能力, type GuanLiJiaoSe, type GuanLiNengLi } from '../utils/角色能力'
+import { 取管理角色, 取角色能力, type 管理角色, type 管理能力 } from '../utils/角色能力'
 import { 包装依赖调用 } from '../utils/依赖错误'
 import type { 登录失败原因 } from './登录失败'
 import type { YongHuXinXi, DengLuXiangYing } from '../types'
 
-export interface ZhuCeCanShu {
+export interface 注册参数 {
   shou_ji_hao: string
   yan_zheng_ma: string
   yong_hu_ming: string
@@ -25,15 +26,16 @@ export interface ZhuCeCanShu {
   chu_sheng_ri_qi: string
   ip: string
   jing_wai?: boolean
+  shi_qu?: string
 }
 
-export interface DengLuCanShu {
+export interface 登录参数 {
   shou_ji_hao: string
   mi_ma: string
   ip: string
 }
 
-export interface GengGaiMiMaCanShu {
+export interface 改密参数 {
   yong_hu_id: string
   shou_ji_hao?: string
   jiu_mi_ma: string
@@ -43,16 +45,16 @@ export interface GengGaiMiMaCanShu {
   ip: string
 }
 
-export interface GengGaiYongHuMingCanShu {
+export interface 改用户名参数 {
   yong_hu_id: string
   yong_hu_ming: string
   ip: string
 }
 
-export function yingSheYongHu(row: Record<string, unknown>): YongHuXinXi {
-  const yongHuId = String(row.ID)
-  const jiaoSe: GuanLiJiaoSe | null = 取管理角色(row)
-  const nengLi: GuanLiNengLi[] = [...取角色能力(jiaoSe)]
+export function 映射用户(row: Record<string, unknown>): YongHuXinXi {
+  const 用户ID = String(row.ID)
+  const jiaoSe: 管理角色 | null = 取管理角色(row)
+  const nengLi: 管理能力[] = [...取角色能力(jiaoSe)]
   return {
     id: String(row.ID),
     shou_ji_hao: yinBiShouJiHao(String(row.手机号)),
@@ -63,7 +65,7 @@ export function yingSheYongHu(row: Record<string, unknown>): YongHuXinXi {
     xing_ge_xuan_ze: row.性格选择 ? String(row.性格选择) : null,
     ren_she_biao_qian: row.人设标签 ? String(row.人设标签) : null,
     yun_xu_zha_nan_zha_nv: Boolean(row.渣男渣女变体),
-    tou_xiang: row.头像 ? zhongXinQianMingMeiTiURL(String(row.头像), yongHuId) : null,
+    tou_xiang: row.头像 ? zhongXinQianMingMeiTiURL(String(row.头像), 用户ID) : null,
     sheng_ri: row.生日 ? String(row.生日) : null,
     qian_ming: row.签名 ? String(row.签名) : null,
     jiao_se: jiaoSe,
@@ -76,13 +78,13 @@ export function yingSheYongHu(row: Record<string, unknown>): YongHuXinXi {
   }
 }
 
-export function yanZhengShouJiHaoGeShi(shouJiHao: string): boolean {
+export function 校验手机号格式(shouJiHao: string): boolean {
   const guoJiHao = guiYiWeiGuoJiHao(shouJiHao)
   if (!peiZhi.shouJiHao.zhengZe.test(guoJiHao)) return false
   return jieXiShouJiHao(guoJiHao).heFa
 }
 
-export function jiSuanZhouSuiNianLing(
+export function 计算周岁年龄(
   chuShengRiQi: string,
   dangQian: Date = new Date(),
 ): number | null {
@@ -107,12 +109,12 @@ export function jiSuanZhouSuiNianLing(
   return nianLing
 }
 
-export function yanZhengYongHuMingGeShi(yongHuMing: string): {
+export function 校验用户名格式(yongHuMing: string): {
   he_fa: boolean
   ti_shi: string
 } {
   const qingLi = yongHuMing.trim()
-  if (!peiZhi.yongHuMing.baiMingDan.test(qingLi)) {
+  if (!peiZhi.yongHuMing.白名单.test(qingLi)) {
     return {
       he_fa: false,
       ti_shi: huoQuFanYi('renZheng', 'yongHuMingTeShuZiFu'),
@@ -121,7 +123,7 @@ export function yanZhengYongHuMingGeShi(yongHuMing: string): {
   return { he_fa: true, ti_shi: '' }
 }
 
-export function yanZhengMiMaFuZaDu(miMa: string): {
+export function 校验密码复杂度(miMa: string): {
   he_fa: boolean
   ti_shi: string
 } {
@@ -145,7 +147,7 @@ export function yanZhengMiMaFuZaDu(miMa: string): {
   return { he_fa: true, ti_shi: '' }
 }
 
-export async function anShouJiHaoChaYongHu(
+export async function 按手机号查用户(
   shouJiHao: string,
 ): Promise<YongHuXinXi | null> {
   const guoJiHao = guiYiWeiGuoJiHao(shouJiHao)
@@ -154,16 +156,16 @@ export async function anShouJiHaoChaYongHu(
     [guoJiHao, shouJiHao],
   )
   if (jieGuo.rows.length === 0) return null
-  return yingSheYongHu(jieGuo.rows[0])
+  return 映射用户(jieGuo.rows[0])
 }
 
-export async function anIdChaYongHu(id: string): Promise<YongHuXinXi | null> {
+export async function 按ID查用户(id: string): Promise<YongHuXinXi | null> {
   const jieGuo = await 数据库.query(
     `SELECT * FROM "用户" WHERE "ID" = $1 LIMIT 1`,
     [id],
   )
   if (jieGuo.rows.length === 0) return null
-  return yingSheYongHu(jieGuo.rows[0])
+  return 映射用户(jieGuo.rows[0])
 }
 
 function huoQuDengLuShiBaiJian(shouJiHao: string): string {
@@ -202,7 +204,7 @@ async function dengLuShiBaiShiFouChaoGuo(
   return parseInt(ciShu, 10) >= peiZhi.xianLiu.dengLu.zuiDa
 }
 
-export function 注册失败错误码(cuoWuMa: ZhuCeCuoWuMa, yuanYin?: CuoWuYuanYin): CuoWuDaiMa {
+export function 注册失败错误码(cuoWuMa: 注册错误码, yuanYin?: 错误原因): CuoWuDaiMa {
   if (cuoWuMa === 'YONG_HU_MING_CHONG_FU') return CuoWuDaiMa.AUTH_USERNAME_TAKEN
   if (cuoWuMa === 'CHONG_TU') return CuoWuDaiMa.AUTH_ACCOUNT_ALREADY_EXISTS
   if (cuoWuMa === 'XIAN_LIU') return CuoWuDaiMa.AUTH_REGISTRATION_CLOSED
@@ -218,9 +220,9 @@ export function 注册失败错误码(cuoWuMa: ZhuCeCuoWuMa, yuanYin?: CuoWuYuan
   return CuoWuDaiMa.REQUEST_PARAMETER_INVALID
 }
 
-export function yanZhengMaShiBaiJieGuo(
+export function 验证码失败结果(
   结果: Exclude<验证码校验结果, '通过'>,
-): { cheng_gong: false; cuo_wu_ma: ZhuCeCuoWuMa; ti_shi: string; juTiYuanYin: CuoWuYuanYin } {
+): { cheng_gong: false; cuo_wu_ma: 注册错误码; ti_shi: string; juTiYuanYin: 错误原因 } {
   if (结果 === '尝试超限') {
     return {
       cheng_gong: false,
@@ -245,7 +247,7 @@ export function yanZhengMaShiBaiJieGuo(
   }
 }
 
-export type CuoWuYuanYin =
+export type 错误原因 =
   | 'SHOU_JI_HAO_DI_QU_BU_FU'
   | 'YONG_HU_MING_BU_HE_FA'
   | 'MI_MA_FU_ZA_DU_BU_ZU'
@@ -255,7 +257,7 @@ export type CuoWuYuanYin =
   | 'YAN_ZHENG_MA_GUO_QI'
   | 'YAN_ZHENG_MA_CHANG_SHI_GUO_DUO'
 
-export type ZhuCeCuoWuMa =
+export type 注册错误码 =
   | 'CAN_SHU_CUO_WU'
   | 'CHONG_TU'
   | 'YONG_HU_MING_CHONG_FU'
@@ -264,14 +266,21 @@ export type ZhuCeCuoWuMa =
 
 type ZhuCeJieGuo =
   | { cheng_gong: true; shu_ju: DengLuXiangYing }
-  | { cheng_gong: false; cuo_wu_ma: ZhuCeCuoWuMa; ti_shi: string; juTiYuanYin?: CuoWuYuanYin }
+  | { cheng_gong: false; cuo_wu_ma: 注册错误码; ti_shi: string; juTiYuanYin?: 错误原因 }
 
-export async function zhuCe(canShu: ZhuCeCanShu): Promise<ZhuCeJieGuo> {
-  if (!yanZhengShouJiHaoGeShi(canShu.shou_ji_hao)) {
+function huoQuHeFaShiQu(canShu: 注册参数): string | null {
+  const yuan = canShu.shi_qu
+  if (typeof yuan !== 'string') return null
+  if (!shiQuYouXiao(yuan)) return null
+  return yuan.trim()
+}
+
+export async function zhuCe(canShu: 注册参数): Promise<ZhuCeJieGuo> {
+  if (!校验手机号格式(canShu.shou_ji_hao)) {
     return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), juTiYuanYin: 'SHOU_JI_HAO_DI_QU_BU_FU' }
   }
 
-  const yongHuMingJieGuo = yanZhengYongHuMingGeShi(canShu.yong_hu_ming)
+  const yongHuMingJieGuo = 校验用户名格式(canShu.yong_hu_ming)
   if (!yongHuMingJieGuo.he_fa) {
     return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: yongHuMingJieGuo.ti_shi, juTiYuanYin: 'YONG_HU_MING_BU_HE_FA' }
   }
@@ -280,7 +289,7 @@ export async function zhuCe(canShu: ZhuCeCanShu): Promise<ZhuCeJieGuo> {
     return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'miMaKong'), juTiYuanYin: 'MI_MA_FU_ZA_DU_BU_ZU' }
   }
 
-  const miMaFuZaDu = yanZhengMiMaFuZaDu(canShu.mi_ma)
+  const miMaFuZaDu = 校验密码复杂度(canShu.mi_ma)
   if (!miMaFuZaDu.he_fa) {
     return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: miMaFuZaDu.ti_shi, juTiYuanYin: 'MI_MA_FU_ZA_DU_BU_ZU' }
   }
@@ -289,7 +298,7 @@ export async function zhuCe(canShu: ZhuCeCanShu): Promise<ZhuCeJieGuo> {
     return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'weiTongYiXieYi'), juTiYuanYin: 'WEI_TONG_YI_XIE_YI' }
   }
 
-  const zhouSui = jiSuanZhouSuiNianLing(canShu.chu_sheng_ri_qi)
+  const zhouSui = 计算周岁年龄(canShu.chu_sheng_ri_qi)
   if (zhouSui === null) {
     return { cheng_gong: false, cuo_wu_ma: 'CAN_SHU_CUO_WU', ti_shi: huoQuFanYi('renZheng', 'chuShengRiQiGeShiCuoWu'), juTiYuanYin: 'CHU_SHENG_RI_QI_BU_HE_FA' }
   }
@@ -303,7 +312,7 @@ export async function zhuCe(canShu: ZhuCeCanShu): Promise<ZhuCeJieGuo> {
   }
 
   const guoJiHao = guiYiWeiGuoJiHao(canShu.shou_ji_hao)
-  const yiCunZai = await anShouJiHaoChaYongHu(guoJiHao)
+  const yiCunZai = await 按手机号查用户(guoJiHao)
   if (yiCunZai) {
     return { cheng_gong: false, cuo_wu_ma: 'CHONG_TU', ti_shi: huoQuFanYi('renZheng', 'shouJiHaoYiZhuCe') }
   }
@@ -321,7 +330,7 @@ export async function zhuCe(canShu: ZhuCeCanShu): Promise<ZhuCeJieGuo> {
       canShu.yan_zheng_ma,
     )
     if (maJiaoYan !== '通过') {
-      return yanZhengMaShiBaiJieGuo(maJiaoYan)
+      return 验证码失败结果(maJiaoYan)
     }
   }
 
@@ -335,17 +344,19 @@ export async function zhuCe(canShu: ZhuCeCanShu): Promise<ZhuCeJieGuo> {
   }
 
   const miMaHaXi = await bcrypt.hash(canShu.mi_ma, 12)
+  const shiQu = huoQuHeFaShiQu(canShu)
   let chaRuJieGuo
   try {
     chaRuJieGuo = await 数据库.query(
-      `INSERT INTO "用户" ("手机号", "用户名", "密码哈希", "管理员", "生日")
-       VALUES ($1, $2, $3, false, $4)
+      `INSERT INTO "用户" ("手机号", "用户名", "密码哈希", "管理员", "生日", "时区")
+       VALUES ($1, $2, $3, false, $4, $5)
        RETURNING *`,
       [
         guoJiHao,
         qingLiYongHuMing,
         miMaHaXi,
         canShu.chu_sheng_ri_qi.trim(),
+        shiQu,
       ],
     )
   } catch (cuoWu) {
@@ -359,7 +370,7 @@ export async function zhuCe(canShu: ZhuCeCanShu): Promise<ZhuCeJieGuo> {
     }
     throw cuoWu
   }
-  const yongHu = yingSheYongHu(chaRuJieGuo.rows[0])
+  const yongHu = 映射用户(chaRuJieGuo.rows[0])
   await shanChuYanZhengMa(guoJiHao)
   await jiLuShenJiRiZhi({
     yong_hu_id: yongHu.id,
@@ -369,7 +380,7 @@ export async function zhuCe(canShu: ZhuCeCanShu): Promise<ZhuCeJieGuo> {
   })
 
   const lingPai = shengChengLingPai({
-    yongHuId: yongHu.id,
+    用户ID: yongHu.id,
     tokenType: 'access',
   })
   const refreshTokenId = randomUUID()
@@ -400,12 +411,12 @@ export async function zhuCe(canShu: ZhuCeCanShu): Promise<ZhuCeJieGuo> {
 }
 
 export async function dengLu(
-  canShu: DengLuCanShu,
+  canShu: 登录参数,
 ): Promise<
   | { cheng_gong: true; shu_ju: DengLuXiangYing }
   | { cheng_gong: false; cuo_wu_ma: 登录失败原因; ti_shi: string }
 > {
-  if (!yanZhengShouJiHaoGeShi(canShu.shou_ji_hao)) {
+  if (!校验手机号格式(canShu.shou_ji_hao)) {
     return { cheng_gong: false, cuo_wu_ma: '参数错误', ti_shi: huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu') }
   }
 
@@ -414,7 +425,7 @@ export async function dengLu(
     return { cheng_gong: false, cuo_wu_ma: '尝试过频', ti_shi: huoQuFanYi('renZheng', 'dengLuShiBaiPinFan') }
   }
 
-  const yongHu = await 包装依赖调用('postgres', () => anShouJiHaoChaYongHu(guoJiHao))
+  const yongHu = await 包装依赖调用('postgres', () => 按手机号查用户(guoJiHao))
   if (!yongHu) {
     await jiLuDengLuShiBai(guoJiHao, canShu.ip)
     await bcrypt.hash(canShu.mi_ma, 12)
@@ -460,7 +471,7 @@ export async function dengLu(
   )
 
   const lingPai = shengChengLingPai({
-    yongHuId: yongHu.id,
+    用户ID: yongHu.id,
     tokenType: 'access',
   })
   const refreshTokenId = randomUUID()
@@ -479,7 +490,7 @@ export async function dengLu(
   }
 }
 
-export interface ChongZhiMiMaCanShu {
+export interface 重置密码参数 {
   shou_ji_hao: string
   yan_zheng_ma: string
   xin_mi_ma: string
@@ -489,7 +500,7 @@ export interface ChongZhiMiMaCanShu {
 
 
 export async function chongZhiMiMa(
-  canShu: ChongZhiMiMaCanShu,
+  canShu: 重置密码参数,
 ): Promise<{ cheng_gong: boolean; ti_shi?: string; tongYiHuiFu?: boolean }> {
   const tongYiTiShi = huoQuFanYi('renZheng', 'chongZhiMiMaTongYiTiShi')
 
@@ -499,13 +510,13 @@ export async function chongZhiMiMa(
   if (canShu.xin_mi_ma !== canShu.que_ren_xin_mi_ma) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'miMaBuYiZhi') }
   }
-  const fuZaDu = yanZhengMiMaFuZaDu(canShu.xin_mi_ma)
+  const fuZaDu = 校验密码复杂度(canShu.xin_mi_ma)
   if (!fuZaDu.he_fa) {
     return { cheng_gong: false, ti_shi: fuZaDu.ti_shi }
   }
 
   const guoJiHao = guiYiWeiGuoJiHao(canShu.shou_ji_hao)
-  const yongHu = await anShouJiHaoChaYongHu(guoJiHao)
+  const yongHu = await 按手机号查用户(guoJiHao)
   const maJiaoYan = await yanZhengMaShiFouZhengQue(
     guoJiHao,
     canShu.yan_zheng_ma,
@@ -515,7 +526,7 @@ export async function chongZhiMiMa(
     return { cheng_gong: false, ti_shi: tongYiTiShi }
   }
   if (maJiaoYan !== '通过') {
-    return { cheng_gong: false, ti_shi: yanZhengMaShiBaiJieGuo(maJiaoYan).ti_shi }
+    return { cheng_gong: false, ti_shi: 验证码失败结果(maJiaoYan).ti_shi }
   }
 
   const xinMiMaHaXi = await bcrypt.hash(canShu.xin_mi_ma, 12)
@@ -537,7 +548,7 @@ export async function chongZhiMiMa(
 }
 
 export async function gengGaiMiMa(
-  canShu: GengGaiMiMaCanShu,
+  canShu: 改密参数,
 ): Promise<{ cheng_gong: boolean; ti_shi?: string }> {
   if (canShu.xin_mi_ma !== canShu.que_ren_xin_mi_ma) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'miMaBuYiZhi') }
@@ -545,7 +556,7 @@ export async function gengGaiMiMa(
   if (!canShu.xin_mi_ma || canShu.xin_mi_ma.length === 0) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'miMaKong') }
   }
-  const xinMiMaFuZaDu = yanZhengMiMaFuZaDu(canShu.xin_mi_ma)
+  const xinMiMaFuZaDu = 校验密码复杂度(canShu.xin_mi_ma)
   if (!xinMiMaFuZaDu.he_fa) {
     return { cheng_gong: false, ti_shi: xinMiMaFuZaDu.ti_shi }
   }
@@ -565,10 +576,10 @@ export async function gengGaiMiMa(
     YanZhengMaYongTu.chongZhiMiMa,
   )
   if (maJiaoYan !== '通过') {
-    return { cheng_gong: false, ti_shi: yanZhengMaShiBaiJieGuo(maJiaoYan).ti_shi }
+    return { cheng_gong: false, ti_shi: 验证码失败结果(maJiaoYan).ti_shi }
   }
 
-  const yongHu = await anIdChaYongHu(canShu.yong_hu_id)
+  const yongHu = await 按ID查用户(canShu.yong_hu_id)
   if (!yongHu) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'dengLuShiBai') }
   }
@@ -602,15 +613,15 @@ export async function gengGaiMiMa(
 }
 
 export async function gengGaiYongHuMing(
-  canShu: GengGaiYongHuMingCanShu,
+  canShu: 改用户名参数,
 ): Promise<{ cheng_gong: boolean; ti_shi?: string; yong_hu?: YongHuXinXi }> {
-  const yongHuMingJieGuo = yanZhengYongHuMingGeShi(canShu.yong_hu_ming)
+  const yongHuMingJieGuo = 校验用户名格式(canShu.yong_hu_ming)
   if (!yongHuMingJieGuo.he_fa) {
     return { cheng_gong: false, ti_shi: yongHuMingJieGuo.ti_shi }
   }
 
   const qingLiYongHuMing = canShu.yong_hu_ming.trim()
-  const dangQianYongHu = await anIdChaYongHu(canShu.yong_hu_id)
+  const dangQianYongHu = await 按ID查用户(canShu.yong_hu_id)
   if (dangQianYongHu && dangQianYongHu.yong_hu_ming === qingLiYongHuMing) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'yongHuMingYiCunZai') }
   }
@@ -627,7 +638,7 @@ export async function gengGaiYongHuMing(
     `UPDATE "用户" SET "用户名" = $1, "更新时间" = NOW() WHERE "ID" = $2 RETURNING *`,
     [qingLiYongHuMing, canShu.yong_hu_id],
   )
-  const yongHu = yingSheYongHu(gengXinJieGuo.rows[0])
+  const yongHu = 映射用户(gengXinJieGuo.rows[0])
   await jiLuShenJiRiZhi({
     yong_hu_id: canShu.yong_hu_id,
     ip: canShu.ip,
@@ -638,7 +649,7 @@ export async function gengGaiYongHuMing(
   return { cheng_gong: true, ti_shi: huoQuFanYi('renZheng', 'xiuGaiYongHuMingChengGong'), yong_hu: yongHu }
 }
 
-export async function setMoRenXingBie(
+export async function 设置默认性别(
   canShu: { yong_hu_id: string; mo_ren_xing_bie: string },
 ): Promise<{ cheng_gong: boolean; ti_shi?: string; yong_hu?: YongHuXinXi }> {
   const 归一值 = 内部转用户形态(解析性别(canShu.mo_ren_xing_bie))
@@ -654,7 +665,7 @@ export async function setMoRenXingBie(
   if (gengXinJieGuo.rows.length === 0) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'ziYuanBuCunZai') }
   }
-  const yongHu = yingSheYongHu(gengXinJieGuo.rows[0])
+  const yongHu = 映射用户(gengXinJieGuo.rows[0])
   await jiLuShenJiRiZhi({
     yong_hu_id: canShu.yong_hu_id,
     ip: '127.0.0.1',
@@ -664,7 +675,7 @@ export async function setMoRenXingBie(
   return { cheng_gong: true, ti_shi: huoQuFanYi('tongYong', 'caoZuoChengGong'), yong_hu: yongHu }
 }
 
-export async function setMoRenDuiXiangXingBie(
+export async function 设置默认对象性别(
   canShu: { yong_hu_id: string; mo_ren_dui_xiang_xing_bie: string },
 ): Promise<{ cheng_gong: boolean; ti_shi?: string; yong_hu?: YongHuXinXi }> {
   const 内部 = 解析性别(canShu.mo_ren_dui_xiang_xing_bie)
@@ -678,7 +689,7 @@ export async function setMoRenDuiXiangXingBie(
   if (gengXinJieGuo.rows.length === 0) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'ziYuanBuCunZai') }
   }
-  const yongHu = yingSheYongHu(gengXinJieGuo.rows[0])
+  const yongHu = 映射用户(gengXinJieGuo.rows[0])
   await jiLuShenJiRiZhi({
     yong_hu_id: canShu.yong_hu_id,
     ip: '127.0.0.1',
@@ -688,7 +699,7 @@ export async function setMoRenDuiXiangXingBie(
   return { cheng_gong: true, ti_shi: huoQuFanYi('tongYong', 'caoZuoChengGong'), yong_hu: yongHu }
 }
 
-export async function shuaXinLingPai(
+export async function 刷新令牌(
   refreshToken: string,
 ): Promise<{ cheng_gong: boolean; shu_ju?: { 令牌: string; 刷新令牌: string; 刷新令牌ID: string }; ti_shi?: string }> {
   const tokenId = refreshToken
@@ -700,34 +711,34 @@ export async function shuaXinLingPai(
   if (parts.length !== 2) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'lingPaiWuXiao') }
   }
-  const yongHuId = parts[0]
+  const 用户ID = parts[0]
   const tokenIdOnly = parts[1]
 
-  const feiXingJian = `shuaxin_feixing:${yongHuId}:${tokenIdOnly}`
+  const feiXingJian = `shuaxin_feixing:${用户ID}:${tokenIdOnly}`
   const qiangZhan = await redis.set(feiXingJian, '1', 'EX', 15, 'NX')
   if (!qiangZhan) {
     return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'dengLuShiBaiPinFan') }
   }
   try {
-    const chongFu = await jianCeRefreshTokenChongFu(tokenIdOnly, yongHuId)
+    const chongFu = await jianCeRefreshTokenChongFu(tokenIdOnly, 用户ID)
     if (chongFu) {
-      await cheXiaoYongHuSuoYouRefreshToken(yongHuId)
-      await xieRuCheXiaoShiJianCuo(yongHuId)
+      await cheXiaoYongHuSuoYouRefreshToken(用户ID)
+      await xieRuCheXiaoShiJianCuo(用户ID)
       return { cheng_gong: false, ti_shi: huoQuFanYi('renZheng', 'lingPaiChongFuBeiDao') }
     }
 
-    const xiaoHao = await xiaoHaoRefreshToken(tokenIdOnly, yongHuId)
+    const xiaoHao = await xiaoHaoRefreshToken(tokenIdOnly, 用户ID)
     if (!xiaoHao.chengGong) {
       return { cheng_gong: false, ti_shi: xiaoHao.cuoWu || huoQuFanYi('renZheng', 'lingPaiWuXiao') }
     }
 
-    const yongHu = await anIdChaYongHu(yongHuId)
+    const yongHu = await 按ID查用户(用户ID)
     if (!yongHu) {
       return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'ziYuanBuCunZai') }
     }
 
     const xinLingPai = shengChengLingPai({
-      yongHuId: yongHu.id,
+      用户ID: yongHu.id,
       tokenType: 'access',
     })
     const xinRefreshTokenId = randomUUID()
@@ -743,21 +754,21 @@ export async function shuaXinLingPai(
       },
     }
   } finally {
-    await redis.del(`shuaxin_feixing:${yongHuId}:${tokenIdOnly}`).catch(() => undefined)
+    await redis.del(`shuaxin_feixing:${用户ID}:${tokenIdOnly}`).catch(() => undefined)
   }
 }
 
-export async function zhuXiaoLingPai(
-  yongHuId: string,
+export async function 注销令牌(
+  用户ID: string,
   refreshTokenId?: string,
 ): Promise<{ cheng_gong: boolean; ti_shi?: string }> {
   if (refreshTokenId) {
     const parts = refreshTokenId.split(':')
     const tokenIdOnly = parts.length === 2 ? parts[1] : refreshTokenId
-    await shanChuRefreshToken(tokenIdOnly, yongHuId)
+    await shanChuRefreshToken(tokenIdOnly, 用户ID)
   } else {
-    await cheXiaoYongHuSuoYouRefreshToken(yongHuId)
+    await cheXiaoYongHuSuoYouRefreshToken(用户ID)
   }
-  await xieRuCheXiaoShiJianCuo(yongHuId)
+  await xieRuCheXiaoShiJianCuo(用户ID)
   return { cheng_gong: true, ti_shi: huoQuFanYi('tongYong', 'caoZuoChengGong') }
 }

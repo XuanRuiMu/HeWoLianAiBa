@@ -4,8 +4,8 @@ import { fanYi, huoQuFanYi } from '@/config/翻译表'
 import { chuFaCuoWuShangBao } from '@/utils/错误上报'
 
 export const JingSuHaoMiao = 60
-export const GuoDuZuiDuanZhanShiHaoMiao = 400
 export const GuoDuChaoShiHaoMiao = 8000
+export const GuoDuRuChangHaoMiao = 2000
 
 export type YuQuRenWu = (to: RouteLocationNormalized) => unknown
 
@@ -15,14 +15,35 @@ export interface YuJiaZaiPeiZhi {
   zuJian?: () => Promise<unknown>
 }
 
+export type GuoDuJieDuan = 'guanBi' | 'ruChang' | 'tuiChang'
+
 export interface GuoDuZhuangTai {
-  jinXingZhong: boolean
+  jieDuan: GuoDuJieDuan
   wenAn: string
+  banBen: number
+  ruChangQiDian: number
+  tuiChangQiDian: number
+  tuiChangShiChang: number
+  dongJieJinDu: number
 }
 
 const GuoDuWenAnFenLei = 'guoDuZaiRu' as const
 
-export const guoDuZhuangTai = shallowRef<GuoDuZhuangTai>({ jinXingZhong: false, wenAn: '' })
+let guoDuBanBen = 0
+
+function guanBiZhuangTai(): GuoDuZhuangTai {
+  return {
+    jieDuan: 'guanBi',
+    wenAn: '',
+    banBen: guoDuBanBen,
+    ruChangQiDian: 0,
+    tuiChangQiDian: 0,
+    tuiChangShiChang: 0,
+    dongJieJinDu: 0,
+  }
+}
+
+export const guoDuZhuangTai = shallowRef<GuoDuZhuangTai>(guanBiZhuangTai())
 
 let luYouPiCi = 0
 
@@ -83,6 +104,11 @@ function faQiRenWu(renWu: YuQuRenWu, to: RouteLocationNormalized): Promise<unkno
     })
 }
 
+export function jieShuGuoDu(banBen: number): void {
+  if (guoDuZhuangTai.value.banBen !== banBen) return
+  guoDuZhuangTai.value = guanBiZhuangTai()
+}
+
 export async function kaiShiLuYouYuQu(
   peiZhi: YuJiaZaiPeiZhi,
   to: RouteLocationNormalized,
@@ -96,19 +122,41 @@ export async function kaiShiLuYouYuQu(
     dengDaiHaoMiao(JingSuHaoMiao).then(() => false),
   ])
   const benCiPiCi = luYouPiCi
-  if (yiJiuXu || benCiPiCi !== luYouPiCi) return
-  guoDuZhuangTai.value = { jinXingZhong: true, wenAn: jieXiGuoDuWenAn(peiZhi.wenAn) }
-  const zhanShiKaiShi = Date.now()
+  if (yiJiuXu || benCiPiCi !== luYouPiCi) {
+    if (guoDuZhuangTai.value.jieDuan !== 'guanBi') guoDuZhuangTai.value = guanBiZhuangTai()
+    return
+  }
+
+  const banBen = ++guoDuBanBen
+  const ruChangQiDian = Date.now()
+  guoDuZhuangTai.value = {
+    jieDuan: 'ruChang',
+    wenAn: jieXiGuoDuWenAn(peiZhi.wenAn),
+    banBen,
+    ruChangQiDian,
+    tuiChangQiDian: 0,
+    tuiChangShiChang: 0,
+    dongJieJinDu: 0,
+  }
+
   try {
     await Promise.race([
       quanBu,
       dengDaiHaoMiao(Math.max(0, jieZhi - Date.now())),
     ])
   } finally {
-    if (benCiPiCi === luYouPiCi) {
-      const shengYu = Math.max(0, GuoDuZuiDuanZhanShiHaoMiao - (Date.now() - zhanShiKaiShi))
-      if (shengYu > 0) await dengDaiHaoMiao(shengYu)
-      if (benCiPiCi === luYouPiCi) guoDuZhuangTai.value = { jinXingZhong: false, wenAn: '' }
+    if (benCiPiCi === luYouPiCi && guoDuZhuangTai.value.banBen === banBen) {
+      const yiBoFang = Math.min(Math.max(0, Date.now() - ruChangQiDian), GuoDuRuChangHaoMiao)
+      guoDuZhuangTai.value = {
+        jieDuan: 'tuiChang',
+        wenAn: guoDuZhuangTai.value.wenAn,
+        banBen,
+        ruChangQiDian,
+        tuiChangQiDian: Date.now(),
+        tuiChangShiChang: yiBoFang,
+        dongJieJinDu: yiBoFang / GuoDuRuChangHaoMiao,
+      }
+      void dengDaiHaoMiao(yiBoFang + 240).then(() => jieShuGuoDu(banBen))
     }
   }
 }
@@ -116,5 +164,5 @@ export async function kaiShiLuYouYuQu(
 export function zhongZhiYuQu(): void {
   luYouPiCi += 1
   jiaoJieCun.clear()
-  guoDuZhuangTai.value = { jinXingZhong: false, wenAn: '' }
+  guoDuZhuangTai.value = guanBiZhuangTai()
 }

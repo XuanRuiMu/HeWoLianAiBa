@@ -13,7 +13,7 @@ export function 验证手机号(值: unknown): 值 is string {
 
 export function 验证用户名(值: unknown): 值 is string {
   if (typeof 值 !== 'string') return false
-  if (!peiZhi.yongHuMing.baiMingDan.test(值.trim())) return false
+  if (!peiZhi.yongHuMing.白名单.test(值.trim())) return false
   return !peiZhi.yongHuMing.teShuZiFu.test(值.trim())
 }
 

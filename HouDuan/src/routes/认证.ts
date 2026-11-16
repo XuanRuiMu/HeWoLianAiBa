@@ -9,17 +9,17 @@ import {
 import { renJiYanZhengZhongJianJian } from '../middleware/人机验证'
 import { chengGongXiangYing, shiBaiXiangYing } from '../utils/xiangying'
 import {
-  anShouJiHaoChaYongHu,
-  anIdChaYongHu,
+  按手机号查用户,
+  按ID查用户,
   zhuCe,
   dengLu,
   chongZhiMiMa,
   gengGaiMiMa,
   gengGaiYongHuMing,
-  setMoRenXingBie,
-  setMoRenDuiXiangXingBie,
-  yanZhengShouJiHaoGeShi,
-  shuaXinLingPai,
+  设置默认性别,
+  设置默认对象性别,
+  校验手机号格式,
+  刷新令牌,
   注册失败错误码 } from '../services/认证'
 import { faSongYanZhengMa, zhunHuaYanZhengMaYongTu } from '../services/短信'
 import { qianFaRenJiTiaoZhan } from '../services/人机验证'
@@ -97,10 +97,10 @@ function huoQuChuShengRiQi(qingQiuTi: Record<string, unknown>): string | undefin
 
 luYou.get('/检查手机', jianChaShouJiXianLiu, async (qingQiu: Request, xiangYing: Response) => {
   const shouJiHao = huoQuShouJiHao(qingQiu.query as Record<string, unknown>)
-  if (!shouJiHao || !yanZhengShouJiHaoGeShi(shouJiHao)) {
+  if (!shouJiHao || !校验手机号格式(shouJiHao)) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), CuoWuDaiMa.REQUEST_PARAMETER_INVALID)
   }
-  await anShouJiHaoChaYongHu(guiYiWeiGuoJiHao(shouJiHao))
+  await 按手机号查用户(guiYiWeiGuoJiHao(shouJiHao))
   return chengGongXiangYing(xiangYing, { yi_zhu_ce: true })
 })
 
@@ -117,7 +117,7 @@ luYou.get('/人机挑战', renJiTiaoZhanXianLiu, async (qingQiu: Request, xiangY
 
 luYou.post('/发送码', 手机号验证中间件, renJiYanZhengZhongJianJian, faSongMaXianLiu, duanXinRiPeiEZhuJi, async (qingQiu: Request, xiangYing: Response) => {
   const shouJiHao = huoQuShouJiHao(qingQiu.body as Record<string, unknown>)
-  if (!shouJiHao || !yanZhengShouJiHaoGeShi(shouJiHao)) {
+  if (!shouJiHao || !校验手机号格式(shouJiHao)) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('renZheng', 'shouJiHaoGeShiCuoWu'), CuoWuDaiMa.REQUEST_PARAMETER_INVALID)
   }
   const yongTu = zhunHuaYanZhengMaYongTu((qingQiu.body as Record<string, unknown>).yongTu)
@@ -130,6 +130,13 @@ luYou.post('/发送码', 手机号验证中间件, renJiYanZhengZhongJianJian, f
 
 function huoQuJingWaiBiaoZhi(qingQiuTi: Record<string, unknown>): boolean {
   return qingQiuTi.jingWai === true || qingQiuTi.jing_wai === true
+}
+
+function huoQuShiQuCanShu(qingQiuTi: Record<string, unknown>): string | undefined {
+  const yuan = qingQiuTi.shiQu ?? qingQiuTi.shi_qu
+  if (typeof yuan !== 'string') return undefined
+  const zheng = yuan.trim()
+  return zheng === '' ? undefined : zheng
 }
 
 luYou.post('/注册', zhuCeXianLiu, 手机号验证中间件, 用户名验证中间件, async (qingQiu: Request, xiangYing: Response) => {
@@ -177,6 +184,7 @@ luYou.post('/注册', zhuCeXianLiu, 手机号验证中间件, 用户名验证中
     chu_sheng_ri_qi: chuShengRiQi,
     ip: huoQuIp(qingQiu),
     jing_wai: jingWai,
+    shi_qu: huoQuShiQuCanShu(qingQiuTi),
   })
 
   if (!jieGuo.cheng_gong) {
@@ -228,7 +236,7 @@ luYou.post('/刷新', async (qingQiu: Request, xiangYing: Response) => {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CuoWuDaiMa.REQUEST_MISSING_PARAMETER)
   }
 
-  const jieGuo = await shuaXinLingPai(refreshToken)
+  const jieGuo = await 刷新令牌(refreshToken)
   if (!jieGuo.cheng_gong) {
     return shiBaiXiangYing(xiangYing, 401, jieGuo.ti_shi || huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTH_REFRESH_TOKEN_INVALID)
   }
@@ -248,10 +256,10 @@ luYou.post('/吊销刷新令牌', async (qingQiu: RenZhengQingQiu, xiangYing: Re
 
   if (refreshTokenId) {
     const { shanChuRefreshToken } = await import('../utils/jwt')
-    await shanChuRefreshToken(refreshTokenId, yongHu.yongHuId)
+    await shanChuRefreshToken(refreshTokenId, yongHu.用户ID)
   } else {
     const { cheXiaoYongHuSuoYouRefreshToken } = await import('../utils/jwt')
-    await cheXiaoYongHuSuoYouRefreshToken(yongHu.yongHuId)
+    await cheXiaoYongHuSuoYouRefreshToken(yongHu.用户ID)
   }
   return chengGongXiangYing(xiangYing, null, huoQuFanYi('tongYong', 'caoZuoChengGong'))
 })
@@ -304,7 +312,7 @@ luYou.post('/更改密码', async (qingQiu: RenZhengQingQiu, xiangYing: Response
   }
 
   const jieGuo = await gengGaiMiMa({
-    yong_hu_id: yongHu.yongHuId,
+    yong_hu_id: yongHu.用户ID,
     shou_ji_hao: '',
     jiu_mi_ma: jiuMiMa,
     xin_mi_ma: xinMiMa,
@@ -331,7 +339,7 @@ luYou.post('/更改用户名', 用户名验证中间件, async (qingQiu: RenZhen
   }
 
   const jieGuo = await gengGaiYongHuMing({
-    yong_hu_id: yongHu.yongHuId,
+    yong_hu_id: yongHu.用户ID,
     yong_hu_ming: yongHuMing,
     ip: huoQuIp(qingQiu) })
 
@@ -354,8 +362,8 @@ luYou.post('/设置默认性别', async (qingQiu: RenZhengQingQiu, xiangYing: Re
   if (!moRenXingBie) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CuoWuDaiMa.REQUEST_MISSING_PARAMETER)
   }
-  const jieGuo = await setMoRenXingBie({
-    yong_hu_id: yongHu.yongHuId,
+  const jieGuo = await 设置默认性别({
+    yong_hu_id: yongHu.用户ID,
     mo_ren_xing_bie: moRenXingBie })
   if (!jieGuo.cheng_gong) {
     return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'xiuGaiShiBai'), CuoWuDaiMa.AUTH_DEFAULT_GENDER_INVALID)
@@ -375,8 +383,8 @@ luYou.post('/设置默认对象性别', async (qingQiu: RenZhengQingQiu, xiangYi
   if (!moRenDuiXiang) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'), CuoWuDaiMa.REQUEST_MISSING_PARAMETER)
   }
-  const jieGuo = await setMoRenDuiXiangXingBie({
-    yong_hu_id: yongHu.yongHuId,
+  const jieGuo = await 设置默认对象性别({
+    yong_hu_id: yongHu.用户ID,
     mo_ren_dui_xiang_xing_bie: moRenDuiXiang })
   if (!jieGuo.cheng_gong) {
     return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'xiuGaiShiBai'), CuoWuDaiMa.AUTH_DEFAULT_GENDER_INVALID)
@@ -389,7 +397,7 @@ luYou.get('/信息', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   if (!yongHu) {
     return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTHENTICATION_REQUIRED)
   }
-  const shuJu = await anIdChaYongHu(yongHu.yongHuId)
+  const shuJu = await 按ID查用户(yongHu.用户ID)
   if (!shuJu) {
     return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'), CuoWuDaiMa.RESOURCE_NOT_FOUND)
   }
@@ -406,7 +414,7 @@ luYou.delete('/注销', async (qingQiu: RenZhengQingQiu, xiangYing: Response) =>
   const lingPai = authorization.startsWith('Bearer ') ? authorization.slice(7) : ''
 
   try {
-    const jieGuo = await zhuXiaoYongHu(yongHu.yongHuId, lingPai, huoQuIp(qingQiu))
+    const jieGuo = await zhuXiaoYongHu(yongHu.用户ID, lingPai, huoQuIp(qingQiu))
     if (!jieGuo.cheng_gong) {
       return shiBaiXiangYing(xiangYing, 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'xiuGaiShiBai'), CuoWuDaiMa.AUTH_ACCOUNT_DELETION_FAILED)
     }

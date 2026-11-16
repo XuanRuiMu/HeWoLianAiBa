@@ -1,7 +1,7 @@
 import { shiYunYingZiDuanXiaoXiLeiXing } from '../config/消息配置'
 import { anYongHuIdJuBeiNengLi } from '../middleware/管理员'
 import { debug日志 } from '../utils/debug日志'
-import type { XiaoXiXinXi } from './消息'
+import type { 消息信息 } from './消息'
 
 
 async function yunYingZiDuanKeDu(duFangYongHuId: string): Promise<boolean> {
@@ -16,26 +16,26 @@ async function yunYingZiDuanKeDu(duFangYongHuId: string): Promise<boolean> {
   }
 }
 
-function mianYunYingZiDuan(xiao_xi: XiaoXiXinXi): XiaoXiXinXi {
+function mianYunYingZiDuan(xiao_xi: 消息信息): 消息信息 {
   if (xiao_xi.yuan_shi_nei_rong === undefined) return xiao_xi
-  const shouXie: XiaoXiXinXi = { ...xiao_xi }
+  const shouXie: 消息信息 = { ...xiao_xi }
   delete shouXie.yuan_shi_nei_rong
   return shouXie
 }
 
 export async function shouKouXiaoXiYunYingZiDuan(
-  xiao_xi: XiaoXiXinXi | undefined,
+  xiao_xi: 消息信息 | undefined,
   duFangYongHuId: string,
-): Promise<XiaoXiXinXi | undefined> {
+): Promise<消息信息 | undefined> {
   if (!xiao_xi) return xiao_xi
   if (await yunYingZiDuanKeDu(duFangYongHuId)) return xiao_xi
   return mianYunYingZiDuan(xiao_xi)
 }
 
 export async function shouKouXiaoXiLieBiaoYunYingZiDuan(
-  xiao_xi_lie_biao: XiaoXiXinXi[],
+  xiao_xi_lie_biao: 消息信息[],
   duFangYongHuId: string,
-): Promise<XiaoXiXinXi[]> {
+): Promise<消息信息[]> {
   const keDu = await yunYingZiDuanKeDu(duFangYongHuId)
   return xiao_xi_lie_biao
     .filter((xiao_xi) => keDu || !shiYunYingZiDuanXiaoXiLeiXing(xiao_xi.lei_xing))

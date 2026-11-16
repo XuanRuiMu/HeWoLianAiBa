@@ -7,7 +7,7 @@ import { huoQuIo } from '../socket/io'
 import { shengChengDirectorCeLue } from './Director'
 import { shengChengWriterHuiFu } from './Writer'
 import { jianChaAiWei, panDuanShiFouCaiYang, panDuanShiFouMoXingChouJian, guoLvAiWeiXiaoXi, jianChaTaoHua, panDuanTaoHuaCaiYang } from '../config/去AI味配置'
-import { gouJianJiaoSeShangXiaWen, type CanShuShangXiaWen } from '../config/AI参数策略'
+import { gouJianJiaoSeShangXiaWen, type 参数上下文 } from '../config/AI参数策略'
 import { 检索通用知识, 提取必答事实 } from './通用知识检索'
 import { qingXiTieZhiCanPian } from './贴纸标记'
 import type {
@@ -48,10 +48,10 @@ function qieGeXiaoXi(xiaoXiLieBiao: string[], tiaoShu: number): string[] {
 
 const YuSuanYuJingYuLiang = 50
 
-function tuiSongXiTongTiShi(yongHuId: string, jiaoSeId: string, wenBen: string): void {
+function tuiSongXiTongTiShi(用户ID: string, jiaoSeId: string, wenBen: string): void {
   const io = huoQuIo()
   if (!io) return
-  io.to(yongHuId).emit('角色回复', {
+  io.to(用户ID).emit('角色回复', {
     角色ID: jiaoSeId,
     消息列表: [{
       id: shengChengXiTongTiShiId(),
@@ -83,28 +83,28 @@ function qingLiGuoQiNeiCun(): void {
   }
 }
 
-async function jianChaMeiRiYuSuan(yongHuId: string): Promise<{ yunXu: boolean; chuFaYuJing: boolean }> {
+async function jianChaMeiRiYuSuan(用户ID: string): Promise<{ yunXu: boolean; chuFaYuJing: boolean }> {
     const riQi = new Date().toISOString().slice(0, 10)
 
   try {
-    const yiYong = await redis.incr(`ai_yu_suan:${yongHuId}:${riQi}`)
+    const yiYong = await redis.incr(`ai_yu_suan:${用户ID}:${riQi}`)
     if (yiYong === 1) {
-      await redis.expire(`ai_yu_suan:${yongHuId}:${riQi}`, 2 * 24 * 60 * 60)
+      await redis.expire(`ai_yu_suan:${用户ID}:${riQi}`, 2 * 24 * 60 * 60)
     }
     const yuSuan = peiZhi.meiRiAIQingQiuYuSuan
     let chuFaYuJing = false
     if (yiYong >= yuSuan - YuSuanYuJingYuLiang && yiYong <= yuSuan) {
-      const sheZhi = await redis.set(`ai_yu_suan_yu_jing:${yongHuId}:${riQi}`, '1', 'EX', 86400, 'NX')
+      const sheZhi = await redis.set(`ai_yu_suan_yu_jing:${用户ID}:${riQi}`, '1', 'EX', 86400, 'NX')
       chuFaYuJing = sheZhi === 'OK'
     }
     return { yunXu: yiYong <= yuSuan, chuFaYuJing }
   } catch (cuoWu) {
     debug日志.warn('AI引擎', 'AI 日预算 Redis 故障，启用本地内存兜底', {
-      xiang_qing: { cuo_wu: String(cuoWu), yong_hu_id: yongHuId },
+      xiang_qing: { cuo_wu: String(cuoWu), yong_hu_id: 用户ID },
     })
 
     qingLiGuoQiNeiCun()
-    const jianMing = `${yongHuId}:${riQi}`
+    const jianMing = `${用户ID}:${riQi}`
     const jiLu = yuSuanNeiCunJiShu.get(jianMing)
     const yuSuan = peiZhi.meiRiAIQingQiuYuSuan
 
@@ -179,7 +179,7 @@ export async function yunXingAIYinQing(
   let jiang_ji_mo_shi = false
   let cuoWuXinXi: string | undefined
 
-  const shangXiaWen: CanShuShangXiaWen = {
+  const shangXiaWen: 参数上下文 = {
     jiaoSe: gouJianJiaoSeShangXiaWen(shuRu.jiao_se),
     haoGanDu: shuRu.hao_gan_du
       ? {
@@ -235,7 +235,8 @@ export async function yunXingAIYinQing(
     debug日志.error('AI引擎', 'Director调用失败，降级为单代理模式', { xiang_qing: { cuo_wu: String(directorJieGuo.cuo_wu) } })
   }
 
-  if (ceLue && !ceLue.shi_fou_hui_fu && !biDaShiShi) {
+  const huiYingDengJi = benLunShuRu.huiYingDengJi ?? 2
+  if (ceLue && !ceLue.shi_fou_hui_fu && !biDaShiShi && huiYingDengJi <= 1) {
     return {
       xiao_xi_lie_biao: [],
       shi_fou_hui_fu: false,
@@ -256,8 +257,7 @@ jiang_ji_mo_shi: false,
           ce_lue: ceLue,
         }
       }
-    let writerJieGuo = await shengChengWriterHuiFu(benLunShuRu, ceLue, shangXiaWen, waiBuXinHao, zhiShi)
-
+    let writerJieGuo = await shengChengWriterHuiFu(benLunShuRu, ceLue, shangXiaWen, waiBuXinHao, zhiShi, benLunShuRu.zuiJinDuanMing)
     if (biDaShiShi && !shuoDaoLeShiShi(writerJieGuo.xiao_xi_lie_biao, biDaShiShi)) {
       debug日志.warn('AI引擎', 'Writer 漏掉了必答事实，带强调重生成一次', {
         xiang_qing: { jiao_se_id: shuRu.jiao_se_id, shi_shi: biDaShiShi.biao_shi },
@@ -268,6 +268,7 @@ jiang_ji_mo_shi: false,
         shangXiaWen,
         waiBuXinHao,
         zhiShi,
+        benLunShuRu.zuiJinDuanMing,
       )
     }
 

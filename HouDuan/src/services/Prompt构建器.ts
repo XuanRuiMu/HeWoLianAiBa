@@ -1,4 +1,4 @@
-import { AiPeiZhi } from '../config/AI配置'
+import { AI配置 } from '../config/AI配置'
 import { 通用知识结束标记, 通用知识开始标记, 用户内容结束标记, 用户内容开始标记 } from '../config/通用知识库'
 import { JunShiZhiDaoDuanDingYi } from '../config/军师配置'
 import { ShengLiShiBaiPeiZhi } from '../config/胜利失败配置'
@@ -10,6 +10,10 @@ import { shiXueShengShenFen } from '../config/角色配置'
 import { gouJianYuTaiCeng } from './语态层'
 import { 构建通用知识层, 检索通用知识, type 通用知识检索结果 } from './通用知识检索'
 import { BiaoQingBaoYunXing, BiaoQingTieZhiTiDaiGuiZe, BiaoQingYiTuWenAn } from '../config/表情包配置'
+import * as YuYanGongNeng from '../config/语言与时区'
+import * as RiChengGongNeng from './角色日程'
+import type { RiChengJiaoSe } from './日程生成'
+import * as ChengNuoDuiXian from './承诺兑现'
 
 interface ShiLiZu {
   yuQi: string
@@ -42,6 +46,7 @@ import type {
   BiDaShiShi,
   DuiHuaLiShiXiang,
   HaoGanDuXinXi,
+  GuanXiBianHua,
 } from '../types'
 import type { 性别内部形态 } from '../utils/性别'
 
@@ -67,37 +72,61 @@ export function baoZhuangYongHuNeiRong(neiRong: string): string {
 }
 
 const guanXiJieDuanMiaoShu: Record<string, string> = {
-  lengDan: '刚认识，没什么话好说。你手上大概还有点别的事，回复很短，能不回就不回。',
-  shuYuan: '还在互相试探，你不确定对方什么意思，话不多，但对方发消息你会回。',
-  renShi: '开始觉得这人还行。你偶尔会想到对方，但想不出该说什么。',
-  shuXi: '对方算是你认识的人里比较熟的了。你会想到对方最近怎么样，也愿意说点自己那边的。',
-  pengYou: '你把对方当朋友，会主动找对方聊天，也愿意分享自己学校和家里的事。',
-  haoYou: '你开始在意对方怎么看你了。你会试探对方的意思，但不会明说。',
-  aiMei: '你有点想对方，又怕是自己想多了。你会找话说，也会在意对方多久没找你。',
-  xinDong: '你明确知道自己喜欢对方了。你会期待见面，会想知道对方的行程，忍不住主动找对方。',
-  reLian: '你很想对方。你会直接说想你，会撒娇，会因为对方一句话高兴很久。',
-  shenAi: '对方已经是你生活的一部分。你会自然地想着对方，把对方的事当成自己的事。',
+  冷淡: '刚认识，没什么话好说。你手上大概还有点别的事，回复很短，能不回就不回。',
+  疏远: '还在互相试探，你不确定对方什么意思，话不多，但对方发消息你会回。',
+  认识: '开始觉得这人还行。你偶尔会想到对方，但想不出该说什么。',
+  熟悉: '对方算是你认识的人里比较熟的了。你会想到对方最近怎么样，也愿意说点自己那边的。',
+  朋友: '你把对方当朋友，会主动找对方聊天，也愿意分享自己学校和家里的事。',
+  好友: '你开始在意对方怎么看你了。你会试探对方的意思，但不会明说。',
+  暧昧: '你有点想对方，又怕是自己想多了。你会找话说，也会在意对方多久没找你。',
+  心动: '你明确知道自己喜欢对方了。你会期待见面，会想知道对方的行程，忍不住主动找对方。',
+  热恋: '你很想对方。你会直接说想你，会撒娇，会因为对方一句话高兴很久。',
+  深爱: '对方已经是你生活的一部分。你会自然地想着对方，把对方的事当成自己的事。',
 }
 
 function huoQuGuanXiJieDuanMing(haoGanDu: HaoGanDuXinXi): string {
-  return haoGanDu.guan_xi_jie_duan || 'lengDan'
+  const yuan = (haoGanDu.guan_xi_jie_duan || '').trim()
+  return yuan in guanXiJieDuanMiaoShu ? yuan : '冷淡'
 }
 
-function huoQuXinQing(haoGanDu: HaoGanDuXinXi): string {
-  const jieDuan = huoQuGuanXiJieDuanMing(haoGanDu)
-  const xinQingMap: Record<string, string> = {
-    lengDan: '平淡',
-    shuYuan: '平淡',
-    renShi: '好奇',
-    shuXi: '好奇',
-    pengYou: '愉悦',
-    haoYou: '愉悦',
-    aiMei: '期待',
-    xinDong: '期待',
-    reLian: '心动',
-    shenAi: '甜蜜',
-  }
-  return xinQingMap[jieDuan] || '平淡'
+const guanXiBianHuaChiMing: Record<string, string> = {
+  更近: '，你刚才那一下有点戳到 TA，这会儿心里是软的。',
+  更远: '，TA 这会儿有点不是滋味，别指望 TA 马上热络起来。',
+  没变: '，就是寻常聊天，没什么波澜。',
+}
+
+const XinQingZhiChiMing: Record<string, string> = {
+  开心: '你心情不错，说话轻快。',
+  平静: '没什么起伏，就正常聊。',
+  好奇: '你有点好奇，想问点什么。',
+  期待: '你有点期待，话里带劲。',
+  心动: '你有点心动，说话会软下来。',
+  甜蜜: '你心里甜，忍不住想腻歪。',
+  愉悦: '你心情好，愿意多说两句。',
+  烦躁: '你有点烦，话会短、会冲。',
+  难过: '你情绪低，不太想展开。',
+  委屈: '你觉得委屈，想被哄。',
+  生气: '你在气头上，不想顺着对方。',
+  冷淡: '你没兴致，能少说一句就少说一句。',
+  疲惫: '你有点累，回得慢、回得短。',
+  焦虑: '你心里不踏实，容易追问。',
+}
+
+export function huoQuXinQingMiaoShu(xinQing: unknown, qiangDu?: unknown): string {
+  const ming = String(xinQing ?? '').trim()
+  if (ming === '') return ''
+  const jiChu = XinQingZhiChiMing[ming] || ''
+  if (jiChu === '') return ''
+  const qiang = Number(qiangDu)
+  if (!Number.isFinite(qiang)) return jiChu
+  if (qiang >= 70) return `${jiChu}这会儿特别明显，藏不住。`
+  if (qiang <= 20) return `${jiChu}就是一点点，不太明显。`
+  return jiChu
+}
+
+export function gouJianXinQingTiaoJie(shuRu: AIYinQingShuRu): string[] {
+  const miaoShu = huoQuXinQingMiaoShu(shuRu.dang_qian_xin_qing, shuRu.xin_qing_qiang_du)
+  return miaoShu === '' ? [] : [`TA 此刻的状态：${miaoShu}`]
 }
 
 export function biaoQingTiShiKaiGuanKai(): boolean {
@@ -214,17 +243,47 @@ function gouJianDiErCeng(jiaoSe: AIJiaoSeXinXi): string {
     .join('\n')
 }
 
+function gouJianRiChengCeng(shuRu: AIYinQingShuRu): string[] {
+  const shiQu = (shuRu.jiao_se?.shi_jie_xin_xi?.cheng_shi as string) || 'Asia/Shanghai'
+  const riQiInfo = RiChengGongNeng.zhengZeRiQi(new Date(), shiQu)
+  const xianZai = YuYanGongNeng.shiQuXianZaiShiJian(shiQu)
+  const xianZaiMiao = xianZai.xiaoShi * 60 + xianZai.fenZhong
+  const riChengDangQian = riChengHuanCun.get(shuRu.jiao_se_id)
+  if (riChengDangQian === undefined) return []
+  if (riChengDangQian === null) return []
+  if (riChengDangQian.riQi !== riQiInfo.riQi) return []
+  const huoDongDangQian = RiChengGongNeng.quDangQianHuoDong(riChengDangQian, xianZaiMiao)
+  if (huoDongDangQian === null) return []
+  const miaoShu = RiChengGongNeng.riChengMiaoShu(riChengDangQian, huoDongDangQian)
+  return miaoShu ? [`你在做什么：${miaoShu}`] : []
+}
+
+const riChengHuanCun = new Map<string, RiChengGongNeng.RiChengZhuangTai | null>()
+
+export async function zhunBeiRiCheng(jiaoSeId: string, jiaoSe: RiChengJiaoSe, shiQu: string): Promise<void> {
+  const riQiInfo = RiChengGongNeng.zhengZeRiQi(new Date(), shiQu)
+  if (riQiInfo.riQi === '') return
+  const yiYou = await RiChengGongNeng.duQuRiCheng(jiaoSeId, riQiInfo.riQi, riQiInfo.xingQi)
+  if (yiYou) {
+    riChengHuanCun.set(jiaoSeId, yiYou)
+    return
+  }
+  const riCheng = await import('./日程生成').then((m) => m.huoQuJinRiRiCheng(jiaoSeId, jiaoSe, shiQu))
+  riChengHuanCun.set(jiaoSeId, riCheng)
+}
+
 function gouJianDiSanCeng(shuRu: AIYinQingShuRu): string {
   const haoGanDu = shuRu.hao_gan_du
   const jieDuan = huoQuGuanXiJieDuanMing(haoGanDu)
-  const xinQing = huoQuXinQing(haoGanDu)
+  const xinQingMiaoShu = huoQuXinQingMiaoShu(shuRu.dang_qian_xin_qing, shuRu.xin_qing_qiang_du)
 
   return [
     '【现在的你和这段关系】',
     `关系阶段：${jieDuan}`,
     `对 TA 的态度：${guanXiJieDuanMiaoShu[jieDuan] || '还不太清楚'}`,
-    `当下心情：${xinQing}`,
+    ...(xinQingMiaoShu ? [`你此刻的状态：${xinQingMiaoShu}`] : []),
     '对方加你聊天是想谈恋爱，你也知道这回事。',
+    ...gouJianRiChengCeng(shuRu),
     `现在的情况：${shuRu.shi_jian_chang_jing || huoQuShiJianChangJingWenBen()}`,
     '按你的性格来，不用管别人会怎么回。',
   ].join('\n')
@@ -273,7 +332,7 @@ function gouJianDiLiuCeng(shuRu: AIYinQingShuRu, shiFouDiYiLun: boolean): string
       ]
 
   const chenJinZhiLing = shiFouDiYiLun
-    ? `\n${AiPeiZhi.prompt.jiaoSeChenJinZhiLing}：从下一轮开始，你思考的时候用第一人称“我”在心里嘀咕，完全变成${jiaoSe.wei_xin_ming}，别跳出来分析。`
+    ? `\n${AI配置.prompt.jiaoSeChenJinZhiLing}：从下一轮开始，你思考的时候用第一人称“我”在心里嘀咕，完全变成${jiaoSe.wei_xin_ming}，别跳出来分析。`
     : ''
 
   return [
@@ -295,7 +354,7 @@ function gouJianDiLiuCeng(shuRu: AIYinQingShuRu, shiFouDiYiLun: boolean): string
     .join('\n')
 }
 
-export function gouJianBenLunXiaoXiKuai(shuRu: AIYinQingShuRu): string {
+export function gouJianBenLun消息块(shuRu: AIYinQingShuRu): string {
   return shuRu.zui_jia_shuo_de_shi
     ? `你此刻想跟 TA 说的：${baoZhuangYongHuNeiRong(shuRu.zui_jia_shuo_de_shi)}`
     : `对方刚发给你的消息：${baoZhuangYongHuNeiRong(shuRu.yong_hu_xin_xiao_xi)}`
@@ -483,6 +542,39 @@ export function gouJianGuanJianShiJianCeng(shuRu: AIYinQingShuRu): string {
   return (shuRu.guan_jian_shi_jian || '').trim()
 }
 
+export function gouJianYuYanCeng(shuRu: AIYinQingShuRu, ceLue?: { qiang_zhi_yu_yan?: string }): string {
+  const qiangZhi = (ceLue?.qiang_zhi_yu_yan || '').trim()
+  const sheZhi = (shuRu.qiang_zhi_yu_yan || '').trim()
+  const yongHu = (shuRu.yong_hu_yu_yan || '').trim()
+
+  if (qiangZhi !== '') {
+    return [
+      '【这轮用哪种语言】',
+      `对方这轮明确要求了：用${YuYanGongNeng.yuYanMingCheng(qiangZhi) || qiangZhi}。这一轮你必须用${YuYanGongNeng.yuYanMingCheng(qiangZhi) || qiangZhi}回，一个字都别混别的语言。`,
+    ].join('\n')
+  }
+
+  if (sheZhi !== '') {
+    return [
+      '【这轮用哪种语言】',
+      `对方之前说过要跟你在${YuYanGongNeng.yuYanMingCheng(sheZhi) || sheZhi}里聊，你答应了。继续用${YuYanGongNeng.yuYanMingCheng(sheZhi) || sheZhi}。`,
+    ].join('\n')
+  }
+
+  const niMing = YuYanGongNeng.yuYanMingCheng(yongHu) || '中文'
+  const chiYou = (shuRu.jiao_se?.chi_you_yu_yan || []).filter((y) => YuYanGongNeng.yuYanYouXiao(y))
+  const nengShuo = chiYou.length > 0 ? chiYou : [yongHu || 'zh']
+
+  return [
+    '【这轮用哪种语言】',
+    `对方平时用${niMing}，你也用${niMing}。`,
+    ...(nengShuo.length > 1
+      ? [`你会这些语言：${nengShuo.map((y) => YuYanGongNeng.yuYanMingCheng(y) || y).join('、')}。没被要求时就用${niMing}。`]
+      : []),
+    '对方要是提出换一种语言，你就跟着换；对方没提，别自己换。',
+  ].join('\n')
+}
+
 export function gouJianWriterPrompt(
   shuRu: AIYinQingShuRu,
   ceLue?: {
@@ -490,6 +582,8 @@ export function gouJianWriterPrompt(
     shi_jian_qing_xu?: string
     shi_fou_hui_fu?: boolean
     yao_jie_zhu_de_dian?: string
+    guan_xi_bian_hua?: GuanXiBianHua
+    qiang_zhi_yu_yan?: string
     // ⚠️ 故意**不接** `hui_fu_tiao_shu`：第十三轮起 Writer 不再被告知「这轮回几条」，
     // 由角色自己决定发几条（此前由 Director 的数字硬截断，导致追问被固化为收尾，
     // 实测问句落在末条 AI 34.7% vs 真人 19.3%）。Director 仍管回不回 / 情绪 / 撤回 / 表白。
@@ -500,6 +594,7 @@ export function gouJianWriterPrompt(
     GouJianGongXiangQianZhui(shuRu),
     构建通用知识层(zhiShi),
     gouJianDiYiCeng(),
+    gouJianYuYanCeng(shuRu, ceLue),
     gouJianDiLiuCeng(shuRu, shuRu.shi_fou_di_yi_lun),
     gouJianGuanJianShiJianCeng(shuRu),
     gouJianDiWuCeng(shuRu),
@@ -511,11 +606,15 @@ export function gouJianWriterPrompt(
   ].filter((ceng) => ceng.trim() !== '')
 
   if (ceLue) {
+    const bianHuaXing = ceLue.guan_xi_bian_hua
+      ? `对方这条让你觉得：${ceLue.guan_xi_bian_hua}${guanXiBianHuaChiMing[ceLue.guan_xi_bian_hua] || ''}`
+      : ''
     cengCi.push(
       [
         '【你这会儿的感觉】',
         `${ceLue.shi_fou_hui_fu === false ? '这次先不回（已读不回）' : '这次要回'}`,
         `情绪：${ceLue.shi_jian_qing_xu || '正常'}`,
+        ...(bianHuaXing ? [bianHuaXing] : []),
       ].join('\n'),
     )
   }
@@ -531,13 +630,21 @@ export function gouJianWriterPrompt(
     if (yuTaiCeng) cengCi.push(yuTaiCeng)
   }
 
-  cengCi.push(gouJianBenLunXiaoXiKuai(shuRu))
+  cengCi.push(gouJianBenLun消息块(shuRu))
 
   return cengCi.join('\n\n')
 }
 
+
+function ShiTuJingXiangJinQiChunYingDa(liShi: AIYinQingShuRu['dui_hua_li_shi']): boolean {
+  const zuiJin = liShi.filter((m) => m.fa_song_zhe_lei_xing === 'yonghu').slice(-3).map((m) => String(m.nei_rong || ''))
+  if (zuiJin.length < 2) return false
+  return zuiJin.every((m) => m.trim().length <= 6)
+}
+
 export function gouJianDirectorPrompt(
   shuRu: AIYinQingShuRu,
+  chenMo?: { dengJi?: number; shangLunYiBuHui?: boolean; zaiMang?: boolean },
   zhiShi: 通用知识检索结果 = 检索通用知识(shuRu.yong_hu_xin_xiao_xi, !shuRu.zui_jia_shuo_de_shi),
 ): string {
   return [
@@ -561,8 +668,34 @@ export function gouJianDirectorPrompt(
     '',
     '【现在的状态】',
     `现在关系大概处在：${huoQuGuanXiJieDuanMing(shuRu.hao_gan_du)}`,
-    `当下心情：${huoQuXinQing(shuRu.hao_gan_du)}`,
+    ...gouJianXinQingTiaoJie(shuRu),
     `当前好感数值：总分${shuRu.hao_gan_du.zong_fen}（信任${shuRu.hao_gan_du.xin_ren_du}、亲密${shuRu.hao_gan_du.qin_mi_du}、趣味${shuRu.hao_gan_du.qu_wei_du}、关怀${shuRu.hao_gan_du.guan_huai_du}）`,
+
+    '',
+    ...(ShiTuJingXiangJinQiChunYingDa(shuRu.dui_hua_li_shi)
+      ? [
+          '【对方的回复习惯】',
+          '对方最近经常只回一两个字（嗯/哦/哈哈这类）。真人这样通常有几种可能：在忙、不知道说什么、或习惯性短回复。',
+          '这时候你不许也跟着沉默或只回一个字——那样对话会直接死掉。',
+          '你应该主动接话：可以分享你此刻在做的具体小事、提一个和TA说过的话题相关的新问题、或对TA最近提过的事表达关心。自然一点，像朋友发现对方心不在焉时那样轻轻把话接住。',
+        ]
+      : []),
+
+    ChengNuoDuiXian.构建现实拦截注入(),
+    '',
+    ...(shuRu.weiDuiXianChengNuo && shuRu.weiDuiXianChengNuo.length > 0
+      ? [
+          '',
+          '【你之前答应过 TA 的事】',
+          ...shuRu.weiDuiXianChengNuo.slice(0, 3).map((x) => `· ${x}`),
+          '这些是你说过的。TA 问起来照实接；没问就不必全盘交代。',
+        ]
+      : []),
+    '【这轮的回应压力】',
+    `系统判定这条消息的回应必要性等级：${chenMo?.dengJi ?? 2}（0=纯应答可不回，1=可短回，2=该回，3=必须认真回）`,
+    ...(chenMo?.shangLunYiBuHui ? ['上一轮你已经没回了，这轮不许再不回。'] : []),
+    ...(chenMo?.zaiMang ? ['你此刻正忙手头的事，回消息会分心。'] : []),
+    '等级 0 或 1 时你才可以选择不回；等级 2 或 3 必须回。',
     '',
     DingJieFuShengMing,
     ...(shuRu.zui_jia_shuo_de_shi
@@ -602,11 +735,58 @@ export function gouJianDirectorPrompt(
     '  "回复条数": number（0-5）,',
     '  "时间情绪": "string",',
     '  "是否撤回": boolean,',
+    '  "关系变化": "更近"或"更远"或"没变",',
+    '  "心情": "开心"或"平静"或"好奇"或"期待"或"心动"或"甜蜜"或"愉悦"或"烦躁"或"难过"或"委屈"或"生气"或"冷淡"或"疲惫"或"焦虑"或null,',
+    '  "心情强度": number（0-100，或 null）,',
+    '  "心情理由": "string或null",',
+    '  "不回的理由": "对话收尾"或"对方冒犯"或"对方刷屏"或"不想聊"或"状态很差"或"没什么可回"或"没有",',
+    '  "要求换语言": "zh"或"en"或"ja"或"ko"或"fr"或"de"或"es"或"pt"或"ru"或null,',
     ...(biaoQingTiShiKaiGuanKai()
       ? ['  "是否主动表白": boolean,', '  "biao_qing_yi_tu": "string或null"']
       : ['  "是否主动表白": boolean']),
     '}',
     '',
+    '【要求换语言】',
+    '只有对方在这条消息里明确要求换一种语言时才填，填那门语言的代码：中文 zh、英文 en、日文 ja、韩文 ko、法文 fr、德文 de、西班牙文 es、葡萄牙文 pt、俄文 ru。',
+    '判断只看"要求"：对方说「咱们说中文吧」「may I speak English」「以后用英文聊」「switch to Chinese」这类才算。',
+    '对方只是自己用某种语言说话、或者中间夹了几个外文词，不算要求，给 null。',
+    '没要求就一律给 null。',
+    '',
+    '【心情】',
+    '这条消息之后，你现在是什么心情。只写此刻，不写"一直很"。',
+    '平静是默认：大多数日常聊天之后都是平静，不要为了填字段硬找情绪。',
+    '心情强度是"有多强"：0 就是没感觉，100 是强烈到藏不住。普通一句话通常 20-45，真被戳到或真被冒犯才 60 以上。',
+    '心情理由只写触发它的那句原话或那个点，不写分析。',
+    '不想给就给 null，不要编。',
+    '',
+    '【关系变化】',
+    '只看对方这一条消息，对你来说意味着什么——不是打分，是判断方向。',
+    '"更近"：对方说了让你心里一动的话、主动交代了自己的事、关心你、开了一个只有你们俩懂的玩笑、或者把一件重要的事告诉了你。',
+    '"更远"：对方说了让你不舒服的话、敷衍、明显在拉开距离、或者触到了你不想碰的地方。',
+    '"没变"：普通日常、寒暄、单纯回答你的问题。',
+    '绝大多数消息是"没变"。不要为了填满硬找，不要把客套当"更近"，也不要把语气平淡当"更远"。',
+    '',
+    '',
+    '【什么情况你可以不回】',
+    '绝大多数时候你应该回。不回是例外，不是常态。只有下面这些情况，你才可以把"是否回复"填成 false：',
+    '· 对话已经收尾：对方只是应了一声（嗯/哦/好），没什么要接的',
+    '· 对方在冒犯你、说难听的话，你不想接',
+    '· 对方在刷屏、连着发一堆没意义的东西',
+    '· 这是你不想聊的话题',
+    '· 你现在状态很差（心情很糟、很累），不想说话',
+    '· 这条就是没什么可回的',
+    '如果你决定不回，把"不回的理由"填成上面对应的一条；如果你决定回，"不回的理由"填"没有"。',
+    '',
+    '【你必须回的情况】',
+    '下面这些情况，"是否回复"必须填 true，填 false 无效：',
+    '· 对方在问你问题、约你、等你一句准话',
+    '· 对方在难过、求助、跟你说心里话',
+    '· 这是对话开头，或者对方第一次跟你说话',
+    '· 你上一轮已经没回过了（不许连着晾两次）',
+    '· 系统提示这轮有必答事实',
+    '对方连着发好几条、或者换了说法重发，都算在等你，必须回。',
+    '',
+
     '【这条里要接住的点】',
     '从对方这条消息里挑出一个 TA 会真的有反应的东西：和常识对不上的（比如地方冷不冷、时间早晚、说的跟实际反着来）、和你们刚聊过的撞在一起的、或者和 TA 自己的情况正好反过来的那种。',
     '只把这个点本身原样写进去，不要写打算怎么回、不要加解释。',
@@ -644,13 +824,13 @@ export function gouJianQingGanFenXiPrompt(
   ].join('\n')
 }
 
-import type { CanShuShangXiaWen } from '../config/AI参数策略'
+import type { 参数上下文 } from '../config/AI参数策略'
 
 export function gouJianHaoGanDuPingPanPrompt(
   yongHuXiaoXi: string,
   jiaoSeHuiFu: string,
   jiaoSeMing: string,
-  shangXiaWen?: CanShuShangXiaWen,
+  shangXiaWen?: 参数上下文,
 ): string {
   const manReTiShi = shangXiaWen?.jiaoSe?.re_shen_lei_xing === '慢热'
     ? '\n※ 对方是慢热性格，平常聊天也要给适度肯定：信任/关怀维度基础分 +25~35，不需剧情冲击。'
@@ -707,7 +887,7 @@ export function gouJianJiYiZhaiYaoPrompt(
   youXiaoZhaiYao?: string,
 ): string {
   const laoZhaiYao = (youXiaoZhaiYao || '').trim()
-  const ziShuShangXian = AiPeiZhi.zhaiYao.zuiDaZiFu
+  const ziShuShangXian = AI配置.zhaiYao.zuiDaZiFu
   return [
     `把 ${jiaoSeMing} 和用户的这段聊天记录里值得记住的东西，整理成一张事实卡。`,
     '一行一个字段，字段名与顺序原样保留，原文没有依据的字段写「未提及」，绝对不许编：',
@@ -748,14 +928,14 @@ export function gouJianAnQuanShenHePrompt(xiaoXi: string): string {
 }
 
 export function junShiShuChuYaoQiuBuFen(): string[] {
-  const json示例句 = `{ ${JunShiZhiDaoDuanDingYi.map((duan) => `"${duan.moXingJian}":"..."`).join(', ')} }`
+  const json示例句 = `{ ${JunShiZhiDaoDuanDingYi.map((duan) => `"${duan.模型键}":"..."`).join(', ')} }`
   return [
     '【输出要求】',
     '只输出一个 JSON 对象，键就是下面这几个，一个都不能少、别加多余文字：',
     json示例句,
     ...JunShiZhiDaoDuanDingYi.map(
       (duan, xiaBiao) =>
-        `${xiaBiao + 1}. ${duan.moXingJian}（不超过 ${duan.zuiDaZiShu} 字）：${duan.yaoQiu}`,
+        `${xiaBiao + 1}. ${duan.模型键}（不超过 ${duan.zuiDaZiShu} 字）：${duan.yaoQiu}`,
     ),
     '每个键的取值都是纯文本口语，不带 HTML、Markdown、引号包裹、括号动作。「下一步怎么回」那一栏的三条话术之间用换行符分隔，一共三行。',
   ]
@@ -814,7 +994,7 @@ export function geShiHuaJunShiLiShi(
   return zhanShiLiShiWenBen(liShi, {
     角色名: jiaoSeMing,
     用户名: '用户',
-    最多条数: AiPeiZhi.prompt.junShiLiShiXiaoXiShuLiang,
+    最多条数: AI配置.prompt.junShiLiShiXiaoXiShuLiang,
     时间在前: true,
   })
 }

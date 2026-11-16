@@ -11,8 +11,8 @@ import { huoQuNiChengKu } from '../utils/昵称解析'
 import { 剥离控制字符 } from '../utils/控制字符'
 import { 内部转展示, 落库性别或拒绝, 读回性别, 性别内部形态列表, type 性别内部形态 } from '../utils/性别'
 import {
-  type MBTILeiXing,
-  type ShenFenLeiXing,
+  type MBTI类型 as MBTILeiXing,
+  type 身份类型 as ShenFenLeiXing,
   mbtiLieBiao,
   mbtiZhongWenMing,
   nanXingMingZiKu,
@@ -51,7 +51,7 @@ import {
   获取默认音色,
 } from '../config/角色配置'
 import { XueKeTongYiCi, ZhiYeTongYiCi } from '../config/职业同义词'
-import { baoCunJiaoSeXiaoXi } from './AI输入准备'
+import { 保存角色XiaoXi } from './AI输入准备'
 import { shengChengKaiChangBai } from './开场白生成'
 
 const RenSheWenBenZuiDaChangDu = 500
@@ -113,6 +113,10 @@ export const JiaoSeYinSiZiDuan: readonly (keyof ShengChengJiaoSeJieGuo)[] = [
   'xi_tong_ti_shi',
   'ba_da_mo_kuai',
 ]
+export const 角色隐私字段 = JiaoSeYinSiZiDuan
+export const 待确认角色键 = daiQueRenJiaoSeJian
+export const 缓存待确认角色 = huanCunDaiQueRenJiaoSe
+export const 读待确认角色 = duQuDaiQueRenJiaoSe
 
 const RenSheWenBenXingZiDuan: ReadonlySet<string> = new Set([
   'ming_zi', 'wei_xin_ming', 'zhen_shi_ming', 'shen_fen', 'wai_mao', 'xing_ge',
@@ -986,7 +990,7 @@ export async function baoCunJiaoSe(
     if (yaoKaiKou) {
       for (const neiRong of kaiChangBai.xiao_xi_lie_biao.slice(0, 5)) {
         if (neiRong.trim()) {
-          await baoCunJiaoSeXiaoXi({
+          await 保存角色XiaoXi({
             yong_hu_id: yongHuId,
             jiao_se_id: jiaoSeId,
             nei_rong: neiRong.trim(),

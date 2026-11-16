@@ -72,12 +72,12 @@ function duQuQiPao(sheZhi: Record<string, unknown>, jian: string, moRen: string)
   return shiHeFaQiPao(zhi) ? String(zhi) : moRen
 }
 
-async function queBaoSheZhiHang(yongHuId: string): Promise<Record<string, unknown>> {
+async function queBaoSheZhiHang(用户ID: string): Promise<Record<string, unknown>> {
   await 数据库.query(
     `INSERT INTO "用户设置" ("用户ID") VALUES ($1) ON CONFLICT ("用户ID") DO NOTHING`,
-    [yongHuId],
+    [用户ID],
   )
-  const jieGuo = await 数据库.query(`SELECT * FROM "用户设置" WHERE "用户ID" = $1 LIMIT 1`, [yongHuId])
+  const jieGuo = await 数据库.query(`SELECT * FROM "用户设置" WHERE "用户ID" = $1 LIMIT 1`, [用户ID])
   return jieGuo.rows[0] as Record<string, unknown>
 }
 
@@ -86,7 +86,7 @@ async function jieShouTuPianShangChuan(
   xiangYing: Response,
   weiGuiLeiXing: string,
   chengGong: (
-    yongHuId: string,
+    用户ID: string,
     jieGuo: MeiTiBaoCunJieGuo,
   ) => Promise<Record<string, unknown>> | Record<string, unknown>,
 ): Promise<void> {
@@ -95,7 +95,7 @@ async function jieShouTuPianShangChuan(
     shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
     return
   }
-  const shangChuanFengJin = await chaXunZhangHaoFengJin(yongHu.yongHuId)
+  const shangChuanFengJin = await chaXunZhangHaoFengJin(yongHu.用户ID)
   if (shangChuanFengJin.beiFengJin) {
     shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'zhangHaoYiBeiFengJin'))
     return
@@ -125,11 +125,11 @@ async function jieShouTuPianShangChuan(
         xinXi.filename || 'wai-guan-tu-pian',
         xinXi.mimeType || '',
         'tupian',
-        yongHu.yongHuId,
+        yongHu.用户ID,
       )
         .then(async (jieGuo) => {
           try {
-            const shuJu = await chengGong(yongHu.yongHuId, jieGuo)
+            const shuJu = await chengGong(yongHu.用户ID, jieGuo)
             huiYing(() => chengGongXiangYing(xiangYing, shuJu))
           } catch (cuoWu) {
             if (cuoWu instanceof WaiGuanCuoWu) {
@@ -145,7 +145,7 @@ async function jieShouTuPianShangChuan(
             const chuCan = panDingMeiTiShenHeChuCan(String(cuoWu.fanYiJian))
             if (chuCan.xuYaoJiWeiGui) {
               await jiLuZhangHaoWeiGui({
-                yongHuId: yongHu.yongHuId,
+                用户ID: yongHu.用户ID,
                 ip: 获取IP(qingQiu),
                 yuanYin: String(cuoWu.fanYiJian),
                 leiXing: weiGuiLeiXing,
@@ -179,43 +179,43 @@ luYou.get('/', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Resp
   const yongHu = qingQiu.yong_hu
   if (!yongHu) return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
   try {
-    const sheZhi = await queBaoSheZhiHang(yongHu.yongHuId)
+    const sheZhi = await queBaoSheZhiHang(yongHu.用户ID)
     const yongHuHang = await 数据库.query(
       `SELECT "ID", "手机号", "用户名", "昵称", "头像", "签名", "签名可见性", "签名白名单" FROM "用户" WHERE "ID" = $1 LIMIT 1`,
-      [yongHu.yongHuId],
+      [yongHu.用户ID],
     )
     const hang = yongHuHang.rows[0] as Record<string, unknown> | undefined
-    const baiMingDanRaw = hang?.['签名白名单']
+    const 白名单Raw = hang?.['签名白名单']
     const { tiQuMeiTiSha } = await import('../services/媒体存储')
     const cunChuBeiJing = String(sheZhi['聊天背景'] || 'moRen')
     const beiJingSha = tiQuMeiTiSha(cunChuBeiJing)
-    const zhanShiBeiJing = beiJingSha ? zhongXinQianMingMeiTiURL(cunChuBeiJing, yongHu.yongHuId) || 'moRen' : cunChuBeiJing
+    const zhanShiBeiJing = beiJingSha ? zhongXinQianMingMeiTiURL(cunChuBeiJing, yongHu.用户ID) || 'moRen' : cunChuBeiJing
     const cunChuQian = String(sheZhi['聊天背景浅色'] || '')
     const cunChuShen = String(sheZhi['聊天背景深色'] || '')
     const jieSuoBeiJing = (cunChu: string): string => {
       const luoKu = cunChu || cunChuBeiJing
       const sha = tiQuMeiTiSha(luoKu)
-      return sha ? zhongXinQianMingMeiTiURL(luoKu, yongHu.yongHuId) || 'moRen' : luoKu
+      return sha ? zhongXinQianMingMeiTiURL(luoKu, yongHu.用户ID) || 'moRen' : luoKu
     }
     const zhanShiQian = jieSuoBeiJing(cunChuQian)
     const zhanShiShen = jieSuoBeiJing(cunChuShen)
     const duiXiang = await 数据库.query(
       `SELECT "ID", "头像" FROM "角色" WHERE "用户ID" = $1 ORDER BY "创建时间" DESC LIMIT 1`,
-      [yongHu.yongHuId],
+      [yongHu.用户ID],
     )
     const duiXiangHang = duiXiang.rows[0] as Record<string, unknown> | undefined
     const duiXiangTouXiangCun = duiXiangHang?.['头像'] ? String(duiXiangHang['头像']) : ''
     const duiXiangTouXiang = duiXiangTouXiangCun
-      ? zhongXinQianMingMeiTiURL(duiXiangTouXiangCun, yongHu.yongHuId) || duiXiangTouXiangCun
+      ? zhongXinQianMingMeiTiURL(duiXiangTouXiangCun, yongHu.用户ID) || duiXiangTouXiangCun
       : null
     const waiGuan = guiYiCunChuShuJu(sheZhi['外观自定义'])
     return chengGongXiangYing(xiangYing, {
-      uid: yongHu.yongHuId,
+      uid: yongHu.用户ID,
       shou_ji_hao: String(hang?.['手机号'] || ''),
       tou_xiang: hang?.['头像'] ? String(hang['头像']) : null,
       qian_ming: hang?.['签名'] ? String(hang['签名']) : null,
       qian_ming_ke_jian_xing: typeof hang?.['签名可见性'] === 'string' ? String(hang['签名可见性']) : 'gong_kai',
-      qian_ming_bai_ming_dan: Array.isArray(baiMingDanRaw) ? baiMingDanRaw.map((x) => String(x)) : [],
+      qian_ming_bai_ming_dan: Array.isArray(白名单Raw) ? 白名单Raw.map((x) => String(x)) : [],
       liao_tian_bei_jing: zhanShiBeiJing,
       liao_tian_bei_jing_qian: zhanShiQian,
       liao_tian_bei_jing_shen: zhanShiShen,
@@ -225,7 +225,7 @@ luYou.get('/', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Resp
       gong_kai_shou_ji_hao: sheZhi['公开手机号'] === true,
       gong_kai_you_xiang: sheZhi['公开邮箱'] === true,
       bang_ding_you_xiang: String(sheZhi['绑定邮箱'] || ''),
-      wai_guan: shengChengChuCan(waiGuan, yongHu.yongHuId),
+      wai_guan: shengChengChuCan(waiGuan, yongHu.用户ID),
       dui_xiang_jiao_se_id: duiXiangHang ? String(duiXiangHang['ID']) : null,
       dui_xiang_tou_xiang: duiXiangTouXiang,
     })
@@ -246,23 +246,23 @@ luYou.put('/聊天背景', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xia
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
   }
   try {
-    await queBaoSheZhiHang(yongHu.yongHuId)
+    await queBaoSheZhiHang(yongHu.用户ID)
     const { tiQuMeiTiSha: tiQuSha, shengChengMeiTiYinYong } = await import('../services/媒体存储')
     let luoKuZhi = beiJing
     const beiJingSha = tiQuSha(beiJing)
     if (beiJingSha) {
-      const guiShu = await 数据库.query(`SELECT 1 FROM "媒体文件" WHERE "SHA256" = $1 AND "上传者ID" = $2 LIMIT 1`, [beiJingSha, yongHu.yongHuId])
+      const guiShu = await 数据库.query(`SELECT 1 FROM "媒体文件" WHERE "SHA256" = $1 AND "上传者ID" = $2 LIMIT 1`, [beiJingSha, yongHu.用户ID])
       if (guiShu.rows.length === 0) {
         return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'meiTiWuQuanXian'))
       }
       luoKuZhi = shengChengMeiTiYinYong(beiJingSha)
     }
     if (moShi === 'qian') {
-      await 数据库.query(`UPDATE "用户设置" SET "聊天背景浅色" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [luoKuZhi, yongHu.yongHuId])
+      await 数据库.query(`UPDATE "用户设置" SET "聊天背景浅色" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [luoKuZhi, yongHu.用户ID])
     } else if (moShi === 'shen') {
-      await 数据库.query(`UPDATE "用户设置" SET "聊天背景深色" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [luoKuZhi, yongHu.yongHuId])
+      await 数据库.query(`UPDATE "用户设置" SET "聊天背景深色" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [luoKuZhi, yongHu.用户ID])
     } else {
-      await 数据库.query(`UPDATE "用户设置" SET "聊天背景" = $1, "聊天背景浅色" = $1, "聊天背景深色" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [luoKuZhi, yongHu.yongHuId])
+      await 数据库.query(`UPDATE "用户设置" SET "聊天背景" = $1, "聊天背景浅色" = $1, "聊天背景深色" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [luoKuZhi, yongHu.用户ID])
     }
     return chengGongXiangYing(xiangYing, { cheng_gong: true })
   } catch (cuoWu) {
@@ -272,32 +272,35 @@ luYou.put('/聊天背景', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xia
 })
 
 luYou.post('/聊天背景/上传', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
-  await jieShouTuPianShangChuan(qingQiu, xiangYing, '聊天背景', (yongHuId, jieGuo) => {
-    return { bei_jing: shengChengQianMingURL(jieGuo.sha256, yongHuId) }
+  await jieShouTuPianShangChuan(qingQiu, xiangYing, '聊天背景', (用户ID, jieGuo) => {
+    return { bei_jing: shengChengQianMingURL(jieGuo.sha256, 用户ID) }
   })
 })
 
 luYou.post('/外观/上传', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
-  await jieShouTuPianShangChuan(qingQiu, xiangYing, '自定义外观', (yongHuId, jieGuo) => {
-    return { tu_di_zhi: shengChengQianMingURL(jieGuo.sha256, yongHuId) }
+  await jieShouTuPianShangChuan(qingQiu, xiangYing, '自定义外观', (用户ID, jieGuo) => {
+    return { tu_di_zhi: shengChengQianMingURL(jieGuo.sha256, 用户ID) }
   })
 })
 
 luYou.post('/对象头像', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
-  await jieShouTuPianShangChuan(qingQiu, xiangYing, '对象头像', async (yongHuId, jieGuo) => {
+  await jieShouTuPianShangChuan(qingQiu, xiangYing, '对象头像', async (用户ID, jieGuo) => {
     const jiaoSe = await 数据库.query(
       `SELECT "ID" FROM "角色" WHERE "用户ID" = $1 ORDER BY "创建时间" DESC LIMIT 1`,
-      [yongHuId],
+      [用户ID],
     )
     if (jiaoSe.rows.length === 0) {
       throw new WaiGuanCuoWu(huoQuFanYi('sheZhi', 'duiXiangJiaoSeMeiYou'))
     }
     const jiaoSeId = String(jiaoSe.rows[0].ID)
     const yinYong = shengChengMeiTiYinYong(jieGuo.sha256)
-    await 数据库.query(`UPDATE "角色" SET "头像" = $1 WHERE "ID" = $2`, [yinYong, jiaoSeId])
+    await 数据库.query(
+      `UPDATE "角色" SET "头像" = $1, "头像描述" = $2, "情绪基调" = NULL, "头像版本" = COALESCE("头像版本", 0) + 1, "头像变更时间" = NOW() WHERE "ID" = $3`,
+      [yinYong, '用户上传了新头像，具体样子以图为准', jiaoSeId],
+    )
     return {
       dui_xiang_jiao_se_id: jiaoSeId,
-      dui_xiang_tou_xiang: zhongXinQianMingMeiTiURL(yinYong, yongHuId),
+      dui_xiang_tou_xiang: zhongXinQianMingMeiTiURL(yinYong, 用户ID),
     }
   })
 })
@@ -311,19 +314,19 @@ luYou.put('/外观', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing
     if (shaLie.length > 0) {
       const guiShu = await 数据库.query(
         `SELECT DISTINCT "SHA256" FROM "媒体文件" WHERE "SHA256" = ANY($1::text[]) AND "上传者ID" = $2`,
-        [shaLie, yongHu.yongHuId],
+        [shaLie, yongHu.用户ID],
       )
       const yiYou = new Set(guiShu.rows.map((hang) => String(hang.SHA256).toLowerCase()))
       if (shaLie.some((sha) => !yiYou.has(sha))) {
         return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'meiTiWuQuanXian'))
       }
     }
-    await queBaoSheZhiHang(yongHu.yongHuId)
+    await queBaoSheZhiHang(yongHu.用户ID)
     await 数据库.query(
       `UPDATE "用户设置" SET "外观自定义" = $1::jsonb, "更新时间" = NOW() WHERE "用户ID" = $2`,
-      [JSON.stringify(shuJu), yongHu.yongHuId],
+      [JSON.stringify(shuJu), yongHu.用户ID],
     )
-    return chengGongXiangYing(xiangYing, shengChengChuCan(shuJu, yongHu.yongHuId))
+    return chengGongXiangYing(xiangYing, shengChengChuCan(shuJu, yongHu.用户ID))
   } catch (cuoWu) {
     if (cuoWu instanceof WaiGuanCuoWu) {
       return shiBaiXiangYing(xiangYing, 400, cuoWu.fanYiJian)
@@ -346,12 +349,12 @@ luYou.put('/气泡', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'queShaoCanShu'))
   }
   try {
-    await queBaoSheZhiHang(yongHu.yongHuId)
+    await queBaoSheZhiHang(yongHu.用户ID)
     if (ziJi !== undefined) {
-      await 数据库.query(`UPDATE "用户设置" SET "气泡自己" = $1, "气泡已显式设置" = true, "更新时间" = NOW() WHERE "用户ID" = $2`, [String(ziJi), yongHu.yongHuId])
+      await 数据库.query(`UPDATE "用户设置" SET "气泡自己" = $1, "气泡已显式设置" = true, "更新时间" = NOW() WHERE "用户ID" = $2`, [String(ziJi), yongHu.用户ID])
     }
     if (ai !== undefined) {
-      await 数据库.query(`UPDATE "用户设置" SET "气泡AI" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [String(ai), yongHu.yongHuId])
+      await 数据库.query(`UPDATE "用户设置" SET "气泡AI" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [String(ai), yongHu.用户ID])
     }
     return chengGongXiangYing(xiangYing, { cheng_gong: true })
   } catch (cuoWu) {
@@ -373,15 +376,15 @@ luYou.put('/隐私', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing
   const gongKaiShouJi = quZhi('gongKaiShouJiHao', 'gong_kai_shou_ji_hao')
   const gongKaiYouXiang = quZhi('gongKaiYouXiang', 'gong_kai_you_xiang')
   try {
-    await queBaoSheZhiHang(yongHu.yongHuId)
+    await queBaoSheZhiHang(yongHu.用户ID)
     if (gongKaiZhangHao !== null) {
-      await 数据库.query(`UPDATE "用户设置" SET "公开账号" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [gongKaiZhangHao, yongHu.yongHuId])
+      await 数据库.query(`UPDATE "用户设置" SET "公开账号" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [gongKaiZhangHao, yongHu.用户ID])
     }
     if (gongKaiShouJi !== null) {
-      await 数据库.query(`UPDATE "用户设置" SET "公开手机号" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [gongKaiShouJi, yongHu.yongHuId])
+      await 数据库.query(`UPDATE "用户设置" SET "公开手机号" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [gongKaiShouJi, yongHu.用户ID])
     }
     if (gongKaiYouXiang !== null) {
-      await 数据库.query(`UPDATE "用户设置" SET "公开邮箱" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [gongKaiYouXiang, yongHu.yongHuId])
+      await 数据库.query(`UPDATE "用户设置" SET "公开邮箱" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`, [gongKaiYouXiang, yongHu.用户ID])
     }
     return chengGongXiangYing(xiangYing, { cheng_gong: true })
   } catch (cuoWu) {
@@ -394,10 +397,10 @@ luYou.post('/排位/清空', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, x
   const yongHu = qingQiu.yong_hu
   if (!yongHu) return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
   try {
-    await 数据库.query(`DELETE FROM "挑战积分" WHERE "用户ID" = $1`, [yongHu.yongHuId])
-    await 数据库.query(`DELETE FROM "挑战对局" WHERE "用户ID" = $1`, [yongHu.yongHuId])
-    await queBaoSheZhiHang(yongHu.yongHuId)
-    await 数据库.query(`UPDATE "用户设置" SET "清空排位时间" = NOW(), "更新时间" = NOW() WHERE "用户ID" = $1`, [yongHu.yongHuId])
+    await 数据库.query(`DELETE FROM "挑战积分" WHERE "用户ID" = $1`, [yongHu.用户ID])
+    await 数据库.query(`DELETE FROM "挑战对局" WHERE "用户ID" = $1`, [yongHu.用户ID])
+    await queBaoSheZhiHang(yongHu.用户ID)
+    await 数据库.query(`UPDATE "用户设置" SET "清空排位时间" = NOW(), "更新时间" = NOW() WHERE "用户ID" = $1`, [yongHu.用户ID])
     return chengGongXiangYing(xiangYing, { cheng_gong: true })
   } catch (cuoWu) {
     debug日志.error('用户设置接口', '清空排位赛数据失败', { xiang_qing: { cuo_wu: String(cuoWu) } })

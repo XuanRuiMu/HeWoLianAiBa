@@ -24,9 +24,9 @@ let diuQiShu = 0
 let chuangKouQiShiShiJian = 0
 let chuangKouYiTuiSong = 0
 
-async function panDuanKeGaoWei(yongHuId: string): Promise<boolean> {
+async function panDuanKeGaoWei(用户ID: string): Promise<boolean> {
   try {
-    return await anYongHuIdJuBeiNengLi(yongHuId, 'gao_we')
+    return await anYongHuIdJuBeiNengLi(用户ID, 'gao_we')
   } catch (cuoWu) {
     debug日志.error('日志推送Socket', '管理身份校验失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return false
@@ -97,7 +97,7 @@ export function chuShiHuaRiZhiTuiSongSocket(io: Server): void {
     if (!yongHu) return
 
     socket.on(ShiJianDingYueRiZhi, async (huiDiao?: (jieGuo: unknown) => void) => {
-      if (!(await panDuanKeGaoWei(yongHu.yongHuId))) return
+      if (!(await panDuanKeGaoWei(yongHu.用户ID))) return
       socket.join(riZhiTuiSongPeiZhi.fangJianMing)
       dingYueSocketJiHe.add(socket.id)
       qiDongGuanDao()
@@ -105,7 +105,7 @@ export function chuShiHuaRiZhiTuiSongSocket(io: Server): void {
     })
 
     socket.on(ShiJianQuXiaoRiZhi, async (huiDiao?: (jieGuo: unknown) => void) => {
-      if (!(await panDuanKeGaoWei(yongHu.yongHuId))) return
+      if (!(await panDuanKeGaoWei(yongHu.用户ID))) return
       socket.leave(riZhiTuiSongPeiZhi.fangJianMing)
       yiChuDingYue(socket.id)
       if (typeof huiDiao === 'function') huiDiao({ cheng_gong: true })

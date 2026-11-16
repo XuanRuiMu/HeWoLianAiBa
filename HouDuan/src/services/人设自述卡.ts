@@ -1,5 +1,5 @@
 import { debug日志 } from '../utils/debug日志'
-import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/DeepSeek客户端'
 import { 内部转展示 } from '../utils/性别'
 import { 数据库 } from '../数据库'
 import type { AIJiaoSeXinXi } from '../types'
@@ -51,7 +51,7 @@ export function yanZhengRenSheKa(wenBen: string): string | null {
 
 export async function shengChengRenSheKa(yaoSu: RenSheKaYaoSu, jiaoSeId: string): Promise<string | null> {
   try {
-    const xiangYing = await genJuPeiZhiTiaoYong('RenSheKa', [
+    const xiangYing = await 按配置调用('RenSheKa', [
       { jiaoSe: 'user', neiRong: zuZhuangYaoSuTiShiCi(yaoSu) },
     ])
     const heFa = yanZhengRenSheKa(xiangYing.neiRong)

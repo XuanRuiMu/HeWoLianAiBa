@@ -31,17 +31,17 @@ const ZiJie = 1024
 
 const MiaoBi = ZiJie * ZiJie
 
-export const BiaoQingBaoMuLuHuanJingBianLiang = 'BIAO_QING_BAO_MU_LU'
+export const 表情包目录环境变量 = 'BIAO_QING_BAO_MU_LU'
 
-export const BiaoQingBaoMuLuMing = '表情包'
+export const 表情包目录名 = '表情包'
 
-export const BiaoQingBaoMuLuShangXunCengShu = 6
+export const 表情包目录上层层数 = 6
 
-export const BiaoQingDaiDaBiao = '待打标'
+export const 表情待打标 = '待打标'
 
-export const BiaoQingAnPeiJsonHouZhui = '.json'
+export const 表情包标注Json后缀 = '.json'
 
-export const BiaoQingYunXingBiaoQian: readonly string[] = [
+export const 表情运行标签: readonly string[] = [
   '好笑',
   '感动',
   '无语',
@@ -56,9 +56,9 @@ export const BiaoQingYunXingBiaoQian: readonly string[] = [
   '委屈',
 ]
 
-export const BiaoQingTuPianHouZhui: readonly string[] = ['.png', '.jpg', '.jpeg', '.gif', '.webp']
+export const 表情图片后缀: readonly string[] = ['.png', '.jpg', '.jpeg', '.gif', '.webp']
 
-export const BiaoQingMimeYingShe: Readonly<Record<string, string>> = {
+export const 表情Mime映射: Readonly<Record<string, string>> = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -66,15 +66,15 @@ export const BiaoQingMimeYingShe: Readonly<Record<string, string>> = {
   '.webp': 'image/webp',
 }
 
-export const BiaoQingMoRenMime = 'application/octet-stream'
+export const 表情默认Mime = 'application/octet-stream'
 
-export const BiaoQingDuanMingZuiDaChang = 30
+export const 表情短名最大长 = 30
 
-export const BiaoQingMiaoShuZuiDaChang = 120
+export const 表情描述最大长 = 120
 
-export const BiaoQingShiYongChangJingZuiDaChang = 120
+export const 表情适用场景最大长 = 120
 
-export const BiaoQingZuiDaWenJianZiJie = quQiaDuanZhengShu(
+export const 表情最大文件字节 = quQiaDuanZhengShu(
   'BIAO_QING_BAO_ZUI_DA_WEN_JIAN_ZI_JIE',
   6 * MiaoBi,
   ZiJie,
@@ -83,6 +83,7 @@ export const BiaoQingZuiDaWenJianZiJie = quQiaDuanZhengShu(
 
 export const BiaoQingBaoYunXing = {
   houXuanShuLiang: quQiaDuanZhengShu('BIAO_QING_BAO_HOU_XUAN_SHU_LIANG', 8, 1, 50),
+  zuiJinChuangKou: quQiaDuanZhengShu('BIAO_QING_BAO_ZUI_JIN_CHUANG_KOU', 3, 0, 20),
   zuiDaMeiLunZhangShu: quZuiDaMeiLunZhangShu('BIAO_QING_BAO_ZUI_DA_MEI_LUN_ZHANG_SHU'),
   daKai: quHuanJingWenBen('BIAO_QING_BAO_AI_DA_KAI', 'true').toLowerCase() !== 'false',
   tieZhiHouDuanJianGe: {
@@ -98,7 +99,7 @@ export const BiaoQingTieZhiBiaoJi = {
   zuoKuoHao: ['[', '【'] as readonly string[],
   youKuoHao: [']', '】'] as readonly string[],
   duanMingZuiXiaoChangDu: 1,
-  duanMingZuiDaChangDu: BiaoQingDuanMingZuiDaChang,
+  duanMingZuiDaChangDu: 表情短名最大长,
   qingXiGuanJianCi: ['贴纸', '贴图', '表情包'] as readonly string[],
   qingXiKuoHao: [
     { zuo: '[', you: ']' },
@@ -167,31 +168,19 @@ export const BiaoQingMiDu = {
     waiXiang: 0.9,
     manReGangRenShi: 0.6,
   },
-  manReGangRenShiJieDuan: ['lengDan', 'shuYuan', 'renShi'] as readonly string[],
+  manReGangRenShiJieDuan: ['冷淡', '疏远', '认识'] as readonly string[],
   guanXiXiShu: {
-    lengDan: 0.4,
-    shuYuan: 0.4,
-    renShi: 0.6,
-    shuXi: 1,
-    pengYou: 1,
-    haoYou: 1.2,
-    aiMei: 1.5,
-    xinDong: 1.8,
-    reLian: 2,
-    shenAi: 2,
+    冷淡: 0.4,
+    疏远: 0.4,
+    认识: 0.6,
+    熟悉: 1,
+    朋友: 1,
+    好友: 1.2,
+    暧昧: 1.5,
+    心动: 1.8,
+    热恋: 2,
+    深爱: 2,
   },
-  guanXiJieDuanZhongWenMing: {
-    冷淡: 'lengDan',
-    疏远: 'shuYuan',
-    认识: 'renShi',
-    熟悉: 'shuXi',
-    朋友: 'pengYou',
-    好友: 'haoYou',
-    暧昧: 'aiMei',
-    心动: 'xinDong',
-    热恋: 'reLian',
-    深爱: 'shenAi',
-  } as Readonly<Record<string, string>>,
   huHui: {
     duiFangYou: 2,
     duiFangWu: 0.5,
@@ -208,31 +197,31 @@ export const BiaoQingMiDu = {
 
 export const BiaoQingYiTuWenAn = {
   biaoTi: '【表情包意图】',
-  dingYi: `biao_qing_yi_tu 只是本轮的心情底色，用来筛表情包候选，不决定发不发；发不发、图放在哪儿，由写手自己判断。取值：${BiaoQingYunXingBiaoQian.join('、')}，不想给就给 null。`,
+  dingYi: `biao_qing_yi_tu 只是本轮的心情底色，用来筛表情包候选，不决定发不发；发不发、图放在哪儿，由写手自己判断。取值：${表情运行标签.join('、')}，不想给就给 null。`,
   shiJi:
     '时机：接到好笑的事/对方自嘲/玩梗给「好笑」；对方分享喜事给「庆祝」；对方难过先写认真文字、可给「安慰」；答应请求或表达喜欢给「撒娇」；对方刚发表情包回敬时按对方那张的情绪给；话题接不下去给「破冰」。',
   weiJi: '对方严肃求助、情绪危机、深夜倾诉时不要给底色，这种场景只许认真文字。',
   pingFan: '普通日常聊天大部分时候不用给底色；没给也不代表不能发表情包，写手照样按自己的判断决定。',
 } as const
 
-export const BiaoQingFengGeBiaoQian: readonly string[] = ['黄脸', '祝福', '日常', '梗图']
+export const 表情风格标签: readonly string[] = ['黄脸', '祝福', '日常', '梗图']
 
-export const BiaoQingMoRenFengGe = '日常'
+export const 表情默认风格 = '日常'
 
-export const BiaoQingGuanXiJieDuanShunXu: readonly string[] = [
-  'lengDan',
-  'shuYuan',
-  'renShi',
-  'shuXi',
-  'pengYou',
-  'haoYou',
-  'aiMei',
-  'xinDong',
-  'reLian',
-  'shenAi',
+export const 表情关系阶段顺序: readonly string[] = [
+  '冷淡',
+  '疏远',
+  '认识',
+  '熟悉',
+  '朋友',
+  '好友',
+  '暧昧',
+  '心动',
+  '热恋',
+  '深爱',
 ]
 
-export const BiaoQingZaiTiPeiZhi = {
+export const 表情载体配置 = {
   nianLingFenDang: [
     { ming: '青年', nianLingShangXian: 44, yunXuFengGe: ['黄脸', '祝福', '日常', '梗图'], jianGeBeiLv: 1 },
     { ming: '中年', nianLingShangXian: 59, yunXuFengGe: ['黄脸', '祝福', '日常'], jianGeBeiLv: 1.2 },
@@ -248,7 +237,7 @@ export const BiaoQingZaiTiPeiZhi = {
     jianGeZuiDaBeiLv: 1.35,
   },
   moRenDangMing: '长辈',
-  zuiDiYunXuJieDuan: 'renShi',
+  zuiDiYunXuJieDuan: '认识',
   jinYongXiaoShiQiShi: 23,
   jinYongXiaoShiJieShu: 5,
   weiJiGuanJianCi: [

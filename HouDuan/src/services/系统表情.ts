@@ -1,10 +1,10 @@
 import { debug日志 } from '../utils/debug日志'
-import { baoCunJiaoSeMeiTiXiaoXi, type XiaoXiXinXi } from './消息'
-import { chaAnDuanMing, duanMingDaoUUID, quHouXuan, type BiaoQingKuTiaoMu } from './表情包库'
-import { BiaoQingShuLeiBie, LeiBieDaoXiaoXiLeiXing } from '../config/媒体配置'
+import { 保存角色媒体消息, type 消息信息 } from './消息'
+import { 按短名查, 短名转UUID, 候选系统表情, type 表情包条目 } from './表情包库'
+import { 表情书类别, 类别到消息类型 } from '../config/媒体配置'
 import {
   BiaoQingBaoYunXing,
-  BiaoQingDaiDaBiao,
+  表情待打标,
   BiaoQingFaSongShiJiWenAn,
   BiaoQingFaSongYuanYin,
   BiaoQingHouXuanWenAn,
@@ -25,7 +25,7 @@ export interface XiTongBiaoQingXiang {
 
 const RiZhiLeiXing = '系统表情'
 
-const BiaoQingXiaoXiLeiXing = LeiBieDaoXiaoXiLeiXing[BiaoQingShuLeiBie]
+const 表情消息类型 = 类别到消息类型[表情书类别]
 
 function tianChongMoBan(moBan: string, zhi: Readonly<Record<string, string>>): string {
   let jieGuo = moBan
@@ -35,13 +35,13 @@ function tianChongMoBan(moBan: string, zhi: Readonly<Record<string, string>>): s
   return jieGuo
 }
 
-function tieZhiWenBen(duanMing: string): string {
+function 贴纸文本(duanMing: string): string {
   return BiaoQingTieZhiShiLi.split(BiaoQingTieZhiZhanWei).join(duanMing)
 }
 
-function zhuangXiang(tiaoMu: BiaoQingKuTiaoMu): XiTongBiaoQingXiang {
+function zhuangXiang(tiaoMu: 表情包条目): XiTongBiaoQingXiang {
   return {
-    id: duanMingDaoUUID(tiaoMu.duanMing),
+    id: 短名转UUID(tiaoMu.duanMing),
     duanMing: tiaoMu.duanMing,
     miaoShu: tiaoMu.miaoShu,
     qingXuBiaoQian: tiaoMu.qingXuBiaoQian,
@@ -51,31 +51,33 @@ function zhuangXiang(tiaoMu: BiaoQingKuTiaoMu): XiTongBiaoQingXiang {
   }
 }
 
-export async function houXuanXiTongBiaoQing(
+export async function 候选包装(
   yiTu: string | null | undefined,
   shuLiang: number,
   jueCe?: BiaoQingZaiTiJueCe,
+  excludeDuanMing?: string[],
 ): Promise<XiTongBiaoQingXiang[]> {
-  const youXiaoYiTu = typeof yiTu === 'string' && yiTu.trim() !== '' ? yiTu.trim() : null
+  const 意化 = typeof yiTu === 'string' && yiTu.trim() !== '' ? yiTu.trim() : null
   try {
     const guoLv = jueCe
       ? { yunXuFengGe: jueCe.yunXuFengGe, guanXiJieDuanXuHao: jueCe.guanXiJieDuanXuHao }
       : undefined
+  const excludeArg = excludeDuanMing && excludeDuanMing.length > 0 ? excludeDuanMing : undefined
     const lieBiao = guoLv
-      ? await quHouXuan(youXiaoYiTu, shuLiang, guoLv)
-      : await quHouXuan(youXiaoYiTu, shuLiang)
+      ? await 候选系统表情(意化, shuLiang, guoLv, excludeArg)
+      : await 候选系统表情(意化, shuLiang, undefined, excludeArg)
     if (lieBiao.length === 0) {
       debug日志.warn(RiZhiLeiXing, '表情包库没有可用候选，本轮不给表情包', {
         xiang_qing: {
           yuan_yin: BiaoQingFaSongYuanYin.kuWeiKong,
-          qing_xu: youXiaoYiTu ?? '',
+          qing_xu: 意化 ?? '',
           qing_qiu_shu_liang: shuLiang,
         },
       })
       return []
     }
     debug日志.debug(RiZhiLeiXing, '表情包候选已就绪', {
-      xiang_qing: { qing_xu: youXiaoYiTu ?? '', hou_xuan_shu: lieBiao.length },
+      xiang_qing: { qing_xu: 意化 ?? '', hou_xuan_shu: lieBiao.length },
     })
     return lieBiao.map(zhuangXiang)
   } catch (cuoWu) {
@@ -89,12 +91,12 @@ export async function houXuanXiTongBiaoQing(
   }
 }
 
-export async function chaZhaoBiaoQingAnDuanMing(duanMing: string): Promise<XiTongBiaoQingXiang | null> {
+export async function 查找表情按短名(duanMing: string): Promise<XiTongBiaoQingXiang | null> {
   if (typeof duanMing !== 'string') return null
   const jianHua = duanMing.trim()
   if (jianHua === '') return null
   try {
-    const tiaoMu = await chaAnDuanMing(jianHua)
+    const tiaoMu = await 按短名查(jianHua)
     if (!tiaoMu) {
       debug日志.debug(RiZhiLeiXing, '贴纸短名未命中表情包库', {
         xiang_qing: { duan_ming: jianHua, yuan_yin: BiaoQingFaSongYuanYin.weiMingZhong },
@@ -120,34 +122,34 @@ export async function chaZhaoBiaoQingAnDuanMing(duanMing: string): Promise<XiTon
   }
 }
 
-export async function faSongBiaoQingBaoXiaoXi(
-  yongHuId: string,
+export async function 发送表情包消息(
+  用户ID: string,
   jiaoSeId: string,
   duanMing: string,
-): Promise<XiaoXiXinXi | null> {
+): Promise<消息信息 | null> {
   const jianHua = typeof duanMing === 'string' ? duanMing.trim() : ''
   if (jianHua === '') {
     debug日志.warn(RiZhiLeiXing, '贴纸指令没有短名，本条丢弃', {
-      yong_hu_id: yongHuId,
+      yong_hu_id: 用户ID,
       jiao_se_id: jiaoSeId,
       xiang_qing: { yuan_yin: BiaoQingFaSongYuanYin.weiMingZhong },
     })
     return null
   }
-  const biaoQing = await chaZhaoBiaoQingAnDuanMing(jianHua)
+  const biaoQing = await 查找表情按短名(jianHua)
   if (!biaoQing) return null
   try {
-    return await baoCunJiaoSeMeiTiXiaoXi({
-      yong_hu_id: yongHuId,
+    return await 保存角色媒体消息({
+      yong_hu_id: 用户ID,
       jiao_se_id: jiaoSeId,
-      nei_rong: tieZhiWenBen(biaoQing.duanMing),
-      lei_xing: BiaoQingXiaoXiLeiXing,
+      nei_rong: 贴纸文本(biaoQing.duanMing),
+      lei_xing: 表情消息类型,
       mei_ti_id: null,
       duan_ming: biaoQing.duanMing,
     })
   } catch (cuoWu) {
     debug日志.warn(RiZhiLeiXing, '表情包消息落库失败，本条丢弃', {
-      yong_hu_id: yongHuId,
+      yong_hu_id: 用户ID,
       jiao_se_id: jiaoSeId,
       xiang_qing: {
         duan_ming: biaoQing.duanMing,
@@ -159,9 +161,9 @@ export async function faSongBiaoQingBaoXiaoXi(
   }
 }
 
-export function zuZhuangBiaoQingHouXuanKuai(tiaoMuLieBiao: XiTongBiaoQingXiang[]): string {
+export function 组装表情候选块(tiaoMuLieBiao: XiTongBiaoQingXiang[]): string {
   if (tiaoMuLieBiao.length === 0) return ''
-  const shiLi = tieZhiWenBen(tiaoMuLieBiao[0].duanMing)
+  const shiLi = 贴纸文本(tiaoMuLieBiao[0].duanMing)
   const shuoMing = BiaoQingHouXuanWenAn.daiTiShuoMing.map((hang) =>
     tianChongMoBan(hang, {
       tie_zhi_shi_li: shiLi,
@@ -170,9 +172,9 @@ export function zuZhuangBiaoQingHouXuanKuai(tiaoMuLieBiao: XiTongBiaoQingXiang[]
   )
   const hangLieBiao = tiaoMuLieBiao.map((xiang) =>
     tianChongMoBan(BiaoQingHouXuanWenAn.hangMoBan, {
-      tie_zhi_shi_li: tieZhiWenBen(xiang.duanMing),
+      tie_zhi_shi_li: 贴纸文本(xiang.duanMing),
       miao_shu: xiang.miaoShu || BiaoQingHouXuanWenAn.moShuKong,
-      qing_xu: xiang.qingXuBiaoQian || BiaoQingDaiDaBiao,
+      qing_xu: xiang.qingXuBiaoQian || 表情待打标,
       chang_jing: xiang.shiYongChangJing || BiaoQingHouXuanWenAn.changJingKong,
     }),
   )
@@ -184,12 +186,13 @@ export function zuZhuangBiaoQingHouXuanKuai(tiaoMuLieBiao: XiTongBiaoQingXiang[]
   ].join('\n')
 }
 
-export async function shengChengBiaoQingHouXuanWenBen(
+export async function 生成表情候选文本(
   yiTu: string | null | undefined,
   jueCe?: BiaoQingZaiTiJueCe,
+  excludeDuanMing?: string[],
 ): Promise<string> {
   if (!BiaoQingBaoYunXing.daKai) return ''
   if (!jueCe || !jueCe.geiHouXuan) return ''
-  const lieBiao = await houXuanXiTongBiaoQing(yiTu, BiaoQingBaoYunXing.houXuanShuLiang, jueCe)
-  return zuZhuangBiaoQingHouXuanKuai(lieBiao)
+  const lieBiao = await 候选包装(yiTu, BiaoQingBaoYunXing.houXuanShuLiang, jueCe, excludeDuanMing)
+  return 组装表情候选块(lieBiao)
 }

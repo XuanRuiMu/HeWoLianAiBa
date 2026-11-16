@@ -15,7 +15,7 @@ function quZhengShu(zhi: unknown): number {
 }
 
 export async function huoQuHaoGanDuLeiJiBianHua(
-  yongHuId: string,
+  用户ID: string,
   jiaoSeId: string,
 ): Promise<HaoGanDuLeiJiBianHua> {
   const jieGuo = await 数据库.query(
@@ -28,7 +28,7 @@ export async function huoQuHaoGanDuLeiJiBianHua(
        COALESCE(SUM("总分变化"), 0)::integer AS "zongFen"
      FROM "好感度变化历史"
      WHERE "用户ID" = $1 AND "角色ID" = $2`,
-    [yongHuId, jiaoSeId],
+    [用户ID, jiaoSeId],
   )
   const hang = jieGuo.rows[0] ?? {}
   return {

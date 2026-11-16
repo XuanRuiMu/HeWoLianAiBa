@@ -18,7 +18,7 @@ vi.mock('../../数据库', () => ({
   数据库: { query: (...c: unknown[]) => chaXunMock(...c) },
 }))
 
-import { gouJianWriterPrompt, gouJianDiYiCeng, gouJianBenLunXiaoXiKuai } from '../Prompt构建器'
+import { gouJianWriterPrompt, gouJianDiYiCeng, gouJianBenLun消息块 } from '../Prompt构建器'
 import type { AIYinQingShuRu } from '../../types'
 import { jianChaTaoHua, panDuanTaoHuaCaiYang, TaoHuaPeiZhi } from '../../config/去AI味配置'
 import { chuLiQueXiKouJian, QueXiChuFaXiaoShi } from '../亲密度缺席扣减'
@@ -136,7 +136,7 @@ describe('FP-29 Writer提示词契约（缓存层序与去游戏化）', () => {
   })
 
   it('本轮用户消息进定界符且位于末尾', () => {
-    const kuai = gouJianBenLunXiaoXiKuai(zuZhuangShuRu())
+    const kuai = gouJianBenLun消息块(zuZhuangShuRu())
     expect(kuai).toContain('对方刚发给你的消息')
     expect(kuai).toContain('今天好累啊')
   })

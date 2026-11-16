@@ -18,7 +18,7 @@ export interface KeJianShangXiaWen {
   chaKanZheId: string | null
   yongYouZheId: string
   shiHaoYou: boolean
-  baiMingDan: string[]
+  白名单: string[]
 }
 
 export function panDuanKeJian(keJianXing: KeJianXing, wen: KeJianShangXiaWen): boolean {
@@ -32,7 +32,7 @@ export function panDuanKeJian(keJianXing: KeJianXing, wen: KeJianShangXiaWen): b
     case 'jin_hao_you':
       return wen.shiHaoYou
     case 'jin_bu_fen_ren':
-      return wen.chaKanZheId !== null && wen.baiMingDan.includes(wen.chaKanZheId)
+      return wen.chaKanZheId !== null && wen.白名单.includes(wen.chaKanZheId)
     case 'bu_ke_jian':
     case 'jin_zi_ji':
     default:
@@ -52,22 +52,22 @@ export async function chaXunShiHaoYou(a: string, b: string): Promise<boolean> {
 export interface QianMingKeJianXinXi {
   qianMing: string | null
   keJianXing: KeJianXing
-  baiMingDan: string[]
+  白名单: string[]
 }
 
-export async function duQuQianMingKeJianXinXi(yongHuId: string): Promise<QianMingKeJianXinXi | null> {
+export async function duQuQianMingKeJianXinXi(用户ID: string): Promise<QianMingKeJianXinXi | null> {
   const jieGuo = await 数据库.query(
     `SELECT "签名", "签名可见性", "签名白名单" FROM "用户" WHERE "ID" = $1 LIMIT 1`,
-    [yongHuId],
+    [用户ID],
   )
   if (!jieGuo.rows.length) return null
   const hang = jieGuo.rows[0] as Record<string, unknown>
   const keJianXingRaw = hang['签名可见性']
-  const baiMingDanRaw = hang['签名白名单']
+  const 白名单Raw = hang['签名白名单']
   return {
     qianMing: hang['签名'] ? String(hang['签名']) : null,
     keJianXing: shiHeFaKeJianXing(keJianXingRaw) ? keJianXingRaw : 'gong_kai',
-    baiMingDan: Array.isArray(baiMingDanRaw) ? baiMingDanRaw.map((x) => String(x)) : [],
+    白名单: Array.isArray(白名单Raw) ? 白名单Raw.map((x) => String(x)) : [],
   }
 }
 
@@ -82,7 +82,7 @@ export async function guoLvQianMing(
     chaKanZheId,
     yongYouZheId,
     shiHaoYou,
-    baiMingDan: xinXi.baiMingDan,
+    白名单: xinXi.白名单,
   })
   return keJian ? xinXi.qianMing : null
 }

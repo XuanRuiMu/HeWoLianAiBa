@@ -4,7 +4,7 @@ import { Readable } from 'stream'
 import { redis } from '../redis'
 import { 数据库 } from '../数据库'
 import { debug日志 } from '../utils/debug日志'
-import { caiDiaoPNGDiBu } from '../utils/PNG裁剪'
+import { 裁掉PNG底部 } from '../utils/PNG裁剪'
 import { 内部转展示 } from '../utils/性别'
 import { diaoYongShengTuJieKou } from './图像生成'
 import { liuShiBaoCunMeiTi, shengChengMeiTiYinYong } from './媒体存储'
@@ -13,8 +13,7 @@ import {
   TouXiangPeiZhi,
   MbtiQiZhi,
   JiDiaoQiZhi,
-  tuiDaoQingXuJiDiao,
-  qianJinJiDiao,
+  推导情绪基调,
   type TouXiangQiZhi,
   type QingXuJiDiao,
 } from '../config/头像配置'
@@ -96,8 +95,8 @@ function tuiDaoNianLingDang(nianLing: number): string {
   return '青年'
 }
 
-export function tuiDaoTouXiangQiZhi(mbti: string, xingGeWenBen?: string): TouXiangQiZhi {
-  const congXingGe = xingGeWenBen ? tuiDaoQingXuJiDiao(xingGeWenBen) : null
+export function 推导头像气质(mbti: string, xingGeWenBen?: string): TouXiangQiZhi {
+  const congXingGe = xingGeWenBen ? 推导情绪基调(xingGeWenBen) : null
   const congMbti = MbtiQiZhi[mbti]
   if (congXingGe === '阴郁') return '冷感'
   if (congMbti) return congMbti
@@ -113,7 +112,7 @@ function ziFuChuanHash(zhongZi: string): number {
   return haXi
 }
 
-export function xuanZeTouXiangFengGe(canShu: {
+export function 选择头像风格(canShu: {
   nianLing: number
   mbti: string
   xingGeWenBen?: string
@@ -125,7 +124,7 @@ export function xuanZeTouXiangFengGe(canShu: {
 }): TouXiangFengGeXuanZe | null {
   if (FengGeKu.风格.length === 0) return null
   const nianLingDang = tuiDaoNianLingDang(canShu.nianLing)
-  const qiZhi = canShu.jiDiao ? JiDiaoQiZhi[canShu.jiDiao] : tuiDaoTouXiangQiZhi(canShu.mbti, canShu.xingGeWenBen)
+  const qiZhi = canShu.jiDiao ? JiDiaoQiZhi[canShu.jiDiao] : 推导头像气质(canShu.mbti, canShu.xingGeWenBen)
   const shenFen = canShu.shenFen ?? ''
   const xiHao = canShu.xiHao ?? []
   const yiYong = new Set(canShu.yiYongFengGe ?? [])
@@ -154,7 +153,7 @@ export interface TouXiangTiShiCiZuZhuang {
   miaoShu: string
 }
 
-export function zuZhuangTouXiangTiShiCi(
+export function 组装头像提示词(
   xuanZe: TouXiangFengGeXuanZe,
   canShu: { nianLing: number; xingBie: string; waiMao: string; xiHao?: string[] },
 ): TouXiangTiShiCiZuZhuang {
@@ -195,7 +194,7 @@ export function zuZhuangTouXiangTiShiCi(
   return { prompt, negativePrompt, miaoShu: miaoShu.slice(0, 60) }
 }
 
-async function dengDaiShengChengDuiLie(): Promise<void> {
+async function 等待生成队列(): Promise<void> {
   const jian = 'tou_xiang_sheng_cheng_dui_lie'
   for (let ciShu = 0; ciShu < TouXiangPeiZhi.zhengPianZuiDaChangShiCiShu + 3; ciShu++) {
     const deDao = await redis.set(jian, '1', 'PX', TouXiangPeiZhi.paiDuiJianGeHaoMiao, 'NX')
@@ -211,13 +210,13 @@ export interface JiaoSeTouXiangJieGuo {
   yinYong?: string
 }
 
-export async function shengChengJiaoSeTouXiang(canShu: {
-  yongHuId: string
+export async function 生成角色头像(canShu: {
+  用户ID: string
   jiaoSeId: string
   jiaoSe: Pick<ShengChengJiaoSeJieGuo, 'nian_ling' | 'xing_bie' | 'mbti_lei_xing' | 'shen_fen' | 'wai_mao' | 'xi_hao' | 'xing_ge'>
   jiDiao?: QingXuJiDiao
 }): Promise<JiaoSeTouXiangJieGuo> {
-  const xuanZe = xuanZeTouXiangFengGe({
+  const xuanZe = 选择头像风格({
     nianLing: canShu.jiaoSe.nian_ling,
     mbti: canShu.jiaoSe.mbti_lei_xing,
     xingGeWenBen: canShu.jiaoSe.xing_ge,
@@ -229,14 +228,14 @@ export async function shengChengJiaoSeTouXiang(canShu: {
     debug日志.warn('头像生成', '风格库为空，跳过头像生成', { xiang_qing: { jiao_se_id: canShu.jiaoSeId } })
     return { chengGong: false }
   }
-  const zuZhuang = zuZhuangTouXiangTiShiCi(xuanZe, {
+  const zuZhuang = 组装头像提示词(xuanZe, {
     nianLing: canShu.jiaoSe.nian_ling,
     xingBie: canShu.jiaoSe.xing_bie,
     waiMao: canShu.jiaoSe.wai_mao,
     xiHao: canShu.jiaoSe.xi_hao,
   })
 
-  await dengDaiShengChengDuiLie()
+  await 等待生成队列()
   for (let ciShu = 0; ciShu < TouXiangPeiZhi.zhengPianZuiDaChangShiCiShu; ciShu++) {
     const jieGuo = await diaoYongShengTuJieKou({
       tiShiCi: zuZhuang.prompt,
@@ -249,13 +248,13 @@ export async function shengChengJiaoSeTouXiang(canShu: {
       })
       continue
     }
-    const caiJian = caiDiaoPNGDiBu(jieGuo.tuPianZiJie, TouXiangPeiZhi.caiDiBuBiLi)
+    const caiJian = 裁掉PNG底部(jieGuo.tuPianZiJie, TouXiangPeiZhi.caiDiBuBiLi)
     const cunChu = await liuShiBaoCunMeiTi(
       Readable.from(caiJian),
       `touxiang-${canShu.jiaoSeId}-${Date.now()}.png`,
       'image/png',
       'tupian',
-      canShu.yongHuId,
+      canShu.用户ID,
     )
     const yinYong = shengChengMeiTiYinYong(cunChu.sha256)
     await 数据库.query(`UPDATE "角色" SET "头像" = $1, "头像描述" = $2 WHERE "ID" = $3`, [
@@ -275,16 +274,16 @@ export async function shengChengJiaoSeTouXiang(canShu: {
 
 const YanHuaZhengJuQianZhui = 'tou_xiang_yan_hua_zheng_ju:'
 
-function yanHuaZhengJuJian(jiaoSeId: string): string {
+function 演化证据键(jiaoSeId: string): string {
   return `${YanHuaZhengJuQianZhui}${jiaoSeId}`
 }
 
-export async function jiLuTouXiangYanHuaZhengJu(
+export async function 记录头像演化证据(
   jiaoSeId: string,
   laiYuan: string,
 ): Promise<boolean> {
   try {
-    const jian = yanHuaZhengJuJian(jiaoSeId)
+    const jian = 演化证据键(jiaoSeId)
     const yiYou = await redis.lrange(jian, 0, -1)
     if (yiYou.includes(laiYuan)) return false
     await redis.lpush(jian, laiYuan)
@@ -297,54 +296,55 @@ export async function jiLuTouXiangYanHuaZhengJu(
   }
 }
 
-function suiJiShu(): number {
-  return Math.random()
-}
-
-export async function changShiTouXiangYanHua(canShu: {
-  yongHuId: string
+export async function 尝试头像演化(canShu: {
+  用户ID: string
   jiaoSeId: string
   laiYuan: string
+  guanXiYueQian?: boolean
 }): Promise<boolean> {
-  const yingGaiChuFa = await jiLuTouXiangYanHuaZhengJu(canShu.jiaoSeId, canShu.laiYuan)
-  if (!yingGaiChuFa) return false
-  if (suiJiShu() >= TouXiangPeiZhi.yanHuaChuFaGaiLv) return false
-
+  const yanHuaShangXian = 2
+  const yiYouVersion = await 数据库.query(`SELECT COALESCE("头像版本", 0) AS v FROM "角色" WHERE "ID" = $1 LIMIT 1`, [canShu.jiaoSeId])
+  if (Number(yiYouVersion.rows[0]?.v || 0) >= yanHuaShangXian) {
+    debug日志.info('头像生成', '头像演化已达硬上限，跳过', { xiang_qing: { jiao_se_id: canShu.jiaoSeId, yan_hua_shang_xian: yanHuaShangXian } })
+    return false
+  }
   const jiaoSeHang = await 数据库.query(
-    `SELECT "用户ID", "年龄", "性别", "MBTI", "性格", "身份", "外貌", "爱好", "头像描述", "情绪基调" FROM "角色" WHERE "ID" = $1 LIMIT 1`,
+    `SELECT "用户ID", "年龄", "性别", "MBTI", "性格", "预设类型", "外貌", "爱好", "头像描述", "情绪基调", "当前心情", "心情强度", "头像版本" FROM "角色" WHERE "ID" = $1 LIMIT 1`,
     [canShu.jiaoSeId],
   )
   const hang = jiaoSeHang.rows[0] as Record<string, unknown> | undefined
   if (!hang) return false
 
+  const xinQing = String(hang['当前心情'] || '')
+  const qiangDu = Number(hang['心情强度']) || 0
+  const chuFa = 判断演化出发(xinQing, qiangDu, canShu.laiYuan, canShu.guanXiYueQian === true)
+  if (!chuFa) return false
+
   const dangQianJiDiao = (typeof hang['情绪基调'] === 'string' && hang['情绪基调'] !== ''
     ? (hang['情绪基调'] as QingXuJiDiao)
-    : tuiDaoQingXuJiDiao(String(hang['性格'] || '')))
-  const xinJiDiao = qianJinJiDiao(dangQianJiDiao)
-  if (xinJiDiao === dangQianJiDiao) {
-    await redis.del(yanHuaZhengJuJian(canShu.jiaoSeId))
-    return false
-  }
+    : 推导情绪基调(String(hang['性格'] || '')))
+  const muBiaoJiDiao = 心情到基调(xinQing, dangQianJiDiao)
+  if (muBiaoJiDiao === dangQianJiDiao) return false
 
   const xiHao = Array.isArray(hang['爱好']) ? (hang['爱好'] as string[]) : []
-  const xuanZe = xuanZeTouXiangFengGe({
+  const xuanZe = 选择头像风格({
     nianLing: Number(hang['年龄']) || 20,
     mbti: String(hang['MBTI'] || ''),
-    shenFen: String(hang['身份'] || ''),
+    shenFen: String(hang['预设类型'] || ''),
     xiHao,
-    zhongZi: `${canShu.jiaoSeId}-${xinJiDiao}`,
-    jiDiao: xinJiDiao,
+    zhongZi: `${canShu.jiaoSeId}-${muBiaoJiDiao}`,
+    jiDiao: muBiaoJiDiao,
   })
   if (!xuanZe) return false
 
-  const zuZhuang = zuZhuangTouXiangTiShiCi(xuanZe, {
+  const zuZhuang = 组装头像提示词(xuanZe, {
     nianLing: Number(hang['年龄']) || 20,
     xingBie: String(hang['性别'] || 'nv'),
     waiMao: String(hang['外貌'] || ''),
     xiHao,
   })
 
-  await dengDaiShengChengDuiLie()
+  await 等待生成队列()
   const jieGuo = await diaoYongShengTuJieKou({
     tiShiCi: zuZhuang.prompt,
     fuMianTiShiCi: zuZhuang.negativePrompt,
@@ -352,24 +352,53 @@ export async function changShiTouXiangYanHua(canShu: {
   })
   if (!jieGuo.cheng_gong || !jieGuo.tuPianZiJie) return false
 
-  const caiJian = caiDiaoPNGDiBu(jieGuo.tuPianZiJie, TouXiangPeiZhi.caiDiBuBiLi)
+  const caiJian = 裁掉PNG底部(jieGuo.tuPianZiJie, TouXiangPeiZhi.caiDiBuBiLi)
   const cunChu = await liuShiBaoCunMeiTi(
     Readable.from(caiJian),
     `touxiang-yanhua-${canShu.jiaoSeId}-${Date.now()}.png`,
     'image/png',
     'tupian',
-    canShu.yongHuId,
+    canShu.用户ID,
   )
   const yinYong = shengChengMeiTiYinYong(cunChu.sha256)
-  await 数据库.query(`UPDATE "角色" SET "头像" = $1, "头像描述" = $2, "情绪基调" = $3 WHERE "ID" = $4`, [
+  await 数据库.query(`UPDATE "角色" SET "头像" = $1, "头像描述" = $2, "情绪基调" = $3, "头像版本" = COALESCE("头像版本", 0) + 1, "头像变更时间" = NOW() WHERE "ID" = $4`, [
     yinYong,
     zuZhuang.miaoShu,
-    xinJiDiao,
+    muBiaoJiDiao,
     canShu.jiaoSeId,
   ])
-  await redis.del(yanHuaZhengJuJian(canShu.jiaoSeId))
-  debug日志.info('头像生成', '头像已演化', {
-    xiang_qing: { jiao_se_id: canShu.jiaoSeId, xin_ji_diao: xinJiDiao, lai_yuan: canShu.laiYuan },
+  debug日志.info('头像生成', '头像已随心情演化', {
+    xiang_qing: { jiao_se_id: canShu.jiaoSeId, xin_ji_diao: muBiaoJiDiao, xin_qing: xinQing, qiang_du: qiangDu, lai_yuan: canShu.laiYuan },
   })
   return true
+}
+
+const XinQingJiDiaoYingShe: Record<string, QingXuJiDiao> = {
+  开心: '明朗',
+  甜蜜: '明朗',
+  愉悦: '明朗',
+  期待: '明朗',
+  心动: '明朗',
+  平静: '平静',
+  好奇: '平静',
+  疲惫: '平静',
+  烦躁: '阴郁',
+  难过: '阴郁',
+  委屈: '阴郁',
+  生气: '阴郁',
+  冷淡: '阴郁',
+  焦虑: '阴郁',
+}
+
+export function 判断演化出发(xinQing: string, qiangDu: number, 来源: string, 关系跃迁 = false): boolean {
+  if (关系跃迁) return true
+  if (xinQing === '') return false
+  if (qiangDu < 60) return false
+  return true
+}
+
+export function 心情到基调(xinQing: string, dangQian: QingXuJiDiao): QingXuJiDiao {
+  const muBiao = XinQingJiDiaoYingShe[xinQing]
+  if (!muBiao) return dangQian
+  return muBiao
 }

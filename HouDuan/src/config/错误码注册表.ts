@@ -80,7 +80,7 @@ export const JiuDaiMa = {
 
 export type CuoWuDaiMa = typeof CuoWuDaiMa[keyof typeof CuoWuDaiMa]
 export type CuoWuJieMian = string
-export type ZhanJiFenLeiCuoWuDaiMa = Extract<CuoWuDaiMa, `ZHAN_JI_${string}`>
+export type 战绩分类错误代码 = Extract<CuoWuDaiMa, `ZHAN_JI_${string}`>
 export type JiaoSeShengChengCuoWuDaiMa = Extract<CuoWuDaiMa, `ROLE_GENERATION_${string}`>
 
 export interface CuoWuXianRong {
@@ -212,7 +212,7 @@ const fanYiJianBiao: Record<CuoWuDaiMa, string> = {
   [CuoWuDaiMa.ROLE_GENERATION_MODEL_UNAVAILABLE]: 'shengChengMoXingFuWuWuXianZhi',
   [CuoWuDaiMa.ROLE_GENERATION_MODEL_CALL_FAILED]: 'shengChengMoXingFuWuWuXianZhi',
   [CuoWuDaiMa.ROLE_GENERATION_RESPONSE_INVALID]: 'shengChengMoXingHuiFuBuHeFa',
-  [CuoWuDaiMa.ROLE_GENERATION_PERSISTENCE_FAILED]: 'baoCunJiaoSeShiBai',
+  [CuoWuDaiMa.ROLE_GENERATION_PERSISTENCE_FAILED]: '保存角色ShiBai',
   [CuoWuDaiMa.DEPENDENCY_POSTGRES_UNAVAILABLE]: 'shuJuKuWeiBeiHouXu',
   [CuoWuDaiMa.DEPENDENCY_REDIS_UNAVAILABLE]: 'huanCunWeiBeiHouXu',
   [CuoWuDaiMa.DEPENDENCIES_UNAVAILABLE]: 'yiZhiXingFuWuWuXianZhi',

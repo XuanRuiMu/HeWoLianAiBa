@@ -105,7 +105,7 @@ function quLuBo(xing: Buffer, shangXing: Buffer | null, meiXingZiJie: number): v
   xing[0] = 0
 }
 
-export function caiDiaoPNGDiBu(tuPian: Buffer, diBuBiLi: number): Buffer {
+export function 裁掉PNG底部(tuPian: Buffer, diBuBiLi: number): Buffer {
   try {
     const ihdr = duIhdr(tuPian)
     if (!ihdr) return tuPian

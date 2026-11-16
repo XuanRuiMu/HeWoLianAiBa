@@ -13,7 +13,7 @@ describe('语音时长从合成落库到消息出参的单一链路', () => {
     const 调用起 = TTS.indexOf('liuShiBaoCunMeiTi(')
     expect(调用起).toBeGreaterThan(-1)
     const 调用块 = TTS.slice(调用起, 调用起 + 400)
-    expect(调用块).toContain('响应.duration_ms')
+    expect(调用块).toContain('jieGuo.shiChangHaoMiao')
   })
 
   it('用户消息回查、角色多媒体落库与撤回回包都取媒体时长列', () => {

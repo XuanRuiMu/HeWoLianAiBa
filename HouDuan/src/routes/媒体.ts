@@ -8,7 +8,7 @@ import { shiBaiXiangYing } from '../utils/xiangying'
 import { 数据库 } from '../数据库'
 import { yanZhengUUID } from '../utils/验证'
 import { huoQuBenDiLuJing, huoQuMeiTiQianMingMiYao, yanZhengQianMing } from '../services/媒体存储'
-import { chaAnDuanMing, chaAnSha256, type BiaoQingKuTiaoMu } from '../services/表情包库'
+import { 按短名查, 按哈希查, type 表情包条目 } from '../services/表情包库'
 import { tiQuTieZhiDuanMing } from '../services/贴纸标记'
 
 const luYou = Router()
@@ -25,7 +25,7 @@ const HuanCunKongZhi = 'private, max-age=31536000, immutable'
 
 const TieZhiHuoQingLieBiao = 300
 
-function quTiaoMuDuanMing(tiaoMu: BiaoQingKuTiaoMu): string {
+function quTiaoMuDuanMing(tiaoMu: 表情包条目): string {
   return typeof tiaoMu.duanMing === 'string' ? tiaoMu.duanMing : ''
 }
 
@@ -51,7 +51,7 @@ function yanZhengBiaoQingQianMing(
 }
 
 function faChuBiaoQingTuPian(
-  tiaoMu: BiaoQingKuTiaoMu,
+  tiaoMu: 表情包条目,
   sha256: string,
   xiangYing: Response,
 ): void {
@@ -106,7 +106,7 @@ async function huiTuiBiaoQingKu(
   sha256: string,
   xiangYing: Response,
 ): Promise<boolean> {
-  const tiaoMu = await chaAnSha256(sha256)
+  const tiaoMu = await 按哈希查(sha256)
   if (tiaoMu) {
     debug日志.info('媒体下载', '媒体行或本地文件缺失，已回退表情包库', {
       xiang_qing: { xiang_qing_lei: 'sha256', duan_ming: quTiaoMuDuanMing(tiaoMu), mime: tiaoMu.mime },
@@ -125,7 +125,7 @@ async function huiTuiAnDuanMing(
 ): Promise<boolean> {
   const duanMingLieBiao = await quDuanMingLieBiao(sha256)
   for (const duanMing of duanMingLieBiao) {
-    const tiaoMu = await chaAnDuanMing(duanMing)
+    const tiaoMu = await 按短名查(duanMing)
     if (!tiaoMu) continue
     if (tiaoMu.sha256 === sha256) continue
     debug日志.info('媒体下载', '按短名二次回退命中表情包库', {

@@ -60,8 +60,8 @@ export async function fanYiWenBen(
           { jiaoSe: 'user', neiRong: yuan },
         ],
         wenDu: 0.1,
-        siKaoMoShi: 'disabled',
-        xiangYingGeShi: { type: 'text' },
+        思考模式: 'disabled',
+        响应格式: { type: 'text' },
       },
       'wenBenFanYi',
     )

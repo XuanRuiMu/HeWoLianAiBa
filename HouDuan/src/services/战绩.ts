@@ -4,16 +4,16 @@ import {
   CuoWuDaiMa,
   YingYongCuoWu,
   huoQuCuoWuXianRong,
-  type ZhanJiFenLeiCuoWuDaiMa,
+  type 战绩分类错误代码,
 } from '../config/错误码注册表'
 import { ZhanJiPeiZhi } from '../config/战绩配置'
 import type { PoolClient } from 'pg'
 import type { YouXiJieGuoLeiXing } from '../types'
 import { 解析结局类型, 解析结局文案 } from '../utils/结局'
 import { 归一角色性别 } from '../utils/性别'
-import { huoQuJunShiJiLuLieBiao, type JunShiJiLuXiang } from './军师缓存'
+import { huoQuJunShiJiLuLieBiao, type 军师记录项 } from './军师缓存'
 
-export interface FuPanShiJianXianTiaoMu {
+export interface 复盘时间线条目 {
   shi_jian: string
   shi_jian_miao_shu: string
   yong_hu_xiao_xi?: string
@@ -29,19 +29,19 @@ export interface FuPanShiJianXianTiaoMu {
   }
 }
 
-export interface FuPanPiZhu {
+export interface 复盘批注 {
   xu_hao: number
   ping_lun: string
   qing_gan?: string
 }
 
-export interface ZhanJiZuiHouXiaoXi {
+export interface 战绩最后消息 {
   shi_jian: string
   fa_song_zhe: 'yonghu' | 'jiaose'
   zhai_yao: string
 }
 
-export interface DangAnLieBiaoXiang {
+export interface 档案列表项 {
   id: string
   yong_hu_id: string
   jiao_se_id: string
@@ -63,14 +63,14 @@ export interface DangAnLieBiaoXiang {
   mo_shi?: 'putong' | 'tiaozhan'
   category_id: string
   sort_order: number
-  zui_hou_liang_tiao: ZhanJiZuiHouXiaoXi[]
+  zui_hou_liang_tiao: 战绩最后消息[]
 }
 
-export interface DangAnXiangQing extends DangAnLieBiaoXiang {
-  fu_pan_shu_ju: FuPanShiJianXianTiaoMu[] | null
+export interface 档案详情 extends 档案列表项 {
+  fu_pan_shu_ju: 复盘时间线条目[] | null
   fu_pan_nei_rong?: string | null
-  fu_pan_pi_zhu: FuPanPiZhu[] | null
-  jun_shi_ji_lu: JunShiJiLuXiang[]
+  fu_pan_pi_zhu: 复盘批注[] | null
+  jun_shi_ji_lu: 军师记录项[]
 }
 
 export interface ZhanJiFenLei {
@@ -103,11 +103,11 @@ export interface ZhanJiFenLeiPaiXuJieGuo {
   version: number
 }
 
-export type { ZhanJiFenLeiCuoWuDaiMa } from '../config/错误码注册表'
+export type { 战绩分类错误代码 } from '../config/错误码注册表'
 
 export class ZhanJiFenLeiCuoWu extends YingYongCuoWu {
   constructor(
-    public readonly daiMa: ZhanJiFenLeiCuoWuDaiMa,
+    public readonly daiMa: 战绩分类错误代码,
     _zhuangTaiMa?: 400 | 404 | 409,
     _fanYiJian?: string,
   ) {
@@ -740,7 +740,7 @@ function guiYiZuiHouFaSongZhe(faSongZhe: unknown): 'yonghu' | 'jiaose' {
 export async function huoQuDangAnLieBiao(
   yong_hu_id: string,
   fen_lei_id?: string,
-): Promise<DangAnLieBiaoXiang[]> {
+): Promise<档案列表项[]> {
   if (fen_lei_id) {
     const fenLei = await 数据库.query(
       `SELECT 1 FROM "战绩分类" WHERE "ID" = $1 AND "用户ID" = $2 LIMIT 1`,
@@ -772,7 +772,7 @@ export async function huoQuDangAnLieBiao(
   const jiaoSeIds = [...new Set(jieGuo.rows.map((shuJuHang) => String(shuJuHang.角色ID)))].filter(
     (id) => id,
   )
-  const zuiHouAnJiaoSe = new Map<string, ZhanJiZuiHouXiaoXi[]>()
+  const zuiHouAnJiaoSe = new Map<string, 战绩最后消息[]>()
   if (jiaoSeIds.length > 0) {
     const xiaoXi = await 数据库.query(
       `SELECT "角色ID", "发送者", "内容", "类型", "已撤回", "创建时间", "ID"
@@ -792,7 +792,7 @@ export async function huoQuDangAnLieBiao(
       if (lieBiao && lieBiao.length >= ZhanJiPeiZhi.zuiHouXiaoXiMeiJiaoSeTiaoShu) continue
       const zhaiYao = zhaiYaoZuiHouXiaoXi(hang)
       if (!zhaiYao) continue
-      const tiao: ZhanJiZuiHouXiaoXi = {
+      const tiao: 战绩最后消息 = {
         shi_jian: String(hang.创建时间),
         fa_song_zhe: guiYiZuiHouFaSongZhe(hang.发送者),
         zhai_yao: zhaiYao,
@@ -847,10 +847,10 @@ export async function huoQuDangAnLieBiao(
   })
 }
 
-export async function huoQuDangAnXiangQing(
+export async function huoQu档案详情(
   yong_hu_id: string,
   dang_an_id: string,
-): Promise<DangAnXiangQing | null> {
+): Promise<档案详情 | null> {
   const jieGuo = await 数据库.query(
     `SELECT d."ID", d."用户ID", d."角色ID", d."角色名字", r."微信昵称", d."是否渣型",
             d."结果类型", d."是否封存", d."好感度总分", d."关系阶段",
@@ -873,8 +873,8 @@ export async function huoQuDangAnXiangQing(
   const chuangJianShiJian = String(shuJuHang.创建时间 || new Date().toISOString())
   const youXiJieShu = jieGuoLeiXingYuan !== 'jinxing_zhong'
 
-  let fuPanShuJu: FuPanShiJianXianTiaoMu[] | null = null
-  let fuPanPiZhu: FuPanPiZhu[] | null = null
+  let fuPanShuJu: 复盘时间线条目[] | null = null
+  let fuPanPiZhu: 复盘批注[] | null = null
   if (shuJuHang.复盘数据) {
     try {
       const jieXi = typeof shuJuHang.复盘数据 === 'string' ? JSON.parse(shuJuHang.复盘数据) : shuJuHang.复盘数据
@@ -883,7 +883,7 @@ export async function huoQuDangAnXiangQing(
       } else if (jieXi && typeof jieXi === 'object' && Array.isArray(jieXi.pi_zhu)) {
         fuPanPiZhu = jieXi.pi_zhu
           .filter(
-            (item: unknown): item is FuPanPiZhu =>
+            (item: unknown): item is 复盘批注 =>
               item !== null &&
               typeof item === 'object' &&
               typeof (item as { xu_hao?: unknown }).xu_hao === 'number' &&
@@ -892,8 +892,8 @@ export async function huoQuDangAnXiangQing(
               typeof (item as { ping_lun?: unknown }).ping_lun === 'string' &&
               (item as { ping_lun: string }).ping_lun.trim().length > 0,
           )
-          .map((item: FuPanPiZhu) => {
-            const tiaoMu: FuPanPiZhu = {
+          .map((item: 复盘批注) => {
+            const tiaoMu: 复盘批注 = {
               xu_hao: Math.floor(item.xu_hao),
               ping_lun: item.ping_lun,
             }
@@ -957,7 +957,7 @@ export async function huoQuDangAnXiangQing(
 export async function gengXinFuPanNeiRong(
   dang_an_id: string,
   fu_pan_nei_rong: string,
-  fu_pan_pi_zhu: FuPanPiZhu[],
+  fu_pan_pi_zhu: 复盘批注[],
 ): Promise<void> {
   await 数据库.query(
     `UPDATE "游戏档案" SET "复盘内容" = $1, "复盘数据" = $2 WHERE "ID" = $3`,

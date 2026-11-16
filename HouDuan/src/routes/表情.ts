@@ -39,7 +39,7 @@ function qingLiDuanMing(yuanShiWenJianMing: unknown): string {
     .join('')
 }
 
-function zhuangHuaBiaoQingXing(hang: Record<string, unknown>, yongHuId: string): BiaoQingXing {
+function zhuangHuaBiaoQingXing(hang: Record<string, unknown>, 用户ID: string): BiaoQingXing {
   const sha256 = String(hang['sha256'] || '').toLowerCase()
   return {
     id: String(hang['id']),
@@ -49,7 +49,7 @@ function zhuangHuaBiaoQingXing(hang: Record<string, unknown>, yongHuId: string):
     duan_ming: String(hang['duan_ming'] || ''),
     pai_xu: Number(hang['pai_xu'] ?? 0),
     chuang_jian_shi_jian: String(hang['chuang_jian_shi_jian'] || ''),
-    mei_ti_url: shengChengQianMingURL(sha256, yongHuId),
+    mei_ti_url: shengChengQianMingURL(sha256, 用户ID),
   }
 }
 
@@ -91,13 +91,13 @@ export const BiaoQingYuJu = {
   取登记锁: `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`,
 } as const
 
-export function biaoQingDengJiSuoJian(yongHuId: string): string {
-  return `biaoqing-dengji:${yongHuId}`
+export function biaoQingDengJiSuoJian(用户ID: string): string {
+  return `biaoqing-dengji:${用户ID}`
 }
 
-async function quBiaoQingLieBiao(yongHuId: string): Promise<BiaoQingXing[]> {
-  const jieGuo = await 数据库.query(BiaoQingYuJu.查列表, [yongHuId])
-  return jieGuo.rows.map((hang: Record<string, unknown>) => zhuangHuaBiaoQingXing(hang, yongHuId))
+async function quBiaoQingLieBiao(用户ID: string): Promise<BiaoQingXing[]> {
+  const jieGuo = await 数据库.query(BiaoQingYuJu.查列表, [用户ID])
+  return jieGuo.rows.map((hang: Record<string, unknown>) => zhuangHuaBiaoQingXing(hang, 用户ID))
 }
 
 type DengJiJieGuo =
@@ -106,24 +106,24 @@ type DengJiJieGuo =
   | { zhuang_tai: 'yi_man' }
 
 async function dengJiBiaoQing(
-  yongHuId: string,
+  用户ID: string,
   meiTi: { mediaId: string; sha256: string; mime: string },
   duanMing: string,
 ): Promise<DengJiJieGuo> {
   const lianJie = await 数据库.connect()
   try {
     await lianJie.query(BiaoQingYuJu.开启事务)
-    await lianJie.query(BiaoQingYuJu.取登记锁, [biaoQingDengJiSuoJian(yongHuId)])
+    await lianJie.query(BiaoQingYuJu.取登记锁, [biaoQingDengJiSuoJian(用户ID)])
 
-    const yiYou = await lianJie.query(BiaoQingYuJu.按内容查一条, [yongHuId, meiTi.sha256])
+    const yiYou = await lianJie.query(BiaoQingYuJu.按内容查一条, [用户ID, meiTi.sha256])
     if (yiYou.rows.length > 0) {
-      const biaoQing = zhuangHuaBiaoQingXing(yiYou.rows[0] as Record<string, unknown>, yongHuId)
-      await lianJie.query(BiaoQingYuJu.回收媒体行, [meiTi.mediaId, yongHuId])
+      const biaoQing = zhuangHuaBiaoQingXing(yiYou.rows[0] as Record<string, unknown>, 用户ID)
+      await lianJie.query(BiaoQingYuJu.回收媒体行, [meiTi.mediaId, 用户ID])
       await lianJie.query(BiaoQingYuJu.提交事务)
       return { zhuang_tai: 'yi_cun_zai', biao_qing: biaoQing }
     }
 
-    const jiShu = await lianJie.query(BiaoQingYuJu.计数与下一序, [yongHuId])
+    const jiShu = await lianJie.query(BiaoQingYuJu.计数与下一序, [用户ID])
     const shuHang = jiShu.rows[0] as Record<string, unknown> | undefined
     if (Number(shuHang?.shu ?? 0) >= BiaoQingPeiZhi.meiYongHuZuiDaTiaoShu) {
       await lianJie.query(BiaoQingYuJu.回滚事务)
@@ -131,7 +131,7 @@ async function dengJiBiaoQing(
     }
 
     const chaRu = await lianJie.query(BiaoQingYuJu.插入, [
-      yongHuId,
+      用户ID,
       meiTi.mediaId,
       duanMing,
       Number(shuHang?.xu ?? 0),
@@ -142,7 +142,7 @@ async function dengJiBiaoQing(
       zhuang_tai: 'xin_zeng',
       biao_qing: zhuangHuaBiaoQingXing(
         { ...hang, sha256: meiTi.sha256, mime: meiTi.mime },
-        yongHuId,
+        用户ID,
       ),
     }
   } catch (cuoWu) {
@@ -156,7 +156,7 @@ async function dengJiBiaoQing(
 async function huiYingMeiTiCuoWu(
   cuoWu: unknown,
   xiangYing: Response,
-  yongHuId: string,
+  用户ID: string,
   qingQiu: RenZhengQingQiu,
 ): Promise<void> {
   if (cuoWu instanceof MeiTiCunChuCuoWu) {
@@ -164,7 +164,7 @@ async function huiYingMeiTiCuoWu(
     const chuCan = panDingMeiTiShenHeChuCan(jian)
     if (chuCan.xuYaoJiWeiGui) {
       await jiLuZhangHaoWeiGui({
-        yongHuId,
+        用户ID,
         ip: 获取IP(qingQiu),
         yuanYin: jian,
         leiXing: '用户表情',
@@ -181,7 +181,7 @@ luYou.get('/我的', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing
   const yongHu = qingQiu.yong_hu
   if (!yongHu) return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
   try {
-    const lieBiao = await quBiaoQingLieBiao(yongHu.yongHuId)
+    const lieBiao = await quBiaoQingLieBiao(yongHu.用户ID)
     return chengGongXiangYing(xiangYing, { lie_biao: lieBiao, zong_shu: lieBiao.length })
   } catch (cuoWu) {
     debug日志.error('表情接口', '查询自定义表情失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
@@ -192,7 +192,7 @@ luYou.get('/我的', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing
 luYou.post('/我的', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu
   if (!yongHu) return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
-  const fengJin = await chaXunZhangHaoFengJin(yongHu.yongHuId)
+  const fengJin = await chaXunZhangHaoFengJin(yongHu.用户ID)
   if (fengJin.beiFengJin) {
     return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'zhangHaoYiBeiFengJin'))
   }
@@ -226,11 +226,11 @@ luYou.post('/我的', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
         xinXi.filename || 'biaoqing',
         xinXi.mimeType || '',
         BiaoQingMeiTiLeiBie,
-        yongHu.yongHuId,
+        yongHu.用户ID,
       )
         .then(async (jieGuo) => {
           const jieLun = await dengJiBiaoQing(
-            yongHu.yongHuId,
+            yongHu.用户ID,
             { mediaId: jieGuo.mediaId, sha256: jieGuo.sha256, mime: jieGuo.mime },
             qingLiDuanMing(xinXi.filename),
           )
@@ -248,7 +248,7 @@ luYou.post('/我的', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
           )
         })
         .catch(async (cuoWu) => {
-          await huiYingMeiTiCuoWu(cuoWu, xiangYing, yongHu.yongHuId, qingQiu)
+          await huiYingMeiTiCuoWu(cuoWu, xiangYing, yongHu.用户ID, qingQiu)
         })
         .finally(() => {
           if (!wenJianLiu.readableEnded) wenJianLiu.resume()
@@ -284,7 +284,7 @@ luYou.delete(
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
     }
     try {
-      const jieGuo = await 数据库.query(BiaoQingYuJu.删除, [biaoQingId, yongHu.yongHuId])
+      const jieGuo = await 数据库.query(BiaoQingYuJu.删除, [biaoQingId, yongHu.用户ID])
       if (jieGuo.rowCount === 0) {
         return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('liaoTian', 'biaoQingBuCunZai'))
       }
@@ -318,7 +318,7 @@ luYou.put(
       return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
     }
     try {
-      const dangQian = await 数据库.query(BiaoQingYuJu.本人标识, [yongHu.yongHuId])
+      const dangQian = await 数据库.query(BiaoQingYuJu.本人标识, [yongHu.用户ID])
       const benRenJi = new Set(
         dangQian.rows.map((hang: Record<string, unknown>) => String(hang['id'])),
       )
@@ -328,8 +328,8 @@ luYou.put(
       ) {
         return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('liaoTian', 'biaoQingBuCunZai'))
       }
-      await 数据库.query(BiaoQingYuJu.批量改序, [yongHu.yongHuId, idLieBiao])
-      const lieBiao = await quBiaoQingLieBiao(yongHu.yongHuId)
+      await 数据库.query(BiaoQingYuJu.批量改序, [yongHu.用户ID, idLieBiao])
+      const lieBiao = await quBiaoQingLieBiao(yongHu.用户ID)
       return chengGongXiangYing(xiangYing, { lie_biao: lieBiao, zong_shu: lieBiao.length })
     } catch (cuoWu) {
       debug日志.error('表情接口', '保存表情排序失败', { xiang_qing: { cuo_wu: String(cuoWu) } })

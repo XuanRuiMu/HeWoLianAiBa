@@ -81,17 +81,17 @@ export async function renZhengZhongJianJian(
             return
           }
         }
-        if (await lingPaiShiFouYiCheXiao(zaiHe.yongHuId, zaiHe.iat, zaiHe.qianFaHaoMiao)) {
+        if (await lingPaiShiFouYiCheXiao(zaiHe.用户ID, zaiHe.iat, zaiHe.qianFaHaoMiao)) {
           shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'), CuoWuDaiMa.AUTH_TOKEN_INVALID)
           return
         }
       } else {
         const { debug日志 } = await import('../utils/debug日志')
-        debug日志.warn('认证中间件', 'Redis熔断开路，吊销检查降级放行', { xiang_qing: { yong_hu_id: zaiHe.yongHuId } })
+        debug日志.warn('认证中间件', 'Redis熔断开路，吊销检查降级放行', { xiang_qing: { yong_hu_id: zaiHe.用户ID } })
       }
     } catch {
       const { debug日志 } = await import('../utils/debug日志')
-      debug日志.warn('认证中间件', '吊销检查失败降级放行', { xiang_qing: { yong_hu_id: zaiHe.yongHuId } })
+      debug日志.warn('认证中间件', '吊销检查失败降级放行', { xiang_qing: { yong_hu_id: zaiHe.用户ID } })
     }
     qingQiu.yong_hu = zaiHe
     xiaYiBu()

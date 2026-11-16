@@ -1,5 +1,5 @@
 ﻿import { debug日志 } from '../utils/debug日志'
-import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/DeepSeek客户端'
 import { gouJianAnQuanShenHePrompt } from './Prompt构建器'
 import { peiZhi } from '../config'
 import { huoQuFanYi } from '../config/translations'
@@ -62,7 +62,7 @@ export async function shenHeNeiRongAnQuan(xiaoXi: string): Promise<AnQuanShenHeJ
   }
 
   try {
-    const xiangYing = await genJuPeiZhiTiaoYong('AnQuanShenHe', [
+    const xiangYing = await 按配置调用('AnQuanShenHe', [
       { jiaoSe: 'system', neiRong: '判断消息是否违规，只输出 JSON。' },
       { jiaoSe: 'user', neiRong: gouJianAnQuanShenHePrompt(xiaoXi) },
     ])

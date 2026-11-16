@@ -16,10 +16,10 @@ vi.mock('../../config/多模态配置', () => ({
     yuYinLiJieQiYong: false,
     guiJiLiuDongJiChuUrl: '',
     guiJiLiuDongYuYinMoXing: '',
-    yinPinLiJieQiYong: false,
-    yinPinLiJieJiChuUrl: '',
-    yinPinLiJieMoXing: '',
-    yinPinLiJieZuiDaZiJie: 0,
+    音频理解启用: false,
+    音频理解基础地址: '',
+    音频理解模型: '',
+    音频理解最大字节: 0,
     shiPinLiJieQiYong: false,
     tuXiangShengChengQiYong: true,
     tuXiangShengChengJiChuUrl: 'https://shengtu.example/v1',
@@ -95,7 +95,7 @@ describe('生图底层接口', () => {
       status: 500,
       json: async () => ({}),
     })) as unknown as typeof fetch
-    const jieGuo = await shengChengTuXiang({ tiShiCi: '风景', yongHuId: 'u-9' })
+    const jieGuo = await shengChengTuXiang({ tiShiCi: '风景', 用户ID: 'u-9' })
     expect(jieGuo.cheng_gong).toBe(false)
     const { redis } = await import('../../redis')
     expect(redis.decr).toHaveBeenCalled()

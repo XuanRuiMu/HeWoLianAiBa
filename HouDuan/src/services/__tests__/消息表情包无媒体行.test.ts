@@ -6,7 +6,7 @@ const lianJieMock = vi.hoisted(() => vi.fn())
 
 const shiFangMock = vi.hoisted(() => vi.fn())
 
-const chaAnDuanMingMock = vi.hoisted(() => vi.fn())
+const 按短名查Mock = vi.hoisted(() => vi.fn())
 
 vi.mock('../../数据库', () => ({
   数据库: {
@@ -26,11 +26,11 @@ vi.mock('../../redis', () => ({
 
 vi.mock('../表情包库', async () => {
   const shiJi = await vi.importActual<typeof import('../表情包库')>('../表情包库')
-  return { ...shiJi, chaAnDuanMing: (...canShu: unknown[]) => chaAnDuanMingMock(...canShu) }
+  return { ...shiJi, 按短名查: (...canShu: unknown[]) => 按短名查Mock(...canShu) }
 })
 
-import { duanMingDaoUUID } from '../表情包库'
-import { gouKuaiShangXiaWen, huoQuXiaoXiLieBiao, baoCunJiaoSeMeiTiXiaoXi, yingSheKuaiChuCan } from '../消息'
+import { 短名转UUID } from '../表情包库'
+import { gou块上下文, 取消息列表, 保存角色媒体消息, 映射块出参 } from '../消息'
 import { yanZhengQianMing } from '../媒体存储'
 
 const YongHu = '6ef2a94a-67be-4e9b-9c93-f0a2c9df6f21'
@@ -76,8 +76,8 @@ beforeEach(() => {
   chaXunMock.mockReset()
   lianJieMock.mockReset()
   shiFangMock.mockReset()
-  chaAnDuanMingMock.mockReset()
-  chaAnDuanMingMock.mockImplementation(async () => null)
+  按短名查Mock.mockReset()
+  按短名查Mock.mockImplementation(async () => null)
   chaXunMock.mockImplementation(async () => ({ rows: [], rowCount: 0 }))
 })
 
@@ -87,20 +87,20 @@ afterEach(() => {
 
 describe('短名生成确定性 UUID', () => {
   it('同一短名稳定且是合法 UUID', () => {
-    const diYiCi = duanMingDaoUUID(DuanMing)
-    expect(diYiCi).toBe(duanMingDaoUUID(DuanMing))
-    expect(diYiCi).toBe(duanMingDaoUUID(`  ${DuanMing}  `))
+    const diYiCi = 短名转UUID(DuanMing)
+    expect(diYiCi).toBe(短名转UUID(DuanMing))
+    expect(diYiCi).toBe(短名转UUID(`  ${DuanMing}  `))
     expect(diYiCi).toMatch(UuidGeShi)
     expect(diYiCi.slice(14, 15)).toBe('4')
   })
 
   it('不同短名互不相同', () => {
-    expect(duanMingDaoUUID(DuanMing)).not.toBe(duanMingDaoUUID('狗头'))
-    expect(duanMingDaoUUID('')).toMatch(UuidGeShi)
+    expect(短名转UUID(DuanMing)).not.toBe(短名转UUID('狗头'))
+    expect(短名转UUID('')).toMatch(UuidGeShi)
   })
 
   it('非字符串输入也不抛错', () => {
-    expect(duanMingDaoUUID(undefined as unknown as string)).toMatch(UuidGeShi)
+    expect(短名转UUID(undefined as unknown as string)).toMatch(UuidGeShi)
   })
 })
 
@@ -118,7 +118,7 @@ describe('保存表情包消息不依赖媒体行', () => {
     })
     lianJieMock.mockResolvedValue({ query: chaXunKeHuDuan, release: shiFangMock })
 
-    const xiaoXi = await baoCunJiaoSeMeiTiXiaoXi({
+    const xiaoXi = await 保存角色媒体消息({
       yong_hu_id: YongHu,
       jiao_se_id: JiaoSe,
       nei_rong: `[贴纸:${DuanMing}]`,
@@ -147,7 +147,7 @@ describe('保存表情包消息不依赖媒体行', () => {
     expect(xiaoXi.nei_rong_kuai?.[0]).toMatchObject({
       lei_xing: 'tupian',
       duan_ming: DuanMing,
-      mei_ti_id: duanMingDaoUUID(DuanMing),
+      mei_ti_id: 短名转UUID(DuanMing),
       mei_ti_lei_bie: 'biaoqingshu',
       mei_ti_url: null,
     })
@@ -165,7 +165,7 @@ describe('保存表情包消息不依赖媒体行', () => {
     })
     lianJieMock.mockResolvedValue({ query: chaXunKeHuDuan, release: shiFangMock })
 
-    await baoCunJiaoSeMeiTiXiaoXi({
+    await 保存角色媒体消息({
       yong_hu_id: YongHu,
       jiao_se_id: JiaoSe,
       nei_rong: `[贴纸:${DuanMing}]`,
@@ -196,7 +196,7 @@ describe('保存表情包消息不依赖媒体行', () => {
     })
     lianJieMock.mockResolvedValue({ query: chaXunKeHuDuan, release: shiFangMock })
 
-    await baoCunJiaoSeMeiTiXiaoXi({
+    await 保存角色媒体消息({
       yong_hu_id: YongHu,
       jiao_se_id: JiaoSe,
       nei_rong: '给你看个东西',
@@ -215,7 +215,7 @@ describe('保存表情包消息不依赖媒体行', () => {
   it('既没有媒体ID也没有短名时拒绝落库', async () => {
     lianJieMock.mockResolvedValue({ query: vi.fn(), release: shiFangMock })
     await expect(
-      baoCunJiaoSeMeiTiXiaoXi({
+      保存角色媒体消息({
         yong_hu_id: YongHu,
         jiao_se_id: JiaoSe,
         nei_rong: `[贴纸:${DuanMing}]`,
@@ -228,7 +228,7 @@ describe('保存表情包消息不依赖媒体行', () => {
 
 describe('读取无媒体行表情包消息', () => {
   it('带短名的块补出签名URL与确定性媒体ID', async () => {
-    chaAnDuanMingMock.mockImplementation(async (duanMing: unknown) =>
+    按短名查Mock.mockImplementation(async (duanMing: unknown) =>
       duanMing === DuanMing
         ? {
             duanMing: DuanMing,
@@ -245,13 +245,13 @@ describe('读取无媒体行表情包消息', () => {
         : null,
     )
     const hang = tieZhiHang()
-    const shangXiaWen = await gouKuaiShangXiaWen([hang])
-    const chuCan = yingSheKuaiChuCan(hang, shangXiaWen, '')
+    const shangXiaWen = await gou块上下文([hang])
+    const chuCan = 映射块出参(hang, shangXiaWen, '')
     expect(chuCan).toHaveLength(1)
     expect(chuCan[0]).toMatchObject({
       lei_xing: 'tupian',
       duan_ming: DuanMing,
-      mei_ti_id: duanMingDaoUUID(DuanMing),
+      mei_ti_id: 短名转UUID(DuanMing),
       mei_ti_lei_bie: 'biaoqingshu',
     })
     const url = String(chuCan[0].mei_ti_url)
@@ -264,12 +264,12 @@ describe('读取无媒体行表情包消息', () => {
 
   it('短名在表情包库查不到时url为空且不抛错', async () => {
     const hang = tieZhiHang()
-    const shangXiaWen = await gouKuaiShangXiaWen([hang])
-    const chuCan = yingSheKuaiChuCan(hang, shangXiaWen, '')
+    const shangXiaWen = await gou块上下文([hang])
+    const chuCan = 映射块出参(hang, shangXiaWen, '')
     expect(chuCan[0]).toMatchObject({
       lei_xing: 'tupian',
       duan_ming: DuanMing,
-      mei_ti_id: duanMingDaoUUID(DuanMing),
+      mei_ti_id: 短名转UUID(DuanMing),
       mei_ti_url: null,
       mei_ti_lei_bie: 'biaoqingshu',
     })
@@ -277,7 +277,7 @@ describe('读取无媒体行表情包消息', () => {
 
   it('没有表情包上下文的旧路径仍按文本块出参，不抛错', () => {
     const hang = tieZhiHang()
-    const chuCan = yingSheKuaiChuCan(
+    const chuCan = 映射块出参(
       hang,
       { kuaiOf: () => null, meiTiOf: () => null },
       '',
@@ -286,7 +286,7 @@ describe('读取无媒体行表情包消息', () => {
   })
 
   it('消息列表按内容里的贴纸短名补顶层签名URL与类别', async () => {
-    chaAnDuanMingMock.mockImplementation(async (duanMing: unknown) =>
+    按短名查Mock.mockImplementation(async (duanMing: unknown) =>
       duanMing === DuanMing ? { sha256: SHA } : null,
     )
     chaXunMock.mockImplementation(async (yuJu: string) => {
@@ -295,7 +295,7 @@ describe('读取无媒体行表情包消息', () => {
       return { rows: [tieZhiHang()], rowCount: 1 }
     })
 
-    const jieGuo = await huoQuXiaoXiLieBiao({
+    const jieGuo = await 取消息列表({
       yong_hu_id: YongHu,
       jiao_se_id: JiaoSe,
       ye_ma: 1,
@@ -307,7 +307,7 @@ describe('读取无媒体行表情包消息', () => {
     expect(String(xiaoXi.mei_ti_url)).toContain(`/api/媒体/${SHA}`)
     expect(xiaoXi.nei_rong_kuai?.[0]).toMatchObject({
       duan_ming: DuanMing,
-      mei_ti_id: duanMingDaoUUID(DuanMing),
+      mei_ti_id: 短名转UUID(DuanMing),
     })
   })
 
@@ -318,7 +318,7 @@ describe('读取无媒体行表情包消息', () => {
       return { rows: [tieZhiHang()], rowCount: 1 }
     })
 
-    const jieGuo = await huoQuXiaoXiLieBiao({
+    const jieGuo = await 取消息列表({
       yong_hu_id: YongHu,
       jiao_se_id: JiaoSe,
       ye_ma: 1,

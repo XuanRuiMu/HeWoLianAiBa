@@ -5,7 +5,7 @@ import { huoQuFanYi } from '../config/translations'
 import { chengGongXiangYing, shiBaiXiangYing } from '../utils/xiangying'
 import { anIdChaJiaoSeXiangQing, touYingGuanLiJiaoSe, touYingWanJiaKeJianJiaoSe } from '../services/角色生成'
 import { anYongHuIdJuBeiNengLi } from '../middleware/管理员'
-import { huoQuJiaoSeSuoYouZhe } from '../services/消息'
+import { 取角色所有者 } from '../services/消息'
 import { zhongXinQianMingMeiTiURL } from '../services/媒体存储'
 import { guiYiHuaJiaoSeBiaoShi } from '../services/公开编号'
 import type { RenZhengQingQiu } from '../middleware/认证'
@@ -28,20 +28,20 @@ luYou.get(
     try {
       const [jiaoSe, suoYouZhe] = await Promise.all([
         anIdChaJiaoSeXiangQing(jiaoSeId),
-        huoQuJiaoSeSuoYouZhe(jiaoSeId),
+        取角色所有者(jiaoSeId),
       ])
 
       if (!jiaoSe || !suoYouZhe) {
         return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
       }
 
-      if (suoYouZhe.yong_hu_id !== yongHu.yongHuId) {
+      if (suoYouZhe.yong_hu_id !== yongHu.用户ID) {
         return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('liaoTian', 'wuQuanXian'))
       }
 
       let youYunYingNengLi = false
       try {
-        youYunYingNengLi = await anYongHuIdJuBeiNengLi(yongHu.yongHuId, 'cha_kan')
+        youYunYingNengLi = await anYongHuIdJuBeiNengLi(yongHu.用户ID, 'cha_kan')
       } catch (cuoWu) {
         debug日志.error('角色接口', '运营读取能力判定失败，按无权限处理', {
           xiang_qing: { jiao_se_id: jiaoSeId, cuo_wu: String(cuoWu) },
@@ -56,7 +56,7 @@ luYou.get(
       return chengGongXiangYing(xiangYing, {
         jiao_se: {
           ...touYingJiaoSe,
-          tou_xiang: zhongXinQianMingMeiTiURL(jiaoSe.tou_xiang, yongHu.yongHuId) ?? '',
+          tou_xiang: zhongXinQianMingMeiTiURL(jiaoSe.tou_xiang, yongHu.用户ID) ?? '',
         },
         dang_an_zhuang_tai: {
           jie_guo_lei_xing: suoYouZhe.jie_ju_zhuang_tai,

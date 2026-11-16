@@ -65,7 +65,7 @@ export const MbtiQiZhi: Record<string, TouXiangQiZhi> = {
   ESFP: '活泼',
 }
 
-export function tuiDaoQingXuJiDiao(xingGeWenBen: string): QingXuJiDiao {
+export function 推导情绪基调(xingGeWenBen: string): QingXuJiDiao {
   const yinYuCi = ['抑郁', '阴郁', '低落', '丧', '消沉', '悲观', '孤独', '冷漠']
   const mingLangCi = ['开朗', '阳光', '活泼', '热情', '元气', '乐观', '爱笑']
   if (yinYuCi.some((ci) => xingGeWenBen.includes(ci))) return '阴郁'

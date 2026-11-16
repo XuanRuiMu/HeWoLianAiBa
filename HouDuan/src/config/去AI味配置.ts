@@ -72,7 +72,7 @@ export function guoLvAiWeiXiaoXi(xiaoXiLieBiao: readonly string[], ciBiao: reado
 export const QuAiWeiPeiZhi = {
   ciBiao: duQuCiBiao('QU_AI_WEI_CI_BIAO', MoRenCiBiao),
   caiYangBiLi: duQuFuDian('QU_AI_WEI_CAI_YANG_BI_LI', 0.1, 0, 1),
-  moXingChouJianBiLi: duQuFuDian('QU_AI_WEI_MO_XING_CHOU_JIAN_BI_LI', 0.05, 0, 1),
+  模型抽检比例: duQuFuDian('QU_AI_WEI_MO_XING_CHOU_JIAN_BI_LI', 0.05, 0, 1),
   huiDuKaiGuan: (process.env['QU_AI_WEI_HUI_DU_QI_YONG'] || '').trim().toLowerCase() !== 'false',
 } as const
 
@@ -95,7 +95,7 @@ export function panDuanShiFouCaiYang(suiJiShu: number = Math.random()): boolean 
 }
 
 export function panDuanShiFouMoXingChouJian(suiJiShu: number = Math.random()): boolean {
-  return suiJiShu < QuAiWeiPeiZhi.moXingChouJianBiLi
+  return suiJiShu < QuAiWeiPeiZhi.模型抽检比例
 }
 
 export const QuAiWeiHuiDuGuanJian = 'QU_AI_WEI_HUI_DU'

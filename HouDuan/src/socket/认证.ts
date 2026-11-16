@@ -21,13 +21,13 @@ interface CheXiaoHuanCunXiang {
 const cheXiaoShiJianCuoHuanCun = new Map<string, CheXiaoHuanCunXiang>()
 const huanCunYouXiaoHaoMiao = 30000
 
-async function huoQuCheXiaoShiJianCuoDaiHuanCun(yongHuId: string): Promise<number | null> {
+async function huoQuCheXiaoShiJianCuoDaiHuanCun(用户ID: string): Promise<number | null> {
   const xianZai = Date.now()
-  const huanCun = cheXiaoShiJianCuoHuanCun.get(yongHuId)
+  const huanCun = cheXiaoShiJianCuoHuanCun.get(用户ID)
   if (huanCun && huanCun.daoQiHaoMiao > xianZai) return huanCun.zhi
-  const zhi = await redis.get(huoQuCheXiaoJian(yongHuId))
+  const zhi = await redis.get(huoQuCheXiaoJian(用户ID))
   const jieXiZhi = zhi === null ? null : Number(zhi)
-  cheXiaoShiJianCuoHuanCun.set(yongHuId, { zhi: jieXiZhi, daoQiHaoMiao: xianZai + huanCunYouXiaoHaoMiao })
+  cheXiaoShiJianCuoHuanCun.set(用户ID, { zhi: jieXiZhi, daoQiHaoMiao: xianZai + huanCunYouXiaoHaoMiao })
   return jieXiZhi
 }
 
@@ -36,8 +36,8 @@ export function qingLiCheXiaoHuanCun(): void {
 }
 
 export function guaZaiCheXiaoShouWei(socket: RenZhengSocket): void {
-  const yongHuId = socket.yong_hu?.yongHuId
-  if (!yongHuId) return
+  const 用户ID = socket.yong_hu?.用户ID
+  if (!用户ID) return
   const qianFaHaoMiao =
     typeof socket.yong_hu?.qianFaHaoMiao === 'number'
       ? socket.yong_hu.qianFaHaoMiao
@@ -45,7 +45,7 @@ export function guaZaiCheXiaoShouWei(socket: RenZhengSocket): void {
   socket.use((_bao, shouWeiXiaYiBu) => {
     void (async () => {
       try {
-        const cheXiaoShiJianCuo = await huoQuCheXiaoShiJianCuoDaiHuanCun(yongHuId)
+        const cheXiaoShiJianCuo = await huoQuCheXiaoShiJianCuoDaiHuanCun(用户ID)
         if (cheXiaoShiJianCuo !== null && qianFaHaoMiao <= cheXiaoShiJianCuo) {
           debug日志.warn('Socket认证', '令牌已吊销，断开存量连接', {
             xiang_qing: { socket_id: socket.id },
@@ -72,7 +72,7 @@ export async function renZhengSocketZhongJianJian(
       return xiaYiBu(new Error(huoQuFanYi('tongYong', 'weiShouQuan')))
     }
     const zaiHe = yanZhengLingPai(token)
-    if (await lingPaiShiFouYiCheXiao(zaiHe.yongHuId, zaiHe.iat, zaiHe.qianFaHaoMiao)) {
+    if (await lingPaiShiFouYiCheXiao(zaiHe.用户ID, zaiHe.iat, zaiHe.qianFaHaoMiao)) {
       debug日志.warn('Socket认证', '令牌已被吊销，拒绝握手', { xiang_qing: { socket_id: socket.id } })
       return xiaYiBu(new Error(huoQuFanYi('renZheng', 'lingPaiWuXiao')))
     }

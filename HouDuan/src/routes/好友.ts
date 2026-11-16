@@ -16,13 +16,13 @@ import { shenHeNeiRongAnQuan } from '../services/安全审核'
 import { chaXunZhangHaoFengJin, jiLuZhangHaoWeiGui } from '../services/账号封禁'
 import { 获取IP } from '../services/IP封禁'
 import {
-  HaoYouBeiYinYongMianXiang,
-  gouKuaiShangXiaWen,
-  haoYouKuaiTouYing,
-  qingLiXiaoXiKuaiXieRu,
-  yanZhengBeiYinYong,
-  yingSheKuaiChuCan,
-  type KuaiShangXiaWen,
+  HaoYou被引用面向,
+  gou块上下文,
+  好友块头像,
+  qingLi消息块XieRu,
+  校验被引用,
+  映射块出参,
+  type 块上下文,
 } from '../services/消息'
 import { kuaiShenHeWenBen } from '../services/消息内容块'
 import type { HaoYouXiaoXiChuCan } from '../types'
@@ -61,23 +61,23 @@ luYou.get('/搜索', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing
       `SELECT u."ID", u."手机号", u."用户名", u."昵称", u."头像", u."签名", u."签名可见性", u."签名白名单", s."公开账号", s."公开手机号"
        FROM "用户" u LEFT JOIN "用户设置" s ON s."用户ID" = u."ID"
        WHERE (u."手机号" = $1 OR u."用户名" = $1 OR u."ID"::text = $1) AND u."ID" <> $2 LIMIT 10`,
-      [guanJianZi, yongHu.yongHuId],
+      [guanJianZi, yongHu.用户ID],
     )
     const lieBiao = []
     for (const row of jieGuo.rows) {
       if (row['公开账号'] === false) continue
       const duiFangId = String(row['ID'])
-      const youShiHaoYou = await shiHaoYou(yongHu.yongHuId, duiFangId)
+      const youShiHaoYou = await shiHaoYou(yongHu.用户ID, duiFangId)
       const keJianXingRaw = row['签名可见性']
       const keJianXing = shiHeFaKeJianXing(keJianXingRaw) ? keJianXingRaw : 'gong_kai'
-      const baiMingDanRaw = row['签名白名单']
-      const baiMingDan = Array.isArray(baiMingDanRaw) ? baiMingDanRaw.map((x) => String(x)) : []
+      const 白名单Raw = row['签名白名单']
+      const 白名单 = Array.isArray(白名单Raw) ? 白名单Raw.map((x) => String(x)) : []
       const qianMing = row['签名']
         ? panDuanKeJian(keJianXing, {
-            chaKanZheId: yongHu.yongHuId,
+            chaKanZheId: yongHu.用户ID,
             yongYouZheId: duiFangId,
             shiHaoYou: youShiHaoYou,
-            baiMingDan,
+            白名单,
           })
           ? String(row['签名'])
           : null
@@ -106,7 +106,7 @@ luYou.post('/申请', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
   const qingQiuTi = qingQiu.body as Record<string, unknown>
   const jieShouZheId = huoQuZiFuChuan(qingQiuTi, 'jieShouZheId') || huoQuZiFuChuan(qingQiuTi, 'jie_shou_zhe_id')
   if (!yanZhengUUID(jieShouZheId)) return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
-  if (jieShouZheId === yongHu.yongHuId) return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('haoYou', 'buNengTianJiaZiJi'))
+  if (jieShouZheId === yongHu.用户ID) return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('haoYou', 'buNengTianJiaZiJi'))
   try {
     const muBiao = await 数据库.query(`SELECT "ID" FROM "用户" WHERE "ID" = $1 LIMIT 1`, [jieShouZheId])
     if (!muBiao.rows.length) return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
@@ -114,12 +114,12 @@ luYou.post('/申请', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
     if (sheZhi.rows.length > 0 && sheZhi.rows[0]['公开账号'] === false) {
       return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('haoYou', 'duiFangJuJueTianJia'))
     }
-    if (await shiHaoYou(yongHu.yongHuId, jieShouZheId)) {
+    if (await shiHaoYou(yongHu.用户ID, jieShouZheId)) {
       return shiBaiXiangYing(xiangYing, 409, huoQuFanYi('haoYou', 'yiShiHaoYou'))
     }
     const yiCun = await 数据库.query(
       `SELECT "ID", "状态" FROM "好友申请" WHERE (("申请者ID" = $1 AND "接收者ID" = $2) OR ("申请者ID" = $2 AND "接收者ID" = $1)) AND "状态" = 'pending' LIMIT 1`,
-      [yongHu.yongHuId, jieShouZheId],
+      [yongHu.用户ID, jieShouZheId],
     )
     if (yiCun.rows.length > 0) {
       return shiBaiXiangYing(xiangYing, 409, huoQuFanYi('haoYou', 'yiFaSongShenQing'))
@@ -127,7 +127,7 @@ luYou.post('/申请', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
     await 数据库.query(
       `INSERT INTO "好友申请" ("申请者ID", "接收者ID", "状态") VALUES ($1, $2, 'pending')
        ON CONFLICT ("申请者ID", "接收者ID") DO UPDATE SET "状态" = 'pending', "更新时间" = NOW()`,
-      [yongHu.yongHuId, jieShouZheId],
+      [yongHu.用户ID, jieShouZheId],
     )
     try {
       const { chuangJianTongZhi } = await import('../services/通知')
@@ -150,7 +150,7 @@ luYou.get('/申请/收到的', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu,
       `SELECT a."ID", a."申请者ID", a."创建时间", u."用户名", u."昵称", u."头像"
        FROM "好友申请" a JOIN "用户" u ON u."ID" = a."申请者ID"
        WHERE a."接收者ID" = $1 AND a."状态" = 'pending' ORDER BY a."创建时间" DESC LIMIT 50`,
-      [yongHu.yongHuId],
+      [yongHu.用户ID],
     )
     return chengGongXiangYing(xiangYing, {
       lie_biao: jieGuo.rows.map((r) => ({
@@ -176,7 +176,7 @@ luYou.get('/申请/发出的', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu,
       `SELECT a."ID", a."接收者ID", a."状态", a."创建时间", u."用户名", u."昵称", u."头像"
        FROM "好友申请" a JOIN "用户" u ON u."ID" = a."接收者ID"
        WHERE a."申请者ID" = $1 AND a."状态" = 'pending' ORDER BY a."创建时间" DESC LIMIT 50`,
-      [yongHu.yongHuId],
+      [yongHu.用户ID],
     )
     return chengGongXiangYing(xiangYing, {
       lie_biao: jieGuo.rows.map((r) => ({
@@ -204,7 +204,7 @@ luYou.post('/申请/:id/接受', liaoTianXianLiu, async (qingQiu: RenZhengQingQi
     const jieGuo = await 数据库.query(
       `UPDATE "好友申请" SET "状态" = 'accepted', "更新时间" = NOW()
        WHERE "ID" = $1 AND "接收者ID" = $2 AND "状态" = 'pending' RETURNING "申请者ID"`,
-      [shenQingId, yongHu.yongHuId],
+      [shenQingId, yongHu.用户ID],
     )
     if (!jieGuo.rows.length) return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('haoYou', 'shenQingBuCunZai'))
     return chengGongXiangYing(xiangYing, { cheng_gong: true })
@@ -223,7 +223,7 @@ luYou.post('/申请/:id/拒绝', liaoTianXianLiu, async (qingQiu: RenZhengQingQi
     const jieGuo = await 数据库.query(
       `UPDATE "好友申请" SET "状态" = 'rejected', "更新时间" = NOW()
        WHERE "ID" = $1 AND "接收者ID" = $2 AND "状态" = 'pending' RETURNING "ID"`,
-      [shenQingId, yongHu.yongHuId],
+      [shenQingId, yongHu.用户ID],
     )
     if (!jieGuo.rows.length) return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('haoYou', 'shenQingBuCunZai'))
     return chengGongXiangYing(xiangYing, { cheng_gong: true })
@@ -242,21 +242,21 @@ luYou.get('/列表', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYing
         u."用户名", u."昵称", u."头像", u."签名", u."签名可见性", u."签名白名单"
        FROM "好友申请" a JOIN "用户" u ON u."ID" = CASE WHEN a."申请者ID" = $1 THEN a."接收者ID" ELSE a."申请者ID" END
        WHERE a."状态" = 'accepted' AND (a."申请者ID" = $1 OR a."接收者ID" = $1) ORDER BY "好友ID" LIMIT 200`,
-      [yongHu.yongHuId],
+      [yongHu.用户ID],
     )
     return chengGongXiangYing(xiangYing, {
       lie_biao: jieGuo.rows.map((r) => {
         const haoYouId = String(r['好友ID'])
         const keJianXingRaw = r['签名可见性']
         const keJianXing = shiHeFaKeJianXing(keJianXingRaw) ? keJianXingRaw : 'gong_kai'
-        const baiMingDanRaw = r['签名白名单']
-        const baiMingDan = Array.isArray(baiMingDanRaw) ? baiMingDanRaw.map((x) => String(x)) : []
+        const 白名单Raw = r['签名白名单']
+        const 白名单 = Array.isArray(白名单Raw) ? 白名单Raw.map((x) => String(x)) : []
         const qianMing = r['签名']
           ? panDuanKeJian(keJianXing, {
-              chaKanZheId: yongHu.yongHuId,
+              chaKanZheId: yongHu.用户ID,
               yongYouZheId: haoYouId,
               shiHaoYou: true,
-              baiMingDan,
+              白名单,
             })
             ? String(r['签名'])
             : null
@@ -285,7 +285,7 @@ luYou.delete('/:haoYouId', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xia
     await 数据库.query(
       `UPDATE "好友申请" SET "状态" = 'rejected', "更新时间" = NOW()
        WHERE "状态" = 'accepted' AND (("申请者ID" = $1 AND "接收者ID" = $2) OR ("申请者ID" = $2 AND "接收者ID" = $1))`,
-      [yongHu.yongHuId, haoYouId],
+      [yongHu.用户ID, haoYouId],
     )
     return chengGongXiangYing(xiangYing, { cheng_gong: true })
   } catch (cuoWu) {
@@ -325,7 +325,7 @@ export const HaoYouYuJu = {
 export function yingSheHaoYouXiaoXi(
   row: Record<string, unknown>,
   duZheId: string,
-  kuaiShangXiaWen: KuaiShangXiaWen,
+  kuaiShangXiaWen: 块上下文,
 ): HaoYouXiaoXiChuCan {
   const yiCheHui = row['撤回'] === true
   const sha256 = row['SHA256'] ? String(row['SHA256']).toLowerCase() : ''
@@ -336,7 +336,7 @@ export function yingSheHaoYouXiaoXi(
     jie_shou_zhe_id: String(row['接收者ID']),
     nei_rong: yiCheHui ? '' : String(row['内容'] || ''),
     lei_xing: String(row['类型']),
-    nei_rong_kuai: yingSheKuaiChuCan(row, kuaiShangXiaWen, '', haoYouKuaiTouYing(duZheId)),
+    nei_rong_kuai: 映射块出参(row, kuaiShangXiaWen, '', 好友块头像(duZheId)),
     bei_yong_xiao_xi_id: row['被引用消息ID'] ? String(row['被引用消息ID']) : null,
     mei_ti_id: yiCheHui || !row['媒体ID'] ? null : String(row['媒体ID']),
     mei_ti_url: yiCheHui || sha256 === '' ? null : shengChengQianMingURL(sha256, duZheId),
@@ -363,25 +363,25 @@ luYou.get('/消息/:haoYouId', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu,
   const youBiaoId = yanZhengUUID(yuanWenYouBiaoId) ? yuanWenYouBiaoId : null
   const shiYongYouBiao = youBiaoShiJianChuo !== null && youBiaoId !== null
   try {
-    if (!(await shiHaoYou(yongHu.yongHuId, haoYouId))) {
+    if (!(await shiHaoYou(yongHu.用户ID, haoYouId))) {
       return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('haoYou', 'feiHaoYou'))
     }
     const jieGuo = shiYongYouBiao
       ? await 数据库.query(HaoYouYuJu.查更早消息, [
-          yongHu.yongHuId,
+          yongHu.用户ID,
           haoYouId,
           xianZhi + 1,
           new Date(youBiaoShiJianChuo as number),
           youBiaoId,
         ])
-      : await 数据库.query(HaoYouYuJu.查消息列表, [yongHu.yongHuId, haoYouId, xianZhi + 1])
+      : await 数据库.query(HaoYouYuJu.查消息列表, [yongHu.用户ID, haoYouId, xianZhi + 1])
     const hangLie = jieGuo.rows as Record<string, unknown>[]
     const haiYouGengDuo = hangLie.length > xianZhi
     const youXiaoHang = hangLie.slice(0, xianZhi)
-    const kuaiShangXiaWen = await gouKuaiShangXiaWen(youXiaoHang, haoYouKuaiTouYing(yongHu.yongHuId))
+    const kuaiShangXiaWen = await gou块上下文(youXiaoHang, 好友块头像(yongHu.用户ID))
     return chengGongXiangYing(xiangYing, {
       lie_biao: youXiaoHang
-        .map((r) => yingSheHaoYouXiaoXi(r, yongHu.yongHuId, kuaiShangXiaWen))
+        .map((r) => yingSheHaoYouXiaoXi(r, yongHu.用户ID, kuaiShangXiaWen))
         .reverse(),
       hai_you_geng_duo: haiYouGengDuo,
     })
@@ -395,7 +395,7 @@ luYou.post('/媒体', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
   const yongHu = qingQiu.yong_hu
   if (!yongHu) return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
 
-  const fengJin = await chaXunZhangHaoFengJin(yongHu.yongHuId)
+  const fengJin = await chaXunZhangHaoFengJin(yongHu.用户ID)
   if (fengJin.beiFengJin) {
     return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'zhangHaoYiBeiFengJin'))
   }
@@ -410,11 +410,11 @@ luYou.post('/媒体', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
   if (!yanZhengUUID(jieShouZheId)) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
   }
-  if (jieShouZheId === yongHu.yongHuId) {
+  if (jieShouZheId === yongHu.用户ID) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('haoYou', 'buNengTianJiaZiJi'))
   }
   try {
-    if (!(await shiHaoYou(yongHu.yongHuId, jieShouZheId))) {
+    if (!(await shiHaoYou(yongHu.用户ID, jieShouZheId))) {
       return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('haoYou', 'feiHaoYou'))
     }
   } catch (cuoWu) {
@@ -443,7 +443,7 @@ luYou.post('/媒体', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
         return
       }
       chuLiGuoWenJian = true
-      liuShiBaoCunMeiTi(wenJianLiu, xinXi.filename || 'weimingming', xinXi.mimeType || '', leiBie, yongHu.yongHuId, shiChangHaoMiao)
+      liuShiBaoCunMeiTi(wenJianLiu, xinXi.filename || 'weimingming', xinXi.mimeType || '', leiBie, yongHu.用户ID, shiChangHaoMiao)
         .then((jieGuo) => {
           huiYing(() =>
             chengGongXiangYing(xiangYing, {
@@ -453,7 +453,7 @@ luYou.post('/媒体', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
               daXiao: jieGuo.daXiao,
               leiBie: jieGuo.leiBie,
               yuanShiWenJianMing: jieGuo.yuanShiWenJianMing,
-              mei_ti_url: shengChengQianMingURL(jieGuo.sha256, yongHu.yongHuId),
+              mei_ti_url: shengChengQianMingURL(jieGuo.sha256, yongHu.用户ID),
             }),
           )
         })
@@ -463,7 +463,7 @@ luYou.post('/媒体', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
             const chuCan = panDingMeiTiShenHeChuCan(jian)
             if (chuCan.xuYaoJiWeiGui) {
               await jiLuZhangHaoWeiGui({
-                yongHuId: yongHu.yongHuId,
+                用户ID: yongHu.用户ID,
                 ip: 获取IP(qingQiu),
                 yuanYin: jian,
                 leiXing: '好友媒体',
@@ -509,14 +509,14 @@ luYou.post('/消息', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
   const tiJiaoKuaiZhi = qingQiuTi['nei_rong_kuai'] ?? qingQiuTi['neiRongKuai'] ?? qingQiuTi['内容块']
   const yuanShiBeiYongZhi = qingQiuTi['beiYongXiaoXiId'] ?? qingQiuTi['bei_yong_xiao_xi_id'] ?? qingQiuTi['被引用消息ID']
   try {
-    if (!(await shiHaoYou(yongHu.yongHuId, jieShouZheId))) {
+    if (!(await shiHaoYou(yongHu.用户ID, jieShouZheId))) {
       return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('haoYou', 'feiHaoYou'))
     }
-    const haoYouFengJin = await chaXunZhangHaoFengJin(yongHu.yongHuId)
+    const haoYouFengJin = await chaXunZhangHaoFengJin(yongHu.用户ID)
     if (haoYouFengJin.beiFengJin) {
       return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('anQuan', 'zhangHaoYiBeiFengJin'))
     }
-    const kuaiXieRu = await qingLiXiaoXiKuaiXieRu(tiJiaoKuaiZhi, yongHu.yongHuId, '好友消息发送')
+    const kuaiXieRu = await qingLi消息块XieRu(tiJiaoKuaiZhi, yongHu.用户ID, '好友消息发送')
     if (!kuaiXieRu.cheng_gong) {
       return shiBaiXiangYing(
         xiangYing,
@@ -539,7 +539,7 @@ luYou.post('/消息', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
       if (!meiTiId || !yanZhengUUID(meiTiId)) {
         return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('liaoTian', 'meiTiBiXuXianChuanShu'))
       }
-      const guiShu = await yanZhengHaoYouMeiTiGuiShu(meiTiId, yongHu.yongHuId, leiXing)
+      const guiShu = await yanZhengHaoYouMeiTiGuiShu(meiTiId, yongHu.用户ID, leiXing)
       if (!guiShu.he_fa) {
         return shiBaiXiangYing(xiangYing, 400, guiShu.ti_shi)
       }
@@ -555,7 +555,7 @@ luYou.post('/消息', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
       if (shenHe.wei_gui) {
         if (shenHe.lei_xing !== ShenHeFuWuBuKeYongJian) {
           await jiLuZhangHaoWeiGui({
-            yongHuId: yongHu.yongHuId,
+            用户ID: yongHu.用户ID,
             ip: 获取IP(qingQiu),
             yuanYin: shenHe.li_you || shenHe.lei_xing || '内容违规',
             leiXing: '好友聊天',
@@ -571,7 +571,7 @@ luYou.post('/消息', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
       if (meiTiShenHe.wei_gui) {
         if (meiTiShenHe.lei_xing !== ShenHeFuWuBuKeYongJian) {
           await jiLuZhangHaoWeiGui({
-            yongHuId: yongHu.yongHuId,
+            用户ID: yongHu.用户ID,
             ip: 获取IP(qingQiu),
             yuanYin: meiTiShenHe.li_you || meiTiShenHe.lei_xing || '媒体违规',
             leiXing: '好友媒体',
@@ -581,11 +581,11 @@ luYou.post('/消息', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
         return shiBaiXiangYing(xiangYing, 500, huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
       }
     }
-    const beiYong = await yanZhengBeiYinYong(
+    const beiYong = await 校验被引用(
       yuanShiBeiYongZhi,
-      yongHu.yongHuId,
+      yongHu.用户ID,
       jieShouZheId,
-      HaoYouBeiYinYongMianXiang,
+      HaoYou被引用面向,
     )
     if (!beiYong.cheng_gong) {
       return shiBaiXiangYing(
@@ -595,7 +595,7 @@ luYou.post('/消息', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu, xiangYin
       )
     }
     const chaRu = await 数据库.query(HaoYouYuJu.插入消息, [
-      yongHu.yongHuId,
+      yongHu.用户ID,
       jieShouZheId,
       neiRong,
       leiXing,
@@ -627,7 +627,7 @@ luYou.put('/消息/:id/撤回', liaoTianXianLiu, async (qingQiu: RenZhengQingQiu
   try {
     const chaXun = await 数据库.query(`SELECT "发送者ID", "创建时间" FROM "好友消息" WHERE "ID" = $1 LIMIT 1`, [xiaoXiId])
     if (!chaXun.rows.length) return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
-    if (String(chaXun.rows[0]['发送者ID']) !== yongHu.yongHuId) {
+    if (String(chaXun.rows[0]['发送者ID']) !== yongHu.用户ID) {
       return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('haoYou', 'wuQuanXian'))
     }
     if (Date.now() - new Date(chaXun.rows[0]['创建时间']).getTime() > 2 * 60 * 1000) {
@@ -649,7 +649,7 @@ luYou.put('/消息/已读/:haoYouId', liaoTianXianLiu, async (qingQiu: RenZhengQ
   try {
     await 数据库.query(`UPDATE "好友消息" SET "已读" = TRUE WHERE "发送者ID" = $1 AND "接收者ID" = $2 AND "已读" = FALSE`, [
       haoYouId,
-      yongHu.yongHuId,
+      yongHu.用户ID,
     ])
     return chengGongXiangYing(xiangYing, { cheng_gong: true })
   } catch (cuoWu) {

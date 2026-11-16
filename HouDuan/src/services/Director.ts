@@ -1,13 +1,15 @@
 import { debug日志 } from '../utils/debug日志'
-import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/DeepSeek客户端'
 import { gouJianDirectorPrompt } from './Prompt构建器'
 import { paiRuZhongShiDuiLie } from './重试队列'
 import { zhuRuBenLunTuXiangKuai } from './对话渲染'
 import { 检索通用知识, type 通用知识检索结果 } from './通用知识检索'
-import { BiaoQingYunXingBiaoQian } from '../config/表情包配置'
-import type { DuiHuaKuai } from '../utils/DeepSeek客户端'
-import type { AIYinQingShuRu, DirectorCeLue } from '../types'
-import type { CanShuShangXiaWen } from '../config/AI参数策略'
+import { 表情运行标签 } from '../config/表情包配置'
+import type { 对话块 } from '../utils/DeepSeek客户端'
+import type { AIYinQingShuRu, DirectorCeLue, GuanXiBianHua, XinQingMingZhi } from '../types'
+import { XinQingLieBiao as XinQingMingZhiLieBiao } from './当前心情'
+import * as YuYanGongNeng from '../config/语言与时区'
+import type { 参数上下文 } from '../config/AI参数策略'
 
 export interface DirectorJieGuo {
   cheng_gong: boolean
@@ -17,7 +19,7 @@ export interface DirectorJieGuo {
   yuan_wen?: string
 }
 
-const YunXuYiTu = new Set<string>(BiaoQingYunXingBiaoQian)
+const YunXuYiTu = new Set<string>(表情运行标签)
 
 function biaoQingYiTuZhi(zhi: unknown): string | null {
   if (typeof zhi !== 'string') return null
@@ -77,35 +79,91 @@ export function jieXiDirectorXiangYing(neiRong: string): { ceLue: DirectorCeLue;
       shi_fou_che_hui: Boolean(shuJu['是否撤回'] ?? shuJu['shi_fou_che_hui'] ?? false),
       shi_fou_zhu_dong_biao_bai: Boolean(shuJu['是否主动表白'] ?? shuJu['shi_fou_zhu_dong_biao_bai'] ?? false),
       biao_qing_yi_tu: biaoQingYiTuZhi(shuJu['biao_qing_yi_tu']),
+      guan_xi_bian_hua: quGuanXiBianHua(quZhi(shuJu, '关系变化', 'guan_xi_bian_hua')),
+      xin_qing: quXinQing(quZhi(shuJu, '心情', 'xin_qing')),
+      xin_qing_qiang_du: quXinQingQiangDu(quZhi(shuJu, '心情强度', 'xin_qing_qiang_du')),
+      xin_qing_li_you: quXinQingLiYou(quZhi(shuJu, '心情理由', 'xin_qing_li_you')),
+      yao_qiu_huan_yu_yan: quYaoQiuHuanYuYan(quZhi(shuJu, '要求换语言', 'yao_qiu_huan_yu_yan')),
+      bu_hui_li_you: quBuHuiLiYou(quZhi(shuJu, '不回的理由', 'bu_hui_li_you')),
     },
     jieXiChengGong: true,
   }
 }
+function quZhi(sou: Record<string, unknown>, zhongWen: string, liuChengMing: string): unknown {
+  if (zhongWen in sou) return sou[zhongWen]
+  if (liuChengMing in sou) return sou[liuChengMing]
+  return undefined
+}
+
+function quGuanXiBianHua(zhi: unknown): GuanXiBianHua | undefined {
+  const wen = String(zhi ?? '').trim()
+  if (wen === '更近' || wen === '更远' || wen === '没变') return wen
+  return undefined
+}
+
+function quXinQing(zhi: unknown): XinQingMingZhi | null | undefined {
+  if (zhi === null) return null
+  const wen = String(zhi ?? '').trim()
+  if (wen === '') return undefined
+  if ((XinQingMingZhiLieBiao as readonly string[]).includes(wen)) return wen as XinQingMingZhi
+  return undefined
+}
+
+function quXinQingQiangDu(zhi: unknown): number | null | undefined {
+  if (zhi === null) return null
+  const shu = Number(zhi)
+  if (!Number.isFinite(shu)) return undefined
+  return Math.max(0, Math.min(100, Math.round(shu)))
+}
+
+function quXinQingLiYou(zhi: unknown): string | null | undefined {
+  if (zhi === null) return null
+  const wen = String(zhi ?? '').trim()
+  if (wen === '') return undefined
+  return wen.slice(0, 200)
+}
+
+function quYaoQiuHuanYuYan(zhi: unknown): string | null | undefined {
+  if (zhi === null) return null
+  const wen = String(zhi ?? '').trim()
+  if (wen === '') return undefined
+  if (!YuYanGongNeng.yuYanYouXiao(wen)) return undefined
+  return wen
+}
+
+const BuHuiLiYouBiao = ['对话收尾', '对方冒犯', '对方刷屏', '不想聊', '状态很差', '没什么可回']
+
+function quBuHuiLiYou(zhi: unknown): string {
+  const wen = String(zhi ?? '').trim()
+  if (wen === '') return '没有'
+  return (BuHuiLiYouBiao as readonly string[]).includes(wen) ? wen : '没有'
+}
+
 
 export async function shengChengDirectorCeLue(
   shuRu: AIYinQingShuRu,
-  shangXiaWen?: CanShuShangXiaWen,
+  shangXiaWen?: 参数上下文,
   waiBuXinHao?: AbortSignal,
-  zhiShi: 通用知识检索结果 = 检索通用知识(shuRu.yong_hu_xin_xiao_xi, !shuRu.zui_jia_shuo_de_shi),
+  _zhiShi: 通用知识检索结果 = 检索通用知识(shuRu.yong_hu_xin_xiao_xi, !shuRu.zui_jia_shuo_de_shi),
 ): Promise<DirectorJieGuo> {
   try {
     const tuXiangKuai = await zhuRuBenLunTuXiangKuai(shuRu.dui_hua_li_shi)
-    const tiShiCi = gouJianDirectorPrompt(shuRu, zhiShi)
-    const yongHuNeiRong: string | DuiHuaKuai[] =
+    const tiShiCi = gouJianDirectorPrompt(shuRu, { dengJi: shuRu.huiYingDengJi })
+    const yongHuNeiRong: string | 对话块[] =
       tuXiangKuai.length > 0
         ? [{ type: 'input_text', text: tiShiCi }, ...tuXiangKuai]
         : tiShiCi
 
     const daoYanZhiLing =
       '你负责判断角色这次是否回复、当下情绪、是否撤回和是否主动表白，只输出 JSON。情感分析字段写对方这条消息的语气和情绪。'
-    const 带导演指令 = (内容: string | DuiHuaKuai[]): string | DuiHuaKuai[] =>
+    const 带导演指令 = (内容: string | 对话块[]): string | 对话块[] =>
       typeof 内容 === 'string' ? `${内容}\n\n${daoYanZhiLing}` : [...内容, { type: 'input_text', text: daoYanZhiLing }]
     const xiaoXi = [{ jiaoSe: 'user' as const, neiRong: 带导演指令(yongHuNeiRong) }]
 
-    let xiangYing = await genJuPeiZhiTiaoYong('DaoYan', xiaoXi, shangXiaWen, waiBuXinHao)
+    let xiangYing = await 按配置调用('DaoYan', xiaoXi, shangXiaWen, waiBuXinHao)
     if (xiangYing.neiRong.trim() === '') {
       await new Promise((r) => setTimeout(r, 10000))
-      xiangYing = await genJuPeiZhiTiaoYong('DaoYan', xiaoXi, shangXiaWen, waiBuXinHao)
+      xiangYing = await 按配置调用('DaoYan', xiaoXi, shangXiaWen, waiBuXinHao)
     }
 
     const { ceLue, jieXiChengGong } = jieXiDirectorXiangYing(xiangYing.neiRong)
@@ -134,5 +192,3 @@ export async function shengChengDirectorCeLue(
     }
   }
 }
-
-

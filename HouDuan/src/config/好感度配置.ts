@@ -1,4 +1,4 @@
-import type { MBTILeiXing } from './角色配置'
+import type { MBTI类型 } from './角色配置'
 import { haoGanDuJiChuFanWei } from './角色配置'
 
 function huoQuMiJiKouLing(): string {
@@ -13,12 +13,6 @@ export interface HaoGanDuJieDuanYingShe {
   jieDuanMing: string
   xinQing: string
   taiDuMiaoShu: string
-  xiaXian: number
-  shangXian: number
-}
-
-export interface LiuCengJiYingShe {
-  mingCheng: string
   xiaXian: number
   shangXian: number
 }
@@ -63,15 +57,6 @@ export const HaoGanDuPeiZhi = {
     shenAi: { jieDuanMing: '深爱', xinQing: '甜蜜', taiDuMiaoShu: '深情、依赖', xiaXian: 901, shangXian: 1000 },
   } as Record<string, HaoGanDuJieDuanYingShe>,
 
-  liuCengJi: {
-    moShengRen: { mingCheng: '陌生人', xiaXian: 0, shangXian: 100 },
-    renShiDeRen: { mingCheng: '认识的人', xiaXian: 101, shangXian: 300 },
-    pengYou: { mingCheng: '朋友', xiaXian: 301, shangXian: 500 },
-    haoPengYou: { mingCheng: '好朋友', xiaXian: 501, shangXian: 600 },
-    aiMei: { mingCheng: '暧昧', xiaXian: 601, shangXian: 800 },
-    lianRen: { mingCheng: '恋人', xiaXian: 801, shangXian: 1000 },
-  } as Record<string, LiuCengJiYingShe>,
-
   jiChuFanWei: haoGanDuJiChuFanWei,
 
   zhaXing: {
@@ -88,6 +73,6 @@ export const HaoGanDuPeiZhi = {
 
 export type HaoGanDuJieDuanJian = keyof typeof HaoGanDuPeiZhi.jieDuan
 
-export function huoQuJiChuHaoGanDuFanWei(mbti: MBTILeiXing): [number, number] {
+export function huoQuJiChuHaoGanDuFanWei(mbti: MBTI类型): [number, number] {
   return HaoGanDuPeiZhi.jiChuFanWei[mbti]
 }

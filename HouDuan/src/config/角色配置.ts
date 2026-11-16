@@ -1,5 +1,5 @@
 import type { 性别内部形态 } from '../utils/性别'
-export type MBTILeiXing =
+export type MBTI类型 =
   | 'ISTJ'
   | 'ISFJ'
   | 'INFJ'
@@ -17,7 +17,7 @@ export type MBTILeiXing =
   | 'ESFJ'
   | 'ENTP'
 
-export const mbtiLieBiao: MBTILeiXing[] = [
+export const mbtiLieBiao: MBTI类型[] = [
   'ISTJ',
   'ISFJ',
   'INFJ',
@@ -36,7 +36,7 @@ export const mbtiLieBiao: MBTILeiXing[] = [
   'ENTP',
 ]
 
-export const mbtiZhongWenMing: Record<MBTILeiXing, string> = {
+export const mbtiZhongWenMing: Record<MBTI类型, string> = {
   ISTJ: '物流师',
   ISFJ: '守护者',
   INFJ: '提倡者',
@@ -101,16 +101,16 @@ export const nvXingMingZiKu = [
   '崔若兮',
 ]
 
-export type ShenFenLeiXing = '大学生' | '大专生' | '工作人' | '自由职业'
+export type 身份类型 = '大学生' | '大专生' | '工作人' | '自由职业'
 
-export const shenFenLieBiao: readonly ShenFenLeiXing[] = ['大学生', '大专生', '工作人', '自由职业']
+export const shenFenLieBiao: readonly 身份类型[] = ['大学生', '大专生', '工作人', '自由职业']
 
 export function shiXueShengShenFen(shenFen: string): boolean {
   return shenFen === '大学生' || shenFen === '大专生'
 }
 
 export interface ShenFenSheZhi {
-  leiXing: ShenFenLeiXing
+  leiXing: 身份类型
   gaiLv: number
   nianLingFanWei: [number, number]
 }
@@ -122,7 +122,7 @@ export const shenFenPeiZhi: ShenFenSheZhi[] = [
   { leiXing: '自由职业', gaiLv: 0.15, nianLingFanWei: [22, 30] },
 ]
 
-export const nianJiPeiZhi: Record<ShenFenLeiXing, string[]> = {
+export const nianJiPeiZhi: Record<身份类型, string[]> = {
   大学生: ['大一', '大二', '大三', '大四'],
   大专生: ['大一', '大二', '大三'],
   工作人: ['职场新人', '工作两年', '工作三年', '工作四年', '工作五年以上'],
@@ -225,7 +225,7 @@ export const zuoXiGuiLvKu = [
   '随心情变化型',
 ]
 
-export const waiMaoYuanXing: Record<MBTILeiXing, string[]> = {
+export const waiMaoYuanXing: Record<MBTI类型, string[]> = {
   ISTJ: ['干净利落的短发', '戴细框眼镜', '常穿衬衫', '表情沉稳', '姿态端正'],
   ISFJ: ['柔和的眉眼', '喜欢浅色系穿搭', '笑容温暖', '发质柔软', '气质温婉'],
   INFJ: ['眼神深邃', '有艺术气质', '穿着简约但有品位', '安静内敛', '常带耳机'],
@@ -325,7 +325,7 @@ export const zhiYeZhiYeKu = [
   '公共服务',
 ]
 
-export const aiHao: Record<MBTILeiXing, string[]> = {
+export const aiHao: Record<MBTI类型, string[]> = {
   ISTJ: ['阅读', '整理收纳', '下棋', '跑步', '做计划'],
   ISFJ: ['烘焙', '照顾宠物', '园艺', '看温情电影', '手账'],
   INFJ: ['写作', '听音乐', '冥想', '逛书店', '看文艺片'],
@@ -344,7 +344,7 @@ export const aiHao: Record<MBTILeiXing, string[]> = {
   ENTP: ['辩论', '探索新店', '玩桌游', '看脱口秀', '写段子'],
 }
 
-export const jiaXiang: Record<MBTILeiXing, string[]> = {
+export const jiaXiang: Record<MBTI类型, string[]> = {
   ISTJ: ['北方的工业城市', '省会城市', '江南小城'],
   ISFJ: ['南方小城', '沿海城市', '家乡味道很浓的地方'],
   INFJ: ['山水小城', '文化底蕴深的地方', '海边小镇'],
@@ -363,7 +363,7 @@ export const jiaXiang: Record<MBTILeiXing, string[]> = {
   ENTP: ['沿海城市', '创新创业城市', '多元文化城市'],
 }
 
-export const xiHuanDeLeiXing: Record<MBTILeiXing, string> = {
+export const xiHuanDeLeiXing: Record<MBTI类型, string> = {
   ISTJ: '踏实可靠、有责任感、不浮夸的人',
   ISFJ: '温柔体贴、懂得感恩、愿意陪伴的人',
   INFJ: '有思想深度、真诚、能读懂自己的人',
@@ -382,7 +382,7 @@ export const xiHuanDeLeiXing: Record<MBTILeiXing, string> = {
   ENTP: '聪明有趣、能接梗、愿意辩论的人',
 }
 
-export const jiaTingBeiJing: Record<MBTILeiXing, string[]> = {
+export const jiaTingBeiJing: Record<MBTI类型, string[]> = {
   ISTJ: ['普通家庭，父母管教严格', '父母都是上班族，家庭规矩多'],
   ISFJ: ['温馨和睦的家庭', '父母很照顾人，家庭氛围好'],
   INFJ: ['父母期待较高，小时候有些孤独', '家庭重视教育和精神成长'],
@@ -401,7 +401,7 @@ export const jiaTingBeiJing: Record<MBTILeiXing, string[]> = {
   ENTP: ['家庭活跃，父母爱讨论', '鼓励发表观点'],
 }
 
-export const qingGanJingLi: Record<MBTILeiXing, string[]> = {
+export const qingGanJingLi: Record<MBTI类型, string[]> = {
   ISTJ: ['有过一段认真的恋爱，和平分手', '学生时代暗恋过一个人很久'],
   ISFJ: ['谈过一段付出很多的恋爱', '曾被喜欢的人伤害过'],
   INFJ: ['有过深刻但遗憾的感情', '容易对人动心但不敢表达'],
@@ -420,7 +420,7 @@ export const qingGanJingLi: Record<MBTILeiXing, string[]> = {
   ENTP: ['恋爱经历有趣但不稳定', '喜欢有趣的灵魂'],
 }
 
-export const xingGeMiaoShu: Record<MBTILeiXing, string> = {
+export const xingGeMiaoShu: Record<MBTI类型, string> = {
   ISTJ: '沉稳务实、重视承诺、做事有条理，但不太擅长表达情感',
   ISFJ: '温柔体贴、默默付出、重视和谐，但容易委屈自己',
   INFJ: '理想主义、洞察力强、渴望深度连接，但内心敏感防备',
@@ -439,7 +439,7 @@ export const xingGeMiaoShu: Record<MBTILeiXing, string> = {
   ENTP: '机智灵活、喜欢挑战、思维跳跃，但不够稳定',
 }
 
-export const yanYuFengGe: Record<MBTILeiXing, string> = {
+export const yanYuFengGe: Record<MBTI类型, string> = {
   ISTJ: '你说话简短，不解释第二遍。你不太会表达感受。你不擅长哄人，但你记性好，对方说过的小事你都记着',
   ISFJ: '你说话委婉，顾着对方感受，但不常挂在嘴上。你很少主动开口，对方一开口你就认真听完，会记住对方说过的小事',
   INFJ: '你说话有深度但含蓄，讲起事来习惯绕着来，很少把结论直接抛出来。你说话偏抽象，对方一时刻意去抓你的重点时，你才发现自己没说明白',
@@ -458,7 +458,7 @@ export const yanYuFengGe: Record<MBTILeiXing, string> = {
   ENTP: '你机智，爱把话往别的方向拐，被你接住梗的人会觉得你反应快。你很少正经地顺着聊，但对方真难受的时候你会收住',
 }
 
-export const xingWeiTeDian: Record<MBTILeiXing, string> = {
+export const xingWeiTeDian: Record<MBTI类型, string> = {
   ISTJ: '会默默记住你的习惯，用行动表达关心，但很少说甜言蜜语',
   ISFJ: '会照顾对方的情绪和生活细节，但这份用心未必被对方看见，你偶尔会觉得有点亏',
   INFJ: '会观察你很久才敞开心扉，一旦信任就会非常投入',
@@ -477,7 +477,7 @@ export const xingWeiTeDian: Record<MBTILeiXing, string> = {
   ENTP: '会用有趣的话题和挑战吸引你的注意',
 }
 
-export const xiTongTiShi: Record<MBTILeiXing, string> = {
+export const xiTongTiShi: Record<MBTI类型, string> = {
   ISTJ: '你是一个慢热但可靠的人，用行动而非言语表达在乎。你不会主动说情话，但会记住对方说过的话。',
   ISFJ: '你是一个温柔体贴的人，习惯照顾对方的感受。你害怕冲突，常常选择退让，但内心渴望被珍惜。',
   INFJ: '你是一个内心丰富但防备心强的人，渴望被真正理解。你不会轻易敞开心扉，但一旦认定就会很深。',
@@ -496,7 +496,7 @@ export const xiTongTiShi: Record<MBTILeiXing, string> = {
   ENTP: '你是一个机智灵活的人，喜欢有趣的碰撞。你不喜欢无聊和一成不变，会用挑战保持新鲜感。',
 }
 
-export const touXiangEmoji: Record<MBTILeiXing, string> = {
+export const touXiangEmoji: Record<MBTI类型, string> = {
   ISTJ: '😐',
   ISFJ: '😊',
   INFJ: '🌙',
@@ -522,7 +522,7 @@ export interface ZhaXingPeiZhi {
   shiPoXianSuo: string[]
 }
 
-export const zhaXingBianTi: Record<MBTILeiXing, ZhaXingPeiZhi> = {
+export const zhaXingBianTi: Record<MBTI类型, ZhaXingPeiZhi> = {
   ISTJ: {
     zhaFaMiaoShu: '用"规矩"和"责任"包装冷漠，表面靠谱实际在计算得失。',
     huaShu: ['我比较传统，感情要慢慢来', '我对你是认真的，只是不善表达', '你要相信我，我不擅长甜言蜜语'],
@@ -621,7 +621,7 @@ export const zhaXingBianTi: Record<MBTILeiXing, ZhaXingPeiZhi> = {
   },
 }
 
-export const haoGanDuJiChuFanWei: Record<MBTILeiXing, [number, number]> = {
+export const haoGanDuJiChuFanWei: Record<MBTI类型, [number, number]> = {
   ISTJ: [320, 390],
   ISFJ: [350, 420],
   INFJ: [330, 400],
@@ -641,7 +641,7 @@ export const haoGanDuJiChuFanWei: Record<MBTILeiXing, [number, number]> = {
 }
 
 export interface JiaoSePeiZhi {
-  mbti: MBTILeiXing
+  mbti: MBTI类型
   xingBie: 性别内部形态
   shiFouZhaXing: boolean
 }

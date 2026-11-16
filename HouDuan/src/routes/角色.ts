@@ -24,14 +24,14 @@ import {
   NianLingXiaXian,
   NianLingShangXian,
 } from '../services/人设审核'
-import { shengChengJiaoSeTouXiang } from '../services/头像生成'
+import { 生成角色头像 } from '../services/头像生成'
 import { shengChengRenSheKa, yaoSuCongJiaoSe, type RenSheKaYaoSu } from '../services/人设自述卡'
-import type { MBTILeiXing } from '../config/角色配置'
+import type { MBTI类型 } from '../config/角色配置'
 import { mbtiLieBiao } from '../config/角色配置'
 import type { RenZhengQingQiu } from '../middleware/认证'
 import { 性别验证中间件 } from '../middleware/输入验证'
 import { 解析性别 } from '../utils/性别'
-import { setMoRenXingBie } from '../services/认证'
+import { 设置默认性别 } from '../services/认证'
 import {
   CuoWuDaiMa,
   JiaoSeShengChengCuoWu,
@@ -68,8 +68,8 @@ function jieXiBuErZhi(qingQiuTi: Record<string, unknown>, jian: string, tianChon
   return false
 }
 
-function yanZhengMbti(zhi: string): zhi is MBTILeiXing {
-  return mbtiLieBiao.includes(zhi as MBTILeiXing)
+function yanZhengMbti(zhi: string): zhi is MBTI类型 {
+  return mbtiLieBiao.includes(zhi as MBTI类型)
 }
 
 const XinMuZhongDeTaWenBenXianZhi: Record<string, number> = {
@@ -149,8 +149,8 @@ luYou.post('/MBTI生成', 性别验证中间件, async (qingQiu: RenZhengQingQiu
   const zhengLiMuBiaoXingBie = 解析性别(muBiaoXingBie) ?? undefined
   const zhengLiYongHuXingBie = 解析性别(jieXiZiFuChuan(qingQiuTi, '用户性别', 'yong_hu_xing_bie')) ?? undefined
   if (zhengLiYongHuXingBie) {
-    void setMoRenXingBie({
-      yong_hu_id: yongHu.yongHuId,
+    void 设置默认性别({
+      yong_hu_id: yongHu.用户ID,
       mo_ren_xing_bie: zhengLiYongHuXingBie,
     }).catch(() => undefined)
   }
@@ -160,7 +160,7 @@ luYou.post('/MBTI生成', 性别验证中间件, async (qingQiu: RenZhengQingQiu
     return shiBaiXiangYing(xiangYing, 400, xinMuZhongDeTaJieXi.cuo_wu, CuoWuDaiMa.ROLE_GENERATION_INPUT_INVALID)
   }
 
-  let shengXiaoZiDuan = xinMuZhongDeTaJieXi.shu_ju
+  let shengXiaoZiDuan: XinMuZhongDeTaZiDing | null = xinMuZhongDeTaJieXi.shu_ju
   if (shengXiaoZiDuan) {
     const renSheCaiJue = await caiJueRenShe(shengXiaoZiDuan)
     if (renSheCaiJue.jieLun === 'juJue') {
@@ -195,7 +195,7 @@ luYou.post('/MBTI生成', 性别验证中间件, async (qingQiu: RenZhengQingQiu
 
   try {
     const jiaoSe = shengChengJiaoSe({
-      yong_hu_id: yongHu.yongHuId,
+      yong_hu_id: yongHu.用户ID,
       xing_bie: zhengLiXingBie,
       mu_biao_xing_bie: zhengLiMuBiaoXingBie || null,
       mbti_lei_xing: mbtiLeiXing && yanZhengMbti(mbtiLeiXing) ? mbtiLeiXing : null,
@@ -203,7 +203,7 @@ luYou.post('/MBTI生成', 性别验证中间件, async (qingQiu: RenZhengQingQiu
       sui_ji_xing_ge: suiJiXingGe,
       xin_mu_zhong_de_ta: shengXiaoZiDuan,
     })
-    void huanCunDaiQueRenJiaoSe(yongHu.yongHuId, jiaoSe)
+    void huanCunDaiQueRenJiaoSe(yongHu.用户ID, jiaoSe)
     return chengGongXiangYing(xiangYing, touYingWanJiaKeJianJiaoSe(jiaoSe))
   } catch (cuoWu) {
     chuLiJiaoSeCuoWu(xiangYing, cuoWu, CuoWuDaiMa.ROLE_GENERATION_INITIALIZATION_FAILED)
@@ -225,17 +225,17 @@ luYou.post('/确认', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   }
 
   try {
-    const daiQueRenJiaoSe = await duQuDaiQueRenJiaoSe(yongHu.yongHuId)
+    const daiQueRenJiaoSe = await duQuDaiQueRenJiaoSe(yongHu.用户ID)
     const jiaoSeYuanShi = daiQueRenJiaoSe ?? xuanZhongJiaoSe
     const xiZhengHouJiaoSe = chongZhuZhaXingZiDuan(
       qingXiRenSheDuiXiang(
         jiaoSeYuanShi as unknown as Record<string, unknown>,
       ) as unknown as ShengChengJiaoSeJieGuo,
     )
-    const baoCunHou = await baoCunJiaoSe(yongHu.yongHuId, xiZhengHouJiaoSe)
+    const baoCunHou = await baoCunJiaoSe(yongHu.用户ID, xiZhengHouJiaoSe)
     try {
-      await shengChengJiaoSeTouXiang({
-        yongHuId: yongHu.yongHuId,
+      await 生成角色头像({
+        用户ID: yongHu.用户ID,
         jiaoSeId: String(baoCunHou.id),
         jiaoSe: baoCunHou,
       })

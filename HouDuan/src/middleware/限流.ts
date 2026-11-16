@@ -53,7 +53,7 @@ function huoQuQingQiuIP(req: Request): string {
 }
 
 function huoQuYongHuId(req: Request): string | undefined {
-  return (req as Request & { yong_hu?: { yongHuId: string } }).yong_hu?.yongHuId
+  return (req as Request & { yong_hu?: { 用户ID: string } }).yong_hu?.用户ID
 }
 
 function tongYongXianLiu(

@@ -41,8 +41,8 @@ function tiQuHuiFuNeiRong(shuJu: Record<string, unknown>): string | null {
   return null
 }
 
-export async function duQuYinPinShiJianHuanCun(sha256: string, moXing: string): Promise<string | null> {
-  const jian = `${sha256}:${moXing}`
+export async function duQuYinPinShiJianHuanCun(sha256: string, 模型: string): Promise<string | null> {
+  const jian = `${sha256}:${模型}`
   const neiCun = neiCunHuanCun.get(jian)
   if (neiCun !== undefined) return neiCun
   try {
@@ -57,8 +57,8 @@ export async function duQuYinPinShiJianHuanCun(sha256: string, moXing: string): 
   }
 }
 
-async function xieRuYinPinShiJianHuanCun(sha256: string, moXing: string, miaoShu: string): Promise<void> {
-  const jian = `${sha256}:${moXing}`
+async function xieRuYinPinShiJianHuanCun(sha256: string, 模型: string, miaoShu: string): Promise<void> {
+  const jian = `${sha256}:${模型}`
   neiCunHuanCun.set(jian, miaoShu)
   try {
     await redis.setex(`${HuanCunQianZhui}${jian}`, HuanCunYouXiaoMiao, JSON.stringify(miaoShu))
@@ -74,9 +74,9 @@ export async function huoQuYinPinShiJianMiaoShuZhiJie(canShu: { sha256: string; 
   if (!mime.startsWith('audio/')) return null
   const peiZhi = huoQuDuoMoTaiPeiZhi()
   const miYao = huoQuYinPinLiJieMiYao().trim()
-  const moXing = peiZhi.yinPinLiJieMoXing.trim()
-  if (!peiZhi.yinPinLiJieQiYong || miYao === '' || moXing === '') return null
-  const huanCun = await duQuYinPinShiJianHuanCun(sha256, moXing)
+  const 模型名 = peiZhi.音频理解模型.trim()
+  if (!peiZhi.音频理解启用 || miYao === '' || 模型名 === '') return null
+  const huanCun = await duQuYinPinShiJianHuanCun(sha256, 模型名)
   if (huanCun) return huanCun
   const benDiLuJing = huoQuBenDiLuJing(sha256)
   if (!benDiLuJing) return null
@@ -91,7 +91,7 @@ export async function huoQuYinPinShiJianMiaoShuZhiJie(canShu: { sha256: string; 
   }
   if (!wavZiJie || !wavZiJie.length) return null
   const base64 = wavZiJie.toString('base64')
-  if (Buffer.byteLength(base64, 'utf8') > peiZhi.yinPinLiJieZuiDaZiJie) return null
+  if (Buffer.byteLength(base64, 'utf8') > peiZhi.音频理解最大字节) return null
   if (shiFouJinZhiCeShiWaiHu()) {
     throw new Error(
       '[语音理解调用] VITEST 测试环境禁止真实外呼（音频事件理解）：请在 语音理解.ts 注入 sheZhiYuYinLiJieMock，或显式设置 XU_KE_ZHEN_SHI_WAI_HU=true 并 stub fetch 后联调',
@@ -100,11 +100,11 @@ export async function huoQuYinPinShiJianMiaoShuZhiJie(canShu: { sha256: string; 
   const kongZhi = new AbortController()
   const dingShi = setTimeout(() => kongZhi.abort(), Math.max(peiZhi.qingQiuChaoShiHaoMiao, QingQiuChaoShiDiXianHaoMiao))
   try {
-    const xiangYing = await fetch(`${peiZhi.yinPinLiJieJiChuUrl.trim().replace(/\/$/, '')}/chat/completions`, {
+    const xiangYing = await fetch(`${peiZhi.音频理解基础地址.trim().replace(/\/$/, '')}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${miYao}` },
       body: JSON.stringify({
-        model: moXing,
+        model: 模型名,
         modalities: ['text'],
         messages: [
           {
@@ -122,7 +122,7 @@ export async function huoQuYinPinShiJianMiaoShuZhiJie(canShu: { sha256: string; 
     const shuJu = (await xiangYing.json()) as Record<string, unknown>
     const miaoShu = tiQuHuiFuNeiRong(shuJu)
     if (!miaoShu) return null
-    await xieRuYinPinShiJianHuanCun(sha256, moXing, miaoShu)
+    await xieRuYinPinShiJianHuanCun(sha256, 模型名, miaoShu)
     return miaoShu
   } catch (cuoWu) {
     debug日志.warn('语音理解调用', '音频事件理解请求失败，已降级', { xiang_qing: { cuo_wu: String(cuoWu) } })

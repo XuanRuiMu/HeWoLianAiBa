@@ -1,5 +1,5 @@
 import type { 性别内部形态, 性别展示形态, 性别用户形态 } from '@/utils/性别'
-import type { GuanLiJiaoSe, GuanLiNengLi } from '@/utils/角色能力'
+import type { 管理角色, 管理能力 } from '@/utils/角色能力'
 
 export interface ApiXiangYing<T> {
   cheng_gong: boolean
@@ -12,18 +12,6 @@ export interface ApiXiangYing<T> {
   retryable?: boolean
   retryAfterMs?: number
 }
-
-export type GuanxiJieduan =
-  | 'lengDan'
-  | 'shuYuan'
-  | 'renShi'
-  | 'shuXi'
-  | 'pengYou'
-  | 'haoYou'
-  | 'aiMei'
-  | 'xinDong'
-  | 'reLian'
-  | 'shenAi'
 
 export type XingBie = 性别用户形态
 
@@ -68,8 +56,8 @@ export interface Yonghu {
   tou_xiang: string | null
   sheng_ri: string | null
   qian_ming: string | null
-  jiao_se: GuanLiJiaoSe | null
-  neng_li: GuanLiNengLi[]
+  jiao_se: 管理角色 | null
+  neng_li: 管理能力[]
   huo_yue_ren_she_id: string | null
   hai_wang_fen_shu: number
   chuang_jian_shi_jian: string
@@ -231,7 +219,7 @@ export interface QingganZhuangtai {
   jiao_se_id: string
   yong_hu_id: string
   qin_mi_du: number
-  guan_xi_jie_duan: GuanxiJieduan
+  guan_xi_jie_duan: string
   xin_ren_du: number
   hao_gan_du: number
   jie_suo_dui_hua: string[]
@@ -399,32 +387,6 @@ export interface RenShe {
   chuang_jian_shi_jian: string
 }
 
-export const GuanxiJieduanMap: Record<GuanxiJieduan, string> = {
-  lengDan: '冷淡',
-  shuYuan: '疏远',
-  renShi: '认识',
-  shuXi: '熟悉',
-  pengYou: '朋友',
-  haoYou: '好友',
-  aiMei: '暧昧',
-  xinDong: '心动',
-  reLian: '热恋',
-  shenAi: '深爱',
-}
-
-export const GuanxiJieduanOrder: GuanxiJieduan[] = [
-  'lengDan',
-  'shuYuan',
-  'renShi',
-  'shuXi',
-  'pengYou',
-  'haoYou',
-  'aiMei',
-  'xinDong',
-  'reLian',
-  'shenAi',
-]
-
 export const XingGeXuanZeMap: Record<XingGeXuanZe, string> = {
   ISTJ: '物流师',
   ISFJ: '守护者',
@@ -451,22 +413,6 @@ export const RenSheBiaoQianMap: Record<RenSheBiaoQian, string> = {
   liGongZhiNan: '理工直男/女',
   wenRouQingTingZhe: '温柔倾听者',
   youMoHuaLao: '幽默话痨',
-}
-
-export const HaoGanDuCengJiMap: Record<
-  string,
-  { min: number; max: number; ming_cheng: string }
-> = {
-  lengDan: { min: 0, max: 100, ming_cheng: '冷淡' },
-  shuYuan: { min: 101, max: 200, ming_cheng: '疏远' },
-  renShi: { min: 201, max: 300, ming_cheng: '认识' },
-  shuXi: { min: 301, max: 400, ming_cheng: '熟悉' },
-  pengYou: { min: 401, max: 500, ming_cheng: '朋友' },
-  haoYou: { min: 501, max: 600, ming_cheng: '好友' },
-  aiMei: { min: 601, max: 700, ming_cheng: '暧昧' },
-  xinDong: { min: 701, max: 800, ming_cheng: '心动' },
-  reLian: { min: 801, max: 900, ming_cheng: '热恋' },
-  shenAi: { min: 901, max: 1000, ming_cheng: '深爱' },
 }
 
 export type FanKuiLeiBie =
@@ -500,13 +446,6 @@ export const FanKuiLeiBieMap: Record<FanKuiLeiBie, string> = {
   neiRongBuDang: '内容不当',
   xiTongGuZhang: '系统故障',
   qiTaJianYi: '其他建议',
-}
-
-export function huoQuHaoGanDuCengJi(haoGanDu: number): string {
-  for (const [, dingYi] of Object.entries(HaoGanDuCengJiMap)) {
-    if (haoGanDu >= dingYi.min && haoGanDu <= dingYi.max) return dingYi.ming_cheng
-  }
-  return '冷淡'
 }
 
 export type 用户 = Yonghu

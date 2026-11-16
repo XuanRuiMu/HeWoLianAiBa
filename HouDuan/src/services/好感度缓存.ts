@@ -24,8 +24,8 @@ export interface XiShuJiSuanJieGuo {
     pingJunShuaiJianHou: number
 }
 
-function huoQuKey(yongHuId: string, jiaoSeId: string): string {
-    return `${ZengLiangKeyQianZhui}${yongHuId}:${jiaoSeId}`
+function huoQuKey(用户ID: string, jiaoSeId: string): string {
+    return `${ZengLiangKeyQianZhui}${用户ID}:${jiaoSeId}`
 }
 
 export function jiSuanMuBiaoQuXian(dangQianFen: number, huDongCiShu: number): number {
@@ -35,7 +35,7 @@ export function jiSuanMuBiaoQuXian(dangQianFen: number, huDongCiShu: number): nu
 }
 
 export async function jiLuZengLiang(
-    yongHuId: string,
+    用户ID: string,
     jiaoSeId: string,
     yuanShiZengLiang: number,
     shuaiJianHouZengLiang: number,
@@ -43,7 +43,7 @@ export async function jiLuZengLiang(
     muBiaoQuXian: number,
     lianXuWeiDaBiao: number = 0,
 ): Promise<void> {
-    const jianMing = huoQuKey(yongHuId, jiaoSeId)
+    const jianMing = huoQuKey(用户ID, jiaoSeId)
     const jiLu: ZengLiangJiLu = {
         lunXu: 0,
         yuanShiZengLiang,
@@ -65,10 +65,10 @@ export async function jiLuZengLiang(
         await 数据库.query(
             `INSERT INTO "好感度增量统计" 
                 ("用户ID", "角色ID", "轮次序号", "原始增量", "衰减后增量", "是否应用系数", "系数值", "目标曲线值")
-             VALUES ($1, $2, 
-                (SELECT COALESCE(MAX("轮次序号"), 0) + 1 FROM "好感度增量统计" WHERE "用户ID" = $1 AND "角色ID" = $2),
+             VALUES ($1::varchar, $2::varchar, 
+                (SELECT COALESCE(MAX("轮次序号"), 0) + 1 FROM "好感度增量统计" WHERE "用户ID" = $1::varchar AND "角色ID" = $2::varchar),
                 $3, $4, $5, $6, $7)`,
-            [yongHuId, jiaoSeId, yuanShiZengLiang, shuaiJianHouZengLiang, xiShu !== 1, xiShu, muBiaoQuXian],
+            [用户ID, jiaoSeId, yuanShiZengLiang, shuaiJianHouZengLiang, xiShu !== 1, xiShu, muBiaoQuXian],
         )
     } catch (cuoWu) {
         debug日志.error('好感度缓存', 'PG统计表写入失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
@@ -76,12 +76,12 @@ export async function jiLuZengLiang(
 }
 
 export async function jiSuanXiShu(
-    yongHuId: string,
+    用户ID: string,
     jiaoSeId: string,
     dangQianFen: number,
     huDongCiShu: number,
 ): Promise<XiShuJiSuanJieGuo> {
-    const jianMing = huoQuKey(yongHuId, jiaoSeId)
+    const jianMing = huoQuKey(用户ID, jiaoSeId)
     let lieBiao: string[] = []
     try {
         lieBiao = await redis.lrange(jianMing, 0, 7)
@@ -170,7 +170,7 @@ export async function yingYongHuiHuaBaoDi(
 }
 
 export async function huoQuZengLiangQuXian(
-    yongHuId: string,
+    用户ID: string,
     jiaoSeId: string,
     dangQianFen: number,
     huDongCiShu: number,
@@ -181,7 +181,7 @@ export async function huoQuZengLiangQuXian(
     lianXuWeiDaBiao: number
     pingJunShuaiJianHou: number
 }> {
-    const jianMing = huoQuKey(yongHuId, jiaoSeId)
+    const jianMing = huoQuKey(用户ID, jiaoSeId)
     const lieBiaoStr = await redis.lrange(jianMing, 0, 9)
     const lieBiao: ZengLiangJiLu[] = []
     for (const s of lieBiaoStr) {
@@ -192,7 +192,7 @@ export async function huoQuZengLiangQuXian(
         }
     }
 
-    const xiShuJieGuo = await jiSuanXiShu(yongHuId, jiaoSeId, dangQianFen, huDongCiShu)
+    const xiShuJieGuo = await jiSuanXiShu(用户ID, jiaoSeId, dangQianFen, huDongCiShu)
 
     return {
         lieBiao,

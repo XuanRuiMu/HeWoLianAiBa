@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Server } from 'socket.io'
-import type { XiaoXiXinXi } from '../消息'
+import type { 消息信息 } from '../消息'
 
 vi.mock('../AI引擎', () => ({ yunXingAIYinQing: vi.fn() }))
 vi.mock('../AI输入准备', () => ({
-  baoCunJiaoSeXiaoXi: vi.fn(),
+  保存角色XiaoXi: vi.fn(),
   huoQuAIJiaoSeXinXi: vi.fn(async () => ({ jiao_se_id: 'j-1', wei_xin_ming: '糖糖' })),
   huoQuZuiJinDuiHuaLiShi: vi.fn(async () => []),
 }))
@@ -12,7 +12,7 @@ vi.mock('../好感度', () => ({
   huoQuWanZhengHaoGanDu: vi.fn(async () => ({ zong_fen: 400 })),
   gengXinHaoGanDu: vi.fn(async () => undefined),
 }))
-vi.mock('../认证', () => ({ anIdChaYongHu: vi.fn(async () => null) }))
+vi.mock('../认证', () => ({ 按ID查用户: vi.fn(async () => null) }))
 vi.mock('../夺舍', () => ({ jiaoSeShiFouBeiDuoShe: vi.fn(async () => false) }))
 vi.mock('../好感度评判', () => ({ pingPanHaoGanDuPiLiangNei: vi.fn() }))
 vi.mock('../胜利失败条件', () => ({
@@ -20,7 +20,7 @@ vi.mock('../胜利失败条件', () => ({
   chuLiAIHuiFuHouJieShuJianCha: vi.fn(async () => null),
   chuLiYouXiJieShu: vi.fn(),
 }))
-vi.mock('../系统表情', () => ({ faSongBiaoQingBaoXiaoXi: vi.fn() }))
+vi.mock('../系统表情', () => ({ 发送表情包消息: vi.fn() }))
 vi.mock('../对话摘要', () => ({
   duQuTongBuZhaiYao: vi.fn(() => ''),
   duQuDuiHuaZhaiYao: vi.fn(async () => null),
@@ -28,7 +28,7 @@ vi.mock('../对话摘要', () => ({
   gouJianZhaiYaoZhuRuWenBen: vi.fn(() => ''),
   huanCunTongBuZhaiYao: vi.fn(() => undefined),
 }))
-vi.mock('../头像生成', () => ({ changShiTouXiangYanHua: vi.fn(async () => undefined) }))
+vi.mock('../头像生成', () => ({ 尝试头像演化: vi.fn(async () => undefined) }))
 vi.mock('../../utils/debug日志', () => ({
   debug日志: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
   jiLuSocketShiJian: vi.fn(),
@@ -37,8 +37,8 @@ vi.mock('../../utils/debug日志', () => ({
 }))
 
 import { AI回复调度器 } from '../AI回复调度器'
-import { baoCunJiaoSeXiaoXi } from '../AI输入准备'
-import { faSongBiaoQingBaoXiaoXi } from '../系统表情'
+import { 保存角色XiaoXi } from '../AI输入准备'
+import { 发送表情包消息 } from '../系统表情'
 import { debug日志 } from '../../utils/debug日志'
 import { BiaoQingBaoYunXing } from '../../config/表情包配置'
 import { burstChangJianGeJiZhunHaoMiao } from '../../config/角色配置'
@@ -61,7 +61,7 @@ interface 调度器内部 {
   ) => Promise<void>
 }
 
-function 造文本消息(id: string, neiRong: string): XiaoXiXinXi {
+function 造文本消息(id: string, neiRong: string): 消息信息 {
   return {
     id,
     hui_hua_id: 'j-1',
@@ -75,14 +75,14 @@ function 造文本消息(id: string, neiRong: string): XiaoXiXinXi {
   }
 }
 
-function 造图片消息(id: string, duanMing: string): XiaoXiXinXi {
+function 造图片消息(id: string, duanMing: string): 消息信息 {
   return {
     ...造文本消息(id, `[贴纸:${duanMing}]`),
     lei_xing: 'biaoQingBao',
     nei_rong_kuai: [
       { lei_xing: 'tupian', mei_ti_lei_bie: 'biaoqingshu', duan_ming: duanMing },
     ],
-  } as XiaoXiXinXi
+  } as 消息信息
 }
 
 function 造调度器() {
@@ -99,7 +99,7 @@ function 造调度器() {
   const 推送序列 = (): string[] =>
     发射列表
       .filter((tiao) => tiao.shiJian === '角色回复')
-      .flatMap((tiao) => (tiao.fuZai as { 消息列表: XiaoXiXinXi[] }).消息列表)
+      .flatMap((tiao) => (tiao.fuZai as { 消息列表: 消息信息[] }).消息列表)
       .map((xiaoXi) => {
         const duanMing = String(xiaoXi.nei_rong_kuai?.[0]?.duan_ming ?? '')
         if (duanMing !== '') return `图:${duanMing}`
@@ -113,11 +113,11 @@ function 造调度器() {
 beforeEach(() => {
   vi.clearAllMocks()
   let xuHao = 0
-  vi.mocked(baoCunJiaoSeXiaoXi).mockImplementation(async (canShu: { nei_rong: string }) => {
+  vi.mocked(保存角色XiaoXi).mockImplementation(async (canShu: { nei_rong: string }) => {
     xuHao += 1
     return 造文本消息(`m-${xuHao}`, canShu.nei_rong)
   })
-  vi.mocked(faSongBiaoQingBaoXiaoXi).mockImplementation(async (_yongHu: string, _jiaoSe: string, duanMing: string) =>
+  vi.mocked(发送表情包消息).mockImplementation(async (_yongHu: string, _jiaoSe: string, duanMing: string) =>
     造图片消息(`t-${duanMing}`, duanMing),
   )
 })
@@ -129,12 +129,12 @@ describe('调度器按段发送贴纸', () => {
     await 运行(['无语[贴纸:熊猫头无语]我跟你说'])
 
     expect(推送序列()).toEqual(['文:无语', '图:熊猫头无语', '文:我跟你说'])
-    expect(vi.mocked(baoCunJiaoSeXiaoXi).mock.calls.map(([canShu]) => (canShu as { nei_rong: string }).nei_rong)).toEqual([
+    expect(vi.mocked(保存角色XiaoXi).mock.calls.map(([canShu]) => (canShu as { nei_rong: string }).nei_rong)).toEqual([
       '无语',
       '我跟你说',
     ])
-    expect(vi.mocked(faSongBiaoQingBaoXiaoXi).mock.calls.map(([, , duanMing]) => duanMing)).toEqual(['熊猫头无语'])
-    for (const [canShu] of vi.mocked(baoCunJiaoSeXiaoXi).mock.calls) {
+    expect(vi.mocked(发送表情包消息).mock.calls.map(([, , duanMing]) => duanMing)).toEqual(['熊猫头无语'])
+    for (const [canShu] of vi.mocked(保存角色XiaoXi).mock.calls) {
       const wenBen = (canShu as { nei_rong: string }).nei_rong
       expect(wenBen).not.toContain('贴纸')
       expect(wenBen).not.toContain('[')
@@ -148,7 +148,7 @@ describe('调度器按段发送贴纸', () => {
     await 运行(['[贴纸:狗头]'])
 
     expect(推送序列()).toEqual(['图:狗头'])
-    expect(baoCunJiaoSeXiaoXi).not.toHaveBeenCalled()
+    expect(保存角色XiaoXi).not.toHaveBeenCalled()
   })
 
   it('超过每轮上限的图段被丢弃，后续文字段照常发出', async () => {
@@ -158,7 +158,7 @@ describe('调度器按段发送贴纸', () => {
 
     await 运行([`${tieZhi}收尾话`])
 
-    expect(vi.mocked(faSongBiaoQingBaoXiaoXi).mock.calls).toHaveLength(shangXian)
+    expect(vi.mocked(发送表情包消息).mock.calls).toHaveLength(shangXian)
     const 序列 = 推送序列()
     expect(序列.filter((xiang) => xiang.startsWith('图:'))).toHaveLength(shangXian)
     expect(序列[序列.length - 1]).toBe('文:收尾话')
@@ -169,12 +169,12 @@ describe('调度器按段发送贴纸', () => {
 
   it('图段发送失败时只丢这一段，后续文字段照常发出', async () => {
     const { 推送序列, 运行 } = 造调度器()
-    vi.mocked(faSongBiaoQingBaoXiaoXi).mockResolvedValue(null)
+    vi.mocked(发送表情包消息).mockResolvedValue(null)
 
     await 运行(['无语[贴纸:熊猫头无语]我跟你说'])
 
     expect(推送序列()).toEqual(['文:无语', '文:我跟你说'])
-    expect(faSongBiaoQingBaoXiaoXi).toHaveBeenCalledTimes(1)
+    expect(发送表情包消息).toHaveBeenCalledTimes(1)
   })
 
   it('图段与紧随其后的下一段之间走短间隔，其余段走普通间隔', async () => {

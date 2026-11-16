@@ -49,7 +49,7 @@ vi.mock('../../services/复盘', () => ({
 }))
 vi.mock('../../services/战绩', async () => {
   const yuan = await vi.importActual<typeof import('../../services/战绩')>('../../services/战绩')
-  return { ...yuan, huoQuDangAnXiangQing: 档案详情 }
+  return { ...yuan, huoQu档案详情: 档案详情 }
 })
 
 import luYou from '../战绩'
@@ -62,7 +62,7 @@ function chuangJianYingYong() {
   const yingYong = express()
   yingYong.use(express.json())
   yingYong.use((qingQiu, _xiangYing, xiaYiBu) => {
-    ;(qingQiu as unknown as { yong_hu: { yongHuId: string } }).yong_hu = { yongHuId: YongHu }
+    ;(qingQiu as unknown as { yong_hu: { 用户ID: string } }).yong_hu = { 用户ID: YongHu }
     xiaYiBu()
   })
   yingYong.use((qingQiu, _xiangYing, xiaYiBu) => {

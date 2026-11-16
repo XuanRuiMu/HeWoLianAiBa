@@ -8,9 +8,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const chaXunMock = vi.hoisted(() => vi.fn())
 
-const chaAnSha256Mock = vi.hoisted(() => vi.fn())
+const 按哈希查Mock = vi.hoisted(() => vi.fn())
 
-const chaAnDuanMingMock = vi.hoisted(() => vi.fn())
+const 按短名查Mock = vi.hoisted(() => vi.fn())
 
 vi.mock('../../数据库', () => ({
   数据库: { query: (...canShu: unknown[]) => chaXunMock(...canShu) },
@@ -28,8 +28,8 @@ vi.mock('../../services/表情包库', async () => {
   const shiJi = await vi.importActual<typeof import('../../services/表情包库')>('../../services/表情包库')
   return {
     ...shiJi,
-    chaAnSha256: (...canShu: unknown[]) => chaAnSha256Mock(...canShu),
-    chaAnDuanMing: (...canShu: unknown[]) => chaAnDuanMingMock(...canShu),
+    按哈希查: (...canShu: unknown[]) => 按哈希查Mock(...canShu),
+    按短名查: (...canShu: unknown[]) => 按短名查Mock(...canShu),
   }
 })
 
@@ -77,10 +77,10 @@ function biaoQingTiaoMu(wenJianLuJing: string) {
 beforeEach(() => {
   chaXunMock.mockReset()
   chaXunMock.mockImplementation(async () => ({ rows: [], rowCount: 0 }))
-  chaAnSha256Mock.mockReset()
-  chaAnSha256Mock.mockImplementation(async () => null)
-  chaAnDuanMingMock.mockReset()
-  chaAnDuanMingMock.mockImplementation(async () => null)
+  按哈希查Mock.mockReset()
+  按哈希查Mock.mockImplementation(async () => null)
+  按短名查Mock.mockReset()
+  按短名查Mock.mockImplementation(async () => null)
 })
 
 afterEach(() => {
@@ -94,7 +94,7 @@ describe('媒体下载回退表情包库', () => {
   it('媒体表无行但表情包库命中时照常返回图片', async () => {
     const neiRong = Buffer.from('png-nei-rong')
     const wenJianLuJing = chuangJianBiaoQingWenJian(neiRong)
-    chaAnSha256Mock.mockImplementation(async () => biaoQingTiaoMu(wenJianLuJing))
+    按哈希查Mock.mockImplementation(async () => biaoQingTiaoMu(wenJianLuJing))
     const url = shengChengQianMingURL(SHA, YongHu)
 
     const xiangYing = await request(chuangJianYingYong()).get(encodeURI(url))
@@ -108,13 +108,13 @@ describe('媒体下载回退表情包库', () => {
 
   it('签名被篡改时一律拒绝，不进表情包库', async () => {
     const wenJianLuJing = chuangJianBiaoQingWenJian(Buffer.from('png-nei-rong'))
-    chaAnSha256Mock.mockImplementation(async () => biaoQingTiaoMu(wenJianLuJing))
+    按哈希查Mock.mockImplementation(async () => biaoQingTiaoMu(wenJianLuJing))
     const url = shengChengQianMingURL(SHA, YongHu).replace(/s=[0-9a-f]+/, `s=${'f'.repeat(64)}`)
 
     const xiangYing = await request(chuangJianYingYong()).get(encodeURI(url))
 
     expect(xiangYing.status).toBe(403)
-    expect(chaAnSha256Mock).not.toHaveBeenCalled()
+    expect(按哈希查Mock).not.toHaveBeenCalled()
   })
 
   it('缺少签名参数时拒绝', async () => {
@@ -129,7 +129,7 @@ describe('媒体下载回退表情包库', () => {
   })
 
   it('表情包库命中但文件已丢失时返回 404', async () => {
-    chaAnSha256Mock.mockImplementation(async () =>
+    按哈希查Mock.mockImplementation(async () =>
       biaoQingTiaoMu(path.join(os.tmpdir(), 'bu-cun-zai-de-biao-qing.png')),
     )
     const url = shengChengQianMingURL(SHA, YongHu)
@@ -151,8 +151,8 @@ describe('媒体下载回退表情包库', () => {
       }
       return { rows: [], rowCount: 0 }
     })
-    chaAnSha256Mock.mockImplementation(async () => null)
-    chaAnDuanMingMock.mockImplementation(async (duanMing: unknown) =>
+    按哈希查Mock.mockImplementation(async () => null)
+    按短名查Mock.mockImplementation(async (duanMing: unknown) =>
       duanMing === '笑哭'
         ? { ...biaoQingTiaoMu(wenJianLuJing), sha256: erSha, duanMing: '笑哭' }
         : null,
@@ -162,7 +162,7 @@ describe('媒体下载回退表情包库', () => {
     const xiangYing = await request(chuangJianYingYong()).get(encodeURI(url))
 
     expect(xiangYing.status).toBe(200)
-    expect(chaAnDuanMingMock).toHaveBeenCalledWith('笑哭')
+    expect(按短名查Mock).toHaveBeenCalledWith('笑哭')
     expect(xiangYing.headers['etag']).toBe(`"${erSha}"`)
     expect(Number(xiangYing.headers['content-length'])).toBe(neiRong.length)
   })
@@ -179,8 +179,8 @@ describe('媒体下载回退表情包库', () => {
       }
       return { rows: [], rowCount: 0 }
     })
-    chaAnSha256Mock.mockImplementation(async () => null)
-    chaAnDuanMingMock.mockImplementation(async () => null)
+    按哈希查Mock.mockImplementation(async () => null)
+    按短名查Mock.mockImplementation(async () => null)
     const url = shengChengQianMingURL(SHA, YongHu)
 
     const xiangYing = await request(chuangJianYingYong()).get(encodeURI(url))

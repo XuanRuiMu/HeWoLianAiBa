@@ -10,7 +10,7 @@ const JiuXinJianYingShe: Record<string, (buFen: string[]) => { jiuJian: string; 
   aiYuSuan: (buFen) => ({ jiuJian: `ai_yu_suan:${buFen.join(':')}`, xinJian: jianMingJian('ai-yu-suan', ...buFen) }),
   yanZhengMa: (buFen) => ({ jiuJian: `yan_zheng_ma:${buFen.join(':')}`, xinJian: jianMingJian('yan-zheng-ma', ...buFen) }),
   dengLuShiBai: (buFen) => ({ jiuJian: `deng_lu_shi_bai:${buFen.join(':')}`, xinJian: jianMingJian('deng-lu-shi-bai', ...buFen) }),
-  shuaXinLingPai: (buFen) => ({ jiuJian: `refresh_token:${buFen.join(':')}`, xinJian: jianMingJian('refresh-token', ...buFen) }),
+  刷新令牌: (buFen) => ({ jiuJian: `refresh_token:${buFen.join(':')}`, xinJian: jianMingJian('refresh-token', ...buFen) }),
   jwtHeiMingDan: (buFen) => ({ jiuJian: `jwt_blacklist:${buFen.join(':')}`, xinJian: jianMingJian('jwt-hei-ming-dan', ...buFen) }),
   jwtCheXiao: (buFen) => ({ jiuJian: `jwt_yong_hu_cheXiao:${buFen.join(':')}`, xinJian: jianMingJian('jwt-che-xiao', ...buFen) }),
 }

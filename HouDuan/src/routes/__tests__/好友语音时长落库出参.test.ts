@@ -8,9 +8,9 @@ import {
   shiHaoYouShangChuanLeiBie,
 } from '../../config/媒体配置'
 import { HaoYouYuJu, yingSheHaoYouXiaoXi } from '../../routes/好友'
-import type { KuaiShangXiaWen } from '../../services/消息'
+import type { 块上下文 } from '../../services/消息'
 
-const WuKuai: KuaiShangXiaWen = { kuaiOf: () => null, meiTiOf: () => null }
+const WuKuai: 块上下文 = { kuaiOf: () => null, meiTiOf: () => null }
 
 describe('好友媒体上传白名单', () => {
   it('语音在好友上传白名单内，与全量媒体类别一致', () => {

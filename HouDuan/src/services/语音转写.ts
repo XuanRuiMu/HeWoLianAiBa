@@ -1,6 +1,7 @@
 import fs from 'fs'
 import { debug日志 } from '../utils/debug日志'
-import { huoQuDuoMoTaiPeiZhi, huoQuGuiJiLiuDongMiYao } from '../config/多模态配置'
+import { huoQuFFmpegLuJing, tiQuYinPinWeiWav } from '../utils/音频转码'
+import { shiBieYuYin } from './DeepSeek官方工具'
 import { 数据库 } from '../数据库'
 import { huoQuBenDiLuJing } from './媒体存储'
 
@@ -29,11 +30,6 @@ export async function mianFeiZhuanXieYuYin(canShu: { meiTiId: string }): Promise
   }
   const meiTiId = (canShu.meiTiId || '').trim()
   if (!meiTiId) return null
-  const peiZhi = huoQuDuoMoTaiPeiZhi()
-  const miYao = huoQuGuiJiLiuDongMiYao()
-  if (miYao.trim() === '') return null
-  const moXing = peiZhi.guiJiLiuDongYuYinMoXing.trim()
-  if (moXing === '') return null
   let sha256 = ''
   let mime = 'audio/webm'
   try {
@@ -46,50 +42,28 @@ export async function mianFeiZhuanXieYuYin(canShu: { meiTiId: string }): Promise
   }
   const benDiLuJing = huoQuBenDiLuJing(sha256)
   if (!benDiLuJing) return null
-  let yinPin: Buffer
+  let wavZiJie: Buffer | null = null
+  if (mime === 'audio/wav' || mime === 'audio/x-wav') {
+    wavZiJie = await fs.promises.readFile(benDiLuJing).catch(() => null)
+  }
+  if (!wavZiJie || !wavZiJie.length) {
+    const ffmpegLuJing = await huoQuFFmpegLuJing()
+    if (!ffmpegLuJing) return null
+    wavZiJie = await tiQuYinPinWeiWav(benDiLuJing)
+  }
+  if (!wavZiJie || !wavZiJie.length) return null
+  let jieGuo: Awaited<ReturnType<typeof shiBieYuYin>>
   try {
-    yinPin = await fs.promises.readFile(benDiLuJing)
+    jieGuo = await shiBieYuYin({ wavZiJie })
   } catch {
     return null
   }
-  if (!yinPin.length) return null
-  const jiChu = peiZhi.guiJiLiuDongJiChuUrl.replace(/\/$/, '')
-  const kongZhi = new AbortController()
-  const dingShi = setTimeout(() => kongZhi.abort(), Math.max(peiZhi.qingQiuChaoShiHaoMiao, 120000))
-  const houZhui = mime.includes('wav') ? '.wav' : mime.includes('mp3') || mime.includes('mpeg') ? '.mp3' : mime.includes('mp4') ? '.m4a' : mime.includes('ogg') ? '.ogg' : '.webm'
-  try {
-    const biaoDan = new FormData()
-    biaoDan.append('model', moXing)
-    biaoDan.append('file', new Blob([new Uint8Array(yinPin)], { type: mime }), `yuyin-${meiTiId}${houZhui}`)
-    const xiangYing = await fetch(`${jiChu}/audio/transcriptions`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${miYao}` },
-      body: biaoDan,
-      signal: kongZhi.signal,
-    })
-    if (!xiangYing.ok) {
-      const cuoWai = await xiangYing.text().catch(() => '')
-      debug日志.warn('语音转写', 'ASR响应非2xx，已降级', {
-        xiang_qing: { zhuang_tai: xiangYing.status, xiang_ying: cuoWai.slice(0, 300) },
-      })
-      return null
-    }
-    const shuJu = (await xiangYing.json()) as Record<string, unknown>
-    const wenBen =
-      typeof shuJu['wen_ben'] === 'string'
-        ? String(shuJu['wen_ben'])
-        : typeof shuJu['text'] === 'string'
-          ? String(shuJu['text'])
-          : ''
-    return qingXi(wenBen)
-  } catch (cuoWu) {
-    debug日志.warn('语音转写', '免费转写失败，已降级', { xiang_qing: { cuo_wu: String(cuoWu) } })
+  if (!jieGuo.cheng_gong) {
+    debug日志.warn('语音转写', '官方ASR转写失败，已降级', { xiang_qing: { ti_shi: jieGuo.ti_shi || '' } })
     return null
-  } finally {
-    clearTimeout(dingShi)
   }
+  return (jieGuo.wenBen || '').trim().slice(0, 500)
 }
-
 export async function buQiYuYinZhuanXie<
   T extends { lei_xing: string; nei_rong: string; mei_ti_id?: string | null },
 >(xiaoXi: T): Promise<T> {

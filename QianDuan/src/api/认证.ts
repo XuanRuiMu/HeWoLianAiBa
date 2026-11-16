@@ -16,6 +16,7 @@ export interface 注册请求 {
   tongYiXieYi: boolean
   chuShengRiQi: string
   jingWai?: boolean
+  shiQu?: string
 }
 
 export interface 登录请求 {
@@ -108,10 +109,21 @@ export async function zhuCe(
       tongYiXieYi,
       chuShengRiQi,
       jingWai,
+      shiQu: huoQuShiBieShiQu(),
     },
     peiZhi,
   )
   return 响应.data.shu_ju
+}
+
+export function huoQuShiBieShiQu(): string {
+  try {
+    const shiQu = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (typeof shiQu === 'string' && /^[A-Za-z_]+\/[A-Za-z_+\-/]+$/.test(shiQu)) return shiQu
+  } catch {
+    return ''
+  }
+  return ''
 }
 
 export async function dengLu(

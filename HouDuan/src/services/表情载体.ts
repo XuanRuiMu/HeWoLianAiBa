@@ -2,9 +2,9 @@ import { debug日志 } from '../utils/debug日志'
 import { duPeiZhiShiCha } from '../config/时区'
 import {
   BiaoQingBaoYunXing,
-  BiaoQingGuanXiJieDuanShunXu,
+  表情关系阶段顺序,
   BiaoQingMiDu,
-  BiaoQingZaiTiPeiZhi,
+  表情载体配置,
 } from '../config/表情包配置'
 import { jiSuanBiaoQingShouGan, shiBiaoQingXiaoXi } from './表情密度'
 import type { AIYinQingShuRu, DirectorCeLue, DuiHuaLiShiXiang } from '../types'
@@ -39,11 +39,11 @@ interface NianLingDang {
 }
 
 function quMoRenDang(): NianLingDang {
-  const moRen = BiaoQingZaiTiPeiZhi.nianLingFenDang.find(
-    (dang) => dang.ming === BiaoQingZaiTiPeiZhi.moRenDangMing,
+  const moRen = 表情载体配置.nianLingFenDang.find(
+    (dang) => dang.ming === 表情载体配置.moRenDangMing,
   )
   return {
-    ming: BiaoQingZaiTiPeiZhi.moRenDangMing,
+    ming: 表情载体配置.moRenDangMing,
     yunXuFengGe: moRen?.yunXuFengGe ?? [],
     jianGeBeiLv: moRen?.jianGeBeiLv ?? 1,
   }
@@ -64,7 +64,7 @@ function quBaoShouJueCe(yuanYin: BiaoQingZaiTiYuanYin): BiaoQingZaiTiJueCe {
 }
 
 function quWenBen(zhi: unknown): string {
-  return typeof zhi === 'string' ? zhi.slice(0, BiaoQingZaiTiPeiZhi.wenBenZuiDaChang) : ''
+  return typeof zhi === 'string' ? zhi.slice(0, 表情载体配置.wenBenZuiDaChang) : ''
 }
 
 function quGeRenXiShu(jiaoSeId: unknown): number {
@@ -80,7 +80,7 @@ function quGeRenXiShu(jiaoSeId: unknown): number {
   haXi = Math.imul(haXi, 0x846ca68b) >>> 0
   haXi ^= haXi >>> 16
   const biLi = (haXi >>> 0) / 4294967296
-  const peiZhi = BiaoQingZaiTiPeiZhi.geRenPianHao
+  const peiZhi = 表情载体配置.geRenPianHao
   return peiZhi.jianGeZuiXiaoBeiLv + biLi * (peiZhi.jianGeZuiDaBeiLv - peiZhi.jianGeZuiXiaoBeiLv)
 }
 
@@ -88,7 +88,7 @@ function quNianLingDang(nianLing: unknown): NianLingDang {
   if (typeof nianLing !== 'number' || !Number.isFinite(nianLing)) return quMoRenDang()
   const zhengShu = Math.trunc(nianLing)
   if (zhengShu < 10 || zhengShu > 99) return quMoRenDang()
-  const mingZhong = BiaoQingZaiTiPeiZhi.nianLingFenDang.find((dang) => zhengShu <= dang.nianLingShangXian)
+  const mingZhong = 表情载体配置.nianLingFenDang.find((dang) => zhengShu <= dang.nianLingShangXian)
   if (!mingZhong) return quMoRenDang()
   return {
     ming: mingZhong.ming,
@@ -100,9 +100,7 @@ function quNianLingDang(nianLing: unknown): NianLingDang {
 function quJieDuanXuHao(jieDuan: unknown): number {
   const wenBen = quWenBen(jieDuan).trim()
   if (wenBen === '') return 0
-  const zhongWenMing = BiaoQingMiDu.guanXiJieDuanZhongWenMing as Record<string, string>
-  const jian = zhongWenMing[wenBen] ?? wenBen
-  const xuHao = BiaoQingGuanXiJieDuanShunXu.indexOf(jian)
+  const xuHao = 表情关系阶段顺序.indexOf(wenBen)
   return xuHao >= 0 ? xuHao : 0
 }
 
@@ -110,8 +108,8 @@ function shiShenYe(riQi: Date): boolean {
   const shiCha = duPeiZhiShiCha()
   const xiaoShi = ((riQi.getHours() + riQi.getMinutes() / 60 + shiCha) % 24 + 24) % 24
   return (
-    xiaoShi >= BiaoQingZaiTiPeiZhi.jinYongXiaoShiQiShi ||
-    xiaoShi < BiaoQingZaiTiPeiZhi.jinYongXiaoShiJieShu
+    xiaoShi >= 表情载体配置.jinYongXiaoShiQiShi ||
+    xiaoShi < 表情载体配置.jinYongXiaoShiJieShu
   )
 }
 
@@ -123,8 +121,8 @@ function shiWeiJi(shuRu: AIYinQingShuRu, ceLue?: DirectorCeLue): boolean {
     quWenBen(ceLue?.yong_hu_yi_tu),
   ].join('\n')
   if (wenBen.trim() === '') return false
-  if (BiaoQingZaiTiPeiZhi.weiJiPaiChuCi.some((ci) => yongHu.includes(ci))) return false
-  return BiaoQingZaiTiPeiZhi.weiJiGuanJianCi.some((ci) => wenBen.includes(ci))
+  if (表情载体配置.weiJiPaiChuCi.some((ci) => yongHu.includes(ci))) return false
+  return 表情载体配置.weiJiGuanJianCi.some((ci) => wenBen.includes(ci))
 }
 
 function shiHuiJing(liShi: DuiHuaLiShiXiang[]): boolean {
@@ -158,7 +156,7 @@ export function panDuanBiaoQingZaiTi(
         ie_lei_xing: shuRu?.jiao_se?.ie_lei_xing,
         re_shen_lei_xing: shuRu?.jiao_se?.re_shen_lei_xing,
       },
-      BiaoQingGuanXiJieDuanShunXu[jieDuanXuHao],
+      表情关系阶段顺序[jieDuanXuHao],
     )
     const qiWangJianGe = Math.min(
       BiaoQingMiDu.jianGe.zuiDa,
@@ -173,7 +171,7 @@ export function panDuanBiaoQingZaiTi(
     if (!BiaoQingBaoYunXing.daKai) yuanYin = '总开关关闭'
     else if (shiShenYe(riQi)) yuanYin = '深夜'
     else if (shiWeiJi(shuRu, ceLue)) yuanYin = '危机'
-    else if (jieDuanXuHao < quJieDuanXuHao(BiaoQingZaiTiPeiZhi.zuiDiYunXuJieDuan)) yuanYin = '关系未到'
+    else if (jieDuanXuHao < quJieDuanXuHao(表情载体配置.zuiDiYunXuJieDuan)) yuanYin = '关系未到'
     else if (shiHuiJing(liShi)) yuanYin = '回敬'
     else if (shouGan.shangCiFaTuLunShu !== null && shouGan.shangCiFaTuLunShu < qiWangJianGe) {
       yuanYin = '间隔未到'

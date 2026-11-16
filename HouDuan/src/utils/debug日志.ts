@@ -145,12 +145,12 @@ export const debug日志: RiZhiDuiXiang = {
 
 export function withRequestId(
   qingQiuId: string,
-  yongHuId?: string,
+  用户ID?: string,
   jiaoSeId?: string,
 ): QingQiuRiZhiDuiXiang {
   const daiRuXuanXiang = (xiangQing?: Record<string, unknown>): RiZhiXuanXiang => ({
     qing_qiu_id: qingQiuId,
-    yong_hu_id: yongHuId,
+    yong_hu_id: 用户ID,
     jiao_se_id: jiaoSeId,
     xiang_qing: xiangQing,
   })
@@ -171,12 +171,12 @@ export function jiLuHTTPQingQiu(
   luJing: string,
   zhuangTaiMa: number,
   haoShi: number,
-  yongHuId?: string,
+  用户ID?: string,
 ): void {
   const huanJing = peiZhi.huanJing
   const jiBie: RiZhiJiBie = zhuangTaiMa >= 500 ? 'error' : zhuangTaiMa >= 400 ? 'warn' : 'info'
   debug日志[jiBie]('HTTP请求', `${fangFa} ${luJing} ${zhuangTaiMa} ${haoShi}ms`, {
-    yong_hu_id: yongHuId,
+    yong_hu_id: 用户ID,
     xiang_qing: {
       fang_fa: fangFa,
       lu_jing: luJing,
@@ -193,8 +193,8 @@ export function chuangJianHTTPRiZhiZhongJianJian(): RequestHandler {
 
     xiangYing.on('finish', () => {
       const haoShi = Date.now() - kaiShiShiJian
-      const yongHuId = (qingQiu as unknown as { yong_hu?: { yongHuId: string } }).yong_hu?.yongHuId
-      jiLuHTTPQingQiu(qingQiu.method, qingQiu.path, xiangYing.statusCode, haoShi, yongHuId)
+      const 用户ID = (qingQiu as unknown as { yong_hu?: { 用户ID: string } }).yong_hu?.用户ID
+      jiLuHTTPQingQiu(qingQiu.method, qingQiu.path, xiangYing.statusCode, haoShi, 用户ID)
     })
 
     xiaYiBu()
@@ -203,27 +203,27 @@ export function chuangJianHTTPRiZhiZhongJianJian(): RequestHandler {
 
 export function jiLuSocketShiJian(
   shiJian: string,
-  yongHuId: string,
+  用户ID: string,
   xiangQing?: Record<string, unknown>,
 ): void {
   debug日志.info('Socket事件', shiJian, {
-    yong_hu_id: yongHuId,
+    yong_hu_id: 用户ID,
     xiang_qing: xiangQing,
   })
 }
 
 export function jiLuAIJiLu(
-  moXingLeiXing: string,
-  moXing: string,
+  模型类型: string,
+  模型: string,
   haoShi: number,
   chengGong: boolean,
   cuoWu?: string,
 ): void {
   const jiBie: RiZhiJiBie = chengGong ? 'info' : 'error'
-  debug日志[jiBie]('AI调用', `${moXingLeiXing} ${moXing} ${chengGong ? '成功' : '失败'} ${haoShi}ms`, {
+  debug日志[jiBie]('AI调用', `${模型类型} ${模型} ${chengGong ? '成功' : '失败'} ${haoShi}ms`, {
     xiang_qing: {
-      mo_xing_lei_xing: moXingLeiXing,
-      mo_xing: moXing,
+      mo_xing_lei_xing: 模型类型,
+      mo_xing: 模型,
       hao_shi: haoShi,
       cheng_gong: chengGong,
       cuo_wu: cuoWu,
@@ -232,13 +232,13 @@ export function jiLuAIJiLu(
 }
 
 export function jiLuHaoGanDuBianHua(
-  yongHuId: string,
+  用户ID: string,
   jiaoSeId: string,
   bianHua: Record<string, unknown>,
   xinZongFen?: number,
 ): void {
-  debug日志.info('好感度变更', `用户 ${yongHuId} 角色 ${jiaoSeId}`, {
-    yong_hu_id: yongHuId,
+  debug日志.info('好感度变更', `用户 ${用户ID} 角色 ${jiaoSeId}`, {
+    yong_hu_id: 用户ID,
     jiao_se_id: jiaoSeId,
     xiang_qing: {
       bian_hua: bianHua,
@@ -248,14 +248,14 @@ export function jiLuHaoGanDuBianHua(
 }
 
 export function jiLuJunShiQiuZhu(
-  yongHuId: string,
+  用户ID: string,
   jiaoSeId: string,
   chengGong: boolean,
   cuoWuMa?: string,
 ): void {
   const jiBie: RiZhiJiBie = chengGong ? 'info' : 'warn'
-  debug日志[jiBie]('军师指导', `用户 ${yongHuId} 角色 ${jiaoSeId} ${chengGong ? '成功' : '失败'}`, {
-    yong_hu_id: yongHuId,
+  debug日志[jiBie]('军师指导', `用户 ${用户ID} 角色 ${jiaoSeId} ${chengGong ? '成功' : '失败'}`, {
+    yong_hu_id: 用户ID,
     jiao_se_id: jiaoSeId,
     xiang_qing: {
       cheng_gong: chengGong,
@@ -265,12 +265,12 @@ export function jiLuJunShiQiuZhu(
 }
 
 export function jiLuYouXiJieJu(
-  yongHuId: string,
+  用户ID: string,
   jiaoSeId: string,
   jieGuoLeiXing: string,
 ): void {
-  debug日志.info('游戏结局', `用户 ${yongHuId} 角色 ${jiaoSeId} 触发 ${jieGuoLeiXing}`, {
-    yong_hu_id: yongHuId,
+  debug日志.info('游戏结局', `用户 ${用户ID} 角色 ${jiaoSeId} 触发 ${jieGuoLeiXing}`, {
+    yong_hu_id: 用户ID,
     jiao_se_id: jiaoSeId,
     xiang_qing: {
       jie_guo_lei_xing: jieGuoLeiXing,
@@ -280,13 +280,13 @@ export function jiLuYouXiJieJu(
 
 export function jiLuXiaoXiCaoZuo(
   caoZuo: string,
-  yongHuId: string,
+  用户ID: string,
   jiaoSeId: string,
   faSongZheLeiXing: string,
   xiangQing?: Record<string, unknown>,
 ): void {
   debug日志.info('消息操作', caoZuo, {
-    yong_hu_id: yongHuId,
+    yong_hu_id: 用户ID,
     jiao_se_id: jiaoSeId,
     xiang_qing: {
       cao_zuo: caoZuo,

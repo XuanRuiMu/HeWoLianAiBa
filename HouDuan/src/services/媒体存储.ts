@@ -133,7 +133,7 @@ export async function liuShiBaoCunMeiTi(
   yuanShiWenJianMing: string,
   mime: string,
   leiBie: string,
-  yongHuId: string,
+  用户ID: string,
   shiChangHaoMiao?: number | null,
 ): Promise<MeiTiBaoCunJieGuo> {
   if (!shiHeFaLeiBie(leiBie)) {
@@ -284,7 +284,7 @@ const sha256 = haXi.digest('hex').toLowerCase()
     `INSERT INTO "媒体文件" ("SHA256", "原始文件名", "MIME", "大小字节", "类别", "上传者ID", "时长毫秒")
      VALUES ($1, $2, $3, $4, $5, $6, $7)
      RETURNING "ID"`,
-    [sha256, yuanShiWenJianMing, qingLiMIME, ziJieShu, leiBie, yongHuId, shiChangHaoMiao ?? null],
+    [sha256, yuanShiWenJianMing, qingLiMIME, ziJieShu, leiBie, 用户ID, shiChangHaoMiao ?? null],
   )
 
   const meiTiId = String(chaRuJieGuo.rows[0].ID)
@@ -299,15 +299,15 @@ const sha256 = haXi.digest('hex').toLowerCase()
   }
 }
 
-export function shengChengQianMingURL(sha256: string, yongHuId: string, youXiaoMiao?: number): string {
+export function shengChengQianMingURL(sha256: string, 用户ID: string, youXiaoMiao?: number): string {
   const youXiaoQi = youXiaoMiao ?? MeiTiPeiZhi.qianMingYouXiaoMiaoRenZheng
   const guoQiMiao = Math.floor(Date.now() / 1000) + youXiaoQi
   const qianFaHaoMiao = Date.now()
   const qianMing = crypto
     .createHmac('sha256', huoQuMeiTiQianMingMiYao())
-    .update(`${sha256}:${guoQiMiao}:${yongHuId}:${qianFaHaoMiao}`)
+    .update(`${sha256}:${guoQiMiao}:${用户ID}:${qianFaHaoMiao}`)
     .digest('hex')
-  return `/api/媒体/${sha256}?e=${guoQiMiao}&u=${yongHuId}&t=${qianFaHaoMiao}&s=${qianMing}`
+  return `/api/媒体/${sha256}?e=${guoQiMiao}&u=${用户ID}&t=${qianFaHaoMiao}&s=${qianMing}`
 }
 
 export function shengChengMeiTiYinYong(sha256: string): string {
@@ -325,21 +325,21 @@ export function tiQuMeiTiSha(cunChuZhi: unknown): string | null {
 
 export function zhongXinQianMingMeiTiURL(
   cunChuZhi: string | null | undefined,
-  yongHuId: string,
+  用户ID: string,
   youXiaoMiao?: number,
 ): string | null {
   if (!cunChuZhi) return null
   const sha256 = tiQuMeiTiSha(cunChuZhi)
   if (!sha256) return cunChuZhi
-  return shengChengQianMingURL(sha256, yongHuId, youXiaoMiao ?? MeiTiPeiZhi.zhanShiYouXiaoMiao)
+  return shengChengQianMingURL(sha256, 用户ID, youXiaoMiao ?? MeiTiPeiZhi.zhanShiYouXiaoMiao)
 }
 
-function huoQuMeiTiCheXiaoJian(yongHuId: string): string {
-  return `mei_ti_qian_ming_che_xiao:${yongHuId}`
+function huoQuMeiTiCheXiaoJian(用户ID: string): string {
+  return `mei_ti_qian_ming_che_xiao:${用户ID}`
 }
 
-export async function cheXiaoYongHuMeiTiQianMing(yongHuId: string): Promise<void> {
-  await redis.set(huoQuMeiTiCheXiaoJian(yongHuId), String(Date.now()), 'EX', 30 * 24 * 60 * 60)
+export async function cheXiaoYongHuMeiTiQianMing(用户ID: string): Promise<void> {
+  await redis.set(huoQuMeiTiCheXiaoJian(用户ID), String(Date.now()), 'EX', 30 * 24 * 60 * 60)
 }
 
 export const MeiTiKeDuYuJu = `
@@ -362,8 +362,8 @@ SELECT 1
    )
  LIMIT 1`
 
-export async function yanZhengMeiTiKeDu(meiTiSha: string, yongHuId: string): Promise<boolean> {
-  const jieGuo = await 数据库.query(MeiTiKeDuYuJu, [meiTiSha, yongHuId])
+export async function yanZhengMeiTiKeDu(meiTiSha: string, 用户ID: string): Promise<boolean> {
+  const jieGuo = await 数据库.query(MeiTiKeDuYuJu, [meiTiSha, 用户ID])
   return jieGuo.rows.length > 0
 }
 

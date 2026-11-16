@@ -1,32 +1,32 @@
 import OpenAI from 'openai'
-import { AiPeiZhi } from '../config/AI配置'
+import { AI配置 } from '../config/AI配置'
 import { 通用知识结束标记, 通用知识开始标记, 用户内容结束标记, 用户内容开始标记 } from '../config/通用知识库'
 import { peiZhi } from '../config'
 import { huoQuFanYi } from '../config/translations'
-import { jiSuanAIChanShu, type CanShuShangXiaWen } from '../config/AI参数策略'
+import { jiSuanAIChanShu, type 参数上下文 } from '../config/AI参数策略'
 import { jiLuAIJiLu, debug日志 } from './debug日志'
 
-export type DuiHuaKuai =
+export type 对话块 =
   | { type: 'input_text'; text: string }
   | { type: 'input_image'; image_url: string; detail?: 'low' | 'high' | 'auto' }
 
-export interface DuiHuaXiaoXi {
+export interface 对话消息 {
   jiaoSe: 'system' | 'user' | 'assistant'
-  neiRong: string | DuiHuaKuai[]
+  neiRong: string | 对话块[]
 }
 
-export interface TiaoYongCanShu {
-  moXing?: string
+export interface 调用参数 {
+  模型?: string
   wenDu?: number
   top_p?: number
-  zuiDaTokens?: number
-  xiangYingGeShi?: { type: 'json_object' | 'text' }
-  siKaoMoShi?: 'enabled' | 'disabled'
-  reasoningEffort?: string
-  xiaoXi: DuiHuaXiaoXi[]
+  最大Tokens?: number
+  响应格式?: { type: 'json_object' | 'text' }
+  思考模式?: 'enabled' | 'disabled'
+  思考强度?: string
+  xiaoXi: 对话消息[]
 }
 
-export interface TiaoYongJieGuo {
+export interface 调用结果 {
   neiRong: string
   siKaoNeiRong?: string
   yuanShuJu: unknown
@@ -34,17 +34,17 @@ export interface TiaoYongJieGuo {
   shiYongLiang?: { shuRuToken: number; shuChuToken: number; zongToken: number; mingZhongToken: number }
 }
 
-export type CuoWuFenLei = 'keZhongShi' | 'buKeZhongShi'
+export type 错误分类 = 'keZhongShi' | 'buKeZhongShi'
 
-export interface FenLeiCuoWu extends Error {
-  fenLei: CuoWuFenLei
+export interface 分类错误 extends Error {
+  fenLei: 错误分类
   zhuangTaiMa?: number
 }
 
-const KeZhongShiZuiDaCiShu = AiPeiZhi.zhongShi.keZhongShiZuiDaCiShu
-const KongXiangYingZuiDaCiShu = AiPeiZhi.kongXiangYing.zuiDaCiShu
-const RongDuanLianXuShiBaiYuZhi = AiPeiZhi.zhongShi.rongDuanLianXuShiBaiYuZhi
-const RongDuanLengQueHaoMiao = AiPeiZhi.zhongShi.rongDuanLengQueHaoMiao
+const 可重试最大次数 = AI配置.zhongShi.keZhongShiZuiDaCiShu
+const KongXiangYingZuiDaCiShu = AI配置.kongXiangYing.zuiDaCiShu
+const RongDuanLianXuShiBaiYuZhi = AI配置.zhongShi.rongDuanLianXuShiBaiYuZhi
+const RongDuanLengQueHaoMiao = AI配置.zhongShi.rongDuanLengQueHaoMiao
 
 let rongDuanKaiQiShiJian = 0
 let lianXuShiBaiCiShu = 0
@@ -75,11 +75,11 @@ function jiLuShiBaiRongDuan(): void {
   }
 }
 
-function fenLeiDiaoYongCuoWu(cuoWu: unknown): FenLeiCuoWu {
+function fenLeiDiaoYongCuoWu(cuoWu: unknown): 分类错误 {
   const yuanXinXi = cuoWu instanceof Error ? cuoWu.message : String(cuoWu)
   const zhuangTaiMa = tiQuZhuangTaiMa(cuoWu)
   const keZhongShi = zhuangTaiMa === null ? true : zhuangTaiMa === 429 || zhuangTaiMa >= 500
-  const fenLeiCuoWu = new Error(yuanXinXi) as FenLeiCuoWu
+  const fenLeiCuoWu = new Error(yuanXinXi) as 分类错误
   fenLeiCuoWu.fenLei = keZhongShi ? 'keZhongShi' : 'buKeZhongShi'
   if (zhuangTaiMa !== null) fenLeiCuoWu.zhuangTaiMa = zhuangTaiMa
   return fenLeiCuoWu
@@ -120,7 +120,7 @@ function jieXiZhuangTaiMa(zhi: unknown): number | null {
 }
 
 function jiSuanTuiBiHaoMiao(changCi: number): number {
-  return Math.min(AiPeiZhi.zhongShi.tuiBiJiChuHaoMiao * 2 ** changCi, AiPeiZhi.zhongShi.tuiBiZuiDaHaoMiao)
+  return Math.min(AI配置.zhongShi.tuiBiJiChuHaoMiao * 2 ** changCi, AI配置.zhongShi.tuiBiZuiDaHaoMiao)
 }
 
 function dengDai(haoMiao: number): Promise<void> {
@@ -160,47 +160,53 @@ function tiQuShiYongLiang(
   }
 }
 
-let mockTiaoYong: ((canShu: TiaoYongCanShu) => Promise<TiaoYongJieGuo>) | null = null
+let mockTiaoYong: ((canShu: 调用参数) => Promise<调用结果>) | null = null
 
 export function sheZhiMockTiaoYong(
-  mock: ((canShu: TiaoYongCanShu) => Promise<TiaoYongJieGuo>) | null,
+  mock: ((canShu: 调用参数) => Promise<调用结果>) | null,
 ): void {
   mockTiaoYong = mock
 }
 
-export function huoQuMockTiaoYong(): ((canShu: TiaoYongCanShu) => Promise<TiaoYongJieGuo>) | null {
+export function huoQuMockTiaoYong(): ((canShu: 调用参数) => Promise<调用结果>) | null {
   return mockTiaoYong
 }
 
-let shiLi: OpenAI | null = null
+let 实例: OpenAI | null = null
 
-export function GouJianQingQiuShuRu<T extends { jiaoSe: string; neiRong: unknown }>(
+export function 构建请求输入<T extends { jiaoSe: string; neiRong: unknown }>(
   xiaoXi: readonly T[],
 ): Array<{ role: string; content: unknown }> {
   return xiaoXi.map((x) => ({ role: x.jiaoSe, content: x.neiRong }))
 }
 
-export function huoQuDeepSeekKeHuDuan(): OpenAI {
-  if (shiLi) return shiLi
-  const apiMiYao = peiZhi.deepSeek.apiMiYao || AiPeiZhi.deepSeek.apiMiYao
-  const jiChuUrl = peiZhi.deepSeek.jiChuUrl || AiPeiZhi.deepSeek.jiChuUrl
+export function 获取DeepSeek客户端(): OpenAI {
+  if (实例) return 实例
+  const api密钥 = peiZhi.deepSeek.api密钥 || AI配置.deepSeek.api密钥
+  const 原始地址 = peiZhi.deepSeek.基础地址 || AI配置.deepSeek.基础地址
+  const 规范地址 = /\/v1\/?$/.test(原始地址.replace(/\/$/, '')) ? 原始地址.replace(/\/$/, '') : `${原始地址.replace(/\/$/, '')}/v1`
 
-  shiLi = new OpenAI({
-    apiKey: apiMiYao,
-    baseURL: jiChuUrl,
+  实例 = new OpenAI({
+    apiKey: api密钥,
+    baseURL: 规范地址,
     timeout: 120 * 1000,
   })
-  return shiLi
+  return 实例
 }
 
-export function chongZhiDeepSeekKeHuDuan(): void {
-  shiLi = null
+export function 重置DeepSeek客户端(): void {
+  实例 = null
 }
 
-export async function ziJianMoXingMingKeYong(): Promise<boolean> {
-  const jiChu = (peiZhi.deepSeek.jiChuUrl || AiPeiZhi.deepSeek.jiChuUrl).replace(/\/$/, '')
-  const miYao = (peiZhi.deepSeek.apiMiYao || AiPeiZhi.deepSeek.apiMiYao).trim()
-  const qiYongMoXing = (peiZhi.deepSeek.moXing || AiPeiZhi.deepSeek.moXing).trim()
+export async function 自检模型名可用(): Promise<boolean> {
+  const jiChu = String(process.env.DEEPSEEK_BASE_URL || peiZhi.deepSeek.基础地址 || AI配置.deepSeek.基础地址).replace(/\/$/, '')
+  const qiYongMoXing = String(process.env.DEEPSEEK_MODEL || peiZhi.deepSeek.模型 || AI配置.deepSeek.模型).trim()
+  const shiGuanFangDuanDian = /api\.deepseek\.com/.test(jiChu)
+  const shiGuanFangMingMing = /^deepseek-/i.test(qiYongMoXing)
+  if (!shiGuanFangDuanDian || !shiGuanFangMingMing) {
+    return true
+  }
+  const miYao = String(peiZhi.deepSeek.api密钥 || AI配置.deepSeek.api密钥 || '').trim()
   if (!miYao || !jiChu) return true
   try {
     const xiangYing = await fetch(`${jiChu}/v1/models`, {
@@ -227,29 +233,29 @@ export async function ziJianMoXingMingKeYong(): Promise<boolean> {
   }
 }
 
-const MeiZiTokenShuLv = 0.6
-const TuPianGuDingToken = 1024
+const 每字Token速率 = 0.6
+const 图片固定Token = 1024
 
-function guJiToken(neiRong: string | DuiHuaKuai[]): number {
-  if (typeof neiRong === 'string') return Math.ceil(neiRong.length * MeiZiTokenShuLv)
+function 估算Token(neiRong: string | 对话块[]): number {
+  if (typeof neiRong === 'string') return Math.ceil(neiRong.length * 每字Token速率)
   return neiRong.reduce((zong, kuai) => {
-    if (kuai.type === 'input_text') return zong + Math.ceil(kuai.text.length * MeiZiTokenShuLv)
-    return zong + TuPianGuDingToken
+    if (kuai.type === 'input_text') return zong + Math.ceil(kuai.text.length * 每字Token速率)
+    return zong + 图片固定Token
   }, 0)
 }
 
-interface BaoHuQuJian {
+interface 保护区间 {
   kaiShi: number
   jieShu: number
   wenBen: string
 }
 
-function tiQuBaoHuQuJian(
+function tiQu保护区间(
   wenBen: string,
   kaiShiBiaoJi: string,
   jieShuBiaoJi: string,
   zuiHou = false,
-): BaoHuQuJian | null {
+): 保护区间 | null {
   const kaiShi = zuiHou ? wenBen.lastIndexOf(kaiShiBiaoJi) : wenBen.indexOf(kaiShiBiaoJi)
   if (kaiShi < 0) return null
   const jieShuWeiZhi = wenBen.indexOf(jieShuBiaoJi, kaiShi + kaiShiBiaoJi.length)
@@ -258,7 +264,7 @@ function tiQuBaoHuQuJian(
   return { kaiShi, jieShu, wenBen: wenBen.slice(kaiShi, jieShu) }
 }
 
-function yiChuQuJian(wenBen: string, quJian: BaoHuQuJian | null): string {
+function yiChuQuJian(wenBen: string, quJian: 保护区间 | null): string {
   return quJian ? wenBen.replace(quJian.wenBen, '') : wenBen
 }
 
@@ -269,33 +275,33 @@ function jieQuZhiYuSuan(wenBen: string, yuSuan: number, congWei = false): string
   while (di < gao) {
     const zhong = Math.ceil((di + gao) / 2)
     const houXuan = congWei ? wenBen.slice(-zhong) : wenBen.slice(0, zhong)
-    if (guJiToken(houXuan) <= yuSuan) di = zhong
+    if (估算Token(houXuan) <= yuSuan) di = zhong
     else gao = zhong - 1
   }
   return congWei ? wenBen.slice(-di) : wenBen.slice(0, di)
 }
 
-function hanYouZhiShi(neiRong: string | DuiHuaKuai[]): boolean {
+function hanYouZhiShi(neiRong: string | 对话块[]): boolean {
   return typeof neiRong === 'string'
     ? neiRong.includes(通用知识开始标记)
     : neiRong.some((kuai) => kuai.type === 'input_text' && kuai.text.includes(通用知识开始标记))
 }
 
 function yaSuoZhiShiWenBen(wenBen: string, yuSuan: number): string {
-  if (guJiToken(wenBen) <= yuSuan) return wenBen
-  const zhiShi = tiQuBaoHuQuJian(wenBen, 通用知识开始标记, 通用知识结束标记)
+  if (估算Token(wenBen) <= yuSuan) return wenBen
+  const zhiShi = tiQu保护区间(wenBen, 通用知识开始标记, 通用知识结束标记)
   if (!zhiShi) return wenBen
-  const yongHu = tiQuBaoHuQuJian(wenBen, 用户内容开始标记, 用户内容结束标记, true)
+  const yongHu = tiQu保护区间(wenBen, 用户内容开始标记, 用户内容结束标记, true)
   const guDing = [zhiShi.wenBen, yongHu?.wenBen || ''].filter(Boolean).join('\n')
-  const shengYu = Math.max(0, yuSuan - guJiToken(guDing) - 4)
+  const shengYu = Math.max(0, yuSuan - 估算Token(guDing) - 4)
   const qiTa = yiChuQuJian(yiChuQuJian(wenBen, zhiShi), yongHu)
   const qianZhui = jieQuZhiYuSuan(qiTa, Math.floor(shengYu / 2))
-  const houZhui = jieQuZhiYuSuan(qiTa, shengYu - guJiToken(qianZhui), true)
+  const houZhui = jieQuZhiYuSuan(qiTa, shengYu - 估算Token(qianZhui), true)
   return [qianZhui, zhiShi.wenBen, houZhui, yongHu?.wenBen || ''].filter(Boolean).join('\n')
 }
 
-function yaSuoZhiShiNeiRong(neiRong: string | DuiHuaKuai[], yuSuan: number): string | DuiHuaKuai[] {
-  if (guJiToken(neiRong) <= yuSuan) return neiRong
+function yaSuoZhiShiNeiRong(neiRong: string | 对话块[], yuSuan: number): string | 对话块[] {
+  if (估算Token(neiRong) <= yuSuan) return neiRong
   if (typeof neiRong === 'string') return yaSuoZhiShiWenBen(neiRong, yuSuan)
   const zhiShiSuoYin = neiRong.findIndex(
     (kuai) => kuai.type === 'input_text' && kuai.text.includes(通用知识开始标记),
@@ -303,9 +309,9 @@ function yaSuoZhiShiNeiRong(neiRong: string | DuiHuaKuai[], yuSuan: number): str
   if (zhiShiSuoYin < 0) return neiRong
   const zhiShiKuai = neiRong[zhiShiSuoYin]
   if (zhiShiKuai.type !== 'input_text') return neiRong
-  const zuiXiaoZhiShi: DuiHuaKuai = { type: 'input_text', text: yaSuoZhiShiWenBen(zhiShiKuai.text, 0) }
+  const zuiXiaoZhiShi: 对话块 = { type: 'input_text', text: yaSuoZhiShiWenBen(zhiShiKuai.text, 0) }
   let qiTa = neiRong.filter((_, suoYin) => suoYin !== zhiShiSuoYin)
-  const zuiXiaoToken = () => guJiToken([zuiXiaoZhiShi, ...qiTa])
+  const zuiXiaoToken = () => 估算Token([zuiXiaoZhiShi, ...qiTa])
   while (zuiXiaoToken() > yuSuan && qiTa.some((kuai) => kuai.type === 'input_image')) {
     const suoYin = qiTa.findIndex((kuai) => kuai.type === 'input_image')
     qiTa = qiTa.filter((_, index) => index !== suoYin)
@@ -313,28 +319,28 @@ function yaSuoZhiShiNeiRong(neiRong: string | DuiHuaKuai[], yuSuan: number): str
   while (zuiXiaoToken() > yuSuan && qiTa.length > 0) {
     qiTa = qiTa.slice(1)
   }
-  const qiTaToken = guJiToken(qiTa)
-  const yaSuoHou: DuiHuaKuai = {
+  const qiTaToken = 估算Token(qiTa)
+  const yaSuoHou: 对话块 = {
     type: 'input_text',
     text: yaSuoZhiShiWenBen(zhiShiKuai.text, Math.max(0, yuSuan - qiTaToken)),
   }
   return [yaSuoHou, ...qiTa]
 }
 
-export function yuSuanBaoHu(xiaoXi: DuiHuaXiaoXi[], yuSuan?: number): DuiHuaXiaoXi[] {
-  const yuSuanZhi = yuSuan ?? AiPeiZhi.prompt.shangXiaWenTokenYuSuan
+export function 预算保护(xiaoXi: 对话消息[], yuSuan?: number): 对话消息[] {
+  const yuSuanZhi = yuSuan ?? AI配置.prompt.shangXiaWenTokenYuSuan
   if (!yuSuanZhi || yuSuanZhi <= 0) return xiaoXi
   const xiTong = xiaoXi.filter((x) => x.jiaoSe === 'system')
   let qiTa = xiaoXi.filter((x) => x.jiaoSe !== 'system')
-  const xiTongJi = xiTong.reduce((s, x) => s + guJiToken(x.neiRong), 0)
-  const jiSuan = () => xiTongJi + qiTa.reduce((s, x) => s + guJiToken(x.neiRong), 0)
+  const xiTongJi = xiTong.reduce((s, x) => s + 估算Token(x.neiRong), 0)
+  const jiSuan = () => xiTongJi + qiTa.reduce((s, x) => s + 估算Token(x.neiRong), 0)
   while (qiTa.length > 1 && jiSuan() > yuSuanZhi) {
     qiTa = qiTa.slice(1)
   }
   const zuiHouSuoYin = qiTa.length - 1
   if (zuiHouSuoYin >= 0 && jiSuan() > yuSuanZhi && hanYouZhiShi(qiTa[zuiHouSuoYin].neiRong)) {
     const qiTaToken = xiTongJi + qiTa.reduce(
-      (zong, xiang, suoYin) => zong + (suoYin === zuiHouSuoYin ? 0 : guJiToken(xiang.neiRong)),
+      (zong, xiang, suoYin) => zong + (suoYin === zuiHouSuoYin ? 0 : 估算Token(xiang.neiRong)),
       0,
     )
     qiTa[zuiHouSuoYin] = {
@@ -351,7 +357,7 @@ export function yuSuanBaoHu(xiaoXi: DuiHuaXiaoXi[], yuSuan?: number): DuiHuaXiao
   return [...xiTong, ...qiTa]
 }
 
-function tiQuXiangYing(xiangYing: unknown): { neiRong: string; siKaoNeiRong: string } {
+function 提取响应(xiangYing: unknown): { neiRong: string; siKaoNeiRong: string } {
   const xiangYingZhi = xiangYing as { output?: Array<Record<string, unknown>>; status?: string }
   let neiRong = ''
   let siKaoNeiRong = ''
@@ -376,59 +382,59 @@ function shiFouJinZhiCeShiWaiHu(): boolean {
 }
 
 export async function tiaoYongDeepSeek(
-  canShu: TiaoYongCanShu,
-  moXingLeiXing: string = 'DeepSeek',
+  canShu: 调用参数,
+  模型LeiXing: string = 'DeepSeek',
   waiBuXinHao?: AbortSignal,
-): Promise<TiaoYongJieGuo> {
+): Promise<调用结果> {
   if (mockTiaoYong) {
     return mockTiaoYong(canShu)
   }
   if (shiFouJinZhiCeShiWaiHu()) {
     throw new Error(
-      `[DeepSeek客户端] VITEST 测试环境禁止真实外呼（moXingLeiXing=${moXingLeiXing}）：请用 sheZhiMockTiaoYong 注入 mock，或显式设置 XU_KE_ZHEN_SHI_WAI_HU=true 允许联调`,
+      `[DeepSeek客户端] VITEST 测试环境禁止真实外呼（模型LeiXing=${模型LeiXing}）：请用 sheZhiMockTiaoYong 注入 mock，或显式设置 XU_KE_ZHEN_SHI_WAI_HU=true 允许联调`,
     )
   }
 
   const kaiShiShiJian = Date.now()
-  const keHuDuan = huoQuDeepSeekKeHuDuan()
-  const moXing = canShu.moXing || AiPeiZhi.deepSeek.moXing
-  const xiangYingGeShi = canShu.xiangYingGeShi || { type: 'text' as const }
+  const keHuDuan = 获取DeepSeek客户端()
+  const 模型 = canShu.模型 || AI配置.deepSeek.模型
+  const 响应格式 = canShu.响应格式 || { type: 'text' as const }
 
   if (peiZhi.kaiFaMoShi) {
     debug日志.debug('DeepSeek客户端', '[AI参数] 最终生效参数', {
       xiang_qing: {
-        moXingLeiXing,
-        moXing,
+        模型LeiXing,
+        模型,
         wenDu: canShu.wenDu,
         top_p: canShu.top_p,
-        zuiDaTokens: canShu.zuiDaTokens,
-        siKaoMoShi: canShu.siKaoMoShi,
-        reasoningEffort: canShu.reasoningEffort,
+        最大Tokens: canShu.最大Tokens,
+        思考模式: canShu.思考模式,
+        思考强度: canShu.思考强度,
       },
     })
   }
 
-  const shiJiXiaoXi = yuSuanBaoHu(canShu.xiaoXi)
+  const shiJiXiaoXi = 预算保护(canShu.xiaoXi)
 
-  const shuRuXiang = GouJianQingQiuShuRu(shiJiXiaoXi)
+  const shuRuXiang = 构建请求输入(shiJiXiaoXi)
 
   const body: Record<string, unknown> = {
-    model: moXing,
+    model: 模型,
     input: shuRuXiang,
   }
-  if (xiangYingGeShi.type === 'json_object') {
+  if (响应格式.type === 'json_object') {
     body.text = { format: { type: 'json_object' } }
   }
   const qingQiuXuanXiang: Record<string, unknown> = {}
   if (waiBuXinHao) {
     qingQiuXuanXiang.signal = waiBuXinHao
   }
-  if (canShu.siKaoMoShi === 'enabled') {
-    body.reasoning = { effort: canShu.reasoningEffort || 'max' }
-  } else if (canShu.siKaoMoShi === 'disabled') {
+  if (canShu.思考模式 === 'enabled') {
+    body.reasoning = { effort: canShu.思考强度 || 'max' }
+  } else if (canShu.思考模式 === 'disabled') {
     body.reasoning = { effort: 'none' }
   }
-  if (canShu.zuiDaTokens) body.max_output_tokens = canShu.zuiDaTokens
+  if (canShu.最大Tokens) body.max_output_tokens = canShu.最大Tokens
   if (typeof canShu.wenDu === 'number') body.temperature = canShu.wenDu
   if (typeof canShu.top_p === 'number') body.top_p = canShu.top_p
 
@@ -445,7 +451,7 @@ export async function tiaoYongDeepSeek(
       throw new Error('[DeepSeek客户端] 调用已取消，中止重试等待')
     }
   }
-  for (let changCi = 0; changCi <= KeZhongShiZuiDaCiShu; changCi++) {
+  for (let changCi = 0; changCi <= 可重试最大次数; changCi++) {
     jianChaQuXiao()
     if (rongDuanShiFouKaiQi()) {
       if (长测自主恢复 && Date.now() - 自主恢复起点 < 自主恢复上限毫秒) {
@@ -453,12 +459,12 @@ export async function tiaoYongDeepSeek(
         changCi -= 1
         continue
       }
-      const rongDuanCuoWu = new Error(huoQuFanYi('AI', 'aiDiaoYongShiBai')) as FenLeiCuoWu
+      const rongDuanCuoWu = new Error(huoQuFanYi('AI', 'aiDiaoYongShiBai')) as 分类错误
       rongDuanCuoWu.fenLei = 'buKeZhongShi'
       throw rongDuanCuoWu
     }
     try {
-      const benCiChaoShi = moXingLeiXing === 'XieShou' ? 120 * 1000 : 60 * 1000
+      const benCiChaoShi = 模型LeiXing === 'XieShou' ? 120 * 1000 : 60 * 1000
       const chaoShiKongZhi = new AbortController()
       const chaoShiDingShi = setTimeout(() => chaoShiKongZhi.abort(), benCiChaoShi)
       const youXiaoXinHao = waiBuXinHao ?? chaoShiKongZhi.signal
@@ -474,12 +480,12 @@ export async function tiaoYongDeepSeek(
       }
 
       let zhongXinXiangYing = xiangYing
-      while (tiQuXiangYing(zhongXinXiangYing).neiRong.trim() === '' && kongXiangYingCiShu < KongXiangYingZuiDaCiShu) {
+      while (提取响应(zhongXinXiangYing).neiRong.trim() === '' && kongXiangYingCiShu < KongXiangYingZuiDaCiShu) {
         kongXiangYingCiShu += 1
         debug日志.warn('DeepSeek客户端', '[AI调用] 响应为空，退避后重试', {
-          xiang_qing: { moXingLeiXing, moXing, ciShu: kongXiangYingCiShu },
+          xiang_qing: { 模型LeiXing, 模型, ciShu: kongXiangYingCiShu },
         })
-        const deng = Math.min(AiPeiZhi.kongXiangYing.tuiBiJiChuHaoMiao * kongXiangYingCiShu, AiPeiZhi.kongXiangYing.tuiBiZuiDaHaoMiao)
+        const deng = Math.min(AI配置.kongXiangYing.tuiBiJiChuHaoMiao * kongXiangYingCiShu, AI配置.kongXiangYing.tuiBiZuiDaHaoMiao)
         if (waiBuXinHao) {
           await Promise.race([
             dengDai(deng),
@@ -500,7 +506,7 @@ export async function tiaoYongDeepSeek(
         }
       }
 
-      const { neiRong, siKaoNeiRong } = tiQuXiangYing(zhongXinXiangYing)
+      const { neiRong, siKaoNeiRong } = 提取响应(zhongXinXiangYing)
       const shiYongLiang = tiQuShiYongLiang(zhongXinXiangYing)
 
       if (peiZhi.kaiFaMoShi && siKaoNeiRong) {
@@ -516,7 +522,7 @@ export async function tiaoYongDeepSeek(
       }
 
       const haoShi = Date.now() - kaiShiShiJian
-      jiLuAIJiLu(moXingLeiXing, moXing, haoShi, true)
+      jiLuAIJiLu(模型LeiXing, 模型, haoShi, true)
       jiLuChengGongRongDuan()
 
       const { jiLuAIChengGong } = await import('./邮件告警')
@@ -524,8 +530,8 @@ export async function tiaoYongDeepSeek(
 
       if (shiYongLiang) {
         void import('../services/用量统计').then(({ jiLuShiYongLiang }) => jiLuShiYongLiang({
-          moXingLeiXing,
-          moXing,
+          模型类型: 模型LeiXing,
+          模型,
           shuRuToken: shiYongLiang.shuRuToken,
           shuChuToken: shiYongLiang.shuChuToken,
           zongToken: shiYongLiang.zongToken,
@@ -549,12 +555,12 @@ export async function tiaoYongDeepSeek(
       if (fenLeiCuoWu.fenLei === 'buKeZhongShi') {
         const haoShi = Date.now() - kaiShiShiJian
         const cuoWuXinXi = cuoWu instanceof Error ? cuoWu.message : String(cuoWu)
-        jiLuAIJiLu(moXingLeiXing, moXing, haoShi, false, cuoWuXinXi)
+        jiLuAIJiLu(模型LeiXing, 模型, haoShi, false, cuoWuXinXi)
         jiLuShiBaiRongDuan()
         void import('./邮件告警').then(({ jiLuAIShiBai }) => jiLuAIShiBai(cuoWuXinXi)).catch(() => {})
         throw cuoWu
       }
-      if (changCi >= KeZhongShiZuiDaCiShu) {
+      if (changCi >= 可重试最大次数) {
         if (长测自主恢复 && Date.now() - 自主恢复起点 < 自主恢复上限毫秒) {
           changCi -= 1
           await dengDai(20_000)
@@ -575,31 +581,31 @@ export async function tiaoYongDeepSeek(
   }
   const haoShi = Date.now() - kaiShiShiJian
   const cuoWuXinXi = zuiHouCuoWu instanceof Error ? zuiHouCuoWu.message : String(zuiHouCuoWu)
-  jiLuAIJiLu(moXingLeiXing, moXing, haoShi, false, cuoWuXinXi)
+  jiLuAIJiLu(模型LeiXing, 模型, haoShi, false, cuoWuXinXi)
   jiLuShiBaiRongDuan()
   void import('./邮件告警').then(({ jiLuAIShiBai }) => jiLuAIShiBai(cuoWuXinXi)).catch(() => {})
   throw fenLeiDiaoYongCuoWu(zuiHouCuoWu)
 }
 
-export function genJuPeiZhiTiaoYong(
-  moXingLeiXing: keyof typeof AiPeiZhi.moXing,
-  xiaoXi: DuiHuaXiaoXi[],
-  shangXiaWen?: CanShuShangXiaWen,
+export function 按配置调用(
+  模型LeiXing: keyof typeof AI配置.模型,
+  xiaoXi: 对话消息[],
+  shangXiaWen?: 参数上下文,
   waiBuXinHao?: AbortSignal,
-): Promise<TiaoYongJieGuo> {
-  const moXingCanShu = jiSuanAIChanShu(moXingLeiXing, shangXiaWen)
+): Promise<调用结果> {
+  const 模型CanShu = jiSuanAIChanShu(模型LeiXing, shangXiaWen)
   return tiaoYongDeepSeek(
     {
-      moXing: moXingCanShu.moXing,
-      wenDu: moXingCanShu.wenDu,
-      top_p: moXingCanShu.top_p,
-      zuiDaTokens: moXingCanShu.zuiDaTokens,
-      xiangYingGeShi: moXingCanShu.xiangYingGeShi,
-      siKaoMoShi: moXingCanShu.siKaoMoShi,
-      reasoningEffort: moXingCanShu.reasoningEffort,
+      模型: 模型CanShu.模型,
+      wenDu: 模型CanShu.wenDu,
+      top_p: 模型CanShu.top_p,
+      最大Tokens: 模型CanShu.最大Tokens,
+      响应格式: 模型CanShu.响应格式,
+      思考模式: 模型CanShu.思考模式,
+      思考强度: 模型CanShu.思考强度,
       xiaoXi,
     },
-    moXingLeiXing,
+    模型LeiXing,
     waiBuXinHao,
   )
 }

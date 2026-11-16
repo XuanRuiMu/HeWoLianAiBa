@@ -8,13 +8,14 @@ import {
   WenDangHouZhuiLeiXing,
   WenDangMimeLeiXing,
   WenDangTiQuPeiZhi,
-  type WenDangJieXiLeiXing,
+  type 文档解析类型,
 } from '../config/媒体配置'
 import { huoQuBenDiLuJing } from './媒体存储'
+import { ocrShiBieWenJian } from './DeepSeek官方工具'
 import type { DuiHuaLiShiXiang, DuiHuaWenJianTiQu } from '../types'
 
 
-export interface WenDangYuanShu {
+export interface 文档元素 {
   mime: string
   yuanShiWenJianMing: string
   ziJie: Buffer
@@ -44,7 +45,7 @@ function quHouZhui(wenJianMing: string): string {
 export function panDingJieXiLeiXing(
   mime: string | null | undefined,
   yuanShiWenJianMing: string | null | undefined,
-): WenDangJieXiLeiXing | null {
+): 文档解析类型 | null {
   const qingLiMIME = String(mime || '').split(';')[0].trim().toLowerCase()
   const qingMing = String(yuanShiWenJianMing || '').trim().toLowerCase()
   const houZhui = quHouZhui(qingMing)
@@ -347,7 +348,7 @@ function jieXiHTML(neiRong: string): string {
 }
 
 export async function tiQuWenDangWenBen(
-  ke: WenDangYuanShu,
+  ke: 文档元素,
 ): Promise<DuiHuaWenJianTiQu | null> {
   const leiXing = panDingJieXiLeiXing(ke.mime, ke.yuanShiWenJianMing)
   if (!leiXing) return null
@@ -364,7 +365,16 @@ export async function tiQuWenDangWenBen(
       const { extractText } = await import('unpdf')
       const { text: wenBen } = await extractText(new Uint8Array(ke.ziJie), { mergePages: true })
       if (typeof wenBen !== 'string') return null
+      if (wenBen.trim() === '') {
+        const ocr = await ocrShiBieWenJian({ ziJie: ke.ziJie, wenJianMing: ke.yuanShiWenJianMing || 'file.pdf', mime: ke.mime || 'application/pdf' })
+        if (ocr.cheng_gong) return shouKouJieGuo(ocr.wenBen)
+      }
       return shouKouJieGuo(wenBen)
+    }
+    if (leiXing === 'ocr') {
+      const ocr = await ocrShiBieWenJian({ ziJie: ke.ziJie, wenJianMing: ke.yuanShiWenJianMing || 'image.png', mime: ke.mime || 'image/png' })
+      if (ocr.cheng_gong) return shouKouJieGuo(ocr.wenBen)
+      return null
     }
     const xuYao =
       leiXing === 'docx'

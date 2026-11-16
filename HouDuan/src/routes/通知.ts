@@ -60,7 +60,7 @@ luYou.get(
     const xianShiShu = huoQuShuZi(qingQiu.query.xian_shi_shu, 100)
 
     try {
-      const jieGuo = await huoQuTongZhiLieBiao(yongHu.yongHuId, xianShiShu)
+      const jieGuo = await huoQuTongZhiLieBiao(yongHu.用户ID, xianShiShu)
       return chengGongXiangYing(xiangYing, {
         lie_biao: jieGuo.lie_biao,
         wei_du_shu: jieGuo.wei_du_shu,
@@ -86,7 +86,7 @@ luYou.put(
     }
 
     try {
-      const jieGuo = await biaoJiTongZhiYiDu(yongHu.yongHuId, tongZhiId)
+      const jieGuo = await biaoJiTongZhiYiDu(yongHu.用户ID, tongZhiId)
       if (!jieGuo) {
         return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
       }
@@ -107,7 +107,7 @@ luYou.put(
     }
 
     try {
-      await biaoJiSuoYouTongZhiYiDu(yongHu.yongHuId)
+      await biaoJiSuoYouTongZhiYiDu(yongHu.用户ID)
       return chengGongXiangYing(xiangYing, null)
     } catch (cuoWu) {
       debug日志.error('通知接口', '标记全部已读失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
@@ -137,7 +137,7 @@ luYou.post(
 
     try {
       const jieGuo = await guanLiYuanFaSongTongZhi({
-        guan_li_yuan_id: yongHu.yongHuId,
+        guan_li_yuan_id: yongHu.用户ID,
         mu_biao: muBiao,
         jie_shou_zhe_ids: jieShouZheIds,
         biao_ti: biaoTi,

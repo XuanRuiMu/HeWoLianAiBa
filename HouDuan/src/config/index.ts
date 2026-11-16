@@ -116,7 +116,7 @@ export const peiZhi = {
   jwtMiYao: huoQuHuanJingBianLiangBiTian('JWT_SECRET'),
   jwtGuoQi: huoQuHuanJingBianLiang('JWT_EXPIRES_IN', '25m'),
 
-  shuaXinLingPaiYouXiaoMiao: parseInt(huoQuHuanJingBianLiang('SHUA_XIN_LING_PAI_YOU_XIAO_MIAO', String(7 * 24 * 60 * 60)), 10),
+  刷新令牌YouXiaoMiao: parseInt(huoQuHuanJingBianLiang('SHUA_XIN_LING_PAI_YOU_XIAO_MIAO', String(7 * 24 * 60 * 60)), 10),
 
   meiTiQianMingMiYao: huoQuJiMi('MEI_TI_QIAN_MING_MI_YAO'),
 
@@ -167,9 +167,9 @@ xianLiu: {
   xieYiBanBen: huoQuHuanJingBianLiang('PROTOCOL_VERSION', 'v1.0'),
 
   deepSeek: {
-    apiMiYao: huoQuHuanJingBianLiang('DEEPSEEK_API_KEY', ''),
-    jiChuUrl: huoQuHuanJingBianLiang('DEEPSEEK_BASE_URL', 'https://api.deepseek.com'),
-    moXing: huoQuHuanJingBianLiang('DEEPSEEK_MODEL', 'deepseek-flash'),
+    api密钥: huoQuHuanJingBianLiang('DEEPSEEK_API_KEY', ''),
+    基础地址: huoQuHuanJingBianLiang('DEEPSEEK_BASE_URL', 'https://api.deepseek.com'),
+    模型: huoQuHuanJingBianLiang('DEEPSEEK_MODEL', 'deepseek-flash'),
   },
 
   yanZhengMa: {
@@ -192,7 +192,7 @@ xianLiu: {
   yongHuMing: {
     zuiXiao: 1,
     zuiDa: 30,
-    baiMingDan: /^[\u4e00-\u9fa5A-Za-z0-9_-]{1,30}$/,
+    白名单: /^[\u4e00-\u9fa5A-Za-z0-9_-]{1,30}$/,
     teShuZiFu: /[!@#$%^&*+=[\]{}|\\:;"'?~`<>()]/,
   },
 
@@ -228,13 +228,13 @@ xianLiu: {
     guanJianZi: jieXiZiFuChuanLieBiao(
       huoQuHuanJingBianLiang(
         'MIN_GAN_GUAN_JIAN_ZI',
-        'password,miMa,mi_ma,yanZhengMa,yan_zheng_ma,token,lingPai,ling_pai,jwt,mi_yao,miYao,apiKey,api_key,apiMiYao,api_mi_yao',
+        'password,miMa,mi_ma,yanZhengMa,yan_zheng_ma,token,lingPai,ling_pai,jwt,mi_yao,miYao,apiKey,api_key,api密钥,api_mi_yao',
       ),
     ),
     ziDuanMing: jieXiZiFuChuanLieBiao(
       huoQuHuanJingBianLiang(
         'MIN_GAN_ZI_DUAN_MING',
-        'password,miMa,mi_ma,yanZhengMa,yan_zheng_ma,token,lingPai,ling_pai,jwt,miYao,mi_yao,apiKey,api_key,apiMiYao,api_mi_yao,fangWenMiYao,fang_wen_mi_yao,fangWenMiYaoMiMa,fang_wen_mi_yao_mi_ma,ALIYUN_ACCESS_KEY_SECRET,DEEPSEEK_API_KEY,JWT_SECRET,GUI_JI_LIU_DONG_API_MI_YAO,TU_XIANG_SHENG_CHENG_API_MI_YAO,SHI_PIN_SHENG_CHENG_API_MI_YAO,YIN_PIN_LI_JIE_API_MI_YAO,shou_ji_hao,shouJiHao,手机号,手机',
+        'password,miMa,mi_ma,yanZhengMa,yan_zheng_ma,token,lingPai,ling_pai,jwt,miYao,mi_yao,apiKey,api_key,api密钥,api_mi_yao,fangWenMiYao,fang_wen_mi_yao,fangWenMiYaoMiMa,fang_wen_mi_yao_mi_ma,ALIYUN_ACCESS_KEY_SECRET,DEEPSEEK_API_KEY,JWT_SECRET,GUI_JI_LIU_DONG_API_MI_YAO,TU_XIANG_SHENG_CHENG_API_MI_YAO,SHI_PIN_SHENG_CHENG_API_MI_YAO,YIN_PIN_LI_JIE_API_MI_YAO,shou_ji_hao,shouJiHao,手机号,手机',
       ),
     ),
   },

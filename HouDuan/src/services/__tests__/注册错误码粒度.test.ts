@@ -13,7 +13,7 @@ vi.mock('../短信', async () => {
   }
 })
 
-const { zhuCe, yanZhengMaShiBaiJieGuo, 注册失败错误码: jieXiZhuCeDaiMa } = await import('../认证')
+const { zhuCe, 验证码失败结果, 注册失败错误码: jieXiZhuCeDaiMa } = await import('../认证')
 
 function 基础参数() {
   return {
@@ -48,7 +48,7 @@ describe('注册失败原因不再折叠成同一个错误码', () => {
 
   it('验证码错误 / 过期 / 尝试超限各自映射到不同的注册错误码', () => {
     const 码 = (['错误', '已过期', '尝试超限'] as const).map(
-      (结果) => jieXiZhuCeDaiMa('CAN_SHU_CUO_WU', yanZhengMaShiBaiJieGuo(结果).juTiYuanYin),
+      (结果) => jieXiZhuCeDaiMa('CAN_SHU_CUO_WU', 验证码失败结果(结果).juTiYuanYin),
     )
     expect(new Set(码).size).toBe(3)
     expect(码).toEqual([
@@ -60,7 +60,7 @@ describe('注册失败原因不再折叠成同一个错误码', () => {
 
   it('三者都不是账号已存在，也不是通用参数错误', () => {
     for (const 结果 of ['错误', '已过期', '尝试超限'] as const) {
-      const 码 = jieXiZhuCeDaiMa('CAN_SHU_CUO_WU', yanZhengMaShiBaiJieGuo(结果).juTiYuanYin)
+      const 码 = jieXiZhuCeDaiMa('CAN_SHU_CUO_WU', 验证码失败结果(结果).juTiYuanYin)
       expect(码).not.toBe(CuoWuDaiMa.AUTH_ACCOUNT_ALREADY_EXISTS)
       expect(码).not.toBe(CuoWuDaiMa.REQUEST_PARAMETER_INVALID)
     }

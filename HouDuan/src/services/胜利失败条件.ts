@@ -1,9 +1,9 @@
 import { 数据库 } from '../数据库'
-import { genJuPeiZhiTiaoYong, type DuiHuaKuai } from '../utils/DeepSeek客户端'
+import { 按配置调用, type 对话块 } from '../utils/DeepSeek客户端'
 import { gengXinHaoGanDu, huoQuWanZhengHaoGanDu } from './好感度'
 import { huoQuIo } from '../socket/io'
 import { redis } from '../redis'
-import { baoCunJiaoSeXiaoXi } from './AI输入准备'
+import { 保存角色XiaoXi } from './AI输入准备'
 import { BeiChaQuPeiZhi, ShengLiShiBaiPeiZhi, QueXinDuYueShu } from '../config/胜利失败配置'
 import {
   gouJianDanTiaoTuXiangKuai,
@@ -27,11 +27,11 @@ import type {
   ShenJingBingJianCeJieGuo,
   ShiPoJianCeJieGuo, YouXiJieGuoLeiXing,
   YouXiJieShuJieGuo } from '../types'
-import type { CanShuShangXiaWen } from '../config/AI参数策略'
+import type { 参数上下文 } from '../config/AI参数策略'
 import { gouJianJiaoSeShangXiaWen } from '../config/AI参数策略'
 import { DingJieFuShengMing, baoZhuangYongHuNeiRong } from './Prompt构建器'
 
-function jieXiJSONXiangYing(neiRong: string): Record<string, unknown> {
+function 解析JSON响应(neiRong: string): Record<string, unknown> {
   const qingLiNeiRong = neiRong.trim()
   try {
     return JSON.parse(qingLiNeiRong)
@@ -48,13 +48,13 @@ function jieXiJSONXiangYing(neiRong: string): Record<string, unknown> {
   }
 }
 
-function pinJieYongHuNeiRong(wenBen: string, tuXiangKuai?: DuiHuaKuai[]): string | DuiHuaKuai[] {
+function pinJieYongHuNeiRong(wenBen: string, tuXiangKuai?: 对话块[]): string | 对话块[] {
   return tuXiangKuai && tuXiangKuai.length > 0
     ? [{ type: 'input_text', text: wenBen }, ...tuXiangKuai]
     : wenBen
 }
 
-export interface SiLianJianShuChu {
+export interface 四联件输出 {
   biao_bai: BiaoBaiJianCeJieGuo
   hu_shan: HuShanJianCeJieGuo
   shi_po: ShiPoJianCeJieGuo
@@ -100,7 +100,7 @@ export async function jianCeSiLianHeYi(
   duiHuaLiShi: DuiHuaLiShiXiang[] = [],
   jiaoSe?: AIJiaoSeXinXi,
   tuPianShouQuan?: boolean,
-): Promise<SiLianJianShuChu> {
+): Promise<四联件输出> {
   const kongShenJingBing: ShenJingBingJianCeJieGuo = {
     shi_fou_shen_jing_bing: false,
     fa_san_si_wei_ren_she: false,
@@ -146,7 +146,7 @@ export async function jianCeSiLianHeYi(
       ]
     : []
 
-  const xiangYing = await genJuPeiZhiTiaoYong('SiLianJian', [
+  const xiangYing = await 按配置调用('SiLianJian', [
     {
       jiaoSe: 'system',
       neiRong:
@@ -223,7 +223,7 @@ export async function jianCeSiLianHeYi(
       ) },
   ])
 
-  const shuJu = jieXiJSONXiangYing(xiangYing.neiRong)
+  const shuJu = 解析JSON响应(xiangYing.neiRong)
   const biaoBaiLeiXing = String(shuJu['表白类型'] ?? '非表白')
   const youXiaoLeiXing = BiaoBaiLeiXingYingShe[biaoBaiLeiXing] || 'fei_biao_bai'
   const renSheNengJieShou = Boolean(
@@ -266,9 +266,9 @@ export async function jianCeYongHuXiaoXi(
   xiaoXi: string,
   duiHuaLiShi: DuiHuaLiShiXiang[] = [],
   jiaoSe?: AIJiaoSeXinXi,
-  _shangXiaWen?: CanShuShangXiaWen,
+  _shangXiaWen?: 参数上下文,
   tuPianShouQuan?: boolean,
-): Promise<SiLianJianShuChu> {
+): Promise<四联件输出> {
   void _shangXiaWen
   return jianCeSiLianHeYi(xiaoXi, duiHuaLiShi, jiaoSe, tuPianShouQuan)
 }
@@ -613,7 +613,7 @@ async function shengChengJingGaoFanYing(jiao_se?: AIJiaoSeXinXi): Promise<string
         `说话风格：${jiao_se.yan_yu_feng_ge}`,
       ]
     : []
-  const xiangYing = await genJuPeiZhiTiaoYong('JiaoSeJingGaoFanYing', [
+  const xiangYing = await 按配置调用('JiaoSeJingGaoFanYing', [
     { jiaoSe: 'system', neiRong: '你是恋爱模拟游戏的角色反应生成器。只输出 JSON。' },
     {
       jiaoSe: 'user',
@@ -632,7 +632,7 @@ async function shengChengJingGaoFanYing(jiao_se?: AIJiaoSeXinXi): Promise<string
         '只输出 JSON。',
       ].join('\n') },
   ])
-  const shuJu = jieXiJSONXiangYing(xiangYing.neiRong)
+  const shuJu = 解析JSON响应(xiangYing.neiRong)
   return String(shuJu['反应消息'] ?? '').trim()
 }
 
@@ -675,7 +675,7 @@ export async function chuLiShenJingBing(
   try {
     const fanYingNeiRong = await shengChengJingGaoFanYing(jiao_se)
     if (!fanYingNeiRong) throw new Error('警告反应消息为空')
-    const baoCunJieGuo = await baoCunJiaoSeXiaoXi({
+    const baoCunJieGuo = await 保存角色XiaoXi({
       yong_hu_id,
       jiao_se_id,
       nei_rong: fanYingNeiRong })
@@ -701,7 +701,7 @@ async function shengChengChaQuJingGaoFanYing(yuan_yin: string, jiao_se?: AIJiaoS
         `说话风格：${jiao_se.yan_yu_feng_ge}`,
       ]
     : []
-  const xiangYing = await genJuPeiZhiTiaoYong('JiaoSeJingGaoFanYing', [
+  const xiangYing = await 按配置调用('JiaoSeJingGaoFanYing', [
     { jiaoSe: 'system', neiRong: '你是恋爱模拟游戏的角色反应生成器。只输出 JSON。' },
     {
       jiaoSe: 'user',
@@ -720,7 +720,7 @@ async function shengChengChaQuJingGaoFanYing(yuan_yin: string, jiao_se?: AIJiaoS
         '只输出 JSON。',
       ].join('\n') },
   ])
-  const shuJu = jieXiJSONXiangYing(xiangYing.neiRong)
+  const shuJu = 解析JSON响应(xiangYing.neiRong)
   return String(shuJu['反应消息'] ?? '').trim()
 }
 
@@ -733,7 +733,7 @@ async function zhaoShuBeiChaQuJingGao(
   try {
     const fanYingNeiRong = await shengChengChaQuJingGaoFanYing(yuan_yin, jiao_se)
     if (!fanYingNeiRong) throw new Error('警告反应消息为空')
-    const baoCunJieGuo = await baoCunJiaoSeXiaoXi({ yong_hu_id, jiao_se_id, nei_rong: fanYingNeiRong })
+    const baoCunJieGuo = await 保存角色XiaoXi({ yong_hu_id, jiao_se_id, nei_rong: fanYingNeiRong })
     const io = huoQuIo()
     if (io) {
       io.to(yong_hu_id).emit('角色回复', { 角色ID: jiao_se_id, 消息列表: [baoCunJieGuo] })
@@ -825,7 +825,7 @@ export async function chuLiYongHuJuJueAIHuoJieShou(
   jiao_se_id: string,
   jiao_se: AIJiaoSeXinXi,
   yong_hu_xiao_xi: string,
-  shangXiaWen?: CanShuShangXiaWen,
+  shangXiaWen?: 参数上下文,
   dui_hua_li_shi?: DuiHuaLiShiXiang[],
 ): Promise<YouXiJieShuJieGuo | null> {
   const shangXiaWenShiJi = shangXiaWen ?? { jiaoSe: gouJianJiaoSeShangXiaWen(jiao_se) }
@@ -835,7 +835,7 @@ export async function chuLiYongHuJuJueAIHuoJieShou(
     用户名: '用户',
     最多条数: ShengLiShiBaiPeiZhi.biaoBaiPanDuanLiShiTiaoShu,
     时间在前: true })
-  const xiangYing = await genJuPeiZhiTiaoYong('JieShouBiaoBaiJianCe', [
+  const xiangYing = await 按配置调用('JieShouBiaoBaiJianCe', [
     { jiaoSe: 'system', neiRong: '判断用户回复是接受表白还是拒绝，只输出 JSON。' },
     {
       jiaoSe: 'user',
@@ -859,7 +859,7 @@ export async function chuLiYongHuJuJueAIHuoJieShou(
       ].join('\n') },
   ], shangXiaWenShiJi)
 
-  const shuJu = jieXiJSONXiangYing(xiangYing.neiRong)
+  const shuJu = 解析JSON响应(xiangYing.neiRong)
   const jieShou = Boolean(shuJu['是否接受'] ?? shuJu['shi_fou_jie_shou'] ?? false)
   const queXinDu = anQuanQueXinDu(shuJu['确信度'] ?? shuJu['que_xin_du'] ?? 0)
   const moHuHuiFu = Boolean(shuJu['是否模糊回复'] ?? false)

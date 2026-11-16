@@ -67,3 +67,91 @@ describe('出话层新增约束（真人行为基线导向）', () => {
     expect(导演).toContain('别一上来就问「几点」「在哪」「吃什么」连着三连问')
   })
 })
+
+describe('关系阶段描述按中文档名取值', () => {
+  it('库里存中文档名时能取到该档的态度描述', () => {
+    const 提示 = gouJianWriterPrompt(
+      造输入({
+        hao_gan_du: {
+          xin_ren_du: 160,
+          qin_mi_du: 112,
+          qu_wei_du: 88,
+          guan_huai_du: 92,
+          zong_fen: 463,
+          guan_xi_jie_duan: '朋友',
+        },
+      }),
+    )
+    expect(提示).toContain('关系阶段：朋友')
+    expect(提示).toContain('你把对方当朋友，会主动找对方聊天')
+    expect(提示).not.toContain('还不太清楚')
+  })
+
+  it('未知档名兜底到冷淡而不是报错', () => {
+    const 提示 = gouJianWriterPrompt(
+      造输入({
+        hao_gan_du: {
+          xin_ren_du: 160,
+          qin_mi_du: 112,
+          qu_wei_du: 88,
+          guan_huai_du: 92,
+          zong_fen: 463,
+          guan_xi_jie_duan: '乱写的',
+        },
+      }),
+    )
+    expect(提示).toContain('刚认识，没什么话好说')
+  })
+
+  it('两档之间的态度描述必须不同——否则玩家升档感觉不到变化', () => {
+    const 造 = (duan: string) =>
+      gouJianWriterPrompt(
+        造输入({
+          hao_gan_du: {
+            xin_ren_du: 500,
+            qin_mi_du: 500,
+            qu_wei_du: 500,
+            guan_huai_du: 500,
+            zong_fen: 2000,
+            guan_xi_jie_duan: duan,
+          },
+        }),
+      )
+    const 取态度 = (提示: string) => 提示.match(/对 TA 的态度：(.+)/)?.[1] ?? ''
+    const 朋友 = 取态度(造('朋友'))
+    const 暧昧 = 取态度(造('暧昧'))
+    const 热恋 = 取态度(造('热恋'))
+    expect(朋友).not.toBe('')
+    expect(暧昧).not.toBe('')
+    expect(热恋).not.toBe('')
+    expect(new Set([朋友, 暧昧, 热恋]).size).toBe(3)
+  })
+})
+
+describe('Director 输出的关系变化会进 Writer 提示词', () => {
+  it('三条取值分别映射成一句人话，且不出现英文枚举值', () => {
+    const 造 = (bianHua: '更近' | '更远' | '没变') =>
+      gouJianWriterPrompt(造输入(), {
+        hui_fu_ce_lue: 'normal',
+        shi_jian_qing_xu: '正常',
+        shi_fou_hui_fu: true,
+        guan_xi_bian_hua: bianHua,
+      })
+
+    expect(造('更近')).toContain('对方这条让你觉得：更近')
+    expect(造('更远')).toContain('对方这条让你觉得：更远')
+    expect(造('没变')).toContain('对方这条让你觉得：没变')
+
+    expect(造('更近')).toContain('心里是软的')
+    expect(造('更远')).toContain('有点不是滋味')
+  })
+
+  it('Director 没给这个字段时不注入这一行', () => {
+    const 提示 = gouJianWriterPrompt(造输入(), {
+      hui_fu_ce_lue: 'normal',
+      shi_jian_qing_xu: '正常',
+      shi_fou_hui_fu: true,
+    })
+    expect(提示).not.toContain('对方这条让你觉得')
+  })
+})

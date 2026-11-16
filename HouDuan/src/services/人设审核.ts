@@ -1,10 +1,10 @@
 import { debug日志 } from '../utils/debug日志'
-import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/DeepSeek客户端'
 import { jiaZaiZuiXinCiKu, saoMiaoNeiRong } from './审核词库'
 import { baoZhuangYongHuNeiRong, DingJieFuShengMing } from './Prompt构建器'
 import { shiFouXingShi } from '../config/姓氏表'
 import { huoQuFanYi } from '../config/translations'
-import type { XinMuZhongDeTaZiDing } from './角色生成'
+import type { XinMuZhongDeTaZiDing as 心中のTA自定义 } from './角色生成'
 
 export type RenSheJuJueYuanYinMa =
   | 'nianLingBuHeFa'
@@ -23,7 +23,7 @@ export interface RenSheCaiJueJieGuo {
   jieLun: 'tongGuo' | 'buFenCaiNa' | 'juJue'
   yuanYinMa?: RenSheJuJueYuanYinMa
   baoLiuPianDuan: string[]
-  guiYiHou: XinMuZhongDeTaZiDing
+  guiYiHou: 心中のTA自定义
 }
 
 interface RenSheShenHeChuCan {
@@ -33,7 +33,7 @@ interface RenSheShenHeChuCan {
   ziDuanPanDing?: Record<string, { pan_ding?: unknown; yuan_yin_ma?: unknown; bao_liu_pian_duan?: unknown }>
 }
 
-type RenSheShenHeMock = ((ziDuan: XinMuZhongDeTaZiDing) => Promise<RenSheShenHeChuCan>) | null
+type RenSheShenHeMock = ((ziDuan: 心中のTA自定义) => Promise<RenSheShenHeChuCan>) | null
 
 let renSheShenHeMock: RenSheShenHeMock = null
 
@@ -61,8 +61,8 @@ const ZhiLingTeZheng: RegExp[] = [
   /(?:系统|用户|开发者)提示词/g,
 ]
 
-export function guiYiRenSheZiDuan(ziDuan: XinMuZhongDeTaZiDing | null | undefined): XinMuZhongDeTaZiDing {
-  const jieGuo: XinMuZhongDeTaZiDing = {}
+export function guiYiRenSheZiDuan(ziDuan: 心中のTA自定义 | null | undefined): 心中のTA自定义 {
+  const jieGuo: 心中のTA自定义 = {}
   const guiYiWenBen = (zhi: unknown): string =>
     typeof zhi === 'string' ? zhi.trim() : ''
   const yiChuHanZiBianJieKongGe = (zhi: string): string =>
@@ -101,7 +101,7 @@ export function shiFouHeFaNianLingShuRu(yuanZhi: unknown): boolean {
   return Number.isInteger(shu) && shu >= NianLingXiaXian && shu <= NianLingShangXian
 }
 
-export function yingJianRenShe(ziDuan: XinMuZhongDeTaZiDing): YingJianRenSheJieGuo {
+export function yingJianRenShe(ziDuan: 心中のTA自定义): YingJianRenSheJieGuo {
   const youXiaoCanShu =
     Boolean(ziDuan.wei_xin_ming) ||
     Boolean(ziDuan.zhen_shi_ming) ||
@@ -143,7 +143,7 @@ export function yingJianRenShe(ziDuan: XinMuZhongDeTaZiDing): YingJianRenSheJieG
 }
 
 export async function saoMiaoCiKuHongXian(
-  ziDuan: XinMuZhongDeTaZiDing,
+  ziDuan: 心中のTA自定义,
 ): Promise<YingJianRenSheJieGuo> {
   const ciKu = await jiaZaiZuiXinCiKu()
   const wenBenZiDuan = [ziDuan.wei_xin_ming, ziDuan.zhen_shi_ming, ziDuan.tong_yong_ti_shi_ci]
@@ -160,7 +160,7 @@ export async function saoMiaoCiKuHongXian(
   return { juJue: false }
 }
 
-export function gouJianRenSheShenHePrompt(ziDuan: XinMuZhongDeTaZiDing): string {
+export function gouJianRenSheShenHePrompt(ziDuan: 心中のTA自定义): string {
   const zhanShi = (zhi: string | undefined): string =>
     zhi ? baoZhuangYongHuNeiRong(zhi) : '（未填）'
   const nianLingZhanShi =
@@ -272,10 +272,10 @@ function yanZhengShenHeChuCan(shuJu: Record<string, unknown> | null): RenSheShen
   return { heFa: true, zongPanDing, biaoJi, ziDuanPanDing }
 }
 
-async function diaoYongShenHe(ziDuan: XinMuZhongDeTaZiDing): Promise<RenSheShenHeChuCan> {
+async function diaoYongShenHe(ziDuan: 心中のTA自定义): Promise<RenSheShenHeChuCan> {
   if (renSheShenHeMock) return renSheShenHeMock(ziDuan)
   try {
-    const xiangYing = await genJuPeiZhiTiaoYong('RenSheShenHe', [
+    const xiangYing = await 按配置调用('RenSheShenHe', [
       { jiaoSe: 'system', neiRong: '判断用户填写的人物资料能否构成一个现实中可能存在的具体人物，只输出 JSON。' },
       { jiaoSe: 'user', neiRong: gouJianRenSheShenHePrompt(ziDuan) },
     ])
@@ -299,7 +299,7 @@ const BiaoJiYouXianJi: readonly RenSheJuJueYuanYinMa[] = [
 ]
 
 export async function caiJueRenShe(
-  ziDuan: XinMuZhongDeTaZiDing | null | undefined,
+  ziDuan: 心中のTA自定义 | null | undefined,
 ): Promise<RenSheCaiJueJieGuo> {
   const guiYiHou = guiYiRenSheZiDuan(ziDuan)
 

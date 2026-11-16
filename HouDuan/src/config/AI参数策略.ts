@@ -1,10 +1,10 @@
-import { AiPeiZhi, yingYongHuiDuCanShu } from './AI配置'
+import { AI配置, yingYongHuiDuCanShu } from './AI配置'
 import type { MoXingCanShu } from './AI配置'
 import type { AIJiaoSeXinXi } from '../types'
 
 export function gouJianJiaoSeShangXiaWen(
   jiaoSe?: AIJiaoSeXinXi,
-): CanShuShangXiaWen['jiaoSe'] {
+): 参数上下文['jiaoSe'] {
   if (!jiaoSe) return undefined
   const wenBen = [jiaoSe.xing_ge, jiaoSe.yan_yu_feng_ge].filter(Boolean).join('')
   const faSan = FaSanGuanJianCi.some((ci) => wenBen.includes(ci))
@@ -18,7 +18,7 @@ export function gouJianJiaoSeShangXiaWen(
   }
 }
 
-export interface CanShuShangXiaWen {
+export interface 参数上下文 {
   jiaoSe?: {
     ie_lei_xing?: 'I' | 'E'
     re_shen_lei_xing?: '慢热' | '快热'
@@ -33,14 +33,14 @@ export interface CanShuShangXiaWen {
 
 export const ManReHaoGanDuJiaCheng = 1.15
 
-export function shiFouManRe(shangXiaWen?: CanShuShangXiaWen): boolean {
+export function shiFouManRe(shangXiaWen?: 参数上下文): boolean {
   return shangXiaWen?.jiaoSe?.re_shen_lei_xing === '慢热'
 }
 
 const WenDuXiaXian = 0
 const WenDuShangXian = 2
 
-export const XieShouWenDuShangXian = Math.min(
+export const 写手温度ShangXian = Math.min(
   WenDuShangXian,
   Math.max(0, parseFloat(process.env['WRITER_WENDU_SHANG_XIAN'] || '1.15') || 1.15),
 )
@@ -57,19 +57,19 @@ function qianZhiWenDu(wenDu: number): number {
 }
 
 export function jiSuanAIChanShu(
-  moXingLeiXing: keyof typeof AiPeiZhi.moXing,
-  shangXiaWen?: CanShuShangXiaWen,
+  模型类型: keyof typeof AI配置.模型,
+  shangXiaWen?: 参数上下文,
 ): MoXingCanShu {
-  const ji = AiPeiZhi.moXing[moXingLeiXing]
+  const ji = AI配置.模型[模型类型]
 
-  if (ji.siKaoMoShi === 'enabled') {
-    return yingYongHuiDuCanShu(moXingLeiXing, {
-      moXing: ji.moXing,
+  if (ji.思考模式 === 'enabled') {
+    return yingYongHuiDuCanShu(模型类型, {
+      模型: ji.模型,
       top_p: Math.max(TopPSiKaoXiaXian, ji.top_p ?? TopPSiKaoXiaXian),
-      zuiDaTokens: ji.zuiDaTokens,
-      siKaoMoShi: ji.siKaoMoShi,
-      reasoningEffort: ji.reasoningEffort,
-      xiangYingGeShi: ji.xiangYingGeShi,
+      最大Tokens: ji.最大Tokens,
+      思考模式: ji.思考模式,
+      思考强度: ji.思考强度,
+      响应格式: ji.响应格式,
     })
   }
 
@@ -105,15 +105,15 @@ export function jiSuanAIChanShu(
   else if (changJing === 'anWei') wenDu += 0.05
 
   wenDu = qianZhiWenDu(wenDu)
-  if (moXingLeiXing === 'XieShou') wenDu = Math.min(wenDu, XieShouWenDuShangXian)
+  if (模型类型 === 'XieShou') wenDu = Math.min(wenDu, 写手温度ShangXian)
 
   const jiChu: MoXingCanShu = {
-    moXing: ji.moXing,
+    模型: ji.模型,
     wenDu,
-    zuiDaTokens: ji.zuiDaTokens,
-    siKaoMoShi: ji.siKaoMoShi,
-    reasoningEffort: ji.reasoningEffort,
-    xiangYingGeShi: ji.xiangYingGeShi,
+    最大Tokens: ji.最大Tokens,
+    思考模式: ji.思考模式,
+    思考强度: ji.思考强度,
+    响应格式: ji.响应格式,
   }
-  return yingYongHuiDuCanShu(moXingLeiXing, jiChu)
+  return yingYongHuiDuCanShu(模型类型, jiChu)
 }

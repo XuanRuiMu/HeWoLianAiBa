@@ -1,9 +1,9 @@
-import { AiPeiZhi } from '../config/AI配置'
+import { AI配置 } from '../config/AI配置'
 import { huoQuFanYi } from '../config/translations'
 import { biaoQingBaoZhanShiWenBen, gouJianDanTiaoTuXiangKuai, meiTiZhanShiWenBen, shiTuXiangLeiBie } from './AI视觉辅助'
 import { gouJianYuYinKeDuWenBen, tiQuYinPinShiJian } from './语音理解'
 import { gouJianShiPinKeDuWenBen } from './视频多模态'
-import type { DuiHuaKuai } from '../utils/DeepSeek客户端'
+import type { 对话块 } from '../utils/DeepSeek客户端'
 import type { DuiHuaLiShiXiang } from '../types'
 
 
@@ -172,8 +172,8 @@ export function zhanShiLiShiWenBen(
   liShi: DuiHuaLiShiXiang[],
   xuanXiang: LiShiXuanXiang,
 ): string {
-  const zuiDa = xuanXiang.最多条数 ?? AiPeiZhi.prompt.liShiXiaoXiShuLiang
-  const buZhang = Math.max(1, AiPeiZhi.prompt.liShiCaiDuanBuZhang)
+  const zuiDa = xuanXiang.最多条数 ?? AI配置.prompt.liShiXiaoXiShuLiang
+  const buZhang = Math.max(1, AI配置.prompt.liShiCaiDuanBuZhang)
   const zongShu = liShi[0]?.duiHuaZongTiaoShu
   const youZongShu = typeof zongShu === 'number' && zongShu >= liShi.length
     && liShi.every((x) => x.duiHuaZongTiaoShu === zongShu)
@@ -203,12 +203,12 @@ export function quBenLunDengDaiHuiFuXiang(liShi: DuiHuaLiShiXiang[]): DuiHuaLiSh
 
 export async function zhuRuBenLunTuXiangKuai(
   liShi: DuiHuaLiShiXiang[],
-): Promise<DuiHuaKuai[]> {
-  const shangXian = AiPeiZhi.prompt.benLunTuXiangZuiDuoZhuRuShu
+): Promise<对话块[]> {
+  const shangXian = AI配置.prompt.benLunTuXiangZuiDuoZhuRuShu
   const houXuan = quBenLunDengDaiHuiFuXiang(liShi).filter(
     (xiang) => !xiang.yi_che_hui && shiTuXiangLeiBie(xiang.meiTiLeiBie),
   )
-  const jieGuo: DuiHuaKuai[] = []
+  const jieGuo: 对话块[] = []
   for (const xiang of houXuan.slice(-shangXian)) {
     jieGuo.push(...(await gouJianDanTiaoTuXiangKuai(xiang)))
   }

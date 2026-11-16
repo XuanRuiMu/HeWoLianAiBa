@@ -31,7 +31,7 @@ describe('FP-05 开场白开口标志', () => {
 
   it('标志只在开场白消息真正落库后置真，失败或未开口保持假', () => {
     const 体 = 取函数体(服务源, 'export async function baoCunJiaoSe(')
-    const 保存调用 = 体.indexOf('await baoCunJiaoSeXiaoXi({')
+    const 保存调用 = 体.indexOf('await 保存角色XiaoXi({')
     const 置真 = 体.indexOf('yiBaoCunKaiChang = true')
     const 赋值 = 体.indexOf('jiaoSe.yao_kai_kou = yiBaoCunKaiChang')
     expect(保存调用).toBeGreaterThan(-1)

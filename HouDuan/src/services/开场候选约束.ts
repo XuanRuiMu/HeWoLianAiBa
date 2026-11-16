@@ -1,6 +1,6 @@
 import { KaiChangPeiZhi, huoQuKaiChangBiao } from '../config/开场采样配置'
 import { debug日志 } from '../utils/debug日志'
-import type { DuiHuaKuai } from '../utils/DeepSeek客户端'
+import type { 对话块 } from '../utils/DeepSeek客户端'
 
 const ZiShu = 2
 
@@ -100,9 +100,9 @@ export function daiShuKaiChangYuanYu(): { wenBen: string; houXuan: string[] } {
 }
 
 export function fuJiaKaiChangYuanYu(
-  neiRong: string | DuiHuaKuai[],
+  neiRong: string | 对话块[],
   kaiChangYu: string,
-): string | DuiHuaKuai[] {
+): string | 对话块[] {
   if (kaiChangYu === '') return neiRong
   if (typeof neiRong === 'string') return neiRong + kaiChangYu
   return [...neiRong, { type: 'input_text', text: kaiChangYu }]

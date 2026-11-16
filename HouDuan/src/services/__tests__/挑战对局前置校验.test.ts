@@ -29,6 +29,9 @@ vi.mock('../角色生成', () => ({
     shunXu.push('shengCheng')
     return jiaJiaoSe
   }),
+  保存角色: vi.fn(async () => {
+    shunXu.push('baoCun')
+  }),
   baoCunJiaoSe: vi.fn(async () => {
     shunXu.push('baoCun')
   }),

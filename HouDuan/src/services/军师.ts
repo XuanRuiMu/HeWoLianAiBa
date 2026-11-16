@@ -1,10 +1,10 @@
 ﻿import { JunShiPeiZhi, JunShiPeiZhiMoRen } from '../config/军师配置'
-import { AiPeiZhi } from '../config/AI配置'
+import { AI配置 } from '../config/AI配置'
 import { huoQuFanYi } from '../config/translations'
 import { gouJianJiaoSeShangXiaWen } from '../config/AI参数策略'
 import { huoQuWanZhengHaoGanDu } from './好感度'
-import { huoQuXiaoXiLieBiao, huoQuJiaoSeSuoYouZhe } from './消息'
-import { shiTuWenHunPaiKuai, type XiaoXiKuai } from './消息内容块'
+import { 取消息列表, 取角色所有者 } from './消息'
+import { shiTuWenHunPaiKuai, type 消息块 } from './消息内容块'
 import { buQiWenJianTiQuWenBen } from './文档文本提取'
 import { shengChengJunShiZhiDao } from './军师求助'
 import { huoQuAIJiaoSeXinXi } from './AI输入准备'
@@ -18,7 +18,7 @@ import {
   sheZhiJunShiZhiDaoZhuangTai,
   huoQuJunShiZhiDaoZhuangTai,
   shanChuJunShiZhiDaoZhuangTai,
-  type JunShiJiLuXiang,
+  type 军师记录项,
   type JunShiJiLuLiaoTianXiaoXi,
   type JunShiZhiDaoZhuangTaiXinXi,
 } from './军师缓存'
@@ -56,11 +56,11 @@ export interface JunShiZhiDaoJieGuo {
   shiJian: string
 }
 
-export interface JunShiJiLuXiangYing {
-  jiLuLieBiao: JunShiJiLuXiang[]
+export interface 军师记录项Ying {
+  jiLuLieBiao: 军师记录项[]
 }
 
-interface QianDuanJunShiJiLuXiang {
+interface QianDuan军师记录项 {
   jian_yi: string
   jian_yi_fen_duan: JunShiZhiDaoFenDuan | null
   shi_jian: string
@@ -79,8 +79,8 @@ interface QianDuanJunShiJiLuXiang {
   }[]
 }
 
-export interface QianDuanJunShiJiLuXiangYing {
-  jiLuLieBiao: QianDuanJunShiJiLuXiang[]
+export interface QianDuan军师记录项Ying {
+  jiLuLieBiao: QianDuan军师记录项[]
 }
 
 function gouJianJunShiRenSheDuan(jiaoSe: AIJiaoSeXinXi): string {
@@ -114,9 +114,9 @@ export async function huoQuJunShiLieBiao(): Promise<JunShiLieBiaoXiangYing> {
 export async function huoQuJunShiJiLu(
   yong_hu_id: string,
   jiao_se_id: string,
-): Promise<QianDuanJunShiJiLuXiangYing> {
+): Promise<QianDuan军师记录项Ying> {
   const jiLuLieBiao = await huoQuJunShiJiLuLieBiao(yong_hu_id, jiao_se_id)
-  const qianDuanLieBiao: QianDuanJunShiJiLuXiang[] = jiLuLieBiao.map((ji_lu) => ({
+  const qianDuanLieBiao: QianDuan军师记录项[] = jiLuLieBiao.map((ji_lu) => ({
     jian_yi: ji_lu.jian_yi,
     jian_yi_fen_duan: ji_lu.jian_yi_fen_duan ?? null,
     shi_jian: ji_lu.shi_jian,
@@ -142,7 +142,7 @@ export async function qingQiuJunShiZhiDao(
 ): Promise<{ cheng_gong: boolean; jie_guo?: JunShiZhiDaoJieGuo; cuo_wu_ma?: string; ti_shi?: string; zhuang_tai_ma?: number }> {
   const junShiPeiZhi = JunShiPeiZhi[canShu.jun_shi_id || ''] || JunShiPeiZhiMoRen
 
-  const jiaoSeSuoYouZhe = await huoQuJiaoSeSuoYouZhe(canShu.jiao_se_id)
+  const jiaoSeSuoYouZhe = await 取角色所有者(canShu.jiao_se_id)
   if (!jiaoSeSuoYouZhe) {
     jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, false, 'JIAO_SE_BU_CUN_ZAI')
     return { cheng_gong: false, cuo_wu_ma: 'JIAO_SE_BU_CUN_ZAI', ti_shi: huoQuFanYi('junShi', 'jiaoSeBuCunZai'), zhuang_tai_ma: 404 }
@@ -169,11 +169,11 @@ export async function qingQiuJunShiZhiDao(
     return { cheng_gong: false, cuo_wu_ma: 'JIAO_SE_BU_CUN_ZAI', ti_shi: huoQuFanYi('junShi', 'jiaoSeBuCunZai'), zhuang_tai_ma: 404 }
   }
 
-  const xiaoXiJieGuo = await huoQuXiaoXiLieBiao({
+  const xiaoXiJieGuo = await 取消息列表({
     yong_hu_id: canShu.yong_hu_id,
     jiao_se_id: canShu.jiao_se_id,
     ye_ma: 1,
-    mei_ye_tiao_shu: AiPeiZhi.prompt.junShiLiShiXiaoXiShuLiang,
+    mei_ye_tiao_shu: AI配置.prompt.junShiLiShiXiaoXiShuLiang,
   })
 
   const youXiaoXiaoXi = xiaoXiJieGuo.lie_biao
@@ -237,7 +237,7 @@ export async function qingQiuJunShiZhiDao(
     )
 
     const shiJian = new Date().toISOString()
-    const jiLu: JunShiJiLuXiang = {
+    const jiLu: 军师记录项 = {
       jian_yi: zhiDaoJieGuo.zhi_dao_zheng_duan,
       jian_yi_fen_duan: zhiDaoJieGuo.zhi_dao_fen_duan,
       shi_jian: shiJian,
@@ -323,11 +323,11 @@ export async function huoQuJunShiZhiDaoZhuangTaiXinXi(
     return { zhuang_tai: zhuangTai, ke_zai_ci_zhi_dao: false, you_liao_tian_ji_lu: true }
   }
 
-  const xiaoXiJieGuo = await huoQuXiaoXiLieBiao({
+  const xiaoXiJieGuo = await 取消息列表({
     yong_hu_id,
     jiao_se_id,
     ye_ma: 1,
-    mei_ye_tiao_shu: AiPeiZhi.prompt.junShiLiShiXiaoXiShuLiang,
+    mei_ye_tiao_shu: AI配置.prompt.junShiLiShiXiaoXiShuLiang,
   })
   const dangQianLieBiao = xiaoXiJieGuo.lie_biao
     .filter((xiao_xi) => xiao_xi.fa_song_zhe_lei_xing !== 'xitong')
@@ -379,7 +379,7 @@ function zhuanHuanXiaoXiDaoDuiHuaLiShi(
     mei_ti_shi_chang_hao_miao?: number | null
     mei_ti_yuan_shi_wen_jian_ming?: string | null
     mei_ti_id?: string | null
-    nei_rong_kuai?: XiaoXiKuai[]
+    nei_rong_kuai?: 消息块[]
     bei_yong_xiao_xi_id?: string | null
   }[],
   jiaoSeWeiXinMing: string,

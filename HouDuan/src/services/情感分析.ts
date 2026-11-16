@@ -1,20 +1,20 @@
 ﻿import { debug日志 } from '../utils/debug日志'
-import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/DeepSeek客户端'
 import { gouJianQingGanFenXiPrompt } from './Prompt构建器'
 import type { QingGanFenXiJieGuo } from '../types'
-import type { CanShuShangXiaWen } from '../config/AI参数策略'
+import type { 参数上下文 } from '../config/AI参数策略'
 
 export async function fenXiQingGan(
   xiaoXi: string,
   jiaoSeMing: string,
-  shangXiaWen?: CanShuShangXiaWen,
+  shangXiaWen?: 参数上下文,
   waiBuXinHao?: AbortSignal,
 ): Promise<QingGanFenXiJieGuo> {
   try {
     if (waiBuXinHao?.aborted) {
       return { fen_shu: 0, fen_xi: '' }
     }
-    const xiangYing = await genJuPeiZhiTiaoYong('QingGanFenXi', [
+    const xiangYing = await 按配置调用('QingGanFenXi', [
       { jiaoSe: 'system', neiRong: '判断用户消息的情绪倾向，只输出 JSON。' },
       { jiaoSe: 'user', neiRong: gouJianQingGanFenXiPrompt(xiaoXi, jiaoSeMing) },
     ], shangXiaWen, waiBuXinHao)

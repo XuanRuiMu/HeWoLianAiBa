@@ -1,6 +1,6 @@
-import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/DeepSeek客户端'
 import type { DuiHuaLiShiXiang } from '../types'
-import type { CanShuShangXiaWen } from '../config/AI参数策略'
+import type { 参数上下文 } from '../config/AI参数策略'
 
 const ZuiJinTiaoShu = 8
 const ZuiDuoShiShiTiaoShu = 6
@@ -8,7 +8,7 @@ const ChaoShiHaoMiao = 15000
 
 export async function chouQuZiWoShiShi(
   duiHuaLiShi: DuiHuaLiShiXiang[],
-  shangXiaWen?: CanShuShangXiaWen,
+  shangXiaWen?: 参数上下文,
 ): Promise<string[]> {
   const zuiJin = duiHuaLiShi
     .filter((xiang) => xiang.fa_song_zhe_lei_xing === 'yonghu' || xiang.fa_song_zhe_lei_xing === 'jiaose')
@@ -19,7 +19,7 @@ export async function chouQuZiWoShiShi(
     .map((xiang) => `${xiang.fa_song_zhe_lei_xing === 'jiaose' ? '我' : '对方'}: ${xiang.nei_rong}`)
     .join('\n')
 
-  const caiJi = genJuPeiZhiTiaoYong('XieShou', [
+  const caiJi = 按配置调用('XieShou', [
     { jiaoSe: 'system', neiRong: '你负责从聊天记录里提取「我」自己说过的事实，列成清单。' },
     {
       jiaoSe: 'user',

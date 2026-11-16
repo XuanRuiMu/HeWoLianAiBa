@@ -19,23 +19,23 @@ describe('表情包密度模型', () => {
   it('对方近期发过图时期望间隔明显更短', () => {
     const wuTu = Array.from({ length: 12 }, () => wenZi('yonghu'))
     const youTu = [...Array.from({ length: 9 }, () => wenZi('yonghu')), tu('yonghu'), wenZi('yonghu'), tu('yonghu')]
-    const wu = jiSuanBiaoQingShouGan(wuTu, { ie_lei_xing: 'E' }, 'pengYou')
-    const you = jiSuanBiaoQingShouGan(youTu, { ie_lei_xing: 'E' }, 'pengYou')
+    const wu = jiSuanBiaoQingShouGan(wuTu, { ie_lei_xing: 'E' }, '朋友')
+    const you = jiSuanBiaoQingShouGan(youTu, { ie_lei_xing: 'E' }, '朋友')
     expect(you.qiWangJianGeLunShu).toBeLessThan(wu.qiWangJianGeLunShu)
     expect(you.duiFangJinQiTuShu).toBeGreaterThan(0)
   })
 
   it('关系越亲期望间隔越短', () => {
     const liShi = Array.from({ length: 12 }, () => wenZi('yonghu'))
-    const leng = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'E' }, 'lengDan')
-    const lian = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'E' }, 'reLian')
+    const leng = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'E' }, '冷淡')
+    const lian = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'E' }, '热恋')
     expect(lian.qiWangJianGeLunShu).toBeLessThan(leng.qiWangJianGeLunShu)
   })
 
   it('内向角色用图比外向角色更密', () => {
     const liShi = Array.from({ length: 12 }, () => wenZi('yonghu'))
-    const nei = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'I' }, 'shuXi')
-    const wai = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'E' }, 'shuXi')
+    const nei = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'I' }, '熟悉')
+    const wai = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'E' }, '熟悉')
     expect(nei.qiWangJianGeLunShu).toBeLessThan(wai.qiWangJianGeLunShu)
   })
 
@@ -47,14 +47,14 @@ describe('表情包密度模型', () => {
 
   it('能统计到没有媒体行的表情包消息', () => {
     const liShi = [tu('jiaose'), wenZi('jiaose'), wenZi('yonghu')]
-    const jieGuo = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'I' }, 'aiMei')
+    const jieGuo = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'I' }, '暧昧')
     expect(jieGuo.ziJiJinQiTuShu).toBe(1)
     expect(jieGuo.shangCiFaTuLunShu).toBe(2)
   })
 
   it('间隔落在 3 到 500 之间', () => {
     const liShi = Array.from({ length: 20 }, () => tu('yonghu'))
-    const jieGuo = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'I', re_shen_lei_xing: '快热' }, 'shenAi')
+    const jieGuo = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'I', re_shen_lei_xing: '快热' }, '深爱')
     expect(jieGuo.qiWangJianGeLunShu).toBeGreaterThanOrEqual(3)
     expect(jieGuo.qiWangJianGeLunShu).toBeLessThanOrEqual(500)
   })

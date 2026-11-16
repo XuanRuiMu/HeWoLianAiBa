@@ -3,17 +3,17 @@ import { redis } from '../redis'
 import { debug日志 } from '../utils/debug日志'
 
 export interface ShiYongLiangJiLu {
-  moXingLeiXing: string
-  moXing: string
+  模型类型: string
+  模型: string
   shuRuToken: number
   shuChuToken: number
   zongToken: number
   mingZhongToken?: number
-  yongHuId?: string
+  用户ID?: string
 }
 
 export interface YongLiangHuiZong {
-  moXingLeiXing: string
+  模型类型: string
   ciShu: number
   shuRuToken: number
   shuChuToken: number
@@ -29,14 +29,14 @@ function huoQuJiShuJian(riQi: string): string {
   return `llm_shi_yong_liang:${riQi}`
 }
 
-function huoQuChengYuan(moXingLeiXing: string, moXing: string): string {
-  return `${moXingLeiXing}|${moXing}`
+function huoQuChengYuan(模型类型: string, 模型: string): string {
+  return `${模型类型}|${模型}`
 }
 
-function jieXiChengYuan(chengYuan: string): { moXingLeiXing: string; moXing: string } {
+function jieXiChengYuan(chengYuan: string): { 模型类型: string; 模型: string } {
   const fenGe = chengYuan.indexOf('|')
-  if (fenGe < 0) return { moXingLeiXing: chengYuan, moXing: '' }
-  return { moXingLeiXing: chengYuan.slice(0, fenGe), moXing: chengYuan.slice(fenGe + 1) }
+  if (fenGe < 0) return { 模型类型: chengYuan, 模型: '' }
+  return { 模型类型: chengYuan.slice(0, fenGe), 模型: chengYuan.slice(fenGe + 1) }
 }
 
 export async function jiLuShiYongLiang(jiLu: ShiYongLiangJiLu): Promise<void> {
@@ -48,7 +48,7 @@ export async function jiLuShiYongLiang(jiLu: ShiYongLiangJiLu): Promise<void> {
   if (shuRu <= 0 && shuChu <= 0 && zong <= 0) return
   const riQi = jinRiBiaoJi()
   const jian = huoQuJiShuJian(riQi)
-  const chengYuan = huoQuChengYuan(jiLu.moXingLeiXing, jiLu.moXing)
+  const chengYuan = huoQuChengYuan(jiLu.模型类型, jiLu.模型)
   try {
     await redis.hincrby(jian, `${chengYuan}:ci_shu`, 1)
     await redis.hincrby(jian, `${chengYuan}:shu_ru`, shuRu)
@@ -70,7 +70,7 @@ export async function jiLuShiYongLiang(jiLu: ShiYongLiangJiLu): Promise<void> {
          "总Token" = "LLM用量"."总Token" + EXCLUDED."总Token",
          "缓存命中Token" = "LLM用量"."缓存命中Token" + EXCLUDED."缓存命中Token",
          "更新时间" = NOW()`,
-      [riQi, jiLu.moXingLeiXing, jiLu.moXing, shuRu, shuChu, zong, mingZhong],
+      [riQi, jiLu.模型类型, jiLu.模型, shuRu, shuChu, zong, mingZhong],
     )
   } catch (cuoWu) {
     debug日志.error('用量统计', 'PG用量持久化失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
@@ -91,9 +91,9 @@ export async function huoQuJinRiHuiZong(riQi: string = jinRiBiaoJi()): Promise<Y
     if (fenGe < 0) continue
     const chengYuan = jianMing.slice(0, fenGe)
     const ziDuan = jianMing.slice(fenGe + 1)
-    const { moXingLeiXing,  } = jieXiChengYuan(chengYuan)
-    if (!moXingLeiXing) continue
-    const xianYou = huiZong.get(chengYuan) ?? { moXingLeiXing, ciShu: 0, shuRuToken: 0, shuChuToken: 0, zongToken: 0, mingZhongToken: 0 }
+    const { 模型类型,  } = jieXiChengYuan(chengYuan)
+    if (!模型类型) continue
+    const xianYou = huiZong.get(chengYuan) ?? { 模型类型, ciShu: 0, shuRuToken: 0, shuChuToken: 0, zongToken: 0, mingZhongToken: 0 }
     const shuZhi = Number(zhi) || 0
     if (ziDuan === 'ci_shu') xianYou.ciShu = shuZhi
     else if (ziDuan === 'shu_ru') xianYou.shuRuToken = shuZhi
@@ -112,7 +112,7 @@ export async function huoQuJinRiHuiZong(riQi: string = jinRiBiaoJi()): Promise<Y
       [riQi],
     )
     return jieGuo.rows.map((hang): YongLiangHuiZong => ({
-      moXingLeiXing: String(hang.模型类型 || ''),
+      模型类型: String(hang.模型类型 || ''),
       ciShu: Number(hang.次数 || 0),
       shuRuToken: Number(hang.输入Token || 0),
       shuChuToken: Number(hang.输出Token || 0),

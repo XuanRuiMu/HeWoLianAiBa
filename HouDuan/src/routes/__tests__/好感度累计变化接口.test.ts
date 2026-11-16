@@ -16,7 +16,7 @@ vi.mock('../../services/公开编号', () => ({
 import 好感度路由 from '../好感度'
 
 type 请求体 = {
-  yong_hu?: { yongHuId: string }
+  yong_hu?: { 用户ID: string }
   params: Record<string, string>
   body: Record<string, unknown>
 }
@@ -66,7 +66,7 @@ async function 调用累计接口(选项: { 登录?: boolean; 角色?: string } 
     params: { jiaoSeId: 选项.角色 ?? 'j-1' },
     body: {},
   }
-  if (选项.登录 !== false) 请求.yong_hu = { yongHuId: 'u-1' }
+  if (选项.登录 !== false) 请求.yong_hu = { 用户ID: 'u-1' }
   const 响应 = 造响应()
   await 处理器(请求, 响应)
   return 响应

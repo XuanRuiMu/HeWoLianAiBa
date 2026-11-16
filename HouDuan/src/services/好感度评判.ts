@@ -1,10 +1,10 @@
 ﻿import { debug日志 } from '../utils/debug日志'
-import { AiPeiZhi } from '../config/AI配置'
-import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
+import { AI配置 } from '../config/AI配置'
+import { 按配置调用 } from '../utils/DeepSeek客户端'
 import { gouJianHaoGanDuPingPanPrompt } from './Prompt构建器'
 import { paiRuZhongShiDuiLie } from './重试队列'
 import type { HaoGanDuPingPanJieGuo } from '../types'
-import type { CanShuShangXiaWen } from '../config/AI参数策略'
+import type { 参数上下文 } from '../config/AI参数策略'
 import { shiFouManRe, ManReHaoGanDuJiaCheng } from '../config/AI参数策略'
 import { jiSuanXiShu, yingYongHuiHuaBaoDi } from './好感度缓存'
 import { huoQuWanZhengHaoGanDu } from './好感度'
@@ -20,8 +20,8 @@ export interface PingPanJieGuoYuXiShu {
 function xiuZhengFanWei(zhi: number): number {
   if (Number.isNaN(zhi)) return 0
   return Math.max(
-    AiPeiZhi.haoGanDu.zuiXiaoBianHua,
-    Math.min(AiPeiZhi.haoGanDu.zuiDaBianHua, zhi),
+    AI配置.haoGanDu.zuiXiaoBianHua,
+    Math.min(AI配置.haoGanDu.zuiDaBianHua, zhi),
   )
 }
 
@@ -40,20 +40,20 @@ async function yingYongXiShu(
 }
 
 async function jiaoHuLLM(
-  moXing: 'HaoGanDuPingPan',
+  模型: 'HaoGanDuPingPan',
   xiaoXiLieBiao: Array<{ jiaoSe: 'user' | 'system' | 'assistant'; neiRong: string }>,
-  shangXiaWen?: CanShuShangXiaWen,
+  shangXiaWen?: 参数上下文,
 ): Promise<{ neiRong: string }> {
-  return genJuPeiZhiTiaoYong(moXing, xiaoXiLieBiao, shangXiaWen)
+  return 按配置调用(模型, xiaoXiLieBiao, shangXiaWen)
 }
 
 async function pingPanHaoGanDuBianHuaNei(
   yongHuXiaoXi: string,
   jiaoSeHuiFu: string,
   jiaoSeMing: string,
-  shangXiaWen?: CanShuShangXiaWen,
+  shangXiaWen?: 参数上下文,
   huiHuaJian?: string,
-  yongHuId?: string,
+  用户ID?: string,
   jiaoSeId?: string,
 ): Promise<PingPanJieGuoYuXiShu> {
   try {
@@ -62,10 +62,10 @@ async function pingPanHaoGanDuBianHuaNei(
     let lianXuWeiDaBiao = 0
     let pingJunShuaiJianHou = 0
 
-    if (yongHuId && jiaoSeId) {
-      const haoGanDu = await huoQuWanZhengHaoGanDu(yongHuId, jiaoSeId)
+    if (用户ID && jiaoSeId) {
+      const haoGanDu = await huoQuWanZhengHaoGanDu(用户ID, jiaoSeId)
       if (haoGanDu) {
-        const xiShuJieGuo = await jiSuanXiShu(yongHuId, jiaoSeId, haoGanDu.zong_fen, haoGanDu.互动次数 ?? 0)
+        const xiShuJieGuo = await jiSuanXiShu(用户ID, jiaoSeId, haoGanDu.zong_fen, haoGanDu.互动次数 ?? 0)
         xiShu = xiShuJieGuo.xiShu
         muBiaoQuXian = xiShuJieGuo.muBiaoQuXian
         lianXuWeiDaBiao = xiShuJieGuo.lianXuWeiDaBiao
@@ -121,7 +121,7 @@ async function pingPanHaoGanDuBianHuaNei(
     }
 
     const jieGuoJingXiShu = await yingYongXiShu(yuanShiJieGuo, xiShu)
-    const jieGuo = huiHuaJian && !(yongHuId && jiaoSeId)
+    const jieGuo = huiHuaJian && !(用户ID && jiaoSeId)
       ? await yingYongHuiHuaBaoDi(huiHuaJian, jieGuoJingXiShu)
       : jieGuoJingXiShu
 
@@ -149,12 +149,12 @@ export async function pingPanHaoGanDuBianHua(
   yongHuXiaoXi: string,
   jiaoSeHuiFu: string,
   jiaoSeMing: string,
-  shangXiaWen?: CanShuShangXiaWen,
+  shangXiaWen?: 参数上下文,
   huiHuaJian?: string,
-  yongHuId?: string,
+  用户ID?: string,
   jiaoSeId?: string,
 ): Promise<HaoGanDuPingPanJieGuo> {
-  const { jieGuo } = await pingPanHaoGanDuBianHuaNei(yongHuXiaoXi, jiaoSeHuiFu, jiaoSeMing, shangXiaWen, huiHuaJian, yongHuId, jiaoSeId)
+  const { jieGuo } = await pingPanHaoGanDuBianHuaNei(yongHuXiaoXi, jiaoSeHuiFu, jiaoSeMing, shangXiaWen, huiHuaJian, 用户ID, jiaoSeId)
   return jieGuo
 }
 
@@ -162,9 +162,9 @@ async function pingPanHaoGanDuPiLiangNei(
   yongHuXiaoXi: string,
   jiaoSeHuiFuLieBiao: string[],
   jiaoSeMing: string,
-  shangXiaWen?: CanShuShangXiaWen,
+  shangXiaWen?: 参数上下文,
   huiHuaJian?: string,
-  yongHuId?: string,
+  用户ID?: string,
   jiaoSeId?: string,
 ): Promise<PingPanJieGuoYuXiShu> {
   if (jiaoSeHuiFuLieBiao.length === 0) {
@@ -183,7 +183,7 @@ async function pingPanHaoGanDuPiLiangNei(
     }
   }
   if (jiaoSeHuiFuLieBiao.length === 1) {
-    return pingPanHaoGanDuBianHuaNei(yongHuXiaoXi, jiaoSeHuiFuLieBiao[0], jiaoSeMing, shangXiaWen, huiHuaJian, yongHuId, jiaoSeId)
+    return pingPanHaoGanDuBianHuaNei(yongHuXiaoXi, jiaoSeHuiFuLieBiao[0], jiaoSeMing, shangXiaWen, huiHuaJian, 用户ID, jiaoSeId)
   }
 
   try {
@@ -192,10 +192,10 @@ async function pingPanHaoGanDuPiLiangNei(
     let lianXuWeiDaBiao = 0
     let pingJunShuaiJianHou = 0
 
-    if (yongHuId && jiaoSeId) {
-      const haoGanDu = await huoQuWanZhengHaoGanDu(yongHuId, jiaoSeId)
+    if (用户ID && jiaoSeId) {
+      const haoGanDu = await huoQuWanZhengHaoGanDu(用户ID, jiaoSeId)
       if (haoGanDu) {
-        const xiShuJieGuo = await jiSuanXiShu(yongHuId, jiaoSeId, haoGanDu.zong_fen, haoGanDu.互动次数 ?? 0)
+        const xiShuJieGuo = await jiSuanXiShu(用户ID, jiaoSeId, haoGanDu.zong_fen, haoGanDu.互动次数 ?? 0)
         xiShu = xiShuJieGuo.xiShu
         muBiaoQuXian = xiShuJieGuo.muBiaoQuXian
         lianXuWeiDaBiao = xiShuJieGuo.lianXuWeiDaBiao
@@ -260,7 +260,7 @@ async function pingPanHaoGanDuPiLiangNei(
     }
 
     const jieGuoJingXiShu = await yingYongXiShu(yuanShiJieGuo, xiShu)
-    const jieGuo = huiHuaJian && !(yongHuId && jiaoSeId)
+    const jieGuo = huiHuaJian && !(用户ID && jiaoSeId)
       ? await yingYongHuiHuaBaoDi(huiHuaJian, jieGuoJingXiShu)
       : jieGuoJingXiShu
 
@@ -288,12 +288,12 @@ export async function pingPanHaoGanDuPiLiang(
   yongHuXiaoXi: string,
   jiaoSeHuiFuLieBiao: string[],
   jiaoSeMing: string,
-  shangXiaWen?: CanShuShangXiaWen,
+  shangXiaWen?: 参数上下文,
   huiHuaJian?: string,
-  yongHuId?: string,
+  用户ID?: string,
   jiaoSeId?: string,
 ): Promise<HaoGanDuPingPanJieGuo> {
-  const { jieGuo } = await pingPanHaoGanDuPiLiangNei(yongHuXiaoXi, jiaoSeHuiFuLieBiao, jiaoSeMing, shangXiaWen, huiHuaJian, yongHuId, jiaoSeId)
+  const { jieGuo } = await pingPanHaoGanDuPiLiangNei(yongHuXiaoXi, jiaoSeHuiFuLieBiao, jiaoSeMing, shangXiaWen, huiHuaJian, 用户ID, jiaoSeId)
   return jieGuo
 }
 

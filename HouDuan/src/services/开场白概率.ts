@@ -1,6 +1,6 @@
-import { AiPeiZhi } from '../config/AI配置'
+import { AI配置 } from '../config/AI配置'
 import { peiZhi } from '../config'
-import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/DeepSeek客户端'
 import { 内部转展示 } from '../utils/性别'
 import type { KaiChangBaiShengChengCanShu } from './开场白生成'
 import {
@@ -8,7 +8,7 @@ import {
   JiaoSeShengChengCuoWu,
 } from '../config/错误码注册表'
 
-const DouBeiGaiLv = AiPeiZhi.prompt.kaiChangBaiFaSongGaiLv
+const DouBeiGaiLv = AI配置.prompt.kaiChangBaiFaSongGaiLv
 const ZuiXiao = 0.1
 const ZuiDa = 0.9
 
@@ -47,8 +47,8 @@ function jieXiGaiLv(shuRu: string): number | null {
 export async function jiSuanKaiChangBaiGaiLv(
   canShu: KaiChangBaiShengChengCanShu,
 ): Promise<number> {
-  const apiMiYao = peiZhi.deepSeek.apiMiYao || AiPeiZhi.deepSeek.apiMiYao
-  if (!apiMiYao) {
+  const api密钥 = peiZhi.deepSeek.api密钥 || AI配置.deepSeek.api密钥
+  if (!api密钥) {
     if (process.env.VITEST === 'true') return DouBeiGaiLv
     throw new JiaoSeShengChengCuoWu(CuoWuDaiMa.ROLE_GENERATION_MODEL_UNAVAILABLE)
   }
@@ -56,8 +56,8 @@ export async function jiSuanKaiChangBaiGaiLv(
     return DouBeiGaiLv
   }
   try {
-    const xiangYing = await genJuPeiZhiTiaoYong(
-      'KaiChangBaiGaiLv' as keyof typeof AiPeiZhi.moXing,
+    const xiangYing = await 按配置调用(
+      'KaiChangBaiGaiLv' as keyof typeof AI配置.模型,
       [{ jiaoSe: 'user', neiRong: gouJianGaiLvTiShi(canShu) }],
     )
     const gaiLv = jieXiGaiLv(xiangYing.neiRong)

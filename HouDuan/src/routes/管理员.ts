@@ -60,7 +60,7 @@ luYou.get('/用户', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   try {
     const lieBiao = await huoQuYongHuLieBiao()
     await jiLuShenJiRiZhi({
-      yong_hu_id: yongHu.yongHuId,
+      yong_hu_id: yongHu.用户ID,
       ip: huoQuIp(qingQiu),
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'chaKanYongHuLieBiao'),
       xiang_qing: { yong_hu_shu: lieBiao.length },
@@ -78,7 +78,7 @@ luYou.get('/对话', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   try {
     const lieBiao = await huoQuDuiHuaLieBiao()
     await jiLuShenJiRiZhi({
-      yong_hu_id: yongHu.yongHuId,
+      yong_hu_id: yongHu.用户ID,
       ip: huoQuIp(qingQiu),
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'chaKanDuiHuaLieBiao'),
       xiang_qing: { dui_hua_shu: lieBiao.length },
@@ -104,7 +104,7 @@ luYou.get('/对话/:jiaoSeId', async (qingQiu: RenZhengQingQiu, xiangYing: Respo
       return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
     }
     await jiLuShenJiRiZhi({
-      yong_hu_id: yongHu.yongHuId,
+      yong_hu_id: yongHu.用户ID,
       ip: huoQuIp(qingQiu),
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'chaKanDuiHuaXiangQing'),
       xiang_qing: { jiao_se_id: jiaoSeId },
@@ -130,7 +130,7 @@ luYou.get('/角色/:jiaoSeId', async (qingQiu: RenZhengQingQiu, xiangYing: Respo
       return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
     }
     await jiLuShenJiRiZhi({
-      yong_hu_id: yongHu.yongHuId,
+      yong_hu_id: yongHu.用户ID,
       ip: huoQuIp(qingQiu),
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'chaKanJiaoSeXinXi'),
       xiang_qing: { jiao_se_id: jiaoSeId },
@@ -151,7 +151,7 @@ luYou.post('/夺舍/:jiaoSeId', guanLiGaoWeiMenKong, async (qingQiu: RenZhengQin
   }
 
   try {
-    const jieGuo = await sheZhiDuoSheZhuangTai(jiaoSeId, yongHu.yongHuId)
+    const jieGuo = await sheZhiDuoSheZhuangTai(jiaoSeId, yongHu.用户ID)
     const muBiaoYongHuId = await huoQuJiaoSeYongHuId(jiaoSeId)
     if (muBiaoYongHuId) {
       执行落库后副作用(
@@ -161,7 +161,7 @@ luYou.post('/夺舍/:jiaoSeId', guanLiGaoWeiMenKong, async (qingQiu: RenZhengQin
       )
     }
     await jiLuShenJiRiZhi({
-      yong_hu_id: yongHu.yongHuId,
+      yong_hu_id: yongHu.用户ID,
       ip: huoQuIp(qingQiu),
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'duoSheJiaoSe'),
       xiang_qing: { jiao_se_id: jiaoSeId },
@@ -180,7 +180,7 @@ luYou.post('/夺舍/:jiaoSeId/心跳', guanLiGaoWeiMenKong, async (qingQiu: RenZ
   if (!yanZhengUUID(jiaoSeId)) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
   }
-  const xuZu = await duoSheXinTiao(jiaoSeId, yongHu.yongHuId)
+  const xuZu = await duoSheXinTiao(jiaoSeId, yongHu.用户ID)
   if (!xuZu) {
     return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('tongYong', 'weiShouQuan'))
   }
@@ -195,12 +195,12 @@ luYou.post('/归还/:jiaoSeId', guanLiGaoWeiMenKong, async (qingQiu: RenZhengQin
   }
 
   try {
-    const chengGong = await jieShuDuoShe(yongHu.yongHuId, jiaoSeId)
+    const chengGong = await jieShuDuoShe(yongHu.用户ID, jiaoSeId)
     if (!chengGong) {
       return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('tongYong', 'weiShouQuan'))
     }
     await jiLuShenJiRiZhi({
-      yong_hu_id: yongHu.yongHuId,
+      yong_hu_id: yongHu.用户ID,
       ip: huoQuIp(qingQiu),
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'guiHuanJiaoSe'),
       xiang_qing: { jiao_se_id: jiaoSeId },
@@ -232,7 +232,7 @@ luYou.post('/测试用户', guanLiGaoWeiMenKong, async (qingQiu: RenZhengQingQiu
       return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('tongYong', 'caoZuoShiBai'))
     }
     await jiLuShenJiRiZhi({
-      yong_hu_id: yongHu.yongHuId,
+      yong_hu_id: yongHu.用户ID,
       ip: huoQuIp(qingQiu),
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'chuangJianCeShiYongHu'),
       xiang_qing: { mu_biao_shou_ji_hao: shouJiHao },
@@ -266,7 +266,7 @@ luYou.post('/测试用户登录', guanLiGaoWeiMenKong, async (qingQiu: RenZhengQ
       return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('renZheng', 'dengLuShiBai'))
     }
     await jiLuShenJiRiZhi({
-      yong_hu_id: yongHu.yongHuId,
+      yong_hu_id: yongHu.用户ID,
       ip: huoQuIp(qingQiu),
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'dengLuCeShiYongHu'),
       xiang_qing: { mu_biao_shou_ji_hao: shouJiHao },
@@ -284,7 +284,7 @@ luYou.get('/系统状态', async (qingQiu: RenZhengQingQiu, xiangYing: Response)
   try {
     const zhuangTai = await huoQuXiTongZhuangTai()
     await jiLuShenJiRiZhi({
-      yong_hu_id: yongHu.yongHuId,
+      yong_hu_id: yongHu.用户ID,
       ip: huoQuIp(qingQiu),
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'chaKanXiTongZhuangTai'),
       xiang_qing: { yong_hu_shu: zhuangTai.yong_hu_shu },
@@ -322,10 +322,10 @@ luYou.get('/用量看板', async (qingQiu: RenZhengQingQiu, xiangYing: Response)
 
     const yiYongAnYongHuId = new Map<string, number>()
     for (const jian of jiShuJian) {
-      const yongHuId = jian.slice(qianZhui.length, jian.length - riQi.length - 1)
+      const 用户ID = jian.slice(qianZhui.length, jian.length - riQi.length - 1)
       const zhi = Number(await redis.get(jian))
-      if (yongHuId && !Number.isNaN(zhi)) {
-        yiYongAnYongHuId.set(yongHuId, zhi)
+      if (用户ID && !Number.isNaN(zhi)) {
+        yiYongAnYongHuId.set(用户ID, zhi)
       }
     }
 
@@ -368,7 +368,7 @@ luYou.get('/用量看板', async (qingQiu: RenZhengQingQiu, xiangYing: Response)
     }
 
     await jiLuShenJiRiZhi({
-      yong_hu_id: yongHu.yongHuId,
+      yong_hu_id: yongHu.用户ID,
       ip: huoQuIp(qingQiu),
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'chaKanXiTongZhuangTai'),
       xiang_qing: { lei_xing: '用量看板', yong_hu_shu: lieBiao.length },
@@ -379,7 +379,7 @@ luYou.get('/用量看板', async (qingQiu: RenZhengQingQiu, xiangYing: Response)
       mei_ri_yu_suan: peiZhi.meiRiAIQingQiuYuSuan,
       lie_biao: lieBiao,
       an_lei_xing: anLeiXing.map((xiang) => ({
-        mo_xing_lei_xing: xiang.moXingLeiXing,
+        mo_xing_lei_xing: xiang.模型类型,
         ci_shu: xiang.ciShu,
         shu_ru_token: xiang.shuRuToken,
         shu_chu_token: xiang.shuChuToken,
@@ -394,27 +394,27 @@ luYou.get('/用量看板', async (qingQiu: RenZhengQingQiu, xiangYing: Response)
   }
 })
 
-luYou.get('/增益曲线/:yongHuId/:jiaoSeId', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+luYou.get('/增益曲线/:用户ID/:jiaoSeId', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu!
-  const yongHuId = String(qingQiu.params.yongHuId || '')
+  const 用户ID = String(qingQiu.params.用户ID || '')
   const jiaoSeId = String(qingQiu.params.jiaoSeId || '')
-  if (!yanZhengUUID(yongHuId) || !yanZhengUUID(jiaoSeId)) {
+  if (!yanZhengUUID(用户ID) || !yanZhengUUID(jiaoSeId)) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
   }
 
   try {
-    const haoGanDu = await huoQuWanZhengHaoGanDu(yongHuId, jiaoSeId)
+    const haoGanDu = await huoQuWanZhengHaoGanDu(用户ID, jiaoSeId)
     if (!haoGanDu) {
       return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
     }
 
-    const quXian = await huoQuZengLiangQuXian(yongHuId, jiaoSeId, haoGanDu.zong_fen, haoGanDu.互动次数 ?? 0)
+    const quXian = await huoQuZengLiangQuXian(用户ID, jiaoSeId, haoGanDu.zong_fen, haoGanDu.互动次数 ?? 0)
 
     await jiLuShenJiRiZhi({
-      yong_hu_id: yongHu.yongHuId,
+      yong_hu_id: yongHu.用户ID,
       ip: huoQuIp(qingQiu),
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'chaKanXiTongZhuangTai'),
-      xiang_qing: { lei_xing: '增益曲线', yong_hu_id: yongHuId, jiao_se_id: jiaoSeId },
+      xiang_qing: { lei_xing: '增益曲线', yong_hu_id: 用户ID, jiao_se_id: jiaoSeId },
       lei_xing: '管理',
     })
     return chengGongXiangYing(xiangYing, {
@@ -441,7 +441,7 @@ luYou.get('/增益曲线/:yongHuId/:jiaoSeId', async (qingQiu: RenZhengQingQiu, 
 luYou.post('/授权', guanLiGaoWeiMenKong, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu!
   const qingQiuTi = qingQiu.body as Record<string, unknown>
-  const muBiaoYongHuId = huoQuZiFuChuan(qingQiuTi, 'yongHuId', 'yong_hu_id')
+  const muBiaoYongHuId = huoQuZiFuChuan(qingQiuTi, '用户ID', 'yong_hu_id')
   if (!yanZhengUUID(muBiaoYongHuId)) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
   }
@@ -452,7 +452,7 @@ luYou.post('/授权', guanLiGaoWeiMenKong, async (qingQiu: RenZhengQingQiu, xian
       return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('tongYong', 'caoZuoShiBai'))
     }
     await jiLuShenJiRiZhi({
-      yong_hu_id: yongHu.yongHuId,
+      yong_hu_id: yongHu.用户ID,
       ip: huoQuIp(qingQiu),
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'shouYuGuanLiYuan'),
       xiang_qing: { mu_biao_yong_hu_id: muBiaoYongHuId },
@@ -468,7 +468,7 @@ luYou.post('/授权', guanLiGaoWeiMenKong, async (qingQiu: RenZhengQingQiu, xian
 luYou.post('/回收', guanLiGaoWeiMenKong, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu!
   const qingQiuTi = qingQiu.body as Record<string, unknown>
-  const muBiaoYongHuId = huoQuZiFuChuan(qingQiuTi, 'yongHuId', 'yong_hu_id')
+  const muBiaoYongHuId = huoQuZiFuChuan(qingQiuTi, '用户ID', 'yong_hu_id')
   if (!yanZhengUUID(muBiaoYongHuId)) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
   }
@@ -479,7 +479,7 @@ luYou.post('/回收', guanLiGaoWeiMenKong, async (qingQiu: RenZhengQingQiu, xian
       return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('tongYong', 'caoZuoShiBai'))
     }
     await jiLuShenJiRiZhi({
-      yong_hu_id: yongHu.yongHuId,
+      yong_hu_id: yongHu.用户ID,
       ip: huoQuIp(qingQiu),
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'huiShouGuanLiYuan'),
       xiang_qing: { mu_biao_yong_hu_id: muBiaoYongHuId },
@@ -492,20 +492,20 @@ luYou.post('/回收', guanLiGaoWeiMenKong, async (qingQiu: RenZhengQingQiu, xian
   }
 })
 
-luYou.delete('/用户/:yongHuId', guanLiGaoWeiMenKong, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
+luYou.delete('/用户/:用户ID', guanLiGaoWeiMenKong, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu!
-  const muBiaoYongHuId = String(qingQiu.params.yongHuId || '')
+  const muBiaoYongHuId = String(qingQiu.params.用户ID || '')
   if (!yanZhengUUID(muBiaoYongHuId)) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
   }
 
   try {
-    const jieGuo = await shanChuYongHu(yongHu.yongHuId, muBiaoYongHuId)
+    const jieGuo = await shanChuYongHu(yongHu.用户ID, muBiaoYongHuId)
     if (!jieGuo.cheng_gong) {
       return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('tongYong', 'caoZuoShiBai'))
     }
     await jiLuShenJiRiZhi({
-      yong_hu_id: yongHu.yongHuId,
+      yong_hu_id: yongHu.用户ID,
       ip: huoQuIp(qingQiu),
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'shanChuYongHu'),
       xiang_qing: { mu_biao_yong_hu_id: muBiaoYongHuId },
@@ -531,12 +531,12 @@ luYou.get('/账号封禁', async (qingQiu: RenZhengQingQiu, xiangYing: Response)
 luYou.post('/账号封禁/解封', guanLiFengJinMenKong, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu!
   const qingQiuTi = qingQiu.body as Record<string, unknown>
-  const muBiaoYongHuId = huoQuZiFuChuan(qingQiuTi, 'yongHuId', 'yong_hu_id')
+  const muBiaoYongHuId = huoQuZiFuChuan(qingQiuTi, '用户ID', 'yong_hu_id')
   if (!yanZhengUUID(muBiaoYongHuId)) {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
   }
   try {
-    await jieChuZhangHaoFengJin(yongHu.yongHuId, muBiaoYongHuId, huoQuIp(qingQiu))
+    await jieChuZhangHaoFengJin(yongHu.用户ID, muBiaoYongHuId, huoQuIp(qingQiu))
     return chengGongXiangYing(xiangYing, { cheng_gong: true })
   } catch (cuoWu) {
     debug日志.error('管理接口', '解除封禁失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
@@ -547,13 +547,13 @@ luYou.post('/账号封禁/解封', guanLiFengJinMenKong, async (qingQiu: RenZhen
 luYou.post('/申诉/审核', guanLiFengJinShenHeMenKong, async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
   const yongHu = qingQiu.yong_hu!
   const qingQiuTi = qingQiu.body as Record<string, unknown>
-  const muBiaoYongHuId = huoQuZiFuChuan(qingQiuTi, 'yongHuId', 'yong_hu_id')
+  const muBiaoYongHuId = huoQuZiFuChuan(qingQiuTi, '用户ID', 'yong_hu_id')
   const tongGuoRaw = qingQiuTi['tongGuo'] ?? qingQiuTi['tong_guo']
   if (!yanZhengUUID(muBiaoYongHuId) || typeof tongGuoRaw !== 'boolean') {
     return shiBaiXiangYing(xiangYing, 400, huoQuFanYi('tongYong', 'canShuBuHeFa'))
   }
   try {
-    await shenHeShenSu(yongHu.yongHuId, muBiaoYongHuId, tongGuoRaw, huoQuIp(qingQiu))
+    await shenHeShenSu(yongHu.用户ID, muBiaoYongHuId, tongGuoRaw, huoQuIp(qingQiu))
     return chengGongXiangYing(xiangYing, { cheng_gong: true })
   } catch (cuoWu) {
     debug日志.error('管理接口', '审核申诉失败', { xiang_qing: { cuo_wu: String(cuoWu) } })

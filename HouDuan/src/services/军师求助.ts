@@ -1,7 +1,7 @@
 import { debug日志 } from '../utils/debug日志'
 import { huoQuFanYi } from '../config/translations'
 import { JunShiZhiDaoDuanDingYi } from '../config/军师配置'
-import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/DeepSeek客户端'
 import { gouJianJunShiQiuZhuPrompt, geShiHuaJunShiLiShi } from './Prompt构建器'
 import { 构建军师知识层, 检索通用知识 } from './通用知识检索'
 import { xiaoChuShuZhiXieLu } from '../utils/数值泄露过滤'
@@ -10,11 +10,11 @@ import type {
   JunShiQiuZhuJieGuo,
   JunShiZhiDaoFenDuan,
 } from '../types'
-import type { CanShuShangXiaWen } from '../config/AI参数策略'
+import type { 参数上下文 } from '../config/AI参数策略'
 
 export async function shengChengJunShiZhiDao(
   canShu: JunShiQiuZhuCanShu,
-  shangXiaWen?: CanShuShangXiaWen,
+  shangXiaWen?: 参数上下文,
 ): Promise<JunShiQiuZhuJieGuo> {
   try {
     const duiHuaWenBen = geShiHuaJunShiLiShi(canShu.dui_hua_li_shi, canShu.jiao_se_ming)
@@ -26,7 +26,7 @@ export async function shengChengJunShiZhiDao(
         guan_xi_jie_duan: canShu.hao_gan_du?.guan_xi_jie_duan,
       },
     }
-    const xiangYing = await genJuPeiZhiTiaoYong('JunShiQiuZhu', [
+    const xiangYing = await 按配置调用('JunShiQiuZhu', [
       { jiaoSe: 'system', neiRong: canShu.jun_shi_pei_zhi.xiTongTiShi },
       {
         jiaoSe: 'user',
@@ -94,7 +94,7 @@ export function jieXiJunShiFenDuan(neiRong: string): JunShiZhiDaoFenDuan | null 
     guLi: '',
   }
   for (const duan of JunShiZhiDaoDuanDingYi) {
-    const yuanShi = duiXiang[duan.moXingJian]
+    const yuanShi = duiXiang[duan.模型键]
     const wenBen = typeof yuanShi === 'string' ? yuanShi : ''
     fenDuan[duan.ziDuan] = qieDuanWenBen(xiaoChuShuZhiXieLu(wenBen), duan.zuiDaZiShu)
   }

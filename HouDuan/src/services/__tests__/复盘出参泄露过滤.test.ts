@@ -26,7 +26,7 @@ vi.mock('../../utils/debug日志', () => ({
 
 import { guoLvFuPanChuCan } from '../复盘'
 import { guoLvMinGanZiDuanXiangQing } from '../../routes/战绩'
-import type { DangAnXiangQing } from '../../services/战绩'
+import type { 档案详情 } from '../../services/战绩'
 
 describe('复盘出参确定性过滤（对齐军师侧强度）', () => {
   it('复盘正文里的带分数后台表述被抹掉，正常说法保留', () => {
@@ -76,7 +76,7 @@ describe('复盘出参确定性过滤（对齐军师侧强度）', () => {
       fu_pan_pi_zhu: [{ xu_hao: 1, ping_lun: '亲密度涨了2分', qing_gan: '中性' }],
       fu_pan_shu_ju: [],
       jun_shi_ji_lu: [],
-    } as unknown as DangAnXiangQing
+    } as unknown as 档案详情
     const qianDuan = guoLvMinGanZiDuanXiangQing(dangAn) as unknown as Record<string, unknown>
     const neiRong = qianDuan.fu_pan_nei_rong as string
     expect(neiRong).not.toContain('120')
@@ -92,7 +92,7 @@ describe('复盘出参确定性过滤（对齐军师侧强度）', () => {
       fu_pan_pi_zhu: null,
       fu_pan_shu_ju: null,
       jun_shi_ji_lu: [],
-    } as unknown as DangAnXiangQing
+    } as unknown as 档案详情
     const qianDuan = guoLvMinGanZiDuanXiangQing(dangAn) as unknown as Record<string, unknown>
     expect(qianDuan.fu_pan_nei_rong).toBeNull()
     expect(qianDuan.fu_pan_pi_zhu).toBeNull()

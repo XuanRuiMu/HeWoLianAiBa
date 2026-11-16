@@ -144,7 +144,7 @@ export const fanYi = {
     shengChengChuShiShiBai: '角色没有生成成功，也没有覆盖原来的角色',
     shengChengMoXingFuWuWuXianZhi: '角色生成服务暂时不可用，请重试当前操作',
     shengChengMoXingHuiFuBuHeFa: '角色生成结果异常，请重试当前操作',
-    baoCunJiaoSeShiBai: '角色没有保存成功，本次修改未生效，请重试当前操作',
+    保存角色ShiBai: '角色没有保存成功，本次修改未生效，请重试当前操作',
     renSheJuJue: '创建对象的资料未通过检查，请调整后重新提交',
   },
   qiDong: {
@@ -201,6 +201,7 @@ export const fanYi = {
     shengTuPeiEYongJin: '今日生成额度已用完，明天再试',
     yuanChengLaQuBuHeFa: '图片或视频来源不被允许，已拦截',
     shiPinShengChengShiBai: '视频生成失败，请重试',
+    shiPinZanBuZhiChi: '暂时不支持视频识别与视频生成',
     shiPinPeiEYongJin: '今日生成额度已用完，明天再试',
     zhuDongFenXiangTuPian: '分享一张图片给你~',
     zhuDongFenXiangFengJing: '刚拍的这片天，还行',
@@ -471,8 +472,8 @@ export const fanYi = {
   ziLiao: {
     qianMingTaiChang: '签名不能超过500个字符',
     keJianXingFeiFa: '可见性设置不合法',
-    baiMingDanFeiFa: '白名单用户列表不合法',
-    baiMingDanTaiDuo: '白名单用户不能超过200人',
+    白名单FeiFa: '白名单用户列表不合法',
+    白名单TaiDuo: '白名单用户不能超过200人',
     touXiangQueShaoWenJian: '请上传头像图片',
     touXiangGeShiCuoWu: '头像仅支持JPG/PNG/WebP图片',
     touXiangTaiDa: '头像文件不能超过2MB',

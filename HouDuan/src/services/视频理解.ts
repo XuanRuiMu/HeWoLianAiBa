@@ -5,8 +5,8 @@ import os from 'os'
 import path from 'path'
 import { debug日志 } from '../utils/debug日志'
 import { huoQuBenDiLuJing } from './媒体存储'
-import { huoQuGuiJiLiuDongMiYao, huoQuDuoMoTaiPeiZhi } from '../config/多模态配置'
-import { AiPeiZhi } from '../config/AI配置'
+import { shiBieYuYin } from './DeepSeek官方工具'
+import { AI配置 } from '../config/AI配置'
 import { redis } from '../redis'
 import { huoQuFFmpegLuJing, tiQuYinPinWeiWav } from '../utils/音频转码'
 
@@ -62,7 +62,7 @@ export async function xieRuJieXiHuanCun(sha256: string, jieGuo: ShiPinJieXiJieGu
 }
 
 async function moRenMiaoShuTuPian(tuPianZiJie: Buffer): Promise<string | null> {
-  const moXing = AiPeiZhi.deepSeek.moXing
+  const 模型名 = AI配置.deepSeek.模型
   const jiChu = (process.env.DEEPSEEK_BASE_URL || '').trim().replace(/\/$/, '')
   const miYao = (process.env.DEEPSEEK_API_KEY || '').trim()
   if (!jiChu || !miYao) return null
@@ -73,7 +73,7 @@ async function moRenMiaoShuTuPian(tuPianZiJie: Buffer): Promise<string | null> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${miYao}` },
       body: JSON.stringify({
-        model: moXing,
+        model: 模型名,
         messages: [
           {
             role: 'user',
@@ -99,42 +99,20 @@ async function moRenMiaoShuTuPian(tuPianZiJie: Buffer): Promise<string | null> {
   }
 }
 
-async function moRenZhuanXieYinPin(yinPinZiJie: Buffer, mime: string): Promise<string | null> {
-  const peiZhi = huoQuDuoMoTaiPeiZhi()
-  const miYao = huoQuGuiJiLiuDongMiYao()
-  const moXing = peiZhi.guiJiLiuDongYuYinMoXing.trim()
-  if (!miYao.trim() || !moXing) return null
-  const kongZhi = new AbortController()
-  const dingShi = setTimeout(() => kongZhi.abort(), 120000)
-  try {
-    const biaoDan = new FormData()
-    biaoDan.append('model', moXing)
-    biaoDan.append('file', new Blob([new Uint8Array(yinPinZiJie)], { type: mime }), 'shipin-shengyin.wav')
-    const xiangYing = await fetch(`${peiZhi.guiJiLiuDongJiChuUrl.replace(/\/$/, '')}/audio/transcriptions`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${miYao}` },
-      body: biaoDan,
-      signal: kongZhi.signal,
-    })
-    if (!xiangYing.ok) return null
-    const shuJu = (await xiangYing.json()) as Record<string, unknown>
-    const wenBen = typeof shuJu['text'] === 'string' ? String(shuJu['text']) : typeof shuJu['wen_ben'] === 'string' ? String(shuJu['wen_ben']) : ''
-    return qingXi(wenBen, 500)
-  } catch {
-    return null
-  } finally {
-    clearTimeout(dingShi)
-  }
+async function moRenZhuanXieYinPin(yinPinZiJie: Buffer, _mime: string): Promise<string | null> {
+  const jieGuo = await shiBieYuYin({ wavZiJie: yinPinZiJie })
+  if (!jieGuo.cheng_gong) return null
+  return qingXi(jieGuo.wenBen, 500)
 }
 
 export async function jieXiShiPin(sha256: string, yiLai: ShiPinJieXiYiLai = {}): Promise<ShiPinJieXiJieGuo> {
   const huanCun = await duQuJieXiHuanCun(sha256)
   if (huanCun) return huanCun
-  const kong: ShiPinJieXiJieGuo = { huaMianMiaoShu: null, zhuanXieWenBen: null, jiangJiZhaiYao: null }
+  const kong: ShiPinJieXiJieGuo = { huaMianMiaoShu: null, zhuanXieWenBen: null, jiangJiZhaiYao: '视频理解：暂不支持视频识别' }
   const ffmpegLuJing = await huoQuFFmpegLuJing()
   const benDiLuJing = huoQuBenDiLuJing(sha256)
   if (!ffmpegLuJing || !benDiLuJing) {
-    kong.jiangJiZhaiYao = '视频理解降级：转码链路暂不可用，已保留占位'
+    kong.jiangJiZhaiYao = '视频理解：暂不支持视频识别'
     await xieRuJieXiHuanCun(sha256, kong)
     return kong
   }
@@ -162,19 +140,19 @@ export async function jieXiShiPin(sha256: string, yiLai: ShiPinJieXiYiLai = {}):
     }
   } catch (cuoWu) {
     debug日志.warn('视频理解', '解析视频失败，已降级为占位', { xiang_qing: { cuo_wu: String(cuoWu) } })
-    kong.jiangJiZhaiYao = '视频理解降级：解析失败，已保留占位'
+    kong.jiangJiZhaiYao = '视频理解：暂不支持视频识别'
   } finally {
     await fs.promises.rm(linShiMuLu, { recursive: true, force: true })
   }
   if (!kong.huaMianMiaoShu && !kong.zhuanXieWenBen && !kong.jiangJiZhaiYao) {
-    kong.jiangJiZhaiYao = '视频理解降级：画面与声音暂不可用，已保留占位'
+    kong.jiangJiZhaiYao = '视频理解：暂不支持视频识别'
   }
   await xieRuJieXiHuanCun(sha256, kong)
   return kong
 }
 
 export async function huoQuHuoJieXiShiPinMiaoShu(sha256: string | null | undefined): Promise<ShiPinJieXiJieGuo> {
-  const kong: ShiPinJieXiJieGuo = { huaMianMiaoShu: null, zhuanXieWenBen: null, jiangJiZhaiYao: '视频理解降级：转码链路暂不可用，已保留占位' }
+  const kong: ShiPinJieXiJieGuo = { huaMianMiaoShu: null, zhuanXieWenBen: null, jiangJiZhaiYao: '视频理解：暂不支持视频识别' }
   if (!sha256 || !/^[0-9a-f]{64}$/.test(sha256)) return kong
   const huanCun = await duQuJieXiHuanCun(sha256)
   if (huanCun) return huanCun

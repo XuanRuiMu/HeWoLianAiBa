@@ -66,18 +66,18 @@ export async function huoQuJiaoSeBianHao(jiaoSeId: string): Promise<string> {
   return zhi
 }
 
-export async function huoQuYongHuBianHao(yongHuId: string): Promise<string> {
-  if (!yongHuId) return yongHuId
-  const yiHuanCun = duHuanCun(yongHuHuanCun, yongHuId)
-  if (yiHuanCun !== undefined) return yiHuanCun || yongHuId
+export async function huoQuYongHuBianHao(用户ID: string): Promise<string> {
+  if (!用户ID) return 用户ID
+  const yiHuanCun = duHuanCun(yongHuHuanCun, 用户ID)
+  if (yiHuanCun !== undefined) return yiHuanCun || 用户ID
   const jieGuo = await 数据库.query(
     'SELECT "公开编号" FROM "用户" WHERE "ID" = $1 LIMIT 1',
-    [yongHuId],
+    [用户ID],
   )
   const zhi = jieGuo.rows.length > 0 ? String(jieGuo.rows[0]['公开编号'] || '').trim() : ''
-  if (!zhi) return yongHuId
-  xieHuanCun(yongHuHuanCun, yongHuId, zhi)
-  xieHuanCun(yongHuFanXiangHuanCun, zhi, yongHuId)
+  if (!zhi) return 用户ID
+  xieHuanCun(yongHuHuanCun, 用户ID, zhi)
+  xieHuanCun(yongHuFanXiangHuanCun, zhi, 用户ID)
   return zhi
 }
 
@@ -161,19 +161,19 @@ export async function jieXiYongHuBianHaoPiLiang(bianHaoLieBiao: unknown[]): Prom
   )
   for (const hang of jieGuo.rows as Record<string, unknown>[]) {
     const bianHao = String(hang['公开编号'])
-    const yongHuId = String(hang.ID)
-    duiZhao.set(bianHao, yongHuId)
-    xieHuanCun(yongHuFanXiangHuanCun, bianHao, yongHuId)
-    xieHuanCun(yongHuHuanCun, yongHuId, bianHao)
+    const 用户ID = String(hang.ID)
+    duiZhao.set(bianHao, 用户ID)
+    xieHuanCun(yongHuFanXiangHuanCun, bianHao, 用户ID)
+    xieHuanCun(yongHuHuanCun, 用户ID, bianHao)
   }
   return duiZhao
 }
 
-export async function jiaoSeBianHaoBiao(yongHuId: string): Promise<Map<string, string>> {
+export async function jiaoSeBianHaoBiao(用户ID: string): Promise<Map<string, string>> {
   const duiZhao = new Map<string, string>()
   const jieGuo = await 数据库.query(
     'SELECT "ID", "公开编号" FROM "角色" WHERE "用户ID" = $1',
-    [yongHuId],
+    [用户ID],
   )
   for (const hang of jieGuo.rows as Record<string, unknown>[]) {
     const jiaoSeId = String(hang.ID)

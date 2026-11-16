@@ -1,21 +1,21 @@
 ﻿import { debug日志 } from '../utils/debug日志'
-import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/DeepSeek客户端'
 import { gouJianGuanJianShiJianPrompt, JiYiZhuRuYueShu } from './Prompt构建器'
 import { 数据库 } from '../数据库'
 import type { GongJianShiJianJieGuo } from '../types'
-import type { CanShuShangXiaWen } from '../config/AI参数策略'
+import type { 参数上下文 } from '../config/AI参数策略'
 
 export async function tiQuGuanJianShiJian(
   duiHuaWenBen: string,
   jiaoSeMing: string,
-  shangXiaWen?: CanShuShangXiaWen,
+  shangXiaWen?: 参数上下文,
   waiBuXinHao?: AbortSignal,
 ): Promise<GongJianShiJianJieGuo[]> {
   try {
     if (waiBuXinHao?.aborted) {
       return []
     }
-    const xiangYing = await genJuPeiZhiTiaoYong('GuanJianShiJian', [
+    const xiangYing = await 按配置调用('GuanJianShiJian', [
       { jiaoSe: 'system', neiRong: '从聊天记录里挑出关键事件，只输出 JSON 数组。' },
       { jiaoSe: 'user', neiRong: gouJianGuanJianShiJianPrompt(duiHuaWenBen, jiaoSeMing) },
     ], shangXiaWen, waiBuXinHao)
@@ -28,11 +28,11 @@ export async function tiQuGuanJianShiJian(
 }
 
 export async function tiQuBingLuoKuGuanJianShiJian(
-  yongHuId: string,
+  用户ID: string,
   jiaoSeId: string,
   duiHuaWenBen: string,
   jiaoSeMing: string,
-  shangXiaWen?: CanShuShangXiaWen,
+  shangXiaWen?: 参数上下文,
 ): Promise<GongJianShiJianJieGuo[]> {
   const shiJianLieBiao = await tiQuGuanJianShiJian(duiHuaWenBen, jiaoSeMing, shangXiaWen)
   if (shiJianLieBiao.length === 0) {
@@ -46,14 +46,14 @@ export async function tiQuBingLuoKuGuanJianShiJian(
       }
       const yiCunZai = await 数据库.query(
         `SELECT 1 FROM "关键事件" WHERE "用户ID" = $1 AND "角色ID" = $2 AND "描述" = $3 LIMIT 1`,
-        [yongHuId, jiaoSeId, miaoShu],
+        [用户ID, jiaoSeId, miaoShu],
       )
       if ((yiCunZai.rowCount ?? 0) > 0) {
         continue
       }
       await 数据库.query(
         `INSERT INTO "关键事件" ("用户ID", "角色ID", "事件类型", "描述") VALUES ($1, $2, $3, $4)`,
-        [yongHuId, jiaoSeId, String(shiJian.shi_jian_lei_xing || '其他').slice(0, 50), miaoShu],
+        [用户ID, jiaoSeId, String(shiJian.shi_jian_lei_xing || '其他').slice(0, 50), miaoShu],
       )
     }
   } catch (cuoWu) {
@@ -63,7 +63,7 @@ export async function tiQuBingLuoKuGuanJianShiJian(
 }
 
 export async function duQuGuanJianShiJianZhuRu(
-  yongHuId: string,
+  用户ID: string,
   jiaoSeId: string,
   zuiDaTiaoShu = 10,
   benLunXiaoXi = '',
@@ -71,7 +71,7 @@ export async function duQuGuanJianShiJianZhuRu(
   try {
     const jieGuo = await 数据库.query(
       `SELECT "事件类型", "描述", "创建时间" FROM "关键事件" WHERE "用户ID" = $1 AND "角色ID" = $2 ORDER BY "创建时间" DESC LIMIT $3`,
-      [yongHuId, jiaoSeId, Math.max(zuiDaTiaoShu, zuiDaTiaoShu * 3)],
+      [用户ID, jiaoSeId, Math.max(zuiDaTiaoShu, zuiDaTiaoShu * 3)],
     )
     if (jieGuo.rows.length === 0) {
       return ''

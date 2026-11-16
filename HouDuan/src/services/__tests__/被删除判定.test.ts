@@ -28,7 +28,7 @@ vi.mock('../../utils/debug日志', () => ({
 }))
 
 vi.mock('../../utils/DeepSeek客户端', () => ({
-  genJuPeiZhiTiaoYong: vi.fn(async () => ({ neiRong: 外呼返回.neiRong })),
+  按配置调用: vi.fn(async () => ({ neiRong: 外呼返回.neiRong })),
 }))
 
 vi.mock('../好感度', () => ({
@@ -37,7 +37,7 @@ vi.mock('../好感度', () => ({
 }))
 
 vi.mock('../AI输入准备', () => ({
-  baoCunJiaoSeXiaoXi: vi.fn(async () => ({ id: 'm-1' })),
+  保存角色XiaoXi: vi.fn(async () => ({ id: 'm-1' })),
 }))
 
 vi.mock('../复盘', () => ({ shengChengFuPan: vi.fn(async () => undefined) }))
@@ -46,9 +46,9 @@ vi.mock('../挑战积分', () => ({ jieSuanTiaoZhanDuiJu: vi.fn(async () => unde
 import { jianCeSiLianHeYi, chuLiBeiChaQu } from '../胜利失败条件'
 import { 数据库 } from '../../数据库'
 import { redis } from '../../redis'
-import { genJuPeiZhiTiaoYong } from '../../utils/DeepSeek客户端'
+import { 按配置调用 } from '../../utils/DeepSeek客户端'
 import { gengXinHaoGanDu } from '../好感度'
-import { baoCunJiaoSeXiaoXi } from '../AI输入准备'
+import { 保存角色XiaoXi } from '../AI输入准备'
 import { 渲染被删原因 } from '../../utils/结局'
 
 const 人设 = {
@@ -111,7 +111,7 @@ describe('删除判定：处置', () => {
     RedisSet结果.zhi = 'OK'
     vi.mocked(redis.set).mockClear()
     vi.mocked(gengXinHaoGanDu).mockClear()
-    vi.mocked(baoCunJiaoSeXiaoXi).mockClear()
+    vi.mocked(保存角色XiaoXi).mockClear()
     vi.mocked(数据库.query).mockReset()
     vi.mocked(数据库.query).mockImplementation(async (sql: string) => {
       if (sql.includes('"用户ID", "是否渣型"')) {
@@ -130,7 +130,7 @@ describe('删除判定：处置', () => {
   it('其他原因第一次触发：只警告，不结束这一局', async () => {
     const 结果 = await chuLiBeiChaQu('u-1', 'j-1', '像渣男渣女', 人设)
     expect(结果).toBeNull()
-    expect(vi.mocked(baoCunJiaoSeXiaoXi)).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(保存角色XiaoXi)).toHaveBeenCalledTimes(1)
     expect(vi.mocked(gengXinHaoGanDu)).toHaveBeenCalledTimes(1)
   })
 
@@ -172,7 +172,7 @@ describe('删除判定：提示词要求模型自评', () => {
 
   it('判定提示词里必须写清四类原因与不判的边界', async () => {
     await jianCeSiLianHeYi('随便一句', [], 人设)
-    const 调用 = vi.mocked(genJuPeiZhiTiaoYong).mock.calls[0]
+    const 调用 = vi.mocked(按配置调用).mock.calls[0]
     const 提示 = JSON.stringify(调用[1])
     for (const 词 of ['提示词注入', '不像真人说话', '像渣男渣女', '不符合我的条件', '情商太低']) {
       expect(提示, 词).toContain(词)

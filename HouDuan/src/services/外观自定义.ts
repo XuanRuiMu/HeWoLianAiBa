@@ -353,20 +353,20 @@ export interface WaiGuanChuCan {
 
 function chuCanTiaoMu(
   lieBiao: WaiGuanTiaoMu[],
-  yongHuId: string,
+  用户ID: string,
 ): WaiGuanChuCanTiaoMu[] {
   return lieBiao.map((tiaoMu) => ({
     id: tiaoMu.id,
     ming_cheng: tiaoMu.mingCheng,
-    tu_di_zhi: zhongXinQianMingMeiTiURL(tiaoMu.meiTiYinYong, yongHuId) || '',
+    tu_di_zhi: zhongXinQianMingMeiTiURL(tiaoMu.meiTiYinYong, 用户ID) || '',
     wen_zi_yan_se: tiaoMu.wenZiYanSe,
   }))
 }
 
-export function shengChengChuCan(数据: WaiGuanShuJu, yongHuId: string): WaiGuanChuCan {
+export function shengChengChuCan(数据: WaiGuanShuJu, 用户ID: string): WaiGuanChuCan {
   return {
-    bei_jing: chuCanTiaoMu(数据.beiJing, yongHuId),
-    qi_pao: chuCanTiaoMu(数据.qiPao, yongHuId),
+    bei_jing: chuCanTiaoMu(数据.beiJing, 用户ID),
+    qi_pao: chuCanTiaoMu(数据.qiPao, 用户ID),
     bei_jing_fu_gai: 数据.beiJingFuGai,
     qi_pao_fu_gai: 数据.qiPaoFuGai,
     dang_qian_qi_pao: 数据.dangQianQiPao,

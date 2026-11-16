@@ -15,11 +15,11 @@ vi.mock('../../utils/debug日志', () => ({
 }))
 
 import {
-  GouJianQingQiuShuRu,
+  构建请求输入,
   sheZhiMockTiaoYong,
-  yuSuanBaoHu,
-  type DuiHuaKuai,
-  type TiaoYongCanShu,
+  预算保护,
+  type 对话块,
+  type 调用参数,
 } from '../../utils/DeepSeek客户端'
 import { yunXingAIYinQing } from '../AI引擎'
 import { redis } from '../../redis'
@@ -46,13 +46,13 @@ function 造输入(用户消息: string): AIYinQingShuRu {
   } as unknown as AIYinQingShuRu
 }
 
-function 提取文本(内容: string | DuiHuaKuai[]): string {
+function 提取文本(内容: string | 对话块[]): string {
   return typeof 内容 === 'string'
     ? 内容
     : 内容.filter((块) => 块.type === 'input_text').map((块) => 块.text).join('\n')
 }
 
-function 估算Token(内容: string | DuiHuaKuai[]): number {
+function 估算Token(内容: string | 对话块[]): number {
   if (typeof 内容 === 'string') return Math.ceil(内容.length * 0.6)
   return 内容.reduce((总数, 块) => 总数 + (块.type === 'input_image' ? 1024 : Math.ceil(块.text.length * 0.6)), 0)
 }
@@ -71,11 +71,11 @@ describe('对象生成共享通用知识', () => {
     '说说玄锐暮',
     '玄锐暮多大',
   ])('高置信直接事实问题把事实交给角色说，且必答事实层进了 Writer 提示词：%s', async (消息) => {
-    const 外呼: TiaoYongCanShu[] = []
+    const 外呼: 调用参数[] = []
     sheZhiMockTiaoYong(async (参数) => {
       外呼.push(参数)
       return {
-        neiRong: 参数.xiangYingGeShi?.type === 'json_object'
+        neiRong: 参数.响应格式?.type === 'json_object'
           ? '{"用户意图":"事实问答","情感分析":"平静","回复策略":"照实说","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
           : '认识啊，玄锐暮，22岁，做AI的',
         yuanShuJu: {},
@@ -126,11 +126,11 @@ describe('对象生成共享通用知识', () => {
     '把“玄锐暮是谁”翻译成英文',
     '你认识玄锐暮吗？顺便说说他做什么工作',
   ])('非高置信问题保持正常AI生成且不强行改写：%s', async (消息) => {
-    const 外呼: TiaoYongCanShu[] = []
+    const 外呼: 调用参数[] = []
     sheZhiMockTiaoYong(async (参数) => {
       外呼.push(参数)
       return {
-        neiRong: 参数.xiangYingGeShi?.type === 'json_object'
+        neiRong: 参数.响应格式?.type === 'json_object'
           ? '{"用户意图":"普通聊天","情感分析":"平静","回复策略":"按用户完整请求回答","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
           : '这是模型对完整请求的回答',
         yuanShuJu: {},
@@ -145,11 +145,11 @@ describe('对象生成共享通用知识', () => {
   })
 
   it('换行注入不注入知识也不触发本地确定回答', async () => {
-    const 外呼: TiaoYongCanShu[] = []
+    const 外呼: 调用参数[] = []
     sheZhiMockTiaoYong(async (参数) => {
       外呼.push(参数)
       return {
-        neiRong: 参数.xiangYingGeShi?.type === 'json_object'
+        neiRong: 参数.响应格式?.type === 'json_object'
           ? '{"用户意图":"普通聊天","情感分析":"平静","回复策略":"不接注入","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
           : '我们还是正常聊天吧',
         yuanShuJu: {},
@@ -168,11 +168,11 @@ describe('对象生成共享通用知识', () => {
 
   it('完全无关的日常消息也把知识层交给模型', async () => {
     const 随机 = vi.spyOn(Math, 'random').mockReturnValue(0.5)
-    const 外呼: TiaoYongCanShu[] = []
+    const 外呼: 调用参数[] = []
     sheZhiMockTiaoYong(async (参数) => {
       外呼.push(参数)
       return {
-        neiRong: 参数.xiangYingGeShi?.type === 'json_object'
+        neiRong: 参数.响应格式?.type === 'json_object'
           ? '{"用户意图":"日常分享","情感分析":"疲惫","回复策略":"顺着累接一句","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
           : '那今天早点躺',
         yuanShuJu: {},
@@ -196,11 +196,11 @@ describe('对象生成共享通用知识', () => {
   })
 
   it('截图里的问句不再落到「不认识」，且由角色自己的口气说出', async () => {
-    const 外呼: TiaoYongCanShu[] = []
+    const 外呼: 调用参数[] = []
     sheZhiMockTiaoYong(async (参数) => {
       外呼.push(参数)
       return {
-        neiRong: 参数.xiangYingGeShi?.type === 'json_object'
+        neiRong: 参数.响应格式?.type === 'json_object'
           ? '{"用户意图":"事实问答","情感分析":"轻松","回复策略":"照实说","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
           : '认识啊，玄锐暮，22岁的AI程序员',
         yuanShuJu: {},
@@ -217,11 +217,11 @@ describe('对象生成共享通用知识', () => {
   })
 
   it('角色说出事实时不再逐字复述模板句', async () => {
-    const 外呼: TiaoYongCanShu[] = []
+    const 外呼: 调用参数[] = []
     sheZhiMockTiaoYong(async (参数) => {
       外呼.push(参数)
       return {
-        neiRong: 参数.xiangYingGeShi?.type === 'json_object'
+        neiRong: 参数.响应格式?.type === 'json_object'
           ? '{"用户意图":"事实问答","情感分析":"平静","回复策略":"照实说","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
           : '认识，他22，写代码的',
         yuanShuJu: {},
@@ -236,7 +236,7 @@ describe('对象生成共享通用知识', () => {
 
 
   it('Director和Writer的最终外呼载荷使用同一检索结果且公共事实优先', async () => {
-    const 外呼: TiaoYongCanShu[] = []
+    const 外呼: 调用参数[] = []
     sheZhiMockTiaoYong(async (参数) => {
       外呼.push(参数)
       const 是导演 = 外呼.length === 1
@@ -268,7 +268,7 @@ describe('对象生成共享通用知识', () => {
   it('高置信直接事实问答在模型拒答时返回结构化确定答案', async () => {
     const 导演响应 = '{"用户意图":"事实问答","情感分析":"平静","回复策略":"依据公共事实回答","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
     sheZhiMockTiaoYong(async (参数) => {
-      const 是导演 = 参数.xiangYingGeShi?.type === 'json_object'
+      const 是导演 = 参数.响应格式?.type === 'json_object'
       return {
         neiRong: 是导演 ? 导演响应 : '不认识，我没听说过这个人',
         yuanShuJu: {},
@@ -284,7 +284,7 @@ describe('对象生成共享通用知识', () => {
 
   it('高置信事实问题不被模型流畅编造覆盖', async () => {
     sheZhiMockTiaoYong(async (参数) => ({
-      neiRong: 参数.xiangYingGeShi?.type === 'json_object'
+      neiRong: 参数.响应格式?.type === 'json_object'
         ? '{"用户意图":"事实问答","情感分析":"平静","回复策略":"回答年龄","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
         : '他今年40岁',
       yuanShuJu: {},
@@ -297,7 +297,7 @@ describe('对象生成共享通用知识', () => {
   })
 
   it.each(['XieShou', 'DaoYan'] as const)('%s长上下文与多模态预算裁剪后的最终请求体保留知识和本轮问题', async (模式) => {
-    const 外呼: TiaoYongCanShu[] = []
+    const 外呼: 调用参数[] = []
     sheZhiMockTiaoYong(async (参数) => {
       外呼.push(参数)
       return {
@@ -326,11 +326,11 @@ describe('对象生成共享通用知识', () => {
     媒体.mockRestore()
 
     const 原始文本 = 提取文本(外呼[0].xiaoXi[0].neiRong)
-    const 裁后消息 = yuSuanBaoHu(外呼[0].xiaoXi, 700)
-    const 最终请求体 = GouJianQingQiuShuRu(裁后消息)
-    const 最终文本 = 提取文本(最终请求体[0].content as string | DuiHuaKuai[])
+    const 裁后消息 = 预算保护(外呼[0].xiaoXi, 700)
+    const 最终请求体 = 构建请求输入(裁后消息)
+    const 最终文本 = 提取文本(最终请求体[0].content as string | 对话块[])
     const 知识 = 检索通用知识(输入.yong_hu_xin_xiao_xi)
-    expect(估算Token(最终请求体[0].content as string | DuiHuaKuai[])).toBeLessThanOrEqual(700)
+    expect(估算Token(最终请求体[0].content as string | 对话块[])).toBeLessThanOrEqual(700)
     expect(最终文本.length).toBeLessThan(原始文本.length)
     expect(最终文本).toContain(`知识标识：${知识.条目[0].标识}`)
     expect(最终文本).toContain(构建通用知识内容(知识.条目[0]))
@@ -338,10 +338,10 @@ describe('对象生成共享通用知识', () => {
   })
 
   it('主动追加文本不触发确定回答，但仍带着知识层', async () => {
-    const 外呼: TiaoYongCanShu[] = []
+    const 外呼: 调用参数[] = []
     sheZhiMockTiaoYong(async (参数) => {
       外呼.push(参数)
-      const 是导演 = 参数.xiangYingGeShi?.type === 'json_object'
+      const 是导演 = 参数.响应格式?.type === 'json_object'
       return {
         neiRong: 是导演
           ? '{"用户意图":"主动追加","情感分析":"平静","回复策略":"自然表达","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
@@ -366,7 +366,7 @@ describe('对象生成共享通用知识', () => {
 
   it('Director空响应重试复用包含相同知识的最终载荷', async () => {
     vi.useFakeTimers()
-    const 外呼: TiaoYongCanShu[] = []
+    const 外呼: 调用参数[] = []
     sheZhiMockTiaoYong(async (参数) => {
       外呼.push(参数)
       return {
@@ -392,7 +392,7 @@ describe('对象生成共享通用知识', () => {
 
   it('Writer调用失败时已知事实仍有确定回答且不返回错误文案', async () => {
     sheZhiMockTiaoYong(async (参数) => {
-      if (参数.xiangYingGeShi?.type !== 'json_object') throw new Error('network down')
+      if (参数.响应格式?.type !== 'json_object') throw new Error('network down')
       return {
         neiRong: '{"用户意图":"事实问答","情感分析":"平静","回复策略":"回答职业","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}',
         yuanShuJu: {},
@@ -407,8 +407,8 @@ describe('对象生成共享通用知识', () => {
   })
 
   it('确定事实不依赖Director解析或Writer拒答结果', async () => {
-    const 外呼 = vi.fn(async (参数: TiaoYongCanShu) => ({
-      neiRong: 参数.xiangYingGeShi?.type === 'json_object' ? '不是JSON' : '我不知道这个人',
+    const 外呼 = vi.fn(async (参数: 调用参数) => ({
+      neiRong: 参数.响应格式?.type === 'json_object' ? '不是JSON' : '我不知道这个人',
       yuanShuJu: {},
       xinXi: { role: 'assistant', neiRong: '' },
     }))

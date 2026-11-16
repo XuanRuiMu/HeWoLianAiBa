@@ -10,13 +10,13 @@ function duQuZhengShu(ming: string, moRen: number): number {
 export const QueXiChuFaXiaoShi = duQuZhengShu('QUE_XI_CHU_FA_XIAO_SHI', 12)
 export const QueXiKouJianFen = duQuZhengShu('QUE_XI_KOU_JIAN_FEN', 1)
 
-export async function chuLiQueXiKouJian(yongHuId: string, jiaoSeId: string): Promise<boolean> {
-  const biaoJi = `que_xi_kou_jian:${yongHuId}:${jiaoSeId}`
+export async function chuLiQueXiKouJian(用户ID: string, jiaoSeId: string): Promise<boolean> {
+  const biaoJi = `que_xi_kou_jian:${用户ID}:${jiaoSeId}`
   try {
     const yiKou = await redis.get(biaoJi)
     const qianYiHuDong = await 数据库.query(
       `SELECT "创建时间" FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2 ORDER BY "创建时间" DESC LIMIT 1 OFFSET 1`,
-      [yongHuId, jiaoSeId],
+      [用户ID, jiaoSeId],
     )
     if (qianYiHuDong.rows.length === 0) return false
     const qianYiShiKe = new Date(String(qianYiHuDong.rows[0].创建时间)).getTime()
@@ -38,13 +38,13 @@ export async function chuLiQueXiKouJian(yongHuId: string, jiaoSeId: string): Pro
          "总分" = GREATEST(0, "总分" - $1)
        WHERE "用户ID" = $3 AND "角色ID" = $4
        RETURNING "总分"`,
-      [kouJian, weiDuKouJian, yongHuId, jiaoSeId],
+      [kouJian, weiDuKouJian, 用户ID, jiaoSeId],
     )
     if (gengXin.rows.length === 0) return false
     await redis.set(biaoJi, '1')
     debug日志.info('缺席扣减', '用户缺席触发单次亲密度扣减', {
       xiang_qing: {
-        yong_hu_id: yongHuId,
+        yong_hu_id: 用户ID,
         jiao_se_id: jiaoSeId,
         ge_shi_xiao_shi: Math.round(geShiHaoMiao / 3600_000),
         kou_jian: kouJian,

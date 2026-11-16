@@ -1,8 +1,8 @@
 import { 数据库 } from '../数据库'
 import { redis } from '../redis'
 import { debug日志 } from '../utils/debug日志'
-import { AiPeiZhi } from '../config/AI配置'
-import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
+import { AI配置 } from '../config/AI配置'
+import { 按配置调用 } from '../utils/DeepSeek客户端'
 import { gouJianJiYiZhaiYaoPrompt, JiYiZhuRuYueShu } from './Prompt构建器'
 import { huoQuFanYi } from '../config/translations'
 
@@ -14,7 +14,7 @@ export interface DuiHuaZhaiYaoJiLu {
 }
 
 function huoQuZhaiYaoPeiZhi(): { zuiDaZiFu: number; chuFaXiaoXiShu: number; yuanLiaoXiaoXiShu: number; suoTtlMiao: number } {
-  const zhaiYao = AiPeiZhi.zhaiYao
+  const zhaiYao = AI配置.zhaiYao
   return {
     zuiDaZiFu: zhaiYao.zuiDaZiFu,
     chuFaXiaoXiShu: zhaiYao.chuFaXiaoXiShu,
@@ -37,11 +37,11 @@ export function qieDuanZhaiYao(neiRong: string): string {
   return jieGuo || qingLi.slice(0, zuiDaZiFu)
 }
 
-export async function duQuDuiHuaZhaiYao(yongHuId: string, jiaoSeId: string): Promise<DuiHuaZhaiYaoJiLu | null> {
+export async function duQuDuiHuaZhaiYao(用户ID: string, jiaoSeId: string): Promise<DuiHuaZhaiYaoJiLu | null> {
   try {
     const jieGuo = await 数据库.query(
       `SELECT "摘要内容", "概括消息数", "更新时间", "素材锚点时间" FROM "对话摘要" WHERE "用户ID" = $1 AND "角色ID" = $2 LIMIT 1`,
-      [yongHuId, jiaoSeId],
+      [用户ID, jiaoSeId],
     )
     if (jieGuo.rows.length === 0) return null
     const hang = jieGuo.rows[0]
@@ -67,12 +67,12 @@ export function gouJianZhaiYaoZhuRuWenBen(zhaiYao: DuiHuaZhaiYaoJiLu | null): st
 const TongBuHuanCun = new Map<string, string>()
 const TongBuHuanCunZuiDa = 500
 
-function huoQuTongBuJian(yongHuId: string, jiaoSeId: string): string {
-  return `${yongHuId}:${jiaoSeId}`
+function huoQuTongBuJian(用户ID: string, jiaoSeId: string): string {
+  return `${用户ID}:${jiaoSeId}`
 }
 
-export function huanCunTongBuZhaiYao(yongHuId: string, jiaoSeId: string, zhuRuWenBen: string): void {
-  const jian = huoQuTongBuJian(yongHuId, jiaoSeId)
+export function huanCunTongBuZhaiYao(用户ID: string, jiaoSeId: string, zhuRuWenBen: string): void {
+  const jian = huoQuTongBuJian(用户ID, jiaoSeId)
   if (!zhuRuWenBen) {
     TongBuHuanCun.delete(jian)
     return
@@ -84,22 +84,22 @@ export function huanCunTongBuZhaiYao(yongHuId: string, jiaoSeId: string, zhuRuWe
   TongBuHuanCun.set(jian, zhuRuWenBen)
 }
 
-export function duQuTongBuZhaiYao(yongHuId: string, jiaoSeId: string): string {
-  return TongBuHuanCun.get(huoQuTongBuJian(yongHuId, jiaoSeId)) ?? ''
+export function duQuTongBuZhaiYao(用户ID: string, jiaoSeId: string): string {
+  return TongBuHuanCun.get(huoQuTongBuJian(用户ID, jiaoSeId)) ?? ''
 }
 
-async function huoQuXiaoXiZongShu(yongHuId: string, jiaoSeId: string, maoDian?: string | null): Promise<number> {
+async function huoQuXiaoXiZongShu(用户ID: string, jiaoSeId: string, maoDian?: string | null): Promise<number> {
   const jieGuo = await 数据库.query(
     `SELECT COUNT(*) AS zong_shu FROM "消息"
      WHERE "用户ID" = $1 AND "角色ID" = $2
        AND ($3::timestamptz IS NULL OR "创建时间" > $3::timestamptz)`,
-    [yongHuId, jiaoSeId, maoDian ?? null],
+    [用户ID, jiaoSeId, maoDian ?? null],
   )
   return Number(jieGuo.rows[0]?.zong_shu || 0)
 }
 
 async function huoQuZhaiYaoYuanLiao(
-  yongHuId: string,
+  用户ID: string,
   jiaoSeId: string,
   maoDian?: string | null,
 ): Promise<{ wenBen: string; xinMaoDian: string | null }> {
@@ -110,7 +110,7 @@ async function huoQuZhaiYaoYuanLiao(
        AND ($3::timestamptz IS NULL OR "创建时间" > $3::timestamptz)
      ORDER BY "创建时间" ASC
      LIMIT $4`,
-    [yongHuId, jiaoSeId, maoDian ?? null, yuanLiaoShu],
+    [用户ID, jiaoSeId, maoDian ?? null, yuanLiaoShu],
   )
   const wenBen = jieGuo.rows
     .map((hang, xuHao) => `${xuHao + 1}. [${hang.发送者 === 'yonghu' ? '用户' : '角色'}] ${String(hang.内容 || '').slice(0, 200)}`)
@@ -119,9 +119,9 @@ async function huoQuZhaiYaoYuanLiao(
   return { wenBen, xinMaoDian: weiYi ? new Date(weiYi).toISOString() : null }
 }
 
-export async function shengChengBingLuoKuZhaiYao(yongHuId: string, jiaoSeId: string, jiaoSeMing: string): Promise<boolean> {
+export async function shengChengBingLuoKuZhaiYao(用户ID: string, jiaoSeId: string, jiaoSeMing: string): Promise<boolean> {
   const peiZhi = huoQuZhaiYaoPeiZhi()
-  const suoJian = `${ZhaiYaoRedisJianQianZhui}${yongHuId}:${jiaoSeId}`
+  const suoJian = `${ZhaiYaoRedisJianQianZhui}${用户ID}:${jiaoSeId}`
   try {
     const qiangZhan = await redis.set(suoJian, '1', 'EX', peiZhi.suoTtlMiao, 'NX')
     if (qiangZhan !== 'OK') return false
@@ -129,15 +129,15 @@ export async function shengChengBingLuoKuZhaiYao(yongHuId: string, jiaoSeId: str
     return false
   }
   try {
-    const zongShu = await huoQuXiaoXiZongShu(yongHuId, jiaoSeId)
+    const zongShu = await huoQuXiaoXiZongShu(用户ID, jiaoSeId)
     if (zongShu < peiZhi.chuFaXiaoXiShu) return true
-    const xianYou = await duQuDuiHuaZhaiYao(yongHuId, jiaoSeId)
+    const xianYou = await duQuDuiHuaZhaiYao(用户ID, jiaoSeId)
     const maoDian = xianYou?.suCaiMaoDian ?? null
-    const daiGaiShu = await huoQuXiaoXiZongShu(yongHuId, jiaoSeId, maoDian)
+    const daiGaiShu = await huoQuXiaoXiZongShu(用户ID, jiaoSeId, maoDian)
     if (daiGaiShu < peiZhi.chuFaXiaoXiShu) return true
-    const { wenBen: yuanLiao, xinMaoDian } = await huoQuZhaiYaoYuanLiao(yongHuId, jiaoSeId, maoDian)
+    const { wenBen: yuanLiao, xinMaoDian } = await huoQuZhaiYaoYuanLiao(用户ID, jiaoSeId, maoDian)
     if (!yuanLiao.trim()) return true
-    const xiangYing = await genJuPeiZhiTiaoYong('JiYiZhaiYao', [
+    const xiangYing = await 按配置调用('JiYiZhaiYao', [
       { jiaoSe: 'system', neiRong: '把聊天记录里值得记住的东西串成几句话，只输出摘要正文。' },
       { jiaoSe: 'user', neiRong: gouJianJiYiZhaiYaoPrompt(yuanLiao, jiaoSeMing, xianYou?.zhaiYaoNeiRong || '') },
     ])
@@ -151,7 +151,7 @@ export async function shengChengBingLuoKuZhaiYao(yongHuId: string, jiaoSeId: str
          "概括消息数" = EXCLUDED."概括消息数",
          "素材锚点时间" = EXCLUDED."素材锚点时间",
          "更新时间" = NOW()`,
-      [yongHuId, jiaoSeId, zhaiYao, zongShu, xinMaoDian],
+      [用户ID, jiaoSeId, zhaiYao, zongShu, xinMaoDian],
     )
     return true
   } catch (cuoWu) {

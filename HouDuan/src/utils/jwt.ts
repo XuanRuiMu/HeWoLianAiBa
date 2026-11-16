@@ -6,7 +6,7 @@ import { redis } from '../redis'
 export { randomUUID } from 'crypto'
 
 export interface LingPaiZaiHe {
-  yongHuId: string
+  用户ID: string
   shouJiHao?: string
   jti?: string
   iat?: number
@@ -19,24 +19,24 @@ export interface LingPaiZaiHe {
 const RefreshTokenPrefix = 'refresh_token:'
 const RefreshTokenUserPrefix = 'refresh_token_user:'
 const RefreshTokenXiaoHaoPrefix = 'xiao_hao_refresh_token:'
-const RefreshTokenTtl = peiZhi.shuaXinLingPaiYouXiaoMiao
+const RefreshTokenTtl = peiZhi.刷新令牌YouXiaoMiao
 const XiaoHaoBiaoJiTtl = 24 * 60 * 60
 
 export async function cunChuRefreshToken(
-  yongHuId: string,
+  用户ID: string,
   tokenId: string,
 ): Promise<void> {
-  const jianMing = `${RefreshTokenPrefix}${yongHuId}:${tokenId}`
-  await redis.set(jianMing, yongHuId, 'EX', RefreshTokenTtl)
-  await redis.sadd(`${RefreshTokenUserPrefix}${yongHuId}`, tokenId)
-  await redis.expire(`${RefreshTokenUserPrefix}${yongHuId}`, RefreshTokenTtl)
+  const jianMing = `${RefreshTokenPrefix}${用户ID}:${tokenId}`
+  await redis.set(jianMing, 用户ID, 'EX', RefreshTokenTtl)
+  await redis.sadd(`${RefreshTokenUserPrefix}${用户ID}`, tokenId)
+  await redis.expire(`${RefreshTokenUserPrefix}${用户ID}`, RefreshTokenTtl)
 }
 
 function duQuRefreshTokenYongHuId(cunChuZhi: string): string | null {
   if (!cunChuZhi.includes('{')) return cunChuZhi
   try {
-    const jieXi = JSON.parse(cunChuZhi) as { yongHuId?: unknown }
-    return typeof jieXi.yongHuId === 'string' ? jieXi.yongHuId : null
+    const jieXi = JSON.parse(cunChuZhi) as { 用户ID?: unknown }
+    return typeof jieXi.用户ID === 'string' ? jieXi.用户ID : null
   } catch {
     return null
   }
@@ -51,7 +51,7 @@ if not huo then return 0 end
 local yongHu = huo
 if string.find(huo, '{', 1, true) then
   local ok, jie = pcall(cjson.decode, huo)
-  if ok and jie and jie.yongHuId then yongHu = jie.yongHuId end
+  if ok and jie and jie.用户ID then yongHu = jie.用户ID end
 end
 if yongHu ~= ARGV[1] then return -1 end
 redis.call('DEL', KEYS[1])
@@ -62,14 +62,14 @@ return 1
 
 export async function xiaoHaoRefreshToken(
   tokenId: string,
-  yongHuId: string,
+  用户ID: string,
 ): Promise<{ chengGong: boolean; cuoWu?: string }> {
-  const jianMing = `${RefreshTokenPrefix}${yongHuId}:${tokenId}`
-  const yongHuJian = `${RefreshTokenUserPrefix}${yongHuId}`
-  const tombKey = `${RefreshTokenXiaoHaoPrefix}${yongHuId}:${tokenId}`
+  const jianMing = `${RefreshTokenPrefix}${用户ID}:${tokenId}`
+  const yongHuJian = `${RefreshTokenUserPrefix}${用户ID}`
+  const tombKey = `${RefreshTokenXiaoHaoPrefix}${用户ID}:${tokenId}`
   const jieGuo = (await (redis as unknown as {
     eval: (jiaoBen: string, jianShu: number, ...canShu: string[]) => Promise<unknown>
-  }).eval(XiaoHaoLua, 3, jianMing, yongHuJian, tombKey, yongHuId, tokenId, String(XiaoHaoBiaoJiTtl))) as number
+  }).eval(XiaoHaoLua, 3, jianMing, yongHuJian, tombKey, 用户ID, tokenId, String(XiaoHaoBiaoJiTtl))) as number
   if (jieGuo === 1) return { chengGong: true }
   if (jieGuo === -1) return { chengGong: false, cuoWu: 'refresh token用户不匹配' }
   return { chengGong: false, cuoWu: 'refresh token不存在或已过期' }
@@ -77,29 +77,29 @@ export async function xiaoHaoRefreshToken(
 
 export async function jianCeRefreshTokenChongFu(
   tokenId: string,
-  yongHuId: string,
+  用户ID: string,
 ): Promise<boolean> {
-  const xiaoHaoJian = `${RefreshTokenXiaoHaoPrefix}${yongHuId}:${tokenId}`
+  const xiaoHaoJian = `${RefreshTokenXiaoHaoPrefix}${用户ID}:${tokenId}`
   const beiXiaoHao = await redis.exists(xiaoHaoJian)
   if (beiXiaoHao === 0) return false
-  const huoJian = `${RefreshTokenPrefix}${yongHuId}:${tokenId}`
+  const huoJian = `${RefreshTokenPrefix}${用户ID}:${tokenId}`
   return (await redis.exists(huoJian)) === 0
 }
 
-export async function cheXiaoYongHuSuoYouRefreshToken(yongHuId: string): Promise<void> {
-  const yongHuJian = `${RefreshTokenUserPrefix}${yongHuId}`
+export async function cheXiaoYongHuSuoYouRefreshToken(用户ID: string): Promise<void> {
+  const yongHuJian = `${RefreshTokenUserPrefix}${用户ID}`
   const tokenIds = await redis.smembers(yongHuJian)
   if (tokenIds.length > 0) {
-    const jianMingLieBiao = tokenIds.map((tid) => `${RefreshTokenPrefix}${yongHuId}:${tid}`)
+    const jianMingLieBiao = tokenIds.map((tid) => `${RefreshTokenPrefix}${用户ID}:${tid}`)
     await redis.del(...jianMingLieBiao)
   }
   await redis.del(yongHuJian)
 }
 
-export async function shanChuRefreshToken(tokenId: string, yongHuId: string): Promise<void> {
-  const jianMing = `${RefreshTokenPrefix}${yongHuId}:${tokenId}`
+export async function shanChuRefreshToken(tokenId: string, 用户ID: string): Promise<void> {
+  const jianMing = `${RefreshTokenPrefix}${用户ID}:${tokenId}`
   await redis.del(jianMing)
-  await redis.srem(`${RefreshTokenUserPrefix}${yongHuId}`, tokenId)
+  await redis.srem(`${RefreshTokenUserPrefix}${用户ID}`, tokenId)
 }
 
 export function huoQuLingPaiZuiDaYouXiaoQiMiao(): number {
@@ -109,13 +109,13 @@ export function huoQuLingPaiZuiDaYouXiaoQiMiao(): number {
   return Number(piPei[1]) * danWeiHaoMiao[piPei[2]]
 }
 
-export function huoQuCheXiaoJian(yongHuId: string): string {
-  return `jwt_yong_hu_cheXiao:${yongHuId}`
+export function huoQuCheXiaoJian(用户ID: string): string {
+  return `jwt_yong_hu_cheXiao:${用户ID}`
 }
 
-export async function xieRuCheXiaoShiJianCuo(yongHuId: string): Promise<void> {
+export async function xieRuCheXiaoShiJianCuo(用户ID: string): Promise<void> {
   await redis.set(
-    huoQuCheXiaoJian(yongHuId),
+    huoQuCheXiaoJian(用户ID),
     String(Date.now()),
     'EX',
     huoQuLingPaiZuiDaYouXiaoQiMiao(),
@@ -123,12 +123,12 @@ export async function xieRuCheXiaoShiJianCuo(yongHuId: string): Promise<void> {
 }
 
 export async function lingPaiShiFouYiCheXiao(
-  yongHuId: string,
+  用户ID: string,
   iat?: number,
   qianFaHaoMiao?: number,
 ): Promise<boolean> {
-  if (!yongHuId) return false
-  const zhi = await redis.get(huoQuCheXiaoJian(yongHuId))
+  if (!用户ID) return false
+  const zhi = await redis.get(huoQuCheXiaoJian(用户ID))
   if (zhi === null) return false
   const panDuanHaoMiao =
     typeof qianFaHaoMiao === 'number'

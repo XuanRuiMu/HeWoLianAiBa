@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { existsSync, readFileSync, readdirSync } from 'fs'
 import { resolve } from 'path'
-import { 管理角色清单, 管理能力清单, 角色能力矩阵, type GuanLiNengLi } from '../角色能力'
+import { 管理角色清单, 管理能力清单, 角色能力矩阵, type 管理能力 } from '../角色能力'
 
 const 仓库根 = resolve(__dirname, '../../../..')
 const 对端仓根 = [resolve(仓库根, '..', '恋爱吧管理中心'), resolve(仓库根, '恋爱吧管理中心')].find(
@@ -91,7 +91,7 @@ describe('FP-18 游戏端与管理端角色能力矩阵同源', () => {
   })
 
   it('对端仍把本仓门禁依赖的 cha_kan 与 gao_we 两位发给至少一个角色', () => {
-    for (const 能力 of ['cha_kan', 'gao_we'] as GuanLiNengLi[]) {
+    for (const 能力 of ['cha_kan', 'gao_we'] as 管理能力[]) {
       const 可得 = Object.entries(对端矩阵).filter(([, 能力表]) => 能力表.includes(能力)).map(([角色]) => 角色)
       expect(可得.length, `能力位 ${能力} 在对端矩阵里无人可得`).toBeGreaterThan(0)
     }

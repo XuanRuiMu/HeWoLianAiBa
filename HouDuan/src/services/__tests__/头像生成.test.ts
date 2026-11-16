@@ -33,32 +33,32 @@ vi.mock('../媒体存储', () => ({
 }))
 
 vi.mock('../消息', () => ({
-  baoCunJiaoSeMeiTiXiaoXi: vi.fn(async () => ({ id: 'x' })),
+  保存角色媒体消息: vi.fn(async () => ({ id: 'x' })),
 }))
 
 vi.mock('../../socket/io', () => ({ huoQuIo: vi.fn(() => null) }))
 
 import {
-  xuanZeTouXiangFengGe,
-  zuZhuangTouXiangTiShiCi,
-  shengChengJiaoSeTouXiang,
-  changShiTouXiangYanHua,
-  tuiDaoTouXiangQiZhi,
+  选择头像风格,
+  组装头像提示词,
+  生成角色头像,
+  尝试头像演化,
+  推导头像气质,
 } from '../头像生成'
-import { tuiDaoQingXuJiDiao } from '../../config/头像配置'
+import { 推导情绪基调 } from '../../config/头像配置'
 
 describe('头像风格选择', () => {
   it('同一角色ID确定性选择同一风格', () => {
     const canShu = { nianLing: 20, mbti: 'INFP', shenFen: '大学生', xiHao: ['阅读'], zhongZi: 'jiao-se-1' }
-    const yiCi = xuanZeTouXiangFengGe(canShu)
-    const erCi = xuanZeTouXiangFengGe(canShu)
+    const yiCi = 选择头像风格(canShu)
+    const erCi = 选择头像风格(canShu)
     expect(yiCi?.fengGe.类别).toBe(erCi?.fengGe.类别)
   })
 
   it('不同角色大概率不同风格（去重抽查）', () => {
     const fengGeJi = new Set<string>()
     for (let i = 0; i < 40; i++) {
-      const xuanZe = xuanZeTouXiangFengGe({
+      const xuanZe = 选择头像风格({
         nianLing: 20,
         mbti: 'ENFP',
         shenFen: '大学生',
@@ -71,7 +71,7 @@ describe('头像风格选择', () => {
   })
 
   it('演化基调覆盖MBTI气质', () => {
-    const yinYuXuanZe = xuanZeTouXiangFengGe({
+    const yinYuXuanZe = 选择头像风格({
       nianLing: 20,
       mbti: 'ENFP',
       xiHao: [],
@@ -82,24 +82,24 @@ describe('头像风格选择', () => {
   })
 
   it('MBTI气质推导符合映射', () => {
-    expect(tuiDaoTouXiangQiZhi('INFP')).toBe('文艺')
-    expect(tuiDaoTouXiangQiZhi('ESTP')).toBe('活泼')
-    expect(tuiDaoTouXiangQiZhi('INTJ')).toBe('沉稳')
+    expect(推导头像气质('INFP')).toBe('文艺')
+    expect(推导头像气质('ESTP')).toBe('活泼')
+    expect(推导头像气质('INTJ')).toBe('沉稳')
   })
 })
 
 describe('头像提示词组装', () => {
   it('人物主体类含人物句式、视线约束与构图约束', () => {
-    const xuanZe = xuanZeTouXiangFengGe({ nianLing: 20, mbti: 'INFP', xiHao: [], zhongZi: 'a' })
+    const xuanZe = 选择头像风格({ nianLing: 20, mbti: 'INFP', xiHao: [], zhongZi: 'a' })
     if (!xuanZe) throw new Error('风格库为空')
     if (!xuanZe.fengGe.是否人物主体) {
-      const renWuXuanZe = xuanZeTouXiangFengGe({ nianLing: 20, mbti: 'INFP', xiHao: [], zhongZi: 'b' })
+      const renWuXuanZe = 选择头像风格({ nianLing: 20, mbti: 'INFP', xiHao: [], zhongZi: 'b' })
       if (!renWuXuanZe) throw new Error('风格库为空')
-      const zuZhuang = zuZhuangTouXiangTiShiCi(renWuXuanZe, { nianLing: 20, xingBie: 'nv', waiMao: '长发温柔' })
+      const zuZhuang = 组装头像提示词(renWuXuanZe, { nianLing: 20, xingBie: 'nv', waiMao: '长发温柔' })
       expect(zuZhuang.prompt).toContain(renWuXuanZe.fengGe.画风锚点)
       return
     }
-    const zuZhuang = zuZhuangTouXiangTiShiCi(xuanZe, { nianLing: 20, xingBie: 'nv', waiMao: '长发温柔' })
+    const zuZhuang = 组装头像提示词(xuanZe, { nianLing: 20, xingBie: 'nv', waiMao: '长发温柔' })
     expect(zuZhuang.prompt).toContain('20岁的女性')
     expect(zuZhuang.prompt).toContain('长发温柔')
     expect(zuZhuang.prompt).toContain('目光望向画面侧边')
@@ -110,10 +110,10 @@ describe('头像提示词组装', () => {
 
   it('物件主体类按气质配色与氛围填充模板', () => {
     for (let i = 0; i < 12; i++) {
-      const xuanZe = xuanZeTouXiangFengGe({ nianLing: 20, mbti: 'ENFP', xiHao: [], zhongZi: `w-${i}` })
+      const xuanZe = 选择头像风格({ nianLing: 20, mbti: 'ENFP', xiHao: [], zhongZi: `w-${i}` })
       if (!xuanZe) throw new Error('风格库为空')
       if (xuanZe.fengGe.是否人物主体) continue
-      const zuZhuang = zuZhuangTouXiangTiShiCi(xuanZe, { nianLing: 20, xingBie: 'nv', waiMao: '' })
+      const zuZhuang = 组装头像提示词(xuanZe, { nianLing: 20, xingBie: 'nv', waiMao: '' })
       expect(zuZhuang.prompt).not.toContain('{配色}')
       expect(zuZhuang.prompt).not.toContain('{氛围}')
       expect(zuZhuang.prompt).not.toContain('{小物}')
@@ -125,9 +125,9 @@ describe('头像提示词组装', () => {
   })
 
   it('抑郁人设推导阴郁基调', () => {
-    expect(tuiDaoQingXuJiDiao('性格内向，有点抑郁，不太爱说话')).toBe('阴郁')
-    expect(tuiDaoQingXuJiDiao('开朗爱笑的姑娘')).toBe('明朗')
-    expect(tuiDaoQingXuJiDiao('话不多')).toBe('平静')
+    expect(推导情绪基调('性格内向，有点抑郁，不太爱说话')).toBe('阴郁')
+    expect(推导情绪基调('开朗爱笑的姑娘')).toBe('明朗')
+    expect(推导情绪基调('话不多')).toBe('平静')
   })
 })
 
@@ -140,8 +140,8 @@ describe('头像生成主流程', () => {
   it('生成成功后裁剪入库并更新角色头像与描述', async () => {
     shengTuJieKouMock.mockResolvedValue({ cheng_gong: true, tuPianZiJie: Buffer.from('png-data'), mime: 'image/png' })
     liuShiBaoCunMock.mockResolvedValue({ mediaId: 'm-1', sha256: 'A'.repeat(64) })
-    const jieGuo = await shengChengJiaoSeTouXiang({
-      yongHuId: 'u-1',
+    const jieGuo = await 生成角色头像({
+      用户ID: 'u-1',
       jiaoSeId: 'j-1',
       jiaoSe: {
         nian_ling: 20,
@@ -164,8 +164,8 @@ describe('头像生成主流程', () => {
 
   it('生成失败时入重试队列且不更新角色', async () => {
     shengTuJieKouMock.mockResolvedValue({ cheng_gong: false, ti_shi: 'x' })
-    const jieGuo = await shengChengJiaoSeTouXiang({
-      yongHuId: 'u-1',
+    const jieGuo = await 生成角色头像({
+      用户ID: 'u-1',
       jiaoSeId: 'j-2',
       jiaoSe: {
         nian_ling: 22,
@@ -188,9 +188,42 @@ describe('头像演化门控', () => {
     liuShiBaoCunMock.mockReset()
   })
 
-  it('单一来源证据不触发演化', async () => {
+  it('演化达到硬上限 2 次后不再演化', async () => {
     shengTuJieKouMock.mockResolvedValue({ cheng_gong: true, tuPianZiJie: Buffer.from('x'), mime: 'image/png' })
-    const jieGuo = await changShiTouXiangYanHua({ yongHuId: 'u-1', jiaoSeId: 'j-e-1', laiYuan: 'qinMiDuBianHua' })
+    liuShiBaoCunMock.mockResolvedValue({ sha256: 'abc', mediaId: 'm-1' })
+    const { 数据库 } = await import('../../数据库')
+    const queryMock = 数据库.query as ReturnType<typeof vi.fn>
+    queryMock.mockResolvedValueOnce({ rows: [{ v: 2 }], rowCount: 1 })
+    const jieGuo = await 尝试头像演化({ 用户ID: 'u-1', jiaoSeId: 'j-e-1', laiYuan: '回复完成类' })
+    expect(jieGuo).toBe(false)
+  })
+
+  it('无心情或强度不足不触发演化', async () => {
+    const { 数据库 } = await import('../../数据库')
+    ;(数据库.query as ReturnType<typeof vi.fn>).mockResolvedValue({ rows: [{ v: 0 }, { 用户ID: 'u-1', 当前心情: '', 心情强度: 0, 头像版本: 0 }], rowCount: 2 })
+    const jieGuo = await 尝试头像演化({ 用户ID: 'u-1', jiaoSeId: 'j-e-1', laiYuan: '回复完成类' })
+    expect(jieGuo).toBe(false)
+  })
+
+  it('心情强度达到阈值且基调变化时触发演化并递增版本', async () => {
+    shengTuJieKouMock.mockResolvedValue({ cheng_gong: true, tuPianZiJie: Buffer.from('x'), mime: 'image/png' })
+    liuShiBaoCunMock.mockResolvedValue({ sha256: 'abc', mediaId: 'm-1' })
+    const { 数据库 } = await import('../../数据库')
+    const queryMock = 数据库.query as ReturnType<typeof vi.fn>
+    queryMock.mockReset()
+    queryMock.mockResolvedValueOnce({ rows: [{ v: 1 }], rowCount: 1 })
+    queryMock.mockResolvedValueOnce({ rows: [{ 用户ID: 'u-1', 当前心情: '开心', 心情强度: 90, 情绪基调: '阴郁', 头像版本: 1 }], rowCount: 1 })
+    queryMock.mockResolvedValue({ rows: [], rowCount: 0 })
+    const jieGuo = await 尝试头像演化({ 用户ID: 'u-1', jiaoSeId: 'j-e-1', laiYuan: '回复完成类' })
+    expect(jieGuo).toBe(true)
+    const updateCall = queryMock.mock.calls.find((c: unknown[]) => String(c[0]).includes('UPDATE'))
+    expect(String(updateCall?.[0])).toContain('头像版本')
+  })
+
+  it('心情与基调一致时不重复演化', async () => {
+    const { 数据库 } = await import('../../数据库')
+    ;(数据库.query as ReturnType<typeof vi.fn>).mockResolvedValue({ rows: [{ v: 0 }, { 用户ID: 'u-1', 当前心情: '开心', 心情强度: 90, 情绪基调: '明朗', 头像版本: 0 }], rowCount: 2 })
+    const jieGuo = await 尝试头像演化({ 用户ID: 'u-1', jiaoSeId: 'j-e-1', laiYuan: '回复完成类' })
     expect(jieGuo).toBe(false)
   })
 })

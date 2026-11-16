@@ -78,13 +78,13 @@ export function fengJinTongZhiZhengWen(
   })
 }
 
-export async function chaXunZhangHaoFengJin(yongHuId: string): Promise<ZhangHaoFengJinZhuangTai> {
-  if (!yongHuId) return KongZhuangTai
+export async function chaXunZhangHaoFengJin(用户ID: string): Promise<ZhangHaoFengJinZhuangTai> {
+  if (!用户ID) return KongZhuangTai
   let hang: Record<string, unknown> | null = null
   try {
     const jieGuo = await 数据库.query(
       `SELECT "违规次数", "级别", "解封时间", "最后原因", "申诉状态" FROM "账号封禁" WHERE "用户ID" = $1 LIMIT 1`,
-      [yongHuId],
+      [用户ID],
     )
     hang = (jieGuo.rows[0] as Record<string, unknown> | undefined) || null
   } catch (cuoWu) {
@@ -112,12 +112,12 @@ export interface WeiGuiJiLuJieGuo {
 }
 
 export async function jiLuZhangHaoWeiGui(canShu: {
-  yongHuId: string
+  用户ID: string
   ip: string
   yuanYin: string
   leiXing: string
 }): Promise<WeiGuiJiLuJieGuo> {
-  const { yongHuId, ip, yuanYin, leiXing } = canShu
+  const { 用户ID, ip, yuanYin, leiXing } = canShu
   const keHuDuan = await 数据库.connect()
   let ciShu = 1
   let jiBie: FengJinJiBie = 'feng_jin_1_fen'
@@ -126,7 +126,7 @@ export async function jiLuZhangHaoWeiGui(canShu: {
     await keHuDuan.query('BEGIN')
     const suoHang = await keHuDuan.query(
       `SELECT "违规次数" FROM "账号封禁" WHERE "用户ID" = $1 FOR UPDATE`,
-      [yongHuId],
+      [用户ID],
     )
     const shangCi = suoHang.rows.length > 0 ? Number(suoHang.rows[0].违规次数 || 0) : 0
     ciShu = shangCi + 1
@@ -137,7 +137,7 @@ export async function jiLuZhangHaoWeiGui(canShu: {
       `INSERT INTO "账号封禁" ("用户ID", "违规次数", "级别", "解封时间", "最后原因", "申诉状态", "更新时间")
        VALUES ($1, $2, $3, $4, $5, 'wu', NOW())
        ON CONFLICT ("用户ID") DO UPDATE SET "违规次数" = "账号封禁"."违规次数" + 1, "级别" = $3, "解封时间" = $4, "最后原因" = $5, "申诉状态" = 'wu', "更新时间" = NOW()`,
-      [yongHuId, ciShu, jiBie, jieFengShiJian, `${leiXing}：${yuanYin}`.slice(0, 500)],
+      [用户ID, ciShu, jiBie, jieFengShiJian, `${leiXing}：${yuanYin}`.slice(0, 500)],
     )
     await keHuDuan.query('COMMIT')
   } catch (cuoWu) {
@@ -148,19 +148,19 @@ export async function jiLuZhangHaoWeiGui(canShu: {
     keHuDuan.release()
   }
   try {
-    await redis.set(`${ZhangHaoWeiGuiQianZhui}${yongHuId}`, String(ciShu), 'PX', WeiGuiJiShuYouXiaoHaoMiao)
+    await redis.set(`${ZhangHaoWeiGuiQianZhui}${用户ID}`, String(ciShu), 'PX', WeiGuiJiShuYouXiaoHaoMiao)
   } catch {
     /* 缓存回写失败不阻断封禁 */
   }
   try {
     const { cheXiaoYongHuMeiTiQianMing } = await import('./媒体存储')
-    await cheXiaoYongHuMeiTiQianMing(yongHuId)
+    await cheXiaoYongHuMeiTiQianMing(用户ID)
   } catch {
     return { ciShu, jiBie, jieFengShiJian }
   }
   try {
     await chuangJianTongZhi({
-      jie_shou_zhe_id: yongHuId,
+      jie_shou_zhe_id: 用户ID,
       biao_ti: huoQuFanYi('tongZhi', 'zhangHaoShouXianBiaoTi'),
       nei_rong: fengJinTongZhiZhengWen(ciShu, jiBie, jieFengShiJian),
     })
@@ -169,7 +169,7 @@ export async function jiLuZhangHaoWeiGui(canShu: {
   }
   try {
     await jiLuShenJiRiZhi({
-      yong_hu_id: yongHuId,
+      yong_hu_id: 用户ID,
       ip,
       shi_jian_lei_xing: huoQuFanYi('shenJi', 'zhangHaoWeiGui'),
       xiang_qing: { ci_shu: ciShu, ji_bie: jiBie, lei_xing: leiXing, yuan_yin: yuanYin.slice(0, 200) },
@@ -201,14 +201,14 @@ export async function cheHuiWeiGuiXiaoXi(
   }
 }
 
-export async function tiJiaoShenSu(yongHuId: string, liYou: string): Promise<{ cheng_gong: boolean; ti_shi?: string }> {
-  const zhuangTai = await chaXunZhangHaoFengJin(yongHuId)
+export async function tiJiaoShenSu(用户ID: string, liYou: string): Promise<{ cheng_gong: boolean; ti_shi?: string }> {
+  const zhuangTai = await chaXunZhangHaoFengJin(用户ID)
   if (!zhuangTai.beiFengJin) return { cheng_gong: false }
   const qingLi = liYou.trim().slice(0, 500)
   if (!qingLi) return { cheng_gong: false }
   await 数据库.query(
     `UPDATE "账号封禁" SET "申诉状态" = 'shen_su_zhong', "申诉理由" = $1, "更新时间" = NOW() WHERE "用户ID" = $2`,
-    [qingLi, yongHuId],
+    [qingLi, 用户ID],
   )
   return { cheng_gong: true }
 }

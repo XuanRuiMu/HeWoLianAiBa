@@ -33,11 +33,11 @@ vi.mock('../../utils/debug日志', () => ({
   jiLuXiaoXiCaoZuo: vi.fn(),
   jiLuSocketShiJian: vi.fn(),
 }))
-vi.mock('../消息', () => ({ huoQuXiaoXiLieBiao: 消息列表 }))
+vi.mock('../消息', () => ({ 取消息列表: 消息列表 }))
 vi.mock('../战绩', () => ({ gengXinFuPanNeiRong: 落库 }))
 vi.mock('../关键事件提取', () => ({ tiQuBingLuoKuGuanJianShiJian: vi.fn(async () => []) }))
 vi.mock('../文档文本提取', () => ({ buQiWenJianTiQuWenBen: vi.fn(async (lieBiao: unknown) => lieBiao) }))
-vi.mock('../../utils/DeepSeek客户端', () => ({ genJuPeiZhiTiaoYong: 调用模型 }))
+vi.mock('../../utils/DeepSeek客户端', () => ({ 按配置调用: 调用模型 }))
 
 import {
   FuPanYouXiaoXiaoXiShuYuJu,

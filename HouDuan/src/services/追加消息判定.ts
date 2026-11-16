@@ -1,4 +1,4 @@
-import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/DeepSeek客户端'
 import { duJieBaoKaiGuanMoRenKai } from '../config/开场采样配置'
 import { gouJianFengGeShiLiCeng } from './Prompt构建器'
 import type { AIJiaoSeXinXi, HaoGanDuXinXi, DuiHuaLiShiXiang } from '../types'
@@ -75,7 +75,7 @@ export async function panDuanZuiJia(shuRu: ZuiJiaPanDuanShuRu): Promise<ZuiJiaPa
   if (!duJieBaoKaiGuanMoRenKai('ZUI_JIA_QI_YONG')) return { youShiMeDongXi: false }
   if (process.env.VITEST === 'true') return { youShiMeDongXi: false }
   try {
-    const xiangYing = await genJuPeiZhiTiaoYong(MoXingMing, [
+    const xiangYing = await 按配置调用(MoXingMing, [
       { jiaoSe: 'system', neiRong: '你在判断自己此刻想不想跟一个人说句话。只输出 JSON。' },
       { jiaoSe: 'user', neiRong: gouJianTiShi(shuRu) },
     ])

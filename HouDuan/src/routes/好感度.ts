@@ -37,7 +37,7 @@ luYou.get(
     }
 
     try {
-      const jieGuo = await huoQuGongKaiHaoGanDuXinXi(yongHu.yongHuId, jiaoSeId)
+      const jieGuo = await huoQuGongKaiHaoGanDuXinXi(yongHu.用户ID, jiaoSeId)
       if (!jieGuo) {
         return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
       }
@@ -64,7 +64,7 @@ luYou.get(
     }
 
     try {
-      const jieGuo = await huoQuWanZhengHaoGanDu(yongHu.yongHuId, jiaoSeId)
+      const jieGuo = await huoQuWanZhengHaoGanDu(yongHu.用户ID, jiaoSeId)
       if (!jieGuo) {
         return shiBaiXiangYing(xiangYing, 404, huoQuFanYi('tongYong', 'ziYuanBuCunZai'))
       }
@@ -91,7 +91,7 @@ luYou.get(
     }
 
     try {
-      const jieGuo = await huoQuHaoGanDuLeiJiBianHua(yongHu.yongHuId, jiaoSeId)
+      const jieGuo = await huoQuHaoGanDuLeiJiBianHua(yongHu.用户ID, jiaoSeId)
       return chengGongXiangYing(xiangYing, jieGuo)
     } catch (cuoWu) {
       debug日志.error('好感度接口', '获取好感度累计变化失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
@@ -118,7 +118,7 @@ luYou.post(
     }
 
     try {
-      const jieGuo = await sheZhiMiJiHaoGanDu(yongHu.yongHuId, jiaoSeId, miLing)
+      const jieGuo = await sheZhiMiJiHaoGanDu(yongHu.用户ID, jiaoSeId, miLing)
       if (!jieGuo.cheng_gong) {
         return shiBaiXiangYing(xiangYing, jieGuo.zhuang_tai_ma || 400, jieGuo.ti_shi || huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
       }

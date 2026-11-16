@@ -7,7 +7,7 @@ import {
   quShenHeMoShi,
 } from '../config/媒体配置'
 import { debug日志 } from '../utils/debug日志'
-import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/DeepSeek客户端'
 import { 数据库 } from '../数据库'
 import type { AnQuanShenHeJieGuo } from '../types'
 import fs from 'fs'
@@ -143,7 +143,7 @@ export async function shenHeTuPianAnQuan(wenJianLuJing: string): Promise<AnQuanS
   const mime = getMimeFromFile(wenJianLuJing)
 
   try {
-    const xiangYing = await genJuPeiZhiTiaoYong('TuPianShenHe', [
+    const xiangYing = await 按配置调用('TuPianShenHe', [
       { jiaoSe: 'system', neiRong: gouJianTuPianShenHePrompt() },
       {
         jiaoSe: 'user',

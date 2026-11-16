@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { deflateSync } from 'zlib'
-import { caiDiaoPNGDiBu } from '../PNG裁剪'
+import { 裁掉PNG底部 } from '../PNG裁剪'
 
 const CrcBiao: number[] = (() => {
   const biao: number[] = []
@@ -61,7 +61,7 @@ function shengChengCeShiPNG(kuan: number, gao: number): Buffer {
 describe('PNG底部裁剪', () => {
   it('按比例裁掉底部且保留顶部像素行', () => {
     const yuan = shengChengCeShiPNG(4, 100)
-    const jieGuo = caiDiaoPNGDiBu(yuan, 0.06)
+    const jieGuo = 裁掉PNG底部(yuan, 0.06)
     const xinKuan = jieGuo.readUInt32BE(16)
     const xinGao = jieGuo.readUInt32BE(20)
     expect(xinKuan).toBe(4)
@@ -70,15 +70,15 @@ describe('PNG底部裁剪', () => {
 
   it('非PNG与极端比例原样返回', () => {
     const feiPNG = Buffer.from('bushi png')
-    expect(caiDiaoPNGDiBu(feiPNG, 0.06)).toBe(feiPNG)
+    expect(裁掉PNG底部(feiPNG, 0.06)).toBe(feiPNG)
     const yuan = shengChengCeShiPNG(4, 100)
-    expect(caiDiaoPNGDiBu(yuan, 0.6)).toBe(yuan)
-    expect(caiDiaoPNGDiBu(yuan, 0)).toBe(yuan)
+    expect(裁掉PNG底部(yuan, 0.6)).toBe(yuan)
+    expect(裁掉PNG底部(yuan, 0)).toBe(yuan)
   })
 
   it('裁剪结果可被再次读取（IEND存在）', () => {
     const yuan = shengChengCeShiPNG(2, 50)
-    const jieGuo = caiDiaoPNGDiBu(yuan, 0.06)
+    const jieGuo = 裁掉PNG底部(yuan, 0.06)
     const weiZhi = jieGuo.indexOf(Buffer.from('IEND', 'ascii'))
     expect(weiZhi).toBeGreaterThan(0)
   })

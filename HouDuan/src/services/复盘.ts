@@ -1,27 +1,27 @@
-import { genJuPeiZhiTiaoYong } from '../utils/DeepSeek客户端'
-import { huoQuXiaoXiLieBiao } from './消息'
+import { 按配置调用 } from '../utils/DeepSeek客户端'
+import { 取消息列表 } from './消息'
 import { gengXinFuPanNeiRong } from './战绩'
-import type { FuPanPiZhu, FuPanShiJianXianTiaoMu } from './战绩'
+import type { 复盘批注, 复盘时间线条目 } from './战绩'
 import { HaoGanDuPeiZhi } from '../config/好感度配置'
 import { YunYingZiDuanXiaoXiLeiXing } from '../config/消息配置'
 import { huoQuWanZhengHaoGanDu, huoQuJieDuanMing } from './好感度'
 import { tiQuBingLuoKuGuanJianShiJian } from './关键事件提取'
-import { zhaXingBianTi, type MBTILeiXing } from '../config/角色配置'
+import { zhaXingBianTi, type MBTI类型 } from '../config/角色配置'
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import { 渲染性别变体文案 } from '../utils/结局'
 import { 归一角色性别, type 角色性别 } from '../utils/性别'
 import { xiaoChuShuZhiXieLu } from '../utils/数值泄露过滤'
-import { type CanShuShangXiaWen } from '../config/AI参数策略'
+import { type 参数上下文 } from '../config/AI参数策略'
 import { gouJianYinYongChaXun, zhanShiXiaoXiZhengWen } from './对话渲染'
 import { shiTuWenHunPaiKuai } from './消息内容块'
 import { buQiWenJianTiQuWenBen } from './文档文本提取'
 import type { DuiHuaLiShiXiang, GongJianShiJianJieGuo } from '../types'
 
-export interface FuPanShengChengJieGuo {
+export interface 复盘生成结果 {
   fu_pan_nei_rong: string
-  fu_pan_shi_jian_xian: FuPanShiJianXianTiaoMu[]
-  fu_pan_pi_zhu: FuPanPiZhu[]
+  fu_pan_shi_jian_xian: 复盘时间线条目[]
+  fu_pan_pi_zhu: 复盘批注[]
 }
 
 export const 复盘状态 = {
@@ -97,7 +97,7 @@ interface FuPanPromptCanShu {
 const FuPanMaxXiaoXi = 999
 const FuPanMaxPiZhu = 15
 
-function jieXiJSONXiangYing(neiRong: string): FuPanJSONJieGou {
+function 解析JSON响应(neiRong: string): FuPanJSONJieGou {
   const qingLiNeiRong = neiRong.trim()
   try {
     return JSON.parse(qingLiNeiRong) as FuPanJSONJieGou
@@ -303,9 +303,9 @@ function shengChengFuPanZongJie(jieGou: FuPanJSONJieGou): string {
   return zhuanHuanWeiWenBen(zhi).trim()
 }
 
-function zhuanHuanPiZhu(jieGou: FuPanJSONJieGou): FuPanPiZhu[] {
+function zhuanHuanPiZhu(jieGou: FuPanJSONJieGou): 复盘批注[] {
   if (!Array.isArray(jieGou.pi_zhu)) return []
-  const jieGuo: FuPanPiZhu[] = []
+  const jieGuo: 复盘批注[] = []
   for (const xiang of jieGou.pi_zhu) {
     if (!xiang || typeof xiang !== 'object') continue
     const xuHao = Number(xiang.xu_hao)
@@ -313,7 +313,7 @@ function zhuanHuanPiZhu(jieGou: FuPanJSONJieGou): FuPanPiZhu[] {
     if (!Number.isFinite(xuHao) || xuHao < 1 || !neiRong) continue
     const qingGanRaw = xiang.qing_gan
     const qingGan = typeof qingGanRaw === 'string' && qingGanRaw.trim() ? qingGanRaw.trim() : undefined
-    const tiaoMu: FuPanPiZhu = {
+    const tiaoMu: 复盘批注 = {
       xu_hao: Math.floor(xuHao),
       ping_lun: neiRong }
     if (qingGan) {
@@ -325,14 +325,14 @@ function zhuanHuanPiZhu(jieGou: FuPanJSONJieGou): FuPanPiZhu[] {
   return jieGuo
 }
 
-export function guoLvFuPanChuCan(jieGuo: FuPanShengChengJieGuo): FuPanShengChengJieGuo {
+export function guoLvFuPanChuCan(jieGuo: 复盘生成结果): 复盘生成结果 {
   return {
     fu_pan_nei_rong: xiaoChuShuZhiXieLu(jieGuo.fu_pan_nei_rong),
     fu_pan_shi_jian_xian: jieGuo.fu_pan_shi_jian_xian,
     fu_pan_pi_zhu: (jieGuo.fu_pan_pi_zhu ?? []).flatMap((xiang) => {
       const pingLun = xiaoChuShuZhiXieLu(xiang.ping_lun)
       if (!pingLun) return []
-      const tiaoMu: FuPanPiZhu = { xu_hao: xiang.xu_hao, ping_lun: pingLun }
+      const tiaoMu: 复盘批注 = { xu_hao: xiang.xu_hao, ping_lun: pingLun }
       const qingGan = xiang.qing_gan ? xiaoChuShuZhiXieLu(xiang.qing_gan) : ''
       if (qingGan) tiaoMu.qing_gan = qingGan
       return [tiaoMu]
@@ -357,7 +357,7 @@ async function huoQuJiaoSeJiBenXinXi(jiao_se_id: string): Promise<JiaoSeJiBenXin
 
 function huoQuZhaXingTeZhi(mbti: string): ZhaXingTeZhi | null {
   if (!mbti) return null
-  const peiZhi = zhaXingBianTi[mbti as MBTILeiXing]
+  const peiZhi = zhaXingBianTi[mbti as MBTI类型]
   if (!peiZhi) return null
   return {
     zhaFaMiaoShu: peiZhi.zhaFaMiaoShu,
@@ -406,7 +406,7 @@ export async function shengChengFuPan(
   yong_hu_id: string,
   jiao_se_id: string,
   dang_an_id: string,
-): Promise<FuPanShengChengJieGuo | null> {
+): Promise<复盘生成结果 | null> {
   const youXiaoXiaoXiShu = await huoQuFuPanYouXiaoXiaoXiShu(yong_hu_id, jiao_se_id)
   if (youXiaoXiaoXiShu === 0) return null
 
@@ -419,7 +419,7 @@ export async function shengChengFuPan(
   const miJiQianHaoGanDu: number | null =
     dangAn?.秘籍前好感度 != null ? Number(dangAn.秘籍前好感度) : null
 
-  const xiaoXiJieGuo = await huoQuXiaoXiLieBiao({
+  const xiaoXiJieGuo = await 取消息列表({
     yong_hu_id,
     jiao_se_id,
     ye_ma: 1,
@@ -482,7 +482,7 @@ export async function shengChengFuPan(
       guanXiJieDuan: huoQuJieDuanMing(miJiQianHaoGanDu) }
   }
 
-  const fuPanShangXiaWen: CanShuShangXiaWen = {
+  const fuPanShangXiaWen: 参数上下文 = {
     jiaoSe: { shi_fou_zha_xing: fuPanJiaoSeXinXi.shiFouZhaXing },
     haoGanDu: haoGanDuGuiJi
       ? { zong_fen: haoGanDuGuiJi.zuiZhongFen, guan_xi_jie_duan: haoGanDuGuiJi.guanXiJieDuan }
@@ -514,12 +514,12 @@ export async function shengChengFuPan(
     ...(guanJianShiJian.length > 0 ? { guanJianShiJian } : {}),
     ...(miJiTiShi ? { miJiTiShi } : {}) })
 
-  const xiangYing = await genJuPeiZhiTiaoYong('FuPanShengCheng', [
+  const xiangYing = await 按配置调用('FuPanShengCheng', [
     { jiaoSe: 'system', neiRong: '帮朋友复盘一段恋爱模拟聊天，结合后台数据客观分析，只输出 JSON。' },
     { jiaoSe: 'user', neiRong: prompt },
   ], fuPanShangXiaWen)
 
-  const jieGou = jieXiJSONXiangYing(xiangYing.neiRong)
+  const jieGou = 解析JSON响应(xiangYing.neiRong)
 
   let zongJie = shengChengFuPanZongJie(jieGou) || xiangYing.neiRong.trim()
   if (fuPanJiaoSeXinXi.shiFouZhaXing) {

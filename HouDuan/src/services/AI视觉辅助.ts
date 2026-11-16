@@ -1,7 +1,7 @@
 import fs from 'fs'
 import { huoQuBenDiLuJing, tiQuMeiTiSha } from './媒体存储'
 import { shiDanChunTieZhi, tiQuTieZhiDuanMing } from './贴纸标记'
-import type { DuiHuaKuai } from '../utils/DeepSeek客户端'
+import type { 对话块 } from '../utils/DeepSeek客户端'
 import type { DuiHuaLiShiXiang } from '../types'
 
 export interface MeiTiZhanShiXuanXiang {
@@ -87,7 +87,7 @@ export function yongHuTiDaoTouXiang(yongHuXiaoXi: string): boolean {
 export async function gouJianTouXiangKuai(
   yongHuXiaoXi: string,
   touXiangYinYong: string | undefined,
-): Promise<DuiHuaKuai[]> {
+): Promise<对话块[]> {
   if (!yongHuTiDaoTouXiang(yongHuXiaoXi)) return []
   const sha = tiQuMeiTiSha(touXiangYinYong)
   if (!sha) return []
@@ -108,7 +108,7 @@ export async function gouJianTouXiangKuai(
   }
 }
 
-export async function gouJianDanTiaoTuXiangKuai(xiang: DuiHuaLiShiXiang): Promise<DuiHuaKuai[]> {
+export async function gouJianDanTiaoTuXiangKuai(xiang: DuiHuaLiShiXiang): Promise<对话块[]> {
   const leiBie = xiang.meiTiLeiBie
   if (!shiTuXiangLeiBie(leiBie)) return []
   if (xiang.yi_che_hui) return []

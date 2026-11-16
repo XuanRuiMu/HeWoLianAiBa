@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { 用户, 登录状态 } from '@/types/类型定义'
-import { 归一管理角色, 归一管理能力列表, type GuanLiJiaoSe, type GuanLiNengLi } from '@/utils/角色能力'
+import { 归一管理角色, 归一管理能力列表, type 管理角色, type 管理能力 } from '@/utils/角色能力'
 import { dengLu, zhuCe, huoQuYongHuXinXi, zhuXiaoZhangHao } from '@/api/认证'
 import {
   chuangJianQianTaiCuoWu,
@@ -35,8 +35,8 @@ export const 使用用户仓库 = defineStore('用户', () => {
   let 认证代次 = 0
   let 恢复控制器: AbortController | null = null
   let 恢复任务: Promise<void> | null = null
-  const dangQianJiaoSe = ref<GuanLiJiaoSe | null>(null)
-  const nengLieBiao = ref<GuanLiNengLi[]>([])
+  const dangQianJiaoSe = ref<管理角色 | null>(null)
+  const nengLieBiao = ref<管理能力[]>([])
   const keGuanLiZhiDu = computed(() => nengLieBiao.value.includes('cha_kan'))
   const keGaoWei = computed(() => nengLieBiao.value.includes('gao_we'))
   const mingChengKeJian = ref(true)

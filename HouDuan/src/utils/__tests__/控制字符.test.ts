@@ -100,7 +100,7 @@ describe('端到端：消息内容块文字块清洗后不含控制字符', () =
   })
 })
 
-describe('端到端：qingXiRenSheWenBen 输出不含控制字符', () => {
+describe('端到端：清洗人设文本 输出不含控制字符', () => {
   it('人设文本剥掉控制字符，换行保留', () => {
     const jieGuo = qingXiRenSheWenBen(`姓名\u0000甲\u001b乙\r丙\n保留行`)
     expect(jieGuo).toBe('姓名甲乙丙\n保留行')

@@ -11,7 +11,7 @@ vi.mock('../../services/胜利失败条件', () => ({
 vi.mock('../../services/AI输入准备', () => ({
   huoQuAIJiaoSeXinXi: vi.fn(async () => ({ jiao_se_id: 'j-1' })),
   huoQuZuiJinDuiHuaLiShi: vi.fn(async () => []),
-  baoCunJiaoSeXiaoXi: vi.fn(async () => undefined),
+  保存角色XiaoXi: vi.fn(async () => undefined),
 }))
 
 vi.mock('../../services/好感度', () => ({
@@ -20,7 +20,7 @@ vi.mock('../../services/好感度', () => ({
 }))
 
 vi.mock('../../services/认证', () => ({
-  anIdChaYongHu: vi.fn(async () => null),
+  按ID查用户: vi.fn(async () => null),
 }))
 
 vi.mock('../../services/夺舍', () => ({
@@ -33,7 +33,7 @@ function 造调度器() {
   const io = { to: () => ({ emit: () => {} }) } as never
   const 调度器 = new AI回复调度器('j-1', 'u-1', 'E', io, 0)
   const 内部 = 调度器 as unknown as Record<string, unknown>
-  内部.获取最新用户消息 = async () => '我喜欢你'
+  内部.获取最新消息文本 = async () => '我喜欢你'
   内部.启动AI计时器 = vi.fn()
   内部.清除等待表白回复状态 = vi.fn()
   内部.是否等待表白回复 = () => false

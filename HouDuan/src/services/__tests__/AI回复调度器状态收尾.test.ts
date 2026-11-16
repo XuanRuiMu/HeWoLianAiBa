@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Server } from 'socket.io'
 import type { AIYinQingShuChu } from '../../types'
-import type { XiaoXiXinXi } from '../消息'
+import type { 消息信息 } from '../消息'
 
 vi.mock('../AI引擎', () => ({ yunXingAIYinQing: vi.fn() }))
 vi.mock('../AI输入准备', () => ({
-  baoCunJiaoSeXiaoXi: vi.fn(),
+  保存角色XiaoXi: vi.fn(),
   huoQuAIJiaoSeXinXi: vi.fn(async () => ({ jiao_se_id: 'j-1', wei_xin_ming: '糖糖' })),
   huoQuZuiJinDuiHuaLiShi: vi.fn(async () => []),
 }))
@@ -13,9 +13,47 @@ vi.mock('../好感度', () => ({
   huoQuWanZhengHaoGanDu: vi.fn(async () => ({ zong_fen: 400 })),
   gengXinHaoGanDu: vi.fn(async () => undefined),
 }))
-vi.mock('../认证', () => ({ anIdChaYongHu: vi.fn(async () => null) }))
+vi.mock('../消息', async (importOriginal) => {
+  const shiJi = await importOriginal<typeof import('../消息')>()
+  return { ...shiJi, 保存角色XiaoXi: vi.fn(async () => ({ id: 'x' })) }
+})
+vi.mock('../认证', () => ({ 按ID查用户: vi.fn(async () => null) }))
 vi.mock('../夺舍', () => ({ jiaoSeShiFouBeiDuoShe: vi.fn(async () => false) }))
 vi.mock('../好感度评判', () => ({ pingPanHaoGanDuPiLiangNei: vi.fn() }))
+vi.mock('../沉默判定', () => ({
+  沉默配置: { 连续沉默最多次数: 1 },
+  是问句: vi.fn(() => false),
+  是纯应答词: vi.fn(() => false),
+  算回应必要性等级: vi.fn(() => 2),
+  升级等级: vi.fn(() => 2),
+  可不回: vi.fn(() => false),
+  算时光秒: vi.fn(() => 2),
+  转换时光毫秒: vi.fn(() => 2000),
+}))
+vi.mock('../承诺兑现', () => ({
+  提取承诺: vi.fn(async () => undefined),
+  获取未兑现承诺: vi.fn(async () => []),
+  构建承诺注入: vi.fn(() => ''),
+}))
+vi.mock('../角色日程', () => ({
+  zhengZeRiQi: vi.fn(() => ({ riQi: '2026-01-01', xingQi: 4 })),
+  duQuRiCheng: vi.fn(async () => null),
+  quDangQianHuoDong: vi.fn(() => null),
+  renDingKeNengXing: vi.fn(() => 'xian'),
+  riChengMiaoShu: vi.fn(() => ''),
+}))
+vi.mock('../Prompt构建器', async (importOriginal) => {
+  const shiJi = await importOriginal<typeof import('../Prompt构建器')>()
+  return {
+    ...shiJi,
+    zhunBeiRiCheng: vi.fn(async () => undefined),
+  }
+})
+vi.mock('../当前心情', () => ({
+  duQuDangQianXinQing: vi.fn(async () => null),
+  jieGuoXinQing: vi.fn(() => ({ ming: null, qiangDu: 0 })),
+  xieRuDangQianXinQing: vi.fn(async () => undefined),
+}))
 vi.mock('../胜利失败条件', () => ({
   jianCeYongHuXiaoXiBingChuLi: vi.fn(async () => null),
   chuLiAIHuiFuHouJieShuJianCha: vi.fn(async () => null),
@@ -30,7 +68,7 @@ vi.mock('../../utils/debug日志', () => ({
 
 import { AI回复调度器 } from '../AI回复调度器'
 import { yunXingAIYinQing } from '../AI引擎'
-import { baoCunJiaoSeXiaoXi } from '../AI输入准备'
+import { 保存角色XiaoXi } from '../AI输入准备'
 
 type AI状态名 = 'kong_xian' | 'deng_dai_zhong' | 'zheng_zai_shu_ru'
 
@@ -54,6 +92,8 @@ function 造调度器() {
   const io = { to: vi.fn(() => ({ emit })) } as unknown as Server
   const 调度器 = new AI回复调度器('j-1', 'u-1', 'E', io, 0)
   const 内部 = 调度器 as unknown as Record<string, unknown>
+  内部.回复延迟毫秒 = 0
+  内部.沉默计时器 = null
   const AI状态序列 = () =>
     发射列表
       .filter((tiao) => tiao.shiJian === 'AI状态')
@@ -61,7 +101,7 @@ function 造调度器() {
   return { 调度器, 内部, AI状态序列 }
 }
 
-function 造消息(id: string, neiRong: string): XiaoXiXinXi {
+function 造消息(id: string, neiRong: string): 消息信息 {
   return {
     id,
     hui_hua_id: 'j-1',
@@ -83,15 +123,15 @@ describe('AI调度器状态收尾', () => {
   it('连发中途被新一轮取代：发送消息列表提前 return 后 AI状态 仍收敛到 kong_xian', async () => {
     const { 调度器, 内部, AI状态序列 } = 造调度器()
     内部.获取最新用户消息 = async () => '在吗'
-    let 放行首条保存!: (jieGuo: XiaoXiXinXi) => void
+    let 放行首条保存!: (jieGuo: 消息信息) => void
     let 首条保存已被调用!: () => void
-    const 首条保存挂起 = new Promise<XiaoXiXinXi>((jie) => {
+    const 首条保存挂起 = new Promise<消息信息>((jie) => {
       放行首条保存 = jie
     })
     const 保存已挂起信号 = new Promise<void>((jie) => {
       首条保存已被调用 = jie
     })
-    vi.mocked(baoCunJiaoSeXiaoXi).mockImplementationOnce(async () => {
+    vi.mocked(保存角色XiaoXi).mockImplementationOnce(async () => {
       首条保存已被调用()
       return await 首条保存挂起
     })

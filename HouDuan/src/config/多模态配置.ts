@@ -32,10 +32,10 @@ export interface DuoMoTaiPeiZhi {
   yuYinLiJieQiYong: boolean
   guiJiLiuDongJiChuUrl: string
   guiJiLiuDongYuYinMoXing: string
-  yinPinLiJieQiYong: boolean
-  yinPinLiJieJiChuUrl: string
-  yinPinLiJieMoXing: string
-  yinPinLiJieZuiDaZiJie: number
+  音频理解启用: boolean
+  音频理解基础地址: string
+  音频理解模型: string
+  音频理解最大字节: number
   shiPinLiJieQiYong: boolean
   tuXiangShengChengQiYong: boolean
   tuXiangShengChengJiChuUrl: string
@@ -57,10 +57,10 @@ export function huoQuDuoMoTaiPeiZhi(): DuoMoTaiPeiZhi {
     yuYinLiJieQiYong: duQuBuEr('YU_YIN_LI_JIE_QI_YONG', false),
     guiJiLiuDongJiChuUrl: duQu('GUI_JI_LIU_DONG_JI_CHU_URL', 'https://api.siliconflow.cn/v1'),
     guiJiLiuDongYuYinMoXing: duQu('GUI_JI_LIU_DONG_YU_YIN_MO_XING', ''),
-    yinPinLiJieQiYong: duQuBuEr('YIN_PIN_LI_JIE_QI_YONG', false),
-    yinPinLiJieJiChuUrl: duQu('YIN_PIN_LI_JIE_JI_CHU_URL', ''),
-    yinPinLiJieMoXing: duQu('YIN_PIN_LI_JIE_MO_XING', ''),
-    yinPinLiJieZuiDaZiJie: duQuZhengShu('YIN_PIN_LI_JIE_ZUI_DA_ZI_JIE', 10485760, 1024, 10485760),
+    音频理解启用: duQuBuEr('YIN_PIN_LI_JIE_QI_YONG', false),
+    音频理解基础地址: duQu('YIN_PIN_LI_JIE_JI_CHU_URL', ''),
+    音频理解模型: duQu('YIN_PIN_LI_JIE_MO_XING', ''),
+    音频理解最大字节: duQuZhengShu('YIN_PIN_LI_JIE_ZUI_DA_ZI_JIE', 10485760, 1024, 10485760),
     shiPinLiJieQiYong: duQuBuEr('SHI_PIN_LI_JIE_QI_YONG', false),
     tuXiangShengChengQiYong: duQuBuEr('TU_XIANG_SHENG_CHENG_QI_YONG', true),
     tuXiangShengChengJiChuUrl: duQu('TU_XIANG_SHENG_CHENG_JI_CHU_URL', 'https://api.siliconflow.cn/v1'),

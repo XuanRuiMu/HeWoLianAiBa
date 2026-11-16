@@ -10,7 +10,7 @@ export interface ShengTuJieGuo {
   ti_shi?: string
 }
 
-type ShengTuMock = ((canShu: { tiShiCi: string; yongHuId: string }) => Promise<ShengTuJieGuo>) | null
+type ShengTuMock = ((canShu: { tiShiCi: string; 用户ID: string }) => Promise<ShengTuJieGuo>) | null
 
 let shengTuMock: ShengTuMock = null
 
@@ -113,9 +113,9 @@ export function yanZhengShengTuTiShiCi(tiShiCi: unknown): { heFa: boolean; qingX
   return { heFa: true, qingXiHou }
 }
 
-export async function jianChaShengTuPeiE(yongHuId: string): Promise<{ yunXu: boolean }> {
+export async function jianChaShengTuPeiE(用户ID: string): Promise<{ yunXu: boolean }> {
   const peiZhi = huoQuDuoMoTaiPeiZhi()
-  const jian = `sheng_cheng_ji_fei:${yongHuId}:${huoQuRiQi()}:tuxiang`
+  const jian = `sheng_cheng_ji_fei:${用户ID}:${huoQuRiQi()}:tuxiang`
   try {
     const yiYong = await redis.incr(jian)
     if (yiYong === 1) await redis.expire(jian, 2 * 24 * 60 * 60)
@@ -135,8 +135,8 @@ export async function jianChaShengTuPeiE(yongHuId: string): Promise<{ yunXu: boo
   }
 }
 
-export async function huiTuiShengTuPeiE(yongHuId: string): Promise<void> {
-  const jian = `sheng_cheng_ji_fei:${yongHuId}:${huoQuRiQi()}:tuxiang`
+export async function huiTuiShengTuPeiE(用户ID: string): Promise<void> {
+  const jian = `sheng_cheng_ji_fei:${用户ID}:${huoQuRiQi()}:tuxiang`
   try {
     await redis.decr(jian)
   } catch {
@@ -145,15 +145,15 @@ export async function huiTuiShengTuPeiE(yongHuId: string): Promise<void> {
   }
 }
 
-export async function shengChengTuXiang(canShu: { tiShiCi: string; yongHuId: string }): Promise<ShengTuJieGuo> {
+export async function shengChengTuXiang(canShu: { tiShiCi: string; 用户ID: string }): Promise<ShengTuJieGuo> {
   if (shengTuMock) return shengTuMock(canShu)
   const yanZheng = yanZhengShengTuTiShiCi(canShu.tiShiCi)
   if (!yanZheng.heFa) return { cheng_gong: false, ti_shi: yanZheng.ti_shi || huoQuFanYi('liaoTian', 'xiaoXiNeiRongWeiKong') }
-  const peiE = await jianChaShengTuPeiE(canShu.yongHuId)
+  const peiE = await jianChaShengTuPeiE(canShu.用户ID)
   if (!peiE.yunXu) return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'shengTuPeiEYongJin') }
   const jieGuo = await diaoYongShengTuJieKou({ tiShiCi: yanZheng.qingXiHou })
   if (!jieGuo.cheng_gong) {
-    await huiTuiShengTuPeiE(canShu.yongHuId)
+    await huiTuiShengTuPeiE(canShu.用户ID)
     return jieGuo
   }
   return jieGuo

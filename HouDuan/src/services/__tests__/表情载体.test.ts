@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { panDuanBiaoQingZaiTi } from '../表情载体'
-import { BiaoQingBaoYunXing, BiaoQingMiDu, BiaoQingZaiTiPeiZhi } from '../../config/表情包配置'
+import { BiaoQingBaoYunXing, BiaoQingMiDu } from '../../config/表情包配置'
 import type { AIYinQingShuRu, DirectorCeLue, DuiHuaLiShiXiang } from '../../types'
 
 const BaiTian = new Date(2026, 10, 13, 14, 0, 0)
@@ -23,7 +23,7 @@ function zaoShuRu(gengDuo: Record<string, unknown> = {}): AIYinQingShuRu {
     yong_hu_id: 'u-1',
     jiao_se_id: 'j-1',
     jiao_se: { nian_ling: 24, ie_lei_xing: 'E', re_shen_lei_xing: '快热' },
-    hao_gan_du: { guan_xi_jie_duan: 'aiMei', zong_fen: 500 },
+    hao_gan_du: { guan_xi_jie_duan: '暧昧', zong_fen: 500 },
     dui_hua_li_shi: [],
     yong_hu_xin_xiao_xi: '今天挺开心的',
     shi_fou_di_yi_lun: false,
@@ -79,21 +79,21 @@ describe('人设年龄决定可用表情风格', () => {
 
 describe('关系阶段是硬门槛并决定专属梗图', () => {
   it('冷淡阶段不给候选', () => {
-    const shuRu = zaoShuRu({ hao_gan_du: { guan_xi_jie_duan: 'lengDan' } })
+    const shuRu = zaoShuRu({ hao_gan_du: { guan_xi_jie_duan: '冷淡' } })
     const jueCe = panDuanBiaoQingZaiTi(shuRu, zaoCeLue(), BaiTian)
     expect(jueCe.yuanYin).toBe('关系未到')
     expect(jueCe.geiHouXuan).toBe(false)
   })
 
   it('达到配置门槛后放行', () => {
-    const shuRu = zaoShuRu({ hao_gan_du: { guan_xi_jie_duan: BiaoQingZaiTiPeiZhi.zuiDiYunXuJieDuan } })
+    const shuRu = zaoShuRu({ hao_gan_du: { guan_xi_jie_duan: '认识' } })
     const jueCe = panDuanBiaoQingZaiTi(shuRu, zaoCeLue(), BaiTian)
     expect(jueCe.yuanYin).toBe('放行')
     expect(jueCe.geiHouXuan).toBe(true)
   })
 
   it('深爱阶段序号最大，可解锁全部专属梗图', () => {
-    const shuRu = zaoShuRu({ hao_gan_du: { guan_xi_jie_duan: 'shenAi' } })
+    const shuRu = zaoShuRu({ hao_gan_du: { guan_xi_jie_duan: '深爱' } })
     expect(panDuanBiaoQingZaiTi(shuRu, zaoCeLue(), BaiTian).guanXiJieDuanXuHao).toBe(9)
   })
 
@@ -194,12 +194,12 @@ describe('节奏与回敬', () => {
 
   it('关系越亲期望间隔越短，密度模型确实被接进决策', () => {
     const qian = panDuanBiaoQingZaiTi(
-      zaoShuRu({ hao_gan_du: { guan_xi_jie_duan: 'renShi' } }),
+      zaoShuRu({ hao_gan_du: { guan_xi_jie_duan: '认识' } }),
       zaoCeLue(),
       BaiTian,
     )
     const hou = panDuanBiaoQingZaiTi(
-      zaoShuRu({ hao_gan_du: { guan_xi_jie_duan: 'shenAi' } }),
+      zaoShuRu({ hao_gan_du: { guan_xi_jie_duan: '深爱' } }),
       zaoCeLue(),
       BaiTian,
     )
@@ -222,7 +222,7 @@ describe('节奏与回敬', () => {
 
   it('期望间隔始终落在历史可追溯范围内，不会永久锁死', () => {
     const jueCe = panDuanBiaoQingZaiTi(
-      zaoShuRu({ jiao_se: { nian_ling: 65 }, hao_gan_du: { guan_xi_jie_duan: 'lengDan' } }),
+      zaoShuRu({ jiao_se: { nian_ling: 65 }, hao_gan_du: { guan_xi_jie_duan: '冷淡' } }),
       zaoCeLue(),
       BaiTian,
     )
