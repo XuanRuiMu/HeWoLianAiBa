@@ -279,7 +279,12 @@ export class AI回复调度器 {
     for (const [文本, 时刻] of this.已送达登记) {
       if (现在 - 时刻 > AI回复调度器.去重窗口毫秒) this.已送达登记.delete(文本)
     }
-    return this.已送达登记.has(内容)
+    if (this.已送达登记.has(内容)) return true
+    const qian = 内容.slice(0, 12)
+    for (const yiYou of this.已送达登记.keys()) {
+      if (yiYou.startsWith(qian) && Math.abs(yiYou.length - 内容.length) <= 6) return true
+    }
+    return false
   }
 
   private 登记送达(内容: string): void {
