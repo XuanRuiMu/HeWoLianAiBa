@@ -972,7 +972,7 @@ luYou.post(
     if (!yongHu) {
       return shiBaiXiangYing(xiangYing, 401, huoQuFanYi('tongYong', 'weiShouQuan'))
     }
-    return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('liaoTian', 'shengTuGaiYouAIDaiFa'))
+    return shiBaiXiangYing(xiangYing, 403, huoQuFanYi('liaoTian', 'shiPinZanBuZhiChi'))
   },
 )
 
