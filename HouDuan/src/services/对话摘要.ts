@@ -141,8 +141,8 @@ export async function shengChengBingLuoKuZhaiYao(用户ID: string, jiaoSeId: str
       { jiaoSe: 'system', neiRong: '把聊天记录里值得记住的东西串成几句话，只输出摘要正文。' },
       { jiaoSe: 'user', neiRong: gouJianJiYiZhaiYaoPrompt(yuanLiao, jiaoSeMing, xianYou?.zhaiYaoNeiRong || '') },
     ])
-    const zhaiYao = qieDuanZhaiYao(xiangYing.neiRong)
-    if (!zhaiYao) return true
+    const zhaiYao = qieDuanZhaiYao(xiangYing.neiRong) || '（暂无新摘要）'
+    if (zhaiYao === '（暂无新摘要）' && xianYou?.zhaiYaoNeiRong) return true
     await 数据库.query(
       `INSERT INTO "对话摘要" ("用户ID", "角色ID", "摘要内容", "概括消息数", "素材锚点时间", "更新时间")
        VALUES ($1, $2, $3, $4, $5, NOW())

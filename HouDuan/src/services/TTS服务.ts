@@ -6,6 +6,7 @@ export interface TTS合成请求 {
   text: string
   voiceId: string
   roleId?: string
+  用户ID?: string
 }
 
 export interface TTS合成响应 {
@@ -34,7 +35,7 @@ export async function 合成语音(请求: TTS合成请求): Promise<TTS合成�
       `tts_${请求.roleId || 'unknown'}_${Date.now()}.wav`,
       jieGuo.mime || 'audio/wav',
       'yuyin',
-      请求.roleId ?? 'system',
+      请求.用户ID ?? 请求.roleId ?? '',
       jieGuo.shiChangHaoMiao ?? 时长毫秒,
     )
 
