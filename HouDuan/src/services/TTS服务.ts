@@ -34,7 +34,7 @@ export async function 合成语音(请求: TTS合成请求): Promise<TTS合成�
       `tts_${请求.roleId || 'unknown'}_${Date.now()}.wav`,
       jieGuo.mime || 'audio/wav',
       'yuyin',
-      请求.roleId || 'system',
+      请求.roleId ?? 'system',
       jieGuo.shiChangHaoMiao ?? 时长毫秒,
     )
 
