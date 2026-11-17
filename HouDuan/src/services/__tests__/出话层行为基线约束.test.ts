@@ -142,8 +142,19 @@ describe('Director 输出的关系变化会进 Writer 提示词', () => {
     expect(造('更远')).toContain('对方这条让你觉得：更远')
     expect(造('没变')).toContain('对方这条让你觉得：没变')
 
-    expect(造('更近')).toContain('心里是软的')
+    expect(造('更近')).toContain('有点戳到你，方向是往近了走')
     expect(造('更远')).toContain('有点不是滋味')
+    expect(造('更近')).not.toContain('心里是软的')
+  })
+
+  it('Director 的回复策略必须进入 Writer 提示词', () => {
+    const 提示 = gouJianWriterPrompt(造输入(), {
+      hui_fu_ce_lue: '先承认说乱了，再直接回答他问的事，最多两句',
+      shi_jian_qing_xu: '正常',
+      shi_fou_hui_fu: true,
+    })
+    expect(提示).toContain('【导演纸条】')
+    expect(提示).toContain('先承认说乱了')
   })
 
   it('Director 没给这个字段时不注入这一行', () => {

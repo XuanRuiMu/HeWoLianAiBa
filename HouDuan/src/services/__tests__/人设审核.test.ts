@@ -24,7 +24,7 @@ import {
   sheZhiRenSheShenHeMock,
   qingChuRenSheShenHeMock,
 } from '../人设审核'
-import type { 心中のTA自定义 } from '../角色生成'
+import type { XinMuZhongDeTaZiDing as 心中のTA自定义 } from '../角色生成'
 import { RenSheJiaJu, ZhuRuYangLi, type RenSheJiaJuZu } from './人设示例夹具'
 import { shiFouXingShi } from '../../config/姓氏表'
 

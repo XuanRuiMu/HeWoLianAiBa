@@ -446,7 +446,7 @@ private 当地现在小时(): number {
   private 构造时间场景提示(): string {
     const jiBen = huoQuShiJianChangJingWenBen()
     if (!this.本轮睡着中) return jiBen
-    return `${jiBen}\n（现在是你的睡觉时间，这条消息刚被你看到。回复可以很短、迷糊或带点起床气，说完可以接着睡。）`
+    return `${jiBen}\n（你刚刚睡了，但这条新消息把你叫醒了。先按醒来接话的真实状态回对方，照顾 TA 的来意；别拿已经睡了当不回复的理由，也别展开一大段睡觉找补。）`
   }
 
   private 设置等待表白回复状态(): void {    dengDaiBiaoBaiHuiFuMap.set(shengChengDengDaiBiaoBaiJian(this.用户ID, this.角色ID), {
@@ -725,11 +725,10 @@ private 当地现在小时(): number {
 
   private async 运行AI(信号: AbortSignal, 轮次: LunCiShangXiaWen): Promise<AIYinQingShuChu> {
 
-    const [角色, 好感度, 历史消息, 用户性别] = await Promise.all([
+    const [角色, 好感度, 历史消息] = await Promise.all([
       huoQuAIJiaoSeXinXi(this.角色ID),
       huoQuWanZhengHaoGanDu(this.用户ID, this.角色ID),
       huoQuZuiJinDuiHuaLiShi(this.用户ID, this.角色ID),
-      this.读取用户性别(),
     ])
 
     if (!角色) {
@@ -739,7 +738,9 @@ private 当地现在小时(): number {
     const tuPianShouQuan = this.用户信息缓存?.tu_pian_shou_quan ?? false
 
     this.当前角色 = 角色
+    this.本轮睡着中 = zuoXiKaiQi() && this.睡着()
     await this.同步用户语言()
+    const 用户性别 = await this.读取用户性别()
     if (process.env.VITEST !== 'true' && 角色) {
       try {
         const { zhunBeiRiCheng } = await import('./Prompt构建器')
@@ -813,6 +814,7 @@ private 当地现在小时(): number {
       yong_hu_xin_xiao_xi: 最新消息文本,
       yong_hu_xing_bie: 用户性别 ?? undefined,
       shi_fou_di_yi_lun: 是第一轮,
+      shi_jian_chang_jing: this.构造时间场景提示(),
       tu_pian_shou_quan: tuPianShouQuan,
       ji_yi_zhai_yao: yuQuZhaiYao || undefined,
       guan_jian_shi_jian: guanJianZhuRu || undefined,
@@ -1021,7 +1023,7 @@ private 当地现在小时(): number {
     if (benLunYiFaChuTiaoShu === 0 && 消息列表.length > 0) {
       const yuanShiWenBen = 消息列表.join('\n')
       const douDiWenBen = qingXiTieZhiCanPian(yuanShiWenBen)
-      if (douDiWenBen !== '') {
+      if (douDiWenBen !== '' && !this.已送达过(douDiWenBen)) {
         const 保存结果 = await 保存角色XiaoXi({
           yong_hu_id: this.用户ID,
           jiao_se_id: this.角色ID,

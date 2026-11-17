@@ -257,7 +257,46 @@ jiang_ji_mo_shi: false,
           ce_lue: ceLue,
         }
       }
+    const zuiJinJiaoSeKaiTou = benLunShuRu.dui_hua_li_shi
+      .filter((xiaoXi) => xiaoXi.fa_song_zhe_lei_xing === 'jiaose')
+      .slice(-6)
+      .map((xiaoXi) => (xiaoXi.nei_rong || '').replace(/\s+/g, '').slice(0, 6))
+      .filter((kaiTou) => kaiTou.length >= 3)
     let writerJieGuo = await shengChengWriterHuiFu(benLunShuRu, ceLue, shangXiaWen, waiBuXinHao, zhiShi, benLunShuRu.zuiJinDuanMing)
+    const huiFuKaiTou = (lieBiao: string[]): string | null => {
+      const wenBen = lieBiao
+        .map((tiao) => qingXiTieZhiCanPian(tiao).replace(/\s+/g, ''))
+        .find((tiao) => tiao.length >= 6)
+      return wenBen ? wenBen.slice(0, 6) : null
+    }
+    const shiFouKaiTouZhongFu = (lieBiao: string[]): boolean => {
+      const kaiTou = huiFuKaiTou(lieBiao)
+      return Boolean(kaiTou) && zuiJinJiaoSeKaiTou.includes(kaiTou as string)
+    }
+    if (ceLue?.shi_fou_hui_fu !== false && zuiJinJiaoSeKaiTou.length > 0 && shiFouKaiTouZhongFu(writerJieGuo.xiao_xi_lie_biao)) {
+      debug日志.warn('AI引擎', 'Writer 开头与近几条角色消息重复，带事实重生成一次', {
+        xiang_qing: { jiao_se_id: shuRu.jiao_se_id, zui_jin_kai_tou: zuiJinJiaoSeKaiTou.slice(-3) },
+      })
+      const chongShuJieGuo = await shengChengWriterHuiFu(
+        {
+          ...benLunShuRu,
+          zuiJinDuanMing: [...(benLunShuRu.zuiJinDuanMing || []), '重复开头和重复梗'],
+          ...(biDaShiShi ? { bi_da_shi_shi: { ...biDaShiShi, zhong_shi: true } } : {}),
+        },
+        ceLue,
+        shangXiaWen,
+        waiBuXinHao,
+        zhiShi,
+        [...(benLunShuRu.zuiJinDuanMing || []), '重复开头和重复梗'],
+      )
+      if (chongShuJieGuo.xiao_xi_lie_biao.length > 0) {
+        const haiShiZhongFu = shiFouKaiTouZhongFu(chongShuJieGuo.xiao_xi_lie_biao)
+        writerJieGuo = chongShuJieGuo
+        debug日志[haiShiZhongFu ? 'warn' : 'debug']('AI引擎', '重复开头重试完成', {
+          xiang_qing: { jiao_se_id: shuRu.jiao_se_id, 重试后仍重复: haiShiZhongFu, 重试后输出: writerJieGuo.yuan_wen },
+        })
+      }
+    }
     if (biDaShiShi && !shuoDaoLeShiShi(writerJieGuo.xiao_xi_lie_biao, biDaShiShi)) {
       debug日志.warn('AI引擎', 'Writer 漏掉了必答事实，带强调重生成一次', {
         xiang_qing: { jiao_se_id: shuRu.jiao_se_id, shi_shi: biDaShiShi.biao_shi },
@@ -327,7 +366,12 @@ cuo_wu_xin_xi: huoQuFanYi('AI', 'ShenHeWeiGui'),
 
     const aiWeiGuoLv = guoLvAiWeiXiaoXi(xiaoXiLieBiao)
     if (aiWeiGuoLv.beiFengSha.length > 0) {
-      xiaoXiLieBiao = aiWeiGuoLv.baoLiu
+      const baoLiuLieBiao = aiWeiGuoLv.baoLiu
+      if (baoLiuLieBiao.length === 0 && biDaShiShi) {
+        xiaoXiLieBiao = [biDaShiShi.wen_an]
+      } else {
+        xiaoXiLieBiao = baoLiuLieBiao
+      }
       debug日志.warn('AI引擎', 'Writer输出命中过AI味规则，已过滤', {
         xiang_qing: {
           jiao_se_id: shuRu.jiao_se_id,
@@ -380,6 +424,18 @@ cuo_wu_xin_xi: huoQuFanYi('AI', 'ShenHeWeiGui'),
       })
       cuoWuXinXi = huoQuFanYi('AI', 'WriterFuShiKongBai')
     }
+
+    const zuiHouYuanWen = xiaoXiLieBiao.join('\n')
+    debug日志.debug('AI引擎', '最终发送文本及触发链路', {
+      xiang_qing: {
+        消息条数: xiaoXiLieBiao.length,
+        是否回复: ceLue?.shi_fou_hui_fu ?? true,
+        Director策略: ceLue?.hui_fu_ce_lue ?? null,
+        必答事实: biDaShiShi?.biao_shi ?? null,
+        降级模式: jiang_ji_mo_shi,
+        正文: zuiHouYuanWen,
+      },
+    })
 
     return {
       xiao_xi_lie_biao: xiaoXiLieBiao,

@@ -90,7 +90,7 @@ function huoQuGuanXiJieDuanMing(haoGanDu: HaoGanDuXinXi): string {
 }
 
 const guanXiBianHuaChiMing: Record<string, string> = {
-  更近: '，你刚才那一下有点戳到 TA，这会儿心里是软的。',
+  更近: '，TA 这条有点戳到你，方向是往近了走。',
   更远: '，TA 这会儿有点不是滋味，别指望 TA 马上热络起来。',
   没变: '，就是寻常聊天，没什么波澜。',
 }
@@ -272,6 +272,7 @@ export async function zhunBeiRiCheng(jiaoSeId: string, jiaoSe: RiChengJiaoSe, sh
   riChengHuanCun.set(jiaoSeId, riCheng)
 }
 
+const zhengZaiChuDuiXiang = (jieDuan: string): boolean => ['热恋', '深爱'].includes(jieDuan)
 function gouJianDiSanCeng(shuRu: AIYinQingShuRu): string {
   const haoGanDu = shuRu.hao_gan_du
   const jieDuan = huoQuGuanXiJieDuanMing(haoGanDu)
@@ -282,7 +283,7 @@ function gouJianDiSanCeng(shuRu: AIYinQingShuRu): string {
     `关系阶段：${jieDuan}`,
     `对 TA 的态度：${guanXiJieDuanMiaoShu[jieDuan] || '还不太清楚'}`,
     ...(xinQingMiaoShu ? [`你此刻的状态：${xinQingMiaoShu}`] : []),
-    '对方加你聊天是想谈恋爱，你也知道这回事。',
+    ...(zhengZaiChuDuiXiang(jieDuan) ? ['你们是恋爱关系，你也知道这回事。'] : ['对方加你聊天是想谈恋爱，但你们现在还没确定关系。']),
     ...gouJianRiChengCeng(shuRu),
     `现在的情况：${shuRu.shi_jian_chang_jing || huoQuShiJianChangJingWenBen()}`,
     '按你的性格来，不用管别人会怎么回。',
@@ -402,13 +403,15 @@ export function gouJianFengGeShiLiCeng(jiaoSe: AIJiaoSeXinXi): string {
 export function 构建恋爱身份层(
   yongHuXingBie?: 性别内部形态 | null,
   jiaoSeXingBie?: 性别内部形态 | null,
+  jieDuan = '冷淡',
 ): string {
   const 对方 = 内部转展示(yongHuXingBie ?? null)
   const 自己 = 内部转展示(jiaoSeXingBie ?? null)
   if (对方 === '未知' || 自己 === '未知') return ''
+  const yiQueRen = zhengZaiChuDuiXiang(jieDuan)
   const 块 = [
     '【你们俩这回事】',
-    `你${自己 === '男' ? '是个男生' : '是个女生'}，对方是${对方 === '男' ? '男生' : '女生'}。你们在处对象。`,
+    `你${自己 === '男' ? '是个男生' : '是个女生'}，对方是${对方 === '男' ? '男生' : '女生'}。${yiQueRen ? '你们在处对象。' : `你们还不是对象，现在是${jieDuan}阶段。`}`,
   ]
   if (对方 === 自己) {
     块.push(
@@ -454,10 +457,24 @@ export function 构建接住点层(yaoJieZhuDeDian?: string): string {
   ].join('\n')
 }
 
+export function 构建回复策略层(huiFuCeLue?: string): string {
+  const ceLue = (huiFuCeLue || '').trim()
+  if (!ceLue || ceLue === 'unknown') return ''
+  return [
+    '【导演纸条】',
+    '这句话是给你的执行提示，不是给用户看的：按它判断重点、长度和语气，不许把“导演”“策略”这类字眼写进消息。',
+    ceLue,
+  ].join('\n')
+}
+
+export function gouJianZhaoHuiYeWanTiShi(): string {
+  return '【睡眠与回复】游戏里的角色也要能接住对方发给 TA 的消息，不能因为睡了就拒绝聊天。若刚说过自己睡了，这次被新消息叫醒，就按“被你吵醒了，怎么了”的真实意思自然接起来，照顾一下对方的来意；隔很久再聊，就按新的时间说，不必继续装困。用户没追问睡觉时，别额外讲一段找补说明。'
+}
+
 export function GouJianGongXiangQianZhui(shuRu: AIYinQingShuRu): string {
   return [
     gouJianDiErCeng(shuRu.jiao_se),
-    构建恋爱身份层(shuRu.yong_hu_xing_bie, shuRu.jiao_se.xing_bie),
+    构建恋爱身份层(shuRu.yong_hu_xing_bie, shuRu.jiao_se.xing_bie, huoQuGuanXiJieDuanMing(shuRu.hao_gan_du)),
     gouJianFengGeShiLiCeng(shuRu.jiao_se),
   ]
     .filter((ceng) => ceng.trim() !== '')
@@ -603,6 +620,7 @@ export function gouJianWriterPrompt(
     构建必答事实层(shuRu.bi_da_shi_shi),
     gouJianJingXiangTiShi(shuRu),
     构建接住点层(ceLue?.yao_jie_zhu_de_dian),
+    构建回复策略层(ceLue?.hui_fu_ce_lue),
   ].filter((ceng) => ceng.trim() !== '')
 
   if (ceLue) {
@@ -629,6 +647,19 @@ export function gouJianWriterPrompt(
     )
     if (yuTaiCeng) cengCi.push(yuTaiCeng)
   }
+
+  const zuiJinJiaoSeXiaoXi = shuRu.dui_hua_li_shi.filter((xiaoXi) => xiaoXi.fa_song_zhe_lei_xing === 'jiaose').slice(-6)
+  const zuiJinKaiTou = zuiJinJiaoSeXiaoXi
+    .map((xiaoXi) => (xiaoXi.nei_rong || '').replace(/\s+/g, '').slice(0, 6))
+    .filter((kaiTou) => kaiTou.length >= 3)
+  if (zuiJinKaiTou.length > 0) {
+    cengCi.push([
+      '【最近说话记录】',
+      `你最近几条消息的开头：${zuiJinKaiTou.join('；')}。`,
+      '这些不是要你复读。换个角度、换个措辞回应这次的话；同一个故事只在上次真实聊到的事实范围内继续使用，不要反复把新编的日常细节当自己的经历。',
+    ].join('\n'))
+  }
+  cengCi.push(gouJianZhaoHuiYeWanTiShi())
 
   cengCi.push(gouJianBenLun消息块(shuRu))
 
@@ -723,6 +754,10 @@ export function gouJianDirectorPrompt(
     '真人也经常各说各的：对方最后一句没什么可接的，策略就写你这边的事——你突然想到的、手头在做的、上次没聊完的。',
     '出策略之前先在心里核对：对方提到的事，你自己前文说过没有？说过的按你说过的回，别改口；你前文说过的事，对方没提，也别主动翻出来。',
     '写策略的时候，别拿我上次、我那天、我记得开头讲角色自己的事——角色没有那么多经历，策略只写对方这条消息该怎么回。',
+    '对方问到角色自己前后矛盾、说睡又回话、或指出这段关系怎么发展：照着真实时间和“谁说了什么”答，不把矛盾解释成玩家想象的，也不拿“我就是这个风格、你是不是觉得无聊”躲开问题。',
+    '需要认下口误或事实矛盾时，策略先写“直接认+接着回应对方问的事”，通常一条短消息说清，最多两条；不要把澄清写成一段自我介绍，也不要在对方明确要求解释、说明原因时仍一味压短。',
+    '对方问“睡了怎么还能回”“你真的睡了吗”，本来就允许被消息叫醒再回，不等于前面撒谎。先接住“被你吵醒了，怎么了”这层状态，再认真答对方当前问的事，不要认定每次都必须没睡着，也不要写一大段辩解。',
+    '对方讲重复笑话时，策略要指定“用当前话题只需要一两句反应就好”，不把老笑话重新演一遍。',
     '回复策略只写简短关键词或一句话，不用写长篇分析。',
     '',
     '【输出格式】',

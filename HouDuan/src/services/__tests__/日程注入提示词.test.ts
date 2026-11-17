@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { zhunBeiRiCheng, gouJianWriterPrompt } from '../Prompt构建器'
 import * as RiChengGongNeng from '../角色日程'
 
-function 造输入(): Record<string, unknown> {
+import type { AIYinQingShuRu } from '../../types'
+
+function 造输入(): AIYinQingShuRu {
   return {
     yong_hu_id: 'u-1',
     jiao_se_id: 'j-1',
@@ -27,6 +29,10 @@ function 造输入(): Record<string, unknown> {
       jia_ting_bei_jing: '',
       qing_gan_jing_li: '',
       shi_fou_zha_xing: false,
+      ba_da_mo_kuai: {
+        ji_ben_xin_xi: '罗一帆，男，20岁',
+        wai_mao: '', xing_ge: '', bei_jing: '', yan_yu: '', xing_wei: '', guan_xi: '', xi_tong_ti_shi: '',
+      },
       shi_jie_xin_xi: {},
     },
     hao_gan_du: {
@@ -55,7 +61,7 @@ describe('日程层注入 Writer', () => {
     )
     const riCheng = RiChengGongNeng
     expect(riCheng).toBeTruthy()
-    const 提示 = gouJianWriterPrompt(输入)
+    const 提示 = gouJianWriterPrompt(输入 as AIYinQingShuRu)
     expect(提示).toContain('【这轮用哪种语言】')
   })
 

@@ -169,11 +169,12 @@ export async function shengChengDirectorCeLue(
     const { ceLue, jieXiChengGong } = jieXiDirectorXiangYing(xiangYing.neiRong)
     if (!jieXiChengGong) {
       debug日志.error('AI导演', 'Director响应解析失败，已标unknown并入重试队列', {
-        xiang_qing: { yuan_wen_chang_du: xiangYing.neiRong.length },
+        xiang_qing: { yuan_wen_chang_du: xiangYing.neiRong.length, 原始响应: xiangYing.neiRong },
       })
       void paiRuZhongShiDuiLie({ leiXing: 'DaoYan', yuanYin: 'jie_xi_shi_bai' })
       return { cheng_gong: false, ce_lue: ceLue, cuo_wu: 'JIE_XI_SHI_BAI', yuan_wen: xiangYing.neiRong }
     }
+    debug日志.debug('AI导演', 'Director策略已生成', { xiang_qing: { 策略: ceLue, 是否有思考: Boolean(xiangYing.siKaoNeiRong) } })
     return { cheng_gong: true, ce_lue: ceLue, si_kao: xiangYing.siKaoNeiRong || undefined, yuan_wen: xiangYing.neiRong }
   } catch (cuoWu) {
     const cuoWuXinXi = cuoWu instanceof Error ? cuoWu.message : String(cuoWu)

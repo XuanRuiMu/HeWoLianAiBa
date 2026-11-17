@@ -166,4 +166,33 @@ describe('AI调度器状态收尾', () => {
     expect(AI状态序列()).toEqual(['kong_xian', 'deng_dai_zhong'])
     expect(内部.取消控制器).toBe(xinLunKongZhiQi)
   })
+
+  it('整轮文字都因重复被去重时，兜底不再补发同一段重复文本', async () => {
+    const { 调度器, 内部, AI状态序列 } = 造调度器()
+    vi.mocked(yunXingAIYinQing).mockResolvedValueOnce({
+      xiao_xi_lie_biao: ['被你看穿了，我刚躺下。'],
+      shi_fou_hui_fu: true,
+      shi_fou_che_hui: false,
+      jiang_ji_mo_shi: false,
+    } satisfies AIYinQingShuChu)
+    内部.获取最新消息文本 = async () => '哈哈'
+    内部.更新好感度 = async () => null
+    const 原本推送 = 调度器['推送角色回复'].bind(调度器) as (xiaoXiLieBiao: 消息信息[], lunCi?: unknown) => void
+    内部.推送角色回复 = 原本推送
+    const 首轮 = (内部.触发AI处理 as () => Promise<void>)()
+    await 首轮
+    expect(vi.mocked(保存角色XiaoXi)).toHaveBeenCalledTimes(1)
+    调度器.重置()
+    vi.mocked(yunXingAIYinQing).mockResolvedValueOnce({
+      xiao_xi_lie_biao: ['被你看穿了，我刚躺下。'],
+      shi_fou_hui_fu: true,
+      shi_fou_che_hui: false,
+      jiang_ji_mo_shi: false,
+    } satisfies AIYinQingShuChu)
+    const 次轮 = (内部.触发AI处理 as () => Promise<void>)()
+    await 次轮
+
+    expect(vi.mocked(保存角色XiaoXi)).toHaveBeenCalledTimes(1)
+    expect(AI状态序列().at(-1)).toBe('kong_xian')
+  })
 })

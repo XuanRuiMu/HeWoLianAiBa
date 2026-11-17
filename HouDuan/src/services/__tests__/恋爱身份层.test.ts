@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { 构建恋爱身份层, 构建接住点层, 构建必答事实层 } from '../Prompt构建器'
+import { 构建恋爱身份层, 构建接住点层, 构建必答事实层, 构建回复策略层 } from '../Prompt构建器'
 import { 提取必答事实, 检索通用知识 } from '../通用知识检索'
 import { jieXiDirectorXiangYing } from '../Director'
 
@@ -35,6 +35,26 @@ describe('恋爱身份层：三种性别组合', () => {
   ])('性别未知时不注入身份层：%s / %s', (用户性别, 角色性别) => {
     expect(构建恋爱身份层(用户性别 as never, 角色性别 as never)).toBe('')
   })
+
+  it.each(['冷淡', '疏远', '认识', '熟悉', '朋友', '好友', '暧昧', '心动'])(
+    '未确立阶段不冒充已处对象：%s',
+    (jieDuan) => {
+      const 层 = 构建恋爱身份层('nan', 'nv', jieDuan)
+      expect(层).toContain(`你们还不是对象，现在是${jieDuan}阶段`)
+      expect(层).not.toContain('你们在处对象')
+    },
+  )
+
+  it.each(['热恋', '深爱'])('已确立阶段保留恋爱事实：%s', (jieDuan) => {
+    const 层 = 构建恋爱身份层('nan', 'nv', jieDuan)
+    expect(层).toContain('你们在处对象')
+    expect(层).not.toContain('你们还不是对象')
+  })
+
+  it('未传阶段时按保守早期关系处理', () => {
+    const 层 = 构建恋爱身份层('nan', 'nv')
+    expect(层).toContain('你们还不是对象，现在是冷淡阶段')
+  })
 })
 
 describe('接住点层', () => {
@@ -49,6 +69,19 @@ describe('接住点层', () => {
     expect(构建接住点层('')).toBe('')
     expect(构建接住点层(undefined)).toBe('')
     expect(构建接住点层('   ')).toBe('')
+  })
+
+  it('有效回复策略会交给 Writer，并禁止把导演字眼写给用户', () => {
+    const 层 = 构建回复策略层('被戳中矛盾时，先承认刚才说乱了，再直接回答问题，不超过两句')
+    expect(层).toContain('【导演纸条】')
+    expect(层).toContain('不超过两句')
+    expect(层).toContain('不许把“导演”“策略”这类字眼写进消息')
+  })
+
+  it('空策略和默认 unknown 不生成策略层', () => {
+    expect(构建回复策略层('')).toBe('')
+    expect(构建回复策略层('unknown')).toBe('')
+    expect(构建回复策略层(undefined)).toBe('')
   })
 
   it('Director 把新字段解析进策略', () => {

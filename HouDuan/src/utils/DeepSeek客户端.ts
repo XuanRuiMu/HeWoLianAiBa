@@ -5,6 +5,7 @@ import { peiZhi } from '../config'
 import { huoQuFanYi } from '../config/translations'
 import { jiSuanAIChanShu, type 参数上下文 } from '../config/AI参数策略'
 import { jiLuAIJiLu, debug日志 } from './debug日志'
+import { chuangJianRiZhiYinQing } from './日志引擎'
 
 export type 对话块 =
   | { type: 'input_text'; text: string }
@@ -518,6 +519,24 @@ export async function tiaoYongDeepSeek(
 
   const shuRuXiang = 构建请求输入(shiJiXiaoXi)
 
+  if (chuangJianRiZhiYinQing().isLevelEnabled('debug')) {
+    const 输入文本 = shuRuXiang.map((xiaoXi) => {
+      if (typeof xiaoXi.content === 'string') return `${xiaoXi.role}: ${xiaoXi.content}`
+      if (Array.isArray(xiaoXi.content)) {
+        return `${xiaoXi.role}: ${xiaoXi.content.map((kuai) => {
+          if (typeof kuai !== 'object' || kuai === null) return ''
+          const kuaiObj = kuai as Record<string, unknown>
+          if (typeof kuaiObj.text === 'string') return kuaiObj.text
+          return '[媒体]'
+        }).join('')}`
+      }
+      return `${xiaoXi.role}: [空内容]`
+    }).join('\n')
+    debug日志.debug('DeepSeek客户端', '[AI输入] 完整模型提示词', {
+      xiang_qing: { 模型LeiXing, 内容: 输入文本 },
+    })
+  }
+
   const body: Record<string, unknown> = {
     model: 模型,
     input: shuRuXiang,
@@ -609,9 +628,13 @@ export async function tiaoYongDeepSeek(
       const { neiRong, siKaoNeiRong } = 提取响应(zhongXinXiangYing)
       const shiYongLiang = tiQuShiYongLiang(zhongXinXiangYing)
 
+      debug日志.debug('DeepSeek客户端', '[AI输出] 模型完整回复', {
+        xiang_qing: { 模型LeiXing, 内容: neiRong },
+      })
+
       if (peiZhi.kaiFaMoShi && siKaoNeiRong) {
         debug日志.debug('DeepSeek客户端', '[AI思考过程]', {
-          xiang_qing: { si_kao_zi_shu: siKaoNeiRong.length },
+          xiang_qing: { si_kao_zi_shu: siKaoNeiRong.length, 内容: siKaoNeiRong },
         })
       }
       if ((zhongXinXiangYing as { status?: string }).status === 'incomplete') {

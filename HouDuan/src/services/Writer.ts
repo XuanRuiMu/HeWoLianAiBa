@@ -6,6 +6,7 @@ import * as XiTongBiaoQing from './系统表情'
 import { panDuanBiaoQingZaiTi } from './表情载体'
 import { daiShuKaiChangYuanYu, fuJiaKaiChangYuanYu, qingLiXiaoXi } from './开场候选约束'
 import { 检索通用知识, type 通用知识检索结果 } from './通用知识检索'
+import { debug日志 } from '../utils/debug日志'
 import type { 对话块 } from '../utils/DeepSeek客户端'
 import type { AIYinQingShuRu, DirectorCeLue, WriterJieGuo } from '../types'
 import type { 参数上下文 } from '../config/AI参数策略'
@@ -30,8 +31,11 @@ export async function shengChengWriterHuiFu(
     quanBuKuai.length > 0 ? [{ type: 'input_text', text: tiShiCiWanZheng }, ...quanBuKuai] : tiShiCiWanZheng
 
   const kaiChang = daiShuKaiChangYuanYu()
+  const shiFouQueLi = ['热恋', '深爱'].includes(
+    typeof shuRu.hao_gan_du?.guan_xi_jie_duan === 'string' ? shuRu.hao_gan_du.guan_xi_jie_duan : '',
+  )
   const chenJinZhiLing = kaiChang.wenBen
-    ? `\n${'【从现在起，你就是TA】'}：用第一人称在心里嘀咕，完全变成对方眼中的恋人，别跳出来分析。`
+    ? `\n${'【从现在起，你就是TA】'}：用第一人称在心里嘀咕，完全变成对方眼中的${shiFouQueLi ? '恋人' : '聊天对象'}，别跳出来分析。`
     : ''
   const daiZhiLingNeiRong: string | 对话块[] =
     typeof yongHuNeiRong === 'string'
@@ -54,6 +58,8 @@ export async function shengChengWriterHuiFu(
     : xiaoXi
 
   const xiangYing = await 按配置调用('XieShou', xiaoXiDaiYu, 淽数上下文, 外部信号)
+
+  debug日志.debug('AI写手', 'Writer原始输出', { xiang_qing: { yuan_wen: xiangYing.neiRong, si_kao: xiangYing.siKaoNeiRong || null } })
 
   return {
     xiao_xi_lie_biao: qingLiXiaoXi(xiangYing.neiRong),
