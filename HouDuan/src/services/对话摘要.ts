@@ -142,6 +142,7 @@ export async function shengChengBingLuoKuZhaiYao(用户ID: string, jiaoSeId: str
       { jiaoSe: 'user', neiRong: gouJianJiYiZhaiYaoPrompt(yuanLiao, jiaoSeMing, xianYou?.zhaiYaoNeiRong || '') },
     ])
     const zhaiYao = qieDuanZhaiYao(xiangYing.neiRong)
+    if (zhaiYao === '' && xianYou?.zhaiYaoNeiRong) return true
     if (!zhaiYao) return true
     await 数据库.query(
       `INSERT INTO "对话摘要" ("用户ID", "角色ID", "摘要内容", "概括消息数", "素材锚点时间", "更新时间")
