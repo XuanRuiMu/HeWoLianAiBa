@@ -280,14 +280,14 @@ jiang_ji_mo_shi: false,
       const chongShuJieGuo = await shengChengWriterHuiFu(
         {
           ...benLunShuRu,
-          zuiJinDuanMing: [...(benLunShuRu.zuiJinDuanMing || []), '重复开头和重复梗'],
+          shengChengJiuCuo: '你最近几条已经用过相似开头或同一个梗；这一轮先换一种说法，再接着当前话题。不要把同一段虚构日常细节继续当自己的经历。',
           ...(biDaShiShi ? { bi_da_shi_shi: { ...biDaShiShi, zhong_shi: true } } : {}),
         },
         ceLue,
         shangXiaWen,
         waiBuXinHao,
         zhiShi,
-        [...(benLunShuRu.zuiJinDuanMing || []), '重复开头和重复梗'],
+        benLunShuRu.zuiJinDuanMing,
       )
       if (chongShuJieGuo.xiao_xi_lie_biao.length > 0) {
         const haiShiZhongFu = shiFouKaiTouZhongFu(chongShuJieGuo.xiao_xi_lie_biao)

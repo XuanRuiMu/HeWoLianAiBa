@@ -519,7 +519,7 @@ export async function tiaoYongDeepSeek(
 
   const shuRuXiang = 构建请求输入(shiJiXiaoXi)
 
-  if (chuangJianRiZhiYinQing().isLevelEnabled('debug')) {
+  if (chuangJianRiZhiYinQing().isLevelEnabled('debug') && (process.env['TI_SHI_CI_RI_ZHI_QI_YONG'] || '').trim().toLowerCase() === 'true') {
     const 输入文本 = shuRuXiang.map((xiaoXi) => {
       if (typeof xiaoXi.content === 'string') return `${xiaoXi.role}: ${xiaoXi.content}`
       if (Array.isArray(xiaoXi.content)) {

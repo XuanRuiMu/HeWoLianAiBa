@@ -62,15 +62,15 @@ describe('重复回复由生成层消化，不改写用户可见文本', () => {
     sheZhiMockTiaoYong(null)
   })
 
-  it('开头命中近期角色消息时重生成一次，并注入重复短名', async () => {
+  it('开头命中近期角色消息时重生成一次，并通过专用纠正层注入提示', async () => {
     const { shengChengWriterHuiFu } = await import('../Writer')
     const 调用内容: string[] = []
-    const 重试输入列表: (string[] | undefined)[] = []
-    vi.mocked(shengChengWriterHuiFu).mockImplementation(async (shuRu, ceLue, _canShu, _xinHao, _zhiShi, zuiJinDuanMing) => {
+    const 重试纠正列表: (string | undefined)[] = []
+    vi.mocked(shengChengWriterHuiFu).mockImplementation(async (shuRu, ceLue) => {
       const tiShiCi = await (await import('../Prompt构建器')).gouJianWriterPrompt(shuRu, ceLue)
       调用内容.push(tiShiCi)
-      重试输入列表.push(zuiJinDuanMing)
-      const shiChongFu = Boolean(zuiJinDuanMing?.includes('重复开头和重复梗'))
+      重试纠正列表.push(shuRu.shengChengJiuCuo)
+      const shiChongFu = Boolean(shuRu.shengChengJiuCuo?.includes('相似开头'))
       return {
         xiao_xi_lie_biao: [shiChongFu ? '今天我也在忙，你先说。' : '被你看穿了，我刚躺下。'],
         yuan_wen: shiChongFu ? '今天我也在忙，你先说。' : '被你看穿了，我刚躺下。',
@@ -84,7 +84,8 @@ describe('重复回复由生成层消化，不改写用户可见文本', () => {
     ]))
 
     expect(调用内容).toHaveLength(2)
-    expect(重试输入列表[1]).toContain('重复开头和重复梗')
+    expect(重试纠正列表[1]).toContain('相似开头')
+    expect(调用内容[1]).toContain('【生成纠正】')
     expect(调用内容[1]).toContain('换个角度')
     expect(jieGuo.xiao_xi_lie_biao).toEqual(['今天我也在忙，你先说。'])
   })
@@ -103,7 +104,7 @@ describe('重复回复由生成层消化，不改写用户可见文本', () => {
     const jieGuo = await yunXingAIYinQing(造输入(['被你看穿了，我刚躺下'], '你认识玄锐暮吗'))
 
     expect(shengChengWriterHuiFu).toHaveBeenCalledTimes(2)
-    expect(输入列表[1]?.zuiJinDuanMing).toContain('重复开头和重复梗')
+    expect(输入列表[1]?.shengChengJiuCuo).toContain('相似开头')
     expect(输入列表[1]?.bi_da_shi_shi?.zhong_shi).toBe(true)
     expect(jieGuo.xiao_xi_lie_biao.join('')).toContain('玄锐暮')
   })

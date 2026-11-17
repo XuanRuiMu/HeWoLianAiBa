@@ -467,6 +467,41 @@ export function 构建回复策略层(huiFuCeLue?: string): string {
   ].join('\n')
 }
 
+export function 构建生成纠正层(jiuCuo?: string): string {
+  const tiShi = (jiuCuo || '').trim()
+  if (!tiShi) return ''
+  return [
+    '【生成纠正】',
+    '这一条是系统在上一次输出后追加的内部纠偏提示，只影响本次怎么改，不是用户消息。',
+    tiShi,
+  ].join('\n')
+}
+
+export function 有重复倾向(liShi: AIYinQingShuRu['dui_hua_li_shi']): boolean {
+  const kaiTou = liShi
+    .filter((xiaoXi) => xiaoXi.fa_song_zhe_lei_xing === 'jiaose')
+    .slice(-6)
+    .map((xiaoXi) => (xiaoXi.nei_rong || '').replace(/\s+/g, '').slice(0, 6))
+    .filter((kaiTou) => kaiTou.length >= 3)
+  if (kaiTou.length < 2) return false
+  return new Set(kaiTou).size < kaiTou.length
+}
+
+export function gouJianZuiJinShuoHuaCeng(shuRu: AIYinQingShuRu): string {
+  if (!有重复倾向(shuRu.dui_hua_li_shi)) return ''
+  const zuiJinKaiTou = shuRu.dui_hua_li_shi
+    .filter((xiaoXi) => xiaoXi.fa_song_zhe_lei_xing === 'jiaose')
+    .slice(-6)
+    .map((xiaoXi) => (xiaoXi.nei_rong || '').replace(/\s+/g, '').slice(0, 6))
+    .filter((kaiTou) => kaiTou.length >= 3)
+  if (zuiJinKaiTou.length === 0) return ''
+  return [
+    '【最近说话记录】',
+    `你最近几条消息的开头：${zuiJinKaiTou.join('；')}。`,
+    '这些不是要你复读。换个角度、换个措辞回应这次的话；同一个故事只在上次真实聊到的事实范围内继续使用，不要反复把新编的日常细节当自己的经历。',
+  ].join('\n')
+}
+
 export function gouJianZhaoHuiYeWanTiShi(): string {
   return '【睡眠与回复】游戏里的角色也要能接住对方发给 TA 的消息，不能因为睡了就拒绝聊天。若刚说过自己睡了，这次被新消息叫醒，就按“被你吵醒了，怎么了”的真实意思自然接起来，照顾一下对方的来意；隔很久再聊，就按新的时间说，不必继续装困。用户没追问睡觉时，别额外讲一段找补说明。'
 }
@@ -648,17 +683,10 @@ export function gouJianWriterPrompt(
     if (yuTaiCeng) cengCi.push(yuTaiCeng)
   }
 
-  const zuiJinJiaoSeXiaoXi = shuRu.dui_hua_li_shi.filter((xiaoXi) => xiaoXi.fa_song_zhe_lei_xing === 'jiaose').slice(-6)
-  const zuiJinKaiTou = zuiJinJiaoSeXiaoXi
-    .map((xiaoXi) => (xiaoXi.nei_rong || '').replace(/\s+/g, '').slice(0, 6))
-    .filter((kaiTou) => kaiTou.length >= 3)
-  if (zuiJinKaiTou.length > 0) {
-    cengCi.push([
-      '【最近说话记录】',
-      `你最近几条消息的开头：${zuiJinKaiTou.join('；')}。`,
-      '这些不是要你复读。换个角度、换个措辞回应这次的话；同一个故事只在上次真实聊到的事实范围内继续使用，不要反复把新编的日常细节当自己的经历。',
-    ].join('\n'))
-  }
+  const zuiJinShuoHuaCeng = gouJianZuiJinShuoHuaCeng(shuRu)
+  if (zuiJinShuoHuaCeng) cengCi.push(zuiJinShuoHuaCeng)
+  const shengChengJiuCuoCeng = 构建生成纠正层(shuRu.shengChengJiuCuo)
+  if (shengChengJiuCuoCeng) cengCi.push(shengChengJiuCuoCeng)
   cengCi.push(gouJianZhaoHuiYeWanTiShi())
 
   cengCi.push(gouJianBenLun消息块(shuRu))

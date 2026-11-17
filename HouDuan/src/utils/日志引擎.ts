@@ -36,7 +36,7 @@ function huoQuYouXiaoRiZhiJiBie(jiBie: string | undefined): pino.LevelWithSilent
   if (jiBie && (youXiaoJiBieLieBiao as string[]).includes(jiBie)) {
     return jiBie as pino.LevelWithSilent
   }
-  return 'debug'
+  return process.env.NODE_ENV === 'production' ? 'info' : 'debug'
 }
 
 export interface RiZhiTargetPeiZhi {

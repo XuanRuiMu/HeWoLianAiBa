@@ -399,10 +399,9 @@ export class AI回复调度器 {
   }
 
 private 启动AI计时器(): void {
-  this.本轮睡着中 = zuoXiKaiQi() && this.睡着()
-
   this.计时器 = setTimeout(() => {
     this.计时器 = null
+    this.本轮睡着中 = zuoXiKaiQi() && this.睡着()
     void this.触发AI处理()
   }, Math.max(0, this.回复延迟毫秒))
   this.发布AI状态('deng_dai_zhong')
@@ -628,6 +627,8 @@ private 当地现在小时(): number {
 
       const 控制器 = new AbortController()
       this.取消控制器 = 控制器
+      this.当前角色 = 角色
+      this.本轮睡着中 = zuoXiKaiQi() && this.睡着()
       await deng(this.计算间隔())
 
       const 结果 = await yunXingAIYinQing(

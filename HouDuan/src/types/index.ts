@@ -253,6 +253,7 @@ export interface AIYinQingShuRu {
   weiDuiXianChengNuo?: string[]
   lianWangSouSuo?: string
   zuiJinDuanMing?: string[]
+  shengChengJiuCuo?: string
 }
 
 export interface BiDaShiShi {
