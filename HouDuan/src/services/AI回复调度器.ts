@@ -282,6 +282,7 @@ export class AI回复调度器 {
     if (this.已送达登记.has(内容)) return true
     const qian = 内容.slice(0, 12)
     for (const yiYou of this.已送达登记.keys()) {
+      if (yiYou === 内容) continue
       if (yiYou.startsWith(qian) && Math.abs(yiYou.length - 内容.length) <= 6) return true
     }
     return false
