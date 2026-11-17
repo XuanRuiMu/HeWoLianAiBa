@@ -733,7 +733,7 @@ export function gouJianDirectorPrompt(
     '  "这条里要接住的点": "string",',
     '  "回复策略": "string",',
     '  "是否回复": boolean,',
-    '  "回复条数": number（0-5）,',
+    '  回复条数：number，1 到 5；很短的一句就填 1，认真长回也最多 3，别为了凑数拆条。',
     '  "时间情绪": "string",',
     '  "是否撤回": boolean,',
     '  "关系变化": "更近"或"更远"或"没变",',

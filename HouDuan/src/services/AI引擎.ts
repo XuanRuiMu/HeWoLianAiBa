@@ -286,7 +286,7 @@ jiang_ji_mo_shi: false,
       }
     }
 
-    let xiaoXiLieBiao = qieGeXiaoXi(writerJieGuo.xiao_xi_lie_biao, ZuiDaTiaoShu)
+    let xiaoXiLieBiao = qieGeXiaoXi(writerJieGuo.xiao_xi_lie_biao, ceLue?.hui_fu_tiao_shu ?? ZuiDaTiaoShu)
     if (writerJieGuo.xiao_xi_lie_biao.length > ZuiDaTiaoShu) {
       debug日志.warn('AI引擎', 'Writer 输出条数超失控护栏，已截断', {
         xiang_qing: {
