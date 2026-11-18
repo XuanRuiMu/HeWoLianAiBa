@@ -90,3 +90,6 @@ docker-compose.override.yml
 /过渡网页/候选样张/
 _*.cjs
 /过渡网页/调研/
+
+stdout-*.pack
+stdout-*.idx
