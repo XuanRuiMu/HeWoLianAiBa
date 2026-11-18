@@ -118,6 +118,7 @@ export class AI回复调度器 {
   private 上次关系阶段序号 = -1
   private 连续沉默轮数 = 0
   private 强制语言: string | null = null
+  private 待补发消息ID: string | null | undefined = undefined
 
   private static readonly 去重登记上限 = 12
   private static readonly 去重窗口毫秒 = 15 * 60 * 1000
@@ -141,6 +142,10 @@ export class AI回复调度器 {
   }
 
   处理用户消息(驱动消息ID?: string | null): Promise<void> {
+    if (this.处理中) {
+      this.待补发消息ID = 驱动消息ID ?? null
+      return Promise.resolve()
+    }
     this.本轮驱动消息ID = 驱动消息ID ?? null
 
     this.自上一条角色消息以来的用户消息计数 += 1
@@ -566,6 +571,12 @@ private 当地现在小时(): number {
       if (处理ID === this.当前处理ID) {
         this.处理中 = false
         this.取消控制器 = null
+        const daiBu = this.待补发消息ID
+        this.待补发消息ID = undefined
+        if (daiBu !== undefined) {
+          debug日志.info('AI调度器', '处理期间有新消息到达，完成后补一轮', { xiang_qing: { qu_dong_xiao_xi_id: daiBu } })
+          void this.处理用户消息(daiBu)
+        }
       }
     }
   }
@@ -1382,3 +1393,4 @@ private 算沉默等级(历史: DuiHuaLiShiXiang[], 最新消息: string, 连发
     }
   }
 }
+
