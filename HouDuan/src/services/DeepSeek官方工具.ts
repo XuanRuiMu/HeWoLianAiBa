@@ -187,12 +187,12 @@ export interface TTSJieGuo {
   ti_shi?: string
 }
 
-export async function heChengYuYin(canShu: { text: string; yinSeId?: string; durationMs?: number }): Promise<TTSJieGuo> {
+export async function heChengYuYin(canShu: { text: string; voiceId?: string; durationMs?: number }): Promise<TTSJieGuo> {
   const miYao = MiYao()
   if (miYao === '') return { cheng_gong: false, yinPin: null, mime: '', shiChangHaoMiao: null, ti_shi: '官方钥匙未配置' }
   const text = (canShu.text || '').trim()
   if (text === '') return { cheng_gong: false, yinPin: null, mime: '', shiChangHaoMiao: null, ti_shi: '文本为空' }
-  const voiceId = canShu.yinSeId === 'male-qn-chenqing' || canShu.yinSeId === 'tide' ? 'tide' : 'stella'
+  const voiceId = canShu.voiceId === 'male-qn-chenqing' || canShu.voiceId === 'tide' ? 'tide' : 'stella'
   const kongZhi = new AbortController()
   const dingShi = setTimeout(() => kongZhi.abort(), ChaoShiHaoMiao)
   try {

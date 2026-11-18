@@ -310,10 +310,8 @@ onBeforeUnmount(qingLiEmojiZiYuan)
 }
 
 .emoji-xiangmu {
-  width: 100%;
-  max-width: 36px;
-  aspect-ratio: 1;
-  height: auto;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -456,7 +454,6 @@ onBeforeUnmount(qingLiEmojiZiYuan)
 }
 
 .ge-caoZuo {
-  position: relative;
   width: 26px;
   height: 26px;
   display: flex;
@@ -469,18 +466,6 @@ onBeforeUnmount(qingLiEmojiZiYuan)
   font-size: 15px;
   line-height: 1;
   cursor: pointer;
-}
-
-@media (max-width: 767px) {
-  .ge-caoZuo::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 44px;
-    height: 44px;
-    transform: translate(-50%, -50%);
-  }
 }
 
 .ge-caoZuo:active:not(:disabled) {

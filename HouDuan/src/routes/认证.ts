@@ -70,7 +70,7 @@ function huoQuMiMa(
   const buFen = queRenQianZhu ? `${queRenQianZhu}XinMiMa` : 'MiMa'
   const xianShou =
     (typeof qingQiuTi[buFen] === 'string' ? (qingQiuTi[buFen] as string) : undefined) ??
-    (typeof qingQiuTi[huoQuTuoFengMing(buFen)] === 'string' ? (qingQiuTi[huoQuTuoFengMing(buFen)] as string) : undefined)
+    (typeof qingQiuTi[huoQuSnake(buFen)] === 'string' ? (qingQiuTi[huoQuSnake(buFen)] as string) : undefined)
   if (xianShou !== undefined) return xianShou
   return (
     (typeof qingQiuTi.miMa === 'string' ? qingQiuTi.miMa : undefined) ||
@@ -78,7 +78,7 @@ function huoQuMiMa(
   )
 }
 
-function huoQuTuoFengMing(camel: string): string {
+function huoQuSnake(camel: string): string {
   return camel.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase()
 }
 

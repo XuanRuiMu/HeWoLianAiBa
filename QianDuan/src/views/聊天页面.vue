@@ -1813,10 +1813,8 @@ onBeforeUnmount(() => {
 }
 
 .emoji-xiangmu {
-  width: 100%;
-  max-width: 36px;
-  aspect-ratio: 1;
-  height: auto;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1935,7 +1933,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: calc(var(--ceng-yu-lan) - 1);
+  z-index: 2000;
   padding: var(--jiange-da);
 }
 
@@ -2064,7 +2062,7 @@ onBeforeUnmount(() => {
 }
 
 .fupan-pizhu-qipao {
-  max-width: min(calc(100% - 126px), 520px);
+  max-width: min(calc(100vw - 126px), 520px);
   padding: var(--jiange-xiao) var(--jiange-12);
   border-radius: 8px;
   background: rgba(108, 92, 231, 0.12);
@@ -2262,7 +2260,7 @@ onBeforeUnmount(() => {
 
 .shipin-xianshi {
   width: 100%;
-  max-width: min(calc(100% - 126px), 320px);
+  max-width: min(calc(100vw - 126px), 320px);
   max-height: 240px;
   border-radius: var(--yuanjiao-xiao);
   background: #000;
@@ -2442,7 +2440,6 @@ onBeforeUnmount(() => {
 }
 
 .ge-caoZuo {
-  position: relative;
   width: 28px;
   height: 28px;
   display: flex;
@@ -2457,18 +2454,6 @@ onBeforeUnmount(() => {
   line-height: 1;
   cursor: pointer;
   transition: background-color 0.15s var(--quxian-biao-zhun), border-color 0.15s var(--quxian-biao-zhun);
-}
-
-@media (max-width: 767px) {
-  .ge-caoZuo::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 44px;
-    height: 44px;
-    transform: translate(-50%, -50%);
-  }
 }
 
 @media (hover: hover) {
@@ -2553,7 +2538,7 @@ onBeforeUnmount(() => {
 
 @media (max-width: 480px) {
   .fupan-pizhu-qipao {
-    max-width: min(calc(100% - 120px), 420px);
+    max-width: min(calc(100vw - 120px), 420px);
   }
 }
 </style>

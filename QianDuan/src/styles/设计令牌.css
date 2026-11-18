@@ -80,7 +80,7 @@
   --shuru-danxing-gao-du: 35px;
   --shuru-tubiao-chicun: var(--shuru-danxing-gao-du);
   
-  --shuru-zhan-kai-gao-du: calc(var(--shi-jiao-kou-gao-du) * 0.5);
+  --shuru-zhan-kai-gao-du: 50vh;
   --shuru-tubiao-glyph-chicun: 22px;
   
   --daifa-kuai-tu-kuan: 64px;

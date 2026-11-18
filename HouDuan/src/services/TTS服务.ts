@@ -4,7 +4,7 @@ import { heChengYuYin } from './DeepSeek官方工具'
 
 export interface TTS合成请求 {
   text: string
-  yinSeId: string
+  voiceId: string
   roleId?: string
   用户ID?: string
 }
@@ -23,7 +23,7 @@ export async function 合成语音(请求: TTS合成请求): Promise<TTS合成�
   const 开始时间 = Date.now()
 
   try {
-    const jieGuo = await heChengYuYin({ text: 请求.text, yinSeId: 请求.yinSeId, durationMs: guJiShiChangHaoMiao(请求.text) })
+    const jieGuo = await heChengYuYin({ text: 请求.text, voiceId: 请求.voiceId, durationMs: guJiShiChangHaoMiao(请求.text) })
     if (!jieGuo.cheng_gong || !jieGuo.yinPin) {
       throw new Error(jieGuo.ti_shi || 'TTS合成失败')
     }
@@ -42,7 +42,7 @@ export async function 合成语音(请求: TTS合成请求): Promise<TTS合成�
     debug日志.info('TTS服务', '语音合成成功', {
       xiang_qing: {
         roleId: 请求.roleId,
-        yinSeId: 请求.yinSeId,
+        voiceId: 请求.voiceId,
         字符数: 请求.text.length,
         音频大小: 音频二进制.length,
         时长: 时长毫秒,
@@ -58,7 +58,7 @@ export async function 合成语音(请求: TTS合成请求): Promise<TTS合成�
     debug日志.debug('TTS服务', '语音合成失败，已告警降级', {
       xiang_qing: {
         roleId: 请求.roleId,
-        yinSeId: 请求.yinSeId,
+        voiceId: 请求.voiceId,
         错误: String(错误),
         耗时: Date.now() - 开始时间,
       },

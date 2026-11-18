@@ -143,7 +143,7 @@ export const debug日志: RiZhiDuiXiang = {
     xieRuRiZhi('error', leiXing, xiaoXi, xuanXiang),
 }
 
-export function daiQingQiuRiZhi(
+export function withRequestId(
   qingQiuId: string,
   用户ID?: string,
   jiaoSeId?: string,

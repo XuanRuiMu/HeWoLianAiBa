@@ -26,7 +26,7 @@ const jiaoSeTiaoDuQiMap = new Map<string, TiaoDuQiJiLu>()
 const TiaoDuQiSuoQianZhui = 'tiao_du_qi_suo:'
 const TiaoDuQiSuoMiao = 30000
 const TiaoDuQiXuQiMiao = Math.floor(TiaoDuQiSuoMiao / 3)
-const BenJinChengBianHao = `${process.pid}-${Math.random().toString(36).slice(2, 10)}`
+const BenChengProcesseId = `${process.pid}-${Math.random().toString(36).slice(2, 10)}`
 
 async function changShiRenLingTiaoDuQi(用户ID: string, jiaoSeId: string, lingZhuBiaoShi: string): Promise<boolean> {
   const suoJian = `${TiaoDuQiSuoQianZhui}${用户ID}:${jiaoSeId}`
@@ -48,7 +48,7 @@ function kaiShiXuQiTiaoDuQiSuo(jian: string, jiLu: TiaoDuQiJiLu, 用户ID: strin
       } catch {
         return
       }
-      if (chiYou === BenJinChengBianHao) {
+      if (chiYou === BenChengProcesseId) {
         await redis.pexpire(suoJian, TiaoDuQiSuoMiao).catch(() => undefined)
         return
       }
@@ -116,7 +116,7 @@ async function queBaoJiaoSeTiaoDuQi(
   const jiuJiLu = jiaoSeTiaoDuQiMap.get(jian)
   if (jiuJiLu) return jiuJiLu
 
-  if (!(await changShiRenLingTiaoDuQi(yong_hu_id, jiao_se_id, BenJinChengBianHao))) {
+  if (!(await changShiRenLingTiaoDuQi(yong_hu_id, jiao_se_id, BenChengProcesseId))) {
     debug日志.warn('聊天Socket', '调度器已被他处认领，本进程禁建禁覆盖', {
       xiang_qing: { jiao_se_id, user_id: yong_hu_id },
     })
@@ -129,7 +129,7 @@ async function queBaoJiaoSeTiaoDuQi(
     huoQuJiaoSeBianHao(jiao_se_id),
   ])
   if (!ie类型) {
-    await shiFangTiaoDuQiSuo(yong_hu_id, jiao_se_id, BenJinChengBianHao)
+    await shiFangTiaoDuQiSuo(yong_hu_id, jiao_se_id, BenChengProcesseId)
     return null
   }
 
@@ -268,7 +268,7 @@ export function 初始化聊天Socket(io: Server): void {
           jiuJiLu.归属Socket.delete(socket.id)
           if (jiuJiLu.归属Socket.size === 0) {
             shanChuJiaoSeJiLuRuGuo(jiuJiLu, jiuJian)
-            void shiFangTiaoDuQiSuo(用户ID, jiuJiLu.角色ID, BenJinChengBianHao)
+            void shiFangTiaoDuQiSuo(用户ID, jiuJiLu.角色ID, BenChengProcesseId)
           }
         }
 
@@ -297,7 +297,7 @@ export function 初始化聊天Socket(io: Server): void {
         const jian = 生成角色TiaoDuQiJian(用户ID, jiLu.角色ID)
         if (jiLu.归属Socket.size === 0 && jiaoSeTiaoDuQiMap.get(jian) === jiLu) {
           shanChuJiaoSeJiLuRuGuo(jiLu, jian)
-          void shiFangTiaoDuQiSuo(用户ID, jiLu.角色ID, BenJinChengBianHao)
+          void shiFangTiaoDuQiSuo(用户ID, jiLu.角色ID, BenChengProcesseId)
           void guangBoTiaoDuQiBianGeng(用户ID, jiLu.角色ID, 'shi_fang')
         }
       }

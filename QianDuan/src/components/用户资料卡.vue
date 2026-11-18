@@ -91,25 +91,20 @@ onMounted(() => {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding: calc(var(--jiange-da) + var(--anquan-quyu-shang)) var(--jiange-da) calc(var(--jiange-da) + var(--anquan-quyu-xia));
-  overflow-y: auto;
-  z-index: var(--ceng-xieyi);
+  padding: var(--jiange-da);
+  z-index: 1000;
 }
 
 .ziliaoka-rongqi {
   position: relative;
-  margin: auto;
   background: rgba(20, 24, 40, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   padding: calc(var(--jiange-da) + var(--jiange-4)) var(--jiange-da) var(--jiange-da);
   max-width: 360px;
   width: 100%;
-  max-height: calc(var(--shi-jiao-kou-gao-du) - var(--jiange-da) * 2 - var(--anquan-quyu-shang) - var(--anquan-quyu-xia));
-  overflow-y: auto;
-  flex-shrink: 0;
 }
 
 .ziliaoka-guanbi {

@@ -358,7 +358,7 @@ watch(
 }
 
 .chehui-shijian {
-  font-size: 11px;
+  font-size: 10px;
   color: rgba(255, 255, 255, 0.3);
 }
 
@@ -376,4 +376,3 @@ watch(
   color: rgba(0, 0, 0, 0.25);
 }
 </style>
-

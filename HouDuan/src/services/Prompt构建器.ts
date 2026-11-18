@@ -506,7 +506,7 @@ export function gouJianZhaoHuiYeWanTiShi(): string {
   return '【睡眠与回复】游戏里的角色也要能接住对方发给 TA 的消息，不能因为睡了就拒绝聊天。若刚说过自己睡了，这次被新消息叫醒，就按“被你吵醒了，怎么了”的真实意思自然接起来，照顾一下对方的来意；隔很久再聊，就按新的时间说，不必继续装困。用户没追问睡觉时，别额外讲一段找补说明。'
 }
 
-export function gouJianGongXiangQianZhui(shuRu: AIYinQingShuRu): string {
+export function GouJianGongXiangQianZhui(shuRu: AIYinQingShuRu): string {
   return [
     gouJianDiErCeng(shuRu.jiao_se),
     构建恋爱身份层(shuRu.yong_hu_xing_bie, shuRu.jiao_se.xing_bie, huoQuGuanXiJieDuanMing(shuRu.hao_gan_du)),
@@ -643,7 +643,7 @@ export function gouJianWriterPrompt(
   zhiShi: 通用知识检索结果 = 检索通用知识(shuRu.yong_hu_xin_xiao_xi, !shuRu.zui_jia_shuo_de_shi),
 ): string {
   const cengCi = [
-    gouJianGongXiangQianZhui(shuRu),
+    GouJianGongXiangQianZhui(shuRu),
     构建通用知识层(zhiShi),
     gouJianDiYiCeng(),
     gouJianYuYanCeng(shuRu, ceLue),
@@ -695,7 +695,7 @@ export function gouJianWriterPrompt(
 }
 
 
-function shiTuJingXiangJinQiChunYingDa(liShi: AIYinQingShuRu['dui_hua_li_shi']): boolean {
+function ShiTuJingXiangJinQiChunYingDa(liShi: AIYinQingShuRu['dui_hua_li_shi']): boolean {
   const zuiJin = liShi.filter((m) => m.fa_song_zhe_lei_xing === 'yonghu').slice(-3).map((m) => String(m.nei_rong || ''))
   if (zuiJin.length < 2) return false
   return zuiJin.every((m) => m.trim().length <= 6)
@@ -707,7 +707,7 @@ export function gouJianDirectorPrompt(
   zhiShi: 通用知识检索结果 = 检索通用知识(shuRu.yong_hu_xin_xiao_xi, !shuRu.zui_jia_shuo_de_shi),
 ): string {
   return [
-    gouJianGongXiangQianZhui(shuRu),
+    GouJianGongXiangQianZhui(shuRu),
     构建通用知识层(zhiShi),
     ...(shuRu.lianWangSouSuo ? [shuRu.lianWangSouSuo] : []),
     gouJianGuanJianShiJianCeng(shuRu),
@@ -732,7 +732,7 @@ export function gouJianDirectorPrompt(
     `当前好感数值：总分${shuRu.hao_gan_du.zong_fen}（信任${shuRu.hao_gan_du.xin_ren_du}、亲密${shuRu.hao_gan_du.qin_mi_du}、趣味${shuRu.hao_gan_du.qu_wei_du}、关怀${shuRu.hao_gan_du.guan_huai_du}）`,
 
     '',
-    ...(shiTuJingXiangJinQiChunYingDa(shuRu.dui_hua_li_shi)
+    ...(ShiTuJingXiangJinQiChunYingDa(shuRu.dui_hua_li_shi)
       ? [
           '【对方的回复习惯】',
           '对方最近经常只回一两个字（嗯/哦/哈哈这类）。真人这样通常有几种可能：在忙、不知道说什么、或习惯性短回复。',

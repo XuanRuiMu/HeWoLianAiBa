@@ -375,7 +375,7 @@ onBeforeUnmount(() => {
 }
 
 .xieyi-dibu {
-  padding: var(--jiange-zhong) var(--jiange-da) calc(var(--jiange-da) + var(--anquan-quyu-xia));
+  padding: var(--jiange-zhong) var(--jiange-da) var(--jiange-da);
   border-top: 1px solid var(--tanchuang-biankuang);
   flex-shrink: 0;
 }
@@ -478,4 +478,3 @@ onBeforeUnmount(() => {
   }
 }
 </style>
-

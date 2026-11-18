@@ -126,21 +126,21 @@ const emit = defineEmits<{
 
 .qipao-waike {
   position: relative;
-  max-width: min(calc(100% - 126px), 520px);
+  max-width: min(calc(100vw - 126px), 520px);
 }
 
 @media (max-width: 480px) {
   .qipao-waike {
-    max-width: min(calc(100% - 120px), 420px);
+    max-width: min(calc(100vw - 120px), 420px);
   }
 }
 
 .qipao-waike.tupian-waike {
-  max-width: min(calc(100% - 126px), 260px);
+  max-width: min(calc(100vw - 126px), 260px);
 }
 
 .qipao-waike.wenjian-waike {
-  max-width: min(calc(100% - 126px), 320px);
+  max-width: min(calc(100vw - 126px), 320px);
 }
 
 .qipao-waike.yuyin-waike {
@@ -177,7 +177,6 @@ const emit = defineEmits<{
 }
 
 .fasong-shibai-jiaobiao {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -195,18 +194,6 @@ const emit = defineEmits<{
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
-}
-
-@media (max-width: 767px) {
-  .fasong-shibai-jiaobiao::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 44px;
-    height: 44px;
-    transform: translate(-50%, -50%);
-  }
 }
 
 .fasong-zhuangtai-zhuanquan {
