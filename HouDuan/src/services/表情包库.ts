@@ -720,7 +720,17 @@ export async function 候选系统表情(
     })
   }
   const daLuanHou = daLuan(finalPool)
-  return daLuanHou.slice(0, Math.min(tiShu, daLuanHou.length))
+  const jieGuo = daLuanHou.slice(0, Math.min(tiShu, daLuanHou.length))
+  if (guoLv) {
+    const yuanSheng = daLuanHou.filter((t) => t.duanMing.startsWith('wx_'))
+    if (yuanSheng.length > 0) {
+      const baoDi = daLuan(yuanSheng).slice(0, 3)
+      for (const t of baoDi) {
+        if (!jieGuo.some((x) => x.duanMing === t.duanMing)) jieGuo.push(t)
+      }
+    }
+  }
+  return jieGuo
 }
 export function 短名转UUID(duanMing: string): string {
   const yiJianHua = typeof duanMing === 'string' ? duanMing.trim() : ''
