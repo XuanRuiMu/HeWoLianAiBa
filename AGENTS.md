@@ -32,47 +32,91 @@
 
 ## 部署
 
-以下内容于 2026-11-04 在本机实际执行并在服务器上验证过，不是推测。
-
-部署属高危操作：动手前先用一句话说明要改哪些文件、影响什么、能否回滚，并取得用户确认（用户已明确要求本轮上线时视为已确认）。
+本节是当前实测可用的部署方法。若只改了前端静态文件，可按旧说明走“纯静态文件发布”；若改了后端或需要完整发布，直接按下面的“推荐部署流程”执行。
 
 ### 1. 服务器现状
 
 - **不用 Docker**：服务器上不存在 `docker` 命令
 - 应用目录 `/opt/lianaiba`，**不是 git 仓库**，部署方式为按文件同步
-- 登录：`ssh -i "C:\Users\xuanr\.ssh\aliyun_hk_trial" root@47.86.40.118`（主机名 `iZj6c08bwjilei4sstowgyZ`）
 - 后端：systemd 服务 `lianaiba.service`，`User=lianaiba`，`WorkingDirectory=/opt/lianaiba/HouDuan`，`ExecStart=/usr/bin/node dist/server.js`，监听 3000
-- 前端：nginx 配置 `/etc/nginx/conf.d/lianaiba.conf`，`root /opt/lianaiba/QianDuan/dist`（`/etc/nginx/sites-enabled/lianaiba` 是同一份的软链）
+- 前端：nginx 配置 `/etc/nginx/conf.d/lianaiba.conf`，`root /opt/lianaiba/QianDuan/dist`
 - 隧道：`cloudflared-lianaiba.service`
 - 域名：https://hewolianaiba.xuanruimu.top
+- 公网 IP：`47.86.40.118`
+- SSH 22 端口：**不是公网全开放**。已放行 `218.68.0.0/16` 和阿里云 Workbench 网段 `100.104.0.0/16`。若本机公网 IP 不在允许网段内，直接 SSH 会超时
+- 阿里云云助手已启用，可用 AccessKey 通过 API 在服务器执行命令
+- Chrome 已安装 DSH Bridge 扩展；本机已注册原生宿主 `com.dsh.bridge`，可通过桥接控制 Chrome 打开阿里云 Workbench 网页终端
 
-### 2. 纯静态文件发布（本次实际走的路径）
+### 2. 推荐部署流程（2026-11-18 实测通过）
+
+1. 本地确认代码已提交并推送到 `origin/main`。
+2. 本地构建：
+   - 后端：`npm --prefix HouDuan run build`
+   - 前端：`npm --prefix QianDuan run build`
+3. 优先尝试 SSH；若 22 端口超时，不要卡在这里，改走下面第 4 步的云助手或 Workbench。
+4. 服务器无法直接 SSH 时，用阿里云云助手执行命令：
+   - 在 `/tmp` 拉取 GitHub 最新 `main`：
+     ```bash
+     rm -rf /tmp/lianaiba-github
+     mkdir -p /tmp/lianaiba-github
+     cd /tmp/lianaiba-github
+     curl -L --fail --retry 3 -o repo.tar.gz https://github.com/XuanRuiMu/HeWoLianAiBa/archive/refs/heads/main.tar.gz
+     tar -xzf repo.tar.gz --strip-components=1
+     ```
+   - 同步代码到 `/opt/lianaiba`：
+     ```bash
+     cd /opt/lianaiba
+     rsync -a --delete /tmp/lianaiba-github/HouDuan/src/ HouDuan/src/
+     rsync -a --delete /tmp/lianaiba-github/HouDuan/QianYi/ HouDuan/QianYi/
+     rsync -a --delete /tmp/lianaiba-github/HouDuan/scripts/ HouDuan/scripts/
+     cp /tmp/lianaiba-github/HouDuan/package.json HouDuan/package.json
+     ```
+   - 服务器上构建：
+     ```bash
+     npm --prefix HouDuan run build
+     npm --prefix QianDuan run build
+     ```
+   - 重启并验证：
+     ```bash
+     systemctl restart lianaiba
+     sleep 8
+     curl -s -o /dev/null -w "readyz=%{http_code}\n" http://127.0.0.1:3000/readyz
+     systemctl is-active lianaiba nginx cloudflared-lianaiba
+     ```
+5. 若云助手也临时不可用，用 Chrome 打开阿里云 ECS 控制台，进入实例详情，点“远程连接 → 网页连接 → 立即登录”，在 Workbench 网页终端里执行同样命令。
+6. 部署后必查：
+   - `systemctl is-active lianaiba nginx cloudflared-lianaiba` 全部为 `active`
+   - `curl http://127.0.0.1:3000/readyz` 返回 200
+   - 公网首页 https://hewolianaiba.xuanruimu.top 返回 200
+   - 公网 `/readyz` 返回 200
+   - 需要时对比本地与服务器关键文件 SHA256
+
+### 3. 生产日志设置
+
+服务器 `/opt/lianaiba/HouDuan/.env` 当前应保持：
+
+```env
+LOG_LEVEL=info
+TI_SHI_CI_RI_ZHI_QI_YONG=false
+```
+
+- `LOG_LEVEL=info`：生产环境不输出完整提示词和聊天正文。
+- `TI_SHI_CI_RI_ZHI_QI_YONG=false`：关闭完整模型输入日志。
+- 本地开发可按需打开完整日志，但不要把打开状态复制到服务器。
+
+### 4. 数据库迁移
+
+- 代码里的启动迁移链在 `HouDuan/entrypoint.sh`：`node scripts/run_migration.js QianYi/migrations`
+- 本服务器无 Docker；遇到后端含迁移时，先备份数据库、在临时库试跑，核实清楚前不要执行。
+
+### 5. 旧静态文件发布方式（仅适用于纯前端静态小改动）
 
 1. 本地构建：`npm --prefix QianDuan run build`
 2. `scp` 上传到服务器 `/tmp/`
 3. 在服务器上 `chown lianaiba:lianaiba`、`chmod 644`
-4. 先备份旧文件到 `/tmp/<文件名>.旧-YYYYMMDD`（例：`/tmp/block-08.js.旧-20261104`）
-5. `mv` 原子覆盖目标文件，例如 `/opt/lianaiba/QianDuan/dist/grass-bg/scripts/block-08.js`；若服务器上还存有 `/opt/lianaiba/QianDuan/public/...` 同名源文件，也一并覆盖，保证两份一致
-6. **纯静态改动不需要重启任何服务**，nginx 直接读文件即可（静态资源响应头为 `cache-control: no-cache`）
-
-### 3. 后端变更发布
-
-1. 本地构建：`npm --prefix HouDuan run build`（`tsc` + 复制非 TS 运行时资源）
-2. 同步 `HouDuan/dist` 到 `/opt/lianaiba/HouDuan/dist`（同上，先 /tmp、再改属主权限、再原子替换）
-3. `systemctl restart lianaiba`
-4. 验证：`curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/readyz` 为 200，且 `systemctl is-active lianaiba` 为 active
-
-### 4. 数据库迁移
-
-- 代码里的启动迁移链在 [entrypoint.sh](file:///d:/xuanr/Desktop/玄锐暮工作区/和我恋爱吧/HouDuan/entrypoint.sh#L11)：`node scripts/run_migration.js QianYi/migrations`，端口/路径以该文件为准
-- 该文件是 Docker 镜像入口脚本；**本服务器无 Docker，生产库迁移实际如何执行尚未实测**。遇到后端含迁移时，须先核实（先备份数据库、在临时库试跑），核实清楚前不要动手，也不要编造流程。
-
-### 5. 部署后必查
-
-- 三份 SHA256 一致：本地 `QianDuan/dist`、本地 `QianDuan/public`（同文件存在时）、线上 URL 重新取回的文件
-- 首页 200：`Invoke-WebRequest https://hewolianaiba.xuanruimu.top/`
-- 后端本机健康检查 200：`127.0.0.1:3000/readyz`
-- 三个服务都 active：`systemctl is-active lianaiba nginx cloudflared-lianaiba`
+4. 先备份旧文件到 `/tmp/<文件名>.旧-YYYYMMDD`
+5. `mv` 原子覆盖目标文件
+6. 纯静态改动不需要重启服务
 
 ## 本机执行注意（实测踩过的坑）
 
