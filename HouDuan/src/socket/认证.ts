@@ -20,6 +20,25 @@ interface CheXiaoHuanCunXiang {
 
 const cheXiaoShiJianCuoHuanCun = new Map<string, CheXiaoHuanCunXiang>()
 const huanCunYouXiaoHaoMiao = 30000
+const huanCunRongLiangShangXian = 5000
+
+function xieRuHuanCun(用户ID: string, xiang: CheXiaoHuanCunXiang): void {
+  if (!cheXiaoShiJianCuoHuanCun.has(用户ID) && cheXiaoShiJianCuoHuanCun.size >= huanCunRongLiangShangXian) {
+    qingLiGuoQiHuanCun()
+  }
+  cheXiaoShiJianCuoHuanCun.set(用户ID, xiang)
+}
+
+function qingLiGuoQiHuanCun(): void {
+  const xianZai = Date.now()
+  for (const [用户ID, huanCun] of cheXiaoShiJianCuoHuanCun.entries()) {
+    if (huanCun.daoQiHaoMiao <= xianZai) cheXiaoShiJianCuoHuanCun.delete(用户ID)
+  }
+  if (cheXiaoShiJianCuoHuanCun.size >= huanCunRongLiangShangXian) {
+    const shouJian = cheXiaoShiJianCuoHuanCun.keys().next().value
+    if (shouJian !== undefined) cheXiaoShiJianCuoHuanCun.delete(shouJian)
+  }
+}
 
 async function huoQuCheXiaoShiJianCuoDaiHuanCun(用户ID: string): Promise<number | null> {
   const xianZai = Date.now()
@@ -27,7 +46,7 @@ async function huoQuCheXiaoShiJianCuoDaiHuanCun(用户ID: string): Promise<numbe
   if (huanCun && huanCun.daoQiHaoMiao > xianZai) return huanCun.zhi
   const zhi = await redis.get(huoQuCheXiaoJian(用户ID))
   const jieXiZhi = zhi === null ? null : Number(zhi)
-  cheXiaoShiJianCuoHuanCun.set(用户ID, { zhi: jieXiZhi, daoQiHaoMiao: xianZai + huanCunYouXiaoHaoMiao })
+  xieRuHuanCun(用户ID, { zhi: jieXiZhi, daoQiHaoMiao: xianZai + huanCunYouXiaoHaoMiao })
   return jieXiZhi
 }
 
@@ -54,7 +73,8 @@ export function guaZaiCheXiaoShouWei(socket: RenZhengSocket): void {
           return
         }
         shouWeiXiaYiBu()
-      } catch {
+      } catch (cuoWu) {
+        debug日志.warn('Socket认证', '吊销时间读取失败，按未吊销放行', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
         shouWeiXiaYiBu()
       }
     })()

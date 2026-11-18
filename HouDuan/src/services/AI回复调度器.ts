@@ -173,13 +173,17 @@ export class AI回复调度器 {
         duQuDuiHuaZhaiYao(this.用户ID, this.角色ID).then((zhaiYao) => {
           try {
             huanCunTongBuZhaiYao(this.用户ID, this.角色ID, gouJianZhaiYaoZhuRuWenBen(zhaiYao))
-          } catch {
-            // 忽略
+          } catch (cuoWu) {
+            debug日志.debug('AI调度器', '预取摘要缓存写入失败，下轮将重新读取', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
           }
-        }).catch(() => {}),
-      ).catch(() => {})
-    } catch {
-      // 忽略
+        }).catch((cuoWu) => {
+          debug日志.debug('AI调度器', '预取摘要读取失败，按空摘要处理', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
+        }),
+      ).catch((cuoWu) => {
+        debug日志.debug('AI调度器', '预取摘要模块加载失败', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
+      })
+    } catch (cuoWu) {
+      debug日志.debug('AI调度器', '预取摘要调度异常', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
     }
   }
 
@@ -1157,8 +1161,8 @@ private 当地现在小时(): number {
                 debug日志.warn('AI调度器', 'TTS 语音推送失败，已降级为纯文本', { xiang_qing: { cuo_wu: String(推送错误) } })
               }
             })
-            .catch(() => {
-              // 静默降级，已在服务内部处理
+            .catch((cuoWu) => {
+              debug日志.warn('AI调度器', 'TTS 语音合成链路失败，已降级为纯文本', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
             })
         })
       }
@@ -1182,14 +1186,20 @@ private 当地现在小时(): number {
           duQuDuiHuaZhaiYao(this.用户ID, this.角色ID).then((zhaiYao) => {
             try {
               huanCunTongBuZhaiYao(this.用户ID, this.角色ID, gouJianZhaiYaoZhuRuWenBen(zhaiYao))
-            } catch {
-              // 忽略
+            } catch (cuoWu) {
+              debug日志.warn('AI调度器', '摘要同步缓存写入失败，下轮将重新读取', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
             }
-          }).catch(() => {}),
-        ).catch(() => {}),
-      ).catch(() => {})
-    } catch {
-      // 忽略
+          }).catch((cuoWu) => {
+            debug日志.debug('AI调度器', '摘要回读失败，保持旧缓存', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
+          }),
+        ).catch((cuoWu) => {
+          debug日志.debug('AI调度器', '摘要生成失败，不影响本轮回复', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
+        }),
+      ).catch((cuoWu) => {
+        debug日志.debug('AI调度器', '摘要模块加载失败，不影响本轮回复', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
+      })
+    } catch (cuoWu) {
+      debug日志.debug('AI调度器', '关键事件/摘要后处理异常，不影响本轮回复', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
     }
     void 尝试头像演化({
       用户ID: this.用户ID,

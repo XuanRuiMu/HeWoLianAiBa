@@ -157,7 +157,7 @@ onMounted(() => {
   --tongzhi-kong-fuwen: rgba(255, 255, 255, 0.4);
   --tongzhi-fen-wenben: #ff8fac;
   width: 100%;
-  min-height: calc(100vh - 52px);
+  min-height: calc(var(--shi-jiao-kou-gao-du) - var(--daohanglan-gao-du));
   padding: var(--jiange-da);
   background: transparent;
 }

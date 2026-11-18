@@ -1840,6 +1840,89 @@ onBeforeUnmount(() => {
   transform: scale(0.95);
 }
 
+.wei-ji-tan-chuang {
+  position: fixed;
+  inset: 0;
+  z-index: var(--ceng-xieyi);
+  background: var(--zhezhao-beijing);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--jiange-da);
+}
+
+.wei-ji-nei {
+  width: 100%;
+  max-width: 340px;
+  max-height: calc(var(--shi-jiao-kou-gao-du) - var(--jiange-da) * 2);
+  overflow-y: auto;
+  background: var(--tanchuang-beijing);
+  border: 1px solid var(--cuowu-yanse);
+  border-radius: var(--yuanjiao-da);
+  padding: var(--jiange-da);
+  text-align: center;
+  box-shadow: var(--tanchuang-yinying);
+}
+
+.wei-ji-nei h2 {
+  margin: 0 0 var(--jiange-zhong);
+  font-size: var(--ziti-da);
+  color: var(--tanchuang-biaoti);
+}
+
+.wei-ji-nei p {
+  margin: 0 0 var(--jiange-zhong);
+  font-size: var(--ziti-zhong);
+  line-height: 1.6;
+  color: var(--wenben-zhuse);
+  word-break: break-word;
+}
+
+.wei-ji-re-xian {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--cuowu-yanse);
+}
+
+.wei-ji-an-niu-zu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jiange-xiao);
+  margin-top: var(--jiange-zhong);
+}
+
+.wei-ji-bo-da,
+.wei-ji-guan-bi {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--shuru-anniu-re-ku);
+  border-radius: var(--yuanjiao-zhong);
+  font-size: var(--ziti-zhong);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.wei-ji-bo-da {
+  background: var(--cuowu-yanse);
+  color: #ffffff;
+  border: none;
+}
+
+.wei-ji-guan-bi {
+  background: transparent;
+  color: var(--wenben-ciuse);
+  border: 1px solid var(--biankuang-yanse);
+}
+
+@media (max-width: 374px) {
+  .wei-ji-nei {
+    max-width: 100%;
+  }
+}
+
 .youxi-zhezhao {
   position: fixed;
   top: 0;

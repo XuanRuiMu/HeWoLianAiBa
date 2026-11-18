@@ -122,8 +122,8 @@ watch(
 <style scoped>
 .junshi-jilu-yemian {
   width: 100%;
-  height: calc(100vh - 52px);
-  min-height: calc(100vh - 52px);
+  height: calc(var(--shi-jiao-kou-gao-du) - var(--daohanglan-gao-du));
+  min-height: calc(var(--shi-jiao-kou-gao-du) - var(--daohanglan-gao-du));
   padding: var(--jiange-da) var(--jiange-zhong);
   display: flex;
   flex-direction: column;
