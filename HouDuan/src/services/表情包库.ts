@@ -1,3 +1,4 @@
+import { yuanShengBiaoQingTiaoMuLieBiao, 构建原生表情条目 } from './原生表情库'
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -708,26 +709,20 @@ export async function 候选系统表情(
   const excludeList = Array.isArray(paiChuDuanMing) ? paiChuDuanMing : []
   const filtered = excludeList.length > 0 ? mingZhong.filter((t) => !excludeList.includes(t.duanMing)) : mingZhong
   const finalPool = filtered.length > 0 ? filtered : mingZhong
-  if (guoLv) {
-    debug日志.debug(日志类型, '候选已按人设与关系阶段筛选', {
-      xiang_qing: {
-        yuan_shu: qiYongLieBiao.length,
-        fu_he_zai_ti: fuHeZaiTi.length,
-        zui_zhong: mingZhong.length,
-        yun_xu_feng_ge_shu: guoLv.yunXuFengGe.length,
-        jie_duan_xu_hao: guoLv.guanXiJieDuanXuHao,
-      },
-    })
-  }
   const daLuanHou = daLuan(finalPool)
   const jieGuo = daLuanHou.slice(0, Math.min(tiShu, daLuanHou.length))
   if (guoLv) {
-    const yuanSheng = daLuanHou.filter((t) => t.duanMing.startsWith('wx_'))
-    if (yuanSheng.length > 0) {
-      const baoDi = daLuan(yuanSheng).slice(0, 3)
-      for (const t of baoDi) {
-        if (!jieGuo.some((x) => x.duanMing === t.duanMing)) jieGuo.push(t)
-      }
+    const yuanShengQuanBu = await yuanShengBiaoQingTiaoMuLieBiao()
+    const yuanShengFuHe = yuanShengQuanBu.filter(
+      (t) =>
+        guoLv.yunXuFengGe.includes(t.fengGe ?? 表情默认风格) &&
+        (t.guanXiJieDuanXiaXian ?? 0) <= guoLv.guanXiJieDuanXuHao &&
+        (qingXuBiaoQian === null || t.qingXuBiaoQian === qingXuBiaoQian) &&
+        !(paiChuDuanMing ?? []).includes(t.duanMing),
+    )
+    const baoDi = daLuan(yuanShengFuHe).slice(0, 3)
+    for (const t of [...daLuanHou, ...baoDi]) {
+      if (!jieGuo.some((x) => x.duanMing === t.duanMing)) jieGuo.push(t)
     }
   }
   return jieGuo
@@ -749,6 +744,7 @@ export function 短名转UUID(duanMing: string): string {
 }
 
 export async function 按短名查(duanMing: string): Promise<表情包条目 | null> {
+  if (duanMing.startsWith('wx_')) return 构建原生表情条目(duanMing.slice(3))
   if (typeof duanMing !== 'string') return null
   const jianHua = duanMing.trim()
   if (jianHua === '') return null

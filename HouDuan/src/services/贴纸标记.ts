@@ -1,5 +1,3 @@
-import { readFileSync } from 'fs'
-import { resolve } from 'path'
 import { BiaoQingTieZhiBiaoJi } from '../config/表情包配置'
 import { debug日志 } from '../utils/debug日志'
 
@@ -112,18 +110,6 @@ function jiLuQingXiYiChang(yuanWen: string, shanChuShu: number): void {
   })
 }
 
-const yuanshengBiaoQingMing = new Set<string>(
-  (JSON.parse(readFileSync(resolve(__dirname, '../config/微信原生表情码表.json'), 'utf-8')) as Array<{ name: string }>).map((x) => x.name)
-)
-
-export function zhuanHuanYuanShengBiaoQing(wenBen: string): string {
-  if (typeof wenBen !== 'string' || wenBen === '') return wenBen
-  return wenBen.replace(/\[([^\[\]]{1,8})\]/g, (quan: string, ming: string) => {
-    const mingCheng = ming.trim()
-    if (yuanshengBiaoQingMing.has(mingCheng)) return `[贴纸:wx_${mingCheng}]`
-    return quan
-  })
-}
 export function qingXiTieZhiCanPian(wenBen: string): string {
   if (typeof wenBen !== 'string' || wenBen === '') return ''
   let shanChuShu = 0
