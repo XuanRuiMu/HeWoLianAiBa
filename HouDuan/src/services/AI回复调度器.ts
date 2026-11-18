@@ -1139,9 +1139,9 @@ private 当地现在小时(): number {
       })
 
       if (概率结果.是否触发 && tts文本) {
-        const voiceId = this.当前角色.voice_id || 'female-shaonv'
+        const yinSeId = this.当前角色.voice_id || 'female-shaonv'
         setImmediate(() => {
-          尝试合成语音({ text: tts文本, voiceId, roleId: this.角色ID, 用户ID: this.用户ID })
+          尝试合成语音({ text: tts文本, yinSeId, roleId: this.角色ID, 用户ID: this.用户ID })
             .then(async 结果 => {
               if (!结果) return
               if (信号.aborted || 处理ID !== this.当前处理ID) {

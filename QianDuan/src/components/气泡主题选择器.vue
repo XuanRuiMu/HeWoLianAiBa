@@ -770,7 +770,7 @@ async function queRenShanChu(): Promise<void> {
 
 .qi-pao-liang-lan {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
   gap: var(--jiange-12);
   min-width: 0;
 }

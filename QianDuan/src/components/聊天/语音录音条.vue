@@ -81,7 +81,7 @@ function yinBoGaoDu(qiangDu: number): string {
   flex-direction: column;
   align-items: center;
   gap: var(--jiange-zhong);
-  padding: calc(var(--jiange-da) + var(--jiange-4)) calc(var(--jiange-da) + var(--jiange-xiao));
+  padding: calc(var(--jiange-da) + var(--jiange-4)) calc(var(--jiange-da) + var(--jiange-xiao)) calc(var(--jiange-da) + var(--jiange-4) + var(--anquan-quyu-xia));
   border-radius: var(--yuanjiao-da);
   background: var(--tanchuang-beijing);
   border: 0.5px solid var(--tanchuang-biankuang);
@@ -178,3 +178,4 @@ function yinBoGaoDu(qiangDu: number): string {
   background: var(--guanbi-anniu-hover);
 }
 </style>
+

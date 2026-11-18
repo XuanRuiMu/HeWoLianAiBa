@@ -49,7 +49,7 @@ describe('FP06 气泡主题卡片真实气泡形状', () => {
   })
 
   it('双栏网格契约保持：auto-fit 260px 两列，窄屏单列时 AI 组落在上方', () => {
-    expect(取规则(卡片源, '.qi-pao-liang-lan')).toContain('grid-template-columns: repeat(auto-fit, minmax(260px, 1fr))')
+    expect(取规则(卡片源, '.qi-pao-liang-lan')).toContain('grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr))')
   })
 
   it('卡片尾巴几何与真实气泡容器消费同一共享实现', () => {

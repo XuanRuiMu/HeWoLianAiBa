@@ -92,6 +92,7 @@ defineExpose({
   justify-content: center;
   gap: var(--jiange-12);
   padding: var(--jiange-xiao) var(--jiange-zhong);
+  padding-bottom: calc(var(--jiange-xiao) + var(--anquan-quyu-xia));
   background: var(--jinggao-yanse);
   color: #1a1a1a;
   font-size: var(--ziti-xiao);
@@ -105,6 +106,7 @@ defineExpose({
 }
 
 .duan-wang-guan-bi {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -119,6 +121,18 @@ defineExpose({
   flex-shrink: 0;
   padding: 0;
   transition: background 0.2s ease;
+}
+
+@media (max-width: 767px) {
+  .duan-wang-guan-bi::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
 }
 
 .duan-wang-guan-bi:hover {

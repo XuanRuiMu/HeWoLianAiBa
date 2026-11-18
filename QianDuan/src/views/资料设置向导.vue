@@ -706,7 +706,7 @@ async function kaiShiLiaoTian() {
 }
 
 .mbti-miaoShu {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--kapian-shuoming-wenben);
   line-height: 1.3;
   overflow: hidden;
@@ -1008,7 +1008,7 @@ async function kaiShiLiaoTian() {
   }
 
   .mbti-miaoShu {
-    font-size: 8px;
+    font-size: 11px;
     -webkit-line-clamp: 1;
   }
 
@@ -1080,3 +1080,4 @@ async function kaiShiLiaoTian() {
   }
 }
 </style>
+

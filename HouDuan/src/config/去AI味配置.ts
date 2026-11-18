@@ -98,7 +98,7 @@ export function panDuanShiFouMoXingChouJian(suiJiShu: number = Math.random()): b
   return suiJiShu < QuAiWeiPeiZhi.模型抽检比例
 }
 
-export const QuAiWeiHuiDuGuanJian = 'QU_AI_WEI_HUI_DU'
+export const quAiWeiHuiDuGuanJian = 'QU_AI_WEI_HUI_DU'
 
 const TaoHuaCiBiao = [
   '抱抱你',
