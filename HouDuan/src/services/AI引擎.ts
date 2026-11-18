@@ -23,7 +23,6 @@ export * from './情感分析'
 export * from './好感度评判'
 export * from './安全审核'
 export * from './军师求助'
-export * from './关键事件提取'
 
 const ZuiDaTiaoShu = 5
 

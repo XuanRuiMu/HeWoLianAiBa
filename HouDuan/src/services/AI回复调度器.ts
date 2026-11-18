@@ -1,3 +1,4 @@
+import { anPaiGuanHuai } from './主动关怀调度器'
 import type { Server } from 'socket.io'
 import { yunXingAIYinQing } from './AI引擎'
 import { pingPanHaoGanDuPiLiangNei } from './好感度评判'
@@ -163,33 +164,9 @@ export class AI回复调度器 {
     }
 
     this.重置()
-    this.预取回填摘要()
     void chuLiQueXiKouJian(this.用户ID, this.角色ID).catch(() => undefined)
     const benCiJianCeID = ++this.当前检测ID
     return this.检测用户消息并决定后续(benCiJianCeID)
-  }
-
-  private 预取回填摘要(): void {
-    if (process.env.VITEST === 'true') {
-      return
-    }
-    try {
-      import('./对话摘要').then(({ duQuDuiHuaZhaiYao, gouJianZhaiYaoZhuRuWenBen, huanCunTongBuZhaiYao }) =>
-        duQuDuiHuaZhaiYao(this.用户ID, this.角色ID).then((zhaiYao) => {
-          try {
-            huanCunTongBuZhaiYao(this.用户ID, this.角色ID, gouJianZhaiYaoZhuRuWenBen(zhaiYao))
-          } catch (cuoWu) {
-            debug日志.debug('AI调度器', '预取摘要缓存写入失败，下轮将重新读取', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
-          }
-        }).catch((cuoWu) => {
-          debug日志.debug('AI调度器', '预取摘要读取失败，按空摘要处理', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
-        }),
-      ).catch((cuoWu) => {
-        debug日志.debug('AI调度器', '预取摘要模块加载失败', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
-      })
-    } catch (cuoWu) {
-      debug日志.debug('AI调度器', '预取摘要调度异常', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
-    }
   }
 
   private async 触发连发预警(): Promise<void> {
@@ -576,6 +553,11 @@ private 当地现在小时(): number {
         if (daiBu !== undefined) {
           debug日志.info('AI调度器', '处理期间有新消息到达，完成后补一轮', { xiang_qing: { qu_dong_xiao_xi_id: daiBu } })
           void this.处理用户消息(daiBu)
+        } else {
+          void anPaiGuanHuai(this.用户ID, this.角色ID, async (neiRong) => {
+            const 保存结果 = await 保存角色XiaoXi({ yong_hu_id: this.用户ID, jiao_se_id: this.角色ID, nei_rong: neiRong })
+            this.推送角色回复([保存结果])
+          })
         }
       }
     }
@@ -789,16 +771,8 @@ private 当地现在小时(): number {
     const 本轮连发数 = this.自上一条角色消息以来的用户消息计数
     const 当前睡前 = (() => { const h = this.当地现在小时(); return h >= 22 || h < 6 })()
     const silenceLevel = this.算沉默等级(历史消息, 最新消息内容, 本轮连发数, false, 当前睡前)
-    const yuQuZhaiYao = this.读同步摘要()
-    let guanJianZhuRu = ''
-    if (process.env.VITEST !== 'true') {
-      try {
-        const { duQuGuanJianShiJianZhuRu } = await import('./关键事件提取')
-        guanJianZhuRu = await duQuGuanJianShiJianZhuRu(this.用户ID, this.角色ID, undefined, 最新消息文本)
-      } catch {
-        guanJianZhuRu = ''
-      }
-    }
+    const yuQuZhaiYao = ''
+    const guanJianZhuRu = ''
     let lianWangZhuRu = ""
     try {
       const { huoQuLianWangSouSuoZhuRu } = await import("./联网搜索")
@@ -845,15 +819,6 @@ private 当地现在小时(): number {
     }
 
     return yunXingAIYinQing(输入, 信号)
-  }
-
-  private 读同步摘要(): string {
-    try {
-      const duiHuaZhaiYao = require('./对话摘要') as typeof import('./对话摘要')
-      return duiHuaZhaiYao.duQuTongBuZhaiYao(this.用户ID, this.角色ID)
-    } catch {
-      return ''
-    }
   }
 
   private async 获取最新消息文本(
@@ -1181,37 +1146,6 @@ private 当地现在小时(): number {
 
     if (处理ID === this.当前处理ID) this.发布AI状态('kong_xian')
 
-    try {
-    if (process.env.VITEST !== 'true' && yiFaSongLieBiao.length > 0) {
-      try {
-        const { tiQuBingLuoKuGuanJianShiJian } = await import('./关键事件提取')
-        const duiHuaWenBen = [最新消息文本, ...yiFaSongLieBiao].join('\n')
-        await tiQuBingLuoKuGuanJianShiJian(this.用户ID, this.角色ID, duiHuaWenBen, this.当前角色?.wei_xin_ming ?? '')
-      } catch (e) {
-        debug日志.warn('AI调度器', '关键事件抽取失败，不影响回复', { xiang_qing: { cuo_wu: String(e) } })
-      }
-    }
-
-      import('./对话摘要').then(({ shengChengBingLuoKuZhaiYao, huanCunTongBuZhaiYao, gouJianZhaiYaoZhuRuWenBen, duQuDuiHuaZhaiYao }) =>
-        shengChengBingLuoKuZhaiYao(this.用户ID, this.角色ID, this.当前角色?.wei_xin_ming ?? '').then(() =>
-          duQuDuiHuaZhaiYao(this.用户ID, this.角色ID).then((zhaiYao) => {
-            try {
-              huanCunTongBuZhaiYao(this.用户ID, this.角色ID, gouJianZhaiYaoZhuRuWenBen(zhaiYao))
-            } catch (cuoWu) {
-              debug日志.warn('AI调度器', '摘要同步缓存写入失败，下轮将重新读取', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
-            }
-          }).catch((cuoWu) => {
-            debug日志.debug('AI调度器', '摘要回读失败，保持旧缓存', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
-          }),
-        ).catch((cuoWu) => {
-          debug日志.debug('AI调度器', '摘要生成失败，不影响本轮回复', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
-        }),
-      ).catch((cuoWu) => {
-        debug日志.debug('AI调度器', '摘要模块加载失败，不影响本轮回复', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
-      })
-    } catch (cuoWu) {
-      debug日志.debug('AI调度器', '关键事件/摘要后处理异常，不影响本轮回复', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
-    }
     void 尝试头像演化({
       用户ID: this.用户ID,
       jiaoSeId: this.角色ID,

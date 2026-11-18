@@ -5,7 +5,6 @@ import type { 复盘批注, 复盘时间线条目 } from './战绩'
 import { HaoGanDuPeiZhi } from '../config/好感度配置'
 import { YunYingZiDuanXiaoXiLeiXing } from '../config/消息配置'
 import { huoQuWanZhengHaoGanDu, huoQuJieDuanMing } from './好感度'
-import { tiQuBingLuoKuGuanJianShiJian } from './关键事件提取'
 import { zhaXingBianTi, type MBTI类型 } from '../config/角色配置'
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
@@ -488,30 +487,11 @@ export async function shengChengFuPan(
       ? { zong_fen: haoGanDuGuiJi.zuiZhongFen, guan_xi_jie_duan: haoGanDuGuiJi.guanXiJieDuan }
       : undefined }
 
-  let guanJianShiJian: GongJianShiJianJieGuo[] = []
-  if (xiaoXiLieBiao.length > 0) {
-    const duiHuaWenBen = zhanShiFuPanXiaoXiWenBen(xiaoXiLieBiao, false)
-    if (duiHuaWenBen) {
-      try {
-        guanJianShiJian = await tiQuBingLuoKuGuanJianShiJian(
-          yong_hu_id,
-          jiao_se_id,
-          duiHuaWenBen,
-          fuPanJiaoSeXinXi.weiXinNiCheng,
-          fuPanShangXiaWen,
-        )
-      } catch {
-        guanJianShiJian = []
-      }
-    }
-  }
-
   const prompt = gouJianFuPanPrompt({
     xiaoXiLieBiao,
     jiaoSeJiBenXinXi: fuPanJiaoSeXinXi,
     ...(zhaXingTeZhi ? { zhaXingTeZhi } : {}),
     ...(haoGanDuGuiJi ? { haoGanDuGuiJi } : {}),
-    ...(guanJianShiJian.length > 0 ? { guanJianShiJian } : {}),
     ...(miJiTiShi ? { miJiTiShi } : {}) })
 
   const xiangYing = await 按配置调用('FuPanShengCheng', [
