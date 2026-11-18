@@ -270,12 +270,12 @@ onBeforeUnmount(卸载监听)
 .qu-hao-zhe-zhao {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  z-index: var(--ceng-caidan);
   background: transparent;
 }
 
 .qu-hao-lie-biao {
-  z-index: 1201;
+  z-index: calc(var(--ceng-caidan) + 1);
   min-width: var(--shuru-qu-hao-lie-biao-kuan);
   max-height: var(--shuru-qu-hao-lie-biao-gao);
   padding: var(--jiange-6);

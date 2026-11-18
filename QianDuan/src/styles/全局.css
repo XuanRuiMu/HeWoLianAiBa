@@ -435,7 +435,7 @@ img {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  min-height: var(--bu-ju-gao-du);
 }
 
 .yemian-rongqi.quanping-rongqi {

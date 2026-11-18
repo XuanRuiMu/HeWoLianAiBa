@@ -140,7 +140,7 @@ export async function shenHeTuPianAnQuan(wenJianLuJing: string): Promise<AnQuanS
   if (mingZhong) return mingZhong
 
   const base64 = tuPianHuanChong.toString('base64')
-  const mime = getMimeFromFile(wenJianLuJing)
+  const mime = congWenJianQuMIME(wenJianLuJing)
 
   try {
     const xiangYing = await 按配置调用('TuPianShenHe', [
@@ -167,7 +167,7 @@ export async function shenHeTuPianAnQuan(wenJianLuJing: string): Promise<AnQuanS
   }
 }
 
-function getMimeFromFile(luJing: string): string {
+function congWenJianQuMIME(luJing: string): string {
   const houZhui = luJing.toLowerCase().split('.').pop()
   switch (houZhui) {
     case 'png':

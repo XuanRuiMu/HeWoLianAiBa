@@ -124,8 +124,9 @@ describe('聊天预览复用真实聊天页的渲染实现', () => {
     expect(行源).toContain('background: var(--touxiang-beijing-moren)')
     expect(行源).toContain('margin-left: var(--jiange-10)')
     expect(行源).toContain('margin-right: var(--jiange-10)')
-    expect(行源).toContain('max-width: min(calc(100vw - 126px), 520px)')
-    expect(行源).toContain('max-width: min(calc(100vw - 120px), 420px)')
+    expect(行源).toContain('max-width: min(calc(100% - 126px), 520px)')
+    expect(行源, '气泡宽度禁止基于 100vw（桌面滚动条误差会横向溢出）').not.toContain('100vw')
+    expect(行源).toContain('max-width: min(calc(100% - 120px), 420px)')
     expect(行源).toContain('@media (max-width: 480px)')
     expect(行源).toContain('<TouXiang')
     expect(持有皮肤的文件(/\.xiaoxi-wei\s*\{/)).toEqual([

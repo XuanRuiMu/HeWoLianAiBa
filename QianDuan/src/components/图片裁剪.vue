@@ -1108,7 +1108,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   padding: var(--jiange-da);
-  z-index: 1000;
+  z-index: var(--ceng-yu-lan);
 }
 
 :root[data-theme='light'] .caijian-zhezhao {
@@ -1131,7 +1131,7 @@ onBeforeUnmount(() => {
   padding: var(--jiange-da);
   max-width: 380px;
   width: 100%;
-  max-height: min(88vh, 860px);
+  max-height: min(calc(var(--shi-jiao-kou-gao-du) * 0.88), 860px);
   overflow-y: auto;
   text-align: center;
   outline: none;
