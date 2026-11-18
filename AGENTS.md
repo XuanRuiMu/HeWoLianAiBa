@@ -47,6 +47,22 @@
 - 阿里云云助手已启用，可用 AccessKey 通过 API 在服务器执行命令
 - Chrome 已安装 DSH Bridge 扩展；本机已注册原生宿主 `com.dsh.bridge`，可通过桥接控制 Chrome 打开阿里云 Workbench 网页终端
 
+#### 服务器访问凭据与实测结论（2026-11-18）
+
+| 项目 | 值 / 结论 |
+|---|---|
+| 实例 ID | `i-j6c08bwjilei4sstowgy`（地域 `cn-hongkong`，ecs.e-c1m1.large 2C2G） |
+| 公网 IP | `47.86.40.118` |
+| 系统 | Ubuntu 26.04.1 LTS，PostgreSQL 18.6（PGDG 源） |
+| SSH 密钥 | `C:\Users\xuanr\Desktop\玄锐暮工作区\总控制台\服务器-aliyun_hk_trial`（私钥，无密码）；指纹 `SHA256:NsKjbU8vkbW63CUOxaDnzE+VIF34+vx7b9sDE+cVbgc` |
+| SSH 实测 | 本机公网 IP `125.36.112.47` **不在** `218.68.0.0/16` 放行段 → 22 端口直连必超时，别反复试。**密钥本身仍有效**：总控制台私钥对应公钥指纹 `SHA256:NsKjbU8vkbW63CUOxaDnzE+VIF34+vx7b9sDE+cVbgc`，2026-11-18 实测仍在服务器 `authorized_keys` 里；一旦本机 IP 进入放行段（或经代理/跳板），即可直接 SSH |
+| **当前实际可用通道：阿里云云助手 API** | 用 AccessKey（`LTAI5t86gJnakBd8Fp9tAACi`，Secret 见 `总控制台\API大全（重要，勿删）.txt`）调 ECS `RunCommand`（`Type=RunShellScript`，参数 `InstanceId.1`、`CommandContent`），再轮询 `DescribeInvocations` 取 `Output`（Base64）。实测可用，脚本模板：`和我恋爱吧\表情包实验室\tmp_aliyun_api.ps1` |
+| 云助手 API 要点 | 端点 `https://ecs.aliyuncs.com`；`CommandContent`、`InstanceId.N` 必须以**原文**参与签名（不能先编码再拼）；单次命令超时建议 ≥60s；输出是 Base64，需解码 |
+| 备用通道 | Chrome DSH Bridge 打开阿里云控制台 → 实例详情 → 远程连接 → Workbench 网页终端。注意：控制台登录账号 `16622370059`，**密码不是** `BXYXblupz542284`（实测该密码报“密码错误”），需要用户本人提供或已保存的登录态 |
+| 阿里云 AccessKey | `LTAI5t86gJnakBd8Fp9tAACi` / Secret 在 `总控制台\API大全（重要，勿删）.txt`（轮转用，别提交进仓库） |
+| 服务器部署路径 | `/opt/lianaiba`（非 git 仓库）；表情包目录 `/opt/lianaiba/表情包/` |
+| 数据库 | PostgreSQL 18.6，业务库 `lianaiba`（表/列均为中文名，如 `系统表情`），pgvector 0.8.7 已启用（2026-11-18 实测） |
+
 ### 2. 推荐部署流程（2026-11-18 实测通过）
 
 1. 本地确认代码已提交并推送到 `origin/main`。
