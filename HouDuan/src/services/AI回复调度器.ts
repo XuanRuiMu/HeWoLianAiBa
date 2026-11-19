@@ -6,6 +6,7 @@ import { gengXinHaoGanDu, huoQuWanZhengHaoGanDu } from './好感度'
 import { 尝试头像演化 } from './头像生成'
 import { 发送表情包消息 } from './系统表情'
 import { qieFenTieZhi, qingXiTieZhiCanPian } from './贴纸标记'
+import { isYuanShengBiaoQingDuanMing } from './原生表情库'
 import { BiaoQingBaoYunXing, BiaoQingFaSongYuanYin } from '../config/表情包配置'
 import { chuLiQueXiKouJian } from './亲密度缺席扣减'
 import {
@@ -109,6 +110,7 @@ export class AI回复调度器 {
   private 已送达登记 = new Map<string, number>()
   private 本轮贴纸账 = new Map<number, number>()
   private 最近贴纸短名: string[] = []
+  private 连发小表情计数 = 0
 
   private 追加计时器: NodeJS.Timeout | null = null
   private 上条角色消息时刻 = 0
@@ -874,6 +876,7 @@ private 当地现在小时(): number {
     let chuLiDuanShu = 0
     let benLunYiFaChuNeiRong = false
     let shangYiDuanShiTieZhi = false
+    this.连发小表情计数 = 0
 
     for (const yuanShiXiaoXi of 消息列表) {
       for (const duan of qieFenTieZhi(yuanShiXiaoXi)) {
@@ -901,7 +904,8 @@ private 当地现在小时(): number {
             shangYiDuanShiTieZhi = false
             continue
           }
-          if (yiFaTieZhiShu >= BiaoQingBaoYunXing.zuiDaMeiLunZhangShu) {
+          const shiYuanSheng = isYuanShengBiaoQingDuanMing(duan.neiRong)
+          if (!shiYuanSheng && yiFaTieZhiShu >= BiaoQingBaoYunXing.zuiDaMeiLunZhangShu) {
             debug日志.warn('AI调度器', '本轮表情包张数已到上限，这一段丢弃', {
               xiang_qing: {
                 jiao_se_id: this.角色ID,
@@ -934,6 +938,26 @@ private 当地现在小时(): number {
             shangYiDuanShiTieZhi = false
             continue
           }
+          if (shiYuanSheng) {
+            shangYiDuanShiTieZhi = false
+            this.连发小表情计数 = this.连发小表情计数 + 1
+            benLunYiFaChuNeiRong = true
+            if (this.连发小表情计数 > 6) {
+              debug日志.warn('AI调度器', '本轮微信小表情超过6连发，后续不再发', {
+                xiang_qing: { jiao_se_id: this.角色ID, lun_ci: 处理ID, duan_ming: duan.neiRong },
+              })
+              continue
+            }
+            try {
+              this.推送角色回复([biaoQingXiaoXi], 轮次)
+            } catch (cuoWu) {
+              debug日志.error('AI调度器', '微信小表情回复推送异常', {
+                xiang_qing: { jiao_se_id: this.角色ID, xiao_xi_id: biaoQingXiaoXi.id, cuo_wu: String(cuoWu) },
+              })
+            }
+            continue
+          }
+          this.连发小表情计数 = 0
           yiFaTieZhiShu += 1
           this.记本轮已发贴纸(处理ID, yiFaTieZhiShu)
           this.最近贴纸短名.push(duan.neiRong)
