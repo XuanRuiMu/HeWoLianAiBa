@@ -1,4 +1,4 @@
-import { yuanShengBiaoQingTiaoMuLieBiao, 构建原生表情条目 } from './原生表情库'
+import { 构建原生表情条目 } from './原生表情库'
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -711,20 +711,6 @@ export async function 候选系统表情(
   const finalPool = filtered.length > 0 ? filtered : mingZhong
   const daLuanHou = daLuan(finalPool)
   const jieGuo = daLuanHou.slice(0, Math.min(tiShu, daLuanHou.length))
-  if (guoLv) {
-    const yuanShengQuanBu = await yuanShengBiaoQingTiaoMuLieBiao()
-    const yuanShengFuHe = yuanShengQuanBu.filter(
-      (t) =>
-        guoLv.yunXuFengGe.includes(t.fengGe ?? 表情默认风格) &&
-        (t.guanXiJieDuanXiaXian ?? 0) <= guoLv.guanXiJieDuanXuHao &&
-        (qingXuBiaoQian === null || t.qingXuBiaoQian === qingXuBiaoQian) &&
-        !(paiChuDuanMing ?? []).includes(t.duanMing),
-    )
-    const baoDi = daLuan(yuanShengFuHe).slice(0, 3)
-    for (const t of [...daLuanHou, ...baoDi]) {
-      if (!jieGuo.some((x) => x.duanMing === t.duanMing)) jieGuo.push(t)
-    }
-  }
   return jieGuo
 }
 export function 短名转UUID(duanMing: string): string {

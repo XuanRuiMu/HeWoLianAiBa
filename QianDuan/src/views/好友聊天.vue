@@ -99,7 +99,7 @@
               @dian-ji="daKaiTuPianYuLan($event)"
               @cuo-wu="chuLiMeiTiShiXiao(xiaoXi)"
             />
-            <template v-else>{{ xiaoXi.nei_rong }}</template>
+            <WenBenNeiLian v-else :nei-rong="xiaoXi.nei_rong" />
           </QiPaoRongQi>
           <YinYongQiPaoKuai
             v-if="xiaoXi.bei_yong_xiao_xi_id"
@@ -312,6 +312,7 @@ import QiPaoRongQi from '@/components/聊天/气泡容器.vue'
 import XiaoXiCaoZuoCaiDan from '@/components/聊天/消息操作菜单.vue'
 import TuPianQiPao from '@/components/聊天/图片气泡.vue'
 import TuWenKuai from '@/components/聊天/图文块.vue'
+import WenBenNeiLian from '@/components/聊天/文本内联.vue'
 import YuYinQiPao from '@/components/聊天/语音气泡.vue'
 import YuYinLuYinTiao from '@/components/聊天/语音录音条.vue'
 import WenJianQiPao from '@/components/聊天/文件气泡.vue'

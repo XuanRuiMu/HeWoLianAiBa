@@ -38,6 +38,28 @@
         </button>
       </div>
 
+      <div v-show="emojiTab === 'emoji'" class="weixin-biaoqing-quyu">
+        <div class="weixin-biaoqing-biaoti">{{ huoQuFanYi('duoMeiTi', 'weiXinXiaoBiaoQing') }}</div>
+        <div class="weixin-biaoqing-wangge">
+          <button
+            v-for="wx in weiXinBiaoQingLieBiao"
+            :key="wx.mingCheng"
+            class="weixin-biaoqing-xiangmu"
+            :title="wx.mingCheng"
+            :aria-label="wx.mingCheng"
+            @click="chaRuWeiXinBiaoQing(wx.mingCheng)"
+          >
+            <img
+              class="weixin-biaoqing-tu"
+              :src="`/wechat-emojis/${wx.luJing}`"
+              :alt="wx.mingCheng"
+              loading="lazy"
+              decoding="async"
+            />
+          </button>
+        </div>
+      </div>
+
       <div v-show="emojiTab === 'biaoqingbao'" class="biaoqingbao-quyu">
         <section class="biaoqingbao-fenqu">
           <div class="fenqu-biaoti-hang">
@@ -185,7 +207,9 @@ const {
   emojiMianBanZhanKai,
   emojiMianBanRef,
   changYongEmoji,
+  weiXinBiaoQingLieBiao,
   chaRuEmoji,
+  chaRuWeiXinBiaoQing,
   qieHuanEmojiTab,
   yuZaiEmojiZiXing,
   qingLiEmojiZiYuan,
@@ -333,6 +357,52 @@ onBeforeUnmount(qingLiEmojiZiYuan)
 .emoji-xiangmu:active {
   background: var(--caidan-active);
   transform: scale(0.95);
+}
+
+.weixin-biaoqing-quyu {
+  grid-column: 1 / -1;
+  margin-top: var(--jiange-2);
+}
+
+.weixin-biaoqing-biaoti {
+  font-size: 12px;
+  color: var(--wenben-tishi);
+  padding: var(--jiange-1) var(--jiange-2);
+}
+
+.weixin-biaoqing-wangge {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: var(--jiange-2);
+}
+
+.weixin-biaoqing-xiangmu {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 2px;
+  transition: background-color 0.15s var(--quxian-biao-zhun);
+}
+
+.weixin-biaoqing-xiangmu:hover {
+  background: var(--caidan-hover);
+}
+
+.weixin-biaoqing-xiangmu:active {
+  background: var(--caidan-active);
+  transform: scale(0.95);
+}
+
+.weixin-biaoqing-tu {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .biaoqingbao-quyu {

@@ -9,7 +9,7 @@ import { shengChengWriterHuiFu } from './Writer'
 import { jianChaAiWei, panDuanShiFouCaiYang, panDuanShiFouMoXingChouJian, guoLvAiWeiXiaoXi, jianChaTaoHua, panDuanTaoHuaCaiYang } from '../config/去AI味配置'
 import { gouJianJiaoSeShangXiaWen, type 参数上下文 } from '../config/AI参数策略'
 import { 检索通用知识, 提取必答事实 } from './通用知识检索'
-import { qingXiTieZhiCanPian } from './贴纸标记'
+import { qingXiTieZhiCanPian, zhuanHuanYuanShengBiaoQing } from './贴纸标记'
 import type {
   AIYinQingShuChu,
   AIYinQingShuRu,
@@ -324,7 +324,10 @@ jiang_ji_mo_shi: false,
       }
     }
 
-    let xiaoXiLieBiao = qieGeXiaoXi(writerJieGuo.xiao_xi_lie_biao, ceLue?.hui_fu_tiao_shu ?? ZuiDaTiaoShu)
+    let xiaoXiLieBiao = qieGeXiaoXi(
+      writerJieGuo.xiao_xi_lie_biao.map((tiao) => zhuanHuanYuanShengBiaoQing(tiao)),
+      ceLue?.hui_fu_tiao_shu ?? ZuiDaTiaoShu,
+    )
     if (writerJieGuo.xiao_xi_lie_biao.length > ZuiDaTiaoShu) {
       debug日志.warn('AI引擎', 'Writer 输出条数超失控护栏，已截断', {
         xiang_qing: {

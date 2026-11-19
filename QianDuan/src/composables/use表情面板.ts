@@ -1,5 +1,6 @@
 import { ref, watch, type Ref } from 'vue'
 import { EmojiMianbanPeiZhi } from '@/config/消息配置'
+import { WeiXinXiaoBiaoQingLieBiao } from '@/config/微信原生表情'
 
 export type EmojiTabLeiXing = 'emoji' | 'biaoqingbao'
 
@@ -290,6 +291,10 @@ export function use表情面板(yiLai: Use表情面板依赖) {
     yiLai.shuRuNeiRong.value += emoji
   }
 
+  function chaRuWeiXinBiaoQing(mingCheng: string) {
+    yiLai.shuRuNeiRong.value += `[${mingCheng}]`
+  }
+
   function qieHuanEmojiTab(tab: EmojiTabLeiXing) {
     emojiTab.value = tab
   }
@@ -333,8 +338,10 @@ export function use表情面板(yiLai: Use表情面板依赖) {
     emojiMianBanZhanKai,
     emojiMianBanRef,
     changYongEmoji,
+    weiXinBiaoQingLieBiao: WeiXinXiaoBiaoQingLieBiao,
     qieHuanEmojiMianBan,
     chaRuEmoji,
+    chaRuWeiXinBiaoQing,
     qieHuanEmojiTab,
     yuZaiEmojiZiXing,
     qingLiEmojiZiYuan,

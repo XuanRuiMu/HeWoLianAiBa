@@ -16,13 +16,14 @@
       @click.stop="emit('dian-ji', kuai.mei_ti_url || tuDiZhi)"
       @error="emit('cuo-wu', $event)"
     />
-    <template v-else>{{ kuai.nei_rong }}</template>
+    <WenBenNeiLian v-else :nei-rong="kuai.nei_rong ?? ''" />
   </span>
 </template>
 
 <script setup lang="ts">
 import { huoQuFanYi } from '@/config/翻译表'
 import { XiaoXiKuaiLeiXingZhi, shiBiaoQingBaoKuai } from '@/utils/消息内容块'
+import WenBenNeiLian from '@/components/聊天/文本内联.vue'
 import type { XiaoXiKuaiChuCan } from '@/types/类型定义'
 
 withDefaults(

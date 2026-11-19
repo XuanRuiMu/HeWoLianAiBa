@@ -505,6 +505,7 @@ export const fanYi = {
     shouQuanWeiKaiQiTiShi: '未开启图片理解：TA看不到你发的图片内容，可在「账号与安全」中开启',
     zhangHaoAnQuanMiaoShu: '开启后，你发送的图片、表情包、语音和文件会随聊天内容一起上传给AI服务，用于理解你发的内容。可随时关闭。',
     emojiBiaoQian: 'Emoji',
+    weiXinXiaoBiaoQing: '微信表情',
     biaoQingMianBan: '表情面板',
     biaoQingBaoBiaoQian: '表情包',
     anZhuShuoHua: '按住说话',

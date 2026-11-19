@@ -98,3 +98,4 @@ stdout-*.idx
 # 约3.7GB图片与同名JSON标注：过git历史推送屡次超时，2026-11-18起改为本地/服务器文件同步，仓库只保留标注规则文档
 表情包/
 stdout-*.rev
+表情包实验室/tmp_aliyun_api.ps1
