@@ -274,4 +274,13 @@ describe('开关、兜底与硬上限', () => {
       panDuanBiaoQingZaiTi(zaoShuRu(), wu, BaiTian).yuanYin,
     )
   })
+
+  it('玩笑里夹着真危机仍按危机拒发', () => {
+    expect(panDuanBiaoQingZaiTi(zaoShuRu({ yong_hu_xin_xiao_xi: '笑不活了，我爷爷刚住院' }), zaoCeLue(), BaiTian).yuanYin).toBe('危机')
+    expect(panDuanBiaoQingZaiTi(zaoShuRu({ yong_hu_xin_xiao_xi: '前情铺垫'.repeat(80) + '我爷爷刚住院' }), zaoCeLue(), BaiTian).yuanYin).toBe('危机')
+  })
+
+  it('发送前后不得因本地玩笑排除词漏掉危机', () => {
+    expect(panDuanBiaoQingZaiTi(zaoShuRu({ yong_hu_xin_xiao_xi: '笑崩溃了，我现在真的很难受' }), zaoCeLue(), BaiTian).yuanYin).toBe('危机')
+  })
 })

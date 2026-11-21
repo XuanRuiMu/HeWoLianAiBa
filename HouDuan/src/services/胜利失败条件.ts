@@ -320,8 +320,9 @@ async function xieRuYouXiJieJu(
   jiao_se_id: string,
   jie_guo_lei_xing: YouXiJieGuoLeiXing,
   zhai_yao?: Record<string, unknown>,
+  zhiXing?: (文本: string, 参数?: unknown[]) => Promise<{ rowCount?: number | null }>,
 ): Promise<boolean> {
-  const jieGuo = await 数据库.query(
+  const jieGuo = await (zhiXing ?? 数据库.query.bind(数据库))(
     `INSERT INTO "游戏结局" ("用户ID", "角色ID", "结果状态", "摘要") VALUES ($1, $2, $3, $4)
      ON CONFLICT ("用户ID", "角色ID") DO NOTHING`,
     [yong_hu_id, jiao_se_id, jie_guo_lei_xing, zhai_yao ? JSON.stringify(zhai_yao) : JSON.stringify({})],
@@ -398,6 +399,34 @@ function tuiSongYouXiShiJian(
   }
 }
 
+export async function 触发消息已全部撤回(
+  chuFaXiaoXiIdLieBiao?: string[],
+): Promise<boolean> {
+  const youXiaoIdLieBiao = (chuFaXiaoXiIdLieBiao ?? []).filter(
+    (xiaoXiId) => typeof xiaoXiId === 'string' && xiaoXiId.trim() !== '',
+  )
+  if (youXiaoIdLieBiao.length === 0) return false
+  try {
+    const jieGuo = await 数据库.query(
+      `SELECT "ID", "已撤回" FROM "消息" WHERE "ID" = ANY($1::text[])`,
+      [youXiaoIdLieBiao],
+    )
+    const xingLieBiao = Array.isArray(jieGuo.rows) ? jieGuo.rows : []
+    if (xingLieBiao.length === 0) return false
+    return youXiaoIdLieBiao.every((xiaoXiId) =>
+      xingLieBiao.some((hang) => String(hang?.ID) === xiaoXiId && Boolean(hang?.已撤回)),
+    )
+  } catch (cuoWu) {
+    debug日志.warn('胜负判定', '触发消息撤回状态查询失败，按未撤回继续判定', {
+      xiang_qing: { cuo_wu: String(cuoWu) } })
+    return false
+  }
+}
+
+function chuFaXiaoXiIdXiangQing(chuFaXiaoXiIdLieBiao?: string[]): Record<string, unknown> {
+  return { chu_fa_xiao_xi_id_lie_biao: chuFaXiaoXiIdLieBiao ?? [] }
+}
+
 function yiBuChuFaFuPanShengCheng(yong_hu_id: string, jiao_se_id: string): void {
   void (async () => {
     const dangAnJieGuo = await 数据库.query(
@@ -433,7 +462,15 @@ export async function chuLiYouXiJieShu(
   jiao_se_id: string,
   jie_guo_lei_xing: YouXiJieGuoLeiXing,
   zhai_yao?: Record<string, unknown>,
-): Promise<YouXiJieShuJieGuo> {
+  chuFaXiaoXiIdLieBiao?: string[],
+): Promise<YouXiJieShuJieGuo | null> {
+  if (await 触发消息已全部撤回(chuFaXiaoXiIdLieBiao)) {
+    debug日志.warn('胜负判定', '触发消息已撤回，结局判定作废', {
+      yong_hu_id,
+      jiao_se_id,
+      xiang_qing: chuFaXiaoXiIdXiangQing(chuFaXiaoXiIdLieBiao) })
+    return null
+  }
   const keJiXuLiaoTian = jie_guo_lei_xing === 'sheng_li_ai_qing'
   const xingBie = await huoQuJiaoSeXingBie(jiao_se_id)
   const jieGuoWenAn =
@@ -445,7 +482,6 @@ export async function chuLiYouXiJieShu(
 
   type ZhiXing = (文本: string, 参数?: unknown[]) => Promise<{ rows: Array<Record<string, unknown>>; rowCount?: number | null }>
   const jieRuZhiXing: ZhiXing = (文本, 参数) => 数据库.query(文本, 参数)
-  const zhaiYaoWen = zhai_yao ? JSON.stringify(zhai_yao) : JSON.stringify({})
   let jieJuXieRuChengGong = false
   let zhongShiCiShu = 0
   for (;;) {
@@ -459,6 +495,13 @@ export async function chuLiYouXiJieShu(
       }
     }
     if (!keHuDuan) {
+      if (await 触发消息已全部撤回(chuFaXiaoXiIdLieBiao)) {
+        debug日志.warn('胜负判定', '触发消息已撤回，结局判定作废', {
+          yong_hu_id,
+          jiao_se_id,
+          xiang_qing: chuFaXiaoXiIdXiangQing(chuFaXiaoXiIdLieBiao) })
+        return null
+      }
       const [, jieJuXieRu] = await Promise.all([
         gengXinJiaoSeJieJuZhuangTai(jiao_se_id, jie_guo_lei_xing),
         xieRuYouXiJieJu(yong_hu_id, jiao_se_id, jie_guo_lei_xing, zhai_yao),
@@ -471,14 +514,24 @@ export async function chuLiYouXiJieShu(
     const keHuDuanShiWu = keHuDuan
     try {
       await keHuDuanShiWu.query('BEGIN')
+      if (await 触发消息已全部撤回(chuFaXiaoXiIdLieBiao)) {
+        await keHuDuanShiWu.query('ROLLBACK')
+        debug日志.warn('胜负判定', '触发消息已撤回，结局判定作废', {
+          yong_hu_id,
+          jiao_se_id,
+          xiang_qing: chuFaXiaoXiIdXiangQing(chuFaXiaoXiIdLieBiao) })
+        return null
+      }
       await keHuDuanShiWu.query(
         `UPDATE "角色" SET "封存" = $1, "可继续聊天" = $2, "结局状态" = $3 WHERE "ID" = $4`,
         [!keJiXuLiaoTian, keJiXuLiaoTian, jie_guo_lei_xing, jiao_se_id],
       )
-      const jieJuXieRu = await keHuDuanShiWu.query(
-        `INSERT INTO "游戏结局" ("用户ID", "角色ID", "结果状态", "摘要") VALUES ($1, $2, $3, $4)
-         ON CONFLICT ("用户ID", "角色ID") DO NOTHING`,
-        [yong_hu_id, jiao_se_id, jie_guo_lei_xing, zhaiYaoWen],
+      const jieJuXieRu = await xieRuYouXiJieJu(
+        yong_hu_id,
+        jiao_se_id,
+        jie_guo_lei_xing,
+        zhai_yao,
+        (文本, 参数) => keHuDuanShiWu.query(文本, 参数),
       )
       await xieRuJieGuoWenAnKuaiZhao(
         (文本, 参数) => keHuDuanShiWu.query(文本, 参数),
@@ -491,8 +544,16 @@ export async function chuLiYouXiJieShu(
         jiao_se_id,
         jie_guo_lei_xing,
       )
+      if (await 触发消息已全部撤回(chuFaXiaoXiIdLieBiao)) {
+        await keHuDuanShiWu.query('ROLLBACK')
+        debug日志.warn('胜负判定', '触发消息已撤回，结局判定作废', {
+          yong_hu_id,
+          jiao_se_id,
+          xiang_qing: chuFaXiaoXiIdXiangQing(chuFaXiaoXiIdLieBiao) })
+        return null
+      }
       await keHuDuanShiWu.query('COMMIT')
-      jieJuXieRuChengGong = (jieJuXieRu.rowCount ?? 0) > 0
+      jieJuXieRuChengGong = jieJuXieRu
       break
     } catch (cuoWu) {
       await keHuDuanShiWu.query('ROLLBACK').catch(() => undefined)
@@ -524,6 +585,7 @@ export async function chuLiYongHuBiaoBai(
   yong_hu_id: string,
   jiao_se_id: string,
   hao_gan_du_zong_fen: number,
+  chuFaXiaoXiIdLieBiao?: string[],
 ): Promise<YouXiJieShuJieGuo | null> {
   const jiaoSe = await huoQuJiaoSeJiBenXinXi(jiao_se_id)
   if (!jiaoSe || !jiaoSe.yong_hu_id || jiaoSe.yong_hu_id !== yong_hu_id) return null
@@ -531,19 +593,19 @@ export async function chuLiYongHuBiaoBai(
   if (jiaoSe.shi_fou_zha_xing) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_bei_qi_pian', {
       lei_xing: '用户向渣型表白',
-      hao_gan_du: hao_gan_du_zong_fen })
+      hao_gan_du: hao_gan_du_zong_fen }, chuFaXiaoXiIdLieBiao)
   }
 
   if (hao_gan_du_zong_fen >= ShengLiShiBaiPeiZhi.biaoBaiHaoGanDuYuZhi) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'sheng_li_ai_qing', {
       lei_xing: '用户主动表白成功',
-      hao_gan_du: hao_gan_du_zong_fen })
+      hao_gan_du: hao_gan_du_zong_fen }, chuFaXiaoXiIdLieBiao)
   }
 
   await kouChuZaoQiBiaoBaiXinRenDu(yong_hu_id, jiao_se_id)
   return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_guo_zao_biao_bai', {
     lei_xing: '过早表白',
-    hao_gan_du: hao_gan_du_zong_fen })
+    hao_gan_du: hao_gan_du_zong_fen }, chuFaXiaoXiIdLieBiao)
 }
 
 async function kouChuZaoQiBiaoBaiXinRenDu(
@@ -575,33 +637,35 @@ async function huoQuDangQianJieDuanMing(
 export async function chuLiHuShan(
   yong_hu_id: string,
   jiao_se_id: string,
+  chuFaXiaoXiIdLieBiao?: string[],
 ): Promise<YouXiJieShuJieGuo | null> {
   const jiaoSe = await huoQuJiaoSeJiBenXinXi(jiao_se_id)
   if (!jiaoSe || !jiaoSe.yong_hu_id || jiaoSe.yong_hu_id !== yong_hu_id) return null
 
   if (jiaoSe.shi_fou_zha_xing) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'sheng_li_hu_shan_sheng_li', {
-      lei_xing: '用户与渣型互删' })
+      lei_xing: '用户与渣型互删' }, chuFaXiaoXiIdLieBiao)
   }
 
   return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_hu_shan_shi_bai', {
-    lei_xing: '用户与正常角色互删' })
+    lei_xing: '用户与正常角色互删' }, chuFaXiaoXiIdLieBiao)
 }
 
 export async function chuLiShiPo(
   yong_hu_id: string,
   jiao_se_id: string,
+  chuFaXiaoXiIdLieBiao?: string[],
 ): Promise<YouXiJieShuJieGuo | null> {
   const jiaoSe = await huoQuJiaoSeJiBenXinXi(jiao_se_id)
   if (!jiaoSe || !jiaoSe.yong_hu_id || jiaoSe.yong_hu_id !== yong_hu_id) return null
 
   if (jiaoSe.shi_fou_zha_xing) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'sheng_li_shi_po', {
-      lei_xing: '用户识破渣型' })
+      lei_xing: '用户识破渣型' }, chuFaXiaoXiIdLieBiao)
   }
 
   return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_cuo_wu_shi_po', {
-    lei_xing: '用户错误识破正常角色' })
+    lei_xing: '用户错误识破正常角色' }, chuFaXiaoXiIdLieBiao)
 }
 
 async function shengChengJingGaoFanYing(jiao_se?: AIJiaoSeXinXi): Promise<string> {
@@ -641,13 +705,14 @@ export async function chuLiShenJingBing(
   jiao_se_id: string,
   fa_san_si_wei_ren_she = false,
   jiao_se?: AIJiaoSeXinXi,
+  chuFaXiaoXiIdLieBiao?: string[],
 ): Promise<YouXiJieShuJieGuo | null> {
   const jiaoSe = await huoQuJiaoSeJiBenXinXi(jiao_se_id)
   if (!jiaoSe || !jiaoSe.yong_hu_id || jiaoSe.yong_hu_id !== yong_hu_id) return null
 
   if (jiaoSe.shi_fou_zha_xing) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'sheng_li_shen_jing_bing', {
-      lei_xing: '渣型角色诱导用户被视为神经病' })
+      lei_xing: '渣型角色诱导用户被视为神经病' }, chuFaXiaoXiIdLieBiao)
   }
 
   if (fa_san_si_wei_ren_she) return null
@@ -664,7 +729,7 @@ export async function chuLiShenJingBing(
 
   if (!shouCiChuFa) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_shen_jing_bing', {
-      lei_xing: '正常角色判定用户为神经病' })
+      lei_xing: '正常角色判定用户为神经病' }, chuFaXiaoXiIdLieBiao)
   }
 
   debug日志.warn(
@@ -749,6 +814,7 @@ export async function chuLiBeiChaQu(
   jiao_se_id: string,
   yuan_yin: string,
   jiao_se?: AIJiaoSeXinXi,
+  chuFaXiaoXiIdLieBiao?: string[],
 ): Promise<YouXiJieShuJieGuo | null> {
   const jiaoSeXinXi = await huoQuJiaoSeJiBenXinXi(jiao_se_id)
   if (!jiaoSeXinXi || !jiaoSeXinXi.yong_hu_id || jiaoSeXinXi.yong_hu_id !== yong_hu_id) return null
@@ -774,7 +840,7 @@ export async function chuLiBeiChaQu(
 
     if (!shouCiChuFa) {
       return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_bei_cha_qu', {
-        lei_xing: '对方删除用户', yuan_yin })
+        lei_xing: '对方删除用户', yuan_yin }, chuFaXiaoXiIdLieBiao)
     }
 
     debug日志.warn(
@@ -787,7 +853,7 @@ export async function chuLiBeiChaQu(
   }
 
   return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_bei_cha_qu', {
-    lei_xing: '对方删除用户（提示词注入）', yuan_yin })
+    lei_xing: '对方删除用户（提示词注入）', yuan_yin }, chuFaXiaoXiIdLieBiao)
 }
 
 export async function chuLiAIHuiFuHouJieShuJianCha(
@@ -827,6 +893,7 @@ export async function chuLiYongHuJuJueAIHuoJieShou(
   yong_hu_xiao_xi: string,
   shangXiaWen?: 参数上下文,
   dui_hua_li_shi?: DuiHuaLiShiXiang[],
+  chuFaXiaoXiIdLieBiao?: string[],
 ): Promise<YouXiJieShuJieGuo | null> {
   const shangXiaWenShiJi = shangXiaWen ?? { jiaoSe: gouJianJiaoSeShangXiaWen(jiao_se) }
   const { 背景 } = fenGeZuiXinYongHuXiaoXi(dui_hua_li_shi ?? [])
@@ -866,6 +933,13 @@ export async function chuLiYongHuJuJueAIHuoJieShou(
   const yueShu = ShengLiShiBaiPeiZhi.biaoBaiHuiFuQueXinDuYueShu
 
   if (!moHuHuiFu && jieShou && queXinDu > yueShu) {
+    if (await 触发消息已全部撤回(chuFaXiaoXiIdLieBiao)) {
+      debug日志.warn('胜负判定', '触发消息已撤回，结局判定作废', {
+        yong_hu_id,
+        jiao_se_id,
+        xiang_qing: chuFaXiaoXiIdXiangQing(chuFaXiaoXiIdLieBiao) })
+      return null
+    }
     return chuLiAIJieShouBiaoBai(yong_hu_id, jiao_se_id, jiao_se)
   }
 
@@ -875,7 +949,7 @@ export async function chuLiYongHuJuJueAIHuoJieShou(
     }
 
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_ju_jue_biao_bai', {
-      lei_xing: '用户拒绝正常角色表白' })
+      lei_xing: '用户拒绝正常角色表白' }, chuFaXiaoXiIdLieBiao)
   }
 
   return null
@@ -890,27 +964,44 @@ export async function jianCeYongHuXiaoXiBingChuLi(
   jiao_se?: AIJiaoSeXinXi,
   dui_hua_li_shi?: DuiHuaLiShiXiang[],
   tuPianShouQuan?: boolean,
+  chuFaXiaoXiIdLieBiao?: string[],
 ): Promise<YouXiJieShuJieGuo | null> {
   const shiHeFaYongHu = await yanZhengJiaoSeSuoYouQuan(yong_hu_id, jiao_se_id)
   if (!shiHeFaYongHu) return null
 
+  if (await 触发消息已全部撤回(chuFaXiaoXiIdLieBiao)) {
+    debug日志.warn('胜负判定', '触发消息已撤回，结局判定作废', {
+      yong_hu_id,
+      jiao_se_id,
+      xiang_qing: chuFaXiaoXiIdXiangQing(chuFaXiaoXiIdLieBiao) })
+    return null
+  }
+
   const jianCeJieGuo = await jianCeYongHuXiaoXi(xiao_xi, dui_hua_li_shi, jiao_se, undefined, tuPianShouQuan)
 
   if (deng_dai_biao_bai_hui_fu && jiao_se) {
-    return chuLiYongHuJuJueAIHuoJieShou(yong_hu_id, jiao_se_id, jiao_se, xiao_xi, undefined, dui_hua_li_shi)
+    return chuLiYongHuJuJueAIHuoJieShou(
+      yong_hu_id,
+      jiao_se_id,
+      jiao_se,
+      xiao_xi,
+      undefined,
+      dui_hua_li_shi,
+      chuFaXiaoXiIdLieBiao,
+    )
   }
 
   const tongYongYueShu = QueXinDuYueShu.tongYongJianCe
   if (jianCeJieGuo.biao_bai.shi_fou_biao_bai && jianCeJieGuo.biao_bai.que_xin_du > tongYongYueShu) {
-    return chuLiYongHuBiaoBai(yong_hu_id, jiao_se_id, hao_gan_du_zong_fen)
+    return chuLiYongHuBiaoBai(yong_hu_id, jiao_se_id, hao_gan_du_zong_fen, chuFaXiaoXiIdLieBiao)
   }
 
   if (jianCeJieGuo.hu_shan.shi_fou_hu_shan && jianCeJieGuo.hu_shan.que_xin_du > tongYongYueShu) {
-    return chuLiHuShan(yong_hu_id, jiao_se_id)
+    return chuLiHuShan(yong_hu_id, jiao_se_id, chuFaXiaoXiIdLieBiao)
   }
 
   if (jianCeJieGuo.shi_po.shi_fou_shi_po && jianCeJieGuo.shi_po.que_xin_du > tongYongYueShu) {
-    return chuLiShiPo(yong_hu_id, jiao_se_id)
+    return chuLiShiPo(yong_hu_id, jiao_se_id, chuFaXiaoXiIdLieBiao)
   }
 
   if (
@@ -922,6 +1013,7 @@ export async function jianCeYongHuXiaoXiBingChuLi(
       jiao_se_id,
       jianCeJieGuo.bei_sha_qu.yuan_yin,
       jiao_se,
+      chuFaXiaoXiIdLieBiao,
     )
   }
 
@@ -934,6 +1026,7 @@ export async function jianCeYongHuXiaoXiBingChuLi(
       jiao_se_id,
       jianCeJieGuo.shen_jing_bing.fa_san_si_wei_ren_she,
       jiao_se,
+      chuFaXiaoXiIdLieBiao,
     )
   }
 

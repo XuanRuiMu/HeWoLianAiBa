@@ -193,6 +193,43 @@ describe('调度器按段发送贴纸', () => {
     expect(BiaoQingBaoYunXing.tieZhiHouDuanJianGe.jiZhun).toBeLessThan(burstChangJianGeJiZhunHaoMiao.E)
   })
 
+  it('微信原生小表情不占图片轮数上限，连续3对玫瑰/点赞全部发出', async () => {
+    const { 推送序列, 运行 } = 造调度器()
+    await 运行([
+      '春霞真美丽[贴纸:wx_玫瑰][贴纸:wx_玫瑰][贴纸:wx_玫瑰]有你真是我们的福气[贴纸:wx_点赞][贴纸:wx_点赞][贴纸:wx_点赞]',
+    ])
+
+    expect(vi.mocked(发送表情包消息)).toHaveBeenCalledTimes(6)
+    expect(推送序列()).toEqual([
+      '文:春霞真美丽',
+      '图:wx_玫瑰',
+      '图:wx_玫瑰',
+      '图:wx_玫瑰',
+      '文:有你真是我们的福气',
+      '图:wx_点赞',
+      '图:wx_点赞',
+      '图:wx_点赞',
+    ])
+  })
+
+  it('普通图已到上限后仍可发小表情；第7个小表情之前被拦截不调用发送', async () => {
+    const { 推送序列, 运行 } = 造调度器()
+    await 运行([
+      '[贴纸:图普通]一句[贴纸:wx_玫瑰][贴纸:wx_玫瑰][贴纸:wx_玫瑰][贴纸:wx_点赞][贴纸:wx_点赞][贴纸:wx_点赞][贴纸:wx_点赞]',
+    ])
+    expect(vi.mocked(发送表情包消息)).toHaveBeenCalledTimes(7)
+    expect(推送序列()).toEqual([
+      '图:图普通',
+      '文:一句',
+      '图:wx_玫瑰',
+      '图:wx_玫瑰',
+      '图:wx_玫瑰',
+      '图:wx_点赞',
+      '图:wx_点赞',
+      '图:wx_点赞',
+    ])
+  })
+
   it('同一文字段重复出现时按去重丢弃，图段不参与文本去重', async () => {
     const { 内部, 推送序列, 运行 } = 造调度器()
 

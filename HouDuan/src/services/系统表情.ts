@@ -60,7 +60,7 @@ export async function 候选包装(
   const 意化 = typeof yiTu === 'string' && yiTu.trim() !== '' ? yiTu.trim() : null
   try {
     const guoLv = jueCe
-      ? { yunXuFengGe: jueCe.yunXuFengGe, guanXiJieDuanXuHao: jueCe.guanXiJieDuanXuHao }
+      ? { yunXuFengGe: jueCe.yunXuFengGe, guanXiJieDuanXuHao: jueCe.guanXiJieDuanXuHao, renSheQiZhi: jueCe.renSheQiZhi ?? ['通用'] }
       : undefined
   const excludeArg = excludeDuanMing && excludeDuanMing.length > 0 ? excludeDuanMing : undefined
     const lieBiao = guoLv
@@ -191,7 +191,7 @@ export async function 生成表情候选文本(
   jueCe?: BiaoQingZaiTiJueCe,
   excludeDuanMing?: string[],
 ): Promise<string> {
-  if (!BiaoQingBaoYunXing.daKai) return ''
+  if (!BiaoQingBaoYunXing.daKai || !jueCe?.geiHouXuan) return ''
   if (!jueCe || !jueCe.geiHouXuan) return ''
   const lieBiao = await 候选包装(yiTu, BiaoQingBaoYunXing.houXuanShuLiang, jueCe, excludeDuanMing)
   return 组装表情候选块(lieBiao)

@@ -1,4 +1,4 @@
-import { 构建原生表情条目 } from './原生表情库'
+﻿import { 构建原生表情条目 } from './原生表情库'
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -22,11 +22,14 @@ import {
   表情运行标签,
   表情载体配置,
   表情最大文件字节,
+  表情人设气质标签,
+  表情圈层门槛标签,
 } from '../config/表情包配置'
 
 export interface 表情包过滤 {
   yunXuFengGe: readonly string[]
   guanXiJieDuanXuHao: number
+  renSheQiZhi?: readonly string[]
 }
 
 export interface 表情包条目 {
@@ -42,6 +45,8 @@ export interface 表情包条目 {
   ziJieShu: number
   wenJianMing: string
   wenJianLuJing: string
+  renSheQiZhi?: string[]
+  quanCengMenKian?: string
 }
 
 interface 表情包标注 {
@@ -52,6 +57,8 @@ interface 表情包标注 {
   qiYong: boolean
   fengGe: string
   guanXiJieDuanXiaXian: number
+  renSheQiZhi?: string[]
+  quanCengMenKian?: string
 }
 
 interface 库快照 {
@@ -157,6 +164,8 @@ function tanCeMuLuLuJingLieBiao(): string[] {
 function tanCeMuLu(): string {
   const huanJingLuJing = (process.env[表情包目录环境变量] || '').trim()
   if (huanJingLuJing !== '') return path.resolve(huanJingLuJing)
+  const rootOverride = (process.env.BIAO_QING_BAO_GEN_MU_LU || '').trim()
+  if (rootOverride !== '') return path.join(path.resolve(rootOverride), 表情包目录名)
   const huanCunHaoMiao = 取探测缓存毫秒()
   const xianZai = Date.now()
   if (tanCeHuanCun !== null && xianZai - tanCeHuanCun.shiJian < huanCunHaoMiao) {
@@ -392,6 +401,26 @@ function yongWenJianMingBiaoZhu(
   return moRenBiaoZhu(caiJian)
 }
 
+function quZiDuanShuZu(
+  duiXiang: Record<string, unknown>,
+  ziDuan: string,
+  zuiDaChang: number,
+  wenJianMing: string,
+): string[] {
+  const yuan = duiXiang[ziDuan]
+  const lie = Array.isArray(yuan) ? yuan : typeof yuan === 'string' ? [yuan] : []
+  const heFa = lie
+    .filter((x): x is string => typeof x === 'string')
+    .map((x) => x.trim())
+    .filter((x) => x.length > 0 && x.length <= zuiDaChang && 表情人设气质标签.includes(x))
+  if (lie.length !== heFa.length) {
+    debug日志.warn(日志类型, '人设气质白名单外，未知气质已丢弃', {
+      xiang_qing: { wen_jian_ming: wenJianMing },
+    })
+  }
+  return [...new Set(heFa)]
+}
+
 async function duQuBiaoZhu(
   muLu: string,
   wenJianMing: string,
@@ -475,6 +504,15 @@ async function duQuBiaoZhu(
     qiYong,
     fengGe: fengGeHeFa ? fengGeYuan : 表情默认风格,
     guanXiJieDuanXiaXian: jieDuanYuanDaoXuHao(jieDuanYuan, wenJianMing),
+    renSheQiZhi: quZiDuanShuZu(duiXiang, '人设气质', 10, wenJianMing),
+    quanCengMenKian: (() => {
+      const men = quZiDuanWenBen(duiXiang, '圈层门槛', 10, wenJianMing).trim()
+      if (表情圈层门槛标签.includes(men)) return men
+      if (men !== '') {
+        debug日志.warn(日志类型, '圈层门槛白名单外，按大众处理', { xiang_qing: { wen_jian_ming: wenJianMing } })
+      }
+      return '大众'
+    })(),
   }
 }
 
@@ -512,6 +550,8 @@ async function suoYinDanWenJian(
     qiYong: biaoZhu.qiYong,
     fengGe: biaoZhu.fengGe,
     guanXiJieDuanXiaXian: biaoZhu.guanXiJieDuanXiaXian,
+    renSheQiZhi: biaoZhu.renSheQiZhi,
+    quanCengMenKian: biaoZhu.quanCengMenKian,
     sha256: createHash('sha256').update(neiRong).digest('hex'),
     mime: 表情Mime映射[houZhui] || 表情默认Mime,
     ziJieShu: neiRong.length,
@@ -682,6 +722,22 @@ function daLuan<T>(lieBiao: readonly T[]): T[] {
   return fuBen
 }
 
+function guoLvRenShe(tiaoMu: 表情包条目, renSheQiZhi: readonly string[]): boolean {
+  const duanQiZhi = Array.isArray(tiaoMu.renSheQiZhi) && tiaoMu.renSheQiZhi.length > 0 ? tiaoMu.renSheQiZhi : ['通用']
+  if (duanQiZhi.includes('通用')) return true
+  return duanQiZhi.some((x) => renSheQiZhi.includes(x))
+}
+
+function guoLvQuanCeng(tiaoMu: 表情包条目, jieDuanXuHao: number, renSheQiZhi: readonly string[]): boolean {
+  const men = tiaoMu.quanCengMenKian && 表情圈层门槛标签.includes(tiaoMu.quanCengMenKian) ? tiaoMu.quanCengMenKian : '大众'
+  if (men === '大众') return true
+  if (renSheQiZhi.length === 1 && renSheQiZhi[0] === '正经严肃') return false
+  const yaWenHuaXuHao = jieDuanYuanDaoXuHao('认识', '圈层门槛')
+  const shenDuGengXuHao = jieDuanYuanDaoXuHao('熟悉', '圈层门槛')
+  if (men === '亚文化') return jieDuanXuHao >= yaWenHuaXuHao
+  return jieDuanXuHao >= shenDuGengXuHao
+}
+
 export async function 候选系统表情(
   qingXuBiaoQian: string | null | undefined,
   shuLiang: number,
@@ -697,7 +753,9 @@ export async function 候选系统表情(
     ? qiYongLieBiao.filter(
         (tiaoMu) =>
           guoLv.yunXuFengGe.includes(tiaoMu.fengGe ?? 表情默认风格) &&
-          (tiaoMu.guanXiJieDuanXiaXian ?? 0) <= guoLv.guanXiJieDuanXuHao,
+          (tiaoMu.guanXiJieDuanXiaXian ?? 0) <= guoLv.guanXiJieDuanXuHao &&
+          guoLvQuanCeng(tiaoMu, guoLv.guanXiJieDuanXuHao, Array.isArray(guoLv.renSheQiZhi) ? guoLv.renSheQiZhi : ['通用']) &&
+          guoLvRenShe(tiaoMu, Array.isArray(guoLv.renSheQiZhi) ? guoLv.renSheQiZhi : ['通用']),
       )
     : qiYongLieBiao
   const mingZhong =

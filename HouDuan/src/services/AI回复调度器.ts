@@ -1,6 +1,7 @@
 import { anPaiGuanHuai } from './主动关怀调度器'
 import type { Server } from 'socket.io'
 import { yunXingAIYinQing } from './AI引擎'
+
 import { pingPanHaoGanDuPiLiangNei } from './好感度评判'
 import { gengXinHaoGanDu, huoQuWanZhengHaoGanDu } from './好感度'
 import { 尝试头像演化 } from './头像生成'
@@ -18,7 +19,7 @@ import { 按ID查用户 } from './认证'
 import { 撤回角色消息 } from './消息'
 import { huoQuHuoJieXiShiPinMiaoShu } from './视频理解'
 import { huoQuYinPinShiJianMiaoShu } from './语音理解'
-import { gouJianYinYongChaXun, quBenLunJiaoDianXiaoXiXiang, zhanShiXiaoXiZhengWen } from './对话渲染'
+import { zhanShiXiaoXiZhengWen, quBenLunLianFaJiaoDian, gouJianYinYongChaXun } from './对话渲染'
 import {
   jianCeYongHuXiaoXiBingChuLi,
   chuLiAIHuiFuHouJieShuJianCha,
@@ -51,6 +52,7 @@ import { duShiChaXiaShi } from '../config/时区'
 import { duJieBaoKaiGuanMoRenKai } from '../config/开场采样配置'
 import { huoQuShiJianChangJingWenBen } from '../config/时间场景配置'
 import { duQuDangQianXinQing, jieGuoXinQing as xinQingShuaiJian, xieRuDangQianXinQing } from './当前心情'
+import { duQuTongBuZhaiYao, duQuDuiHuaZhaiYao, gouJianZhaiYaoZhuRuWenBen, huanCunTongBuZhaiYao, shengChengBingLuoKuZhaiYao } from './对话摘要'
 import * as YuYanGongNeng from '../config/语言与时区'
 import { 数据库 } from '../数据库'
 import * as 沉默判定模块 from './沉默判定'
@@ -66,7 +68,7 @@ export interface AIHuiFuXiaoXiShiJian {
   驱动消息ID?: string | null
 }
 
-interface LunCiShangXiaWen {
+export interface LunCiShangXiaWen {
   处理ID: number
   驱动消息ID: string | null
 }
@@ -90,6 +92,58 @@ function qingChuGuoQiDengDaiZhuangTai(): void {
     if (xianZai - zhuangTai.chuang_jian_shi_jian > DengDaiBiaoBaiGuoQiShiJian) {
       dengDaiBiaoBaiHuiFuMap.delete(jian)
     }
+  }
+}
+
+/**
+ * FP-04：轻量判定本轮消息像不像在回溯历史。
+ * 只在命中时查库，避免每条消息都触发回想检索（成本）。
+ */
+export function shiHuiSuLiShiXiaoXi(xiaoXi: string): boolean {
+  const s = (xiaoXi || '').trim()
+  if (!s) return false
+  const recentBareSnippet =
+    /(?:周五|周六|周日|周一|周二|周三|周四)+[^\n。！？]{0,18}(?:约|订|去|吃|见)|(?:约好|约过|说好|说好要|答应过|答应我去|没有忘)[^\n。！？]{0,18}|这周六[^\n。！？]{0,18}(?:去|吃|见)/
+  if (recentBareSnippet.test(s)) return true
+  return /你(?:忘了|不记得|说过|之前说|刚才说|那天说|那次说)|我(?:记得|还记得|说过|那时候说)|记得吗|还记得|记不记得|想起来了?|我们(?:之前|以前|那天|那次|约好|说过)(?:说|聊|约|提|去)|(?:之前|上次|以前|那天|那刻|那次|当时|前几天|早先|曾经|刚刚)[^\n。！？]{0,12}(?:说|提|聊|讲|约|去|吃|做|喜欢|告诉)/.test(s)
+}
+
+/**
+ * FP-04：回溯类消息检索历史原文并整理成回想提示层文本。
+ * 查不到或异常都返回空串——「照实说没印象」的表达交给提示词层，不在此硬编码玩家文案。
+ * 任何异常都被吞掉并记分级日志，绝不影响主回复链路。
+ */
+export async function huoQuHuiXiangTiShi(
+  xiaoXi: string,
+  yongHuId: string,
+  jiaoSeId: string,
+): Promise<string> {
+  if (!shiHuiSuLiShiXiaoXi(xiaoXi)) return ''
+  try {
+    const { huiXiangLiShiYuanWen } = await import('./历史回想')
+    const jieGuo = await huiXiangLiShiYuanWen(yongHuId, jiaoSeId, xiaoXi)
+    if (!jieGuo.zhaoDao || jieGuo.yuanWen.length === 0) {
+      debug日志.info('AI回复调度器', '历史回想未命中，本轮不加回想提示', {
+        yong_hu_id: yongHuId,
+        jiao_se_id: jiaoSeId,
+        xiang_qing: { chu_fa: true, zhao_dao: false },
+      })
+      return ''
+    }
+    const 片段 = jieGuo.yuanWen.map((wen) => `- ${wen}`).join('\n')
+    debug日志.info('AI回复调度器', '历史回想命中，已注入回想提示层', {
+      yong_hu_id: yongHuId,
+      jiao_se_id: jiaoSeId,
+      xiang_qing: { chu_fa: true, tiao_shu: jieGuo.yuanWen.length },
+    })
+    return `【历史回想】TA在聊你们以前的事。你回想了一下，想起这些旧话：\n${片段}\n对得上的就顺着聊；对不上、或TA说的你其实没印象，就照实说没印象，别编。`
+  } catch (cuoWu) {
+    debug日志.warn('AI回复调度器', '历史回想失败，不影响本轮回复', {
+      yong_hu_id: yongHuId,
+      jiao_se_id: jiaoSeId,
+      xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) },
+    })
+    return ''
   }
 }
 
@@ -245,11 +299,19 @@ export class AI回复调度器 {
   }
 
   private 转对外消息(消息列表: 消息信息[]): 消息信息[] {
-    return 消息列表.map((xiaoXi) => ({
-      ...xiaoXi,
-      hui_hua_id: this.对外角色ID,
-      fa_song_zhe_id: xiaoXi.fa_song_zhe_id === this.角色ID ? this.对外角色ID : xiaoXi.fa_song_zhe_id,
-    }))
+    return 消息列表.map((xiaoXi) => {
+      const duiWai: 消息信息 = {
+        ...xiaoXi,
+        hui_hua_id: this.对外角色ID,
+        fa_song_zhe_id: xiaoXi.fa_song_zhe_id === this.角色ID ? this.对外角色ID : xiaoXi.fa_song_zhe_id,
+      }
+      delete duiWai.neiRongYuanWen
+      delete (duiWai as unknown as { yuan_shi_nei_rong?: unknown }).yuan_shi_nei_rong
+      if (xiaoXi.yi_che_hui === true) {
+        duiWai.nei_rong = xiaoXi.nei_rong || huoQuFanYi('liaoTian', 'duiFangCheHuiLeYiTiaoXiaoXi')
+      }
+      return duiWai
+    })
   }
 
   private 推送角色回复(消息列表: 消息信息[], 轮次?: LunCiShangXiaWen | null): void {
@@ -354,6 +416,9 @@ export class AI回复调度器 {
         this.启动AI计时器()
         return
       }
+      const 触发消息ID列表 = quBenLunLianFaJiaoDian(历史消息, this.本轮驱动消息ID)
+        ?.xiaoXiLieBiao.map((xiaoXi) => xiaoXi.id)
+        .filter((xiaoXiId): xiaoXiId is string => typeof xiaoXiId === 'string' && xiaoXiId.trim() !== '')
 
       const 等待表白回复 = this.是否等待表白回复()
       const jieShuJieGuo = await jianCeYongHuXiaoXiBingChuLi(
@@ -365,6 +430,7 @@ export class AI回复调度器 {
         角色,
         历史消息,
         tuPianShouQuan,
+        触发消息ID列表,
       )
       if (jianCeID !== this.当前检测ID) return
 
@@ -552,6 +618,7 @@ private 当地现在小时(): number {
         this.取消控制器 = null
         const daiBu = this.待补发消息ID
         this.待补发消息ID = undefined
+        this.触发记忆压缩()
         if (daiBu !== undefined) {
           debug日志.info('AI调度器', '处理期间有新消息到达，完成后补一轮', { xiang_qing: { qu_dong_xiao_xi_id: daiBu } })
           void this.处理用户消息(daiBu)
@@ -723,6 +790,35 @@ private 当地现在小时(): number {
     }
   }
 
+  private async 读取本轮记忆摘要(): Promise<string> {
+    const huanCun = duQuTongBuZhaiYao(this.用户ID, this.角色ID)
+    if (huanCun.trim() !== '') return huanCun
+    if (process.env.VITEST === 'true') return ''
+    try {
+      const zhaiYao = await duQuDuiHuaZhaiYao(this.用户ID, this.角色ID)
+      const zhuRuWenBen = gouJianZhaiYaoZhuRuWenBen(zhaiYao)
+      if (zhaiYao) huanCunTongBuZhaiYao(this.用户ID, this.角色ID, zhuRuWenBen)
+      return zhuRuWenBen
+    } catch (cuoWu) {
+      debug日志.warn('AI调度器', '读取对话摘要失败，本轮按无记忆处理', {
+        xiang_qing: { yong_hu_id: this.用户ID, jiao_se_id: this.角色ID, cuo_wu: String(cuoWu) },
+      })
+      return ''
+    }
+  }
+
+  private 触发记忆压缩(): void {
+    if (process.env.VITEST === 'true') return
+    const jiaoSeMing = this.当前角色?.ming_zi || ''
+    setImmediate(() => {
+      void shengChengBingLuoKuZhaiYao(this.用户ID, this.角色ID, jiaoSeMing).catch((cuoWu) => {
+        debug日志.warn('AI调度器', '对话摘要压缩任务失败，等待下一轮再试', {
+          xiang_qing: { yong_hu_id: this.用户ID, jiao_se_id: this.角色ID, cuo_wu: String(cuoWu) },
+        })
+      })
+    })
+  }
+
   private async 运行AI(信号: AbortSignal, 轮次: LunCiShangXiaWen): Promise<AIYinQingShuChu> {
 
     const [角色, 好感度, 历史消息] = await Promise.all([
@@ -773,7 +869,7 @@ private 当地现在小时(): number {
     const 本轮连发数 = this.自上一条角色消息以来的用户消息计数
     const 当前睡前 = (() => { const h = this.当地现在小时(); return h >= 22 || h < 6 })()
     const silenceLevel = this.算沉默等级(历史消息, 最新消息内容, 本轮连发数, false, 当前睡前)
-    const yuQuZhaiYao = ''
+    const yuQuZhaiYao = await this.读取本轮记忆摘要()
     const guanJianZhuRu = ''
     let lianWangZhuRu = ""
     try {
@@ -790,6 +886,9 @@ private 当地现在小时(): number {
       轮次: 轮次.处理ID,
     })
 
+    // FP-04：回溯类消息才查库回想，结果进回想提示层；未命中/异常留空，不影响主链路
+    const huiXiangTiShi = await huoQuHuiXiangTiShi(最新消息内容, this.用户ID, this.角色ID)
+
     const 输入: AIYinQingShuRu = {
       yong_hu_id: this.用户ID,
       jiao_se_id: this.角色ID,
@@ -803,6 +902,7 @@ private 当地现在小时(): number {
         guan_xi_jie_duan: '冷淡',
       },
       dui_hua_li_shi: 历史消息,
+      benLunJiaoDianId: 轮次.驱动消息ID ?? null,
       yong_hu_xin_xiao_xi: 最新消息文本,
       yong_hu_xing_bie: 用户性别 ?? undefined,
       shi_fou_di_yi_lun: 是第一轮,
@@ -818,6 +918,7 @@ private 当地现在小时(): number {
       huiYingDengJi: silenceLevel,
       weiDuiXianChengNuo: await this.getPendingPromises(this.用户ID, this.角色ID),
       zuiJinDuanMing: [...this.最近贴纸短名],
+      huiXiangTiShi: huiXiangTiShi || undefined,
     }
 
     return yunXingAIYinQing(输入, 信号)
@@ -827,32 +928,32 @@ private 当地现在小时(): number {
     历史消息: DuiHuaLiShiXiang[],
     驱动消息ID?: string | null,
   ): Promise<string> {
-    const 焦点消息 = quBenLunJiaoDianXiaoXiXiang(历史消息, 驱动消息ID)
-    if (!焦点消息) return ''
+    const 焦点 = quBenLunLianFaJiaoDian(历史消息, 驱动消息ID)
+    if (!焦点) return ''
     const 引用回口 = gouJianYinYongChaXun(历史消息)
-    if (焦点消息.meiTiLeiBie === 'wenjian' && !焦点消息.yi_che_hui) {
-      const ming = 焦点消息.yuanShiWenJianMing || ''
-      const xiaoMIME = (焦点消息.meiTiMIME || '').toLowerCase()
-      const shiShiPin = xiaoMIME.startsWith('video/') || ming.toLowerCase().match(/\.(mp4|mov|webm|m4v)$/) !== null
-      if (shiShiPin) {
-        const jieXi = await huoQuHuoJieXiShiPinMiaoShu(焦点消息.meiTiSha256)
-        return zhanShiXiaoXiZhengWen(焦点消息, {
-          视频画面描述: jieXi.huaMianMiaoShu,
-          视频转写文本: jieXi.zhuanXieWenBen,
-        }, 引用回口)
-      }
-    }
-    if (焦点消息.meiTiLeiBie === 'yuyin' && !焦点消息.yi_che_hui) {
-      const sha256 = (焦点消息.meiTiSha256 || '').toLowerCase()
-      const mime = (焦点消息.meiTiMIME || '').toLowerCase()
-      if (/^[0-9a-f]{64}$/.test(sha256) && mime.startsWith('audio/')) {
-        const miaoShu = await huoQuYinPinShiJianMiaoShu({ sha256, mime })
-        if (miaoShu) {
-          return zhanShiXiaoXiZhengWen(焦点消息, { 音频事件描述: miaoShu }, 引用回口)
+    const wenBenLieBiao: string[] = []
+    for (const 焦点消息 of 焦点.xiaoXiLieBiao) {
+      let 增补: { 视频画面描述?: string | null; 视频转写文本?: string | null; 音频事件描述?: string } | undefined
+      if (焦点消息.meiTiLeiBie === 'wenjian' && !焦点消息.yi_che_hui) {
+        const ming = 焦点消息.yuanShiWenJianMing || ''
+        const xiaoMIME = (焦点消息.meiTiMIME || '').toLowerCase()
+        if (xiaoMIME.startsWith('video/') || /\.(mp4|mov|webm|m4v)$/i.test(ming)) {
+          const jieXi = await huoQuHuoJieXiShiPinMiaoShu(焦点消息.meiTiSha256)
+          增补 = { 视频画面描述: jieXi.huaMianMiaoShu, 视频转写文本: jieXi.zhuanXieWenBen }
         }
       }
+      if (焦点消息.meiTiLeiBie === 'yuyin' && !焦点消息.yi_che_hui) {
+        const sha256 = (焦点消息.meiTiSha256 || '').toLowerCase()
+        const mime = (焦点消息.meiTiMIME || '').toLowerCase()
+        if (/^[0-9a-f]{64}$/.test(sha256) && mime.startsWith('audio/')) {
+          const miaoShu = await huoQuYinPinShiJianMiaoShu({ sha256, mime })
+          if (miaoShu) 增补 = { 音频事件描述: miaoShu }
+        }
+      }
+      const wenBen = zhanShiXiaoXiZhengWen(焦点消息, 增补, 引用回口)
+      if (wenBen.trim()) wenBenLieBiao.push(wenBen)
     }
-    return zhanShiXiaoXiZhengWen(焦点消息, undefined, 引用回口)
+    return wenBenLieBiao.join('\n')
   }
 
   private async 发送消息列表(
@@ -905,6 +1006,13 @@ private 当地现在小时(): number {
             continue
           }
           const shiYuanSheng = isYuanShengBiaoQingDuanMing(duan.neiRong)
+          if (shiYuanSheng && this.连发小表情计数 >= 6) {
+            debug日志.warn('AI调度器', '本轮微信小表情已达6连发，后续不再发', {
+              xiang_qing: { jiao_se_id: this.角色ID, lun_ci: 处理ID, duan_ming: duan.neiRong },
+            })
+            shangYiDuanShiTieZhi = false
+            continue
+          }
           if (!shiYuanSheng && yiFaTieZhiShu >= BiaoQingBaoYunXing.zuiDaMeiLunZhangShu) {
             debug日志.warn('AI调度器', '本轮表情包张数已到上限，这一段丢弃', {
               xiang_qing: {
@@ -942,12 +1050,6 @@ private 当地现在小时(): number {
             shangYiDuanShiTieZhi = false
             this.连发小表情计数 = this.连发小表情计数 + 1
             benLunYiFaChuNeiRong = true
-            if (this.连发小表情计数 > 6) {
-              debug日志.warn('AI调度器', '本轮微信小表情超过6连发，后续不再发', {
-                xiang_qing: { jiao_se_id: this.角色ID, lun_ci: 处理ID, duan_ming: duan.neiRong },
-              })
-              continue
-            }
             try {
               this.推送角色回复([biaoQingXiaoXi], 轮次)
             } catch (cuoWu) {

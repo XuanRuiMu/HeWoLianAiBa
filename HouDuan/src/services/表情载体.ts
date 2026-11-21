@@ -7,6 +7,7 @@ import {
   表情载体配置,
 } from '../config/表情包配置'
 import { jiSuanBiaoQingShouGan, shiBiaoQingXiaoXi } from './表情密度'
+import { tuiDaoRenSheQiZhi } from './人设气质'
 import type { AIYinQingShuRu, DirectorCeLue, DuiHuaLiShiXiang } from '../types'
 
 const RiZhiLeiXing = '表情载体'
@@ -30,6 +31,7 @@ export interface BiaoQingZaiTiJueCe {
   qiWangJianGeLunShu: number
   shangCiFaTuLunShu: number | null
   quXiang: string
+  renSheQiZhi: string[]
 }
 
 interface NianLingDang {
@@ -60,6 +62,7 @@ function quBaoShouJueCe(yuanYin: BiaoQingZaiTiYuanYin): BiaoQingZaiTiJueCe {
     qiWangJianGeLunShu: BiaoQingMiDu.jianGe.zuiDa,
     shangCiFaTuLunShu: null,
     quXiang: '偏少',
+    renSheQiZhi: ['通用'],
   }
 }
 
@@ -113,16 +116,36 @@ function shiShenYe(riQi: Date): boolean {
   )
 }
 
+function quWenChang(zhi: unknown): string {
+  return typeof zhi === 'string' ? zhi.trim() : ''
+}
+
+function hanJuBuPaiChu(wenBen: string, qi: number, ciChang: number): boolean {
+  const fuJinBanJing = 6
+  const zuo = Math.max(0, qi - fuJinBanJing)
+  const you = Math.min(wenBen.length, qi + ciChang + fuJinBanJing)
+  const fuJin = wenBen.slice(zuo, you)
+  return 表情载体配置.weiJiPaiChuCi.some((paiChu) => fuJin.includes(paiChu))
+}
+
 function shiWeiJi(shuRu: AIYinQingShuRu, ceLue?: DirectorCeLue): boolean {
-  const yongHu = quWenBen(shuRu?.yong_hu_xin_xiao_xi)
-  const wenBen = [
-    yongHu,
-    quWenBen(ceLue?.qing_gan_fen_xi),
-    quWenBen(ceLue?.yong_hu_yi_tu),
-  ].join('\n')
-  if (wenBen.trim() === '') return false
-  if (表情载体配置.weiJiPaiChuCi.some((ci) => yongHu.includes(ci))) return false
-  return 表情载体配置.weiJiGuanJianCi.some((ci) => wenBen.includes(ci))
+  const yongHu = quWenChang(shuRu?.yong_hu_xin_xiao_xi)
+  const fenXi = [quWenChang(ceLue?.qing_gan_fen_xi), quWenChang(ceLue?.yong_hu_yi_tu)].join('\n')
+  const geMian: Array<{ wenBen: string; yunXuPaiChu: boolean }> = [
+    { wenBen: yongHu, yunXuPaiChu: true },
+    { wenBen: fenXi, yunXuPaiChu: false },
+  ]
+  for (const { wenBen, yunXuPaiChu } of geMian) {
+    if (wenBen.trim() === '') continue
+    for (const guanJian of 表情载体配置.weiJiGuanJianCi) {
+      let qi = -1
+      while ((qi = wenBen.indexOf(guanJian, qi + 1)) >= 0) {
+        if (yunXuPaiChu && hanJuBuPaiChu(wenBen, qi, guanJian.length)) continue
+        return true
+      }
+    }
+  }
+  return false
 }
 
 function shiHuiJing(liShi: DuiHuaLiShiXiang[]): boolean {
@@ -186,6 +209,7 @@ export function panDuanBiaoQingZaiTi(
       qiWangJianGeLunShu: qiWangJianGe,
       shangCiFaTuLunShu: shouGan.shangCiFaTuLunShu,
       quXiang: shouGan.quXiang,
+      renSheQiZhi: tuiDaoRenSheQiZhi(shuRu.jiao_se),
     }
     debug日志.debug(RiZhiLeiXing, '本轮表情载体决策', {
       xiang_qing: {

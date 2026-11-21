@@ -47,6 +47,7 @@ function fangXingJueCe(gengDuo: Partial<BiaoQingZaiTiJueCe> = {}): BiaoQingZaiTi
     qiWangJianGeLunShu: 20,
     shangCiFaTuLunShu: null,
     quXiang: '正常',
+    renSheQiZhi: ['通用'],
     ...gengDuo,
   }
 }
@@ -234,6 +235,7 @@ describe('候选文本总开关', () => {
     expect(候选系统表情Mock).toHaveBeenCalledWith('无语', BiaoQingBaoYunXing.houXuanShuLiang, {
       yunXuFengGe: ['黄脸', '祝福'],
       guanXiJieDuanXuHao: 6,
+      renSheQiZhi: ['通用'],
     }, undefined)
   })
 

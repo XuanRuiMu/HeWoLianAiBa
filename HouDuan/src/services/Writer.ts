@@ -21,7 +21,9 @@ export async function shengChengWriterHuiFu(
 ): Promise<WriterJieGuo> {
   const tiShiCi = gouJianWriterPrompt(shuRu, ceLue, zhiShi)
   const 载体决策 = panDuanBiaoQingZaiTi(shuRu, ceLue)
-  const biaoQingHouXuan = await XiTongBiaoQing.生成表情候选文本(ceLue?.biao_qing_yi_tu ?? null, 载体决策, zuiJinDuanMing)
+  const biaoQingHouXuan = 载体决策.geiHouXuan
+    ? await XiTongBiaoQing.生成表情候选文本(ceLue?.biao_qing_yi_tu ?? null, 载体决策, zuiJinDuanMing)
+    : ''
   const tiShiCiWanZheng = biaoQingHouXuan ? `${tiShiCi}\n\n${biaoQingHouXuan}` : tiShiCi
 
   const tuXiangKuai = await zhuRuBenLunTuXiangKuai(shuRu.dui_hua_li_shi)
