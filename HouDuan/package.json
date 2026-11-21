@@ -25,6 +25,7 @@
     "@alicloud/dysmsapi20170525": "4.6.0",
     "@alicloud/openapi-client": "0.4.15",
     "@alicloud/openapi-core": "1.0.9",
+    "@huggingface/transformers": "^4.3.2",
     "@opentelemetry/api": "1.10.0",
     "@opentelemetry/exporter-trace-otlp-http": "0.301.0",
     "@opentelemetry/instrumentation-express": "0.73.0",

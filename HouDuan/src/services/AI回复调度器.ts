@@ -75,6 +75,12 @@ export interface LunCiShangXiaWen {
 
 const DengDaiBiaoBaiGuoQiShiJian = 30 * 60 * 1000
 
+let ceShiTiaoGuo = false
+
+export function sheZhiCeShiTiaoGuo(qiYong: boolean): void {
+  ceShiTiaoGuo = qiYong
+}
+
 interface DengDaiBiaoBaiHuiFuZhuangTai {
   deng_dai_zhong: boolean
   chuang_jian_shi_jian: number
@@ -95,10 +101,6 @@ function qingChuGuoQiDengDaiZhuangTai(): void {
   }
 }
 
-/**
- * FP-04：轻量判定本轮消息像不像在回溯历史。
- * 只在命中时查库，避免每条消息都触发回想检索（成本）。
- */
 export function shiHuiSuLiShiXiaoXi(xiaoXi: string): boolean {
   const s = (xiaoXi || '').trim()
   if (!s) return false
@@ -108,11 +110,6 @@ export function shiHuiSuLiShiXiaoXi(xiaoXi: string): boolean {
   return /你(?:忘了|不记得|说过|之前说|刚才说|那天说|那次说)|我(?:记得|还记得|说过|那时候说)|记得吗|还记得|记不记得|想起来了?|我们(?:之前|以前|那天|那次|约好|说过)(?:说|聊|约|提|去)|(?:之前|上次|以前|那天|那刻|那次|当时|前几天|早先|曾经|刚刚)[^\n。！？]{0,12}(?:说|提|聊|讲|约|去|吃|做|喜欢|告诉)/.test(s)
 }
 
-/**
- * FP-04：回溯类消息检索历史原文并整理成回想提示层文本。
- * 查不到或异常都返回空串——「照实说没印象」的表达交给提示词层，不在此硬编码玩家文案。
- * 任何异常都被吞掉并记分级日志，绝不影响主回复链路。
- */
 export async function huoQuHuiXiangTiShi(
   xiaoXi: string,
   yongHuId: string,
@@ -383,7 +380,7 @@ export class AI回复调度器 {
 
   private async 检测用户消息并决定后续(jianCeID: number): Promise<void> {
     let tuPianShouQuan = false
-    if (process.env.VITEST !== 'true') {
+    if (!ceShiTiaoGuo) {
       try {
         const 认证结果 = await 按ID查用户(this.用户ID).catch(() => null)
         if (jianCeID !== this.当前检测ID) return
@@ -635,7 +632,7 @@ private 当地现在小时(): number {
   private 安排追加消息(): void {
     if (!this.当前角色) return
     if (!duJieBaoKaiGuanMoRenKai('ZUI_JIA_QI_YONG')) return
-    if (process.env.VITEST === 'true') return
+    if (ceShiTiaoGuo) return
     if (this.是否等待表白回复()) return
 
 
@@ -781,7 +778,7 @@ private 当地现在小时(): number {
   private async 读取用户性别(): Promise<性别内部形态 | null> {
     const 已缓存 = this.用户信息缓存?.yong_hu_xing_bie
     if (已缓存 !== undefined) return 已缓存
-    if (process.env.VITEST === 'true') return null
+    if (ceShiTiaoGuo) return null
     try {
       const 认证结果 = await 按ID查用户(this.用户ID).catch(() => null)
       return 用户形态转内部(认证结果?.mo_ren_xing_bie ?? null)
@@ -793,7 +790,7 @@ private 当地现在小时(): number {
   private async 读取本轮记忆摘要(): Promise<string> {
     const huanCun = duQuTongBuZhaiYao(this.用户ID, this.角色ID)
     if (huanCun.trim() !== '') return huanCun
-    if (process.env.VITEST === 'true') return ''
+    if (ceShiTiaoGuo) return ''
     try {
       const zhaiYao = await duQuDuiHuaZhaiYao(this.用户ID, this.角色ID)
       const zhuRuWenBen = gouJianZhaiYaoZhuRuWenBen(zhaiYao)
@@ -808,7 +805,7 @@ private 当地现在小时(): number {
   }
 
   private 触发记忆压缩(): void {
-    if (process.env.VITEST === 'true') return
+    if (ceShiTiaoGuo) return
     const jiaoSeMing = this.当前角色?.ming_zi || ''
     setImmediate(() => {
       void shengChengBingLuoKuZhaiYao(this.用户ID, this.角色ID, jiaoSeMing).catch((cuoWu) => {
@@ -837,7 +834,7 @@ private 当地现在小时(): number {
     this.本轮睡着中 = zuoXiKaiQi() && this.睡着()
     await this.同步用户语言()
     const 用户性别 = await this.读取用户性别()
-    if (process.env.VITEST !== 'true' && 角色) {
+    if (!ceShiTiaoGuo && 角色) {
       try {
         const { zhunBeiRiCheng } = await import('./Prompt构建器')
         await zhunBeiRiCheng(
@@ -886,7 +883,6 @@ private 当地现在小时(): number {
       轮次: 轮次.处理ID,
     })
 
-    // FP-04：回溯类消息才查库回想，结果进回想提示层；未命中/异常留空，不影响主链路
     const huiXiangTiShi = await huoQuHuiXiangTiShi(最新消息内容, this.用户ID, this.角色ID)
 
     const 输入: AIYinQingShuRu = {
@@ -1013,7 +1009,7 @@ private 当地现在小时(): number {
             shangYiDuanShiTieZhi = false
             continue
           }
-          if (!shiYuanSheng && yiFaTieZhiShu >= BiaoQingBaoYunXing.zuiDaMeiLunZhangShu) {
+          if (!shiYuanSheng && yiFaTieZhiShu >= BiaoQingBaoYunXing.zuiDaMeiLunZhangShu && (typeof ai结果.ce_lue?.qing_gan_nong_du !== 'number' || ai结果.ce_lue.qing_gan_nong_du < 70)) {
             debug日志.warn('AI调度器', '本轮表情包张数已到上限，这一段丢弃', {
               xiang_qing: {
                 jiao_se_id: this.角色ID,
@@ -1298,7 +1294,7 @@ private 当地现在小时(): number {
 
 
   private async getPendingPromises(用户ID: string, jiaoSeId: string): Promise<string[]> {
-    if (process.env.VITEST === 'true') return []
+    if (ceShiTiaoGuo) return []
     const m = await import('./承诺兑现')
     const fn = m as unknown as Record<string, (a: string, b: string) => Promise<string[]>>
     const 未兑现 = await fn['获取未兑现承诺'](用户ID, jiaoSeId)

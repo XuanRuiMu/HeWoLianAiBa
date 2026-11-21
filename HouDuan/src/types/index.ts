@@ -152,7 +152,10 @@ export interface DuiHuaLiShiXiang {
   fa_song_zhe_ming: string
   nei_rong: string
   shi_jian: string
+  shi_jian_chuo?: number | null
+  lei_xing?: string
   yi_che_hui?: boolean
+  yuanShiNeiRong?: string | null
   meiTiLeiBie?: string
   meiTiSha256?: string
   meiTiMIME?: string
@@ -196,12 +199,14 @@ export interface DirectorCeLue {
   shi_fou_zhu_dong_biao_bai?: boolean
   yao_jie_zhu_de_dian?: string
   biao_qing_yi_tu?: string | null
+  qing_gan_nong_du?: number | null
   guan_xi_bian_hua?: GuanXiBianHua
   xin_qing?: XinQingMingZhi | null
   xin_qing_qiang_du?: number | null
   xin_qing_li_you?: string | null
   yao_qiu_huan_yu_yan?: string | null
   bu_hui_li_you?: string
+  dangQianHuaTiShiTi?: string[]
 }
 
 export type GuanXiBianHua = '更近' | '更远' | '没变'
@@ -235,6 +240,7 @@ export interface AIYinQingShuRu {
   jiao_se: AIJiaoSeXinXi
   hao_gan_du: HaoGanDuXinXi
   dui_hua_li_shi: DuiHuaLiShiXiang[]
+  benLunJiaoDianId?: string | null
   yong_hu_xin_xiao_xi: string
   zui_jia_shuo_de_shi?: string
   shi_fou_di_yi_lun: boolean
@@ -375,17 +381,6 @@ export interface YongHuXiaoXiJianCeJieGuo {
   bei_sha_qu: BeiChaQuJianCeJieGuo
 }
 
-export interface DirectorCeLue {
-  yong_hu_yi_tu: string
-  qing_gan_fen_xi: string
-  hui_fu_ce_lue: string
-  shi_fou_hui_fu: boolean
-  hui_fu_tiao_shu: number
-  shi_jian_qing_xu: string
-  shi_fou_che_hui: boolean
-  shi_fou_zhu_dong_biao_bai?: boolean
-}
-
 export interface TongZhi {
   id: string
   fa_song_zhe_id: string | null
@@ -403,7 +398,6 @@ export interface JunShiQiuZhuCanShu {
   jiao_se_ming: string
   dui_hua_li_shi: DuiHuaLiShiXiang[]
   hao_gan_du: HaoGanDuXinXi
-  ren_she_wen_ben?: string
   fu_pan_tiao_mu?: string[]
   jun_shi_pei_zhi: {
     id: string

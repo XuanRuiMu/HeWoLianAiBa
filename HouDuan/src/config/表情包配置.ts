@@ -16,7 +16,7 @@ function quQiaDuanZhengShu(ming: string, moRen: number, zuiXiao: number, zuiDa: 
   return quZheng
 }
 
-const ZuiDaMeiLunZhangShu = 1
+const ZuiDaMeiLunZhangShu = 2
 
 function quZuiDaMeiLunZhangShu(ming: string): number {
   const wenBen = quHuanJingWenBen(ming, '')

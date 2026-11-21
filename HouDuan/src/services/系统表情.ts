@@ -1,6 +1,7 @@
 import { debug日志 } from '../utils/debug日志'
 import { 保存角色媒体消息, type 消息信息 } from './消息'
 import { 按短名查, 短名转UUID, 候选系统表情, type 表情包条目 } from './表情包库'
+import { 语义候选 } from './语义表情检索'
 import { 表情书类别, 类别到消息类型 } from '../config/媒体配置'
 import {
   BiaoQingBaoYunXing,
@@ -63,9 +64,22 @@ export async function 候选包装(
       ? { yunXuFengGe: jueCe.yunXuFengGe, guanXiJieDuanXuHao: jueCe.guanXiJieDuanXuHao, renSheQiZhi: jueCe.renSheQiZhi ?? ['通用'] }
       : undefined
   const excludeArg = excludeDuanMing && excludeDuanMing.length > 0 ? excludeDuanMing : undefined
-    const lieBiao = guoLv
-      ? await 候选系统表情(意化, shuLiang, guoLv, excludeArg)
-      : await 候选系统表情(意化, shuLiang, undefined, excludeArg)
+    let lieBiao: 表情包条目[] = []
+    if (jueCe && jueCe.geiHouXuan && typeof jueCe.yong_hu_xin_xiao_xi === 'string' && jueCe.yong_hu_xin_xiao_xi.trim() !== '') {
+      lieBiao = await 语义候选({
+        query: `${意化 ?? ''} ${jueCe.yong_hu_xin_xiao_xi}`.trim(),
+        yunXuFengGe: jueCe.yunXuFengGe,
+        guanXiJieDuanXuHao: jueCe.guanXiJieDuanXuHao,
+        renSheQiZhi: jueCe.renSheQiZhi ?? ['通用'],
+        excludeDuanMing: excludeDuanMing ?? [],
+        shuLiang,
+      })
+    }
+    if (lieBiao.length === 0) {
+      lieBiao = guoLv
+        ? await 候选系统表情(意化, shuLiang, guoLv, excludeArg)
+        : await 候选系统表情(意化, shuLiang, undefined, excludeArg)
+    }
     if (lieBiao.length === 0) {
       debug日志.warn(RiZhiLeiXing, '表情包库没有可用候选，本轮不给表情包', {
         xiang_qing: {

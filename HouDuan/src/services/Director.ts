@@ -13,7 +13,7 @@ import type { 参数上下文 } from '../config/AI参数策略'
 
 export interface DirectorJieGuo {
   cheng_gong: boolean
-  ce_lue: DirectorCeLue
+  ce_lue: DirectorCeLue & { need_recall?: boolean }
   cuo_wu?: string
   si_kao?: string
   yuan_wen?: string
@@ -66,6 +66,11 @@ export function jieXiDirectorXiangYing(neiRong: string): { ceLue: DirectorCeLue;
 
   const huiFuTiaoShu = Number(shuJu['回复条数'] || shuJu['hui_fu_tiao_shu'] || 1)
   const xiuZhengTiaoShu = Number.isNaN(huiFuTiaoShu) ? 1 : Math.max(0, Math.min(5, huiFuTiaoShu))
+  const shiTiZhi = shuJu['当前话题实体'] ?? shuJu['dangQianHuaTiShiTi']
+  const youShiTi = Array.isArray(shiTiZhi)
+  const shiTiLieBiao = youShiTi
+    ? (shiTiZhi as unknown[]).map((x) => String(x ?? '').trim()).filter((x) => x.length > 0).slice(0, 8)
+    : []
 
   return {
     ceLue: {
@@ -79,12 +84,15 @@ export function jieXiDirectorXiangYing(neiRong: string): { ceLue: DirectorCeLue;
       shi_fou_che_hui: Boolean(shuJu['是否撤回'] ?? shuJu['shi_fou_che_hui'] ?? false),
       shi_fou_zhu_dong_biao_bai: Boolean(shuJu['是否主动表白'] ?? shuJu['shi_fou_zhu_dong_biao_bai'] ?? false),
       biao_qing_yi_tu: biaoQingYiTuZhi(shuJu['biao_qing_yi_tu']),
+      qing_gan_nong_du: quNongDu(shuJu['qing_gan_nong_du']),
       guan_xi_bian_hua: quGuanXiBianHua(quZhi(shuJu, '关系变化', 'guan_xi_bian_hua')),
       xin_qing: quXinQing(quZhi(shuJu, '心情', 'xin_qing')),
       xin_qing_qiang_du: quXinQingQiangDu(quZhi(shuJu, '心情强度', 'xin_qing_qiang_du')),
       xin_qing_li_you: quXinQingLiYou(quZhi(shuJu, '心情理由', 'xin_qing_li_you')),
       yao_qiu_huan_yu_yan: quYaoQiuHuanYuYan(quZhi(shuJu, '要求换语言', 'yao_qiu_huan_yu_yan')),
       bu_hui_li_you: quBuHuiLiYou(quZhi(shuJu, '不回的理由', 'bu_hui_li_you')),
+      ...(youShiTi ? { dangQianHuaTiShiTi: shiTiLieBiao } : {}),
+      ...(shuJu['需要回想'] === true ? { need_recall: true } : {}),
     },
     jieXiChengGong: true,
   }
@@ -93,6 +101,13 @@ function quZhi(sou: Record<string, unknown>, zhongWen: string, liuChengMing: str
   if (zhongWen in sou) return sou[zhongWen]
   if (liuChengMing in sou) return sou[liuChengMing]
   return undefined
+}
+
+function quNongDu(zhi: unknown): number | undefined {
+  if (zhi === null || zhi === undefined) return undefined
+  const shu = Number(zhi)
+  if (!Number.isFinite(shu)) return undefined
+  return Math.max(0, Math.min(100, Math.round(shu)))
 }
 
 function quGuanXiBianHua(zhi: unknown): GuanXiBianHua | undefined {
@@ -153,6 +168,7 @@ export async function shengChengDirectorCeLue(
       tuXiangKuai.length > 0
         ? [{ type: 'input_text', text: tiShiCi }, ...tuXiangKuai]
         : tiShiCi
+
 
     const daoYanZhiLing =
       '你负责判断角色这次是否回复、当下情绪、是否撤回和是否主动表白，只输出 JSON。情感分析字段写对方这条消息的语气和情绪。'

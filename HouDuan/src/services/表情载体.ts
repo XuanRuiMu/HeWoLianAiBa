@@ -1,5 +1,4 @@
 import { debug日志 } from '../utils/debug日志'
-import { duPeiZhiShiCha } from '../config/时区'
 import {
   BiaoQingBaoYunXing,
   表情关系阶段顺序,
@@ -16,7 +15,6 @@ export type BiaoQingZaiTiYuanYin =
   | '放行'
   | '回敬'
   | '总开关关闭'
-  | '深夜'
   | '危机'
   | '关系未到'
   | '间隔未到'
@@ -32,6 +30,7 @@ export interface BiaoQingZaiTiJueCe {
   shangCiFaTuLunShu: number | null
   quXiang: string
   renSheQiZhi: string[]
+  yong_hu_xin_xiao_xi: string
 }
 
 interface NianLingDang {
@@ -63,6 +62,7 @@ function quBaoShouJueCe(yuanYin: BiaoQingZaiTiYuanYin): BiaoQingZaiTiJueCe {
     shangCiFaTuLunShu: null,
     quXiang: '偏少',
     renSheQiZhi: ['通用'],
+    yong_hu_xin_xiao_xi: '',
   }
 }
 
@@ -107,14 +107,6 @@ function quJieDuanXuHao(jieDuan: unknown): number {
   return xuHao >= 0 ? xuHao : 0
 }
 
-function shiShenYe(riQi: Date): boolean {
-  const shiCha = duPeiZhiShiCha()
-  const xiaoShi = ((riQi.getHours() + riQi.getMinutes() / 60 + shiCha) % 24 + 24) % 24
-  return (
-    xiaoShi >= 表情载体配置.jinYongXiaoShiQiShi ||
-    xiaoShi < 表情载体配置.jinYongXiaoShiJieShu
-  )
-}
 
 function quWenChang(zhi: unknown): string {
   return typeof zhi === 'string' ? zhi.trim() : ''
@@ -166,7 +158,6 @@ function qingXiLiShi(zhi: unknown): DuiHuaLiShiXiang[] {
 export function panDuanBiaoQingZaiTi(
   shuRu: AIYinQingShuRu,
   ceLue?: DirectorCeLue,
-  riQi: Date = new Date(),
 ): BiaoQingZaiTiJueCe {
   try {
     const nianLingDang = quNianLingDang(shuRu?.jiao_se?.nian_ling)
@@ -192,11 +183,14 @@ export function panDuanBiaoQingZaiTi(
 
     let yuanYin: BiaoQingZaiTiYuanYin = '放行'
     if (!BiaoQingBaoYunXing.daKai) yuanYin = '总开关关闭'
-    else if (shiShenYe(riQi)) yuanYin = '深夜'
     else if (shiWeiJi(shuRu, ceLue)) yuanYin = '危机'
     else if (jieDuanXuHao < quJieDuanXuHao(表情载体配置.zuiDiYunXuJieDuan)) yuanYin = '关系未到'
     else if (shiHuiJing(liShi)) yuanYin = '回敬'
     else if (shouGan.shangCiFaTuLunShu !== null && shouGan.shangCiFaTuLunShu < qiWangJianGe) {
+      yuanYin = '间隔未到'
+    }
+
+    if (yuanYin === '放行' && typeof ceLue?.qing_gan_nong_du === 'number' && ceLue.qing_gan_nong_du < 35) {
       yuanYin = '间隔未到'
     }
 
@@ -210,6 +204,7 @@ export function panDuanBiaoQingZaiTi(
       shangCiFaTuLunShu: shouGan.shangCiFaTuLunShu,
       quXiang: shouGan.quXiang,
       renSheQiZhi: tuiDaoRenSheQiZhi(shuRu.jiao_se),
+      yong_hu_xin_xiao_xi: quWenBen(shuRu?.yong_hu_xin_xiao_xi),
     }
     debug日志.debug(RiZhiLeiXing, '本轮表情载体决策', {
       xiang_qing: {
