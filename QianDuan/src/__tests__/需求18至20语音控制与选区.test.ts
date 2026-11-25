@@ -1,0 +1,550 @@
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { mount } from '@vue/test-utils'
+import 语音气泡 from '@/components/聊天/语音气泡.vue'
+import { DuoMeiTiPeiZhi } from '@/config/消息配置'
+import { huoQuFanYi } from '@/config/翻译表'
+import {
+  ceLiangYuYinShiChang,
+  geShiHuaYuYinShiChang,
+  jiXuDangQianYuYin,
+  shiDangQianYuYinBoFangZhong,
+  tingZhiDangQianYuYin,
+  use语音播放,
+  yuYinKuanDuPx,
+  yuYinShiChangMiao,
+  zanTingDangQianYuYin,
+} from '@/composables/use语音播放'
+import type { 消息 } from '@/types/类型定义'
+
+const QiPaoYuan = readFileSync(resolve(__dirname, '../components/聊天/语音气泡.vue'), 'utf8')
+const ShuRuYuan = readFileSync(resolve(__dirname, '../components/聊天/图文输入区.vue'), 'utf8')
+
+function zaoShiJianChi() {
+  const chi = new Map<string, Set<() => void>>()
+  return {
+    add(leiXing: string, fn: () => void) {
+      if (!chi.has(leiXing)) chi.set(leiXing, new Set())
+      chi.get(leiXing)?.add(fn)
+    },
+    remove(leiXing: string, fn: () => void) {
+      chi.get(leiXing)?.delete(fn)
+    },
+    fa(leiXing: string) {
+      for (const fn of chi.get(leiXing) ?? []) fn()
+    },
+  }
+}
+
+function zaoBoFangYinPin(shiChangMiao = 10) {
+  const shiJian = zaoShiJianChi()
+  const yinPin = {
+    duration: shiChangMiao,
+    currentTime: 0,
+    muted: false,
+    volume: 1,
+    preload: '',
+    src: '',
+    boFangCiShu: 0,
+    addEventListener(leiXing: string, fn: () => void) {
+      shiJian.add(leiXing, fn)
+    },
+    removeEventListener(leiXing: string, fn: () => void) {
+      shiJian.remove(leiXing, fn)
+    },
+    fa(leiXing: string) {
+      shiJian.fa(leiXing)
+    },
+    play() {
+      yinPin.boFangCiShu += 1
+      return Promise.resolve()
+    },
+    pause() {
+      return undefined
+    },
+    load() {
+      return undefined
+    },
+    removeAttribute() {
+      yinPin.src = ''
+    },
+  }
+  return yinPin
+}
+
+function zaoCeLiangYinPin() {
+  const shiJian = zaoShiJianChi()
+  let dangQianMiao = 0
+  const yinPin = {
+    duration: Infinity as number,
+    preload: '',
+    src: '',
+    beiQiuZhi: 0,
+    addEventListener(leiXing: string, fn: () => void) {
+      shiJian.add(leiXing, fn)
+    },
+    removeEventListener(leiXing: string, fn: () => void) {
+      shiJian.remove(leiXing, fn)
+    },
+    pause() {
+      return undefined
+    },
+    load() {
+      return undefined
+    },
+    removeAttribute() {
+      yinPin.src = ''
+    },
+  }
+  let dangQianDiZhi = ''
+  Object.defineProperty(yinPin, 'src', {
+    get: () => dangQianDiZhi,
+    set: (zhi: string) => {
+      dangQianDiZhi = zhi
+      if (zhi === '') return
+      queueMicrotask(() => shiJian.fa('loadedmetadata'))
+    },
+  })
+  Object.defineProperty(yinPin, 'currentTime', {
+    get: () => dangQianMiao,
+    set: (zhi: number) => {
+      yinPin.beiQiuZhi = zhi
+      dangQianMiao = zhi >= 1e100 ? 10 : zhi
+      if (dangQianMiao !== 10) return
+      yinPin.duration = 10
+      queueMicrotask(() => shiJian.fa('durationchange'))
+    },
+  })
+  return yinPin
+}
+
+function zaoXiaoXi(buChong: Partial<消息> = {}): 消息 {
+  return {
+    id: 'xiao-xi-1',
+    ke_hu_duan_id: 'ke-hu-duan-1',
+    hui_hua_id: 'hui-hua-1',
+    fa_song_zhe_id: 'yong-hu-1',
+    fa_song_zhe_lei_xing: 'yonghu',
+    nei_rong: '',
+    lei_xing: 'yuYin',
+    shi_jian_chuo: Date.now(),
+    yi_du: false,
+    ...buChong,
+  } as 消息
+}
+
+afterEach(() => {
+  tingZhiDangQianYuYin()
+  vi.unstubAllGlobals()
+})
+
+describe('需求19：语音时长只有一处口径，且与真实播放一致', () => {
+  it('毫秒→整秒只由 yuYinShiChangMiao 换算，宽度与文案同源', () => {
+    const xiaoXi = { mei_ti_shi_chang_hao_miao: 10000 }
+    expect(yuYinShiChangMiao(xiaoXi)).toBe(10)
+    expect(geShiHuaYuYinShiChang(xiaoXi)).toBe('10″')
+    expect(yuYinKuanDuPx(xiaoXi)).toBe(220)
+  })
+
+  it('缺时长字段时按音频真实 duration 兜底（WebM/Opus 的 Infinity 用 seek 逼出真实值）', async () => {
+    const jiaYinPin = zaoCeLiangYinPin()
+    vi.stubGlobal('Audio', function () {
+      return jiaYinPin
+    })
+    const xiaoXi = { mei_ti_url: 'blob:ce-liang-wu-qiong' }
+    expect(geShiHuaYuYinShiChang(xiaoXi)).toBe('…″')
+    ceLiangYuYinShiChang(xiaoXi)
+    await vi.waitFor(() => expect(geShiHuaYuYinShiChang(xiaoXi)).toBe('10″'))
+    expect(jiaYinPin.beiQiuZhi).toBeGreaterThan(1e100)
+    expect(yuYinKuanDuPx(xiaoXi)).toBe(220)
+  })
+
+  it('同一地址只测一次；测不出时不写脏值也不会反复打网络', async () => {
+    let ciShu = 0
+    vi.stubGlobal('Audio', function () {
+      ciShu += 1
+      return zaoCeLiangYinPin()
+    })
+    const xiaoXi = { mei_ti_url: 'blob:ce-liang-mi-deng' }
+    ceLiangYuYinShiChang(xiaoXi)
+    ceLiangYuYinShiChang(xiaoXi)
+    await vi.waitFor(() => expect(geShiHuaYuYinShiChang(xiaoXi)).toBe('10″'))
+    ceLiangYuYinShiChang(xiaoXi)
+    expect(ciShu).toBe(1)
+  })
+
+  it('本地实测时长在服务端回包缺字段时保留（气泡不会掉回 1 秒）', () => {
+    expect(readFileSync(resolve(__dirname, '../stores/聊天.ts'), 'utf8')).toContain(
+      'mei_ti_shi_chang_hao_miao: buQiShiChangHaoMiao',
+    )
+  })
+
+  it('FP-01 已有服务端字段时挂载依然实测并以实测值为准覆盖显示', async () => {
+    let ciShu = 0
+    vi.stubGlobal('Audio', function () {
+      ciShu += 1
+      return zaoCeLiangYinPin()
+    })
+    const diZhi = `blob:fp01-yi-you-fu-wu-zi-duan-${Date.now()}`
+    const xiaoXi = { mei_ti_url: diZhi, mei_ti_shi_chang_hao_miao: 5000 }
+    expect(geShiHuaYuYinShiChang(xiaoXi)).toBe('5″')
+    ceLiangYuYinShiChang(xiaoXi)
+    await vi.waitFor(() => expect(geShiHuaYuYinShiChang(xiaoXi)).toBe('10″'))
+    expect(ciShu).toBe(1)
+  })
+})
+
+describe('需求18：暂停/停止按钮与空格键', () => {
+  it('气泡内两个新增控件都是内联 SVG、读屏文案走翻译表，视觉 28px 且 ::before 外扩到 36px 热区', () => {
+    const wenBen = huoQuFanYi('duoMeiTi', 'zanTingYuYin')
+    expect(wenBen).toBe('暂停语音')
+    expect(huoQuFanYi('duoMeiTi', 'jiXuYuYin')).toBe('继续播放语音')
+    expect(huoQuFanYi('duoMeiTi', 'tingZhiYuYin')).toBe('停止语音并回到开头')
+    expect((QiPaoYuan.match(/class="yuyin-kongzhi"/g) ?? []).length).toBe(2)
+    expect(QiPaoYuan).toContain('class="yuyin-kongzhi-zu"')
+    expect(QiPaoYuan).toContain('width: var(--yuyin-kongzhi-chicun)')
+    expect(QiPaoYuan).toContain('height: var(--yuyin-kongzhi-chicun)')
+    expect(QiPaoYuan).toContain(
+      'inset: calc((var(--yuyin-kongzhi-chicun) - var(--yuyin-kongzhi-re-ku)) / 2)',
+    )
+    expect(QiPaoYuan).toContain('gap: var(--yuyin-kongzhi-jian-ju)')
+    expect(QiPaoYuan).not.toMatch(/[⏸⏹▶⏯⏪]/u)
+  })
+
+  it('组件挂载后按播放态切换暂停/继续与停止的读屏口径，且不再重复渲染第二份总时长', () => {
+    const wrapper = mount(语音气泡, {
+      props: {
+        xiaoXi: { mei_ti_shi_chang_hao_miao: 10000 },
+        boFangZhong: true,
+        xuanZhong: true,
+        jinDuMiao: 3,
+        zongMiao: 10,
+      },
+    })
+    const anniu = wrapper.findAll('.yuyin-kongzhi')
+    expect(anniu).toHaveLength(2)
+    expect(anniu[0].attributes('aria-label')).toBe('暂停语音')
+    expect(anniu[1].attributes('aria-label')).toBe('停止语音并回到开头')
+    expect(anniu[0].find('svg').exists()).toBe(true)
+    expect(anniu[1].find('svg').exists()).toBe(true)
+    expect(wrapper.find('.yuyin-shichang').text()).toBe('10″')
+    expect(wrapper.find('.yuyin-jindu-wenben').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('暂停 → 继续 → 停止：停止立即中断并把进度归零，控制权从全局注册表摘除', () => {
+    const jiaYinPin = zaoBoFangYinPin()
+    vi.stubGlobal('Audio', function () {
+      return jiaYinPin
+    })
+    const boFang = use语音播放({ huoQuDiZhi: () => 'blob:bo-fang' })
+    const xiaoXi = zaoXiaoXi()
+    boFang.qieHuanYuYinBoFang(xiaoXi)
+    expect(shiDangQianYuYinBoFangZhong()).toBe(true)
+    expect(zanTingDangQianYuYin()).toBe(true)
+    expect(shiDangQianYuYinBoFangZhong()).toBe(false)
+    expect(boFang.shiYuYinXuanZhong(xiaoXi)).toBe(true)
+    expect(jiXuDangQianYuYin()).toBe(true)
+    expect(shiDangQianYuYinBoFangZhong()).toBe(true)
+    boFang.boFangJinDuMiao.value = 6
+    expect(tingZhiDangQianYuYin()).toBe(true)
+    expect(boFang.shiYuYinXuanZhong(xiaoXi)).toBe(false)
+    expect(boFang.boFangJinDuMiao.value).toBe(0)
+    expect(shiDangQianYuYinBoFangZhong()).toBe(false)
+    expect(tingZhiDangQianYuYin()).toBe(false)
+  })
+
+  it('空格键暂停/继续；焦点在输入框或按钮上时不抢键', () => {
+    const jiaYinPin = zaoBoFangYinPin()
+    vi.stubGlobal('Audio', function () {
+      return jiaYinPin
+    })
+    const boFang = use语音播放({ huoQuDiZhi: () => 'blob:kong-ge' })
+    const xiaoXi = zaoXiaoXi({ ke_hu_duan_id: 'ke-hu-duan-2' })
+    boFang.qieHuanYuYinBoFang(xiaoXi)
+    expect(shiDangQianYuYinBoFangZhong()).toBe(true)
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space' }))
+    expect(shiDangQianYuYinBoFangZhong()).toBe(false)
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space' }))
+    expect(shiDangQianYuYinBoFangZhong()).toBe(true)
+
+    const shuRu = document.createElement('div')
+    shuRu.setAttribute('contenteditable', 'true')
+    document.body.appendChild(shuRu)
+    shuRu.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true }))
+    expect(shiDangQianYuYinBoFangZhong()).toBe(true)
+    shuRu.remove()
+
+    const anNiu = document.createElement('button')
+    document.body.appendChild(anNiu)
+    anNiu.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true }))
+    expect(shiDangQianYuYinBoFangZhong()).toBe(true)
+    anNiu.remove()
+  })
+})
+
+describe('需求20：聊天输入框划词必须可见', () => {
+  it('不再用 user-select:none 关掉选区，选中底色走主题令牌且深浅两档同一枚', () => {
+    expect(ShuRuYuan).not.toMatch(/user-select:\s*none/)
+    expect(ShuRuYuan).toMatch(
+      /\.shuru-kuang::selection,\s*\.shuru-kuang \*::selection\s*\{[^}]*background:\s*color-mix\(in srgb, var\(--jujiao-huan-yanse\) 32%, transparent\)/,
+    )
+  })
+
+  it('选中态不再被「透明背景」压掉，文字色跟随继承色', () => {
+    const qiDian = ShuRuYuan.indexOf('::selection')
+    const guiZe = ShuRuYuan.slice(qiDian, ShuRuYuan.indexOf('}', qiDian) + 1)
+    expect(guiZe).not.toContain('background: transparent')
+    expect(guiZe).toContain('color: inherit')
+  })
+})
+
+interface KeKongCeLiangYinPin {
+  duration: number
+  currentTime: number
+  preload: string
+  src: string
+  addEventListener: (leiXing: string, huiDiao: () => void) => void
+  removeEventListener: (leiXing: string, huiDiao: () => void) => void
+  pause: () => void
+  load: () => void
+  removeAttribute: (ming: string) => void
+}
+
+function zaoKeKongCeLiangYinPin(
+  huiFu: Map<string, () => void>,
+  faQi: string[],
+): () => KeKongCeLiangYinPin {
+  return function chuangJian() {
+    const shiJian = zaoShiJianChi()
+    let diZhi = ''
+    const yinPin = {
+      duration: Number.POSITIVE_INFINITY,
+      currentTime: 0,
+      preload: '',
+      addEventListener: (leiXing: string, huiDiao: () => void) => shiJian.add(leiXing, huiDiao),
+      removeEventListener: (leiXing: string, huiDiao: () => void) => shiJian.remove(leiXing, huiDiao),
+      pause: () => undefined,
+      load: () => undefined,
+      removeAttribute: () => undefined,
+    }
+    Object.defineProperty(yinPin, 'src', {
+      get: () => diZhi,
+      set: (zhi: string) => {
+        diZhi = zhi
+        if (zhi === '') return
+        faQi.push(zhi)
+        huiFu.set(zhi, () => {
+          yinPin.duration = 4
+          shiJian.fa('loadedmetadata')
+        })
+      },
+    })
+    return yinPin as KeKongCeLiangYinPin
+  }
+}
+
+async function dengDaiLuoPan(): Promise<void> {
+  await new Promise((deng) => {
+    setTimeout(deng, DuoMeiTiPeiZhi.yuYinShiChangXieRuYanChiHaoMiao + 80)
+  })
+}
+
+async function huiFuQuanBu(huiFu: Map<string, () => void>): Promise<void> {
+  for (let lun = 0; lun < 60; lun += 1) {
+    const xiaYi = huiFu.entries().next()
+    if (xiaYi.done) return
+    const [jian, huiDiao] = xiaYi.value
+    huiFu.delete(jian)
+    huiDiao()
+    await new Promise((deng) => {
+      setTimeout(deng, 0)
+    })
+  }
+}
+
+describe('FP-01B 语音时长持久化与测量调度', () => {
+  async function chongXinDaoRu() {
+    vi.resetModules()
+    const chiJiu = await import('@/utils/语音时长存储')
+    const boFang = await import('@/composables/use语音播放')
+    return { chiJiu, boFang }
+  }
+
+  function wangLuoDiZhi(mingCheng: string): string {
+    return `${window.location.origin}/api/媒体/${mingCheng}`
+  }
+
+  function quanBuYuanWen(): string {
+    let yuanWen = ''
+    for (let suoYin = 0; suoYin < localStorage.length; suoYin += 1) {
+      const jian = localStorage.key(suoYin)
+      if (!jian) continue
+      yuanWen += jian + (localStorage.getItem(jian) ?? '')
+    }
+    return yuanWen
+  }
+
+  it('命中持久化时首次显示就是实测秒数与对应宽度，且一条测量请求都不发', async () => {
+    localStorage.clear()
+    const mingCheng = `ming-zhong-${Date.now()}`
+    const wuQianMing = wangLuoDiZhi(mingCheng)
+    const qianMingJia = `${wuQianMing}?e=1&u=yong-hu-2&t=3&s=qian-ming-jia`
+    const qianMingYi = `${wuQianMing}?e=9&u=yong-hu-2&t=8&s=qian-ming-yi`
+    const huiFu = new Map<string, () => void>()
+    const faQi: string[] = []
+    vi.stubGlobal('Audio', zaoKeKongCeLiangYinPin(huiFu, faQi) as unknown as typeof Audio)
+    try {
+      const yiFen = await chongXinDaoRu()
+      yiFen.chiJiu.jiLuYuYinShiChang(qianMingJia, 4000)
+      await dengDaiLuoPan()
+
+      const erFen = await chongXinDaoRu()
+      const xiaoXi = { mei_ti_url: qianMingYi, mei_ti_shi_chang_hao_miao: 5000 }
+      expect(erFen.boFang.geShiHuaYuYinShiChang(xiaoXi)).toBe('4″')
+      expect(erFen.boFang.yuYinKuanDuPx(xiaoXi)).toBe(
+        4 * DuoMeiTiPeiZhi.yuYinMeiMiaoKuanPx + DuoMeiTiPeiZhi.yuYinJiChuKuanPx,
+      )
+      erFen.boFang.ceLiangYuYinShiChang(xiaoXi)
+      expect(faQi).toEqual([])
+      const yuanWen = quanBuYuanWen()
+      expect(yuanWen).not.toContain('qian-ming-jia')
+      expect(yuanWen).not.toContain('qian-ming-yi')
+      expect(yuanWen).not.toContain('u=yong-hu-2')
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it('未命中持久化才发起测量，测到的值写盘后下次进入直接命中', async () => {
+    localStorage.clear()
+    const diZhi = wangLuoDiZhi(`wei-ming-zhong-${Date.now()}`)
+    const huiFu = new Map<string, () => void>()
+    const faQi: string[] = []
+    vi.stubGlobal('Audio', zaoKeKongCeLiangYinPin(huiFu, faQi) as unknown as typeof Audio)
+    try {
+      const yiFen = await chongXinDaoRu()
+      const xiaoXi = { mei_ti_url: diZhi }
+      expect(yiFen.boFang.geShiHuaYuYinShiChang(xiaoXi)).toBe('…″')
+      yiFen.boFang.ceLiangYuYinShiChang(xiaoXi)
+      expect(faQi).toEqual([diZhi])
+      huiFu.get(diZhi)?.()
+      await vi.waitFor(() => expect(yiFen.boFang.geShiHuaYuYinShiChang(xiaoXi)).toBe('4″'))
+      await dengDaiLuoPan()
+
+      const erFen = await chongXinDaoRu()
+      expect(erFen.chiJiu.duQuYuYinShiChang(diZhi)).toBe(4000)
+      const qian = faQi.length
+      erFen.boFang.ceLiangYuYinShiChang(xiaoXi)
+      expect(faQi.length).toBe(qian)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it('并发有上限、同一地址不重复排队、撤销后不再请求', async () => {
+    localStorage.clear()
+    const shangXian = DuoMeiTiPeiZhi.yuYinCeLiangBingFaShangXian
+    const zongShu = shangXian + 3
+    const qianZhui = Date.now()
+    const diZhiLieBiao = Array.from(
+      { length: zongShu },
+      (_, suoYin) => wangLuoDiZhi(`bing-fa-${qianZhui}-${suoYin}`),
+    )
+    const huiFu = new Map<string, () => void>()
+    const faQi: string[] = []
+    vi.stubGlobal('Audio', zaoKeKongCeLiangYinPin(huiFu, faQi) as unknown as typeof Audio)
+    try {
+      const moKuai = await chongXinDaoRu()
+      for (const diZhi of diZhiLieBiao) moKuai.boFang.ceLiangYuYinShiChang({ mei_ti_url: diZhi })
+      expect(faQi.length).toBe(shangXian)
+      moKuai.boFang.ceLiangYuYinShiChang({ mei_ti_url: diZhiLieBiao[0] })
+      moKuai.boFang.ceLiangYuYinShiChang({ mei_ti_url: diZhiLieBiao[shangXian] })
+      expect(faQi.length).toBe(shangXian)
+
+      const quXiaoDiZhi = diZhiLieBiao[zongShu - 1]
+      moKuai.boFang.quXiaoCeLiangYuYinShiChang({ mei_ti_url: quXiaoDiZhi })
+      await huiFuQuanBu(huiFu)
+      await vi.waitFor(() =>
+        expect(moKuai.boFang.geShiHuaYuYinShiChang({ mei_ti_url: diZhiLieBiao[0] })).toBe('4″'),
+      )
+      expect(faQi).not.toContain(quXiaoDiZhi)
+      expect(faQi.length).toBe(zongShu - 1)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it('播放时读到的真实元数据同样写入持久化，下次进入无需再测', async () => {
+    localStorage.clear()
+    const diZhi = wangLuoDiZhi(`bo-fang-${Date.now()}`)
+    const jiaYinPin = zaoBoFangYinPin(4)
+    const yuanShiAudio = Audio
+    vi.stubGlobal('Audio', function () {
+      return jiaYinPin
+    } as unknown as typeof Audio)
+    try {
+      const moKuai = await chongXinDaoRu()
+      const boFang = moKuai.boFang.use语音播放({ huoQuDiZhi: () => diZhi })
+      const xiaoXi = zaoXiaoXi({ ke_hu_duan_id: `bo-fang-${Date.now()}` })
+      boFang.qieHuanYuYinBoFang(xiaoXi)
+      jiaYinPin.fa('loadedmetadata')
+      expect(moKuai.chiJiu.duQuYuYinShiChang(diZhi)).toBe(4000)
+      boFang.tingZhiYinPinBoFang()
+      await dengDaiLuoPan()
+      const erFen = await chongXinDaoRu()
+      expect(erFen.chiJiu.duQuYuYinShiChang(diZhi)).toBe(4000)
+      expect(erFen.boFang.geShiHuaYuYinShiChang({ mei_ti_url: diZhi })).toBe('4″')
+    } finally {
+      vi.stubGlobal('Audio', yuanShiAudio)
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it('blob 预览地址只服务本次文档，不进持久化', async () => {
+    localStorage.clear()
+    const diZhi = `blob:ben-di-yu-lan-${Date.now()}`
+    const moKuai = await chongXinDaoRu()
+    moKuai.chiJiu.jiLuYuYinShiChang(diZhi, 4000)
+    expect(moKuai.chiJiu.duQuYuYinShiChang(diZhi)).toBe(4000)
+    await dengDaiLuoPan()
+    const erFen = await chongXinDaoRu()
+    expect(erFen.chiJiu.duQuYuYinShiChang(diZhi)).toBeNull()
+    expect(quanBuYuanWen()).not.toContain('blob:')
+  })
+
+  it('超出条数上限只留最近的，超过有效期的条目重新载入时被丢弃', async () => {
+    localStorage.clear()
+    const shangXian = DuoMeiTiPeiZhi.yuYinShiChangChiJiuShangXian
+    const qianZhui = Date.now()
+    const diZhi = (suoYin: number): string => wangLuoDiZhi(`shou-xian-${qianZhui}-${suoYin}`)
+    const moKuai = await chongXinDaoRu()
+    for (let suoYin = 0; suoYin < shangXian + 5; suoYin += 1) {
+      moKuai.chiJiu.jiLuYuYinShiChang(diZhi(suoYin), 2000 + suoYin)
+    }
+    expect(moKuai.chiJiu.语音时长表.size).toBe(shangXian)
+    expect(moKuai.chiJiu.duQuYuYinShiChang(diZhi(0))).toBeNull()
+    expect(moKuai.chiJiu.duQuYuYinShiChang(diZhi(shangXian + 4))).toBe(2000 + shangXian + 4)
+    await dengDaiLuoPan()
+
+    const cunChuJian = moKuai.chiJiu.YuYinShiChangCunChuJian
+    const yuanWen = JSON.parse(localStorage.getItem(cunChuJian) ?? '{}') as Record<
+      string,
+      [number, number]
+    >
+    const jian = Object.keys(yuanWen).find((key) => key.endsWith(`shou-xian-${qianZhui}-7`))
+    expect(jian).toBeTruthy()
+    if (jian) {
+      yuanWen[jian] = [
+        3000,
+        Date.now() - DuoMeiTiPeiZhi.yuYinShiChangChiJiuShiXiaoHaoMiao - 1000,
+      ]
+    }
+    localStorage.setItem(cunChuJian, JSON.stringify(yuanWen))
+
+    const erFen = await chongXinDaoRu()
+    expect(erFen.chiJiu.duQuYuYinShiChang(wangLuoDiZhi(`shou-xian-${qianZhui}-7`))).toBeNull()
+  })
+})

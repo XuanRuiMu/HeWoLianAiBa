@@ -1,0 +1,135 @@
+/**
+ * 微信原生小表情清单（与后端 HouDuan/src/config/微信原生表情码表.json 同源）。
+ * 用途：emoji 面板展示 + 文本消息内联渲染 [表情名] → /wechat-emojis/... 小图。
+ * 这些是「微信小表情」（类似 emoji 的文字内嵌表情），不属于表情包图库。
+ */
+export interface WeiXinXiaoBiaoQing {
+  mingCheng: string
+  fenLei: string
+  luJing: string
+}
+
+export const WeiXinXiaoBiaoQingLieBiao: WeiXinXiaoBiaoQing[] = [
+  { mingCheng: "666", fenLei: "face", luJing: "face/666.png" },
+  { mingCheng: "微笑", fenLei: "face", luJing: "face/微笑.png" },
+  { mingCheng: "撇嘴", fenLei: "face", luJing: "face/撇嘴.png" },
+  { mingCheng: "色", fenLei: "face", luJing: "face/色.png" },
+  { mingCheng: "发呆", fenLei: "face", luJing: "face/发呆.png" },
+  { mingCheng: "得意", fenLei: "face", luJing: "face/得意.png" },
+  { mingCheng: "流泪", fenLei: "face", luJing: "face/流泪.png" },
+  { mingCheng: "害羞", fenLei: "face", luJing: "face/害羞.png" },
+  { mingCheng: "闭嘴", fenLei: "face", luJing: "face/闭嘴.png" },
+  { mingCheng: "睡", fenLei: "face", luJing: "face/睡.png" },
+  { mingCheng: "大哭", fenLei: "face", luJing: "face/大哭.png" },
+  { mingCheng: "尴尬", fenLei: "face", luJing: "face/尴尬.png" },
+  { mingCheng: "发怒", fenLei: "face", luJing: "face/发怒.png" },
+  { mingCheng: "调皮", fenLei: "face", luJing: "face/调皮.png" },
+  { mingCheng: "呲牙", fenLei: "face", luJing: "face/呲牙.png" },
+  { mingCheng: "惊讶", fenLei: "face", luJing: "face/惊讶.png" },
+  { mingCheng: "难过", fenLei: "face", luJing: "face/难过.png" },
+  { mingCheng: "囧", fenLei: "face", luJing: "face/囧.png" },
+  { mingCheng: "抓狂", fenLei: "face", luJing: "face/抓狂.png" },
+  { mingCheng: "吐", fenLei: "face", luJing: "face/吐.png" },
+  { mingCheng: "偷笑", fenLei: "face", luJing: "face/偷笑.png" },
+  { mingCheng: "愉快", fenLei: "face", luJing: "face/愉快.png" },
+  { mingCheng: "白眼", fenLei: "face", luJing: "face/白眼.png" },
+  { mingCheng: "傲慢", fenLei: "face", luJing: "face/傲慢.png" },
+  { mingCheng: "困", fenLei: "face", luJing: "face/困.png" },
+  { mingCheng: "惊恐", fenLei: "face", luJing: "face/惊恐.png" },
+  { mingCheng: "憨笑", fenLei: "face", luJing: "face/憨笑.png" },
+  { mingCheng: "悠闲", fenLei: "face", luJing: "face/悠闲.png" },
+  { mingCheng: "咒骂", fenLei: "face", luJing: "face/咒骂.png" },
+  { mingCheng: "疑问", fenLei: "face", luJing: "face/疑问.png" },
+  { mingCheng: "嘘", fenLei: "face", luJing: "face/嘘.png" },
+  { mingCheng: "晕", fenLei: "face", luJing: "face/晕.png" },
+  { mingCheng: "衰", fenLei: "face", luJing: "face/衰.png" },
+  { mingCheng: "骷髅", fenLei: "face", luJing: "face/骷髅.png" },
+  { mingCheng: "敲打", fenLei: "face", luJing: "face/敲打.png" },
+  { mingCheng: "再见", fenLei: "face", luJing: "face/再见.png" },
+  { mingCheng: "擦汗", fenLei: "face", luJing: "face/擦汗.png" },
+  { mingCheng: "抠鼻", fenLei: "face", luJing: "face/抠鼻.png" },
+  { mingCheng: "鼓掌", fenLei: "face", luJing: "face/鼓掌.png" },
+  { mingCheng: "坏笑", fenLei: "face", luJing: "face/坏笑.png" },
+  { mingCheng: "右哼哼", fenLei: "face", luJing: "face/右哼哼.png" },
+  { mingCheng: "鄙视", fenLei: "face", luJing: "face/鄙视.png" },
+  { mingCheng: "委屈", fenLei: "face", luJing: "face/委屈.png" },
+  { mingCheng: "快哭了", fenLei: "face", luJing: "face/快哭了.png" },
+  { mingCheng: "阴险", fenLei: "face", luJing: "face/阴险.png" },
+  { mingCheng: "亲亲", fenLei: "face", luJing: "face/亲亲.png" },
+  { mingCheng: "可怜", fenLei: "face", luJing: "face/可怜.png" },
+  { mingCheng: "笑脸", fenLei: "face", luJing: "face/笑脸.png" },
+  { mingCheng: "生病", fenLei: "face", luJing: "face/生病.png" },
+  { mingCheng: "脸红", fenLei: "face", luJing: "face/脸红.png" },
+  { mingCheng: "破涕为笑", fenLei: "face", luJing: "face/破涕为笑.png" },
+  { mingCheng: "恐惧", fenLei: "face", luJing: "face/恐惧.png" },
+  { mingCheng: "失望", fenLei: "face", luJing: "face/失望.png" },
+  { mingCheng: "无语", fenLei: "face", luJing: "face/无语.png" },
+  { mingCheng: "嘿哈", fenLei: "face", luJing: "face/嘿哈.png" },
+  { mingCheng: "捂脸", fenLei: "face", luJing: "face/捂脸.png" },
+  { mingCheng: "机智", fenLei: "face", luJing: "face/机智.png" },
+  { mingCheng: "皱眉", fenLei: "face", luJing: "face/皱眉.png" },
+  { mingCheng: "耶", fenLei: "face", luJing: "face/耶.png" },
+  { mingCheng: "吃瓜", fenLei: "face", luJing: "face/吃瓜.png" },
+  { mingCheng: "加油", fenLei: "face", luJing: "face/加油.png" },
+  { mingCheng: "汗", fenLei: "face", luJing: "face/汗.png" },
+  { mingCheng: "天啊", fenLei: "face", luJing: "face/天啊.png" },
+  { mingCheng: "Emm", fenLei: "face", luJing: "face/Emm.png" },
+  { mingCheng: "社会社会", fenLei: "face", luJing: "face/社会社会.png" },
+  { mingCheng: "旺柴", fenLei: "face", luJing: "face/旺柴.png" },
+  { mingCheng: "好的", fenLei: "face", luJing: "face/好的.png" },
+  { mingCheng: "打脸", fenLei: "face", luJing: "face/打脸.png" },
+  { mingCheng: "哇", fenLei: "face", luJing: "face/哇.png" },
+  { mingCheng: "翻白眼", fenLei: "face", luJing: "face/翻白眼.png" },
+  { mingCheng: "让我看看", fenLei: "face", luJing: "face/让我看看.png" },
+  { mingCheng: "叹气", fenLei: "face", luJing: "face/叹气.png" },
+  { mingCheng: "苦涩", fenLei: "face", luJing: "face/苦涩.png" },
+  { mingCheng: "裂开", fenLei: "face", luJing: "face/裂开.png" },
+  { mingCheng: "奸笑", fenLei: "face", luJing: "face/奸笑.png" },
+  { mingCheng: "握手", fenLei: "gesture", luJing: "gesture/握手.png" },
+  { mingCheng: "胜利", fenLei: "gesture", luJing: "gesture/胜利.png" },
+  { mingCheng: "抱拳", fenLei: "gesture", luJing: "gesture/抱拳.png" },
+  { mingCheng: "勾引", fenLei: "gesture", luJing: "gesture/勾引.png" },
+  { mingCheng: "拳头", fenLei: "gesture", luJing: "gesture/拳头.png" },
+  { mingCheng: "OK", fenLei: "gesture", luJing: "gesture/OK.png" },
+  { mingCheng: "合十", fenLei: "gesture", luJing: "gesture/合十.png" },
+  { mingCheng: "强", fenLei: "gesture", luJing: "gesture/强.png" },
+  { mingCheng: "拥抱", fenLei: "gesture", luJing: "gesture/拥抱.png" },
+  { mingCheng: "弱", fenLei: "gesture", luJing: "gesture/弱.png" },
+  { mingCheng: "猪头", fenLei: "animal", luJing: "animal/猪头.png" },
+  { mingCheng: "跳跳", fenLei: "animal", luJing: "animal/跳跳.png" },
+  { mingCheng: "发抖", fenLei: "animal", luJing: "animal/发抖.png" },
+  { mingCheng: "转圈", fenLei: "animal", luJing: "animal/转圈.png" },
+  { mingCheng: "庆祝", fenLei: "blessing", luJing: "blessing/庆祝.png" },
+  { mingCheng: "礼物", fenLei: "blessing", luJing: "blessing/礼物.png" },
+  { mingCheng: "红包", fenLei: "blessing", luJing: "blessing/红包.png" },
+  { mingCheng: "發", fenLei: "blessing", luJing: "blessing/發.png" },
+  { mingCheng: "福", fenLei: "blessing", luJing: "blessing/福.png" },
+  { mingCheng: "烟花", fenLei: "blessing", luJing: "blessing/烟花.png" },
+  { mingCheng: "爆竹", fenLei: "blessing", luJing: "blessing/爆竹.png" },
+  { mingCheng: "嘴唇", fenLei: "other", luJing: "other/嘴唇.png" },
+  { mingCheng: "爱心", fenLei: "other", luJing: "other/爱心.png" },
+  { mingCheng: "心碎", fenLei: "other", luJing: "other/心碎.png" },
+  { mingCheng: "啤酒", fenLei: "other", luJing: "other/啤酒.png" },
+  { mingCheng: "咖啡", fenLei: "other", luJing: "other/咖啡.png" },
+  { mingCheng: "蛋糕", fenLei: "other", luJing: "other/蛋糕.png" },
+  { mingCheng: "凋谢", fenLei: "other", luJing: "other/凋谢.png" },
+  { mingCheng: "菜刀", fenLei: "other", luJing: "other/菜刀.png" },
+  { mingCheng: "炸弹", fenLei: "other", luJing: "other/炸弹.png" },
+  { mingCheng: "便便", fenLei: "other", luJing: "other/便便.png" },
+  { mingCheng: "太阳", fenLei: "other", luJing: "other/太阳.png" },
+  { mingCheng: "月亮", fenLei: "other", luJing: "other/月亮.png" },
+  { mingCheng: "玫瑰", fenLei: "other", luJing: "other/玫瑰.png" },
+]
+
+export const WeiXinXiaoBiaoQingMingDan: string[] = WeiXinXiaoBiaoQingLieBiao.map((x) => x.mingCheng)
+
+export function chaZhaoWeiXinXiaoBiaoQing(mingCheng: string): WeiXinXiaoBiaoQing | null {
+  const jianHua = mingCheng.trim()
+  if (jianHua === '') return null
+  return WeiXinXiaoBiaoQingLieBiao.find((x) => x.mingCheng === jianHua) ?? null
+}
+
+export function weiXinXiaoBiaoQingURL(mingCheng: string): string | null {
+  const xiang = chaZhaoWeiXinXiaoBiaoQing(mingCheng)
+  return xiang ? `/wechat-emojis/${xiang.luJing}` : null
+}

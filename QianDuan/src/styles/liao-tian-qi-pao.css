@@ -1,0 +1,15 @@
+
+.shuru-fu-zhu {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 4px;
+  margin-top: 4px;
+}
+
+
+.biaoqing-tishi {
+  font-size: 12px;
+  color: var(--chenggong-yanse);
+}

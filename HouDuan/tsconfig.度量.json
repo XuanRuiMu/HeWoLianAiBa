@@ -1,0 +1,23 @@
+{
+  // ⚠️ 度量与开场链的**独立**类型检查配置。
+  //
+  // 背景：原配置用于覆盖 `__tests__` 目录下的度量与联调测试（测试文件已于
+  // 2026-10-07 全部删除，配套的 `src/测试/` 辅助目录与 vitest 配置一并移除）。
+  //
+  // 现仅覆盖**生产源文件**本身：这些文件曾是度量链的被测对象，其中多处曾因
+  // `__tests__` 被主配置排除而处于零类型保护状态（返回值缺字段这类 P0 错误
+  // 在结构上看不见）。保留本配置是为了给它们留一道独立的 tsc 护栏。
+  //
+  // 用法：npx tsc --noEmit -p tsconfig.度量.json
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/types/index.ts",
+    "src/config/开场采样配置.ts",
+    "src/config/开场采样表.json",
+    "src/services/开场候选约束.ts",
+    "src/services/开场判据统计.ts",
+    "src/services/Writer.ts",
+    "src/services/AI引擎.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

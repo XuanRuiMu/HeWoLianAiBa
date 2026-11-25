@@ -1,0 +1,3 @@
+-- 角色头像版本与变更时间，用于头像演化与「AI 说的和玩家看的」一致性
+ALTER TABLE "角色" ADD COLUMN IF NOT EXISTS "头像版本" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "角色" ADD COLUMN IF NOT EXISTS "头像变更时间" TIMESTAMPTZ;

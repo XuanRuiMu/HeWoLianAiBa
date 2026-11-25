@@ -1,0 +1,309 @@
+import type { Server } from 'socket.io'
+import type { RenZhengSocket } from './认证'
+import { AI回复调度器 } from '../services/AI回复调度器'
+import { huoQuJiaoSeIELeiXing, huoQuJiaoSeHuiFuYanChiHaoMiao } from '../services/AI输入准备'
+import { jiaoSeShiFouBeiDuoShe, huoQuJiaoSeYongHuId } from '../services/夺舍'
+import { zhuanFaYongHuXiaoXiGeiGuanLiYuan } from './夺舍'
+import type { 消息信息 } from '../services/消息'
+import { jiLuSocketShiJian, jiLuXiaoXiCaoZuo, debug日志 } from '../utils/debug日志'
+import { huoQuFanYi } from '../config/translations'
+import { yanZhengUUID } from '../utils/验证'
+import { guiYiHuaJiaoSeBiaoShi, huoQuJiaoSeBianHao } from '../services/公开编号'
+import { redis } from '../redis'
+import { huoQuIo } from './io'
+import { 按身份同步管理房间 } from './管理通道'
+import { jianChaBingAnPaiGuanHuaiDuiHua } from '../services/主动关怀调度器'
+
+interface TiaoDuQiJiLu {
+  角色ID: string
+  调度器: AI回复调度器
+  归属Socket: Set<string>
+  续期定时器?: NodeJS.Timeout
+}
+
+const socketTiaoDuQiMap = new Map<string, TiaoDuQiJiLu>()
+const jiaoSeTiaoDuQiMap = new Map<string, TiaoDuQiJiLu>()
+
+const TiaoDuQiSuoQianZhui = 'tiao_du_qi_suo:'
+const TiaoDuQiSuoMiao = 30000
+const TiaoDuQiXuQiMiao = Math.floor(TiaoDuQiSuoMiao / 3)
+const BenJinChengBianHao = `${process.pid}-${Math.random().toString(36).slice(2, 10)}`
+
+async function changShiRenLingTiaoDuQi(用户ID: string, jiaoSeId: string, lingZhuBiaoShi: string): Promise<boolean> {
+  const suoJian = `${TiaoDuQiSuoQianZhui}${用户ID}:${jiaoSeId}`
+  try {
+    const jieGuo = await redis.set(suoJian, lingZhuBiaoShi, 'PX', TiaoDuQiSuoMiao, 'NX')
+    return jieGuo === 'OK'
+  } catch {
+    return true
+  }
+}
+
+function kaiShiXuQiTiaoDuQiSuo(jian: string, jiLu: TiaoDuQiJiLu, 用户ID: string, jiaoSeId: string): void {
+  jiLu.续期定时器 = setInterval(() => {
+    void (async () => {
+      const suoJian = `${TiaoDuQiSuoQianZhui}${用户ID}:${jiaoSeId}`
+      let chiYou: string | null = null
+      try {
+        chiYou = await redis.get(suoJian)
+      } catch {
+        return
+      }
+      if (chiYou === BenJinChengBianHao) {
+        await redis.pexpire(suoJian, TiaoDuQiSuoMiao).catch(() => undefined)
+        return
+      }
+      debug日志.warn('聊天Socket', '调度器认领锁易主，本进程作废轮次并放弃记录', {
+        xiang_qing: { jiao_se_id: jiaoSeId, chi_you: chiYou === null ? 'yi_shi_xiao' : 'ta_ren' },
+      })
+      jiLu.调度器.重置()
+      tingZhiXuQiTiaoDuQiSuo(jiLu)
+      if (jiaoSeTiaoDuQiMap.get(jian) === jiLu) jiaoSeTiaoDuQiMap.delete(jian)
+      for (const [socketId, zaiJi] of [...socketTiaoDuQiMap.entries()]) {
+        if (zaiJi === jiLu) socketTiaoDuQiMap.delete(socketId)
+      }
+    })()
+  }, TiaoDuQiXuQiMiao)
+  jiLu.续期定时器.unref?.()
+}
+
+function tingZhiXuQiTiaoDuQiSuo(jiLu: TiaoDuQiJiLu): void {
+  if (jiLu.续期定时器) {
+    clearInterval(jiLu.续期定时器)
+    jiLu.续期定时器 = undefined
+  }
+}
+
+async function shiFangTiaoDuQiSuo(用户ID: string, jiaoSeId: string, lingZhuBiaoShi: string): Promise<void> {
+  const suoJian = `${TiaoDuQiSuoQianZhui}${用户ID}:${jiaoSeId}`
+  try {
+    const chiYou = await redis.get(suoJian)
+    if (chiYou === lingZhuBiaoShi) {
+      await redis.del(suoJian)
+    }
+  } catch {
+    // 锁释放失败不阻断
+  }
+}
+
+async function guangBoTiaoDuQiBianGeng(用户ID: string, jiaoSeId: string, dongZuo: string): Promise<void> {
+  try {
+    await redis.publish(`tiao_du_qi_guang_bo:${用户ID}`, JSON.stringify({ jiao_se_id: jiaoSeId, dong_zuo: dongZuo, shi_jian: Date.now() }))
+  } catch {
+    // 广播失败不阻断
+  }
+}
+
+function 生成角色TiaoDuQiJian(yong_hu_id: string, jiao_se_id: string): string {
+  return `${yong_hu_id}:${jiao_se_id}`
+}
+
+export function 清理调度器映射(): void {
+  const 待重置 = new Set<TiaoDuQiJiLu>([...socketTiaoDuQiMap.values(), ...jiaoSeTiaoDuQiMap.values()])
+  for (const jiLu of 待重置) {
+    tingZhiXuQiTiaoDuQiSuo(jiLu)
+    jiLu.调度器.重置()
+  }
+  socketTiaoDuQiMap.clear()
+  jiaoSeTiaoDuQiMap.clear()
+}
+
+async function queBaoJiaoSeTiaoDuQi(
+  yong_hu_id: string,
+  jiao_se_id: string,
+  io: Server,
+): Promise<TiaoDuQiJiLu | null> {
+  const jian = 生成角色TiaoDuQiJian(yong_hu_id, jiao_se_id)
+  const jiuJiLu = jiaoSeTiaoDuQiMap.get(jian)
+  if (jiuJiLu) return jiuJiLu
+
+  if (!(await changShiRenLingTiaoDuQi(yong_hu_id, jiao_se_id, BenJinChengBianHao))) {
+    debug日志.warn('聊天Socket', '调度器已被他处认领，本进程禁建禁覆盖', {
+      xiang_qing: { jiao_se_id, user_id: yong_hu_id },
+    })
+    return null
+  }
+
+  const [ie类型, huiFuYanChiHaoMiao, duiWaiJiaoSeId] = await Promise.all([
+    huoQuJiaoSeIELeiXing(jiao_se_id),
+    huoQuJiaoSeHuiFuYanChiHaoMiao(jiao_se_id),
+    huoQuJiaoSeBianHao(jiao_se_id),
+  ])
+  if (!ie类型) {
+    await shiFangTiaoDuQiSuo(yong_hu_id, jiao_se_id, BenJinChengBianHao)
+    return null
+  }
+
+  const jiLu: TiaoDuQiJiLu = {
+    角色ID: jiao_se_id,
+    调度器: new AI回复调度器(jiao_se_id, yong_hu_id, ie类型, io, huiFuYanChiHaoMiao, duiWaiJiaoSeId),
+    归属Socket: new Set<string>(),
+  }
+  jiaoSeTiaoDuQiMap.set(jian, jiLu)
+  kaiShiXuQiTiaoDuQiSuo(jian, jiLu, yong_hu_id, jiao_se_id)
+  await guangBoTiaoDuQiBianGeng(yong_hu_id, jiao_se_id, 'ren_ling')
+  return jiLu
+}
+
+function shanChuJiaoSeJiLuRuGuo(jiLu: TiaoDuQiJiLu, jian: string): void {
+  tingZhiXuQiTiaoDuQiSuo(jiLu)
+  jiLu.调度器.重置()
+  if (jiaoSeTiaoDuQiMap.get(jian) === jiLu) {
+    jiaoSeTiaoDuQiMap.delete(jian)
+  }
+}
+
+export function huoQuJiaoSeTiaoDuQi(
+  yong_hu_id: string,
+  jiao_se_id: string,
+): AI回复调度器 | null {
+  return jiaoSeTiaoDuQiMap.get(生成角色TiaoDuQiJian(yong_hu_id, jiao_se_id))?.调度器 || null
+}
+
+export function chongZhiJiaoSeTiaoDuQi(yong_hu_id: string, jiao_se_id: string): void {
+  const jiLu = jiaoSeTiaoDuQiMap.get(生成角色TiaoDuQiJian(yong_hu_id, jiao_se_id))
+  if (jiLu) {
+    jiLu.调度器.处理用户消息()
+  }
+}
+
+export function zhongDuanJiaoSeTiaoDuQi(yong_hu_id: string, jiao_se_id: string): void {
+  const jiLu = jiaoSeTiaoDuQiMap.get(生成角色TiaoDuQiJian(yong_hu_id, jiao_se_id))
+  if (jiLu) {
+    jiLu.调度器.重置()
+  }
+}
+
+export async function luoKuChuFaJiaoSeTiaoDuQi(
+  yong_hu_id: string,
+  jiao_se_id: string,
+  xiao_xi: 消息信息,
+): Promise<void> {
+  try {
+    if (!yong_hu_id || !yanZhengUUID(jiao_se_id) || !xiao_xi?.id) return
+    const io = huoQuIo()
+    if (!io) return
+
+    if (await jiaoSeShiFouBeiDuoShe(jiao_se_id)) {
+      await zhuanFaYongHuXiaoXiGeiGuanLiYuan(io, jiao_se_id, yong_hu_id, xiao_xi)
+      return
+    }
+
+    const jiLu = await queBaoJiaoSeTiaoDuQi(yong_hu_id, jiao_se_id, io)
+    if (!jiLu) {
+      debug日志.warn('聊天Socket', '落库触发AI被跳过：调度器在他处认领', {
+        xiang_qing: { jiao_se_id, user_id: yong_hu_id, xiao_xi_id: xiao_xi.id },
+      })
+      jiLuXiaoXiCaoZuo('用户消息落库但AI触发被跳过', yong_hu_id, jiao_se_id, 'yonghu', {
+        xiao_xi_id: xiao_xi.id,
+        chu_fa: 'tiao_du_qi_ren_ling_shi_bai',
+      })
+      return
+    }
+
+    jiLu.调度器.处理用户消息(xiao_xi.id)
+    jiLuXiaoXiCaoZuo('用户发送消息触发AI处理', yong_hu_id, jiao_se_id, 'yonghu', {
+      xiao_xi_id: xiao_xi.id,
+      chu_fa: 'luo-ku',
+    })
+  } catch (cuoWu) {
+    debug日志.error('聊天Socket', '落库触发AI处理失败', {
+      xiang_qing: { jiao_se_id, cuo_wu: String(cuoWu) },
+    })
+  }
+}
+
+const SocketXianLiuPrefix = 'socket_xian_liu:'
+const SocketXianLiuMax = 10
+const SocketXianLiuWindow = 10 * 1000
+
+async function jianCeSocketXianLiu(用户ID: string): Promise<boolean> {
+  const jianMing = `${SocketXianLiuPrefix}${用户ID}`
+  const dangQian = await redis.incr(jianMing)
+  if (dangQian === 1) {
+    await redis.pexpire(jianMing, SocketXianLiuWindow)
+  }
+  return dangQian <= SocketXianLiuMax
+}
+
+export function 初始化聊天Socket(io: Server): void {
+  io.on('connection', (socket: RenZhengSocket) => {
+    const 用户ID = socket.yong_hu?.用户ID
+    if (!用户ID) {
+      socket.disconnect(true)
+      return
+    }
+
+    jiLuSocketShiJian('Socket连接', 用户ID, { socket_id: socket.id, shi_jian: 'liao_tian' })
+
+    socket.on('加入聊天', async (角色ID: unknown) => {
+      try {
+        const keXing = await jianCeSocketXianLiu(用户ID)
+        if (!keXing) {
+          socket.emit('错误', huoQuFanYi('tongYong', 'caoZuoPinFan'))
+          debug日志.warn('聊天Socket', 'Socket超限丢弃不踢人', { xiang_qing: { socket_id: socket.id } })
+          return
+        }
+        const 角色ID字符串 = await guiYiHuaJiaoSeBiaoShi(角色ID)
+        if (!角色ID字符串) {
+          socket.emit('错误', huoQuFanYi('tongYong', 'queShaoCanShu'))
+          return
+        }
+
+        const jiaoSeYongHuId = await huoQuJiaoSeYongHuId(角色ID字符串)
+        if (jiaoSeYongHuId === null) {
+          socket.emit('错误', huoQuFanYi('liaoTian', 'jiaoSeBuCunZai'))
+          return
+        }
+        if (jiaoSeYongHuId !== 用户ID) {
+          socket.emit('错误', huoQuFanYi('tongYong', 'weiShouQuan'))
+          return
+        }
+
+        socket.join(用户ID)
+        await 按身份同步管理房间(socket, 用户ID)
+
+        const jiuJiLu = socketTiaoDuQiMap.get(socket.id)
+        if (jiuJiLu && jiuJiLu.角色ID !== 角色ID字符串) {
+          const jiuJian = 生成角色TiaoDuQiJian(用户ID, jiuJiLu.角色ID)
+          jiuJiLu.归属Socket.delete(socket.id)
+          if (jiuJiLu.归属Socket.size === 0) {
+            shanChuJiaoSeJiLuRuGuo(jiuJiLu, jiuJian)
+            void shiFangTiaoDuQiSuo(用户ID, jiuJiLu.角色ID, BenJinChengBianHao)
+          }
+        }
+
+        const jiLu = await queBaoJiaoSeTiaoDuQi(用户ID, 角色ID字符串, io)
+        if (!jiLu) {
+          socketTiaoDuQiMap.delete(socket.id)
+          return
+        }
+        jiLu.归属Socket.add(socket.id)
+        socketTiaoDuQiMap.set(socket.id, jiLu)
+        jiLuSocketShiJian('加入聊天', 用户ID, { jiao_se_id: 角色ID字符串, socket_id: socket.id })
+        void jianChaBingAnPaiGuanHuaiDuiHua(用户ID, 角色ID字符串)
+      } catch (cuoWu) {
+        debug日志.error('聊天Socket', '加入聊天处理失败', {
+          xiang_qing: { socket_id: socket.id, cuo_wu: String(cuoWu) },
+        })
+        socket.emit('错误', huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'))
+      }
+    })
+
+
+    socket.on('disconnect', () => {
+      const jiLu = socketTiaoDuQiMap.get(socket.id)
+      socketTiaoDuQiMap.delete(socket.id)
+      if (jiLu) {
+        jiLu.归属Socket.delete(socket.id)
+        const jian = 生成角色TiaoDuQiJian(用户ID, jiLu.角色ID)
+        if (jiLu.归属Socket.size === 0 && jiaoSeTiaoDuQiMap.get(jian) === jiLu) {
+          shanChuJiaoSeJiLuRuGuo(jiLu, jian)
+          void shiFangTiaoDuQiSuo(用户ID, jiLu.角色ID, BenJinChengBianHao)
+          void guangBoTiaoDuQiBianGeng(用户ID, jiLu.角色ID, 'shi_fang')
+        }
+      }
+      jiLuSocketShiJian('Socket断开', 用户ID, { socket_id: socket.id })
+    })
+  })
+}

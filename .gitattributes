@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.sh text eol=lf
+HouDuan/QianYi/*.sql text eol=lf
+HouDuan/QianYi/migrations/*.sql text eol=lf
+HouDuan/QianYi/migrations/pending/*.sql text eol=lf
+QianDuan/brotli-src/** -text
