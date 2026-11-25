@@ -3,8 +3,8 @@
  * 网页搜索/抓取走免费通道；语音识别与合成走硅基流动免费通道。
  * 不绑定任何单一模型厂商官方工具端点。
  */
-import { peiZhi } from "../配置.js";
-import { duoMoTaiPeiZhi } from "./多模态配置.js";
+import { peiZhi } from "../config";
+import { duoMoTaiPeiZhi } from "./多模态配置";
 
 type SouSuoGongJu = "ddg" | "bing";
 type SouSuoJieGuo = { title: string; url: string; snippet: string; source: string };

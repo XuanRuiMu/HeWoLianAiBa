@@ -32,16 +32,6 @@ export interface BiaoQingZaiTiJueCe {
   quXiang: string
   renSheQiZhi: string[]
   yong_hu_xin_xiao_xi: string
-  wanGeng?: boolean
-  changJingTiShi?: string
-}
-
-function quFengGeYunXu(jiaoSe: AIYinQingShuRu['jiao_se'], nianLing: NianLingDang): readonly string[] {
-  const shiNeiXiang = jiaoSe?.ie_lei_xing === 'I'
-  if (shiNeiXiang) {
-    return nianLing.yunXuFengGe.filter((x) => x !== '梗图')
-  }
-  return nianLing.yunXuFengGe
 }
 
 interface NianLingDang {
@@ -122,14 +112,6 @@ function quWenChang(zhi: unknown): string {
   return typeof zhi === 'string' ? zhi.trim() : ''
 }
 
-function shiWanGengChangJing(yongHuWenBen: string, ceLue?: DirectorCeLue): boolean {
-  const yiTu = quWenChang(ceLue?.biao_qing_yi_tu)
-  if (yiTu !== '' && BiaoQingMiDu.wanGeng.yiTu.includes(yiTu)) return true
-  const wenBen = [yongHuWenBen, quWenChang(ceLue?.qing_gan_fen_xi)].join('\n')
-  if (wenBen.trim() === '') return false
-  return BiaoQingMiDu.wanGeng.guanJianCi.some((ci) => wenBen.includes(ci))
-}
-
 function hanJuBuPaiChu(wenBen: string, qi: number, ciChang: number): boolean {
   const fuJinBanJing = 6
   const zuo = Math.max(0, qi - fuJinBanJing)
@@ -208,17 +190,14 @@ export function panDuanBiaoQingZaiTi(
       yuanYin = '间隔未到'
     }
 
-    const wanGeng = shiWanGengChangJing(quWenBen(shuRu?.yong_hu_xin_xiao_xi), ceLue)
-
-    if (yuanYin === '放行' && typeof ceLue?.qing_gan_nong_du === 'number') {
-      const nongDuXiaXian = wanGeng ? BiaoQingMiDu.wanGeng.qingGanNongDuXiaXian : BiaoQingMiDu.qingGanNongDuXiaXian
-      if (ceLue.qing_gan_nong_du < nongDuXiaXian) yuanYin = '间隔未到'
+    if (yuanYin === '放行' && typeof ceLue?.qing_gan_nong_du === 'number' && ceLue.qing_gan_nong_du < 35) {
+      yuanYin = '间隔未到'
     }
 
     const jueCe: BiaoQingZaiTiJueCe = {
       geiHouXuan: yuanYin === '放行' || yuanYin === '回敬',
       yuanYin,
-      yunXuFengGe: quFengGeYunXu(shuRu?.jiao_se, nianLingDang),
+      yunXuFengGe: nianLingDang.yunXuFengGe,
       guanXiJieDuanXuHao: jieDuanXuHao,
       nianLingDang: nianLingDang.ming,
       qiWangJianGeLunShu: qiWangJianGe,
@@ -226,24 +205,12 @@ export function panDuanBiaoQingZaiTi(
       quXiang: shouGan.quXiang,
       renSheQiZhi: tuiDaoRenSheQiZhi(shuRu.jiao_se),
       yong_hu_xin_xiao_xi: quWenBen(shuRu?.yong_hu_xin_xiao_xi),
-      wanGeng,
-      changJingTiShi: wanGeng ? BiaoQingMiDu.wanGeng.changJingTiShi : undefined,
-    }
-    if (wanGeng && !jueCe.geiHouXuan && yuanYin !== '总开关关闭' && yuanYin !== '危机') {
-      const wanGengJieDuanXuHao = quJieDuanXuHao(BiaoQingMiDu.wanGeng.zuiDiYunXuJieDuan)
-      const 当前间隔 = shouGan.shangCiFaTuLunShu
-      const 间隔已满足 = 当前间隔 === null || 当前间隔 >= qiWangJianGe
-      if (jieDuanXuHao >= wanGengJieDuanXuHao && 间隔已满足) {
-        jueCe.geiHouXuan = true
-        jueCe.yuanYin = '放行'
-      }
     }
     debug日志.debug(RiZhiLeiXing, '本轮表情载体决策', {
       xiang_qing: {
         jiao_se_id: shuRu?.jiao_se_id ?? '',
         yuan_yin: jueCe.yuanYin,
         gei_hou_xuan: jueCe.geiHouXuan,
-        wan_geng: wanGeng,
         nian_ling_dang: jueCe.nianLingDang,
         feng_ge_shu: jueCe.yunXuFengGe.length,
         jie_duan_xu_hao: jueCe.guanXiJieDuanXuHao,

@@ -452,4 +452,40 @@ async function huoQuHuoJieXiWenJian(xing: MeiTiXing): Promise<DuiHuaWenJianTiQu 
   if (zaiTu) return zaiTu
   if (tiQuHuanCun.size >= WenDangTiQuPeiZhi.tiQuHuanCunTiaoMuShangXian) {
     const zuiJiu = tiQuHuanCun.keys().next().value
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+    if (zuiJiu !== undefined) tiQuHuanCun.delete(zuiJiu)
+  }
+  const daiBanRenWu = anSha256TiQu(xing).catch((cuoWu) => {
+    jiLuJiangJi(fenLeiCuoWu(cuoWu))
+    return null
+  })
+  tiQuHuanCun.set(mingZhong, daiBanRenWu)
+  return daiBanRenWu
+}
+
+export async function buQiWenJianTiQuWenBen<T extends DuiHuaLiShiXiang>(
+  liShi: T[],
+): Promise<T[]> {
+  const houXuan: T[] = []
+  const bianHaoLieBiao = new Set<string>()
+  for (const xiang of liShi) {
+    if (xiang.meiTiLeiBie !== 'wenjian' || xiang.yi_che_hui) continue
+    if (xiang.wenJianTiQu || !xiang.meiTiId || !yanZhengUUID(xiang.meiTiId)) continue
+    houXuan.push(xiang)
+    bianHaoLieBiao.add(xiang.meiTiId)
+  }
+  if (houXuan.length === 0) return liShi
+  let hangBiao: Map<string, MeiTiXing>
+  try {
+    hangBiao = await huoQuMeiTiXingLieBiao([...bianHaoLieBiao])
+  } catch (cuoWu) {
+    jiLuJiangJi(fenLeiCuoWu(cuoWu))
+    return liShi
+  }
+  for (const xiang of houXuan) {
+    const xing = hangBiao.get(String(xiang.meiTiId))
+    if (!xing) continue
+    const jieGuo = await huoQuHuoJieXiWenJian(xing)
+    if (jieGuo) xiang.wenJianTiQu = jieGuo
+  }
+  return liShi
+}

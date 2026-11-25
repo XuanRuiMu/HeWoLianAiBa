@@ -55,7 +55,7 @@ export async function fanYiWenBen(
         xiaoXi: [
           {
             jiaoSe: 'system',
-            neiRong: `任务：将${yuanShuoMing}翻译为${muBiaoMing}。只输出译文本身，不附加解释或引号。`,
+            neiRong: `你是翻译助手。将${yuanShuoMing}翻译为${muBiaoMing}。只输出译文，不要解释，不要加引号。`,
           },
           { jiaoSe: 'user', neiRong: yuan },
         ],

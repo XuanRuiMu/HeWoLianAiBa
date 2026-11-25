@@ -5,7 +5,8 @@ import { AI配置 } from '../config/AI配置'
 import { 用户内容结束标记, 用户内容开始标记 } from '../config/通用知识库'
 import { YunYingZiDuanXiaoXiLeiXing } from '../config/消息配置'
 import { huoQuFanYi } from '../config/translations'
-import { 按配置调用 } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/通用模型调用'
+import { guJiTokenShu, ziFuShuZhuanTokenShu } from '../utils/token估算'
 
 export interface SuCaiYouBiao {
   shiJian: string
@@ -18,7 +19,6 @@ export interface DuiHuaZhaiYaoJiLu {
   gengXinShiJian: string | null
   suCaiMaoDian: string | null
   xiaoXiId?: string | null
-  suCaiMaoDianId?: string | null
   youBiao?: SuCaiYouBiao | null
 }
 
@@ -57,13 +57,13 @@ export const ZhaiYaoFuHeGuoLvYuJu = `
      AND COALESCE("类型", 'wenBen') <> ALL($4::varchar[])
      AND BTRIM("内容") <> ''`
 
-export const ZhaiYaoLuoKuYuJu = `INSERT INTO "对话摘要" ("用户ID", "角色ID", "摘要内容", "概括消息数", "素材锚点时间", "起始消息ID", "更新时间")
+export const ZhaiYaoLuoKuYuJu = `INSERT INTO "对话摘要" ("用户ID", "角色ID", "摘要内容", "概括消息数", "素材锚点时间", "素材锚点消息ID", "更新时间")
      VALUES ($1, $2, $3, $4, $5, $6, NOW())
      ON CONFLICT ("用户ID", "角色ID") DO UPDATE SET
        "摘要内容" = EXCLUDED."摘要内容",
        "概括消息数" = EXCLUDED."概括消息数",
        "素材锚点时间" = EXCLUDED."素材锚点时间",
-       "起始消息ID" = EXCLUDED."起始消息ID",
+       "素材锚点消息ID" = EXCLUDED."素材锚点消息ID",
        "更新时间" = NOW()`
 
 export const ZhaiYaoCuDian =
@@ -87,7 +87,13 @@ interface YouBiaoJieXi {
 }
 
 export function jieXiSuCaiMaoDian(zhi: unknown): YouBiaoJieXi {
-  if (typeof zhi === 'string' && zhi.includes(' ')) {
+  if (typeof zhi === 'string') {
+    try {
+      const jieXi = JSON.parse(zhi) as { shiJian?: unknown; id?: unknown }
+      const shiJian = guiYiShiJian(jieXi?.shiJian)
+      if (shiJian) return { shiJian, id: typeof jieXi.id === 'string' && jieXi.id !== '' ? jieXi.id : null, xinShi: true }
+    } catch {
+    }
     const jieKai = zhi.lastIndexOf(' ')
     const houZhui = zhi.slice(jieKai + 1)
     const shiJian = guiYiShiJian(zhi.slice(0, jieKai))
@@ -103,13 +109,13 @@ export function jieXiMaoDianYuXiaoXi(maoDian: unknown, xiaoXi: unknown): YouBiao
 }
 
 export function bianMaSuCaiMaoDian(shiJian: string | null, id: string | null = null): string | null {
-  return shiJian
+  return shiJian && id ? JSON.stringify({ shiJian, id }) : shiJian
 }
 
 function huoQuHangYouBiao(hang: Record<string, unknown> | undefined): SuCaiYouBiao | null {
   const shiJian = guiYiShiJian(hang?.['创建时间'])
-  const id = typeof hang?.['ID'] === 'string' ? hang['ID'] : ''
-  if (!shiJian || id === '') return null
+  const id = typeof hang?.['ID'] === 'string' && hang['ID'].trim() !== '' ? hang['ID'] : null
+  if (!shiJian) return null
   return { shiJian, id }
 }
 
@@ -149,23 +155,24 @@ export async function duQuDuiHuaZhaiYao(
   if (!yongHuId || !jiaoSeId) return null
   try {
     const jieGuo = await 数据库.query(
-      'SELECT "摘要内容", "概括消息数", "更新时间", "素材锚点时间", "起始消息ID" FROM "对话摘要" WHERE "用户ID" = $1 AND "角色ID" = $2 LIMIT 1',
+      'SELECT "摘要内容", "概括消息数", "更新时间", "素材锚点时间", "素材锚点消息ID" FROM "对话摘要" WHERE "用户ID" = $1 AND "角色ID" = $2 LIMIT 1',
       [yongHuId, jiaoSeId],
     )
     const hang = jieGuo.rows[0]
     if (!hang) return null
     const neiRong = String(hang['摘要内容'] ?? '').trim()
     if (neiRong === '') return null
-    const you = hang['起始消息ID']
-      ? jieXiMaoDianYuXiaoXi(hang['素材锚点时间'], hang['起始消息ID'])
+    const you = hang['素材锚点消息ID']
+      ? jieXiMaoDianYuXiaoXi(hang['素材锚点时间'], hang['素材锚点消息ID'])
       : jieXiSuCaiMaoDian(hang['素材锚点时间'])
+    const suCaiMaoDian = you.shiJian
+    const xiaoXiId = you.xinShi ? you.id : null
     return {
       zhaiYaoNeiRong: neiRong,
       gaiKuoXiaoXiShu: zhengShu(hang['概括消息数']),
       gengXinShiJian: guiYiShiJian(hang['更新时间']),
-      suCaiMaoDian: you.shiJian,
-      xiaoXiId: you.id,
-      youBiao: you.shiJian ? { shiJian: you.shiJian, id: you.id } : null,
+      suCaiMaoDian,
+      xiaoXiId,
     }
   } catch (cuoWu) {
     debug日志.warn('对话摘要', '读取已有摘要失败，本轮按没有记忆处理', {
@@ -336,7 +343,7 @@ function huoQuYuanLiaoCanShu(
   xiaoXiId: string | null = null,
 ): { canShu: unknown[]; fuHe: boolean } {
   return {
-    canShu: [yongHuId, jiaoSeId, maoDian, [...YunYingZiDuanXiaoXiLeiXing], xiaoXiId],
+    canShu: [yongHuId, jiaoSeId, jieXiSuCaiMaoDian(maoDian).shiJian, [...YunYingZiDuanXiaoXiLeiXing], xiaoXiId ?? jieXiSuCaiMaoDian(maoDian).id],
     fuHe: maoDian !== null && xiaoXiId !== null,
   }
 }
@@ -358,12 +365,12 @@ export async function 估算未压缩Token(
 ): Promise<number> {
   const can = huoQuYuanLiaoCanShu(yong_hu_id, jiao_se_id, maoDian, xiaoXiId)
   const jieGuo = await 数据库.query(
-    `SELECT COALESCE(SUM(OCTET_LENGTH(BTRIM("内容"))), 0)::bigint AS zi_jie FROM "消息"${can.fuHe ? ZhaiYaoFuHeGuoLvYuJu : ZhaiYaoYuanLiaoGuoLvYuJu}`,
+    `SELECT COALESCE(SUM(CHAR_LENGTH(BTRIM("内容"))), 0)::bigint AS zi_fu_shu FROM "消息"${can.fuHe ? ZhaiYaoFuHeGuoLvYuJu : ZhaiYaoYuanLiaoGuoLvYuJu}`,
     can.canShu,
   )
-  const ziJie = Number(jieGuo.rows[0]?.zi_jie ?? 0)
-  if (!Number.isFinite(ziJie) || ziJie <= 0) return 0
-  return Math.ceil(ziJie / 5)
+  const ziFuShu = Number(jieGuo.rows[0]?.zi_fu_shu ?? 0)
+  if (!Number.isFinite(ziFuShu) || ziFuShu <= 0) return 0
+  return ziFuShuZhuanTokenShu(ziFuShu)
 }
 
 interface ZhaiYaoYuanLiao {
@@ -385,7 +392,7 @@ function chuangKouQiShiZhi(
     if (leiJiToken >= zuiJinYuanWenToken) {
       return xuHao + 1
     }
-    leiJiToken += Buffer.byteLength(neiRong, 'utf8') / 5
+    leiJiToken += guJiTokenShu(neiRong)
   }
   return 0
 }
@@ -402,22 +409,14 @@ async function huoQuZhaiYaoYuanLiao(
   const hangLieBiao: Array<Record<string, unknown>> = []
   let you: SuCaiYouBiao | null = null
   let piCi = 0
-  let leiJiToken = 0
-  let tie = false
-
+  let qiShi = 0
   while (piCi < zuiDaPiCi) {
-    const params: unknown[] = [yongHuId, jiaoSeId, maoDian, [...YunYingZiDuanXiaoXiLeiXing], xiaoXiId, you?.shiJian ?? null, you?.id ?? null, piLiang]
+    const can = huoQuYuanLiaoCanShu(yongHuId, jiaoSeId, maoDian, xiaoXiId)
+    const params = [...can.canShu, you?.shiJian ?? null, you?.id ?? null, piLiang]
     const jie = await 数据库.query(
-      `SELECT "内容", "发送者", "创建时间", "客户端序号", "ID" FROM "消息"
-       WHERE "用户ID" = $1 AND "角色ID" = $2
-         AND ($3::timestamptz IS NULL OR "创建时间" >= $3::timestamptz)
-         AND ($5::text IS NULL OR "创建时间" > $3::timestamptz OR ("创建时间" = $3::timestamptz AND "ID"::text > $5::text))
-         AND COALESCE("已撤回", false) = false
-         AND "发送者" IN ('yonghu', 'jiaose')
-         AND COALESCE("类型", 'wenBen') IN ('wenben', 'wenBen')
-         AND COALESCE("类型", 'wenBen') <> ALL($4::varchar[])
-         AND BTRIM("内容") <> ''
-         AND ($6::timestamptz IS NULL OR ("创建时间", "ID"::text) < ($6::timestamptz, $7::text))
+      `SELECT "内容", "发送者", "创建时间", "ID" FROM "消息"
+       ${can.fuHe ? ZhaiYaoFuHeGuoLvYuJu : ZhaiYaoYuanLiaoGuoLvYuJu}
+       AND ($6::timestamptz IS NULL OR ("创建时间", "ID"::text) < ($6::timestamptz, $7::text))
        ORDER BY "创建时间" DESC, "ID"::text DESC
        LIMIT $8`,
       params,
@@ -425,41 +424,20 @@ async function huoQuZhaiYaoYuanLiao(
     const benPi = (jie.rows as Array<Record<string, unknown>>).reverse()
     hangLieBiao.unshift(...benPi)
     piCi += 1
-    if (benPi.length === 0) {
-      you = hangLieBiao.length > 0 ? huoQuHangYouBiao(hangLieBiao[0]) : you
-      break
-    }
-    for (let i = hangLieBiao.length - 1; i >= 0; i -= 1) {
-      leiJiToken += Buffer.byteLength(String(hangLieBiao[i]?.['内容'] ?? '').trim(), 'utf8') / 5
-      if (leiJiToken >= zuiJinYuanWenToken) {
-        tie = true
-        break
-      }
-    }
-    if (tie && zuiJinYuanWenToken > 0) {
-      you = hangLieBiao.length > 0 ? huoQuHangYouBiao(hangLieBiao[0]) : null
-      break
-    }
+    qiShi = chuangKouQiShiZhi(hangLieBiao, zuiJinYuanWenToken)
+    if (benPi.length < piLiang || (zuiJinYuanWenToken > 0 && qiShi > 0)) break
     const zaoYou = huoQuHangYouBiao(benPi[0])
-    if (!zaoYou) {
-      you = hangLieBiao.length > 0 ? huoQuHangYouBiao(hangLieBiao[0]) : null
-      break
-    }
+    if (!zaoYou) break
     you = zaoYou
-    if (benPi.length < piLiang || zuiJinYuanWenToken <= 0) break
+    if (piCi >= 2) break
   }
-
-  const qiShi = chuangKouQiShiZhi(hangLieBiao, zuiJinYuanWenToken)
-  const baoLiu = qiShi === 0 ? hangLieBiao : hangLieBiao.slice(qiShi)
-  const yaoZhaiYao = qiShi === 0 ? [] : hangLieBiao.slice(0, qiShi)
-  const wanZheng = qiShi === 0 || piCi < zuiDaPiCi && (hangLieBiao.length < piLiang || zuiJinYuanWenToken <= 0 || leiJiToken === 0)
+  const baoLiu = hangLieBiao.slice(qiShi)
+  const yaoZhaiYao = hangLieBiao.slice(0, qiShi)
+  const xinYou = zuiJinYuanWenToken > 0 && qiShi === 0 ? null : huoQuHangYouBiao(yaoZhaiYao[yaoZhaiYao.length - 1])
   const wenBen = yaoZhaiYao
     .map((hang, xuHao) => `${xuHao + 1}. [${hang['发送者'] === ZhaiYaoJiShu.yongHu ? '对方' : '自己'}] ${String(hang['内容'] ?? '').trim()}`)
     .join('\n')
-  const xinYou = wanZheng ? huoQuHangYouBiao(hangLieBasehangLieBiao.length - 1]) : huoQuHangYouBiao(yaoZhaiYao[yaoZhaiYao.length - 1])
-  const xinMaoDian = xinYou?.shiJian ?? null
-  const xiaoXiId = wanZheng ? xinYou?.id ?? null : null
-  return { wenBentext, xinMaoDian, xiaoXiId, tiaoShu: yaoZhaiYao.length, baoLiuTiaoShu: baoLiu.length, piCi }
+  return { wenBen, xinMaoDian: xinYou?.shiJian ?? null, xiaoXiId: xinYou?.id ?? null, tiaoShu: yaoZhaiYao.length, baoLiuTiaoShu: baoLiu.length, piCi }
 }
 
 export async function shengChengBingLuoKuZhaiYao(
@@ -473,61 +451,34 @@ export async function shengChengBingLuoKuZhaiYao(
   try {
     const peiZhi = huoQuZhaiYaoPeiZhi()
     const xianYou = await duQuDuiHuaZhaiYao(yongHuId, jiaoSeId)
-    const shiDaiGaiKuo = (yongHuId: string, jiaoSeId: string, maoDian: string | null, xiaoXiId: string | null) => {
-      const can = huoQuYuanLiaoCanShu(yongHuId, jiaoSeId, maoDian, xiaoXiId)
-      return 数据库.query(
-        `SELECT COUNT(*)::int AS dai_shu FROM "消息"${can.fuHe ? ZhaiYaoFuHeGuoLvYuJu : ZhaiYaoYuanLiaoGuoLvYuJu}`,
-        can.canShu,
-      )
-    }
-    const daiGuGaiKuo = xianYou?.suCaiMaoDian && xianYou.xiaoXiId
-      ? await shiDaiGaiKuo(yongHuId, jiaoSeId, xianYou.suCaiMaoDian, xianYou.xiaoXiId)
-      : await 数据库.query(`SELECT COUNT(*)::int AS dai_shu FROM "消息"${ZhaiYaoYuanLiaoGuoLvYuJu}`, [yongHuId, jiaoSeId, xianYou?.suCaiMaoDian ?? null, [...YunYingZiDuanXiaoXiLeiXing], null])
-    const daiShu = zhengShu(daiGuGaiKuo.rows[0]?.dai_shu)
+    const daiShu = await huoQuDaiGaiKuoShu(yongHuId, jiaoSeId, xianYou?.suCaiMaoDian ?? null, xianYou?.xiaoXiId ?? null)
     if (daiShu <= 0) return true
-
     const daiYaSuoToken = await 估算未压缩Token(yongHuId, jiaoSeId, xianYou?.suCaiMaoDian ?? null, xianYou?.xiaoXiId ?? null)
     if (daiYaSuoToken < peiZhi.yaSuoTokenYuZhi) return true
     const { wenBen, xinMaoDian, xiaoXiId: xinXiaoXiId, tiaoShu, baoLiuTiaoShu } = await huoQuZhaiYaoYuanLiao(yongHuId, jiaoSeId, xianYou?.suCaiMaoDian ?? null, xianYou?.xiaoXiId ?? null)
     if (wenBen.trim() === '' || xinMaoDian === null || tiaoShu === 0) return true
     const xiangYing = await 按配置调用('JiYiZhaiYao', [
       { jiaoSe: 'system', neiRong: ZhaiYaoXiTongTiShi },
-      {
-        jiaoSe: 'user',
-        neiRong: gouJianJiYiZhaiYaoPrompt(wenBen, jiaoSeMing, xianYou?.zhaiYaoNeiRong ?? ''),
-      },
+      { jiaoSe: 'user', neiRong: gouJianJiYiZhaiYaoPrompt(wenBen, jiaoSeMing, xianYou?.zhaiYaoNeiRong ?? '') },
     ])
     const zhaiYao = qieDuanZhaiYao(xiangYing.neiRong)
     if (zhaiYao === '') {
-      debug日志.warn('对话摘要', huoQuFanYi('AI', 'JiYiZhaiYaoShiBai'), {
-        xiang_qing: { yuan_yin: 'mo_xing_kong_nei_rong' },
-      })
+      debug日志.warn('对话摘要', huoQuFanYi('AI', 'JiYiZhaiYaoKong'), { xiang_qing: { yuan_yin: 'mo_xing_kong_nei_rong' } })
       return false
     }
     const gaiKuoXiaoXiShu = zhengShu(xianYou?.gaiKuoXiaoXiShu) + tiaoShu
-    await 数据库.query(ZhaiYaoLuoKuYuJu, [yongHuId, jiaoSeId, zhaiYao, gaiKuoXiaoXiShu, xinMaoDian])
+    await 数据库.query(ZhaiYaoLuoKuYuJu, [yongHuId, jiaoSeId, zhaiYao, gaiKuoXiaoXiShu, xinMaoDian, xinXiaoXiId])
     huanCunTongBuZhaiYao(yongHuId, jiaoSeId, gouJianZhaiYaoZhuRuWenBen({
       zhaiYaoNeiRong: zhaiYao,
       gaiKuoXiaoXiShu,
       gengXinShiJian: null,
-      suCaiMaoDian: xinMaoDian,
+      suCaiMaoDian: bianMaSuCaiMaoDian(xinMaoDian, xinXiaoXiId),
+      xiaoXiId: xinXiaoXiId,
     }))
-    debug日志.info('对话摘要', '增量摘要已生成并落库', {
-      xiang_qing: {
-        yuan_liao_tiao_shu: daiShu,
-        zhai_yao_tiao_shu: tiaoShu,
-        bao_liu_tiao_shu: baoLiuTiaoShu,
-        dai_ya_suo_token: daiYaSuoToken,
-        ya_suo_token_yu_zhi: peiZhi.yaSuoTokenYuZhi,
-        lei_ji_gai_kuo_shu: gaiKuoXiaoXiShu,
-        you_mao_dian: true,
-      },
-    })
+    debug日志.info('对话摘要', '增量摘要已生成并落库', { xiang_qing: { yuan_liao_tiao_shu: daiShu, zhai_yao_tiao_shu: tiaoShu, bao_liu_tiao_shu: baoLiuTiaoShu, dai_ya_suo_token: daiYaSuoToken, ya_suo_token_yu_zhi: peiZhi.yaSuoTokenYuZhi, lei_ji_gai_kuo_shu: gaiKuoXiaoXiShu } })
     return true
   } catch (cuoWu) {
-    debug日志.error('对话摘要', huoQuFanYi('AI', 'JiYiZhaiYaoShiBai'), {
-      xiang_qing: { yuan_yin: biaoTiCuoWu(cuoWu) },
-    })
+    debug日志.error('对话摘要', huoQuFanYi('AI', 'JiYiZhaiYaoShiBai'), { xiang_qing: { yuan_yin: biaoTiCuoWu(cuoWu) } })
     return false
   } finally {
     shiFang()

@@ -167,11 +167,8 @@ describe('FP-14 预算护栏按官方 token 口径估算并在裁不动时告警
     expect(debug日志.warn).not.toHaveBeenCalled()
 	})
 
-  it('摘要模型的上下文预算跟随统一上限，不再写死更小的数字', () => {
-    const yuSuan = jiSuanAIChanShu('JiYiZhaiYao').上下文预算
-    expect(typeof yuSuan).toBe('number')
-    expect(yuSuan).toBeGreaterThan(0)
-    expect(yuSuan).toBeGreaterThanOrEqual(131072)
+  it('摘要模型得到900000预算，低于普通六万字上限的素材才允许裁剪', () => {
+    expect(jiSuanAIChanShu('JiYiZhaiYao').上下文预算).toBe(900000)
     const 素材 = '约定'.repeat(100000)
     const 消息: 对话消息[] = [
       { jiaoSe: 'system', neiRong: '提炼持续记忆' },

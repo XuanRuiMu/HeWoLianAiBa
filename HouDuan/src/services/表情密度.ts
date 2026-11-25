@@ -1,6 +1,6 @@
 import { BiaoQingMiDu } from '../config/表情包配置'
 import { GuiFanGuanXiJieDuanMing } from '../config/好感度配置'
-import { tiQuBiaoQingDuanMing } from './表情包标记'
+import { tiQuTieZhiDuanMing } from './贴纸标记'
 import type { DuiHuaLiShiXiang } from '../types'
 
 export type BiaoQingQuXiang = '偏少' | '正常' | '偏多'
@@ -22,7 +22,7 @@ export function shiBiaoQingXiaoXi(xiang: Pick<DuiHuaLiShiXiang, 'meiTiLeiBie' | 
   if (xiang.meiTiLeiBie === BiaoQingMiDu.ziLiaoBiaoQingLeiBie) return true
   const neiRong = typeof xiang.nei_rong === 'string' ? xiang.nei_rong : ''
   if (neiRong === '') return false
-  return tiQuBiaoQingDuanMing(neiRong).length > 0
+  return tiQuTieZhiDuanMing(neiRong).length > 0
 }
 
 function quRenGeXiShu(jiaoSe?: JiaoSeXiangGuan | null, guanXiJieDuan?: string | null): number {

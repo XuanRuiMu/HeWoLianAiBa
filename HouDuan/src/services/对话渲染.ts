@@ -3,12 +3,12 @@ import { huoQuFanYi } from '../config/translations'
 import { biaoQingBaoZhanShiWenBen, gouJianDanTiaoTuXiangKuai, meiTiZhanShiWenBen, shiTuXiangLeiBie } from './AI视觉辅助'
 import { gouJianYuYinKeDuWenBen, tiQuYinPinShiJian } from './语音理解'
 import { gouJianShiPinKeDuWenBen } from './视频多模态'
-import type { 对话块 } from '../utils/DeepSeek客户端'
+import type { 对话块 } from '../utils/通用模型调用'
 import type { DuiHuaLiShiXiang } from '../types'
 
 
 export const ZaiTiBiaoJiShuoMing =
-  '内容里的方括号只是系统标的发送载体标记：图片=对方发了张图片，表情包=对方发了个表情包（方括号里冒号后面写着的短名，就是那张表情包的名字，双方各自发过哪一张都能凭它对上），语音(N秒)=对方发了条语音，视频、文件 同理，已撤回=那条被对方撤回。它们只在对方真的发来对应载体时才会出现在那一行里；对方发的是普通文字就只会是文字。这些标记不是对方说的话、不是对方的口头禅也不是昵称，不许自己数它们出现了几次，不许把没发来过的载体说成对方发过，更不许拿它们当梗反复引用。'
+  '内容里的方括号只是系统标的发送载体标记：图片=对方发了张图片，表情包=对方发了个表情包（方括号里冒号后面写着的短名，就是那张表情包的名字，双方各自发过哪一张都能凭它对上），语音(N秒)=对方发了条语音，视频、文件 同理，已撤回=那条被对方撤回。它们只在对方真的发来对应载体时才会出现在那一行里；对方发的是普通文字就只会是文字。这些标记不是对方说的话、不是对方的口头禅也不是昵称，不许自己数它们出现了几次，不许把没发来过的载体说成对方发过，更不许拿它们当梗反复引用。已撤回那条的原文只帮你理解语境：你可以就「TA 撤回了什么」这件事自然做出反应，但不得在回复里逐字复述或分析那条已撤回的具体内容。'
 
 export interface ZhuangZaiBuFen {
   视频画面描述?: string | null

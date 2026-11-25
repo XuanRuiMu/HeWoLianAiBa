@@ -162,10 +162,6 @@ xianLiu: {
       chuangKou: parseInt(huoQuHuanJingBianLiang('REN_JI_TIAO_ZHAN_XIAN_LIU_CHUANG_KOU_HAO_MIAO', '60000'), 10),
       zuiDa: parseInt(huoQuHuanJingBianLiang('REN_JI_TIAO_ZHAN_XIAN_LIU_MEI_FEN_ZUI_DA', '20'), 10),
     },
-    fanKui: {
-      chuangKou: parseInt(huoQuHuanJingBianLiang('FAN_KUI_XIAN_LIU_CHUANG_KOU_HAO_MIAO', '600000'), 10),
-      zuiDa: parseInt(huoQuHuanJingBianLiang('FAN_KUI_XIAN_LIU_MEI_CHUANG_KOU_ZUI_DA', '3'), 10),
-    },
   },
 
   xieYiBanBen: huoQuHuanJingBianLiang('PROTOCOL_VERSION', 'v1.0'),

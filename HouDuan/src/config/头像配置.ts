@@ -26,8 +26,6 @@ export const TouXiangPeiZhi = {
 
 export const TouXiangYanJingShuXian = '目光望向画面侧边，不与观看者对视'
 
-export const YongHuShangChuanTouXiangMiaoShu = '用户上传了新头像，具体样子以图为准'
-
 export const QiZhiQiDiao = {
   冷感: '阴郁',
   沉稳: '平静',

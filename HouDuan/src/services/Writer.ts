@@ -1,4 +1,4 @@
-import { 按配置调用 } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/通用模型调用'
 import { gouJianWriterPrompt } from './Prompt构建器'
 import { zhuRuBenLunTuXiangKuai } from './对话渲染'
 import { gouJianTouXiangKuai } from './AI视觉辅助'
@@ -7,7 +7,7 @@ import { panDuanBiaoQingZaiTi } from './表情载体'
 import { daiShuKaiChangYuanYu, fuJiaKaiChangYuanYu, qingLiXiaoXi } from './开场候选约束'
 import { 检索通用知识, type 通用知识检索结果 } from './通用知识检索'
 import { debug日志 } from '../utils/debug日志'
-import type { 对话块 } from '../utils/DeepSeek客户端'
+import type { 对话块 } from '../utils/通用模型调用'
 import type { AIYinQingShuRu, DirectorCeLue, WriterJieGuo } from '../types'
 import type { 参数上下文 } from '../config/AI参数策略'
 
@@ -71,6 +71,5 @@ export async function shengChengWriterHuiFu(
     yuan_wen: xiangYing.neiRong,
     si_kao: xiangYing.siKaoNeiRong || undefined,
     kai_chang_hou_xuan: kaiChang.houXuan.length > 0 ? kaiChang.houXuan : undefined,
-    biaoQingZaiTi: 载体决策,
   }
 }

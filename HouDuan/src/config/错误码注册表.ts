@@ -115,4 +115,188 @@ const xianRongBiao: Record<CuoWuDaiMa, Omit<CuoWuXianRong, 'message'>> = {
   [CuoWuDaiMa.AUTH_SMS_SEND_FAILED]: { code: CuoWuDaiMa.AUTH_SMS_SEND_FAILED, jieMian: 'renZheng', httpStatus: 503, retryable: true },
   [CuoWuDaiMa.AUTH_HUMAN_VERIFICATION_FAILED]: { code: CuoWuDaiMa.AUTH_HUMAN_VERIFICATION_FAILED, jieMian: 'renZheng', httpStatus: 400, retryable: false },
   [CuoWuDaiMa.AUTH_REGISTRATION_CLOSED]: { code: CuoWuDaiMa.AUTH_REGISTRATION_CLOSED, jieMian: 'renZheng', httpStatus: 429, retryable: false },
-  [CuoWuDaiMa.AUTH_ACCOUNT_ALREADY_EXISTS]: { code: CuoWuDaiMa.AUTH_ACCOUNT_ALREADY_EXISTS, jieMian: 'renZheng', httpSt                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+  [CuoWuDaiMa.AUTH_ACCOUNT_ALREADY_EXISTS]: { code: CuoWuDaiMa.AUTH_ACCOUNT_ALREADY_EXISTS, jieMian: 'renZheng', httpStatus: 409, retryable: false },
+  [CuoWuDaiMa.AUTH_USERNAME_TAKEN]: { code: CuoWuDaiMa.AUTH_USERNAME_TAKEN, jieMian: 'renZheng', httpStatus: 409, retryable: false },
+  [CuoWuDaiMa.AUTH_USERNAME_INVALID]: { code: CuoWuDaiMa.AUTH_USERNAME_INVALID, jieMian: 'renZheng', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.AUTH_VERIFICATION_CODE_INVALID]: { code: CuoWuDaiMa.AUTH_VERIFICATION_CODE_INVALID, jieMian: 'renZheng', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.AUTH_VERIFICATION_CODE_EXPIRED]: { code: CuoWuDaiMa.AUTH_VERIFICATION_CODE_EXPIRED, jieMian: 'renZheng', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.AUTH_VERIFICATION_CODE_ATTEMPTS_EXCEEDED]: { code: CuoWuDaiMa.AUTH_VERIFICATION_CODE_ATTEMPTS_EXCEEDED, jieMian: 'renZheng', httpStatus: 429, retryable: false },
+  [CuoWuDaiMa.AUTH_PHONE_NOT_ACCEPTED]: { code: CuoWuDaiMa.AUTH_PHONE_NOT_ACCEPTED, jieMian: 'renZheng', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.AUTH_PASSWORD_WEAK]: { code: CuoWuDaiMa.AUTH_PASSWORD_WEAK, jieMian: 'renZheng', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.AUTH_BIRTH_DATE_INVALID]: { code: CuoWuDaiMa.AUTH_BIRTH_DATE_INVALID, jieMian: 'renZheng', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.AUTH_AGREEMENT_REQUIRED]: { code: CuoWuDaiMa.AUTH_AGREEMENT_REQUIRED, jieMian: 'renZheng', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.AUTH_REGISTRATION_FAILED]: { code: CuoWuDaiMa.AUTH_REGISTRATION_FAILED, jieMian: 'renZheng', httpStatus: 503, retryable: true },
+  [CuoWuDaiMa.AUTH_INVALID_CREDENTIALS]: { code: CuoWuDaiMa.AUTH_INVALID_CREDENTIALS, jieMian: 'renZheng', httpStatus: 401, retryable: false },
+  [CuoWuDaiMa.AUTH_REFRESH_TOKEN_INVALID]: { code: CuoWuDaiMa.AUTH_REFRESH_TOKEN_INVALID, jieMian: 'renZheng', httpStatus: 401, retryable: false },
+  [CuoWuDaiMa.AUTH_PASSWORD_CHANGE_FAILED]: { code: CuoWuDaiMa.AUTH_PASSWORD_CHANGE_FAILED, jieMian: 'renZheng', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.AUTH_PASSWORD_RESET_FAILED]: { code: CuoWuDaiMa.AUTH_PASSWORD_RESET_FAILED, jieMian: 'renZheng', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.AUTH_USERNAME_CHANGE_FAILED]: { code: CuoWuDaiMa.AUTH_USERNAME_CHANGE_FAILED, jieMian: 'renZheng', httpStatus: 409, retryable: false },
+  [CuoWuDaiMa.AUTH_DEFAULT_GENDER_INVALID]: { code: CuoWuDaiMa.AUTH_DEFAULT_GENDER_INVALID, jieMian: 'anQuan', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.AUTH_ACCOUNT_DELETION_FAILED]: { code: CuoWuDaiMa.AUTH_ACCOUNT_DELETION_FAILED, jieMian: 'renZheng', httpStatus: 500, retryable: false },
+  [CuoWuDaiMa.ROLE_GENERATION_INPUT_INVALID]: { code: CuoWuDaiMa.ROLE_GENERATION_INPUT_INVALID, jieMian: 'jiaoSe', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.ROLE_GENERATION_PERSONA_REJECTED]: { code: CuoWuDaiMa.ROLE_GENERATION_PERSONA_REJECTED, jieMian: 'jiaoSe', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.ROLE_GENERATION_INITIALIZATION_FAILED]: { code: CuoWuDaiMa.ROLE_GENERATION_INITIALIZATION_FAILED, jieMian: 'jiaoSe', httpStatus: 500, retryable: false },
+  [CuoWuDaiMa.ROLE_GENERATION_MODEL_UNAVAILABLE]: { code: CuoWuDaiMa.ROLE_GENERATION_MODEL_UNAVAILABLE, jieMian: 'jiaoSe', httpStatus: 503, retryable: true },
+  [CuoWuDaiMa.ROLE_GENERATION_MODEL_CALL_FAILED]: { code: CuoWuDaiMa.ROLE_GENERATION_MODEL_CALL_FAILED, jieMian: 'jiaoSe', httpStatus: 502, retryable: true },
+  [CuoWuDaiMa.ROLE_GENERATION_RESPONSE_INVALID]: { code: CuoWuDaiMa.ROLE_GENERATION_RESPONSE_INVALID, jieMian: 'jiaoSe', httpStatus: 502, retryable: true },
+  [CuoWuDaiMa.ROLE_GENERATION_PERSISTENCE_FAILED]: { code: CuoWuDaiMa.ROLE_GENERATION_PERSISTENCE_FAILED, jieMian: 'jiaoSe', httpStatus: 503, retryable: true },
+  [CuoWuDaiMa.DEPENDENCY_POSTGRES_UNAVAILABLE]: { code: CuoWuDaiMa.DEPENDENCY_POSTGRES_UNAVAILABLE, jieMian: 'tongYong', httpStatus: 503, retryable: true },
+  [CuoWuDaiMa.DEPENDENCY_REDIS_UNAVAILABLE]: { code: CuoWuDaiMa.DEPENDENCY_REDIS_UNAVAILABLE, jieMian: 'tongYong', httpStatus: 503, retryable: true },
+  [CuoWuDaiMa.DEPENDENCIES_UNAVAILABLE]: { code: CuoWuDaiMa.DEPENDENCIES_UNAVAILABLE, jieMian: 'tongYong', httpStatus: 503, retryable: true },
+  [CuoWuDaiMa.DOCKER_STARTUP_MIGRATION_SCRIPT_MISSING]: { code: CuoWuDaiMa.DOCKER_STARTUP_MIGRATION_SCRIPT_MISSING, jieMian: 'qiDong', httpStatus: 503, retryable: false },
+  [CuoWuDaiMa.DOCKER_STARTUP_MIGRATION_FAILED]: { code: CuoWuDaiMa.DOCKER_STARTUP_MIGRATION_FAILED, jieMian: 'qiDong', httpStatus: 503, retryable: true },
+  [CuoWuDaiMa.DOCKER_STARTUP_REDIS_TLS_INVALID]: { code: CuoWuDaiMa.DOCKER_STARTUP_REDIS_TLS_INVALID, jieMian: 'qiDong', httpStatus: 503, retryable: false },
+  [CuoWuDaiMa.DOCKER_STARTUP_REDIS_UNAVAILABLE]: { code: CuoWuDaiMa.DOCKER_STARTUP_REDIS_UNAVAILABLE, jieMian: 'qiDong', httpStatus: 503, retryable: true },
+  [CuoWuDaiMa.DOCKER_STARTUP_POSTGRES_UNAVAILABLE]: { code: CuoWuDaiMa.DOCKER_STARTUP_POSTGRES_UNAVAILABLE, jieMian: 'qiDong', httpStatus: 503, retryable: true },
+  [CuoWuDaiMa.DOCKER_STARTUP_MODERATION_RESOURCE_UNAVAILABLE]: { code: CuoWuDaiMa.DOCKER_STARTUP_MODERATION_RESOURCE_UNAVAILABLE, jieMian: 'qiDong', httpStatus: 503, retryable: false },
+  [CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_WU_XIAO]: { code: CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_WU_XIAO, jieMian: 'zhanJi', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_CHANG]: { code: CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_CHANG, jieMian: 'zhanJi', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU]: { code: CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU, jieMian: 'zhanJi', httpStatus: 409, retryable: false },
+  [CuoWuDaiMa.ZHAN_JI_FEN_LEI_BIAN_GENG]: { code: CuoWuDaiMa.ZHAN_JI_FEN_LEI_BIAN_GENG, jieMian: 'zhanJi', httpStatus: 409, retryable: false },
+  [CuoWuDaiMa.ZHAN_JI_MO_REN_FEN_LEI_BU_NENG_SHAN_CHU]: { code: CuoWuDaiMa.ZHAN_JI_MO_REN_FEN_LEI_BU_NENG_SHAN_CHU, jieMian: 'zhanJi', httpStatus: 409, retryable: false },
+  [CuoWuDaiMa.ZHAN_JI_FEN_LEI_BU_CUN_ZAI]: { code: CuoWuDaiMa.ZHAN_JI_FEN_LEI_BU_CUN_ZAI, jieMian: 'zhanJi', httpStatus: 404, retryable: false },
+  [CuoWuDaiMa.ZHAN_JI_DANG_AN_BU_CUN_ZAI]: { code: CuoWuDaiMa.ZHAN_JI_DANG_AN_BU_CUN_ZAI, jieMian: 'zhanJi', httpStatus: 404, retryable: false },
+  [CuoWuDaiMa.ZHAN_JI_DANG_AN_BU_SHU_YU_FEN_LEI]: { code: CuoWuDaiMa.ZHAN_JI_DANG_AN_BU_SHU_YU_FEN_LEI, jieMian: 'zhanJi', httpStatus: 409, retryable: false },
+  [CuoWuDaiMa.ZHAN_JI_BU_NENG_YIDONG_DAO_DANG_QIAN_FEN_LEI]: { code: CuoWuDaiMa.ZHAN_JI_BU_NENG_YIDONG_DAO_DANG_QIAN_FEN_LEI, jieMian: 'zhanJi', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.ZHAN_JI_PAI_XU_ID_CHONG_FU]: { code: CuoWuDaiMa.ZHAN_JI_PAI_XU_ID_CHONG_FU, jieMian: 'zhanJi', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.ZHAN_JI_PAI_XU_JI_LU_BU_WU_ZHEN]: { code: CuoWuDaiMa.ZHAN_JI_PAI_XU_JI_LU_BU_WU_ZHEN, jieMian: 'zhanJi', httpStatus: 409, retryable: false },
+  [CuoWuDaiMa.ZHAN_JI_SHU_JU_BIAN_HUA]: { code: CuoWuDaiMa.ZHAN_JI_SHU_JU_BIAN_HUA, jieMian: 'zhanJi', httpStatus: 409, retryable: false },
+  [CuoWuDaiMa.ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA]: { code: CuoWuDaiMa.ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA, jieMian: 'zhanJi', httpStatus: 400, retryable: false },
+  [CuoWuDaiMa.ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA]: { code: CuoWuDaiMa.ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA, jieMian: 'zhanJi', httpStatus: 400, retryable: false },
+}
+
+const fanYiJianBiao: Record<CuoWuDaiMa, string> = {
+  [CuoWuDaiMa.REQUEST_PARAMETER_INVALID]: 'canShuBuHeFa',
+  [CuoWuDaiMa.REQUEST_MISSING_PARAMETER]: 'queShaoCanShu',
+  [CuoWuDaiMa.REQUEST_BODY_INVALID]: 'canShuBuHeFa',
+  [CuoWuDaiMa.PAYLOAD_TOO_LARGE]: 'qingQiuNeiRongGuoDa',
+  [CuoWuDaiMa.AUTHENTICATION_REQUIRED]: 'weiShouQuan',
+  [CuoWuDaiMa.AUTH_TOKEN_INVALID]: 'lingPaiWuXiao',
+  [CuoWuDaiMa.PERMISSION_DENIED]: 'wuGuanLiQuanXian',
+  [CuoWuDaiMa.RESOURCE_NOT_FOUND]: 'ziYuanBuCunZai',
+  [CuoWuDaiMa.RESOURCE_EXPIRED]: 'meiTiYiShiXiao',
+  [CuoWuDaiMa.METHOD_NOT_ALLOWED]: 'fangFaBuYunXu',
+  [CuoWuDaiMa.RESOURCE_CONFLICT]: 'ziYuanChongTu',
+  [CuoWuDaiMa.RATE_LIMITED]: 'caoZuoPinFan',
+  [CuoWuDaiMa.INTERNAL_ERROR]: 'fuWuQiNeiBuCuoWu',
+  [CuoWuDaiMa.UPSTREAM_NETWORK_ERROR]: 'waiBuFuWuWuXianZhi',
+  [CuoWuDaiMa.SERVICE_UNAVAILABLE]: 'fuWuQiWeiBeiHouXu',
+  [CuoWuDaiMa.UPSTREAM_TIMEOUT]: 'fuFuWuWaiXianZhi',
+  [CuoWuDaiMa.DATABASE_ERROR]: 'shuJuKuWeiBeiHouXu',
+  [CuoWuDaiMa.ORIGIN_DENIED]: 'yuanLaiWeiBeiJieShou',
+  [CuoWuDaiMa.AUTH_SMS_RATE_LIMITED]: 'faSongYanZhengMaPinFan',
+  [CuoWuDaiMa.AUTH_SMS_SEND_FAILED]: 'faSongYanZhengMaFuWuWuXianZhi',
+  [CuoWuDaiMa.AUTH_HUMAN_VERIFICATION_FAILED]: 'renJiYanZhengWeiTongGuo',
+  [CuoWuDaiMa.AUTH_REGISTRATION_CLOSED]: 'tiYanBanManYuan',
+  [CuoWuDaiMa.AUTH_ACCOUNT_ALREADY_EXISTS]: 'shouJiHaoYiZhuCe',
+  [CuoWuDaiMa.AUTH_USERNAME_TAKEN]: 'yongHuMingYiCunZai',
+  [CuoWuDaiMa.AUTH_USERNAME_INVALID]: 'yongHuMingTeShuZiFu',
+  [CuoWuDaiMa.AUTH_VERIFICATION_CODE_INVALID]: 'yanZhengMaCuoWu',
+  [CuoWuDaiMa.AUTH_VERIFICATION_CODE_EXPIRED]: 'yanZhengMaGuoQi',
+  [CuoWuDaiMa.AUTH_VERIFICATION_CODE_ATTEMPTS_EXCEEDED]: 'yanZhengMaChangShiGuoDuo',
+  [CuoWuDaiMa.AUTH_PHONE_NOT_ACCEPTED]: 'shouJiHaoDiQuBuFu',
+  [CuoWuDaiMa.AUTH_PASSWORD_WEAK]: 'miMaFuZaDuBuZu',
+  [CuoWuDaiMa.AUTH_BIRTH_DATE_INVALID]: 'chuShengRiQiGeShiCuoWu',
+  [CuoWuDaiMa.AUTH_AGREEMENT_REQUIRED]: 'weiTongYiXieYi',
+  [CuoWuDaiMa.AUTH_REGISTRATION_FAILED]: 'zhuCeFuWuWuXianZhi',
+  [CuoWuDaiMa.AUTH_INVALID_CREDENTIALS]: 'zhangHaoHuoMiMaCuoWu',
+  [CuoWuDaiMa.AUTH_REFRESH_TOKEN_INVALID]: 'lingPaiWuXiao',
+  [CuoWuDaiMa.AUTH_PASSWORD_CHANGE_FAILED]: 'xiuGaiMiMaShiBai',
+  [CuoWuDaiMa.AUTH_PASSWORD_RESET_FAILED]: 'chongZhiMiMaTongYiTiShi',
+  [CuoWuDaiMa.AUTH_USERNAME_CHANGE_FAILED]: 'xiuGaiYongHuMingShiBai',
+  [CuoWuDaiMa.AUTH_DEFAULT_GENDER_INVALID]: 'shenFenBuHeFa',
+  [CuoWuDaiMa.AUTH_ACCOUNT_DELETION_FAILED]: 'zhuXiaoShiBai',
+  [CuoWuDaiMa.ROLE_GENERATION_INPUT_INVALID]: 'shengChengCanShuBuHeFa',
+  [CuoWuDaiMa.ROLE_GENERATION_PERSONA_REJECTED]: 'renSheJuJue',
+  [CuoWuDaiMa.ROLE_GENERATION_INITIALIZATION_FAILED]: 'shengChengChuShiShiBai',
+  [CuoWuDaiMa.ROLE_GENERATION_MODEL_UNAVAILABLE]: 'shengChengMoXingFuWuWuXianZhi',
+  [CuoWuDaiMa.ROLE_GENERATION_MODEL_CALL_FAILED]: 'shengChengMoXingFuWuWuXianZhi',
+  [CuoWuDaiMa.ROLE_GENERATION_RESPONSE_INVALID]: 'shengChengMoXingHuiFuBuHeFa',
+  [CuoWuDaiMa.ROLE_GENERATION_PERSISTENCE_FAILED]: '保存角色ShiBai',
+  [CuoWuDaiMa.DEPENDENCY_POSTGRES_UNAVAILABLE]: 'shuJuKuWeiBeiHouXu',
+  [CuoWuDaiMa.DEPENDENCY_REDIS_UNAVAILABLE]: 'huanCunWeiBeiHouXu',
+  [CuoWuDaiMa.DEPENDENCIES_UNAVAILABLE]: 'yiZhiXingFuWuWuXianZhi',
+  [CuoWuDaiMa.DOCKER_STARTUP_MIGRATION_SCRIPT_MISSING]: 'jiaoBenBuWanZheng',
+  [CuoWuDaiMa.DOCKER_STARTUP_MIGRATION_FAILED]: 'yiJuWeiFaWanCheng',
+  [CuoWuDaiMa.DOCKER_STARTUP_REDIS_TLS_INVALID]: 'huanCunJiaYuBuAnQuan',
+  [CuoWuDaiMa.DOCKER_STARTUP_REDIS_UNAVAILABLE]: 'qiDongHuanCunYiBuKeYong',
+  [CuoWuDaiMa.DOCKER_STARTUP_POSTGRES_UNAVAILABLE]: 'qiDongShuJuKuYiBuKeYong',
+  [CuoWuDaiMa.DOCKER_STARTUP_MODERATION_RESOURCE_UNAVAILABLE]: 'shenHeZiDuanKuBuKeYong',
+  [CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_WU_XIAO]: 'fenLeiMingChengBuNengWeiKong',
+  [CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_CHANG]: 'fenLeiMingChengTaiChang',
+  [CuoWuDaiMa.ZHAN_JI_FEN_LEI_MING_CHENG_CHONG_FU]: 'fenLeiMingChengYiCunZai',
+  [CuoWuDaiMa.ZHAN_JI_FEN_LEI_BIAN_GENG]: 'fenLeiShuJuYiBianHua',
+  [CuoWuDaiMa.ZHAN_JI_MO_REN_FEN_LEI_BU_NENG_SHAN_CHU]: 'moRenFenLeiBuNengShanChu',
+  [CuoWuDaiMa.ZHAN_JI_FEN_LEI_BU_CUN_ZAI]: 'fenLeiBuCunZai',
+  [CuoWuDaiMa.ZHAN_JI_DANG_AN_BU_CUN_ZAI]: 'dangAnBuCunZai',
+  [CuoWuDaiMa.ZHAN_JI_DANG_AN_BU_SHU_YU_FEN_LEI]: 'dangAnBuShuYuFenLei',
+  [CuoWuDaiMa.ZHAN_JI_BU_NENG_YIDONG_DAO_DANG_QIAN_FEN_LEI]: 'buNengYiDongDaoDangQianFenLei',
+  [CuoWuDaiMa.ZHAN_JI_PAI_XU_ID_CHONG_FU]: 'paiXuIDChongFu',
+  [CuoWuDaiMa.ZHAN_JI_PAI_XU_JI_LU_BU_WU_ZHEN]: 'paiXuBiXuBaoHanFenLeiQuanBuKeJianZhanJi',
+  [CuoWuDaiMa.ZHAN_JI_SHU_JU_BIAN_HUA]: 'fenLeiShuJuYiBianHua',
+  [CuoWuDaiMa.ZHAN_JI_FEN_LEI_BAN_BEN_BU_HE_FA]: 'fenLeiShuJuYiBianHua',
+  [CuoWuDaiMa.ZHAN_JI_PAI_XU_CAN_SHU_BU_HE_FA]: 'paiXuCanShuBuHeFa',
+}
+
+export const dengLiCuoWuXianRongLieBiao = Object.freeze(
+  Object.keys(xianRongBiao) as CuoWuDaiMa[],
+)
+
+export function shiCuoWuDaiMa(zhi: unknown): zhi is CuoWuDaiMa {
+  return typeof zhi === 'string' && Object.hasOwn(xianRongBiao, zhi)
+}
+
+export function huoQuCuoWuXianRong(daiMa: CuoWuDaiMa): CuoWuXianRong {
+  const xianRong = xianRongBiao[daiMa]
+  const fanYi = (huoQuFanYi as (jieMian: string, jian: string) => string)(
+    xianRong.jieMian,
+    fanYiJianBiao[daiMa],
+  )
+  return { ...xianRong, message: fanYi }
+}
+
+export class YingYongCuoWu extends Error {
+  constructor(public readonly code: CuoWuDaiMa, cause?: unknown) {
+    super(code)
+    this.name = 'YingYongCuoWu'
+    if (cause !== undefined) this.cause = cause
+  }
+}
+
+export class JiaoSeShengChengCuoWu extends YingYongCuoWu {
+  constructor(code: JiaoSeShengChengCuoWuDaiMa, cause?: unknown) {
+    super(code, cause)
+    this.name = 'JiaoSeShengChengCuoWu'
+  }
+}
+
+const jiuDaiMaBianShe: Readonly<Record<string, CuoWuDaiMa>> = {
+  CAN_SHU_CUO_WU: CuoWuDaiMa.REQUEST_PARAMETER_INVALID,
+  WEI_SHOU_QUAN: CuoWuDaiMa.AUTHENTICATION_REQUIRED,
+  LING_PAI_WU_XIAO: CuoWuDaiMa.AUTH_TOKEN_INVALID,
+  WU_GUAN_LI_QUAN_XIAN: CuoWuDaiMa.PERMISSION_DENIED,
+  WEI_ZHAO_DAO: CuoWuDaiMa.RESOURCE_NOT_FOUND,
+}
+
+export function zhuanHuanJiuDaiMa(zhi: unknown): CuoWuDaiMa | null {
+  if (shiCuoWuDaiMa(zhi)) return zhi
+  if (typeof zhi !== 'string') return null
+  return jiuDaiMaBianShe[zhi] || null
+}
+
+export function daiMaHuoQuZhuangTaiMa(zhi: unknown): CuoWuDaiMa {
+  if (shiCuoWuDaiMa(zhi)) return zhi
+  if (zhi === 400) return CuoWuDaiMa.REQUEST_PARAMETER_INVALID
+  if (zhi === 401) return CuoWuDaiMa.AUTHENTICATION_REQUIRED
+  if (zhi === 403) return CuoWuDaiMa.PERMISSION_DENIED
+  if (zhi === 404) return CuoWuDaiMa.RESOURCE_NOT_FOUND
+  if (zhi === 410) return CuoWuDaiMa.RESOURCE_EXPIRED
+  if (zhi === 405) return CuoWuDaiMa.METHOD_NOT_ALLOWED
+  if (zhi === 409) return CuoWuDaiMa.RESOURCE_CONFLICT
+  if (zhi === 413) return CuoWuDaiMa.PAYLOAD_TOO_LARGE
+  if (zhi === 429) return CuoWuDaiMa.RATE_LIMITED
+  if (zhi === 502) return CuoWuDaiMa.UPSTREAM_NETWORK_ERROR
+  if (zhi === 503) return CuoWuDaiMa.SERVICE_UNAVAILABLE
+  if (zhi === 504) return CuoWuDaiMa.UPSTREAM_TIMEOUT
+  return CuoWuDaiMa.INTERNAL_ERROR
+}

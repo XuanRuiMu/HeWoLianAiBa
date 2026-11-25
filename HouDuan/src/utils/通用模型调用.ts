@@ -582,14 +582,14 @@ const yiDingZhiFetch = async (shuRu: Parameters<typeof fetch>[0], chuShiCanShu?:
       : await fetch(shuRu, chuShiCanShu)
   } catch (yuanCuoWu) {
     const yuanWenBen = yuanCuoWu instanceof Error ? yuanCuoWu.message : String(yuanCuoWu)
-    debug日志.warn('DeepSeek客户端', '[AI调用] 模型接口请求抛出异常', {
+    debug日志.warn('通用模型调用', '[AI调用] 模型接口请求抛出异常', {
       xiang_qing: { yuan_wen: yuanWenBen.slice(0, 300) },
     })
     throw yuanCuoWu
   }
   if (xiangYing.ok) return xiangYing
   const wenBen = await xiangYing.text().catch(() => '')
-  debug日志.warn('DeepSeek客户端', '[AI调用] 模型接口返回非 2xx', {
+  debug日志.warn('通用模型调用', '[AI调用] 模型接口返回非 2xx', {
     xiang_qing: { zhuang_tai_ma: xiangYing.status, wen_ben: wenBen.slice(0, 300) },
   })
   const cuoWu = new Error(`[模型接口] HTTP ${xiangYing.status} ${wenBen.slice(0, 300)}`) as Error & {
@@ -610,7 +610,7 @@ const yiDingZhiFetch = async (shuRu: Parameters<typeof fetch>[0], chuShiCanShu?:
   }
   throw cuoWu
 }
-export function 获取DeepSeek客户端(): OpenAI {
+export function 获取通用模型调用(): OpenAI {
   if (实例) return 实例
   const api密钥 = peiZhi.deepSeek.api密钥 || AI配置.deepSeek.api密钥
   const 原始地址 = peiZhi.deepSeek.基础地址 || AI配置.deepSeek.基础地址
@@ -698,7 +698,7 @@ function chuangJianChatXiangYing(shuJu: ChatCompletionShimResponse): Response {
   }
   return new Response(JSON.stringify(xinTi), { status: 200, headers: { 'Content-Type': 'application/json' } })
 }
-export function 重置DeepSeek客户端(): void {
+export function 重置通用模型调用(): void {
   实例 = null
 }
 
@@ -718,19 +718,19 @@ export async function 自检模型名可用(): Promise<boolean> {
       signal: AbortSignal.timeout(15 * 1000),
     })
     if (!xiangYing.ok) {
-      debug日志.warn('DeepSeek客户端', `模型名自检跳过：/v1/models 返回 ${xiangYing.status}`)
+      debug日志.warn('通用模型调用', `模型名自检跳过：/v1/models 返回 ${xiangYing.status}`)
       return true
     }
     const shuJu = (await xiangYing.json()) as { data?: Array<{ id?: unknown }> }
     const keYong = (shuJu.data ?? []).map((m) => String(m.id ?? '')).filter(Boolean)
     if (keYong.length === 0 || keYong.includes(qiYongMoXing)) return true
     const neiRong = `当前 DEEPSEEK_MODEL=${qiYongMoXing} 不在官方可用模型列表 [${keYong.join(', ')}] 中，AI 调用将返回 400。请改为官方在册模型名。`
-    debug日志.error('DeepSeek客户端', '模型名自检失败：配置的模型名不在官方可用列表', { xiang_qing: { nei_rong: neiRong } })
+    debug日志.error('通用模型调用', '模型名自检失败：配置的模型名不在官方可用列表', { xiang_qing: { nei_rong: neiRong } })
     const { faSongGaoJing } = await import('./邮件告警')
     void faSongGaoJing('ai_mo_xing_ming_shi_xiao', 'AI 模型名已失效', neiRong).catch(() => undefined)
     return false
   } catch (cuoWu) {
-    debug日志.warn('DeepSeek客户端', '模型名自检跳过：拉取 /v1/models 异常', {
+    debug日志.warn('通用模型调用', '模型名自检跳过：拉取 /v1/models 异常', {
       xiang_qing: { cuo_wu: String(cuoWu) },
     })
     return true
@@ -853,7 +853,7 @@ export function 预算保护(xiaoXi: 对话消息[], yuSuan?: number): 对话消
   }
   if (jiSuan() > yuSuanZhi) {
     debug日志.warn(
-      'DeepSeek客户端',
+      '通用模型调用',
       `[AI调用] 上下文估算 ${jiSuan()} token 已超预算 ${yuSuanZhi}，且单条消息无法再裁；请核对历史条数与消息长度上限`,
     )
   }
@@ -919,14 +919,14 @@ async function 占用并发额度(waiBuXinHao?: AbortSignal): Promise<() => void
       clearTimeout(超时器)
       const weiZhi = 并发等待队列.indexOf(排队者)
       if (weiZhi >= 0) 并发等待队列.splice(weiZhi, 1)
-      juJue(new Error('[DeepSeek客户端] 等待模型并发额度时被取消'))
+      juJue(new Error('[通用模型调用] 等待模型并发额度时被取消'))
     }
     const 超时器 = setTimeout(() => {
       if (yiJieShu) return
       yiJieShu = true
       const weiZhi = 并发等待队列.indexOf(排队者)
       if (weiZhi >= 0) 并发等待队列.splice(weiZhi, 1)
-      juJue(new Error(`[DeepSeek客户端] 等待模型并发额度超时（${MoXingBingFaDengDaiZuiChangHaoMiao}ms）`))
+      juJue(new Error(`[通用模型调用] 等待模型并发额度超时（${MoXingBingFaDengDaiZuiChangHaoMiao}ms）`))
     }, MoXingBingFaDengDaiZuiChangHaoMiao)
     if (waiBuXinHao) {
       if (waiBuXinHao.aborted) {
@@ -965,18 +965,18 @@ export async function tiaoYongDeepSeek(
   }
   if (shiFouJinZhiCeShiWaiHu()) {
     throw new Error(
-      `[DeepSeek客户端] VITEST 测试环境禁止真实外呼（模型LeiXing=${模型LeiXing}）：请用 sheZhiMockTiaoYong 注入 mock，或显式设置 XU_KE_ZHEN_SHI_WAI_HU=true 允许联调`,
+      `[通用模型调用] VITEST 测试环境禁止真实外呼（模型LeiXing=${模型LeiXing}）：请用 sheZhiMockTiaoYong 注入 mock，或显式设置 XU_KE_ZHEN_SHI_WAI_HU=true 允许联调`,
     )
   }
 
   const kaiShiShiJian = Date.now()
-  const keHuDuan = 获取DeepSeek客户端()
+  const keHuDuan = 获取通用模型调用()
   let 请求模型 = canShu.模型 || AI配置.deepSeek.模型
   let 模型 = 请求模型
   const 响应格式 = canShu.响应格式 || { type: 'text' as const }
 
   if (peiZhi.kaiFaMoShi) {
-    debug日志.debug('DeepSeek客户端', '[AI参数] 最终生效参数', {
+    debug日志.debug('通用模型调用', '[AI参数] 最终生效参数', {
       xiang_qing: {
         模型LeiXing,
         模型,
@@ -1007,7 +1007,7 @@ export async function tiaoYongDeepSeek(
       }
       return `${xiaoXi.role}: [空内容]`
     }).join('\n')
-    debug日志.debug('DeepSeek客户端', '[AI输入] 完整模型提示词', {
+    debug日志.debug('通用模型调用', '[AI输入] 完整模型提示词', {
       xiang_qing: { 模型LeiXing, 内容: 输入文本 },
     })
   }
@@ -1044,11 +1044,11 @@ export async function tiaoYongDeepSeek(
   const 自主恢复上限毫秒 = Math.max(60_000, Number(process.env['AI_CHANG_CE_HUI_FU_SHANG_XIAN_HAO_MIAO'] || '900000') || 900000)
   const 自主恢复起点 = Date.now()
   if (waiBuXinHao?.aborted) {
-    throw new Error('[DeepSeek客户端] 调用已取消，不再发起外呼')
+    throw new Error('[通用模型调用] 调用已取消，不再发起外呼')
   }
   const jianChaQuXiao = (): void => {
     if (waiBuXinHao?.aborted) {
-      throw new Error('[DeepSeek客户端] 调用已取消，中止重试等待')
+      throw new Error('[通用模型调用] 调用已取消，中止重试等待')
     }
   }
   for (let changCi = 0; changCi <= 可重试最大次数; changCi++) {
@@ -1075,7 +1075,7 @@ export async function tiaoYongDeepSeek(
       释放额度 = await 占用并发额度(youXiaoXinHao)
       const duiLieChangDu = 当前模型并发排队数()
       if (duiLieChangDu > 0) {
-        debug日志.debug('DeepSeek客户端', '[AI调用] 模型并发已满，本次排队等待', {
+        debug日志.debug('通用模型调用', '[AI调用] 模型并发已满，本次排队等待', {
           xiang_qing: { 模型LeiXing, 排队数: duiLieChangDu, 上限: MoXingBingFaShangXian },
         })
       }
@@ -1088,7 +1088,7 @@ export async function tiaoYongDeepSeek(
   const 实际模型 = (xiangYing as unknown as { model?: unknown }).model ?? (xiangYing as unknown as Response).headers?.get?.('x-dsh-actual-model')
   if (typeof 实际模型 === 'string' && 实际模型.trim() !== '') 模型 = 实际模型.trim()
   if (typeof (xiangYing as unknown as { model?: unknown }).model !== 'string') {
-    debug日志.debug('DeepSeek客户端', '[AI调用] 上游响应未带模型名，使用配置模型', {
+    debug日志.debug('通用模型调用', '[AI调用] 上游响应未带模型名，使用配置模型', {
       xiang_qing: { 模型LeiXing, 模型 },
     })
   }
@@ -1096,14 +1096,14 @@ export async function tiaoYongDeepSeek(
   let zhongXinXiangYing = xiangYing
       while (提取响应(zhongXinXiangYing).neiRong.trim() === '' && kongXiangYingCiShu < KongXiangYingZuiDaCiShu) {
         kongXiangYingCiShu += 1
-        debug日志.warn('DeepSeek客户端', '[AI调用] 响应为空，退避后重试', {
+        debug日志.warn('通用模型调用', '[AI调用] 响应为空，退避后重试', {
           xiang_qing: { 模型LeiXing, 模型, ciShu: kongXiangYingCiShu },
         })
         const deng = Math.min(AI配置.kongXiangYing.tuiBiJiChuHaoMiao * kongXiangYingCiShu, AI配置.kongXiangYing.tuiBiZuiDaHaoMiao)
         if (waiBuXinHao) {
           await Promise.race([
             dengDai(deng),
-            new Promise((_, juJue) => waiBuXinHao.addEventListener('abort', () => juJue(new Error('[DeepSeek客户端] 调用已取消，中止重试等待')), { once: true })),
+            new Promise((_, juJue) => waiBuXinHao.addEventListener('abort', () => juJue(new Error('[通用模型调用] 调用已取消，中止重试等待')), { once: true })),
           ])
         } else {
           await dengDai(deng)
@@ -1125,19 +1125,19 @@ export async function tiaoYongDeepSeek(
       if (typeof 最终模型 === 'string' && 最终模型.trim() !== '') 模型 = 最终模型.trim()
       const shiYongLiang = tiQuShiYongLiang(zhongXinXiangYing)
 
-      debug日志.debug('DeepSeek客户端', '[AI输出] 模型完整回复', {
+      debug日志.debug('通用模型调用', '[AI输出] 模型完整回复', {
         xiang_qing: { 模型LeiXing, 内容: neiRong },
       })
 
       if (peiZhi.kaiFaMoShi && siKaoNeiRong) {
-        debug日志.debug('DeepSeek客户端', '[AI思考过程]', {
+        debug日志.debug('通用模型调用', '[AI思考过程]', {
           xiang_qing: { si_kao_zi_shu: siKaoNeiRong.length, 内容: siKaoNeiRong, 模型 },
         })
       }
       if ((zhongXinXiangYing as { status?: string }).status === 'incomplete') {
         const buWanZheng = (zhongXinXiangYing as { incomplete_details?: { reason?: string } }).incomplete_details
         debug日志.warn(
-          'DeepSeek客户端',
+          '通用模型调用',
           '[AI调用] 响应被截断（达到 max_output_tokens），思考强度可能过高或上限偏低',
           { xiang_qing: { 模型LeiXing, 原因: buWanZheng?.reason ?? '', 上限: body.max_output_tokens } },
         )
@@ -1177,7 +1177,7 @@ export async function tiaoYongDeepSeek(
       zuiHouCuoWu = cuoWu
       {
         const e = cuoWu as Error & { status?: unknown; statusCode?: unknown; code?: unknown; type?: unknown; error?: unknown; cause?: unknown }
-        debug日志.warn('DeepSeek客户端', '[AI调用] 底层错误原始信息', {
+        debug日志.warn('通用模型调用', '[AI调用] 底层错误原始信息', {
           xiang_qing: {
             模型LeiXing,
             模型,
@@ -1209,11 +1209,11 @@ export async function tiaoYongDeepSeek(
         ? Math.max(可重试最大次数, XianLiuZuiDaChangShiCiShu)
         : 可重试最大次数
       if (shiXianLiu) {
-        debug日志.warn('DeepSeek客户端', '[AI调用] 中转并发限流，长退避后重试', {
+        debug日志.warn('通用模型调用', '[AI调用] 中转并发限流，长退避后重试', {
           xiang_qing: { 模型LeiXing, 模型, ciShu: changCi + 1, 上限: MoXingBingFaShangXian, 占用: 当前并发数 },
         })
       } else if (shiZhongZhuanCuoWu) {
-        debug日志.warn('DeepSeek客户端', '[AI调用] 中转服务异常，加长重试', {
+        debug日志.warn('通用模型调用', '[AI调用] 中转服务异常，加长重试', {
           xiang_qing: { 模型LeiXing, 模型, ciShu: changCi + 1 },
         })
       }
@@ -1233,7 +1233,7 @@ export async function tiaoYongDeepSeek(
       if (waiBuXinHao) {
         await Promise.race([
           dengDai(tuiBiHaoMiao),
-          new Promise((_, juJue) => waiBuXinHao.addEventListener('abort', () => juJue(new Error('[DeepSeek客户端] 调用已取消，中止重试等待')), { once: true })),
+          new Promise((_, juJue) => waiBuXinHao.addEventListener('abort', () => juJue(new Error('[通用模型调用] 调用已取消，中止重试等待')), { once: true })),
         ])
       } else {
         await dengDai(tuiBiHaoMiao)

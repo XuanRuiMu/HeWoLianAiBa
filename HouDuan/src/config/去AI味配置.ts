@@ -69,38 +69,6 @@ export function guoLvAiWeiXiaoXi(xiaoXiLieBiao: readonly string[], ciBiao: reado
   return { baoLiu, beiFengSha }
 }
 
-export const CuSuHuiDuiPeiZhi = {
-  zhengZe: [
-    /[\u4e00-\u9fa5]{1,4}个屁/,
-    /扯淡/,
-    /放屁/,
-    /少来这套/,
-    /关你屁事/,
-    /你算老几/,
-    /^(滚|滚吧|滚蛋)$/,
-    /有病吧/,
-    /你是不是傻/,
-  ] as readonly RegExp[],
-} as const
-
-export interface CuSuHuiDuiJianChaJieGuo {
-  mingZhong: string[]
-  tongGuo: boolean
-}
-
-export function jianChaCuSuHuiDui(
-  wenBen: string,
-  zhengZeLieBiao: readonly RegExp[] = CuSuHuiDuiPeiZhi.zhengZe,
-): CuSuHuiDuiJianChaJieGuo {
-  const mingZhong: string[] = []
-  if (typeof wenBen !== 'string' || !wenBen) return { mingZhong, tongGuo: true }
-  for (const zhengZe of zhengZeLieBiao) {
-    const piPei = wenBen.match(zhengZe)
-    if (piPei && !mingZhong.includes(piPei[0])) mingZhong.push(piPei[0])
-  }
-  return { mingZhong, tongGuo: mingZhong.length === 0 }
-}
-
 export const QuAiWeiPeiZhi = {
   ciBiao: duQuCiBiao('QU_AI_WEI_CI_BIAO', MoRenCiBiao),
   caiYangBiLi: duQuFuDian('QU_AI_WEI_CAI_YANG_BI_LI', 0.1, 0, 1),

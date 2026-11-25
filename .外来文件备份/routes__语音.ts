@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { prisma } from "../db.js";
-import { verifyToken, AuthRequest } from "../middleware/认证.js";
-import { wenJianShangChuan, shiPinShangChuan } from "../middleware/上传.js";
-import { tiQuYinPin, tiQuShiPinYuanYinPin } from "./语音转写.js";
+import { prisma } from "../数据库";
+import { verifyToken, AuthRequest } from "../middleware/认证";
+import { wenJianShangChuan, shiPinShangChuan } from "../middleware/上传";
+import { tiQuYinPin, tiQuShiPinYuanYinPin } from "./语音转写";
 import { ocrShiBieWenJian, shiBieYuYin } from "../services/多模态工具.js";
 
 const router = Router();

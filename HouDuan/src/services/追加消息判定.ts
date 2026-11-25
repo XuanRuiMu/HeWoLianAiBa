@@ -100,7 +100,7 @@ export async function panDuanZuiJia(shuRu: ZuiJiaPanDuanShuRu): Promise<ZuiJiaPa
   if (process.env.VITEST === 'true') return { youShiMeDongXi: false }
   try {
     const xiangYing = await 按配置调用(MoXingMing, [
-      { jiaoSe: 'system', neiRong: '任务：判定该角色此刻是否会主动追加一条消息，以及追加内容。只输出 JSON，不附加任何说明文字。' },
+      { jiaoSe: 'system', neiRong: '你在判断自己此刻想不想跟一个人说句话。只输出 JSON。' },
       { jiaoSe: 'user', neiRong: gouJianTiShi(shuRu) },
     ])
     return jieXi(xiangYing.neiRong)

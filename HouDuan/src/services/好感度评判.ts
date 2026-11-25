@@ -1,6 +1,6 @@
 import { debug日志 } from '../utils/debug日志'
 import { AI配置 } from '../config/AI配置'
-import { 按配置调用 } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/通用模型调用'
 import { gouJianHaoGanDuPingPanPrompt, gouJianXiuFuPanDingPrompt, type XiuFuPanDingShangXiaWen } from './Prompt构建器'
 import { paiRuZhongShiDuiLie } from './重试队列'
 import type { HaoGanDuPingPanJieGuo } from '../types'
@@ -114,7 +114,7 @@ async function pingPanHaoGanDuBianHuaNei(
     const xiuFuPanDingShangXiaWen = await quXiuFuPanDingShangXiaWen(用户ID, jiaoSeId)
 
     const xiangYing = await jiaoHuLLM('HaoGanDuPingPan', [
-      { jiaoSe: 'system', neiRong: '任务：评估给定一轮对话后，角色对用户的好感度各维度变化量。只输出 JSON，不附加任何说明文字。' },
+      { jiaoSe: 'system', neiRong: '根据一轮对话判断好感变化，只输出 JSON。' },
       {
         jiaoSe: 'user',
         neiRong: gouJianHaoGanDuPingPanPrompt(yongHuXiaoXi, jiaoSeHuiFu, jiaoSeMing, shangXiaWen, xiuFuPanDingShangXiaWen),
@@ -248,7 +248,7 @@ async function pingPanHaoGanDuPiLiangNei(
       .map((huiFu, xuHao) => `${xuHao + 1}. ${huiFu}`)
       .join('\n')
     const xiangYing = await jiaoHuLLM('HaoGanDuPingPan', [
-      { jiaoSe: 'system', neiRong: '任务：评估给定一轮对话后，角色对用户的好感度各维度变化量。只输出 JSON，不附加任何说明文字。' },
+      { jiaoSe: 'system', neiRong: '根据一轮对话判断好感变化，只输出 JSON。' },
       {
         jiaoSe: 'user',
         neiRong: [
@@ -349,7 +349,7 @@ export async function pingPanXiuFu(
     const chongTuXinXi = await huoQuChongTuXinXi(用户ID, jiaoSeId)
     if (!chongTuXinXi || chongTuXinXi.zhuangTai === 'wu') return undefined
     const xiangYing = await jiaoHuLLM('HaoGanDuPingPan', [
-      { jiaoSe: 'system', neiRong: '任务：判定用户这条消息是否在修复双方之间的既有冲突。只输出 JSON，不附加任何说明文字。' },
+      { jiaoSe: 'system', neiRong: '判断这条消息有没有在修复你们之间的冲突，只输出 JSON。' },
       {
         jiaoSe: 'user',
         neiRong: gouJianXiuFuPanDingPrompt(yongHuXiaoXi, chongTuXinXi.zhuangTai, chongTuXinXi.shiYou, chongTuXinXi.shengJiJiShu, shangXiaWen),

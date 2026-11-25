@@ -2,12 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Server } from 'socket.io'
 import type { AIYinQingShuChu } from '../../types'
 
-const yaSuoKaiGuan = vi.hoisted(() => ({ zhi: true }))
-vi.mock('../../config/AI配置', async (importOriginal) => {
-  const shiJi = await importOriginal<typeof import('../../config/AI配置')>()
-  return { ...shiJi, get yaSuoQiYong() { return yaSuoKaiGuan.zhi } }
-})
-
 vi.mock('../AI引擎', () => ({ yunXingAIYinQing: vi.fn() }))
 vi.mock('../AI输入准备', () => ({
   保存角色XiaoXi: vi.fn(),
@@ -106,7 +100,6 @@ function 造调度器() {
 
 beforeEach(() => {
   sheZhiCeShiTiaoGuo(true)
-  yaSuoKaiGuan.zhi = true
   vi.clearAllMocks()
   vi.mocked(duQuTongBuZhaiYao).mockReturnValue('')
   vi.mocked(duQuDuiHuaZhaiYao).mockResolvedValue(null)
@@ -156,36 +149,24 @@ describe('运行AI注入长期记忆摘要', () => {
     调度器.重置()
   })
 
-  it('压缩停用（yaSuoQiYong=false）时不读摘要库，注入为空', async () => {
-    const { 调度器, 内部 } = 造调度器()
-    内部.获取最新消息文本 = async () => '在吗'
-    yaSuoKaiGuan.zhi = false
-
-    try {
-      await yunXing(内部)
-    } finally {
-      yaSuoKaiGuan.zhi = true
-    }
-
-    expect(duQuTongBuZhaiYao).not.toHaveBeenCalled()
-    expect(duQuDuiHuaZhaiYao).not.toHaveBeenCalled()
-    expect(vi.mocked(yunXingAIYinQing).mock.calls[0][0].ji_yi_zhai_yao).toBeUndefined()
-    调度器.重置()
-  })
-
-  it('压缩管线停用：调度器不再持有触发入口，收尾也不会调用摘要压缩', async () => {
+  it('压缩任务拿当前角色名，测试跳过开关控制是否触发压缩', async () => {
     const { 调度器, 内部 } = 造调度器()
     内部.当前角色 = { wei_xin_ming: '糖糖', ming_zi: '糖糖' }
+    const chuFaJiYiYaSuo = (AI回复调度器.prototype as unknown as Record<string, () => void>).触发记忆压缩.bind(调度器) as () => void
 
-    expect((AI回复调度器.prototype as unknown as Record<string, unknown>)['触发记忆压缩']).toBeUndefined()
+    sheZhiCeShiTiaoGuo(false)
+    try {
+      chuFaJiYiYaSuo()
+      await new Promise((jieShu) => setImmediate(jieShu))
+      expect(shengChengBingLuoKuZhaiYao).toHaveBeenCalledWith('u-1', 'j-1', '糖糖')
+    } finally {
+      sheZhiCeShiTiaoGuo(true)
+    }
 
-    内部.获取最新消息文本 = async () => '在吗'
-    await yunXing(内部)
+    vi.mocked(shengChengBingLuoKuZhaiYao).mockClear()
+    chuFaJiYiYaSuo()
     await new Promise((jieShu) => setImmediate(jieShu))
-    await new Promise((jieShu) => setTimeout(jieShu, 0))
-
     expect(shengChengBingLuoKuZhaiYao).not.toHaveBeenCalled()
-    调度器.重置()
   })
 
   it('同步缓存命中时免查库，摘要为空则注入 undefined', async () => {

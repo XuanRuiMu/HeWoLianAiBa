@@ -15,7 +15,7 @@ import fs from 'fs'
 function gouJianTuPianShenHePrompt(): string {
   const leiBieShuoMing = ShenHeWeiGuiLeiBie.map((lb, i) => `${i + 1}. ${lb}`).join('\n')
   return [
-    '任务：判定给定图片是否包含违规内容。',
+    '你是内容安全审核专家，请分析这张图片是否包含违规内容。',
     '',
     '审核类别（六大法定类别）：',
     leiBieShuoMing,

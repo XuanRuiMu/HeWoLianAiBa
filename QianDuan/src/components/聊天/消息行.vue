@@ -103,10 +103,12 @@ const emit = defineEmits<{
 
 .xiaoxi-xiangmu.yonghu-xiaoxi {
   flex-direction: row-reverse;
+  align-self: flex-end;
 }
 
 .xiaoxi-xiangmu.jiaose-xiaoxi {
   flex-direction: row;
+  align-self: flex-start;
 }
 
 .xiaoxi-xiangmu.xitong-xiaoxi,

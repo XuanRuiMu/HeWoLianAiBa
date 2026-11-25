@@ -118,3 +118,69 @@ export async function jieXiYongHuBianHao(bianHao: unknown): Promise<string | nul
     [bianHao],
   )
   const zhi = jieGuo.rows.length > 0 ? String(jieGuo.rows[0].ID) : null
+  xieHuanCun(yongHuFanXiangHuanCun, bianHao, zhi)
+  if (zhi) xieHuanCun(yongHuHuanCun, zhi, bianHao)
+  return zhi
+}
+
+export async function jieXiJiaoSeBianHaoPiLiang(bianHaoLieBiao: unknown[]): Promise<Map<string, string>> {
+  const duiZhao = new Map<string, string>()
+  const xuCha = bianHaoLieBiao.filter((zhi): zhi is string => shiHeFaJiaoSeBianHao(zhi))
+  for (const bianHao of xuCha) {
+    const yiHuanCun = duHuanCun(jiaoSeFanXiangHuanCun, bianHao)
+    if (yiHuanCun) duiZhao.set(bianHao, yiHuanCun)
+  }
+  const weiZhi = xuCha.filter((bianHao) => !duiZhao.has(bianHao))
+  if (weiZhi.length === 0) return duiZhao
+  const jieGuo = await 数据库.query(
+    'SELECT "ID", "公开编号" FROM "角色" WHERE "公开编号" = ANY($1::text[])',
+    [weiZhi],
+  )
+  for (const hang of jieGuo.rows as Record<string, unknown>[]) {
+    const bianHao = String(hang['公开编号'])
+    const jiaoSeId = String(hang.ID)
+    duiZhao.set(bianHao, jiaoSeId)
+    xieHuanCun(jiaoSeFanXiangHuanCun, bianHao, jiaoSeId)
+    xieHuanCun(jiaoSeHuanCun, jiaoSeId, bianHao)
+  }
+  return duiZhao
+}
+
+export async function jieXiYongHuBianHaoPiLiang(bianHaoLieBiao: unknown[]): Promise<Map<string, string>> {
+  const duiZhao = new Map<string, string>()
+  const xuCha = bianHaoLieBiao.filter((zhi): zhi is string => shiHeFaYongHuBianHao(zhi))
+  for (const bianHao of xuCha) {
+    const yiHuanCun = duHuanCun(yongHuFanXiangHuanCun, bianHao)
+    if (yiHuanCun) duiZhao.set(bianHao, yiHuanCun)
+  }
+  const weiZhi = xuCha.filter((bianHao) => !duiZhao.has(bianHao))
+  if (weiZhi.length === 0) return duiZhao
+  const jieGuo = await 数据库.query(
+    'SELECT "ID", "公开编号" FROM "用户" WHERE "公开编号" = ANY($1::text[])',
+    [weiZhi],
+  )
+  for (const hang of jieGuo.rows as Record<string, unknown>[]) {
+    const bianHao = String(hang['公开编号'])
+    const 用户ID = String(hang.ID)
+    duiZhao.set(bianHao, 用户ID)
+    xieHuanCun(yongHuFanXiangHuanCun, bianHao, 用户ID)
+    xieHuanCun(yongHuHuanCun, 用户ID, bianHao)
+  }
+  return duiZhao
+}
+
+export async function jiaoSeBianHaoBiao(用户ID: string): Promise<Map<string, string>> {
+  const duiZhao = new Map<string, string>()
+  const jieGuo = await 数据库.query(
+    'SELECT "ID", "公开编号" FROM "角色" WHERE "用户ID" = $1',
+    [用户ID],
+  )
+  for (const hang of jieGuo.rows as Record<string, unknown>[]) {
+    const jiaoSeId = String(hang.ID)
+    const bianHao = String(hang['公开编号'])
+    duiZhao.set(jiaoSeId, bianHao)
+    xieHuanCun(jiaoSeHuanCun, jiaoSeId, bianHao)
+    xieHuanCun(jiaoSeFanXiangHuanCun, bianHao, jiaoSeId)
+  }
+  return duiZhao
+}

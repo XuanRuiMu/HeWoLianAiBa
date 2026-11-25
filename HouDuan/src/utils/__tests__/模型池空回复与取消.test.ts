@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest'
-import { 按配置调用, zhuCeMoXingChi, qingKongMoXingChi, 模型池快照 } from '../DeepSeek客户端'
+import { 按配置调用, zhuCeMoXingChi, qingKongMoXingChi, 模型池快照 } from '../通用模型调用'
 
 const 外呼许可 = () => { process.env.XU_KE_ZHEN_SHI_WAI_HU = 'true' }
 const 释放 = () => { delete process.env.XU_KE_ZHEN_SHI_WAI_HU }

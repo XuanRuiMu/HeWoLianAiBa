@@ -20,7 +20,7 @@ export async function chouQuZiWoShiShi(
     .join('\n')
 
   const caiJi = 按配置调用('XieShou', [
-    { jiaoSe: 'system', neiRong: '任务：从给定聊天记录中提取角色本人明确陈述过的事实，列成清单。只输出 JSON 数组，不附加任何说明文字。' },
+    { jiaoSe: 'system', neiRong: '你负责从聊天记录里提取「我」自己说过的事实，列成清单。' },
     {
       jiaoSe: 'user',
       neiRong: [

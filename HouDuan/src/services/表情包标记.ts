@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
-import { BiaoQingBiaoJi } from '../config/表情包配置'
+import { BiaoQingTieZhiBiaoJi } from '../config/表情包配置'
 import { debug日志 } from '../utils/debug日志'
 
 export type BiaoQingPianDuanLeiXing = 'wenzi' | 'tupian'
@@ -22,26 +22,26 @@ function ziFuZu(lieBiao: readonly string[]): string {
   return lieBiao.map((xiang) => zhuanYiZhengZe(xiang)).join('')
 }
 
-const ZuoKuoHaoZu = ziFuZu(BiaoQingBiaoJi.zuoKuoHao)
+const ZuoKuoHaoZu = ziFuZu(BiaoQingTieZhiBiaoJi.zuoKuoHao)
 
-const YouKuoHaoZu = ziFuZu(BiaoQingBiaoJi.youKuoHao)
+const YouKuoHaoZu = ziFuZu(BiaoQingTieZhiBiaoJi.youKuoHao)
 
-const MaoHaoZu = ziFuZu(BiaoQingBiaoJi.maoHao)
+const MaoHaoZu = ziFuZu(BiaoQingTieZhiBiaoJi.maoHao)
 
-const BiaoQingShuJu = `[${ZuoKuoHaoZu}]${KongBai}*${BiaoQingBiaoJi.qianZhui}${KongBai}*[${MaoHaoZu}]${KongBai}*([^${YouKuoHaoZu}\\n\\r]*?)${KongBai}*[${YouKuoHaoZu}]`
+const BiaoQingShuJu = `[${ZuoKuoHaoZu}]${KongBai}*${BiaoQingTieZhiBiaoJi.qianZhui}${KongBai}*[${MaoHaoZu}]${KongBai}*([^${YouKuoHaoZu}\\n\\r]*?)${KongBai}*[${YouKuoHaoZu}]`
 
-const QingXiZuoKuoHaoZu = ziFuZu(BiaoQingBiaoJi.qingXiKuoHao.map((kuoHao) => kuoHao.zuo))
+const QingXiZuoKuoHaoZu = ziFuZu(BiaoQingTieZhiBiaoJi.qingXiKuoHao.map((kuoHao) => kuoHao.zuo))
 
-const QingXiYouKuoHaoZu = ziFuZu(BiaoQingBiaoJi.qingXiKuoHao.map((kuoHao) => kuoHao.you))
+const QingXiYouKuoHaoZu = ziFuZu(BiaoQingTieZhiBiaoJi.qingXiKuoHao.map((kuoHao) => kuoHao.you))
 
-const QingXiGuanJianZiZu = BiaoQingBiaoJi.qingXiGuanJianCi.map(zhuanYiZhengZe).join('|')
+const QingXiGuanJianZiZu = BiaoQingTieZhiBiaoJi.qingXiGuanJianCi.map(zhuanYiZhengZe).join('|')
 
 const QingXiShuJu = `[${QingXiZuoKuoHaoZu}]${KongBai}*(?:${QingXiGuanJianZiZu})${KongBai}*(?:[${MaoHaoZu}]|${KongBai})[^${QingXiYouKuoHaoZu}\\n\\r]*(?:[${QingXiYouKuoHaoZu}]|$)`
 
 function shiHeFaDuanMing(duanMing: string): boolean {
   const changDu = duanMing.length
-  if (changDu < BiaoQingBiaoJi.duanMingZuiXiaoChangDu) return false
-  if (changDu > BiaoQingBiaoJi.duanMingZuiDaChangDu) return false
+  if (changDu < BiaoQingTieZhiBiaoJi.duanMingZuiXiaoChangDu) return false
+  if (changDu > BiaoQingTieZhiBiaoJi.duanMingZuiDaChangDu) return false
   if (/[\n\r]/.test(duanMing)) return false
   return !new RegExp(`[${ZuoKuoHaoZu}]`).test(duanMing)
 }
@@ -107,7 +107,7 @@ function jiLuQingXiYiChang(yuanWen: string, shanChuShu: number): void {
     xiang_qing: {
       shan_chu_shu: shanChuShu,
       he_fa_shu: heFaShu,
-      yuan_wen: yuanWen.slice(0, BiaoQingBiaoJi.qingXiYuanWenZuiDaChang),
+      yuan_wen: yuanWen.slice(0, BiaoQingTieZhiBiaoJi.qingXiYuanWenZuiDaChang),
     },
   })
 }

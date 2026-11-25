@@ -398,4 +398,531 @@ function chuLiJianPan(事件: KeyboardEvent): void {
   if (props.jinYong) return
   switch (事件.key) {
     case 'ArrowDown':
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+      事件.preventDefault()
+      if (!zhanKai.value) 打开()
+      else 移动HuoDong(1)
+      break
+    case 'ArrowUp':
+      事件.preventDefault()
+      if (!zhanKai.value) 打开()
+      else 移动HuoDong(-1)
+      break
+    case 'Home':
+      if (!zhanKai.value) return
+      事件.preventDefault()
+      移到端点(true)
+      break
+    case 'End':
+      if (!zhanKai.value) return
+      事件.preventDefault()
+      移到端点(false)
+      break
+    case 'Enter':
+      事件.preventDefault()
+      if (!zhanKai.value) {
+        打开()
+      } else {
+        const xuanXiang = props.xuanXiang[huoDongSuoYin.value]
+        if (xuanXiang) xuanZeXuanXiang(xuanXiang)
+      }
+      break
+    case ' ':
+      事件.preventDefault()
+      if (!zhanKai.value) 打开()
+      else {
+        const xuanXiang = props.xuanXiang[huoDongSuoYin.value]
+        if (xuanXiang) xuanZeXuanXiang(xuanXiang)
+      }
+      break
+    case 'Escape':
+      if (!zhanKai.value) return
+      事件.preventDefault()
+      关闭(true)
+      break
+    case 'Tab':
+      if (zhanKai.value) 关闭(false)
+      break
+    default:
+      break
+  }
+}
+
+watch(
+  () => props.jinYong,
+  (jinYong) => {
+    if (jinYong && zhanKai.value) 关闭(false)
+  },
+)
+
+watch(
+  () => props.moXingZhi,
+  () => {
+    if (!zhanKai.value) return
+    huoDongSuoYin.value = xuanZhongSuoYin.value >= 0 ? xuanZhongSuoYin.value : 首个KeYongSuoYin()
+  },
+)
+
+使用浮层关闭(fuCengYuanSu, chuFaQiYuanSu, () => zhanKai.value, 关闭)
+</script>
+
+<style scoped>
+.tongyong-xiala-biao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--jiange-6);
+  min-width: 0;
+  font-size: var(--ziti-xiao);
+}
+
+.tongyong-xiala-wen {
+  color: var(--wenben-ciuse);
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.tongyong-xiala {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--jiange-xiao);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  font: inherit;
+  text-align: left;
+  color: var(--wenben-zhuse);
+  cursor: pointer;
+  transition:
+    border-color var(--quxian-biao-zhun),
+    background-color var(--quxian-biao-zhun),
+    box-shadow var(--quxian-biao-zhun),
+    color var(--quxian-biao-zhun);
+}
+
+.tongyong-xiala-zhi {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tongyong-xiala-jiantou {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  opacity: 0.7;
+  transform: rotate(45deg);
+  transition: transform var(--quxian-biao-zhun);
+}
+
+.tongyong-xiala--zhanKai .tongyong-xiala-jiantou {
+  transform: rotate(225deg);
+}
+
+.tongyong-xiala--zhanJi {
+  min-height: 34px;
+  max-width: 180px;
+  padding: var(--jiange-6) var(--jiange-10);
+  border: 1.5px solid var(--yanse-zhanji-qian);
+  border-radius: 10px;
+  background: var(--beijing-kaopian);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tongyong-xiala--zhanJi:hover:not(:disabled) {
+  border-color: var(--yanse-zhanji);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--yanse-zhanji) 28%, transparent);
+}
+
+.tongyong-xiala--fanYi {
+  padding: var(--jiange-6) var(--jiange-10);
+  border: 1.5px solid var(--biankuang-yanse);
+  border-radius: 10px;
+  background: var(--beijing-ciuse);
+  font-size: 12px;
+}
+
+.tongyong-xiala--fanYi:hover:not(:disabled) {
+  border-color: var(--zhuse);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--zhuse) 22%, transparent);
+}
+
+.tongyong-xiala--keJianXing {
+  padding: var(--jiange-10) var(--jiange-12);
+  border: 1px solid var(--bianKuang, var(--biankuang-yanse));
+  border-radius: 10px;
+  background: var(--kaPian, var(--beijing-kaopian));
+  color: var(--moSe, var(--wenben-zhuse));
+  font-size: 13px;
+  transition: border-color 0.2s ease;
+}
+
+.tongyong-xiala--keJianXing:hover:not(:disabled) {
+  border-color: var(--yeLv, var(--zhuse));
+}
+
+.tongyong-xiala--quanJu {
+  min-width: 160px;
+  padding: var(--jiange-10) var(--jiange-12);
+  border: 1px solid var(--xiala-biankuang);
+  border-radius: 9px;
+  background: var(--xiala-beijing);
+  color: var(--xiala-wenben);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.tongyong-xiala--quanJu:hover:not(:disabled) {
+  background-color: var(--xiala-hover-beijing);
+  color: var(--xiala-hover-wenben);
+}
+
+.tongyong-xiala:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.tongyong-xiala:focus-visible {
+  outline: var(--jujiao-huan-kuan-du) solid var(--jujiao-huan-yanse);
+  outline-offset: var(--jujiao-huan-pian-yi);
+}
+
+.tongyong-xiala-biao--keJianXing .tongyong-xiala:focus-visible {
+  outline: var(--jujiao-huan-kuan-du-wenben) solid var(--jujiao-huan-yanse);
+  outline-offset: var(--jujiao-huan-pian-yi-wenben);
+}
+
+.tongyong-fuceng {
+  --tongyong-fuceng-ceng: var(--ceng-caidan);
+  position: fixed;
+  z-index: var(--tongyong-fuceng-ceng);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  transform-origin: top center;
+}
+
+.tongyong-fuceng[data-fangxiang='shang'] {
+  transform-origin: bottom center;
+}
+
+.tongyong-fuceng-tou {
+  flex: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tongyong-liebiao {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--jiange-2);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.tongyong-xuanxiang {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--jiange-xiao);
+  width: 100%;
+  min-height: 36px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.tongyong-xuanxiang-wen {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tongyong-xuanxiang-gou {
+  flex: none;
+  opacity: 0;
+  transform: scale(0.7);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.tongyong-xuanxiang--xuanZhong .tongyong-xuanxiang-gou {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.tongyong-xuanxiang--jinYong {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tongyong-fuceng-kong {
+  padding: var(--jiange-10) var(--jiange-12);
+  color: var(--wenben-tishi);
+  font-size: 12px;
+  text-align: center;
+}
+
+.tongyong-fuceng--zhanJi {
+  padding: var(--jiange-6);
+  border: 2px solid var(--yanse-zhanji-qian);
+  border-radius: 12px;
+  background: var(--beijing-kaopian);
+  color: var(--wenben-zhuse);
+  box-shadow:
+    var(--xiala-yinying),
+    4px 4px 0 color-mix(in srgb, var(--yanse-zhanji) 32%, transparent);
+}
+
+.tongyong-fuceng--zhanJi .tongyong-fuceng-tou {
+  padding: var(--jiange-6) var(--jiange-10) var(--jiange-4);
+  margin-bottom: var(--jiange-4);
+  border-bottom: 1px solid color-mix(in srgb, var(--yanse-zhanji-qian) 55%, transparent);
+  color: var(--yanse-zhanji);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.tongyong-fuceng--zhanJi .tongyong-xuanxiang {
+  padding: var(--jiange-6) var(--jiange-10);
+  border-radius: 8px;
+  color: var(--wenben-zhuse);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.tongyong-fuceng--zhanJi .tongyong-xuanxiang:hover {
+  background: color-mix(in srgb, var(--yanse-zhanji) 9%, transparent);
+}
+
+.tongyong-fuceng--zhanJi .tongyong-xuanxiang--huoDong {
+  background: color-mix(in srgb, var(--yanse-zhanji) 12%, transparent);
+  box-shadow: inset 0 0 0 2px var(--yanse-zhanji);
+}
+
+.tongyong-fuceng--zhanJi .tongyong-xuanxiang--xuanZhong {
+  background: color-mix(in srgb, var(--yanse-zhanji) 16%, transparent);
+  box-shadow: inset 3px 0 0 var(--yanse-zhanji);
+}
+
+.tongyong-fuceng--zhanJi .tongyong-xuanxiang--huoDong.tongyong-xuanxiang--xuanZhong {
+  box-shadow:
+    inset 3px 0 0 var(--yanse-zhanji),
+    inset 0 0 0 2px var(--yanse-zhanji);
+}
+
+.tongyong-fuceng--zhanJi .tongyong-xuanxiang-gou {
+  color: var(--yanse-zhanji);
+  font-weight: 900;
+}
+
+.tongyong-fuceng--fanYi {
+  padding: var(--jiange-6);
+  border: 1px solid var(--biankuang-yanse);
+  border-radius: 12px;
+  background: var(--beijing-kaopian);
+  color: var(--wenben-zhuse);
+  box-shadow: var(--xiala-yinying);
+}
+
+.tongyong-fuceng--fanYi .tongyong-fuceng-tou {
+  padding: var(--jiange-6) var(--jiange-10) var(--jiange-4);
+  margin-bottom: var(--jiange-4);
+  border-bottom: 1px solid var(--biankuang-yanse);
+  color: var(--wenben-ciuse);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.tongyong-fuceng--fanYi .tongyong-xuanxiang {
+  padding: var(--jiange-10) var(--jiange-12);
+  border-radius: 8px;
+  color: var(--wenben-zhuse);
+  font-size: 13px;
+}
+
+.tongyong-fuceng--fanYi .tongyong-xuanxiang:hover {
+  background: var(--beijing-ciuse);
+}
+
+.tongyong-fuceng--fanYi .tongyong-xuanxiang--huoDong {
+  background: var(--beijing-ciuse);
+  box-shadow: inset 0 0 0 1.5px var(--zhuse);
+}
+
+.tongyong-fuceng--fanYi .tongyong-xuanxiang--xuanZhong {
+  background: color-mix(in srgb, var(--zhuse) 13%, transparent);
+  color: var(--wenben-zhuse);
+  font-weight: 600;
+}
+
+.tongyong-fuceng--fanYi .tongyong-xuanxiang-gou {
+  color: var(--zhuse);
+  font-weight: 900;
+}
+
+.tongyong-fuceng--keJianXing {
+  padding: var(--jiange-4);
+  border: 1px solid var(--bianKuang, var(--biankuang-yanse));
+  border-radius: 10px;
+  background: var(--kaPian, var(--beijing-kaopian));
+  color: var(--moSe, var(--wenben-zhuse));
+  box-shadow: var(--xiala-yinying);
+}
+
+.tongyong-fuceng--keJianXing .tongyong-fuceng-tou {
+  padding: var(--jiange-6) var(--jiange-xiao) var(--jiange-4);
+  margin-bottom: var(--jiange-2);
+  border-bottom: 1px dashed var(--bianKuang, var(--biankuang-yanse));
+  color: var(--huiSe, var(--wenben-ciuse));
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+.tongyong-fuceng--keJianXing .tongyong-xuanxiang {
+  padding: var(--jiange-6) var(--jiange-xiao);
+  border-radius: 6px;
+  color: var(--moSe, var(--wenben-zhuse));
+  font-size: 13px;
+}
+
+.tongyong-fuceng--keJianXing .tongyong-xuanxiang:hover {
+  background: color-mix(in srgb, var(--yeLv, var(--zhuse)) 10%, transparent);
+}
+
+.tongyong-fuceng--keJianXing .tongyong-xuanxiang--huoDong {
+  background: color-mix(in srgb, var(--yeLv, var(--zhuse)) 12%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--yeLv, var(--zhuse));
+}
+
+.tongyong-fuceng--keJianXing .tongyong-xuanxiang--xuanZhong {
+  background: color-mix(in srgb, var(--yeLv, var(--zhuse)) 14%, transparent);
+  box-shadow: inset 2px 0 0 var(--yeLv, var(--zhuse));
+}
+
+.tongyong-fuceng--keJianXing .tongyong-xuanxiang-gou {
+  color: var(--yeLv, var(--zhuse));
+  font-weight: 900;
+}
+
+.tongyong-fuceng--quanJu {
+  padding: var(--jiange-6);
+  border: 1px solid var(--xiala-biankuang);
+  border-radius: 12px;
+  background: var(--xiala-beijing);
+  color: var(--xiala-wenben);
+  box-shadow: var(--xiala-yinying);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.tongyong-fuceng--quanJu .tongyong-fuceng-tou {
+  padding: var(--jiange-4) var(--jiange-10) var(--jiange-6);
+  color: var(--xiala-wenben);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.tongyong-fuceng--quanJu .tongyong-xuanxiang {
+  padding: var(--jiange-10) var(--jiange-12);
+  border-radius: 9px;
+  color: var(--xiala-wenben);
+  font-size: 13px;
+}
+
+.tongyong-fuceng--quanJu .tongyong-xuanxiang:hover {
+  background: var(--xiala-hover-beijing);
+  color: var(--xiala-hover-wenben);
+}
+
+.tongyong-fuceng--quanJu .tongyong-xuanxiang--huoDong {
+  background: var(--xiala-hover-beijing);
+  box-shadow: inset 0 0 0 1.5px var(--xiala-hover-wenben);
+}
+
+.tongyong-fuceng--quanJu .tongyong-xuanxiang--xuanZhong {
+  background: var(--xiala-hover-beijing);
+  color: var(--xiala-hover-wenben);
+  font-weight: 600;
+}
+
+.tongyong-fuceng--quanJu .tongyong-xuanxiang-gou {
+  color: var(--zhuse);
+}
+
+.tongyong-xiala-guodu-enter-active {
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s var(--quxian-tan-chu);
+}
+
+.tongyong-xiala-guodu-leave-active {
+  pointer-events: none;
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+}
+
+.tongyong-xiala-guodu-enter-from {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.97);
+}
+
+.tongyong-xiala-guodu-leave-to {
+  opacity: 0;
+  transform: translateY(-2px) scale(0.98);
+}
+
+@media (max-width: 767px) {
+  .tongyong-xuanxiang {
+    min-height: 44px;
+  }
+
+  .tongyong-xiala--zhanJi,
+  .tongyong-xiala--fanYi,
+  .tongyong-xiala--keJianXing,
+  .tongyong-xiala--quanJu {
+    min-height: 44px;
+  }
+
+  .tongyong-xiala--zhanJi {
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tongyong-xiala,
+  .tongyong-xiala-jiantou,
+  .tongyong-xuanxiang,
+  .tongyong-xuanxiang-gou,
+  .tongyong-xiala-guodu-enter-active,
+  .tongyong-xiala-guodu-leave-active {
+    transition: none;
+  }
+}
+</style>

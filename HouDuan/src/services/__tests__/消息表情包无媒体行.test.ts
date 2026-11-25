@@ -39,7 +39,7 @@ const SHA = 'a'.repeat(64)
 const DuanMing = '笑哭'
 const UuidGeShi = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
-function biaoQingHang(zhi: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
+function tieZhiHang(zhi: Partial<Record<string, unknown>> = {}): Record<string, unknown> {
   return {
     ID: 'xiao-xi-tie-zhi-1',
     用户ID: YongHu,
@@ -112,7 +112,7 @@ describe('保存表情包消息不依赖媒体行', () => {
         return { rows: [{ zui_da: 7 }], rowCount: 1 }
       }
       if (wenBen.includes('INSERT INTO "消息"')) {
-        return { rows: [biaoQingHang({ 客户端序号: 8 })], rowCount: 1 }
+        return { rows: [tieZhiHang({ 客户端序号: 8 })], rowCount: 1 }
       }
       return { rows: [], rowCount: 0 }
     })
@@ -159,7 +159,7 @@ describe('保存表情包消息不依赖媒体行', () => {
       const wenBen = String(yuJu)
       if (wenBen.includes('MAX("客户端序号")')) return { rows: [{ zui_da: 0 }], rowCount: 1 }
       if (wenBen.includes('INSERT INTO "消息"')) {
-        return { rows: [biaoQingHang({ 客户端序号: 1, 媒体ID: MeiTiId })], rowCount: 1 }
+        return { rows: [tieZhiHang({ 客户端序号: 1, 媒体ID: MeiTiId })], rowCount: 1 }
       }
       return { rows: [], rowCount: 0 }
     })
@@ -188,7 +188,7 @@ describe('保存表情包消息不依赖媒体行', () => {
       if (wenBen.includes('MAX("客户端序号")')) return { rows: [{ zui_da: 2 }], rowCount: 1 }
       if (wenBen.includes('INSERT INTO "消息"')) {
         return {
-          rows: [biaoQingHang({ 类型: 'tuPian', 内容: '', 媒体ID: MeiTiId, 媒体SHA256: SHA, 媒体类别: 'tupian', 内容块: null })],
+          rows: [tieZhiHang({ 类型: 'tuPian', 内容: '', 媒体ID: MeiTiId, 媒体SHA256: SHA, 媒体类别: 'tupian', 内容块: null })],
           rowCount: 1,
         }
       }
@@ -244,7 +244,7 @@ describe('读取无媒体行表情包消息', () => {
           }
         : null,
     )
-    const hang = biaoQingHang()
+    const hang = tieZhiHang()
     const shangXiaWen = await gou块上下文([hang])
     const chuCan = 映射块出参(hang, shangXiaWen, '')
     expect(chuCan).toHaveLength(1)
@@ -263,7 +263,7 @@ describe('读取无媒体行表情包消息', () => {
   })
 
   it('短名在表情包库查不到时url为空且不抛错', async () => {
-    const hang = biaoQingHang()
+    const hang = tieZhiHang()
     const shangXiaWen = await gou块上下文([hang])
     const chuCan = 映射块出参(hang, shangXiaWen, '')
     expect(chuCan[0]).toMatchObject({
@@ -276,7 +276,7 @@ describe('读取无媒体行表情包消息', () => {
   })
 
   it('没有表情包上下文的旧路径仍按文本块出参，不抛错', () => {
-    const hang = biaoQingHang()
+    const hang = tieZhiHang()
     const chuCan = 映射块出参(
       hang,
       { kuaiOf: () => null, meiTiOf: () => null },
@@ -285,14 +285,14 @@ describe('读取无媒体行表情包消息', () => {
     expect(chuCan[0]).toMatchObject({ lei_xing: 'tupian', duan_ming: DuanMing, mei_ti_url: null })
   })
 
-  it('消息列表按内容里的表情包短名补顶层签名URL与类别', async () => {
+  it('消息列表按内容里的贴纸短名补顶层签名URL与类别', async () => {
     按短名查Mock.mockImplementation(async (duanMing: unknown) =>
       duanMing === DuanMing ? { sha256: SHA } : null,
     )
     chaXunMock.mockImplementation(async (yuJu: string) => {
       const wenBen = String(yuJu)
       if (wenBen.includes('COUNT(*)')) return { rows: [{ zong_shu: 1 }], rowCount: 1 }
-      return { rows: [biaoQingHang()], rowCount: 1 }
+      return { rows: [tieZhiHang()], rowCount: 1 }
     })
 
     const jieGuo = await 取消息列表({
@@ -311,11 +311,11 @@ describe('读取无媒体行表情包消息', () => {
     })
   })
 
-  it('消息列表里表情包短名未命中时顶层url为空', async () => {
+  it('消息列表里贴纸短名未命中时顶层url为空', async () => {
     chaXunMock.mockImplementation(async (yuJu: string) => {
       const wenBen = String(yuJu)
       if (wenBen.includes('COUNT(*)')) return { rows: [{ zong_shu: 1 }], rowCount: 1 }
-      return { rows: [biaoQingHang()], rowCount: 1 }
+      return { rows: [tieZhiHang()], rowCount: 1 }
     })
 
     const jieGuo = await 取消息列表({

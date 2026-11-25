@@ -138,3 +138,27 @@ export function 算时光秒(等级: 回应必要性等级, 状态差: boolean, 
   if (等级 === 0) 秒 = 时光秒数.纯应答
   else if (等级 >= 2) 秒 = 时光秒数.状态差
   else 秒 = 关系深 ? 时光秒数.关系深 : 时光秒数.关系浅
+  if (状态差 && 秒 < 时光秒数.状态差) return 时光秒数.状态差
+  return 秒
+}
+
+export function 转换时光毫秒(秒: number): number {
+  const 数 = Number(秒)
+  if (!Number.isFinite(数)) return 沉默配置.时光生成最低毫秒
+  const 毫秒 = Math.round(数 * 1000)
+  return Math.max(沉默配置.时光生成最低毫秒, Math.min(沉默配置.时光生成最高毫秒, 毫秒))
+}
+
+export function 算最近纯应答条数(用户消息列表: string[]): number {
+  let 条数 = 0
+  for (const 消息 of 用户消息列表) {
+    if (是纯应答词(String(消息 || ''))) 条数 += 1
+  }
+  return 条数
+}
+
+export function 应答密度过高(最近用户消息列表: string[]): boolean {
+  const 有效 = 最近用户消息列表.filter((m) => String(m || '').trim() !== '')
+  if (有效.length < 2) return false
+  return 算最近纯应答条数(有效) >= 2
+}

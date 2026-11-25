@@ -320,4 +320,49 @@ function quXiaoBeiZhu(): void {
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: var(--hao-you-tiao-ci-wen-ben                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+  background: var(--hao-you-tiao-ci-wen-ben);
+}
+
+.cao-zuo-qu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--jiange-6);
+  padding-top: var(--jiange-6);
+  border-top: 1px solid var(--hao-you-tiao-bian);
+}
+
+.cao-zuo-anniu {
+  min-height: 44px;
+  padding: var(--jiange-xiao) var(--jiange-12);
+  border-radius: var(--yuanjiao-xiao);
+  background: transparent;
+  border: 1px solid var(--hao-you-tiao-bian);
+  color: var(--hao-you-tiao-ci-wen-ben);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.2s var(--quxian-biao-zhun), color 0.2s var(--quxian-biao-zhun);
+}
+
+.cao-zuo-anniu:hover {
+  border-color: var(--zhuse);
+  color: var(--zhuse);
+}
+
+.cao-zuo-anniu--zhu {
+  border-color: var(--zhuse);
+  color: var(--zhuse);
+}
+
+.cao-zuo-anniu--wei-xian:hover {
+  border-color: var(--cuowu-yanse);
+  color: var(--cuowu-yanse);
+}
+
+.bei-zhu-hang {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--jiange-6);
+}
+
+</style>

@@ -86,13 +86,13 @@ export const BiaoQingBaoYunXing = {
   zuiJinChuangKou: quQiaDuanZhengShu('BIAO_QING_BAO_ZUI_JIN_CHUANG_KOU', 3, 0, 20),
   zuiDaMeiLunZhangShu: quZuiDaMeiLunZhangShu('BIAO_QING_BAO_ZUI_DA_MEI_LUN_ZHANG_SHU'),
   daKai: quHuanJingWenBen('BIAO_QING_BAO_AI_DA_KAI', 'true').toLowerCase() !== 'false',
-  biaoQingHouDuanJianGe: {
+  tieZhiHouDuanJianGe: {
     jiZhun: quQiaDuanZhengShu('BIAO_QING_BAO_TIE_ZHI_HOU_JI_ZHUN_HAO_MIAO', 300, 0, 3000),
     douDong: quQiaDuanZhengShu('BIAO_QING_BAO_TIE_ZHI_HOU_DOU_DONG_HAO_MIAO', 400, 0, 3000),
   } as const,
 } as const
 
-export const BiaoQingBiaoJi = {
+export const BiaoQingTieZhiBiaoJi = {
   qianZhui: '(?:贴纸|表情包)',
   feiFaQianZhui: ['贴图'] as readonly string[],
   maoHao: [':', '：'] as readonly string[],
@@ -111,9 +111,9 @@ export const BiaoQingBiaoJi = {
   qingXiYuanWenZuiDaChang: 60,
 } as const
 
-export const BiaoQingZhanWei = '{duan_ming}'
+export const BiaoQingTieZhiZhanWei = '{duan_ming}'
 
-export const BiaoQingShiLi = '[表情包:{duan_ming}]'
+export const BiaoQingTieZhiShiLi = '[贴纸:{duan_ming}]'
 
 export const BiaoQingFaSongYuanYin = {
   weiMingZhong: '未命中',
@@ -131,9 +131,9 @@ export const BiaoQingHouXuanWenAn = {
   daiTiShuoMing: [
     '下面这几张图这一轮都能用，想发哪张就写 {tie_zhi_shi_li}，放在哪儿随你。',
     '开头先甩一张再开口，那是抢话；话说完了最后补一张，那是收尾；夹在两句中间，就是停了一下；也能这轮一个字都不打，只发一张图。位置本身就是语气。',
-    '标记格式就是 `[表情包:短名]`，短名原样照抄候选里给的，别自己换词。',
+    '标记格式必须是 `[贴纸:短名]`，不要用 `[表情包:...]` 或 `[表情:...]`。',
     '图替你说了的那层意思，别再用文字说一遍；同一个地方也别又写那个词又贴图。',
-    '一轮最多 {zui_da_zhang_shu} 张。正经求助、情绪崩了、深夜倾诉，只说话不发图；其他日常场合想发就发，不用等关系多熟。',
+    '一轮最多 {zui_da_zhang_shu} 张。关系还没到能随手甩图的份上就别用；正经求助、情绪崩了、深夜倾诉，只说话不发图。',
     '微信自带的小表情（写成 [表情名]，比如 [转圈]、[旺柴]、[破涕为笑]、[捂脸]、[偷笑]、[玫瑰]、[爱心]、[点赞]）不算上面的图，不受轮数限制，想打多少打多少，可以像真人那样连打一串（如「有你真是我们的福气[点赞][点赞][点赞]」）；小表情和图片表情包别混在同一条里。',
   ] as readonly string[],
   hangMoBan: '- {tie_zhi_shi_li} 描述:{miao_shu} | 情绪:{qing_xu} | 场景:{chang_jing}',
@@ -153,22 +153,22 @@ export const BiaoQingChuanSongGuiZe: readonly string[] = [
 
 export const BiaoQingFaSongShiJiWenAn = BiaoQingChuanSongGuiZe.join('\n')
 
-export const BiaoQingTiDaiGuiZe: readonly string[] = [
-  `想发图就在要发的位置写一个方括号标记，写成「[表情包:短名]」：放开头、放两句中间、放结尾都行，整条只发图不写字也行。`,
+export const BiaoQingTieZhiTiDaiGuiZe: readonly string[] = [
+  `想发图就在要发的位置写一个方括号标记，里面是「${BiaoQingTieZhiBiaoJi.qianZhui}:短名」：放开头、放两句中间、放结尾都行，整条只发图不写字也行。`,
   '图顶掉的那层意思别再用文字说一遍，同一个地方别又写那个词又贴图；方括号里只写短名，不写动作也不写心理活动；这个标记是给系统看的，别跟人解释它，更别当文字发出去。',
 ]
 
 export const BiaoQingMiDu = {
-  jiXian: 0.08,
+  jiXian: 0.02,
   chuangKouTiaoShu: quQiaDuanZhengShu('BIAO_QING_BAO_MI_DU_CHUANG_KOU', 12, 4, 60),
   shangCiZhuiSuZuiDuoTiao: quQiaDuanZhengShu('BIAO_QING_BAO_MI_DU_ZHUI_SU', 600, 20, 2000),
   ziLiaoBiaoQingLeiBie: 'biaoqingshu',
   manReBiaoShi: '慢热',
   moRenXiShu: 1,
   renGeXiShu: {
-    neiXiang: 0.45,
-    waiXiang: 1.5,
-    manReGangRenShi: 0.65,
+    neiXiang: 1.2,
+    waiXiang: 0.9,
+    manReGangRenShi: 0.6,
   },
   manReGangRenShiJieDuan: ['冷淡', '疏远', '认识'] as readonly string[],
   guanXiXiShu: {
@@ -195,48 +195,11 @@ export const BiaoQingMiDu = {
     偏少: 0.01,
     偏多: 0.04,
   },
-  qingGanNongDuXiaXian: 35,
-  wanGeng: {
-    yiTu: ['好笑', '破冰'] as readonly string[],
-    guanJianCi: [
-      '哈哈',
-      '笑死',
-      '笑不活',
-      '好笑',
-      '太逗',
-      '搞笑',
-      '好玩',
-      '有意思',
-      '离谱',
-      '整活',
-      '玩梗',
-      '梗',
-      '乐死',
-      '绷不住',
-      '绝了',
-      '绷',
-      '笑喷',
-      '合不拢嘴',
-      '有趣的事',
-      '说点好玩',
-      '段子',
-      '沙雕',
-      '憨',
-      '抽象',
-      '自嘲',
-      '社死',
-      '翻车',
-    ] as readonly string[],
-    zuiDiYunXuJieDuan: '冷淡',
-    kuQuTuZuiDiJieDuan: '认识' as string | null,
-    qingGanNongDuXiaXian: 12,
-    changJingTiShi: '这一轮对方在玩梗/笑，气氛轻松：允许先甩一张图再说话，允许整条只发一张图。图和文字各说一层，别重复表达。',
-  },
 } as const
 
 export const BiaoQingYiTuWenAn = {
   biaoTi: '【表情包意图】',
-  dingYi: `biao_qing_yi_tu 只是本轮的心情底色，用来筛表情包候选，不决定发不发；发不发、图放在哪儿，由写手自己判断。取值：${表情运行标签.join('、')}，不想给就给 null。发图时只写表情包标记，格式是 [表情包:短名]，短名照抄候选。`,
+  dingYi: `biao_qing_yi_tu 只是本轮的心情底色，用来筛表情包候选，不决定发不发；发不发、图放在哪儿，由写手自己判断。取值：${表情运行标签.join('、')}，不想给就给 null。发图时只写贴纸标记，格式必须是 [贴纸:短名]，不能写 [表情包:短名] 或 [表情:短名]。`,
   shiJi:
     '时机：接到好笑的事/对方自嘲/玩梗给「好笑」；对方分享喜事给「庆祝」；对方难过先写认真文字、可给「安慰」；答应请求或表达喜欢给「撒娇」；对方刚发表情包回敬时按对方那张的情绪给；话题接不下去给「破冰」。',
   weiJi: '对方严肃求助、情绪危机、深夜倾诉时不要给底色，这种场景只许认真文字。',

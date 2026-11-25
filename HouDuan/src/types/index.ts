@@ -241,7 +241,6 @@ export interface WriterJieGuo {
   yuan_wen?: string
   si_kao?: string
   kai_chang_hou_xuan?: string[]
-  biaoQingZaiTi?: import('../services/表情载体').BiaoQingZaiTiJueCe
 }
 
 export interface AIYinQingShuRu {
@@ -257,6 +256,7 @@ export interface AIYinQingShuRu {
   shi_jian_chang_jing?: string
   tu_pian_shou_quan: boolean
   ji_yi_zhai_yao?: string
+  guan_jian_shi_jian?: string
   yong_hu_xing_bie?: 性别内部形态
   bi_da_shi_shi?: BiDaShiShi
   dang_qian_xin_qing?: string
@@ -294,7 +294,6 @@ export interface AIYinQingShuChu {
   si_kao?: { director?: string; writer?: string }
   kai_chang_hou_xuan?: string[]
   yuan_wen?: string
-  biaoQingZaiTi?: import('../services/表情载体').BiaoQingZaiTiJueCe
 }
 
 export interface QingGanFenXiJieGuo {

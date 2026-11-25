@@ -1,7 +1,7 @@
-import { prisma } from "../db.js";
+import { prisma } from "../数据库";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { lianWangSouSuo, peiZhiLianWangSouSuo, tiQuBiaoTi } from "./联网搜索.js";
-import { peiZhiDuoMoTai } from "./多模态配置.js";
+import { lianWangSouSuo, peiZhiLianWangSouSuo, tiQuBiaoTi } from "./联网搜索";
+import { peiZhiDuoMoTai } from "./多模态配置";
 import { ocrShiBieWenJian, shiBieYuYin, souSuoWangYe, zhuaQuWangYe } from "./多模态工具.js";
 
 export type GongJuMing = "web_search" | "web_fetch" | "ocr_extract" | "asr_transcribe" | "vision_analyze";

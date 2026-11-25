@@ -6,7 +6,7 @@ import { Server } from 'socket.io'
 import { peiZhi } from './config'
 import { huoQuFanYi } from './config/translations'
 import { debug日志, qingLiNeiBuCuoWu } from './utils/debug日志'
-import { 自检模型名可用 } from './utils/DeepSeek客户端'
+import { 自检模型名可用 } from './utils/通用模型调用'
 import { renZhengZhongJianJian } from './middleware/认证'
 import { changGuiXianLiu, riZhiJieShouXianLiu } from './middleware/限流'
 import { anQuanZhongJianJian } from './middleware/安全'
@@ -23,7 +23,6 @@ import zhanJiLuYou from './routes/战绩'
 import tongZhiLuYou from './routes/通知'
 import tiaoZhanLuYou from './routes/挑战'
 import guanLiYuanLuYou from './routes/管理员'
-import fanKuiLuYou from './routes/意见反馈'
 import haoYouLuYou from './routes/好友'
 import yongHuSheZhiLuYou from './routes/用户设置'
 import biaoQingLuYou from './routes/表情'
@@ -34,7 +33,6 @@ import { 依赖闸门中间件 } from './middleware/依赖闸门'
 import { CuoWuDaiMa, YingYongCuoWu } from './config/错误码注册表'
 import { qiDongShenJiRiZhiGuiDangDingShiQi, tingZhiShenJiRiZhiGuiDang } from './services/审计日志归档'
 import { qiDongShuJuBaoCunQingLiDingShiQi, tingZhiShuJuBaoCunQingLi } from './services/数据保存期限'
-import { qiDongGuanHuaiXunJianDingShiQi, tingZhiGuanHuaiXunJianDingShiQi } from './services/主动关怀调度器'
 import { chuangJianHTTPRiZhiZhongJianJian } from './utils/debug日志'
 import jianKangJianChaLuYou, { qingQiuJiShu, qingQiuHaoShi } from './routes/健康检查'
 import riZhiJieShouLuYou from './routes/日志接收'
@@ -191,7 +189,6 @@ yingYong.use('/api/战绩', zhanJiLuYou)
 yingYong.use('/api/通知', tongZhiLuYou)
 yingYong.use('/api/挑战', tiaoZhanLuYou)
 yingYong.use('/api/管理', guanLiYuanLuYou)
-yingYong.use('/api/反馈', fanKuiLuYou)
 yingYong.use('/api/好友', haoYouLuYou)
 yingYong.use('/api/用户设置', yongHuSheZhiLuYou)
 yingYong.use('/api/表情', biaoQingLuYou)
@@ -310,12 +307,10 @@ if (require.main === module) {
     chuShiHuaMoXingLuYou()
     void 自检模型名可用()
     qiDongShuJuBaoCunQingLiDingShiQi()
-    qiDongGuanHuaiXunJianDingShiQi()
 
     const tingJi = async (): Promise<void> => {
       tingZhiShenJiRiZhiGuiDang()
       tingZhiShuJuBaoCunQingLi()
-      tingZhiGuanHuaiXunJianDingShiQi()
       await 优雅停机({
         SocketIO: io,
         HTTP服务器: fuWuQi,

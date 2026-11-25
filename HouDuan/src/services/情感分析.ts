@@ -15,7 +15,7 @@ export async function fenXiQingGan(
       return { fen_shu: 0, fen_xi: '' }
     }
     const xiangYing = await 按配置调用('QingGanFenXi', [
-      { jiaoSe: 'system', neiRong: '任务：分析给定用户消息的情绪倾向与强度。只输出 JSON，不附加任何说明文字。' },
+      { jiaoSe: 'system', neiRong: '判断用户消息的情绪倾向，只输出 JSON。' },
       { jiaoSe: 'user', neiRong: gouJianQingGanFenXiPrompt(xiaoXi, jiaoSeMing) },
     ], shangXiaWen, waiBuXinHao)
 

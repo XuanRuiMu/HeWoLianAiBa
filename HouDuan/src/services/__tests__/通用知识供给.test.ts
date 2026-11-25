@@ -27,8 +27,6 @@ import { shengChengDirectorCeLue } from '../Director'
 import { shengChengWriterHuiFu } from '../Writer'
 import * as 对话渲染 from '../对话渲染'
 import { 构建通用知识内容, 检索通用知识 } from '../通用知识检索'
-import { huoQuFanYi } from '../../config/translations'
-import { peiZhi } from '../../config'
 import type { AIYinQingShuRu } from '../../types'
 
 function 造输入(用户消息: string): AIYinQingShuRu {
@@ -95,7 +93,7 @@ describe('对象生成共享通用知识', () => {
     expect(写手文本).toContain('【对方问的这件事你确实知道】')
   })
 
-  it.each([429, 402])('模型状态%s时返回错误响应，不用事实模板顶替', async (状态码) => {
+  it.each([429, 402])('模型状态%s不能覆盖已知的确定事实', async (状态码) => {
     const 外呼 = vi.fn(async () => {
       const 错误 = new Error(`status ${状态码}`) as Error & { status: number }
       错误.status = 状态码
@@ -105,43 +103,21 @@ describe('对象生成共享通用知识', () => {
 
     const 结果 = await yunXingAIYinQing(造输入('玄锐暮多大？'))
 
-    expect(结果.shi_fou_hui_fu).toBe(false)
-    expect(结果.xiao_xi_lie_biao).toEqual([])
-    expect(结果.cuo_wu_xin_xi).toBeTruthy()
-    expect(结果.cuo_wu_ma).toBe(状态码 === 429 ? 'XIAN_LIU_429' : 'YU_E_BU_ZU_402')
-    expect(结果.xiao_xi_lie_biao.join('')).not.toContain('22岁')
+    expect(结果.shi_fou_hui_fu).toBe(true)
+    expect(结果.xiao_xi_lie_biao).toEqual(['玄锐暮22岁。'])
+    expect(结果.cuo_wu_xin_xi).toBeUndefined()
   })
 
-  it('必答事实场景 Director拒回 且 Writer空输出时返回错误提示，不静默', async () => {
-    sheZhiMockTiaoYong(async (参数) => {
-      const 是导演 = 参数.响应格式?.type === 'json_object'
-      return {
-        neiRong: 是导演
-          ? '{"用户意图":"事实问答","情感分析":"平静","回复策略":"回答年龄","是否回复":false,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
-          : '   ',
-        yuanShuJu: {},
-        xinXi: { role: 'assistant', neiRong: '' },
-      }
-    })
-
-    const 结果 = await yunXingAIYinQing(造输入('玄锐暮多大？'))
-
-    expect(结果.shi_fou_hui_fu).toBe(false)
-    expect(结果.xiao_xi_lie_biao).toEqual([])
-    expect(结果.cuo_wu_xin_xi).toBe(huoQuFanYi('AI', 'WriterFuShiKongBai'))
-    expect(结果.xiao_xi_lie_biao.join('')).not.toContain('22岁')
-  })
-
-  it('每日模型预算耗尽返回额度提示错误，不用事实模板顶替', async () => {
+  it('每日模型预算耗尽不阻断确定事实的回答', async () => {
     const 外呼 = vi.fn()
     sheZhiMockTiaoYong(外呼)
     vi.mocked(redis.incr).mockResolvedValueOnce(Number.MAX_SAFE_INTEGER)
 
     const 结果 = await yunXingAIYinQing(造输入('玄锐暮做什么工作？'))
 
-    expect(结果.shi_fou_hui_fu).toBe(false)
-    expect(结果.xiao_xi_lie_biao).toEqual([])
-    expect(结果.cuo_wu_xin_xi).toBe(huoQuFanYi('liaoTian', 'aiYuSuanYiYongJin'))
+    expect(结果.shi_fou_hui_fu).toBe(true)
+    expect(结果.xiao_xi_lie_biao).toEqual(['玄锐暮是一名AI程序员。'])
+    expect(结果.cuo_wu_xin_xi).toBeUndefined()
     expect(外呼).not.toHaveBeenCalled()
   })
 
@@ -289,11 +265,9 @@ describe('对象生成共享通用知识', () => {
     }
   })
 
-  it('高置信直接事实问答在模型拒答时带强调重答一轮，仍拒答则接受 Writer 原文不顶替', async () => {
-    const 外呼: 调用参数[] = []
+  it('高置信直接事实问答在模型拒答时返回结构化确定答案', async () => {
     const 导演响应 = '{"用户意图":"事实问答","情感分析":"平静","回复策略":"依据公共事实回答","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
     sheZhiMockTiaoYong(async (参数) => {
-      外呼.push(参数)
       const 是导演 = 参数.响应格式?.type === 'json_object'
       return {
         neiRong: 是导演 ? 导演响应 : '不认识，我没听说过这个人',
@@ -305,13 +279,10 @@ describe('对象生成共享通用知识', () => {
     const 结果 = await yunXingAIYinQing(造输入('你认识玄锐暮吗？'))
 
     expect(结果.shi_fou_hui_fu).toBe(true)
-    expect(结果.xiao_xi_lie_biao).toEqual(['不认识，我没听说过这个人'])
-    expect(结果.cuo_wu_xin_xi).toBeUndefined()
-    expect(外呼).toHaveLength(3)
-    expect(提取文本(外呼[2].xiaoXi[0].neiRong)).toContain('上一回你把这件事整个漏掉了')
+    expect(结果.xiao_xi_lie_biao).toEqual(['认识，玄锐暮是一位22岁的AI程序员。'])
   })
 
-  it('高置信事实问题漏说时重答一轮后接受 Writer 原文，不用正确答案顶替', async () => {
+  it('高置信事实问题不被模型流畅编造覆盖', async () => {
     sheZhiMockTiaoYong(async (参数) => ({
       neiRong: 参数.响应格式?.type === 'json_object'
         ? '{"用户意图":"事实问答","情感分析":"平静","回复策略":"回答年龄","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
@@ -322,9 +293,7 @@ describe('对象生成共享通用知识', () => {
 
     const 结果 = await yunXingAIYinQing(造输入('玄锐暮多大？'))
 
-    expect(结果.shi_fou_hui_fu).toBe(true)
-    expect(结果.xiao_xi_lie_biao).toEqual(['他今年40岁'])
-    expect(结果.cuo_wu_xin_xi).toBeUndefined()
+    expect(结果.xiao_xi_lie_biao).toEqual(['玄锐暮22岁。'])
   })
 
   it.each(['XieShou', 'DaoYan'] as const)('%s长上下文与多模态预算裁剪后的最终请求体保留知识和本轮问题', async (模式) => {
@@ -421,7 +390,7 @@ describe('对象生成共享通用知识', () => {
     expect(载荷[0]).toContain('22岁')
   })
 
-  it('Writer调用失败时返回错误响应而非事实模板', async () => {
+  it('Writer调用失败时已知事实仍有确定回答且不返回错误文案', async () => {
     sheZhiMockTiaoYong(async (参数) => {
       if (参数.响应格式?.type !== 'json_object') throw new Error('network down')
       return {
@@ -433,34 +402,11 @@ describe('对象生成共享通用知识', () => {
 
     const 结果 = await yunXingAIYinQing(造输入('玄锐暮做什么工作？'))
 
-    expect(结果.shi_fou_hui_fu).toBe(false)
-    expect(结果.xiao_xi_lie_biao).toEqual([])
-    expect(结果.cuo_wu_xin_xi).toBe(huoQuFanYi('AI', 'WriterDiaoYongShiBai'))
-    expect(结果.jiang_ji_mo_shi).toBe(true)
+    expect(结果.xiao_xi_lie_biao).toEqual(['玄锐暮是一名AI程序员。'])
+    expect(结果.cuo_wu_xin_xi).toBeUndefined()
   })
 
-  it('必答事实场景输出命中违禁词时返回错误响应而非事实模板', async () => {
-    const weiJinCi = peiZhi.shuChuWeiJinCiLieBiao[0] || '违禁词测试'
-    expect(weiJinCi).toBeTruthy()
-    sheZhiMockTiaoYong(async (参数) => {
-      const 是导演 = 参数.响应格式?.type === 'json_object'
-      return {
-        neiRong: 是导演
-          ? '{"用户意图":"事实问答","情感分析":"平静","回复策略":"回答年龄","是否回复":true,"回复条数":1,"时间情绪":"正常","是否撤回":false,"是否主动表白":false}'
-          : `玄锐暮22岁，${weiJinCi}`,
-        yuanShuJu: {},
-        xinXi: { role: 'assistant', neiRong: '' },
-      }
-    })
-
-    const 结果 = await yunXingAIYinQing(造输入('玄锐暮多大？'))
-
-    expect(结果.shi_fou_hui_fu).toBe(false)
-    expect(结果.xiao_xi_lie_biao).toEqual([])
-    expect(结果.cuo_wu_xin_xi).toBe(huoQuFanYi('AI', 'ShenHeWeiGui'))
-  })
-
-  it('Director解析失败时接受 Writer 原文，不用事实模板顶替', async () => {
+  it('确定事实不依赖Director解析或Writer拒答结果', async () => {
     const 外呼 = vi.fn(async (参数: 调用参数) => ({
       neiRong: 参数.响应格式?.type === 'json_object' ? '不是JSON' : '我不知道这个人',
       yuanShuJu: {},
@@ -471,8 +417,7 @@ describe('对象生成共享通用知识', () => {
     const 结果 = await yunXingAIYinQing(造输入('玄锐暮多大？'))
 
     expect(结果.shi_fou_hui_fu).toBe(true)
-    expect(结果.xiao_xi_lie_biao).toEqual(['我不知道这个人'])
-    expect(结果.jiang_ji_mo_shi).toBe(true)
-    expect(结果.cuo_wu_xin_xi).toBe(huoQuFanYi('AI', 'DirectorDiaoYongShiBai'))
+    expect(结果.xiao_xi_lie_biao).toEqual(['玄锐暮22岁。'])
+    expect(结果.cuo_wu_xin_xi).toBeUndefined()
   })
 })

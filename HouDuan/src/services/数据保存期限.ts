@@ -6,7 +6,7 @@ import { shanChuMeiTiWenJian } from './媒体存储'
 const PiLiangDaXiao = 5000
 
 export const ShuJuBaoCunQiXian = {
-  liaoTianJiLuTian: 30,
+  liaoTianJiLuTian: 180,
   yuYinWenJianTian: 7,
   tongZhiTian: 90,
 } as const

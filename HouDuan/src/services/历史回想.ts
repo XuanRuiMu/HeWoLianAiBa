@@ -22,12 +22,63 @@ const ZuiDaDuanLuo = AI配置.huiXiang.zuiDaDuanLuo
 const MeiDuanZuiDaZiShu = AI配置.huiXiang.meiDuanZuiDaZiShu
 const ZuiDaCiShu = AI配置.huiXiang.zuiDaCiShu
 
-// 常见无实义的回溯触发词，单独成词对检索没有帮助
 const ChuFaCiHeiMingDan = new Set([
   '之前', '以前', '上次', '刚才', '刚刚', '那天', '那次', '当时', '记得',
-  '说过', '说的', '说过', '约好', '说好', '忘了', '忘记', '提过', '聊过',
+  '说过', '说的', '约好', '说好', '忘了', '忘记', '提过', '聊过',
   '想起来', '想起', '我们', '你们', '咱们', '那个', '这个',
+  '到的', '一次', '就是', '不是', '什么', '没有', '知道', '自己', '他们',
+  '现在', '时候', '可以', '已经', '感觉', '觉得',
 ])
+
+const TongYiCiBiao: Record<string, string[]> = {
+  紧张: ['心跳', '忐忑'],
+  开心: ['高兴', '快乐'],
+  难过: ['伤心', '委屈'],
+  生气: ['愤怒', '火大'],
+  害怕: ['担心', '恐惧'],
+  喜欢: ['心动', '中意'],
+  想念: ['惦记', '挂念'],
+  疲惫: ['劳累', '辛苦'],
+  道歉: ['认错', '赔不是'],
+  吵架: ['拌嘴', '闹别扭'],
+  约会: ['见面', '出去逛'],
+  加班: ['熬夜', '赶工'],
+  考试: ['测验', '复习'],
+  表白: ['告白', '在一起'],
+  撒娇: ['卖萌', '黏人'],
+  加油: ['打气', '鼓劲'],
+}
+
+export const HuiXiangBanShuaiHaoMiao = 30 * 24 * 60 * 60 * 1000
+
+export function huiXiangShuaiJianFen(fenShu: number, juJinHaoMiao: number): number {
+  if (!Number.isFinite(fenShu) || fenShu <= 0) return 0
+  if (!Number.isFinite(juJinHaoMiao) || juJinHaoMiao < 0) return fenShu
+  return fenShu * Math.pow(0.5, juJinHaoMiao / HuiXiangBanShuaiHaoMiao)
+}
+
+export function zhanKaiTongYiCi(ciZu: string[]): string[] {
+  const yuanCi: string[] = []
+  for (const ci of ciZu) {
+    if (!yuanCi.includes(ci)) yuanCi.push(ci)
+  }
+  const jieGuo: string[] = []
+  for (const ci of yuanCi) {
+    if (ci.length < 2 || ChuFaCiHeiMingDan.has(ci)) continue
+    jieGuo.push(ci)
+  }
+  for (const ci of yuanCi) {
+    const kuoZhan = TongYiCiBiao[ci]
+    if (!kuoZhan) continue
+    for (const yiCi of kuoZhan) {
+      if (yiCi.length < 2) continue
+      if (ChuFaCiHeiMingDan.has(yiCi)) continue
+      if (jieGuo.includes(yiCi)) continue
+      jieGuo.push(yiCi)
+    }
+  }
+  return jieGuo
+}
 
 function chaiFenCiZu(chaXun: string): string[] {
   const qingLi = String(chaXun ?? '')
@@ -75,9 +126,10 @@ export function gouZaoHuiXiangChaXun(
     canShu.push(`%${ciWei}%`)
     tiaoJian.push(`COALESCE("内容", '') ILIKE $${zhanWei} OR COALESCE("原始内容", '') ILIKE $${zhanWei}`)
   }
-  const paiHangZhanWei = ci.length + 3
-  const zuiZhongZhanWei = ci.length + 4
-  canShu.push(AI配置.huiXiang.shuangFangMeiCeTiaoShu, ZuiDaDuanLuo)
+  const shuaiJianZhanWei = ci.length + 3
+  const paiHangZhanWei = ci.length + 4
+  const zuiZhongZhanWei = ci.length + 5
+  canShu.push(HuiXiangBanShuaiHaoMiao / 1000, AI配置.huiXiang.shuangFangMeiCeTiaoShu, ZuiDaDuanLuo)
   const guoLv = tiaoJian.length === 0 ? '' : ` AND (${tiaoJian.join(' OR ')})`
   const pingFen = tiaoJian.length === 0
     ? '0'
@@ -93,17 +145,18 @@ export function gouZaoHuiXiangChaXun(
       AND COALESCE("类型", 'wenBen') IN ('wenben', 'wenBen')
       AND (COALESCE(BTRIM("内容"), '') <> '' OR COALESCE(BTRIM("原始内容"), '') <> '')${guoLv}
   ), "双方命中" AS (
-    SELECT *, ROW_NUMBER() OVER (
+    SELECT *, "匹配分" * EXP(- LN(2) * EXTRACT(EPOCH FROM (NOW() - "创建时间")) / $${shuaiJianZhanWei}::float8) AS "衰减分",
+      ROW_NUMBER() OVER (
       PARTITION BY "发送者"
-      ORDER BY "匹配分" DESC, "创建时间" DESC, "客户端序号" DESC NULLS LAST, "ID" DESC
+      ORDER BY "匹配分" * EXP(- LN(2) * EXTRACT(EPOCH FROM (NOW() - "创建时间")) / $${shuaiJianZhanWei}::float8) DESC, "创建时间" DESC, "客户端序号" DESC NULLS LAST, "ID" DESC
     ) AS "位次"
     FROM "评分"
     WHERE "匹配分" > 0
   )
-  SELECT "ID", "发送者", "创建时间", "已撤回", "客户端序号", "回想文本", "匹配分", "位次"
+  SELECT "ID", "发送者", "创建时间", "已撤回", "客户端序号", "回想文本", "匹配分", "衰减分", "位次"
   FROM "双方命中"
   WHERE "位次" <= $${paiHangZhanWei}
-  ORDER BY "匹配分" DESC, "创建时间" DESC, "客户端序号" DESC NULLS LAST, "ID" DESC
+  ORDER BY "衰减分" DESC, "创建时间" DESC, "客户端序号" DESC NULLS LAST, "ID" DESC
   LIMIT $${zuiZhongZhanWei}`
 
   return { yuJu, canShu }
@@ -114,7 +167,7 @@ export async function huiXiangLiShiYuanWen(
   jiaoSeId: string,
   chaXun: string,
 ): Promise<HuiXiangJieGuo> {
-  const ciZu = chaiFenCiZu(chaXun)
+  const ciZu = zhanKaiTongYiCi(chaiFenCiZu(chaXun))
   if (!yongHuId || !jiaoSeId || ciZu.length === 0) {
     return { zhaoDao: false, yuanWen: [], buZu: true, shuangFang: false, duanLuo: [] }
   }
@@ -163,4 +216,9 @@ export async function huiXiangLiShiYuanWen(
     debug日志.warn('历史回想', '检索历史消息失败，按查无处理', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
     return { zhaoDao: false, yuanWen: [], buZu: true, shuangFang: false, duanLuo: [] }
   }
+}
+
+export function gouJianHuiXiangTiShiWenBen(jieGuo: HuiXiangJieGuo): string {
+  const pianDuan = jieGuo.yuanWen.map((wen) => `- ${wen}`).join('\n')
+  return `【历史回想】TA在聊你们以前的事。你回想了一下，想起这些旧话：\n${pianDuan}\n对得上的就顺着聊；对不上、或TA说的你其实没印象，就照实说没印象，别编。`
 }

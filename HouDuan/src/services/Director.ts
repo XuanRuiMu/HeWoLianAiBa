@@ -1,12 +1,12 @@
 import { debug日志 } from '../utils/debug日志'
-import { 按配置调用 } from '../utils/DeepSeek客户端'
+import { 按配置调用 } from '../utils/通用模型调用'
 import { gouJianDirectorPrompt } from './Prompt构建器'
 import { paiRuZhongShiDuiLie } from './重试队列'
 import { zhuRuBenLunTuXiangKuai } from './对话渲染'
 import { 检索通用知识, type 通用知识检索结果 } from './通用知识检索'
 import { 表情运行标签 } from '../config/表情包配置'
-import type { 对话块 } from '../utils/DeepSeek客户端'
-import type { AIYinQingShuRu, ChongTuShiJianPanDing, DirectorCeLue, GuanXiBianHua, XinQingMingZhi } from '../types'
+import type { 对话块 } from '../utils/通用模型调用'
+import type { AIYinQingShuRu, DirectorCeLue, GuanXiBianHua, XinQingMingZhi } from '../types'
 import { XinQingLieBiao as XinQingMingZhiLieBiao } from './当前心情'
 import * as YuYanGongNeng from '../config/语言与时区'
 import type { 参数上下文 } from '../config/AI参数策略'
@@ -42,42 +42,6 @@ function moRenCeLue(): DirectorCeLue {
   }
 }
 
-function congJieDuanWenBenHuiFu(neiRong: string): Record<string, unknown> | null {
-  const wenBen = String(neiRong || '').trim()
-  if (wenBen === '') return null
-  const jieGuo: Record<string, unknown> = {}
-  const jianZhiZhengZe = /"([^"\\]{1,40})"\s*:\s*("(?:[^"\\]|\\.)*"?|true|false|null|-?\d+(?:\.\d+)?|\[[^\]]*\]?|\{[^}]*\}?)/g
-  let piPei: RegExpExecArray | null
-  let 收到 = 0
-  while ((piPei = jianZhiZhengZe.exec(wenBen)) !== null) {
-    const jian = piPei[1].trim()
-    if (jian === '') continue
-    const yuanShi = piPei[2].trim()
-    let zhi: unknown
-    if (yuanShi === 'true') zhi = true
-    else if (yuanShi === 'false') zhi = false
-    else if (yuanShi === 'null') zhi = null
-    else if (/^-?\d+(?:\.\d+)?$/.test(yuanShi)) zhi = Number(yuanShi)
-    else if (yuanShi.startsWith('[')) {
-      try {
-        zhi = JSON.parse(yuanShi.endsWith(']') ? yuanShi : `${yuanShi}]`)
-      } catch {
-        continue
-      }
-    } else if (yuanShi.startsWith('{')) {
-      continue
-    } else {
-      const quYinHao = yuanShi.startsWith('"') ? yuanShi.slice(1) : yuanShi
-      zhi = quYinHao.endsWith('"') ? quYinHao.slice(0, -1) : quYinHao
-      if (String(zhi).trim() === '') continue
-    }
-    jieGuo[jian] = zhi
-    收到 += 1
-  }
-  if (收到 < 2) return null
-  return jieGuo
-}
-
 export function jieXiDirectorXiangYing(neiRong: string): { ceLue: DirectorCeLue; jieXiChengGong: boolean } {
   const qingLiNeiRong = neiRong.trim()
   let shuJu: Record<string, unknown> | null = null
@@ -90,12 +54,10 @@ export function jieXiDirectorXiangYing(neiRong: string): { ceLue: DirectorCeLue;
       try {
         shuJu = JSON.parse(piPei[0])
       } catch {
-        shuJu = congJieDuanWenBenHuiFu(qingLiNeiRong)
-        if (!shuJu) return { ceLue: moRenCeLue(), jieXiChengGong: false }
+        return { ceLue: moRenCeLue(), jieXiChengGong: false }
       }
     } else {
-      shuJu = congJieDuanWenBenHuiFu(qingLiNeiRong)
-      if (!shuJu) return { ceLue: moRenCeLue(), jieXiChengGong: false }
+      return { ceLue: moRenCeLue(), jieXiChengGong: false }
     }
   }
   if (!shuJu || typeof shuJu !== 'object') {
@@ -129,7 +91,6 @@ export function jieXiDirectorXiangYing(neiRong: string): { ceLue: DirectorCeLue;
       xin_qing_li_you: quXinQingLiYou(quZhi(shuJu, '心情理由', 'xin_qing_li_you')),
       yao_qiu_huan_yu_yan: quYaoQiuHuanYuYan(quZhi(shuJu, '要求换语言', 'yao_qiu_huan_yu_yan')),
       bu_hui_li_you: quBuHuiLiYou(quZhi(shuJu, '不回的理由', 'bu_hui_li_you')),
-      chongTuShiJian: quChongTuShiJian(quZhi(shuJu, '冲突事件', 'chongTuShiJian')),
       ...(youShiTi ? { dangQianHuaTiShiTi: shiTiLieBiao } : {}),
       ...(shuJu['需要回想'] === true ? { need_recall: true } : {}),
     },
@@ -193,22 +154,6 @@ function quBuHuiLiYou(zhi: unknown): string {
   return (BuHuiLiYouBiao as readonly string[]).includes(wen) ? wen : '没有'
 }
 
-function quChongTuShiJian(zhi: unknown): ChongTuShiJianPanDing | null | undefined {
-  if (zhi === null) return null
-  if (typeof zhi !== 'object' || Array.isArray(zhi)) return undefined
-  const sou = zhi as Record<string, unknown>
-  const dongZuoYuan = String(sou['动作'] ?? sou['dongZuo'] ?? '').trim()
-  const dongZuo =
-    dongZuoYuan === 'yanZhong' || dongZuoYuan === '严重'
-      ? 'yanZhong'
-      : dongZuoYuan === 'shengQi' || dongZuoYuan === '生气'
-        ? 'shengQi'
-        : null
-  if (!dongZuo) return undefined
-  const shiYou = String(sou['事由'] ?? sou['shiYou'] ?? '').trim().slice(0, 200)
-  return { dongZuo, shiYou }
-}
-
 
 export async function shengChengDirectorCeLue(
   shuRu: AIYinQingShuRu,
@@ -226,7 +171,7 @@ export async function shengChengDirectorCeLue(
 
 
     const daoYanZhiLing =
-      '任务：判定该角色本轮是否回复、当前情绪、是否撤回、是否主动表白。情感分析字段填写对方这条消息的语气与情绪。只输出 JSON，不附加任何说明文字。'
+      '你负责判断角色这次是否回复、当下情绪、是否撤回和是否主动表白，只输出 JSON。情感分析字段写对方这条消息的语气和情绪。'
     const 带导演指令 = (内容: string | 对话块[]): string | 对话块[] =>
       typeof 内容 === 'string' ? `${内容}\n\n${daoYanZhiLing}` : [...内容, { type: 'input_text', text: daoYanZhiLing }]
     const xiaoXi = [{ jiaoSe: 'user' as const, neiRong: 带导演指令(yongHuNeiRong) }]

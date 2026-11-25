@@ -32,11 +32,11 @@ describe('表情包密度模型', () => {
     expect(lian.qiWangJianGeLunShu).toBeLessThan(leng.qiWangJianGeLunShu)
   })
 
-  it('内向角色比外向角色更克制用图', () => {
+  it('内向角色用图比外向角色更密', () => {
     const liShi = Array.from({ length: 12 }, () => wenZi('yonghu'))
     const nei = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'I' }, '熟悉')
     const wai = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'E' }, '熟悉')
-    expect(nei.qiWangJianGeLunShu).toBeGreaterThan(wai.qiWangJianGeLunShu)
+    expect(nei.qiWangJianGeLunShu).toBeLessThan(wai.qiWangJianGeLunShu)
   })
 
   it('历史里没有发过图时上次为 null 且倾向可判定', () => {

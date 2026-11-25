@@ -2,6 +2,8 @@ import { redis } from '../redis'
 import { 数据库 } from '../数据库'
 import { debug日志 } from '../utils/debug日志'
 import { huoQuYongHuHuoDongFenBu, caiYangHuoDongShiKe } from './主动关怀时段'
+import { huoQuChongTuZhuangTai } from './冲突弧'
+import type { ChongTuZhuangTaiMing } from '../types'
 
 const SuoQianZhui = 'zhu_dong_guan_huai_suo:'
 const YiFaQianZhui = 'zhu_dong_guan_huai_yifa:'
@@ -52,6 +54,20 @@ export async function anPaiGuanHuai(
       try {
         const zaiFa = await redis.set(`${YiFaQianZhui}${yongHuId}:${jiaoSeId}`, '1', 'EX', 172800, 'NX')
         if (!zaiFa) return
+        let chongTuZhuangTai: ChongTuZhuangTaiMing | null = null
+        try {
+          chongTuZhuangTai = await huoQuChongTuZhuangTai(yongHuId, jiaoSeId)
+        } catch (chaXunCuoWu) {
+          debug日志.warn('主动关怀', '发送时刻冲突档读取失败，按无冲突放行', {
+            xiang_qing: { yong_hu_id: yongHuId, jiao_se_id: jiaoSeId, cuo_wu: String(chaXunCuoWu).slice(0, 200) },
+          })
+        }
+        if (chongTuZhuangTai === 'yiDuBuHui') {
+          debug日志.debug('主动关怀', '发送时刻冲突已到已读不回，放弃本次关怀', {
+            xiang_qing: { yong_hu_id: yongHuId, jiao_se_id: jiaoSeId },
+          })
+          return
+        }
         const leiXing: GuanHuaiXinXi['leiXing'] = jingMoMiao < 30 * 3600 ? 'dangTian' : jingMoMiao < 40 * 3600 ? 'geTian' : 'liangTian'
         const neiRong = moRenNeiRong(leiXing)
         await ioFaSong(neiRong)

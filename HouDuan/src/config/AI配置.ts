@@ -14,6 +14,9 @@ import './env'
 export const 写手思考 =
   (process.env['WRITER_SI_KAO_QI_YONG'] || 'false').trim().toLowerCase() === 'true'
 
+export const yaSuoQiYong =
+  (process.env['YA_SUO_QI_YONG'] || 'false').trim().toLowerCase() === 'true'
+
 export const 写手温度 = Math.min(
   2,
   Math.max(0, parseFloat(process.env.WRITER_WENDU || '0.9') || 0.9),
@@ -45,7 +48,7 @@ export const AI配置 = {
       top_p: 0.95,
       最大Tokens: 32000,
       思考模式: 'enabled',
-      思考强度: 'medium',
+      思考强度: 'max',
       响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
@@ -54,7 +57,7 @@ export const AI配置 = {
       最大Tokens: 4000,
       思考模式: 写手思考 ? 'enabled' : 'disabled',
       ...(写手思考
-        ? { 思考强度: process.env['WRITER_SI_KAO_QIANG_DU'] || 'medium' }
+        ? { 思考强度: process.env['WRITER_SI_KAO_QIANG_DU'] || 'max' }
         : { wenDu: 写手温度 }),
     } as MoXingCanShu,
 
@@ -79,7 +82,7 @@ export const AI配置 = {
       top_p: 0.95,
       最大Tokens: 32000,
       思考模式: 'enabled',
-      思考强度: 'medium',
+      思考强度: 'max',
       上下文预算: 900000,
     } as MoXingCanShu,
 
@@ -119,7 +122,7 @@ export const AI配置 = {
       top_p: 0.95,
       最大Tokens: 64000,
       思考模式: 'enabled',
-      思考强度: 'medium',
+      思考强度: 'max',
       响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
@@ -192,7 +195,7 @@ export const AI配置 = {
       top_p: 0.95,
       最大Tokens: 16000,
       思考模式: 'enabled',
-      思考强度: 'medium',
+      思考强度: 'max',
       响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
@@ -209,7 +212,7 @@ export const AI配置 = {
       top_p: 0.95,
       最大Tokens: 64000,
       思考模式: 'enabled',
-      思考强度: 'medium',
+      思考强度: 'max',
       响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
@@ -219,6 +222,11 @@ export const AI配置 = {
     liShiXiaoXiShuLiang: 200,
     junShiLiShiXiaoXiShuLiang: 100,
     liShiCaiDuanBuZhang: 1,
+    zhuRuYuSuanZiFu: (() => {
+      const jieXi = parseInt(process.env.ZHU_RU_YU_SUAN_ZI_FU || '600000', 10)
+      return Number.isFinite(jieXi) && jieXi > 0 ? jieXi : 600000
+    })(),
+    zhuRuZuiShaoBaoLiuTiaoShu: 20,
     shangXiaWenTokenYuSuan: 60000,
     benLunTuXiangZuiDuoZhuRuShu: 8,
     jiaoSeChenJinZhiLing: '【从现在起，你就是TA】',
@@ -327,23 +335,19 @@ export function xuanZeHuiDuFenZu(
 
 export const 模型灰度策略: Record<string, 模型灰度策略> = {
   DaoYan: duQuHuiDu('DaoYan', [
-    { mingCheng: 'gaoJingQueMax', biLi: 90, 思考强度: 'max' },
-    { mingCheng: 'shouLianMedium', biLi: 10, 思考强度: 'medium' },
+    { mingCheng: 'gaoJingQueMax', biLi: 100, 思考强度: 'max' },
   ]),
   JunShiQiuZhu: duQuHuiDu('JunShiQiuZhu', [
-    { mingCheng: 'jiZhun', biLi: 100, 思考强度: 'medium' },
+    { mingCheng: 'jiZhun', biLi: 100, 思考强度: 'max' },
   ]),
   KaiChangBai: duQuHuiDu('KaiChangBai', [
-    { mingCheng: 'chenJinMax', biLi: 80, 思考强度: 'max' },
-    { mingCheng: 'shouLianMedium', biLi: 20, 思考强度: 'medium' },
+    { mingCheng: 'chenJinMax', biLi: 100, 思考强度: 'max' },
   ]),
   JiYiZhaiYao: duQuHuiDu('JiYiZhaiYao', [
-    { mingCheng: 'wenDingMax', biLi: 90, 思考强度: 'max' },
-    { mingCheng: 'shouLianMedium', biLi: 10, 思考强度: 'medium' },
+    { mingCheng: 'wenDingMax', biLi: 100, 思考强度: 'max' },
   ]),
   FuPanShengCheng: duQuHuiDu('FuPanShengCheng', [
-    { mingCheng: 'fuPanMax', biLi: 90, 思考强度: 'max' },
-    { mingCheng: 'shouLianMedium', biLi: 10, 思考强度: 'medium' },
+    { mingCheng: 'fuPanMax', biLi: 100, 思考强度: 'max' },
   ]),
 }
 

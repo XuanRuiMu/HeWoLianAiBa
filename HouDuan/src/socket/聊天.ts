@@ -12,7 +12,6 @@ import { guiYiHuaJiaoSeBiaoShi, huoQuJiaoSeBianHao } from '../services/公开编
 import { redis } from '../redis'
 import { huoQuIo } from './io'
 import { 按身份同步管理房间 } from './管理通道'
-import { jianChaBingAnPaiGuanHuaiDuiHua } from '../services/主动关怀调度器'
 
 interface TiaoDuQiJiLu {
   角色ID: string
@@ -281,7 +280,6 @@ export function 初始化聊天Socket(io: Server): void {
         jiLu.归属Socket.add(socket.id)
         socketTiaoDuQiMap.set(socket.id, jiLu)
         jiLuSocketShiJian('加入聊天', 用户ID, { jiao_se_id: 角色ID字符串, socket_id: socket.id })
-        void jianChaBingAnPaiGuanHuaiDuiHua(用户ID, 角色ID字符串)
       } catch (cuoWu) {
         debug日志.error('聊天Socket', '加入聊天处理失败', {
           xiang_qing: { socket_id: socket.id, cuo_wu: String(cuoWu) },

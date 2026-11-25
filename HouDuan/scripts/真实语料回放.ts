@@ -7,7 +7,7 @@ import { resolve } from 'node:path'
 import { 读取真实对话片段, 构造回放历史, 构造语义评审提示词, 解析语义评审, 创建回放记录器, 汇总问题标签, type 真实对话片段, type 语义评审轮次 } from '../src/services/语料读取'
 import { shengChengDirectorCeLue } from '../src/services/Director'
 import { shengChengWriterHuiFu } from '../src/services/Writer'
-import { 按配置调用, chongZhiRongDuan } from '../src/utils/通用模型调用'
+import { 按配置调用, chongZhiRongDuan } from '../src/utils/DeepSeek客户端'
 import { peiZhi } from '../src/config'
 import { redis } from '../src/redis'
 import type { AIYinQingShuRu, DuiHuaLiShiXiang } from '../src/types'
@@ -23,7 +23,7 @@ const 源哈希 = createHash('sha256').update(
 if (源哈希 !== '634768c4a6ca483fba145592d64f373c2dc938494fee5de29aec0e9b38dc7158') throw new Error('来源摘要与已核验公开语料不符')
 
 const 配置哈希 = createHash('sha256')
-for (const 子路径 of ['src/utils/通用模型调用.ts', 'src/services/Director.ts', 'src/services/Writer.ts', 'src/services/Prompt构建器.ts']) {
+for (const 子路径 of ['src/utils/DeepSeek客户端.ts', 'src/services/Director.ts', 'src/services/Writer.ts', 'src/services/Prompt构建器.ts']) {
   配置哈希.update(readFileSync(resolve(__dirname, '..', 子路径)))
 }
 const 配置摘要 = 配置哈希.digest('hex')

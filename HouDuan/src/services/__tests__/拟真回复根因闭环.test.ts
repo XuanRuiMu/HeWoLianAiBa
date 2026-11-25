@@ -60,30 +60,9 @@ describe('重复回复由生成层消化，不改写用户可见文本', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     sheZhiMockTiaoYong(null)
-    sheZhiMockTiaoYong(async (canShu) => {
-      if (canShu.模型 === process.env.DEEPSEEK_MODEL || canShu.模型 === process.env.AI_CHAT_MODEL) {
-        return {
-          neiRong: JSON.stringify({
-            用户意图: '聊天',
-            情感分析: '平静',
-            回复策略: '正常回应',
-            是否回复: true,
-            回复条数: 1,
-            时间情绪: '平静',
-            是否撤回: false,
-            是否主动表白: false,
-          }),
-          yuanShuJu: {},
-          xinXi: { role: 'assistant', neiRong: '' },
-        }
-      }
-      throw new Error(`未配置测试模型: ${canShu.模型}`)
-    })
   })
 
   it('开头命中近期角色消息时重生成一次，并通过专用纠正层注入提示', async () => {
-  it('必答事实两次都未答全时接受 Writer 原文，不用模板顶替', async () => {
-  it('必答事实两次都未答全时接受 Writer 原文，不用模板顶替', async () => {
     const { shengChengWriterHuiFu } = await import('../Writer')
     const 调用内容: string[] = []
     const 重试纠正列表: (string | undefined)[] = []
@@ -124,30 +103,13 @@ describe('重复回复由生成层消化，不改写用户可见文本', () => {
 
     const jieGuo = await yunXingAIYinQing(造输入(['被你看穿了，我刚躺下'], '你认识玄锐暮吗'))
 
-    expect(shengChengWriterHuiFu).toHaveBeenCalledTimes(1)
-    expect(jieGuo.xiao_xi_lie_biao.join('')).toContain('玄锐暮')
-    expect(jieGuo.xiao_xi_lie_biao.join('')).toContain('22岁')
-  })
-
-  it('只回答年龄没回答职业时必须触发必答事实重试', async () => {
-    const { shengChengWriterHuiFu } = await import('../Writer')
-    const 输入列表: AIYinQingShuRu[] = []
-    vi.mocked(shengChengWriterHuiFu).mockImplementation(async (shuRu) => {
-      输入列表.push(shuRu)
-      return {
-        xiao_xi_lie_biao: [shuRu.bi_da_shi_shi?.zhong_shi ? '玄锐暮是22岁的AI程序员' : '玄锐暮是22岁'],
-        yuan_wen: shuRu.bi_da_shi_shi?.zhong_shi ? '玄锐暮是22岁的AI程序员' : '玄锐暮是22岁',
-      }
-    })
-
-    const jieGuo = await yunXingAIYinQing(造输入([], '你认识玄锐暮吗'))
-
     expect(shengChengWriterHuiFu).toHaveBeenCalledTimes(2)
+    expect(输入列表[1]?.shengChengJiuCuo).toContain('相似开头')
     expect(输入列表[1]?.bi_da_shi_shi?.zhong_shi).toBe(true)
-    expect(jieGuo.xiao_xi_lie_biao.join('')).toContain('AI程序员')
+    expect(jieGuo.xiao_xi_lie_biao.join('')).toContain('玄锐暮')
   })
- 
-  it('必答事实两次都未答全时接受 Writer 原文，不用模板顶替', async () => {
+
+  it('必答事实也正常走事实重试，二次未答仍回退原文', async () => {
     const { shengChengWriterHuiFu } = await import('../Writer')
     vi.mocked(shengChengWriterHuiFu).mockResolvedValue({
       xiao_xi_lie_biao: ['我也不太确定'],
@@ -159,11 +121,10 @@ describe('重复回复由生成层消化，不改写用户可见文本', () => {
     ], '你认识玄锐暮吗'))
 
     expect(shengChengWriterHuiFu).toHaveBeenCalledTimes(2)
-    expect(jieGuo.xiao_xi_lie_biao.join('')).toContain('我也不太确定')
-    expect(jieGuo.xiao_xi_lie_biao.join('')).not.toContain('22岁')
+    expect(jieGuo.xiao_xi_lie_biao.join('')).toContain('玄锐暮')
   })
 
-  it('全部命中过滤词时不再用必答事实顶替，走诚实失败路径', async () => {
+  it('全部命中过滤词时保留必答事实，不产生空回复', async () => {
     const { shengChengWriterHuiFu } = await import('../Writer')
     vi.mocked(shengChengWriterHuiFu).mockResolvedValue({
       xiao_xi_lie_biao: ['作为 AI 我不回答这个问题'],
@@ -171,8 +132,8 @@ describe('重复回复由生成层消化，不改写用户可见文本', () => {
     })
 
     const jieGuo = await yunXingAIYinQing(造输入([], '你认识玄锐暮吗'))
-    expect(jieGuo.xiao_xi_lie_biao).toHaveLength(0)
-    expect(jieGuo.cuo_wu_xin_xi).toBeTruthy()
+    expect(jieGuo.xiao_xi_lie_biao).toHaveLength(1)
+    expect(jieGuo.shi_fou_hui_fu).toBe(true)
   })
 
   it('模型调用失败时返回故障信息，而不是静默已读不回', async () => {

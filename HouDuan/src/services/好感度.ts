@@ -158,3 +158,221 @@ export async function huoQuGongKaiHaoGanDuXinXi(
   }
 }
 
+
+
+export async function gengXinHaoGanDu(
+  yong_hu_id: string,
+  jiao_se_id: string,
+  bianHua: HaoGanDuSiWeiBianHua,
+  xiShu?: number,
+  muBiaoQuXian?: number,
+  lianXuWeiDaBiao?: number,
+  ): Promise<HaoGanDuGengXinJieGuo> {
+  try {
+    const { quanZhong } = HaoGanDuPeiZhi
+    const yuanShiBianHua =
+      bianHua.xin_ren_du_bian_hua * quanZhong.xinRenDu +
+      bianHua.qin_mi_du_bian_hua * quanZhong.qinMiDu +
+      bianHua.qu_wei_du_bian_hua * quanZhong.quWeiDu +
+      bianHua.guan_huai_du_bian_hua * quanZhong.guanHuaiDu
+
+    const jiuHaoGanDu = await huoQuWanZhengHaoGanDu(yong_hu_id, jiao_se_id)
+    if (!jiuHaoGanDu) {
+      return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'ziYuanBuCunZai'), zhuang_tai_ma: 404 }
+    }
+    const jiuZongFen = jiuHaoGanDu.zong_fen
+
+    const gengXinJieGuo = await 数据库.query(
+      `UPDATE "好感度" SET
+         "总分" = GREATEST($1, LEAST($2, ROUND(
+           "总分" + ($3::numeric) * GREATEST(1 - "总分"::numeric / $2::numeric, $4::numeric)
+         ))),
+         "互动次数" = "互动次数" + 1,
+         "最后互动时间" = NOW()
+       WHERE "用户ID" = $5 AND "角色ID" = $6
+       RETURNING "总分", "互动次数"`,
+      [
+        HaoGanDuPeiZhi.fanWei.zuiDiFen,
+        HaoGanDuPeiZhi.fanWei.zuiGaoFen,
+        yuanShiBianHua,
+        HaoGanDuPeiZhi.shuaiJian.zuiDiBaoLiu,
+        yong_hu_id,
+        jiao_se_id,
+      ],
+    )
+
+    if ((gengXinJieGuo.rowCount ?? 0) === 0) {
+      return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'ziYuanBuCunZai'), zhuang_tai_ma: 404 }
+    }
+
+    const xinZongFen = Number(gengXinJieGuo.rows[0].总分)
+    const shuaiJianHouZengLiang = xinZongFen - jiuZongFen
+    const xinSiWei = fenJieSiWei(xinZongFen)
+    const jiuSiWei = fenJieSiWei(jiuZongFen)
+    const zengLiangShiJian: HaoGanDuZengLiangShiJian = {
+      shi_jian_id: randomUUID(),
+      jiao_se_id,
+      xin_ren_du_bian_hua: xinSiWei.xin_ren_du - jiuSiWei.xin_ren_du,
+      qin_mi_du_bian_hua: xinSiWei.qin_mi_du - jiuSiWei.qin_mi_du,
+      qu_wei_du_bian_hua: xinSiWei.qu_wei_du - jiuSiWei.qu_wei_du,
+      guan_huai_du_bian_hua: xinSiWei.guan_huai_du - jiuSiWei.guan_huai_du,
+      zong_fen_bian_hua: shuaiJianHouZengLiang,
+    }
+    const xinJieDuanMing = huoQuJieDuanMing(xinZongFen)
+
+    await 数据库.query(
+      `UPDATE "好感度" SET
+        "信任度" = $1,
+        "亲密度" = $2,
+        "趣味度" = $3,
+        "关怀度" = $4,
+        "关系阶段" = $5
+       WHERE "用户ID" = $6 AND "角色ID" = $7`,
+      [
+        xinSiWei.xin_ren_du,
+        xinSiWei.qin_mi_du,
+        xinSiWei.qu_wei_du,
+        xinSiWei.guan_huai_du,
+        xinJieDuanMing,
+        yong_hu_id,
+        jiao_se_id,
+      ],
+    )
+
+    jiLuHaoGanDuBianHua(yong_hu_id, jiao_se_id, { ...bianHua }, xinZongFen)
+
+    const xiShuYingYong = xiShu ?? 1
+    const muBiao = muBiaoQuXian ?? 0
+    const lianXu = lianXuWeiDaBiao ?? 0
+    await jiLuZengLiang(yong_hu_id, jiao_se_id, yuanShiBianHua, shuaiJianHouZengLiang, xiShuYingYong, muBiao, lianXu)
+
+    return {
+      cheng_gong: true,
+      hao_gan_du: {
+        ...xinSiWei,
+        guan_xi_jie_duan: xinJieDuanMing,
+      },
+      shuaiJianHouZengLiang,
+      zeng_liang_shi_jian: zengLiangShiJian,
+    }
+  } catch (cuoWu) {
+    debug日志.error('好感度服务', '更新好感度失败', { xiang_qing: { cuo_wu: String(cuoWu) } })
+    return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'fuWuQiNeiBuCuoWu'), zhuang_tai_ma: 500 }
+  }
+}
+
+export async function sheZhiMiJiHaoGanDu(
+  yong_hu_id: string,
+  jiao_se_id: string,
+  mi_ling: string,
+): Promise<HaoGanDuGengXinJieGuo> {
+  if (!miJiKouLingPiPei(mi_ling)) {
+    return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'weiShouQuan'), zhuang_tai_ma: 401 }
+  }
+
+  const jiuHaoGanDu = await huoQuWanZhengHaoGanDu(yong_hu_id, jiao_se_id)
+  if (!jiuHaoGanDu) {
+    return { cheng_gong: false, ti_shi: huoQuFanYi('tongYong', 'ziYuanBuCunZai'), zhuang_tai_ma: 404 }
+  }
+
+  const jiaoSeJieGuo = await 数据库.query(
+    `SELECT "是否渣型", "对局模式" FROM "角色" WHERE "ID" = $1 LIMIT 1`,
+    [jiao_se_id],
+  )
+  const shiFouZhaXing = Boolean(jiaoSeJieGuo.rows[0]?.是否渣型)
+
+  void String(jiaoSeJieGuo.rows[0]?.对局模式 || 'putong')
+
+  const miJiQianZongFen = jiuHaoGanDu.zong_fen
+  await 数据库.query(
+    `INSERT INTO "游戏档案" ("用户ID", "角色ID", "是否秘籍通关", "秘籍前好感度")
+     VALUES ($1, $2, TRUE, $3)
+     ON CONFLICT ("用户ID", "角色ID") DO UPDATE SET
+       "是否秘籍通关" = TRUE,
+       "秘籍前好感度" = EXCLUDED."秘籍前好感度"`,
+    [yong_hu_id, jiao_se_id, miJiQianZongFen],
+  )
+
+  const muBiaoFen = HaoGanDuPeiZhi.miJi.muBiaoFen
+  const xinSiWei = fenJieSiWei(muBiaoFen)
+  const xinJieDuanMing = huoQuJieDuanMing(muBiaoFen)
+
+  await 数据库.query(
+    `UPDATE "好感度" SET
+      "信任度" = $1,
+      "亲密度" = $2,
+      "趣味度" = $3,
+      "关怀度" = $4,
+      "总分" = $5,
+      "关系阶段" = $6,
+      "互动次数" = "互动次数" + 1,
+      "最后互动时间" = NOW()
+     WHERE "用户ID" = $7 AND "角色ID" = $8`,
+    [
+      xinSiWei.xin_ren_du,
+      xinSiWei.qin_mi_du,
+      xinSiWei.qu_wei_du,
+      xinSiWei.guan_huai_du,
+      muBiaoFen,
+      xinJieDuanMing,
+      yong_hu_id,
+      jiao_se_id,
+    ],
+  )
+
+    jiLuHaoGanDuBianHua(yong_hu_id, jiao_se_id, {
+    xin_ren_du_bian_hua: xinSiWei.xin_ren_du - jiuHaoGanDu.xin_ren_du,
+    qin_mi_du_bian_hua: xinSiWei.qin_mi_du - jiuHaoGanDu.qin_mi_du,
+    qu_wei_du_bian_hua: xinSiWei.qu_wei_du - jiuHaoGanDu.qu_wei_du,
+    guan_huai_du_bian_hua: xinSiWei.guan_huai_du - jiuHaoGanDu.guan_huai_du,
+  }, muBiaoFen)
+
+  const miJiJieGuoLeiXing = 'sheng_li_ai_qing' as const
+  await chuLiYouXiJieShu(yong_hu_id, jiao_se_id, miJiJieGuoLeiXing, {
+    lei_xing: '秘籍通关',
+    mi_ji: true,
+    mi_ji_qian_hao_gan_du: miJiQianZongFen,
+    shi_fou_zha_xing: shiFouZhaXing,
+  })
+
+  return {
+    cheng_gong: true,
+    hao_gan_du: {
+      ...xinSiWei,
+      guan_xi_jie_duan: xinJieDuanMing,
+    },
+  }
+}
+
+export async function chuShiHuaHaoGanDu(
+  yong_hu_id: string,
+  jiao_se_id: string,
+  zong_fen: number,
+): Promise<void> {
+  const qieGeFen = qieGeFanWei(zong_fen, HaoGanDuPeiZhi.fanWei.zuiDiFen, HaoGanDuPeiZhi.fanWei.zuiGaoFen)
+  const siWei = fenJieSiWei(qieGeFen)
+  const jieDuanMing = huoQuJieDuanMing(qieGeFen)
+
+  await 数据库.query(
+    `INSERT INTO "好感度" (
+      "用户ID", "角色ID", "信任度", "亲密度", "趣味度", "关怀度", "总分", "关系阶段"
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    ON CONFLICT ("用户ID", "角色ID") DO UPDATE SET
+      "信任度" = EXCLUDED."信任度",
+      "亲密度" = EXCLUDED."亲密度",
+      "趣味度" = EXCLUDED."趣味度",
+      "关怀度" = EXCLUDED."关怀度",
+      "总分" = EXCLUDED."总分",
+      "关系阶段" = EXCLUDED."关系阶段"`,
+    [
+      yong_hu_id,
+      jiao_se_id,
+      siWei.xin_ren_du,
+      siWei.qin_mi_du,
+      siWei.qu_wei_du,
+      siWei.guan_huai_du,
+      qieGeFen,
+      jieDuanMing,
+    ],
+  )
+}

@@ -1,122 +1,122 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+import http from './请求'
+import type { Yonghu, XingBie, XingGeXuanZe, RenSheBiaoQian, DengLuXiangYing } from '@/types/类型定义'
+
+export interface 重置密码请求 {
+  shouJiHao: string
+  yanZhengMa: string
+  xinMiMa: string
+  queRenXinMiMa: string
+}
+
+export interface 注册请求 {
+  shouJiHao: string
+  yanZhengMa: string
+  yongHuMing: string
+  miMa: string
+  tongYiXieYi: boolean
+  chuShengRiQi: string
+  jingWai?: boolean
+  shiQu?: string
+}
+
+export interface 登录请求 {
+  shouJiHao: string
+  miMa: string
+}
+
+export interface 资料请求 {
+  niCheng: string
+  xingBie: XingBie
+  muBiaoXingBie: XingBie
+  xingGeXuanZe: XingGeXuanZe
+  renSheBiaoQian: RenSheBiaoQian
+  yunXuZhaNanZhaNv: boolean
+}
+
+export const YanZhengMaYongTu = {
+  zhuCe: 'zhuCe',
+  chongZhiMiMa: 'chongZhiMiMa',
+} as const
+
+export type YanZhengMaYongTu = (typeof YanZhengMaYongTu)[keyof typeof YanZhengMaYongTu]
+
+export interface 人机验证答案 {
+  renJiPiaoJu: string
+  renJiDaAn: string
+}
+
+export interface 人机挑战 {
+  id: string
+  svg: string
+  guoQiMiao: number
+}
+
+export async function huoQuRenJiTiaoZhan(
+  yongTu: YanZhengMaYongTu = YanZhengMaYongTu.zhuCe,
+  peiZhi?: { signal?: AbortSignal },
+): Promise<人机挑战> {
+  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: 人机挑战 }>(
+    `/认证/人机挑战?yongTu=${encodeURIComponent(yongTu)}`,
+    peiZhi,
+  )
+  return 响应.data.shu_ju
+}
+
+export async function faSongMa(
+  shouJiHao: string,
+  yongTu: YanZhengMaYongTu = YanZhengMaYongTu.zhuCe,
+  peiZhi?: { signal?: AbortSignal },
+  renJi?: 人机验证答案,
+): Promise<void> {
+  await http.post('/认证/发送码', { shouJiHao, yongTu, ...(renJi ?? {}) }, peiZhi)
+}
+
+export async function chongZhiMiMa(
+  qingQiu: 重置密码请求,
+  peiZhi?: { signal?: AbortSignal },
+): Promise<void> {
+  await http.post('/认证/重置密码', qingQiu, peiZhi)
+}
+
+export async function jianChaShouJiHao(
+  shouJiHao: string,
+  peiZhi?: { signal?: AbortSignal },
+): Promise<{ yi_zhu_ce: boolean }> {
+  const 响应 = await http.get<{ cheng_gong: boolean; shu_ju: { yi_zhu_ce: boolean } }>(
+    `/认证/检查手机?shouJiHao=${encodeURIComponent(shouJiHao)}`,
+    peiZhi,
+  )
+  return 响应.data.shu_ju
+}
+
+export async function zhuCe(
+  shouJiHao: string,
+  yanZhengMa: string,
+  yongHuMing: string,
+  miMa: string,
+  tongYiXieYi: boolean,
+  chuShengRiQi: string,
+  peiZhi?: { signal?: AbortSignal },
+  jingWai = false,
+): Promise<DengLuXiangYing> {
+  const 响应 = await http.post<{ cheng_gong: boolean; shu_ju: DengLuXiangYing }>(
+    '/认证/注册',
+    {
+      shouJiHao,
+      yanZhengMa,
+      yongHuMing,
+      miMa,
+      tongYiXieYi,
+      chuShengRiQi,
+      jingWai,
+      shiQu: huoQuShiBieShiQu(),
+    },
+    peiZhi,
+  )
+  return 响应.data.shu_ju
+}
+
+export function huoQuShiBieShiQu(): string {
   try {
     const shiQu = Intl.DateTimeFormat().resolvedOptions().timeZone
     if (typeof shiQu === 'string' && /^[A-Za-z_]+\/[A-Za-z_+\-/]+$/.test(shiQu)) return shiQu

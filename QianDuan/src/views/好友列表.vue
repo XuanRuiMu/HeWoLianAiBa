@@ -274,7 +274,568 @@
             <HaoYouTiao
               v-for="haoYou in fenZu.lieBiao"
               :key="haoYou.id"
-              :hao-you-id="hao                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                tu-se);
+              :hao-you-id="haoYou.id"
+              :ming-cheng="xianShiMing(haoYou)"
+              :tou-xiang="haoYou.tou_xiang"
+              :qian-ming="qianMingWen(haoYou)"
+              :bei-zhu="beiZhuWen(haoYou)"
+              :huo-yue-tai="huoYueTai(haoYou.id)"
+              :huo-yue-wen-zi="huoYueWenZi(haoYou.id)"
+              :zui-jin-zhai-yao="zuiJinZhaiYao(haoYou.id)"
+              :zui-jin-shi-jian="zuiJinShiJian(haoYou.id)"
+              @jin-ru="jinRuLiaoTian"
+              @da-kai-zi-liao="daKaiZiLiaoKa"
+              @bao-cun-bei-zhu="baoCunBeiZhu"
+              @shan-chu="shanChu"
+            />
+          </ul>
+        </section>
+      </template>
+
+      <HaoYouKongTai
+        v-else
+        :biao-ti="huoQuFanYi('haoYou', 'zanWuHaoYou')"
+        :ti-shi="huoQuFanYi('haoYou', 'zanWuHaoYouTiShi')"
+        :anniu-wen-zi="huoQuFanYi('haoYou', 'quTianJiaHaoYou')"
+        @dian-ji="juJiaoSouSuo"
+      />
+
+      <p class="tong-ji">{{ jiShuWenZi }}</p>
+    </section>
+    </Transition>
+
+    <Teleport to="body">
+      <YongHuZiLiaoKa
+        v-if="ziLiaoKaYongHuId"
+        :yong-hu-id="ziLiaoKaYongHuId"
+        @guan-bi="guanBiZiLiaoKa"
+        @fa-xiao-xi="jinRuLiaoTian"
+        @tian-jia="chuLiZiLiaoKaTianJia"
+      />
+    </Teleport>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { huoQuFanYi } from '@/config/翻译表'
+import {
+  faSongHaoYouShenQing,
+  jieShouHaoYouShenQing,
+  juJueHaoYouShenQing,
+  shanChuHaoYou,
+  type HaoYouSouSuoXiang,
+  type HaoYouXiang,
+} from '@/api/社交'
+import { QianTaiDaiMa } from '@/config/前台错误码'
+import { 归一前台错误 } from '@/utils/前台错误'
+import { weiDuFengDing } from '@/utils/未读封顶'
+import { jianShaoDongXiaoGuo } from '@/utils/动效偏好'
+import RequestError from '@/components/请求错误.vue'
+import { use前台错误 } from '@/composables/use前台错误'
+import { geShiHuaHaoYouShiJian, use好友概览, type 好友活跃态 } from '@/composables/use好友概览'
+import TouXiang from '@/components/头像.vue'
+import YongHuZiLiaoKa from '@/components/用户资料卡.vue'
+import HaoYouTiao from '@/components/好友/好友条目.vue'
+import HaoYouKongTai from '@/components/好友/好友空态.vue'
+import { 使用好友仓库 } from '@/stores/好友'
+import { 使用通知仓库 } from '@/stores/通知'
+
+const router = useRouter()
+const haoYouCangKu = 使用好友仓库()
+const 通知仓库 = 使用通知仓库()
+const gaiLan = use好友概览()
+
+const guanJianZi = ref('')
+const souSuoZhong = ref(false)
+const souSuoJieGuo = ref<HaoYouSouSuoXiang[]>([])
+const souSuoWuJieGuo = ref(false)
+const caoZuoTiShi = ref('')
+const zhengZaiShenQing = ref<string | null>(null)
+const ziLiaoKaYongHuId = ref<string | null>(null)
+const dangQianMianBan = ref<'haoYou' | 'shenQing'>('haoYou')
+const beiZhuBanBen = ref(0)
+const shuaXinZhong = ref(false)
+const yeGen = ref<HTMLElement | null>(null)
+const dingBu = ref<HTMLElement | null>(null)
+const dingBuGao = ref(0)
+const souSuoShuRu = ref<HTMLInputElement | null>(null)
+const dingBuFuGai = ref(false)
+let dingBuGuanCha: ResizeObserver | null = null
+
+const { cuoWu: qianTaiCuoWu, zhuangTai: qianTaiZhuangTai, jieShou: jieShouQianTai, chongShi, qingLi } = use前台错误()
+const qianTaiCuoWuZhi = computed(() => qianTaiCuoWu.value)
+
+const shouDaoLieBiao = computed(() => haoYouCangKu.shouDaoLieBiao ?? [])
+const faChuLieBiao = computed(() => haoYouCangKu.faChuLieBiao ?? [])
+const haoYouLieBiao = computed(() => haoYouCangKu.haoYouLieBiao ?? [])
+const fenZuLieBiao = computed(() => haoYouCangKu.haoYouFenQu)
+const guanJianZiQing = computed(() => guanJianZi.value.trim())
+const zhengZaiSouSuo = computed(() => guanJianZiQing.value.length > 0)
+
+const zongShuWenZi = computed(
+  () =>
+    `${haoYouLieBiao.value.length}${huoQuFanYi('haoYou', 'haoYouZongShu')} · ${shouDaoLieBiao.value.length}${huoQuFanYi('haoYou', 'daiChuLiTiao')}`,
+)
+const jiShuWenZi = computed(
+  () =>
+    `${huoQuFanYi('haoYou', 'quanBuHaoYou')} ${haoYouLieBiao.value.length} · ${huoQuFanYi('haoYou', 'shouDaoShenQing')} ${shouDaoLieBiao.value.length}`,
+)
+const xinPengYouShuoMing = computed(() =>
+  shouDaoLieBiao.value.length
+    ? `${shouDaoLieBiao.value.length}${huoQuFanYi('haoYou', 'daiChuLiTiao')}`
+    : huoQuFanYi('haoYou', 'zanWuDaiChuLi'),
+)
+const tongZhiShuoMing = computed(() =>
+  通知仓库.weiDuShu > 0
+    ? `${通知仓库.weiDuShu}${huoQuFanYi('haoYou', 'weiDuTiao')}`
+    : huoQuFanYi('haoYou', 'zanWuWeiDuTongZhi'),
+)
+const hongDianShu = computed(() => weiDuFengDing(shouDaoLieBiao.value.length))
+const tongZhiHongDian = computed(() => weiDuFengDing(通知仓库.weiDuShu))
+
+const benDiJieGuo = computed<HaoYouXiang[]>(() => {
+  const wenBen = guanJianZiQing.value.toLowerCase()
+  if (!wenBen) return []
+  void beiZhuBanBen.value
+  return haoYouLieBiao.value.filter((haoYou) =>
+    [xianShiMing(haoYou), beiZhuWen(haoYou), haoYou.yong_hu_ming ?? '', haoYou.qian_ming ?? ''].some((zhi) =>
+      zhi.toLowerCase().includes(wenBen),
+    ),
+  )
+})
+
+const zuiJinLianXiLieBiao = computed<HaoYouXiang[]>(() =>
+  haoYouLieBiao.value
+    .map((haoYou) => ({ haoYou, dongTai: gaiLan.huoQuZuiJin(haoYou.id) }))
+    .filter((xiang) => xiang.dongTai !== null)
+    .sort((a, b) => (b.dongTai?.shiJianChuo ?? 0) - (a.dongTai?.shiJianChuo ?? 0))
+    .slice(0, 5)
+    .map((xiang) => xiang.haoYou),
+)
+
+function xianShiMing(haoYou: HaoYouXiang): string {
+  return haoYouCangKu.huoQuXianShiMing(haoYou) || huoQuFanYi('haoYou', 'weiMingMing')
+}
+
+function beiZhuWen(haoYou: HaoYouXiang): string {
+  void beiZhuBanBen.value
+  return haoYouCangKu.huoQuBeiZhu(haoYou.id)
+}
+
+function qianMingWen(haoYou: HaoYouXiang): string {
+  return haoYou.qian_ming || huoQuFanYi('haoYou', 'zanWuQianMing')
+}
+
+function huoYueTai(haoYouId: string): 好友活跃态 {
+  return gaiLan.huoQuHuoYueTai(haoYouId)
+}
+
+function huoYueWenZi(haoYouId: string): string {
+  return gaiLan.huoQuHuoYueWenZi(haoYouId)
+}
+
+function zuiJinZhaiYao(haoYouId: string): string {
+  const dongTai = gaiLan.huoQuZuiJin(haoYouId)
+  return dongTai ? dongTai.zhaiYao : huoQuFanYi('haoYou', 'zanWuZuiJinXiaoXi')
+}
+
+function zuiJinShiJian(haoYouId: string): string {
+  const dongTai = gaiLan.huoQuZuiJin(haoYouId)
+  return dongTai ? geShiHuaHaoYouShiJian(dongTai.shiJianChuo) : ''
+}
+
+function gengXinDingBuGao(): void {
+  dingBuGao.value = dingBu.value ? dingBu.value.offsetHeight : 0
+}
+
+function gengXinDingBuFuGai(shiJian: Event): void {
+  dingBuFuGai.value = (shiJian.target as HTMLElement).scrollTop > 4
+}
+
+async function shuaXinLieBiao(): Promise<void> {
+  if (shuaXinZhong.value) return
+  shuaXinZhong.value = true
+  qingLi()
+  caoZuoTiShi.value = ''
+  try {
+    await haoYouCangKu.chuShiHua()
+    await gaiLan.jiaZai(haoYouCangKu.haoYouLieBiao)
+  } finally {
+    shuaXinZhong.value = false
+  }
+}
+
+function qieHuanMianBan(mianBan: 'haoYou' | 'shenQing'): void {
+  dangQianMianBan.value = mianBan
+  caoZuoTiShi.value = ''
+  yeGen.value?.scrollTo({ top: 0, behavior: gunDongXingWei() })
+}
+
+function qingKongGuanJianZi(): void {
+  guanJianZi.value = ''
+  souSuoJieGuo.value = []
+  souSuoWuJieGuo.value = false
+}
+
+async function juJiaoSouSuo(): Promise<void> {
+  qieHuanMianBan('haoYou')
+  await nextTick()
+  souSuoShuRu.value?.focus()
+}
+
+async function zhiXingQuanZhanSouSuo(): Promise<void> {
+  const wenBen = guanJianZiQing.value
+  if (!wenBen || souSuoZhong.value) return
+  souSuoZhong.value = true
+  souSuoWuJieGuo.value = false
+  qingLi()
+  try {
+    souSuoJieGuo.value = await haoYouCangKu.souSuo(wenBen)
+    if (!souSuoJieGuo.value.length) souSuoWuJieGuo.value = true
+  } catch (cuoWu: unknown) {
+    if (归一前台错误(cuoWu).code === QianTaiDaiMa.RESOURCE_NOT_FOUND) {
+      souSuoWuJieGuo.value = true
+    } else {
+      jieShouQianTai(cuoWu, zhiXingQuanZhanSouSuo)
+    }
+    souSuoJieGuo.value = []
+  } finally {
+    souSuoZhong.value = false
+  }
+}
+
+async function faSongShenQing(yongHu: HaoYouSouSuoXiang): Promise<void> {
+  if (yongHu.shi_hao_you) {
+    jinRuLiaoTian(yongHu.id)
+    return
+  }
+  if (zhengZaiShenQing.value) return
+  zhengZaiShenQing.value = yongHu.id
+  caoZuoTiShi.value = ''
+  qingLi()
+  try {
+    await faSongHaoYouShenQing(yongHu.id)
+    caoZuoTiShi.value = huoQuFanYi('haoYou', 'shenQingYiFaSong')
+  } catch (cuoWu: unknown) {
+    jieShouQianTai(cuoWu, () => faSongShenQing(yongHu))
+  } finally {
+    zhengZaiShenQing.value = null
+  }
+}
+
+async function jieShou(shenQingId: string): Promise<void> {
+  qingLi()
+  try {
+    await jieShouHaoYouShenQing(shenQingId)
+    await haoYouCangKu.shuaXinShenQing()
+    await haoYouCangKu.shuaXinHaoYou()
+    await gaiLan.jiaZai(haoYouCangKu.haoYouLieBiao)
+  } catch (cuoWu: unknown) {
+    jieShouQianTai(cuoWu, () => jieShou(shenQingId))
+  }
+}
+
+async function juJue(shenQingId: string): Promise<void> {
+  qingLi()
+  try {
+    await juJueHaoYouShenQing(shenQingId)
+    await haoYouCangKu.shuaXinShenQing()
+  } catch (cuoWu: unknown) {
+    jieShouQianTai(cuoWu, () => juJue(shenQingId))
+  }
+}
+
+async function shanChu(haoYouId: string): Promise<void> {
+  if (!window.confirm(huoQuFanYi('haoYou', 'queRenShanChuHaoYou'))) return
+  qingLi()
+  try {
+    await shanChuHaoYou(haoYouId)
+    await haoYouCangKu.shuaXinHaoYou()
+    await gaiLan.jiaZai(haoYouCangKu.haoYouLieBiao)
+  } catch (cuoWu: unknown) {
+    jieShouQianTai(cuoWu, () => shanChu(haoYouId))
+  }
+}
+
+function baoCunBeiZhu(haoYouId: string, beiZhu: string): void {
+  haoYouCangKu.baoCunBeiZhu(haoYouId, beiZhu)
+  beiZhuBanBen.value += 1
+}
+
+function jinRuLiaoTian(haoYouId: string): void {
+  ziLiaoKaYongHuId.value = null
+  void router.push(`/hao-you/${haoYouId}`)
+}
+
+function jinRuTongZhi(): void {
+  void router.push('/tong-zhi')
+}
+
+function daKaiZiLiaoKa(yongHuId: string): void {
+  ziLiaoKaYongHuId.value = yongHuId
+}
+
+function guanBiZiLiaoKa(): void {
+  ziLiaoKaYongHuId.value = null
+}
+
+async function chuLiZiLiaoKaTianJia(yongHuId: string): Promise<void> {
+  guanBiZiLiaoKa()
+  if (zhengZaiShenQing.value) return
+  zhengZaiShenQing.value = yongHuId
+  caoZuoTiShi.value = ''
+  qingLi()
+  try {
+    await faSongHaoYouShenQing(yongHuId)
+    caoZuoTiShi.value = huoQuFanYi('haoYou', 'shenQingYiFaSong')
+  } catch (cuoWu: unknown) {
+    jieShouQianTai(cuoWu, () => chuLiZiLiaoKaTianJia(yongHuId))
+  } finally {
+    zhengZaiShenQing.value = null
+  }
+}
+
+function tiaoDaoFenZu(shouZiMu: string): void {
+  const gen = yeGen.value
+  if (!gen) return
+  const muBiao = gen.querySelector<HTMLElement>(`[data-fen-zu="${shouZiMu}"]`)
+  if (!muBiao) return
+  gen.scrollTo({ top: Math.max(0, muBiao.offsetTop - dingBuGao.value - 4), behavior: gunDongXingWei() })
+}
+
+function gunDongXingWei() {
+  return jianShaoDongXiaoGuo() ? 'auto' : 'smooth'
+}
+
+watch(
+  () => haoYouCangKu.haoYouLieBiao,
+  (lieBiao) => {
+    void gaiLan.jiaZai(lieBiao ?? [])
+  },
+  { immediate: true },
+)
+
+onMounted(() => {
+  if (!haoYouCangKu.yiChuShiHua) void haoYouCangKu.chuShiHua()
+  gengXinDingBuGao()
+  window.addEventListener('resize', gengXinDingBuGao)
+  if (typeof ResizeObserver !== 'undefined' && dingBu.value) {
+    dingBuGuanCha = new ResizeObserver(gengXinDingBuGao)
+    dingBuGuanCha.observe(dingBu.value)
+  }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', gengXinDingBuGao)
+  dingBuGuanCha?.disconnect()
+  dingBuGuanCha = null
+  haoYouCangKu.qingKong()
+  gaiLan.qingKong()
+})
+
+defineExpose({ dangQianMianBan, guanJianZi, benDiJieGuo, haoYouLieBiao })
+</script>
+
+<style scoped>
+.hao-you-ye {
+  --hao-you-ye-mian: rgba(18, 18, 20, 0.86);
+  --hao-you-ye-bian: rgba(255, 255, 255, 0.1);
+  --hao-you-ye-wen-ben: #ffffff;
+  --hao-you-ye-ci-wen-ben: #d8d8de;
+  --hao-you-ye-ruo-wen-ben: #b4b4bb;
+  --hao-you-ka-mian: rgba(32, 32, 37, 0.92);
+  --hao-you-ka-bian: rgba(255, 255, 255, 0.12);
+  --hao-you-jin: #f0c86a;
+  --hao-you-jin-mian: rgba(240, 200, 106, 0.14);
+  --hao-you-zhu-beijing: #e8bb55;
+  --hao-you-zhu-jianbian: linear-gradient(135deg, #f7d27a, #d9a441);
+  --hao-you-zhu-wenben: #2a1d05;
+  --hao-you-ding-bu-gao: 0px;
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  height: 100%;
+  margin: 0 auto;
+  padding: var(--jiange-zhong);
+  display: flex;
+  flex-direction: column;
+  gap: var(--jiange-12);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  border-radius: var(--yuanjiao-da);
+  border: 1px solid var(--hao-you-ye-bian);
+  background: var(--hao-you-ye-mian);
+  color: var(--hao-you-ye-wen-ben);
+  scrollbar-width: thin;
+  scrollbar-color: var(--gundong-tiao-huakuai) transparent;
+}
+
+:root[data-theme='light'] .hao-you-ye {
+  --hao-you-ye-mian: rgba(255, 255, 255, 0.88);
+  --hao-you-ye-bian: rgba(20, 22, 26, 0.1);
+  --hao-you-ye-wen-ben: #14161a;
+  --hao-you-ye-ci-wen-ben: #3f434a;
+  --hao-you-ye-ruo-wen-ben: #55595f;
+  --hao-you-ka-mian: rgba(255, 255, 255, 0.94);
+  --hao-you-ka-bian: rgba(20, 22, 26, 0.1);
+  --hao-you-jin: #6f4a06;
+  --hao-you-jin-mian: rgba(154, 107, 18, 0.12);
+}
+
+.hao-you-ye::-webkit-scrollbar {
+  width: var(--gundong-tiao-kuan-du);
+}
+
+.hao-you-ye::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--gundong-tiao-huakuai);
+}
+
+.hao-you-ye::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hao-you-ding-bu {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--jiange-xiao);
+  padding-bottom: var(--jiange-12);
+}
+
+.hao-you-ding-bu.ding-bu-fu-gai {
+  background: var(--hao-you-ye-mian);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.biao-ti-hang {
+  display: flex;
+  align-items: center;
+  gap: var(--jiange-xiao);
+}
+
+.ye-biao-ti {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--hao-you-ye-wen-ben);
+}
+
+.ji-shu {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+  color: var(--hao-you-ye-ci-wen-ben);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shua-xin-anniu {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--hao-you-ye-ci-wen-ben);
+  cursor: pointer;
+  transition: border-color 0.2s var(--quxian-biao-zhun), color 0.2s var(--quxian-biao-zhun);
+}
+
+.shua-xin-anniu svg {
+  width: 18px;
+  height: 18px;
+}
+
+.shua-xin-anniu:hover:not(:disabled) {
+  border-color: var(--hao-you-jin);
+  color: var(--hao-you-jin);
+}
+
+.shua-xin-anniu:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.hao-you-sou-suo {
+  --hao-you-sou-suo-yuan-jiao: 999px;
+  --hao-you-sou-suo-gao: 44px;
+  --hao-you-sou-suo-tu-kou: 18px;
+  --hao-you-sou-suo-qing-kou: 44px;
+  --hao-you-sou-suo-qing-tu: 16px;
+  --hao-you-sou-suo-di: rgba(255, 255, 255, 0.08);
+  --hao-you-sou-suo-bian: rgba(255, 255, 255, 0.12);
+  --hao-you-sou-suo-tu-se: var(--hao-you-ye-ruo-wen-ben);
+  display: flex;
+  align-items: center;
+  gap: var(--jiange-xiao);
+  min-height: var(--hao-you-sou-suo-gao);
+  padding: 0 var(--jiange-4) 0 var(--jiange-12);
+  border-radius: var(--hao-you-sou-suo-yuan-jiao);
+  background: var(--hao-you-sou-suo-di);
+  border: 1px solid var(--hao-you-sou-suo-bian);
+  transition: border-color 0.2s var(--quxian-biao-zhun);
+}
+
+:root[data-theme='light'] .hao-you-sou-suo {
+  --hao-you-sou-suo-di: rgba(20, 22, 26, 0.05);
+  --hao-you-sou-suo-bian: rgba(20, 22, 26, 0.1);
+}
+
+.hao-you-sou-suo:focus-within {
+  border-color: var(--hao-you-jin);
+}
+
+.hao-you-sou-suo-tu {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--hao-you-sou-suo-tu-kou);
+  height: var(--hao-you-sou-suo-tu-kou);
+  color: var(--hao-you-sou-suo-tu-se);
+}
+
+.hao-you-sou-suo-tu svg {
+  width: 100%;
+  height: 100%;
+}
+
+.hao-you-ye .hao-you-sou-suo .hao-you-sou-suo-shu-ru {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--hao-you-sou-suo-gao);
+  padding: 0;
+  background-color: transparent;
+  color: var(--hao-you-ye-wen-ben);
+  font-size: var(--ziti-zhong);
+  appearance: none;
+}
+
+#app .hao-you-sou-suo .hao-you-sou-suo-shu-ru,
+#app .hao-you-sou-suo .hao-you-sou-suo-shu-ru:focus,
+#app .hao-you-sou-suo .hao-you-sou-suo-shu-ru:read-only {
+  border: 0 !important;
+  border-bottom: 0 !important;
+  background-image: none !important;
+  background-size: auto !important;
+  transition: none !important;
+}
+
+.hao-you-ye .hao-you-sou-suo .hao-you-sou-suo-shu-ru::placeholder {
+  color: var(--hao-you-sou-suo-tu-se);
 }
 
 .hao-you-ye .hao-you-sou-suo .hao-you-sou-suo-shu-ru:focus,

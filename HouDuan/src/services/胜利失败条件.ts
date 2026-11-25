@@ -1,5 +1,5 @@
 import { 数据库 } from '../数据库'
-import { 按配置调用, type 对话块 } from '../utils/DeepSeek客户端'
+import { 按配置调用, type 对话块 } from '../utils/通用模型调用'
 import { gengXinHaoGanDu, huoQuWanZhengHaoGanDu } from './好感度'
 import { huoQuIo } from '../socket/io'
 import { redis } from '../redis'
@@ -93,8 +93,6 @@ const BiaoBaiLeiXingYingShe: Record<string, BiaoBaiJianCeJieGuo['biao_bai_lei_xi
   暗示表白: 'an_shi_biao_bai',
   要求确立关系: 'yao_qiu_que_li_guan_xi' }
 
-const MingQueBiaoBaiTeZheng = /我喜欢你|我爱你|喜欢你很久|做我(的)?(男|女)朋友|和我(在)?一起|(我们|咱们)(在)?(一起|交往|谈)|和我(交往|谈恋爱)|你愿意(做|当我|和)|请和我|我想和你(在)?一起|我要追你|接受我/
-
 const ZhanJieZhongShiCiShu = 3
 
 export async function jianCeSiLianHeYi(
@@ -164,22 +162,6 @@ export async function jianCeSiLianHeYi(
           ...(jiaoSe
             ? [
                 ...renSheDuanLuo,
-                '',
-                '【表白判定准则（从严，宁可漏判不可误判）】',
-                '这一栏只在对方**明确说出要跟你在一起**时才填 true。判定门槛很高，拿不准一律填 false。',
-                '算的情况（必须出现明确的表白语句）：',
-                '- 对方直接说喜欢你、爱你，例如「我喜欢你」「我爱你」「我挺喜欢你的」。',
-                '- 对方要求确立关系，例如「做我男朋友吧」「和我在一起吧」「咱们交往吧」「和我谈恋爱」「你愿意做我对象吗」。',
-                '- 对方明确表达追求意图，例如「我想追你」「我要追你」「嫁给我」「我们在一起好不好」。',
-                '不算的情况（这些一律填 false，哪怕对方表现得很亲近）：',
-                '- 只是表达期待、想见面、想聊天、想一起玩：「我突然有点期待跟你见面了」「想约你出来」「下次一起吃饭」。',
-                '- 只是夸你、说你好、说跟你聊天开心、说你特别。',
-                '- 只是撒娇、调侃、开玩笑、试探、欲言又止。',
-                '- 只是问你的感受、问你怎么想、问有没有可能。',
-                '- 只是情绪上头、说想你了、说放心不下你。',
-                '关键区别：「想见你」「喜欢你这个人」是亲近的表达，不是表白；「我喜欢你，做我男朋友」才是表白。',
-                '表白类型：只有明确表白语句才填「直接表白」或「要求确立关系」；亲近、试探、暧昧一律填「非表白」。',
-                '「暗示表白」只在对方说得非常露骨、几乎等于明说时（如「我要是不只是想跟你做朋友呢」）才填。',
                 '',
                 '【神经病判定准则（由你综合权衡，不使用固定阈值）】',
                 '- E 型人格通常更宽容，会觉得莫名其妙的话好玩、有趣、能接梗，不轻易判定为"神经病"',
@@ -604,21 +586,9 @@ export async function chuLiYongHuBiaoBai(
   jiao_se_id: string,
   hao_gan_du_zong_fen: number,
   chuFaXiaoXiIdLieBiao?: string[],
-  yuanWen?: string,
 ): Promise<YouXiJieShuJieGuo | null> {
   const jiaoSe = await huoQuJiaoSeJiBenXinXi(jiao_se_id)
   if (!jiaoSe || !jiaoSe.yong_hu_id || jiaoSe.yong_hu_id !== yong_hu_id) return null
-
-  const yuanWenWenBen = String(yuanWen ?? '')
-  const shiMingQueBiaoBai = MingQueBiaoBaiTeZheng.test(yuanWenWenBen)
-  if (!shiMingQueBiaoBai) {
-    debug日志.info('胜利失败', '被判为表白但原文没有明确表白用语，按普通暧昧处理，不结束游戏', {
-      yong_hu_id,
-      jiao_se_id,
-      xiang_qing: { yuan_wen: yuanWenWenBen.slice(0, 80), hao_gan_du: hao_gan_du_zong_fen },
-    })
-    return null
-  }
 
   if (jiaoSe.shi_fou_zha_xing) {
     return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_bei_qi_pian', {
@@ -708,7 +678,7 @@ async function shengChengJingGaoFanYing(jiao_se?: AIJiaoSeXinXi): Promise<string
       ]
     : []
   const xiangYing = await 按配置调用('JiaoSeJingGaoFanYing', [
-    { jiaoSe: 'system', neiRong: '任务：生成该角色针对当前情境的反应内容。只输出 JSON，不附加任何说明文字。' },
+    { jiaoSe: 'system', neiRong: '你是恋爱模拟游戏的角色反应生成器。只输出 JSON。' },
     {
       jiaoSe: 'user',
       neiRong: [
@@ -797,7 +767,7 @@ async function shengChengChaQuJingGaoFanYing(yuan_yin: string, jiao_se?: AIJiaoS
       ]
     : []
   const xiangYing = await 按配置调用('JiaoSeJingGaoFanYing', [
-    { jiaoSe: 'system', neiRong: '任务：生成该角色针对当前情境的反应内容。只输出 JSON，不附加任何说明文字。' },
+    { jiaoSe: 'system', neiRong: '你是恋爱模拟游戏的角色反应生成器。只输出 JSON。' },
     {
       jiaoSe: 'user',
       neiRong: [
@@ -933,7 +903,7 @@ export async function chuLiYongHuJuJueAIHuoJieShou(
     最多条数: ShengLiShiBaiPeiZhi.biaoBaiPanDuanLiShiTiaoShu,
     时间在前: true })
   const xiangYing = await 按配置调用('JieShouBiaoBaiJianCe', [
-    { jiaoSe: 'system', neiRong: '任务：判定用户对角色表白的回复属于接受还是拒绝。只输出 JSON，不附加任何说明文字。' },
+    { jiaoSe: 'system', neiRong: '判断用户回复是接受表白还是拒绝，只输出 JSON。' },
     {
       jiaoSe: 'user',
       neiRong: [
@@ -1023,7 +993,7 @@ export async function jianCeYongHuXiaoXiBingChuLi(
 
   const tongYongYueShu = QueXinDuYueShu.tongYongJianCe
   if (jianCeJieGuo.biao_bai.shi_fou_biao_bai && jianCeJieGuo.biao_bai.que_xin_du > tongYongYueShu) {
-    return chuLiYongHuBiaoBai(yong_hu_id, jiao_se_id, hao_gan_du_zong_fen, chuFaXiaoXiIdLieBiao, xiao_xi)
+    return chuLiYongHuBiaoBai(yong_hu_id, jiao_se_id, hao_gan_du_zong_fen, chuFaXiaoXiIdLieBiao)
   }
 
   if (jianCeJieGuo.hu_shan.shi_fou_hu_shan && jianCeJieGuo.hu_shan.que_xin_du > tongYongYueShu) {

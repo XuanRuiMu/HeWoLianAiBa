@@ -144,6 +144,14 @@ export const aiQingQiuXianLiu = tongYongXianLiu(
   (req) => huoQuYongHuId(req) || huoQuQingQiuIP(req),
 )
 
+export const fanKuiXianLiu = tongYongXianLiu(
+  600000,
+  3,
+  'caoZuoPinFan',
+  (req) => huoQuYongHuId(req) || huoQuQingQiuIP(req),
+  'tongYong',
+)
+
 export const guanLiCaoZuoXianLiu = tongYongXianLiu(
   peiZhi.xianLiu.guanLi.chuangKou,
   peiZhi.xianLiu.guanLi.zuiDa,
@@ -192,14 +200,6 @@ export const zhuCeXianLiu = tongYongXianLiu(
   'zhuCePinFan',
   (req) => huoQuQingQiuIP(req),
   'renZheng',
-)
-
-export const fanKuiXianLiu = tongYongXianLiu(
-  peiZhi.xianLiu.fanKui.chuangKou,
-  peiZhi.xianLiu.fanKui.zuiDa,
-  'fanKuiTiJiaoPinFan',
-  (req) => huoQuYongHuId(req) || huoQuQingQiuIP(req),
-  'fanKui',
 )
 
 export async function duanXinRiPeiEZhuJi(

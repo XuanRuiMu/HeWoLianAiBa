@@ -330,4 +330,155 @@ export const 使用战绩仓库 = defineStore('战绩', () => {
     if (caoZuoZhong.value) return shiBaoHuJieGuo('busy', huoQuFanYi('tongYong', 'caoZuoPinFan'))
     const yuanFenLei = dangQianFenLei.value
     const muBiaoFenLei = fenLeiLieBiao.value.find((item) => item.id === targetCategoryId)
-    const dangAnJiLu = dangAnLieBiao                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+    const dangAnJiLu = dangAnLieBiao.value.find((item) => item.id === recordId)
+    if (!yuanFenLei || !muBiaoFenLei || !dangAnJiLu) {
+      return shiBaoHuJieGuo('invalid', huoQuFanYi('tongYong', 'canShuBuHeFa'))
+    }
+    if (yuanFenLei.id === muBiaoFenLei.id) {
+      return shiBaoHuJieGuo('invalid', huoQuFanYi('tongYong', 'canShuBuHeFa'))
+    }
+    caoZuoZhong.value = true
+    yiDongZhongId.value = recordId
+    qingCuoWu()
+    try {
+      const jieGuo = await yiDongDangAnDaoFenLei(yuanFenLei.id, recordId, muBiaoFenLei.id, yuanFenLei.version)
+      dangAnLieBiao.value = dangAnLieBiao.value.filter((item) => item.id !== recordId)
+      fenLeiLieBiao.value = fenLeiLieBiao.value.map((item) => {
+        if (item.id === jieGuo.source_category_id) {
+          return {
+            ...item,
+            version: jieGuo.source_version,
+            record_count: Math.max(0, item.record_count - 1),
+          }
+        }
+        if (item.id === jieGuo.category_id) {
+          return {
+            ...item,
+            version: jieGuo.target_version,
+            record_count: item.record_count + 1,
+          }
+        }
+        return item
+      })
+      return shiChengGong()
+    } catch (cuoWu) {
+      const zhengChangHua = jiLuCuoWu(cuoWu)
+      const tiShiWenBen = zhengChangHua.lianAiWenAn
+      if (shiChongTu(cuoWu)) {
+        await jiaZai()
+        sheZhiQianTaiCuoWu(zhengChangHua, true)
+        return shiBaoHuJieGuo('conflict', tiShiWenBen)
+      }
+      return shiBaoHuJieGuo('failed', tiShiWenBen)
+    } finally {
+      yiDongZhongId.value = null
+      caoZuoZhong.value = false
+    }
+  }
+
+  async function baoCunPaiXu(recordIds: string[]): Promise<ZhanJiCunKuanJieGuo> {
+    if (caoZuoZhong.value) return shiBaoHuJieGuo('busy', huoQuFanYi('tongYong', 'caoZuoPinFan'))
+    const fenLeiDuiXiang = dangQianFenLei.value
+    const xianYouIds = dangAnLieBiao.value.map((item) => item.id)
+    const tiJiaoZiDuan = paiXuZiDuanDengYu(recordIds)
+    const tiJiaoWanZheng =
+      tiJiaoZiDuan &&
+      recordIds.length === xianYouIds.length &&
+      recordIds.every((id) => xianYouIds.includes(id))
+    if (!fenLeiDuiXiang || !tiJiaoWanZheng) {
+      const tiShiWenBen = huoQuFanYi('tongYong', 'canShuBuHeFa')
+      cuoWuXinXi.value = tiShiWenBen
+      return shiBaoHuJieGuo('invalid', tiShiWenBen)
+    }
+    caoZuoZhong.value = true
+    paiXuZhong.value = true
+    jiLuXianShiPaiXu.value = [...recordIds]
+    qingCuoWu()
+    try {
+      const jieGuo = await paiXuFenLeiNeiZhanJi(fenLeiDuiXiang.id, recordIds, fenLeiDuiXiang.version)
+      const fuWuIdMap = new Map(dangAnLieBiao.value.map((item) => [item.id, item]))
+      const fuWuIds = jieGuo.record_ids
+      const fuWuZiDuan = paiXuZiDuanDengYu(fuWuIds)
+      const fuWuWanZheng =
+        jieGuo.category_id === fenLeiDuiXiang.id &&
+        fuWuZiDuan &&
+        fuWuIds.length === recordIds.length &&
+        fuWuIds.every((id) => fuWuIdMap.has(id))
+      if (!fuWuWanZheng) {
+        const tiShiWenBen = huoQuFanYi('tongYong', 'canShuBuHeFa')
+        cuoWuXinXi.value = tiShiWenBen
+        return shiBaoHuJieGuo('failed', tiShiWenBen)
+      }
+      dangAnLieBiao.value = fuWuIds.map((id, index) => ({
+        ...fuWuIdMap.get(id) as DangAnXiangQing,
+        category_id: jieGuo.category_id,
+        sort_order: index,
+      }))
+      fenLeiLieBiao.value = fenLeiLieBiao.value.map((item) =>
+        item.id === jieGuo.category_id ? { ...item, version: jieGuo.version } : item,
+      )
+      jiLuXianShiPaiXu.value = null
+      return shiChengGong()
+    } catch (cuoWu) {
+      const zhengChangHua = jiLuCuoWu(cuoWu)
+      const tiShiWenBen = zhengChangHua.lianAiWenAn
+      if (shiChongTu(cuoWu)) {
+        await jiaZai()
+        sheZhiQianTaiCuoWu(zhengChangHua, true)
+        jiLuXianShiPaiXu.value = null
+        return shiBaoHuJieGuo('conflict', tiShiWenBen)
+      }
+      cuoWuXinXi.value = tiShiWenBen
+      jiLuXianShiPaiXu.value = null
+      return shiBaoHuJieGuo('failed', tiShiWenBen)
+    } finally {
+      paiXuZhong.value = false
+      caoZuoZhong.value = false
+    }
+  }
+
+  function qingKong(): void {
+    shenFenFu += 1
+    fenLeiLieBiao.value = []
+    moRenFenLeiId.value = ''
+    dangQianFenLeiId.value = ''
+    dangAnLieBiao.value = []
+    fenLeiZhuangTai.value = 'weiKaiShi'
+    jiaZaiZhong.value = false
+    jiLuJiaZaiZhong.value = false
+    caoZuoZhong.value = false
+    paiXuZhong.value = false
+    yiDongZhongId.value = null
+    qingCuoWu()
+    jiLuXianShiPaiXu.value = null
+  }
+
+  return {
+    fenLeiLieBiao,
+    moRenFenLeiId,
+    dangQianFenLeiId,
+    dangQianFenLei,
+    dangAnLieBiao,
+    jiaZaiZhong,
+    jiLuJiaZaiZhong,
+    caoZuoZhong,
+    paiXuZhong,
+    yiDongZhongId,
+    cuoWuXinXi,
+    qianTaiCuoWu,
+    fenLeiZhuangTai,
+    fenLeiKeYong,
+    jiLuXianShiPaiXu,
+    jiaZai,
+    qieHuanFenLei,
+    chongXinJiaZai,
+    chuangJian,
+    gengMing,
+    shanChu,
+    sheZhiMoRen,
+    baoCunFenLeiPaiXu,
+    yiDongDangAn,
+    baoCunPaiXu,
+    qingKong,
+  }
+})

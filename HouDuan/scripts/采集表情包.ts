@@ -179,7 +179,7 @@ async function daBiao(): Promise<void> {
     `SELECT "ID", "短名", "SHA256", "MIME" FROM "系统表情" WHERE "描述" = '' AND "启用" = TRUE ORDER BY "创建时间" LIMIT $1`,
     [DA_BIAO_MEI_PI_SHU],
   )
-  const { genJuPeiZhiTiaoYong } = await import('../src/utils/通用模型调用')
+  const { genJuPeiZhiTiaoYong } = await import('../src/utils/DeepSeek客户端')
   for (const hang of daiDaBiao.rows as Array<Record<string, unknown>>) {
     const sha256 = String(hang.SHA256).toLowerCase()
     const luJing = huoQuBenDiLuJing(sha256)

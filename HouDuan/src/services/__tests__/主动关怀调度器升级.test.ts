@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { 调用参数, 调用结果 } from '../../utils/DeepSeek客户端'
-import { sheZhiMockTiaoYong } from '../../utils/DeepSeek客户端'
+import type { 调用参数, 调用结果 } from '../../utils/通用模型调用'
+import { sheZhiMockTiaoYong } from '../../utils/通用模型调用'
 import { 用户内容开始标记, 用户内容结束标记 } from '../../config/通用知识库'
 import type { AIJiaoSeXinXi, DuiHuaLiShiXiang, HaoGanDuXinXi } from '../../types'
 import {

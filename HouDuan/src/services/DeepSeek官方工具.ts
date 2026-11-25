@@ -1,4 +1,5 @@
 import { peiZhi } from '../config'
+import { huoQuDuoMoTaiPeiZhi, huoQuGuiJiLiuDongMiYao } from '../config/多模态配置'
 
 const JiChu = (): string => {
   const zi = (process.env.DEEPSEEK_OFFICIAL_BASE_URL || peiZhi.deepSeek.基础地址 || 'https://api.deepseek.com').trim().replace(/\/$/, '')
@@ -8,6 +9,91 @@ const JiChu = (): string => {
 const MiYao = (): string => (process.env.DEEPSEEK_OFFICIAL_API_KEY || '').trim()
 
 const ChaoShiHaoMiao = 180000
+
+function huoQuMianFeiSouSuoDaiLi(): string {
+  return (process.env.SOU_SUO_DAI_LI || '').trim()
+}
+
+function jieXiDdgLite(html: string): Array<{ title: string; url: string; snippet: string; site_name: string; date: string }> {
+  const jieGuo: Array<{ title: string; url: string; snippet: string; site_name: string; date: string }> = []
+  const linkReg = /<a\s+rel="nofollow"\s+href="(?:https?:)?\/\/duckduckgo\.com\/l\/\?uddg=([^"&]+)[^"]*"[^>]*class='result-link'[^>]*>([\s\S]*?)<\/a>/gi
+  let m: RegExpExecArray | null
+  while ((m = linkReg.exec(html)) !== null) {
+    let url = ''
+    try { url = decodeURIComponent(m[1]) } catch { continue }
+    const title = m[2].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
+    if (!/^https?:\/\//i.test(url) || !title) continue
+    let snippet = ''
+    const snipZhengZe = new RegExp(`<td\\s+class='result-snippet'>([\\s\\S]{0,600}?)</td>`)
+    const snip = html.slice(m.index, m.index + 1200).match(snipZhengZe) || html.match(snipZhengZe)
+    if (snip) snippet = snip[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
+    let site = ''
+    try { site = new URL(url).hostname.replace(/^www\./, '') } catch { site = '' }
+    const riQi = snippet.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}-\d{1,2}\s+\d{1,2}:\d{2})/)
+    jieGuo.push({ title, url, snippet, site_name: site, date: riQi ? riQi[1] : '' })
+  }
+  return jieGuo
+}
+
+async function souSuoDdgLite(query: string, tiaoShu: number): Promise<WangYeSouSuoTiaoMu[]> {
+  const daiLi = huoQuMianFeiSouSuoDaiLi()
+  const url = `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}`
+  const kongZhi = new AbortController()
+  const dingShi = setTimeout(() => kongZhi.abort(), 25000)
+  try {
+    const tou: Record<string, string> = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36' }
+    let dispatcher: unknown
+    if (daiLi) {
+      const { ProxyAgent } = await import('undici')
+      dispatcher = new ProxyAgent(daiLi)
+    }
+    const xiangYing = await fetch(url, {
+      method: 'GET',
+      headers: tou,
+      signal: kongZhi.signal,
+      ...(dispatcher ? ({ dispatcher } as Record<string, unknown>) : {}),
+    } as RequestInit)
+    if (!xiangYing.ok) return []
+    const html = await xiangYing.text()
+    return jieXiDdgLite(html).slice(0, tiaoShu).map((x) => ({
+      title: x.title, url: x.url, snippet: x.snippet, summary: x.snippet, content: x.snippet,
+      site_name: x.site_name || null, date: x.date || null, authority: 0, rerank_score: 0,
+    }))
+  } catch {
+    return []
+  } finally {
+    clearTimeout(dingShi)
+  }
+}
+
+async function souSuoBing(query: string, tiaoShu: number): Promise<WangYeSouSuoTiaoMu[]> {
+  const url = `https://cn.bing.com/search?q=${encodeURIComponent(query)}`
+  const kongZhi = new AbortController()
+  const dingShi = setTimeout(() => kongZhi.abort(), 25000)
+  try {
+    const xiangYing = await fetch(url, {
+      method: 'GET',
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36' },
+      signal: kongZhi.signal,
+    })
+    if (!xiangYing.ok) return []
+    const html = await xiangYing.text()
+    const jieGuo: WangYeSouSuoTiaoMu[] = []
+    const reg = /<h2><a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a><\/h2>/gi
+    let m: RegExpExecArray | null
+    while ((m = reg.exec(html)) !== null && jieGuo.length < tiaoShu) {
+      const title = m[2].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
+      let site = ''
+      try { site = new URL(m[1]).hostname.replace(/^www\./, '') } catch { site = '' }
+      jieGuo.push({ title, url: m[1], snippet: title, summary: title, content: title, site_name: site || null, date: null, authority: 0, rerank_score: 0 })
+    }
+    return jieGuo
+  } catch {
+    return []
+  } finally {
+    clearTimeout(dingShi)
+  }
+}
 
 export interface WangYeSouSuoTiaoMu {
   title: string
@@ -35,6 +121,15 @@ export async function souSuoWangYe(canShu: {
 }): Promise<WangYeSouSuoJieGuo> {
   const query = (canShu.query || '').trim()
   if (query === '' || query.length > 128) return { cheng_gong: false, tiaoMu: [], ti_shi: '搜索词为空或超长' }
+  const gongJu = (process.env.SOU_SUO_GONG_JU || 'ddg').trim().toLowerCase()
+  const tiaoShu = Math.max(1, Math.min(20, canShu.tiaoShu ?? 8))
+  const mianFei = gongJu === 'ddg' || gongJu === 'bing' ? (gongJu === 'ddg' ? await souSuoDdgLite(query, tiaoShu) : await souSuoBing(query, tiaoShu)) : []
+  if (mianFei.length > 0) return { cheng_gong: true, tiaoMu: mianFei }
+  if (gongJu === 'ddg' || gongJu === 'bing') {
+    const bei = gongJu === 'ddg' ? await souSuoBing(query, tiaoShu) : await souSuoDdgLite(query, tiaoShu)
+    if (bei.length > 0) return { cheng_gong: true, tiaoMu: bei }
+    return { cheng_gong: false, tiaoMu: [], ti_shi: '免费搜索无结果' }
+  }
   const miYao = MiYao()
   if (miYao === '') return { cheng_gong: false, tiaoMu: [], ti_shi: '官方钥匙未配置' }
   const kongZhi = new AbortController()
@@ -45,7 +140,7 @@ export async function souSuoWangYe(canShu: {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${miYao}` },
       body: JSON.stringify({
         query,
-        count: Math.max(1, Math.min(20, canShu.tiaoShu ?? 8)),
+        count: tiaoShu,
         need_content: canShu.xuYaoZhengWen === true,
         ori_question: canShu.yuanShiWenTi ? String(canShu.yuanShiWenTi).slice(0, 128) : null,
       }),
@@ -152,9 +247,38 @@ export interface ASRJieGuo {
 }
 
 export async function shiBieYuYin(canShu: { wavZiJie: Buffer }): Promise<ASRJieGuo> {
+  if (!canShu.wavZiJie.length) return { cheng_gong: false, wenBen: '', shiChangHaoMiao: null, ti_shi: '音频为空' }
+  const duoMoTai = huoQuDuoMoTaiPeiZhi()
+  const mianFeiKey = huoQuGuiJiLiuDongMiYao().trim()
+  const mianFeiBase = duoMoTai.guiJiLiuDongJiChuUrl.trim().replace(/\/$/, '')
+  const mianFeiModel = duoMoTai.guiJiLiuDongYuYinMoXing.trim()
+  if (mianFeiKey !== '' && mianFeiBase !== '' && mianFeiModel !== '') {
+    const biaoDan = new FormData()
+    biaoDan.append('file', new Blob([new Uint8Array(canShu.wavZiJie)], { type: 'audio/wav' }), 'yuyin.wav')
+    biaoDan.append('model', mianFeiModel)
+    const kongZhi = new AbortController()
+    const dingShi = setTimeout(() => kongZhi.abort(), 120000)
+    try {
+      const xiangYing = await fetch(`${mianFeiBase}/audio/transcriptions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${mianFeiKey}` },
+        body: biaoDan,
+        signal: kongZhi.signal,
+      })
+      if (xiangYing.ok) {
+        const shuJu = (await xiangYing.json()) as { text?: string; duration?: number }
+        const wenBen = String(shuJu.text ?? '').trim()
+        if (wenBen !== '') return { cheng_gong: true, wenBen, shiChangHaoMiao: Number(shuJu.duration ?? 0) > 0 ? Math.round(Number(shuJu.duration) * 1000) : null }
+        return { cheng_gong: true, wenBen: '', shiChangHaoMiao: null }
+      }
+    } catch {
+      /* 免费通道失败继续走官方 */
+    } finally {
+      clearTimeout(dingShi)
+    }
+  }
   const miYao = MiYao()
   if (miYao === '') return { cheng_gong: false, wenBen: '', shiChangHaoMiao: null, ti_shi: '官方钥匙未配置' }
-  if (!canShu.wavZiJie.length) return { cheng_gong: false, wenBen: '', shiChangHaoMiao: null, ti_shi: '音频为空' }
   const biaoDan = new FormData()
   biaoDan.append('file', new Blob([new Uint8Array(canShu.wavZiJie)], { type: 'audio/wav' }), 'yuyin.wav')
   const kongZhi = new AbortController()
@@ -188,10 +312,39 @@ export interface TTSJieGuo {
 }
 
 export async function heChengYuYin(canShu: { text: string; yinSeId?: string; durationMs?: number }): Promise<TTSJieGuo> {
-  const miYao = MiYao()
-  if (miYao === '') return { cheng_gong: false, yinPin: null, mime: '', shiChangHaoMiao: null, ti_shi: '官方钥匙未配置' }
   const text = (canShu.text || '').trim()
   if (text === '') return { cheng_gong: false, yinPin: null, mime: '', shiChangHaoMiao: null, ti_shi: '文本为空' }
+  const duoMoTai = huoQuDuoMoTaiPeiZhi()
+  const mianFeiKey = huoQuGuiJiLiuDongMiYao().trim()
+  const mianFeiBase = duoMoTai.guiJiLiuDongJiChuUrl.trim().replace(/\/$/, '')
+  if (mianFeiKey !== '' && mianFeiBase !== '') {
+    const yinSe = canShu.yinSeId === 'male-qn-chenqing' || canShu.yinSeId === 'tide' ? 'benjamin' : 'anna'
+    const kongZhi = new AbortController()
+    const dingShi = setTimeout(() => kongZhi.abort(), 90000)
+    try {
+      const xiangYing = await fetch(`${mianFeiBase}/audio/speech`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${mianFeiKey}` },
+        body: JSON.stringify({
+          model: 'FunAudioLLM/CosyVoice2-0.5B',
+          input: text.slice(0, 10000),
+          voice: `FunAudioLLM/CosyVoice2-0.5B:${yinSe}`,
+          response_format: 'wav',
+        }),
+        signal: kongZhi.signal,
+      })
+      if (xiangYing.ok) {
+        const huanChong = Buffer.from(await xiangYing.arrayBuffer())
+        if (huanChong.length > 0) return { cheng_gong: true, yinPin: huanChong, mime: 'audio/wav', shiChangHaoMiao: typeof canShu.durationMs === 'number' && canShu.durationMs > 0 ? Math.round(canShu.durationMs) : null }
+      }
+    } catch {
+      /* 免费通道失败继续走官方 */
+    } finally {
+      clearTimeout(dingShi)
+    }
+  }
+  const miYao = MiYao()
+  if (miYao === '') return { cheng_gong: false, yinPin: null, mime: '', shiChangHaoMiao: null, ti_shi: '官方钥匙未配置' }
   const voiceId = canShu.yinSeId === 'male-qn-chenqing' || canShu.yinSeId === 'tide' ? 'tide' : 'stella'
   const kongZhi = new AbortController()
   const dingShi = setTimeout(() => kongZhi.abort(), ChaoShiHaoMiao)

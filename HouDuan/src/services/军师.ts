@@ -5,7 +5,7 @@ import { huoQuWanZhengHaoGanDu } from './好感度'
 import { 取消息列表, 取角色所有者, type 消息信息 } from './消息'
 import { shiTuWenHunPaiKuai, type 消息块 } from './消息内容块'
 import { buQiWenJianTiQuWenBen } from './文档文本提取'
-import { shengChengJunShiZhiDao, JunShiZhiDaoShengChengShiBaiCuoWu } from './军师求助'
+import { shengChengJunShiZhiDao } from './军师求助'
 import { 数据库 } from '../数据库'
 import { 整理军师输入 } from './军师输入'
 import {
@@ -289,22 +289,11 @@ export async function qingQiuJunShiZhiDao(
     return { cheng_gong: true, jie_guo: jieGuo }
   } catch (cuoWu) {
     await shanChuJunShiZhiDaoZhuangTai(canShu.yong_hu_id, canShu.jiao_se_id)
-    const shiShengChengShiBai = cuoWu instanceof JunShiZhiDaoShengChengShiBaiCuoWu
-    jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, false, shiShengChengShiBai ? 'JUN_SHI_SHENG_CHENG_SHI_BAI' : 'XI_TONG_YI_CHANG')
-    if (shiShengChengShiBai) {
-      debug日志.warn('军师指导', '军师指导生成失败，返回错误响应，不落库军师记录', {
-        xiang_qing: {
-          yong_hu_id: canShu.yong_hu_id,
-          jiao_se_id: canShu.jiao_se_id,
-          yuan_yin: cuoWu instanceof JunShiZhiDaoShengChengShiBaiCuoWu ? cuoWu.yuanYin : '',
-        },
-      })
-    } else {
-      debug日志.error('军师指导', '请求军师指导异常', { xiang_qing: { cuo_wu: String(cuoWu) } })
-    }
+    jiLuJunShiQiuZhu(canShu.yong_hu_id, canShu.jiao_se_id, false, 'XI_TONG_YI_CHANG')
+    debug日志.error('军师指导', '请求军师指导异常', { xiang_qing: { cuo_wu: String(cuoWu) } })
     return {
       cheng_gong: false,
-      cuo_wu_ma: shiShengChengShiBai ? 'JUN_SHI_SHENG_CHENG_SHI_BAI' : 'XI_TONG_YI_CHANG',
+      cuo_wu_ma: 'XI_TONG_YI_CHANG',
       ti_shi: huoQuFanYi('junShi', 'shengChengShiBai'),
       zhuang_tai_ma: 500,
     }

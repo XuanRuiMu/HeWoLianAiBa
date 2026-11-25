@@ -1,18 +1,6 @@
 <template>
   <div v-if="youFenDuan && fenDuan" class="junshi-fenduan">
-    <section
-      v-if="juMianNeiRong"
-      class="junshi-duan junshi-duan-canyao"
-      data-duan="dangQianJuMian"
-    >
-      <h4 class="duan-biaoti">{{ huoQuFanYi('junShi', 'dangQianJuMian') }}</h4>
-      <p class="duan-neirong">{{ juMianNeiRong }}</p>
-    </section>
-    <section
-      v-if="houXuanHang.length > 0"
-      class="junshi-duan junshi-duan-zhidian"
-      data-duan="xiaYiBuZenMeHui"
-    >
+    <section class="junshi-duan junshi-duan-zhidian" data-duan="xiaYiBuZenMeHui">
       <h4 class="duan-biaoti">{{ huoQuFanYi('junShi', 'xiaYiBuZenMeHui') }}</h4>
       <div class="houxuan-liebiao">
         <div
@@ -64,12 +52,13 @@ const FuZhiTiShiHaoMiao = 2000
 type JunShiCiYaoJian = FanYiZiJian<'junShi'>
 
 const CiYaoDuan: Array<{ ziDuan: keyof JunShiZhiDaoFenDuan; fanYiJian: JunShiCiYaoJian }> = [
+  { ziDuan: 'dangQianJuMian', fanYiJian: 'dangQianJuMian' },
+  { ziDuan: 'weiShenMeZheMeLiao', fanYiJian: 'weiShenMeZheMeLiao' },
   { ziDuan: 'kanDaoDeJiXiang', fanYiJian: 'kanDaoDeJiXiang' },
+  { ziDuan: 'guLi', fanYiJian: 'guLi' },
 ]
 
 const HouXuanBiaoQian: JunShiCiYaoJian[] = ['houXuanWenTuo', 'houXuanTuiJin', 'houXuanShouZhuo']
-
-const juMianNeiRong = computed(() => (props.fenDuan?.dangQianJuMian || '').trim())
 
 const houXuanHang = computed(() => {
   const zhi = (props.fenDuan?.xiaYiBuZenMeHui || '').trim()
@@ -93,9 +82,7 @@ const ciYaoDuan = computed(() =>
 const youFenDuan = computed(
   () =>
     !!props.fenDuan &&
-    (juMianNeiRong.value.length > 0 ||
-      (props.fenDuan.xiaYiBuZenMeHui || '').trim().length > 0 ||
-      ciYaoDuan.value.length > 0),
+    ((props.fenDuan.xiaYiBuZenMeHui || '').trim().length > 0 || ciYaoDuan.value.length > 0),
 )
 
 const fuZhiTiShi = ref('')

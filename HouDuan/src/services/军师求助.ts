@@ -100,13 +100,18 @@ function guoLvJunShiBiaoDa(fenDuan: JunShiZhiDaoFenDuan): JunShiZhiDaoFenDuan {
     dangQianJuMian: guoLvFenXiBiaoDa(fenDuan.dangQianJuMian, '军师·当前局面'),
     xiaYiBuZenMeHui: guoLvFenXiBiaoDa(fenDuan.xiaYiBuZenMeHui, '军师·下一步怎么回'),
     weiShenMeZheMeLiao: guoLvFenXiBiaoDa(fenDuan.weiShenMeZheMeLiao, '军师·为什么这么聊'),
-    kanDaoDeJiXiang: guoLvFenXiBiaoDa(fenDuan.kanDaoDeJiXiang, '军师·我看到的迹象'),
+    kanDaoDeJiXiang: guoLvFenXiBiaoDa(fenDuan.kanDaoDeJiXiang, '军师·关键提醒'),
     guLi: guoLvFenXiBiaoDa(fenDuan.guLi, '军师·鼓励'),
   }
 }
 
+export const JunShiZongZiShuShangXian = 200
+
 export function pinJieJunShiFenDuan(fenDuan: JunShiZhiDaoFenDuan): string {
-  return JunShiZhiDaoDuanDingYi.map((duan) => fenDuan[duan.ziDuan]).filter((zhi) => zhi.length > 0).join('\n')
+  const wenBen = JunShiZhiDaoDuanDingYi.map((duan) => fenDuan[duan.ziDuan]).filter((zhi) => zhi.length > 0).join('\n')
+  const zi = Array.from(wenBen)
+  if (zi.length <= JunShiZongZiShuShangXian) return wenBen
+  return `${zi.slice(0, JunShiZongZiShuShangXian - 1).join('')}…`
 }
 
 function huoQuJiangJiWenBen(): string {
