@@ -421,13 +421,14 @@ export type FanKuiLeiBie =
   | 'neiRongBuDang'
   | 'xiTongGuZhang'
   | 'qiTaJianYi'
-
-export interface FanKuiTiJiao {
-  jiao_se_id: string
-  lei_bie: FanKuiLeiBie
-  nei_rong: string
-  xiao_xi_duan_luo?: string
-}
+  | 'yuYin'
+  | 'aiLiaoTian'
+  | 'biaoQingBao'
+  | 'gongNengYiChang'
+  | 'jieMianXianShi'
+  | 'qiTa'
+  | 'tiYanJianYi'
+  | string
 
 export interface TongZhi {
   id: string
@@ -440,12 +441,19 @@ export interface TongZhi {
   yi_du_shi_jian: string | null
 }
 
-export const FanKuiLeiBieMap: Record<FanKuiLeiBie, string> = {
+export const FanKuiLeiBieMap: Partial<Record<FanKuiLeiBie, string>> = {
   jiaoSeBuHeShi: '角色不合适',
   huiFuBuHeShi: '回复不合适',
   neiRongBuDang: '内容不当',
   xiTongGuZhang: '系统故障',
   qiTaJianYi: '其他建议',
+  yuYin: '语音',
+  aiLiaoTian: 'AI聊天',
+  biaoQingBao: '表情包',
+  gongNengYiChang: '功能异常',
+  jieMianXianShi: '界面显示',
+  qiTa: '其他',
+  tiYanJianYi: '体验建议',
 }
 
 export type 用户 = Yonghu
@@ -459,3 +467,93 @@ export type 性格选择 = XingGeXuanZe
 export const 性格选择映射 = XingGeXuanZeMap
 export type 人设标签 = RenSheBiaoQian
 export type 性别 = XingBie
+
+export interface FanKuiSheBeiXinXi {
+  yeMian?: string
+  yuYan?: string
+  pingTai?: string
+  shiQu?: string
+  shiKouKuanGao?: number
+  shiKouGaoDu?: number
+  pingMuKuan?: number
+  pingMuGao?: number
+  xiangSuBi?: number
+  shiJianChuo?: number
+}
+
+export interface XiaoXiYinYongKuaiZhao {
+  xiao_xi_id: string
+  lei_xing: string
+  zhai_yao: string
+  fa_song_zhe_lei_xing: string
+  shi_jian_chuo?: number
+  mei_ti_id?: string
+  url?: string
+  mei_ti_url?: string
+  mei_ti_shi_chang_hao_miao?: number
+  lai_yuan?: string
+}
+
+export interface BiaoQingBaoYinYongKuaiZhao {
+  mei_ti_id: string
+  url?: string
+  mei_ti_url?: string
+  lai_yuan: string
+  duan_ming?: string
+}
+
+export type FanKuiXiaoXiLeiXing = 'wenben' | 'wenzi' | 'tuPian' | 'tupian' | 'yuYin' | 'yinpin' | 'shipin' | 'biaoQingBao' | 'biaoqingbao' | 'wenJian' | 'xitong' | 'neiXinHuoDong' | 'neixinhuodong' | 'tiaozhan' | string
+
+export interface WoDeFanKuiXiang {
+  id: string
+  fen_lei: string
+  zhuang_tai: string
+  zheng_wen_zhai_yao: string
+  guan_li_bei_zhu: string | null
+  chuang_jian_shi_jian: string
+}
+
+export interface FanKuiGuanLiXiang {
+  id: string
+  yong_hu_ni_cheng: string | null
+  yong_hu_shou_ji_hao_yan_ma: string
+  ye_mian_biao_shi: string
+  fen_lei: string
+  man_yi_du: number | null
+  zheng_wen: string
+  biao_qian: string[]
+  xiao_xi_yin_yong: unknown[]
+  biao_qing_bao_yin_yong: unknown[]
+  she_bei_xin_xi: FanKuiSheBeiXinXi
+  zhuang_tai: string
+  guan_li_bei_zhu: string | null
+  chuang_jian_shi_jian: string
+  geng_xin_shi_jian: string
+}
+
+export interface FanKuiTongJi {
+  zong_shu: number
+  jin_7_tian_shu: number
+  zhuang_tai_shu: Record<string, number>
+  fen_lei_shu: Record<string, number>
+}
+
+export interface FanKuiTiJiao {
+  ye_mian_biao_shi: string
+  fen_lei: string
+  man_yi_du?: number
+  zheng_wen: string
+  biao_qian: string[]
+  xiao_xi_yin_yong: Array<XiaoXiYinYongKuaiZhao & { lei_xing: FanKuiXiaoXiLeiXing }> | XiaoXiYinYongKuaiZhao[]
+  biao_qing_bao_yin_yong: BiaoQingBaoYinYongKuaiZhao[]
+  she_bei_xin_xi: FanKuiSheBeiXinXi
+}
+
+export type FanKuiZhuangTai = 'xinJian' | 'chuLiZhong' | 'yiJieJue' | 'yiJuJue' | string
+
+export const FanKuiZhuangTaiMap: Record<FanKuiZhuangTai, string> = {
+  xinJian: '新建',
+  chuLiZhong: '处理中',
+  yiJieJue: '已解决',
+  yiJuJue: '已拒绝',
+}
