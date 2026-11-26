@@ -114,3 +114,4 @@ HouDuan/.models/bge-small-zh-v1.5/1_Pooling/
 HouDuan/.models/bge-small-zh-v1.5/modules.json
 HouDuan/.models/bge-small-zh-v1.5/config_sentence_transformers.json
 HouDuan/.models/bge-small-zh-v1.5/vocab.txt
+HouDuan/.models/
