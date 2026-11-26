@@ -1,0 +1,29 @@
+#!/bin/bash
+export VITEST=true
+export NODE_ENV=test
+export DATABASE_URL='postgresql://lianaiba:mLa1r%2BklANadqicEazyH0G6fOgUI1x6DYbIZwQ3u6FQ%3D@127.0.0.1:5432/lianaiba'
+export REDIS_URL='redis://:BgFAUbT%2FOChDZ3JMpHxNOQJkp%2FHmME9vb1ymIdyiXDc%3D@127.0.0.1:6379'
+export JWT_SECRET='G4Do0F4iSgHECc%2B1xDCuAh1eJc6bO%2BM%2Fk6dRb4P1F9p0pqFhyJ%2Ft%2Fm4Ie%2F8NwYKi'
+export PORT=3000
+export LOG_LEVEL=debug
+export TI_SHI_CI_RI_ZHI_QI_YONG=true
+export KAI_CHANG_QIAN_ZHI_QI_YONG=false
+export DEEPSEEK_API_KEY='sk-magpie'
+export DEEPSEEK_BASE_URL='http://172.29.0.1:3426'
+export DEEPSEEK_MODEL='group/magpie-2'
+export AI_CHAT_MODEL='group/magpie-2'
+export DEEPSEEK_FALLBACK_API_KEY=''
+export DEEPSEEK_FALLBACK_BASE_URL=''
+export DEEPSEEK_FALLBACK_MODEL=''
+export AI_MO_XING_CHI_JI_CHU='http://172.29.0.1:3426'
+export AI_MO_XING_CHI_MI_YAO='sk-magpie'
+export AI_MO_XING_CHI='ofm-kilo-dsh/deepseek-v4.1-flash-free|1,numes/dealignai/glm-5.3-flash-uncensored-fp8:free|1,deepaicode/deepseek-v4.1-flash|1,opencode-zen/deepseek-v4.1-flash-free|1,runcrate/zai-org/GLM-5.3|1,ofm-kilo-dsh/nemotron-3.5-lightning-free|1'
+export AI_HEDGE_DUI_CHONG_HAO_MIAO=2000
+export AI_HEDGE_ZUI_DA_BING_FA=24
+export AI_HEDGE_MEI_MIAO_XIN_QING_QIU=40
+export AI_HEDGE_ZUI_DUO_HOU_XUAN=3
+export MI_JI_KOU_LING=''
+export MEI_TI_SHEN_HE_MO_SHI='local'
+export MO_XING_LU_YOU_GONG_JU=''
+cd '/mnt/c/Users/xuanr/Desktop/玄锐暮工作区/和我恋爱吧/HouDuan'
+exec '/mnt/c/Program Files/nodejs/node.exe' -r ts-node/register -r tsconfig-paths/register src/server.ts

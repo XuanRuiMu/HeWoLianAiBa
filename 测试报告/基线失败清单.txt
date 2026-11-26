@@ -1,0 +1,90 @@
+ FAIL  src/routes/__tests__/意见反馈.test.ts [ src/routes/__tests__/意见反馈.test.ts ]
+ FAIL  src/services/__tests__/表情包端到端取图.test.ts > 真实库端到端：冷淡阶段玩梗也要能取到表情包 > 气质落不到专属标签时也不返回空
+ FAIL  src/services/__tests__/表情包端到端取图.test.ts > 真实库端到端：冷淡阶段玩梗也要能取到表情包 > 文件库路径能返回真实的短名与元数据
+ FAIL  src/services/__tests__/冲突弧.test.ts > 冲突弧服务：升档链、化解、计数、查询 > 敷衍计数只加一且要求弧内状态，返回新计数
+ FAIL  src/services/__tests__/冲突弧.test.ts > Director 解析冲突事件 > 拼音键与中文别名同样支持，普通生气解析为 shengQi
+ FAIL  src/services/__tests__/冲突弧.test.ts > Director 解析冲突事件 > 事由超长被截到 200 字
+ FAIL  src/services/__tests__/冲突弧.test.ts > Director 解析冲突事件 > 中文键严重冒犯解析为 yanZhong 并带事由
+ FAIL  src/services/__tests__/冲突弧.test.ts > Director 解析冲突事件 > null 表示明确无事件，缺字段是 undefined，非法值被丢弃
+ FAIL  src/services/__tests__/冲突弧调度集成.test.ts [ src/services/__tests__/冲突弧调度集成.test.ts ]
+ FAIL  src/services/__tests__/冲突死锁与状态机.test.ts > 已读不回死锁：用户持续真诚道歉必须在有限轮内拿到回复 > 频控超限那一轮直接放行，不静默
+ FAIL  src/services/__tests__/冲突闸门降级.test.ts [ src/services/__tests__/冲突闸门降级.test.ts ]
+ FAIL  src/services/__tests__/调度器记忆注入.test.ts > 运行AI注入长期记忆摘要 > 压缩任务拿当前角色名，测试跳过开关控制是否触发压缩
+ FAIL  src/services/__tests__/对话摘要.test.ts > 复合锚点与分批素材窗口 > 旧纯时间和旧无ID JSON锚点仍按原时间增量读取，不误用空复合游标
+ FAIL  src/services/__tests__/对话摘要.test.ts > 复合锚点与分批素材窗口 > 每批两条时取齐最近窗口且只摘窗口外内容，游标推进不重复计数
+ FAIL  src/services/__tests__/对话摘要.test.ts > 复合锚点与分批素材窗口 > 首次锚点带有消息ID，第二次生成仍能取到同创建时间的下一条
+ FAIL  src/services/__tests__/对话摘要.test.ts > 生成摘要触发门槛 > 估算 token 恰好达到压缩阈值时触发生成
+ FAIL  src/services/__tests__/对话摘要.test.ts > 生成摘要触发门槛 > 锚点后的新纯文字 token 不足阈值时不调模型不写库
+ FAIL  src/services/__tests__/对话摘要.test.ts > 生成摘要触发门槛 > 模型结果为空时保留旧摘要，不推进素材锚点
+ FAIL  src/services/__tests__/对话摘要.test.ts > 生成摘要触发门槛 > 首轮达到门槛但摘要读取失败时继续无锚点生成
+ FAIL  src/services/__tests__/对话摘要.test.ts > 生成摘要触发门槛 > 锁释放后下一次投入可以正常生成，空参数仅安全跳过
+ FAIL  src/services/__tests__/对话摘要.test.ts > 生成摘要触发门槛 > 已有旧摘要时只取锚点后增量，模型入参带旧记忆且按原文顺序
+ FAIL  src/services/__tests__/对话摘要.test.ts > 生成摘要触发门槛 > 已有摘要的计数保持原累计值，不重复增加
+ FAIL  src/services/__tests__/对话摘要.test.ts > 生成摘要触发门槛 > Redis不可用时用本地互斥完成生成，重复并发不重复调用模型
+ FAIL  src/services/__tests__/对话摘要.test.ts > 素材过滤与增量锚点 > 生成异常返回false且锁释放，保存含正文、密钥的报错也不会写到日志
+ FAIL  src/services/__tests__/对话摘要.test.ts > 素材过滤与增量锚点 > 素材按token窗口取数，模型文本不会截断成第一条或整表旧素材
+ FAIL  src/services/__tests__/对话摘要.test.ts > 素材过滤与增量锚点 > 写库异常不替换近期记忆，下轮可以再尝试
+ FAIL  src/services/__tests__/对话摘要.test.ts > 素材过滤与增量锚点 > token 估算在阈值处精确触发，不是超过阈值才触发
+ FAIL  src/services/__tests__/对话摘要.test.ts > 最近原文窗口 > 窗口配置为0时退化为旧的全量压缩行为
+ FAIL  src/services/__tests__/对话摘要.test.ts > 最近原文窗口 > 候选超阈值且窗口外有内容时，只摘要窗口前部分，最近窗口保留
+ FAIL  src/services/__tests__/对话摘要.test.ts > 最近原文窗口 > 候选全部落在最近窗口内时不调模型、不写库、不推进锚点
+ FAIL  src/services/__tests__/工具/真实语料回放.test.ts [ src/services/__tests__/工具/真实语料回放.test.ts ]
+ FAIL  src/services/__tests__/好感度评判冲突修复.test.ts [ src/services/__tests__/好感度评判冲突修复.test.ts ]
+ FAIL  src/services/__tests__/军师分段与泄露防护.test.ts > 军师表达层约束（全知分析 + 单一视角表达） > 不带后台词与普通「亲密」表述不被误删
+ FAIL  src/services/__tests__/军师分段与泄露防护.test.ts > 军师表达层约束（全知分析 + 单一视角表达） > 喂后台渣型数据时输出不得出现身份词与读心断言，正常话术保留
+ FAIL  src/services/__tests__/军师分段与泄露防护.test.ts > 军师分段协议 > 分段定义与类型键位同源，多一个少一个都会发现
+ FAIL  src/services/__tests__/军师分段与泄露防护.test.ts > 军师分段协议 > 五个键都能解析出来
+ FAIL  src/services/__tests__/军师分段与泄露防护.test.ts > 数值泄露防护 > 不带数字的正常说法不会被误伤
+ FAIL  src/services/__tests__/历史回想接入.test.ts > FP-04 历史回想接入——调用链 > 查不到时回想提示留空（照实说没印象交给提示词层）
+ FAIL  src/services/__tests__/历史回想接入.test.ts > FP-04 历史回想接入——调用链 > 回溯类消息会检索并把结果填入回想提示文本
+ FAIL  src/services/__tests__/连发合并调度.test.ts > 连发消息期间不中断进行中的 AI 调用 > 处理中收到新消息时记录待补发，不重置不中断
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 安全审核提示词必须是正式措辞 > 不再出现口语化的「瞅一眼」「踩线」
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 安全审核提示词必须是正式措辞 > 明确写出确信度门槛与宽容原则
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 安全审核提示词必须是正式措辞 > 使用正式的任务式表述
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 安全审核提示词必须是正式措辞 > 输出格式要求只输出 JSON
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 好感度按「对方舒不舒服」分档 > 低情商也保留少量加分空间，不是只有零分或负分
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 好感度按「对方舒不舒服」分档 > 分档覆盖从极度舒服到极度反感，梯度完整
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 好感度按「对方舒不舒服」分档 > 高情商必须有明显回报，能拉开与普通人的差距
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 好感度按「对方舒不舒服」分档 > 判断标准统一为对方舒不舒服，不用抽象情商标签
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 好感度按「对方舒不舒服」分档 > 真正的扣分只发生在让人不舒服时
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 好感度目标曲线按 5 分钟一把校准 > 成长系数上限提高，追赶时加速更明显
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 好感度目标曲线按 5 分钟一把校准 > 默认目标轮数从 35 降到 12
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 好感度目标曲线按 5 分钟一把校准 > 目标轮数可由环境变量覆盖，且有上下限保护
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 好感度评判异步化 > 好感度更新不再阻塞消息发送
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 好感度评判异步化 > 异步失败只记警告，不抛出影响已发消息
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 日程生成不再阻塞回复 > 日程准备失败只记警告，不影响本轮
+ FAIL  src/services/__tests__/系统提示词正式化与提速.test.ts > 日程生成不再阻塞回复 > 准备日程改为后台执行，不 await 在主链路上
+ FAIL  src/services/__tests__/长期记忆回想行为.test.ts > 回想检索语句的硬约束 > 关键词超过配置上限会被裁剪，预算不随输入膨胀
+ FAIL  src/services/__tests__/长期记忆回想行为.test.ts > 主聊天窗口：最近原文窗口由token驱动而非条数，>5000条短消息不被截断 > 生成摘要时查询语句按用户+角色+锚点+类型过滤，无LIMIT字面量
+ FAIL  src/services/__tests__/长期记忆回想行为.test.ts > 主聊天窗口：最近原文窗口由token驱动而非条数，>5000条短消息不被截断 > 长候选列表下保留窗口只取最近约 zuiJinYuanWenToken 的原文，更早的进入摘要
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀调度器升级 > 48小时锁被占用时放弃且不发送
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀调度器升级 > 单发闸门廉价预检命中时零生成零锁操作放弃
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀调度器升级 > 单发闸门抢占失败（被追加消息占用）时放弃并释放48小时锁
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀调度器升级 > 发送成功后抢占48小时已发锁与单发闸门（NX），存关怀原文、落通知并推送
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀调度器升级 > 发送前复核静默不满足（用户已回归）时放弃且不占锁不发送
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀调度器升级 > 发送时刻复核静默不满足时释放已占的48小时锁与单发闸门
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀调度器升级 > 发送时刻已读不回时放弃且不查闸门不写锁
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀调度器升级 > 角色被夺舍接管时跳过关怀安排
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀调度器升级 > 角色消息落库失败时对称释放48小时锁与单发闸门
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀调度器升级 > 角色信息读取失败时放弃且不占锁
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀调度器升级 > 冷战时提示词注入冲突起因定界包装与破冰指令
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀调度器升级 > 生成失败时放弃且不占48小时锁
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀调度器升级 > 消息已落库但推送失败时降级不抛，不释放48小时锁
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀调度器升级 > 与最近关怀重复时加强禁令重试一次，仍重复则放弃
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀调度器升级 > 重试通过相似度校验后正常发送
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀排期与触发源 > 触发源检查：静默查询失败不崩不排期
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀排期与触发源 > 触发源检查：静默满20小时才进入排期，不足则直接放弃
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀排期与触发源 > 调度器源码已删除模板三句与三档分型
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀排期与触发源 > 排期锁 NX 成功时安排一次定时发送
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀排期与触发源 > 排期锁 NX 失败（已有关怀排期）时不堆叠定时器
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀排期与触发源 > 在线巡检：无在线用户或无静默会话时不排期
+ FAIL  src/services/__tests__/主动关怀调度器升级.test.ts > 主动关怀排期与触发源 > 在线巡检：只扫socket在线用户，静默会话进入排期
+ FAIL  src/services/__tests__/主动关怀生成.test.ts [ src/services/__tests__/主动关怀生成.test.ts ]
+ FAIL  src/services/__tests__/追加消息单发闸门.test.ts > 追加消息单发闸门 > 单发闸门被主动关怀抢占时追加放弃，不发送
+ FAIL  src/services/__tests__/追加消息单发闸门.test.ts > 追加消息单发闸门 > 抢占在发送前完成，被取代时已占闸门由用户发言清理兜底
+ FAIL  src/services/__tests__/追加消息单发闸门.test.ts > 追加消息单发闸门 > 追加发送前 NX 抢占单发闸门键（7 天 TTL）
+ FAIL  src/services/__tests__/追加消息单发闸门.test.ts > 追加消息单发闸门 > 追加发送失败时释放已抢占的闸门
+ FAIL  src/services/__tests__/FP02军师输入解耦与简短输出.test.ts > 配置与段定义 > 五个前端字段名保持不变，各段限字符合简报要求
+ FAIL  src/services/__tests__/FP03复盘聊天分析重构.test.ts > 复盘主链路：逐段点评、表白过慢点出、忽略标注 > 合并后的消息进 prompt，批注序号按可定位段过滤，表白过快与忽略条数入总结
+ FAIL  src/services/__tests__/FP08语音理解调用.test.ts > 语音理解调用（阿里百炼 qwen-omni 音频事件描述） > 请求体结构：model、modalities=text、input_audio(base64, wav)、指令词与密钥头
+ FAIL  src/utils/__tests__/模型池日志模型名.test.ts > 模型池日志必须包含真实模型名 > 记录真实模型名，而不是配置分类名

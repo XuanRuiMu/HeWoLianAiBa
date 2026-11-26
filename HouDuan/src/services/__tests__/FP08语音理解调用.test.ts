@@ -95,7 +95,7 @@ describe('语音理解调用（阿里百炼 qwen-omni 音频事件描述）', ()
     expect(qingQiuTi.modalities).toEqual(['text'])
     const neiRong = qingQiuTi.messages[0].content
     expect(neiRong[0].type).toBe('input_audio')
-    expect(neiRong[0].input_audio.data).toBe(wavZiJie.toString('base64'))
+    expect(neiRong[0].input_audio.data).toBe(`data:audio/wav;base64,${wavZiJie.toString('base64')}`)
     expect(neiRong[0].input_audio.format).toBe('wav')
     expect(neiRong[1].type).toBe('text')
     expect(String(neiRong[1].text)).toContain('200')

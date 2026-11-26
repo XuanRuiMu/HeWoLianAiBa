@@ -126,7 +126,7 @@ describe('冲突弧服务：升档链、化解、计数、查询', () => {
   })
 
   it('敷衍计数只加一且要求弧内状态，返回新计数', async () => {
-    查询.mockResolvedValueOnce({ rows: [{ 冲突升级计数: 3 }], rowCount: 1 })
+    查询.mockResolvedValueOnce({ rows: [{ ji_shu: 3 }], rowCount: 1 })
     const jiShu = await diZengFuYanJiShu('u-1', 'j-1')
     expect(jiShu).toBe(3)
     const [yuJu, canShu] = 查询.mock.calls[0]

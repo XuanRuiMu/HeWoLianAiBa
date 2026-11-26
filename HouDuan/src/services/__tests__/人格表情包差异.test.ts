@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { panDuanBiaoQingZaiTi } from '../表情载体'
-import { jiSuanBiaoQingShouGan } from '../表情密度'
+import { panDuanBiaoQingZaiTi } from '../表情包载体'
+import { jiSuanBiaoQingShouGan } from '../表情包频率'
 import type { AIYinQingShuRu } from '../../types'
 
 function 输入(ie: 'I' | 'E', 消息 = '哈哈太搞笑了'): AIYinQingShuRu {
@@ -17,20 +17,25 @@ function 输入(ie: 'I' | 'E', 消息 = '哈哈太搞笑了'): AIYinQingShuRu {
 }
 
 describe('人格决定表情包频率和梗图范围', () => {
-  it('内向人格不注入梗图，外向人格可注入梗图', () => {
+  it('风格由年龄档决定，青年档含梗图', () => {
     const 内 = panDuanBiaoQingZaiTi(输入('I'))
     const 外 = panDuanBiaoQingZaiTi(输入('E'))
-    expect(内.yunXuFengGe).not.toContain('梗图')
-    expect(内.yunXuFengGe).toContain('日常')
+    expect(内.yunXuFengGe).toContain('梗图')
     expect(外.yunXuFengGe).toContain('梗图')
     expect(外.geiHouXuan).toBe(true)
   })
 
-  it('内向间隔明显长于外向，不是方向写反', () => {
+  it('人设气质决定频率：沙雕搞怪明显比正经严肃发得多', () => {
+    const 沙雕 = jiSuanBiaoQingShouGan([], { ie_lei_xing: 'E', re_shen_lei_xing: '快热', ren_she_qi_zhi: ['沙雕搞怪'] }, '好友')
+    const 正经 = jiSuanBiaoQingShouGan([], { ie_lei_xing: 'I', re_shen_lei_xing: '慢热', ren_she_qi_zhi: ['正经严肃'] }, '好友')
+    expect(沙雕.qiWangJianGeLunShu).toBeLessThan(正经.qiWangJianGeLunShu)
+    expect(沙雕.qiWangJianGeLunShu).toBeLessThan(20)
+  })
+
+  it('无气质时回退到 IE，外向比内向发得多', () => {
     const 内 = jiSuanBiaoQingShouGan([], { ie_lei_xing: 'I', re_shen_lei_xing: '快热' }, '好友')
     const 外 = jiSuanBiaoQingShouGan([], { ie_lei_xing: 'E', re_shen_lei_xing: '快热' }, '好友')
-    expect(内.qiWangJianGeLunShu).toBeGreaterThan(外.qiWangJianGeLunShu)
-    expect(外.qiWangJianGeLunShu).toBeLessThan(15)
+    expect(外.qiWangJianGeLunShu).toBeLessThan(内.qiWangJianGeLunShu)
   })
 
   it('长辈人设无论外向与否都不发梗图，年龄档优先', () => {

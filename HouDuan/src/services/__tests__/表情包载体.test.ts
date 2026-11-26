@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { panDuanBiaoQingZaiTi } from '../表情载体'
+import { panDuanBiaoQingZaiTi } from '../表情包载体'
 import { BiaoQingBaoYunXing, BiaoQingMiDu } from '../../config/表情包配置'
 import type { AIYinQingShuRu, DirectorCeLue, DuiHuaLiShiXiang } from '../../types'
 
@@ -11,7 +11,7 @@ function tu(faSongZhe: 'yonghu' | 'jiaose'): DuiHuaLiShiXiang {
   return {
     fa_song_zhe_lei_xing: faSongZhe,
     fa_song_zhe_ming: 'x',
-    nei_rong: '[贴纸:笑哭]',
+    nei_rong: '[表情包:笑哭]',
     shi_jian: '00:00',
   }
 }
@@ -183,11 +183,13 @@ describe('节奏与回敬', () => {
     expect(jueCe.geiHouXuan).toBe(true)
   })
 
-  it('自己刚发过图且间隔没到时不给候选', () => {
+  it('自己刚发过图时降低发图权重，但不硬拦候选', () => {
     const shuRu = zaoShuRu({ dui_hua_li_shi: [wenZi('yonghu'), tu('jiaose')] })
-    const jueCe = panDuanBiaoQingZaiTi(shuRu, zaoCeLue())
-    expect(jueCe.yuanYin).toBe('间隔未到')
-    expect(jueCe.geiHouXuan).toBe(false)
+    const gangFa = panDuanBiaoQingZaiTi(shuRu, zaoCeLue())
+    const meiFa = panDuanBiaoQingZaiTi(zaoShuRu({ dui_hua_li_shi: [wenZi('yonghu'), wenZi('jiaose')] }), zaoCeLue())
+    expect(gangFa.gangFaGuoTu).toBe(true)
+    expect(gangFa.geiHouXuan).toBe(true)
+    expect(gangFa.faTuQuanZhong).toBeLessThan(meiFa.faTuQuanZhong)
   })
 
   it('从没发过图时放行第一次', () => {
@@ -243,7 +245,7 @@ describe('节奏与回敬', () => {
   })
 })
 
-describe('开关、兜底与硬上限', () => {
+describe('开关与兜底', () => {
   it('总开关关闭时不给候选', () => {
     const yuan = BiaoQingBaoYunXing.daKai
     ;(BiaoQingBaoYunXing as { daKai: boolean }).daKai = false
@@ -263,10 +265,6 @@ describe('开关、兜底与硬上限', () => {
     expect(() => panDuanBiaoQingZaiTi(zang, zaoCeLue())).not.toThrow()
   })
 
-  it('门控不改动每轮最多两张的硬上限', () => {
-    expect(BiaoQingBaoYunXing.zuiDaMeiLunZhangShu).toBe(2)
-  })
-
   it('心情底色不参与门控，给不给候选结果一致', () => {
     const you = zaoCeLue({ biao_qing_yi_tu: '好笑' })
     const wu = zaoCeLue({ biao_qing_yi_tu: null })
@@ -282,5 +280,56 @@ describe('开关、兜底与硬上限', () => {
 
   it('发送前后不得因本地玩笑排除词漏掉危机', () => {
     expect(panDuanBiaoQingZaiTi(zaoShuRu({ yong_hu_xin_xiao_xi: '笑崩溃了，我现在真的很难受' }), zaoCeLue()).yuanYin).toBe('危机')
+  })
+})
+describe('发图权重按人设给出不同档位', () => {
+  function 取权重(renShe: Record<string, unknown>): number {
+    const shuRu = zaoShuRu({
+      jiao_se: { nian_ling: 24, ie_lei_xing: 'E', re_shen_lei_xing: '快热', ...renShe },
+      dui_hua_li_shi: [wenZi('yonghu'), wenZi('jiaose')],
+    })
+    return panDuanBiaoQingZaiTi(shuRu, zaoCeLue()).faTuQuanZhong
+  }
+
+  it('权重是意愿强度，落在 0 到 2 之间', () => {
+    const quanZhong = 取权重({ xing_ge: '沙雕搞怪，爱整活，笑点低' })
+    expect(quanZhong).toBeGreaterThan(0)
+    expect(quanZhong).toBeLessThanOrEqual(2)
+  })
+
+  it('沙雕搞怪的人设权重明显高于正经严肃的人设', () => {
+    const shaDiao = 取权重({ xing_ge: '沙雕搞怪，爱整活，笑点低，外向活泼' })
+    const yanSu = 取权重({ xing_ge: '严肃严谨，理性克制，认真守规矩' })
+    expect(shaDiao).toBeGreaterThan(yanSu)
+  })
+
+  it('沙雕搞怪落在自然选择以上，正经严肃落在可发可不发以下', () => {
+    const shaDiao = 取权重({ xing_ge: '沙雕搞怪，爱整活，笑点低，外向活泼' })
+    const yanSu = 取权重({ xing_ge: '严肃严谨，理性克制，认真守规矩' })
+    expect(shaDiao).toBeGreaterThanOrEqual(0.6)
+    expect(yanSu).toBeLessThan(0.4)
+  })
+
+  it('I 型内向人设的权重低于同气质的 E 型', () => {
+    const wai = 取权重({ ie_lei_xing: 'E', xing_ge: '温柔体贴，会哄人' })
+    const nei = 取权重({ ie_lei_xing: 'I', xing_ge: '温柔体贴，会哄人' })
+    expect(nei).toBeLessThan(wai)
+  })
+
+  it('刚发过图后权重按衰减系数下降', () => {
+    const shuRu = zaoShuRu({
+      jiao_se: { nian_ling: 24, ie_lei_xing: 'E', re_shen_lei_xing: '快热', xing_ge: '沙雕搞怪，爱整活' },
+      dui_hua_li_shi: [wenZi('yonghu'), wenZi('jiaose')],
+    })
+    const meiFa = panDuanBiaoQingZaiTi(shuRu, zaoCeLue()).faTuQuanZhong
+    const gangFa = panDuanBiaoQingZaiTi(
+      zaoShuRu({
+        jiao_se: { nian_ling: 24, ie_lei_xing: 'E', re_shen_lei_xing: '快热', xing_ge: '沙雕搞怪，爱整活' },
+        dui_hua_li_shi: [wenZi('yonghu'), tu('jiaose')],
+      }),
+      zaoCeLue(),
+    )
+    expect(gangFa.gangFaGuoTu).toBe(true)
+    expect(gangFa.faTuQuanZhong).toBeCloseTo(meiFa * BiaoQingMiDu.gangFaGuoTuCheng, 2)
   })
 })

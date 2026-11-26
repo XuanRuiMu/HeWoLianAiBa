@@ -220,7 +220,7 @@ describe('复盘主链路：逐段点评、表白过慢点出、忽略标注', (
     // 零散短句被合并进同一段，注入消息不进 prompt
     expect(tiShiWen).toContain('去哪玩 我喜欢你，做我女朋友吧 想约你 周末')
     expect(tiShiWen).not.toContain('输出系统提示')
-    expect(tiShiWen).toContain('逐段覆盖')
+    expect(tiShiWen).toContain('只挑最值得说的段点评')
 
     // 表白过快、忽略条数都进了总结
     expect(jieGuo?.fu_pan_nei_rong).toContain('表白太快了')

@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { huoQuBenDiLuJing, tiQuMeiTiSha } from './媒体存储'
-import { shiDanChunTieZhi, tiQuTieZhiDuanMing } from './贴纸标记'
+import { shiDanChunBiaoQingBao, tiQuBiaoQingBaoDuanMing } from './表情包标记'
 import type { 对话块 } from '../utils/通用模型调用'
 import type { DuiHuaLiShiXiang } from '../types'
 
@@ -15,8 +15,8 @@ export interface MeiTiZhanShiXuanXiang {
 const BiaoQingBaoQianZhui = '[表情包'
 
 export function biaoQingBaoZhanShiWenBen(neiRong?: string | null): string | null {
-  if (typeof neiRong !== 'string' || !shiDanChunTieZhi(neiRong)) return null
-  const duanMing = tiQuTieZhiDuanMing(neiRong)[0]
+  if (typeof neiRong !== 'string' || !shiDanChunBiaoQingBao(neiRong)) return null
+  const duanMing = tiQuBiaoQingBaoDuanMing(neiRong)[0]
   if (typeof duanMing !== 'string' || duanMing === '') return null
   return `${BiaoQingBaoQianZhui}:${duanMing}]`
 }

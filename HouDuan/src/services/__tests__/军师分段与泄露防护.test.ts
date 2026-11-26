@@ -10,19 +10,16 @@ import type { DuiHuaLiShiXiang, JunShiQiuZhuCanShu } from '../../types'
 const 完整输出 = JSON.stringify({
   当前局面: '聊到周末去哪玩了，气氛还行',
   下一步怎么回: '那个地方我也去过\n周末要不要一起去看看\n你最近好像挺忙的',
-  为什么这么聊: 'TA最后问你去哪玩了，是在找共同话题',
-  我看到的迹象: '这三次都是TA先起的话，回得也比之前快',
-  鼓励: '稳着呢',
+  关键提醒: 'TA最后问你去哪玩了，是在找共同话题；这三次都是TA先起的话，回得也比之前快',
 })
 
 describe('军师分段协议', () => {
-  it('五个键都能解析出来', () => {
+  it('三个键都能解析出来', () => {
     const fenDuan = jieXiJunShiFenDuan(完整输出)
     expect(fenDuan).not.toBeNull()
     expect(fenDuan?.dangQianJuMian).toContain('周末')
-    expect(fenDuan?.weiShenMeZheMeLiao).toContain('共同话题')
+    expect(fenDuan?.kanDaoDeJiXiang).toContain('共同话题')
     expect(fenDuan?.kanDaoDeJiXiang).toContain('TA先起的话')
-    expect(fenDuan?.guLi).toBe('稳着呢')
   })
 
   it('下一步怎么回保留三条换行结构', () => {
@@ -35,9 +32,7 @@ describe('军师分段协议', () => {
     const dingYiJian = JunShiZhiDaoDuanDingYi.map((duan) => duan.ziDuan).sort()
     expect(dingYiJian).toEqual([
       'dangQianJuMian',
-      'guLi',
       'kanDaoDeJiXiang',
-      'weiShenMeZheMeLiao',
       'xiaYiBuZenMeHui',
     ])
   })
@@ -56,26 +51,22 @@ describe('数值泄露防护', () => {
     const yuan = JSON.stringify({
       当前局面: 'TA对你有兴趣，亲密度涨了2分',
       下一步怎么回: '那地方我也去过',
-      为什么这么聊: '信任度现在是120分，说明还早',
-      我看到的迹象: '',
-      鼓励: '',
+      关键提醒: '',
     })
     const fenDuan = jieXiJunShiFenDuan(yuan)
     expect(fenDuan?.dangQianJuMian).not.toContain('2分')
-    expect(fenDuan?.weiShenMeZheMeLiao).not.toContain('120')
+    expect(fenDuan?.kanDaoDeJiXiang).not.toContain('120')
   })
 
   it('不带数字的正常说法不会被误伤', () => {
     const yuan = JSON.stringify({
       当前局面: '你们俩现在挺亲密的',
       下一步怎么回: '我也想去看看',
-      为什么这么聊: 'TA在试探你的态度',
-      我看到的迹象: '',
-      鼓励: '',
+      关键提醒: 'TA在试探你的态度',
     })
     const fenDuan = jieXiJunShiFenDuan(yuan)
     expect(fenDuan?.dangQianJuMian).toContain('亲密')
-    expect(fenDuan?.weiShenMeZheMeLiao).toContain('试探')
+    expect(fenDuan?.kanDaoDeJiXiang).toContain('试探')
   })
 })
 
@@ -85,9 +76,7 @@ describe('截断按码点走', () => {
     const yuan = JSON.stringify({
       当前局面: '',
       下一步怎么回: changWenBen,
-      为什么这么聊: '',
-      我看到的迹象: '',
-      鼓励: '',
+      关键提醒: '',
     })
     const fenDuan = jieXiJunShiFenDuan(yuan)
     const zhi = fenDuan?.xiaYiBuZenMeHui || ''
@@ -102,7 +91,7 @@ describe('整段拼接', () => {
     const fenDuan = jieXiJunShiFenDuan(完整输出)
     expect(fenDuan).not.toBeNull()
     if (!fenDuan) return
-    const zhengDuan = pinJieJunShiFenDuan({ ...fenDuan, guLi: '' })
+    const zhengDuan = pinJieJunShiFenDuan({ ...fenDuan, kanDaoDeJiXiang: '' })
     expect(zhengDuan.includes('\n\n')).toBe(false)
   })
 
@@ -110,9 +99,7 @@ describe('整段拼接', () => {
     const kong = JSON.stringify({
       当前局面: '',
       下一步怎么回: '',
-      为什么这么聊: '',
-      我看到的迹象: '',
-      鼓励: '',
+      关键提醒: '',
     })
     expect(jieXiJunShiFenDuan(kong)).toBeNull()
   })
@@ -150,7 +137,7 @@ describe('军师知识层注入', () => {
     sheZhiMockTiaoYong(async (canShu) => {
       buHuo.push(canShu)
       return {
-        neiRong: JSON.stringify({ 当前局面: 'a', 下一步怎么回: 'b\nc\nd', 为什么这么聊: 'e', 我看到的迹象: 'f', 鼓励: 'g' }),
+        neiRong: JSON.stringify({ 当前局面: 'a', 下一步怎么回: 'b\nc\nd', 关键提醒: 'ef' }),
         yuanShuJu: null,
         xinXi: { role: 'assistant', neiRong: '' },
       }
@@ -172,7 +159,7 @@ describe('军师知识层注入', () => {
     sheZhiMockTiaoYong(async (canShu) => {
       buHuo.push(canShu)
       return {
-        neiRong: JSON.stringify({ 当前局面: 'a', 下一步怎么回: 'b\nc\nd', 为什么这么聊: 'e', 我看到的迹象: 'f', 鼓励: 'g' }),
+        neiRong: JSON.stringify({ 当前局面: 'a', 下一步怎么回: 'b\nc\nd', 关键提醒: 'ef' }),
         yuanShuJu: null,
         xinXi: { role: 'assistant', neiRong: '' },
       }
@@ -191,7 +178,7 @@ describe('军师知识层注入', () => {
     sheZhiMockTiaoYong(async (canShu) => {
       buHuo.push(canShu)
       return {
-        neiRong: JSON.stringify({ 当前局面: 'a', 下一步怎么回: 'b', 为什么这么聊: 'c', 我看到的迹象: 'd', 鼓励: 'e' }),
+        neiRong: JSON.stringify({ 当前局面: 'a', 下一步怎么回: 'b', 关键提醒: 'cd' }),
         yuanShuJu: null,
         xinXi: { role: 'assistant', neiRong: '' },
       }
@@ -255,9 +242,7 @@ describe('军师表达层约束（全知分析 + 单一视角表达）', () => {
       neiRong: JSON.stringify({
         当前局面: 'TA是渣型，你别讨好了，TA在试探你，信任度120分',
         下一步怎么回: '那地方周末一起去看看\n要不你主动约一句\n先别急着往下聊',
-        为什么这么聊: '对象类型是渣男，MBTI是ENTJ，TA在试探你的态度',
-        我看到的迹象: 'TA是渣女，亲密度涨了2分',
-        鼓励: '稳着呢',
+        关键提醒: 'TA最后问你去哪玩了，是在找共同话题',
       }),
       yuanShuJu: null,
       xinXi: { role: 'assistant', neiRong: '' },
@@ -271,7 +256,7 @@ describe('军师表达层约束（全知分析 + 单一视角表达）', () => {
       expect(zhengWen).not.toContain(ci)
     }
     expect(jieGuo.zhi_dao_fen_duan?.xiaYiBuZenMeHui).toContain('那地方周末一起去看看')
-    expect(jieGuo.zhi_dao_fen_duan?.guLi).toBe('稳着呢')
+    expect(jieGuo.zhi_dao_fen_duan?.kanDaoDeJiXiang).toBeTruthy()
   })
 
   it('不带后台词与普通「亲密」表述不被误删', async () => {
@@ -279,9 +264,7 @@ describe('军师表达层约束（全知分析 + 单一视角表达）', () => {
       neiRong: JSON.stringify({
         当前局面: '你们俩现在挺亲密的，聊得挺热乎',
         下一步怎么回: '我也想去看看\n周末一起约一下\n先留个话头',
-        为什么这么聊: 'TA最后问你去哪玩，是在找共同话题',
-        我看到的迹象: '这几次都是TA先起的话',
-        鼓励: '',
+        关键提醒: 'TA最后问你去哪玩了，是在找共同话题',
       }),
       yuanShuJu: null,
       xinXi: { role: 'assistant', neiRong: '' },
@@ -290,6 +273,6 @@ describe('军师表达层约束（全知分析 + 单一视角表达）', () => {
       { fa_song_zhe_lei_xing: 'yonghu', fa_song_zhe_ming: '用户', nei_rong: '周末去哪玩', shi_jian: '12:00' },
     ]))
     expect(jieGuo.zhi_dao_fen_duan?.dangQianJuMian).toContain('挺亲密的')
-    expect(jieGuo.zhi_dao_fen_duan?.weiShenMeZheMeLiao).toContain('共同话题')
+    expect(jieGuo.zhi_dao_fen_duan?.kanDaoDeJiXiang).toContain('共同话题')
   })
 })

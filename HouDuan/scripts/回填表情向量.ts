@@ -13,6 +13,10 @@ interface 标注 {
   适用场景?: string
   启用?: boolean
   来源?: string
+  风格?: string
+  关系阶段下限?: string
+  人设气质?: string[] | string
+  圈层门槛?: string
 }
 
 const MIME映射: Record<string, string> = {
@@ -48,6 +52,27 @@ function jianDuan(wenBen: string, zuiDa: number): string {
 function suanSha256(luJing: string): string {
   const huanChong = fs.readFileSync(luJing)
   return createHash('sha256').update(huanChong).digest('hex').toLowerCase()
+}
+
+function 归一气质(zhi: unknown): string {
+  if (Array.isArray(zhi)) return zhi.map((x) => String(x).trim()).filter(Boolean).join(' ')
+  return typeof zhi === 'string' ? zhi.trim() : ''
+}
+
+function 组检索文本(can: {
+  duanMing: string
+  miaoShu: string
+  qingXu: string
+  changJing: string
+  fengGe: string
+  qiZhi: string
+  quanCeng: string
+  jieDuan: string
+}): string {
+  return [
+    can.duanMing, can.miaoShu, can.qingXu, can.changJing,
+    can.qiZhi, can.fengGe, can.quanCeng, can.jieDuan,
+  ].filter((x) => x !== '').join(' ').replace(/\s+/g, ' ').trim()
 }
 
 interface 条目 {
@@ -97,12 +122,16 @@ async function zhu(): Promise<void> {
     const miaoShu = jianDuan(biaoZhu.描述 || '', 120)
     const qingXu = jianDuan(biaoZhu.情绪标签 || '待打标', 20)
     const changJing = jianDuan(biaoZhu.适用场景 || '', 120)
+    const fengGe = jianDuan(biaoZhu.风格 || '', 20)
+    const qiZhi = jianDuan(归一气质(biaoZhu.人设气质), 60)
+    const quanCeng = jianDuan(biaoZhu.圈层门槛 || '', 20)
+    const jieDuan = jianDuan(biaoZhu.关系阶段下限 || '', 20)
     daiChuLi.push({
       duanMing,
       miaoShu,
       qingXu,
       changJing,
-      jianSuo: `${duanMing} ${miaoShu} ${qingXu} ${changJing}`.trim(),
+      jianSuo: 组检索文本({ duanMing, miaoShu, qingXu, changJing, fengGe, qiZhi, quanCeng, jieDuan }),
       sha256,
       mime,
       laiYuan: jianDuan(biaoZhu.来源 || '本地表情包库', 120),

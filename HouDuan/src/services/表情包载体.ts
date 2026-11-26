@@ -6,7 +6,7 @@ import {
   BiaoQingMiDu,
   表情载体配置,
 } from '../config/表情包配置'
-import { jiSuanBiaoQingShouGan, shiBiaoQingXiaoXi } from './表情密度'
+import { jiSuanBiaoQingShouGan, shiBiaoQingXiaoXi } from './表情包频率'
 import { tuiDaoRenSheQiZhi } from './人设气质'
 import type { AIYinQingShuRu, DirectorCeLue, DuiHuaLiShiXiang } from '../types'
 
@@ -18,7 +18,6 @@ export type BiaoQingZaiTiYuanYin =
   | '总开关关闭'
   | '危机'
   | '关系未到'
-  | '间隔未到'
   | '门控异常'
 
 export interface BiaoQingZaiTiJueCe {
@@ -32,6 +31,8 @@ export interface BiaoQingZaiTiJueCe {
   quXiang: string
   renSheQiZhi: string[]
   yong_hu_xin_xiao_xi: string
+  faTuQuanZhong: number
+  gangFaGuoTu: boolean
 }
 
 interface NianLingDang {
@@ -64,6 +65,8 @@ function quBaoShouJueCe(yuanYin: BiaoQingZaiTiYuanYin): BiaoQingZaiTiJueCe {
     quXiang: '偏少',
     renSheQiZhi: ['通用'],
     yong_hu_xin_xiao_xi: '',
+    faTuQuanZhong: 0,
+    gangFaGuoTu: false,
   }
 }
 
@@ -164,11 +167,13 @@ export function panDuanBiaoQingZaiTi(
     const geRenXiShu = quGeRenXiShu(shuRu?.jiao_se_id)
     const jieDuanXuHao = quJieDuanXuHao(shuRu?.hao_gan_du?.guan_xi_jie_duan)
     const liShi = qingXiLiShi(shuRu?.dui_hua_li_shi)
+    const renSheQiZhi = tuiDaoRenSheQiZhi(shuRu.jiao_se)
     const shouGan = jiSuanBiaoQingShouGan(
       liShi,
       {
         ie_lei_xing: shuRu?.jiao_se?.ie_lei_xing,
         re_shen_lei_xing: shuRu?.jiao_se?.re_shen_lei_xing,
+        ren_she_qi_zhi: renSheQiZhi,
       },
       表情关系阶段顺序[jieDuanXuHao],
     )
@@ -186,13 +191,16 @@ export function panDuanBiaoQingZaiTi(
     else if (shiWeiJi(shuRu, ceLue)) yuanYin = '危机'
     else if (jieDuanXuHao < quJieDuanXuHao(表情载体配置.zuiDiYunXuJieDuan)) yuanYin = '关系未到'
     else if (shiHuiJing(liShi)) yuanYin = '回敬'
-    else if (shouGan.shangCiFaTuLunShu !== null && shouGan.shangCiFaTuLunShu < qiWangJianGe) {
-      yuanYin = '间隔未到'
-    }
 
-    if (yuanYin === '放行' && typeof ceLue?.qing_gan_nong_du === 'number' && ceLue.qing_gan_nong_du < 35) {
-      yuanYin = '间隔未到'
+    const gangFaGuoTu = shouGan.shangCiFaTuLunShu !== null && shouGan.shangCiFaTuLunShu <= 2
+    const qiWang = Math.max(1, shouGan.qiWangJianGeLunShu)
+    const jianGeQuanZhong = BiaoQingMiDu.quanZhongJiShu / Math.max(1, qiWang / BiaoQingMiDu.quanZhongBanShuaiLun)
+    let faTuQuanZhong = jianGeQuanZhong * nianLingDang.jianGeBeiLv * geRenXiShu
+    if (gangFaGuoTu) faTuQuanZhong *= BiaoQingMiDu.gangFaGuoTuCheng
+    if (typeof ceLue?.qing_gan_nong_du === 'number') {
+      faTuQuanZhong *= Math.max(0.3, Math.min(1.4, ceLue.qing_gan_nong_du / 50))
     }
+    faTuQuanZhong = Math.max(0, Math.min(2, Number(faTuQuanZhong.toFixed(3))))
 
     const jueCe: BiaoQingZaiTiJueCe = {
       geiHouXuan: yuanYin === '放行' || yuanYin === '回敬',
@@ -203,8 +211,10 @@ export function panDuanBiaoQingZaiTi(
       qiWangJianGeLunShu: qiWangJianGe,
       shangCiFaTuLunShu: shouGan.shangCiFaTuLunShu,
       quXiang: shouGan.quXiang,
-      renSheQiZhi: tuiDaoRenSheQiZhi(shuRu.jiao_se),
+      renSheQiZhi: renSheQiZhi,
       yong_hu_xin_xiao_xi: quWenBen(shuRu?.yong_hu_xin_xiao_xi),
+      faTuQuanZhong,
+      gangFaGuoTu,
     }
     debug日志.debug(RiZhiLeiXing, '本轮表情载体决策', {
       xiang_qing: {
@@ -219,6 +229,8 @@ export function panDuanBiaoQingZaiTi(
         ge_ren_xi_shu: geRenXiShu,
         shang_ci_fa_tu: jueCe.shangCiFaTuLunShu,
         qu_xiang: jueCe.quXiang,
+        fa_tu_quan_zhong: jueCe.faTuQuanZhong,
+        gang_fa_guo_tu: jueCe.gangFaGuoTu,
       },
     })
     return jueCe

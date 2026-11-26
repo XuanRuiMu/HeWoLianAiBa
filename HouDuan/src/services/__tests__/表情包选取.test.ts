@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const 候选系统表情Mock = vi.hoisted(() => vi.fn())
 
+const 语义候选Mock = vi.hoisted(() => vi.fn())
+
 const 按短名查Mock = vi.hoisted(() => vi.fn())
 
 const 短名转UUIDMock = vi.hoisted(() => vi.fn())
@@ -26,7 +28,7 @@ vi.mock('../../数据库', () => ({
 }))
 
 vi.mock('../语义表情检索', () => ({
-  语义候选: vi.fn(async () => []),
+  语义候选: (...canShu: unknown[]) => 语义候选Mock(...canShu),
 }))
 
 import {
@@ -36,10 +38,10 @@ import {
   生成表情候选文本,
   组装表情候选块,
   type XiTongBiaoQingXiang,
-} from '../系统表情'
+} from '../表情包选取'
 import { jieXiDirectorXiangYing } from '../Director'
 import { BiaoQingBaoYunXing } from '../../config/表情包配置'
-import type { BiaoQingZaiTiJueCe } from '../表情载体'
+import type { BiaoQingZaiTiJueCe } from '../表情包载体'
 
 function fangXingJueCe(gengDuo: Partial<BiaoQingZaiTiJueCe> = {}): BiaoQingZaiTiJueCe {
   return {
@@ -88,17 +90,19 @@ function xiang(zhi: Partial<XiTongBiaoQingXiang> = {}): XiTongBiaoQingXiang {
 
 beforeEach(() => {
   候选系统表情Mock.mockReset()
+  语义候选Mock.mockReset()
+  语义候选Mock.mockResolvedValue([])
   按短名查Mock.mockReset()
   短名转UUIDMock.mockReset()
   baoCunMeiTiXiaoXiMock.mockReset()
   短名转UUIDMock.mockImplementation((duanMing: string) => `uuid-${duanMing}`)
 })
 
-describe('候选来自表情包库', () => {
+describe('候选来自语义向量检索', () => {
   it('按意图取候选并补上稳定 id', async () => {
-    候选系统表情Mock.mockResolvedValue([kuTiaoMu()])
-    const lieBiao = await 候选包装('无语', 8)
-    expect(候选系统表情Mock).toHaveBeenCalledWith('无语', 8, undefined, undefined)
+    语义候选Mock.mockResolvedValue([kuTiaoMu()])
+    const lieBiao = await 候选包装('无语', 8, fangXingJueCe())
+    expect(语义候选Mock).toHaveBeenCalled()
     expect(lieBiao).toHaveLength(1)
     expect(lieBiao[0]).toMatchObject({
       id: 'uuid-熊猫头无语',
@@ -111,22 +115,24 @@ describe('候选来自表情包库', () => {
     })
   })
 
-  it('意图为空或空白时按无标签取候选', async () => {
-    候选系统表情Mock.mockResolvedValue([kuTiaoMu()])
-    await 候选包装(null, 8)
-    expect(候选系统表情Mock).toHaveBeenLastCalledWith(null, 8, undefined, undefined)
-    await 候选包装('   ', 8)
-    expect(候选系统表情Mock).toHaveBeenLastCalledWith(null, 8, undefined, undefined)
+  it('未开载体门控时不走向量检索，返回空', async () => {
+    语义候选Mock.mockResolvedValue([kuTiaoMu()])
+    await expect(候选包装('无语', 8)).resolves.toEqual([])
+    expect(语义候选Mock).not.toHaveBeenCalled()
+    await expect(候选包装('   ', 8)).resolves.toEqual([])
+    expect(语义候选Mock).not.toHaveBeenCalled()
   })
 
-  it('库为空时返回空数组且不抛错', async () => {
-    候选系统表情Mock.mockResolvedValue([])
-    await expect(候选包装('无语', 8)).resolves.toEqual([])
+  it('向量无候选时返回空数组，不回落关键词库', async () => {
+    语义候选Mock.mockResolvedValue([])
+    await expect(候选包装('无语', 8, fangXingJueCe())).resolves.toEqual([])
+    expect(候选系统表情Mock).not.toHaveBeenCalled()
   })
 
-  it('库读取抛错时返回空数组且不抛错', async () => {
-    候选系统表情Mock.mockRejectedValue(new Error('目录不存在'))
-    await expect(候选包装('无语', 8)).resolves.toEqual([])
+  it('向量检索抛错时返回空数组且不抛错，也不回落关键词库', async () => {
+    语义候选Mock.mockRejectedValue(new Error('目录不存在'))
+    await expect(候选包装('无语', 8, fangXingJueCe())).resolves.toEqual([])
+    expect(候选系统表情Mock).not.toHaveBeenCalled()
   })
 })
 
@@ -170,7 +176,7 @@ describe('表情包消息发送', () => {
     expect(canShu.lei_xing).toBe('biaoQingBao')
     expect(canShu.yong_hu_id).toBe('u-1')
     expect(canShu.jiao_se_id).toBe('j-1')
-    expect(canShu.nei_rong).toBe('[贴纸:熊猫头无语]')
+    expect(canShu.nei_rong).toBe('[表情包:熊猫头无语]')
   })
 
   it('未命中表情库时不落库', async () => {
@@ -196,11 +202,11 @@ describe('候选块组装', () => {
   it('说明文字放开图的形态且不写死一图一文', () => {
     const kuai = 组装表情候选块([xiang()])
     expect(kuai).toContain('【表情包候选】')
-    expect(kuai).toContain('[贴纸:熊猫头无语]')
+    expect(kuai).toContain('[表情包:熊猫头无语]')
     expect(kuai).toContain('位置本身就是语气')
     expect(kuai).toContain('只发一张图')
     expect(kuai).toContain('别再用文字说一遍')
-    expect(kuai).toContain(`一轮最多 ${BiaoQingBaoYunXing.zuiDaMeiLunZhangShu} 张`)
+    expect(kuai).toContain('一轮发几张由你自己决定')
     expect(kuai).not.toContain('不是把话说完再补一张图')
     expect(kuai).not.toContain('用一张图代替你要打的那个词')
     expect(kuai).toContain('情绪:无语')
@@ -220,48 +226,48 @@ describe('候选块组装', () => {
 
 describe('候选文本总开关', () => {
   it('意图为空但门控放行时仍给候选', async () => {
-    候选系统表情Mock.mockResolvedValue([kuTiaoMu()])
+    语义候选Mock.mockResolvedValue([kuTiaoMu()])
     await expect(生成表情候选文本(null, fangXingJueCe())).resolves.toContain(
-      '[贴纸:熊猫头无语]',
+      '[表情包:熊猫头无语]',
     )
-    expect(候选系统表情Mock).toHaveBeenCalled()
+    expect(语义候选Mock).toHaveBeenCalled()
   })
 
   it('门控拒绝时返回空串且不查库', async () => {
     await expect(
       生成表情候选文本('无语', fangXingJueCe({ geiHouXuan: false })),
     ).resolves.toBe('')
-    expect(候选系统表情Mock).not.toHaveBeenCalled()
+    expect(语义候选Mock).not.toHaveBeenCalled()
   })
 
-  it('门控放行时把人设风格与关系阶段透传给图库', async () => {
-    候选系统表情Mock.mockResolvedValue([kuTiaoMu()])
+  it('门控放行时把人设风格与关系阶段透传给向量检索', async () => {
+    语义候选Mock.mockResolvedValue([kuTiaoMu()])
     await 生成表情候选文本('无语', fangXingJueCe())
-    expect(候选系统表情Mock).toHaveBeenCalledWith('无语', BiaoQingBaoYunXing.houXuanShuLiang, {
+    expect(语义候选Mock).toHaveBeenCalledWith(expect.objectContaining({
       yunXuFengGe: ['黄脸', '祝福'],
       guanXiJieDuanXuHao: 6,
       renSheQiZhi: ['通用'],
-      wenBen: expect.any(String),
-    }, undefined)
+      shuLiang: BiaoQingBaoYunXing.houXuanShuLiang,
+    }))
   })
 
   it('库关闭时返回空串', async () => {
     const yuan = BiaoQingBaoYunXing.daKai
     ;(BiaoQingBaoYunXing as { daKai: boolean }).daKai = false
     try {
-      候选系统表情Mock.mockResolvedValue([kuTiaoMu()])
+      语义候选Mock.mockResolvedValue([kuTiaoMu()])
       await expect(生成表情候选文本('无语', fangXingJueCe())).resolves.toBe('')
-      expect(候选系统表情Mock).not.toHaveBeenCalled()
+      expect(语义候选Mock).not.toHaveBeenCalled()
     } finally {
       ;(BiaoQingBaoYunXing as { daKai: boolean }).daKai = yuan
     }
   })
 
-  it('打开且库有候选时拼出候选块', async () => {
-    候选系统表情Mock.mockResolvedValue([kuTiaoMu()])
+  it('打开且向量有候选时拼出候选块', async () => {
+    语义候选Mock.mockResolvedValue([kuTiaoMu()])
     const wenBen = await 生成表情候选文本('无语', fangXingJueCe())
-    expect(wenBen).toContain('[贴纸:熊猫头无语]')
-    expect(候选系统表情Mock).toHaveBeenCalled()
+    expect(wenBen).toContain('[表情包:熊猫头无语]')
+    expect(语义候选Mock).toHaveBeenCalled()
   })
 
   it('不传门控决策时一律不给候选，避免绕过人设判断', async () => {

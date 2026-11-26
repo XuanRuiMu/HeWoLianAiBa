@@ -46,7 +46,7 @@ describe('聊天证据整理：时间与撤回边界', () => {
 
   it('撤回、合法短句、隔日消息的组合中撤回带标记进证据且不吞原文', async () => {
     const { zhengLiLiaoTianZhengJu } = await import('../聊天证据整理')
-    const kuai = [{ leiXing: 'tupian', url: 'uploads/che-hui.png' }, { leiXing: 'wenzi', neiRong: '说明文字' }]
+    const kuai = [{ leiXing: 'biaoqingbao', url: 'uploads/che-hui.png' }, { leiXing: 'wenzi', neiRong: '说明文字' }]
     const cheHui = zaoXiang('che-hui', '撤回不等于空消息', Date.parse('2026-09-01T23:59:30+08:00'), {
       yi_che_hui: true,
       yuanShiNeiRong: '撤回不等于空消息',
@@ -126,7 +126,7 @@ describe('聊天证据整理：正常说话与原始证据', () => {
 
   it('媒体的类型、URL、文件名、时长、内容块顺序原样留在消息证据中', async () => {
     const { zhengLiLiaoTianZhengJu } = await import('../聊天证据整理')
-    const kuai = [{ leiXing: 'wenzi', neiRong: '看看这张' }, { leiXing: 'tupian', url: '/uploads/a.png' }]
+    const kuai = [{ leiXing: 'wenzi', neiRong: '看看这张' }, { leiXing: 'biaoqingbao', url: '/uploads/a.png' }]
     const shi = zaoXiang('tu', '看看这张', Date.parse('2026-09-01T12:00:00+08:00'), {
       meiTiLeiBie: 'tupian',
       meiTiURL: '/uploads/a.png',

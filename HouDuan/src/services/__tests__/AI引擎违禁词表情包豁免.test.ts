@@ -84,12 +84,12 @@ beforeEach(() => {
 
 describe('违禁词兜底不误伤贴纸标记', () => {
   it('敏感字只出现在表情包短名里时不再拦掉整轮回复', async () => {
-    设定写手输出([`原来[贴纸:熊猫头${MinGanCi}]是这样`])
+    设定写手输出([`原来[表情包:熊猫头${MinGanCi}]是这样`])
 
     const jieGuo = await yunXingAIYinQing(造输入())
 
     expect(jieGuo.shi_fou_hui_fu).toBe(true)
-    expect(jieGuo.xiao_xi_lie_biao).toEqual([`原来[贴纸:熊猫头${MinGanCi}]是这样`])
+    expect(jieGuo.xiao_xi_lie_biao).toEqual([`原来[表情包:熊猫头${MinGanCi}]是这样`])
   })
 
   it('正文里真的出现违禁词时仍然整轮拦截', async () => {

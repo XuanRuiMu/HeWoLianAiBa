@@ -104,3 +104,13 @@ stdout-*.rev
 项目语料实验室/
 撤回消息（时间已过）.png
 撤回消息（时间未过）.png
+
+# 临时脚本与本地模型权重
+HouDuan/.tmp-*
+!HouDuan/.tmp-start-server-wsl.sh
+!HouDuan/.tmp-tcpforward3425.cjs
+HouDuan/.models/bge-small-zh-v1.5/model.safetensors
+HouDuan/.models/bge-small-zh-v1.5/1_Pooling/
+HouDuan/.models/bge-small-zh-v1.5/modules.json
+HouDuan/.models/bge-small-zh-v1.5/config_sentence_transformers.json
+HouDuan/.models/bge-small-zh-v1.5/vocab.txt

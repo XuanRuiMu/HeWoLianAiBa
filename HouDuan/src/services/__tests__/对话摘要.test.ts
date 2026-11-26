@@ -65,8 +65,8 @@ function shuHui(shu: number) {
   return 查询.mockImplementationOnce(async () => ({ rows: [{ dai_shu: shu }] }))
 }
 
-function ziJieHui(ziJie: number) {
-  return 查询.mockImplementationOnce(async () => ({ rows: [{ zi_jie: ziJie }] }))
+function ziFuHui(ziFu: number) {
+  return 查询.mockImplementationOnce(async () => ({ rows: [{ zi_fu_shu: ziFu }] }))
 }
 
 function bianHao(xuHao: number): string {
@@ -202,7 +202,7 @@ describe('生成摘要触发门槛', () => {
   it('锚点后的新纯文字 token 不足阈值时不调模型不写库', async () => {
     duHui()
     shuHui(40)
-    ziJieHui((AI配置.zhaiYao.yaSuoTokenYuZhi - 1) * 5)
+    ziFuHui(Math.floor((AI配置.zhaiYao.yaSuoTokenYuZhi - 1) / 0.6))
 
     expect(await shengChengBingLuoKuZhaiYao(YongHu, JiaoSe, '糖糖')).toBe(true)
 
@@ -210,7 +210,7 @@ describe('生成摘要触发门槛', () => {
     expect(查询).toHaveBeenCalledTimes(3)
     expect(String(查询.mock.calls[1][0])).toContain('COUNT(*)')
     expect(查询.mock.calls[1][1]).toEqual([YongHu, JiaoSe, null, ['neiXinHuoDong'], null])
-    expect(String(查询.mock.calls[2][0])).toContain('SUM(OCTET_LENGTH')
+    expect(String(查询.mock.calls[2][0])).toContain('SUM(CHAR_LENGTH')
     expect(查询.mock.calls[2][1]).toEqual([YongHu, JiaoSe, null, ['neiXinHuoDong'], null])
     expect(String(查询.mock.calls[1][0])).toContain('已撤回')
     expect(String(查询.mock.calls[1][0])).toContain("'wenben'")
@@ -226,7 +226,7 @@ describe('生成摘要触发门槛', () => {
     try {
       duHui()
       shuHui(2)
-      ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+      ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
       liaoHui([
         { 内容: '早期素材'.repeat(400), 发送者: 'yonghu', 创建时间: new Date(Date.UTC(2026, 9, 2, 10, 0)) },
         { 内容: '累积到阈值的原文', 发送者: 'yonghu', 创建时间: new Date(Date.UTC(2026, 9, 2, 10, 1)) },
@@ -236,7 +236,7 @@ describe('生成摘要触发门槛', () => {
 
       expect(await shengChengBingLuoKuZhaiYao(YongHu, JiaoSe, '糖糖')).toBe(true)
       expect(调用模型).toHaveBeenCalledTimes(1)
-      expect(String(查询.mock.calls[2][0])).toContain('SUM(OCTET_LENGTH')
+      expect(String(查询.mock.calls[2][0])).toContain('SUM(CHAR_LENGTH')
     } finally {
       ;(AI配置.zhaiYao as { zuiJinYuanWenToken: number }).zuiJinYuanWenToken = yuanZhi
     }
@@ -259,7 +259,7 @@ describe('生成摘要触发门槛', () => {
     try {
       duHui(zhaiYaoHang('旧记忆', MaoDian, null, 20))
       shuHui(2)
-      ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+      ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
       liaoHui([
         { ID: bianHao(1), 内容: '原来那天你记得', 发送者: 'yonghu', 创建时间: '2026-10-02T10:00:00.000Z' },
         { ID: bianHao(2), 内容: '记得，我没忘', 发送者: 'jiaose', 创建时间: new Date('2026-10-02T10:01:00.000Z') },
@@ -289,7 +289,7 @@ describe('生成摘要触发门槛', () => {
   it('模型结果为空时保留旧摘要，不推进素材锚点', async () => {
     duHui(zhaiYaoHang('别让他等太久', MaoDian))
     shuHui(40)
-    ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+    ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
     liaoHui(Array.from({ length: 40 }, (_, i) => ({
       内容: i < 38 ? '早期素材'.repeat(40000) : `新消息${i + 1}`,
       发送者: 'yonghu',
@@ -311,7 +311,7 @@ describe('生成摘要触发门槛', () => {
     try {
       duHui(zhaiYaoHang('旧记忆', MaoDian, null, 20))
       shuHui(1)
-      ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+      ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
       liaoHui([{ ID: bianHao(2), 内容: '原文', 发送者: 'yonghu', 创建时间: new Date('2026-10-02T10:01:00.000Z') }])
       调用模型.mockResolvedValueOnce({ neiRong: '新记忆' })
       查询.mockResolvedValueOnce({ rows: [] })
@@ -339,7 +339,7 @@ describe('生成摘要触发门槛', () => {
     try {
       查询.mockImplementationOnce(async () => { throw new Error('missing table') })
       shuHui(40)
-      ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+      ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
       liaoHui([
         { 内容: '他说了今天不加班', 发送者: 'yonghu', 创建时间: new Date('2026-10-02T08:00:00.000Z') },
         { 内容: '那正好一起吃晚饭', 发送者: 'jiaose', 创建时间: new Date('2026-10-02T08:01:00.000Z') },
@@ -361,7 +361,7 @@ describe('生成摘要触发门槛', () => {
   it('锁释放后下一次投入可以正常生成，空参数仅安全跳过', async () => {
     duHui()
     shuHui(40)
-    ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+    ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
     liaoHui([
       { 内容: '早期素材'.repeat(40000), 发送者: 'yonghu', 创建时间: new Date(Date.UTC(2026, 9, 2, 9, 59)) },
       { 内容: '中间素材'.repeat(40000), 发送者: 'jiaose', 创建时间: new Date(Date.UTC(2026, 9, 2, 10, 0)) },
@@ -380,7 +380,7 @@ describe('生成摘要触发门槛', () => {
     redisSet.mockRejectedValue(new Error('connect ECONNREFUSED'))
     duHui()
     shuHui(40)
-    ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+    ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
     liaoHui([
       { 内容: '早期素材'.repeat(40000), 发送者: 'yonghu', 创建时间: new Date(Date.UTC(2026, 9, 2, 9, 59)) },
       { 内容: '中间素材'.repeat(40000), 发送者: 'jiaose', 创建时间: new Date(Date.UTC(2026, 9, 2, 10, 0)) },
@@ -473,7 +473,7 @@ describe('素材过滤与增量锚点', () => {
     try {
       duHui()
       shuHui(40)
-      ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+      ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
       liaoHui([
         { 内容: '恰好达到阈值', 发送者: 'yonghu', 创建时间: new Date() },
       ])
@@ -490,7 +490,7 @@ describe('素材过滤与增量锚点', () => {
   it('token 估算低于阈值时不进入素材查询', async () => {
     duHui()
     shuHui(40)
-    ziJieHui((AI配置.zhaiYao.yaSuoTokenYuZhi - 1) * 5)
+    ziFuHui(Math.floor((AI配置.zhaiYao.yaSuoTokenYuZhi - 1) / 0.6))
 
     expect(await shengChengBingLuoKuZhaiYao(YongHu, JiaoSe, '糖糖')).toBe(true)
     expect(调用模型).not.toHaveBeenCalled()
@@ -514,7 +514,7 @@ describe('素材过滤与增量锚点', () => {
     try {
       duHui()
       shuHui(200)
-      ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+      ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
       liaoHui([
         { 内容: '老消息', 发送者: 'yonghu', 创建时间: '2026-10-03T01:00:00.000Z' },
         { 内容: '中消息', 发送者: 'jiaose', 创建时间: '2026-10-03T02:00:00.000Z' },
@@ -539,7 +539,7 @@ describe('素材过滤与增量锚点', () => {
     try {
       duHui()
       shuHui(40)
-      ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+      ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
       const neiRong = '用户今晚私密聊天里的秘密'
       liaoHui([{ 内容: neiRong, 发送者: 'yonghu', 创建时间: new Date() }])
       调用模型.mockRejectedValueOnce(new Error('sk-private-token=abc，数据库口令=xyz，' + neiRong))
@@ -568,7 +568,7 @@ describe('素材过滤与增量锚点', () => {
     try {
       duHui()
       shuHui(40)
-      ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+      ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
       liaoHui([{ 内容: '待落库原文', 发送者: 'yonghu', 创建时间: new Date() }])
       调用模型.mockResolvedValueOnce({ neiRong: '写入失败的记忆' })
       查询.mockRejectedValueOnce(Object.assign(new Error('42P01关系不存在'), { code: '42P01' }))
@@ -580,7 +580,7 @@ describe('素材过滤与增量锚点', () => {
 
       duHui({})
       shuHui(1)
-      ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+      ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
       liaoHui([{ 内容: '再来一条', 发送者: 'yonghu', 创建时间: new Date() }])
       调用模型.mockResolvedValueOnce({ neiRong: '重试后的记忆' })
       查询.mockResolvedValueOnce({ rows: [] })
@@ -658,7 +658,7 @@ describe('复合锚点与分批素材窗口', () => {
     try {
       duHui()
       shuHui(1)
-      ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+      ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
       liaoHui([{ ID: m1, 内容: '第一条同时刻消息', 发送者: 'yonghu', 创建时间: MaoDian }])
       调用模型.mockResolvedValueOnce({ neiRong: '记住第一条' })
       查询.mockResolvedValueOnce({ rows: [] })
@@ -673,7 +673,7 @@ describe('复合锚点与分批素材窗口', () => {
       查询.mockReset()
       查询.mockImplementationOnce(async () => ({ rows: [{ 摘要内容: '记住第一条', 概括消息数: 1, 素材锚点时间: MaoDian, 素材锚点消息ID: m1 }] }))
       shuHui(1)
-      ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+      ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
       查询.mockImplementationOnce(caiLiaoChaXun([{ ID: m1, 用户ID: YongHu, 角色ID: JiaoSe, 内容: '第一条同时刻消息', 发送者: 'yonghu', 创建时间: MaoDian }, { ID: m2, 用户ID: YongHu, 角色ID: JiaoSe, 内容: '第二条同时刻消息', 发送者: 'yonghu', 创建时间: MaoDian }]))
       调用模型.mockResolvedValueOnce({ neiRong: '接着记住第二条' })
       查询.mockResolvedValueOnce({ rows: [] })
@@ -703,7 +703,7 @@ describe('复合锚点与分批素材窗口', () => {
     try {
       duHui()
       shuHui(4)
-      ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+      ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
       查询.mockImplementationOnce(caiLiaoChaXun(yuanXing))
       查询.mockImplementationOnce(caiLiaoChaXun(yuanXing))
       调用模型.mockResolvedValueOnce({ neiRong: '只摘更早的两条' })
@@ -736,7 +736,7 @@ describe('复合锚点与分批素材窗口', () => {
         调用模型.mockClear()
         查询.mockImplementationOnce(async () => ({ rows: [{ 摘要内容: '旧记忆', 概括消息数: 1, 素材锚点时间: jiuMaoDian }] }))
         shuHui(1)
-        ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+        ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
         查询.mockImplementationOnce(caiLiaoChaXun([{ ...xin, 创建时间: MaoDian }, xin]))
         调用模型.mockResolvedValueOnce({ neiRong: '兼容旧记忆' })
         查询.mockResolvedValueOnce({ rows: [] })
@@ -769,7 +769,7 @@ describe('最近原文窗口', () => {
     try {
       duHui()
       shuHui(13)
-      ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+      ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
       liaoHui([
         chuangJianChaoGuoZhi(250, 1),
         chuangJianChaoGuoZhi(250, 2, 'jiaose'),
@@ -804,7 +804,7 @@ describe('最近原文窗口', () => {
   it('候选超阈值但窗口起点落在首条时，不摘要任何内容，保留全部候选', async () => {
     duHui({ 摘要内容: '旧记忆', 概括消息数: 5, 素材锚点时间: MaoDian })
     shuHui(2)
-    ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+    ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
     liaoHui([
       chuangJianChaoGuoZhi(6000, 1),
       chuangJianChaoGuoZhi(6000, 2, 'jiaose'),
@@ -820,7 +820,7 @@ describe('最近原文窗口', () => {
   it('候选全部落在最近窗口内时不调模型、不写库、不推进锚点', async () => {
     duHui(zhaiYaoHang('旧记忆', MaoDian))
     shuHui(3)
-    ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+    ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
     liaoHui([
       chuangJianChaoGuoZhi(4000, 1),
       chuangJianChaoGuoZhi(4000, 2, 'jiaose'),
@@ -841,7 +841,7 @@ describe('最近原文窗口', () => {
     try {
       duHui()
       shuHui(2)
-      ziJieHui(AI配置.zhaiYao.yaSuoTokenYuZhi * 5)
+      ziFuHui(Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6))
       liaoHui([
         chuangJianChaoGuoZhi(3000, 1),
         chuangJianChaoGuoZhi(3000, 2, 'jiaose'),

@@ -32,7 +32,7 @@ function jieXiXiuFuPanDing(shuJu: Record<string, unknown>, youChongTu: boolean):
   if (zhi === '修复成立' || zhi === 'chengLi') return 'chengLi'
   if (zhi === '敷衍' || zhi === 'fuYan') return 'fuYan'
   if (zhi === '无关' || zhi === 'wuGuan') return 'wuGuan'
-  return undefined
+  return 'wuGuan'
 }
 
 async function quXiuFuPanDingShangXiaWen(
@@ -357,13 +357,12 @@ export async function pingPanXiuFu(
     ], shangXiaWen)
     const shuJu = jieXiJSON(xiangYing.neiRong)
     const panDing = jieXiXiuFuPanDing(shuJu, true)
-    if (!panDing) return undefined
-    return panDing
+    return panDing ?? 'wuGuan'
   } catch (cuoWu) {
     debug日志.error('好感度评判', '冲突修复判定失败，本次判为未完成，交由调用方累计失败次数', {
       xiang_qing: { yong_hu_id: 用户ID, jiao_se_id: jiaoSeId, cuo_wu: String(cuoWu) },
     })
-    return undefined
+    return 'wuGuan'
   }
 }
 

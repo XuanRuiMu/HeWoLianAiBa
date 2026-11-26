@@ -93,6 +93,17 @@ const BiaoBaiLeiXingYingShe: Record<string, BiaoBaiJianCeJieGuo['biao_bai_lei_xi
   暗示表白: 'an_shi_biao_bai',
   要求确立关系: 'yao_qiu_que_li_guan_xi' }
 
+const MingQueBiaoBaiTeZheng = /(我(?:真的|很|挺|好|特别|超|蛮)?(?:喜欢|爱)(?:上)?(?:你|上你)|做我(?:的)?(?:男朋友|女朋友|对象|男票|女票|老公|老婆)|和(?:我|你)(?:在)?一起吧|跟(?:我|你)(?:在)?一起吧|(?:我们|咱们|咱俩)(?:在)?(?:一起|交往|谈恋爱|处对象|谈|处)吧|(?:愿意|肯)(?:做|当)我(?:的)?(?:男朋友|女朋友|对象|男票|女票|老公|老婆)|(?:我|俺)(?:要|想)?追你|(?:请|能)(?:和|跟)我交往|你(?:愿意|肯)(?:做|当)我(?:的)?(?:男朋友|女朋友|对象)|(?:我们|咱们|咱俩)(?:谈|处)(?:个)?(?:恋爱|对象)|我(?:想|要)(?:和你|跟你)(?:在)?一起|(?:接受|答应)我(?:吧|好吗))/
+
+const JiaSheTanShiCongJu = /(?:如果|要是|假如|倘若|万一|假设)(?:我)?(?:说|讲|问|真的?说)[\s\S]*?(?:你会不会|你会觉得|你会|你是不是|你愿意|你肯|你答应|行不行|好不好|好吗|吗)/g
+
+export function shiMingQueBiaoBai(yuanWen: string): boolean {
+  const guiYi = yuanWen.replace(/[\s，。！？、~～…,.!?]/g, '')
+  if (!guiYi) return false
+  const quDiaoJiaShe = guiYi.replace(JiaSheTanShiCongJu, '')
+  return MingQueBiaoBaiTeZheng.test(quDiaoJiaShe)
+}
+
 const ZhanJieZhongShiCiShu = 3
 
 export async function jianCeSiLianHeYi(
@@ -158,6 +169,15 @@ export async function jianCeSiLianHeYi(
           '对下面这条用户消息完成五类判定。',
           '',
           DingJieFuShengMing,
+          '',
+          '【表白判定准则】',
+          '这一栏只判对方有没有真的把"我要和你处对象"这句话说出口，不判对方有没有好感、有没有靠近、有没有心动。',
+          '算的情况：对方直接说喜欢你、爱你、想和你在一起；对方要求确立关系，问你要不要做他对象、要不要交往、要不要在一起；对方说在追你、让你答应他。',
+          '不算的情况：只是表达期待、想见面、想约饭、想一起玩；只是问你会不会觉得太快、会不会介意、会不会吓到你；只是夸你好看、说跟你聊天舒服、说记得你；只是试探你对他的感觉、问你觉得他怎么样、问他有没有机会；只是撒娇、暧昧、撩你、说想你、说心动、说上头；只是聊未来的打算、说以后要是能常见面就好了。',
+          '上面这些不算的情况一律填 false，哪怕语气很热情、很像在表白也一样填 false。',
+          '只有对方把话说到"我们在一起"这个份上，才填 true。',
+          '填 true 时，"表白类型"按对方说得多明确来选：对方直接说喜欢你、爱你，或者明确要求确立关系的，填"直接表白"或"要求确立关系"；只有几乎等于明说、但还留了半句余地（比如"要不我们试试"）的，才填"暗示表白"。',
+          '判 false 时"表白类型"填"非表白"，"表白确信度"填 0。',
           '',
           ...(jiaoSe
             ? [
@@ -586,7 +606,16 @@ export async function chuLiYongHuBiaoBai(
   jiao_se_id: string,
   hao_gan_du_zong_fen: number,
   chuFaXiaoXiIdLieBiao?: string[],
+  yuanWen?: string,
 ): Promise<YouXiJieShuJieGuo | null> {
+  if (typeof yuanWen === 'string' && !shiMingQueBiaoBai(yuanWen)) {
+    debug日志.info('胜负判定', '判定为表白但原文不含明确表白用语，按亲近表达处理', {
+      yong_hu_id,
+      jiao_se_id,
+      xiang_qing: { yuan_wen: yuanWen, hao_gan_du: hao_gan_du_zong_fen } })
+    return null
+  }
+
   const jiaoSe = await huoQuJiaoSeJiBenXinXi(jiao_se_id)
   if (!jiaoSe || !jiaoSe.yong_hu_id || jiaoSe.yong_hu_id !== yong_hu_id) return null
 
@@ -993,7 +1022,7 @@ export async function jianCeYongHuXiaoXiBingChuLi(
 
   const tongYongYueShu = QueXinDuYueShu.tongYongJianCe
   if (jianCeJieGuo.biao_bai.shi_fou_biao_bai && jianCeJieGuo.biao_bai.que_xin_du > tongYongYueShu) {
-    return chuLiYongHuBiaoBai(yong_hu_id, jiao_se_id, hao_gan_du_zong_fen, chuFaXiaoXiIdLieBiao)
+    return chuLiYongHuBiaoBai(yong_hu_id, jiao_se_id, hao_gan_du_zong_fen, chuFaXiaoXiIdLieBiao, xiao_xi)
   }
 
   if (jianCeJieGuo.hu_shan.shi_fou_hu_shan && jianCeJieGuo.hu_shan.que_xin_du > tongYongYueShu) {

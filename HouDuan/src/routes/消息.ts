@@ -22,7 +22,7 @@ import {
 import { kuaiShenHeWenBen, qingLiTiJiaoKuai } from '../services/消息内容块'
 import { liuShiBaoCunMeiTi, MeiTiCunChuCuoWu, shengChengQianMingURL } from '../services/媒体存储'
 import { 按短名查, 短名转UUID } from '../services/表情包库'
-import { tiQuTieZhiDuanMing } from '../services/贴纸标记'
+import { tiQuBiaoQingBaoDuanMing } from '../services/表情包标记'
 import { panDingMeiTiShenHeChuCan } from '../services/媒体审核出参'
 import { ShenHeFuWuBuKeYongJian, guiYiHuaShangChuanShiChang, shiHeFaLeiBie, shiHeFaXiaoXiLeiXing } from '../config/媒体配置'
 import { shenHeNeiRongAnQuan, jianCeWeiJiXinHao } from '../services/安全审核'
@@ -861,7 +861,7 @@ luYou.get(
         )
         let duanMing: string | null = null
         for (const hang of tieZhiJieGuo.rows as Record<string, unknown>[]) {
-          const mingLieBiao = tiQuTieZhiDuanMing(String(hang.内容 || ''))
+          const mingLieBiao = tiQuBiaoQingBaoDuanMing(String(hang.内容 || ''))
           if (mingLieBiao.length === 0) continue
           if (短名转UUID(mingLieBiao[0]) === meiTiId) {
             duanMing = mingLieBiao[0]

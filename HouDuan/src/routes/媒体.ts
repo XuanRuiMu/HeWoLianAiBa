@@ -9,7 +9,7 @@ import { 数据库 } from '../数据库'
 import { yanZhengUUID } from '../utils/验证'
 import { huoQuBenDiLuJing, huoQuMeiTiQianMingMiYao, yanZhengQianMing } from '../services/媒体存储'
 import { 按短名查, 按哈希查, type 表情包条目 } from '../services/表情包库'
-import { tiQuTieZhiDuanMing } from '../services/贴纸标记'
+import { tiQuBiaoQingBaoDuanMing } from '../services/表情包标记'
 
 const luYou = Router()
 
@@ -157,7 +157,7 @@ async function quDuanMingLieBiao(sha256: string): Promise<string[]> {
   const neiRongLieBiao = await quTieZhiNeiRong(meiTiIdLieBiao)
   const duanMingLieBiao: string[] = []
   for (const neiRong of neiRongLieBiao) {
-    for (const duanMing of tiQuTieZhiDuanMing(neiRong)) {
+    for (const duanMing of tiQuBiaoQingBaoDuanMing(neiRong)) {
       if (duanMingLieBiao.includes(duanMing)) continue
       duanMingLieBiao.push(duanMing)
     }

@@ -7,6 +7,8 @@ import { jiSuanAIChanShu, type 参数上下文 } from '../config/AI参数策略'
 import { jiLuAIJiLu, debug日志 } from './debug日志'
 import { chuangJianRiZhiYinQing } from './日志引擎'
 import { guJiTokenShu } from './token估算'
+import { 创建请求对冲器, type DuiChongQingQiu, type DuiChongPeiZhi } from './请求对冲'
+import { chuShiHuaMoXingLuYou } from '../services/模型路由'
 
 export type 对话块 =
   | { type: 'input_text'; text: string }
@@ -415,50 +417,89 @@ async function 访问池成员(
   })
 }
 
+const DuiChongPeiZhi: DuiChongPeiZhi = (() => {
+  const duiChong = (() => {
+    const yuan = Number(process.env['AI_HEDGE_DUI_CHONG_HAO_MIAO'])
+    return Number.isFinite(yuan) && yuan >= 100 ? Math.min(30000, Math.trunc(yuan)) : 2000
+  })()
+  const bingFa = (() => {
+    const yuan = Number(process.env['AI_HEDGE_ZUI_DA_BING_FA'])
+    return Number.isFinite(yuan) && yuan >= 1 ? Math.min(64, Math.trunc(yuan)) : 24
+  })()
+  const suLv = (() => {
+    const yuan = Number(process.env['AI_HEDGE_MEI_MIAO_XIN_QING_QIU'])
+    return Number.isFinite(yuan) && yuan >= 1 ? Math.min(200, Math.trunc(yuan)) : 40
+  })()
+  const houXuan = (() => {
+    const yuan = Number(process.env['AI_HEDGE_ZUI_DUO_HOU_XUAN'])
+    return Number.isFinite(yuan) && yuan >= 1 ? Math.min(8, Math.trunc(yuan)) : 3
+  })()
+  return { 对冲毫秒: duiChong, 最大并发: bingFa, 每秒新请求: suLv, 最多候选: houXuan }
+})()
+
+const 对冲器 = 创建请求对冲器(DuiChongPeiZhi)
+
 async function zouMoXingChi(
   yuanBody: Record<string, unknown>,
   chuShiCanShu?: RequestInit,
   waiBuXinHao?: AbortSignal,
 ): Promise<Response> {
-  const 总尝试 = Math.max(1, Math.min(模型池.length, 6))
-  const 已试 = new Set<string>()
-  let zuiHouCuoWu: unknown = null
-
-  for (let ci = 0; ci < 总尝试; ci += 1) {
-    const 可用 = 取可用成员().filter((x) => !已试.has(x.moXing))
-    if (可用.length === 0) break
-    const chengYuan = 按权重轮询选出(可用)
-    已试.add(chengYuan.moXing)
-    const kaiShi = Date.now()
-    try {
-      const 响应 = await 访问池成员(chengYuan, yuanBody, chuShiCanShu)
-      const haoShi = Date.now() - kaiShi
-      记成员成功(chengYuan, haoShi)
-      if (ci > 0) {
-        debug日志.info('模型路由', '模型池切换后成功', {
-          xiang_qing: { mo_xing: chengYuan.moXing, di_ci: ci + 1, hao_shi: haoShi },
-        })
-      }
-      return 响应
-    } catch (cuoWu) {
-      const cuoWuWen = cuoWu instanceof Error ? cuoWu.message : String(cuoWu)
-      const yongHuQuXiao = waiBuXinHao?.aborted === true || cuoWuWen.includes('aborted')
-      if (!yongHuQuXiao) 记成员失败(chengYuan)
-      debug日志.warn('模型路由', yongHuQuXiao ? '模型池成员请求被取消，不影响健康计数' : '模型池成员失败，换下一个', {
-        xiang_qing: {
-          mo_xing: chengYuan.moXing,
-          di_ci: ci + 1,
-          hao_shi: Date.now() - kaiShi,
-          cuo_wu: cuoWuWen.slice(0, 160),
-        },
-      })
-    }
+  const 可用 = 取可用成员()
+  if (可用.length === 0) {
+    const 错误 = new Error('[模型池] 所有成员均在冷却中，本次无可用模型') as 分类错误
+    错误.fenLei = 'buKeZhongShi'
+    throw 错误
   }
 
-  if (zuiHouCuoWu) throw zuiHouCuoWu
-  const 错误 = new Error('[模型池] 所有成员均在冷却中，本次无可用模型') as 分类错误
-  错误.fenLei = 'buKeZhongShi'
-  throw 错误
+  const houXuan: DuiChongQingQiu[] = 可用.map((chengYuan) => ({
+    标识: chengYuan.moXing,
+    async 执行(signal: AbortSignal): Promise<string> {
+      const kaiShi = Date.now()
+      // 外部取消（用户放弃/超时）转发到本路，且不计入成员失败
+      if (waiBuXinHao?.aborted) throw new DOMException('aborted', 'AbortError')
+      const heBing = new AbortController()
+      const onWai = () => heBing.abort()
+      waiBuXinHao?.addEventListener('abort', onWai, { once: true })
+      const onNei = () => heBing.abort()
+      signal.addEventListener('abort', onNei, { once: true })
+      const fuZhiCanShu: RequestInit = { ...(chuShiCanShu || {}), signal: heBing.signal }
+      try {
+        const 响应 = await 访问池成员(chengYuan, yuanBody, fuZhiCanShu)
+        const haoShi = Date.now() - kaiShi
+        记成员成功(chengYuan, haoShi)
+        return `${响应.headers.get('x-dsh-actual-model') || chengYuan.moXing}\u0000${await 响应.text()}`
+      } catch (cuoWu) {
+        const cuoWuWen = cuoWu instanceof Error ? cuoWu.message : String(cuoWu)
+        const shiQuXiao = waiBuXinHao?.aborted === true || heBing.signal.aborted ||
+          cuoWu instanceof DOMException && cuoWu.name === 'AbortError' || /aborted/i.test(cuoWuWen)
+        if (shiQuXiao) throw new DOMException('aborted', 'AbortError')
+        记成员失败(chengYuan)
+        debug日志.warn('模型路由', '对冲成员失败，等待其他候选', {
+          xiang_qing: { mo_xing: chengYuan.moXing, hao_shi: Date.now() - kaiShi, cuo_wu: cuoWuWen.slice(0, 160) },
+        })
+        throw cuoWu
+      } finally {
+        waiBuXinHao?.removeEventListener('abort', onWai)
+        signal.removeEventListener('abort', onNei)
+      }
+    },
+  }))
+
+  try {
+    const jieGuo = await 对冲器.执行(houXuan)
+    const fenGe = jieGuo.indexOf('\u0000')
+    const shiJiMoXing = fenGe >= 0 ? jieGuo.slice(0, fenGe) : ''
+    const wenBen = fenGe >= 0 ? jieGuo.slice(fenGe + 1) : jieGuo
+    // 访问池成员返回的已是 responses 格式（output[].content[].text），直接透传，不可二次转换
+    return new Response(wenBen, {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', 'x-dsh-actual-model': shiJiMoXing },
+    })
+  } catch (cuoWu) {
+    const 错误 = new Error(`[模型池] 对冲后所有候选均失败：${cuoWu instanceof Error ? cuoWu.message : String(cuoWu)}`) as 分类错误
+    错误.fenLei = 'keZhongShi'
+    throw 错误
+  }
 }
 
 async function fangWenChatCompletion(
@@ -1259,6 +1300,7 @@ export function 按配置调用(
   shangXiaWen?: 参数上下文,
   waiBuXinHao?: AbortSignal,
 ): Promise<调用结果> {
+  if (模型池.length === 0) chuShiHuaMoXingLuYou()
   const 模型CanShu = jiSuanAIChanShu(模型LeiXing, shangXiaWen)
   return tiaoYongDeepSeek(
     {

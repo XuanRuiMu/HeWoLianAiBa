@@ -271,11 +271,10 @@ describe('简短结构化输出', () => {
 })
 
 describe('配置与段定义', () => {
-  it('五个前端字段名保持不变，各段限字符合简报要求', () => {
+  it('三个分段字段名与限字符合简报要求', () => {
     const 定义 = JunShiZhiDaoDuanDingYi.map((段) => [段.ziDuan, 段.zuiDaZiShu])
     expect(定义).toContainEqual(['dangQianJuMian', 40])
-    expect(定义).toContainEqual(['weiShenMeZheMeLiao', 60])
-    expect(定义).toContainEqual(['kanDaoDeJiXiang', 50])
-    expect(定义).toContainEqual(['guLi', 30])
+    expect(定义).toContainEqual(['xiaYiBuZenMeHui', 120])
+    expect(定义).toContainEqual(['kanDaoDeJiXiang', 40])
   })
 })

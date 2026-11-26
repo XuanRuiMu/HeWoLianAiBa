@@ -147,7 +147,7 @@ describe('媒体下载回退表情包库', () => {
         return { rows: [{ ID: meiTiId }], rowCount: 1 }
       }
       if (String(zhi).includes('FROM "消息"')) {
-        return { rows: [{ 内容: '[贴纸:笑哭]' }], rowCount: 1 }
+        return { rows: [{ 内容: '[表情包:笑哭]' }], rowCount: 1 }
       }
       return { rows: [], rowCount: 0 }
     })

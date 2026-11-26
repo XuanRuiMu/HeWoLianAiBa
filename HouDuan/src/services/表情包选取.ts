@@ -9,10 +9,10 @@ import {
   BiaoQingFaSongShiJiWenAn,
   BiaoQingFaSongYuanYin,
   BiaoQingHouXuanWenAn,
-  BiaoQingTieZhiShiLi,
-  BiaoQingTieZhiZhanWei,
+  表情包示例,
+  表情包占位,
 } from '../config/表情包配置'
-import type { BiaoQingZaiTiJueCe } from './表情载体'
+import type { BiaoQingZaiTiJueCe } from './表情包载体'
 
 export interface XiTongBiaoQingXiang {
   id: string
@@ -36,8 +36,8 @@ function tianChongMoBan(moBan: string, zhi: Readonly<Record<string, string>>): s
   return jieGuo
 }
 
-function 贴纸文本(duanMing: string): string {
-  return BiaoQingTieZhiShiLi.split(BiaoQingTieZhiZhanWei).join(duanMing)
+function 表情包文本(duanMing: string): string {
+  return 表情包示例.split(表情包占位).join(duanMing)
 }
 
 function zhuangXiang(tiaoMu: 表情包条目): XiTongBiaoQingXiang {
@@ -103,13 +103,13 @@ export async function 查找表情按短名(duanMing: string): Promise<XiTongBia
   try {
     const tiaoMu = await 按短名查(jianHua)
     if (!tiaoMu) {
-      debug日志.debug(RiZhiLeiXing, '贴纸短名未命中表情包库', {
+      debug日志.debug(RiZhiLeiXing, '表情包短名未命中表情包库', {
         xiang_qing: { duan_ming: jianHua, yuan_yin: BiaoQingFaSongYuanYin.weiMingZhong },
       })
       return null
     }
     if (!tiaoMu.qiYong) {
-      debug日志.warn(RiZhiLeiXing, '贴纸条目已停用，按未命中处理', {
+      debug日志.warn(RiZhiLeiXing, '表情包条目已停用，按未命中处理', {
         xiang_qing: { duan_ming: jianHua, yuan_yin: BiaoQingFaSongYuanYin.yiJinYong },
       })
       return null
@@ -134,7 +134,7 @@ export async function 发送表情包消息(
 ): Promise<消息信息 | null> {
   const jianHua = typeof duanMing === 'string' ? duanMing.trim() : ''
   if (jianHua === '') {
-    debug日志.warn(RiZhiLeiXing, '贴纸指令没有短名，本条丢弃', {
+    debug日志.warn(RiZhiLeiXing, '表情包指令没有短名，本条丢弃', {
       yong_hu_id: 用户ID,
       jiao_se_id: jiaoSeId,
       xiang_qing: { yuan_yin: BiaoQingFaSongYuanYin.weiMingZhong },
@@ -143,23 +143,18 @@ export async function 发送表情包消息(
   }
   const biaoQing = await 查找表情按短名(jianHua)
   if (!biaoQing) {
-    const 回退 = await 语义候选({
-      query: jianHua,
-      yunXuFengGe: [],
-      guanXiJieDuanXuHao: 9,
-      renSheQiZhi: ['通用'],
-      excludeDuanMing: [],
-      shuLiang: 1,
+    debug日志.warn(RiZhiLeiXing, '表情包短名查不到，本条不发送（不做兜底替换）', {
+      yong_hu_id: 用户ID,
+      jiao_se_id: jiaoSeId,
+      xiang_qing: { duan_ming: jianHua, yuan_yin: BiaoQingFaSongYuanYin.weiMingZhong },
     })
-    const 候选 = 回退[0]
-    if (!候选) return null
-    return 发送表情包消息(用户ID, jiaoSeId, 候选.duanMing)
+    return null
   }
   try {
     return await 保存角色媒体消息({
       yong_hu_id: 用户ID,
       jiao_se_id: jiaoSeId,
-      nei_rong: 贴纸文本(biaoQing.duanMing),
+      nei_rong: 表情包文本(biaoQing.duanMing),
       lei_xing: 表情消息类型,
       mei_ti_id: null,
       duan_ming: biaoQing.duanMing,
@@ -178,18 +173,26 @@ export async function 发送表情包消息(
   }
 }
 
-export function 组装表情候选块(tiaoMuLieBiao: XiTongBiaoQingXiang[]): string {
+function quanZhongDaoWenAn(quanZhong: number, gangFaGuoTu: boolean): string {
+  if (quanZhong >= 1.1) return '这一轮你挺想发图的，看到合适的就发，一条里想发两张也行。'
+  if (quanZhong >= 0.6) return '这一轮发图是你的自然选择之一，有贴合的图就顺手发一张，没有就不发。'
+  if (quanZhong >= 0.3) return '这一轮可发可不发，除非图特别贴合此刻的话，否则就先只说话。'
+  if (gangFaGuoTu) return '你上一轮刚发过图，这一轮先正常说话，除非真有特别想发的图。'
+  return '这一轮先好好说话，你此刻没那么想发图；如果图简直就是你现在的心情，也可以发。'
+}
+
+export function 组装表情候选块(tiaoMuLieBiao: XiTongBiaoQingXiang[], faTuQuanZhong?: number, gangFaGuoTu = false): string {
   if (tiaoMuLieBiao.length === 0) return ''
-  const shiLi = 贴纸文本(tiaoMuLieBiao[0].duanMing)
+  const quanZhongWenAn = typeof faTuQuanZhong === 'number' ? quanZhongDaoWenAn(faTuQuanZhong, gangFaGuoTu) : ''
+  const shiLi = 表情包文本(tiaoMuLieBiao[0].duanMing)
   const shuoMing = BiaoQingHouXuanWenAn.daiTiShuoMing.map((hang) =>
     tianChongMoBan(hang, {
-      tie_zhi_shi_li: shiLi,
-      zui_da_zhang_shu: String(BiaoQingBaoYunXing.zuiDaMeiLunZhangShu),
+      biao_qing_bao_shi_li: shiLi,
     }),
   )
   const hangLieBiao = tiaoMuLieBiao.map((xiang) =>
     tianChongMoBan(BiaoQingHouXuanWenAn.hangMoBan, {
-      tie_zhi_shi_li: 贴纸文本(xiang.duanMing),
+      biao_qing_bao_shi_li: 表情包文本(xiang.duanMing),
       miao_shu: xiang.miaoShu || BiaoQingHouXuanWenAn.moShuKong,
       qing_xu: xiang.qingXuBiaoQian || 表情待打标,
       chang_jing: xiang.shiYongChangJing || BiaoQingHouXuanWenAn.changJingKong,
@@ -199,6 +202,7 @@ export function 组装表情候选块(tiaoMuLieBiao: XiTongBiaoQingXiang[]): str
     BiaoQingHouXuanWenAn.biaoTi,
     ...shuoMing,
     BiaoQingFaSongShiJiWenAn,
+    ...(quanZhongWenAn ? ['【这一轮你有多想发图】' + quanZhongWenAn] : []),
     ...hangLieBiao,
   ].join('\n')
 }
@@ -211,5 +215,5 @@ export async function 生成表情候选文本(
   if (!BiaoQingBaoYunXing.daKai || !jueCe?.geiHouXuan) return ''
   if (!jueCe || !jueCe.geiHouXuan) return ''
   const lieBiao = await 候选包装(yiTu, BiaoQingBaoYunXing.houXuanShuLiang, jueCe, excludeDuanMing)
-  return 组装表情候选块(lieBiao)
+  return 组装表情候选块(lieBiao, jueCe.faTuQuanZhong, jueCe.gangFaGuoTu)
 }

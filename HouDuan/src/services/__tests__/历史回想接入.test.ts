@@ -2,9 +2,13 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 
 // 接入层测试：只验证调度器是否正确触发/填充/容错，历史回想内部逻辑由 历史回想.test.ts 覆盖
 const huiXiangMock = vi.hoisted(() => vi.fn())
-vi.mock('../历史回想', () => ({
-  huiXiangLiShiYuanWen: (...c: unknown[]) => huiXiangMock(...c),
-}))
+vi.mock('../历史回想', async (importOriginal) => {
+  const shiJi = await importOriginal<typeof import('../历史回想')>()
+  return {
+    ...shiJi,
+    huiXiangLiShiYuanWen: (...c: unknown[]) => huiXiangMock(...c),
+  }
+})
 
 import { shiHuiSuLiShiXiaoXi, huoQuHuiXiangTiShi } from '../AI回复调度器'
 

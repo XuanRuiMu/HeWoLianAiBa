@@ -1,4 +1,3 @@
-import { 构建原生表情条目 } from './原生表情库'
 import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -796,7 +795,6 @@ export function 短名转UUID(duanMing: string): string {
 }
 
 export async function 按短名查(duanMing: string): Promise<表情包条目 | null> {
-  if (duanMing.startsWith('wx_')) return 构建原生表情条目(duanMing.slice(3))
   if (typeof duanMing !== 'string') return null
   const jianHua = duanMing.trim()
   if (jianHua === '') return null

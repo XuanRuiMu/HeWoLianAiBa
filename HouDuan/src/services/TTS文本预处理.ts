@@ -1,4 +1,4 @@
-import { qingXiTieZhiCanPian } from './贴纸标记'
+import { qingXiBiaoQingBaoCanPian } from './表情包标记'
 
 const 数字映射: Record<string, string> = {
   '0': '零',
@@ -214,7 +214,7 @@ export function 转换TTS文本(原始文本: string): string {
     return ''
   }
 
-  let 文本 = qingXiTieZhiCanPian(原始文本.trim())
+  let 文本 = qingXiBiaoQingBaoCanPian(原始文本.trim())
 
   if (!文本) {
     return ''

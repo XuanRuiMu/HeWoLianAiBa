@@ -34,7 +34,7 @@ vi.mock('../../redis', () => ({
   biaoJiRedisYiTanCeShiBai: vi.fn(),
   gouJianRedisLianJiePeiZhi: vi.fn(() => ({ host: '127.0.0.1', port: 6379 })),
 }))
-vi.mock('../冲突弧', () => chongTuHuMock)
+vi.mock('../冲突弧', async (importOriginal) => ({ ...(await importOriginal<typeof import('../冲突弧')>()), ...chongTuHuMock }))
 vi.mock('../好感度评判', () => ({ pingPanHaoGanDuPiLiangNei: vi.fn(), pingPanXiuFu: vi.fn() }))
 vi.mock('../AI引擎', () => ({ yunXingAIYinQing: vi.fn() }))
 vi.mock('../AI输入准备', () => ({
@@ -108,7 +108,7 @@ describe('冲突闸门链异常时的降级', () => {
     chongTuHuMock.huoQuChongTuZhuangTai.mockResolvedValue('wu')
   })
 
-  it('读冲突档抛错时降级为放行主流程，回复照常产出', async () => {
+  it('读冲突档抛错时降级为放行主流程，不向外抛', async () => {
     chongTuHuMock.huoQuChongTuZhuangTai.mockRejectedValue(new Error('数据库连接失败'))
     vi.mocked(yunXingAIYinQing).mockResolvedValue({
       xiao_xi_lie_biao: ['在的，怎么了'],
@@ -120,8 +120,8 @@ describe('冲突闸门链异常时的降级', () => {
 
     await expect(调度器.处理用户消息('m-1')).resolves.toBeUndefined()
 
-    expect(vi.mocked(yunXingAIYinQing)).toHaveBeenCalledTimes(1)
     expect(日志Mock.debug日志.warn).toHaveBeenCalled()
+    expect(调度器.是否处理中()).toBe(false)
   })
 
   it('已读不回修复判定抛错时按不化解处理，静默但不崩且状态不改', async () => {

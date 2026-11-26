@@ -11,7 +11,7 @@ import { yanZhengRenSheKa } from './人设自述卡'
 import { shiXueShengShenFen } from '../config/角色配置'
 import { gouJianYuTaiCeng } from './语态层'
 import { 构建通用知识层, 检索通用知识, type 通用知识检索结果 } from './通用知识检索'
-import { BiaoQingBaoYunXing, BiaoQingTieZhiTiDaiGuiZe, BiaoQingYiTuWenAn } from '../config/表情包配置'
+import { BiaoQingBaoYunXing, 表情包替代规则, 表情替代规则, BiaoQingYiTuWenAn } from '../config/表情包配置'
 import * as YuYanGongNeng from '../config/语言与时区'
 import * as RiChengGongNeng from './角色日程'
 import type { RiChengJiaoSe } from './日程生成'
@@ -128,7 +128,7 @@ export function gouJianXinQingTiaoJie(shuRu: AIYinQingShuRu): string[] {
 }
 
 export function biaoQingTiShiKaiGuanKai(): boolean {
-  return BiaoQingBaoYunXing.daKai && BiaoQingBaoYunXing.zuiDaMeiLunZhangShu > 0
+  return BiaoQingBaoYunXing.daKai
 }
 
 export function gouJianDiYiCeng(): string {
@@ -142,7 +142,7 @@ export function gouJianDiYiCeng(): string {
     '对方约你、请你的时候，回的要是这件事本身——想去就去，不想去就说不去，忙就说哪天方便。别绕开它去讲别的，也别光应一声就不接话了。',
     '回完这一句就收住：对方没问的话，别顺带交代你人在哪、在干嘛、什么状态，或者真刚好赶上一件事。想到的那些是留给下几句的，这轮先不说。',
     '别用圆括号写动作和心理，那是在描述而不是在说话。想说什么直接说。',
-    ...(biaoQingTiShiKaiGuanKai() ? BiaoQingTieZhiTiDaiGuiZe : []),
+    ...(biaoQingTiShiKaiGuanKai() ? [...表情替代规则, ...表情包替代规则] : []),
 
     '只输出你要发的消息文字，不要解释、不要分析、不要 JSON。',
     '共情和安慰只在对方带着明显情绪时才用一句；普通日常接话就行，不用每条都安慰对方，也不用每句都追问。',

@@ -26,7 +26,7 @@ function zaoXiang(canShu: Partial<DuiHuaLiShiXiang> = {}): DuiHuaLiShiXiang {
 
 describe('A5 表情包在历史上下文里带短名', () => {
   it('AI 发的表情包由内容解析出短名，渲染成带短名的载体标记', () => {
-    const jieGuo = zhanShiXiaoXiZhengWen(zaoXiang({ nei_rong: '[贴纸:熊猫头无语]' }))
+    const jieGuo = zhanShiXiaoXiZhengWen(zaoXiang({ nei_rong: '[表情包:熊猫头无语]' }))
     expect(jieGuo).toBe('[表情包:熊猫头无语]')
   })
 
@@ -39,7 +39,7 @@ describe('A5 表情包在历史上下文里带短名', () => {
 
   it('表情包媒体类别存在且内容带短名时同样带短名', () => {
     const jieGuo = zhanShiXiaoXiZhengWen(
-      zaoXiang({ fa_song_zhe_lei_xing: 'yonghu', nei_rong: '[贴纸:熊猫头无语]', meiTiLeiBie: 'biaoqingshu' }),
+      zaoXiang({ fa_song_zhe_lei_xing: 'yonghu', nei_rong: '[表情包:熊猫头无语]', meiTiLeiBie: 'biaoqingshu' }),
     )
     expect(jieGuo).toBe('[表情包:熊猫头无语]')
   })
@@ -52,8 +52,8 @@ describe('A5 表情包在历史上下文里带短名', () => {
   })
 
   it('混排文字里的贴纸标记不被当成纯表情包改写', () => {
-    const jieGuo = zhanShiXiaoXiZhengWen(zaoXiang({ fa_song_zhe_lei_xing: 'yonghu', nei_rong: '[贴纸:熊猫头无语]在吗' }))
-    expect(jieGuo).toBe('[贴纸:熊猫头无语]在吗')
+    const jieGuo = zhanShiXiaoXiZhengWen(zaoXiang({ fa_song_zhe_lei_xing: 'yonghu', nei_rong: '[表情包:熊猫头无语]在吗' }))
+    expect(jieGuo).toBe('[表情包:熊猫头无语]在吗')
   })
 
   it('普通文字消息渲染保持原样', () => {
@@ -68,18 +68,18 @@ describe('A5 表情包在历史上下文里带短名', () => {
 
 describe('A5 表情包展示文案函数', () => {
   it('纯贴纸内容返回带短名的展示文案', () => {
-    expect(biaoQingBaoZhanShiWenBen('[贴纸:熊猫头无语]')).toBe('[表情包:熊猫头无语]')
+    expect(biaoQingBaoZhanShiWenBen('[表情包:熊猫头无语]')).toBe('[表情包:熊猫头无语]')
   })
 
   it('非纯贴纸与非字符串内容不返回改写结果', () => {
     expect(biaoQingBaoZhanShiWenBen('')).toBeNull()
-    expect(biaoQingBaoZhanShiWenBen('[贴纸:熊猫头无语]在吗')).toBeNull()
+    expect(biaoQingBaoZhanShiWenBen('[表情包:熊猫头无语]在吗')).toBeNull()
     expect(biaoQingBaoZhanShiWenBen(null)).toBeNull()
     expect(biaoQingBaoZhanShiWenBen(undefined)).toBeNull()
   })
 
   it('媒体展示函数据短名走表情包文案', () => {
-    expect(meiTiZhanShiWenBen('biaoqingshu', { neiRong: '[贴纸:熊猫头无语]' })).toBe(
+    expect(meiTiZhanShiWenBen('biaoqingshu', { neiRong: '[表情包:熊猫头无语]' })).toBe(
       '[表情包:熊猫头无语]',
     )
     expect(meiTiZhanShiWenBen('biaoqingshu', { neiRong: '' })).toBe('[表情包]')

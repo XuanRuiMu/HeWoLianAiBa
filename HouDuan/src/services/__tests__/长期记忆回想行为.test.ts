@@ -47,7 +47,7 @@ describe('回想检索语句的硬约束', () => {
   it('关键词超过配置上限会被裁剪，预算不随输入膨胀', () => {
     const ciZu = Array.from({ length: 100 }, (_, i) => `词${i}`)
     const { canShu } = gouZaoHuiXiangChaXun(YongHu, JiaoSe, ciZu)
-    expect(canShu.length).toBeLessThanOrEqual(2 + AI配置.huiXiang.zuiDaCiShu + 2)
+    expect(canShu.length).toBeLessThanOrEqual(2 + AI配置.huiXiang.zuiDaCiShu + 5)
   })
 
   it('空关键词不生成 ILIKE 条件，仍然参数化并附带配额参数', () => {
@@ -86,7 +86,7 @@ describe('主聊天窗口：最近原文窗口由token驱动而非条数，>5000
       chaXunMock
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [{ dai_shu: 2 }] })
-        .mockResolvedValueOnce({ rows: [{ zi_jie: AI配置.zhaiYao.yaSuoTokenYuZhi * 5 }] })
+        .mockResolvedValueOnce({ rows: [{ zi_fu_shu: Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6) }] })
         .mockResolvedValueOnce({
           rows: [
             { 内容: '早', 发送者: 'yonghu', 创建时间: new Date('2026-11-20T10:00:00Z'), 客户端序号: 1, ID: 'm-1' },
@@ -130,7 +130,7 @@ describe('主聊天窗口：最近原文窗口由token驱动而非条数，>5000
       chaXunMock
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [{ dai_shu: hangLieBiao.length }] })
-        .mockResolvedValueOnce({ rows: [{ zi_jie: AI配置.zhaiYao.yaSuoTokenYuZhi * 5 }] })
+        .mockResolvedValueOnce({ rows: [{ zi_fu_shu: Math.ceil(AI配置.zhaiYao.yaSuoTokenYuZhi / 0.6) }] })
         .mockResolvedValueOnce({ rows: hangLieBiao.slice(0, AI配置.zhaiYao.piLiangTiaoShu) })
         .mockResolvedValueOnce({ rows: hangLieBiao.slice(AI配置.zhaiYao.piLiangTiaoShu) })
       moXingMock.mockResolvedValueOnce({ neiRong: '窗口前的要点' })

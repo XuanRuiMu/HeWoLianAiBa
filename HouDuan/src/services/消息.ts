@@ -28,7 +28,7 @@ import {
 
 const 表情消息类型 = 类别到消息类型[表情书类别]
 
-const 贴纸短名正则 = /^\s*\[贴纸[:：]\s*([^\]】]+?)\s*\]\s*$/
+const 表情包短名正则 = /^\s*\[表情包[:：]\s*([^\]】]+?)\s*\]\s*$/
 
 export interface 消息块ChuCan extends 消息块 {
   mei_ti_url?: string | null
@@ -142,7 +142,7 @@ function 取块数组(zhi: unknown): Record<string, unknown>[] {
   return jieGuo
 }
 
-function 取贴纸短名(xiang: Record<string, unknown>): string | null {
+function 取表情包短名(xiang: Record<string, unknown>): string | null {
   if (xiang.lei_xing !== 消息块LeiXing.tuPian) return null
   const meiTiId = typeof xiang.mei_ti_id === 'string' ? xiang.mei_ti_id.trim() : ''
   if (meiTiId !== '') return null
@@ -151,9 +151,9 @@ function 取贴纸短名(xiang: Record<string, unknown>): string | null {
   return duanMing
 }
 
-function 解析贴纸短名(zhi: unknown): string | null {
+function 解析表情包短名(zhi: unknown): string | null {
   if (typeof zhi !== 'string') return null
-  const piPei = 贴纸短名正则.exec(zhi)
+  const piPei = 表情包短名正则.exec(zhi)
   if (!piPei) return null
   const duanMing = piPei[1].trim()
   if (duanMing === '' || duanMing.length > 表情短名最大长) return null
@@ -163,13 +163,13 @@ function 解析贴纸短名(zhi: unknown): string | null {
 function shouJiTieZhiDuanMing(row: Record<string, unknown>): Set<string> {
   const jieGuo = new Set<string>()
   for (const xiang of 取块数组(row.内容块)) {
-    const duanMing = 取贴纸短名(xiang)
+    const duanMing = 取表情包短名(xiang)
     if (duanMing) jieGuo.add(duanMing)
   }
   return jieGuo
 }
 
-function 映射贴纸块(
+function 映射表情包块(
   duanMing: string,
   shangXiaWen: 块上下文,
   zhuTi: string,
@@ -370,8 +370,8 @@ function 映射原始块(
   beiYongLeiBie: string | null,
   benHangMeiTi: (meiTiId: string) => 块媒体信息 | null,
 ): 消息块ChuCan | null {
-  const duanMing = 取贴纸短名(xiang)
-  if (duanMing) return 映射贴纸块(duanMing, shangXiaWen, zhuTi)
+  const duanMing = 取表情包短名(xiang)
+  if (duanMing) return 映射表情包块(duanMing, shangXiaWen, zhuTi)
   if (xiang.lei_xing === 消息块LeiXing.wenZi) {
     return {
       lei_xing: 消息块LeiXing.wenZi,
@@ -411,7 +411,7 @@ export function 映射块出参(
   }
   const zhuTi = String(mianXiang.qianMingZhuTi(row))
   const yuanKuai = 取块数组(row.内容块)
-  if (yuanKuai.some((xiang) => 取贴纸短名(xiang) !== null)) {
+  if (yuanKuai.some((xiang) => 取表情包短名(xiang) !== null)) {
     const jieGuo: 消息块ChuCan[] = []
     for (const xiang of yuanKuai) {
       const chuCan = 映射原始块(xiang, shangXiaWen, zhuTi, beiYongLeiBie, benHangMeiTi)
@@ -423,12 +423,12 @@ export function 映射块出参(
   return kuai.map((xiang) => 映射单块(xiang, beiYongLeiBie, zhuTi, benHangMeiTi))
 }
 
-async function 查贴纸哈希(row: Record<string, unknown>): Promise<string | null> {
-  const duanMing = 解析贴纸短名(row.内容)
+async function 查表情包哈希(row: Record<string, unknown>): Promise<string | null> {
+  const duanMing = 解析表情包短名(row.内容)
   if (duanMing === null) return null
   const tiaoMu = await 按短名查(duanMing)
   if (!tiaoMu) {
-    debug日志.warn('消息服务', '贴纸短名未命中表情包库，按无媒体出参', {
+    debug日志.warn('消息服务', '表情包短名未命中表情包库，按无媒体出参', {
       xiang_qing: { xiao_xi_id: String(row.ID ?? ''), duan_ming: duanMing },
     })
     return null
@@ -459,7 +459,7 @@ async function 映射消息(
   const leiXing = String(row.类型 || 'wenben')
   const meiTiSha256 = row.媒体SHA256 ? String(row.媒体SHA256).toLowerCase() : ''
   const tieZhiSha256 =
-    meiTiSha256 === '' && leiXing === 表情消息类型 ? await 查贴纸哈希(row) : null
+    meiTiSha256 === '' && leiXing === 表情消息类型 ? await 查表情包哈希(row) : null
   const qianMingSha256 = meiTiSha256 !== '' ? meiTiSha256 : tieZhiSha256
 
   return {

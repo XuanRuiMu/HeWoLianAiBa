@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { 候选包装 } from '../系统表情'
+import { 候选包装 } from '../表情包选取'
 import { 初始化表情包库 } from '../表情包库'
-import type { BiaoQingZaiTiJueCe } from '../表情载体'
+import type { BiaoQingZaiTiJueCe } from '../表情包载体'
 
 function 玩梗决策(gengDuo: Partial<BiaoQingZaiTiJueCe> = {}): BiaoQingZaiTiJueCe {
   return {
@@ -15,7 +15,6 @@ function 玩梗决策(gengDuo: Partial<BiaoQingZaiTiJueCe> = {}): BiaoQingZaiTiJ
     quXiang: '正常',
     renSheQiZhi: ['沙雕搞怪'],
     yong_hu_xin_xiao_xi: '哈哈哈哈笑死我了',
-    wanGeng: true,
     ...gengDuo,
   }
 }
@@ -40,7 +39,7 @@ describe('真实库端到端：冷淡阶段玩梗也要能取到表情包', () =
 
   it('非玩梗的冷淡阶段仍受关系门槛约束', async () => {
     await 初始化表情包库()
-    const 列表 = await 候选包装('好笑', 8, 玩梗决策({ wanGeng: false, yong_hu_xin_xiao_xi: '今天天气怎么样' }))
+    const 列表 = await 候选包装('好笑', 8, 玩梗决策({ guanXiJieDuanXuHao: 0, geiHouXuan: false, yong_hu_xin_xiao_xi: '今天天气怎么样' }))
     console.log('冷淡非玩梗取到', 列表.length)
     expect(列表.length).toBe(0)
   })

@@ -33,7 +33,7 @@ vi.mock('../../redis', () => ({
   biaoJiRedisYiTanCeShiBai: vi.fn(),
   gouJianRedisLianJiePeiZhi: vi.fn(() => ({ host: '127.0.0.1', port: 6379 })),
 }))
-vi.mock('../冲突弧', () => chongTuHuMock)
+vi.mock('../冲突弧', async (importOriginal) => ({ ...(await importOriginal<typeof import('../冲突弧')>()), ...chongTuHuMock }))
 vi.mock('../好感度评判', () => pingPanMock)
 vi.mock('../AI引擎', () => ({ yunXingAIYinQing: vi.fn() }))
 vi.mock('../AI输入准备', () => ({

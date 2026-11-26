@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { jiSuanBiaoQingShouGan } from '../表情密度'
+import { jiSuanBiaoQingShouGan } from '../表情包频率'
 import type { DuiHuaLiShiXiang } from '../../types'
 
 function wenZi(faSongZhe: 'yonghu' | 'jiaose', neiRong = '在吗'): DuiHuaLiShiXiang {
@@ -10,7 +10,7 @@ function tu(faSongZhe: 'yonghu' | 'jiaose', duanMing = '无语猫'): DuiHuaLiShi
   return {
     fa_song_zhe_lei_xing: faSongZhe,
     fa_song_zhe_ming: 'x',
-    nei_rong: `[贴纸:${duanMing}]`,
+    nei_rong: `[表情包:${duanMing}]`,
     shi_jian: '00:00',
   }
 }
@@ -32,11 +32,18 @@ describe('表情包密度模型', () => {
     expect(lian.qiWangJianGeLunShu).toBeLessThan(leng.qiWangJianGeLunShu)
   })
 
-  it('内向角色用图比外向角色更密', () => {
+  it('外向角色用图比内向角色更密（无气质时回退 IE）', () => {
     const liShi = Array.from({ length: 12 }, () => wenZi('yonghu'))
     const nei = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'I' }, '熟悉')
     const wai = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'E' }, '熟悉')
-    expect(nei.qiWangJianGeLunShu).toBeLessThan(wai.qiWangJianGeLunShu)
+    expect(wai.qiWangJianGeLunShu).toBeLessThan(nei.qiWangJianGeLunShu)
+  })
+
+  it('人设气质优先于 IE：沙雕搞怪比正经严肃密得多', () => {
+    const liShi = Array.from({ length: 12 }, () => wenZi('yonghu'))
+    const shaDiao = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'I', ren_she_qi_zhi: ['沙雕搞怪'] }, '熟悉')
+    const yanSu = jiSuanBiaoQingShouGan(liShi, { ie_lei_xing: 'E', ren_she_qi_zhi: ['正经严肃'] }, '熟悉')
+    expect(shaDiao.qiWangJianGeLunShu).toBeLessThan(yanSu.qiWangJianGeLunShu)
   })
 
   it('历史里没有发过图时上次为 null 且倾向可判定', () => {

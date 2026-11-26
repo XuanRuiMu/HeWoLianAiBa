@@ -9,7 +9,8 @@ import { shengChengWriterHuiFu } from './Writer'
 import { jianChaAiWei, panDuanShiFouCaiYang, panDuanShiFouMoXingChouJian, guoLvAiWeiXiaoXi, jianChaTaoHua, panDuanTaoHuaCaiYang } from '../config/去AI味配置'
 import { gouJianJiaoSeShangXiaWen, type 参数上下文 } from '../config/AI参数策略'
 import { 检索通用知识, 提取必答事实 } from './通用知识检索'
-import { qingXiTieZhiCanPian, zhuanHuanYuanShengBiaoQing } from './贴纸标记'
+import { qingXiBiaoQingBaoCanPian } from './表情包标记'
+import { 转义表情标记 } from './表情标记'
 import type {
   AIYinQingShuChu,
   AIYinQingShuRu,
@@ -261,7 +262,7 @@ jiang_ji_mo_shi: false,
     let writerJieGuo = await shengChengWriterHuiFu(benLunShuRu, ceLue, shangXiaWen, waiBuXinHao, zhiShi, benLunShuRu.zuiJinDuanMing)
     const huiFuKaiTou = (lieBiao: string[]): string | null => {
       const wenBen = lieBiao
-        .map((tiao) => qingXiTieZhiCanPian(tiao).replace(/\s+/g, ''))
+        .map((tiao) => qingXiBiaoQingBaoCanPian(tiao).replace(/\s+/g, ''))
         .find((tiao) => tiao.length >= 6)
       return wenBen ? wenBen.slice(0, 6) : null
     }
@@ -355,7 +356,7 @@ jiang_ji_mo_shi: false,
     }
 
     let xiaoXiLieBiao = qieGeXiaoXi(
-      writerJieGuo.xiao_xi_lie_biao.map((tiao) => zhuanHuanYuanShengBiaoQing(tiao)),
+      writerJieGuo.xiao_xi_lie_biao.map((tiao) => 转义表情标记(tiao)),
       ceLue?.hui_fu_tiao_shu ?? ZuiDaTiaoShu,
     )
     if (writerJieGuo.xiao_xi_lie_biao.length > ZuiDaTiaoShu) {
@@ -369,7 +370,7 @@ jiang_ji_mo_shi: false,
       })
     }
 
-    const weiJinTiaoMu = xiaoXiLieBiao.filter((tiao) => hanWeiJinCi(qingXiTieZhiCanPian(tiao)))
+    const weiJinTiaoMu = xiaoXiLieBiao.filter((tiao) => hanWeiJinCi(qingXiBiaoQingBaoCanPian(tiao)))
     if (weiJinTiaoMu.length > 0) {
       debug日志.error('AI引擎', 'Writer输出命中本地违禁词兜底，已拦截本轮回复', {
         xiang_qing: {

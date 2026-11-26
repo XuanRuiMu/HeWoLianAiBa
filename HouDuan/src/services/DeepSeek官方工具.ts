@@ -121,17 +121,21 @@ export async function souSuoWangYe(canShu: {
 }): Promise<WangYeSouSuoJieGuo> {
   const query = (canShu.query || '').trim()
   if (query === '' || query.length > 128) return { cheng_gong: false, tiaoMu: [], ti_shi: '搜索词为空或超长' }
-  const gongJu = (process.env.SOU_SUO_GONG_JU || 'ddg').trim().toLowerCase()
+  const gongJu = (process.env.SOU_SUO_GONG_JU || 'deepseek').trim().toLowerCase()
   const tiaoShu = Math.max(1, Math.min(20, canShu.tiaoShu ?? 8))
-  const mianFei = gongJu === 'ddg' || gongJu === 'bing' ? (gongJu === 'ddg' ? await souSuoDdgLite(query, tiaoShu) : await souSuoBing(query, tiaoShu)) : []
-  if (mianFei.length > 0) return { cheng_gong: true, tiaoMu: mianFei }
   if (gongJu === 'ddg' || gongJu === 'bing') {
+    const mianFei = gongJu === 'ddg' ? await souSuoDdgLite(query, tiaoShu) : await souSuoBing(query, tiaoShu)
+    if (mianFei.length > 0) return { cheng_gong: true, tiaoMu: mianFei }
     const bei = gongJu === 'ddg' ? await souSuoBing(query, tiaoShu) : await souSuoDdgLite(query, tiaoShu)
     if (bei.length > 0) return { cheng_gong: true, tiaoMu: bei }
     return { cheng_gong: false, tiaoMu: [], ti_shi: '免费搜索无结果' }
   }
   const miYao = MiYao()
-  if (miYao === '') return { cheng_gong: false, tiaoMu: [], ti_shi: '官方钥匙未配置' }
+  if (miYao === '') {
+    const mianFei = await souSuoDdgLite(query, tiaoShu)
+    if (mianFei.length > 0) return { cheng_gong: true, tiaoMu: mianFei }
+    return { cheng_gong: false, tiaoMu: [], ti_shi: '官方钥匙未配置，免费搜索也无结果' }
+  }
   const kongZhi = new AbortController()
   const dingShi = setTimeout(() => kongZhi.abort(), 30000)
   try {

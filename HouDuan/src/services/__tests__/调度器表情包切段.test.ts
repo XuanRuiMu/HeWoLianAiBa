@@ -20,7 +20,7 @@ vi.mock('../胜利失败条件', () => ({
   chuLiAIHuiFuHouJieShuJianCha: vi.fn(async () => null),
   chuLiYouXiJieShu: vi.fn(),
 }))
-vi.mock('../系统表情', () => ({ 发送表情包消息: vi.fn() }))
+vi.mock('../表情包选取', () => ({ 发送表情包消息: vi.fn() }))
 vi.mock('../对话摘要', () => ({
   duQuTongBuZhaiYao: vi.fn(() => ''),
   duQuDuiHuaZhaiYao: vi.fn(async () => null),
@@ -38,8 +38,7 @@ vi.mock('../../utils/debug日志', () => ({
 
 import { AI回复调度器 } from '../AI回复调度器'
 import { 保存角色XiaoXi } from '../AI输入准备'
-import { 发送表情包消息 } from '../系统表情'
-import { debug日志 } from '../../utils/debug日志'
+import { 发送表情包消息 } from '../表情包选取'
 import { BiaoQingBaoYunXing } from '../../config/表情包配置'
 import { burstChangJianGeJiZhunHaoMiao } from '../../config/角色配置'
 
@@ -77,7 +76,7 @@ function 造文本消息(id: string, neiRong: string): 消息信息 {
 
 function 造图片消息(id: string, duanMing: string): 消息信息 {
   return {
-    ...造文本消息(id, `[贴纸:${duanMing}]`),
+    ...造文本消息(id, `[表情包:${duanMing}]`),
     lei_xing: 'biaoQingBao',
     nei_rong_kuai: [
       { lei_xing: 'tupian', mei_ti_lei_bie: 'biaoqingshu', duan_ming: duanMing },
@@ -122,11 +121,11 @@ beforeEach(() => {
   )
 })
 
-describe('调度器按段发送贴纸', () => {
-  it('一行里文字与贴纸交替时按原顺序分段发出，文字段不残留标记', async () => {
+describe('调度器按段发送表情包', () => {
+  it('一行里文字与表情包交替时按原顺序分段发出，文字段不残留标记', async () => {
     const { 推送序列, 运行 } = 造调度器()
 
-    await 运行(['无语[贴纸:熊猫头无语]我跟你说'])
+    await 运行(['无语[表情包:熊猫头无语]我跟你说'])
 
     expect(推送序列()).toEqual(['文:无语', '图:熊猫头无语', '文:我跟你说'])
     expect(vi.mocked(保存角色XiaoXi).mock.calls.map(([canShu]) => (canShu as { nei_rong: string }).nei_rong)).toEqual([
@@ -136,48 +135,44 @@ describe('调度器按段发送贴纸', () => {
     expect(vi.mocked(发送表情包消息).mock.calls.map(([, , duanMing]) => duanMing)).toEqual(['熊猫头无语'])
     for (const [canShu] of vi.mocked(保存角色XiaoXi).mock.calls) {
       const wenBen = (canShu as { nei_rong: string }).nei_rong
-      expect(wenBen).not.toContain('贴纸')
+      expect(wenBen).not.toContain('表情包')
       expect(wenBen).not.toContain('[')
       expect(wenBen).not.toContain(']')
     }
   })
 
-  it('纯贴纸一行只发一张图，不落文字', async () => {
+  it('纯表情包一行只发一张图，不落文字', async () => {
     const { 推送序列, 运行 } = 造调度器()
 
-    await 运行(['[贴纸:狗头]'])
+    await 运行(['[表情包:狗头]'])
 
     expect(推送序列()).toEqual(['图:狗头'])
     expect(保存角色XiaoXi).not.toHaveBeenCalled()
   })
 
-  it('超过每轮上限的图段被丢弃，后续文字段照常发出', async () => {
+  it('表情包没有每轮张数上限，连续多张全部发出', async () => {
     const { 推送序列, 运行 } = 造调度器()
-    const shangXian = BiaoQingBaoYunXing.zuiDaMeiLunZhangShu
-    const tieZhi = Array.from({ length: shangXian + 1 }, (_, xu) => `[贴纸:图${xu + 1}]`).join('')
+    const 图 = Array.from({ length: 6 }, (_, xu) => `[表情包:图${xu + 1}]`).join('')
 
-    await 运行([`${tieZhi}收尾话`])
+    await 运行([`${图}收尾话`])
 
-    expect(vi.mocked(发送表情包消息).mock.calls).toHaveLength(shangXian)
+    expect(vi.mocked(发送表情包消息).mock.calls).toHaveLength(6)
     const 序列 = 推送序列()
-    expect(序列.filter((xiang) => xiang.startsWith('图:'))).toHaveLength(shangXian)
+    expect(序列.filter((xiang) => xiang.startsWith('图:'))).toHaveLength(6)
     expect(序列[序列.length - 1]).toBe('文:收尾话')
-    expect(
-      vi.mocked(debug日志.warn).mock.calls.some(([, xiaoXi]) => String(xiaoXi).includes('上限')),
-    ).toBe(true)
   })
 
-  it('图段发送失败时只丢这一段，后续文字段照常发出', async () => {
+  it('表情包段发送失败时只丢这一段，后续文字段照常发出', async () => {
     const { 推送序列, 运行 } = 造调度器()
     vi.mocked(发送表情包消息).mockResolvedValue(null)
 
-    await 运行(['无语[贴纸:熊猫头无语]我跟你说'])
+    await 运行(['无语[表情包:熊猫头无语]我跟你说'])
 
     expect(推送序列()).toEqual(['文:无语', '文:我跟你说'])
     expect(发送表情包消息).toHaveBeenCalledTimes(1)
   })
 
-  it('图段与紧随其后的下一段之间走短间隔，其余段走普通间隔', async () => {
+  it('表情包段与紧随其后的下一段之间走短间隔，其余段走普通间隔', async () => {
     const { 内部, 运行 } = 造调度器()
     const 间隔序列: string[] = []
     内部.等待间隔 = async () => {
@@ -187,50 +182,39 @@ describe('调度器按段发送贴纸', () => {
       间隔序列.push('短')
     }
 
-    await 运行(['无语[贴纸:熊猫头无语]我跟你说'])
+    await 运行(['无语[表情包:熊猫头无语]我跟你说'])
 
     expect(间隔序列).toEqual(['普通', '短'])
-    expect(BiaoQingBaoYunXing.biaoQingHouDuanJianGe.jiZhun).toBeLessThan(burstChangJianGeJiZhunHaoMiao.E)
+    expect(BiaoQingBaoYunXing.biaoQingBaoHouDuanJianGe.jiZhun).toBeLessThan(burstChangJianGeJiZhunHaoMiao.E)
   })
 
-  it('微信原生小表情不占图片轮数上限，连续3对玫瑰/点赞全部发出', async () => {
+  it('微信表情留在文字里，不当表情包发送', async () => {
     const { 推送序列, 运行 } = 造调度器()
-    await 运行([
-      '春霞真美丽[贴纸:wx_玫瑰][贴纸:wx_玫瑰][贴纸:wx_玫瑰]有你真是我们的福气[贴纸:wx_点赞][贴纸:wx_点赞][贴纸:wx_点赞]',
-    ])
 
-    expect(vi.mocked(发送表情包消息)).toHaveBeenCalledTimes(6)
-    expect(推送序列()).toEqual([
-      '文:春霞真美丽',
-      '图:wx_玫瑰',
-      '图:wx_玫瑰',
-      '图:wx_玫瑰',
-      '文:有你真是我们的福气',
-      '图:wx_点赞',
-      '图:wx_点赞',
-      '图:wx_点赞',
-    ])
+    await 运行(['春霞真美丽[表情:微信玫瑰][表情:微信玫瑰]有你真是我们的福气[表情:微信强]'])
+
+    expect(发送表情包消息).not.toHaveBeenCalled()
+    expect(推送序列()).toEqual(['文:春霞真美丽[玫瑰][玫瑰]有你真是我们的福气[强]'])
   })
 
-  it('普通图已到上限后仍可发小表情；第7个小表情之前被拦截不调用发送', async () => {
+  it('emoji 表情留在文字里，夹在句中', async () => {
     const { 推送序列, 运行 } = 造调度器()
-    await 运行([
-      '[贴纸:图普通]一句[贴纸:wx_玫瑰][贴纸:wx_玫瑰][贴纸:wx_玫瑰][贴纸:wx_点赞][贴纸:wx_点赞][贴纸:wx_点赞][贴纸:wx_点赞]',
-    ])
-    expect(vi.mocked(发送表情包消息)).toHaveBeenCalledTimes(7)
-    expect(推送序列()).toEqual([
-      '图:图普通',
-      '文:一句',
-      '图:wx_玫瑰',
-      '图:wx_玫瑰',
-      '图:wx_玫瑰',
-      '图:wx_点赞',
-      '图:wx_点赞',
-      '图:wx_点赞',
-    ])
+
+    await 运行(['今天好开心[表情:emoji大笑]真的'])
+
+    expect(发送表情包消息).not.toHaveBeenCalled()
+    expect(推送序列()).toEqual(['文:今天好开心😆真的'])
   })
 
-  it('同一文字段重复出现时按去重丢弃，图段不参与文本去重', async () => {
+  it('表情与表情包同一条里混排时，表情跟文字走、表情包独立成条', async () => {
+    const { 推送序列, 运行 } = 造调度器()
+
+    await 运行(['太逗了[表情:微信呲牙][表情包:狗头]哈哈哈'])
+
+    expect(推送序列()).toEqual(['文:太逗了[呲牙]', '图:狗头', '文:哈哈哈'])
+  })
+
+  it('同一文字段重复出现时按去重丢弃，表情包段不参与文本去重', async () => {
     const { 内部, 推送序列, 运行 } = 造调度器()
 
     await 运行(['收到', '收到'])
@@ -238,7 +222,7 @@ describe('调度器按段发送贴纸', () => {
     expect([...内部.已送达登记.keys()]).toEqual(['收到'])
 
     const 第二轮 = 造调度器()
-    await 第二轮.运行(['[贴纸:狗头]'])
+    await 第二轮.运行(['[表情包:狗头]'])
     expect(第二轮.推送序列()).toEqual(['图:狗头'])
     expect([...第二轮.内部.已送达登记.keys()]).toEqual([])
   })

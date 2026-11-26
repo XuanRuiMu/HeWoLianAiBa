@@ -6,7 +6,7 @@ import { zhuRuBenLunTuXiangKuai } from './对话渲染'
 import { 检索通用知识, type 通用知识检索结果 } from './通用知识检索'
 import { 表情运行标签 } from '../config/表情包配置'
 import type { 对话块 } from '../utils/通用模型调用'
-import type { AIYinQingShuRu, DirectorCeLue, GuanXiBianHua, XinQingMingZhi } from '../types'
+import type { AIYinQingShuRu, ChongTuShiJianPanDing, DirectorCeLue, GuanXiBianHua, XinQingMingZhi } from '../types'
 import { XinQingLieBiao as XinQingMingZhiLieBiao } from './当前心情'
 import * as YuYanGongNeng from '../config/语言与时区'
 import type { 参数上下文 } from '../config/AI参数策略'
@@ -91,6 +91,7 @@ export function jieXiDirectorXiangYing(neiRong: string): { ceLue: DirectorCeLue;
       xin_qing_li_you: quXinQingLiYou(quZhi(shuJu, '心情理由', 'xin_qing_li_you')),
       yao_qiu_huan_yu_yan: quYaoQiuHuanYuYan(quZhi(shuJu, '要求换语言', 'yao_qiu_huan_yu_yan')),
       bu_hui_li_you: quBuHuiLiYou(quZhi(shuJu, '不回的理由', 'bu_hui_li_you')),
+      chongTuShiJian: quChongTuShiJian(quZhi(shuJu, '冲突事件', 'chongTuShiJian')),
       ...(youShiTi ? { dangQianHuaTiShiTi: shiTiLieBiao } : {}),
       ...(shuJu['需要回想'] === true ? { need_recall: true } : {}),
     },
@@ -152,6 +153,22 @@ function quBuHuiLiYou(zhi: unknown): string {
   const wen = String(zhi ?? '').trim()
   if (wen === '') return '没有'
   return (BuHuiLiYouBiao as readonly string[]).includes(wen) ? wen : '没有'
+}
+
+function quChongTuShiJian(zhi: unknown): ChongTuShiJianPanDing | null | undefined {
+  if (zhi === null) return null
+  if (typeof zhi !== 'object' || Array.isArray(zhi)) return undefined
+  const sou = zhi as Record<string, unknown>
+  const dongZuoYuan = String(sou['动作'] ?? sou['dongZuo'] ?? '').trim()
+  const dongZuo =
+    dongZuoYuan === 'yanZhong' || dongZuoYuan === '严重'
+      ? 'yanZhong'
+      : dongZuoYuan === 'shengQi' || dongZuoYuan === '生气'
+        ? 'shengQi'
+        : null
+  if (!dongZuo) return undefined
+  const shiYou = String(sou['事由'] ?? sou['shiYou'] ?? '').trim().slice(0, 200)
+  return { dongZuo, shiYou }
 }
 
 

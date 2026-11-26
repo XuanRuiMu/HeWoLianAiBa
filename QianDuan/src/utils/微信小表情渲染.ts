@@ -7,7 +7,7 @@ export interface WenBenPianDuan {
 
 /**
  * 把文本里的 [表情名] 切成 文字 / 微信小表情 片段。
- * 只认微信原生小表情码表里的名字；方括号里的其他内容（如 [贴纸:xxx]）原样保留为文字。
+ * 只认微信原生小表情码表里的名字；方括号里的其他内容（如 [表情包:xxx]）原样保留为文字。
  */
 export function qieFenWenBenWeiXinBiaoQing(neiRong: string): WenBenPianDuan[] {
   const jieGuo: WenBenPianDuan[] = []

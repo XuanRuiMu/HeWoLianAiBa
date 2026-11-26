@@ -12,7 +12,7 @@ import { liuShiBaoCunMeiTi, MeiTiCunChuCuoWu, shengChengQianMingURL } from '../s
 import { panDingMeiTiShenHeChuCan } from '../services/媒体审核出参'
 import { chaXunZhangHaoFengJin, jiLuZhangHaoWeiGui } from '../services/账号封禁'
 import { 获取IP } from '../services/IP封禁'
-import { BiaoQingPeiZhi, BiaoQingMeiTiLeiBie } from '../config/表情配置'
+import { BiaoQingPeiZhi, BiaoQingMeiTiLeiBie } from '../config/我的表情包配置'
 
 const luYou = Router()
 

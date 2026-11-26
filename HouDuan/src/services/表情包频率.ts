@@ -1,6 +1,6 @@
 import { BiaoQingMiDu } from '../config/表情包配置'
 import { GuiFanGuanXiJieDuanMing } from '../config/好感度配置'
-import { tiQuTieZhiDuanMing } from './贴纸标记'
+import { tiQuBiaoQingBaoDuanMing } from './表情包标记'
 import type { DuiHuaLiShiXiang } from '../types'
 
 export type BiaoQingQuXiang = '偏少' | '正常' | '偏多'
@@ -16,25 +16,45 @@ export interface BiaoQingShouGanJieGuo {
 interface JiaoSeXiangGuan {
   ie_lei_xing?: string
   re_shen_lei_xing?: string
+  ren_she_qi_zhi?: readonly string[]
 }
 
 export function shiBiaoQingXiaoXi(xiang: Pick<DuiHuaLiShiXiang, 'meiTiLeiBie' | 'nei_rong'>): boolean {
   if (xiang.meiTiLeiBie === BiaoQingMiDu.ziLiaoBiaoQingLeiBie) return true
   const neiRong = typeof xiang.nei_rong === 'string' ? xiang.nei_rong : ''
   if (neiRong === '') return false
-  return tiQuTieZhiDuanMing(neiRong).length > 0
+  return tiQuBiaoQingBaoDuanMing(neiRong).length > 0
 }
 
 function quRenGeXiShu(jiaoSe?: JiaoSeXiangGuan | null, guanXiJieDuan?: string | null): number {
   const xiShu = BiaoQingMiDu.renGeXiShu
+  const qiZhiBiao = BiaoQingMiDu.qiZhiXiShu as Record<string, number>
+  const ming = GuiFanGuanXiJieDuanMing(guanXiJieDuan)
+  const shiManRe = jiaoSe?.re_shen_lei_xing === BiaoQingMiDu.manReBiaoShi
+  const shiGangRenShi = BiaoQingMiDu.manReGangRenShiJieDuan.includes(ming)
+
   const shiNeiXiang = jiaoSe?.ie_lei_xing === 'I'
   const shiWaiXiang = jiaoSe?.ie_lei_xing === 'E'
-  const shiManRe = jiaoSe?.re_shen_lei_xing === BiaoQingMiDu.manReBiaoShi
-  const ming = GuiFanGuanXiJieDuanMing(guanXiJieDuan)
-  const shiGangRenShi = BiaoQingMiDu.manReGangRenShiJieDuan.includes(ming)
-  if (shiNeiXiang) return shiManRe && shiGangRenShi ? xiShu.neiXiang * xiShu.manReGangRenShi : xiShu.neiXiang
-  if (shiWaiXiang) return shiManRe && shiGangRenShi ? xiShu.waiXiang * xiShu.manReGangRenShi : xiShu.waiXiang
-  return 1
+  let ieXiShu = 1
+  if (shiNeiXiang) ieXiShu = xiShu.neiXiang
+  else if (shiWaiXiang) ieXiShu = xiShu.waiXiang
+  if (shiManRe && shiGangRenShi) ieXiShu *= xiShu.manReGangRenShi
+
+  const qiZhi = Array.isArray(jiaoSe?.ren_she_qi_zhi) ? jiaoSe.ren_she_qi_zhi : []
+  if (qiZhi.length > 0) {
+    let ji = 0
+    let shu = 0
+    for (const zhi of qiZhi) {
+      const z = qiZhiBiao[zhi]
+      if (typeof z === 'number' && Number.isFinite(z)) {
+        ji += z
+        shu += 1
+      }
+    }
+    if (shu > 0) return (ji / shu) * ieXiShu
+  }
+
+  return ieXiShu
 }
 
 function quGuanXiXiShu(guanXiJieDuan?: string | null): number {

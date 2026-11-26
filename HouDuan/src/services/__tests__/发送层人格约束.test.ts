@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { BiaoQingZaiTiJueCe } from '../表情载体'
+import type { BiaoQingZaiTiJueCe } from '../表情包载体'
 
 describe('发送层人格约束', () => {
   it('I 型即使模型给出梗图短名也不会发送', async () => {
     vi.resetModules()
-    const { 发送表情包消息 } = await import('../系统表情')
-    const { 查找表情按短名 } = await import('../系统表情')
+    const { 发送表情包消息 } = await import('../表情包选取')
+    const { 查找表情按短名 } = await import('../表情包选取')
     const 结果 = await 发送表情包消息('u-1', 'j-1', '任意梗图', {
       geiHouXuan: true,
       yuanYin: '放行',

@@ -45,7 +45,7 @@ function 读媒体文本(消息: 原始军师消息): string {
   if (消息.meiTiLeiBie === 'yuyin' || 读类型(消息).toLowerCase() === 'yuyin') return 读语音文本(消息)
   if (消息.tuWenHunPai) return '图文混排消息，只能看到文字与图片标记；未显示的具体内容不猜测。'
   if (消息.meiTiLeiBie === 'tupian') return '[图片]'
-  if (消息.meiTiLeiBie === 'biaoqingshu') return '[表情包]（只知道贴纸载体，不猜其文字内容）'
+  if (消息.meiTiLeiBie === 'biaoqingshu') return '[表情包]（只知道表情包载体，不猜其文字内容）'
   if (消息.meiTiLeiBie === 'wenjian') return '[文件]'
   if (消息.meiTiLeiBie) return `[${消息.meiTiLeiBie}]`
   return 归一空白(消息.nei_rong ?? '')
