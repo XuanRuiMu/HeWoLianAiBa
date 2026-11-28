@@ -1,7 +1,7 @@
 import { 数据库 } from '../数据库'
 import { huoQuFanYi } from '../config/translations'
 import { 类别到消息类型, ShenHeFuWuBuKeYongJian, type MeiTiLeiBie } from '../config/媒体配置'
-import { shenHeTuPianAnQuan } from './DeepSeek视觉审核'
+import { shenHeTuPianAnQuan } from './TuPianAnQuanShenHe'
 import { yanZhengUUID } from '../utils/验证'
 
 function meiTiBuKeYong(): { he_fa: boolean; ti_shi: string } {

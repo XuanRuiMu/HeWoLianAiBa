@@ -162,6 +162,7 @@ export const fanYi = {
     xiaoXiNeiRongGuoChang: '消息内容不能超过500个字符',
     xiaoXiNeiRongWeiKong: '消息内容不能为空',
     faSongShiBai: '消息发送失败，请重试',
+    miDengJianChongTu: '同一请求标识不能用于不同内容',
     cheHuiShiBai: '消息撤回失败',
     jiaoSeBuCunZai: '聊天对象不存在',
     wuQuanXian: '无权访问该聊天',

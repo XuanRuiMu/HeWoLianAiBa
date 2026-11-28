@@ -15,7 +15,7 @@ const 文件 = resolve(process.cwd(), '..', '.agents', 'evidence', 'traces', `FP
 mkdirSync(resolve(process.cwd(), '..', '.agents', 'evidence', 'traces'), { recursive: true })
 function 记录(数据: Record<string, unknown>): void { appendFileSync(文件, JSON.stringify({ 时间: new Date().toISOString(), ...数据 }) + '\n', 'utf8') }
 const emit记录: Array<{ shiJian: string; fuZai: unknown }> = []
-const 角色 = { jiao_se_id: 'sql-test-role', wei_xin_ming: '糖糖', ie_lei_xing: 'E', re_shen_lei_xing: '快热', nian_ling: 24, xing_ge: '开朗爱闹，爱玩梗，偶尔毒舌', yan_yu_feng_ge: '口语活泼，爱玩梗', ren_she_ka: '你是糖糖，24岁，开朗爱闹，喜欢玩梗但不滥用。亲切也懂得分寸，严肃时认真。' }
+const 角色 = { jiao_se_id: 'sql-test-role', wei_xin_ming: '糖糖', ie_lei_xing: 'E', re_shen_lei_xing: '快热', nian_ling: 24, xing_ge: '开朗爱闹，爱玩梗，偶尔毒舌', yan_yu_feng_ge: '口语活泼，爱玩梗' }
 
 const emit = (shiJian: string, fuZai: unknown): void => {
   emit记录.push({ shiJian, fuZai })

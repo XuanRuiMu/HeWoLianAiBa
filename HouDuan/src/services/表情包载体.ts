@@ -158,6 +158,13 @@ function qingXiLiShi(zhi: unknown): DuiHuaLiShiXiang[] {
   return zhi.filter((xiang): xiang is DuiHuaLiShiXiang => Boolean(xiang) && typeof xiang === 'object')
 }
 
+function shiGouShu(shuRu: AIYinQingShuRu): boolean {
+  const 互动次数 = Number(shuRu?.hao_gan_du?.互动次数)
+  if (Number.isFinite(互动次数) && 互动次数 >= 表情载体配置.zuiDiYunXuHuDongCiShu) return true
+  const jieDuanXuHao = quJieDuanXuHao(shuRu?.hao_gan_du?.guan_xi_jie_duan)
+  return jieDuanXuHao >= quJieDuanXuHao(表情载体配置.zuiDiYunXuJieDuan)
+}
+
 export function panDuanBiaoQingZaiTi(
   shuRu: AIYinQingShuRu,
   ceLue?: DirectorCeLue,
@@ -189,7 +196,7 @@ export function panDuanBiaoQingZaiTi(
     let yuanYin: BiaoQingZaiTiYuanYin = '放行'
     if (!BiaoQingBaoYunXing.daKai) yuanYin = '总开关关闭'
     else if (shiWeiJi(shuRu, ceLue)) yuanYin = '危机'
-    else if (jieDuanXuHao < quJieDuanXuHao(表情载体配置.zuiDiYunXuJieDuan)) yuanYin = '关系未到'
+    else if (!shiGouShu(shuRu)) yuanYin = '关系未到'
     else if (shiHuiJing(liShi)) yuanYin = '回敬'
 
     const gangFaGuoTu = shouGan.shangCiFaTuLunShu !== null && shouGan.shangCiFaTuLunShu <= 2

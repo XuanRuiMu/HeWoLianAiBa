@@ -22,7 +22,6 @@ export interface KaiChangBaiShengChengCanShu {
   bei_jing_gu_shi: string
   qing_gan_jing_li: string
   jia_ting_bei_jing: string
-  tou_xiang: string
   biao_qian: string[]
 }
 
@@ -56,8 +55,9 @@ function gouJianKaiChangBaiTiShi(canShu: KaiChangBaiShengChengCanShu): string {
     '「极被动型」：极度被动、社恐、或者有过主动联系别人却被无视的经历，基本上不会自己先发消息。',
     '判断依据（按权重从高到低）：说话风格里的主动性、性格里的主动程度、热身类型的快热慢热、MBTI 的 E/I、情感经历里有没有被人放过鸽子、家庭背景里的性格成因。',
     '注意：不要因为"主动一点更好"就往高档位选。性格被动的人就是不主动，这是真实的人，不是缺陷。',
-    '第二步，决定条数：假设 TA 真的开口了，会发几条。话多热情的发 3~5 条，话少内向的发 1~2 条。',
-    '第三步，写内容：写 TA 主动发出去的那几条消息。',
+    '第二步，决定条数：假设 TA 真的开口了，会发几条。性格被动、社恐、或者刚加好友实在没话题的，可以一条都不发，xiao_xi_lie_biao 给空数组；外向热情的发 1~2 条；特别有话说的最多 3 条。不要机械按 MBTI 决定条数。',
+    '第三步，写内容：写 TA 主动发出去的那几条消息；如果决定不发，xiao_xi_lie_biao 就是空数组。',
+    '下面是角色资料，不是让你把这些都写进开场白，只挑一个自然的点。',
     '角色真实画像：',
     `MBTI：${canShu.mbti_lei_xing}（首字母 ${canShu.ie_lei_xing} 仅供参考，不要据此机械决定），热身类型：${canShu.re_shen_lei_xing}，性别：${xingBieMiaoShu}。`,
     `性格：${canShu.xing_ge}`,
@@ -66,22 +66,28 @@ function gouJianKaiChangBaiTiShi(canShu: KaiChangBaiShengChengCanShu): string {
     `背景故事：${canShu.bei_jing_gu_shi}`,
     `情感经历：${canShu.qing_gan_jing_li}`,
     `家庭背景：${canShu.jia_ting_bei_jing}`,
-    `头像：${canShu.tou_xiang}`,
     `标签：${canShu.biao_qian.join('、')}`,
-    canShu.shi_fou_zha_xing ? '这人设带点渣，往往会更主动地撩。' : '',
+    canShu.shi_fou_zha_xing ? '这人设带点渣，会更主动，但也不要因此塞爆信息量。' : '',
     '',
-    '数量要求：消息 1~5 条（含 1 和 5），不要发 0 条。条数由 TA 的性格决定：越热情/开朗/快热/渣型，越可以发到 3~5 条；越害羞/慢热/高冷，发 1~2 条即可。',
-    '请按真实中国大学生微信聊天的风格生成。',
+    '数量要求：消息 0~3 条。性格被动、社恐、刚加好友没话题的，可以一条都不发，xiao_xi_lie_biao 返回空数组；外向热情的发 1~2 条；特别有话题的最多 3 条。不要机械按 MBTI 决定条数。',
+    '请按这个角色真实身份的微信聊天风格生成（学生就学生气，上班族就带点上班族的气息），保留真人味，不要为了礼貌写得像客服。',
     '',
-'内容要求：',
-    '1. 像真实大学生微信聊天：可以有表情、简短问候、找话题、俏皮话、emoji，不要长篇大论。',
-    '2. 说点你自己的事。真人加好友后第一条消息往往不是「在吗」，而是顺嘴说一句自己那边怎么样——在干嘛、刚下课、今天冷死了、看到个什么。',
+    '克制要求：',
+    '1. 最多 1~2 条，特别热情最多 3 条；每条只说一件事，不要把多件事挤在一条里。',
+    '2. 最多一个问号，且不要在下一句继续追问；对方还没回，不追问第二句。',
+    '3. 不要替对方下结论，不要推断对方在哪、在干嘛、是什么样的人，也不要编造对方的信息。',
+    '4. 不要调侃或催促对方回消息，不要显得急着要回复。',
+    '5. 礼貌一点，但别端着，保留真人味。',
+    '',
+    '内容要求：',
+    '1. 像这个身份的真人微信聊天，简短自然，不要长篇大论。',
+    '2. 只挑一个自然的点顺嘴说一句，比如刚下课、今天冷、看到个什么；不用把性格、风格、经历、标签全塞进来。',
     '3. 不要自我介绍姓名、年级、专业这类信息，那是别人问了你才说。',
     '4. 每条消息独立一行，不超过 100 字。',
     '5. 内容必须是 TA 主动发起的，不能假设对方已经说话。',
     '',
     '按这个 JSON 格式输出，别加别的：',
-    '{"主动程度": "中间型", "xiao_xi_lie_biao": ["消息1", "消息2"]}',
+    '决定不发时输出：{"主动程度": "被动型", "xiao_xi_lie_biao": []}；决定发时输出：{"主动程度": "中间型", "xiao_xi_lie_biao": ["一句话"]}',
   ].filter(Boolean).join('\n')
 }
 
@@ -102,7 +108,7 @@ function anQuanGuoLvXiaoXi(neiRong: string, mingZi?: string): string | null {
   return qingLi
 }
 
-function jieXiJSONNeiRong(
+export function jieXiJSONNeiRong(
   neiRong: unknown,
   mingZi?: string,
 ): { dang_wei: string; gai_lv: number; xiao_xi_lie_biao: string[] } {
@@ -123,7 +129,12 @@ function jieXiJSONNeiRong(
   if (!jieGuo || typeof jieGuo !== 'object' || !Array.isArray((jieGuo as { xiao_xi_lie_biao?: unknown }).xiao_xi_lie_biao)) {
     throw new JiaoSeShengChengCuoWu(CuoWuDaiMa.ROLE_GENERATION_RESPONSE_INVALID)
   }
-  const xiaoXiLieBiao = (jieGuo as { xiao_xi_lie_biao: unknown[] }).xiao_xi_lie_biao
+  const yuanLieBiao = (jieGuo as { xiao_xi_lie_biao: unknown[] }).xiao_xi_lie_biao
+  if (yuanLieBiao.length === 0) {
+    const dangWeiKong = jieXiZhuDongDangWei((jieGuo as { 主动程度?: unknown })['主动程度'])
+    return { dang_wei: dangWeiKong, gai_lv: dangWeiZhuanGaiLv(dangWeiKong), xiao_xi_lie_biao: [] }
+  }
+  const xiaoXiLieBiao = yuanLieBiao
     .map((x: unknown) => (typeof x === 'string' ? anQuanGuoLvXiaoXi(x, mingZi) : null))
     .filter((x: string | null): x is string => x !== null)
     .slice(0, 5)
@@ -157,7 +168,7 @@ function jiangJiKaiChangBai(canShu: KaiChangBaiShengChengCanShu): KaiChangBaiShe
     '看到朋友圈有点意思', '今天天气好好', '你的头像有点意思',
   ]
   const zuiDa = 3
-  const tiaoShu = Math.max(1, Math.floor(Math.random() * zuiDa) + 1)
+  const tiaoShu = Math.floor(Math.random() * (zuiDa + 1))
   const jieGuo: string[] = []
   const chi = [...houXuan]
   while (jieGuo.length < tiaoShu && chi.length > 0) {
@@ -195,7 +206,7 @@ export async function shengChengKaiChangBai(
     }
   }
 
-  const api密钥 = peiZhi.deepSeek.api密钥 || AI配置.deepSeek.api密钥
+  const api密钥 = peiZhi.moRenMoXing.api密钥 || AI配置.moRenMoXing.api密钥
   if (!api密钥 || process.env.VITEST === 'true') {
     return jiangJiKaiChangBai(canShu)
   }

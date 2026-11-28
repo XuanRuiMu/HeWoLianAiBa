@@ -2,7 +2,7 @@ import { peiZhi } from '../config'
 import { huoQuDuoMoTaiPeiZhi, huoQuGuiJiLiuDongMiYao } from '../config/多模态配置'
 
 const JiChu = (): string => {
-  const zi = (process.env.DEEPSEEK_OFFICIAL_BASE_URL || peiZhi.deepSeek.基础地址 || 'https://api.deepseek.com').trim().replace(/\/$/, '')
+  const zi = (process.env.DEEPSEEK_OFFICIAL_BASE_URL || peiZhi.moRenMoXing.基础地址 || 'https://api.deepseek.com').trim().replace(/\/$/, '')
   return /\/v1$/.test(zi) ? zi.replace(/\/v1$/, '') : zi
 }
 

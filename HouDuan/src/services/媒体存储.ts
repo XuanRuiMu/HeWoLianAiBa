@@ -14,7 +14,7 @@ import {
   shiHeFaLeiBie,
   shiYunXuMIME,
 } from '../config/媒体配置'
-import { shenHeTuPianAnQuan } from './DeepSeek视觉审核'
+import { shenHeTuPianAnQuan } from './TuPianAnQuanShenHe'
 
 export interface MeiTiBaoCunJieGuo {
   mediaId: string

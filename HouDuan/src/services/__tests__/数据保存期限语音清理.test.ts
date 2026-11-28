@@ -6,7 +6,7 @@ import { 数据库 } from '../../数据库'
 import { MeiTiPeiZhi } from '../../config/媒体配置'
 import { qingLiGuoQiYuYinWenJian } from '../数据保存期限'
 
-const 手机号 = '19900000099'
+const 手机号 = '+8619900000099'
 const 哈希 = crypto.randomBytes(32).toString('hex')
 let 用户ID = ''
 let 文件路径 = ''

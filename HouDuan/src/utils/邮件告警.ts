@@ -96,7 +96,7 @@ let lianXuShiBaiCiShu = 0
 
 function huoQuYuDongNeiRong(ciShu: number, zuiJinCuoWu?: string): string {
   return [
-    `AI服务已连续失败${ciShu}次（阈值${peiZhi.aiLianXuShiBaiGaoJingYuZhi}），请尽快检查DeepSeek服务与网络状况。`,
+    `AI服务已连续失败${ciShu}次（阈值${peiZhi.aiLianXuShiBaiGaoJingYuZhi}），请尽快检查AI模型服务与网络状况。`,
     zuiJinCuoWu ? `最近一次错误：${zuiJinCuoWu.slice(0, 500)}` : '',
     `时间：${new Date().toISOString()}`,
   ]

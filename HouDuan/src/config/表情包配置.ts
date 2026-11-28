@@ -70,8 +70,16 @@ export const 表情最大文件字节 = quQiaDuanZhengShu(
   100 * MiaoBi,
 )
 
+export const YuYiJianSuoPeiZhi = {
+  juLiShangXian: 0.62,
+  benDiZhaoHuiShangXian: 600,
+  benDiHuanCunShangXian: 6000,
+  yiTuJiaFen: 8,
+  ciDuanJiaFen: 3,
+} as const
+
 export const BiaoQingBaoYunXing = {
-  houXuanShuLiang: quQiaDuanZhengShu('BIAO_QING_BAO_HOU_XUAN_SHU_LIANG', 8, 1, 50),
+  houXuanShuLiang: quQiaDuanZhengShu('BIAO_QING_BAO_HOU_XUAN_SHU_LIANG', 5, 1, 50),
   zuiJinChuangKou: quQiaDuanZhengShu('BIAO_QING_BAO_ZUI_JIN_CHUANG_KOU', 3, 0, 20),
   daKai: quHuanJingWenBen('BIAO_QING_BAO_AI_DA_KAI', 'true').toLowerCase() !== 'false',
   biaoQingBaoHouDuanJianGe: {
@@ -127,14 +135,10 @@ export const BiaoQingFaSongYuanYin = {
 export const BiaoQingHouXuanWenAn = {
   biaoTi: '【表情包候选】',
   daiTiShuoMing: [
-    '下面这几张图这一轮都能用，想发哪张就写 {biao_qing_bao_shi_li}，放在哪儿随你。',
-    '开头先甩一张再开口，那是抢话；话说完了最后补一张，那是收尾；夹在两句中间，就是停了一下；也能这轮一个字都不打，只发一张图。位置本身就是语气。',
-    '表情包标记格式必须是 `[表情包:短名]`，不要用 `[贴纸:...]`，也不要和 `[表情:...]` 混用。',
-    '图替你说了的那层意思，别再用文字说一遍；同一个地方也别又写那个词又贴图。',
-    '一轮发几张由你自己决定，连续发图也行，一张不发也行；关系还没到能随手甩图的份上就别用。正经求助、情绪崩了、深夜倾诉，只说话不发图。',
+    '想发就照抄 `[表情包:短名]` 原样写进正文，位置随你：开头、句中、结尾、整条只发图都行。',
   ] as readonly string[],
-  hangMoBan: '- {biao_qing_bao_shi_li} 描述:{miao_shu} | 情绪:{qing_xu} | 场景:{chang_jing}',
-  moShuKong: '无',
+  hangMoBan: '- {biao_qing_bao_shi_li} 场景:{chang_jing}',
+  quanZhongBiaoTi: '【这一轮你有多想发图】',
   changJingKong: '通用',
 } as const
 
@@ -149,12 +153,8 @@ export const 表情候选文案例 = {
 } as const
 
 export const BiaoQingChuanSongGuiZe: readonly string[] = [
-  '接到好笑的事、对方自嘲、玩梗 → 高概率发表情包',
-  '对方分享成就喜事 → 庆祝类',
+  '接到好笑的事、对方自嘲、玩梗 → 高概率发一张',
   '对方难过需要安慰 → 先认真文字，可跟一张安慰类',
-  '答应请求、表达喜欢 → 亲昵类',
-  '对方刚发表情包 → 回敬概率大幅提高',
-  '话题尴尬接不下去 → 表情包垫场',
   '对方严肃求助、情绪危机、深夜倾诉 → 禁止发表情包，只许认真文字',
 ]
 
@@ -195,7 +195,7 @@ export const BiaoQingMiDu = {
     高冷毒舌: 0.75,
     正经严肃: 0.3,
   } as Record<string, number>,
-  gangFaGuoTuCheng: 0.25,
+  gangFaGuoTuCheng: 0.55,
   quanZhongJiShu: 1.15,
   quanZhongBanShuaiLun: 6,
   manReGangRenShiJieDuan: ['冷淡', '疏远', '认识'] as readonly string[],
@@ -239,7 +239,17 @@ export const 表情风格标签: readonly string[] = ['黄脸', '祝福', '日�
 export const 表情默认风格 = '日常'
 
 export const 表情人设气质标签: readonly string[] = ['通用', '可爱萌系', '沙雕搞怪', '高冷毒舌', '温柔治愈', '正经严肃', '文艺清新', '热血燃系']
+
+export const 表情通用气质 = '通用'
 export const 表情圈层门槛标签: readonly string[] = ['大众', '亚文化', '深度梗']
+
+export const 表情圈层门槛阶段: Readonly<Record<string, string>> = {
+  大众: '冷淡',
+  亚文化: '认识',
+  深度梗: '熟悉',
+}
+
+export const 表情圈层仅大众气质 = '正经严肃'
 
 export const 表情人设气质词库: Readonly<Record<string, readonly string[]>> = {
   可爱萌系: ['可爱','软萌','卖萌','元气','撒娇','黏人','甜','软妹','治愈','开朗','活泼','天真','粘人','天真活泼','老顽童'],
@@ -280,7 +290,8 @@ export const 表情载体配置 = {
     jianGeZuiDaBeiLv: 1.35,
   },
   moRenDangMing: '长辈',
-  zuiDiYunXuJieDuan: '认识',
+  zuiDiYunXuJieDuan: '疏远',
+  zuiDiYunXuHuDongCiShu: 3,
   jinYongXiaoShiQiShi: 23,
   jinYongXiaoShiJieShu: 5,
   weiJiGuanJianCi: [

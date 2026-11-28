@@ -10,14 +10,14 @@ const 概率下限 = TtsPeiZhi.gaiLvXiaXian
 export const TtsDouDongFuDu = TtsPeiZhi.douDongFuDu
 
 const 关系阶段系数: Record<string, number> = {
-  冷淡: 0.3,
-  疏远: 0.3,
+  冷淡: 0.5,
+  疏远: 0.5,
   认识: 0.6,
-  熟悉: 0.6,
+  熟悉: 0.7,
   朋友: 0.9,
-  好友: 0.9,
+  好友: 1.0,
   暧昧: 1.2,
-  心动: 1.2,
+  心动: 1.3,
   热恋: 1.5,
   深爱: 1.5,
 }

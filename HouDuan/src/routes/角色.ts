@@ -1,4 +1,4 @@
-﻿import { debug日志 } from '../utils/debug日志'
+import { debug日志 } from '../utils/debug日志'
 import { Router } from 'express'
 import type { Response } from 'express'
 import { huoQuFanYi } from '../config/translations'
@@ -25,7 +25,6 @@ import {
   NianLingShangXian,
 } from '../services/人设审核'
 import { 生成角色头像 } from '../services/头像生成'
-import { shengChengRenSheKa, yaoSuCongJiaoSe, type RenSheKaYaoSu } from '../services/人设自述卡'
 import type { MBTI类型 } from '../config/角色配置'
 import { mbtiLieBiao } from '../config/角色配置'
 import type { RenZhengQingQiu } from '../middleware/认证'
@@ -232,24 +231,26 @@ luYou.post('/确认', async (qingQiu: RenZhengQingQiu, xiangYing: Response) => {
         jiaoSeYuanShi as unknown as Record<string, unknown>,
       ) as unknown as ShengChengJiaoSeJieGuo,
     )
-    const baoCunHou = await baoCunJiaoSe(yongHu.用户ID, xiZhengHouJiaoSe)
-    try {
-      await 生成角色头像({
-        用户ID: yongHu.用户ID,
-        jiaoSeId: String(baoCunHou.id),
-        jiaoSe: baoCunHou,
-      })
-    } catch (touXiangCuoWu) {
-      debug日志.warn('角色接口', '头像生成异常，保留兜底头像并等待重试队列', {
-        xiang_qing: { cuo_wu: String(touXiangCuoWu).slice(0, 200) },
-      })
-    }
+    const baoCunHou = await baoCunJiaoSe(
+      yongHu.用户ID,
+      xiZhengHouJiaoSe,
+      'putong',
+      async (jiaoSeId, jiaoSe) => {
+        try {
+          await 生成角色头像({
+            用户ID: yongHu.用户ID,
+            jiaoSeId,
+            jiaoSe,
+          })
+        } catch (touXiangCuoWu) {
+          debug日志.warn('角色接口', '头像生成异常，保留兜底头像并等待重试队列', {
+            xiang_qing: { cuo_wu: String(touXiangCuoWu).slice(0, 200) },
+          })
+        }
+      },
+    )
     const zuiZhongJiaoSe = await anIdChaJiaoSeXiangQing(String(baoCunHou.id))
     const huiXian = zuiZhongJiaoSe ?? baoCunHou
-    if (huiXian.id) {
-      const yaoSu: RenSheKaYaoSu = yaoSuCongJiaoSe(huiXian as unknown as Parameters<typeof yaoSuCongJiaoSe>[0])
-      void shengChengRenSheKa(yaoSu, String(huiXian.id)).catch(() => undefined)
-    }
     return chengGongXiangYing(xiangYing, touYingWanJiaKeJianJiaoSe(huiXian))
   } catch (cuoWu) {
     chuLiJiaoSeCuoWu(xiangYing, cuoWu, CuoWuDaiMa.ROLE_GENERATION_PERSISTENCE_FAILED)

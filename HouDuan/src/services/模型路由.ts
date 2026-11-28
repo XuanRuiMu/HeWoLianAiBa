@@ -1,4 +1,4 @@
-import { zhuCeMoXingChi, zhuCeZiDingYiLuYou, daiLiMoXingZhiHuanForTest, type ChiChengYuanPeiZhi } from '../utils/通用模型调用'
+import { zhuCeMoXingChi, type ChiChengYuanPeiZhi } from '../utils/通用模型调用'
 import { debug日志 } from '../utils/debug日志'
 
 let yiZhuCe = false
@@ -30,10 +30,10 @@ export function chuShiHuaMoXingLuYou(): void {
   if (yiZhuCe) return
   yiZhuCe = true
 
-  const chiQingDan = duQuHuanJing('AI_MO_XING_CHI')
+  const chiQingDan = duQuHuanJing('MAGPIE_MO_XING_CHI')
   if (chiQingDan !== '') {
-    const chiJiChu = duQuHuanJing('AI_MO_XING_CHI_JI_CHU')
-    const chiMiYao = duQuHuanJing('AI_MO_XING_CHI_MI_YAO')
+    const chiJiChu = duQuHuanJing('MAGPIE_MO_XING_CHI_JI_CHU')
+    const chiMiYao = duQuHuanJing('MAGPIE_MO_XING_CHI_MI_YAO')
     if (chiJiChu === '' || chiMiYao === '') {
       debug日志.warn('模型路由', '模型池配置缺少地址或密钥，未启用', {
         xiang_qing: { you_qing_dan: true, you_ji_chu: chiJiChu !== '', you_mi_yao: chiMiYao !== '' },
@@ -52,41 +52,7 @@ export function chuShiHuaMoXingLuYou(): void {
     return
   }
 
-  const gongJu = duQuHuanJing('MO_XING_LU_YOU_GONG_JU')
-  if (gongJu !== 'nex-kilo') {
-    const beiJiChu = duQuHuanJing('DEEPSEEK_FALLBACK_BASE_URL')
-    const beiMiYao = duQuHuanJing('DEEPSEEK_FALLBACK_API_KEY')
-    const beiMoXing = duQuHuanJing('DEEPSEEK_FALLBACK_MODEL')
-    if (beiJiChu !== '' && beiMiYao !== '' && beiMoXing !== '') {
-      zhuCeZiDingYiLuYou(/responses$/, { miYao: beiMiYao, jiChu: beiJiChu, moXing: beiMoXing })
-    }
-    return
-  }
-
-  const zhuJiChu = duQuHuanJing('ZHU_MO_XING_JI_CHU_URL')
-  const zhuMiYao = duQuHuanJing('ZHU_MO_XING_API_KEY')
-  const zhuMoXing = duQuHuanJing('ZHU_MO_XING_NAME')
-  const beiJiChu = duQuHuanJing('DEEPSEEK_FALLBACK_BASE_URL')
-  const beiMiYao = duQuHuanJing('DEEPSEEK_FALLBACK_API_KEY')
-  const beiMoXing = duQuHuanJing('DEEPSEEK_FALLBACK_MODEL')
-  if (zhuJiChu === '' || zhuMiYao === '' || zhuMoXing === '' || beiJiChu === '' || beiMiYao === '' || beiMoXing === '') {
-    debug日志.warn('模型路由', 'nex-kilo 路由配置不完整，未启用', {
-      xiang_qing: {
-        zhu_ji_chu: zhuJiChu !== '',
-        zhu_mi_yao: zhuMiYao !== '',
-        zhu_mo_xing: zhuMoXing !== '',
-        bei_ji_chu: beiJiChu !== '',
-        bei_mi_yao: beiMiYao !== '',
-        bei_mo_xing: beiMoXing !== '',
-      },
-    })
-    return
-  }
-  daiLiMoXingZhiHuanForTest({
-    zhu: { jiChu: zhuJiChu, miYao: zhuMiYao, moXing: zhuMoXing },
-    bei: { jiChu: beiJiChu, miYao: beiMiYao, moXing: beiMoXing },
-  })
-  debug日志.info('模型路由', '已启用 nex 主用（原生 responses）、kilo 备用的失败降级路由', {
-    xiang_qing: { zhu: zhuMoXing, bei: beiMoXing },
+  debug日志.info('模型路由', '未配置模型池，使用默认模型', {
+    xiang_qing: { lai_yuan: 'moRenMoXing' },
   })
 }

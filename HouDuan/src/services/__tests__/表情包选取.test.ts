@@ -199,23 +199,22 @@ describe('表情包消息发送', () => {
 })
 
 describe('候选块组装', () => {
-  it('说明文字放开图的形态且不写死一图一文', () => {
+  it('说明文字只保留一条格式说明，不再复述发图形态', () => {
     const kuai = 组装表情候选块([xiang()])
     expect(kuai).toContain('【表情包候选】')
     expect(kuai).toContain('[表情包:熊猫头无语]')
-    expect(kuai).toContain('位置本身就是语气')
-    expect(kuai).toContain('只发一张图')
-    expect(kuai).toContain('别再用文字说一遍')
-    expect(kuai).toContain('一轮发几张由你自己决定')
-    expect(kuai).not.toContain('不是把话说完再补一张图')
-    expect(kuai).not.toContain('用一张图代替你要打的那个词')
-    expect(kuai).toContain('情绪:无语')
+    expect(kuai).toContain('照抄 `[表情包:短名]`')
+    expect(kuai).not.toContain('位置本身就是语气')
+    expect(kuai).not.toContain('只发一张图')
+    expect(kuai).not.toContain('别再用文字说一遍')
+    expect(kuai).not.toContain('一轮发几张由你自己决定')
+    expect(kuai).not.toContain('情绪:无语')
     expect(kuai).toContain('场景:接住无话可说的场面')
   })
 
   it('描述与场景为空时有兜底文案', () => {
     const kuai = 组装表情候选块([xiang({ miaoShu: '', shiYongChangJing: '' })])
-    expect(kuai).toContain('描述:无')
+    expect(kuai).not.toContain('描述:无')
     expect(kuai).toContain('场景:通用')
   })
 

@@ -42,6 +42,11 @@ export const ShengLiShiBaiPeiZhi = {
   biaoBaiPanDuanLiShiTiaoShu: 10,
   jianCeLiShiTiaoShu: 10,
   biaoBaiHaoGanDuYuZhi: 800,
+  zhanJieZhongShiCiShu: 3,
+  zhongShiYanChiJiChuHaoMiao: 100,
+  guoZaoBiaoBaiKouFen: -50,
+  zengYouGuoZhengFenTtlMiao: 60 * 60 * 24 * 30,
+  shenJingBingZanCunMiao: 300,
   shenJingBingJingGao: {
     haoGanDuKouFenZong: 30,
     kouFenFenPei: {

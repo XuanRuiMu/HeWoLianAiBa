@@ -30,13 +30,17 @@ export async function chuLiQueXiKouJian(用户ID: string, jiaoSeId: string): Pro
     const kouJian = QueXiKouJianFen
     const weiDuKouJian = Math.floor(kouJian / 4)
     const gengXin = await 数据库.query(
-      `UPDATE "好感度" SET
+      `WITH "标记来源" AS (
+         SELECT set_config('app.hao_gan_du_lai_yuan', 'quexi', true) AS "标记"
+       )
+       UPDATE "好感度" SET
          "信任度" = GREATEST(0, "信任度" - $2),
          "亲密度" = GREATEST(0, "亲密度" - $2),
          "趣味度" = GREATEST(0, "趣味度" - $2),
          "关怀度" = GREATEST(0, "关怀度" - $2),
          "总分" = GREATEST(0, "总分" - $1)
        WHERE "用户ID" = $3 AND "角色ID" = $4
+         AND (SELECT "标记" FROM "标记来源") IS NOT NULL
        RETURNING "总分"`,
       [kouJian, weiDuKouJian, 用户ID, jiaoSeId],
     )

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { ShenHeMoShiBenDi, quShenHeMoShi } from '../../config/媒体配置'
-import { shenHeTuPianAnQuan } from '../DeepSeek视觉审核'
+import { shenHeTuPianAnQuan } from '../TuPianAnQuanShenHe'
 
 const YuanShiMoShi = process.env.MEI_TI_SHEN_HE_MO_SHI
 

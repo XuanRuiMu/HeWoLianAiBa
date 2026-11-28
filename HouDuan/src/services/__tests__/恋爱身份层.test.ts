@@ -26,6 +26,28 @@ describe('恋爱身份层：三种性别组合', () => {
     const 层 = 构建恋爱身份层('nv', 'nan')
     expect(层).toContain('对方是女生')
     expect(层).not.toContain('同性')
+    expect(层).not.toContain('gay')
+    expect(层).not.toContain('拉拉')
+    expect(层).not.toContain('该说就说')
+    expect(层).not.toContain('恋人或暧昧对象')
+  })
+
+  it('同性：把 gay、拉拉、同性恋当普通话题聊，词可以用，不回避不说教', () => {
+    const 层 = 构建恋爱身份层('nan', 'nan')
+    expect(层).toContain('gay')
+    expect(层).toContain('拉拉')
+    expect(层).toContain('同性恋')
+    expect(层).toContain('普通')
+    expect(层).toContain('该说就说')
+    expect(层).not.toContain('不许自己冒出')
+    expect(层).not.toContain('不是话题')
+    expect(层).not.toContain('不许解释、表态、科普')
+  })
+
+  it('同性：保留恋人/暧昧对象关系底线，不许降级成兄弟哥们闺蜜室友', () => {
+    const 层 = 构建恋爱身份层('nv', 'nv')
+    expect(层).toContain('不许把两个人的关系说成兄弟、哥们、闺蜜、室友')
+    expect(层).toContain('恋人或暧昧对象')
   })
 
   it.each([
@@ -60,9 +82,10 @@ describe('恋爱身份层：三种性别组合', () => {
 describe('接住点层', () => {
   it('有点时才生成这一层，并点名不许替双方概括', () => {
     const 层 = 构建接住点层('黑龙江却说非常的热')
-    expect(层).toContain('【这一句先说这个】')
+    expect(层).toContain('【这一句重点回应这个】')
     expect(层).toContain('黑龙江却说非常的热')
     expect(层).toContain('不许替你们俩概括这件事')
+    expect(层).toContain('严禁把对方的原话或原词照抄一遍')
   })
 
   it('空点不生成任何层', () => {

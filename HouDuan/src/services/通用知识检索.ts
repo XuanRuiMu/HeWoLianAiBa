@@ -60,12 +60,14 @@ export function 构建通用知识内容(条目: 通用知识条目): string {
 
 export const 通用知识注入条目上限 = 3
 
+export const 通用知识未命中注入上限 = 1
+
 function 选取注入条目(检索: 通用知识检索结果): 通用知识条目[] {
   const 相关标识 = new Set(检索.条目.map((项) => 项.标识))
   const 其余 = 通用知识库
     .filter((项) => !相关标识.has(项.标识))
     .sort((甲, 乙) => (乙.优先级 ?? 0) - (甲.优先级 ?? 0))
-  return [...检索.条目, ...其余].slice(0, 通用知识注入条目上限)
+  return [...检索.条目, ...其余].slice(0, 检索.命中 ? 通用知识注入条目上限 : 通用知识未命中注入上限)
 }
 
 function 拼装知识层(声明: string, 检索: 通用知识检索结果): string {

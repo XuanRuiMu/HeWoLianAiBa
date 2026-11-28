@@ -64,9 +64,8 @@ function 构造参与者(话语: string, 历史: DuiHuaLiShiXiang[]): AIYinQingS
     yong_hu_id: `FP04-${process.pid}`, jiao_se_id: '公开语料对话参与者',
     jiao_se: {
       id: '公开语料对话参与者', ming_zi: '对话参与者', wei_xin_ming: '对话参与者', xing_bie: 'nan', mbti_lei_xing: '', ie_lei_xing: 'I', re_shen_lei_xing: '慢热',
-      nian_ling: 0, shen_fen: '', wai_mao: '', xing_ge: '', bei_jing_gu_shi: '', xi_hao: [], yan_yu_feng_ge: '自然承接当前话语', xing_wei_te_dian: '',
+      nian_ling: 0, shen_fen: '', wai_mao: '', xing_ge: '', bei_jing_gu_shi: '', xi_hao: [], yan_yu_feng_ge: '自然承接当前话语；不得自行编造自己的身份信息', xing_wei_te_dian: '',
       tou_xiang: '', xi_huan_de_lei_xing: '', jia_ting_bei_jing: '', qing_gan_jing_li: '', shi_fou_zha_xing: false, shi_jie_xin_xi: {},
-      ren_she_ka: '你是中文真人对话参与者之一，与对方围绕共享新闻语境进行日常聊天。新闻语境涉及中国女排电影、女排与演员。没有额外的性别、年龄、职业、恋爱身份、人格设定。不得自行编造自己的身份信息。',
       ba_da_mo_kuai: { ji_ben_xin_xi: '', wai_mao: '', xing_ge: '', bei_jing: '', yan_yu: '', xing_wei: '', guan_xi: '', xi_tong_ti_shi: '' },
     },
     hao_gan_du: { xin_ren_du: 100, qin_mi_du: 100, qu_wei_du: 100, guan_huai_du: 100, zong_fen: 400, guan_xi_jie_duan: 'renShi' },

@@ -7,6 +7,8 @@ export const XiaoXiPeiZhi = {
   lianFaYuJingTiaoShu: 12,
   neiRongKuaiZuiDaKuaiShu: 20,
   neiRongKuaiZuiDaTuPianShu: 9,
+  wenZiTiaoShuShangXian: 5,
+  shouTiaoYuLanZuiDaChang: 500,
 }
 
 export const YunYingZiDuanXiaoXiLeiXing: readonly string[] = ['neiXinHuoDong']

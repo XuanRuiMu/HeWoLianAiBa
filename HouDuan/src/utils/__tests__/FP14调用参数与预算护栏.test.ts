@@ -188,48 +188,30 @@ describe('FP-14 预算护栏按官方 token 口径估算并在裁不动时告警
   })
 })
 
-describe('FP-14 模型名在册自检', () => {
-  const 原端点 = process.env.DEEPSEEK_BASE_URL
-  const 原模型 = process.env.DEEPSEEK_MODEL
+describe('FP-14 模型名自检', () => {
+  const 原端点 = process.env.MAGPIE_MO_XING_CHI_JI_CHU
+  const 原模型 = process.env.MAGPIE_MO_XING_CHI
   beforeEach(() => {
-    process.env.DEEPSEEK_BASE_URL = 'https://api.deepseek.com'
-    process.env.DEEPSEEK_MODEL = 'deepseek-flash'
+    process.env.MAGPIE_MO_XING_CHI_JI_CHU = 'http://127.0.0.1:3425'
+    process.env.MAGPIE_MO_XING_CHI = 'one|1,two|1'
   })
   afterEach(() => {
-    process.env.DEEPSEEK_BASE_URL = 原端点
-    process.env.DEEPSEEK_MODEL = 原模型
-  })
-  const 原Fetch = globalThis.fetch
-  afterEach(() => {
-    globalThis.fetch = 原Fetch
+    if (原端点 === undefined) delete process.env.MAGPIE_MO_XING_CHI_JI_CHU
+    else process.env.MAGPIE_MO_XING_CHI_JI_CHU = 原端点
+    if (原模型 === undefined) delete process.env.MAGPIE_MO_XING_CHI
+    else process.env.MAGPIE_MO_XING_CHI = 原模型
   })
 
-  it('配置的模型名在官方列表内 → 通过', async () => {
-    globalThis.fetch = vi.fn(async () => ({
-      ok: true,
-      status: 200,
-      json: async () => ({ data: [{ id: 'deepseek-flash' }, { id: 'deepseek-v4-pro' }] }),
-    })) as unknown as typeof fetch
-    await expect(自检模型名可用()).resolves.toBe(true)
-  })
-
-  it('模型名不在列表内 → 返回 false 并告警，不抛异常', async () => {
-    process.env.DEEPSEEK_MODEL = 'deepseek-flash'
-    globalThis.fetch = vi.fn(async () => ({
-      ok: true,
-      status: 200,
-      json: async () => ({ data: [{ id: 'deepseek-v4-pro' }] }),
-    })) as unknown as typeof fetch
-    const { faSongGaoJing } = await import('../邮件告警')
-    await expect(自检模型名可用()).resolves.toBe(false)
-    expect(faSongGaoJing).toHaveBeenCalled()
-  })
-
-  it('拉取失败（网络/限速）时放行，不阻塞启动', async () => {
-    globalThis.fetch = vi.fn(async () => {
-      throw new Error('network down')
-    }) as unknown as typeof fetch
-    await expect(自检模型名可用()).resolves.toBe(true)
+  it('magpie 本地端点直接放行，不发起官方在册校验', async () => {
+    const fetchMock = vi.fn(async () => { throw new Error('不应发起自检请求') })
+    const 原Fetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    try {
+      await expect(自检模型名可用()).resolves.toBe(true)
+      expect(fetchMock).not.toHaveBeenCalled()
+    } finally {
+      globalThis.fetch = 原Fetch
+    }
   })
 
   it('过期内测模型名不得残留在源码与实际生效的模型配置里', () => {
@@ -251,14 +233,13 @@ describe('FP-14 模型名在册自检', () => {
     for (const 文件 of ['../.env', '../.env.example', '../../docker-compose.yml']) {
       const 路径 = path.resolve(根, 文件)
       if (!fs.existsSync(路径)) continue
-      for (const 匹配 of fs.readFileSync(路径, 'utf8').matchAll(/DEEPSEEK_MODEL\s*[:=]\s*([^\r\n#]+)/g)) {
+      for (const 匹配 of fs.readFileSync(路径, 'utf8').matchAll(/MAGPIE_MO_XING_CHI\s*[:=]\s*([^\r\n#]+)/g)) {
         if (内测名.test(匹配[1])) 命中.push(`${文件} → ${匹配[1].trim()}`)
       }
     }
     expect(命中).toEqual([])
   })
 })
-
 describe('FP-14 缓存命中量落库', () => {
   beforeEach(() => {
     写入的SQL.length = 0
@@ -267,7 +248,7 @@ describe('FP-14 缓存命中量落库', () => {
   it('把 cached_tokens 累计进「缓存命中Token」，且不超过输入 token', async () => {
     await jiLuShiYongLiang({
       模型类型: 'XieShou',
-      模型: 'deepseek-flash',
+      模型: 'model-a',
       shuRuToken: 1000,
       shuChuToken: 200,
       zongToken: 1200,
@@ -275,7 +256,7 @@ describe('FP-14 缓存命中量落库', () => {
     })
     await jiLuShiYongLiang({
       模型类型: 'XieShou',
-      模型: 'deepseek-flash',
+      模型: 'model-a',
       shuRuToken: 1000,
       shuChuToken: 200,
       zongToken: 1200,
@@ -291,7 +272,7 @@ describe('FP-14 缓存命中量落库', () => {
   it('未上报命中量时按 0 落库（旧调用方不受影响）', async () => {
     await jiLuShiYongLiang({
       模型类型: 'QingGanFenXi',
-      模型: 'deepseek-flash',
+      模型: 'model-a',
       shuRuToken: 10,
       shuChuToken: 5,
       zongToken: 15,

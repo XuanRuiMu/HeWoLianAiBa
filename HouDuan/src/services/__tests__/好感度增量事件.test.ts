@@ -19,8 +19,8 @@ vi.mock('../../数据库', () => {
         if (wen.includes('SELECT * FROM "好感度"')) {
           return { rows: [{ ...JiuHang }], rowCount: 1 }
         }
-        if (wen.includes('RETURNING "总分", "互动次数"')) {
-          return { rows: [{ 总分: XinZongFen, 互动次数: 5 }], rowCount: 1 }
+        if (wen.includes('RETURNING "总分"') && wen.includes('"互动次数"')) {
+          return { rows: [{ 总分: XinZongFen, 信任度: 142, 亲密度: 102, 趣味度: 81, 关怀度: 81, 互动次数: 5 }], rowCount: 1 }
         }
         return { rows: [], rowCount: 1 }
       }),
@@ -73,7 +73,13 @@ vi.mock('../好感度', async (daoRuYuan) => {
     gengXinHaoGanDu: vi.fn(
       (...canShu: Parameters<typeof shiJi.gengXinHaoGanDu>) => shiJi.gengXinHaoGanDu(...canShu),
     ),
-    huoQuWanZhengHaoGanDu: vi.fn(async () => ({ zong_fen: 400 })),
+    huoQuWanZhengHaoGanDu: vi.fn(async () => ({
+      zong_fen: 400,
+      xin_ren_du: 140,
+      qin_mi_du: 100,
+      qu_wei_du: 80,
+      guan_huai_du: 80,
+    })),
   }
 })
 

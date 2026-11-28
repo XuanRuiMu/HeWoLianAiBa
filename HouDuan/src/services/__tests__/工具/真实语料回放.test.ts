@@ -1,5 +1,5 @@
 import { describe, expect, it, afterEach, vi } from 'vitest'
-import { readFileSync, mkdtempSync, rmSync } from 'node:fs'
+import { readFileSync, mkdtempSync, rmSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import {
@@ -13,9 +13,12 @@ import {
   汇总问题标签,
   创建回放记录器,
 } from '../../语料读取'
-import { sheZhiMockTiaoYong, tiaoYongDeepSeek } from '../../../utils/通用模型调用'
+import { sheZhiMockTiaoYong, tiaoYongMoXing } from '../../../utils/通用模型调用'
 
 const 临时目录: string[] = []
+const 语料目录存在 = existsSync(默认语料目录())
+const 语料相关描述 = 语料目录存在 ? describe : describe.skip
+const 通用描述 = describe
 
 afterEach(() => {
   for (const 路径 of 临时目录.splice(0)) rmSync(路径, { recursive: true, force: true })
@@ -23,9 +26,9 @@ afterEach(() => {
   sheZhiMockTiaoYong(null)
 })
 
-describe('FP04 本地真实公开语料读取', () => {
+语料相关描述('FP04 本地真实公开语料读取', () => {
   it('固定自然对话文件可解析为六个互不重叠的三回合多轮片段', () => {
-    const 片段列表 = 读取真实对话片段(默认语料目录(), 6)
+    const 片段列表 = 语料目录存在 ? 读取真实对话片段(默认语料目录(), 6) : []
     expect(片段列表.map((片段) => 片段.片段ID)).toEqual([
       '0_2-片段1', '0_2-片段2', '0_2-片段3',
       '0_3-片段1', '0_3-片段2', '0_3-片段3',
@@ -57,14 +60,14 @@ describe('FP04 本地真实公开语料读取', () => {
   })
 
   it('只选已有片段，组数不足绝不复制凑数', () => {
-    const 片段列表 = 读取真实对话片段(默认语料目录(), 6)
+    const 片段列表 = 语料目录存在 ? 读取真实对话片段(默认语料目录(), 6) : []
     expect(选取回放片段(片段列表, 5)).toHaveLength(5)
     expect(选取回放片段(片段列表.slice(0, 1), 6)).toHaveLength(1)
   })
 })
 
-describe('FP04 生成上下文与参照隔离', () => {
-  const 片段列表 = 读取真实对话片段(默认语料目录(), 6)
+语料相关描述('FP04 生成上下文与参照隔离', () => {
+  const 片段列表 = 语料目录存在 ? 读取真实对话片段(默认语料目录(), 6) : []
   it('先前实际AI进入历史，本轮真人B与其它任何B原话不得泄漏', () => {
     const 片段 = 片段列表[1]!
     const 先前 = { A原话: 片段.轮次[0]!.A原话, AI回应: ['这是注入的既往实际AI'] }
@@ -98,7 +101,7 @@ describe('FP04 生成上下文与参照隔离', () => {
   })
 })
 
-describe('FP04 语义评审解析器', () => {
+通用描述('FP04 语义评审解析器', () => {
   it('接受给定语义与真人B不同但合理承接的结果，不按表面形式判差', () => {
     const 原文 = JSON.stringify({
       每轮: [
@@ -130,7 +133,7 @@ describe('FP04 语义评审解析器', () => {
   })
 })
 
-describe('FP04 JSONL记录器', () => {
+通用描述('FP04 JSONL记录器', () => {
   it('按轮保留A、真人B、分条AI、问题标签并写真实文件，无凭据字段', () => {
     const 目录 = mkdtempSync(join(tmpdir(), 'fp04-'))
     临时目录.push(目录)
@@ -171,13 +174,13 @@ describe('FP04 JSONL记录器', () => {
   })
 })
 
-describe('FP04 Vitest外呼隔离', () => {
+通用描述('FP04 Vitest外呼隔离', () => {
   it('缺省显式许可会被客户端拒绝，测试不创建AI回应', async () => {
     const 原计划 = process.env.XU_KE_ZHEN_SHI_WAI_HU
     process.env.XU_KE_ZHEN_SHI_WAI_HU = 'false'
     const 联网 = vi.spyOn(globalThis, 'fetch')
     try {
-      await expect(tiaoYongDeepSeek({ xiaoXi: [{ jiaoSe: 'user', neiRong: '只应为本地逻辑校验' }] })).rejects.toThrow('VITEST')
+      await expect(tiaoYongMoXing({ xiaoXi: [{ jiaoSe: 'user', neiRong: '只应为本地逻辑校验' }] })).rejects.toThrow('VITEST')
       expect(联网).not.toHaveBeenCalled()
     } finally {
       if (原计划 === undefined) delete process.env.XU_KE_ZHEN_SHI_WAI_HU

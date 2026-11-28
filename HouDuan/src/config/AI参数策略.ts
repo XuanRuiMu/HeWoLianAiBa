@@ -29,6 +29,7 @@ export interface 参数上下文 {
     shi_fou_fa_san_si_wei?: boolean
   }
   haoGanDu?: { zong_fen?: number; guan_xi_jie_duan?: string }
+  haoGanDu阶段?: string
   changJing?: 'riChang' | 'chaoJia' | 'biaoBai' | 'langMan' | 'anWei' | 'shenJingBing' | string
 }
 

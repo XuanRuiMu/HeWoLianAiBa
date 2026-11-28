@@ -5,6 +5,7 @@ import { huoQuIo } from '../socket/io'
 import { redis } from '../redis'
 import { 保存角色XiaoXi } from './AI输入准备'
 import { BeiChaQuPeiZhi, ShengLiShiBaiPeiZhi, QueXinDuYueShu } from '../config/胜利失败配置'
+import { HaoGanDuPeiZhi } from '../config/好感度配置'
 import {
   gouJianDanTiaoTuXiangKuai,
   shiTuXiangLeiBie } from './AI视觉辅助'
@@ -93,7 +94,7 @@ const BiaoBaiLeiXingYingShe: Record<string, BiaoBaiJianCeJieGuo['biao_bai_lei_xi
   暗示表白: 'an_shi_biao_bai',
   要求确立关系: 'yao_qiu_que_li_guan_xi' }
 
-const MingQueBiaoBaiTeZheng = /(我(?:真的|很|挺|好|特别|超|蛮)?(?:喜欢|爱)(?:上)?(?:你|上你)|做我(?:的)?(?:男朋友|女朋友|对象|男票|女票|老公|老婆)|和(?:我|你)(?:在)?一起吧|跟(?:我|你)(?:在)?一起吧|(?:我们|咱们|咱俩)(?:在)?(?:一起|交往|谈恋爱|处对象|谈|处)吧|(?:愿意|肯)(?:做|当)我(?:的)?(?:男朋友|女朋友|对象|男票|女票|老公|老婆)|(?:我|俺)(?:要|想)?追你|(?:请|能)(?:和|跟)我交往|你(?:愿意|肯)(?:做|当)我(?:的)?(?:男朋友|女朋友|对象)|(?:我们|咱们|咱俩)(?:谈|处)(?:个)?(?:恋爱|对象)|我(?:想|要)(?:和你|跟你)(?:在)?一起|(?:接受|答应)我(?:吧|好吗))/
+const MingQueBiaoBaiTeZheng = /(我(?:真的|很|挺|好|特别|超|蛮)?(?:喜欢|爱)(?:上)?(?:你|上你)|我(?:好像|感觉|觉得)?(?:有点|挺|真的|可能)?(?:喜欢|爱)(?:上)?你了|我(?:好像|真的)?(?:喜欢|爱)上你了|做我(?:的)?(?:男朋友|女朋友|对象|男票|女票|老公|老婆)|和(?:我|你)(?:在)?一起吧|跟(?:我|你)(?:在)?一起吧|(?:我们|咱们|咱俩)(?:在)?(?:一起|交往|谈恋爱|处对象)吧|(?:愿意|肯)(?:做|当)我(?:的)?(?:男朋友|女朋友|对象|男票|女票|老公|老婆)|(?:我|俺)(?:要|想)?追你|(?:请|能)(?:和|跟)我交往|你(?:愿意|肯)(?:做|当)我(?:的)?(?:男朋友|女朋友|对象)|你(?:愿意|肯)?(?:跟|和|与)(?:我|俺)(?:一起)?(?:试试|试着|在一起)|(?:跟我|和我|同我)(?:试着)?(?:在一起|处对象|交往)|(?:愿意|肯)(?:跟|和)(?:我|俺)(?:试着)?(?:在一起|交往)|(?:能|可以)(?:不能|不可以)?(?:做|当)我(?:的)?(?:对象|男朋友|女朋友)|(?:我们|咱们|咱俩)(?:谈|处)(?:个)?(?:恋爱|对象)|我(?:想|要)(?:和你|跟你)(?:在)?一起(?!看|去|吃|玩|做|睡|走|回|上|下|出|逛|喝|买|学|打|聊|说)|(?:接受|答应)我(?:吧|好吗)$|(?:在一起|交往)(?:好吗|行吗|可以吗)$|(?:我们|咱们|咱俩)(?:试试|试着)(?:在一起|处|交往|谈恋爱)?吧|我(?:有点|真的|好像)?(?:喜欢你|爱你)了?|(?:我们|咱们|咱俩)(?:做|当)(?:个)?(?:对象|情侣|男女朋友)吧?|(?:做|当)(?:个)?对象吧?|当?(?:我)?(?:的)?对象吧|要不要(?:在一起|交往|试试|做我))/
 
 const JiaSheTanShiCongJu = /(?:如果|要是|假如|倘若|万一|假设)(?:我)?(?:说|讲|问|真的?说)[\s\S]*?(?:你会不会|你会觉得|你会|你是不是|你愿意|你肯|你答应|行不行|好不好|好吗|吗)/g
 
@@ -104,7 +105,7 @@ export function shiMingQueBiaoBai(yuanWen: string): boolean {
   return MingQueBiaoBaiTeZheng.test(quDiaoJiaShe)
 }
 
-const ZhanJieZhongShiCiShu = 3
+const ZhanJieZhongShiCiShu = ShengLiShiBaiPeiZhi.zhanJieZhongShiCiShu
 
 export async function jianCeSiLianHeYi(
   xiaoXi: string,
@@ -579,7 +580,7 @@ export async function chuLiYouXiJieShu(
       await keHuDuanShiWu.query('ROLLBACK').catch(() => undefined)
       zhongShiCiShu += 1
       if (zhongShiCiShu >= ZhanJieZhongShiCiShu) throw cuoWu
-      await new Promise((jieJue) => setTimeout(jieJue, 100 * zhongShiCiShu))
+      await new Promise((jieJue) => setTimeout(jieJue, ShengLiShiBaiPeiZhi.zhongShiYanChiJiChuHaoMiao * zhongShiCiShu))
     } finally {
       keHuDuanShiWu.release()
     }
@@ -645,7 +646,7 @@ async function kouChuZaoQiBiaoBaiXinRenDu(
   const dangQianJieDuanMing = await huoQuDangQianJieDuanMing(yong_hu_id, jiao_se_id)
   if (qianSanJieDuan.includes(dangQianJieDuanMing)) {
     await gengXinHaoGanDu(yong_hu_id, jiao_se_id, {
-      xin_ren_du_bian_hua: -50,
+      xin_ren_du_bian_hua: ShengLiShiBaiPeiZhi.guoZaoBiaoBaiKouFen,
       qin_mi_du_bian_hua: 0,
       qu_wei_du_bian_hua: 0,
       guan_huai_du_bian_hua: 0 })
@@ -892,13 +893,46 @@ export async function chuLiAIHuiFuHouJieShuJianCha(
   const haoGanDu = await huoQuWanZhengHaoGanDu(yong_hu_id, jiao_se_id)
   if (!haoGanDu) return null
 
-  if (haoGanDu.zong_fen <= 0) {
-    return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_hao_gan_du_gui_ling', {
-      lei_xing: '好感度归零',
-      hao_gan_du: haoGanDu.zong_fen })
+  if (haoGanDu.zong_fen > HaoGanDuPeiZhi.fanWei.zuiDiFen) {
+    await 标记曾有过正分(yong_hu_id, jiao_se_id)
+    return null
   }
 
-  return null
+  const cengYouGuoZhengFen = await 查询曾有过正分(yong_hu_id, jiao_se_id)
+  if (!cengYouGuoZhengFen) return null
+
+  return chuLiYouXiJieShu(yong_hu_id, jiao_se_id, 'shi_bai_hao_gan_du_gui_ling', {
+    lei_xing: '好感度归零',
+    hao_gan_du: haoGanDu.zong_fen })
+}
+
+const ZengYouGuoZhengFenQianZhui = 'hao_gan_du_ceng_you_zheng_fen:'
+const ZengYouGuoZhengFenTtlMiao = ShengLiShiBaiPeiZhi.zengYouGuoZhengFenTtlMiao
+
+function 曾有过正分键(yong_hu_id: string, jiao_se_id: string): string {
+  return `${ZengYouGuoZhengFenQianZhui}${yong_hu_id}:${jiao_se_id}`
+}
+
+async function 标记曾有过正分(yong_hu_id: string, jiao_se_id: string): Promise<void> {
+  try {
+    await redis.set(曾有过正分键(yong_hu_id, jiao_se_id), '1', 'EX', ZengYouGuoZhengFenTtlMiao)
+  } catch (cuo_wu) {
+    debug日志.warn('胜负判定', '正分标记写入失败，后续读取将按无标记处理（永不误判负）', {
+      xiang_qing: { yong_hu_id, jiao_se_id, cuo_wu: String(cuo_wu) },
+    })
+  }
+}
+
+async function 查询曾有过正分(yong_hu_id: string, jiao_se_id: string): Promise<boolean> {
+  try {
+    const 标记 = await redis.get(曾有过正分键(yong_hu_id, jiao_se_id))
+    return 标记 !== null && 标记 !== ''
+  } catch (cuo_wu) {
+    debug日志.warn('胜负判定', '正分标记读取失败，按无正分处理，本轮不判负', {
+      xiang_qing: { yong_hu_id, jiao_se_id, cuo_wu: String(cuo_wu) },
+    })
+    return false
+  }
 }
 
 export async function chuLiAIJieShouBiaoBai(
@@ -1050,15 +1084,124 @@ export async function jianCeYongHuXiaoXiBingChuLi(
     jianCeJieGuo.shen_jing_bing.shi_fou_shen_jing_bing &&
     jianCeJieGuo.shen_jing_bing.que_xin_du > ShengLiShiBaiPeiZhi.shenJingBingQueXinDuYueShu
   ) {
-    return chuLiShenJingBing(
+    await 暂存神经病判定(
       yong_hu_id,
       jiao_se_id,
       jianCeJieGuo.shen_jing_bing.fa_san_si_wei_ren_she,
-      jiao_se,
       chuFaXiaoXiIdLieBiao,
     )
+    return null
   }
 
   return null
+}
+
+const 神经病暂存前缀 = 'shen_jing_bing_dai_jie_suan:'
+const 神经病暂存秒数 = ShengLiShiBaiPeiZhi.shenJingBingZanCunMiao
+
+interface 神经病暂存载荷 {
+  fa_san_si_wei_ren_she: boolean
+  chu_fa_xiao_xi_id: string[]
+  cun_ru_shi_ke: number
+}
+
+function 神经病暂存键(yong_hu_id: string, jiao_se_id: string): string {
+  return `${神经病暂存前缀}${yong_hu_id}:${jiao_se_id}`
+}
+
+async function 暂存神经病判定(
+  yong_hu_id: string,
+  jiao_se_id: string,
+  faSanSiWeiRenShe: boolean,
+  chuFaXiaoXiIdLieBiao?: string[],
+): Promise<void> {
+  const 载荷: 神经病暂存载荷 = {
+    fa_san_si_wei_ren_she: faSanSiWeiRenShe,
+    chu_fa_xiao_xi_id: Array.isArray(chuFaXiaoXiIdLieBiao) ? chuFaXiaoXiIdLieBiao : [],
+    cun_ru_shi_ke: Date.now(),
+  }
+  try {
+    await redis.set(神经病暂存键(yong_hu_id, jiao_se_id), JSON.stringify(载荷), 'EX', 神经病暂存秒数)
+    debug日志.info('胜负判定', '神经病判定先落库，等好感评分的行为字段交叉验证后再结算', {
+      yong_hu_id,
+      jiao_se_id,
+      xiang_qing: { fa_san_si_wei_ren_she: faSanSiWeiRenShe },
+    })
+  } catch (cuo_wu) {
+    debug日志.error('胜负判定', '神经病判定暂存失败，本轮不结算', {
+      yong_hu_id,
+      jiao_se_id,
+      xiang_qing: { cuo_wu: String(cuo_wu) },
+    })
+  }
+}
+
+export async function 读取暂存神经病判定(
+  yong_hu_id: string,
+  jiao_se_id: string,
+): Promise<神经病暂存载荷 | null> {
+  try {
+    const 原文 = await redis.get(神经病暂存键(yong_hu_id, jiao_se_id))
+    if (!原文) return null
+    const 载荷 = JSON.parse(原文) as 神经病暂存载荷
+    if (!载荷 || typeof 载荷.cun_ru_shi_ke !== 'number') return null
+    if (Date.now() - 载荷.cun_ru_shi_ke > 神经病暂存秒数 * 1000) return null
+    return 载荷
+  } catch {
+    return null
+  }
+}
+
+export async function 清除暂存神经病判定(yong_hu_id: string, jiao_se_id: string): Promise<void> {
+  try {
+    await redis.del(神经病暂存键(yong_hu_id, jiao_se_id))
+  } catch {
+    return
+  }
+}
+
+export async function 结算暂存神经病(
+  yong_hu_id: string,
+  jiao_se_id: string,
+  本轮行为: string | undefined,
+  jiao_se?: AIJiaoSeXinXi,
+): Promise<YouXiJieShuJieGuo | null> {
+  const 载荷 = await 读取暂存神经病判定(yong_hu_id, jiao_se_id)
+  if (!载荷) return null
+
+  const 行为 = String(本轮行为 ?? '').trim()
+  if (行为 === '有效交流' || 行为 === '客套') {
+    await 清除暂存神经病判定(yong_hu_id, jiao_se_id)
+    debug日志.info('胜负判定', '四鉴判了神经病但好感评分判为正常交流，以评分为准不予结算', {
+      yong_hu_id,
+      jiao_se_id,
+      xiang_qing: { xing_wei: 行为 },
+    })
+    return null
+  }
+
+  if (行为 !== '过界玩笑' && 行为 !== '严重冒犯' && 行为 !== '低情商') {
+    await 清除暂存神经病判定(yong_hu_id, jiao_se_id)
+    debug日志.info('胜负判定', '本轮行为缺失或不构成确认条件，清除暂存神经病判定不串轮', {
+      yong_hu_id,
+      jiao_se_id,
+      xiang_qing: { xing_wei: 行为 },
+    })
+    return null
+  }
+
+  await 清除暂存神经病判定(yong_hu_id, jiao_se_id)
+  debug日志.info('胜负判定', '四鉴与好感评分双向确认，结算神经病结局', {
+    yong_hu_id,
+    jiao_se_id,
+    xiang_qing: { xing_wei: 行为 },
+  })
+  return chuLiShenJingBing(
+    yong_hu_id,
+    jiao_se_id,
+    载荷.fa_san_si_wei_ren_she,
+    jiao_se,
+    载荷.chu_fa_xiao_xi_id,
+  )
 }
 

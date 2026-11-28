@@ -27,7 +27,16 @@ export async function huoQuHaoGanDuLeiJiBianHua(
        COALESCE(SUM("关怀度变化"), 0)::integer AS "guanHuaiDu",
        COALESCE(SUM("总分变化"), 0)::integer AS "zongFen"
      FROM "好感度变化历史"
-     WHERE "用户ID" = $1 AND "角色ID" = $2`,
+     WHERE "用户ID" = $1 AND "角色ID" = $2
+       AND (
+         NOT EXISTS (
+           SELECT 1 FROM information_schema.columns
+           WHERE table_schema = 'public'
+             AND table_name = '好感度变化历史'
+             AND column_name = '来源'
+         )
+         OR "来源" = 'liaotian'
+       )`,
     [用户ID, jiaoSeId],
   )
   const hang = jieGuo.rows[0] ?? {}

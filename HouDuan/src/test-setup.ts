@@ -5,9 +5,14 @@ export function shiFouYunXuZhenShiWaiHu(): boolean {
 }
 
 if (process.env.VITEST === 'true' && !shiFouYunXuZhenShiWaiHu()) {
-  const 测试数据库 = (process.env.TEST_DATABASE_URL ?? '').trim()
-  peiZhi.shuJuKuLianJie = 测试数据库 || 'postgresql://test@127.0.0.1:1/test'
-  peiZhi.deepSeek.基础地址 = 'http://127.0.0.1:9'
+  const 禁用真实库 = process.env.JIN_YONG_ZHEN_SHI_KU === 'true'
+  if (!禁用真实库) {
+    const 测试数据库 = (process.env.TEST_DATABASE_URL ?? '').trim()
+    if (测试数据库) peiZhi.shuJuKuLianJie = 测试数据库
+  } else {
+    peiZhi.shuJuKuLianJie = 'postgresql://test@127.0.0.1:1/test'
+  }
+  peiZhi.moRenMoXing.基础地址 = 'http://127.0.0.1:9'
   const 测试名额 = Number(process.env.TI_YAN_BAN_CE_SHI_MING_E || '1000000')
   const 取整名额 = Number.isFinite(测试名额) ? Math.floor(测试名额) : 1000000
   if (取整名额 > peiZhi.tiYanBan.zuiDaYongHuShu) {

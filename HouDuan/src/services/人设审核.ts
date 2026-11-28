@@ -240,6 +240,18 @@ function jieXiJSON(neiRong: string): Record<string, unknown> | null {
   }
 }
 
+export function guiYiShenHeJianMing(zhi: unknown): unknown {
+  if (Array.isArray(zhi)) return zhi.map((xiang) => guiYiShenHeJianMing(xiang))
+  if (zhi !== null && typeof zhi === 'object') {
+    const jieGuo: Record<string, unknown> = {}
+    for (const [jian, ziZhi] of Object.entries(zhi as Record<string, unknown>)) {
+      jieGuo[jian.replace(/duing/g, 'ding')] = guiYiShenHeJianMing(ziZhi)
+    }
+    return jieGuo
+  }
+  return zhi
+}
+
 function yanZhengShenHeChuCan(shuJu: Record<string, unknown> | null): RenSheShenHeChuCan {
   if (!shuJu || typeof shuJu !== 'object') return { heFa: false }
   const zongPanDing = shuJu['zong_pan_ding']
@@ -279,7 +291,8 @@ async function diaoYongShenHe(ziDuan: 心中のTA自定义): Promise<RenSheShenH
       { jiaoSe: 'system', neiRong: '判断用户填写的人物资料能否构成一个现实中可能存在的具体人物，只输出 JSON。' },
       { jiaoSe: 'user', neiRong: gouJianRenSheShenHePrompt(ziDuan) },
     ])
-    return yanZhengShenHeChuCan(jieXiJSON(xiangYing.neiRong))
+    const jieXiJieGuo = jieXiJSON(xiangYing.neiRong)
+    return yanZhengShenHeChuCan(guiYiShenHeJianMing(jieXiJieGuo) as Record<string, unknown> | null)
   } catch (cuoWu) {
     debug日志.warn('人设审核', '审核调用失败，fail-closed 拒绝', {
       xiang_qing: { cuo_wu: String(cuoWu).slice(0, 300) },

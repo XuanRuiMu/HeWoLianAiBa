@@ -62,9 +62,9 @@ export async function xieRuJieXiHuanCun(sha256: string, jieGuo: ShiPinJieXiJieGu
 }
 
 async function moRenMiaoShuTuPian(tuPianZiJie: Buffer): Promise<string | null> {
-  const 模型名 = AI配置.deepSeek.模型
-  const jiChu = (process.env.DEEPSEEK_BASE_URL || '').trim().replace(/\/$/, '')
-  const miYao = (process.env.DEEPSEEK_API_KEY || '').trim()
+  const 模型名 = AI配置.moRenMoXing.模型
+  const jiChu = (process.env.MAGPIE_MO_XING_CHI_JI_CHU || '').trim().replace(/\/$/, '')
+  const miYao = (process.env.MAGPIE_MO_XING_CHI_MI_YAO || '').trim()
   if (!jiChu || !miYao) return null
   const kongZhi = new AbortController()
   const dingShi = setTimeout(() => kongZhi.abort(), 90000)

@@ -6,8 +6,8 @@ import { gouJianJiaoSeShangXiaWen } from '../src/config/AI参数策略'
 import type { AIYinQingShuRu, DirectorCeLue } from '../src/types'
 import type { CanShuShangXiaWen } from '../src/config/AI参数策略'
 
-const 网关地址 = (process.env.DEEPSEEK_BASE_URL || 'https://token.sensenova.cn/v1').replace(/\/+$/, '')
-const 网关令牌 = process.env.DEEPSEEK_API_KEY || ''
+const 网关地址 = (process.env.MAGPIE_MO_XING_CHI_JI_CHU || 'https://token.sensenova.cn/v1').replace(/\/+$/, '')
+const 网关令牌 = process.env.MAGPIE_MO_XING_CHI_MI_YAO || ''
 const 日志 = (s: string) => process.stdout.write(s + '\n')
 
 interface 直连结果 {

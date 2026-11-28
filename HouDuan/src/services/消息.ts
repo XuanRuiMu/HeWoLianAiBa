@@ -863,7 +863,7 @@ export async function 创建用户消息(
       )
       if (chaRu.rows.length === 0) {
         const yiCunZai = await keHuDuan.query(
-          `SELECT "ID" FROM "消息"
+          `SELECT "ID", "内容", "类型" FROM "消息"
            WHERE "用户ID" = $1 AND "角色ID" = $2 AND "幂等键" = $3 AND "发送者" = 'yonghu' LIMIT 1`,
           [canShu.yong_hu_id, canShu.jiao_se_id, miDengJian],
         )
@@ -875,6 +875,16 @@ export async function 创建用户消息(
             xiang_qing: { yong_hu_id: canShu.yong_hu_id, jiao_se_id: canShu.jiao_se_id },
           })
           return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'faSongShiBai'), zhuang_tai_ma: 500 }
+        }
+        if (String(mingZhong.内容 || '') !== qingLiNeiRong || String(mingZhong.类型 || '') !== leiXing) {
+          debug日志.warn('消息服务', '幂等键被不同内容复用，拒绝并返回冲突', {
+            xiang_qing: {
+              yong_hu_id: canShu.yong_hu_id,
+              jiao_se_id: canShu.jiao_se_id,
+              xiao_xi_id: String(mingZhong.ID),
+            },
+          })
+          return { cheng_gong: false, ti_shi: huoQuFanYi('liaoTian', 'miDengJianChongTu'), zhuang_tai_ma: 409 }
         }
         debug日志.warn('消息服务', '用户消息重复提交，按幂等键返回原行', {
           xiang_qing: { yong_hu_id: canShu.yong_hu_id, jiao_se_id: canShu.jiao_se_id, xiao_xi_id: String(mingZhong.ID) },

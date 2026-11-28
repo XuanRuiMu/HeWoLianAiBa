@@ -94,7 +94,6 @@ export interface AIJiaoSeXinXi {
   xing_wei_te_dian: string
   tou_xiang: string
   tou_xiang_miao_shu?: string
-  ren_she_ka?: string
   xi_huan_de_lei_xing: string
   jia_ting_bei_jing: string
   qing_gan_jing_li: string
@@ -198,6 +197,7 @@ export interface DirectorCeLue {
   shi_fou_che_hui: boolean
   shi_fou_zhu_dong_biao_bai?: boolean
   yao_jie_zhu_de_dian?: string
+  zha_dong_zuo?: string
   biao_qing_yi_tu?: string | null
   qing_gan_nong_du?: number | null
   guan_xi_bian_hua?: GuanXiBianHua
@@ -301,11 +301,14 @@ export interface QingGanFenXiJieGuo {
   fen_xi?: string
 }
 
+export type 行为键 = '有效交流' | '客套' | '过界玩笑' | '低情商' | '严重冒犯'
+
 export interface HaoGanDuPingPanJieGuo {
   xin_ren_du_bian_hua: number
   qin_mi_du_bian_hua: number
   qu_wei_du_bian_hua: number
   guan_huai_du_bian_hua: number
+  行为?: 行为键
   li_you?: string
 }
 

@@ -42,8 +42,34 @@ function hanWeiJinCi(wenBen: string): boolean {
   return peiZhi.shuChuWeiJinCiLieBiao.some((ci) => ci.length > 0 && wenBen.includes(ci))
 }
 
-function qieGeXiaoXi(xiaoXiLieBiao: string[], tiaoShu: number): string[] {
-  return xiaoXiLieBiao.slice(0, xiuZhengTiaoShu(tiaoShu))
+function shiBiaoQingBaoTiao(mu: string): boolean {
+  return /^\s*\[表情包[:：][^\]]+\]\s*$/.test(String(mu || ''))
+}
+
+export function qieGeXiaoXi(xiaoXiLieBiao: string[], tiaoShu: number): string[] {
+  const 上限 = xiuZhengTiaoShu(tiaoShu)
+  if (上限 <= 0) return []
+  const 结果: string[] = []
+  let 文字条数 = 0
+  for (const 条 of 小列表化(xiaoXiLieBiao)) {
+    if (shiBiaoQingBaoTiao(条)) {
+      结果.push(条)
+      continue
+    }
+    if (文字条数 >= 上限) break
+    结果.push(条)
+    文字条数 += 1
+  }
+  const 有文字 = 结果.some((条) => !shiBiaoQingBaoTiao(条))
+  if (!有文字) {
+    const 首条文字 = xiaoXiLieBiao.find((条) => !shiBiaoQingBaoTiao(条))
+    if (首条文字) 结果.push(首条文字)
+  }
+  return 结果
+}
+
+function 小列表化(xiaoXiLieBiao: string[]): string[] {
+  return Array.isArray(xiaoXiLieBiao) ? xiaoXiLieBiao : []
 }
 
 const YuSuanYuJingYuLiang = 50

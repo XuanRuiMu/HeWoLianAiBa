@@ -47,7 +47,7 @@ function jieXiGaiLv(shuRu: string): number | null {
 export async function jiSuanKaiChangBaiGaiLv(
   canShu: KaiChangBaiShengChengCanShu,
 ): Promise<number> {
-  const api密钥 = peiZhi.deepSeek.api密钥 || AI配置.deepSeek.api密钥
+  const api密钥 = peiZhi.moRenMoXing.api密钥 || AI配置.moRenMoXing.api密钥
   if (!api密钥) {
     if (process.env.VITEST === 'true') return DouBeiGaiLv
     throw new JiaoSeShengChengCuoWu(CuoWuDaiMa.ROLE_GENERATION_MODEL_UNAVAILABLE)

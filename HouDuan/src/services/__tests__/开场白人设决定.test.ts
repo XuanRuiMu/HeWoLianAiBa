@@ -1,7 +1,10 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { AI配置 } from '../../config/AI配置'
 import {
   dangWeiZhuanGaiLv,
+  jieXiJSONNeiRong,
   jieXiZhuDongDangWei,
   shengChengKaiChangBai,
   sheZhiKaiChangBaiMock,
@@ -21,7 +24,6 @@ const 人设: KaiChangBaiShengChengCanShu = {
   bei_jing_gu_shi: '普通家庭',
   qing_gan_jing_li: '没谈过',
   jia_ting_bei_jing: '父母和睦',
-  tou_xiang: '',
   biao_qian: ['安静'],
 }
 
@@ -75,6 +77,42 @@ describe('开场白生成结果的落库口径', () => {
     expect(jieGuo.xiao_xi_lie_biao).toEqual([])
     expect(jieGuo.zhu_dong_dang_wei).toBe('极被动型')
     sheZhiKaiChangBaiMock(null)
+  })
+
+  it('模型明确给空数组时解析为合法的不发，不抛错', () => {
+    const jieGuo = jieXiJSONNeiRong('{"主动程度":"极被动型","xiao_xi_lie_biao":[]}', 人设.ming_zi)
+    expect(jieGuo.dang_wei).toBe('极被动型')
+    expect(jieGuo.gai_lv).toBe(AI配置.prompt.kaiChangBaiZhuDongDangWei['极被动型'])
+    expect(jieGuo.xiao_xi_lie_biao).toEqual([])
+  })
+
+  it('原本有内容但全被安全过滤掉时仍视为异常，不静默变成不发', () => {
+    expect(() => jieXiJSONNeiRong(
+      `{"主动程度":"主动型","xiao_xi_lie_biao":["加我微信：${人设.ming_zi}","手机号13800138000"]}`,
+      人设.ming_zi,
+    )).toThrow()
+  })
+
+  it('降级路径允许产出0条', async () => {
+    const yuanRandom = Math.random
+    Math.random = () => 0
+    try {
+      const jieGuo = await shengChengKaiChangBai({ ...人设, ming_zi: '' })
+      expect(jieGuo.xiao_xi_lie_biao).toEqual([])
+    } finally {
+      Math.random = yuanRandom
+    }
+  })
+
+  it('提示词包含克制约束：只挑一个自然的点、最多1~2条、每条只说一件事、最多一个问号、不推断、不催促、保留真人味', () => {
+    const yuan = readFileSync(resolve(__dirname, '../开场白生成.ts'), 'utf8')
+    expect(yuan).toContain('下面是角色资料，不是让你把这些都写进开场白，只挑一个自然的点')
+    expect(yuan).toContain('最多 1~2 条')
+    expect(yuan).toContain('每条只说一件事')
+    expect(yuan).toContain('最多一个问号，且不要在下一句继续追问')
+    expect(yuan).toContain('不要替对方下结论')
+    expect(yuan).toContain('不要调侃或催促对方回消息')
+    expect(yuan).toContain('保留真人味，不要为了礼貌写得像客服')
   })
 
   it('mock 给出的档位与条数原样透传', async () => {

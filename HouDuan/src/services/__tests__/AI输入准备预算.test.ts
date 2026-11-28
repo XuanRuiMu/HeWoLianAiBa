@@ -63,7 +63,7 @@ describe('字符预算注入（W3-A）', () => {
     expect(jieGuo[19].id).toBe('m-30')
   })
 
-  it('历史查询默认无条数上限，截断在内存侧完成并记 debug 日志', async () => {
+  it('历史查询有参数化条数上限，内存侧再按字符预算截断并记 debug 日志', async () => {
     const 每条字数 = Math.max(24001, Math.ceil((AI配置.prompt.zhuRuYuSuanZiFu * 1.2) / 20))
     const hangLieBiao = Array.from({ length: 25 }, (_, i) => ({
       ID: `m-${25 - i}`,
@@ -76,9 +76,10 @@ describe('字符预算注入（W3-A）', () => {
     const jieGuo = await huoQuZuiJinDuiHuaLiShi('u-y', 'j-y')
 
     const [yuJu, can] = chaXunMock.mock.calls[0]
-    expect(can).toHaveLength(2)
-    expect(String(yuJu)).toMatch(/LIMIT 50000/i)
-    expect(String(yuJu)).not.toMatch(/LIMIT \$|LIMIT \d{1,4}\b/i)
+    expect(can).toHaveLength(3)
+    expect(Number(can[2])).toBe(200)
+    expect(String(yuJu)).toMatch(/LIMIT \$3/i)
+    expect(String(yuJu)).not.toMatch(/LIMIT 50000/i)
     expect(jieGuo.length).toBeLessThan(25)
     expect(jieGuo.length).toBeGreaterThanOrEqual(20)
     expect(jieGuo[jieGuo.length - 1].id).toBe('m-25')

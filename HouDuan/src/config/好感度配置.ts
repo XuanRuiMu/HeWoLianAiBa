@@ -26,13 +26,29 @@ export const HaoGanDuPeiZhi = {
   },
 
   fanWei: {
-    zuiDiFen: 0,
+    zuiDiFen: 5,
     zuiGaoFen: 1000,
   },
 
-  shuaiJian: {
-    zuiDiBaoLiu: 0.1,
+  siWeiShangXian: 1000,
+
+  moShiBeiLv: {
+    putong: 2,
+    tiaozhan: 1,
   },
+
+  jiangDangQueRenLunShu: 2,
+
+  queRenJieDuanYouXiaoMiao: 60 * 60 * 24 * 90,
+
+  ceLiangXiShuShangXian: 1.5,
+
+  ceLiangXiShuXiaXian: 1,
+
+ junHengDuanWen: {
+  liShiTiaoShu: 6,
+  neiRongZuiDaChang: 60,
+ },
 
   jiYi: {
     shengJiZhongYaoDu: 8,
@@ -60,7 +76,10 @@ export const HaoGanDuPeiZhi = {
   jiChuFanWei: haoGanDuJiChuFanWei,
 
   zhaXing: {
-    eWaiJiaFen: { zuiDi: 200, zuiGao: 300 },
+    eWaiJiaFen: {
+      I: { zuiDi: 150, zuiGao: 250, shangXian: 370 },
+      E: { zuiDi: 200, zuiGao: 300, shangXian: 550 },
+    },
   },
 
   pingPanBaoDi: {

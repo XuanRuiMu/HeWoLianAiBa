@@ -22,7 +22,6 @@ import { gouJianWriterPrompt, gouJianDiYiCeng, gouJianBenLun消息块 } from '..
 import type { AIYinQingShuRu } from '../../types'
 import { jianChaTaoHua, panDuanTaoHuaCaiYang, TaoHuaPeiZhi } from '../../config/去AI味配置'
 import { chuLiQueXiKouJian, QueXiChuFaXiaoShi } from '../亲密度缺席扣减'
-import { yanZhengRenSheKa } from '../人设自述卡'
 
 function zuZhuangShuRu(gengDuo: Partial<AIYinQingShuRu> = {}): AIYinQingShuRu {
   return {
@@ -127,12 +126,27 @@ describe('FP-29 Writer提示词契约（缓存层序与去游戏化）', () => {
     expect(tiShiCi).toContain('【别人聊天就是这样聊的】')
   })
 
-  it('人设有自述卡时以自述呈现，无自述卡回退字段清单', () => {
-    const daiKa = zuZhuangShuRu({ jiao_se: { ...zuZhuangShuRu().jiao_se, ren_she_ka: '我叫陈雨桐，20岁，在杭州读大二。话不多，但认定的朋友会掏心。周末喜欢窝在宿舍画画的间隙听歌，说到猫会停不下来。' } as never })
-    const kaTiShi = gouJianWriterPrompt(daiKa)
-    expect(kaTiShi).toContain('完全按它的身份、性格、习惯来说话')
-    const wuKa = gouJianWriterPrompt(zuZhuangShuRu())
-    expect(wuKa).toContain('性格底色')
+  it('始终输出完整结构化字段清单，不存在自述卡分支', () => {
+    const tiShi = gouJianWriterPrompt(zuZhuangShuRu())
+    expect(tiShi).toContain('【你是这样一个人】')
+    expect(tiShi).toContain('性格底色')
+    expect(tiShi).toContain('说话方式')
+    expect(tiShi).toContain('行为习惯')
+    expect(tiShi).toContain('会被什么样的人吸引')
+    expect(tiShi).toContain('家庭情况')
+    expect(tiShi).toContain('感情经历')
+    expect(tiShi).toContain('【你的日常事实】')
+    expect(tiShi).not.toContain('下面这段是你自己的自述')
+    expect(tiShi).not.toContain('完全按它的身份、性格、习惯来说话')
+  })
+
+  it('渣型角色的渣型句始终出现在字段清单中', () => {
+    const jiChu = zuZhuangShuRu()
+    const tiShi = gouJianWriterPrompt({
+      ...jiChu,
+      jiao_se: { ...jiChu.jiao_se, shi_fou_zha_xing: true, zha_fa_miao_shu: '嘴上答应，转头就忘' },
+    })
+    expect(tiShi).toContain('这个人设里带点渣：嘴上答应，转头就忘')
   })
 
   it('本轮用户消息进定界符且位于末尾', () => {
@@ -188,13 +202,5 @@ describe('FP-29 缺席单次扣减', () => {
 
   it('阈值常量为正整数', () => {
     expect(QueXiChuFaXiaoShi).toBeGreaterThanOrEqual(1)
-  })
-})
-
-describe('FP-29 自述卡校验', () => {
-  it('长度越界与AI话术不合规', () => {
-    expect(yanZhengRenSheKa('太短')).toBeNull()
-    expect(yanZhengRenSheKa('我是一个AI助手，很高兴为你服务。'.repeat(4))).toBeNull()
-    expect(yanZhengRenSheKa('我叫陈雨桐，20岁，在杭州读大二。话不多，但认定的朋友会掏心。周末喜欢窝在宿舍画画的间隙听歌。')).toBeTruthy()
   })
 })

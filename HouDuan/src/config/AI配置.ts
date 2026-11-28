@@ -7,7 +7,7 @@ import './env'
 //   Director 策略是「不追问太多，轻轻接住，问一句是身体累还是心里累」，
 //   Writer 却输出「这么晚还没睡……要不要我陪你打会儿语音，不想说也没关系」，
 //   正是本项目自己登记的「长篇安慰+给建议+收尾」病灶。
-// 依据三：DeepSeek 思考模式下 temperature 不生效，AI参数策略里按人设微调温度的整条链路
+// 依据三：部分模型思考模式下 temperature 不生效，AI参数策略里按人设微调温度的整条链路
 //   （E型/快热/渣型/关系阶段/场景）会变成死代码。
 // 思考留给 Director：它要做的判断（该不该接、接哪个点、情绪）本来就适合推理；
 // Writer 的任务是执行，不是分析。
@@ -35,16 +35,23 @@ export interface MoXingCanShu {
   }
 }
 
+export function huoQuMoRenMoXingMing(): string {
+  const ming = (process.env.MAGPIE_MO_XING_CHI || '').split(',')
+    .map((xiang) => (xiang.split('|')[0] || '').trim())
+    .find((xiang) => xiang !== '')
+  return ming || (process.env.MAGPIE_MO_XING_MING || '').trim() || 'kilo-auto/free'
+}
+
 export const AI配置 = {
-  deepSeek: {
-    api密钥: process.env.DEEPSEEK_API_KEY || '',
-    基础地址: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
-    模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+  moRenMoXing: {
+    api密钥: process.env.MAGPIE_MO_XING_CHI_MI_YAO || '',
+    基础地址: process.env.MAGPIE_MO_XING_CHI_JI_CHU || 'http://127.0.0.1:3425',
+    模型: huoQuMoRenMoXingMing(),
   },
 
   模型: {
     DaoYan: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       top_p: 0.95,
       最大Tokens: 32000,
       思考模式: 'enabled',
@@ -53,7 +60,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     XieShou: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       最大Tokens: 4000,
       思考模式: 写手思考 ? 'enabled' : 'disabled',
       ...(写手思考
@@ -62,7 +69,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     QingGanFenXi: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       wenDu: 0.2,
       最大Tokens: 32000,
       思考模式: 'disabled',
@@ -70,7 +77,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     HaoGanDuPingPan: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       wenDu: 0.2,
       最大Tokens: 32000,
       思考模式: 'disabled',
@@ -78,7 +85,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     JiYiZhaiYao: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       top_p: 0.95,
       最大Tokens: 32000,
       思考模式: 'enabled',
@@ -87,7 +94,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     AnQuanShenHe: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       wenDu: 0.1,
       最大Tokens: 32000,
       思考模式: 'disabled',
@@ -95,22 +102,15 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     RenSheShenHe: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       wenDu: 0,
       最大Tokens: 2000,
       思考模式: 'disabled',
       响应格式: { type: 'json_object' },
     } as MoXingCanShu,
 
-    RenSheKa: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
-      wenDu: 0.9,
-      最大Tokens: 1000,
-      思考模式: 'disabled',
-    } as MoXingCanShu,
-
     GuanJianShiJian: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       wenDu: 0.2,
       最大Tokens: 32000,
       思考模式: 'disabled',
@@ -118,7 +118,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     JunShiQiuZhu: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       top_p: 0.95,
       最大Tokens: 64000,
       思考模式: 'enabled',
@@ -127,7 +127,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     BiaoBaiJianCe: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       wenDu: 0.1,
       最大Tokens: 32000,
       思考模式: 'disabled',
@@ -135,7 +135,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     HuShanJianCe: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       wenDu: 0.1,
       最大Tokens: 32000,
       思考模式: 'disabled',
@@ -143,7 +143,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     ShiPoJianCe: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       wenDu: 0.1,
       最大Tokens: 32000,
       思考模式: 'disabled',
@@ -151,7 +151,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     JieShouBiaoBaiJianCe: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       wenDu: 0.1,
       最大Tokens: 32000,
       思考模式: 'disabled',
@@ -159,7 +159,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     ShenJingBingJianCe: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       wenDu: 0.1,
       最大Tokens: 32000,
       思考模式: 'disabled',
@@ -167,7 +167,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     TuPianShenHe: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       wenDu: 0.1,
       最大Tokens: 32000,
       思考模式: 'disabled',
@@ -175,7 +175,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     SiLianJian: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       wenDu: 0.1,
       最大Tokens: 32000,
       思考模式: 'disabled',
@@ -183,7 +183,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     JiaoSeJingGaoFanYing: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       wenDu: 0.1,
       最大Tokens: 32000,
       思考模式: 'disabled',
@@ -191,7 +191,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     KaiChangBai: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       top_p: 0.95,
       最大Tokens: 16000,
       思考模式: 'enabled',
@@ -200,7 +200,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     KaiChangBaiGaiLv: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       wenDu: 0,
       最大Tokens: 30,
       思考模式: 'disabled',
@@ -208,7 +208,7 @@ export const AI配置 = {
     } as MoXingCanShu,
 
     FuPanShengCheng: {
-      模型: process.env.AI_CHAT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+      模型: huoQuMoRenMoXingMing(),
       top_p: 0.95,
       最大Tokens: 64000,
       思考模式: 'enabled',
@@ -253,11 +253,14 @@ export const AI配置 = {
   },
 
   zhongShi: {
-    keZhongShiZuiDaCiShu: 2,
-    tuiBiJiChuHaoMiao: 2000,
-    tuiBiZuiDaHaoMiao: 8000,
-    rongDuanLianXuShiBaiYuZhi: 5,
-    rongDuanLengQueHaoMiao: 60 * 1000,
+    keZhongShiZuiDaCiShu: (() => {
+      const yuan = Number(process.env['AI_ZhongShiZuiDaCiShu'])
+      return Number.isInteger(yuan) && yuan >= 0 && yuan <= 10 ? yuan : 4
+    })(),
+    tuiBiJiChuHaoMiao: 1000,
+    tuiBiZuiDaHaoMiao: 4000,
+    rongDuanLianXuShiBaiYuZhi: 8,
+    rongDuanLengQueHaoMiao: 30 * 1000,
   },
 
   kongXiangYing: {

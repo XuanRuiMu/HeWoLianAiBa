@@ -265,13 +265,13 @@ const 模型池: ChiChengYuanZhuangTai[] = []
 let 轮询指针 = 0
 
 const LengQueJiChuHaoMiao = (() => {
-  const yuan = Number(process.env['AI_MO_XING_CHI_LENG_QUE_HAO_MIAO'])
+  const yuan = Number(process.env['MAGPIE_MO_XING_CHI_LENG_QUE_HAO_MIAO'])
   if (!Number.isFinite(yuan) || yuan < 1000) return 30000
   return Math.min(600000, Math.trunc(yuan))
 })()
 
 const ShiBaiShangXian = (() => {
-  const yuan = Number(process.env['AI_MO_XING_CHI_SHI_BAI_SHANG_XIAN'])
+  const yuan = Number(process.env['MAGPIE_MO_XING_CHI_SHI_BAI_SHANG_XIAN'])
   if (!Number.isFinite(yuan) || yuan < 1) return 2
   return Math.min(10, Math.trunc(yuan))
 })()
@@ -653,13 +653,13 @@ const yiDingZhiFetch = async (shuRu: Parameters<typeof fetch>[0], chuShiCanShu?:
 }
 export function 获取通用模型调用(): OpenAI {
   if (实例) return 实例
-  const api密钥 = peiZhi.deepSeek.api密钥 || AI配置.deepSeek.api密钥
-  const 原始地址 = peiZhi.deepSeek.基础地址 || AI配置.deepSeek.基础地址
+  const api密钥 = peiZhi.moRenMoXing.api密钥 || AI配置.moRenMoXing.api密钥
+  const 原始地址 = peiZhi.moRenMoXing.基础地址 || AI配置.moRenMoXing.基础地址
   const 规范地址 = /\/v1\/?$/.test(原始地址.replace(/\/$/, '')) ? 原始地址.replace(/\/$/, '') : `${原始地址.replace(/\/$/, '')}/v1`
 
   const chaoShiHaoMiao = (() => {
     const yuan = Number(process.env['AI_MO_XING_QING_QIU_CHAO_SHI_HAO_MIAO'])
-    if (!Number.isFinite(yuan) || yuan < 30000) return 600000
+    if (!Number.isFinite(yuan) || yuan < 30000) return 45 * 1000
     return Math.min(1800000, Math.trunc(yuan))
   })()
 
@@ -667,6 +667,7 @@ export function 获取通用模型调用(): OpenAI {
     apiKey: api密钥,
     baseURL: 规范地址,
     timeout: chaoShiHaoMiao,
+    maxRetries: 0,
     fetch: yiDingZhiFetch,
   })
   return 实例
@@ -744,14 +745,14 @@ export function 重置通用模型调用(): void {
 }
 
 export async function 自检模型名可用(): Promise<boolean> {
-  const jiChu = String(process.env.DEEPSEEK_BASE_URL || peiZhi.deepSeek.基础地址 || AI配置.deepSeek.基础地址).replace(/\/$/, '')
-  const qiYongMoXing = String(process.env.DEEPSEEK_MODEL || peiZhi.deepSeek.模型 || AI配置.deepSeek.模型).trim()
+  const jiChu = String(process.env.MAGPIE_MO_XING_CHI_JI_CHU || peiZhi.moRenMoXing.基础地址 || AI配置.moRenMoXing.基础地址).replace(/\/$/, '')
+  const qiYongMoXing = String(process.env.MAGPIE_MO_XING_CHI || peiZhi.moRenMoXing.模型 || AI配置.moRenMoXing.模型).trim()
   const shiGuanFangDuanDian = /api\.deepseek\.com/.test(jiChu)
   const shiGuanFangMingMing = /^deepseek-/i.test(qiYongMoXing)
   if (!shiGuanFangDuanDian || !shiGuanFangMingMing) {
     return true
   }
-  const miYao = String(peiZhi.deepSeek.api密钥 || AI配置.deepSeek.api密钥 || '').trim()
+  const miYao = String(peiZhi.moRenMoXing.api密钥 || AI配置.moRenMoXing.api密钥 || '').trim()
   if (!miYao || !jiChu) return true
   try {
     const xiangYing = await fetch(`${jiChu}/v1/models`, {
@@ -765,7 +766,7 @@ export async function 自检模型名可用(): Promise<boolean> {
     const shuJu = (await xiangYing.json()) as { data?: Array<{ id?: unknown }> }
     const keYong = (shuJu.data ?? []).map((m) => String(m.id ?? '')).filter(Boolean)
     if (keYong.length === 0 || keYong.includes(qiYongMoXing)) return true
-    const neiRong = `当前 DEEPSEEK_MODEL=${qiYongMoXing} 不在官方可用模型列表 [${keYong.join(', ')}] 中，AI 调用将返回 400。请改为官方在册模型名。`
+    const neiRong = `当前模型名=${qiYongMoXing} 不在官方可用模型列表 [${keYong.join(', ')}] 中，AI 调用将返回 400。请改为官方在册模型名。`
     debug日志.error('通用模型调用', '模型名自检失败：配置的模型名不在官方可用列表', { xiang_qing: { nei_rong: neiRong } })
     const { faSongGaoJing } = await import('./邮件告警')
     void faSongGaoJing('ai_mo_xing_ming_shi_xiao', 'AI 模型名已失效', neiRong).catch(() => undefined)
@@ -996,9 +997,9 @@ export function 当前模型并发排队数(): number {
   return 并发等待队列.length
 }
 
-export async function tiaoYongDeepSeek(
+export async function tiaoYongMoXing(
   canShu: 调用参数,
-  模型LeiXing: string = 'DeepSeek',
+  模型LeiXing: string = 'MoXing',
   waiBuXinHao?: AbortSignal,
 ): Promise<调用结果> {
   if (mockTiaoYong) {
@@ -1012,7 +1013,7 @@ export async function tiaoYongDeepSeek(
 
   const kaiShiShiJian = Date.now()
   const keHuDuan = 获取通用模型调用()
-  let 请求模型 = canShu.模型 || AI配置.deepSeek.模型
+  let 请求模型 = canShu.模型 || AI配置.moRenMoXing.模型
   let 模型 = 请求模型
   const 响应格式 = canShu.响应格式 || { type: 'text' as const }
 
@@ -1106,7 +1107,11 @@ export async function tiaoYongDeepSeek(
     }
     let 释放额度: (() => void) | null = null
     try {
-      const benCiChaoShi = 模型LeiXing === 'XieShou' ? 90 * 1000 : 70 * 1000
+      const benCiChaoShi = (() => {
+        const yuan = Number(process.env['AI_DAN_CI_CHAO_SHI_HAO_MIAO'])
+        if (Number.isFinite(yuan) && yuan >= 5000) return Math.trunc(yuan)
+        return 模型LeiXing === 'XieShou' ? 20 * 1000 : 15 * 1000
+      })()
       const chaoShiKongZhi = new AbortController()
       const chaoShiDingShi = setTimeout(() => chaoShiKongZhi.abort(), benCiChaoShi)
       const youXiaoXinHao = waiBuXinHao ?? chaoShiKongZhi.signal
@@ -1142,9 +1147,13 @@ export async function tiaoYongDeepSeek(
         })
         const deng = Math.min(AI配置.kongXiangYing.tuiBiJiChuHaoMiao * kongXiangYingCiShu, AI配置.kongXiangYing.tuiBiZuiDaHaoMiao)
         if (waiBuXinHao) {
+          if (waiBuXinHao.aborted) throw new Error('[通用模型调用] 调用已取消，中止重试等待')
           await Promise.race([
             dengDai(deng),
-            new Promise((_, juJue) => waiBuXinHao.addEventListener('abort', () => juJue(new Error('[通用模型调用] 调用已取消，中止重试等待')), { once: true })),
+            new Promise((_, juJue) => {
+              if (waiBuXinHao.aborted) { juJue(new Error('[通用模型调用] 调用已取消，中止重试等待')); return }
+              waiBuXinHao.addEventListener('abort', () => juJue(new Error('[通用模型调用] 调用已取消，中止重试等待')), { once: true })
+            }),
           ])
         } else {
           await dengDai(deng)
@@ -1272,9 +1281,13 @@ export async function tiaoYongDeepSeek(
           ? Math.min(3000 * 2 ** changCi, 30000)
           : jiSuanTuiBiHaoMiao(changCi)
       if (waiBuXinHao) {
+        if (waiBuXinHao.aborted) throw new Error('[通用模型调用] 调用已取消，中止重试等待')
         await Promise.race([
           dengDai(tuiBiHaoMiao),
-          new Promise((_, juJue) => waiBuXinHao.addEventListener('abort', () => juJue(new Error('[通用模型调用] 调用已取消，中止重试等待')), { once: true })),
+          new Promise((_, juJue) => {
+            if (waiBuXinHao.aborted) { juJue(new Error('[通用模型调用] 调用已取消，中止重试等待')); return }
+            waiBuXinHao.addEventListener('abort', () => juJue(new Error('[通用模型调用] 调用已取消，中止重试等待')), { once: true })
+          }),
         ])
       } else {
         await dengDai(tuiBiHaoMiao)
@@ -1302,7 +1315,7 @@ export function 按配置调用(
 ): Promise<调用结果> {
   if (模型池.length === 0) chuShiHuaMoXingLuYou()
   const 模型CanShu = jiSuanAIChanShu(模型LeiXing, shangXiaWen)
-  return tiaoYongDeepSeek(
+  return tiaoYongMoXing(
     {
       模型: 模型CanShu.模型,
       wenDu: 模型CanShu.wenDu,

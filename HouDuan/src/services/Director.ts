@@ -77,6 +77,7 @@ export function jieXiDirectorXiangYing(neiRong: string): { ceLue: DirectorCeLue;
       yong_hu_yi_tu: String(shuJu['用户意图'] || shuJu['yong_hu_yi_tu'] || 'unknown'),
       qing_gan_fen_xi: String(shuJu['情感分析'] || shuJu['qing_gan_fen_xi'] || 'unknown'),
       yao_jie_zhu_de_dian: String(shuJu['这条里要接住的点'] || shuJu['yao_jie_zhu_de_dian'] || '').trim(),
+      zha_dong_zuo: String(shuJu['渣动作'] || shuJu['zha_dong_zuo'] || '').trim() || undefined,
       hui_fu_ce_lue: String(shuJu['回复策略'] || shuJu['hui_fu_ce_lue'] || 'unknown'),
       shi_fou_hui_fu: Boolean(shuJu['是否回复'] ?? shuJu['shi_fou_hui_fu'] ?? true),
       hui_fu_tiao_shu: xiuZhengTiaoShu,

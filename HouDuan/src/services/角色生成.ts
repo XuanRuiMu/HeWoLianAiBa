@@ -1,8 +1,9 @@
+import { randomInt } from 'node:crypto'
 import { 数据库 } from '../数据库'
 import { redis } from '../redis'
 import { huoQuFanYi, huoQuFanYiMiaoShu } from '../config/translations'
 import { GuiFanGuanXiJieDuanMing } from '../config/好感度配置'
-import { fenJieSiWei } from './好感度'
+import { 生成人设初始分, 生成四维初值 } from './初始好感度'
 import {
   CuoWuDaiMa,
   JiaoSeShengChengCuoWu,
@@ -33,6 +34,7 @@ import {
   zhiYeXueKeKu,
   zhiYeZhiYeKu,
   aiHao,
+  zhiYeAiHaoBaiMing,
   jiaXiang,
   xiHuanDeLeiXing,
   jiaTingBeiJing,
@@ -51,10 +53,12 @@ import {
   获取默认音色,
 } from '../config/角色配置'
 import { XueKeTongYiCi, ZhiYeTongYiCi } from '../config/职业同义词'
-import { 保存角色XiaoXi } from './AI输入准备'
+import { 保存角色XiaoXi, quXingWeiTeDian } from './AI输入准备'
 import { shengChengKaiChangBai } from './开场白生成'
 
 const RenSheWenBenZuiDaChangDu = 500
+
+const AiHaoTiaoShu = 3
 
 const ZhiLingTeZhengMoShi: RegExp[] = [
   /ignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions?/gi,
@@ -543,27 +547,21 @@ function xuanZeZhiYe(shenFen: ShenFenLeiXing, zhiYeTiQu: string): string {
   return anQuanZhongXuanZeZhiYe(shenFen)
 }
 
-function anQuanZhongXuanZeAiHao(mbti: MBTILeiXing): string[] {
-  const mbtiAiHao = [...aiHao[mbti]]
-  const qiTaAiHao = Object.values(aiHao)
-    .flat()
-    .filter((x) => !mbtiAiHao.includes(x))
+function anQuanZhongXuanZeAiHao(mbti: MBTILeiXing, shenFen: ShenFenLeiXing): string[] {
   const jieGuo: string[] = []
-
-  while (jieGuo.length < 3) {
-    const gaiLv = Math.random()
-    const houXuan =
-      (gaiLv < 0.6 && mbtiAiHao.length > 0) || qiTaAiHao.length === 0
-        ? mbtiAiHao
-        : qiTaAiHao
-    const xuanZhong = suiJiXuanZe(houXuan)
-    if (!jieGuo.includes(xuanZhong)) {
-      jieGuo.push(xuanZhong)
-    }
-    const suoYin = houXuan.indexOf(xuanZhong)
-    if (suoYin > -1) houXuan.splice(suoYin, 1)
+  const baiMingChi = [...(zhiYeAiHaoBaiMing[shenFen] ?? [])]
+  while (jieGuo.length < AiHaoTiaoShu && baiMingChi.length > 0) {
+    const xuanZhong = suiJiXuanZe(baiMingChi)
+    baiMingChi.splice(baiMingChi.indexOf(xuanZhong), 1)
+    jieGuo.push(xuanZhong)
   }
-
+  if (jieGuo.length >= AiHaoTiaoShu) return jieGuo
+  const mbtiChi = aiHao[mbti].filter((x) => !jieGuo.includes(x))
+  while (jieGuo.length < AiHaoTiaoShu && mbtiChi.length > 0) {
+    const xuanZhong = suiJiXuanZe(mbtiChi)
+    mbtiChi.splice(mbtiChi.indexOf(xuanZhong), 1)
+    jieGuo.push(xuanZhong)
+  }
   return jieGuo
 }
 
@@ -590,9 +588,11 @@ function shengChengShiJieXinXi(shenFen: ShenFenLeiXing, _mbti: MBTILeiXing, nian
   const xueSheng = shiXueShengShenFen(shenFen)
   return {
     cheng_shi: chengShi,
-    xue_xiao: shenFen === '大专生'
-      ? chengShi + '职业技术学院'
-      : suiJiXuanZe(xueXiaoKu[chengShi] || ['省属师范大学']),
+    xue_xiao: xueSheng
+      ? shenFen === '大专生'
+        ? chengShi + '职业技术学院'
+        : suiJiXuanZe(xueXiaoKu[chengShi] || ['省属师范大学'])
+      : null,
     gong_zuo_zhuang_tai: xueSheng ? null : suiJiXuanZe(gongZuoZhuangTaiKu),
     xian_shang_ai_hao: suiJiXuanZe(xianShangAiHaoKu),
     peng_you_quan_xi_guan: suiJiXuanZe(pengYouQuanXiGuanKu),
@@ -618,19 +618,30 @@ function anZhongZiSuiJiShu(zhongZi: string, min: number, max: number): number {
   return min + (haXiZhi % (max - min + 1))
 }
 
+function tuiDaoNianJi(shenFen: ShenFenLeiXing, nianLing: number): string {
+  const 年级表 = nianJiPeiZhi[shenFen]
+  if (!年级表 || 年级表.length === 0) return suiJiXuanZe(年级表 || ['大一'])
+  const 入学年龄 = 18
+  const 顺序 = shenFen === '大专生' ? ['大一', '大二', '大三'] : ['大一', '大二', '大三', '大四']
+  const 基准序号 = Math.max(0, Math.min(顺序.length - 1, nianLing - 入学年龄))
+  const 浮动 = randomInt(0, 3) === 0 ? 1 : 0
+  const 最终序号 = Math.min(顺序.length - 1, 基准序号 + 浮动)
+  return 顺序[最终序号]
+}
+
 export function shengChengHaoGanDuZongFen(
   mbti: MBTILeiXing,
   shiFouZhaXing: boolean,
-  yongHuId?: string,
 ): number {
-  const [jiChuMin, jiChuMax] = haoGanDuJiChuFanWei[mbti]
-  const zhongZi = yongHuId ? `${yongHuId}_${mbti}` : `${mbti}_${Date.now()}_${Math.random()}`
-  let zongFen = anZhongZiSuiJiShu(zhongZi, jiChuMin, jiChuMax)
-  if (shiFouZhaXing) {
-    const jiaFen = anZhongZiSuiJiShu(`${zhongZi}_zha_xing_jia_fen`, 200, 300)
-    zongFen = Math.min(zongFen + jiaFen, 1000)
-  }
-  return zongFen
+  return 生成人设初始分(mbti, shiFouZhaXing, mbti.startsWith('E') ? 'E' : 'I')
+}
+
+export function shengChengHaoGanDuSiWei(
+  mbti: MBTILeiXing,
+  zongFen: number,
+): { xin_ren_du: number; qin_mi_du: number; qu_wei_du: number; guan_huai_du: number; zong_fen: number } {
+  void mbti
+  return 生成四维初值(zongFen)
 }
 
 function huoQuGuanXiJieDuan(haoGanDu: number): string {
@@ -664,12 +675,29 @@ export function shengChengJiaoSe(canShu: ShengChengJiaoSeCanShu): ShengChengJiao
     nianLing = suiJiShu(shenFenJieGuo.nianLingFanWei[0], shenFenJieGuo.nianLingFanWei[1])
   }
 
+  const nianLingZaiFanWeiNei =
+    nianLing >= shenFenJieGuo.nianLingFanWei[0] && nianLing <= shenFenJieGuo.nianLingFanWei[1]
+  if (!nianLingZaiFanWeiNei) {
+    const piPeiShenFen = shenFenPeiZhi.filter(
+      (peiZhi) => nianLing >= peiZhi.nianLingFanWei[0] && nianLing <= peiZhi.nianLingFanWei[1],
+    )
+    if (piPeiShenFen.length > 0) {
+      const xuanZhong = suiJiXuanZe(piPeiShenFen)
+      shenFenJieGuo = { leiXing: xuanZhong.leiXing, nianLingFanWei: [...xuanZhong.nianLingFanWei] as [number, number] }
+    } else {
+      const zuiDaShenFen = shenFenPeiZhi.reduce((zuiDa, peiZhi) =>
+        peiZhi.nianLingFanWei[1] > zuiDa.nianLingFanWei[1] ? peiZhi : zuiDa,
+      )
+      shenFenJieGuo = { leiXing: zuiDaShenFen.leiXing, nianLingFanWei: [...zuiDaShenFen.nianLingFanWei] as [number, number] }
+    }
+  }
+
   const zhiYeTiQu = heBing.zhi_ye ? qingXiRenSheWenBen(heBing.zhi_ye) : ''
   const zhiYe = xuanZeZhiYe(shenFenJieGuo.leiXing, zhiYeTiQu)
   const nianJi = shiXueShengShenFen(shenFenJieGuo.leiXing)
-    ? suiJiXuanZe(nianJiPeiZhi[shenFenJieGuo.leiXing])
+    ? tuiDaoNianJi(shenFenJieGuo.leiXing, nianLing)
     : null
-  const aiHaoLieBiao = anQuanZhongXuanZeAiHao(mbti)
+  const aiHaoLieBiao = anQuanZhongXuanZeAiHao(mbti, shenFenJieGuo.leiXing)
   const jiaXiangDi = heBing.jia_xiang ? qingXiRenSheWenBen(heBing.jia_xiang) : anQuanZhongXuanZeJiaXiang(mbti)
   const chengShi = heBing.cheng_shi ? qingXiRenSheWenBen(heBing.cheng_shi) : suiJiXuanZe(chengShiKu)
   const shiJieXinXi = {
@@ -696,7 +724,7 @@ export function shengChengJiaoSe(canShu: ShengChengJiaoSeCanShu): ShengChengJiao
   const xiTong = xiTongTiShi[mbti]
   const weiXinMing = heBing.wei_xin_ming ? qingXiRenSheWenBen(heBing.wei_xin_ming) : huoQuWeiXinMing(xingBie)
   const touXiang = touXiangEmoji[mbti]
-  const haoGanDuZongFen = shengChengHaoGanDuZongFen(mbti, shiFouZhaXing, canShu.yong_hu_id)
+  const haoGanDuZongFen = shengChengHaoGanDuZongFen(mbti, shiFouZhaXing)
 
   const xueSheng = shiXueShengShenFen(shenFenJieGuo.leiXing)
   const shenFenMiaoShu = xueSheng && nianJi
@@ -790,13 +818,13 @@ export async function baoCunJiaoSe(
   yongHuId: string,
   jiaoSe: ShengChengJiaoSeJieGuo,
   duiJuMoShi: 'putong' | 'tiaozhan' = 'putong',
+  落库后回调?: (jiaoSeId: string, jiaoSe: ShengChengJiaoSeJieGuo) => Promise<unknown>,
 ): Promise<ShengChengJiaoSeJieGuo> {
   chongZhuZhaXingZiDuan(jiaoSe)
-  if (mbtiLieBiao.includes(jiaoSe.mbti_lei_xing)) {
+  if (!Number.isFinite(jiaoSe.hao_gan_du_zong_fen) && mbtiLieBiao.includes(jiaoSe.mbti_lei_xing)) {
     jiaoSe.hao_gan_du_zong_fen = shengChengHaoGanDuZongFen(
       jiaoSe.mbti_lei_xing,
       jiaoSe.shi_fou_zha_xing === true,
-      yongHuId,
     )
   }
 
@@ -889,17 +917,19 @@ export async function baoCunJiaoSe(
   jiaoSe.id = jiaoSeIdNei
   jiaoSe.gong_kai_bian_hao = String(chaRuJiaoSe.rows[0]['公开编号'] || '').trim() || jiaoSeIdNei
 
+  const chuShiSiWei = shengChengHaoGanDuSiWei(jiaoSe.mbti_lei_xing, jiaoSe.hao_gan_du_zong_fen)
   await zhiXing.query(
     `INSERT INTO "好感度" (
       "用户ID", "角色ID", "信任度", "亲密度", "趣味度", "关怀度", "总分", "关系阶段"
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    ON CONFLICT ("用户ID", "角色ID") DO NOTHING`,
     [
       yongHuId,
       jiaoSeId,
-      fenJieSiWei(jiaoSe.hao_gan_du_zong_fen).xin_ren_du,
-      fenJieSiWei(jiaoSe.hao_gan_du_zong_fen).qin_mi_du,
-      fenJieSiWei(jiaoSe.hao_gan_du_zong_fen).qu_wei_du,
-      fenJieSiWei(jiaoSe.hao_gan_du_zong_fen).guan_huai_du,
+      chuShiSiWei.xin_ren_du,
+      chuShiSiWei.qin_mi_du,
+      chuShiSiWei.qu_wei_du,
+      chuShiSiWei.guan_huai_du,
       jiaoSe.hao_gan_du_zong_fen,
       huoQuGuanXiJieDuan(jiaoSe.hao_gan_du_zong_fen),
     ],
@@ -958,48 +988,51 @@ export async function baoCunJiaoSe(
   shiWuKeHuDuan?.release()
 
   let yiBaoCunKaiChang = false
-  try {
-    const kcbCanShu: Parameters<typeof shengChengKaiChangBai>[0] = {
-      mbti_lei_xing: jiaoSe.mbti_lei_xing,
-      ie_lei_xing: jiaoSe.ie_lei_xing,
-      re_shen_lei_xing: jiaoSe.re_shen_lei_xing,
-      shi_fou_zha_xing: jiaoSe.shi_fou_zha_xing,
-      xing_ge: jiaoSe.xing_ge,
-      yan_yu_feng_ge: jiaoSe.yan_yu_feng_ge,
-      xi_huan_de_lei_xing: jiaoSe.xi_huan_de_lei_xing,
-      xing_bie: jiaoSe.xing_bie,
-      ming_zi: jiaoSe.ming_zi,
-      bei_jing_gu_shi: jiaoSe.bei_jing_gu_shi,
-      qing_gan_jing_li: jiaoSe.qing_gan_jing_li,
-      jia_ting_bei_jing: jiaoSe.jia_ting_bei_jing,
-      tou_xiang: jiaoSe.tou_xiang,
-      biao_qian: jiaoSe.biao_qian,
-    }
-    const kaiChangBai = await shengChengKaiChangBai(kcbCanShu)
-    const yaoKaiKou = Math.random() < kaiChangBai.zhu_dong_kai_kou_gai_lv
-    await jiLuKaiChangBaiJueCe(
-      jiaoSeId,
-      kaiChangBai.zhu_dong_dang_wei,
-      kaiChangBai.zhu_dong_kai_kou_gai_lv,
-      yaoKaiKou,
-      kaiChangBai.xiao_xi_lie_biao.length,
-    )
-    if (yaoKaiKou) {
-      for (const neiRong of kaiChangBai.xiao_xi_lie_biao.slice(0, 5)) {
-        if (neiRong.trim()) {
-          await 保存角色XiaoXi({
-            yong_hu_id: yongHuId,
-            jiao_se_id: jiaoSeId,
-            nei_rong: neiRong.trim(),
-          })
-          yiBaoCunKaiChang = true
+  const kaiChangBaiRenWu = (async () => {
+    try {
+      const kcbCanShu: Parameters<typeof shengChengKaiChangBai>[0] = {
+        mbti_lei_xing: jiaoSe.mbti_lei_xing,
+        ie_lei_xing: jiaoSe.ie_lei_xing,
+        re_shen_lei_xing: jiaoSe.re_shen_lei_xing,
+        shi_fou_zha_xing: jiaoSe.shi_fou_zha_xing,
+        xing_ge: jiaoSe.xing_ge,
+        yan_yu_feng_ge: jiaoSe.yan_yu_feng_ge,
+        xi_huan_de_lei_xing: jiaoSe.xi_huan_de_lei_xing,
+        xing_bie: jiaoSe.xing_bie,
+        ming_zi: jiaoSe.ming_zi,
+        bei_jing_gu_shi: jiaoSe.bei_jing_gu_shi,
+        qing_gan_jing_li: jiaoSe.qing_gan_jing_li,
+        jia_ting_bei_jing: jiaoSe.jia_ting_bei_jing,
+        biao_qian: jiaoSe.biao_qian,
+      }
+      const kaiChangBai = await shengChengKaiChangBai(kcbCanShu)
+      const yaoKaiKou = Math.random() < kaiChangBai.zhu_dong_kai_kou_gai_lv
+      await jiLuKaiChangBaiJueCe(
+        jiaoSeId,
+        kaiChangBai.zhu_dong_dang_wei,
+        kaiChangBai.zhu_dong_kai_kou_gai_lv,
+        yaoKaiKou,
+        kaiChangBai.xiao_xi_lie_biao.length,
+      )
+      if (yaoKaiKou) {
+        for (const neiRong of kaiChangBai.xiao_xi_lie_biao.slice(0, 5)) {
+          if (neiRong.trim()) {
+            await 保存角色XiaoXi({
+              yong_hu_id: yongHuId,
+              jiao_se_id: jiaoSeId,
+              nei_rong: neiRong.trim(),
+            })
+            yiBaoCunKaiChang = true
+          }
         }
       }
+    } catch {
     }
-  } catch {
-    // 开场白生成/落库失败不阻断角色创建（角色已入库），
-    // shengChengKaiChangBai 内部已降级到 jiangJi，此处兜底防持久化异常
-  }
+  })()
+  const luoKuHouRenWu = 落库后回调
+    ? Promise.resolve(落库后回调(jiaoSeId, jiaoSe)).catch(() => undefined)
+    : Promise.resolve()
+  await Promise.all([kaiChangBaiRenWu, luoKuHouRenWu])
 
   jiaoSe.yao_kai_kou = yiBaoCunKaiChang
   return jiaoSe
@@ -1030,7 +1063,7 @@ export async function anIdChaJiaoSeXiangQing(
     bei_jing_gu_shi: String(shuJuHang.背景故事 || ''),
     xi_hao: Array.isArray(shuJuHang.爱好) ? shuJuHang.爱好 : [],
     yan_yu_feng_ge: String(shuJuHang.言语风格 || ''),
-    xing_wei_te_dian: '',
+    xing_wei_te_dian: quXingWeiTeDian(String(shuJuHang.MBTI || shuJuHang.预设类型 || '')),
     tou_xiang: String(shuJuHang.头像 || ''),
     biao_qian: Array.isArray(shuJuHang.标签) ? shuJuHang.标签 : [],
     xi_huan_de_lei_xing: String(shuJuHang.喜欢的类型 || ''),

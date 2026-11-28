@@ -1,5 +1,5 @@
 import { huoQuFanYi } from '../config/translations'
-import { tiaoYongDeepSeek } from '../utils/通用模型调用'
+import { tiaoYongMoXing } from '../utils/通用模型调用'
 import { debug日志 } from '../utils/debug日志'
 
 export interface FanYiJieGuo {
@@ -50,7 +50,7 @@ export async function fanYiWenBen(
   const muBiaoMing = YuYanMing[muBiaoYuGuiFan] ?? '中文'
   const yuanShuoMing = yuanYuGuiFan === 'auto' ? '原文（可能为混合语言）' : YuYanMing[yuanYuGuiFan] ?? '原文'
   try {
-    const xiangYing = await tiaoYongDeepSeek(
+    const xiangYing = await tiaoYongMoXing(
       {
         xiaoXi: [
           {

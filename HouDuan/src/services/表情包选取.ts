@@ -5,7 +5,6 @@ import { 语义候选 } from './语义表情检索'
 import { 表情书类别, 类别到消息类型 } from '../config/媒体配置'
 import {
   BiaoQingBaoYunXing,
-  表情待打标,
   BiaoQingFaSongShiJiWenAn,
   BiaoQingFaSongYuanYin,
   BiaoQingHouXuanWenAn,
@@ -84,7 +83,7 @@ export async function 候选包装(
     debug日志.debug(RiZhiLeiXing, '表情包候选已就绪', {
       xiang_qing: { qing_xu: 意化 ?? '', hou_xuan_shu: lieBiao.length },
     })
-    return lieBiao.map(zhuangXiang)
+    return lieBiao.slice(0, shuLiang).map(zhuangXiang)
   } catch (cuoWu) {
     debug日志.warn(RiZhiLeiXing, '表情包库读取失败，本轮不给表情包', {
       xiang_qing: {
@@ -174,11 +173,9 @@ export async function 发送表情包消息(
 }
 
 function quanZhongDaoWenAn(quanZhong: number, gangFaGuoTu: boolean): string {
-  if (quanZhong >= 1.1) return '这一轮你挺想发图的，看到合适的就发，一条里想发两张也行。'
-  if (quanZhong >= 0.6) return '这一轮发图是你的自然选择之一，有贴合的图就顺手发一张，没有就不发。'
-  if (quanZhong >= 0.3) return '这一轮可发可不发，除非图特别贴合此刻的话，否则就先只说话。'
-  if (gangFaGuoTu) return '你上一轮刚发过图，这一轮先正常说话，除非真有特别想发的图。'
-  return '这一轮先好好说话，你此刻没那么想发图；如果图简直就是你现在的心情，也可以发。'
+  if (gangFaGuoTu) return '上一轮刚发过图，这一轮除非特别贴合，否则先说话。'
+  if (quanZhong < 0.3) return '这一轮不太想发图，除非图正是你现在的心情。'
+  return '这一轮有贴合的图就顺手发一张，没有就只说话。'
 }
 
 export function 组装表情候选块(tiaoMuLieBiao: XiTongBiaoQingXiang[], faTuQuanZhong?: number, gangFaGuoTu = false): string {
@@ -193,8 +190,6 @@ export function 组装表情候选块(tiaoMuLieBiao: XiTongBiaoQingXiang[], faTu
   const hangLieBiao = tiaoMuLieBiao.map((xiang) =>
     tianChongMoBan(BiaoQingHouXuanWenAn.hangMoBan, {
       biao_qing_bao_shi_li: 表情包文本(xiang.duanMing),
-      miao_shu: xiang.miaoShu || BiaoQingHouXuanWenAn.moShuKong,
-      qing_xu: xiang.qingXuBiaoQian || 表情待打标,
       chang_jing: xiang.shiYongChangJing || BiaoQingHouXuanWenAn.changJingKong,
     }),
   )
@@ -202,8 +197,8 @@ export function 组装表情候选块(tiaoMuLieBiao: XiTongBiaoQingXiang[], faTu
     BiaoQingHouXuanWenAn.biaoTi,
     ...shuoMing,
     BiaoQingFaSongShiJiWenAn,
-    ...(quanZhongWenAn ? ['【这一轮你有多想发图】' + quanZhongWenAn] : []),
-    ...hangLieBiao,
+    ...(quanZhongWenAn ? [BiaoQingHouXuanWenAn.quanZhongBiaoTi + quanZhongWenAn] : []),
+    ...hangLieBiao.slice(0, BiaoQingBaoYunXing.houXuanShuLiang),
   ].join('\n')
 }
 

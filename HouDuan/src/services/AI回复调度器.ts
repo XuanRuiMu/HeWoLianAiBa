@@ -38,6 +38,7 @@ import {
   jianCeYongHuXiaoXiBingChuLi,
   chuLiAIHuiFuHouJieShuJianCha,
   chuLiYouXiJieShu,
+  结算暂存神经病,
 } from './胜利失败条件'
 import { jiaoSeShiFouBeiDuoShe } from './夺舍'
 import { XiaoXiPeiZhi } from '../config/消息配置'
@@ -59,6 +60,7 @@ import type { 消息信息 } from './消息'
 import { 尝试合成语音 } from './TTS服务'
 import { 转换TTS文本 } from './TTS文本预处理'
 import { 计算TTS概率 } from './TTS概率计算'
+import type { TTS概率计算结果 } from './TTS概率计算'
 import { TtsPeiZhi } from '../config/TTS触发配置'
 import { panDuanZuiJia } from './追加消息判定'
 import { tuiDuanZuoXi, panDuanZuoXi, zuoXiKaiQi } from '../config/角色作息'
@@ -91,6 +93,32 @@ export interface LunCiShangXiaWen {
 }
 
 const DengDaiBiaoBaiGuoQiShiJian = 30 * 60 * 1000
+
+const DengDaiBiaoBaiRedisQianZhui = 'deng_dai_biao_bai:'
+
+const 表情包条判定 = /^\s*[\[【]\s*表情包\s*[:：]/u
+
+function 保留表情包截文字(xiaoXiLieBiao: string[], wenZiShangXian: number): string[] {
+  const 列表 = Array.isArray(xiaoXiLieBiao) ? xiaoXiLieBiao : []
+  const 上限 = Math.max(1, Math.floor(wenZiShangXian))
+  const 结果: string[] = []
+  let 文字条数 = 0
+  for (const 条 of 列表) {
+    if (typeof 条 !== 'string' || 条.trim() === '') continue
+    if (表情包条判定.test(条)) {
+      结果.push(条)
+      continue
+    }
+    if (文字条数 >= 上限) continue
+    结果.push(条)
+    文字条数 += 1
+  }
+  if (文字条数 === 0) {
+    const 首条文字 = 列表.find((条) => typeof 条 === 'string' && 条.trim() !== '' && !表情包条判定.test(条))
+    if (首条文字) 结果.push(首条文字)
+  }
+  return 结果
+}
 
 const XiuFuPanDuanPinKongChuangKouHaoMiao = ChongTuWanFaPeiZhi.xiuFuPanDuanPinKongChuangKouHaoMiao
 const XiuFuPanDuanPinKongShangXian = ChongTuWanFaPeiZhi.xiuFuPanDuanPinKongShangXian
@@ -594,7 +622,7 @@ export class AI回复调度器 {
         ?.xiaoXiLieBiao.map((xiaoXi) => xiaoXi.id)
         .filter((xiaoXiId): xiaoXiId is string => typeof xiaoXiId === 'string' && xiaoXiId.trim() !== '')
 
-      const 等待表白回复 = this.是否等待表白回复()
+      const 等待表白回复 = await this.异步确认等待表白状态()
       const jieShuJieGuo = await jianCeYongHuXiaoXiBingChuLi(
         this.用户ID,
         this.角色ID,
@@ -658,7 +686,7 @@ private 当地现在小时(): number {
   return new Date().getHours()
 }
 
-  private 是否等待表白回复(): boolean {
+  private 内存中是否等待表白回复(): boolean {
     qingChuGuoQiDengDaiZhuangTai()
     const jian = shengChengDengDaiBiaoBaiJian(this.用户ID, this.角色ID)
     const zhuangTai = dengDaiBiaoBaiHuiFuMap.get(jian)
@@ -670,20 +698,57 @@ private 当地现在小时(): number {
     return zhuangTai.deng_dai_zhong
   }
 
+  private 是否等待表白回复(): boolean {
+    return this.内存中是否等待表白回复()
+  }
+
+  private async 异步确认等待表白状态(): Promise<boolean> {
+    if (this.内存中是否等待表白回复()) return true
+    const jian = shengChengDengDaiBiaoBaiJian(this.用户ID, this.角色ID)
+    try {
+      const 值 = await redis.get(`${DengDaiBiaoBaiRedisQianZhui}${jian}`)
+      if (!值) return false
+      const 时间 = Number(值)
+      if (!Number.isFinite(时间) || Date.now() - 时间 > DengDaiBiaoBaiGuoQiShiJian) return false
+      dengDaiBiaoBaiHuiFuMap.set(jian, {
+        deng_dai_zhong: true,
+        chuang_jian_shi_jian: 时间,
+      })
+      return true
+    } catch (cuoWu) {
+      debug日志.warn('AI调度器', '等待表白状态回源失败，按未等待处理', {
+        xiang_qing: { yong_hu_id: this.用户ID, jiao_se_id: this.角色ID, cuo_wu: String(cuoWu) },
+      })
+      return false
+    }
+  }
+
   private 构造时间场景提示(): string {
     const jiBen = huoQuShiJianChangJingWenBen()
     if (!this.本轮睡着中) return jiBen
     return `${jiBen}\n（你刚刚睡了，但这条新消息把你叫醒了。先按醒来接话的真实状态回对方，照顾 TA 的来意；别拿已经睡了当不回复的理由，也别展开一大段睡觉找补。）`
   }
 
-  private 设置等待表白回复状态(): void {    dengDaiBiaoBaiHuiFuMap.set(shengChengDengDaiBiaoBaiJian(this.用户ID, this.角色ID), {
+  private 设置等待表白回复状态(): void {
+    const jian = shengChengDengDaiBiaoBaiJian(this.用户ID, this.角色ID)
+    const 时间 = Date.now()
+    dengDaiBiaoBaiHuiFuMap.set(jian, {
       deng_dai_zhong: true,
-      chuang_jian_shi_jian: Date.now(),
+      chuang_jian_shi_jian: 时间,
     })
+    void redis
+      .set(`${DengDaiBiaoBaiRedisQianZhui}${jian}`, String(时间), 'PX', DengDaiBiaoBaiGuoQiShiJian)
+      .catch((cuoWu: unknown) => {
+        debug日志.warn('AI调度器', '等待表白状态写 Redis 失败，仅内存生效', {
+          xiang_qing: { yong_hu_id: this.用户ID, jiao_se_id: this.角色ID, cuo_wu: String(cuoWu) },
+        })
+      })
   }
 
   private 清除等待表白回复状态(): void {
-    dengDaiBiaoBaiHuiFuMap.delete(shengChengDengDaiBiaoBaiJian(this.用户ID, this.角色ID))
+    const jian = shengChengDengDaiBiaoBaiJian(this.用户ID, this.角色ID)
+    dengDaiBiaoBaiHuiFuMap.delete(jian)
+    void redis.del(`${DengDaiBiaoBaiRedisQianZhui}${jian}`).catch(() => undefined)
   }
 
   private async 触发AI处理(): Promise<void> {
@@ -786,7 +851,7 @@ private 当地现在小时(): number {
         }
       }
 
-      const 消息列表 = ai结果.xiao_xi_lie_biao.slice(0, 5)
+      const 消息列表 = 保留表情包截文字(ai结果.xiao_xi_lie_biao, XiaoXiPeiZhi.wenZiTiaoShuShangXian)
       this.连续沉默轮数 = 0
       await this.发送消息列表(消息列表, 信号, 轮次, ai结果)
       if (信号.aborted || 处理ID !== this.当前处理ID) return
@@ -993,7 +1058,7 @@ private 当地现在小时(): number {
       const 轮次: LunCiShangXiaWen = { 处理ID: this.当前处理ID, 驱动消息ID: null }
       this.连续沉默轮数 = 0
       try {
-        await this.发送消息列表(结果.xiao_xi_lie_biao.slice(0, 5), 控制器.signal, 轮次, 结果)
+        await this.发送消息列表(保留表情包截文字(结果.xiao_xi_lie_biao, XiaoXiPeiZhi.wenZiTiaoShuShangXian), 控制器.signal, 轮次, 结果)
       } catch (faSongCuoWu) {
         await redis.del(zhaMenJian).catch(() => null)
         throw faSongCuoWu
@@ -1245,6 +1310,7 @@ private 当地现在小时(): number {
     let chuLiDuanShu = 0
     let benLunYiFaChuNeiRong = false
     let shangYiDuanShiBiaoQingBao = false
+    let yiZuoGuoYuYinPanDing = false
 
     for (const yuanShiXiaoXi of 消息列表) {
       for (const duan of qieFenBiaoQingBao(yuanShiXiaoXi)) {
@@ -1324,6 +1390,40 @@ private 当地现在小时(): number {
             xiang_qing: { jiao_se_id: this.角色ID, lun_ci: 处理ID, duan_shu: chuLiDuanShu },
           })
           continue
+        }
+
+        if (yiFaWenZiDuanLieBiao.length === 0 && !yiZuoGuoYuYinPanDing) {
+          yiZuoGuoYuYinPanDing = true
+          const yuYinXiaoXi = await this.尝试改走语音(qingXiHouWenBen, 信号, 处理ID, 轮次, ai结果)
+          if (信号.aborted || 处理ID !== this.当前处理ID) return
+          if (yuYinXiaoXi) {
+            this.自上一条角色消息以来的用户消息计数 = 0
+            benLunYiFaChuNeiRong = true
+            yiFaSongLieBiao.push(qingXiHouWenBen)
+            yiFaWenZiDuanLieBiao.push(qingXiHouWenBen)
+            this.登记送达(qingXiHouWenBen)
+            try {
+              this.推送角色回复([yuYinXiaoXi], 轮次)
+            } catch (cuoWu) {
+              debug日志.error('AI调度器', '语音回复推送异常', {
+                xiang_qing: { jiao_se_id: this.角色ID, xiao_xi_id: yuYinXiaoXi.id, cuo_wu: String(cuoWu) },
+              })
+            }
+            jiLuSocketShiJian('角色回复', this.用户ID, {
+              jiao_se_id: this.角色ID,
+              xiao_xi_shu: 1,
+              xiao_xi_id: yuYinXiaoXi.id,
+              lei_xing: 'tts_yu_yin',
+            })
+            this.io.to(管理监控房间名(this.用户ID)).emit('管理员_构建过程', {
+              阶段: '输出回复',
+              说明: `第 ${yiFaWenZiDuanLieBiao.length} 段文字改以语音发出`,
+              内容: qingXiHouWenBen,
+              时间: Date.now(),
+              轮次: 处理ID,
+            })
+            continue
+          }
         }
 
         const 保存结果 = await 保存角色XiaoXi({
@@ -1407,8 +1507,9 @@ private 当地现在小时(): number {
     }
 
     if (最新消息文本 && benLunYiFaChuNeiRong) {
+      let 好感度变化: HaoGanDuPingPanJieGuo | null = null
       if (yiFaSongLieBiao.length > 0) {
-        const 好感度变化 = await this.更新好感度(最新消息文本, yiFaSongLieBiao)
+        好感度变化 = await this.更新好感度(最新消息文本, yiFaSongLieBiao)
       void import('./承诺兑现').then((m) => (m as unknown as Record<string, (a: string, b: string, c: string) => Promise<void>>)['提取承诺'](this.用户ID, this.角色ID, yiFaSongLieBiao.join(' '))).catch(() => undefined)
         if (好感度变化) {
           this.io.to(管理监控房间名(this.用户ID)).emit('管理员_好感度变化', {
@@ -1435,70 +1536,29 @@ private 当地现在小时(): number {
         const hd = await huoQuWanZhengHaoGanDu(this.用户ID, this.角色ID)
         const xinJieDuan = huoQuJieDuanXinXi(hd ? hd.zong_fen : 0)
         const yueQian = this.上次关系阶段序号 >= 0 && xinJieDuan.xiaXian > this.上次关系阶段序号
+        this.上次关系阶段序号 = xinJieDuan.xiaXian
       void 尝试头像演化({
         用户ID: this.用户ID,
         jiaoSeId: this.角色ID,
         laiYuan: '回复完成类',
         guanXiYueQian: yueQian,
       }).catch(() => undefined)
+      const shenJingBingJieShu = await 结算暂存神经病(
+        this.用户ID,
+        this.角色ID,
+        好感度变化 ? 好感度变化.行为 : undefined,
+        this.当前角色,
+      )
+      if (shenJingBingJieShu) {
+        this.清除等待表白回复状态()
+        if (处理ID === this.当前处理ID) this.发布AI状态('kong_xian')
+        return
+      }
       const jieShuJieGuo = await chuLiAIHuiFuHouJieShuJianCha(this.用户ID, this.角色ID)
       if (jieShuJieGuo) {
         this.清除等待表白回复状态()
         if (处理ID === this.当前处理ID) this.发布AI状态('kong_xian')
         return
-      }
-    }
-
-    if (this.当前角色 && yiFaWenZiDuanLieBiao.length > 0 && 处理ID === this.当前处理ID) {
-      const 首条回复 = yiFaWenZiDuanLieBiao[0]
-      const tts文本 = 转换TTS文本(首条回复).slice(0, TtsPeiZhi.tuiSongZuiDaZiFu)
-      const 概率结果 = 计算TTS概率({
-        角色: this.当前角色,
-        好感度: await (async () => {
-          const { huoQuWanZhengHaoGanDu } = await import('./好感度')
-          return huoQuWanZhengHaoGanDu(this.用户ID, this.角色ID)
-        })(),
-        策略: ai结果.ce_lue,
-      })
-
-      if (概率结果.是否触发 && tts文本) {
-        const yinSeId = this.当前角色.voice_id || 'female-shaonv'
-        setImmediate(() => {
-          尝试合成语音({ text: tts文本, yinSeId, roleId: this.角色ID, 用户ID: this.用户ID })
-            .then(async 结果 => {
-              if (!结果) return
-              if (信号.aborted || 处理ID !== this.当前处理ID) {
-                debug日志.info('AI调度器', '轮次已作废，TTS 语音不再落库推送', {
-                  xiang_qing: { jiao_se_id: this.角色ID, lun_ci: 处理ID },
-                })
-                return
-              }
-              debug日志.info('AI调度器', 'TTS 语音合成完成', {
-                xiang_qing: {
-                  roleId: this.角色ID,
-                  mediaId: 结果.mediaId,
-                  durationMs: 结果.durationMs,
-                },
-              })
-              try {
-                const { 保存角色媒体消息 } = await import('./消息')
-                const 语音消息 = await 保存角色媒体消息({
-                  yong_hu_id: this.用户ID,
-                  jiao_se_id: this.角色ID,
-                  nei_rong: 首条回复.slice(0, 500),
-                  lei_xing: 'yuYin',
-                  mei_ti_id: 结果.mediaId,
-                })
-                this.推送角色回复([语音消息], 轮次)
-                jiLuSocketShiJian('角色回复', this.用户ID, { jiao_se_id: this.角色ID, xiao_xi_shu: 1, xiao_xi_id: 语音消息?.id, lei_xing: 'tts_yu_yin' })
-              } catch (推送错误) {
-                debug日志.warn('AI调度器', 'TTS 语音推送失败，已降级为纯文本', { xiang_qing: { cuo_wu: String(推送错误) } })
-              }
-            })
-            .catch((cuoWu) => {
-              debug日志.warn('AI调度器', 'TTS 语音合成链路失败，已降级为纯文本', { xiang_qing: { cuo_wu: String(cuoWu).slice(0, 200) } })
-            })
-        })
       }
     }
 
@@ -1509,6 +1569,68 @@ private 当地现在小时(): number {
       jiaoSeId: this.角色ID,
       laiYuan: 'zhaiYaoShengCheng',
     }).catch(() => undefined)
+  }
+
+  private async 尝试改走语音(
+    首条回复: string,
+    信号: AbortSignal,
+    处理ID: number,
+    轮次: LunCiShangXiaWen,
+    ai结果: { ce_lue?: DirectorCeLue },
+  ): Promise<消息信息 | null> {
+    if (!this.当前角色) return null
+    const tts文本 = 转换TTS文本(首条回复).slice(0, TtsPeiZhi.tuiSongZuiDaZiFu)
+    if (!tts文本) return null
+    let 概率结果: TTS概率计算结果
+    try {
+      概率结果 = 计算TTS概率({
+        角色: this.当前角色,
+        好感度: await huoQuWanZhengHaoGanDu(this.用户ID, this.角色ID),
+        策略: ai结果.ce_lue,
+      })
+    } catch (cuoWu) {
+      debug日志.warn('AI调度器', 'TTS 概率计算失败，这一段按文字发出', {
+        xiang_qing: { jiao_se_id: this.角色ID, cuo_wu: String(cuoWu).slice(0, 200) },
+      })
+      return null
+    }
+    if (!概率结果.是否触发) return null
+    const yinSeId = this.当前角色.voice_id || 'female-shaonv'
+    const 合成结果 = await 尝试合成语音({
+      text: tts文本,
+      yinSeId,
+      roleId: this.角色ID,
+      用户ID: this.用户ID,
+    })
+    if (!合成结果) return null
+    if (信号.aborted || 处理ID !== this.当前处理ID) {
+      debug日志.info('AI调度器', '轮次已作废，TTS 语音不再落库推送', {
+        xiang_qing: { jiao_se_id: this.角色ID, lun_ci: 处理ID },
+      })
+      return null
+    }
+    debug日志.info('AI调度器', 'TTS 语音合成完成', {
+      xiang_qing: {
+        roleId: this.角色ID,
+        mediaId: 合成结果.mediaId,
+        durationMs: 合成结果.durationMs,
+      },
+    })
+    try {
+      const { 保存角色媒体消息 } = await import('./消息')
+      return await 保存角色媒体消息({
+        yong_hu_id: this.用户ID,
+        jiao_se_id: this.角色ID,
+        nei_rong: 首条回复.slice(0, XiaoXiPeiZhi.shouTiaoYuLanZuiDaChang),
+        lei_xing: 'yuYin',
+        mei_ti_id: 合成结果.mediaId,
+      })
+    } catch (推送错误) {
+      debug日志.warn('AI调度器', 'TTS 语音落库失败，这一段降级为纯文本', {
+        xiang_qing: { cuo_wu: String(推送错误).slice(0, 200) },
+      })
+      return null
+    }
   }
 
   private async 同步用户语言(): Promise<void> {

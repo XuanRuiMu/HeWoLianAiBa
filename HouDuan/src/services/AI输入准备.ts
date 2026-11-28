@@ -1,5 +1,6 @@
 import { 数据库 } from '../数据库'
-import { huiFuYanChiJiZhunHaoMiao } from '../config/角色配置'
+import { huiFuYanChiJiZhunHaoMiao, xingWeiTeDian } from '../config/角色配置'
+import type { MBTI类型 } from '../config/角色配置'
 import { AI配置 } from '../config/AI配置'
 import { debug日志, jiLuXiaoXiCaoZuo } from '../utils/debug日志'
 import { guJiZiFuShu } from '../utils/token估算'
@@ -12,6 +13,11 @@ import type { 消息信息 } from './消息'
 import { 会话消息所辖, 失效消息总数缓存 } from './消息'
 import { qingLiLuoKuKuai, shiTuWenHunPaiKuai } from './消息内容块'
 import { buQiWenJianTiQuWenBen } from './文档文本提取'
+import { huoQuJieDuanMing } from './好感度'
+
+export function 取关系阶段名(zongFen: number): string {
+  return huoQuJieDuanMing(Number(zongFen) || 0)
+}
 
 export interface BaoCunJiaoSeXiaoXiCanShu {
   yong_hu_id: string
@@ -38,6 +44,11 @@ function anQuanZiFuChuan(zhi: unknown): string {
 function anQuanZiFuChuanShuZu(zhi: unknown): string[] {
   if (Array.isArray(zhi)) return zhi.map((x) => String(x))
   return []
+}
+
+export function quXingWeiTeDian(mbtiLeiXing: string): string {
+  const zhi = xingWeiTeDian[mbtiLeiXing as MBTI类型]
+  return typeof zhi === 'string' ? zhi : ''
 }
 
 export async function huoQuJiaoSeIELeiXing(
@@ -103,10 +114,9 @@ export async function huoQuAIJiaoSeXinXi(
     bei_jing_gu_shi: beiJingGuShi,
     xi_hao: anQuanZiFuChuanShuZu(shuJuHang.爱好),
     yan_yu_feng_ge: anQuanZiFuChuan(shuJuHang.言语风格),
-    xing_wei_te_dian: '',
+    xing_wei_te_dian: quXingWeiTeDian(mbtiLeiXing),
     tou_xiang: anQuanZiFuChuan(shuJuHang.头像),
     tou_xiang_miao_shu: anQuanZiFuChuan(shuJuHang.头像描述) || undefined,
-    ren_she_ka: anQuanZiFuChuan(shuJuHang.自述卡) || undefined,
     xi_huan_de_lei_xing: xiHuanDeLeiXing,
     jia_ting_bei_jing: jiaTingBeiJing,
     qing_gan_jing_li: qingGanJingLi,
@@ -128,7 +138,7 @@ export async function huoQuAIJiaoSeXinXi(
       xing_ge: anQuanZiFuChuan(shuJuHang.性格),
       bei_jing: beiJingGuShi,
       yan_yu: anQuanZiFuChuan(shuJuHang.言语风格),
-      xing_wei: '',
+      xing_wei: quXingWeiTeDian(mbtiLeiXing),
       guan_xi: `喜欢的类型：${xiHuanDeLeiXing}`,
       xi_tong_ti_shi: '',
     },
@@ -156,20 +166,43 @@ export function anZiFuYuSuanJieQu(
   return baoLiu.reverse()
 }
 
+const 最近历史条数上限 = 200
+
+async function 取对话总条数(
+  yong_hu_id: string,
+  jiao_se_id: string,
+  本次取回条数: number,
+): Promise<number | undefined> {
+  if (本次取回条数 < 最近历史条数上限) return 本次取回条数
+  try {
+    const 计数 = await 数据库.query(
+      `SELECT COUNT(*) AS "总数" FROM "消息" WHERE "用户ID" = $1 AND "角色ID" = $2`,
+      [yong_hu_id, jiao_se_id],
+    )
+    const 值 = Number(计数.rows[0]?.总数)
+    return Number.isFinite(值) ? 值 : undefined
+  } catch (cuoWu) {
+    debug日志.warn('AI输入准备', '对话总条数查询失败，按未知总数处理', {
+      xiang_qing: { yong_hu_id, jiao_se_id, cuo_wu: String(cuoWu) },
+    })
+    return undefined
+  }
+}
+
 export async function huoQuZuiJinDuiHuaLiShi(
   yong_hu_id: string,
   jiao_se_id: string,
 ): Promise<DuiHuaLiShiXiang[]> {
   const jieGuo = await 数据库.query(
     `SELECT m.*, mf."SHA256" AS "媒体SHA256", mf."MIME" AS "媒体MIME", mf."类别" AS "媒体类别",
-            mf."时长毫秒" AS "媒体时长毫秒", mf."原始文件名" AS "媒体原始文件名",
-            COUNT(*) OVER() AS "对话总条数"
+            mf."时长毫秒" AS "媒体时长毫秒", mf."原始文件名" AS "媒体原始文件名"
      FROM "消息" m LEFT JOIN "媒体文件" mf ON m."媒体ID" = mf."ID"
      WHERE m."用户ID" = $1 AND m."角色ID" = $2
      ORDER BY m."创建时间" DESC
-     LIMIT 50000`,
-    [yong_hu_id, jiao_se_id],
+     LIMIT $3`,
+    [yong_hu_id, jiao_se_id, 最近历史条数上限],
   )
+  const zongTiaoShu = await 取对话总条数(yong_hu_id, jiao_se_id, jieGuo.rows.length)
 
   const liShi = jieGuo.rows.reverse().map((shuJuHang): DuiHuaLiShiXiang => {
     const faSongZheLeiXing =
@@ -208,7 +241,7 @@ export async function huoQuZuiJinDuiHuaLiShi(
       meiTiShiChangHaoMiao: shuJuHang.媒体时长毫秒 != null ? Number(shuJuHang.媒体时长毫秒) : null,
       yuanShiWenJianMing: shuJuHang.媒体原始文件名 ? String(shuJuHang.媒体原始文件名) : undefined,
       meiTiId: shuJuHang.媒体ID ? String(shuJuHang.媒体ID) : undefined,
-      duiHuaZongTiaoShu: shuJuHang.对话总条数 != null ? Number(shuJuHang.对话总条数) : undefined,
+      duiHuaZongTiaoShu: zongTiaoShu,
       beiYongXiaoXiId: shuJuHang.被引用消息ID ? String(shuJuHang.被引用消息ID) : null,
     }
   })
@@ -282,7 +315,6 @@ export async function 保存角色XiaoXi(
       try {
         await keHuDuan.query('ROLLBACK')
       } catch {
-        // 忽略回滚失败
       }
       keHuDuan.release()
       lastError = cuoWu as Error
