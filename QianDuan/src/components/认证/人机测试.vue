@@ -39,7 +39,16 @@
                 {{ huoQuFanYi('renZheng', 'renJiYanZhengMiaoShu') }}
               </p>
 
-              <div class="renji-tuxiang-qu" :class="{ 'renji-tuxiang-jiazai': jiaZaiZhong }">
+              <div
+                class="renji-tuxiang-qu"
+                :class="{ 'renji-tuxiang-jiazai': jiaZaiZhong }"
+                role="button"
+                tabindex="0"
+                :aria-label="huoQuFanYi('renZheng', 'renJiYanZhengGengHuan')"
+                @click="gengHuan"
+                @keydown.enter.prevent="gengHuan"
+                @keydown.space.prevent="gengHuan"
+              >
                 <img
                   v-if="tiaoZhan"
                   class="renji-tuxiang"
@@ -441,6 +450,14 @@ defineExpose({ biaoShiYanZhengShiBai })
   border: 1px solid var(--renji-xian);
   border-radius: var(--yuanjiao-xiao);
   overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s var(--quxian-biao-zhun);
+}
+
+.renji-tuxiang-qu:hover,
+.renji-tuxiang-qu:focus-visible {
+  border-color: #c9a96a;
+  outline: none;
 }
 
 .renji-tuxiang {
