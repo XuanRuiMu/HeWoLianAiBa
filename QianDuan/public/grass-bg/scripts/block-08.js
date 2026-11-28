@@ -1782,7 +1782,12 @@ window.__camReady = true;
       if (bareDone || !wuBase) return;
       window.__m('足印开始');
       var grass = ((E.world && E.world.islands && E.world.islands.mainIsland) || {}).grass;
-      if (!grass || !grass.chunks || grass.chunks.entries().length < 20) return;
+      if (!grass || !grass.chunks) return;
+      var chunks = grass.chunks;
+      var chunkCount = typeof chunks.size === 'number'
+        ? chunks.size
+        : (typeof chunks.entries === 'function' ? Array.from(chunks.entries()).length : 0);
+      if (chunkCount < 20) return;
       var mi = scene.getObjectByName('main-island');
       if (!mi) return;
       if (!wuAlpha) {
@@ -3226,8 +3231,14 @@ function wuBakeAuroraNoise(size) {
         for (var i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
         window.__diXing = { x0: o.x0, z0: o.z0, n: o.n, bu: (o.x1 - o.x0) / o.n, shuJu: new Int16Array(buf) };
         window.__m('地形高度图就绪');
-      }).catch(function () {});
-    } catch (e0) {}
+      }).catch(function (eD) {
+        window.__diXingErr = String(eD && eD.message || eD);
+        window.__m('地形高度图失败');
+      });
+    } catch (e0) {
+      window.__diXingErr = String(e0 && e0.message || e0);
+      window.__m('地形高度图失败');
+    }
   })();
   var WU_ASPECT = 443 / 312;
   var CAM = { pos: [4.2706, 1.157, 5.1022], d: 4.664, p: -23, a: -6.6 };

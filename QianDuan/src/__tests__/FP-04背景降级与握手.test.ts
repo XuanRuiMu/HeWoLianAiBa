@@ -1,4 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { resolve } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -7,7 +8,22 @@ const 项目根 = resolve(源码根, '..')
 const 仓库根 = resolve(项目根, '..')
 const 读 = (相对: string) => readFileSync(resolve(项目根, 相对), 'utf8')
 
+const 完好背景哈希: Record<string, string> = {
+  'draco/draco_decoder.wasm': 'c55a594e8ffd18426d36b27fea9618af3df5e173640a3e56d46f09d76f0574f2',
+  'di-xing-gao-du.json': '8bd85bbd4c16d12f7c878057ee091139db85407d1f717851b66621d1f199cdf1',
+  'textures/top-island.png': 'a350e947d31ed616442bfc8dac87e415d60853eb724b055a7ce18b1ec6e6c346',
+  'textures/main-island-zones.png': '8aba989b6f8e690e32e8397c3506257d02d62b74ef0aa5f852ec570b9019d8a8',
+  'textures/foliage/combined-foliages.webp': '01b82b03e0709a7dd6b5c8ca3bb8377c3d663eadb94750463f169c877dc7d88c',
+}
+
 describe('主页三维背景：就绪握手、暂停与降级', () => {
+  it('关键背景素材必须与历史完好版本逐字节一致', () => {
+    for (const [路径, 哈希] of Object.entries(完好背景哈希)) {
+      const 文件 = readFileSync(resolve(项目根, 'public/grass-bg', 路径))
+      expect(createHash('sha256').update(文件).digest('hex'), 路径).toBe(哈希)
+    }
+  })
+
   it('背景页只在场景真正完成后通知父页，并支持暂停渲染', () => {
     const 背景页 = 读('public/grass-bg/grass-bg.html')
     const 握手 = 读('public/grass-bg/scripts/block-09.js')

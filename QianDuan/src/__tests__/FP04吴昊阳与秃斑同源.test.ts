@@ -40,6 +40,19 @@ describe('FP-04 吴昊阳与秃斑同源（空隙按屏幕等距，缩窗后重�
     expect(源码).not.toContain('Math.max(0, Math.floor(bodyShuPx.zuo')
   })
 
+  it('秃斑就绪门正确读取Map分块数量，不把迭代器当数组', () => {
+    const 源码 = 读源码()
+    expect(源码).not.toContain('grass.chunks.entries().length < 20')
+    expect(源码).toContain("typeof chunks.size === 'number'")
+    expect(源码).toContain('Array.from(chunks.entries()).length')
+  })
+
+  it('地形高度图失败必须留下明确诊断', () => {
+    const 源码 = 读源码()
+    expect(源码).toContain('window.__diXingErr')
+    expect(源码).toContain("window.__m('地形高度图失败')")
+  })
+
   it('窗口尺寸变化后去抖重铺网格并重算足迹', () => {
     const 源码 = 读源码()
     expect(源码).toContain('window.addEventListener(\'resize\', function () { puWu(); });')
