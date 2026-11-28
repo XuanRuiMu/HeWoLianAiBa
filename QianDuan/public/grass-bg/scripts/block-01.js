@@ -8,13 +8,24 @@
                 } catch (e) { return false; }
             }
             const origFetch = window.fetch;
+            function versionedUrl(input) {
+                try {
+                    const url = new URL(input && input.url ? input.url : input, window.location.href);
+                    if (url.origin === window.location.origin && url.pathname.startsWith('/grass-bg/')) {
+                        url.searchParams.set('caoDiZiYuanBanBen', '20261128-0bc49cf');
+                    }
+                    return input && typeof Request !== 'undefined' && input instanceof Request ? new Request(url, input) : url;
+                } catch (_) { return input; }
+            }
             window.fetch = function(...args) {
                 if (shouldBlock(args[0])) return Promise.resolve(new Response('', { status: 204 }));
+                args[0] = versionedUrl(args[0]);
                 return origFetch.apply(this, args);
             };
             const origOpen = XMLHttpRequest.prototype.open;
             const origSend = XMLHttpRequest.prototype.send;
             XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+                url = versionedUrl(url);
                 this._blocked = shouldBlock(url);
                 return origOpen.call(this, method, url, ...rest);
             };
